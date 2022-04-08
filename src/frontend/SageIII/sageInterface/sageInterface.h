@@ -1939,6 +1939,9 @@ ROSE_DLL_API void deleteAST(SgNode* node);
 // DQ (2/13/2022): Adding support to delete the whole AST (every SgNode).
 ROSE_DLL_API void deleteAllNodes();
 
+// DQ (3/5/2022): Adding support to check AST for invalid poionters.
+ROSE_DLL_API void checkSgNodePointers();
+
 //! Special purpose function for deleting AST expression tress containing valid original expression trees in constant folded expressions (for internal use only).
 ROSE_DLL_API void deleteExpressionTreeWithOriginalExpressionSubtrees(SgNode* root);
 

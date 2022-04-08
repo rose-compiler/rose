@@ -243,6 +243,53 @@ SageInterface::deleteAllNodes()
 #endif
 
 
+#if 0
+// DQ (3/5/2022): Adding support to check AST for invalide poionters.
+void
+SageInterface::checkSgNodePointers()
+   {
+  // This function uses a memory pool traversal to look for any pointers to invalid IR nodes.
+
+  // Step 1: is to build a map of the boundaries of the memory pools for each IR node kind.
+  // Step 2: traverse all of the IR nodes across all of the memory pools and check
+  //   a) if the pointer to each node in the list of child IR nodes is in the map from step 1.
+  //   b) if it is then we can expect to dereference the pointer and check the value of 
+  //      get_freepointer(), the value should be 0xffffffffffffffff, else it is an error
+  // (when it is an error it usually should be a value that is in the map from step 1, but it
+  // is a node that was previously deleted, so it is a stale pointer).
+
+     class BuildMapTraversal : public ROSE_VisitTraversal
+        {
+          public:
+            // std::vector<SgNode*> resultlist;
+            // std::map<enum VariantT,std::vector<std::pair<SgNode*,SgNode*>> mapOfMemoryPoolsBounds;
+
+            // We need to get the pools variable for each IR node.
+
+               void visit ( SgNode* node)
+                  {
+                 // Get list of all pointers to all IR nodes in the current node.
+
+                 // $CLASSNAME::pools
+                    node->checkDataMemberPointersIfInMemoryPool();
+
+                    resultlist.push_back(result);
+                  };
+
+           virtual ~MyTraversal() {}
+        };
+
+  // For debugging, recode the number of IR nodes before we delete the AST.
+     size_t numberOfNodes_before = numberOfNodes();
+
+     MyTraversal my_traversal;
+
+  // We need to visit all of the IR nodes, not just those of a specific class in ROSE.
+  // NodeType::traverseMemoryPoolNodes(my_traversal);
+     my_traversal.traverseMemoryPool();
+   }
+#endif
+
 void
 SageInterface::DeclarationSets::addDeclaration(SgDeclarationStatement* decl)
    {
@@ -19870,7 +19917,7 @@ void SageInterface::markNodeToBeUnparsed(SgNode* node, int physical_file_id)
        // DQ (10/26/2020): Set the physical_file_id, required for header file unparsing (is it?).
           if (locatedNode->get_file_info() != NULL)
              {
-#if 1
+#if 0
                printf ("In SageInterface::markNodeToBeUnparsed(): locatedNode = %p = %s calling set_physical_file_id(%d) \n",locatedNode,locatedNode->class_name().c_str(),physical_file_id);
 #endif
                locatedNode->get_file_info()->set_physical_file_id(physical_file_id);
@@ -19904,7 +19951,7 @@ void SageInterface::markSubtreeToBeUnparsed(SgNode* root, int physical_file_id)
                printf ("In global scope: *i = %p = %s \n",*i,(*i)->class_name().c_str());
              }
 #endif
-#if 1
+#if 0
           printf ("In markSubtreeToBeUnparsed(): Calling markNodeToBeUnparsed(): *i = %p = %s physical_file_id = %d \n",*i,(*i)->class_name().c_str(),physical_file_id);
 #endif
           markNodeToBeUnparsed(*i,physical_file_id);

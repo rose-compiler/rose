@@ -121,7 +121,7 @@ int main( int argc, char * argv[] )
   // TimingPerformance::generateReportToFile(project);
   // TimingPerformance::set_project(SgProject* project);
 
-#if 0
+#if 1
   // This should delete all of the IR nodes in the AST, and as a result should 
   // fix all memory leaks from the AST which will better allow tools to detect 
   // and fix their memory leeks (since that will be all that is left).
@@ -130,8 +130,8 @@ int main( int argc, char * argv[] )
   // DQ (2/27/2022): Old function from me (SageInterface::deleteAllNodes()) and 
   // new function from Tristan (Rose::AST::free()).
   // SageInterface::deleteAllNodes();
-  // Rose::AST::free();
-     SageInterface::deleteAllNodes();
+     Rose::AST::free();
+  // SageInterface::deleteAllNodes();
   // printf ("DONE: Experiment with calling function to delete all IR nodes \n");
 #endif
 

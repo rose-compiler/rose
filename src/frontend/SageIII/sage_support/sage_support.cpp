@@ -2011,13 +2011,7 @@ SgSourceFile::SgSourceFile ( vector<string> & argv , SgProject* project )
    {
   // printf ("In the SgSourceFile constructor \n");
 
-     this->p_package = nullptr;
-     this->p_import_list = nullptr;
-     this->p_class_list = nullptr;
-     this->p_associated_include_file = nullptr;
-     this->p_headerFileReport = nullptr;
-     this->p_processedToIncludeCppDirectivesAndComments = false;
-     this->p_isHeaderFile = false;
+     this->initialization();
 
      set_globalScope(nullptr);
 
@@ -3258,6 +3252,17 @@ SgFile::callFrontEnd()
                        {
                          SgSourceFile* sourceFile = const_cast<SgSourceFile*>(isSgSourceFile(this));
                          ASSERT_not_null(sourceFile);
+#if 0
+                      // DQ (3/2/2022): Added code for debugging.
+                         printf ("In SgFile::callFrontEnd(): globalScope        = %p \n",sourceFile->get_globalScope());
+                         printf ("In SgFile::callFrontEnd(): temp_holding_scope = %p \n",sourceFile->get_temp_holding_scope());
+                         printf ("In SgFile::callFrontEnd(): headerFileReport   = %p \n",sourceFile->get_headerFileReport());
+                         printf ("In SgFile::callFrontEnd(): package            = %p \n",sourceFile->get_package());
+                         printf ("In SgFile::callFrontEnd(): import_list        = %p \n",sourceFile->get_import_list());
+                         printf ("In SgFile::callFrontEnd(): class_list         = %p \n",sourceFile->get_class_list());
+                         printf ("In SgFile::callFrontEnd(): firstStatement     = %p \n",sourceFile->get_firstStatement());
+                         printf ("In SgFile::callFrontEnd(): lastStatement      = %p \n",sourceFile->get_lastStatement());
+#endif
                          frontendErrorLevel = sourceFile->buildAST(localCopy_argv, inputCommandLine);
                          break;
                        }
@@ -6358,7 +6363,9 @@ SgBinaryComposite::buildAST(vector<string> /*argv*/, vector<string> /*inputComma
 int
 SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
    {
-  // printf ("######################## Inside of SgSourceFile::buildAST() ##########################\n");
+#if 0
+     printf ("######################## Inside of SgSourceFile::buildAST() ##########################\n");
+#endif
 
   // TV (09/24/2018): Skip actually calling the frontend (used to test the backend with ROSE command line processing)
      if (get_skip_parser()) return 0;
@@ -6565,7 +6572,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
   // DQ (4/21/2006): I think we can now assert this!
      ROSE_ASSERT(fileNameIndex == 0);
 
-#if 1
+#if 0
      printf ("Inside of SgFile::compileOutput() \n");
 #endif
 
@@ -6920,7 +6927,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
        // CAVE3 double check that is correct and shouldn't be compilerCmdLine
           returnValueForCompiler = systemFromVector (compilerCmdLine);
 
-#if 1
+#if 0
           printf ("In SgFile::compileOutput(): Calling systemFromVector(): returnValueForCompiler = %d \n",returnValueForCompiler);
 #endif
 
