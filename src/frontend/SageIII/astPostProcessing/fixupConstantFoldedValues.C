@@ -316,7 +316,10 @@ void resetConstantFoldedValues( SgNode* node ) {
     TimingPerformance timer1 ("Fixup Constant Folded Values (replace with original expression trees):");
 
 #if 1
-    removeConstantFoldedValue((SgProject *)node);
+ // removeConstantFoldedValue((SgProject *)node);
+    SgProject* project = isSgProject(node);
+    ROSE_ASSERT(project != NULL);
+    removeConstantFoldedValue(project);
 #else
     printf ("In resetConstantFoldedValues(): Skipping call to removeConstantFoldedValue() \n");
 #endif

@@ -2156,6 +2156,29 @@ TransformationSupport::getStatement( const SgNode* astNode )
      if (isSgProject(astNode) != NULL || isSgFile(astNode) != NULL)
           return NULL;
 
+#if 0
+  // DQ (3/2/2022): Added debugging code.
+     printf ("In TransformationSupport::getStatement(): parentNode = %p \n",parentNode);
+     if (parentNode != NULL)
+        {
+          printf ("In TransformationSupport::getStatement(): parentNode = %p = %s \n",parentNode,parentNode->class_name().c_str());
+          const SgLocatedNode* locatedNode = isSgLocatedNode(parentNode);
+          if (locatedNode != NULL)
+             {
+               string filename = locatedNode->get_file_info()->get_filename();
+               int line        = locatedNode->get_file_info()->get_line();
+               int column      = locatedNode->get_file_info()->get_col();
+
+               printf (" --- %s: line: %d column: %d \n",filename.c_str(),line,column);
+             }
+          printf ("parentNode->get_parent() = %p \n",parentNode->get_parent());
+          if (parentNode->get_parent() != NULL)
+             {
+               printf ("parentNode->get_parent() = %p = %s \n",parentNode->get_parent(),parentNode->get_parent()->class_name().c_str());
+             }
+        }
+#endif
+
   // DQ (7/24/2010): Handle the case of an expression in an array type.
      if (parentNode->get_parent() != NULL && isSgArrayType(parentNode->get_parent()) != NULL)
         {
