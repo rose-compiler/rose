@@ -47,8 +47,13 @@ SgNode * ClangToSageTranslator::Traverse(const clang::Type * type) {
         return NULL;
 
     std::map<const clang::Type *, SgNode *>::iterator it = p_type_translation_map.find(type);
-    if (it != p_type_translation_map.end()) 
+        std::cerr << "Traverse Type : " << type << " " << type->getTypeClassName ()<< std::endl;
+    if (it != p_type_translation_map.end()) {
+#if DEBUG_TRAVERSE_TYPE
+        std::cerr << " already visited : node = " << it->second << std::endl;
+#endif
          return it->second;
+    }
 
     SgNode * result = NULL;
     bool ret_status = false;
@@ -241,6 +246,10 @@ SgNode * ClangToSageTranslator::Traverse(const clang::Type * type) {
 
     p_type_translation_map.insert(std::pair<const clang::Type *, SgNode *>(type, result));
 
+#if DEBUG_TRAVERSE_TYPE
+    std::cerr << "Traverse(clang::Type : " << type << " ";
+    std::cerr << " visit done : node = " << result << std::endl;
+#endif
     return result;
 }
 
@@ -284,7 +293,23 @@ bool ClangToSageTranslator::VisitDecayedType(clang::DecayedType * decayed_type, 
 #endif
     bool res = true;
 
+//    SgType * decayType = buildTypeFromQualifiedType(decayed_type->getDecayedType ());
+    SgType * pointeeType = buildTypeFromQualifiedType(decayed_type->getPointeeType ());
+
     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
+
+//    *node = pointeeType;
+// Pei-Hung (04/08/2022) Building SgArrayyType to represent the DecayedType in Clang,
+// in order to match the type of ParmVarDecl  in FunctionProtoType
+// Might need to check the case when the pointeeType is a functionType
+    if(decayed_type->getPointeeType()->getTypeClass() == clang::Type::VariableArray ||
+       decayed_type->getPointeeType()->getTypeClass() == clang::Type::ConstantArray ||
+       decayed_type->getPointeeType()->getTypeClass() == clang::Type::DependentSizedArray ||
+       decayed_type->getPointeeType()->getTypeClass() == clang::Type::IncompleteArray 
+       )
+      *node = SageBuilder::buildArrayType(pointeeType);
+    else 
+      *node = pointeeType;
 
     return VisitAdjustedType(decayed_type, node) && res;
 }
@@ -339,7 +364,24 @@ bool ClangToSageTranslator::VisitIncompleteArrayType(clang::IncompleteArrayType 
 
     // TODO clang::ArrayType::ArraySizeModifier
 
-    *node = SageBuilder::buildArrayType(type);
+    clang::ArrayType::ArraySizeModifier sizeModifier = incomplete_array_type->getSizeModifier();
+
+    if(sizeModifier == clang::ArrayType::ArraySizeModifier::Star)
+    {
+      SgExprListExp* exprListExp = SageBuilder::buildExprListExp(SageBuilder::buildNullExpression());
+      *node = SageBuilder::buildArrayType(type, exprListExp);
+    }
+    else if(sizeModifier == clang::ArrayType::ArraySizeModifier::Static)
+    {
+      // TODO check how to handle Static 
+      *node = SageBuilder::buildArrayType(type);
+    }
+    else  // clang::ArrayType::ArraySizeModifier::Normal
+    {
+      *node = SageBuilder::buildArrayType(type);
+    }
+
+
 
  // DQ (11/28/2020): Added assertion.
  // ROSE_ASSERT(*node != NULL);
@@ -358,7 +400,9 @@ bool ClangToSageTranslator::VisitVariableArrayType(clang::VariableArrayType * va
     SgNode* tmp_expr = Traverse(variable_array_type->getSizeExpr());
     SgExpression* array_size = isSgExpression(tmp_expr);
 
-    *node = SageBuilder::buildArrayType(type,array_size);
+    SgArrayType* arrayType = SageBuilder::buildArrayType(type,array_size);
+    arrayType->set_is_variable_length_array(true);
+    *node = arrayType;
 
  // DQ (11/28/2020): Added assertion.
     ROSE_ASSERT(*node != NULL);
@@ -628,6 +672,7 @@ bool ClangToSageTranslator::VisitFunctionProtoType(clang::FunctionProtoType * fu
     bool res = true;
     SgFunctionParameterTypeList * param_type_list = new SgFunctionParameterTypeList();
     for (unsigned i = 0; i < function_proto_type->getNumParams(); i++) {
+std::cerr << "funcProtoType: " << i << " th param" << std::endl;
         SgType * param_type = buildTypeFromQualifiedType(function_proto_type->getParamType(i));
 
         param_type_list->append_argument(param_type);
