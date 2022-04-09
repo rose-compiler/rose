@@ -2715,6 +2715,13 @@ bool ClangToSageTranslator::VisitDeclRefExpr(clang::DeclRefExpr * decl_ref_expr,
                sym = new SgFunctionSymbol(isSgFunctionDeclaration(tmp_decl));
                sym->set_parent(tmp_decl);
              }
+          // Pei-Hung (04/07/2022) sym can be NULL in the case for C99 VLA
+          if (sym == NULL && isSgInitializedName(tmp_decl) != NULL)
+             {
+               sym = new SgVariableSymbol(isSgInitializedName(tmp_decl));
+               sym->set_parent(tmp_decl);
+               SageBuilder::topScopeStack()->insert_symbol(isSgInitializedName(tmp_decl)->get_name(), sym);        
+             }
         }
 
      if (sym != NULL) 

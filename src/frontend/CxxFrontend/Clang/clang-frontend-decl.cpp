@@ -1208,6 +1208,10 @@ bool ClangToSageTranslator::VisitFunctionDecl(clang::FunctionDecl * function_dec
 
     SgName name(function_decl->getNameAsString());
 
+#if DEBUG_VISIT_DECL
+    std::cerr << "ClangToSageTranslator::VisitFunctionDecl name:" << name.getString() << std::endl;
+#endif
+
     SgType * ret_type = buildTypeFromQualifiedType(function_decl->getReturnType());
 
     SgFunctionParameterList * param_list = SageBuilder::buildFunctionParameterList_nfi();
@@ -1286,7 +1290,7 @@ bool ClangToSageTranslator::VisitFunctionDecl(clang::FunctionDecl * function_dec
         function_definition->set_parent(sg_function_decl);
 
         SgFunctionDeclaration * first_decl;
-        if (function_decl->getFirstDecl() == function_decl) {
+        if (function_decl->isFirstDecl()) {
             SgFunctionParameterList * param_list_ = SageBuilder::buildFunctionParameterList_nfi();
               setCompilerGeneratedFileInfo(param_list_);
             SgInitializedNamePtrList & init_names = param_list->get_args();
@@ -1298,6 +1302,7 @@ bool ClangToSageTranslator::VisitFunctionDecl(clang::FunctionDecl * function_dec
             }
 
             first_decl = SageBuilder::buildNondefiningFunctionDeclaration(name, ret_type, param_list_, NULL);
+//            first_decl = SageBuilder::buildNondefiningFunctionDeclaration(sg_function_decl, NULL,  NULL);
             setCompilerGeneratedFileInfo(first_decl);
             first_decl->set_parent(SageBuilder::topScopeStack());
             first_decl->set_firstNondefiningDeclaration(first_decl);
@@ -1567,6 +1572,7 @@ bool ClangToSageTranslator::VisitParmVarDecl(clang::ParmVarDecl * param_var_decl
 
     SgName name(param_var_decl->getNameAsString());
 
+    // use getOriginalType instead of getType.  This type has to match the DecayedType when VLA is used in parameter
     SgType * type = buildTypeFromQualifiedType(param_var_decl->getOriginalType());
 
     SgInitializer * init = NULL;
