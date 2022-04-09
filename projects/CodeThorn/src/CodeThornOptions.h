@@ -196,7 +196,7 @@ public:
   std::string csvStatsFileName;
   int displayDiff=10000;
   std::string explorationMode="breadth-first";
-  bool quiet=false;
+  bool quiet=true; // turns off printing of names of successfully written files
   std::string startFunctionName;
   bool status=false;
   bool reduceCfg=true;

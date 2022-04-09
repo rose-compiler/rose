@@ -1,6 +1,6 @@
 #!/bin/bash
 
-OPTIONS="--normalize-level=1 --ignore-unknown-functions --generate-reports=yes --precision=2 --solver=18 --exploration-mode=topologic-sort --abstraction-mode=1 --array-abstraction-index=0"
+OPTIONS="--normalize-level=2 --ignore-unknown-functions --generate-reports=yes --precision=2 --solver=18 --exploration-mode=topologic-sort --abstraction-mode=1 --array-abstraction-index=0 --rw-trace=0 "
 
 # test 1-9: normalization: YES
 # test 10:  normalization: NO
@@ -27,7 +27,7 @@ function runtests {
             rm -f test${p}_col1.csv
             benchmarkname=$(basename $benchmark)
             printf "Testing %-44s : " "$benchmarkname"
-            ./codethorn ${OPTIONS} --report-dir=$REPORT_DIR $benchmark > /dev/null
+            ./codethorn ${OPTIONS} --report-dir=$REPORT_DIR $benchmark #> /dev/null
             cclines=`grep -v gcc_HEADERS $REPORT_DIR/opaque-predicate.csv | wc -l | cut -f1 -d' '`
             if [ ! $? -eq 0 ]
             then

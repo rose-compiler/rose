@@ -13,7 +13,14 @@ int main() {
   int* dp=&d;
   int* p1;
   int* p2;
-  printf("started.\n");
+  int* p3;
+  struct S {
+    int x;
+    struct S* next;
+  };
+  int cnt=0;
+  
+#if 1
   if(arbitrary) {
     p1=ap;
   } else {
@@ -25,44 +32,61 @@ int main() {
     p2=dp;
   }
 
-  int cnt=0;
-  int cntTotal=8;
+  if(ap==p1) {
+    cnt++;
+  }
+  if(p1<p2) {
+    cnt++;
+  }
+  if(p1>p2) {
+    cnt++;
+  }
+
+  // p3 is undef, must be unknown
+  if(ap==p3) {
+    cnt++;
+  }
+  if(p1<p3) {
+    cnt++;
+  }
+  if(p1>p3) {
+    cnt++;
+  }
+  if(p1==p3) {
+    cnt++;
+  }
+  if(p1!=p3) {
+    cnt++;
+  }
+#endif
   
-  if(p1<p2||p1>p2) {
-    printf("p1<p2||p1>p2\n");
+#if 0
+  // precise analysis can determine this
+  if(p1==p2) {
     cnt++;
   }
+  // precise analysis can determine this
   if(p1!=p2) {
-    printf("p1!=p2\n");
     cnt++;
   }
-  if(p1==p1) {
-    printf("p1==p1\n");
+#endif
+
+#if 0
+  struct S s;
+  s.next=&s;
+  s.next->next=0;
+
+  // true
+  if(s.next==0) {
+    printf("1\n");
     cnt++;
   }
-  if(p1==&a) {
-    printf("p1==&a\n");
+
+  // false
+  if(s.next!=0) {
+    printf("2\n");
     cnt++;
   }
-  if(p2!=&a) {
-    printf("p2!=&a\n");
-    cnt++;
-  }
-  if(p1!=&c) {
-    printf("&p1!=&c\n");
-    cnt++;
-  }
-  if(&a!=p2) {
-    printf("&a!=p2\n");
-    cnt++;
-  }
-  if(p1==ap||p1==bp) {
-    printf("p1==ap||p1==bp\n");
-    cnt++;
-  }
-  if(cnt==cntTotal) {
-    printf("All tests passed (%d)\n",cnt);
-  } else {
-    printf("%d tests of %d failed.\n",cntTotal-cnt,cntTotal);
-  }
+#endif
+
 }

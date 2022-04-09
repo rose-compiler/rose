@@ -249,7 +249,7 @@ while [[ $# -gt 0 ]]; do
 	;;
     --all)
 	printHeader
-	level3Test
+	#level3Test
 	#level2BasicCombineTest
 	#level2AvSetCombineTest
         regressionTests

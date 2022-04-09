@@ -2427,7 +2427,7 @@ namespace CodeThorn {
       //cout<<"DEBUG: evalExp at: "<<AstTerm::astTermWithNullValuesToString(node)<<endl;
     }
 
-    SAWYER_MESG(logger[TRACE])<<"evalExp at: "<<node->unparseToString()<<endl;
+    SAWYER_MESG(logger[TRACE])<<"evalExp at: "<<node->unparseToString()<<" evalmode: "<<mode<<endl;
 
     if(SgStatementExpression* gnuExtensionStmtExpr=isSgStatementExpression(node)) {
       warning(gnuExtensionStmtExpr,"ignoring GNU extension StmtExpr:");
@@ -2536,7 +2536,7 @@ namespace CodeThorn {
     switch(node->variantT()) {
     case V_SgVarRefExp: {
       //SAWYER_MESG(logger[TRACE])<<"case V_SgVarRefExp: started"<<endl;
-      auto ret=evalRValueVarRefExp(isSgVarRefExp(node),estate,mode);
+      auto ret=evalVarRefExp(isSgVarRefExp(node),estate,mode);
       //SAWYER_MESG(logger[TRACE])<<"case V_SgVarRefExp: done"<<endl;
       return ret;
     }
@@ -3225,13 +3225,16 @@ namespace CodeThorn {
     }
     SAWYER_MESG(logger[TRACE])<<"ArrowOp: "<<node->unparseToString()<<"lhsResult(address): "<<lhsResult.result.toString()<< " rhsResult(offset):"<<rhsResult.result.toString()<<" mode:"<<mode<<endl;
     // L->R : L evaluates to pointer value (address), R evaluates to offset value (a struct member always evaluates to an offset)
+    //_analyzer->getOptionsRef().nullPointerDereferenceKeepGoing) {
     AbstractValue referencedAddress=lhsResult.result;
     bool isDefinitelyNullPtr=checkAndRecordNullPointer(referencedAddress, estate);
-    SAWYER_MESG(logger[TRACE])<<"ArrowOp: continue exec:"<<isDefinitelyNullPtr<<endl;
+    SAWYER_MESG(logger[TRACE])<<"ArrowOp: is definitely null pointer:"<<isDefinitelyNullPtr<<endl;
     if(!isDefinitelyNullPtr) {
       SAWYER_MESG(logger[TRACE])<<"ArrowOp: referencedAddress(lhs):"<<referencedAddress.toString(_variableIdMapping)<<endl;
+      AbstractValue dereferencedAddress=readFromMemoryLocation(estate->label(),estate->pstate(),referencedAddress);
+      SAWYER_MESG(logger[TRACE])<<"ArrowOp: dereferencedAddress(lhs):"<<dereferencedAddress.toString(_variableIdMapping)<<endl;
       AbstractValue offset=rhsResult.result;
-      AbstractValue denotedAddress=AbstractValue::operatorAdd(referencedAddress,offset); // data member offset
+      AbstractValue denotedAddress=AbstractValue::operatorAdd(dereferencedAddress,offset); // data member offset
       SAWYER_MESG(logger[TRACE])<<"ArrowOp: denoted Address(lhs):"<<denotedAddress.toString(_variableIdMapping)<<endl;
 
       switch(mode) {
@@ -3251,9 +3254,14 @@ namespace CodeThorn {
       SAWYER_MESG(logger[TRACE])<<"ArrowOp: "<<" null pointer deref."<<endl;
       SingleEvalResult empty;
       notifyReadWriteListenersOnReading(estate->label(),estate->pstate(),referencedAddress);
-      empty.init(estate,CodeThorn::Bot()); // indicates unreachable, could also mark state as unreachable
-      return empty;
+      if(_analyzer->getOptionsRef().nullPointerDereferenceKeepGoing) {
+        empty.init(estate,CodeThorn::Top()); // arbitrary result value, keep going
+      } else {
+        empty.init(estate,CodeThorn::Bot()); // indicates unreachable
+      }
+      return res;
     }
+    ROSE_ASSERT(false); // unreachable
   }
 
   SingleEvalResult EStateTransferFunctions::evalDotOp(SgDotExp* node,
@@ -3301,6 +3309,7 @@ namespace CodeThorn {
       return false;
     } else if(derefOperandValue.isNullPtr()) {
       notifyReadWriteListenersOnReading(estate->label(),estate->pstate(),derefOperandValue);      
+      // definitely null pointer
       return true;
     }
     return false;
@@ -3332,7 +3341,7 @@ namespace CodeThorn {
     SingleEvalResult res;
     res.estate=estate;
     AbstractValue derefOperandValue=operandResult.result;
-    SAWYER_MESG(logger[DEBUG])<<"derefOperandValue: "<<derefOperandValue.toRhsString(_variableIdMapping);
+    SAWYER_MESG(logger[TRACE])<<"semanticEvalDereferenceOp: derefOperandValue: "<<derefOperandValue.toRhsString(_variableIdMapping)<<" evalmode: "<<mode<<endl;
 
     if(mode==EStateTransferFunctions::MODE_EMPTY_STATE) {
       // arbitrary value
@@ -3345,7 +3354,11 @@ namespace CodeThorn {
     if(isDefinitelyNullPtr) {
       SingleEvalResult empty;
       notifyReadWriteListenersOnReading(estate->label(),estate->pstate(),derefOperandValue);
-      empty.init(estate,CodeThorn::Bot()); // indicates unreachable, could also mark state as unreachable
+      if(_analyzer->getOptionsRef().nullPointerDereferenceKeepGoing) {
+        empty.init(estate,CodeThorn::Top()); // arbitrary result value, keep going
+      } else {
+        empty.init(estate,CodeThorn::Bot()); // indicates unreachable
+      }
       return empty;
     } else {
       switch(mode) {
@@ -3542,7 +3555,7 @@ namespace CodeThorn {
   }
 
 
-  SingleEvalResult EStateTransferFunctions::evalLValueVarRefExp(SgVarRefExp* node, EStatePtr estate, EvalMode mode) {
+  SingleEvalResult EStateTransferFunctions::evalLValueVarRefExp(SgVarRefExp* node, EStatePtr estate) {
     SAWYER_MESG(logger[TRACE])<<"evalLValueVarRefExp: "<<node->unparseToString()<<" label:"<<estate->label().toString()<<endl;
     SingleEvalResult res;
     res.init(estate,AbstractValue::createBot());
@@ -3652,13 +3665,23 @@ namespace CodeThorn {
       }
     }
   }
-  
-  SingleEvalResult EStateTransferFunctions::evalRValueVarRefExp(SgVarRefExp* node, EStatePtr estate, EvalMode mode) {
-    if(mode==EStateTransferFunctions::MODE_EMPTY_STATE) {
+
+  SingleEvalResult EStateTransferFunctions::evalVarRefExp(SgVarRefExp* node, EStatePtr estate, EvalMode mode) {
+    switch(mode) {
+    case MODE_ADDRESS:
+      return evalLValueVarRefExp(node,estate);
+    case MODE_VALUE:
+      return evalRValueVarRefExp(node,estate,mode);
+    case MODE_EMPTY_STATE: {
       SingleEvalResult res;
       res.init(estate,AbstractValue::createTop());
       return res;
     }
+    }
+    ROSE_ASSERT(false); // unreachable
+  }
+
+  SingleEvalResult EStateTransferFunctions::evalRValueVarRefExp(SgVarRefExp* node, EStatePtr estate, EvalMode mode) {
     //SAWYER_MESG(logger[TRACE])<<"evalRValueVarRefExp: "<<node->unparseToString()<<" id:"<<_variableIdMapping->variableId(isSgVarRefExp(node)).toString()<<" MODE:"<<mode<<" Symbol:"<<node->get_symbol()<<endl;
     SingleEvalResult res;
     res.init(estate,AbstractValue::createTop());
