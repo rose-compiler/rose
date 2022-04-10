@@ -14,10 +14,11 @@ using namespace ByteOrder;
 SgAsmJvmAttribute* SgAsmJvmAttribute::create_attribute(SgAsmJvmConstantPool* pool)
 {
   uint16_t attribute_name_index;
+  uint32_t attribute_length;
 
   std::cout << "SgAsmJvmAttribute::createAttribute() ...\n";
 
-  read_jvm_value(pool, attribute_name_index, false);
+  Jvm::read_value(pool, attribute_name_index, false);
   std::cout << "SgAsmJvmAttribute::attribute_name_index " << attribute_name_index << std::endl;
   std::string name = pool->get_utf8_string(attribute_name_index);
   std::cout << "SgAsmJvmAttribute::attribute name is " << name << std::endl;
@@ -30,28 +31,54 @@ SgAsmJvmAttribute* SgAsmJvmAttribute::create_attribute(SgAsmJvmConstantPool* poo
   return nullptr;
 }
 
+SgAsmJvmAttributeTable* SgAsmJvmAttributeTable::parse(SgAsmJvmConstantPool* pool)
+{
+  uint16_t attributes_count;
+
+  std::cout << "SgAsmJvmAttributeTable::parse() ...\n";
+
+  Jvm::read_value(pool, attributes_count, true);
+
+  std::cout << "SgAsmJvmAttributeTable::attributes_count " << attributes_count << std::endl;
+
+  auto attributes = get_attributes()->get_entries();
+  for (int ii = 0; ii < attributes_count; ii++) {
+    auto attribute = SgAsmJvmAttribute::create_attribute(pool);
+    // attribute may not be implemented yet
+    if (attribute) {
+      attribute->parse(pool);
+      attributes.push_back(attribute);
+    }
+  }
+
+  std::cout << "SgAsmJvmAttributeTable::parse() exit ... \n\n";
+
+  return this;
+}
+
 SgAsmJvmAttribute* SgAsmJvmAttribute::parse(SgAsmJvmConstantPool* pool)
 {
   std::cout << "SgAsmJvmAttribute::parse() ...\n";
 
-  read_jvm_value(pool, p_attribute_name_index, true);
-  read_jvm_value(pool, p_attribute_length, true);
+  Jvm::read_value(pool, p_attribute_name_index);
+  Jvm::read_value(pool, p_attribute_length);
 
   return this;
 }
 
 SgAsmJvmAttribute* SgAsmJvmCodeAttribute::parse(SgAsmJvmConstantPool* pool)
 {
+  uint32_t length;
   char* bytes{nullptr};
 
   SgAsmJvmAttribute::parse(pool);
   std::cout << "SgAsmJvmCodeAttribute::parse() ...\n";
 
-  read_jvm_value(pool, p_max_stack, true);
-  read_jvm_value(pool, p_max_locals, true);
+  Jvm::read_value(pool, p_max_stack);
+  Jvm::read_value(pool, p_max_locals);
 
   /* allocate and read the code array */
-  p_code_length = read_jvm_bytes(pool, bytes);
+  p_code_length = Jvm::read_bytes(pool, bytes, length);
   set_code(bytes);
 
   // try creating an instruction
@@ -98,30 +125,30 @@ SgAsmJvmAttribute* SgAsmJvmSourceFile::parse(SgAsmJvmConstantPool* pool)
   return this;
 }
 
-void SgAsmJvmAttribute::dump(std::ostream &os)
+void SgAsmJvmAttribute::dump(std::ostream &os) const
 {
   os << "SgAsmJvmAttribute:" << p_attribute_name_index << ":" << p_attribute_length << std::endl;
 }
 
-void SgAsmJvmCodeAttribute::dump(std::ostream &os)
+void SgAsmJvmCodeAttribute::dump(std::ostream &os) const
 {
   SgAsmJvmAttribute::dump(os);
   os << "SgAsmJvmCodeAttribute:" << p_max_stack << ":" << p_max_locals << ":" << p_code_length << std::endl;
 }
 
-void SgAsmJvmConstantValue::dump(std::ostream &os)
+void SgAsmJvmConstantValue::dump(std::ostream &os) const
 {
   SgAsmJvmAttribute::dump(os);
   os << "SgAsmJvmConstantValue::dump\n";
 }
 
-void SgAsmJvmSignature::dump(std::ostream &os)
+void SgAsmJvmSignature::dump(std::ostream &os) const
 {
   SgAsmJvmAttribute::dump(os);
   os << "SgAsmJvmSignature::dump\n";
 }
 
-void SgAsmJvmSourceFile::dump(std::ostream &os)
+void SgAsmJvmSourceFile::dump(std::ostream &os) const
 {
   SgAsmJvmAttribute::dump(os);
   os << "SgAsmJvmSourceFile::dump\n";

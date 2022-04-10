@@ -5651,7 +5651,7 @@ void Grammar::setUpBinaryInstructions() {
 
     public:
         /** Construct a new JVM File Header with default values; ready to be initialized via parse(). */
-        explicit SgAsmJvmFileHeader(SgAsmGenericFile *f);
+        explicit SgAsmJvmFileHeader(SgAsmGenericFile *);
 
         /** Parse header from file.
          *
@@ -9816,7 +9816,7 @@ void Grammar::setUpBinaryInstructions() {
          *  Parses a JVM constant pool and constructs and parses all sections reachable from the table. The section is
          *  extended as necessary based on the number of entries and the size of each entry. Returns a pointer to this
          *  object. */
-        virtual SgAsmJvmConstantPool *parse() override;
+        virtual SgAsmJvmConstantPool* parse() override;
 
         /** Returns constant pool entry at given index.
          *
@@ -10315,7 +10315,7 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 
         /** Print some debugging information */
-        void dump(std::ostream &os, int index);
+        void dump(std::ostream &os, int index) const;
 
         /** Convert constant pool entry kind to a string */
         static std::string to_string(SgAsmJvmConstantPoolEntry::Kind);
@@ -10387,7 +10387,7 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 
         /** Print some debugging information */
-        virtual void dump(std::ostream &os) override;
+        virtual void dump(std::ostream &) const override;
 
 #endif // SgAsmJvmConstantValue_OTHERS
 
@@ -10512,7 +10512,7 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 
         /** Print some debugging information */
-        virtual void dump(std::ostream &os) override;
+        virtual void dump(std::ostream &) const override;
 
 #endif // SgAsmJvmCodeAttribute_OTHERS
 
@@ -10581,7 +10581,7 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 
         /** Print some debugging information */
-        virtual void dump(std::ostream &os) override;
+        virtual void dump(std::ostream &) const override;
 
 #endif // SgAsmJvmSignature_OTHERS
 
@@ -10650,7 +10650,7 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 
         /** Print some debugging information */
-        virtual void dump(std::ostream &os) override;
+        virtual void dump(std::ostream &) const override;
 
 #endif // SgAsmJvmSourceFile_OTHERS
 
@@ -10732,7 +10732,7 @@ void Grammar::setUpBinaryInstructions() {
 
     protected:
         /** Protected constructor for derived classes. */
-        SgAsmJvmAttribute(const SgAsmJvmConstantPool*);
+        explicit SgAsmJvmAttribute(const SgAsmJvmConstantPool*);
 
     public:
         /** Factory method returning a derived class instance.
@@ -10748,7 +10748,7 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 
         /** Print some debugging information */
-        virtual void dump(std::ostream &os);
+        virtual void dump(std::ostream &) const override;
 
 #endif // SgAsmJvmAttribute_OTHERS
 
@@ -10775,13 +10775,13 @@ void Grammar::setUpBinaryInstructions() {
          *
          * @{ */
      public:
-        const SgAsmJvmAttributePtrList& get_attributes() const;
-        void set_attributes(const SgAsmJvmAttributePtrList&);
+        const SgAsmJvmAttributePtrList& get_entries() const;
+        void set_entries(const SgAsmJvmAttributePtrList&);
      protected
-        SgAsmJvmAttributePtrList & p_attributes;
+        SgAsmJvmAttributePtrList & p_entries;
         /** @} */
 #else
-        AsmJvmAttributeList.setDataPrototype("SgAsmJvmAttributePtrList", "attributes", "",
+        AsmJvmAttributeList.setDataPrototype("SgAsmJvmAttributePtrList", "entries", "",
                                              NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL,
                                              NO_DELETE);
 #endif
@@ -10795,10 +10795,160 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmNode);
-            s & BOOST_SERIALIZATION_NVP(p_attributes);
+            s & BOOST_SERIALIZATION_NVP(p_entries);
         }
 #endif
 #endif // SgAsmJvmAttributeList_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /*************************************************************************************************************************
+     *                                           JVM Attribute Table
+     *************************************************************************************************************************/
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmJvmAttributeTable);
+    IS_SERIALIZABLE(AsmJvmAttributeTable);
+
+#ifdef DOCUMENTATION
+    /** Represents a JVM attribute_info table/array.
+     *
+     *  A JVM attribute table is a section.  The entries of the table are stored with the section they describe rather
+     *  than storing them all in the SgAsmSectionTable node.  We can reconstruct the JVM Section Table since sections have
+     *  unique ID numbers that are their original indices in the JVM Section Table.
+     */
+    class SgAsmJvmAttributeTable: public SgAsmGenericSection {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: List of attributes.
+         *
+         *  This property points to an AST node that contains the list rather than being a list directly because of limitations
+         *  of ROSETTA.
+         *
+         * @{ */
+     public:
+        SgAsmJvmAttributeList* get_attributes() const;
+        void set_attributes(SgAsmJvmAttributeList*);
+     protected:
+        SgAsmJvmAttributeList* p_attributes;
+        /** @} */
+#else
+        AsmJvmAttributeTable.setDataPrototype("SgAsmJvmAttributeList*", "attributes", "= nullptr",
+                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmJvmAttributeTable);
+#if defined(SgAsmJvmAttributeTable_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
+            s & BOOST_SERIALIZATION_NVP(p_attributes);
+        }
+#endif
+
+    public:
+        /** Initialize the attribute table before parsing.
+         *
+         *  This is the preferred constructor to use before parsing.  It
+         *  shall set its parent.
+         */
+        // TODO: parent may be method/field/class_file
+        explicit SgAsmJvmAttributeTable(SgAsmJvmClassFile*);
+
+        /** Parses a JVM attribute table.
+         *
+         *  Parses a JVM attribute table and constructs and parses all attributes reachable from the
+         *  table section. Returns a pointer to this object.
+         */
+        SgAsmJvmAttributeTable* parse(SgAsmJvmConstantPool*);
+
+#endif // SgAsmJvmAttributeTable_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /*************************************************************************************************************************
+     *                                           JVM Method Table
+     *************************************************************************************************************************/
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmJvmMethodTable);
+    IS_SERIALIZABLE(AsmJvmMethodTable);
+
+#ifdef DOCUMENTATION
+    /** Represents a JVM method_info table/array.
+     *
+     *  The JVM Constant Pool is itself a section.  The entries of the table are stored with the section they describe rather
+     *  than storing them all in the SgAsmSectionTable node.  We can reconstruct the JVM Section Table since sections have
+     *  unique ID numbers that are their original indices in the JVM Section Table. */
+    class SgAsmJvmMethodTable: public SgAsmGenericSection {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: List of methods.
+         *
+         *  This property points to an AST node that contains the list rather than being a list directly because of limitations
+         *  of ROSETTA.
+         *
+         * @{ */
+     public:
+        SgAsmJvmMethodList* get_methods() const;
+        void set_methods(SgAsmJvmMethodList*);
+     protected:
+        SgAsmJvmMethodList* p_methods;
+        /** @} */
+#else
+        AsmJvmMethodTable.setDataPrototype("SgAsmJvmMethodList*", "methods", "= nullptr",
+                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmJvmMethodTable);
+#if defined(SgAsmJvmMethodTable_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
+            s & BOOST_SERIALIZATION_NVP(p_methods);
+        }
+#endif
+
+    public:
+        /** Initialize the method table before parsing.
+         *
+         *  This is the preferred constructor to use before parsing.  It
+         *  shall set its parent.
+         */
+        explicit SgAsmJvmMethodTable(SgAsmJvmClassFile*);
+
+        /** Parses a JVM method table.
+         *
+         *  Parses a JVM method table and constructs and parses all methods reachable from the
+         *  method table section. Returns a pointer to this object.
+         */
+        virtual SgAsmJvmMethodTable* parse() override;
+
+#endif // SgAsmJvmMethodTable_OTHERS
 
 #ifdef DOCUMENTATION
     };
@@ -10822,7 +10972,7 @@ void Grammar::setUpBinaryInstructions() {
      *  A method describes an instance of an initialization method (2.9.1) and the class or
      *  interface initialization method (2.9.2), see section 4.6 of the JVM documentation.
      */
-    class SgAsmJvmMethod: public SgAsmGenericSection {
+    class SgAsmJvmMethod: public SgAsmJvmNode {
     public:
 #endif
 
@@ -10881,50 +11031,99 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
 #ifdef DOCUMENTATION
-        /** Property: List of attributes.
+        /** Property: Table of attributes.
          *
          * @{ */
      public:
-        SgAsmJvmAttributeList* get_attributes() const;
-        void set_attributes(SgAsmJvmAttributeList*);
+        SgAsmJvmAttributeTable* get_attribute_table() const;
+        void set_attribute_table(SgAsmJvmAttributeTable*);
      protected
-        SgAsmJvmAttributeList* p_attributes;
+        SgAsmJvmAttributeTable* p_attribute_table;
         /** @} */
 #else
-        AsmJvmMethod.setDataPrototype("SgAsmJvmAttributeList*", "attributes", "= nullptr",
+        AsmJvmMethod.setDataPrototype("SgAsmJvmAttributeTable*", "attribute_table", "= nullptr",
                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 #endif
 
         DECLARE_OTHERS(AsmJvmMethod);
 #if defined(SgAsmJvmMethod_OTHERS) || defined(DOCUMENTATION)
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+     private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmNode);
+            s & BOOST_SERIALIZATION_NVP(p_access_flags);
+            s & BOOST_SERIALIZATION_NVP(p_name_index);
+            s & BOOST_SERIALIZATION_NVP(p_descriptor_index);
+            s & BOOST_SERIALIZATION_NVP(p_attribute_table);
+        }
+#endif
+
+     public:
+        /** Initialize the object before parsing.
+         *
+         *  This is the preferred constructor to use before parsing.  It
+         *  shall set its parent.
+         */
+        explicit SgAsmJvmMethod(SgAsmJvmMethodTable*);
+
+        /** Initialize the object by parsing content from the class file. */
+        SgAsmJvmMethod* parse(SgAsmJvmConstantPool*);
+
+        /** Print some debugging information */
+        void dump(std::ostream &) const override;
+
+#endif // SgAsmJvmMethod_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmJvmMethodList);
+    IS_SERIALIZABLE(AsmJvmMethodList);
+
+#ifdef DOCUMENTATION
+    /** List of JVM attributes.
+     *
+     *  The only purpose of this node is to hold a list which, due to ROSETTA limitations, cannot be contained in the objects
+     *  that actually need it. */
+    class SgAsmJvmMethodList: public SgAsmJvmNode {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: List of methods.
+         *
+         * @{ */
+     public:
+        const SgAsmJvmMethodPtrList& get_entries() const;
+        void set_entries(const SgAsmJvmMethodPtrList&);
+     protected
+        SgAsmJvmMethodPtrList & p_entries;
+        /** @} */
+#else
+        AsmJvmMethodList.setDataPrototype("SgAsmJvmMethodPtrList", "entries", "",
+                                          NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL,
+                                          NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmJvmMethodList);
+#if defined(SgAsmJvmMethodList_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
 
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
-            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
-            s & BOOST_SERIALIZATION_NVP(p_access_flags);
-            s & BOOST_SERIALIZATION_NVP(p_name_index);
-            s & BOOST_SERIALIZATION_NVP(p_descriptor_index);
-            s & BOOST_SERIALIZATION_NVP(p_attributes);
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmNode);
+            s & BOOST_SERIALIZATION_NVP(p_entries);
         }
 #endif
-
-    public:
-        explicit SgAsmJvmMethod(SgAsmJvmClassFile*, /*temporary*/SgAsmGenericHeader* fhdr);
-
-    public:
-        /** Initialize the method by parsing the file.
-         *
-         * @{ */
-        virtual SgAsmJvmMethod* parse(/*temporary*/SgAsmJvmConstantPool* pool) /*override*/;
-        /** @} */
-
-        /** Print some debugging information */
-        virtual void dump(std::ostream &os);
-
-#endif // SgAsmJvmMethod_OTHERS
+#endif // SgAsmJvmMethodList_OTHERS
 
 #ifdef DOCUMENTATION
     };
@@ -10966,7 +11165,7 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 #else
         AsmJvmClassFile.setDataPrototype("uint16_t", "access_flags", "= 0",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
 #ifdef DOCUMENTATION
@@ -10983,7 +11182,7 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 #else
         AsmJvmClassFile.setDataPrototype("uint16_t", "this_class", "= 0",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
 #ifdef DOCUMENTATION
@@ -11043,11 +11242,11 @@ void Grammar::setUpBinaryInstructions() {
         /** Initialize the object by parsing the class file.
          *
          * @{ */
-        /*virtual*/ SgAsmJvmClassFile * parse(std::string file_name) /*override*/;
+        SgAsmJvmClassFile * parse(std::string file_name);
         /** @} */
 
         /** Print some debugging information */
-        void dump(std::ostream &os);
+        void dump(std::ostream &) const;
 
 #endif // SgAsmJvmClassFile_OTHERS
 
@@ -16408,7 +16607,7 @@ void Grammar::setUpBinaryInstructions() {
                           AsmPESectionTable | AsmDOSExtendedHeader | AsmCoffSymbolTable | AsmNESection | AsmNESectionTable |
                           AsmNENameTable | AsmNEModuleTable | AsmNEStringTable | AsmNEEntryTable | AsmNERelocTable |
                           AsmLESection | AsmLESectionTable | AsmLENameTable | AsmLEPageTable | AsmLEEntryTable | AsmLERelocTable |
-                          AsmJvmConstantPool | AsmJvmMethod,
+                          AsmJvmConstantPool | AsmJvmAttributeTable | AsmJvmMethodTable,
                           "AsmGenericSection", "AsmGenericSectionTag", true);
     AsmGenericSection.setCppCondition("!defined(DOCUMENTATION)");
     AsmGenericSection.setAutomaticGenerationOfDestructor(false);
@@ -18252,7 +18451,8 @@ void Grammar::setUpBinaryInstructions() {
      *************************************************************************************************************************/
 
     NEW_NONTERMINAL_MACRO(AsmJvmNode,
-                          AsmJvmAttribute | AsmJvmAttributeList | AsmJvmConstantPoolEntry | AsmJvmConstantPoolEntryList,
+                          AsmJvmAttribute | AsmJvmAttributeList | AsmJvmConstantPoolEntry | AsmJvmConstantPoolEntryList |
+                          AsmJvmMethod | AsmJvmMethodList,
                           "AsmJvmNode", "AsmJvmNodeTag", false);
     AsmJvmNode.setCppCondition("!defined(DOCUMENTATION)");
     IS_SERIALIZABLE(AsmJvmNode);
@@ -18274,6 +18474,11 @@ void Grammar::setUpBinaryInstructions() {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmNode);
         }
 #endif
+
+    public:
+        /** Print some debugging information */
+        virtual void dump(std::ostream &) const;
+
 #endif // SgAsmJvmNode_OTHERS
 
 #ifdef DOCUMENTATION
