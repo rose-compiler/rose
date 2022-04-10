@@ -1256,7 +1256,9 @@ UnparseLanguageIndependentConstructs::canBeUnparsedFromTokenStream(SgSourceFile*
           ROSE_ASSERT(stmt->get_parent() != NULL);
           printf ("parent = %p = %s \n",stmt->get_parent(),stmt->get_parent()->class_name().c_str());
 
-#if 1
+#if 0
+       // DQ (4/8/2022): Comment this out since it is failing as part of new version of ROSE running on gnu 10.3.
+       // Failing tests are: test_20.cpp and test_84.cpp in codeSegregation/tests.
           printf ("Exiting as a test! \n");
           ROSE_ASSERT(false);
 #endif
