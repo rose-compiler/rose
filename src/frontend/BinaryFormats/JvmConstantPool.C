@@ -81,15 +81,10 @@ std::string PoolEntry::to_string(PoolEntry::Kind kind)
   }
 }
 
-std::string cp_tag(PoolEntry* entry)
-{
-  return PoolEntry::to_string(entry->get_tag());
-}
-
-void PoolEntry::dump(std::ostream &os, int index)
+void PoolEntry::dump(std::ostream &os, int index) const
 {
   if (get_tag() != PoolEntry::EMPTY) {
-    os << index << ":" << cp_tag(this) << "_info";
+    os << index << ":" << to_string(get_tag()) << "_info";
   }
 
   switch (get_tag()) {

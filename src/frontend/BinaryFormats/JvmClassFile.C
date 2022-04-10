@@ -9,66 +9,11 @@
 using namespace Rose::Diagnostics;
 using namespace ByteOrder;
 
-#ifdef JVM
-namespace Jvm {
-#endif
-
-#ifdef JVM
-template <typename T>
-size_t read_jvm_value(const SgAsmJvmConstantPool* pool, T &value, bool advance_offset)
+// This function shouldn't be reached (ROSETTA won't allow pure virtual functions)
+void SgAsmJvmNode::dump(std::ostream &os) const
 {
-  SgAsmGenericHeader* header{pool->get_header()};
-  rose_addr_t offset{header->get_offset()};
-
-  std::cout << "read_jvm_value: offset is " << offset << std::endl;
-
-  size_t count = header->read_content(offset, &value, sizeof(T));
-  if (count != sizeof(T)) {
-    //throw FormatError("Error reading JVM value");
-    ROSE_ASSERT(false && "Error reading JVM value");
-  }
-  value = be_to_host(value);
-  if (advance_offset) header->set_offset(offset + count);
-  return count;
+  os << "SgAsmJvmNode::dump: should be a pure virtual function\n";
 }
-#endif
-
-size_t read_jvm_bytes(const SgAsmJvmConstantPool* pool, char* &bytes)
-{
-  SgAsmGenericHeader* header{pool->get_header()};
-  rose_addr_t offset{header->get_offset()};
-  uint32_t length;
-
-  std::cout << "read_jvm_bytes: offset is " << offset << std::endl;
-
-  /* read length of the array */
-  size_t count = header->read_content(offset, &length, sizeof(length));
-  if (count != sizeof(length)) {
-    //throw FormatError("Error reading JVM bytes array length");
-    ROSE_ASSERT(false && "Error reading JVM bytes array length");
-  }
-  length = be_to_host(length);
-  offset += count;
-  header->set_offset(offset);
-
-  /* allocate memory for array */
-  bytes = new char[length];
-
-  /* read array */
-  count = header->read_content(offset, bytes, length);
-  if (count != length) {
-    //throw FormatError("Error reading JVM bytes array");
-    ROSE_ASSERT(false && "Error reading JVM bytes array");
-  }
-  offset += count;
-  header->set_offset(offset);
-
-  return count;
-}
-
-#ifdef JVM
-}// namespace Jvm
-#endif
 
 #if 0
 SgAsmJvmClassFile::SgAsmJvmClassFile(const std::string &fileName)
@@ -255,11 +200,6 @@ SgAsmJvmClassFile::parse(std::string fileName)
   gh->set_offset(offset);
 
   std::cout << "SgAsmJvmClassFile::methods_count " << methods_count << std::endl;
-
-  //  for (int i; i < methods_count; i++) {
-  SgAsmJvmMethod* method = new SgAsmJvmMethod(this, gh);
-  method->parse(pool);
-    // }
 
   // Attributes
   //

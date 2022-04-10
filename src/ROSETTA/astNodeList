@@ -1026,3 +1026,6 @@ SgAdaSubroutineType
 SgAdaGenericInstanceSymbol
 SgAdaFormalPackageDecl
 SgAdaFormalPackageSymbol
+SgAsmJvmAttributeTable
+SgAsmJvmMethodList
+SgAsmJvmMethodTable
