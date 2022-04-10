@@ -3566,7 +3566,7 @@ namespace CodeThorn {
       ROSE_ASSERT(_variableIdMapping);
       CodeThorn::TypeSize offset=AbstractValue::getVariableIdMapping()->getOffset(varId);
       SAWYER_MESG(logger[TRACE])<<"evalLValueVarRefExp found STRUCT member: "<<_variableIdMapping->variableName(varId)<<" offset: "<<offset<<endl;
-      if(!VariableIdMapping::isUnknownSizeValue(offset)) {
+      if(VariableIdMapping::isUnknownSizeValue(offset)) {
         res.result=AbstractValue::createTop();
         return res;
       } else {
