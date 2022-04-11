@@ -236,12 +236,12 @@ void PState::writeTopToAllMemoryLocations() {
 
 void PState::writeTopToAllPotentialMemoryLocations() {
   // model dereference of top
-  CodeThorn::AbstractValue val=CodeThorn::Top();
   for(PState::iterator i=begin();i!=end();++i) {
     AbstractValue av=(*i).first;
     AbstractValue val=rawReadFromMemoryLocation(av);
-    if(!av.isAbstract()&&!val.isUndefined()&&!val.isAbstract())
-      writeToMemoryLocation(av,val);
+    if(!av.isAbstract()&&!val.isUndefined()&&!val.isAbstract()) {
+      rawWriteAtMemoryLocation(av,CodeThorn::Top());
+    }
   }
 }
 

@@ -6,7 +6,7 @@ int main()
     IS   = 1,
     COOL = 2
   };
-  FOO x;
+  enum FOO x;
   x=ROSE;
   if(x!=ROSE) {
     x=IS;

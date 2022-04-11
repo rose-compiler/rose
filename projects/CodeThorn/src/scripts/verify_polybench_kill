@@ -1,4 +1,0 @@
-#!/bin/bash 
-
-ps aux | grep -ie verify_polybench | awk '{print $2}' | xargs kill -9 || ps aux | grep -ie codethorn | awk '{print $2}' | xargs kill -9 
-

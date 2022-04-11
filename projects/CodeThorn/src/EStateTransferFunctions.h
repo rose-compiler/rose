@@ -507,14 +507,17 @@ namespace CodeThorn {
                                                   SingleEvalResult operandResult,
                                                   EStatePtr estate, EvalMode mode=MODE_VALUE);
 
-    SingleEvalResult evalLValuePntrArrRefExp(SgPntrArrRefExp* node, EStatePtr estate, EvalMode mode=MODE_VALUE);
-    SingleEvalResult evalLValueVarRefExp(SgVarRefExp* node, EStatePtr estate, EvalMode mode=MODE_VALUE);
-    SingleEvalResult evalLValuePointerDerefExp(SgPointerDerefExp* node, EStatePtr estate);
     // handles DotExp and ArrowExp
     SingleEvalResult evalLValueDotOrArrowExp(SgNode* node, EStatePtr estate, EvalMode mode=MODE_VALUE);
 
-    SingleEvalResult evalRValueVarRefExp(SgVarRefExp* node, EStatePtr estate, EvalMode mode=MODE_VALUE);
+    SingleEvalResult evalVarRefExp(SgVarRefExp* node, EStatePtr estate, EvalMode mode);
+    SingleEvalResult evalRValueVarRefExp(SgVarRefExp* node, EStatePtr estate, EvalMode mode); // evalmode used for references
+    SingleEvalResult evalLValueVarRefExp(SgVarRefExp* node, EStatePtr estate);
+
     SingleEvalResult evalValueExp(SgValueExp* node, EStatePtr estate, EvalMode mode);
+    SingleEvalResult evalLValuePntrArrRefExp(SgPntrArrRefExp* node, EStatePtr estate, EvalMode mode=MODE_VALUE);
+    SingleEvalResult evalLValuePointerDerefExp(SgPointerDerefExp* node, EStatePtr estate);
+
 
     SingleEvalResult evalFunctionRefExp(SgFunctionRefExp* node, EStatePtr estate, EvalMode mode=MODE_VALUE);
     // supported system functions

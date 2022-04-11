@@ -719,7 +719,7 @@ check-matcher:
 	./matcher_demo  --edg:no_warnings $(srcdir)/tests/basictest5.C < $(srcdir)/tests/matchexpressions/test1.mat
 
 
-CHECK_DEFAULT_PASSING=check-codethorn-internal check-domain check-expr-eval check-normalization check-line-col check-io check-omp-cfg check-commandline-options check-vis check-thorn2 check-stg check-thorn4
+CHECK_DEFAULT_PASSING=check-codethorn-internal check-no-cc check-domain-regression check-domain-l3 check-domain-l2basic check-expr-eval check-normalization check-line-col check-io check-omp-cfg check-commandline-options check-vis check-thorn2 check-stg check-thorn4
 CHECK_DEFAULT_FAILING=check-data-races check-deadcode
 
 CHECK_WITH_SPOT_PASSING=check-reachability-seq check-ltl-seq check-ltl-par
@@ -758,6 +758,9 @@ check-codethorn-internal:
 
 check-domain:
 	$(srcdir)/scripts/runDomainTests --testdir $(srcdir)/tests --all
+
+check-domain-l3:
+	$(srcdir)/scripts/runDomainTests --testdir $(srcdir)/tests --l3
 
 check-domain-l2basic:
 	$(srcdir)/scripts/runDomainTests --testdir $(srcdir)/tests --l2basic
@@ -863,7 +866,7 @@ check-ltl-rers-timeout-seq:
 
 #test the analysis of RERS Problem1402 and terminate after 3 seconds, 4 threads
 check-ltl-rers-timeout-par:
-	@$(srcdir)/scripts/runRersTimeoutTest $(srcdir) $(top_builddir)/projects/CodeThorn/src 1 2
+	@$(srcdir)/scripts/runRersTimeoutTest $(srcdir) $(top_builddir)/projects/CodeThorn/src 0 2
 
 #one test for the loop-aware-sync analysis (solver 12, ISoLA'16 paper)
 check-ltl-rers-loop-aware-sync:
@@ -911,8 +914,11 @@ check-commandline-options: ./codethorn
 	@./codethorn --cl-args="a bbb cc" $(srcdir)/tests/commandlineoptions1.C --vis --tg1-memory-subgraphs
 #	@dot -Tpdf transitiongraph1.dot -otransitiongraph1.pdf
 
-check-deadcode:
+check-dead-code:
 	$(srcdir)/scripts/runDeadCodeTests $(srcdir)/tests
+
+check-no-cc:
+	$(srcdir)/scripts/runNoConstantConditionTests $(srcdir)/tests
 
 check-normalization:
 	$(srcdir)/scripts/runNormalizationTests $(srcdir)/tests
