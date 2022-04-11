@@ -1029,3 +1029,6 @@ SgAdaFormalPackageSymbol
 SgAsmJvmAttributeTable
 SgAsmJvmMethodList
 SgAsmJvmMethodTable
+SgAsmJvmField
+SgAsmJvmFieldList
+SgAsmJvmFieldTable

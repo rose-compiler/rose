@@ -20,8 +20,6 @@ SgAsmJvmMethod::SgAsmJvmMethod(SgAsmJvmMethodTable* table)
   p_attribute_table->set_parent(this);
   set_parent(table);
 
-  //TODO:FIX constructor
-  p_attribute_table->set_attributes(new SgAsmJvmAttributeList);
   ROSE_ASSERT(get_attribute_table()->get_attributes());
 }
 

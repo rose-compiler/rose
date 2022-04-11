@@ -10815,6 +10815,7 @@ void Grammar::setUpBinaryInstructions() {
 
     DECLARE_LEAF_CLASS(AsmJvmAttributeTable);
     IS_SERIALIZABLE(AsmJvmAttributeTable);
+    AsmJvmAttributeTable.setAutomaticGenerationOfConstructor(false);
 
 #ifdef DOCUMENTATION
     /** Represents a JVM attribute_info table/array.
@@ -10859,6 +10860,12 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
     public:
+        /** Initialize the attribute table before parsing.
+         *
+         *  This constructor does not set its parent and should be replaced.
+         */
+        SgAsmJvmAttributeTable();
+
         /** Initialize the attribute table before parsing.
          *
          *  This is the preferred constructor to use before parsing.  It
@@ -11133,6 +11140,253 @@ void Grammar::setUpBinaryInstructions() {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /*************************************************************************************************************************
+     *                                           JVM Field Table
+     *************************************************************************************************************************/
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmJvmFieldTable);
+    IS_SERIALIZABLE(AsmJvmFieldTable);
+
+#ifdef DOCUMENTATION
+    /** Represents a JVM field_info table/array.
+     *
+     *  The JVM fields table is a section.  The entries of the table are stored with the section they describe rather
+     *  than storing them all in the SgAsmSectionTable node.  We can reconstruct the JVM Section Table since sections have
+     *  unique ID numbers that are their original indices in the JVM Section Table. */
+    class SgAsmJvmFieldTable: public SgAsmGenericSection {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: List of fields.
+         *
+         *  This property points to an AST node that contains the list rather than being a list directly because of limitations
+         *  of ROSETTA.
+         *
+         * @{ */
+     public:
+        SgAsmJvmFieldList* get_fields() const;
+        void set_fields(SgAsmJvmFieldList*);
+     protected:
+        SgAsmJvmFieldList* p_fields;
+        /** @} */
+#else
+        AsmJvmFieldTable.setDataPrototype("SgAsmJvmFieldList*", "fields", "= nullptr",
+                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmJvmFieldTable);
+#if defined(SgAsmJvmFieldTable_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
+            s & BOOST_SERIALIZATION_NVP(p_fields);
+        }
+#endif
+
+    public:
+        /** Initialize the field table before parsing.
+         *
+         *  This is the preferred constructor to use before parsing.  It
+         *  shall set its parent.
+         */
+        explicit SgAsmJvmFieldTable(SgAsmJvmClassFile*);
+
+        /** Parses a JVM field table.
+         *
+         *  Parses a JVM field table and constructs and parses all fields reachable from the table.
+         *  Returns a pointer to this object. */
+        virtual SgAsmJvmFieldTable* parse() override;
+
+#endif // SgAsmJvmFieldTable_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /*************************************************************************************************************************
+     *                                        JVM Field (section 4.5)
+     *************************************************************************************************************************/
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmJvmField);
+    IS_SERIALIZABLE(AsmJvmField);
+
+#ifdef DOCUMENTATION
+    /** JVM Field.
+     *
+     *  Each field is described by a field_info structure.
+     */
+    class SgAsmJvmField: public SgAsmJvmNode {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: access_flags
+         *
+         *  The value of the access_flags item is a mask of flags used to denote access
+         *  permission to and properties of this method (see JVM documentation).
+         *
+         * @{ */
+     public:
+        uint16_t get_access_flags() const;
+        void set_access_flags(uint16_t);
+     protected:
+        uint16_t p_access_flags;
+        /** @} */
+#else
+        AsmJvmField.setDataPrototype("uint16_t", "access_flags", "= 0",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: name_index
+         *
+         *  The value of the name_index item must be a valid index into the constant_pool table
+         *  (see JVM documentation).
+         *
+         * @{ */
+     public:
+        uint16_t get_name_index() const;
+        void set_name_index(uint16_t);
+     protected:
+        uint16_t p_name_index;
+        /** @} */
+#else
+        AsmJvmField.setDataPrototype("uint16_t", "name_index", "= 0",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: descriptor_index
+         *
+         *  The value of the descriptor_index item must be a valid index into the constant_pool table
+         *  (see JVM documentation).
+         *
+         * @{ */
+     public:
+        uint16_t get_descriptor_index() const;
+        void set_descriptor_index(uint16_t);
+     protected:
+        uint16_t p_descriptor_index;
+        /** @} */
+#else
+        AsmJvmField.setDataPrototype("uint16_t", "descriptor_index", "= 0",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Table of attributes.
+         *
+         * @{ */
+     public:
+        SgAsmJvmAttributeTable* get_attribute_table() const;
+        void set_attribute_table(SgAsmJvmAttributeTable*);
+     protected
+        SgAsmJvmAttributeTable* p_attribute_table;
+        /** @} */
+#else
+        AsmJvmField.setDataPrototype("SgAsmJvmAttributeTable*", "attribute_table", "= nullptr",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmJvmField);
+#if defined(SgAsmJvmField_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+     private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmNode);
+            s & BOOST_SERIALIZATION_NVP(p_access_flags);
+            s & BOOST_SERIALIZATION_NVP(p_name_index);
+            s & BOOST_SERIALIZATION_NVP(p_descriptor_index);
+            s & BOOST_SERIALIZATION_NVP(p_attribute_table);
+        }
+#endif
+
+     public:
+        /** Initialize the object before parsing.
+         *
+         *  This is the preferred constructor to use before parsing.  It
+         *  shall set its parent.
+         */
+        explicit SgAsmJvmField(SgAsmJvmFieldTable*);
+
+        /** Initialize the object by parsing content from the class file. */
+        SgAsmJvmField* parse(SgAsmJvmConstantPool* pool);
+
+        /** Print some debugging information */
+        void dump(std::ostream &) const override;
+
+#endif // SgAsmJvmField_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmJvmFieldList);
+    IS_SERIALIZABLE(AsmJvmFieldList);
+
+#ifdef DOCUMENTATION
+    /** List of JVM fields.
+     *
+     *  The only purpose of this node is to hold a list which, due to ROSETTA limitations, cannot be contained in the objects
+     *  that actually need it. */
+    class SgAsmJvmFieldList: public SgAsmJvmNode {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: List of fields.
+         *
+         * @{ */
+     public:
+        const SgAsmJvmFieldPtrList& get_entries() const;
+        void set_entries(const SgAsmJvmFieldPtrList&);
+     protected
+        SgAsmJvmFieldPtrList & p_entries;
+        /** @} */
+#else
+        AsmJvmFieldList.setDataPrototype("SgAsmJvmFieldPtrList", "entries", "",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL,
+                                         NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmJvmFieldList);
+#if defined(SgAsmJvmFieldList_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmNode);
+            s & BOOST_SERIALIZATION_NVP(p_entries);
+        }
+#endif
+#endif // SgAsmJvmFieldList_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /*************************************************************************************************************************
      *                                           JVM-Java Class File
      *************************************************************************************************************************/
 
@@ -11222,6 +11476,66 @@ void Grammar::setUpBinaryInstructions() {
                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
+#ifdef DOCUMENTATION
+        /** Property: Field table.
+         *
+         *  Points to the AST node that represents the JVM field table. The constant pool is a table of structures
+         *  (see 4.4) representing various string constants, class and interface names, field names, and other constants
+         *  that are referred to within the ClassFile structure and its substructures. The format of each constant-pool
+         *  table entry is indicated by its first "tag" byte.
+         *
+         * @{ */
+     public:
+        const SgAsmJvmFieldTable* get_field_table() const;
+        void set_field_table(SgAsmJvmFieldTable*);
+     protected:
+        SgAsmJvmFieldTable* p_field_table;
+        /** @} */
+#else
+        AsmJvmClassFile.setDataPrototype("SgAsmJvmFieldTable*", "field_table", "= nullptr",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Field table.
+         *
+         *  Points to the AST node that represents the JVM field table. The constant pool is a table of structures
+         *  (see 4.4) representing various string constants, class and interface names, field names, and other constants
+         *  that are referred to within the ClassFile structure and its substructures. The format of each constant-pool
+         *  table entry is indicated by its first "tag" byte.
+         *
+         * @{ */
+     public:
+        const SgAsmJvmMethodTable* get_method_table() const;
+        void set_method_table(SgAsmJvmMethodTable*);
+     protected:
+        SgAsmJvmMethodTable* p_method_table;
+        /** @} */
+#else
+        AsmJvmClassFile.setDataPrototype("SgAsmJvmMethodTable*", "method_table", "= nullptr",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Attribute table.
+         *
+         *  Points to the AST node that represents the JVM attribute table. The constant pool is a table of structures
+         *  (see 4.4) representing various string constants, class and interface names, field names, and other constants
+         *  that are referred to within the ClassFile structure and its substructures. The format of each constant-pool
+         *  table entry is indicated by its first "tag" byte.
+         *
+         * @{ */
+     public:
+        const SgAsmJvmAttributeTable* get_attribute_table() const;
+        void set_attribute_table(SgAsmJvmAttributeTable*);
+     protected:
+        SgAsmJvmAttributeTable* p_attribute_table;
+        /** @} */
+#else
+        AsmJvmClassFile.setDataPrototype("SgAsmJvmAttributeTable*", "attribute_table", "= nullptr",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
         DECLARE_OTHERS(AsmJvmClassFile);
 #if defined(SgAsmJvmClassFile_OTHERS) || defined(DOCUMENTATION)
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -11235,6 +11549,9 @@ void Grammar::setUpBinaryInstructions() {
             s & BOOST_SERIALIZATION_NVP(p_this_class);
             s & BOOST_SERIALIZATION_NVP(p_super_class);
             s & BOOST_SERIALIZATION_NVP(p_constant_pool);
+            s & BOOST_SERIALIZATION_NVP(p_field_table);
+            s & BOOST_SERIALIZATION_NVP(p_method_table);
+            s & BOOST_SERIALIZATION_NVP(p_attribute_table);
         }
 #endif
 
@@ -16607,7 +16924,7 @@ void Grammar::setUpBinaryInstructions() {
                           AsmPESectionTable | AsmDOSExtendedHeader | AsmCoffSymbolTable | AsmNESection | AsmNESectionTable |
                           AsmNENameTable | AsmNEModuleTable | AsmNEStringTable | AsmNEEntryTable | AsmNERelocTable |
                           AsmLESection | AsmLESectionTable | AsmLENameTable | AsmLEPageTable | AsmLEEntryTable | AsmLERelocTable |
-                          AsmJvmConstantPool | AsmJvmAttributeTable | AsmJvmMethodTable,
+                          AsmJvmConstantPool | AsmJvmAttributeTable | AsmJvmFieldTable | AsmJvmMethodTable,
                           "AsmGenericSection", "AsmGenericSectionTag", true);
     AsmGenericSection.setCppCondition("!defined(DOCUMENTATION)");
     AsmGenericSection.setAutomaticGenerationOfDestructor(false);
@@ -18452,7 +18769,7 @@ void Grammar::setUpBinaryInstructions() {
 
     NEW_NONTERMINAL_MACRO(AsmJvmNode,
                           AsmJvmAttribute | AsmJvmAttributeList | AsmJvmConstantPoolEntry | AsmJvmConstantPoolEntryList |
-                          AsmJvmMethod | AsmJvmMethodList,
+                          AsmJvmMethod | AsmJvmMethodList | AsmJvmField | AsmJvmFieldList,
                           "AsmJvmNode", "AsmJvmNodeTag", false);
     AsmJvmNode.setCppCondition("!defined(DOCUMENTATION)");
     IS_SERIALIZABLE(AsmJvmNode);
