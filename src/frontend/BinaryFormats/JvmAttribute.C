@@ -16,7 +16,7 @@ SgAsmJvmAttribute* SgAsmJvmAttribute::create_attribute(SgAsmJvmConstantPool* poo
   uint16_t attribute_name_index;
   uint32_t attribute_length;
 
-  std::cout << "SgAsmJvmAttribute::createAttribute() ...\n";
+  std::cout << "SgAsmJvmAttribute::create_attribute() ...\n";
 
   Jvm::read_value(pool, attribute_name_index, false);
   std::cout << "SgAsmJvmAttribute::attribute_name_index " << attribute_name_index << std::endl;
@@ -27,8 +27,35 @@ SgAsmJvmAttribute* SgAsmJvmAttribute::create_attribute(SgAsmJvmConstantPool* poo
     std::cout << "SgAsmJvmAttribute:: returning new Code attribute ...\n";
     return new SgAsmJvmCodeAttribute();
   }
+  else if (name == "ConstantValue") {
+    std::cout << "SgAsmJvmAttribute:: returning new ConstantValue attribute ...\n";
+    return new SgAsmJvmConstantValue();
+  }
+  else if (name == "LineNumberTable") {
+    std::cout << "SgAsmJvmAttribute:: skipping LineNumberTable attribute ";
+  }
+
+  // skip attribute
+  Jvm::read_value(pool, attribute_name_index);
+  Jvm::read_value(pool, attribute_length);
+
+  std::cout << "of length " << attribute_length << std::endl;
+
+  SgAsmGenericHeader* header{pool->get_header()};
+  ROSE_ASSERT(header);
+  std::cout << "--> header is " << header->class_name() << std::endl;
+
+  rose_addr_t offset{header->get_offset()};
+  std::cout << "--> offset is " << offset << std::endl;
+
+  header->set_offset(offset + attribute_length);
 
   return nullptr;
+}
+
+SgAsmJvmAttributeTable::SgAsmJvmAttributeTable()
+{
+  p_attributes = new SgAsmJvmAttributeList;
 }
 
 SgAsmJvmAttributeTable* SgAsmJvmAttributeTable::parse(SgAsmJvmConstantPool* pool)
@@ -50,8 +77,6 @@ SgAsmJvmAttributeTable* SgAsmJvmAttributeTable::parse(SgAsmJvmConstantPool* pool
       attributes.push_back(attribute);
     }
   }
-
-  std::cout << "SgAsmJvmAttributeTable::parse() exit ... \n\n";
 
   return this;
 }
@@ -81,6 +106,29 @@ SgAsmJvmAttribute* SgAsmJvmCodeAttribute::parse(SgAsmJvmConstantPool* pool)
   p_code_length = Jvm::read_bytes(pool, bytes, length);
   set_code(bytes);
 
+  // skip exception table
+  uint16_t exception_table_length;
+  Jvm::read_value(pool, exception_table_length);
+  std::cout << "SgAsmJvmCodeAttribute::parse(): exception_table_length is " << exception_table_length << std::endl;
+  ROSE_ASSERT(exception_table_length == 0);
+
+  // skip attributes
+  uint16_t attributes_count;
+  Jvm::read_value(pool, attributes_count);
+  std::cout << "SgAsmJvmCodeAttribute::parse(): attributes_count is " << attributes_count << std::endl;
+
+  //TODO
+  //auto attributes = get_attributes()->get_entries();
+  for (int ii = 0; ii < attributes_count; ii++) {
+    auto attribute = SgAsmJvmAttribute::create_attribute(pool);
+    // attribute may not be implemented yet
+    if (attribute) {
+      //TODO
+      // attribute->parse(pool);
+      // attributes.push_back(attribute);
+    }
+  }
+
   // try creating an instruction
 
 // Interface should be changed to
@@ -103,25 +151,33 @@ SgAsmJvmAttribute* SgAsmJvmCodeAttribute::parse(SgAsmJvmConstantPool* pool)
 
 SgAsmJvmAttribute* SgAsmJvmConstantValue::parse(SgAsmJvmConstantPool* pool)
 {
-  SgAsmJvmConstantValue::parse(pool);
+  SgAsmJvmAttribute::parse(pool);
   std::cout << "SgAsmJvmConstantValue::parse() ...\n";
+
+  // The value of the attribute_length item must be two (section 4.7.2)
+  ROSE_ASSERT(p_attribute_length == 2);
+
+  Jvm::read_value(pool, p_constantvalue_index);
+  std::cout << "SgAsmJvmConstantValue::parse:constantvalue_index " << p_constantvalue_index << std::endl;
 
   return this;
 }
 
 SgAsmJvmAttribute* SgAsmJvmSignature::parse(SgAsmJvmConstantPool* pool)
 {
-  SgAsmJvmSignature::parse(pool);
+  SgAsmJvmAttribute::parse(pool);
   std::cout << "SgAsmJvmSignature::parse() ...\n";
 
+  ROSE_ASSERT(false && "TODO");
   return this;
 }
 
 SgAsmJvmAttribute* SgAsmJvmSourceFile::parse(SgAsmJvmConstantPool* pool)
 {
-  SgAsmJvmSourceFile::parse(pool);
+  SgAsmJvmAttribute::parse(pool);
   std::cout << "SgAsmJvmSourceFile::parse() ...\n";
 
+  ROSE_ASSERT(false && "TODO");
   return this;
 }
 
@@ -139,7 +195,7 @@ void SgAsmJvmCodeAttribute::dump(std::ostream &os) const
 void SgAsmJvmConstantValue::dump(std::ostream &os) const
 {
   SgAsmJvmAttribute::dump(os);
-  os << "SgAsmJvmConstantValue::dump\n";
+  os << "SgAsmJvmConstantValue:" << p_constantvalue_index << std::endl;
 }
 
 void SgAsmJvmSignature::dump(std::ostream &os) const

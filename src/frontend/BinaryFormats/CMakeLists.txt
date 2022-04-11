@@ -33,6 +33,7 @@ add_library(roseBinaryFormats OBJECT
   JvmClassFile.C
   JvmAttribute.C
   JvmConstantPool.C
+  JvmField.C
   JvmFileHeader.C
   JvmMethod.C
 
