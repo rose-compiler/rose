@@ -1032,3 +1032,6 @@ SgAsmJvmMethodTable
 SgAsmJvmField
 SgAsmJvmFieldList
 SgAsmJvmFieldTable
+SgAsmJvmException
+SgAsmJvmExceptionList
+SgAsmJvmExceptionTable

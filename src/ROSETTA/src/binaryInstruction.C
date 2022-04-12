@@ -10891,6 +10891,258 @@ void Grammar::setUpBinaryInstructions() {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /*************************************************************************************************************************
+     *                                       JVM Exception Table (section 4.7.3)
+     *************************************************************************************************************************/
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmJvmExceptionTable);
+    IS_SERIALIZABLE(AsmJvmExceptionTable);
+
+#ifdef DOCUMENTATION
+    /** Represents a JVM exception_info table/array.
+     *
+     *  The JVM exceptions table is an SgAsmJvmNode containing SgAsmJvmException entries.
+     */
+    class SgAsmJvmExceptionTable: public SgAsmJvmNode {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: List of exceptions.
+         *
+         *  This property points to an AST node that contains the list rather than being a list directly because of limitations
+         *  of ROSETTA.
+         *
+         * @{ */
+     public:
+        SgAsmJvmExceptionList* get_exceptions() const;
+        void set_exceptions(SgAsmJvmExceptionList*);
+     protected:
+        SgAsmJvmExceptionList* p_exceptions;
+        /** @} */
+#else
+        AsmJvmExceptionTable.setDataPrototype("SgAsmJvmExceptionList*", "exceptions", "= nullptr",
+                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmJvmExceptionTable);
+#if defined(SgAsmJvmExceptionTable_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmNode);
+            s & BOOST_SERIALIZATION_NVP(p_exceptions);
+        }
+#endif
+
+    public:
+        /** Initialize the exception table before parsing.
+         *
+         *  This is the preferred constructor to use before parsing.  It
+         *  shall set its parent.
+         */
+        explicit SgAsmJvmExceptionTable(SgAsmJvmCodeAttribute*);
+
+        /** Parses a JVM exception table.
+         *
+         *  Parses a JVM exception table and constructs and parses all exceptions reachable from the table.
+         *  Returns a pointer to this object. */
+        SgAsmJvmExceptionTable* parse(SgAsmJvmConstantPool*);
+
+#endif // SgAsmJvmExceptionTable_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /*************************************************************************************************************************
+     *                                        JVM Exception (section 4.7.3)
+     *************************************************************************************************************************/
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmJvmException);
+    IS_SERIALIZABLE(AsmJvmException);
+
+#ifdef DOCUMENTATION
+    /** JVM Exception.
+     *
+     *  Each exception is described by an anonymous structure defined in Code_attribute, section 4.7.3
+     *  of the JVM specification.
+     */
+    class SgAsmJvmException: public SgAsmJvmNode {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: start_pc
+         *
+         *  The value of the start_pc item must be a valid index into the constant_pool table (see JVM documentation).
+         *    Present in an exception table of a Code_attribute (see section 4.7.3 of the JVM specification).
+         *
+         * @{ */
+     public:
+        uint16_t get_start_pc() const;
+        void set_start_pc(uint16_t);
+     protected:
+        uint16_t p_start_pc;
+        /** @} */
+#else
+        AsmJvmException.setDataPrototype("uint16_t", "start_pc", "= 0",
+                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: end_pc
+         *
+         *  The value of the end_pc item must be a valid index into the constant_pool table (see JVM documentation).
+         *    Present in an exception table of a Code_attribute (see section 4.7.3 of the JVM specification).
+         *
+         * @{ */
+     public:
+        uint16_t get_end_pc() const;
+        void set_end_pc(uint16_t);
+     protected:
+        uint16_t p_end_pc;
+        /** @} */
+#else
+        AsmJvmException.setDataPrototype("uint16_t", "end_pc", "= 0",
+                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: handler_pc
+         *
+         *  The value of the handler_pc item must be a valid index into the constant_pool table (see JVM documentation).
+         *    Present in an exception table of a Code_attribute (see section 4.7.3 of the JVM specification).
+         *
+         * @{ */
+     public:
+        uint16_t get_handler_pc() const;
+        void set_handler_pc(uint16_t);
+     protected:
+        uint16_t p_handler_pc;
+        /** @} */
+#else
+        AsmJvmException.setDataPrototype("uint16_t", "handler_pc", "= 0",
+                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: catch_type
+         *
+         *  The value of the catch_type item must be a valid index into the constant_pool table (see JVM documentation).
+         *    Present in an exception table of a Code_attribute (see section 4.7.3 of the JVM specification).
+         *
+         * @{ */
+     public:
+        uint16_t get_catch_type() const;
+        void set_catch_type(uint16_t);
+     protected:
+        uint16_t p_catch_type;
+        /** @} */
+#else
+        AsmJvmException.setDataPrototype("uint16_t", "catch_type", "= 0",
+                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmJvmException);
+#if defined(SgAsmJvmException_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+     private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmNode);
+#ifdef TRIALS
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(p_start_pc);
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(p_end_pc);
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(p_handler_pc);
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(p_catch_type);
+#endif
+        }
+#endif
+
+     public:
+        /** Initialize the object before parsing.
+         *
+         *  This is the preferred constructor to use before parsing.  It
+         *  shall set its parent.
+         */
+        explicit SgAsmJvmException(SgAsmJvmExceptionTable*);
+
+        /** Initialize the object by parsing content from the class file. */
+        SgAsmJvmException* parse(SgAsmJvmConstantPool*);
+
+        /** Print some debugging information */
+        void dump(std::ostream &) const override;
+
+#endif // SgAsmJvmException_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmJvmExceptionList);
+    IS_SERIALIZABLE(AsmJvmExceptionList);
+
+#ifdef DOCUMENTATION
+    /** List of JVM exceptions.
+     *
+     *  The only purpose of this node is to hold a list which, due to ROSETTA limitations, cannot be contained in the objects
+     *  that actually need it. */
+    class SgAsmJvmExceptionList: public SgAsmJvmNode {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: List of exceptions.
+         *
+         * @{ */
+     public:
+        const SgAsmJvmExceptionPtrList& get_entries() const;
+        void set_entries(const SgAsmJvmExceptionPtrList&);
+     protected
+        SgAsmJvmExceptionPtrList & p_entries;
+        /** @} */
+#else
+        AsmJvmExceptionList.setDataPrototype("SgAsmJvmExceptionPtrList", "entries", "",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL,
+                                         NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmJvmExceptionList);
+#if defined(SgAsmJvmExceptionList_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmNode);
+            s & BOOST_SERIALIZATION_NVP(p_entries);
+        }
+#endif
+#endif // SgAsmJvmExceptionList_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /*************************************************************************************************************************
      *                                           JVM Method Table
      *************************************************************************************************************************/
 
@@ -18769,7 +19021,8 @@ void Grammar::setUpBinaryInstructions() {
 
     NEW_NONTERMINAL_MACRO(AsmJvmNode,
                           AsmJvmAttribute | AsmJvmAttributeList | AsmJvmConstantPoolEntry | AsmJvmConstantPoolEntryList |
-                          AsmJvmMethod | AsmJvmMethodList | AsmJvmField | AsmJvmFieldList,
+                          AsmJvmMethod | AsmJvmMethodList | AsmJvmField | AsmJvmFieldList |
+                          AsmJvmException | AsmJvmExceptionList | AsmJvmExceptionTable,
                           "AsmJvmNode", "AsmJvmNodeTag", false);
     AsmJvmNode.setCppCondition("!defined(DOCUMENTATION)");
     IS_SERIALIZABLE(AsmJvmNode);
