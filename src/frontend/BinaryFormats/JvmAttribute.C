@@ -56,6 +56,7 @@ SgAsmJvmAttribute* SgAsmJvmAttribute::create_attribute(SgAsmJvmConstantPool* poo
 SgAsmJvmAttributeTable::SgAsmJvmAttributeTable()
 {
   p_attributes = new SgAsmJvmAttributeList;
+  p_attributes->set_parent(this);
 }
 
 SgAsmJvmAttributeTable* SgAsmJvmAttributeTable::parse(SgAsmJvmConstantPool* pool)
@@ -208,6 +209,45 @@ void SgAsmJvmSourceFile::dump(std::ostream &os) const
 {
   SgAsmJvmAttribute::dump(os);
   os << "SgAsmJvmSourceFile::dump\n";
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// Exception nodes used by SgAsmJvmCodeAttribute
+//
+SgAsmJvmException::SgAsmJvmException(SgAsmJvmExceptionTable* table)
+{
+  std::cout << "\nSgAsmJvmException::ctor() ...\n";
+  set_parent(table);
+}
+
+SgAsmJvmException* SgAsmJvmException::parse(SgAsmJvmConstantPool* pool)
+{
+  std::cout << "SgAsmJvmException::parse() ...\n";
+  return this;
+}
+
+void SgAsmJvmException::dump(std::ostream &os) const
+{
+  std::cout << "SgAsmJvmException::dump() ...\n";
+}
+
+SgAsmJvmExceptionTable::SgAsmJvmExceptionTable(SgAsmJvmCodeAttribute* parent)
+{
+  std::cout << "SgAsmJvmExceptionTable::ctor() ...\n";
+
+  set_parent(parent);
+  p_exceptions = new SgAsmJvmExceptionList;
+  p_exceptions->set_parent(this);
+}
+
+SgAsmJvmExceptionTable* SgAsmJvmExceptionTable::parse(SgAsmJvmConstantPool* pool)
+{
+  std::cout << "SgAsmJvmExceptionTable::parse() ...\n";
+  std::cout << "SgAsmJvmExceptionTable::parse() exit ... \n\n";
+
+  return this;
 }
 
 #endif // ROSE_ENABLE_BINARY_ANALYSIS

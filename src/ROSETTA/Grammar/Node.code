@@ -714,6 +714,9 @@ typedef SgAsmJvmAttributePtrList*              SgAsmJvmAttributePtrListPtr;
 typedef Rose_STL_Container<SgAsmJvmConstantPoolEntry*> SgAsmJvmConstantPoolEntryPtrList;
 typedef SgAsmJvmConstantPoolEntryPtrList*              SgAsmJvmConstantPoolEntryPtrListPtr;
 
+typedef Rose_STL_Container<SgAsmJvmException*> SgAsmJvmExceptionPtrList;
+typedef SgAsmJvmExceptionPtrList*              SgAsmJvmExceptionPtrListPtr;
+
 typedef Rose_STL_Container<SgAsmJvmField*> SgAsmJvmFieldPtrList;
 typedef SgAsmJvmFieldPtrList*              SgAsmJvmFieldPtrListPtr;
 
