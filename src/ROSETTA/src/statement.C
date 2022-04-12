@@ -3186,13 +3186,17 @@ Grammar::setUpStatements ()
      // was: AdaGenericInstanceDecl.setDataPrototype ( "SgAdaGenericDecl*", "declaration", "= NULL",
      AdaGenericInstanceDecl.setDataPrototype ( "SgDeclarationStatement*", "declaration", "= nullptr",
                                                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AdaGenericInstanceDecl.setDataPrototype ( "SgType*", "return_type", "= NULL",
-                                               CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     // PP (4/1/22): adding scope to store actual instantiation
+     //              \todo specify which scope it will be..
+     AdaGenericInstanceDecl.setDataPrototype ( "SgScopeStatement*", "instantiatedScope", "= nullptr",
+                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     // PP (4/1/22): return_type is not used currently
+     //~ AdaGenericInstanceDecl.setDataPrototype ( "SgType*", "return_type", "= NULL",
+                                               //~ CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AdaGenericInstanceDecl.setDataPrototype ( "SgExprListExp*", "actual_parameters", "= NULL",
                                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AdaGenericInstanceDecl.setDataPrototype ( "SgScopeStatement*", "scope", "= nullptr",
                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
 
 
      // tasks

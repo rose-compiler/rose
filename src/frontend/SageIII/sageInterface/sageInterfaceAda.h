@@ -99,6 +99,13 @@ namespace ada
   std::vector<IfStatementInfo>
   flattenIfStatements(SgIfStmt& n);
 
+  /// integer constant folding
+  /// \returns an integral value for an Ada expression if possible
+  /// \throws  an exception otherwise.
+  long long int
+  staticIntegralValue(SgExpression* n);
+
+
   /// returns the expression of an expression statement, or nullptr if s is some other node
   SgExpression*
   underlyingExpr(const SgStatement* s);
