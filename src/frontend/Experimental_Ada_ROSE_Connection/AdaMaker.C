@@ -743,8 +743,11 @@ mkAdaGenericInstanceDecl(const std::string& name, SgDeclarationStatement& gendec
              || isSgAdaRenamingDecl(&gendecl)
              );
 
-  SgAdaGenericInstanceDecl& sgnode = mkLocatedNode<SgAdaGenericInstanceDecl>(name,&gendecl,nullptr);
+  //~ SgDeclarationScope&       dclscope = mkDeclarationScope(scope);
+  SgScopeStatement&         dclscope = mkBasicBlock();
+  SgAdaGenericInstanceDecl& sgnode = mkLocatedNode<SgAdaGenericInstanceDecl>(name,&gendecl,&dclscope);
 
+  dclscope.set_parent(&sgnode);
   sgnode.set_scope(&scope);
   // PP (2/24/22): should this be set_definingDeclaration ?
   sgnode.set_firstNondefiningDeclaration(&sgnode);
@@ -1881,20 +1884,11 @@ mkNullExpression()
 
 namespace
 {
-  struct IntegerValue : sg::DispatchHandler<long long int>
-  {
-    void handle(const SgNode& n)           { SG_UNEXPECTED_NODE(n); }
-    void handle(const SgShortVal& n)       { res = n.get_value(); }
-    void handle(const SgIntVal& n)         { res = n.get_value(); }
-    void handle(const SgLongIntVal& n)     { res = n.get_value(); }
-    void handle(const SgLongLongIntVal& n) { res = n.get_value(); }
-  };
-
   long long int getIntegralValue(SgInitializedName& enumitem)
   {
     SgAssignInitializer& ini = SG_DEREF( isSgAssignInitializer(enumitem.get_initializer()) );
 
-    return sg::dispatch(IntegerValue{}, ini.get_operand());
+    return si::ada::staticIntegralValue(ini.get_operand());
   }
 };
 

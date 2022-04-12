@@ -561,16 +561,17 @@ namespace
   /// defines ROSE AST types for which we do not generate scope qualification
   struct RoseRequiresScopeQual : sg::DispatchHandler<bool>
   {
-    void handle(const SgNode& n)               { SG_UNEXPECTED_NODE(n); }
+    void handle(const SgNode& n)                 { SG_UNEXPECTED_NODE(n); }
 
-    void handle(const SgDeclarationStatement&) { res = true; }
-    void handle(const SgAdaTaskSpecDecl&)      { res = false; }
-    void handle(const SgAdaProtectedSpecDecl&) { res = false; }
-    void handle(const SgAdaPackageSpecDecl&)   { res = false; }
-    void handle(const SgImportStatement&)      { res = false; }
-    void handle(const SgAdaRenamingDecl&)      { res = false; }
+    void handle(const SgDeclarationStatement&)   { res = true; }
+    void handle(const SgAdaTaskSpecDecl&)        { res = false; }
+    void handle(const SgAdaProtectedSpecDecl&)   { res = false; }
+    void handle(const SgAdaPackageSpecDecl&)     { res = false; }
+    void handle(const SgImportStatement&)        { res = false; }
+    void handle(const SgAdaRenamingDecl&)        { res = false; }
+    void handle(const SgBasicBlock&)             { res = false; }
+    void handle(const SgAdaGenericInstanceDecl&) { res = false; }
     //~ void handle(const SgFunctionDeclaration&)  { res = false; }
-    void handle(const SgBasicBlock&)           { res = false; }
   };
 
 

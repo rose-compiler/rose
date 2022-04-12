@@ -2231,24 +2231,28 @@ namespace
       {
         ADA_ASSERT (el.Element_Kind == An_Expression);
 
-        NameData                     usepkg = getName(el, ctx);
+        NameData                     usedEl = getName(el, ctx); // either unit or type
         SgScopeStatement&            scope  = ctx.scope();
-        Expression_Struct&           expr   = asisExpression(usepkg.elem());
+        Expression_Struct&           expr   = asisExpression(usedEl.elem());
         SgDeclarationStatement*      used   = findFirst(m, expr.Corresponding_Name_Definition, expr.Corresponding_Name_Declaration);
 
         // fallback code for packages not extracted from Asis
         if (!used)
         {
-          logWarn() << "using unknown package: " << usepkg.fullName
+          logWarn() << "using unknown package/type: " << usedEl.fullName
                     << std::endl;
 
-          used = findFirst(adaPkgs(), AdaIdentifier{usepkg.fullName});
+          // fallback lookup by name
+          AdaIdentifier ident{usedEl.fullName};
+
+          used = findFirst(adaPkgs(), ident);
+          // if (!used) used = findFirst(adaTypes(), ident);
         }
 
         SgUsingDeclarationStatement& sgnode = mkUseClause(SG_DEREF(used));
 
         //~ std::cerr
-        //~ logError() << "use decl: " << usepkg.fullName
+        //~ logError() << "use decl: " << usedEl.fullName
                    //~ << " " << typeid(*used).name()
                    //~ << " (" << expr.Corresponding_Name_Definition
                    //~ << ", " << expr.Corresponding_Name_Declaration << ")"
@@ -4793,6 +4797,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
           sgnode.set_actual_parameters(&args);
         }
 
+
         recordNode(asisDecls(), elem.ID, sgnode);
         recordNode(asisDecls(), adaname.id(), sgnode);
 
@@ -4801,8 +4806,14 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         outer.append_statement(&sgnode);
         ADA_ASSERT (sgnode.get_parent() == &outer);
 
+        // PP (4/1/22): fill in the declaration
+        ADA_ASSERT(decl.Corresponding_Declaration);
+        handleDeclaration( retrieveAs(elemMap(), decl.Corresponding_Declaration),
+                           ctx.scope(SG_DEREF(sgnode.get_instantiatedScope()))
+                         );
+        // \todo mark whole subtree under sgnode.get_instantiatedScope() as instantiated
+
         /* unused field
-             Declaration_ID                 Corresponding_Declaration;
              Declaration_ID                 Corresponding_Body;
         */
         break;

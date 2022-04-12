@@ -194,7 +194,7 @@ namespace
 
   struct IntegralValue : sg::DispatchHandler<long long int>
   {
-    void handle(SgNode& n)     { SG_UNEXPECTED_NODE(n); }
+    void handle(const SgNode& n)     { SG_UNEXPECTED_NODE(n); }
 
     void handle(SgExpression& n)
     {
@@ -203,15 +203,16 @@ namespace
       throw std::runtime_error(msg + n.unparseToString());
     }
 
-    void handle(SgIntVal& n)                 { res = n.get_value(); }
-    void handle(SgLongIntVal& n)             { res = n.get_value(); }
-    void handle(SgLongLongIntVal& n)         { res = n.get_value(); }
-    void handle(SgShortVal& n)               { res = n.get_value(); }
-    void handle(SgUnsignedCharVal& n)        { res = n.get_value(); }
-    void handle(SgUnsignedIntVal& n)         { res = n.get_value(); }
-    void handle(SgUnsignedLongLongIntVal& n) { res = n.get_value(); }
-    void handle(SgUnsignedLongVal& n)        { res = n.get_value(); }
-    void handle(SgUnsignedShortVal& n)       { res = n.get_value(); }
+    void handle(const SgShortVal& n)               { res = n.get_value(); }
+    void handle(const SgIntVal& n)                 { res = n.get_value(); }
+    void handle(const SgLongIntVal& n)             { res = n.get_value(); }
+    void handle(const SgLongLongIntVal& n)         { res = n.get_value(); }
+
+    void handle(const SgUnsignedCharVal& n)        { res = n.get_value(); }
+    void handle(const SgUnsignedIntVal& n)         { res = n.get_value(); }
+    void handle(const SgUnsignedLongLongIntVal& n) { res = n.get_value(); }
+    void handle(const SgUnsignedLongVal& n)        { res = n.get_value(); }
+    void handle(const SgUnsignedShortVal& n)       { res = n.get_value(); }
   };
 
   struct RangeExp : sg::DispatchHandler<SgRangeExp*>
@@ -399,6 +400,12 @@ namespace ada
   const std::string roseOperatorPrefix  = "operator";
   const std::string packageStandardName = "Standard";
 
+  long long int
+  staticIntegralValue(SgExpression* n)
+  {
+    return sg::dispatch(IntegralValue(), n);
+  }
+
   int
   firstLastDimension(SgExprListExp& args)
   {
@@ -408,7 +415,7 @@ namespace ada
       return 1;
 
     ROSE_ASSERT(exprlst.size() == 1);
-    IntegralValue::ReturnType res = sg::dispatch(IntegralValue(), exprlst[0]);
+    long long res = staticIntegralValue(exprlst[0]);
 
     ROSE_ASSERT(res <= std::numeric_limits<int>::max());
     return res;
