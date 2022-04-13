@@ -60,6 +60,7 @@ namespace Defects {
     Kind kind;
 
     defect_t<Kind::any>(Kind kind_);
+    virtual ~defect_t<Kind::any>();
 
     static void clear(); //!< Delete all stored defect and clear the container
     static void display(std::ostream & out); //<! Calls print on all stored defects

@@ -365,7 +365,6 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
           // AST I/O
           argument == "-rose:ast:read" ||
           argument == "-rose:ast:write" ||
-          argument == "-rose:ast:merge" ||
           argument == "-rose:ast:graphviz:when" ||
           argument == "-rose:ast:graphviz:mode" ||
           argument == "-rose:ast:graphviz:out" ||

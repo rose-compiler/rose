@@ -32,6 +32,9 @@ TEST_TARGETS += $(testDelete_TESTS)
 .PHONY: check_testDelete
 check_testDelete: $(testDelete_TESTS)
 
+$(top_builddir)/src/hello-world.cpp:
+	make -C $(top_builddir)/src check-hello-cxx
+
 testDelete_helloworld_cpp.passed: testDelete $(top_builddir)/src/hello-world.cpp
 	@$(RTH_RUN) \
 		CMD="./testDelete $(top_builddir)/src/hello-world.cpp" \

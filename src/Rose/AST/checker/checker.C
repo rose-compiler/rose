@@ -10,6 +10,7 @@ namespace Rose { namespace AST { namespace Defects {
 std::set<defect_t<Kind::any> *> defect_t<Kind::any>::all;
 
 defect_t<Kind::any>::defect_t(Kind kind_) : kind(kind_) {}
+defect_t<Kind::any>::~defect_t() {}
 
 void defect_t<Kind::any>::clear() {
   for (auto d: all) delete d;
