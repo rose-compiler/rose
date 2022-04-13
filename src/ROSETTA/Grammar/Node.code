@@ -711,6 +711,9 @@ typedef SgAsmElfSymverNeededAuxPtrList*              SgAsmElfSymverNeededAuxPtrL
 typedef Rose_STL_Container<SgAsmJvmAttribute*> SgAsmJvmAttributePtrList;
 typedef SgAsmJvmAttributePtrList*              SgAsmJvmAttributePtrListPtr;
 
+typedef Rose_STL_Container<SgAsmJvmClass*> SgAsmJvmClassPtrList;
+typedef SgAsmJvmClassPtrList*              SgAsmJvmClassPtrListPtr;
+
 typedef Rose_STL_Container<SgAsmJvmConstantPoolEntry*> SgAsmJvmConstantPoolEntryPtrList;
 typedef SgAsmJvmConstantPoolEntryPtrList*              SgAsmJvmConstantPoolEntryPtrListPtr;
 
