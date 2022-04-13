@@ -470,4 +470,49 @@ SgAsmJvmClassFile::dump(FILE *f, const char *prefix, ssize_t idx) const
 }
 #endif // SgAsmGenericHeader old stuff
 
+SgAsmJvmClass::SgAsmJvmClass(SgAsmJvmInterfaceTable* table)
+{
+  std::cout << "SgAsmJvmClass::ctor() ...\n";
+  set_parent(table);
+}
+
+SgAsmJvmClass* SgAsmJvmClass::parse(SgAsmJvmConstantPool* pool)
+{
+  std::cout << "SgAsmJvmClass::parse() ...\n";
+
+  return this;
+}
+
+void SgAsmJvmClass::dump(std::ostream &os) const
+{
+  std::cout << "SgAsmJvmClass::dump() ...\n";
+}
+
+
+SgAsmJvmInterfaceTable::SgAsmJvmInterfaceTable(SgAsmJvmClassFile* jcf)
+{
+  std::cout << "SgAsmJvmInterfaceTable::ctor() ...\n";
+
+  set_parent(jcf);
+  p_interfaces = new SgAsmJvmClassList;
+  p_interfaces->set_parent(this);
+}
+
+SgAsmJvmInterfaceTable* SgAsmJvmInterfaceTable::parse()
+{
+  std::cout << "SgAsmJvmInterfaceTable::parse() ...\n";
+  uint16_t interfaces_count;
+
+  auto jcf = dynamic_cast<SgAsmJvmClassFile*>(get_parent());
+  ROSE_ASSERT(jcf && "JVM class_file is a nullptr");
+  auto pool = jcf->get_constant_pool();
+  ROSE_ASSERT(pool && "JVM constant_pool is a nullptr");
+
+  Jvm::read_value(pool, interfaces_count);
+  std::cout << "SgAsmJvmInterfaceTable::parse(): interfaces_count " << interfaces_count << std::endl;
+
+  std::cout << "SgAsmJvmInterfaceTable::parse() exit ... \n";
+  return this;
+}
+
 #endif // ROSE_ENABLE_BINARY_ANALYSIS
