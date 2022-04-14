@@ -229,6 +229,7 @@ libroseLibraries = \
    $(top_builddir)/src/roseExtensions/failSafe/libfailsafe.la \
    $(top_builddir)/src/Rose/librose_partial.la \
    $(top_builddir)/src/Rose/AST/libRoseAST.la \
+   $(top_builddir)/src/Rose/CodeGen/libRoseCodeGen.la \
    $(libroseSqlite3xConnection) \
    $(libroseQtExtension)
 

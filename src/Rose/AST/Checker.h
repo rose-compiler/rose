@@ -1,6 +1,6 @@
 
-#ifndef __ROSE_AST_CHECKER_H__
-#define __ROSE_AST_CHECKER_H__
+#ifndef ROSE_AST_CHECKER_H
+#define ROSE_AST_CHECKER_H
 
 namespace Rose {
 namespace AST {
@@ -105,5 +105,5 @@ bool consistency(SgProject * project);
 
 } } }
 
-#endif /* __ROSE_AST_CHECKER_H__ */
+#endif /* ROSE_AST_CHECKER_H */
 

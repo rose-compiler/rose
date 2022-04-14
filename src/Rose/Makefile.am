@@ -4,7 +4,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 AUTOMAKE_OPTIONS = nostdinc subdir-objects
 
-SUBDIRS=AST
+SUBDIRS=AST CodeGen
 
 # LicenseString.h is included by CommandLine/License.C but is not installed.
 #

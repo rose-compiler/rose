@@ -18,7 +18,8 @@ if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
               astSymbolTableTests astSnippetTests \
               programTransformationTests \
               graph_tests mergeTraversal_tests \
-              astLValueTests abstractMemoryObjectTests varDeclNorm
+              astLValueTests abstractMemoryObjectTests varDeclNorm \
+	      roseCodeGen
 
 # DQ (3/31/2021): Testing by removing astTokenStreamTests (above)
 #              astSymbolTableTests astTokenStreamTests astSnippetTests 

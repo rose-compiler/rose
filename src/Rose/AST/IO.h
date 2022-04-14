@@ -1,5 +1,5 @@
-#ifndef __ROSE_AST_IO_H__
-#define __ROSE_AST_IO_H__
+#ifndef ROSE_AST_IO_H
+#define ROSE_AST_IO_H
 
 #include <list>
 #include <string>
@@ -84,5 +84,5 @@ ROSE_DLL_API void free();
 
 } } }
 
-#endif /* __ROSE_AST_IO_H__ */
+#endif /* ROSE_AST_IO_H */
 

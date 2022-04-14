@@ -74,8 +74,6 @@ namespace ELF{
 // #include "AstMerge.h"
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-// DQ (5/26/2007): Use the new AST merge mechanism.
-#include "Rose/AST/io.h"
 // JH (01/18/2006): adding the include file for the AST file I/O (by Jochen)
 #include "AST_FILE_IO.h"
 // DQ (9/9/2007): Can't use astVisualization/ prefix since it then does not permit use from the install tree
