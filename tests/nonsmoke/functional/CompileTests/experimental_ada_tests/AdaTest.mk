@@ -27,6 +27,7 @@ ADA_TRANSLATOR_PASSING_TESTS :=        \
   empty_package.ads                    \
   empty_private.ads                    \
   enum_colors.ads                      \
+  enum_derived_type.adb                \
   exit_statement.adb                   \
   fib.adb                              \
   for_loop.adb                         \
@@ -57,6 +58,7 @@ ADA_TRANSLATOR_PASSING_TESTS :=        \
   overload.adb                         \
   package_with_body.ads                \
   parameter_declaration.ads            \
+  parent-child.ads                     \
   private_enum.ads                     \
   private_extension_declaration.ads    \
   private_type_definition.ads          \
@@ -71,12 +73,16 @@ ADA_TRANSLATOR_PASSING_TESTS :=        \
   short_circuit_v2.adb                 \
   signed_integer_type_definition.ads   \
   simpleada.ads                        \
+  simple_expression_range.ads          \
   some_modes.ads                       \
   standard_subtypes.ads                \
   subtypes.ads                         \
+  sub_derived_types.ads                \
   switches.ads                         \
   tagged_definition.ads                \
   tagged_incomplete_type_declaration.ads \
+  type_conversion.adb                  \
+  unconstrained_array_definition.ads   \
   unit_1.adb                           \
   unit_3.ads                           \
   variable_declaration.ads             \
@@ -100,7 +106,6 @@ ADA_TRANSLATOR_PASSING_INCOMPLETE_TESTS :=       \
   defining_enumeration_literal.adb     \
   defining_operator_symbol.ads         \
   derived_private_record.adb           \
-  enum_derived_type.adb                \
   enumeration.adb                      \
   enumeration_with_text_io.adb         \
   function_body_stub.adb               \
@@ -117,6 +122,7 @@ ADA_TRANSLATOR_PASSING_INCOMPLETE_TESTS :=       \
   hello_world.adb                      \
   identity.ads                         \
   ifexpr.adb                           \
+  io.ads                               \
   io_test.adb                          \
   io_test2.adb                         \
   multidimensional_array.adb           \
@@ -124,11 +130,10 @@ ADA_TRANSLATOR_PASSING_INCOMPLETE_TESTS :=       \
   myarray.adb                          \
   nullptr.adb                          \
   object_renaming_declaration.adb      \
-  package_pragma.ads                   \
   package_instantiation.adb            \
+  package_pragma.ads                   \
   package_with_body.adb                \
   parent.ads                           \
-  parent-child.ads                     \
   parenthesis_matters.adb              \
   pragmas.adb                          \
   private_access_type.adb              \
@@ -144,11 +149,9 @@ ADA_TRANSLATOR_PASSING_INCOMPLETE_TESTS :=       \
   scopequal.adb                        \
   simpleada-io.ads                     \
   simple_array_expressions.adb         \
-  simple_expression_range.ads          \
+  simple_hello_world.adb               \
   simple_hello_world_with_renamed.adb  \
-  sub_derived_types.ads                \
-  type_conversion.adb                  \
-  unconstrained_array_definition.ads   \
+  simple_hello_world_with_use.adb      \
   default_function_argument.adb        \
   qualified_expression.adb             \
   type_in_local_pkg.adb                \
@@ -186,7 +189,6 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   generic_procedure_renaming_declaration.ads  \
   generic_function_renaming_declaration.ads   \
   inherited_primitive_operation.adb    \
-  io.ads                               \
   iterate_range.adb                    \
   namequal_with_renamed_1.adb          \
   namequal_with_renamed_2.adb          \
@@ -208,8 +210,6 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   simple_select_accept.adb             \
   simple_select_accept_guarded.adb     \
   simple_use_type.ads                  \
-  simple_hello_world.adb               \
-  simple_hello_world_with_use.adb      \
   single_protected_declaration.ads     \
   std_ascii_user.adb                   \
   taskarray.adb                        \
