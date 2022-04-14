@@ -114,6 +114,8 @@ public:
 
   bool initialStateFilterUnusedVariables=true;
 
+  bool externalSoundness=false; // if set to true, calls to external functions invalidate all variables
+  
   std::string interpreterModeOuputFileName;
   bool printWarnings=false;
   //bool printViolations=false;
