@@ -199,6 +199,8 @@ namespace CodeThorn {
     AbstractValue createStructDataMemberAddress(AbstractValue structAddress,VariableId varId);
     bool isGlobalAddress(AbstractValue memLoc);
     void createAbstractArrayInPlace(Label label, PStatePtr newPState, VariableId initDeclVarId);
+    // invalidates pstate if externalSoundness is enabled. This feature is off by default.
+    void modelOptionalExternalSoundness(PStatePtr pstate);
   public:
     // determines whether lab is a function call label of a function
     // call of the form 'x=f(...)' and returns the varible-id of the

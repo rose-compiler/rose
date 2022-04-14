@@ -845,6 +845,12 @@ namespace CodeThorn {
     }
   }
 
+  void EStateTransferFunctions::modelOptionalExternalSoundness(PStatePtr pstate) {
+    if(_analyzer->getOptionsRef().externalSoundness) {
+      pstate->writeTopToAllPotentialMemoryLocations();
+    }
+  }
+  
   std::list<EStatePtr> EStateTransferFunctions::transferFunctionCallExternal(Edge edge, EStatePtr estate) {
     EStatePtr currentEState=estate;
     CallString cs=currentEState->getCallString();
@@ -922,7 +928,7 @@ namespace CodeThorn {
           // update input var
           newPState->writeTopToMemoryLocation(varId);
           newio.recordVariable(InputOutput::STDIN_VAR,varId);
-
+          modelOptionalExternalSoundness(newPState);
           // external call context
           // call string is reused from input-estate. An external function call does not change the call string
           // callReturn node must check for being an external call
@@ -965,6 +971,7 @@ namespace CodeThorn {
         // here only the specific format x=f(...) can exist
         SgAssignOp* assignOp=isSgAssignOp(AstUtility::findExprNodeInAstUpwards(V_SgAssignOp,funCall));
         ROSE_ASSERT(assignOp);
+        modelOptionalExternalSoundness(estate->pstate());
         return evalAssignOp3(assignOp,edge.target(),estate);
       } else {
         // all other cases, evaluate function call as expression
@@ -982,11 +989,13 @@ namespace CodeThorn {
         // added function call result value to state. The returnVarId does not correspond to a declaration, and therefore it is
         // treated as being initialized (and declared).
         initializeMemoryLocation(currentEState->label(),newPState,returnVarId,evalResult2.result);
+        modelOptionalExternalSoundness(newPState);
         return elistify(reInitEState(currentEState,edge.target(),cs,newPState,evalResult2.estate->io)); // pstate from evalResult2
       }
     }
     // for all other external functions use identity as transfer function
     EStatePtr newEState=currentEState;
+    modelOptionalExternalSoundness(newEState->pstate());
     newEState->io=newio;
     newEState->setLabel(edge.target());
     return elistify(newEState);

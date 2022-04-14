@@ -243,6 +243,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("abstraction-check",po::value<bool>(&ctOpt.abstractionConsistencyCheck)->implicit_value(true), "Enable abstraction consistency check. Only used for debugging, slows down analysis significantly.")
     ("pass-through-opt",po::value<bool>(&ctOpt.passThroughOptimization)->implicit_value(true), "Enable/Disable pass through optimization in Solver 18. Only used for debugging, slows down analysis significantly when turned off.")
     ("temp-var-opt",po::value<bool>(&ctOpt.temporaryLocalVarOptFlag)->implicit_value(true), "Enable/Disable temporary var optimization in Solver 18. Only used for debugging, slows down analysis significantly when turned off.")
+    ("external-soundness",po::value<bool>(&ctOpt.externalSoundness)->implicit_value(true), "Enable external soundness (functions without semantics invalidate entire state)")
     ;
 
   rersOptions.add_options()
