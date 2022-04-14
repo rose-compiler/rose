@@ -27,21 +27,21 @@ $foundInDir  = "";
 
 $mkinstaller_ver_major = "2";
 $mkinstaller_ver_minor = "6";
-$mkinstaller_ver_build = "18";
-$mkinstaller_ver_patch = "1";
-$mkinstaller_ver_name  = "2.6.18.1";
-$mkinstaller_ver_time  = "18Mar2022,00:48:03z";
-$mkinstaller_ver_id    = "@(#)mkinstaller 2.6.18.1 - 18Mar2022,00:48:03z";
+$mkinstaller_ver_build = "20";
+$mkinstaller_ver_patch = "";
+$mkinstaller_ver_name  = "2.6.20";
+$mkinstaller_ver_time  = "11Apr2022,18:11:34z";
+$mkinstaller_ver_id    = "@(#)mkinstaller 2.6.20 - 11Apr2022,18:11:34z";
 
 # MyUniqueFileId: d34be5e4-1cfc-49b6-d988-25ab878c795f
 
 $perl_library_ver_major = "2";
 $perl_library_ver_minor = "0";
-$perl_library_ver_build = "10";
+$perl_library_ver_build = "11";
 $perl_library_ver_patch = "";
-$perl_library_ver_name  = "2.0.10";
-$perl_library_ver_time  = " 8Feb2022,18:05:49z";
-$perl_library_ver_id    = "@(#)perl_library 2.0.10 -  8Feb2022,18:05:49z";
+$perl_library_ver_name  = "2.0.11";
+$perl_library_ver_time  = " 4Apr2022,14:43:01z";
+$perl_library_ver_id    = "@(#)perl_library 2.0.11 -  4Apr2022,14:43:01z";
 
 #{------------------------------------------------------------------------------
 #
@@ -20788,7 +20788,7 @@ sub pKit_getTotebagId {
    #
    #---------------------------------------
 
-   my $TBG_uniqueId = "cbaf8f4292c5d1531fe86f7cf52dc8e9e989a46e88691f33da948b4063f178bb";
+   my $TBG_uniqueId = "00aa09ab51b663fa6f473fc12a5513f7ee76fb90fc1a1998e68f8301b5f5e875";
 
    #}--------------------------------------
 
