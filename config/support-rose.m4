@@ -2211,6 +2211,7 @@ src/3rdPartyLibraries/qrose/Widgets/Makefile
 src/Makefile
 src/Rose/Makefile
 src/Rose/AST/Makefile
+src/Rose/CodeGen/Makefile
 src/ROSETTA/Makefile
 src/ROSETTA/src/Makefile
 src/backend/Makefile
@@ -2518,6 +2519,7 @@ tests/nonsmoke/functional/roseTests/roseHPCToolkitTests/data/03/PROFILE/Makefile
 tests/nonsmoke/functional/roseTests/roseHPCToolkitTests/data/03/struct_ls/Makefile
 tests/nonsmoke/functional/roseTests/roseHPCToolkitTests/data/Makefile
 tests/nonsmoke/functional/roseTests/varDeclNorm/Makefile
+tests/nonsmoke/functional/roseTests/roseCodeGen/Makefile
 tests/nonsmoke/functional/testSupport/Makefile
 tests/nonsmoke/functional/testSupport/gtest/Makefile
 tests/nonsmoke/functional/translatorTests/Makefile

@@ -151,6 +151,7 @@ set(rose_LIB_SRCS
   $<TARGET_OBJECTS:roseFileSystem>
   $<TARGET_OBJECTS:roseStringUtility>
   $<TARGET_OBJECTS:RoseAST>
+  $<TARGET_OBJECTS:RoseCodeGen>
   $<TARGET_OBJECTS:mstl>)
 
 if(enable-java)

@@ -11,6 +11,7 @@ add_subdirectory(Diagnostics)
 add_subdirectory(FileSystem)
 add_subdirectory(StringUtility)
 add_subdirectory(AST)
+add_subdirectory(CodeGen)
 
 # needed to properly define ROSE_UTIL_API
 add_definitions(-DROSE_UTIL_EXPORTS)
