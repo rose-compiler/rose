@@ -190,6 +190,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   generic_function_renaming_declaration.ads   \
   inherited_primitive_operation.adb    \
   iterate_range.adb                    \
+  largeenum.adb                        \
   namequal_with_renamed_1.adb          \
   namequal_with_renamed_2.adb          \
   nested_package.ads                   \
