@@ -77,7 +77,7 @@ class AbstractValue {
   // should use this function to model the semantics of an undefined value.
   bool isUndefined() const; 
   bool isTop() const;
-  bool isTopOrArbitraryMemPtr() const;
+  bool isTopOrUndefinedOrArbitraryMemPtrOrAbstract() const;
   bool isTrue() const;
   bool isFalse() const;
   bool isBot() const;

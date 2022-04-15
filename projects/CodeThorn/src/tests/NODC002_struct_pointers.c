@@ -10,7 +10,7 @@ char Read_8bit(int offset) {
 
 void FOO() {};
 
-void main(void) {
+int main(void) {
   int J;
   char* P_JIM;
   P_JIM = (char*) &JIM;
@@ -22,4 +22,5 @@ void main(void) {
   if(JIM.JIM_STATE == 0) {
     FOO();
   }
+  return 0;
 }
