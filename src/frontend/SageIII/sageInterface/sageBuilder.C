@@ -2031,7 +2031,7 @@ SageBuilder::buildTemplateVariableDeclaration (const SgName & name, SgType* type
 {
   SgTemplateVariableDeclaration* res = buildTemplateVariableDeclaration_nfi(name, type, varInit, scope);
   setOneSourcePositionForTransformation(res);
-  return res; 
+  return res;
 }
 
 // DQ (12/6/2011): Adding support for template declarations into the AST.
@@ -7399,6 +7399,7 @@ BUILD_UNARY_DEF(MinusOp)
 BUILD_UNARY_DEF(NotOp)
 BUILD_UNARY_DEF(PointerDerefExp)
 BUILD_UNARY_DEF(UnaryAddOp)
+BUILD_UNARY_DEF(AbsOp)
 BUILD_UNARY_DEF(MinusMinusOp)
 BUILD_UNARY_DEF(PlusPlusOp)
 BUILD_UNARY_DEF(RealPartOp)
@@ -7607,6 +7608,7 @@ BUILD_BINARY_DEF(NonMembershipOp)
 BUILD_BINARY_DEF(OrOp)
 BUILD_BINARY_DEF(PlusAssignOp)
 BUILD_BINARY_DEF(PntrArrRefExp)
+BUILD_BINARY_DEF(RemOp)
 BUILD_BINARY_DEF(RshiftAssignOp)
 BUILD_BINARY_DEF(JavaUnsignedRshiftAssignOp)
 
@@ -15506,7 +15508,7 @@ SageBuilder::buildTemplateClassDeclaration(const SgName& XXX_name, SgClassDeclar
 {
   SgTemplateClassDeclaration * res = buildTemplateClassDeclaration_nfi (XXX_name, kind, scope, nonDefiningDecl, templateParameterList, templateSpecializationArgumentList);
   setSourcePositionForTransformation (res);
-  return res; 
+  return res;
 }
 
 SgTemplateClassDeclaration *

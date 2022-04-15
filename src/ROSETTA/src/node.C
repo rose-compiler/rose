@@ -136,10 +136,11 @@ Grammar::setUpNodes ()
      NEW_TERMINAL_MACRO (AdaDigitsConstraint, "AdaDigitsConstraint", "AdaDigitsConstraintTag");
      NEW_TERMINAL_MACRO (AdaDeltaConstraint,  "AdaDeltaConstraint", "AdaDeltaConstraintTag");
      NEW_TERMINAL_MACRO (AdaDiscriminantConstraint, "AdaDiscriminantConstraint", "AdaDiscriminantConstraintTag");
+     NEW_TERMINAL_MACRO (AdaNullConstraint, "AdaNullConstraint", "AdaNullConstraintTag");
 
      NEW_NONTERMINAL_MACRO (AdaTypeConstraint,
           AdaRangeConstraint | AdaIndexConstraint | AdaDigitsConstraint | AdaDeltaConstraint |
-          AdaDiscriminantConstraint ,
+          AdaDiscriminantConstraint | AdaNullConstraint,
           "AdaTypeConstraint", "AdaTypeConstraintTag", false);
 
 
@@ -646,6 +647,7 @@ Grammar::setUpNodes ()
      AdaDigitsConstraint.setFunctionPrototype    ( "HEADER_ADA_DIGITS_CONSTRAINT"    , "../Grammar/LocatedNode.code");
      AdaDeltaConstraint.setFunctionPrototype     ( "HEADER_ADA_DELTA_CONSTRAINT"     , "../Grammar/LocatedNode.code");
      AdaDiscriminantConstraint.setFunctionPrototype ( "HEADER_ADA_DISCRIMINANT_CONSTRAINT", "../Grammar/LocatedNode.code");
+     AdaNullConstraint.setFunctionPrototype      ( "HEADER_ADA_NULL_CONSTRAINT", "../Grammar/LocatedNode.code");
 
 
   // ***************************************************************************************
@@ -1690,6 +1692,7 @@ Grammar::setUpNodes ()
      AdaDigitsConstraint.setFunctionSource     ( "SOURCE_ADA_DIGITS_CONSTRAINT"    , "../Grammar/LocatedNode.code");
      AdaDeltaConstraint.setFunctionSource      ( "SOURCE_ADA_DELTA_CONSTRAINT"     , "../Grammar/LocatedNode.code");
      AdaDiscriminantConstraint.setFunctionSource ( "SOURCE_ADA_DISCRIMINANT_CONSTRAINT", "../Grammar/LocatedNode.code");
+     AdaNullConstraint.setFunctionSource       ( "SOURCE_ADA_NULL_CONSTRAINT", "../Grammar/LocatedNode.code");
 
 
 

@@ -285,12 +285,34 @@ namespace
       exprlst(n);
     }
 
-    void handle(SgCallExpression& n)
+    void handle(SgFunctionCallExp& n)
     {
-      SgExprListExp& args = SG_DEREF(n.get_args());
+      SgExprListExp&         args = SG_DEREF(n.get_args());
+      SgFunctionDeclaration* fndcl = n.getAssociatedFunctionDeclaration();
 
-      expr(n.get_function());
-      arglst_opt(args);
+      if ((fndcl == nullptr) || (n.get_uses_operator_syntax() == false))
+      {
+        expr(n.get_function());
+        arglst_opt(args);
+        return;
+      }
+
+      SgExpressionPtrList& lst = args.get_expressions();
+      ROSE_ASSERT((lst.size() > 0) && (lst.size() < 3));
+
+      std::string op = si::ada::convertRoseOperatorNameToAdaOperator(fndcl->get_name());
+      ROSE_ASSERT(op.size());
+
+      if (lst.size() == 2)
+      {
+        expr(lst.front());
+        prn(" ");
+      }
+
+      prn(op);
+      // add a space for binary and named unary (op.size > 1) operators
+      if ((lst.size() == 2) || (op.size() > 1)) prn(" ");
+      expr(lst.back());
     }
 
     void prnIfBranch(const si::ada::IfExpressionInfo& branch, const std::string& cond)
@@ -492,7 +514,9 @@ namespace
       else if (SgScopeStatement* dclscope = assumedDeclarativeScope(n))
         prn(scopeQual(dclscope));
 
-      prn(nameOf(n));
+      std::string fn = si::ada::convertRoseOperatorNameToAdaName(nameOf(n));
+
+      prn(std::move(fn));
     }
 
     template <class SageAdaRefExp>

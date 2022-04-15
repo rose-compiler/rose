@@ -802,10 +802,11 @@ namespace
       /// computes the name qualification for a non-shared node \ref n.
       /// \details
       ///    suitable for declarations, expressions, and other non-shared nodes.
-      ///    note: some expression subtrees within types are not reached by the
-      ///          type traversal mechanism. Those need to be visited separately.
+      ///    note: some expression subtrees (e.g., those in types, AdaVariantFieldDecl, ..)
+      ///          are not reached by the type traversal mechanism. Those need to be
+      ///          visited separately.
       ///          e.g., SgDeclType::get_base_expression
-      void computeNameQualForNonshared(const SgNode* n);
+      void computeNameQualForNonshared(const SgNode* n, bool inTypeSubtree = true);
 
       void computeNameQualForDeclLink(const SgNode& ref, const SgDeclarationStatement& n);
 
@@ -994,6 +995,9 @@ namespace
           basedecl = gendcl->get_declaration();
 
         computeNameQualForDeclLink(n, SG_DEREF(basedecl));
+
+        // since the arguments are not traversed, they are name-qualified explicitly
+        computeNameQualForNonshared(n.get_actual_parameters(), false /* not a type subtree */);
       }
 
       void handle(const SgAdaFormalPackageDecl& n)
@@ -1039,6 +1043,13 @@ namespace
         // bases seem not to be traverses, so let's traverse them
         for (const SgBaseClass* base : n.get_inheritances())
           handle(SG_DEREF(base));
+      }
+
+      void handle(const SgAdaVariantFieldDecl& n)
+      {
+        handle(sg::asBaseType(n));
+
+        computeNameQualForNonshared(n.get_variantConditions(), false);
       }
 
       //
@@ -1452,11 +1463,12 @@ namespace
 
 
   void
-  AdaPreNameQualifier::computeNameQualForNonshared(const SgNode* n)
+  AdaPreNameQualifier::computeNameQualForNonshared(const SgNode* n, bool inTypeSubtree)
   {
-    // since we are already in a subtree, we do not need to switch
-    // the local reference map.
-    ROSE_ASSERT(&traversal.get_qualifiedNameMapForNames() != &SgNode::get_globalQualifiedNameMapForNames());
+    // since it is a non-shared node, we do not need to switch the local reference map.
+    ROSE_ASSERT(  (!inTypeSubtree)
+               || (&traversal.get_qualifiedNameMapForNames() != &SgNode::get_globalQualifiedNameMapForNames())
+               );
 
     /// not sure if we need a separate traversal here,
     //    or if we could just reuse traversal.

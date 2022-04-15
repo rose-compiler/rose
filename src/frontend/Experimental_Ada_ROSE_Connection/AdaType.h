@@ -61,8 +61,11 @@ getDeclTypeID(Element_ID id, AstContext ctx);
 
 
 /// returns the ROSE type for an Asis definition \ref defid
+/// \param defid        the Asis element ID
+/// \param ctx          the translation context
+/// \param forceSubtype true, iff a subtype without constraint should be represented as such
 SgType&
-getDefinitionTypeID(Element_ID defid, AstContext ctx);
+getDefinitionTypeID(Element_ID defid, AstContext ctx, bool forceSubtype = false);
 
 /// returns the ROSE type for an Asis definition \ref defid
 /// iff defid is NULL, an SgTypeVoid is returned.

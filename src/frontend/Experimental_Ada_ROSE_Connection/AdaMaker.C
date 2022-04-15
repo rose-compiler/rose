@@ -177,6 +177,12 @@ mkAdaDeltaConstraint(SgExpression& delta, bool isDecimal, SgAdaTypeConstraint* s
   return mkFixedPointConstraint<SgAdaDeltaConstraint>(delta, sub_opt, isDecimal);
 }
 
+SgAdaNullConstraint&
+mkAdaNullConstraint()
+{
+  return mkLocatedNode<SgAdaNullConstraint>();
+}
+
 
 namespace
 {
@@ -1249,7 +1255,7 @@ mkAdaFunctionRenamingDecl( const std::string& name,
                            SgScopeStatement& scope,
                            SgType& retty,
                            std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
-                           )
+                         )
 {
   SgAdaFunctionRenamingDecl& sgnode = mkLocatedNode<SgAdaFunctionRenamingDecl>(name, nullptr, nullptr);
   SgFunctionParameterList&   lst    = SG_DEREF(sgnode.get_parameterList());
@@ -1264,7 +1270,13 @@ mkAdaFunctionRenamingDecl( const std::string& name,
   ADA_ASSERT(sgnode.get_parameterList_syntax() == nullptr);
 
   SgFunctionSymbol *funsy = scope.find_symbol_by_type_of_function<SgFunctionDeclaration>(name, &funty, NULL, NULL);
-  ADA_ASSERT(funsy == nullptr);
+  if (funsy != nullptr)
+  {
+    logWarn() << "found function symbol " << name << " in scope. Type of scope: "
+              << typeid(scope).name()
+              << std::endl;
+    ADA_ASSERT(funsy == nullptr);
+  }
 
   funsy = &mkBareNode<SgFunctionSymbol>(&sgnode);
   scope.insert_symbol(name, funsy);
@@ -1778,6 +1790,17 @@ mkCastExp(SgExpression& expr, SgType& ty)
 }
 
 
+SgFunctionCallExp&
+mkFunctionCallExp(SgExpression& target, SgExprListExp& arglst, bool usesOperatorSyntax)
+{
+  SgFunctionCallExp& sgnode = SG_DEREF(sb::buildFunctionCallExp_nfi(&target, &arglst));
+
+  sgnode.set_uses_operator_syntax(usesOperatorSyntax);
+  return sgnode;
+}
+
+
+
 SgExpression&
 mkQualifiedExp(SgExpression& expr, SgType& ty)
 {
@@ -1895,17 +1918,242 @@ mkEnumeratorRef_repclause(SgEnumDeclaration&, SgInitializedName& enumitem)
   return SG_DEREF( sb::buildVarRefExp(&enumitem, nullptr /* not needed */) );
 }
 
+namespace
+{
+  SgType& accessTypeAttr(SgExpression& expr, SgExprListExp&)
+  {
+    return mkAdaAccessType(SG_DEREF(expr.get_type()));
+  }
+
+  SgType& integralTypeAttr(SgExpression&, SgExprListExp&)
+  {
+    return mkIntegralType();
+  }
+
+  SgType& realTypeAttr(SgExpression&, SgExprListExp&)
+  {
+    return mkRealType();
+  }
+
+  SgType& unknownTypeAttr(SgExpression&, SgExprListExp&)
+  {
+    return mkTypeUnknown();
+  }
+
+  SgType& voidTypeAttr(SgExpression&, SgExprListExp&)
+  {
+    return mkTypeVoid();
+  }
+
+  SgType& boolTypeAttr(SgExpression&, SgExprListExp&)
+  {
+    return lookupNode(adaTypes(), AdaIdentifier{"BOOLEAN"});
+  }
+/*
+  SgType& fixedTypeAttr(SgExpression&, SgExprListExp&)
+  {
+    return mkFixedType();
+  }
+*/
+  SgType& stringTypeAttr(SgExpression&, SgExprListExp&)
+  {
+    return lookupNode(adaTypes(), AdaIdentifier{"STRING"});
+  }
+
+  SgType& wideStringTypeAttr(SgExpression&, SgExprListExp&)
+  {
+    return lookupNode(adaTypes(), AdaIdentifier{"WIDE_STRING"});
+  }
+
+  SgType& wideWideStringTypeAttr(SgExpression&, SgExprListExp&)
+  {
+    return lookupNode(adaTypes(), AdaIdentifier{"WIDE_WIDE_STRING"});
+  }
+
+  SgType& firstLastTypeAttr(SgExpression& obj, SgExprListExp& args)
+  {
+    SgType* basety = nullptr;
+
+    if (SgTypeExpression* tyexp = isSgTypeExpression(&obj))
+      basety = tyexp->get_type();
+    else
+      basety = obj.get_type();
+
+    si::ada::FlatArrayType flatty = si::ada::getArrayTypeInfo(basety);
+
+    if (flatty.first == nullptr)
+      return SG_DEREF(basety);
+
+    SgType* resty = nullptr;
+
+    try
+    {
+      const int dim = si::ada::firstLastDimension(args);
+
+      resty = SG_DEREF(flatty.second.at(dim-1)).get_type();
+    }
+    catch (...)
+    {
+      logWarn() << "unable to fold " << args.get_expressions().at(0)->unparseToString()
+                << std::endl;
+
+      resty = &mkTypeUnknown();
+    }
+
+    return SG_DEREF(resty);
+  }
+
+  SgType& exprTypeAttr(SgExpression& tyrep, SgExprListExp&)
+  {
+    //~ logError() << " >>> " << tyrep.unparseToString() << " " << typeid(*tyrep.get_type()).name()
+                //~ << std::endl;
+
+    return SG_DEREF(tyrep.get_type());
+  }
+
+  SgType& argTypeAttr(SgExpression&, SgExprListExp& args)
+  {
+    SgExpression& exp = SG_DEREF(args.get_expressions().front());
+
+    return SG_DEREF(exp.get_type());
+  }
+
+  SgType&
+  attributeType(SgExpression& expr, const std::string& ident, SgExprListExp& args)
+  {
+    using TypeMaker = SgType& (*) (SgExpression& expr, SgExprListExp& args);
+    using TypeCalc  = std::map<AdaIdentifier, TypeMaker>;
+
+    static const TypeCalc typecalc = { { "access",               &accessTypeAttr }
+                                     , { "address",              &integralTypeAttr }
+                                     , { "address_size",         &integralTypeAttr }
+                                     , { "adjacent",             &argTypeAttr }
+                                     , { "aft",                  &integralTypeAttr }
+                                     , { "alignment",            &integralTypeAttr }
+                                     //~ , { "base",                 &unknownTypeAttr }
+                                     , { "bit",                  &integralTypeAttr }
+                                     , { "bit_order",            &voidTypeAttr }
+                                     , { "body_version",         &stringTypeAttr }
+                                     //~ , { "class",                &unknownTypeAttr }
+                                     , { "callable",             &boolTypeAttr }
+                                     , { "caller",               &stringTypeAttr } // should be Ada.Task_ID
+                                     , { "ceiling",              &argTypeAttr }
+                                     , { "component_size",       &integralTypeAttr }
+                                     , { "compose",              &argTypeAttr }
+                                     , { "constrained",          &boolTypeAttr }
+                                     , { "copy_sign",            &argTypeAttr }
+                                     , { "count",                &integralTypeAttr }
+                                     , { "delta",                &realTypeAttr }
+                                     , { "denorm",               &boolTypeAttr }
+                                     , { "definite",             &boolTypeAttr }
+                                     , { "digits",               &integralTypeAttr }
+                                     , { "exponent",             &integralTypeAttr }
+                                     //~ , { "external_tag",         &tagTypeAttr }
+                                     , { "fraction",             &argTypeAttr }
+                                     , { "first",                &firstLastTypeAttr }
+                                     , { "first_bit",            &integralTypeAttr }
+                                     , { "first_valid",          &exprTypeAttr }
+                                     , { "floor",                &argTypeAttr }
+                                     , { "fore",                 &integralTypeAttr }
+                                     , { "fraction",             &argTypeAttr }
+                                     , { "has_access_values",    &boolTypeAttr }
+                                     , { "has_discriminants",    &boolTypeAttr }
+                                     , { "has_tagged_values",    &boolTypeAttr }
+                                     , { "has_same_storage",     &boolTypeAttr }
+                                     , { "identity",             &stringTypeAttr } // should be an identity (TASK_ID, EXCEPTION_ID ...)
+                                     , { "image",                &stringTypeAttr }
+                                     //~ , { "input",                &unknownTypeAttr }   // ???
+                                     , { "last",                 &firstLastTypeAttr }
+                                     , { "last_valid",           &exprTypeAttr }
+                                     , { "last_bit",             &integralTypeAttr }
+                                     , { "leading_part",         &argTypeAttr }
+                                     , { "length",               &integralTypeAttr }
+                                     , { "machine",              &argTypeAttr }
+                                     , { "machine_emax",         &integralTypeAttr }
+                                     , { "machine_emin",         &integralTypeAttr }
+                                     , { "machine_mantissa",     &integralTypeAttr }
+                                     , { "machine_radix",        &integralTypeAttr }
+                                     , { "machine_rounds",       &boolTypeAttr }
+                                     , { "machine_rounding",     &argTypeAttr }
+                                     , { "machine_overflows",    &boolTypeAttr }
+                                     , { "max",                  &argTypeAttr }
+                                     , { "maximum_alignment",    &integralTypeAttr }
+                                     , { "min",                  &argTypeAttr }
+                                     , { "model",                &argTypeAttr }
+                                     , { "model_emin",           &integralTypeAttr }
+                                     , { "model_epsilon",        &realTypeAttr }
+                                     , { "model_mantissa",       &integralTypeAttr }
+                                     , { "model_small",          &realTypeAttr }
+                                     , { "modulus",              &integralTypeAttr }
+                                     , { "overlaps_storage",     &boolTypeAttr }
+                                     , { "pos",                  &integralTypeAttr }
+                                     , { "position",             &integralTypeAttr }
+                                     , { "pred",                 &argTypeAttr }
+                                     , { "remainder",            &argTypeAttr }
+                                     , { "rounding",             &argTypeAttr }
+                                     //~ , { "range",                &unknownTypeAttr }
+                                     //~ , { "output",               &unknownTypeAttr }   // ???
+                                     //~ , { "read",                 &unknownTypeAttr }   // ???
+                                     , { "safe_first",           &realTypeAttr }
+                                     , { "safe_last",            &realTypeAttr }
+                                     , { "scaling",              &argTypeAttr }
+                                     , { "scalar_storage_order", &voidTypeAttr }
+                                     , { "storage_pool",         &voidTypeAttr }
+                                     , { "storage_size",         &integralTypeAttr }
+                                     , { "succ",                 &argTypeAttr }
+                                     , { "signed_zeros",         &boolTypeAttr }
+                                     , { "size",                 &integralTypeAttr }
+                                     , { "storage_unit",         &integralTypeAttr }
+                                     //~ , { "tag",                  &tagTypeAttr }
+                                     , { "terminated",           &boolTypeAttr }
+                                     , { "truncation",           &argTypeAttr }
+                                     , { "to_address",           &integralTypeAttr }
+                                     , { "unbiased_rounding",    &argTypeAttr }
+                                     , { "unchecked_access",     &accessTypeAttr }
+                                     , { "unrestricted_access",  &accessTypeAttr }
+                                     , { "val",                  &exprTypeAttr }
+                                     , { "valid",                &boolTypeAttr }
+                                     , { "value",                &exprTypeAttr }
+                                     //~ , { "write",                &unknownTypeAttr }
+                                     , { "wide_identity",        &wideStringTypeAttr } // should be Ada.Task_ID
+                                     , { "wide_value",           &exprTypeAttr } // should be Ada.Task_ID
+                                     , { "wide_wide_identity",   &wideWideStringTypeAttr } // should be Ada.Task_ID
+                                     , { "wide_wide_value",      &exprTypeAttr } // should be Ada.Task_ID
+                                     , { "width",                &integralTypeAttr }
+                                     , { "wide_width",           &integralTypeAttr }
+                                     , { "wide_wide_width",      &integralTypeAttr }
+                                     , { "word_size",            &integralTypeAttr }
+                                     };
+
+    auto      pos = typecalc.find(ident);
+    TypeMaker bldr = ((pos != typecalc.end()) ? pos->second : nullptr);
+
+    if ((bldr == &argTypeAttr) && (args.get_expressions().size() == 0))
+    {
+      logError() << ident << " with zero arguments." << std::endl;
+      ADA_ASSERT(false);
+    }
+
+    if (bldr == nullptr)
+    {
+      bldr = &unknownTypeAttr;
+      logWarn() << "unknown attribute type for '" << ident << std::endl;
+    }
+
+    return bldr(expr, args);
+  }
+}
+
 
 SgAdaAttributeExp&
 mkAdaAttributeExp(SgExpression& expr, const std::string& ident, SgExprListExp& args)
 {
-  SgAdaAttributeExp& sgnode = mkLocatedNode<SgAdaAttributeExp>(ident, &expr, &args);
-  //~ SG_DEREF(sb::buildTypeTraitBuiltinOperator(ident, { &expr, &args }));
+  SgType&            attrty = attributeType(expr, ident, args);
+  SgAdaAttributeExp& sgnode = mkLocatedNode<SgAdaAttributeExp>(ident, &expr, &args, &attrty);
 
   expr.set_parent(&sgnode);
   args.set_parent(&sgnode);
 
-  markCompilerGenerated(sgnode);
   return sgnode;
 }
 
@@ -2068,17 +2316,17 @@ mkAdaIntegerLiteral(const char* textrep)
 //
 // builder functions
 
-SgRemOp*
-buildRemOp(SgExpression* lhs, SgExpression* rhs)
-{
-  return &mkLocatedNode<SgRemOp>(lhs, rhs, nullptr);
-}
+//~ SgRemOp*
+//~ buildRemOp(SgExpression* lhs, SgExpression* rhs)
+//~ {
+  //~ return &mkLocatedNode<SgRemOp>(lhs, rhs, nullptr);
+//~ }
 
-SgAbsOp*
-buildAbsOp(SgExpression* op)
-{
-  return &mkLocatedNode<SgAbsOp>(op, nullptr);
-}
+//~ SgAbsOp*
+//~ buildAbsOp(SgExpression* op)
+//~ {
+  //~ return &mkLocatedNode<SgAbsOp>(op, nullptr);
+//~ }
 
 
 }
