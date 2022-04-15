@@ -30,11 +30,18 @@ Unparse_Ada::Unparse_Ada(Unparser* unp, std::string fname)
   use_scopes(),
   renamed_scopes(),
   scope_state(1, ScopeStackEntry{}),
-  currentNameQualificationMap(&SgNode::get_globalQualifiedNameMapForNames())
+  currentNameQualificationMap(&SgNode::get_globalQualifiedNameMapForNames()),
+  oldLineWrap(unp->cur.get_linewrap())
 {
-  // Nothing to do here!
+  static constexpr int MAX_GNAT_LINE_LENGTH    = (1<<16)-1;
+  static constexpr int DEFAULT_MAX_LINE_LENGTH = 132;
+
+  // if unparsing generates a file, set max line wrapping if not set otherwise
+  if (fname.size() && ((oldLineWrap <= 0) || (oldLineWrap > MAX_GNAT_LINE_LENGTH)))
+    unp->cur.set_linewrap(DEFAULT_MAX_LINE_LENGTH);
 }
 
+Unparse_Ada::~Unparse_Ada() { unp->cur.set_linewrap(oldLineWrap); }
 
 void
 Unparse_Ada::unparseAdaFile(SgSourceFile* sourcefile, SgUnparse_Info& info)
