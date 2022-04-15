@@ -723,6 +723,9 @@ typedef SgAsmJvmExceptionPtrList*              SgAsmJvmExceptionPtrListPtr;
 typedef Rose_STL_Container<SgAsmJvmField*> SgAsmJvmFieldPtrList;
 typedef SgAsmJvmFieldPtrList*              SgAsmJvmFieldPtrListPtr;
 
+typedef Rose_STL_Container<SgAsmJvmLineNumber*> SgAsmJvmLineNumberPtrList;
+typedef SgAsmJvmLineNumberPtrList*              SgAsmJvmLineNumberPtrListPtr;
+
 typedef Rose_STL_Container<SgAsmJvmMethod*> SgAsmJvmMethodPtrList;
 typedef SgAsmJvmMethodPtrList*              SgAsmJvmMethodPtrListPtr;
 
