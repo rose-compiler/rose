@@ -234,8 +234,8 @@ namespace
     private:
       Element_ID                 tgtid;
       std::vector<SgExpression*> args;
-      bool                       callSyntax;
-      AstContext                 ctx;
+      bool        callSyntax;
+      AstContext  ctx;
   };
 
   struct ArrayAggregateCreator
@@ -433,9 +433,6 @@ namespace
 
     std::vector<SgFunctionDeclaration*> res;
 
-    //~ logWarn() << "disambiguating " << cands.size() << "candidates"
-              //~ << std::endl;
-
     std::copy_if( cands.begin(), cands.end(),
                   std::back_inserter(res),
                   [args](SgFunctionDeclaration* fn) -> bool
@@ -443,10 +440,7 @@ namespace
                     ADA_ASSERT(fn);
                     const int numParams = fn->get_args().size();
 
-                    if (std::size_t(numParams) != args->size())
-                    {
-                      return false;
-                    }
+                    if (std::size_t(numParams) != args->size()) return false;
 
                     bool res = true;
                     int  i   = 0;
@@ -1039,23 +1033,23 @@ namespace
           {
             AdaIdentifier adaIdent{expr.Name_Image};
 
-            // after there was no matching declaration, try to look up declarations in the standard package by name
+          // after there was no matching declaration, try to look up declarations in the standard package by name
             if (SgType* ty = findFirst(adaTypes(), adaIdent))
-            {
-              res = &mkTypeExpression(*ty);
-            }
+          {
+            res = &mkTypeExpression(*ty);
+          }
             else if (SgInitializedName* var = findFirst(adaVars(), adaIdent))
-            {
+          {
               res = sb::buildVarRefExp(var, &ctx.scope());
             }
             else if (SgInitializedName* exc = findFirst(adaExcps(), adaIdent))
             {
               res = &mkExceptionRef(*exc, ctx.scope());
-            }
-            else
-            {
-              // \todo check why the name remained unresolved
-              res = &mkUnresolvedName(expr.Name_Image, ctx.scope());
+          }
+          else
+          {
+            // \todo check why the name remained unresolved
+            res = &mkUnresolvedName(expr.Name_Image, ctx.scope());
             }
           }
 
@@ -1216,7 +1210,7 @@ namespace
       case A_Selected_Component:                      // 4.1.3
         {
           logKind("A_Selected_Component");
-          SgExpression& selector = getExprID(expr.Selector, ctx, suppl);
+          SgExpression& selector = getExprID(expr.Selector, ctx);
 
           // Check if the kind requires a prefix in ROSE,
           //   or if the prefix (scope qualification) is implied and
