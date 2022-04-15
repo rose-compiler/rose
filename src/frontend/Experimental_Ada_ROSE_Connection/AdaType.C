@@ -377,7 +377,6 @@ namespace
   SgAdaTypeConstraint*
   getConstraintID_opt(Element_ID el, AstContext ctx)
   {
-    // consider returning AdaNullConstraint if el == 0 (see impl. of getConstraintID).
     return el ? &getConstraintID(el, ctx) : nullptr;
   }
 
@@ -1395,7 +1394,7 @@ void initializePkgStandard(SgGlobal& global)
   stdpkg.set_scope(&global);
 
   // \todo reconsider using a true Ada exception representation
-  SgType& exceptionType             = SG_DEREF(sb::buildOpaqueType("Exception", &stdspec));
+  SgType&               exceptionType = SG_DEREF(sb::buildOpaqueType("Exception", &stdspec));
 
   adaTypes()["EXCEPTION"]           = &exceptionType;
 

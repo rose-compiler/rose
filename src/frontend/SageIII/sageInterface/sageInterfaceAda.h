@@ -54,8 +54,10 @@ namespace ada
   /// returns an integer value for args[0] as used by type attributes first and last
   /// \throws throws an exception if args[0] cannot be constant folded
   /// \note currently only constant values are supported
+  /// \{
   int firstLastDimension(SgExprListExp& args);
   int firstLastDimension(SgExprListExp* args);
+  /// \}
 
   /// defines the result type for \ref getArrayTypeInfo
   using FlatArrayType = std::pair<SgArrayType*, std::vector<SgExpression*> >;

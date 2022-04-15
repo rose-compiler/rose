@@ -208,8 +208,6 @@ struct AstContext
     /// \note the passed object needs to survive the lifetime of the return AstContext
     AstContext labelsAndLoops(LabelAndLoopManager& lm) const;
 
-    bool hasLabelAndLoopManager() const { return all_labels_loops; }
-
     /// unit file name
     /// \note the passed object needs to survive the lifetime of the return AstContext
     AstContext sourceFileName(std::string& file) const;
