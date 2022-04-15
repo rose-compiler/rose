@@ -2087,46 +2087,10 @@ namespace
     }
   }
 
-
-  std::set<std::string> adaOperatorNames()
-  {
-    std::string elems[] = { "+",   "-",   "*",  "/",   "**", "REM", "MOD", "ABS"
-                          , "=",   "/=",  "<",  ">",   "<=", ">="
-                          , "NOT", "AND", "OR", "XOR", "&"
-                          };
-
-    return std::set<std::string>(elems, elems + sizeof(elems) / sizeof(elems[0]));
-  }
-
-  bool isOperatorName(const std::string& id)
-  {
-    static std::set<std::string> adaops = adaOperatorNames();
-
-    const std::string canonicalname = boost::to_upper_copy(id);
-
-    return adaops.find(canonicalname) != adaops.end();
-  }
-
-  std::string convertOperatorNames(const std::string& name)
-  {
-    static const std::string cxxprefix = "operator";
-    static const std::string quotes    = "\"";
-
-    if (name.rfind(cxxprefix, 0) != 0)
-      return name;
-
-    const std::string op = name.substr(cxxprefix.size());
-
-    if (!isOperatorName(op))
-      return name;
-
-    return quotes + op + quotes;
-  }
-
   void
   AdaStatementUnparser::handleFunctionEntryDecl(SgFunctionDeclaration& n, std::string keyword, bool hasReturn)
   {
-    std::string name = convertOperatorNames(n.get_name());
+    std::string name = si::ada::convertRoseOperatorNameToAdaName(n.get_name());
 
     prn(keyword);
     prn(" ");
@@ -2183,7 +2147,7 @@ namespace
       SgFunctionDeclaration& renamed = SG_DEREF(renaming->get_renamed_function());
 
       prnNameQual(n, renamed, renamed.get_scope());
-      prn(convertOperatorNames(renamed.get_name()));
+      prn(si::ada::convertRoseOperatorNameToAdaName(renamed.get_name()));
       prn(STMT_SEP);
       return;
     }

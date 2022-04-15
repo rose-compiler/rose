@@ -836,6 +836,7 @@ namespace sg
     GEN_VISIT(SgAdaDigitsConstraint)
     GEN_VISIT(SgAdaAncestorInitializer)
     GEN_VISIT(SgAdaDeltaConstraint)
+    GEN_VISIT(SgAdaNullConstraint)
     GEN_VISIT(SgAdaSubroutineType)
     GEN_VISIT(SgAdaGenericInstanceSymbol)
     GEN_VISIT(SgAdaFormalPackageDecl)

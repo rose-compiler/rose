@@ -13,6 +13,9 @@ namespace SageInterface
 /// Contains Ada-specific functionality
 namespace ada
 {
+  extern const std::string roseOperatorPrefix;
+  extern const std::string packageStandardName;
+
   /// tests if the declaration \ref dcl defines a public type that is completed
   ///   in a private section.
   /// \return true, iff dcl is public and completed in a private section.
@@ -46,6 +49,13 @@ namespace ada
   StatementRange
   declsInPackage(SgGlobal& globalScope, const SgSourceFile& mainFile);
   /// \}
+
+
+  /// returns an integer value for args[0] as used by type attributes first and last
+  /// \throws throws an exception if args[0] cannot be constant folded
+  /// \note currently only constant values are supported
+  int firstLastDimension(SgExprListExp& args);
+  int firstLastDimension(SgExprListExp* args);
 
   /// defines the result type for \ref getArrayTypeInfo
   using FlatArrayType = std::pair<SgArrayType*, std::vector<SgExpression*> >;
@@ -203,6 +213,26 @@ namespace ada
   bool isSeparatedBody(const SgDeclarationStatement& n);
   bool isSeparatedBody(const SgDeclarationStatement* n);
   /// @}
+
+  /// returns the most fundamental type
+  ///   after skipping derived types, subtypes, typedefs, etc.
+  /// @{
+  SgType* typeRoot(SgType&);
+  SgType* typeRoot(SgType*);
+  SgType* typeRoot(SgExpression&);
+  SgType* typeRoot(SgExpression*);
+  /// @}
+
+
+  /// takes a function name as used in ROSE and converts it to a name in Ada
+  ///   (i.e., '"' + operator_text + '"').
+  ///   if \ref nameInRose does not name an operator, then the name is returned as is.
+  std::string convertRoseOperatorNameToAdaName(const std::string& nameInRose);
+
+  /// takes a function name as used in ROSE and converts it to an operator in Ada
+  ///   (i.e., operator_text).
+  ///   if \ref nameInRose does not name an operator, an empty string is returned
+  std::string convertRoseOperatorNameToAdaOperator(const std::string& nameInRose);
 
   /// Details of expression aggregates
   struct AggregateInfo : std::tuple< SgAdaAncestorInitializer*,
@@ -372,14 +402,6 @@ namespace ada
   positionalArgumentLimit(const SgExprListExp* args);
   /// @}
 
-
-  /// converts all Ada style comments to C++ comments
-  // \todo mv into Ada to C++ converter
-  void convertAdaToCxxComments(SgNode* root, bool cxxLineComments = true);
-
-  /// converts all symbol tables from case insensitive to case sensitive
-  void convertToCaseSensitiveSymbolTables(SgNode* root);
-
   /// converts text to constant values
   /// \{
   long long int convertIntegerLiteral(const char* img);
@@ -392,7 +414,18 @@ namespace ada
   /// \}
 
 
+  /// converts all Ada style comments to C++ comments
+  // \todo mv into Ada to C++ converter
+  void convertAdaToCxxComments(SgNode* root, bool cxxLineComments = true);
 
+  /// converts all symbol tables from case insensitive to case sensitive
+  // \todo mv into Ada to C++ converter
+  void convertToCaseSensitiveSymbolTables(SgNode* root);
+
+  /// converts AST from a function call representation to operator form
+  ///   for fundamental operator declarations.
+  // \todo mv into Ada to C++ converter
+  void convertToOperatorRepresentation(SgNode* root);
 } // Ada
 } // SageInterface
 

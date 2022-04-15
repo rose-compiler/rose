@@ -198,6 +198,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   package_renaming_declaration.ads     \
   parent-child.adb                     \
   pkgrename.ads                        \
+  prefixcalls.adb                      \
   private_derived_formal_type.adb      \
   procedure_renaming.adb               \
   protected_object.adb                 \

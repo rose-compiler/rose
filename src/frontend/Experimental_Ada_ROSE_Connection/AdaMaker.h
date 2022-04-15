@@ -92,6 +92,10 @@ namespace Ada_ROSE_Translation
   SgAdaDigitsConstraint&
   mkAdaDigitsConstraint(SgExpression& digits, SgAdaTypeConstraint* constraint_opt);
 
+  /// builds a null constraint
+  SgAdaNullConstraint&
+  mkAdaNullConstraint();
+
   /// builds a delta constraint for floating point numbers
   /// \param digits an expression indicating the number of digits
   /// \param constraint_opt an optional floating point constraint
@@ -812,12 +816,19 @@ namespace Ada_ROSE_Translation
   SgCastExp&
   mkCastExp(SgExpression& expr, SgType& ty);
 
+  /// creates a call in the form of target(arglist).
+  /// \param target the expression denoting the callee
+  /// \param arglist the arguments
+  /// \param usesOperatorSyntax true if call should be unparsed
+  ///        using operator syntax instead of function call syntax
+  SgFunctionCallExp&
+  mkFunctionCallExp(SgExpression& target, SgExprListExp& arglst, bool usesOperatorSyntax = false);
+
   /// creates a qualified expression for \ref expr and type qualification \ref ty.
   /// \todo consider whether the explicit representation in code is necessary
   ///       or whether it can be reproduced by the backend.
   SgExpression&
   mkQualifiedExp(SgExpression& expr, SgType& ty);
-
 
   /// returns a representation of an Ada Attribute in expression context
   /// \param exp the attribute's prefix expression
@@ -861,14 +872,14 @@ namespace Ada_ROSE_Translation
   /// creates a remainder operation (different from SgModOp)
   /// \todo move to SageBuilder
   ///       should SgRemOp be called SgAdaRem?
-  SgRemOp*
-  buildRemOp(SgExpression* lhs, SgExpression* rhs);
+  //~ SgRemOp*
+  //~ buildRemOp(SgExpression* lhs, SgExpression* rhs);
 
   /// creates an abs function
   /// \todo move to SageBuilder
   ///       should SgAbsOp be called SgAdaAbs?
-  SgAbsOp*
-  buildAbsOp(SgExpression* op);
+  //~ SgAbsOp*
+  //~ buildAbsOp(SgExpression* op);
 
 
   /// creates and if statement

@@ -11099,6 +11099,14 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
       // For compiler generated code, this could happen.
       // We can just ignore this function call since it will not appear in the final AST.
       return;
+  }
+  else if (SgActualArgumentExpression* actexp = isSgActualArgumentExpression(parent)) {
+    // PP (4/25/22) since SgExpression::replace_expression is deprecated, I added the
+    //              functionality for replacing SgActualArgumentExpression::expression
+    //              here.
+    //              Note, this case needs to be ordered before isSgExpression!
+    ROSE_ASSERT(oldExp == actexp->get_expression());
+    actexp->set_expression(newExp);
   } else if ((parentExp=isSgExpression(parent)) != NULL) {
     int worked = parentExp->replace_expression(oldExp, newExp);
     // ROSE_DEPRECATED_FUNCTION
@@ -11142,6 +11150,33 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
     } else {
       ROSE_ABORT();
     }
+  } else if (SgAdaExitStmt* stm = isSgAdaExitStmt(parent)) {
+    ROSE_ASSERT(oldExp == stm->get_condition());
+    stm->set_condition(newExp);
+  } else if (SgAdaDelayStmt* stm = isSgAdaDelayStmt(parent)) {
+    ROSE_ASSERT(oldExp == stm->get_time());
+    stm->set_time(newExp);
+  } else if (SgAdaAttributeClause* clause = isSgAdaAttributeClause(parent)) {
+    ROSE_ASSERT(oldExp == clause->get_size());
+    clause->set_size(newExp);
+  } else if (SgAdaRenamingDecl* dcl = isSgAdaRenamingDecl(parent)) {
+    ROSE_ASSERT(oldExp == dcl->get_renamed());
+    dcl->set_renamed(newExp);
+  } else if (SgAdaEntryDecl* dcl = isSgAdaEntryDecl(parent)) {
+    ROSE_ASSERT(oldExp == dcl->get_entryBarrier());
+    dcl->set_entryBarrier(newExp);
+  } else if (SgAdaSelectAlternativeStmt* stm = isSgAdaSelectAlternativeStmt(parent)) {
+    ROSE_ASSERT(oldExp == stm->get_guard());
+    stm->set_guard(newExp);
+  } else if (SgAdaComponentClause* clause = isSgAdaComponentClause(parent)) {
+    if (oldExp == clause->get_offset())
+      clause->set_offset(newExp);
+    else if (oldExp == clause->get_range() && isSgRangeExp(newExp))
+      clause->set_range(isSgRangeExp(newExp));
+    else if (oldExp == clause->get_component() && isSgVarRefExp(newExp))
+      clause->set_component(isSgVarRefExp(newExp));
+    else
+      ROSE_ABORT();
   } else {
     cerr<<"SageInterface::replaceExpression(). Unhandled parent expression type of SageIII enum value: " <<parent->class_name()<<endl;
     ROSE_ABORT();

@@ -86,20 +86,15 @@ namespace
   {
       using base = sg::DispatchHandler<SgExpression*>;
 
-      AdaCallBuilder(ElemIdRange params, bool useCallSyntax, AstContext astctx)
-      : base(nullptr), range(params), ctx(astctx)
+      AdaCallBuilder(Element_ID targetid, std::vector<SgExpression*> arglist, bool useCallSyntax, AstContext astctx)
+      : base(nullptr), tgtid(targetid), args(std::move(arglist)), callSyntax(useCallSyntax), ctx(astctx)
       {}
-
-      ArgListCreator computeArguments()
-      {
-        return traverseIDs(range, elemMap(), ArgListCreator{ctx});
-      }
 
       void mkCall(SgExpression& n)
       {
-        SgExprListExp& arglst = computeArguments();
+        SgExprListExp& arglst = mkExprListExp(args);
 
-        res = sb::buildFunctionCallExp(&n, &arglst);
+        res = &mkFunctionCallExp(n, arglst, !callSyntax);
       }
 
       SgAdaInheritedFunctionSymbol*
@@ -190,7 +185,7 @@ namespace
 
       void handle(SgFunctionRefExp& n)
       {
-        SgExprListExp& arglst = computeArguments();
+        SgExprListExp& arglst = mkExprListExp(args);
 
         if (SgFunctionDeclaration* funDcl = n.getAssociatedFunctionDeclaration())
         {
@@ -201,7 +196,7 @@ namespace
             n.set_symbol(&funSym);
         }
 
-        res = sb::buildFunctionCallExp(&n, &arglst);
+        res = &mkFunctionCallExp(n, arglst, !callSyntax);
       }
 
       void handle(SgUnaryOp& n)
@@ -212,9 +207,6 @@ namespace
           mkCall(n);
           return;
         }
-
-        ADA_ASSERT(range.size() == 1);
-        std::vector<SgExpression*> args = computeArguments();
 
         ADA_ASSERT(args.size() == 1);
         n.set_operand(args[0]);
@@ -233,9 +225,6 @@ namespace
           return;
         }
 
-        ADA_ASSERT(range.size() == 2);
-        std::vector<SgExpression*> args = computeArguments();
-
         ADA_ASSERT(args.size() == 2);
         n.set_lhs_operand(args[0]);
         n.set_rhs_operand(args[1]);
@@ -243,9 +232,10 @@ namespace
       }
 
     private:
-      ElemIdRange range;
-      bool        callSyntax;
-      AstContext  ctx;
+      Element_ID                 tgtid;
+      std::vector<SgExpression*> args;
+      bool                       callSyntax;
+      AstContext                 ctx;
   };
 
   struct ArrayAggregateCreator
@@ -378,9 +368,10 @@ namespace
     return mkexp(nullptr);
   }
 
-
+  /// old operator call, currently serves as fallback
+  /// \todo remove from code base
   SgExpression&
-  getOperator(Expression_Struct& expr, AstContext ctx)
+  getOperator_fallback(Expression_Struct& expr, AstContext ctx)
   {
     using MkWrapperFn = std::function<SgExpression*()>;
     using OperatorMakerMap = std::map<Operator_Kinds, std::pair<const char*, MkWrapperFn> >;
@@ -403,9 +394,9 @@ namespace
       { A_Multiply_Operator,              {"A_Multiply_Operator",              mk2_wrapper<SgMultiplyOp,       sb::buildMultiplyOp> }},
       { A_Divide_Operator,                {"A_Divide_Operator",                mk2_wrapper<SgDivideOp,         sb::buildDivideOp> }},
       { A_Mod_Operator,                   {"A_Mod_Operator",                   mk2_wrapper<SgModOp,            sb::buildModOp> }},
-      { A_Rem_Operator,                   {"A_Rem_Operator",                   mk2_wrapper<SgRemOp,            buildRemOp> }},
+      { A_Rem_Operator,                   {"A_Rem_Operator",                   mk2_wrapper<SgRemOp,            sb::buildRemOp> }},
       { An_Exponentiate_Operator,         {"An_Exponentiate_Operator",         mk2_wrapper<SgExponentiationOp, sb::buildExponentiationOp> }},
-      { An_Abs_Operator,                  {"An_Abs_Operator",                  mk1_wrapper<SgAbsOp,            buildAbsOp> }},
+      { An_Abs_Operator,                  {"An_Abs_Operator",                  mk1_wrapper<SgAbsOp,            sb::buildAbsOp> }},
       { A_Not_Operator,                   {"A_Not_Operator",                   mk1_wrapper<SgNotOp,            sb::buildNotOp> }},
     };
 
@@ -430,6 +421,108 @@ namespace
     return SG_DEREF(sb::buildOpaqueVarRefExp(expr.Name_Image, &ctx.scope()));
   }
 
+  SgFunctionDeclaration*
+  disambiguateOperators(std::vector<SgFunctionDeclaration*>& cands, std::vector<SgExpression*>* args)
+  {
+    if ((args == nullptr) || (args->size() == 0))
+    {
+      logError() << "unable to disambiguate operator. No candidates."
+                 << std::endl;
+      return nullptr;
+    }
+
+    std::vector<SgFunctionDeclaration*> res;
+
+    //~ logWarn() << "disambiguating " << cands.size() << "candidates"
+              //~ << std::endl;
+
+    std::copy_if( cands.begin(), cands.end(),
+                  std::back_inserter(res),
+                  [args](SgFunctionDeclaration* fn) -> bool
+                  {
+                    ADA_ASSERT(fn);
+                    const int numParams = fn->get_args().size();
+
+                    if (std::size_t(numParams) != args->size())
+                    {
+                      return false;
+                    }
+
+                    bool res = true;
+                    int  i   = 0;
+
+                    while (res && (i < numParams))
+                    {
+                      SgInitializedName& parm = SG_DEREF(fn->get_args().at(i));
+                      SgExpression*      arg  = args->at(i);
+
+                      // \todo consider to replace the simple type check with a proper overload resolution
+                      res = si::ada::typeRoot(parm.get_type()) == si::ada::typeRoot(arg);
+
+                      //~ if (!res)
+                        //~ logWarn() << i << ". parm/arg: "
+                                  //~ << si::ada::typeRoot(parm.get_type())->class_name() << " / "
+                                  //~ << (si::ada::typeRoot(arg) ? si::ada::typeRoot(arg)->class_name() : std::string{"<null>"})
+                                  //~ << std::endl;
+
+                      ++i;
+                    }
+
+                    return res;
+                  }
+                );
+
+    if (res.size() != 1)
+    {
+      logError() << "unable to disambiguate operator. " << res.size() << " viable candidates found."
+                 << std::endl;
+    }
+
+    return res.size() != 1 ? nullptr : res.front();
+  }
+
+  SgExpression&
+  getOperator(Expression_Struct& expr, OperatorCallSupplement suppl, AstContext ctx)
+  {
+    ADA_ASSERT(expr.Expression_Kind == An_Operator_Symbol);
+
+    if (SgDeclarationStatement* dcl = findFirst(asisDecls(), expr.Corresponding_Name_Definition, expr.Corresponding_Name_Declaration))
+    {
+      SgFunctionDeclaration* fundcl = isSgFunctionDeclaration(dcl);
+      ADA_ASSERT(fundcl);
+
+      return SG_DEREF(sb::buildFunctionRefExp(fundcl));
+    }
+
+    int len = strlen(expr.Name_Image);
+    ADA_ASSERT((len > 2) && (expr.Name_Image[0] == '"') && (expr.Name_Image[len-1] == '"'));
+
+    // do not use leading and trailing '"'
+    auto pos = adaFuncs().find(AdaIdentifier{expr.Name_Image+1, len-2});
+
+    if (pos != adaFuncs().end())
+    {
+      if (SgFunctionDeclaration* fundcl = disambiguateOperators(pos->second, suppl.args))
+        return SG_DEREF(sb::buildFunctionRefExp(fundcl));
+    }
+    else
+    {
+      logError() << "Operator name not registered: '" << expr.Name_Image
+                 << "' / " << adaFuncs().size()
+                 << std::endl;
+    }
+
+    logError() << "Using first version generator as fallback to model operator " << expr.Name_Image
+               << std::endl;
+
+    /* unused fields:
+       Defining_Name_List    Corresponding_Name_Definition_List;
+       Defining_Name_ID      Corresponding_Generic_Element;
+    */
+    return getOperator_fallback(expr, ctx);
+  }
+
+
 
   /// converts enum values to SgExpressions
   /// \note currently True and False are handled separately, because
@@ -446,8 +539,7 @@ namespace
       SgEnumType&        enumtype = SG_DEREF( isSgEnumType(enumitem->get_type()) );
       SgEnumDeclaration& enumdecl = SG_DEREF( isSgEnumDeclaration(enumtype.get_declaration()) );
 
-      // res = sb::buildEnumVal_nfi(-1, &enumdecl, enumitem->get_name());
-      res = &ctx.enumBuilder()(enumdecl, *enumitem);
+      res = &mkEnumeratorRef(enumdecl, *enumitem);
     }
     else
     {
@@ -499,9 +591,7 @@ namespace
 
     if (expr.Expression_Kind == An_Identifier)
     {
-      const SgStatement* stmt = getDecl_opt(expr, ctx);
-
-      if (stmt == nullptr) stmt = findFirst(asisBlocks(), expr.Corresponding_Name_Declaration);
+      const SgStatement* stmt = queryScopeStmt(expr, ctx);
 
       // \note getDecl_opt does not retrieve variable declarations
       //       => assuming a is a variable of record: a.x (the dcl for a would be nullptr)
@@ -647,7 +737,7 @@ namespace
 
 
 SgAdaAttributeExp&
-getAttributeExpr(Expression_Struct& expr, AstContext ctx)
+getAttributeExpr(Expression_Struct& expr, AstContext ctx, ElemIdRange argRangeSuppl)
 {
   ADA_ASSERT(expr.Expression_Kind == An_Attribute_Reference);
 
@@ -663,19 +753,20 @@ getAttributeExpr(Expression_Struct& expr, AstContext ctx)
     case A_Length_Attribute:           // 3.6.2(9), K(117)
     case An_Unknown_Attribute:          // Unknown to ASIS
     case An_Implementation_Defined_Attribute:  // Reference Manual, Annex M
-      logInfo() << "untested attribute created: " << expr.Attribute_Kind
-                << "  attr-name: " << name.fullName
-                << std::endl;
-
-    /* fall through */
     case A_Last_Attribute:            // 3.5(13), 3.6.2(5), K(102), K(104)
     case A_Range_Attribute:            // 3.5(14), 3.6.2(7), K(187), ú(189)
     {
       ElemIdRange                range = idRange(expr.Attribute_Designator_Expressions);
-      std::vector<SgExpression*> exprs = traverseIDs(range, elemMap(), ExprSeqCreator{ctx});
-      SgExprListExp&             args  = mkExprListExp(exprs);
+      ADA_ASSERT(argRangeSuppl.empty() || range.empty());
 
-      res = &mkAdaAttributeExp(obj, name.fullName, args);
+      std::vector<SgExpression*> exprs;
+
+      if (range.empty())
+        exprs = traverseIDs(argRangeSuppl, elemMap(), ArgListCreator{ctx});
+      else
+        exprs = traverseIDs(range, elemMap(), ExprSeqCreator{ctx});
+
+      res = &mkAdaAttributeExp(obj, name.fullName, mkExprListExp(exprs));
       break;
     }
 
@@ -783,13 +874,14 @@ getAttributeExpr(Expression_Struct& expr, AstContext ctx)
       {
         logInfo() << "untested attribute created: " << expr.Attribute_Kind
                   << std::endl;
+        std::vector<SgExpression*> exprs = traverseIDs(argRangeSuppl, elemMap(), ArgListCreator{ctx});
+        SgExprListExp&             args  = mkExprListExp(exprs);
 
-        res = &mkAdaAttributeExp(obj, name.fullName, mkExprListExp());
+        res = &mkAdaAttributeExp(obj, name.fullName, args);
         break;
       }
 
     // failure kinds
-
     case Not_An_Attribute:             // An unexpected element
     default:
       {
@@ -805,12 +897,12 @@ getAttributeExpr(Expression_Struct& expr, AstContext ctx)
 }
 
 SgAdaAttributeExp&
-getAttributeExprID(Element_ID el, AstContext ctx)
+getAttributeExprID(Element_ID el, AstContext ctx, ElemIdRange argRangeSuppl)
 {
   Element_Struct& elem = retrieveAs(elemMap(), el);
 
   ADA_ASSERT(elem.Element_Kind == An_Expression);
-  SgAdaAttributeExp& sgnode = getAttributeExpr(elem.The_Union.Expression, ctx);
+  SgAdaAttributeExp& sgnode = getAttributeExpr(elem.The_Union.Expression, ctx, argRangeSuppl);
 
   attachSourceLocation(sgnode, elem, ctx);
   return sgnode;
@@ -899,15 +991,22 @@ namespace
     return (res == nullptr) ? mkExprListExp({&exp}) : *res;
   }
 
+  Expression_Kinds queryExprKindID(Element_ID id)
+  {
+    Element_Struct& elem = retrieveAs(elemMap(), id);
+
+    ADA_ASSERT(elem.Element_Kind == An_Expression);
+    return elem.The_Union.Expression.Expression_Kind;
+  }
 
   SgExpression&
-  getExprID_undecorated(Element_ID el, AstContext ctx);
+  getExprID_undecorated(Element_ID el, AstContext ctx, OperatorCallSupplement suppl = {});
 
 
   /// creates expressions from elements, but does not decorate
   ///   aggregates with SgAggregateInitializers
   SgExpression&
-  getExpr_undecorated(Element_Struct& elem, AstContext ctx)
+  getExpr_undecorated(Element_Struct& elem, AstContext ctx, OperatorCallSupplement suppl = {})
   {
     ADA_ASSERT(elem.Element_Kind == An_Expression);
 
@@ -924,7 +1023,7 @@ namespace
           {
             res = sb::buildVarRefExp(var, &ctx.scope());
           }
-          else if (SgDeclarationStatement* dcl = getDecl_opt(expr, ctx))
+          else if (SgDeclarationStatement* dcl = queryDecl(expr, ctx))
           {
             res = sg::dispatch(ExprRefMaker{ctx}, dcl);
           }
@@ -936,19 +1035,28 @@ namespace
           {
             res = sg::dispatch(TypeRefMaker{ctx}, tydcl);
           }
-          // after there was no matching declaration, try to look up declarations in the standard package by name
-          else if (SgType* ty = findFirst(adaTypes(), AdaIdentifier{expr.Name_Image}))
-          {
-            res = &mkTypeExpression(*ty);
-          }
-          else if (SgAdaPackageSpecDecl* pkg = findFirst(adaPkgs(), AdaIdentifier{expr.Name_Image}))
-          {
-            res = &mkAdaUnitRefExp(*pkg);
-          }
           else
           {
-            // \todo check why the name remained unresolved
-            res = &mkUnresolvedName(expr.Name_Image, ctx.scope());
+            AdaIdentifier adaIdent{expr.Name_Image};
+
+            // after there was no matching declaration, try to look up declarations in the standard package by name
+            if (SgType* ty = findFirst(adaTypes(), adaIdent))
+            {
+              res = &mkTypeExpression(*ty);
+            }
+            else if (SgInitializedName* var = findFirst(adaVars(), adaIdent))
+            {
+              res = sb::buildVarRefExp(var, &ctx.scope());
+            }
+            else if (SgInitializedName* exc = findFirst(adaExcps(), adaIdent))
+            {
+              res = &mkExceptionRef(*exc, ctx.scope());
+            }
+            else
+            {
+              // \todo check why the name remained unresolved
+              res = &mkUnresolvedName(expr.Name_Image, ctx.scope());
+            }
           }
 
           /* unused fields: (Expression_Struct)
@@ -967,15 +1075,20 @@ namespace
                      << expr.Is_Prefix_Call
                      << std::endl;
 
-          SgExpression&           target = getExprID(expr.Prefix, ctx);
           ElemIdRange             range  = idRange(expr.Function_Call_Parameters);
 
-          // distinguish between operators and calls
-          res = &createCall(target, range, expr.Is_Prefix_Call, ctx);
+          // PP (04/22/22) if the callee is an Ada Attribute then integrate
+          //               the arguments into the Ada attribute expression directly.
+          //               Note sure if it is good to deviate from the Asis representation
+          //               but some arguments have no underlying functiom declaration.
+          // \todo Consider adding an optional function reference to the SgAdaAttribute rep.
+          if (queryExprKindID(expr.Prefix) == An_Attribute_Reference)
+            res = &getAttributeExprID(expr.Prefix, ctx, range);
+          else
+            res = &createCall(expr.Prefix, range, expr.Is_Prefix_Call, ctx);
 
           /* unused fields:
              Expression_Struct
-               Expression_ID         Prefix;
                bool                  Is_Prefix_Notation;
                bool                  Is_Generalized_Reference;
                bool                  Is_Dispatching_Call;
@@ -1030,7 +1143,7 @@ namespace
       case An_Operator_Symbol:                        // 4.1
         {
           logKind("An_Operator_Symbol");
-          res = &getOperator(expr, ctx);
+          res = &getOperator(expr, suppl, ctx);
           /* unused fields:
              Defining_Name_ID      Corresponding_Name_Definition;
              Defining_Name_List    Corresponding_Name_Definition_List;
@@ -1103,7 +1216,7 @@ namespace
       case A_Selected_Component:                      // 4.1.3
         {
           logKind("A_Selected_Component");
-          SgExpression& selector = getExprID(expr.Selector, ctx);
+          SgExpression& selector = getExprID(expr.Selector, ctx, suppl);
 
           // Check if the kind requires a prefix in ROSE,
           //   or if the prefix (scope qualification) is implied and
@@ -1333,16 +1446,16 @@ namespace
   }
 
   SgExpression&
-  getExprID_undecorated(Element_ID el, AstContext ctx)
+  getExprID_undecorated(Element_ID el, AstContext ctx, OperatorCallSupplement suppl)
   {
-    return getExpr_undecorated(retrieveAs(elemMap(), el), ctx);
+    return getExpr_undecorated(retrieveAs(elemMap(), el), ctx, suppl);
   }
 }
 
 SgExpression&
-getExpr(Element_Struct& elem, AstContext ctx)
+getExpr(Element_Struct& elem, AstContext ctx, OperatorCallSupplement suppl)
 {
-  SgExpression*      res  = &getExpr_undecorated(elem, ctx);
+  SgExpression*      res  = &getExpr_undecorated(elem, ctx, suppl);
   Expression_Struct& expr = elem.The_Union.Expression;
 
   switch (expr.Expression_Kind)
@@ -1369,13 +1482,13 @@ getExpr(Element_Struct& elem, AstContext ctx)
 
 
 SgExpression&
-getExprID(Element_ID el, AstContext ctx)
+getExprID(Element_ID el, AstContext ctx, OperatorCallSupplement suppl)
 {
-  return getExpr(retrieveAs(elemMap(), el), ctx);
+  return getExpr(retrieveAs(elemMap(), el), ctx, suppl);
 }
 
 SgExpression&
-getExprID_opt(Element_ID el, AstContext ctx)
+getExprID_opt(Element_ID el, AstContext ctx, OperatorCallSupplement suppl)
 {
   if (isInvalidId(el))
   {
@@ -1384,7 +1497,7 @@ getExprID_opt(Element_ID el, AstContext ctx)
   }
 
   return el == 0 ? mkNullExpression()
-                 : getExprID(el, ctx)
+                 : getExprID(el, ctx, suppl)
                  ;
 }
 
@@ -1564,9 +1677,15 @@ getDefinitionExprID(Element_ID id, AstContext ctx)
   return getDefinitionExpr(retrieveAs(elemMap(), id), ctx);
 }
 
-SgExpression& createCall(SgExpression& target, ElemIdRange args, bool callSyntax, AstContext ctx)
+SgExpression& createCall(Element_ID tgtid, ElemIdRange args, bool callSyntax, AstContext ctx)
 {
-  SgExpression* res = sg::dispatch(AdaCallBuilder{args, callSyntax, ctx}, &target);
+  logInfo() << "use prefix call syntax: " << callSyntax << std::endl;
+
+  // Create the arguments first. They may be needed to disambiguate operator calls
+  std::vector<SgExpression*> arglist = traverseIDs(args, elemMap(), ArgListCreator{ctx});
+
+  SgExpression& tgt = getExprID(tgtid, ctx, OperatorCallSupplement{callSyntax, &arglist});
+  SgExpression* res = sg::dispatch(AdaCallBuilder{tgtid, std::move(arglist), callSyntax, ctx}, &tgt);
 
   return SG_DEREF(res);
 }

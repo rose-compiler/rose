@@ -1391,6 +1391,7 @@ generate_override_keyword_for_set_functions( AstNodeClass & node, GrammarString 
           (nodeName == "AdaProtectedSpecDecl"       && variableNameString == "type")  ||
           (nodeName == "AdaRenamingDecl"            && variableNameString == "type")  ||
           (nodeName == "AdaFormalTypeDecl"          && variableNameString == "type")  ||
+          (nodeName == "AdaAttributeExp"            && variableNameString == "type")  ||
           (nodeName == "ClassDeclaration"           && variableNameString == "type")  ||
           (nodeName == "FunctionDeclaration"        && variableNameString == "type")  ||
           (nodeName == "FunctionTypeSymbol"         && variableNameString == "type")  ||

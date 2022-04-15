@@ -1246,7 +1246,9 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                          break;
                        }
 
-                    case V_SgTypeBool: // PP (01/22/21) used in Ada
+                    // PP (01/22/21) used in Ada
+                    case V_SgTypeBool:
+                    case V_SgTypeLongLong:
                        {
                          ROSE_ASSERT(SageInterface::is_Ada_language());
                          break;

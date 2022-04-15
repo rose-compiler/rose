@@ -2,6 +2,7 @@
 #include "sageInterfaceAda.h"
 #include "sageInterface.h"
 #include "sageGeneric.h"
+#include "sageBuilder.h"
 
 #include <iostream>
 #include <limits>
@@ -13,6 +14,7 @@
 #include "Rose/Diagnostics.h"
 
 namespace si = SageInterface;
+namespace sb = SageBuilder;
 
 namespace
 {
@@ -144,8 +146,18 @@ namespace
       // subtype -> get the dimension info for each
       void handle(SgAdaSubtype& n)
       {
+        SgAdaTypeConstraint* constraint = n.get_constraint();
+
+        // if the subtype has a null constraint, then the real array types
+        //   must be located underneath.
+        if (isSgAdaNullConstraint(constraint))
+        {
+          res = recurse(n.get_base_type());
+          return;
+        }
+
         // the first subtype must be an index constraint
-        SgAdaIndexConstraint& idx = SG_DEREF(isSgAdaIndexConstraint(n.get_constraint()));
+        SgAdaIndexConstraint& idx = SG_DEREF(isSgAdaIndexConstraint(constraint));
         SgExpressionPtrList&  idxlst = idx.get_indexRanges();
 
         for (size_t i = 0; i < idxlst.size(); ++i)
@@ -201,17 +213,6 @@ namespace
     void handle(SgUnsignedLongVal& n)        { res = n.get_value(); }
     void handle(SgUnsignedShortVal& n)       { res = n.get_value(); }
   };
-
-  size_t dimValue(SgExprListExp& args)
-  {
-    SgExpressionPtrList& exprlst = args.get_expressions();
-
-    if (exprlst.size() == 0)
-      return 1;
-
-    ROSE_ASSERT(exprlst.size() == 1);
-    return sg::dispatch(IntegralValue(), exprlst[0]);
-  }
 
   struct RangeExp : sg::DispatchHandler<SgRangeExp*>
   {
@@ -395,6 +396,32 @@ namespace SageInterface
 {
 namespace ada
 {
+  const std::string roseOperatorPrefix  = "operator";
+  const std::string packageStandardName = "Standard";
+
+  int
+  firstLastDimension(SgExprListExp& args)
+  {
+    SgExpressionPtrList& exprlst = args.get_expressions();
+
+    if (exprlst.size() == 0)
+      return 1;
+
+    ROSE_ASSERT(exprlst.size() == 1);
+    IntegralValue::ReturnType res = sg::dispatch(IntegralValue(), exprlst[0]);
+
+    ROSE_ASSERT(res <= std::numeric_limits<int>::max());
+    return res;
+  }
+
+  int
+  firstLastDimension(SgExprListExp* args)
+  {
+    ASSERT_not_null(args);
+    return firstLastDimension(*args);
+  }
+
+
   bool withPrivateDefinition(const SgDeclarationStatement& dcl)
   {
     // return false if dcl is already private
@@ -479,7 +506,7 @@ namespace ada
     if (boost::to_upper_copy(n.get_attribute().getString()) != "RANGE")
       return nullptr;
 
-    const size_t dim = dimValue(SG_DEREF(n.get_args()));
+    const int dim = si::ada::firstLastDimension(SG_DEREF(n.get_args()));
 
     return RangeExp::find(n.get_object(), dim);
   }
@@ -833,6 +860,18 @@ namespace ada
       return equalVariantExpr(SG_DEREF(lhs), SG_DEREF(rhs));
     }
 
+    bool equalVariantExpr(const SgFunctionRefExp& lhs, const SgFunctionRefExp& rhs)
+    {
+      return lhs.get_symbol() == rhs.get_symbol();
+    }
+/*
+    bool equalVariantExpr(const SgFunctionRefExp* lhs, const SgFunctionRefExp* rhs)
+    {
+      return equalVariantExpr(SG_DEREF(lhs), SG_DEREF(rhs));
+    }
+*/
+
+
     bool haveSameControl(const SgExpression* lhs, const SgExpression* rhs)
     {
       return equalVariantExpr(getControl(SG_DEREF(lhs)), getControl(SG_DEREF(rhs)));
@@ -998,9 +1037,24 @@ namespace ada
         }
 
         //
+        // calls
+        bool eval(const SgCallExpression& l, const SgCallExpression& r, const SgCallExpression&)
+        {
+          return (  equalChild(l, r, &SgCallExpression::get_function)
+                 && equalChild(l, r, &SgCallExpression::get_args)
+                 );
+        }
+
+
+        //
         // special
 
         bool eval(const SgVarRefExp& l, const SgVarRefExp& r, const SgVarRefExp&)
+        {
+          return equalRef(l, r);
+        }
+
+        bool eval(const SgFunctionRefExp& l, const SgFunctionRefExp& r, const SgFunctionRefExp&)
         {
           return equalRef(l, r);
         }
@@ -1173,6 +1227,256 @@ namespace ada
     return n && isSeparatedBody(*n);
   }
 
+  namespace
+  {
+    // root types as implemented by AdaMaker.C
+    SgType* integralType() { return sb::buildLongLongType(); }
+    SgType* realType()     { return sb::buildLongDoubleType(); }
+    SgType* fixedType()    { return sb::buildFixedType(nullptr, nullptr); }
+    SgType* pointerType()  { return sb::buildNullptrType(); }
+
+    SgType* arrayType(SgType* base)
+    {
+      // poor man's type unifier
+      static std::map<SgType*, SgArrayType*> m;
+
+      SgArrayType*& res = m[base];
+
+      if (res == nullptr) res = sb::buildArrayType(base);
+
+      return res;
+    };
+
+    struct RootTypeFinder : sg::DispatchHandler<SgType*>
+    {
+      void handle(SgNode& n)              { SG_UNEXPECTED_NODE(n); }
+
+      //~ void handle(SgType& n) { res = &n; }
+
+      // all root types (according to the three builder function in AdaMaker.C)
+      void handle(SgTypeLongLong& n)      { res = integralType(); }
+      void handle(SgTypeLongDouble& n)    { res = realType(); }
+      void handle(SgTypeFixed& n)         { res = fixedType(); }
+
+      // plus discrete type indicator for Ada generics
+      void handle(SgAdaDiscreteType& n)   { res = &n; }
+
+      // modular type: handle like int?
+      void handle(SgAdaModularType& n)    { res = integralType(); }
+
+      // are subroutines their own root type?
+      void handle(SgAdaSubroutineType& n) { res = &n; }
+
+      // plus types used by AdaMaker but that do not have a direct correspondence
+      //   in the Ada Standard.
+      void handle(SgTypeVoid& n)          { res = &n; }
+      void handle(SgTypeUnknown& n)       { res = &n; }
+      void handle(SgAutoType& n)          { res = &n; }
+
+      void handle(SgAdaFormalType& n)
+      {
+        // \todo what else?
+        res = &n;
+      }
+
+      void handle(SgTypeDefault& n)
+      {
+        // this is a type used by a opaque declaration.
+        // \todo maybe needs replacement with the actual type.
+        res = &n;
+      }
+
+      // the package standard uses an enumeration to define boolean, so include the
+      //   ROSE bool type also.
+      // \todo reconsider
+      void handle(SgTypeBool& n)          { res = &n; }
+
+      // plus: map all other fundamental types introduced by initializeStandardPackage in AdaType.C
+      //       onto the root types defined by AdaMaker.C
+      // \todo eventually all types in initializeStandardPackage should be rooted in
+      //       the root types as defined by AdaMaker.C.
+      void handle(SgTypeInt&)             { res = integralType(); }
+      void handle(SgTypeLong&)            { res = integralType(); }
+      void handle(SgTypeShort&)           { res = integralType(); }
+
+      void handle(SgTypeFloat&)           { res = realType(); }
+      void handle(SgTypeDouble&)          { res = realType(); }
+
+      void handle(SgTypeChar& n)          { res = &n; }
+      void handle(SgTypeChar16& n)        { res = &n; }
+      void handle(SgTypeChar32& n)        { res = &n; }
+
+      // true fundamental types
+      void handle(SgClassType& n)         { res = &n; }
+      void handle(SgEnumType& n)          { res = &n; /* \todo check if this is a derived enum */ }
+
+      // an array is fundamental - its underlying type may not be, so it may can be discovered if needed
+      void handle(SgArrayType& n)
+      {
+        res = arrayType(&find(n.get_base_type()));
+      }
+
+      void handle(SgTypeString& n)
+      {
+        // not sure why this can be reached ..
+        // since we have no info about the character type, just return the standard string type
+        res = arrayType(sb::buildCharType());
+      }
+
+
+      // pointer types
+      void handle(SgPointerType& n)       { res = pointerType(); } // \todo should not be in Ada
+      void handle(SgAdaAccessType& n)     { res = pointerType(); }
+      void handle(SgTypeNullptr& n)       { res = pointerType(); }
+
+      // \todo add string types as introduced by initializeStandardPackage in AdaType.C
+      // \todo add other fundamental types as introduced by initializeStandardPackage in AdaType.C
+
+      // all type indirections that do not define fundamental types
+      void handle(SgTypedefType& n)       { res = &find(n.get_base_type()); }
+      void handle(SgModifierType& n)      { res = &find(n.get_base_type()); }
+      void handle(SgAdaSubtype& n)        { res = &find(n.get_base_type()); }
+      void handle(SgAdaDerivedType& n)    { res = &find(n.get_base_type()); }
+
+      void handle(SgAdaDiscriminatedType& n)
+      {
+        // \todo not sure..
+        res = &n;
+      }
+
+      void handle(SgDeclType& n)
+      {
+        // \todo not sure..
+        res = typeRoot(n.get_base_expression());
+      }
+
+
+      // expressions
+
+      // by default use the expression's type
+      void handle(SgExpression& n)        { res = &find(n.get_type()); }
+
+
+      // by default use the expression's type
+      void handle(SgVarRefExp& n)
+      {
+        res = &find(n.get_type());
+
+        if (isSgAutoType(res))
+        {
+          // if this is an auto constant, check the initializer
+          SgVariableSymbol&  sy  = SG_DEREF(n.get_symbol());
+          SgInitializedName& var = SG_DEREF(sy.get_declaration());
+
+          if (SgAssignInitializer* init = isSgAssignInitializer(var.get_initializer()))
+            res = &find(SG_DEREF(init->get_operand()).get_type());
+        }
+      }
+
+
+      // SgTypeString does not preserve the 'wideness', so let's just get
+      //   this info from the literal.
+      void handle(SgStringVal& n)
+      {
+        SgType* charType = nullptr;
+
+        if (n.get_is16bitString())      charType = sb::buildChar16Type();
+        else if (n.get_is32bitString()) charType = sb::buildChar32Type();
+        else                            charType = sb::buildCharType();
+        ASSERT_not_null(charType);
+
+        res = arrayType(charType);
+      }
+
+
+      static
+      SgType& find(SgType* ty);
+    };
+
+    SgType&
+    RootTypeFinder::find(SgType* ty)
+    {
+      SgType* res = sg::dispatch(RootTypeFinder{}, ty);
+
+      return SG_DEREF(res);
+    }
+  };
+
+  SgType* typeRoot(SgType& ty)
+  {
+    return &RootTypeFinder::find(&ty);
+  }
+
+  SgType* typeRoot(SgType* ty)
+  {
+    return ty ? typeRoot(*ty) : nullptr;
+  }
+
+  SgType* typeRoot(SgExpression& exp)
+  {
+    return sg::dispatch(RootTypeFinder{}, &exp);
+  }
+
+  SgType* typeRoot(SgExpression* exp)
+  {
+    return exp ? typeRoot(*exp) : nullptr;
+  }
+
+
+/*
+  std::set<std::string> adaOperatorNames()
+  {
+    std::string elems[] =
+
+    return std::set<std::string>(elems, elems + sizeof(elems) / sizeof(elems[0]));
+  }
+(/
+*/
+
+  namespace
+  {
+    bool isOperatorName(const std::string& id)
+    {
+      static std::set<std::string> adaops =
+                            { "+",   "-",   "*",  "/",   "**", "REM", "MOD", "ABS"
+                            , "=",   "/=",  "<",  ">",   "<=", ">="
+                            , "NOT", "AND", "OR", "XOR", "&"
+                            };
+
+      const std::string canonicalname = boost::to_upper_copy(id);
+
+      return adaops.find(canonicalname) != adaops.end();
+    }
+  }
+
+  std::string convertRoseOperatorNameToAdaOperator(const std::string& name)
+  {
+    if (name.rfind(si::ada::roseOperatorPrefix, 0) != 0)
+      return "";
+
+    const std::string op = name.substr(si::ada::roseOperatorPrefix.size());
+
+    if (!isOperatorName(op))
+      return "";
+
+    return op;
+  }
+
+  std::string convertRoseOperatorNameToAdaName(const std::string& name)
+  {
+    static const std::string quotes    = "\"";
+
+    if (name.rfind(si::ada::roseOperatorPrefix, 0) != 0)
+      return name;
+
+    const std::string op = name.substr(si::ada::roseOperatorPrefix.size());
+
+    if (!isOperatorName(op))
+      return name;
+
+    return quotes + op + quotes;
+  }
+
 
 
   // ******
@@ -1287,6 +1591,168 @@ namespace ada
     }
   }
 
+  struct FunctionCallToOperatorConverter
+  {
+      FunctionCallToOperatorConverter() = default;
+      ~FunctionCallToOperatorConverter() { executeTransformations(); }
+
+      void executeTransformations() const;
+
+      void operator()(SgNode*);
+
+    private:
+      using replacement_t = std::tuple<SgFunctionCallExp*, std::string>;
+
+      std::vector<replacement_t> work;
+
+      //~ FunctionCallToOperatorConverter& operator=(const FunctionCallToOperatorConverter&) = delete;
+      //~ FunctionCallToOperatorConverter& operator=(FunctionCallToOperatorConverter&&)      = delete;
+  };
+
+  int arity(const SgFunctionCallExp& fncall)
+  {
+    SgExprListExp* args = fncall.get_args();
+
+    return SG_DEREF(args).get_expressions().size();
+  }
+
+  bool hasNullArg(const SgFunctionCallExp& fncall)
+  {
+    SgExprListExp* args = fncall.get_args();
+
+    return isSgNullExpression(SG_DEREF(args).get_expressions().at(0));
+  }
+
+  void FunctionCallToOperatorConverter::operator()(SgNode* n)
+  {
+    SgFunctionCallExp*     fncall = isSgFunctionCallExp(n);
+    if (  (fncall == nullptr)
+       || (!fncall->get_uses_operator_syntax())
+       || (arity(*fncall) > 2)
+       //~ || (hasNullArg(*fncall))
+       )
+     return;
+
+    SgFunctionDeclaration* fndecl = fncall->getAssociatedFunctionDeclaration();
+    if (fndecl == nullptr) return;
+
+    SgAdaPackageSpec*      pkgspec = isSgAdaPackageSpec(fndecl->get_scope());
+    if (pkgspec == nullptr) return;
+
+    SgAdaPackageSpecDecl*  pkgdecl = isSgAdaPackageSpecDecl(pkgspec->get_parent());
+    // test for properties of package standard, which is a top-level package
+    //   and has the name "Standard".
+    // \note The comparison is case sensitive, but as long as the creation
+    //       of the fictitious package uses the same constant, this is fine.
+    if (  (pkgdecl == nullptr)
+       || (pkgdecl->get_name() != packageStandardName)
+       || (isSgGlobal(pkgdecl->get_scope()) == nullptr)
+       )
+       return;
+
+    // only consider function names that map onto operators
+    std::string op = convertRoseOperatorNameToAdaOperator(fndecl->get_name());
+    if (op.empty()) return;
+
+    // none of the functions in Standard should be defined.
+    ROSE_ASSERT(fndecl->get_definingDeclaration() == nullptr);
+    work.emplace_back(fncall, std::move(op));
+  }
+
+  using CallToOperatorTransformer = std::function<SgExpression*(SgFunctionCallExp*)>;
+
+  template <class BinaryBuilderFn>
+  CallToOperatorTransformer tf2(BinaryBuilderFn fn)
+  {
+    // in c++14: return [fn = std::move(fn)](SgFunctionCallExp* n) -> SgExpression*
+    return [fn](SgFunctionCallExp* n) -> SgExpression*
+           {
+             SgExprListExp*       args = SG_DEREF(n).get_args();
+             SgExpressionPtrList& list = SG_DEREF(args).get_expressions();
+
+             ROSE_ASSERT(list.size() == 2);
+             SgExpression*        lhs = list[0];
+             SgExpression*        rhs = list[1];
+             SgExpression*        lhs_dummy = sb::buildNullExpression();
+             SgExpression*        rhs_dummy = sb::buildNullExpression();
+
+             si::replaceExpression(lhs, lhs_dummy, true /* keep */);
+             si::replaceExpression(rhs, rhs_dummy, true /* keep */);
+
+             return fn(lhs, rhs);
+           };
+  }
+
+  template <class UnaryBuilderFn>
+  CallToOperatorTransformer tf1(UnaryBuilderFn fn)
+  {
+    // in c++14: return [fn = std::move(fn)](SgFunctionCallExp* n) -> SgExpression*
+    return [fn](SgFunctionCallExp* n) -> SgExpression*
+           {
+             SgExprListExp*       args = SG_DEREF(n).get_args();
+             SgExpressionPtrList& list = SG_DEREF(args).get_expressions();
+
+             ROSE_ASSERT(list.size() == 1);
+             SgExpression*        arg = list[0];
+             SgExpression*        arg_dummy = sb::buildNullExpression();
+
+             si::replaceExpression(arg, arg_dummy, true /* keep */);
+
+             return fn(arg);
+           };
+  }
+
+
+  void FunctionCallToOperatorConverter::executeTransformations() const
+  {
+    using BuilderMap = std::map<std::string, CallToOperatorTransformer>;
+
+    static const BuilderMap tfFn2 = { { "=",   tf2(&sb::buildEqualityOp) }
+                                    , { "/=",  tf2(&sb::buildNotEqualOp) }
+                                    , { "<",   tf2(&sb::buildLessThanOp) }
+                                    , { "<=",  tf2(&sb::buildLessOrEqualOp) }
+                                    , { ">",   tf2(&sb::buildGreaterThanOp) }
+                                    , { ">=",  tf2(&sb::buildGreaterOrEqualOp) }
+                                    , { "and", tf2(&sb::buildBitAndOp) }
+                                    , { "or",  tf2(&sb::buildBitOrOp) }
+                                    , { "xor", tf2(&sb::buildBitXorOp) }
+                                    , { "+",   tf2(&sb::buildAddOp) }
+                                    , { "-",   tf2(&sb::buildSubtractOp) }
+                                    , { "*",   tf2(&sb::buildMultiplyOp) }
+                                    , { "/",   tf2(&sb::buildDivideOp) }
+                                    , { "rem", tf2(&sb::buildRemOp) }
+                                    , { "mod", tf2(&sb::buildModOp) }
+                                    , { "**",  tf2(&sb::buildExponentiationOp) }
+                                    , { "&",   tf2(&sb::buildConcatenationOp) }
+                                    };
+
+    static const BuilderMap tfFn1 = { { "not", tf1(&sb::buildNotOp) }
+                                    , { "abs", tf1(&sb::buildAbsOp) }
+                                    , { "+",   tf1(&sb::buildUnaryAddOp) }
+                                    //~ , { "-",   tf1(&sb::buildMinusOp) }
+                                    , { "-",   tf1(&sb::buildUnaryExpression<SgMinusOp>) }
+                                    };
+
+
+    for (const replacement_t& r : work)
+    {
+      SgFunctionCallExp* orig  = std::get<0>(r);
+      const int          numargs = arity(*orig);
+      ROSE_ASSERT(numargs == 1 || numargs == 2);
+      SgExpression*      repl  = numargs == 1 ? tfFn1.at(std::get<1>(r))(orig)
+                                              : tfFn2.at(std::get<1>(r))(orig);
+
+      ROSE_ASSERT(repl);
+      repl->set_need_paren(orig->get_need_paren());
+
+      if (orig->get_parent() == nullptr)
+        std::cerr << "parent is null: " << orig->unparseToString() << std::endl;
+
+      si::replaceExpression(orig, repl, false /* delete orig sub-tree */ );
+    }
+  }
+
+
   void conversionTraversal(std::function<void(SgNode*)>&& fn, SgNode* root)
   {
     ROSE_ASSERT(root);
@@ -1301,10 +1767,14 @@ namespace ada
     conversionTraversal(CommentCxxifier{cxxLineComments}, root);
   }
 
-
   void convertToCaseSensitiveSymbolTables(SgNode* root)
   {
     conversionTraversal(convertSymbolTablesToCaseSensitive_internal, root);
+  }
+
+  void convertToOperatorRepresentation(SgNode* root)
+  {
+    conversionTraversal(FunctionCallToOperatorConverter{}, root);
   }
 
   /*
