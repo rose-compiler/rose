@@ -915,7 +915,10 @@ check-commandline-options: ./codethorn
 #	@dot -Tpdf transitiongraph1.dot -otransitiongraph1.pdf
 
 check-dead-code:
-	$(srcdir)/scripts/runDeadCodeTests $(srcdir)/tests
+	$(srcdir)/scripts/runDeadCodeTests $(srcdir)/tests --dc
+
+check-no-dead-code:
+	$(srcdir)/scripts/runDeadCodeTests $(srcdir)/tests --no-dc
 
 check-no-cc:
 	$(srcdir)/scripts/runNoConstantConditionTests $(srcdir)/tests
