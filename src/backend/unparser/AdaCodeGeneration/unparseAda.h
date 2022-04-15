@@ -48,6 +48,7 @@ struct Unparse_Ada : UnparseLanguageIndependentConstructs
           // in unparseAda_statements.C
 
           Unparse_Ada(Unparser* unp, std::string fname);
+          ~Unparse_Ada();
 
           void unparseAdaFile(SgSourceFile *file, SgUnparse_Info &info);
           void unparseStatement(SgStatement* stmt, SgUnparse_Info& info) override;
@@ -114,6 +115,9 @@ struct Unparse_Ada : UnparseLanguageIndependentConstructs
 
           ///
           const NameQualMap* currentNameQualificationMap;
+
+          /// line wrapping setting of the parser; will be restored by unparser
+          int oldLineWrap;
    };
 
 #endif

@@ -1,6 +1,6 @@
 /* unparser.h
  * This header file contains the class declaration for the newest unparser. Six
- * C files include this header file: unparser.C, modified_sage.C, unparse_stmt.C, 
+ * C files include this header file: unparser.C, modified_sage.C, unparse_stmt.C,
  * unparse_expr.C, unparse_type.C, and unparse_sym.C.
  */
 
@@ -14,7 +14,7 @@
 // #include <algorithm>
 #include "unparseCxx_types.h"
 #include "name_qualification_support.h"
-// #include "unparseCxx_templates.h"  
+// #include "unparseCxx_templates.h"
 #include "unparse_sym.h"
 #include "unparse_debug.h"
 #include "modified_sage.h"
@@ -40,7 +40,7 @@
 class Unparser_Nameq;
 
 // Macro used for debugging.  If true it fixes the anonymous typedef and anonymous declaration
-// bugs, but causes several other problems.  If false, everything works except the anonymous 
+// bugs, but causes several other problems.  If false, everything works except the anonymous
 // typedef and anonymous declaration bugs.
 #define ANONYMOUS_TYPEDEF_FIX false
 
@@ -72,10 +72,10 @@ class Unparser_Nameq;
           \ingroup backendGenerator
           \brief This function is used by the SgNode object to connect the unparser to the AST.
 
-          This function hides the complexity of generating a string from any subtree 
+          This function hides the complexity of generating a string from any subtree
           of the AST (represented by a SgNode*).
 
-          \internal This function uses the standard stringstream mechanism in C++ to 
+          \internal This function uses the standard stringstream mechanism in C++ to
                     convert the stream output to a string.
      \endif
   */
@@ -89,8 +89,8 @@ std::string get_type_name( SgType* t);
 //! Unparse the declaration as a string for use in prototypes within the AST rewrite mechanism prefix mechanism
 ROSE_DLL_API std::string unparseDeclarationToString ( SgDeclarationStatement* declaration, bool unparseAsDeclaration = true );
 
-//! Unparse the header of the scope statement (used in the prefix generation to 
-//! permit context to be accounted for the in generation of AST fragements from 
+//! Unparse the header of the scope statement (used in the prefix generation to
+//! permit context to be accounted for the in generation of AST fragements from
 //! strings, e.g. for cases in SgSwitchStatement).
 std::string unparseScopeStatementWithoutBasicBlockToString ( SgScopeStatement* scope );
 
@@ -109,9 +109,9 @@ class UnparseDelegate
    {
      public:
      virtual ~UnparseDelegate() {};
-       // This class need only support the unparsing of statements since all other IR nodes are 
+       // This class need only support the unparsing of statements since all other IR nodes are
        // unparsed by the functions that unparse statements.
-          virtual bool unparse_statement( SgStatement* stmt, SgUnparse_Info& info, UnparseFormat& out) = 0; 
+          virtual bool unparse_statement( SgStatement* stmt, SgUnparse_Info& info, UnparseFormat& out) = 0;
    };
 
 
@@ -160,7 +160,7 @@ class Unparser
 #endif
 
        // DQ (8/19/2007): Added simple access to the SgFile so that options specified there are easily available.
-       // Using this data member a number of mechanism in the unparser could be simplified to be more efficient 
+       // Using this data member a number of mechanism in the unparser could be simplified to be more efficient
        // (they currently search bacj through the AST to get the SgFile).
           SgFile* currentFile;
 
@@ -176,16 +176,15 @@ class Unparser
 
 #error "Dead Code!"
 
-      /*! \brief Old approach to handling comments separately from the AST, it 
+      /*! \brief Old approach to handling comments separately from the AST, it
                  is included for compatability while it is evaluated.
-          \depricated This approach is currently not used (will be removed soon).
+          \deprecated This approach is currently not used (will be removed soon).
        */
           ROSEAttributesListContainer directiveListContainer;
 #endif
-
-      // DQ (10/23/2006): Moved to be private after Thomas noticed this was incorrectly marked 
+      // DQ (10/23/2006): Moved to be private after Thomas noticed this was incorrectly marked
       // public in this program vizualization.
-      //! compiler generated code statements are pushed into a temporary queue so that they can 
+      //! compiler generated code statements are pushed into a temporary queue so that they can
       //! be output after any statements attached to the next statements and before the next statement
           std::list<SgStatement*> compilerGeneratedStatementQueue;
 
@@ -229,7 +228,7 @@ class Unparser
           Unparser & operator=(const Unparser & X);
 
       //! get the output stream wrapper
-          UnparseFormat& get_output_stream(); 
+          UnparseFormat& get_output_stream();
 
       //! true if SgLocatedNode is part of a transformation on the AST
           bool isPartOfTransformation( SgLocatedNode *n);
@@ -239,7 +238,7 @@ class Unparser
 
       //! counts the number of lines in one directive
           int line_count(char*);
-  
+
       //! Used to decide which include files (most often header files) will be unparsed
           bool containsLanguageStatements (char* fileName);
 
@@ -291,7 +290,7 @@ class Unparser
           static int getNumberOfLines( std::string s );
           static int getColumnNumberOfEndOfString( std::string s );
 
-       // DQ (8/7/2018): Refactored code for name qualification (so that we can call it once before all files 
+       // DQ (8/7/2018): Refactored code for name qualification (so that we can call it once before all files
        // are unparsed (where we unparse multiple files because fo the use of header file unparsing)).
           static void computeNameQualification ( SgSourceFile* file );
    };
@@ -301,7 +300,7 @@ class Unparser
 void resetSourcePositionToGeneratedCode( SgFile* file, UnparseFormatHelp *unparseHelp );
 
 // DQ (10/11/2007): I think this is redundant with the Unparser::unparseProject() member function
-// DQ (3/18/2006): Modified to include UnparseFormatHelp in the interface.  These function can be 
+// DQ (3/18/2006): Modified to include UnparseFormatHelp in the interface.  These function can be
 // called by the user if backend compilation using the vendor compiler is not required.
 
 //! User callable function available if compilation using the backend compiler is not required.
@@ -324,9 +323,9 @@ void unparseFileList ( SgFileList* fileList, UnparseFormatHelp *unparseFormatHel
 // DQ (10/1/2019): Adding support to generate SgSourceFile for individual header files on demand.
 // This is required for the optimization of the header files because in this optimization all the
 // header files will not be processed at one time in the operation to attach the CPP and comments to the AST.
-// Instead we defer the transformations on the header files and make a note of what header files will be 
-// transformed, and then prepare the individual header files that we will transform by collecint CPP 
-// directives and comments and weaving them into those subsequences of the AST and then perform the 
+// Instead we defer the transformations on the header files and make a note of what header files will be
+// transformed, and then prepare the individual header files that we will transform by collecint CPP
+// directives and comments and weaving them into those subsequences of the AST and then perform the
 // defered transforamtion, and then unparse the header files.  This is a moderately complex operation.
 SgSourceFile* buildSourceFileForHeaderFile(SgProject* project, std::string originalFileName);
 
