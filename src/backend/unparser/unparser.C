@@ -1156,10 +1156,9 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
                // PP (04/21/15) rm output since there is another one mentioning that
                //               Ada unparsing is experimental.
                //~ printf ("NOTE: SgFile::e_Ada_language detected in unparser (initial start at unparser) \n");
+               Unparse_Ada adagen{this, file->getFileName()};
 
-               Unparse_Ada unparser(this, file->getFileName());
-
-               unparser.unparseAdaFile(file, info);
+               adagen.unparseAdaFile(file, info);
                break;
              }
 
@@ -4408,14 +4407,13 @@ buildSourceFileForHeaderFile(SgProject* project, string includedFileName)
   // statementInFile functionality will not alow the global scope to be unparsed when unparsing
   // the header file (resulting in an empty header file being unparsed)).
   // DQ (11/22/2019): We don't want to overwrite the global scope in the include_sourceFile (note it is a valid global scope).
+
+#if DEBUG_BUILD_SOURCE_FILE_FOR_HEADER_FILE
      SgGlobal* headerFileGlobal = include_sourceFile->get_globalScope();
 
-#if DEBUG_BUILD_SOURCE_FILE_FOR_HEADER_FILE
      SgSourceFile* sourceFileFromHeaderFile = isSgSourceFile(headerFileGlobal->get_parent());
      printf ("sourceFileFromHeaderFile = %p \n",sourceFileFromHeaderFile);
-#endif
 
-#if DEBUG_BUILD_SOURCE_FILE_FOR_HEADER_FILE
      SgGlobal* globalScope_from_include_sourceFile       = include_sourceFile->get_globalScope();
      SgGlobal* globalScope_from_sourceFileFromHeaderFile = include_sourceFile->get_globalScope();
 
