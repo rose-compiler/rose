@@ -13,7 +13,7 @@ echo "------------------------------------------------"
 BENCH_PASS=0
 BENCH_FAIL=0
 
-REPORT_DIR=test
+REPORT_DIR="test_$$"
 mkdir -p $REPORT_DIR
 
 function runtests {    
@@ -58,3 +58,5 @@ testNumbers=`echo {001..002}`
 testprefix=NOCC
 echo "Scheduled tests: $testNumbers"
 runtests
+
+rm -rf $REPORT_DIR
