@@ -21,7 +21,7 @@ namespace CodeThorn {
     void generateVerificationFunctionsCsvFile(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer, string analysisName, ProgramLocationsReport& report);
     void generateInternalAnalysisReport(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer);
     CodeThorn::LabelSet functionLabels(CodeThorn::CTAnalysis* analyzer);
-    void generateDeadCodeLocationsVerificationReport(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer, LabelSet& unreachable);
+    void generateDeadCodeLocationsVerificationReport(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer, LabelSet& unreachable, LabelSet& reachable);
     void generateUnusedVariablesReport(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer);
 
   private:
