@@ -23,7 +23,7 @@ namespace CodeThorn {
     //cout<<"MEM CHECK: @"<<lab.toString()<<": READ: @"<< memLoc.toString()<<endl;
     auto violation=checkMemoryAddress(memLoc);
     // check uninitialized value read from memory location
-    if(memLoc.isUndefined()) {
+    if(memLoc.isUndefined()||memLoc.isTop()) {
       // indirect access
       violation.insert(ACCESS_POTENTIALLY_UNINIT);
     } else if(pstate->memLocExists(memLoc)) {
@@ -77,24 +77,31 @@ namespace CodeThorn {
 	if(offset.isConstInt()) {
 	  // check array bounds
 	  int memRegionSize=AbstractValue::_variableIdMapping->getTotalSize(memId);
+          int accessOffset=offset.getIntValue();
 	  if(memRegionSize==0) {
 	    resultList.insert(ACCESS_POTENTIALLY_OUTSIDE_BOUNDS); // will become ACCESS_DEFINITELY_OUTSIDE_BOUNDS;
           } else {
-            int accessOffset=offset.getIntValue();
-            if(!(accessOffset<0||accessOffset>=memRegionSize)) {
-              resultList.insert(ACCESS_DEFINITELY_INSIDE_BOUNDS);
+            if(memRegionSize==-1) {
+              resultList.insert(ACCESS_POTENTIALLY_OUTSIDE_BOUNDS);
+              if(!AbstractValue::_variableIdMapping->isReturnVariableId(memId)) {
+              SAWYER_MESG(CodeThorn::logger[WARN])<<"Memory violation check (unknown region size): "<<address.toString()<<":"
+                                                  <<" offset:"<<accessOffset
+                                                  <<" memregionsize:"<<memRegionSize
+                                                  <<" numelemsize:"<<AbstractValue::_variableIdMapping->getElementSize(memId)
+                                                  <<" numElems:"<<AbstractValue::_variableIdMapping->getNumberOfElements(memId)
+                                                  <<endl;
+              }
             } else {
-              if(memRegionSize!=-1) {
-                resultList.insert(ACCESS_DEFINITELY_OUTSIDE_BOUNDS);
+              if(accessOffset>=0&&accessOffset<memRegionSize) {
+                resultList.insert(ACCESS_DEFINITELY_INSIDE_BOUNDS);
               } else {
-                if(!AbstractValue::_variableIdMapping->isReturnVariableId(memId)) {
-                  SAWYER_MESG(CodeThorn::logger[WARN])<<"Memory violation check (unknown region size): "<<address.toString()<<":"
-                                                      <<" offset:"<<accessOffset
-                                                      <<" memregionsize:"<<memRegionSize
-                                                      <<" numelemsize:"<<AbstractValue::_variableIdMapping->getElementSize(memId)
-                                                      <<" numElems:"<<AbstractValue::_variableIdMapping->getNumberOfElements(memId)
-                                                      <<endl;
-                }
+                resultList.insert(ACCESS_DEFINITELY_OUTSIDE_BOUNDS);
+                cout<<"Memory violation check (out side-bounds): "<<address.toString()<<":"
+                                                  <<" offset:"<<accessOffset
+                                                  <<" memregionsize:"<<memRegionSize
+                                                  <<" numelemsize:"<<AbstractValue::_variableIdMapping->getElementSize(memId)
+                                                  <<" numElems:"<<AbstractValue::_variableIdMapping->getNumberOfElements(memId)
+                                                  <<endl;
               }
             }
           }

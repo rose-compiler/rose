@@ -51,9 +51,9 @@ function runNPTests {
     then
         if [ $TESTS_FAILED -le $TESTS_FAILED_EXPECTED ]
         then
-            echo "PASS: $TESTS_FAILED tests of $TESTS_TOTAL imprecise (expected $TESTS_FAILED_EXPECTED)."
+            echo "PASS ($TESTS_FAILED tests of $TESTS_TOTAL imprecise (expected $TESTS_FAILED_EXPECTED))"
         else
-            echo "FAIL: $TESTS_FAILED tests of $TESTS_TOTAL failed. Exiting."
+            echo "FAIL ($TESTS_FAILED tests of $TESTS_TOTAL failed) Exiting."
             exit 1
         fi
     else
@@ -80,7 +80,7 @@ do
         --no-np)
             testNumbers=`echo {001..005}`
             testprefix=NONP
-            runNPTests 0 0 2
+            runNPTests 0 0 1
             ;;
         *)
             ;;

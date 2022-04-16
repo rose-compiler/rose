@@ -239,7 +239,7 @@ void PState::writeTopToAllPotentialMemoryLocations() {
   for(PState::iterator i=begin();i!=end();++i) {
     AbstractValue av=(*i).first;
     AbstractValue val=rawReadFromMemoryLocation(av);
-    if(!av.isAbstract()&&!val.isUndefined()&&!val.isAbstract()) {
+    if(!av.isAbstract()&&!val.isUndefined()&&!val.isAbstract()&&!av.isPointerToArbitraryMemory()) {
       rawWriteAtMemoryLocation(av,CodeThorn::Top());
     }
   }
@@ -250,7 +250,6 @@ void PState::combineValueAtAllMemoryLocations(AbstractValue val) {
   for(PState::iterator i=begin();i!=end();++i) {
     AbstractValue memLoc=(*i).first;
     if(!memLoc.isRef()) {
-      //cout<<"DEBUG: rawcombine"<<endl;
       rawCombineAtMemoryLocation(memLoc,val);
     }
   }
