@@ -383,6 +383,8 @@ class Grammar
           Rose::StringUtility::FileWithLineNumbers buildDataMemberVariableDeclarations ( AstNodeClass & node );
           Rose::StringUtility::FileWithLineNumbers buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( AstNodeClass & node );
 
+          Rose::StringUtility::FileWithLineNumbers buildFriendDeclarations ( AstNodeClass & node );
+
           Rose::StringUtility::FileWithLineNumbers buildConstructor ( AstNodeClass & node );
           Rose::StringUtility::FileWithLineNumbers buildConstructorForEssentialDataMembers ( AstNodeClass & node);
 
@@ -649,6 +651,8 @@ class Grammar
           void  generateAST_FILE_IOFiles ( );
           void  generateStorageClassesFiles ( );
           std::vector<std::string>& getListOfBuiltinTypes();
+
+          void generateRoseTraits();
 
        // DQ (4/6/2006): Added in Jochen's new version
           std::vector<std::string>& getListOfAbstractClasses();

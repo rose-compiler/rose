@@ -1,6 +1,6 @@
 
-#ifndef ROSE_CODEGEN_DRIVER_H
-#define ROSE_CODEGEN_DRIVER_H
+#ifndef Rose_CodeGen_Driver_h
+#define Rose_CodeGen_Driver_h
 
 #include <set>
 #include <map>
@@ -70,5 +70,5 @@ class Driver {
 
 } }
 
-#endif /* ROSE_CODEGEN_DRIVER_H */
+#endif /* Rose_CodeGen_Driver_h */
 

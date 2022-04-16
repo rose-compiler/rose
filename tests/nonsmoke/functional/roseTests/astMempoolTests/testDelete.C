@@ -1,6 +1,6 @@
 
 #include "sage3basic.h"
-#include "Rose/AST/io.h"
+#include "Rose/AST/IO.h"
 
 int main_to_repeat(std::vector<std::string> & args) {
   SgProject * project = args.size() > 1 ? frontend(args) : new SgProject(); // TODO this behavior should be part of ::frontend(std::vector<std::string> const &)

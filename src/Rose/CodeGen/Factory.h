@@ -1,19 +1,29 @@
-
-#ifndef ROSE_CODEGEN_FACTORY_H
-#define ROSE_CODEGEN_FACTORY_H
+#ifndef Rose_CodeGen_Factory_h
+#define Rose_CodeGen_Factory_h
 
 #include "Rose/CodeGen/API.h"
 
 namespace Rose { namespace CodeGen {
 
 /**
- * \brief 
+ * \brief constructs expressions and types for the given API
+ *
+ * \tparam CRT https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern
+ * \tparam API a specialization of Rose::CodeGen::API
+ *
+ * 
+ *
  */
 template <typename CRT, typename API>
 class Factory;
 
 /**
- * \brief 
+ * \brief enables partial specializations w.r.t the template parameter `otag`
+ *
+ * \tparam CRT https://en.wikipedia.org/wiki/Curiously_recurring_template_pattern
+ * \tparam API a specialization of Rose::CodeGen::API
+ * \tparam otag Object of the specialization
+ *
  */
 template <typename CRT, typename apiT, Object otag>
 struct __factory_helper_t;
@@ -31,12 +41,15 @@ class Factory {
     Factory(Driver & driver_) : driver(driver_), api() {
       api.load(driver);
     }
+
     /**
      * Return an instantiation 
      *
-     * \param otag must be one of a_class/a_typedef/a_variable/a_function
-     * \param obj points to a template symbol
-     * \param args template arguments
+     * \tparam otag must be one of a_class/a_typedef/a_variable/a_function
+     * \tparam Args types of the nodes to use as template arguments (SgType/SgExpression for type/non-type respectively
+     *
+     * \param obj must points to a template symbol
+     * \param args nodes to use as template arguments
      * \param parent is used when called by reference which was called by one of the `access` methods
      *
      * \return a template instantiation
@@ -53,9 +66,11 @@ class Factory {
     /**
      * Return an expression or type referencing the object. Args are forwarded to `instantiate` as needed.
      *
-     * \param otag must be one of a_class/a_typedef/a_variable/a_function
+     * \tparam otag must be one of a_class/a_typedef/a_variable/a_function
+     * \tparam Args types of template arguments (see instantiate)
+     *
      * \param obj points to a symbol
-     * \param args template arguments if obj is a template
+     * \param args template arguments (see instantiate)
      * \param parent is used when called by one of the `access` methods
      *
      * \return a reference expression
@@ -81,10 +96,12 @@ class Factory {
     /**
      * Build expression to access a member of the parent expression. Args are forwarded to `instantiate` as needed.
      *
-     * \param otag must be one of a_variable/a_function
+     * \tparam otag must be one of a_variable/a_function
+     * \tparam Args types of template arguments (see instantiate)
+     *
      * \param obj points to a symbol
      * \param parent
-     * \param args template arguments if obj is a template
+     * \param args template arguments (see instantiate)
      *
      * \return either `.` or `->` operator with `parent` as lhs and `reference(obj, args...)` as rhs
      *
@@ -112,17 +129,32 @@ class Factory {
       }
     }
 
+
+  protected:
+    /**
+     * Select return type for access based on Object type
+     *
+     * \tparam otag must be one of a_class/a_typedef or a_variable/a_function
+     *
+     */
+    template <Object otag>
+    using access_return_t = std::conditional_t<otag == Object::a_class || otag == Object::a_typedef, SgType, SgExpression>;
+
+
+  public:
     /**
      * Build expression or type to access static member and subtype of the parent type. Args are forwarded to `instantiate` as needed.
      *
-     * \param otag must be one of a_class/a_typedef or a_variable/a_function
+     * \tparam otag must be one of a_class/a_typedef or a_variable/a_function
+     * \tparam Args types of template arguments (see instantiate)
+     *
      * \param obj points to a symbol
      * \param lhs
-     * \param args template arguments if obj is a template
+     * \param args template arguments (see instantiate)
      *
      */
-    template <Object otag, typename... Args, typename OutNodeT = std::conditional_t<otag == Object::a_class || otag == Object::a_typedef, SgType, SgExpression>>
-    OutNodeT * access(symbol_t<otag> * API::* obj, SgNamedType * parent, Args... args) {
+    template <Object otag, typename... Args>
+    access_return_t<otag> * access(symbol_t<otag> * API::* obj, SgNamedType * parent, Args... args) {
       reference_t<otag> * rhs = reference(obj, parent, args...);
       // TODO build either SgScopedRefType SgScopedRefExp
       return rhs;
@@ -145,5 +177,4 @@ reference_t<Object::a_variable> * Factory<CRT,apiT>::reference<Object::a_variabl
 #include "Rose/CodeGen/factory/variables.txx"
 #include "Rose/CodeGen/factory/functions.txx"
 
-#endif /* ROSE_CODEGEN_FACTORY_H */
-
+#endif /* Rose_CodeGen_Factory_h */

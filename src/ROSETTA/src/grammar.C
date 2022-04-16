@@ -1720,6 +1720,33 @@ Grammar::buildDataMemberVariableDeclarations ( AstNodeClass & node )
      return result;
    }
 
+
+StringUtility::FileWithLineNumbers
+Grammar::buildFriendDeclarations ( AstNodeClass & node )
+   {
+     StringUtility::FileWithLineNumbers result;
+
+     std::string prefix("    friend class Rose::Traits::generated::describe_");
+     std::string name = node.baseName;
+
+     result.push_back(StringUtility::StringWithLineNumber(prefix + "node_t<Sg" + name + ">;", "", 1));
+
+     std::vector<GrammarString *> fields;
+     for (auto gsp: node.memberDataPrototypeList[0][0]) {
+       if (gsp->typeNameString.find("static ") != 0) {
+         auto vname = gsp->variableNameString;
+         auto type_str = gsp->typeNameString;
+
+         if (type_str == "hash_iterator")    type_str = "Sg" + name + "::hash_iterator";
+         else if (type_str == "$CLASSNAME*") type_str = "Sg" + name + "*";
+
+         std::string decl_str = "field_t<Sg" + name + ", " + type_str + ",&Sg" + name + "::p_" + vname + ">;";
+         result.push_back(StringUtility::StringWithLineNumber(prefix + decl_str, "", 1));
+       }
+     }
+     return result;
+   }
+
 StringUtility::FileWithLineNumbers
 Grammar::buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( AstNodeClass & node )
    {
@@ -2223,6 +2250,9 @@ Grammar::buildHeaderFiles( AstNodeClass & node, StringUtility::FileWithLineNumbe
   // DQ (3/24/2006): Add the data members to the end of the class in the generated code.
      StringUtility::FileWithLineNumbers editStringMiddleNodeData = buildDataMemberVariableDeclarations(node);
      editedStringMiddle += editStringMiddleNodeData;
+
+     StringUtility::FileWithLineNumbers editStringMiddleNodeFriends = buildFriendDeclarations(node);
+     editedStringMiddle += editStringMiddleNodeFriends;
 
   // printf ("editStringMiddleNodeMemberFunctions = %s \n",editStringMiddleNodeMemberFunctions);
   // char* editStringForParserPrototype = buildParserPrototype (node);
@@ -3973,6 +4003,7 @@ Grammar::buildCode ()
   /////////////////////////////////////////////////////////////////////////////////////////////
 
 
+     Grammar::generateRoseTraits();
 
 #if 1
   // -----------------------------------------------------------------------------------------------------------------------

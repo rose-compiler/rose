@@ -11,7 +11,7 @@
 
 #include "SgNodeHelper.h" //Markus's helper functions
 
-#include "Rose/AST/utils.h"
+#include "Rose/AST/Utils.h"
 
 #include "sageInterface.h"
 

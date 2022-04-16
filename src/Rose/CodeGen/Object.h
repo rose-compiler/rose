@@ -1,11 +1,13 @@
+#ifndef Rose_CodeGen_Object_h
+#define Rose_CodeGen_Object_h
 
-#ifndef ROSE_CODEGEN_OBJECT_H
-#define ROSE_CODEGEN_OBJECT_H
-
-#include "sage3basic.h" // TODO ROSE header that contains only forward of nodes and VariantT (maybe also template-meta for hierarchy and traversal)
+// FIXME it is a problem with MSVC ("cannot access protected member")
+//#include "Rose/Traits/Describe.h"
+#include "sage3basic.hhh"
 
 namespace Rose { namespace CodeGen {
 
+//! The five kind of objects manipulated by Rose::CodeGen::API and associated  Rose::CodeGen::Factory
 enum class Object {
   a_namespace,
   a_class,
@@ -17,10 +19,28 @@ enum class Object {
 template <Object otag>
 struct object_helper;
 
+/**
+ * The SgSymbol specialization for an Object kind
+ * /tparam otag an Object kind
+ */
 template <Object otag> using symbol_t      = typename object_helper<otag>::symbol_t;
+
+/**
+ * The SgReference specialization for an Object kind
+ * /tparam otag an Object kind
+ */
 template <Object otag> using reference_t   = typename object_helper<otag>::ref_t;
+
+/**
+ * The SgDeclarationStatement specialization for an Object kind
+ * /tparam otag an Object kind
+ */
 template <Object otag> using declaration_t = typename object_helper<otag>::decl_t;
 
+/**
+ * This function returns whether the node variant is a template symbol for an Object kind
+ * /tparam otag an Object kind
+ */
 template <Object otag> constexpr auto is_template_symbol_variant = object_helper<otag>::is_template_symbol_variant;
 
 template <>
@@ -80,5 +100,4 @@ struct object_helper<Object::a_function> {
 
 } }
 
-#endif /* ROSE_CODEGEN_OBJECT_H */
-
+#endif /* Rose_CodeGen_Object_h */

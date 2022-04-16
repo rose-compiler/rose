@@ -152,6 +152,8 @@ namespace ELF{
 // DQ (4/20/2009): Added support to optionally get more information out about new delete operators.
 #define COMPILE_DEBUG_STATEMENTS 1
 
+#include <Rose/AST.h>
+
 #include <Rose/Initialize.h>
 
 /******************************************************************************************************************************

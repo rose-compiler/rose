@@ -2,7 +2,7 @@ include_rules
 
 CxxGrammarMetaProgram_SOURCES = CxxGrammarMetaProgram.C grammar.C GrammarFile.C grammarGenerator.C grammarString.C		\
     AstNodeClass.C type.C symbol.C expression.C statement.C support.C binaryInstruction.C storageSize.C visitorSupport.C	\
-    poolBasedTraversal.C node.C buildAstFileIO.C buildStorageClasses.C buildConstructorsWithoutSourcePositionInformation.C	\
+    poolBasedTraversal.C node.C buildAstFileIO.C buildRoseTraits.C buildStorageClasses.C buildConstructorsWithoutSourcePositionInformation.C	\
     outputClassesAndFields.C java/terminals.cpp
 
 CxxGrammarMetaProgram_LIBS = \
@@ -27,3 +27,5 @@ run $(librose_compile) $(CxxGrammarMetaProgram_GENSRC)
 run $(public_header) AST_FILE_IO.h AstQueryMemoryPool.h AstSpecificDataManagingClass.h Cxx_Grammar.h	\
     Cxx_GrammarMemoryPoolSupport.h Cxx_GrammarSerialization.h Cxx_GrammarTreeTraversalAccessEnums.h	\
     StorageClasses.h
+
+run $(public_header) -o include/rose/Rose/Traits Rose/Traits/generated.h

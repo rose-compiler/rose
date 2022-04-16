@@ -9,10 +9,7 @@
 
 class SgProject;
 
-namespace Rose {
-
-//! Collection of functionalities performing global operations on the AST.
-namespace AST {
+namespace Rose { namespace AST {
 
 //! Function used to load, merge, prune, link, delete
 namespace IO {

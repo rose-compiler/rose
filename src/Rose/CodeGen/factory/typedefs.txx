@@ -1,6 +1,6 @@
 
-#ifndef ROSE_CODEGEN_FACTORY_TYPEDEFS_TXX
-#define ROSE_CODEGEN_FACTORY_TYPEDEFS_TXX
+#ifndef Rose_CodeGen_factory_typedefs_txx
+#define Rose_CodeGen_factory_typedefs_txx
 
 namespace Rose { namespace CodeGen {
 
@@ -49,5 +49,5 @@ reference_t<Object::a_typedef> * __factory_helper_t<CRT, API, Object::a_typedef>
 
 } }
 
-#endif /*  ROSE_CODEGEN_FACTORY_TYPEDEFS_TXX */
+#endif /* Rose_CodeGen_factory_typedefs_txx */
 

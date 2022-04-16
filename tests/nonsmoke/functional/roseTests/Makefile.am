@@ -2,7 +2,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # DQ (4/17/2010): These directories are now organized based on what sets of languages 
 # are enabled in ROSE (including binary analysis).
-SUBDIRS =
+SUBDIRS = 
 
 # DQ (9/22/2020): Exclude the Intel compiler for now since it's testing is assigned 
 # to a slow machine on Jenkins and it causes the tests to take 5.75 hours. We have 
@@ -10,6 +10,8 @@ SUBDIRS =
 # DQ (9/18/2020): Comment out as a test so that we can use clang and Intel compilers.
 # if USING_GNU_COMPILER
 if !USING_INTEL_COMPILER
+
+SUBDIRS += roseTraits
 
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 

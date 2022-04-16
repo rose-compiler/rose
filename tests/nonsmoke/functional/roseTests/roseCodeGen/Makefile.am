@@ -26,4 +26,4 @@ check-local: $(TEST_TARGETS)
 
 clean-local:
 	rm -f $(TEST_TARGETS)
-	rm -f $(TEST_TARGETS:.passed=.failed)https://www.youtube.com/watch?list=RDupQMjdj-jz8&v=InIw_a9FEtg
+	rm -f $(TEST_TARGETS:.passed=.failed)
