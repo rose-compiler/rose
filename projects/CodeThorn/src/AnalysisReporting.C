@@ -110,7 +110,7 @@ namespace CodeThorn {
         }
         case ANALYSIS_DEAD_CODE: {
           string overviewFileName=ctOpt.reportFilePath+"/"+analysisName+"-"+ctOpt.analysisReportOverviewFileName;
-          generateDeadCodeLocationsVerificationReport(ctOpt, analyzer, unreachableLabels);
+          generateDeadCodeLocationsVerificationReport(ctOpt, analyzer, unreachableLabels, reachableLabels);
           generateVerificationFunctionsCsvFile(ctOpt,analyzer,analysisName,report);
           generateVerificationCallGraphDotFile(ctOpt,analyzer,analysisName,report);
           ss<<separationLine();
@@ -128,23 +128,41 @@ namespace CodeThorn {
     }
   }
 
-  void AnalysisReporting::generateDeadCodeLocationsVerificationReport(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer, LabelSet& unreachable) {
+  void AnalysisReporting::generateDeadCodeLocationsVerificationReport(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer, LabelSet& unreachable, LabelSet& reachable) {
     if(ctOpt.deadCodeAnalysisFileName.size()>0) {
       stringstream locationsCSVFileData;
-      std::set<string> locations; // use set to get sorted unique locations
-      for(auto lab : unreachable) {
-        ROSE_ASSERT(analyzer->getLabeler());
+      std::set<string> deadLocations; // use set to get sorted unique locations
+      std::set<string> tmpDeadLocations; // use set to get sorted unique locations
+      std::set<string> liveLocations; // use set to get sorted unique locations
+      ROSE_ASSERT(analyzer->getLabeler());
+
+      for(auto lab : reachable) {
 	ROSE_ASSERT(lab.isValid());
         SgNode* node=analyzer->getLabeler()->getNode(lab);
         string loc;
         if(node) {
           loc=ProgramLocationsReport::findOriginalProgramLocationOfLabel(analyzer->getLabeler(),lab);
-        } else {
-          loc="unknown-location";
         }
-        locations.insert(loc);
+        liveLocations.insert(loc);
       }
-      for(auto sloc : locations) {
+
+      for(auto lab : unreachable) {
+	ROSE_ASSERT(lab.isValid());
+        SgNode* node=analyzer->getLabeler()->getNode(lab);
+        string loc;
+        if(node) {
+          loc=ProgramLocationsReport::findOriginalProgramLocationOfLabel(analyzer->getLabeler(),lab);
+        }
+        tmpDeadLocations.insert(loc);
+      }
+      // live and dead locations can be mapped to the same original program location. Only report as dead if no live loc is mapped to a dead loc
+      for(auto loc : tmpDeadLocations) {
+        if(liveLocations.find(loc)==liveLocations.end()) {
+          deadLocations.insert(loc);
+        }
+      }
+      
+      for(auto sloc : deadLocations) {
         locationsCSVFileData<<sloc<<endl;
       }
       string fileName=ctOpt.reportFilePath+"/"+"dead-code-locations.csv";

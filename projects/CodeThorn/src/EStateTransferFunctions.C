@@ -3207,11 +3207,25 @@ namespace CodeThorn {
     // TODO: adapt pointer value element size
     SgType* targetType=node->get_type();
     targetType=targetType->stripType(SgType::STRIP_TYPEDEF_TYPE|SgType::STRIP_MODIFIER_TYPE);
-    if(AbstractValue::byteMode) {
+    AbstractValue operandValue=operandResult.value();
+    if(operandValue.isPtr() && !operandValue.isNullPtr()) {
       if(SgPointerType* ptrType=isSgPointerType(targetType)) {
         SgType* elementType=ptrType->get_base_type();
         long int elementTypeSize=_variableIdMapping->getTypeSize(elementType);
-        SAWYER_MESG(logger[DEBUG])<<"casting pointer to element type size: "<<elementTypeSize<<":"<<elementType->unparseToString()<<endl;
+        long int elementSizeMemRegion=getMemoryRegionElementSize(operandValue);
+        // convert to top if a concrete pointer is cast to a pointer of different element size to avoid pointer arithmetic with different element sizes
+        if(elementTypeSize!=elementSizeMemRegion
+           && elementTypeSize!=0 /* zero-check: exclude cast to void* because it must be cast to some non-zero pointer to be used */
+           && !operandValue.isPointerToArbitraryMemory()
+           && !operandValue.isAbstract()
+           && !operandValue.isUndefined()
+           ) {
+          SAWYER_MESG(logger[WARN])<<"evalCastOp: pointer cast: "<<node->unparseToString()<<" : operandResult:"<<operandResult.value().toString()<<": "<<AstTerm::astTermWithNullValuesToString(node)<<"casting pointer to mem region with elemsize "<<elementSizeMemRegion<<" to element type size: "<<elementTypeSize<<":"<<elementType->unparseToString()<<" (assuming arbitrary pointer)"<<endl;
+          // convert to arbitrary pointer
+          SingleEvalResult res;
+          res.init(estate,AbstractValue::createTop()); // create arbitrary memory pointer
+          return res;
+        }
       }
     }
     SingleEvalResult res;
@@ -4296,11 +4310,13 @@ namespace CodeThorn {
     memLoc=conditionallyApplyArrayAbstraction(memLoc);
     notifyReadWriteListenersOnWriting(lab,pstate,memLoc,newValue);
 
-    if(memLoc.isTop()||memLoc.isBot()||memLoc.isPointerToArbitraryMemory()) {
+    if(memLoc.isTop()||memLoc.isBot()/*||memLoc.isPointerToArbitraryMemory()*/) {
       pstate->writeTopToAllPotentialMemoryLocations();
       return;
     } else if(!pstate->memLocExists(memLoc)) {
       //SAWYER_MESG(logger[TRACE])<<"EStateTransferFunctions::writeToMemoryLocation: memloc does not exist"<<endl;
+      pstate->writeTopToAllPotentialMemoryLocations();
+      return;
     }
     if(memLoc.isNullPtr()) {
       // do not write to null pointer

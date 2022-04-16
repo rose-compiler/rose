@@ -7,39 +7,40 @@ OPTIONS="--normalize-level=1 --ignore-unknown-functions --generate-reports=yes -
 
 TESTDIR=$1
 echo "------------------------------------------------"
-echo "running DEADCODE TESTS"
+echo "running NULL POINTER DEREFERENCE TESTS"
 echo "------------------------------------------------"
 
 REPORT_DIR="test_$$"
 mkdir -p $REPORT_DIR
 
-function runDeadCodeTests {    
-echo "Scheduled tests: $testNumbers"
+function runNPTests {    
+    echo "Scheduled tests: $testNumbers"
 
-MIN_COUNT=$1
-MAX_COUNT=$2
-
-TESTS_FAILED=0
-TESTS_PASSED=0
+    MIN_COUNT=$1
+    MAX_COUNT=$2
+    TESTS_FAILED_EXPECTED=$3
+    
+    TESTS_FAILED=0
+    TESTS_PASSED=0
 
     for testNumber in $testNumbers; do
         benchmarkprefix=$TESTDIR/${testprefix}${testNumber};
-        for benchmark in ${benchmarkprefix}_*.c; do
+        for benchmark in ${benchmarkprefix}*.c; do
             benchmarkname=$(basename $benchmark)
             printf "Testing %-44s : " "$benchmarkname"
             ./codethorn ${OPTIONS} --report-dir=$REPORT_DIR $benchmark > /dev/null
-            dclines=`grep -v gcc_HEADERS $REPORT_DIR/dead-code-locations.csv | grep -v include | wc -l | cut -f1 -d' '`
+            nplines=`grep -v gcc_HEADERS $REPORT_DIR/null-pointer-locations.csv | wc -l | cut -f1 -d' '`
             if [ ! $? -eq 0 ]
             then
-	        echo "FAIL"
+	        echo "FAIL: error in input or internal tool error"
                 exit 1
             else
-                if [ $dclines -lt $MIN_COUNT ] || [ $dclines -gt $MAX_COUNT ];
+                if [ $nplines -lt $MIN_COUNT ] || [ $nplines -gt $MAX_COUNT ];
                 then
-	            printf "FAIL: %s unreachable locations\n" "$dclines"
+	            printf "WARN: %s null pointer dereference locations\n" "$nplines"
                     TESTS_FAILED=$((TESTS_FAILED+1))
                 else
-	            printf "PASS: %s unreachable locations\n" "$dclines"
+	            printf "PASS: %s null pointer dereference locations\n" "$nplines"
                     TESTS_PASSED=$((TESTS_PASSED+1))
                 fi
             fi
@@ -48,8 +49,13 @@ TESTS_PASSED=0
     TESTS_TOTAL=$((TESTS_PASSED+TESTS_FAILED))
     if [ $TESTS_FAILED -gt 0 ];
     then
-        echo "$TESTS_FAILED tests of $TESTS_TOTAL failed. Exiting."
-        exit 1
+        if [ $TESTS_FAILED -le $TESTS_FAILED_EXPECTED ]
+        then
+            echo "PASS ($TESTS_FAILED tests of $TESTS_TOTAL imprecise (expected $TESTS_FAILED_EXPECTED))"
+        else
+            echo "FAIL ($TESTS_FAILED tests of $TESTS_TOTAL failed) Exiting."
+            exit 1
+        fi
     else
         echo "All tests passed ($TESTS_TOTAL)"
     fi
@@ -59,24 +65,22 @@ ARG=$1
 
 if [[ $# -eq 0 ]];
 then
-    echo "runDeadCodeTests: usage: TESTDIR [--dc] [--no-dc]"
+    echo "runNPTests: usage: TESTDIR [--np] [--no-np]"
     exit
 fi
 
 for arg in "$@"
 do
     case $arg in
-        --dc)
-            testNumbers=`echo {001..015}`
-            testprefix=DC
-            # not finding any dead code is ok
-            runDeadCodeTests 0 100
+        --np)
+            testNumbers=`echo {001..005}`
+            testprefix=NP
+            runNPTests 1 10 0
             ;;
-        --no-dc)
-            testNumbers=`echo {001..002}`
-            testprefix=NODC
-            # there is no dead code, finding any dead code is an incorrect analysis
-            runDeadCodeTests 0 0
+        --no-np)
+            testNumbers=`echo {001..005}`
+            testprefix=NONP
+            runNPTests 0 0 1
             ;;
         *)
             ;;
