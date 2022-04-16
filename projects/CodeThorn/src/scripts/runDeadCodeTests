@@ -13,27 +13,6 @@ echo "------------------------------------------------"
 REPORT_DIR="test_$$"
 mkdir -p $REPORT_DIR
 
-
-function runDeadCodeTestsOld {    
-echo "Scheduled tests: $testNumbers"
-    for testNumber in $testNumbers; do
-    benchmarkprefix=$TESTDIR/${testprefix}${testNumber};
-    for benchmark in ${benchmarkprefix}_*.c; do
-        benchmarkname=$(basename $benchmark)
-        printf "Testing %-44s : " "$benchmarkname"
-        ./codethorn ${OPTIONS} --report-dir=$REPORT_DIR $benchmark > /dev/null
-        dclines=`grep -v gcc_HEADERS $REPORT_DIR/dead-code-locations.csv | wc -l | cut -f1 -d' '`
-        if [ ! $? -eq 0 ]
-        then
-	    echo "FAIL"
-            exit 1
-        else
-	    printf "PASS: %s unreachable locations\n" "$dclines"
-        fi
-    done
-done
-}
-
 function runDeadCodeTests {    
 echo "Scheduled tests: $testNumbers"
 
@@ -49,7 +28,7 @@ TESTS_PASSED=0
             benchmarkname=$(basename $benchmark)
             printf "Testing %-44s : " "$benchmarkname"
             ./codethorn ${OPTIONS} --report-dir=$REPORT_DIR $benchmark > /dev/null
-            dclines=`grep -v gcc_HEADERS $REPORT_DIR/dead-code-locations.csv | wc -l | cut -f1 -d' '`
+            dclines=`grep -v gcc_HEADERS $REPORT_DIR/dead-code-locations.csv | grep -v include | wc -l | cut -f1 -d' '`
             if [ ! $? -eq 0 ]
             then
 	        echo "FAIL"
