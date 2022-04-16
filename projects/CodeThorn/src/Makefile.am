@@ -914,7 +914,11 @@ check-commandline-options: ./codethorn
 	@./codethorn --cl-args="a bbb cc" $(srcdir)/tests/commandlineoptions1.C --vis --tg1-memory-subgraphs
 #	@dot -Tpdf transitiongraph1.dot -otransitiongraph1.pdf
 
+
 check-violations: check-dead-code check-no-dead-code check-no-cc check-np check-no-np
+	$(srcdir)/scripts/runDeadCodeTests $(srcdir)/tests --dc --no-dc
+	$(srcdir)/scripts/runNPTests $(srcdir)/tests --np --no-dp
+	$(srcdir)/scripts/runNoConstantConditionTests $(srcdir)/tests
 
 check-dead-code:
 	$(srcdir)/scripts/runDeadCodeTests $(srcdir)/tests --dc
@@ -930,6 +934,7 @@ check-np:
 
 check-no-np:
 	$(srcdir)/scripts/runNPTests $(srcdir)/tests --no-np
+
 
 check-normalization:
 	$(srcdir)/scripts/runNormalizationTests $(srcdir)/tests
