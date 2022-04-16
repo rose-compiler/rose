@@ -1,6 +1,6 @@
 
-#ifndef ROSE_CODEGEN_FACTORY_NAMESPACES_TXX
-#define ROSE_CODEGEN_FACTORY_NAMESPACES_TXX
+#ifndef Rose_CodeGen_factory_namespaces_txx
+#define Rose_CodeGen_factory_namespaces_txx
 
 namespace Rose { namespace CodeGen {
 
@@ -29,5 +29,5 @@ reference_t<Object::a_namespace> * __factory_helper_t<CRT, API, Object::a_namesp
 
 } }
 
-#endif /*  ROSE_CODEGEN_FACTORY_NAMESPACES_TXX */
+#endif /* Rose_CodeGen_factory_namespaces_txx */
 

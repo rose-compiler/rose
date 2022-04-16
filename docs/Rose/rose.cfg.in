@@ -144,7 +144,10 @@ STRIP_FROM_PATH        =
 # definition is used. Otherwise one should specify the include paths that
 # are normally passed to the compiler using the -I flag.
 
-STRIP_FROM_INC_PATH    =
+STRIP_FROM_INC_PATH    = @top_pwd@/src/frontend/SageIII \
+                         @top_pwd@/src/Rose \
+                         @top_srcdir@/src/frontend/SageIII \
+                         @top_srcdir@/src/
 
 # If the SHORT_NAMES tag is set to YES, doxygen will generate much shorter
 # (but less readable) file names. This can be useful if your file system
@@ -680,6 +683,7 @@ INPUT                  = @top_srcdir@/docs/Rose/MainPage.dox \
 			 @top_srcdir@/docs/Rose/Developers.dox \
                          @top_srcdir@/docs/Rose \
                          @top_pwd@/src/frontend/SageIII \
+                         @top_pwd@/src/frontend/SageIII/Rose/Traits \
                          @top_srcdir@/src/frontend/frontend.docs \
                          @top_srcdir@/docs/testDoxygen \
 			 @top_srcdir@/src/Rose \
@@ -696,6 +700,8 @@ INPUT                  = @top_srcdir@/docs/Rose/MainPage.dox \
 			 @top_srcdir@/src/Rose/FileSystem \
 			 @top_srcdir@/src/Rose/StringUtility \
 			 @top_srcdir@/src/Rose/AST \
+			 @top_srcdir@/src/Rose/Traits \
+			 @top_srcdir@/src/Rose/CodeGen \
                          @top_srcdir@/src/ROSETTA/src/binaryInstruction.C \
                          @top_srcdir@/src/frontend/Disassemblers \
                          @top_srcdir@/src/frontend/BinaryFormats/Rva.C \

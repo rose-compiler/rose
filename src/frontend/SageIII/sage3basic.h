@@ -432,6 +432,9 @@ namespace Exec { namespace ELF { class ElfFileHeader; }; };
    typedef int ATerm;
 #endif
 
+namespace Rose { namespace Traits { namespace generated { template <typename NodeT> struct describe_node_t; } } }
+namespace Rose { namespace Traits { namespace generated { template <typename NodeT, typename FieldT, FieldT NodeT::* fld_ptr> struct describe_field_t; } } }
+
 // DQ (3/7/2013): I think that we need to use "" instead of <> and this may make a difference for SWIG.
 // DQ (9/21/2005): This is the simplest way to include this here
 // This is the definition of the Sage III IR classes (generated header).

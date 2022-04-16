@@ -1,6 +1,6 @@
 
-#ifndef ROSE_CODEGEN_FACTORY_VARIABLES_TXX
-#define ROSE_CODEGEN_FACTORY_VARIABLES_TXX
+#ifndef Rose_CodeGen_factory_variables_txx
+#define Rose_CodeGen_factory_variables_txx
 
 namespace Rose { namespace CodeGen {
 
@@ -49,5 +49,5 @@ reference_t<Object::a_variable> * __factory_helper_t<CRT, API, Object::a_variabl
 
 } }
 
-#endif /*  ROSE_CODEGEN_FACTORY_VARIABLES_TXX */
+#endif /* Rose_CodeGen_factory_variables_txx */
 

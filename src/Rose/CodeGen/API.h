@@ -1,6 +1,6 @@
 
-#ifndef ROSE_CODEGEN_API_H
-#define ROSE_CODEGEN_API_H
+#ifndef Rose_CodeGen_API_h
+#define Rose_CodeGen_API_h
 
 #include "Rose/CodeGen/Driver.h"
 #include "Rose/CodeGen/Object.h"
@@ -9,12 +9,7 @@
 #include <map>
 #include <string>
 
-namespace Rose {
-
-/**
- * \brief Collection of classes/functions to facilitate generation of source-code (esp. C/C++)
- */
-namespace CodeGen {
+namespace Rose { namespace CodeGen {
 
 /**
  * \brief permits to gather types and symbols to extract an API from a set of headers.
@@ -65,5 +60,5 @@ class API {
 
 #include "Rose/CodeGen/API.txx"
 
-#endif /* ROSE_CODEGEN_API_H */
+#endif /* Rose_CodeGen_API_h */
 
