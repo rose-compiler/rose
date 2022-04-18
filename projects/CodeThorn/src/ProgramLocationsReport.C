@@ -138,6 +138,14 @@ LabelSet CodeThorn::ProgramLocationsReport::determineRecordFreeFunctions(CFAnaly
   return verifiedFunctions;
 }
 
+void ProgramLocationsReport::filterDefinitiveFromPotentialLocations() {
+  for (auto defLoc : definitiveLocations) {
+    if(potentialLocations.find(defLoc)!=potentialLocations.end()) {
+      potentialLocations.erase(defLoc);
+    }
+  }
+}
+
 void ProgramLocationsReport::recordDefinitiveLocation(CodeThorn::Label lab) {
 #pragma omp critical(definitiveproglocrecording)
   {

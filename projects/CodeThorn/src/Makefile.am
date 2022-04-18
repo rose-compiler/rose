@@ -915,7 +915,7 @@ check-commandline-options: ./codethorn
 #	@dot -Tpdf transitiongraph1.dot -otransitiongraph1.pdf
 
 
-check-violations: check-dead-code check-no-dead-code check-no-cc check-np check-no-np
+check-violations:
 	$(srcdir)/scripts/runDeadCodeTests $(srcdir)/tests --dc --no-dc
 	$(srcdir)/scripts/runNPTests $(srcdir)/tests --np --no-dp
 	$(srcdir)/scripts/runNoConstantConditionTests $(srcdir)/tests

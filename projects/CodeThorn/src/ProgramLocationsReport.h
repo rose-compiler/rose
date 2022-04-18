@@ -34,13 +34,16 @@ namespace CodeThorn {
     static bool hasSourceLocation(SgNode* stmt);
     LabelSet filterFunctionEntryLabels(Labeler* labeler, LabelSet labSet);
 
+    void filterDefinitiveFromPotentialLocations();
     void writeLocationsVerificationOverview(CodeThornOptions& ctOpt, std::ostream& os, CodeThorn::Labeler* labeler);
     void writeResultFile(CodeThornOptions& ctOpt, std::string fileName, CodeThorn::Labeler* labeler);
     void writeResultToStream(CodeThornOptions& ctOpt, std::ostream& stream, CodeThorn::Labeler* labeler);
+
     void writeAllDefinitiveLocationsToStream(std::ostream& stream, CodeThorn::Labeler* labeler, bool qualifier, bool programLocation);
     void writeAllPotentialLocationsToStream(std::ostream& stream, CodeThorn::Labeler* labeler, bool qualifier, bool programLocation);
     void writeLocationsToStream(std::ostream& stream, CodeThorn::Labeler* labeler, LabelSet& set, std::string qualifier, bool programLocation);
 
+  public:
     static std::string findOriginalProgramLocationOfLabel(CodeThorn::Labeler* labeler, CodeThorn::Label lab);
     static std::string findOriginalProgramLocationOfNode(SgNode* node);
     static std::string sourceCodeAtLabel(CodeThorn::Labeler* labeler, CodeThorn::Label lab); // not used anymore, obsolete
@@ -49,8 +52,8 @@ namespace CodeThorn {
     typedef std::string LineColString;
     typedef std::set<std::string> SortedProgramLocationStringSet;
     static SortedProgramLocationStringSet createOriginalProgramLocationSet(LabelSet labSet, Labeler* labeler);
-  private:
 
+  private:
     // provide set of all locations (unused function)
     LabelSet determineRecordFreeFunctions(CFAnalysis& cfAnalysis, Flow& flow);
 
