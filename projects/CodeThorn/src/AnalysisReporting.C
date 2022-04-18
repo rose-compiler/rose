@@ -76,6 +76,7 @@ namespace CodeThorn {
         case ANALYSIS_OUT_OF_BOUNDS:
         case ANALYSIS_UNINITIALIZED: {
           string overviewFileName=ctOpt.reportFilePath+"/"+analysisName+"-"+ctOpt.analysisReportOverviewFileName;
+          report.filterDefinitiveFromPotentialLocations();
           report.writeLocationsVerificationOverview(ctOpt,ss,analyzer->getLabeler()); // overview
           ss<<separationLine();
           if(reportDetectedErrorLines) {
