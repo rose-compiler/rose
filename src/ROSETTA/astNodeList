@@ -1042,3 +1042,6 @@ SgAsmJvmLineNumberTable
 SgAsmJvmLineNumber
 SgAsmJvmLineNumberList
 SgAsmJvmLineNumberInnerTable
+SgAsmJvmInnerClass
+SgAsmJvmInnerClassList
+SgAsmJvmInnerClassTable
