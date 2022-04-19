@@ -10,9 +10,9 @@ using namespace Rose::Diagnostics;
 using namespace ByteOrder;
 
 // This function shouldn't be reached (ROSETTA won't allow pure virtual functions)
-void SgAsmJvmNode::dump(std::ostream &os) const
+void SgAsmJvmNode::dump(FILE* f, const char* prefix, ssize_t idx) const
 {
-  os << "SgAsmJvmNode::dump: should be a pure virtual function\n";
+  fprintf(f, "SgAsmJvmNode::dump: should be a pure virtual function\n");
 }
 
 #if 0
@@ -453,7 +453,7 @@ SgAsmJvmClassFile::unparse(std::ostream &f) const
 }
 
 void
-SgAsmJvmClassFile::dump(FILE *f, const char *prefix, ssize_t idx) const
+SgAsmJvmClassFile::dump(FILE* f, const char* prefix, ssize_t idx) const
 {
   char p[4096];
   if (idx>=0) {
@@ -483,9 +483,9 @@ SgAsmJvmClass* SgAsmJvmClass::parse(SgAsmJvmConstantPool* pool)
   return this;
 }
 
-void SgAsmJvmClass::dump(std::ostream &os) const
+void SgAsmJvmClass::dump(FILE* f, const char* prefix, ssize_t idx) const
 {
-  std::cout << "SgAsmJvmClass::dump() ...\n";
+  fprintf(f, "SgAsmJvmClass::dump() ...\n");
 }
 
 
@@ -513,6 +513,11 @@ SgAsmJvmInterfaceTable* SgAsmJvmInterfaceTable::parse()
 
   std::cout << "SgAsmJvmInterfaceTable::parse() exit ... \n";
   return this;
+}
+
+void SgAsmJvmInterfaceTable::dump(FILE* f, const char* prefix, ssize_t idx) const
+{
+  fprintf(f, "SgAsmJvmInterfaceTable::dump() ...\n");
 }
 
 #endif // ROSE_ENABLE_BINARY_ANALYSIS

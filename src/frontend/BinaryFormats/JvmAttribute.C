@@ -92,6 +92,14 @@ SgAsmJvmAttributeTable* SgAsmJvmAttributeTable::parse(SgAsmJvmConstantPool* pool
   return this;
 }
 
+void SgAsmJvmAttributeTable::dump(FILE*f, const char* prefix, ssize_t idx) const
+{
+  fprintf(f, "%s", prefix);
+  for (auto attribute : get_attributes()->get_entries()) {
+    attribute->dump(stdout, "   ", idx++);
+  }
+}
+
 SgAsmJvmAttribute* SgAsmJvmAttribute::parse(SgAsmJvmConstantPool* pool)
 {
   std::cout << "SgAsmJvmAttribute::parse() ...\n";
@@ -130,7 +138,7 @@ SgAsmJvmAttribute* SgAsmJvmCodeAttribute::parse(SgAsmJvmConstantPool* pool)
   ROSE_ASSERT(p_attribute_table && p_attribute_table->get_attributes());
   p_attribute_table->parse(pool);
 
-  dump(std::cout);
+  dump(stdout, "", 0);
 
   // try creating an instruction
 
@@ -146,8 +154,6 @@ SgAsmJvmAttribute* SgAsmJvmCodeAttribute::parse(SgAsmJvmConstantPool* pool)
 //                     )
 //
 // auto inst = Rose::BinaryAnalysis::JvmDisassembler::disassembleOne(...);
-
-  dump(std::cout);
 
   return this;
 }
@@ -183,33 +189,33 @@ SgAsmJvmAttribute* SgAsmJvmSourceFile::parse(SgAsmJvmConstantPool* pool)
   return this;
 }
 
-void SgAsmJvmAttribute::dump(std::ostream &os) const
+void SgAsmJvmAttribute::dump(FILE*f, const char* prefix, ssize_t idx) const
 {
-  os << "SgAsmJvmAttribute:" << p_attribute_name_index << ":" << p_attribute_length << std::endl;
+  fprintf(f, "SgAsmJvmAttribute:%d:%d\n", p_attribute_name_index, p_attribute_length);
 }
 
-void SgAsmJvmCodeAttribute::dump(std::ostream &os) const
+void SgAsmJvmCodeAttribute::dump(FILE*f, const char* prefix, ssize_t idx) const
 {
-  SgAsmJvmAttribute::dump(os);
-  os << "SgAsmJvmCodeAttribute:" << p_max_stack << ":" << p_max_locals << ":" << p_code_length << std::endl;
+  SgAsmJvmAttribute::dump(f, prefix, idx);
+  fprintf(f, "SgAsmJvmCodeAttribute:%d:%d:%d\n", p_max_stack, p_max_locals, p_code_length);
 }
 
-void SgAsmJvmConstantValue::dump(std::ostream &os) const
+void SgAsmJvmConstantValue::dump(FILE*f, const char* prefix, ssize_t idx) const
 {
-  SgAsmJvmAttribute::dump(os);
-  os << "SgAsmJvmConstantValue:" << p_constantvalue_index << std::endl;
+  SgAsmJvmAttribute::dump(f, prefix, idx);
+  fprintf(f, "SgAsmJvmConstantValue:%d\n", p_constantvalue_index);
 }
 
-void SgAsmJvmSignature::dump(std::ostream &os) const
+void SgAsmJvmSignature::dump(FILE*f, const char* prefix, ssize_t idx) const
 {
-  SgAsmJvmAttribute::dump(os);
-  os << "SgAsmJvmSignature::dump\n";
+  SgAsmJvmAttribute::dump(f, prefix, idx);
+  fprintf(f, "SgAsmJvmSignature::dump\n");
 }
 
-void SgAsmJvmSourceFile::dump(std::ostream &os) const
+void SgAsmJvmSourceFile::dump(FILE*f, const char* prefix, ssize_t idx) const
 {
-  SgAsmJvmAttribute::dump(os);
-  os << "SgAsmJvmSourceFile:" << p_sourcefile_index << std::endl;
+  SgAsmJvmAttribute::dump(f, prefix, idx);
+  fprintf(f, "SgAsmJvmSourceFile:%d\n", p_sourcefile_index);
 }
 
 
@@ -232,7 +238,7 @@ SgAsmJvmException* SgAsmJvmException::parse(SgAsmJvmConstantPool* pool)
   return this;
 }
 
-void SgAsmJvmException::dump(std::ostream &os) const
+void SgAsmJvmException::dump(FILE*f, const char* prefix, ssize_t idx) const
 {
   std::cout << "SgAsmJvmException::dump() ...\n";
 }
@@ -262,6 +268,39 @@ SgAsmJvmExceptionTable* SgAsmJvmExceptionTable::parse(SgAsmJvmConstantPool* pool
     exceptions.push_back(exception);
   }
   std::cout << "SgAsmJvmExceptionTable::parse() exit ... \n";
+
+  return this;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// InnerClassTable used by SgAsmJvmInnerClass (InnerClassTable_attribute from the Jvm specification (4.7.6))
+//
+SgAsmJvmInnerClass::SgAsmJvmInnerClass(SgAsmJvmInnerClassTable* table)
+{
+  std::cout << "\nSgAsmJvmInnerClass::ctor() ...\n";
+}
+
+SgAsmJvmInnerClass* SgAsmJvmInnerClass::parse(SgAsmJvmConstantPool* pool)
+{
+  std::cout << "SgAsmJvmInnerClass::parse() ...\n";
+  return this;
+}
+
+void SgAsmJvmInnerClass::dump(FILE*f, const char* prefix, ssize_t idx) const
+{
+  std::cout << "SgAsmJvmInnerClass::dump() ...\n";
+}
+
+SgAsmJvmInnerClassTable::SgAsmJvmInnerClassTable(SgAsmJvmAttribute* parent)
+{
+  std::cout << "SgAsmJvmInnerClassTable::ctor() ...\n";
+}
+
+SgAsmJvmInnerClassTable* SgAsmJvmInnerClassTable::parse(SgAsmJvmConstantPool* pool)
+{
+  std::cout << "SgAsmJvmInnerClassTable::parse() ...\n";
+  std::cout << "SgAsmJvmInnerClassTable::parse() exit ... \n";
 
   return this;
 }
@@ -307,17 +346,17 @@ SgAsmJvmLineNumberTable* SgAsmJvmLineNumberTable::parse(SgAsmJvmConstantPool* po
   for (int ii = 0; ii < line_number_table_length; ii++) {
     auto line_number = new SgAsmJvmLineNumber(inner_table);
     line_number->parse(pool);
-    line_number->dump(std::cout);
+    line_number->dump(stdout, "", 0);
     entries.push_back(line_number);
   }
-  inner_table->dump(std::cout);
+  inner_table->dump(stdout, "", 0);
 
   return this;
 }
 
-void SgAsmJvmLineNumberTable::dump(std::ostream &os) const
+void SgAsmJvmLineNumberTable::dump(FILE*f, const char* prefix, ssize_t idx) const
 {
-  std::cout << "SgAsmJvmLineNumberTable::dump() ...\n";
+  fprintf(f, "SgAsmJvmLineNumberTable::dump() ...\n");
 }
 
 SgAsmJvmLineNumber::SgAsmJvmLineNumber(SgAsmJvmLineNumberInnerTable* table)
@@ -332,9 +371,9 @@ SgAsmJvmLineNumber* SgAsmJvmLineNumber::parse(SgAsmJvmConstantPool* pool)
   return this;
 }
 
-void SgAsmJvmLineNumber::dump(std::ostream &os) const
+void SgAsmJvmLineNumber::dump(FILE*f, const char* prefix, ssize_t idx) const
 {
-  os << "SgAsmJvmLineNumber:" << p_start_pc << ":" << p_line_number << std::endl;
+  fprintf(f, "SgAsmJvmLineNumber:%d:%d\n", p_start_pc, p_line_number);
 }
 
 SgAsmJvmLineNumberInnerTable::SgAsmJvmLineNumberInnerTable(SgAsmJvmLineNumberTable* parent)
