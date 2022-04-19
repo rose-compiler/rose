@@ -13,39 +13,27 @@ using namespace ByteOrder;
 
 SgAsmJvmMethod::SgAsmJvmMethod(SgAsmJvmMethodTable* table)
 {
-  ROSE_ASSERT(table);
-  std::cout << "\nSgAsmJvmMethod::ctor() ...\n";
-
-  p_attribute_table = new SgAsmJvmAttributeTable;
-  p_attribute_table->set_parent(this);
   set_parent(table);
-
+  p_attribute_table = new SgAsmJvmAttributeTable(this);
   ROSE_ASSERT(get_attribute_table()->get_attributes());
+  ROSE_ASSERT(get_attribute_table()->get_attributes()->get_parent());
 }
 
 SgAsmJvmMethod* SgAsmJvmMethod::parse(SgAsmJvmConstantPool* pool)
 {
-  ROSE_ASSERT(pool);
-  std::cout << "SgAsmJvmMethod::parse() ...\n";
-
   Jvm::read_value(pool, p_access_flags);
   Jvm::read_value(pool, p_name_index);
   Jvm::read_value(pool, p_descriptor_index);
 
-  /* Attributes */
+  /* Method attributes */
   p_attribute_table->parse(pool);
-
-  dump(std::cout);
-
-  std::cout << "SgAsmJvmMethod::parse() exit ... \n\n";
 
   return this;
 }
 
-void SgAsmJvmMethod::dump(std::ostream &os) const
+void SgAsmJvmMethod::dump(FILE*f, const char* prefix, ssize_t idx) const
 {
-  os << "SgAsmJvmMethod::" << p_access_flags << ":"
-     << p_name_index  << ":" << p_descriptor_index << "\n";
+  fprintf(f, "%s:%d:%d:%d\n", prefix, p_access_flags, p_name_index, p_descriptor_index);
 }
 
 
@@ -56,10 +44,20 @@ SgAsmJvmMethodTable::SgAsmJvmMethodTable(SgAsmJvmClassFile* jcf)
 
 SgAsmJvmMethodTable* SgAsmJvmMethodTable::parse()
 {
+  uint16_t methods_count;
+
   std::cout << "SgAsmJvmMethodTable::parse() ...\n";
-  std::cout << "SgAsmJvmMethodTable::parse() exit ... \n\n";
+  std::cout << "SgAsmJvmMethodTable::parse() exit ... \n";
 
   return this;
+}
+
+void SgAsmJvmMethodTable::dump(FILE* f, const char *prefix, ssize_t idx) const
+{
+  fprintf(f, "%s", prefix);
+  for (auto method : get_methods()->get_entries()) {
+    method->dump(stdout, "   ", idx++);
+  }
 }
 
 #endif // ROSE_ENABLE_BINARY_ANALYSIS
