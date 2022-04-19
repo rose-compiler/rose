@@ -1219,9 +1219,11 @@ insertFriendDecls (SgFunctionDeclaration* func,
          {
            printf ("NOTE: In insertFriendDecls(): deferedFriendTransformation.targetClasses.size() = %zu \n",deferedFriendTransformation.targetClasses.size());
          }
+   // DQ (4/19/2022): An essential application code demonstrates that this value can sometimes be as great as 4, so I have increased the limit.
    // DQ (12/11/2019): Modified to increase bound (required for tool_G using some of the later gregression tests (after test_33.cpp).
    // ROSE_ASSERT(deferedFriendTransformation.targetClasses.size() <= 2);
-      ROSE_ASSERT(deferedFriendTransformation.targetClasses.size() <= 3);
+   // ROSE_ASSERT(deferedFriendTransformation.targetClasses.size() <= 3);
+      ROSE_ASSERT(deferedFriendTransformation.targetClasses.size() <= 4);
    // ROSE_ASSERT(deferedFriendTransformation.targetFriends.size() < 2);
       ROSE_ASSERT(deferedFriendTransformation.targetFriends.size() == 0);
     }
