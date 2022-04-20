@@ -329,6 +329,7 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/InstructionCache.h						\
 	Rose/BinaryAnalysis/InstructionEnumsAarch32.h					\
 	Rose/BinaryAnalysis/InstructionEnumsAarch64.h					\
+	Rose/BinaryAnalysis/InstructionEnumsCil.h					\
 	Rose/BinaryAnalysis/InstructionEnumsJvm.h					\
 	Rose/BinaryAnalysis/InstructionEnumsM68k.h					\
 	Rose/BinaryAnalysis/InstructionEnumsMips.h					\

@@ -1045,3 +1045,5 @@ SgAsmJvmLineNumberInnerTable
 SgAsmJvmInnerClass
 SgAsmJvmInnerClassList
 SgAsmJvmInnerClassTable
+SgAsmCilInstruction
+SgAsmStackExpression

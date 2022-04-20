@@ -31,6 +31,7 @@
 #include <Rose/BinaryAnalysis/InstructionCache.h>
 #include <Rose/BinaryAnalysis/InstructionEnumsAarch32.h>
 #include <Rose/BinaryAnalysis/InstructionEnumsAarch64.h>
+#include <Rose/BinaryAnalysis/InstructionEnumsCil.h>
 #include <Rose/BinaryAnalysis/InstructionEnumsJvm.h>
 #include <Rose/BinaryAnalysis/InstructionEnumsM68k.h>
 #include <Rose/BinaryAnalysis/InstructionEnumsMips.h>
