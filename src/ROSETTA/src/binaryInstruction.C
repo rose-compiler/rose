@@ -655,6 +655,72 @@ void Grammar::setUpBinaryInstructions() {
     };
 #endif
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmCilInstruction);
+    IS_SERIALIZABLE(AsmCilInstruction);
+    DECLARE_HEADERS(AsmCilInstruction);
+#if defined(SgAsmCilInstruction_HEADERS) || defined(DOCUMENTATION)
+    #include <Rose/BinaryAnalysis/InstructionEnumsCil.h>
+#endif // SgAsmCilInstruction_HEADERS
+
+#ifdef DOCUMENTATION
+    class SgAsmCilInstruction: public SgAsmInstruction {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Instruction kind.
+         *
+         *  Returns an enum constant describing the CIL instruction. These enum constants correspond roughly 1:1 with
+         *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind.
+         *
+         * @{ */
+        Rose::BinaryAnalysis::CilInstructionKind get_kind() const;
+        void set_kind(Rose::BinaryAnalysis::CilInstructionKind);
+        /** @} */
+#else
+        AsmCilInstruction.setDataPrototype("Rose::BinaryAnalysis::CilInstructionKind", "kind",
+                                            " = Rose::BinaryAnalysis::Cil_unknown_instruction",
+                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE,
+                                            COPY_DATA);
+#endif
+
+        DECLARE_OTHERS(AsmCilInstruction);
+#if defined(SgAsmCilInstruction_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmInstruction);
+            s & BOOST_SERIALIZATION_NVP(p_kind);
+        }
+#endif
+
+    public:
+        // Overrides are documented in the base class
+        virtual std::string description() const override;
+        virtual bool terminatesBasicBlock() override;
+        virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns,
+                                        rose_addr_t *target/*out*/, rose_addr_t *ret/*out*/) override;
+        virtual bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&,
+                                        rose_addr_t *target, rose_addr_t *ret) override;
+        virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) override;
+        virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*> &insns) override;
+        virtual Sawyer::Optional<rose_addr_t> branchTarget() override;
+        virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool &complete) override;
+        virtual Rose::BinaryAnalysis::AddressSet getSuccessors(const std::vector<SgAsmInstruction*>&,
+                                                               bool &complete,
+                                                               const Rose::BinaryAnalysis::MemoryMap::Ptr &initial_memory =
+                                                               Rose::BinaryAnalysis::MemoryMap::Ptr()) override;
+        virtual bool isUnknown() const override;
+        virtual unsigned get_anyKind() const override;
+#endif // SgAsmCilInstruction_OTHERS
+#ifdef DOCUMENTATION
+    };
+#endif
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -722,7 +788,6 @@ void Grammar::setUpBinaryInstructions() {
 #ifdef DOCUMENTATION
     };
 #endif
-
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -912,8 +977,8 @@ void Grammar::setUpBinaryInstructions() {
 #ifdef ROSE_ENABLE_ASM_AARCH64
                           | AsmAarch64Instruction
 #endif
-                          | AsmPowerpcInstruction | AsmJvmInstruction | AsmMipsInstruction | AsmM68kInstruction
-                          | AsmNullInstruction,
+                          | AsmPowerpcInstruction | AsmCilInstruction | AsmJvmInstruction | AsmMipsInstruction
+                          | AsmM68kInstruction | AsmNullInstruction,
                           "AsmInstruction", "AsmInstructionTag", true);
     AsmInstruction.setCppCondition("!defined(DOCUMENTATION)");
     IS_SERIALIZABLE(AsmInstruction);
@@ -2611,6 +2676,54 @@ void Grammar::setUpBinaryInstructions() {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// DQ (11/1/2021): Adding support for stack expressions for CIL and JVM.
+
+    DECLARE_LEAF_CLASS(AsmStackExpression);
+    IS_SERIALIZABLE(AsmStackExpression);
+
+#ifdef DOCUMENTATION
+    /** Base class for references to a machine register. */
+    class SgAsmStackExpression: public SgAsmExpression {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Position of element referenced on the stack.
+         *
+         *  This is a value that references the values on the stack (zero is top of stack, positive numbers are the depth into the stack).
+         *
+         *  @{ */
+     public:
+        int get_stack_position() const;
+        void set_stack_position(int);
+     protected:
+        int p_stack_position;
+        /** @} */
+#else
+        AsmStackExpression.setDataPrototype("int", "stack_position", "= 0", CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmStackExpression);
+#if defined(SgAsmStackExpression_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExpression);
+            s & BOOST_SERIALIZATION_NVP(p_stack_position);
+        }
+#endif
+
+#endif // SgAsmStackExpression_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     DECLARE_LEAF_CLASS(AsmRegisterNames);
     IS_SERIALIZABLE(AsmRegisterNames);
 
@@ -3455,11 +3568,12 @@ void Grammar::setUpBinaryInstructions() {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+ // DQ (11/1/2021): Added AsmStackExpression.
     NEW_NONTERMINAL_MACRO(AsmExpression,
                           AsmValueExpression           | AsmBinaryExpression            | AsmUnaryExpression        |
                           AsmMemoryReferenceExpression | AsmRegisterReferenceExpression | AsmControlFlagsExpression |
                           AsmCommonSubExpression       | AsmExprListExp                 | AsmRegisterNames          |
-                          AsmRiscOperation
+                          AsmRiscOperation             | AsmStackExpression
 #ifdef ROSE_ENABLE_ASM_AARCH64
                           | AsmAarch64AtOperand | AsmAarch64PrefetchOperand | AsmAarch64SysMoveOperand
                           | AsmAarch64CImmediateOperand | AsmAarch64BarrierOperand

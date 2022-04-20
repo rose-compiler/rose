@@ -893,6 +893,7 @@ AstNodeClass::evaluateType(std::string& varTypeString)
                  ( varTypeString == "PowerpcConditionRegisterAccessGranularity" ) || "Rose::BinaryAnalysis::PowerpcConditionRegisterAccessGranularity" == varTypeString ||
                  ( varTypeString == "PowerpcSpecialPurposeRegister" ) || "Rose::BinaryAnalysis::PowerpcSpecialPurposeRegister" == varTypeString ||
                  ( varTypeString == "PowerpcTimeBaseRegister" ) || "Rose::BinaryAnalysis::PowerpcTimeBaseRegister" == varTypeString ||
+                 ( varTypeString == "CilInstructionKind") || "Rose::BinaryAnalysis::CilInstructionKind" == varTypeString ||
                  ( varTypeString == "JvmInstructionKind") || "Rose::BinaryAnalysis::JvmInstructionKind" == varTypeString ||
                  ( varTypeString == "MipsInstructionKind") || "Rose::BinaryAnalysis::MipsInstructionKind" == varTypeString ||
                  ( varTypeString == "M68kInstructionKind") || "Rose::BinaryAnalysis::M68kInstructionKind" == varTypeString ||
