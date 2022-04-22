@@ -56,8 +56,19 @@ void SgAsmJvmMethodTable::dump(FILE* f, const char *prefix, ssize_t idx) const
 {
   fprintf(f, "%s", prefix);
   for (auto method : get_methods()->get_entries()) {
-    method->dump(stdout, "   ", idx++);
+    method->dump(stdout, "method->", idx++);
   }
+}
+
+SgAsmJvmAttribute* SgAsmJvmEnclosingMethod::parse(SgAsmJvmConstantPool* pool)
+{
+  ROSE_ASSERT(false && "SgAsmJvmEnclosingMethod::parse()");
+  return nullptr;
+}
+
+void SgAsmJvmEnclosingMethod::dump(FILE* f, const char *prefix, ssize_t idx) const
+{
+  ROSE_ASSERT(false && "SgAsmJvmEnclosingMethod::dump()");
 }
 
 #endif // ROSE_ENABLE_BINARY_ANALYSIS

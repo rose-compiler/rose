@@ -10109,7 +10109,7 @@ void Grammar::setUpBinaryInstructions() {
 #ifdef DOCUMENTATION
         /** Property: class_index
          *
-         *  The value of the class_index item must be a valid index into the constant_pool table (see JVM documentation).
+         *  The value of the class_index item must be a valid index into the constant_pool table (see JVM specification).
          *    Present in CONSTANT_Fieldref_info, CONSTANT_Methodref_info, and CONSTANT_InterfaceMethodref_info table entries.
          *
          * @{ */
@@ -10127,7 +10127,7 @@ void Grammar::setUpBinaryInstructions() {
 #ifdef DOCUMENTATION
         /** Property: descriptor_index
          *
-         *  The value of the descriptor_index item must be a valid index into the constant_pool table (see JVM documentation).
+         *  The value of the descriptor_index item must be a valid index into the constant_pool table (see JVM specification).
          *    Present in CONSTANT_NameAndType_info and CONSTANT_MethodHandle_info table entries.
          *
          * @{ */
@@ -10145,7 +10145,7 @@ void Grammar::setUpBinaryInstructions() {
 #ifdef DOCUMENTATION
         /** Property: name_index
          *
-         *  The value of the name_index item must be a valid index into the constant_pool table (see JVM documentation).
+         *  The value of the name_index item must be a valid index into the constant_pool table (see JVM specification).
          *    Present in CONSTANT_Class_info, CONSTANT_NameAndType_info, CONSTANT_Module_info, and CONSTANT_Package_info
          *    table entries.
          *
@@ -10163,7 +10163,7 @@ void Grammar::setUpBinaryInstructions() {
 #ifdef DOCUMENTATION
         /** Property: name_and_type_index
          *
-         *  The value of the name_and_type_index item must be a valid index into the constant_pool table (see JVM documentation).
+         *  The value of the name_and_type_index item must be a valid index into the constant_pool table (see JVM specification).
          *    Present in CONSTANT_Fieldref_info, CONSTANT_Methodref_info, CONSTANT_InterfaceMethodref_info,
          *    CONSTANT_Dynamic_info, and CONSTANT_InvokeDynamic_info table entries.
          *
@@ -10181,7 +10181,7 @@ void Grammar::setUpBinaryInstructions() {
 #ifdef DOCUMENTATION
         /** Property: reference_index
          *
-         *  The value of the reference_index item must be a valid index into the constant_pool table (see JVM documentation).
+         *  The value of the reference_index item must be a valid index into the constant_pool table (see JVM specification).
          *    Present in CONSTANT_MethodHandle_info table entries.
          *
          * @{ */
@@ -10215,7 +10215,7 @@ void Grammar::setUpBinaryInstructions() {
 #ifdef DOCUMENTATION
         /** Property: string_index
          *
-         *  The value of the string_index item must be a valid index into the constant_pool table (see JVM documentation).
+         *  The value of the string_index item must be a valid index into the constant_pool table (see JVM specification).
          *    Present in CONSTANT_String_info table entries.
          *
          * @{ */
@@ -10459,7 +10459,7 @@ void Grammar::setUpBinaryInstructions() {
     /** JVM ConstantValue attribute.
      *
      *  A ConstantValue attribute represents the value of a constant expression, see
-     *  section 4.7.2 of the JVM documentation.
+     *  section 4.7.2 of the JVM specification.
      */
     class SgAsmJvmConstantValue: public SgAsmJvmAttribute {
     public:
@@ -10469,7 +10469,7 @@ void Grammar::setUpBinaryInstructions() {
         /** Property: constantvalue_index
          *
          *  The value of the constantvalue_index item must be a valid index into the constant_pool table
-         *  (see JVM documentation).
+         *  (see JVM specification).
          *
          * @{ */
      public:
@@ -10529,7 +10529,7 @@ void Grammar::setUpBinaryInstructions() {
      *
      *  A Code attribute contains the Java Virtual Machine instructions and auxiliary
      *  information for a method, including an instance initialization method and a
-     *  class or interface initialization method, see section 4.7.3 of the JVM documentation.
+     *  class or interface initialization method, see section 4.7.3 of the JVM specification.
      */
     class SgAsmJvmCodeAttribute: public SgAsmJvmAttribute {
     public:
@@ -10769,7 +10769,7 @@ void Grammar::setUpBinaryInstructions() {
 #ifdef DOCUMENTATION
         /** Property: inner_class_info_index
          *
-         *  The value of the class_index item must be a valid index into the constant_pool table (see JVM documentation).
+         *  The value of the class_index item must be a valid index into the constant_pool table (see JVM specification).
          *    Present in CONSTANT_Fieldref_info, CONSTANT_Methodref_info, and CONSTANT_InterfaceMethodref_info table entries.
          *
          * @{ */
@@ -10787,7 +10787,7 @@ void Grammar::setUpBinaryInstructions() {
 #ifdef DOCUMENTATION
         /** Property: outer_class_info_index
          *
-         *  The value of the class_index item must be a valid index into the constant_pool table (see JVM documentation).
+         *  The value of the class_index item must be a valid index into the constant_pool table (see JVM specification).
          *    Present in CONSTANT_Fieldref_info, CONSTANT_Methodref_info, and CONSTANT_InterfaceMethodref_info table entries.
          *
          * @{ */
@@ -10805,7 +10805,7 @@ void Grammar::setUpBinaryInstructions() {
 #ifdef DOCUMENTATION
         /** Property: inner_name_index
          *
-         *  The value of the class_index item must be a valid index into the constant_pool table (see JVM documentation).
+         *  The value of the class_index item must be a valid index into the constant_pool table (see JVM specification).
          *    Present in CONSTANT_Fieldref_info, CONSTANT_Methodref_info, and CONSTANT_InterfaceMethodref_info table entries.
          *
          * @{ */
@@ -10823,7 +10823,7 @@ void Grammar::setUpBinaryInstructions() {
 #ifdef DOCUMENTATION
         /** Property: inner_class_access_flags
          *
-         *  The value of the class_index item must be a valid index into the constant_pool table (see JVM documentation).
+         *  The value of the class_index item must be a valid index into the constant_pool table (see JVM specification).
          *    Present in CONSTANT_Fieldref_info, CONSTANT_Methodref_info, and CONSTANT_InterfaceMethodref_info table entries.
          *
          * @{ */
@@ -10926,6 +10926,94 @@ void Grammar::setUpBinaryInstructions() {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /*************************************************************************************************************************
+     *                                  JVM EnclosingMethod attribute (section 4.7.7)
+     *************************************************************************************************************************/
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmJvmEnclosingMethod);
+    IS_SERIALIZABLE(AsmJvmEnclosingMethod);
+
+#ifdef DOCUMENTATION
+    /** JVM EnclosingMethod attribute.
+     *
+     *  A class must have an EnclosingMethod attribute if and only if it represents a local class
+     *  or an anonymous class, see section 4.7.7 of the JVM specification.
+     */
+    class SgAsmJvmEnclosingMethod: public SgAsmJvmAttribute {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: class_index
+         *
+         *  The value of the class_index item must be a valid index into the constant_pool table
+         *  (see JVM specification).
+         *
+         * @{ */
+     public:
+        uint16_t get_class_index() const;
+        void set_class_index(uint16_t);
+     protected:
+        uint16_t p_class_index;
+        /** @} */
+#else
+        AsmJvmEnclosingMethod.setDataPrototype("uint16_t", "class_index", "= 0",
+                                               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: method_index
+         *
+         *  The value of the method_index item must be a valid index into the constant_pool table
+         *  (see JVM specification).
+         *
+         * @{ */
+     public:
+        uint16_t get_method_index() const;
+        void set_method_index(uint16_t);
+     protected:
+        uint16_t p_method_index;
+        /** @} */
+#else
+        AsmJvmEnclosingMethod.setDataPrototype("uint16_t", "method_index", "= 0",
+                                               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmJvmEnclosingMethod);
+#if defined(SgAsmJvmEnclosingMethod_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmAttribute);
+            s & BOOST_SERIALIZATION_NVP(p_class_index);
+            s & BOOST_SERIALIZATION_NVP(p_method_index);
+        }
+#endif
+
+    public:
+        /** Initialize the attribute by parsing the file.
+         *
+         * @{ */
+        virtual SgAsmJvmAttribute* parse(SgAsmJvmConstantPool* pool) override;
+        /** @} */
+
+        /** Print some debugging information */
+        virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
+
+#endif // SgAsmJvmEnclosingMethod_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /*************************************************************************************************************************
      *                                  JVM Signature attribute (section 4.7.9)
      *************************************************************************************************************************/
 
@@ -10938,7 +11026,7 @@ void Grammar::setUpBinaryInstructions() {
     /** JVM Signature attribute.
      *
      *  A Signature attribute stores a signature for a class, interface, constructor, method,
-     *  field, or record component, see section 4.7.9 of the JVM documentation.
+     *  field, or record component, see section 4.7.9 of the JVM specification.
      */
     class SgAsmJvmSignature: public SgAsmJvmAttribute {
     public:
@@ -10948,7 +11036,7 @@ void Grammar::setUpBinaryInstructions() {
         /** Property: signature_index
          *
          *  The value of the signature_index item must be a valid index into the constant_pool table
-         *  (see JVM documentation).
+         *  (see JVM specification).
          *
          * @{ */
      public:
@@ -11007,7 +11095,7 @@ void Grammar::setUpBinaryInstructions() {
     /** JVM SourceFile attribute.
      *
      *  A SourceFile attribute stores an index to the name of the class file, see
-     *  section 4.7.10 of the JVM documentation.
+     *  section 4.7.10 of the JVM specification.
      */
     class SgAsmJvmSourceFile: public SgAsmJvmAttribute {
     public:
@@ -11017,7 +11105,7 @@ void Grammar::setUpBinaryInstructions() {
         /** Property: sourcefile_index
          *
          *  The value of the sourcefile_index item must be a valid index into the constant_pool table
-         *  (see JVM documentation).
+         *  (see JVM specification).
          *
          * @{ */
      public:
@@ -11151,7 +11239,7 @@ void Grammar::setUpBinaryInstructions() {
         /** Property: start_pc
          *
          *  The value of the start_pc item must be a valid index into the constant_pool table
-         *  (see JVM documentation).
+         *  (see JVM specification).
          *
          * @{ */
      public:
@@ -11169,7 +11257,7 @@ void Grammar::setUpBinaryInstructions() {
         /** Property: line_number
          *
          *  The value of the line_number item must be a valid index into the constant_pool table
-         *  (see JVM documentation).
+         *  (see JVM specification).
          *
          * @{ */
      public:
@@ -11319,7 +11407,7 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
     public:
-        /** Initialize the exception table before parsing.
+        /** Initialize the line number table before parsing.
          *
          *  This is the preferred constructor to use before parsing.  It
          *  shall set its parent.
@@ -11351,8 +11439,8 @@ void Grammar::setUpBinaryInstructions() {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     NEW_NONTERMINAL_MACRO(AsmJvmAttribute,
-                          AsmJvmCodeAttribute | AsmJvmConstantValue | AsmJvmSignature | AsmJvmSourceFile |
-                          AsmJvmLineNumberTable,
+                          AsmJvmCodeAttribute   | AsmJvmConstantValue | AsmJvmSignature | AsmJvmSourceFile |
+                          AsmJvmLineNumberTable | AsmJvmEnclosingMethod,
                           "AsmJvmAttribute", "AsmJvmAttributeTag", false);
     AsmJvmAttribute.setCppCondition("!defined(DOCUMENTATION)");
     IS_SERIALIZABLE(AsmJvmAttribute);
@@ -11369,7 +11457,7 @@ void Grammar::setUpBinaryInstructions() {
         /** Property: attribute_name_index
          *
          *  The value of the attribute_name_index item must be a valid index into the constant_pool table
-         *  (see JVM documentation).
+         *  (see JVM specification).
          *
          * @{ */
      public:
@@ -11531,7 +11619,7 @@ void Grammar::setUpBinaryInstructions() {
 #ifdef DOCUMENTATION
         /** Property: name_index
          *
-         *  The value of the name_index item must be a valid index into the constant_pool table (see JVM documentation).
+         *  The value of the name_index item must be a valid index into the constant_pool table (see JVM specification).
          *    Present in an exception table of a Code_attribute (see section 4.7.3 of the JVM specification).
          *
          * @{ */
@@ -11881,7 +11969,7 @@ void Grammar::setUpBinaryInstructions() {
 #ifdef DOCUMENTATION
         /** Property: start_pc
          *
-         *  The value of the start_pc item must be a valid index into the constant_pool table (see JVM documentation).
+         *  The value of the start_pc item must be a valid index into the constant_pool table (see JVM specification).
          *    Present in an exception table of a Code_attribute (see section 4.7.3 of the JVM specification).
          *
          * @{ */
@@ -11899,7 +11987,7 @@ void Grammar::setUpBinaryInstructions() {
 #ifdef DOCUMENTATION
         /** Property: end_pc
          *
-         *  The value of the end_pc item must be a valid index into the constant_pool table (see JVM documentation).
+         *  The value of the end_pc item must be a valid index into the constant_pool table (see JVM specification).
          *    Present in an exception table of a Code_attribute (see section 4.7.3 of the JVM specification).
          *
          * @{ */
@@ -11917,7 +12005,7 @@ void Grammar::setUpBinaryInstructions() {
 #ifdef DOCUMENTATION
         /** Property: handler_pc
          *
-         *  The value of the handler_pc item must be a valid index into the constant_pool table (see JVM documentation).
+         *  The value of the handler_pc item must be a valid index into the constant_pool table (see JVM specification).
          *    Present in an exception table of a Code_attribute (see section 4.7.3 of the JVM specification).
          *
          * @{ */
@@ -11935,7 +12023,7 @@ void Grammar::setUpBinaryInstructions() {
 #ifdef DOCUMENTATION
         /** Property: catch_type
          *
-         *  The value of the catch_type item must be a valid index into the constant_pool table (see JVM documentation).
+         *  The value of the catch_type item must be a valid index into the constant_pool table (see JVM specification).
          *    Present in an exception table of a Code_attribute (see section 4.7.3 of the JVM specification).
          *
          * @{ */
@@ -12127,7 +12215,7 @@ void Grammar::setUpBinaryInstructions() {
     /** JVM Method.
      *
      *  A method describes an instance of an initialization method (2.9.1) and the class or
-     *  interface initialization method (2.9.2), see section 4.6 of the JVM documentation.
+     *  interface initialization method (2.9.2), see section 4.6 of the JVM specification.
      */
     class SgAsmJvmMethod: public SgAsmJvmNode {
     public:
@@ -12137,7 +12225,7 @@ void Grammar::setUpBinaryInstructions() {
         /** Property: access_flags
          *
          *  The value of the access_flags item is a mask of flags used to denote access
-         *  permission to and properties of this method (see JVM documentation).
+         *  permission to and properties of this method (see JVM specification).
          *
          * @{ */
      public:
@@ -12155,7 +12243,7 @@ void Grammar::setUpBinaryInstructions() {
         /** Property: name_index
          *
          *  The value of the name_index item must be a valid index into the constant_pool table
-         *  (see JVM documentation).
+         *  (see JVM specification).
          *
          * @{ */
      public:
@@ -12173,7 +12261,7 @@ void Grammar::setUpBinaryInstructions() {
         /** Property: descriptor_index
          *
          *  The value of the descriptor_index item must be a valid index into the constant_pool table
-         *  (see JVM documentation).
+         *  (see JVM specification).
          *
          * @{ */
      public:
@@ -12387,7 +12475,7 @@ void Grammar::setUpBinaryInstructions() {
         /** Property: access_flags
          *
          *  The value of the access_flags item is a mask of flags used to denote access
-         *  permission to and properties of this method (see JVM documentation).
+         *  permission to and properties of this method (see JVM specification).
          *
          * @{ */
      public:
@@ -12405,7 +12493,7 @@ void Grammar::setUpBinaryInstructions() {
         /** Property: name_index
          *
          *  The value of the name_index item must be a valid index into the constant_pool table
-         *  (see JVM documentation).
+         *  (see JVM specification).
          *
          * @{ */
      public:
@@ -12423,7 +12511,7 @@ void Grammar::setUpBinaryInstructions() {
         /** Property: descriptor_index
          *
          *  The value of the descriptor_index item must be a valid index into the constant_pool table
-         *  (see JVM documentation).
+         *  (see JVM specification).
          *
          * @{ */
      public:
@@ -12552,7 +12640,7 @@ void Grammar::setUpBinaryInstructions() {
     /** Java Class File.
      *
      *  This node represents the contents of a Java class file for JVM executables.
-     *  See JVM documentation for more information.
+     *  See JVM specification for more information.
      */
     class SgAsmJvmClassFile: public SgAsmExecutableFileFormat /*SgAsmGenericFile*/ {
     public:
