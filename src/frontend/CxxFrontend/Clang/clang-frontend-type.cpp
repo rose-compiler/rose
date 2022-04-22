@@ -990,6 +990,12 @@ bool ClangToSageTranslator::VisitTypeOfType(clang::TypeOfType * type_of_type, Sg
 #endif
     bool res = true;
 
+    SgType* underlyinigType = buildTypeFromQualifiedType(type_of_type->getUnderlyingType());
+
+    SgType* type = SageBuilder::buildTypeOfType(NULL,underlyinigType);
+
+    *node = type;
+
     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
 
     return VisitType(type_of_type, node) && res;
