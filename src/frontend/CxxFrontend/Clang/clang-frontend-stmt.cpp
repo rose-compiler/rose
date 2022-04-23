@@ -1313,6 +1313,9 @@ bool ClangToSageTranslator::VisitIfStmt(clang::IfStmt * if_stmt, SgNode ** node)
 
     *node = SageBuilder::buildIfStmt_nfi(NULL, NULL, NULL);
 
+    // Pei-Hung (04/22/22) Needs to setup parent node before processing the operands.
+    // Needed for test2013_55.c and other similar tests
+    (*node)->set_parent(SageBuilder::topScopeStack());
     SageBuilder::pushScopeStack(isSgScopeStatement(*node));
 
     SgNode * tmp_cond = Traverse(if_stmt->getCond());
