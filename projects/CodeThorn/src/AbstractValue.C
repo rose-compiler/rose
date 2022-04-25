@@ -331,6 +331,7 @@ std::string AbstractValue::valueTypeToString() const {
 // undefined values.
 bool AbstractValue::isUndefined() const {return valueType==AbstractValue::AV_UNDEFINED;}
 bool AbstractValue::isTop() const {return valueType==AbstractValue::AV_TOP||isUndefined();}
+//bool AbstractValue::isTop() const {return valueType==AbstractValue::AV_TOP;}
 bool AbstractValue::isTopOrUndefinedOrArbitraryMemPtrOrAbstract() const {return isTop()||isUndefined()||isPointerToArbitraryMemory()||isAbstract();}
 bool AbstractValue::isTrue() const {return valueType==AbstractValue::AV_INTEGER && intValue!=0;}
 bool AbstractValue::isFalse() const {return valueType==AbstractValue::AV_INTEGER && intValue==0;}
@@ -367,6 +368,9 @@ bool AbstractValue::isAbstract() const {
 
 void AbstractValue::setAbstractFlag(bool flag) {
   _abstractionFlag=flag;
+}
+bool AbstractValue::getAbstractFlag() {
+  return _abstractionFlag;
 }
 
 size_t AbstractValue::hash() const {
@@ -905,19 +909,23 @@ string AbstractValue::arrayVariableNameToString(CodeThorn::VariableIdMapping* vi
   }
 }
 
+string AbstractValue::abstractToString() const {
+  return isAbstract()?"*":"";
+}
+
 string AbstractValue::toString(CodeThorn::VariableIdMapping* vim) const {
   switch(valueType) {
   case AV_TOP: return "top";
   case AV_BOT: return "bot";
-  case AV_UNDEFINED: return "uninit";
+  case AV_UNDEFINED: return "uninit"+abstractToString();
   case AV_INTEGER: {
     stringstream ss;
-    ss<<getIntValue();
+    ss<<getIntValue()<<abstractToString();
     return ss.str();
   }
   case AV_FP_SINGLE_PRECISION:
   case AV_FP_DOUBLE_PRECISION: {
-    return getFloatValueString();
+    return getFloatValueString()+abstractToString();
   }
   case AV_PTR: {
     //    if(vim->isOfArrayType(variableId)||vim->isOfClassType(variableId)||vim->isOfReferenceType(variableId)||vim->isHeapMemoryRegionId(variableId)) {
@@ -929,7 +937,7 @@ string AbstractValue::toString(CodeThorn::VariableIdMapping* vim) const {
         //<<","
         //<<getElementTypeSize()
         <<")"
-        <<(isAbstract()?"*":"")
+        <<abstractToString()
         ;
       return ss.str();
       //    } else {
