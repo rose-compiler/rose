@@ -744,11 +744,8 @@ void Grammar::setUpBinaryInstructions() {
          *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind.
          *
          * @{ */
-     public:
         Rose::BinaryAnalysis::JvmInstructionKind get_kind() const;
         void set_kind(Rose::BinaryAnalysis::JvmInstructionKind);
-     protected:
-        Rose::BinaryAnalysis::JvmInstructionKind p_kind;
         /** @} */
 #else
         AsmJvmInstruction.setDataPrototype("Rose::BinaryAnalysis::JvmInstructionKind", "kind",
@@ -2693,11 +2690,8 @@ void Grammar::setUpBinaryInstructions() {
          *  This is a value that references the values on the stack (zero is top of stack, positive numbers are the depth into the stack).
          *
          *  @{ */
-     public:
         int get_stack_position() const;
         void set_stack_position(int);
-     protected:
-        int p_stack_position;
         /** @} */
 #else
         AsmStackExpression.setDataPrototype("int", "stack_position", "= 0", CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -5721,11 +5715,8 @@ void Grammar::setUpBinaryInstructions() {
          *  Minor version number of this class file.
          *
          * @{ */
-     public:
         uint16_t get_minor_version() const;
         void set_minor_version(uint16_t);
-     protected:
-        uint16_t p_minor_version;
         /** @} */
 #else
         AsmJvmFileHeader.setDataPrototype("uint16_t", "minor_version", "= 0",
@@ -5738,11 +5729,8 @@ void Grammar::setUpBinaryInstructions() {
          *  Major version number of this class file.
          *
          * @{ */
-     public:
         uint16_t get_major_version() const;
         void set_major_version(uint16_t);
-     protected:
-        uint16_t p_major_version;
         /** @} */
 #else
         AsmJvmFileHeader.setDataPrototype("uint16_t", "major_version", "= 0",
@@ -9898,11 +9886,8 @@ void Grammar::setUpBinaryInstructions() {
          *  of ROSETTA.
          *
          * @{ */
-     public:
         SgAsmJvmConstantPoolEntryList* get_entries() const;
         void set_entries(SgAsmJvmConstantPoolEntryList*);
-     protected:
-        SgAsmJvmConstantPoolEntryList* p_entries;
         /** @} */
 #else
         AsmJvmConstantPool.setDataPrototype("SgAsmJvmConstantPoolEntryList*", "entries", "= nullptr",
@@ -9974,11 +9959,8 @@ void Grammar::setUpBinaryInstructions() {
         /** Property: List of entries.
          *
          * @{ */
-     public:
         const SgAsmJvmConstantPoolEntryPtrList& get_entries() const;
         void set_entries(const SgAsmJvmConstantPoolEntryPtrList&);
-     protected:
-        SgAsmJvmConstantPoolEntryPtrList & p_entries;
         /** @} */
 #else
         AsmJvmConstantPoolEntryList.setDataPrototype("SgAsmJvmConstantPoolEntryPtrList", "entries", "",
@@ -10030,11 +10012,8 @@ void Grammar::setUpBinaryInstructions() {
          *  Enum constant describing the kind of this entry in the pool.
          *
          * @{ */
-     public:
         SgAsmJvmConstantPoolEntry::Kind get_tag() const;
         void set_tag(SgAsmJvmConstantPoolEntry::Kind);
-     protected:
-        SgAsmJvmConstantPoolEntry::Kind p_tag;
         /** @} */
 #else
         AsmJvmConstantPoolEntry.setDataPrototype("SgAsmJvmConstantPoolEntry::Kind", "tag", "= SgAsmJvmConstantPoolEntry::EMPTY",
@@ -10049,11 +10028,8 @@ void Grammar::setUpBinaryInstructions() {
          *   in IEEE 754 binary32 floating-point format.
          *
          * @{ */
-     public:
         uint32_t get_bytes() const;
         void set_bytes(uint32_t);
-     protected:
-        uint32_t p_bytes;
         /** @} */
 #else
         AsmJvmConstantPoolEntry.setDataPrototype("uint32_t", "bytes", "= 0",
@@ -10069,17 +10045,11 @@ void Grammar::setUpBinaryInstructions() {
          *   the double value in IEEE 754 binary64 floating-point format.
          *
          * @{ */
-     public:
         uint32_t get_hi_bytes() const;
         void set_hi_bytes(uint32_t);
-     protected:
-        uint32_t p_hi_bytes;
 
-     public:
         uint32_t get_low_bytes() const;
         void set_low_bytes(uint32_t);
-     protected:
-        uint32_t p_low_bytes;
         /** @} */
 #else
         AsmJvmConstantPoolEntry.setDataPrototype("uint32_t", "hi_bytes", "= 0",
@@ -10095,11 +10065,8 @@ void Grammar::setUpBinaryInstructions() {
          *    of this class file.  Present in CONSTANT_Dynamic_info and CONSTANT_Dynamic_info structs.
          *
          * @{ */
-     public:
         uint16_t get_bootstrap_method_attr_index() const;
         void set_bootstrap_method_attr_index(uint16_t);
-     protected:
-        uint16_t p_bootstrap_method_attr_index;
         /** @} */
 #else
         AsmJvmConstantPoolEntry.setDataPrototype("uint16_t", "bootstrap_method_attr_index", "= 0",
@@ -10113,11 +10080,8 @@ void Grammar::setUpBinaryInstructions() {
          *    Present in CONSTANT_Fieldref_info, CONSTANT_Methodref_info, and CONSTANT_InterfaceMethodref_info table entries.
          *
          * @{ */
-     public:
         uint16_t get_class_index() const;
         void set_class_index(uint16_t);
-     protected:
-        uint16_t p_class_index;
         /** @} */
 #else
         AsmJvmConstantPoolEntry.setDataPrototype("uint16_t", "class_index", "= 0",
@@ -10131,11 +10095,8 @@ void Grammar::setUpBinaryInstructions() {
          *    Present in CONSTANT_NameAndType_info and CONSTANT_MethodHandle_info table entries.
          *
          * @{ */
-     public:
         uint16_t get_descriptor_index() const;
         void set_descriptor_index(uint16_t);
-     protected:
-        uint16_t p_descriptor_index;
         /** @} */
 #else
         AsmJvmConstantPoolEntry.setDataPrototype("uint16_t", "descriptor_index", "= 0",
@@ -10150,11 +10111,8 @@ void Grammar::setUpBinaryInstructions() {
          *    table entries.
          *
          * @{ */
-     public:
         uint16_t get_name_index() const;
         void set_name_index(uint16_t);
-     protected:
-        uint16_t p_name_index;
 #else
         AsmJvmConstantPoolEntry.setDataPrototype("uint16_t", "name_index", "= 0",
                                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -10168,11 +10126,8 @@ void Grammar::setUpBinaryInstructions() {
          *    CONSTANT_Dynamic_info, and CONSTANT_InvokeDynamic_info table entries.
          *
          * @{ */
-     public:
         uint16_t get_name_and_type_index() const;
         void set_name_and_type_index(uint16_t);
-     protected:
-        uint16_t p_name_and_type_index;
 #else
         AsmJvmConstantPoolEntry.setDataPrototype("uint16_t", "name_and_type_index", "= 0",
                                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -10185,11 +10140,8 @@ void Grammar::setUpBinaryInstructions() {
          *    Present in CONSTANT_MethodHandle_info table entries.
          *
          * @{ */
-     public:
         uint16_t get_reference_index() const;
         void set_reference_index(uint16_t);
-     protected:
-        uint16_t p_reference_index;
 #else
         AsmJvmConstantPoolEntry.setDataPrototype("uint16_t", "reference_index", "= 0",
                                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -10202,11 +10154,8 @@ void Grammar::setUpBinaryInstructions() {
          *    CONSTANT_MethodHandle_info table entry.
          *
          * @{ */
-     public:
         uint8_t get_reference_kind() const;
         void set_reference_kind(uint8_t);
-     protected:
-        uint8_t p_reference_kind;
 #else
         AsmJvmConstantPoolEntry.setDataPrototype("uint8_t",  "reference_kind", "= 0",
                                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -10219,11 +10168,8 @@ void Grammar::setUpBinaryInstructions() {
          *    Present in CONSTANT_String_info table entries.
          *
          * @{ */
-     public:
         uint16_t get_string_index() const;
         void set_string_index(uint16_t);
-     protected:
-        uint16_t p_string_index;
 #else
         AsmJvmConstantPoolEntry.setDataPrototype("uint16_t", "string_index", "= 0",
                                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -10236,11 +10182,8 @@ void Grammar::setUpBinaryInstructions() {
          *  resulting string).  Present in CONSTANT_Utf8_info table entries.
          *
          * @{ */
-     public:
         uint16_t get_length() const;
         void set_length(uint16_t);
-     protected:
-        uint16_t p_length;
 #else
         AsmJvmConstantPoolEntry.setDataPrototype("uint16_t", "length", "= 0",
                                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -10252,11 +10195,8 @@ void Grammar::setUpBinaryInstructions() {
          *  The bytes array contains the bytes of the string. Present in CONSTANT_Utf8_info table entries.
          *
          * @{ */
-     public:
         const char* get_utf8_bytes() const;
         void set_utf8_bytes(const char*);
-     protected:
-        const char* p_utf8_bytes;
 #else
         AsmJvmConstantPoolEntry.setDataPrototype("const char*", "utf8_bytes", "= nullptr",
                                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -10472,11 +10412,8 @@ void Grammar::setUpBinaryInstructions() {
          *  (see JVM specification).
          *
          * @{ */
-     public:
         uint16_t get_constantvalue_index() const;
         void set_constantvalue_index(uint16_t);
-     protected:
-        uint16_t p_constantvalue_index;
         /** @} */
 #else
         AsmJvmConstantValue.setDataPrototype("uint16_t", "constantvalue_index", "= 0",
@@ -10542,11 +10479,8 @@ void Grammar::setUpBinaryInstructions() {
          *  stack of this method at any point during execution of the method.
          *
          * @{ */
-     public:
         uint16_t get_max_stack() const;
         void set_max_stack(uint16_t);
-     protected:
-        uint16_t p_max_stack;
         /** @} */
 #else
         AsmJvmCodeAttribute.setDataPrototype("uint16_t", "max_stack", "= 0", NO_CONSTRUCTOR_PARAMETER,
@@ -10560,11 +10494,8 @@ void Grammar::setUpBinaryInstructions() {
          *  variable array allocated upon invocation of this method.
          *
          * @{ */
-     public:
         uint16_t get_max_locals() const;
         void set_max_locals(uint16_t);
-     protected:
-        uint16_t p_max_locals;
         /** @} */
 #else
         AsmJvmCodeAttribute.setDataPrototype("uint16_t", "max_locals", "= 0", NO_CONSTRUCTOR_PARAMETER,
@@ -10578,11 +10509,8 @@ void Grammar::setUpBinaryInstructions() {
          *  variable array allocated upon invocation of this method.
          *
          * @{ */
-     public:
         uint32_t get_code_length() const;
         void set_code_length(uint32_t);
-     protected:
-        uint32_t p_code_length;
         /** @} */
 #else
         AsmJvmCodeAttribute.setDataPrototype("uint32_t", "code_length", "= 0", NO_CONSTRUCTOR_PARAMETER,
@@ -10596,11 +10524,8 @@ void Grammar::setUpBinaryInstructions() {
          *  implement the method.
          *
          * @{ */
-     public:
         const char* get_code() const;
         void set_code(const char*);
-     protected:
-        const char* p_code;
 #else
         AsmJvmCodeAttribute.setDataPrototype("const char*", "code", "= nullptr", NO_CONSTRUCTOR_PARAMETER,
                                              BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -10612,11 +10537,8 @@ void Grammar::setUpBinaryInstructions() {
          *  Points to the AST node that represents the exception table for this code attribute.
          *
          * @{ */
-     public:
         const SgAsmJvmExceptionTable* get_exception_table() const;
         void set_exception_table(SgAsmJvmExceptionTable*);
-     protected:
-        SgAsmJvmExceptionTable* p_exception_table;
         /** @} */
 #else
         AsmJvmCodeAttribute.setDataPrototype("SgAsmJvmExceptionTable*", "exception_table", "= nullptr",
@@ -10629,11 +10551,8 @@ void Grammar::setUpBinaryInstructions() {
          *  Points to the AST node that represents the attribute table for this code attribute.
          *
          * @{ */
-     public:
         const SgAsmJvmAttributeTable* get_attribute_table() const;
         void set_attribute_table(SgAsmJvmAttributeTable*);
-     protected:
-        SgAsmJvmAttributeTable* p_attribute_table;
         /** @} */
 #else
         AsmJvmCodeAttribute.setDataPrototype("SgAsmJvmAttributeTable*", "attribute_table", "= nullptr",
@@ -10701,11 +10620,8 @@ void Grammar::setUpBinaryInstructions() {
          *  of ROSETTA.
          *
          * @{ */
-     public:
         SgAsmJvmInnerClassList* get_innerclasss() const;
         void set_innerclasss(SgAsmJvmInnerClassList*);
-     protected:
-        SgAsmJvmInnerClassList* p_innerclasss;
         /** @} */
 #else
         AsmJvmInnerClassTable.setDataPrototype("SgAsmJvmInnerClassList*", "innerclasss", "= nullptr",
@@ -10773,11 +10689,8 @@ void Grammar::setUpBinaryInstructions() {
          *    Present in CONSTANT_Fieldref_info, CONSTANT_Methodref_info, and CONSTANT_InterfaceMethodref_info table entries.
          *
          * @{ */
-     public:
         uint16_t get_inner_class_info_index() const;
         void set_inner_class_info_index(uint16_t);
-     protected:
-        uint16_t p_inner_class_info_index;
         /** @} */
 #else
         AsmJvmInnerClass.setDataPrototype("uint16_t", "inner_class_info_index", "= 0",
@@ -10791,11 +10704,8 @@ void Grammar::setUpBinaryInstructions() {
          *    Present in CONSTANT_Fieldref_info, CONSTANT_Methodref_info, and CONSTANT_InterfaceMethodref_info table entries.
          *
          * @{ */
-     public:
         uint16_t get_outer_class_info_index() const;
         void set_outer_class_info_index(uint16_t);
-     protected:
-        uint16_t p_outer_class_info_index;
         /** @} */
 #else
         AsmJvmInnerClass.setDataPrototype("uint16_t", "outer_class_info_index", "= 0",
@@ -10809,11 +10719,8 @@ void Grammar::setUpBinaryInstructions() {
          *    Present in CONSTANT_Fieldref_info, CONSTANT_Methodref_info, and CONSTANT_InterfaceMethodref_info table entries.
          *
          * @{ */
-     public:
         uint16_t get_inner_name_index() const;
         void set_inner_name_index(uint16_t);
-     protected:
-        uint16_t p_inner_name_index;
         /** @} */
 #else
         AsmJvmInnerClass.setDataPrototype("uint16_t", "inner_name_index", "= 0",
@@ -10827,11 +10734,8 @@ void Grammar::setUpBinaryInstructions() {
          *    Present in CONSTANT_Fieldref_info, CONSTANT_Methodref_info, and CONSTANT_InterfaceMethodref_info table entries.
          *
          * @{ */
-     public:
         uint16_t get_inner_class_access_flags() const;
         void set_inner_class_access_flags(uint16_t);
-     protected:
-        uint16_t p_inner_class_access_flags;
         /** @} */
 #else
         AsmJvmInnerClass.setDataPrototype("uint16_t", "inner_class_access_flags", "= 0",
@@ -10951,11 +10855,8 @@ void Grammar::setUpBinaryInstructions() {
          *  (see JVM specification).
          *
          * @{ */
-     public:
         uint16_t get_class_index() const;
         void set_class_index(uint16_t);
-     protected:
-        uint16_t p_class_index;
         /** @} */
 #else
         AsmJvmEnclosingMethod.setDataPrototype("uint16_t", "class_index", "= 0",
@@ -10969,11 +10870,8 @@ void Grammar::setUpBinaryInstructions() {
          *  (see JVM specification).
          *
          * @{ */
-     public:
         uint16_t get_method_index() const;
         void set_method_index(uint16_t);
-     protected:
-        uint16_t p_method_index;
         /** @} */
 #else
         AsmJvmEnclosingMethod.setDataPrototype("uint16_t", "method_index", "= 0",
@@ -11039,11 +10937,8 @@ void Grammar::setUpBinaryInstructions() {
          *  (see JVM specification).
          *
          * @{ */
-     public:
         uint16_t get_signature_index() const;
         void set_signature_index(uint16_t);
-     protected:
-        uint16_t p_signature_index;
         /** @} */
 #else
         AsmJvmSignature.setDataPrototype("uint16_t", "signature_index", "= 0",
@@ -11108,11 +11003,8 @@ void Grammar::setUpBinaryInstructions() {
          *  (see JVM specification).
          *
          * @{ */
-     public:
         uint16_t get_sourcefile_index() const;
         void set_sourcefile_index(uint16_t);
-     protected:
-        uint16_t p_sourcefile_index;
         /** @} */
 #else
         AsmJvmSourceFile.setDataPrototype("uint16_t", "sourcefile_index", "= 0",
@@ -11176,11 +11068,8 @@ void Grammar::setUpBinaryInstructions() {
          *  of ROSETTA.
          *
          * @{ */
-     public:
         SgAsmJvmLineNumberList* get_line_numbers() const;
         void set_line_numbers(SgAsmJvmLineNumberList*);
-     protected:
-        SgAsmJvmLineNumberList* p_line_numbers;
         /** @} */
 #else
         AsmJvmLineNumberInnerTable.setDataPrototype("SgAsmJvmLineNumberList*", "line_numbers", "= nullptr",
@@ -11242,11 +11131,8 @@ void Grammar::setUpBinaryInstructions() {
          *  (see JVM specification).
          *
          * @{ */
-     public:
         uint16_t get_start_pc() const;
         void set_start_pc(uint16_t);
-     protected:
-        uint16_t p_start_pc;
         /** @} */
 #else
         AsmJvmLineNumber.setDataPrototype("uint16_t", "start_pc", "= 0",
@@ -11260,11 +11146,8 @@ void Grammar::setUpBinaryInstructions() {
          *  (see JVM specification).
          *
          * @{ */
-     public:
         uint16_t get_line_number() const;
         void set_line_number(uint16_t);
-     protected:
-        uint16_t p_line_number;
         /** @} */
 #else
         AsmJvmLineNumber.setDataPrototype("uint16_t", "line_number", "= 0",
@@ -11382,11 +11265,8 @@ void Grammar::setUpBinaryInstructions() {
          *  The inner table in a LineNumberTable attribute (see JVM specification 4.7.12).
          *
          * @{ */
-     public:
         SgAsmJvmLineNumberInnerTable* get_line_number_table() const;
         void set_line_number_table(SgAsmJvmLineNumberInnerTable*);
-     protected:
-        SgAsmJvmLineNumberInnerTable* p_line_number_table;
         /** @} */
 #else
         AsmJvmLineNumberTable.setDataPrototype("SgAsmJvmLineNumberInnerTable*", "line_number_table", "= 0",
@@ -11460,11 +11340,8 @@ void Grammar::setUpBinaryInstructions() {
          *  (see JVM specification).
          *
          * @{ */
-     public:
         uint16_t get_attribute_name_index() const;
         void set_attribute_name_index(uint16_t);
-     protected:
-        uint16_t p_attribute_name_index;
         /** @} */
 #else
         AsmJvmAttribute.setDataPrototype("uint16_t", "attribute_name_index", "= 0",
@@ -11478,11 +11355,8 @@ void Grammar::setUpBinaryInstructions() {
          *  attribute_name_index nor attribute_length.
          *
          * @{ */
-     public:
         uint32_t get_attribute_length() const;
         void set_attribute_length(uint32_t);
-     protected:
-        uint32_t p_attribute_length;
 #else
         AsmJvmAttribute.setDataPrototype("uint32_t", "attribute_length", "= 0",
                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -11605,11 +11479,8 @@ void Grammar::setUpBinaryInstructions() {
          *  This tag item has the value CONSTANT_Class (see section 4.4.1).
          *
          * @{ */
-     public:
         uint8_t get_tag() const;
         void set_tag(uint8_t);
-     protected:
-        uint8_t p_tag;
         /** @} */
 #else
         AsmJvmInterfaceTable.setDataPrototype("uint8_t", "tag", "= 0",
@@ -11623,11 +11494,8 @@ void Grammar::setUpBinaryInstructions() {
          *    Present in an exception table of a Code_attribute (see section 4.7.3 of the JVM specification).
          *
          * @{ */
-     public:
         uint16_t get_name_index() const;
         void set_name_index(uint16_t);
-     protected:
-        uint16_t p_name_index;
         /** @} */
 #else
         AsmJvmInterfaceTable.setDataPrototype("uint16_t", "name_index", "= 0",
@@ -11641,11 +11509,8 @@ void Grammar::setUpBinaryInstructions() {
          *  of ROSETTA.
          *
          * @{ */
-     public:
         SgAsmJvmClassList* get_interfaces() const;
         void set_interfaces(SgAsmJvmClassList*);
-     protected:
-        SgAsmJvmClassList* p_interfaces;
         /** @} */
 #else
         AsmJvmInterfaceTable.setDataPrototype("SgAsmJvmClassList*", "interfaces", "= nullptr",
@@ -11823,11 +11688,8 @@ void Grammar::setUpBinaryInstructions() {
          *  of ROSETTA.
          *
          * @{ */
-     public:
         SgAsmJvmAttributeList* get_attributes() const;
         void set_attributes(SgAsmJvmAttributeList*);
-     protected:
-        SgAsmJvmAttributeList* p_attributes;
         /** @} */
 #else
         AsmJvmAttributeTable.setDataPrototype("SgAsmJvmAttributeList*", "attributes", "= nullptr",
@@ -11900,11 +11762,8 @@ void Grammar::setUpBinaryInstructions() {
          *  of ROSETTA.
          *
          * @{ */
-     public:
         SgAsmJvmExceptionList* get_exceptions() const;
         void set_exceptions(SgAsmJvmExceptionList*);
-     protected:
-        SgAsmJvmExceptionList* p_exceptions;
         /** @} */
 #else
         AsmJvmExceptionTable.setDataPrototype("SgAsmJvmExceptionList*", "exceptions", "= nullptr",
@@ -11973,11 +11832,8 @@ void Grammar::setUpBinaryInstructions() {
          *    Present in an exception table of a Code_attribute (see section 4.7.3 of the JVM specification).
          *
          * @{ */
-     public:
         uint16_t get_start_pc() const;
         void set_start_pc(uint16_t);
-     protected:
-        uint16_t p_start_pc;
         /** @} */
 #else
         AsmJvmException.setDataPrototype("uint16_t", "start_pc", "= 0",
@@ -11991,11 +11847,8 @@ void Grammar::setUpBinaryInstructions() {
          *    Present in an exception table of a Code_attribute (see section 4.7.3 of the JVM specification).
          *
          * @{ */
-     public:
         uint16_t get_end_pc() const;
         void set_end_pc(uint16_t);
-     protected:
-        uint16_t p_end_pc;
         /** @} */
 #else
         AsmJvmException.setDataPrototype("uint16_t", "end_pc", "= 0",
@@ -12009,11 +11862,8 @@ void Grammar::setUpBinaryInstructions() {
          *    Present in an exception table of a Code_attribute (see section 4.7.3 of the JVM specification).
          *
          * @{ */
-     public:
         uint16_t get_handler_pc() const;
         void set_handler_pc(uint16_t);
-     protected:
-        uint16_t p_handler_pc;
         /** @} */
 #else
         AsmJvmException.setDataPrototype("uint16_t", "handler_pc", "= 0",
@@ -12027,11 +11877,8 @@ void Grammar::setUpBinaryInstructions() {
          *    Present in an exception table of a Code_attribute (see section 4.7.3 of the JVM specification).
          *
          * @{ */
-     public:
         uint16_t get_catch_type() const;
         void set_catch_type(uint16_t);
-     protected:
-        uint16_t p_catch_type;
         /** @} */
 #else
         AsmJvmException.setDataPrototype("uint16_t", "catch_type", "= 0",
@@ -12151,11 +11998,8 @@ void Grammar::setUpBinaryInstructions() {
          *  of ROSETTA.
          *
          * @{ */
-     public:
         SgAsmJvmMethodList* get_methods() const;
         void set_methods(SgAsmJvmMethodList*);
-     protected:
-        SgAsmJvmMethodList* p_methods;
         /** @} */
 #else
         AsmJvmMethodTable.setDataPrototype("SgAsmJvmMethodList*", "methods", "= nullptr",
@@ -12228,11 +12072,8 @@ void Grammar::setUpBinaryInstructions() {
          *  permission to and properties of this method (see JVM specification).
          *
          * @{ */
-     public:
         uint16_t get_access_flags() const;
         void set_access_flags(uint16_t);
-     protected:
-        uint16_t p_access_flags;
         /** @} */
 #else
         AsmJvmMethod.setDataPrototype("uint16_t", "access_flags", "= 0",
@@ -12246,11 +12087,8 @@ void Grammar::setUpBinaryInstructions() {
          *  (see JVM specification).
          *
          * @{ */
-     public:
         uint16_t get_name_index() const;
         void set_name_index(uint16_t);
-     protected:
-        uint16_t p_name_index;
         /** @} */
 #else
         AsmJvmMethod.setDataPrototype("uint16_t", "name_index", "= 0",
@@ -12264,11 +12102,8 @@ void Grammar::setUpBinaryInstructions() {
          *  (see JVM specification).
          *
          * @{ */
-     public:
         uint16_t get_descriptor_index() const;
         void set_descriptor_index(uint16_t);
-     protected:
-        uint16_t p_descriptor_index;
         /** @} */
 #else
         AsmJvmMethod.setDataPrototype("uint16_t", "descriptor_index", "= 0",
@@ -12403,11 +12238,8 @@ void Grammar::setUpBinaryInstructions() {
          *  of ROSETTA.
          *
          * @{ */
-     public:
         SgAsmJvmFieldList* get_fields() const;
         void set_fields(SgAsmJvmFieldList*);
-     protected:
-        SgAsmJvmFieldList* p_fields;
         /** @} */
 #else
         AsmJvmFieldTable.setDataPrototype("SgAsmJvmFieldList*", "fields", "= nullptr",
@@ -12478,11 +12310,8 @@ void Grammar::setUpBinaryInstructions() {
          *  permission to and properties of this method (see JVM specification).
          *
          * @{ */
-     public:
         uint16_t get_access_flags() const;
         void set_access_flags(uint16_t);
-     protected:
-        uint16_t p_access_flags;
         /** @} */
 #else
         AsmJvmField.setDataPrototype("uint16_t", "access_flags", "= 0",
@@ -12496,11 +12325,8 @@ void Grammar::setUpBinaryInstructions() {
          *  (see JVM specification).
          *
          * @{ */
-     public:
         uint16_t get_name_index() const;
         void set_name_index(uint16_t);
-     protected:
-        uint16_t p_name_index;
         /** @} */
 #else
         AsmJvmField.setDataPrototype("uint16_t", "name_index", "= 0",
@@ -12514,11 +12340,8 @@ void Grammar::setUpBinaryInstructions() {
          *  (see JVM specification).
          *
          * @{ */
-     public:
         uint16_t get_descriptor_index() const;
         void set_descriptor_index(uint16_t);
-     protected:
-        uint16_t p_descriptor_index;
         /** @} */
 #else
         AsmJvmField.setDataPrototype("uint16_t", "descriptor_index", "= 0",
@@ -12652,11 +12475,8 @@ void Grammar::setUpBinaryInstructions() {
          *  Mask of flags used to denote access permissions and properties of this class or interface.
          *
          * @{ */
-     public:
         uint16_t get_access_flags() const;
         void set_access_flags(uint16_t);
-     protected:
-        uint16_t p_access_flags;
         /** @} */
 #else
         AsmJvmClassFile.setDataPrototype("uint16_t", "access_flags", "= 0",
@@ -12669,11 +12489,8 @@ void Grammar::setUpBinaryInstructions() {
          *  Index into constant pool table for this class or interface.
          *
          * @{ */
-     public:
         uint16_t get_this_class() const;
         void set_this_class(uint16_t);
-     protected:
-        uint16_t p_this_class;
         /** @} */
 #else
         AsmJvmClassFile.setDataPrototype("uint16_t", "this_class", "= 0",
@@ -12686,11 +12503,8 @@ void Grammar::setUpBinaryInstructions() {
          *  Index into constant pool table for direct super class of this class or interface.
          *
          * @{ */
-     public:
         uint16_t get_super_class() const;
         void set_super_class(uint16_t);
-     protected:
-        uint16_t p_super_class;
         /** @} */
 #else
         AsmJvmClassFile.setDataPrototype("uint16_t", "super_class", "= 0",
@@ -12706,11 +12520,8 @@ void Grammar::setUpBinaryInstructions() {
          *  table entry is indicated by its first "tag" byte.
          *
          * @{ */
-     public:
         const SgAsmJvmConstantPool* get_constant_pool() const;
         void set_constant_pool(SgAsmJvmConstantPool*);
-     protected:
-        SgAsmJvmConstantPool* p_constant_pool;
         /** @} */
 #else
         AsmJvmClassFile.setDataPrototype("SgAsmJvmConstantPool*", "constant_pool", "= nullptr",
@@ -12726,11 +12537,8 @@ void Grammar::setUpBinaryInstructions() {
          *  table entry is indicated by its first "tag" byte.
          *
          * @{ */
-     public:
         const SgAsmJvmFieldTable* get_field_table() const;
         void set_field_table(SgAsmJvmFieldTable*);
-     protected:
-        SgAsmJvmFieldTable* p_field_table;
         /** @} */
 #else
         AsmJvmClassFile.setDataPrototype("SgAsmJvmFieldTable*", "field_table", "= nullptr",
@@ -12746,11 +12554,8 @@ void Grammar::setUpBinaryInstructions() {
          *  table entry is indicated by its first "tag" byte.
          *
          * @{ */
-     public:
         const SgAsmJvmMethodTable* get_method_table() const;
         void set_method_table(SgAsmJvmMethodTable*);
-     protected:
-        SgAsmJvmMethodTable* p_method_table;
         /** @} */
 #else
         AsmJvmClassFile.setDataPrototype("SgAsmJvmMethodTable*", "method_table", "= nullptr",
@@ -12766,11 +12571,8 @@ void Grammar::setUpBinaryInstructions() {
          *  table entry is indicated by its first "tag" byte.
          *
          * @{ */
-     public:
         const SgAsmJvmAttributeTable* get_attribute_table() const;
         void set_attribute_table(SgAsmJvmAttributeTable*);
-     protected:
-        SgAsmJvmAttributeTable* p_attribute_table;
         /** @} */
 #else
         AsmJvmClassFile.setDataPrototype("SgAsmJvmAttributeTable*", "attribute_table", "= nullptr",
