@@ -3,10 +3,11 @@ package a_nodes_h.Support is
    -- their components. a_nodes_h.ads is generated from C, so this package
    -- supplies constant records for safe initialization.
 
-   package ICE renames Interfaces.C.Extensions;
-   package ICS renames Interfaces.C.Strings;
+   package IC renames Interfaces.C;
+   package ICE renames IC.Extensions;
+   package ICS renames IC.Strings;
 
-   Invalid_bool         : constant ICE.bool := ICE.False;
+   Invalid_bool         : constant ICE.bool := IC.False;
    Invalid_chars_ptr    : constant ICS.chars_ptr := ICS.Null_Ptr;
    Invalid_ID           : constant := -1;
    Empty_ID             : constant := 0;
@@ -516,7 +517,7 @@ package a_nodes_h.Support is
      (Item : in Boolean)
       return ICE.bool
    is
-     (if Item then ICE.True else ICE.False);
+     (if Item then IC.True else IC.False);
 
    type Unit_ID_Array is array (Positive range <>) of aliased Unit_ID;
    -- Not called _Ptr so we don't forget a pointer to this is not the same as a

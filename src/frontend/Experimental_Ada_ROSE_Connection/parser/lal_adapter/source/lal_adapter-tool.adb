@@ -52,10 +52,7 @@ package body Lal_Adapter.Tool is
       --    Process_Predefined_Units;
       --  Unit_Options.Process_If_Origin_Is (Lal.An_Implementation_Unit) :=
       --    Process_Implementation_Units;
-      This.Outputs.Text := new Indented_Text.Class;
-      This.Outputs.Graph := Dot.Graphs.Create (Is_Digraph => True,
-                                               Is_Strict  => False);
-      This.Outputs.A_Nodes := new A_Nodes.Class;
+      This.Outputs.Initialize;
       --     This.My_Context.Process (Unit_Options   => Unit_Options,
       --                              Outputs        => This.Outputs);
       This.My_Context.Process (Input_File_Name   => Input_File_Name,
