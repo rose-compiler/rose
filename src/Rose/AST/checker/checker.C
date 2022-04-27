@@ -2,8 +2,8 @@
 #include "sage3basic.h"
 #include "AST_FILE_IO.h"
 
-#include "Rose/AST/checker.h"
-#include "Rose/AST/defect.h"
+#include "Rose/AST/Checker.h"
+#include "Rose/AST/Defect.h"
 
 namespace Rose { namespace AST { namespace Defects {
 

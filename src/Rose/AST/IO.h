@@ -1,5 +1,5 @@
-#ifndef __ROSE_AST_IO_H__
-#define __ROSE_AST_IO_H__
+#ifndef ROSE_AST_IO_H
+#define ROSE_AST_IO_H
 
 #include <list>
 #include <string>
@@ -9,10 +9,7 @@
 
 class SgProject;
 
-namespace Rose {
-
-//! Collection of functionalities performing global operations on the AST.
-namespace AST {
+namespace Rose { namespace AST {
 
 //! Function used to load, merge, prune, link, delete
 namespace IO {
@@ -84,5 +81,5 @@ ROSE_DLL_API void free();
 
 } } }
 
-#endif /* __ROSE_AST_IO_H__ */
+#endif /* ROSE_AST_IO_H */
 

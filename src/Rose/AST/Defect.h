@@ -1,6 +1,6 @@
 
-#ifndef __ROSE_AST_DEFECT_H__
-#define __ROSE_AST_DEFECT_H__
+#ifndef ROSE_AST_DEFECT_H
+#define ROSE_AST_DEFECT_H
 
 namespace Rose {
 namespace AST {
@@ -119,5 +119,5 @@ using IntegrityEdgeDefect = Defects::defect_t<Defects::Kind::integrity_edges>;
 
 } }
 
-#endif /* __ROSE_AST_DEFECT_H__ */
+#endif /* ROSE_AST_DEFECT_H */
 
