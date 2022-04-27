@@ -319,9 +319,8 @@ namespace CodeThorn {
       }
     }
  
-    // option to be added, to differentiate it from the functioncall-mapping based report
     if(ctOpt.analyzedExternalFunctionCallsCSVFileName.size()>0) {
-      string fileName=ctOpt.reportFilePath+"/"+ctOpt.externalFunctionsCSVFileName;
+      string fileName=ctOpt.reportFilePath+"/"+ctOpt.analyzedExternalFunctionCallsCSVFileName;
       if(!ctOpt.quiet)
         cout<<"Writing list of called external functions to file "<<fileName<<endl;
       string s=analyzer->externalFunctionsToString();

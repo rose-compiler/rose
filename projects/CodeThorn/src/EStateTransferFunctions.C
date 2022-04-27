@@ -975,7 +975,7 @@ namespace CodeThorn {
         return evalAssignOp3(assignOp,edge.target(),estate);
       } else {
         // all other cases, evaluate function call as expression
-        SingleEvalResult evalResult2=evaluateExpression(funCall,currentEState);
+        SingleEvalResult evalResult2=evaluateExpression(funCall,currentEState); // eventually calls evalFunctionCall
         SAWYER_MESG(logger[TRACE])<<"EXTERNAL FUNCTION: "<<SgNodeHelper::getFunctionName(funCall)<<" result(added to state):"<<evalResult2.result.toString()<<endl;
 
         // create new estate with added return variable (for inter-procedural analysis)
