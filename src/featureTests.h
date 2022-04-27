@@ -24,8 +24,8 @@
     // that they're using the wrong language based on the compiler's error messages.
     //   See https://docs.microsoft.com/en-us/cpp/build/reference/zc-cplusplus?view=msvc-160
     //   See https://devblogs.microsoft.com/cppblog/msvc-now-correctly-reports-__cplusplus/
-#elif __cplusplus < 201103L
-    #error "ROSE requires a C++11 or later compiler"
+#elif __cplusplus < 201402L
+    #error "ROSE requires a C++14 or later compiler"
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
