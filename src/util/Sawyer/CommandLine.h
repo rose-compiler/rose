@@ -776,6 +776,13 @@ struct LexicalCast<std::regex> {
 };
 
 template<>
+struct LexicalCast<boost::filesystem::path> {
+    static boost::filesystem::path convert(const std::string &src) {
+        return boost::filesystem::path(src);
+    }
+};
+
+template<>
 struct LexicalCast<boost::any> {
     static boost::any convert(const std::string &src) {
         return src;
