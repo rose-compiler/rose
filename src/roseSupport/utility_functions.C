@@ -61,7 +61,7 @@
 // DQ (9/8/2017): Debugging ROSE_ASSERT. Call sighandler_t signal(int signum, sighandler_t handler);
 #include<signal.h>
 
-#include "Rose/AST/io.h"
+#include "Rose/AST/IO.h"
 #include "Rose/AST/cmdline.h"
 
 #include "AST_FILE_IO.h"

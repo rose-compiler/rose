@@ -1,6 +1,6 @@
 
-#ifndef __ROSE_AST_CMDLINE_H__
-#define __ROSE_AST_CMDLINE_H__
+#ifndef ROSE_AST_CMDLINE_H
+#define ROSE_AST_CMDLINE_H
 
 #include <string>
 #include <vector>
@@ -72,4 +72,4 @@ namespace cmdline {
   extern __when_T<checker_t> checker; //!< Used by the -rose:ast:checker:XXX options
 
 } } }
-#endif /* __ROSE_AST_CMDLINE_H__ */
+#endif /* ROSE_AST_CMDLINE_H */

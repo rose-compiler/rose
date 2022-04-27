@@ -1,7 +1,7 @@
 
 #include "sage3basic.h"
 
-#include "Rose/AST/checker.h"
+#include "Rose/AST/Checker.h"
 #include "Rose/AST/cmdline.h"
 
 namespace Rose { namespace AST { namespace cmdline {

@@ -1,6 +1,6 @@
 
 #include "sage3basic.h"
-#include "Rose/AST/utils.h"
+#include "Rose/AST/Utils.h"
 
 namespace Rose { namespace AST { namespace IO {
 

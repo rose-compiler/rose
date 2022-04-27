@@ -1,6 +1,6 @@
 
 #include "sage3basic.h"
-#include "Rose/AST/utils.h"
+#include "Rose/AST/Utils.h"
 
 #define DEBUG_LinkAcrossFiles 0
 
