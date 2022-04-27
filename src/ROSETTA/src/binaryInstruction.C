@@ -10559,6 +10559,21 @@ void Grammar::setUpBinaryInstructions() {
                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
+#ifdef DOCUMENTATION
+        /** Property: Code offset.
+         *
+         *  Offset in bytes from the start of the file for the byte-code array of the method.
+         *  A convenience property @a not in the JVM specification.
+         *
+         * @{ */
+        const rose_addr_t get_code_offset() const;
+        void set_code_offset(rose_addr_t);
+        /** @} */
+#else
+        AsmJvmCodeAttribute.setDataPrototype("rose_addr_t", "code_offset", "= 0",
+                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
         DECLARE_OTHERS(AsmJvmCodeAttribute);
 #if defined(SgAsmJvmCodeAttribute_OTHERS) || defined(DOCUMENTATION)
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -10573,6 +10588,7 @@ void Grammar::setUpBinaryInstructions() {
             s & BOOST_SERIALIZATION_NVP(p_code_length);
             s & BOOST_SERIALIZATION_NVP(p_exception_table);
             s & BOOST_SERIALIZATION_NVP(p_attribute_table);
+            s & BOOST_SERIALIZATION_NVP(p_code_offset);
         }
 #endif
 
@@ -11402,54 +11418,6 @@ void Grammar::setUpBinaryInstructions() {
     };
 #endif
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    DECLARE_LEAF_CLASS(AsmJvmAttributeList);
-    IS_SERIALIZABLE(AsmJvmAttributeList);
-
-#ifdef DOCUMENTATION
-    /** List of JVM attributes.
-     *
-     *  The only purpose of this node is to hold a list which, due to ROSETTA limitations, cannot be contained in the objects
-     *  that actually need it. */
-    class SgAsmJvmAttributeList: public SgAsmJvmNode {
-    public:
-#endif
-
-#ifdef DOCUMENTATION
-        /** Property: List of attributes.
-         *
-         * @{ */
-     public:
-        const SgAsmJvmAttributePtrList& get_entries() const;
-        void set_entries(const SgAsmJvmAttributePtrList&);
-     protected
-        SgAsmJvmAttributePtrList & p_entries;
-        /** @} */
-#else
-        AsmJvmAttributeList.setDataPrototype("SgAsmJvmAttributePtrList", "entries", "",
-                                             NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL,
-                                             NO_DELETE);
-#endif
-
-        DECLARE_OTHERS(AsmJvmAttributeList);
-#if defined(SgAsmJvmAttributeList_OTHERS) || defined(DOCUMENTATION)
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-    private:
-        friend class boost::serialization::access;
-
-        template<class S>
-        void serialize(S &s, const unsigned /*version*/) {
-            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmNode);
-            s & BOOST_SERIALIZATION_NVP(p_entries);
-        }
-#endif
-#endif // SgAsmJvmAttributeList_OTHERS
-
-#ifdef DOCUMENTATION
-    };
-#endif
-
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -11682,18 +11650,16 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
 #ifdef DOCUMENTATION
-        /** Property: List of attributes.
-         *
-         *  This property points to an AST node that contains the list rather than being a list directly because of limitations
-         *  of ROSETTA.
+        /** Property: List of pointers to attributes.
          *
          * @{ */
-        SgAsmJvmAttributeList* get_attributes() const;
-        void set_attributes(SgAsmJvmAttributeList*);
+        const SgAsmJvmAttributePtrList& get_attributes() const;
+        void set_attributes(SgAsmJvmAttributePtrList&);
         /** @} */
 #else
-        AsmJvmAttributeTable.setDataPrototype("SgAsmJvmAttributeList*", "attributes", "= nullptr",
-                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+        AsmJvmAttributeTable.setDataPrototype("SgAsmJvmAttributePtrList", "attributes", "",
+                                              NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS,
+                                              DEF_TRAVERSAL, NO_DELETE);
 #endif
 
         DECLARE_OTHERS(AsmJvmAttributeTable);
@@ -11992,18 +11958,16 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
 #ifdef DOCUMENTATION
-        /** Property: List of methods.
-         *
-         *  This property points to an AST node that contains the list rather than being a list directly because of limitations
-         *  of ROSETTA.
+        /** Property: List of pointers to methods.
          *
          * @{ */
-        SgAsmJvmMethodList* get_methods() const;
-        void set_methods(SgAsmJvmMethodList*);
+        const SgAsmJvmMethodPtrList& get_methods() const;
+        void set_methods(SgAsmJvmMethodPtrList&);
         /** @} */
 #else
-        AsmJvmMethodTable.setDataPrototype("SgAsmJvmMethodList*", "methods", "= nullptr",
-                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+        AsmJvmMethodTable.setDataPrototype("SgAsmJvmMethodPtrList", "methods", "",
+                                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS,
+                                           DEF_TRAVERSAL, NO_DELETE);
 #endif
 
         DECLARE_OTHERS(AsmJvmMethodTable);
@@ -12161,54 +12125,6 @@ void Grammar::setUpBinaryInstructions() {
     };
 #endif
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    DECLARE_LEAF_CLASS(AsmJvmMethodList);
-    IS_SERIALIZABLE(AsmJvmMethodList);
-
-#ifdef DOCUMENTATION
-    /** List of JVM attributes.
-     *
-     *  The only purpose of this node is to hold a list which, due to ROSETTA limitations, cannot be contained in the objects
-     *  that actually need it. */
-    class SgAsmJvmMethodList: public SgAsmJvmNode {
-    public:
-#endif
-
-#ifdef DOCUMENTATION
-        /** Property: List of methods.
-         *
-         * @{ */
-     public:
-        const SgAsmJvmMethodPtrList& get_entries() const;
-        void set_entries(const SgAsmJvmMethodPtrList&);
-     protected
-        SgAsmJvmMethodPtrList & p_entries;
-        /** @} */
-#else
-        AsmJvmMethodList.setDataPrototype("SgAsmJvmMethodPtrList", "entries", "",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL,
-                                          NO_DELETE);
-#endif
-
-        DECLARE_OTHERS(AsmJvmMethodList);
-#if defined(SgAsmJvmMethodList_OTHERS) || defined(DOCUMENTATION)
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-    private:
-        friend class boost::serialization::access;
-
-        template<class S>
-        void serialize(S &s, const unsigned /*version*/) {
-            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmNode);
-            s & BOOST_SERIALIZATION_NVP(p_entries);
-        }
-#endif
-#endif // SgAsmJvmMethodList_OTHERS
-
-#ifdef DOCUMENTATION
-    };
-#endif
-
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -12232,18 +12148,16 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
 #ifdef DOCUMENTATION
-        /** Property: List of fields.
-         *
-         *  This property points to an AST node that contains the list rather than being a list directly because of limitations
-         *  of ROSETTA.
+        /** Property: List of pointers to fields.
          *
          * @{ */
-        SgAsmJvmFieldList* get_fields() const;
-        void set_fields(SgAsmJvmFieldList*);
+        const SgAsmJvmFieldPtrList& get_fields() const;
+        void set_fields(SgAsmJvmFieldPtrList&);
         /** @} */
 #else
-        AsmJvmFieldTable.setDataPrototype("SgAsmJvmFieldList*", "fields", "= nullptr",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+        AsmJvmFieldTable.setDataPrototype("SgAsmJvmFieldPtrList", "fields", "",
+                                          NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS,
+                                          DEF_TRAVERSAL, NO_DELETE);
 #endif
 
         DECLARE_OTHERS(AsmJvmFieldTable);
@@ -12394,54 +12308,6 @@ void Grammar::setUpBinaryInstructions() {
         void dump(FILE*, const char *prefix, ssize_t idx) const override;
 
 #endif // SgAsmJvmField_OTHERS
-
-#ifdef DOCUMENTATION
-    };
-#endif
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    DECLARE_LEAF_CLASS(AsmJvmFieldList);
-    IS_SERIALIZABLE(AsmJvmFieldList);
-
-#ifdef DOCUMENTATION
-    /** List of JVM fields.
-     *
-     *  The only purpose of this node is to hold a list which, due to ROSETTA limitations, cannot be contained in the objects
-     *  that actually need it. */
-    class SgAsmJvmFieldList: public SgAsmJvmNode {
-    public:
-#endif
-
-#ifdef DOCUMENTATION
-        /** Property: List of fields.
-         *
-         * @{ */
-     public:
-        const SgAsmJvmFieldPtrList& get_entries() const;
-        void set_entries(const SgAsmJvmFieldPtrList&);
-     protected
-        SgAsmJvmFieldPtrList & p_entries;
-        /** @} */
-#else
-        AsmJvmFieldList.setDataPrototype("SgAsmJvmFieldPtrList", "entries", "",
-                                         NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL,
-                                         NO_DELETE);
-#endif
-
-        DECLARE_OTHERS(AsmJvmFieldList);
-#if defined(SgAsmJvmFieldList_OTHERS) || defined(DOCUMENTATION)
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-    private:
-        friend class boost::serialization::access;
-
-        template<class S>
-        void serialize(S &s, const unsigned /*version*/) {
-            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmNode);
-            s & BOOST_SERIALIZATION_NVP(p_entries);
-        }
-#endif
-#endif // SgAsmJvmFieldList_OTHERS
 
 #ifdef DOCUMENTATION
     };
@@ -19811,11 +19677,10 @@ void Grammar::setUpBinaryInstructions() {
      *************************************************************************************************************************/
 
     NEW_NONTERMINAL_MACRO(AsmJvmNode,
-                          AsmJvmAttribute | AsmJvmAttributeList | AsmJvmConstantPoolEntry | AsmJvmConstantPoolEntryList |
+                          AsmJvmAttribute | AsmJvmConstantPoolEntry | AsmJvmConstantPoolEntryList |
                           AsmJvmClass | AsmJvmClassList |
                           AsmJvmInnerClass | AsmJvmInnerClassList | AsmJvmInnerClassTable |
-                          AsmJvmMethod | AsmJvmMethodList | AsmJvmField | AsmJvmFieldList |
-                          AsmJvmException | AsmJvmExceptionList | AsmJvmExceptionTable |
+                          AsmJvmMethod | AsmJvmField | AsmJvmException | AsmJvmExceptionList | AsmJvmExceptionTable |
                           AsmJvmLineNumber | AsmJvmLineNumberList | AsmJvmLineNumberInnerTable,
                           "AsmJvmNode", "AsmJvmNodeTag", false);
     AsmJvmNode.setCppCondition("!defined(DOCUMENTATION)");
