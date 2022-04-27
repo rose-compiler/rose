@@ -1727,7 +1727,7 @@ Grammar::buildFriendDeclarations ( AstNodeClass & node )
    {
      StringUtility::FileWithLineNumbers result;
 
-     std::string prefix("    friend class Rose::Traits::generated::describe_");
+     std::string prefix("    friend struct Rose::Traits::generated::describe_");
      std::string name = node.baseName;
 
      result.push_back(StringUtility::StringWithLineNumber(prefix + "node_t<Sg" + name + ">;", "", 1));
