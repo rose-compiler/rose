@@ -59,7 +59,7 @@ testTraitsDescribe0.passed: testTraitsDescribe0
 
 noinst_PROGRAMS += testTraitsTraversal0
 testTraitsTraversal0_SOURCES = testTraitsTraversal0.C
-testTraitsTraversal0_CPPFLAGS = -ftemplate-depth=2000
+testTraitsTraversal0_CPPFLAGS = -ftemplate-depth=2000 -DUSE_META_TRAVERSAL=1
 testTraitsTraversal0_LDADD = $(ROSE_SEPARATE_LIBS)
 
 TEST_TARGETS += testTraitsTraversal0.passed
@@ -67,11 +67,21 @@ TEST_TARGETS += testTraitsTraversal0.passed
 testTraitsTraversal0.passed: testTraitsTraversal0
 	@$(RTH_RUN) CMD="./testTraitsTraversal0" $(TEST_EXIT_STATUS) $@
 
+noinst_PROGRAMS += testTraitsTraversalOld0
+testTraitsTraversalOld0_SOURCES = testTraitsTraversal0.C
+testTraitsTraversalOld0_CXXFLAGS = -ftemplate-depth=2000 -DUSE_META_TRAVERSAL=0 -O2
+testTraitsTraversalOld0_LDADD = $(ROSE_SEPARATE_LIBS)
+
+TEST_TARGETS += testTraitsTraversalOld0.passed
+
+testTraitsTraversalOld0.passed: testTraitsTraversalOld0
+	@$(RTH_RUN) CMD="./testTraitsTraversalOld0" $(TEST_EXIT_STATUS) $@
+
 #------------------------------------------------------------------------------------------------------------------------
 
 noinst_PROGRAMS += testTraitsTraversal1
 testTraitsTraversal1_SOURCES = testTraitsTraversal1.C
-testTraitsTraversal1_CPPFLAGS = -ftemplate-depth=2000
+testTraitsTraversal1_CXXFLAGS = -ftemplate-depth=2000 -DUSE_META_TRAVERSAL=1 -O2
 testTraitsTraversal1_LDADD = $(ROSE_SEPARATE_LIBS)
 
 TEST_TARGETS += testTraitsTraversal1.passed
