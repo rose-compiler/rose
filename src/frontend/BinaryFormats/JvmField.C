@@ -17,8 +17,7 @@ SgAsmJvmField::SgAsmJvmField(SgAsmJvmFieldTable* table)
 
   set_parent(table);
   p_attribute_table = new SgAsmJvmAttributeTable(this);
-  ROSE_ASSERT(get_attribute_table()->get_attributes());
-  ROSE_ASSERT(get_attribute_table()->get_attributes()->get_parent());
+  ROSE_ASSERT(get_attribute_table()->get_parent());
 }
 
 SgAsmJvmField* SgAsmJvmField::parse(SgAsmJvmConstantPool* pool)
@@ -47,9 +46,8 @@ SgAsmJvmFieldTable::SgAsmJvmFieldTable(SgAsmJvmClassFile* jcf)
 {
   std::cout << "SgAsmJvmFieldTable::ctor() ...\n";
 
+  jcf->set_field_table(this);
   set_parent(jcf);
-  p_fields = new SgAsmJvmFieldList;
-  p_fields->set_parent(this);
 }
 
 SgAsmJvmFieldTable* SgAsmJvmFieldTable::parse()
@@ -63,25 +61,19 @@ SgAsmJvmFieldTable* SgAsmJvmFieldTable::parse()
   auto pool = jcf->get_constant_pool();
   ROSE_ASSERT(pool && "JVM constant_pool is a nullptr");
 
-  auto fields = get_fields()->get_entries();
-
   Jvm::read_value(pool, fields_count);
-  std::cout << "SgAsmJvmClassFile::fields_count " << fields_count << std::endl;
-
   for (int ii = 0; ii < fields_count; ii++) {
-    auto method = new SgAsmJvmField(this);
-    method->parse(pool);
-    fields.push_back(method);
+    auto field = new SgAsmJvmField(this);
+    field->parse(pool);
+    get_fields().push_back(field);
   }
-
-  std::cout << "SgAsmJvmFieldTable::parse() exit ...\n";
   return this;
 }
 
 void SgAsmJvmFieldTable::dump(FILE*f, const char* prefix, ssize_t idx) const
 {
   fprintf(f, "%s", prefix);
-  for (auto field : get_fields()->get_entries()) {
+  for (auto field : get_fields()) {
     field->dump(stdout, "   ", idx++);
   }
 }

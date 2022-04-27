@@ -212,7 +212,6 @@ SgAsmInterpretation
 SgAsmInterpretationList
 SgAsmJvmClassFile
 SgAsmJvmAttribute
-SgAsmJvmAttributeList
 SgAsmJvmCodeAttribute
 SgAsmJvmMethod
 SgAsmJvmConstantPool
@@ -1027,10 +1026,8 @@ SgAdaGenericInstanceSymbol
 SgAdaFormalPackageDecl
 SgAdaFormalPackageSymbol
 SgAsmJvmAttributeTable
-SgAsmJvmMethodList
 SgAsmJvmMethodTable
 SgAsmJvmField
-SgAsmJvmFieldList
 SgAsmJvmFieldTable
 SgAsmJvmException
 SgAsmJvmExceptionList

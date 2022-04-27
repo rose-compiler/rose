@@ -10,6 +10,8 @@
 
 using namespace Rose::Diagnostics;
 using namespace ByteOrder;
+using std::cout;
+using std::endl;
 
 SgAsmJvmAttribute* SgAsmJvmAttribute::create_attribute(SgAsmJvmConstantPool* pool)
 {
@@ -54,39 +56,30 @@ SgAsmJvmAttribute* SgAsmJvmAttribute::create_attribute(SgAsmJvmConstantPool* poo
 SgAsmJvmAttributeTable::SgAsmJvmAttributeTable()
 {
   std::cout << "SgAsmJvmAttributeTable::ctor() ... WARNING: parent NOT set\n";
-  p_attributes = new SgAsmJvmAttributeList;
-  p_attributes->set_parent(this);
+  ROSE_ASSERT(false);
 }
 SgAsmJvmAttributeTable::SgAsmJvmAttributeTable(SgAsmJvmClassFile* parent)
 {
-  std::cout << "SgAsmJvmAttributeTable::ctor() ...\n";
   set_parent(parent);
-  p_attributes = new SgAsmJvmAttributeList;
-  p_attributes->set_parent(this);
 }
 SgAsmJvmAttributeTable::SgAsmJvmAttributeTable(SgAsmJvmNode* parent)
 {
-  std::cout << "SgAsmJvmAttributeTable::ctor() ...\n";
   set_parent(parent);
-  p_attributes = new SgAsmJvmAttributeList;
-  p_attributes->set_parent(this);
 }
 
 SgAsmJvmAttributeTable* SgAsmJvmAttributeTable::parse(SgAsmJvmConstantPool* pool)
 {
   uint16_t attributes_count;
 
-  std::cout << "SgAsmJvmAttributeTable::parse() ...\n";
-
   Jvm::read_value(pool, attributes_count);
-  auto attributes = get_attributes()->get_entries();
+
   for (int ii = 0; ii < attributes_count; ii++) {
     auto attribute = SgAsmJvmAttribute::create_attribute(pool);
     // attribute may not be implemented yet
     if (attribute) {
       attribute->set_parent(this);
       attribute->parse(pool);
-      attributes.push_back(attribute);
+      get_attributes().push_back(attribute);
     }
   }
   return this;
@@ -95,7 +88,7 @@ SgAsmJvmAttributeTable* SgAsmJvmAttributeTable::parse(SgAsmJvmConstantPool* pool
 void SgAsmJvmAttributeTable::dump(FILE*f, const char* prefix, ssize_t idx) const
 {
   fprintf(f, "%s", prefix);
-  for (auto attribute : get_attributes()->get_entries()) {
+  for (auto attribute : get_attributes()) {
     attribute->dump(stdout, "   ", idx++);
   }
 }
@@ -105,7 +98,10 @@ SgAsmJvmAttribute* SgAsmJvmAttribute::parse(SgAsmJvmConstantPool* pool)
   std::cout << "SgAsmJvmAttribute::parse() ...\n";
 
   Jvm::read_value(pool, p_attribute_name_index);
+  std::cout << "SgAsmJvmAttribute::parse:attribute_name_index " << p_attribute_name_index << std::endl;
+
   Jvm::read_value(pool, p_attribute_length);
+  std::cout << "SgAsmJvmAttribute::parse:attribute_length " << p_attribute_length << std::endl;
 
   return this;
 }
@@ -114,19 +110,28 @@ SgAsmJvmAttribute* SgAsmJvmCodeAttribute::parse(SgAsmJvmConstantPool* pool)
 {
   uint32_t length;
   char* bytes{nullptr};
+  auto header{pool->get_header()};
 
+  cout << "SgAsmJvmCodeAttribute::parse() file offset is " << header->get_offset() << endl;
   SgAsmJvmAttribute::parse(pool);
-  std::cout << "SgAsmJvmCodeAttribute::parse() ...\n";
+  cout << "SgAsmJvmCodeAttribute::parse() file offset is " << header->get_offset() << endl;
 
   Jvm::read_value(pool, p_max_stack);
   Jvm::read_value(pool, p_max_locals);
+  cout << "SgAsmJvmCodeAttribute::parse() file offset is " << header->get_offset() << endl;
+
+  /* set the offset for the code array (used later for disassembly/decoding) */
+  set_code_offset(header->get_offset());
+  std::cout << "SgAsmJvmCodeAttribute::parse() code_offset is " << get_code_offset() << std::endl;
 
   /* allocate and read the code array */
   p_code_length = Jvm::read_bytes(pool, bytes, length);
   set_code(bytes);
 
+#ifdef DEBUGGING
   std::cout << "SgAsmJvmCodeAttribute::parse() attr length is " << p_attribute_length << std::endl;
   std::cout << "SgAsmJvmCodeAttribute::parse() code length is " << length << std::endl;
+#endif
 
   /* exception table */
   p_exception_table = new SgAsmJvmExceptionTable(this);
@@ -135,25 +140,10 @@ SgAsmJvmAttribute* SgAsmJvmCodeAttribute::parse(SgAsmJvmConstantPool* pool)
 
   /* attribute table */
   p_attribute_table = new SgAsmJvmAttributeTable(this);
-  ROSE_ASSERT(p_attribute_table && p_attribute_table->get_attributes());
+  ROSE_ASSERT(p_attribute_table);
   p_attribute_table->parse(pool);
 
   dump(stdout, "", 0);
-
-  // try creating an instruction
-
-// Interface should be changed to
-//
-// SgAsmInstruction*
-// Rose::BinaryAnalysis::Disassembler
-//     ::disassembleOne(const unsigned char* buf,
-//                      rose_addr_t buf_va,
-//                      size_t buf_size,
-//                      rose_addr_t start_va,
-//                      AddressSet* successors=nullptr
-//                     )
-//
-// auto inst = Rose::BinaryAnalysis::JvmDisassembler::disassembleOne(...);
 
   return this;
 }

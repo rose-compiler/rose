@@ -15,8 +15,7 @@ SgAsmJvmMethod::SgAsmJvmMethod(SgAsmJvmMethodTable* table)
 {
   set_parent(table);
   p_attribute_table = new SgAsmJvmAttributeTable(this);
-  ROSE_ASSERT(get_attribute_table()->get_attributes());
-  ROSE_ASSERT(get_attribute_table()->get_attributes()->get_parent());
+  ROSE_ASSERT(get_attribute_table()->get_parent());
 }
 
 SgAsmJvmMethod* SgAsmJvmMethod::parse(SgAsmJvmConstantPool* pool)
@@ -39,15 +38,34 @@ void SgAsmJvmMethod::dump(FILE*f, const char* prefix, ssize_t idx) const
 
 SgAsmJvmMethodTable::SgAsmJvmMethodTable(SgAsmJvmClassFile* jcf)
 {
-  std::cout << "SgAsmJvmMethodTable::ctor() ...\n";
+  jcf->set_method_table(this);
+  set_parent(jcf);
+
+#ifdef WORKING_ON
+  ROSE_ASSERT(get_header() == nullptr);
+  auto header = jcf->get_header(SgAsmGenericFile::FAMILY_JVM);
+  ROSE_ASSERT(header);
+  set_header(header);
+#endif
+
+  std::cout << "-->method_table: " << jcf->get_method_table() << std::endl;
 }
 
 SgAsmJvmMethodTable* SgAsmJvmMethodTable::parse()
 {
   uint16_t methods_count;
 
-  std::cout << "SgAsmJvmMethodTable::parse() ...\n";
-  std::cout << "SgAsmJvmMethodTable::parse() exit ... \n";
+  auto jcf = dynamic_cast<SgAsmJvmClassFile*>(get_parent());
+  ROSE_ASSERT(jcf && "JVM class_file is a nullptr");
+  auto pool = jcf->get_constant_pool();
+  ROSE_ASSERT(pool && "JVM constant_pool is a nullptr");
+
+  Jvm::read_value(pool, methods_count);
+  for (int ii = 0; ii < methods_count; ii++) {
+    auto method = new SgAsmJvmMethod(this);
+    method->parse(pool);
+    get_methods().push_back(method);
+  }
 
   return this;
 }
@@ -55,7 +73,7 @@ SgAsmJvmMethodTable* SgAsmJvmMethodTable::parse()
 void SgAsmJvmMethodTable::dump(FILE* f, const char *prefix, ssize_t idx) const
 {
   fprintf(f, "%s", prefix);
-  for (auto method : get_methods()->get_entries()) {
+  for (auto method : get_methods()) {
     method->dump(stdout, "method->", idx++);
   }
 }
