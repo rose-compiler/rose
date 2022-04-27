@@ -14,12 +14,17 @@ static const char *gDescription =
 
 #include <batSupport.h>
 #include <boost/filesystem.hpp>
+#include <Sawyer/ThreadWorkers.h>
 
 using namespace Sawyer::Message::Common;
 using namespace Rose;
 using namespace Rose::BinaryAnalysis;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 using Flir = Rose::BinaryAnalysis::LibraryIdentification;
+using DbFunctionPair = std::pair<std::string /*dbname*/, Flir::Function::Ptr>;
+using Functions = Sawyer::Container::Map<rose_addr_t /*func_addr*/, std::vector<DbFunctionPair>>;
+using LibraryCountPair = std::pair<Flir::Library::Ptr, size_t>;
+using Libraries = Sawyer::Container::Map<std::string /*libhash*/, LibraryCountPair>;
 
 static Sawyer::Message::Facility mlog;
 
@@ -72,6 +77,42 @@ nInsns(const P2::Partitioner &p, const P2::Function::Ptr &f) {
     return Flir::nInsns(p, f);
 }
 
+class Worker {
+    Flir::Settings settings_;
+    const std::string &dbName_;
+    const P2::Partitioner &partitioner_;
+    std::shared_ptr<Flir> flir_;
+    Sawyer::ProgressBar<size_t> &progress_;
+
+    // The following fields are protected by a mutex
+    SAWYER_THREAD_TRAITS::Mutex &mutex_;
+    Functions &functions_;
+    Libraries &libraries_;
+
+public:
+    Worker(const Flir::Settings &settings, const std::string &dbName, const P2::Partitioner &partitioner,
+           Sawyer::ProgressBar<size_t> &progress, SAWYER_THREAD_TRAITS::Mutex &mutex, Functions &functions, Libraries &libraries)
+        : settings_(settings), dbName_(dbName), partitioner_(partitioner), progress_(progress), mutex_(mutex),
+          functions_(functions), libraries_(libraries) {}
+
+    void operator()(size_t, const P2::Function::Ptr &function) {
+        if (!flir_) {
+            flir_ = std::make_shared<Flir>();
+            flir_->settings(settings_);
+            flir_->connect(dbName_);
+        }
+
+        for (const Flir::Function::Ptr &found: flir_->search(partitioner_, function)) {
+            SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+            functions_.insertMaybeDefault(function->address()).push_back(DbFunctionPair(dbName_, found));
+            ++libraries_.insertMaybe(found->library()->hash(), LibraryCountPair(found->library(), 0)).second;
+        }
+
+        ++progress_;
+    }
+};
+
+
 int
 main(int argc, char *argv[]) {
     // Initialization
@@ -91,26 +132,17 @@ main(int argc, char *argv[]) {
     P2::Partitioner partitioner = engine.loadPartitioner(rbaFileName, settings.stateFormat);
 
     // Match each function against the databases. It's fastest to open each database just once.
-    using DbFunctionPair = std::pair<std::string /*dbname*/, Flir::Function::Ptr>;
-    using Functions = Sawyer::Container::Map<rose_addr_t /*func_addr*/, std::vector<DbFunctionPair>>;
+    SAWYER_THREAD_TRAITS::Mutex resultMutex;            // guards 'functions' and 'libraries' as they're being initialized
     Functions functions;                                // specimen functions and the corresponding database functions
-
-    using LibraryCountPair = std::pair<Flir::Library::Ptr, size_t>;
-    using Libraries = Sawyer::Container::Map<std::string /*libhash*/, LibraryCountPair>;
     Libraries libraries;
 
     Sawyer::ProgressBar<size_t> progress(args.size() * partitioner.nFunctions(), mlog[MARCH]);
     for (const std::string &dbName: args) {
-        Flir flir;
-        flir.settings(settings.flir);
-        flir.connect(dbName);
-        for (const P2::Function::Ptr &function: partitioner.functions()) {
-            ++progress;
-            for (const Flir::Function::Ptr &found: flir.search(partitioner, function)) {
-                functions.insertMaybeDefault(function->address()).push_back(DbFunctionPair(dbName, found));
-                ++libraries.insertMaybe(found->library()->hash(), LibraryCountPair(found->library(), 0)).second;
-            }
-        }
+        Sawyer::Container::Graph<P2::Function::Ptr> work;
+        for (const P2::Function::Ptr &function: partitioner.functions())
+            work.insertVertex(function);
+        Sawyer::workInParallel(work, Rose::CommandLine::genericSwitchArgs.threads,
+                               Worker(settings.flir, dbName, partitioner, progress, resultMutex, functions, libraries));
     }
 
     // Print information about matched functions
