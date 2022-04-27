@@ -27,5 +27,3 @@ run $(librose_compile) $(CxxGrammarMetaProgram_GENSRC)
 run $(public_header) AST_FILE_IO.h AstQueryMemoryPool.h AstSpecificDataManagingClass.h Cxx_Grammar.h	\
     Cxx_GrammarMemoryPoolSupport.h Cxx_GrammarSerialization.h Cxx_GrammarTreeTraversalAccessEnums.h	\
     StorageClasses.h
-
-run $(public_header) -o include/rose/Rose/Traits Rose/Traits/generated.h

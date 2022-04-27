@@ -10,6 +10,7 @@ run $(public_header) -o include/rose/Rose	\
     BinaryAnalysis.h				\
     BitFlags.h					\
     BitOps.h					\
+    CodeGen.h					\
     Color.h					\
     CommandLine.h				\
     Constants.h					\
