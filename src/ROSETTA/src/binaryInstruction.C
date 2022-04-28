@@ -14129,6 +14129,20 @@ void Grammar::setUpBinaryInstructions() {
                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
+#ifdef DOCUMENTATION
+        /** Property: Whether the resolved address has been written to the memory map.
+         *
+         *  See PE specification.
+         *
+         * @{ */
+        bool get_iat_written() const;
+        void set_iat_written(bool);
+        /** @} */
+#else
+        AsmPEImportItem.setDataPrototype("bool", "iat_written", "=false",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
         DECLARE_OTHERS(AsmPEImportItem);
 #if defined(SgAsmPEImportItem_OTHERS) || defined(DOCUMENTATION)
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -14145,6 +14159,7 @@ void Grammar::setUpBinaryInstructions() {
             s & BOOST_SERIALIZATION_NVP(p_hintname_rva);
             s & BOOST_SERIALIZATION_NVP(p_hintname_nalloc);
             s & BOOST_SERIALIZATION_NVP(p_bound_rva);
+            s & BOOST_SERIALIZATION_NVP(p_iat_written);
         }
 #endif
 
