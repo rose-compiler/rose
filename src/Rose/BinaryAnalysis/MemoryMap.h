@@ -519,6 +519,35 @@ public:
         return val;
     }
 
+    /** Read a long unsigned value.
+     *
+     *  Reads a long unsigned value from memory and converts it from the memory byte order to the host byte order.  If the entire
+     *  value is not mapped in memory then return nothing (not even any part of the multi-byte value that might have been
+     *  present. */
+    Sawyer::Optional<uint64_t> readLongUnsinged(rose_addr_t startVa) const {
+        uint64_t val = 0;
+        if (at(startVa).limit(sizeof val).read((uint8_t*)&val).size() != sizeof val)
+            return Sawyer::Nothing();
+        ByteOrder::convert((void*)&val, sizeof val, endianness_, ByteOrder::host_order());
+        return val;
+    }
+    
+     /** Write an unsigned value.
+     *
+     *  Takes a unsigned value converts it from the memory byte order to the host byte order then writes to memory. 
+     *  This does not verify the memory is writable. Returns the number of bytes written. */
+    size_t writeUnsigned(uint32_t value, rose_addr_t startVa) {
+        return at(startVa).limit(sizeof(uint32_t)).write((const uint8_t*)(&value)).size(); 
+    }
+
+     /** Write a long unsigned value.
+     *
+     *  Takes a long unsigned value converts it from the memory byte order to the host byte order then writes to memory. 
+     *  This does not verify the memory is writable. Returns the number of bytes written. */
+    size_t writeUnsigned(uint64_t value, rose_addr_t startVa) {
+        return at(startVa).limit(sizeof(uint64_t)).write((const uint8_t*)(&value)).size(); 
+    } 
+
     /** Read a byte from memory.
      *
      *  Reads a byte at the specified address and returns it. Returns nothing if the address is not mapped. */
