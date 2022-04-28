@@ -1,10 +1,14 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
+#include "rose.h"//TODO
 
 #include <Rose/BinaryAnalysis/BinaryLoaderPe.h>
 #include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
+
+using namespace Sawyer::Message;
+using namespace std;
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -119,6 +123,174 @@ BinaryLoaderPe::alignValues(SgAsmGenericSection *section, const MemoryMap::Ptr &
     *anon_lo_p = *anon_hi_p = true;
     *resolve_p = RESOLVE_OVERMAP;
     return CONTRIBUTE_ADD;
+}
+
+/* once called loadInterpLibraries */
+void
+BinaryLoaderPe::link(SgAsmInterpretation* interp) {
+/*    ASSERT_not_null(interp);
+    SgBinaryComposite *composite = SageInterface::getEnclosingNode<SgBinaryComposite>(interp);
+    ASSERT_not_null(composite);
+*/
+    /* Make sure the pre-load objects are parsed and linked into the AST. */
+ /*   for (std::vector<std::string>::const_iterator pi=preloads_.begin(); pi!=preloads_.end(); ++pi) {
+        mlog[TRACE] <<"preload object " <<*pi <<"\n";
+        std::string filename = findSoFile(*pi);
+        if (isLinked(composite, filename)) {
+            mlog[TRACE] <<filename <<" is already parsed.\n";
+        } else {
+            Stream m1(mlog[TRACE] <<"parsing " <<filename);
+            createAsmAST(composite, filename);
+            m1 <<"... done.\n";
+        }
+    }
+*/
+    /* Bootstrap */
+    /*std::list<SgAsmGenericHeader*> unresolved_hdrs;
+    unresolved_hdrs.insert(unresolved_hdrs.end(),
+                           interp->get_headers()->get_headers().begin(),
+                           interp->get_headers()->get_headers().end());
+*/
+    /* Process unresolved headers from the beginning of the queue and push new ones onto the end. */
+    /*while (!unresolved_hdrs.empty()) {
+        SgAsmGenericHeader *header = unresolved_hdrs.front();
+        unresolved_hdrs.pop_front();
+        std::string header_name = header->get_file()->get_name();
+        std::vector<std::string> deps = dependencies(header);
+        for (std::vector<std::string>::iterator di=deps.begin(); di!=deps.end(); ++di) {
+            mlog[TRACE] <<"library " <<*di <<" needed by " <<header_name <<"\n";
+            std::string filename = findSoFile(*di);
+            if (isLinked(composite, filename)) {
+                mlog[TRACE] <<filename <<" is already parsed.\n";
+            } else {
+                Stream m1(mlog[TRACE] <<"parsing " <<filename);
+                SgAsmGenericFile *new_file = createAsmAST(composite, filename);
+                m1 <<"... done.\n";
+                ASSERT_not_null2(new_file, "createAsmAST failed");
+                SgAsmGenericHeaderPtrList new_hdrs = findSimilarHeaders(header, new_file->get_headers()->get_headers());
+                unresolved_hdrs.insert(unresolved_hdrs.end(), new_hdrs.begin(), new_hdrs.end());
+            }
+        }
+    }*/
+}
+
+#define REPORT_MISSING_DLL_IMPORTS 0
+void
+BinaryLoaderPe::fixup(SgAsmInterpretation *interp, FixupErrors *errors) {
+    SgAsmGenericHeaderPtrList& headers = interp->get_headers()->get_headers();
+    map<pair<string,string>,SgAsmPEExportEntry*> exportEntryMap;
+    
+    MemoryMap::Ptr memoryMap = interp->get_map();
+    if(memoryMap == nullptr) interp->set_map(memoryMap = MemoryMap::instance());
+    
+#if REPORT_MISSING_DLL_IMPORTS
+    map<string,SgAsmPEExportDirectory*> exportDirMap;
+    vector<pair<string,string>> missingImports;
+#endif
+
+    //Build a map with the keys DDL Name and entry name that points to the export entry.
+    //Seperate map for all loaded dll for determining when a dll was not found.
+    for(auto h = headers.begin(); h != headers.end(); ++h) {
+        SgAsmGenericSectionPtrList& sections = (*h)->get_sections()->get_sections();
+        for(auto s = sections.begin(); s != sections.end(); ++s){
+            if(SgAsmPEExportSection* exportSection = isSgAsmPEExportSection(*s)){
+                SgAsmPEExportDirectory* exportDir = exportSection->get_export_dir();
+                SgAsmPEExportEntryPtrList& exports = exportSection->get_exports()->get_exports();
+                string dirName = exportDir->get_name()->get_string();
+                boost::to_lower(dirName);
+                                
+            #if REPORT_MISSING_DLL_IMPORTS
+                exportDirMap[dirName] = exportDir;
+            #endif
+
+                for(auto e = exports.begin(); e != exports.end(); ++e){
+                    string entryName = (*e)->get_name()->get_string();
+                    boost::to_lower(entryName);
+                    exportEntryMap[make_pair(dirName,entryName)] = (*e);
+                }
+            }
+        }
+    }
+
+    for(auto h = headers.begin(); h != headers.end(); ++h) {
+        SgAsmGenericSectionPtrList& sections = (*h)->get_sections()->get_sections();
+        for(auto s = sections.begin(); s != sections.end(); ++s){
+            if(SgAsmPEImportSection* importSection = isSgAsmPEImportSection(*s)){
+                SgAsmPEImportDirectoryPtrList& directories = (importSection)->get_import_directories()->get_vector();
+                for(auto d = directories.begin(); d != directories.end(); ++d){
+                    SgAsmPEImportItemPtrList& imports = (*d)->get_imports()->get_vector();
+                    string dirName = (*d)->get_dll_name()->get_string();
+                    for(auto i = imports.begin(); i != imports.end(); ++i){
+                        SgAsmPEImportItem* importEntry = *i;
+                        string importName = importEntry->get_name()->get_string();
+                        boost::to_lower(dirName);
+                        boost::to_lower(importName);
+                        auto found = exportEntryMap.find(make_pair(dirName,importName));
+                        if (found != exportEntryMap.end()){
+                            SgAsmPEExportEntry* exportEntry = found->second;
+                            
+                            //The entry could be forwarded to another dll.
+                            //Recurse down forwards till the filanl entry is found
+                            while(SgAsmGenericString* forward = exportEntry->get_forwarder()){
+                                string forwardString = forward->get_string();
+                                size_t splitPos = forwardString.find(".");
+                                dirName = forwardString.substr(0,splitPos+1) + "dll";
+                                importName = forwardString.substr(splitPos+1);
+                                boost::to_lower(dirName);
+                                boost::to_lower(importName);
+                                found = exportEntryMap.find(make_pair(dirName,importName));
+                                if (found != exportEntryMap.end()){
+                                    exportEntry = found->second;
+                                }
+                                else{
+                                    //Forwards to an unloaded dll
+                                    exportEntry = nullptr;
+                                    break;
+                                }
+                            }
+                            //Export entry found. Set address in the IAT
+                            if(exportEntry != nullptr){
+                                rose_addr_t exportAddr   = exportEntry->get_export_rva().get_va();
+                                rose_addr_t iatEntryAddr = importEntry->get_iat_entry_va();
+                                size_t written = memoryMap->writeUnsigned(exportAddr,iatEntryAddr);
+                                if(written > 0) importEntry->set_iat_written(true);
+                                mlog[TRACE]<<"Setting value in IAT: "<<dirName<<importName<<": IAT 0x"<<hex<<iatEntryAddr<<" Export: 0x"<<exportAddr<<dec<<endl;
+                            }
+                        }
+                    #if REPORT_MISSING_DLL_IMPORTS
+                        if(found == exportEntryMap.end()){
+                            missingImports.push_back(make_pair(dirName,importName));
+                        }
+                    #endif
+                    }//End import list iterator
+                }//End import directory iterator
+            }//End is import section
+        }//End section iterator
+    }//End Header iterator
+    
+#if REPORT_MISSING_DLL_IMPORTS
+    set<string> missingDLL;
+    set<string> missingEntry;
+    
+    for(auto x = missingImports.begin(); x != missingImports.end(); ++x){
+        string dirName = (*x).first;
+        string impName = (*x).second;
+        
+        if(exportDirMap.find(dirName) == exportDirMap.end()){
+            if(dirName.substr(0,10) != "api-ms-win") missingDLL.insert(dirName);
+        }else{
+            missingEntry.insert(dirName + ":" + impName);
+        }
+    }
+    
+    for(auto x = missingDLL.begin(); x != missingDLL.end(); ++x){
+        mlog[ERROR]<<"Missing DLL:"<<(*x)<<endl;
+    }
+    for(auto x = missingEntry.begin(); x != missingEntry.end(); ++x){
+        mlog[ERROR]<<"Missing DLL Entry:"<<(*x)<<endl;
+    }
+#endif
+    
 }
 
 } // namespace

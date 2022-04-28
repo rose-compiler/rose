@@ -17,11 +17,16 @@ public:
     typedef Sawyer::SharedPointer<BinaryLoaderPe> Ptr;
 
 protected:
-    BinaryLoaderPe() {}
+    BinaryLoaderPe() {
+        performingDynamicLinking(true);
+        performingRelocations(true);
+    }
 
     BinaryLoaderPe(const BinaryLoaderPe &other)
-        : BinaryLoader(other)
-        {}
+        : BinaryLoader(other){
+        performingDynamicLinking(true);
+        performingRelocations(true);
+    }
 
 public:
     /** Allocating constructor. */
@@ -40,9 +45,15 @@ public:
 
     virtual bool canLoad(SgAsmGenericHeader*) const override;
 
+    // documented in superclass
+    virtual void link(SgAsmInterpretation *interp) override;
+
     /** Returns a new, temporary base address which is greater than everything that's been mapped already. */
     virtual rose_addr_t rebase(const MemoryMap::Ptr&, SgAsmGenericHeader*, const SgAsmGenericSectionPtrList&) override;
 
+    // Resolve import section to DLL files.
+    virtual void fixup(SgAsmInterpretation *interp, FixupErrors *errors=NULL) override;
+    
     // Returns sections in order of their definition in the PE Section Table.
     virtual SgAsmGenericSectionPtrList getRemapSections(SgAsmGenericHeader*) override;
 
@@ -53,6 +64,7 @@ public:
                                             rose_addr_t *offset, rose_addr_t *file_size, bool *map_private,
                                             rose_addr_t *va_offset, bool *anon_lo, bool *anon_hi,
                                             ConflictResolution *resolve) override;
+                                                
 };
 
 } // namespace
