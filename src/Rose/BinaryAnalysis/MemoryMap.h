@@ -458,6 +458,11 @@ public:
     /** Documentation string for @ref insertProcess. */
     static std::string insertProcessDocumentation();
 
+    /** Insert part of another map by reference.
+     *
+     *  The specified addresses of the other map are copied into this map. */
+    void linkTo(const MemoryMap::Ptr &other, const AddressIntervalSet &parts);
+
     /** Copy part of a file into a buffer.
      *
      *  This copies (rather than directly references) part of a file and returns a pointer to a new buffer containing the data.
