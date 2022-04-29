@@ -12504,7 +12504,7 @@ static bool templateHeaderNeedUnparsing(T* decl) {
 }
 #endif
 
-#define DEBUG_unparseTemplateHeader 1
+#define DEBUG_unparseTemplateHeader 0
 
 template<class T>
 void Unparse_ExprStmt::unparseTemplateHeader(T* decl, SgUnparse_Info& info) {
