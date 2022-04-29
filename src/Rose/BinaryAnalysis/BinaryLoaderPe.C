@@ -1,7 +1,6 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
-#include "rose.h"//TODO
 
 #include <Rose/BinaryAnalysis/BinaryLoaderPe.h>
 #include <Rose/Diagnostics.h>
@@ -125,17 +124,105 @@ BinaryLoaderPe::alignValues(SgAsmGenericSection *section, const MemoryMap::Ptr &
     return CONTRIBUTE_ADD;
 }
 
+//isLinked is case insensitive as is the windows filesystem.
+bool
+BinaryLoaderPe::isLinked(SgBinaryComposite *composite, const std::string &filename) {
+    std::string lowerFileName = filename;
+    lowerFileName = lowerFileName.substr(lowerFileName.find_last_of("/") + 1);
+    boost::to_lower(lowerFileName);
+    const SgAsmGenericFilePtrList &files = composite->get_genericFileList()->get_files();
+    for (SgAsmGenericFilePtrList::const_iterator fi=files.begin(); fi!=files.end(); ++fi) {
+        std::string headerName = (*fi)->get_name();
+        headerName = headerName.substr(headerName.find_last_of("/") + 1);
+        boost::to_lower(headerName);
+        if (headerName==lowerFileName)
+            return true;
+    }
+    return false;
+}
+
+bool
+BinaryLoaderPe::isLinked(SgAsmInterpretation *interp, const std::string &filename) {
+    std::string lowerFileName = filename;
+    lowerFileName = lowerFileName.substr(lowerFileName.find_last_of("/") + 1);
+    boost::to_lower(lowerFileName);
+    const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
+    for (SgAsmGenericHeaderPtrList::const_iterator hi=headers.begin(); hi!=headers.end(); ++hi) {
+        SgAsmGenericFile *file = (*hi)->get_file();
+        ASSERT_not_null(file);
+        std::string headerName = (*hi)->get_name()->get_string();
+        headerName = headerName.substr(headerName.find_last_of("/") + 1);
+        boost::to_lower(headerName);
+        if (headerName==lowerFileName)
+            return true;
+    }
+    return false;
+}
+
+void
+BinaryLoaderPe::addLibDefaults(SgAsmGenericHeader *hdr/*=NULL*/) {
+    /* The LD_PRELOAD environment variable may contain space-separated library names */
+    const char* ld_preload_env = getenv("LD_PRELOAD");
+    if (ld_preload_env) {
+        std::string s = ld_preload_env;
+        boost::regex re;
+        re.assign("\\s+");
+        boost::sregex_token_iterator iter(s.begin(), s.end(), re, -1);
+        boost::sregex_token_iterator iterEnd;
+        for (; iter!=iterEnd; ++iter)
+            preloads().push_back(*iter);
+    }
+
+    /* Add the paths from the LD_LIBRARY_PATH environment variable */
+    const char *ld_library_path_env = getenv("LD_LIBRARY_PATH");
+    if (ld_library_path_env) {
+        std::string s = ld_library_path_env;
+        boost::regex re;
+        re.assign("[:;]");
+        boost::sregex_token_iterator iter(s.begin(), s.end(), re, -1);
+        boost::sregex_token_iterator iterEnd;
+        for (; iter!=iterEnd; ++iter)
+            directories().push_back(*iter);
+    }
+}
+
+std::string
+BinaryLoaderPe::findSoFile(const std::string &libname) const {
+    mlog[TRACE] <<"find library=" <<libname <<"\n";
+    if (!libname.empty() && '/'==libname[0])
+        return libname;
+    for (std::vector<std::string>::const_iterator di=directories().begin(); di!=directories().end(); ++di) {
+        mlog[TRACE] <<"  looking in " <<*di <<"\n";
+        std::string libpath = *di + "/" + libname;
+        struct stat sb;
+#ifndef _MSC_VER
+        if (stat(libpath.c_str(), &sb)>=0 && S_ISREG(sb.st_mode) && access(libpath.c_str(), R_OK)>=0) {
+            mlog[TRACE] <<"    found.\n";
+            return libpath;
+        }
+#endif
+    }
+    if (mlog[TRACE]) {
+        if (directories().empty())
+            mlog[TRACE] <<"no search directories\n";
+    }
+    mlog[WARN]<<"cannot find file for library: " + libname + "\n";
+    return "";
+}
+
 /* once called loadInterpLibraries */
 void
 BinaryLoaderPe::link(SgAsmInterpretation* interp) {
-/*    ASSERT_not_null(interp);
+    addLibDefaults();
+    ASSERT_not_null(interp);
     SgBinaryComposite *composite = SageInterface::getEnclosingNode<SgBinaryComposite>(interp);
     ASSERT_not_null(composite);
-*/
+
     /* Make sure the pre-load objects are parsed and linked into the AST. */
- /*   for (std::vector<std::string>::const_iterator pi=preloads_.begin(); pi!=preloads_.end(); ++pi) {
+    for (std::vector<std::string>::const_iterator pi=preloads().begin(); pi!=preloads().end(); ++pi) {
         mlog[TRACE] <<"preload object " <<*pi <<"\n";
         std::string filename = findSoFile(*pi);
+        if (filename == "") continue;
         if (isLinked(composite, filename)) {
             mlog[TRACE] <<filename <<" is already parsed.\n";
         } else {
@@ -144,15 +231,15 @@ BinaryLoaderPe::link(SgAsmInterpretation* interp) {
             m1 <<"... done.\n";
         }
     }
-*/
+
     /* Bootstrap */
-    /*std::list<SgAsmGenericHeader*> unresolved_hdrs;
+    std::list<SgAsmGenericHeader*> unresolved_hdrs;
     unresolved_hdrs.insert(unresolved_hdrs.end(),
                            interp->get_headers()->get_headers().begin(),
                            interp->get_headers()->get_headers().end());
-*/
+
     /* Process unresolved headers from the beginning of the queue and push new ones onto the end. */
-    /*while (!unresolved_hdrs.empty()) {
+    while (!unresolved_hdrs.empty()) {
         SgAsmGenericHeader *header = unresolved_hdrs.front();
         unresolved_hdrs.pop_front();
         std::string header_name = header->get_file()->get_name();
@@ -160,6 +247,7 @@ BinaryLoaderPe::link(SgAsmInterpretation* interp) {
         for (std::vector<std::string>::iterator di=deps.begin(); di!=deps.end(); ++di) {
             mlog[TRACE] <<"library " <<*di <<" needed by " <<header_name <<"\n";
             std::string filename = findSoFile(*di);
+            if (filename == "") continue;
             if (isLinked(composite, filename)) {
                 mlog[TRACE] <<filename <<" is already parsed.\n";
             } else {
@@ -171,7 +259,7 @@ BinaryLoaderPe::link(SgAsmInterpretation* interp) {
                 unresolved_hdrs.insert(unresolved_hdrs.end(), new_hdrs.begin(), new_hdrs.end());
             }
         }
-    }*/
+    }
 }
 
 #define REPORT_MISSING_DLL_IMPORTS 0
@@ -188,6 +276,20 @@ BinaryLoaderPe::fixup(SgAsmInterpretation *interp, FixupErrors *errors) {
     vector<pair<string,string>> missingImports;
 #endif
 
+    //Traverse sections to ensure mapped address and sections are properly set.
+    for(auto h = headers.begin(); h != headers.end(); ++h) {
+        SgAsmGenericSectionPtrList& sections = (*h)->get_sections()->get_sections();
+        rose_addr_t headerOffset = (*h)->get_mapped_actual_va() - (*h)->get_base_va();
+        for(auto s = sections.begin(); s != sections.end(); ++s){
+            SgAsmGenericSection* section = *s;
+            //cout<<hex<<"Offset 0x"<<headerOffset<<"    Mapped 0x"<<section->get_mapped_actual_va()<<"    Base 0x"<<section->get_base_va()<<dec<<endl;
+            if((headerOffset + section->get_base_va()) > section->get_mapped_actual_va()){
+                //cout<<"Adding offset 0x"<<hex<<headerOffset<<dec<<endl;
+                section->set_mapped_actual_va(section->get_mapped_actual_va() + headerOffset);
+            }
+        }
+    }
+    
     //Build a map with the keys DDL Name and entry name that points to the export entry.
     //Seperate map for all loaded dll for determining when a dll was not found.
     for(auto h = headers.begin(); h != headers.end(); ++h) {
@@ -212,14 +314,18 @@ BinaryLoaderPe::fixup(SgAsmInterpretation *interp, FixupErrors *errors) {
         }
     }
 
+    //Find all the import sections and update the IAT
     for(auto h = headers.begin(); h != headers.end(); ++h) {
         SgAsmGenericSectionPtrList& sections = (*h)->get_sections()->get_sections();
         for(auto s = sections.begin(); s != sections.end(); ++s){
             if(SgAsmPEImportSection* importSection = isSgAsmPEImportSection(*s)){
+                //cout<<hex<<"Import VA: 0x"<<importSection->get_mapped_actual_va()<<dec<<endl;
                 SgAsmPEImportDirectoryPtrList& directories = (importSection)->get_import_directories()->get_vector();
                 for(auto d = directories.begin(); d != directories.end(); ++d){
                     SgAsmPEImportItemPtrList& imports = (*d)->get_imports()->get_vector();
                     string dirName = (*d)->get_dll_name()->get_string();
+                    auto x = ((*d)->get_iat_rva().get_va());
+                    //cout<<hex<<"Dir "<<dirName<<"Va: 0x"<<hex<<x<<dec<<endl;
                     for(auto i = imports.begin(); i != imports.end(); ++i){
                         SgAsmPEImportItem* importEntry = *i;
                         string importName = importEntry->get_name()->get_string();
@@ -230,7 +336,7 @@ BinaryLoaderPe::fixup(SgAsmInterpretation *interp, FixupErrors *errors) {
                             SgAsmPEExportEntry* exportEntry = found->second;
                             
                             //The entry could be forwarded to another dll.
-                            //Recurse down forwards till the filanl entry is found
+                            //Recurse down forwards till the final entry is found
                             while(SgAsmGenericString* forward = exportEntry->get_forwarder()){
                                 string forwardString = forward->get_string();
                                 size_t splitPos = forwardString.find(".");
