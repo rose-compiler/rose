@@ -37,7 +37,7 @@
 #include <Sawyer/Stopwatch.h>
 #include <Rose/BinaryAnalysis/SRecord.h>
 
-#ifdef ROSE_HAVE_LIBYAML
+#ifdef ROSE_HAVE_YAMLCPP
 #include <yaml-cpp/yaml.h>
 #endif
 

@@ -493,10 +493,10 @@ std::string version_message() {
     ss <<"  ---   sqilte library:           unused\n";
 #endif
 
-#ifdef ROSE_HAVE_LIBYAML
-    ss <<"  ---   yaml library:             unknown version\n"; // not provided by the library or headers
+#ifdef ROSE_HAVE_YAMLCPP
+    ss <<"  ---   yaml-cpp library:         unknown version\n"; // not provided by the library or headers
 #else
-    ss <<"  ---   yaml library:             unused\n";
+    ss <<"  ---   yaml-cpp library:         unused\n";
 #endif
 
 #ifdef Z3_FULL_VERSION

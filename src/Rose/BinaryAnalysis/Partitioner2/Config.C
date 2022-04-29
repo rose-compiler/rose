@@ -7,7 +7,7 @@
 #include <Rose/BinaryAnalysis/Partitioner2/Modules.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Utility.h>
 
-#ifdef ROSE_HAVE_LIBYAML
+#ifdef ROSE_HAVE_YAMLCPP
 #include <yaml-cpp/yaml.h>
 #endif
 
@@ -108,7 +108,7 @@ Configuration::loadFromFile(const FileSystem::Path &fileName) {
                 loadFromFile(name);
         }
     } else if (isFile(fileName)) {
-#ifndef ROSE_HAVE_LIBYAML
+#ifndef ROSE_HAVE_YAMLCPP
         throw std::runtime_error("cannot open \"" + fileName.string() + "\": no YAML support" +
                                  " (use --with-yaml when configuring ROSE)");
 #else
@@ -237,7 +237,7 @@ Configuration::loadFromFile(const FileSystem::Path &fileName) {
     }
 }
 
-#ifdef ROSE_HAVE_LIBYAML
+#ifdef ROSE_HAVE_YAMLCPP
 static void
 printFunctionConfig(YAML::Emitter &out, const FunctionConfig &config) {
     out <<YAML::BeginMap;
@@ -306,7 +306,7 @@ printAddressConfig(YAML::Emitter &out, const AddressConfig &config) {
 
 void
 Configuration::print(std::ostream &out) const {
-#ifndef ROSE_HAVE_LIBYAML
+#ifndef ROSE_HAVE_YAMLCPP
     throw std::runtime_error("cannot produce YAML output: no YAML support (use --with-yaml when configuring ROSE)");
 #else
     YAML::Emitter emitter;

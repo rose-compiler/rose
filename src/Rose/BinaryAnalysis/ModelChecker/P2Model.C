@@ -1755,7 +1755,7 @@ SemanticCallbacks::filterUninitVar(const BS::SValue::Ptr &addr, const AddressInt
     return true;
 }
 
-#ifdef ROSE_HAVE_LIBYAML
+#ifdef ROSE_HAVE_YAMLCPP
 std::list<ExecutionUnit::Ptr>
 SemanticCallbacks::parsePath(const YAML::Node &root, const std::string &sourceName) {
     std::list<ExecutionUnit::Ptr> retval;
