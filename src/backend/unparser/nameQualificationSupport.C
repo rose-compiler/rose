@@ -2526,6 +2526,7 @@ NameQualificationTraversal::requiresTypeElaboration(SgSymbol* symbol)
           case V_SgNamespaceSymbol: // Note sure about this!!!
           case V_SgTemplateSymbol: // Note sure about this!!!
           case V_SgNonrealSymbol: // Note sure about this!!!
+          case V_SgAdaGenericSymbol: // Note sure about this!!!
           case V_SgTypedefSymbol:
              {
                typeElaborationRequired = false;
