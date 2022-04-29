@@ -55,5 +55,5 @@ macro(find_yamlcpp)
   endif()
 
   # ROSE variables
-  set(ROSE_HAVE_LIBYAML ${YAMLCPP_FOUND})
+  set(ROSE_HAVE_YAMLCPP ${YAMLCPP_FOUND})
 endmacro()

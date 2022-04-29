@@ -1,5 +1,5 @@
 # Tests for libyaml-cpp [https://code.google.com/p/yaml-cpp]
-AC_DEFUN([ROSE_SUPPORT_YAML],[
+AC_DEFUN([ROSE_SUPPORT_YAMLCPP],[
 
     dnl Parse configure command-line switches for YAML and/or obtain the value from the cache.
     AC_ARG_WITH(
@@ -15,15 +15,15 @@ AC_DEFUN([ROSE_SUPPORT_YAML],[
             [ac_cv_use_yaml=no])
     AC_CACHE_CHECK([whether to use yaml], [ac_cv_use_yaml], [ac_cv_use_yaml=no])
 
-    dnl YAML root directory
+    dnl YAML-CPP root directory
     if test "$ac_cv_use_yaml" = yes; then
-        ROSE_YAML_PREFIX=
+        ROSE_YAMLCPP_PREFIX=
     elif test -n "$ac_cv_use_yaml" -a "$ac_cv_use_yaml" != no; then
-        ROSE_YAML_PREFIX="$ac_cv_use_yaml"
+        ROSE_YAMLCPP_PREFIX="$ac_cv_use_yaml"
     fi
 
-    dnl Is the YAML library available?
-    ROSE_HAVE_LIBYAML=
+    dnl Is the YAML-CPP library available?
+    ROSE_HAVE_YAMLCPP=
     if test "$ac_cv_use_yaml" != "no"; then
         # Save variables
         AC_LANG_PUSH(C++)
@@ -34,17 +34,17 @@ AC_DEFUN([ROSE_SUPPORT_YAML],[
         # Set include and library search paths
         CPPFLAGS="$CPPFLAGS $BOOST_CPPFLAGS"
         LDFLAGS="$LDFLAGS $BOOST_LDFLAGS"
-        if test "$ROSE_YAML_PREFIX" != ""; then
-            LDFLAGS="$LDFLAGS -L$ROSE_YAML_PREFIX/lib"
-            CPPFLAGS="$CPPFLAGS -I$ROSE_YAML_PREFIX/include"
+        if test "$ROSE_YAMLCPP_PREFIX" != ""; then
+            LDFLAGS="$LDFLAGS -L$ROSE_YAMLCPP_PREFIX/lib"
+            CPPFLAGS="$CPPFLAGS -I$ROSE_YAMLCPP_PREFIX/include"
         fi
         LIBS="$LIBS -lyaml-cpp"
 
-        # Look for the YAML library
+        # Look for the YAML-CPP library
         AC_LINK_IFELSE(
             [AC_LANG_PROGRAM([#include <yaml-cpp/yaml.h>],
                              [YAML::Node configFile = YAML::LoadFile(std::string());])],
-            [ROSE_HAVE_LIBYAML=yes],
+            [ROSE_HAVE_YAMLCPP=yes],
             [AC_MSG_ERROR([did not find yaml-cpp library but --with-yaml was specified])])
 
         # Restore variables
@@ -55,11 +55,11 @@ AC_DEFUN([ROSE_SUPPORT_YAML],[
     fi
 
     dnl Results
-    dnl   ROSE_LIBYAML_PREFIX -- name of the directory where yaml-cpp is installed
-    dnl   ROSE_HAVE_LIBYAML   -- defined if the yaml-cpp library is available
-    AC_SUBST(ROSE_YAML_PREFIX)
-    AM_CONDITIONAL(ROSE_HAVE_LIBYAML, [test -n "$ROSE_HAVE_LIBYAML"])
-    if test -n "$ROSE_HAVE_LIBYAML"; then
-        AC_DEFINE(ROSE_HAVE_LIBYAML, [], [Defined when libyaml-cpp is available])
+    dnl   ROSE_YAMLCPP_PREFIX -- name of the directory where yaml-cpp is installed
+    dnl   ROSE_HAVE_YAMLCPP   -- defined if the yaml-cpp library is available
+    AC_SUBST(ROSE_YAMLCPP_PREFIX)
+    AM_CONDITIONAL(ROSE_HAVE_YAMLCPP, [test -n "$ROSE_HAVE_YAMLCPP"])
+    if test -n "$ROSE_HAVE_YAMLCPP"; then
+        AC_DEFINE(ROSE_HAVE_YAMLCPP, [], [Defined when libyaml-cpp is available])
     fi
 ])

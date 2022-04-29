@@ -720,7 +720,7 @@ public:
     virtual std::vector<NextUnit>
     nextUnits(const PathPtr&, const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&, const SmtSolver::Ptr&) override;
 
-#ifdef ROSE_HAVE_LIBYAML
+#ifdef ROSE_HAVE_YAMLCPP
     virtual std::list<ExecutionUnitPtr>
     parsePath(const YAML::Node&, const std::string &sourceName) override;
 #endif

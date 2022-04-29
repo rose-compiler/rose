@@ -214,7 +214,7 @@ insert into dependencies values ('wt',           '3.3.3',            0, 0);
 insert into dependencies values ('wt',           '3.3.4',            1, 0);
 insert into dependencies values ('wt',           '3.3.5',            0, 0);
 
--- YAML-CC library version number or "system" or "none"
+-- YAML-CPP library version number or "system" or "none"
 insert into dependencies values ('yaml',         'none',             1, 1);
 insert into dependencies values ('yaml',         '0.5.1',            1, 0);
 insert into dependencies values ('yaml',         '0.5.2',            0, 0);
