@@ -311,7 +311,7 @@ dry_run $RG_SRC/scripts/tup/merge-configs \
     WITH_SQLITE="$(value_or_no "$(prefix_from_include "$(makefile_value SQLITE3_CFLAGS Makefile)")")" \
     WITH_TIFF="$(value_or_no "$LIBTIFF_ROOT")" \
     WITH_WT="$(value_or_no "$(makefile_value WT_PREFIX Makefile)")" \
-    WITH_YAMLCPP="$(value_or_no "$(makefile_value ROSE_YAML_PREFIX Makefile)")" \
+    WITH_YAMLCPP="$(value_or_no "$(makefile_value ROSE_YAMLCPP_PREFIX Makefile)")" \
     WITH_Z3="$(value_or_no "$(makefile_value ROSE_Z3_PREFIX Makefile)")" \
     WITH_ZLIB="$(value_or_no "$ZLIB_ROOT")" \
     AUTOTOOLS_STASH="$(pwd)/.stash" \

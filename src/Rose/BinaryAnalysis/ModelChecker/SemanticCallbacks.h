@@ -8,7 +8,7 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Types.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 
-#ifdef ROSE_HAVE_LIBYAML
+#ifdef ROSE_HAVE_YAMLCPP
 #include <yaml-cpp/yaml.h>
 #endif
 
@@ -243,7 +243,7 @@ public:
     // Path creation functions.
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifdef ROSE_HAVE_LIBYAML
+#ifdef ROSE_HAVE_YAMLCPP
     /** Construct a path from a YAML document.
      *
      *  The specified (subtree) root is a YAML sequence whose elements represent the nodes of the path. Each node has a type
