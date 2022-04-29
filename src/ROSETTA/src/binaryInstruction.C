@@ -19684,6 +19684,214 @@ void Grammar::setUpBinaryInstructions() {
     };
 #endif
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /*************************************************************************************************************************
+     *                                           CIL Assembly (II.22.2)
+     *************************************************************************************************************************/
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmCilAssembly);
+    IS_SERIALIZABLE(AsmCilAssembly);
+
+#ifdef DOCUMENTATION
+    /** CIL Assembly table.
+     *
+     */
+    class SgAsmCilAssembly: public SgAsmCilNode {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: HashAlgId
+         *
+         *  A 4-byte constant of type AssemblyHashAlgorithm (II.23.1.1).
+         *
+         * @{ */
+        uint32_t get_HashAlgId() const;
+        void set_HashAlgId(uint32_t);
+        /** @} */
+#else
+        AsmCilAssembly.setDataPrototype("uint32_t", "HashAlgId", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                        BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: MajorVersion
+         *
+         *  A 2-byte constant that may have any value.
+         *
+         * @{ */
+        uint16_t get_MajorVersion() const;
+        void set_MajorVersion(uint16_t);
+        /** @} */
+#else
+        AsmCilAssembly.setDataPrototype("uint16_t", "MajorVersion", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                        BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: MinorVersion
+         *
+         *  A 2-byte constant that may have any value.
+         *
+         * @{ */
+        uint16_t get_MinorVersion() const;
+        void set_MinorVersion(uint16_t);
+        /** @} */
+#else
+        AsmCilAssembly.setDataPrototype("uint16_t", "MinorVersion", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                        BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: BuildNumber
+         *
+         *  A 2-byte constant that may have any value.
+         *
+         * @{ */
+        uint16_t get_BuildNumber() const;
+        void set_BuildNumber(uint16_t);
+        /** @} */
+#else
+        AsmCilAssembly.setDataPrototype("uint16_t", "BuildNumber", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                        BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: RevisionNumber
+         *
+         *  A 2-byte constant that may have any value.
+         *
+         * @{ */
+        uint16_t get_RevisionNumber() const;
+        void set_RevisionNumber(uint16_t);
+        /** @} */
+#else
+        AsmCilAssembly.setDataPrototype("uint16_t", "RevisionNumber", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                        BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Flags
+         *
+         *  Flags is a 4-byte bitmask of type AssemblyFlags (II.23.1.2)
+         *
+         * @{ */
+        uint32_t get_Flags() const;
+        void set_Flags(uint32_t);
+        /** @} */
+#else
+        AsmCilAssembly.setDataPrototype("uint32_t", "Flags", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                        BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: PublicKey
+         *
+         *  PublicKey is an index into the Blob heap
+         *
+         * @{ */
+        uint32_t get_PublicKey() const;
+        void set_PublicKey(uint32_t);
+        /** @} */
+#else
+        AsmCilAssembly.setDataPrototype("uint32_t", "PublicKey", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                        BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Name
+         *
+         *  Name is an index into the String heap.
+         *
+         * @{ */
+        uint32_t get_Name() const;
+        void set_Name(uint32_t);
+        /** @} */
+#else
+        AsmCilAssembly.setDataPrototype("uint32_t", "Name", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                        BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Culture
+         *
+         *  Culture is an index into the String heap.
+         *
+         * @{ */
+        uint32_t get_Culture() const;
+        void set_Culture(uint32_t);
+        /** @} */
+#else
+        AsmCilAssembly.setDataPrototype("uint32_t", "Culture", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                        BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmCilAssembly);
+#if defined(SgAsmCilAssembly_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
+            s & BOOST_SERIALIZATION_NVP(p_HashAlgId);
+            s & BOOST_SERIALIZATION_NVP(p_MajorVersion);
+            s & BOOST_SERIALIZATION_NVP(p_MinorVersion);
+            s & BOOST_SERIALIZATION_NVP(p_BuildNumber);
+            s & BOOST_SERIALIZATION_NVP(p_RevisionNumber);
+            s & BOOST_SERIALIZATION_NVP(p_Flags);
+            s & BOOST_SERIALIZATION_NVP(p_PublicKey);
+            s & BOOST_SERIALIZATION_NVP(p_Name);
+            s & BOOST_SERIALIZATION_NVP(p_Culture);
+        }
+#endif
+
+#endif // SgAsmCilAssembly_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /*************************************************************************************************************************
+     *                                      Root of a branch of CIL IR classes
+     *************************************************************************************************************************/
+
+    NEW_NONTERMINAL_MACRO(AsmCilNode,
+                          AsmCilAssembly,
+                          "AsmCilNode", "AsmCilNodeTag", false);
+    AsmCilNode.setCppCondition("!defined(DOCUMENTATION)");
+    IS_SERIALIZABLE(AsmCilNode);
+
+#ifdef DOCUMENTATION
+    /** Base class for CIL branch of binary analysis IR nodes. */
+    class SgAsmCilNode: public SgAsmNode {
+    public:
+#endif
+
+        DECLARE_OTHERS(AsmCilNode);
+#if defined(SgAsmCilNode_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmNode);
+        }
+#endif
+
+#endif // SgAsmCilNode_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -19738,7 +19946,7 @@ void Grammar::setUpBinaryInstructions() {
     NEW_NONTERMINAL_MACRO(AsmNode,
                           AsmStatement | AsmExpression | AsmInterpretation | AsmOperandList | AsmType |
                           AsmExecutableFileFormat | AsmInterpretationList | AsmGenericFileList |
-                          AsmJvmNode,
+                          AsmCilNode | AsmJvmNode,
                           "AsmNode", "AsmNodeTag", false);
     AsmNode.setCppCondition("!defined(DOCUMENTATION)");
     IS_SERIALIZABLE(AsmNode);
