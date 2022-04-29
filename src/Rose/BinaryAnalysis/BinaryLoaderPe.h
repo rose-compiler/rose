@@ -20,12 +20,14 @@ protected:
     BinaryLoaderPe() {
         performingDynamicLinking(true);
         performingRelocations(true);
+        performingRemap(true);
     }
 
     BinaryLoaderPe(const BinaryLoaderPe &other)
         : BinaryLoader(other){
         performingDynamicLinking(true);
         performingRelocations(true);
+        performingRemap(true);
     }
 
 public:
@@ -64,6 +66,23 @@ public:
                                             rose_addr_t *offset, rose_addr_t *file_size, bool *map_private,
                                             rose_addr_t *va_offset, bool *anon_lo, bool *anon_hi,
                                             ConflictResolution *resolve) override;
+
+    /** Returns true if the specified file name is already linked into the AST.
+     *
+     * @{ */
+    virtual bool isLinked(SgBinaryComposite *composite, const std::string &filename);
+    virtual bool isLinked(SgAsmInterpretation *interp, const std::string &filename);
+    /** @} */
+
+     /** Sets up library search paths and preloads from the environment.  The search paths and preloads are added to the end of
+     *  the lists.  If a PE file header is provided, then only LD_PRELOAD and LD_LIBRARY_PATH are used. */
+    void addLibDefaults(SgAsmGenericHeader *header=NULL);
+                                            
+    /** Convert name to fully qualified name.
+     *
+     *  Given the name of a shared object, return the fully qualified name where the library is located in the file system.
+     *  Throws a BinaryLoader::Exception if the library cannot be found. */
+    virtual std::string findSoFile(const std::string &libname) const;
                                                 
 };
 
