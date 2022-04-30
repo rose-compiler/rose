@@ -10690,6 +10690,26 @@ isSubset(const std::vector<SgNode*>& a_vector, const std::set<SgNode*>& b_set)
 
 #define DEBUG_FIND_SYMBOL_WITH_TEMPLATE_ARGUMENTS 0
 
+namespace
+{
+  // PP (4/29/22): replace SgSymbol::get_declaration
+  //               with functions that check whether get_declaration exists
+  template <class SageSymbol>
+  auto getTypeOfDeclaration(const SageSymbol* sym) -> decltype(sym->get_declaration()->get_type())
+  {
+    auto ptr = sym->get_declaration();
+    ASSERT_not_null(ptr);
+
+    return ptr->get_type();
+  }
+
+  [[noreturn]]
+  auto getTypeOfDeclaration(const SgSymbol*) -> SgType*
+  {
+    ROSE_ABORT();
+  }
+}
+
 // DQ (4/14/2017): Added explicit control to filer symbols associated with templates (see test2017_30.C for where this is required).
 // DQ (7/31/2013): Added support for template parameters and template specialization.
 // template<class ReturnType> ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, const SgType* type)
@@ -10811,7 +10831,7 @@ ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, con
        // if (symbol != NULL && get_table()->key_eq()((*p_iterator).first,nm))
        // if ( (symbol != NULL) && (symbol->get_declaration()->get_type() == type) && get_table()->key_eq()(sym->get_name(),nm))
        // if ( (symbol != NULL) && (symbol->get_declaration()->get_type() == type) )
-          if ( (symbol != NULL) && ( (type == NULL) || ( (type != NULL) && (symbol->get_declaration()->get_type() == type) ) ) )
+          if ( (symbol != NULL) && ( (type == NULL) || ( (type != NULL) && (getTypeOfDeclaration(symbol) == type) ) ) )
              {
                p_name    = nm;
                p_no_name = false;
@@ -10951,7 +10971,7 @@ ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, con
             // if ( original_aliased_symbol != NULL )
             // if ( (original_aliased_symbol != NULL) && (original_aliased_symbol->get_declaration()->get_type() == type))
             // if ( (original_aliased_symbol != NULL) && ( (type == NULL) || (type != NULL) && (original_aliased_symbol->get_declaration()->get_type() == type) ) )
-               if ( (original_aliased_symbol != NULL) && ( (type == NULL) || ((type != NULL) && (original_aliased_symbol->get_declaration()->get_type() == type || equavilentFunctionType)) ) )
+               if ( (original_aliased_symbol != NULL) && ( (type == NULL) || ((type != NULL) && (getTypeOfDeclaration(original_aliased_symbol) == type || equavilentFunctionType)) ) )
                   {
                  // mprintf ("Found a valid functionSymbol = %p = %s \n",functionSymbol,functionSymbol->get_name().str());
                     p_name    = nm;
