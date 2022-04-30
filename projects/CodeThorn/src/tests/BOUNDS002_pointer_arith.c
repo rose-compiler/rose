@@ -1,15 +1,16 @@
-struct BUFFER {
+
+struct S2 {
   char a;
 };
 
-struct HOLDER {
-  struct BUFFER BUF[10];
+struct S1 {
+  struct S2 buf[10];
 };
 
-struct HOLDER HELD;
+struct S1 s1;
 
 int main() {
-  struct BUFFER *ptr = {HELD.BUF};
+  struct S2 *ptr = {s1.buf};
   (ptr+1)->a = 0; 
   return 0;
 }

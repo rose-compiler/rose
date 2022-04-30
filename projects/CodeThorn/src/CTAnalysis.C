@@ -172,7 +172,7 @@ void CodeThorn::CTAnalysis::ensureToplogicSortFlowConsistency() {
     }
     if(l2pMap[lab]==0) {
       SgNode* node=getLabeler()->getNode(lab);
-      cerr<<"Error: checkToplogicSortFlowConsistency failed: flow-node not in topological sort: L"<<lab<<": "<<SgNodeHelper::locationAndSourceCodeToString(node,25,25)<<endl;
+      cerr<<"Error: checkToplogicSortFlowConsistency failed: flow-node not in topological sort: L"<<lab<<": "<<SgNodeHelper::locationAndSourceCodeToString(node,25,40)<<endl;
       numFail++;
     }
   }
@@ -1346,9 +1346,17 @@ std::string CodeThorn::CTAnalysis::analyzedFilesToString() {
 }
 
 std::string CodeThorn::CTAnalysis::externalFunctionsToString() {
-  ostringstream ss;
+  set<string> s;
   for (auto funCall : externalFunctions)  {
-    ss<<SgNodeHelper::getFunctionName(funCall)<<endl;
+    //ss<<SgNodeHelper::locationToString(node);
+    //ss<<SgNodeHelper::getFunctionName(funCall)<<endl;
+    ostringstream ss;
+    auto funDecl=funCall->getAssociatedFunctionDeclaration();
+    s.insert(SgNodeHelper::locationToString(funDecl)+","+funDecl->unparseToString());
+  }
+  stringstream ss;
+  for(auto entry : s) {
+    ss<<entry<<endl;
   }
   return ss.str();
 }
