@@ -1048,3 +1048,6 @@ SgAsmJvmEnclosingMethod
 SgAdaNullConstraint
 SgAsmCilNode
 SgAsmCilAssembly
+SgAsmCilAssemblyOS
+SgAsmCilAssemblyProcessor
+SgAsmCilAssemblyRef
