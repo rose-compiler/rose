@@ -11418,112 +11418,6 @@ void Grammar::setUpBinaryInstructions() {
     };
 #endif
 
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    /*************************************************************************************************************************
-     *                               JVM Interface Table (see ClassFile Structure, section 4.1)
-     *************************************************************************************************************************/
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    DECLARE_LEAF_CLASS(AsmJvmInterfaceTable);
-    IS_SERIALIZABLE(AsmJvmInterfaceTable);
-
-#ifdef DOCUMENTATION
-    /** Represents a JVM CONSTANT_Class_info table/array.
-     *
-     *  The JVM interfaces table is an SgAsmJvmNode containing SgAsmJvmClass entries.
-     *  The table is called an interface table because of the naming convention in the
-     *  ClassFile Structure, see section 4.1 of the JVM specification.
-     */
-    class SgAsmJvmInterfaceTable: public SgAsmGenericSection {
-    public:
-#endif
-
-#ifdef DOCUMENTATION
-        /** Property: tag
-         *
-         *  This tag item has the value CONSTANT_Class (see section 4.4.1).
-         *
-         * @{ */
-        uint8_t get_tag() const;
-        void set_tag(uint8_t);
-        /** @} */
-#else
-        AsmJvmInterfaceTable.setDataPrototype("uint8_t", "tag", "= 0",
-                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
-
-#ifdef DOCUMENTATION
-        /** Property: name_index
-         *
-         *  The value of the name_index item must be a valid index into the constant_pool table (see JVM specification).
-         *    Present in an exception table of a Code_attribute (see section 4.7.3 of the JVM specification).
-         *
-         * @{ */
-        uint16_t get_name_index() const;
-        void set_name_index(uint16_t);
-        /** @} */
-#else
-        AsmJvmInterfaceTable.setDataPrototype("uint16_t", "name_index", "= 0",
-                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
-
-#ifdef DOCUMENTATION
-        /** Property: List of interfaces.
-         *
-         *  This property points to an AST node that contains the list rather than being a list directly because of limitations
-         *  of ROSETTA.
-         *
-         * @{ */
-        SgAsmJvmClassList* get_interfaces() const;
-        void set_interfaces(SgAsmJvmClassList*);
-        /** @} */
-#else
-        AsmJvmInterfaceTable.setDataPrototype("SgAsmJvmClassList*", "interfaces", "= nullptr",
-                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-#endif
-
-        DECLARE_OTHERS(AsmJvmInterfaceTable);
-#if defined(SgAsmJvmInterfaceTable_OTHERS) || defined(DOCUMENTATION)
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-    private:
-        friend class boost::serialization::access;
-
-        template<class S>
-        void serialize(S &s, const unsigned /*version*/) {
-            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
-            s & BOOST_SERIALIZATION_NVP(p_tag);
-            s & BOOST_SERIALIZATION_NVP(p_name_index);
-            s & BOOST_SERIALIZATION_NVP(p_interfaces);
-        }
-#endif
-
-    public:
-        /** Initialize the interface table before parsing.
-         *
-         *  This is the preferred constructor to use before parsing.  It
-         *  shall set its parent.
-         */
-        explicit SgAsmJvmInterfaceTable(SgAsmJvmClassFile*);
-
-        /** Parses a JVM interface table.
-         *
-         *  Parses a JVM interface table and constructs and parses all interfaces reachable from the table.
-         *  Returns a pointer to this object. */
-        virtual SgAsmJvmInterfaceTable* parse() override;
-
-        /** Print some debugging information */
-        void dump(FILE*, const char *prefix, ssize_t idx) const override;
-
-#endif // SgAsmJvmInterfaceTable_OTHERS
-
-#ifdef DOCUMENTATION
-    };
-#endif
-
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /*************************************************************************************************************************
@@ -11557,74 +11451,11 @@ void Grammar::setUpBinaryInstructions() {
         }
 #endif
 
-     public:
-        /** Initialize the object before parsing.
-         *
-         *  This is the preferred constructor to use before parsing.  It
-         *  shall set its parent.
-         */
-        explicit SgAsmJvmClass(SgAsmJvmInterfaceTable*);
-
-        /** Initialize the object by parsing content from the class file. */
-        SgAsmJvmClass* parse(SgAsmJvmConstantPool*);
-
-        /** Print some debugging information */
-        void dump(FILE*, const char *prefix, ssize_t idx) const override;
-
 #endif // SgAsmJvmClass_OTHERS
 
 #ifdef DOCUMENTATION
     };
 #endif
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    DECLARE_LEAF_CLASS(AsmJvmClassList);
-    IS_SERIALIZABLE(AsmJvmClassList);
-
-#ifdef DOCUMENTATION
-    /** List of JVM classs.
-     *
-     *  The only purpose of this node is to hold a list which, due to ROSETTA limitations, cannot be contained in the objects
-     *  that actually need it. */
-    class SgAsmJvmClassList: public SgAsmJvmNode {
-    public:
-#endif
-
-#ifdef DOCUMENTATION
-        /** Property: List of classs.
-         *
-         * @{ */
-     public:
-        const SgAsmJvmClassPtrList& get_entries() const;
-        void set_entries(const SgAsmJvmClassPtrList&);
-     protected
-        SgAsmJvmClassPtrList & p_entries;
-        /** @} */
-#else
-        AsmJvmClassList.setDataPrototype("SgAsmJvmClassPtrList", "entries", "",
-                                         NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL,
-                                         NO_DELETE);
-#endif
-
-        DECLARE_OTHERS(AsmJvmClassList);
-#if defined(SgAsmJvmClassList_OTHERS) || defined(DOCUMENTATION)
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-    private:
-        friend class boost::serialization::access;
-
-        template<class S>
-        void serialize(S &s, const unsigned /*version*/) {
-            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmNode);
-            s & BOOST_SERIALIZATION_NVP(p_entries);
-        }
-#endif
-#endif // SgAsmJvmClassList_OTHERS
-
-#ifdef DOCUMENTATION
-    };
-#endif
-
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -11929,12 +11760,12 @@ void Grammar::setUpBinaryInstructions() {
             s & BOOST_SERIALIZATION_NVP(p_entries);
         }
 #endif
+
 #endif // SgAsmJvmExceptionList_OTHERS
 
 #ifdef DOCUMENTATION
     };
 #endif
-
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -17848,7 +17679,7 @@ void Grammar::setUpBinaryInstructions() {
                           AsmPESectionTable | AsmDOSExtendedHeader | AsmCoffSymbolTable | AsmNESection | AsmNESectionTable |
                           AsmNENameTable | AsmNEModuleTable | AsmNEStringTable | AsmNEEntryTable | AsmNERelocTable |
                           AsmLESection | AsmLESectionTable | AsmLENameTable | AsmLEPageTable | AsmLEEntryTable | AsmLERelocTable |
-                          AsmJvmConstantPool | AsmJvmAttributeTable | AsmJvmFieldTable | AsmJvmInterfaceTable | AsmJvmMethodTable,
+                          AsmJvmConstantPool | AsmJvmAttributeTable | AsmJvmFieldTable | AsmJvmMethodTable,
                           "AsmGenericSection", "AsmGenericSectionTag", true);
     AsmGenericSection.setCppCondition("!defined(DOCUMENTATION)");
     AsmGenericSection.setAutomaticGenerationOfDestructor(false);
@@ -20200,7 +20031,6 @@ void Grammar::setUpBinaryInstructions() {
     };
 #endif
 
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /*************************************************************************************************************************
@@ -20209,8 +20039,7 @@ void Grammar::setUpBinaryInstructions() {
 
     NEW_NONTERMINAL_MACRO(AsmJvmNode,
                           AsmJvmAttribute | AsmJvmConstantPoolEntry | AsmJvmConstantPoolEntryList |
-                          AsmJvmClass | AsmJvmClassList |
-                          AsmJvmInnerClass | AsmJvmInnerClassList | AsmJvmInnerClassTable |
+                          AsmJvmClass | AsmJvmInnerClass | AsmJvmInnerClassList | AsmJvmInnerClassTable |
                           AsmJvmMethod | AsmJvmField | AsmJvmException | AsmJvmExceptionList | AsmJvmExceptionTable |
                           AsmJvmLineNumber | AsmJvmLineNumberList | AsmJvmLineNumberInnerTable,
                           "AsmJvmNode", "AsmJvmNodeTag", false);

@@ -8,6 +8,8 @@
 
 using namespace Rose::Diagnostics;
 using namespace ByteOrder;
+using std::cout;
+using std::endl;
 
 // This function shouldn't be reached (ROSETTA won't allow pure virtual functions)
 void SgAsmJvmNode::dump(FILE* f, const char* prefix, ssize_t idx) const
@@ -19,7 +21,7 @@ void SgAsmJvmNode::dump(FILE* f, const char* prefix, ssize_t idx) const
 SgAsmJvmClassFile::SgAsmJvmClassFile(const std::string &fileName)
   : SgAsmGenericFile{}
 {
-  std::cout << "SgAsmJvmClassFile::SgAsmJvmClassFile ...\n";
+  cout << "SgAsmJvmClassFile::SgAsmJvmClassFile ...\n";
 
   /* Parse the generic file to load the file */
   SgAsmGenericFile::parse(fileName);  
@@ -27,34 +29,34 @@ SgAsmJvmClassFile::SgAsmJvmClassFile(const std::string &fileName)
   // What am I???
   //  set_sex(ByteOrder::ORDER_MSB);
   //
-  std::cout << "isSgAsmJvmClassFile is " << isSgAsmJvmClassFile(this) << "\n";
-  std::cout << "isSgAsmGenericFile is " << isSgAsmGenericFile(this) << "\n";
-  std::cout << "isSgAsmGenericHeader is " << isSgAsmGenericHeader(this) << "\n";
-  std::cout << "isSgAsmGenericSection is " << isSgAsmGenericSection(this) << "\n";
+  cout << "isSgAsmJvmClassFile is " << isSgAsmJvmClassFile(this) << "\n";
+  cout << "isSgAsmGenericFile is " << isSgAsmGenericFile(this) << "\n";
+  cout << "isSgAsmGenericHeader is " << isSgAsmGenericHeader(this) << "\n";
+  cout << "isSgAsmGenericSection is " << isSgAsmGenericSection(this) << "\n";
 
-  std::cout << "SgAsmJavaClass: p_headers->get_headers().size(): " << p_headers->get_headers().size() << "\n";
+  cout << "SgAsmJavaClass: p_headers->get_headers().size(): " << p_headers->get_headers().size() << "\n";
   auto header = new SgAsmJvmFileHeader(this);
-  std::cout << "SgAsmJavaClass: p_headers->get_headers().size(): " << p_headers->get_headers().size() << "\n";
+  cout << "SgAsmJavaClass: p_headers->get_headers().size(): " << p_headers->get_headers().size() << "\n";
 
-  std::cout << "  header: " << header << "\n";
+  cout << "  header: " << header << "\n";
 
   auto header2 = p_headers->get_headers()[0];
-  std::cout << "isSgAsmGenericHeader is " << isSgAsmGenericHeader(header) << "\n";
-  std::cout << "isSgAsmJvmFileHeader is " << isSgAsmJvmFileHeader(header) << "\n";
-  std::cout << "isSgAsmGenericHeader is " << isSgAsmGenericHeader(header2) << "\n";
+  cout << "isSgAsmGenericHeader is " << isSgAsmGenericHeader(header) << "\n";
+  cout << "isSgAsmJvmFileHeader is " << isSgAsmJvmFileHeader(header) << "\n";
+  cout << "isSgAsmGenericHeader is " << isSgAsmGenericHeader(header2) << "\n";
 
   int same = header == header2;
 
-  std::cout << "  same " << same << std::endl;
+  cout << "  same " << same << endl;
 
-  std::cout << "SgAsmJvmClassFile::ctor() finished ...\n";
+  cout << "SgAsmJvmClassFile::ctor() finished ...\n";
 }
 #endif
 
 #if 0
 SgAsmJvmClassFile::~SgAsmJvmClassFile()
 {
-  std::cout << "~SgAsmJvmClassFile:: ...\n";
+  cout << "~SgAsmJvmClassFile:: ...\n";
   if (p_header_section) delete p_header_section;
 }
 #endif
@@ -85,16 +87,19 @@ SgAsmJvmClassFile::is_JVM(SgAsmGenericFile* file)
 SgAsmJvmClassFile*
 SgAsmJvmClassFile::parse(std::string fileName)
 {
-  std::cout << "SgAsmJvmClassFile::parse()\n";
+  cout << "SgAsmJvmClassFile::parse()\n";
 
   /* Allow parent to load file into memory (does no reading of file) */
-#ifdef IN_PROGRESS
+#ifdef NOT_YET
   SgAsmGenericFile::parse(fileName);
+#endif
 
-  std::cout << "\n--- file header ---\n";
+  cout << "\n--- file header ---\n";
   /* File header */
-  auto header = new SgAsmJvmFileHeader(this);
+  auto header = new SgAsmJvmFileHeader();
+#ifdef NOT_YET
   ROSE_ASSERT(header == get_header(SgAsmGenericFile::FAMILY_JVM));
+#endif
   header->parse();
 
   /* Constant pool */
@@ -108,24 +113,40 @@ SgAsmJvmClassFile::parse(std::string fileName)
   Jvm::read_value(pool, p_this_class);
   Jvm::read_value(pool, p_super_class);
 
-  std::cout << "\n--- interfaces ---\n";
+  cout << "\n--- interfaces ---\n";
   /* Interfaces */
-  auto interfaces = new SgAsmJvmInterfaceTable(this);
-  ROSE_ASSERT(interfaces->get_interfaces());
-  interfaces->parse();
-  interfaces->dump(stdout, "Interfaces\n", 0);
+#ifdef NOT_YET
+  std::list<uint16_t>& interfaces = get_interfaces();
+  std::list<uint16_t>* ilist = &p_interfaces;
+  cout << "SgAsmJvmClassFile::parse(): &p_interfaces: " << ilist << ": size:" << ilist->size() << endl;;
+#endif
+  uint16_t interfaces_count;
+  Jvm::read_value(pool, interfaces_count);
+  cout << "SgAsmJvmClassFile::parse(): interfaces_count " << interfaces_count << endl;
 
-  std::cout << "\n--- fields ---\n";
+  for (int i = 0; i < interfaces_count; i++) {
+    uint16_t index;
+    Jvm::read_value(pool, index);
+    cout << "     interface class index: " << index << endl;
+#ifdef NOT_YET
+    interfaces.push_back(index);
+    cout << "SgAsmJvmClassFile::parse(): &p_interfaces: " << ilist << ": size:" << ilist->size() << endl;;
+    cout << "SgAsmJvmClassFile::parse(): get_interfaces().size(): " << get_interfaces().size() << endl;;
+    cout << "SgAsmJvmClassFile::parse(): interfaces.size(): " << interfaces.size() << endl;;
+#endif
+  }
+
+  cout << "\n--- fields ---\n";
   /* Fields */
   auto fields = new SgAsmJvmFieldTable(this);
   fields->parse();
 
-  std::cout << "\n--- methods ---\n";
+  cout << "\n--- methods ---\n";
   /* Methods */
   auto methods = new SgAsmJvmMethodTable(this);
   methods->parse();
 
-  std::cout << "\n--- attributes ---\n";
+  cout << "\n--- attributes ---\n";
   /* Attributes */
   auto attributes = new SgAsmJvmAttributeTable(this);
   ROSE_ASSERT(attributes->get_parent());
@@ -136,9 +157,8 @@ SgAsmJvmClassFile::parse(std::string fileName)
     ROSE_ASSERT(false && "Error reading file, end of file not reached");
   }
 
-  std::cout << "-----------\n";
-  std::cout << "Finished reading class file, # bytes read is " << header->get_offset() << std::endl;
-#endif
+  cout << "-----------\n";
+  cout << "Finished reading class file, # bytes read is " << header->get_offset() << endl;
 
   return this;
 }
@@ -146,16 +166,16 @@ SgAsmJvmClassFile::parse(std::string fileName)
 void
 SgAsmJvmClassFile::dump(FILE* f, const char* prefix, ssize_t idx) const
 {
-  std::cout << "############### HELP CLASSFILE DUMP ###########\n\n";
+  cout << "############### HELP CLASSFILE DUMP ###########\n\n";
 
   auto pool{get_constant_pool()};
   ROSE_ASSERT(pool);
 
 #if 1
-  std::cout << "\n--- JVM class file ---\n";
-  std::cout << "SgAsmJvmClassFile::p_access_flags " << p_access_flags << std::endl;
-  std::cout << "SgAsmJvmClassFile::p_this_class " << p_this_class << std::endl;
-  std::cout << "SgAsmJvmClassFile::p_super_class " << p_super_class << std::endl;
+  cout << "\n--- JVM class file ---\n";
+  cout << "SgAsmJvmClassFile::p_access_flags " << p_access_flags << endl;
+  cout << "SgAsmJvmClassFile::p_this_class " << p_this_class << endl;
+  cout << "SgAsmJvmClassFile::p_super_class " << p_super_class << endl;
 #endif
 
 #if 0
@@ -193,54 +213,5 @@ SgAsmJvmClassFile::unparse(std::ostream &f) const
 }
 
 #endif // SgAsmGenericHeader old stuff
-
-SgAsmJvmClass::SgAsmJvmClass(SgAsmJvmInterfaceTable* table)
-{
-  std::cout << "SgAsmJvmClass::ctor() ...\n";
-  set_parent(table);
-}
-
-SgAsmJvmClass* SgAsmJvmClass::parse(SgAsmJvmConstantPool* pool)
-{
-  std::cout << "SgAsmJvmClass::parse() ...\n";
-
-  return this;
-}
-
-void SgAsmJvmClass::dump(FILE* f, const char* prefix, ssize_t idx) const
-{
-  fprintf(f, "SgAsmJvmClass::dump() ...\n");
-}
-
-SgAsmJvmInterfaceTable::SgAsmJvmInterfaceTable(SgAsmJvmClassFile* jcf)
-{
-  std::cout << "SgAsmJvmInterfaceTable::ctor() ...\n";
-
-  set_parent(jcf);
-  p_interfaces = new SgAsmJvmClassList;
-  p_interfaces->set_parent(this);
-}
-
-SgAsmJvmInterfaceTable* SgAsmJvmInterfaceTable::parse()
-{
-  std::cout << "SgAsmJvmInterfaceTable::parse() ...\n";
-  uint16_t interfaces_count;
-
-  auto jcf = dynamic_cast<SgAsmJvmClassFile*>(get_parent());
-  ROSE_ASSERT(jcf && "JVM class_file is a nullptr");
-  auto pool = jcf->get_constant_pool();
-  ROSE_ASSERT(pool && "JVM constant_pool is a nullptr");
-
-  Jvm::read_value(pool, interfaces_count);
-  std::cout << "SgAsmJvmInterfaceTable::parse(): interfaces_count " << interfaces_count << std::endl;
-
-  std::cout << "SgAsmJvmInterfaceTable::parse() exit ... \n";
-  return this;
-}
-
-void SgAsmJvmInterfaceTable::dump(FILE* f, const char* prefix, ssize_t idx) const
-{
-  fprintf(f, "SgAsmJvmInterfaceTable::dump() ...\n");
-}
 
 #endif // ROSE_ENABLE_BINARY_ANALYSIS
