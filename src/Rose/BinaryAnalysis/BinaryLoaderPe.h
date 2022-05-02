@@ -70,8 +70,8 @@ public:
     /** Returns true if the specified file name is already linked into the AST.
      *
      * @{ */
-    virtual bool isLinked(SgBinaryComposite *composite, const std::string &filename);
-    virtual bool isLinked(SgAsmInterpretation *interp, const std::string &filename);
+    virtual bool isLinked(SgBinaryComposite *composite, const std::string &filename) override;
+    virtual bool isLinked(SgAsmInterpretation *interp, const std::string &filename) override;
     /** @} */
 
      /** Sets up library search paths and preloads from the environment.  The search paths and preloads are added to the end of
@@ -82,7 +82,7 @@ public:
      *
      *  Given the name of a shared object, return the fully qualified name where the library is located in the file system.
      *  Throws a BinaryLoader::Exception if the library cannot be found. */
-    virtual std::string findSoFile(const std::string &libname) const;
+    virtual std::string findSoFile(const std::string &libname) const override;
                                                 
 };
 
