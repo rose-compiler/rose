@@ -25326,8 +25326,8 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
   out<<endl;
 
   std::vector<SgNode* > children = node->get_traversalSuccessorContainer();
-  int total_count = children.size();
 #if 0
+  int total_count = children.size();
   int current_index=0;
 #endif
 
@@ -25341,10 +25341,12 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
     }
   }
 
+#if 0
   // some Sg??PtrList are not AST nodes, not part of children , we need to handle them separatedly
   // we sum all children into single total_count to tell if there is remaining children.
   if (isSgTemplateInstantiationDecl (node))
     total_count += 1; // sn->get_templateArguments().size();
+#endif
 
    // handling SgTemplateArgumentPtrList first
   if (SgTemplateInstantiationDecl* sn = isSgTemplateInstantiationDecl (node))
