@@ -19556,11 +19556,11 @@ void Grammar::setUpBinaryInstructions() {
          *  A 4-byte constant (II.23.1.3).
          *
          * @{ */
-        uint16_t get_OSMajorVersion() const;
-        void set_OSMajorVersion(uint16_t);
+        uint32_t get_OSMajorVersion() const;
+        void set_OSMajorVersion(uint32_t);
         /** @} */
 #else
-        AsmCilAssemblyOS.setDataPrototype("uint16_t", "OSMajorVersion", "= 0", NO_CONSTRUCTOR_PARAMETER,
+        AsmCilAssemblyOS.setDataPrototype("uint32_t", "OSMajorVersion", "= 0", NO_CONSTRUCTOR_PARAMETER,
                                           BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
@@ -19570,11 +19570,11 @@ void Grammar::setUpBinaryInstructions() {
          *  A 4-byte constant (II.23.1.3).
          *
          * @{ */
-        uint16_t get_OSMinorVersion() const;
-        void set_OSMinorVersion(uint16_t);
+        uint32_t get_OSMinorVersion() const;
+        void set_OSMinorVersion(uint32_t);
         /** @} */
 #else
-        AsmCilAssemblyOS.setDataPrototype("uint16_t", "OSMinorVersion", "= 0", NO_CONSTRUCTOR_PARAMETER,
+        AsmCilAssemblyOS.setDataPrototype("uint32_t", "OSMinorVersion", "= 0", NO_CONSTRUCTOR_PARAMETER,
                                           BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
@@ -19827,12 +19827,176 @@ void Grammar::setUpBinaryInstructions() {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /*************************************************************************************************************************
+     *                                         CIL AssemblyRefOS (II.22.6)
+     *************************************************************************************************************************/
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmCilAssemblyRefOS);
+    IS_SERIALIZABLE(AsmCilAssemblyRefOS);
+
+#ifdef DOCUMENTATION
+    /** CIL AssemblyRefOS table.
+     *
+     */
+    class SgAsmCilAssemblyRefOS: public SgAsmCilNode {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: OSPlatformId
+         *
+         *  A 4-byte constant (II.23.1.6).
+         *
+         * @{ */
+        uint32_t get_OSPlatformId() const;
+        void set_OSPlatformId(uint32_t);
+        /** @} */
+#else
+        AsmCilAssemblyRefOS.setDataPrototype("uint32_t", "OSPlatformId", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                             BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: OSMajorVersion
+         *
+         *  A 4-byte constant (II.23.1.6).
+         *
+         * @{ */
+        uint32_t get_OSMajorVersion() const;
+        void set_OSMajorVersion(uint32_t);
+        /** @} */
+#else
+        AsmCilAssemblyRefOS.setDataPrototype("uint32_t", "OSMajorVersion", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                             BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: OSMinorVersion
+         *
+         *  A 4-byte constant (II.23.1.6).
+         *
+         * @{ */
+        uint32_t get_OSMinorVersion() const;
+        void set_OSMinorVersion(uint32_t);
+        /** @} */
+#else
+        AsmCilAssemblyRefOS.setDataPrototype("uint32_t", "OSMinorVersion", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                             BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: AssemblyRef
+         *
+         *  An index into the AssemblyRef table.
+         *
+         * @{ */
+        uint32_t get_AssemblyRef() const;
+        void set_AssemblyRef(uint32_t);
+        /** @} */
+#else
+        AsmCilAssemblyRefOS.setDataPrototype("uint32_t", "AssemblyRef", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                             BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmCilAssemblyRefOS);
+#if defined(SgAsmCilAssemblyRefOS_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
+            s & BOOST_SERIALIZATION_NVP(p_OSPlatformId);
+            s & BOOST_SERIALIZATION_NVP(p_OSMajorVersion);
+            s & BOOST_SERIALIZATION_NVP(p_OSMinorVersion);
+            s & BOOST_SERIALIZATION_NVP(p_AssemblyRef);
+        }
+#endif
+
+#endif // SgAsmCilAssemblyRefOS_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /*************************************************************************************************************************
+     *                                      CIL AssemblyRefProcessor (II.22.7)
+     *************************************************************************************************************************/
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmCilAssemblyRefProcessor);
+    IS_SERIALIZABLE(AsmCilAssemblyRefProcessor);
+
+#ifdef DOCUMENTATION
+    /** CIL AssemblyRefProcessor table.
+     *
+     */
+    class SgAsmCilAssemblyRefProcessor: public SgAsmCilNode {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Processor
+         *
+         *  A 4-byte constant (II.23.1.7).
+         *
+         * @{ */
+        uint32_t get_Processor() const;
+        void set_Processor(uint32_t);
+        /** @} */
+#else
+        AsmCilAssemblyRefProcessor.setDataPrototype("uint32_t", "Processor", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                                    BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: AssemblyRef
+         *
+         *  An index into the AssemblyRef table.
+         *
+         * @{ */
+        uint32_t get_AssemblyRef() const;
+        void set_AssemblyRef(uint32_t);
+        /** @} */
+#else
+        AsmCilAssemblyRefProcessor.setDataPrototype("uint32_t", "AssemblyRef", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                                    BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmCilAssemblyRefProcessor);
+#if defined(SgAsmCilAssemblyRefProcessor_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
+            s & BOOST_SERIALIZATION_NVP(p_Processor);
+            s & BOOST_SERIALIZATION_NVP(p_AssemblyRef);
+        }
+#endif
+
+#endif // SgAsmCilAssemblyRefProcessor_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /*************************************************************************************************************************
      *                                      Root of a branch of CIL IR classes
      *************************************************************************************************************************/
 
     NEW_NONTERMINAL_MACRO(AsmCilNode,
                           AsmCilAssembly | AsmCilAssemblyOS | AsmCilAssemblyProcessor |
-                          AsmCilAssemblyRef,
+                          AsmCilAssemblyRef | AsmCilAssemblyRefOS | AsmCilAssemblyRefProcessor,
                           "AsmCilNode", "AsmCilNodeTag", false);
     AsmCilNode.setCppCondition("!defined(DOCUMENTATION)");
     IS_SERIALIZABLE(AsmCilNode);

@@ -1044,4 +1044,6 @@ SgAsmCilAssembly
 SgAsmCilAssemblyOS
 SgAsmCilAssemblyProcessor
 SgAsmCilAssemblyRef
+SgAsmCilAssemblyRefOS
+SgAsmCilAssemblyRefProcessor
 SgAsmJvmModuleMainClass
