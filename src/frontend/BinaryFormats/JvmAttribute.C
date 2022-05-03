@@ -20,7 +20,7 @@ SgAsmJvmAttribute* SgAsmJvmAttribute::create_attribute(SgAsmJvmConstantPool* poo
 
   Jvm::read_value(pool, attribute_name_index, /*advance_offset*/false);
   std::string name = pool->get_utf8_string(attribute_name_index);
-  std::cout << "\n--- " << name << " attribute ---\n";
+  cout << "\n--- " << name << " attribute ---\n";
 
   if (name == "Code") {
     return new SgAsmJvmCodeAttribute;
@@ -39,14 +39,14 @@ SgAsmJvmAttribute* SgAsmJvmAttribute::create_attribute(SgAsmJvmConstantPool* poo
   Jvm::read_value(pool, attribute_name_index);
   Jvm::read_value(pool, attribute_length);
 
-  std::cout << "of length " << attribute_length << std::endl;
+  cout << "of length " << attribute_length << endl;
 
   SgAsmGenericHeader* header{pool->get_header()};
   ROSE_ASSERT(header);
-  std::cout << "--> header is " << header->class_name() << std::endl;
+  cout << "--> header is " << header->class_name() << endl;
 
   rose_addr_t offset{header->get_offset()};
-  std::cout << "--> offset is " << offset << std::endl;
+  cout << "--> offset is " << offset << endl;
 
   header->set_offset(offset + attribute_length);
 
@@ -55,7 +55,7 @@ SgAsmJvmAttribute* SgAsmJvmAttribute::create_attribute(SgAsmJvmConstantPool* poo
 
 SgAsmJvmAttributeTable::SgAsmJvmAttributeTable()
 {
-  std::cout << "SgAsmJvmAttributeTable::ctor() ... WARNING: parent NOT set\n";
+  cout << "SgAsmJvmAttributeTable::ctor() ... WARNING: parent NOT set\n";
   ROSE_ASSERT(false);
 }
 SgAsmJvmAttributeTable::SgAsmJvmAttributeTable(SgAsmJvmClassFile* parent)
@@ -95,13 +95,15 @@ void SgAsmJvmAttributeTable::dump(FILE*f, const char* prefix, ssize_t idx) const
 
 SgAsmJvmAttribute* SgAsmJvmAttribute::parse(SgAsmJvmConstantPool* pool)
 {
-  std::cout << "SgAsmJvmAttribute::parse() ...\n";
-
   Jvm::read_value(pool, p_attribute_name_index);
-  std::cout << "SgAsmJvmAttribute::parse:attribute_name_index " << p_attribute_name_index << std::endl;
-
   Jvm::read_value(pool, p_attribute_length);
-  std::cout << "SgAsmJvmAttribute::parse:attribute_length " << p_attribute_length << std::endl;
+
+  //#ifdef DEBUGGING
+  cout << "SgAsmJvmAttribute::parse:attribute_name_index " << p_attribute_name_index << endl;
+  cout << "SgAsmJvmAttribute::parse:attribute_length " << p_attribute_length << endl;
+  ROSE_ASSERT(p_attribute_name_index == get_attribute_name_index());
+  ROSE_ASSERT(p_attribute_length == get_attribute_length());
+  //#endif
 
   return this;
 }
@@ -112,30 +114,25 @@ SgAsmJvmAttribute* SgAsmJvmCodeAttribute::parse(SgAsmJvmConstantPool* pool)
   char* bytes{nullptr};
   auto header{pool->get_header()};
 
-  cout << "SgAsmJvmCodeAttribute::parse() file offset is " << header->get_offset() << endl;
   SgAsmJvmAttribute::parse(pool);
-  cout << "SgAsmJvmCodeAttribute::parse() file offset is " << header->get_offset() << endl;
 
   Jvm::read_value(pool, p_max_stack);
   Jvm::read_value(pool, p_max_locals);
-  cout << "SgAsmJvmCodeAttribute::parse() file offset is " << header->get_offset() << endl;
 
   /* set the offset for the code array (used later for disassembly/decoding) */
   set_code_offset(header->get_offset());
-  std::cout << "SgAsmJvmCodeAttribute::parse() code_offset is " << get_code_offset() << std::endl;
 
   /* allocate and read the code array */
   p_code_length = Jvm::read_bytes(pool, bytes, length);
   set_code(bytes);
 
 #ifdef DEBUGGING
-  std::cout << "SgAsmJvmCodeAttribute::parse() attr length is " << p_attribute_length << std::endl;
-  std::cout << "SgAsmJvmCodeAttribute::parse() code length is " << length << std::endl;
+  cout << "SgAsmJvmCodeAttribute::parse() attr length is " << p_attribute_length << endl;
+  cout << "SgAsmJvmCodeAttribute::parse() code length is " << length << endl;
 #endif
 
   /* exception table */
   p_exception_table = new SgAsmJvmExceptionTable(this);
-  ROSE_ASSERT(p_exception_table && p_exception_table->get_exceptions());
   p_exception_table->parse(pool);
 
   /* attribute table */
@@ -151,13 +148,13 @@ SgAsmJvmAttribute* SgAsmJvmCodeAttribute::parse(SgAsmJvmConstantPool* pool)
 SgAsmJvmAttribute* SgAsmJvmConstantValue::parse(SgAsmJvmConstantPool* pool)
 {
   SgAsmJvmAttribute::parse(pool);
-  std::cout << "SgAsmJvmConstantValue::parse() ...\n";
+  cout << "SgAsmJvmConstantValue::parse() ...\n";
 
   // The value of the attribute_length item must be two (section 4.7.2)
   ROSE_ASSERT(p_attribute_length == 2);
 
   Jvm::read_value(pool, p_constantvalue_index);
-  std::cout << "SgAsmJvmConstantValue::parse:constantvalue_index " << p_constantvalue_index << std::endl;
+  cout << "SgAsmJvmConstantValue::parse:constantvalue_index " << p_constantvalue_index << endl;
 
   return this;
 }
@@ -165,7 +162,7 @@ SgAsmJvmAttribute* SgAsmJvmConstantValue::parse(SgAsmJvmConstantPool* pool)
 SgAsmJvmAttribute* SgAsmJvmSignature::parse(SgAsmJvmConstantPool* pool)
 {
   SgAsmJvmAttribute::parse(pool);
-  std::cout << "SgAsmJvmSignature::parse() ...\n";
+  cout << "SgAsmJvmSignature::parse() ...\n";
 
   ROSE_ASSERT(false && "TODO");
   return this;
@@ -174,7 +171,7 @@ SgAsmJvmAttribute* SgAsmJvmSignature::parse(SgAsmJvmConstantPool* pool)
 SgAsmJvmAttribute* SgAsmJvmSourceFile::parse(SgAsmJvmConstantPool* pool)
 {
   SgAsmJvmAttribute::parse(pool);
-  std::cout << "SgAsmJvmSourceFile::parse() ...\n";
+  cout << "SgAsmJvmSourceFile::parse() ...\n";
   Jvm::read_value(pool, p_sourcefile_index);
   return this;
 }
@@ -215,7 +212,7 @@ void SgAsmJvmSourceFile::dump(FILE*f, const char* prefix, ssize_t idx) const
 //
 SgAsmJvmException::SgAsmJvmException(SgAsmJvmExceptionTable* table)
 {
-  std::cout << "\nSgAsmJvmException::ctor() ...\n";
+  cout << "\nSgAsmJvmException::ctor() ...\n";
   set_parent(table);
 }
 
@@ -230,15 +227,13 @@ SgAsmJvmException* SgAsmJvmException::parse(SgAsmJvmConstantPool* pool)
 
 void SgAsmJvmException::dump(FILE*f, const char* prefix, ssize_t idx) const
 {
-  std::cout << "SgAsmJvmException::dump() ...\n";
+  cout << "SgAsmJvmException::dump() ...\n";
 }
 
 SgAsmJvmExceptionTable::SgAsmJvmExceptionTable(SgAsmJvmCodeAttribute* parent)
 {
-  std::cout << "SgAsmJvmExceptionTable::ctor() ...\n";
+  cout << "SgAsmJvmExceptionTable::ctor() ...\n";
   set_parent(parent);
-  p_exceptions = new SgAsmJvmExceptionList;
-  p_exceptions->set_parent(this);
 }
 
 SgAsmJvmExceptionTable* SgAsmJvmExceptionTable::parse(SgAsmJvmConstantPool* pool)
@@ -246,18 +241,19 @@ SgAsmJvmExceptionTable* SgAsmJvmExceptionTable::parse(SgAsmJvmConstantPool* pool
   uint16_t exception_table_length;
   Jvm::read_value(pool, exception_table_length);
 
-  //if (exception_table_length == 0) return this; // TODO: until message dump ends
-  std::cout << "SgAsmJvmExceptionTable::parse() ...\n";
-  std::cout << "SgAsmJvmExceptionTable::parse() exception table length is " << exception_table_length << std::endl;
+#ifdef DEBUGGING
+  cout << "SgAsmJvmExceptionTable::parse() ...\n";
+  cout << "SgAsmJvmExceptionTable::parse() exception table length is " << exception_table_length << endl;
+#endif
 
-  auto exceptions = get_exceptions()->get_entries();
+  auto exceptions = get_exceptions();
   for (int ii = 0; ii < exception_table_length; ii++) {
-    std::cout << "\n --- exception ---\n";
+    cout << "\n --- exception ---\n";
     auto exception = new SgAsmJvmException(this);
     exception->parse(pool);
     exceptions.push_back(exception);
   }
-  std::cout << "SgAsmJvmExceptionTable::parse() exit ... \n";
+  cout << "SgAsmJvmExceptionTable::parse() exit ... \n";
 
   return this;
 }
@@ -266,31 +262,31 @@ SgAsmJvmExceptionTable* SgAsmJvmExceptionTable::parse(SgAsmJvmConstantPool* pool
 //
 // InnerClassTable used by SgAsmJvmInnerClass (InnerClassTable_attribute from the Jvm specification (4.7.6))
 //
-SgAsmJvmInnerClass::SgAsmJvmInnerClass(SgAsmJvmInnerClassTable* table)
+SgAsmJvmInnerClassesEntry::SgAsmJvmInnerClassesEntry(SgAsmJvmInnerClasses* table)
 {
-  std::cout << "\nSgAsmJvmInnerClass::ctor() ...\n";
+  cout << "\nSgAsmJvmInnerClassesEntry::ctor() ...\n";
 }
 
-SgAsmJvmInnerClass* SgAsmJvmInnerClass::parse(SgAsmJvmConstantPool* pool)
+SgAsmJvmInnerClassesEntry* SgAsmJvmInnerClassesEntry::parse(SgAsmJvmConstantPool* pool)
 {
-  std::cout << "SgAsmJvmInnerClass::parse() ...\n";
+  cout << "SgAsmJvmInnerClassesEntry::parse() ...\n";
   return this;
 }
 
-void SgAsmJvmInnerClass::dump(FILE*f, const char* prefix, ssize_t idx) const
+void SgAsmJvmInnerClassesEntry::dump(FILE*f, const char* prefix, ssize_t idx) const
 {
-  std::cout << "SgAsmJvmInnerClass::dump() ...\n";
+  cout << "SgAsmJvmInnerClassesEntry::dump() ...\n";
 }
 
-SgAsmJvmInnerClassTable::SgAsmJvmInnerClassTable(SgAsmJvmAttribute* parent)
+SgAsmJvmInnerClasses::SgAsmJvmInnerClasses(SgAsmJvmAttribute* parent)
 {
-  std::cout << "SgAsmJvmInnerClassTable::ctor() ...\n";
+  cout << "SgAsmJvmInnerClasses::ctor() ...\n";
 }
 
-SgAsmJvmInnerClassTable* SgAsmJvmInnerClassTable::parse(SgAsmJvmConstantPool* pool)
+SgAsmJvmInnerClasses* SgAsmJvmInnerClasses::parse(SgAsmJvmConstantPool* pool)
 {
-  std::cout << "SgAsmJvmInnerClassTable::parse() ...\n";
-  std::cout << "SgAsmJvmInnerClassTable::parse() exit ... \n";
+  cout << "SgAsmJvmInnerClasses::parse() ...\n";
+  cout << "SgAsmJvmInnerClasses::parse() exit ... \n";
 
   return this;
 }
@@ -299,47 +295,30 @@ SgAsmJvmInnerClassTable* SgAsmJvmInnerClassTable::parse(SgAsmJvmConstantPool* po
 //
 // SgAsmJvmLineNumberTable attribute node (LineNumberTable_attribute from the Jvm specification (4.7.12)
 //
-SgAsmJvmLineNumberTable::SgAsmJvmLineNumberTable(SgAsmJvmCodeAttribute* parent)
+SgAsmJvmLineNumberTable::SgAsmJvmLineNumberTable(SgAsmJvmAttribute* parent)
 {
-  std::cout << "\nSgAsmJvmLineNumberTable::ctor() ...\n";
+  cout << "\nSgAsmJvmLineNumberTable::ctor() ...\n";
   set_parent(parent);
-
-  p_line_number_table = new SgAsmJvmLineNumberInnerTable(this);
-  ROSE_ASSERT(get_line_number_table());
-  //TODO:
-  //  p_line_number_table->set_parent(this);
-
-  ROSE_ASSERT(false);
 }
 
 SgAsmJvmLineNumberTable* SgAsmJvmLineNumberTable::parse(SgAsmJvmConstantPool* pool)
 {
   ROSE_ASSERT(get_parent());
-  std::cout << "SgAsmJvmLineNumberTable::parse() ...\n";
+  cout << "SgAsmJvmLineNumberTable::parse() ...\n";
 
   uint16_t line_number_table_length;
   SgAsmJvmAttribute::parse(pool);
 
   Jvm::read_value(pool, line_number_table_length);
-  std::cout << "SgAsmJvmLineNumberTable::parse() line_number_table_length is " << line_number_table_length << std::endl;
+  cout << "SgAsmJvmLineNumberTable::parse() line_number_table_length is " << line_number_table_length << endl;
 
-  //TODO: fix attribute constructor (see above)
-  if (get_line_number_table() == nullptr) {
-    p_line_number_table = new SgAsmJvmLineNumberInnerTable(this);
-    ROSE_ASSERT(get_line_number_table());
-    ROSE_ASSERT(get_line_number_table()->get_parent());
-  }
-
-  auto inner_table = get_line_number_table();
-  ROSE_ASSERT(inner_table);
-  auto entries = inner_table->get_line_numbers()->get_entries();
+  auto line_number_table = get_line_number_table();
   for (int ii = 0; ii < line_number_table_length; ii++) {
-    auto line_number = new SgAsmJvmLineNumber(inner_table);
-    line_number->parse(pool);
-    line_number->dump(stdout, "", 0);
-    entries.push_back(line_number);
+    auto entry = new SgAsmJvmLineNumberEntry(this);
+    entry->parse(pool);
+    entry->dump(stdout, "", 0);
+    line_number_table.push_back(entry);
   }
-  inner_table->dump(stdout, "", 0);
 
   return this;
 }
@@ -349,30 +328,21 @@ void SgAsmJvmLineNumberTable::dump(FILE*f, const char* prefix, ssize_t idx) cons
   fprintf(f, "SgAsmJvmLineNumberTable::dump() ...\n");
 }
 
-SgAsmJvmLineNumber::SgAsmJvmLineNumber(SgAsmJvmLineNumberInnerTable* table)
+SgAsmJvmLineNumberEntry::SgAsmJvmLineNumberEntry(SgAsmJvmLineNumberTable* table)
 {
   set_parent(table);
 }
 
-SgAsmJvmLineNumber* SgAsmJvmLineNumber::parse(SgAsmJvmConstantPool* pool)
+SgAsmJvmLineNumberEntry* SgAsmJvmLineNumberEntry::parse(SgAsmJvmConstantPool* pool)
 {
   Jvm::read_value(pool, p_start_pc);
   Jvm::read_value(pool, p_line_number);
   return this;
 }
 
-void SgAsmJvmLineNumber::dump(FILE*f, const char* prefix, ssize_t idx) const
+void SgAsmJvmLineNumberEntry::dump(FILE*f, const char* prefix, ssize_t idx) const
 {
   fprintf(f, "SgAsmJvmLineNumber:%d:%d\n", p_start_pc, p_line_number);
-}
-
-SgAsmJvmLineNumberInnerTable::SgAsmJvmLineNumberInnerTable(SgAsmJvmLineNumberTable* parent)
-{
-  std::cout << "SgAsmJvmLineNumberInnerTable::ctor() ...\n";
-
-  set_parent(parent);
-  p_line_numbers = new SgAsmJvmLineNumberList;
-  p_line_numbers->set_parent(this);
 }
 
 #endif // ROSE_ENABLE_BINARY_ANALYSIS

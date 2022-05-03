@@ -214,4 +214,15 @@ SgAsmJvmClassFile::unparse(std::ostream &f) const
 
 #endif // SgAsmGenericHeader old stuff
 
+SgAsmJvmAttribute* SgAsmJvmModuleMainClass::parse(SgAsmJvmConstantPool* pool)
+{
+  ROSE_ASSERT(false && "SgAsmJvmModuleMainClass::parse()");
+  return nullptr;
+}
+
+void SgAsmJvmModuleMainClass::dump(FILE* f, const char *prefix, ssize_t idx) const
+{
+  ROSE_ASSERT(false && "SgAsmJvmModuleMainClass::dump()");
+}
+
 #endif // ROSE_ENABLE_BINARY_ANALYSIS

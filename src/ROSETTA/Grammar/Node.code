@@ -711,8 +711,8 @@ typedef SgAsmElfSymverNeededAuxPtrList*              SgAsmElfSymverNeededAuxPtrL
 typedef Rose_STL_Container<SgAsmJvmAttribute*> SgAsmJvmAttributePtrList;
 typedef SgAsmJvmAttributePtrList*              SgAsmJvmAttributePtrListPtr;
 
-typedef Rose_STL_Container<SgAsmJvmInnerClass*> SgAsmJvmInnerClassPtrList;
-typedef SgAsmJvmInnerClassPtrList*              SgAsmJvmInnerClassPtrListPtr;
+typedef Rose_STL_Container<SgAsmJvmInnerClassesEntry*> SgAsmJvmInnerClassesEntryPtrList;
+typedef SgAsmJvmInnerClassesEntryPtrList*              SgAsmJvmInnerClassesEntryPtrListPtr;
 
 typedef Rose_STL_Container<SgAsmJvmConstantPoolEntry*> SgAsmJvmConstantPoolEntryPtrList;
 typedef SgAsmJvmConstantPoolEntryPtrList*              SgAsmJvmConstantPoolEntryPtrListPtr;
@@ -723,8 +723,8 @@ typedef SgAsmJvmExceptionPtrList*              SgAsmJvmExceptionPtrListPtr;
 typedef Rose_STL_Container<SgAsmJvmField*> SgAsmJvmFieldPtrList;
 typedef SgAsmJvmFieldPtrList*              SgAsmJvmFieldPtrListPtr;
 
-typedef Rose_STL_Container<SgAsmJvmLineNumber*> SgAsmJvmLineNumberPtrList;
-typedef SgAsmJvmLineNumberPtrList*              SgAsmJvmLineNumberPtrListPtr;
+typedef Rose_STL_Container<SgAsmJvmLineNumberEntry*> SgAsmJvmLineNumberEntryPtrList;
+typedef SgAsmJvmLineNumberEntryPtrList*              SgAsmJvmLineNumberEntryPtrListPtr;
 
 typedef Rose_STL_Container<SgAsmJvmMethod*> SgAsmJvmMethodPtrList;
 typedef SgAsmJvmMethodPtrList*              SgAsmJvmMethodPtrListPtr;
