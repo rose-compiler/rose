@@ -216,7 +216,6 @@ SgAsmJvmCodeAttribute
 SgAsmJvmMethod
 SgAsmJvmConstantPool
 SgAsmJvmConstantPoolEntry
-SgAsmJvmConstantPoolEntryList
 SgAsmJvmConstantValue
 SgAsmJvmInstruction
 SgAsmJvmFileHeader
@@ -1030,16 +1029,12 @@ SgAsmJvmMethodTable
 SgAsmJvmField
 SgAsmJvmFieldTable
 SgAsmJvmException
-SgAsmJvmExceptionList
 SgAsmJvmExceptionTable
 SgAsmJvmClass
+SgAsmJvmLineNumberEntry
 SgAsmJvmLineNumberTable
-SgAsmJvmLineNumber
-SgAsmJvmLineNumberList
-SgAsmJvmLineNumberInnerTable
-SgAsmJvmInnerClass
-SgAsmJvmInnerClassList
-SgAsmJvmInnerClassTable
+SgAsmJvmInnerClassesEntry
+SgAsmJvmInnerClasses
 SgAsmCilInstruction
 SgAsmStackExpression
 SgAsmJvmEnclosingMethod
@@ -1049,3 +1044,4 @@ SgAsmCilAssembly
 SgAsmCilAssemblyOS
 SgAsmCilAssemblyProcessor
 SgAsmCilAssemblyRef
+SgAsmJvmModuleMainClass

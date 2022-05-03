@@ -16,9 +16,7 @@ using PoolEntry = SgAsmJvmConstantPoolEntry;
 SgAsmJvmConstantPool::SgAsmJvmConstantPool(SgAsmJvmFileHeader* fhdr)
   : SgAsmGenericSection(fhdr->get_file(), fhdr)
 {
-  std::cout << "SgAsmJvmConstantPool::ctor() ...\n";
-  p_entries = new SgAsmJvmConstantPoolEntryList;
-  p_entries->set_parent(this);
+  set_parent(fhdr);
 }
 
 // Constructor creating an object ready to be initialized via parse().
@@ -32,9 +30,9 @@ SgAsmJvmConstantPoolEntry::SgAsmJvmConstantPoolEntry(PoolEntry::Kind tag)
 SgAsmJvmConstantPoolEntry* SgAsmJvmConstantPool::get_entry(size_t index) const
 {
   SgAsmJvmConstantPoolEntry* entry{nullptr};
-  auto entries{get_entries()->get_entries()};
+  auto entries{get_entries()};
 
-  if (index > 0 && index < entries.size()) {
+  if (index > 0 && index <= entries.size()) {
     // Indices starts at one
     entry = entries[index-1];
   }
@@ -91,47 +89,46 @@ std::string cp_tag(PoolEntry* entry)
 void PoolEntry::dump(FILE* f, const char* prefix, ssize_t idx) const
 {
   if (get_tag() != PoolEntry::EMPTY) {
-    // os << index << ":" << cp_tag(this) << "_info";
     fprintf(f, "%s%ld:%s_info", prefix, idx, PoolEntry::to_string(this->get_tag()).c_str());
   }
 
   switch (get_tag()) {
     case PoolEntry::CONSTANT_Utf8:
-      fprintf(f, "%s%ld:%d:%s", prefix, idx, get_length(), std::string{get_utf8_bytes(), get_length()}.c_str());
+      fprintf(f, ":%d:%s", get_length(), std::string{get_utf8_bytes(), get_length()}.c_str());
       break;
     case PoolEntry::CONSTANT_Integer:
     case PoolEntry::CONSTANT_Float:
-      fprintf(f, "%s%ld:%d", prefix, idx, get_bytes());
+      fprintf(f, ":%d", get_bytes());
       break;
     case PoolEntry::CONSTANT_Long:
     case PoolEntry::CONSTANT_Double:
-      fprintf(f, "%s%ld:%d:%d", prefix, idx, get_hi_bytes(), get_low_bytes());
+      fprintf(f, ":%d:%d", get_hi_bytes(), get_low_bytes());
       break;
     case PoolEntry::CONSTANT_Class:
     case PoolEntry::CONSTANT_Module:
     case PoolEntry::CONSTANT_Package:
-      fprintf(f, "%s%ld:%d", prefix, idx, get_name_index());
+      fprintf(f, ":%d", get_name_index());
       break;
     case PoolEntry::CONSTANT_String:
-      fprintf(f, "%s%ld:%d", prefix, idx, get_string_index());
+      fprintf(f, ":%d", get_string_index());
       break;
     case PoolEntry::CONSTANT_Fieldref:
     case PoolEntry::CONSTANT_Methodref:
     case PoolEntry::CONSTANT_InterfaceMethodref:
-      fprintf(f, "%s%ld:%d:%d", prefix, idx, get_class_index(), get_name_and_type_index());
+      fprintf(f, ":%d:%d", get_class_index(), get_name_and_type_index());
       break;
     case PoolEntry::CONSTANT_NameAndType:
-      fprintf(f, "%s%ld:%d:%d", prefix, idx, get_name_index(), get_descriptor_index());
+      fprintf(f, ":%d:%d", get_name_index(), get_descriptor_index());
       break;
     case PoolEntry::CONSTANT_MethodHandle:
-      fprintf(f, "%s%ld:%d:%d", prefix, idx, get_reference_kind(), get_reference_index());
+      fprintf(f, ":%d:%d", get_reference_kind(), get_reference_index());
       break;
     case PoolEntry::CONSTANT_MethodType:
-      fprintf(f, "%s%ld:%d", prefix, idx, get_descriptor_index());
+      fprintf(f, ":%d", get_descriptor_index());
       break;
     case PoolEntry::CONSTANT_Dynamic:
     case PoolEntry::CONSTANT_InvokeDynamic:
-      fprintf(f, "%s%ld:%d:%d", prefix, idx, get_bootstrap_method_attr_index(), get_name_and_type_index());
+      fprintf(f, ":%d:%d", get_bootstrap_method_attr_index(), get_name_and_type_index());
       break;
     case PoolEntry::EMPTY:
       fprintf(f, "%s%ld:Empty", prefix, idx);
@@ -247,7 +244,7 @@ SgAsmJvmConstantPool* SgAsmJvmConstantPool::parse()
     entry->parse(this);
 
     // Store the new entry
-    p_entries->get_entries().push_back(entry);
+    get_entries().push_back(entry);
 
     // If this is CONSTANT_Long or CONSTANT_Double, store index location with empty entry
     // 4.4.5 "In retrospect, making 8-byte constants take two constant pool entries was a poor choice."
@@ -255,7 +252,7 @@ SgAsmJvmConstantPool* SgAsmJvmConstantPool::parse()
     if (kind == PoolEntry::CONSTANT_Long || kind == PoolEntry::CONSTANT_Double) {
       // Create and store an empty entry
       entry = new PoolEntry(PoolEntry::EMPTY);
-      p_entries->get_entries().push_back(entry);
+      get_entries().push_back(entry);
       ii += 1;
     }
   }
@@ -266,7 +263,7 @@ SgAsmJvmConstantPool* SgAsmJvmConstantPool::parse()
 void SgAsmJvmConstantPool::dump(FILE* f, const char *prefix, ssize_t idx) const
 {
   fprintf(f, "%s", prefix);
-  for (auto entry : get_entries()->get_entries()) {
+  for (auto entry : get_entries()) {
     entry->dump(stdout, "   ", idx++);
   }
 }
