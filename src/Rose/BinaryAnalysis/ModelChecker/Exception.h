@@ -24,8 +24,9 @@ public:
 /** Parse errors.
  *
  *  This exception is thrown if an error is encountered when parsing a file. Low-level syntax errors from YAML parsers throw
- *  YAML::Exception instead, while these @ref ParseError are thrown for higher level things, such as when we have a valid YAML
- *  file that doesn't contain the correct object description for the thing we're expecting to parse. */
+ *  parser-specific exceptions instead (such as YAML::Exception), while these @ref ParseError are thrown for higher level
+ *  things, such as when we have a valid YAML file that doesn't contain the correct object description for the thing we're
+ *  expecting to parse. */
 class ParseError: public Exception {
 public:
     /** Construct an exception with an error messsage. */

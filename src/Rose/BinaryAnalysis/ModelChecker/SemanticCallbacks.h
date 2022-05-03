@@ -7,6 +7,7 @@
 
 #include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Types.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+#include <Rose/Yaml.h>
 
 #ifdef ROSE_HAVE_YAMLCPP
 #include <yaml-cpp/yaml.h>
@@ -243,7 +244,6 @@ public:
     // Path creation functions.
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifdef ROSE_HAVE_YAMLCPP
     /** Construct a path from a YAML document.
      *
      *  The specified (subtree) root is a YAML sequence whose elements represent the nodes of the path. Each node has a type
@@ -251,11 +251,16 @@ public:
      *  model checker -- it must make sense for the current specimen.
      *
      *  Parse errors are reported by throwing a @ref ParseError exception. The @p sourceName is typically the name of the file
-     *  from which the YAML was originally parsed, or an empty string to signify that the name of the source is unknown. */
+     *  from which the YAML was originally parsed, or an empty string to signify that the name of the source is unknown.
+     *
+     *  @{ */
+#ifdef ROSE_HAVE_YAMLCPP
     virtual std::list<ExecutionUnitPtr>
     parsePath(const YAML::Node&, const std::string &sourceName) = 0;
 #endif
-
+    virtual std::list<ExecutionUnitPtr>
+    parsePath(const Yaml::Node&, const std::string &sourceName) = 0;
+    /** @} */
 };
 
 } // namespace

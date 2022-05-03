@@ -725,6 +725,9 @@ public:
     parsePath(const YAML::Node&, const std::string &sourceName) override;
 #endif
 
+    virtual std::list<ExecutionUnitPtr>
+    parsePath(const Yaml::Node&, const std::string &sourceName) override;
+
 private:
     // Records the state hash and returns true if we've seen it before.
     bool seenState(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&);

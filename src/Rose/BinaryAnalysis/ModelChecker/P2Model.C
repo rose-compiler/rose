@@ -1807,6 +1807,59 @@ SemanticCallbacks::parsePath(const YAML::Node &root, const std::string &sourceNa
 }
 #endif
 
+std::list<ExecutionUnit::Ptr>
+SemanticCallbacks::parsePath(const Yaml::Node &root_, const std::string &sourceName) {
+    std::list<ExecutionUnit::Ptr> retval;
+
+    // Mini-yaml doesn't have const versions of some read-only pure functions, thus this cast.
+    Yaml::Node &root = *const_cast<Yaml::Node*>(&root_);
+
+    if (!root.isSequence() || root.size() == 0)
+        throw ParseError(sourceName, "a path must be a non-empty sequence of path nodes");
+
+    for (size_t i = 0; i <root.size(); ++i) {
+        const std::string where = "path vertex #" + boost::lexical_cast<std::string>(i) + " ";
+        if (!root[i].isMap() || root[i]["vertex-type"].isNone())
+            throw ParseError(sourceName, where + "is not an object with a \"vertex-type\" field");
+
+        std::string vertexType = root[i]["vertex-type"].as<std::string>();
+        if ("basic-block" == vertexType) {
+            if (root[i]["vertex-address"].isNone())
+                throw ParseError(sourceName, where + "must have a \"vertex-address\" field");
+            rose_addr_t va = root[i]["vertex-address"].as<rose_addr_t>();
+            if (P2::BasicBlock::Ptr bb = partitioner().basicBlockExists(va)) {
+                retval.push_back(BasicBlockUnit::instance(partitioner(), bb));
+            } else {
+                throw ParseError(sourceName, where + "no such basic block at " + StringUtility::addrToString(va));
+            }
+
+        } else if ("instruction" == vertexType) {
+            if (root[i]["vertex-address"].isNone())
+                throw ParseError(sourceName, where + "must have a \"vertex-address\" field");
+            rose_addr_t va = root[i]["vertex-address"].as<rose_addr_t>();
+            if (SgAsmInstruction *insn = partitioner().instructionProvider()[va]) {
+                retval.push_back(InstructionUnit::instance(insn, partitioner().sourceLocations().get(va)));
+            } else {
+                throw ParseError(sourceName, where + "no instruction at " + StringUtility::addrToString(va));
+            }
+
+        } else if ("extern-function" == vertexType) {
+            if (root[i]["vertex-address"].isNone())
+                throw ParseError(sourceName, where + "must have a \"vertex-address\" field");
+            rose_addr_t va = root[i]["vertex-address"].as<rose_addr_t>();
+            if (P2::Function::Ptr function = partitioner().functionExists(va)) {
+                retval.push_back(ExternalFunctionUnit::instance(function, partitioner().sourceLocations().get(va)));
+            } else {
+                throw ParseError(sourceName, where + "no function at " + StringUtility::addrToString(va));
+            }
+
+        } else {
+            throw ParseError(sourceName, where + "has unrecognized type \"" + StringUtility::cEscape(vertexType) + "\"");
+        }
+    }
+    return retval;
+}
+
 } // namespace
 } // namespace
 } // namespace
