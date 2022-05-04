@@ -213,14 +213,14 @@ public:
      *
      * @{ */
     Iterator& operator++();
-    Iterator& operator++(int);
+    Iterator operator++(int);
     /** @} */
 
     /** Decrement operator.
      *
      * @{ */
     Iterator& operator--();
-    Iterator& operator--(int);
+    Iterator operator--(int);
     /** @} */
 
     /** Check if this iterator is equal to another iterator. */
@@ -267,14 +267,14 @@ public:
      *
      * @{ */
     ConstIterator& operator++();
-    ConstIterator& operator++(int);
+    ConstIterator operator++(int);
     /** @} */
 
     /** Decrement operator.
      *
      * @{ */
     ConstIterator& operator--();
-    ConstIterator& operator--(int);
+    ConstIterator operator--(int);
     /** @} */
 
     /** Check if this iterator is equal to another iterator. */

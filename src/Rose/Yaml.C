@@ -752,21 +752,31 @@ namespace Yaml {
         return *this;
     }
 
-    // BUG: This original implementation of post-increment is actually a pre-increment operation.
-    Iterator & Iterator::operator ++ (int dummy)
-    {
-        switch(m_Type)
-        {
-        case SequenceType:
-            static_cast<SequenceIteratorImp*>(m_pImp)->m_Iterator++;
-            break;
-        case MapType:
-            static_cast<MapIteratorImp*>(m_pImp)->m_Iterator++;
-            break;
-        default:
-            break;
+    Iterator Iterator::operator++(int) {
+        Iterator orig;
+        switch (m_Type) {
+            case SequenceType: {
+                auto imp = static_cast<SequenceIteratorImp*>(m_pImp);
+                auto newImp = new SequenceIteratorImp;
+                newImp->m_Iterator = imp->m_Iterator;
+                orig.m_Type = SequenceType;
+                orig.m_pImp = newImp;
+                ++imp->m_Iterator;
+                break;
+            }
+            case MapType: {
+                auto imp = static_cast<MapIteratorImp*>(m_pImp);
+                auto newImp = new MapIteratorImp;
+                newImp->m_Iterator = imp->m_Iterator;
+                orig.m_Type = MapType;
+                orig.m_pImp = newImp;
+                ++imp->m_Iterator;
+                break;
+            }
+            default:
+                break;
         }
-        return *this;
+        return orig;
     }
 
     Iterator& Iterator::operator--() {
@@ -783,21 +793,31 @@ namespace Yaml {
         return *this;
     }
 
-    // BUG: This original implementation of post-decrement is actually a pre-decrement operation.
-    Iterator & Iterator::operator -- (int dummy)
-    {
-        switch(m_Type)
-        {
-        case SequenceType:
-            static_cast<SequenceIteratorImp*>(m_pImp)->m_Iterator--;
-            break;
-        case MapType:
-            static_cast<MapIteratorImp*>(m_pImp)->m_Iterator--;
-            break;
-        default:
-            break;
+    Iterator Iterator::operator--(int) {
+        Iterator orig;
+        switch (m_Type) {
+            case SequenceType: {
+                auto imp = static_cast<SequenceIteratorImp*>(m_pImp);
+                auto newImp = new SequenceIteratorImp;
+                newImp->m_Iterator = imp->m_Iterator;
+                orig.m_Type = SequenceType;
+                orig.m_pImp = newImp;
+                --imp->m_Iterator;
+                break;
+            }
+            case MapType: {
+                auto imp = static_cast<MapIteratorImp*>(m_pImp);
+                auto newImp = new MapIteratorImp;
+                newImp->m_Iterator = imp->m_Iterator;
+                orig.m_Type = MapType;
+                orig.m_pImp = newImp;
+                --imp->m_Iterator;
+                break;
+            }
+            default:
+                break;
         }
-        return *this;
+        return orig;
     }
 
     bool Iterator::operator == (const Iterator & it)
@@ -921,21 +941,31 @@ namespace Yaml {
         return { g_EmptyString, g_NoneNode};
     }
 
-    // BUG: This original implementation of post-increment is actually a pre-increment operation.
-    ConstIterator & ConstIterator::operator ++ (int dummy)
-    {
-        switch(m_Type)
-        {
-        case SequenceType:
-            static_cast<SequenceConstIteratorImp*>(m_pImp)->m_Iterator++;
-            break;
-        case MapType:
-            static_cast<MapConstIteratorImp*>(m_pImp)->m_Iterator++;
-            break;
-        default:
-            break;
+    ConstIterator ConstIterator::operator++(int) {
+        ConstIterator orig;
+        switch (m_Type) {
+            case SequenceType: {
+                auto imp = static_cast<SequenceConstIteratorImp*>(m_pImp);
+                auto newImp = new SequenceConstIteratorImp;
+                newImp->m_Iterator = imp->m_Iterator;
+                orig.m_Type = SequenceType;
+                orig.m_pImp = newImp;
+                ++imp->m_Iterator;
+                break;
+            }
+            case MapType: {
+                auto imp = static_cast<MapConstIteratorImp*>(m_pImp);
+                auto newImp = new MapConstIteratorImp;
+                newImp->m_Iterator = imp->m_Iterator;
+                orig.m_Type = MapType;
+                orig.m_pImp = newImp;
+                ++imp->m_Iterator;
+                break;
+            }
+            default:
+                break;
         }
-        return *this;
+        return orig;
     }
 
     ConstIterator& ConstIterator::operator++() {
@@ -952,21 +982,31 @@ namespace Yaml {
         return *this;
     }
 
-    // BUG: This original implementation of post-decrement is actually a pre-decrement operation.
-    ConstIterator & ConstIterator::operator -- (int dummy)
-    {
-        switch(m_Type)
-        {
-        case SequenceType:
-            static_cast<SequenceConstIteratorImp*>(m_pImp)->m_Iterator--;
-            break;
-        case MapType:
-            static_cast<MapConstIteratorImp*>(m_pImp)->m_Iterator--;
-            break;
-        default:
-            break;
+    ConstIterator ConstIterator::operator--(int) {
+        ConstIterator orig;
+        switch (m_Type) {
+            case SequenceType: {
+                auto imp = static_cast<SequenceConstIteratorImp*>(m_pImp);
+                auto newImp = new SequenceConstIteratorImp;
+                newImp->m_Iterator = imp->m_Iterator;
+                orig.m_Type = SequenceType;
+                orig.m_pImp = newImp;
+                --imp->m_Iterator;
+                break;
+            }
+            case MapType: {
+                auto imp = static_cast<MapConstIteratorImp*>(m_pImp);
+                auto newImp = new MapConstIteratorImp;
+                newImp->m_Iterator = imp->m_Iterator;
+                orig.m_Type = MapType;
+                orig.m_pImp = newImp;
+                --imp->m_Iterator;
+                break;
+            }
+            default:
+                break;
         }
-        return *this;
+        return orig;
     }
 
     ConstIterator& ConstIterator::operator--() {
