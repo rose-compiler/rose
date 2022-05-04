@@ -1,0 +1,7 @@
+This is mini-yaml version 22d3dcf5684a11f9c0508c1ad8b3282a1d888319
+
+Do not upgrade to a new version without consulting Dan Quinlan.  Any
+new version needs to be code reviewed before being added to ROSE.
+
+Only a subset of the mini-yaml files have been copied here (this
+VERSION file is not one of them).
