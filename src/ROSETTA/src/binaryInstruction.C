@@ -19991,12 +19991,340 @@ void Grammar::setUpBinaryInstructions() {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /*************************************************************************************************************************
+     *                                      CIL ClassLayout (II.22.8)
+     *************************************************************************************************************************/
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmCilClassLayout);
+    IS_SERIALIZABLE(AsmCilClassLayout);
+
+#ifdef DOCUMENTATION
+    /** CIL ClassLayout table.
+     *
+     */
+    class SgAsmCilClassLayout: public SgAsmCilNode {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: PackingSize
+         *
+         *  A 2-byte constant.
+         *
+         * @{ */
+        uint16_t get_PackingSize() const;
+        void set_PackingSize(uint16_t);
+        /** @} */
+#else
+        AsmCilClassLayout.setDataPrototype("uint16_t", "PackingSize", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                           BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: ClassSize
+         *
+         *  A 4-byte constant.
+         *
+         * @{ */
+        uint32_t get_ClassSize() const;
+        void set_ClassSize(uint32_t);
+        /** @} */
+#else
+        AsmCilClassLayout.setDataPrototype("uint32_t", "ClassSize", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                           BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Parent
+         *
+         *  An index into the TypeDef table.
+         *
+         * @{ */
+        uint32_t get_Parent() const;
+        void set_Parent(uint32_t);
+        /** @} */
+#else
+        AsmCilClassLayout.setDataPrototype("uint32_t", "Parent", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                           BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmCilClassLayout);
+#if defined(SgAsmCilClassLayout_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
+            s & BOOST_SERIALIZATION_NVP(p_PackingSize);
+            s & BOOST_SERIALIZATION_NVP(p_ClassSize);
+            s & BOOST_SERIALIZATION_NVP(p_Parent);
+        }
+#endif
+
+#endif // SgAsmCilClassLayout_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+    /*************************************************************************************************************************
+     *                                      CIL Constant (II.22.9)
+     *************************************************************************************************************************/
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmCilConstant);
+    IS_SERIALIZABLE(AsmCilConstant);
+
+#ifdef DOCUMENTATION
+    /** CIL Constant table.
+     *
+     */
+    class SgAsmCilConstant: public SgAsmCilNode {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Type
+         *
+         *  A 1-byte constant, followed by 1-byte padding zero.
+         *
+         * @{ */
+        uint8_t get_Type() const;
+        void set_Type(uint8_t);
+        /** @} */
+#else
+        AsmCilConstant.setDataPrototype("uint8_t", "Type", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                        BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Parent
+         *
+         *  An index into the Param, Field, or Property table; more precisely,
+         *  a HasConstant (II.24.2.6) coded index.
+         *
+         * @{ */
+        uint32_t get_Parent() const;
+        void set_Parent(uint32_t);
+        /** @} */
+#else
+        AsmCilConstant.setDataPrototype("uint32_t", "Parent", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                        BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Value
+         *
+         *  An index into the Blob heap.
+         *
+         * @{ */
+        uint32_t get_Value() const;
+        void set_Value(uint32_t);
+        /** @} */
+#else
+        AsmCilConstant.setDataPrototype("uint32_t", "Value", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                        BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmCilConstant);
+#if defined(SgAsmCilConstant_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
+            s & BOOST_SERIALIZATION_NVP(p_Type);
+            s & BOOST_SERIALIZATION_NVP(p_Parent);
+            s & BOOST_SERIALIZATION_NVP(p_Value);
+        }
+#endif
+
+#endif // SgAsmCilConstant_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+    /*************************************************************************************************************************
+     *                                      CIL CustomAttribute (II.22.10)
+     *************************************************************************************************************************/
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmCilCustomAttribute);
+    IS_SERIALIZABLE(AsmCilCustomAttribute);
+
+#ifdef DOCUMENTATION
+    /** CIL CustomAttribute table.
+     *
+     */
+    class SgAsmCilCustomAttribute: public SgAsmCilNode {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Parent
+         *
+         *  An index into a metadata table that has an associated HasCustomAttribute
+         *  (II.24.2.6) coded index.
+         *
+         * @{ */
+        uint32_t get_Parent() const;
+        void set_Parent(uint32_t);
+        /** @} */
+#else
+        AsmCilCustomAttribute.setDataPrototype("uint32_t", "Parent", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                               BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Type
+         *
+         *  An index into the MethodDef or MethodRef table; more precisely, a
+         *  CustomAttributeType (II.24.2.6) coded index.
+         *
+         * @{ */
+        uint32_t get_Type() const;
+        void set_Type(uint32_t);
+        /** @} */
+#else
+        AsmCilCustomAttribute.setDataPrototype("uint32_t", "Type", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                               BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Value
+         *
+         *  An index into the Blob heap.
+         *
+         * @{ */
+        uint32_t get_Value() const;
+        void set_Value(uint32_t);
+        /** @} */
+#else
+        AsmCilCustomAttribute.setDataPrototype("uint32_t", "Value", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                               BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmCilCustomAttribute);
+#if defined(SgAsmCilCustomAttribute_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
+            s & BOOST_SERIALIZATION_NVP(p_Parent);
+            s & BOOST_SERIALIZATION_NVP(p_Type);
+            s & BOOST_SERIALIZATION_NVP(p_Value);
+        }
+#endif
+
+#endif // SgAsmCilCustomAttribute_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+    /*************************************************************************************************************************
+     *                                      CIL DeclSecurity (II.22.11)
+     *************************************************************************************************************************/
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmCilDeclSecurity);
+    IS_SERIALIZABLE(AsmCilDeclSecurity);
+
+#ifdef DOCUMENTATION
+    /** CIL DeclSecurity table.
+     *
+     */
+    class SgAsmCilDeclSecurity: public SgAsmCilNode {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Action
+         *
+         *  A 2-byte value.
+         *
+         * @{ */
+        uint16_t get_Action() const;
+        void set_Action(uint16_t);
+        /** @} */
+#else
+        AsmCilDeclSecurity.setDataPrototype("uint16_t", "Action", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Parent
+         *
+         *  An index into the TypeDef, MethodDef, or Assembly table; more precisely,
+         *  a HasDeclSecurity (II.24.2.6) coded index.
+         *
+         * @{ */
+        uint32_t get_Parent() const;
+        void set_Parent(uint32_t);
+        /** @} */
+#else
+        AsmCilDeclSecurity.setDataPrototype("uint32_t", "Parent", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: PermissionSet
+         *
+         *  An index into the Blob heap.
+         *
+         * @{ */
+        uint32_t get_PermissionSet() const;
+        void set_PermissionSet(uint32_t);
+        /** @} */
+#else
+        AsmCilDeclSecurity.setDataPrototype("uint32_t", "PermissionSet", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmCilDeclSecurity);
+#if defined(SgAsmCilDeclSecurity_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
+            s & BOOST_SERIALIZATION_NVP(p_Action);
+            s & BOOST_SERIALIZATION_NVP(p_Parent);
+            s & BOOST_SERIALIZATION_NVP(p_PermissionSet);
+        }
+#endif
+
+#endif // SgAsmCilDeclSecurity_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /*************************************************************************************************************************
      *                                      Root of a branch of CIL IR classes
      *************************************************************************************************************************/
 
     NEW_NONTERMINAL_MACRO(AsmCilNode,
                           AsmCilAssembly | AsmCilAssemblyOS | AsmCilAssemblyProcessor |
-                          AsmCilAssemblyRef | AsmCilAssemblyRefOS | AsmCilAssemblyRefProcessor,
+                          AsmCilAssemblyRef | AsmCilAssemblyRefOS | AsmCilAssemblyRefProcessor |
+                          AsmCilClassLayout | AsmCilConstant | AsmCilCustomAttribute |
+                          AsmCilDeclSecurity,
                           "AsmCilNode", "AsmCilNodeTag", false);
     AsmCilNode.setCppCondition("!defined(DOCUMENTATION)");
     IS_SERIALIZABLE(AsmCilNode);
