@@ -32,7 +32,9 @@ libroseutil_la_SOURCES =			\
 	LinearCongruentialGenerator.C		\
 	processSupport.C			\
 	rose_getline.C				\
-	rose_strtoull.C
+	rose_strtoull.C				\
+	mini-yaml/Yaml.C
+
 nodist_libroseutil_la_SOURCES = rose_paths.C
 libroseutil_la_LIBADD = \
 	stringSupport/libRoseStringSupport.la \
@@ -71,6 +73,9 @@ pkginclude_HEADERS =				\
 	rose_strtoull.h				\
 	roseTraceLib.c				\
 	setup.h
+
+miniyaml_includedir = $(includedir)/mini-yaml
+miniyaml_include_HEADERS = mini-yaml/Yaml.h
 
 EXTRA_DIST = CMakeLists.txt setup.h utilDocumentation.docs
 
