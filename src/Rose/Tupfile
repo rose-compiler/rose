@@ -4,7 +4,8 @@ run $(librose_compile)				\
     FormattedTable.C				\
     Initialize.C				\
     Progress.C					\
-    SourceLocation.C
+    SourceLocation.C				\
+    Yaml.C
 
 run $(public_header) -o include/rose/Rose	\
     BinaryAnalysis.h				\
@@ -24,4 +25,5 @@ run $(public_header) -o include/rose/Rose	\
     Progress.h					\
     RecursionCounter.h				\
     SourceLocation.h				\
-    StringUtility.h
+    StringUtility.h				\
+    Yaml.h
