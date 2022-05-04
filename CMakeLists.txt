@@ -797,7 +797,6 @@ endif()
 set(LIBHARU_SOURCE_DIR ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/libharu-200910170404)
 set(LIBHARU_BINARY_DIR ${ROSE_TOP_BINARY_DIR}/src/3rdPartyLibraries/libharu-200910170404)
 
-
 ########################################################################################################################
 # Back-end compilers
 ########################################################################################################################
