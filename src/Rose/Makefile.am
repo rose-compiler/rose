@@ -204,7 +204,8 @@ librose_partial_la_SOURCES =								\
 	FormattedTable.C								\
 	Initialize.C									\
 	Progress.C									\
-	SourceLocation.C
+	SourceLocation.C								\
+	Yaml.C
 
 rose_metaprog_h_includedir = $(prefix)/include/Rose
 rose_metaprog_h_include_HEADERS = metaprog.h

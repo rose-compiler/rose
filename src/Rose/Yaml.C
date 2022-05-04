@@ -1,3 +1,10 @@
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// This is mini-yaml version 22d3dcf5684a11f9c0508c1ad8b3282a1d888319 subsequently modified by the ROSE team.
+//
+// Do not upgrade to a new version without consulting Dan Quinlan.  Any new version needs to be code reviewed before being
+// added to ROSE.
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /*
 * MIT License
 *
@@ -41,9 +48,8 @@
 
 #define IT_IMP static_cast<IteratorImp*>(m_pImp)
 
-
-namespace Yaml
-{
+namespace Rose {
+namespace Yaml {
     class ReaderLine;
 
     // Exception message definitions.
@@ -2770,4 +2776,5 @@ namespace Yaml
     }
 
 
-}
+} // namespace
+} // namespace

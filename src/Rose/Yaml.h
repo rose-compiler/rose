@@ -1,3 +1,10 @@
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// This is mini-yaml version 22d3dcf5684a11f9c0508c1ad8b3282a1d888319 subsequently modified by the ROSE team.
+//
+// Do not upgrade to a new version without consulting Dan Quinlan.  Any new version needs to be code reviewed before being
+// added to ROSE.
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /*
 * MIT License
 *
@@ -29,8 +36,8 @@ http://yaml.org/spec/1.0/index.html
 https://www.codeproject.com/Articles/28720/YAML-Parser-in-C
 */
 
-#ifndef MiniYaml_Yaml_H
-#define MiniYaml_Yaml_H
+#ifndef ROSE_Yaml_H
+#define ROSE_Yaml_H
 
 #include <exception>
 #include <string>
@@ -38,6 +45,8 @@ https://www.codeproject.com/Articles/28720/YAML-Parser-in-C
 #include <sstream>
 #include <algorithm>
 #include <map>
+
+namespace Rose {
 
 /** YAML parser and unparser. */
 namespace Yaml {
@@ -461,6 +470,7 @@ void Serialize(const Node & root, std::iostream & stream, const SerializeConfig 
 void Serialize(const Node & root, std::string & string, const SerializeConfig & config = {2, 64, false, false});
 /** @} */
 
+} // namespace
 } // namespace
 
 #endif
