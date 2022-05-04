@@ -29,8 +29,9 @@
 * SOFTWARE.
 *
 */
+#include <sage3basic.h>
+#include <Rose/Yaml.h>
 
-#include "Yaml.h"
 #include <memory>
 #include <fstream>
 #include <sstream>
@@ -39,13 +40,10 @@
 #include <cstdio>
 #include <stdarg.h>
 
-
 // Implementation access definitions.
 #define NODE_IMP static_cast<NodeImp*>(m_pImp)
 #define NODE_IMP_EXT(node) static_cast<NodeImp*>(node.m_pImp)
 #define TYPE_IMP static_cast<NodeImp*>(m_pImp)->m_pImp
-
-
 #define IT_IMP static_cast<IteratorImp*>(m_pImp)
 
 namespace Rose {
@@ -740,6 +738,21 @@ namespace Yaml {
         return { g_EmptyString, g_NoneNode};
     }
 
+    Iterator& Iterator::operator++() {
+        switch (m_Type) {
+            case SequenceType:
+                static_cast<SequenceIteratorImp*>(m_pImp)->m_Iterator++;
+                break;
+            case MapType:
+                static_cast<MapIteratorImp*>(m_pImp)->m_Iterator++;
+                break;
+            default:
+                break;
+        }
+        return *this;
+    }
+
+    // BUG: This original implementation of post-increment is actually a pre-increment operation.
     Iterator & Iterator::operator ++ (int dummy)
     {
         switch(m_Type)
@@ -756,6 +769,21 @@ namespace Yaml {
         return *this;
     }
 
+    Iterator& Iterator::operator--() {
+        switch (m_Type) {
+            case SequenceType:
+                --static_cast<SequenceIteratorImp*>(m_pImp)->m_Iterator;
+                break;
+            case MapType:
+                --static_cast<MapIteratorImp*>(m_pImp)->m_Iterator;
+                break;
+            default:
+                break;
+        }
+        return *this;
+    }
+
+    // BUG: This original implementation of post-decrement is actually a pre-decrement operation.
     Iterator & Iterator::operator -- (int dummy)
     {
         switch(m_Type)
@@ -893,6 +921,7 @@ namespace Yaml {
         return { g_EmptyString, g_NoneNode};
     }
 
+    // BUG: This original implementation of post-increment is actually a pre-increment operation.
     ConstIterator & ConstIterator::operator ++ (int dummy)
     {
         switch(m_Type)
@@ -909,6 +938,21 @@ namespace Yaml {
         return *this;
     }
 
+    ConstIterator& ConstIterator::operator++() {
+        switch (m_Type) {
+            case SequenceType:
+                ++static_cast<SequenceConstIteratorImp*>(m_pImp)->m_Iterator;
+                break;
+            case MapType:
+                ++static_cast<MapConstIteratorImp*>(m_pImp)->m_Iterator;
+                break;
+            default:
+                break;
+        }
+        return *this;
+    }
+
+    // BUG: This original implementation of post-decrement is actually a pre-decrement operation.
     ConstIterator & ConstIterator::operator -- (int dummy)
     {
         switch(m_Type)
@@ -921,6 +965,20 @@ namespace Yaml {
             break;
         default:
             break;
+        }
+        return *this;
+    }
+
+    ConstIterator& ConstIterator::operator--() {
+        switch (m_Type) {
+            case SequenceType:
+                --static_cast<SequenceConstIteratorImp*>(m_pImp)->m_Iterator;
+                break;
+            case MapType:
+                --static_cast<MapConstIteratorImp*>(m_pImp)->m_Iterator;
+                break;
+            default:
+                break;
         }
         return *this;
     }
@@ -2228,9 +2286,13 @@ namespace Yaml {
     };
 
     // Parsing functions
-    void Parse(Node & root, const char * filename)
+    void parse(Node& root, boost::filesystem::path &fileName) {
+        Parse(root, fileName);
+    }
+
+    void Parse(Node & root, const boost::filesystem::path &fileName)
     {
-        std::ifstream f(filename, std::ifstream::binary);
+        std::ifstream f(fileName.c_str(), std::ifstream::binary);
         if (f.is_open() == false)
         {
             throw OperationException(g_ErrorCannotOpenFile);
@@ -2245,6 +2307,10 @@ namespace Yaml {
         f.close();
 
         Parse(root, data.get(), fileSize);
+    }
+
+    void parse(Node& root, std::iostream &stream) {
+        Parse(root, stream);
     }
 
     void Parse(Node & root, std::iostream & stream)
@@ -2264,10 +2330,19 @@ namespace Yaml {
         }
     }
 
+    void parse(Node& root, const std::string &data) {
+        Parse(root, data);
+    }
+
     void Parse(Node & root, const std::string & string)
     {
         std::stringstream ss(string);
         Parse(root, ss);
+    }
+
+    void parse(Node &root, const char *data) {
+        ASSERT_not_null(data);
+        Parse(root, data, strlen(data));
     }
 
     void Parse(Node & root, const char * buffer, const size_t size)

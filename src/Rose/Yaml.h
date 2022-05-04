@@ -39,6 +39,7 @@ https://www.codeproject.com/Articles/28720/YAML-Parser-in-C
 #ifndef ROSE_Yaml_H
 #define ROSE_Yaml_H
 
+#include <boost/filesystem.hpp>
 #include <exception>
 #include <string>
 #include <iostream>
@@ -195,10 +196,10 @@ public:
     Iterator();
 
     /** Copy constructor. */
-    Iterator(const Iterator & it);
+    Iterator(const Iterator&);
 
     /** Assignment operator. */
-    Iterator & operator=(const Iterator & it);
+    Iterator & operator=(const Iterator&);
 
     /** Destructor. */
     ~Iterator();
@@ -206,19 +207,27 @@ public:
     /** Get node of iterator.
      *
      *  First pair item is the key of map value, empty if type is sequence. */
-    std::pair<const std::string &, Node &> operator*();
+    std::pair<const std::string&, Node&> operator*();
 
-    /** Post-increment operator. */
-    Iterator & operator++(int);
+    /** Increment operator.
+     *
+     * @{ */
+    Iterator& operator++();
+    Iterator& operator++(int);
+    /** @} */
 
-    /** Post-decrement operator. */
-    Iterator & operator--(int);
+    /** Decrement operator.
+     *
+     * @{ */
+    Iterator& operator--();
+    Iterator& operator--(int);
+    /** @} */
 
     /** Check if this iterator is equal to another iterator. */
-    bool operator==(const Iterator & it);
+    bool operator==(const Iterator&);
 
     /** Check if this iterator is not equal to another iterator. */
-    bool operator!=(const Iterator & it);
+    bool operator!=(const Iterator&);
 
 private:
     enum eType {
@@ -241,10 +250,10 @@ public:
     ConstIterator();
 
     /** Copy constructor. */
-    ConstIterator(const ConstIterator & it);
+    ConstIterator(const ConstIterator&);
 
     /** Assignment operator. */
-    ConstIterator & operator=(const ConstIterator & it);
+    ConstIterator & operator=(const ConstIterator&);
 
     /** Destructor. */
     ~ConstIterator();
@@ -252,19 +261,27 @@ public:
     /** Get node of iterator.
      *
      *  First pair item is the key of map value, empty if type is sequence. */
-    std::pair<const std::string &, const Node &> operator*();
+    std::pair<const std::string&, const Node&> operator*();
 
-    /** Post-increment operator. */
-    ConstIterator & operator++(int);
+    /** Increment operator.
+     *
+     * @{ */
+    ConstIterator& operator++();
+    ConstIterator& operator++(int);
+    /** @} */
 
-    /** Post-decrement operator. */
-    ConstIterator & operator--(int);
+    /** Decrement operator.
+     *
+     * @{ */
+    ConstIterator& operator--();
+    ConstIterator& operator--(int);
+    /** @} */
 
     /** Check if this iterator is equal to another iterator. */
-    bool operator==(const ConstIterator & it);
+    bool operator==(const ConstIterator&);
 
     /** Check if this iterator is not equal to another iterator. */
-    bool operator!=(const ConstIterator & it);
+    bool operator!=(const ConstIterator&);
 
 private:
     enum eType {
@@ -312,49 +329,51 @@ public:
     /** Functions for checking type of node.
      *
      * @{ */
-    eType Type() const;
-    bool IsNone() const;
-    bool IsSequence() const;
-    bool IsMap() const;
-    bool IsScalar() const;
+    eType type() const { return Type(); }
+    bool isNone() const { return IsNone(); }
+    bool isSequence() const { return IsSequence(); }
+    bool isMap() const { return IsMap(); }
+    bool isScalar() const { return IsScalar(); }
     /** @} */
 
     /** Completely clear node. */
-    void Clear();
+    void clear() { Clear(); }
 
-    /** Get node as given template type. */
+    /** Get node as given template type.
+     *
+     * @{ */
     template<typename T>
-    T As() const {
+    T as() const {
         return impl::StringConverter<T>::Get(AsString());
     }
 
-    /** Get node as given template type. */
     template<typename T>
-    T As(const T & defaultValue) const {
+    T as(const T & defaultValue) const {
         return impl::StringConverter<T>::Get(AsString(), defaultValue);
     }
+    /** @} */
 
     /** Get size of node.
      *
      *        Nodes of type None or Scalar will return 0. */
-    size_t Size() const;
+    size_t size() const { return Size(); }
 
     // Sequence operators
 
     /** Insert sequence item at given index.
      *
      * Converts node to sequence type if needed. Adding new item to end of sequence if index is larger than sequence size. */
-    Node & Insert(const size_t index);
+    Node& insert(const size_t index) { return Insert(index); }
 
     /** Add new sequence index to back.
      *
      *  Converts node to sequence type if needed. */
-    Node & PushFront();
+    Node& pushFront() { return PushFront(); }
 
     /** Add new sequence index to front.
      *
      *  Converts node to sequence type if needed. */
-    Node & PushBack();
+    Node& pushBack() { return PushBack(); }
 
     /** Get sequence/map item.
      *
@@ -364,8 +383,8 @@ public:
      * @param key    Map key. Creates a new node if key is unknown.
      *
      * @{ */
-    Node & operator[](const size_t index);
-    Node & operator[](const std::string & key);
+    Node& operator[](const size_t index);
+    Node& operator[](const std::string& key);
     /** @} */
 
     /** Erase item.
@@ -373,31 +392,60 @@ public:
      * No action if node is not a sequence or map.
      *
      * @{ */
-    void Erase(const size_t index);
-    void Erase(const std::string & key);
+    void erase(const size_t index) { Erase(index); }
+    void erase(const std::string& key) { Erase(key); }
     /** @} */
 
     /** Assignment operators.
      *
      * @{ */
-    Node & operator=(const Node & node);
-    Node & operator=(const std::string & value);
-    Node & operator=(const char * value);
+    Node& operator=(const Node& node);
+    Node& operator=(const std::string& value);
+    Node& operator=(const char* value);
     /** @} */
 
     /** Get start iterator.
      *
      * @{ */
-    Iterator Begin();
-    ConstIterator Begin() const;
+    Iterator begin() { return Begin(); }
+    ConstIterator begin() const { return Begin(); }
     /** @} */
 
     /** Get end iterator.
      *
      *  @{ */
+    Iterator end() { return End(); }
+    ConstIterator end() const { return End(); }
+    /** @} */
+
+    // Original function names with unusual capitalization.
+    eType Type() const;
+    bool IsNone() const;
+    bool IsSequence() const;
+    bool IsMap() const;
+    bool IsScalar() const;
+    void Clear();
+    size_t Size() const;
+    Node & Insert(const size_t index);
+    Node & PushFront();
+    Node & PushBack();
+    void Erase(const size_t index);
+    void Erase(const std::string & key);
+    Iterator Begin();
+    ConstIterator Begin() const;
     Iterator End();
     ConstIterator End() const;
-    /** @} */
+
+    template<typename T>
+    T As() const {
+        return impl::StringConverter<T>::Get(AsString());
+    }
+
+    template<typename T>
+    T As(const T & defaultValue) const {
+        return impl::StringConverter<T>::Get(AsString(), defaultValue);
+    }
+
 
 private:
     // Get as string. If type is scalar, else empty.
@@ -408,28 +456,24 @@ private:
 };
 
 
-/** Parse YAML.
- *
- * Population given root node with deserialized data.
- *
- * @param root       Root node to populate.
- * @param filename   Path of input file.
- * @param stream     Input stream.
- * @param string     String of input data.
- * @param buffer     Char array of input data.
- * @param size       Buffer size.
- *
- * @throw InternalException  An internal error occurred.
- * @throw ParsingException   Invalid input YAML data.
- * @throw OperationException If filename or buffer pointer is invalid.
+// Original oddly capitalized functions
+void Parse(Node &root, const boost::filesystem::path&);
+void Parse(Node &root, std::iostream&);
+void Parse(Node &root, const std::string &data);
+void Parse(Node &root, const char *data, const size_t size);
+
+/** Parse YAML from file into node. */
+void parse(Node &root, const boost::filesystem::path&);
+
+/** Parse YAML from stream into node. */
+void parse(Node &root, std::iostream&);
+
+/** Parse YAML from data into node.
  *
  * @{ */
-void Parse(Node & root, const char * filename);
-void Parse(Node & root, std::iostream & stream);
-void Parse(Node & root, const std::string & string);
-void Parse(Node & root, const char * buffer, const size_t size);
+void parse(Node &root, const std::string &data);
+void parse(Node &root, const char *data);
 /** @} */
-
 
 /** Serialization configuration structure, describing output behavior. */
 struct SerializeConfig {
