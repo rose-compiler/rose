@@ -975,7 +975,7 @@ namespace CodeThorn {
         return evalAssignOp3(assignOp,edge.target(),estate);
       } else {
         // all other cases, evaluate function call as expression
-        SingleEvalResult evalResult2=evaluateExpression(funCall,currentEState);
+        SingleEvalResult evalResult2=evaluateExpression(funCall,currentEState); // eventually calls evalFunctionCall
         SAWYER_MESG(logger[TRACE])<<"EXTERNAL FUNCTION: "<<SgNodeHelper::getFunctionName(funCall)<<" result(added to state):"<<evalResult2.result.toString()<<endl;
 
         // create new estate with added return variable (for inter-procedural analysis)
@@ -1133,8 +1133,9 @@ namespace CodeThorn {
 
   std::list<EStatePtr> EStateTransferFunctions::transferExprStmt(SgNode* nextNodeToAnalyze1, Edge edge, EStatePtr estate) {
     SgNode* nextNodeToAnalyze2=0;
-    if(isSgExprStatement(nextNodeToAnalyze1))
+    if(isSgExprStatement(nextNodeToAnalyze1)) {
       nextNodeToAnalyze2=SgNodeHelper::getExprStmtChild(nextNodeToAnalyze1);
+    }
     if(SgNodeHelper::isForIncExpr(nextNodeToAnalyze1)) {
       nextNodeToAnalyze2=nextNodeToAnalyze1;
     }
@@ -1154,6 +1155,13 @@ namespace CodeThorn {
       // this is meanwhile modeled in the ExprAnalyzer - TODO: utilize as expr-stmt.
       logger[ERROR] <<"found conditional expression outside expression. Normalization required."<<endl;
       exit(1);
+    } else if(SgExpression* exp=isSgExpression(nextNodeToAnalyze2)) {
+      SingleEvalResult res=evaluateExpression(exp,estate,MODE_VALUE);
+      // this builds a new estate (sets new target label)
+      EStatePtr estate2=res.estate; // use return state from ++/-- TODO: investigate (otherwise use estate->)
+      PStatePtr newPState=estate2->pstate();
+      CallString cs=estate->getCallString();
+      return elistify(reInitEState(estate2,edge.target(),cs,newPState));
     } else {
       return transferIdentity(edge,estate);
     }
@@ -1163,6 +1171,10 @@ namespace CodeThorn {
     // nothing to analyze, just create new estate (from same State) with target label of edge
     // can be same state if edge is a backedge to same cfg node
     ROSE_ASSERT(estate);
+    if(_analyzer->getOptionsRef().info.printTransferFunctionInfo) {
+      _analyzer->printStatusMessageLine("subtransfer     : transferIdentity      : -");
+    }
+
     EStatePtr newEState=estate;
     newEState->setLabel(edge.target());
     return elistify(newEState);

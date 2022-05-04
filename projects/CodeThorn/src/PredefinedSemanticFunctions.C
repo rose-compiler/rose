@@ -116,7 +116,7 @@ namespace PredefinedSemanticFunctions {
   SingleEvalResult evalFunctionCallStrLen(EStateTransferFunctions* exprAnalyzer, SgFunctionCallExp* funCall, EStatePtr estate) {
     SingleEvalResult res;
     res.init(estate,AbstractValue(CodeThorn::Top()));
-    return res;
+    //return res;
 
     // DEACTIVATED (use reference implementation)
     cout<<"DEBUG:evalFunctionCallStrLen:"<<funCall->unparseToString()<<endl;

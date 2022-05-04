@@ -222,8 +222,8 @@ class AbstractValue {
   static AbstractValue conditionallyApplyArrayAbstraction(AbstractValue val);
   bool isAbstract() const;
   // forces abstract value to be handled as a summary
-  void setAbstractFlag(bool flag); 
-
+  void setAbstractFlag(bool flag);
+  bool getAbstractFlag(); 
 private:
 
   /* the following are extensions that allocate more memory than a single abstract value
@@ -243,6 +243,7 @@ private:
   void addSetElement(AbstractValue av); // requires this to be AV_SET, adds av to AV_SET
   void setExtension(void*);
   AbstractValue topOrError(std::string) const;
+  string abstractToString() const;
   ValueType valueType;
   CodeThorn::VariableId variableId;
   union {

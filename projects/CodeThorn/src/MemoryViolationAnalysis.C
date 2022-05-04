@@ -20,10 +20,10 @@ namespace CodeThorn {
   }
   
   void MemoryViolationAnalysis::readingFromMemoryLocation(Label lab, PStatePtr pstate, AbstractValue& memLoc) {
-    //cout<<"MEM CHECK: @"<<lab.toString()<<": READ: @"<< memLoc.toString()<<endl;
+    //cout<<"MEM CHECK: @"<<lab.toString()<<": READ: @"<< memLoc.toString()<<":"<<pstate->readFromMemoryLocation(memLoc).toString()<<endl;
     auto violation=checkMemoryAddress(memLoc);
     // check uninitialized value read from memory location
-    if(memLoc.isUndefined()||memLoc.isTop()) {
+    if(memLoc.isTop()) {
       // indirect access
       violation.insert(ACCESS_POTENTIALLY_UNINIT);
     } else if(pstate->memLocExists(memLoc)) {

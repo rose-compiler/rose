@@ -318,19 +318,16 @@ namespace CodeThorn {
         exit(1);
       }
     }
-    /*
-    // option to be added, to differentiate it from the functioncall-mapping based report
+ 
     if(ctOpt.analyzedExternalFunctionCallsCSVFileName.size()>0) {
-      string fileName=ctOpt.externalFunctionsCSVFileName;
+      string fileName=ctOpt.reportFilePath+"/"+ctOpt.analyzedExternalFunctionCallsCSVFileName;
       if(!ctOpt.quiet)
-        cout<<"Writing list of external function calls to file "<<fileName<<endl;
+        cout<<"Writing list of called external functions to file "<<fileName<<endl;
       string s=analyzer->externalFunctionsToString();
       if(!CppStdUtilities::writeFile(fileName, s)) {
-        cerr<<"Cannot create file "<<fileName<<endl;
-        exit(1);
+        cerr<<"Error: cannot create file "<<fileName<<endl;
       }
     }
-    */
   }
 
   void AnalysisReporting::generateVerificationCallGraphDotFile(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer, string analysisName, ProgramLocationsReport& report) {
