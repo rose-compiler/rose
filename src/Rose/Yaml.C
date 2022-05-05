@@ -738,6 +738,20 @@ namespace Yaml {
         return { g_EmptyString, g_NoneNode};
     }
 
+    std::unique_ptr<std::pair<const std::string&, Node&>> Iterator::operator->() {
+        using P = std::pair<const std::string&, Node&>;
+        switch (m_Type) {
+            case SequenceType:
+                return std::make_unique<P>(g_EmptyString, *(static_cast<SequenceIteratorImp*>(m_pImp)->m_Iterator->second));
+            case MapType:
+                return std::make_unique<P>(static_cast<MapIteratorImp*>(m_pImp)->m_Iterator->first,
+                                           *(static_cast<MapIteratorImp*>(m_pImp)->m_Iterator->second));
+            default:
+                g_NoneNode.Clear();
+                return std::make_unique<P>(g_EmptyString, g_NoneNode);
+        }
+    }
+
     Iterator& Iterator::operator++() {
         switch (m_Type) {
             case SequenceType:
@@ -939,6 +953,20 @@ namespace Yaml {
 
         g_NoneNode.Clear();
         return { g_EmptyString, g_NoneNode};
+    }
+
+    std::unique_ptr<std::pair<const std::string&, const Node&>> ConstIterator::operator->() {
+        using P = std::pair<const std::string&, const Node&>;
+        switch (m_Type) {
+            case SequenceType:
+                return std::make_unique<P>(g_EmptyString, *(static_cast<SequenceIteratorImp*>(m_pImp)->m_Iterator->second));
+            case MapType:
+                return std::make_unique<P>(static_cast<MapIteratorImp*>(m_pImp)->m_Iterator->first,
+                                           *(static_cast<MapIteratorImp*>(m_pImp)->m_Iterator->second));
+            default:
+                g_NoneNode.Clear();
+                return std::make_unique<P>(g_EmptyString, g_NoneNode);
+        }
     }
 
     ConstIterator ConstIterator::operator++(int) {
@@ -2326,7 +2354,7 @@ namespace Yaml {
     };
 
     // Parsing functions
-    void parse(Node& root, boost::filesystem::path &fileName) {
+    void parse(Node& root, const boost::filesystem::path &fileName) {
         Parse(root, fileName);
     }
 
