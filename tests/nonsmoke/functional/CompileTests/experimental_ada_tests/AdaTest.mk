@@ -41,6 +41,7 @@ ADA_TRANSLATOR_PASSING_TESTS :=        \
   gototest.ads                         \
   if_statement.adb                     \
   increment.adb                        \
+  largeenum.adb                        \
   linkedlists.ads                      \
   loop_exit.adb                        \
   loop_parameter_specification.adb     \
@@ -52,7 +53,6 @@ ADA_TRANSLATOR_PASSING_TESTS :=        \
   named_block.adb                      \
   nullrecord.ads                       \
   ordinary_type_declaration.ads        \
-  operator.adb                         \
   ordinary_type_declaration_range_constraint.ads    \
   overload.ads                         \
   overload.adb                         \
@@ -108,15 +108,19 @@ ADA_TRANSLATOR_PASSING_INCOMPLETE_TESTS :=       \
   derived_private_record.adb           \
   enumeration.adb                      \
   enumeration_with_text_io.adb         \
-  function_body_stub.adb               \
   exception_declaration.ads            \
   exception_renamingrenaming.adb       \
   exhandler.adb                        \
   extension_aggregate.adb              \
   explicit_deref.adb                   \
   floating_point_definition.ads        \
+  formal_procedure_declaration.ads     \
+  formal_subprogram_declaration.ads    \
+  function_body_stub.adb               \
   function_renaming.adb                \
   function_instantiation.adb           \
+  generic_function_declaration.ads     \
+  generic_package_declaration.ads      \
   goto_loop_v2.adb                     \
   hardwarestore.adb                    \
   hello_world.adb                      \
@@ -130,6 +134,7 @@ ADA_TRANSLATOR_PASSING_INCOMPLETE_TESTS :=       \
   myarray.adb                          \
   nullptr.adb                          \
   object_renaming_declaration.adb      \
+  operator.adb                         \
   package_instantiation.adb            \
   package_pragma.ads                   \
   package_with_body.adb                \
@@ -137,6 +142,7 @@ ADA_TRANSLATOR_PASSING_INCOMPLETE_TESTS :=       \
   parenthesis_matters.adb              \
   pragmas.adb                          \
   private_access_type.adb              \
+  prefixcalls.adb                      \
   procedure_call.adb                   \
   procedure_instantiation.adb          \
   procedure_instantiation2.adb         \
@@ -180,17 +186,12 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   entry_body_declaration.adb           \
   entry_index_specification.adb        \
   exception_rename.ads                 \
-  formal_procedure_declaration.ads     \
-  formal_subprogram_declaration.ads    \
   fixed_point_definition.ads           \
-  generic_function_declaration.ads     \
-  generic_package_declaration.ads      \
   generic_package_declaration.adb      \
   generic_procedure_renaming_declaration.ads  \
   generic_function_renaming_declaration.ads   \
   inherited_primitive_operation.adb    \
   iterate_range.adb                    \
-  largeenum.adb                        \
   namequal_with_renamed_1.adb          \
   namequal_with_renamed_2.adb          \
   nested_package.ads                   \
@@ -198,7 +199,6 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   package_renaming_declaration.ads     \
   parent-child.adb                     \
   pkgrename.ads                        \
-  prefixcalls.adb                      \
   private_derived_formal_type.adb      \
   procedure_renaming.adb               \
   protected_object.adb                 \
