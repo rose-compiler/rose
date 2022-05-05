@@ -1,0 +1,8 @@
+include_rules
+
+run $(librose_compile)				\
+    Jvm.C					\
+
+run $(public_header) -o include/rose/Rose/BinaryAnalysis/ByteCode	\
+    ByteCode.h								\
+    Jvm.h								\
