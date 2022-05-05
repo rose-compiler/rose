@@ -73,8 +73,6 @@ string CodeThorn::ProgramLocationsReport::findOriginalProgramLocationOfLabel(Lab
 
 string CodeThorn::ProgramLocationsReport::findOriginalProgramLocationOfNode(SgNode* node) {
   ROSE_ASSERT(node);
-  // find non-transformation file info
-  //SgNode* parent=node->get_parent();
   // if node is inside expression, search for statement node
   while(!isSgStatement(node)) {
     if(hasSourceLocation(node)) {

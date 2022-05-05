@@ -1,6 +1,7 @@
 struct S2 {
   int var21;
   int var22;
+  int* p;
 };
 struct {
   struct S2 var11;
@@ -11,10 +12,7 @@ int main() {
 
 
   int x;
-  struct S2 s21=s1.array12[0];
-  s1.var11 = s21;
-
-  int y;
-  s1.var11 = s1.array12[0];
+  s1.var11.p=0;
+  *s1.var11.p=0;
 
 }
