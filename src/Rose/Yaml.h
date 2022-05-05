@@ -39,13 +39,17 @@ https://www.codeproject.com/Articles/28720/YAML-Parser-in-C
 #ifndef ROSE_Yaml_H
 #define ROSE_Yaml_H
 
-#include <boost/filesystem.hpp>
-#include <exception>
-#include <string>
-#include <iostream>
-#include <sstream>
 #include <algorithm>
+#include <boost/filesystem.hpp>
+#include <boost/lexical_cast.hpp>
+#include <exception>
+#include <iostream>
 #include <map>
+#include <memory>
+#include <rose_strtoull.h>
+#include <sstream>
+#include <string>
+#include <type_traits>
 
 namespace Rose {
 
@@ -61,25 +65,44 @@ class Node;
 namespace impl {
 
 // Helper functionality, converting string to any data type. Strings are left untouched.
-template<typename T>
+template<typename T, class Enable = void>
 struct StringConverter {
-    static T Get(const std::string & data) {
-        T type;
-        std::stringstream ss(data);
-        ss >> type;
-        return type;
+    static T Get(const std::string &data) {
+        return boost::lexical_cast<T>(data);
     }
 
     static T Get(const std::string & data, const T & defaultValue) {
-        T type;
-        std::stringstream ss(data);
-        ss >> type;
+        T result{};
+        return boost::conversion::try_lexical_convert(data, result) ? result : defaultValue;
+    }
+};
 
-        if (ss.fail()) {
+// Converter from string to integral types handles hexadecimal, octal, and decimal.
+template<typename T>
+struct StringConverter<T, typename std::enable_if<std::is_integral<T>::value>::type> {
+    static T Get(const std::string &data) {
+        const char *s = data.c_str();
+        char *rest = nullptr;
+        static_assert(sizeof(T) <= sizeof(uint64_t), "sizeof(T) is too big for implementation");
+        if (strlen(s) != data.size() || data.empty() || isspace(data[0]))
+            throw std::runtime_error("string is not a recognized integral literal");
+        errno = 0;
+        uint64_t big = rose_strtoull(s, &rest, 0);
+        if (*rest) {
+            throw std::runtime_error("string is not a recognized integral literal");
+        } else if (ULLONG_MAX == big && ERANGE == errno) {
+            throw std::runtime_error("integral literal out of range");
+        } else {
+            return boost::numeric_cast<T>(big);
+        }
+    }
+
+    static T Get(const std::string & data, const T & defaultValue) {
+        try {
+            return Get(data);
+        } catch (...) {
             return defaultValue;
         }
-
-        return type;
     }
 };
 
@@ -209,6 +232,9 @@ public:
      *  First pair item is the key of map value, empty if type is sequence. */
     std::pair<const std::string&, Node&> operator*();
 
+    /** Dereference. */
+    std::unique_ptr<std::pair<const std::string&, Node&>> operator->();
+
     /** Increment operator.
      *
      * @{ */
@@ -262,6 +288,9 @@ public:
      *
      *  First pair item is the key of map value, empty if type is sequence. */
     std::pair<const std::string&, const Node&> operator*();
+
+    /** Dereference. */
+    std::unique_ptr<std::pair<const std::string&, const Node&>> operator->();
 
     /** Increment operator.
      *
