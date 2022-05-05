@@ -4,5 +4,6 @@ struct {
 
 void main() {
   char* p = &s.a[0];
-  *(p-p)='x';
+  p=0;
+  *p='y';
 }

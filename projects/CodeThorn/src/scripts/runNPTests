@@ -73,14 +73,14 @@ for arg in "$@"
 do
     case $arg in
         --np)
-            testNumbers=`echo {001..007}`
+            testNumbers=`echo {001..009}`
             testprefix=NP
             runNPTests 1 10 0
             ;;
         --no-np)
-            testNumbers=`echo {001..007}`
+            testNumbers=`echo {001..009}`
             testprefix=NONP
-            runNPTests 0 0 1
+            runNPTests 0 0 3
             ;;
         *)
             ;;

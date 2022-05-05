@@ -728,20 +728,26 @@ void Normalization::normalizeCompoundAssignmentsInAst(SgNode* node) {
 }
 
 void Normalization::setFileInfo(SgLocatedNode* node, Sg_File_Info* info) {
-#if 1
   if(node && info) {
     // check if valid file info already exists and modify
     Sg_File_Info* fi=node->get_file_info();
     if(fi && info->get_line()>0) {
+#if 1
+      Sg_File_Info* newfi=new Sg_File_Info(*info);
+      newfi->unsetTransformation();
+      node->set_file_info(newfi);
+      // delete fi; // delete old fi
+#else
+      fi->unsetTransformation();
+      fi->updateSourcePosition(info);
       fi->set_line(info->get_line());
       fi->set_col(info->get_col());
       fi->set_file_id(info->get_file_id());
-      fi->setTransformation();
+#endif
     } else {
       // set new file info?
     }
   }
-#endif
 }
 
 void Normalization::addEmptyDefaultCase(SgSwitchStatement* node) {
@@ -872,22 +878,25 @@ void Normalization::normalizeSwitchWithoutDefault(SgSwitchStatement* node) {
           auto tmpVarDeclaration=buildVariableDeclarationWithInitializerForExpression(expr,scope,shareExpression);
 
           ROSE_ASSERT(tmpVarDeclaration);
+          setFileInfo(tmpVarDeclaration,originalFileInfo);
           SAWYER_MESG(logger[TRACE])<<"GEN_TMP_VAR_INIT: tmpVarDeclaration: "<<tmpVarDeclaration<<endl;
           addToTmpVarMapping((*j).tmpVarNr,tmpVarDeclaration);
 
           /////tmpVarDeclaration->set_parent(scope);
           tmpVarDeclaration->set_parent(stmt->get_parent());
-          SAWYER_MESG(logger[TRACE])<<"GEN_TMP_VAR_INIT: tmpVarDeclaration:"<<tmpVarDeclaration->unparseToString()<<endl;
           auto tmpVarReference=buildVarRefExpForVariableDeclaration(tmpVarDeclaration);
           ROSE_ASSERT(tmpVarReference);
-          setFileInfo(tmpVarReference,originalFileInfo); // breaks some tests
+          setFileInfo(tmpVarReference,originalFileInfo);
 
           // ii) insert tmp-var initializer
           insertNormalizedSubExpressionFragment(tmpVarDeclaration,stmt);
+          
+          setFileInfo(tmpVarDeclaration,originalFileInfo);
           // ii) replace use of expr with tmp-var and set file info of original AST
           bool deleteReplacedExpression=false;
           SgNodeHelper::replaceExpression(expr,tmpVarReference,deleteReplacedExpression);
           setFileInfo(tmpVarReference,originalFileInfo);
+
           //SAWYER_MESG(logger[TRACE])<<"inserted: "<<tmpVarDeclaration->unparseToString()<<endl;
           break;
         }
@@ -983,7 +992,7 @@ void Normalization::normalizeSwitchWithoutDefault(SgSwitchStatement* node) {
             SgVarRefExp* varRefExp=SageBuilder::buildVarRefExp(decl);
 
             // set line col file-info
-            setFileInfo(varRefExp,originalFileInfo); // breaks?
+            setFileInfo(varRefExp,originalFileInfo);
 
             SAWYER_MESG(logger[TRACE])<<"GEN_LOG_OP: REPLACING "<<expr->unparseToString()<<" with tmp var:"<<varRefExp->unparseToString()<<endl;
             SgNodeHelper::replaceExpression(expr,varRefExp);
