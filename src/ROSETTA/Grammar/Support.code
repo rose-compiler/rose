@@ -9670,6 +9670,7 @@ std::vector<SgTemplateParameter*> getTemplateParametersOrArgumentsList<SgTemplat
           case V_SgEnumSymbol:
           case V_SgEnumFieldSymbol:
           case V_SgNamespaceSymbol:
+          case V_SgAdaGenericSymbol: // workaround some Ada symbols without names. Ada2Cpp cannot remove them for now.
              {
             // This function requires this case so that it can be called within very general contexts.
             // However, for this case we only return the empty template parameter list.
