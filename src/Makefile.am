@@ -289,6 +289,7 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/BinaryLoaderElf.h						\
 	Rose/BinaryAnalysis/BinaryLoaderElfObj.h					\
 	Rose/BinaryAnalysis/BinaryLoaderPe.h						\
+	Rose/BinaryAnalysis/ByteCode/ByteCode.h						\
 	Rose/BinaryAnalysis/CallingConvention.h						\
 	Rose/BinaryAnalysis/CodeInserter.h						\
 	Rose/BinaryAnalysis/Concolic.h							\
@@ -318,6 +319,7 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/Disassembler.h						\
 	Rose/BinaryAnalysis/DisassemblerAarch32.h					\
 	Rose/BinaryAnalysis/DisassemblerAarch64.h					\
+	Rose/BinaryAnalysis/DisassemblerJvm.h						\
 	Rose/BinaryAnalysis/DisassemblerM68k.h						\
 	Rose/BinaryAnalysis/DisassemblerMips.h						\
 	Rose/BinaryAnalysis/DisassemblerNull.h						\

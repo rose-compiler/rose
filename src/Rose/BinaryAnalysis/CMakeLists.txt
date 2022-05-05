@@ -1,3 +1,4 @@
+add_subdirectory(ByteCode)
 add_subdirectory(Concolic)
 add_subdirectory(InstructionSemantics2)
 add_subdirectory(ModelChecker)
@@ -22,6 +23,7 @@ add_library(roseBinaryAnalysis OBJECT
   Disassembler.C
   DisassemblerAarch32.C
   DisassemblerAarch64.C
+  DisassemblerJvm.C
   DisassemblerM68k.C
   DisassemblerMips.C
   DisassemblerNull.C
@@ -80,6 +82,7 @@ install(FILES
   Disassembler.h
   DisassemblerAarch32.h
   DisassemblerAarch64.h
+  DisassemblerJvm.h
   DisassemblerM68k.h
   DisassemblerMips.h
   DisassemblerNull.h
