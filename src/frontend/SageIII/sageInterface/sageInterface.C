@@ -11150,10 +11150,16 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
     } else {
       ROSE_ABORT();
     }
-  } else if (SgAdaExitStmt* stm = isSgAdaExitStmt(parent)) {
+  } 
+  else if (SgAdaExitStmt* stm = isSgAdaExitStmt(parent)) {
     ROSE_ASSERT(oldExp == stm->get_condition());
     stm->set_condition(newExp);
-  } else if (SgAdaDelayStmt* stm = isSgAdaDelayStmt(parent)) {
+  }
+  else if (SgAdaModularType* ptype = isSgAdaModularType(parent)) {
+    ROSE_ASSERT(oldExp == ptype->get_modexpr());
+    ptype->set_modexpr(newExp);
+  } 
+  else if (SgAdaDelayStmt* stm = isSgAdaDelayStmt(parent)) {
     ROSE_ASSERT(oldExp == stm->get_time());
     stm->set_time(newExp);
   } else if (SgAdaAttributeClause* clause = isSgAdaAttributeClause(parent)) {
