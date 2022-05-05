@@ -10,6 +10,10 @@
 #include <Rose/BinaryAnalysis/InstructionEnumsPowerpc.h>
 #include <Rose/BinaryAnalysis/InstructionEnumsX86.h>
 
+// DQ (10/18/2021): Added support for CIL and Java Byte Code.
+#include <Rose/BinaryAnalysis/InstructionEnumsCil.h>
+#include <Rose/BinaryAnalysis/InstructionEnumsJvm.h>
+
 // These are here temporarily until the classes in this file can be moved into Rose::BinaryAnalysis
 using namespace Rose;
 using namespace Rose::BinaryAnalysis;
@@ -1748,6 +1752,20 @@ RegisterDictionary::dictionary_coldfire_emac() {
         regs->insert("accext23",   m68k_regclass_mac, m68k_mac_ext23,  0, 32);  // extensions for acc2 and acc3
         regs->insert("accext2",    m68k_regclass_mac, m68k_mac_ext2,   0, 16);
         regs->insert("accext3",    m68k_regclass_mac, m68k_mac_ext3,  16, 16);
+    }
+    return regs;
+}
+
+
+const RegisterDictionary *
+RegisterDictionary::dictionary_Cil() {
+    static SAWYER_THREAD_TRAITS::Mutex mutex;
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
+
+    static RegisterDictionary *regs = NULL;
+    if (!regs) {
+        regs = new RegisterDictionary("Cil");
+
     }
     return regs;
 }
