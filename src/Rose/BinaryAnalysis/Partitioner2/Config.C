@@ -6,6 +6,7 @@
 #include <Rose/BinaryAnalysis/Partitioner2/Config.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Modules.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Utility.h>
+#include <Rose/Yaml.h>
 
 #ifdef ROSE_HAVE_YAMLCPP
 #include <yaml-cpp/yaml.h>
@@ -108,10 +109,7 @@ Configuration::loadFromFile(const FileSystem::Path &fileName) {
                 loadFromFile(name);
         }
     } else if (isFile(fileName)) {
-#ifndef ROSE_HAVE_YAMLCPP
-        throw std::runtime_error("cannot open \"" + fileName.string() + "\": no YAML support" +
-                                 " (use --with-yaml when configuring ROSE)");
-#else
+#if defined(ROSE_HAVE_YAMLCPP)
         SAWYER_MESG(mlog[TRACE]) <<"loading configuration from " <<fileName <<"\n";
         YAML::Node configFile = YAML::LoadFile(fileName.string());
         if (configFile["config"] && configFile["config"]["exports"]) {
@@ -233,125 +231,229 @@ Configuration::loadFromFile(const FileSystem::Path &fileName) {
         } else {
             SAWYER_MESG(mlog[ERROR]) <<"not a valid configuration file: \"" <<StringUtility::cEscape(fileName.string()) <<"\"\n";
         }
+#else
+        SAWYER_MESG(mlog[TRACE]) <<"loading configuration from " <<fileName <<"\n";
+        Yaml::Node configFile;
+        Yaml::Parse(configFile, fileName.string());
+        if (!configFile["config"].isNone() && !configFile["config"]["exports"].isNone()) {
+            // This is a CMU/SEI configuration file.
+            Yaml::Node &exports = configFile["config"]["exports"];
+            for (const auto &node: exports) {
+                const std::string functionName = Modules::canonicalFunctionName(node.first);
+                Yaml::Node &functionInfo = node.second;
+
+                // This non-idiomatic "if" condition is because Yaml::Node has no bool operator, so we have to negate a
+                // predicate in the negative (i.e., "is not nothing" instead of "is something".
+                if (!functionInfo["function"].isNone() && !functionInfo["function"]["delta"].isNone()) {
+                    FunctionConfig config(functionName);
+                    static const int wordSize = 4;      // these files don't include popping the return address
+                    int delta = functionInfo["function"]["delta"].as<int>() + wordSize;
+                    config.stackDelta(delta);
+                    if (!insertConfiguration(config)) {
+                        SAWYER_MESG(mlog[WARN]) <<"multiple configuration records for function \""
+                                                <<StringUtility::cEscape(functionName) <<"\"\n";
+                    }
+                }
+            }
+        } else if (!configFile["rose"].isNone()) {
+            // This is a ROSE configuration file.
+            Yaml::Node &functions = configFile["rose"]["functions"];
+            if (!functions.isNone()) {
+                for (const auto &node: functions) {
+                    Yaml::Node &function = node.second;
+                    Sawyer::Optional<rose_addr_t> addr;
+                    std::string name;
+                    if (!function["address"].isNone())
+                        addr = function["address"].as<rose_addr_t>();
+                    if (!function["name"].isNone())
+                        name = Modules::canonicalFunctionName(function["name"].as<std::string>());
+                    FunctionConfig config(addr, name);
+                    if (!function["default_name"].isNone())
+                        config.defaultName(Modules::canonicalFunctionName(function["default_name"].as<std::string>()));
+                    if (!function["comment"].isNone())
+                        config.comment(function["comment"].as<std::string>());
+                    if (!function["stack_delta"].isNone())
+                        config.stackDelta(function["stack_delta"].as<int64_t>());
+                    if (!function["may_return"].isNone()) {
+                        std::string val = function["may_return"].as<std::string>();
+                        if (val == "true" || val == "yes" || val == "t" || val == "y" || val == "1") {
+                            config.stackDelta(true);
+                        } else {
+                            config.stackDelta(false);
+                        }
+                    }
+                    if (!function["source_location"].isNone())
+                        config.sourceLocation(SourceLocation::parse(function["source_location"].as<std::string>()));
+                    if (!insertConfiguration(config)) {
+                        SAWYER_MESG(mlog[WARN]) <<"multiple configuration records for function "
+                                                <<(addr?StringUtility::addrToString(*addr)+" ":std::string())
+                                                <<"\"" <<StringUtility::cEscape(name) <<"\"\n";
+                    }
+                }
+            }
+            Yaml::Node &bblocks = configFile["rose"]["bblocks"];
+            if (!bblocks.isNone()) {
+                for (const auto &node: bblocks) {
+                    Yaml::Node &bblock = node.second;
+                    if (bblock["address"].isNone()) {
+                        SAWYER_MESG(mlog[ERROR]) <<"missing address for basic block configuration record\n";
+                        continue;
+                    }
+                    rose_addr_t addr = bblock["address"].as<rose_addr_t>();
+                    BasicBlockConfig config(addr);
+                    if (!bblock["comment"].isNone())
+                        config.comment(bblock["comment"].as<std::string>());
+                    if (!bblock["final_instruction"].isNone())
+                        config.finalInstructionVa(bblock["final_instruction"].as<rose_addr_t>());
+                    Yaml::Node &successors = bblock["successors"];
+                    if (!successors.isNone()) {
+                        for (const auto &sucNode: successors) {
+                            Yaml::Node &successor = sucNode.second;
+                            config.successorVas().insert(successor.as<rose_addr_t>());
+                        }
+                    }
+                    if (!bblock["source_location"].isNone())
+                        config.sourceLocation(SourceLocation::parse(bblock["source_location"].as<std::string>()));
+                    if (!insertConfiguration(config)) {
+                        SAWYER_MESG(mlog[WARN]) <<"multiple configuration records for basic block "
+                                                <<StringUtility::addrToString(addr) <<"\n";
+                    }
+                }
+            }
+            Yaml::Node &dblocks = configFile["rose"]["dblocks"];
+            if (!dblocks.isNone()) {
+                for (const auto &node: dblocks) {
+                    Yaml::Node &dblock = node.second;
+                    if (dblock["address"].isNone()) {
+                        SAWYER_MESG(mlog[ERROR]) <<"missing address for data block configuration record\n";
+                        continue;
+                    }
+                    rose_addr_t addr = dblock["address"].as<rose_addr_t>();
+                    DataBlockConfig config(addr);
+                    if (!dblock["name"].isNone())
+                        config.name(dblock["name"].as<std::string>());
+                    if (!dblock["comment"].isNone())
+                        config.comment(dblock["comment"].as<std::string>());
+                    if (!dblock["source_location"].isNone())
+                        config.sourceLocation(SourceLocation::parse(dblock["source_location"].as<std::string>()));
+                    if (!insertConfiguration(config)) {
+                        SAWYER_MESG(mlog[WARN]) <<"multiple configuration records for data block "
+                                                <<StringUtility::addrToString(addr) <<"\n";
+                    }
+                }
+            }
+            Yaml::Node &addrs = configFile["rose"]["addresses"];
+            if (!addrs.isNone()) {
+                for (const auto &node: addrs) {
+                    Yaml::Node &detail = node.second;
+                    if (detail["address"].isNone()) {
+                        SAWYER_MESG(mlog[ERROR]) <<"missing address for address configuration record\n";
+                        continue;
+                    }
+                    rose_addr_t addr = detail["address"].as<rose_addr_t>();
+                    AddressConfig config(addr);
+                    if (!detail["name"].isNone())
+                        config.name(detail["name"].as<std::string>());
+                    if (!detail["comment"].isNone())
+                        config.comment(detail["comment"].as<std::string>());
+                    if (!detail["source_location"].isNone())
+                        config.sourceLocation(SourceLocation::parse(detail["source_location"].as<std::string>()));
+                    if (!insertConfiguration(config)) {
+                        SAWYER_MESG(mlog[WARN]) <<"multiple configuration records for address "
+                                                <<StringUtility::addrToString(addr) <<"\n";
+                    }
+                }
+            }
+
+        } else {
+            SAWYER_MESG(mlog[ERROR]) <<"not a valid configuration file: \"" <<StringUtility::cEscape(fileName.string()) <<"\"\n";
+        }
 #endif
     }
 }
 
-#ifdef ROSE_HAVE_YAMLCPP
 static void
-printFunctionConfig(YAML::Emitter &out, const FunctionConfig &config) {
-    out <<YAML::BeginMap;
+printFunctionConfig(std::ostream &out, const FunctionConfig &config) {
     if (config.address())
-        out <<YAML::Key <<"address" <<YAML::Value <<StringUtility::addrToString(*config.address());
+        out <<"    - address:" <<StringUtility::addrToString(*config.address()) <<"\n";
     if (!config.name().empty())
-        out <<YAML::Key <<"name" <<YAML::Value <<config.name();
+        out <<"      name: " <<StringUtility::yamlEscape(config.name()) <<"\n";
     if (!config.defaultName().empty())
-        out <<YAML::Key <<"default_name" <<YAML::Value <<config.defaultName();
+        out <<"      default_name: " <<StringUtility::yamlEscape(config.defaultName()) <<"\n";
     if (!config.comment().empty())
-        out <<YAML::Key <<"comment" <<YAML::Value <<config.comment();
+        out <<"      comment: " <<StringUtility::yamlEscape(config.comment()) <<"\n";
     if (config.stackDelta())
-        out <<YAML::Key <<"stack_delta" <<YAML::Value <<*config.stackDelta();
+        out <<"      stack_delta: " <<*config.stackDelta() <<"\n";
     if (config.mayReturn())
-        out <<YAML::Key <<"may_return" <<YAML::Value <<(*config.mayReturn()?"yes":"no");
+        out <<"      may_return: " <<(*config.mayReturn()?"yes":"no") <<"\n";
     if (!config.sourceLocation().isEmpty())
-        out <<YAML::Key <<"source_location" <<YAML::Value <<config.sourceLocation().printableName();
-    out <<YAML::EndMap;
+        out <<"      source_location: " <<StringUtility::yamlEscape(config.sourceLocation().printableName()) <<"\n";
 }
 
 static void
-printBasicBlockConfig(YAML::Emitter &out, const BasicBlockConfig &config) {
-    out <<YAML::BeginMap;
-    out <<YAML::Key <<"address" <<YAML::Value <<StringUtility::addrToString(config.address());
+printBasicBlockConfig(std::ostream &out, const BasicBlockConfig &config) {
+    out <<"    - address:" <<StringUtility::addrToString(config.address()) <<"\n";
     if (!config.comment().empty())
-        out <<YAML::Key <<"comment" <<YAML::Value <<config.comment();
+        out <<"      comment: " <<StringUtility::yamlEscape(config.comment()) <<"\n";
     if (config.finalInstructionVa())
-        out <<YAML::Key <<"final_instruction" <<YAML::Value <<StringUtility::addrToString(*config.finalInstructionVa());
+        out <<"      final_instruction: " <<StringUtility::addrToString(*config.finalInstructionVa()) <<"\n";
     if (!config.successorVas().empty()) {
-        out <<YAML::Key <<"successors" <<YAML::Value <<YAML::BeginSeq;
+        out <<"      successors:" <<"\n";
         for (rose_addr_t va: config.successorVas())
-            out <<StringUtility::addrToString(va);
-        out <<YAML::EndSeq;
+            out <<"          - " <<StringUtility::addrToString(va) <<"\n";
     }
     if (!config.sourceLocation().isEmpty())
-        out <<YAML::Key <<"source_location" <<YAML::Value <<config.sourceLocation().printableName();
-    out <<YAML::EndMap;
+        out <<"      source_location: " <<StringUtility::yamlEscape(config.sourceLocation().printableName()) <<"\n";
 }
 
 static void
-printDataBlockConfig(YAML::Emitter &out, const DataBlockConfig &config) {
-    out <<YAML::BeginMap;
-    out <<YAML::Key <<"address" <<YAML::Value <<StringUtility::addrToString(config.address());
+printDataBlockConfig(std::ostream &out, const DataBlockConfig &config) {
+    out <<"    - address: " <<StringUtility::addrToString(config.address()) <<"\n";
     if (!config.name().empty())
-        out <<YAML::Key <<"name" <<YAML::Value <<config.name();
+        out <<"      name: " <<StringUtility::yamlEscape(config.name()) <<"\n";
     if (!config.comment().empty())
-        out <<YAML::Key <<"comment" <<YAML::Value <<config.comment();
+        out <<"      comment: " <<StringUtility::yamlEscape(config.comment()) <<"\n";
     if (!config.sourceLocation().isEmpty())
-        out <<YAML::Key <<"source_location" <<YAML::Value <<config.sourceLocation().printableName();
-    out <<YAML::EndMap;
+        out <<"      source_location: " <<StringUtility::yamlEscape(config.sourceLocation().printableName()) <<"\n";
 }
 
 static void
-printAddressConfig(YAML::Emitter &out, const AddressConfig &config) {
-    out <<YAML::BeginMap;
-    out <<YAML::Key <<"address" <<YAML::Value <<StringUtility::addrToString(config.address());
+printAddressConfig(std::ostream &out, const AddressConfig &config) {
+    out <<"    - address: " <<StringUtility::addrToString(config.address()) <<"\n";
     if (!config.name().empty())
-        out <<YAML::Key <<"name" <<YAML::Value <<config.name();
+        out <<"      name: " <<StringUtility::yamlEscape(config.name()) <<"\n";
     if (!config.comment().empty())
-        out <<YAML::Key <<"comment" <<YAML::Value <<config.comment();
+        out <<"      comment: " <<StringUtility::yamlEscape(config.comment()) <<"\n";
     if (!config.sourceLocation().isEmpty())
-        out <<YAML::Key <<"source_location" <<YAML::Value <<config.sourceLocation().printableName();
-    out<<YAML::EndMap;
+        out <<"      source_location: " <<StringUtility::yamlEscape(config.sourceLocation().printableName()) <<"\n";
 }
-#endif
 
 void
 Configuration::print(std::ostream &out) const {
-#ifndef ROSE_HAVE_YAMLCPP
-    throw std::runtime_error("cannot produce YAML output: no YAML support (use --with-yaml when configuring ROSE)");
-#else
-    YAML::Emitter emitter;
-    emitter <<YAML::BeginMap;
-    emitter <<YAML::Key <<"rose" <<YAML::Value;
-    emitter <<YAML::BeginMap;
-    
     if (!functionConfigsByAddress_.isEmpty() || !functionConfigsByName_.isEmpty()) {
-        emitter <<YAML::Key <<"functions" <<YAML::Value;
-        emitter <<YAML::BeginSeq;
+        out <<"functions:\n";
         for (const FunctionConfig &config: functionConfigsByAddress_.values())
-            printFunctionConfig(emitter, config);
+            printFunctionConfig(out, config);
         for (const FunctionConfig &config: functionConfigsByName_.values())
-            printFunctionConfig(emitter, config);
-        emitter <<YAML::EndSeq;
+            printFunctionConfig(out, config);
     }
 
     if (!bblockConfigs_.isEmpty()) {
-        emitter <<YAML::Key <<"bblocks" <<YAML::Value;
-        emitter <<YAML::BeginSeq;
+        out <<"bblocks:\n";
         for (const BasicBlockConfig &config: bblockConfigs_.values())
-            printBasicBlockConfig(emitter, config);
-        emitter <<YAML::EndSeq;
+            printBasicBlockConfig(out, config);
     }
 
     if (!dblockConfigs_.isEmpty()) {
-        emitter <<YAML::Key <<"dblocks" <<YAML::Value;
-        emitter <<YAML::BeginSeq;
+        out <<"dblocks:\n";
         for (const DataBlockConfig &config: dblockConfigs_.values())
-            printDataBlockConfig(emitter, config);
-        emitter <<YAML::EndSeq;
+            printDataBlockConfig(out, config);
     }
     if (!addressConfigs_.isEmpty()) {
-        emitter <<YAML::Key <<"addresses" <<YAML::Value;
-        emitter <<YAML::BeginSeq;
+        out <<"addresses:\n";
         for (const AddressConfig &config: addressConfigs_.values())
-            printAddressConfig(emitter, config);
-        emitter <<YAML::EndSeq;
+            printAddressConfig(out, config);
     }
-
-    emitter <<YAML::EndMap;                             // end of "rose" map
-    emitter <<YAML::EndMap;                             // end of document containing "rose"
-
-    out <<emitter.c_str();
-#endif
 }
 
 BasicBlockConfig&

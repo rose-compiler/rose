@@ -33,6 +33,7 @@ libroseutil_la_SOURCES =			\
 	processSupport.C			\
 	rose_getline.C				\
 	rose_strtoull.C
+
 nodist_libroseutil_la_SOURCES = rose_paths.C
 libroseutil_la_LIBADD = \
 	stringSupport/libRoseStringSupport.la \

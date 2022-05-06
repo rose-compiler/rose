@@ -96,11 +96,8 @@ else()
   set(CMAKE_VERBOSE_MAKEFILE FALSE)
 endif()
 
-option(enable-cxx11-build "Should ROSE be built using C++11 standards?" OFF)
-if(enable-cxx11-build)
-  set(CMAKE_CXX_STANDARD 11)
-  set(CMAKE_CXX_STANDARD_REQUIRED ON)
-endif()
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 option(BUILD_SHARED_LIBS "Build all libraries shared" FALSE)
 
@@ -799,7 +796,6 @@ endif()
 
 set(LIBHARU_SOURCE_DIR ${ROSE_TOP_SRC_DIR}/src/3rdPartyLibraries/libharu-200910170404)
 set(LIBHARU_BINARY_DIR ${ROSE_TOP_BINARY_DIR}/src/3rdPartyLibraries/libharu-200910170404)
-
 
 ########################################################################################################################
 # Back-end compilers

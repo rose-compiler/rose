@@ -150,7 +150,11 @@ SgAsmJvmClassFile::parse(std::string fileName)
   /* Attributes */
   auto attributes = new SgAsmJvmAttributeTable(this);
   ROSE_ASSERT(attributes->get_parent());
+#if 0 // [Robb Matzke 2022-05-05]: should take no argument, and find the pool by AST traversal
   attributes->parse(pool);
+#else
+  ASSERT_not_implemented("[Robb Matzke 2022-05-05]: see binaryInstruction.C class SgAsmJvmAttributeTable");
+#endif
 
   auto offset = header->get_offset();
   if (1 != (header->get_end_offset() - offset)) {

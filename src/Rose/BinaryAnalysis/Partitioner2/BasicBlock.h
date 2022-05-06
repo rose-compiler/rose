@@ -430,9 +430,8 @@ public:
      *  When adding multiple instructions:
      *
      * @code
-     *  BasicBlock::Ptr bb = protoBlock->create(startingVa)
-     *      ->append(insn1)->append(p, insn2)->append(p, insn3)
-     *      ->freeze();
+     *  BasicBlock::Ptr bb = protoBlock->instance(startingVa, partitioner)
+     *      ->append(partitioner, insn1)->append(parititoner, insn2)->append(partitioner, insn3);
      * @endcode
      *
      *  Thread safety: This method is not thread safe. */

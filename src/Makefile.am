@@ -513,7 +513,8 @@ nobase_pkginclude_HEADERS=								\
 	Rose/StringUtility/NumberToString.h						\
 	Rose/StringUtility/Predicate.h							\
 	Rose/StringUtility/SplitJoin.h							\
-	Rose/StringUtility/StringToNumber.h
+	Rose/StringUtility/StringToNumber.h						\
+	Rose/Yaml.h
 
 
 ########################################################################################################################

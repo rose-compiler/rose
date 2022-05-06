@@ -69,4 +69,11 @@ run $(test) testSourceLocation
 run $(tool_compile_linkexe) testBitOps.C
 run $(test) testBitOps
 
+########################################################################################################################
+# YAML parsing
+########################################################################################################################
+
+run $(tool_compile_linkexe) testYaml.C
+run $(test) testYaml
+
 endif

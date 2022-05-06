@@ -25,7 +25,11 @@ SgAsmJvmMethod* SgAsmJvmMethod::parse(SgAsmJvmConstantPool* pool)
   Jvm::read_value(pool, p_descriptor_index);
 
   /* Method attributes */
+#if 0 // [Robb Matzke 2022-05-05]: should take no argument, and find the pool by AST traversal
   p_attribute_table->parse(pool);
+#else
+  ASSERT_not_implemented("[Robb Matzke 2022-05-05]: see binaryInstruction.C class SgAsmJvmAttributeTable");
+#endif
 
   return this;
 }

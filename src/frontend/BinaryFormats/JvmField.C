@@ -29,7 +29,12 @@ SgAsmJvmField* SgAsmJvmField::parse(SgAsmJvmConstantPool* pool)
   Jvm::read_value(pool, p_name_index);
   Jvm::read_value(pool, p_descriptor_index);
 
+#if 0 // [Robb Matzke 2022-05-05]: should take no argument, and find the pool by AST traversal
   p_attribute_table->parse(pool);
+#else
+  ASSERT_not_implemented("[Robb Matzke 2022-05-05]: see binaryInstruction.C class SgAsmJvmAttributeTable");
+#endif
+
   dump(stdout, "", 0);
 
   std::cout << "SgAsmJvmField::parse() exit ...\n";

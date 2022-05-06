@@ -983,7 +983,7 @@ MemoryMap::insertProcess(pid_t pid, Attach::Boolean doAttach) {
 void
 MemoryMap::linkTo(const MemoryMap::Ptr &other, const AddressIntervalSet &parts) {
     ASSERT_not_null(other);
-    for (const AddressInterval part: parts.intervals()) {
+    for (const AddressInterval &part: parts.intervals()) {
         for (auto node: other->findAll(part)) {
             const AddressInterval srcAddrs = node.key();
             const Segment &srcSegment = node.value();
