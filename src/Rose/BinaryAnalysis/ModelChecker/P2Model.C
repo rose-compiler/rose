@@ -1819,12 +1819,12 @@ SemanticCallbacks::parsePath(const Yaml::Node &root_, const std::string &sourceN
 
     for (size_t i = 0; i <root.size(); ++i) {
         const std::string where = "path vertex #" + boost::lexical_cast<std::string>(i) + " ";
-        if (!root[i].isMap() || root[i]["vertex-type"].isNone())
+        if (!root[i].isMap() || !root[i]["vertex-type"])
             throw ParseError(sourceName, where + "is not an object with a \"vertex-type\" field");
 
         std::string vertexType = root[i]["vertex-type"].as<std::string>();
         if ("basic-block" == vertexType) {
-            if (root[i]["vertex-address"].isNone())
+            if (!root[i]["vertex-address"])
                 throw ParseError(sourceName, where + "must have a \"vertex-address\" field");
             rose_addr_t va = root[i]["vertex-address"].as<rose_addr_t>();
             if (P2::BasicBlock::Ptr bb = partitioner().basicBlockExists(va)) {
@@ -1834,7 +1834,7 @@ SemanticCallbacks::parsePath(const Yaml::Node &root_, const std::string &sourceN
             }
 
         } else if ("instruction" == vertexType) {
-            if (root[i]["vertex-address"].isNone())
+            if (!root[i]["vertex-address"])
                 throw ParseError(sourceName, where + "must have a \"vertex-address\" field");
             rose_addr_t va = root[i]["vertex-address"].as<rose_addr_t>();
             if (SgAsmInstruction *insn = partitioner().instructionProvider()[va]) {
@@ -1844,7 +1844,7 @@ SemanticCallbacks::parsePath(const Yaml::Node &root_, const std::string &sourceN
             }
 
         } else if ("extern-function" == vertexType) {
-            if (root[i]["vertex-address"].isNone())
+            if (!root[i]["vertex-address"])
                 throw ParseError(sourceName, where + "must have a \"vertex-address\" field");
             rose_addr_t va = root[i]["vertex-address"].as<rose_addr_t>();
             if (P2::Function::Ptr function = partitioner().functionExists(va)) {

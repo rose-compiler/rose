@@ -235,7 +235,7 @@ Configuration::loadFromFile(const FileSystem::Path &fileName) {
         SAWYER_MESG(mlog[TRACE]) <<"loading configuration from " <<fileName <<"\n";
         Yaml::Node configFile;
         Yaml::Parse(configFile, fileName.string());
-        if (!configFile["config"].isNone() && !configFile["config"]["exports"].isNone()) {
+        if (configFile["config"] && configFile["config"]["exports"]) {
             // This is a CMU/SEI configuration file.
             Yaml::Node &exports = configFile["config"]["exports"];
             for (const auto &node: exports) {
@@ -244,7 +244,7 @@ Configuration::loadFromFile(const FileSystem::Path &fileName) {
 
                 // This non-idiomatic "if" condition is because Yaml::Node has no bool operator, so we have to negate a
                 // predicate in the negative (i.e., "is not nothing" instead of "is something".
-                if (!functionInfo["function"].isNone() && !functionInfo["function"]["delta"].isNone()) {
+                if (functionInfo["function"] && functionInfo["function"]["delta"]) {
                     FunctionConfig config(functionName);
                     static const int wordSize = 4;      // these files don't include popping the return address
                     int delta = functionInfo["function"]["delta"].as<int>() + wordSize;
@@ -255,26 +255,26 @@ Configuration::loadFromFile(const FileSystem::Path &fileName) {
                     }
                 }
             }
-        } else if (!configFile["rose"].isNone()) {
+        } else if (configFile["rose"]) {
             // This is a ROSE configuration file.
             Yaml::Node &functions = configFile["rose"]["functions"];
-            if (!functions.isNone()) {
+            if (functions) {
                 for (const auto &node: functions) {
                     Yaml::Node &function = node.second;
                     Sawyer::Optional<rose_addr_t> addr;
                     std::string name;
-                    if (!function["address"].isNone())
+                    if (function["address"])
                         addr = function["address"].as<rose_addr_t>();
-                    if (!function["name"].isNone())
+                    if (function["name"])
                         name = Modules::canonicalFunctionName(function["name"].as<std::string>());
                     FunctionConfig config(addr, name);
-                    if (!function["default_name"].isNone())
+                    if (function["default_name"])
                         config.defaultName(Modules::canonicalFunctionName(function["default_name"].as<std::string>()));
-                    if (!function["comment"].isNone())
+                    if (function["comment"])
                         config.comment(function["comment"].as<std::string>());
-                    if (!function["stack_delta"].isNone())
+                    if (function["stack_delta"])
                         config.stackDelta(function["stack_delta"].as<int64_t>());
-                    if (!function["may_return"].isNone()) {
+                    if (function["may_return"]) {
                         std::string val = function["may_return"].as<std::string>();
                         if (val == "true" || val == "yes" || val == "t" || val == "y" || val == "1") {
                             config.stackDelta(true);
@@ -282,7 +282,7 @@ Configuration::loadFromFile(const FileSystem::Path &fileName) {
                             config.stackDelta(false);
                         }
                     }
-                    if (!function["source_location"].isNone())
+                    if (function["source_location"])
                         config.sourceLocation(SourceLocation::parse(function["source_location"].as<std::string>()));
                     if (!insertConfiguration(config)) {
                         SAWYER_MESG(mlog[WARN]) <<"multiple configuration records for function "
@@ -292,27 +292,27 @@ Configuration::loadFromFile(const FileSystem::Path &fileName) {
                 }
             }
             Yaml::Node &bblocks = configFile["rose"]["bblocks"];
-            if (!bblocks.isNone()) {
+            if (bblocks) {
                 for (const auto &node: bblocks) {
                     Yaml::Node &bblock = node.second;
-                    if (bblock["address"].isNone()) {
+                    if (!bblock["address"]) {
                         SAWYER_MESG(mlog[ERROR]) <<"missing address for basic block configuration record\n";
                         continue;
                     }
                     rose_addr_t addr = bblock["address"].as<rose_addr_t>();
                     BasicBlockConfig config(addr);
-                    if (!bblock["comment"].isNone())
+                    if (bblock["comment"])
                         config.comment(bblock["comment"].as<std::string>());
-                    if (!bblock["final_instruction"].isNone())
+                    if (bblock["final_instruction"])
                         config.finalInstructionVa(bblock["final_instruction"].as<rose_addr_t>());
                     Yaml::Node &successors = bblock["successors"];
-                    if (!successors.isNone()) {
+                    if (successors) {
                         for (const auto &sucNode: successors) {
                             Yaml::Node &successor = sucNode.second;
                             config.successorVas().insert(successor.as<rose_addr_t>());
                         }
                     }
-                    if (!bblock["source_location"].isNone())
+                    if (bblock["source_location"])
                         config.sourceLocation(SourceLocation::parse(bblock["source_location"].as<std::string>()));
                     if (!insertConfiguration(config)) {
                         SAWYER_MESG(mlog[WARN]) <<"multiple configuration records for basic block "
@@ -321,20 +321,20 @@ Configuration::loadFromFile(const FileSystem::Path &fileName) {
                 }
             }
             Yaml::Node &dblocks = configFile["rose"]["dblocks"];
-            if (!dblocks.isNone()) {
+            if (dblocks) {
                 for (const auto &node: dblocks) {
                     Yaml::Node &dblock = node.second;
-                    if (dblock["address"].isNone()) {
+                    if (!dblock["address"]) {
                         SAWYER_MESG(mlog[ERROR]) <<"missing address for data block configuration record\n";
                         continue;
                     }
                     rose_addr_t addr = dblock["address"].as<rose_addr_t>();
                     DataBlockConfig config(addr);
-                    if (!dblock["name"].isNone())
+                    if (dblock["name"])
                         config.name(dblock["name"].as<std::string>());
-                    if (!dblock["comment"].isNone())
+                    if (dblock["comment"])
                         config.comment(dblock["comment"].as<std::string>());
-                    if (!dblock["source_location"].isNone())
+                    if (dblock["source_location"])
                         config.sourceLocation(SourceLocation::parse(dblock["source_location"].as<std::string>()));
                     if (!insertConfiguration(config)) {
                         SAWYER_MESG(mlog[WARN]) <<"multiple configuration records for data block "
@@ -343,20 +343,20 @@ Configuration::loadFromFile(const FileSystem::Path &fileName) {
                 }
             }
             Yaml::Node &addrs = configFile["rose"]["addresses"];
-            if (!addrs.isNone()) {
+            if (addrs) {
                 for (const auto &node: addrs) {
                     Yaml::Node &detail = node.second;
-                    if (detail["address"].isNone()) {
+                    if (!detail["address"]) {
                         SAWYER_MESG(mlog[ERROR]) <<"missing address for address configuration record\n";
                         continue;
                     }
                     rose_addr_t addr = detail["address"].as<rose_addr_t>();
                     AddressConfig config(addr);
-                    if (!detail["name"].isNone())
+                    if (detail["name"])
                         config.name(detail["name"].as<std::string>());
-                    if (!detail["comment"].isNone())
+                    if (detail["comment"])
                         config.comment(detail["comment"].as<std::string>());
-                    if (!detail["source_location"].isNone())
+                    if (detail["source_location"])
                         config.sourceLocation(SourceLocation::parse(detail["source_location"].as<std::string>()));
                     if (!insertConfiguration(config)) {
                         SAWYER_MESG(mlog[WARN]) <<"multiple configuration records for address "
