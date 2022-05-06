@@ -1123,7 +1123,7 @@ main(int argc, char *argv[]) {
             if (c.isDisplayed())
                 ++tableColumn;
         }
-        if (firstSorted) {
+        if (firstSorted && table.nRows() > 0) {
             ASSERT_require(*firstSorted <= lastSorted);
             ASSERT_require(lastSorted < table.nColumns());
             dittoize(table, *firstSorted, lastSorted+1);
