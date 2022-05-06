@@ -5,6 +5,7 @@ add_library(roseBinaryAnalysisInstructionSemantics2 OBJECT
   DataFlowSemantics.C
   DispatcherAarch32.C
   DispatcherAarch64.C
+  DispatcherCil.C
   DispatcherM68k.C
   DispatcherPowerpc.C
   DispatcherX86.C
@@ -38,6 +39,7 @@ install(FILES
   DataFlowSemantics.h
   DispatcherAarch32.h
   DispatcherAarch64.h
+  DispatcherCil.h
   DispatcherM68k.h
   DispatcherPowerpc.h
   DispatcherX86.h

@@ -56,6 +56,7 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/InstructionSemantics2/DataFlowSemantics.C			\
 	BinaryAnalysis/InstructionSemantics2/DispatcherAarch32.C			\
 	BinaryAnalysis/InstructionSemantics2/DispatcherAarch64.C			\
+	BinaryAnalysis/InstructionSemantics2/DispatcherCil.C				\
 	BinaryAnalysis/InstructionSemantics2/DispatcherM68k.C				\
 	BinaryAnalysis/InstructionSemantics2/DispatcherPowerpc.C			\
 	BinaryAnalysis/InstructionSemantics2/DispatcherX86.C				\
@@ -127,6 +128,7 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/Unparser/Aarch32.C						\
 	BinaryAnalysis/Unparser/Aarch64.C						\
 	BinaryAnalysis/Unparser/Base.C							\
+	BinaryAnalysis/Unparser/Cil.C							\
 	BinaryAnalysis/Unparser/Jvm.C							\
 	BinaryAnalysis/Unparser/M68k.C							\
 	BinaryAnalysis/Unparser/Mips.C							\
@@ -150,6 +152,7 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/Disassembler.C							\
 	BinaryAnalysis/DisassemblerAarch32.C						\
 	BinaryAnalysis/DisassemblerAarch64.C						\
+	BinaryAnalysis/DisassemblerCil.C						\
 	BinaryAnalysis/DisassemblerJvm.C						\
 	BinaryAnalysis/DisassemblerM68k.C						\
 	BinaryAnalysis/DisassemblerMips.C						\
