@@ -23,6 +23,7 @@ add_library(roseBinaryAnalysis OBJECT
   Disassembler.C
   DisassemblerAarch32.C
   DisassemblerAarch64.C
+  DisassemblerCil.C
   DisassemblerJvm.C
   DisassemblerM68k.C
   DisassemblerMips.C
@@ -82,6 +83,7 @@ install(FILES
   Disassembler.h
   DisassemblerAarch32.h
   DisassemblerAarch64.h
+  DisassemblerCil.h
   DisassemblerJvm.h
   DisassemblerM68k.h
   DisassemblerMips.h
