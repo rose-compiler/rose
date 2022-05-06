@@ -22,7 +22,8 @@ add_library(roseNamespace OBJECT
   FormattedTable.C
   Initialize.C
   Progress.C
-  SourceLocation.C)
+  SourceLocation.C
+  Yaml.C)
 
 add_dependencies(roseNamespace rosetta_generated)
 
@@ -45,5 +46,6 @@ install(FILES
   RecursionCounter.h
   SourceLocation.h
   StringUtility.h
+  Yaml.h
 
   DESTINATION ${INCLUDE_INSTALL_DIR}/Rose)

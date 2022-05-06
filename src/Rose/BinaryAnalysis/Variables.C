@@ -299,7 +299,7 @@ StackVariable::interval() const {
 // class method
 StackVariable::Boundary&
 StackVariable::insertBoundary(Boundaries &boundaries /*in,out*/, int64_t frameOffset, rose_addr_t insnVa) {
-    for (int i = 0; i < boundaries.size(); ++i) {
+    for (size_t i = 0; i < boundaries.size(); ++i) {
         if (boundaries[i].frameOffset == frameOffset) {
             boundaries[i].definingInsns.insert(insnVa);
             return boundaries[i];
@@ -992,7 +992,7 @@ VariableFinder::findStackVariables(const P2::Partitioner &partitioner, const P2:
     if (frame.minOffset && frame.maxOffset) {
         ASSERT_require(*frame.minOffset <= *frame.maxOffset);
         if (frame.size)
-            ASSERT_require(*frame.size == (*frame.maxOffset - *frame.minOffset) + 1);
+            ASSERT_require((long)*frame.size == (*frame.maxOffset - *frame.minOffset) + 1);
     }
     if (!frame.rule.empty())
         SAWYER_MESG(debug) <<"  stack frame rule is \"" <<StringUtility::cEscape(frame.rule) <<"\"\n";

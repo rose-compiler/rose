@@ -60,8 +60,8 @@ set(rose_util_src
   rose_getline.C
   processSupport.C
   rose_getline.C
-  rose_strtoull.C
-)
+  rose_strtoull.C)
+
 add_library(util_main OBJECT ${rose_util_src})
 add_dependencies(util_main generate_rosePublicConfig)
 

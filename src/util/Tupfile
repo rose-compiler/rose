@@ -4,9 +4,10 @@ include_rules
 : |> ^o GEN %o^ cp -p @(AUTOTOOLS_STASH)/src/util/rose_paths.C . |> rose_paths.C
 
 # Create a librose_util.so library, but also link the same objects into librose.so.
-run $(support_compile_linklib) -o rose_util --objects=OBJECTS \
-    compilationFileDatabase.C LinearCongruentialGenerator.C processSupport.C \
-    rose_getline.C rose_strtoull.C rose_paths.C
+SOURCES = compilationFileDatabase.C LinearCongruentialGenerator.C processSupport.C \
+          rose_getline.C rose_strtoull.C rose_paths.C
+
+run $(support_compile_linklib) -o rose_util --objects=OBJECTS $(SOURCES)
 : {OBJECTS} |> !for_librose |>
 
 run $(public_header) BitFlags.h BitOps.h Color.h compilationFileDatabase.h FileSystem.h FormatRestorer.h GraphUtility.h \
