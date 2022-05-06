@@ -365,6 +365,20 @@ public:
     bool isScalar() const { return IsScalar(); }
     /** @} */
 
+    /** Predicate to test whether node exists.
+     *
+     *  Returns true unless the node @ref isNone. */
+    explicit operator bool() const {
+        return !isNone();
+    }
+
+    /** Predicate to test whether node exists.
+     *
+     *  Returns true if node @ref isNone. */
+    bool operator!() const {
+        return isNone();
+    }
+
     /** Completely clear node. */
     void clear() { Clear(); }
 

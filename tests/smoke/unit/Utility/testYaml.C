@@ -82,8 +82,26 @@ testConversion() {
     }
 }
 
+static void
+testBoolean() {
+    Rose::Yaml::Node n1;
+
+    Rose::Yaml::Node n2;
+    Rose::Yaml::parse(n2,
+                      "a: foo\n"
+                      "b:\n"
+                      "  - one\n"
+                      "  - two\n");
+
+    if (n1) {
+        ASSERT_always_require(!n1);
+        ASSERT_not_reachable("prior assert should have failed");
+    }
+}
+
 int
 main() {
     testSequence();
     testConversion();
+    testBoolean();
 }
