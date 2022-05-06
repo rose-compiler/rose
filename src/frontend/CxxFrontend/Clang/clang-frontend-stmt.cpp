@@ -1807,6 +1807,12 @@ bool ClangToSageTranslator::VisitDefaultStmt(clang::DefaultStmt * default_stmt, 
 
     SgNode * tmp_stmt = Traverse(default_stmt->getSubStmt());
     SgStatement * stmt = isSgStatement(tmp_stmt);
+    SgExpression * expr = isSgExpression(tmp_stmt);
+    if (expr != NULL) {
+        stmt = SageBuilder::buildExprStatement(expr);
+        applySourceRange(stmt, default_stmt->getSubStmt()->getSourceRange());
+    }
+    ROSE_ASSERT(stmt != NULL);
 
     *node = SageBuilder::buildDefaultOptionStmt_nfi(stmt);
 
