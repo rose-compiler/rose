@@ -1051,3 +1051,11 @@ SgAsmCilClassLayout
 SgAsmCilConstant
 SgAsmCilCustomAttribute
 SgAsmCilDeclSecurity
+SgAsmInstructionList
+SgAsmCilEventMap
+SgAsmCilEvent
+SgAsmCilExportedType
+SgAsmCilField
+SgAsmCilFieldLayout
+SgAsmCilFieldMarshal
+SgAsmCilFieldRVA

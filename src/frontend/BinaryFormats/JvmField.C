@@ -17,7 +17,7 @@ SgAsmJvmField::SgAsmJvmField(SgAsmJvmFieldTable* table)
 
   set_parent(table);
   p_attribute_table = new SgAsmJvmAttributeTable(this);
-  ROSE_ASSERT(get_attribute_table()->get_parent());
+  ASSERT_not_null(get_attribute_table()->get_parent());
 }
 
 SgAsmJvmField* SgAsmJvmField::parse(SgAsmJvmConstantPool* pool)
