@@ -1288,7 +1288,7 @@ bool ClangToSageTranslator::VisitFunctionDecl(clang::FunctionDecl * function_dec
 
         sg_function_decl->set_definition(function_definition);
         function_definition->set_parent(sg_function_decl);
-
+/*
         SgFunctionDeclaration * first_decl;
         if (function_decl->isFirstDecl()) {
             SgFunctionParameterList * param_list_ = SageBuilder::buildFunctionParameterList_nfi();
@@ -1321,6 +1321,7 @@ bool ClangToSageTranslator::VisitFunctionDecl(clang::FunctionDecl * function_dec
 
         sg_function_decl->set_firstNondefiningDeclaration(first_decl);
         first_decl->set_definingDeclaration(sg_function_decl);
+*/
     }
     else {
         sg_function_decl = SageBuilder::buildNondefiningFunctionDeclaration(name, ret_type, param_list, NULL);
