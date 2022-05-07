@@ -149,12 +149,8 @@ SgAsmJvmClassFile::parse(std::string fileName)
   cout << "\n--- attributes ---\n";
   /* Attributes */
   auto attributes = new SgAsmJvmAttributeTable(this);
-  ROSE_ASSERT(attributes->get_parent());
-#if 0 // [Robb Matzke 2022-05-05]: should take no argument, and find the pool by AST traversal
+  ASSERT_not_null(attributes->get_parent());
   attributes->parse(pool);
-#else
-  ASSERT_not_implemented("[Robb Matzke 2022-05-05]: see binaryInstruction.C class SgAsmJvmAttributeTable");
-#endif
 
   auto offset = header->get_offset();
   if (1 != (header->get_end_offset() - offset)) {
@@ -173,7 +169,7 @@ SgAsmJvmClassFile::dump(FILE* f, const char* prefix, ssize_t idx) const
   cout << "############### HELP CLASSFILE DUMP ###########\n\n";
 
   auto pool{get_constant_pool()};
-  ROSE_ASSERT(pool);
+  ASSERT_not_null(pool);
 
 #if 1
   cout << "\n--- JVM class file ---\n";

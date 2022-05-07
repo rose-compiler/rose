@@ -42,7 +42,7 @@ SgAsmJvmAttribute* SgAsmJvmAttribute::create_attribute(SgAsmJvmConstantPool* poo
   cout << "of length " << attribute_length << endl;
 
   SgAsmGenericHeader* header{pool->get_header()};
-  ROSE_ASSERT(header);
+  ASSERT_not_null(header);
   cout << "--> header is " << header->class_name() << endl;
 
   rose_addr_t offset{header->get_offset()};
@@ -67,7 +67,6 @@ SgAsmJvmAttributeTable::SgAsmJvmAttributeTable(SgAsmJvmNode* parent)
   set_parent(parent);
 }
 
-#if 0 // [Robb Matzke 2022-05-05]: should take no argument, and find the pool by AST traversal
 SgAsmJvmAttributeTable* SgAsmJvmAttributeTable::parse(SgAsmJvmConstantPool* pool)
 {
   uint16_t attributes_count;
@@ -85,11 +84,6 @@ SgAsmJvmAttributeTable* SgAsmJvmAttributeTable::parse(SgAsmJvmConstantPool* pool
   }
   return this;
 }
-#else
-SgAsmJvmAttributeTable* SgAsmJvmAttributeTable::parse() {
-    ASSERT_not_implemented("[Robb Matzke 2022-05-05]: see binaryInstruction.C class SgAsmJvmAttributeTable");
-}
-#endif
 
 void SgAsmJvmAttributeTable::dump(FILE*f, const char* prefix, ssize_t idx) const
 {
@@ -143,12 +137,8 @@ SgAsmJvmAttribute* SgAsmJvmCodeAttribute::parse(SgAsmJvmConstantPool* pool)
 
   /* attribute table */
   p_attribute_table = new SgAsmJvmAttributeTable(this);
-  ROSE_ASSERT(p_attribute_table);
-#if 0 // [Robb Matzke 2022-05-05]: should take no argument, and find the pool by AST traversal
+  ASSERT_not_null(p_attribute_table);
   p_attribute_table->parse(pool);
-#else
-  ASSERT_not_implemented("[Robb Matzke 2022-05-05]: see binaryInstruction.C class SgAsmJvmAttributeTable");
-#endif
 
   dump(stdout, "", 0);
 
@@ -313,7 +303,7 @@ SgAsmJvmLineNumberTable::SgAsmJvmLineNumberTable(SgAsmJvmAttribute* parent)
 
 SgAsmJvmLineNumberTable* SgAsmJvmLineNumberTable::parse(SgAsmJvmConstantPool* pool)
 {
-  ROSE_ASSERT(get_parent());
+  ASSERT_not_null(get_parent());
   cout << "SgAsmJvmLineNumberTable::parse() ...\n";
 
   uint16_t line_number_table_length;
