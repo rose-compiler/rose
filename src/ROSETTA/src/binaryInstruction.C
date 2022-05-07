@@ -11432,11 +11432,9 @@ void Grammar::setUpBinaryInstructions() {
          *  Parses a JVM attribute table and constructs and parses all attributes reachable from the
          *  table section. Returns a pointer to this object.
          */
-#if 0 // [Robb Matzke 2022-05-05]: temporarily removed to prevent thousands of warning messages
+        using SgAsmGenericSection::parse; // Removes warning messages on some compilers
+                                          // ("hidden virtual overloaded function")
         SgAsmJvmAttributeTable* parse(SgAsmJvmConstantPool*);
-#else
-        SgAsmJvmAttributeTable* parse() override;
-#endif
 
         /** Print some debugging information */
         virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
