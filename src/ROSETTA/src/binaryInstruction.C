@@ -20912,6 +20912,408 @@ void Grammar::setUpBinaryInstructions() {
     };
 #endif
 
+    /*************************************************************************************************************************
+     *                                            CIL File (II.22.19)
+     *************************************************************************************************************************/
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmCilFile);
+    IS_SERIALIZABLE(AsmCilFile);
+
+#ifdef DOCUMENTATION
+    /** CIL File table.
+     *
+     */
+    class SgAsmCilFile: public SgAsmCilNode {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Flags.
+         *
+         *  A 4-byte bitmask of type FileAttributes (II.23.1.6)
+         *
+         * @{ */
+        uint32_t get_Flags() const;
+        void set_Flags(uint32_t);
+        /** @} */
+#else
+        AsmCilFile.setDataPrototype("uint32_t", "Flags", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                    BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Name.
+         *
+         *  An index into the String heap.
+         *
+         * @{ */
+        uint32_t get_Name() const;
+        void set_Name(uint32_t);
+        /** @} */
+#else
+        AsmCilFile.setDataPrototype("uint32_t", "Name", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                    BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: HashValue.
+         *
+         *  An index into the Blob heap.
+         *
+         * @{ */
+        uint32_t get_HashValue() const;
+        void set_HashValue(uint32_t);
+        /** @} */
+#else
+        AsmCilFile.setDataPrototype("uint32_t", "HashValue", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                    BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmCilFile);
+#if defined(SgAsmCilFile_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
+            s & BOOST_SERIALIZATION_NVP(p_Flags);
+            s & BOOST_SERIALIZATION_NVP(p_Name);
+            s & BOOST_SERIALIZATION_NVP(p_HashValue);
+        }
+#endif
+
+#endif // SgAsmCilFile_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+    /*************************************************************************************************************************
+     *                                            CIL GenericParam (II.22.20)
+     *************************************************************************************************************************/
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmCilGenericParam);
+    IS_SERIALIZABLE(AsmCilGenericParam);
+
+#ifdef DOCUMENTATION
+    /** CIL GenericParam table.
+     *
+     */
+    class SgAsmCilGenericParam: public SgAsmCilNode {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Number.
+         *
+         *  The 2-byte index of the generic parameter, numbered left-to-right, from zero.
+         *
+         * @{ */
+        uint16_t get_Number() const;
+        void set_Number(uint16_t);
+        /** @} */
+#else
+        AsmCilGenericParam.setDataPrototype("uint16_t", "Number", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Flags.
+         *
+         *  A 2-byte bitmask of type GenericParamAttributes (II.23.1.7)
+         *
+         * @{ */
+        uint16_t get_Flags() const;
+        void set_Flags(uint16_t);
+        /** @} */
+#else
+        AsmCilGenericParam.setDataPrototype("uint16_t", "Flags", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Owner.
+         *
+         *  An index into the TypeDef or MethodDef table, specifying the Type or Method
+         *  to which this generic parameter applies.
+         *
+         * @{ */
+        uint32_t get_Owner() const;
+        void set_Owner(uint32_t);
+        /** @} */
+#else
+        AsmCilGenericParam.setDataPrototype("uint32_t", "Owner", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Name.
+         *
+         *  A non-null index into the String heap, giving the name for the generic
+         *  parameter.
+         *
+         * @{ */
+        uint32_t get_Name() const;
+        void set_Name(uint32_t);
+        /** @} */
+#else
+        AsmCilGenericParam.setDataPrototype("uint32_t", "Name", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmCilGenericParam);
+#if defined(SgAsmCilGenericParam_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
+            s & BOOST_SERIALIZATION_NVP(p_Number);
+            s & BOOST_SERIALIZATION_NVP(p_Flags);
+            s & BOOST_SERIALIZATION_NVP(p_Owner);
+            s & BOOST_SERIALIZATION_NVP(p_Name);
+        }
+#endif
+
+#endif // SgAsmCilGenericParam_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+    /*************************************************************************************************************************
+     *                                          CIL GenericParamConstraint (II.22.21)
+     *************************************************************************************************************************/
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmCilGenericParamConstraint);
+    IS_SERIALIZABLE(AsmCilGenericParamConstraint);
+
+#ifdef DOCUMENTATION
+    /** CIL GenericParamConstraint table.
+     *
+     */
+    class SgAsmCilGenericParamConstraint: public SgAsmCilNode {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Owner.
+         *
+         *  An index into the GenericParam table.
+         *
+         * @{ */
+        uint32_t get_Owner() const;
+        void set_Owner(uint32_t);
+        /** @} */
+#else
+        AsmCilGenericParamConstraint.setDataPrototype("uint32_t", "Owner", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                                      BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Constraint.
+         *
+         *  An index into the TypeDef, TypeRef, or TypeSpec tables.
+         *
+         * @{ */
+        uint32_t get_Constraint() const;
+        void set_Constraint(uint32_t);
+        /** @} */
+#else
+        AsmCilGenericParamConstraint.setDataPrototype("uint32_t", "Constraint", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                                      BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmCilGenericParamConstraint);
+#if defined(SgAsmCilGenericParamConstraint_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
+            s & BOOST_SERIALIZATION_NVP(p_Owner);
+            s & BOOST_SERIALIZATION_NVP(p_Constraint);
+        }
+#endif
+
+#endif // SgAsmCilGenericParamConstraint_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+    /*************************************************************************************************************************
+     *                                            CIL ImplMap (II.22.22)
+     *************************************************************************************************************************/
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmCilImplMap);
+    IS_SERIALIZABLE(AsmCilImplMap);
+
+#ifdef DOCUMENTATION
+    /** CIL ImplMap table.
+     *
+     */
+    class SgAsmCilImplMap: public SgAsmCilNode {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: MappingFlags.
+         *
+         *  A 2-byte bitmask of type PInvokeAttributes (II.23.1.8)
+         *
+         * @{ */
+        uint16_t get_MappingFlags() const;
+        void set_MappingFlags(uint16_t);
+        /** @} */
+#else
+        AsmCilImplMap.setDataPrototype("uint16_t", "MappingFlags", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                       BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: MemberForwarded.
+         *
+         *  An index into the MethodDef table.
+         *
+         * @{ */
+        uint32_t get_MemberForwarded() const;
+        void set_MemberForwarded(uint32_t);
+        /** @} */
+#else
+        AsmCilImplMap.setDataPrototype("uint32_t", "MemberForwarded", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                       BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: ImportName.
+         *
+         *  An index into the String heap.
+         *
+         * @{ */
+        uint32_t get_ImportName() const;
+        void set_ImportName(uint32_t);
+        /** @} */
+#else
+        AsmCilImplMap.setDataPrototype("uint32_t", "ImportName", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                       BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: ImportScope.
+         *
+         *  An index into the ModuleRef table.
+         *
+         * @{ */
+        uint32_t get_ImportScope() const;
+        void set_ImportScope(uint32_t);
+        /** @} */
+#else
+        AsmCilImplMap.setDataPrototype("uint32_t", "ImportScope", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                       BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmCilImplMap);
+#if defined(SgAsmCilImplMap_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
+            s & BOOST_SERIALIZATION_NVP(p_MappingFlags);
+            s & BOOST_SERIALIZATION_NVP(p_MemberForwarded);
+            s & BOOST_SERIALIZATION_NVP(p_ImportName);
+            s & BOOST_SERIALIZATION_NVP(p_ImportScope);
+        }
+#endif
+
+#endif // SgAsmCilImplMap_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+    /*************************************************************************************************************************
+     *                                            CIL InterfaceImpl (II.22.23)
+     *************************************************************************************************************************/
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmCilInterfaceImpl);
+    IS_SERIALIZABLE(AsmCilInterfaceImpl);
+
+#ifdef DOCUMENTATION
+    /** CIL InterfaceImpl table.
+     *
+     */
+    class SgAsmCilInterfaceImpl: public SgAsmCilNode {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Class.
+         *
+         *  An index into the TypeDef table.
+         *
+         * @{ */
+        uint32_t get_Class() const;
+        void set_Class(uint32_t);
+        /** @} */
+#else
+        AsmCilInterfaceImpl.setDataPrototype("uint32_t", "Class", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                             BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Interface.
+         *
+         *  An index into the TypeDef, TypeRef, or TypeSpec table.
+         *
+         * @{ */
+        uint32_t get_Interface() const;
+        void set_Interface(uint32_t);
+        /** @} */
+#else
+        AsmCilInterfaceImpl.setDataPrototype("uint32_t", "Interface", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                             BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmCilInterfaceImpl);
+#if defined(SgAsmCilInterfaceImpl_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
+            s & BOOST_SERIALIZATION_NVP(p_Class);
+            s & BOOST_SERIALIZATION_NVP(p_Interface);
+        }
+#endif
+
+#endif // SgAsmCilInterfaceImpl_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /*************************************************************************************************************************
@@ -20923,7 +21325,9 @@ void Grammar::setUpBinaryInstructions() {
                           AsmCilAssemblyRef | AsmCilAssemblyRefOS | AsmCilAssemblyRefProcessor |
                           AsmCilClassLayout | AsmCilConstant | AsmCilCustomAttribute |
                           AsmCilDeclSecurity | AsmCilEventMap | AsmCilEvent | AsmCilExportedType |
-                          AsmCilField | AsmCilFieldLayout | AsmCilFieldMarshal | AsmCilFieldRVA,
+                          AsmCilField | AsmCilFieldLayout | AsmCilFieldMarshal | AsmCilFieldRVA |
+                          AsmCilFile | AsmCilGenericParam | AsmCilGenericParamConstraint | AsmCilImplMap |
+                          AsmCilInterfaceImpl,
                           "AsmCilNode", "AsmCilNodeTag", false);
     AsmCilNode.setCppCondition("!defined(DOCUMENTATION)");
     IS_SERIALIZABLE(AsmCilNode);
