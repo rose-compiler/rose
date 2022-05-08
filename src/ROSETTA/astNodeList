@@ -1059,3 +1059,8 @@ SgAsmCilField
 SgAsmCilFieldLayout
 SgAsmCilFieldMarshal
 SgAsmCilFieldRVA
+SgAsmCilFile
+SgAsmCilGenericParam
+SgAsmCilGenericParamConstraint
+SgAsmCilImplMap
+SgAsmCilInterfaceImpl
