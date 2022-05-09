@@ -99,9 +99,31 @@ testBoolean() {
     }
 }
 
+static void
+testConst() {
+    Rose::Yaml::Node root_rw;
+    Rose::Yaml::parse(root_rw,
+                      "a: foo\n"
+                      "b:\n"
+                      "  - zero\n"
+                      "  - one\n");
+    const Rose::Yaml::Node &root = root_rw;
+
+    ASSERT_always_require(root["a"].as<std::string>() == "foo");
+    ASSERT_always_require(root["c"].isNone());
+    ASSERT_always_require(root["c"].isNone());          // not created
+
+    const auto &b = root["b"];
+    ASSERT_always_require(Rose::Yaml::Node::SequenceType == b.type());
+    ASSERT_always_require(b[0].as<std::string>() == "zero");
+    ASSERT_always_require(b[2].isNone());
+    ASSERT_always_require(b[2].isNone());
+}
+
 int
 main() {
     testSequence();
     testConversion();
     testBoolean();
+    testConst();
 }

@@ -1808,11 +1808,8 @@ SemanticCallbacks::parsePath(const YAML::Node &root, const std::string &sourceNa
 #endif
 
 std::list<ExecutionUnit::Ptr>
-SemanticCallbacks::parsePath(const Yaml::Node &root_, const std::string &sourceName) {
+SemanticCallbacks::parsePath(const Yaml::Node &root, const std::string &sourceName) {
     std::list<ExecutionUnit::Ptr> retval;
-
-    // Mini-yaml doesn't have const versions of some read-only pure functions, thus this cast.
-    Yaml::Node &root = *const_cast<Yaml::Node*>(&root_);
 
     if (!root.isSequence() || root.size() == 0)
         throw ParseError(sourceName, "a path must be a non-empty sequence of path nodes");
