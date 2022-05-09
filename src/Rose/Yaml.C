@@ -94,7 +94,7 @@ Exception::eType Exception::Type() const {
     return m_Type;
 }
 
-const char * Exception::Message() const {
+const char* Exception::Message() const {
     return what();
 }
 
@@ -118,7 +118,9 @@ public:
     virtual bool SetData(const std::string &data) = 0;
     virtual size_t GetSize() const = 0;
     virtual Node* GetNode(const size_t index) = 0;
+    virtual Node* GetNode(const size_t index) const = 0;
     virtual Node* GetNode(const std::string &key) = 0;
+    virtual Node* GetNode(const std::string &key) const = 0;
     virtual Node* Insert(const size_t index) = 0;
     virtual Node* PushFront() = 0;
     virtual Node* PushBack() = 0;
@@ -155,7 +157,16 @@ public:
         return nullptr;
     }
 
-    virtual Node* GetNode(const std::string & key) {
+    virtual Node* GetNode(const size_t index) const {
+        auto it = m_Sequence.find(index);
+        return it != m_Sequence.end() ? it->second : nullptr;
+    }
+
+    virtual Node* GetNode(const std::string&) {
+        return nullptr;
+    }
+
+    virtual Node* GetNode(const std::string&) const {
         return nullptr;
     }
 
@@ -177,7 +188,7 @@ public:
         auto it = m_Sequence.cbegin();
         while (it != m_Sequence.cend()) {
             m_Sequence[it->first+1] = it->second;
-            if(it->first == index)
+            if (it->first == index)
                 break;
         }
 
@@ -216,7 +227,7 @@ public:
         m_Sequence.erase(index);
     }
 
-    virtual void Erase(const std::string & key) {}
+    virtual void Erase(const std::string &key) {}
 };
 
 class MapImp: public TypeImp {
@@ -241,7 +252,11 @@ public:
         return m_Map.size();
     }
 
-    virtual Node* GetNode(const size_t index) {
+    virtual Node* GetNode(const size_t) {
+        return nullptr;
+    }
+
+    virtual Node* GetNode(const size_t) const {
         return nullptr;
     }
 
@@ -253,6 +268,11 @@ public:
             return pNode;
         }
         return it->second;
+    }
+
+    virtual Node* GetNode(const std::string &key) const {
+        auto it = m_Map.find(key);
+        return it != m_Map.end() ? it->second : nullptr;
     }
 
     virtual Node* Insert(const size_t index) {
@@ -298,11 +318,19 @@ public:
         return 0;
     }
 
-    virtual Node* GetNode(const size_t index) {
+    virtual Node* GetNode(const size_t) {
         return nullptr;
     }
 
-    virtual Node* GetNode(const std::string &key) {
+    virtual Node* GetNode(const size_t) const {
+        return nullptr;
+    }
+
+    virtual Node* GetNode(const std::string&) {
+        return nullptr;
+    }
+
+    virtual Node* GetNode(const std::string&) const {
         return nullptr;
     }
 
@@ -350,7 +378,7 @@ public:
 
     void InitSequence() {
         if (m_Type != Node::SequenceType || m_pImp == nullptr) {
-            if(m_pImp)
+            if (m_pImp)
                 delete m_pImp;
             m_pImp = new SequenceImp;
             m_Type = Node::SequenceType;
@@ -359,7 +387,7 @@ public:
 
     void InitMap() {
         if (m_Type != Node::MapType || m_pImp == nullptr) {
-            if(m_pImp)
+            if (m_pImp)
                 delete m_pImp;
             m_pImp = new MapImp;
             m_Type = Node::MapType;
@@ -368,7 +396,7 @@ public:
 
     void InitScalar() {
         if (m_Type != Node::ScalarType || m_pImp == nullptr) {
-            if(m_pImp)
+            if (m_pImp)
                 delete m_pImp;
             m_pImp = new ScalarImp;
             m_Type = Node::ScalarType;
@@ -490,7 +518,7 @@ public:
         m_Iterator = pMapImp->m_Map.end();
     }
 
-    void Copy(const MapConstIteratorImp & it) {
+    void Copy(const MapConstIteratorImp &it) {
         m_Iterator = it.m_Iterator;
     }
 };
@@ -987,7 +1015,7 @@ Node::PushBack() {
 Node&
 Node::operator[](const size_t index) {
     NODE_IMP->InitSequence();
-    Node * pNode = TYPE_IMP->GetNode(index);
+    Node *pNode = TYPE_IMP->GetNode(index);
     if (pNode == nullptr) {
         g_NoneNode.Clear();
         return g_NoneNode;
@@ -996,9 +1024,29 @@ Node::operator[](const size_t index) {
 }
 
 Node&
+Node::operator[](const size_t index) const {
+    if (Node::SequenceType == Type() && m_pImp) {
+        if (Node *pNode = TYPE_IMP->GetNode(index))
+            return *pNode;
+    }
+    g_NoneNode.Clear();
+    return g_NoneNode;
+}
+
+Node&
 Node::operator[](const std::string &key) {
     NODE_IMP->InitMap();
     return *TYPE_IMP->GetNode(key);
+}
+
+Node&
+Node::operator[](const std::string &key) const {
+    if (Node::MapType == Type() && m_pImp) {
+        if (Node *pNode = TYPE_IMP->GetNode(key))
+            return *pNode;
+    }
+    g_NoneNode.Clear();
+    return g_NoneNode;
 }
 
 void
@@ -1040,7 +1088,7 @@ Iterator
 Node::Begin() {
     Iterator it;
     if (TYPE_IMP != nullptr) {
-        IteratorImp * pItImp = nullptr;
+        IteratorImp *pItImp = nullptr;
         switch (NODE_IMP->m_Type) {
             case Node::SequenceType:
                 it.m_Type = Iterator::SequenceType;
@@ -1064,7 +1112,7 @@ ConstIterator
 Node::Begin() const {
     ConstIterator it;
     if (TYPE_IMP != nullptr) {
-        IteratorImp * pItImp = nullptr;
+        IteratorImp *pItImp = nullptr;
         switch (NODE_IMP->m_Type) {
             case Node::SequenceType:
                 it.m_Type = ConstIterator::SequenceType;
@@ -1088,7 +1136,7 @@ Iterator
 Node::End() {
     Iterator it;
     if (TYPE_IMP != nullptr) {
-        IteratorImp * pItImp = nullptr;
+        IteratorImp *pItImp = nullptr;
         switch (NODE_IMP->m_Type) {
             case Node::SequenceType:
                 it.m_Type = Iterator::SequenceType;
@@ -1112,7 +1160,7 @@ ConstIterator
 Node::End() const {
     ConstIterator it;
     if (TYPE_IMP != nullptr) {
-        IteratorImp * pItImp = nullptr;
+        IteratorImp *pItImp = nullptr;
         switch (NODE_IMP->m_Type) {
             case Node::SequenceType:
                 it.m_Type = ConstIterator::SequenceType;
@@ -1152,7 +1200,7 @@ public:
     size_t          Offset;                             // Offset to first character in data.
     Node::eType     Type;                               // Type of line.
     unsigned char   Flags;                              // Flags of line.
-    ReaderLine *    NextLine;                           // Pointer to next line.
+    ReaderLine      *NextLine;                          // Pointer to next line.
 
 public:
     ReaderLine(const std::string &data = "", const size_t no = 0, const size_t offset = 0, const Node::eType type = Node::None,
@@ -1184,7 +1232,7 @@ public:
     }
 
     bool GetFlag(const eFlag flag) const {
-        return Flags & FlagMask[static_cast<size_t>(flag)];
+        return Flags &FlagMask[static_cast<size_t>(flag)];
     }
 
     // Copy and replace scalar flags from another ReaderLine.
@@ -1221,7 +1269,7 @@ public:
             PostProcessLines();
             //Print();
             ParseRoot(root);
-        } catch(Exception e) {
+        } catch (Exception e) {
             root.Clear();
             throw;
         }
@@ -1428,7 +1476,7 @@ private:
         unsigned char dummyBlockFlags = 0;
         if (IsBlockScalar(value, pLine->No, dummyBlockFlags) == true)
             newLineOffset = pLine->Offset;
-        ReaderLine * pNewLine = new ReaderLine(value, pLine->No, newLineOffset, Node::ScalarType);
+        ReaderLine *pNewLine = new ReaderLine(value, pLine->No, newLineOffset, Node::ScalarType);
         it = m_Lines.insert(it, pNewLine);
 
         // Return false in order to handle next line(scalar value).
@@ -1454,7 +1502,7 @@ private:
         while (it != m_Lines.end()) {
             pLine = *it;
             pLine->Type = Node::ScalarType;
-            if(pLine->Data.size()) {
+            if (pLine->Data.size()) {
                 if (pLine->Offset <= parentOffset) {
                     break;
                 } else {
@@ -1499,7 +1547,7 @@ private:
     void ParseSequence(Node &node, std::list<ReaderLine*>::iterator& it) {
         ReaderLine *pNextLine = nullptr;
         while (it != m_Lines.end()) {
-            ReaderLine * pLine = *it;
+            ReaderLine *pLine = *it;
             Node &childNode = node.PushBack();
 
             // Move to next line, error check.
@@ -1832,7 +1880,7 @@ parse(Node &root, std::iostream &stream) {
 
 void
 Parse(Node &root, std::iostream &stream) {
-    ParseImp * pImp = nullptr;
+    ParseImp *pImp = nullptr;
 
     try {
         pImp = new ParseImp;
@@ -1990,7 +2038,7 @@ SerializeLoop(const Node &node, std::iostream &stream, bool useLevel, const size
             }
 
             // Block scalar
-            const std::string & lastLine = lines.back();
+            const std::string &lastLine = lines.back();
             const bool endNewline = lastLine.size() == 0;
             if (endNewline)
                 lines.pop_back();
@@ -2003,7 +2051,7 @@ SerializeLoop(const Node &node, std::iostream &stream, bool useLevel, const size
                 const std::string frontLine = lines.front();
                 if (config.ScalarMaxLength == 0 || lines.front().size() <= config.ScalarMaxLength ||
                     LineFolding(frontLine, lines, config.ScalarMaxLength) == 1) {
-                    if(useLevel)
+                    if (useLevel)
                         stream << std::string(level, ' ');
 
                     if (ShouldBeCited(value)) {
@@ -2077,7 +2125,7 @@ FindQuote(const std::string &input, size_t &start, size_t &end, size_t searchPos
     size_t qPos = searchPos;
     bool foundStart = false;
 
-    while( qPos != std::string::npos) {
+    while (qPos != std::string::npos) {
         // Find first quote.
         qPos = input.find_first_of("\"'", qPos);
         if (qPos == std::string::npos)
@@ -2085,7 +2133,7 @@ FindQuote(const std::string &input, size_t &start, size_t &end, size_t searchPos
 
         const char token = input[qPos];
         if (token == '"' && (qPos == 0 || input[qPos-1] != '\\')) {
-            if(foundStart == false) {
+            if (foundStart == false) {
                 // Found start quote.
                 start = qPos;
                 foundStart = true;
@@ -2174,7 +2222,7 @@ ValidateQuote(const std::string &input) {
 
         const char foundToken = input[searchPos];
         if (input[searchPos] == '\"' || input[searchPos] == '\'') {
-            if(token == 0 && input[searchPos-1] != '\\')
+            if (token == 0 && input[searchPos-1] != '\\')
                 return false;
 #if 0
             if (foundToken == token) {
@@ -2206,14 +2254,14 @@ CopyNode(const Node &from, Node &to) {
     switch (type) {
         case Node::SequenceType:
             for (auto it = from.Begin(); it != from.End(); it++) {
-                const Node & currentNode = (*it).second;
+                const Node &currentNode = (*it).second;
                 Node &newNode = to.PushBack();
                 CopyNode(currentNode, newNode);
             }
             break;
         case Node::MapType:
             for (auto it = from.Begin(); it != from.End(); it++) {
-                const Node & currentNode = (*it).second;
+                const Node &currentNode = (*it).second;
                 Node &newNode = to[(*it).first];
                 CopyNode(currentNode, newNode);
             }

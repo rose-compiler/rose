@@ -71,7 +71,7 @@ struct StringConverter {
         return boost::lexical_cast<T>(data);
     }
 
-    static T Get(const std::string & data, const T & defaultValue) {
+    static T Get(const std::string &data, const T &defaultValue) {
         T result{};
         return boost::conversion::try_lexical_convert(data, result) ? result : defaultValue;
     }
@@ -97,7 +97,7 @@ struct StringConverter<T, typename std::enable_if<std::is_integral<T>::value>::t
         }
     }
 
-    static T Get(const std::string & data, const T & defaultValue) {
+    static T Get(const std::string &data, const T &defaultValue) {
         try {
             return Get(data);
         } catch (...) {
@@ -108,11 +108,11 @@ struct StringConverter<T, typename std::enable_if<std::is_integral<T>::value>::t
 
 template<>
 struct StringConverter<std::string> {
-    static std::string Get(const std::string & data) {
+    static std::string Get(const std::string &data) {
         return data;
     }
 
-    static std::string Get(const std::string & data, const std::string & defaultValue) {
+    static std::string Get(const std::string &data, const std::string &defaultValue) {
         if (data.size() == 0) {
             return defaultValue;
         }
@@ -122,7 +122,7 @@ struct StringConverter<std::string> {
 
 template<>
 struct StringConverter<bool> {
-    static bool Get(const std::string & data) {
+    static bool Get(const std::string &data) {
         std::string tmpData = data;
         std::transform(tmpData.begin(), tmpData.end(), tmpData.begin(), ::tolower);
         if (tmpData == "true" || tmpData == "yes" || tmpData == "1") {
@@ -132,7 +132,7 @@ struct StringConverter<bool> {
         return false;
     }
 
-    static bool Get(const std::string & data, const bool & defaultValue) {
+    static bool Get(const std::string &data, const bool &defaultValue) {
         if (data.size() == 0) {
             return defaultValue;
         }
@@ -161,13 +161,13 @@ public:
     *
     * @param message    Exception message.
     * @param type       Type of exception. */
-    Exception(const std::string & message, const eType type);
+    Exception(const std::string &message, const eType type);
 
     /** Get type of exception. */
     eType Type() const;
 
     /** Get message of exception. */
-    const char * Message() const;
+    const char* Message() const;
 
 private:
     eType m_Type;                                       // Type of exception.
@@ -182,7 +182,7 @@ public:
     /** Constructor.
     *
     * @param message Exception message. */
-    InternalException(const std::string & message);
+    InternalException(const std::string &message);
 };
 
 
@@ -194,7 +194,7 @@ public:
     /** Constructor.
      *
      * @param message Exception message. */
-    ParsingException(const std::string & message);
+    ParsingException(const std::string &message);
 };
 
 
@@ -206,7 +206,7 @@ public:
     /** Constructor.
      *
      * @param message Exception message. */
-    OperationException(const std::string & message);
+    OperationException(const std::string &message);
 };
 
 
@@ -222,7 +222,7 @@ public:
     Iterator(const Iterator&);
 
     /** Assignment operator. */
-    Iterator & operator=(const Iterator&);
+    Iterator& operator=(const Iterator&);
 
     /** Destructor. */
     ~Iterator();
@@ -263,7 +263,7 @@ private:
     };
 
     eType   m_Type;                                     // Type of iterator.
-    void *  m_pImp;                                     // Implementation of iterator class.
+    void    *m_pImp;                                    // Implementation of iterator class.
 };
 
 
@@ -279,7 +279,7 @@ public:
     ConstIterator(const ConstIterator&);
 
     /** Assignment operator. */
-    ConstIterator & operator=(const ConstIterator&);
+    ConstIterator& operator=(const ConstIterator&);
 
     /** Destructor. */
     ~ConstIterator();
@@ -320,7 +320,7 @@ private:
     };
 
     eType   m_Type;                                     // Type of iterator.
-    void *  m_pImp;                                     // Implementation of constant iterator class.
+    void    *m_pImp;                                    // Implementation of constant iterator class.
 };
 
 
@@ -341,15 +341,15 @@ public:
     Node();
 
     /** Copy constructor. */
-    Node(const Node & node);
+    Node(const Node &node);
 
     /** Assignment constructors.
      *
      *  Converts node to scalar type if needed.
      *
      *  @{ */
-    Node(const std::string & value);
-    Node(const char * value);
+    Node(const std::string &value);
+    Node(const char* value);
     /** @} */
 
     /** Destructor. */
@@ -391,7 +391,7 @@ public:
     }
 
     template<typename T>
-    T as(const T & defaultValue) const {
+    T as(const T &defaultValue) const {
         return impl::StringConverter<T>::Get(AsString(), defaultValue);
     }
     /** @} */
@@ -423,11 +423,13 @@ public:
      *  Converts node to sequence/map type if needed.
      *
      * @param index  Sequence index. Returns None type Node if index is unknown.
-     * @param key    Map key. Creates a new node if key is unknown.
+     * @param key    Map key. Creates a new node if key is unknown unless this is const.
      *
      * @{ */
     Node& operator[](const size_t index);
+    Node& operator[](const size_t index) const;
     Node& operator[](const std::string& key);
+    Node& operator[](const std::string& key) const;
     /** @} */
 
     /** Erase item.
@@ -469,11 +471,11 @@ public:
     bool IsScalar() const;
     void Clear();
     size_t Size() const;
-    Node & Insert(const size_t index);
-    Node & PushFront();
-    Node & PushBack();
+    Node& Insert(const size_t index);
+    Node& PushFront();
+    Node& PushBack();
     void Erase(const size_t index);
-    void Erase(const std::string & key);
+    void Erase(const std::string &key);
     Iterator Begin();
     ConstIterator Begin() const;
     Iterator End();
@@ -485,17 +487,17 @@ public:
     }
 
     template<typename T>
-    T As(const T & defaultValue) const {
+    T As(const T &defaultValue) const {
         return impl::StringConverter<T>::Get(AsString(), defaultValue);
     }
 
 
 private:
     // Get as string. If type is scalar, else empty.
-    const std::string & AsString() const;
+    const std::string& AsString() const;
 
      // Implementation of node class.
-    void * m_pImp;
+    void *m_pImp;
 };
 
 
@@ -552,9 +554,9 @@ struct SerializeConfig {
 *                           If config is invalid.
 *
 * @{ */
-void Serialize(const Node & root, const char * filename, const SerializeConfig & config = {2, 64, false, false});
-void Serialize(const Node & root, std::iostream & stream, const SerializeConfig & config = {2, 64, false, false});
-void Serialize(const Node & root, std::string & string, const SerializeConfig & config = {2, 64, false, false});
+void Serialize(const Node &root, const char *filename, const SerializeConfig &config = {2, 64, false, false});
+void Serialize(const Node &root, std::iostream &stream, const SerializeConfig &config = {2, 64, false, false});
+void Serialize(const Node &root, std::string &string, const SerializeConfig &config = {2, 64, false, false});
 /** @} */
 
 } // namespace
