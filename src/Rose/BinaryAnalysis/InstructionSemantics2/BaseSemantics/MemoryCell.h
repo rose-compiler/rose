@@ -141,32 +141,18 @@ public:
      *
      *  This property holds the address of the memory cell. The address must not be null.
      *
-     *  This method should not be reimplemented (yet) in subclasses. Instead, it calls @ref get_address and @ref set_address to
-     *  do its work.
-     *
      * @{ */
-    SValuePtr address() const /*final*/ {
-        return get_address();
-    }
-    void address(const SValuePtr &addr) /*final*/ {
-        set_address(addr);
-    }
+    virtual SValuePtr address() const;
+    virtual void address(const SValuePtr &addr);
     /** @} */
 
     /** Property: Memory cell value.
      *
      *  This property holds the value of the memory cell. It must not be null.
      *
-     *  This method should not be reimplemented (yet) in subclasses. Instead, it calls @ref get_value and @ref set_value to do
-     *  its work.
-     *
      *  @{ */
-    SValuePtr value() const /*final*/ {
-        return get_value();
-    }
-    void value(const SValuePtr &v) /*final*/ {
-        set_value(v);
-    }
+    virtual SValuePtr value() const;
+    virtual void value(const SValuePtr &v);
     /** @} */
 
     /** Get writer information.
@@ -237,35 +223,16 @@ public:
      *
      *  Two cells may alias one another if it is possible that their addresses cause them to overlap.  For cells containing
      *  one-byte values, aliasing may occur if their two addresses may be equal; multi-byte cells will need to check ranges of
-     *  addresses.
-     *
-     *  For now, this just calls the old virtual @ref may_alias method, but eventually we'll remove that method.
-     */
-    bool mayAlias(const MemoryCellPtr &other, RiscOperators *addrOps) const /*final*/ {
-        return may_alias(other, addrOps);
-    }
-
-    // [Robb Matzke 2021-03-18]: deprecated, but not marked as such because we need to still call it in order to support
-    // user-defined subclasses that might have reimplemented it. Users: be sure to mark them as "override" so you'll notice
-    // when we switch to just "mayAlias".
-    virtual bool may_alias(const MemoryCellPtr &other, RiscOperators *addrOps) const;
+     *  addresses. */
+    bool mayAlias(const MemoryCellPtr &other, RiscOperators *addrOps) const;
 
     /** Test whether two memory cells must alias one another.
      *
      *  Two cells must alias one another when it can be proven that their addresses cause them to overlap.  For cells
      *  containing one-byte values, aliasing must occur unless their addresses can be different; multi-byte cells will need to
-     *  check ranges of addresses.
-     *
-     *  For now, this just calls the old virtual @ref must_alias method, but eventually we'll remove that method. */
-    bool mustAlias(const MemoryCellPtr &other, RiscOperators *addrOps) const /*final*/ {
-        return must_alias(other, addrOps);
-    }
+     *  check ranges of addresses. */
+    bool mustAlias(const MemoryCellPtr &other, RiscOperators *addrOps) const;
 
-    // [Robb Matzke 2021-03-18]: deprecated, but not marked as such because we need to still call it in order to support
-    // user-defined subclasses that might have reimplemented it. Users: be sure to mark them as "override" so you'll notice
-    // when we switch to just "mustAlias".
-    virtual bool must_alias(const MemoryCellPtr &other, RiscOperators *addrOps) const;
-    
     /** Hash the address and value.
      *
      *  This hashes the address and value for the cell, but not any other properties. The goal is that an analysis that
@@ -299,28 +266,6 @@ public:
     WithFormatter operator+(Formatter&);
     WithFormatter operator+(const std::string &linePrefix);
     /** @} */
-
-    // [Robb Matzke 2021-03-18]: deprecated.
-    // Virtual functions for the address property. These will eventually be removed, so it's in your best interest to use C++11
-    // "override" in your subclasses. We cannot mark these as ROSE_DEPRECATED because the value property needs to call them.
-    virtual SValuePtr get_address() const {
-        return address_;
-    }
-    virtual void set_address(const SValuePtr &addr) {
-        ASSERT_not_null(addr);
-        address_ = addr;
-    }
-
-    // [Robb Matzke 2021-03-18]: deprecated
-    // Virtual functions for the value property. These will eventually be removed, so it's in your best interest to use C++11
-    // "override" in your subclasses. We cannot mark these as ROSE_DEPRECATED because the value property needs to call them.
-    virtual SValuePtr get_value() const {
-        return value_;
-    }
-    virtual void set_value(const SValuePtr &v) {
-        ASSERT_not_null(v);
-        value_ = v;
-    }
 };
 
 

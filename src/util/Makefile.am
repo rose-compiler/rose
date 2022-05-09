@@ -48,13 +48,7 @@ libroseutil_la_LIBADD = \
 # DISTCLEANFILES = rose_paths.C
 
 pkginclude_HEADERS =				\
-	BitFlags.h				\
-	BitOps.h				\
-	Color.h					\
 	compilationFileDatabase.h		\
-	FileSystem.h				\
-	FormatRestorer.h			\
-	GraphUtility.h				\
 	LinearCongruentialGenerator.h		\
 	Map.h					\
 	timing.h				\
@@ -62,9 +56,6 @@ pkginclude_HEADERS =				\
 	processSupport.h			\
 	ROSE_ABORT.h				\
 	ROSE_ASSERT.h                           \
-	Progress.h				\
-	RecursionCounter.h			\
-	rose_constants.h			\
 	rose_getline.h				\
 	rose_isnan.h				\
 	rose_pragma_message.h			\

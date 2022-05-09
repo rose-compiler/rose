@@ -337,10 +337,6 @@ ROSE_DLL_API bool isInitialized();
  *  declared or they should be de-registered before they go out of scope. */
 ROSE_DLL_API void initAndRegister(Facility *mlog, const std::string &name);
 
-// [Robb P Matzke 2017-02-16]: deprecated: The version that takes a pointer first argument is a better design because it gives
-// the user a better clue that we're saving a reference rather than a copy. Note: ROSE_DEPRECATED not defined here.
-ROSE_DLL_API void initAndRegister(Facility &mlog, const std::string &name) SAWYER_DEPRECATED("use a pointer for the first argument");
-
 /** Deregister a facility.
  *
  *  Do this before your facility goes out of scope.  In general, you don't need to deregister a Facility object from a

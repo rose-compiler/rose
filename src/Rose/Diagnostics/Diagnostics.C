@@ -189,12 +189,6 @@ bool isInitialized() {
     return isInitialized_;
 }
 
-// [Robb P Matzke 2017-02-16]: deprecated
-void
-initAndRegister(Facility &mlog, const std::string &name) {
-    initAndRegister(&mlog, name);
-}
-
 void
 initAndRegister(Facility *mlog, const std::string &name) {
     ASSERT_not_null(mlog);

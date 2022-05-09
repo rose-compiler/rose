@@ -1015,36 +1015,6 @@ protected:
         return SValue::promote(boolean_(b));
     }
 
-    // [Robb Matzke 2021-03-18]: deprecated
-    SValuePtr svalue_number(size_t nbits, uint64_t value) ROSE_DEPRECATED("use svalueNumber instead") {
-        return svalueNumber(nbits, value);
-    }
-
-    // [Robb Matzke 2021-03-18]: deprecated
-    SValuePtr svalue_boolean(bool b) ROSE_DEPRECATED("use svalueBoolean instead") {
-        return svalueBoolean(b);
-    }
-
-    // [Robb Matzke 2021-03-18]: deprecated
-    SValuePtr svalue_unspecified(size_t nbits) ROSE_DEPRECATED("use svalueUnspecified instead") {
-        return svalueUnspecified(nbits);
-    }
-
-    // [Robb Matzke 2021-03-18]: deprecated
-    SValuePtr svalue_bottom(size_t nbits) ROSE_DEPRECATED("use svalueBottom instead") {
-        return svalueBottom(nbits);
-    }
-
-    // [Robb Matzke 2021-03-18]: deprecated
-    SValuePtr svalue_undefined(size_t nbits) ROSE_DEPRECATED("use svalueUndefined instead") {
-        return svalueUndefined(nbits);
-    }
-
-    // [Robb Matzke 2021-03-18]: deprecated
-    SValuePtr svalue_expr(const ExprPtr &expr, const InsnSet &defs=InsnSet()) ROSE_DEPRECATED("use svalueExpr instead") {
-        return svalueExpr(expr, defs);
-    }
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Configuration properties
 public:

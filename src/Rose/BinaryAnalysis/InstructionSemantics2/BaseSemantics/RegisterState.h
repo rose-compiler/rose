@@ -125,16 +125,6 @@ public:
     }
     /** @} */
 
-    // [Robb Matzke 2021-03-18]: deprecated
-    const RegisterDictionary *get_register_dictionary() const ROSE_DEPRECATED("use registerDictionary property") {
-        return registerDictionary();
-    }
-
-    // [Robb Matzke 2021-03-18]: deprecated
-    void set_register_dictionary(const RegisterDictionary *rd) ROSE_DEPRECATED("use registerDictionary property") {
-        registerDictionary(rd);
-    }
-
     /** Removes stored values from the register state.
      *
      *  Depending on the register state implementation, this could either store new, distinct undefined values in each
