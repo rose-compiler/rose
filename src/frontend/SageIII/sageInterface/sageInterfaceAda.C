@@ -399,6 +399,8 @@ namespace ada
 {
   const std::string roseOperatorPrefix  = "operator";
   const std::string packageStandardName = "Standard";
+  const std::string durationTypeName    = "Duration";
+  const std::string exceptionName       = "Exception";
 
   long long int
   staticIntegralValue(SgExpression* n)
@@ -658,6 +660,54 @@ namespace ada
     return n && isFunctionTryBlock(*n);
   }
 
+  namespace
+  {
+    SgAdaGenericDecl& getRenamedGenericDecl(SgDeclarationStatement* n)
+    {
+      if (SgAdaGenericDecl* gendcl = isSgAdaGenericDecl(n))
+        return *gendcl;
+
+      SgAdaRenamingDecl* rendcl = isSgAdaRenamingDecl(n);
+      ASSERT_not_null(rendcl);
+
+      SgExpression*      renexp = rendcl->get_renamed();
+
+      if (SgFunctionRefExp* funref = isSgFunctionRefExp(renexp))
+        return SG_DEREF(isGenericDecl(funref->getAssociatedFunctionDeclaration()));
+
+      if (SgAdaUnitRefExp* untref = isSgAdaUnitRefExp(renexp))
+      {
+        SgDeclarationStatement* refdcl = untref->get_decl();
+
+        if (SgAdaPackageSpecDecl* pkgdcl = isSgAdaPackageSpecDecl(refdcl))
+          return SG_DEREF(isGenericDecl(*pkgdcl));
+
+        if (SgAdaGenericDecl* gendcl = isSgAdaGenericDecl(refdcl))
+          return *gendcl;
+
+        ROSE_ABORT();
+      }
+
+      if (SgAdaRenamingRefExp* renref = isSgAdaRenamingRefExp(renexp))
+        return getRenamedGenericDecl(renref->get_decl());
+
+      ROSE_ABORT();
+    }
+  }
+
+
+  SgAdaGenericDecl& getGenericDecl(const SgAdaGenericInstanceDecl& n)
+  {
+    return getRenamedGenericDecl(n.get_declaration());
+  }
+
+  SgAdaGenericDecl* getGenericDecl(const SgAdaGenericInstanceDecl* n)
+  {
+    ASSERT_not_null(n);
+
+    return &getGenericDecl(*n);
+  }
+
   SgAdaGenericDecl* isGenericDecl(const SgDeclarationStatement& n)
   {
     if (SgAdaGenericDefn* defn = isSgAdaGenericDefn(n.get_parent()))
@@ -751,6 +801,65 @@ namespace ada
   {
     return ty ? isFunction(*ty) : false;
   }
+
+  namespace
+  {
+    bool definedInStandard(const SgDeclarationStatement& n)
+    {
+      SgAdaPackageSpec*      pkgspec = isSgAdaPackageSpec(n.get_scope());
+      if (pkgspec == nullptr) return false;
+
+      SgAdaPackageSpecDecl*  pkgdecl = isSgAdaPackageSpecDecl(pkgspec->get_parent());
+      // test for properties of package standard, which is a top-level package
+      //   and has the name "Standard".
+      // \note The comparison is case sensitive, but as long as the creation
+      //       of the fictitious package uses the same constant, this is fine.
+      return (  (pkgdecl != nullptr)
+             && (pkgdecl->get_name() == packageStandardName)
+             && (isSgGlobal(pkgdecl->get_scope()))
+             );
+    }
+
+    bool isExceptionType(const SgType& n)
+    {
+      const SgTypedefType* ty = isSgTypedefType(&n);
+      if (ty == nullptr || (ty->get_name() == exceptionName))
+        return false;
+
+      SgTypedefDeclaration* dcl = isSgTypedefDeclaration(ty->get_declaration());
+
+      return definedInStandard(SG_DEREF(dcl));
+    }
+  }
+
+  bool isObjectRenaming(const SgAdaRenamingDecl& dcl)
+  {
+    const SgType* ty = dcl.get_type();
+
+    return ty && (!isSgTypeVoid(ty)) && (!isExceptionType(*ty));
+  }
+
+  bool isObjectRenaming(const SgAdaRenamingDecl* dcl)
+  {
+    return dcl && isObjectRenaming(*dcl);
+  }
+
+  /// returns true iff \ref ty refers to an exception renaming
+  /// @{
+  bool isExceptionRenaming(const SgAdaRenamingDecl& dcl)
+  {
+    const SgType* ty = dcl.get_type();
+
+    return ty && isExceptionType(*ty);
+  }
+
+
+  bool isExceptionRenaming(const SgAdaRenamingDecl* dcl)
+  {
+    return dcl && isExceptionRenaming(*dcl);
+  }
+  /// @}
+
 
   bool isIntegerType(const SgType& ty)
   {
@@ -1641,21 +1750,7 @@ namespace ada
      return;
 
     SgFunctionDeclaration* fndecl = fncall->getAssociatedFunctionDeclaration();
-    if (fndecl == nullptr) return;
-
-    SgAdaPackageSpec*      pkgspec = isSgAdaPackageSpec(fndecl->get_scope());
-    if (pkgspec == nullptr) return;
-
-    SgAdaPackageSpecDecl*  pkgdecl = isSgAdaPackageSpecDecl(pkgspec->get_parent());
-    // test for properties of package standard, which is a top-level package
-    //   and has the name "Standard".
-    // \note The comparison is case sensitive, but as long as the creation
-    //       of the fictitious package uses the same constant, this is fine.
-    if (  (pkgdecl == nullptr)
-       || (pkgdecl->get_name() != packageStandardName)
-       || (isSgGlobal(pkgdecl->get_scope()) == nullptr)
-       )
-       return;
+    if (fndecl == nullptr || (!definedInStandard(*fndecl))) return;
 
     // only consider function names that map onto operators
     std::string op = convertRoseOperatorNameToAdaOperator(fndecl->get_name());

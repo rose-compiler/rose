@@ -224,6 +224,16 @@ struct AstContext
     /// gets all variant choice lists in the context
     const std::vector<Element_ID_List>& variantChoices() const;
 
+    /// instantiation property
+    /// \details
+    ///   Inside an instantiation, the Asis representation may be incomplete
+    ///   Thus, the argument mapping needs to switch to lookup mode to find
+    ///   generic arguments, if the Asis link is not present.
+    /// \{
+    SgAdaGenericInstanceDecl* instantiation() const { return enclosing_instantiation; }
+    AstContext                instantiation(SgAdaGenericInstanceDecl& instance) const;
+    /// \}
+
     //
     // policies for building the AST depending on context
 
@@ -239,6 +249,7 @@ struct AstContext
     SgScopeStatement*            the_scope               = nullptr;
     LabelAndLoopManager*         all_labels_loops        = nullptr;
     const std::string*           unit_file_name          = nullptr;
+    SgAdaGenericInstanceDecl*    enclosing_instantiation = nullptr;
     std::vector<Name>            active_variant_names;
     std::vector<Element_ID_List> active_variant_choices;
 
