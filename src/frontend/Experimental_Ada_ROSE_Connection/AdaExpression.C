@@ -568,10 +568,15 @@ namespace
     void handle(const SgAdaProtectedSpecDecl&)   { res = false; }
     void handle(const SgAdaPackageSpecDecl&)     { res = false; }
     void handle(const SgImportStatement&)        { res = false; }
-    void handle(const SgAdaRenamingDecl&)        { res = false; }
     void handle(const SgBasicBlock&)             { res = false; }
     void handle(const SgAdaGenericInstanceDecl&) { res = false; }
     //~ void handle(const SgFunctionDeclaration&)  { res = false; }
+
+
+    void handle(const SgAdaRenamingDecl& n)
+    {
+      res = si::ada::isObjectRenaming(n);
+    }
   };
 
 
@@ -588,6 +593,10 @@ namespace
     {
       const SgStatement* stmt = queryScopeStmt(expr, ctx);
 
+      logTrace() << "An_Identifier? " << expr.Name_Image << " "
+                 << (stmt == nullptr ? std::string{"<0>"} : typeid(*stmt).name())
+                 << std::endl;
+
       // \note getDecl_opt does not retrieve variable declarations
       //       => assuming a is a variable of record: a.x (the dcl for a would be nullptr)
       return stmt == nullptr || sg::dispatch(RoseRequiresScopeQual{}, stmt);
@@ -596,12 +605,14 @@ namespace
 
     if (expr.Expression_Kind == A_Selected_Component)
     {
+      logTrace() << "A_Selected_Component?" << std::endl;
       return    roseRequiresPrefixID(expr.Prefix, ctx)
              || roseRequiresPrefixID(expr.Selector, ctx);
     }
 
     if (expr.Expression_Kind == An_Indexed_Component)
     {
+      logTrace() << "An_Indexed_Component?" << std::endl;
       // \todo should this always return true (like the cases below)?
       return roseRequiresPrefixID(expr.Prefix, ctx);
     }
@@ -609,7 +620,11 @@ namespace
     if (  (expr.Expression_Kind == An_Explicit_Dereference)
        || (expr.Expression_Kind == A_Function_Call)
        )
+    {
+
+      logTrace() << "A_Function_Call/An_Explicit_Dereference?" << std::endl;
       return true;
+    }
 
     logWarn() << "roseRequiresPrefixID: untested expression-kind: "
               << expr.Expression_Kind
@@ -643,11 +658,13 @@ namespace
       void handle(SgAdaRenamingDecl& n)        { res = &mkAdaRenamingRefExp(n); }
       void handle(SgAdaTaskSpecDecl& n)        { res = &mkAdaTaskRefExp(n); }
       void handle(SgAdaProtectedSpecDecl& n)   { res = &mkAdaProtectedRefExp(n); }
-      void handle(SgAdaGenericDecl& n)         { res = &mkAdaUnitRefExp(n); }
       void handle(SgAdaGenericInstanceDecl& n) { res = &mkAdaUnitRefExp(n); }
       void handle(SgAdaPackageSpecDecl& n)     { res = &mkAdaUnitRefExp(n); }
       void handle(SgAdaTaskTypeDecl& n)        { res = &mkTypeExpression(SG_DEREF(n.get_type())); }
       void handle(SgAdaProtectedTypeDecl& n)   { res = &mkTypeExpression(SG_DEREF(n.get_type())); }
+
+      // \todo should we reference the underlying declaration instead of the generic??
+      void handle(SgAdaGenericDecl& n)         { res = &mkAdaUnitRefExp(n); }
 
     private:
       AstContext ctx;
@@ -1034,23 +1051,23 @@ namespace
           {
             AdaIdentifier adaIdent{expr.Name_Image};
 
-          // after there was no matching declaration, try to look up declarations in the standard package by name
+            // after there was no matching declaration, try to look up declarations in the standard package by name
             if (SgType* ty = findFirst(adaTypes(), adaIdent))
-          {
-            res = &mkTypeExpression(*ty);
-          }
+            {
+              res = &mkTypeExpression(*ty);
+            }
             else if (SgInitializedName* var = findFirst(adaVars(), adaIdent))
-          {
+            {
               res = sb::buildVarRefExp(var, &ctx.scope());
             }
             else if (SgInitializedName* exc = findFirst(adaExcps(), adaIdent))
             {
               res = &mkExceptionRef(*exc, ctx.scope());
-          }
-          else
-          {
-            // \todo check why the name remained unresolved
-            res = &mkUnresolvedName(expr.Name_Image, ctx.scope());
+            }
+            else
+            {
+              // \todo check why the name remained unresolved
+              res = &mkUnresolvedName(expr.Name_Image, ctx.scope());
             }
           }
 

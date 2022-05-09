@@ -1497,14 +1497,21 @@ SOURCE_ADA_GENERIC_SYMBOL_START
 SgName
 SgAdaGenericSymbol::get_name() const
 {
-  if (SgFunctionDeclaration* dcl = isSgFunctionDeclaration(get_declaration()))
-    return dcl->get_name();
+  SgDeclarationStatement* dcl = get_declaration();
 
-if (SgAdaPackageSpecDecl* dcl = isSgAdaPackageSpecDecl(get_declaration()))
-    return dcl->get_name();
+  if (SgAdaFormalTypeDecl* frmdcl = isSgAdaFormalTypeDecl(dcl))
+    return frmdcl->get_name();
 
-  if (SgAdaFormalTypeDecl* dcl = isSgAdaFormalTypeDecl(get_declaration()))
-    return dcl->get_name();
+  SgAdaGenericDecl* gendcl = isSgAdaGenericDecl(dcl);
+  ASSERT_not_null(gendcl);
+
+  SgDeclarationStatement* dclstm = gendcl->get_declaration();
+
+  if (SgFunctionDeclaration* fundcl = isSgFunctionDeclaration(dclstm))
+    return fundcl->get_name();
+
+  if (SgAdaPackageSpecDecl* pkgdcl = isSgAdaPackageSpecDecl(dclstm))
+    return pkgdcl->get_name();
 
   return SgName("undefined");
 }

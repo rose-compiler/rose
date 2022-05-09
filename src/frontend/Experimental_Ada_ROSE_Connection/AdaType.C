@@ -79,58 +79,137 @@ namespace
   SgNode&
   getExprTypeID(Element_ID tyid, AstContext ctx);
 
-  namespace
+  SgType* errorType(Expression_Struct& typeEx, AstContext ctx)
   {
-    SgType* errorType(Expression_Struct& typeEx, AstContext ctx)
-    {
-      logError() << "unknown type name: " << typeEx.Name_Image
-                 << " / " << typeEx.Corresponding_Name_Definition
-                 << std::endl;
+    logError() << "unknown type name: " << typeEx.Name_Image
+               << " / " << typeEx.Corresponding_Name_Definition
+               << std::endl;
 
-      ADA_ASSERT(!FAIL_ON_ERROR(ctx));
-      return &mkUnresolvedType(typeEx.Name_Image);
-    }
+    ADA_ASSERT(!FAIL_ON_ERROR(ctx));
+    return &mkUnresolvedType(typeEx.Name_Image);
+  }
 
-    // stop gap function
-    // \todo remove after instantiations can be fully represented
-    SgAdaGenericInstanceDecl*
-    instantiationDeclID(Element_ID id, AstContext ctx)
-    {
-      Element_Struct*         elem = retrieveAsOpt(elemMap(), id);
-      if (!elem || (elem->Element_Kind != An_Expression))
-        return nullptr;
+  // stop gap function
+  // \todo remove after instantiations can be fully represented
+  SgAdaGenericInstanceDecl*
+  instantiationDeclID(Element_ID id, AstContext ctx)
+  {
+    Element_Struct*         elem = retrieveAsOpt(elemMap(), id);
+    if (!elem || (elem->Element_Kind != An_Expression))
+      return nullptr;
 
-      Expression_Struct&      ex   = elem->The_Union.Expression;
+    Expression_Struct&      ex   = elem->The_Union.Expression;
 
-      if (ex.Expression_Kind != An_Identifier)
-        return nullptr;
+    if (ex.Expression_Kind != An_Identifier)
+      return nullptr;
 
-      return isSgAdaGenericInstanceDecl(findFirst(asisDecls(), ex.Corresponding_Name_Definition));
-    }
+    return isSgAdaGenericInstanceDecl(findFirst(asisDecls(), ex.Corresponding_Name_Definition));
+  }
 
-    template <class AsisDefinition>
-    SgArrayType&
-    createConstrainedArrayType(AsisDefinition& typenode, AstContext ctx)
-    {
-      ElemIdRange                indicesAsis = idRange(typenode.Discrete_Subtype_Definitions);
-      std::vector<SgExpression*> indicesSeq  = traverseIDs(indicesAsis, elemMap(), ExprSeqCreator{ctx});
-      SgExprListExp&             indicesAst  = mkExprListExp(indicesSeq);
-      SgType&                    compType    = getDefinitionTypeID(typenode.Array_Component_Definition, ctx);
+  template <class AsisDefinition>
+  SgArrayType&
+  createConstrainedArrayType(AsisDefinition& typenode, AstContext ctx)
+  {
+    ElemIdRange                indicesAsis = idRange(typenode.Discrete_Subtype_Definitions);
+    std::vector<SgExpression*> indicesSeq  = traverseIDs(indicesAsis, elemMap(), ExprSeqCreator{ctx});
+    SgExprListExp&             indicesAst  = mkExprListExp(indicesSeq);
+    SgType&                    compType    = getDefinitionTypeID(typenode.Array_Component_Definition, ctx);
 
-      return mkArrayType(compType, indicesAst, false /* constrained */);
-    }
+    return mkArrayType(compType, indicesAst, false /* constrained */);
+  }
 
-    template <class AsisDefinition>
-    SgArrayType&
-    createUnconstrainedArrayType(AsisDefinition& typenode, AstContext ctx)
-    {
-      ElemIdRange                indicesAsis = idRange(typenode.Index_Subtype_Definitions);
-      std::vector<SgExpression*> indicesSeq  = traverseIDs(indicesAsis, elemMap(), ExprSeqCreator{ctx});
-      SgExprListExp&             indicesAst  = mkExprListExp(indicesSeq);
-      SgType&                    compType    = getDefinitionTypeID(typenode.Array_Component_Definition, ctx);
+  template <class AsisDefinition>
+  SgArrayType&
+  createUnconstrainedArrayType(AsisDefinition& typenode, AstContext ctx)
+  {
+    ElemIdRange                indicesAsis = idRange(typenode.Index_Subtype_Definitions);
+    std::vector<SgExpression*> indicesSeq  = traverseIDs(indicesAsis, elemMap(), ExprSeqCreator{ctx});
+    SgExprListExp&             indicesAst  = mkExprListExp(indicesSeq);
+    SgType&                    compType    = getDefinitionTypeID(typenode.Array_Component_Definition, ctx);
 
-      return mkArrayType(compType, indicesAst, true /* unconstrained */);
-    }
+    return mkArrayType(compType, indicesAst, true /* unconstrained */);
+  }
+
+  struct FundamentalNodeExtractor : sg::DispatchHandler<SgNode*>
+  {
+    void handle(SgNode& n)            { SG_UNEXPECTED_NODE(n); }
+
+    // expressions
+    void handle(SgExpression& n)      { /* do nothing */ }
+    void handle(SgTypeExpression& n)  { res = extract(n.get_type()); }
+
+    // types
+    void handle(SgType& n)            { res = &n; }
+    void handle(SgNamedType& n)       { res = n.get_declaration(); }
+
+    static
+    SgNode* extract(SgNode* exp);
+  };
+
+  SgNode*
+  FundamentalNodeExtractor::extract(SgNode* n)
+  {
+    return sg::dispatch(FundamentalNodeExtractor{}, n);
+  }
+
+  SgNode* extractFundamentalNode(SgExpression* exp)
+  {
+    SgNode* res = FundamentalNodeExtractor::extract(exp);
+
+    //~ if (res) logWarn() << "i: " << typeid(*res).name() << std::endl;
+    //~ else logWarn() << "i: nullptr" << std::endl;
+
+    return res;
+  }
+
+
+  SgNode*
+  queryArgumentTypeFromInstantiation(AdaIdentifier tyname, AstContext ctx)
+  {
+    using ExprIterator = SgExpressionPtrList::const_iterator;
+    using DeclIterator = SgDeclarationStatementPtrList::const_iterator;
+
+    SgAdaGenericInstanceDecl* insdcl = ctx.instantiation();
+
+    if (insdcl == nullptr) return nullptr;
+
+    // first try to find an argument matching the name
+    SgExprListExp&       args  = SG_DEREF(insdcl->get_actual_parameters());
+    SgExpressionPtrList& exprs = args.get_expressions();
+    ExprIterator         exbeg = exprs.end();
+    ExprIterator         exend = exprs.end();
+    ExprIterator         expos = std::find_if( exbeg, exend,
+                                               [&tyname](const SgExpression* exp) -> bool
+                                               {
+                                                 const SgActualArgumentExpression* act = isSgActualArgumentExpression(exp);
+
+                                                 return (act && (tyname == AdaIdentifier{act->get_argument_name()}));
+                                               }
+                                             );
+
+    if (expos != exend)
+      return extractFundamentalNode(isSgActualArgumentExpression(*expos)->get_expression());
+
+    // match argument by position
+    SgAdaGenericDecl& gendcl = si::ada::getGenericDecl(*insdcl);
+    SgAdaGenericDefn& gendfn = SG_DEREF(gendcl.get_definition());
+
+    SgDeclarationStatementPtrList& genArglst = gendfn.get_declarations();
+    DeclIterator      genbeg = genArglst.begin();
+    DeclIterator      genend = genArglst.end();
+    DeclIterator      genpos = std::find_if( genbeg, genend,
+                                             [&tyname](const SgDeclarationStatement* prm) -> bool
+                                             {
+                                               const SgAdaFormalTypeDecl* formalParam = isSgAdaFormalTypeDecl(prm);
+
+                                               return (formalParam && (tyname == AdaIdentifier{formalParam->get_name()}));
+                                             }
+                                           );
+
+    if (genpos != genend)
+      return extractFundamentalNode(exprs.at(std::distance(genbeg, genpos)));
+
+    return nullptr;
   }
 
   SgNode&
@@ -152,6 +231,7 @@ namespace
           || (res = findFirst(asisTypes(), typeEx.Corresponding_Name_Definition))
           || (res = findFirst(asisExcps(), typeEx.Corresponding_Name_Definition))
           || (res = findFirst(adaTypes(),  AdaIdentifier{typeEx.Name_Image}))
+          || (res = queryArgumentTypeFromInstantiation(typeEx.Name_Image, ctx))
           || (res = errorType(typeEx, ctx))
           ;
 
@@ -501,177 +581,6 @@ namespace
       AstContext         ctx;
   };
 
-  // PP: rewrote this code to create the SgAdaFormalTypeDecl together with the type
-  TypeData
-  getFormalTypeFoundation(const std::string& name, Definition_Struct& def, Definition_ID discrId, AstContext ctx)
-  {
-    ADA_ASSERT(def.Definition_Kind == A_Formal_Type_Definition);
-    logKind("A_Formal_Type_Definition");
-
-    Formal_Type_Definition_Struct& typenode = def.The_Union.The_Formal_Type_Definition;
-    SgAdaFormalTypeDecl&           sgnode = mkAdaFormalTypeDecl(name, ctx.scope());
-    SgAdaFormalType&               formal = SG_DEREF(sgnode.get_type());
-    SgType*                        formalBaseType = nullptr;
-    TypeData                       res{nullptr, nullptr, false, false, false};
-
-    switch (typenode.Formal_Type_Kind)
-      {
-      case A_Formal_Private_Type_Definition:         // 12.5.1(2)   -> Trait_Kinds
-      case A_Formal_Tagged_Private_Type_Definition:  // 12.5.1(2)   -> Trait_Kinds
-        {
-          const bool tagged = (typenode.Formal_Type_Kind == A_Formal_Tagged_Private_Type_Definition);
-
-          logKind(tagged ? "A_Formal_Tagged_Private_Type_Definition" : "A_Formal_Private_Type_Definition");
-
-          res.setAbstract(typenode.Has_Abstract);
-          res.setLimited(typenode.Has_Limited);
-
-          if (tagged) res.setTagged(typenode.Has_Tagged);
-
-          // NOTE: we use a private flag on the type instead of the privatize()
-          // code used elsewhere since they currently denote different types of
-          // private-ness.
-          formal.set_is_private(typenode.Has_Private);
-
-          // PP (2/16/22): to avoid null pointers types
-          formalBaseType = &mkOpaqueType();
-          break;
-        }
-
-      case A_Formal_Derived_Type_Definition:         // 12.5.1(3)   -> Trait_Kinds
-        {
-          logKind("A_Formal_Derived_Type_Definition");
-
-          res.setAbstract(typenode.Has_Abstract);
-          res.setLimited(typenode.Has_Limited);
-
-          SgType& undertype = getDeclTypeID(typenode.Subtype_Mark, ctx);
-
-          formal.set_is_private(typenode.Has_Private);
-          formalBaseType = &mkAdaDerivedType(undertype);
-          /* unused fields:
-               bool                 Has_Synchronized
-               Declaration_List     Implicit_Inherited_Declarations
-               Declaration_List     Implicit_Inherited_Subprograms
-               Expression_List      Definition_Interface_List
-           */
-          break;
-        }
-
-
-      case A_Formal_Access_Type_Definition:          // 3.10(3),3.10(5)
-        {
-          logKind("A_Formal_Access_Type_Definition");
-          formalBaseType = &getAccessType(typenode.Access_Type, ctx);
-          /* unused fields:
-           */
-          break;
-        }
-
-      case A_Formal_Signed_Integer_Type_Definition:  // 12.5.2(3)
-        {
-          logKind("A_Formal_Signed_Integer_Type_Definition");
-          formalBaseType = &mkIntegralType();
-          /* unused fields:
-           */
-          break;
-        }
-
-      case A_Formal_Modular_Type_Definition:         // 12.5.2(4)
-        {
-          logKind("A_Formal_Modular_Type_Definition");
-          formalBaseType = &mkAdaModularType(mkNullExpression());
-          /* unused fields:
-           */
-          break;
-        }
-
-      case A_Formal_Floating_Point_Definition:       // 12.5.2(5)
-        {
-          logKind("A_Formal_Floating_Point_Definition");
-          formalBaseType = &mkRealType();
-          /* unused fields:
-           */
-          break;
-        }
-
-      case A_Formal_Discrete_Type_Definition:        // 12.5.2(2)
-        {
-          logKind("A_Formal_Discrete_Type_Definition");
-          formalBaseType = &mkAdaDiscreteType();
-          /* unused fields:
-           */
-          break;
-        }
-
-      case A_Formal_Ordinary_Fixed_Point_Definition: // 12.5.2(6)
-        {
-          logKind("A_Formal_Ordinary_Fixed_Point_Definition");
-          formalBaseType = &mkFixedType();
-          /* unused fields:
-           */
-          break;
-        }
-
-      case A_Formal_Decimal_Fixed_Point_Definition:  // 12.5.2(7)
-        {
-          SgType&               fixed   = mkFixedType();
-          SgAdaDeltaConstraint& decimal = mkAdaDeltaConstraint(mkNullExpression(), true, nullptr);
-
-          formalBaseType = &mkAdaSubtype(fixed, decimal);
-          break;
-        }
-
-      case A_Formal_Unconstrained_Array_Definition:  // 3.6(3)
-        {
-          formalBaseType = &createUnconstrainedArrayType(typenode, ctx);
-          break;
-        }
-
-      case A_Formal_Constrained_Array_Definition:    // 3.6(5)
-        {
-          formalBaseType = &createConstrainedArrayType(typenode, ctx);
-          break;
-        }
-
-      // MS: types to do later when we need them
-        //|A2005 start
-      case A_Formal_Interface_Type_Definition:       // 12.5.5(2) -> Interface_Kinds
-        //|A2005 end
-
-      default:
-        logWarn() << "unhandled formal type kind " << typenode.Formal_Type_Kind << std::endl;
-        // NOTE: temporarily create an AdaFormalType with the given name,
-        //       but set no fields.  This is sufficient to pass some test cases but
-        //       is not correct.
-        ADA_ASSERT(!FAIL_ON_ERROR(ctx));
-        formalBaseType = &mkTypeUnknown();
-      }
-
-    ROSE_ASSERT(formalBaseType);
-
-    // add discriminant decl if needed
-    if (discrId)
-    {
-      // PP (2/16/22)
-      // \todo not sure if this is the right way to represent
-      //       discriminants with a subtype constraints.
-      Element_Struct&    discrElem = retrieveAs(elemMap(), discrId);
-      ADA_ASSERT (discrElem.Element_Kind == A_Definition);
-      logKind("A_Definition");
-
-      Definition_Struct& discrDefn = discrElem.The_Union.Definition;
-      ADA_ASSERT (discrDefn.Definition_Kind == An_Unknown_Discriminant_Part);
-      logKind("An_Unknown_Discriminant_Part");
-
-      formalBaseType = &mkAdaSubtype(*formalBaseType, mkAdaDiscriminantConstraint({}));
-    }
-
-    formal.set_formal_type(formalBaseType);
-    res.sageNode(sgnode);
-    return res;
-  }
-
   SgAdaTypeConstraint*
   createDigitsConstraintIfNeeded(Expression_ID digitId, SgAdaTypeConstraint* sub, AstContext ctx)
   {
@@ -994,20 +903,20 @@ namespace
   }
 
 
-  struct DiscriminantCreator
+  struct DiscriminantInstanceCreator
   {
       explicit
-      DiscriminantCreator(AstContext astctx)
+      DiscriminantInstanceCreator(AstContext astctx)
       : ctx(astctx), elems()
       {}
 
-      DiscriminantCreator(DiscriminantCreator&&)                 = default;
-      DiscriminantCreator& operator=(DiscriminantCreator&&)      = default;
+      DiscriminantInstanceCreator(DiscriminantInstanceCreator&&)                 = default;
+      DiscriminantInstanceCreator& operator=(DiscriminantInstanceCreator&&)      = default;
 
       // \todo the following copying functions should be deleted post C++17
       // @{
-      DiscriminantCreator(const DiscriminantCreator&)            = default;
-      DiscriminantCreator& operator=(const DiscriminantCreator&) = default;
+      DiscriminantInstanceCreator(const DiscriminantInstanceCreator&)            = default;
+      DiscriminantInstanceCreator& operator=(const DiscriminantInstanceCreator&) = default;
       // @}
 
       void operator()(Element_Struct& el);
@@ -1022,10 +931,10 @@ namespace
       AstContext          ctx;
       SgExpressionPtrList elems;
 
-      DiscriminantCreator() = delete;
+      DiscriminantInstanceCreator() = delete;
   };
 
-  void DiscriminantCreator::operator()(Element_Struct& el)
+  void DiscriminantInstanceCreator::operator()(Element_Struct& el)
   {
     using name_container = std::vector<NameData>;
 
@@ -1061,6 +970,177 @@ namespace
                      }
                    );
     }
+  }
+
+  // PP: rewrote this code to create the SgAdaFormalTypeDecl together with the type
+  TypeData
+  getFormalTypeFoundation(const std::string& name, Definition_Struct& def, Definition_ID discrId, AstContext ctx)
+  {
+    ADA_ASSERT(def.Definition_Kind == A_Formal_Type_Definition);
+    logKind("A_Formal_Type_Definition");
+
+    Formal_Type_Definition_Struct& typenode = def.The_Union.The_Formal_Type_Definition;
+    SgAdaFormalTypeDecl&           sgnode = mkAdaFormalTypeDecl(name, ctx.scope());
+    SgAdaFormalType&               formal = SG_DEREF(sgnode.get_type());
+    SgType*                        formalBaseType = nullptr;
+    TypeData                       res{nullptr, nullptr, false, false, false};
+
+    switch (typenode.Formal_Type_Kind)
+    {
+      case A_Formal_Private_Type_Definition:         // 12.5.1(2)   -> Trait_Kinds
+      case A_Formal_Tagged_Private_Type_Definition:  // 12.5.1(2)   -> Trait_Kinds
+        {
+          const bool tagged = (typenode.Formal_Type_Kind == A_Formal_Tagged_Private_Type_Definition);
+
+          logKind(tagged ? "A_Formal_Tagged_Private_Type_Definition" : "A_Formal_Private_Type_Definition");
+
+          res.setAbstract(typenode.Has_Abstract);
+          res.setLimited(typenode.Has_Limited);
+
+          if (tagged) res.setTagged(typenode.Has_Tagged);
+
+          // NOTE: we use a private flag on the type instead of the privatize()
+          // code used elsewhere since they currently denote different types of
+          // private-ness.
+          formal.set_is_private(typenode.Has_Private);
+
+          // PP (2/16/22): to avoid null pointers types
+          formalBaseType = &mkOpaqueType();
+          break;
+        }
+
+      case A_Formal_Derived_Type_Definition:         // 12.5.1(3)   -> Trait_Kinds
+        {
+          logKind("A_Formal_Derived_Type_Definition");
+
+          res.setAbstract(typenode.Has_Abstract);
+          res.setLimited(typenode.Has_Limited);
+
+          SgType& undertype = getDeclTypeID(typenode.Subtype_Mark, ctx);
+
+          formal.set_is_private(typenode.Has_Private);
+          formalBaseType = &mkAdaDerivedType(undertype);
+          /* unused fields:
+               bool                 Has_Synchronized
+               Declaration_List     Implicit_Inherited_Declarations
+               Declaration_List     Implicit_Inherited_Subprograms
+               Expression_List      Definition_Interface_List
+           */
+          break;
+        }
+
+
+      case A_Formal_Access_Type_Definition:          // 3.10(3),3.10(5)
+        {
+          logKind("A_Formal_Access_Type_Definition");
+          formalBaseType = &getAccessType(typenode.Access_Type, ctx);
+          /* unused fields:
+           */
+          break;
+        }
+
+      case A_Formal_Signed_Integer_Type_Definition:  // 12.5.2(3)
+        {
+          logKind("A_Formal_Signed_Integer_Type_Definition");
+          formalBaseType = &mkIntegralType();
+          /* unused fields:
+           */
+          break;
+        }
+
+      case A_Formal_Modular_Type_Definition:         // 12.5.2(4)
+        {
+          logKind("A_Formal_Modular_Type_Definition");
+          formalBaseType = &mkAdaModularType(mkNullExpression());
+          /* unused fields:
+           */
+          break;
+        }
+
+      case A_Formal_Floating_Point_Definition:       // 12.5.2(5)
+        {
+          logKind("A_Formal_Floating_Point_Definition");
+          formalBaseType = &mkRealType();
+          /* unused fields:
+           */
+          break;
+        }
+
+      case A_Formal_Discrete_Type_Definition:        // 12.5.2(2)
+        {
+          logKind("A_Formal_Discrete_Type_Definition");
+          formalBaseType = &mkAdaDiscreteType();
+          /* unused fields:
+           */
+          break;
+        }
+
+      case A_Formal_Ordinary_Fixed_Point_Definition: // 12.5.2(6)
+        {
+          logKind("A_Formal_Ordinary_Fixed_Point_Definition");
+          formalBaseType = &mkFixedType();
+          /* unused fields:
+           */
+          break;
+        }
+
+      case A_Formal_Decimal_Fixed_Point_Definition:  // 12.5.2(7)
+        {
+          SgType&               fixed   = mkFixedType();
+          SgAdaDeltaConstraint& decimal = mkAdaDeltaConstraint(mkNullExpression(), true, nullptr);
+
+          formalBaseType = &mkAdaSubtype(fixed, decimal);
+          break;
+        }
+
+      case A_Formal_Unconstrained_Array_Definition:  // 3.6(3)
+        {
+          formalBaseType = &createUnconstrainedArrayType(typenode, ctx);
+          break;
+        }
+
+      case A_Formal_Constrained_Array_Definition:    // 3.6(5)
+        {
+          formalBaseType = &createConstrainedArrayType(typenode, ctx);
+          break;
+        }
+
+      // MS: types to do later when we need them
+        //|A2005 start
+      case A_Formal_Interface_Type_Definition:       // 12.5.5(2) -> Interface_Kinds
+        //|A2005 end
+
+      default:
+        logWarn() << "unhandled formal type kind " << typenode.Formal_Type_Kind << std::endl;
+        // NOTE: temporarily create an AdaFormalType with the given name,
+        //       but set no fields.  This is sufficient to pass some test cases but
+        //       is not correct.
+        ADA_ASSERT(!FAIL_ON_ERROR(ctx));
+        formalBaseType = &mkTypeUnknown();
+      }
+
+    ROSE_ASSERT(formalBaseType);
+
+    // add discriminant decl if needed
+    if (discrId)
+    {
+      // PP (2/16/22)
+      // \todo not sure if this is the right way to represent
+      //       discriminants with a subtype constraints.
+      Element_Struct&    discrElem = retrieveAs(elemMap(), discrId);
+      ADA_ASSERT (discrElem.Element_Kind == A_Definition);
+      logKind("A_Definition");
+
+      Definition_Struct& discrDefn = discrElem.The_Union.Definition;
+      ADA_ASSERT (discrDefn.Definition_Kind == An_Unknown_Discriminant_Part);
+      logKind("An_Unknown_Discriminant_Part");
+
+      formalBaseType = &mkAdaSubtype(*formalBaseType, mkAdaDiscriminantConstraint({}));
+    }
+
+    formal.set_formal_type(formalBaseType);
+    res.sageNode(sgnode);
+    return res;
   }
 } // anonymous
 
@@ -1174,7 +1254,7 @@ getConstraintID(Element_ID el, AstContext ctx)
         logKind("A_Discriminant_Constraint");
 
         ElemIdRange         discrRange  = idRange(constraint.Discriminant_Associations);
-        SgExpressionPtrList constraints = traverseIDs(discrRange, elemMap(), DiscriminantCreator{ctx});
+        SgExpressionPtrList constraints = traverseIDs(discrRange, elemMap(), DiscriminantInstanceCreator{ctx});
 
         res = &mkAdaDiscriminantConstraint(std::move(constraints));
         break;
@@ -1394,7 +1474,7 @@ void initializePkgStandard(SgGlobal& global)
   stdpkg.set_scope(&global);
 
   // \todo reconsider using a true Ada exception representation
-  SgType&               exceptionType = SG_DEREF(sb::buildOpaqueType("Exception", &stdspec));
+  SgType&               exceptionType = SG_DEREF(sb::buildOpaqueType(si::ada::exceptionName, &stdspec));
 
   adaTypes()["EXCEPTION"]           = &exceptionType;
 
@@ -1404,7 +1484,7 @@ void initializePkgStandard(SgGlobal& global)
   adaTypes()["BOOLEAN"]             = &adaBoolType;
 
   // \todo reconsider adding a true Ada Duration type
-  SgType& adaDuration               = SG_DEREF(sb::buildOpaqueType("Duration", &stdspec));
+  SgType& adaDuration               = SG_DEREF(sb::buildOpaqueType(si::ada::durationTypeName, &stdspec));
 
   adaTypes()["DURATION"]            = &adaDuration;
 
@@ -1655,7 +1735,6 @@ void initializePkgStandard(SgGlobal& global)
 }
 
 
-
 void ExHandlerTypeCreator::operator()(Element_Struct& elem)
 {
   SgExpression* exceptExpr = nullptr;
@@ -1690,3 +1769,6 @@ ExHandlerTypeCreator::operator SgType&() &&
 }
 
 }
+
+
+

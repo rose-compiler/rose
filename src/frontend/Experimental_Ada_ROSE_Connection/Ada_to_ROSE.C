@@ -150,6 +150,14 @@ AstContext::scope_npc(SgScopeStatement& s) const
   return tmp;
 }
 
+AstContext AstContext::instantiation(SgAdaGenericInstanceDecl& instance) const
+{
+  AstContext tmp{*this};
+
+  tmp.enclosing_instantiation = &instance;
+  return tmp;
+}
+
 AstContext
 AstContext::scope(SgScopeStatement& s) const
 {
@@ -586,6 +594,7 @@ namespace
     }
   }
 
+/*
   std::string
   astDotFileName(const SgSourceFile& file)
   {
@@ -598,6 +607,7 @@ namespace
     res += "_rose";
     return res;
   }
+*/
 
   struct UnitEntry
   {
@@ -847,6 +857,7 @@ namespace
       dfs(deps, *pos, res);
     }
 
+#if 0
     // print all module dependencies
     for (Unit_Struct_List_Struct* unit : allUnits)
     {
@@ -855,11 +866,12 @@ namespace
       ROSE_ASSERT(pos != deps.end());
       DependencyMap::value_type& el = *pos;
 
-      //~ for (const std::string& n : el.second.dependencies)
-        //~ logWarn() << n << ", ";
+      for (const std::string& n : el.second.dependencies)
+        logWarn() << n << ", ";
 
-      //~ logWarn() << std::endl << std::endl;
+      logWarn() << std::endl << std::endl;
     }
+#endif
 
     logTrace() << "\nTopologically sorted module processing order"
                << std::endl;
@@ -972,6 +984,7 @@ namespace
   ///   While some issues, such as parent pointers will be fixed at the
   ///   post processing stage, it may be good to point inconsistencies
   ///   out anyway.
+  inline
   void astSanityCheck(SgSourceFile* file)
   {
     AstSanityCheck checker;

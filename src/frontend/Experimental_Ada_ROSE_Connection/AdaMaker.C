@@ -747,10 +747,15 @@ mkAdaGenericInstanceDecl(const std::string& name, SgDeclarationStatement& gendec
   SgScopeStatement&         dclscope = mkBasicBlock();
   SgAdaGenericInstanceDecl& sgnode = mkLocatedNode<SgAdaGenericInstanceDecl>(name,&gendecl,&dclscope);
 
-  dclscope.set_parent(&sgnode);
-  sgnode.set_scope(&scope);
+  sg::linkParentChild(sgnode, dclscope, &SgAdaGenericInstanceDecl::set_instantiatedScope);
+
   // PP (2/24/22): should this be set_definingDeclaration ?
+  //               I think not, since we only extract the spec (possibly the impl for procedures...)
   sgnode.set_firstNondefiningDeclaration(&sgnode);
+
+  // \todo not sure if needs an explicit scope
+  //       if not: fix also in nameQualifcationSupport.C, Statement.code, unparseAdaStatement.C
+  sgnode.set_scope(&scope);
 
   scope.insert_symbol(name, &mkBareNode<SgAdaGenericInstanceSymbol>(&sgnode));
   return sgnode;
@@ -808,6 +813,7 @@ mkAdaRenamingDecl(const std::string& name, SgExpression& renamed, SgType* ty, Sg
 
   SgAdaRenamingDecl& sgnode = mkLocatedNode<SgAdaRenamingDecl>(name, &renamed, ty);
 
+  renamed.set_parent(&sgnode);
   sgnode.set_parent(&scope);
   sgnode.set_firstNondefiningDeclaration(&sgnode);
   scope.insert_symbol(name, &mkBareNode<SgAdaRenamingSymbol>(&sgnode));

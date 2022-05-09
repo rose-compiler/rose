@@ -15,6 +15,8 @@ namespace ada
 {
   extern const std::string roseOperatorPrefix;
   extern const std::string packageStandardName;
+  extern const std::string durationTypeName;
+  extern const std::string exceptionName;
 
   /// tests if the declaration \ref dcl defines a public type that is completed
   ///   in a private section.
@@ -197,10 +199,25 @@ namespace ada
   bool isDecimalFixedType(const SgType& ty);
   /// @}
 
-  /// returns if dcl is a generic declaration
+  /// Returns the SgAdaGenericDecl node that makes a declaration (either function/procedure or package)
+  /// generic.
+  /// \param n a declaration that is possibly part of a generic declaration.
+  /// \returns the generic declaration of \ref n, where \ref n is a either function/procedure or package
+  ///          that is declared directly under an SgAdaGenericDecl;
+  ///          nullptr otherwise.
+  /// \details
+  ///   For a subtree SgAdaGenericDecl->SgAdaGenericDefn->n, the SgAdaGenericDecl node is returned.
   /// @{
   SgAdaGenericDecl* isGenericDecl(const SgDeclarationStatement& n);
   SgAdaGenericDecl* isGenericDecl(const SgDeclarationStatement* n);
+  /// @}
+
+  /// Returns SgAdaGenericDecl for a given SgAdaGenericInstanceDecl.
+  /// \details
+  ///    skips over intermediate renaming declarations.
+  /// @{
+  SgAdaGenericDecl& getGenericDecl(const SgAdaGenericInstanceDecl& n);
+  SgAdaGenericDecl* getGenericDecl(const SgAdaGenericInstanceDecl* n);
   /// @}
 
 
@@ -289,6 +306,19 @@ namespace ada
   bool isFunction(const SgFunctionType& ty);
   bool isFunction(const SgFunctionType* ty);
   /// @}
+
+  /// returns true iff \ref ty refers to an object renaming
+  /// @{
+  bool isObjectRenaming(const SgAdaRenamingDecl* dcl);
+  bool isObjectRenaming(const SgAdaRenamingDecl& dcl);
+  /// @}
+
+  /// returns true iff \ref ty refers to an exception renaming
+  /// @{
+  bool isExceptionRenaming(const SgAdaRenamingDecl* dcl);
+  bool isExceptionRenaming(const SgAdaRenamingDecl& dcl);
+  /// @}
+
 
   //
   // Ada Variant processing

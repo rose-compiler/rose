@@ -4687,7 +4687,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
         SgScopeStatement&  scope   = ctx.scope();
         SgExpression&      renamed = getExprID(decl.Renamed_Entity, ctx);
-        SgType&            excty    = lookupNode(adaTypes(), AdaIdentifier{"Exception"});
+        SgType&            excty   = lookupNode(adaTypes(), AdaIdentifier{"Exception"});
 
         // ADA_ASSERT(renamed.get_type() == &excty); \todo not sure why this does not hold...
         SgAdaRenamingDecl& sgnode  = mkAdaRenamingDecl(adaname.ident, renamed, &excty, scope);
@@ -4797,7 +4797,6 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
           sgnode.set_actual_parameters(&args);
         }
 
-
         recordNode(asisDecls(), elem.ID, sgnode);
         recordNode(asisDecls(), adaname.id(), sgnode);
 
@@ -4805,11 +4804,12 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         privatize(sgnode, isPrivate);
         outer.append_statement(&sgnode);
         ADA_ASSERT (sgnode.get_parent() == &outer);
+        ADA_ASSERT (sgnode.get_instantiatedScope()->get_parent() == &sgnode);
 
         // PP (4/1/22): fill in the declaration
         ADA_ASSERT(decl.Corresponding_Declaration);
         handleDeclaration( retrieveAs(elemMap(), decl.Corresponding_Declaration),
-                           ctx.scope(SG_DEREF(sgnode.get_instantiatedScope()))
+                           ctx.instantiation(sgnode).scope(SG_DEREF(sgnode.get_instantiatedScope()))
                          );
         // \todo mark whole subtree under sgnode.get_instantiatedScope() as instantiated
 
