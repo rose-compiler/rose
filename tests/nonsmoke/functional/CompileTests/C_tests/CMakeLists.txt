@@ -67,7 +67,7 @@ set(files_to_test
   test2013_94.c test2013_95.c test2013_96.c test2013_97.c test2013_98.c
   test2013_99.c test2013_100.c math.c complex_01.c stdio.c
   test2006_48.c test2006_132.c test2010_04.c test2010_10.c test2010_12.c
-  test2010_11.c test2010_14.c constants.c
+  test2010_11.c test2010_14.c constants.c test2022_01.c
   #EXPECTED FAILURES: test2012_51.c test2013_31.c  
 )
 

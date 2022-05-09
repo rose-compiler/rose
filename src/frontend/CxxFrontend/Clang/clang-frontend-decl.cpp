@@ -1220,6 +1220,22 @@ bool ClangToSageTranslator::VisitFunctionDecl(clang::FunctionDecl * function_dec
     for (unsigned i = 0; i < function_decl->getNumParams(); i++) {
         SgNode * tmp_init_name = Traverse(function_decl->getParamDecl(i));
         SgInitializedName * init_name = isSgInitializedName(tmp_init_name);
+
+        // Pei-Hung (05/09/2022) Need to setup set_needs_definitions to SgInitializedName when the
+        // Enum or Class type is actually declared in a function prototype scope
+        if(isSgEnumType(init_name->get_type()) || isSgClassType(init_name->get_type()))
+        {
+          SgNamedType* namedType = isSgNamedType(init_name->get_type());
+          SgDeclarationStatement* namedTypeDecl = isSgDeclarationStatement(namedType->get_declaration());
+          SgScopeStatement* enclosingScope = namedTypeDecl->get_scope();
+          SgDeclarationStatementPtrList& declList = enclosingScope->getDeclarationList();
+          SgDeclarationStatement* definingNamedTypeDecl = isSgDeclarationStatement(namedTypeDecl->get_definingDeclaration());
+          if(definingNamedTypeDecl != NULL  && std::find(declList.begin(), declList.end(), definingNamedTypeDecl) == declList.end())
+          {
+            init_name->set_needs_definitions(true);
+          }
+        }
+
         if (tmp_init_name != NULL && init_name == NULL) {
             std::cerr << "Runtime error: tmp_init_name != NULL && init_name == NULL" << std::endl;
             res = false;
