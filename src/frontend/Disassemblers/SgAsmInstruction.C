@@ -125,18 +125,6 @@ SgAsmInstruction::branchTarget() {
     ASSERT_not_reachable("you forgot to implement this in a subclass"); // runtime error is the best we can do with ROSETTA
 }
 
-// FIXME[Robb Matzke 2021-03-02]: deprecated
-bool
-SgAsmInstruction::getBranchTarget(rose_addr_t *target/*out*/) {
-    if (Sawyer::Optional<rose_addr_t> va = branchTarget()) {
-        if (target)
-            *target = *va;
-        return true;
-    } else {
-        return false;
-    }
-}
-
 bool
 SgAsmInstruction::hasEffect()
 {

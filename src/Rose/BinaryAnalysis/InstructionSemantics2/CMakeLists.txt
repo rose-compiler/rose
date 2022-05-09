@@ -25,16 +25,6 @@ add_dependencies(roseBinaryAnalysisInstructionSemantics2 rosetta_generated)
 
 install(FILES
   BaseSemantics.h
-  BaseSemanticsDispatcher.h
-  BaseSemanticsException.h
-  BaseSemanticsFormatter.h
-  BaseSemanticsMemoryState.h
-  BaseSemanticsMerger.h
-  BaseSemanticsRegisterState.h
-  BaseSemanticsRiscOperators.h
-  BaseSemanticsState.h
-  BaseSemanticsSValue.h
-  BaseSemanticsTypes.h
   ConcreteSemantics.h
   DataFlowSemantics.h
   DispatcherAarch32.h
@@ -44,18 +34,12 @@ install(FILES
   DispatcherPowerpc.h
   DispatcherX86.h
   IntervalSemantics.h
-  MemoryCell.h
-  MemoryCellList.h
-  MemoryCellMap.h
-  MemoryCellState.h
   MultiSemantics.h
   NativeSemantics.h
   NullSemantics.h
   PartialSymbolicSemantics.h
-  RegisterStateGeneric.h
   SourceAstSemantics.h
   StaticSemantics.h
-  SymbolicMemory.h
   SymbolicSemantics.h
   TestSemantics.h
   TraceSemantics.h

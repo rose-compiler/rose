@@ -32,16 +32,6 @@ public:
     }
     /** @} */
 
-    // [Robb Matzke 2021-03-18]: deprecated
-    const RegisterDictionary *get_register_dictionary() const ROSE_DEPRECATED("use registerDictionary property") {
-        return registerDictionary();
-    }
-
-    // [Robb Matzke 2021-03-18]: deprecated
-    void set_register_dictionary(const RegisterDictionary *rd) ROSE_DEPRECATED("use registerDictionary property") {
-        registerDictionary(rd);
-    }
-
     /** Whether register initial values should be suppressed.  If a register's value has a comment that is equal to the
      * register name with "_0" appended, then that value is assumed to be the register's initial value.
      * @{ */

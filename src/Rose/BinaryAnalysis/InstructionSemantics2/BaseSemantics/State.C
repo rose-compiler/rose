@@ -56,12 +56,12 @@ State::clear() {
 }
 
 void
-State::zero_registers() {
+State::zeroRegisters() {
     registers_->zero();
 }
 
 void
-State::clear_memory() {
+State::clearMemory() {
     memory_->clear();
 }
 

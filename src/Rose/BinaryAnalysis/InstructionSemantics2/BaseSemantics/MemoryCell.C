@@ -34,13 +34,35 @@ MemoryCell::MemoryCell(const MemoryCell &other)
 
 MemoryCell::~MemoryCell() {}
 
+SValue::Ptr
+MemoryCell::address() const {
+    return address_;
+}
+
+void
+MemoryCell::address(const SValue::Ptr &addr) {
+    ASSERT_not_null(addr);
+    address_ = addr;
+}
+
+SValue::Ptr
+MemoryCell::value() const {
+    return value_;
+}
+
+void
+MemoryCell::value(const SValue::Ptr &v) {
+    ASSERT_not_null(v);
+    value_ = v;
+}
+
 bool
 MemoryCell::NonWrittenCells::operator()(const MemoryCellPtr &cell) {
     return cell->getWriters().isEmpty();
 }
 
 bool
-MemoryCell::may_alias(const MemoryCellPtr &other, RiscOperators *addrOps) const
+MemoryCell::mayAlias(const MemoryCellPtr &other, RiscOperators *addrOps) const
 {
     // Check for the easy case:  two one-byte cells may alias one another if their addresses may be equal.
     if (8==value_->nBits() && 8==other->value()->nBits())
@@ -77,7 +99,7 @@ MemoryCell::may_alias(const MemoryCellPtr &other, RiscOperators *addrOps) const
 }
 
 bool
-MemoryCell::must_alias(const MemoryCellPtr &other, RiscOperators *addrOps) const
+MemoryCell::mustAlias(const MemoryCellPtr &other, RiscOperators *addrOps) const
 {
     // Check the easy case: two one-byte cells must alias one another if their address must be equal.
     if (8==value_->nBits() && 8==other->value()->nBits())

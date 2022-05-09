@@ -123,24 +123,12 @@ public:
     /** Initialize all registers to zero.
      *
      *  Calls the @ref RegisterState::zero method. Memory is not affected. */
-    void zeroRegisters() /*final*/ {
-        zero_registers();
-    }
-
-    // [Robb Matzke 2021-03-18]: deprecated. This will be removed, although it is currently used. Users should be already
-    // using C++11 "override" in order to be notified when we make the switch.
-    virtual void zero_registers();
+    void zeroRegisters();
 
     /** Clear all memory locations.
      *
      *  Calls the @ref MemoryState::clear method. Registers are not affected. */
-    void clearMemory() /*final*/ {
-        clear_memory();
-    }
-
-    // [Robb Matzke 2021-03-18]: deprecated. This will be removed, although it is currently used. Users should be already
-    // using C++11 "override" in order to be notified when we make the switch.
-    virtual void clear_memory();
+    void clearMemory();
 
     /** Property: Register state.
      *

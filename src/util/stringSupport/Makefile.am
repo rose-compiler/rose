@@ -9,7 +9,7 @@ libRoseStringSupportSources = FileNameClassifier.C FileUtility.C escape.C
 noinst_LTLIBRARIES = libRoseStringSupport.la
 libRoseStringSupport_la_SOURCES = $(libRoseStringSupportSources)
 
-pkginclude_HEADERS = StringUtility.h string_functions.h FileUtility.h escape.h
+pkginclude_HEADERS = FileUtility.h escape.h
 
 # DQ (2/8/2010): This reproduces a bug from before the FileNameClassifier.C was cleaned up.
 # The code that failes has been added as: test2010_01.C in the tests/nonsmoke/functional/CompileTests/Cxx_tests directory.

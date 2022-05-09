@@ -420,10 +420,6 @@ protected:
                "{Arithmetic shift right. The second operand is interpreted as a signed value which is shifted right by "
                "the unsigned first argument. The result has the same width as the second operand.}";
 
-        ops_.insert("bv-and",       SymbolicExpr::OP_AND); // [Robb Matzke 2017-11-14]: deprecated; use "and" instead.
-        ops_.insert("bv-or",        SymbolicExpr::OP_OR); // [Robb Matzke 2017-11-14]: deprecated; use "or" instead.
-        ops_.insert("bv-xor",       SymbolicExpr::OP_XOR); // [Robb Matzke 2017-11-14]: deprecated; use "xor" instead
-
         ops_.insert("concat",       SymbolicExpr::OP_CONCAT);
         doc += "@named{concat}"
                "{Concatenate operands to produce a result whose width is the sum of the widths of the operands. The "

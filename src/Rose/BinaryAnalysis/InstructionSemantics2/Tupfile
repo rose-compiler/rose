@@ -8,10 +8,9 @@ run $(librose_compile) \
     SourceAstSemantics.C StaticSemantics.C SymbolicSemantics.C TraceSemantics.C Util.C
 
 run $(public_header) -o include/rose/Rose/BinaryAnalysis/InstructionSemantics2 \
-    BaseSemantics.h BaseSemanticsDispatcher.h BaseSemanticsException.h BaseSemanticsFormatter.h \
-    BaseSemanticsMemoryState.h BaseSemanticsMerger.h BaseSemanticsRegisterState.h BaseSemanticsRiscOperators.h \
-    BaseSemanticsState.h BaseSemanticsSValue.h BaseSemanticsTypes.h ConcreteSemantics.h DataFlowSemantics.h \
+    BaseSemantics.h \
+    ConcreteSemantics.h DataFlowSemantics.h \
     DispatcherAarch32.h DispatcherAarch64.h DispatcherCil.h DispatcherM68k.h DispatcherPowerpc.h DispatcherX86.h \
-    IntervalSemantics.h LlvmSemantics.h MemoryCell.h MemoryCellList.h MemoryCellMap.h MemoryCellState.h MultiSemantics.h \
-    NativeSemantics.h NullSemantics.h PartialSymbolicSemantics.h RegisterStateGeneric.h SourceAstSemantics.h \
-    StaticSemantics.h SymbolicMemory.h SymbolicSemantics.h TestSemantics.h TraceSemantics.h Util.h
+    IntervalSemantics.h LlvmSemantics.h MultiSemantics.h \
+    NativeSemantics.h NullSemantics.h PartialSymbolicSemantics.h SourceAstSemantics.h \
+    StaticSemantics.h SymbolicSemantics.h TestSemantics.h TraceSemantics.h Util.h

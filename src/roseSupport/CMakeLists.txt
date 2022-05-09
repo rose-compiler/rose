@@ -21,13 +21,8 @@ install(FILES  transformationSupport.h
                utility_functions.h
                IncludeDirective.h
                callbacks.h
-               Diagnostics.h
                utility_functionsImpl.C
                stringify.h
-	       initialize.h
-	       CommandLine.h
 	       Combinatorics.h
-	       RoseException.h
-	       SourceLocation.h
 	DESTINATION ${INCLUDE_INSTALL_DIR}
   )

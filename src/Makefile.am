@@ -357,16 +357,6 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/SymbolicMemory.h	\
 	Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Types.h			\
 	Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics.h			\
-	Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsDispatcher.h		\
-	Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsException.h		\
-	Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsFormatter.h		\
-	Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsMemoryState.h		\
-	Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsMerger.h			\
-	Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsRegisterState.h		\
-	Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsRiscOperators.h		\
-	Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsState.h			\
-	Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsSValue.h			\
-	Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsTypes.h			\
 	Rose/BinaryAnalysis/InstructionSemantics2/ConcreteSemantics.h			\
 	Rose/BinaryAnalysis/InstructionSemantics2/DataFlowSemantics.h			\
 	Rose/BinaryAnalysis/InstructionSemantics2/DispatcherAarch32.h			\
@@ -376,18 +366,12 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/InstructionSemantics2/DispatcherX86.h			\
 	Rose/BinaryAnalysis/InstructionSemantics2/IntervalSemantics.h			\
 	Rose/BinaryAnalysis/InstructionSemantics2/LlvmSemantics.h			\
-	Rose/BinaryAnalysis/InstructionSemantics2/MemoryCell.h				\
-	Rose/BinaryAnalysis/InstructionSemantics2/MemoryCellList.h			\
-	Rose/BinaryAnalysis/InstructionSemantics2/MemoryCellMap.h			\
-	Rose/BinaryAnalysis/InstructionSemantics2/MemoryCellState.h			\
 	Rose/BinaryAnalysis/InstructionSemantics2/MultiSemantics.h			\
 	Rose/BinaryAnalysis/InstructionSemantics2/NativeSemantics.h			\
 	Rose/BinaryAnalysis/InstructionSemantics2/NullSemantics.h			\
 	Rose/BinaryAnalysis/InstructionSemantics2/PartialSymbolicSemantics.h		\
-	Rose/BinaryAnalysis/InstructionSemantics2/RegisterStateGeneric.h		\
 	Rose/BinaryAnalysis/InstructionSemantics2/SourceAstSemantics.h			\
 	Rose/BinaryAnalysis/InstructionSemantics2/StaticSemantics.h			\
-	Rose/BinaryAnalysis/InstructionSemantics2/SymbolicMemory.h			\
 	Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h			\
 	Rose/BinaryAnalysis/InstructionSemantics2/TestSemantics.h			\
 	Rose/BinaryAnalysis/InstructionSemantics2/TraceSemantics.h			\
