@@ -238,6 +238,7 @@ namespace CodeThorn {
     bool getOptionContextSensitiveAnalysis();
     bool isReachableLabel(Label lab);
     bool isUnreachableLabel(Label lab);
+    bool isRegisterAddress(AbstractValue address);
   protected:
     using super = CTAnalysis; // allows use of super like in Java without repeating the class name
   public:

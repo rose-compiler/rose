@@ -457,6 +457,14 @@ bool CodeThorn::CTAnalysis::isReachableLabel(Label lab) {
   return !isUnreachableLabel(lab);
 }
 
+bool CodeThorn::CTAnalysis::isRegisterAddress(AbstractValue memLoc) {
+  if(memLoc.isConstInt()) {
+    uint64_t address=(uint64_t)memLoc.getLongIntValue();
+    return address>=getOptionsRef().getRegisterRangeStart()&&address<=getOptionsRef().getRegisterRangeEnd();
+  }
+  return false;
+}
+
 EStatePtr CodeThorn::CTAnalysis::getAbstractState(CodeThorn::Label lab, CodeThorn::CallString cs) {
   EStatePtr res;
 #pragma omp critical(SUMMARY_STATES)

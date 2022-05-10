@@ -45,12 +45,20 @@ namespace CodeThorn {
     recordViolation(violation,lab);
   }
 
+  bool MemoryViolationAnalysis::isRegisterAddress(AbstractValue memLoc) {
+    ROSE_ASSERT(_estateTransferFunctions);
+    return _estateTransferFunctions->isRegisterAddress(memLoc);
+  }
+
   MemoryViolationAnalysis::MemoryAccessViolationSet MemoryViolationAnalysis::checkMemoryAddress(AbstractValue& address) {
     MemoryViolationAnalysis::MemoryAccessViolationSet resultList;
     // MemoryViolationAnalysis::MemoryAccessViolationType::ACCESS_ERROR;
     // check memLoc w.r.t. AbstractValue::getVariableIdMapping()
     //cout<<"DEBUG: checkMemoryAddress: "<<address.toString()<<endl;
     ROSE_ASSERT(AbstractValue::_variableIdMapping);
+    if(isRegisterAddress(address)) {
+      return resultList;
+    }
     if(address.isTop()) {
       resultList.insert(ACCESS_POTENTIALLY_NP);
       resultList.insert(ACCESS_POTENTIALLY_OUTSIDE_BOUNDS);

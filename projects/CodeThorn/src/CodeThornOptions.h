@@ -5,6 +5,7 @@
 #include <vector>
 #include <string>
 #include <list>
+#include <limits>
 
 namespace CodeThorn {
   enum AnalysisSelector { ANALYSIS_NULL_POINTER, ANALYSIS_OUT_OF_BOUNDS, ANALYSIS_UNINITIALIZED, ANALYSIS_DEAD_CODE, ANALYSIS_OPAQUE_PREDICATE, ANALYSIS_NUM };
@@ -141,6 +142,8 @@ public:
   bool abstractionConsistencyCheck=false; // currently only supported in Solver18
   bool passThroughOptimization=true;
   bool temporaryLocalVarOptFlag=true;
+  std::string registerAddressStartString="0x10000";
+  std::string registerAddressEndString=""; // defaults to max value if empty
   
   // RERS C-subset program options
   struct Rers {
@@ -262,6 +265,8 @@ public:
   // default hard code init values
   int maxExactMemorySizeRepresentation=10;
   bool exprEvalTest=false;
+  uint64_t getRegisterRangeStart();
+  uint64_t getRegisterRangeEnd();
 private:
   CodeThornOptions::AnalysisListType _analysisList;
 };

@@ -1,7 +1,9 @@
 
+#include <iostream>
+#include <limits>
 #include "CodeThornOptions.h"
 #include "CodeThornException.h"
-#include <iostream>
+#include "CppStdUtilities.h"
 
 void CodeThornOptions::configurePrecisionOption() {
   switch(precisionLevel) {
@@ -106,4 +108,15 @@ std::string CodeThornOptions::getAnalysisReportFileName(CodeThorn::AnalysisSelec
   default:
     throw CodeThorn::Exception("getAnalysisReportFileName: unknown analysis selector.");
   }
+}
+
+uint64_t CodeThornOptions::getRegisterRangeStart() {
+  return CppStdUtilities::convertStringToNumber(registerAddressStartString);
+}
+
+uint64_t CodeThornOptions::getRegisterRangeEnd() {
+  if(registerAddressEndString.size()==0) {
+    return std::numeric_limits<uint64_t>::max();
+  }
+  return CppStdUtilities::convertStringToNumber(registerAddressEndString);
 }

@@ -703,6 +703,11 @@ namespace CodeThorn {
     return _maxCSLength;
   }
 
+  bool EStateTransferFunctions::isRegisterAddress(AbstractValue memLoc) {
+    ROSE_ASSERT(_analyzer);
+    return _analyzer->isRegisterAddress(memLoc);
+  }
+  
   void EStateTransferFunctions::transferFunctionEntryPrintStatus(Edge edge, EStatePtr estate, std::string fileName, std::string functionName) {
     if(_analyzer->getOptionsRef().status) {
       if(_analyzer->getOptionsRef().precisionLevel==1) {
@@ -4337,7 +4342,9 @@ namespace CodeThorn {
         pstate->writeToMemoryLocation(memLoc,newValue);
       } else {
         // memory location is a constant value
-        cerr<<"WARNING: attemping to write to integer value memory location: "<<memLoc.toString(getVariableIdMapping())<<endl;
+        if(!_analyzer->isRegisterAddress(memLoc)) {
+          cerr<<"WARNING: attemping to write to integer value memory location: "<<memLoc.toString(getVariableIdMapping())<<endl;
+        }
       }
     }
   }
