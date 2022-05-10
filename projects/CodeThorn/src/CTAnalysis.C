@@ -459,8 +459,8 @@ bool CodeThorn::CTAnalysis::isReachableLabel(Label lab) {
 
 bool CodeThorn::CTAnalysis::isRegisterAddress(AbstractValue memLoc) {
   if(memLoc.isConstInt()) {
-    long int address=memLoc.getLongIntValue();
-    return address<getOptionsRef().registerAddressStart||address>getOptionsRef().registerAddressEnd;
+    uint64_t address=(uint64_t)memLoc.getLongIntValue();
+    return address>=getOptionsRef().getRegisterRangeStart()&&address<=getOptionsRef().getRegisterRangeEnd();
   }
   return false;
 }
