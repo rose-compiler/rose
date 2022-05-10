@@ -14,7 +14,7 @@
 
 
 
-#include "rose.h"
+#include <rose.h> // POLICY_OK
 #include "SgNodeHelper.h"
 using namespace llvm;
 
