@@ -349,6 +349,8 @@ namespace CodeThorn {
     size_t getMaxStateSize();
     size_t getMaxCSLength();
 
+    bool isRegisterAddress(AbstractValue memLoc);
+    
   protected:
     AbstractValue abstractValueFromSgValueExp(SgValueExp* valueExp, EvalMode mode);
     std::map<std::string,ReadWriteListener*> _readWriteListenerMap;

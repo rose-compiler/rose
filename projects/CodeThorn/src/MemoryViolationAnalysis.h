@@ -22,6 +22,7 @@ namespace CodeThorn {
     void writingToMemoryLocation(Label lab, PState* pstate, AbstractValue& memLoc, AbstractValue& newValue) override;
     virtual ~MemoryViolationAnalysis();
     void setEStateTransferFunctions(EStateTransferFunctions* tf);
+    bool isRegisterAddress(AbstractValue memLoc);
   private:
     typedef std::set<MemoryAccessViolationType> MemoryAccessViolationSet;
     MemoryAccessViolationSet checkMemoryAddress(AbstractValue& memLoc);

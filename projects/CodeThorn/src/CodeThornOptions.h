@@ -5,6 +5,7 @@
 #include <vector>
 #include <string>
 #include <list>
+#include <limits>
 
 namespace CodeThorn {
   enum AnalysisSelector { ANALYSIS_NULL_POINTER, ANALYSIS_OUT_OF_BOUNDS, ANALYSIS_UNINITIALIZED, ANALYSIS_DEAD_CODE, ANALYSIS_OPAQUE_PREDICATE, ANALYSIS_NUM };
@@ -141,6 +142,8 @@ public:
   bool abstractionConsistencyCheck=false; // currently only supported in Solver18
   bool passThroughOptimization=true;
   bool temporaryLocalVarOptFlag=true;
+  long int registerAddressStart=0x10000;
+  long int registerAddressEnd=std::numeric_limits<long int>::max();
   
   // RERS C-subset program options
   struct Rers {

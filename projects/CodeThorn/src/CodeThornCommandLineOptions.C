@@ -323,6 +323,8 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("external-functions-csv",po::value<std::string>(&ctOpt.externalFunctionsCSVFileName),"Write list of external functions (functions for which no implementation is provided) to CSV file [arg].")
     ("external-function-calls-csv",po::value< string >(&ctOpt.externalFunctionCallsCSVFileName), "write a list of all function calls to external functions encountered during the program analysis to a CSV file.")
     ("threads",po::value< int >(&ctOpt.threads)->default_value(1),"(experimental) Run analyzer in parallel using <arg> threads.")
+    ("register-start",po::value< long int > (&ctOpt.registerAddressStart)," set start address of registers.")
+    ("register-end",po::value< long int > (&ctOpt.registerAddressEnd)," set end address of registers.")
     ("unparse",po::value< bool >(&ctOpt.unparse)->default_value(false)->implicit_value(true),"unpare code (only relevant for inlining, normalization, and lowering)")
     ("version,v",po::value< bool >(&ctOpt.displayVersion)->default_value(false)->implicit_value(true), "Display the version of CodeThorn.")
     ;
