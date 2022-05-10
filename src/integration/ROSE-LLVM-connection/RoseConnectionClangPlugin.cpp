@@ -5,6 +5,8 @@
 //===----------------------------------------------------------------------===//
 #include "RoseConnectionClangPlugin.hpp"
 
+using namespace clang;
+
 namespace {
 
 class collectInfoVisitor : public RecursiveASTVisitor<collectInfoVisitor> {

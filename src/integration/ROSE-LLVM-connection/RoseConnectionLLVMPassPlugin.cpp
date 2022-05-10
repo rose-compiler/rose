@@ -1,5 +1,7 @@
 #include "RoseConnectionLLVMPassPlugin.hpp"
 
+using namespace llvm;
+
 extern SgProject* roseProject;
 
 //-----------------------------------------------------------------------------
@@ -63,59 +65,59 @@ PreservedAnalyses ROSEPass::run(Module &M, ModuleAnalysisManager &MAM) {
 
 PreservedAnalyses ROSEPass::runOnFunction(Function &F, FunctionAnalysisManager &FAM)
 {
-	unsigned int i = 0;
-	Function::arg_iterator arg_iter;
-	Function::iterator	bb_iter;
-	BasicBlock::iterator inst_iter;
+    unsigned int i = 0;
+    Function::arg_iterator arg_iter;
+    Function::iterator    bb_iter;
+    BasicBlock::iterator inst_iter;
    
         AAResults& AAR = FAM.getResult<AAManager>(F);
         DependenceInfo& Dinfo = FAM.getResult<DependenceAnalysis >(F);
 
-  	outs() << "Name: " << F.getName() << "\n";
-	
-	// Return type
-	outs() << i << ". Return Type: " << *F.getReturnType() << "\n";
-	i += 1;
+      outs() << "Name: " << F.getName() << "\n";
+    
+    // Return type
+    outs() << i << ". Return Type: " << *F.getReturnType() << "\n";
+    i += 1;
 
-	// Arguments
-	outs() << i << ". Arguments: ";
-	if (F.arg_size() == 0)
-	{
-		outs() << "No Arguments" << "\n";
-	}
-	else
-	{
-		for (arg_iter = F.arg_begin(); arg_iter != F.arg_end(); arg_iter++)
-		{
-			outs() << *arg_iter;
-			
-			if (arg_iter != F.arg_end())
-			{
-				outs() << ", ";
-			}
-		}
+    // Arguments
+    outs() << i << ". Arguments: ";
+    if (F.arg_size() == 0)
+    {
+        outs() << "No Arguments" << "\n";
+    }
+    else
+    {
+        for (arg_iter = F.arg_begin(); arg_iter != F.arg_end(); arg_iter++)
+        {
+            outs() << *arg_iter;
+            
+            if (arg_iter != F.arg_end())
+            {
+                outs() << ", ";
+            }
+        }
 
-		outs() << "\n";
-	}
-	i += 1;
+        outs() << "\n";
+    }
+    i += 1;
 
         // map to record all operands, and their line/column info from the instruction
         std::map<Value*, std::pair<int,int>> valueList;
         std::map<Instruction*, std::pair<int,int>> instList;
-	// BasicBlocks
-	outs() << i << ". IR: " << "\n";
-	if (F.isDeclaration() == true)
-	{
-		outs() << "Declaration. No IR" << "\n";
-	}
-	else
-	{
-		for (bb_iter = F.begin(); bb_iter != F.end(); bb_iter++)
-		{
-			// Each BB is made of one/more instructions.
-			// Print them.
-			for (inst_iter = (*bb_iter).begin(); inst_iter != (*bb_iter).end(); inst_iter++)
-			{
+    // BasicBlocks
+    outs() << i << ". IR: " << "\n";
+    if (F.isDeclaration() == true)
+    {
+        outs() << "Declaration. No IR" << "\n";
+    }
+    else
+    {
+        for (bb_iter = F.begin(); bb_iter != F.end(); bb_iter++)
+        {
+            // Each BB is made of one/more instructions.
+            // Print them.
+            for (inst_iter = (*bb_iter).begin(); inst_iter != (*bb_iter).end(); inst_iter++)
+            {
                                 std::pair<int, int> srcinfo;
                                 StringRef File;
                                 StringRef Dir;
@@ -140,12 +142,12 @@ PreservedAnalyses ROSEPass::runOnFunction(Function &F, FunctionAnalysisManager &
                                   if(valueList.find(val) == valueList.end())
                                      valueList.insert({val,srcinfo});
                                 }
-                                if(hasDebugInfo())	
-				  outs() << "[" << srcinfo.first << ":" << srcinfo.second << "] ";
+                                if(hasDebugInfo())    
+                  outs() << "[" << srcinfo.first << ":" << srcinfo.second << "] ";
                                 outs()  <<  *inst_iter << "\n";
-			}
-		}
-	}
+            }
+        }
+    }
 
         outs()  << "================================================== " << "\n";
         outs()  << "Data dependence analysis: " << "\n";
@@ -198,7 +200,7 @@ PreservedAnalyses ROSEPass::runOnFunction(Function &F, FunctionAnalysisManager &
           }
         }
 
-  	return PreservedAnalyses::all();
+      return PreservedAnalyses::all();
 }
 
 void ROSEPass::checkCompiledWithDebugInfo(const Module& M) {
@@ -227,9 +229,9 @@ std::pair<SgNode*, std::pair<int ,int >> ROSEPass::getMatchingROSESrcInfo(std::p
 
 
 PreservedAnalyses ROSEPass::runOnGVariable(GlobalVariable &G)
-{	
-	outs() << G << "\n";
-	return PreservedAnalyses::all();
+{    
+    outs() << G << "\n";
+    return PreservedAnalyses::all();
 }
 
 
