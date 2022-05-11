@@ -175,6 +175,8 @@ namespace ada
 
   /// return if the type @ref ty is the corresponding universal type representation in ROSE
   /// @{
+  bool isModularType(const SgType& ty);
+  bool isModularType(const SgType* ty);
   bool isIntegerType(const SgType& ty);
   bool isIntegerType(const SgType* ty);
   bool isFloatingPointType(const SgType& ty);
@@ -407,7 +409,9 @@ namespace ada
   overridingScope(const SgExprListExp* args, const std::vector<PrimitiveParameterDesc>& primitiveArgs);
   /// @}
 
-  /// finds the type declaration of a type
+  /// finds the type declaration of a type \ref ty
+  /// \returns returns the first named base declaration of ty
+  ///          nullptr if no declaration can be found
   /// \details
   ///    Skips over intermediate derived types, subtypes, etc. until a SgNamedType is found.
   ///    Returns the declaration of said type.
@@ -417,6 +421,20 @@ namespace ada
 
   SgDeclarationStatement*
   baseDeclaration(SgType* ty);
+  /// \}
+
+  /// finds the underlying enum declaration of a type \ref ty
+  /// \returns an enum declaration associated with ty
+  ///          nullptr if no declaration can be found
+  /// \details
+  ///    in contrast to baseDeclaration, baseEnumDeclaration skips
+  ///    over intermediate SgTypedefDeclarations that introduce a new type or a subtype.
+  /// \{
+  SgEnumDeclaration*
+  baseEnumDeclaration(SgType* ty);
+
+  SgEnumDeclaration*
+  baseEnumDeclaration(SgType& ty);
   /// \}
 
   /// returns true, iff \ref fndef is the body of an explicit null procedure
@@ -463,8 +481,14 @@ namespace ada
 
   /// converts AST from a function call representation to operator form
   ///   for fundamental operator declarations.
+  /// \param root                  the subtree is traversed to find operator calls (using the traversal mechanism)
+  /// \param withPrefixCalls       false, only convert those calls where get_uses_operator_syntax() returns false
+  ///                              true,  convert all calls (may result in invalid Ada)
+  /// \param resolveNamedArguments not relevant, when withPrefixCalls == false
+  ///                              true, named arguments are resolved
+  ///                              false, named arguments are preserved
   // \todo mv into Ada to C++ converter
-  void convertToOperatorRepresentation(SgNode* root);
+  void convertToOperatorRepresentation(SgNode* root, bool withPrefixCalls = false, bool resolveNamedArguments = false);
 } // Ada
 } // SageInterface
 
