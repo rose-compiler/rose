@@ -20575,9 +20575,11 @@ SgAdaPackageBodyDecl::get_symbol_from_symbol_table() const
   ROSE_ASSERT(scope);
   return scope->find_symbol_from_declaration(this);
 */
+  const SgAdaPackageBodyDecl* defdcl = isSgAdaPackageBodyDecl(get_definingDeclaration());
+  const SgAdaPackageBodyDecl* decl   = defdcl ? defdcl : this;
 
-  SgAdaPackageBody* body = get_definition();
-  ROSE_ASSERT(body);
+  SgAdaPackageBody* body = decl->get_definition();
+  ROSE_ASSERT(body); // Could decl refer to a stub w/o defining declaration?
 
   SgAdaPackageSpec* spec = body->get_spec();
   ROSE_ASSERT(spec);

@@ -79,48 +79,57 @@ namespace
 
   struct DimRange : sg::DispatchHandler<SgExpression*>
   {
-    static
-    SgExpression& find(SgNode* n);
+      static
+      SgExpression& find(SgNode* n);
 
-    ReturnType recurse(SgNode* n);
+      static
+      ReturnType descend(SgNode* n); // may return null
 
-    // invalid case
-    void handle(SgNode& n)                { SG_UNEXPECTED_NODE(n); }
+      // invalid case
+      void handle(SgNode& n)                { SG_UNEXPECTED_NODE(n); }
 
-    // base cases for expressions
-    //~ void handle(SgExpression&)            { res = nullptr; }
-    void handle(SgRangeExp& n)            { res = &n; }
-    void handle(SgAdaAttributeExp& n)     { res = &n; }
+      //
+      void handle(SgType&)                  { /* do nothing to return the type-expression */ }
 
-    // switch from expression to types
-    void handle(SgTypeExpression& n)      { res = recurse(n.get_type()); }
+      // base cases for expressions
+      //~ void handle(SgExpression&)            { res = nullptr; }
+      void handle(SgRangeExp& n)            { res = &n; }
+      void handle(SgAdaAttributeExp& n)     { res = &n; }
 
-    // base case for types
-    //~ void handle(SgType& n)                { res = nullptr; }
+      // switch from expression to types
+      void handle(SgTypeExpression& n)
+      {
+        // try to extract the range form the type
+        DimRange::ReturnType sub = descend(n.get_type());
 
-    // type expressions
-    void handle(SgTypedefType& n)         { res = recurse(n.get_base_type()); }
+        // if that did not work, return the type expression
+        res = sub ? sub : &n;
+      }
 
-    void handle(SgAdaSubtype& n)
-    {
-      SgAdaRangeConstraint& range = SG_DEREF(isSgAdaRangeConstraint(n.get_constraint()));
+      // base case for types
+      //~ void handle(SgType& n)                { res = nullptr; }
 
-      res = recurse(range.get_range());
-    }
+      // type expressions
+      void handle(SgTypedefType& n)         { res = descend(n.get_base_type()); }
+
+      void handle(SgAdaSubtype& n)
+      {
+        SgAdaRangeConstraint& range = SG_DEREF(isSgAdaRangeConstraint(n.get_constraint()));
+
+        res = descend(range.get_range());
+      }
   };
 
   SgExpression&
   DimRange::find(SgNode* n)
   {
-    SgExpression* res = sg::dispatch(DimRange(), n);
-
-    return SG_DEREF(res);
+    return SG_DEREF(descend(n));
   }
 
   DimRange::ReturnType
-  DimRange::recurse(SgNode* n)
+  DimRange::descend(SgNode* n)
   {
-    return &DimRange::find(n);
+    return sg::dispatch(DimRange{}, n);
   }
 
   struct ArrayBounds : sg::DispatchHandler<std::vector<SgExpression*> >
@@ -316,8 +325,8 @@ namespace
       void handle(SgNamedType& n)           { res = n.get_declaration(); }
 
       void handle(SgAdaSubtype& n)          { res = recurse(n.get_base_type()); }
-      void handle(SgAdaDerivedType& n)      { res = recurse(n.get_base_type()); }
       void handle(SgModifierType& n)        { res = recurse(n.get_base_type()); }
+      void handle(SgAdaDerivedType& n)      { res = recurse(n.get_base_type()); }
   };
 
 
@@ -541,7 +550,10 @@ namespace ada
   {
     if (!bodyDecl) return nullptr;
 
-    SgAdaPackageBody*     body = bodyDecl->get_definition();
+    const SgAdaPackageBodyDecl* defDecl = isSgAdaPackageBodyDecl(bodyDecl->get_definingDeclaration());
+    if (!defDecl) defDecl = bodyDecl;
+
+    SgAdaPackageBody*     body = defDecl->get_definition();
     if (!body) return nullptr;
 
     SgAdaPackageSpec*     spec = body->get_spec();
@@ -553,7 +565,10 @@ namespace ada
   SgAdaPackageSpecDecl&
   getSpecificationDeclaration(const SgAdaPackageBodyDecl& bodyDecl)
   {
-    SgAdaPackageBody&     body = SG_DEREF(bodyDecl.get_definition());
+    const SgAdaPackageBodyDecl* defDecl = isSgAdaPackageBodyDecl(bodyDecl.get_definingDeclaration());
+    if (!defDecl) defDecl = &bodyDecl;
+
+    SgAdaPackageBody&     body = SG_DEREF(defDecl->get_definition());
     SgAdaPackageSpec&     spec = SG_DEREF(body.get_spec());
     SgAdaPackageSpecDecl* specDecl = isSgAdaPackageSpecDecl(spec.get_parent());
 
@@ -859,6 +874,17 @@ namespace ada
     return dcl && isExceptionRenaming(*dcl);
   }
   /// @}
+
+
+  bool isModularType(const SgType& ty)
+  {
+    return isModularType(&ty);
+  }
+
+  bool isModularType(const SgType* ty)
+  {
+    return isSgAdaModularType(ty);
+  }
 
 
   bool isIntegerType(const SgType& ty)
@@ -1709,7 +1735,10 @@ namespace ada
 
   struct FunctionCallToOperatorConverter
   {
-      FunctionCallToOperatorConverter() = default;
+      FunctionCallToOperatorConverter(bool convPrefixCalls, bool convNamedArgs)
+      : withPrefixCalls(convPrefixCalls), resolveNamedArguments(convNamedArgs)
+      {}
+
       ~FunctionCallToOperatorConverter() { executeTransformations(); }
 
       void executeTransformations() const;
@@ -1720,7 +1749,10 @@ namespace ada
       using replacement_t = std::tuple<SgFunctionCallExp*, std::string>;
 
       std::vector<replacement_t> work;
+      bool                       withPrefixCalls;
+      bool                       resolveNamedArguments;
 
+      FunctionCallToOperatorConverter() = delete;
       //~ FunctionCallToOperatorConverter& operator=(const FunctionCallToOperatorConverter&) = delete;
       //~ FunctionCallToOperatorConverter& operator=(FunctionCallToOperatorConverter&&)      = delete;
   };
@@ -1874,9 +1906,9 @@ namespace ada
     conversionTraversal(convertSymbolTablesToCaseSensitive_internal, root);
   }
 
-  void convertToOperatorRepresentation(SgNode* root)
+  void convertToOperatorRepresentation(SgNode* root, bool withPrefixCalls, bool resolveNamedArguments)
   {
-    conversionTraversal(FunctionCallToOperatorConverter{}, root);
+    conversionTraversal(FunctionCallToOperatorConverter{withPrefixCalls, resolveNamedArguments}, root);
   }
 
   /*
@@ -2331,6 +2363,23 @@ SgDeclarationStatement*
 baseDeclaration(SgType* ty)
 {
   return BaseTypeDecl::find(ty);
+}
+
+SgEnumDeclaration*
+baseEnumDeclaration(SgType& ty)
+{
+  return baseEnumDeclaration(&ty);
+}
+
+SgEnumDeclaration*
+baseEnumDeclaration(SgType* ty)
+{
+  SgDeclarationStatement* basedcl = baseDeclaration(ty);
+
+  if (SgTypedefDeclaration* tydcl = isSgTypedefDeclaration(basedcl))
+    return baseEnumDeclaration(tydcl->get_base_type());
+
+  return isSgEnumDeclaration(basedcl);
 }
 
 
