@@ -83,12 +83,16 @@ namespace
     void def(SageDecl& n) { res = n.get_definition(); }
 
     void handle(SgNode& n)                   { SG_UNEXPECTED_NODE(n); }
+
+    // declarations
     void handle(SgAdaPackageSpecDecl& n)     { def(n); }
     void handle(SgAdaPackageBodyDecl& n)     { def(n); }
     void handle(SgAdaGenericDecl& n)         { def(n); }
+    void handle(SgAdaGenericInstanceDecl& n) { res = n.get_instantiatedScope(); }
+
+    // others
     void handle(SgBasicBlock& n)             { res = &n; }
     // \todo add handlers as needed
-    //~ void handle(SgAdaGenericInstanceDecl& n) { def(n); }
   };
 
 
@@ -2575,21 +2579,6 @@ namespace
       void operator()(Element_ID id)
       {
         //~ ROSE_ASSERT(origAA != origZZ);
-
-#if OLD_CODE
-        SgInitializedName& origEnum = SG_DEREF(*origAA);
-        ADA_ASSERT (isSgAssignInitializer(origEnum.get_initializer()));
-
-        SgVarRefExp&       enumInit = SG_DEREF(sb::buildVarRefExp(&origEnum, &ctx.scope()));
-
-        enumInit.unsetTransformation();
-        enumInit.setCompilerGenerated();
-
-        SgType&            enumTy   = SG_DEREF(derivedDcl.get_type());
-        SgInitializedName& sgnode   = mkInitializedName(origEnum.get_name(), enumTy, &enumInit);
-
-        std::cerr << "derenum " << reinterpret_cast<uint64_t>(&sgnode) << std::endl;
-#endif /* OLD _CODE */
 
         // PP (01/25/22) new code: the old code tried to link the enumerators to their original definition
         // by setting the initializer to the old value. However, derived enumerators can have

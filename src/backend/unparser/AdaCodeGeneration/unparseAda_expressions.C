@@ -54,6 +54,12 @@ namespace
   }
 
   inline
+  SgName nameOf(const SgEnumVal& n)
+  {
+    return n.get_name();
+  }
+
+  inline
   SgName nameOf(const SgFunctionRefExp& n)
   {
     return nameOf(symOf(n));
@@ -431,6 +437,17 @@ namespace
       prn(nameOf(n));
     }
 
+    void handle(SgEnumVal& n)
+    {
+      if (USE_COMPUTED_NAME_QUALIFICATION_EXPR)
+        prnNameQual(n);
+      else if (ctxRequiresScopeQualification)
+        prn(scopeQual(SG_DEREF(n.get_declaration()).get_scope()));
+
+      prn(nameOf(n));
+    }
+
+
     void handle(SgAdaRenamingRefExp& n)
     {
       SgAdaRenamingDecl& dcl = SG_DEREF(n.get_decl());
@@ -627,22 +644,28 @@ namespace
 
     SgExpression* lhs        = n.get_lhs_operand();
     SgExpression* rhs        = n.get_rhs_operand();
+    const bool    opref      = (lhs == nullptr) && (rhs == nullptr);
     const bool    callsyntax = (  argRequiresCallSyntax(lhs)
                                || argRequiresCallSyntax(rhs)
                                );
 
-    if (callsyntax)
+    if (opref || callsyntax)
     {
       prn("\"");
       prn(operator_sym(n));
-      prn("\" (");
+      prn("\"");
+
+      if (callsyntax) prn("(");
     }
 
-    expr(lhs);
-    prn(" ");
-    prn(callsyntax ? std::string(", ") : operator_sym(n));
-    prn(" ");
-    expr(rhs);
+    if (!opref)
+    {
+      expr(lhs);
+      prn(" ");
+      prn(callsyntax ? std::string(", ") : operator_sym(n));
+      prn(" ");
+      expr(rhs);
+    }
 
     if (callsyntax) prn(")");
   }

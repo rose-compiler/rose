@@ -1096,6 +1096,14 @@ namespace
           recordNameQualIfNeeded(n, declOf(n).get_scope());
       }
 
+      void handle(const SgEnumVal& n)
+      {
+        // \todo can an enum be elided?
+        //       gets the scope of the enumeration declaration, not the initialized name
+        if (!elideNameQualification(n))
+          recordNameQualIfNeeded(n, SG_DEREF(n.get_declaration()).get_scope());
+      }
+
       void handle(const SgAdaUnitRefExp& n)
       {
         if (!elideNameQualification(n))

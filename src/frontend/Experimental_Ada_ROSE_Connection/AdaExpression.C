@@ -426,7 +426,8 @@ namespace
   {
     if ((args == nullptr) || (args->size() == 0))
     {
-      logError() << "unable to disambiguate operator. No candidates."
+      logError() << "unable to disambiguate operator w/o arguments. "
+                 << (args ? int(args->size()) : -1)
                  << std::endl;
       return nullptr;
     }
@@ -492,7 +493,8 @@ namespace
     ADA_ASSERT((len > 2) && (expr.Name_Image[0] == '"') && (expr.Name_Image[len-1] == '"'));
 
     // do not use leading and trailing '"'
-    auto pos = adaFuncs().find(AdaIdentifier{expr.Name_Image+1, len-2});
+    AdaIdentifier fnname{expr.Name_Image+1, len-2};
+    auto pos = adaFuncs().find(fnname);
 
     if (pos != adaFuncs().end())
     {
@@ -1228,7 +1230,7 @@ namespace
       case A_Selected_Component:                      // 4.1.3
         {
           logKind("A_Selected_Component");
-          SgExpression& selector = getExprID(expr.Selector, ctx);
+          SgExpression& selector = getExprID(expr.Selector, ctx, suppl);
 
           // Check if the kind requires a prefix in ROSE,
           //   or if the prefix (scope qualification) is implied and

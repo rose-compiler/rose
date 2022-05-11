@@ -173,10 +173,12 @@ namespace
 
     if (insdcl == nullptr) return nullptr;
 
+
     // first try to find an argument matching the name
     SgExprListExp&       args  = SG_DEREF(insdcl->get_actual_parameters());
     SgExpressionPtrList& exprs = args.get_expressions();
-    ExprIterator         exbeg = exprs.end();
+    //~ logError() << "instance " << exprs.size() << std::endl;
+    ExprIterator         exbeg = exprs.begin();
     ExprIterator         exend = exprs.end();
     ExprIterator         expos = std::find_if( exbeg, exend,
                                                [&tyname](const SgExpression* exp) -> bool
@@ -207,7 +209,12 @@ namespace
                                            );
 
     if (genpos != genend)
-      return extractFundamentalNode(exprs.at(std::distance(genbeg, genpos)));
+    {
+      const int parmpos = std::distance(genbeg, genpos);
+
+      ADA_ASSERT(parmpos < exprs.size());
+      return extractFundamentalNode(exprs[parmpos]);
+    }
 
     return nullptr;
   }

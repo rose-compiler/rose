@@ -1575,7 +1575,11 @@ mkVarDecl(SgInitializedName& var, SgScopeStatement& scope)
 SgVariableDeclaration&
 mkExceptionDecl(const SgInitializedNamePtrList& vars, SgScopeStatement& scope)
 {
-  return mkVarExceptionDeclInternal<SgVariableDeclaration>(vars.begin(), vars.end(), scope);
+  SgVariableDeclaration& sgnode = mkVarExceptionDeclInternal<SgVariableDeclaration>(vars.begin(), vars.end(), scope);
+
+  //~ sgnode.set_firstNondefiningDeclaration(&sgnode); //??
+  sgnode.set_definingDeclaration(&sgnode); //??
+  return sgnode;
 }
 
 SgAdaComponentClause&
@@ -1912,11 +1916,13 @@ mkEnumeratorRef(SgEnumDeclaration& enumdecl, SgInitializedName& enumitem)
   return SG_DEREF( sb::buildEnumVal_nfi(enumval, &enumdecl, enumitem.get_name()) );
 }
 
+#if OBSOLETE
 SgExpression&
 mkEnumeratorRef_repclause(SgEnumDeclaration&, SgInitializedName& enumitem)
 {
   return SG_DEREF( sb::buildVarRefExp(&enumitem, nullptr /* not needed */) );
 }
+#endif /* OBSOLETE */
 
 namespace
 {

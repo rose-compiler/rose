@@ -864,23 +864,12 @@ namespace Ada_ROSE_Translation
   SgExpression&
   mkEnumeratorRef(SgEnumDeclaration&, SgInitializedName&);
 
+#if OBSOLETE
   /// builds a reference to an enumerator in form of an SgVarRefExp
   /// (special case for SgAdaEnumRepresentationClause - RC-1147)
   SgExpression&
   mkEnumeratorRef_repclause(SgEnumDeclaration&, SgInitializedName&);
-
-  /// creates a remainder operation (different from SgModOp)
-  /// \todo move to SageBuilder
-  ///       should SgRemOp be called SgAdaRem?
-  //~ SgRemOp*
-  //~ buildRemOp(SgExpression* lhs, SgExpression* rhs);
-
-  /// creates an abs function
-  /// \todo move to SageBuilder
-  ///       should SgAbsOp be called SgAdaAbs?
-  //~ SgAbsOp*
-  //~ buildAbsOp(SgExpression* op);
-
+#endif /* OBSOLETE */
 
   /// creates and if statement
   SgIfStmt&
