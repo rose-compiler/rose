@@ -42,7 +42,7 @@ library project ASIS_Adapter is
    for Languages use ("Ada", "C");
 
    package Compiler is
-      for Default_Switches ("ada") use ("-gnat12", "-gnata", "-g");
+      for Default_Switches ("ada") use ("-gnat12", "-gnata", "-g", "-gnateDGNAT_2021=false");
    end Compiler;
 
    -- Linker switches are not taken into account in library projects
