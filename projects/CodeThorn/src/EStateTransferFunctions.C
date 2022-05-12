@@ -2523,7 +2523,7 @@ namespace CodeThorn {
       SgNode* child=SgNodeHelper::getFirstChild(node);
       SingleEvalResult operandResult=evaluateLExpression(child,estate);
       switch(node->variantT()) {
-      case V_SgAddressOfOp: return evalAddressOfOp(isSgAddressOfOp(node),operandResult,estate,mode);
+      case V_SgAddressOfOp: return evalAddressOfOp(isSgAddressOfOp(node),operandResult,estate,MODE_ADDRESS);
       case V_SgPlusPlusOp: return evalPlusPlusOp(isSgPlusPlusOp(node),operandResult,estate,mode);
       case V_SgMinusMinusOp: return evalMinusMinusOp(isSgMinusMinusOp(node),operandResult,estate,mode);
         // SgPointerDerefExp??
@@ -3585,7 +3585,7 @@ namespace CodeThorn {
     } else {
       SgExpression* arrExp=isSgExpression(SgNodeHelper::getLhs(node));
       SgExpression* indexExp=isSgExpression(SgNodeHelper::getRhs(node));
-      SingleEvalResult lhsResult=evaluateExpression(arrExp,estate,MODE_VALUE);
+      SingleEvalResult lhsResult=evaluateExpression(arrExp,estate,MODE_ADDRESS);
       SingleEvalResult rhsResult=evaluateExpression(indexExp,estate,MODE_VALUE);
       SingleEvalResult res=evalArrayReferenceOp(node,lhsResult,rhsResult,estate,MODE_ADDRESS);
       return res;
