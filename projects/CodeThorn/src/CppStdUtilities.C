@@ -20,6 +20,19 @@ namespace CppStdUtilities {
     return "generate";
   }
 
+  unsigned long int convertStringToNumber(string s) {
+    unsigned long int x;
+    if(CppStdUtilities::isPrefix("0x",s)) {
+      // convert as hex number
+      x = std::stoul(s, nullptr, 16);
+    } else if(CppStdUtilities::isPrefix("0",s)) {
+      x = std::stoul(s, nullptr, 8);      
+    } else {
+      x = std::stoul(s, nullptr, 10);
+    }
+    return x;
+  }
+
   bool readDataFile(std::string fileName, DataFileVector& dfv) {
     string line;
     ifstream infile(fileName);

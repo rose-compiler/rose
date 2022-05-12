@@ -11,6 +11,9 @@ namespace CppStdUtilities {
 
   typedef std::vector<std::string> DataFileVector;
 
+  // converts a number in various number formats to an unsigned integer. e.g. 0x1000, 1000, 0800.
+  unsigned long int convertStringToNumber(std::string s);
+  
   // Read data file and add the lines in the provided vector. Chops off a newline if it is
   // present at the end of a line.
   // Returns true if reading the file was successful, otherwise false.
