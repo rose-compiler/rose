@@ -29,15 +29,13 @@ package Lal_Adapter.Tool is
       return a_nodes_h.Nodes_Struct;
 
 private
-
    -- For debuggng:
    Parent_Name : constant String := Module_Name;
    Module_Name : constant String := Parent_Name & ".Tool";
 
-   type Class is tagged limited -- Initialized
+   type Class is new Lal_Adapter.Class with -- Initialized
       record
          My_Context : Lal_Adapter.Context.Class; -- Initialized
-         Outputs    : Output_Accesses_Record; -- Initialized
       end record;
 
 end Lal_Adapter.Tool;

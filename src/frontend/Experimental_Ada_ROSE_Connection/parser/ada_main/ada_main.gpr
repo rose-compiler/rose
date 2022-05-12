@@ -11,7 +11,7 @@ project Ada_Main is
      ("run_parser_adapter.adb");
 
    package Compiler is
-      for Default_Switches ("ada") use ("-gnat12", "-gnata", "-g");
+      for Default_Switches ("ada") use ("-gnat12", "-gnata", "-g", "-gnateDGNAT_2021=false");
    end Compiler;
 
    package Linker is

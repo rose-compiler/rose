@@ -39,7 +39,7 @@ library project LAL_Adapter is
    for Languages use ("Ada", "C");
 
    package Compiler is
-      for Default_Switches ("ada") use ("-gnat12", "-gnata", "-g");
+      for Default_Switches ("ada") use ("-gnat12", "-gnata", "-g", "-gnateDGNAT_2021=true");
    end Compiler;
 
    -- Linker switches are ignored in library projects
