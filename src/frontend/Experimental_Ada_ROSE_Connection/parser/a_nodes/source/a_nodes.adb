@@ -52,12 +52,21 @@ package body A_Nodes is
       else
          -- TODO: Remove when no longer needed for debug:
          --  Ada.Text_IO.Put_Line ("a_nodes.Check_Element_Node:  ID => " & ID'Image);
+#if GNAT_2021 then
          if Is_Part_Of_Instance = Interfaces.C.False then
             This.Element_IDs.Insert (ID);
             if ID > This.Highest_Element_ID then
                This.Highest_Element_ID := ID;
             end if;
          end if;
+#else
+         if Is_Part_Of_Instance = Extensions.False then
+            This.Element_IDs.Insert (ID);
+            if ID > This.Highest_Element_ID then
+               This.Highest_Element_ID := ID;
+            end if;
+         end if;
+#end if;
       end if;
    end Check_Element_Node;
 
