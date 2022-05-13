@@ -1833,6 +1833,8 @@ bool ClangToSageTranslator::VisitSwitchStmt(clang::SwitchStmt * switch_stmt, SgN
 
     SgSwitchStatement * sg_switch_stmt = SageBuilder::buildSwitchStatement_nfi(expr_stmt, NULL);
 
+    sg_switch_stmt->set_parent(SageBuilder::topScopeStack());
+
     cond->set_parent(expr_stmt);
     expr_stmt->set_parent(sg_switch_stmt);
 
