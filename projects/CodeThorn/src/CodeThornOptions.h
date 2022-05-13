@@ -141,7 +141,7 @@ public:
   bool keepErrorStates=false;
   bool abstractionConsistencyCheck=false; // currently only supported in Solver18
   bool passThroughOptimization=true;
-  bool temporaryLocalVarOptFlag=true;
+  bool temporaryLocalVarOptFlag=false;
   std::string registerAddressStartString="0x10000";
   std::string registerAddressEndString=""; // defaults to max value if empty
   

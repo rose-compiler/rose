@@ -3044,16 +3044,14 @@ namespace CodeThorn {
             return res;
           }
         } else if(_variableIdMapping->isOfReferenceType(arrayVarId)) {
-          // DEBUG2: reference test: NONP008
-          arrayPtrValue=readFromReferenceMemoryLocation(estate->label(),pstate2,arrayVarId);
+          if(mode==MODE_VALUE) {
+            arrayPtrValue=readFromReferenceMemoryLocation(estate->label(),pstate2,arrayVarId);
+          }
           if(arrayPtrValue.isBot()) {
             // if referred memory location is not in state
             res.result=CodeThorn::Top();
             return res;
           }
-          cout<<"DEBUG3: array reference value: "<<arrayPtrValue.toString()<<endl;
-          //cout<<"PSTATE:"<<pstate2.toString(_variableIdMapping)<<endl;
-          //cerr<<node->unparseToString()<<" of type "<<node->get_type()->unparseToString()<<endl;
         } else {
           cerr<<"Error: unknown type of array or pointer."<<endl;
           cerr<<node->unparseToString()<<" of type "<<node->get_type()->unparseToString()<<endl;
@@ -3070,7 +3068,6 @@ namespace CodeThorn {
         AbstractValue indexExprResultValue=indexExprResult.value();
         AbstractValue elementSize=getMemoryRegionAbstractElementSize(arrayPtrValue);
         AbstractValue arrayPtrPlusIndexValue=AbstractValue::operatorAdd(arrayPtrValue,indexExprResultValue,elementSize);
-        cout<<"DEBUG5: arrayPtrValue("<<arrayPtrValue.toString()<<")+indexExprResultValue("<<indexExprResultValue<<") => "<<arrayPtrPlusIndexValue.toString()<<endl;
         if(arrayPtrPlusIndexValue.isNullPtr()) {
           notifyReadWriteListenersOnReading(estate->label(),const_pstate,arrayPtrPlusIndexValue);
           // there is no state following a definitive null pointer
