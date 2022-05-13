@@ -364,19 +364,22 @@ void finishSageAST(ClangToSageTranslator & translator) {
 
  // 1 - Label Statements: Move sub-statement after the label statement.
 
+// Pei-Hung (05/13/2022) This step is no longer needed as subStatement is properly handled.  
+/*
     std::vector<SgLabelStatement *> label_stmts = SageInterface::querySubTree<SgLabelStatement>(global_scope, V_SgLabelStatement);
     std::vector<SgLabelStatement *>::iterator label_stmt_it;
     for (label_stmt_it = label_stmts.begin(); label_stmt_it != label_stmts.end(); label_stmt_it++) {
-        SgStatement * sub_stmt = (*label_stmt_it)->get_statement();
+        SgLabelStatement* labelStmt = isSgLabelStatement(*label_stmt_it);
+        SgStatement * sub_stmt = labelStmt->get_statement();
         if (!isSgNullStatement(sub_stmt)) {
             SgNullStatement * null_stmt = SageBuilder::buildNullStatement_nfi();
             translator.setCompilerGeneratedFileInfo(null_stmt);
-            (*label_stmt_it)->set_statement(null_stmt);
-            null_stmt->set_parent(*label_stmt_it);
-            SageInterface::insertStatementAfter(*label_stmt_it, sub_stmt);
+            labelStmt->set_statement(null_stmt);
+            null_stmt->set_parent(labelStmt);
+            SageInterface::insertStatementAfter(labelStmt, sub_stmt);
         }
     }
-
+*/
  // 2 - Place Preprocessor informations
 }
 
