@@ -3012,7 +3012,6 @@ namespace CodeThorn {
     } else {
       if(SgVarRefExp* varRefExp=isSgVarRefExp(arrayExpr)) {
         AbstractValue arrayPtrValue=arrayExprResult.result;
-        cout<<"DEBUG4: arrayPtrValue"<<arrayPtrValue.toString()<<endl;
         PStatePtr const_pstate=estate->pstate();
         PStatePtr pstate2=const_pstate;
         VariableId arrayVarId=_variableIdMapping->variableId(varRefExp);
