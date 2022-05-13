@@ -80,7 +80,7 @@ do
         --no-np)
             testNumbers=`echo {001..009}`
             testprefix=NONP
-            runNPTests 0 0 3
+            runNPTests 0 0 1
             ;;
         *)
             ;;

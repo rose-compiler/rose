@@ -2523,7 +2523,7 @@ namespace CodeThorn {
       SgNode* child=SgNodeHelper::getFirstChild(node);
       SingleEvalResult operandResult=evaluateLExpression(child,estate);
       switch(node->variantT()) {
-      case V_SgAddressOfOp: return evalAddressOfOp(isSgAddressOfOp(node),operandResult,estate,mode);
+      case V_SgAddressOfOp: return evalAddressOfOp(isSgAddressOfOp(node),operandResult,estate,MODE_ADDRESS);
       case V_SgPlusPlusOp: return evalPlusPlusOp(isSgPlusPlusOp(node),operandResult,estate,mode);
       case V_SgMinusMinusOp: return evalMinusMinusOp(isSgMinusMinusOp(node),operandResult,estate,mode);
         // SgPointerDerefExp??
@@ -3043,15 +3043,14 @@ namespace CodeThorn {
             return res;
           }
         } else if(_variableIdMapping->isOfReferenceType(arrayVarId)) {
-          arrayPtrValue=readFromReferenceMemoryLocation(estate->label(),pstate2,arrayVarId);
+          if(mode==MODE_VALUE) {
+            arrayPtrValue=readFromReferenceMemoryLocation(estate->label(),pstate2,arrayVarId);
+          }
           if(arrayPtrValue.isBot()) {
             // if referred memory location is not in state
             res.result=CodeThorn::Top();
             return res;
           }
-          //cout<<"DEBUG: array reference value: "<<arrayPtrValue.toString()<<endl;
-          //cout<<"PSTATE:"<<pstate2.toString(_variableIdMapping)<<endl;
-          //cerr<<node->unparseToString()<<" of type "<<node->get_type()->unparseToString()<<endl;
         } else {
           cerr<<"Error: unknown type of array or pointer."<<endl;
           cerr<<node->unparseToString()<<" of type "<<node->get_type()->unparseToString()<<endl;
@@ -3068,7 +3067,6 @@ namespace CodeThorn {
         AbstractValue indexExprResultValue=indexExprResult.value();
         AbstractValue elementSize=getMemoryRegionAbstractElementSize(arrayPtrValue);
         AbstractValue arrayPtrPlusIndexValue=AbstractValue::operatorAdd(arrayPtrValue,indexExprResultValue,elementSize);
-        //cout<<"DEBUG5: arrayPtrValue("<<arrayPtrValue.toString()<<")+indexExprResultValue("<<indexExprResultValue<<") => "<<arrayPtrPlusIndexValue.toString()<<endl;
         if(arrayPtrPlusIndexValue.isNullPtr()) {
           notifyReadWriteListenersOnReading(estate->label(),const_pstate,arrayPtrPlusIndexValue);
           // there is no state following a definitive null pointer
@@ -3585,7 +3583,7 @@ namespace CodeThorn {
     } else {
       SgExpression* arrExp=isSgExpression(SgNodeHelper::getLhs(node));
       SgExpression* indexExp=isSgExpression(SgNodeHelper::getRhs(node));
-      SingleEvalResult lhsResult=evaluateExpression(arrExp,estate,MODE_VALUE);
+      SingleEvalResult lhsResult=evaluateExpression(arrExp,estate,MODE_ADDRESS);
       SingleEvalResult rhsResult=evaluateExpression(indexExp,estate,MODE_VALUE);
       SingleEvalResult res=evalArrayReferenceOp(node,lhsResult,rhsResult,estate,MODE_ADDRESS);
       return res;

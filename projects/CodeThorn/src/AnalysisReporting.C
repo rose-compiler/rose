@@ -319,6 +319,7 @@ namespace CodeThorn {
       }
     }
  
+#if 0
     if(ctOpt.analyzedExternalFunctionCallsCSVFileName.size()>0) {
       string fileName=ctOpt.reportFilePath+"/"+ctOpt.analyzedExternalFunctionCallsCSVFileName;
       if(!ctOpt.quiet)
@@ -328,6 +329,7 @@ namespace CodeThorn {
         cerr<<"Error: cannot create file "<<fileName<<endl;
       }
     }
+#endif
   }
 
   void AnalysisReporting::generateVerificationCallGraphDotFile(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer, string analysisName, ProgramLocationsReport& report) {
