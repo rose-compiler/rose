@@ -453,6 +453,9 @@ namespace ada
   ///   - (1, 2, LEN => 3) => 2
   /// @{
   size_t
+  positionalArgumentLimit(const SgExpressionPtrList& arglst);
+
+  size_t
   positionalArgumentLimit(const SgExprListExp& args);
 
   size_t
@@ -482,13 +485,13 @@ namespace ada
   /// converts AST from a function call representation to operator form
   ///   for fundamental operator declarations.
   /// \param root                  the subtree is traversed to find operator calls (using the traversal mechanism)
-  /// \param withPrefixCalls       false, only convert those calls where get_uses_operator_syntax() returns false
+  /// \param convertCallSyntax     false, only convert those calls where get_uses_operator_syntax() returns false
   ///                              true,  convert all calls (may result in invalid Ada)
-  /// \param resolveNamedArguments not relevant, when withPrefixCalls == false
+  /// \param convertNamedArguments not relevant, when withPrefixCalls == false
   ///                              true, named arguments are resolved
   ///                              false, named arguments are preserved
   // \todo mv into Ada to C++ converter
-  void convertToOperatorRepresentation(SgNode* root, bool withPrefixCalls = false, bool resolveNamedArguments = false);
+  void convertToOperatorRepresentation(SgNode* root, bool convertCallSyntax = false, bool convertNamedArguments = false);
 } // Ada
 } // SageInterface
 

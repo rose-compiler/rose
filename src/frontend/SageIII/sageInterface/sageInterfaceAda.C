@@ -10,6 +10,7 @@
 #include <exception>
 
 #include <boost/lexical_cast.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 
 #include "Rose/Diagnostics.h"
 
@@ -1735,8 +1736,8 @@ namespace ada
 
   struct FunctionCallToOperatorConverter
   {
-      FunctionCallToOperatorConverter(bool convPrefixCalls, bool convNamedArgs)
-      : withPrefixCalls(convPrefixCalls), resolveNamedArguments(convNamedArgs)
+      FunctionCallToOperatorConverter(bool convOperatorCalls, bool convNamedArgs)
+      : convertOperatorCalls(convOperatorCalls), convertNamedArguments(convNamedArgs)
       {}
 
       ~FunctionCallToOperatorConverter() { executeTransformations(); }
@@ -1749,8 +1750,8 @@ namespace ada
       using replacement_t = std::tuple<SgFunctionCallExp*, std::string>;
 
       std::vector<replacement_t> work;
-      bool                       withPrefixCalls;
-      bool                       resolveNamedArguments;
+      const bool                 convertOperatorCalls;
+      const bool                 convertNamedArguments;
 
       FunctionCallToOperatorConverter() = delete;
       //~ FunctionCallToOperatorConverter& operator=(const FunctionCallToOperatorConverter&) = delete;
@@ -1764,6 +1765,7 @@ namespace ada
     return SG_DEREF(args).get_expressions().size();
   }
 
+  inline
   bool hasNullArg(const SgFunctionCallExp& fncall)
   {
     SgExprListExp* args = fncall.get_args();
@@ -1775,7 +1777,7 @@ namespace ada
   {
     SgFunctionCallExp*     fncall = isSgFunctionCallExp(n);
     if (  (fncall == nullptr)
-       || (!fncall->get_uses_operator_syntax())
+       || ((!convertOperatorCalls) && (!fncall->get_uses_operator_syntax()))
        || (arity(*fncall) > 2)
        //~ || (hasNullArg(*fncall))
        )
@@ -1793,52 +1795,112 @@ namespace ada
     work.emplace_back(fncall, std::move(op));
   }
 
-  using CallToOperatorTransformer = std::function<SgExpression*(SgFunctionCallExp*)>;
+  using CallToOperatorTransformer = std::function<SgExpression&(SgExpressionPtrList)>;
 
   template <class BinaryBuilderFn>
   CallToOperatorTransformer tf2(BinaryBuilderFn fn)
   {
-    // in c++14: return [fn = std::move(fn)](SgFunctionCallExp* n) -> SgExpression*
-    return [fn](SgFunctionCallExp* n) -> SgExpression*
+    return [fn](SgExpressionPtrList operands) -> SgExpression&
            {
-             SgExprListExp*       args = SG_DEREF(n).get_args();
-             SgExpressionPtrList& list = SG_DEREF(args).get_expressions();
+             ROSE_ASSERT(operands.size() == 2);
+             SgExpression*       lhs = operands[0];
+             SgExpression*       rhs = operands[1];
 
-             ROSE_ASSERT(list.size() == 2);
-             SgExpression*        lhs = list[0];
-             SgExpression*        rhs = list[1];
-             SgExpression*        lhs_dummy = sb::buildNullExpression();
-             SgExpression*        rhs_dummy = sb::buildNullExpression();
+             ROSE_ASSERT(lhs && rhs);
+             SgExpression*       lhs_dummy = sb::buildNullExpression();
+             SgExpression*       rhs_dummy = sb::buildNullExpression();
 
              si::replaceExpression(lhs, lhs_dummy, true /* keep */);
              si::replaceExpression(rhs, rhs_dummy, true /* keep */);
 
-             return fn(lhs, rhs);
+             return SG_DEREF(fn(lhs, rhs));
            };
   }
 
   template <class UnaryBuilderFn>
   CallToOperatorTransformer tf1(UnaryBuilderFn fn)
   {
-    // in c++14: return [fn = std::move(fn)](SgFunctionCallExp* n) -> SgExpression*
-    return [fn](SgFunctionCallExp* n) -> SgExpression*
+    return [fn](SgExpressionPtrList operands) -> SgExpression&
            {
-             SgExprListExp*       args = SG_DEREF(n).get_args();
-             SgExpressionPtrList& list = SG_DEREF(args).get_expressions();
+             ROSE_ASSERT(operands.size() == 1);
+             SgExpression*       arg = operands[0];
 
-             ROSE_ASSERT(list.size() == 1);
-             SgExpression*        arg = list[0];
-             SgExpression*        arg_dummy = sb::buildNullExpression();
+             ROSE_ASSERT(arg);
+             SgExpression*       arg_dummy = sb::buildNullExpression();
 
              si::replaceExpression(arg, arg_dummy, true /* keep */);
-
-             return fn(arg);
+             return SG_DEREF(fn(arg));
            };
+  }
+
+  SgExpressionPtrList
+  simpleArgumentExtractor(SgFunctionCallExp& n)
+  {
+    return SG_DEREF(n.get_args()).get_expressions();
+  }
+
+  int
+  namedArgumentPosition(const SgInitializedNamePtrList& paramList, const std::string& name)
+  {
+    SgInitializedNamePtrList::const_iterator aaa = paramList.begin();
+    SgInitializedNamePtrList::const_iterator pos = std::find_if( aaa, paramList.end(),
+                                                                 [&name](const SgInitializedName* n) -> bool
+                                                                 {
+                                                                   ASSERT_not_null(n);
+                                                                   return boost::iequals(name, n->get_name().getString());
+                                                                 }
+                                                               );
+
+    return std::distance(aaa, pos);
+  }
+
+  /// resize the container if \ref pos is outside the valid index range
+  void extend(SgExpressionPtrList& container, std::size_t pos, SgExpression* val = nullptr)
+  {
+    const std::size_t sz = pos+1; // pos needs to be a valid index
+
+    if (container.size() < sz) container.resize(sz, val);
+  }
+
+  SgExpressionPtrList
+  namedArgumentExtractor(SgFunctionCallExp& n)
+  {
+    SgExpressionPtrList           res;
+    SgExpressionPtrList&          orig = SG_DEREF(n.get_args()).get_expressions();
+    size_t                        posArgLimit = positionalArgumentLimit(orig);
+    SgExpressionPtrList::iterator aaa = orig.begin();
+    SgExpressionPtrList::iterator pos = aaa + posArgLimit;
+    SgExpressionPtrList::iterator zzz = orig.end();
+
+    res.reserve(orig.size());
+    std::copy(aaa, pos, std::back_inserter(res));
+
+    SgFunctionDeclaration&        fndecl   = SG_DEREF(n.getAssociatedFunctionDeclaration());
+    SgFunctionParameterList&      fnparms  = SG_DEREF(fndecl.get_parameterList());
+    SgInitializedNamePtrList&     parmList = fnparms.get_args();
+
+    std::for_each( pos, zzz,
+                   [&parmList, &res](SgExpression* n) -> void
+                   {
+                     SgActualArgumentExpression* arg = isSgActualArgumentExpression(n);
+                     ASSERT_not_null(arg);
+
+                     const int pos = namedArgumentPosition(parmList, arg->get_argument_name());
+                     ROSE_ASSERT(pos < int(parmList.size()));
+
+                     extend(res, pos);
+                     ROSE_ASSERT(res[pos] == nullptr); // do not overwrite a valid arg
+                     res[pos] = arg->get_expression();
+                   }
+                 );
+
+    return res;
   }
 
 
   void FunctionCallToOperatorConverter::executeTransformations() const
   {
+    using OperandExtractor = decltype(&simpleArgumentExtractor);
     using BuilderMap = std::map<std::string, CallToOperatorTransformer>;
 
     static const BuilderMap tfFn2 = { { "=",   tf2(&sb::buildEqualityOp) }
@@ -1867,22 +1929,22 @@ namespace ada
                                     , { "-",   tf1(&sb::buildUnaryExpression<SgMinusOp>) }
                                     };
 
+    OperandExtractor operandExtractor = convertNamedArguments ? namedArgumentExtractor
+                                                              : simpleArgumentExtractor;
 
     for (const replacement_t& r : work)
     {
-      SgFunctionCallExp* orig  = std::get<0>(r);
-      const int          numargs = arity(*orig);
+      SgFunctionCallExp& orig  = SG_DEREF(std::get<0>(r));
+      const int          numargs = arity(orig);
       ROSE_ASSERT(numargs == 1 || numargs == 2);
-      SgExpression*      repl  = numargs == 1 ? tfFn1.at(std::get<1>(r))(orig)
-                                              : tfFn2.at(std::get<1>(r))(orig);
+      SgExpression&      repl  = numargs == 1 ? tfFn1.at(std::get<1>(r))(operandExtractor(orig))
+                                              : tfFn2.at(std::get<1>(r))(operandExtractor(orig));
 
-      ROSE_ASSERT(repl);
-      repl->set_need_paren(orig->get_need_paren());
+      //~ if (orig.get_parent() == nullptr)
+        //~ std::cerr << "parent is null: " << orig->unparseToString() << std::endl;
 
-      if (orig->get_parent() == nullptr)
-        std::cerr << "parent is null: " << orig->unparseToString() << std::endl;
-
-      si::replaceExpression(orig, repl, false /* delete orig sub-tree */ );
+      repl.set_need_paren(orig.get_need_paren());
+      si::replaceExpression(&orig, &repl, false /* delete orig sub-tree */ );
     }
   }
 
@@ -1906,9 +1968,9 @@ namespace ada
     conversionTraversal(convertSymbolTablesToCaseSensitive_internal, root);
   }
 
-  void convertToOperatorRepresentation(SgNode* root, bool withPrefixCalls, bool resolveNamedArguments)
+  void convertToOperatorRepresentation(SgNode* root, bool convertCallSyntax, bool convertNamedArguments)
   {
-    conversionTraversal(FunctionCallToOperatorConverter{withPrefixCalls, resolveNamedArguments}, root);
+    conversionTraversal(FunctionCallToOperatorConverter{convertCallSyntax, convertNamedArguments}, root);
   }
 
   /*
@@ -2269,15 +2331,18 @@ primitiveParameterPositions(const SgFunctionDeclaration* dcl)
 }
 
 size_t
+positionalArgumentLimit(const SgExpressionPtrList& arglst)
+{
+  SgExpressionPtrList::const_iterator aaa = arglst.begin();
+  SgExpressionPtrList::const_iterator pos = std::find_if(aaa, arglst.end(), isNamedArgument);
+
+  return std::distance(aaa, pos);
+}
+
+size_t
 positionalArgumentLimit(const SgExprListExp& args)
 {
-  using ConstIterator = SgExpressionPtrList::const_iterator;
-
-  const SgExpressionPtrList& arglst = args.get_expressions();
-  ConstIterator              aa     = arglst.begin();
-  ConstIterator              pos    = std::find_if(aa, arglst.end(), isNamedArgument);
-
-  return std::distance(aa, pos);
+  return positionalArgumentLimit(args.get_expressions());
 }
 
 size_t
