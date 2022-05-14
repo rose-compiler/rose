@@ -3072,7 +3072,23 @@ bool ClangToSageTranslator::VisitInitListExpr(clang::InitListExpr * init_list_ex
         SgNode * tmp_expr = Traverse(*it);
         SgExpression * expr = isSgExpression(tmp_expr);
         ROSE_ASSERT(expr != NULL);
-        expr_list_expr->append_expression(expr);
+
+        // Pei-Hung (05/13/2022) the expr can another InitListExpr
+        SgExprListExp * child_expr_list_expr = isSgExprListExp(expr);
+        SgInitializer * init = NULL;
+        if (child_expr_list_expr != NULL)
+        {
+            SgType * type = expr->get_type();
+            init = SageBuilder::buildAggregateInitializer(child_expr_list_expr, type);
+        }
+
+        if (init != NULL)
+        {
+            applySourceRange(init, (*it)->getSourceRange());
+            expr_list_expr->append_expression(init);
+        }
+        else
+            expr_list_expr->append_expression(expr);
     }
 
     *node = expr_list_expr;
