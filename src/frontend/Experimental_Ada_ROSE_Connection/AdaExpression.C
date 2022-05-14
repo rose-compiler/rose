@@ -148,14 +148,16 @@ namespace
         // check all named arguments
         while (aa != zz)
         {
-          const std::string parmName = SG_DEREF(aa->name()).get_name();
-          auto              sameNamePred = [&parmName](const SgExpression* arg) -> bool
-                                           {
-                                             const SgActualArgumentExpression* actarg = isSgActualArgumentExpression(arg);
+          const std::string& parmName = SG_DEREF(aa->name()).get_name();
+          auto               sameNamePred = [&parmName](const SgExpression* arg) -> bool
+                                            {
+                                              const SgActualArgumentExpression* actarg = isSgActualArgumentExpression(arg);
 
-                                             ROSE_ASSERT(actarg);
-                                             return parmName == std::string{actarg->get_argument_name()};
-                                           };
+                                              ROSE_ASSERT(actarg);
+                                              const std::string& argName = actarg->get_argument_name().getString();
+
+                                              return boost::iequals(parmName, argName);
+                                            };
           ArgumentIterator argpos   = std::find_if(firstNamed, argLimit, sameNamePred);
 
           ++aa;
