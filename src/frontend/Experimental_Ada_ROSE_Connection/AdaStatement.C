@@ -683,13 +683,10 @@ namespace
 
       void handle(SgAdaDerivedType& n)
       {
-        SgEnumDeclaration* enmdcl = isSgEnumDeclaration(si::ada::baseDeclaration(n));
+        SgEnumDeclaration* enmdcl = si::ada::baseEnumDeclaration(n);
 
         if (enmdcl == nullptr)
-        {
-          handle(sg::asBaseType(n));
-          return;
-        }
+          return handle(sg::asBaseType(n));
 
         SgEnumDeclaration& derivedEnum = mkEnumDefn(dclname, dclscope);
 
@@ -2595,7 +2592,7 @@ namespace
 
         Declaration_Struct& decl = elem.The_Union.Declaration;
         ADA_ASSERT (decl.Declaration_Kind == An_Enumeration_Literal_Specification);
-        logKind("An_Enumeration_Literal_Specification");
+        logKind("An_Enumeration_Literal_Specification (inherited)");
 
         NameData            name = singleName(decl, ctx);
         ADA_ASSERT (name.ident == name.fullName);
@@ -2650,6 +2647,8 @@ namespace
   std::tuple<SgEnumDeclaration*, SgAdaRangeConstraint*>
   getBaseEnum(SgType* baseTy)
   {
+    ADA_ASSERT(baseTy);
+
     SgAdaRangeConstraint* constraint = nullptr;
     SgEnumDeclaration*    basedecl   = nullptr;
 
@@ -2663,11 +2662,15 @@ namespace
         constraint = isSgAdaRangeConstraint(subTy->get_constraint());
       }
 
-      if (SgEnumType* enumTy = isSgEnumType(ty))
-        basedecl = isSgEnumDeclaration(enumTy->get_declaration());
+      basedecl = si::ada::baseEnumDeclaration(ty);
     }
 
-    ROSE_ASSERT(basedecl);
+    if (basedecl == nullptr)
+    {
+      logError() << typeid(*baseTy).name() << std::endl;
+      ASSERT_not_null(basedecl);
+    }
+
     if (SgEnumDeclaration* realdecl = isSgEnumDeclaration(basedecl->get_definingDeclaration()))
       basedecl = realdecl;
 
@@ -2954,45 +2957,6 @@ namespace
     return &mkExprListExp(reslst);
   }
 
-/*
-  // compare SgAdaType::getExceptionBase
-  std::pair<SgInitializedName*, SgAdaRenamingDecl*>
-  getObjectBase(Element_Struct& el, AstContext ctx)
-  {
-    ADA_ASSERT (el.Element_Kind == An_Expression);
-
-    NameData        name = getQualName(el, ctx);
-    Element_Struct& elem = name.elem();
-
-    ADA_ASSERT (elem.Element_Kind == An_Expression);
-    Expression_Struct& obj  = elem.The_Union.Expression;
-
-    //~ use this if package standard is included
-    //~ return lookupNode(asisExcps(), ex.Corresponding_Name_Definition);
-
-    // first try: look up in user defined exceptions
-    if (SgInitializedName* ini = findFirst(asisVars(), obj.Corresponding_Name_Definition, obj.Corresponding_Name_Declaration))
-      return std::make_pair(ini, nullptr);
-
-    // second try: look up in renamed declarations
-    if (SgDeclarationStatement* dcl = findFirst(asisDecls(), obj.Corresponding_Name_Definition, obj.Corresponding_Name_Declaration))
-    {
-      SgAdaRenamingDecl& rendcl = SG_DEREF(isSgAdaRenamingDecl(dcl));
-
-      return std::make_pair(nullptr, &rendcl);
-    }
-
-    // last resort: create a new initialized name representing the exception
-    logError() << "Unknown object: " << obj.Name_Image << std::endl;
-    ADA_ASSERT (!FAIL_ON_ERROR(ctx));
-
-    // \todo what else can we do???
-    SgInitializedName& init = mkInitializedName(obj.Name_Image, lookupNode(adaTypes(), AdaIdentifier{"Integer"}), nullptr);
-
-    init.set_scope(&ctx.scope());
-    return std::make_pair(&init, nullptr);
-  }
-*/
 
   // returns a function declaration statement for a declaration statement
   //   checks if the function is an Ada generic function, where the declaration
@@ -3418,6 +3382,19 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         SgScopeStatement&     outer    = ctx.scope();
         Element_ID            specID   = decl.Corresponding_Declaration;
 
+        if (specID == 0)
+        {
+          ADA_ASSERT(decl.Corresponding_Body_Stub);
+
+          Element_Struct&     stubelem = retrieveAs(elemMap(), decl.Corresponding_Body_Stub);
+          ADA_ASSERT(stubelem.Element_Kind == A_Declaration);
+
+          Declaration_Struct& stubdecl = stubelem.The_Union.Declaration;
+          ADA_ASSERT(stubdecl.Declaration_Kind == A_Package_Body_Stub);
+
+          specID = stubdecl.Corresponding_Declaration;
+        }
+
         // we need to check if the SgAdaPackageSpecDecl is directly available
         // or if it is wrapped by an SgAdaGenericDecl node.
         SgDeclarationStatement* declnode = &lookupNode(asisDecls(), specID);
@@ -3444,8 +3421,10 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         SgAdaPackageBodyDecl*   nondef  = isSgAdaPackageBodyDecl(ndef);
         ADA_ASSERT(!ndef || nondef); // ndef => nondef
 
-        NameData                adaname = singleName(decl, ctx);
-        SgScopeStatement&       logicalScope = adaname.parent_scope();
+        // when this is an implementation of a stub, use the scope of the stub, instead of the global scope
+        SgScopeStatement&       logicalScope = nondef ? SG_DEREF(nondef->get_scope())
+                                                      : singleName(decl, ctx).parent_scope();
+
         SgAdaPackageBodyDecl&   sgnode  = mkAdaPackageBodyDecl(SG_DEREF(specdcl), nondef, logicalScope);
         SgAdaPackageBody&       pkgbody = SG_DEREF(sgnode.get_definition());
 
@@ -3477,7 +3456,6 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
                Declaration_ID                 Body_Block_Statement;
                bool                           Is_Name_Repeated;
                bool                           Is_Subunit;
-               Declaration_ID                 Corresponding_Body_Stub;
          */
         break;
       }

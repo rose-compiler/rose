@@ -1197,7 +1197,9 @@ namespace
 
       // \todo what types need to be printed?
       //       print all non-null ty->get_formal_type() ?
-      if (si::ada::isIntegerType(formalBase))
+      if (si::ada::isModularType(formalBase))
+        prn("mod <>");
+      else if (si::ada::isIntegerType(formalBase))
         prn("range <>");
       else if (si::ada::isFloatingPointType(formalBase))
         prn("digits <>");
