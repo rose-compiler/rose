@@ -1237,7 +1237,8 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
      printf ("   --- funcdecl_stmt->get_type_syntax_is_available() = %s \n",funcdecl_stmt->get_type_syntax_is_available() ? "true" : "false");
      printf ("   --- initializedName                               = %p = %s \n",initializedName,initializedName->get_name().str());
      printf ("   --- initializedName->get_name()                   = %s \n",initializedName->get_name().str());
-     printf ("   --- initializedName->get_type()                   = %p = %s \n",initializedName->get_type(),initializedName->get_type()->class_name().c_str());
+     printf ("   --- initializedName->get_type()                   = %p = %s name = %s \n",initializedName->get_type(),
+          initializedName->get_type()->class_name().c_str(),SageInterface::get_name(initializedName->get_type()).c_str());
 #endif
 
   // DQ (9/14/2015): Test disabling this for C++11 mode.
@@ -1717,6 +1718,7 @@ Unparse_ExprStmt::unparseFunctionArgs(SgFunctionDeclaration* funcdecl_stmt, SgUn
              {
 #if 0
                printf ("In unparseFunctionArgs(): Calling unparseFunctionParameterDeclaration() \n");
+               printf (" --- funcdecl_stmt->get_type_syntax_is_available() = %s \n",funcdecl_stmt->get_type_syntax_is_available() ? "true" : "false");
 #endif
             // DQ (4/13/2018): If we have saved the original syntax then use it, else use the default (which is matching the defining function declaration).
             // unparseFunctionParameterDeclaration (funcdecl_stmt,*p,false,info);
@@ -1925,7 +1927,8 @@ Unparse_ExprStmt::unparse_helper(SgFunctionDeclaration* funcdecl_stmt, SgUnparse
      printf ("In unparse_helper(): funcdecl_stmt->get_oldStyleDefinition() = %s \n",funcdecl_stmt->get_oldStyleDefinition() ? "true" : "false");
 #endif
 
-     if ( funcdecl_stmt->get_oldStyleDefinition() )
+  // if ( funcdecl_stmt->get_oldStyleDefinition() )
+     if ( funcdecl_stmt->get_oldStyleDefinition() == true)
         {
        // Output old-style C (K&R) function definition
        // printf ("Output old-style C (K&R) function definition \n");
