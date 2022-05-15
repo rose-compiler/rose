@@ -1,7 +1,9 @@
 // Example ROSE Translator used for testing ROSE infrastructure
 #include "rose.h"
 
-#include "merge.h"
+// DQ (4/24/2022): We don't need thisnow, it was included as part of previous work with Tristan.
+// #include "merge.h"
+#include "Rose/AST/io.h"
 
 // DQ (3/5/2017): Adding support for EDG/ROSE frontend message logging.
 #ifndef ROSE_USE_CLANG_FRONTEND
@@ -130,7 +132,7 @@ int main( int argc, char * argv[] )
   // DQ (2/27/2022): Old function from me (SageInterface::deleteAllNodes()) and 
   // new function from Tristan (Rose::AST::free()).
   // SageInterface::deleteAllNodes();
-     Rose::AST::free();
+     Rose::AST::IO::free();
   // SageInterface::deleteAllNodes();
   // printf ("DONE: Experiment with calling function to delete all IR nodes \n");
 #endif

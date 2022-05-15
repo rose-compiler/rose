@@ -440,13 +440,24 @@ else
 endif
 endif
 
+# DQ (4/24/2022): Note that this test is testing the generation of an error, so the output will make it apear to be an error.
 # Liao, 4/12/2017 restrict_template_parameter.C will trigger frontend error.
 # __minimal_input_code is defined in input_codes/Makefile.for.input.codes
 testKeepGoingTranslator: $(top_builddir)/exampleTranslators/defaultTranslator/KeepGoingTranslator
 if ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
 	@echo "SKIPPING target '$@' because the EDG is compiled in debug mode."
 else
+	@echo "*******************************************************************************************************"
+	@echo "*******************************************************************************************************"
+	@echo "This test below is testing the generation of an error, so the output will make it apear to be an error!"
+	@echo "*************************************************************************************************"
+	@echo "*************************************************************************************************"
 	./$(top_builddir)/exampleTranslators/defaultTranslator/KeepGoingTranslator -c $(__minimal_input_code) $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests/restrict_template_parameter.C $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests/test2017_13_Liao.C $(top_srcdir)/tests/nonsmoke/functional/CompileTests/Cxx_tests/test2017_12_Liao.C
+	@echo "**************************************************************************************************"
+	@echo "**************************************************************************************************"
+	@echo "The test above tested the generation of an error, so the output will make it apear to be an error!"
+	@echo "**************************************************************************************************"
+	@echo "**************************************************************************************************"
 endif
 
 # DQ (7/2/2015): template test code that marks all template instantiations for output (as a test).
