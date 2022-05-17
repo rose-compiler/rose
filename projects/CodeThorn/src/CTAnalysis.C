@@ -1360,7 +1360,11 @@ std::string CodeThorn::CTAnalysis::externalFunctionsToString() {
     //ss<<SgNodeHelper::getFunctionName(funCall)<<endl;
     ostringstream ss;
     auto funDecl=funCall->getAssociatedFunctionDeclaration();
-    s.insert(SgNodeHelper::locationToString(funDecl)+","+funDecl->unparseToString());
+    if(funDecl) {
+      s.insert(SgNodeHelper::locationToString(funDecl)+","+funDecl->unparseToString());
+    } else {
+      s.insert(SgNodeHelper::locationToString(funCall)+","+"unresolved function call");
+    }
   }
   stringstream ss;
   for(auto entry : s) {
