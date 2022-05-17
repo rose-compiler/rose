@@ -1361,9 +1361,9 @@ std::string CodeThorn::CTAnalysis::externalFunctionsToString() {
     ostringstream ss;
     auto funDecl=funCall->getAssociatedFunctionDeclaration();
     if(funDecl) {
-      s.insert(SgNodeHelper::locationToString(funDecl)+","+funDecl->unparseToString());
+      s.insert(ProgramLocationsReport::findOriginalProgramLocationOfNode(funDecl)+","+funDecl->unparseToString());
     } else {
-      s.insert(SgNodeHelper::locationToString(funCall)+","+"unresolved function call");
+      s.insert(ProgramLocationsReport::findOriginalProgramLocationOfNode(funCall)+","+"function call resolves to more than one target:"+funCall->unparseToString());
     }
   }
   stringstream ss;
