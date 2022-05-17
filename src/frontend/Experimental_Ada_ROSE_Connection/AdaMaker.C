@@ -831,6 +831,7 @@ namespace
     {
       nondef->set_definingDeclaration(&defn);
       defn.set_firstNondefiningDeclaration(nondef);
+      defn.set_definingDeclaration(&defn);
     }
     else
     {
@@ -2094,7 +2095,8 @@ namespace
                                      , { "overlaps_storage",     &boolTypeAttr }
                                      , { "pos",                  &integralTypeAttr }
                                      , { "position",             &integralTypeAttr }
-                                     , { "pred",                 &argTypeAttr }
+                                     //~ , { "pred",                 &argTypeAttr }
+                                     , { "pred",                 &exprTypeAttr }   // Type'Pred may have no arguments when it is passed as function
                                      , { "remainder",            &argTypeAttr }
                                      , { "rounding",             &argTypeAttr }
                                      //~ , { "range",                &unknownTypeAttr }
@@ -2106,7 +2108,8 @@ namespace
                                      , { "scalar_storage_order", &voidTypeAttr }
                                      , { "storage_pool",         &voidTypeAttr }
                                      , { "storage_size",         &integralTypeAttr }
-                                     , { "succ",                 &argTypeAttr }
+                                     //~ , { "succ",                 &argTypeAttr }
+                                     , { "succ",                 &exprTypeAttr }  // Type'Pred may have no arguments when it is passed as function
                                      , { "signed_zeros",         &boolTypeAttr }
                                      , { "size",                 &integralTypeAttr }
                                      , { "storage_unit",         &integralTypeAttr }
