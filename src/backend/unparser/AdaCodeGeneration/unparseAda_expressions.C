@@ -444,6 +444,7 @@ namespace
       else if (ctxRequiresScopeQualification)
         prn(scopeQual(SG_DEREF(n.get_declaration()).get_scope()));
 
+      std::cerr << "enumval: " << nameOf(n) << std::endl;
       prn(nameOf(n));
     }
 
@@ -673,14 +674,14 @@ namespace
   void AdaExprUnparser::handle(SgUnaryOp& n)
   {
     SgExpression* oper       = n.get_operand();
+    const bool    opref      = (oper == nullptr);
     const bool    callsyntax = argRequiresCallSyntax(oper);
 
-    // are there any postfix operators in Ada
-
-    if (callsyntax) prn("\"");
+    if (opref || callsyntax) prn("\"");
     prn(operator_sym(n));
-    prn(callsyntax ? "\" (" : " ");
-    expr(n.get_operand());
+    if (opref || callsyntax) prn("\"");
+    prn(callsyntax ? " (" : " ");
+    if (!opref) expr(n.get_operand());
     if (callsyntax) prn(")");
   }
 

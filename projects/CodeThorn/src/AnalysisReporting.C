@@ -319,7 +319,7 @@ namespace CodeThorn {
       }
     }
  
-#if 0
+#if 1
     if(ctOpt.analyzedExternalFunctionCallsCSVFileName.size()>0) {
       string fileName=ctOpt.reportFilePath+"/"+ctOpt.analyzedExternalFunctionCallsCSVFileName;
       if(!ctOpt.quiet)

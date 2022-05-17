@@ -212,7 +212,7 @@ namespace
     {
       const int parmpos = std::distance(genbeg, genpos);
 
-      ADA_ASSERT(parmpos < exprs.size());
+      ADA_ASSERT(parmpos < int(exprs.size()));
       return extractFundamentalNode(exprs[parmpos]);
     }
 
@@ -1384,7 +1384,7 @@ namespace
   SgTypedefDeclaration&
   declareStringType(const std::string& name, SgType& positive, SgType& comp, SgAdaPackageSpec& scope)
   {
-    SgExprListExp&        idx     = mkExprListExp({sb::buildTypeExpression(&positive)});
+    SgExprListExp&        idx     = mkExprListExp({&mkTypeExpression(positive)});
     SgArrayType&          strtype = mkArrayType(comp, idx, true);
     SgTypedefDeclaration& sgnode  = mkTypeDecl(name, strtype, scope);
 
