@@ -206,6 +206,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   protected_body_declaration.adb       \
   protected_body_declaration.ads       \
   protected_type_declaration.ads       \
+  record_extends_formal_type.ads       \
   renamings.adb                        \
   renaming_as_body.adb                 \
   requeue_statement_2.adb              \

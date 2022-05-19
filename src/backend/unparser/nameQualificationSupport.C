@@ -903,7 +903,7 @@ namespace
 
       void handle(const SgAdaPackageSpecDecl& n)
       {
-        std::cerr << n.get_name() << std::endl;
+        //~ std::cerr << n.get_name() << std::endl;
         handle(sg::asBaseType(n));
 
         recordNameQualIfNeeded(n, n.get_scope());
@@ -1037,20 +1037,39 @@ namespace
         addUsedScopeIfNeeded(n.get_declaration());
       }
 
+      // needed because SgBaseClass objects cannot be traversed
+      //   see Cxx_GrammarTreeTraversalSuccessorContainer for details!
+      void handleBaseClass(const SgBaseClass* b)
+      {
+        if (b == nullptr)
+          return;
+
+        if (const SgExpBaseClass* eb = isSgExpBaseClass(b))
+          handle(*eb);
+        else
+          handle(*b);
+      }
+
       void handle(const SgClassDefinition& n)
       {
         handle(sg::asBaseType(n));
 
-        // bases seem not to be traverses, so let's traverse them
+        // bases seem not to be traversed, so let's traverse them
         for (const SgBaseClass* base : n.get_inheritances())
-          handle(SG_DEREF(base));
+          handleBaseClass(base);
+      }
+
+      void handle(const SgClassDeclaration& n)
+      {
+        handle(sg::asBaseType(n));
+        handleBaseClass(n.get_adaParentType());
       }
 
       void handle(const SgAdaVariantFieldDecl& n)
       {
         handle(sg::asBaseType(n));
 
-        computeNameQualForNonshared(n.get_variantConditions(), false);
+        computeNameQualForNonshared(n.get_variantConditions(), false /* not a type subtree */);
       }
 
       //
@@ -1071,9 +1090,12 @@ namespace
         recordNameQualIfNeeded(n, decl.get_scope());
       }
 
-      void handle(const SgExpBaseClass&)
+      void handle(const SgExpBaseClass& n)
       {
-        // \todo?
+        // get_base_class_exp would be traversed by default, yet, here it is NOT traversed.
+        // the reason is that we cannot traverse any SgBaseClass objects.. ???
+        //   see Cxx_GrammarTreeTraversalSuccessorContainer for details!
+        computeNameQualForNonshared(n.get_base_class_exp(), false /* not a type subtree */);
       }
 
 
