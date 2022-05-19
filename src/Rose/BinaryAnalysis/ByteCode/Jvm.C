@@ -3,7 +3,6 @@
 #include <sage3basic.h>
 
 #include <Rose/BinaryAnalysis/ByteCode/Jvm.h>
-#include <Rose/BinaryAnalysis/DisassemblerJvm.h>
 
 using namespace Rose::Diagnostics;
 using PoolEntry = SgAsmJvmConstantPoolEntry;
@@ -15,38 +14,23 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace ByteCode {
 
-#ifdef TRIALS
-JvmField::JvmField(SgAsmJvmClassFile* jcf, uint16_t index)
-  : jcf_{jcf}
-{
-  ROSE_ASSERT(jcf && jcf->get_field_table());
-
-  auto fields = jcf->get_field_table()->get_fields();
-  sgField_ = fields[index];
-  ROSE_ASSERT(sgField_ && "JvmField ctor(): sgField_ is null");
-
-  cout << "JvmField ctor(): name_index:" << sgField_->get_name_index() << endl;
-}
-#endif
-
 const std::string JvmField::name() const
 {
-  auto pool = jcf_->get_constant_pool();
+  auto pool = jfh_->get_constant_pool();
   if (sgField_->get_name_index() != 0) {
     return pool->get_utf8_string(sgField_->get_name_index());
   }
   return std::string{""};
 }
 
-JvmMethod::JvmMethod(SgAsmJvmClassFile* jcf, SgAsmJvmMethod* method)
-  : jcf_{jcf}, sgMethod_{method}, code_{jcf,nullptr,0,0}
+JvmMethod::JvmMethod(SgAsmJvmFileHeader* jfh, SgAsmJvmMethod* method)
+  : jfh_{jfh}, sgMethod_{method}, code_{jfh,nullptr,0,0}
 {
-  ROSE_ASSERT(jcf && method);
+  ASSERT_not_null(jfh);
+  ASSERT_not_null(method);
 
   auto attribute_table = method->get_attribute_table();
   for (auto attribute : attribute_table->get_attributes()) {
-
-    attribute->dump(stdout, "", 0);
     if (auto codeAttr{isSgAsmJvmCodeAttribute(attribute)}) {
       const uint8_t* code{reinterpret_cast<const uint8_t*>(codeAttr->get_code())};
       // Set JvmCode object fields
@@ -59,7 +43,7 @@ JvmMethod::JvmMethod(SgAsmJvmClassFile* jcf, SgAsmJvmMethod* method)
 
 const std::string JvmMethod::name() const
 {
-  auto pool = jcf_->get_constant_pool();
+  auto pool = jfh_->get_constant_pool();
   if (sgMethod_->get_name_index() != 0) {
     return pool->get_utf8_string(sgMethod_->get_name_index());
   }
@@ -79,33 +63,28 @@ void const JvmMethod::decode(Disassembler* disassembler) const {
               AddressSegment(buf, /*offset*/0, MemoryMap::READABLE, "JVM code segment"));
 
   SgAsmInstruction* insn{nullptr};
+  SgAsmInstructionList* insnList{sgMethod_->get_instruction_list()};
+
   while (va < endVa) {
     insn = disassembler->disassembleOne(map, va);
     if (insn) {
-      cout << "    : " << insn->get_anyKind() << ": " << insn->get_mnemonic() << ": '"
-           << insn->description() << "' " << " size:" << insn->get_size()
-           << " va:" << insn->get_address() << endl;
       va += insn->get_size();
       ROSE_ASSERT((666 != (int)insn->get_anyKind()) && "unknown instruction");
+      insnList->get_instructions().push_back(insn);
+      insn->set_parent(insnList);
     }
     else {
       ROSE_ASSERT(false && "disassembly failed");
     }
   }
-  cout << "JvmMethod:decode() finished: va-offset:" << va-code_.offset() << endl;
-}
-
-JvmInterface::JvmInterface(SgAsmJvmClassFile* jcf, uint16_t index)
-  : jcf_{jcf}, index_{index}
-{
-  cout << "JvmInterface ctor(): # interfaces: " << jcf->get_interfaces().size() << endl;
+  ROSE_ASSERT((va - code_.offset()) == code_.size());
 }
 
 const std::string JvmInterface::name() const
 {
-  auto pool = jcf_->get_constant_pool();
-  if (index_ != 0) {
-    auto classEntry = pool->get_entry(index_);
+  auto pool = jfh_->get_constant_pool();
+  if (0 != index()) {
+    auto classEntry = pool->get_entry(index());
     if (classEntry->get_tag() == SgAsmJvmConstantPoolEntry::CONSTANT_Class) {
       if (classEntry->get_name_index() != 0) {
         return pool->get_utf8_string(classEntry->get_name_index());
@@ -115,49 +94,49 @@ const std::string JvmInterface::name() const
   return std::string{""};
 }
 
-JvmClass::JvmClass(SgAsmJvmClassFile* jcf)
-  : jcf_{jcf}, strings_{std::vector<std::string>()}
+const std::string JvmAttribute::name() const
 {
-  cout << "JvmClass ctor(): jcf:" << jcf << endl;
-  ROSE_ASSERT(jcf && jcf->get_field_table());
-  ROSE_ASSERT(jcf && jcf->get_method_table());
+  auto pool = jfh_->get_constant_pool();
+  if (0 != index()) {
+    auto entry = pool->get_entry(index());
+    if (entry->get_tag() == SgAsmJvmConstantPoolEntry::CONSTANT_Utf8) {
+      return pool->get_utf8_string(index());
+    }
+  }
+  return std::string{""};
+}
 
-  auto fields = jcf->get_field_table()->get_fields();
-  cout << "JvmClass ctor(): field table:" << jcf->get_field_table() << endl;
-  auto methods = jcf->get_method_table()->get_methods();
-  cout << "JvmClass ctor(): method table:" << jcf->get_method_table() << endl;
-  const std::list<uint16_t>& interfaces = jcf->get_interfaces();
-  cout << "JvmClass ctor(): interface list count: " << interfaces.size() << endl;
+JvmClass::JvmClass(SgAsmJvmFileHeader* jfh)
+  : jfh_{jfh}, strings_{std::vector<std::string>()}
+{
+  ASSERT_not_null(jfh);
+  ASSERT_not_null(jfh->get_field_table());
+  ASSERT_not_null(jfh->get_method_table());
+  ASSERT_not_null(jfh->get_attribute_table());
 
-  cout << "JvmClass ctor(): # fields:" << fields.size() << endl;
+  auto fields = jfh->get_field_table()->get_fields();
+  auto methods = jfh->get_method_table()->get_methods();
+  auto attributes = jfh->get_attribute_table()->get_attributes();
+  const std::list<uint16_t>& interfaces = jfh->get_interfaces();
+
   for (auto sgField : fields) {
-    fields_.push_back(new JvmField{jcf, sgField});
+    fields_.push_back(new JvmField{jfh, sgField});
   }
-  for (auto field : fields_) {
-    cout << "    field_name:" << field->name() << endl;
-  }
-
-  cout << "JvmClass ctor(): # methods:" << methods.size() << endl;
   for (auto sgMethod : methods) {
-    methods_.push_back(new JvmMethod{jcf, sgMethod});
+    methods_.push_back(new JvmMethod{jfh, sgMethod});
   }
-  for (auto method : methods_) {
-    cout << "    method_name:" << method->name() << endl;
-  }
-
-  cout << "JvmClass ctor(): # interfaces:" << interfaces.size() << endl;
   for (uint16_t index  : interfaces) {
-    interfaces_.push_back(new JvmInterface{jcf, index});
+    interfaces_.push_back(new JvmInterface{jfh, index});
   }
-  for (auto interface : interfaces_) {
-    cout << "    interface_name:" << interface->name() << endl;
+  for (auto sgAttribute : attributes) {
+    attributes_.push_back(new JvmAttribute{jfh, sgAttribute->get_attribute_name_index()});
   }
 }
 
 const std::string JvmClass::name() const
 {
-  auto pool = jcf_->get_constant_pool();
-  auto class_index = jcf_->get_this_class();
+  auto pool = jfh_->get_constant_pool();
+  auto class_index = jfh_->get_this_class();
   auto class_info = pool->get_entry(class_index);
   if (class_info->get_name_index() != 0) {
     return pool->get_utf8_string(class_info->get_name_index());
@@ -167,8 +146,8 @@ const std::string JvmClass::name() const
 
 const std::string JvmClass::super_name() const
 {
-  auto pool = jcf_->get_constant_pool();
-  auto super_index = jcf_->get_super_class();
+  auto pool = jfh_->get_constant_pool();
+  auto super_index = jfh_->get_super_class();
   auto class_info = pool->get_entry(super_index);
   if (class_info->get_name_index() != 0) {
     return pool->get_utf8_string(class_info->get_name_index());
@@ -179,9 +158,7 @@ const std::string JvmClass::super_name() const
 const std::vector<std::string> &JvmClass::strings()
 {
   strings_.clear();
-  auto pool = jcf_->get_constant_pool();
-  cout << "... strings: pool: " << pool << endl;
-  cout << "... strings: # pool entries: " << pool->get_entries().size() << endl;
+  auto pool = jfh_->get_constant_pool();
   for (auto entry : pool->get_entries()) {
     auto tag{entry->get_tag()};
     if (entry && (tag==PoolEntry::CONSTANT_Utf8 || tag==PoolEntry::CONSTANT_Utf8)) {

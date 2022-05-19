@@ -1,5 +1,5 @@
-#ifndef JvmClassFile_H
-#define JvmClassFile_H
+#ifndef Jvm_H
+#define Jvm_H
 
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 

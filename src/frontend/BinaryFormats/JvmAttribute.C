@@ -3,13 +3,10 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
-#include <Rose/Diagnostics.h>
-#include "JvmClassFile.h"
+#include "Jvm.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-using namespace Rose::Diagnostics;
-using namespace ByteOrder;
 using std::cout;
 using std::endl;
 
@@ -20,7 +17,6 @@ SgAsmJvmAttribute* SgAsmJvmAttribute::create_attribute(SgAsmJvmConstantPool* poo
 
   Jvm::read_value(pool, attribute_name_index, /*advance_offset*/false);
   std::string name = pool->get_utf8_string(attribute_name_index);
-  cout << "\n--- " << name << " attribute ---\n";
 
   if (name == "Code") {
     return new SgAsmJvmCodeAttribute;
@@ -39,15 +35,15 @@ SgAsmJvmAttribute* SgAsmJvmAttribute::create_attribute(SgAsmJvmConstantPool* poo
   Jvm::read_value(pool, attribute_name_index);
   Jvm::read_value(pool, attribute_length);
 
-  cout << "of length " << attribute_length << endl;
+#ifdef DEBUG_ON
+  cout << "--- " << name << " attribute ---\n";
+  cout << "SgAsmJvmAttribute::create_attribute(): skipping attribute of length " << attribute_length << endl;
+#endif
 
   SgAsmGenericHeader* header{pool->get_header()};
   ASSERT_not_null(header);
-  cout << "--> header is " << header->class_name() << endl;
 
   rose_addr_t offset{header->get_offset()};
-  cout << "--> offset is " << offset << endl;
-
   header->set_offset(offset + attribute_length);
 
   return nullptr;
@@ -55,16 +51,12 @@ SgAsmJvmAttribute* SgAsmJvmAttribute::create_attribute(SgAsmJvmConstantPool* poo
 
 SgAsmJvmAttributeTable::SgAsmJvmAttributeTable()
 {
-  cout << "SgAsmJvmAttributeTable::ctor() ... WARNING: parent NOT set\n";
-  ROSE_ASSERT(false);
+  ROSE_ASSERT(false && "WARNING: attribute table parent not set");
 }
-SgAsmJvmAttributeTable::SgAsmJvmAttributeTable(SgAsmJvmClassFile* parent)
+SgAsmJvmAttributeTable::SgAsmJvmAttributeTable(SgAsmJvmFileHeader* jfh, SgAsmNode* parent)
 {
   set_parent(parent);
-}
-SgAsmJvmAttributeTable::SgAsmJvmAttributeTable(SgAsmJvmNode* parent)
-{
-  set_parent(parent);
+  set_header(jfh);
 }
 
 SgAsmJvmAttributeTable* SgAsmJvmAttributeTable::parse(SgAsmJvmConstantPool* pool)
@@ -98,12 +90,12 @@ SgAsmJvmAttribute* SgAsmJvmAttribute::parse(SgAsmJvmConstantPool* pool)
   Jvm::read_value(pool, p_attribute_name_index);
   Jvm::read_value(pool, p_attribute_length);
 
-  //#ifdef DEBUGGING
+#ifdef DEBUG_ON
   cout << "SgAsmJvmAttribute::parse:attribute_name_index " << p_attribute_name_index << endl;
   cout << "SgAsmJvmAttribute::parse:attribute_length " << p_attribute_length << endl;
   ROSE_ASSERT(p_attribute_name_index == get_attribute_name_index());
   ROSE_ASSERT(p_attribute_length == get_attribute_length());
-  //#endif
+#endif
 
   return this;
 }
@@ -112,7 +104,7 @@ SgAsmJvmAttribute* SgAsmJvmCodeAttribute::parse(SgAsmJvmConstantPool* pool)
 {
   uint32_t length;
   char* bytes{nullptr};
-  auto header{pool->get_header()};
+  auto header = dynamic_cast<SgAsmJvmFileHeader*>(pool->get_header());
 
   SgAsmJvmAttribute::parse(pool);
 
@@ -126,21 +118,13 @@ SgAsmJvmAttribute* SgAsmJvmCodeAttribute::parse(SgAsmJvmConstantPool* pool)
   p_code_length = Jvm::read_bytes(pool, bytes, length);
   set_code(bytes);
 
-#ifdef DEBUGGING
-  cout << "SgAsmJvmCodeAttribute::parse() attr length is " << p_attribute_length << endl;
-  cout << "SgAsmJvmCodeAttribute::parse() code length is " << length << endl;
-#endif
-
   /* exception table */
   p_exception_table = new SgAsmJvmExceptionTable(this);
   p_exception_table->parse(pool);
 
   /* attribute table */
-  p_attribute_table = new SgAsmJvmAttributeTable(this);
-  ASSERT_not_null(p_attribute_table);
+  p_attribute_table = new SgAsmJvmAttributeTable(header, /*parent*/this);
   p_attribute_table->parse(pool);
-
-  dump(stdout, "", 0);
 
   return this;
 }
@@ -148,13 +132,10 @@ SgAsmJvmAttribute* SgAsmJvmCodeAttribute::parse(SgAsmJvmConstantPool* pool)
 SgAsmJvmAttribute* SgAsmJvmConstantValue::parse(SgAsmJvmConstantPool* pool)
 {
   SgAsmJvmAttribute::parse(pool);
-  cout << "SgAsmJvmConstantValue::parse() ...\n";
 
   // The value of the attribute_length item must be two (section 4.7.2)
   ROSE_ASSERT(p_attribute_length == 2);
-
   Jvm::read_value(pool, p_constantvalue_index);
-  cout << "SgAsmJvmConstantValue::parse:constantvalue_index " << p_constantvalue_index << endl;
 
   return this;
 }
@@ -171,20 +152,19 @@ SgAsmJvmAttribute* SgAsmJvmSignature::parse(SgAsmJvmConstantPool* pool)
 SgAsmJvmAttribute* SgAsmJvmSourceFile::parse(SgAsmJvmConstantPool* pool)
 {
   SgAsmJvmAttribute::parse(pool);
-  cout << "SgAsmJvmSourceFile::parse() ...\n";
   Jvm::read_value(pool, p_sourcefile_index);
   return this;
 }
 
-void SgAsmJvmAttribute::dump(FILE*f, const char* prefix, ssize_t idx) const
+void SgAsmJvmAttribute::dump(FILE* f, const char* prefix, ssize_t idx) const
 {
-  fprintf(f, "SgAsmJvmAttribute:%d:%d\n", p_attribute_name_index, p_attribute_length);
+  fprintf(f, "%s:%ld:%d:%d\n", prefix, idx, p_attribute_name_index, p_attribute_length);
 }
 
-void SgAsmJvmCodeAttribute::dump(FILE*f, const char* prefix, ssize_t idx) const
+void SgAsmJvmCodeAttribute::dump(FILE* f, const char* prefix, ssize_t idx) const
 {
   SgAsmJvmAttribute::dump(f, prefix, idx);
-  fprintf(f, "SgAsmJvmCodeAttribute:%d:%d:%d\n", p_max_stack, p_max_locals, p_code_length);
+  fprintf(f, "-->SgAsmJvmCodeAttribute:%d:%d:%d\n", p_max_stack, p_max_locals, p_code_length);
 }
 
 void SgAsmJvmConstantValue::dump(FILE*f, const char* prefix, ssize_t idx) const
@@ -202,7 +182,7 @@ void SgAsmJvmSignature::dump(FILE*f, const char* prefix, ssize_t idx) const
 void SgAsmJvmSourceFile::dump(FILE*f, const char* prefix, ssize_t idx) const
 {
   SgAsmJvmAttribute::dump(f, prefix, idx);
-  fprintf(f, "SgAsmJvmSourceFile:%d\n", p_sourcefile_index);
+  fprintf(f, "SgAsmJvmSourceFile::dump():%d\n", p_sourcefile_index);
 }
 
 
@@ -232,7 +212,6 @@ void SgAsmJvmException::dump(FILE*f, const char* prefix, ssize_t idx) const
 
 SgAsmJvmExceptionTable::SgAsmJvmExceptionTable(SgAsmJvmCodeAttribute* parent)
 {
-  cout << "SgAsmJvmExceptionTable::ctor() ...\n";
   set_parent(parent);
 }
 
@@ -241,11 +220,6 @@ SgAsmJvmExceptionTable* SgAsmJvmExceptionTable::parse(SgAsmJvmConstantPool* pool
   uint16_t exception_table_length;
   Jvm::read_value(pool, exception_table_length);
 
-#ifdef DEBUGGING
-  cout << "SgAsmJvmExceptionTable::parse() ...\n";
-  cout << "SgAsmJvmExceptionTable::parse() exception table length is " << exception_table_length << endl;
-#endif
-
   auto exceptions = get_exceptions();
   for (int ii = 0; ii < exception_table_length; ii++) {
     cout << "\n --- exception ---\n";
@@ -253,7 +227,6 @@ SgAsmJvmExceptionTable* SgAsmJvmExceptionTable::parse(SgAsmJvmConstantPool* pool
     exception->parse(pool);
     exceptions.push_back(exception);
   }
-  cout << "SgAsmJvmExceptionTable::parse() exit ... \n";
 
   return this;
 }
@@ -303,29 +276,25 @@ SgAsmJvmLineNumberTable::SgAsmJvmLineNumberTable(SgAsmJvmAttribute* parent)
 
 SgAsmJvmLineNumberTable* SgAsmJvmLineNumberTable::parse(SgAsmJvmConstantPool* pool)
 {
-  ASSERT_not_null(get_parent());
-  cout << "SgAsmJvmLineNumberTable::parse() ...\n";
-
   uint16_t line_number_table_length;
-  SgAsmJvmAttribute::parse(pool);
+  ASSERT_not_null(get_parent());
 
+  SgAsmJvmAttribute::parse(pool);
   Jvm::read_value(pool, line_number_table_length);
-  cout << "SgAsmJvmLineNumberTable::parse() line_number_table_length is " << line_number_table_length << endl;
 
   auto line_number_table = get_line_number_table();
   for (int ii = 0; ii < line_number_table_length; ii++) {
     auto entry = new SgAsmJvmLineNumberEntry(this);
     entry->parse(pool);
-    entry->dump(stdout, "", 0);
     line_number_table.push_back(entry);
   }
 
   return this;
 }
 
-void SgAsmJvmLineNumberTable::dump(FILE*f, const char* prefix, ssize_t idx) const
+void SgAsmJvmLineNumberTable::dump(FILE* f, const char* prefix, ssize_t idx) const
 {
-  fprintf(f, "SgAsmJvmLineNumberTable::dump() ...\n");
+  fprintf(f, "%s:%ld: SgAsmJvmLineNumberTable::dump()\n", prefix, idx);
 }
 
 SgAsmJvmLineNumberEntry::SgAsmJvmLineNumberEntry(SgAsmJvmLineNumberTable* table)
@@ -342,7 +311,18 @@ SgAsmJvmLineNumberEntry* SgAsmJvmLineNumberEntry::parse(SgAsmJvmConstantPool* po
 
 void SgAsmJvmLineNumberEntry::dump(FILE*f, const char* prefix, ssize_t idx) const
 {
-  fprintf(f, "SgAsmJvmLineNumber:%d:%d\n", p_start_pc, p_line_number);
+  fprintf(f, "%s:%ld: start_pc:%d line_number:%d\n", prefix, idx, p_start_pc, p_line_number);
+}
+
+SgAsmJvmAttribute* SgAsmJvmModuleMainClass::parse(SgAsmJvmConstantPool* pool)
+{
+  ROSE_ASSERT(false && "SgAsmJvmModuleMainClass::parse()");
+  return nullptr;
+}
+
+void SgAsmJvmModuleMainClass::dump(FILE* f, const char *prefix, ssize_t idx) const
+{
+  ROSE_ASSERT(false && "SgAsmJvmModuleMainClass::dump()");
 }
 
 #endif // ROSE_ENABLE_BINARY_ANALYSIS

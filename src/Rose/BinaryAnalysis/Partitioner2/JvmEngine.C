@@ -4,8 +4,12 @@
 
 #include <Rose/CommandLine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/JvmEngine.h>
+#include <Rose/BinaryAnalysis/DisassemblerJvm.h>
+#include <Rose/BinaryAnalysis/ByteCode/Jvm.h>
 
 using namespace Rose::Diagnostics;
+using std::cout;
+using std::endl;
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -518,7 +522,7 @@ JvmEngine::specimenNameDocumentation() {
 Sawyer::CommandLine::Parser
 JvmEngine::commandLineParser(const std::string &purpose, const std::string &description) {
     using namespace Sawyer::CommandLine;
-    std::cout << "JvmEngine::parseCommandLine:2: creating parser\n";
+    cout << "JvmEngine::parseCommandLine:2: creating parser\n";
     Parser parser =
         CommandLine::createEmptyParser(purpose.empty() ? std::string("analyze binary specimen") : purpose, description);
     parser.groupNameSeparator("-");                     // ROSE defaults to ":", which is sort of ugly
@@ -534,7 +538,6 @@ JvmEngine::commandLineParser(const std::string &purpose, const std::string &desc
 
 Sawyer::CommandLine::ParserResult
 JvmEngine::parseCommandLine(int argc, char *argv[], const std::string &purpose, const std::string &description) {
-  std::cout << "JvmEngine::parseCommandLine:0\n";
   try {
     std::vector<std::string> args;
     for (int i=1; i<argc; ++i) {
@@ -553,88 +556,103 @@ JvmEngine::parseCommandLine(int argc, char *argv[], const std::string &purpose, 
 
 Sawyer::CommandLine::ParserResult
 JvmEngine::parseCommandLine(const std::vector<std::string> &args, const std::string &purpose, const std::string &description) {
-#if 0 // until I figure out thecommand line options
+#if 0 // until I figure out the command line options
   return commandLineParser(purpose, description).parse(args).apply();
-#else
+#endif
 
   using namespace ModulesJvm;
   std::string fileName{args[0]};
 
-  std::cout << "JvmEngine::parseCommandLine:1 for file " << fileName << std::endl;
-
   if (isJavaClassFile(fileName)) {
+#ifdef DEBUG_ON
     // assumes args[0] is the file name for now
-    std::cout << "JvmEngine::parseCommandLine:2 for file " << fileName << std::endl;
-    std::cout << "  Purpose: " << purpose << ": Description: " << description << "\n";
+    cout << "JvmEngine::parseCommandLine for file " << fileName << endl;
+    cout << "  Purpose: " << purpose << ": Description: " << description << "\n";
+#endif
   }
   else {
     return Sawyer::CommandLine::ParserResult{};
   }
 
-#if 0
-  // The way ExecGeneric parses:
-  //   1. Create gf=SgAsmGenericFile
-  //   2. Parse using SgAsmGenericFile (gf->parse(fileName))
-  //   3. Construct jfh=SgAsmJvmFileHeader using parsed gf
-  //   4. Parse using constructed jfh
-
-  // How about
-  //   1. Create jcf=SgAsmJvmClassFile
-  //   2. Parse using SgAsmJvmClassFile (jcf->parse(fileName)) /* does little parsing of file */
-  //   3. Construct jfh=SgAsmJvmFileHeader using parsed jcf
-  //   4. Parse using constructed jfh (jfh->parse()) /* */
-
-  SgAsmGenericFile* gf = new SgAsmGenericFile();
-  gf->parse(fileName);
-  std::cout << "JvmEngine::parseCommandLine: is_JVM: " << SgAsmJvmClassFile::is_JVM(gf) << std::endl;
-  if (SgAsmJvmClassFile::is_JVM(gf)) {
-    auto jcf = new SgAsmJvmClassFile(gf);
-    jcf->parse();
-  }
-
-#else
-  // Do this
-  //   1. Create jcf=SgAsmJvmClassFile(fileName) /* the only public constructor */
-  //       a. gf = SgAsmGenericFile{}
-  //       b. gf->parse(fileName) /* this loads file into memory, does no reading of file */
-  //       c. header = new SgAsmPvmFileHeader(gf)
-  //   2. Parse using SgAsmJvmClassFile (jcf->parse(fileName)) /* does little parsing of file */
-  //   3. Construct jfh=SgAsmJvmFileHeader using parsed jcf
-  //   4. Parse using constructed jfh (jfh->parse()) /* */
-
-// NOTE: Temporary until SgAsmJvmClassFile created
-#if 0
   auto gf = new SgAsmGenericFile{};
   gf->parse(fileName); /* this loads file into memory, does no reading of file */
   auto header = new SgAsmJvmFileHeader(gf);
-  ROSE_ASSERT(header == gf->get_header(SgAsmGenericFile::FAMILY_JVM));
 
-  auto gh = gf->get_header(SgAsmGenericFile::FAMILY_JVM);
-  std::cout << "--> header class is " << header->class_name() << ":" << header << std::endl;
-  std::cout << "--> generic header class is " << gh->class_name() << ":" << gh << std::endl;
+  // Check AST
+  ROSE_ASSERT(header == gf->get_header(SgAsmGenericFile::FAMILY_JVM));
+  ROSE_ASSERT(header->get_parent() == gf);
 
   header->parse();
-  // Not sure we need SgAsmJvmClassFile
-  //  gf->add_header(header);
-  gh = gf->get_header(SgAsmGenericFile::FAMILY_JVM);
-  std::cout << "--> header class is " << header->class_name() << ":" << header << std::endl;
-  std::cout << "--> generic header class is " << gh->class_name() << ":" << gh << std::endl;
-  ROSE_ASSERT(header == gf->get_header(SgAsmGenericFile::FAMILY_JVM));
+  cout << "\n --- JVM file header ---\n";
+  header->dump(stdout, "    jfh:", 0);
 
-#else
-  // Doesn't do much, may need a constructor with filename so that can call is_JVM?
-  auto jcf = new SgAsmJvmClassFile();
-  //  std::cout << "JvmEngine::parseCommandLine: is_JVM: " << SgAsmJvmClassFile::is_JVM(jcf) << std::endl;
+  cout << "\n---------- JVM Analysis -----------------\n\n";
 
-  // This should load entire class file
-  jcf->parse(fileName);
+  Rose::BinaryAnalysis::ByteCode::JvmClass* jvmClass = new ByteCode::JvmClass(header);
+  cout << "class '" << jvmClass->name() << "'" << endl;
+  cout << "----------------\n";
+  cout << "   super: " << jvmClass->super_name() << "\n\n";
+
+  cout << "constant pool\n";
+  cout << "-----------\n";
+  jvmClass->constant_pool()->dump(stdout, "", 1);
+  cout << "-----------\n\n";
+
+  if (jvmClass->interfaces().size() > 0) {
+    cout << "interfaces\n";
+    cout << "-----------\n";
+    for (auto interface : jvmClass->interfaces()) {
+      cout << "   interface: " << interface->name() << endl;
+    }
+    cout << "-----------\n\n";
+  }
+
+  if (jvmClass->fields().size() > 0) {
+    cout << "fields\n";
+    cout << "-----------\n";
+    for (auto field : jvmClass->fields()) {
+      cout << "   field: " << field->name() << endl;
+    }
+    cout << "-----------\n\n";
+  }
+
+  if (jvmClass->attributes().size() > 0) {
+    cout << "attributes\n";
+    cout << "-----------\n";
+    for (auto attribute : jvmClass->attributes()) {
+      cout << "   attribute: " << attribute->name() << endl;
+    }
+    cout << "-----------\n\n";
+  }
+
+  for (auto method : jvmClass->methods()) {
+    cout << "method '" << method->name() << endl;
+    cout << "-----------\n";
+
+#ifndef DECODE_NO
+    Disassembler* disassembler = obtainDisassembler();
+    ASSERT_not_null(disassembler);
+
+    method->decode(disassembler);
+    for (auto insn : method->instructions()->get_instructions()) {
+      cout << "   : " << insn->get_anyKind() << ": " << insn->get_mnemonic() << ": '"
+           << insn->description() << "' " << " size:" << insn->get_size()
+           << " va:" << insn->get_address();
+      if (insn->terminatesBasicBlock()) cout << " :terminates";
+      cout << endl;
+    }
 #endif
+    cout << "-----------\n\n";
+  }
 
-#endif
+  // Bonus
+  cout << "--- strings ---\n";
+  for (auto str : jvmClass->strings()) {
+    cout << "   " << str << endl;
+  }
+  cout << "-----------\n\n";
 
   return Sawyer::CommandLine::ParserResult{};
-
-#endif
 }
 
 void
@@ -656,7 +674,10 @@ JvmEngine::parseContainers(const std::string &fileName) {
 
 Disassembler*
 JvmEngine::obtainDisassembler(Disassembler *hint) {
-    return disassembler_;
+  if (disassembler_ == nullptr) {
+    disassembler_ = new DisassemblerJvm();
+  }
+  return disassembler_;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

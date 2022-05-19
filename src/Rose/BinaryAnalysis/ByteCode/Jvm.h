@@ -5,9 +5,6 @@
 
 #include <Rose/BinaryAnalysis/ByteCode/ByteCode.h>
 
-// Sage nodes
-class SgAsmJvmClassFile;
-
 namespace Rose {
 namespace BinaryAnalysis {
 namespace ByteCode {
@@ -33,12 +30,12 @@ public:
     offset_ = off;
   }
 
-  explicit JvmCode(SgAsmJvmClassFile* jcf, uint8_t* bytes, size_t size, rose_addr_t offset)
-    : jcf_{jcf}, bytes_{bytes}, size_{size}, offset_{offset} {
+  explicit JvmCode(SgAsmJvmFileHeader* jfh, uint8_t* bytes, size_t size, rose_addr_t offset)
+    : jfh_{jfh}, bytes_{bytes}, size_{size}, offset_{offset} {
   }
 
 private:
-  SgAsmJvmClassFile* jcf_;
+  SgAsmJvmFileHeader* jfh_;
   const uint8_t* bytes_;
   size_t size_;
   rose_addr_t offset_;
@@ -49,12 +46,12 @@ public:
   virtual const std::string name() const;
 
   JvmField() = delete;
-  explicit JvmField(SgAsmJvmClassFile* jcf, SgAsmJvmField* field)
-    : jcf_{jcf}, sgField_{field} {
+  explicit JvmField(SgAsmJvmFileHeader* jfh, SgAsmJvmField* field)
+    : jfh_{jfh}, sgField_{field} {
   }
 
 private:
-  SgAsmJvmClassFile* jcf_;
+  SgAsmJvmFileHeader* jfh_;
   SgAsmJvmField* sgField_;
 };
 
@@ -65,26 +62,46 @@ public:
     return code_;
   }
   virtual const void decode(Disassembler* disassembler) const;
+  virtual const SgAsmInstructionList* instructions() const {
+    return sgMethod_->get_instruction_list();
+  }
 
   JvmMethod() = delete;
-  explicit JvmMethod(SgAsmJvmClassFile* jcf, SgAsmJvmMethod* method);
+  explicit JvmMethod(SgAsmJvmFileHeader*, SgAsmJvmMethod*);
 
 private:
-  SgAsmJvmClassFile* jcf_;
+  SgAsmJvmFileHeader* jfh_;
   SgAsmJvmMethod* sgMethod_;
   JvmCode code_;
 };
 
 class JvmInterface : public Interface {
 public:
-public:
   virtual const std::string name() const;
+  const uint16_t index() const {return index_;}
 
   JvmInterface() = delete;
-  explicit JvmInterface(SgAsmJvmClassFile* jcf, uint16_t index);
+  explicit JvmInterface(SgAsmJvmFileHeader* jfh, uint16_t index)
+    : jfh_{jfh}, index_{index} {
+  }
 
 private:
-  SgAsmJvmClassFile* jcf_;
+  SgAsmJvmFileHeader* jfh_;
+  uint16_t index_;
+};
+
+class JvmAttribute : public Attribute {
+public:
+  virtual const std::string name() const;
+  const uint16_t index() const {return index_;}
+
+  JvmAttribute() = delete;
+  explicit JvmAttribute(SgAsmJvmFileHeader* jfh, uint16_t index)
+    : jfh_{jfh}, index_{index} {
+  }
+
+private:
+  SgAsmJvmFileHeader* jfh_;
   uint16_t index_;
 };
 
@@ -93,7 +110,7 @@ public:
   virtual const std::string name() const;
   virtual const std::string super_name() const;
   virtual const std::vector<std::string> &strings();
-  virtual const std::vector<Interface*> &interfaces() const {
+  virtual const std::vector<const Interface*> &interfaces() const {
     return interfaces_;
   }
   virtual const std::vector<const Field*> &fields() const {
@@ -102,15 +119,23 @@ public:
   virtual const std::vector<const Method*> &methods() const {
     return methods_;
   }
+  virtual const std::vector<const Attribute*> &attributes() const {
+    return attributes_;
+  }
+
+  SgAsmJvmConstantPool* constant_pool() {
+    return jfh_->get_constant_pool();
+  }
 
   JvmClass() = delete;
-  explicit JvmClass(SgAsmJvmClassFile* jcf);
+  explicit JvmClass(SgAsmJvmFileHeader* jfh);
 
 private:
-  SgAsmJvmClassFile* jcf_;
+  SgAsmJvmFileHeader* jfh_;
   std::vector<const Field*> fields_;
   std::vector<const Method*> methods_;
-  std::vector<Interface*> interfaces_;
+  std::vector<const Attribute*> attributes_;
+  std::vector<const Interface*> interfaces_;
   std::vector<std::string> strings_;
 };
 

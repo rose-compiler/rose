@@ -3,7 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <Rose/BinaryAnalysis/Disassembler.h>
+#include <Rose/BinaryAnalysis/DisassemblerJvm.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -29,6 +29,7 @@ public:
   virtual const std::string name() const = 0;
   virtual const Code & code() const = 0;
   virtual const void decode(Disassembler*) const = 0;
+  virtual const SgAsmInstructionList* instructions() const = 0;
 protected:
   Method() {}
 };
@@ -40,13 +41,21 @@ protected:
   Interface() {}
 };
 
+class Attribute {
+public:
+  virtual const std::string name() const = 0;
+protected:
+  Attribute() {}
+};
+
 class Class {
 public:
   virtual const std::string name() const = 0;
   virtual const std::string super_name() const = 0;
-  virtual const std::vector<const Method*> &methods() const = 0;
   virtual const std::vector<const Field*> &fields() const = 0;
-  virtual const std::vector<Interface*> &interfaces() const = 0;
+  virtual const std::vector<const Method*> &methods() const = 0;
+  virtual const std::vector<const Attribute*> &attributes() const = 0;
+  virtual const std::vector<const Interface*> &interfaces() const = 0;
   virtual const std::vector<std::string> &strings() = 0;
 protected:
   Class() {}

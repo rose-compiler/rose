@@ -5787,6 +5787,132 @@ void Grammar::setUpBinaryInstructions() {
                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
+#ifdef DOCUMENTATION
+        /** Property: Access flags.
+         *
+         *  Mask of flags used to denote access permissions and properties of this class or interface.
+         *
+         * @{ */
+        uint16_t get_access_flags() const;
+        void set_access_flags(uint16_t);
+        /** @} */
+#else
+        AsmJvmFileHeader.setDataPrototype("uint16_t", "access_flags", "= 0",
+                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: This class index.
+         *
+         *  Index into constant pool table for this class or interface.
+         *
+         * @{ */
+        uint16_t get_this_class() const;
+        void set_this_class(uint16_t);
+        /** @} */
+#else
+        AsmJvmFileHeader.setDataPrototype("uint16_t", "this_class", "= 0",
+                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Super class.
+         *
+         *  Index into constant pool table for direct super class of this class or interface.
+         *
+         * @{ */
+        uint16_t get_super_class() const;
+        void set_super_class(uint16_t);
+        /** @} */
+#else
+        AsmJvmFileHeader.setDataPrototype("uint16_t", "super_class", "= 0",
+                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Constant pool.
+         *
+         *  Points to the AST node that represents the JVM constant pool. The constant pool is a table of structures
+         *  (see 4.4) representing various string constants, class and interface names, field names, and other constants
+         *  that are referred to within the ClassFile structure and its substructures. The format of each constant-pool
+         *  table entry is indicated by its first "tag" byte.
+         *
+         * @{ */
+        const SgAsmJvmConstantPool* get_constant_pool() const;
+        void set_constant_pool(SgAsmJvmConstantPool*);
+        /** @} */
+#else
+        AsmJvmFileHeader.setDataPrototype("SgAsmJvmConstantPool*", "constant_pool", "= nullptr",
+                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Interfaces.
+         *
+         *  Each value in the interfaces array must be a valid index into the constant_pool table. The constant_pool entry
+         *  at each value is a CONSTANT_Class_info structure representing an interface that is a direct superinterface
+         *  of this class or interface type.
+         *
+         * @{ */
+        const std::list<uint16_t>& get_interfaces() const;
+        std::list<uint16_t>& get_interfaces();
+        /** @} */
+#else
+        AsmJvmFileHeader.setDataPrototype("std::list<uint16_t>", "interfaces", "",
+                                          NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Field table.
+         *
+         *  Points to the AST node that represents the JVM field table. The constant pool is a table of structures
+         *  (see 4.4) representing various string constants, class and interface names, field names, and other constants
+         *  that are referred to within the ClassFile structure and its substructures. The format of each constant-pool
+         *  table entry is indicated by its first "tag" byte.
+         *
+         * @{ */
+        const SgAsmJvmFieldTable* get_field_table() const;
+        void set_field_table(SgAsmJvmFieldTable*);
+        /** @} */
+#else
+        AsmJvmFileHeader.setDataPrototype("SgAsmJvmFieldTable*", "field_table", "= nullptr",
+                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Method table.
+         *
+         *  Points to the AST node that represents the JVM method table. The constant pool is a table of structures
+         *  (see 4.4) representing various string constants, class and interface names, field names, and other constants
+         *  that are referred to within the ClassFile structure and its substructures. The format of each constant-pool
+         *  table entry is indicated by its first "tag" byte.
+         *
+         * @{ */
+        const SgAsmJvmMethodTable* get_method_table() const;
+        void set_method_table(SgAsmJvmMethodTable*);
+        /** @} */
+#else
+        AsmJvmFileHeader.setDataPrototype("SgAsmJvmMethodTable*", "method_table", "= nullptr",
+                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Attribute table.
+         *
+         *  Points to the AST node that represents the JVM attribute table. The constant pool is a table of structures
+         *  (see 4.4) representing various string constants, class and interface names, field names, and other constants
+         *  that are referred to within the ClassFile structure and its substructures. The format of each constant-pool
+         *  table entry is indicated by its first "tag" byte.
+         *
+         * @{ */
+        const SgAsmJvmAttributeTable* get_attribute_table() const;
+        void set_attribute_table(SgAsmJvmAttributeTable*);
+        /** @} */
+#else
+        AsmJvmFileHeader.setDataPrototype("SgAsmJvmAttributeTable*", "attribute_table", "= nullptr",
+                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
         DECLARE_OTHERS(AsmJvmFileHeader);
 #if defined(SgAsmJvmFileHeader_OTHERS) || defined(DOCUMENTATION)
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -5798,6 +5924,14 @@ void Grammar::setUpBinaryInstructions() {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericHeader);
             s & BOOST_SERIALIZATION_NVP(p_minor_version);
             s & BOOST_SERIALIZATION_NVP(p_major_version);
+            s & BOOST_SERIALIZATION_NVP(p_access_flags);
+            s & BOOST_SERIALIZATION_NVP(p_this_class);
+            s & BOOST_SERIALIZATION_NVP(p_super_class);
+            s & BOOST_SERIALIZATION_NVP(p_constant_pool);
+            s & BOOST_SERIALIZATION_NVP(p_interfaces);
+            s & BOOST_SERIALIZATION_NVP(p_field_table);
+            s & BOOST_SERIALIZATION_NVP(p_method_table);
+            s & BOOST_SERIALIZATION_NVP(p_attribute_table);
         }
 #endif
 
@@ -9956,7 +10090,8 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
     public:
-        explicit SgAsmJvmConstantPool(SgAsmJvmFileHeader* fhdr);
+        /** Non-parsing constructor. */
+        explicit SgAsmJvmConstantPool(SgAsmJvmFileHeader*);
 
         /** Parses a JVM Constant Pool.
          *
@@ -11419,13 +11554,9 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
     public:
-        /** Initialize the attribute table before parsing.
-         *
-         *  This constructor does not set its parent and should be replaced.
-         */
+        /** Initialize the attribute table before parsing. */
         SgAsmJvmAttributeTable();
-        explicit SgAsmJvmAttributeTable(SgAsmJvmClassFile*);
-        explicit SgAsmJvmAttributeTable(SgAsmJvmNode*);
+        explicit SgAsmJvmAttributeTable(SgAsmJvmFileHeader*, SgAsmNode*);
 
         /** Parses a JVM attribute table.
          *
@@ -11685,7 +11816,7 @@ void Grammar::setUpBinaryInstructions() {
          *  This is the preferred constructor to use before parsing.  It
          *  shall set its parent.
          */
-        explicit SgAsmJvmMethodTable(SgAsmJvmClassFile*);
+        explicit SgAsmJvmMethodTable(SgAsmJvmFileHeader*);
 
         /** Parses a JVM method table.
          *
@@ -11890,7 +12021,7 @@ void Grammar::setUpBinaryInstructions() {
          *  This is the preferred constructor to use before parsing.  It
          *  shall set its parent.
          */
-        explicit SgAsmJvmFieldTable(SgAsmJvmClassFile*);
+        explicit SgAsmJvmFieldTable(SgAsmJvmFileHeader*);
 
         /** Parses a JVM field table.
          *
@@ -12019,190 +12150,6 @@ void Grammar::setUpBinaryInstructions() {
         void dump(FILE*, const char *prefix, ssize_t idx) const override;
 
 #endif // SgAsmJvmField_OTHERS
-
-#ifdef DOCUMENTATION
-    };
-#endif
-
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    /*************************************************************************************************************************
-     *                                           JVM-Java Class File
-     *************************************************************************************************************************/
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    DECLARE_LEAF_CLASS(AsmJvmClassFile);
-    IS_SERIALIZABLE(AsmJvmClassFile);
-
-#ifdef DOCUMENTATION
-    /** Java Class File.
-     *
-     *  This node represents the contents of a Java class file for JVM executables.
-     *  See JVM specification for more information.
-     */
-    class SgAsmJvmClassFile: public SgAsmExecutableFileFormat /*SgAsmGenericFile*/ {
-    public:
-#endif
-
-#ifdef DOCUMENTATION
-        /** Property: Access flags.
-         *
-         *  Mask of flags used to denote access permissions and properties of this class or interface.
-         *
-         * @{ */
-        uint16_t get_access_flags() const;
-        void set_access_flags(uint16_t);
-        /** @} */
-#else
-        AsmJvmClassFile.setDataPrototype("uint16_t", "access_flags", "= 0",
-                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
-
-#ifdef DOCUMENTATION
-        /** Property: This class index.
-         *
-         *  Index into constant pool table for this class or interface.
-         *
-         * @{ */
-        uint16_t get_this_class() const;
-        void set_this_class(uint16_t);
-        /** @} */
-#else
-        AsmJvmClassFile.setDataPrototype("uint16_t", "this_class", "= 0",
-                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
-
-#ifdef DOCUMENTATION
-        /** Property: Super class.
-         *
-         *  Index into constant pool table for direct super class of this class or interface.
-         *
-         * @{ */
-        uint16_t get_super_class() const;
-        void set_super_class(uint16_t);
-        /** @} */
-#else
-        AsmJvmClassFile.setDataPrototype("uint16_t", "super_class", "= 0",
-                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
-
-#ifdef DOCUMENTATION
-        /** Property: Constant pool.
-         *
-         *  Points to the AST node that represents the JVM constant pool. The constant pool is a table of structures
-         *  (see 4.4) representing various string constants, class and interface names, field names, and other constants
-         *  that are referred to within the ClassFile structure and its substructures. The format of each constant-pool
-         *  table entry is indicated by its first "tag" byte.
-         *
-         * @{ */
-        const SgAsmJvmConstantPool* get_constant_pool() const;
-        void set_constant_pool(SgAsmJvmConstantPool*);
-        /** @} */
-#else
-        AsmJvmClassFile.setDataPrototype("SgAsmJvmConstantPool*", "constant_pool", "= nullptr",
-                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
-
-#ifdef DOCUMENTATION
-        /** Property: Interfaces.
-         *
-         *  Each value in the interfaces array must be a valid index into the constant_pool table. The constant_pool entry
-         *  at each value is a CONSTANT_Class_info structure representing an interface that is a direct superinterface
-         *  of this class or interface type.
-         *
-         * @{ */
-        const std::list<uint16_t>& get_interfaces() const;
-        std::list<uint16_t>& get_interfaces();
-        /** @} */
-#else
-        AsmJvmClassFile.setDataPrototype("std::list<uint16_t>", "interfaces", "",
-                                         NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
-
-#ifdef DOCUMENTATION
-        /** Property: Field table.
-         *
-         *  Points to the AST node that represents the JVM field table. The constant pool is a table of structures
-         *  (see 4.4) representing various string constants, class and interface names, field names, and other constants
-         *  that are referred to within the ClassFile structure and its substructures. The format of each constant-pool
-         *  table entry is indicated by its first "tag" byte.
-         *
-         * @{ */
-        const SgAsmJvmFieldTable* get_field_table() const;
-        void set_field_table(SgAsmJvmFieldTable*);
-        /** @} */
-#else
-        AsmJvmClassFile.setDataPrototype("SgAsmJvmFieldTable*", "field_table", "= nullptr",
-                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
-
-#ifdef DOCUMENTATION
-        /** Property: Method table.
-         *
-         *  Points to the AST node that represents the JVM method table. The constant pool is a table of structures
-         *  (see 4.4) representing various string constants, class and interface names, field names, and other constants
-         *  that are referred to within the ClassFile structure and its substructures. The format of each constant-pool
-         *  table entry is indicated by its first "tag" byte.
-         *
-         * @{ */
-        const SgAsmJvmMethodTable* get_method_table() const;
-        void set_method_table(SgAsmJvmMethodTable*);
-        /** @} */
-#else
-        AsmJvmClassFile.setDataPrototype("SgAsmJvmMethodTable*", "method_table", "= nullptr",
-                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
-
-#ifdef DOCUMENTATION
-        /** Property: Attribute table.
-         *
-         *  Points to the AST node that represents the JVM attribute table. The constant pool is a table of structures
-         *  (see 4.4) representing various string constants, class and interface names, field names, and other constants
-         *  that are referred to within the ClassFile structure and its substructures. The format of each constant-pool
-         *  table entry is indicated by its first "tag" byte.
-         *
-         * @{ */
-        const SgAsmJvmAttributeTable* get_attribute_table() const;
-        void set_attribute_table(SgAsmJvmAttributeTable*);
-        /** @} */
-#else
-        AsmJvmClassFile.setDataPrototype("SgAsmJvmAttributeTable*", "attribute_table", "= nullptr",
-                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
-
-        DECLARE_OTHERS(AsmJvmClassFile);
-#if defined(SgAsmJvmClassFile_OTHERS) || defined(DOCUMENTATION)
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-    private:
-        friend class boost::serialization::access;
-
-        template<class S>
-        void serialize(S &s, const unsigned /*version*/) {
-            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat /*SgAsmGenericFile*/);
-            s & BOOST_SERIALIZATION_NVP(p_access_flags);
-            s & BOOST_SERIALIZATION_NVP(p_this_class);
-            s & BOOST_SERIALIZATION_NVP(p_super_class);
-            s & BOOST_SERIALIZATION_NVP(p_constant_pool);
-            s & BOOST_SERIALIZATION_NVP(p_interfaces);
-            s & BOOST_SERIALIZATION_NVP(p_field_table);
-            s & BOOST_SERIALIZATION_NVP(p_method_table);
-            s & BOOST_SERIALIZATION_NVP(p_attribute_table);
-        }
-#endif
-
-    public:
-        /** Initialize the object by parsing the class file.
-         *
-         * @{ */
-        SgAsmJvmClassFile * parse(std::string file_name);
-        /** @} */
-
-        /** Print some debugging information */
-        void dump(FILE*, const char *prefix, ssize_t idx) const;
-
-#endif // SgAsmJvmClassFile_OTHERS
 
 #ifdef DOCUMENTATION
     };
@@ -19032,7 +18979,6 @@ void Grammar::setUpBinaryInstructions() {
                           AsmElfSymverNeededAuxList | AsmPEImportDirectory | AsmPESectionTableEntry |
                           AsmPEExportDirectory | AsmPERVASizePair | AsmCoffSymbolList | AsmPERVASizePairList |
                           AsmElfEHFrameEntryCI |
-                          AsmJvmClassFile |
                           AsmPEImportDirectoryList | AsmNEEntryPoint | AsmNERelocEntry | AsmNESectionTableEntry |
                           AsmElfEHFrameEntryCIList | AsmLEPageTableEntry | AsmLEEntryPoint | AsmLESectionTableEntry |
                           AsmElfEHFrameEntryFDList | AsmDwarfInformation | AsmPEImportItem | AsmPEImportItemList,
