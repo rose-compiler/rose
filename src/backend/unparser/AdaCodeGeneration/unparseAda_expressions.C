@@ -444,7 +444,7 @@ namespace
       else if (ctxRequiresScopeQualification)
         prn(scopeQual(SG_DEREF(n.get_declaration()).get_scope()));
 
-      std::cerr << "enumval: " << nameOf(n) << std::endl;
+      //~ std::cerr << "enumval: " << nameOf(n) << std::endl;
       prn(nameOf(n));
     }
 
