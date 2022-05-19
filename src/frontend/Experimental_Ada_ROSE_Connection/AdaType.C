@@ -511,44 +511,6 @@ namespace
     return getRecordBody(def.The_Union.The_Record_Definition, ctx);
   }
 
-  struct BaseClassMaker : sg::DispatchHandler<SgBaseClass*>
-  {
-    void handle(SgNode& n)               { SG_UNEXPECTED_NODE(n); }
-    void handle(SgClassDeclaration& n)   { res = &mkRecordParent(n); }
-    void handle(SgAdaFormalTypeDecl& n)  { res = &mkRecordParent(SG_DEREF(n.get_type())); }
-    void handle(SgTypedefDeclaration& n) { res = &mkRecordParent(SG_DEREF(n.get_type())); }
-
-    // stop gap measure
-    void handle(SgType& n)               { res = &mkRecordParent(n); }
-    //~ void handle(SgTypeUnknown& n)        { res = &mkRecordParent(n); }
-  };
-
-  SgBaseClass&
-  getParentType(Definition_Struct& def, AstContext ctx)
-  {
-    ADA_ASSERT(def.Definition_Kind == A_Subtype_Indication);
-
-    logKind("A_Subtype_Indication");
-
-    Subtype_Indication_Struct& subtype = def.The_Union.The_Subtype_Indication;
-    ADA_ASSERT (subtype.Subtype_Constraint == 0);
-
-    Element_Struct&            subelem = retrieveAs(elemMap(), subtype.Subtype_Mark);
-    ADA_ASSERT(subelem.Element_Kind == An_Expression);
-
-    SgNode*                    basenode = &getExprType(subelem.The_Union.Expression, ctx);
-    SgBaseClass*               sgnode = sg::dispatch(BaseClassMaker{}, basenode);
-
-    if (sgnode == nullptr)
-    {
-      logError() << "getParentType: " << typeid(*basenode).name() << std::endl;
-      ROSE_ABORT();
-    }
-
-    return *sgnode;
-  }
-
-
   struct EnumeratorCreator
   {
       EnumeratorCreator(SgEnumDeclaration& n, AstContext astctx)
@@ -1133,7 +1095,7 @@ namespace
     {
       // PP (2/16/22)
       // \todo not sure if this is the right way to represent
-      //       discriminants with a subtype constraints.
+      //       discriminants with subtype constraints.
       Element_Struct&    discrElem = retrieveAs(elemMap(), discrId);
       ADA_ASSERT (discrElem.Element_Kind == A_Definition);
       logKind("A_Definition");
@@ -1330,12 +1292,11 @@ getDefinitionTypeID_opt(Element_ID defid, AstContext ctx)
 }
 
 SgBaseClass&
-getParentTypeID(Element_ID defid, AstContext ctx)
+getParentTypeID(Element_ID id, AstContext ctx)
 {
-  Element_Struct&     elem = retrieveAs(elemMap(), defid);
-  ADA_ASSERT(elem.Element_Kind == A_Definition);
+  SgType& basety = getDefinitionTypeID(id, ctx);
 
-  return getParentType(elem.The_Union.Definition, ctx);
+  return mkRecordParent(basety);
 }
 
 TypeData

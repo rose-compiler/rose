@@ -903,6 +903,7 @@ namespace
 
       void handle(const SgAdaPackageSpecDecl& n)
       {
+        std::cerr << n.get_name() << std::endl;
         handle(sg::asBaseType(n));
 
         recordNameQualIfNeeded(n, n.get_scope());

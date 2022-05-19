@@ -428,9 +428,9 @@ namespace
   {
     if ((args == nullptr) || (args->size() == 0))
     {
-      logError() << "unable to disambiguate operator w/o arguments. "
-                 << (args ? int(args->size()) : -1)
-                 << std::endl;
+      logWarn() << "unable to disambiguate operator w/o arguments. "
+                << (args ? int(args->size()) : -1)
+                << std::endl;
       return nullptr;
     }
 
@@ -471,8 +471,8 @@ namespace
 
     if (res.size() != 1)
     {
-      logError() << "unable to disambiguate operator. " << res.size() << " viable candidates found."
-                 << std::endl;
+      logWarn() << "unable to disambiguate operator. " << res.size() << " viable candidates found."
+                << std::endl;
     }
 
     return res.size() != 1 ? nullptr : res.front();
@@ -510,8 +510,8 @@ namespace
                  << std::endl;
     }
 
-    logError() << "Using first version generator as fallback to model operator " << expr.Name_Image
-               << std::endl;
+    logWarn() << "Using first version generator as fallback to model operator " << expr.Name_Image
+              << std::endl;
 
     /* unused fields:
        Defining_Name_List    Corresponding_Name_Definition_List;
