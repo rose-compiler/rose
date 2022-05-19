@@ -30,7 +30,7 @@ add_library(roseBinaryFormats OBJECT
   ElfSymbolVersion.C
 
   ### Java Virtual Machine Format (JVM) ###
-  JvmClassFile.C
+  JvmNode.C
   JvmAttribute.C
   JvmConstantPool.C
   JvmField.C

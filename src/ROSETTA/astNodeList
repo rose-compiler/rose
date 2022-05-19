@@ -210,7 +210,6 @@ SgAsmIntegerValueExpression
 SgAsmIntegerType
 SgAsmInterpretation
 SgAsmInterpretationList
-SgAsmJvmClassFile
 SgAsmJvmAttribute
 SgAsmJvmCodeAttribute
 SgAsmJvmMethod

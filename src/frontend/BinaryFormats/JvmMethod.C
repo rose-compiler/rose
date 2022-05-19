@@ -1,21 +1,23 @@
 /* JVM Methods */
 #include <featureTests.h>
+
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
-#include <Rose/Diagnostics.h>
-#include "JvmClassFile.h"
+#include "Jvm.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-using namespace Rose::Diagnostics;
-using namespace ByteOrder;
-
 SgAsmJvmMethod::SgAsmJvmMethod(SgAsmJvmMethodTable* table)
 {
+  ASSERT_not_null(table);
   set_parent(table);
-  p_attribute_table = new SgAsmJvmAttributeTable(this);
-  ROSE_ASSERT(get_attribute_table()->get_parent());
+
+  auto header = dynamic_cast<SgAsmJvmFileHeader*>(table->get_header());
+  p_attribute_table = new SgAsmJvmAttributeTable(header, this);
+
+  p_instruction_list = new SgAsmInstructionList;
+  p_instruction_list->set_parent(this);
 }
 
 SgAsmJvmMethod* SgAsmJvmMethod::parse(SgAsmJvmConstantPool* pool)
@@ -36,26 +38,17 @@ void SgAsmJvmMethod::dump(FILE*f, const char* prefix, ssize_t idx) const
 }
 
 
-SgAsmJvmMethodTable::SgAsmJvmMethodTable(SgAsmJvmClassFile* jcf)
+SgAsmJvmMethodTable::SgAsmJvmMethodTable(SgAsmJvmFileHeader* jfh)
 {
-  jcf->set_method_table(this);
-  set_parent(jcf);
-
-#ifdef WORKING_ON
-  ROSE_ASSERT(get_header() == nullptr);
-  auto header = jcf->get_header(SgAsmGenericFile::FAMILY_JVM);
-  ROSE_ASSERT(header);
-  set_header(header);
-#endif
-
-  std::cout << "-->method_table: " << jcf->get_method_table() << std::endl;
+  set_parent(jfh);
+  set_header(jfh);
 }
 
 SgAsmJvmMethodTable* SgAsmJvmMethodTable::parse()
 {
   uint16_t methods_count;
 
-  auto jcf = dynamic_cast<SgAsmJvmClassFile*>(get_parent());
+  auto jcf = dynamic_cast<SgAsmJvmFileHeader*>(get_parent());
   ROSE_ASSERT(jcf && "JVM class_file is a nullptr");
   auto pool = jcf->get_constant_pool();
   ROSE_ASSERT(pool && "JVM constant_pool is a nullptr");

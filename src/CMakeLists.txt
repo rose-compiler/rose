@@ -139,6 +139,7 @@ set(rose_LIB_SRCS
   $<TARGET_OBJECTS:astRewriteMechanism>
   $<TARGET_OBJECTS:roseNamespace>
   $<TARGET_OBJECTS:roseBinaryAnalysis>
+  $<TARGET_OBJECTS:roseBinaryAnalysisByteCode>
   $<TARGET_OBJECTS:roseBinaryAnalysisConcolic>
   $<TARGET_OBJECTS:roseBinaryAnalysisInstructionSemantics2>
   $<TARGET_OBJECTS:roseBinaryAnalysisInstructionSemantics2BaseSemantics>

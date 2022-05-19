@@ -3,20 +3,21 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
-#include <Rose/Diagnostics.h>
-#include "JvmClassFile.h"
+#include "Jvm.h"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-using namespace Rose::Diagnostics;
-using namespace ByteOrder;
-
 using PoolEntry = SgAsmJvmConstantPoolEntry;
 
-SgAsmJvmConstantPool::SgAsmJvmConstantPool(SgAsmJvmFileHeader* fhdr)
-  : SgAsmGenericSection(fhdr->get_file(), fhdr)
+SgAsmJvmConstantPool::SgAsmJvmConstantPool(SgAsmJvmFileHeader* jfh)
 {
-  set_parent(fhdr);
+  /* Initialize the base class */
+  ASSERT_not_null(jfh);
+  auto gf = static_cast<SgAsmGenericFile*>(jfh->get_parent());
+  SgAsmGenericSection(gf, jfh);
+
+  set_parent(jfh);
+  set_header(jfh);
 }
 
 // Constructor creating an object ready to be initialized via parse().
@@ -219,9 +220,11 @@ SgAsmJvmConstantPool* SgAsmJvmConstantPool::parse()
 {
   PoolEntry* entry{nullptr};
   auto header = get_header();
+  ASSERT_not_null(header);
+
   rose_addr_t offset = header->get_offset();
 
-#if 0
+#ifdef DEBUG_ON
   std::cout << "SgAsmJvmConstantPool::parse() ...\n";
   std::cout << "SgAsmJvmConstantPool::parse() header class name is " << header->class_name() << std::endl;
   std::cout << "SgAsmJvmConstantPool::parse() this offset is " << get_offset() << std::endl;

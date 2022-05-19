@@ -3,17 +3,21 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
-#include <Rose/Diagnostics.h>
+#include "Jvm.h"
 
-using namespace Rose::Diagnostics;
-using namespace ByteOrder;
+using std::cout;
+using std::endl;
 
 SgAsmJvmFileHeader::SgAsmJvmFileHeader(SgAsmGenericFile* f)
-  : SgAsmGenericHeader{f}, p_minor_version{0}, p_major_version{0}
+  : SgAsmGenericHeader{f}, p_minor_version{0}, p_major_version{0}, p_access_flags{0},
+    p_this_class{0}, p_super_class{0}, p_constant_pool{nullptr}, p_field_table{nullptr},
+    p_method_table{nullptr}, p_attribute_table{nullptr}
 {
-  std::cout << "SgAsmJvmFileHeader::ctor() ...\n";
+  ASSERT_not_null(f);
+  set_parent(f);
 
-  ROSE_ASSERT(get_file() != nullptr);
+  // Check that the file has already been parsed and has content
+  ASSERT_not_null(get_file());
   ROSE_ASSERT(get_size() > 0);
 
   set_name(new SgAsmBasicString("JVM File Header"));
@@ -28,7 +32,7 @@ SgAsmJvmFileHeader::SgAsmJvmFileHeader(SgAsmGenericFile* f)
   p_magic.push_back(0xBE);
 
   /* Executable Format */
-  ROSE_ASSERT(p_exec_format != nullptr);
+  ASSERT_not_null(p_exec_format);
   p_exec_format->set_family(FAMILY_JVM);
   p_exec_format->set_purpose(PURPOSE_EXECUTABLE);
   p_exec_format->set_sex(ByteOrder::ORDER_MSB);
@@ -39,26 +43,29 @@ SgAsmJvmFileHeader::SgAsmJvmFileHeader(SgAsmGenericFile* f)
   p_exec_format->set_abi_version(0);
 
   p_isa = ISA_JVM;
-
-  std::cout << "SgAsmJvmFileHeader::ctor() finished ...\n\n";
 }
 
 SgAsmJvmFileHeader*
 SgAsmJvmFileHeader::parse()
 {
-  ROSE_ASSERT(get_file() != nullptr);
+  SgAsmGenericFile* gf = get_file();
+  ASSERT_not_null(gf);
   ROSE_ASSERT(get_size() > 0);
 
-  std::cout << "SgAsmJvmFileHeader::parse()...\n";
+  auto header = gf->get_header(SgAsmGenericFile::FAMILY_JVM);
+  ASSERT_not_null(header);
+  ROSE_ASSERT(header == this);
 
-  // TODO:
-  /* The parent class will have already been parsed in constructing the Java class file */
+  /* parse base class */
   SgAsmGenericHeader::parse();
 
-  std::cout << "WARNING: SgAsmJvmFileHeader::parse():0\n"; // TODO: move to constructor
+  cout << "WARNING: SgAsmJvmFileHeader::parse() ...\n"; // TODO: move to constructor (probably can't because parse needed
+  // how does this offset fit in now that switched to file header from class file?
   rose_addr_t offset{get_offset()};
 
-  std::cout << "SgAsmJvmFileHeader::parse() offset is " << offset << std::endl;
+  /* Construct, but don't parse (yet), constant pool */
+  auto pool = new SgAsmJvmConstantPool(this);
+  set_constant_pool(pool);
 
   /* Ensure magic number in file is correct */
   unsigned char magic[4];
@@ -70,35 +77,60 @@ SgAsmJvmFileHeader::parse()
   offset += count;
   set_offset(offset);
 
-  /* Minor version */
-  count = read_content(offset, &p_minor_version, sizeof p_minor_version);
-  if (2 != count) {
-    throw FormatError("Bad Java class file minor_version");
-  }
-  p_minor_version = be_to_host(p_minor_version);
-  offset += count;
-  set_offset(offset);
+  /* Minor and major version */
+  Jvm::read_value(pool, p_minor_version);
+  Jvm::read_value(pool, p_major_version);
 
-  std::cout << "SgAsmJvmFileHeader::parse() offset is " << get_offset() << std::endl;
-
-  /* Major version */
-  count = read_content(offset, &p_major_version, sizeof p_major_version);
-  if (2 != count) {
-    throw FormatError("Bad Java class file major_version");
-  }
-  p_major_version = be_to_host(p_major_version);
-  offset += count;
-  set_offset(offset);
-
-  std::cout << "SgAsmJvmFileHeader::parse() offset is " << get_offset() << std::endl;
-  std::cout << "SgAsmJvmFileHeader::parse() major, minor: " << p_major_version << "," << p_minor_version << std::endl;
-
-  ROSE_ASSERT(p_exec_format != nullptr);
+  ASSERT_not_null(p_exec_format);
   p_exec_format->set_version(p_major_version);
   p_exec_format->set_is_current_version(true);
   p_exec_format->set_abi_version(p_major_version);
 
-  std::cout << "SgAsmJvmFileHeader::parse() finished ...\n";
+  /* And finally the constant pool can be parsed */
+  pool->parse();
+
+  Jvm::read_value(pool, p_access_flags);
+  Jvm::read_value(pool, p_this_class);
+  Jvm::read_value(pool, p_super_class);
+
+  uint16_t interfaces_count;
+  Jvm::read_value(pool, interfaces_count);
+
+  std::list<uint16_t>& interfaces = get_interfaces();
+  for (int i = 0; i < interfaces_count; i++) {
+    uint16_t index;
+    Jvm::read_value(pool, index);
+    interfaces.push_back(index);
+#ifdef DEBUG_ON
+    cout << "SgAsmJvmFileHeader::parse(): &p_interfaces: " << &p_interfaces << ": size:" << p_interfaces.size() << endl;;
+    cout << "SgAsmJvmFileHeader::parse(): get_interfaces().size(): " << get_interfaces().size() << endl;;
+    cout << "SgAsmJvmFileHeader::parse(): interfaces.size(): " << interfaces.size() << endl;;
+#endif
+  }
+
+  /* Fields */
+  auto fields = new SgAsmJvmFieldTable(this);
+  set_field_table(fields);
+  fields->parse();
+
+  /* Methods */
+  auto methods = new SgAsmJvmMethodTable(this);
+  set_method_table(methods);
+  methods->parse();
+
+  /* Attributes */
+  auto attributes = new SgAsmJvmAttributeTable(this, /*parent*/this);
+  set_attribute_table(attributes);
+  ASSERT_not_null(attributes->get_parent());
+  attributes->parse(pool);
+
+#ifdef DEBUG_ON
+  cout << "SgAsmJvmFileHeader::parse() offset, get_offset: " << offset << ", " << get_offset() << endl;
+#endif
+
+  if (1 != (get_end_offset() - get_offset())) {
+    ROSE_ASSERT(false && "Error reading file, end of file not reached");
+  }
 
   return this;
 }
@@ -119,27 +151,10 @@ SgAsmJvmFileHeader::unparse(std::ostream &f) const
   /* Do not unparse to this file. */
 }
 
-void
-SgAsmJvmFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
-{
-  char p[4096];
-  if (idx>=0) {
-    sprintf(p, "%sJvmFileHeader[%zd].", prefix, idx);
-  } else {
-    sprintf(p, "%sJvmFileHeader.", prefix);
-  }
-  int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-
-  SgAsmGenericHeader::dump(f, p, -1);
-  fprintf(f, "%s%-*s = 0x%08x\n",   p, w, "magic_number",   p_magic_number); // 0x0a00 is for "JVM_FAMILY"
-  fprintf(f, "%s%-*s = %u\n",       p, w, "major_version",  p_major_version);
-  fprintf(f, "%s%-*s = %u\n",       p, w, "minor_version",  p_minor_version);
-}
-
 bool
 SgAsmJvmFileHeader::is_JVM(SgAsmGenericFile* file)
 {
-  ROSE_ASSERT(file != nullptr);
+  ASSERT_not_null(file);
 
   /* Turn off byte reference tracking for the duration of this function. We don't want our testing the file contents to
    * affect the list of bytes that we've already referenced or which we might reference later. */
