@@ -170,6 +170,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   access_to_subprogram.ads             \
   array_declare.adb                    \
   array_declare_2.ads                  \
+  ascii_user.adb                       \
   asm_machine_code.adb                 \
   based_numbers.ads                    \
   box.adb                              \
@@ -206,6 +207,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   protected_body_declaration.ads       \
   protected_type_declaration.ads       \
   renamings.adb                        \
+  renaming_as_body.adb                 \
   requeue_statement_2.adb              \
   requeue_statements.adb               \
   select_accept.adb                    \

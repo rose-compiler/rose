@@ -603,11 +603,22 @@ namespace Ada_ROSE_Translation
                    std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
                  );
 
+
+  /// creates an Ada renaming declaration
+  /// \param name       the name of this declaration
+  /// \param scope      the enclosing scope
+  /// \param retty      return type of a function (SgTypeVoid for procedures)
+  /// \param complete   a functor that is called after the function parameter list and
+  ///                   the function parameter scope have been constructed. The task of complete
+  ///                   is to fill these objects with function parameters.
+  /// \param nondef_opt when this is a renaming-as-body, then nondef_opt indicates the nondefining
+  ///                   declaration that gets defined by this renaming.
   SgAdaFunctionRenamingDecl&
   mkAdaFunctionRenamingDecl( const std::string& name,
                              SgScopeStatement& scope,
                              SgType& retty,
-                             std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
+                             std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete,
+                             SgAdaFunctionRenamingDecl* nondef_opt = nullptr
                            );
 
 
@@ -695,17 +706,14 @@ namespace Ada_ROSE_Translation
   SgVariableDeclaration&
   mkExceptionDecl(const SgInitializedNamePtrList& vars, SgScopeStatement& scope);
 
-  /// creates a SgBaseClass object for an Ada type
-  /// \todo currently only direct base classes are represented in the Ast
+  /// creates a SgBaseClass object for an Ada type \ref n
+  /// \param n a representation of the base type (often an SgClassType, but could be any type in principle.
+  ///          e.g., often expression based, wrapped in an SgTypeExpression)
+  /// \return  a node representing the base class (SgBaseClass when n is SgClassType, SgExpBaseClass otherwise).
+  /// \note currently only direct base classes are represented in the Ast
   /// \todo should we represent base classes and other base types uniformly
   ///       e.g., BaseClassExp(TypeExpression(class_type)) ??
   SgBaseClass&
-  mkRecordParent(SgClassDeclaration& n);
-
-  /// creates a SgBaseClassExp representation for a parent type that is not a class
-  ///   (i.e., typedef type or formal type argument).
-  /// \todo currently only direct base classes are represented in the Ast
-  SgExpBaseClass&
   mkRecordParent(SgType& n);
 
   /// creates an Ada component clause (part of a record representation clause)

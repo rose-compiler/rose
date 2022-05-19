@@ -3027,6 +3027,24 @@ namespace
       Declaration_ID id;
       AstContext     ctx;
   };
+
+  bool
+  definedByRenamingID(Element_ID id, AstContext /* unused */)
+  {
+    if (id == 0)
+      return false;
+
+    Element_Struct&     elem = retrieveAs(elemMap(), id);
+
+    if (elem.Element_Kind != A_Declaration)
+      return false;
+
+    Declaration_Struct& decl = elem.The_Union.Declaration;
+
+    return (  decl.Declaration_Kind == A_Procedure_Renaming_Declaration
+           || decl.Declaration_Kind == A_Function_Renaming_Declaration
+           );
+  }
 } // anonymous
 
 
@@ -3594,23 +3612,16 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         ADA_ASSERT (sgnode.get_parent() == &outer);
 
         /* unhandled fields
-
-           bool                          Has_Abstract
-           bool                          Is_Not_Overriding_Declaration
-           bool                          Is_Dispatching_Operation
-           Declaration_ID                Corresponding_Declaration
-           Declaration_ID                Corresponding_Body
-           Declaration_ID                Corresponding_Subprogram_Derivation
-           Type_Definition_ID            Corresponding_Type
-
+             bool                          Has_Abstract
+             bool                          Is_Not_Overriding_Declaration
+             bool                          Is_Dispatching_Operation
+             Declaration_ID                Corresponding_Declaration
+             Declaration_ID                Corresponding_Body
+             Declaration_ID                Corresponding_Subprogram_Derivation
+             Type_Definition_ID            Corresponding_Type
          +func:
-           bool                          Is_Not_Null_Return
-           Declaration_ID                Corresponding_Equality_Operator
-
-           break;
+             bool                          Is_Not_Null_Return
         */
-
-
         break;
       }
 
@@ -3627,11 +3638,13 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
                                                 : mkTypeVoid();
 
         SgScopeStatement&      logicalScope = adaname.parent_scope();
-        SgFunctionDeclaration& sgnode  = mkProcedureDecl_nondef( adaname.ident,
-                                                                 logicalScope,
-                                                                 rettype,
-                                                                 ParameterCompletion{params, ctx}
-                                                               );
+        const bool             renamingAsBody = definedByRenamingID(decl.Corresponding_Body, ctx);
+        ParameterCompletion    complete{params, ctx};
+        const std::string&     ident = adaname.ident;
+        SgFunctionDeclaration& sgnode  = renamingAsBody
+                                            ? mkAdaFunctionRenamingDecl(ident, logicalScope, rettype, std::move(complete))
+                                            : mkProcedureDecl_nondef(ident, logicalScope, rettype, std::move(complete))
+                                            ;
 
         setOverride(sgnode, decl.Is_Overriding_Declaration);
         recordNode(asisDecls(), elem.ID, sgnode);
@@ -3643,22 +3656,16 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         ADA_ASSERT (sgnode.get_parent() == &outer);
 
         /* unhandled fields
-
-           bool                          Has_Abstract
-           bool                          Is_Not_Overriding_Declaration
-           bool                          Is_Dispatching_Operation
-           Declaration_ID                Corresponding_Declaration
-           Declaration_ID                Corresponding_Body
-           Declaration_ID                Corresponding_Subprogram_Derivation
-           Type_Definition_ID            Corresponding_Type
-
-         +func:
-           bool                          Is_Not_Null_Return
-           Declaration_ID                Corresponding_Equality_Operator
-
-           break;
+             bool                          Has_Abstract
+             bool                          Is_Not_Overriding_Declaration
+             bool                          Is_Dispatching_Operation
+             Declaration_ID                Corresponding_Declaration
+             Declaration_ID                Corresponding_Subprogram_Derivation
+             Type_Definition_ID            Corresponding_Type
+           +func:
+             bool                          Is_Not_Null_Return
+             Declaration_ID                Corresponding_Equality_Operator
         */
-
         break;
       }
 
@@ -4550,18 +4557,22 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         logKind(decl.Declaration_Kind == A_Function_Renaming_Declaration ?
                 "A_Function_Renaming_Declaration" : "A_Procedure_Renaming_Declaration");
 
-        const bool        isFuncRename = decl.Declaration_Kind == A_Function_Renaming_Declaration;
-        SgScopeStatement& outer        = ctx.scope();
-        NameData          adaname      = singleName(decl, ctx);
-        ElemIdRange       range        = idRange(decl.Parameter_Profile);
-        SgType&           rettype      = isFuncRename ? getDeclTypeID(decl.Result_Profile, ctx)
-                                                      : mkTypeVoid();
+        const bool                 isFuncRename = decl.Declaration_Kind == A_Function_Renaming_Declaration;
+        SgScopeStatement&          outer     = ctx.scope();
+        NameData                   adaname   = singleName(decl, ctx);
+        ElemIdRange                range     = idRange(decl.Parameter_Profile);
+        SgType&                    rettype   = isFuncRename ? getDeclTypeID(decl.Result_Profile, ctx)
+                                                            : mkTypeVoid();
+        SgDeclarationStatement*    nondefDcl = findFirst(asisDecls(), decl.Corresponding_Declaration);
+        SgAdaFunctionRenamingDecl* nondefFun = isSgAdaFunctionRenamingDecl(nondefDcl);
+        ADA_ASSERT(!nondefDcl || nondefFun); // nondefDcl => nondefFun
 
         ADA_ASSERT (adaname.fullName == adaname.ident);
-        SgAdaFunctionRenamingDecl& sgnode  = mkAdaFunctionRenamingDecl(adaname.fullName,
-                                                                       outer,
-                                                                       rettype,
-                                                                       ParameterCompletion{range, ctx});
+        SgAdaFunctionRenamingDecl& sgnode    = mkAdaFunctionRenamingDecl( adaname.fullName,
+                                                                          outer,
+                                                                          rettype,
+                                                                          ParameterCompletion{range, ctx},
+                                                                          nondefFun );
         setOverride(sgnode, decl.Is_Overriding_Declaration);
         recordNode(asisDecls(), elem.ID, sgnode);
         recordNode(asisDecls(), adaname.id(), sgnode);
@@ -4588,6 +4599,13 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         attachSourceLocation(sgnode, elem, ctx);
         outer.append_statement(&sgnode);
         ADA_ASSERT (sgnode.get_parent() == &outer);
+
+        /*
+           bool                           Is_Not_Null_Return;
+           bool                           Is_Not_Overriding_Declaration;
+           Expression_ID                  Corresponding_Base_Entity;
+           bool                           Is_Dispatching_Operation;
+         */
         break;
       }
 
@@ -5025,13 +5043,10 @@ getQualName(Element_Struct& elem, AstContext ctx)
                  };
 }
 
-
 NameData
 getNameID(Element_ID el, AstContext ctx)
 {
   return getName(retrieveAs(elemMap(), el), ctx);
 }
-
-
 
 }

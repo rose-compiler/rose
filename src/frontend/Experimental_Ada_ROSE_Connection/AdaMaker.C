@@ -1260,11 +1260,13 @@ mkProcedureDecl( const std::string& nm,
 }
 
 // MS: 12/20/2020 Ada function renaming declaration maker
+// PP:  5/22/2022 added nondef_opt to support renaming-as-body declarations
 SgAdaFunctionRenamingDecl&
 mkAdaFunctionRenamingDecl( const std::string& name,
                            SgScopeStatement& scope,
                            SgType& retty,
-                           std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
+                           std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete,
+                           SgAdaFunctionRenamingDecl* nondef_opt
                          )
 {
   SgAdaFunctionRenamingDecl& sgnode = mkLocatedNode<SgAdaFunctionRenamingDecl>(name, nullptr, nullptr);
@@ -1279,17 +1281,30 @@ mkAdaFunctionRenamingDecl( const std::string& name,
   sgnode.set_type(&funty);
   ADA_ASSERT(sgnode.get_parameterList_syntax() == nullptr);
 
-  SgFunctionSymbol *funsy = scope.find_symbol_by_type_of_function<SgFunctionDeclaration>(name, &funty, NULL, NULL);
-  if (funsy != nullptr)
+  if (scope.find_symbol_by_type_of_function<SgFunctionDeclaration>(name, &funty, NULL, NULL))
   {
     logWarn() << "found function symbol " << name << " in scope. Type of scope: "
               << typeid(scope).name()
               << std::endl;
-    ADA_ASSERT(funsy == nullptr);
+    ADA_ASSERT(nondef_opt);
+  }
+  else
+  {
+    SgFunctionSymbol& funsy = mkBareNode<SgFunctionSymbol>(&sgnode);
+    scope.insert_symbol(name, &funsy);
   }
 
-  funsy = &mkBareNode<SgFunctionSymbol>(&sgnode);
-  scope.insert_symbol(name, funsy);
+  if (nondef_opt)
+  {
+    SgSymbol*         baseSy = nondef_opt->search_for_symbol_from_symbol_table();
+    SgFunctionSymbol& funcSy = SG_DEREF(isSgFunctionSymbol(baseSy));
+
+    // demote to a non-defining declaration
+    nondef_opt->set_firstNondefiningDeclaration(nondef_opt);
+    nondef_opt->setForward();
+    linkDeclDef(funcSy, sgnode);
+  }
+
   sgnode.set_scope(&scope);
   sgnode.set_definingDeclaration(&sgnode);
   sgnode.unsetForward();
@@ -1640,22 +1655,23 @@ mkPragmaDeclaration(const std::string& name, SgExprListExp& args)
   return sgnode;
 }
 
-SgExpBaseClass&
+SgBaseClass&
 mkRecordParent(SgType& n)
 {
-  return mkBareNode<SgExpBaseClass>(nullptr, true /* direct base */, &mkTypeExpression(n));
-}
-
-SgBaseClass&
-mkRecordParent(SgClassDeclaration& n)
-{
-  if (!n.get_definingDeclaration())
+  if (SgClassType* clsty = isSgClassType(&n))
   {
-    logWarn() << "no defining declaration for base class: " << n.get_name()
-              << std::endl;
+    SgClassDeclaration& dcl = SG_DEREF(isSgClassDeclaration(clsty->get_declaration()));
+
+    if (!dcl.get_definingDeclaration())
+    {
+      logWarn() << "no defining declaration for base class: " << dcl.get_name()
+                << std::endl;
+    }
+
+    return mkBareNode<SgBaseClass>(&dcl, true /* direct base */);
   }
 
-  return mkBareNode<SgBaseClass>(&n, true /* direct base */);
+  return mkBareNode<SgExpBaseClass>(nullptr, true /* direct base */, &mkTypeExpression(n));
 }
 
 //
