@@ -775,6 +775,11 @@ if(NOT FLEX_FOUND)
   message(FATAL_ERROR "Could not find flex command")
 endif()
 
+find_package(BISON)
+if(NOT BISON_FOUND)
+  message(FATAL_ERROR "Could not find bison command")
+endif()
+
 if(NOT WIN32)
   find_library(M_LIB m)
   if(NOT APPLE)
