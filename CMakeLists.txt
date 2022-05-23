@@ -374,7 +374,7 @@ endif()
 # Java
 option(enable-java "Enable Java analysis" ON)
 if(enable-java)
-  message(STATUS "Looking for JAVA ...")
+  message(STATUS "Looking for Java JDK8 ...")
   # The FindJava script is different than all our others--it doesn't consult JAVA_ROOT. Therefore, the only
   # value of JAVA_ROOT that we can support is the empty string.
   if("${JAVA_ROOT}" STREQUAL "")
@@ -385,6 +385,10 @@ if(enable-java)
   endif()
 
   include(FindJava)
+
+  # bin/javah is provided by jdk8
+  find_package(Java 1.8 EXACT REQUIRED COMPONENTS Development)
+
   find_program(GCJ gcj)
   find_program(GCJH gcjh)
   find_package(JNI)
