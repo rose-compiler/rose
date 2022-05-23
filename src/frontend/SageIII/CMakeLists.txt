@@ -60,9 +60,14 @@ if(enable-cpp)
     DEPENDS  ${ROSE_TOP_SRC_DIR}/src/frontend/SageIII/ompparser.yy)
 
   #BISON generates a ompparser.H file and we need a ompparser.h file
+  # TODO why do we need ompparser.h?
+  #   for gcc, small c/h = C lang, big C/H = C++ lang
+  #   renaming to ompparser.h breaks include in ompparser.C:
+  #   #include "ompparser.H"
+  #   quickfix: copy ompparser.H to ompparser.h
   add_custom_command(
     OUTPUT ${CMAKE_BINARY_DIR}/src/frontend/SageIII/ompparser.h
-    COMMAND ${CMAKE_COMMAND} -E rename
+    COMMAND ${CMAKE_COMMAND} -E copy
       ${CMAKE_BINARY_DIR}/src/frontend/SageIII/ompparser.H ${CMAKE_BINARY_DIR}/src/frontend/SageIII/ompparser.h
     DEPENDS ${CMAKE_BINARY_DIR}/src/frontend/SageIII/ompparser.C)
 
