@@ -65,14 +65,14 @@ set(EDG_SIG_OUTPUT
 #  PRE_BUILD
 #  COMMAND "${CMAKE_SOURCE_DIR}/scripts/edg-generate-sig" "${CMAKE_SOURCE_DIR}" " ${CMAKE_BINARY_DIR}" " >" ${EDG_SIG_OUTPUT}
 #  COMMAND "cat" ${EDG_SIG_OUTPUT}  ">" signature
-#  DEPENDS roseutil rosetta_generated "${CMAKE_SOURCE_DIR}/scripts/edg-generate-sig"
+#  DEPENDS roseUtil rosetta_generated "${CMAKE_SOURCE_DIR}/scripts/edg-generate-sig"
 #)
 add_custom_target(get_EDG_name
 #  COMMENT "EDG NAME: ${CMAKE_SOURCE_DIR}/scripts/edg-generate-sig ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR}
 #    > ${EDG_SIG_OUTPUT}"
   COMMAND ${CMAKE_SOURCE_DIR}/scripts/edg-generate-sig ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR}
     > ${EDG_SIG_OUTPUT}
-  DEPENDS roseutil rosetta_generated)
+  DEPENDS roseUtil rosetta_generated)
 #set(signature "")
 
 add_custom_target( EDGSignature
