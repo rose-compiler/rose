@@ -121,6 +121,16 @@ set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake" "${CMAKE_SOURCE_DIR}/cmake/mod
 set(ROSE_TOP_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(ROSE_TOP_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
+message(STATUS "Checking presence of auto-generated files ...")
+SET(ROSE_AUTOGEN_FILES config/depcomp config/ltargz.m4 configure.orig)
+foreach(file IN LISTS ROSE_AUTOGEN_FILES)
+  if(EXISTS "${ROSE_TOP_SRC_DIR}/${file}")
+    message(STATUS "Found ${ROSE_TOP_SRC_DIR}/${file}")
+  else()
+    message(FATAL_ERROR "Not found ${ROSE_TOP_SRC_DIR}/${file}. Please run the build script before cmake")
+  endif()
+endforeach()
+
 
 ########################################################################################################################
 # ROSE version information
