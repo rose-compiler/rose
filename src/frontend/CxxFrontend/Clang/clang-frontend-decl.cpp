@@ -737,11 +737,18 @@ bool ClangToSageTranslator::VisitRecordDecl(clang::RecordDecl * record_decl, SgN
   // Find previous declaration
 
     clang::RecordDecl * prev_record_decl = record_decl->getPreviousDecl();
+    clang::RecordDecl * record_Definition = record_decl->getDefinition();
+    bool isDefined = record_decl->isThisDeclarationADefinition();
+
+    SgClassSymbol * sg_defining_sym = isSgClassSymbol(GetSymbolFromSymbolTable(record_Definition));
+    SgClassDeclaration * sg_def_class_decl = sg_defining_sym == NULL ? NULL : isSgClassDeclaration(sg_defining_sym->get_declaration()->get_definingDeclaration());
+
     SgClassSymbol * sg_prev_class_sym = isSgClassSymbol(GetSymbolFromSymbolTable(prev_record_decl));
     SgClassDeclaration * sg_prev_class_decl = sg_prev_class_sym == NULL ? NULL : isSgClassDeclaration(sg_prev_class_sym->get_declaration());
 
     SgClassDeclaration * sg_first_class_decl = sg_prev_class_decl == NULL ? NULL : isSgClassDeclaration(sg_prev_class_decl->get_firstNondefiningDeclaration());
-    SgClassDeclaration * sg_def_class_decl = sg_prev_class_decl == NULL ? NULL : isSgClassDeclaration(sg_prev_class_decl->get_definingDeclaration());
+
+    //SgClassDeclaration * sg_def_class_decl = sg_prev_class_decl == NULL ? NULL : isSgClassDeclaration(sg_prev_class_decl->get_definingDeclaration());
 
     ROSE_ASSERT(sg_first_class_decl != NULL || sg_def_class_decl == NULL);
 
@@ -797,46 +804,32 @@ bool ClangToSageTranslator::VisitRecordDecl(clang::RecordDecl * record_decl, SgN
         sg_first_class_decl->set_definingDeclaration(NULL);
         sg_first_class_decl->set_definition(NULL);
         sg_first_class_decl->setForward();
-        if (!record_decl->field_empty()) {
-            sg_def_class_decl = new SgClassDeclaration(name, type_of_class, type, NULL);
-            sg_def_class_decl->set_scope(SageBuilder::topScopeStack());
-            if (record_decl->isAnonymousStructOrUnion()) sg_def_class_decl->set_isUnNamed(true);
-            sg_def_class_decl->set_parent(SageBuilder::topScopeStack());
-
-            sg_class_decl = sg_def_class_decl; // we return thew defining decl
-
-            sg_def_class_decl->set_firstNondefiningDeclaration(sg_first_class_decl);
-            sg_def_class_decl->set_definingDeclaration(sg_def_class_decl);
-
-            sg_first_class_decl->set_definingDeclaration(sg_def_class_decl);
-            setCompilerGeneratedFileInfo(sg_first_class_decl);
-        }
-    }
-    else if (!record_decl->field_empty()) {
-        if (sg_def_class_decl != NULL) {
-            delete sg_class_decl;
-            *node = sg_def_class_decl;
-            return true;
-        }
-        sg_def_class_decl = sg_class_decl;
-        sg_def_class_decl->set_firstNondefiningDeclaration(sg_first_class_decl);
-        sg_def_class_decl->set_definingDeclaration(sg_def_class_decl);
-        sg_first_class_decl->set_definingDeclaration(sg_def_class_decl);
-    }
-    else // second (or more) non-defining declaration
-        return false; // FIXME ROSE need only one non-defining declaration (SageBuilder don't let me build another one....)
-
-  // Update symbol table
-
-    if (!had_prev_decl) {
         SgScopeStatement * scope = SageBuilder::topScopeStack();
         SgClassSymbol * class_symbol = new SgClassSymbol(sg_first_class_decl);
         scope->insert_symbol(name, class_symbol);
     }
+    else if (!isDefined) 
+        return false; // FIXME ROSE need only one non-defining declaration (SageBuilder don't let me build another one....)
+
+    if (isDefined) {
+        sg_def_class_decl = new SgClassDeclaration(name, type_of_class, type, NULL);
+        sg_def_class_decl->set_scope(SageBuilder::topScopeStack());
+        if (record_decl->isAnonymousStructOrUnion()) sg_def_class_decl->set_isUnNamed(true);
+        sg_def_class_decl->set_parent(SageBuilder::topScopeStack());
+
+        sg_class_decl = sg_def_class_decl; // we return thew defining decl
+
+        sg_def_class_decl->set_firstNondefiningDeclaration(sg_first_class_decl);
+        sg_def_class_decl->set_definingDeclaration(sg_def_class_decl);
+
+        sg_first_class_decl->set_definingDeclaration(sg_def_class_decl);
+        setCompilerGeneratedFileInfo(sg_first_class_decl);
+
+        if(had_prev_decl) {
+          sg_first_class_decl->set_definingDeclaration(sg_def_class_decl);
+        }
 
   // Build ClassDefinition
-
-    if (!record_decl->field_empty()) {
         SgClassDefinition * sg_class_def = isSgClassDefinition(sg_def_class_decl->get_definition());
         if (sg_class_def == NULL) {
             sg_class_def = SageBuilder::buildClassDefinition_nfi(sg_def_class_decl);
