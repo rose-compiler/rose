@@ -6,6 +6,8 @@
 #include <Rose/Diagnostics.h>
 #include "stringify.h"
 
+// Ignore warning: unknown option after '#pragma GCC diagnostic' kind
+#pragma GCC diagnostic ignored "-Wpragmas"
 // In order to efficiently (in terms of amount of code) parse a file format that's defined for a different architecture, we
 // need to occassionally take addresses of structs that don't follow alignment rules for this architecture.
 #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
