@@ -5913,6 +5913,22 @@ void Grammar::setUpBinaryInstructions() {
                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
+#ifdef DOCUMENTATION
+      /** Protected member variables. */
+    protected:
+      uint16_t p_minor_version;
+      uint16_t p_major_version;
+      uint16_t p_access_flags;
+      uint16_t p_this_class;
+      uint16_t p_super_class;
+      SgAsmJvmConstantPool* p_constant_pool;
+      std::list<uint16_t>& p_interfaces;
+      SgAsmJvmFieldTable* p_field_table;
+      SgAsmJvmMethodTable* p_method_table;
+      SgAsmJvmAttributeTable* p_attribute_table;
+    public:
+#endif
+
         DECLARE_OTHERS(AsmJvmFileHeader);
 #if defined(SgAsmJvmFileHeader_OTHERS) || defined(DOCUMENTATION)
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
