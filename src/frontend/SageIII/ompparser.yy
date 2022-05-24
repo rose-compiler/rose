@@ -10,9 +10,9 @@ To debug bison conflicts, use the following command line in the build tree
 /bin/sh ../../../../sourcetree/config/ylwrap ../../../../sourcetree/src/frontend/Sab.h `echo ompparser.cc | sed -e s/cc$/hh/ -e s/cpp$/hpp/ -e s/cxx$/hxx/ -e s/c++$/h++/ -e s/c$/h/` y.output ompparser.output -- bison -y -d -r state
 in the build tree
 */
-%name-prefix "omp_"
+%define api.prefix {omp_}
 %defines
-%error-verbose
+%define parse.error verbose
 
 %{
 /* DQ (2/10/2014): IF is conflicting with Boost template IF. */
