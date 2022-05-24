@@ -1163,6 +1163,13 @@ bool ClangToSageTranslator::VisitForStmt(clang::ForStmt * for_stmt, SgNode ** no
         if (init_stmt != NULL)
             for_init_stmt_list.push_back(init_stmt);
 
+        if(for_init_stmt_list.size() == 0)
+        {
+          SgNullStatement* nullStmt = SageBuilder::buildNullStatement_nfi();
+          setCompilerGeneratedFileInfo(nullStmt, true);
+          for_init_stmt_list.push_back(nullStmt);
+        }
+
         for_init_stmt = SageBuilder::buildForInitStatement_nfi(for_init_stmt_list);
 
         printf ("In VisitForStmt(): for_init_stmt = %p  \n");
@@ -1190,7 +1197,7 @@ bool ClangToSageTranslator::VisitForStmt(clang::ForStmt * for_stmt, SgNode ** no
         }
         else {
             cond_stmt = SageBuilder::buildNullStatement_nfi();
-            setCompilerGeneratedFileInfo(cond_stmt);
+            setCompilerGeneratedFileInfo(cond_stmt, true);
         }
     }
 
@@ -1207,7 +1214,7 @@ bool ClangToSageTranslator::VisitForStmt(clang::ForStmt * for_stmt, SgNode ** no
         }
         if (inc == NULL) {
             inc = SageBuilder::buildNullExpression_nfi();
-            setCompilerGeneratedFileInfo(inc);
+            setCompilerGeneratedFileInfo(inc, true);
         }
     }
 
