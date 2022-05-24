@@ -470,7 +470,7 @@ endif()
 option(enable-clang-frontend "Use Clang for parsing C/C++-like languages" ON)
 
 set(ROSE_USE_CLANG_FRONTEND 0) # global
-if(enable-clang-frontend AND (enable-c OR enable-cpp))
+if(enable-clang-frontend AND enable-c)
   message(STATUS "Using clang frontend")
   set(ROSE_USE_CLANG_FRONTEND 1)
   find_package(LLVM)
@@ -489,7 +489,7 @@ if(enable-clang-frontend AND (enable-c OR enable-cpp))
       ${CMAKE_BINARY_DIR}/include-staging/clang
     )
   endforeach()
-elseif(enable-c OR enable-cpp)
+elseif(enable-c)
   message(STATUS "Not using clang frontend")
 endif()
 if(ROSE_USE_CLANG_FRONTEND)
@@ -516,7 +516,7 @@ set(EDG_MINOR_VERSION 0)
 set(ROSE_EDG_MAJOR_VERSION_NUMBER 0)
 set(ROSE_EDG_MINOR_VERSION_NUMBER 0)
 
-if(enable-edg-frontend AND (enable-c OR enable-cpp))
+if(enable-edg-frontend AND enable-c)
   message(STATUS "Using EDG frontend")
 
   # FIXME use cmake to generate files + remove ROSE_AUTOGEN_SCRIPT
@@ -596,7 +596,7 @@ if(enable-edg-frontend AND (enable-c OR enable-cpp))
   else()
     message(STATUS "EDG - not needed; using a nearly empty dummy library")
   endif()
-elseif(enable-c OR enable-cpp)
+elseif(enable-c)
   message(STATUS "Not using EDG frontend")
 endif()
 
