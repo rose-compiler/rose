@@ -3960,10 +3960,7 @@ SgClassType::get_name() const
             ROSE_ASSERT(false);
           }
         }
-       else
-        {
-          return SgName((char *)0L);
-        }
+     return SgName((char *)0L);
    }
 
 
