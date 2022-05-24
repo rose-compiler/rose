@@ -10,7 +10,7 @@
 
 #include "CallGraph.h"
 #include "staticSingleAssignment.h"
-#include <boost/timer.hpp>
+#include <boost/timer/timer.hpp>
 
 // warning: poor practice and possible name conflicts according to Boost documentation
 #define foreach BOOST_FOREACH

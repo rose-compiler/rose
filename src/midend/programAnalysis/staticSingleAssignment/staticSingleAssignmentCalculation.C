@@ -16,7 +16,7 @@
 #include <queue>
 #include <fstream>
 #include <stack>
-#include <boost/timer.hpp>
+#include <boost/timer/timer.hpp>
 #include <boost/foreach.hpp>
 #include <boost/unordered_set.hpp>
 #include <boost/tuple/tuple.hpp>
