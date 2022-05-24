@@ -10,7 +10,8 @@
 #include "DefUseAnalysis_perFunction.h"
 #include "GlobalVarAnalysis.h"
 #include <boost/config.hpp>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
+using namespace boost::placeholders;
 
 
 using namespace std;

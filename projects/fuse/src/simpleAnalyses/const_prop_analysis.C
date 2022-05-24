@@ -1,7 +1,8 @@
 #include "sage3basic.h"
 #include "const_prop_analysis.h"
 
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
+using namespace boost::placeholders;
 #include <boost/mem_fn.hpp>
 #include <boost/make_shared.hpp>
   

@@ -7,7 +7,8 @@
 // #include "sage3basic.h"
 
 #include <boost/graph/adjacency_list.hpp>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
+using namespace boost::placeholders;
 #include <boost/foreach.hpp>
 #include <boost/tuple/tuple.hpp>
 #include <boost/graph/graphviz.hpp>

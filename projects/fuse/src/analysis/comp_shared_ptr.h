@@ -1,5 +1,6 @@
 #pragma once 
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
+using namespace boost::placeholders;
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/make_shared.hpp>
 #include "widgets.h"

@@ -22,7 +22,8 @@
 #include "DefUseAnalysis_perFunction.h"
 #include "GlobalVarAnalysis.h"
 #include <boost/config.hpp>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
+using namespace boost::placeholders;
 #include "BottomUpTraversalLiveness.h"
 using namespace std;
 

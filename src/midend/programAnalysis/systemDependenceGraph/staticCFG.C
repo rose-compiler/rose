@@ -8,7 +8,8 @@
 #include "cong_staticCFG.h"
 
 #include <boost/algorithm/string.hpp>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
+using namespace boost::placeholders;
 #include <boost/foreach.hpp>
 #include <boost/graph/dominator_tree.hpp>
 #include <boost/graph/graphviz.hpp>

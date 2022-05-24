@@ -1,7 +1,8 @@
 #include "sage3basic.h"                                 // every librose .C file must start with this
 
 #include "newCDG.h"
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
+using namespace boost::placeholders;
 #include <boost/foreach.hpp>
 #include <boost/graph/graph_utility.hpp>
 #include <boost/graph/graphviz.hpp>

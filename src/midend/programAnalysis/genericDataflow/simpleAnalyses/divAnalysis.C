@@ -3,7 +3,8 @@
 
 #include "divAnalysis.h"
 
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
+using namespace boost::placeholders;
 #include <boost/mem_fn.hpp>
 
 int divAnalysisDebugLevel=0;

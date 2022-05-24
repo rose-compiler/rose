@@ -2,7 +2,8 @@
 
 #include "newDDG.h"
 #include <VariableRenaming.h>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
+using namespace boost::placeholders;
 #include <boost/lambda/lambda.hpp>
 #include <boost/graph/graphviz.hpp>
 #include <boost/unordered_set.hpp>

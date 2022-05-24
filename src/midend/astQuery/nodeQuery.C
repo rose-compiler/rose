@@ -10,7 +10,8 @@
 // string class used if compiler does not contain a C++ string class
 // include <roseString.h>
 
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
+using namespace boost::placeholders;
 
 #include "nodeQuery.h"
 #define DEBUG_NODEQUERY 0

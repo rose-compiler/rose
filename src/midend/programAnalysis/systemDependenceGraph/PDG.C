@@ -8,7 +8,8 @@
 #include "PDG.h"
 #include "util.h"
 #include <VariableRenaming.h>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
+using namespace boost::placeholders;
 #include <boost/foreach.hpp>
 #include <boost/lambda/lambda.hpp>
 #include <boost/graph/graphviz.hpp>

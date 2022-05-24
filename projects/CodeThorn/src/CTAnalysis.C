@@ -11,7 +11,8 @@
 #include "CodeThornException.h"
 
 #include <unordered_set>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
+using namespace boost::placeholders;
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp>
 

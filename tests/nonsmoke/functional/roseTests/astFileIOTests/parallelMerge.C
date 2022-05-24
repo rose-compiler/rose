@@ -14,7 +14,8 @@
 #include <queue>
 #include <boost/lexical_cast.hpp>
 #include <boost/progress.hpp>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
+using namespace boost::placeholders;
 #include <boost/filesystem.hpp>
 
 #ifndef TEST_AST_FILE_READ
