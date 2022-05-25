@@ -334,10 +334,15 @@ AC_MSG_NOTICE([testing value of FC = "$FC"])
                       ;;
               esac
           elif test $XCODE_VERSION_MAJOR -eq 13; then
-            # Rasmussen (01/27/2022): Added results for clang --version 13.0.0
+            # Rasmussen (05/19/2022): Updated results for clang --version 13.0.0-13.1.6
               case "$XCODE_VERSION_PATCH" in
                   0)
                       BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=12
+                      BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=0
+                      BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER=0
+                      ;;
+                  1)
+                      BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=13
                       BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=0
                       BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER=0
                       ;;
