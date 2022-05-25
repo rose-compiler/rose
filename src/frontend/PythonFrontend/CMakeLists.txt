@@ -5,5 +5,8 @@ if(enable-python)
   add_library(rosePythonFrontend
 	  SagePythonInterface.C SagePythonSupport.C PythonFrontend.C)
 
+  # fix: Cxx_Grammar.h: No such file or directory
+  add_dependencies(rosePythonFrontend rosetta_generated)
+
   install(FILES  PythonFrontend.h DESTINATION src/frontend/PythonFrontend/CMakeLists.txt )
 endif()
