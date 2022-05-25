@@ -576,6 +576,12 @@ if(enable-edg-frontend)
     endif()
   endif()
 
+  message(STATUS "Creating target EDG")
+  add_library(EDG STATIC IMPORTED)
+  #add_dependencies(EDG EDGSignature)
+  set_property(TARGET EDG PROPERTY IMPORTED_LOCATION
+    ${CMAKE_BINARY_DIR}/src/frontend/CxxFrontend/EDG/.libs/libroseEDG.a)
+
   set(edg_lib EDG) # the compiled library, the downloaded library, or the dummy library
   if(have_EDG_source)
     message(STATUS "EDG - will compile EDG-${EDG_VERSION} source code")

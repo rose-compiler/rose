@@ -106,8 +106,3 @@ execute_process(
 #  DEPENDS EDGSignature 
 #  )
 
-add_library(EDG STATIC IMPORTED)
-#add_dependencies(EDG EDGSignature)
-set_property(TARGET EDG PROPERTY IMPORTED_LOCATION
-  ${CMAKE_BINARY_DIR}/src/frontend/CxxFrontend/EDG/.libs/libroseEDG.a)
-
