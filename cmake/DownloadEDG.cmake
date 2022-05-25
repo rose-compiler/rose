@@ -25,7 +25,7 @@ set(max_supported "5.2")
 execute_process(COMMAND ${CMAKE_C_COMPILER} -dumpversion
                 OUTPUT_VARIABLE GCC_version)
 # strip patch version; we only care about major & minor
-string(REGEX MATCH "([0-9]\\.[0-9])" GCC_version ${GCC_version})
+string(REGEX MATCH "^([0-9]+\\.[0-9]+)" GCC_version ${GCC_version})
 
 if(GCC_version VERSION_GREATER max_supported OR
    GCC_version VERSION_LESS min_supported)
