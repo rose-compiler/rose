@@ -118,6 +118,10 @@ endif()
 
 add_definitions(-DBOOST_ALL_NO_LIB=1)
 
+# based on config/support-gomp-omp.m4
+# default: /usr
+add_definitions(-DROSE_INSTALLATION_PATH=\"${CMAKE_INSTALL_PREFIX}\")
+
 # FIXME: Why do we have to have a copy of some standard built-in modules inside rose?
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake" "${CMAKE_SOURCE_DIR}/cmake/modules"  ${CMAKE_MODULE_PATH})
 
