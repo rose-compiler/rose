@@ -76,8 +76,7 @@ endif
 
 # Pei-Hung (12/06/2016) use "aclocal --print-ac-dir" to specify the include path to support both Linux and Mac
 #ACLOCAL_AMFLAGS = -I ./config -I ./acmacros -I ./libltdl -I /usr/share/aclocal
-ACLOCAL_INCLUDE = "$$(aclocal --print-ac-dir)"
-ACLOCAL_AMFLAGS = -I ./config -I ./acmacros -I ./libltdl -I $(ACLOCAL_INCLUDE)
+ACLOCAL_AMFLAGS = -I ./config -I ./acmacros -I ./libltdl -I $(aclocal --print-ac-dir)
 
 all: remove_sage3basic_h_pch
 
