@@ -178,6 +178,8 @@ if(ROSE_USE_CLANG_FRONTEND)
   list(APPEND link_with_libraries ${CLANG_LIBRARIES})
 endif()
 
+# fix: librose.so.1.0.0: undefined reference to `quadmath_snprintf'
+list(APPEND link_with_libraries quadmath)
 
 ########################################################################################################################
 # The ROSE library itself (librose.so, librose.a, librose.dll)
