@@ -28,7 +28,7 @@ void createDOT(SgProject * root, string postfix = "") {
 
     string dotCommand = "dot -Tps -o " + filename + postfix + 
       ".ps " + filename + ".dot -Gsize=\"10.5,8\" -Grotate=90 -Gcenter=1";
-    system(dotCommand.c_str());
+    ROSE_ASSERT(system(dotCommand.c_str()) == 0);
   }
 }
 

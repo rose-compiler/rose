@@ -51,14 +51,14 @@ void visitorTraversal::visit(SgNode* currentNode)
 			{
 				unsigned int computedSize = ((SgUnsignedIntVal*)parent) -> get_value();
 		                unsigned int directSize;
-				fscanf(fp, "%u", &directSize);
+				ROSE_ASSERT(fscanf(fp, "%u", &directSize) == 1);
 				checkEqual(computedSize, directSize);
 			}
 			else if(isSgUnsignedLongLongIntVal(parent) != NULL)
 			{
 				unsigned long long computedSize = ((SgUnsignedLongLongIntVal*)parent) -> get_value();
 		                unsigned long long directSize;
-				fscanf(fp, "%llu", &directSize);
+				ROSE_ASSERT(fscanf(fp, "%llu", &directSize) == 1);
 				checkEqual(computedSize, directSize);
 			}
 			else
@@ -74,7 +74,7 @@ int main(int argc, char* argv[])
 	SgProject* project = frontend(argc, argv);
 	ROSE_ASSERT(project != NULL);
 	cout << "Running sizeof operation tests...\n";
-	system("rm -f test");
+	ROSE_ASSERT(system("rm -f test") == 0);
 	//Run the input file first to get all the sizeof results and write them into a file.
 	string command("g++ -o inputCode_SizeofTest ");
 	command += argv[2];

@@ -35,7 +35,7 @@ void visitorTraversal::visit(SgNode* currentNode)
 			unsigned int computedSize = ((SgUnsignedIntVal*)parent) -> get_value();
 			//directSize is the actual value from the program execution.
 			unsigned int directSize;
-			fscanf(fp, "%d", &directSize);
+			ROSE_ASSERT(fscanf(fp, "%d", &directSize) == 1);
 			if(directSize == computedSize)
 			{
 				cout << " EQUAL: " << directSize << " and " << computedSize << endl;
@@ -55,7 +55,7 @@ int main(int argc, char* argv[])
 	SgProject* project = frontend(argc, argv);
 	ROSE_ASSERT(project != NULL);
 	cout << "Running sizeof operation tests...\n";
-	system("rm -f test");
+	ROSE_ASSERT(system("rm -f test") == 0);
 	//Run the input file first to get all the sizeof results and write them into a file.
 	string command("icc -o inputCode_SizeofTest ");
 	command += argv[2];
