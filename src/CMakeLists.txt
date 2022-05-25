@@ -163,6 +163,11 @@ if (enable-php)
   list(APPEND rose_LIB_SRCS $<TARGET_OBJECTS:phpFrontend>)
 endif()
 
+if(enable-python)
+  # fix: librose.so.1.0.0: undefined reference to `PyErr_Print'
+  list(APPEND link_with_libraries ${PYTHON_LIBRARIES})
+endif()
+
 if(NOT enable-internalFrontendDevelopment)
   list(APPEND rose_LIB_SRCS
     $<TARGET_OBJECTS:midend_pa>
