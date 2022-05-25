@@ -2,6 +2,7 @@
 
 #include "sage3basic.h"
 #include "rose_config.h"
+#include <ROSE_ABORT.h>
 
 #include "SagePythonInterface.h"
 
