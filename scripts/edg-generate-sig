@@ -70,19 +70,19 @@ EDG_GENERATED_DEPENDENCIES=("$ROSE_BLD/src/frontend/SageIII/Cxx_Grammar.h"
 # Make sure ROSE source and build directories exist and that they look reasonable.
 check_directories() {
     if [ ! -d "$ROSE_SRC/." ]; then
-	echo "$myname: ROSE source directory not found: $ROSE_SRC" >&2
+	echo "$myname: ROSE source directory not found: '$ROSE_SRC'" >&2
 	exit 1
     fi
     if [ ! -d "$ROSE_SRC/scripts" ]; then
-	echo "$myname: doesn't seem to be the top of the ROSE source tree: $ROSE_SRC" >&2
+	echo "$myname: doesn't seem to be the top of the ROSE source tree: '$ROSE_SRC'" >&2
 	exit 1
     fi
     if [ ! -d "$ROSE_BLD/." ]; then
-	echo "$myname: ROSE build directory not found: $ROSE_BLD" >&2
+	echo "$myname: ROSE build directory not found: '$ROSE_BLD'" >&2
 	exit 1
     fi
     if [ ! -d "$ROSE_BLD/src/frontend/SageIII" ]; then
-	echo "$myname: doesn't seem to be the top of the ROSE build tree: $ROSE_BLD" >&2
+	echo "$myname: doesn't seem to be the top of the ROSE build tree: '$ROSE_BLD'" >&2
 	exit 1
     fi
 }

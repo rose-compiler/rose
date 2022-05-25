@@ -466,13 +466,10 @@ endif()
 # clang frontend C/C++ compiler
 ########################################################################################################################
 
-# enable clang by default, as it's open source
 option(enable-clang-frontend "Use Clang for parsing C/C++-like languages" ON)
 
-set(ROSE_USE_CLANG_FRONTEND 0) # global
-if(enable-clang-frontend AND enable-c)
+if(enable-c AND enable-clang-frontend)
   message(STATUS "Using clang frontend")
-  set(ROSE_USE_CLANG_FRONTEND 1)
   find_package(LLVM)
   message(STATUS "Found LLVM: ${LLVM_INCLUDE_DIRS}")
   find_package(Clang)
@@ -492,31 +489,21 @@ if(enable-clang-frontend AND enable-c)
 elseif(enable-c)
   message(STATUS "Not using clang frontend")
 endif()
-if(ROSE_USE_CLANG_FRONTEND)
-  # define for C++ code
-  add_definitions(-DROSE_USE_CLANG_FRONTEND=1)
-endif()
+
 
 ########################################################################################################################
 # EDG (Edison Design Group) frontend C/C++ compiler
 ########################################################################################################################
 
-# disable EDG by default, as it's closed source
-option(enable-edg-frontend "Use EDG for parsing C/C++-like languages" OFF)
+#option(enable-edg-frontend "Use EDG for parsing C/C++-like languages" OFF)
+# not an option. EDG is hard requirement for enable-c
+# https://github.com/rose-compiler/rose/issues/26
+set(enable-edg-frontend OFF)
+if(enable-c)
+  set(enable-edg-frontend ON)
+endif()
 
-# default values to build without EDG
-add_library(EDG INTERFACE) # nearly empty dummy library
-set(edg_lib EDG)
-set(have_EDG_source 0)
-set(BINARY_EDG 0)
-# needed in src/frontend/SageIII/CMakeFiles/sage3.dir/sage_support/sage_support.cpp
-set(EDG_MAJOR_VERSION 0)
-set(EDG_MINOR_VERSION 0)
-# needed in src/roseSupport/CMakeFiles/roseSupport.dir/utility_functions.C
-set(ROSE_EDG_MAJOR_VERSION_NUMBER 0)
-set(ROSE_EDG_MINOR_VERSION_NUMBER 0)
-
-if(enable-edg-frontend AND enable-c)
+if(enable-edg-frontend)
   message(STATUS "Using EDG frontend")
 
   # FIXME use cmake to generate files + remove ROSE_AUTOGEN_SCRIPT
@@ -575,7 +562,7 @@ if(enable-edg-frontend AND enable-c)
       if(NOT WIN32)
         if(EXISTS "${PROJECT_BINARY_DIR}/src/frontend/CxxFrontend/EDG.tar.gz")
           message(STATUS "EDG - unpacking EDG binary tar file")
-          execute_process(COMMAND "tar" "-zxvf" "-C" "${PROJECT_BINARY_DIR}/src/frontend/CxxFrontend/EDG")
+          execute_process(COMMAND "tar" "-zxvf" "-C" "${PROJECT_BINARY_DIR}/src/frontend/CxxFrontend/EDG" COMMAND_ERROR_IS_FATAL ANY)
         else()
           # download EDG before build.
           # since EDG version 5, the EDG signature no longer depends on generated code
@@ -596,8 +583,20 @@ if(enable-edg-frontend AND enable-c)
   else()
     message(STATUS "EDG - not needed; using a nearly empty dummy library")
   endif()
-elseif(enable-c)
+else()
   message(STATUS "Not using EDG frontend")
+  # default values to build without EDG
+  # this is currently not supported -> linking errors: edg_main ...
+  add_library(EDG INTERFACE) # nearly empty dummy library
+  set(edg_lib EDG)
+  set(have_EDG_source 0)
+  set(BINARY_EDG 0)
+  # needed in src/frontend/SageIII/CMakeFiles/sage3.dir/sage_support/sage_support.cpp
+  set(EDG_MAJOR_VERSION 0)
+  set(EDG_MINOR_VERSION 0)
+  # needed in src/roseSupport/CMakeFiles/roseSupport.dir/utility_functions.C
+  set(ROSE_EDG_MAJOR_VERSION_NUMBER 0)
+  set(ROSE_EDG_MINOR_VERSION_NUMBER 0)
 endif()
 
 
@@ -1281,7 +1280,7 @@ set(CMAKE_INSTALL_RPATH "${origin}/../lib;${origin}/")
 
 add_subdirectory(LicenseInformation)
 add_subdirectory(config)
-add_subdirectory(src)
+add_subdirectory(src) # ROSE_DLL
 add_subdirectory(exampleTranslators)
 add_subdirectory(scripts)
 

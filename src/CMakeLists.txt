@@ -173,6 +173,12 @@ if(enable-rosehpct)
   list(APPEND rose_LIB_SRCS $<TARGET_OBJECTS:roseExtensions>)
 endif()
 
+if(ROSE_USE_CLANG_FRONTEND)
+  add_definitions(-DROSE_USE_CLANG_FRONTEND=1)
+  list(APPEND link_with_libraries ${CLANG_LIBRARIES})
+endif()
+
+
 ########################################################################################################################
 # The ROSE library itself (librose.so, librose.a, librose.dll)
 ########################################################################################################################

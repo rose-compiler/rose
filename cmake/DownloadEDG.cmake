@@ -27,6 +27,9 @@ set(compiler "gnu-${GCC_version}")
 
 
 # Get binary compatibility signature
+set(EDG_SIG_OUTPUT_DIR
+  "${CMAKE_BINARY_DIR}/src/frontend/CxxFrontend"
+)
 set(EDG_SIG_OUTPUT
   "${CMAKE_BINARY_DIR}/src/frontend/CxxFrontend/edg-generate-sig.output"
 )
@@ -48,10 +51,38 @@ add_custom_target(get_EDG_name
   # so we can fetch EDG before building
 #set(signature "")
 
-add_custom_target( EDGSignature
-#    COMMENT "EDGSignature arguments ${EDG_SIG_OUTPUT} ${Local_EDG_Version} ${platform} ${compiler}"
-    COMMAND ${CMAKE_COMMAND} -P ${PROJECT_SOURCE_DIR}/cmake/ProcessEDGBinary.cmake ${EDG_SIG_OUTPUT} ${Local_EDG_Version} ${platform} ${compiler} 
-    DEPENDS get_EDG_name
+#add_custom_target( EDGSignature
+##    COMMENT "EDGSignature arguments ${EDG_SIG_OUTPUT} ${Local_EDG_Version} ${platform} ${compiler}"
+#    COMMAND ${CMAKE_COMMAND} -P ${PROJECT_SOURCE_DIR}/cmake/ProcessEDGBinary.cmake ${EDG_SIG_OUTPUT} ${Local_EDG_Version} ${platform} ${compiler} 
+#    DEPENDS get_EDG_name
+#)
+
+# download EDG now
+# TODO switch EDG version
+# since EDG version 5, the EDG signature no longer depends on generated code,
+# so we can fetch EDG before building
+
+# FIXME edg-generate-sig?
+
+message(STATUS "Generating EDG signature")
+# TODO remove mkdir? not needed?
+execute_process(
+  COMMAND mkdir -p "${EDG_SIG_OUTPUT_DIR}"
+  COMMAND_ECHO STDOUT
+  COMMAND_ERROR_IS_FATAL ANY
+)
+execute_process(
+  COMMAND "${CMAKE_SOURCE_DIR}/scripts/edg-generate-sig" "${CMAKE_SOURCE_DIR}" "${CMAKE_BINARY_DIR}"
+  OUTPUT_FILE ${EDG_SIG_OUTPUT}
+  COMMAND_ECHO STDOUT
+  COMMAND_ERROR_IS_FATAL ANY
+)
+
+message(STATUS "Fetching EDG tarball")
+execute_process(
+  COMMAND ${CMAKE_COMMAND} -P ${PROJECT_SOURCE_DIR}/cmake/ProcessEDGBinary.cmake ${EDG_SIG_OUTPUT} ${Local_EDG_Version} ${platform} ${compiler}
+  COMMAND_ECHO STDOUT
+  COMMAND_ERROR_IS_FATAL ANY
 )
 
 #set(tarball_site "http://edg-binaries.rosecompiler.org")
@@ -76,7 +107,7 @@ add_custom_target( EDGSignature
 #  )
 
 add_library(EDG STATIC IMPORTED)
-add_dependencies(EDG EDGSignature)
+#add_dependencies(EDG EDGSignature)
 set_property(TARGET EDG PROPERTY IMPORTED_LOCATION
   ${CMAKE_BINARY_DIR}/src/frontend/CxxFrontend/EDG/.libs/libroseEDG.a)
 
