@@ -3920,7 +3920,9 @@ DispatcherCil::condition(CilInstructionKind kind, RiscOperators *ops) {
             ROSE_ASSERT(false);
 #endif
     }
-    return nullptr; // fix warning: no return statement in function returning non-void
+    // fix warning: no return statement in function returning non-void
+    //return nullptr; // error: could not convert to 'SValuePtr' aka 'Sawyer::SharedPointer<SValue>'
+    return SValuePtr(); // empty shared pointer
 }
 
 // Override Dispatcher::read so that if we read the PC register we get the address of the current instruction plus 2.  See

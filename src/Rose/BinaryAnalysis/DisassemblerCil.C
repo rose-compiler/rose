@@ -338,7 +338,8 @@ formatNBits(CilDataFormat fmt)
 #else
     ROSE_ASSERT(false);
 #endif
-    return nullptr; // fix warning: no return statement in function returning non-void
+    // fix warning: no return statement in function returning non-void
+    return 0;
 }
 
 // see base class
@@ -819,7 +820,8 @@ DisassemblerCil::makeEffectiveAddress(State &state, unsigned mode, unsigned reg,
 #else
     ROSE_ASSERT(false);
 #endif
-    return nullptr; // fix warning: no return statement in function returning non-void
+    // fix warning: no return statement in function returning non-void
+    return nullptr;
 }
 
 SgAsmExpression *
