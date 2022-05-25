@@ -72,7 +72,11 @@ add_custom_target(get_EDG_name
 #    > ${EDG_SIG_OUTPUT}"
   COMMAND ${CMAKE_SOURCE_DIR}/scripts/edg-generate-sig ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR}
     > ${EDG_SIG_OUTPUT}
-  DEPENDS roseUtil rosetta_generated)
+  #DEPENDS roseUtil rosetta_generated)
+  )
+  # TODO switch EDG version
+  # since EDG version 5, the EDG signature no longer depends on generated code,
+  # so we can fetch EDG before building
 #set(signature "")
 
 add_custom_target( EDGSignature
@@ -81,7 +85,9 @@ add_custom_target( EDGSignature
     DEPENDS get_EDG_name
 )
 
-#set(tarball_site "http://www.rosecompiler.org/edg_binaries")
+#set(tarball_site "http://edg-binaries.rosecompiler.org")
+# example url
+# http://edg-binaries.rosecompiler.org/roseBinaryEDG-5-0-x86_64-pc-linux-gnu-gnu-8-5.0.11.80.1.tar.gz
 #set(tarball_filename "roseBinaryEDG-${Local_EDG_Version}-${platform}-${compiler}-${signature}.tar.gz")
 
 #add_custom_target(EDG_tarball

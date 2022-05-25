@@ -1,6 +1,8 @@
 execute_process(COMMAND cat ${CMAKE_ARGV3} OUTPUT_VARIABLE signature OUTPUT_STRIP_TRAILING_WHITESPACE)
 message("signature='${signature}'")
-set(tarball_site "http://www.rosecompiler.org/edg_binaries")
+set(tarball_site "http://edg-binaries.rosecompiler.org")
+# example url
+# http://edg-binaries.rosecompiler.org/roseBinaryEDG-5-0-x86_64-pc-linux-gnu-gnu-8-5.0.11.80.1.tar.gz
 set(workingDirectory "${CMAKE_BINARY_DIR}/src/frontend/CxxFrontend")
 set(tarball_filename "roseBinaryEDG-${CMAKE_ARGV4}-${CMAKE_ARGV5}-${CMAKE_ARGV6}-${signature}")
 set(tarball_fullname "roseBinaryEDG-${CMAKE_ARGV4}-${CMAKE_ARGV5}-${CMAKE_ARGV6}-${signature}.tar.gz")
