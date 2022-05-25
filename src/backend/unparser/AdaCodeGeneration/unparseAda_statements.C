@@ -1029,7 +1029,7 @@ namespace
         // function/procedure
         prn(si::ada::isFunction(fn->get_type()) ? "function " : "procedure ");
         prn(pkgqual);
-        prn(name.getString());
+        prn(si::ada::convertRoseOperatorNameToAdaName(name));
         prn(" is new ");
         prnNameQual(n, *fn, fn->get_scope());
         prn(fn->get_name().getString());

@@ -356,6 +356,83 @@ namespace
     elems.push_back(sgnode);
   }
 
+  struct ExprRefMaker : sg::DispatchHandler<SgExpression*>
+  {
+      using base = sg::DispatchHandler<SgExpression*>;
+
+      explicit
+      ExprRefMaker(AstContext astctx)
+      : base(), ctx(astctx)
+      {}
+
+      void handle(SgNode& n) { SG_UNEXPECTED_NODE(n); }
+
+      void handle(SgDeclarationStatement& n)
+      {
+        logError() << "ExprRefMaker: " << typeid(n).name() << std::endl;
+
+        res = sb::buildIntVal();
+        ADA_ASSERT(!FAIL_ON_ERROR(ctx));
+      }
+
+      // void handle(SgImportStatement& n)
+
+      void handle(SgFunctionDeclaration& n)    { res = sb::buildFunctionRefExp(&n); }
+      void handle(SgAdaRenamingDecl& n)        { res = &mkAdaRenamingRefExp(n); }
+      void handle(SgAdaTaskSpecDecl& n)        { res = &mkAdaTaskRefExp(n); }
+      void handle(SgAdaProtectedSpecDecl& n)   { res = &mkAdaProtectedRefExp(n); }
+      void handle(SgAdaGenericInstanceDecl& n) { res = &mkAdaUnitRefExp(n); }
+      void handle(SgAdaPackageSpecDecl& n)     { res = &mkAdaUnitRefExp(n); }
+      void handle(SgAdaTaskTypeDecl& n)        { res = &mkTypeExpression(SG_DEREF(n.get_type())); }
+      void handle(SgAdaProtectedTypeDecl& n)   { res = &mkTypeExpression(SG_DEREF(n.get_type())); }
+
+      // \todo should we reference the underlying declaration instead of the generic??
+      void handle(SgAdaGenericDecl& n)         { res = &mkAdaUnitRefExp(n); }
+
+    private:
+      AstContext ctx;
+  };
+
+  struct TypeRefMaker : sg::DispatchHandler<SgExpression*>
+  {
+      using base = sg::DispatchHandler<SgExpression*>;
+
+      explicit
+      TypeRefMaker(AstContext astctx)
+      : base(), ctx(astctx)
+      {}
+
+      void set(SgType* ty);
+
+      void handle(SgNode& n) { SG_UNEXPECTED_NODE(n); }
+
+      void handle(SgDeclarationStatement& n)
+      {
+        logError() << "TypeRefMaker: " << typeid(n).name() << std::endl;
+
+        set(&mkTypeUnknown());
+        ADA_ASSERT(!FAIL_ON_ERROR(ctx));
+      }
+
+      // void handle(SgImportStatement& n)
+
+      void handle(SgClassDeclaration& n)   { set(n.get_type()); }
+      void handle(SgTypedefDeclaration& n) { set(n.get_type()); }
+      void handle(SgEnumDeclaration& n)    { set(n.get_type()); }
+      void handle(SgAdaFormalTypeDecl& n)  { set(n.get_type()); }
+      void handle(SgAdaTaskTypeDecl& n)      { set(n.get_type()); }
+      void handle(SgAdaProtectedTypeDecl& n) { set(n.get_type()); }
+
+    private:
+      AstContext ctx;
+  };
+
+  void TypeRefMaker::set(SgType* ty)
+  {
+    res = &mkTypeExpression(SG_DEREF(ty));
+  }
+
+
   // wrapper uses homogeneous return types instead of covariant ones
   template <class R, R* (*mkexp) (SgExpression*, SgExpression*)>
   SgExpression* mk2_wrapper()
@@ -485,10 +562,9 @@ namespace
 
     if (SgDeclarationStatement* dcl = findFirst(asisDecls(), expr.Corresponding_Name_Definition, expr.Corresponding_Name_Declaration))
     {
-      SgFunctionDeclaration* fundcl = isSgFunctionDeclaration(dcl);
-      ADA_ASSERT(fundcl);
+      SgExpression* res = sg::dispatch(ExprRefMaker{ctx}, dcl);
 
-      return SG_DEREF(sb::buildFunctionRefExp(fundcl));
+      return SG_DEREF(res);
     }
 
     int len = strlen(expr.Name_Image);
@@ -635,82 +711,6 @@ namespace
               << std::endl;
     ADA_ASSERT(!FAIL_ON_ERROR(ctx) && "untested expression-kind");
     return true;
-  }
-
-  struct ExprRefMaker : sg::DispatchHandler<SgExpression*>
-  {
-      using base = sg::DispatchHandler<SgExpression*>;
-
-      explicit
-      ExprRefMaker(AstContext astctx)
-      : base(), ctx(astctx)
-      {}
-
-      void handle(SgNode& n) { SG_UNEXPECTED_NODE(n); }
-
-      void handle(SgDeclarationStatement& n)
-      {
-        logError() << "ExprRefMaker: " << typeid(n).name() << std::endl;
-
-        res = sb::buildIntVal();
-        ADA_ASSERT(!FAIL_ON_ERROR(ctx));
-      }
-
-      // void handle(SgImportStatement& n)
-
-      void handle(SgFunctionDeclaration& n)    { res = sb::buildFunctionRefExp(&n); }
-      void handle(SgAdaRenamingDecl& n)        { res = &mkAdaRenamingRefExp(n); }
-      void handle(SgAdaTaskSpecDecl& n)        { res = &mkAdaTaskRefExp(n); }
-      void handle(SgAdaProtectedSpecDecl& n)   { res = &mkAdaProtectedRefExp(n); }
-      void handle(SgAdaGenericInstanceDecl& n) { res = &mkAdaUnitRefExp(n); }
-      void handle(SgAdaPackageSpecDecl& n)     { res = &mkAdaUnitRefExp(n); }
-      void handle(SgAdaTaskTypeDecl& n)        { res = &mkTypeExpression(SG_DEREF(n.get_type())); }
-      void handle(SgAdaProtectedTypeDecl& n)   { res = &mkTypeExpression(SG_DEREF(n.get_type())); }
-
-      // \todo should we reference the underlying declaration instead of the generic??
-      void handle(SgAdaGenericDecl& n)         { res = &mkAdaUnitRefExp(n); }
-
-    private:
-      AstContext ctx;
-  };
-
-  struct TypeRefMaker : sg::DispatchHandler<SgExpression*>
-  {
-      using base = sg::DispatchHandler<SgExpression*>;
-
-      explicit
-      TypeRefMaker(AstContext astctx)
-      : base(), ctx(astctx)
-      {}
-
-      void set(SgType* ty);
-
-      void handle(SgNode& n) { SG_UNEXPECTED_NODE(n); }
-
-      void handle(SgDeclarationStatement& n)
-      {
-        logError() << "TypeRefMaker: " << typeid(n).name() << std::endl;
-
-        set(&mkTypeUnknown());
-        ADA_ASSERT(!FAIL_ON_ERROR(ctx));
-      }
-
-      // void handle(SgImportStatement& n)
-
-      void handle(SgClassDeclaration& n)   { set(n.get_type()); }
-      void handle(SgTypedefDeclaration& n) { set(n.get_type()); }
-      void handle(SgEnumDeclaration& n)    { set(n.get_type()); }
-      void handle(SgAdaFormalTypeDecl& n)  { set(n.get_type()); }
-      void handle(SgAdaTaskTypeDecl& n)      { set(n.get_type()); }
-      void handle(SgAdaProtectedTypeDecl& n) { set(n.get_type()); }
-
-    private:
-      AstContext ctx;
-  };
-
-  void TypeRefMaker::set(SgType* ty)
-  {
-    res = &mkTypeExpression(SG_DEREF(ty));
   }
 
 
