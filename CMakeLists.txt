@@ -499,13 +499,7 @@ endif()
 # EDG (Edison Design Group) frontend C/C++ compiler
 ########################################################################################################################
 
-#option(enable-edg-frontend "Use EDG for parsing C/C++-like languages" OFF)
-# not an option. EDG is hard requirement for enable-c
-# https://github.com/rose-compiler/rose/issues/26
-set(enable-edg-frontend OFF)
-if(enable-c)
-  set(enable-edg-frontend ON)
-endif()
+option(enable-edg-frontend "Use EDG for parsing C/C++-like languages" OFF)
 
 if(enable-edg-frontend)
   message(STATUS "Using EDG frontend")
@@ -582,26 +576,27 @@ if(enable-edg-frontend)
     endif()
   endif()
 
-  message(STATUS "Creating target EDG")
-  add_library(EDG STATIC IMPORTED)
-  #add_dependencies(EDG EDGSignature)
-  set_property(TARGET EDG PROPERTY IMPORTED_LOCATION
-    ${CMAKE_BINARY_DIR}/src/frontend/CxxFrontend/EDG/.libs/libroseEDG.a)
 
   set(edg_lib EDG) # the compiled library, the downloaded library, or the dummy library
   if(have_EDG_source)
     message(STATUS "EDG - will compile EDG-${EDG_VERSION} source code")
+    # creating target in rose/src/frontend/CxxFrontend/CMakeLists.txt
   elseif(BINARY_EDG)
     message(STATUS "EDG - will use EDG-${EDG_VERSION} binary release")
+    # make sure that libroseEDG.a exists
+    execute_process(COMMAND "stat" "${CMAKE_BINARY_DIR}/src/frontend/CxxFrontend/EDG/.libs/libroseEDG.a" COMMAND_ECHO STDOUT COMMAND_ERROR_IS_FATAL ANY)
+    add_library(EDG STATIC IMPORTED)
+    set_property(TARGET EDG PROPERTY IMPORTED_LOCATION
+      ${CMAKE_BINARY_DIR}/src/frontend/CxxFrontend/EDG/.libs/libroseEDG.a)
   else()
     message(STATUS "EDG - not needed; using a nearly empty dummy library")
+    # creating target in rose/src/frontend/CxxFrontend/CMakeLists.txt
   endif()
 else()
   message(STATUS "Not using EDG frontend")
   # default values to build without EDG
   # this is currently not supported -> linking errors: edg_main ...
-  add_library(EDG INTERFACE) # nearly empty dummy library
-  set(edg_lib EDG)
+  # creating target in rose/src/frontend/CxxFrontend/CMakeLists.txt
   set(have_EDG_source 0)
   set(BINARY_EDG 0)
   # needed in src/frontend/SageIII/CMakeFiles/sage3.dir/sage_support/sage_support.cpp
