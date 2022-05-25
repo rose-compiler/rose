@@ -562,7 +562,8 @@ if(enable-edg-frontend)
       if(NOT WIN32)
         if(EXISTS "${PROJECT_BINARY_DIR}/src/frontend/CxxFrontend/EDG.tar.gz")
           message(STATUS "EDG - unpacking EDG binary tar file")
-          execute_process(COMMAND "tar" "-zxvf" "-C" "${PROJECT_BINARY_DIR}/src/frontend/CxxFrontend/EDG" COMMAND_ERROR_IS_FATAL ANY)
+          execute_process(COMMAND "mkdir" "-p" "${PROJECT_BINARY_DIR}/src/frontend/CxxFrontend/EDG" COMMAND_ECHO STDOUT COMMAND_ERROR_IS_FATAL ANY)
+          execute_process(COMMAND "tar" "-xf" "${PROJECT_BINARY_DIR}/src/frontend/CxxFrontend/EDG.tar.gz" "--strip-components=1" "-C" "${PROJECT_BINARY_DIR}/src/frontend/CxxFrontend/EDG" COMMAND_ECHO STDOUT COMMAND_ERROR_IS_FATAL ANY)
         else()
           # download EDG before build.
           # since EDG version 5, the EDG signature no longer depends on generated code
