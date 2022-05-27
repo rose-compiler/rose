@@ -740,15 +740,15 @@ bool ClangToSageTranslator::VisitRecordDecl(clang::RecordDecl * record_decl, SgN
     clang::RecordDecl * record_Definition = record_decl->getDefinition();
     bool isDefined = record_decl->isThisDeclarationADefinition();
 
-    SgClassSymbol * sg_defining_sym = isSgClassSymbol(GetSymbolFromSymbolTable(record_Definition));
-    SgClassDeclaration * sg_def_class_decl = sg_defining_sym == NULL ? NULL : isSgClassDeclaration(sg_defining_sym->get_declaration()->get_definingDeclaration());
-
     SgClassSymbol * sg_prev_class_sym = isSgClassSymbol(GetSymbolFromSymbolTable(prev_record_decl));
     SgClassDeclaration * sg_prev_class_decl = sg_prev_class_sym == NULL ? NULL : isSgClassDeclaration(sg_prev_class_sym->get_declaration());
 
     SgClassDeclaration * sg_first_class_decl = sg_prev_class_decl == NULL ? NULL : isSgClassDeclaration(sg_prev_class_decl->get_firstNondefiningDeclaration());
 
     //SgClassDeclaration * sg_def_class_decl = sg_prev_class_decl == NULL ? NULL : isSgClassDeclaration(sg_prev_class_decl->get_definingDeclaration());
+    SgClassSymbol * sg_defining_sym = isSgClassSymbol(GetSymbolFromSymbolTable(record_Definition));
+    SgClassDeclaration * sg_def_class_decl = sg_defining_sym == NULL ? NULL : isSgClassDeclaration(sg_defining_sym->get_declaration()->get_definingDeclaration());
+
 
     ROSE_ASSERT(sg_first_class_decl != NULL || sg_def_class_decl == NULL);
 
@@ -987,6 +987,12 @@ bool ClangToSageTranslator::VisitTypedefDecl(clang::TypedefDecl * typedef_decl, 
     SgType * type = buildTypeFromQualifiedType(typedef_decl->getUnderlyingType());
 
     SgTypedefDeclaration * sg_typedef_decl = SageBuilder::buildTypedefDeclaration_nfi(name, type, SageBuilder::topScopeStack());
+
+    // check if it is a pointer to class or pointer to enum
+    if (isSgPointerType(type))
+    {
+      type = isSgPointerType(type)->get_base_type();
+    }
 
     if (isSgClassType(type)) {
         std::map<SgClassType *, bool>::iterator bool_it = p_class_type_decl_first_see_in_type.find(isSgClassType(type));
