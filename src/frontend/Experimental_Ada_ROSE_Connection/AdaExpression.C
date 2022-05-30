@@ -1673,7 +1673,7 @@ getDefinitionExpr(Element_Struct& el, AstContext ctx)
 
     default:
       logWarn() << "Unhandled definition expr: " << def.Definition_Kind << std::endl;
-      res = sb::buildNullExpression();
+      res = &mkNullExpression();
       ADA_ASSERT(!FAIL_ON_ERROR(ctx));
   }
 
