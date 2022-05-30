@@ -64,6 +64,11 @@ generatePrototype (const SgFunctionDeclaration* full_decl, SgScopeStatement* sco
      SgFunctionDeclaration* proto = SageBuilder::buildNondefiningFunctionDeclaration(full_decl,scope);
      ROSE_ASSERT(proto != NULL);
 
+
+  // Inherit defining function's inline property: avoid linking error when linking multiple .lib files with the outlined functions
+    if (full_decl->get_functionModifier().isInline()) 
+      proto->get_functionModifier().setInline();
+    
   // This should be the defining declaration (check it).
      ROSE_ASSERT(full_decl->get_definition() != NULL);
 
@@ -1631,6 +1636,10 @@ Outliner::insert (SgFunctionDeclaration* func,
 
        // Build a function prototype and insert it first (will be at the top of the generated file).
           outlinedFileFunctionPrototype = SageBuilder::buildNondefiningFunctionDeclaration (func,scope);
+
+          // Inherit defining function's inline property: avoid linking error when linking multiple .lib files with the outlined functions
+          if (func->get_functionModifier().isInline())
+            outlinedFileFunctionPrototype->get_functionModifier().setInline();
 
 #if 0
           printf ("######### Outliner::insert(): Inserting (prepend) outlinedFileFunctionPrototype = %p = %s into scope = %p = %s \n",

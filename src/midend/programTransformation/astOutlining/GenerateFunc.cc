@@ -1482,11 +1482,20 @@ Outliner::generateFunction ( SgBasicBlock* s,  // block to be outlined
 #endif
   //step 2. Create function skeleton, 'func'.
   // -----------------------------------------
+
   SgName func_name (func_name_str);
   SgFunctionParameterList *parameterList = buildFunctionParameterList();
 
   SgFunctionDeclaration* func = createFuncSkeleton (func_name,SgTypeVoid::createType (),parameterList, scope);
   ROSE_ASSERT (func);
+
+  // Inherit enclosing function's inline property: avoid linking error when linking multiple .lib files with the outlined functions
+  SgFunctionDeclaration* enclosing_func = getEnclosingFunctionDeclaration(s);
+  ROSE_ASSERT (enclosing_func);
+  if (enclosing_func->get_functionModifier().isInline())
+  {
+    func->get_functionModifier().setInline();
+  }
 
   // Liao, 4/15/2009 , enforce C-bindings  for C++ outlined code
   // enable C code to call this outlined function
