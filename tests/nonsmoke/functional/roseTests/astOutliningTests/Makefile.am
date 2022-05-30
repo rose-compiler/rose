@@ -371,7 +371,7 @@ test_dlopen3: $(dlopen3_test_targets)
 # Liao, 2020/8/24
 # Test select_omp_loop option 
 # rose_inputfile_lib.cpp
-
+# only a single test: required to have main and compile to run
 dlopen4_test_targets = $(addprefix dlopen4_,  $(CXX4_TESTS_REQUIRED_TO_RUN))
 dlopen4_test_lib_targets = $(addprefix rose_, $(addsuffix .cpp, $(addsuffix _lib, $(basename $(CXX4_TESTS_REQUIRED_TO_RUN)))))
 dlopen4_test_lib_so_targets = $(addprefix rose_, $(addsuffix .so, $(addsuffix _lib, $(basename $(CXX4_TESTS_REQUIRED_TO_RUN)))))
@@ -494,6 +494,24 @@ complexStruct_flags = \
 
 C_CXX_RESULTS += complexStruct.passed
 
+# test linking outlined functions from inline functions
+rose_test_inline_1_2022_lib.cpp: test_inline_1_2022.cpp outline$(EXEEXT)
+	./outline$(EXEEXT) $(TEST_INCLUDES) $(dlopen2_test_flags) -c $< 
+rose_test_inline_2_2022_lib.cpp: rose_test_inline_1_2022_lib.cpp
+	cp $^ $@
+
+OUT_1_test_inline_2022_6.o:rose_test_inline_1_2022_lib.cpp
+	g++ -c -fPIC $(TEST_INCLUDES) $< -o $@ 
+
+OUT_2_test_inline_2022_6.o:rose_test_inline_2_2022_lib.cpp
+	g++ -c -fPIC $(TEST_INCLUDES) $< -o $@ 
+
+test_inline_2022_6.so:OUT_1_test_inline_2022_6.o OUT_2_test_inline_2022_6.o
+	g++ -shared $^ -o $@
+testlinking:test_inline_2022_6.so
+
+C_CXX_RESULTS += test_inline_2022_6.so
+
 complexStruct.passed: complexStruct.c outline
 	@$(RTH_RUN) \
 		USE_SUBDIR=yes \
@@ -524,6 +542,6 @@ test-c-cxx:$(C_CXX_RESULTS)
 check-local: $(TEST_TARGETS) 
 
 clean-local:
-	rm -f $(TEST_TARGETS) OUT__*.cpp rose_*.cpp
+	rm -f $(TEST_TARGETS) OUT__*.cpp rose_*.cpp *.so
 	rm -f $(TEST_TARGETS:.passed=.failed)
 	rm -rf unparseHeaderRoot_test_20_2019
