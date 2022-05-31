@@ -709,11 +709,7 @@ namespace
 
     void handle(SgAdaSelectAlternativeStmt& n)
     {
-      if (isSgNullExpression(n.get_guard()) == NULL) {
-        prn("when ");
-        expr(n.get_guard());
-        prn(" =>\n");
-      }
+      expr_opt(n.get_guard(), "when ", " =>\n");
       stmt(n.get_body());
       if (n.get_next() != NULL) {
         prn("or\n");
@@ -1408,12 +1404,7 @@ namespace
         prn(loopName);
       }
 
-      if (isSgNullExpression(n.get_condition()) == nullptr)
-      {
-        prn(" when ");
-        expr(n.get_condition());
-      }
-
+      expr_opt(n.get_condition(), " when ");
       prn(STMT_SEP);
     }
 
@@ -2179,11 +2170,7 @@ namespace
     {
       SgExpression* barrier = adaEntry->get_entryBarrier();
 
-      if (barrier && (isSgNullExpression(barrier) == nullptr))
-      {
-        prn(" when ");
-        expr(barrier);
-      }
+      expr_opt(barrier, " when ");
     }
 
     prn(" is\n");
@@ -2256,93 +2243,116 @@ namespace
 
   struct RenamingSyntax : sg::DispatchHandler<RenamingSyntaxResult>
   {
-    void handle(const SgNode& n)      { SG_UNEXPECTED_NODE(n); }
+      using base = sg::DispatchHandler<RenamingSyntaxResult>;
 
-    void handle(const SgAdaRenamingSymbol& n)
-    {
-      SgAdaRenamingDecl& dcl = SG_DEREF(n.get_declaration());
+      explicit
+      RenamingSyntax(bool isNonGeneric)
+      : base(), forceNonGeneric(isNonGeneric)
+      {}
 
-      res = AdaStatementUnparser::renamingSyntax(dcl.get_renamed());
-      //~ res.renamedName() = n.get_name();
-    }
+      void handle(const SgNode& n)      { SG_UNEXPECTED_NODE(n); }
 
-    void handle(const SgAdaPackageSpecDecl& n)
-    {
-      std::string prefix = si::ada::isGenericDecl(n) ? "generic package " : "package ";
+      void handle(const SgAdaRenamingSymbol& n)
+      {
+        SgAdaRenamingDecl& dcl = SG_DEREF(n.get_declaration());
 
-      res = ReturnType{prefix, false /* does not require type */, n.get_definition()};
-      //~ res = ReturnType{prefix, false /* does not require type */, n.get_name(), n.get_definition()};
-    }
+        res = AdaStatementUnparser::renamingSyntax(dcl.get_renamed());
+        //~ res.renamedName() = n.get_name();
+      }
 
-    void handle(const SgAdaPackageBodyDecl& n)
-    {
-      res = ReturnType{"package ", false /* does not require type */, SG_DEREF(n.get_definition()).get_spec()};
-      //~ res = ReturnType{"package ", false /* does not require type */, n.get_name(), SG_DEREF(n.get_definition()).get_spec()};
-    }
+      void handle(const SgAdaPackageSpecDecl& n)
+      {
+        std::string prefix = genericPrefix(n) + "package ";
 
-    void handle(const SgAdaPackageSymbol& n)
-    {
-      res = compute(n.get_declaration());
-    }
+        res = ReturnType{prefix, false /* does not require type */, n.get_definition()};
+        //~ res = ReturnType{prefix, false /* does not require type */, n.get_name(), n.get_definition()};
+      }
 
-    void handle(const SgFunctionDeclaration& n)
-    {
-      std::string prefix = si::ada::isGenericDecl(n) ? "generic " : "";
+      void handle(const SgAdaPackageBodyDecl& n)
+      {
+        res = ReturnType{"package ", false /* does not require type */, SG_DEREF(n.get_definition()).get_spec()};
+        //~ res = ReturnType{"package ", false /* does not require type */, n.get_name(), SG_DEREF(n.get_definition()).get_spec()};
+      }
 
-      prefix += si::ada::isFunction(n.get_type()) ? "function " : "procedure ";
+      void handle(const SgAdaPackageSymbol& n)
+      {
+        res = compute(n.get_declaration(), forceNonGeneric);
+      }
 
-      res = ReturnType{prefix, false, nullptr};
-      //~ res = ReturnType{prefix, false, n.get_name(), nullptr};
-    }
+      void handle(const SgFunctionDeclaration& n)
+      {
+        std::string prefix = genericPrefix(n);
 
-    void handle(const SgAdaGenericDecl& n)
-    {
-      res = compute(n.get_declaration());
-    }
+        prefix += si::ada::isFunction(n.get_type()) ? "function " : "procedure ";
 
-    void handle(const SgAdaGenericInstanceDecl& n)
-    {
-      res = compute(n.get_declaration());
-    }
+        res = ReturnType{prefix, false, nullptr};
+        //~ res = ReturnType{prefix, false, n.get_name(), nullptr};
+      }
 
-    //
-    // expression refs
+      void handle(const SgAdaGenericDecl& n)
+      {
+        res = compute(n.get_declaration(), forceNonGeneric);
+      }
 
-    void handle(const SgAdaUnitRefExp& n)
-    {
-      // get the prefix from the declaration, then set the proper name.
-      res = compute(n.get_decl());
-      //~ res.renamedName() = n.get_name();
-    }
+      void handle(const SgAdaGenericInstanceDecl& n)
+      {
+        res = compute(n.get_declaration(), true /* force non generic */);
+      }
 
-    void handle(const SgVarRefExp&)
-    {
-      //~ res = ReturnType{"", true /* requires type */, n.get_name(), nullptr};
-      res = ReturnType{"", true /* requires type */, nullptr};
-    }
+      //
+      // expression refs
 
-    void handle(const SgFunctionRefExp& n)
-    {
-      res = compute(n.getAssociatedFunctionDeclaration());
-      // res.renamedName() = n.get_name();
-    }
+      void handle(const SgAdaUnitRefExp& n)
+      {
+        // get the prefix from the declaration, then set the proper name.
+        res = compute(n.get_decl(), forceNonGeneric);
+        //~ res.renamedName() = n.get_name();
+      }
 
-    void handle(const SgExpression&)
-    {
-      // object renaming
-      res = ReturnType{"", true /* requires type */, nullptr};
-    }
+      void handle(const SgVarRefExp&)
+      {
+        //~ res = ReturnType{"", true /* requires type */, n.get_name(), nullptr};
+        res = ReturnType{"", true /* requires type */, nullptr};
+      }
 
+      void handle(const SgFunctionRefExp& n)
+      {
+        res = compute(n.getAssociatedFunctionDeclaration(), forceNonGeneric);
+        // res.renamedName() = n.get_name();
+      }
 
-    static
-    RenamingSyntaxResult
-    compute(const SgNode* n);
+      void handle(const SgExpression&)
+      {
+        // object renaming
+        res = ReturnType{"", true /* requires type */, nullptr};
+      }
+
+      static
+      RenamingSyntaxResult
+      compute(const SgNode* n, bool forceNonGeneric = false);
+
+    private:
+      bool forceNonGeneric;
+
+      std::string
+      genericPrefix(const SgDeclarationStatement& n);
+
+      RenamingSyntax() = delete;
   };
 
-  RenamingSyntaxResult
-  RenamingSyntax::compute(const SgNode* n)
+  std::string
+  RenamingSyntax::genericPrefix(const SgDeclarationStatement& n)
   {
-    return sg::dispatch(RenamingSyntax{}, n);
+    if (forceNonGeneric || !si::ada::isGenericDecl(n))
+      return "";
+
+    return "generic ";
+  }
+
+  RenamingSyntaxResult
+  RenamingSyntax::compute(const SgNode* n, bool forceNonGeneric)
+  {
+    return sg::dispatch(RenamingSyntax{forceNonGeneric}, n);
   }
 
   RenamingSyntaxResult
