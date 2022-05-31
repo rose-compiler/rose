@@ -754,6 +754,12 @@ void Grammar::setUpBinaryInstructions() {
                                             COPY_DATA);
 #endif
 
+#ifdef DOCUMENTATION
+    protected:
+      Rose::BinaryAnalysis::JvmInstructionKind p_kind;
+    public:
+#endif
+
         DECLARE_OTHERS(AsmJvmInstruction);
 #if defined(SgAsmJvmInstruction_OTHERS) || defined(DOCUMENTATION)
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -5914,7 +5920,6 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
 #ifdef DOCUMENTATION
-      /** Protected member variables. */
     protected:
       uint16_t p_minor_version;
       uint16_t p_major_version;
@@ -10092,6 +10097,12 @@ void Grammar::setUpBinaryInstructions() {
                                             NO_DELETE);
 #endif
 
+#ifdef DOCUMENTATION
+    protected:
+      SgAsmJvmConstantPoolEntryPtrList p_entries;
+    public:
+#endif
+
         DECLARE_OTHERS(AsmJvmConstantPool);
 #if defined(SgAsmJvmConstantPool_OTHERS) || defined(DOCUMENTATION)
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -10355,6 +10366,25 @@ void Grammar::setUpBinaryInstructions() {
                                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
+#ifdef DOCUMENTATION
+    protected:
+      SgAsmJvmConstantPoolEntry::Kind p_tag;
+      uint32_t p_bytes;
+      uint32_t p_hi_bytes;
+      uint32_t p_low_bytes;
+      uint16_t p_bootstrap_method_attr_index;
+      uint16_t p_class_index;
+      uint16_t p_descriptor_index;
+      uint16_t p_name_index;
+      uint16_t p_name_and_type_index;
+      uint16_t p_reference_index;
+      uint8_t p_reference_kind;
+      uint16_t p_string_index;
+      uint16_t p_length;
+      const char* p_utf8_bytes;
+    public:
+#endif
+
         DECLARE_OTHERS(AsmJvmConstantPoolEntry);
 #if defined(SgAsmJvmConstantPoolEntry_OTHERS) || defined(DOCUMENTATION)
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -10573,6 +10603,12 @@ void Grammar::setUpBinaryInstructions() {
                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
+#ifdef DOCUMENTATION
+    protected:
+      uint16_t p_constantvalue_index;
+    public:
+#endif
+
         DECLARE_OTHERS(AsmJvmConstantValue);
 #if defined(SgAsmJvmConstantValue_OTHERS) || defined(DOCUMENTATION)
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -10727,6 +10763,18 @@ void Grammar::setUpBinaryInstructions() {
                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
+#ifdef DOCUMENTATION
+    protected:
+      uint16_t p_max_stack;
+      uint16_t p_max_locals;
+      uint32_t p_code_length;
+      const char* p_code;
+      SgAsmJvmExceptionTable* p_exception_table;
+      SgAsmJvmAttributeTable* p_attribute_table;
+      rose_addr_t p_code_offset;
+    public:
+#endif
+
         DECLARE_OTHERS(AsmJvmCodeAttribute);
 #if defined(SgAsmJvmCodeAttribute_OTHERS) || defined(DOCUMENTATION)
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -10794,6 +10842,12 @@ void Grammar::setUpBinaryInstructions() {
         AsmJvmInnerClasses.setDataPrototype("SgAsmJvmInnerClassesEntryPtrList", "classes", "",
                                             NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS,
                                             NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+    protected:
+      SgAsmJvmInnerClassesEntryPtrList p_classes;
+    public:
 #endif
 
         DECLARE_OTHERS(AsmJvmInnerClasses);
@@ -10915,6 +10969,15 @@ void Grammar::setUpBinaryInstructions() {
                                                  NO_TRAVERSAL, NO_DELETE);
 #endif
 
+#ifdef DOCUMENTATION
+    protected:
+      uint16_t p_inner_class_info_index;
+      uint16_t p_outer_class_info_index;
+      uint16_t p_inner_name_index;
+      uint16_t p_inner_class_access_flags;
+    public:
+#endif
+
         DECLARE_OTHERS(AsmJvmInnerClassesEntry);
 #if defined(SgAsmJvmInnerClassesEntry_OTHERS) || defined(DOCUMENTATION)
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -11002,6 +11065,13 @@ void Grammar::setUpBinaryInstructions() {
                                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
+#ifdef DOCUMENTATION
+    protected:
+      uint16_t p_class_index;
+      uint16_t p_method_index;
+    public:
+#endif
+
         DECLARE_OTHERS(AsmJvmEnclosingMethod);
 #if defined(SgAsmJvmEnclosingMethod_OTHERS) || defined(DOCUMENTATION)
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -11069,6 +11139,12 @@ void Grammar::setUpBinaryInstructions() {
                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
+#ifdef DOCUMENTATION
+    protected:
+      uint16_t p_signature_index;
+    public:
+#endif
+
         DECLARE_OTHERS(AsmJvmSignature);
 #if defined(SgAsmJvmSignature_OTHERS) || defined(DOCUMENTATION)
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -11133,6 +11209,12 @@ void Grammar::setUpBinaryInstructions() {
 #else
         AsmJvmSourceFile.setDataPrototype("uint16_t", "sourcefile_index", "= 0",
                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+    protected:
+      uint16_t p_sourcefile_index;
+    public:
 #endif
 
         DECLARE_OTHERS(AsmJvmSourceFile);
@@ -11216,6 +11298,13 @@ void Grammar::setUpBinaryInstructions() {
                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
+#ifdef DOCUMENTATION
+    protected:
+      uint16_t p_start_pc;
+      uint16_t p_line_number;
+    public:
+#endif
+
         DECLARE_OTHERS(AsmJvmLineNumberEntry);
 #if defined(SgAsmJvmLineNumberEntry_OTHERS) || defined(DOCUMENTATION)
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -11285,6 +11374,12 @@ void Grammar::setUpBinaryInstructions() {
         AsmJvmLineNumberTable.setDataPrototype("SgAsmJvmLineNumberEntryPtrList", "line_number_table", "",
                                                NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS,
                                                NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+    protected:
+      SgAsmJvmLineNumberEntryPtrList p_line_number_table;
+    public:
 #endif
 
         DECLARE_OTHERS(AsmJvmLineNumberTable);
@@ -11357,6 +11452,12 @@ void Grammar::setUpBinaryInstructions() {
 #else
         AsmJvmModuleMainClass.setDataPrototype("uint16_t", "main_class_index", "= 0",
                                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+    protected:
+      uint16_t p_main_class_index;
+    public:
 #endif
 
         DECLARE_OTHERS(AsmJvmModuleMainClass);
@@ -11439,6 +11540,13 @@ void Grammar::setUpBinaryInstructions() {
 #else
         AsmJvmAttribute.setDataPrototype("uint32_t", "attribute_length", "= 0",
                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+    protected:
+      uint16_t p_attribute_name_index;
+      uint32_t p_attribute_length;
+    public:
 #endif
 
         DECLARE_OTHERS(AsmJvmAttribute);
@@ -11556,6 +11664,12 @@ void Grammar::setUpBinaryInstructions() {
                                               DEF_TRAVERSAL, NO_DELETE);
 #endif
 
+#ifdef DOCUMENTATION
+    protected:
+      SgAsmJvmAttributePtrList p_attributes;
+    public:
+#endif
+
         DECLARE_OTHERS(AsmJvmAttributeTable);
 #if defined(SgAsmJvmAttributeTable_OTHERS) || defined(DOCUMENTATION)
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -11627,6 +11741,12 @@ void Grammar::setUpBinaryInstructions() {
         AsmJvmExceptionTable.setDataPrototype("SgAsmJvmExceptionPtrList", "exceptions", "",
                                               NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS,
                                               NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+    protected:
+      SgAsmJvmExceptionPtrList p_exceptions;
+    public:
 #endif
 
         DECLARE_OTHERS(AsmJvmExceptionTable);
@@ -11743,6 +11863,15 @@ void Grammar::setUpBinaryInstructions() {
                                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
+#ifdef DOCUMENTATION
+    protected:
+      uint16_t p_start_pc;
+      uint16_t p_end_pc;
+      uint16_t p_handler_pc;
+      uint16_t p_catch_type;
+    public:
+#endif
+
         DECLARE_OTHERS(AsmJvmException);
 #if defined(SgAsmJvmException_OTHERS) || defined(DOCUMENTATION)
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -11811,6 +11940,12 @@ void Grammar::setUpBinaryInstructions() {
         AsmJvmMethodTable.setDataPrototype("SgAsmJvmMethodPtrList", "methods", "",
                                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS,
                                            DEF_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+    protected:
+      SgAsmJvmMethodPtrList p_methods;
+    public:
 #endif
 
         DECLARE_OTHERS(AsmJvmMethodTable);
@@ -11946,6 +12081,16 @@ void Grammar::setUpBinaryInstructions() {
                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
+#ifdef DOCUMENTATION
+    protected:
+      uint16_t p_access_flags;
+      uint16_t p_name_index;
+      uint16_t p_descriptor_index;
+      SgAsmJvmAttributeTable* p_attribute_table;
+      SgAsmInstructionList* p_instruction_list;
+    public:
+#endif
+
         DECLARE_OTHERS(AsmJvmMethod);
 #if defined(SgAsmJvmMethod_OTHERS) || defined(DOCUMENTATION)
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -12016,6 +12161,12 @@ void Grammar::setUpBinaryInstructions() {
         AsmJvmFieldTable.setDataPrototype("SgAsmJvmFieldPtrList", "fields", "",
                                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS,
                                           DEF_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+    protected:
+      SgAsmJvmFieldPtrList p_fields;
+    public:
 #endif
 
         DECLARE_OTHERS(AsmJvmFieldTable);
@@ -12133,6 +12284,15 @@ void Grammar::setUpBinaryInstructions() {
 #else
         AsmJvmField.setDataPrototype("SgAsmJvmAttributeTable*", "attribute_table", "= nullptr",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+    protected:
+      uint16_t p_access_flags;
+      uint16_t p_name_index;
+      uint16_t p_descriptor_index;
+      SgAsmJvmAttributeTable* p_attribute_table;
+    public:
 #endif
 
         DECLARE_OTHERS(AsmJvmField);
