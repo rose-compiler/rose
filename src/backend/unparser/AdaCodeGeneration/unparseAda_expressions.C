@@ -413,7 +413,7 @@ namespace
     void handle(SgThrowOp& n)
     {
       prn("raise ");
-      expr(n.get_operand());
+      expr_opt(n.get_operand());
     }
 
     void handle(SgActualArgumentExpression& n)
@@ -498,9 +498,11 @@ namespace
 
     void handle(SgNullExpression& n)
     {
-      // \todo should not be reached
+      // should not be reached because all parents with legitimate null-expressions
+      // such as "raise;" should unparse using expr_opt.
       prn("<null>");
     }
+
 
     // Ada's derived types "inherit" the primitive functions of their base type.
     // Asis does not create new declaration for these functions, but instead links
@@ -594,6 +596,7 @@ namespace
                 );
 
     void expr(SgExpression* exp, bool requiresScopeQual = true);
+    void expr_opt(SgExpression* exp);
     void exprlst(SgExprListExp& exp, std::string sep = ", ", bool requiresScopeQual = true);
     void aggregate(SgExprListExp& exp);
     void arglst_opt(SgExprListExp& args);
@@ -636,6 +639,14 @@ namespace
     if (withParens) prn("(");
     sg::dispatch(AdaExprUnparser{unparser, info, os, requiresScopeQual}, exp);
     if (withParens) prn(")");
+  }
+
+  void AdaExprUnparser::expr_opt(SgExpression* exp)
+  {
+    if (exp == nullptr || isSgNullExpression(exp))
+      return;
+
+    expr(exp);
   }
 
   void AdaExprUnparser::handle(SgBinaryOp& n)
