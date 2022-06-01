@@ -740,15 +740,15 @@ bool ClangToSageTranslator::VisitRecordDecl(clang::RecordDecl * record_decl, SgN
     clang::RecordDecl * record_Definition = record_decl->getDefinition();
     bool isDefined = record_decl->isThisDeclarationADefinition();
 
-    SgClassSymbol * sg_defining_sym = isSgClassSymbol(GetSymbolFromSymbolTable(record_Definition));
-    SgClassDeclaration * sg_def_class_decl = sg_defining_sym == NULL ? NULL : isSgClassDeclaration(sg_defining_sym->get_declaration()->get_definingDeclaration());
-
     SgClassSymbol * sg_prev_class_sym = isSgClassSymbol(GetSymbolFromSymbolTable(prev_record_decl));
     SgClassDeclaration * sg_prev_class_decl = sg_prev_class_sym == NULL ? NULL : isSgClassDeclaration(sg_prev_class_sym->get_declaration());
 
     SgClassDeclaration * sg_first_class_decl = sg_prev_class_decl == NULL ? NULL : isSgClassDeclaration(sg_prev_class_decl->get_firstNondefiningDeclaration());
 
     //SgClassDeclaration * sg_def_class_decl = sg_prev_class_decl == NULL ? NULL : isSgClassDeclaration(sg_prev_class_decl->get_definingDeclaration());
+    SgClassSymbol * sg_defining_sym = isSgClassSymbol(GetSymbolFromSymbolTable(record_Definition));
+    SgClassDeclaration * sg_def_class_decl = sg_defining_sym == NULL ? NULL : isSgClassDeclaration(sg_defining_sym->get_declaration()->get_definingDeclaration());
+
 
     ROSE_ASSERT(sg_first_class_decl != NULL || sg_def_class_decl == NULL);
 
@@ -922,9 +922,18 @@ bool ClangToSageTranslator::VisitEnumDecl(clang::EnumDecl * enum_decl, SgNode **
     std::cerr << "ClangToSageTranslator::VisitEnumDecl" << std::endl;
 #endif
     bool res = true;
+    std::string enumDeclName = enum_decl->getNameAsString();
+    if(enumDeclName.empty())
+    {
+      enumDeclName = "__anonymous_" +  generate_source_position_string(enum_decl->getBeginLoc());  
+    }
+    SgName name(enumDeclName);
 
-    SgName name(enum_decl->getNameAsString());
-
+#if DEBUG_VISIT_DECL
+    std::cerr << "isfreestanding:" << enum_decl->isFreeStanding() << " isembedded:" << enum_decl->isEmbeddedInDeclarator() << std::endl;
+    std::cerr << "hasNameForLinkage:" << enum_decl->hasNameForLinkage() << std::endl;
+    std::cerr << "enum name:" << enumDeclName << std::endl;
+#endif
 
     clang::EnumDecl * prev_enum_decl = enum_decl->getPreviousDecl();
     SgEnumSymbol * sg_prev_enum_sym = isSgEnumSymbol(GetSymbolFromSymbolTable(prev_enum_decl));
@@ -933,6 +942,11 @@ bool ClangToSageTranslator::VisitEnumDecl(clang::EnumDecl * enum_decl, SgNode **
 
     SgEnumDeclaration * sg_enum_decl = SageBuilder::buildEnumDeclaration(name, SageBuilder::topScopeStack());
     *node = sg_enum_decl;
+
+    if(!enum_decl->hasNameForLinkage())
+    {
+      sg_enum_decl->set_isUnNamed(true);
+    }
 
     if (sg_prev_enum_decl == NULL || sg_prev_enum_decl->get_enumerators().size() == 0) {
       clang::EnumDecl::enumerator_iterator it;
@@ -951,6 +965,16 @@ bool ClangToSageTranslator::VisitEnumDecl(clang::EnumDecl * enum_decl, SgNode **
       sg_enum_decl->set_firstNondefiningDeclaration(sg_prev_enum_decl->get_firstNondefiningDeclaration());
     }
 
+     SgEnumDeclaration* firstNondefEnumDecl = isSgEnumDeclaration(sg_enum_decl->get_firstNondefiningDeclaration());
+     if(enum_decl->isEmbeddedInDeclarator())
+     {
+       firstNondefEnumDecl->set_isAutonomousDeclaration(true);
+     }
+
+     SgSymbol* sym = firstNondefEnumDecl->get_symbol_from_symbol_table();
+#if DEBUG_VISIT_DECL
+     std::cout << "VisitEnumDecl symbol: " << sym << " type:" << firstNondefEnumDecl->get_type() << std::endl;
+#endif
     return VisitDecl(enum_decl, node) && res;
 }
 
@@ -984,24 +1008,96 @@ bool ClangToSageTranslator::VisitTypedefDecl(clang::TypedefDecl * typedef_decl, 
 
     SgName name(typedef_decl->getNameAsString());
 
-    SgType * type = buildTypeFromQualifiedType(typedef_decl->getUnderlyingType());
+    clang::QualType underlyingQualType = typedef_decl->getUnderlyingType();
+
+    const clang::Type* underlyingType = underlyingQualType.getTypePtr();
+
+    // Pei-Hung (06/01/2022) check if the declaration is considered embedded in Clang AST.
+    // If it is embedded, no explicit SgDeclaration should be placed for ROSE AST.
+    bool isembedded = false;
+    if(underlyingType->getTypeClass() == clang::Type::Enum)
+    {
+       clang::EnumType* underlyingEnumType = (clang::EnumType*)underlyingType;
+       clang::EnumDecl* enumDeclaration = underlyingEnumType->getDecl();
+       if(enumDeclaration->isEmbeddedInDeclarator())
+       {
+         isembedded = true;
+       }
+    }
+    else if(underlyingType->getTypeClass() == clang::Type::Record)
+    {
+       clang::RecordType* underlyingRecordType = (clang::RecordType*)underlyingType;
+       clang::RecordDecl* recordDeclaration = underlyingRecordType->getDecl();
+       if(recordDeclaration->isEmbeddedInDeclarator())
+       {
+         isembedded = true;
+       }
+    }
+
+    SgType * type = buildTypeFromQualifiedType(underlyingQualType);
 
     SgTypedefDeclaration * sg_typedef_decl = SageBuilder::buildTypedefDeclaration_nfi(name, type, SageBuilder::topScopeStack());
 
+    // check if it is a pointer to class or pointer to enum
+    if (isSgPointerType(type))
+    {
+      type = isSgPointerType(type)->get_base_type();
+    }
+
+// Pei-Hung (05/31/2022) set "bool_it->second = false" to avoid duplicated definition
     if (isSgClassType(type)) {
+// Pei-Hung (06/01/2022) applying same handling as EnumDecl 
+        SgClassDeclaration* classDecl = isSgClassDeclaration(isSgClassType(type)->get_declaration());
+        SgClassDeclaration* classDefDecl = isSgClassDeclaration(isSgClassType(type)->get_declaration()->get_definingDeclaration());
+        if(classDecl->get_isAutonomousDeclaration() && isSgScopeStatement(classDefDecl->get_parent()))
+        {
+          SgScopeStatement* scope = isSgScopeStatement(classDefDecl->get_parent());
+          SgDeclarationStatementPtrList& declList = scope->getDeclarationList();
+          auto it = std::find(declList.begin(), declList.end(), classDefDecl);
+          if(it != declList.end())
+          {
+             declList.erase(it);
+          }
+
+          classDefDecl->set_parent(sg_typedef_decl);
+          classDefDecl->set_isAutonomousDeclaration(false);
+          sg_typedef_decl->set_typedefBaseTypeContainsDefiningDeclaration(true);
+        }
         std::map<SgClassType *, bool>::iterator bool_it = p_class_type_decl_first_see_in_type.find(isSgClassType(type));
         ROSE_ASSERT(bool_it != p_class_type_decl_first_see_in_type.end());
         if (bool_it->second) {
             sg_typedef_decl->set_declaration(isSgNamedType(type)->get_declaration()->get_definingDeclaration());
             sg_typedef_decl->set_typedefBaseTypeContainsDefiningDeclaration(true);
+            bool_it->second = false;
         }
     }
     else if (isSgEnumType(type)) {
+
+// Pei-Hung (06/01/2022) Clang places a EnumDecl before TypedefDecl.  
+// Needs to remove the declaration from the enclosing scope and add the declaration under SgTypedefDeclaration
+        SgEnumDeclaration* enumDecl = isSgEnumDeclaration(isSgEnumType(type)->get_declaration());
+        SgEnumDeclaration* enumDefDecl = isSgEnumDeclaration(isSgEnumType(type)->get_declaration()->get_definingDeclaration());
+        if(enumDecl->get_isAutonomousDeclaration() && isSgScopeStatement(enumDefDecl->get_parent()))
+        {
+          SgScopeStatement* scope = isSgScopeStatement(enumDefDecl->get_parent());
+          SgDeclarationStatementPtrList& declList = scope->getDeclarationList();
+          auto it = std::find(declList.begin(), declList.end(), enumDefDecl);
+          if(it != declList.end())
+          {
+             declList.erase(it);
+          }
+
+          enumDefDecl->set_parent(sg_typedef_decl);
+          enumDefDecl->set_isAutonomousDeclaration(false);
+          sg_typedef_decl->set_typedefBaseTypeContainsDefiningDeclaration(true);
+        }
+
         std::map<SgEnumType *, bool>::iterator bool_it = p_enum_type_decl_first_see_in_type.find(isSgEnumType(type));
         ROSE_ASSERT(bool_it != p_enum_type_decl_first_see_in_type.end());
         if (bool_it->second) {
-            sg_typedef_decl->set_declaration(isSgEnumType(type)->get_declaration()->get_definingDeclaration());
+            sg_typedef_decl->set_declaration(enumDefDecl);
             sg_typedef_decl->set_typedefBaseTypeContainsDefiningDeclaration(true);
+            bool_it->second = false;
         }
     }
 
