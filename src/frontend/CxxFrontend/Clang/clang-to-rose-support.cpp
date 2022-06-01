@@ -1,7 +1,7 @@
 #include "sage3basic.h"
 #include "clang-to-rose-support.hpp" 
 
-SgAsmOp::asm_operand_modifier_enum get_sgAsmOperandModifier(std::string modifier)
+SgAsmOp::asm_operand_modifier_enum ClangToSageTranslator::get_sgAsmOperandModifier(std::string modifier)
 {
    char c = modifier.front();
    SgAsmOp::asm_operand_modifier_enum result;
@@ -39,7 +39,7 @@ SgAsmOp::asm_operand_modifier_enum get_sgAsmOperandModifier(std::string modifier
 }
 
 
-SgAsmOp::asm_operand_constraint_enum get_sgAsmOperandConstraint(std::string constraint)
+SgAsmOp::asm_operand_constraint_enum ClangToSageTranslator::get_sgAsmOperandConstraint(std::string constraint)
 {
    char c = constraint.front();
    SgAsmOp::asm_operand_constraint_enum result = SgAsmOp::e_invalid;
@@ -226,7 +226,7 @@ SgAsmOp::asm_operand_constraint_enum get_sgAsmOperandConstraint(std::string cons
   return result;
 }
 
-SgInitializedName::asm_register_name_enum get_sgAsmRegister(std::string reg)
+SgInitializedName::asm_register_name_enum ClangToSageTranslator::get_sgAsmRegister(std::string reg)
 {
    SgInitializedName::asm_register_name_enum result = SgInitializedName::e_invalid_register;
    if(reg.compare(0, sizeof(reg), "memory") == 0)
@@ -551,3 +551,24 @@ SgInitializedName::asm_register_name_enum get_sgAsmRegister(std::string reg)
    return result;
 }
 
+// Pei-Hung (05/27/2022) referece APIs from edgRose.C
+std::string ClangToSageTranslator::generate_source_position_string(clang::SourceLocation srcLoc)
+{
+  clang::SourceManager& SM = p_compiler_instance->getSourceManager();
+  clang::FileID fID = SM.getFileID(srcLoc);
+  const clang::FileEntry* fEntry = SM.getFileEntryForID(fID);
+  std::string return_string;
+
+//  return_string = string("0x") + StringUtility::numberToString(file_id) + "_" + StringUtility::numberToString(line_number) + "_" + StringUtility::numberToString(column_number);
+  return_string = std::string("0x") + std::to_string(fEntry->getUID()) + "_" + std::to_string(SM.getSpellingLineNumber(srcLoc)) + "_" + std::to_string(SM.getSpellingColumnNumber(srcLoc));
+  return return_string;
+
+}
+
+std::string ClangToSageTranslator::generate_name_for_type(clang::TypeSourceInfo* typeInfo)
+{
+   clang::SourceManager& SM = p_compiler_instance->getSourceManager();
+   clang::TypeLoc typeLoc = typeInfo->getTypeLoc();
+   return "__anonymous_" + generate_source_position_string(typeLoc.getBeginLoc());
+
+}
