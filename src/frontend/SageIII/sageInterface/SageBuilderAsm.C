@@ -828,6 +828,18 @@ buildFunction(rose_addr_t entryVa, const std::vector<SgAsmBlock*> &blocks) {
     return func;
 }
 
+// Template specializations for building integer values
+template<> SgAsmIntegerValueExpression* buildValue<bool    >(bool     x) {return buildValueU1(x);}
+template<> SgAsmIntegerValueExpression* buildValue<uint8_t >(uint8_t  x) {return buildValueU8(x);}
+template<> SgAsmIntegerValueExpression* buildValue<uint16_t>(uint16_t x) {return buildValueU16(x);}
+template<> SgAsmIntegerValueExpression* buildValue<uint32_t>(uint32_t x) {return buildValueU32(x);}
+template<> SgAsmIntegerValueExpression* buildValue<uint64_t>(uint64_t x) {return buildValueU64(x);}
+
+template<> SgAsmIntegerValueExpression* buildValue<int8_t >(int8_t  x) {return buildValueI8(x);}
+template<> SgAsmIntegerValueExpression* buildValue<int16_t>(int16_t x) {return buildValueI16(x);}
+template<> SgAsmIntegerValueExpression* buildValue<int32_t>(int32_t x) {return buildValueI32(x);}
+template<> SgAsmIntegerValueExpression* buildValue<int64_t>(int64_t x) {return buildValueI64(x);}
+
 } // namespace
 } // namespace
 
