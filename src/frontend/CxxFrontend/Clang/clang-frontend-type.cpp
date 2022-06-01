@@ -861,6 +861,14 @@ bool ClangToSageTranslator::VisitEnumType(clang::EnumType * enum_type, SgNode **
 
         ROSE_ASSERT(sg_decl != NULL);
 
+        SgEnumDeclaration* firstNondefEnumDecl = isSgEnumDeclaration(sg_decl->get_firstNondefiningDeclaration());
+        SgSymbol* firstSym = firstNondefEnumDecl->get_symbol_from_symbol_table();
+
+#if DEBUG_VISIT_TYPE
+        std::cerr << "EnumType symbol: " << firstSym << " type:" << firstNondefEnumDecl->get_type() << std::endl;
+#endif
+        enum_sym = isSgEnumSymbol(firstSym);
+
         *node = sg_decl->get_type();
     }
     else {
