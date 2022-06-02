@@ -17,6 +17,7 @@ BUILT_SOURCES = CommandLine/LicenseString.h
 AM_CPPFLAGS = $(ROSE_INCLUDES)
 noinst_LTLIBRARIES = librose_partial.la
 librose_partial_la_SOURCES =								\
+	BinaryAnalysis/ByteCode/ByteCode.C						\
 	BinaryAnalysis/ByteCode/Jvm.C							\
 	BinaryAnalysis/Concolic/Architecture.C						\
 	BinaryAnalysis/Concolic/ConcolicExecutor.C					\

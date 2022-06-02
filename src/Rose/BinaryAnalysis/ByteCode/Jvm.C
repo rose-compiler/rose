@@ -4,7 +4,6 @@
 
 #include <Rose/BinaryAnalysis/ByteCode/Jvm.h>
 
-using namespace Rose::Diagnostics;
 using PoolEntry = SgAsmJvmConstantPoolEntry;
 using AddressSegment = Sawyer::Container::AddressSegment<rose_addr_t,uint8_t>;
 using std::cout;
