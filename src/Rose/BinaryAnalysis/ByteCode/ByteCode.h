@@ -4,10 +4,13 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <Rose/BinaryAnalysis/DisassemblerJvm.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
 namespace ByteCode {
+
+using BasicBlockPtr = Partitioner2::BasicBlock::Ptr;
 
 class Code {
 public:
@@ -30,8 +33,20 @@ public:
   virtual const Code & code() const = 0;
   virtual const void decode(Disassembler*) const = 0;
   virtual const SgAsmInstructionList* instructions() const = 0;
+
+  // Methods associated with basic blocks (Partitioner2)
+
+  const std::vector<BasicBlockPtr>& blocks() const {
+    return blocks_;
+  }
+  void append(BasicBlockPtr bb) {
+    blocks_.push_back(bb);
+  }
+
 protected:
   Method() {}
+  Partitioner2::FunctionPtr function_;
+  std::vector<BasicBlockPtr> blocks_;
 };
 
 class Interface {
@@ -57,6 +72,7 @@ public:
   virtual const std::vector<const Attribute*> &attributes() const = 0;
   virtual const std::vector<const Interface*> &interfaces() const = 0;
   virtual const std::vector<std::string> &strings() = 0;
+  virtual void partition();
 protected:
   Class() {}
 };

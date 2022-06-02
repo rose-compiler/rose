@@ -629,7 +629,6 @@ JvmEngine::parseCommandLine(const std::vector<std::string> &args, const std::str
     cout << "method '" << method->name() << endl;
     cout << "-----------\n";
 
-#ifndef DECODE_NO
     Disassembler* disassembler = obtainDisassembler();
     ASSERT_not_null(disassembler);
 
@@ -641,7 +640,6 @@ JvmEngine::parseCommandLine(const std::vector<std::string> &args, const std::str
       if (insn->terminatesBasicBlock()) cout << " :terminates";
       cout << endl;
     }
-#endif
     cout << "-----------\n\n";
   }
 
@@ -651,6 +649,40 @@ JvmEngine::parseCommandLine(const std::vector<std::string> &args, const std::str
     cout << "   " << str << endl;
   }
   cout << "-----------\n\n";
+
+  // Run the partitioner
+  jvmClass->partition();
+
+  // Dump diagnostics from the partition
+  for (auto method : jvmClass->methods()) {
+    cout << "\nmethod: " << method->name() << endl;
+    for (auto block : method->blocks()) {
+      cout << "--------------block------------\n";
+      for (auto insn : block->instructions()) {
+        auto va = insn->get_address();
+        cout << "... insn: " << insn << " va:" << va << " :" << insn->get_mnemonic()
+             << " nOperands:" << insn->nOperands()
+             << " terminates:" << insn->terminatesBasicBlock() << endl;
+        for (auto op : insn->get_operandList()->get_operands()) {
+          if (op->asUnsigned()) {
+            cout << "      unsigned operand:" << *(op->asUnsigned()) << endl;
+          }
+          else if (op->asSigned()) {
+            cout << "       signed operand:" << *(op->asSigned()) << endl;
+          }
+        }
+      }
+      // Explore block methods
+      cout << "      :nInstructions:" << block->nInstructions() << endl;
+      cout << "      :address:" << block->address() << endl;
+      cout << "      :fallthroughVa:" << block->fallthroughVa() << endl;
+      cout << "      :isEmpty:" << block->isEmpty() << endl;
+      cout << "      :nDataBlocks:" << block->nDataBlocks() << endl;
+      if (block->isFunctionCall().isCached()) cout << "      :isFunctionCall:" << block->isFunctionCall().get() << endl;
+      if (block->successors().isCached()) cout << "      :#successors:" << block->successors().get().size() << endl;
+
+    }
+  }
 
   return Sawyer::CommandLine::ParserResult{};
 }
