@@ -7390,6 +7390,10 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
           SgName nameQualifier = mfuncdecl_stmt->get_qualified_name_prefix();
 #if 0
           printf ("nameQualifier for member function = %s \n",nameQualifier.str());
+
+       // DQ (5/28/2022): Debugging leading "::".
+       // curprint(" /* In unparseMFuncDeclStmt(): nameQualifier = %s */ \n",nameQualifier.str());
+          curprint ( string("\n/* In unparseMFuncDeclStmt(): nameQualifier = = " ) + string(nameQualifier.str()) + " */");
 #endif
           curprint ( nameQualifier.str() );
 

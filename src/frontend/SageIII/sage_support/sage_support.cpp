@@ -6588,6 +6588,11 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
      printf ("Inside of SgFile::compileOutput() \n");
      printf ("   --- get_unparse_output_filename() = %s \n",get_unparse_output_filename().c_str());
      printf ("***************************************************** \n\n\n");
+#if 1
+  // DQ (3/15/2020): There are only two places where this is called (here and in the CompilerOutputParser::processFile() function).
+     printf ("\nIn SgFile::compileOutput(): TOP of function: argv.size() = %" PRIuPTR " argv = %s \n",
+          argv.size(),StringUtility::listToString(argv).c_str());
+#endif
 #endif
 #if 0
      printf ("In SgFile::compileOutput(): calling display() \n");
@@ -6694,6 +6699,10 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                printf ("WARNING: In SgFile::compileOutput(): file = %p has no associated project \n",this);
              }
 
+#if DEBUG_PROJECT_COMPILE_COMMAND_LINE_WITH_ARGS
+          printf ("get_unparse_output_filename() = %s \n",get_unparse_output_filename().c_str());
+#endif
+
           if (get_unparse_output_filename().empty())
              {
                if (get_skipfinalCompileStep())
@@ -6749,14 +6758,15 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                        {
                          boost::filesystem::remove(unparsed_file);
                        }
-#if 0
+
+#if DEBUG_PROJECT_COMPILE_COMMAND_LINE_WITH_ARGS
                     printf ("NOTE: keep_going option supporting direct copy of original input file to overwrite the unparsed file \n");
 #endif
                     Rose::FileSystem::copyFile(original_file, unparsed_file);
                   }
              }
 
-#if 0
+#if DEBUG_PROJECT_COMPILE_COMMAND_LINE_WITH_ARGS
        // DQ (11/8/2015): Commented out to avoid output spew.
           printf ("In SgFile::compileOutput(): outputFilename = %s \n",outputFilename.c_str());
 #endif
@@ -6768,17 +6778,27 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
 
   // Now call the compiler that rose is replacing
   // if (get_useBackendOnly() == false)
+
+  // DQ (5/27/2022): Temporary debugging...
+  // if ( SgProject::get_verbose() >= 1 )
      if ( SgProject::get_verbose() >= 1 )
         {
           printf ("Now call the backend (vendor's) compiler compilerNameOrig = %s for file = %s \n",compilerNameOrig.c_str(),get_unparse_output_filename().c_str());
         }
+
+#if 0
+  // DQ (3/15/2020): There are only two places where this is called (here and in the CompilerOutputParser::processFile() function).
+     printf ("\nIn SgFile::compileOutput(): Before buildCompilerCommandLineOptions(): argv.size() = %" PRIuPTR " argv = %s \n",
+          argv.size(),StringUtility::listToString(argv).c_str());
+#endif
 
   // Build the commandline to hand off to the C++/C compiler
      vector<string> compilerCmdLine = buildCompilerCommandLineOptions (argv,fileNameIndex, compilerName );
 
 #if 0
   // DQ (3/15/2020): There are only two places where this is called (here and in the CompilerOutputParser::processFile() function).
-     printf ("In SgFile::compileOutput(): After buildCompilerCommandLineOptions(): compilerCmdLine.size() = %" PRIuPTR " compilerCmdLine = %s \n",compilerCmdLine.size(),StringUtility::listToString(compilerCmdLine).c_str());
+     printf ("\nIn SgFile::compileOutput(): After buildCompilerCommandLineOptions(): compilerCmdLine.size() = %" PRIuPTR " compilerCmdLine = %s \n",
+          compilerCmdLine.size(),StringUtility::listToString(compilerCmdLine).c_str());
 #endif
 
 #if 0
@@ -6891,7 +6911,8 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                   }
 
 #if DEBUG_PROJECT_COMPILE_COMMAND_LINE_WITH_ARGS || 0
-               printf ("In SgFile::compileOutput(): get_skipfinalCompileStep() == false: get_compileOnly() == true: compilerCmdLine = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerCmdLine,false,false).c_str());
+               printf ("In SgFile::compileOutput(): get_skipfinalCompileStep() == false: get_compileOnly() == true: compilerCmdLine = \n%s\n",
+                    CommandlineProcessing::generateStringFromArgList(compilerCmdLine,false,false).c_str());
 #endif
 
 #if 0
@@ -7268,7 +7289,7 @@ SgProject::compileOutput()
           ROSE_ABORT();
 #endif
 
-          if ( SgProject::get_verbose() > 0 )
+          if ( SgProject::get_verbose() > -1 )
              {
                printf ("In SgProject::compileOutput(): listToString(originalCommandLine) = %s \n",StringUtility::listToString(originalCommandLine).c_str());
              }
@@ -7462,6 +7483,9 @@ SgProject::compileOutput()
                        }
                       else
                        {
+#if DEBUG_PROJECT_COMPILE_COMMAND_LINE
+                         printf ("\nIn Project::compileOutput(): Calling file.compileOutput(0) \n");
+#endif
                          localErrorCode = file.compileOutput(0);
                          if (get_Java_only() && this->get_keep_going() == false)
                             {
