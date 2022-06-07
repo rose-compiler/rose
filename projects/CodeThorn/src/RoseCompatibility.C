@@ -5,6 +5,7 @@
 //~ #include <VariableIdMapping.h>
 
 #include <tuple>
+#include <numeric>
 #include <unordered_set>
 
 #include "CodeThornLib.h"
@@ -827,6 +828,27 @@ namespace
       const SgType* basTy;
   };
 }
+
+
+std::vector<FunctionKeyType>
+RoseCompatibilityBridge::constructors(ClassKeyType cls) const
+{
+  const SgDeclarationStatementPtrList& lst = cls->get_members();
+
+  return std::accumulate( lst.begin(), lst.end(),
+                          std::vector<FunctionKeyType>{},
+                          [](std::vector<FunctionKeyType> res, SgDeclarationStatement* el) -> std::vector<FunctionKeyType>
+                          {
+                            const SgMemberFunctionDeclaration* fn = isSgMemberFunctionDeclaration(el);
+
+                            if (fn && fn->get_specialFunctionModifier().isConstructor())
+                              res.emplace_back(fn);
+
+                            return res;
+                          }
+                        );
+}
+
 
 RoseCompatibilityBridge::ReturnTypeRelation
 RoseCompatibilityBridge::haveSameOrCovariantReturn( const ClassAnalysis& classes,

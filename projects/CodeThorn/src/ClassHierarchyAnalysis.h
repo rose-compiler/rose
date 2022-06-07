@@ -227,7 +227,7 @@ class ClassData
     DataMemberContainer       allDataMembers;
     VirtualBaseOrderContainer virtualBaseOrder;
 
-    bool                     hasInheritedVirtualMethods = false;
+    bool                      hasInheritedVirtualMethods = false;
 };
 
 /// holds data about all classes in a program

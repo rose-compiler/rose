@@ -129,6 +129,9 @@ class RoseCompatibilityBridge
     /// returns a function that maps a VariableId to std::string
     VarNameFn variableNomenclator() const;
 
+    std::vector<FunctionKeyType>
+    constructors(ClassKeyType) const;
+
   private:
     //~ RoseCompatibilityBridge()                                          = delete;
     RoseCompatibilityBridge(RoseCompatibilityBridge&&)                 = delete;
