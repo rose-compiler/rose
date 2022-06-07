@@ -19534,10 +19534,8 @@ void Grammar::setUpBinaryInstructions() {
     };
 #endif
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
     /*************************************************************************************************************************
-     *                                           CIL Assembly (II.22.2)
+     *                                          CIL Assembly (II.22.2)
      *************************************************************************************************************************/
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -19553,10 +19551,11 @@ void Grammar::setUpBinaryInstructions() {
     public:
 #endif
 
+
 #ifdef DOCUMENTATION
-        /** Property: HashAlgId
+        /** Property: HashAlgId.
          *
-         *  A 4-byte constant of type AssemblyHashAlgorithm (II.23.1.1).
+         *  a 4-byte constant of type AssemblyHashAlgorithm
          *
          * @{ */
         uint32_t get_HashAlgId() const;
@@ -19564,13 +19563,12 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 #else
         AsmCilAssembly.setDataPrototype("uint32_t", "HashAlgId", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                        BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
-
 #ifdef DOCUMENTATION
-        /** Property: MajorVersion
+        /** Property: MajorVersion.
          *
-         *  A 2-byte constant that may have any value.
+         *  a 2-byte constant.
          *
          * @{ */
         uint16_t get_MajorVersion() const;
@@ -19578,13 +19576,12 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 #else
         AsmCilAssembly.setDataPrototype("uint16_t", "MajorVersion", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                        BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
-
 #ifdef DOCUMENTATION
-        /** Property: MinorVersion
+        /** Property: MinorVersion.
          *
-         *  A 2-byte constant that may have any value.
+         *  a 2-byte constant.
          *
          * @{ */
         uint16_t get_MinorVersion() const;
@@ -19592,13 +19589,12 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 #else
         AsmCilAssembly.setDataPrototype("uint16_t", "MinorVersion", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                        BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
-
 #ifdef DOCUMENTATION
-        /** Property: BuildNumber
+        /** Property: BuildNumber.
          *
-         *  A 2-byte constant that may have any value.
+         *  a 2-byte constant.
          *
          * @{ */
         uint16_t get_BuildNumber() const;
@@ -19606,13 +19602,12 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 #else
         AsmCilAssembly.setDataPrototype("uint16_t", "BuildNumber", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                        BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
-
 #ifdef DOCUMENTATION
-        /** Property: RevisionNumber
+        /** Property: RevisionNumber.
          *
-         *  A 2-byte constant that may have any value.
+         *  a 2-byte constant.
          *
          * @{ */
         uint16_t get_RevisionNumber() const;
@@ -19620,13 +19615,12 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 #else
         AsmCilAssembly.setDataPrototype("uint16_t", "RevisionNumber", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                        BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
-
 #ifdef DOCUMENTATION
-        /** Property: Flags
+        /** Property: Flags.
          *
-         *  Flags is a 4-byte bitmask of type AssemblyFlags (II.23.1.2)
+         *  a 4-byte bitmask of type AssemblyFlags.
          *
          * @{ */
         uint32_t get_Flags() const;
@@ -19634,13 +19628,12 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 #else
         AsmCilAssembly.setDataPrototype("uint32_t", "Flags", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                        BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
-
 #ifdef DOCUMENTATION
-        /** Property: PublicKey
+        /** Property: PublicKey.
          *
-         *  PublicKey is an index into the Blob heap
+         *  an index into the Blob heap.
          *
          * @{ */
         uint32_t get_PublicKey() const;
@@ -19648,13 +19641,12 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 #else
         AsmCilAssembly.setDataPrototype("uint32_t", "PublicKey", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                        BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
-
 #ifdef DOCUMENTATION
-        /** Property: Name
+        /** Property: Name.
          *
-         *  Name is an index into the String heap.
+         *  an index into the String heap.
          *
          * @{ */
         uint32_t get_Name() const;
@@ -19662,13 +19654,12 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 #else
         AsmCilAssembly.setDataPrototype("uint32_t", "Name", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                        BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
-
 #ifdef DOCUMENTATION
-        /** Property: Culture
+        /** Property: Culture.
          *
-         *  Culture is an index into the String heap.
+         *  an index into the String heap.
          *
          * @{ */
         uint32_t get_Culture() const;
@@ -19676,7 +19667,7 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 #else
         AsmCilAssembly.setDataPrototype("uint32_t", "Culture", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                        BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
         DECLARE_OTHERS(AsmCilAssembly);
@@ -19688,6 +19679,7 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
+
             s & BOOST_SERIALIZATION_NVP(p_HashAlgId);
             s & BOOST_SERIALIZATION_NVP(p_MajorVersion);
             s & BOOST_SERIALIZATION_NVP(p_MinorVersion);
@@ -19700,7 +19692,23 @@ void Grammar::setUpBinaryInstructions() {
         }
 #endif
 
+        void parse(uint8_t* buf, size_t& index, bool uses4byteIndexing);
+
 #endif // SgAsmCilAssembly_OTHERS
+
+#ifdef DOCUMENTATION
+    protected:
+
+      uint32_t p_HashAlgId;
+      uint16_t p_MajorVersion;
+      uint16_t p_MinorVersion;
+      uint16_t p_BuildNumber;
+      uint16_t p_RevisionNumber;
+      uint32_t p_Flags;
+      uint32_t p_PublicKey;
+      uint32_t p_Name;
+      uint32_t p_Culture;
+#endif
 
 #ifdef DOCUMENTATION
     };
@@ -19708,8 +19716,9 @@ void Grammar::setUpBinaryInstructions() {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+
     /*************************************************************************************************************************
-     *                                           CIL AssemblyOS (II.22.3)
+     *                                          CIL AssemblyOS (II.22.3)
      *************************************************************************************************************************/
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -19725,24 +19734,24 @@ void Grammar::setUpBinaryInstructions() {
     public:
 #endif
 
-#ifdef DOCUMENTATION
-        /** Property: OSPlatformId
-         *
-         *  A 4-byte constant (II.23.1.3).
-         *
-         * @{ */
-        uint32_t get_OSPlatformId() const;
-        void set_OSPlatformId(uint32_t);
-        /** @} */
-#else
-        AsmCilAssemblyOS.setDataPrototype("uint32_t", "OSPlatformId", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                          BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
 
 #ifdef DOCUMENTATION
-        /** Property: OSMajorVersion
+        /** Property: OSPlatformID.
          *
-         *  A 4-byte constant (II.23.1.3).
+         *  a 4-byte constant
+         *
+         * @{ */
+        uint32_t get_OSPlatformID() const;
+        void set_OSPlatformID(uint32_t);
+        /** @} */
+#else
+        AsmCilAssemblyOS.setDataPrototype("uint32_t", "OSPlatformID", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+#ifdef DOCUMENTATION
+        /** Property: OSMajorVersion.
+         *
+         *  a 4-byte constant
          *
          * @{ */
         uint32_t get_OSMajorVersion() const;
@@ -19750,13 +19759,12 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 #else
         AsmCilAssemblyOS.setDataPrototype("uint32_t", "OSMajorVersion", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                          BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
-
 #ifdef DOCUMENTATION
-        /** Property: OSMinorVersion
+        /** Property: OSMinorVersion.
          *
-         *  A 4-byte constant (II.23.1.3).
+         *  a 4-byte constant
          *
          * @{ */
         uint32_t get_OSMinorVersion() const;
@@ -19764,7 +19772,7 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 #else
         AsmCilAssemblyOS.setDataPrototype("uint32_t", "OSMinorVersion", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                          BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
         DECLARE_OTHERS(AsmCilAssemblyOS);
@@ -19776,22 +19784,30 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
-            s & BOOST_SERIALIZATION_NVP(p_OSPlatformId);
+
+            s & BOOST_SERIALIZATION_NVP(p_OSPlatformID);
             s & BOOST_SERIALIZATION_NVP(p_OSMajorVersion);
             s & BOOST_SERIALIZATION_NVP(p_OSMinorVersion);
         }
 #endif
 
+        void parse(uint8_t* buf, size_t& index, bool uses4byteIndexing);
+
 #endif // SgAsmCilAssemblyOS_OTHERS
+
+#ifdef DOCUMENTATION
+    protected:
+
+      uint32_t p_OSPlatformID;
+      uint32_t p_OSMajorVersion;
+      uint32_t p_OSMinorVersion;
+#endif
 
 #ifdef DOCUMENTATION
     };
 #endif
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
     /*************************************************************************************************************************
-     *                                           CIL AssemblyProcessor (II.22.4)
+     *                                          CIL AssemblyProcessor (II.22.4)
      *************************************************************************************************************************/
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -19807,10 +19823,11 @@ void Grammar::setUpBinaryInstructions() {
     public:
 #endif
 
+
 #ifdef DOCUMENTATION
-        /** Property: Processor
+        /** Property: Processor.
          *
-         *  A 4-byte constant (II.23.1.4).
+         *  a 4-byte constant
          *
          * @{ */
         uint32_t get_Processor() const;
@@ -19818,7 +19835,7 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 #else
         AsmCilAssemblyProcessor.setDataPrototype("uint32_t", "Processor", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                                 BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
         DECLARE_OTHERS(AsmCilAssemblyProcessor);
@@ -19830,20 +19847,26 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
+
             s & BOOST_SERIALIZATION_NVP(p_Processor);
         }
 #endif
 
+        void parse(uint8_t* buf, size_t& index, bool uses4byteIndexing);
+
 #endif // SgAsmCilAssemblyProcessor_OTHERS
+
+#ifdef DOCUMENTATION
+    protected:
+
+      uint32_t p_Processor;
+#endif
 
 #ifdef DOCUMENTATION
     };
 #endif
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
     /*************************************************************************************************************************
-     *                                           CIL AssemblyRef (II.22.5)
+     *                                          CIL AssemblyRef (II.22.5)
      *************************************************************************************************************************/
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -19859,10 +19882,11 @@ void Grammar::setUpBinaryInstructions() {
     public:
 #endif
 
+
 #ifdef DOCUMENTATION
-        /** Property: MajorVersion
+        /** Property: MajorVersion.
          *
-         *  A 2-byte constant.
+         *  version number
          *
          * @{ */
         uint16_t get_MajorVersion() const;
@@ -19870,13 +19894,12 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 #else
         AsmCilAssemblyRef.setDataPrototype("uint16_t", "MajorVersion", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                           BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
-
 #ifdef DOCUMENTATION
-        /** Property: MinorVersion
+        /** Property: MinorVersion.
          *
-         *  A 2-byte constant.
+         *  version number
          *
          * @{ */
         uint16_t get_MinorVersion() const;
@@ -19884,13 +19907,12 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 #else
         AsmCilAssemblyRef.setDataPrototype("uint16_t", "MinorVersion", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                           BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
-
 #ifdef DOCUMENTATION
-        /** Property: BuildNumber
+        /** Property: BuildNumber.
          *
-         *  A 2-byte constant.
+         *  version number
          *
          * @{ */
         uint16_t get_BuildNumber() const;
@@ -19898,13 +19920,12 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 #else
         AsmCilAssemblyRef.setDataPrototype("uint16_t", "BuildNumber", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                           BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
-
 #ifdef DOCUMENTATION
-        /** Property: RevisionNumber
+        /** Property: RevisionNumber.
          *
-         *  A 2-byte constant.
+         *  revision number
          *
          * @{ */
         uint16_t get_RevisionNumber() const;
@@ -19912,13 +19933,12 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 #else
         AsmCilAssemblyRef.setDataPrototype("uint16_t", "RevisionNumber", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                           BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
-
 #ifdef DOCUMENTATION
-        /** Property: Flags
+        /** Property: Flags.
          *
-         *  Flags is a 4-byte bitmask of type AssemblyFlags (II.23.1.2)
+         *  Shall have only one bit set, the PublicKey bit.
          *
          * @{ */
         uint32_t get_Flags() const;
@@ -19926,14 +19946,12 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 #else
         AsmCilAssemblyRef.setDataPrototype("uint32_t", "Flags", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                           BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
-
 #ifdef DOCUMENTATION
-        /** Property: PublicKeyOrToken
+        /** Property: PublicKeyOrToken.
          *
-         *  PublicKeyOrToken is an index into the Blob heap, indicating the public key
-         *  or token that identifies the author of this Assembly.
+         *  can be null, or non-null.
          *
          * @{ */
         uint32_t get_PublicKeyOrToken() const;
@@ -19941,13 +19959,12 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 #else
         AsmCilAssemblyRef.setDataPrototype("uint32_t", "PublicKeyOrToken", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                           BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
-
 #ifdef DOCUMENTATION
-        /** Property: Name
+        /** Property: Name.
          *
-         *  Name is an index into the String heap.
+         *  an index into the String heap.
          *
          * @{ */
         uint32_t get_Name() const;
@@ -19955,13 +19972,12 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 #else
         AsmCilAssemblyRef.setDataPrototype("uint32_t", "Name", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                           BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
-
 #ifdef DOCUMENTATION
-        /** Property: Culture
+        /** Property: Culture.
          *
-         *  Culture is an index into the String heap.
+         *  null or non-null
          *
          * @{ */
         uint32_t get_Culture() const;
@@ -19969,13 +19985,12 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 #else
         AsmCilAssemblyRef.setDataPrototype("uint32_t", "Culture", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                           BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
-
 #ifdef DOCUMENTATION
-        /** Property: HashValue
+        /** Property: HashValue.
          *
-         *  HashValue is an index into the Blob heap.
+         *  an index into the Blob heap.
          *
          * @{ */
         uint32_t get_HashValue() const;
@@ -19983,7 +19998,7 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 #else
         AsmCilAssemblyRef.setDataPrototype("uint32_t", "HashValue", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                           BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
         DECLARE_OTHERS(AsmCilAssemblyRef);
@@ -19995,6 +20010,7 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
+
             s & BOOST_SERIALIZATION_NVP(p_MajorVersion);
             s & BOOST_SERIALIZATION_NVP(p_MinorVersion);
             s & BOOST_SERIALIZATION_NVP(p_BuildNumber);
@@ -20007,16 +20023,29 @@ void Grammar::setUpBinaryInstructions() {
         }
 #endif
 
+        void parse(uint8_t* buf, size_t& index, bool uses4byteIndexing);
+
 #endif // SgAsmCilAssemblyRef_OTHERS
+
+#ifdef DOCUMENTATION
+    protected:
+
+      uint16_t p_MajorVersion;
+      uint16_t p_MinorVersion;
+      uint16_t p_BuildNumber;
+      uint16_t p_RevisionNumber;
+      uint32_t p_Flags;
+      uint32_t p_PublicKeyOrToken;
+      uint32_t p_Name;
+      uint32_t p_Culture;
+      uint32_t p_HashValue;
+#endif
 
 #ifdef DOCUMENTATION
     };
 #endif
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
     /*************************************************************************************************************************
-     *                                         CIL AssemblyRefOS (II.22.6)
+     *                                          CIL AssemblyRefOS (II.22.6)
      *************************************************************************************************************************/
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -20032,24 +20061,24 @@ void Grammar::setUpBinaryInstructions() {
     public:
 #endif
 
-#ifdef DOCUMENTATION
-        /** Property: OSPlatformId
-         *
-         *  A 4-byte constant (II.23.1.6).
-         *
-         * @{ */
-        uint32_t get_OSPlatformId() const;
-        void set_OSPlatformId(uint32_t);
-        /** @} */
-#else
-        AsmCilAssemblyRefOS.setDataPrototype("uint32_t", "OSPlatformId", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                             BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
 
 #ifdef DOCUMENTATION
-        /** Property: OSMajorVersion
+        /** Property: OSPlatformID.
          *
-         *  A 4-byte constant (II.23.1.6).
+         *  a 4-byte constant
+         *
+         * @{ */
+        uint32_t get_OSPlatformID() const;
+        void set_OSPlatformID(uint32_t);
+        /** @} */
+#else
+        AsmCilAssemblyRefOS.setDataPrototype("uint32_t", "OSPlatformID", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+#ifdef DOCUMENTATION
+        /** Property: OSMajorVersion.
+         *
+         *  a 4-byte constant
          *
          * @{ */
         uint32_t get_OSMajorVersion() const;
@@ -20057,13 +20086,12 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 #else
         AsmCilAssemblyRefOS.setDataPrototype("uint32_t", "OSMajorVersion", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                             BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
-
 #ifdef DOCUMENTATION
-        /** Property: OSMinorVersion
+        /** Property: OSMinorVersion.
          *
-         *  A 4-byte constant (II.23.1.6).
+         *  a 4-byte constant
          *
          * @{ */
         uint32_t get_OSMinorVersion() const;
@@ -20071,21 +20099,20 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 #else
         AsmCilAssemblyRefOS.setDataPrototype("uint32_t", "OSMinorVersion", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                             BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
-
 #ifdef DOCUMENTATION
-        /** Property: AssemblyRef
+        /** Property: AssemblyRefOS.
          *
-         *  An index into the AssemblyRef table.
+         *  an index into the AssemblyRef table.
          *
          * @{ */
-        uint32_t get_AssemblyRef() const;
-        void set_AssemblyRef(uint32_t);
+        uint32_t get_AssemblyRefOS() const;
+        void set_AssemblyRefOS(uint32_t);
         /** @} */
 #else
-        AsmCilAssemblyRefOS.setDataPrototype("uint32_t", "AssemblyRef", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                             BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+        AsmCilAssemblyRefOS.setDataPrototype("uint32_t", "AssemblyRefOS", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
         DECLARE_OTHERS(AsmCilAssemblyRefOS);
@@ -20097,23 +20124,32 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
-            s & BOOST_SERIALIZATION_NVP(p_OSPlatformId);
+
+            s & BOOST_SERIALIZATION_NVP(p_OSPlatformID);
             s & BOOST_SERIALIZATION_NVP(p_OSMajorVersion);
             s & BOOST_SERIALIZATION_NVP(p_OSMinorVersion);
-            s & BOOST_SERIALIZATION_NVP(p_AssemblyRef);
+            s & BOOST_SERIALIZATION_NVP(p_AssemblyRefOS);
         }
 #endif
+
+        void parse(uint8_t* buf, size_t& index, bool uses4byteIndexing);
 
 #endif // SgAsmCilAssemblyRefOS_OTHERS
 
 #ifdef DOCUMENTATION
-    };
+    protected:
+
+      uint32_t p_OSPlatformID;
+      uint32_t p_OSMajorVersion;
+      uint32_t p_OSMinorVersion;
+      uint32_t p_AssemblyRefOS;
 #endif
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+#ifdef DOCUMENTATION
+    };
+#endif
     /*************************************************************************************************************************
-     *                                      CIL AssemblyRefProcessor (II.22.7)
+     *                                          CIL AssemblyRefProcessor (II.22.7)
      *************************************************************************************************************************/
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -20129,10 +20165,11 @@ void Grammar::setUpBinaryInstructions() {
     public:
 #endif
 
+
 #ifdef DOCUMENTATION
-        /** Property: Processor
+        /** Property: Processor.
          *
-         *  A 4-byte constant (II.23.1.7).
+         *  a 4-byte constant
          *
          * @{ */
         uint32_t get_Processor() const;
@@ -20140,13 +20177,12 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 #else
         AsmCilAssemblyRefProcessor.setDataPrototype("uint32_t", "Processor", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                                    BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
-
 #ifdef DOCUMENTATION
-        /** Property: AssemblyRef
+        /** Property: AssemblyRef.
          *
-         *  An index into the AssemblyRef table.
+         *  an index into the AssemblyRef table.
          *
          * @{ */
         uint32_t get_AssemblyRef() const;
@@ -20154,7 +20190,7 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 #else
         AsmCilAssemblyRefProcessor.setDataPrototype("uint32_t", "AssemblyRef", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                                    BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
         DECLARE_OTHERS(AsmCilAssemblyRefProcessor);
@@ -20166,21 +20202,28 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
+
             s & BOOST_SERIALIZATION_NVP(p_Processor);
             s & BOOST_SERIALIZATION_NVP(p_AssemblyRef);
         }
 #endif
 
+        void parse(uint8_t* buf, size_t& index, bool uses4byteIndexing);
+
 #endif // SgAsmCilAssemblyRefProcessor_OTHERS
+
+#ifdef DOCUMENTATION
+    protected:
+
+      uint32_t p_Processor;
+      uint32_t p_AssemblyRef;
+#endif
 
 #ifdef DOCUMENTATION
     };
 #endif
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
     /*************************************************************************************************************************
-     *                                      CIL ClassLayout (II.22.8)
+     *                                          CIL ClassLayout (II.22.8)
      *************************************************************************************************************************/
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -20196,10 +20239,11 @@ void Grammar::setUpBinaryInstructions() {
     public:
 #endif
 
+
 #ifdef DOCUMENTATION
-        /** Property: PackingSize
+        /** Property: PackingSize.
          *
-         *  A 2-byte constant.
+         *  a 2-byte constant
          *
          * @{ */
         uint16_t get_PackingSize() const;
@@ -20207,13 +20251,12 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 #else
         AsmCilClassLayout.setDataPrototype("uint16_t", "PackingSize", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                           BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
-
 #ifdef DOCUMENTATION
-        /** Property: ClassSize
+        /** Property: ClassSize.
          *
-         *  A 4-byte constant.
+         *  a 4-byte constant
          *
          * @{ */
         uint32_t get_ClassSize() const;
@@ -20221,13 +20264,12 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 #else
         AsmCilClassLayout.setDataPrototype("uint32_t", "ClassSize", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                           BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
-
 #ifdef DOCUMENTATION
-        /** Property: Parent
+        /** Property: Parent.
          *
-         *  An index into the TypeDef table.
+         *  an index into the TypeDef table.
          *
          * @{ */
         uint32_t get_Parent() const;
@@ -20235,7 +20277,7 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 #else
         AsmCilClassLayout.setDataPrototype("uint32_t", "Parent", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                           BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
         DECLARE_OTHERS(AsmCilClassLayout);
@@ -20247,20 +20289,30 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
+
             s & BOOST_SERIALIZATION_NVP(p_PackingSize);
             s & BOOST_SERIALIZATION_NVP(p_ClassSize);
             s & BOOST_SERIALIZATION_NVP(p_Parent);
         }
 #endif
 
+        void parse(uint8_t* buf, size_t& index, bool uses4byteIndexing);
+
 #endif // SgAsmCilClassLayout_OTHERS
+
+#ifdef DOCUMENTATION
+    protected:
+
+      uint16_t p_PackingSize;
+      uint32_t p_ClassSize;
+      uint32_t p_Parent;
+#endif
 
 #ifdef DOCUMENTATION
     };
 #endif
-
     /*************************************************************************************************************************
-     *                                      CIL Constant (II.22.9)
+     *                                          CIL Constant (II.22.9)
      *************************************************************************************************************************/
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -20276,10 +20328,11 @@ void Grammar::setUpBinaryInstructions() {
     public:
 #endif
 
+
 #ifdef DOCUMENTATION
-        /** Property: Type
+        /** Property: Type.
          *
-         *  A 1-byte constant, followed by 1-byte padding zero.
+         *  a 1-byte constant PLUS PADDING
          *
          * @{ */
         uint8_t get_Type() const;
@@ -20287,14 +20340,12 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 #else
         AsmCilConstant.setDataPrototype("uint8_t", "Type", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                        BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
-
 #ifdef DOCUMENTATION
-        /** Property: Parent
+        /** Property: Parent.
          *
-         *  An index into the Param, Field, or Property table; more precisely,
-         *  a HasConstant (II.24.2.6) coded index.
+         *  an index into the Param, Field, or Property table.
          *
          * @{ */
         uint32_t get_Parent() const;
@@ -20302,13 +20353,12 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 #else
         AsmCilConstant.setDataPrototype("uint32_t", "Parent", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                        BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
-
 #ifdef DOCUMENTATION
-        /** Property: Value
+        /** Property: Value.
          *
-         *  An index into the Blob heap.
+         *  an index into the Blob heap.
          *
          * @{ */
         uint32_t get_Value() const;
@@ -20316,7 +20366,7 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 #else
         AsmCilConstant.setDataPrototype("uint32_t", "Value", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                        BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
         DECLARE_OTHERS(AsmCilConstant);
@@ -20328,20 +20378,30 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
+
             s & BOOST_SERIALIZATION_NVP(p_Type);
             s & BOOST_SERIALIZATION_NVP(p_Parent);
             s & BOOST_SERIALIZATION_NVP(p_Value);
         }
 #endif
 
+        void parse(uint8_t* buf, size_t& index, bool uses4byteIndexing);
+
 #endif // SgAsmCilConstant_OTHERS
+
+#ifdef DOCUMENTATION
+    protected:
+
+      uint8_t p_Type;
+      uint32_t p_Parent;
+      uint32_t p_Value;
+#endif
 
 #ifdef DOCUMENTATION
     };
 #endif
-
     /*************************************************************************************************************************
-     *                                      CIL CustomAttribute (II.22.10)
+     *                                          CIL CustomAttribute (II.22.10)
      *************************************************************************************************************************/
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -20357,11 +20417,11 @@ void Grammar::setUpBinaryInstructions() {
     public:
 #endif
 
+
 #ifdef DOCUMENTATION
-        /** Property: Parent
+        /** Property: Parent.
          *
-         *  An index into a metadata table that has an associated HasCustomAttribute
-         *  (II.24.2.6) coded index.
+         *  an index into a metadata table that has an associated HasCustomAttribute index.
          *
          * @{ */
         uint32_t get_Parent() const;
@@ -20369,14 +20429,12 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 #else
         AsmCilCustomAttribute.setDataPrototype("uint32_t", "Parent", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                               BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
-
 #ifdef DOCUMENTATION
-        /** Property: Type
+        /** Property: Type.
          *
-         *  An index into the MethodDef or MethodRef table; more precisely, a
-         *  CustomAttributeType (II.24.2.6) coded index.
+         *  n index into the MethodDef or MemberRef table.
          *
          * @{ */
         uint32_t get_Type() const;
@@ -20384,13 +20442,12 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 #else
         AsmCilCustomAttribute.setDataPrototype("uint32_t", "Type", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                               BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
-
 #ifdef DOCUMENTATION
-        /** Property: Value
+        /** Property: Value.
          *
-         *  An index into the Blob heap.
+         *  an index into the Blob heap.
          *
          * @{ */
         uint32_t get_Value() const;
@@ -20398,7 +20455,7 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 #else
         AsmCilCustomAttribute.setDataPrototype("uint32_t", "Value", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                               BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
         DECLARE_OTHERS(AsmCilCustomAttribute);
@@ -20410,20 +20467,30 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
+
             s & BOOST_SERIALIZATION_NVP(p_Parent);
             s & BOOST_SERIALIZATION_NVP(p_Type);
             s & BOOST_SERIALIZATION_NVP(p_Value);
         }
 #endif
 
+        void parse(uint8_t* buf, size_t& index, bool uses4byteIndexing);
+
 #endif // SgAsmCilCustomAttribute_OTHERS
+
+#ifdef DOCUMENTATION
+    protected:
+
+      uint32_t p_Parent;
+      uint32_t p_Type;
+      uint32_t p_Value;
+#endif
 
 #ifdef DOCUMENTATION
     };
 #endif
-
     /*************************************************************************************************************************
-     *                                      CIL DeclSecurity (II.22.11)
+     *                                          CIL DeclSecurity (II.22.11)
      *************************************************************************************************************************/
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -20439,10 +20506,11 @@ void Grammar::setUpBinaryInstructions() {
     public:
 #endif
 
+
 #ifdef DOCUMENTATION
-        /** Property: Action
+        /** Property: Action.
          *
-         *  A 2-byte value.
+         *  a 2-byte value.
          *
          * @{ */
         uint16_t get_Action() const;
@@ -20452,12 +20520,10 @@ void Grammar::setUpBinaryInstructions() {
         AsmCilDeclSecurity.setDataPrototype("uint16_t", "Action", "= 0", NO_CONSTRUCTOR_PARAMETER,
                                             BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
-
 #ifdef DOCUMENTATION
-        /** Property: Parent
+        /** Property: Parent.
          *
-         *  An index into the TypeDef, MethodDef, or Assembly table; more precisely,
-         *  a HasDeclSecurity (II.24.2.6) coded index.
+         *  an index into the TypeDef, MethodDef, or Assembly table.
          *
          * @{ */
         uint32_t get_Parent() const;
@@ -20467,11 +20533,10 @@ void Grammar::setUpBinaryInstructions() {
         AsmCilDeclSecurity.setDataPrototype("uint32_t", "Parent", "= 0", NO_CONSTRUCTOR_PARAMETER,
                                             BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
-
 #ifdef DOCUMENTATION
-        /** Property: PermissionSet
+        /** Property: PermissionSet.
          *
-         *  An index into the Blob heap.
+         *  an index into the Blob heap.
          *
          * @{ */
         uint32_t get_PermissionSet() const;
@@ -20491,85 +20556,30 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
+
             s & BOOST_SERIALIZATION_NVP(p_Action);
             s & BOOST_SERIALIZATION_NVP(p_Parent);
             s & BOOST_SERIALIZATION_NVP(p_PermissionSet);
         }
 #endif
 
+        void parse(uint8_t* buf, size_t& index, bool uses4byteIndexing);
+
 #endif // SgAsmCilDeclSecurity_OTHERS
 
 #ifdef DOCUMENTATION
-    };
+    protected:
+
+      uint16_t p_Action;
+      uint32_t p_Parent;
+      uint32_t p_PermissionSet;
 #endif
-
-    /*************************************************************************************************************************
-     *                                        CIL EventMap (II.22.12)
-     *************************************************************************************************************************/
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    DECLARE_LEAF_CLASS(AsmCilEventMap);
-    IS_SERIALIZABLE(AsmCilEventMap);
-
-#ifdef DOCUMENTATION
-    /** CIL EventMap table.
-     *
-     */
-    class SgAsmCilEventMap: public SgAsmCilNode {
-    public:
-#endif
-
-#ifdef DOCUMENTATION
-        /** Property: Parent.
-         *
-         *  An index into the TypeDef table.
-         *
-         * @{ */
-        uint32_t get_Parent() const;
-        void set_Parent(uint32_t);
-        /** @} */
-#else
-        AsmCilEventMap.setDataPrototype("uint32_t", "Parent", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                        BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
-
-#ifdef DOCUMENTATION
-        /** Property: EventList.
-         *
-         *  An index into the Event table.
-         *
-         * @{ */
-        uint32_t get_EventList() const;
-        void set_EventList(uint32_t);
-        /** @} */
-#else
-        AsmCilEventMap.setDataPrototype("uint32_t", "EventList", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                        BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
-
-        DECLARE_OTHERS(AsmCilEventMap);
-#if defined(SgAsmCilEventMap_OTHERS) || defined(DOCUMENTATION)
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-    private:
-        friend class boost::serialization::access;
-
-        template<class S>
-        void serialize(S &s, const unsigned /*version*/) {
-            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
-            s & BOOST_SERIALIZATION_NVP(p_Parent);
-            s & BOOST_SERIALIZATION_NVP(p_EventList);
-        }
-#endif
-
-#endif // SgAsmCilEventMap_OTHERS
 
 #ifdef DOCUMENTATION
     };
 #endif
-
     /*************************************************************************************************************************
-     *                                            CIL Event (II.22.13)
+     *                                          CIL Event (II.22.13)
      *************************************************************************************************************************/
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -20585,10 +20595,11 @@ void Grammar::setUpBinaryInstructions() {
     public:
 #endif
 
+
 #ifdef DOCUMENTATION
         /** Property: EventFlags.
          *
-         *  A 2-byte bitmask of type EventAttributes, (II.23.1.4).
+         *  a 2-byte bitmask of type EventAttribute.
          *
          * @{ */
         uint16_t get_EventFlags() const;
@@ -20596,13 +20607,12 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 #else
         AsmCilEvent.setDataPrototype("uint16_t", "EventFlags", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                     BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
-
 #ifdef DOCUMENTATION
         /** Property: Name.
          *
-         *  An index into the String heap.
+         *  an index into the String heap.
          *
          * @{ */
         uint32_t get_Name() const;
@@ -20610,13 +20620,12 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 #else
         AsmCilEvent.setDataPrototype("uint32_t", "Name", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                     BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
-
 #ifdef DOCUMENTATION
         /** Property: EventType.
          *
-         *  An index into a TypeDef, a TypeRef, or TypeSpec table.
+         *  an index into a TypeDef, a TypeRef, or TypeSpec table.
          *
          * @{ */
         uint32_t get_EventType() const;
@@ -20624,7 +20633,7 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 #else
         AsmCilEvent.setDataPrototype("uint32_t", "EventType", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                     BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
         DECLARE_OTHERS(AsmCilEvent);
@@ -20636,20 +20645,104 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
+
             s & BOOST_SERIALIZATION_NVP(p_EventFlags);
             s & BOOST_SERIALIZATION_NVP(p_Name);
             s & BOOST_SERIALIZATION_NVP(p_EventType);
         }
 #endif
 
+        void parse(uint8_t* buf, size_t& index, bool uses4byteIndexing);
+
 #endif // SgAsmCilEvent_OTHERS
+
+#ifdef DOCUMENTATION
+    protected:
+
+      uint16_t p_EventFlags;
+      uint32_t p_Name;
+      uint32_t p_EventType;
+#endif
 
 #ifdef DOCUMENTATION
     };
 #endif
-
     /*************************************************************************************************************************
-     *                                            CIL ExportedType (II.22.14)
+     *                                          CIL EventMap (II.22.12)
+     *************************************************************************************************************************/
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmCilEventMap);
+    IS_SERIALIZABLE(AsmCilEventMap);
+
+#ifdef DOCUMENTATION
+    /** CIL EventMap table.
+     *
+     */
+    class SgAsmCilEventMap: public SgAsmCilNode {
+    public:
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: Parent.
+         *
+         *  an index into the TypeDef table.
+         *
+         * @{ */
+        uint32_t get_Parent() const;
+        void set_Parent(uint32_t);
+        /** @} */
+#else
+        AsmCilEventMap.setDataPrototype("uint32_t", "Parent", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+#ifdef DOCUMENTATION
+        /** Property: EventList.
+         *
+         *  an index into the Event table.
+         *
+         * @{ */
+        uint32_t get_EventList() const;
+        void set_EventList(uint32_t);
+        /** @} */
+#else
+        AsmCilEventMap.setDataPrototype("uint32_t", "EventList", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmCilEventMap);
+#if defined(SgAsmCilEventMap_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
+
+            s & BOOST_SERIALIZATION_NVP(p_Parent);
+            s & BOOST_SERIALIZATION_NVP(p_EventList);
+        }
+#endif
+
+        void parse(uint8_t* buf, size_t& index, bool uses4byteIndexing);
+
+#endif // SgAsmCilEventMap_OTHERS
+
+#ifdef DOCUMENTATION
+    protected:
+
+      uint32_t p_Parent;
+      uint32_t p_EventList;
+#endif
+
+#ifdef DOCUMENTATION
+    };
+#endif
+    /*************************************************************************************************************************
+     *                                          CIL ExportedType (II.22.14)
      *************************************************************************************************************************/
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -20665,38 +20758,37 @@ void Grammar::setUpBinaryInstructions() {
     public:
 #endif
 
-#ifdef DOCUMENTATION
-        /** Property: Flags.
-         *
-         *  A 4-byte bitmask of type TypeAttributes, (II.23.1.4).
-         *
-         * @{ */
-        uint32_t get_Flags() const;
-        void set_Flags(uint32_t);
-        /** @} */
-#else
-        AsmCilExportedType.setDataPrototype("uint32_t", "Flags", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
 
 #ifdef DOCUMENTATION
-        /** Property: TypeDefId.
+        /** Property: EventFlags.
          *
-         *  A 4-byte index into a TypeDef table of another module in this Assembly.
+         *  a 4-byte bitmask of type TypeAttribute.
          *
          * @{ */
-        uint32_t get_TypeDefId() const;
-        void set_TypeDefId(uint32_t);
+        uint32_t get_EventFlags() const;
+        void set_EventFlags(uint32_t);
         /** @} */
 #else
-        AsmCilExportedType.setDataPrototype("uint32_t", "TypeDefId", "= 0", NO_CONSTRUCTOR_PARAMETER,
+        AsmCilExportedType.setDataPrototype("uint32_t", "EventFlags", "= 0", NO_CONSTRUCTOR_PARAMETER,
                                             BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
-
+#ifdef DOCUMENTATION
+        /** Property: TypeDefIdName.
+         *
+         *  a 4-byte index into a TypeDef table of another module in this Assembly.
+         *
+         * @{ */
+        uint32_t get_TypeDefIdName() const;
+        void set_TypeDefIdName(uint32_t);
+        /** @} */
+#else
+        AsmCilExportedType.setDataPrototype("uint32_t", "TypeDefIdName", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
 #ifdef DOCUMENTATION
         /** Property: TypeName.
          *
-         *  An index into the String heap.
+         *  an index into the String heap.
          *
          * @{ */
         uint32_t get_TypeName() const;
@@ -20706,11 +20798,10 @@ void Grammar::setUpBinaryInstructions() {
         AsmCilExportedType.setDataPrototype("uint32_t", "TypeName", "= 0", NO_CONSTRUCTOR_PARAMETER,
                                             BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
-
 #ifdef DOCUMENTATION
         /** Property: TypeNamespace.
          *
-         *  An index into the String heap.
+         *  an index into the String heap.
          *
          * @{ */
         uint32_t get_TypeNamespace() const;
@@ -20720,11 +20811,10 @@ void Grammar::setUpBinaryInstructions() {
         AsmCilExportedType.setDataPrototype("uint32_t", "TypeNamespace", "= 0", NO_CONSTRUCTOR_PARAMETER,
                                             BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
-
 #ifdef DOCUMENTATION
         /** Property: Implementation.
          *
-         *  An index (more precisely a coded index) into any of a few different kinds of tables.
+         *  an index into the File table, ExportedType table, or the AssemblyRef table.
          *
          * @{ */
         uint32_t get_Implementation() const;
@@ -20744,22 +20834,34 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
-            s & BOOST_SERIALIZATION_NVP(p_Flags);
-            s & BOOST_SERIALIZATION_NVP(p_TypeDefId);
+
+            s & BOOST_SERIALIZATION_NVP(p_EventFlags);
+            s & BOOST_SERIALIZATION_NVP(p_TypeDefIdName);
             s & BOOST_SERIALIZATION_NVP(p_TypeName);
             s & BOOST_SERIALIZATION_NVP(p_TypeNamespace);
             s & BOOST_SERIALIZATION_NVP(p_Implementation);
         }
 #endif
 
+        void parse(uint8_t* buf, size_t& index, bool uses4byteIndexing);
+
 #endif // SgAsmCilExportedType_OTHERS
+
+#ifdef DOCUMENTATION
+    protected:
+
+      uint32_t p_EventFlags;
+      uint32_t p_TypeDefIdName;
+      uint32_t p_TypeName;
+      uint32_t p_TypeNamespace;
+      uint32_t p_Implementation;
+#endif
 
 #ifdef DOCUMENTATION
     };
 #endif
-
     /*************************************************************************************************************************
-     *                                            CIL Field (II.22.15)
+     *                                          CIL Field (II.22.15)
      *************************************************************************************************************************/
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -20775,10 +20877,11 @@ void Grammar::setUpBinaryInstructions() {
     public:
 #endif
 
+
 #ifdef DOCUMENTATION
         /** Property: Flags.
          *
-         *  A 2-byte bitmask of type FieldAttributes, (II.23.1.5).
+         *  a 2-byte bitmask of type FieldAttributes
          *
          * @{ */
         uint16_t get_Flags() const;
@@ -20786,13 +20889,12 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 #else
         AsmCilField.setDataPrototype("uint16_t", "Flags", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                     BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
-
 #ifdef DOCUMENTATION
         /** Property: Name.
          *
-         *  An index into the String heap.
+         *  an index into the String heap.
          *
          * @{ */
         uint32_t get_Name() const;
@@ -20800,13 +20902,12 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 #else
         AsmCilField.setDataPrototype("uint32_t", "Name", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                     BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
-
 #ifdef DOCUMENTATION
         /** Property: Signature.
          *
-         *  An index into the Blob heap.
+         *  an index into the Blob heap.
          *
          * @{ */
         uint32_t get_Signature() const;
@@ -20814,7 +20915,7 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 #else
         AsmCilField.setDataPrototype("uint32_t", "Signature", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                     BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
         DECLARE_OTHERS(AsmCilField);
@@ -20826,18 +20927,28 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
+
             s & BOOST_SERIALIZATION_NVP(p_Flags);
             s & BOOST_SERIALIZATION_NVP(p_Name);
             s & BOOST_SERIALIZATION_NVP(p_Signature);
         }
 #endif
 
+        void parse(uint8_t* buf, size_t& index, bool uses4byteIndexing);
+
 #endif // SgAsmCilField_OTHERS
+
+#ifdef DOCUMENTATION
+    protected:
+
+      uint16_t p_Flags;
+      uint32_t p_Name;
+      uint32_t p_Signature;
+#endif
 
 #ifdef DOCUMENTATION
     };
 #endif
-
     /*************************************************************************************************************************
      *                                          CIL FieldLayout (II.22.16)
      *************************************************************************************************************************/
@@ -20855,10 +20966,11 @@ void Grammar::setUpBinaryInstructions() {
     public:
 #endif
 
+
 #ifdef DOCUMENTATION
         /** Property: Offset.
          *
-         *  A 4-byte constant.
+         *  a 4-byte constant.
          *
          * @{ */
         uint32_t get_Offset() const;
@@ -20866,13 +20978,12 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 #else
         AsmCilFieldLayout.setDataPrototype("uint32_t", "Offset", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                           BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
-
 #ifdef DOCUMENTATION
         /** Property: Field.
          *
-         *  An index into the Field table.
+         *  an index into the Field table.
          *
          * @{ */
         uint32_t get_Field() const;
@@ -20880,7 +20991,7 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 #else
         AsmCilFieldLayout.setDataPrototype("uint32_t", "Field", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                           BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
         DECLARE_OTHERS(AsmCilFieldLayout);
@@ -20892,17 +21003,26 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
+
             s & BOOST_SERIALIZATION_NVP(p_Offset);
             s & BOOST_SERIALIZATION_NVP(p_Field);
         }
 #endif
 
+        void parse(uint8_t* buf, size_t& index, bool uses4byteIndexing);
+
 #endif // SgAsmCilFieldLayout_OTHERS
+
+#ifdef DOCUMENTATION
+    protected:
+
+      uint32_t p_Offset;
+      uint32_t p_Field;
+#endif
 
 #ifdef DOCUMENTATION
     };
 #endif
-
     /*************************************************************************************************************************
      *                                          CIL FieldMarshal (II.22.17)
      *************************************************************************************************************************/
@@ -20920,11 +21040,11 @@ void Grammar::setUpBinaryInstructions() {
     public:
 #endif
 
+
 #ifdef DOCUMENTATION
         /** Property: Parent.
          *
-         *  An index into the Field or Param table; more precisely, a HasFieldMarshal (II.24.2.6)
-         *  coded index.
+         *  an index into Field or Param table.
          *
          * @{ */
         uint32_t get_Parent() const;
@@ -20934,11 +21054,10 @@ void Grammar::setUpBinaryInstructions() {
         AsmCilFieldMarshal.setDataPrototype("uint32_t", "Parent", "= 0", NO_CONSTRUCTOR_PARAMETER,
                                             BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
-
 #ifdef DOCUMENTATION
         /** Property: NativeType.
          *
-         *  An index into the Blob heap.
+         *  an index into the Blob heap.
          *
          * @{ */
         uint32_t get_NativeType() const;
@@ -20958,17 +21077,26 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
+
             s & BOOST_SERIALIZATION_NVP(p_Parent);
             s & BOOST_SERIALIZATION_NVP(p_NativeType);
         }
 #endif
 
+        void parse(uint8_t* buf, size_t& index, bool uses4byteIndexing);
+
 #endif // SgAsmCilFieldMarshal_OTHERS
+
+#ifdef DOCUMENTATION
+    protected:
+
+      uint32_t p_Parent;
+      uint32_t p_NativeType;
+#endif
 
 #ifdef DOCUMENTATION
     };
 #endif
-
     /*************************************************************************************************************************
      *                                          CIL FieldRVA (II.22.18)
      *************************************************************************************************************************/
@@ -20986,10 +21114,11 @@ void Grammar::setUpBinaryInstructions() {
     public:
 #endif
 
+
 #ifdef DOCUMENTATION
         /** Property: RVA.
          *
-         *  A 4-byte constant.
+         *  a 4-byte constant.
          *
          * @{ */
         uint32_t get_RVA() const;
@@ -20997,13 +21126,12 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 #else
         AsmCilFieldRVA.setDataPrototype("uint32_t", "RVA", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                        BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
-
 #ifdef DOCUMENTATION
         /** Property: Field.
          *
-         *  An index into the Field table.
+         *  an index into Field table
          *
          * @{ */
         uint32_t get_Field() const;
@@ -21011,7 +21139,7 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 #else
         AsmCilFieldRVA.setDataPrototype("uint32_t", "Field", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                        BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
         DECLARE_OTHERS(AsmCilFieldRVA);
@@ -21023,19 +21151,28 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
+
             s & BOOST_SERIALIZATION_NVP(p_RVA);
             s & BOOST_SERIALIZATION_NVP(p_Field);
         }
 #endif
 
+        void parse(uint8_t* buf, size_t& index, bool uses4byteIndexing);
+
 #endif // SgAsmCilFieldRVA_OTHERS
+
+#ifdef DOCUMENTATION
+    protected:
+
+      uint32_t p_RVA;
+      uint32_t p_Field;
+#endif
 
 #ifdef DOCUMENTATION
     };
 #endif
-
     /*************************************************************************************************************************
-     *                                            CIL File (II.22.19)
+     *                                          CIL File (II.22.19)
      *************************************************************************************************************************/
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -21051,10 +21188,11 @@ void Grammar::setUpBinaryInstructions() {
     public:
 #endif
 
+
 #ifdef DOCUMENTATION
         /** Property: Flags.
          *
-         *  A 4-byte bitmask of type FileAttributes (II.23.1.6)
+         *  a 4-byte bitmask of type FileAttributes.
          *
          * @{ */
         uint32_t get_Flags() const;
@@ -21062,13 +21200,12 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 #else
         AsmCilFile.setDataPrototype("uint32_t", "Flags", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                    BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
-
 #ifdef DOCUMENTATION
         /** Property: Name.
          *
-         *  An index into the String heap.
+         *  an index into the String heap.
          *
          * @{ */
         uint32_t get_Name() const;
@@ -21076,13 +21213,12 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 #else
         AsmCilFile.setDataPrototype("uint32_t", "Name", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                    BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
-
 #ifdef DOCUMENTATION
         /** Property: HashValue.
          *
-         *  An index into the Blob heap.
+         *  an index into the Blob heap.
          *
          * @{ */
         uint32_t get_HashValue() const;
@@ -21090,7 +21226,7 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 #else
         AsmCilFile.setDataPrototype("uint32_t", "HashValue", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                    BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
         DECLARE_OTHERS(AsmCilFile);
@@ -21102,20 +21238,30 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
+
             s & BOOST_SERIALIZATION_NVP(p_Flags);
             s & BOOST_SERIALIZATION_NVP(p_Name);
             s & BOOST_SERIALIZATION_NVP(p_HashValue);
         }
 #endif
 
+        void parse(uint8_t* buf, size_t& index, bool uses4byteIndexing);
+
 #endif // SgAsmCilFile_OTHERS
+
+#ifdef DOCUMENTATION
+    protected:
+
+      uint32_t p_Flags;
+      uint32_t p_Name;
+      uint32_t p_HashValue;
+#endif
 
 #ifdef DOCUMENTATION
     };
 #endif
-
     /*************************************************************************************************************************
-     *                                            CIL GenericParam (II.22.20)
+     *                                          CIL GenericParam (II.22.20)
      *************************************************************************************************************************/
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -21131,10 +21277,11 @@ void Grammar::setUpBinaryInstructions() {
     public:
 #endif
 
+
 #ifdef DOCUMENTATION
         /** Property: Number.
          *
-         *  The 2-byte index of the generic parameter, numbered left-to-right, from zero.
+         *  the 2-byte index of the generic parameter.
          *
          * @{ */
         uint16_t get_Number() const;
@@ -21144,11 +21291,10 @@ void Grammar::setUpBinaryInstructions() {
         AsmCilGenericParam.setDataPrototype("uint16_t", "Number", "= 0", NO_CONSTRUCTOR_PARAMETER,
                                             BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
-
 #ifdef DOCUMENTATION
         /** Property: Flags.
          *
-         *  A 2-byte bitmask of type GenericParamAttributes (II.23.1.7)
+         *  a 2-byte bitmask of type GenericParamAttributes.
          *
          * @{ */
         uint16_t get_Flags() const;
@@ -21158,12 +21304,10 @@ void Grammar::setUpBinaryInstructions() {
         AsmCilGenericParam.setDataPrototype("uint16_t", "Flags", "= 0", NO_CONSTRUCTOR_PARAMETER,
                                             BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
-
 #ifdef DOCUMENTATION
         /** Property: Owner.
          *
-         *  An index into the TypeDef or MethodDef table, specifying the Type or Method
-         *  to which this generic parameter applies.
+         *  an index into the TypeDef or MethodDef table.
          *
          * @{ */
         uint32_t get_Owner() const;
@@ -21173,12 +21317,10 @@ void Grammar::setUpBinaryInstructions() {
         AsmCilGenericParam.setDataPrototype("uint32_t", "Owner", "= 0", NO_CONSTRUCTOR_PARAMETER,
                                             BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
-
 #ifdef DOCUMENTATION
         /** Property: Name.
          *
-         *  A non-null index into the String heap, giving the name for the generic
-         *  parameter.
+         *  an index into the String heap.
          *
          * @{ */
         uint32_t get_Name() const;
@@ -21198,6 +21340,7 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
+
             s & BOOST_SERIALIZATION_NVP(p_Number);
             s & BOOST_SERIALIZATION_NVP(p_Flags);
             s & BOOST_SERIALIZATION_NVP(p_Owner);
@@ -21205,12 +21348,22 @@ void Grammar::setUpBinaryInstructions() {
         }
 #endif
 
+        void parse(uint8_t* buf, size_t& index, bool uses4byteIndexing);
+
 #endif // SgAsmCilGenericParam_OTHERS
+
+#ifdef DOCUMENTATION
+    protected:
+
+      uint16_t p_Number;
+      uint16_t p_Flags;
+      uint32_t p_Owner;
+      uint32_t p_Name;
+#endif
 
 #ifdef DOCUMENTATION
     };
 #endif
-
     /*************************************************************************************************************************
      *                                          CIL GenericParamConstraint (II.22.21)
      *************************************************************************************************************************/
@@ -21228,10 +21381,11 @@ void Grammar::setUpBinaryInstructions() {
     public:
 #endif
 
+
 #ifdef DOCUMENTATION
         /** Property: Owner.
          *
-         *  An index into the GenericParam table.
+         *  an index into the GenericParam table.
          *
          * @{ */
         uint32_t get_Owner() const;
@@ -21239,13 +21393,12 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 #else
         AsmCilGenericParamConstraint.setDataPrototype("uint32_t", "Owner", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                                      BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
-
 #ifdef DOCUMENTATION
         /** Property: Constraint.
          *
-         *  An index into the TypeDef, TypeRef, or TypeSpec tables.
+         *  an index into the TypeDef, TypeRef, or TypeSpec table.
          *
          * @{ */
         uint32_t get_Constraint() const;
@@ -21253,7 +21406,7 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 #else
         AsmCilGenericParamConstraint.setDataPrototype("uint32_t", "Constraint", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                                      BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
         DECLARE_OTHERS(AsmCilGenericParamConstraint);
@@ -21265,19 +21418,28 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
+
             s & BOOST_SERIALIZATION_NVP(p_Owner);
             s & BOOST_SERIALIZATION_NVP(p_Constraint);
         }
 #endif
 
+        void parse(uint8_t* buf, size_t& index, bool uses4byteIndexing);
+
 #endif // SgAsmCilGenericParamConstraint_OTHERS
+
+#ifdef DOCUMENTATION
+    protected:
+
+      uint32_t p_Owner;
+      uint32_t p_Constraint;
+#endif
 
 #ifdef DOCUMENTATION
     };
 #endif
-
     /*************************************************************************************************************************
-     *                                            CIL ImplMap (II.22.22)
+     *                                          CIL ImplMap (II.22.22)
      *************************************************************************************************************************/
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -21293,10 +21455,11 @@ void Grammar::setUpBinaryInstructions() {
     public:
 #endif
 
+
 #ifdef DOCUMENTATION
         /** Property: MappingFlags.
          *
-         *  A 2-byte bitmask of type PInvokeAttributes (II.23.1.8)
+         *  a 2-byte bitmask of type PInvokeAttributes.
          *
          * @{ */
         uint16_t get_MappingFlags() const;
@@ -21304,13 +21467,12 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 #else
         AsmCilImplMap.setDataPrototype("uint16_t", "MappingFlags", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                       BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
-
 #ifdef DOCUMENTATION
         /** Property: MemberForwarded.
          *
-         *  An index into the MethodDef table.
+         *  an index into the Field or MethodDef table.
          *
          * @{ */
         uint32_t get_MemberForwarded() const;
@@ -21318,13 +21480,12 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 #else
         AsmCilImplMap.setDataPrototype("uint32_t", "MemberForwarded", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                       BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
-
 #ifdef DOCUMENTATION
         /** Property: ImportName.
          *
-         *  An index into the String heap.
+         *  an index into the String heap.
          *
          * @{ */
         uint32_t get_ImportName() const;
@@ -21332,13 +21493,12 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 #else
         AsmCilImplMap.setDataPrototype("uint32_t", "ImportName", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                       BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
-
 #ifdef DOCUMENTATION
         /** Property: ImportScope.
          *
-         *  An index into the ModuleRef table.
+         *  an index into the ModuleRef table.
          *
          * @{ */
         uint32_t get_ImportScope() const;
@@ -21346,7 +21506,7 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 #else
         AsmCilImplMap.setDataPrototype("uint32_t", "ImportScope", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                       BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
         DECLARE_OTHERS(AsmCilImplMap);
@@ -21358,6 +21518,7 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
+
             s & BOOST_SERIALIZATION_NVP(p_MappingFlags);
             s & BOOST_SERIALIZATION_NVP(p_MemberForwarded);
             s & BOOST_SERIALIZATION_NVP(p_ImportName);
@@ -21365,14 +21526,24 @@ void Grammar::setUpBinaryInstructions() {
         }
 #endif
 
+        void parse(uint8_t* buf, size_t& index, bool uses4byteIndexing);
+
 #endif // SgAsmCilImplMap_OTHERS
+
+#ifdef DOCUMENTATION
+    protected:
+
+      uint16_t p_MappingFlags;
+      uint32_t p_MemberForwarded;
+      uint32_t p_ImportName;
+      uint32_t p_ImportScope;
+#endif
 
 #ifdef DOCUMENTATION
     };
 #endif
-
     /*************************************************************************************************************************
-     *                                            CIL InterfaceImpl (II.22.23)
+     *                                          CIL InterfaceImpl (II.22.23)
      *************************************************************************************************************************/
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -21388,10 +21559,11 @@ void Grammar::setUpBinaryInstructions() {
     public:
 #endif
 
+
 #ifdef DOCUMENTATION
         /** Property: Class.
          *
-         *  An index into the TypeDef table.
+         *  an index into the TypeDef table.
          *
          * @{ */
         uint32_t get_Class() const;
@@ -21399,13 +21571,12 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 #else
         AsmCilInterfaceImpl.setDataPrototype("uint32_t", "Class", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                             BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
-
 #ifdef DOCUMENTATION
         /** Property: Interface.
          *
-         *  An index into the TypeDef, TypeRef, or TypeSpec table.
+         *  an index into the TypeDef, TypeRef, or TypeSpec table.
          *
          * @{ */
         uint32_t get_Interface() const;
@@ -21413,7 +21584,7 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 #else
         AsmCilInterfaceImpl.setDataPrototype("uint32_t", "Interface", "= 0", NO_CONSTRUCTOR_PARAMETER,
-                                             BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
         DECLARE_OTHERS(AsmCilInterfaceImpl);
@@ -21425,31 +21596,1487 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
+
             s & BOOST_SERIALIZATION_NVP(p_Class);
             s & BOOST_SERIALIZATION_NVP(p_Interface);
         }
 #endif
 
+        void parse(uint8_t* buf, size_t& index, bool uses4byteIndexing);
+
 #endif // SgAsmCilInterfaceImpl_OTHERS
+
+#ifdef DOCUMENTATION
+    protected:
+
+      uint32_t p_Class;
+      uint32_t p_Interface;
+#endif
+
+#ifdef DOCUMENTATION
+    };
+#endif
+    /*************************************************************************************************************************
+     *                                          CIL ManifestResource (II.22.24)
+     *************************************************************************************************************************/
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmCilManifestResource);
+    IS_SERIALIZABLE(AsmCilManifestResource);
+
+#ifdef DOCUMENTATION
+    /** CIL ManifestResource table.
+     *
+     */
+    class SgAsmCilManifestResource: public SgAsmCilNode {
+    public:
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: Offset.
+         *
+         *  a 4-byte constant.
+         *
+         * @{ */
+        uint32_t get_Offset() const;
+        void set_Offset(uint32_t);
+        /** @} */
+#else
+        AsmCilManifestResource.setDataPrototype("uint32_t", "Offset", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+#ifdef DOCUMENTATION
+        /** Property: Flags.
+         *
+         *  a 4-byte constant of type ManifestResourceAttributes.
+         *
+         * @{ */
+        uint32_t get_Flags() const;
+        void set_Flags(uint32_t);
+        /** @} */
+#else
+        AsmCilManifestResource.setDataPrototype("uint32_t", "Flags", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+#ifdef DOCUMENTATION
+        /** Property: Name.
+         *
+         *  an index into the String heap.
+         *
+         * @{ */
+        uint32_t get_Name() const;
+        void set_Name(uint32_t);
+        /** @} */
+#else
+        AsmCilManifestResource.setDataPrototype("uint32_t", "Name", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+#ifdef DOCUMENTATION
+        /** Property: Implementation.
+         *
+         *  an index into a File table, a AssemblyRef table.
+         *
+         * @{ */
+        uint32_t get_Implementation() const;
+        void set_Implementation(uint32_t);
+        /** @} */
+#else
+        AsmCilManifestResource.setDataPrototype("uint32_t", "Implementation", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmCilManifestResource);
+#if defined(SgAsmCilManifestResource_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
+
+            s & BOOST_SERIALIZATION_NVP(p_Offset);
+            s & BOOST_SERIALIZATION_NVP(p_Flags);
+            s & BOOST_SERIALIZATION_NVP(p_Name);
+            s & BOOST_SERIALIZATION_NVP(p_Implementation);
+        }
+#endif
+
+        void parse(uint8_t* buf, size_t& index, bool uses4byteIndexing);
+
+#endif // SgAsmCilManifestResource_OTHERS
+
+#ifdef DOCUMENTATION
+    protected:
+
+      uint32_t p_Offset;
+      uint32_t p_Flags;
+      uint32_t p_Name;
+      uint32_t p_Implementation;
+#endif
+
+#ifdef DOCUMENTATION
+    };
+#endif
+    /*************************************************************************************************************************
+     *                                          CIL MemberRef (II.22.25)
+     *************************************************************************************************************************/
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmCilMemberRef);
+    IS_SERIALIZABLE(AsmCilMemberRef);
+
+#ifdef DOCUMENTATION
+    /** CIL MemberRef table.
+     *
+     */
+    class SgAsmCilMemberRef: public SgAsmCilNode {
+    public:
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: Offset.
+         *
+         *  an index into the MethodDef, ModuleRef,TypeDef, TypeRef, or TypeSpec table.
+         *
+         * @{ */
+        uint32_t get_Offset() const;
+        void set_Offset(uint32_t);
+        /** @} */
+#else
+        AsmCilMemberRef.setDataPrototype("uint32_t", "Offset", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+#ifdef DOCUMENTATION
+        /** Property: Flags.
+         *
+         *  TODO:TABLE_REFS_UNKNOWN
+         *
+         * @{ */
+        uint32_t get_Flags() const;
+        void set_Flags(uint32_t);
+        /** @} */
+#else
+        AsmCilMemberRef.setDataPrototype("uint32_t", "Flags", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+#ifdef DOCUMENTATION
+        /** Property: Name.
+         *
+         *  TODO:TABLE_REFS_UNKNOWN
+         *
+         * @{ */
+        uint32_t get_Name() const;
+        void set_Name(uint32_t);
+        /** @} */
+#else
+        AsmCilMemberRef.setDataPrototype("uint32_t", "Name", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+#ifdef DOCUMENTATION
+        /** Property: Implementation.
+         *
+         *  TODO:TABLE_REFS_UNKNOWN
+         *
+         * @{ */
+        uint32_t get_Implementation() const;
+        void set_Implementation(uint32_t);
+        /** @} */
+#else
+        AsmCilMemberRef.setDataPrototype("uint32_t", "Implementation", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmCilMemberRef);
+#if defined(SgAsmCilMemberRef_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
+
+            s & BOOST_SERIALIZATION_NVP(p_Offset);
+            s & BOOST_SERIALIZATION_NVP(p_Flags);
+            s & BOOST_SERIALIZATION_NVP(p_Name);
+            s & BOOST_SERIALIZATION_NVP(p_Implementation);
+        }
+#endif
+
+        void parse(uint8_t* buf, size_t& index, bool uses4byteIndexing);
+
+#endif // SgAsmCilMemberRef_OTHERS
+
+#ifdef DOCUMENTATION
+    protected:
+
+      uint32_t p_Offset;
+      uint32_t p_Flags;
+      uint32_t p_Name;
+      uint32_t p_Implementation;
+#endif
+
+#ifdef DOCUMENTATION
+    };
+#endif
+    /*************************************************************************************************************************
+     *                                          CIL MethodDef (II.22.26)
+     *************************************************************************************************************************/
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmCilMethodDef);
+    IS_SERIALIZABLE(AsmCilMethodDef);
+
+#ifdef DOCUMENTATION
+    /** CIL MethodDef table.
+     *
+     */
+    class SgAsmCilMethodDef: public SgAsmCilNode {
+    public:
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: RVA.
+         *
+         *  a 4-byte constant.
+         *
+         * @{ */
+        uint32_t get_RVA() const;
+        void set_RVA(uint32_t);
+        /** @} */
+#else
+        AsmCilMethodDef.setDataPrototype("uint32_t", "RVA", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+#ifdef DOCUMENTATION
+        /** Property: ImplFlags.
+         *
+         *  a 2-byte bitmask of type MethodImplAttributes.
+         *
+         * @{ */
+        uint32_t get_ImplFlags() const;
+        void set_ImplFlags(uint32_t);
+        /** @} */
+#else
+        AsmCilMethodDef.setDataPrototype("uint32_t", "ImplFlags", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+#ifdef DOCUMENTATION
+        /** Property: Flags.
+         *
+         *  a 2-byte bitmask of type MethodAttributes.
+         *
+         * @{ */
+        uint16_t get_Flags() const;
+        void set_Flags(uint16_t);
+        /** @} */
+#else
+        AsmCilMethodDef.setDataPrototype("uint16_t", "Flags", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+#ifdef DOCUMENTATION
+        /** Property: Name.
+         *
+         *  an index into the String heap.
+         *
+         * @{ */
+        uint32_t get_Name() const;
+        void set_Name(uint32_t);
+        /** @} */
+#else
+        AsmCilMethodDef.setDataPrototype("uint32_t", "Name", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+#ifdef DOCUMENTATION
+        /** Property: Signature.
+         *
+         *  an index into the Blob heap.
+         *
+         * @{ */
+        uint32_t get_Signature() const;
+        void set_Signature(uint32_t);
+        /** @} */
+#else
+        AsmCilMethodDef.setDataPrototype("uint32_t", "Signature", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+#ifdef DOCUMENTATION
+        /** Property: ParamList.
+         *
+         *  an index into the Param table
+         *
+         * @{ */
+        uint32_t get_ParamList() const;
+        void set_ParamList(uint32_t);
+        /** @} */
+#else
+        AsmCilMethodDef.setDataPrototype("uint32_t", "ParamList", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmCilMethodDef);
+#if defined(SgAsmCilMethodDef_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
+
+            s & BOOST_SERIALIZATION_NVP(p_RVA);
+            s & BOOST_SERIALIZATION_NVP(p_ImplFlags);
+            s & BOOST_SERIALIZATION_NVP(p_Flags);
+            s & BOOST_SERIALIZATION_NVP(p_Name);
+            s & BOOST_SERIALIZATION_NVP(p_Signature);
+            s & BOOST_SERIALIZATION_NVP(p_ParamList);
+        }
+#endif
+
+        void parse(uint8_t* buf, size_t& index, bool uses4byteIndexing);
+
+#endif // SgAsmCilMethodDef_OTHERS
+
+#ifdef DOCUMENTATION
+    protected:
+
+      uint32_t p_RVA;
+      uint32_t p_ImplFlags;
+      uint16_t p_Flags;
+      uint32_t p_Name;
+      uint32_t p_Signature;
+      uint32_t p_ParamList;
+#endif
+
+#ifdef DOCUMENTATION
+    };
+#endif
+    /*************************************************************************************************************************
+     *                                          CIL MethodImpl (II.22.27)
+     *************************************************************************************************************************/
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmCilMethodImpl);
+    IS_SERIALIZABLE(AsmCilMethodImpl);
+
+#ifdef DOCUMENTATION
+    /** CIL MethodImpl table.
+     *
+     */
+    class SgAsmCilMethodImpl: public SgAsmCilNode {
+    public:
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: Class.
+         *
+         *  an index into the TypeDef table.
+         *
+         * @{ */
+        uint32_t get_Class() const;
+        void set_Class(uint32_t);
+        /** @} */
+#else
+        AsmCilMethodImpl.setDataPrototype("uint32_t", "Class", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+#ifdef DOCUMENTATION
+        /** Property: MethodBody.
+         *
+         *  an index into the MethodDef or MemberRef table.
+         *
+         * @{ */
+        uint32_t get_MethodBody() const;
+        void set_MethodBody(uint32_t);
+        /** @} */
+#else
+        AsmCilMethodImpl.setDataPrototype("uint32_t", "MethodBody", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+#ifdef DOCUMENTATION
+        /** Property: MethodDeclaration.
+         *
+         *  an index into the MethodDef or MemberRef table.
+         *
+         * @{ */
+        uint32_t get_MethodDeclaration() const;
+        void set_MethodDeclaration(uint32_t);
+        /** @} */
+#else
+        AsmCilMethodImpl.setDataPrototype("uint32_t", "MethodDeclaration", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmCilMethodImpl);
+#if defined(SgAsmCilMethodImpl_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
+
+            s & BOOST_SERIALIZATION_NVP(p_Class);
+            s & BOOST_SERIALIZATION_NVP(p_MethodBody);
+            s & BOOST_SERIALIZATION_NVP(p_MethodDeclaration);
+        }
+#endif
+
+        void parse(uint8_t* buf, size_t& index, bool uses4byteIndexing);
+
+#endif // SgAsmCilMethodImpl_OTHERS
+
+#ifdef DOCUMENTATION
+    protected:
+
+      uint32_t p_Class;
+      uint32_t p_MethodBody;
+      uint32_t p_MethodDeclaration;
+#endif
+
+#ifdef DOCUMENTATION
+    };
+#endif
+    /*************************************************************************************************************************
+     *                                          CIL MethodSemantics (II.22.28)
+     *************************************************************************************************************************/
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmCilMethodSemantics);
+    IS_SERIALIZABLE(AsmCilMethodSemantics);
+
+#ifdef DOCUMENTATION
+    /** CIL MethodSemantics table.
+     *
+     */
+    class SgAsmCilMethodSemantics: public SgAsmCilNode {
+    public:
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: Semantics.
+         *
+         *  a 2-byte bitmask of type MethodSemanticsAttributes.
+         *
+         * @{ */
+        uint16_t get_Semantics() const;
+        void set_Semantics(uint16_t);
+        /** @} */
+#else
+        AsmCilMethodSemantics.setDataPrototype("uint16_t", "Semantics", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+#ifdef DOCUMENTATION
+        /** Property: Method.
+         *
+         *  an index into the MethodDef table.
+         *
+         * @{ */
+        uint32_t get_Method() const;
+        void set_Method(uint32_t);
+        /** @} */
+#else
+        AsmCilMethodSemantics.setDataPrototype("uint32_t", "Method", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+#ifdef DOCUMENTATION
+        /** Property: Association.
+         *
+         *  an index into the Event or Property table.
+         *
+         * @{ */
+        uint32_t get_Association() const;
+        void set_Association(uint32_t);
+        /** @} */
+#else
+        AsmCilMethodSemantics.setDataPrototype("uint32_t", "Association", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmCilMethodSemantics);
+#if defined(SgAsmCilMethodSemantics_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
+
+            s & BOOST_SERIALIZATION_NVP(p_Semantics);
+            s & BOOST_SERIALIZATION_NVP(p_Method);
+            s & BOOST_SERIALIZATION_NVP(p_Association);
+        }
+#endif
+
+        void parse(uint8_t* buf, size_t& index, bool uses4byteIndexing);
+
+#endif // SgAsmCilMethodSemantics_OTHERS
+
+#ifdef DOCUMENTATION
+    protected:
+
+      uint16_t p_Semantics;
+      uint32_t p_Method;
+      uint32_t p_Association;
+#endif
+
+#ifdef DOCUMENTATION
+    };
+#endif
+    /*************************************************************************************************************************
+     *                                          CIL MethodSpec (II.22.29)
+     *************************************************************************************************************************/
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmCilMethodSpec);
+    IS_SERIALIZABLE(AsmCilMethodSpec);
+
+#ifdef DOCUMENTATION
+    /** CIL MethodSpec table.
+     *
+     */
+    class SgAsmCilMethodSpec: public SgAsmCilNode {
+    public:
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: Method.
+         *
+         *  an index into the MethodDef or MemberRef table.
+         *
+         * @{ */
+        uint32_t get_Method() const;
+        void set_Method(uint32_t);
+        /** @} */
+#else
+        AsmCilMethodSpec.setDataPrototype("uint32_t", "Method", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+#ifdef DOCUMENTATION
+        /** Property: Instantiation.
+         *
+         *  an index into the Blob heap.
+         *
+         * @{ */
+        uint32_t get_Instantiation() const;
+        void set_Instantiation(uint32_t);
+        /** @} */
+#else
+        AsmCilMethodSpec.setDataPrototype("uint32_t", "Instantiation", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmCilMethodSpec);
+#if defined(SgAsmCilMethodSpec_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
+
+            s & BOOST_SERIALIZATION_NVP(p_Method);
+            s & BOOST_SERIALIZATION_NVP(p_Instantiation);
+        }
+#endif
+
+        void parse(uint8_t* buf, size_t& index, bool uses4byteIndexing);
+
+#endif // SgAsmCilMethodSpec_OTHERS
+
+#ifdef DOCUMENTATION
+    protected:
+
+      uint32_t p_Method;
+      uint32_t p_Instantiation;
+#endif
+
+#ifdef DOCUMENTATION
+    };
+#endif
+    /*************************************************************************************************************************
+     *                                          CIL Module (II.22.30)
+     *************************************************************************************************************************/
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmCilModule);
+    IS_SERIALIZABLE(AsmCilModule);
+
+#ifdef DOCUMENTATION
+    /** CIL Module table.
+     *
+     */
+    class SgAsmCilModule: public SgAsmCilNode {
+    public:
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: Generation.
+         *
+         *  a 2-byte value, reserved, shall be zero
+         *
+         * @{ */
+        uint16_t get_Generation() const;
+        void set_Generation(uint16_t);
+        /** @} */
+#else
+        AsmCilModule.setDataPrototype("uint16_t", "Generation", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+#ifdef DOCUMENTATION
+        /** Property: Name.
+         *
+         *  an index into the String heap.
+         *
+         * @{ */
+        uint32_t get_Name() const;
+        void set_Name(uint32_t);
+        /** @} */
+#else
+        AsmCilModule.setDataPrototype("uint32_t", "Name", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+#ifdef DOCUMENTATION
+        /** Property: Mvid.
+         *
+         *  an index into the Guid heap.
+         *
+         * @{ */
+        uint32_t get_Mvid() const;
+        void set_Mvid(uint32_t);
+        /** @} */
+#else
+        AsmCilModule.setDataPrototype("uint32_t", "Mvid", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+#ifdef DOCUMENTATION
+        /** Property: Encld.
+         *
+         *  an index into the Guid heap.
+         *
+         * @{ */
+        uint32_t get_Encld() const;
+        void set_Encld(uint32_t);
+        /** @} */
+#else
+        AsmCilModule.setDataPrototype("uint32_t", "Encld", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+#ifdef DOCUMENTATION
+        /** Property: EncBaseId.
+         *
+         *  an index into the Guid heap.
+         *
+         * @{ */
+        uint32_t get_EncBaseId() const;
+        void set_EncBaseId(uint32_t);
+        /** @} */
+#else
+        AsmCilModule.setDataPrototype("uint32_t", "EncBaseId", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmCilModule);
+#if defined(SgAsmCilModule_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
+
+            s & BOOST_SERIALIZATION_NVP(p_Generation);
+            s & BOOST_SERIALIZATION_NVP(p_Name);
+            s & BOOST_SERIALIZATION_NVP(p_Mvid);
+            s & BOOST_SERIALIZATION_NVP(p_Encld);
+            s & BOOST_SERIALIZATION_NVP(p_EncBaseId);
+        }
+#endif
+
+        void parse(uint8_t* buf, size_t& index, bool uses4byteIndexing);
+
+#endif // SgAsmCilModule_OTHERS
+
+#ifdef DOCUMENTATION
+    protected:
+
+      uint16_t p_Generation;
+      uint32_t p_Name;
+      uint32_t p_Mvid;
+      uint32_t p_Encld;
+      uint32_t p_EncBaseId;
+#endif
+
+#ifdef DOCUMENTATION
+    };
+#endif
+    /*************************************************************************************************************************
+     *                                          CIL ModuleRef (II.22.31)
+     *************************************************************************************************************************/
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmCilModuleRef);
+    IS_SERIALIZABLE(AsmCilModuleRef);
+
+#ifdef DOCUMENTATION
+    /** CIL ModuleRef table.
+     *
+     */
+    class SgAsmCilModuleRef: public SgAsmCilNode {
+    public:
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: Name.
+         *
+         *  an index into the String heap.
+         *
+         * @{ */
+        uint32_t get_Name() const;
+        void set_Name(uint32_t);
+        /** @} */
+#else
+        AsmCilModuleRef.setDataPrototype("uint32_t", "Name", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmCilModuleRef);
+#if defined(SgAsmCilModuleRef_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
+
+            s & BOOST_SERIALIZATION_NVP(p_Name);
+        }
+#endif
+
+        void parse(uint8_t* buf, size_t& index, bool uses4byteIndexing);
+
+#endif // SgAsmCilModuleRef_OTHERS
+
+#ifdef DOCUMENTATION
+    protected:
+
+      uint32_t p_Name;
+#endif
+
+#ifdef DOCUMENTATION
+    };
+#endif
+    /*************************************************************************************************************************
+     *                                          CIL NestedClass (II.22.32)
+     *************************************************************************************************************************/
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmCilNestedClass);
+    IS_SERIALIZABLE(AsmCilNestedClass);
+
+#ifdef DOCUMENTATION
+    /** CIL NestedClass table.
+     *
+     */
+    class SgAsmCilNestedClass: public SgAsmCilNode {
+    public:
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: NestedClass.
+         *
+         *  an index into the TypeDef table.
+         *
+         * @{ */
+        uint32_t get_NestedClass() const;
+        void set_NestedClass(uint32_t);
+        /** @} */
+#else
+        AsmCilNestedClass.setDataPrototype("uint32_t", "NestedClass", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+#ifdef DOCUMENTATION
+        /** Property: EnclosingClass.
+         *
+         *  an index into the TypeDef table.
+         *
+         * @{ */
+        uint32_t get_EnclosingClass() const;
+        void set_EnclosingClass(uint32_t);
+        /** @} */
+#else
+        AsmCilNestedClass.setDataPrototype("uint32_t", "EnclosingClass", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmCilNestedClass);
+#if defined(SgAsmCilNestedClass_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
+
+            s & BOOST_SERIALIZATION_NVP(p_NestedClass);
+            s & BOOST_SERIALIZATION_NVP(p_EnclosingClass);
+        }
+#endif
+
+        void parse(uint8_t* buf, size_t& index, bool uses4byteIndexing);
+
+#endif // SgAsmCilNestedClass_OTHERS
+
+#ifdef DOCUMENTATION
+    protected:
+
+      uint32_t p_NestedClass;
+      uint32_t p_EnclosingClass;
+#endif
+
+#ifdef DOCUMENTATION
+    };
+#endif
+    /*************************************************************************************************************************
+     *                                          CIL Param (II.22.33)
+     *************************************************************************************************************************/
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmCilParam);
+    IS_SERIALIZABLE(AsmCilParam);
+
+#ifdef DOCUMENTATION
+    /** CIL Param table.
+     *
+     */
+    class SgAsmCilParam: public SgAsmCilNode {
+    public:
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: Flags.
+         *
+         *  a 2-byte bitmask of type ParamAttributes.
+         *
+         * @{ */
+        uint16_t get_Flags() const;
+        void set_Flags(uint16_t);
+        /** @} */
+#else
+        AsmCilParam.setDataPrototype("uint16_t", "Flags", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+#ifdef DOCUMENTATION
+        /** Property: Sequence.
+         *
+         *  a 2-byte constant
+         *
+         * @{ */
+        uint16_t get_Sequence() const;
+        void set_Sequence(uint16_t);
+        /** @} */
+#else
+        AsmCilParam.setDataPrototype("uint16_t", "Sequence", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+#ifdef DOCUMENTATION
+        /** Property: Name.
+         *
+         *  an index into the Blob heap.
+         *
+         * @{ */
+        uint32_t get_Name() const;
+        void set_Name(uint32_t);
+        /** @} */
+#else
+        AsmCilParam.setDataPrototype("uint32_t", "Name", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmCilParam);
+#if defined(SgAsmCilParam_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
+
+            s & BOOST_SERIALIZATION_NVP(p_Flags);
+            s & BOOST_SERIALIZATION_NVP(p_Sequence);
+            s & BOOST_SERIALIZATION_NVP(p_Name);
+        }
+#endif
+
+        void parse(uint8_t* buf, size_t& index, bool uses4byteIndexing);
+
+#endif // SgAsmCilParam_OTHERS
+
+#ifdef DOCUMENTATION
+    protected:
+
+      uint16_t p_Flags;
+      uint16_t p_Sequence;
+      uint32_t p_Name;
+#endif
+
+#ifdef DOCUMENTATION
+    };
+#endif
+    /*************************************************************************************************************************
+     *                                          CIL Property (II.22.34)
+     *************************************************************************************************************************/
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmCilProperty);
+    IS_SERIALIZABLE(AsmCilProperty);
+
+#ifdef DOCUMENTATION
+    /** CIL Property table.
+     *
+     */
+    class SgAsmCilProperty: public SgAsmCilNode {
+    public:
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: Flags.
+         *
+         *  a 2-byte bitmask of type PropertyAttributes.
+         *
+         * @{ */
+        uint16_t get_Flags() const;
+        void set_Flags(uint16_t);
+        /** @} */
+#else
+        AsmCilProperty.setDataPrototype("uint16_t", "Flags", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+#ifdef DOCUMENTATION
+        /** Property: Name.
+         *
+         *  an index into the String heap.
+         *
+         * @{ */
+        uint32_t get_Name() const;
+        void set_Name(uint32_t);
+        /** @} */
+#else
+        AsmCilProperty.setDataPrototype("uint32_t", "Name", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+#ifdef DOCUMENTATION
+        /** Property: Type.
+         *
+         *  an index into the Blob heap.
+         *
+         * @{ */
+        uint32_t get_Type() const;
+        void set_Type(uint32_t);
+        /** @} */
+#else
+        AsmCilProperty.setDataPrototype("uint32_t", "Type", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmCilProperty);
+#if defined(SgAsmCilProperty_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
+
+            s & BOOST_SERIALIZATION_NVP(p_Flags);
+            s & BOOST_SERIALIZATION_NVP(p_Name);
+            s & BOOST_SERIALIZATION_NVP(p_Type);
+        }
+#endif
+
+        void parse(uint8_t* buf, size_t& index, bool uses4byteIndexing);
+
+#endif // SgAsmCilProperty_OTHERS
+
+#ifdef DOCUMENTATION
+    protected:
+
+      uint16_t p_Flags;
+      uint32_t p_Name;
+      uint32_t p_Type;
+#endif
+
+#ifdef DOCUMENTATION
+    };
+#endif
+    /*************************************************************************************************************************
+     *                                          CIL PropertyMap (II.22.35)
+     *************************************************************************************************************************/
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmCilPropertyMap);
+    IS_SERIALIZABLE(AsmCilPropertyMap);
+
+#ifdef DOCUMENTATION
+    /** CIL PropertyMap table.
+     *
+     */
+    class SgAsmCilPropertyMap: public SgAsmCilNode {
+    public:
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: Parent.
+         *
+         *  an index into the TypeDef table.
+         *
+         * @{ */
+        uint32_t get_Parent() const;
+        void set_Parent(uint32_t);
+        /** @} */
+#else
+        AsmCilPropertyMap.setDataPrototype("uint32_t", "Parent", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+#ifdef DOCUMENTATION
+        /** Property: PropertyList.
+         *
+         *  an index into the Property table
+         *
+         * @{ */
+        uint32_t get_PropertyList() const;
+        void set_PropertyList(uint32_t);
+        /** @} */
+#else
+        AsmCilPropertyMap.setDataPrototype("uint32_t", "PropertyList", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmCilPropertyMap);
+#if defined(SgAsmCilPropertyMap_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
+
+            s & BOOST_SERIALIZATION_NVP(p_Parent);
+            s & BOOST_SERIALIZATION_NVP(p_PropertyList);
+        }
+#endif
+
+        void parse(uint8_t* buf, size_t& index, bool uses4byteIndexing);
+
+#endif // SgAsmCilPropertyMap_OTHERS
+
+#ifdef DOCUMENTATION
+    protected:
+
+      uint32_t p_Parent;
+      uint32_t p_PropertyList;
+#endif
+
+#ifdef DOCUMENTATION
+    };
+#endif
+    /*************************************************************************************************************************
+     *                                          CIL StandAloneSig (II.22.36)
+     *************************************************************************************************************************/
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmCilStandAloneSig);
+    IS_SERIALIZABLE(AsmCilStandAloneSig);
+
+#ifdef DOCUMENTATION
+    /** CIL StandAloneSig table.
+     *
+     */
+    class SgAsmCilStandAloneSig: public SgAsmCilNode {
+    public:
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: Signature.
+         *
+         *  an index into the Blob heap.
+         *
+         * @{ */
+        uint32_t get_Signature() const;
+        void set_Signature(uint32_t);
+        /** @} */
+#else
+        AsmCilStandAloneSig.setDataPrototype("uint32_t", "Signature", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmCilStandAloneSig);
+#if defined(SgAsmCilStandAloneSig_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
+
+            s & BOOST_SERIALIZATION_NVP(p_Signature);
+        }
+#endif
+
+        void parse(uint8_t* buf, size_t& index, bool uses4byteIndexing);
+
+#endif // SgAsmCilStandAloneSig_OTHERS
+
+#ifdef DOCUMENTATION
+    protected:
+
+      uint32_t p_Signature;
+#endif
+
+#ifdef DOCUMENTATION
+    };
+#endif
+    /*************************************************************************************************************************
+     *                                          CIL TypeDef (II.22.37)
+     *************************************************************************************************************************/
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmCilTypeDef);
+    IS_SERIALIZABLE(AsmCilTypeDef);
+
+#ifdef DOCUMENTATION
+    /** CIL TypeDef table.
+     *
+     */
+    class SgAsmCilTypeDef: public SgAsmCilNode {
+    public:
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: Flags.
+         *
+         *  a 4-byte bitmask of type TypeAttributes.
+         *
+         * @{ */
+        uint32_t get_Flags() const;
+        void set_Flags(uint32_t);
+        /** @} */
+#else
+        AsmCilTypeDef.setDataPrototype("uint32_t", "Flags", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+#ifdef DOCUMENTATION
+        /** Property: TypeName.
+         *
+         *  an index into the String heap.
+         *
+         * @{ */
+        uint32_t get_TypeName() const;
+        void set_TypeName(uint32_t);
+        /** @} */
+#else
+        AsmCilTypeDef.setDataPrototype("uint32_t", "TypeName", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+#ifdef DOCUMENTATION
+        /** Property: TypeNamespace.
+         *
+         *  an index into the String heap.
+         *
+         * @{ */
+        uint32_t get_TypeNamespace() const;
+        void set_TypeNamespace(uint32_t);
+        /** @} */
+#else
+        AsmCilTypeDef.setDataPrototype("uint32_t", "TypeNamespace", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+#ifdef DOCUMENTATION
+        /** Property: Extends.
+         *
+         *  an index into the TypeDef, TypeRef, or TypeSpec table.
+         *
+         * @{ */
+        uint32_t get_Extends() const;
+        void set_Extends(uint32_t);
+        /** @} */
+#else
+        AsmCilTypeDef.setDataPrototype("uint32_t", "Extends", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+#ifdef DOCUMENTATION
+        /** Property: FieldList.
+         *
+         *  an index into the Field table.
+         *
+         * @{ */
+        uint32_t get_FieldList() const;
+        void set_FieldList(uint32_t);
+        /** @} */
+#else
+        AsmCilTypeDef.setDataPrototype("uint32_t", "FieldList", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+#ifdef DOCUMENTATION
+        /** Property: MethodList.
+         *
+         *  an index into the MethodDef table.
+         *
+         * @{ */
+        uint32_t get_MethodList() const;
+        void set_MethodList(uint32_t);
+        /** @} */
+#else
+        AsmCilTypeDef.setDataPrototype("uint32_t", "MethodList", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmCilTypeDef);
+#if defined(SgAsmCilTypeDef_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
+
+            s & BOOST_SERIALIZATION_NVP(p_Flags);
+            s & BOOST_SERIALIZATION_NVP(p_TypeName);
+            s & BOOST_SERIALIZATION_NVP(p_TypeNamespace);
+            s & BOOST_SERIALIZATION_NVP(p_Extends);
+            s & BOOST_SERIALIZATION_NVP(p_FieldList);
+            s & BOOST_SERIALIZATION_NVP(p_MethodList);
+        }
+#endif
+
+        void parse(uint8_t* buf, size_t& index, bool uses4byteIndexing);
+
+#endif // SgAsmCilTypeDef_OTHERS
+
+#ifdef DOCUMENTATION
+    protected:
+
+      uint32_t p_Flags;
+      uint32_t p_TypeName;
+      uint32_t p_TypeNamespace;
+      uint32_t p_Extends;
+      uint32_t p_FieldList;
+      uint32_t p_MethodList;
+#endif
+
+#ifdef DOCUMENTATION
+    };
+#endif
+    /*************************************************************************************************************************
+     *                                          CIL TypeRef (II.22.38)
+     *************************************************************************************************************************/
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmCilTypeRef);
+    IS_SERIALIZABLE(AsmCilTypeRef);
+
+#ifdef DOCUMENTATION
+    /** CIL TypeRef table.
+     *
+     */
+    class SgAsmCilTypeRef: public SgAsmCilNode {
+    public:
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: ResolutionScope.
+         *
+         *  An index into a Module, ModuleRef, AssemblyRef or TypeRef table, or null.
+         *
+         * @{ */
+        uint16_t get_ResolutionScope() const;
+        void set_ResolutionScope(uint16_t);
+        /** @} */
+#else
+        AsmCilTypeRef.setDataPrototype("uint16_t", "ResolutionScope", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+#ifdef DOCUMENTATION
+        /** Property: TypeName.
+         *
+         *  an index into the String heap.
+         *
+         * @{ */
+        uint32_t get_TypeName() const;
+        void set_TypeName(uint32_t);
+        /** @} */
+#else
+        AsmCilTypeRef.setDataPrototype("uint32_t", "TypeName", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+#ifdef DOCUMENTATION
+        /** Property: TypeNamespace.
+         *
+         *  an index into the String heap.
+         *
+         * @{ */
+        uint32_t get_TypeNamespace() const;
+        void set_TypeNamespace(uint32_t);
+        /** @} */
+#else
+        AsmCilTypeRef.setDataPrototype("uint32_t", "TypeNamespace", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmCilTypeRef);
+#if defined(SgAsmCilTypeRef_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
+
+            s & BOOST_SERIALIZATION_NVP(p_ResolutionScope);
+            s & BOOST_SERIALIZATION_NVP(p_TypeName);
+            s & BOOST_SERIALIZATION_NVP(p_TypeNamespace);
+        }
+#endif
+
+        void parse(uint8_t* buf, size_t& index, bool uses4byteIndexing);
+
+#endif // SgAsmCilTypeRef_OTHERS
+
+#ifdef DOCUMENTATION
+    protected:
+
+      uint16_t p_ResolutionScope;
+      uint32_t p_TypeName;
+      uint32_t p_TypeNamespace;
+#endif
+
+#ifdef DOCUMENTATION
+    };
+#endif
+    /*************************************************************************************************************************
+     *                                          CIL TypeSpec (II.22.39)
+     *************************************************************************************************************************/
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmCilTypeSpec);
+    IS_SERIALIZABLE(AsmCilTypeSpec);
+
+#ifdef DOCUMENTATION
+    /** CIL TypeSpec table.
+     *
+     */
+    class SgAsmCilTypeSpec: public SgAsmCilNode {
+    public:
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: Signature.
+         *
+         *  An index into the Blob heap.
+         *
+         * @{ */
+        uint32_t get_Signature() const;
+        void set_Signature(uint32_t);
+        /** @} */
+#else
+        AsmCilTypeSpec.setDataPrototype("uint32_t", "Signature", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmCilTypeSpec);
+#if defined(SgAsmCilTypeSpec_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
+
+            s & BOOST_SERIALIZATION_NVP(p_Signature);
+        }
+#endif
+
+        void parse(uint8_t* buf, size_t& index, bool uses4byteIndexing);
+
+#endif // SgAsmCilTypeSpec_OTHERS
+
+#ifdef DOCUMENTATION
+    protected:
+
+      uint32_t p_Signature;
+#endif
 
 #ifdef DOCUMENTATION
     };
 #endif
 
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// --- END generated code. ------------------------------------------------------
+
+
 
     /*************************************************************************************************************************
      *                                      Root of a branch of CIL IR classes
      *************************************************************************************************************************/
 
+
+
     NEW_NONTERMINAL_MACRO(AsmCilNode,
-                          AsmCilAssembly | AsmCilAssemblyOS | AsmCilAssemblyProcessor |
-                          AsmCilAssemblyRef | AsmCilAssemblyRefOS | AsmCilAssemblyRefProcessor |
-                          AsmCilClassLayout | AsmCilConstant | AsmCilCustomAttribute |
-                          AsmCilDeclSecurity | AsmCilEventMap | AsmCilEvent | AsmCilExportedType |
-                          AsmCilField | AsmCilFieldLayout | AsmCilFieldMarshal | AsmCilFieldRVA |
-                          AsmCilFile | AsmCilGenericParam | AsmCilGenericParamConstraint | AsmCilImplMap |
-                          AsmCilInterfaceImpl,
+                          AsmCilAssembly        | AsmCilAssemblyOS           | AsmCilAssemblyProcessor | AsmCilAssemblyRef |
+                          AsmCilAssemblyRefOS   | AsmCilAssemblyRefProcessor | AsmCilClassLayout       | AsmCilConstant |
+                          AsmCilCustomAttribute | AsmCilDeclSecurity         | AsmCilEvent             | AsmCilEventMap |
+                          AsmCilExportedType    | AsmCilField                | AsmCilFieldLayout       | AsmCilFieldMarshal |
+                          AsmCilFieldRVA        | AsmCilFile                 | AsmCilGenericParam      | AsmCilGenericParamConstraint |
+                          AsmCilImplMap         | AsmCilInterfaceImpl        | AsmCilManifestResource  | AsmCilMemberRef |
+                          AsmCilMethodDef       | AsmCilMethodImpl           | AsmCilMethodSemantics   | AsmCilMethodSpec |
+                          AsmCilModule          | AsmCilModuleRef            | AsmCilNestedClass       | AsmCilParam |
+                          AsmCilProperty        | AsmCilPropertyMap          | AsmCilStandAloneSig     | AsmCilTypeDef |
+                          AsmCilTypeRef         | AsmCilTypeSpec,
                           "AsmCilNode", "AsmCilNodeTag", false);
     AsmCilNode.setCppCondition("!defined(DOCUMENTATION)");
     IS_SERIALIZABLE(AsmCilNode);
