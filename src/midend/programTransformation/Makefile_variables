@@ -19,7 +19,8 @@ mptTransTrackingPath=$(mProgramTransformationPath)/transformationTracking#
 # ------------------------------------------------------------------------------
 
 mProgramTransformation_lib_ltlibraries=\
-	$(mptOmpLowering_lib_ltlibraries)
+	$(mptOmpLowering_lib_ltlibraries) \
+	$(mptOutlining_lib_ltlibraries)
 
 
 mProgramTransformation_la_sources=\
