@@ -82,7 +82,8 @@ namespace Outliner
 
   //! Constants used during translation
   // A support lib's header name
-  const std::string AUTOTUNING_LIB_HEADER="autotuning_lib.h";
+  //const std::string AUTOTUNING_LIB_HEADER="autotuning_lib.h";
+  const std::string AUTOTUNING_LIB_HEADER="outlining_lib.h"; // we moved the lib to be inside of rose/src and renamed it.
   // the lib function call to find a specified function pointer
   const std::string FIND_FUNCP_DLOPEN="findFunctionUsingDlopen";
   const std::string DEFAULT_OUTPUT_PATH="/tmp";

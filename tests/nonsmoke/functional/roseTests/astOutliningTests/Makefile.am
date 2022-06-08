@@ -308,7 +308,12 @@ $(tofile_test_targets): tofile_%.passed: % outline
 # shortcut to test new_file
 
 test_newfile: $(tofile_test_targets)
-
+# runtime lib and its header: note that they are in two different paths.
+OUTLINING_LIB_PATH = $(abs_top_builddir)/src/midend
+$(OUTLINING_LIB_PATH)/.libs/liboutlining.a:
+	make -C $(OUTLINING_LIB_PATH)
+INCLUDE_OUTLINING_LIB_HEADER = -I$(abs_top_srcdir)/src/midend/programTransformation/astOutlining
+# we use $(abs_top_srcdir) since the build will happen within a temp directory!!
 #------------------------------------------------------------------------------------------------------------------------
 # Test outlining to a separate file using dlopen
 
@@ -316,8 +321,8 @@ dlopen_test_targets  = $(addprefix dlopen_,  $(addsuffix .passed, $(C_TESTS_REQU
 dlopen_test_targets  += $(addprefix dlopen_,  $(addsuffix .passed, $(CXX_TESTS_REQUIRED_TO_PASS)))
 C_CXX_RESULTS +=  $(dlopen_test_targets)
 dlopen_test_flags =				\
+	$(INCLUDE_OUTLINING_LIB_HEADER)	\
 	-rose:outline:use_dlopen		\
-	-I$(abs_top_srcdir)/projects/autoTuning	\
 	-rose:outline:output_path .
 
 $(dlopen_test_targets): dlopen_%.passed: % outline
@@ -332,9 +337,9 @@ dlopen2_test_targets  = $(addprefix dlopen2_,  $(addsuffix .passed, $(C_TESTS_RE
 dlopen2_test_targets  += $(addprefix dlopen2_,  $(addsuffix .passed, $(CXX_TESTS_REQUIRED_TO_PASS)))
 C_CXX_RESULTS += $(dlopen2_test_targets)  
 dlopen2_test_flags =				\
+        $(INCLUDE_OUTLINING_LIB_HEADER)	 \
 	-rose:outline:use_dlopen		\
 	-rose:outline:copy_orig_file		\
-	-I$(abs_top_srcdir)/projects/autoTuning	\
 	-rose:outline:output_path .
 
 $(dlopen2_test_targets): dlopen2_%.passed: % outline
@@ -352,9 +357,9 @@ if !USING_INTEL_COMPILER
 dlopen3_test_targets = $(addprefix dlopen3_,  $(addsuffix .passed, $(CXX2_TESTS_REQUIRED_TO_PASS)))
 C_CXX_RESULTS += $(dlopen3_test_targets)  
 dlopen3_test_flags =				\
+	$(INCLUDE_OUTLINING_LIB_HEADER)	\
 	-rose:outline:use_dlopen		\
 	-rose:outline:copy_orig_file		\
-	-I$(abs_top_srcdir)/projects/autoTuning	\
 	-rose:outline:exclude_headers -rose:unparseHeaderFiles -rose:unparseHeaderFilesRootFolder unparseHeaderRoot_test_20_2019
 
 $(dlopen3_test_targets): dlopen3_%.passed: % outline
@@ -378,10 +383,10 @@ dlopen4_test_lib_so_targets = $(addprefix rose_, $(addsuffix .so, $(addsuffix _l
 C_CXX_RESULTS += $(dlopen4_test_targets)
 
 dlopen4_test_flags = -fpermissive	\
+	$(INCLUDE_OUTLINING_LIB_HEADER)	\
 	-rose:outline:select_omp_loop           \
 	-rose:outline:use_dlopen		\
 	-rose:outline:copy_orig_file		\
-	-I$(abs_top_srcdir)/projects/autoTuning	\
 	-rose:unparseHeaderFilesRootFolder unparseHeaderRoot_dlopen4
 $(dlopen4_test_targets): dlopen4_%: % outline
 	./outline$(EXEEXT) $(TEST_INCLUDES) $(dlopen4_test_flags) -c $(abspath $<) -rose:output $@
@@ -400,14 +405,16 @@ $(dlopen4_test_lib_so_targets):%.so: %.cpp
 	cp $@ /tmp/.
 
 # build the executables
-AUTO_TUNING_PATH = $(top_builddir)/projects/autoTuning
+#AUTO_TUNING_PATH = $(top_builddir)/projects/autoTuning
 
-$(AUTO_TUNING_PATH)/libautoTuning.a:
-	make -C $(AUTO_TUNING_PATH)
+#$(AUTO_TUNING_PATH)/libautoTuning.a:
+#	make -C $(AUTO_TUNING_PATH)
 
-MY_FINAL_LINK = $(AUTO_TUNING_PATH)/libautoTuning.a -Wl,--export-dynamic -g -ldl -lm  $(LDFLAGS)
+#MY_FINAL_LINK = $(AUTO_TUNING_PATH)/libautoTuning.a -Wl,--export-dynamic -g -ldl -lm  $(LDFLAGS)
+MY_FINAL_LINK = $(OUTLINING_LIB_PATH)/.libs/liboutlining.a -Wl,--export-dynamic -g -ldl -lm  $(LDFLAGS)
 PASSING_CXX_TEST_Executables = ${CXX4_TESTS_OBJECT_REQUIRED_TO_RUN:.o=.out}
-$(PASSING_CXX_TEST_Executables): %.out: %.o $(AUTO_TUNING_PATH)/libautoTuning.a rose_%_lib.so
+#$(PASSING_CXX_TEST_Executables): %.out: %.o $(AUTO_TUNING_PATH)/libautoTuning.a rose_%_lib.so
+$(PASSING_CXX_TEST_Executables): %.out: %.o $(OUTLINING_LIB_PATH)/.libs/liboutlining.a rose_%_lib.so
 	$(LIBTOOL) --mode=link $(CXX) $< $(MY_FINAL_LINK) -o $@
 
 check_PROGRAM = $(PASSING_CXX_TEST_Executables)

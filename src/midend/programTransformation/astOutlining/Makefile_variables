@@ -1,5 +1,15 @@
 # Non-recursive Makefile
 
+# avoid using libtool for outlining_lib.a since it will be directly linked to executables
+mptOutlining_lib_ltlibraries=\
+        liboutlining.la
+
+# only generate .libs/outlining_lib.a
+liboutlining_la_LDFLAGS = -static
+
+liboutlining_la_SOURCES=\
+        $(mptOutliningPath)/outlining_lib.c
+
 mptAstOutlining_la_sources = \
 	$(mptOutliningPath)/Check.cc \
 	$(mptOutliningPath)/Outliner.cc \
@@ -44,6 +54,7 @@ mptAstOutlining_includeHeaders = \
 	$(mptOutliningPath)/IfDirectiveContextFinder.hh \
 	$(mptOutliningPath)/IfDirectiveExtractor.hh \
 	$(mptOutliningPath)/If.hh \
+	$(mptOutliningPath)/outlining_lib.h \
 	$(mptOutliningPath)/Preprocess.hh
 #Transform.hh
 
