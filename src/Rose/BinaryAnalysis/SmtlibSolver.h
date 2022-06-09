@@ -103,8 +103,10 @@ protected:
 
     // Create an expression that does a shift operation.
     virtual SExprTypePair outputArithmeticShiftRight(const SymbolicExpr::InteriorPtr&);
-    virtual SExprTypePair outputLogicalShiftRight(const SymbolicExpr::InteriorPtr&);
-    virtual SExprTypePair outputShiftLeft(const SymbolicExpr::InteriorPtr&);
+    virtual SExprTypePair outputLogicalShiftRight0(const SymbolicExpr::InteriorPtr&);
+    virtual SExprTypePair outputLogicalShiftRight1(const SymbolicExpr::InteriorPtr&);
+    virtual SExprTypePair outputShiftLeft0(const SymbolicExpr::InteriorPtr&);
+    virtual SExprTypePair outputShiftLeft1(const SymbolicExpr::InteriorPtr&);
 
     // Create a rotate expression. */
     virtual SExprTypePair outputRotateLeft(const SymbolicExpr::InteriorPtr&);

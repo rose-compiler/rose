@@ -362,16 +362,16 @@ Z3Solver::outputExpression(const SymbolicExpr::Ptr &expr) {
                 retval = outputBinary("bvsle", inode, BOOLEAN);
                 break;
             case SymbolicExpr::OP_SHL0:
-                retval = outputShiftLeft(inode);
+                retval = outputShiftLeft0(inode);
                 break;
             case SymbolicExpr::OP_SHL1:
-                retval = outputShiftLeft(inode);
+                retval = outputShiftLeft1(inode);
                 break;
             case SymbolicExpr::OP_SHR0:
-                retval = outputLogicalShiftRight(inode);
+                retval = outputLogicalShiftRight0(inode);
                 break;
             case SymbolicExpr::OP_SHR1:
-                retval = outputLogicalShiftRight(inode);
+                retval = outputLogicalShiftRight1(inode);
                 break;
             case SymbolicExpr::OP_SGE:
                 retval = outputBinary("bvsge", inode, BOOLEAN);
