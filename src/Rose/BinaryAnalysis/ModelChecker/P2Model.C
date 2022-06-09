@@ -1227,7 +1227,8 @@ RiscOperators::readMemory(RegisterDescriptor segreg, const BS::SValue::Ptr &addr
     const size_t nBytes = dflt->nBits() / 8;
     uint8_t buf[8];
     if (adjustedVa->toUnsigned() && nBytes <= sizeof(buf) &&
-        nBytes == partitioner_.memoryMap()->at(adjustedVa->toUnsigned().get()).limit(nBytes).read(buf).size()) {
+        nBytes == (partitioner_.memoryMap()->at(adjustedVa->toUnsigned().get()).limit(nBytes)
+                   .require(MemoryMap::READABLE).prohibit(MemoryMap::WRITABLE).read(buf).size())) {
         switch (partitioner_.memoryMap()->byteOrder()) {
             case ByteOrder::ORDER_UNSPECIFIED:
             case ByteOrder::ORDER_LSB: {
