@@ -340,6 +340,16 @@ namespace
   };
 
 
+  SgVariableDeclaration* asVariableDeclaration(SgDeclarationStatement* dcl)
+  {
+    ASSERT_not_null(dcl);
+    SgVariableDeclaration* var = isSgVariableDeclaration(dcl);
+
+    ASSERT_not_null(var);
+    return var;
+  }
+
+
   SgVariableDeclaration* variableDeclaration(SgInitializedName* ini)
   {
     ASSERT_not_null(ini);
@@ -618,6 +628,7 @@ namespace
     void handleFunctionEntryDecl(SgFunctionDeclaration&, std::string keyword, bool hasReturn = false);
 
     void handleParameterList(const SgInitializedNamePtrList& params);
+    void handleParameterList(const SgDeclarationStatementPtrList& params);
 
     static
     std::string
@@ -1159,7 +1170,7 @@ namespace
     }
 
     SgType&
-    processUnknownDiscriminatPart(SgType* ty)
+    processUnknownDiscriminantPart(SgType* ty)
     {
       if (SgAdaSubtype* sub = isSgAdaSubtype(ty))
       {
@@ -1186,7 +1197,7 @@ namespace
       SgType* formalBase = ty->get_formal_type();
       ASSERT_not_null(formalBase);
 
-      formalBase = &processUnknownDiscriminatPart(formalBase);
+      formalBase = &processUnknownDiscriminantPart(formalBase);
 
       prn(" is ");
       modifiers(n);
@@ -1682,7 +1693,7 @@ namespace
         return;
       }
 
-      handleParameterList(dcl.get_discriminants());
+      handleParameterList(SG_DEREF(dcl.get_discriminants()).get_parameters());
     }
 
     void handle(SgClassDeclaration& n)
@@ -2070,6 +2081,33 @@ namespace
     parameter_decl_t::iterator aa = paramdecls.begin();
     parameter_decl_t::iterator zz = std::unique(aa, paramdecls.end());
 
+    // print parenthesis only if parameters were present
+    if (aa != zz)
+    {
+      prn("(");
+      std::for_each(aa, zz, AdaParamUnparser{unparser, info, os});
+      prn(")");
+    }
+  }
+
+  void
+  AdaStatementUnparser::handleParameterList(const SgDeclarationStatementPtrList& params)
+  {
+    using parameter_decl_t = std::vector<SgVariableDeclaration*>;
+
+    parameter_decl_t           paramdecls;
+
+    // Since SgFunctionParameterScope (and SgFunctionDefinition) do not allow
+    //   traversing the function parameter declarations, they are collected
+    //   from initialized names.
+
+    std::transform( params.begin(), params.end(),
+                    std::back_inserter(paramdecls),
+                    asVariableDeclaration
+                  );
+
+    parameter_decl_t::iterator aa = paramdecls.begin();
+    parameter_decl_t::iterator zz = paramdecls.end();
 
     // print parenthesis only if parameters were present
     if (aa != zz)
@@ -2079,6 +2117,7 @@ namespace
       prn(")");
     }
   }
+
 
   void
   AdaStatementUnparser::handleFunctionEntryDecl(SgFunctionDeclaration& n, std::string keyword, bool hasReturn)

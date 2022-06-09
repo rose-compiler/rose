@@ -538,30 +538,29 @@ namespace
   struct DiscriminantCreator
   {
       DiscriminantCreator(SgAdaDiscriminatedTypeDecl& discrNode, AstContext astctx)
-      : sgnode(discrNode), ctx(astctx)
+      : sgnode(discrNode), params(SG_DEREF(discrNode.get_discriminants())), ctx(astctx)
       {}
 
       void operator()(Element_Struct& elem)
       {
-        SgVariableDeclaration&    decl = getDiscriminant(elem, ctx);
+        SgVariableDeclaration& decl = getDiscriminant(elem, ctx);
 
         // SgDeclarationScope does not hold a list of declarations..
         // ctx.scope().append_statement(&decl);
-        // alternative: store them with the discriminated decl node
+        // alternative: store them in the discriminated decl node's parameter list
+        params.append_parameter(&decl);
 
-        SgInitializedNamePtrList& args = sgnode.get_discriminants();
-
-        // in Ada multiple parameters can be declared
-        //   within a single declaration.
-        for (SgInitializedName* discriminant : decl.get_variables())
-        {
-          args.push_back(discriminant);
-        }
+        //~ logWarn() << decl.unparseToString()
+                  //~ << " in " << typeid(*decl.get_scope()).name()
+                  //~ << std::endl;
+        //~ decl.get_scope();
+        //~ ADA_ASSERT(!isSgBasicBlock(decl.get_scope()));
       }
 
     private:
-      SgAdaDiscriminatedTypeDecl& sgnode;
-      AstContext                  ctx;
+      SgAdaDiscriminatedTypeDecl&    sgnode;
+      SgAdaParameterList&            params;
+      AstContext                     ctx;
 
       DiscriminantCreator() = delete;
   };
@@ -3910,6 +3909,14 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         attachSourceLocation(sgnode, elem, ctx);
         ctx.scope().append_statement(&sgnode);
 
+        /* unused fields:
+              bool                           Has_Abstract;
+              bool                           Is_Not_Null_Return;
+              enum Subprogram_Default_Kinds  Default_Kind;
+              bool                           Is_Not_Overriding_Declaration;
+              bool                           Is_Overriding_Declaration;
+              Expression_ID                  Formal_Subprogram_Default;
+        */
         break;
       }
 
@@ -3977,7 +3984,6 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         logKind("A_Real_Number_Declaration");
 
         handleNumberDecl(elem, decl, ctx, isPrivate, SG_DEREF(sb::buildAutoType()), mkRealType());
-
         /* unused fields:
          */
         break;
