@@ -3718,11 +3718,13 @@ bool ClangToSageTranslator::VisitUnaryOperator(clang::UnaryOperator * unary_oper
         case clang::UO_Minus:
             *node = SageBuilder::buildMinusOp(subexpr);
             break;
+        // Def. in Clang: UNARY_OPERATION(Not, "~")
         case clang::UO_Not:
-            *node = SageBuilder::buildNotOp(subexpr);
-            break;
-        case clang::UO_LNot:
             *node = SageBuilder::buildBitComplementOp(subexpr);
+            break;
+        // Def. in UNARY_OPERATION(LNot, "!")
+        case clang::UO_LNot:
+            *node = SageBuilder::buildNotOp(subexpr);
             break;
         case clang::UO_Real:
             *node = SageBuilder::buildImagPartOp(subexpr);
