@@ -2818,7 +2818,9 @@ bool ClangToSageTranslator::VisitDesignatedInitExpr(clang::DesignatedInitExpr * 
     std::cerr << "ClangToSageTranslator::VisitDesignatedInitExpr" << std::endl;
 #endif
 
-    SgInitializer * init = NULL;    
+    SgInitializer * base_init = NULL;    
+    SgDesignatedInitializer * designated_init = NULL;    
+    SgExprListExp * expr_list_exp = NULL; 
     {
         SgNode * tmp_expr = Traverse(designated_init_expr->getInit());
         SgExpression * expr = isSgExpression(tmp_expr);
@@ -2826,17 +2828,87 @@ bool ClangToSageTranslator::VisitDesignatedInitExpr(clang::DesignatedInitExpr * 
         SgExprListExp * expr_list_exp = isSgExprListExp(expr);
         if (expr_list_exp != NULL) {
             // FIXME get the type right...
-            init = SageBuilder::buildAggregateInitializer_nfi(expr_list_exp, NULL);
+            base_init = SageBuilder::buildAggregateInitializer_nfi(expr_list_exp, NULL);
         }
         else {
-            init = SageBuilder::buildAssignInitializer_nfi(expr, expr->get_type());
+            base_init = SageBuilder::buildAssignInitializer_nfi(expr, expr->get_type());
         }
-        ROSE_ASSERT(init != NULL);
-        applySourceRange(init, designated_init_expr->getInit()->getSourceRange());
+        ROSE_ASSERT(base_init != NULL);
+        applySourceRange(base_init, designated_init_expr->getInit()->getSourceRange());
     }
 
-    SgExprListExp * expr_list_exp = SageBuilder::buildExprListExp_nfi();
+
+/* Pei-Hung (06/10/2022) revision to handle Initializer in test2013_37.c
+ *  After calling getSyntacticForm from InitListExpr, the type and multidimensional array hierarchy is missing.
+ *  This version can construct the array structure but need additional support to grab the type structure from 
+ *  parent AST node, such as VarDecl.
+ */
+
     auto designatorSize = designated_init_expr->size();
+
+    for (auto it=designatorSize; it > 0; it--) {
+        expr_list_exp = SageBuilder::buildExprListExp_nfi();
+        SgExpression * expr = NULL;
+        clang::DesignatedInitExpr::Designator * D = designated_init_expr->getDesignator(it-1);
+        if (D->isFieldDesignator()) {
+            SgSymbol * symbol = GetSymbolFromSymbolTable(D->getField());
+            SgVariableSymbol * var_sym = isSgVariableSymbol(symbol);
+            ROSE_ASSERT(var_sym != NULL);
+            expr = SageBuilder::buildVarRefExp_nfi(var_sym);
+        }
+        else if (D->isArrayDesignator()) {
+            SgNode * tmp_expr = NULL;
+            if(clang::ConstantExpr::classof(designated_init_expr->getArrayIndex(*D)))
+            {
+               clang::FullExpr* fullExpr = (clang::FullExpr*) designated_init_expr->getArrayIndex(*D);
+               clang::IntegerLiteral* integerLiteral = (clang::IntegerLiteral*) fullExpr->getSubExpr();
+               tmp_expr = SageBuilder::buildUnsignedLongVal((unsigned long) integerLiteral->getValue().getSExtValue());
+            }
+            else
+            {
+               tmp_expr = Traverse(designated_init_expr->getArrayIndex(*D));
+            }
+            expr = isSgExpression(tmp_expr);
+            ROSE_ASSERT(expr != NULL);
+
+        }
+        else if (D->isArrayRangeDesignator()) {
+            ROSE_ASSERT(!"I don't believe range designator initializer are supported by ROSE...");    
+        }
+        else ROSE_ABORT();
+
+        ROSE_ASSERT(expr != NULL);
+
+        applySourceRange(expr, D->getSourceRange());
+        expr->set_parent(expr_list_exp);
+        expr_list_exp->append_expression(expr);
+        if(it > 1)
+        {
+            SgDesignatedInitializer * design_init = new SgDesignatedInitializer(expr_list_exp, base_init);
+            applySourceRange(design_init, designated_init_expr->getDesignatorsSourceRange());
+            expr_list_exp->set_parent(design_init);
+            base_init->set_parent(design_init);
+            SgExprListExp* aggListExp = SageBuilder::buildExprListExp_nfi();
+            design_init->set_parent(aggListExp);
+            aggListExp->append_expression(design_init);
+            SgAggregateInitializer* newAggInit = SageBuilder::buildAggregateInitializer_nfi(aggListExp, NULL);
+            expr_list_exp = SageBuilder::buildExprListExp_nfi(); 
+            base_init = newAggInit; 
+        }
+
+    }
+
+    applySourceRange(expr_list_exp, designated_init_expr->getDesignatorsSourceRange());
+    designated_init = new SgDesignatedInitializer(expr_list_exp, base_init);
+    expr_list_exp->set_parent(base_init);
+    base_init->set_parent(designated_init);
+
+    *node = designated_init;
+
+    return VisitExpr(designated_init_expr, node);
+
+// Pei-Hung (06/10/2022) keep the original implementation which has the array information stored in the list
+/*
     for (auto it=0; it < designatorSize; it++) {
         SgExpression * expr = NULL;
         clang::DesignatedInitExpr::Designator * D = designated_init_expr->getDesignator(it);
@@ -2848,7 +2920,18 @@ bool ClangToSageTranslator::VisitDesignatedInitExpr(clang::DesignatedInitExpr * 
             applySourceRange(expr, D->getSourceRange());
         }
         else if (D->isArrayDesignator()) {
-            SgNode * tmp_expr = Traverse(designated_init_expr->getArrayIndex(*D));
+            SgNode * tmp_expr = NULL;
+            if(clang::ConstantExpr::classof(designated_init_expr->getArrayIndex(*D)))
+            {
+               clang::FullExpr* fullExpr = (clang::FullExpr*) designated_init_expr->getArrayIndex(*D);
+               clang::IntegerLiteral* integerLiteral = (clang::IntegerLiteral*) fullExpr->getSubExpr();
+               tmp_expr = SageBuilder::buildUnsignedLongVal((unsigned long) integerLiteral->getValue().getSExtValue());
+std::cerr << "idx:" << integerLiteral->getValue().getSExtValue() << std::endl;
+            }
+            else
+            {
+               tmp_expr = Traverse(designated_init_expr->getArrayIndex(*D));
+            }
             expr = isSgExpression(tmp_expr);
             ROSE_ASSERT(expr != NULL);
         }
@@ -2872,6 +2955,7 @@ bool ClangToSageTranslator::VisitDesignatedInitExpr(clang::DesignatedInitExpr * 
     *node = design_init;
 
     return VisitExpr(designated_init_expr, node);
+*/
 }
 
 bool ClangToSageTranslator::VisitDesignatedInitUpdateExpr(clang::DesignatedInitUpdateExpr * designated_init_update, SgNode ** node) {
