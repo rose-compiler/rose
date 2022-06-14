@@ -4,6 +4,8 @@
 #include <Rose/BinaryAnalysis/DisassemblerJvm.h>
 #include <Rose/BinaryAnalysis/Unparser/Jvm.h>
 
+#define DEBUG_OUTPUT 0
+
 using std::cout;
 using std::endl;
 
@@ -28,10 +30,9 @@ DisassemblerJvm::append_operand(const MemoryMap::Ptr &map, rose_addr_t va,
     ROSE_ASSERT(false && "short read");
   }
 
-  T val = be_to_host(*buf);
-#ifdef TODO_SageBuilderAsm
+  T val = be_to_host(*reinterpret_cast<T*>(buf));
   operands->append_operand(SageBuilderAsm::buildValue(val));
-#endif
+
   // TODO: Perhaps there is a more efficient way to do this
   for (int i = 0; i < nRead; i++) {
     chars.push_back(buf[i]);
@@ -201,7 +202,7 @@ DisassemblerJvm::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start, Ad
         break;
       case opcode::iload: // 0x15 (21)
         mnemonic = "iload";
-        va += append_operand<uint8_t>(map, va, chars, operands);
+        va += append_operand<uint8_t>(map, va, chars, operands); // index
         break;
       case opcode::lload: // 0x16 (22)
         mnemonic = "lload";
@@ -746,18 +747,17 @@ DisassemblerJvm::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start, Ad
         mnemonic = "new";
         va += append_operand<uint16_t>(map, va, chars, operands);
         break;
-      case opcode::newarray: { // 0xbc (188)
+      case opcode::newarray: // 0xbc (188)
         mnemonic = "newarray";
-        va += append_operand<uint8_t>(map, va, chars, operands);
+        va += append_operand<uint8_t>(map, va, chars, operands); // atype
         break;
-      }
       case opcode::anewarray: // 0xbd (189)
         mnemonic = "anewarray";
         va += append_operand<uint16_t>(map, va, chars, operands);
         break;
-
-//    case opcode::arraylength: // 0xbe (190)
-
+      case opcode::arraylength: // 0xbe (190)
+        mnemonic = "arraylength";
+        break;
       case opcode::athrow: // 0xbf (191)
         mnemonic = "athrow";
         break;
@@ -809,6 +809,7 @@ DisassemblerJvm::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start, Ad
         break;
 
       default:
+        cout << "DisassemblerJvm::disassembleOne: Warning, unknown instruction kind " << (int) kind << endl;
         kind = opcode::unknown;
   }
 
@@ -824,6 +825,23 @@ DisassemblerJvm::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start, Ad
   insn->set_operandList(operands);
   operands->set_parent(insn);
   insn->set_raw_bytes(chars);
+
+#if DEBUG_OUTPUT
+  cout << "... insn: " << (int)kind << ": " << insn->get_mnemonic()
+       << " nOperands:" << insn->nOperands() << ":chars:";
+  for (int i = 0; i < chars.size(); i++) {
+    cout << (int)chars[i] << ":";
+  }
+  cout << endl;
+  for (auto op : insn->get_operandList()->get_operands()) {
+    if (op->asUnsigned()) {
+      cout << "      unsigned operand:" << *(op->asUnsigned()) << endl;
+    }
+    else if (op->asSigned()) {
+      cout << "       signed operand:" << *(op->asSigned()) << endl;
+    }
+  }
+#endif
 
   ROSE_ASSERT(((va-start) == chars.size()) && "disassembleOne count error");
 
