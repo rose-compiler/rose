@@ -567,6 +567,13 @@ class ClangToSageTranslator : public clang::ASTConsumer {
   // Preprocessing access
         std::pair<Sg_File_Info *, PreprocessingInfo *> preprocessor_top();
         bool preprocessor_pop();
+
+        SgAsmOp::asm_operand_modifier_enum get_sgAsmOperandModifier(std::string modifier);
+        SgAsmOp::asm_operand_constraint_enum get_sgAsmOperandConstraint(std::string constraint);
+        SgInitializedName::asm_register_name_enum get_sgAsmRegister(std::string reg);
+
+        std::string generate_source_position_string(clang::SourceLocation srcLoc);
+        std::string generate_name_for_type(clang::TypeSourceInfo* typeInfo);
 };
 
 void finishSageAST(ClangToSageTranslator & translator);
