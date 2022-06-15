@@ -25,4 +25,11 @@ pkginclude_HEADERS = BitPattern.h			\
 	AssemblerX86Init.h 					\
 	x86InstructionProperties.h
 
+
+
+noinst_PROGRAMS = json2rosetta
+
+json2rosetta_SOURCES = cilgen/src/json2rosetta.C
+## json2rosetta_CPPFLAGS = $(AM_CPPFLAGS) -I cilgen/include
+
 EXTRA_DIST = CMakeLists.txt dummyDisassembler.C

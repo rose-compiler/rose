@@ -1,0 +1,81 @@
+// This file CilImpl.C has been generated from a JSON description file using json2rosetta.
+//   Do not modify this file directly, but the corresponding JSON file.
+
+/* CIL Implementation for Classes defined in src/ROSETTA/src/BinaryInstruction.C */
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
+#include "sage3basic.h"
+
+namespace
+{
+  constexpr bool TRACE_CONSTRUCTION = false;
+
+uint8_t read8bitValue (uint8_t* buf, size_t & index)
+   {
+  // This function abstracts the details of reading 2 byte values from the disk image.
+     uint8_t value = ByteOrder::le_to_host(*((uint8_t*)(buf+index)));
+     index += 1;
+
+     return value;
+   }
+
+uint8_t read8bitPadding (uint8_t* buf, size_t & index, uint8_t expected)
+   {
+     const uint8_t value = read8bitValue(buf, index);
+
+     ROSE_ASSERT(value == expected);
+     return value;
+   }
+
+
+uint16_t read16bitValue (uint8_t* buf, size_t & index)
+   {
+  // This function abstracts the details of reading 2 byte values from the disk image.
+     uint16_t value = ByteOrder::le_to_host(*((uint16_t*)(buf+index)));
+     index += 2;
+
+     return value;
+   }
+
+uint32_t read32bitValue (uint8_t* buf, size_t & index)
+   {
+  // This function abstracts the details of reading 4 byte values from the disk image.
+     uint32_t value = ByteOrder::le_to_host(*((uint32_t*)(buf+index)));
+     index += 4;
+
+     return value;
+   }
+
+uint32_t readValue (uint8_t* buf, size_t & index, bool uses4byteIndexing)
+   {
+  // This function abstracts the details of reading 2 byte or 4 byte values from the disk image.
+     uint32_t value = 0;
+     if (uses4byteIndexing == true)
+        {
+          value = read32bitValue(buf,index);
+        }
+       else
+        {
+          value = read16bitValue(buf,index);
+        }
+
+     return value;
+   }
+}
+
+%%forall Class%%
+
+void SgAsmCil%%Class.Name%%::parse(uint8_t* buf, size_t& index, bool uses4byteIndexing)
+   { %%forall Fields%%
+     p_%%Fields.Name%% = %%Fields.Init%%;
+     %%end_for%%
+
+     if (TRACE_CONSTRUCTION)
+        { %%forall Fields%%
+          std::cerr << "p_%%Fields.Name%% = " << p_%%Fields.Name%% << std::endl;
+          %%end_for%%
+        }
+   }
+%%end_for%%
+
+#endif /* ROSE_ENABLE_BINARY_ANALYSIS */
