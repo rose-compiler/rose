@@ -1,0 +1,74 @@
+// This part of the ROSETTA code has been generated from a JSON description file using json2rosetta.
+//   Do not modify this file directly, but the corresponding JSON file.
+// --- BEGIN generated code: ----------------------------------------------------
+
+
+%%forall Class%%
+    /*************************************************************************************************************************
+     *                                          CIL %%Class.Name%% (%%Class.Section%%)
+     *************************************************************************************************************************/
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmCil%%Class.Name%%);
+    IS_SERIALIZABLE(AsmCil%%Class.Name%%);
+
+#ifdef DOCUMENTATION
+    /** CIL %%Class.Name%% table.
+     *
+     */
+    class SgAsmCil%%Class.Name%%: public SgAsmCilNode {
+    public:
+#endif
+
+%%forall Fields%%
+#ifdef DOCUMENTATION
+        /** Property: %%Fields.Name%%.
+         *
+         *  %%Fields.Doc%%
+         *
+         * @{ */
+        %%Fields.Type%% get_%%Fields.Name%%() const;
+        void set_%%Fields.Name%%(%%Fields.Type%%);
+        /** @} */
+#else
+        AsmCil%%Class.Name%%.setDataPrototype("%%Fields.Type%%", "%%Fields.Name%%", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+%%end_for%%
+
+        DECLARE_OTHERS(AsmCil%%Class.Name%%);
+#if defined(SgAsmCil%%Class.Name%%_OTHERS) || defined(DOCUMENTATION)
+
+    public:
+        void parse(uint8_t* buf, size_t& index, bool uses4byteIndexing);
+
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
+            %%forall Fields%%
+            s & BOOST_SERIALIZATION_NVP(p_%%Fields.Name%%);
+            %%end_for%%
+        }
+#endif
+
+
+#endif // SgAsmCil%%Class.Name%%_OTHERS
+
+#ifdef DOCUMENTATION
+    protected:
+      %%forall Fields%%
+      %%Fields.Type%% p_%%Fields.Name%%;
+      %%end_for%%
+#endif
+
+#ifdef DOCUMENTATION
+    };
+#endif
+%%end_for%%
+
+// --- END generated code. ------------------------------------------------------
