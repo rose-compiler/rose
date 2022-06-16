@@ -1,0 +1,970 @@
+[
+  {
+    "Fields": [
+      {
+        "Doc": "a 4-byte constant of type AssemblyHashAlgorithm",
+        "Init": "read32bitValue(buf,index)",
+        "Name": "HashAlgId",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "a 2-byte constant.",
+        "Init": "read16bitValue(buf,index)",
+        "Name": "MajorVersion",
+        "Type": "uint16_t"
+      },
+      {
+        "Doc": "a 2-byte constant.",
+        "Init": "read16bitValue(buf,index)",
+        "Name": "MinorVersion",
+        "Type": "uint16_t"
+      },
+      {
+        "Doc": "a 2-byte constant.",
+        "Init": "read16bitValue(buf,index)",
+        "Name": "BuildNumber",
+        "Type": "uint16_t"
+      },
+      {
+        "Doc": "a 2-byte constant.",
+        "Init": "read16bitValue(buf,index)",
+        "Name": "RevisionNumber",
+        "Type": "uint16_t"
+      },
+      {
+        "Doc": "a 4-byte bitmask of type AssemblyFlags.",
+        "Init": "read32bitValue(buf,index)",
+        "Name": "Flags",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "an index into the Blob heap.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "PublicKey",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "an index into the String heap.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "Name",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "an index into the String heap.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "Culture",
+        "Type": "uint32_t"
+      }
+    ],
+    "Name": "Assembly",
+    "Section": "II.22.2"
+  },
+  {
+    "Fields": [
+      {
+        "Doc": "a 4-byte constant",
+        "Init": "read32bitValue(buf,index)",
+        "Name": "OSPlatformID",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "a 4-byte constant",
+        "Init": "read32bitValue(buf,index)",
+        "Name": "OSMajorVersion",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "a 4-byte constant",
+        "Init": "read32bitValue(buf,index)",
+        "Name": "OSMinorVersion",
+        "Type": "uint32_t"
+      }
+    ],
+    "Name": "AssemblyOS",
+    "Section": "II.22.3"
+  },
+  {
+    "Fields": [
+      {
+        "Doc": "a 4-byte constant",
+        "Init": "read32bitValue(buf,index)",
+        "Name": "Processor",
+        "Type": "uint32_t"
+      }
+    ],
+    "Name": "AssemblyProcessor",
+    "Section": "II.22.4"
+  },
+  {
+    "Fields": [
+      {
+        "Doc": "version number",
+        "Init": "read16bitValue(buf,index)",
+        "Name": "MajorVersion",
+        "Type": "uint16_t"
+      },
+      {
+        "Doc": "version number",
+        "Init": "read16bitValue(buf,index)",
+        "Name": "MinorVersion",
+        "Type": "uint16_t"
+      },
+      {
+        "Doc": "version number",
+        "Init": "read16bitValue(buf,index)",
+        "Name": "BuildNumber",
+        "Type": "uint16_t"
+      },
+      {
+        "Doc": "revision number",
+        "Init": "read16bitValue(buf,index)",
+        "Name": "RevisionNumber",
+        "Type": "uint16_t"
+      },
+      {
+        "Doc": "Shall have only one bit set, the PublicKey bit.",
+        "Init": "read32bitValue(buf,index)",
+        "Name": "Flags",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "can be null, or non-null.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "PublicKeyOrToken",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "an index into the String heap.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "Name",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "null or non-null",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "Culture",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "an index into the Blob heap.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "HashValue",
+        "Type": "uint32_t"
+      }
+    ],
+    "Name": "AssemblyRef",
+    "Section": "II.22.5"
+  },
+  {
+    "Fields": [
+      {
+        "Doc": "a 4-byte constant",
+        "Init": "read32bitValue(buf,index)",
+        "Name": "OSPlatformID",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "a 4-byte constant",
+        "Init": "read32bitValue(buf,index)",
+        "Name": "OSMajorVersion",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "a 4-byte constant",
+        "Init": "read32bitValue(buf,index)",
+        "Name": "OSMinorVersion",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "an index into the AssemblyRef table.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "AssemblyRefOS",
+        "Type": "uint32_t"
+      }
+    ],
+    "Name": "AssemblyRefOS",
+    "Section": "II.22.6"
+  },
+  {
+    "Fields": [
+      {
+        "Doc": "a 4-byte constant",
+        "Init": "read32bitValue(buf,index)",
+        "Name": "Processor",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "an index into the AssemblyRef table.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "AssemblyRef",
+        "Type": "uint32_t"
+      }
+    ],
+    "Name": "AssemblyRefProcessor",
+    "Section": "II.22.7"
+  },
+  {
+    "Fields": [
+      {
+        "Doc": "a 2-byte constant",
+        "Init": "read16bitValue(buf,index)",
+        "Name": "PackingSize",
+        "Type": "uint16_t"
+      },
+      {
+        "Doc": "a 4-byte constant",
+        "Init": "read32bitValue(buf,index)",
+        "Name": "ClassSize",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "an index into the TypeDef table.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "Parent",
+        "Type": "uint32_t"
+      }
+    ],
+    "Name": "ClassLayout",
+    "Section": "II.22.8"
+  },
+  {
+    "Fields": [
+      {
+        "Doc": "a 1-byte constant",
+        "Init": "read8bitValue(buf,index)",
+        "Name": "Type",
+        "Type": "uint8_t"
+      },
+      {
+        "Doc": "a 1-byte zero padding",
+        "Init": "read8bitPadding(buf,index,0)",
+        "Name": "Padding",
+        "Type": "uint8_t"
+      },
+      {
+        "Doc": "an index into the Param, Field, or Property table.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "Parent",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "an index into the Blob heap.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "Value",
+        "Type": "uint32_t"
+      }
+    ],
+    "Name": "Constant",
+    "Section": "II.22.9",
+    "Notes" : ["PP (06/15/22) added padding field."]
+  },
+  {
+    "Fields": [
+      {
+        "Doc": "an index into a metadata table that has an associated HasCustomAttribute index.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "Parent",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "n index into the MethodDef or MemberRef table.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "Type",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "an index into the Blob heap.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "Value",
+        "Type": "uint32_t"
+      }
+    ],
+    "Name": "CustomAttribute",
+    "Section": "II.22.10"
+  },
+  {
+    "Fields": [
+      {
+        "Doc": "a 2-byte value.",
+        "Init": "read16bitValue(buf,index)",
+        "Name": "Action",
+        "Type": "uint16_t"
+      },
+      {
+        "Doc": "an index into the TypeDef, MethodDef, or Assembly table.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "Parent",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "an index into the Blob heap.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "PermissionSet",
+        "Type": "uint32_t"
+      }
+    ],
+    "Name": "DeclSecurity",
+    "Section": "II.22.11"
+  },
+  {
+    "Fields": [
+      {
+        "Doc": "a 2-byte bitmask of type EventAttribute.",
+        "Init": "read16bitValue(buf,index)",
+        "Name": "EventFlags",
+        "Type": "uint16_t"
+      },
+      {
+        "Doc": "an index into the String heap.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "Name",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "an index into a TypeDef, a TypeRef, or TypeSpec table.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "EventType",
+        "Type": "uint32_t"
+      }
+    ],
+    "Name": "Event",
+    "Section": "II.22.13"
+  },
+  {
+    "Fields": [
+      {
+        "Doc": "an index into the TypeDef table.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "Parent",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "an index into the Event table.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "EventList",
+        "Type": "uint32_t"
+      }
+    ],
+    "Name": "EventMap",
+    "Section": "II.22.12"
+  },
+  {
+    "Fields": [
+      {
+        "Doc": "a 4-byte bitmask of type TypeAttribute.",
+        "Init": "read32bitValue(buf,index)",
+        "Name": "EventFlags",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "a 4-byte index into a TypeDef table of another module in this Assembly.",
+        "Init": "read32bitValue(buf,index)",
+        "Name": "TypeDefIdName",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "an index into the String heap.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "TypeName",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "an index into the String heap.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "TypeNamespace",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "an index into the File table, ExportedType table, or the AssemblyRef table.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "Implementation",
+        "Type": "uint32_t"
+      }
+    ],
+    "Name": "ExportedType",
+    "Section": "II.22.14"
+  },
+  {
+    "Fields": [
+      {
+        "Doc": "a 2-byte bitmask of type FieldAttributes",
+        "Init": "read16bitValue(buf,index)",
+        "Name": "Flags",
+        "Type": "uint16_t"
+      },
+      {
+        "Doc": "an index into the String heap.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "Name",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "an index into the Blob heap.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "Signature",
+        "Type": "uint32_t"
+      }
+    ],
+    "Name": "Field",
+    "Section": "II.22.15"
+  },
+  {
+    "Fields": [
+      {
+        "Doc": "a 4-byte constant.",
+        "Init": "read32bitValue(buf,index)",
+        "Name": "Offset",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "an index into the Field table.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "Field",
+        "Type": "uint32_t"
+      }
+    ],
+    "Name": "FieldLayout",
+    "Section": "II.22.16"
+  },
+  {
+    "Fields": [
+      {
+        "Doc": "an index into Field or Param table.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "Parent",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "an index into the Blob heap.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "NativeType",
+        "Type": "uint32_t"
+      }
+    ],
+    "Name": "FieldMarshal",
+    "Section": "II.22.17"
+  },
+  {
+    "Fields": [
+      {
+        "Doc": "a 4-byte constant.",
+        "Init": "(read16bitValue(buf,index))",
+        "Name": "RVA",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "an index into Field table",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "Field",
+        "Type": "uint32_t"
+      }
+    ],
+    "Name": "FieldRVA",
+    "Section": "II.22.18"
+  },
+  {
+    "Fields": [
+      {
+        "Doc": "a 4-byte bitmask of type FileAttributes.",
+        "Init": "read32bitValue(buf,index)",
+        "Name": "Flags",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "an index into the String heap.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "Name",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "an index into the Blob heap.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "HashValue",
+        "Type": "uint32_t"
+      }
+    ],
+    "Name": "File",
+    "Section": "II.22.19"
+  },
+  {
+    "Fields": [
+      {
+        "Doc": "the 2-byte index of the generic parameter.",
+        "Init": "read16bitValue(buf,index)",
+        "Name": "Number",
+        "Type": "uint16_t"
+      },
+      {
+        "Doc": "a 2-byte bitmask of type GenericParamAttributes.",
+        "Init": "read16bitValue(buf,index)",
+        "Name": "Flags",
+        "Type": "uint16_t"
+      },
+      {
+        "Doc": "an index into the TypeDef or MethodDef table.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "Owner",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "an index into the String heap.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "Name",
+        "Type": "uint32_t"
+      }
+    ],
+    "Name": "GenericParam",
+    "Section": "II.22.20"
+  },
+  {
+    "Fields": [
+      {
+        "Doc": "an index into the GenericParam table.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "Owner",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "an index into the TypeDef, TypeRef, or TypeSpec table.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "Constraint",
+        "Type": "uint32_t"
+      }
+    ],
+    "Name": "GenericParamConstraint",
+    "Section": "II.22.21"
+  },
+  {
+    "Fields": [
+      {
+        "Doc": "a 2-byte bitmask of type PInvokeAttributes.",
+        "Init": "read16bitValue(buf,index)",
+        "Name": "MappingFlags",
+        "Type": "uint16_t"
+      },
+      {
+        "Doc": "an index into the Field or MethodDef table.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "MemberForwarded",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "an index into the String heap.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "ImportName",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "an index into the ModuleRef table.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "ImportScope",
+        "Type": "uint32_t"
+      }
+    ],
+    "Name": "ImplMap",
+    "Section": "II.22.22"
+  },
+  {
+    "Fields": [
+      {
+        "Doc": "an index into the TypeDef table.",
+        "Init": "(read16bitValue(buf,index))",
+        "Name": "Class",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "an index into the TypeDef, TypeRef, or TypeSpec table.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "Interface",
+        "Type": "uint32_t"
+      }
+    ],
+    "Name": "InterfaceImpl",
+    "Section": "II.22.23"
+  },
+  {
+    "Fields": [
+      {
+        "Doc": "a 4-byte constant.",
+        "Init": "read32bitValue(buf,index)",
+        "Name": "Offset",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "a 4-byte constant of type ManifestResourceAttributes.",
+        "Init": "read32bitValue(buf,index)",
+        "Name": "Flags",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "an index into the String heap.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "Name",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "an index into a File table, a AssemblyRef table.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "Implementation",
+        "Type": "uint32_t"
+      }
+    ],
+    "Name": "ManifestResource",
+    "Section": "II.22.24"
+  },
+  {
+    "Fields": [
+      {
+        "Doc": "an index into the MethodDef, ModuleRef, TypeDef, TypeRef, or TypeSpec tables; more precisely, a MemberRefParent (II.24.2.6) coded index.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "Class",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "an index into the String heap.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "Name",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "an index into the Blob heap.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "Signature",
+        "Type": "uint32_t"
+      }
+    ],
+    "Name": "MemberRef",
+    "Section": "II.22.25",
+    "Notes": ["PP (06/15/22) created from ECMA spec (not extracted from test code base)."]
+  },
+  {
+    "Fields": [
+      {
+        "Doc": "a 4-byte constant.",
+        "Init": "read32bitValue(buf,index)",
+        "Name": "RVA",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "a 2-byte bitmask of type MethodImplAttributes.",
+        "Init": "(read16bitValue(buf,index))",
+        "Name": "ImplFlags",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "a 2-byte bitmask of type MethodAttributes.",
+        "Init": "read16bitValue(buf,index)",
+        "Name": "Flags",
+        "Type": "uint16_t"
+      },
+      {
+        "Doc": "an index into the String heap.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "Name",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "an index into the Blob heap.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "Signature",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "an index into the Param table",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "ParamList",
+        "Type": "uint32_t"
+      }
+    ],
+    "Name": "MethodDef",
+    "Section": "II.22.26"
+  },
+  {
+    "Fields": [
+      {
+        "Doc": "an index into the TypeDef table.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "Class",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "an index into the MethodDef or MemberRef table.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "MethodBody",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "an index into the MethodDef or MemberRef table.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "MethodDeclaration",
+        "Type": "uint32_t"
+      }
+    ],
+    "Name": "MethodImpl",
+    "Section": "II.22.27"
+  },
+  {
+    "Fields": [
+      {
+        "Doc": "a 2-byte bitmask of type MethodSemanticsAttributes.",
+        "Init": "read16bitValue(buf,index)",
+        "Name": "Semantics",
+        "Type": "uint16_t"
+      },
+      {
+        "Doc": "an index into the MethodDef table.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "Method",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "an index into the Event or Property table.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "Association",
+        "Type": "uint32_t"
+      }
+    ],
+    "Name": "MethodSemantics",
+    "Section": "II.22.28"
+  },
+  {
+    "Fields": [
+      {
+        "Doc": "an index into the MethodDef or MemberRef table.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "Method",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "an index into the Blob heap.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "Instantiation",
+        "Type": "uint32_t"
+      }
+    ],
+    "Name": "MethodSpec",
+    "Section": "II.22.29"
+  },
+  {
+    "Fields": [
+      {
+        "Doc": "a 2-byte value, reserved, shall be zero",
+        "Init": "read16bitValue(buf,index)",
+        "Name": "Generation",
+        "Type": "uint16_t"
+      },
+      {
+        "Doc": "an index into the String heap.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "Name",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "an index into the Guid heap.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "Mvid",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "an index into the Guid heap.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "Encld",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "an index into the Guid heap.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "EncBaseId",
+        "Type": "uint32_t"
+      }
+    ],
+    "Name": "Module",
+    "Section": "II.22.30"
+  },
+  {
+    "Fields": [
+      {
+        "Doc": "an index into the String heap.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "Name",
+        "Type": "uint32_t"
+      }
+    ],
+    "Name": "ModuleRef",
+    "Section": "II.22.31"
+  },
+  {
+    "Fields": [
+      {
+        "Doc": "an index into the TypeDef table.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "NestedClass",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "an index into the TypeDef table.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "EnclosingClass",
+        "Type": "uint32_t"
+      }
+    ],
+    "Name": "NestedClass",
+    "Section": "II.22.32"
+  },
+  {
+    "Fields": [
+      {
+        "Doc": "a 2-byte bitmask of type ParamAttributes.",
+        "Init": "read16bitValue(buf,index)",
+        "Name": "Flags",
+        "Type": "uint16_t"
+      },
+      {
+        "Doc": "a 2-byte constant",
+        "Init": "read16bitValue(buf,index)",
+        "Name": "Sequence",
+        "Type": "uint16_t"
+      },
+      {
+        "Doc": "an index into the Blob heap.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "Name",
+        "Type": "uint32_t"
+      }
+    ],
+    "Name": "Param",
+    "Section": "II.22.33"
+  },
+  {
+    "Fields": [
+      {
+        "Doc": "a 2-byte bitmask of type PropertyAttributes.",
+        "Init": "read16bitValue(buf,index)",
+        "Name": "Flags",
+        "Type": "uint16_t"
+      },
+      {
+        "Doc": "an index into the String heap.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "Name",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "an index into the Blob heap.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "Type",
+        "Type": "uint32_t"
+      }
+    ],
+    "Name": "Property",
+    "Section": "II.22.34"
+  },
+  {
+    "Fields": [
+      {
+        "Doc": "an index into the TypeDef table.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "Parent",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "an index into the Property table",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "PropertyList",
+        "Type": "uint32_t"
+      }
+    ],
+    "Name": "PropertyMap",
+    "Section": "II.22.35"
+  },
+  {
+    "Fields": [
+      {
+        "Doc": "an index into the Blob heap.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "Signature",
+        "Type": "uint32_t"
+      }
+    ],
+    "Name": "StandAloneSig",
+    "Section": "II.22.36"
+  },
+  {
+    "Fields": [
+      {
+        "Doc": "a 4-byte bitmask of type TypeAttributes.",
+        "Init": "read32bitValue(buf,index)",
+        "Name": "Flags",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "an index into the String heap.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "TypeName",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "an index into the String heap.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "TypeNamespace",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "an index into the TypeDef, TypeRef, or TypeSpec table.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "Extends",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "an index into the Field table.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "FieldList",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "an index into the MethodDef table.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "MethodList",
+        "Type": "uint32_t"
+      }
+    ],
+    "Name": "TypeDef",
+    "Section": "II.22.37"
+  },
+  {
+    "Fields": [
+      {
+        "Doc": "An index into a Module, ModuleRef, AssemblyRef or TypeRef table, or null.",
+        "Init": "read16bitValue(buf,index)",
+        "Name": "ResolutionScope",
+        "Type": "uint16_t"
+      },
+      {
+        "Doc": "an index into the String heap.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "TypeName",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "an index into the String heap.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "TypeNamespace",
+        "Type": "uint32_t"
+      }
+    ],
+    "Name": "TypeRef",
+    "Section": "II.22.38"
+  },
+  {
+    "Fields": [
+      {
+        "Doc": "An index into the Blob heap.",
+        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Name": "Signature",
+        "Type": "uint32_t"
+      }
+    ],
+    "Name": "TypeSpec",
+    "Section": "II.22.39"
+  }
+]

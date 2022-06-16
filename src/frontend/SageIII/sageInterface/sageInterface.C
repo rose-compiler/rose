@@ -2028,6 +2028,22 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
               break;
             }
 
+            case V_SgAdaParameterList:
+            {
+              const SgAdaParameterList* plst = isSgAdaParameterList(declaration);
+              ROSE_ASSERT(plst);
+
+              name = std::accumulate( plst->get_parameters().begin(), plst->get_parameters().end(),
+                                      std::string{"_ada_parameter_list_"},
+                                      [](std::string n, SgDeclarationStatement* rhs) -> std::string
+                                      {
+                                        n += SageInterface::get_name(rhs);
+                                        return n;
+                                      }
+                                    );
+              break;
+            }
+
        // Note that the case for SgVariableDeclaration is not implemented
           default:
             // name = "default name (default case reached: not handled)";
@@ -11150,7 +11166,7 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
     } else {
       ROSE_ABORT();
     }
-  } 
+  }
   else if (SgAdaExitStmt* stm = isSgAdaExitStmt(parent)) {
     ROSE_ASSERT(oldExp == stm->get_condition());
     stm->set_condition(newExp);
@@ -11158,7 +11174,7 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
   else if (SgAdaModularType* ptype = isSgAdaModularType(parent)) {
     ROSE_ASSERT(oldExp == ptype->get_modexpr());
     ptype->set_modexpr(newExp);
-  } 
+  }
   else if (SgAdaDelayStmt* stm = isSgAdaDelayStmt(parent)) {
     ROSE_ASSERT(oldExp == stm->get_time());
     stm->set_time(newExp);

@@ -741,7 +741,7 @@ namespace ada
 
   bool hasUnknownDiscriminants(const SgAdaDiscriminatedTypeDecl& n)
   {
-    return n.get_discriminants().size() == 0;
+    return SG_DEREF(n.get_discriminants()).get_parameters().size() == 0;
   }
 
   bool hasUnknownDiscriminants(const SgAdaDiscriminatedTypeDecl* n)

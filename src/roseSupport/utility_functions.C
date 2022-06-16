@@ -214,8 +214,8 @@ std::map<int,std::map<SgStatement*,MacroExpansion*>*> Rose::macroExpansionMapOfM
 std::map<std::string, SgIncludeFile*> Rose::includeFileMapForUnparsing;
 
 
-// DQ (11/25/2020): These are the boolean variables that are computed in the function compute_language_kind() 
-// and inlined via the SageInterface::is_<language kind>_language() functions.  See more details comment in 
+// DQ (11/25/2020): These are the boolean variables that are computed in the function compute_language_kind()
+// and inlined via the SageInterface::is_<language kind>_language() functions.  See more details comment in
 // the header file.
 bool Rose::is_Ada_language        = false;
 bool Rose::is_C_language          = false;
@@ -243,10 +243,10 @@ using namespace Rose::Diagnostics;
 // DQ (3/5/2017): Added general IR node specific message stream to support debugging message from the ROSE IR nodes.
 Sawyer::Message::Facility Rose::ir_node_mlog;
 
-void Rose::initDiagnostics() 
+void Rose::initDiagnostics()
    {
      static bool initialized = false;
-     if (!initialized) 
+     if (!initialized)
         {
           initialized = true;
        // printf ("In Rose::initDiagnostics(): Calling Sawyer::Message::Facility() \n");
@@ -277,7 +277,7 @@ std::string edgVersionString()
 // DQ (2/12/2010): When we have a mechanism to get the version number of OFP, put it here.
 std::string ofpVersionString()
    {
-  // Need to make sure that ROSE can get a version number independent of Fortran support 
+  // Need to make sure that ROSE can get a version number independent of Fortran support
   // being installed or include information in the return string when OFP is not installed.
   // return "unknown";
 #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
@@ -682,7 +682,7 @@ SgProject*
 frontend (const std::vector<std::string>& argv, bool frontendConstantFolding )
    {
   // DQ (4/11/2017): Call this as early as possible (usually good enough if it is here).
-  // Note that there are ROSE-based tools that are calling the SgProject constructor directly, 
+  // Note that there are ROSE-based tools that are calling the SgProject constructor directly,
   // and these are not covered by placing ROSE_INITIALIZE here (examples are: loopProcessor).
   // But most are older examples of tools built using ROSE.
      ROSE_INITIALIZE;
@@ -741,7 +741,7 @@ frontend (const std::vector<std::string>& argv, bool frontendConstantFolding )
 #ifdef _MSC_VER
     if ( SgProject::get_verbose() >= 1 )
         printf ("Note: Dynamic Loadable Plugins are not supported on Microsoft Windows yet. Skipping Rose::obtainAndExecuteActions ()\n");
-#else  
+#else
      Rose::obtainAndExecuteActions(project);
 #endif
      return project;
@@ -751,9 +751,9 @@ frontend (const std::vector<std::string>& argv, bool frontendConstantFolding )
 
     This function represents a simple interface to build a SgProject with all the
     SgFiles in place any initialized properly but containing a SgGlobal with no declarations.
-    The purpose of this function is to build a SgProject with SgFile object for each file 
+    The purpose of this function is to build a SgProject with SgFile object for each file
     on the command line, and allow for the frontend to be called separately for each file.
-    The commandline is completely processed so that all information is in each SgFile of the 
+    The commandline is completely processed so that all information is in each SgFile of the
     SgProject.
     This way specific files can be processed conditionally.  This mechanism can be used to
     build support for exclusion of specific files or for exclusion of files in a specific
@@ -774,11 +774,11 @@ frontendShell (const std::vector<std::string>& argv)
      Rose_STL_Container<string> commandLineList = argv;
      printf ("frontendShell (top): argv = \n%s \n",StringUtility::listToString(commandLineList).c_str());
 
-  // Invoke ROSE commandline option to skip internal frontend processing (we will 
+  // Invoke ROSE commandline option to skip internal frontend processing (we will
   // call the fronend explicitly for selected files, after construction of SgProject).
      commandLineList.push_back("-rose:skip_rose");
 
-  // Build the SgProject, but if the above option was used this will only build empty SgFile nodes 
+  // Build the SgProject, but if the above option was used this will only build empty SgFile nodes
      SgProject* project = frontend(commandLineList);
      ROSE_ASSERT(project != NULL);
 
@@ -825,7 +825,7 @@ frontendShell (const std::vector<std::string>& argv)
 /*! \brief Call to backend, generates either object file or executable.
 
     This function operates in two modes:
-        1) If source files were specified on the command line, then it calls 
+        1) If source files were specified on the command line, then it calls
            unparser and compiles generated file.
         2) If no source files are present then it operates as a linker processing
            all specified object files.
@@ -833,18 +833,18 @@ frontendShell (const std::vector<std::string>& argv)
 
     This function represents a simple interface to the use of ROSE as a library.
 
-     At this point in the control flow we have returned from the processing via the 
+     At this point in the control flow we have returned from the processing via the
      EDG frontend (or skipped it if that option was specified).
-     The following has been done or explicitly skipped if such options were specified 
+     The following has been done or explicitly skipped if such options were specified
      on the commandline:
         1) The application program has been parsed
         2) All AST's have been build (one for each grammar)
         3) The transformations have been edited into the C++ AST
-        4) The C++ AST has been unparsed to form the final output file (all code has 
+        4) The C++ AST has been unparsed to form the final output file (all code has
            been generated into a different filename "rose_<original file name>.C")
 
     \internal The error code is returned, but it might be appropriate to make
-              it more similar to the frontend() function and its handling of 
+              it more similar to the frontend() function and its handling of
               the error code.
  */
 int
@@ -903,12 +903,12 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
   // printf ("   project->get_useBackendOnly() = %s \n",project->get_useBackendOnly() ? "true" : "false");
      if (project->get_useBackendOnly() == false)
         {
-       // Add forward references for instantiated template functions and member functions 
-       // (which are by default defined at the bottom of the file (but should be declared 
-       // at the top once we know what instantiations should be built)).  They must be 
-       // defined at the bottom since they could call other functions not yet declared in 
-       // the file.  Note that this fixup is required since we have skipped the class template 
-       // definitions which would contain the declarations that we are generating.  We might 
+       // Add forward references for instantiated template functions and member functions
+       // (which are by default defined at the bottom of the file (but should be declared
+       // at the top once we know what instantiations should be built)).  They must be
+       // defined at the bottom since they could call other functions not yet declared in
+       // the file.  Note that this fixup is required since we have skipped the class template
+       // definitions which would contain the declarations that we are generating.  We might
        // need that as a solution at some point if this fails to be sufficently robust.
        // if ( SgProject::get_verbose() >= BACKEND_VERBOSE_LEVEL-2 )
        //      printf ("Calling fixupInstantiatedTemplates() \n");
@@ -946,7 +946,7 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
      if (project->numberOfFiles() > 0 || project->numberOfDirectories() > 0)
         {
        // Compile generated C++ source code with vendor compiler.
-       // Generate object file (required for further template processing 
+       // Generate object file (required for further template processing
        // if templates exist).
           if ( SgProject::get_verbose() >= BACKEND_VERBOSE_LEVEL )
                printf ("Calling project->compileOutput() \n");
@@ -959,8 +959,8 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
           if ( SgProject::get_verbose() >= BACKEND_VERBOSE_LEVEL )
                printf ("   project->get_compileOnly() = %s \n",project->get_compileOnly() ? "true" : "false");
 
-       // DQ (5/20/2005): If we have not permitted templates to be instantiated during initial 
-       // compilation then we have to do the prelink step (this is however still new and somewhat 
+       // DQ (5/20/2005): If we have not permitted templates to be instantiated during initial
+       // compilation then we have to do the prelink step (this is however still new and somewhat
        // problematic (buggy?)).  It relies upon the EDG mechansisms which are not well understood.
           bool callTemplateInstantation = (project->get_template_instantiation_mode() == SgProject::e_none);
 
@@ -970,8 +970,8 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
                printf ("I don't think we need to call instantiateTemplates() any more! \n");
                ROSE_ABORT();
 
-            // The instantiation of templates can cause new projects (sets of source files) 
-            // to be generated, but since the object files are already processed this is 
+            // The instantiation of templates can cause new projects (sets of source files)
+            // to be generated, but since the object files are already processed this is
             // not an issue here.  A project might, additionally, keep track of the ASTs
             // associated with the different phases of instantions of templates.
                if ( SgProject::get_verbose() >= BACKEND_VERBOSE_LEVEL )
@@ -985,7 +985,7 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
                printf ("Calling project->link() \n");
 
        // DQ (10/15/2005): Trap out case of C programs where we want to make sure that we don't use the C++ compiler to do our linking!
-       // This could be done in the 
+       // This could be done in the
           if (project->get_C_only() == true)
              {
                printf ("Link using the C language linker (when handling C programs) = %s \n",BACKEND_C_COMPILER_NAME_WITH_PATH);
@@ -1031,15 +1031,15 @@ backendCompilesUsingOriginalInputFile ( SgProject* project, bool compile_with_US
   // DQ (8/24/2009):
   // To work with existing makefile systems, we want to force an object file to be generated.
   // So we want to call the backend compiler on the original input file (instead of generating
-  // an new file from the AST and running it through the backend).  The whole point is to 
+  // an new file from the AST and running it through the backend).  The whole point is to
   // gnerate a object file.  The effect is that this does a less agressive test of ROSE
   // but test only the parts required for analysis tools instead of transformation tools.
   // This avoids some programs in the name qualification support that is called by the backend
   // and permits testing of the parts of ROSE relevant for analysis tools (e.g. Compass).
-  // Of course we eventually want everything to work, but I want to test the compilation of 
+  // Of course we eventually want everything to work, but I want to test the compilation of
   // ROSE using ROSE as part of test to get Compass running regularly on ROSE.
 
-  // Note that the command generated may have to be fixup later to include more subtle details 
+  // Note that the command generated may have to be fixup later to include more subtle details
   // required to link libraries, etc.  At present this function only handles the support required
   // to build an object file.
      SgStringList commandLineToGenerateObjectFile;
@@ -1047,10 +1047,10 @@ backendCompilesUsingOriginalInputFile ( SgProject* project, bool compile_with_US
      enum language_enum
         {
           e_none    = 0,
-          e_c       = 1, 
-          e_cxx     = 2, 
-          e_fortran = 3, 
-          e_last_language 
+          e_c       = 1,
+          e_cxx     = 2,
+          e_fortran = 3,
+          e_last_language
         };
 
      language_enum language = e_none;
@@ -1119,17 +1119,17 @@ backendCompilesUsingOriginalInputFile ( SgProject* project, bool compile_with_US
 
           if ( SgProject::get_verbose() >= 1 )
           {
-              printf("Compile Line: ");                 
+              printf("Compile Line: ");
               for (SgStringList::iterator i = it; i != commandLineToGenerateObjectFile.end(); i++)
               {
                   printf("%s ", (*i).c_str());
               }
-              printf("\n");                 
+              printf("\n");
           }
-          
 
-       // DQ (12/28/2010): If we specified to NOT compile the input code then don't do so even when it is the 
-       // original code. This is important for Fortran 2003 test codes that will not compile with gfortran and 
+
+       // DQ (12/28/2010): If we specified to NOT compile the input code then don't do so even when it is the
+       // original code. This is important for Fortran 2003 test codes that will not compile with gfortran and
        // for which the tests/nonsmoke/functional/testTokenGeneration.C translator uses this function to generate object files.
        // finalCombinedExitStatus = system (commandLineToGenerateObjectFile.c_str());
           if (project->get_skipfinalCompileStep() == false)
@@ -1161,10 +1161,10 @@ backendGeneratesSourceCodeButCompilesUsingOriginalInputFile ( SgProject* project
   // the test the generation of the source code, but not the compilation of
   // it using the backend (vendor) compiler.  This is used to test ROSE.
 
-  // Users are likely to either want to use backend() to generate the source 
+  // Users are likely to either want to use backend() to generate the source
   // code for there project and it compiled (e.g. for optimization) or call
   // backendCompilesUsingOriginalInputFile() to process the input code and
-  // then generate object files or executables from the original code 
+  // then generate object files or executables from the original code
   // (e.g for analysis).
 
   // This instance of complexity is why this needs to be a separate backend function.
@@ -1183,9 +1183,9 @@ int
 copy_backend( SgProject* project, UnparseFormatHelp *unparseFormatHelp )
    {
   // This is part of the copy-based unparser (from Qing).
-  // This function calls the unparseFile function with a 
+  // This function calls the unparseFile function with a
   // CopyUnparser object (derived from UnparseDelegate)
-  // to control the unparsing and substitute text based 
+  // to control the unparsing and substitute text based
   // copying for code generation from the AST.
 
   // This function does not presently have the same semantics as the "backend()".
@@ -1239,7 +1239,7 @@ generatePDF ( const SgProject & project )
 void
 generateDOT ( const SgProject & project, std::string filenamePostfix, bool excludeTemplateInstantiations )
    {
-  // DQ (7/4/2008): Added default parameter to support the filenamePostfix 
+  // DQ (7/4/2008): Added default parameter to support the filenamePostfix
   // mechanism in AstDOTGeneration
 
   // DQ (6/14/2007): Added support for timing of the generateDOT() function.
@@ -1263,14 +1263,14 @@ generateDOT ( const SgProject & project, std::string filenamePostfix, bool exclu
   // DQ (2/18/2013): Compute the number of IR nodes for the AST and limit the size of these graphs (take too long to generate and the graphs are not useful).
      if (numberOfASTnodes < maxSize)
         {
-       // Note that the use of generateInputFiles causes the graph to be generated 
-       // for only the input source file and not any included header files. The 
+       // Note that the use of generateInputFiles causes the graph to be generated
+       // for only the input source file and not any included header files. The
        // result is a much smaller file (and generally a more useful one).
 #if 0
        // This used to be the default, but it would output too much data (from include files).
           astdotgen.generate(&nonconstProject);
 #else
-       // DQ (9/1/2008): This is the default for the last long while, but the SgProject IR nodes 
+       // DQ (9/1/2008): This is the default for the last long while, but the SgProject IR nodes
        // is not being processed (which appears to be a bug). This is because in the implementation
        // of the generateInputFiles the function traverseInputFiles is called.
        // astdotgen.generateInputFiles(&nonconstProject,DOTGeneration<SgNode*>::TOPDOWNBOTTOMUP,filenamePostfix);
@@ -1311,19 +1311,19 @@ generateDOT_withIncludes ( const SgProject & project, std::string filenamePostfi
      AstDOTGeneration astdotgen;
      SgProject & nonconstProject = (SgProject &) project;
 
-  // Note that the use of generateInputFiles causes the graph to be generated 
-  // for only the input source file and not any included header files. The 
+  // Note that the use of generateInputFiles causes the graph to be generated
+  // for only the input source file and not any included header files. The
   // result is a much smaller file (and generally a more useful one).
 #if 1
   // This used to be the default, but it would output too much data (from include files).
-  // It is particularly useful when handling multiple files on the command line and 
+  // It is particularly useful when handling multiple files on the command line and
   // traversing the files included from each file.
   // astdotgen.generate(&nonconstProject);
   // DOTGeneration::traversalType tt = TOPDOWNBOTTOMUP;
      AstDOTGeneration::traversalType tt = AstDOTGeneration::TOPDOWNBOTTOMUP;
      astdotgen.generate(&nonconstProject,tt,filenamePostfix);
 #else
-  // DQ (9/1/2008): This is the default for the last long while, but the SgProject IR nodes 
+  // DQ (9/1/2008): This is the default for the last long while, but the SgProject IR nodes
   // is not being processed (which appears to be a bug). This is because in the implementation
   // of the generateInputFiles the function traverseInputFiles is called.
      astdotgen.generateInputFiles(&nonconstProject,DOTGeneration<SgNode*>::TOPDOWNBOTTOMUP,filenamePostfix);
@@ -1535,7 +1535,7 @@ Rose::getLineNumber ( SgLocatedNode* locatedNodePointer )
   // Get the line number from the Sage II statement object
      ROSE_ASSERT (locatedNodePointer != NULL);
      int lineNumber = -1;
-  // Sometimes the locatedNode doesn't have a SgFile object 
+  // Sometimes the locatedNode doesn't have a SgFile object
   // (likely because it is part of a parent statement object)
      if (locatedNodePointer->get_file_info() != NULL)
         {
@@ -1555,7 +1555,7 @@ Rose::getColumnNumber ( SgLocatedNode* locatedNodePointer )
   // Get the line number from the Sage II statement object
      ROSE_ASSERT (locatedNodePointer != NULL);
      int columnNumber = -1;
-  // Sometimes the locatedNode doesn't have a SgFile object 
+  // Sometimes the locatedNode doesn't have a SgFile object
   // (likely because it is part of a parent statement object)
      if (locatedNodePointer->get_file_info() != NULL)
         {
@@ -1575,7 +1575,7 @@ Rose::getFileName ( SgLocatedNode* locatedNodePointer )
   // Get the filename from the Sage II statement object
      ROSE_ASSERT (locatedNodePointer != NULL);
      std::string fileName = "NO NAME FILE";
-  // Sometimes the locatedNode doesn't have a SgFile object 
+  // Sometimes the locatedNode doesn't have a SgFile object
   // (likely because it is part of a parent statement object)
      if (locatedNodePointer->get_file_info() != NULL)
         {
@@ -1647,7 +1647,7 @@ Rose::stripFileSuffixFromFileName ( const std::string& fileNameWithSuffix )
 
      return returnString;
 #endif
-   } 
+   }
 #endif
 
 #if 1
@@ -1661,7 +1661,7 @@ Rose::getPathFromFileName ( const string fileName )
      } else {
        return fileName.substr(0, pos);
      }
-   } 
+   }
 #endif
 
 // Later I expect we will move these functions to be SgFile member functions
@@ -1767,7 +1767,7 @@ Rose::getFileNameByTraversalBackToFileNode ( const SgNode* astNode )
 
      ROSE_ASSERT (astNode != NULL);
 
-  // Make sure this is not a project node (since the SgFile exists below 
+  // Make sure this is not a project node (since the SgFile exists below
   // the project and could not be found by a traversal of the parent list)
      if (isSgProject(astNode) == NULL)
         {
@@ -1807,7 +1807,7 @@ Rose::usage (int status)
   // exit(status);
    }
 
-int 
+int
 Rose::containsString ( const std::string& masterString, const std::string& targetString )
    {
      return masterString.find(targetString) != string::npos;
@@ -1829,7 +1829,7 @@ Rose::getNextStatement ( SgStatement *currentStatement )
      ROSE_ASSERT (currentStatement  != NULL);
   // CI (1/3/2007): This used to be not implemented ,,, here is my try
   //! get next statement will return the next statement in a function or method. if at the end or outside, it WILL return NULL
-     
+
      SgStatement      *nextStatement = NULL;
      SgScopeStatement *scope         = currentStatement->get_scope();
      ROSE_ASSERT (scope != NULL);
@@ -1838,7 +1838,7 @@ Rose::getNextStatement ( SgStatement *currentStatement )
      if (isSgGlobal(currentStatement) != NULL)
           return NULL;
 
-  // Make sure that we didn't get ourselves back from the get_scope() 
+  // Make sure that we didn't get ourselves back from the get_scope()
   // function (previous bug fixed, but tested here).
      ROSE_ASSERT (scope != currentStatement);
 
@@ -1874,18 +1874,19 @@ Rose::getNextStatement ( SgStatement *currentStatement )
 
           default:
              {
-            // We have to handle the cases of a SgStatementPtrList and a 
+            // We have to handle the cases of a SgStatementPtrList and a
             // SgDeclarationStatementPtrList separately
-               if (scope->containsOnlyDeclarations() == true)
+               if (isSgDeclarationScope(scope)) return nullptr;
+               if (scope->containsOnlyDeclarations() == true || (isSgDeclarationScope(scope)))
                   {
                  // Usually a global scope or class declaration scope
-                    SgDeclarationStatementPtrList & declarationList = scope->getDeclarationList();
+                    SgDeclarationStatementPtrList& declarationList = scope->getDeclarationList();
                     Rose_STL_Container<SgDeclarationStatement*>::iterator i;
                  // for (i = declarationList.begin(); (*i) != currentStatement; i++) {}
                     for (i = declarationList.begin(); (i != declarationList.end() && (*i) != currentStatement); i++) {}
                  // now i == currentStatement
 
-                 // DQ (7/19/2015): Needed to add support for template instatiations that might not be 
+                 // DQ (7/19/2015): Needed to add support for template instatiations that might not be
                  // located in there scope (because they would be name qualified).
                     if (i == declarationList.end())
                        {
@@ -1897,7 +1898,7 @@ Rose::getNextStatement ( SgStatement *currentStatement )
                       else
                        {
                          i++;
-                         if (declarationList.end() == i) 
+                         if (declarationList.end() == i)
                               nextStatement = NULL;
                            else
                               nextStatement=*i;
@@ -1909,8 +1910,8 @@ Rose::getNextStatement ( SgStatement *currentStatement )
                     Rose_STL_Container<SgStatement*>::iterator i;
                  // Liao, 11/18/2009, Handle the rare case that current statement is not found
                  // in its scope's statement list
-                 // for (i = statementList.begin();(*i)!=currentStatement;i++) 
-                    for (i = statementList.begin(); (*i) != currentStatement && i != statementList.end(); i++) 
+                 // for (i = statementList.begin();(*i)!=currentStatement;i++)
+                    for (i = statementList.begin(); (*i) != currentStatement && i != statementList.end(); i++)
                        {
                       //  SgStatement* cur_stmt = *i;
                       //  cout<<"Skipping current statement: "<<cur_stmt->class_name()<<endl;
@@ -1918,17 +1919,18 @@ Rose::getNextStatement ( SgStatement *currentStatement )
                        }
 
                  // currentStatement is not found in the list
-                    if (i ==  statementList.end()) 
+                    if (i ==  statementList.end())
                        {
-                         cerr<<"fatal error: ROSE::getNextStatement(): current statement is not found within its scope's statement list"<<endl;
-                         cerr<<"current statement is "<<currentStatement->class_name()<<endl;
-                         cerr<<currentStatement->get_file_info()->displayString()<<endl;
-                         cerr<<"Its scope is "<<scope->class_name()<<endl;
-                         cerr<<scope->get_file_info()->displayString()<<endl;
+                         mlog[FATAL]<<"fatal error: ROSE::getNextStatement(): current statement is not found within its scope's statement list"<<endl;
+                         mlog[FATAL]<<"current statement is "<<currentStatement->class_name()<<endl;
+                         //~ mlog[FATAL]<<"code: " << currentStatement->unparseToString()<<endl;
+                         mlog[FATAL]<<currentStatement->get_file_info()->displayString()<<endl;
+                         mlog[FATAL]<<"Its scope is "<<scope->class_name()<<endl;
+                         mlog[FATAL]<<scope->get_file_info()->displayString()<<endl;
 #if 0
-                         currentStatement->get_file_info()->display("fatal error: ROSE::getNextStatement(): current statement is not found within its scope's statement list: debug");                 
+                         currentStatement->get_file_info()->display("fatal error: ROSE::getNextStatement(): current statement is not found within its scope's statement list: debug");
 #endif
-                         ROSE_ABORT ();
+                         ROSE_ASSERT("!ROSE::getNextStatement not found");
                        }
 
                  // now i == currentStatement
@@ -1944,7 +1946,7 @@ Rose::getNextStatement ( SgStatement *currentStatement )
                           nextStatement = *i;
                   }
 
-            // If the target statement was the last statement in a scope then 
+            // If the target statement was the last statement in a scope then
                if (nextStatement == NULL)
                   {
                  // Someone might think of a better answer than NULL
@@ -1954,15 +1956,15 @@ Rose::getNextStatement ( SgStatement *currentStatement )
              }
         }
 
-  // This assertion does not make sense. 
-  // Since a trailing statement within a scope can have null next statement, 
+  // This assertion does not make sense.
+  // Since a trailing statement within a scope can have null next statement,
   // and  the statement can be not global scope statement, Liao 3/12/2009
   // ROSE_ASSERT (isSgGlobal(currentStatement) != NULL || nextStatement != NULL);
 
      return nextStatement;
    }
 
-         
+
 SgStatement*
 Rose::getPreviousStatement ( SgStatement *targetStatement , bool climbOutScope /*= true*/)
    {
@@ -1976,7 +1978,7 @@ Rose::getPreviousStatement ( SgStatement *targetStatement , bool climbOutScope /
      if (isSgGlobal(targetStatement) != NULL)
           return NULL;
 
-  // Make sure that we didn't get ourselves back from the get_scope() 
+  // Make sure that we didn't get ourselves back from the get_scope()
   // function (previous bug fixed, but tested here).
      if (scope == targetStatement)
         {
@@ -2035,7 +2037,7 @@ Rose::getPreviousStatement ( SgStatement *targetStatement , bool climbOutScope /
              }
           default:
              {
-            // We have to handle the cases of a SgStatementPtrList and a 
+            // We have to handle the cases of a SgStatementPtrList and a
             // SgDeclarationStatementPtrList separately
                if (scope->containsOnlyDeclarations() == true)
                   {
@@ -2054,9 +2056,9 @@ Rose::getPreviousStatement ( SgStatement *targetStatement , bool climbOutScope /
                        }
                   }
                   // Liao 5/10/2010, special case when a true/false body of a if statement is not a basic block
-                  // since getStatementList() is not defined for a if statement. 
+                  // since getStatementList() is not defined for a if statement.
                   // We define the previous statement of the true/false body to be the if statement
-                  // This is consistent with the later handling that when a statement is the first in a parent, 
+                  // This is consistent with the later handling that when a statement is the first in a parent,
                   // treat the parent as the previous statement
                  else if (isSgIfStmt(scope))
                   {
@@ -2082,7 +2084,7 @@ Rose::getPreviousStatement ( SgStatement *targetStatement , bool climbOutScope /
                        }
                   }
 
-            // If the target statement was the first statement in a scope then 
+            // If the target statement was the first statement in a scope then
                if ((previousStatement == NULL)&& climbOutScope)
                   {
                  // Then set the previous statement to be the scope containing the current statement

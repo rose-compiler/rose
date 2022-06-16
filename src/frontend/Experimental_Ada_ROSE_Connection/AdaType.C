@@ -1055,6 +1055,7 @@ namespace
 
       case A_Formal_Decimal_Fixed_Point_Definition:  // 12.5.2(7)
         {
+          logKind("A_Formal_Decimal_Fixed_Point_Definition");
           SgType&               fixed   = mkFixedType();
           SgAdaDeltaConstraint& decimal = mkAdaDeltaConstraint(mkNullExpression(), true, nullptr);
 
@@ -1064,12 +1065,14 @@ namespace
 
       case A_Formal_Unconstrained_Array_Definition:  // 3.6(3)
         {
+          logKind("A_Formal_Unconstrained_Array_Definition");
           formalBaseType = &createUnconstrainedArrayType(typenode, ctx);
           break;
         }
 
       case A_Formal_Constrained_Array_Definition:    // 3.6(5)
         {
+          logKind("A_Formal_Constrained_Array_Definition");
           formalBaseType = &createConstrainedArrayType(typenode, ctx);
           break;
         }

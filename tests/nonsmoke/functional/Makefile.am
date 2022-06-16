@@ -77,7 +77,11 @@ noinst_PROGRAMS = \
    testTokenGeneration \
    testTemplates \
    testBackend \
-   readFileTwice
+   readFileTwice 
+
+if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+   noinst_PROGRAMS += testLinearDisassembler2
+endif
 
 if ROSE_WITH_LIBHARU
    noinst_PROGRAMS += testPDFGeneration
@@ -145,6 +149,10 @@ testTemplates_SOURCES = testTemplates.C
 testBackend_SOURCES = testBackend.C
 
 readFileTwice_SOURCES = readFileTwice.C
+
+if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
+testLinearDisassembler2_SOURCES = testLinearDisassembler2.C
+endif
 
 # DQ (7/3/2013): Added support to output some pre-defined macro values.
 # Program to output predefined relevant macros.

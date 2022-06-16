@@ -65,6 +65,7 @@ Grammar::setUpStatements ()
 
      NEW_TERMINAL_MACRO (CatchStatementSeq,         "CatchStatementSeq",         "CATCH_STATEMENT_SEQ" );
      NEW_TERMINAL_MACRO (FunctionParameterList,     "FunctionParameterList",     "FUNCTION_PARAMETER_LIST" );
+     NEW_TERMINAL_MACRO (AdaParameterList,          "AdaParameterList",          "ADA_PARAMETER_LIST" );
      NEW_TERMINAL_MACRO (CtorInitializerList,       "CtorInitializerList",       "CTOR_INITIALIZER_LIST" );
      NEW_TERMINAL_MACRO (BasicBlock,                "BasicBlock",                "BASIC_BLOCK_STMT");
      NEW_TERMINAL_MACRO (Global,                    "Global",                    "GLOBAL_STMT" );
@@ -598,7 +599,8 @@ Grammar::setUpStatements ()
           AdaProtectedSpecDecl                    | AdaProtectedBodyDecl      | AdaProtectedTypeDecl         |
           AdaRepresentationClause                 | AdaComponentClause        | AdaAttributeClause           |
           AdaEnumRepresentationClause             | AdaGenericDecl            | AdaFormalTypeDecl            |
-          AdaDiscriminatedTypeDecl                | AdaGenericInstanceDecl    | AdaFormalPackageDecl
+          AdaDiscriminatedTypeDecl                | AdaGenericInstanceDecl    | AdaFormalPackageDecl         |
+          AdaParameterList
           /*| ClassPropertyList |*/,
           "DeclarationStatement", "DECL_STMT", false);
 
@@ -1669,6 +1671,20 @@ Grammar::setUpStatements ()
   // VariableDefinition.setDataPrototype("SgExpressionRoot*", "initializer_expr_root", "= NULL",
   //                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL,
   //                                      NO_COPY_DATA);
+
+     AdaParameterList.setFunctionPrototype ( "HEADER_ADA_PARAMETER_LIST", "../Grammar/Statement.code" );
+
+     AdaParameterList.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
+     AdaParameterList.editSubstitute      ( "LIST_DATA_TYPE", "SgDeclarationStatementPtrList" );
+     AdaParameterList.editSubstitute      ( "LIST_NAME", "parameters" );
+     AdaParameterList.editSubstitute      ( "LIST_FUNCTION_RETURN_TYPE", "SgDeclarationStatementPtrList::iterator" );
+     AdaParameterList.editSubstitute      ( "LIST_FUNCTION_NAME", "parameter" );
+     AdaParameterList.editSubstitute      ( "LIST_ELEMENT_DATA_TYPE", "SgDeclarationStatement*" );
+     AdaParameterList.setDataPrototype ( "SgDeclarationStatementPtrList", "parameters", "",
+                                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+
+
 
      ClassDeclaration.setFunctionPrototype ( "HEADER_CLASS_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
      ClassDeclaration.setFunctionPrototype ( "HEADER_TEMPLATE_SPECIALIZATION_SUPPORT", "../Grammar/Statement.code" );
@@ -3264,22 +3280,15 @@ Grammar::setUpStatements ()
 
      AdaDiscriminatedTypeDecl.setFunctionPrototype  ( "HEADER_ADA_DISCRIMINATED_TYPE_DECL_STATEMENT", "../Grammar/Statement.code" );
 
-     AdaDiscriminatedTypeDecl.editSubstitute   ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
-     AdaDiscriminatedTypeDecl.editSubstitute   ( "LIST_DATA_TYPE", "SgInitializedNamePtrList" );
-     AdaDiscriminatedTypeDecl.editSubstitute   ( "LIST_NAME", "discriminants" );
-     AdaDiscriminatedTypeDecl.editSubstitute   ( "LIST_FUNCTION_RETURN_TYPE", "SgInitializedNamePtrList::iterator" );
-     AdaDiscriminatedTypeDecl.editSubstitute   ( "LIST_FUNCTION_NAME", "discriminant" );
-     AdaDiscriminatedTypeDecl.editSubstitute   ( "LIST_ELEMENT_DATA_TYPE", "SgInitializedName*" );
 
-     AdaDiscriminatedTypeDecl.setDataPrototype ( "SgInitializedNamePtrList", "discriminants", "",
-                                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AdaDiscriminatedTypeDecl.setDataPrototype ( "SgDeclarationScope*", "discriminantScope", "= nullptr",
+                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AdaDiscriminatedTypeDecl.setDataPrototype ( "SgAdaParameterList*", "discriminants", "= nullptr",
+                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     AdaDiscriminatedTypeDecl.setDataPrototype ( "SgDeclarationStatement*", "discriminatedDecl", "= nullptr",
+                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      AdaDiscriminatedTypeDecl.setDataPrototype ( "SgAdaDiscriminatedType*", "type", "= nullptr",
                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-     AdaDiscriminatedTypeDecl.setDataPrototype ( "SgDeclarationScope*", "discriminantScope", "= NULL",
-                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AdaDiscriminatedTypeDecl.setDataPrototype ( "SgDeclarationStatement*", "discriminatedDecl", "= NULL",
-                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 #if 0 /* NO_NAME */
      // the name is computed from the child
      AdaDiscriminatedTypeDecl.setDataPrototype ( "SgName", "name", "= \"\"",
@@ -4412,6 +4421,7 @@ Grammar::setUpStatements ()
      ForInitStatement.setFunctionSource     ( "SOURCE_FOR_INIT_STATEMENT", "../Grammar/Statement.code" );
      CatchStatementSeq.setFunctionSource           ( "SOURCE_CATCH_STATEMENT_SEQ", "../Grammar/Statement.code" );
      FunctionParameterList.setFunctionSource( "SOURCE_FUNCTION_PARAMETER_LIST", "../Grammar/Statement.code" );
+     AdaParameterList.setFunctionSource( "SOURCE_ADA_PARAMETER_LIST", "../Grammar/Statement.code" );
      CtorInitializerList.setFunctionSource  ( "SOURCE_CTOR_INITIALIZER_LIST", "../Grammar/Statement.code" );
 
      TypedefDeclaration.setFunctionSource   ( "SOURCE_TYPEDEF_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
