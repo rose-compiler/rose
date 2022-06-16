@@ -1718,6 +1718,33 @@ HEADER_LIST_DECLARATIONS
 
 HEADER_FUNCTION_PARAMETER_LIST_END
 
+HEADER_ADA_PARAMETER_LIST_START
+HEADER_LIST_DECLARATIONS
+
+       // DQ (2/18/2006): Added general name mangling for all declarations (and some other IR nodes).
+          virtual SgName get_mangled_name(void) const override;
+
+#if 0
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+          virtual unsigned int cfgIndexForEnd() const override;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) override;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) override;
+#endif
+
+#if ALT_FIXUP_COPY
+       // DQ (11/7/2007): These need to be called separately (see documentation)
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const override;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const override;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const override;
+#else
+       // DQ (10/6/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
+          virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
+#endif
+#endif /* 0 */
+
+HEADER_ADA_PARAMETER_LIST_END
+
+
 HEADER_CTOR_INITIALIZER_LIST_START
 HEADER_LIST_DECLARATIONS
 
@@ -3646,14 +3673,6 @@ SgName get_mangled_name() const override;
 HEADER_ADA_RENAMING_DECL_STATEMENT_END
 
 HEADER_ADA_DISCRIMINATED_TYPE_DECL_STATEMENT_START
-
-HEADER_LIST_DECLARATIONS
-
-// SgInitializedNamePtrList& get_discriminants() ;
-// const SgInitializedNamePtrList & get_discriminants() const;
-//void append_discriminant(SgInitializedName*) ;
-//void prepend_discriminant(SgInitializedName*) ;
-
 SgSymbol* get_symbol_from_symbol_table() const override;
 SgName get_mangled_name() const override;
 HEADER_ADA_DISCRIMINATED_TYPE_DECL_STATEMENT_END
@@ -4786,6 +4805,19 @@ SgStatement::get_scope(void) const
                break;
              }
 
+          // Ada parameter list follows the design of SgFunctionParameterList
+          case V_SgAdaParameterList:
+             {
+               SgNode* parent = stmt->get_parent();
+               SgAdaDiscriminatedTypeDecl* discdcl = isSgAdaDiscriminatedTypeDecl(parent);
+               ASSERT_not_null(discdcl);
+
+               returnScope = discdcl->get_discriminantScope();
+               ROSE_ASSERT (returnScope != NULL);
+               break;
+             }
+
+
        // TV (05/28/2018): It can happen for SgDeclarationScope created to hold non-real declarations to be missing their parent...
           case V_SgDeclarationScope:
              {
@@ -4924,7 +4956,10 @@ SgStatement::get_scope(void) const
                          stmt = isSgStatement(initializedName->get_parent());
                          ROSE_ASSERT(stmt != NULL);
                        }
-                      else
+                    else if (SgAdaParameterList* adaparmlst = isSgAdaParameterList(stmt->get_parent()))
+                       { return adaparmlst->get_scope();
+                       }
+                    else
                        {
                       // DQ (12/16/2007): Added error handling (reporting)
                          if (isSgStatement(stmt->get_parent()) == NULL)
@@ -12469,6 +12504,61 @@ SgFunctionParameterList::get_mangled_name(void) const
    }
 
 SOURCE_FUNCTION_PARAMETER_LIST_END
+
+
+
+SOURCE_ADA_PARAMETER_LIST_START
+
+void
+SgAdaParameterList::post_construction_initialization()
+   {
+     if (get_file_info() && !get_endOfConstruct())
+        {
+          Sg_File_Info* endingPosition = new Sg_File_Info(*(get_file_info()));
+          ROSE_ASSERT (endingPosition != NULL);
+
+          endingPosition->set_parent(this);
+          set_endOfConstruct(endingPosition);
+        }
+   }
+
+void
+SgAdaParameterList::append_parameter( SgDeclarationStatement* what)
+   {
+     get_parameters().push_back(what);
+     what->set_parent(this);
+   }
+
+void
+SgAdaParameterList::prepend_parameter( SgDeclarationStatement* what)
+   {
+     get_parameters().insert(get_parameters().begin(), what);
+     what->set_parent(this);
+   }
+
+SgName
+SgAdaParameterList::get_mangled_name(void) const
+   {
+     std::string mangledNameString = SageInterface::getMangledNameFromCache(const_cast<SgAdaParameterList*>(this));
+
+     if (!mangledNameString.empty())
+          return mangledNameString;
+
+     mangledNameString = get_scope()->get_mangled_name().getString() + "_ada_parameter_list_";
+
+     for (const SgDeclarationStatement* parm : get_parameters())
+     {
+        ASSERT_not_null(parm);
+
+        mangledNameString += "_parameter_";
+        mangledNameString += parm->get_mangled_name();
+     }
+
+     return SageInterface::addMangledNameToCache(const_cast<SgAdaParameterList*>(this), mangledNameString);
+   }
+
+SOURCE_ADA_PARAMETER_LIST_END
+
 
 
 SOURCE_FUNCTION_DECLARATION_STATEMENT_PARSER_START
@@ -21106,20 +21196,6 @@ SgAdaDiscriminatedTypeDecl::get_mangled_name() const
 
   return name + child->get_mangled_name();
 }
-
-#if 1
-void
-SgAdaDiscriminatedTypeDecl::append_discriminant(SgInitializedName* what)
-{
-  get_discriminants().push_back(what);
-}
-
-void
-SgAdaDiscriminatedTypeDecl::prepend_discriminant(SgInitializedName* what)
-{
-  get_discriminants().insert(get_discriminants().begin(), what);
-}
-#endif
 
 SOURCE_ADA_DISCRIMINATED_TYPE_DECL_STATEMENT_END
 

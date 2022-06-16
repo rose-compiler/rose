@@ -717,9 +717,18 @@ mkAdaPackageSpecDecl(const std::string& name, SgScopeStatement& scope)
 namespace
 {
   SgDeclarationScope&
-  mkDeclarationScope(SgScopeStatement& /* not use */)
+  mkDeclarationScope(SgScopeStatement& /* not used */)
   {
     SgDeclarationScope& sgnode = mkScopeStmt<SgDeclarationScope>();
+
+    //~ sgnode.set_scope(&outer);
+    return sgnode;
+  }
+
+  SgAdaParameterList&
+  mkAdaParameterList(SgScopeStatement& /* not used */)
+  {
+    SgAdaParameterList& sgnode = mkLocatedNode<SgAdaParameterList>();
 
     //~ sgnode.set_scope(&outer);
     return sgnode;
@@ -730,9 +739,11 @@ SgAdaDiscriminatedTypeDecl&
 mkAdaDiscriminatedTypeDecl(SgScopeStatement& scope)
 {
   SgDeclarationScope&         dclscope = mkDeclarationScope(scope);
-  SgAdaDiscriminatedTypeDecl& sgnode   = mkLocatedNode<SgAdaDiscriminatedTypeDecl>(&dclscope);
+  SgAdaParameterList&         params   = mkAdaParameterList(dclscope);
+  SgAdaDiscriminatedTypeDecl& sgnode   = mkLocatedNode<SgAdaDiscriminatedTypeDecl>(&dclscope, &params);
 
   dclscope.set_parent(&sgnode);
+  params.set_parent(&sgnode);
   return sgnode;
 }
 
