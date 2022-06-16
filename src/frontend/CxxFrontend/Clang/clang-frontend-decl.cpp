@@ -1470,6 +1470,13 @@ bool ClangToSageTranslator::VisitFunctionDecl(clang::FunctionDecl * function_dec
 */
 //  ROSE_ASSERT(GetSymbolFromSymbolTable(function_decl) != NULL);
 
+    // Pei-Hung (06/16/22) added "extern" modifier
+    bool hasExternalStorage = function_decl->isLocalExternDecl();
+    if(hasExternalStorage)
+    {
+      sg_function_decl->get_declarationModifier().get_storageModifier().setExtern();
+    }
+
     *node = sg_function_decl;
 
     return VisitDeclaratorDecl(function_decl, node) && res;
@@ -1658,6 +1665,20 @@ bool ClangToSageTranslator::VisitVarDecl(clang::VarDecl * var_decl, SgNode ** no
 
     SgVariableSymbol * var_symbol = new SgVariableSymbol(init_name);
     SageBuilder::topScopeStack()->insert_symbol(name, var_symbol);
+
+    // Pei-Hung (06/16/22) added "extern" modifier
+    bool hasExternalStorage = var_decl->hasExternalStorage();
+    if(hasExternalStorage)
+    {
+      sg_var_decl->get_declarationModifier().get_storageModifier().setExtern();
+    }
+
+    // Pei-Hung (06/16/22) added "static" modifier
+    bool isStaticDecl = var_decl->isStaticLocal();
+    if(isStaticDecl)
+    {
+      sg_var_decl->get_declarationModifier().get_storageModifier().setStatic();
+    }
 
     *node = sg_var_decl;
 
