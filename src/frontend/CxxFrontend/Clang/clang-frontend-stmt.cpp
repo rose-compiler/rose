@@ -1035,35 +1035,51 @@ bool ClangToSageTranslator::VisitDeclStmt(clang::DeclStmt * decl_stmt, SgNode **
     }
     else {
         std::vector<SgNode *> tmp_decls;
-        SgDeclarationStatement * decl;
+        //SgDeclarationStatement * decl;
         clang::DeclStmt::decl_iterator it;
 
         SgScopeStatement * scope = SageBuilder::topScopeStack();
 
-        for (it = decl_stmt->decl_begin(); it != decl_stmt->decl_end(); it++)
-            tmp_decls.push_back(Traverse(*it));
-        for (unsigned i = 0; i < tmp_decls.size() - 1; i++) {
-            decl = isSgDeclarationStatement(tmp_decls[i]);
-            if (tmp_decls[i] != NULL && decl == NULL) {
-                std::cerr << "Runtime error: tmp_decls[i] != NULL && decl == NULL" << std::endl;
+        for (it = decl_stmt->decl_begin(); it != decl_stmt->decl_end()-1; it++) {
+            clang::Decl* decl = (*it);
+            if (decl == nullptr) continue;
+            SgNode * child = Traverse(decl);
+
+            SgDeclarationStatement * sub_decl_stmt = isSgDeclarationStatement(child);
+            if (sub_decl_stmt == NULL && child != NULL) {
+                std::cerr << "Runtime error: the node produce for a clang::Decl is not a SgDeclarationStatement !" << std::endl;
+                std::cerr << "    class = " << child->class_name() << std::endl;
                 res = false;
                 continue;
             }
-            else {
-              SgClassDeclaration * class_decl = isSgClassDeclaration(decl);
-              if (class_decl != NULL && (class_decl->get_name() == "" || class_decl->get_isUnNamed())) continue;
-              SgEnumDeclaration * enum_decl = isSgEnumDeclaration(decl);
-              if (enum_decl != NULL && (enum_decl->get_name() == "" || enum_decl->get_isUnNamed())) continue;
+            else if (child != NULL) {
+                // FIXME This is a hack to avoid autonomous decl of unnamed type to being added to the global scope....
+                SgClassDeclaration * class_decl = isSgClassDeclaration(child);
+                if (class_decl != NULL && (class_decl->get_name() == "" || class_decl->get_isUnNamed())) continue;
+                SgEnumDeclaration * enum_decl = isSgEnumDeclaration(child);
+
+                if(clang::EnumDecl::classof(decl))
+                {
+                  clang::EnumDecl* enumDecl = (clang::EnumDecl*)decl;
+                  if(enumDecl->isEmbeddedInDeclarator())  continue;
+                }
+
+                if (enum_decl != NULL && (enum_decl->get_name() == "" || enum_decl->get_isUnNamed())) continue;
+
             }
-            scope->append_statement(decl);
-            decl->set_parent(scope);
+            scope->append_statement(sub_decl_stmt);
+            sub_decl_stmt->set_parent(scope);
         }
-        decl = isSgDeclarationStatement(tmp_decls[tmp_decls.size() - 1]);
-        if (tmp_decls[tmp_decls.size() - 1] != NULL && decl == NULL) {
-            std::cerr << "Runtime error: tmp_decls[tmp_decls.size() - 1] != NULL && decl == NULL" << std::endl;
+        // last declaration in scope
+        it = decl_stmt->decl_end();
+        --it;
+        SgNode * lastDecl = Traverse((clang::Decl*)(*it));
+        SgDeclarationStatement * last_decl_Stmt = isSgDeclarationStatement(lastDecl);
+        if (lastDecl != NULL && last_decl_Stmt == NULL) {
+            std::cerr << "Runtime error: lastDecl != NULL && last_decl_Stmt == NULL" << std::endl;
             res = false;
         }
-        *node = decl;
+        *node = last_decl_Stmt;
     }
 
 #if 1
