@@ -12,8 +12,7 @@
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/Message.h>
 #include <string>
-#include <inttypes.h> /* for uintptr_t and PRIXPTR */
-//~ #include <utility>
+#include <cinttypes> /* for uintptr_t and PRIxxx format specifiers*/
 
 using namespace Rose;
 using namespace Rose::BinaryAnalysis::InstructionSemantics2;
@@ -111,7 +110,7 @@ void f() {
 
 template <class SageAsmCilNode, class... Args>
 SageAsmCilNode*
-buildAsmCilNode(Args&&... args)
+parseAsmCilNode(Args&&... args)
 {
     SageAsmCilNode* res = new SageAsmCilNode;
 
@@ -364,7 +363,10 @@ class MetadataTable
                printf ("reserved_always_one = %u \n",reserved_always_one);
 
             // DQ (12/13/2021): I thought this was supposed to be the value 1.
-               ROSE_ASSERT(reserved_always_one == 16);
+               //~ ROSE_ASSERT(reserved_always_one == 16);
+
+            // PP (06/16/22): Seems to be 1 on some simple test code
+               ROSE_ASSERT(reserved_always_one == 1);
 
                index += 1;
 
@@ -458,7 +460,7 @@ class MetadataTable
                                  {
                                    printf (" --- processing row j = %zu \n",j);
 
-                                   SgAsmCilAssembly* table_rose = buildAsmCilNode<SgAsmCilAssembly>(buf,index,uses4byteIndexing);
+                                   SgAsmCilAssembly* table_rose = parseAsmCilNode<SgAsmCilAssembly>(buf,index,uses4byteIndexing);
                                    assembly_table.push_back(table_rose);
 #if 1
                                    printf ("DONE: processing row j = %zu \n",j);
@@ -480,7 +482,7 @@ class MetadataTable
                                  {
                                    printf (" --- processing row j = %zu \n",j);
 
-                                   SgAsmCilAssemblyProcessor* table_rose = buildAsmCilNode<SgAsmCilAssemblyProcessor>(buf,index,uses4byteIndexing);
+                                   SgAsmCilAssemblyProcessor* table_rose = parseAsmCilNode<SgAsmCilAssemblyProcessor>(buf,index,uses4byteIndexing);
                                    assemblyProcessor_table.push_back(table_rose);
 #if 1
                                    printf ("DONE: processing row j = %zu \n",j);
@@ -502,7 +504,7 @@ class MetadataTable
                                  {
                                    printf (" --- processing row j = %zu \n",j);
 
-                                   SgAsmCilAssemblyOS* table_rose = buildAsmCilNode<SgAsmCilAssemblyOS>(buf,index,uses4byteIndexing);
+                                   SgAsmCilAssemblyOS* table_rose = parseAsmCilNode<SgAsmCilAssemblyOS>(buf,index,uses4byteIndexing);
                                    assemblyOS_table.push_back(table_rose);
 #if 1
                                    printf ("DONE: processing row j = %zu \n",j);
@@ -524,7 +526,7 @@ class MetadataTable
                                  {
                                    printf (" --- processing row j = %zu \n",j);
 
-                                   SgAsmCilAssemblyRef* table_rose = buildAsmCilNode<SgAsmCilAssemblyRef>(buf,index,uses4byteIndexing);
+                                   SgAsmCilAssemblyRef* table_rose = parseAsmCilNode<SgAsmCilAssemblyRef>(buf,index,uses4byteIndexing);
                                    assemblyRef_table.push_back(table_rose);
 #if 1
                                    printf ("DONE: processing row j = %zu \n",j);
@@ -546,7 +548,7 @@ class MetadataTable
                                  {
                                    printf (" --- processing row j = %zu \n",j);
 
-                                   SgAsmCilAssemblyRefProcessor* table_rose = buildAsmCilNode<SgAsmCilAssemblyRefProcessor>(buf,index,uses4byteIndexing);
+                                   SgAsmCilAssemblyRefProcessor* table_rose = parseAsmCilNode<SgAsmCilAssemblyRefProcessor>(buf,index,uses4byteIndexing);
                                    assemblyRefProcessor_table.push_back(table_rose);
 #if 1
                                    printf ("DONE: processing row j = %zu \n",j);
@@ -568,7 +570,7 @@ class MetadataTable
                                  {
                                    printf (" --- processing row j = %zu \n",j);
 
-                                   SgAsmCilAssemblyRefOS* table_rose = buildAsmCilNode<SgAsmCilAssemblyRefOS>(buf,index,uses4byteIndexing);
+                                   SgAsmCilAssemblyRefOS* table_rose = parseAsmCilNode<SgAsmCilAssemblyRefOS>(buf,index,uses4byteIndexing);
                                    assemblyRefOS_table.push_back(table_rose);
 #if 1
                                    printf ("DONE: processing row j = %zu \n",j);
@@ -590,7 +592,7 @@ class MetadataTable
                                  {
                                    printf (" --- processing row j = %zu \n",j);
 
-                                   SgAsmCilClassLayout* table_rose = buildAsmCilNode<SgAsmCilClassLayout>(buf,index,uses4byteIndexing);
+                                   SgAsmCilClassLayout* table_rose = parseAsmCilNode<SgAsmCilClassLayout>(buf,index,uses4byteIndexing);
                                    classLayout_table.push_back(table_rose);
 #if 1
                                    printf ("DONE: processing row j = %zu \n",j);
@@ -612,7 +614,7 @@ class MetadataTable
                                  {
                                    printf (" --- processing row j = %zu \n",j);
 
-                                   SgAsmCilConstant* table_rose = buildAsmCilNode<SgAsmCilConstant>(buf,index,uses4byteIndexing);
+                                   SgAsmCilConstant* table_rose = parseAsmCilNode<SgAsmCilConstant>(buf,index,uses4byteIndexing);
                                    constant_table.push_back(table_rose);
 #if 1
                                    printf ("DONE: processing row j = %zu \n",j);
@@ -635,7 +637,7 @@ class MetadataTable
                                  {
                                    printf (" --- processing row j = %zu \n",j);
 
-                                   SgAsmCilCustomAttribute* table_rose = buildAsmCilNode<SgAsmCilCustomAttribute>(buf,index,uses4byteIndexing);
+                                   SgAsmCilCustomAttribute* table_rose = parseAsmCilNode<SgAsmCilCustomAttribute>(buf,index,uses4byteIndexing);
                                    customAttribute_table.push_back(table_rose);
 #if 1
                                    printf ("DONE: processing row j = %zu \n",j);
@@ -657,7 +659,7 @@ class MetadataTable
                                  {
                                    printf (" --- processing row j = %zu \n",j);
 
-                                   SgAsmCilDeclSecurity* table_rose = buildAsmCilNode<SgAsmCilDeclSecurity>(buf,index,uses4byteIndexing);
+                                   SgAsmCilDeclSecurity* table_rose = parseAsmCilNode<SgAsmCilDeclSecurity>(buf,index,uses4byteIndexing);
                                    declSecurity_table.push_back(table_rose);
 #if 1
                                    printf ("DONE: processing row j = %zu \n",j);
@@ -679,7 +681,7 @@ class MetadataTable
                                  {
                                    printf (" --- processing row j = %zu \n",j);
 
-                                   SgAsmCilEventMap* table_rose = buildAsmCilNode<SgAsmCilEventMap>(buf,index,uses4byteIndexing);
+                                   SgAsmCilEventMap* table_rose = parseAsmCilNode<SgAsmCilEventMap>(buf,index,uses4byteIndexing);
                                    eventMap_table.push_back(table_rose);
 #if 1
                                    printf ("DONE: processing row j = %zu \n",j);
@@ -701,7 +703,7 @@ class MetadataTable
                                  {
                                    printf (" --- processing row j = %zu \n",j);
 
-                                   SgAsmCilAssemblyRef* table_rose = buildAsmCilNode<SgAsmCilAssemblyRef>(buf,index,uses4byteIndexing);
+                                   SgAsmCilAssemblyRef* table_rose = parseAsmCilNode<SgAsmCilAssemblyRef>(buf,index,uses4byteIndexing);
                                    assemblyRef_table.push_back(table_rose);
 #if 1
                                    printf ("DONE: processing row j = %zu \n",j);
@@ -723,7 +725,7 @@ class MetadataTable
                                  {
                                    printf (" --- processing row j = %zu \n",j);
 
-                                   SgAsmCilExportedType* table_rose = buildAsmCilNode<SgAsmCilExportedType>(buf,index,uses4byteIndexing);
+                                   SgAsmCilExportedType* table_rose = parseAsmCilNode<SgAsmCilExportedType>(buf,index,uses4byteIndexing);
                                    exportedType_table.push_back(table_rose);
 #if 1
                                    printf ("DONE: processing row j = %zu \n",j);
@@ -745,7 +747,7 @@ class MetadataTable
                                  {
                                    printf (" --- processing row j = %zu \n",j);
 
-                                   SgAsmCilField* table_rose = buildAsmCilNode<SgAsmCilField>(buf,index,uses4byteIndexing);
+                                   SgAsmCilField* table_rose = parseAsmCilNode<SgAsmCilField>(buf,index,uses4byteIndexing);
                                    field_table.push_back(table_rose);
 #if 1
                                    printf ("DONE: processing row j = %zu \n",j);
@@ -767,7 +769,7 @@ class MetadataTable
                                  {
                                    printf (" --- processing row j = %zu \n",j);
 
-                                   SgAsmCilFieldLayout* table_rose = buildAsmCilNode<SgAsmCilFieldLayout>(buf,index,uses4byteIndexing);
+                                   SgAsmCilFieldLayout* table_rose = parseAsmCilNode<SgAsmCilFieldLayout>(buf,index,uses4byteIndexing);
                                    fieldLayout_table.push_back(table_rose);
 #if 1
                                    printf ("DONE: processing row j = %zu \n",j);
@@ -789,7 +791,7 @@ class MetadataTable
                                  {
                                    printf (" --- processing row j = %zu \n",j);
 
-                                   SgAsmCilFieldMarshal* table_rose = buildAsmCilNode<SgAsmCilFieldMarshal>(buf,index,uses4byteIndexing);
+                                   SgAsmCilFieldMarshal* table_rose = parseAsmCilNode<SgAsmCilFieldMarshal>(buf,index,uses4byteIndexing);
                                    fieldMarshal_table.push_back(table_rose);
 #if 1
                                    printf ("DONE: processing row j = %zu \n",j);
@@ -811,7 +813,7 @@ class MetadataTable
                                  {
                                    printf (" --- processing row j = %zu \n",j);
 
-                                   SgAsmCilFieldRVA* table_rose = buildAsmCilNode<SgAsmCilFieldRVA>(buf,index,uses4byteIndexing);
+                                   SgAsmCilFieldRVA* table_rose = parseAsmCilNode<SgAsmCilFieldRVA>(buf,index,uses4byteIndexing);
                                    fieldRVA_table.push_back(table_rose);
 #if 1
                                    printf ("DONE: processing row j = %zu \n",j);
@@ -833,7 +835,7 @@ class MetadataTable
                                  {
                                    printf (" --- processing row j = %zu \n",j);
 
-                                   SgAsmCilFile* table_rose = buildAsmCilNode<SgAsmCilFile>(buf,index,uses4byteIndexing);
+                                   SgAsmCilFile* table_rose = parseAsmCilNode<SgAsmCilFile>(buf,index,uses4byteIndexing);
                                    file_table.push_back(table_rose);
 #if 1
                                    printf ("DONE: processing row j = %zu \n",j);
@@ -855,7 +857,7 @@ class MetadataTable
                                  {
                                    printf (" --- processing row j = %zu \n",j);
 
-                                   SgAsmCilGenericParam* table_rose = buildAsmCilNode<SgAsmCilGenericParam>(buf,index,uses4byteIndexing);
+                                   SgAsmCilGenericParam* table_rose = parseAsmCilNode<SgAsmCilGenericParam>(buf,index,uses4byteIndexing);
                                    genericParam_table.push_back(table_rose);
 #if 1
                                    printf ("DONE: processing row j = %zu \n",j);
@@ -877,7 +879,7 @@ class MetadataTable
                                  {
                                    printf (" --- processing row j = %zu \n",j);
 
-                                   SgAsmCilGenericParamConstraint* table_rose = buildAsmCilNode<SgAsmCilGenericParamConstraint>(buf,index,uses4byteIndexing);
+                                   SgAsmCilGenericParamConstraint* table_rose = parseAsmCilNode<SgAsmCilGenericParamConstraint>(buf,index,uses4byteIndexing);
                                    genericParamConstraint_table.push_back(table_rose);
 #if 1
                                    printf ("DONE: processing row j = %zu \n",j);
@@ -899,7 +901,7 @@ class MetadataTable
                                  {
                                    printf (" --- processing row j = %zu \n",j);
 
-                                   SgAsmCilImplMap* table_rose = buildAsmCilNode<SgAsmCilImplMap>(buf,index,uses4byteIndexing);
+                                   SgAsmCilImplMap* table_rose = parseAsmCilNode<SgAsmCilImplMap>(buf,index,uses4byteIndexing);
                                    implMap_table.push_back(table_rose);
 #if 1
                                    printf ("DONE: processing row j = %zu \n",j);
@@ -921,7 +923,7 @@ class MetadataTable
                                  {
                                    printf (" --- processing row j = %zu \n",j);
 
-                                   SgAsmCilInterfaceImpl* table_rose = buildAsmCilNode<SgAsmCilInterfaceImpl>(buf,index,uses4byteIndexing);
+                                   SgAsmCilInterfaceImpl* table_rose = parseAsmCilNode<SgAsmCilInterfaceImpl>(buf,index,uses4byteIndexing);
                                    interfaceImpl_table.push_back(table_rose);
 #if 1
                                    printf ("DONE: processing row j = %zu \n",j);
@@ -943,7 +945,7 @@ class MetadataTable
                                  {
                                    printf (" --- processing row j = %zu \n",j);
 
-                                   SgAsmCilManifestResource* table_rose = buildAsmCilNode<SgAsmCilManifestResource>(buf,index,uses4byteIndexing);
+                                   SgAsmCilManifestResource* table_rose = parseAsmCilNode<SgAsmCilManifestResource>(buf,index,uses4byteIndexing);
                                    manifestResource_table.push_back(table_rose);
 #if 1
                                    printf ("DONE: processing row j = %zu \n",j);
@@ -965,7 +967,7 @@ class MetadataTable
                                  {
                                    printf (" --- processing row j = %zu \n",j);
 
-                                   SgAsmCilMemberRef* table_rose = buildAsmCilNode<SgAsmCilMemberRef>(buf,index,uses4byteIndexing);
+                                   SgAsmCilMemberRef* table_rose = parseAsmCilNode<SgAsmCilMemberRef>(buf,index,uses4byteIndexing);
                                    memberRef_table.push_back(table_rose);
 #if 1
                                    printf ("DONE: processing row j = %zu \n",j);
@@ -987,7 +989,7 @@ class MetadataTable
                                  {
                                    printf (" --- processing row j = %zu \n",j);
 
-                                   SgAsmCilMethodDef* table_rose = buildAsmCilNode<SgAsmCilMethodDef>(buf,index,uses4byteIndexing);
+                                   SgAsmCilMethodDef* table_rose = parseAsmCilNode<SgAsmCilMethodDef>(buf,index,uses4byteIndexing);
                                    methodDef_table.push_back(table_rose);
 #if 1
                                    printf ("DONE: processing row j = %zu \n",j);
@@ -1009,7 +1011,7 @@ class MetadataTable
                                  {
                                    printf (" --- processing row j = %zu \n",j);
 
-                                   SgAsmCilMethodImpl* table_rose = buildAsmCilNode<SgAsmCilMethodImpl>(buf,index,uses4byteIndexing);
+                                   SgAsmCilMethodImpl* table_rose = parseAsmCilNode<SgAsmCilMethodImpl>(buf,index,uses4byteIndexing);
                                    methodImpl_table.push_back(table_rose);
 #if 1
                                    printf ("DONE: processing row j = %zu \n",j);
@@ -1031,7 +1033,7 @@ class MetadataTable
                                  {
                                    printf (" --- processing row j = %zu \n",j);
 
-                                   SgAsmCilMethodSemantics* table_rose = buildAsmCilNode<SgAsmCilMethodSemantics>(buf,index,uses4byteIndexing);
+                                   SgAsmCilMethodSemantics* table_rose = parseAsmCilNode<SgAsmCilMethodSemantics>(buf,index,uses4byteIndexing);
                                    methodSemantics_table.push_back(table_rose);
 #if 1
                                    printf ("DONE: processing row j = %zu \n",j);
@@ -1053,7 +1055,7 @@ class MetadataTable
                                  {
                                    printf (" --- processing row j = %zu \n",j);
 
-                                   SgAsmCilMethodSpec* table_rose = buildAsmCilNode<SgAsmCilMethodSpec>(buf,index,uses4byteIndexing);
+                                   SgAsmCilMethodSpec* table_rose = parseAsmCilNode<SgAsmCilMethodSpec>(buf,index,uses4byteIndexing);
                                    methodSpec_table.push_back(table_rose);
 #if 1
                                    printf ("DONE: processing row j = %zu \n",j);
@@ -1078,7 +1080,7 @@ class MetadataTable
                                 // vector<SgAsmCilModule*> module_table;
 
                                 // MetadataRoot(uint8_t* buf, size_t index)
-                                   SgAsmCilModule* table_rose = buildAsmCilNode<SgAsmCilModule>(buf,index,uses4byteIndexing);
+                                   SgAsmCilModule* table_rose = parseAsmCilNode<SgAsmCilModule>(buf,index,uses4byteIndexing);
                                    module_table.push_back(table_rose);
 #if 1
                                    printf ("DONE: processing row j = %zu \n",j);
@@ -1100,7 +1102,7 @@ class MetadataTable
                                  {
                                    printf (" --- processing row j = %zu \n",j);
 
-                                   SgAsmCilModuleRef* table_rose = buildAsmCilNode<SgAsmCilModuleRef>(buf,index,uses4byteIndexing);
+                                   SgAsmCilModuleRef* table_rose = parseAsmCilNode<SgAsmCilModuleRef>(buf,index,uses4byteIndexing);
                                    moduleRef_table.push_back(table_rose);
 #if 1
                                    printf ("DONE: processing row j = %zu \n",j);
@@ -1122,7 +1124,7 @@ class MetadataTable
                                  {
                                    printf (" --- processing row j = %zu \n",j);
 
-                                   SgAsmCilNestedClass* table_rose = buildAsmCilNode<SgAsmCilNestedClass>(buf,index,uses4byteIndexing);
+                                   SgAsmCilNestedClass* table_rose = parseAsmCilNode<SgAsmCilNestedClass>(buf,index,uses4byteIndexing);
                                    nestedClass_table.push_back(table_rose);
 #if 1
                                    printf ("DONE: processing row j = %zu \n",j);
@@ -1144,7 +1146,7 @@ class MetadataTable
                                  {
                                    printf (" --- processing row j = %zu \n",j);
 
-                                   SgAsmCilParam* table_rose = buildAsmCilNode<SgAsmCilParam>(buf,index,uses4byteIndexing);
+                                   SgAsmCilParam* table_rose = parseAsmCilNode<SgAsmCilParam>(buf,index,uses4byteIndexing);
                                    param_table.push_back(table_rose);
 #if 1
                                    printf ("DONE: processing row j = %zu \n",j);
@@ -1166,7 +1168,7 @@ class MetadataTable
                                  {
                                    printf (" --- processing row j = %zu \n",j);
 
-                                   SgAsmCilProperty* table_rose = buildAsmCilNode<SgAsmCilProperty>(buf,index,uses4byteIndexing);
+                                   SgAsmCilProperty* table_rose = parseAsmCilNode<SgAsmCilProperty>(buf,index,uses4byteIndexing);
                                    property_table.push_back(table_rose);
 #if 1
                                    printf ("DONE: processing row j = %zu \n",j);
@@ -1188,7 +1190,7 @@ class MetadataTable
                                  {
                                    printf (" --- processing row j = %zu \n",j);
 
-                                   SgAsmCilPropertyMap* table_rose = buildAsmCilNode<SgAsmCilPropertyMap>(buf,index,uses4byteIndexing);
+                                   SgAsmCilPropertyMap* table_rose = parseAsmCilNode<SgAsmCilPropertyMap>(buf,index,uses4byteIndexing);
                                    propertyMap_table.push_back(table_rose);
 #if 1
                                    printf ("DONE: processing row j = %zu \n",j);
@@ -1210,7 +1212,7 @@ class MetadataTable
                                  {
                                    printf (" --- processing row j = %zu \n",j);
 
-                                   SgAsmCilStandAloneSig* table_rose = buildAsmCilNode<SgAsmCilStandAloneSig>(buf,index,uses4byteIndexing);
+                                   SgAsmCilStandAloneSig* table_rose = parseAsmCilNode<SgAsmCilStandAloneSig>(buf,index,uses4byteIndexing);
                                    standAloneSig_table.push_back(table_rose);
 #if 1
                                    printf ("DONE: processing row j = %zu \n",j);
@@ -1232,7 +1234,7 @@ class MetadataTable
                                  {
                                    printf (" --- processing row j = %zu \n",j);
 
-                                   SgAsmCilTypeDef* table_rose = buildAsmCilNode<SgAsmCilTypeDef>(buf,index,uses4byteIndexing);
+                                   SgAsmCilTypeDef* table_rose = parseAsmCilNode<SgAsmCilTypeDef>(buf,index,uses4byteIndexing);
                                    typeDef_table.push_back(table_rose);
 #if 1
                                    printf ("DONE: processing row j = %zu \n",j);
@@ -1254,7 +1256,7 @@ class MetadataTable
                                  {
                                    printf (" --- processing row j = %zu \n",j);
 
-                                   SgAsmCilTypeRef* table_rose = buildAsmCilNode<SgAsmCilTypeRef>(buf,index,uses4byteIndexing);
+                                   SgAsmCilTypeRef* table_rose = parseAsmCilNode<SgAsmCilTypeRef>(buf,index,uses4byteIndexing);
                                    typeRef_table.push_back(table_rose);
 #if 1
                                    printf ("DONE: processing row j = %zu \n",j);
@@ -1277,7 +1279,7 @@ class MetadataTable
                                  {
                                    printf (" --- processing row j = %zu \n",j);
 
-                                   SgAsmCilTypeSpec* table_rose = buildAsmCilNode<SgAsmCilTypeSpec>(buf,index,uses4byteIndexing);
+                                   SgAsmCilTypeSpec* table_rose = parseAsmCilNode<SgAsmCilTypeSpec>(buf,index,uses4byteIndexing);
                                    typeSpec_table.push_back(table_rose);
 #if 1
                                    printf ("DONE: processing row j = %zu \n",j);
@@ -1770,7 +1772,8 @@ class MetadataRoot
 
                         printf ("start_of_MetadataRoot = %zu stream_header->offset = %" PRIu32 " offset = %zu \n",start_of_MetadataRoot,stream_header->offset,offset);
 
-                        // \todo: Where shall we store the MetadataTable object?
+                        // \todo PP (06/16/22): Where shall we store the MetadataTable object?
+                        //       talk with Robb where this should go
                         MetadataTable* metadataTable = new MetadataTable(buf,offset);
                       }
                  }
