@@ -16,7 +16,7 @@ extern "C" {
 
 #include <stdbool.h>  
 // check if a file exists or not
-bool rose_dynamic_library_exists( char* filename);  
+bool rose_dynamic_library_exists(const char* filename);  
 
 // function pointer type name 
 typedef void (*funcPointerT)(void **argv);
@@ -33,8 +33,8 @@ int closeLibHandle();
 
 // a variable argument helper function, to make the call site as simple as possible
 // int count : = 2+ parameter count 
-// second parameter: filename of the shared library
-// third parameter: function name of the outlined function in the shared library
+// second parameter: function name of the outlined function in the shared library
+// third parameter: filename of the shared library
 // the remaining parameters: pointers to arguments to be passed by reference into the function
 void findAndCallFunctionUsingDlopen (int num, ... );
 

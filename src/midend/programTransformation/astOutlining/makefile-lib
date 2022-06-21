@@ -1,0 +1,8 @@
+all:liboutlining.a	
+
+outlining_lib.o: outlining_lib.c
+	g++ -c $< -o $@
+liboutlining.a: outlining_lib.o
+	ar -rcs $@ $^
+clean:
+	rm -rf outlining_lib.o liboutlining.a
