@@ -32,7 +32,7 @@ void foov1(int x)
 void foov2(int x)
 {  
   //findAndCallFunctionUsingDlopen (2,"OUT_1_test_02_cpp_0", (void *)(&abxyz));  
-  findAndCallFunctionUsingDlopen (3,"./master_shared_library.so","OUT_1_test_02_cpp_0", (void *)(&abxyz));  
+  findAndCallFunctionUsingDlopen (3, "OUT_1_test_02_cpp_0", "./master_shared_library.so", (void *)(&abxyz));  
 }
 
 

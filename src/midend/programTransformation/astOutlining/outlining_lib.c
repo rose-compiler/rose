@@ -20,7 +20,7 @@ static funcPointerT findWithDlopen(const char* function_name, const char* lib_na
     exit(1);
   }
   // find the function
-  result = dlsym( functionLib, function_name);
+  result = (funcPointerT) dlsym( functionLib, function_name);
   dlError = dlerror();
   if( dlError )
   {
@@ -49,7 +49,7 @@ int closeLibHandle()
   return 0;
 }
 
-bool rose_dynamic_library_exists( char* filename)
+bool rose_dynamic_library_exists(const char* filename)
 {
   // Function to check for existence of file.
   bool returnValue = false;
@@ -81,25 +81,25 @@ bool rose_dynamic_library_exists( char* filename)
 // a variable argument helper function, to make the call site as simple as possible
 // int count : = 2 (fixed lib file name and function name) + parameter count 
 //
-// second parameter: filename of the shared library
-// third parameter: function name of the outlined function in a shared library
+// second parameter: function name of the outlined function in a shared library
+// third parameter: filename of the shared library
 // the remaining parameters: pointers to arguments to be passed by reference into the function
 void findAndCallFunctionUsingDlopen (int num, ... )
 {
   va_list arguments;
-  char* lib_name;
   char* func_name;
+  char* lib_name;
   int param_count=num-2; // how many parameters we have. it should not exceed 1024
   void** out_argv = (void**) malloc(sizeof(void*)* param_count);
 
   va_start (arguments, num);
 
-  // Extract the shared lib file name
-  lib_name= va_arg(arguments, char*);
-  num--;
-
   // Extract the function name
   func_name= va_arg(arguments, char*);
+  num--;
+
+  // Extract the shared lib file name
+  lib_name= va_arg(arguments, char*);
 
   // Extract parameters: void* 
   num--;
