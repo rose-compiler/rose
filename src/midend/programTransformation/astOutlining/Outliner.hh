@@ -71,6 +71,9 @@ namespace Outliner
   ROSE_DLL_API extern bool exclude_headers; // exclude headers from the new file containing outlined functions
   ROSE_DLL_API extern bool enable_liveness; // enable liveness analysis to reduce restoring statements when temp variables are used
   ROSE_DLL_API extern bool use_dlopen; // Outlining the target to a separated file and calling it using a dlopen() scheme. It turns on useNewFile.
+  //Note that use_dlopen_simple is treated as a suboption under use_dlopen.
+  //So we must turn on use_dlopen if use_dlopen_simple is turned on!
+  ROSE_DLL_API extern bool use_dlopen_simple; // Outlining the target to a separated file and calling it using a dlopen() scheme. It turns on useNewFile. Additionally using a simple call convention through findAndCallFunctionUsingDlopen
 
   ROSE_DLL_API extern bool enable_template;  // Enabling outlining code blocks inside template functions
   ROSE_DLL_API extern bool select_omp_loop;  // Find OpenMP for loops and outline them. This is used for testing purposes.
@@ -86,6 +89,9 @@ namespace Outliner
   const std::string AUTOTUNING_LIB_HEADER="outlining_lib.h"; // we moved the lib to be inside of rose/src and renamed it.
   // the lib function call to find a specified function pointer
   const std::string FIND_FUNCP_DLOPEN="findFunctionUsingDlopen";
+  //Find and call a function through dlopen, using a single function call to implement all logic of parameter packing, lib existence checking etc.
+  const std::string FIND_AND_CALL_FUNCP_DLOPEN="findAndCallFunctionUsingDlopen";
+
   const std::string DEFAULT_OUTPUT_PATH="/tmp";
 
 #if 0

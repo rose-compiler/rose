@@ -421,7 +421,8 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
   std::string wrapper_name;
   // two ways to pack parameters: an array of pointers v.s. A structure
   int sym_count = syms.size(); // using symbol count to decide if we need to pass parameters at all
-  if (useParameterWrapper || useStructureWrapper)
+  // We don't need to generate packing statements for parameters if using the simple dlopen call convention.
+  if (!use_dlopen_simple && (useParameterWrapper || useStructureWrapper))
     {
       wrapper_name= generatePackingStatements(s,syms,pdSyms, struct_decl );
     }
@@ -440,51 +441,75 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
   SgStatement *func_call = NULL;
   SgVarRefExp* wrapper_exp = NULL; 
   if (use_dlopen) 
-    // if dlopen() is used, insert a lib call to find the function pointer from a shared lib file
-    // e.g. OUT__2__8072__p = findFunctionUsingDlopen("OUT__2__8072__", "OUT__2__8072__.so");
   {
-    // build the return type of the lib call 
-    SgFunctionParameterTypeList * tlist = buildFunctionParameterTypeList();
-    (tlist->get_arguments()).push_back(buildPointerType(buildPointerType(buildVoidType())));
-
-    SgFunctionType *ftype_return = buildFunctionType(buildVoidType(), tlist);
-    // build the argument list
     string lib_name; 
     if (Outliner::copy_origFile)
     {
-        string lib_file_base_name = StringUtility::stripFileSuffixFromFileName(StringUtility::stripPathFromFileName(generateLibSourceFileName (s))); 
-        lib_name = output_path+"/"+ lib_file_base_name +".so"; 
+      string lib_file_base_name = StringUtility::stripFileSuffixFromFileName(StringUtility::stripPathFromFileName(generateLibSourceFileName (s))); 
+      lib_name = output_path+"/"+ lib_file_base_name +".so"; 
     }
     else 
-        lib_name = output_path+"/"+func_name_str+".so"; 
-    // the new option copy_origFile will ask the outliner to generate rose_input_lib.c/cxx and compile to a .so later
-//e.g.
-// OUT_1_test_26_2020_0p = findFunctionUsingDlopen("OUT_1_test_26_2020_0","test_26_2020/rose_test_26_2020_lib.so");  
-    SgExprListExp* arg_list = buildExprListExp(buildStringVal(func_name_str), buildStringVal(lib_name)); 
-    SgFunctionCallExp* dlopen_call = buildFunctionCallExp(SgName(FIND_FUNCP_DLOPEN),ftype_return,arg_list, p_scope);
-    SgExprStatement * assign_stmt = buildAssignStatement(buildVarRefExp(func_name_str+"p",p_scope),dlopen_call);
-    SageInterface::insertStatementBefore(s, assign_stmt);
-    // Generate a function call using the func pointer
-    // e.g. (*OUT__2__8888__p)(__out_argv2__1527__);
-    SgExprListExp* exp_list_exp = SageBuilder::buildExprListExp();
-    if (sym_count>0) // passing wrapper parameter only if non-zero variables are used in the outlined function
-    {
-      wrapper_exp= buildVarRefExp(wrapper_name,p_scope);
-      // Check if the reference is associated to a found symbol or not, by checking its type
-      SgVariableSymbol* sym = wrapper_exp->get_symbol();
-      ROSE_ASSERT (sym != NULL);
-      SgType * stype = sym->get_declaration()->get_type();
-      if  (stype == SgTypeUnknown::createType())
-      {
-        printf("Error: outliner builds a reference to a wrapper variable which cannot be found in AST!\n");
-        ROSE_ASSERT (stype!= SgTypeUnknown::createType());
-      }
+      lib_name = output_path+"/"+func_name_str+".so"; 
 
-      appendExpression(exp_list_exp, wrapper_exp);
+    // Using the simple call convention: a single function call implementing all logic of the call site: 
+    //    // hide function pointer declaration, done within Insert.cc : 1533    if (use_dlopen) ..
+    //     check shared lib existence
+    //     packing parameter addresses into array of pointers
+    //     find the outlined function's function pointer
+    //     call the outlined function
+    if (use_dlopen_simple)
+    {
+      // findAndCallFunctionUsingDlopen (3, "OUT_1_ft_cfftz_omp_47", "/tmp/rose_ft_cfftz_omp_lib.so", (void *)(&a));  
+      int parameter_count = syms.size();
+      SgExprListExp* arg_list = buildExprListExp(buildIntVal(parameter_count+2), buildStringVal(func_name_str), buildStringVal(lib_name)); 
+
+       for (ASTtools::VarSymSet_t::iterator i = syms.begin (); i != syms.end (); ++i)
+       {
+         SgVarRefExp* rhsvar = buildVarRefExp((*i)->get_declaration(),p_scope);
+         arg_list->append_expression(buildCastExp( buildAddressOfOp(rhsvar), buildPointerType(buildVoidType()), SgCastExp::e_C_style_cast)); 
+       }
+
+      func_call = buildFunctionCallStmt (FIND_AND_CALL_FUNCP_DLOPEN, buildVoidType(), arg_list, p_scope); 
     }
     else
-      appendExpression(exp_list_exp, buildIntVal(0)); // NULL pointer as parameter
-    func_call = buildFunctionCallStmt(buildPointerDerefExp(buildVarRefExp(func_name_str+"p",p_scope)), exp_list_exp);   
+    {
+      // if dlopen() is used, insert a lib call to find the function pointer from a shared lib file
+      // e.g. OUT__2__8072__p = findFunctionUsingDlopen("OUT__2__8072__", "OUT__2__8072__.so");
+      // build the return type of the lib call 
+      SgFunctionParameterTypeList * tlist = buildFunctionParameterTypeList();
+      (tlist->get_arguments()).push_back(buildPointerType(buildPointerType(buildVoidType())));
+
+      SgFunctionType *ftype_return = buildFunctionType(buildVoidType(), tlist);
+      // build the argument list
+      // the new option copy_origFile will ask the outliner to generate rose_input_lib.c/cxx and compile to a .so later
+      //e.g.
+      // OUT_1_test_26_2020_0p = findFunctionUsingDlopen("OUT_1_test_26_2020_0","test_26_2020/rose_test_26_2020_lib.so");  
+      SgExprListExp* arg_list = buildExprListExp(buildStringVal(func_name_str), buildStringVal(lib_name)); 
+      SgFunctionCallExp* dlopen_call = buildFunctionCallExp(SgName(FIND_FUNCP_DLOPEN),ftype_return,arg_list, p_scope);
+      SgExprStatement * assign_stmt = buildAssignStatement(buildVarRefExp(func_name_str+"p",p_scope),dlopen_call);
+      SageInterface::insertStatementBefore(s, assign_stmt);
+      // Generate a function call using the func pointer
+      // e.g. (*OUT__2__8888__p)(__out_argv2__1527__);
+      SgExprListExp* exp_list_exp = SageBuilder::buildExprListExp();
+      if (sym_count>0) // passing wrapper parameter only if non-zero variables are used in the outlined function
+      {
+        wrapper_exp= buildVarRefExp(wrapper_name,p_scope);
+        // Check if the reference is associated to a found symbol or not, by checking its type
+        SgVariableSymbol* sym = wrapper_exp->get_symbol();
+        ROSE_ASSERT (sym != NULL);
+        SgType * stype = sym->get_declaration()->get_type();
+        if  (stype == SgTypeUnknown::createType())
+        {
+          printf("Error: outliner builds a reference to a wrapper variable which cannot be found in AST!\n");
+          ROSE_ASSERT (stype!= SgTypeUnknown::createType());
+        }
+
+        appendExpression(exp_list_exp, wrapper_exp);
+      }
+      else
+        appendExpression(exp_list_exp, buildIntVal(0)); // NULL pointer as parameter
+      func_call = buildFunctionCallStmt(buildPointerDerefExp(buildVarRefExp(func_name_str+"p",p_scope)), exp_list_exp);   
+    }
   }
   else  // regular function call for other cases
     {
