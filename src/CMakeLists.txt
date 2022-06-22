@@ -335,9 +335,62 @@ add_executable(rose-compiler rose-compiler.C)
 target_link_libraries(rose-compiler ROSE_DLL ${link_with_libraries} ${edg_lib})
 install(TARGETS rose-compiler DESTINATION bin)
 
+
 ########################################################################################################################
 # rose-config.cfg -- text file that contains various settings for user-level makefiles.
 ########################################################################################################################
+
+#Build LDFLAGS for ROSE tools
+set(rose_config_installed_cppflags "-I${CMAKE_INSTALL_PREFIX}/include/rose")
+
+set(rose_library_dir_list "${CMAKE_INSTALL_PREFIX}/${ROSE_LIB_DIR_NAME}")
+set(rose_library_dir_list "${rose_library_dir_list};${Boost_LIBRARY_DIRS}")
+if(NOT ${ATERM_LIBRARY} STREQUAL "ATERM_LIBRARY-NOTFOUND")
+  if(NOT ${ATERM_LIBRARY} STREQUAL "")
+    get_filename_component(ATERM_LIBRARY_DIR ${ATERM_LIBRARY} DIRECTORY)
+    set(rose_library_dir_list "${rose_library_dir_list};${ATERM_LIBRARY_DIR}")
+    set(rose_config_installed_cppflags "${rose_config_installed_cppflags} -I${ATERM_LIBRARY_DIR}/../include")
+  endif()
+endif()
+foreach(X IN LISTS rose_library_dir_list)
+  set(rose_config_installed_ldflags "${rose_config_installed_ldflags} -L${X}")
+endforeach()
+set(rose_config_installed_cppflags "${rose_config_installed_cppflags} -I/usr/include")
+
+
+set(rose_library_list "rose")
+set(rose_library_list "${rose_library_list};${Boost_LIBRARIES}")
+set(rose_library_list "${rose_library_list};m;quadmath")
+if(NOT ${ATERM_LIBRARY} STREQUAL "ATERM_LIBRARY-NOTFOUND")
+  if(NOT ${ATERM_LIBRARY} STREQUAL "")
+    set(rose_library_list "${rose_library_list};${ATERM_LIBRARY}")
+  endif()
+endif()
+
+foreach(X IN LISTS rose_library_list)
+  get_filename_component(Y ${X} NAME_WE)
+  if(${Y} MATCHES "-l.*")
+    string(SUBSTRING ${Y} 2 -1 Y)
+  endif()
+  if(${Y} MATCHES "lib.*")
+    string(SUBSTRING ${Y} 3 -1 Y)
+  endif()
+  set(rose_config_installed_ldflags "${rose_config_installed_ldflags} -l${Y}")
+endforeach()
+
+#Need to update config ldflags with the following potential values
+   #     $(JAVA_JVM_LINK) \
+   #     $(SQLITE_DATABASE_LIBS) $(RT_LIBS) \
+   #     $(ROSE_YICES_LIBS_WITH_PATH) $(ROSE_Z3_LIBS_WITH_PATH) \
+   #     $(ROSE_PHP_LIBS_WITH_PATH) $(ROSE_ELF_LIBS_WITH_PATH) \
+   #     $(ROSE_DWARF_LIBS_WITH_PATH) $(ROSE_QT_LIBS_WITH_PATH) \
+   #     $(ROSE_SSL_LIBS) $(ROSE_ETHER_LIBS) \
+   #     $(ROSE_INTEL_COMPILER_MATH_LIBS) $(ROSE_ATERM_LIBS) \
+   #     $(ROSE_FLANG_LIBS) $(ROSE_COBOL_PT_LIBS_WITH_PATH) \
+   #     $(ROSE_YAMLCPP_LIBS_WITH_PATH) $(ROSE_LIBMAGIC_LIBS_WITH_PATH) \
+   #     $(ROSE_DLIB_LIBS_WITH_PATH) $(ROSE_GCRYPT_LIBS_WITH_PATH) \
+   #     $(ROSE_CAPSTONE_LIBS_WITH_PATH) -lm $(am__append_18) \
+   #     $(am__append_19)
 
 file(REMOVE ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg)
 file(WRITE  ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "# Things that the 'rose-config' tool can report\n")
@@ -345,10 +398,10 @@ file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_CC           = ${BA
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_CCPATH       = ${CMAKE_C_COMPILER}\n")
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_CXX          = ${BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH}\n")
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_CXX_PATH     = ${CMAKE_CXX_COMPILER}\n")
-file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_CPPFLAGS     = unknown\n")
+file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_CPPFLAGS     = ${rose_config_installed_cppflags}\n")
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_CFLAGS       = ${CMAKE_C_FLAGS}\n")
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_CXXFLAGS     = ${CMAKE_CXX_FLAGS}\n")
-file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_LDFLAGS      = ${CMAKE_LINKER_FLAGS}\n")
+file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_LDFLAGS      = ${rose_config_installed_ldflags}\n")
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_LIBDIRS      = ${CMAKE_INSTALL_PREFIX}/${ROSE_LIB_DIR_NAME}\n")
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "ROSE_PREFIX       = ${CMAKE_INSTALL_PREFIX}\n")
 file(APPEND ${ROSE_TOP_BINARY_DIR}/src/rose-config.cfg "# Additional items useful to include in Makefiles\n")
