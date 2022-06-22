@@ -1056,15 +1056,14 @@ bool ClangToSageTranslator::VisitDeclStmt(clang::DeclStmt * decl_stmt, SgNode **
                 // FIXME This is a hack to avoid autonomous decl of unnamed type to being added to the global scope....
                 SgClassDeclaration * class_decl = isSgClassDeclaration(child);
                 if (class_decl != NULL && (class_decl->get_name() == "" || class_decl->get_isUnNamed())) continue;
+
                 SgEnumDeclaration * enum_decl = isSgEnumDeclaration(child);
-
-                if(clang::EnumDecl::classof(decl))
-                {
-                  clang::EnumDecl* enumDecl = (clang::EnumDecl*)decl;
-                  if(enumDecl->isEmbeddedInDeclarator())  continue;
-                }
-
                 if (enum_decl != NULL && (enum_decl->get_name() == "" || enum_decl->get_isUnNamed())) continue;
+                if(clang::TagDecl::classof(decl))
+                {
+                  clang::TagDecl* tagDecl = (clang::TagDecl*)decl;
+                  if(tagDecl->isEmbeddedInDeclarator())  continue;
+                }
 
             }
             scope->append_statement(sub_decl_stmt);
