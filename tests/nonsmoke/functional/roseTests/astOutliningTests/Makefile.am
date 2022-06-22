@@ -122,6 +122,14 @@ CXX4_TESTS_REQUIRED_TO_RUN=	\
 
 CXX4_TESTS_OBJECT_REQUIRED_TO_RUN=${CXX4_TESTS_REQUIRED_TO_RUN:.cpp=.o}	
 
+
+# another test, used for testing dlopen simple call convention
+CXX5_TESTS_REQUIRED_TO_RUN=	\
+	ft_cfftz_omp2.cpp
+CXX5_TESTS_OBJECT_REQUIRED_TO_RUN=${CXX5_TESTS_REQUIRED_TO_RUN:.cpp=.o}	
+
+
+
 # DQ (11/14/2017): This is failing and I need to learn the depth of what is the problem for the outlining tests.
 # I think I need to work with Liao on this when he is back from vacation.
 #	moreTest2.cpp				
@@ -358,7 +366,7 @@ dlopen3_test_targets = $(addprefix dlopen3_,  $(addsuffix .passed, $(CXX2_TESTS_
 C_CXX_RESULTS += $(dlopen3_test_targets)  
 dlopen3_test_flags =				\
 	$(INCLUDE_OUTLINING_LIB_HEADER)	\
-	-rose:outline:use_dlopen		\
+	-rose:outline:use_dlopen	\
 	-rose:outline:copy_orig_file		\
 	-rose:outline:exclude_headers -rose:unparseHeaderFiles -rose:unparseHeaderFilesRootFolder unparseHeaderRoot_test_20_2019
 
@@ -368,9 +376,25 @@ $(dlopen3_test_targets): dlopen3_%.passed: % outline
 		USE_SUBDIR=yes \
 		CMD="$$(pwd)/outline$(EXEEXT) $(TEST_INCLUDES) $(dlopen3_test_flags) -c $(abspath $<)" \
 		$(TEST_EXIT_STATUS) $@
+
+dlopensimple_test_targets = $(addprefix dlopensimple_,  $(addsuffix .passed, $(CXX2_TESTS_REQUIRED_TO_PASS)))
+C_CXX_RESULTS += $(dlopensimple_test_targets)  
+dlopensimple_test_flags =				\
+	$(INCLUDE_OUTLINING_LIB_HEADER)	\
+	-rose:outline:use_dlopen_simple	\
+	-rose:outline:copy_orig_file		\
+	-rose:outline:exclude_headers -rose:unparseHeaderFiles -rose:unparseHeaderFilesRootFolder unparseHeaderRoot_test_simple
+
+$(dlopensimple_test_targets): dlopensimple_%.passed: % outline
+	@$(RTH_RUN) \
+		TITLE="outine dlopensimple $(notdir $<) [$@]" \
+		USE_SUBDIR=yes \
+		CMD="$$(pwd)/outline$(EXEEXT) $(TEST_INCLUDES) $(dlopensimple_test_flags) -c $(abspath $<)" \
+		$(TEST_EXIT_STATUS) $@
 endif
 
 # shortcut to test the dlopen feature
+test_dlopensimple: $(dlopensimple_test_targets)
 test_dlopen3: $(dlopen3_test_targets)
 
 # Liao, 2020/8/24
@@ -395,12 +419,33 @@ $(dlopen4_test_targets): dlopen4_%: % outline
 $(CXX4_TESTS_OBJECT_REQUIRED_TO_RUN): %.o: dlopen4_%.cpp
 $(dlopen4_test_lib_targets): rose_%_lib.cpp: dlopen4_%.cpp
 
+# test dlopen simple call convention: a single statement implementing all logic at the call site
+dlopen5_test_targets = $(addprefix dlopen5_,  $(CXX5_TESTS_REQUIRED_TO_RUN))
+dlopen5_test_lib_targets = $(addprefix rose_, $(addsuffix .cpp, $(addsuffix _lib, $(basename $(CXX5_TESTS_REQUIRED_TO_RUN)))))
+dlopen5_test_lib_so_targets = $(addprefix rose_, $(addsuffix .so, $(addsuffix _lib, $(basename $(CXX5_TESTS_REQUIRED_TO_RUN)))))
+C_CXX_RESULTS += $(dlopen5_test_targets)
+
+dlopen5_test_flags = -fpermissive	\
+	$(INCLUDE_OUTLINING_LIB_HEADER)	\
+	-rose:outline:select_omp_loop           \
+	-rose:outline:use_dlopen_simple		\
+	-rose:outline:copy_orig_file		\
+	-rose:unparseHeaderFilesRootFolder unparseHeaderRoot_dlopen4
+$(dlopen5_test_targets): dlopen5_%: % outline
+	./outline$(EXEEXT) $(TEST_INCLUDES) $(dlopen5_test_flags) -c $(abspath $<) -rose:output $@
+
+$(CXX5_TESTS_OBJECT_REQUIRED_TO_RUN): %.o: dlopen5_%.cpp
+$(dlopen5_test_lib_targets): rose_%_lib.cpp: dlopen5_%.cpp
+
 # shortcut to test the dlopen feature
-test_dlopen: $(dlopen_test_targets) $(dlopen2_test_targets) $(dlopen3_test_targets) $(dlopen4_test_targets)
+test_dlopen: $(dlopen_test_targets) $(dlopen2_test_targets) $(dlopen3_test_targets) $(dlopen4_test_targets) $(dlopen5_test_targets)
 test_dlopen4: $(dlopen4_test_targets)
+test_dlopen5: $(dlopen5_test_targets)
 
 #build rose_input_lib.so
-$(dlopen4_test_lib_so_targets):%.so: %.cpp
+Test_lib_so_targets = $(dlopen4_test_lib_so_targets) $(dlopen5_test_lib_so_targets) 
+#$(dlopen4_test_lib_so_targets):%.so: %.cpp
+$(Test_lib_so_targets):%.so: %.cpp
 	$(CXX) -I. -g -fPIC -shared $< -o $@
 	cp $@ /tmp/.
 
@@ -412,7 +457,10 @@ $(dlopen4_test_lib_so_targets):%.so: %.cpp
 
 #MY_FINAL_LINK = $(AUTO_TUNING_PATH)/libautoTuning.a -Wl,--export-dynamic -g -ldl -lm  $(LDFLAGS)
 MY_FINAL_LINK = $(OUTLINING_LIB_PATH)/.libs/liboutlining.a -Wl,--export-dynamic -g -ldl -lm  $(LDFLAGS)
-PASSING_CXX_TEST_Executables = ${CXX4_TESTS_OBJECT_REQUIRED_TO_RUN:.o=.out}
+
+PASSING_CXX_TEST_Executables = ${CXX4_TESTS_OBJECT_REQUIRED_TO_RUN:.o=.out}  
+PASSING_CXX_TEST_Executables += ${CXX5_TESTS_OBJECT_REQUIRED_TO_RUN:.o=.out}
+
 #$(PASSING_CXX_TEST_Executables): %.out: %.o $(AUTO_TUNING_PATH)/libautoTuning.a rose_%_lib.so
 $(PASSING_CXX_TEST_Executables): %.out: %.o $(OUTLINING_LIB_PATH)/.libs/liboutlining.a rose_%_lib.so
 	$(LIBTOOL) --mode=link $(CXX) $< $(MY_FINAL_LINK) -o $@
