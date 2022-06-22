@@ -37,7 +37,7 @@
 #include <Rose/BinaryAnalysis/InstructionEnumsMips.h>
 #include <Rose/BinaryAnalysis/InstructionEnumsPowerpc.h>
 #include <Rose/BinaryAnalysis/InstructionEnumsX86.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics.h>
 #include <Rose/BinaryAnalysis/MagicNumber.h>
 #include <Rose/BinaryAnalysis/Matrix.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>

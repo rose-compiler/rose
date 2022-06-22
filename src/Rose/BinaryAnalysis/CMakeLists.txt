@@ -1,5 +1,6 @@
 add_subdirectory(ByteCode)
 add_subdirectory(Concolic)
+add_subdirectory(InstructionSemantics)
 add_subdirectory(InstructionSemantics2)
 add_subdirectory(ModelChecker)
 add_subdirectory(Partitioner2)
@@ -103,6 +104,7 @@ install(FILES
   InstructionEnumsMips.h
   InstructionEnumsPowerpc.h
   InstructionEnumsX86.h
+  InstructionSemantics.h
   InstructionSemantics2.h
   LibraryIdentification.h
   MagicNumber.h
