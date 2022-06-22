@@ -1530,7 +1530,8 @@ Outliner::insert (SgFunctionDeclaration* func,
 
    // insert a pointer to function declaration if use_dlopen is true
    // insert it into the original global scope
-   if (use_dlopen) 
+   // No need to generate this declaration if we use the simple call convention.
+   if (use_dlopen && !use_dlopen_simple) 
    {
     // void (*OUT_xxx__p) (void**); // this parameter type depends on the number of variables. If zero variables, empty parameter.
      SgFunctionParameterTypeList * tlist = buildFunctionParameterTypeList();
