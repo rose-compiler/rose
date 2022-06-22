@@ -1,28 +1,5 @@
 add_subdirectory(BaseSemantics)
 
-add_library(roseBinaryAnalysisInstructionSemantics2 OBJECT
-  ConcreteSemantics.C
-  DataFlowSemantics.C
-  DispatcherAarch32.C
-  DispatcherAarch64.C
-  DispatcherCil.C
-  DispatcherM68k.C
-  DispatcherPowerpc.C
-  DispatcherX86.C
-  IntervalSemantics.C
-  LlvmSemantics.C
-  MultiSemantics.C
-  NativeSemantics.C
-  NullSemantics.C
-  PartialSymbolicSemantics.C
-  SourceAstSemantics.C
-  StaticSemantics.C
-  SymbolicSemantics.C
-  TraceSemantics.C
-  Util.C)
-
-add_dependencies(roseBinaryAnalysisInstructionSemantics2 rosetta_generated)
-
 install(FILES
   BaseSemantics.h
   ConcreteSemantics.h

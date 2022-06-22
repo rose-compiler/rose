@@ -28,7 +28,7 @@
 namespace Rose {
 namespace BinaryAnalysis {
     namespace CallingConvention { void initDiagnostics(); }
-    namespace InstructionSemantics2 { void initDiagnostics(); }
+    namespace InstructionSemantics { void initDiagnostics(); }
     namespace Partitioner2 { void initDiagnostics(); }
     namespace PointerDetection { void initDiagnostics(); }
     namespace ReturnValueUsed { void initDiagnostics(); }

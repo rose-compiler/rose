@@ -1,12 +1,5 @@
 include_rules
 
-run $(librose_compile) \
-    ConcreteSemantics.C DataFlowSemantics.C DispatcherAarch32.C DispatcherAarch64.C \
-    DispatcherCil.C DispatcherM68k.C DispatcherPowerpc.C \
-    DispatcherX86.C IntervalSemantics.C LlvmSemantics.C \
-    MultiSemantics.C NativeSemantics.C NullSemantics.C PartialSymbolicSemantics.C \
-    SourceAstSemantics.C StaticSemantics.C SymbolicSemantics.C TraceSemantics.C Util.C
-
 run $(public_header) -o include/rose/Rose/BinaryAnalysis/InstructionSemantics2 \
     BaseSemantics.h \
     ConcreteSemantics.h DataFlowSemantics.h \

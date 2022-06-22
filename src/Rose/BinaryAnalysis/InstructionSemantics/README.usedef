@@ -1,0 +1,110 @@
+This document describes binary use-def analysis
+
+Binary use-def analysis has two parts:
+  (1) "Location-based use-def" is information about which instructions
+      defined an abstract location
+  (2) "value-based use-def" is information about which instructions
+      contributed to the definition of a value.
+
+In both cases, the "instruction" is just an integer label that
+uniquely identifies an instruction. By convention, we normally use the
+virtual address of an instruction as its label.
+
+Location-based use-def falls into two categories, registers and
+memory, both of which indicate which instruction most recently wrote
+a value to the location.
+
+== Register-based use-def ==
+
+Register location use-def is stored in
+BaseSemantics::RegisterStateGeneric objects. The following methods are
+provided:
+
++ setWriters(REGISTER, INSN_LABEL) //sets use-def for register
++ labels = getWritersUnion(REGISTER) //query for one register
++ eraseWriters(REGISTER) //clears use-def for one register
++ eraseWriters() //clears only use-def information
++ clear() //clears entire register state, incuding use-def
+
+where REGISTER is a RegisterDescriptor describing not only the machine
+register, but also the specific part of that register (e.g., the x86
+8-bit "ah" register as opposed to the AX register in general), and
+INSN_LABEL is the instruction label (instruction virtual address).
+
+Latest writer information is stored at bit resolution and does not
+need to be queried at the same granularity as it was initialized. For
+instance, the following is permitted (pseudo code):
+
+   setWriters("ah", insn1)
+   setWriters("al", insn2)
+   labels = getWriterUnion("ax") // returns {insn1, insn2}
+
+Register use-def is stored separately from register values -- it is
+permissible to store use-def info for registers that have no value,
+and to omit use-def information for registers that do exist.  It is
+also permissible to query use-def information for registers where no
+use-def information has been stored (returns empty set).
+
+Register-based use-def information is currently (2013-12-16) updated
+only by SymbolicSemantics::RiscOperators::writeRegister().  The plan
+is to add similar updates to the other semantic domains if this
+representation proves useful.
+
+== Memory-based use-def ==
+
+Memory location use-def is stored by BaseSemantics::MemoryCell objects
+which are referenced by the BaseSemantics::MemoryCellList memory
+states.  Each memory cell is an address/value/writer triplet where the
+writer is an optional instruction label.  The following methods are
+used to support memory-based use-def:
+
+In MemoryCell:
+  + label = getWritersUnion()
+  + setWriters(INSN_LABEL)
+  + eraseWriters()
+
+In MemoryCellList:
+  + memory_cell = get_latest_written_cell()
+  + labels = getWritersUnion(ADDR, SIZE, OPS)
+
+where INSN_LABEL is an instruction label (instruction virtual
+address), ADDR is an SValue to indicate the address for cells being
+queried, SIZE is the size of the queried memory area in bits, and OPS
+is a pointer to RiscOperators.  OPS is used when cells contain memory
+locations that aren't equal to the query region. By default,
+SymbolicSemantics uses byte-addressable memory where each cell
+contains a one-byte value, thus SIZE is always eight and OPS is
+unused.
+
+Memory-based use-def information is currently (2013-12-16) updated
+only by SymbolicSemantics::RiscOperators::writeMemory().  The plan is
+to add similar updates to other semantic domains if this
+representation proves useful.
+
+== Value-based use-def ==
+
+Value-based use-def is information about which instructions contribute
+to the definition of a value (SValue) which is not necessarily stored
+at any location.  For instance, the value could be an intermediate
+result computed by the semantics of a particular instruction (such as
+the value of the decremented stack pointer inside a PUSH instruction
+before it's written to the stack pointer register).
+
+In general, the definers for the result of some RiscOperators
+operation are the union of the definers for the operands and the
+current instruction.  Instructions that only copy values from one
+place to another do not cause the instruction to become a definer of
+the value (but they do cause the instruction to become a definer of
+the location for location-based use-def as described
+above). Concatenation and extraction operations that occur on behalf
+of a register or memory I/O operation do not add the current
+instruction to the definers (i.e., they act only like they're copying
+values).
+
+Value-based use-def is only implemented for SymbolicSemantics and the
+following methods of SymbolicSemantics::SValue are useful:
+
++ defined_by(LABELS...)
++ add_defining_instructions(...)
++ set_defining_instructions(...)
++ labels = get_defining_instructions()
