@@ -932,8 +932,11 @@ RiscOperators::unsignedExtend(const BaseSemantics::SValuePtr &a_, size_t new_wid
         case TRACK_ALL_DEFINERS:
             retval->add_defining_instructions(a);       // fall through...
         case TRACK_LATEST_DEFINER:
-            if (retval->nBits() != a->nBits())
+            if (retval->nBits() != a->nBits()) {
                 retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
+            } else {
+                retval->add_defining_instructions(a);   // preserve definers if this extend is a no-op
+            }
             break;
     }
     return filterResult(retval);
@@ -1147,8 +1150,11 @@ RiscOperators::signExtend(const BaseSemantics::SValuePtr &a_, size_t new_width)
         case TRACK_ALL_DEFINERS:
             retval->add_defining_instructions(a);       // fall through...
         case TRACK_LATEST_DEFINER:
-            if (retval->nBits() != a->nBits())
+            if (retval->nBits() != a->nBits()) {
                 retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
+            } else {
+                retval->add_defining_instructions(a);   // preserve definers if this extend is a no-op
+            }
             break;
     }
     return filterResult(retval);
