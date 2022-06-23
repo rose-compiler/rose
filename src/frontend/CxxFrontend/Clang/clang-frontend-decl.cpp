@@ -732,6 +732,26 @@ bool ClangToSageTranslator::VisitRecordDecl(clang::RecordDecl * record_decl, SgN
 
     bool res = true;
 
+#if DEBUG_VISIT_DECL
+    std::cerr << "ClangToSageTranslator::VisitRecordDecl name:" <<record_decl->getNameAsString() <<  "\n";
+    std:: cerr << "isThisDeclarationADefinition() " << record_decl->isThisDeclarationADefinition() << "\n";
+    std:: cerr << "isCompleteDefinition() " << record_decl->isCompleteDefinition() << "\n";
+    std:: cerr << "isCompleteDefinitionRequired() " << record_decl->isCompleteDefinitionRequired() << "\n";
+    std:: cerr << "isBeingDefined() " << record_decl->isBeingDefined() << "\n";
+    std:: cerr << "isEmbeddedInDeclarator() " << record_decl->isEmbeddedInDeclarator() << "\n";
+    std:: cerr << "isFreeStanding() " << record_decl->isFreeStanding() << "\n";
+    std:: cerr << "mayHaveOutOfDateDef() " << record_decl->mayHaveOutOfDateDef() << "\n";
+    std:: cerr << "isDependentType() " << record_decl->isDependentType() << "\n";
+    std:: cerr << "hasNameForLinkage () " << record_decl->hasNameForLinkage () << "\n";
+    std:: cerr << "hasLinkage() " << record_decl->hasLinkage() << "\n";
+    std:: cerr << "hasExternalFormalLinkage() " << record_decl->hasExternalFormalLinkage() << "\n";
+    std:: cerr << "isExternallyVisible () " << record_decl->isExternallyVisible () << "\n";
+    std:: cerr << "isExternallyDeclarable () " << record_decl->isExternallyDeclarable () << "\n";
+    std:: cerr << "isLinkageValid () " << record_decl->isLinkageValid () << "\n";
+    std:: cerr << "hasLinkageBeenComputed() " << record_decl->hasLinkageBeenComputed() << "\n";
+    std:: cerr << "isModulePrivate() " << record_decl->isModulePrivate() << "\n";
+#endif
+
     SgClassDeclaration * sg_class_decl = NULL;
 
   // Find previous declaration
@@ -1021,6 +1041,7 @@ bool ClangToSageTranslator::VisitTypedefDecl(clang::TypedefDecl * typedef_decl, 
     // Pei-Hung (06/01/2022) check if the declaration is considered embedded in Clang AST.
     // If it is embedded, no explicit SgDeclaration should be placed for ROSE AST.
     bool isembedded = false;
+    bool iscompleteDefined = false;
 
     // Adding check for EaboratedType and PointerType to retrieve base EnumType
     while((isa<clang::ElaboratedType>(underlyingType)) || (isa<clang::PointerType>(underlyingType)) || (isa<clang::ArrayType>(underlyingType)))
@@ -1045,6 +1066,7 @@ bool ClangToSageTranslator::VisitTypedefDecl(clang::TypedefDecl * typedef_decl, 
        clang::EnumType* underlyingEnumType = (clang::EnumType*)underlyingType;
        clang::EnumDecl* enumDeclaration = underlyingEnumType->getDecl();
        isembedded = enumDeclaration->isEmbeddedInDeclarator();
+       iscompleteDefined = enumDeclaration->isCompleteDefinition();
     }
 
     if(isa<clang::RecordType>(underlyingType))
@@ -1052,6 +1074,7 @@ bool ClangToSageTranslator::VisitTypedefDecl(clang::TypedefDecl * typedef_decl, 
        clang::RecordType* underlyingRecordType = (clang::RecordType*)underlyingType;
        clang::RecordDecl* recordDeclaration = underlyingRecordType->getDecl();
        isembedded = recordDeclaration->isEmbeddedInDeclarator();
+       iscompleteDefined = recordDeclaration->isCompleteDefinition();
     }
 
     SgType * sg_underlyingType = buildTypeFromQualifiedType(underlyingQualType);
@@ -1068,7 +1091,7 @@ bool ClangToSageTranslator::VisitTypedefDecl(clang::TypedefDecl * typedef_decl, 
     }
 
 // Pei-Hung (05/31/2022) set "bool_it->second = false" to avoid duplicated definition
-    if (isSgClassType(type)) {
+    if (isSgClassType(type) && iscompleteDefined) {
         SgClassDeclaration* classDecl = isSgClassDeclaration(isSgClassType(type)->get_declaration());
         SgClassDeclaration* classDefDecl = isSgClassDeclaration(isSgClassType(type)->get_declaration()->get_definingDeclaration());
         if(isembedded && classDefDecl != nullptr && !isSgDeclarationStatement(classDefDecl->get_parent()))
@@ -1087,7 +1110,7 @@ bool ClangToSageTranslator::VisitTypedefDecl(clang::TypedefDecl * typedef_decl, 
             bool_it->second = false;
         }
     }
-    else if (isSgEnumType(type)) {
+    else if (isSgEnumType(type) && iscompleteDefined) {
 
 // Pei-Hung (06/01/2022) Clang places a EnumDecl before TypedefDecl.  
 // A SgEnumDeclaration for an  embedded EnumDecl is not attached to the scope but its parent node needs to be setup as the SgTypedefDeclaration
@@ -1242,6 +1265,7 @@ bool ClangToSageTranslator::VisitFieldDecl(clang::FieldDecl * field_decl, SgNode
     // Pei-Hung (06/01/2022) check if the declaration is considered embedded in Clang AST.
     // If it is embedded, no explicit SgDeclaration should be placed for ROSE AST.
     bool isembedded = false;
+    bool iscompleteDefined = false;
 
     // Adding check for EaboratedType and PointerType to retrieve base EnumType
     //while((fieldType->getTypeClass() == clang::Type::Elaborated) || (fieldType->getTypeClass() == clang::Type::Pointer) || (fieldType->getTypeClass() == clang::Type::Array))
@@ -1267,6 +1291,7 @@ bool ClangToSageTranslator::VisitFieldDecl(clang::FieldDecl * field_decl, SgNode
        clang::EnumType* underlyingEnumType = (clang::EnumType*)fieldType;
        clang::EnumDecl* enumDeclaration = underlyingEnumType->getDecl();
        isembedded = enumDeclaration->isEmbeddedInDeclarator();
+       iscompleteDefined = enumDeclaration->isCompleteDefinition();
     }
 
     if(isa<clang::RecordType>(fieldType))
@@ -1274,6 +1299,7 @@ bool ClangToSageTranslator::VisitFieldDecl(clang::FieldDecl * field_decl, SgNode
        clang::RecordType* underlyingRecordType = (clang::RecordType*)fieldType;
        clang::RecordDecl* recordDeclaration = underlyingRecordType->getDecl();
        isembedded = recordDeclaration->isEmbeddedInDeclarator();
+       iscompleteDefined = recordDeclaration->isCompleteDefinition();
     }
 
     SgType * sg_fieldType = buildTypeFromQualifiedType(fieldQualType);
@@ -1296,7 +1322,7 @@ bool ClangToSageTranslator::VisitFieldDecl(clang::FieldDecl * field_decl, SgNode
   // Build it by hand...
     SgVariableDeclaration * var_decl = new SgVariableDeclaration(name, type, init);
 
-    if (isSgClassType(type)) {
+    if (isSgClassType(type) && iscompleteDefined) {
         std::map<SgClassType *, bool>::iterator bool_it = p_class_type_decl_first_see_in_type.find(isSgClassType(type));
         ROSE_ASSERT(bool_it != p_class_type_decl_first_see_in_type.end());
         if (bool_it->second) {
@@ -1305,7 +1331,7 @@ bool ClangToSageTranslator::VisitFieldDecl(clang::FieldDecl * field_decl, SgNode
             bool_it->second = false;
         }
     }
-    else if (isSgEnumType(type)) {
+    else if (isSgEnumType(type) && iscompleteDefined) {
         std::map<SgEnumType *, bool>::iterator bool_it = p_enum_type_decl_first_see_in_type.find(isSgEnumType(type));
         ROSE_ASSERT(bool_it != p_enum_type_decl_first_see_in_type.end());
         if (bool_it->second) {
@@ -1644,6 +1670,7 @@ bool ClangToSageTranslator::VisitVarDecl(clang::VarDecl * var_decl, SgNode ** no
     // Pei-Hung (06/01/2022) check if the declaration is considered embedded in Clang AST.
     // If it is embedded, no explicit SgDeclaration should be placed for ROSE AST.
     bool isembedded = false;
+    bool iscompleteDefined = false;
 
     // Adding check for EaboratedType and PointerType to retrieve base EnumType
     //while((varType->getTypeClass() == clang::Type::Elaborated) || (varType->getTypeClass() == clang::Type::Pointer) || (varType->getTypeClass() == clang::Type::Array))
@@ -1669,6 +1696,7 @@ bool ClangToSageTranslator::VisitVarDecl(clang::VarDecl * var_decl, SgNode ** no
        clang::EnumType* underlyingEnumType = (clang::EnumType*)varType;
        clang::EnumDecl* enumDeclaration = underlyingEnumType->getDecl();
        isembedded = enumDeclaration->isEmbeddedInDeclarator();
+       iscompleteDefined = enumDeclaration->isCompleteDefinition();
     }
 
     if(isa<clang::RecordType>(varType))
@@ -1676,6 +1704,7 @@ bool ClangToSageTranslator::VisitVarDecl(clang::VarDecl * var_decl, SgNode ** no
        clang::RecordType* underlyingRecordType = (clang::RecordType*)varType;
        clang::RecordDecl* recordDeclaration = underlyingRecordType->getDecl();
        isembedded = recordDeclaration->isEmbeddedInDeclarator();
+       iscompleteDefined = recordDeclaration->isCompleteDefinition();
     }
 
     SgType * sg_varType = buildTypeFromQualifiedType(varQualType);
@@ -1708,7 +1737,7 @@ bool ClangToSageTranslator::VisitVarDecl(clang::VarDecl * var_decl, SgNode ** no
         break;
     }
 
-    if (isSgClassType(type)) {
+    if (isSgClassType(type) && iscompleteDefined) {
         SgClassDeclaration* classDecl = isSgClassDeclaration(isSgClassType(type)->get_declaration());
         SgClassDeclaration* classDefDecl = isSgClassDeclaration(isSgClassType(type)->get_declaration()->get_definingDeclaration());
         if(isembedded && classDefDecl != nullptr && !isSgDeclarationStatement(classDefDecl->get_parent()))
@@ -1727,7 +1756,7 @@ bool ClangToSageTranslator::VisitVarDecl(clang::VarDecl * var_decl, SgNode ** no
             bool_it->second = false;
         }
     }
-    else if (isSgEnumType(type)) {
+    else if (isSgEnumType(type) && iscompleteDefined) {
         SgEnumDeclaration* enumDecl = isSgEnumDeclaration(isSgEnumType(type)->get_declaration());
         SgEnumDeclaration* enumDefDecl = isSgEnumDeclaration(isSgEnumType(type)->get_declaration()->get_definingDeclaration());
         if(isembedded && enumDefDecl != nullptr && !isSgDeclarationStatement(enumDefDecl->get_parent()))
