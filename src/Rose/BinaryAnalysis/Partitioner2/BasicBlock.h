@@ -25,7 +25,7 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
-namespace BaseSemantics = Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
+namespace BaseSemantics = Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // BasicBlockSemantics

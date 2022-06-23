@@ -139,7 +139,7 @@ void initialize() {
         BinaryAnalysis::FeasiblePath::initDiagnostics();
         BinaryAnalysis::FunctionSimilarity::initDiagnostics();
         BinaryAnalysis::HotPatch::initDiagnostics();
-        BinaryAnalysis::InstructionSemantics2::initDiagnostics();
+        BinaryAnalysis::InstructionSemantics::initDiagnostics();
 #ifdef ROSE_ENABLE_LIBRARY_IDENTIFICATION
         BinaryAnalysis::LibraryIdentification::initDiagnostics();
 #endif

@@ -2,7 +2,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
 
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 #include <Rose/BinaryAnalysis/Reachability.h>
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
 #include <Rose/CommandLine.h>
@@ -12,7 +12,7 @@
 #include <Sawyer/ProgressBar.h>
 #include <Rose/SourceLocation.h>
 #include <stringify.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/TraceSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
 
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/lexical_cast.hpp>
@@ -23,7 +23,7 @@
 
 using namespace Sawyer::Message::Common;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
-namespace S2 = Rose::BinaryAnalysis::InstructionSemantics2;
+namespace S2 = Rose::BinaryAnalysis::InstructionSemantics;
 
 namespace Rose {
 namespace BinaryAnalysis {

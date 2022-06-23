@@ -5,7 +5,7 @@
 
 #include <Rose/BinaryAnalysis/ModelChecker/Types.h>
 
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Types.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Types.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/Yaml.h>
 
@@ -59,13 +59,13 @@ public:
     /** Create a prototypical semantic value.
      *
      *  The prototypical value is used to instantiate other parts of the semantic framework and is what defines the semantic
-     *  domain in conjunction with the @ref Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RiscOperators "RISC
+     *  domain in conjunction with the @ref Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::RiscOperators "RISC
      *  operators". The default implementation returns a prototypical value of the @ref
-     *  Rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics "symbolic domain".
+     *  Rose::BinaryAnalysis::InstructionSemantics::SymbolicSemantics "symbolic domain".
      *
      *  Thread safety: The implementation must be thread safe, but the object it returns does not need to have a thread safe
      *  API. */
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr protoval();
+    virtual InstructionSemantics::BaseSemantics::SValuePtr protoval();
 
     /** Create an initial register state.
      *
@@ -73,7 +73,7 @@ public:
      *
      *  Thread safety: The implementation must be thread safe, but the object it returns does not need to have a thread safe
      *  API. */
-    virtual InstructionSemantics2::BaseSemantics::RegisterStatePtr createInitialRegisters() = 0;
+    virtual InstructionSemantics::BaseSemantics::RegisterStatePtr createInitialRegisters() = 0;
 
     /** Create an initial memory state.
      *
@@ -81,16 +81,16 @@ public:
      *
      *  Thread safety: The implementation must be thread safe, but the object it returns does not need to have a thread safe
      *  API. */
-    virtual InstructionSemantics2::BaseSemantics::MemoryStatePtr createInitialMemory() = 0;
+    virtual InstructionSemantics::BaseSemantics::MemoryStatePtr createInitialMemory() = 0;
 
     /** Create an initial state.
      *
      *  Creates the initial state for paths beginning at the specified execution unit. The default implementation
-     *  uses the @ref Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::State "base semantics state".
+     *  uses the @ref Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::State "base semantics state".
      *
      *  Thread safety: The implementation must be thread safe, but the object it returns does not need to have a thread safe
      *  API. */
-    virtual InstructionSemantics2::BaseSemantics::StatePtr createInitialState();
+    virtual InstructionSemantics::BaseSemantics::StatePtr createInitialState();
 
     /** Create RISC operators.
      *
@@ -109,7 +109,7 @@ public:
      *
      *  Thread safety: The implementation must be thread safe, but the object it returns does not need to have a thread safe
      *  API. */
-    virtual InstructionSemantics2::BaseSemantics::RiscOperatorsPtr createRiscOperators() = 0;
+    virtual InstructionSemantics::BaseSemantics::RiscOperatorsPtr createRiscOperators() = 0;
 
     /** Create model checker solver.
      *
@@ -135,7 +135,7 @@ public:
      *
      *  Thread safety: The implementation must be thread safe, but the provided RISC operators and solver will be thread
      *  local. */
-    virtual void attachModelCheckerSolver(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&,
+    virtual void attachModelCheckerSolver(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&,
                                           const SmtSolver::Ptr&) {}
 
     /** Initialize the initial state.
@@ -146,7 +146,7 @@ public:
      *  operators to initialize the states.
      *
      *  Thread safety: The implementation must be thread safe. However, the RISC operators object is thread-local. */
-    virtual void initializeState(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&);
+    virtual void initializeState(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&);
 
     /** Create an instruction dispatcher.
      *
@@ -154,8 +154,8 @@ public:
      *
      *  Thread safety: The implementation must be thread safe, but the object it returns does not need to have a thread safe
      *  API. */
-    virtual InstructionSemantics2::BaseSemantics::DispatcherPtr
-    createDispatcher(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&) = 0;
+    virtual InstructionSemantics::BaseSemantics::DispatcherPtr
+    createDispatcher(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&) = 0;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // State query functions
@@ -167,14 +167,14 @@ public:
      *  state associated with the supplied RISC operators.
      *
      *  Thread safety: The implementation must be thread safe, but the provided state will be thread local. */
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr
-    instructionPointer(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&) = 0;
+    virtual InstructionSemantics::BaseSemantics::SValuePtr
+    instructionPointer(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&) = 0;
 
     /** Addresses and completeness.
      *
      *  This is the return value for @ref codeAddresses. */
     struct CodeAddresses {
-        InstructionSemantics2::BaseSemantics::SValuePtr ip; /**< Instruction pointer value. */
+        InstructionSemantics::BaseSemantics::SValuePtr ip; /**< Instruction pointer value. */
         std::set<rose_addr_t> addresses;                    /**< The concrete addresses. */
         bool isComplete = true;                             /**< Whether additional non-concrete addresses were found. */
     };
@@ -185,7 +185,7 @@ public:
      *  addresses it can find.  It should not modify the current state associated with the RISC operators.
      *
      *  Thread safety: The implementation must be thread safe, but the provided arguments are all thread local. */
-    virtual CodeAddresses nextCodeAddresses(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&);
+    virtual CodeAddresses nextCodeAddresses(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Execution tree functions
@@ -201,7 +201,7 @@ public:
      *  Thread safety: The implementation must be thread safe, but the provided RISC operators will be thread local. The
      *  current state to which the RISC operators pointsw ill have been copied by this thread. */
     virtual std::vector<TagPtr>
-    preExecute(const ExecutionUnitPtr&, const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&);
+    preExecute(const ExecutionUnitPtr&, const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&);
 
     /** Called after execution ends.
      *
@@ -213,7 +213,7 @@ public:
      *  Thread safety: The implementation must be thread safe, but the provided RISC operators will be thread local. The
      *  current state to which the RISC operators pointsw ill have been copied by this thread. */
     virtual std::vector<TagPtr>
-    postExecute(const ExecutionUnitPtr&, const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&);
+    postExecute(const ExecutionUnitPtr&, const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&);
 
     /** Return value for @ref nextUnits. */
     struct NextUnit {
@@ -238,7 +238,7 @@ public:
      *  Thread safety: The implementation must be thread safe, but the provided RISC operators will be thread local. The
      *  current state to which the RISC operators points will have been copied by this thread. */
     virtual std::vector<NextUnit>
-    nextUnits(const PathPtr&, const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&, const SmtSolver::Ptr&) = 0;
+    nextUnits(const PathPtr&, const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&, const SmtSolver::Ptr&) = 0;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Path creation functions.

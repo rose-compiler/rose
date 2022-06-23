@@ -9,7 +9,7 @@
 #include <boost/format.hpp>
 
 using namespace Sawyer::Message::Common;
-namespace BS = Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
+namespace BS = Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;
 
 namespace Rose {
 namespace BinaryAnalysis {

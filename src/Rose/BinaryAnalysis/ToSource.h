@@ -7,8 +7,8 @@
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/Exception.h>
 #include <Sawyer/CommandLine.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/SourceAstSemantics.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/TraceSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/SourceAstSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -61,9 +61,9 @@ private:
     static Diagnostics::Facility mlog;
     Settings settings_;
     Disassembler *disassembler_;
-    InstructionSemantics2::SourceAstSemantics::RiscOperatorsPtr raisingOps_;
-    InstructionSemantics2::TraceSemantics::RiscOperatorsPtr tracingOps_;
-    InstructionSemantics2::BaseSemantics::DispatcherPtr raisingCpu_;
+    InstructionSemantics::SourceAstSemantics::RiscOperatorsPtr raisingOps_;
+    InstructionSemantics::TraceSemantics::RiscOperatorsPtr tracingOps_;
+    InstructionSemantics::BaseSemantics::DispatcherPtr raisingCpu_;
     
 public:
     /** Default constructor.

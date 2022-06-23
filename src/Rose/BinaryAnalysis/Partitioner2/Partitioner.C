@@ -16,7 +16,7 @@
 #include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/DisassemblerNull.h>
 #include <Rose/RecursionCounter.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/config.hpp>
@@ -42,7 +42,7 @@
     #endif
 #endif
 
-using namespace Rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
+using namespace Rose::BinaryAnalysis::InstructionSemantics::SymbolicSemantics;
 using namespace Rose::Diagnostics;
 
 namespace Rose {
@@ -2281,7 +2281,7 @@ Partitioner::functionCallGraph(AllowParallelEdges::Type allowParallelEdges) cons
 
 std::set<rose_addr_t>
 Partitioner::functionDataFlowConstants(const Function::Ptr &function) const {
-    using namespace Rose::BinaryAnalysis::InstructionSemantics2;
+    using namespace Rose::BinaryAnalysis::InstructionSemantics;
 
     std::set<rose_addr_t> retval;
     BaseSemantics::RiscOperatorsPtr ops = newOperators();

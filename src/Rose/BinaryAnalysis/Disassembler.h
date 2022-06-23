@@ -11,7 +11,7 @@
 #include "Rose/Exception.h"
 #include "integerOps.h"
 #include "Map.h"
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/string.hpp>
@@ -106,7 +106,7 @@ protected:
     size_t instructionAlignment_;                       /**< Positive alignment constraint for instruction addresses. */
 
     /** Prototypical dispatcher for creating real dispatchers */
-    InstructionSemantics2::BaseSemantics::DispatcherPtr p_proto_dispatcher;
+    InstructionSemantics::BaseSemantics::DispatcherPtr p_proto_dispatcher;
 
 public:
     static Sawyer::Message::Facility mlog;              /**< Disassembler diagnostic streams. */
@@ -299,7 +299,7 @@ public:
      *  If instruction semantics are implemented for this architecure then return a pointer to a dispatcher. The dispatcher
      *  will have no attached RISC operators and can only be used to create a new dispatcher via its virtual constructor.  If
      *  instruction semantics are not implemented then the null pointer is returned. */
-    const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::DispatcherPtr& dispatcher() const {
+    const Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::DispatcherPtr& dispatcher() const {
         return p_proto_dispatcher;
     }
 

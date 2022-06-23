@@ -6,15 +6,15 @@
 #include <Rose/BinaryAnalysis/Concolic/Database.h>
 #include <Rose/BinaryAnalysis/Concolic/TestCase.h>
 #include <Rose/BinaryAnalysis/Concolic/TestSuite.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #include <Rose/BitOps.h>
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
 
-namespace IS = Rose::BinaryAnalysis::InstructionSemantics2;
-namespace BS = Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
+namespace IS = Rose::BinaryAnalysis::InstructionSemantics;
+namespace BS = Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;
 
 namespace Rose {
 namespace BinaryAnalysis {

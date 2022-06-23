@@ -3,7 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -24,7 +24,7 @@ namespace BinaryAnalysis {
  *  Abstract locations are immutable objects. */
 class AbstractLocation {
 public:
-    typedef InstructionSemantics2::BaseSemantics::SValuePtr Address; /**< Type of memory address. */
+    typedef InstructionSemantics::BaseSemantics::SValuePtr Address; /**< Type of memory address. */
 
 private:
     RegisterDescriptor reg_;
@@ -129,13 +129,13 @@ public:
      *
      *  @{ */
     void print(std::ostream &out, const RegisterDictionary *regdict=NULL) const {
-        InstructionSemantics2::BaseSemantics::Formatter fmt;
+        InstructionSemantics::BaseSemantics::Formatter fmt;
         print(out, regdict, fmt);
     }
-    void print(std::ostream &out, InstructionSemantics2::BaseSemantics::Formatter &fmt) const {
+    void print(std::ostream &out, InstructionSemantics::BaseSemantics::Formatter &fmt) const {
         print(out, NULL, fmt);
     }
-    void print(std::ostream &out, const RegisterDictionary *regdict, InstructionSemantics2::BaseSemantics::Formatter &fmt) const;
+    void print(std::ostream &out, const RegisterDictionary *regdict, InstructionSemantics::BaseSemantics::Formatter &fmt) const;
     /** @} */
 };
 

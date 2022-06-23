@@ -1151,7 +1151,7 @@ void Grammar::setUpBinaryInstructions() {
          *
          *  If instruction semantics are available and attached to the instruction, then this subtree will contain a list of
          *  semantic side effects of the instruction. The semantics are attached by using the @ref
-         *  Rose::BinaryAnalysis::InstructionSemantics2::StaticSemantics semantic domain. */
+         *  Rose::BinaryAnalysis::InstructionSemantics::StaticSemantics semantic domain. */
 #else
         AsmInstruction.setDataPrototype("SgAsmExprListExp*", "semantics", "= NULL",
                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, COPY_DATA);
@@ -3465,7 +3465,7 @@ void Grammar::setUpBinaryInstructions() {
         /** Property: Low-level semantic operation.
          *
          *  This property is an enum constant that represents an operation in @ref
-         *  Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RiscOperators "RiscOperators".
+         *  Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::RiscOperators "RiscOperators".
          *
          * @{ */
         RiscOperator get_riscOperator() const;

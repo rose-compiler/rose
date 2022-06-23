@@ -5,7 +5,7 @@
 
 #include <Rose/BinaryAnalysis/ModelChecker/Types.h>
 
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Types.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Types.h>
 #include <Rose/SourceLocation.h>
 
 namespace Rose {
@@ -118,7 +118,7 @@ public:
      *
      *  Thread safety: The implementation need not be thread safe. */
     virtual std::vector<TagPtr>
-    execute(const SettingsPtr&, const SemanticCallbacksPtr&, const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&) = 0;
+    execute(const SettingsPtr&, const SemanticCallbacksPtr&, const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&) = 0;
 
     /** Execute a single instruction semantically.
      *
@@ -149,7 +149,7 @@ public:
      *  semantic state.
      *
      *  Thread safety: This method is NOT thread safe. */
-    TagPtr executeInstruction(const SettingsPtr&, SgAsmInstruction*, const InstructionSemantics2::BaseSemantics::DispatcherPtr&,
+    TagPtr executeInstruction(const SettingsPtr&, SgAsmInstruction*, const InstructionSemantics::BaseSemantics::DispatcherPtr&,
                               size_t nodeStep);
 };
 

@@ -3,11 +3,11 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/StackDelta.h>
 
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 #include <Rose/CommandLine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/DataFlow.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/RegisterStateGeneric.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RegisterStateGeneric.h>
 #include <Sawyer/ProgressBar.h>
 #include <integerOps.h>
 
@@ -16,7 +16,7 @@ namespace BinaryAnalysis {
 namespace StackDelta {
 
 using namespace Rose::Diagnostics;
-using namespace Rose::BinaryAnalysis::InstructionSemantics2;
+using namespace Rose::BinaryAnalysis::InstructionSemantics;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 

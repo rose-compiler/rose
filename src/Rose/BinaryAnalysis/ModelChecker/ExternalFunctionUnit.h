@@ -57,26 +57,26 @@ public:
     virtual size_t nSteps() const override;
     virtual Sawyer::Optional<rose_addr_t> address() const override;
     virtual std::vector<TagPtr> execute(const SettingsPtr&, const SemanticCallbacksPtr&,
-                                        const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&) override;
+                                        const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&) override;
 
 private:
     // Read a calling convention parameter location
-    InstructionSemantics2::BaseSemantics::SValuePtr
-    readLocation(const InstructionSemantics2::BaseSemantics::DispatcherPtr&,
+    InstructionSemantics::BaseSemantics::SValuePtr
+    readLocation(const InstructionSemantics::BaseSemantics::DispatcherPtr&,
                  const CallingConvention::ParameterLocation&,
-                 const InstructionSemantics2::BaseSemantics::SValuePtr &dfltValue);
+                 const InstructionSemantics::BaseSemantics::SValuePtr &dfltValue);
 
     // Write to a calling convention parameter location
     void
-    writeLocation(const InstructionSemantics2::BaseSemantics::DispatcherPtr&,
+    writeLocation(const InstructionSemantics::BaseSemantics::DispatcherPtr&,
                  const CallingConvention::ParameterLocation&,
-                 const InstructionSemantics2::BaseSemantics::SValuePtr &value);
+                 const InstructionSemantics::BaseSemantics::SValuePtr &value);
 
     // Set function return values to free variables
-    void clearReturnValues(const InstructionSemantics2::BaseSemantics::DispatcherPtr&);
+    void clearReturnValues(const InstructionSemantics::BaseSemantics::DispatcherPtr&);
 
     // Simulate a function return
-    void simulateReturn(const InstructionSemantics2::BaseSemantics::DispatcherPtr&);
+    void simulateReturn(const InstructionSemantics::BaseSemantics::DispatcherPtr&);
 };
 
 

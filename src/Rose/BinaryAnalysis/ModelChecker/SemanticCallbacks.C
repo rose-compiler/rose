@@ -6,12 +6,12 @@
 #include <Rose/BinaryAnalysis/ModelChecker/ExecutionUnit.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Settings.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Tag.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/State.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/State.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 
 using namespace Sawyer::Message::Common;
-namespace BS = Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
-namespace IS = Rose::BinaryAnalysis::InstructionSemantics2;
+namespace BS = Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;
+namespace IS = Rose::BinaryAnalysis::InstructionSemantics;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 namespace Rose {

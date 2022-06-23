@@ -3,15 +3,15 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Path.h>
 
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/State.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/State.h>
 #include <Rose/BinaryAnalysis/ModelChecker/ExecutionUnit.h>
 #include <Rose/BinaryAnalysis/ModelChecker/PathNode.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Settings.h>
 
 #include <rose_isnan.h>
 
-namespace BS = Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
-namespace IS = Rose::BinaryAnalysis::InstructionSemantics2;
+namespace BS = Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;
+namespace IS = Rose::BinaryAnalysis::InstructionSemantics;
 
 namespace Rose {
 namespace BinaryAnalysis {

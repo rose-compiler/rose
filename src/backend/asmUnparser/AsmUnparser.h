@@ -9,7 +9,7 @@
 #include "callbacks.h"                                  // Needed for Rose::Callbacks::List<>
 #include <Rose/BinaryAnalysis/ControlFlow.h>
 #include <Rose/BinaryAnalysis/FunctionCall.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 
 class SgAsmInstruction;
 class SgAsmBlock;

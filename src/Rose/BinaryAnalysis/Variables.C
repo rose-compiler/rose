@@ -13,7 +13,7 @@
 
 using namespace Sawyer::Message::Common;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
-namespace S2 = Rose::BinaryAnalysis::InstructionSemantics2;
+namespace S2 = Rose::BinaryAnalysis::InstructionSemantics;
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -155,18 +155,18 @@ BaseVariable::definingInstructionVas(const AddressSet &vas) {
     insnVas_ = vas;
 }
 
-const InstructionSemantics2::BaseSemantics::InputOutputPropertySet&
+const InstructionSemantics::BaseSemantics::InputOutputPropertySet&
 BaseVariable::ioProperties() const {
     return ioProperties_;
 }
 
-InstructionSemantics2::BaseSemantics::InputOutputPropertySet&
+InstructionSemantics::BaseSemantics::InputOutputPropertySet&
 BaseVariable::ioProperties() {
     return ioProperties_;
 }
 
 void
-BaseVariable::ioProperties(const InstructionSemantics2::BaseSemantics::InputOutputPropertySet &set) {
+BaseVariable::ioProperties(const InstructionSemantics::BaseSemantics::InputOutputPropertySet &set) {
     ioProperties_ = set;
 }
 

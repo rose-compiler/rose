@@ -3,7 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 #include <Rose/BinaryAnalysis/CallingConvention.h>
 #include <Rose/BinaryAnalysis/StackDelta.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
@@ -63,7 +63,7 @@ private:
     CallingConvention::Analysis ccAnalysis_;            // analysis computing how registers etc. are used
     CallingConvention::Definition::Ptr ccDefinition_;   // best definition or null
     StackDelta::Analysis stackDeltaAnalysis_;           // analysis computing stack deltas for each block and whole function
-    InstructionSemantics2::BaseSemantics::SValuePtr stackDeltaOverride_; // special value to override stack delta analysis
+    InstructionSemantics::BaseSemantics::SValuePtr stackDeltaOverride_; // special value to override stack delta analysis
     SourceLocation sourceLocation_;                     // corresponding location of function in source code if known
 
     // The following members are caches either because their value is seldom needed and expensive to compute, or because the
@@ -297,7 +297,7 @@ public:
      *  expensive analysis.
      *
      * @{ */
-    InstructionSemantics2::BaseSemantics::SValuePtr stackDelta() const;
+    InstructionSemantics::BaseSemantics::SValuePtr stackDelta() const;
     int64_t stackDeltaConcrete() const;
     /** @} */
 
@@ -307,8 +307,8 @@ public:
      *  to override the stack delta analysis.  The partitioner will not run stack delta analysis if an override value is set.
      *
      * @{ */
-    InstructionSemantics2::BaseSemantics::SValuePtr stackDeltaOverride() const;
-    void stackDeltaOverride(const InstructionSemantics2::BaseSemantics::SValuePtr &delta);
+    InstructionSemantics::BaseSemantics::SValuePtr stackDeltaOverride() const;
+    void stackDeltaOverride(const InstructionSemantics::BaseSemantics::SValuePtr &delta);
     /** @} */
 
     /** Property: Stack delta analysis results.

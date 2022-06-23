@@ -12,7 +12,7 @@
 #endif
 
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
-namespace S2 = Rose::BinaryAnalysis::InstructionSemantics2;
+namespace S2 = Rose::BinaryAnalysis::InstructionSemantics;
 using namespace Rose::Diagnostics;
 
 namespace Rose {

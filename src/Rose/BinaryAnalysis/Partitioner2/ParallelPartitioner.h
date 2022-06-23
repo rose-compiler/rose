@@ -958,7 +958,7 @@ private:
     // concrete addresses from a conditional branch instruction. Another common case is that one of the successors will be a
     // free variable to represent that we don't know the successors (as usually happens with x86 RET and other computed
     // branches).
-    std::vector<SymbolicExpr::Ptr> splitSuccessors(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr &ops);
+    std::vector<SymbolicExpr::Ptr> splitSuccessors(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr &ops);
 
     //--------------------------------------------------------------------------------------------------------------------
     // Functions to run things.
