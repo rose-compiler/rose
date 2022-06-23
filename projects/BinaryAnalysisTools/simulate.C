@@ -3,12 +3,12 @@
 #include <AsmUnparser_compat.h>
 #include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/ConcreteSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/ConcreteSemantics.h>
 
 using namespace Rose;
 using namespace Rose::BinaryAnalysis;
 using namespace Sawyer::Message::Common;
-using namespace Rose::BinaryAnalysis::InstructionSemantics2;
+using namespace Rose::BinaryAnalysis::InstructionSemantics;
 
 Diagnostics::Facility mlog;
 
@@ -76,7 +76,7 @@ int main(int argc, char *argv[]) {
     const RegisterDictionary *regdict = disassembler->registerDictionary();
     if (disassembler->dispatcher() == NULL)
         throw std::runtime_error("no instruction semantics for this architecture");    
-    BaseSemantics::RiscOperatorsPtr ops = InstructionSemantics2::ConcreteSemantics::RiscOperators::instance(regdict);
+    BaseSemantics::RiscOperatorsPtr ops = InstructionSemantics::ConcreteSemantics::RiscOperators::instance(regdict);
     BaseSemantics::DispatcherPtr cpu = disassembler->dispatcher()->create(ops);
     ConcreteSemantics::MemoryState::promote(ops->currentState()->memoryState())->memoryMap(map);
 

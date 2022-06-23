@@ -2,13 +2,13 @@
 
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <PathFinder/semantics.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/SymbolicMemory.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/SymbolicMemory.h>
 
 using namespace Rose;
 using namespace Rose::Diagnostics;
 using namespace Rose::BinaryAnalysis;
-namespace BaseSemantics = Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
-namespace SymbolicSemantics = Rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
+namespace BaseSemantics = Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;
+namespace SymbolicSemantics = Rose::BinaryAnalysis::InstructionSemantics::SymbolicSemantics;
 
 namespace PathFinder {
 

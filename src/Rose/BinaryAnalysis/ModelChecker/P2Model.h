@@ -7,7 +7,7 @@
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/Stack.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -132,10 +132,10 @@ using FunctionCallStack = Sawyer::Container::Stack<FunctionCall>;
 /** Symbolic values with memory regions.
  *
  *  Values are symbolic, and some values also have memory region information. */
-class SValue: public InstructionSemantics2::SymbolicSemantics::SValue {
+class SValue: public InstructionSemantics::SymbolicSemantics::SValue {
 public:
     /** Base class. */
-    using Super = InstructionSemantics2::SymbolicSemantics::SValue;
+    using Super = InstructionSemantics::SymbolicSemantics::SValue;
 
     /** Shared-ownership pointer. */
     using Ptr = SValuePtr;
@@ -186,38 +186,38 @@ public:
     static Ptr instanceSymbolic(const SymbolicExpr::Ptr &value);
 
 public:
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr bottom_(size_t nBits) const override {
+    virtual InstructionSemantics::BaseSemantics::SValuePtr bottom_(size_t nBits) const override {
         return instanceBottom(nBits);
     }
 
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr undefined_(size_t nBits) const override {
+    virtual InstructionSemantics::BaseSemantics::SValuePtr undefined_(size_t nBits) const override {
         return instanceUndefined(nBits);
     }
 
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr unspecified_(size_t nBits) const override {
+    virtual InstructionSemantics::BaseSemantics::SValuePtr unspecified_(size_t nBits) const override {
         return instanceUnspecified(nBits);
     }
 
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr number_(size_t nBits, uint64_t value) const override {
+    virtual InstructionSemantics::BaseSemantics::SValuePtr number_(size_t nBits, uint64_t value) const override {
         return instanceInteger(nBits, value);
     }
 
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr boolean_(bool value) const override {
+    virtual InstructionSemantics::BaseSemantics::SValuePtr boolean_(bool value) const override {
         return instanceInteger(1, value ? 1 : 0);
     }
 
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr copy(size_t newNBits = 0) const override;
+    virtual InstructionSemantics::BaseSemantics::SValuePtr copy(size_t newNBits = 0) const override;
 
-    virtual Sawyer::Optional<InstructionSemantics2::BaseSemantics::SValuePtr>
-    createOptionalMerge(const InstructionSemantics2::BaseSemantics::SValuePtr &other,
-                        const InstructionSemantics2::BaseSemantics::MergerPtr&,
+    virtual Sawyer::Optional<InstructionSemantics::BaseSemantics::SValuePtr>
+    createOptionalMerge(const InstructionSemantics::BaseSemantics::SValuePtr &other,
+                        const InstructionSemantics::BaseSemantics::MergerPtr&,
                         const SmtSolverPtr&) const override;
 
 public:
     /** Promote a base value to a MemoryRegionSemantics value.
      *
      *  The value @p v must have a MemoryRegionSemantics::SValue dynamic type. */
-    static Ptr promote(const InstructionSemantics2::BaseSemantics::SValuePtr &v) { // hot
+    static Ptr promote(const InstructionSemantics::BaseSemantics::SValuePtr &v) { // hot
         Ptr retval = v.dynamicCast<SValue>();
         ASSERT_not_null(retval);
         return retval;
@@ -235,7 +235,7 @@ public:
     /** @} */
 
 public:
-    virtual void print(std::ostream&, InstructionSemantics2::BaseSemantics::Formatter&) const override;
+    virtual void print(std::ostream&, InstructionSemantics::BaseSemantics::Formatter&) const override;
     virtual void hash(Combinatorics::Hasher&) const override;
 };
 
@@ -247,10 +247,10 @@ public:
 using StatePtr = boost::shared_ptr<class State>;
 
 /** Semantic state. */
-class State: public InstructionSemantics2::SymbolicSemantics::State {
+class State: public InstructionSemantics::SymbolicSemantics::State {
 public:
     /** Base type. */
-    using Super = InstructionSemantics2::SymbolicSemantics::State;
+    using Super = InstructionSemantics::SymbolicSemantics::State;
 
     /** Shared-ownership pointer. */
     using Ptr = StatePtr;
@@ -260,32 +260,32 @@ private:
 
 protected:
     State();
-    State(const InstructionSemantics2::BaseSemantics::RegisterStatePtr&,
-          const InstructionSemantics2::BaseSemantics::MemoryStatePtr&);
+    State(const InstructionSemantics::BaseSemantics::RegisterStatePtr&,
+          const InstructionSemantics::BaseSemantics::MemoryStatePtr&);
 
     // Deep copy
     State(const State&);
 
 public:
     /** Allocating constructor. */
-    static Ptr instance(const InstructionSemantics2::BaseSemantics::RegisterStatePtr&,
-                        const InstructionSemantics2::BaseSemantics::MemoryStatePtr&);
+    static Ptr instance(const InstructionSemantics::BaseSemantics::RegisterStatePtr&,
+                        const InstructionSemantics::BaseSemantics::MemoryStatePtr&);
 
     /** Deep-copy allocating constructor. */
     static Ptr instance(const StatePtr&);
 
     /** Virtual constructor. */
-    virtual InstructionSemantics2::BaseSemantics::StatePtr
-    create(const InstructionSemantics2::BaseSemantics::RegisterStatePtr &registers,
-           const InstructionSemantics2::BaseSemantics::MemoryStatePtr &memory) const override {
+    virtual InstructionSemantics::BaseSemantics::StatePtr
+    create(const InstructionSemantics::BaseSemantics::RegisterStatePtr &registers,
+           const InstructionSemantics::BaseSemantics::MemoryStatePtr &memory) const override {
         return instance(registers, memory);
     }
 
     /** Virtual copy constructor. */
-    virtual InstructionSemantics2::BaseSemantics::StatePtr clone() const override;
+    virtual InstructionSemantics::BaseSemantics::StatePtr clone() const override;
 
     /** Checked dynamic cast. */
-    static Ptr promote(const InstructionSemantics2::BaseSemantics::StatePtr&);
+    static Ptr promote(const InstructionSemantics::BaseSemantics::StatePtr&);
 
 public:
     /** Function call stack.
@@ -303,9 +303,9 @@ public:
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** RISC operators for model checking. */
-class RiscOperators: public InstructionSemantics2::SymbolicSemantics::RiscOperators {
+class RiscOperators: public InstructionSemantics::SymbolicSemantics::RiscOperators {
 public:
-    using Super = InstructionSemantics2::SymbolicSemantics::RiscOperators;
+    using Super = InstructionSemantics::SymbolicSemantics::RiscOperators;
 
     using Ptr = RiscOperatorsPtr;
 
@@ -323,23 +323,23 @@ private:
 
 protected:
     RiscOperators(const Settings&, const Partitioner2::Partitioner&, ModelChecker::SemanticCallbacks*,
-                  const InstructionSemantics2::BaseSemantics::SValuePtr &protoval, const SmtSolverPtr&,
+                  const InstructionSemantics::BaseSemantics::SValuePtr &protoval, const SmtSolverPtr&,
                   const Variables::VariableFinderPtr&);
 
 public: // Standard public construction-like functions
     ~RiscOperators();
 
     static Ptr instance(const Settings&, const Partitioner2::Partitioner&, ModelChecker::SemanticCallbacks*,
-                        const InstructionSemantics2::BaseSemantics::SValuePtr &protoval, const SmtSolverPtr&,
+                        const InstructionSemantics::BaseSemantics::SValuePtr &protoval, const SmtSolverPtr&,
                         const Variables::VariableFinderPtr&);
 
-    virtual InstructionSemantics2::BaseSemantics::RiscOperatorsPtr
-    create(const InstructionSemantics2::BaseSemantics::SValuePtr&, const SmtSolverPtr&) const override;
+    virtual InstructionSemantics::BaseSemantics::RiscOperatorsPtr
+    create(const InstructionSemantics::BaseSemantics::SValuePtr&, const SmtSolverPtr&) const override;
 
-    virtual InstructionSemantics2::BaseSemantics::RiscOperatorsPtr
-    create(const InstructionSemantics2::BaseSemantics::StatePtr&, const SmtSolverPtr&) const override;
+    virtual InstructionSemantics::BaseSemantics::RiscOperatorsPtr
+    create(const InstructionSemantics::BaseSemantics::StatePtr&, const SmtSolverPtr&) const override;
 
-    static Ptr promote(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr &x);
+    static Ptr promote(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr &x);
 
 public: // Supporting functions
     /** Property: Partitioner.
@@ -373,17 +373,17 @@ public: // Supporting functions
      *  even when accessing a member other than the first member.
      *
      *  If a null dereference is detected, then a NullDerefTag is thrown. */
-    void checkNullAccess(const InstructionSemantics2::BaseSemantics::SValuePtr &addr, TestMode, IoMode);
+    void checkNullAccess(const InstructionSemantics::BaseSemantics::SValuePtr &addr, TestMode, IoMode);
 
     /** Test whether the specified address is out of bounds for variables.
      *
      *  If an OOB access is detected, then an OobTag is thrown. */
-    void checkOobAccess(const InstructionSemantics2::BaseSemantics::SValuePtr &addr, TestMode, IoMode, size_t nBytes);
+    void checkOobAccess(const InstructionSemantics::BaseSemantics::SValuePtr &addr, TestMode, IoMode, size_t nBytes);
 
     /** Test whether the specified address accesses an uninitialized variable.
      *
      *  If an uninitialized access is detected, then an UninitReadTag is thrown. */
-    void checkUninitVar(const InstructionSemantics2::BaseSemantics::SValuePtr &addr, TestMode, size_t nBytes);
+    void checkUninitVar(const InstructionSemantics::BaseSemantics::SValuePtr &addr, TestMode, size_t nBytes);
 
     /** Property: Number of instructions executed.
      *
@@ -432,91 +432,91 @@ public: // Supporting functions
      *  expression.
      *
      * @{ */
-    InstructionSemantics2::BaseSemantics::SValuePtr
-    assignRegion(const InstructionSemantics2::BaseSemantics::SValuePtr &result);
+    InstructionSemantics::BaseSemantics::SValuePtr
+    assignRegion(const InstructionSemantics::BaseSemantics::SValuePtr &result);
 
-    InstructionSemantics2::BaseSemantics::SValuePtr
-    assignRegion(const InstructionSemantics2::BaseSemantics::SValuePtr &result,
-                 const InstructionSemantics2::BaseSemantics::SValuePtr &a);
+    InstructionSemantics::BaseSemantics::SValuePtr
+    assignRegion(const InstructionSemantics::BaseSemantics::SValuePtr &result,
+                 const InstructionSemantics::BaseSemantics::SValuePtr &a);
 
-    InstructionSemantics2::BaseSemantics::SValuePtr
-    assignRegion(const InstructionSemantics2::BaseSemantics::SValuePtr &result,
-                 const InstructionSemantics2::BaseSemantics::SValuePtr &a,
-                 const InstructionSemantics2::BaseSemantics::SValuePtr &b);
+    InstructionSemantics::BaseSemantics::SValuePtr
+    assignRegion(const InstructionSemantics::BaseSemantics::SValuePtr &result,
+                 const InstructionSemantics::BaseSemantics::SValuePtr &a,
+                 const InstructionSemantics::BaseSemantics::SValuePtr &b);
     /** @} */
 
 public: // Override RISC operations
     virtual void finishInstruction(SgAsmInstruction*) override;
 
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr
+    virtual InstructionSemantics::BaseSemantics::SValuePtr
     number_(size_t nBits, uint64_t value) override;
 
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr
-    extract(const InstructionSemantics2::BaseSemantics::SValuePtr&, size_t begin, size_t end) override;
+    virtual InstructionSemantics::BaseSemantics::SValuePtr
+    extract(const InstructionSemantics::BaseSemantics::SValuePtr&, size_t begin, size_t end) override;
 
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr
-    concat(const InstructionSemantics2::BaseSemantics::SValuePtr &lowBits,
-           const InstructionSemantics2::BaseSemantics::SValuePtr &highBits) override;
+    virtual InstructionSemantics::BaseSemantics::SValuePtr
+    concat(const InstructionSemantics::BaseSemantics::SValuePtr &lowBits,
+           const InstructionSemantics::BaseSemantics::SValuePtr &highBits) override;
 
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr
-    shiftLeft(const InstructionSemantics2::BaseSemantics::SValuePtr &a,
-              const InstructionSemantics2::BaseSemantics::SValuePtr &nBits) override;
+    virtual InstructionSemantics::BaseSemantics::SValuePtr
+    shiftLeft(const InstructionSemantics::BaseSemantics::SValuePtr &a,
+              const InstructionSemantics::BaseSemantics::SValuePtr &nBits) override;
 
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr
-    shiftRight(const InstructionSemantics2::BaseSemantics::SValuePtr &a,
-               const InstructionSemantics2::BaseSemantics::SValuePtr &nBits) override;
+    virtual InstructionSemantics::BaseSemantics::SValuePtr
+    shiftRight(const InstructionSemantics::BaseSemantics::SValuePtr &a,
+               const InstructionSemantics::BaseSemantics::SValuePtr &nBits) override;
 
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr
-    shiftRightArithmetic(const InstructionSemantics2::BaseSemantics::SValuePtr &a,
-                         const InstructionSemantics2::BaseSemantics::SValuePtr &nBits) override;
+    virtual InstructionSemantics::BaseSemantics::SValuePtr
+    shiftRightArithmetic(const InstructionSemantics::BaseSemantics::SValuePtr &a,
+                         const InstructionSemantics::BaseSemantics::SValuePtr &nBits) override;
 
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr
-    unsignedExtend(const InstructionSemantics2::BaseSemantics::SValue::Ptr &a, size_t newWidth) override;
+    virtual InstructionSemantics::BaseSemantics::SValuePtr
+    unsignedExtend(const InstructionSemantics::BaseSemantics::SValue::Ptr &a, size_t newWidth) override;
 
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr
-    signExtend(const InstructionSemantics2::BaseSemantics::SValue::Ptr &a, size_t newWidth) override;
+    virtual InstructionSemantics::BaseSemantics::SValuePtr
+    signExtend(const InstructionSemantics::BaseSemantics::SValue::Ptr &a, size_t newWidth) override;
 
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr
-    add(const InstructionSemantics2::BaseSemantics::SValuePtr &a,
-        const InstructionSemantics2::BaseSemantics::SValuePtr &b) override;
+    virtual InstructionSemantics::BaseSemantics::SValuePtr
+    add(const InstructionSemantics::BaseSemantics::SValuePtr &a,
+        const InstructionSemantics::BaseSemantics::SValuePtr &b) override;
 
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr
-    addCarry(const InstructionSemantics2::BaseSemantics::SValuePtr &a,
-             const InstructionSemantics2::BaseSemantics::SValuePtr &b,
-             InstructionSemantics2::BaseSemantics::SValuePtr &carryOut /*out*/,
-             InstructionSemantics2::BaseSemantics::SValuePtr &overflowed /*out*/) override;
+    virtual InstructionSemantics::BaseSemantics::SValuePtr
+    addCarry(const InstructionSemantics::BaseSemantics::SValuePtr &a,
+             const InstructionSemantics::BaseSemantics::SValuePtr &b,
+             InstructionSemantics::BaseSemantics::SValuePtr &carryOut /*out*/,
+             InstructionSemantics::BaseSemantics::SValuePtr &overflowed /*out*/) override;
 
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr
-    subtract(const InstructionSemantics2::BaseSemantics::SValuePtr &a,
-             const InstructionSemantics2::BaseSemantics::SValuePtr &b) override;
+    virtual InstructionSemantics::BaseSemantics::SValuePtr
+    subtract(const InstructionSemantics::BaseSemantics::SValuePtr &a,
+             const InstructionSemantics::BaseSemantics::SValuePtr &b) override;
 
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr
-    subtractCarry(const InstructionSemantics2::BaseSemantics::SValuePtr &a,
-                  const InstructionSemantics2::BaseSemantics::SValuePtr &b,
-                  InstructionSemantics2::BaseSemantics::SValuePtr &carryOut /*out*/,
-                  InstructionSemantics2::BaseSemantics::SValuePtr &overflowed /*out*/) override;
+    virtual InstructionSemantics::BaseSemantics::SValuePtr
+    subtractCarry(const InstructionSemantics::BaseSemantics::SValuePtr &a,
+                  const InstructionSemantics::BaseSemantics::SValuePtr &b,
+                  InstructionSemantics::BaseSemantics::SValuePtr &carryOut /*out*/,
+                  InstructionSemantics::BaseSemantics::SValuePtr &overflowed /*out*/) override;
 
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr
-    addWithCarries(const InstructionSemantics2::BaseSemantics::SValuePtr &a,
-                   const InstructionSemantics2::BaseSemantics::SValuePtr &b,
-                   const InstructionSemantics2::BaseSemantics::SValuePtr &c,
-                   InstructionSemantics2::BaseSemantics::SValuePtr &carryOut /*out*/) override;
+    virtual InstructionSemantics::BaseSemantics::SValuePtr
+    addWithCarries(const InstructionSemantics::BaseSemantics::SValuePtr &a,
+                   const InstructionSemantics::BaseSemantics::SValuePtr &b,
+                   const InstructionSemantics::BaseSemantics::SValuePtr &c,
+                   InstructionSemantics::BaseSemantics::SValuePtr &carryOut /*out*/) override;
 
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr
-    readRegister(RegisterDescriptor, const InstructionSemantics2::BaseSemantics::SValuePtr&) override;
-
-    virtual void
-    writeRegister(RegisterDescriptor, const InstructionSemantics2::BaseSemantics::SValuePtr&) override;
-
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr
-    readMemory(RegisterDescriptor segreg, const InstructionSemantics2::BaseSemantics::SValuePtr &addr,
-               const InstructionSemantics2::BaseSemantics::SValuePtr &dflt,
-               const InstructionSemantics2::BaseSemantics::SValuePtr &cond) override;
+    virtual InstructionSemantics::BaseSemantics::SValuePtr
+    readRegister(RegisterDescriptor, const InstructionSemantics::BaseSemantics::SValuePtr&) override;
 
     virtual void
-    writeMemory(RegisterDescriptor segreg, const InstructionSemantics2::BaseSemantics::SValuePtr &addr,
-                const InstructionSemantics2::BaseSemantics::SValuePtr &value,
-                const InstructionSemantics2::BaseSemantics::SValuePtr &cond) override;
+    writeRegister(RegisterDescriptor, const InstructionSemantics::BaseSemantics::SValuePtr&) override;
+
+    virtual InstructionSemantics::BaseSemantics::SValuePtr
+    readMemory(RegisterDescriptor segreg, const InstructionSemantics::BaseSemantics::SValuePtr &addr,
+               const InstructionSemantics::BaseSemantics::SValuePtr &dflt,
+               const InstructionSemantics::BaseSemantics::SValuePtr &cond) override;
+
+    virtual void
+    writeMemory(RegisterDescriptor segreg, const InstructionSemantics::BaseSemantics::SValuePtr &addr,
+                const InstructionSemantics::BaseSemantics::SValuePtr &value,
+                const InstructionSemantics::BaseSemantics::SValuePtr &cond) override;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -652,7 +652,7 @@ public:
      *  The default implementation always returns true.
      *
      *  Thread safety: The implementation must be thread safe. */
-    virtual bool filterNullDeref(const InstructionSemantics2::BaseSemantics::SValuePtr &addr, SgAsmInstruction*,
+    virtual bool filterNullDeref(const InstructionSemantics::BaseSemantics::SValuePtr &addr, SgAsmInstruction*,
                                  TestMode testMode, IoMode ioMode);
 
     /** Filter out of bounds access.
@@ -670,13 +670,13 @@ public:
      *  The default implementation always returns true.
      *
      *  Thread safety: The implementation must be thread safe. */
-    virtual bool filterOobAccess(const InstructionSemantics2::BaseSemantics::SValuePtr &addr,
+    virtual bool filterOobAccess(const InstructionSemantics::BaseSemantics::SValuePtr &addr,
                                  const AddressInterval &referencedRegion, const AddressInterval &accessedRegion,
                                  SgAsmInstruction *insn, TestMode testMode, IoMode ioMode,
                                  const Variables::StackVariable &intendedVariable, const AddressInterval &intendedVariableLocation,
                                  const Variables::StackVariable &accessedVariable, const AddressInterval &accessedVariableLocation);
 
-    virtual bool filterUninitVar(const InstructionSemantics2::BaseSemantics::SValuePtr &addr,
+    virtual bool filterUninitVar(const InstructionSemantics::BaseSemantics::SValuePtr &addr,
                                  const AddressInterval &referencedREgion, const AddressInterval &accessedRegion,
                                  SgAsmInstruction *insn, TestMode testMode, const Variables::StackVariable &variable,
                                  const AddressInterval &variableLocation);
@@ -684,41 +684,41 @@ public:
 public:
     virtual void reset() override;
 
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr protoval() override;
+    virtual InstructionSemantics::BaseSemantics::SValuePtr protoval() override;
 
-    virtual InstructionSemantics2::BaseSemantics::RegisterStatePtr createInitialRegisters() override;
+    virtual InstructionSemantics::BaseSemantics::RegisterStatePtr createInitialRegisters() override;
 
-    virtual InstructionSemantics2::BaseSemantics::MemoryStatePtr createInitialMemory() override;
+    virtual InstructionSemantics::BaseSemantics::MemoryStatePtr createInitialMemory() override;
 
-    virtual InstructionSemantics2::BaseSemantics::StatePtr createInitialState() override;
+    virtual InstructionSemantics::BaseSemantics::StatePtr createInitialState() override;
 
-    virtual InstructionSemantics2::BaseSemantics::RiscOperatorsPtr createRiscOperators() override;
+    virtual InstructionSemantics::BaseSemantics::RiscOperatorsPtr createRiscOperators() override;
 
     virtual void
-    initializeState(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&) override;
+    initializeState(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&) override;
 
-    virtual InstructionSemantics2::BaseSemantics::DispatcherPtr
-    createDispatcher(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&) override;
+    virtual InstructionSemantics::BaseSemantics::DispatcherPtr
+    createDispatcher(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&) override;
 
     virtual SmtSolver::Ptr createSolver() override;
 
-    virtual void attachModelCheckerSolver(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&,
+    virtual void attachModelCheckerSolver(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&,
                                           const SmtSolver::Ptr&) override;
 
     virtual CodeAddresses
-    nextCodeAddresses(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&) override;
+    nextCodeAddresses(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&) override;
 
     virtual std::vector<TagPtr>
-    preExecute(const ExecutionUnitPtr&, const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&) override;
+    preExecute(const ExecutionUnitPtr&, const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&) override;
 
     virtual std::vector<TagPtr>
-    postExecute(const ExecutionUnitPtr&, const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&) override;
+    postExecute(const ExecutionUnitPtr&, const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&) override;
 
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr
-    instructionPointer(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&) override;
+    virtual InstructionSemantics::BaseSemantics::SValuePtr
+    instructionPointer(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&) override;
 
     virtual std::vector<NextUnit>
-    nextUnits(const PathPtr&, const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&, const SmtSolver::Ptr&) override;
+    nextUnits(const PathPtr&, const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&, const SmtSolver::Ptr&) override;
 
 #ifdef ROSE_HAVE_YAMLCPP
     virtual std::list<ExecutionUnitPtr>
@@ -730,7 +730,7 @@ public:
 
 private:
     // Records the state hash and returns true if we've seen it before.
-    bool seenState(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&);
+    bool seenState(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&);
 
     // Find and cache the execution unit at the specified address.
     ExecutionUnitPtr findUnit(rose_addr_t va, const Progress::Ptr&);

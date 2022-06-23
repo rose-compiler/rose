@@ -240,7 +240,7 @@ typedef Rose::BinaryAnalysis::DataFlow::Engine<DfCfg, BaseSemantics::StatePtr, T
  *  variables that are multiple bytes.  There are many ways to do this, all of which are heuristic.
  *
  *  The @p ops provides the operators for comparing stack pointers, and also provides the state which is examined to find the
- *  stack variables.  The underlying memory state should be of type @ref InstructionSemantics2::BaseSemantics::MemoryCellList
+ *  stack variables.  The underlying memory state should be of type @ref InstructionSemantics::BaseSemantics::MemoryCellList
  *  "MemoryCellList" or a subclass, or else no stack variables will be found. */
 Variables::StackVariables findStackVariables(const FunctionPtr &function, const BaseSemantics::RiscOperatorsPtr &ops,
                                              const BaseSemantics::SValuePtr &initialStackPointer);

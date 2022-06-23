@@ -1103,7 +1103,7 @@ generateStringifierClass() {
               <<" *  way to make a locally short-named object that can be used in place of the long stringifier.\n"
               <<" *\n"
               <<" *  @code\n"
-              <<" *   Stringifier stringifyType(stringifyBinaryAnalysisInstructionSemantics2DataFlowSemanticsDataFlowEdgeEdgeType);\n"
+              <<" *   Stringifier stringifyType(stringifyBinaryAnalysisInstructionSemanticsDataFlowSemanticsDataFlowEdgeEdgeType);\n"
               <<" *   std::cout <<stringifyType(CLOBBER) <<\"\\n\";\n"
               <<" *  @endcode */\n"
               <<"class Stringifier {\n"

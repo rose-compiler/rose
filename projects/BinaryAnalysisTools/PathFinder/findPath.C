@@ -20,14 +20,14 @@
 #include <Sawyer/GraphTraversal.h>
 #include <Sawyer/ProgressBar.h>
 #include <Sawyer/Stopwatch.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/SymbolicMemory.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/SymbolicMemory.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 
 using namespace Rose;
 using namespace Rose::BinaryAnalysis;
 using namespace Sawyer::Message::Common;
 using namespace Sawyer::Container::Algorithm;
-using namespace Rose::BinaryAnalysis::InstructionSemantics2; // BaseSemantics, SymbolicSemantics
+using namespace Rose::BinaryAnalysis::InstructionSemantics; // BaseSemantics, SymbolicSemantics
 using namespace PathFinder;
 namespace P2 = Partitioner2;
 

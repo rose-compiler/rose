@@ -3,7 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 #include <Rose/BinaryAnalysis/SmtSolver.h>
 #include <Rose/BinaryAnalysis/SymbolicExprParser.h>
 #include <Rose/BinaryAnalysis/Partitioner2/CfgPath.h>
@@ -200,7 +200,7 @@ public:
          *  value of @ref Action::CONTINUE means the model checker will try other paths, and a return value of @ref
          *  Action::BREAK means no more paths will be tested. */
         virtual Action found(const FeasiblePath &analyzer, const Partitioner2::CfgPath &path,
-                             const InstructionSemantics2::BaseSemantics::DispatcherPtr &cpu,
+                             const InstructionSemantics::BaseSemantics::DispatcherPtr &cpu,
                              const SmtSolverPtr &solver) {
             return CONTINUE;
         }
@@ -239,8 +239,8 @@ public:
          *  backtrack (@ref Action::BREAK). If this callback requests backtracking then the model checker may continue evaluating
          *  the current path vertex but will not call any more more path processing functions until the backtrack occurs. */
         virtual Action nullDeref(const FeasiblePath &analyzer, const Partitioner2::CfgPath &path, SgAsmInstruction *insn,
-                                 const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr &cpu, const SmtSolverPtr &solver,
-                                 IoMode ioMode, const InstructionSemantics2::BaseSemantics::SValuePtr &addr) {
+                                 const InstructionSemantics::BaseSemantics::RiscOperatorsPtr &cpu, const SmtSolverPtr &solver,
+                                 IoMode ioMode, const InstructionSemantics::BaseSemantics::SValuePtr &addr) {
             return CONTINUE;
         }
 
@@ -284,9 +284,9 @@ public:
          *  backtrack (@ref Action::BREAK). If this callback requests backtracking then the model checker may continue evaluating
          *  the current path vertex but will not call any more more path processing functions until the backtrack occurs. */
         virtual Action memoryIo(const FeasiblePath &analyzer, const Partitioner2::CfgPath &path, SgAsmInstruction *insn,
-                                const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr &cpu, const SmtSolverPtr &solver,
-                                IoMode ioMode, const InstructionSemantics2::BaseSemantics::SValuePtr &addr,
-                                const InstructionSemantics2::BaseSemantics::SValuePtr &value) {
+                                const InstructionSemantics::BaseSemantics::RiscOperatorsPtr &cpu, const SmtSolverPtr &solver,
+                                IoMode ioMode, const InstructionSemantics::BaseSemantics::SValuePtr &addr,
+                                const InstructionSemantics::BaseSemantics::SValuePtr &value) {
             return CONTINUE;
         }
     };
@@ -329,15 +329,15 @@ public:
          *  Returns true if the function was processed, false if we decline to process the function. If returning false, then
          *  the caller will do some basic processing based on the calling convention. */
         virtual bool process(const FeasiblePath &analysis, const FunctionSummary &summary,
-                             const InstructionSemantics2::SymbolicSemantics::RiscOperatorsPtr &ops) = 0;
+                             const InstructionSemantics::SymbolicSemantics::RiscOperatorsPtr &ops) = 0;
 
         /** Return value for function.
          *
          *  This is called after @ref process in order to obtain the primary return value for the function. If the function
          *  doesn't return anything, then this method returns a null pointer. */
-        virtual InstructionSemantics2::SymbolicSemantics::SValuePtr
+        virtual InstructionSemantics::SymbolicSemantics::SValuePtr
         returnValue(const FeasiblePath &analysis, const FunctionSummary &summary,
-                    const InstructionSemantics2::SymbolicSemantics::RiscOperatorsPtr &ops) = 0;
+                    const InstructionSemantics::SymbolicSemantics::RiscOperatorsPtr &ops) = 0;
     };
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -357,7 +357,7 @@ private:
     Partitioner2::CfgConstEdgeSet cfgAvoidEdges_;       // CFG edges to avoid
     Partitioner2::CfgConstVertexSet cfgEndAvoidVertices_;// CFG end-of-path and other avoidance vertices
     FunctionSummarizer::Ptr functionSummarizer_;        // user-defined function for handling function summaries
-    InstructionSemantics2::BaseSemantics::StatePtr initialState_; // set by setInitialState.
+    InstructionSemantics::BaseSemantics::StatePtr initialState_; // set by setInitialState.
     static Sawyer::Attribute::Id POST_STATE;            // stores semantic state after executing the insns for a vertex
     static Sawyer::Attribute::Id POST_INSN_LENGTH;      // path length in instructions at end of vertex
     static Sawyer::Attribute::Id EFFECTIVE_K;           // (double) effective maximimum path length
@@ -432,7 +432,7 @@ public:
      *  Creates a new virtual CPU for each call.  The first call also makes a copy of the register dictionary from the
      *  specified partitioner and augments it with a "path" pseudo-register that holds a symbolic expressions on which the
      *  current CFG path depends. */
-    virtual InstructionSemantics2::BaseSemantics::DispatcherPtr
+    virtual InstructionSemantics::BaseSemantics::DispatcherPtr
     buildVirtualCpu(const Partitioner2::Partitioner&, const Partitioner2::CfgPath*, PathProcessor*, const SmtSolver::Ptr&);
 
     /** Initialize state for first vertex of path.
@@ -442,7 +442,7 @@ public:
      *  unconditionally feasible), sets the instruction pointer register to the first instruction, and initializes the stack
      *  pointer with the concrete stack pointer from @ref settings (if any).  On x86, the DF register is set. */
     virtual void
-    setInitialState(const InstructionSemantics2::BaseSemantics::DispatcherPtr &cpu,
+    setInitialState(const InstructionSemantics::BaseSemantics::DispatcherPtr &cpu,
                     const Partitioner2::ControlFlowGraph::ConstVertexIterator &pathsBeginVertex);
 
     /** Process instructions for one basic block on the specified virtual CPU.
@@ -451,14 +451,14 @@ public:
      *  basic block. */
     virtual void
     processBasicBlock(const Partitioner2::BasicBlock::Ptr &bblock,
-                      const InstructionSemantics2::BaseSemantics::DispatcherPtr &cpu, size_t pathInsnIndex);
+                      const InstructionSemantics::BaseSemantics::DispatcherPtr &cpu, size_t pathInsnIndex);
 
     /** Process an indeterminate block.
      *
      *  This is a state transfer function, representing flow of control through an unknown address. */
     virtual void
     processIndeterminateBlock(const Partitioner2::ControlFlowGraph::ConstVertexIterator &vertex,
-                              const InstructionSemantics2::BaseSemantics::DispatcherPtr &cpu,
+                              const InstructionSemantics::BaseSemantics::DispatcherPtr &cpu,
                               size_t pathInsnIndex);
 
     /** Process a function summary vertex.
@@ -466,14 +466,14 @@ public:
      *  This is a state transfer function, representing flow of control across a summarized function. */
     virtual void
     processFunctionSummary(const Partitioner2::ControlFlowGraph::ConstVertexIterator &pathsVertex,
-                           const InstructionSemantics2::BaseSemantics::DispatcherPtr &cpu,
+                           const InstructionSemantics::BaseSemantics::DispatcherPtr &cpu,
                            size_t pathInsnIndex);
 
     /** Process one vertex.
      *
      *  This is the general state transfer function, representing flow of control through any type of vertex. */
     virtual void
-    processVertex(const InstructionSemantics2::BaseSemantics::DispatcherPtr &cpu,
+    processVertex(const InstructionSemantics::BaseSemantics::DispatcherPtr &cpu,
                   const Partitioner2::ControlFlowGraph::ConstVertexIterator &pathsVertex,
                   size_t pathInsnIndex);
 
@@ -621,16 +621,16 @@ public:
     const FunctionSummary& functionSummary(rose_addr_t entryVa) const;
 
     /** Details about a variable. */
-    const VarDetail& varDetail(const InstructionSemantics2::BaseSemantics::StatePtr&, const std::string &varName) const;
+    const VarDetail& varDetail(const InstructionSemantics::BaseSemantics::StatePtr&, const std::string &varName) const;
 
     /** Details about all variables by name. */
-    const VarDetails& varDetails(const InstructionSemantics2::BaseSemantics::StatePtr&) const;
+    const VarDetails& varDetails(const InstructionSemantics::BaseSemantics::StatePtr&) const;
 
     /** Get the initial state before the first path vertex. */
-    InstructionSemantics2::BaseSemantics::StatePtr initialState() const;
+    InstructionSemantics::BaseSemantics::StatePtr initialState() const;
 
     /** Get the state at the end of the specified vertex. */
-    static InstructionSemantics2::BaseSemantics::StatePtr pathPostState(const Partitioner2::CfgPath&, size_t vertexIdx);
+    static InstructionSemantics::BaseSemantics::StatePtr pathPostState(const Partitioner2::CfgPath&, size_t vertexIdx);
 
     /** Effective maximum path length.
      *
@@ -684,7 +684,7 @@ private:
     // block. Otherwise, returns a symbolic expression which must be tree if the edge is feasible. For trivially feasible
     // edges, the return value is the constant 1 (one bit wide; i.e., true).
     SymbolicExpr::Ptr pathEdgeConstraint(const Partitioner2::ControlFlowGraph::ConstEdgeIterator &pathEdge,
-                                         const InstructionSemantics2::BaseSemantics::DispatcherPtr &cpu);
+                                         const InstructionSemantics::BaseSemantics::DispatcherPtr &cpu);
 
     // Parse the expression if it's a parsable string, otherwise return the expression as is. */
     Expression parseExpression(Expression, const std::string &where, SymbolicExprParser&) const;
@@ -725,16 +725,16 @@ private:
     Substitutions parseSubstitutions();
 
     // Substitute registers and memory values into user-supplied symbolic expressions.
-    void makeSubstitutions(const Substitutions&, const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&);
+    void makeSubstitutions(const Substitutions&, const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&);
 
     // Create an SMT solver. It will have an initial state plus, eventually, a transaction for each path edge.
     SmtSolverPtr createSmtSolver();
 
     // The parts of the instruction semantics framework
     struct Semantics {
-        InstructionSemantics2::BaseSemantics::DispatcherPtr cpu;
-        InstructionSemantics2::BaseSemantics::RiscOperatorsPtr ops;
-        InstructionSemantics2::BaseSemantics::StatePtr originalState;
+        InstructionSemantics::BaseSemantics::DispatcherPtr cpu;
+        InstructionSemantics::BaseSemantics::RiscOperatorsPtr ops;
+        InstructionSemantics::BaseSemantics::StatePtr originalState;
     };
 
     // Create the parts of the instruction semantics framework.
@@ -747,8 +747,8 @@ private:
 
     // Obtain the incoming state for the specified path vertex. This is a pointer to the state, so copy it if you make changes.
     // The incoming state for the first vertex is the specified initial state.
-    InstructionSemantics2::BaseSemantics::StatePtr
-    incomingState(const Partitioner2::CfgPath&, int position, const InstructionSemantics2::BaseSemantics::StatePtr &initialState);
+    InstructionSemantics::BaseSemantics::StatePtr
+    incomingState(const Partitioner2::CfgPath&, int position, const InstructionSemantics::BaseSemantics::StatePtr &initialState);
 
     // Number of steps (e.g., instructions) up to but not including the specified path vertex.
     size_t incomingStepCount(const Partitioner2::CfgPath&, int position);
@@ -758,7 +758,7 @@ private:
 
     // Evaluate semantics up to and including the specified path vertex, returning the outgoing state for that vertex. If
     // semantics fails, then returns a null state pointer.
-    InstructionSemantics2::BaseSemantics::StatePtr evaluate(Partitioner2::CfgPath&, int position, const Semantics&);
+    InstructionSemantics::BaseSemantics::StatePtr evaluate(Partitioner2::CfgPath&, int position, const Semantics&);
 
     // Check whether the last vertex of the path is feasible. Returns true if provably feasible, false if provably infeasible,
     // or indeterminate if not provable one way or the other.

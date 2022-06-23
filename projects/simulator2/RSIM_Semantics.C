@@ -7,13 +7,13 @@
 #include "RSIM_Thread.h"
 
 #if 1 // DEBUGGING [Robb P. Matzke 2015-06-01]
-#include <Rose/BinaryAnalysis/InstructionSemantics2/TraceSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
 #endif
 
 using namespace Rose;
 using namespace Rose::Diagnostics;
 using namespace Rose::BinaryAnalysis;
-using namespace Rose::BinaryAnalysis::InstructionSemantics2;
+using namespace Rose::BinaryAnalysis::InstructionSemantics;
 
 namespace RSIM_Semantics {
 

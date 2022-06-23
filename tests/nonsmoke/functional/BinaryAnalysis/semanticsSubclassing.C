@@ -1,5 +1,5 @@
 // Demo how to subclass some instruction semantics stuff from SymbolicSemantics. This follows the procedure described in the
-// doxygen documentation for the BinaryAnalysis::InstructionSemantics2::BaseSemantics namespace.
+// doxygen documentation for the BinaryAnalysis::InstructionSemantics::BaseSemantics namespace.
 #include "conditionalDisable.h"
 #ifdef ROSE_BINARY_TEST_DISABLED
 #include <iostream>
@@ -7,12 +7,12 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #else
 
 #include "rose.h"
-#include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #include <Rose/BinaryAnalysis/SmtSolver.h>
 #include <Rose/CommandLine.h>
 
 using namespace Rose::BinaryAnalysis;
-using namespace Rose::BinaryAnalysis::InstructionSemantics2;
+using namespace Rose::BinaryAnalysis::InstructionSemantics;
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -176,7 +176,7 @@ public:
 // Test that everything works like we expect.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <Rose/BinaryAnalysis/InstructionSemantics2/TestSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/TestSemantics.h>
 
 int main()
 {

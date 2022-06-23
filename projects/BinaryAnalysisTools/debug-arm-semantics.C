@@ -5,12 +5,12 @@
 #include <Rose/BinaryAnalysis/MemoryMap.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <rose_strtoull.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/TraceSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
 
 using namespace Rose;
 using namespace Rose::BinaryAnalysis;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
-namespace S2 = Rose::BinaryAnalysis::InstructionSemantics2;
+namespace S2 = Rose::BinaryAnalysis::InstructionSemantics;
 
 static void
 showUsageAndExit(int exitValue, const boost::filesystem::path arg0) {

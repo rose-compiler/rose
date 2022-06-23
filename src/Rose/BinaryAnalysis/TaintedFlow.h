@@ -173,7 +173,7 @@ public:
      *  semantic domain will be used to identify variables in the analyzed specimen.  The symbolic domain is the usual choice.
      *  The dispatcher need not have a valid state at this time; however, the state must be initialized before calling @ref
      *  computeFlowGraphs (if that method is called). */
-    explicit TaintedFlow(const InstructionSemantics2::BaseSemantics::DispatcherPtr &userDispatcher)
+    explicit TaintedFlow(const InstructionSemantics::BaseSemantics::DispatcherPtr &userDispatcher)
         : approximation_(UNDER_APPROXIMATE), dataFlow_(userDispatcher), vlistInitialized_(false) {}
 
     /** Initialize diagnostics.

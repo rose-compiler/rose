@@ -21,17 +21,17 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #define OLD_API 1
 #define NEW_API 2
 
-#include <Rose/BinaryAnalysis/InstructionSemantics2/DispatcherX86.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherX86.h>
 
 using namespace Rose::BinaryAnalysis;
-using namespace Rose::BinaryAnalysis::InstructionSemantics2;
+using namespace Rose::BinaryAnalysis::InstructionSemantics;
 
 const RegisterDictionary *regdict = RegisterDictionary::dictionary_i386();
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #if SEMANTIC_DOMAIN == NULL_DOMAIN
 
-#   include <Rose/BinaryAnalysis/InstructionSemantics2/NullSemantics.h>
+#   include <Rose/BinaryAnalysis/InstructionSemantics/NullSemantics.h>
     static BaseSemantics::RiscOperatorsPtr make_ops() {
         return NullSemantics::RiscOperators::instance(regdict);
     }
@@ -39,7 +39,7 @@ const RegisterDictionary *regdict = RegisterDictionary::dictionary_i386();
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #elif SEMANTIC_DOMAIN == PARTSYM_DOMAIN
 
-#   include <Rose/BinaryAnalysis/InstructionSemantics2/PartialSymbolicSemantics.h>
+#   include <Rose/BinaryAnalysis/InstructionSemantics/PartialSymbolicSemantics.h>
     static BaseSemantics::RiscOperatorsPtr make_ops() {
         return PartialSymbolicSemantics::RiscOperators::instance(regdict);
     }
@@ -47,7 +47,7 @@ const RegisterDictionary *regdict = RegisterDictionary::dictionary_i386();
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #elif SEMANTIC_DOMAIN == SYMBOLIC_DOMAIN
 
-#   include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>
+#   include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
     static BaseSemantics::RiscOperatorsPtr make_ops() {
         return SymbolicSemantics::RiscOperators::instance(regdict);
     }
@@ -55,7 +55,7 @@ const RegisterDictionary *regdict = RegisterDictionary::dictionary_i386();
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #elif SEMANTIC_DOMAIN == INTERVAL_DOMAIN
 
-#   include <Rose/BinaryAnalysis/InstructionSemantics2/IntervalSemantics.h>
+#   include <Rose/BinaryAnalysis/InstructionSemantics/IntervalSemantics.h>
     static BaseSemantics::RiscOperatorsPtr make_ops() {
         return IntervalSemantics::RiscOperators::instance(regdict);
     }
@@ -63,10 +63,10 @@ const RegisterDictionary *regdict = RegisterDictionary::dictionary_i386();
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #elif SEMANTIC_DOMAIN == MULTI_DOMAIN
 
-#   include <Rose/BinaryAnalysis/InstructionSemantics2/MultiSemantics.h>
-#   include <Rose/BinaryAnalysis/InstructionSemantics2/PartialSymbolicSemantics.h>
-#   include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>
-#   include <Rose/BinaryAnalysis/InstructionSemantics2/IntervalSemantics.h>
+#   include <Rose/BinaryAnalysis/InstructionSemantics/MultiSemantics.h>
+#   include <Rose/BinaryAnalysis/InstructionSemantics/PartialSymbolicSemantics.h>
+#   include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
+#   include <Rose/BinaryAnalysis/InstructionSemantics/IntervalSemantics.h>
     static BaseSemantics::RiscOperatorsPtr make_ops() {
         MultiSemantics::RiscOperatorsPtr ops = MultiSemantics::RiscOperators::instance(regdict);
         ops->add_subdomain(PartialSymbolicSemantics::RiscOperators::instance(regdict), "PartialSymbolic");

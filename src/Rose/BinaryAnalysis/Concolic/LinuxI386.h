@@ -81,11 +81,11 @@ public:
     virtual void writeRegister(RegisterDescriptor, const Sawyer::Container::BitVector&) override;
     virtual Sawyer::Container::BitVector readRegister(RegisterDescriptor) override;
     virtual void executeInstruction(const Partitioner2::Partitioner&) override;
-    virtual void executeInstruction(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&, SgAsmInstruction*) override;
+    virtual void executeInstruction(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&, SgAsmInstruction*) override;
     virtual void createInputVariables(const Partitioner2::Partitioner&, const Emulation::RiscOperatorsPtr&,
                                       const SmtSolver::Ptr &solver) override;
     virtual void systemCall(const Partitioner2::Partitioner&,
-                            const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&) override;
+                            const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&) override;
 
 private:
     // Maps a scratch page for internal use and updates scratchVa_ with the address of the page.
@@ -105,23 +105,23 @@ private:
     // When stopped at the beginning of a system call, return the system call function number. See <sys/unistd_32.h> for the
     // mapping function system call number to the Linux kernel function that handles it.
     uint64_t systemCallFunctionNumber(const Partitioner2::Partitioner&,
-                                      const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&);
+                                      const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&);
 
     // Returns the system call argument.
-    InstructionSemantics2::BaseSemantics::SValuePtr
+    InstructionSemantics::BaseSemantics::SValuePtr
     systemCallArgument(const Partitioner2::Partitioner&,
-                       const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&, size_t argNumber);
+                       const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&, size_t argNumber);
 
     // Returns the system call return value.
-    InstructionSemantics2::BaseSemantics::SValuePtr
+    InstructionSemantics::BaseSemantics::SValuePtr
     systemCallReturnValue(const Partitioner2::Partitioner&,
-                          const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&);
+                          const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&);
 
     // Modify the symbolic system call return value.
-    InstructionSemantics2::BaseSemantics::SValuePtr
+    InstructionSemantics::BaseSemantics::SValuePtr
     systemCallReturnValue(const Partitioner2::Partitioner&,
-                          const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&,
-                          const InstructionSemantics2::BaseSemantics::SValuePtr&);
+                          const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&,
+                          const InstructionSemantics::BaseSemantics::SValuePtr&);
 
 };
 

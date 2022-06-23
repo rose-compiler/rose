@@ -10,7 +10,7 @@
 #include <SageBuilderAsm.h>
 #include <integerOps.h>
 #include <stringify.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/DispatcherX86.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherX86.h>
 #include <Rose/BinaryAnalysis/Unparser/X86.h>
 
 #include <sstream>
@@ -114,7 +114,7 @@ DisassemblerX86::init(size_t wordsize)
         default:
             ASSERT_not_reachable("instruction must be 2, 4, or 8 bytes");
     }
-    InstructionSemantics2::DispatcherX86Ptr d = InstructionSemantics2::DispatcherX86::instance(addrWidth, regdict);
+    InstructionSemantics::DispatcherX86Ptr d = InstructionSemantics::DispatcherX86::instance(addrWidth, regdict);
     d->registerDictionary(regdict);                     // so register cache is initialized
     p_proto_dispatcher = d; 
 

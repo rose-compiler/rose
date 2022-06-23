@@ -4,7 +4,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/RegisterState.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RegisterState.h>
 #include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>
 #include <Rose/Diagnostics.h>
@@ -113,13 +113,13 @@ public:
      *
      * @{ */
     void parse(const boost::filesystem::path&, const MemoryMap::Ptr&);
-    void parse(const boost::filesystem::path&, const InstructionSemantics2::BaseSemantics::RegisterStatePtr &registers,
-               const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr &ops);
+    void parse(const boost::filesystem::path&, const InstructionSemantics::BaseSemantics::RegisterStatePtr &registers,
+               const InstructionSemantics::BaseSemantics::RiscOperatorsPtr &ops);
     void parse(const boost::filesystem::path&, const MemoryMap::Ptr&,
-               const InstructionSemantics2::BaseSemantics::RegisterStatePtr &registers,
-               const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr &ops);
-    void parse(std::istream&, const MemoryMap::Ptr&, const InstructionSemantics2::BaseSemantics::RegisterStatePtr &registers,
-               const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr &ops, const std::string &inputName = "input");
+               const InstructionSemantics::BaseSemantics::RegisterStatePtr &registers,
+               const InstructionSemantics::BaseSemantics::RiscOperatorsPtr &ops);
+    void parse(std::istream&, const MemoryMap::Ptr&, const InstructionSemantics::BaseSemantics::RegisterStatePtr &registers,
+               const InstructionSemantics::BaseSemantics::RiscOperatorsPtr &ops, const std::string &inputName = "input");
     /** @} */
 
     /** Unparse memory and/or registers to this format.
@@ -136,12 +136,12 @@ public:
      * @{ */
     void unparse(std::ostream&, const MemoryMap::Ptr&, const AddressInterval &memoryLimit,
                  const std::string &outputName = "output");
-    void unparse(std::ostream&, const InstructionSemantics2::BaseSemantics::RegisterStatePtr&,
-                 const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&,
+    void unparse(std::ostream&, const InstructionSemantics::BaseSemantics::RegisterStatePtr&,
+                 const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&,
                  const std::string &outputName = "output");
     void unparse(std::ostream&, const MemoryMap::Ptr&, const AddressInterval &memoryLimit,
-                 const InstructionSemantics2::BaseSemantics::RegisterStatePtr&,
-                 const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&,
+                 const InstructionSemantics::BaseSemantics::RegisterStatePtr&,
+                 const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&,
                  const std::string &outputName = "output");
     /** @} */
 
@@ -159,8 +159,8 @@ private:
                      size_t headerOffset);
 
     // Similar to parseMemory except for registers.
-    bool parseRegisters(const std::string &header, std::istream&, const InstructionSemantics2::BaseSemantics::RegisterStatePtr&,
-                        const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr &ops,
+    bool parseRegisters(const std::string &header, std::istream&, const InstructionSemantics::BaseSemantics::RegisterStatePtr&,
+                        const InstructionSemantics::BaseSemantics::RiscOperatorsPtr &ops,
                         const std::string &inputName, size_t headerOffset);
 };
 

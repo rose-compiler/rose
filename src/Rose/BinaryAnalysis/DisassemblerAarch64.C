@@ -5,7 +5,7 @@
 #include <Rose/BitOps.h>
 #include <Rose/BinaryAnalysis/DisassemblerAarch64.h>
 #include <Rose/BinaryAnalysis/Unparser/Aarch64.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/DispatcherAarch64.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherAarch64.h>
 
 using namespace Rose::Diagnostics;
 
@@ -35,7 +35,7 @@ DisassemblerAarch64::init() {
     byteOrder(ByteOrder::ORDER_LSB);
     registerDictionary(RegisterDictionary::dictionary_aarch64());
     callingConventions(CallingConvention::dictionaryAarch64());
-    p_proto_dispatcher = InstructionSemantics2::DispatcherAarch64::instance();
+    p_proto_dispatcher = InstructionSemantics::DispatcherAarch64::instance();
     instructionAlignment_ = 4;
 
     ASSERT_forbid(modes_.isAnySet(~Mode::MODE_MCLASS));

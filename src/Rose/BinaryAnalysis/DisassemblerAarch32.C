@@ -5,7 +5,7 @@
 #include <Rose/BitOps.h>
 #include <Rose/BinaryAnalysis/DisassemblerAarch32.h>
 #include <Rose/BinaryAnalysis/Unparser/Aarch32.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/DispatcherAarch32.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherAarch32.h>
 
 using namespace Rose::Diagnostics;
 
@@ -48,7 +48,7 @@ DisassemblerAarch32::init() {
     byteOrder(ByteOrder::ORDER_LSB);
     registerDictionary(RegisterDictionary::dictionary_aarch32());
     callingConventions(CallingConvention::dictionaryAarch32());
-    p_proto_dispatcher = InstructionSemantics2::DispatcherAarch32::instance();
+    p_proto_dispatcher = InstructionSemantics::DispatcherAarch32::instance();
 
     if (modes_.isSet(Mode::MCLASS))
         name += "_microprocessor"; // apparently the "microprocessor profile for Cortex processors"

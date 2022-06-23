@@ -34,7 +34,7 @@ AbstractLocation::mustAlias(const AbstractLocation &other, const SmtSolverPtr &s
 
 void
 AbstractLocation::print(std::ostream &out, const RegisterDictionary *regdict,
-                        InstructionSemantics2::BaseSemantics::Formatter &fmt) const {
+                        InstructionSemantics::BaseSemantics::Formatter &fmt) const {
     if (isRegister()) {
         out <<RegisterNames()(reg_, regdict ? regdict : regdict_);
     } else if (isAddress()) {

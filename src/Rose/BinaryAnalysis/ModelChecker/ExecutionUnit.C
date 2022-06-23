@@ -6,12 +6,12 @@
 #include <Rose/BinaryAnalysis/ModelChecker/ErrorTag.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Settings.h>
 #include <Rose/BinaryAnalysis/ModelChecker/SourceLister.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Dispatcher.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Exception.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/RiscOperators.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Dispatcher.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Exception.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RiscOperators.h>
 
 using namespace Sawyer::Message::Common;
-namespace BS = Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
+namespace BS = Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;
 
 namespace Rose {
 namespace BinaryAnalysis {

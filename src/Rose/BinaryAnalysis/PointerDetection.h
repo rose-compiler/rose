@@ -3,7 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 #include <Sawyer/Set.h>
 
 namespace Rose {
@@ -168,13 +168,13 @@ public:
 
 private:
     Settings settings_;
-    InstructionSemantics2::BaseSemantics::DispatcherPtr cpu_;
+    InstructionSemantics::BaseSemantics::DispatcherPtr cpu_;
     bool hasResults_;                                   // Are the following data members initialized?
     bool didConverge_;                                  // Are the following data members valid (else only appoximations)?
     PointerDescriptors codePointers_;                   // Memory addresses that hold a pointer to code
     PointerDescriptors dataPointers_;                   // Memory addresses that hold a pointer to data
-    InstructionSemantics2::BaseSemantics::StatePtr initialState_; // Initial state for analysis
-    InstructionSemantics2::BaseSemantics::StatePtr finalState_;   // Final state for analysis
+    InstructionSemantics::BaseSemantics::StatePtr initialState_; // Initial state for analysis
+    InstructionSemantics::BaseSemantics::StatePtr finalState_;   // Final state for analysis
 
 public:
     /** Default constructor.
@@ -196,10 +196,10 @@ public:
     /** Construct an analysis using a specified dispatcher.
      *
      *  This constructor uses the supplied dispatcher and associated semantic domain.  For best results, the semantic domain
-     *  should be a symbolic domain that uses @ref InstructionSemantics2::BaseSemantics::MemoryCellList "MemoryCellList" and
-     *  @ref InstructionSemantics2::BaseSemantics::RegisterStateGeneric "RegisterStateGeneric". These happen to also be the
-     *  defaults used by @ref InstructionSemantics2::SymbolicSemantics. */
-    explicit Analysis(const InstructionSemantics2::BaseSemantics::DispatcherPtr &cpu,
+     *  should be a symbolic domain that uses @ref InstructionSemantics::BaseSemantics::MemoryCellList "MemoryCellList" and
+     *  @ref InstructionSemantics::BaseSemantics::RegisterStateGeneric "RegisterStateGeneric". These happen to also be the
+     *  defaults used by @ref InstructionSemantics::SymbolicSemantics. */
+    explicit Analysis(const InstructionSemantics::BaseSemantics::DispatcherPtr &cpu,
                       const Settings &settings = Settings())
         : cpu_(cpu), hasResults_(false), didConverge_(false) {}
 
@@ -260,7 +260,7 @@ public:
      *  Returns symbolic state that initialized the analysis. This is the state at the function entry address and is
      *  reinitialized each time @ref analyzeFunction is called. This state is cleared by calling @ref clearNonResults, after
      *  which this function returns a null pointer. */
-    InstructionSemantics2::BaseSemantics::StatePtr initialState() const {
+    InstructionSemantics::BaseSemantics::StatePtr initialState() const {
         return initialState_;
     }
 
@@ -269,14 +269,14 @@ public:
      *  Returns the symbolic state for the function return point. If the function has multiple return points then this is the
      *  state resulting from merging the states after each return.  This state is initialized by calling @ref analyzeFunction.
      *  It is cleared by calling @ref clearNonResults, after which it returns a null pointer. */
-    InstructionSemantics2::BaseSemantics::StatePtr finalState() const {
+    InstructionSemantics::BaseSemantics::StatePtr finalState() const {
         return finalState_;
     }
     
 private:
     void init(Disassembler*);
 
-    InstructionSemantics2::BaseSemantics::RiscOperatorsPtr
+    InstructionSemantics::BaseSemantics::RiscOperatorsPtr
     makeRiscOperators(const Partitioner2::Partitioner&) const;
 
     // Prints instructions to the mlog[DEBUG] diagnostic stream if that stream is enabled.
@@ -287,7 +287,7 @@ private:
     // result. The pointer's value and the defining instructions are added to the two sets, and the result is not updated for
     // values and instructions that have already been processed.
     void
-    conditionallySavePointer(const InstructionSemantics2::BaseSemantics::SValuePtr &ptrValue,
+    conditionallySavePointer(const InstructionSemantics::BaseSemantics::SValuePtr &ptrValue,
                              Sawyer::Container::Set<uint64_t> &ptrValueSeen,
                              size_t wordSize, PointerDescriptors &result);
 };

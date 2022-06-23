@@ -7,7 +7,7 @@
 #include <Rose/BinaryAnalysis/ToSource.h>
 #include <Rose/CommandLine.h>
 
-using namespace Rose::BinaryAnalysis::InstructionSemantics2;
+using namespace Rose::BinaryAnalysis::InstructionSemantics;
 using namespace Sawyer::Message::Common;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 

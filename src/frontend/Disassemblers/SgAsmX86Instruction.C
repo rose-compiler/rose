@@ -5,9 +5,9 @@
 #include "sage3basic.h"
 
 #include "AsmUnparser_compat.h"
-#include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/PartialSymbolicSemantics.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/DispatcherX86.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/PartialSymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherX86.h>
 #include <Rose/BinaryAnalysis/Disassembler.h>
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
@@ -113,8 +113,8 @@ SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*> &in
     // function call.
     if (interp && insns.size()<=EXECUTION_LIMIT) {
         using namespace Rose::BinaryAnalysis;
-        using namespace Rose::BinaryAnalysis::InstructionSemantics2;
-        using namespace Rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
+        using namespace Rose::BinaryAnalysis::InstructionSemantics;
+        using namespace Rose::BinaryAnalysis::InstructionSemantics::SymbolicSemantics;
         const InstructionMap &imap = interp->get_instruction_map();
         const RegisterDictionary *regdict = RegisterDictionary::dictionary_for_isa(interp);
         SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
@@ -173,8 +173,8 @@ SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*> &in
     // address of the basic block. We depend on our caller to figure out if EIP is reasonably a function entry address.
     if (!interp && insns.size()<=EXECUTION_LIMIT) {
         using namespace Rose::BinaryAnalysis;
-        using namespace Rose::BinaryAnalysis::InstructionSemantics2;
-        using namespace Rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
+        using namespace Rose::BinaryAnalysis::InstructionSemantics;
+        using namespace Rose::BinaryAnalysis::InstructionSemantics::SymbolicSemantics;
         SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
         SgAsmX86Instruction *x86insn = isSgAsmX86Instruction(insns.front());
         ASSERT_not_null(x86insn);
@@ -372,7 +372,7 @@ SgAsmX86Instruction::getSuccessors(const std::vector<SgAsmInstruction*>& insns, 
                                    const MemoryMap::Ptr &initial_memory)
 {
     Stream debug(mlog[DEBUG]);
-    using namespace Rose::BinaryAnalysis::InstructionSemantics2;
+    using namespace Rose::BinaryAnalysis::InstructionSemantics;
 
     if (debug) {
         debug <<"SgAsmX86Instruction::getSuccessors(" <<StringUtility::addrToString(insns.front()->get_address())

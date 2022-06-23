@@ -10,7 +10,7 @@ namespace Rose {
 namespace BinaryAnalysis {
 
 using namespace Diagnostics;
-using namespace InstructionSemantics2;
+using namespace InstructionSemantics;
 
 Sawyer::Message::Facility DataFlow::mlog;
 
@@ -29,7 +29,7 @@ DataFlow::init(const BaseSemantics::DispatcherPtr &userDispatcher) {
     ASSERT_not_null(userDispatcher);
     userOps_ = userDispatcher->operators();
     ASSERT_not_null(userOps_);
-    dfOps_ = InstructionSemantics2::DataFlowSemantics::RiscOperators::instance(userOps_);
+    dfOps_ = InstructionSemantics::DataFlowSemantics::RiscOperators::instance(userOps_);
     ASSERT_not_null(dfOps_);
     dispatcher_ = userDispatcher->create(dfOps_);   // a new dispatcher but with our operators
     ASSERT_not_null(dispatcher_);

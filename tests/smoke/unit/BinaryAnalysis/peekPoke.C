@@ -7,13 +7,13 @@ static const char *description =
 #include <Rose/BinaryAnalysis/SmtSolver.h>
 #include <Rose/CommandLine.h>
 #include <Rose/BinaryAnalysis/Registers.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #include <sstream>
 #include <string>
 
 using namespace Rose;
 using namespace Rose::BinaryAnalysis;
-using namespace Rose::BinaryAnalysis::InstructionSemantics2;
+using namespace Rose::BinaryAnalysis::InstructionSemantics;
 using namespace Sawyer::Message::Common;
 
 Sawyer::Message::Facility mlog;

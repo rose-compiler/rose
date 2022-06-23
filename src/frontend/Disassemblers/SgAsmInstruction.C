@@ -7,7 +7,7 @@
 #include <Rose/BinaryAnalysis/NoOperation.h>
 #include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/Disassembler.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Dispatcher.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Dispatcher.h>
 #include "AsmUnparser_compat.h"
 
 using namespace Rose;
@@ -136,12 +136,12 @@ SgAsmInstruction::hasEffect()
 // Build analyzer for no-ops
 static NoOperation
 buildNopAnalyzer(SgAsmInterpretation *interp) {
-    using namespace InstructionSemantics2;
+    using namespace InstructionSemantics;
 
     if (!interp) {
         static bool emitted = false;
-        if (!emitted && InstructionSemantics2::mlog[WARN]) {
-            InstructionSemantics2::mlog[WARN] <<"SgAsmInstruction::buildDispatcher: no binary interpretation\n";
+        if (!emitted && InstructionSemantics::mlog[WARN]) {
+            InstructionSemantics::mlog[WARN] <<"SgAsmInstruction::buildDispatcher: no binary interpretation\n";
             emitted = true;
         }
         return NoOperation(BaseSemantics::DispatcherPtr());
@@ -160,8 +160,8 @@ SgAsmInstruction::hasEffect(const std::vector<SgAsmInstruction*> &insns, bool al
 
     if (relax_stack_semantics) {
         static bool emitted = false;
-        if (!emitted && InstructionSemantics2::mlog[WARN]) {
-            InstructionSemantics2::mlog[WARN] <<"SgAsmInstruction::hasEffect: relax_stack_semantics not implemented\n";
+        if (!emitted && InstructionSemantics::mlog[WARN]) {
+            InstructionSemantics::mlog[WARN] <<"SgAsmInstruction::hasEffect: relax_stack_semantics not implemented\n";
             emitted = true;
         }
     }
@@ -178,8 +178,8 @@ SgAsmInstruction::findNoopSubsequences(const std::vector<SgAsmInstruction*>& ins
 
     if (relax_stack_semantics) {
         static bool emitted = false;
-        if (!emitted && InstructionSemantics2::mlog[WARN]) {
-            InstructionSemantics2::mlog[WARN] <<"SgAsmInstruction::hasEffect: relax_stack_semantics not implemented\n";
+        if (!emitted && InstructionSemantics::mlog[WARN]) {
+            InstructionSemantics::mlog[WARN] <<"SgAsmInstruction::hasEffect: relax_stack_semantics not implemented\n";
             emitted = true;
         }
     }
