@@ -1268,16 +1268,12 @@ bool ClangToSageTranslator::VisitFieldDecl(clang::FieldDecl * field_decl, SgNode
     bool iscompleteDefined = false;
 
     // Adding check for EaboratedType and PointerType to retrieve base EnumType
-    //while((fieldType->getTypeClass() == clang::Type::Elaborated) || (fieldType->getTypeClass() == clang::Type::Pointer) || (fieldType->getTypeClass() == clang::Type::Array))
-    while((isa<clang::ElaboratedType>(fieldType)) || (isa<clang::PointerType>(fieldType)) || (isa<clang::ArrayType>(fieldType)))
+    // Removing PointerType here before finding a better implementation to handle pointer
+    while((isa<clang::ElaboratedType>(fieldType)) || (isa<clang::ArrayType>(fieldType)))
     {
        if(isa<clang::ElaboratedType>(fieldType))
        {
          fieldQualType = ((clang::ElaboratedType *)fieldType)->getNamedType();
-       }
-       else if(isa<clang::PointerType>(fieldType))
-       {
-         fieldQualType = ((clang::PointerType *)fieldType)->getPointeeType();
        }
        else if(isa<clang::ArrayType>(fieldType))
        {
@@ -1322,7 +1318,25 @@ bool ClangToSageTranslator::VisitFieldDecl(clang::FieldDecl * field_decl, SgNode
   // Build it by hand...
     SgVariableDeclaration * var_decl = new SgVariableDeclaration(name, type, init);
 
+    // finding the bottom base type and check
+    while(type->findBaseType() != type)
+    {
+      type = type->findBaseType();
+      if(type == sg_fieldType)
+        break;
+    }
+
     if (isSgClassType(type) && iscompleteDefined) {
+        SgClassDeclaration* classDecl = isSgClassDeclaration(isSgClassType(type)->get_declaration());
+        SgClassDeclaration* classDefDecl = isSgClassDeclaration(isSgClassType(type)->get_declaration()->get_definingDeclaration());
+        if(isembedded && classDefDecl != nullptr && !isSgDeclarationStatement(classDefDecl->get_parent()))
+        {
+          classDefDecl->set_parent(var_decl);
+          classDefDecl->set_isAutonomousDeclaration(false);
+          var_decl->set_baseTypeDefiningDeclaration(classDefDecl);
+          var_decl->set_variableDeclarationContainsBaseTypeDefiningDeclaration(true);
+        }
+
         std::map<SgClassType *, bool>::iterator bool_it = p_class_type_decl_first_see_in_type.find(isSgClassType(type));
         ROSE_ASSERT(bool_it != p_class_type_decl_first_see_in_type.end());
         if (bool_it->second) {
@@ -1332,6 +1346,16 @@ bool ClangToSageTranslator::VisitFieldDecl(clang::FieldDecl * field_decl, SgNode
         }
     }
     else if (isSgEnumType(type) && iscompleteDefined) {
+        SgEnumDeclaration* enumDecl = isSgEnumDeclaration(isSgEnumType(type)->get_declaration());
+        SgEnumDeclaration* enumDefDecl = isSgEnumDeclaration(isSgEnumType(type)->get_declaration()->get_definingDeclaration());
+        if(isembedded && enumDefDecl != nullptr && !isSgDeclarationStatement(enumDefDecl->get_parent()))
+        {
+          enumDefDecl->set_parent(var_decl);
+          enumDefDecl->set_isAutonomousDeclaration(false);
+          var_decl->set_baseTypeDefiningDeclaration(enumDefDecl);
+          var_decl->set_variableDeclarationContainsBaseTypeDefiningDeclaration(true);
+        }
+
         std::map<SgEnumType *, bool>::iterator bool_it = p_enum_type_decl_first_see_in_type.find(isSgEnumType(type));
         ROSE_ASSERT(bool_it != p_enum_type_decl_first_see_in_type.end());
         if (bool_it->second) {
