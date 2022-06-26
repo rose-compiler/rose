@@ -583,12 +583,15 @@ JvmEngine::parseCommandLine(const std::vector<std::string> &args, const std::str
   ROSE_ASSERT(header->get_parent() == gf);
 
   header->parse();
+#ifdef DEBUG_ON
   cout << "\n --- JVM file header ---\n";
   header->dump(stdout, "    jfh:", 0);
 
   cout << "\n---------- JVM Analysis -----------------\n\n";
+#endif
 
   Rose::BinaryAnalysis::ByteCode::JvmClass* jvmClass = new ByteCode::JvmClass(header);
+#ifdef DEBUG_ON
   cout << "class '" << jvmClass->name() << "'" << endl;
   cout << "----------------\n";
   cout << "   super: " << jvmClass->super_name() << "\n\n";
@@ -624,15 +627,19 @@ JvmEngine::parseCommandLine(const std::vector<std::string> &args, const std::str
     }
     cout << "-----------\n\n";
   }
+#endif
 
   for (auto method : jvmClass->methods()) {
+#ifdef DEBUG_ON
     cout << "method '" << method->name() << endl;
     cout << "-----------\n";
+#endif
 
     Disassembler* disassembler = obtainDisassembler();
     ASSERT_not_null(disassembler);
 
     method->decode(disassembler);
+#ifdef DEBUG_ON
     for (auto insn : method->instructions()->get_instructions()) {
       cout << "   : " << insn->get_anyKind() << ": " << insn->get_mnemonic() << ": '"
            << insn->description() << "' " << " size:" << insn->get_size()
@@ -641,19 +648,23 @@ JvmEngine::parseCommandLine(const std::vector<std::string> &args, const std::str
       cout << endl;
     }
     cout << "-----------\n\n";
+#endif
   }
 
   // Bonus
+#ifdef DEBUG_ON
   cout << "--- strings ---\n";
   for (auto str : jvmClass->strings()) {
     cout << "   " << str << endl;
   }
   cout << "-----------\n\n";
+#endif
 
   // Run the partitioner
   jvmClass->partition();
 
   // Dump diagnostics from the partition
+#ifdef DEBUG_ON
   for (auto method : jvmClass->methods()) {
     cout << "\nmethod: " << method->name() << endl;
     for (auto block : method->blocks()) {
@@ -679,10 +690,14 @@ JvmEngine::parseCommandLine(const std::vector<std::string> &args, const std::str
       cout << "      :isEmpty:" << block->isEmpty() << endl;
       cout << "      :nDataBlocks:" << block->nDataBlocks() << endl;
       if (block->isFunctionCall().isCached()) cout << "      :isFunctionCall:" << block->isFunctionCall().get() << endl;
+      if (block->isFunctionReturn().isCached()) cout << "      :isFunctionReturn:" << block->isFunctionReturn().get() << endl;
       if (block->successors().isCached()) cout << "      :#successors:" << block->successors().get().size() << endl;
-
     }
   }
+#endif
+
+  // Create graphviz DOT file
+  jvmClass->digraph();
 
   return Sawyer::CommandLine::ParserResult{};
 }
