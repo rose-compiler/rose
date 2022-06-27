@@ -603,6 +603,7 @@ public:
      *
      *  Thread safety: This method is not thread safe since it returns a reference. */
     const Sawyer::Cached<bool>& isFunctionCall() const { return isFunctionCall_; }
+    void isFunctionCall(bool flag) const { isFunctionCall_.set(flag); }
 
     /** Is a function return?
      *
@@ -612,6 +613,7 @@ public:
      *
      *  Thread safety: This method is not thread safe since it returns a reference. */
     const Sawyer::Cached<bool>& isFunctionReturn() const { return isFunctionReturn_; }
+    void isFunctionReturn(bool flag) const { isFunctionReturn_.set(flag); }
 
     /** May-return property.
      *
@@ -620,6 +622,7 @@ public:
      *
      *  Thread safety: This method is not thread safe since it returns a reference. */
     const Sawyer::Cached<bool>& mayReturn() const { return mayReturn_; }
+    void mayReturn(bool flag) const { mayReturn_.set(flag); }
 
     /** Pops stack property.
      *
@@ -627,6 +630,7 @@ public:
      *
      *  Thread safety: This method is not thread safe since it returns a reference. */
     const Sawyer::Cached<bool>& popsStack() const { return popsStack_; }
+    void popsStack(bool flag) const { popsStack_.set(flag); }
 
     
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
