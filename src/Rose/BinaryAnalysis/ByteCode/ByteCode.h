@@ -73,6 +73,7 @@ public:
   virtual const std::vector<const Interface*> &interfaces() const = 0;
   virtual const std::vector<std::string> &strings() = 0;
   virtual void partition();
+  virtual void digraph();
 protected:
   Class() {}
 };

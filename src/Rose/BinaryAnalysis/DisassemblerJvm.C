@@ -4,7 +4,7 @@
 #include <Rose/BinaryAnalysis/DisassemblerJvm.h>
 #include <Rose/BinaryAnalysis/Unparser/Jvm.h>
 
-#define DEBUG_OUTPUT 0
+#define DEBUG_ON 0
 
 using std::cout;
 using std::endl;
@@ -70,11 +70,17 @@ DisassemblerJvm::append_tableswitch(const MemoryMap::Ptr &map, rose_addr_t start
   int32_t low  = be_to_host(*(int32_t*) ptr);  ptr += sizeof(int32_t);
   int32_t high = be_to_host(*(int32_t*) ptr);  ptr += sizeof(int32_t);
 
-#ifdef TODO_SageBuilderAsm
+#if DEBUG_ON
+  std::cout << "... append_tableswitch: "
+            << def << ": "
+            << low << ": "
+            << high << ": "
+            << std::endl;
+#endif
+
   operands->append_operand(SageBuilderAsm::buildValue(def));
   operands->append_operand(SageBuilderAsm::buildValue(low));
   operands->append_operand(SageBuilderAsm::buildValue(high));
-#endif
 
   int nOff{high-low+1};
   for (int i = 0; i < nOff; i++) {
@@ -826,7 +832,7 @@ DisassemblerJvm::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start, Ad
   operands->set_parent(insn);
   insn->set_raw_bytes(chars);
 
-#if DEBUG_OUTPUT
+#if DEBUG_ON
   cout << "... insn: " << (int)kind << ": " << insn->get_mnemonic()
        << " nOperands:" << insn->nOperands() << ":chars:";
   for (int i = 0; i < chars.size(); i++) {
