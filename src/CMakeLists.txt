@@ -173,6 +173,9 @@ if(enable-rosehpct)
   list(APPEND rose_LIB_SRCS $<TARGET_OBJECTS:roseExtensions>)
 endif()
 
+# TODO Conditional either EDG or CLang or nothing
+list(APPEND rose_LIB_SRCS $<TARGET_OBJECTS:edg_internal> $<TARGET_OBJECTS:newsage>)
+
 ########################################################################################################################
 # The ROSE library itself (librose.so, librose.a, librose.dll)
 ########################################################################################################################
@@ -183,7 +186,7 @@ add_dependencies(ROSE_DLL roseUtil)
 
 set_target_properties(ROSE_DLL PROPERTIES OUTPUT_NAME "rose")
 
-target_link_libraries(ROSE_DLL ${edg_lib} ${link_with_libraries})
+target_link_libraries(ROSE_DLL ${link_with_libraries})
 
 set_target_properties(ROSE_DLL PROPERTIES
   VERSION 1.0.0
@@ -290,9 +293,7 @@ endif ()
 
 # If the C preprocessor is enabled, ROSE has some additional depenendencies
 if(enable-cpp)
-  add_dependencies(ROSE_DLL
-    OMPPARSER ROSE_PREPROCESSOR ${edg_lib} libhpdf
-    generate_rosePublicConfig)
+  add_dependencies(ROSE_DLL OMPPARSER ROSE_PREPROCESSOR libhpdf generate_rosePublicConfig)
 endif()
 
 # SQLite3 has an executable component and a development (library and headers) component that can be installed
@@ -315,8 +316,7 @@ endif()
 
 remove_definitions(-DROSE_DLL_EXPORTS)
 add_executable(testSharedRoseLib testRoseLib.C)
-target_link_libraries(testSharedRoseLib
-  ROSE_DLL ${edg_lib} ${link_with_libraries})
+target_link_libraries(testSharedRoseLib ROSE_DLL ${link_with_libraries})
 
 ########################################################################################################################
 # The rose-config tool (Deprecated; use the rose-config.cfg file directly instead)
@@ -324,7 +324,7 @@ target_link_libraries(testSharedRoseLib
 
 add_definitions(-DLIBDIR="${CMAKE_INSTALL_PREFIX}/${ROSE_LIB_DIR_NAME}") #LIB_INSTALL_DIR ?
 add_executable(rose-config rose-config.C)
-target_link_libraries(rose-config ROSE_DLL ${link_with_libraries} ${edg_lib})
+target_link_libraries(rose-config ROSE_DLL ${link_with_libraries})
 install(TARGETS rose-config DESTINATION bin)
 
 ########################################################################################################################
@@ -332,7 +332,7 @@ install(TARGETS rose-config DESTINATION bin)
 ########################################################################################################################
 
 add_executable(rose-compiler rose-compiler.C)
-target_link_libraries(rose-compiler ROSE_DLL ${link_with_libraries} ${edg_lib})
+target_link_libraries(rose-compiler ROSE_DLL ${link_with_libraries})
 install(TARGETS rose-compiler DESTINATION bin)
 
 
