@@ -3316,7 +3316,56 @@ bool ClangToSageTranslator::VisitOffsetOfExpr(clang::OffsetOfExpr * offset_of_ex
 #endif
     bool res = true;
 
-    // TODO
+    SgNodePtrList nodePtrList;
+  
+    SgType* type = buildTypeFromQualifiedType(offset_of_expr->getTypeSourceInfo()->getType());
+
+    nodePtrList.push_back(type);
+
+    SgExpression* topExp = nullptr;
+ 
+    for (unsigned i = 0, n = offset_of_expr->getNumComponents(); i < n; ++i) {
+        clang::OffsetOfNode ON = offset_of_expr->getComponent(i);
+          
+        switch(ON.getKind()) {
+           case clang::OffsetOfNode::Array: {
+               // Array node
+               SgExpression* arrayIdx = isSgExpression(Traverse(offset_of_expr->getIndexExpr(ON.getArrayExprIndex())));
+               SgPntrArrRefExp* pntrArrRefExp = SageBuilder::buildPntrArrRefExp(topExp,arrayIdx);
+               topExp = isSgExpression(pntrArrRefExp);
+               break;
+           }
+           case clang::OffsetOfNode::Field:{
+               SgNode* fieldNode = Traverse(ON.getField());
+               SgName fieldName(ON.getFieldName()->getName().str());
+               SgVarRefExp* varExp = SageBuilder::buildVarRefExp(fieldName);
+               if(topExp == nullptr)
+               {
+                 topExp = isSgExpression(varExp);
+               }
+               else
+               {
+                 SgDotExp* dotExp = SageBuilder::buildDotExp(topExp, varExp);
+                 topExp = isSgExpression(dotExp);
+               }
+               break;
+           }
+           // TODO
+           case clang::OffsetOfNode::Identifier:{
+               SgName fieldName(ON.getFieldName()->getName().str());
+               SgVarRefExp* varExp = SageBuilder::buildVarRefExp(fieldName);
+               break;
+           }
+           // TODO
+           case clang::OffsetOfNode::Base:
+               break;
+        }
+    }
+    nodePtrList.push_back(topExp);
+
+    SgTypeTraitBuiltinOperator* typeTraitBuiltinOperator = SageBuilder::buildTypeTraitBuiltinOperator("__builtin_offsetof", nodePtrList);
+
+    *node = typeTraitBuiltinOperator;
 
     return VisitExpr(offset_of_expr, node) && res;
 }
