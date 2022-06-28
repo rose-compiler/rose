@@ -5,7 +5,7 @@
 
 #include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Concolic/ExecutionLocation.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Types.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Types.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 #include <Rose/BinaryAnalysis/RegisterDescriptor.h>
 #include <Rose/BinaryAnalysis/SmtSolver.h>
@@ -291,7 +291,7 @@ public:
      *
      * @{ */
     virtual void executeInstruction(const Partitioner2::Partitioner&) = 0;
-    virtual void executeInstruction(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&, SgAsmInstruction*) = 0;
+    virtual void executeInstruction(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&, SgAsmInstruction*) = 0;
     /** @} */
 
     /** Increment the primary part of the current location.
@@ -357,7 +357,7 @@ public:
      *
      *  This function is called after a system call instruction has been executed symbolically and the system call has been
      *  entered concretely. */
-    virtual void systemCall(const Partitioner2::Partitioner&, const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&) {}
+    virtual void systemCall(const Partitioner2::Partitioner&, const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&) {}
 
     /** Called immediately when shared memory is accessed.
      *

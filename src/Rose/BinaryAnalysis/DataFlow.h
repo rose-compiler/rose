@@ -3,10 +3,10 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <Rose/BinaryAnalysis/InstructionSemantics2/DataFlowSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/DataFlowSemantics.h>
 #include <Rose/Diagnostics.h>
 #include <Rose/Exception.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 
 #include <boost/lexical_cast.hpp>
 #include <list>
@@ -56,7 +56,7 @@ namespace BinaryAnalysis {
  *   instance, one can use abstract locations (@ref AbstractLocation) to represent variables. An abstract location is either a
  *   register or a memory address.  Registers are represented by a @ref RegisterDescriptor while addresses are represented by a
  *   semantic value in some user-specified domain (often symbolic, see @ref
- *   Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValue).
+ *   Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::SValue).
  *
  *  @section s2 Prerequisites for the core data flow-engine
  *
@@ -73,13 +73,13 @@ public:
      *  Vertices are abstract locations (register descriptors and/or memory addresses) and edges indicate the flow of data from
      *  abstract location to another.  The edge IDs are in the order they were added; each edge also has a sequence number
      *  that is initially equal to the edge ID, although edge IDs can change if edges are erased from the graph). */
-    typedef InstructionSemantics2::DataFlowSemantics::DataFlowGraph Graph;
+    typedef InstructionSemantics::DataFlowSemantics::DataFlowGraph Graph;
 
     /** Variable participating in data flow.
      *
      *  A variable in binary data-flow analysis is an abstract location referencing either a register or memory cell.  The
      *  address for memory locations is an arbitrary semantic expression (@ref
-     *  Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValue). */
+     *  Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::SValue). */
     typedef AbstractLocation Variable;
 
     /** List of variables. */
@@ -106,11 +106,11 @@ public:
     };
 
 private:
-    InstructionSemantics2::BaseSemantics::RiscOperatorsPtr userOps_; // operators (and state) provided by the user
-    InstructionSemantics2::DataFlowSemantics::RiscOperatorsPtr dfOps_; // data-flow operators (which point to user ops)
-    InstructionSemantics2::BaseSemantics::DispatcherPtr dispatcher_; // copy of user's dispatcher but with DataFlowSemantics
-    static Sawyer::Message::Facility mlog;              // diagnostics for data-flow
-    void init(const InstructionSemantics2::BaseSemantics::DispatcherPtr&);
+    InstructionSemantics::BaseSemantics::RiscOperatorsPtr userOps_;   // operators (and state) provided by the user
+    InstructionSemantics::DataFlowSemantics::RiscOperatorsPtr dfOps_; // data-flow operators (which point to user ops)
+    InstructionSemantics::BaseSemantics::DispatcherPtr dispatcher_;   // copy of user's dispatcher but with DataFlowSemantics
+    static Sawyer::Message::Facility mlog;                            // diagnostics for data-flow
+    void init(const InstructionSemantics::BaseSemantics::DispatcherPtr&);
 
 public:
     /** Constructor.
@@ -118,7 +118,7 @@ public:
      *  Constructs a new data-flow analysis framework using the specified user-level instruction semantics.  The semantics
      *  should consist of an instruction dispatcher appropriate for the architecture being analyzed, and an associated semantic
      *  domain that will be used to calculate memory addresses. The SymbolicSemantics domain is typically used. */
-    DataFlow(const InstructionSemantics2::BaseSemantics::DispatcherPtr &userDispatcher) {
+    DataFlow(const InstructionSemantics::BaseSemantics::DispatcherPtr &userDispatcher) {
         init(userDispatcher);
     }
 
@@ -172,14 +172,14 @@ public:
 
         VertexFlowGraphs result;
         result.insert(startVertex, buildGraph(vertexUnpacker(cfg.findVertex(startVertex)->value())));
-        std::vector<InstructionSemantics2::BaseSemantics::StatePtr> postState(cfg.nVertices()); // user-defined states
+        std::vector<InstructionSemantics::BaseSemantics::StatePtr> postState(cfg.nVertices()); // user-defined states
         postState[startVertex] = userOps_->currentState();
 
         typedef Sawyer::Container::Algorithm::DepthFirstForwardEdgeTraversal<const CFG> Traversal;
         for (Traversal t(cfg, cfg.findVertex(startVertex)); t; ++t) {
             typename CFG::ConstVertexIterator source = t->source();
             typename CFG::ConstVertexIterator target = t->target();
-            InstructionSemantics2::BaseSemantics::StatePtr state = postState[target->id()];
+            InstructionSemantics::BaseSemantics::StatePtr state = postState[target->id()];
             if (state==NULL) {
                 ASSERT_not_null(postState[source->id()]);
                 state = postState[target->id()] = postState[source->id()]->clone();
@@ -209,17 +209,17 @@ public:
      *
      *  This merge operator is for data-flow that uses an instruction semantics state. */
     class SemanticsMerge {
-        InstructionSemantics2::BaseSemantics::RiscOperatorsPtr ops_;
+        InstructionSemantics::BaseSemantics::RiscOperatorsPtr ops_;
     public:
-        explicit SemanticsMerge(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr &ops): ops_(ops) {}
-        explicit SemanticsMerge(const InstructionSemantics2::BaseSemantics::DispatcherPtr &cpu): ops_(cpu->operators()) {}
+        explicit SemanticsMerge(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr &ops): ops_(ops) {}
+        explicit SemanticsMerge(const InstructionSemantics::BaseSemantics::DispatcherPtr &cpu): ops_(cpu->operators()) {}
 
-        bool operator()(InstructionSemantics2::BaseSemantics::StatePtr &dst /*in,out*/,
-                        const InstructionSemantics2::BaseSemantics::StatePtr &src) const {
+        bool operator()(InstructionSemantics::BaseSemantics::StatePtr &dst /*in,out*/,
+                        const InstructionSemantics::BaseSemantics::StatePtr &src) const {
             struct PreserveCurrentState {
-                InstructionSemantics2::BaseSemantics::RiscOperatorsPtr ops;
-                InstructionSemantics2::BaseSemantics::StatePtr state;
-                PreserveCurrentState(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr &ops)
+                InstructionSemantics::BaseSemantics::RiscOperatorsPtr ops;
+                InstructionSemantics::BaseSemantics::StatePtr state;
+                PreserveCurrentState(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr &ops)
                     : ops(ops), state(ops->currentState()) {}
                 ~PreserveCurrentState() { ops->currentState(state); }
             } t(ops_);
@@ -296,10 +296,10 @@ public:
      *      for the edge's target vertex.
      *
      *  A common configuration for an engine is to use a control-flow graph whose vertices are basic blocks, whose @p State is
-     *  a pointer to an @ref InstructionSemantics2::BaseSemantics::State "instruction semantics state", whose @p
-     *  TransferFunction calls @ref InstructionSemantics2::BaseSemantics::Dispatcher::processInstruction
+     *  a pointer to an @ref InstructionSemantics::BaseSemantics::State "instruction semantics state", whose @p
+     *  TransferFunction calls @ref InstructionSemantics::BaseSemantics::Dispatcher::processInstruction
      *  "Dispatcher::processInstruction", and whose @p MergeFunction calls the state's @ref
-     *  InstructionSemantics2::BaseSemantics::State::merge "merge" method.
+     *  InstructionSemantics::BaseSemantics::State::merge "merge" method.
      *
      *  The control flow graph and transfer function are specified in the engine's constructor.  The starting CFG vertex and
      *  its initial state are supplied when the engine starts to run. */

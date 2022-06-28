@@ -37,41 +37,41 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/Concolic/TestCase.C						\
 	BinaryAnalysis/Concolic/TestSuite.C						\
 	BinaryAnalysis/Concolic/Utility.C						\
-	BinaryAnalysis/InstructionSemantics2/BaseSemantics/BaseSemantics.C		\
-	BinaryAnalysis/InstructionSemantics2/BaseSemantics/Dispatcher.C			\
-	BinaryAnalysis/InstructionSemantics2/BaseSemantics/Exception.C			\
-	BinaryAnalysis/InstructionSemantics2/BaseSemantics/MemoryCell.C			\
-	BinaryAnalysis/InstructionSemantics2/BaseSemantics/MemoryCellList.C		\
-	BinaryAnalysis/InstructionSemantics2/BaseSemantics/MemoryCellMap.C		\
-	BinaryAnalysis/InstructionSemantics2/BaseSemantics/MemoryCellState.C		\
-	BinaryAnalysis/InstructionSemantics2/BaseSemantics/MemoryState.C		\
-	BinaryAnalysis/InstructionSemantics2/BaseSemantics/Merger.C			\
-	BinaryAnalysis/InstructionSemantics2/BaseSemantics/RegisterState.C		\
-	BinaryAnalysis/InstructionSemantics2/BaseSemantics/RegisterStateGeneric.C	\
-	BinaryAnalysis/InstructionSemantics2/BaseSemantics/RiscOperators.C		\
-	BinaryAnalysis/InstructionSemantics2/BaseSemantics/State.C			\
-	BinaryAnalysis/InstructionSemantics2/BaseSemantics/SValue.C			\
-	BinaryAnalysis/InstructionSemantics2/BaseSemantics/SymbolicMemory.C		\
-	BinaryAnalysis/InstructionSemantics2/BaseSemantics/BinaryAnalysis		\
-	BinaryAnalysis/InstructionSemantics2/ConcreteSemantics.C			\
-	BinaryAnalysis/InstructionSemantics2/DataFlowSemantics.C			\
-	BinaryAnalysis/InstructionSemantics2/DispatcherAarch32.C			\
-	BinaryAnalysis/InstructionSemantics2/DispatcherAarch64.C			\
-	BinaryAnalysis/InstructionSemantics2/DispatcherCil.C				\
-	BinaryAnalysis/InstructionSemantics2/DispatcherM68k.C				\
-	BinaryAnalysis/InstructionSemantics2/DispatcherPowerpc.C			\
-	BinaryAnalysis/InstructionSemantics2/DispatcherX86.C				\
-	BinaryAnalysis/InstructionSemantics2/IntervalSemantics.C			\
-	BinaryAnalysis/InstructionSemantics2/LlvmSemantics.C				\
-	BinaryAnalysis/InstructionSemantics2/MultiSemantics.C				\
-	BinaryAnalysis/InstructionSemantics2/NativeSemantics.C				\
-	BinaryAnalysis/InstructionSemantics2/NullSemantics.C				\
-	BinaryAnalysis/InstructionSemantics2/PartialSymbolicSemantics.C			\
-	BinaryAnalysis/InstructionSemantics2/SourceAstSemantics.C			\
-	BinaryAnalysis/InstructionSemantics2/StaticSemantics.C				\
-	BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.C			\
-	BinaryAnalysis/InstructionSemantics2/TraceSemantics.C				\
-	BinaryAnalysis/InstructionSemantics2/Util.C					\
+	BinaryAnalysis/InstructionSemantics/BaseSemantics/BaseSemantics.C		\
+	BinaryAnalysis/InstructionSemantics/BaseSemantics/Dispatcher.C			\
+	BinaryAnalysis/InstructionSemantics/BaseSemantics/Exception.C			\
+	BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCell.C			\
+	BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCellList.C		\
+	BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCellMap.C		\
+	BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCellState.C		\
+	BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryState.C			\
+	BinaryAnalysis/InstructionSemantics/BaseSemantics/Merger.C			\
+	BinaryAnalysis/InstructionSemantics/BaseSemantics/RegisterState.C		\
+	BinaryAnalysis/InstructionSemantics/BaseSemantics/RegisterStateGeneric.C	\
+	BinaryAnalysis/InstructionSemantics/BaseSemantics/RiscOperators.C		\
+	BinaryAnalysis/InstructionSemantics/BaseSemantics/State.C			\
+	BinaryAnalysis/InstructionSemantics/BaseSemantics/SValue.C			\
+	BinaryAnalysis/InstructionSemantics/BaseSemantics/SymbolicMemory.C		\
+	BinaryAnalysis/InstructionSemantics/BaseSemantics/BinaryAnalysis		\
+	BinaryAnalysis/InstructionSemantics/ConcreteSemantics.C				\
+	BinaryAnalysis/InstructionSemantics/DataFlowSemantics.C				\
+	BinaryAnalysis/InstructionSemantics/DispatcherAarch32.C				\
+	BinaryAnalysis/InstructionSemantics/DispatcherAarch64.C				\
+	BinaryAnalysis/InstructionSemantics/DispatcherCil.C				\
+	BinaryAnalysis/InstructionSemantics/DispatcherM68k.C				\
+	BinaryAnalysis/InstructionSemantics/DispatcherPowerpc.C				\
+	BinaryAnalysis/InstructionSemantics/DispatcherX86.C				\
+	BinaryAnalysis/InstructionSemantics/IntervalSemantics.C				\
+	BinaryAnalysis/InstructionSemantics/LlvmSemantics.C				\
+	BinaryAnalysis/InstructionSemantics/MultiSemantics.C				\
+	BinaryAnalysis/InstructionSemantics/NativeSemantics.C				\
+	BinaryAnalysis/InstructionSemantics/NullSemantics.C				\
+	BinaryAnalysis/InstructionSemantics/PartialSymbolicSemantics.C			\
+	BinaryAnalysis/InstructionSemantics/SourceAstSemantics.C			\
+	BinaryAnalysis/InstructionSemantics/StaticSemantics.C				\
+	BinaryAnalysis/InstructionSemantics/SymbolicSemantics.C				\
+	BinaryAnalysis/InstructionSemantics/TraceSemantics.C				\
+	BinaryAnalysis/InstructionSemantics/Util.C					\
 	BinaryAnalysis/ModelChecker/BasicBlockUnit.C					\
 	BinaryAnalysis/ModelChecker/Engine.C						\
 	BinaryAnalysis/ModelChecker/ErrorTag.C						\

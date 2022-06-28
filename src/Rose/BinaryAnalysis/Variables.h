@@ -3,8 +3,8 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Types.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/MemoryCellState.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Types.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCellState.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 #include <Rose/BinaryAnalysis/SymbolicExpr.h>
 
@@ -66,7 +66,7 @@ std::string sizeStr(uint64_t size);
 class BaseVariable {
     rose_addr_t maxSizeBytes_ = 0;                  // maximum possible size of this variable in bytes
     AddressSet insnVas_;                            // instructions where the variable was detected that reference the variable
-    InstructionSemantics2::BaseSemantics::InputOutputPropertySet ioProperties_; /**< Properties of a location. */
+    InstructionSemantics::BaseSemantics::InputOutputPropertySet ioProperties_; /**< Properties of a location. */
     std::string name_;                              // optional variable name
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -122,9 +122,9 @@ public:
      *  This property is a set of flags that describe how the variable is accessed.
      *
      * @{ */
-    const InstructionSemantics2::BaseSemantics::InputOutputPropertySet& ioProperties() const;
-    InstructionSemantics2::BaseSemantics::InputOutputPropertySet& ioProperties();
-    void ioProperties(const InstructionSemantics2::BaseSemantics::InputOutputPropertySet &set);
+    const InstructionSemantics::BaseSemantics::InputOutputPropertySet& ioProperties() const;
+    InstructionSemantics::BaseSemantics::InputOutputPropertySet& ioProperties();
+    void ioProperties(const InstructionSemantics::BaseSemantics::InputOutputPropertySet &set);
     /** @} */
 
     /** Property: Optional variable name.
@@ -503,7 +503,7 @@ public:
      *  frame that's referenced, if any.  Returns the part of the frame that's referenced, or an empty interval if the address
      *  is outside the frame. */
     OffsetInterval referencedFrameArea(const Partitioner2::Partitioner&,
-                                       const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&,
+                                       const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&,
                                        const SymbolicExpr::Ptr &address, size_t nBytes);
 #endif
 
@@ -567,20 +567,20 @@ public:
     /** Find addresses in memory state.
      *
      *  Given a cell-based symbolic memory state, return all the memory addresses that appear in it. */
-    std::set<SymbolicExpr::Ptr> getMemoryAddresses(const InstructionSemantics2::BaseSemantics::MemoryCellStatePtr&);
+    std::set<SymbolicExpr::Ptr> getMemoryAddresses(const InstructionSemantics::BaseSemantics::MemoryCellStatePtr&);
 
     /** Find constants in memory.
      *
      *  Given an cell-based symbolic memory state, return all constants that appear in the cell addresses. */
-    std::set<rose_addr_t> findAddressConstants(const InstructionSemantics2::BaseSemantics::MemoryCellStatePtr&);
+    std::set<rose_addr_t> findAddressConstants(const InstructionSemantics::BaseSemantics::MemoryCellStatePtr&);
 
 #if 0 // [Robb Matzke 2021-10-27]
     /** Return symbolic address of stack variable.
      *
      *  Given a stack variable, return the symbolic address where the variable is located. */
-    InstructionSemantics2::BaseSemantics::SValuePtr
+    InstructionSemantics::BaseSemantics::SValuePtr
     symbolicAddress(const Partitioner2::Partitioner&, const StackVariable&,
-                    const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&);
+                    const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&);
 #endif
 
     /** Remove boundaries that are outside a stack frame.

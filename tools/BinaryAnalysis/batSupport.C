@@ -1,7 +1,7 @@
 // Library for all bat toolstState
 
 #include <rose.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/State.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/State.h>
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
 #include <Rose/CommandLine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
@@ -20,7 +20,7 @@
 using namespace Sawyer::Message::Common;
 using namespace Rose::BinaryAnalysis;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
-namespace BS = Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
+namespace BS = Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;
 
 namespace Bat {
 
@@ -228,7 +228,7 @@ PlainTextFormatter::edge(std::ostream &out, const std::string &name) {
 
 void
 PlainTextFormatter::state(std::ostream &out, size_t vertexIdx, const std::string &title,
-                          const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::StatePtr &state,
+                          const Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::StatePtr &state,
                           const Rose::BinaryAnalysis::RegisterDictionary *regdict) {
     out <<"      " <<title <<"\n";
     if (state) {
@@ -474,7 +474,7 @@ YamlFormatter::edge(std::ostream &out, const std::string &name) {
 
 void
 YamlFormatter::state(std::ostream &out, size_t vertexIdx, const std::string &title,
-                          const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::StatePtr &state,
+                          const Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::StatePtr &state,
                           const Rose::BinaryAnalysis::RegisterDictionary *regdict) {
     if (state) {
         writeln(out, "      semantics:", title);

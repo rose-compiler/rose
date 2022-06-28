@@ -4,7 +4,7 @@
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 
 #include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Types.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Types.h>
 #include <Rose/BinaryAnalysis/SymbolicExpr.h>
 
 #include <Sawyer/Optional.h>
@@ -158,7 +158,7 @@ public:
      *
      * @{ */
     void returns(SharedMemoryContext&, const SymbolicExpr::Ptr&) const;
-    void returns(SharedMemoryContext&, const InstructionSemantics2::BaseSemantics::SValuePtr&) const;
+    void returns(SharedMemoryContext&, const InstructionSemantics::BaseSemantics::SValuePtr&) const;
     /** @} */
 
     /** Input variable for future test cases.

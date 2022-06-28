@@ -3,7 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 #include <Rose/BinaryAnalysis/Variables.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Registers.h>
@@ -633,7 +633,7 @@ const Dictionary& dictionaryX86();
  *  This class encapsulates all information about calling conventions including the analysis functions and the data types. */
 class Analysis {
 private:
-    InstructionSemantics2::BaseSemantics::DispatcherPtr cpu_;
+    InstructionSemantics::BaseSemantics::DispatcherPtr cpu_;
     const RegisterDictionary *regDict_;                 // Names for the register parts
     Definition::Ptr defaultCc_;                         // Default calling convention for called functions
 
@@ -687,10 +687,10 @@ public:
     /** Construct an analysis using a specified dispatcher.
      *
      *  This constructor uses the supplied dispatcher and associated semantic domain. For best results, the semantic domain
-     *  should be a symbolic domain that uses @ref InstructionSemantics2::BaseSemantics::MemoryCellList "MemoryCellList" and
-     *  @ref InstructionSemantics2::BaseSemantics::RegisterStateGeneric "RegisterStateGeneric". These happen to also be the
-     *  defaults used by @ref InstructionSemantics2::SymbolicSemantics. */
-    explicit Analysis(const InstructionSemantics2::BaseSemantics::DispatcherPtr &cpu)
+     *  should be a symbolic domain that uses @ref InstructionSemantics::BaseSemantics::MemoryCellList "MemoryCellList" and
+     *  @ref InstructionSemantics::BaseSemantics::RegisterStateGeneric "RegisterStateGeneric". These happen to also be the
+     *  defaults used by @ref InstructionSemantics::SymbolicSemantics. */
+    explicit Analysis(const InstructionSemantics::BaseSemantics::DispatcherPtr &cpu)
         : cpu_(cpu), regDict_(NULL), hasResults_(false), didConverge_(false) {}
 
     /** Property: Default calling convention.
@@ -803,23 +803,23 @@ private:
     void init(Disassembler*);
 
     // Recompute the restoredRegisters_ data member.
-    void updateRestoredRegisters(const InstructionSemantics2::BaseSemantics::StatePtr &initialState,
-                                 const InstructionSemantics2::BaseSemantics::StatePtr &finalState);
+    void updateRestoredRegisters(const InstructionSemantics::BaseSemantics::StatePtr &initialState,
+                                 const InstructionSemantics::BaseSemantics::StatePtr &finalState);
 
     // Recompute the inputRegisters_ data member after updateRestoredRegisters is computed.
-    void updateInputRegisters(const InstructionSemantics2::BaseSemantics::StatePtr &state);
+    void updateInputRegisters(const InstructionSemantics::BaseSemantics::StatePtr &state);
 
     // Recompute the outputRegisters_ data member after updateRestoredRegisters is computed.
-    void updateOutputRegisters(const InstructionSemantics2::BaseSemantics::StatePtr &state);
+    void updateOutputRegisters(const InstructionSemantics::BaseSemantics::StatePtr &state);
 
     // Recompute the input and output stack variables
     void updateStackParameters(const Partitioner2::FunctionPtr &function,
-                               const InstructionSemantics2::BaseSemantics::StatePtr &initialState,
-                               const InstructionSemantics2::BaseSemantics::StatePtr &finalState);
+                               const InstructionSemantics::BaseSemantics::StatePtr &initialState,
+                               const InstructionSemantics::BaseSemantics::StatePtr &finalState);
 
     // Recomputes the stack delta
-    void updateStackDelta(const InstructionSemantics2::BaseSemantics::StatePtr &initialState,
-                          const InstructionSemantics2::BaseSemantics::StatePtr &finalState);
+    void updateStackDelta(const InstructionSemantics::BaseSemantics::StatePtr &initialState,
+                          const InstructionSemantics::BaseSemantics::StatePtr &finalState);
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

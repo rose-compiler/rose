@@ -7,7 +7,7 @@
 #include <boost/numeric/conversion/cast.hpp>
 #include <ctype.h>
 #include <rose_strtoull.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Types.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Types.h>
 #include <Sawyer/BiMap.h>
 #include <Sawyer/Database.h>
 #include <Sawyer/Optional.h>
@@ -316,12 +316,12 @@ public:
      *
      *  If the test case already has a symbolic state, then the old state is replaced by the specified state.  If the specified
      *  state is a null pointer, then any existing state is removed from the database. */
-    void saveSymbolicState(TestCaseId, const InstructionSemantics2::BaseSemantics::StatePtr&);
+    void saveSymbolicState(TestCaseId, const InstructionSemantics::BaseSemantics::StatePtr&);
 
     /** Obtain the symbolic state from the database.
      *
      *  If the test case has no symbolic state then a null pointer is returned. */
-    InstructionSemantics2::BaseSemantics::StatePtr extractSymbolicState(TestCaseId);
+    InstructionSemantics::BaseSemantics::StatePtr extractSymbolicState(TestCaseId);
 
     /** Remove the symbolic state for a test case.
      *

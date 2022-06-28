@@ -83,17 +83,17 @@ Function::isThunk() const {
     return true;
 }
 
-InstructionSemantics2::BaseSemantics::SValuePtr
+InstructionSemantics::BaseSemantics::SValuePtr
 Function::stackDeltaOverride() const {
     return stackDeltaOverride_;
 }
 
 void
-Function::stackDeltaOverride(const InstructionSemantics2::BaseSemantics::SValuePtr &delta) {
+Function::stackDeltaOverride(const InstructionSemantics::BaseSemantics::SValuePtr &delta) {
     stackDeltaOverride_ = delta;
 }
 
-InstructionSemantics2::BaseSemantics::SValuePtr
+InstructionSemantics::BaseSemantics::SValuePtr
 Function::stackDelta() const {
     if (stackDeltaOverride_ != NULL)
         return stackDeltaOverride_;

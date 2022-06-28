@@ -5,7 +5,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <Rose/Color.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 #include <Rose/BinaryAnalysis/Unparser/EdgeArrows.h>
 #include <Sawyer/CommandLine.h>
 
@@ -128,7 +128,7 @@ struct Settings {
 
         struct {
             bool showing;                               /**< Show instruction semantics? */
-            InstructionSemantics2::BaseSemantics::Formatter formatter; /**< How to format the semantic state output. */
+            InstructionSemantics::BaseSemantics::Formatter formatter; /**< How to format the semantic state output. */
             bool tracing;                               /**< Show instruction semantics traces when showing semantics. */
             Style style;                                /**< Style for showing instruction semantics. */
         } semantics;

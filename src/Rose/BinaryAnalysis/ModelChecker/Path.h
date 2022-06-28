@@ -5,7 +5,7 @@
 
 #include <Rose/BinaryAnalysis/ModelChecker/Types.h>
 
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Types.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Types.h>
 #include <Rose/BinaryAnalysis/SmtSolver.h>
 #include <Rose/BinaryAnalysis/SymbolicExpr.h>
 #include <Combinatorics.h>
@@ -47,7 +47,7 @@ public:
      *
      *  Thread safety: This constructor is thread safe. */
     static Ptr instance(const PathPtr &prefix, const ExecutionUnitPtr&, const SymbolicExpr::Ptr &assertion,
-                        const SmtSolver::Evidence&, const InstructionSemantics2::BaseSemantics::StatePtr &parentOutgoingState);
+                        const SmtSolver::Evidence&, const InstructionSemantics::BaseSemantics::StatePtr &parentOutgoingState);
 
     /** Test for empty path.
      *

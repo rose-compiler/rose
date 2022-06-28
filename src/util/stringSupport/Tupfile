@@ -9,4 +9,4 @@ run $(support_compile_linklib) -o libstringSupport --objects=OBJECTS	\
 # But these sources also go into librose
 : {OBJECTS} |> !for_librose |>
 
-run $(public_header) StringUtility.h string_functions.h FileUtility.h escape.h
+run $(public_header) FileUtility.h escape.h

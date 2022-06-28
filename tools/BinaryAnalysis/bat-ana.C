@@ -111,7 +111,7 @@ protected:
     IpRewrite(const P2::Partitioner &partitioner, const std::vector<rose_addr_t> &vaPairs) {
         ASSERT_require(vaPairs.size() % 2 == 0);
         const RegisterDescriptor REG_IP = partitioner.instructionProvider().instructionPointerRegister();
-        InstructionSemantics2::BaseSemantics::RiscOperatorsPtr ops = partitioner.newOperators();
+        InstructionSemantics::BaseSemantics::RiscOperatorsPtr ops = partitioner.newOperators();
         for (size_t i=0; i < vaPairs.size(); i += 2) {
             P2::Semantics::SValuePtr oldVal = P2::Semantics::SValue::promote(ops->number_(REG_IP.nBits(), vaPairs[i+0]));
             P2::Semantics::SValuePtr newVal = P2::Semantics::SValue::promote(ops->number_(REG_IP.nBits(), vaPairs[i+1]));

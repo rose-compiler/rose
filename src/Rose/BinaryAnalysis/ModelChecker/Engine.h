@@ -5,7 +5,7 @@
 
 #include <Rose/BinaryAnalysis/ModelChecker/PathQueue.h>
 
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Types.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Types.h>
 #include <Rose/BinaryAnalysis/SmtSolver.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 #include <Sawyer/Stopwatch.h>
@@ -476,14 +476,14 @@ private:
     //
     // Thread safety: The RISC operators must be thread-local, otherwise thread safe. All paths will have an identical
     // set of states for this path after this returns.
-    void execute(const PathPtr&, const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&, const SmtSolver::Ptr&);
+    void execute(const PathPtr&, const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&, const SmtSolver::Ptr&);
 
     // Produce more work, typically by looking at the instruction pointer register for the outgoing state of a previous
     // path (which is not currently in the work queue) and creating new paths.
-    void extend(const PathPtr&, const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&, const SmtSolver::Ptr&);
+    void extend(const PathPtr&, const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&, const SmtSolver::Ptr&);
 
     // Perform one step of model checking.
-    void doOneStep(const PathPtr&, const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&, const SmtSolver::Ptr&);
+    void doOneStep(const PathPtr&, const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&, const SmtSolver::Ptr&);
 
     // Indicates that a path has been finished.
     //
@@ -491,7 +491,7 @@ private:
     // successful or not.  It removes the path from the @ref inProgress list.
     //
     // Thread safety: This method is thread safe.
-    void finishPath(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&);
+    void finishPath(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&);
 
     // Display diagnostics about where variables appear in path constraints.
     void displaySmtAssertions(const PathPtr&);

@@ -4,7 +4,7 @@
 #include <Rose/BinaryAnalysis/SerialIo.h>
 
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 #include <Rose/BinaryAnalysis/Registers.h>
 #include <boost/serialization/shared_ptr.hpp>
 
