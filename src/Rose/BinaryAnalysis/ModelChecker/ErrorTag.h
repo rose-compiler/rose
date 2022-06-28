@@ -4,7 +4,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/ModelChecker/Tag.h>
 
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Types.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Types.h>
 #include <Rose/BinaryAnalysis/SymbolicExpr.h>
 
 namespace Rose {
@@ -25,7 +25,7 @@ protected:
     SgAsmInstruction* const insn_;                                 // instruction where the error occurs (optional)
     Sawyer::Optional<uint64_t> concrete_;                          // optional concrete value
     const SymbolicExpr::Ptr symbolic_;                             // optional symbolic value
-    const InstructionSemantics2::BaseSemantics::SValuePtr svalue_; // optional semantic value
+    const InstructionSemantics::BaseSemantics::SValuePtr svalue_;  // optional semantic value
     Sawyer::Message::Importance importance_ = Sawyer::Message::ERROR;
 
 protected:
@@ -35,7 +35,7 @@ protected:
     ErrorTag(size_t nodeStep, const std::string &name, const std::string &mesg, SgAsmInstruction*,
              const SymbolicExpr::Ptr&);
     ErrorTag(size_t nodeStep, const std::string &name, const std::string &mesg, SgAsmInstruction*,
-             const InstructionSemantics2::BaseSemantics::SValuePtr&);
+             const InstructionSemantics::BaseSemantics::SValuePtr&);
 
 public:
     ~ErrorTag();
@@ -51,7 +51,7 @@ public:
     static Ptr instance(size_t nodeStep, const std::string &name, const std::string &mesg, SgAsmInstruction*,
                         const SymbolicExpr::Ptr&);
     static Ptr instance(size_t nodeStep, const std::string &name, const std::string &mesg, SgAsmInstruction*,
-                        const InstructionSemantics2::BaseSemantics::SValuePtr&);
+                        const InstructionSemantics::BaseSemantics::SValuePtr&);
     /** @} */
 
     /** Property: Error message.

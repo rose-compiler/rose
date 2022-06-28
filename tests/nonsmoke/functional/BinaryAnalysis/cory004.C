@@ -5,11 +5,11 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #else
 
 #include <rose.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/DispatcherX86.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherX86.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 
 using namespace Rose::BinaryAnalysis;
-using namespace Rose::BinaryAnalysis::InstructionSemantics2;
+using namespace Rose::BinaryAnalysis::InstructionSemantics;
 
 typedef SymbolicSemantics::SValue SymbolicValue;
 typedef SymbolicSemantics::SValuePtr SymbolicValuePtr;

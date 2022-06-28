@@ -4,7 +4,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <Rose/BinaryAnalysis/ModelChecker/Tag.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Types.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Types.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -19,12 +19,12 @@ private:
     const TestMode testMode_;                                    // may or must, but not off
     const IoMode ioMode_;                                        // read or write
     SgAsmInstruction* const insn_;                               // instruction where the dereference occurs (optional)
-    const InstructionSemantics2::BaseSemantics::SValuePtr addr_; // memory address that is considered to be null
+    const InstructionSemantics::BaseSemantics::SValuePtr addr_; // memory address that is considered to be null
 
 protected:
     NullDerefTag() = delete;
     NullDerefTag(size_t nodeStep, TestMode, IoMode, SgAsmInstruction*,
-                 const InstructionSemantics2::BaseSemantics::SValuePtr &addr);
+                 const InstructionSemantics::BaseSemantics::SValuePtr &addr);
 public:
     ~NullDerefTag();
 
@@ -32,7 +32,7 @@ public:
      *
      *  Thread safety: This constructor is thread safe. */
     static Ptr instance(size_t nodeStep, TestMode, IoMode, SgAsmInstruction*,
-                        const InstructionSemantics2::BaseSemantics::SValuePtr &addr);
+                        const InstructionSemantics::BaseSemantics::SValuePtr &addr);
 
 public:
     virtual std::string name() const override;

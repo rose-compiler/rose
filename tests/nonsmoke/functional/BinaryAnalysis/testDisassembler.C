@@ -14,7 +14,7 @@ using namespace Rose;
 using namespace Rose::BinaryAnalysis;
 using namespace Sawyer::Message::Common;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
-namespace I2 = Rose::BinaryAnalysis::InstructionSemantics2;
+namespace I2 = Rose::BinaryAnalysis::InstructionSemantics;
 
 bool runSemantics = false;
 

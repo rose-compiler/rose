@@ -13,12 +13,12 @@ static const char *description =
 #include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/DataFlow.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 
 using namespace Rose;
 using namespace Rose::Diagnostics;
 using namespace Rose::BinaryAnalysis;
-using namespace Rose::BinaryAnalysis::InstructionSemantics2;
+using namespace Rose::BinaryAnalysis::InstructionSemantics;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 static Diagnostics::Facility mlog;

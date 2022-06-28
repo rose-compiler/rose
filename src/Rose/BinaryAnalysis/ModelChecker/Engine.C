@@ -3,7 +3,7 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Engine.h>
 
-#include <Rose/BinaryAnalysis/InstructionSemantics2/TraceSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
 #include <Rose/BinaryAnalysis/ModelChecker/ExecutionUnit.h>
 #include <Rose/BinaryAnalysis/ModelChecker/P2Model.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Path.h>
@@ -28,8 +28,8 @@
 
 
 using namespace Sawyer::Message::Common;
-namespace IS = Rose::BinaryAnalysis::InstructionSemantics2;
-namespace BS = Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
+namespace IS = Rose::BinaryAnalysis::InstructionSemantics;
+namespace BS = Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 namespace Rose {

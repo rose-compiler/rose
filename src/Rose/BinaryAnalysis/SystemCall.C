@@ -88,7 +88,7 @@ SystemCall::hasSystemCall(const Partitioner2::BasicBlock::Ptr &bblock) const {
 Sawyer::Optional<SystemCall::Declaration>
 SystemCall::analyze(const Partitioner2::Partitioner &partitioner, const Partitioner2::BasicBlock::Ptr &bblock,
                     SgAsmInstruction *syscallInsn, const SmtSolver::Ptr &solver /*=null*/) const {
-    using namespace Rose::BinaryAnalysis::InstructionSemantics2;
+    using namespace Rose::BinaryAnalysis::InstructionSemantics;
     ASSERT_not_null(bblock);
 
     if (!ident_.isValid())

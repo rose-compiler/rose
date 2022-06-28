@@ -689,8 +689,8 @@ INPUT                  = @top_srcdir@/docs/Rose/MainPage.dox \
 			 @top_srcdir@/src/Rose \
 			 @top_srcdir@/src/Rose/BinaryAnalysis \
 			 @top_srcdir@/src/Rose/BinaryAnalysis/Concolic \
-                         @top_srcdir@/src/Rose/BinaryAnalysis/InstructionSemantics2 \
-                         @top_srcdir@/src/Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics \
+                         @top_srcdir@/src/Rose/BinaryAnalysis/InstructionSemantics \
+                         @top_srcdir@/src/Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics \
 			 @top_srcdir@/src/Rose/BinaryAnalysis/ModelChecker \
 			 @top_srcdir@/src/Rose/BinaryAnalysis/Partitioner2 \
 			 @top_srcdir@/src/Rose/BinaryAnalysis/Unparser \

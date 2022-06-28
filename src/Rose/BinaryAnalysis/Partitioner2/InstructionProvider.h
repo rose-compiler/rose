@@ -4,7 +4,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <Rose/BinaryAnalysis/Disassembler.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 #include "AstSerialization.h"
 
 #include <boost/serialization/access.hpp>
@@ -195,7 +195,7 @@ public:
      *  Returns a pointer to a dispatcher used for instruction semantics.  Not all architectures support instruction semantics,
      *  in which case a null pointer is returned.  The returned dispatcher is not connected to any semantic domain, so it can
      *  only be used to call its virtual constructor to create a valid dispatcher. */
-    InstructionSemantics2::BaseSemantics::DispatcherPtr dispatcher() const { return disassembler_->dispatcher(); }
+    InstructionSemantics::BaseSemantics::DispatcherPtr dispatcher() const { return disassembler_->dispatcher(); }
 
     /** Print some partitioner performance statistics. */
     void showStatistics() const;

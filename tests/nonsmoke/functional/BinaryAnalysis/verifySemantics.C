@@ -9,22 +9,22 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #include <rose.h>
 
 #include <AsmUnparser_compat.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/ConcreteSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/ConcreteSemantics.h>
 #include <Rose/BinaryAnalysis/Debugger.h>
 #include <Rose/Diagnostics.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/DispatcherX86.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/MemoryCellList.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherX86.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCellList.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Sawyer/BitVector.h>
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/ProgressBar.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/TraceSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
 
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 using namespace Rose;
 using namespace Rose::Diagnostics;
 using namespace Rose::BinaryAnalysis;
-using namespace Rose::BinaryAnalysis::InstructionSemantics2;
+using namespace Rose::BinaryAnalysis::InstructionSemantics;
 
 Sawyer::Message::Facility mlog;
 

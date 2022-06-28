@@ -151,11 +151,7 @@ enum Operator {
     OP_CONVERT,             /**< Convert from one type to another. Argument is the source value. */
     OP_REINTERPRET,         /**< Interpret the value as a different type without converting. Argument is the source value. */
 
-    OP_NONE,                /**< No operation. Result of getOperator on a node that doesn't have an operator. */
-
-    OP_BV_AND = OP_AND,                                 // [Robb Matzke 2017-11-14]: deprecated NO_STRINGIFY
-    OP_BV_OR = OP_OR,                                   // [Robb Matzke 2017-11-14]: deprecated NO_STRINGIFY
-    OP_BV_XOR = OP_XOR                                  // [Robb Matzke 2017-11-14]: deprecated NO_STRINGIFY
+    OP_NONE                 /**< No operation. Result of getOperator on a node that doesn't have an operator. */
 };
 
 std::string toStr(Operator);

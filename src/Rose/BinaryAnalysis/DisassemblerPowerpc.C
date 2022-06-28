@@ -9,7 +9,7 @@
 #include <Rose/BinaryAnalysis/Disassembler.h>
 #include "SageBuilderAsm.h"
 #include <Rose/BinaryAnalysis/Unparser/Powerpc.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/DispatcherPowerpc.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherPowerpc.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -99,7 +99,7 @@ DisassemblerPowerpc::init() {
     REG_SP = regdict->findOrThrow("r1");
     REG_SF = regdict->findOrThrow("r31");
     REG_LINK = regdict->findOrThrow("lr");
-    InstructionSemantics2::DispatcherPowerpcPtr d = InstructionSemantics2::DispatcherPowerpc::instance(8*wordSizeBytes(), regdict);
+    InstructionSemantics::DispatcherPowerpcPtr d = InstructionSemantics::DispatcherPowerpc::instance(8*wordSizeBytes(), regdict);
     d->registerDictionary(regdict);
     p_proto_dispatcher = d;
     registerDictionary(regdict);

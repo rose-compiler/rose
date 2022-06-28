@@ -7,7 +7,7 @@
 #include "integerOps.h"
 #include "stringify.h"
 #include "SageBuilderAsm.h"
-#include <Rose/BinaryAnalysis/InstructionSemantics2/DispatcherM68k.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherM68k.h>
 #include <Rose/BinaryAnalysis/Unparser/M68k.h>
 
 #include <Sawyer/Assert.h>                              // FIXME[Robb P. Matzke 2014-06-19]: replace with "Diagnostics.h"
@@ -4859,7 +4859,7 @@ DisassemblerM68k::init()
     REG_SP = registerDictionary()->findOrThrow("a7");
     REG_SF = registerDictionary()->findOrThrow("a6");
 
-    p_proto_dispatcher = InstructionSemantics2::DispatcherM68k::instance();
+    p_proto_dispatcher = InstructionSemantics::DispatcherM68k::instance();
     p_proto_dispatcher->addressWidth(32);
     p_proto_dispatcher->registerDictionary(regdict);
 

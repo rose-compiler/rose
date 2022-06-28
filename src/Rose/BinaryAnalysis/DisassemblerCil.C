@@ -12,7 +12,7 @@
 #include "integerOps.h"
 #include "stringify.h"
 #include "SageBuilderAsm.h"
-#include <Rose/BinaryAnalysis/InstructionSemantics2/DispatcherCil.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherCil.h>
 #include <Rose/BinaryAnalysis/Unparser/Cil.h>
 
 #include <Sawyer/Assert.h>                              // FIXME[Robb P. Matzke 2014-06-19]: replace with "Diagnostics.h"
@@ -8756,7 +8756,7 @@ DisassemblerCil::init()
     REG_IP = registerDictionary()->findOrThrow("pc");
     REG_SP = registerDictionary()->findOrThrow("a7");
 
-    p_proto_dispatcher = InstructionSemantics2::DispatcherCil::instance();
+    p_proto_dispatcher = InstructionSemantics::DispatcherCil::instance();
     p_proto_dispatcher->addressWidth(32);
     p_proto_dispatcher->registerDictionary(regdict);
 

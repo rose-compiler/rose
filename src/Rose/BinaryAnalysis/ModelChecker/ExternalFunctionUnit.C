@@ -3,7 +3,7 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/ModelChecker/ExternalFunctionUnit.h>
 
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/RiscOperators.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RiscOperators.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 #include <Rose/BinaryAnalysis/ModelChecker/SemanticCallbacks.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Settings.h>
@@ -13,9 +13,9 @@
 #include <boost/lexical_cast.hpp>
 
 using namespace Sawyer::Message::Common;
-namespace BS = Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
+namespace BS = Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;
 namespace CC = Rose::BinaryAnalysis::CallingConvention;
-namespace IS = Rose::BinaryAnalysis::InstructionSemantics2;
+namespace IS = Rose::BinaryAnalysis::InstructionSemantics;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 namespace Rose {

@@ -1,22 +1,16 @@
-#ifndef ROSE_BinaryAnalysis_InstructionSemantics2_BaseSemantics_H 
+#ifndef ROSE_BinaryAnalysis_InstructionSemantics2_BaseSemantics_H
 #define ROSE_BinaryAnalysis_InstructionSemantics2_BaseSemantics_H
 
-// Includes all base semantics classes
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Dispatcher.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Exception.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Formatter.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/MemoryCell.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/MemoryCellList.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/MemoryCellMap.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/MemoryCellState.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/MemoryState.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Merger.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/RegisterState.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/RegisterStateGeneric.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/RiscOperators.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/State.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/SValue.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/SymbolicMemory.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Types.h>
+// [Robb Matzke 2022-06-22]: deprecated
+#include <rose_pragma_message.h>
+ROSE_PRAGMA_MESSAGE("This header is deprecated; use Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h instead");
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
+
+// [Robb Matzke 2022-06-22]: deprecated
+namespace Rose {
+namespace BinaryAnalysis {
+namespace InstructionSemantics2 = Rose::BinaryAnalysis::InstructionSemantics;
+} // namespace
+} // namespace
 
 #endif

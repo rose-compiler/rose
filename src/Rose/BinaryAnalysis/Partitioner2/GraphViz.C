@@ -8,7 +8,7 @@
 #include <Rose/BinaryAnalysis/Partitioner2/GraphViz.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Sawyer/GraphTraversal.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #ifdef _MSC_VER
 #define popen _popen
 #define pclose _pclose
@@ -162,7 +162,7 @@ CfgEmitter::CfgEmitter(const Partitioner &partitioner, const ControlFlowGraph &g
 
 void
 CfgEmitter::init() {
-    using namespace Rose::BinaryAnalysis::InstructionSemantics2;
+    using namespace Rose::BinaryAnalysis::InstructionSemantics;
 
     // Class initialization
     if (0 == versionDate_) {

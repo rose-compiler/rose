@@ -145,9 +145,6 @@ public:
     /** Value stored in the GOT entry. */
     rose_addr_t gotEntry() const { return gotEntry_; }
 
-    // [Robb Matzke 2018-04-06]: deprecated: use gotEntryVa
-    rose_addr_t memAddress() const { return gotEntryVa_; }
-
 private:
     SgAsmInstruction* matchNop(const Partitioner&, rose_addr_t va);
     SgAsmInstruction* matchPush(const Partitioner&, rose_addr_t var, rose_addr_t &n /*out*/);

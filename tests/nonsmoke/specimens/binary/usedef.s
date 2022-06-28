@@ -1,4 +1,4 @@
-;;; These are various unit tests for the simple use-def analysis in BinaryAnalysis::InstructionSemantics2::SymbolicSemantics.
+;;; These are various unit tests for the simple use-def analysis in BinaryAnalysis::InstructionSemantics::SymbolicSemantics.
 ;;; Compile this on an intel machine with "nasm -f elf32 usedef.s && gcc -m32 -nostdlib -o usedef usedef.o"
 
 _start:	je case1

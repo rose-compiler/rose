@@ -1,8 +1,8 @@
 #include <rose.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/NativeSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/NativeSemantics.h>
 
 using namespace Rose::BinaryAnalysis;
-namespace IS = Rose::BinaryAnalysis::InstructionSemantics2;
+namespace IS = Rose::BinaryAnalysis::InstructionSemantics;
 namespace BaseSemantics = IS::BaseSemantics;
 namespace NativeSemantics = IS::NativeSemantics;
 

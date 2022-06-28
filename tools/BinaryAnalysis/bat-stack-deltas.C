@@ -23,7 +23,7 @@ using namespace Rose;
 using namespace Rose::BinaryAnalysis;
 using namespace Sawyer::Message::Common;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
-namespace BaseSemantics = Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
+namespace BaseSemantics = Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;
 
 namespace {
 

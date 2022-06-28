@@ -7,7 +7,7 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #include <rose.h>
 #include <Rose/BinaryAnalysis/SymbolicExpr.h>
 #include <Rose/BinaryAnalysis/Z3Solver.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 
 using namespace Rose;
 using namespace Rose::BinaryAnalysis;
@@ -32,7 +32,7 @@ test_add_simplifications() {
 
 static void
 test_svalues() {
-    using namespace InstructionSemantics2;
+    using namespace InstructionSemantics;
 
     BaseSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(SymbolicSemantics::SValue::instance(),
                                                                                      SmtSolverPtr());

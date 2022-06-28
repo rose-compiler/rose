@@ -6,8 +6,8 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 
 #include "rose.h"
 
-#include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/DispatcherX86.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherX86.h>
 
 using namespace Rose::BinaryAnalysis;
 
@@ -15,7 +15,7 @@ struct Analysis: public AstSimpleProcessing {
     void visit(SgNode *node) {
         SgAsmBlock *block = isSgAsmBlock(node);
         if (block && block->has_instructions()) {
-            using namespace Rose::BinaryAnalysis::InstructionSemantics2;
+            using namespace Rose::BinaryAnalysis::InstructionSemantics;
             const RegisterDictionary *regdict = RegisterDictionary::dictionary_i386();
             SymbolicSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(regdict);
             ops->computingDefiners(SymbolicSemantics::TRACK_ALL_DEFINERS); // only used so we can test that it works

@@ -1,0 +1,2 @@
+#ifndef ROSE_BinaryAnalysis_InstructionSemantics_SymbolicSemantics_H
+#define

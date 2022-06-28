@@ -15,7 +15,7 @@
 #include <Rose/BinaryAnalysis/ModelChecker/Settings.h>
 #include <Rose/BinaryAnalysis/ModelChecker/UninitVarTag.h>
 
-#include <Rose/BinaryAnalysis/InstructionSemantics2/TraceSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/SymbolicExpr.h>
 #include <Rose/BitOps.h>
@@ -26,8 +26,8 @@
 #include <chrono>
 
 using namespace Sawyer::Message::Common;
-namespace BS = Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
-namespace IS = Rose::BinaryAnalysis::InstructionSemantics2;
+namespace BS = Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;
+namespace IS = Rose::BinaryAnalysis::InstructionSemantics;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 namespace Rose {
@@ -1227,7 +1227,8 @@ RiscOperators::readMemory(RegisterDescriptor segreg, const BS::SValue::Ptr &addr
     const size_t nBytes = dflt->nBits() / 8;
     uint8_t buf[8];
     if (adjustedVa->toUnsigned() && nBytes <= sizeof(buf) &&
-        nBytes == partitioner_.memoryMap()->at(adjustedVa->toUnsigned().get()).limit(nBytes).read(buf).size()) {
+        nBytes == (partitioner_.memoryMap()->at(adjustedVa->toUnsigned().get()).limit(nBytes)
+                   .require(MemoryMap::READABLE).prohibit(MemoryMap::WRITABLE).read(buf).size())) {
         switch (partitioner_.memoryMap()->byteOrder()) {
             case ByteOrder::ORDER_UNSPECIFIED:
             case ByteOrder::ORDER_LSB: {

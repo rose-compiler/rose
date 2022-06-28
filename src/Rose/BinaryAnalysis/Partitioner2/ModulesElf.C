@@ -658,7 +658,7 @@ findPltFunctions(Partitioner &partitioner, SgAsmElfFileHeader *elfHeader, std::v
         rose_addr_t pltEntryVa = plt.section->get_mapped_actual_va() + pltOffset;
         if (!matcher.match(partitioner, pltEntryVa))
             continue;
-        rose_addr_t gotVa = matcher.memAddress();    // address that was read by indirect branch
+        rose_addr_t gotVa = matcher.gotEntryVa();    // address that was read by indirect branch
         if (gotVa <  elfHeader->get_base_va() + got->get_mapped_preferred_rva() ||
             gotVa >= elfHeader->get_base_va() + got->get_mapped_preferred_rva() + got->get_mapped_size()) {
             continue;                                   // jump is not indirect through the .got.plt section

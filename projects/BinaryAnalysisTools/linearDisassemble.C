@@ -2,10 +2,10 @@
 #include <rosePublicConfig.h>
 
 #include <Rose/BinaryAnalysis/Disassembler.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/DispatcherM68k.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherM68k.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/TraceSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
 
 #include <map>
 #include <Sawyer/Assert.h>
@@ -14,7 +14,7 @@
 #include <string>
 
 using namespace Rose;
-using namespace Rose::BinaryAnalysis::InstructionSemantics2;
+using namespace Rose::BinaryAnalysis::InstructionSemantics;
 using namespace Rose::BinaryAnalysis;
 using namespace Sawyer::Message::Common;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;

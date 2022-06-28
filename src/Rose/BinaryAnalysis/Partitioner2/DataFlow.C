@@ -4,13 +4,13 @@
 
 #include <AsmUnparser_compat.h>
 #include <Rose/Color.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/MemoryCellList.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCellList.h>
 #include <Rose/BinaryAnalysis/Partitioner2/DataFlow.h>
 #include <Rose/BinaryAnalysis/Partitioner2/GraphViz.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesElf.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Sawyer/GraphTraversal.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 
 #include <boost/range/adaptor/reversed.hpp>
 #include <sstream>
@@ -339,7 +339,7 @@ dumpDfCfg(std::ostream &out, const DfCfg &dfCfg) {
 static Sawyer::Optional<int64_t>
 isStackAddress(const Rose::BinaryAnalysis::SymbolicExpr::Ptr &expr,
                const BaseSemantics::SValuePtr &initialStackPointer, const SmtSolverPtr &solver) {
-    using namespace Rose::BinaryAnalysis::InstructionSemantics2;
+    using namespace Rose::BinaryAnalysis::InstructionSemantics;
 
     if (!initialStackPointer)
         return Sawyer::Nothing();
@@ -374,9 +374,9 @@ isStackAddress(const Rose::BinaryAnalysis::SymbolicExpr::Ptr &expr,
 // Info about stack variables that is distributed across function frame offsets using a Sawyer::IntervalMap.
 struct StackVariableMeta {
     AddressSet writers;
-    InstructionSemantics2::BaseSemantics::InputOutputPropertySet ioProperties;
+    InstructionSemantics::BaseSemantics::InputOutputPropertySet ioProperties;
 
-    StackVariableMeta(const AddressSet &writers, const InstructionSemantics2::BaseSemantics::InputOutputPropertySet &io)
+    StackVariableMeta(const AddressSet &writers, const InstructionSemantics::BaseSemantics::InputOutputPropertySet &io)
         : writers(writers), ioProperties(io) {}
 
     bool operator==(const StackVariableMeta &other) const {
@@ -387,7 +387,7 @@ struct StackVariableMeta {
 Variables::StackVariables
 findStackVariables(const Function::Ptr &function, const BaseSemantics::RiscOperatorsPtr &ops,
                    const BaseSemantics::SValuePtr &initialStackPointer) {
-    using namespace Rose::BinaryAnalysis::InstructionSemantics2;
+    using namespace Rose::BinaryAnalysis::InstructionSemantics;
     ASSERT_not_null(ops);
     ASSERT_not_null(initialStackPointer);
     BaseSemantics::StatePtr state = ops->currentState();

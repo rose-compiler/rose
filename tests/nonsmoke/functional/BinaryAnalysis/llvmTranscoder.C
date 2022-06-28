@@ -7,7 +7,7 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 
 #define __STDC_FORMAT_MACROS
 #include "rose.h"
-#include <Rose/BinaryAnalysis/InstructionSemantics2/LlvmSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/LlvmSemantics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Sawyer/CommandLine.h>
 
@@ -15,7 +15,7 @@ using namespace Rose;
 using namespace Sawyer::Message::Common;
 using namespace StringUtility;
 using namespace SageInterface;
-using namespace Rose::BinaryAnalysis::InstructionSemantics2;
+using namespace Rose::BinaryAnalysis::InstructionSemantics;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 static Sawyer::Message::Facility mlog;

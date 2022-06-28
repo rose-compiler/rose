@@ -402,6 +402,8 @@ SmtlibSolver::outputCommonSubexpressions(std::ostream &o, const std::vector<Symb
             o <<StringUtility::prefixLines(cse->comment(), "; ") <<"\n";
         o <<"; effective size = " <<StringUtility::plural(cse->nNodes(), "nodes")
           <<", actual size = " <<StringUtility::plural(cse->nNodesUnique(), "nodes") <<"\n";
+        o <<"; ROSE expression: " <<*cse <<"\n";
+
         std::string termName = "cse_" + StringUtility::numberToString(++cseId);
 
         SExprTypePair et = outputCast(outputExpression(cse), BIT_VECTOR);
@@ -609,16 +611,16 @@ SmtlibSolver::outputExpression(const SymbolicExpr::Ptr &expr) {
                 retval = outputSignedCompare(inode);
                 break;
             case SymbolicExpr::OP_SHL0:
-                retval = outputShiftLeft(inode);
+                retval = outputShiftLeft0(inode);
                 break;
             case SymbolicExpr::OP_SHL1:
-                retval = outputShiftLeft(inode);
+                retval = outputShiftLeft1(inode);
                 break;
             case SymbolicExpr::OP_SHR0:
-                retval = outputLogicalShiftRight(inode);
+                retval = outputLogicalShiftRight0(inode);
                 break;
             case SymbolicExpr::OP_SHR1:
-                retval = outputLogicalShiftRight(inode);
+                retval = outputLogicalShiftRight1(inode);
                 break;
             case SymbolicExpr::OP_SGE:
                 retval = outputSignedCompare(inode);
@@ -932,70 +934,164 @@ SmtlibSolver::outputRotateLeft(const SymbolicExpr::InteriorPtr &inode) {
     return SExprTypePair(retval, BIT_VECTOR);
 }
 
-// For logical right shifts:
-// ROSE (rose-right-shift-op amount expr) =>
-// SMT-LIB ((_ extract [expr.size-1] 0) (bvlshr (concat zeros_or_ones expr) extended_amount))
+// Logical right shift introducing zero bits.
 //
-// Where extended_amount is the ROSE "amount" widened (or truncated) to the same width as "expr",
-// and where "zeros_or_ones" is a constant with all bits set or clear and the same width as "expr"
+// ROSE: (shr0 AMOUNT EXPR)
+// SMT-LIB: (bvlshr EXPR EXTENDED_AMOUNT)
+//
+// Where EXTENDED_AMOUNT is AMOUNT zero extended to be the same width as EXPR.
 SmtSolver::SExprTypePair
-SmtlibSolver::outputLogicalShiftRight(const SymbolicExpr::InteriorPtr &inode) {
+SmtlibSolver::outputLogicalShiftRight0(const SymbolicExpr::InteriorPtr &inode) {
     ASSERT_not_null(inode);
-    ASSERT_require(inode->getOperator() == SymbolicExpr::OP_SHR0 || inode->getOperator() == SymbolicExpr::OP_SHR1);
+    ASSERT_require(inode->getOperator() == SymbolicExpr::OP_SHR0);
     ASSERT_require(inode->nChildren() == 2);
-    SymbolicExpr::Ptr sa = inode->child(0);
-    SymbolicExpr::Ptr expr = inode->child(1);
 
-    sa = SymbolicExpr::makeExtend(SymbolicExpr::makeIntegerConstant(32, expr->nBits()), sa); // widen sa same as expr
-    bool newBits = inode->getOperator() == SymbolicExpr::OP_SHR1;
-    SExpr::Ptr shiftee = outputCast(outputExpression(expr), BIT_VECTOR).first;
+    // Original arguments
+    const SymbolicExpr::Ptr sa = inode->child(0);
+    const SymbolicExpr::Ptr expr = inode->child(1);
 
-    SExpr::Ptr zerosOrOnes =
-        outputCast(outputExpression(SymbolicExpr::makeIntegerConstant(Sawyer::Container::BitVector(expr->nBits(), newBits))),
+    // The shift amount extended to the same width as the thing to be shifted
+    const SExpr::Ptr extended_va =
+        outputCast(outputExpression(SymbolicExpr::makeExtend(SymbolicExpr::makeIntegerConstant(32, expr->nBits()), sa)),
                    BIT_VECTOR).first;
 
-    SExpr::Ptr retval =
-        SExpr::instance(SExpr::instance(SExpr::instance("_"),
-                                        SExpr::instance("extract"),
-                                        SExpr::instance(expr->nBits()-1),
-                                        SExpr::instance(0)),
-                        SExpr::instance(SExpr::instance("bvlshr"),
-                                        SExpr::instance(SExpr::instance("concat"), zerosOrOnes, shiftee),
-                                        outputCast(outputExpression(sa), BIT_VECTOR).first));
+    // The thing to be shifted
+    const SExpr::Ptr shiftee = outputCast(outputExpression(expr), BIT_VECTOR).first;
 
+    // Use SMT-LIB's bvlshr operation
+    const SExpr::Ptr retval = SExpr::instance(SExpr::instance("bvlshr"), shiftee, extended_va);
     return SExprTypePair(retval, BIT_VECTOR);
 }
 
-// For left shifts:
-// ROSE (rose-left-shift-op amount expr) =>
-// SMT-LIB ((_ extract [2*expr.size-1] expr.size) (bvshl (concat expr zeros_or_ones) extended_amount))
+// Logical right shift introducing one bits.
 //
-// Where extended_amount is the ROSE "amount" widened (or truncated) to the same width as "expr",
-// and where "zeros_or_ones" is a constant with all bits set or clear and the same width as "expr"
+// ROSE: (shr1 AMOUNT EXPR)
+// SMT-LIB: ((_ extract [EXPR.size-1] 0) ; the low-order half
+//              (bvlshr
+//                  (concat ONES EXPR)   ; thing to shift, ONES in high half, EXPR in low half
+//                  EXTENDED_AMOUNT))
+//
+// SMT-LIB doesn't have a logical right-shift operation that introduces ones (only zeros), so we do it the hard way.  We double
+// the width of the value to be shifted by concatenating one bits in the high half. Then we shift the double-width value and
+// return just the low half.
+//
+// The EXTENDED_AMOUNT is the original AMOUNT zero extended to be twice the width of the original EXPR (and the same width as
+// the value that SMT-LIB is shifting.
 SmtSolver::SExprTypePair
-SmtlibSolver::outputShiftLeft(const SymbolicExpr::InteriorPtr &inode) {
+SmtlibSolver::outputLogicalShiftRight1(const SymbolicExpr::InteriorPtr &inode) {
     ASSERT_not_null(inode);
-    ASSERT_require(inode->getOperator() == SymbolicExpr::OP_SHL0 || inode->getOperator() == SymbolicExpr::OP_SHL1);
+    ASSERT_require(inode->getOperator() == SymbolicExpr::OP_SHR1);
     ASSERT_require(inode->nChildren() == 2);
-    SymbolicExpr::Ptr sa = inode->child(0);
-    SymbolicExpr::Ptr expr = inode->child(1);
 
-    sa = SymbolicExpr::makeExtend(SymbolicExpr::makeIntegerConstant(32, expr->nBits()), sa); // widen sa same as expr
-    bool newBits = inode->getOperator() == SymbolicExpr::OP_SHL1;
-    SExpr::Ptr shiftee = outputCast(outputExpression(expr), BIT_VECTOR).first;
+    // Original arguments
+    const SymbolicExpr::Ptr sa = inode->child(0);
+    const SymbolicExpr::Ptr expr = inode->child(1);
 
-    SExpr::Ptr zerosOrOnes =
-        outputCast(outputExpression(SymbolicExpr::makeIntegerConstant(Sawyer::Container::BitVector(expr->nBits(), newBits))),
+    // Upper half of the bits to be shifted (all ones)
+    const SExpr::Ptr upper =
+        outputCast(outputExpression(SymbolicExpr::makeIntegerConstant(Sawyer::Container::BitVector(expr->nBits(), true))),
                    BIT_VECTOR).first;
 
-    SExpr::Ptr retval =
-        SExpr::instance(SExpr::instance(SExpr::instance("_"),
-                                        SExpr::instance("extract"),
-                                        SExpr::instance(2*expr->nBits()-1),
-                                        SExpr::instance(expr->nBits())),
-                        SExpr::instance(SExpr::instance("bvshl"),
-                                        SExpr::instance(SExpr::instance("concat"), shiftee, zerosOrOnes),
-                                        outputCast(outputExpression(sa), BIT_VECTOR).first));
+    // Lower half of the bits to be shifted
+    const SExpr::Ptr lower = outputCast(outputExpression(expr), BIT_VECTOR).first;
+
+    // The thing to be shifted
+    const SExpr::Ptr shiftee = SExpr::instance(SExpr::instance("concat"), upper, lower);
+
+    // The shift amount zero extended to the same width as the shiftee (twice the width of the original expr)
+    const SExpr::Ptr extended_sa =
+        outputCast(outputExpression(SymbolicExpr::makeExtend(SymbolicExpr::makeIntegerConstant(32, 2*expr->nBits()), sa)),
+                   BIT_VECTOR).first;
+
+    // Shift the double-wide shiftee to the right using SMT-LIB's bvlshr operator that introduces zeros at the high end.
+    const SExpr::Ptr shifted = SExpr::instance(SExpr::instance("bvlshr"), shiftee, extended_sa);
+
+    // Extract just the low half of the shifted result.
+    const SExpr::Ptr retval = SExpr::instance(SExpr::instance(SExpr::instance("_"),
+                                                              SExpr::instance("extract"),
+                                                              SExpr::instance(expr->nBits() - 1),
+                                                              SExpr::instance(0)),
+                                              shifted);
+    return SExprTypePair(retval, BIT_VECTOR);
+}
+
+// Left shift introducing zero bits.
+// ROSE: (shl0 AMOUNT EXPR)
+// SMT-LIB: (bvshl EXPR EXTENDED_AMOUNT)
+//
+// Where EXTENDED_AMOUNT is the AMOUNT zero extended to be the same width as EXPR.
+SmtSolver::SExprTypePair
+SmtlibSolver::outputShiftLeft0(const SymbolicExpr::InteriorPtr &inode) {
+    ASSERT_not_null(inode);
+    ASSERT_require(inode->getOperator() == SymbolicExpr::OP_SHL0);
+
+    // Original arguments
+    const SymbolicExpr::Ptr sa = inode->child(0);
+    const SymbolicExpr::Ptr expr = inode->child(1);
+
+    // The shift amount extended to the same width as the thing to be shifted
+    const SExpr::Ptr extended_sa =
+        outputCast(outputExpression(SymbolicExpr::makeExtend(SymbolicExpr::makeIntegerConstant(32, expr->nBits()), sa)),
+                   BIT_VECTOR).first;
+
+    // The thing to be shifted
+    const SExpr::Ptr shiftee = outputCast(outputExpression(expr), BIT_VECTOR).first;
+
+    // Use SMT-LIB's left shift operation
+    const SExpr::Ptr retval = SExpr::instance(SExpr::instance("bvshl"), shiftee, extended_sa);
+    return SExprTypePair(retval, BIT_VECTOR);
+}
+
+// Left shift introducing one bits.
+//
+// ROSE: (shl1 AMOUNT EXPR)
+// SMT-LIB: ((_ extract [2*EXPR.size-1] [EXPR.size]) ; the upper half
+//             (bvshl
+//                 (concat EXPR ONES) ; i.e., the original value padded with zeros or ones in the low bits
+//                 EXTENDED_AMOUNT))
+//
+// Where EXTENDED_AMOUNT is the original AMOUNT extended to be the same width as either EXPR (in the shl0 case) or twice the
+// width of EXPR (in the shl1 case).
+//
+// What we're doing is concatenating EXPR|ONES to make a value that's twice as wide as EXPR with the EXPR part in the
+// high-order half. Then we shift left, introducing zeros (it doesn't matter that they're zeros, but that's all SMT-LIB can
+// do), and then we return the upper half of the bits which are the original EXPR bits and some of the ONES bits.
+SmtSolver::SExprTypePair
+SmtlibSolver::outputShiftLeft1(const SymbolicExpr::InteriorPtr &inode) {
+    ASSERT_not_null(inode);
+    ASSERT_require(inode->getOperator() == SymbolicExpr::OP_SHL1);
+
+    // Original arguments
+    const SymbolicExpr::Ptr sa = inode->child(0);
+    const SymbolicExpr::Ptr expr = inode->child(1);
+
+    // Upper half of the bits to be shifted
+    const SExpr::Ptr upper = outputCast(outputExpression(expr), BIT_VECTOR).first;
+
+    // Lower half of the bits to be shifted are all set
+    const SExpr::Ptr lower =
+        outputCast(outputExpression(SymbolicExpr::makeIntegerConstant(Sawyer::Container::BitVector(expr->nBits(), true))),
+                   BIT_VECTOR).first;
+
+    // The thing to be shifted, twice as wide as the original ROSE argument, consisting of the original ROSE argument in the
+    // high bits, and all ones in the low bits.
+    const SExpr::Ptr shiftee = SExpr::instance(SExpr::instance("concat"), upper, lower);
+
+    // The shift amount extended to the same width as the thing to be shifted since SMT-LIB requires that both arguments are
+    // the same type.
+    const SExpr::Ptr extended_sa =
+        outputCast(outputExpression(SymbolicExpr::makeExtend(SymbolicExpr::makeIntegerConstant(32, 2*expr->nBits()), sa)),
+                   BIT_VECTOR).first;
+
+    // Shift the double-wide value to the left using SMT-LIB's bvshl operator that introduces zeros at the low end.
+    const SExpr::Ptr shifted = SExpr::instance(SExpr::instance("bvshl"), shiftee, extended_sa);
+
+    // Extract just the high half of the shifted result.
+    const SExpr::Ptr retval = SExpr::instance(SExpr::instance(SExpr::instance("_"),
+                                                              SExpr::instance("extract"),
+                                                              SExpr::instance(2*expr->nBits() - 1),
+                                                              SExpr::instance(expr->nBits())),
+                                              shifted);
 
     return SExprTypePair(retval, BIT_VECTOR);
 }

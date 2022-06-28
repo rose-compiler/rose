@@ -3,7 +3,7 @@
 #include <sage3basic.h>
 #include <BinaryVxcoreParser.h>
 
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/RiscOperators.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RiscOperators.h>
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/regex.hpp>
@@ -11,7 +11,7 @@
 #include <rose_strtoull.h>
 
 using namespace Sawyer::Message::Common;
-namespace BaseSemantics = Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
+namespace BaseSemantics = Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -206,8 +206,8 @@ VxcoreParser::unparse(std::ostream &out, const MemoryMap::Ptr &memory, const Add
 }
 
 void
-VxcoreParser::unparse(std::ostream &out, const InstructionSemantics2::BaseSemantics::RegisterStatePtr &registers,
-                      const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr &ops, const std::string &outputName) {
+VxcoreParser::unparse(std::ostream &out, const InstructionSemantics::BaseSemantics::RegisterStatePtr &registers,
+                      const InstructionSemantics::BaseSemantics::RiscOperatorsPtr &ops, const std::string &outputName) {
     unparse(out, MemoryMap::Ptr(), AddressInterval(), registers, ops, outputName);
 }
 

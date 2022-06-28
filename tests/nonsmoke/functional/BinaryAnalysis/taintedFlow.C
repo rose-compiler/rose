@@ -74,8 +74,8 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #include <Rose/BinaryAnalysis/SmtSolver.h>
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/DispatcherX86.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherX86.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #include "WorkLists.h"
 
 #include <boost/algorithm/string/regex.hpp>
@@ -110,7 +110,7 @@ void buildControlFlowGraph<SgAsmBlock>(SgNode *ast, Sawyer::Container::Graph<SgA
 // control flow graphs whose vertices are instructions or basic blocks.
 template<class SageNode>
 static void analyze(SgAsmFunction *specimen, TaintedFlow::Approximation approximation) {
-    using namespace InstructionSemantics2;
+    using namespace InstructionSemantics;
 
     SgAsmInterpretation *interp = SageInterface::getEnclosingNode<SgAsmInterpretation>(specimen);
     ASSERT_always_not_null(interp);

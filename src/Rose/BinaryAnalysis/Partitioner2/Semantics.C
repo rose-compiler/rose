@@ -8,8 +8,8 @@ namespace BinaryAnalysis {
 namespace Partitioner2 {
 namespace Semantics {
 
-namespace BaseSemantics = Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
-namespace SymbolicSemantics = Rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
+namespace BaseSemantics = Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;
+namespace SymbolicSemantics = Rose::BinaryAnalysis::InstructionSemantics::SymbolicSemantics;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Risc Operators

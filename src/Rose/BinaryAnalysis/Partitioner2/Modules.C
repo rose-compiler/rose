@@ -103,7 +103,7 @@ BasicBlockSizeLimiter::operator()(bool chain, const Args &args) {
 
 bool
 IpRewriter::operator()(bool chain, const Args &args) {
-    using namespace InstructionSemantics2;
+    using namespace InstructionSemantics;
     if (chain && !rewrites_.empty()) {
         size_t wordSize = args.partitioner.instructionProvider().instructionPointerRegister().nBits();
         std::vector<BasicBlock::Successor> succs;

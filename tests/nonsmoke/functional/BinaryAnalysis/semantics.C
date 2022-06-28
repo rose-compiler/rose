@@ -24,9 +24,9 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #define NO_SOLVER 0
 
 #include <Rose/BinaryAnalysis/SymbolicExpr.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/DispatcherX86.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/TestSemantics.h>
-using namespace Rose::BinaryAnalysis::InstructionSemantics2;
+#include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherX86.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/TestSemantics.h>
+using namespace Rose::BinaryAnalysis::InstructionSemantics;
 
 #if !defined(SMT_SOLVER) || SMT_SOLVER == NO_SOLVER
     #include <Rose/BinaryAnalysis/SmtSolver.h>
@@ -47,7 +47,7 @@ using namespace Rose::BinaryAnalysis::InstructionSemantics2;
 
 const Rose::BinaryAnalysis::RegisterDictionary *regdict = Rose::BinaryAnalysis::RegisterDictionary::dictionary_pentium4();
 
-#include <Rose/BinaryAnalysis/InstructionSemantics2/TraceSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
 
 // defaults for command-line switches
 static bool do_trace = false;
@@ -57,7 +57,7 @@ static bool do_usedef = true;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #if SEMANTIC_DOMAIN == NULL_DOMAIN
 
-#   include <Rose/BinaryAnalysis/InstructionSemantics2/NullSemantics.h>
+#   include <Rose/BinaryAnalysis/InstructionSemantics/NullSemantics.h>
     static BaseSemantics::RiscOperatorsPtr make_ops() {
         BaseSemantics::RiscOperatorsPtr retval = NullSemantics::RiscOperators::instance(regdict);
         TestSemantics<
@@ -69,7 +69,7 @@ static bool do_usedef = true;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #elif  SEMANTIC_DOMAIN == PARTSYM_DOMAIN
-#   include <Rose/BinaryAnalysis/InstructionSemantics2/PartialSymbolicSemantics.h>
+#   include <Rose/BinaryAnalysis/InstructionSemantics/PartialSymbolicSemantics.h>
     static BaseSemantics::RiscOperatorsPtr make_ops() {
         BaseSemantics::RiscOperatorsPtr retval = PartialSymbolicSemantics::RiscOperators::instance(regdict);
         TestSemantics<PartialSymbolicSemantics::SValuePtr, BaseSemantics::RegisterStateGenericPtr,
@@ -82,7 +82,7 @@ static bool do_usedef = true;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #elif  SEMANTIC_DOMAIN == SYMBOLIC_DOMAIN
 
-#   include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>
+#   include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
     static BaseSemantics::RiscOperatorsPtr make_ops() {
         SymbolicSemantics::RiscOperatorsPtr retval = SymbolicSemantics::RiscOperators::instance(regdict);
         retval->computingDefiners(do_usedef ? SymbolicSemantics::TRACK_ALL_DEFINERS : SymbolicSemantics::TRACK_NO_DEFINERS);
@@ -95,7 +95,7 @@ static bool do_usedef = true;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #elif SEMANTIC_DOMAIN == INTERVAL_DOMAIN
-#   include <Rose/BinaryAnalysis/InstructionSemantics2/IntervalSemantics.h>
+#   include <Rose/BinaryAnalysis/InstructionSemantics/IntervalSemantics.h>
     static BaseSemantics::RiscOperatorsPtr make_ops() {
         BaseSemantics::RiscOperatorsPtr retval = IntervalSemantics::RiscOperators::instance(regdict);
         TestSemantics<IntervalSemantics::SValuePtr, BaseSemantics::RegisterStateGenericPtr,
@@ -107,10 +107,10 @@ static bool do_usedef = true;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #elif SEMANTIC_DOMAIN == MULTI_DOMAIN
-#   include <Rose/BinaryAnalysis/InstructionSemantics2/MultiSemantics.h>
-#   include <Rose/BinaryAnalysis/InstructionSemantics2/PartialSymbolicSemantics.h>
-#   include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>
-#   include <Rose/BinaryAnalysis/InstructionSemantics2/IntervalSemantics.h>
+#   include <Rose/BinaryAnalysis/InstructionSemantics/MultiSemantics.h>
+#   include <Rose/BinaryAnalysis/InstructionSemantics/PartialSymbolicSemantics.h>
+#   include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
+#   include <Rose/BinaryAnalysis/InstructionSemantics/IntervalSemantics.h>
     static BaseSemantics::RiscOperatorsPtr make_ops() {
         MultiSemantics::RiscOperatorsPtr ops = MultiSemantics::RiscOperators::instance(regdict);
         PartialSymbolicSemantics::RiscOperatorsPtr s1 = PartialSymbolicSemantics::RiscOperators::instance(regdict);

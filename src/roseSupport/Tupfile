@@ -4,9 +4,9 @@ run $(librose_compile) Combinatorics.C IncludeDirective.C \
     memoryUsage.C optionDeclaration.C rangemap.C roseTranslators.C \
     sourceLocationInheritedAttribute.C stringify.C transformationSupport.C utility_functions.C
 
-run $(public_header) Combinatorics.h CommandLine.h Diagnostics.h IncludeDirective.h callbacks.h initialize.h \
-    optionDeclaration.h rangemap.h roseTranslators.h SourceLocation.h sourceLocationInheritedAttribute.h stringify.h \
-    transformationSupport.h utility_functions.h RoseException.h
+run $(public_header) Combinatorics.h IncludeDirective.h callbacks.h \
+    optionDeclaration.h rangemap.h roseTranslators.h sourceLocationInheritedAttribute.h stringify.h \
+    transformationSupport.h utility_functions.h
 
 # Strange name for a header file (#include'd by rose.h)
 run $(public_header) utility_functionsImpl.C

@@ -14,8 +14,8 @@
 #include <Rose/BinaryAnalysis/Concolic/Specimen.h>
 #include <Rose/BinaryAnalysis/Concolic/TestCase.h>
 #include <Rose/BinaryAnalysis/Concolic/TestSuite.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
 
 #include <boost/algorithm/string/predicate.hpp>
@@ -40,8 +40,8 @@
 #include <Sawyer/DatabasePostgresql.h>
 #endif
 
-namespace BS = Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
-namespace IS = Rose::BinaryAnalysis::InstructionSemantics2;
+namespace BS = Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;
+namespace IS = Rose::BinaryAnalysis::InstructionSemantics;
 
 namespace Rose {
 namespace BinaryAnalysis {

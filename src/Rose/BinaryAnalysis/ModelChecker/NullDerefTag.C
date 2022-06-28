@@ -3,11 +3,11 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/ModelChecker/NullDerefTag.h>
 
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/SValue.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/SValue.h>
 
 #include <boost/lexical_cast.hpp>
 
-namespace BS = Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
+namespace BS = Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;
 
 namespace Rose {
 namespace BinaryAnalysis {

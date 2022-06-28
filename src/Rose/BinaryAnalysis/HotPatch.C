@@ -2,14 +2,14 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
 
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/RiscOperators.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/SValue.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RiscOperators.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/SValue.h>
 #include <Rose/BinaryAnalysis/HotPatch.h>
 
 using namespace Sawyer::Message::Common;
 
-typedef Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr SValuePtr;
-typedef Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RiscOperatorsPtr RiscOperatorsPtr;
+typedef Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::SValuePtr SValuePtr;
+typedef Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::RiscOperatorsPtr RiscOperatorsPtr;
 
 namespace Rose {
 namespace BinaryAnalysis {

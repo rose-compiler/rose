@@ -94,7 +94,7 @@ public:
     virtual void summaryStep(std::ostream&, size_t idx, const std::string &name) = 0; /**< Function summary within vertex. */
     virtual void edge(std::ostream&, const std::string&) = 0; /**< Name of edge along path. */
     virtual void state(std::ostream&, size_t vertexIdx, const std::string &title,
-                       const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::StatePtr&,
+                       const Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::StatePtr&,
                        const Rose::BinaryAnalysis::RegisterDictionary*) = 0; /**< Semantic state within path. */
 };
 
@@ -139,7 +139,7 @@ public:
     void summaryStep(std::ostream&, size_t idx, const std::string &name) override {}
     void edge(std::ostream&, const std::string &name) override {}
     void state(std::ostream&, size_t vertexIdx, const std::string &title,
-               const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::StatePtr&,
+               const Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::StatePtr&,
                const Rose::BinaryAnalysis::RegisterDictionary*) override {}
     void solverEvidence(std::ostream&, const Rose::BinaryAnalysis::SmtSolverPtr&) override {}
 };
@@ -187,7 +187,7 @@ public:
     void summaryStep(std::ostream&, size_t idx, const std::string &name) override;
     void edge(std::ostream&, const std::string &name) override;
     void state(std::ostream&, size_t vertexIdx, const std::string &title,
-               const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::StatePtr&,
+               const Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::StatePtr&,
                const Rose::BinaryAnalysis::RegisterDictionary*) override;
     void solverEvidence(std::ostream&, const Rose::BinaryAnalysis::SmtSolverPtr&) override;
 };
@@ -249,7 +249,7 @@ public:
     void summaryStep(std::ostream&, size_t idx, const std::string &name) override;
     void edge(std::ostream&, const std::string &name) override;
     void state(std::ostream&, size_t vertexIdx, const std::string &title,
-               const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::StatePtr&,
+               const Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::StatePtr&,
                const Rose::BinaryAnalysis::RegisterDictionary*) override;
     void solverEvidence(std::ostream&, const Rose::BinaryAnalysis::SmtSolverPtr&) override;
 };
@@ -339,7 +339,7 @@ pathEndpointFunctionNames(const Rose::BinaryAnalysis::FeasiblePath&, const Rose:
 void
 printPath(std::ostream&, const Rose::BinaryAnalysis::FeasiblePath&,
           const Rose::BinaryAnalysis::Partitioner2::CfgPath&, const Rose::BinaryAnalysis::SmtSolverPtr&,
-          const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&,
+          const Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::RiscOperatorsPtr&,
           SgAsmInstruction *lastInsn, ShowStates::Flag, const OutputFormatter::Ptr&);
 
 /** Compute calling conventions. */

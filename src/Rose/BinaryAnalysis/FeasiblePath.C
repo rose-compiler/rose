@@ -3,7 +3,7 @@
 #include <sage3basic.h>
 
 #include <AsmUnparser_compat.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 #include <Rose/BinaryAnalysis/FeasiblePath.h>
 #include <Rose/BinaryAnalysis/SymbolicExprParser.h>
 #include <Combinatorics.h>
@@ -17,13 +17,13 @@
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesElf.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Sawyer/GraphAlgorithm.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/SymbolicMemory.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/TraceSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/SymbolicMemory.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
 
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/lexical_cast.hpp>
 
-using namespace Rose::BinaryAnalysis::InstructionSemantics2;
+using namespace Rose::BinaryAnalysis::InstructionSemantics;
 using namespace Sawyer::Message::Common;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
@@ -961,7 +961,7 @@ FeasiblePath::buildVirtualCpu(const P2::Partitioner &partitioner, const P2::CfgP
 
     // More return value stuff, continued from above
 #ifdef ROSE_ENABLE_ASM_AARCH64
-    if (boost::dynamic_pointer_cast<InstructionSemantics2::DispatcherAarch64>(cpu)) {
+    if (boost::dynamic_pointer_cast<InstructionSemantics::DispatcherAarch64>(cpu)) {
         REG_RETURN_ = registers_->find("x0");
     }
 #endif
@@ -1104,15 +1104,15 @@ FeasiblePath::processFunctionSummary(const P2::ControlFlowGraph::ConstVertexIter
         ops->writeRegister(REG_RETURN_, retval);
 
         // Simulate function returning to caller
-        if (boost::dynamic_pointer_cast<InstructionSemantics2::DispatcherPowerpc>(cpu)) {
+        if (boost::dynamic_pointer_cast<InstructionSemantics::DispatcherPowerpc>(cpu)) {
             // PowerPC calling convention stores the return address in the link register (LR)
             const RegisterDescriptor LR = cpu->callReturnRegister();
             ASSERT_forbid(LR.isEmpty());
             BaseSemantics::SValuePtr returnTarget = ops->readRegister(LR, ops->undefined_(LR.nBits()));
             ops->writeRegister(cpu->instructionPointerRegister(), returnTarget);
 
-        } else if (boost::dynamic_pointer_cast<InstructionSemantics2::DispatcherX86>(cpu) ||
-                   boost::dynamic_pointer_cast<InstructionSemantics2::DispatcherM68k>(cpu)) {
+        } else if (boost::dynamic_pointer_cast<InstructionSemantics::DispatcherX86>(cpu) ||
+                   boost::dynamic_pointer_cast<InstructionSemantics::DispatcherM68k>(cpu)) {
             // x86, amd64, and m68k store the return address at the top of the stack
             const RegisterDescriptor SP = cpu->stackPointerRegister();
             ASSERT_forbid(SP.isEmpty());
@@ -1129,7 +1129,7 @@ FeasiblePath::processFunctionSummary(const P2::ControlFlowGraph::ConstVertexIter
             stackPointer = ops->add(stackPointer, ops->number_(stackPointer->nBits(), sd));
             ops->writeRegister(cpu->stackPointerRegister(), stackPointer);
 #ifdef ROSE_ENABLE_ASM_AARCH64
-        } else if (boost::dynamic_pointer_cast<InstructionSemantics2::DispatcherAarch64>(cpu)) {
+        } else if (boost::dynamic_pointer_cast<InstructionSemantics::DispatcherAarch64>(cpu)) {
             // Return address is in the link register, lr
             const RegisterDescriptor LR = cpu->callReturnRegister();
             ASSERT_forbid(LR.isEmpty());
@@ -1137,7 +1137,7 @@ FeasiblePath::processFunctionSummary(const P2::ControlFlowGraph::ConstVertexIter
             ops->writeRegister(cpu->instructionPointerRegister(), returnTarget);
 #endif
 #ifdef ROSE_ENABLE_ASM_AARCH32
-        } else if (boost::dynamic_pointer_cast<InstructionSemantics2::DispatcherAarch32>(cpu)) {
+        } else if (boost::dynamic_pointer_cast<InstructionSemantics::DispatcherAarch32>(cpu)) {
             // Return address is in the link register, lr
             const RegisterDescriptor LR = cpu->callReturnRegister();
             ASSERT_forbid(LR.isEmpty());

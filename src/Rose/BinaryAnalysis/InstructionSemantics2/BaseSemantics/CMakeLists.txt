@@ -1,23 +1,3 @@
-add_library(roseBinaryAnalysisInstructionSemantics2BaseSemantics OBJECT
-  BaseSemantics.C
-  Dispatcher.C
-  Exception.C
-  MemoryCell.C
-  MemoryCellList.C
-  MemoryCellMap.C
-  MemoryCellState.C
-  MemoryState.C
-  Merger.C
-  RegisterState.C
-  RegisterStateGeneric.C
-  RiscOperators.C
-  State.C
-  SValue.C
-  SymbolicMemory.C
-  )
-
-add_dependencies(roseBinaryAnalysisInstructionSemantics2BaseSemantics rosetta_generated)
-
 install(FILES
   Dispatcher.h
   Exception.h
