@@ -18,6 +18,7 @@ add_library(roseBinaryAnalysisInstructionSemantics OBJECT
   SourceAstSemantics.C
   StaticSemantics.C
   SymbolicSemantics.C
+  TaintSemantics.C
   TraceSemantics.C
   Util.C)
 
@@ -42,6 +43,7 @@ install(FILES
   StaticSemantics.h
   SymbolicSemantics.h
   TestSemantics.h
+  TaintSemantics.h
   TraceSemantics.h
   Util.h
 

@@ -374,6 +374,7 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/InstructionSemantics/StaticSemantics.h			\
 	Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h			\
 	Rose/BinaryAnalysis/InstructionSemantics/TestSemantics.h			\
+	Rose/BinaryAnalysis/InstructionSemantics/TaintSemantics.h			\
 	Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h			\
 	Rose/BinaryAnalysis/InstructionSemantics/Util.h					\
 	Rose/BinaryAnalysis/InstructionSemantics2.h					\

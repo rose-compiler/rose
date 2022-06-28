@@ -70,6 +70,7 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/InstructionSemantics/SourceAstSemantics.C			\
 	BinaryAnalysis/InstructionSemantics/StaticSemantics.C				\
 	BinaryAnalysis/InstructionSemantics/SymbolicSemantics.C				\
+	BinaryAnalysis/InstructionSemantics/TaintSemantics.C				\
 	BinaryAnalysis/InstructionSemantics/TraceSemantics.C				\
 	BinaryAnalysis/InstructionSemantics/Util.C					\
 	BinaryAnalysis/ModelChecker/BasicBlockUnit.C					\
