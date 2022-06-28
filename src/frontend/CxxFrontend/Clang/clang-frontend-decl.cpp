@@ -1401,6 +1401,14 @@ bool ClangToSageTranslator::VisitFunctionDecl(clang::FunctionDecl * function_dec
 
     SgName name(function_decl->getNameAsString());
 
+    clang::QualType funcQualType = function_decl->getType();
+
+    const clang::Type* funcType = funcQualType.getTypePtr();
+
+    const clang::FunctionProtoType* funcProtoType = (isa<clang::FunctionProtoType>(funcType)) ? (clang::FunctionProtoType*)funcType : nullptr;
+
+    bool diffInProtoType = false;
+
 #if DEBUG_VISIT_DECL
     std::cerr << "ClangToSageTranslator::VisitFunctionDecl name:" << name.getString() << std::endl;
 #endif
@@ -1410,7 +1418,17 @@ bool ClangToSageTranslator::VisitFunctionDecl(clang::FunctionDecl * function_dec
     SgFunctionParameterList * param_list = SageBuilder::buildFunctionParameterList_nfi();
       applySourceRange(param_list, function_decl->getSourceRange()); // FIXME find the good SourceRange (should be stored by Clang...)
 
+    if(funcProtoType != nullptr && funcProtoType->getNumParams() != function_decl->getNumParams())
+        diffInProtoType = true;
+
     for (unsigned i = 0; i < function_decl->getNumParams(); i++) {
+        if(funcProtoType != nullptr && function_decl->getParamDecl(i)->getType() != funcProtoType->getParamType(i))
+        {
+#if DEBUG_VISIT_DECL
+            std::cout << "Func arg type :" << function_decl->getParamDecl(i)->getType().getAsString() << " funcProtoType arg type:" << funcProtoType->getParamType(i).getAsString() << std::endl;
+#endif
+            diffInProtoType = true;
+        } 
         SgNode * tmp_init_name = Traverse(function_decl->getParamDecl(i));
         SgInitializedName * init_name = isSgInitializedName(tmp_init_name);
 
@@ -1530,7 +1548,16 @@ bool ClangToSageTranslator::VisitFunctionDecl(clang::FunctionDecl * function_dec
 
         sg_function_decl->set_firstNondefiningDeclaration(first_decl);
         first_decl->set_definingDeclaration(sg_function_decl);
-*/
+*/ 
+        // Pei-Hung (06/27/22) This seems to be the way to get test2004_21.c unprarsed properly
+        // by checking if the functionProtoType has different argument types.
+
+        if(diffInProtoType)
+        {
+            sg_function_decl->set_parameterList_syntax(param_list);
+            sg_function_decl->set_type_syntax_is_available(true);
+            sg_function_decl->set_oldStyleDefinition(true);
+        }
     }
     else {
         sg_function_decl = SageBuilder::buildNondefiningFunctionDeclaration(name, ret_type, param_list, NULL);
