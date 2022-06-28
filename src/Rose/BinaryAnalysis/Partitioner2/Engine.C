@@ -2032,16 +2032,6 @@ Engine::makeContainerFunctions(Partitioner &partitioner, SgAsmInterpretation *in
     std::vector<Function::Ptr> retval;
     Sawyer::Message::Stream where(mlog[WHERE]);
 
-    if (settings_.partitioner.findingEntryFunctions) {
-        SAWYER_MESG(where) <<"making entry point functions\n";
-        for (const Function::Ptr &function: makeEntryFunctions(partitioner, interp))
-            insertUnique(retval, function, sortFunctionsByAddress);
-    }
-    if (settings_.partitioner.findingErrorFunctions) {
-        SAWYER_MESG(where) <<"making error-handling functions\n";
-        for (const Function::Ptr &function: makeErrorHandlingFunctions(partitioner, interp))
-            insertUnique(retval, function, sortFunctionsByAddress);
-    }
     if (settings_.partitioner.findingImportFunctions) {
         SAWYER_MESG(where) <<"making import functions\n";
         for (const Function::Ptr &function: makeImportFunctions(partitioner, interp))
@@ -2055,6 +2045,16 @@ Engine::makeContainerFunctions(Partitioner &partitioner, SgAsmInterpretation *in
     if (settings_.partitioner.findingSymbolFunctions) {
         SAWYER_MESG(where) <<"making symbol table functions\n";
         for (const Function::Ptr &function: makeSymbolFunctions(partitioner, interp))
+            insertUnique(retval, function, sortFunctionsByAddress);
+    }
+    if (settings_.partitioner.findingEntryFunctions) {
+        SAWYER_MESG(where) <<"making entry point functions\n";
+        for (const Function::Ptr &function: makeEntryFunctions(partitioner, interp))
+            insertUnique(retval, function, sortFunctionsByAddress);
+    }
+    if (settings_.partitioner.findingErrorFunctions) {
+        SAWYER_MESG(where) <<"making error-handling functions\n";
+        for (const Function::Ptr &function: makeErrorHandlingFunctions(partitioner, interp))
             insertUnique(retval, function, sortFunctionsByAddress);
     }
     return retval;
