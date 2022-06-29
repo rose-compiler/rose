@@ -8,7 +8,7 @@ Functions detected from binary executable:
     4 0x08048310 0x08048310 0x08048316     1/6      .C.I...G..........  unknown       yes        +4 __libc_start_main@plt           
     5 0x08048320 0x08048320 0x08048326     1/6      .C.I...G..........  unknown        no        +4 _exit@plt                       
     6 0x08048330 0x08048330 0x08048336     1/6      .C.I...G..........  unknown       yes        +4 __gmon_start__@plt              
-    7 0x08048340 0x08048340 0x08048362    14/34     E......G..........  unknown        no           _start                          
+    7 0x08048340 0x08048340 0x08048362    14/34     E....S.G..........  unknown        no           _start                          
     8 0x08048364 0x08048364 0x08048388    15/36     .C...S.G..........  unknown       yes        +4 call_gmon_start                 
     9 0x08048390 0x08048390 0x080483ce    20/62     .C...S.G..........  unknown       yes        +4 __do_global_dtors_aux           
    10 0x080483d0 0x080483d0 0x08048404    16/52     .C...S.G..........  unknown       yes        +4 frame_dummy                     

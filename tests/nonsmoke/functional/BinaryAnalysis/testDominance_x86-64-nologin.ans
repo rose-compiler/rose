@@ -18,8 +18,8 @@ CFG dominators for function 0x00400500:
 CFG dominators for function 0x00400510:
   function 0x00400510 dominator of 0x00400510<0> is none
 CFG dominators for function 0x00400520:
-  function 0x00400520 dominator of 0x0040054a<0> is 0x00400520<1>
-  function 0x00400520 dominator of 0x00400520<1> is none
+  function 0x00400520 dominator of 0x00400520<0> is none
+  function 0x00400520 dominator of 0x0040054a<1> is 0x00400520<0>
 CFG dominators for function 0x0040054c:
   function 0x0040054c dominator of 0x0040055c<0> is 0x0040054c<2>
   function 0x0040054c dominator of 0x0040055e<1> is 0x0040054c<2>

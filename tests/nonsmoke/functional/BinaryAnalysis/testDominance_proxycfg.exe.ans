@@ -179,41 +179,41 @@ CFG dominators for function 0x010016ac:
   function 0x010016ac dominator of 0x01001720<15> is 0x01001714<13>
   function 0x010016ac dominator of 0x01001718<16> is 0x01001714<13>
 CFG dominators for function 0x01001774:
-  function 0x01001774 dominator of 0x010018e2<0> is 0x010018b3<8>
+  function 0x01001774 dominator of 0x010018e2<0> is 0x010018b3<6>
   function 0x01001774 dominator of 0x010018dc<1> is none
   function 0x01001774 dominator of 0x010018d5<2> is none
-  function 0x01001774 dominator of 0x01001774<3> is none
-  function 0x01001774 dominator of 0x010018c9<4> is none
-  function 0x01001774 dominator of 0x010018c6<5> is none
-  function 0x01001774 dominator of 0x010018b5<6> is none
-  function 0x01001774 dominator of 0x010018ed<7> is 0x010018e2<0>
-  function 0x01001774 dominator of 0x010018b3<8> is 0x010018ad<34>
-  function 0x01001774 dominator of 0x0100183b<9> is 0x01001836<33>
-  function 0x01001774 dominator of 0x01001899<10> is 0x01001880<14>
-  function 0x01001774 dominator of 0x0100184a<11> is 0x0100183b<9>
-  function 0x01001774 dominator of 0x0100186e<12> is 0x0100184a<11>
-  function 0x01001774 dominator of 0x01001835<13> is 0x0100182a<32>
-  function 0x01001774 dominator of 0x01001880<14> is 0x0100186e<12>
-  function 0x01001774 dominator of 0x01001780<15> is 0x01001774<3>
-  function 0x01001774 dominator of 0x01001789<16> is 0x01001780<15>
-  function 0x01001774 dominator of 0x01001790<17> is 0x01001789<16>
-  function 0x01001774 dominator of 0x010017af<18> is 0x01001789<16>
-  function 0x01001774 dominator of 0x0100179d<19> is 0x01001790<17>
-  function 0x01001774 dominator of 0x010017a8<20> is 0x0100179d<19>
-  function 0x01001774 dominator of 0x010017c7<21> is 0x0100179d<19>
-  function 0x01001774 dominator of 0x010017cd<22> is 0x010017c7<21>
-  function 0x01001774 dominator of 0x010017db<23> is 0x01001789<16>
-  function 0x01001774 dominator of 0x010017b4<24> is 0x010017a8<20>
-  function 0x01001774 dominator of 0x010017bd<25> is 0x010017b4<24>
-  function 0x01001774 dominator of 0x010017d5<26> is 0x0100179d<19>
-  function 0x01001774 dominator of 0x010017e6<27> is 0x010017db<23>
-  function 0x01001774 dominator of 0x010017fb<28> is 0x010017e6<27>
-  function 0x01001774 dominator of 0x01001809<29> is 0x010017fb<28>
-  function 0x01001774 dominator of 0x010018a6<30> is 0x01001899<10>
-  function 0x01001774 dominator of 0x01001822<31> is 0x01001809<29>
-  function 0x01001774 dominator of 0x0100182a<32> is 0x01001822<31>
-  function 0x01001774 dominator of 0x01001836<33> is 0x01001822<31>
-  function 0x01001774 dominator of 0x010018ad<34> is 0x01001899<10>
+  function 0x01001774 dominator of 0x010018c9<3> is none
+  function 0x01001774 dominator of 0x010018c6<4> is none
+  function 0x01001774 dominator of 0x010018b5<5> is none
+  function 0x01001774 dominator of 0x010018b3<6> is 0x010018ad<33>
+  function 0x01001774 dominator of 0x0100183b<7> is 0x01001836<32>
+  function 0x01001774 dominator of 0x01001899<8> is 0x01001880<13>
+  function 0x01001774 dominator of 0x0100184a<9> is 0x0100183b<7>
+  function 0x01001774 dominator of 0x0100186e<10> is 0x0100184a<9>
+  function 0x01001774 dominator of 0x01001835<11> is 0x0100182a<31>
+  function 0x01001774 dominator of 0x01001774<12> is none
+  function 0x01001774 dominator of 0x01001880<13> is 0x0100186e<10>
+  function 0x01001774 dominator of 0x01001780<14> is 0x01001774<12>
+  function 0x01001774 dominator of 0x01001789<15> is 0x01001780<14>
+  function 0x01001774 dominator of 0x01001790<16> is 0x01001789<15>
+  function 0x01001774 dominator of 0x010017af<17> is 0x01001789<15>
+  function 0x01001774 dominator of 0x0100179d<18> is 0x01001790<16>
+  function 0x01001774 dominator of 0x010017a8<19> is 0x0100179d<18>
+  function 0x01001774 dominator of 0x010017c7<20> is 0x0100179d<18>
+  function 0x01001774 dominator of 0x010017cd<21> is 0x010017c7<20>
+  function 0x01001774 dominator of 0x010017db<22> is 0x01001789<15>
+  function 0x01001774 dominator of 0x010017b4<23> is 0x010017a8<19>
+  function 0x01001774 dominator of 0x010017bd<24> is 0x010017b4<23>
+  function 0x01001774 dominator of 0x010017d5<25> is 0x0100179d<18>
+  function 0x01001774 dominator of 0x010017e6<26> is 0x010017db<22>
+  function 0x01001774 dominator of 0x010017fb<27> is 0x010017e6<26>
+  function 0x01001774 dominator of 0x01001809<28> is 0x010017fb<27>
+  function 0x01001774 dominator of 0x010018a6<29> is 0x01001899<8>
+  function 0x01001774 dominator of 0x01001822<30> is 0x01001809<28>
+  function 0x01001774 dominator of 0x0100182a<31> is 0x01001822<30>
+  function 0x01001774 dominator of 0x01001836<32> is 0x01001822<30>
+  function 0x01001774 dominator of 0x010018ad<33> is 0x01001899<8>
+  function 0x01001774 dominator of 0x010018ed<34> is 0x010018e2<0>
 CFG dominators for function 0x010018f4:
   function 0x010018f4 dominator of 0x010018f4<0> is none
 CFG dominators for function 0x01001900:

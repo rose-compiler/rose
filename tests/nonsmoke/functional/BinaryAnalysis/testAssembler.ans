@@ -69,7 +69,7 @@ Skipping 10 bytes
 0x080482b0: ff 25 ac 95 04 08       |.%....  | F080482b0 E.....    jmp    dword ds:[0x080495ac<.got.plt+0x10>]
 
 Skipping 10 bytes
-0x080482c0: ================================== Function (entry point, graph) <_start>
+0x080482c0: ================================== Function (entry point, symbol, graph) <_start>
 0x080482c0: Function does not return to caller.
 
 0x080482c0: 31 ed                   |1.      | F080482c0 EH....    xor    ebp, ebp
