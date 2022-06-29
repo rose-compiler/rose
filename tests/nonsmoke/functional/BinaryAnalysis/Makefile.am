@@ -406,7 +406,7 @@ noinst_PROGRAMS += testAstIO
 testAstIO_SOURCES=testAstIO.C
 testAstIO_LDADD=$(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
-#TEST_TARGETS += testAstIO.passed
+TEST_TARGETS += testAstIO.passed
 
 testAstIO.passed: $(TEST_EXIT_STATUS) testAstIO conditionalDisable
 	@$(RTH_RUN)								\
@@ -424,7 +424,7 @@ noinst_PROGRAMS += testAstNeuter
 testAstNeuter_SOURCES=testAstNeuter.C
 testAstNeuter_LDADD=$(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
 
-#TEST_TARGETS += testAstNeuter.passed
+TEST_TARGETS += testAstNeuter.passed
 EXTRA_DIST += testAstNeuter.conf
 
 MOSTLYCLEANFILES += testAstNeuter.ast
@@ -1355,7 +1355,7 @@ astio_Specimens =						\
 
 astio_Targets = $(addprefix astio_, $(addsuffix .passed, $(astio_Specimens)))
 
-#TEST_TARGETS += $(astio_Targets)
+TEST_TARGETS += $(astio_Targets)
 
 $(astio_Targets): astio_%.passed: $(SPECIMEN_DIR)/% testAstIO conditionalDisable
 	@$(RTH_RUN)							\
@@ -1407,20 +1407,18 @@ check-random-input: $(testRandomInput_Targets) tri_a64.passed
 #############################################################################################
 
 # DQ (2/6/2017): This fails to to compile with GNU 4.8.4 and Boost 1.60.
-# noinst_PROGRAMS += testSageSerialization
-# testSageSerialization_SOURCES = testSageSerialization.C
-# testSageSerialization_LDADD = $(ROSE_SEPARATE_LIBS)
+noinst_PROGRAMS += testSageSerialization
+testSageSerialization_SOURCES = testSageSerialization.C
+testSageSerialization_LDADD = $(ROSE_SEPARATE_LIBS)
 
-# TEST_TARGETS += testSageSerialization.passed
+TEST_TARGETS += testSageSerialization.passed
 
-# testSageSerialization.passed: testSageSerialization conditionalDisable
-# 	@$(RTH_RUN)								\
-#		TITLE="serialization of Sage binary analysis nodes [$@]"	\
-#		DISABLED="$$(./conditionalDisable)"				\
-#		CMD="$$(pwd)/testSageSerialization"				\
-#		$(top_srcdir)/scripts/test_exit_status $@
-
-
+testSageSerialization.passed: testSageSerialization conditionalDisable
+	@$(RTH_RUN)								\
+		TITLE="serialization of Sage binary analysis nodes [$@]"	\
+		DISABLED="$$(./conditionalDisable)"				\
+		CMD="$$(pwd)/testSageSerialization"				\
+		$(top_srcdir)/scripts/test_exit_status $@
 
 #############################################################################################
 # PDF File Generation for Binaries
