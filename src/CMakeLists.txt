@@ -174,7 +174,9 @@ if(enable-rosehpct)
 endif()
 
 # TODO Conditional either EDG or CLang or nothing
-list(APPEND rose_LIB_SRCS $<TARGET_OBJECTS:edg_internal> $<TARGET_OBJECTS:newsage>)
+if(enable-cpp)
+  list(APPEND rose_LIB_SRCS $<TARGET_OBJECTS:edg_internal> $<TARGET_OBJECTS:newsage>)
+endif()
 
 ########################################################################################################################
 # The ROSE library itself (librose.so, librose.a, librose.dll)
