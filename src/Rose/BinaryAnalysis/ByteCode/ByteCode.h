@@ -34,8 +34,11 @@ public:
   virtual const void decode(Disassembler*) const = 0;
   virtual const SgAsmInstructionList* instructions() const = 0;
 
-  // Methods associated with basic blocks (Partitioner2)
+  /* Set of instruction branch targets */
+  std::set<rose_addr_t> targets() const;
 
+  // Methods associated with basic blocks (Rose::BinaryAnalysis::Partitioner2)
+  //
   const std::vector<BasicBlockPtr>& blocks() const {
     return blocks_;
   }

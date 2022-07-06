@@ -5,7 +5,7 @@
 
 #include <Rose/BinaryAnalysis/ByteCode/ByteCode.h>
 
-#define DEBUG_ON 0
+#define DEBUG_PRINT 0
 
 using namespace Rose::BinaryAnalysis::Partitioner2;
 using PoolEntry = SgAsmJvmConstantPoolEntry;
@@ -16,6 +16,22 @@ using std::endl;
 namespace Rose {
 namespace BinaryAnalysis {
 namespace ByteCode {
+
+std::set<rose_addr_t> Method::targets() const {
+  std::set<rose_addr_t> retval{};
+  for (auto insn : instructions()->get_instructions()) {
+    bool complete;
+    auto successors = insn->getSuccessors(complete);
+      for (auto successor : successors.values()) {
+#if DEBUG_PRINT
+        cout << "... Method::targets():adding successor target va:" << successor << endl;
+#endif
+        retval.insert(successor);
+      }
+  }
+  return retval;
+}
+
 
 void Class::partition()
 {
@@ -29,6 +45,7 @@ void Class::partition()
 
     // Allow const_cast only here: TODO: consider fixing this (adding basic blocks)?
     Method* method = const_cast<Method*>(constMethod);
+    std::set<rose_addr_t> targets = method->targets();
 
     auto instructions = method->instructions()->get_instructions();
     if (instructions.size() > 0) {
@@ -37,6 +54,31 @@ void Class::partition()
 
       for (auto insn : instructions) {
         va = insn->get_address();
+
+        // A new block is needed if this instruction is a target of a branch and nonterminal
+        if (targets.find(va) != targets.end() && !insn->terminatesBasicBlock()) {
+          // But a new block is not needed if this is the first instruction in the block
+          if (!block->isEmpty() && va != block->address()) {
+#if DEBUG_PRINT
+            cout << "... splitting block after:" << block->instructions().back()->get_address()
+                 << " va:" << va
+                 << " fallthrough:" << block->fallthroughVa()
+                 << " kind:" << insn->get_anyKind()
+                 << " :" << insn->description()
+                 << endl;
+#endif
+            // If the instruction doesn't have a branch target, add fall through successor
+            if (!block->instructions().back()->branchTarget()) {
+#if DEBUG_PRINT
+              cout << "... adding successor fall-through edge from va:"
+                   << block->instructions().back()->get_address() << " to:" << block->fallthroughVa() << endl;
+#endif
+              block->insertSuccessor(block->fallthroughVa(), nBits, EdgeType::E_NORMAL, Confidence::PROVED);
+            }
+            needNewBlock = true;
+          }
+        }
+
         if (needNewBlock) {
           block = Partitioner2::BasicBlock::instance(va, partitioner);
           function->insertBasicBlock(va);
@@ -45,25 +87,15 @@ void Class::partition()
         }
         block->append(partitioner, insn);
 
-        if (insn->terminatesBasicBlock()) {
-#if DEBUG_ON
-          std::cout << "--> terminates (post call) with " << insn->description() << std::endl;
+        // Add successors if this instruction terminates the block
+        if (insn->terminatesBasicBlock() && insn != instructions.back()) {
+          bool complete;
+          auto successors = insn->getSuccessors(complete); // complete is a return value
+          for (auto successor : successors.values()) {
+#if DEBUG_PRINT
+            cout << "... adding successor edge from va:" << va << " to:" << successor << endl;
 #endif
-          if (insn != instructions.back()) {
-            auto target = insn->branchTarget();
-            if (insn->branchTarget()) {
-#if DEBUG_ON
-              cout << "... adding successor target edge from va:" << va << " to:" << insn->branchTarget().get() << endl;
-#endif
-              block->insertSuccessor(insn->branchTarget().get(), nBits, EdgeType::E_NORMAL, Confidence::PROVED);
-            }
-            else {
-#if DEBUG_ON
-              cout << "... adding successor block edge from va:" << va << " to:" << block->fallthroughVa() << endl;
-#endif
-              block->insertSuccessor(block->fallthroughVa(), nBits, EdgeType::E_NORMAL, Confidence::PROVED);
-            }
-            needNewBlock = true;
+            block->insertSuccessor(successor, nBits, EdgeType::E_NORMAL, Confidence::PROVED);
           }
           // Set properties of the block
           SgAsmInstruction* last = block->instructions().back();
@@ -73,6 +105,7 @@ void Class::partition()
           else if (last->isFunctionCallFast(block->instructions(), nullptr, nullptr)) {
             block->isFunctionCall(true);
           }
+          needNewBlock = true;
         }
       }
     }
@@ -134,37 +167,16 @@ void Class::digraph()
     for (int bidx = 0; bidx < method->blocks().size(); bidx++) {
       auto block = method->blocks()[bidx];
       auto tail = block->instructions().back();
-      bool complete;
-
-#if 0
-      // Successors from block
+      // Successors edges from the block
       if (block->successors().isCached()) {
         for (auto successor : block->successors().get()) {
           if (auto targetVa = successor.expr()->toUnsigned()) {
-            // TODO: Note the cast to uint32_t, why not set nBits to 64?
-            rose_addr_t va = (uint32_t) targetVa.get();
+            rose_addr_t va = targetVa.get();
             dotFile << "  block_" << midx << "_" << bidx << ":" << tail->get_address()
                     << " -> block_" << midx << "_" << vaToBlock[va] << ":" << va << endl;
           }
         }
       }
-#else
-      // Successor edges
-      auto successors = tail->getSuccessors(complete); // complete is a return value
-      for (auto successor : successors.values()) {
-        dotFile << "  block_" << midx << "_" << bidx << ":" << tail->get_address()
-                << " -> block_" << midx << "_" << vaToBlock[successor] << ":" << successor << endl;
-      }
-
-#if 0
-      // Fall-through successor edge
-      if (!complete && (bidx+1 < method->blocks().size())) {
-        auto nextVa = method->blocks()[bidx+1]->address();
-        dotFile << "  block_" << midx << "_" << bidx << ":" << tail->get_address()
-                << " -> block_" << midx << "_" << bidx+1 << ":" << nextVa << endl;
-      }
-#endif
-#endif
     }
   }
   dotFile << "}\n";
