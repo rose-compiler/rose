@@ -164,6 +164,8 @@ switchSuccessors(const SgAsmJvmInstruction* insn, bool &complete) {
               << ": " << defOff
               << ": " << low
               << ": " << high
+              << ": va: " << va
+              << ": fall_through: " << va + insn->get_size()
               << std::endl;
 #endif
 
@@ -171,7 +173,8 @@ switchSuccessors(const SgAsmJvmInstruction* insn, bool &complete) {
     if (nOperands == insn->nOperands()) {
       retval.insert(va + defOff);
 #if DEBUG_PRINT
-      std::cout << "... switchSuccessors: insert " << va + defOff << std::endl;
+      if (kind == JvmOp::goto_) std::cout << "WARNING: GOTO!!!\n";
+        std::cout << "... switchSuccessors (fall through): insert " << va + defOff << std::endl;
 #endif
       for (int n{3}; n < nOperands; n++) {
         if ((ival = isSgAsmIntegerValueExpression(insn->operand(n)))) {
