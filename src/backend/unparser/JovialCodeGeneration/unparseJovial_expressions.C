@@ -47,6 +47,7 @@ void UnparseJovial::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpa
           case V_SgMultiplyOp:          unparseBinaryOperator(expr, "*", info);  break;
           case V_SgDivideOp:            unparseBinaryOperator(expr, "/", info);  break;
           case V_SgModOp:               unparseBinaryOperator(expr,"MOD",info);  break;
+          case V_SgEqualityOp:          unparseBinaryOperator(expr, "=", info);  break;
           case V_SgExponentiationOp:    unparseBinaryOperator(expr,"**", info);  break;
           case V_SgLessThanOp:          unparseBinaryOperator(expr, "<", info);  break;
           case V_SgLessOrEqualOp:       unparseBinaryOperator(expr,"<=", info);  break;
@@ -54,9 +55,9 @@ void UnparseJovial::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpa
           case V_SgGreaterOrEqualOp:    unparseBinaryOperator(expr,">=", info);  break;
           case V_SgNotEqualOp:          unparseBinaryOperator(expr,"<>", info);  break;
           case V_SgBitAndOp:            unparseBinaryOperator(expr,"AND", info); break;
+          case V_SgBitEqvOp:            unparseBinaryOperator(expr,"EQV", info); break;
           case V_SgBitOrOp:             unparseBinaryOperator(expr,"OR", info);  break;
           case V_SgBitXorOp:            unparseBinaryOperator(expr,"XOR", info); break;
-          case V_SgEqualityOp:          unparseEqualityOp    (expr,       info); break;
 
           case V_SgUnaryAddOp:          unparseUnaryOperator(expr, "+", info);   break;
           case V_SgMinusOp:             unparseUnaryOperator(expr, "-", info);   break;
@@ -279,31 +280,9 @@ UnparseJovial::unparseArrayOp(SgExpression* expr, SgUnparse_Info& info)
    }
 
 void
-UnparseJovial::unparseEqualityOp(SgExpression* expr, SgUnparse_Info& info)
-   {
-     SgEqualityOp* eqOp = isSgEqualityOp(expr);
-     ROSE_ASSERT(eqOp);
-
-     SgExpression* lhs = eqOp->get_lhs_operand();
-     SgExpression* rhs = eqOp->get_rhs_operand();
-     SgType* lhs_type = lhs->get_type();
-     SgType* rhs_type = rhs->get_type();
-
-     if ((isSgJovialBitType(lhs_type) || isSgTypeBool(lhs_type)) && (isSgJovialBitType(rhs_type) || isSgTypeBool(rhs_type)) )
-        {
-           unparseBinaryOperator(expr, "EQV", info);
-        }
-     else
-        {
-           unparseBinaryOperator(expr, "=", info);
-        }
-   }
-
-void
 UnparseJovial::unparseAsteriskShapeExpr(SgExpression* expr, SgUnparse_Info& info)
    {
      ASSERT_not_null( isSgAsteriskShapeExp(expr));
-
      curprint("*");
    }
 
