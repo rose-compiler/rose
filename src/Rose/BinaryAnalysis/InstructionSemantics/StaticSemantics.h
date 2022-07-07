@@ -394,9 +394,10 @@ public:
     virtual BaseSemantics::SValuePtr shiftRightArithmetic(const BaseSemantics::SValuePtr &a_,
                                                           const BaseSemantics::SValuePtr &sa_) override;
     virtual BaseSemantics::SValuePtr equalToZero(const BaseSemantics::SValuePtr &a_) override;
-    virtual BaseSemantics::SValuePtr ite(const BaseSemantics::SValuePtr &sel_,
-                                         const BaseSemantics::SValuePtr &a_,
-                                         const BaseSemantics::SValuePtr &b_) override;
+    virtual BaseSemantics::SValuePtr iteWithStatus(const BaseSemantics::SValuePtr &sel_,
+                                                   const BaseSemantics::SValuePtr &a_,
+                                                   const BaseSemantics::SValuePtr &b_,
+                                                   IteStatus&) override;
     virtual BaseSemantics::SValuePtr isEqual(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&) override;
     virtual BaseSemantics::SValuePtr isNotEqual(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&) override;
     virtual BaseSemantics::SValuePtr isUnsignedLessThan(const BaseSemantics::SValuePtr&,

@@ -295,6 +295,7 @@ protected:
     void after(SgAsmInstruction*);
     const BaseSemantics::SValuePtr& after(const BaseSemantics::SValuePtr&);
     const BaseSemantics::SValuePtr& after(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&);
+    const BaseSemantics::SValuePtr& after(const BaseSemantics::SValuePtr&, IteStatus);
     void after(const BaseSemantics::Exception&);
     void after(const BaseSemantics::Exception&, SgAsmInstruction*);
     void after_exception();
@@ -346,8 +347,8 @@ public:
     virtual BaseSemantics::SValuePtr shiftRightArithmetic(const BaseSemantics::SValuePtr&,
                                                           const BaseSemantics::SValuePtr&) override;
     virtual BaseSemantics::SValuePtr equalToZero(const BaseSemantics::SValuePtr&) override;
-    virtual BaseSemantics::SValuePtr ite(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&,
-                                         const BaseSemantics::SValuePtr&) override;
+    virtual BaseSemantics::SValuePtr iteWithStatus(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&,
+                                                   const BaseSemantics::SValuePtr&, IteStatus&) override;
     virtual BaseSemantics::SValuePtr unsignedExtend(const BaseSemantics::SValuePtr&, size_t nbits) override;
     virtual BaseSemantics::SValuePtr signExtend(const BaseSemantics::SValuePtr&, size_t nbits) override;
     virtual BaseSemantics::SValuePtr add(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&) override;

@@ -14,9 +14,10 @@ namespace TaintSemantics {
 
 /** Whether a value is tainted. */
 enum class Taintedness {
-    UNKNOWN = 0,                                        /**< Unknown whether tainted. */
-    NO = 1,                                             /**< Not tainted. */
-    YES = 2                                             /**< Tainted. */
+    BOTTOM,                                             /**< Neither tainted nor untainted. */
+    UNTAINTED,                                          /**< Untainted. */
+    TAINTED,                                            /**< Tainted. */
+    TOP                                                 /**< Both tainted and untainted at the same time. */
 };
 
 using ExprPtr = SymbolicSemantics::ExprPtr;
@@ -48,9 +49,14 @@ using Formatter = SymbolicSemantics::Formatter;
  *  Values of type type are used whenever a value needs to be stored, such as memory addresses, the values stored at those
  *  addresses, the values stored in registers, the operands for RISC operations, and the results of those operations.
  *
- *  Taint SValues are symbolic SValues with additional taint information. */
+ *  Taint SValues are symbolic SValues with additional taint information. Taintedness is a set represented by the four possible
+ *  values of the @ref Taintedness enum. Values can be tainted, untainted, neither, or both. The "neither" case means we don't
+ *  know anything about the taintedness of the value and is also called "bottom" in dataflow parlance. When data flow merges
+ *  two values and one is tainted and the other is untainted, then the merged result is both tainted and untainted at the same
+ *  time, which is called "top" in data flow parlance. <b>Note that the @ref isBottom method inherited from @ref
+ *  SymbolicSemantics::SValue tests whether the symbolic value is a bottom value, not whether the taintedness is bottom.</b> */
 class SValue: public SymbolicSemantics::SValue {
-    Taintedness taintedness_ = Taintedness::UNKNOWN;
+    Taintedness taintedness_ = Taintedness::BOTTOM;
 
 public:
     /** Base type. */
@@ -91,7 +97,11 @@ public:
         return SValuePtr(new SValue(SymbolicExpr::makeIntegerVariable(1)));
     }
 
-    /** Instantiate a new data-flow bottom value of specified width. */
+    /** Instantiate a new data-flow bottom value of specified width.
+     *
+     *  The symbolic value is what is set to bottom in this case. The taintedness is always set to bottom by all the static
+     *  allocating constructors. If you need a different taintedness then you need to change it with the @ref taintedness
+     *  property. */
     static SValuePtr instance_bottom(size_t nbits) {
         return SValuePtr(new SValue(SymbolicExpr::makeIntegerVariable(nbits, "", ExprNode::BOTTOM)));
     }
@@ -124,6 +134,11 @@ public:
         return instance_bottom(nbits);
     }
 
+    /*  Instantiate a new data-flow bottom value of specified width.
+     *
+     *  The symbolic value is what is set to bottom in this case. The taintedness is always set to bottom by all the static
+     *  allocating constructors. If you need a different taintedness then you need to change it with the @ref taintedness
+     *  property. */
     virtual BaseSemantics::SValuePtr undefined_(size_t nbits) const override {
         return instance_undefined(nbits);
     }
@@ -368,9 +383,10 @@ public:
     virtual BaseSemantics::SValuePtr shiftRightArithmetic(const BaseSemantics::SValuePtr &a_,
                                                           const BaseSemantics::SValuePtr &sa_) override;
     virtual BaseSemantics::SValuePtr equalToZero(const BaseSemantics::SValuePtr &a_) override;
-    virtual BaseSemantics::SValuePtr ite(const BaseSemantics::SValuePtr &sel_,
-                                         const BaseSemantics::SValuePtr &a_,
-                                         const BaseSemantics::SValuePtr &b_) override;
+    virtual BaseSemantics::SValuePtr iteWithStatus(const BaseSemantics::SValuePtr &sel_,
+                                                   const BaseSemantics::SValuePtr &a_,
+                                                   const BaseSemantics::SValuePtr &b_,
+                                                   IteStatus&) override;
     virtual BaseSemantics::SValuePtr unsignedExtend(const BaseSemantics::SValuePtr &a_, size_t new_width) override;
     virtual BaseSemantics::SValuePtr signExtend(const BaseSemantics::SValuePtr &a_, size_t new_width) override;
     virtual BaseSemantics::SValuePtr add(const BaseSemantics::SValuePtr &a_,

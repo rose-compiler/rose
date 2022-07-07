@@ -16,6 +16,14 @@
 #include <boost/serialization/shared_ptr.hpp>
 #include <boost/serialization/version.hpp>
 
+#if defined(ASTPROCESSING_H) || defined(INHERITED) || defined(SYNTHESIZED) || defined(BOTH)
+    #include <rose_pragma_message.h>
+    ROSE_PRAGMA_MESSAGE("something is polluting the global namespace; undefining some symbols");
+    #undef INHERITED
+    #undef SYNTHESIZED
+    #undef BOTH
+#endif
+
 namespace Rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics {
@@ -472,10 +480,35 @@ public:
      *  whether argument is zero. */
     virtual SValuePtr equalToZero(const SValuePtr &a) = 0;
 
-    /** If-then-else.  Returns operand @p a if @p cond is true, operand @p b if @p cond is false, or some other value if the
-     *  condition is unknown. The @p condition must be one bit wide; the widths of @p a and @p b must be equal; the return
-     *  value width will be the same as @p a and @p b. */
-    virtual SValuePtr ite(const SValuePtr &cond, const SValuePtr &a, const SValuePtr &b) = 0;
+    /** Status for @ref iteWithStatus operation. */
+    enum class IteStatus {
+        NEITHER,                                        /**< Return value is formed from neither A nor B. */
+        A,                                              /**< Return value is formed from A since condition was true. */
+        B,                                              /**< Return value is formed from B since condition was false. */
+        BOTH                                            /**< Return value is formed from both A and B. */
+    };
+
+    /** If-then-else with status.
+     *
+     *  Returns operand @p a if @p cond is true, operand @p b if @p cond is false, or some other value if the condition is
+     *  unknown. The @p condition must be one bit wide; the widths of @p a and @p b must be equal; the return value width will
+     *  be the same as @p a and @p b.
+     *
+     *  The @p status is an output that indicates how the main return value was determined. */
+    virtual SValuePtr iteWithStatus(const SValuePtr &cond, const SValuePtr &a, const SValuePtr &b, IteStatus &status /*out*/) = 0;
+
+    /** If-then-else.
+     *
+     *  Returns operand @p a if @p cond is true, operand @p b if @p cond is false, or some other value if the condition is
+     *  unknown. The @p condition must be one bit wide; the widths of @p a and @p b must be equal; the return value width will
+     *  be the same as @p a and @p b.
+     *
+     *  This method was once pure virtual and some old subclasses might try to override it. Those subclasses should be changed
+     *  so they override @ref iteWithStatus instead. */
+    virtual SValuePtr ite(const SValuePtr &cond, const SValuePtr &a, const SValuePtr &b) final {
+        IteStatus status = IteStatus::NEITHER;
+        return iteWithStatus(cond, a, b, status);
+    }
 
     /** Equality comparison.
      *

@@ -580,11 +580,44 @@ RiscOperators::equalToZero(const BaseSemantics::SValuePtr &a)
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::ite(const BaseSemantics::SValuePtr &cond, const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b)
+RiscOperators::iteWithStatus(const BaseSemantics::SValuePtr &cond,
+                             const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b,
+                             IteStatus &status)
 {
     SValuePtr retval = svalue_empty(a->nBits());
-    SUBDOMAINS(sd, (cond, a, b))
-        retval->set_subvalue(sd.idx(), sd->ite(sd(cond), sd(a), sd(b)));
+    unsigned mergedStatus = 0;
+    SUBDOMAINS(sd, (cond, a, b)) {
+        IteStatus s = IteStatus::NEITHER;
+        retval->set_subvalue(sd.idx(), sd->iteWithStatus(sd(cond), sd(a), sd(b), s));
+        switch (s) {
+            case IteStatus::NEITHER:
+                break;
+            case IteStatus::A:
+                mergedStatus |= 0x1;
+                break;
+            case IteStatus::B:
+                mergedStatus |= 0x2;
+                break;
+            case IteStatus::BOTH:
+                mergedStatus = 3;
+                break;
+        }
+    }
+
+    switch (mergedStatus) {
+        case 0:
+            status = IteStatus::NEITHER;
+            break;
+        case 1:
+            status = IteStatus::A;
+            break;
+        case 2:
+            status = IteStatus::B;
+            break;
+        case 3:
+            status = IteStatus::BOTH;
+            break;
+    }
     return retval;
 }
 

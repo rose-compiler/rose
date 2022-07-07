@@ -287,8 +287,9 @@ public:
         return mergeSources(1, a);
     }
 
-    virtual BaseSemantics::SValuePtr ite(const BaseSemantics::SValuePtr &sel, const BaseSemantics::SValuePtr &a,
-                                         const BaseSemantics::SValuePtr &b) override {
+    virtual BaseSemantics::SValuePtr iteWithStatus(const BaseSemantics::SValuePtr &sel, const BaseSemantics::SValuePtr &a,
+                                                   const BaseSemantics::SValuePtr &b, IteStatus &status) override {
+        status = IteStatus::BOTH;
         return mergeSources(a->nBits(), sel, a, b);
     }
 

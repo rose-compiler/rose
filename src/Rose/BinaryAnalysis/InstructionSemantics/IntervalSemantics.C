@@ -549,20 +549,32 @@ RiscOperators::equalToZero(const BaseSemantics::SValuePtr &a_)
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::ite(const BaseSemantics::SValuePtr &cond_, const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &b_)
-{
+RiscOperators::iteWithStatus(const BaseSemantics::SValuePtr &cond_, const BaseSemantics::SValuePtr &a_,
+                             const BaseSemantics::SValuePtr &b_, IteStatus &status) {
     SValuePtr cond = SValue::promote(cond_);
-    ASSERT_require(1==cond_->nBits());
+    ASSERT_require(1 == cond_->nBits());
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    ASSERT_require(a->nBits()==b->nBits());
+    ASSERT_require(a->nBits() == b->nBits());
     if (cond->isBottom()) {
-        if (a->mustEqual(b))
+        if (a->mustEqual(b)) {
+            status = IteStatus::NEITHER;
             return a->copy();
-        return bottom_(a->nBits());
+        } else {
+            status = IteStatus::BOTH;
+            return bottom_(a->nBits());
+        }
     }
-    if (auto condVal = cond->toUnsigned())
-        return *condVal ? a->copy() : b->copy();
+    if (auto condVal = cond->toUnsigned()) {
+        if (*condVal) {
+            status = IteStatus::A;
+            return a->copy();
+        } else {
+            status = IteStatus::B;
+            return b->copy();
+        }
+    }
+    status = IteStatus::BOTH;
     Intervals result = a->get_intervals();
     result.insertMultiple(b->get_intervals());
     return svalue_from_intervals(a->nBits(), result);

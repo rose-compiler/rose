@@ -34,14 +34,17 @@ void
 SValue::print(std::ostream &stream, BaseSemantics::Formatter &formatter) const {
 #if 0 // long format
     switch (taintedness_) {
-        case Taintedness::UNKNOWN:
-            stream <<"TaintUnknown ";
+        case Taintedness::BOTTOM:
+            stream <<"taint-bottom ";
             break;
-        case Taintedness::NO:
-            stream <<"Untainted ";
+        case Taintedness::UNTAINTED:
+            stream <<"untainted ";
             break;
-        case Taintedness::YES:
-            stream <<"Tainted ";
+        case Taintedness::TAINTED:
+            stream <<"tainted ";
+            break;
+        case Taintedness::TOP:
+            stream <<"taint-top ";
             break;
     }
 #else // short format
@@ -68,29 +71,17 @@ SValue::hash(Combinatorics::Hasher &hasher) const {
 }
 
 bool
-SValue::may_equal(const BaseSemantics::SValue::Ptr &other_, const SmtSolverPtr &solver) const {
-    SValue::Ptr other = promote(other_);
-
-    if (Taintedness::UNKNOWN == this->taintedness() || Taintedness::UNKNOWN == other->taintedness()) {
-        return true;
-    } else if (this->taintedness() != other->taintedness()) {
-        return false;
-    } else {
-        return Super::may_equal(other_, solver);
-    }
+SValue::may_equal(const BaseSemantics::SValue::Ptr &other, const SmtSolverPtr &solver) const {
+    // Taintedness is not part of the true value, but rather a property that says something about the true value. Therefore,
+    // taintedness doesn't influence whether two values may be equal.
+    return Super::may_equal(other, solver);
 }
 
 bool
-SValue::must_equal(const BaseSemantics::SValue::Ptr &other_, const SmtSolverPtr &solver) const {
-    SValue::Ptr other = promote(other_);
-
-    if (Taintedness::UNKNOWN == this->taintedness() || Taintedness::UNKNOWN == other->taintedness()) {
-        return false;
-    } else if (this->taintedness() != other->taintedness()) {
-        return false;
-    } else {
-        return Super::may_equal(other_, solver);
-    }
+SValue::must_equal(const BaseSemantics::SValue::Ptr &other, const SmtSolverPtr &solver) const {
+    // Taintedness is not part of the true value, but rather a property that says something about the true value. Therefore,
+    // taintedness doesn't influence whether two values may be equal.
+    return Super::must_equal(other, solver);
 }
 
 Taintedness
@@ -105,10 +96,23 @@ SValue::taintedness(Taintedness t) {
 
 Taintedness
 SValue::mergeTaintedness(Taintedness a, Taintedness b) {
-    if (Taintedness::UNKNOWN == a || Taintedness::UNKNOWN == b) {
-        return Taintedness::UNKNOWN;
+    if (Taintedness::TOP == a || Taintedness::TOP == b) {
+        return Taintedness::TOP;
+
+    } else if (Taintedness::BOTTOM == a) {
+        return b;
+
+    } else if (Taintedness::BOTTOM == b) {
+        return a;
+
     } else {
-        return std::max(a, b);
+        ASSERT_require(Taintedness::TAINTED == a || Taintedness::UNTAINTED == a);
+        ASSERT_require(Taintedness::TAINTED == b || Taintedness::UNTAINTED == b);
+        if (a == b) {
+            return a;
+        } else {
+            return Taintedness::TOP;
+        }
     }
 }
 
@@ -142,7 +146,7 @@ RiscOperators::xor_(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SV
     SValue::Ptr retval = SValue::promote(Super::xor_(a, b));
 
     if (a->must_equal(b)) {
-        retval->taintedness(Taintedness::NO);
+        retval->taintedness(Taintedness::UNTAINTED);
     } else {
         retval->taintedness(mergeTaintedness(a, b));
     }
@@ -181,30 +185,28 @@ RiscOperators::equalToZero(const BaseSemantics::SValue::Ptr &a_) {
 }
 
 BaseSemantics::SValue::Ptr
-RiscOperators::ite(const BaseSemantics::SValue::Ptr &sel_,
-                   const BaseSemantics::SValue::Ptr &a_, const BaseSemantics::SValue::Ptr &b_)
+RiscOperators::iteWithStatus(const BaseSemantics::SValue::Ptr &sel_, const BaseSemantics::SValue::Ptr &a_,
+                             const BaseSemantics::SValue::Ptr &b_, IteStatus &status)
 {
-    SValue::Ptr retval = SValue::promote(Super::ite(sel_, a_, b_));
-
-    SValue::Ptr sel = SValue::promote(sel_);
+    SValue::Ptr retval = SValue::promote(Super::iteWithStatus(sel_, a_, b_, status));
     SValue::Ptr a = SValue::promote(a_);
     SValue::Ptr b = SValue::promote(b_);
 
-    if (sel->isBottom()) {
-        retval->taintedness(mergeTaintedness(a, b));
-    } else {
-        const bool isA = retval->get_expression()->isEquivalentTo(a->get_expression());
-        const bool isB = retval->get_expression()->isEquivalentTo(b->get_expression());
-        if (isA && isB) {
-            retval->taintedness(mergeTaintedness(a, b));
-        } else if (isA) {
+    switch (status) {
+        case IteStatus::NEITHER:
+            retval->taintedness(Taintedness::BOTTOM);
+            break;
+        case IteStatus::A:
             retval->taintedness(a->taintedness());
-        } else if (isB) {
+            break;
+        case IteStatus::B:
             retval->taintedness(b->taintedness());
-        } else {
-            retval->taintedness(Taintedness::UNKNOWN);
-        }
+            break;
+        case IteStatus::BOTH:
+            retval->taintedness(SValue::mergeTaintedness(a->taintedness(), b->taintedness()));
+            break;
     }
+
     return retval;
 }
 

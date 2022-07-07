@@ -305,7 +305,9 @@ RiscOperators::equalToZero(const BaseSemantics::SValuePtr &a) {
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::ite(const BaseSemantics::SValuePtr &sel, const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
+RiscOperators::iteWithStatus(const BaseSemantics::SValuePtr &sel, const BaseSemantics::SValuePtr &a,
+                             const BaseSemantics::SValuePtr &b, IteStatus &status) {
+    status = IteStatus::BOTH;
     return makeSValue(a->nBits(), SgAsmRiscOperation::OP_ite, sel, a, b);
 }
 

@@ -672,8 +672,9 @@ RiscOperators::equalToZero(const BaseSemantics::SValuePtr &a_)
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::ite(const BaseSemantics::SValuePtr &sel_,
-                   const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &b_)
+RiscOperators::iteWithStatus(const BaseSemantics::SValuePtr &sel_,
+                             const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &b_,
+                             IteStatus &status /*out*/)
 {
     SValuePtr sel = SValue::promote(sel_);
     SValuePtr a = SValue::promote(a_);
@@ -682,19 +683,19 @@ RiscOperators::ite(const BaseSemantics::SValuePtr &sel_,
     ASSERT_require(a->nBits()==b->nBits());
 
     // (ite bottom A B) should be A when A==B. However, SymbolicExpr would have already simplified that to A.
-    if (sel->isBottom())
+    if (sel->isBottom()) {
+        status = IteStatus::NEITHER;
         return filterResult(bottom_(a->nBits()));
+    }
 
     SValuePtr retval;
     if (auto selNum = sel->toUnsigned()) {
         retval = SValue::promote(*selNum ? a->copy() : b->copy());
+        status = *selNum ? IteStatus::A : IteStatus::B;
         switch (computingDefiners_) {
             case TRACK_NO_DEFINERS:
                 break;
             case TRACK_ALL_DEFINERS:
-#if 0 // [Robb P. Matzke 2015-09-17]: not present in original version
-                retval->add_defining_instructions(*selNum ? a : b);
-#endif
                 retval->add_defining_instructions(sel); // fall through...
             case TRACK_LATEST_DEFINER:
                 retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
@@ -711,13 +712,11 @@ RiscOperators::ite(const BaseSemantics::SValuePtr &sel_,
             bool can_be_true = SmtSolver::SAT_NO != solver()->check();
             if (!can_be_true) {
                 retval = SValue::promote(b->copy());
+                status = IteStatus::B;
                 switch (computingDefiners_) {
                     case TRACK_NO_DEFINERS:
                         break;
                     case TRACK_ALL_DEFINERS:
-#if 0 // [Robb P. Matzke 2015-09-17]: not present in original version
-                        retval->add_defining_instructions(b);
-#endif
                         retval->add_defining_instructions(sel); // fall through...
                     case TRACK_LATEST_DEFINER:
                         retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
@@ -735,13 +734,11 @@ RiscOperators::ite(const BaseSemantics::SValuePtr &sel_,
             bool can_be_false = SmtSolver::SAT_NO != solver()->check();
             if (!can_be_false) {
                 retval = SValue::promote(a->copy());
+                status = IteStatus::A;
                 switch (computingDefiners_) {
                     case TRACK_NO_DEFINERS:
                         break;
                     case TRACK_ALL_DEFINERS:
-#if 0 // [Robb P. Matzke 2015-09-17]: not present in original version
-                        retval->add_defining_instructions(a);
-#endif
                         retval->add_defining_instructions(sel); // fall through...
                     case TRACK_LATEST_DEFINER:
                         retval->add_defining_instructions(omit_cur_insn ? NULL : currentInstruction());
@@ -753,6 +750,7 @@ RiscOperators::ite(const BaseSemantics::SValuePtr &sel_,
     }
 
     retval = svalueExpr(SymbolicExpr::makeIte(sel->get_expression(), a->get_expression(), b->get_expression(), solver()));
+    status = IteStatus::BOTH;
     switch (computingDefiners_) {
         case TRACK_NO_DEFINERS:
             break;

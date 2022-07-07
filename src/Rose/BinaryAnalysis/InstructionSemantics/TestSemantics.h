@@ -407,6 +407,11 @@ public:
             check_sval_type(ops_v22, "RiscOperators::ite");
             require(ops_v22->nBits()==32, "RiscOperators::ite width");
 
+            BaseSemantics::RiscOperators::IteStatus status1 = BaseSemantics::RiscOperators::IteStatus::NEITHER;
+            BaseSemantics::SValuePtr ops_v22b = ops->iteWithStatus(v1, v32a, v32b, status1);
+            check_sval_type(ops_v22b, "RiscOperators::iteWithStatus");
+            require(ops_v22b->nBits() == 32, "RiscOperators::iteWithStatus width");
+
             BaseSemantics::SValuePtr ops_v23 = ops->unsignedExtend(v8, 32);
             check_sval_type(ops_v23, "RiscOperators::unsignedExtend");
             require(ops_v23->nBits()==32, "RiscOperators::unsignedExtend width");
