@@ -339,10 +339,12 @@ RiscOperators::equalToZero(const BaseSemantics::SValuePtr &a) {
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::ite(const BaseSemantics::SValuePtr &sel, const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
+RiscOperators::iteWithStatus(const BaseSemantics::SValuePtr &sel, const BaseSemantics::SValuePtr &a,
+                             const BaseSemantics::SValuePtr &b, IteStatus &status) {
     // (sel ? a : b)
     std::string ctext = "(" + SValue::promote(sel)->ctext() + " ? " + SValue::promote(a)->ctext() + " : " +
                         SValue::promote(b)->ctext() + ")";
+    status = IteStatus::BOTH;
     return makeSValue(a->nBits(), NULL, ctext);
 }
 

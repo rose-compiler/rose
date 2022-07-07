@@ -401,9 +401,10 @@ public:
 
     virtual BaseSemantics::SValuePtr equalToZero(const BaseSemantics::SValuePtr &a_) override;
 
-    virtual BaseSemantics::SValuePtr ite(const BaseSemantics::SValuePtr &sel_,
-                                         const BaseSemantics::SValuePtr &a_,
-                                         const BaseSemantics::SValuePtr &b_) override;
+    virtual BaseSemantics::SValuePtr iteWithStatus(const BaseSemantics::SValuePtr &sel_,
+                                                   const BaseSemantics::SValuePtr &a_,
+                                                   const BaseSemantics::SValuePtr &b_,
+                                                   IteStatus&) override;
 
     virtual BaseSemantics::SValuePtr signExtend(const BaseSemantics::SValuePtr &a_, size_t new_width) override;
 

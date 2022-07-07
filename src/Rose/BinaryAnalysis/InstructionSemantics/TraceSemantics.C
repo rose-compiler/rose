@@ -299,6 +299,30 @@ RiscOperators::after(const BaseSemantics::SValuePtr &retval, const BaseSemantics
     return retval;
 }
 
+const BaseSemantics::SValuePtr&
+RiscOperators::after(const BaseSemantics::SValue::Ptr &retval, IteStatus ret2) {
+    if (shouldPrint() && stream_) {
+        stream_ <<" = " <<toString(retval) <<"\n";
+        linePrefix();
+        stream_ <<"also returns: ";
+        switch (ret2) {
+            case IteStatus::NEITHER:
+                stream_ <<"IteStatus::NEITHER\n";
+                break;
+            case IteStatus::A:
+                stream_ <<"IteStatus::A\n";
+                break;
+            case IteStatus::B:
+                stream_ <<"IteStatus::B\n";
+                break;
+            case IteStatus::BOTH:
+                stream_ <<"IteStatus::BOTH\n";
+                break;
+        }
+    }
+    return retval;
+}
+
 void
 RiscOperators::after(const BaseSemantics::Exception &e) {
     if (shouldPrint())
@@ -783,11 +807,15 @@ RiscOperators::equalToZero(const BaseSemantics::SValuePtr &a) {
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::ite(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b, const BaseSemantics::SValuePtr &c) {
+RiscOperators::iteWithStatus(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b, const BaseSemantics::SValuePtr &c,
+                             IteStatus &d) {
     before("ite", a, b, c);
     try {
         check_equal_widths(b, c);
-        return check_width(after(subdomain_->ite(a, b, c)), b->nBits());
+        BaseSemantics::SValue::Ptr retval = subdomain_->iteWithStatus(a, b, c, d);
+        after(retval, d);
+        check_width(retval, b->nBits());
+        return retval;
     } catch (const BaseSemantics::Exception &e) {
         after(e);
         throw;

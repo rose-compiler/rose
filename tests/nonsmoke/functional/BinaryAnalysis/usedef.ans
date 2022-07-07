@@ -15,6 +15,7 @@ Symbolic insn@0x080480a0[0]: readRegister(eip, V2[u32]) = {defs={0x080480a0}, ex
 Symbolic insn@0x080480a0[0]: number_(32, 134512803) = {defs={0x080480a0}, expr=0x080480a3<134512803>[u32]}
 Symbolic insn@0x080480a0[0]: unsignedExtend({defs={0x080480a0}, expr=0x080480a3<134512803>[u32]}, 32) = {defs={0x080480a0}, expr=0x080480a3<134512803>[u32]}
 Symbolic insn@0x080480a0[0]: ite(zf_0[u1], {defs={0x080480a0}, expr=0x080480a3<134512803>[u32]}, {defs={0x080480a0}, expr=0x080480a2<134512802>[u32]}) = {defs={0x080480a0}, expr=(ite[u32] zf_0[u1] 0x080480a3<134512803>[u32] 0x080480a2<134512802>[u32])}
+Symbolic insn@0x080480a0[0]: also returns: IteStatus::BOTH
 Symbolic insn@0x080480a0[0]: writeRegister(eip, {defs={0x080480a0}, expr=(ite[u32] zf_0[u1] 0x080480a3<134512803>[u32] 0x080480a2<134512802>[u32])})
 Symbolic insn@0x080480a0[0]: finishInstruction(je 0x080480a3<case1>)
 registers:
@@ -106,6 +107,7 @@ Symbolic insn@0x080480a7[2]: readRegister(eip, V4[u32]) = {defs={0x080480a7}, ex
 Symbolic insn@0x080480a7[2]: number_(32, 134512802) = {defs={0x080480a7}, expr=0x080480a2<134512802>[u32]}
 Symbolic insn@0x080480a7[2]: unsignedExtend({defs={0x080480a7}, expr=0x080480a2<134512802>[u32]}, 32) = {defs={0x080480a7}, expr=0x080480a2<134512802>[u32]}
 Symbolic insn@0x080480a7[2]: ite(zf_0[u1], {defs={0x080480a7}, expr=0x080480a2<134512802>[u32]}, {defs={0x080480a7}, expr=0x080480a9<134512809>[u32]}) = {defs={0x080480a7}, expr=(ite[u32] zf_0[u1] 0x080480a2<134512802>[u32] 0x080480a9<134512809>[u32])}
+Symbolic insn@0x080480a7[2]: also returns: IteStatus::BOTH
 Symbolic insn@0x080480a7[2]: writeRegister(eip, {defs={0x080480a7}, expr=(ite[u32] zf_0[u1] 0x080480a2<134512802>[u32] 0x080480a9<134512809>[u32])})
 Symbolic insn@0x080480a7[2]: finishInstruction(je 0x080480a2<end>)
 registers:
@@ -317,6 +319,7 @@ Symbolic insn@0x080480af[3]: readRegister(eip, V8[u32]) = {defs={0x080480af}, ex
 Symbolic insn@0x080480af[3]: number_(32, 134512802) = {defs={0x080480af}, expr=0x080480a2<134512802>[u32]}
 Symbolic insn@0x080480af[3]: unsignedExtend({defs={0x080480af}, expr=0x080480a2<134512802>[u32]}, 32) = {defs={0x080480af}, expr=0x080480a2<134512802>[u32]}
 Symbolic insn@0x080480af[3]: ite({defs={0x080480a9,0x080480ab,0x080480ad}, expr=(zerop[u1] (add[u32] eax_0[u32] eax_0[u32] ebx_0[u32] ebx_0[u32]))}, {defs={0x080480af}, expr=0x080480a2<134512802>[u32]}, {defs={0x080480af}, expr=0x080480b1<134512817>[u32]}) = {defs={0x080480a9,0x080480ab,0x080480ad,0x080480af}, expr=(ite[u32] (zerop[u1] (add[u32] eax_0[u32] eax_0[u32] ebx_0[u32] ebx_0[u32])) 0x080480a2<134512802>[u32] 0x080480b1<134512817>[u32])}
+Symbolic insn@0x080480af[3]: also returns: IteStatus::BOTH
 Symbolic insn@0x080480af[3]: writeRegister(eip, {defs={0x080480a9,0x080480ab,0x080480ad,0x080480af}, expr=(ite[u32] (zerop[u1] (add[u32] eax_0[u32] eax_0[u32] ebx_0[u32] ebx_0[u32])) 0x080480a2<134512802>[u32] 0x080480b1<134512817>[u32])})
 Symbolic insn@0x080480af[3]: finishInstruction(je 0x080480a2<end>)
 registers:
@@ -372,6 +375,7 @@ Symbolic insn@0x080480b6[1]: readRegister(eip, V2[u32]) = {defs={0x080480b6}, ex
 Symbolic insn@0x080480b6[1]: number_(32, 134512802) = {defs={0x080480b6}, expr=0x080480a2<134512802>[u32]}
 Symbolic insn@0x080480b6[1]: unsignedExtend({defs={0x080480b6}, expr=0x080480a2<134512802>[u32]}, 32) = {defs={0x080480b6}, expr=0x080480a2<134512802>[u32]}
 Symbolic insn@0x080480b6[1]: ite(zf_0[u1], {defs={0x080480b6}, expr=0x080480a2<134512802>[u32]}, {defs={0x080480b6}, expr=0x080480b8<134512824>[u32]}) = {defs={0x080480b6}, expr=(ite[u32] zf_0[u1] 0x080480a2<134512802>[u32] 0x080480b8<134512824>[u32])}
+Symbolic insn@0x080480b6[1]: also returns: IteStatus::BOTH
 Symbolic insn@0x080480b6[1]: writeRegister(eip, {defs={0x080480b6}, expr=(ite[u32] zf_0[u1] 0x080480a2<134512802>[u32] 0x080480b8<134512824>[u32])})
 Symbolic insn@0x080480b6[1]: finishInstruction(je 0x080480a2<end>)
 registers:
@@ -566,6 +570,7 @@ Symbolic insn@0x080480c6[4]: readRegister(eip, V5[u32]) = {defs={0x080480c6}, ex
 Symbolic insn@0x080480c6[4]: number_(32, 134512802) = {defs={0x080480c6}, expr=0x080480a2<134512802>[u32]}
 Symbolic insn@0x080480c6[4]: unsignedExtend({defs={0x080480c6}, expr=0x080480a2<134512802>[u32]}, 32) = {defs={0x080480c6}, expr=0x080480a2<134512802>[u32]}
 Symbolic insn@0x080480c6[4]: ite({defs={0x080480c4}, expr=(zerop[u1] (add[u32] (invert[u32] ecx_0[u32]) 0x00000001[u32]))}, {defs={0x080480c6}, expr=0x080480a2<134512802>[u32]}, {defs={0x080480c6}, expr=0x080480c8<134512840>[u32]}) = {defs={0x080480c4,0x080480c6}, expr=(ite[u32] (zerop[u1] (add[u32] (invert[u32] ecx_0[u32]) 0x00000001[u32])) 0x080480a2<134512802>[u32] 0x080480c8<134512840>[u32])}
+Symbolic insn@0x080480c6[4]: also returns: IteStatus::BOTH
 Symbolic insn@0x080480c6[4]: writeRegister(eip, {defs={0x080480c4,0x080480c6}, expr=(ite[u32] (zerop[u1] (add[u32] (invert[u32] ecx_0[u32]) 0x00000001[u32])) 0x080480a2<134512802>[u32] 0x080480c8<134512840>[u32])})
 Symbolic insn@0x080480c6[4]: finishInstruction(je 0x080480a2<end>)
 registers:
@@ -717,6 +722,7 @@ Symbolic insn@0x080480d3[5]: readRegister(eip, V7[u32]) = {defs={0x080480d3}, ex
 Symbolic insn@0x080480d3[5]: number_(32, 134512802) = {defs={0x080480d3}, expr=0x080480a2<134512802>[u32]}
 Symbolic insn@0x080480d3[5]: unsignedExtend({defs={0x080480d3}, expr=0x080480a2<134512802>[u32]}, 32) = {defs={0x080480d3}, expr=0x080480a2<134512802>[u32]}
 Symbolic insn@0x080480d3[5]: ite(zf_0[u1], {defs={0x080480d3}, expr=0x080480a2<134512802>[u32]}, {defs={0x080480d3}, expr=0x080480d5<134512853>[u32]}) = {defs={0x080480d3}, expr=(ite[u32] zf_0[u1] 0x080480a2<134512802>[u32] 0x080480d5<134512853>[u32])}
+Symbolic insn@0x080480d3[5]: also returns: IteStatus::BOTH
 Symbolic insn@0x080480d3[5]: writeRegister(eip, {defs={0x080480d3}, expr=(ite[u32] zf_0[u1] 0x080480a2<134512802>[u32] 0x080480d5<134512853>[u32])})
 Symbolic insn@0x080480d3[5]: finishInstruction(je 0x080480a2<end>)
 registers:
@@ -772,6 +778,7 @@ Symbolic insn@0x080480d7[1]: readRegister(eip, V4[u32]) = {defs={0x080480d7}, ex
 Symbolic insn@0x080480d7[1]: number_(32, 134512802) = {defs={0x080480d7}, expr=0x080480a2<134512802>[u32]}
 Symbolic insn@0x080480d7[1]: unsignedExtend({defs={0x080480d7}, expr=0x080480a2<134512802>[u32]}, 32) = {defs={0x080480d7}, expr=0x080480a2<134512802>[u32]}
 Symbolic insn@0x080480d7[1]: ite(zf_0[u1], {defs={0x080480d7}, expr=0x080480a2<134512802>[u32]}, {defs={0x080480d7}, expr=0x080480d9<134512857>[u32]}) = {defs={0x080480d7}, expr=(ite[u32] zf_0[u1] 0x080480a2<134512802>[u32] 0x080480d9<134512857>[u32])}
+Symbolic insn@0x080480d7[1]: also returns: IteStatus::BOTH
 Symbolic insn@0x080480d7[1]: writeRegister(eip, {defs={0x080480d7}, expr=(ite[u32] zf_0[u1] 0x080480a2<134512802>[u32] 0x080480d9<134512857>[u32])})
 Symbolic insn@0x080480d7[1]: finishInstruction(je 0x080480a2<end>)
 registers:
@@ -831,6 +838,7 @@ Symbolic insn@0x080480db[1]: readRegister(eip, V4[u32]) = {defs={0x080480db}, ex
 Symbolic insn@0x080480db[1]: number_(32, 134512802) = {defs={0x080480db}, expr=0x080480a2<134512802>[u32]}
 Symbolic insn@0x080480db[1]: unsignedExtend({defs={0x080480db}, expr=0x080480a2<134512802>[u32]}, 32) = {defs={0x080480db}, expr=0x080480a2<134512802>[u32]}
 Symbolic insn@0x080480db[1]: ite(zf_0[u1], {defs={0x080480db}, expr=0x080480a2<134512802>[u32]}, {defs={0x080480db}, expr=0x080480dd<134512861>[u32]}) = {defs={0x080480db}, expr=(ite[u32] zf_0[u1] 0x080480a2<134512802>[u32] 0x080480dd<134512861>[u32])}
+Symbolic insn@0x080480db[1]: also returns: IteStatus::BOTH
 Symbolic insn@0x080480db[1]: writeRegister(eip, {defs={0x080480db}, expr=(ite[u32] zf_0[u1] 0x080480a2<134512802>[u32] 0x080480dd<134512861>[u32])})
 Symbolic insn@0x080480db[1]: finishInstruction(je 0x080480a2<end>)
 registers:
@@ -876,21 +884,26 @@ Symbolic insn@0x080480dd[0]: unspecified_(1) = V3[u1]<unspec>
 Symbolic insn@0x080480dd[0]: undefined_(1) = V4[u1]
 Symbolic insn@0x080480dd[0]: peekRegister(af, V4[u1]) = V4[u1]
 Symbolic insn@0x080480dd[0]: ite({defs={0x080480dd}, expr=false[u1]}, V4[u1], V3[u1]<unspec>) = {defs={0x080480dd}, expr=V3[u1]<unspec>}
+Symbolic insn@0x080480dd[0]: also returns: IteStatus::B
 Symbolic insn@0x080480dd[0]: writeRegister(af, {defs={0x080480dd}, expr=V3[u1]<unspec>})
 Symbolic insn@0x080480dd[0]: add({defs={0x080480dd}, expr=0x0a[u5]}, {defs={0x080480dd}, expr=0x1f<-1>[u5]}) = {defs={0x080480dd}, expr=0x09[u5]}
 Symbolic insn@0x080480dd[0]: shiftRight(eax_0[u32], {defs={0x080480dd}, expr=0x09[u5]}) = {defs={0x080480dd}, expr=(concat[u32] 0x000[u9] (extract[u23] 0x00000009[u32] 0x00000020[u32] eax_0[u32]))}
 Symbolic insn@0x080480dd[0]: extract({defs={0x080480dd}, expr=(concat[u32] 0x000[u9] (extract[u23] 0x00000009[u32] 0x00000020[u32] eax_0[u32]))}, 0, 1) = {defs={0x080480dd}, expr=(extract[u1] 0x00000009[u32] 0x0000000a[u32] eax_0[u32])}
 Symbolic insn@0x080480dd[0]: unspecified_(1) = V5[u1]<unspec>
 Symbolic insn@0x080480dd[0]: ite({defs={0x080480dd}, expr=false[u1]}, V5[u1]<unspec>, {defs={0x080480dd}, expr=(extract[u1] 0x00000009[u32] 0x0000000a[u32] eax_0[u32])}) = {defs={0x080480dd}, expr=(extract[u1] 0x00000009[u32] 0x0000000a[u32] eax_0[u32])}
+Symbolic insn@0x080480dd[0]: also returns: IteStatus::B
 Symbolic insn@0x080480dd[0]: undefined_(1) = V6[u1]
 Symbolic insn@0x080480dd[0]: peekRegister(cf, V6[u1]) = V6[u1]
 Symbolic insn@0x080480dd[0]: ite({defs={0x080480dd}, expr=false[u1]}, V6[u1], {defs={0x080480dd}, expr=(extract[u1] 0x00000009[u32] 0x0000000a[u32] eax_0[u32])}) = {defs={0x080480dd}, expr=(extract[u1] 0x00000009[u32] 0x0000000a[u32] eax_0[u32])}
+Symbolic insn@0x080480dd[0]: also returns: IteStatus::B
 Symbolic insn@0x080480dd[0]: writeRegister(cf, {defs={0x080480dd}, expr=(extract[u1] 0x00000009[u32] 0x0000000a[u32] eax_0[u32])})
 Symbolic insn@0x080480dd[0]: unspecified_(1) = V7[u1]<unspec>
 Symbolic insn@0x080480dd[0]: undefined_(1) = V8[u1]
 Symbolic insn@0x080480dd[0]: peekRegister(of, V8[u1]) = V8[u1]
 Symbolic insn@0x080480dd[0]: ite({defs={0x080480dd}, expr=false[u1]}, V8[u1], V7[u1]<unspec>) = {defs={0x080480dd}, expr=V7[u1]<unspec>}
+Symbolic insn@0x080480dd[0]: also returns: IteStatus::B
 Symbolic insn@0x080480dd[0]: ite({defs={0x080480dd}, expr=false[u1]}, {defs={0x080480dd}, expr=(extract[u1] 0x0000001f[u32] 0x00000020[u32] eax_0[u32])}, {defs={0x080480dd}, expr=V7[u1]<unspec>}) = {defs={0x080480dd}, expr=V7[u1]<unspec>}
+Symbolic insn@0x080480dd[0]: also returns: IteStatus::B
 Symbolic insn@0x080480dd[0]: writeRegister(of, {defs={0x080480dd}, expr=V7[u1]<unspec>})
 Symbolic insn@0x080480dd[0]: invert({defs={0x080480dd}, expr=false[u1]}) = {defs={0x080480dd}, expr=true[u1]}
 Symbolic insn@0x080480dd[0]: extract({defs={0x080480dd}, expr=(concat[u32] 0x000[u10] (extract[u22] 0x0000000a[u32] 0x00000020[u32] eax_0[u32]))}, 0, 8) = {defs={0x080480dd}, expr=(extract[u8] 0x0000000a[u32] 0x00000012[u32] eax_0[u32])}
@@ -914,15 +927,18 @@ Symbolic insn@0x080480dd[0]: xor_({defs={0x080480dd}, expr=(xor[u1] (extract[u1]
 Symbolic insn@0x080480dd[0]: xor_({defs={0x080480dd}, expr=(xor[u1] (extract[u1] 0x0000000a[u32] 0x0000000b[u32] eax_0[u32]) (extract[u1] 0x0000000b[u32] 0x0000000c[u32] eax_0[u32]) (extract[u1] 0x0000000c[u32] 0x0000000d[u32] eax_0[u32]) (extract[u1] 0x0000000d[u32] 0x0000000e[u32] eax_0[u32]))}, {defs={0x080480dd}, expr=(xor[u1] (extract[u1] 0x0000000e[u32] 0x0000000f[u32] eax_0[u32]) (extract[u1] 0x0000000f[u32] 0x00000010[u32] eax_0[u32]) (extract[u1] 0x00000010[u32] 0x00000011[u32] eax_0[u32]) (extract[u1] 0x00000011[u32] 0x00000012[u32] eax_0[u32]))}) = {defs={0x080480dd}, expr=(xor[u1] (extract[u1] 0x0000000a[u32] 0x0000000b[u32] eax_0[u32]) (extract[u1] 0x0000000b[u32] 0x0000000c[u32] eax_0[u32]) (extract[u1] 0x0000000c[u32] 0x0000000d[u32] eax_0[u32]) (extract[u1] 0x0000000d[u32] 0x0000000e[u32] eax_0[u32]) (extract[u1] 0x0000000e[u32] 0x0000000f[u32] eax_0[u32]) (extract[u1] 0x0000000f[u32] 0x00000010[u32] eax_0[u32]) (extract[u1] 0x00000010[u32] 0x00000011[u32] eax_0[u32]) (extract[u1] 0x00000011[u32] 0x00000012[u32] eax_0[u32]))}
 Symbolic insn@0x080480dd[0]: invert({defs={0x080480dd}, expr=(xor[u1] (extract[u1] 0x0000000a[u32] 0x0000000b[u32] eax_0[u32]) (extract[u1] 0x0000000b[u32] 0x0000000c[u32] eax_0[u32]) (extract[u1] 0x0000000c[u32] 0x0000000d[u32] eax_0[u32]) (extract[u1] 0x0000000d[u32] 0x0000000e[u32] eax_0[u32]) (extract[u1] 0x0000000e[u32] 0x0000000f[u32] eax_0[u32]) (extract[u1] 0x0000000f[u32] 0x00000010[u32] eax_0[u32]) (extract[u1] 0x00000010[u32] 0x00000011[u32] eax_0[u32]) (extract[u1] 0x00000011[u32] 0x00000012[u32] eax_0[u32]))}) = {defs={0x080480dd}, expr=(invert[u1] (xor[u1] (extract[u1] 0x0000000a[u32] 0x0000000b[u32] eax_0[u32]) (extract[u1] 0x0000000b[u32] 0x0000000c[u32] eax_0[u32]) (extract[u1] 0x0000000c[u32] 0x0000000d[u32] eax_0[u32]) (extract[u1] 0x0000000d[u32] 0x0000000e[u32] eax_0[u32]) (extract[u1] 0x0000000e[u32] 0x0000000f[u32] eax_0[u32]) (extract[u1] 0x0000000f[u32] 0x00000010[u32] eax_0[u32]) (extract[u1] 0x00000010[u32] 0x00000011[u32] eax_0[u32]) (extract[u1] 0x00000011[u32] 0x00000012[u32] eax_0[u32])))}
 Symbolic insn@0x080480dd[0]: ite({defs={0x080480dd}, expr=true[u1]}, {defs={0x080480dd}, expr=(invert[u1] (xor[u1] (extract[u1] 0x0000000a[u32] 0x0000000b[u32] eax_0[u32]) (extract[u1] 0x0000000b[u32] 0x0000000c[u32] eax_0[u32]) (extract[u1] 0x0000000c[u32] 0x0000000d[u32] eax_0[u32]) (extract[u1] 0x0000000d[u32] 0x0000000e[u32] eax_0[u32]) (extract[u1] 0x0000000e[u32] 0x0000000f[u32] eax_0[u32]) (extract[u1] 0x0000000f[u32] 0x00000010[u32] eax_0[u32]) (extract[u1] 0x00000010[u32] 0x00000011[u32] eax_0[u32]) (extract[u1] 0x00000011[u32] 0x00000012[u32] eax_0[u32])))}, V9[u1]) = {defs={0x080480dd}, expr=(invert[u1] (xor[u1] (extract[u1] 0x0000000a[u32] 0x0000000b[u32] eax_0[u32]) (extract[u1] 0x0000000b[u32] 0x0000000c[u32] eax_0[u32]) (extract[u1] 0x0000000c[u32] 0x0000000d[u32] eax_0[u32]) (extract[u1] 0x0000000d[u32] 0x0000000e[u32] eax_0[u32]) (extract[u1] 0x0000000e[u32] 0x0000000f[u32] eax_0[u32]) (extract[u1] 0x0000000f[u32] 0x00000010[u32] eax_0[u32]) (extract[u1] 0x00000010[u32] 0x00000011[u32] eax_0[u32]) (extract[u1] 0x00000011[u32] 0x00000012[u32] eax_0[u32])))}
+Symbolic insn@0x080480dd[0]: also returns: IteStatus::A
 Symbolic insn@0x080480dd[0]: writeRegister(pf, {defs={0x080480dd}, expr=(invert[u1] (xor[u1] (extract[u1] 0x0000000a[u32] 0x0000000b[u32] eax_0[u32]) (extract[u1] 0x0000000b[u32] 0x0000000c[u32] eax_0[u32]) (extract[u1] 0x0000000c[u32] 0x0000000d[u32] eax_0[u32]) (extract[u1] 0x0000000d[u32] 0x0000000e[u32] eax_0[u32]) (extract[u1] 0x0000000e[u32] 0x0000000f[u32] eax_0[u32]) (extract[u1] 0x0000000f[u32] 0x00000010[u32] eax_0[u32]) (extract[u1] 0x00000010[u32] 0x00000011[u32] eax_0[u32]) (extract[u1] 0x00000011[u32] 0x00000012[u32] eax_0[u32])))})
 Symbolic insn@0x080480dd[0]: undefined_(1) = V10[u1]
 Symbolic insn@0x080480dd[0]: peekRegister(sf, V10[u1]) = V10[u1]
 Symbolic insn@0x080480dd[0]: ite({defs={0x080480dd}, expr=true[u1]}, {defs={0x080480dd}, expr=false[u1]}, V10[u1]) = {defs={0x080480dd}, expr=false[u1]}
+Symbolic insn@0x080480dd[0]: also returns: IteStatus::A
 Symbolic insn@0x080480dd[0]: writeRegister(sf, {defs={0x080480dd}, expr=false[u1]})
 Symbolic insn@0x080480dd[0]: undefined_(1) = V11[u1]
 Symbolic insn@0x080480dd[0]: peekRegister(zf, V11[u1]) = V11[u1]
 Symbolic insn@0x080480dd[0]: equalToZero({defs={0x080480dd}, expr=(concat[u32] 0x000[u10] (extract[u22] 0x0000000a[u32] 0x00000020[u32] eax_0[u32]))}) = {defs={0x080480dd}, expr=(zerop[u1] (concat[u32] 0x000[u10] (extract[u22] 0x0000000a[u32] 0x00000020[u32] eax_0[u32])))}
 Symbolic insn@0x080480dd[0]: ite({defs={0x080480dd}, expr=true[u1]}, {defs={0x080480dd}, expr=(zerop[u1] (concat[u32] 0x000[u10] (extract[u22] 0x0000000a[u32] 0x00000020[u32] eax_0[u32])))}, V11[u1]) = {defs={0x080480dd}, expr=(zerop[u1] (concat[u32] 0x000[u10] (extract[u22] 0x0000000a[u32] 0x00000020[u32] eax_0[u32])))}
+Symbolic insn@0x080480dd[0]: also returns: IteStatus::A
 Symbolic insn@0x080480dd[0]: writeRegister(zf, {defs={0x080480dd}, expr=(zerop[u1] (concat[u32] 0x000[u10] (extract[u22] 0x0000000a[u32] 0x00000020[u32] eax_0[u32])))})
 Symbolic insn@0x080480dd[0]: writeRegister(eax, {defs={0x080480dd}, expr=(concat[u32] 0x000[u10] (extract[u22] 0x0000000a[u32] 0x00000020[u32] eax_0[u32]))})
 Symbolic insn@0x080480dd[0]: finishInstruction(shr eax, 0x0a)
@@ -967,21 +983,26 @@ Symbolic insn@0x080480e0[1]: unspecified_(1) = V14[u1]<unspec>
 Symbolic insn@0x080480e0[1]: undefined_(1) = V15[u1]
 Symbolic insn@0x080480e0[1]: peekRegister(af, V15[u1]) = {defs={0x080480dd}, expr=V3[u1]<unspec>}
 Symbolic insn@0x080480e0[1]: ite({defs={0x080480e0}, expr=false[u1]}, {defs={0x080480dd}, expr=V3[u1]<unspec>}, V14[u1]<unspec>) = {defs={0x080480e0}, expr=V14[u1]<unspec>}
+Symbolic insn@0x080480e0[1]: also returns: IteStatus::B
 Symbolic insn@0x080480e0[1]: writeRegister(af, {defs={0x080480e0}, expr=V14[u1]<unspec>})
 Symbolic insn@0x080480e0[1]: add({defs={0x080480e0}, expr=0x0a[u5]}, {defs={0x080480e0}, expr=0x1f<-1>[u5]}) = {defs={0x080480e0}, expr=0x09[u5]}
 Symbolic insn@0x080480e0[1]: shiftRight({defs={0x080480dd}, expr=(concat[u32] 0x000[u10] (extract[u22] 0x0000000a[u32] 0x00000020[u32] eax_0[u32]))}, {defs={0x080480e0}, expr=0x09[u5]}) = {defs={0x080480dd,0x080480e0}, expr=(concat[u32] 0x00000[u19] (extract[u13] 0x00000013[u32] 0x00000020[u32] eax_0[u32]))}
 Symbolic insn@0x080480e0[1]: extract({defs={0x080480dd,0x080480e0}, expr=(concat[u32] 0x00000[u19] (extract[u13] 0x00000013[u32] 0x00000020[u32] eax_0[u32]))}, 0, 1) = {defs={0x080480dd,0x080480e0}, expr=(extract[u1] 0x00000013[u32] 0x00000014[u32] eax_0[u32])}
 Symbolic insn@0x080480e0[1]: unspecified_(1) = V16[u1]<unspec>
 Symbolic insn@0x080480e0[1]: ite({defs={0x080480e0}, expr=false[u1]}, V16[u1]<unspec>, {defs={0x080480dd,0x080480e0}, expr=(extract[u1] 0x00000013[u32] 0x00000014[u32] eax_0[u32])}) = {defs={0x080480dd,0x080480e0}, expr=(extract[u1] 0x00000013[u32] 0x00000014[u32] eax_0[u32])}
+Symbolic insn@0x080480e0[1]: also returns: IteStatus::B
 Symbolic insn@0x080480e0[1]: undefined_(1) = V17[u1]
 Symbolic insn@0x080480e0[1]: peekRegister(cf, V17[u1]) = {defs={0x080480dd}, expr=(extract[u1] 0x00000009[u32] 0x0000000a[u32] eax_0[u32])}
 Symbolic insn@0x080480e0[1]: ite({defs={0x080480e0}, expr=false[u1]}, {defs={0x080480dd}, expr=(extract[u1] 0x00000009[u32] 0x0000000a[u32] eax_0[u32])}, {defs={0x080480dd,0x080480e0}, expr=(extract[u1] 0x00000013[u32] 0x00000014[u32] eax_0[u32])}) = {defs={0x080480dd,0x080480e0}, expr=(extract[u1] 0x00000013[u32] 0x00000014[u32] eax_0[u32])}
+Symbolic insn@0x080480e0[1]: also returns: IteStatus::B
 Symbolic insn@0x080480e0[1]: writeRegister(cf, {defs={0x080480dd,0x080480e0}, expr=(extract[u1] 0x00000013[u32] 0x00000014[u32] eax_0[u32])})
 Symbolic insn@0x080480e0[1]: unspecified_(1) = V18[u1]<unspec>
 Symbolic insn@0x080480e0[1]: undefined_(1) = V19[u1]
 Symbolic insn@0x080480e0[1]: peekRegister(of, V19[u1]) = {defs={0x080480dd}, expr=V7[u1]<unspec>}
 Symbolic insn@0x080480e0[1]: ite({defs={0x080480e0}, expr=false[u1]}, {defs={0x080480dd}, expr=V7[u1]<unspec>}, V18[u1]<unspec>) = {defs={0x080480e0}, expr=V18[u1]<unspec>}
+Symbolic insn@0x080480e0[1]: also returns: IteStatus::B
 Symbolic insn@0x080480e0[1]: ite({defs={0x080480e0}, expr=false[u1]}, {defs={0x080480dd,0x080480e0}, expr=false[u1]}, {defs={0x080480e0}, expr=V18[u1]<unspec>}) = {defs={0x080480e0}, expr=V18[u1]<unspec>}
+Symbolic insn@0x080480e0[1]: also returns: IteStatus::B
 Symbolic insn@0x080480e0[1]: writeRegister(of, {defs={0x080480e0}, expr=V18[u1]<unspec>})
 Symbolic insn@0x080480e0[1]: invert({defs={0x080480e0}, expr=false[u1]}) = {defs={0x080480e0}, expr=true[u1]}
 Symbolic insn@0x080480e0[1]: extract({defs={0x080480dd,0x080480e0}, expr=(concat[u32] 0x00000[u20] (extract[u12] 0x00000014[u32] 0x00000020[u32] eax_0[u32]))}, 0, 8) = {defs={0x080480dd,0x080480e0}, expr=(extract[u8] 0x00000014[u32] 0x0000001c[u32] eax_0[u32])}
@@ -1005,15 +1026,18 @@ Symbolic insn@0x080480e0[1]: xor_({defs={0x080480dd,0x080480e0}, expr=(xor[u1] (
 Symbolic insn@0x080480e0[1]: xor_({defs={0x080480dd,0x080480e0}, expr=(xor[u1] (extract[u1] 0x00000014[u32] 0x00000015[u32] eax_0[u32]) (extract[u1] 0x00000015[u32] 0x00000016[u32] eax_0[u32]) (extract[u1] 0x00000016[u32] 0x00000017[u32] eax_0[u32]) (extract[u1] 0x00000017[u32] 0x00000018[u32] eax_0[u32]))}, {defs={0x080480dd,0x080480e0}, expr=(xor[u1] (extract[u1] 0x00000018[u32] 0x00000019[u32] eax_0[u32]) (extract[u1] 0x00000019[u32] 0x0000001a[u32] eax_0[u32]) (extract[u1] 0x0000001a[u32] 0x0000001b[u32] eax_0[u32]) (extract[u1] 0x0000001b[u32] 0x0000001c[u32] eax_0[u32]))}) = {defs={0x080480dd,0x080480e0}, expr=(xor[u1] (extract[u1] 0x00000014[u32] 0x00000015[u32] eax_0[u32]) (extract[u1] 0x00000015[u32] 0x00000016[u32] eax_0[u32]) (extract[u1] 0x00000016[u32] 0x00000017[u32] eax_0[u32]) (extract[u1] 0x00000017[u32] 0x00000018[u32] eax_0[u32]) (extract[u1] 0x00000018[u32] 0x00000019[u32] eax_0[u32]) (extract[u1] 0x00000019[u32] 0x0000001a[u32] eax_0[u32]) (extract[u1] 0x0000001a[u32] 0x0000001b[u32] eax_0[u32]) (extract[u1] 0x0000001b[u32] 0x0000001c[u32] eax_0[u32]))}
 Symbolic insn@0x080480e0[1]: invert({defs={0x080480dd,0x080480e0}, expr=(xor[u1] (extract[u1] 0x00000014[u32] 0x00000015[u32] eax_0[u32]) (extract[u1] 0x00000015[u32] 0x00000016[u32] eax_0[u32]) (extract[u1] 0x00000016[u32] 0x00000017[u32] eax_0[u32]) (extract[u1] 0x00000017[u32] 0x00000018[u32] eax_0[u32]) (extract[u1] 0x00000018[u32] 0x00000019[u32] eax_0[u32]) (extract[u1] 0x00000019[u32] 0x0000001a[u32] eax_0[u32]) (extract[u1] 0x0000001a[u32] 0x0000001b[u32] eax_0[u32]) (extract[u1] 0x0000001b[u32] 0x0000001c[u32] eax_0[u32]))}) = {defs={0x080480dd,0x080480e0}, expr=(invert[u1] (xor[u1] (extract[u1] 0x00000014[u32] 0x00000015[u32] eax_0[u32]) (extract[u1] 0x00000015[u32] 0x00000016[u32] eax_0[u32]) (extract[u1] 0x00000016[u32] 0x00000017[u32] eax_0[u32]) (extract[u1] 0x00000017[u32] 0x00000018[u32] eax_0[u32]) (extract[u1] 0x00000018[u32] 0x00000019[u32] eax_0[u32]) (extract[u1] 0x00000019[u32] 0x0000001a[u32] eax_0[u32]) (extract[u1] 0x0000001a[u32] 0x0000001b[u32] eax_0[u32]) (extract[u1] 0x0000001b[u32] 0x0000001c[u32] eax_0[u32])))}
 Symbolic insn@0x080480e0[1]: ite({defs={0x080480e0}, expr=true[u1]}, {defs={0x080480dd,0x080480e0}, expr=(invert[u1] (xor[u1] (extract[u1] 0x00000014[u32] 0x00000015[u32] eax_0[u32]) (extract[u1] 0x00000015[u32] 0x00000016[u32] eax_0[u32]) (extract[u1] 0x00000016[u32] 0x00000017[u32] eax_0[u32]) (extract[u1] 0x00000017[u32] 0x00000018[u32] eax_0[u32]) (extract[u1] 0x00000018[u32] 0x00000019[u32] eax_0[u32]) (extract[u1] 0x00000019[u32] 0x0000001a[u32] eax_0[u32]) (extract[u1] 0x0000001a[u32] 0x0000001b[u32] eax_0[u32]) (extract[u1] 0x0000001b[u32] 0x0000001c[u32] eax_0[u32])))}, {defs={0x080480dd}, expr=(invert[u1] (xor[u1] (extract[u1] 0x0000000a[u32] 0x0000000b[u32] eax_0[u32]) (extract[u1] 0x0000000b[u32] 0x0000000c[u32] eax_0[u32]) (extract[u1] 0x0000000c[u32] 0x0000000d[u32] eax_0[u32]) (extract[u1] 0x0000000d[u32] 0x0000000e[u32] eax_0[u32]) (extract[u1] 0x0000000e[u32] 0x0000000f[u32] eax_0[u32]) (extract[u1] 0x0000000f[u32] 0x00000010[u32] eax_0[u32]) (extract[u1] 0x00000010[u32] 0x00000011[u32] eax_0[u32]) (extract[u1] 0x00000011[u32] 0x00000012[u32] eax_0[u32])))}) = {defs={0x080480dd,0x080480e0}, expr=(invert[u1] (xor[u1] (extract[u1] 0x00000014[u32] 0x00000015[u32] eax_0[u32]) (extract[u1] 0x00000015[u32] 0x00000016[u32] eax_0[u32]) (extract[u1] 0x00000016[u32] 0x00000017[u32] eax_0[u32]) (extract[u1] 0x00000017[u32] 0x00000018[u32] eax_0[u32]) (extract[u1] 0x00000018[u32] 0x00000019[u32] eax_0[u32]) (extract[u1] 0x00000019[u32] 0x0000001a[u32] eax_0[u32]) (extract[u1] 0x0000001a[u32] 0x0000001b[u32] eax_0[u32]) (extract[u1] 0x0000001b[u32] 0x0000001c[u32] eax_0[u32])))}
+Symbolic insn@0x080480e0[1]: also returns: IteStatus::A
 Symbolic insn@0x080480e0[1]: writeRegister(pf, {defs={0x080480dd,0x080480e0}, expr=(invert[u1] (xor[u1] (extract[u1] 0x00000014[u32] 0x00000015[u32] eax_0[u32]) (extract[u1] 0x00000015[u32] 0x00000016[u32] eax_0[u32]) (extract[u1] 0x00000016[u32] 0x00000017[u32] eax_0[u32]) (extract[u1] 0x00000017[u32] 0x00000018[u32] eax_0[u32]) (extract[u1] 0x00000018[u32] 0x00000019[u32] eax_0[u32]) (extract[u1] 0x00000019[u32] 0x0000001a[u32] eax_0[u32]) (extract[u1] 0x0000001a[u32] 0x0000001b[u32] eax_0[u32]) (extract[u1] 0x0000001b[u32] 0x0000001c[u32] eax_0[u32])))})
 Symbolic insn@0x080480e0[1]: undefined_(1) = V21[u1]
 Symbolic insn@0x080480e0[1]: peekRegister(sf, V21[u1]) = {defs={0x080480dd}, expr=false[u1]}
 Symbolic insn@0x080480e0[1]: ite({defs={0x080480e0}, expr=true[u1]}, {defs={0x080480dd,0x080480e0}, expr=false[u1]}, {defs={0x080480dd}, expr=false[u1]}) = {defs={0x080480dd,0x080480e0}, expr=false[u1]}
+Symbolic insn@0x080480e0[1]: also returns: IteStatus::A
 Symbolic insn@0x080480e0[1]: writeRegister(sf, {defs={0x080480dd,0x080480e0}, expr=false[u1]})
 Symbolic insn@0x080480e0[1]: undefined_(1) = V22[u1]
 Symbolic insn@0x080480e0[1]: peekRegister(zf, V22[u1]) = {defs={0x080480dd}, expr=(zerop[u1] (concat[u32] 0x000[u10] (extract[u22] 0x0000000a[u32] 0x00000020[u32] eax_0[u32])))}
 Symbolic insn@0x080480e0[1]: equalToZero({defs={0x080480dd,0x080480e0}, expr=(concat[u32] 0x00000[u20] (extract[u12] 0x00000014[u32] 0x00000020[u32] eax_0[u32]))}) = {defs={0x080480dd,0x080480e0}, expr=(zerop[u1] (concat[u32] 0x00000[u20] (extract[u12] 0x00000014[u32] 0x00000020[u32] eax_0[u32])))}
 Symbolic insn@0x080480e0[1]: ite({defs={0x080480e0}, expr=true[u1]}, {defs={0x080480dd,0x080480e0}, expr=(zerop[u1] (concat[u32] 0x00000[u20] (extract[u12] 0x00000014[u32] 0x00000020[u32] eax_0[u32])))}, {defs={0x080480dd}, expr=(zerop[u1] (concat[u32] 0x000[u10] (extract[u22] 0x0000000a[u32] 0x00000020[u32] eax_0[u32])))}) = {defs={0x080480dd,0x080480e0}, expr=(zerop[u1] (concat[u32] 0x00000[u20] (extract[u12] 0x00000014[u32] 0x00000020[u32] eax_0[u32])))}
+Symbolic insn@0x080480e0[1]: also returns: IteStatus::A
 Symbolic insn@0x080480e0[1]: writeRegister(zf, {defs={0x080480dd,0x080480e0}, expr=(zerop[u1] (concat[u32] 0x00000[u20] (extract[u12] 0x00000014[u32] 0x00000020[u32] eax_0[u32])))})
 Symbolic insn@0x080480e0[1]: writeRegister(eax, {defs={0x080480dd,0x080480e0}, expr=(concat[u32] 0x00000[u20] (extract[u12] 0x00000014[u32] 0x00000020[u32] eax_0[u32]))})
 Symbolic insn@0x080480e0[1]: finishInstruction(shr eax, 0x0a)
@@ -1058,21 +1082,26 @@ Symbolic insn@0x080480e3[2]: unspecified_(1) = V25[u1]<unspec>
 Symbolic insn@0x080480e3[2]: undefined_(1) = V26[u1]
 Symbolic insn@0x080480e3[2]: peekRegister(af, V26[u1]) = {defs={0x080480e0}, expr=V14[u1]<unspec>}
 Symbolic insn@0x080480e3[2]: ite({defs={0x080480e3}, expr=false[u1]}, {defs={0x080480e0}, expr=V14[u1]<unspec>}, V25[u1]<unspec>) = {defs={0x080480e3}, expr=V25[u1]<unspec>}
+Symbolic insn@0x080480e3[2]: also returns: IteStatus::B
 Symbolic insn@0x080480e3[2]: writeRegister(af, {defs={0x080480e3}, expr=V25[u1]<unspec>})
 Symbolic insn@0x080480e3[2]: add({defs={0x080480e3}, expr=0x0a[u5]}, {defs={0x080480e3}, expr=0x1f<-1>[u5]}) = {defs={0x080480e3}, expr=0x09[u5]}
 Symbolic insn@0x080480e3[2]: shiftRight({defs={0x080480dd,0x080480e0}, expr=(concat[u32] 0x00000[u20] (extract[u12] 0x00000014[u32] 0x00000020[u32] eax_0[u32]))}, {defs={0x080480e3}, expr=0x09[u5]}) = {defs={0x080480dd,0x080480e0,0x080480e3}, expr=(concat[u32] 0x00000000[u29] (extract[u3] 0x0000001d[u32] 0x00000020[u32] eax_0[u32]))}
 Symbolic insn@0x080480e3[2]: extract({defs={0x080480dd,0x080480e0,0x080480e3}, expr=(concat[u32] 0x00000000[u29] (extract[u3] 0x0000001d[u32] 0x00000020[u32] eax_0[u32]))}, 0, 1) = {defs={0x080480dd,0x080480e0,0x080480e3}, expr=(extract[u1] 0x0000001d[u32] 0x0000001e[u32] eax_0[u32])}
 Symbolic insn@0x080480e3[2]: unspecified_(1) = V27[u1]<unspec>
 Symbolic insn@0x080480e3[2]: ite({defs={0x080480e3}, expr=false[u1]}, V27[u1]<unspec>, {defs={0x080480dd,0x080480e0,0x080480e3}, expr=(extract[u1] 0x0000001d[u32] 0x0000001e[u32] eax_0[u32])}) = {defs={0x080480dd,0x080480e0,0x080480e3}, expr=(extract[u1] 0x0000001d[u32] 0x0000001e[u32] eax_0[u32])}
+Symbolic insn@0x080480e3[2]: also returns: IteStatus::B
 Symbolic insn@0x080480e3[2]: undefined_(1) = V28[u1]
 Symbolic insn@0x080480e3[2]: peekRegister(cf, V28[u1]) = {defs={0x080480dd,0x080480e0}, expr=(extract[u1] 0x00000013[u32] 0x00000014[u32] eax_0[u32])}
 Symbolic insn@0x080480e3[2]: ite({defs={0x080480e3}, expr=false[u1]}, {defs={0x080480dd,0x080480e0}, expr=(extract[u1] 0x00000013[u32] 0x00000014[u32] eax_0[u32])}, {defs={0x080480dd,0x080480e0,0x080480e3}, expr=(extract[u1] 0x0000001d[u32] 0x0000001e[u32] eax_0[u32])}) = {defs={0x080480dd,0x080480e0,0x080480e3}, expr=(extract[u1] 0x0000001d[u32] 0x0000001e[u32] eax_0[u32])}
+Symbolic insn@0x080480e3[2]: also returns: IteStatus::B
 Symbolic insn@0x080480e3[2]: writeRegister(cf, {defs={0x080480dd,0x080480e0,0x080480e3}, expr=(extract[u1] 0x0000001d[u32] 0x0000001e[u32] eax_0[u32])})
 Symbolic insn@0x080480e3[2]: unspecified_(1) = V29[u1]<unspec>
 Symbolic insn@0x080480e3[2]: undefined_(1) = V30[u1]
 Symbolic insn@0x080480e3[2]: peekRegister(of, V30[u1]) = {defs={0x080480e0}, expr=V18[u1]<unspec>}
 Symbolic insn@0x080480e3[2]: ite({defs={0x080480e3}, expr=false[u1]}, {defs={0x080480e0}, expr=V18[u1]<unspec>}, V29[u1]<unspec>) = {defs={0x080480e3}, expr=V29[u1]<unspec>}
+Symbolic insn@0x080480e3[2]: also returns: IteStatus::B
 Symbolic insn@0x080480e3[2]: ite({defs={0x080480e3}, expr=false[u1]}, {defs={0x080480dd,0x080480e0,0x080480e3}, expr=false[u1]}, {defs={0x080480e3}, expr=V29[u1]<unspec>}) = {defs={0x080480e3}, expr=V29[u1]<unspec>}
+Symbolic insn@0x080480e3[2]: also returns: IteStatus::B
 Symbolic insn@0x080480e3[2]: writeRegister(of, {defs={0x080480e3}, expr=V29[u1]<unspec>})
 Symbolic insn@0x080480e3[2]: invert({defs={0x080480e3}, expr=false[u1]}) = {defs={0x080480e3}, expr=true[u1]}
 Symbolic insn@0x080480e3[2]: extract({defs={0x080480dd,0x080480e0,0x080480e3}, expr=(concat[u32] 0x00000000[u30] (extract[u2] 0x0000001e[u32] 0x00000020[u32] eax_0[u32]))}, 0, 8) = {defs={0x080480dd,0x080480e0,0x080480e3}, expr=(concat[u8] 0x00[u6] (extract[u2] 0x0000001e[u32] 0x00000020[u32] eax_0[u32]))}
@@ -1096,15 +1125,18 @@ Symbolic insn@0x080480e3[2]: xor_({defs={0x080480dd,0x080480e0,0x080480e3}, expr
 Symbolic insn@0x080480e3[2]: xor_({defs={0x080480dd,0x080480e0,0x080480e3}, expr=(xor[u1] (extract[u1] 0x0000001e[u32] 0x0000001f[u32] eax_0[u32]) (extract[u1] 0x0000001f[u32] 0x00000020[u32] eax_0[u32]))}, {defs={0x080480dd,0x080480e0,0x080480e3}, expr=false[u1]}) = {defs={0x080480dd,0x080480e0,0x080480e3}, expr=(xor[u1] (extract[u1] 0x0000001e[u32] 0x0000001f[u32] eax_0[u32]) (extract[u1] 0x0000001f[u32] 0x00000020[u32] eax_0[u32]))}
 Symbolic insn@0x080480e3[2]: invert({defs={0x080480dd,0x080480e0,0x080480e3}, expr=(xor[u1] (extract[u1] 0x0000001e[u32] 0x0000001f[u32] eax_0[u32]) (extract[u1] 0x0000001f[u32] 0x00000020[u32] eax_0[u32]))}) = {defs={0x080480dd,0x080480e0,0x080480e3}, expr=(invert[u1] (xor[u1] (extract[u1] 0x0000001e[u32] 0x0000001f[u32] eax_0[u32]) (extract[u1] 0x0000001f[u32] 0x00000020[u32] eax_0[u32])))}
 Symbolic insn@0x080480e3[2]: ite({defs={0x080480e3}, expr=true[u1]}, {defs={0x080480dd,0x080480e0,0x080480e3}, expr=(invert[u1] (xor[u1] (extract[u1] 0x0000001e[u32] 0x0000001f[u32] eax_0[u32]) (extract[u1] 0x0000001f[u32] 0x00000020[u32] eax_0[u32])))}, {defs={0x080480dd,0x080480e0}, expr=(invert[u1] (xor[u1] (extract[u1] 0x00000014[u32] 0x00000015[u32] eax_0[u32]) (extract[u1] 0x00000015[u32] 0x00000016[u32] eax_0[u32]) (extract[u1] 0x00000016[u32] 0x00000017[u32] eax_0[u32]) (extract[u1] 0x00000017[u32] 0x00000018[u32] eax_0[u32]) (extract[u1] 0x00000018[u32] 0x00000019[u32] eax_0[u32]) (extract[u1] 0x00000019[u32] 0x0000001a[u32] eax_0[u32]) (extract[u1] 0x0000001a[u32] 0x0000001b[u32] eax_0[u32]) (extract[u1] 0x0000001b[u32] 0x0000001c[u32] eax_0[u32])))}) = {defs={0x080480dd,0x080480e0,0x080480e3}, expr=(invert[u1] (xor[u1] (extract[u1] 0x0000001e[u32] 0x0000001f[u32] eax_0[u32]) (extract[u1] 0x0000001f[u32] 0x00000020[u32] eax_0[u32])))}
+Symbolic insn@0x080480e3[2]: also returns: IteStatus::A
 Symbolic insn@0x080480e3[2]: writeRegister(pf, {defs={0x080480dd,0x080480e0,0x080480e3}, expr=(invert[u1] (xor[u1] (extract[u1] 0x0000001e[u32] 0x0000001f[u32] eax_0[u32]) (extract[u1] 0x0000001f[u32] 0x00000020[u32] eax_0[u32])))})
 Symbolic insn@0x080480e3[2]: undefined_(1) = V32[u1]
 Symbolic insn@0x080480e3[2]: peekRegister(sf, V32[u1]) = {defs={0x080480dd,0x080480e0}, expr=false[u1]}
 Symbolic insn@0x080480e3[2]: ite({defs={0x080480e3}, expr=true[u1]}, {defs={0x080480dd,0x080480e0,0x080480e3}, expr=false[u1]}, {defs={0x080480dd,0x080480e0}, expr=false[u1]}) = {defs={0x080480dd,0x080480e0,0x080480e3}, expr=false[u1]}
+Symbolic insn@0x080480e3[2]: also returns: IteStatus::A
 Symbolic insn@0x080480e3[2]: writeRegister(sf, {defs={0x080480dd,0x080480e0,0x080480e3}, expr=false[u1]})
 Symbolic insn@0x080480e3[2]: undefined_(1) = V33[u1]
 Symbolic insn@0x080480e3[2]: peekRegister(zf, V33[u1]) = {defs={0x080480dd,0x080480e0}, expr=(zerop[u1] (concat[u32] 0x00000[u20] (extract[u12] 0x00000014[u32] 0x00000020[u32] eax_0[u32])))}
 Symbolic insn@0x080480e3[2]: equalToZero({defs={0x080480dd,0x080480e0,0x080480e3}, expr=(concat[u32] 0x00000000[u30] (extract[u2] 0x0000001e[u32] 0x00000020[u32] eax_0[u32]))}) = {defs={0x080480dd,0x080480e0,0x080480e3}, expr=(zerop[u1] (concat[u32] 0x00000000[u30] (extract[u2] 0x0000001e[u32] 0x00000020[u32] eax_0[u32])))}
 Symbolic insn@0x080480e3[2]: ite({defs={0x080480e3}, expr=true[u1]}, {defs={0x080480dd,0x080480e0,0x080480e3}, expr=(zerop[u1] (concat[u32] 0x00000000[u30] (extract[u2] 0x0000001e[u32] 0x00000020[u32] eax_0[u32])))}, {defs={0x080480dd,0x080480e0}, expr=(zerop[u1] (concat[u32] 0x00000[u20] (extract[u12] 0x00000014[u32] 0x00000020[u32] eax_0[u32])))}) = {defs={0x080480dd,0x080480e0,0x080480e3}, expr=(zerop[u1] (concat[u32] 0x00000000[u30] (extract[u2] 0x0000001e[u32] 0x00000020[u32] eax_0[u32])))}
+Symbolic insn@0x080480e3[2]: also returns: IteStatus::A
 Symbolic insn@0x080480e3[2]: writeRegister(zf, {defs={0x080480dd,0x080480e0,0x080480e3}, expr=(zerop[u1] (concat[u32] 0x00000000[u30] (extract[u2] 0x0000001e[u32] 0x00000020[u32] eax_0[u32])))})
 Symbolic insn@0x080480e3[2]: writeRegister(eax, {defs={0x080480dd,0x080480e0,0x080480e3}, expr=(concat[u32] 0x00000000[u30] (extract[u2] 0x0000001e[u32] 0x00000020[u32] eax_0[u32]))})
 Symbolic insn@0x080480e3[2]: finishInstruction(shr eax, 0x0a)
@@ -1149,21 +1181,26 @@ Symbolic insn@0x080480e6[3]: unspecified_(1) = V36[u1]<unspec>
 Symbolic insn@0x080480e6[3]: undefined_(1) = V37[u1]
 Symbolic insn@0x080480e6[3]: peekRegister(af, V37[u1]) = {defs={0x080480e3}, expr=V25[u1]<unspec>}
 Symbolic insn@0x080480e6[3]: ite({defs={0x080480e6}, expr=false[u1]}, {defs={0x080480e3}, expr=V25[u1]<unspec>}, V36[u1]<unspec>) = {defs={0x080480e6}, expr=V36[u1]<unspec>}
+Symbolic insn@0x080480e6[3]: also returns: IteStatus::B
 Symbolic insn@0x080480e6[3]: writeRegister(af, {defs={0x080480e6}, expr=V36[u1]<unspec>})
 Symbolic insn@0x080480e6[3]: add({defs={0x080480e6}, expr=0x02[u5]}, {defs={0x080480e6}, expr=0x1f<-1>[u5]}) = {defs={0x080480e6}, expr=0x01[u5]}
 Symbolic insn@0x080480e6[3]: shiftRight({defs={0x080480dd,0x080480e0,0x080480e3}, expr=(concat[u32] 0x00000000[u30] (extract[u2] 0x0000001e[u32] 0x00000020[u32] eax_0[u32]))}, {defs={0x080480e6}, expr=0x01[u5]}) = {defs={0x080480dd,0x080480e0,0x080480e3,0x080480e6}, expr=(concat[u32] 0x00000000[u31] (extract[u1] 0x0000001f[u32] 0x00000020[u32] eax_0[u32]))}
 Symbolic insn@0x080480e6[3]: extract({defs={0x080480dd,0x080480e0,0x080480e3,0x080480e6}, expr=(concat[u32] 0x00000000[u31] (extract[u1] 0x0000001f[u32] 0x00000020[u32] eax_0[u32]))}, 0, 1) = {defs={0x080480dd,0x080480e0,0x080480e3,0x080480e6}, expr=(extract[u1] 0x0000001f[u32] 0x00000020[u32] eax_0[u32])}
 Symbolic insn@0x080480e6[3]: unspecified_(1) = V38[u1]<unspec>
 Symbolic insn@0x080480e6[3]: ite({defs={0x080480e6}, expr=false[u1]}, V38[u1]<unspec>, {defs={0x080480dd,0x080480e0,0x080480e3,0x080480e6}, expr=(extract[u1] 0x0000001f[u32] 0x00000020[u32] eax_0[u32])}) = {defs={0x080480dd,0x080480e0,0x080480e3,0x080480e6}, expr=(extract[u1] 0x0000001f[u32] 0x00000020[u32] eax_0[u32])}
+Symbolic insn@0x080480e6[3]: also returns: IteStatus::B
 Symbolic insn@0x080480e6[3]: undefined_(1) = V39[u1]
 Symbolic insn@0x080480e6[3]: peekRegister(cf, V39[u1]) = {defs={0x080480dd,0x080480e0,0x080480e3}, expr=(extract[u1] 0x0000001d[u32] 0x0000001e[u32] eax_0[u32])}
 Symbolic insn@0x080480e6[3]: ite({defs={0x080480e6}, expr=false[u1]}, {defs={0x080480dd,0x080480e0,0x080480e3}, expr=(extract[u1] 0x0000001d[u32] 0x0000001e[u32] eax_0[u32])}, {defs={0x080480dd,0x080480e0,0x080480e3,0x080480e6}, expr=(extract[u1] 0x0000001f[u32] 0x00000020[u32] eax_0[u32])}) = {defs={0x080480dd,0x080480e0,0x080480e3,0x080480e6}, expr=(extract[u1] 0x0000001f[u32] 0x00000020[u32] eax_0[u32])}
+Symbolic insn@0x080480e6[3]: also returns: IteStatus::B
 Symbolic insn@0x080480e6[3]: writeRegister(cf, {defs={0x080480dd,0x080480e0,0x080480e3,0x080480e6}, expr=(extract[u1] 0x0000001f[u32] 0x00000020[u32] eax_0[u32])})
 Symbolic insn@0x080480e6[3]: unspecified_(1) = V40[u1]<unspec>
 Symbolic insn@0x080480e6[3]: undefined_(1) = V41[u1]
 Symbolic insn@0x080480e6[3]: peekRegister(of, V41[u1]) = {defs={0x080480e3}, expr=V29[u1]<unspec>}
 Symbolic insn@0x080480e6[3]: ite({defs={0x080480e6}, expr=false[u1]}, {defs={0x080480e3}, expr=V29[u1]<unspec>}, V40[u1]<unspec>) = {defs={0x080480e6}, expr=V40[u1]<unspec>}
+Symbolic insn@0x080480e6[3]: also returns: IteStatus::B
 Symbolic insn@0x080480e6[3]: ite({defs={0x080480e6}, expr=false[u1]}, {defs={0x080480dd,0x080480e0,0x080480e3,0x080480e6}, expr=false[u1]}, {defs={0x080480e6}, expr=V40[u1]<unspec>}) = {defs={0x080480e6}, expr=V40[u1]<unspec>}
+Symbolic insn@0x080480e6[3]: also returns: IteStatus::B
 Symbolic insn@0x080480e6[3]: writeRegister(of, {defs={0x080480e6}, expr=V40[u1]<unspec>})
 Symbolic insn@0x080480e6[3]: invert({defs={0x080480e6}, expr=false[u1]}) = {defs={0x080480e6}, expr=true[u1]}
 Symbolic insn@0x080480e6[3]: extract({defs={0x080480dd,0x080480e0,0x080480e3,0x080480e6}, expr=0x00000000[u32]}, 0, 8) = {defs={0x080480dd,0x080480e0,0x080480e3,0x080480e6}, expr=0x00[u8]}
@@ -1187,15 +1224,18 @@ Symbolic insn@0x080480e6[3]: xor_({defs={0x080480dd,0x080480e0,0x080480e3,0x0804
 Symbolic insn@0x080480e6[3]: xor_({defs={0x080480dd,0x080480e0,0x080480e3,0x080480e6}, expr=false[u1]}, {defs={0x080480dd,0x080480e0,0x080480e3,0x080480e6}, expr=false[u1]}) = {defs={0x080480dd,0x080480e0,0x080480e3,0x080480e6}, expr=false[u1]}
 Symbolic insn@0x080480e6[3]: invert({defs={0x080480dd,0x080480e0,0x080480e3,0x080480e6}, expr=false[u1]}) = {defs={0x080480dd,0x080480e0,0x080480e3,0x080480e6}, expr=true[u1]}
 Symbolic insn@0x080480e6[3]: ite({defs={0x080480e6}, expr=true[u1]}, {defs={0x080480dd,0x080480e0,0x080480e3,0x080480e6}, expr=true[u1]}, {defs={0x080480dd,0x080480e0,0x080480e3}, expr=(invert[u1] (xor[u1] (extract[u1] 0x0000001e[u32] 0x0000001f[u32] eax_0[u32]) (extract[u1] 0x0000001f[u32] 0x00000020[u32] eax_0[u32])))}) = {defs={0x080480dd,0x080480e0,0x080480e3,0x080480e6}, expr=true[u1]}
+Symbolic insn@0x080480e6[3]: also returns: IteStatus::A
 Symbolic insn@0x080480e6[3]: writeRegister(pf, {defs={0x080480dd,0x080480e0,0x080480e3,0x080480e6}, expr=true[u1]})
 Symbolic insn@0x080480e6[3]: undefined_(1) = V43[u1]
 Symbolic insn@0x080480e6[3]: peekRegister(sf, V43[u1]) = {defs={0x080480dd,0x080480e0,0x080480e3}, expr=false[u1]}
 Symbolic insn@0x080480e6[3]: ite({defs={0x080480e6}, expr=true[u1]}, {defs={0x080480dd,0x080480e0,0x080480e3,0x080480e6}, expr=false[u1]}, {defs={0x080480dd,0x080480e0,0x080480e3}, expr=false[u1]}) = {defs={0x080480dd,0x080480e0,0x080480e3,0x080480e6}, expr=false[u1]}
+Symbolic insn@0x080480e6[3]: also returns: IteStatus::A
 Symbolic insn@0x080480e6[3]: writeRegister(sf, {defs={0x080480dd,0x080480e0,0x080480e3,0x080480e6}, expr=false[u1]})
 Symbolic insn@0x080480e6[3]: undefined_(1) = V44[u1]
 Symbolic insn@0x080480e6[3]: peekRegister(zf, V44[u1]) = {defs={0x080480dd,0x080480e0,0x080480e3}, expr=(zerop[u1] (concat[u32] 0x00000000[u30] (extract[u2] 0x0000001e[u32] 0x00000020[u32] eax_0[u32])))}
 Symbolic insn@0x080480e6[3]: equalToZero({defs={0x080480dd,0x080480e0,0x080480e3,0x080480e6}, expr=0x00000000[u32]}) = {defs={0x080480dd,0x080480e0,0x080480e3,0x080480e6}, expr=true[u1]}
 Symbolic insn@0x080480e6[3]: ite({defs={0x080480e6}, expr=true[u1]}, {defs={0x080480dd,0x080480e0,0x080480e3,0x080480e6}, expr=true[u1]}, {defs={0x080480dd,0x080480e0,0x080480e3}, expr=(zerop[u1] (concat[u32] 0x00000000[u30] (extract[u2] 0x0000001e[u32] 0x00000020[u32] eax_0[u32])))}) = {defs={0x080480dd,0x080480e0,0x080480e3,0x080480e6}, expr=true[u1]}
+Symbolic insn@0x080480e6[3]: also returns: IteStatus::A
 Symbolic insn@0x080480e6[3]: writeRegister(zf, {defs={0x080480dd,0x080480e0,0x080480e3,0x080480e6}, expr=true[u1]})
 Symbolic insn@0x080480e6[3]: writeRegister(eax, {defs={0x080480dd,0x080480e0,0x080480e3,0x080480e6}, expr=0x00000000[u32]})
 Symbolic insn@0x080480e6[3]: finishInstruction(shr eax, 0x02)
@@ -1254,6 +1294,7 @@ Symbolic insn@0x080480eb[5]: readRegister(eip, V47[u32]) = {defs={0x080480eb}, e
 Symbolic insn@0x080480eb[5]: number_(32, 134512802) = {defs={0x080480eb}, expr=0x080480a2<134512802>[u32]}
 Symbolic insn@0x080480eb[5]: unsignedExtend({defs={0x080480eb}, expr=0x080480a2<134512802>[u32]}, 32) = {defs={0x080480eb}, expr=0x080480a2<134512802>[u32]}
 Symbolic insn@0x080480eb[5]: ite({defs={0x080480dd,0x080480e0,0x080480e3,0x080480e6}, expr=true[u1]}, {defs={0x080480eb}, expr=0x080480a2<134512802>[u32]}, {defs={0x080480eb}, expr=0x080480ed<134512877>[u32]}) = {defs={0x080480dd,0x080480e0,0x080480e3,0x080480e6,0x080480eb}, expr=0x080480a2<134512802>[u32]}
+Symbolic insn@0x080480eb[5]: also returns: IteStatus::A
 Symbolic insn@0x080480eb[5]: writeRegister(eip, {defs={0x080480dd,0x080480e0,0x080480e3,0x080480e6,0x080480eb}, expr=0x080480a2<134512802>[u32]})
 Symbolic insn@0x080480eb[5]: finishInstruction(je 0x080480a2<end>)
 registers:
@@ -1425,6 +1466,7 @@ Symbolic insn@0x080480f6[3]: readRegister(eip, V4[u32]) = {defs={0x080480f6}, ex
 Symbolic insn@0x080480f6[3]: number_(32, 134512802) = {defs={0x080480f6}, expr=0x080480a2<134512802>[u32]}
 Symbolic insn@0x080480f6[3]: unsignedExtend({defs={0x080480f6}, expr=0x080480a2<134512802>[u32]}, 32) = {defs={0x080480f6}, expr=0x080480a2<134512802>[u32]}
 Symbolic insn@0x080480f6[3]: ite({defs={0x080480f4}, expr=(zerop[u1] (add[u32] (invert[u32] ecx_0[u32]) 0x00000001[u32]))}, {defs={0x080480f6}, expr=0x080480a2<134512802>[u32]}, {defs={0x080480f6}, expr=0x080480f8<134512888>[u32]}) = {defs={0x080480f4,0x080480f6}, expr=(ite[u32] (zerop[u1] (add[u32] (invert[u32] ecx_0[u32]) 0x00000001[u32])) 0x080480a2<134512802>[u32] 0x080480f8<134512888>[u32])}
+Symbolic insn@0x080480f6[3]: also returns: IteStatus::BOTH
 Symbolic insn@0x080480f6[3]: writeRegister(eip, {defs={0x080480f4,0x080480f6}, expr=(ite[u32] (zerop[u1] (add[u32] (invert[u32] ecx_0[u32]) 0x00000001[u32])) 0x080480a2<134512802>[u32] 0x080480f8<134512888>[u32])})
 Symbolic insn@0x080480f6[3]: finishInstruction(je 0x080480a2<end>)
 registers:
@@ -1549,6 +1591,7 @@ Symbolic insn@0x08048103[3]: readRegister(eip, V5[u32]) = {defs={0x08048103}, ex
 Symbolic insn@0x08048103[3]: number_(32, 134512802) = {defs={0x08048103}, expr=0x080480a2<134512802>[u32]}
 Symbolic insn@0x08048103[3]: unsignedExtend({defs={0x08048103}, expr=0x080480a2<134512802>[u32]}, 32) = {defs={0x08048103}, expr=0x080480a2<134512802>[u32]}
 Symbolic insn@0x08048103[3]: ite(zf_0[u1], {defs={0x08048103}, expr=0x080480a2<134512802>[u32]}, {defs={0x08048103}, expr=0x08048105<134512901>[u32]}) = {defs={0x08048103}, expr=(ite[u32] zf_0[u1] 0x080480a2<134512802>[u32] 0x08048105<134512901>[u32])}
+Symbolic insn@0x08048103[3]: also returns: IteStatus::BOTH
 Symbolic insn@0x08048103[3]: writeRegister(eip, {defs={0x08048103}, expr=(ite[u32] zf_0[u1] 0x080480a2<134512802>[u32] 0x08048105<134512901>[u32])})
 Symbolic insn@0x08048103[3]: finishInstruction(je 0x080480a2<end>)
 registers:

@@ -328,11 +328,15 @@ RiscOperators::equalToZero(const BaseSemantics::SValuePtr &a_) {
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::ite(const BaseSemantics::SValuePtr &sel_, const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &b_) {
+RiscOperators::iteWithStatus(const BaseSemantics::SValuePtr &sel_,
+                             const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &b_,
+                             BaseSemantics::RiscOperators::IteStatus &status) {
     ASSERT_require(sel_->nBits() == 1);
     if (sel_->toUnsigned().get()) {
+        status = IteStatus::A;
         return a_->copy();
     } else {
+        status = IteStatus::B;
         return b_->copy();
     }
 }

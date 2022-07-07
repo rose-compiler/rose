@@ -262,19 +262,28 @@ RiscOperators::equalToZero(const BaseSemantics::SValuePtr &a_)
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::ite(const BaseSemantics::SValuePtr &sel_,
-                   const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &b_)
+RiscOperators::iteWithStatus(const BaseSemantics::SValuePtr &sel_,
+                             const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &b_,
+                             IteStatus &status)
 {
     SValuePtr sel = SValue::promote(sel_);
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
     ASSERT_require(1==sel->nBits());
     ASSERT_require(a->nBits()==b->nBits());
-    if (a->mustEqual(b))
+    if (a->mustEqual(b)) {
+        status = IteStatus::BOTH;
         return a->copy();
-    if (sel->name)
+    } else if (sel->name) {
+        status = IteStatus::NEITHER;
         return undefined_(a->nBits());
-    return sel->offset ? a->copy() : b->copy();
+    } else if (sel->offset) {
+        status = IteStatus::A;
+        return a->copy();
+    } else {
+        status = IteStatus::B;
+        return b->copy();
+    }
 }
 
 BaseSemantics::SValuePtr
