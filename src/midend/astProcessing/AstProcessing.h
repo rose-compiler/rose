@@ -1,11 +1,11 @@
 // Original Author (AstProcessing classes): Markus Schordan
 // Rewritten by: Gergo Barany
 
-#ifndef ASTPROCESSING_H
-#define ASTPROCESSING_H
-#define INHERITED 0
-#define SYNTHESIZED 1
-#define BOTH 2
+#ifndef ROSE_ASTPROCESSING_H
+#define ROSE_ASTPROCESSING_H
+#define ROSE_INHERITED 0
+#define ROSE_SYNTHESIZED 1
+#define ROSE_BOTH 2
 
 
 

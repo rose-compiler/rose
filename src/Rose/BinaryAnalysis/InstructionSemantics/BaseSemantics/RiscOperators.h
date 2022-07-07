@@ -16,14 +16,6 @@
 #include <boost/serialization/shared_ptr.hpp>
 #include <boost/serialization/version.hpp>
 
-#if defined(ASTPROCESSING_H) || defined(INHERITED) || defined(SYNTHESIZED) || defined(BOTH)
-    #include <rose_pragma_message.h>
-    ROSE_PRAGMA_MESSAGE("something is polluting the global namespace; undefining some symbols");
-    #undef INHERITED
-    #undef SYNTHESIZED
-    #undef BOTH
-#endif
-
 namespace Rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics {
