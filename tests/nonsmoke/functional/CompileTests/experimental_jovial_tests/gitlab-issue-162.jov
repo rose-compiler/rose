@@ -1,0 +1,12 @@
+START
+DEF PROC main S;
+BEGIN
+  ITEM B1 B 4;
+  ITEM B2 B 4;
+  B1 = 1B'1001';
+  B2 = 1B'0011';
+  B1 = B1 EQV B2;
+  IF B1 = 1B'0101'; main = 0;
+  ELSE main = 1;
+END
+TERM

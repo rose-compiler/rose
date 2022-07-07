@@ -5831,7 +5831,7 @@ ATbool ATermToSageJovialTraversal::traverse_BinaryExpression(ATerm term, SgExpre
       expr = SageBuilder::buildBitXorOp_nfi(lhs, rhs);
       break;
     case e_operator_equiv:
-      expr = SageBuilder::buildEqualityOp_nfi(lhs, rhs);
+      expr = SageBuilder::buildBinaryExpression_nfi<SgBitEqvOp>(lhs, rhs);
       break;
 
     case e_operator_mod:
