@@ -38,6 +38,7 @@ static const char *gDescription =
 #include <Sawyer/Database.h>
 #include <Sawyer/Map.h>
 
+#include <boost/algorithm/string/trim.hpp>
 #include <boost/any.hpp>
 #include <boost/format.hpp>
 
@@ -54,6 +55,7 @@ struct Settings {
     bool showAges = true;                               // when showing times, also say "about x days ago" or similar
     bool considerAll = false;                           // consider all tests instead of just the latest ROSE version
     bool dittoize = true;                               // use ditto markers (") when successive rows have same value
+    bool askDelete = true;                              // verify deletion
 };
 
 static Sawyer::Message::Facility mlog;
@@ -97,6 +99,10 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
     sg.insert(Switch("delete")
               .intrinsicValue(true, settings.deleteMatchingTests)
               .doc("Delete the tests that were matched."));
+
+    sg.insert(Switch("force", 'f')
+              .intrinsicValue(false, settings.askDelete)
+              .doc("When deleting, do not ask whether to delete; just do it."));
 
     Rose::CommandLine::insertBooleanSwitch(sg, "show-age", settings.showAges,
                                            "Causes timestamps to also incude an approximate age. For instance, the "
@@ -858,6 +864,7 @@ formatValue(const Settings &settings, const Column &c, const std::string &value)
             return Rose::CommandLine::durationParser()->toString(length);
         }
     }
+    ASSERT_not_reachable("invalid column type");
 }
 
 // Adjust table by replacing repeated values with ditto marks.
@@ -1161,14 +1168,23 @@ main(int argc, char *argv[]) {
 
     // Delete tests
     if (settings.deleteMatchingTests && !testIds.empty()) {
-        mlog[INFO] <<"deleting " <<StringUtility::plural(testIds.size(), "matching tests") <<"\n";
-        std::string inClause;
-        for (size_t id: testIds)
-            inClause += (inClause.empty() ? " in (" : ", ") + boost::lexical_cast<std::string>(id);
-        inClause += ")";
+        bool doDeletions = true;
+        if (settings.askDelete) {
+            std::cout <<"delete? [y/N] ";
+            std::string reply;
+            std::getline(std::cin, reply);
+            doDeletions = boost::starts_with(boost::trim_copy(reply), "y");
+        }
+        if (doDeletions) {
+            mlog[INFO] <<"deleting " <<StringUtility::plural(testIds.size(), "matching tests") <<"\n";
+            std::string inClause;
+            for (size_t id: testIds)
+                inClause += (inClause.empty() ? " in (" : ", ") + boost::lexical_cast<std::string>(id);
+            inClause += ")";
 
-        // Delete attachments first, then test records
-        db.stmt("delete from attachments where test_id " + inClause).run();
-        db.stmt("delete from test_results where id " + inClause).run();
+            // Delete attachments first, then test records
+            db.stmt("delete from attachments where test_id " + inClause).run();
+            db.stmt("delete from test_results where id " + inClause).run();
+        }
     }
 }
