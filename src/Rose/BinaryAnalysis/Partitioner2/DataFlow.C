@@ -622,7 +622,8 @@ TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSema
 
         BaseSemantics::SValuePtr newStack;
         if (stackDelta && stackDelta->toUnsigned()) {
-            newStack = ops->add(origStackPtr, stackDelta);
+            // stackDelta might not be the same semantic domain as what we need, so create a new delta
+            newStack = ops->add(origStackPtr, ops->number_(origStackPtr->nBits(), *stackDelta->toUnsigned()));
         } else {
             // We don't know the callee's delta, therefore we don't know how to adjust the delta for the callee's effect.
             newStack = ops->undefined_(STACK_POINTER_REG.nBits());
