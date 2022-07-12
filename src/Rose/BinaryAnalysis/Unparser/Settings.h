@@ -138,6 +138,8 @@ struct Settings {
         EdgeArrows::ArrowStylePreset style;             /**< One of the arrow style presets. */
     } arrow;                                            /**< How to render arrows along the left margin. */
 
+    std::string linePrefix;
+
     Settings();
     static Settings full();
     static Settings minimal();
