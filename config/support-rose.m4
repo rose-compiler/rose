@@ -1976,11 +1976,6 @@ AC_CONFIG_SUBDIRS([libltdl])
 CLASSPATH_COND_IF([ROSE_HAS_EDG_SOURCE], [test "x$has_edg_source" = "xyes"], [
 AC_CONFIG_FILES([
 src/frontend/CxxFrontend/EDG/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.12/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.12/misc/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.12/src/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.12/src/disp/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.12/lib/Makefile
 src/frontend/CxxFrontend/EDG/EDG_5.0/Makefile
 src/frontend/CxxFrontend/EDG/EDG_5.0/misc/Makefile
 src/frontend/CxxFrontend/EDG/EDG_5.0/src/Makefile
@@ -1991,11 +1986,11 @@ src/frontend/CxxFrontend/EDG/EDG_6.0/misc/Makefile
 src/frontend/CxxFrontend/EDG/EDG_6.0/src/Makefile
 src/frontend/CxxFrontend/EDG/EDG_6.0/src/disp/Makefile
 src/frontend/CxxFrontend/EDG/EDG_6.0/lib/Makefile
-src/frontend/CxxFrontend/EDG/EDG_6.2/Makefile
-src/frontend/CxxFrontend/EDG/EDG_6.2/misc/Makefile
-src/frontend/CxxFrontend/EDG/EDG_6.2/src/Makefile
-src/frontend/CxxFrontend/EDG/EDG_6.2/src/disp/Makefile
-src/frontend/CxxFrontend/EDG/EDG_6.2/lib/Makefile
+src/frontend/CxxFrontend/EDG/EDG_6.3/Makefile
+src/frontend/CxxFrontend/EDG/EDG_6.3/misc/Makefile
+src/frontend/CxxFrontend/EDG/EDG_6.3/src/Makefile
+src/frontend/CxxFrontend/EDG/EDG_6.3/src/disp/Makefile
+src/frontend/CxxFrontend/EDG/EDG_6.3/lib/Makefile
 src/frontend/CxxFrontend/EDG/edgRose/Makefile
 ])], [])
 
