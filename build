@@ -290,11 +290,6 @@ sed -i~ -e '/^AC_INIT(/ s/^\(AC_INIT *(\[.*\], *\[\).*\(\] *).*\)/\1'"$rose_vers
 if [[ ! -e src/frontend/CxxFrontend/EDG/Makefile.am ]]; then
     for file in \
         src/frontend/CxxFrontend/EDG/Makefile.in \
-        src/frontend/CxxFrontend/EDG/EDG_4.12/Makefile.in \
-        src/frontend/CxxFrontend/EDG/EDG_4.12/misc/Makefile.in \
-        src/frontend/CxxFrontend/EDG/EDG_4.12/src/Makefile.in \
-        src/frontend/CxxFrontend/EDG/EDG_4.12/src/disp/Makefile.in \
-        src/frontend/CxxFrontend/EDG/EDG_4.12/lib/Makefile.in \
         src/frontend/CxxFrontend/EDG/EDG_5.0/Makefile.in \
         src/frontend/CxxFrontend/EDG/EDG_5.0/misc/Makefile.in \
         src/frontend/CxxFrontend/EDG/EDG_5.0/src/Makefile.in \
@@ -305,11 +300,11 @@ if [[ ! -e src/frontend/CxxFrontend/EDG/Makefile.am ]]; then
         src/frontend/CxxFrontend/EDG/EDG_6.0/src/Makefile.in \
         src/frontend/CxxFrontend/EDG/EDG_6.0/src/disp/Makefile.in \
         src/frontend/CxxFrontend/EDG/EDG_6.0/lib/Makefile.in \
-        src/frontend/CxxFrontend/EDG/EDG_6.2/Makefile.in \
-        src/frontend/CxxFrontend/EDG/EDG_6.2/misc/Makefile.in \
-        src/frontend/CxxFrontend/EDG/EDG_6.2/src/Makefile.in \
-        src/frontend/CxxFrontend/EDG/EDG_6.2/src/disp/Makefile.in \
-        src/frontend/CxxFrontend/EDG/EDG_6.2/lib/Makefile.in \
+        src/frontend/CxxFrontend/EDG/EDG_6.3/Makefile.in \
+        src/frontend/CxxFrontend/EDG/EDG_6.3/misc/Makefile.in \
+        src/frontend/CxxFrontend/EDG/EDG_6.3/src/Makefile.in \
+        src/frontend/CxxFrontend/EDG/EDG_6.3/src/disp/Makefile.in \
+        src/frontend/CxxFrontend/EDG/EDG_6.3/lib/Makefile.in \
         src/frontend/CxxFrontend/EDG/edgRose/Makefile.in
     do
         mkdir -p $(dirname $file)

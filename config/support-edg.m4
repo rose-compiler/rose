@@ -24,14 +24,7 @@ AC_DEFUN([ROSE_SUPPORT_EDG], [
     fi
 
     # Only certain versions of EDG are valid
-    if test "$edg_major_version_number" = "4"; then
-        if test "$edg_minor_version_number" = "12"; then
-            enable_edg_version412=yes
-            AC_DEFINE([ROSE_USE_EDG_VERSION_4_12], [], [Whether to use the new EDG version 4.12])
-        else
-            AC_MSG_FAILURE([EDG-$edg_major_version_number.$edg_minor_version_number is not valid])
-        fi
-    elif test "x$edg_major_version_number" = "x5"; then
+    if test "x$edg_major_version_number" = "x5"; then
         if test "x$edg_minor_version_number" = "x0"; then
             enable_edg_version50=yes
             AC_DEFINE([ROSE_USE_EDG_VERSION_5_0], [], [Whether to use the new EDG version 5.0])
@@ -42,9 +35,9 @@ AC_DEFUN([ROSE_SUPPORT_EDG], [
         if test "x$edg_minor_version_number" = "x0"; then
             enable_edg_version60=yes
             AC_DEFINE([ROSE_USE_EDG_VERSION_6_0], [], [Whether to use the new EDG version 6.0])
-        elif test "x$edg_minor_version_number" = "x2"; then
-            enable_edg_version62=yes
-            AC_DEFINE([ROSE_USE_EDG_VERSION_6_2], [], [Whether to use the new EDG version 6.2])
+        elif test "x$edg_minor_version_number" = "x3"; then
+            enable_edg_version63=yes
+            AC_DEFINE([ROSE_USE_EDG_VERSION_6_3], [], [Whether to use the new EDG version 6.2])
         else
             AC_MSG_FAILURE([EDG-$edg_major_version_number.$edg_minor_version_number is not valid])
         fi
@@ -64,10 +57,9 @@ AC_DEFUN([ROSE_SUPPORT_EDG], [
 
     # DQ (2/3/2010): I would like to not have to use these and use the new
     # ROSE_EDG_MAJOR_VERSION_NUMBER and ROSE_EDG_MINOR_VERSION_NUMBER instead.
-    AM_CONDITIONAL(ROSE_USE_EDG_VERSION_4_12, [test "x$enable_edg_version412" = xyes])
     AM_CONDITIONAL(ROSE_USE_EDG_VERSION_5_0,  [test "x$enable_edg_version50" = xyes])
     AM_CONDITIONAL(ROSE_USE_EDG_VERSION_6_0,  [test "x$enable_edg_version60" = xyes])
-    AM_CONDITIONAL(ROSE_USE_EDG_VERSION_6_2,  [test "x$enable_edg_version62" = xyes])
+    AM_CONDITIONAL(ROSE_USE_EDG_VERSION_6_3,  [test "x$enable_edg_version63" = xyes])
 
     ###############################################################################################################################
     # This part of the configuration is about whether to compile the EDG library from source code, or to use a precompiled EDG
