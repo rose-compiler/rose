@@ -2236,6 +2236,9 @@ Base::emitLinePrefix(std::ostream &out, State &state) const {
     if (nextUnparser()) {
         nextUnparser()->emitLinePrefix(out, state);
     } else {
+        // Indentation prefix
+        out <<settings().linePrefix;
+
         // Generate intra-function arrows that point to basic blocks. I.e., basic blocks are the pointable entities,
         // and we're only drawing arrows that both originate and terminate within the current function.
         StyleGuard style(state.styleStack(), settings().bblock.cfg.arrowStyle);
