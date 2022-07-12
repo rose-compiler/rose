@@ -109,8 +109,9 @@ private:
     InstructionSemantics::BaseSemantics::RiscOperatorsPtr userOps_;   // operators (and state) provided by the user
     InstructionSemantics::DataFlowSemantics::RiscOperatorsPtr dfOps_; // data-flow operators (which point to user ops)
     InstructionSemantics::BaseSemantics::DispatcherPtr dispatcher_;   // copy of user's dispatcher but with DataFlowSemantics
+
+public:
     static Sawyer::Message::Facility mlog;                            // diagnostics for data-flow
-    void init(const InstructionSemantics::BaseSemantics::DispatcherPtr&);
 
 public:
     /** Constructor.
@@ -126,6 +127,9 @@ public:
      *
      *  This is called by Rose::Diagnostics::initialize. */
     static void initDiagnostics();
+
+private:
+    void init(const InstructionSemantics::BaseSemantics::DispatcherPtr&);
 
 public:
     /** Compute data-flow.

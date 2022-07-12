@@ -34,7 +34,7 @@ public:
     InterproceduralPredicate &interproceduralPredicate;      // returns true when a call should be inlined
 
     // maps CFG vertex ID to dataflow vertex
-    typedef Sawyer::Container::GraphIteratorMap<ControlFlowGraph::ConstVertexIterator, DfCfg::VertexIterator> VertexMap;
+    using VertexMap = Sawyer::Container::GraphIteratorMap<ControlFlowGraph::ConstVertexIterator, DfCfg::VertexIterator>;
 
     // Info about one function call
     struct CallFrame {
@@ -49,7 +49,7 @@ public:
               functionReturnVertex(dfCfg.vertices().end()) {}
     };
 
-    typedef std::list<CallFrame> CallStack;             // we use a list since there's no default constructor for an iterator
+    using CallStack = std::list<CallFrame>;             // we use a list since there's no default constructor for an iterator
     CallStack callStack;
     size_t maxCallStackSize;                            // safety to prevent infinite recursion
     size_t nextInliningId;                              // next ID when crating a CallFrame
@@ -58,7 +58,7 @@ public:
         : partitioner(partitioner), cfg(cfg), interproceduralPredicate(predicate),
           maxCallStackSize(10), nextInliningId(0) {}
 
-    typedef DepthFirstForwardGraphTraversal<const ControlFlowGraph> CfgTraversal;
+    using CfgTraversal = DepthFirstForwardGraphTraversal<const ControlFlowGraph>;
 
     // Given a CFG vertex, find the corresponding data-flow vertex. Since function CFGs are inlined into the dfCFG repeatedly,
     // this method looks only at the top of the virtual function call stack.  Returns the end dfCFG vertex if the top of the
@@ -402,9 +402,9 @@ findStackVariables(const Function::Ptr &function, const BaseSemantics::RiscOpera
 
     // Find groups of consecutive addresses that were written to by the same instruction(s) and which have the same I/O
     // properties. This is how we coalesce adjacent bytes into larger variables.
-    typedef Sawyer::Container::IntervalMap<Variables::OffsetInterval, StackVariableMeta> CellCoalescer;
+    using CellCoalescer = Sawyer::Container::IntervalMap<Variables::OffsetInterval, StackVariableMeta>;
     CellCoalescer cellCoalescer;
-    typedef Sawyer::Container::Map<int64_t, BaseSemantics::SValuePtr> OffsetAddress; // full address per stack offset
+    using OffsetAddress = Sawyer::Container::Map<int64_t, BaseSemantics::SValuePtr>; // full address per stack offset
     OffsetAddress offsetAddresses;
     BaseSemantics::MemoryCellStatePtr mem = BaseSemantics::MemoryCellState::promote(state->memoryState());
     auto cells = mem->allCells();
@@ -494,8 +494,8 @@ findGlobalVariables(const BaseSemantics::RiscOperatorsPtr &ops, size_t wordNByte
 
     // Find groups of consecutive addresses that were written to by the same instruction.  This is how we coalesce adjacent
     // bytes into larger variables.
-    typedef Sawyer::Container::IntervalMap<AddressInterval, rose_addr_t /*writer*/> StackWriters;
-    typedef Sawyer::Container::Map<rose_addr_t, BaseSemantics::SValuePtr> SymbolicAddresses;
+    using StackWriters = Sawyer::Container::IntervalMap<AddressInterval, rose_addr_t /*writer*/>;
+    using SymbolicAddresses = Sawyer::Container::Map<rose_addr_t, BaseSemantics::SValuePtr>;
     StackWriters stackWriters;
     SymbolicAddresses symbolicAddrs;
     BaseSemantics::MemoryCellStatePtr mem = BaseSemantics::MemoryCellState::promote(state->memoryState());
@@ -608,9 +608,9 @@ TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSema
             // Use the stack delta from the default calling convention only if we don't already know the stack delta from a
             // stack delta analysis, and only if the default CC is caller-cleanup.
             if (!stackDelta || !stackDelta->toUnsigned()) {
-                if (ccDefn->stackCleanup() == CallingConvention::CLEANUP_BY_CALLER) {
+                if (ccDefn->stackCleanup() == CallingConvention::StackCleanup::BY_CALLER) {
                     stackDelta = ops->number_(origStackPtr->nBits(), ccDefn->nonParameterStackSize());
-                    if (ccDefn->stackDirection() == CallingConvention::GROWS_UP)
+                    if (ccDefn->stackDirection() == CallingConvention::StackDirection::GROWS_UP)
                         stackDelta = ops->negate(stackDelta);
                 }
             }
