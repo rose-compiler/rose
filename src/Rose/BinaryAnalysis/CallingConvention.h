@@ -16,6 +16,9 @@
 #include <Sawyer/SharedObject.h>
 #include <Sawyer/SharedPointer.h>
 
+// Clean up global namespace pollution
+#undef ABSOLUTE
+
 namespace Rose {
 namespace BinaryAnalysis {
 
@@ -49,23 +52,23 @@ extern Sawyer::Message::Facility mlog;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** The order that arguments are pushed onto the stack. */
-enum StackParameterOrder {
+enum class StackParameterOrder {
     LEFT_TO_RIGHT,                                      /**< Stack parameters pushed left to right (Pascal order). */
     RIGHT_TO_LEFT,                                      /**< Stack parameters pushed right to left (C order). */
-    ORDER_UNSPECIFIED,                                  /**< Stack parameter order is unknown or unspecified. */
+    UNSPECIFIED,                                        /**< Stack parameter order is unknown or unspecified. */
 };
 
 /** The direction in which the stack grows. */
-enum StackDirection {
+enum class StackDirection {
     GROWS_UP,                                           /**< A push increments the stack pointer. */
     GROWS_DOWN,                                         /**< A push decrements the stack pointer. */
 };
 
 /** Who is responsible for popping stack parameters. */
-enum StackCleanup {
-    CLEANUP_BY_CALLER,                                  /**< The caller pops all stack parameters. */
-    CLEANUP_BY_CALLEE,                                  /**< The called function pops all stack parameters. */
-    CLEANUP_UNSPECIFIED,                                /**< Stack parameter cleanup is unknown or unspecified. */
+enum class StackCleanup {
+    BY_CALLER,                                          /**< The caller pops all stack parameters. */
+    BY_CALLEE,                                          /**< The called function pops all stack parameters. */
+    UNSPECIFIED,                                        /**< Stack parameter cleanup is unknown or unspecified. */
 };
 
 
@@ -82,7 +85,6 @@ enum StackCleanup {
  *
  *  The same type is used for input parameters, output parameters, and in-out parameters. Return values are a kind of
  *  output parameter, although the API usually does not include the return value when it talks about "parameters". */
-  #undef ABSOLUTE
 class ParameterLocation {
 public:
     /** Type of location. */
@@ -232,16 +234,16 @@ public:
 private:
     std::string name_;                                  // Official short name of the convention, like "stdcall".
     std::string comment_;                               // Long name, like "Windows Borland x86-32 fastcall"
-    size_t wordWidth_;                                  // Natural width word size in bits
-    const RegisterDictionary *regDict_;                 // Register dictionary used when this definition was created
+    size_t wordWidth_ = 0;                              // Natural width word size in bits
+    const RegisterDictionary *regDict_ = nullptr;       // Register dictionary used when this definition was created
     std::vector<ParameterLocation> inputParameters_;    // Input (inc. in-out) parameters; additional stack-based are implied
     std::vector<ParameterLocation> outputParameters_;   // Return values and output parameters.
-    StackParameterOrder stackParameterOrder_;           // Order of arguments on the stack
+    StackParameterOrder stackParameterOrder_ = StackParameterOrder::UNSPECIFIED; // Order of arguments on the stack
     RegisterDescriptor stackPointerRegister_;           // Base pointer for implied stack parameters
-    size_t nonParameterStackSize_;                      // Size in bytes of non-parameter stack area
-    size_t stackAlignment_;                             // Stack alignment in bytes (zero means unknown)
-    StackDirection stackDirection_;                     // Direction that stack grows from a PUSH operation
-    StackCleanup stackCleanup_;                         // Who cleans up stack parameters?
+    size_t nonParameterStackSize_ = 0;                  // Size in bytes of non-parameter stack area
+    size_t stackAlignment_ = 0;                         // Stack alignment in bytes (zero means unknown)
+    StackDirection stackDirection_ = StackDirection::GROWS_DOWN; // Direction that stack grows from a PUSH operation
+    StackCleanup stackCleanup_ = StackCleanup::UNSPECIFIED;      // Who cleans up stack parameters?
     ParameterLocation thisParameter_;                   // Object pointer for calling conventions that are object methods
     std::set<RegisterDescriptor> calleeSavedRegisters_; // Register that the callee must restore before returning
     std::set<RegisterDescriptor> scratchRegisters_;     // Caller-saved registers
@@ -274,9 +276,7 @@ protected:
     /** Default constructor.
      *
      *  Constructs a new calling convention with no name or parameters. */
-    Definition()
-        : wordWidth_(0), regDict_(NULL), stackParameterOrder_(ORDER_UNSPECIFIED), nonParameterStackSize_(0),
-          stackAlignment_(0), stackDirection_(GROWS_DOWN), stackCleanup_(CLEANUP_UNSPECIFIED) {}
+    Definition() {}
 
     /** Construct a new calling convention.
      *
@@ -284,9 +284,9 @@ protected:
      *  is a more complete name for the convention perhaps including the operating system and architecture but not containing
      *  line termination. */
     Definition(size_t wordWidth, const std::string &name, const std::string &comment, const RegisterDictionary *regDict)
-        : name_(name), comment_(comment), wordWidth_(wordWidth), regDict_(regDict), stackParameterOrder_(ORDER_UNSPECIFIED),
-          nonParameterStackSize_(0), stackAlignment_(0), stackDirection_(GROWS_DOWN), stackCleanup_(CLEANUP_UNSPECIFIED) {
+        : name_(name), comment_(comment), wordWidth_(wordWidth), regDict_(regDict) {
         ASSERT_require2(0 == (wordWidth & 7) && wordWidth > 0, "word size must be a positive multiple of eight");
+        ASSERT_not_null(regDict);
     }
 
 public:

@@ -2017,6 +2017,7 @@ Partitioner::functionCallingConvention(const Function::Ptr &function,
 CallingConvention::Dictionary
 Partitioner::functionCallingConventionDefinitions(const Function::Ptr &function,
                                                   const CallingConvention::Definition::Ptr &dfltCc/*=NULL*/) const {
+    SAWYER_MESG(CallingConvention::mlog[DEBUG]) <<"calling convention analysis for " <<function->printableName() <<"\n";
     const CallingConvention::Analysis &ccAnalysis = functionCallingConvention(function, dfltCc);
     const CallingConvention::Dictionary &archConventions = instructionProvider().callingConventions();
     return ccAnalysis.match(archConventions);

@@ -10,6 +10,7 @@
 #include <Rose/BinaryAnalysis/Partitioner2/DataFlow.h>    // Dataflow components that we can re-use
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h> // Fast binary analysis data structures
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>    // Fast function data structures
+#include <Rose/BinaryAnalysis/Unparser/Base.h>
 #include <Sawyer/ProgressBar.h>
 
 using namespace Rose::Diagnostics;
@@ -200,15 +201,18 @@ Definition::x86_cdecl(const RegisterDictionary *regDict) {
 
     // Stack characteristics
     cc->stackPointerRegister(SP);
-    cc->stackDirection(GROWS_DOWN);
+    cc->stackDirection(StackDirection::GROWS_DOWN);
     cc->nonParameterStackSize(cc->wordWidth() >> 3);    // return address
 
     // All parameters are passed on the stack.
-    cc->stackParameterOrder(RIGHT_TO_LEFT);
-    cc->stackCleanup(CLEANUP_BY_CALLER);
+    cc->stackParameterOrder(StackParameterOrder::RIGHT_TO_LEFT);
+    cc->stackCleanup(StackCleanup::BY_CALLER);
 
     // Other inputs
     cc->appendInputParameter(regDict->findOrThrow("df"));   // direction flag is always assumed to be valid
+    cc->appendInputParameter(regDict->findOrThrow("cs"));   // code segment register is assumed to be valid
+    cc->appendInputParameter(regDict->findOrThrow("ds"));   // data segment register is assumed to be valid
+    cc->appendInputParameter(regDict->findOrThrow("ss"));   // stack segment register is assumed to be valid
 
     // Return values
     cc->appendOutputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_ax));
@@ -249,7 +253,7 @@ Definition::ppc_ibm(const RegisterDictionary *regDict) {
 
     // Stack characteristics
     cc->stackPointerRegister(SP);
-    cc->stackDirection(GROWS_DOWN);
+    cc->stackDirection(StackDirection::GROWS_DOWN);
     cc->nonParameterStackSize(0);                       // return address is in link register
 
     // Function arguments are passed in registers
@@ -277,8 +281,8 @@ Definition::ppc_ibm(const RegisterDictionary *regDict) {
     cc->appendInputParameter(regDict->findLargestRegister(powerpc_regclass_fpr, 13));
 
     // Stack is generally not used for passing arguments
-    cc->stackParameterOrder(RIGHT_TO_LEFT);
-    cc->stackCleanup(CLEANUP_BY_CALLER);
+    cc->stackParameterOrder(StackParameterOrder::RIGHT_TO_LEFT);
+    cc->stackCleanup(StackCleanup::BY_CALLER);
 
     // Return values
     cc->appendOutputParameter(regDict->findLargestRegister(powerpc_regclass_gpr, 3)); // primary return
@@ -352,18 +356,22 @@ Definition::x86_stdcall(const RegisterDictionary *regDict) {
 
     // Stack characteristics
     cc->stackPointerRegister(SP);
-    cc->stackDirection(GROWS_DOWN);
+    cc->stackDirection(StackDirection::GROWS_DOWN);
     cc->nonParameterStackSize(cc->wordWidth() >> 3);    // return address
 
     // All parameters are passed on the stack
-    cc->stackParameterOrder(RIGHT_TO_LEFT);
-    cc->stackCleanup(CLEANUP_BY_CALLEE);
+    cc->stackParameterOrder(StackParameterOrder::RIGHT_TO_LEFT);
+    cc->stackCleanup(StackCleanup::BY_CALLEE);
 
     // Other inputs
     cc->appendInputParameter(regDict->findOrThrow("df"));   // direction flag is always assumed to be valid
+    cc->appendInputParameter(regDict->findOrThrow("cs"));   // code segment register is assumed to be valid
+    cc->appendInputParameter(regDict->findOrThrow("ds"));   // data segment register is assumed to be valid
+    cc->appendInputParameter(regDict->findOrThrow("ss"));   // stack segment register is assumed to be valid
 
     // Return values
     cc->appendOutputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_ax));
+    cc->appendOutputParameter(regDict->findLargestRegister(x86_regclass_st, x86_st_0));
     cc->appendOutputParameter(SP);
 
     // Scratch registers (i.e., modified, not callee-saved, not return registers)
@@ -401,18 +409,24 @@ Definition::x86_fastcall(const RegisterDictionary *regDict) {
 
     // Stack characteristics
     cc->stackPointerRegister(SP);
-    cc->stackDirection(GROWS_DOWN);
+    cc->stackDirection(StackDirection::GROWS_DOWN);
     cc->nonParameterStackSize(cc->wordWidth() >> 3);    // return address
 
     // Uses ECX and EDX for first args that fit; all other parameters are passed on the stack.
     cc->appendInputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_cx));
     cc->appendInputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_dx));
-    cc->stackParameterOrder(RIGHT_TO_LEFT);
-    cc->stackCleanup(CLEANUP_BY_CALLEE);
+    cc->stackParameterOrder(StackParameterOrder::RIGHT_TO_LEFT);
+    cc->stackCleanup(StackCleanup::BY_CALLEE);
+
+    // Other inputs
     cc->appendInputParameter(regDict->findOrThrow("df"));   // direction flag is always assumed to be valid
+    cc->appendInputParameter(regDict->findOrThrow("cs"));   // code segment register is assumed to be valid
+    cc->appendInputParameter(regDict->findOrThrow("ds"));   // data segment register is assumed to be valid
+    cc->appendInputParameter(regDict->findOrThrow("ss"));   // stack segment register is assumed to be valid
 
     // Return values
     cc->appendOutputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_ax));
+    cc->appendOutputParameter(regDict->findLargestRegister(x86_regclass_st, x86_st_0));
     cc->appendOutputParameter(SP);
 
     // Scratch registers (i.e., modified, not callee-saved, not return registers)
@@ -442,7 +456,7 @@ Definition::x86_64bit_sysv() {
 
         // Stack characteristics
         cc->stackPointerRegister(SP);
-        cc->stackDirection(GROWS_DOWN);
+        cc->stackDirection(StackDirection::GROWS_DOWN);
         cc->nonParameterStackSize(cc->wordWidth() >> 3); // return address
 
         //---- Function arguments ----
@@ -470,12 +484,15 @@ Definition::x86_64bit_sysv() {
         // is also part of the first return value).
         cc->appendInputParameter(RegisterDescriptor(x86_regclass_gpr, x86_gpr_ax, 0, 8)); // for varargs calls
 
-        // direction flag is always assumed to be initialized and is thus often treated as input
-        cc->appendInputParameter(regDict->findOrThrow("df"));
+        // Other inputs
+        cc->appendInputParameter(regDict->findOrThrow("df")); // direction flag is assuemd to be valid
+        cc->appendInputParameter(regDict->findOrThrow("cs")); // code segment register is assumed to be valid
+        cc->appendInputParameter(regDict->findOrThrow("ds")); // data segment register is assumed to be valid
+        cc->appendInputParameter(regDict->findOrThrow("ss")); // stack segment register is assumed to be valid
 
         // Arguments that don't fit in the input registers are passed on the stack
-        cc->stackParameterOrder(RIGHT_TO_LEFT);
-        cc->stackCleanup(CLEANUP_BY_CALLER);
+        cc->stackParameterOrder(StackParameterOrder::RIGHT_TO_LEFT);
+        cc->stackCleanup(StackCleanup::BY_CALLER);
 
         //---- Return values ----
 
@@ -611,6 +628,7 @@ Definition::getUsedRegisterParts() const {
 void
 Definition::print(std::ostream &out, const RegisterDictionary *regDict/*=NULL*/) const {
     using namespace StringUtility;
+    ASSERT_require(regDict || regDict_);
     RegisterNames regNames(regDict ? regDict : regDict_);
 
     out <<cEscape(name_);
@@ -627,12 +645,12 @@ Definition::print(std::ostream &out, const RegisterDictionary *regDict/*=NULL*/)
         out <<" }";
     }
 
-    if (stackParameterOrder_ != ORDER_UNSPECIFIED) {
+    if (stackParameterOrder_ != StackParameterOrder::UNSPECIFIED) {
         out <<", implied={";
         switch (stackParameterOrder_) {
-            case LEFT_TO_RIGHT: out <<" left-to-right"; break;
-            case RIGHT_TO_LEFT: out <<" right-to-left"; break;
-            case ORDER_UNSPECIFIED: ASSERT_not_reachable("invalid stack parameter order");
+            case StackParameterOrder::LEFT_TO_RIGHT: out <<" left-to-right"; break;
+            case StackParameterOrder::RIGHT_TO_LEFT: out <<" right-to-left"; break;
+            case StackParameterOrder::UNSPECIFIED: ASSERT_not_reachable("invalid stack parameter order");
         }
 
         if (!stackPointerRegister_.isEmpty()) {
@@ -642,9 +660,9 @@ Definition::print(std::ostream &out, const RegisterDictionary *regDict/*=NULL*/)
         }
 
         switch (stackCleanup_) {
-            case CLEANUP_BY_CALLER: out <<" cleaned up by caller"; break;
-            case CLEANUP_BY_CALLEE: out <<" cleaned up by callee"; break;
-            case CLEANUP_UNSPECIFIED: out <<" with UNSPECIFIED cleanup"; break;
+            case StackCleanup::BY_CALLER: out <<" cleaned up by caller"; break;
+            case StackCleanup::BY_CALLEE: out <<" cleaned up by callee"; break;
+            case StackCleanup::UNSPECIFIED: out <<" with UNSPECIFIED cleanup"; break;
         }
         out <<" }";
     }
@@ -652,10 +670,10 @@ Definition::print(std::ostream &out, const RegisterDictionary *regDict/*=NULL*/)
     if (nonParameterStackSize_ > 0)
         out <<", " <<nonParameterStackSize_ <<"-byte return";
 
-    if (stackParameterOrder_ != ORDER_UNSPECIFIED || nonParameterStackSize_ > 0) {
+    if (stackParameterOrder_ != StackParameterOrder::UNSPECIFIED || nonParameterStackSize_ > 0) {
         switch (stackDirection_) {
-            case GROWS_UP: out <<", upward-growing stack"; break;
-            case GROWS_DOWN: out <<", downward-growing stack"; break;
+            case StackDirection::GROWS_UP: out <<", upward-growing stack"; break;
+            case StackDirection::GROWS_DOWN: out <<", downward-growing stack"; break;
         }
     }
 
@@ -729,6 +747,77 @@ Analysis::clearNonResults() {
     cpu_ = DispatcherPtr();
 }
 
+class TransferFunction: public P2::DataFlow::TransferFunction {
+    using Super = P2::DataFlow::TransferFunction;
+    const P2::Partitioner &partitioner_;
+
+public:
+    TransferFunction(const P2::Partitioner &partitioner, const Dispatcher::Ptr &cpu)
+        : Super(cpu), partitioner_(partitioner) {}
+
+    // Just add some debugging to the P2::DataFlow::TransferFunction.
+    State::Ptr operator()(const P2::DataFlow::DfCfg &dfCfg, size_t vertexId, const State::Ptr &incomingState) const {
+        Sawyer::Message::Stream out(Rose::BinaryAnalysis::DataFlow::mlog[DEBUG]);
+        if (out) {
+            P2::DataFlow::DfCfg::ConstVertexIterator vertex = dfCfg.findVertex(vertexId);
+            const std::string prefix = "  ";
+            ASSERT_require(vertex != dfCfg.vertices().end());
+            switch (vertex->value().type()) {
+                case P2::DataFlow::DfCfgVertex::BBLOCK: {
+                    out <<prefix <<"vertex #" <<vertex->id() <<": " <<vertex->value().bblock()->printableName() <<"\n";
+                    if (auto parentFunction = vertex->value().parentFunction())
+                        out <<prefix <<"  in " <<parentFunction->printableName() <<"\n";
+                    for (const auto &edge: vertex->inEdges())
+                        out <<prefix <<"  cfg from vertex #" <<edge.source()->id() <<"\n";
+                    auto unparser = partitioner_.unparser()->copy();
+                    unparser->settings().linePrefix = prefix + "    ";
+                    unparser->settings().bblock.cfg.showingPredecessors = false;
+                    unparser->settings().bblock.cfg.showingSuccessors = false;
+                    unparser->settings().bblock.cfg.showingSharing = false;
+                    unparser->settings().bblock.cfg.showingArrows = false;
+                    unparser->unparse(out, partitioner_, vertex->value().bblock());
+                    for (const auto &edge: vertex->outEdges())
+                        out <<prefix <<"  cfg to vertex #" <<edge.target()->id() <<"\n";
+                    break;
+                }
+
+                case P2::DataFlow::DfCfgVertex::FAKED_CALL:
+                    out <<prefix <<"vertex #" <<vertex->id() <<": faked call to ";
+                    if (auto callee = vertex->value().callee()) {
+                        out <<callee->printableName() <<"\n";
+                    } else {
+                        out <<"indeterminate address\n";
+                    }
+                    if (auto parentFunction = vertex->value().parentFunction())
+                        out <<prefix <<"  called from " <<parentFunction->printableName() <<"\n";
+                    for (const auto &edge: vertex->inEdges())
+                        out <<prefix <<"  cfg from vertex #" <<edge.source()->id() <<"\n";
+                    for (const auto &edge: vertex->outEdges())
+                        out <<prefix <<"  cfg to vertex #" <<edge.target()->id() <<"\n";
+                    break;
+
+                case P2::DataFlow::DfCfgVertex::FUNCRET:
+                    out <<prefix <<"vertex #" <<vertex->id() <<": function return from "
+                        <<vertex->value().parentFunction()->printableName() <<"\n";
+                    for (const auto &edge: vertex->inEdges())
+                        out <<prefix <<"  cfg from vertex #" <<edge.source()->id() <<"\n";
+                    for (const auto &edge: vertex->outEdges())
+                        out <<prefix <<"  cfg to vertex #" <<edge.target()->id() <<"\n";
+                    break;
+
+                case P2::DataFlow::DfCfgVertex::INDET:
+                    out <<prefix <<"vertex #" <<vertex->id() <<": indeterminate address\n";
+                    for (const auto &edge: vertex->inEdges())
+                        out <<prefix <<"  cfg from vertex #" <<edge.source()->id() <<"\n";
+                    for (const auto &edge: vertex->outEdges())
+                        out <<prefix <<"  cfg to vertex #" <<edge.target()->id() <<"\n";
+                    break;
+            }
+        }
+        return Super::operator()(dfCfg, vertexId, incomingState);
+    }
+};
+
 void
 Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
     mlog[DEBUG] <<"analyzing " <<function->printableName() <<"\n";
@@ -764,13 +853,13 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
 
     // Build the dataflow engine.  If an instruction dispatcher is already provided then use it, otherwise create one and store
     // it in this analysis object.
-    typedef DataFlow::Engine<DfCfg, StatePtr, P2::DataFlow::TransferFunction, DataFlow::SemanticsMerge> DfEngine;
+    typedef DataFlow::Engine<DfCfg, StatePtr, TransferFunction, DataFlow::SemanticsMerge> DfEngine;
     if (!cpu_ && NULL==(cpu_ = partitioner.newDispatcher(partitioner.newOperators()))) {
         mlog[DEBUG] <<"  no instruction semantics\n";
         return;
     }
     P2::DataFlow::MergeFunction merge(cpu_);
-    P2::DataFlow::TransferFunction xfer(cpu_);
+    TransferFunction xfer(partitioner, cpu_);
     xfer.defaultCallingConvention(defaultCc_);
     DfEngine dfEngine(dfCfg, xfer, merge);
     size_t maxIterations = dfCfg.nVertices() * 5;       // arbitrary
@@ -781,10 +870,26 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     StatePtr initialState = xfer.initialState();
     RegisterStateGenericPtr initialRegState = RegisterStateGeneric::promote(initialState->registerState());
     initialRegState->initialize_large();
+#if 0 // [Robb Matzke 2022-07-12]
+    // Initializing the stack pointer register to a constant value will interfere with detecting local variables, since the
+    // detection looks for the stack pointer's initial value plus a constant. If the stack pointer were initialized to a
+    // constant here, then all such offsets from the stack pointer would be simplified to just constants and the local variable
+    // detection wouldn't be able to find anything. However, it might also be possible to change the local variable detector
+    // so it looks for constants that are near the stack pointer's concrete value. [Robb Matzke 2022-07-12]
     const RegisterDescriptor SP = partitioner.instructionProvider().stackPointerRegister();
     rose_addr_t initialStackPointer = 0xcf000000;       // arbitrary
     initialRegState->writeRegister(SP, cpu_->operators()->number_(SP.nBits(), initialStackPointer),
                                    cpu_->operators().get());
+#endif
+    // x86 has segment registers ss, ds, and cs that should be initialized to zero.  The local variable detector gets confused
+    // when local variable addresses have a segment component. Setting them to zero causes them to be simplified out of the
+    // addresses.
+    if (RegisterDescriptor ss = regDict_->find("ss"))
+        initialState->writeRegister(ss, cpu_->operators()->number_(ss.nBits(), 0), cpu_->operators().get());
+    if (RegisterDescriptor cs = regDict_->find("cs"))
+        initialState->writeRegister(cs, cpu_->operators()->number_(cs.nBits(), 0), cpu_->operators().get());
+    if (RegisterDescriptor ds = regDict_->find("ds"))
+        initialState->writeRegister(ds, cpu_->operators()->number_(ds.nBits(), 0), cpu_->operators().get());
 
     // Run data flow analysis
     bool converged = true;
@@ -996,7 +1101,7 @@ Analysis::match(const Definition::Ptr &cc) const {
 
     // Stack delta checks
     if (stackDelta_) {
-        int64_t normalization = (cc->stackDirection() == GROWS_UP ? -1 : +1);
+        int64_t normalization = (cc->stackDirection() == StackDirection::GROWS_UP ? -1 : +1);
         int64_t normalizedStackDelta = *stackDelta_ * normalization; // in bytes
 
         // All callees must pop the non-parameter area (e.g., return address) of the stack.
@@ -1007,25 +1112,36 @@ Analysis::match(const Definition::Ptr &cc) const {
         }
         normalizedStackDelta -= cc->nonParameterStackSize();
 
-        // The callee must not pop stack parameters if the caller cleans them up.
-        if (cc->stackCleanup() == CLEANUP_BY_CALLER && normalizedStackDelta != 0) {
-            SAWYER_MESG(debug) <<"  mismatch: callee popped stack parameters but definition is caller-cleanup\n";
-            return false;
-        }
+        switch (cc->stackCleanup()) {
+            case StackCleanup::BY_CALLER:
+                if (normalizedStackDelta != 0) {
+                    // Any stack arguments were already pushed by the caller and will be popped by the caller. If instead the
+                    // callee pops them, then the stack delta will be non-zero.
+                    SAWYER_MESG(debug) <<"  mismatch: callee popped stack parameters but definition is caller-cleanup\n";
+                    return false;
+                }
+                break;
 
-        // For callee cleanup, the callee must pop all the stack variables. It may pop more than what it used (i.e., it must
-        // pop even unused arguments).
-        if (cc->stackCleanup() == CLEANUP_BY_CALLEE) {
-            int64_t normalizedEnd = 0; // one-past first-pushed argument normlized for downward-growing stack
-            for (const Variables::StackVariable &var: inputStackParameters_.values())
-                normalizedEnd = std::max(normalizedEnd, (int64_t)(var.frameOffset() * normalization + var.maxSizeBytes()));
-            for (const Variables::StackVariable &var: outputStackParameters_.values())
-                normalizedEnd = std::max(normalizedEnd, (int64_t)(var.frameOffset() * normalization + var.maxSizeBytes()));
-            if (normalizedStackDelta < normalizedEnd) {
-                SAWYER_MESG(debug) <<"  mismatch: callee failed to pop callee-cleanup stack parameters\n";
-                return false;
+            case StackCleanup::BY_CALLEE: {
+                // The callee must pop all the stack variables. It's required to pop all its arguments, even those it didn't
+                // use.
+                int64_t normalizedEnd = 0; // one-past first-pushed argument normalized for downward-growing stack
+                for (const Variables::StackVariable &var: inputStackParameters_.values())
+                    normalizedEnd = std::max(normalizedEnd, (int64_t)(var.frameOffset() * normalization + var.maxSizeBytes()));
+                for (const Variables::StackVariable &var: outputStackParameters_.values())
+                    normalizedEnd = std::max(normalizedEnd, (int64_t)(var.frameOffset() * normalization + var.maxSizeBytes()));
+                if (normalizedStackDelta < normalizedEnd) {
+                    SAWYER_MESG(debug) <<"  mismatch: callee failed to pop callee-cleanup stack parameters\n";
+                    return false;
+                }
+                break;
             }
+
+            case StackCleanup::UNSPECIFIED:
+                ASSERT_not_reachable("invalid stack cleanup");
         }
+    } else {
+        SAWYER_MESG(debug) <<"  stack delta checks not performed\n";
     }
 
     // All analysis output registers must be a definition's output or scratch register.
@@ -1084,12 +1200,12 @@ Analysis::match(const Definition::Ptr &cc) const {
 
     // If the analysis has stack inputs or outputs then the definition must have a valid stack parameter direction.
     if ((!inputStackParameters().isEmpty() || !outputStackParameters().isEmpty()) &&
-        cc->stackParameterOrder() == ORDER_UNSPECIFIED) {
+        cc->stackParameterOrder() == StackParameterOrder::UNSPECIFIED) {
         SAWYER_MESG(debug) <<"  mismatch: stack parameters detected but not allowed by definition\n";
         return false;
     }
 
-    SAWYER_MESG(debug) <<"  analysis matches definition\n";
+    SAWYER_MESG(debug) <<"  analysis matches definition " <<cc->name() <<"\n";
     return true;
 }
 
