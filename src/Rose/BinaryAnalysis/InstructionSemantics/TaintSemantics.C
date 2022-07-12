@@ -35,16 +35,16 @@ SValue::print(std::ostream &stream, BaseSemantics::Formatter &formatter) const {
 #if 0 // long format
     switch (taintedness_) {
         case Taintedness::BOTTOM:
-            stream <<"taint-bottom ";
+            stream <<"taint{} ";
             break;
         case Taintedness::UNTAINTED:
-            stream <<"untainted ";
+            stream <<"taint{untainted} ";
             break;
         case Taintedness::TAINTED:
-            stream <<"tainted ";
+            stream <<"taint{tainted} ";
             break;
         case Taintedness::TOP:
-            stream <<"taint-top ";
+            stream <<"taint{tainted,untainted} ";
             break;
     }
 #else // short format
