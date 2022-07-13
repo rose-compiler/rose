@@ -14,7 +14,7 @@ EQUAL_PATH3=-rose:hpct:eqpath "/home/liao6/temp"=`cd $(srcdir) && pwd`
 
 # test command line options for outliner, They are set automatically by the translator now
 #ROSE_FLAGS+= -rose:outline:parameter_wrapper -rose:outline:new_file -rose:outline:temp_variable -rose:outline:exclude_headers 
-ROSE_FLAGS+=-rose:outline:enable_liveness -I$(top_srcdir)/projects/autoTuning
+ROSE_FLAGS+=-rose:outline:enable_liveness -I$(top_srcdir)/projects/autoTuning -I$(top_srcdir)/src/midend/programTransformation/astOutlining
 # source file annotation with performance metrics
 # -rose:hpct:enable_debug -rose:autotuning:enable_debug 
 #ROSE_FLAGS+=-rose:autotuning:triage_threshold 0.75
