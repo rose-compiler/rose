@@ -64,10 +64,8 @@ void API<CRT>::display(std::ostream & out) const {
 }
 
 template <typename CRT>
-void API<CRT>::build_command_line(std::vector<std::string> & cmdline) const {
-  cmdline.push_back("rose-cxx");
-  cmdline.push_back("-c");
-
+void API<CRT>::set_command_line(Driver & driver) const {
+  std::vector<std::string> cmdline{"rose-codegen", "-c"};
   for (auto path: paths) {
     if (!boost::filesystem::exists( path )) {
       std::cerr << "[WARN] Path to API header files does not exist: " << path << std::endl;
@@ -79,6 +77,7 @@ void API<CRT>::build_command_line(std::vector<std::string> & cmdline) const {
   for (auto flag: flags) {
     cmdline.push_back(flag);
   }
+  driver.project->set_originalCommandLineArgumentList(cmdline);
 }
 
 template <typename CRT>
@@ -91,14 +90,8 @@ void API<CRT>::add_nodes_for_namequal(Driver & driver, SgSourceFile * srcfile) c
 
 template <typename CRT>
 void API<CRT>::load_headers(Driver & driver) {
-  if (!CommandlineProcessing::isCppFileNameSuffix("hxx")) {
-    CommandlineProcessing::extraCppSourceFileSuffixes.push_back("hxx");
-  }
-
-  std::vector<std::string> old_cmdline = driver.project->get_originalCommandLineArgumentList();
-  std::vector<std::string> cmdline;
-  build_command_line(cmdline);
-  driver.project->set_originalCommandLineArgumentList(cmdline);
+  set_command_line(driver);
+  driver.addCxxExtension("hxx");
 
   for (auto file: files) {
     bool found = false;
@@ -122,8 +115,6 @@ void API<CRT>::load_headers(Driver & driver) {
       std::cerr << "[WARN] API header file not found: " << file << std::endl;
     }
   }
-
-  driver.project->set_originalCommandLineArgumentList(old_cmdline);
 
   ROSE_ASSERT(SageBuilder::topScopeStack() == NULL); // Sanity check
 }

@@ -38,6 +38,9 @@ class Driver {
     Driver(SgProject * project_);
     Driver(std::vector<std::string> & args);
 
+    //! Utility method to add possible C++ extensions (hxx/hpp are not recognized by ROSE as source-file)
+    void addCxxExtension(std::string) const;
+
     //! Create a file ()
     size_t create(const boost::filesystem::path & path);
     size_t add(const boost::filesystem::path & path);

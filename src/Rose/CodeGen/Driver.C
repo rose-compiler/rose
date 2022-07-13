@@ -154,6 +154,12 @@ size_t Driver::add(const boost::filesystem::path & path) {
   }
 }
 
+void Driver::addCxxExtension(std::string suffix) const {
+  if (!CommandlineProcessing::isCppFileNameSuffix(suffix)) {
+    CommandlineProcessing::extraCppSourceFileSuffixes.push_back(suffix);
+  }
+}
+
 size_t Driver::create(const boost::filesystem::path & path) {
   assert(path_to_id_map.find(path) == path_to_id_map.end());
 

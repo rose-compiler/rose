@@ -48,7 +48,7 @@ class API {
   private:
     std::set<size_t> file_ids;
 
-    void build_command_line(std::vector<std::string> & cmdline) const;
+    void set_command_line(Driver & driver) const;
     void load_headers(Driver & driver);
     void load_api(Driver & driver);
 
