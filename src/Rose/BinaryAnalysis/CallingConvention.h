@@ -13,6 +13,7 @@
 #include <boost/serialization/set.hpp>
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/vector.hpp>
+#include <boost/serialization/version.hpp>
 #include <Sawyer/SharedObject.h>
 #include <Sawyer/SharedPointer.h>
 
@@ -247,13 +248,15 @@ private:
     ParameterLocation thisParameter_;                   // Object pointer for calling conventions that are object methods
     std::set<RegisterDescriptor> calleeSavedRegisters_; // Register that the callee must restore before returning
     std::set<RegisterDescriptor> scratchRegisters_;     // Caller-saved registers
+    ParameterLocation returnAddressLocation_;           // Where is the function return address stored at function entry?
+    RegisterDescriptor instructionPointerRegister_;     // Where is the next instruction address stored?
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
+    void serialize(S &s, const unsigned version) {
         s & BOOST_SERIALIZATION_NVP(name_);
         s & BOOST_SERIALIZATION_NVP(comment_);
         s & BOOST_SERIALIZATION_NVP(wordWidth_);
@@ -269,6 +272,10 @@ private:
         s & BOOST_SERIALIZATION_NVP(thisParameter_);
         s & BOOST_SERIALIZATION_NVP(calleeSavedRegisters_);
         s & BOOST_SERIALIZATION_NVP(scratchRegisters_);
+        if (version >= 1) {
+            s & BOOST_SERIALIZATION_NVP(returnAddressLocation_);
+            s & BOOST_SERIALIZATION_NVP(instructionPointerRegister_);
+        }
     }
 #endif
     
@@ -539,6 +546,23 @@ public:
     void thisParameter(rose_addr_t va) {
         thisParameter(ParameterLocation(va));
     }
+    /** @} */
+
+    /** Property: Location of return address.
+     *
+     *  This property stores the location where the function return address is stored. I.e., the location contains the address
+     *  to which this function returns after being called.
+     *
+     * @{ */
+    const ParameterLocation& returnAddressLocation() const { return returnAddressLocation_; }
+    void returnAddressLocation(const ParameterLocation &x) { returnAddressLocation_ = x; }
+    /** @} */
+
+    /** Property: Register that points to next instruction to execute.
+     *
+     *  @{ */
+    RegisterDescriptor instructionPointerRegister() const { return instructionPointerRegister_; }
+    void instructionPointerRegister(RegisterDescriptor x) { instructionPointerRegister_ = x; }
     /** @} */
 
     /** Property: Callee-saved registers.
@@ -832,6 +856,9 @@ std::ostream& operator<<(std::ostream&, const Analysis&);
 } // namespace
 } // namespace
 } // namespace
+
+// Class versions must be at global scope
+BOOST_CLASS_VERSION(Rose::BinaryAnalysis::CallingConvention::Definition, 1);
 
 #endif
 #endif
