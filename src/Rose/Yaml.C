@@ -1269,7 +1269,7 @@ public:
             PostProcessLines();
             //Print();
             ParseRoot(root);
-        } catch (Exception e) {
+        } catch (const Exception &e) {
             root.Clear();
             throw;
         }
@@ -1886,7 +1886,7 @@ Parse(Node &root, std::iostream &stream) {
         pImp = new ParseImp;
         pImp->Parse(root, stream);
         delete pImp;
-    } catch (const Exception e) {
+    } catch (const Exception &e) {
         delete pImp;
         throw;
     }
