@@ -369,17 +369,9 @@ SgAsmGenericStrtab::reallocate(bool shrink)
         /* The string table isn't large enough, so make it larger by extending the section that contains the table. The
          * containing section's "set_size" method should add the new space to the string table's free list. If our recursion
          * level is more than two calls deep then something went horribly wrong! */
-        static bool recursive=false;
-        ROSE_ASSERT(!recursive);
-        recursive = reallocated = true;
-        try {
-            container->get_file()->shift_extend(container, 0, extend_size);
-            reallocate(false);
-            recursive = false;
-        } catch (...) {
-            recursive = false;
-            throw;
-        }
+        reallocated = true;
+        container->get_file()->shift_extend(container, 0, extend_size);
+        reallocate(false);
     } else if (shrink && get_freelist().size()>0) {
         /* See if we can release any address space and shrink the containing section. The containing section's "set_size"
          * method will adjust the free list by removing some bytes from it. */
