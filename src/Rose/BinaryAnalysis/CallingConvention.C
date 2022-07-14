@@ -199,6 +199,10 @@ Definition::x86_cdecl(const RegisterDictionary *regDict) {
                       "x86-" + StringUtility::numberToString(SP.nBits()) + " cdecl",
                       regDict);
 
+    // Address locations
+    cc->instructionPointerRegister(regDict->findLargestRegister(x86_regclass_ip, 0));
+    cc->returnAddressLocation(ParameterLocation(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp), 0));
+
     // Stack characteristics
     cc->stackPointerRegister(SP);
     cc->stackDirection(StackDirection::GROWS_DOWN);
@@ -250,6 +254,10 @@ Definition::ppc_ibm(const RegisterDictionary *regDict) {
     ASSERT_not_null(regDict);
     const RegisterDescriptor SP = regDict->findLargestRegister(powerpc_regclass_gpr, 1);
     Ptr cc = instance(SP.nBits(), "IBM", "PowerPC-" + StringUtility::numberToString(SP.nBits()) + " IBM", regDict);
+
+    // Address locations
+    cc->instructionPointerRegister(regDict->findLargestRegister(powerpc_regclass_iar, 0));
+    cc->returnAddressLocation(ParameterLocation(regDict->findLargestRegister(powerpc_regclass_spr, powerpc_spr_lr)));
 
     // Stack characteristics
     cc->stackPointerRegister(SP);
@@ -354,6 +362,10 @@ Definition::x86_stdcall(const RegisterDictionary *regDict) {
                       "x86-" + StringUtility::numberToString(SP.nBits()) + " stdcall",
                       regDict);
 
+    // Address locations
+    cc->instructionPointerRegister(regDict->findLargestRegister(x86_regclass_ip, 0));
+    cc->returnAddressLocation(ParameterLocation(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp), 0));
+
     // Stack characteristics
     cc->stackPointerRegister(SP);
     cc->stackDirection(StackDirection::GROWS_DOWN);
@@ -407,6 +419,10 @@ Definition::x86_fastcall(const RegisterDictionary *regDict) {
                              "x86-" + StringUtility::numberToString(SP.nBits()) + " fastcall",
                              regDict);
 
+    // Address locations
+    cc->instructionPointerRegister(regDict->findLargestRegister(x86_regclass_ip, 0));
+    cc->returnAddressLocation(ParameterLocation(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp), 0));
+
     // Stack characteristics
     cc->stackPointerRegister(SP);
     cc->stackDirection(StackDirection::GROWS_DOWN);
@@ -454,6 +470,10 @@ Definition::x86_64bit_sysv() {
 
         cc = instance(64, "sysv", "x86-64 sysv", regDict);
 
+        // Address locations
+        cc->instructionPointerRegister(regDict->findLargestRegister(x86_regclass_ip, 0));
+        cc->returnAddressLocation(ParameterLocation(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp), 0));
+
         // Stack characteristics
         cc->stackPointerRegister(SP);
         cc->stackDirection(StackDirection::GROWS_DOWN);
@@ -495,7 +515,6 @@ Definition::x86_64bit_sysv() {
         cc->stackCleanup(StackCleanup::BY_CALLER);
 
         //---- Return values ----
-
         cc->appendOutputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_ax));
         cc->appendOutputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_dx)); // second integer return
         cc->appendOutputParameter(SP);                   // final value is usually 8 greater than initial value
@@ -635,6 +654,14 @@ Definition::print(std::ostream &out, const RegisterDictionary *regDict/*=NULL*/)
     if (!comment_.empty())
         out <<" (" <<cEscape(comment_) <<")";
     out <<" = {" <<wordWidth_ <<"-bit words";
+
+    if (instructionPointerRegister_)
+        out <<", instructionAddressLocation=" <<regNames(instructionPointerRegister_);
+
+    if (returnAddressLocation_.isValid()) {
+        out <<", returnAddress=";
+        returnAddressLocation_.print(out, regDict_);
+    }
 
     if (!inputParameters_.empty()) {
         out <<", inputs={";
