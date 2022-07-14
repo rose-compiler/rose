@@ -1117,6 +1117,7 @@ Partitioner::assignFunctions() {
     using DfEngine = Rose::BinaryAnalysis::DataFlow::Engine<InsnCfg, FaState, FaTransfer, FaMerge, FaEdgePredicate>;
     FaTransfer xfer;
     DfEngine dfEngine(insnCfg_, xfer, FaMerge(), FaEdgePredicate());
+    dfEngine.name("cfg-reachability");
     size_t nFunctions = 0;
     for (auto vertex: insnCfg_.vertices()) {
         if (vertex.value()->functionReasons().isClear(SgAsmFunction::FUNC_CALL_TARGET)) {

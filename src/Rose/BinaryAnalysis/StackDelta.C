@@ -169,6 +169,7 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     TransferFunction xfer(this);
     xfer.defaultCallingConvention(ccDefs.empty() ? CallingConvention::Definition::Ptr() : ccDefs.front());
     DfEngine dfEngine(dfCfg, xfer, merge);
+    dfEngine.name("stack-delta");
     size_t maxIterations = dfCfg.nVertices() * 5;       // arbitrary
     dfEngine.maxIterations(maxIterations);
     BaseSemantics::RiscOperatorsPtr ops = cpu_->operators();

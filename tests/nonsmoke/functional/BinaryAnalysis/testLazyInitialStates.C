@@ -285,6 +285,7 @@ analyzeFunction(const P2::Partitioner &partitioner, const P2::Function::Ptr &fun
     typedef DataFlow::Engine<DfCfg, SymbolicSemantics::StatePtr, P2::DataFlow::TransferFunction,
                              DataFlow::SemanticsMerge> DfEngine;
     DfEngine dfEngine(dfCfg, xfer, merge);
+    dfEngine.name("data-flow-test");
     dfEngine.maxIterations(dfCfg.nVertices() * 5);      // arbitrary limit
 
     // Build the initial state. This will serve as the state whose values are lazily instantiated by the symbolic RiscOperators.

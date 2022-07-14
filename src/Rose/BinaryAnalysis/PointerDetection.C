@@ -315,6 +315,7 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     P2::DataFlow::MergeFunction merge(cpu);
     P2::DataFlow::TransferFunction xfer(cpu);
     DfEngine dfEngine(dfCfg, xfer, merge);
+    dfEngine.name("pointer-detection");
     dfEngine.maxIterations(dfCfg.nVertices() * 5);      // arbitrary
 
     // Build the initial state

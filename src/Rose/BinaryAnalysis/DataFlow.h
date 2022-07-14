@@ -314,6 +314,7 @@ public:
         typedef std::vector<State> VertexStates;        /**< Data-flow states indexed by vertex ID. */
 
     private:
+        std::string name_;                              // optional name for debugging
         const CFG &cfg_;
         TransferFunction &xfer_;
         MergeFunction merge_;
@@ -356,6 +357,24 @@ public:
             nIterations_ = 0;
         }
 
+        /** Property: Name for debugging.
+         *
+         *  This optional name will show up in debugging output.
+         *
+         * @{ */
+        const std::string& name() const { return name_; }
+        void name(const std::string &s) { name_ = s; }
+        /** @} */
+
+        /** Line prefix for debugging. */
+        std::string prefix() const {
+            if (name_.empty()) {
+                return "";
+            } else {
+                return name_ + ": ";
+            }
+        }
+
         /** Max number of iterations to allow.
          *
          *  Allow N number of calls to runOneIteration.  When the limit is exceeded a @ref NotConverging exception is
@@ -384,8 +403,8 @@ public:
                 }
                 size_t cfgVertexId = workList_.popFront();
                 if (mlog[DEBUG]) {
-                    mlog[DEBUG] <<"runOneIteration: vertex #" <<cfgVertexId <<"\n";
-                    mlog[DEBUG] <<"  remaining worklist is {";
+                    mlog[DEBUG] <<prefix() <<"runOneIteration: vertex #" <<cfgVertexId <<"\n";
+                    mlog[DEBUG] <<prefix() <<"  remaining worklist is {";
                     for (size_t id: workList_.items())
                         mlog[DEBUG] <<" " <<id;
                     mlog[DEBUG] <<" }\n";
@@ -396,34 +415,35 @@ public:
                 typename CFG::ConstVertexIterator vertex = cfg_.findVertex(cfgVertexId);
                 State state = incomingState_[cfgVertexId];
                 if (mlog[DEBUG]) {
-                    mlog[DEBUG] <<"  incoming state for vertex #" <<cfgVertexId <<":\n"
-                                <<StringUtility::prefixLines(xfer_.toString(state), "    ") <<"\n";
+                    mlog[DEBUG] <<prefix() <<"  incoming state for vertex #" <<cfgVertexId <<":\n"
+                                <<StringUtility::prefixLines(xfer_.toString(state), prefix() + "    ") <<"\n";
                 }
 
                 state = outgoingState_[cfgVertexId] = xfer_(cfg_, cfgVertexId, state);
                 if (mlog[DEBUG]) {
-                    mlog[DEBUG] <<"  outgoing state for vertex #" <<cfgVertexId <<":\n"
-                                <<StringUtility::prefixLines(xfer_.toString(state), "    ") <<"\n";
+                    mlog[DEBUG] <<prefix() <<"  outgoing state for vertex #" <<cfgVertexId <<":\n"
+                                <<StringUtility::prefixLines(xfer_.toString(state), prefix() + "    ") <<"\n";
                 }
                 
                 // Outgoing state must be merged into the incoming states for the CFG successors.  Any such incoming state that
                 // is modified as a result will have its CFG vertex added to the work list.
-                SAWYER_MESG(mlog[DEBUG]) <<"  forwarding vertex #" <<cfgVertexId <<" output state to "
+                SAWYER_MESG(mlog[DEBUG]) <<prefix() <<"  forwarding vertex #" <<cfgVertexId <<" output state to "
                                          <<StringUtility::plural(vertex->nOutEdges(), "vertices", "vertex") <<"\n";
                 for (const typename CFG::Edge &edge: vertex->outEdges()) {
                     size_t nextVertexId = edge.target()->id();
                     if (!isFeasible_(cfg_, edge, state, incomingState_[nextVertexId])) {
-                        SAWYER_MESG(mlog[DEBUG]) <<"    path to vertex #" <<nextVertexId <<" is not feasible, thus skipped\n";
+                        SAWYER_MESG(mlog[DEBUG]) <<prefix() <<"    path to vertex #" <<nextVertexId
+                                                 <<" is not feasible, thus skipped\n";
                     } else if (merge_(incomingState_[nextVertexId], state)) {
                         if (mlog[DEBUG]) {
-                            mlog[DEBUG] <<"    merged with vertex #" <<nextVertexId <<" (which changed as a result)\n";
-                            mlog[DEBUG] <<"    merge state is: "
+                            mlog[DEBUG] <<prefix() <<"    merged with vertex #" <<nextVertexId <<" (which changed as a result)\n";
+                            mlog[DEBUG] <<prefix() <<"    merge state is: "
                                         <<StringUtility::prefixLines(xfer_.toString(incomingState_[nextVertexId]),
-                                                                     "      ", false) <<"\n";
+                                                                     prefix() + "      ", false) <<"\n";
                         }
                         workList_.pushBack(nextVertexId);
                     } else {
-                        SAWYER_MESG(mlog[DEBUG]) <<"    merged with vertex #" <<nextVertexId <<" (no change)\n";
+                        SAWYER_MESG(mlog[DEBUG]) <<prefix() <<"    merged with vertex #" <<nextVertexId <<" (no change)\n";
                     }
                 }
             }
