@@ -281,6 +281,7 @@ public:
         TransferFunction xfer(vertexFlowGraphs_, approximation_, smtSolver_, mlog);
         MergeFunction merge;
         DataFlow::Engine<CFG, StatePtr, TransferFunction, MergeFunction> dfEngine(cfg, xfer, merge);
+        dfEngine.name("tainted-flow");
         dfEngine.runToFixedPoint(cfgStartVertex, initialState);
         results_ = dfEngine.getFinalStates();
         mesg <<"; results for " <<StringUtility::plural(results_.size(), "vertices", "vertex") <<"\n";

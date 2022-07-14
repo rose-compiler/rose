@@ -2304,6 +2304,7 @@ Partitioner::functionDataFlowConstants(const Function::Ptr &function) const {
     TransferFunction xfer(cpu);
     MergeFunction mergeFunction(cpu);
     Engine dfEngine(dfCfg, xfer, mergeFunction);
+    dfEngine.name("find-constants");
     dfEngine.maxIterations(2 * dfCfg.nVertices());        // arbitrary limit for non-convergent flow
 
     StatePtr initialState = xfer.initialState();

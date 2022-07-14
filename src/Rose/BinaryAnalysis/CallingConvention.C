@@ -779,6 +779,9 @@ class TransferFunction: public P2::DataFlow::TransferFunction {
     const P2::Partitioner &partitioner_;
 
 public:
+    std::string dfEngineName;
+
+public:
     TransferFunction(const P2::Partitioner &partitioner, const Dispatcher::Ptr &cpu)
         : Super(cpu), partitioner_(partitioner) {}
 
@@ -787,7 +790,7 @@ public:
         Sawyer::Message::Stream out(Rose::BinaryAnalysis::DataFlow::mlog[DEBUG]);
         if (out) {
             P2::DataFlow::DfCfg::ConstVertexIterator vertex = dfCfg.findVertex(vertexId);
-            const std::string prefix = "  ";
+            const std::string prefix = dfEngineName + (dfEngineName.empty()?"":": ") + "  ";
             ASSERT_require(vertex != dfCfg.vertices().end());
             switch (vertex->value().type()) {
                 case P2::DataFlow::DfCfgVertex::BBLOCK: {
@@ -889,6 +892,8 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     TransferFunction xfer(partitioner, cpu_);
     xfer.defaultCallingConvention(defaultCc_);
     DfEngine dfEngine(dfCfg, xfer, merge);
+    dfEngine.name("calling-convention");
+    xfer.dfEngineName = dfEngine.name();
     size_t maxIterations = dfCfg.nVertices() * 5;       // arbitrary
     dfEngine.maxIterations(maxIterations);
     regDict_ = cpu_->registerDictionary();

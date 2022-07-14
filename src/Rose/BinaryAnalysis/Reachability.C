@@ -701,6 +701,7 @@ Reachability::propagateImpl(const P2::Partitioner &partitioner, std::vector<size
     TransferFunction xfer;
     MergeFunction merge;
     DfEngine dfEngine(partitioner.cfg(), xfer, merge);
+    dfEngine.name("reachability");
     dfEngine.reset(NOT_REACHABLE);
 
     // Initialize the data-flow states for vertices with intrinsic reachability.
