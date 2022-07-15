@@ -722,7 +722,23 @@ private:
 //                                      Free functions
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/** Read a function argument from a semantic state. */
+InstructionSemantics::BaseSemantics::SValuePtr
+readArgument(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&, const Definition::Ptr&, size_t argNumber);
+
+/** Write a value to a function return semantic state. */
+void writeReturnValue(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&, const Definition::Ptr&,
+                      const InstructionSemantics::BaseSemantics::SValuePtr &returnValue);
+
+/** Simulate a function return.
+ *
+ *  The RISC operator's current state is adjusted as if a function with the specified calling convention returned. */
+void simulateFunctionReturn(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&, const Definition::Ptr&);
+
+/** Print a definition. */
 std::ostream& operator<<(std::ostream&, const Definition&);
+
+/** Print analysis information. */
 std::ostream& operator<<(std::ostream&, const Analysis&);
 
 } // namespace
