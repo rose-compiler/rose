@@ -3,7 +3,12 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
+#include <Rose/Location.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Types.h>
+#include <Rose/BinaryAnalysis/SmtSolver.h>
+
+#include <ostream>
+#include <string>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -21,84 +26,92 @@ namespace BinaryAnalysis {
  *   AbstractLocation aloc2(addr); // addr is an SValuePtr for the symbolic semantics domain
  *  @endcode
  *
- *  Abstract locations are immutable objects. */
-class AbstractLocation {
+ *  Abstract locations are immutable objects.
+ *
+ *  See also, @ref ConcreteLocation. */
+class AbstractLocation: public Location {
 public:
-    typedef InstructionSemantics::BaseSemantics::SValuePtr Address; /**< Type of memory address. */
+    using Address = InstructionSemantics::BaseSemantics::SValuePtr; /**< Type of memory address. */
 
 private:
     RegisterDescriptor reg_;
     Address addr_;
-    size_t nBytes_;                                     // size of memory location, or zero if unknown
-    const RegisterDictionary *regdict_;
+    size_t nBytes_ = 0;                                 // size of memory location, or zero if unknown
+    const RegisterDictionary *regdict_ = nullptr;
 
 public:
     /** Default constructor.
      *
-     *  Constructs an abstract location that does not refer to any location.  The @ref isValid method will return true for such
+     *  Constructs an abstract location that does not refer to any location.  The @ref isEmpty method will return true for such
      *  objects. */
-    AbstractLocation(): nBytes_(0), regdict_(NULL) {}
+    AbstractLocation();
+    virtual ~AbstractLocation();
 
     /** Copy constructor. */
-    AbstractLocation(const AbstractLocation &other)
-        : reg_(other.reg_), addr_(other.addr_), nBytes_(other.nBytes_), regdict_(other.regdict_) {}
+    AbstractLocation(const AbstractLocation&);
+
+    /** Assignment operator. */
+    AbstractLocation& operator=(const AbstractLocation&);
 
     /** Register referent.
      *
      *  Constructs an abstract location that refers to a register. */
-    explicit AbstractLocation(RegisterDescriptor reg, const RegisterDictionary *regdict=NULL)
-        : reg_(reg), nBytes_(0), regdict_(regdict) {}
+    explicit AbstractLocation(RegisterDescriptor, const RegisterDictionary *regdict = nullptr);
 
     /** Memory referent.
      *
      *  Constructs an abstract location that refers to a memory location. */
-    explicit AbstractLocation(const Address &addr, size_t nBytes=0): addr_(addr), nBytes_(nBytes), regdict_(NULL) {}
+    explicit AbstractLocation(const Address&, size_t nBytes = 0);
 
-    /** Assignment operator. */
-    AbstractLocation& operator=(const AbstractLocation &other) {
-        reg_ = other.reg_;
-        addr_ = other.addr_;
-        nBytes_ = other.nBytes_;
-        regdict_ = other.regdict_;
-        return *this;
-    }
+    /** Parse an abstract location from a string. */
+    static AbstractLocation parse(const std::string&);
 
-    /** Validity checker.
+    virtual bool isValid() const override;
+    virtual std::string toString() const override;
+    virtual void print(std::ostream&) const override;
+    virtual std::string printableName() const override;
+    virtual bool isEqual(const Location&) const override;
+    virtual bool operator<(const Location&) const override;
+    virtual bool operator<=(const Location&) const override;
+    virtual bool operator>(const Location&) const override;
+    virtual bool operator>=(const Location&) const override;
+
+    /** Compare two abstract locations.
      *
-     *  Returns true if this abstract location refers to either a register or a memory location.  Default constructed abstract
-     *  locations refer to neither, as do locations that have both an invalid register descriptor and a null memory address. */
-    bool isValid() const { return isRegister() || isAddress(); }
+     *  Returns -1 if this location is less than @p other, 1 if this location is greater than @p other, or zero if this
+     *  location is equal to @p other. */
+    int compare(const AbstractLocation &other) const;
 
     /** Checks register reference.
      *
      *  Returns true if and only if this abstract location refers to a register. It is impossible for an abstract location to
      *  refer to both a register and memory. */
-    bool isRegister() const { return !reg_.isEmpty(); }
+    bool isRegister() const;
 
     /** Checks memory reference.
      *
      *  Returns true if and only if this abstract location refers to memory.  It is impossible for an abstract location to
      *  refer to both a register and memory */
-    bool isAddress() const { return addr_!=NULL; }
+    bool isAddress() const;
 
     /** Returns register.
      *
      *  Returns the register to which this abstract location refers.  When called for an abstract location for which @ref
      *  isRegister returns false, the return value is an invalid register descriptor (i.e., one for which
      *  RegisterDescriptor::is_valid returns false. */
-    RegisterDescriptor getRegister() const { return reg_; }
+    RegisterDescriptor getRegister() const;
 
     /** Returns memory address.
      *
      *  Returns the memory address to which this abstract location refers.  When called for an abstract location for which @ref
      *  isAddress returns false, the return value is a null pointer. */
-    const Address getAddress() const { return addr_; }
+    const Address getAddress() const;
 
     /** Returns size of memory location in bytes.
      *
      *  Returns the size of the memory location in bytes if known, otherwise zero.  It is not valid to call this for an
      *  abstract location that points to a register since registers are not always a multiple of the byte size. */
-    size_t nBytes() const { ASSERT_require(isAddress()); return nBytes_; }
+    size_t nBytes() const;
 
     /** True if two abstract locations could be aliases.
      *
@@ -128,18 +141,11 @@ public:
      *  expressions.
      *
      *  @{ */
-    void print(std::ostream &out, const RegisterDictionary *regdict=NULL) const {
-        InstructionSemantics::BaseSemantics::Formatter fmt;
-        print(out, regdict, fmt);
-    }
-    void print(std::ostream &out, InstructionSemantics::BaseSemantics::Formatter &fmt) const {
-        print(out, NULL, fmt);
-    }
+    void print(std::ostream &out, const RegisterDictionary *regdict) const;
+    void print(std::ostream &out, InstructionSemantics::BaseSemantics::Formatter &fmt) const;
     void print(std::ostream &out, const RegisterDictionary *regdict, InstructionSemantics::BaseSemantics::Formatter &fmt) const;
     /** @} */
 };
-
-std::ostream& operator<<(std::ostream&, const AbstractLocation&);
 
 } // namespace
 } // namespace

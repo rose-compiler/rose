@@ -307,7 +307,7 @@ Analysis::analyzeCallSite(const P2::Partitioner &partitioner, const P2::ControlF
     calleeReturnRegs -= RegisterParts(partitioner.instructionProvider().stackPointerRegister());
     Variables::StackVariables calleeReturnMem;
 #if 0 // [Robb Matzke 2019-08-14]: turning off warning
-    for (const CallingConvention::ParameterLocation &location: calleeDefinition->outputParameters()) {
+    for (const ConcreteLocation &location: calleeDefinition->outputParameters()) {
         // FIXME[Robb P Matzke 2017-03-20]: todo
     }
 #endif

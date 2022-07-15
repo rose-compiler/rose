@@ -62,14 +62,12 @@ public:
 private:
     // Read a calling convention parameter location
     InstructionSemantics::BaseSemantics::SValuePtr
-    readLocation(const InstructionSemantics::BaseSemantics::DispatcherPtr&,
-                 const CallingConvention::ParameterLocation&,
+    readLocation(const InstructionSemantics::BaseSemantics::DispatcherPtr&, const ConcreteLocation&,
                  const InstructionSemantics::BaseSemantics::SValuePtr &dfltValue);
 
     // Write to a calling convention parameter location
     void
-    writeLocation(const InstructionSemantics::BaseSemantics::DispatcherPtr&,
-                 const CallingConvention::ParameterLocation&,
+    writeLocation(const InstructionSemantics::BaseSemantics::DispatcherPtr&, const ConcreteLocation&,
                  const InstructionSemantics::BaseSemantics::SValuePtr &value);
 
     // Set function return values to free variables

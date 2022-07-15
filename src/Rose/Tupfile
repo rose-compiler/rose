@@ -22,6 +22,7 @@ run $(public_header) -o include/rose/Rose	\
     FormattedTable.h				\
     GraphUtility.h				\
     Initialize.h				\
+    Location.h					\
     Progress.h					\
     RecursionCounter.h				\
     SourceLocation.h				\

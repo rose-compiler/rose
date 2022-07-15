@@ -42,6 +42,7 @@ install(FILES
   FormattedTable.h
   GraphUtility.h
   Initialize.h
+  Location.h
   Progress.h
   RecursionCounter.h
   SourceLocation.h

@@ -1,12 +1,16 @@
 #ifndef ROSE_SourceLocation_H
 #define ROSE_SourceLocation_H
 
+#include <Rose/Location.h>
+
 #include <boost/filesystem.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/nvp.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/unordered_set.hpp>
 #include <Sawyer/Optional.h>
+#include <ostream>
+#include <string>
 
 namespace Rose {
 
@@ -52,8 +56,8 @@ namespace Rose {
  *
  *  This class is intended to be extended through derivation to provide additional location features such as scope information, but those
  *  things are not included here because they're not always needed or even available. */
-class SourceLocation {
-    typedef boost::shared_ptr<boost::filesystem::path> NamePtr;
+class SourceLocation: public Location {
+    using NamePtr = boost::shared_ptr<boost::filesystem::path>;
     NamePtr fileName_;                                  // null iff default constructed
     size_t line_;
     Sawyer::Optional<size_t> column_;
@@ -62,7 +66,7 @@ class SourceLocation {
     // Shared index for file names
     struct NameHasher { size_t operator()(const NamePtr&) const; };
     struct NameEquivalence { bool operator()(const NamePtr&, const NamePtr&) const; };
-    typedef boost::unordered_set<NamePtr, NameHasher, NameEquivalence> FileNames;
+    using FileNames = boost::unordered_set<NamePtr, NameHasher, NameEquivalence>;
     static SAWYER_THREAD_TRAITS::Mutex classMutex_;     // protects the following static data members
     static FileNames fileNames_;
 
@@ -103,45 +107,33 @@ public:
     /** Destructor.
      *
      *  A special destructor is used in order to free file names that are no longer referenced by any @ref SourceLocation object. */
-    ~SourceLocation();
+    virtual ~SourceLocation();
 
-    /** Test whether object is empty.
+    /** Convert location to string.
      *
-     *  This object is empty if and only if it was default constructed. A non-default constructed object having an empty file name is
-     *  not considered to be an empty object. This is useful for distinguishing default constructed objects from those that indicate
-     *  a present but unknown location. */
-    bool isEmpty() const;
-    
-    /** File name associated with this location.
-     *
-     *  The behavior is as if the file name were stored as a data member of this object; that is, the reference is valid as
-     *  long as this object is valid.  The actual implementation optimizes name storage and therefore the reference is likely
-     *  (but not guaranteed) to be valid longer than the life time of this object.
-     *
-     *  Thread safety: The referenced name is guaranteed to not change for its entire lifetime. */
-    const boost::filesystem::path& fileName() const;
+     *  Converts this location to a file name, line number, and optional column number. Special characters in the file name are
+     *  not escaped nor is the file name enclosed in quotes. The file name is separated from the line number by a colon (no
+     *  white space), and if the location has a column, the column number is separated from the line number by a colon (also no
+     *  white space).   An empty (default constructed) object returns an empty string. */
+    virtual std::string toString() const override;
 
-    /** Line number. */
-    size_t line() const {
-        return line_;                                   // no lock necessary since *this is immutable
-    }
+    /** Output location to a stream.
+     *
+     *  The format is the same as the @ref toString method. */
+    virtual void print(std::ostream&) const override;
 
-    /** Column number. */
-    const Sawyer::Optional<size_t>& column() const {
-        return column_;                                 // no lock necessary since *this is immutable
-    }
-    
+    /** Convert location to escaped string.
+     *
+     *  Prints the location in a safe manner by printing the file name as a C-style string literal (with double quotes) and with
+     *  all non-graphic characters except ASCII SPC escaped using only graphic characters (the usual C syntax). An empty (default
+     *  constructed) object returns an empty string. */
+    virtual std::string printableName() const override;
+
     /** Equality and inequality.
      *
      *  Two objects are equal if they have the same file name (exact match), same line number, and either the same column
-     *  number or both have no column.
-     *
-     * @{ */
-    bool operator==(const SourceLocation &other) const;
-    bool operator!=(const SourceLocation &other) const {
-        return !(*this == other);
-    }
-    /** @} */
+     *  number or both have no column. */
+    virtual bool isEqual(const Location&) const override;
 
     /** Ordered comparison.
      *
@@ -151,63 +143,41 @@ public:
      *  with column number zero.
      *
      * @{ */
-    int compare(const SourceLocation &other) const;
-    bool operator<(const SourceLocation &other) const {
-        return compare(other) < 0;
-    }
-    bool operator<=(const SourceLocation &other) const {
-        return compare(other) <= 0;
-    }
-    bool operator>(const SourceLocation &other) const {
-        return compare(other) > 0;
-    }
-    bool operator>=(const SourceLocation &other) const {
-        return compare(other) >= 0;
-    }
+    virtual bool operator<(const Location&) const override;
+    virtual bool operator<=(const Location&) const override;
+    virtual bool operator>(const Location&) const override;
+    virtual bool operator>=(const Location&) const override;
     /** @} */
 
-    /** Convert location to string.
-     *
-     *  Converts this location to a file name, line number, and optional column number. Special characters in the file name are
-     *  not escaped nor is the file name enclosed in quotes. The file name is separated from the line number by a colon (no
-     *  white space), and if the location has a column, the column number is separated from the line number by a colon (also no
-     *  white space).   An empty (default constructed) object returns an empty string. */
-    std::string toString() const;
+    virtual bool isValid() const override;
 
-    /** Convert location to escaped string.
+    /** File name associated with this location.
      *
-     *  Prints the location in a safe manner by printing the file name as a C-style string literal (with double quotes) and with
-     *  all non-graphic characters except ASCII SPC escaped using only graphic characters (the usual C syntax). An empty (default
-     *  constructed) object returns an empty string. */
-    std::string printableName() const;
+     *  The behavior is as if the file name were stored as a data member of this object; that is, the reference is valid as
+     *  long as this object is valid.  The actual implementation optimizes name storage and therefore the reference is likely
+     *  (but not guaranteed) to be valid longer than the life time of this object.
+     *
+     *  Thread safety: The referenced name is guaranteed to not change for its entire lifetime. */
+    virtual const boost::filesystem::path& fileName() const;
 
-    /** Output location to a stream.
-     *
-     *  The format is the same as the @ref toString method. */
-    void print(std::ostream&) const;
+    /** Line number. */
+    virtual size_t line() const {
+        return line_;                                   // no lock necessary since *this is immutable
+    }
 
-    // The following trickery is to allow things like "if (x)" to work but without having an implicit
-    // conversion to bool which would cause no end of other problems. This is fixed in C++11.
-private:
-    typedef void(SourceLocation::*unspecified_bool)() const;
-    void this_type_does_not_support_comparisons() const {}
-public:
-    /** Type for Boolean context.
-     *
-     *  Implicit conversion to a type that can be used in a boolean context such as an <code>if</code> or <code>while</code>
-     *  statement. The value in Boolean context is the inverse of what @ref isEmpty would return. */
-    operator unspecified_bool() const {
-        return isEmpty() ? 0 : &SourceLocation::this_type_does_not_support_comparisons;;
+    /** Column number. */
+    virtual const Sawyer::Optional<size_t>& column() const {
+        return column_;                                 // no lock necessary since *this is immutable
     }
 
 private:
+    // Compare two source locations like operator<=> in C++17
+    int compare(const SourceLocation &other) const;
+
     // When reconstituting an object from a serialization, we need to make sure the file name is an element of the shared index.
     // It doesn't hurt to call this on any object at any time.
     void registerFileName();
 };
 
-std::ostream& operator<<(std::ostream&, const SourceLocation&);
-
 } // namespace
-
 #endif

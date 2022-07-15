@@ -590,8 +590,8 @@ TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSema
         } else if ((ccDefn = defaultCallingConvention_)) {
             // Use a default calling convention definition to decide what registers should be clobbered. Don't clobber the
             // stack pointer because we might be able to adjust it more intelligently below.
-            for (const CallingConvention::ParameterLocation &loc: ccDefn->outputParameters()) {
-                if (loc.type() == CallingConvention::ParameterLocation::REGISTER && loc.reg() != STACK_POINTER_REG) {
+            for (const ConcreteLocation &loc: ccDefn->outputParameters()) {
+                if (loc.type() == ConcreteLocation::REGISTER && loc.reg() != STACK_POINTER_REG) {
                     ops->writeRegister(loc.reg(), ops->undefined_(loc.reg().nBits()));
                     if (genericRegState)
                         genericRegState->updateWriteProperties(loc.reg(), BaseSemantics::IO_WRITE);

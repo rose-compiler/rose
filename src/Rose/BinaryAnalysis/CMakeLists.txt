@@ -17,6 +17,7 @@ add_library(roseBinaryAnalysis OBJECT
   BinaryLoaderPe.C
   CallingConvention.C
   CodeInserter.C
+  ConcreteLocation.C
   ControlFlow.C
   DataFlow.C
   Debugger.C
@@ -77,6 +78,7 @@ install(FILES
   CallingConvention.h
   CodeInserter.h
   Concolic.h
+  ConcreteLocation.h
   ControlFlow.h
   DataFlow.h
   Debugger.h

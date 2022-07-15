@@ -3,11 +3,12 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Rose/BinaryAnalysis/ConcreteLocation.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
-#include <Rose/BinaryAnalysis/Variables.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Registers.h>
 #include <Rose/BinaryAnalysis/RegisterParts.h>
+#include <Rose/BinaryAnalysis/Variables.h>
 
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/set.hpp>
@@ -72,151 +73,6 @@ enum class StackCleanup {
     UNSPECIFIED,                                        /**< Stack parameter cleanup is unknown or unspecified. */
 };
 
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                      ParameterLocation
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/** Abstract parameter location.
- *
- *  This class is used to describe the location of a parameter or return value location in a calling convention definition
- *  outside any analysis (locations resulting from an analysis often contain more information). The location can be a register,
- *  a memory location at a constant address (e.g., global variable), or a memory location relative to some register (e.g., on a
- *  stack).  Location descriptors are immutable.
- *
- *  The same type is used for input parameters, output parameters, and in-out parameters. Return values are a kind of
- *  output parameter, although the API usually does not include the return value when it talks about "parameters". */
-class ParameterLocation {
-public:
-    /** Type of location. */
-    enum Type {
-        NO_LOCATION,                                /**< Used by default-constructed locations. */
-        REGISTER,                                   /**< Parameter is in a register. */
-        STACK,                                      /**< Parameter in memory relative to a register. E.g., stack. */
-        ABSOLUTE                                    /**< Parameter is at a fixed memory address. */
-    };
-
-private:
-    Type type_;
-    RegisterDescriptor reg_;                        // The argument register, or the stack base register.
-    union {
-        int64_t offset_;                            // Offset from stack base register for stack-based locations.
-        rose_addr_t va_;                            // Absolute address
-    };
-
-#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-private:
-    friend class boost::serialization::access;
-
-    template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
-        s & BOOST_SERIALIZATION_NVP(type_);
-        s & BOOST_SERIALIZATION_NVP(reg_);
-        if (STACK==type_) {
-            s & BOOST_SERIALIZATION_NVP(offset_);
-        } else {
-            s & BOOST_SERIALIZATION_NVP(va_);
-        }
-    }
-#endif
-    
-public:
-    /** Default constructed no-location.
-     *
-     *  This default constructor is useful for indicating no location or for using an STL container, such as @c
-     *  std::vector, that requires a default constructor.  The @ref isValid predicate will return false for
-     *  default-constructed locations. */
-    ParameterLocation()
-        : type_(NO_LOCATION), offset_(0) {}
-
-    /** Constructs a parameter in a register location. */
-    explicit ParameterLocation(RegisterDescriptor reg)
-        : type_(REGISTER), reg_(reg), offset_(0) {}
-
-    /** Constructs a parameter at a register-relative memory address. */
-    ParameterLocation(RegisterDescriptor reg, int64_t offset)
-        : type_(STACK), reg_(reg), offset_(offset) {}
-
-    /** Constructs a parameter at a fixed memory address. */
-    explicit ParameterLocation(rose_addr_t va)
-        : type_(ABSOLUTE), va_(va) {}
-
-    /** Type of parameter location. */
-    Type type() const { return type_; }
-
-    /** Predicate to determine if location is valid.
-     *
-     *  Returns false for default-constructed locations, true for all others. */
-    bool isValid() const {
-        return type() != NO_LOCATION;
-    }
-
-    /** Register part of location.
-     *
-     *  Returns the register where the parameter is stored (for register parameters) or the register holding the base
-     *  address for register-relative memory parameters.  Returns an invalid (default constructed) register descriptor when
-     *  invoked on a default constructed location or a fixed memory addresses. */
-    RegisterDescriptor reg() const {
-        return reg_;
-    }
-
-    /** Offset part of location.
-     *
-     *  Returns the signed byte offset from the base register for register-relative memory parameters.  The memory address
-     *  of the parameter is the contents of the base register plus this byte offset. Returns zero for register parameters,
-     *  parameters stored at fixed memory addresses, and default constructed locations. */
-    int64_t offset() const {
-        return STACK == type_ ? offset_ : (int64_t)0;
-    }
-
-    /** Fixed address location.
-     *
-     *  Returns the address for a parameter stored at a fixed memory address.  Returns zero for register parameters,
-     *  register-relative (stack) parameters, and default constructed locations. */
-    rose_addr_t address() const {
-        return ABSOLUTE == type_ ? va_ : (rose_addr_t)0;
-    }
-
-    /** Equality.
-     *
-     *  Two locations are equal if they are the same type and register, offset, and/or address as appropriate to the type. */
-    bool operator==(const ParameterLocation &other) const {
-        return type_ == other.type_ && reg_ == other.reg_ && offset_ == other.offset_; // &va_ == &offset_
-    }
-
-    /** Inequality.
-     *
-     *  Two locations are unequal if they have different types, registers, offsets, or addresses. */
-    bool operator!=(const ParameterLocation &other) const {
-        return type_ != other.type_ || reg_ != other.reg_ || offset_ != other.offset_; // &va_ == &offset_
-    }
-
-    /** String representation. */
-    std::string toString(const RegisterDictionary *regdict) const {
-        std::ostringstream ss;
-        print(ss, RegisterNames(regdict));
-        return ss.str();
-    }
-
-    /** Print location.
-     *
-     * @{ */
-    void print(std::ostream &out, const RegisterDictionary *regdict) const {
-        print(out, RegisterNames(regdict));
-    }
-    void print(std::ostream &out, const RegisterNames &regnames) const {
-        switch (type_) {
-            case NO_LOCATION: out <<"nowhere"; break;
-            case REGISTER: out <<regnames(reg_); break;
-            case STACK: out <<"mem[" <<regnames(reg_) <<"+" <<offset_ <<"]"; break;
-            case ABSOLUTE: out <<"mem[" <<StringUtility::addrToString(va_) <<"]"; break;
-        }
-    }
-    /** @} */
-
-};
-
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Definition
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -237,18 +93,18 @@ private:
     std::string comment_;                               // Long name, like "Windows Borland x86-32 fastcall"
     size_t wordWidth_ = 0;                              // Natural width word size in bits
     const RegisterDictionary *regDict_ = nullptr;       // Register dictionary used when this definition was created
-    std::vector<ParameterLocation> inputParameters_;    // Input (inc. in-out) parameters; additional stack-based are implied
-    std::vector<ParameterLocation> outputParameters_;   // Return values and output parameters.
+    std::vector<ConcreteLocation> inputParameters_;     // Input (inc. in-out) parameters; additional stack-based are implied
+    std::vector<ConcreteLocation> outputParameters_;    // Return values and output parameters.
     StackParameterOrder stackParameterOrder_ = StackParameterOrder::UNSPECIFIED; // Order of arguments on the stack
     RegisterDescriptor stackPointerRegister_;           // Base pointer for implied stack parameters
     size_t nonParameterStackSize_ = 0;                  // Size in bytes of non-parameter stack area
     size_t stackAlignment_ = 0;                         // Stack alignment in bytes (zero means unknown)
     StackDirection stackDirection_ = StackDirection::GROWS_DOWN; // Direction that stack grows from a PUSH operation
     StackCleanup stackCleanup_ = StackCleanup::UNSPECIFIED;      // Who cleans up stack parameters?
-    ParameterLocation thisParameter_;                   // Object pointer for calling conventions that are object methods
+    ConcreteLocation thisParameter_;                    // Object pointer for calling conventions that are object methods
     std::set<RegisterDescriptor> calleeSavedRegisters_; // Register that the callee must restore before returning
     std::set<RegisterDescriptor> scratchRegisters_;     // Caller-saved registers
-    ParameterLocation returnAddressLocation_;           // Where is the function return address stored at function entry?
+    ConcreteLocation returnAddressLocation_;            // Where is the function return address stored at function entry?
     RegisterDescriptor instructionPointerRegister_;     // Where is the next instruction address stored?
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -378,14 +234,14 @@ public:
     void clearParameters() {
         clearInputParameters();
         clearOutputParameters();
-        thisParameter_ = ParameterLocation();
+        thisParameter_ = ConcreteLocation();
     }
 
     /** Property: Enumerated input parameters.
      *
      *  Returns the vector of input (and in-out) parameters that have been enumerated; does not include implied stack
      *  parameters.  This property is read-only; see also @ref appendInputParameter and @ref clearInputParameters. */
-    const std::vector<ParameterLocation>& inputParameters() const { return inputParameters_; }
+    const std::vector<ConcreteLocation>& inputParameters() const { return inputParameters_; }
 
     /** Compute the set of input registers. */
     RegisterParts inputRegisterParts() const;
@@ -402,15 +258,15 @@ public:
      *  parameters need to be enumerated since any parameter with a higher index is assumed to be located on the stack.
      *
      * @{ */
-    void appendInputParameter(const ParameterLocation&);
+    void appendInputParameter(const ConcreteLocation&);
     void appendInputParameter(RegisterDescriptor reg) {
-        appendInputParameter(ParameterLocation(reg));
+        appendInputParameter(ConcreteLocation(reg));
     }
     void appendInputParameter(RegisterDescriptor reg, int64_t offset) {
-        appendInputParameter(ParameterLocation(reg, offset));
+        appendInputParameter(ConcreteLocation(reg, offset));
     }
     void appendInputParameter(rose_addr_t va) {
-        appendInputParameter(ParameterLocation(va));
+        appendInputParameter(ConcreteLocation(va));
     }
     /** @} */
 
@@ -418,7 +274,7 @@ public:
      *
      *  Returns the vector of output (and in-out) parameters.  This property is read-only; see also @ref appendOutputParameter
      *  and @ref clearOutputParameters. */
-    const std::vector<ParameterLocation>& outputParameters() const { return outputParameters_; }
+    const std::vector<ConcreteLocation>& outputParameters() const { return outputParameters_; }
 
     /** Computes the set of output registers. */
     RegisterParts outputRegisterParts() const;
@@ -437,15 +293,15 @@ public:
      *  not be enumerated in the calling convention dictionary.
      *
      * @{ */
-    void appendOutputParameter(const ParameterLocation&);
+    void appendOutputParameter(const ConcreteLocation&);
     void appendOutputParameter(RegisterDescriptor reg) {
-        appendOutputParameter(ParameterLocation(reg));
+        appendOutputParameter(ConcreteLocation(reg));
     }
     void appendOutputParameter(RegisterDescriptor reg, int64_t offset) {
-        appendOutputParameter(ParameterLocation(reg, offset));
+        appendOutputParameter(ConcreteLocation(reg, offset));
     }
     void appendOutputParameter(rose_addr_t va) {
-        appendOutputParameter(ParameterLocation(va));
+        appendOutputParameter(ConcreteLocation(va));
     }
     /** @} */
 
@@ -535,16 +391,16 @@ public:
      *  rather than an object method.
      *
      * @{ */
-    const ParameterLocation& thisParameter() const { return thisParameter_; }
-    void thisParameter(const ParameterLocation &x) { thisParameter_ = x; }
+    const ConcreteLocation& thisParameter() const { return thisParameter_; }
+    void thisParameter(const ConcreteLocation &x) { thisParameter_ = x; }
     void thisParameter(RegisterDescriptor reg) {
-        thisParameter(ParameterLocation(reg));
+        thisParameter(ConcreteLocation(reg));
     }
     void thisParameter(RegisterDescriptor reg, int64_t offset) {
-        thisParameter(ParameterLocation(reg, offset));
+        thisParameter(ConcreteLocation(reg, offset));
     }
     void thisParameter(rose_addr_t va) {
-        thisParameter(ParameterLocation(va));
+        thisParameter(ConcreteLocation(va));
     }
     /** @} */
 
@@ -554,8 +410,8 @@ public:
      *  to which this function returns after being called.
      *
      * @{ */
-    const ParameterLocation& returnAddressLocation() const { return returnAddressLocation_; }
-    void returnAddressLocation(const ParameterLocation &x) { returnAddressLocation_ = x; }
+    const ConcreteLocation& returnAddressLocation() const { return returnAddressLocation_; }
+    void returnAddressLocation(const ConcreteLocation &x) { returnAddressLocation_ = x; }
     /** @} */
 
     /** Property: Register that points to next instruction to execute.
