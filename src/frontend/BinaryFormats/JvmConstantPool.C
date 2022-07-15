@@ -143,10 +143,7 @@ void PoolEntry::dump(FILE* f, const char* prefix, ssize_t idx) const
 
 PoolEntry* PoolEntry::parse(SgAsmJvmConstantPool* pool)
 {
-  size_t count;
-  uint16_t name_index;
   auto header{pool->get_header()};
-  auto offset = header->get_offset();
 
   set_parent(pool);
 
@@ -222,9 +219,8 @@ SgAsmJvmConstantPool* SgAsmJvmConstantPool::parse()
   auto header = get_header();
   ASSERT_not_null(header);
 
-  rose_addr_t offset = header->get_offset();
-
 #ifdef DEBUG_ON
+  rose_addr_t offset = header->get_offset();
   std::cout << "SgAsmJvmConstantPool::parse() ...\n";
   std::cout << "SgAsmJvmConstantPool::parse() header class name is " << header->class_name() << std::endl;
   std::cout << "SgAsmJvmConstantPool::parse() this offset is " << get_offset() << std::endl;

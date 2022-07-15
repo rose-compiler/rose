@@ -132,7 +132,8 @@ switchSuccessors(const SgAsmJvmInstruction* insn, bool &complete) {
   complete = false;
 
   if ((kind == JvmOp::lookupswitch) && (1 < insn->nOperands())) {
-    int32_t defOff{0}, nPairs{0}, nOperands{0};
+    size_t nOperands{0};
+    int32_t defOff{0}, nPairs{0};
     if ((ival = isSgAsmIntegerValueExpression(insn->operand(0)))) defOff = ival->get_signedValue();
     if ((ival = isSgAsmIntegerValueExpression(insn->operand(1)))) nPairs = ival->get_signedValue();
 
@@ -142,7 +143,7 @@ switchSuccessors(const SgAsmJvmInstruction* insn, bool &complete) {
 #if DEBUG_PRINT
       std::cout << "... switchSuccessors: insert " << va + defOff << std::endl;
 #endif
-      for (int n{3}; n < nOperands; n+=2) {
+      for (size_t n{3}; n < nOperands; n+=2) {
         if ((ival = isSgAsmIntegerValueExpression(insn->operand(n)))) {
           retval.insert(va + ival->get_signedValue());
 #if DEBUG_PRINT
@@ -154,7 +155,8 @@ switchSuccessors(const SgAsmJvmInstruction* insn, bool &complete) {
     } else return AddressSet{};
   }
   else if ((kind == JvmOp::tableswitch) && (2 < insn->nOperands())) {
-    int32_t defOff{0}, low{0}, high{0}, nOperands{0};
+    size_t nOperands{0};
+    int32_t defOff{0}, low{0}, high{0};
     if ((ival = isSgAsmIntegerValueExpression(insn->operand(0)))) defOff = ival->get_signedValue();
     if ((ival = isSgAsmIntegerValueExpression(insn->operand(1))))    low = ival->get_signedValue();
     if ((ival = isSgAsmIntegerValueExpression(insn->operand(2))))   high = ival->get_signedValue();
