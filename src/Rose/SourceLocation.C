@@ -76,27 +76,42 @@ SourceLocation::parse(const std::string &s) {
     return SourceLocation(fileName, line, column);
 }
 
-bool
-SourceLocation::isEmpty() const {
-    return NULL == fileName_;                           // true if and only if default constructed
+std::string
+SourceLocation::toString() const {
+    // No lock necessary since fileName() is used to access the only shared state.
+    if (isEmpty())
+        return "";
+    std::string s = fileName().string() + ":" + boost::lexical_cast<std::string>(line_);
+    if (column_)
+        s += ":" + boost::lexical_cast<std::string>(*column_);
+    return s;
 }
 
-// Returning a reference is okay here. It has the same semantics as if the filename were stored directly in this object;
-// namely, the refered name will exist as long as this object exists (or some other object that references this same name
-// exists).
-const boost::filesystem::path&
-SourceLocation::fileName() const {
-    // No lock necessary since *this is immutable and we aren't accessing shared state.
-    static const boost::filesystem::path empty;
-    return fileName_ ? *fileName_ : empty;
+void
+SourceLocation::print(std::ostream &out) const {
+    // no lock necessary since fileName is used to access the only shared state
+    out <<fileName() <<":" <<line_;
+    if (column_)
+        out <<":" <<*column_;
+}
+
+std::string
+SourceLocation::printableName() const {
+    // no lock necessary
+    if (isEmpty())
+        return "";
+    std::ostringstream ss;
+    print(ss);
+    return ss.str();
 }
 
 bool
-SourceLocation::operator==(const SourceLocation &other) const {
+SourceLocation::isEqual(const Location &other_) const {
     // No lock necessary since *this is immutable and we aren't accessing shared state.  Comparing file name pointers is
     // equivalent to comparing file names since we guarantee in the constructor that two objects with the same file name will
     // end up with the same file name pointer.
-    return fileName_ == other.fileName_ && line_ == other.line_ && column_.isEqual(other.column_);
+    const SourceLocation *other = dynamic_cast<const SourceLocation*>(&other_);
+    return other && fileName_ == other->fileName_ && line_ == other->line_ && column_.isEqual(other->column_);
 }
 
 int
@@ -119,33 +134,43 @@ SourceLocation::compare(const SourceLocation &other) const {
     return *column_ < *other.column_ ? -1 : 1;
 }
 
-std::string
-SourceLocation::toString() const {
-    // No lock necessary since fileName() is used to access the only shared state.
-    if (isEmpty())
-        return "";
-    std::string s = fileName().string() + ":" + boost::lexical_cast<std::string>(line_);
-    if (column_)
-        s += ":" + boost::lexical_cast<std::string>(*column_);
-    return s;
+bool
+SourceLocation::operator<(const Location &other_) const {
+    const SourceLocation *other = dynamic_cast<const SourceLocation*>(&other_);
+    return other && compare(*other) < 0;
 }
 
-std::string
-SourceLocation::printableName() const {
-    // no lock necessary
-    if (isEmpty())
-        return "";
-    std::ostringstream ss;
-    print(ss);
-    return ss.str();
+bool
+SourceLocation::operator<=(const Location &other_) const {
+    const SourceLocation *other = dynamic_cast<const SourceLocation*>(&other_);
+    return other && compare(*other) <= 0;
 }
 
-void
-SourceLocation::print(std::ostream &out) const {
-    // no lock necessary since fileName is used to access the only shared state
-    out <<fileName() <<":" <<line_;
-    if (column_)
-        out <<":" <<*column_;
+bool
+SourceLocation::operator>(const Location &other_) const {
+    const SourceLocation *other = dynamic_cast<const SourceLocation*>(&other_);
+    return other && compare(*other) > 0;
+}
+
+bool
+SourceLocation::operator>=(const Location &other_) const {
+    const SourceLocation *other = dynamic_cast<const SourceLocation*>(&other_);
+    return other && compare(*other) >= 0;
+}
+
+bool
+SourceLocation::isValid() const {
+    return fileName_ != nullptr;
+}
+
+// Returning a reference is okay here. It has the same semantics as if the filename were stored directly in this object;
+// namely, the refered name will exist as long as this object exists (or some other object that references this same name
+// exists).
+const boost::filesystem::path&
+SourceLocation::fileName() const {
+    // No lock necessary since *this is immutable and we aren't accessing shared state.
+    static const boost::filesystem::path empty;
+    return fileName_ ? *fileName_ : empty;
 }
 
 void
@@ -154,11 +179,6 @@ SourceLocation::registerFileName() {
         SAWYER_THREAD_TRAITS::LockGuard lock(classMutex_);
         fileName_ = *fileNames_.insert(fileName_).first;
     }
-}
-
-std::ostream& operator<<(std::ostream &out, const SourceLocation &x) {
-    x.print(out);
-    return out;
 }
 
 } // namespace

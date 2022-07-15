@@ -17,8 +17,18 @@ BUILT_SOURCES = CommandLine/LicenseString.h
 AM_CPPFLAGS = $(ROSE_INCLUDES)
 noinst_LTLIBRARIES = librose_partial.la
 librose_partial_la_SOURCES =								\
+	BinaryAnalysis/AbstractLocation.C						\
+	BinaryAnalysis/AsmFunctionIndex.C						\
+	BinaryAnalysis/AstHash.C							\
+	BinaryAnalysis/BestMapAddress.C							\
+	BinaryAnalysis/BinaryLoader.C							\
+	BinaryAnalysis/BinaryLoaderElf.C						\
+	BinaryAnalysis/BinaryLoaderElfObj.C						\
+	BinaryAnalysis/BinaryLoaderPe.C							\
 	BinaryAnalysis/ByteCode/ByteCode.C						\
 	BinaryAnalysis/ByteCode/Jvm.C							\
+	BinaryAnalysis/CallingConvention.C						\
+	BinaryAnalysis/CodeInserter.C							\
 	BinaryAnalysis/Concolic/Architecture.C						\
 	BinaryAnalysis/Concolic/ConcolicExecutor.C					\
 	BinaryAnalysis/Concolic/ConcreteExecutor.C					\
@@ -37,7 +47,28 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/Concolic/TestCase.C						\
 	BinaryAnalysis/Concolic/TestSuite.C						\
 	BinaryAnalysis/Concolic/Utility.C						\
+	BinaryAnalysis/ConcreteLocation.C						\
+	BinaryAnalysis/ControlFlow.C							\
+	BinaryAnalysis/DataFlow.C							\
+	BinaryAnalysis/Debugger.C							\
+	BinaryAnalysis/Demangler.C							\
+	BinaryAnalysis/DisassemblerAarch32.C						\
+	BinaryAnalysis/DisassemblerAarch64.C						\
+	BinaryAnalysis/Disassembler.C							\
+	BinaryAnalysis/DisassemblerCil.C						\
+	BinaryAnalysis/DisassemblerJvm.C						\
+	BinaryAnalysis/DisassemblerM68k.C						\
+	BinaryAnalysis/DisassemblerMips.C						\
+	BinaryAnalysis/DisassemblerNull.C						\
+	BinaryAnalysis/DisassemblerPowerpc.C						\
+	BinaryAnalysis/DisassemblerX86.C						\
+	BinaryAnalysis/FeasiblePath.C							\
+	BinaryAnalysis/FunctionCall.C							\
+	BinaryAnalysis/FunctionSimilarity.C						\
+	BinaryAnalysis/HotPatch.C							\
+	BinaryAnalysis/InstructionCache.C						\
 	BinaryAnalysis/InstructionSemantics/BaseSemantics/BaseSemantics.C		\
+	BinaryAnalysis/InstructionSemantics/BaseSemantics/BinaryAnalysis		\
 	BinaryAnalysis/InstructionSemantics/BaseSemantics/Dispatcher.C			\
 	BinaryAnalysis/InstructionSemantics/BaseSemantics/Exception.C			\
 	BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCell.C			\
@@ -52,7 +83,6 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/InstructionSemantics/BaseSemantics/State.C			\
 	BinaryAnalysis/InstructionSemantics/BaseSemantics/SValue.C			\
 	BinaryAnalysis/InstructionSemantics/BaseSemantics/SymbolicMemory.C		\
-	BinaryAnalysis/InstructionSemantics/BaseSemantics/BinaryAnalysis		\
 	BinaryAnalysis/InstructionSemantics/ConcreteSemantics.C				\
 	BinaryAnalysis/InstructionSemantics/DataFlowSemantics.C				\
 	BinaryAnalysis/InstructionSemantics/DispatcherAarch32.C				\
@@ -73,6 +103,9 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/InstructionSemantics/TaintSemantics.C				\
 	BinaryAnalysis/InstructionSemantics/TraceSemantics.C				\
 	BinaryAnalysis/InstructionSemantics/Util.C					\
+	BinaryAnalysis/LibraryIdentification.C						\
+	BinaryAnalysis/MagicNumber.C							\
+	BinaryAnalysis/MemoryMap.C							\
 	BinaryAnalysis/ModelChecker/BasicBlockUnit.C					\
 	BinaryAnalysis/ModelChecker/Engine.C						\
 	BinaryAnalysis/ModelChecker/ErrorTag.C						\
@@ -89,12 +122,13 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/ModelChecker/PathPrioritizer.C					\
 	BinaryAnalysis/ModelChecker/PathQueue.C						\
 	BinaryAnalysis/ModelChecker/Periodic.C						\
-	BinaryAnalysis/ModelChecker/Settings.C						\
 	BinaryAnalysis/ModelChecker/SemanticCallbacks.C					\
+	BinaryAnalysis/ModelChecker/Settings.C						\
 	BinaryAnalysis/ModelChecker/SourceLister.C					\
 	BinaryAnalysis/ModelChecker/Tag.C						\
 	BinaryAnalysis/ModelChecker/UninitVarTag.C					\
 	BinaryAnalysis/ModelChecker/WorkerStatus.C					\
+	BinaryAnalysis/NoOperation.C							\
 	BinaryAnalysis/Partitioner2/AddressUsageMap.C					\
 	BinaryAnalysis/Partitioner2/BasicBlock.C					\
 	BinaryAnalysis/Partitioner2/CfgPath.C						\
@@ -103,13 +137,13 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/Partitioner2/DataBlock.C						\
 	BinaryAnalysis/Partitioner2/DataFlow.C						\
 	BinaryAnalysis/Partitioner2/Engine.C						\
-	BinaryAnalysis/Partitioner2/JvmEngine.C						\
 	BinaryAnalysis/Partitioner2/Exception.C						\
 	BinaryAnalysis/Partitioner2/Function.C						\
 	BinaryAnalysis/Partitioner2/FunctionCallGraph.C					\
 	BinaryAnalysis/Partitioner2/FunctionNoop.C					\
 	BinaryAnalysis/Partitioner2/GraphViz.C						\
 	BinaryAnalysis/Partitioner2/InstructionProvider.C				\
+	BinaryAnalysis/Partitioner2/JvmEngine.C						\
 	BinaryAnalysis/Partitioner2/MayReturnAnalysis.C					\
 	BinaryAnalysis/Partitioner2/Modules.C						\
 	BinaryAnalysis/Partitioner2/ModulesElf.C					\
@@ -126,50 +160,6 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/Partitioner2/StackDeltaAnalysis.C				\
 	BinaryAnalysis/Partitioner2/Thunk.C						\
 	BinaryAnalysis/Partitioner2/Utility.C						\
-	BinaryAnalysis/Unparser/EdgeArrows.C						\
-	BinaryAnalysis/Unparser/Aarch32.C						\
-	BinaryAnalysis/Unparser/Aarch64.C						\
-	BinaryAnalysis/Unparser/Base.C							\
-	BinaryAnalysis/Unparser/Cil.C							\
-	BinaryAnalysis/Unparser/Jvm.C							\
-	BinaryAnalysis/Unparser/M68k.C							\
-	BinaryAnalysis/Unparser/Mips.C							\
-	BinaryAnalysis/Unparser/Null.C							\
-	BinaryAnalysis/Unparser/Powerpc.C						\
-	BinaryAnalysis/Unparser/X86.C							\
-	BinaryAnalysis/AbstractLocation.C						\
-	BinaryAnalysis/AsmFunctionIndex.C						\
-	BinaryAnalysis/AstHash.C							\
-	BinaryAnalysis/BestMapAddress.C							\
-	BinaryAnalysis/BinaryLoader.C							\
-	BinaryAnalysis/BinaryLoaderElf.C						\
-	BinaryAnalysis/BinaryLoaderElfObj.C						\
-	BinaryAnalysis/BinaryLoaderPe.C							\
-	BinaryAnalysis/CallingConvention.C						\
-	BinaryAnalysis/CodeInserter.C							\
-	BinaryAnalysis/ControlFlow.C							\
-	BinaryAnalysis/DataFlow.C							\
-	BinaryAnalysis/Debugger.C							\
-	BinaryAnalysis/Demangler.C							\
-	BinaryAnalysis/Disassembler.C							\
-	BinaryAnalysis/DisassemblerAarch32.C						\
-	BinaryAnalysis/DisassemblerAarch64.C						\
-	BinaryAnalysis/DisassemblerCil.C						\
-	BinaryAnalysis/DisassemblerJvm.C						\
-	BinaryAnalysis/DisassemblerM68k.C						\
-	BinaryAnalysis/DisassemblerMips.C						\
-	BinaryAnalysis/DisassemblerNull.C						\
-	BinaryAnalysis/DisassemblerPowerpc.C						\
-	BinaryAnalysis/DisassemblerX86.C						\
-	BinaryAnalysis/FeasiblePath.C							\
-	BinaryAnalysis/FunctionCall.C							\
-	BinaryAnalysis/FunctionSimilarity.C						\
-	BinaryAnalysis/HotPatch.C							\
-	BinaryAnalysis/InstructionCache.C						\
-	BinaryAnalysis/LibraryIdentification.C						\
-	BinaryAnalysis/MagicNumber.C							\
-	BinaryAnalysis/MemoryMap.C							\
-	BinaryAnalysis/NoOperation.C							\
 	BinaryAnalysis/PointerDetection.C						\
 	BinaryAnalysis/Reachability.C							\
 	BinaryAnalysis/RegisterDescriptor.C						\
@@ -189,6 +179,17 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/SystemCall.C							\
 	BinaryAnalysis/TaintedFlow.C							\
 	BinaryAnalysis/ToSource.C							\
+	BinaryAnalysis/Unparser/Aarch32.C						\
+	BinaryAnalysis/Unparser/Aarch64.C						\
+	BinaryAnalysis/Unparser/Base.C							\
+	BinaryAnalysis/Unparser/Cil.C							\
+	BinaryAnalysis/Unparser/EdgeArrows.C						\
+	BinaryAnalysis/Unparser/Jvm.C							\
+	BinaryAnalysis/Unparser/M68k.C							\
+	BinaryAnalysis/Unparser/Mips.C							\
+	BinaryAnalysis/Unparser/Null.C							\
+	BinaryAnalysis/Unparser/Powerpc.C						\
+	BinaryAnalysis/Unparser/X86.C							\
 	BinaryAnalysis/Variables.C							\
 	BinaryAnalysis/Z3Solver.C							\
 	Color/Color.C									\
@@ -199,6 +200,10 @@ librose_partial_la_SOURCES =								\
 	CommandLine/Version.C								\
 	Diagnostics/Diagnostics.C							\
 	FileSystem/FileSystem.C								\
+	FormattedTable.C								\
+	Initialize.C									\
+	Progress.C									\
+	SourceLocation.C								\
 	StringUtility/Convert.C								\
 	StringUtility/Diagnostics.C							\
 	StringUtility/Escape.C								\
@@ -206,10 +211,6 @@ librose_partial_la_SOURCES =								\
 	StringUtility/Predicate.C							\
 	StringUtility/SplitJoin.C							\
 	StringUtility/StringToNumber.C							\
-	FormattedTable.C								\
-	Initialize.C									\
-	Progress.C									\
-	SourceLocation.C								\
 	Yaml.C
 
 rose_metaprog_h_includedir = $(prefix)/include/Rose

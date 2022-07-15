@@ -11,6 +11,7 @@ run $(librose_compile)				\
     BinaryLoaderPe.C				\
     CallingConvention.C				\
     CodeInserter.C				\
+    ConcreteLocation.C				\
     ControlFlow.C				\
     DataFlow.C					\
     Debugger.C					\
@@ -68,6 +69,7 @@ run $(public_header) -o include/rose/Rose/BinaryAnalysis	\
     CallingConvention.h						\
     CodeInserter.h						\
     Concolic.h							\
+    ConcreteLocation.h						\
     ControlFlow.h						\
     DataFlow.h							\
     Debugger.h							\

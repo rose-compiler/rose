@@ -201,7 +201,7 @@ Definition::x86_cdecl(const RegisterDictionary *regDict) {
 
     // Address locations
     cc->instructionPointerRegister(regDict->findLargestRegister(x86_regclass_ip, 0));
-    cc->returnAddressLocation(ParameterLocation(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp), 0));
+    cc->returnAddressLocation(ConcreteLocation(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp), 0));
 
     // Stack characteristics
     cc->stackPointerRegister(SP);
@@ -257,7 +257,7 @@ Definition::ppc_ibm(const RegisterDictionary *regDict) {
 
     // Address locations
     cc->instructionPointerRegister(regDict->findLargestRegister(powerpc_regclass_iar, 0));
-    cc->returnAddressLocation(ParameterLocation(regDict->findLargestRegister(powerpc_regclass_spr, powerpc_spr_lr)));
+    cc->returnAddressLocation(ConcreteLocation(regDict->findLargestRegister(powerpc_regclass_spr, powerpc_spr_lr)));
 
     // Stack characteristics
     cc->stackPointerRegister(SP);
@@ -364,7 +364,7 @@ Definition::x86_stdcall(const RegisterDictionary *regDict) {
 
     // Address locations
     cc->instructionPointerRegister(regDict->findLargestRegister(x86_regclass_ip, 0));
-    cc->returnAddressLocation(ParameterLocation(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp), 0));
+    cc->returnAddressLocation(ConcreteLocation(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp), 0));
 
     // Stack characteristics
     cc->stackPointerRegister(SP);
@@ -421,7 +421,7 @@ Definition::x86_fastcall(const RegisterDictionary *regDict) {
 
     // Address locations
     cc->instructionPointerRegister(regDict->findLargestRegister(x86_regclass_ip, 0));
-    cc->returnAddressLocation(ParameterLocation(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp), 0));
+    cc->returnAddressLocation(ConcreteLocation(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp), 0));
 
     // Stack characteristics
     cc->stackPointerRegister(SP);
@@ -472,7 +472,7 @@ Definition::x86_64bit_sysv() {
 
         // Address locations
         cc->instructionPointerRegister(regDict->findLargestRegister(x86_regclass_ip, 0));
-        cc->returnAddressLocation(ParameterLocation(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp), 0));
+        cc->returnAddressLocation(ConcreteLocation(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp), 0));
 
         // Stack characteristics
         cc->stackPointerRegister(SP);
@@ -578,18 +578,18 @@ Definition::x86_64bit_sysv() {
 }
 
 void
-Definition::appendInputParameter(const ParameterLocation &newLocation) {
+Definition::appendInputParameter(const ConcreteLocation &newLocation) {
 #ifndef NDEBUG
-    for (const ParameterLocation &existingLocation: inputParameters_)
+    for (const ConcreteLocation &existingLocation: inputParameters_)
         ASSERT_forbid(newLocation == existingLocation);
 #endif
     inputParameters_.push_back(newLocation);
 }
 
 void
-Definition::appendOutputParameter(const ParameterLocation &newLocation) {
+Definition::appendOutputParameter(const ConcreteLocation &newLocation) {
 #ifndef NDEBUG
-    for (const ParameterLocation &existingLocation: outputParameters_)
+    for (const ConcreteLocation &existingLocation: outputParameters_)
         ASSERT_forbid(newLocation == existingLocation);
 #endif
     outputParameters_.push_back(newLocation);
@@ -598,8 +598,8 @@ Definition::appendOutputParameter(const ParameterLocation &newLocation) {
 RegisterParts
 Definition::outputRegisterParts() const {
     RegisterParts retval;
-    for (const ParameterLocation &loc: outputParameters_) {
-        if (loc.type() == ParameterLocation::REGISTER)
+    for (const ConcreteLocation &loc: outputParameters_) {
+        if (loc.type() == ConcreteLocation::REGISTER)
             retval.insert(loc.reg());
     }
     return retval;
@@ -608,8 +608,8 @@ Definition::outputRegisterParts() const {
 RegisterParts
 Definition::inputRegisterParts() const {
     RegisterParts retval;
-    for (const ParameterLocation &loc: inputParameters_) {
-        if (loc.type() == ParameterLocation::REGISTER)
+    for (const ConcreteLocation &loc: inputParameters_) {
+        if (loc.type() == ConcreteLocation::REGISTER)
             retval.insert(loc.reg());
     }
     return retval;
@@ -637,7 +637,7 @@ Definition::getUsedRegisterParts() const {
     retval |= outputRegisterParts();
     if (!stackPointerRegister_.isEmpty())
         retval.insert(stackPointerRegister_);
-    if (thisParameter_.type() == ParameterLocation::REGISTER)
+    if (thisParameter_.type() == ConcreteLocation::REGISTER)
         retval.insert(thisParameter_.reg());
     retval |= calleeSavedRegisterParts();
     retval |= scratchRegisterParts();
@@ -648,7 +648,9 @@ void
 Definition::print(std::ostream &out, const RegisterDictionary *regDict/*=NULL*/) const {
     using namespace StringUtility;
     ASSERT_require(regDict || regDict_);
-    RegisterNames regNames(regDict ? regDict : regDict_);
+    if (!regDict)
+        regDict = regDict_;
+    RegisterNames regNames(regDict);
 
     out <<cEscape(name_);
     if (!comment_.empty())
@@ -665,9 +667,9 @@ Definition::print(std::ostream &out, const RegisterDictionary *regDict/*=NULL*/)
 
     if (!inputParameters_.empty()) {
         out <<", inputs={";
-        for (const ParameterLocation &loc: inputParameters_) {
+        for (const ConcreteLocation &loc: inputParameters_) {
             out <<" ";
-            loc.print(out, regNames);
+            loc.print(out, regDict ? regDict : loc.registerDictionary());
         }
         out <<" }";
     }
@@ -706,14 +708,14 @@ Definition::print(std::ostream &out, const RegisterDictionary *regDict/*=NULL*/)
 
     if (thisParameter_.isValid()) {
         out <<", this=";
-        thisParameter_.print(out, regNames);
+        thisParameter_.print(out, regDict ? regDict : thisParameter_.registerDictionary());
     }
 
     if (!outputParameters_.empty()) {
         out <<", outputs={";
-        for (const ParameterLocation &loc: outputParameters_) {
+        for (const ConcreteLocation &loc: outputParameters_) {
             out <<" ";
-            loc.print(out, regNames);
+            loc.print(out, regDict ? regDict : loc.registerDictionary());
         }
         out <<" }";
     }
@@ -1121,7 +1123,7 @@ Analysis::match(const Definition::Ptr &cc) const {
     RegisterParts ccInputRegisters = cc->inputRegisterParts();
     ccInputRegisters.insert(cpu_->instructionPointerRegister());
     ccInputRegisters.insert(cpu_->stackPointerRegister());
-    if (cc->thisParameter().type() == ParameterLocation::REGISTER)
+    if (cc->thisParameter().type() == ConcreteLocation::REGISTER)
         ccInputRegisters.insert(cc->thisParameter().reg());
 
     // Gather up definition's output registers.  We always add EIP (or similar) because the final RET instruction will write
@@ -1217,7 +1219,7 @@ Analysis::match(const Definition::Ptr &cc) const {
 
     // If the definition has an object pointer ("this" parameter) then it should not be an anlysis output or scratch register,
     // but must be an analysis input register.
-    if (cc->thisParameter().type() == ParameterLocation::REGISTER) {
+    if (cc->thisParameter().type() == ConcreteLocation::REGISTER) {
         if (ccOutputRegisters.existsAny(cc->thisParameter().reg())) {
             SAWYER_MESG(debug) <<"  mismatch: actual output defined as \"this\" register: "
                                <<RegisterNames(registerDictionary())(cc->thisParameter().reg()) <<"\n";

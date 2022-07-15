@@ -293,6 +293,7 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/CallingConvention.h						\
 	Rose/BinaryAnalysis/CodeInserter.h						\
 	Rose/BinaryAnalysis/Concolic.h							\
+	Rose/BinaryAnalysis/ConcreteLocation.h						\
 	Rose/BinaryAnalysis/Concolic/Architecture.h					\
 	Rose/BinaryAnalysis/Concolic/BasicTypes.h					\
 	Rose/BinaryAnalysis/Concolic/ConcolicExecutor.h					\
@@ -525,6 +526,7 @@ nobase_pkginclude_HEADERS=								\
 	Rose/FormattedTable.h								\
 	Rose/GraphUtility.h								\
 	Rose/Initialize.h								\
+	Rose/Location.h									\
 	Rose/Progress.h									\
 	Rose/RecursionCounter.h								\
 	Rose/SourceLocation.h								\
