@@ -36,6 +36,8 @@ OP(unsigned val) {
     return Pattern(12, 15, val, 0);
 }
 
+// TODO: Unused function
+#if 0
 // Bit pattern for an effective address mode in the low-order 6 bits of the instruction word. Only the specified modes are
 // matched.
 static Pattern
@@ -130,7 +132,10 @@ EAM(unsigned eamodes, size_t lobit=0)
     }
     return retval;
 }
+#endif // Unused function
 
+// TODO: Unused function
+#if 0
 // Like EAM but matches REG:MODE rather than MODE:REG
 static Pattern
 EAM_BACKWARD(unsigned eamodes, size_t lobit=0)
@@ -224,6 +229,7 @@ EAM_BACKWARD(unsigned eamodes, size_t lobit=0)
     }
     return retval;
 }
+#endif // Unused function
     
 template<size_t lo, size_t hi>
 Pattern BITS(unsigned val)
@@ -243,6 +249,8 @@ Pattern BIT(unsigned val)
     return Pattern(lo, lo, val, 0);
 }
 
+// TODO: Unused function
+#if 0
 static CilDataFormat
 integerFormat(unsigned fmtNumber)
 {
@@ -254,7 +262,10 @@ integerFormat(unsigned fmtNumber)
     }
     ASSERT_not_reachable("invalid integer format number: " + numberToString(fmtNumber));
 }
+#endif
 
+// TODO: Unused function
+#if 0
 // Floating point format as encoded in a floating-point instruction.  The CilDataFormat enums have the same value as the
 // format field in the instruction.
 static CilDataFormat
@@ -274,6 +285,7 @@ floatingFormat(DisassemblerCil::State &state, unsigned fmtNumber)
                                           state.insn_va);
     }
 }
+#endif
 
 // Default format for floating-point operations. Floating point values are converted to this type internally before any
 // operations are performed on them.
@@ -295,8 +307,11 @@ floatingFormatForFamily(CilFamily family)
 #endif
 
     ASSERT_not_reachable("CIL family has no floating point hardware: " + addrToString(family));
+    return Cil_fmt_unknown;
 }
 
+// TODO: Unused function
+#if 0
 // Convert a numeric format to a letter that's appended to instruction mnemonics.
 static std::string
 formatLetter(CilDataFormat fmt)
@@ -318,6 +333,7 @@ formatLetter(CilDataFormat fmt)
     ROSE_ASSERT(false);
 #endif
 }
+#endif
 
 static size_t
 formatNBits(CilDataFormat fmt)
@@ -337,6 +353,7 @@ formatNBits(CilDataFormat fmt)
     ASSERT_not_reachable("invalid CIL data format: " + stringifyBinaryAnalysisCilDataFormat(fmt));
 #else
     ROSE_ASSERT(false);
+    return 0;
 #endif
 }
 
@@ -344,10 +361,9 @@ formatNBits(CilDataFormat fmt)
 bool
 DisassemblerCil::canDisassemble(SgAsmGenericHeader *header) const
 {
-    SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
-
 #if 0
  // DQ (10/9/2021): Eliminate this code for Cil.
+    SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
     return (isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_Cil_Family;
 #else
     return false;
@@ -372,6 +388,8 @@ DisassemblerCil::makeType(State &state, CilDataFormat fmt) const
         case Cil_fmt_p96: throw Exception("96-bit binary coded decimal not implemented", state.insn_va);
         case Cil_fmt_i16: return SageBuilderAsm::buildTypeU16();
         case Cil_fmt_f64: return SageBuilderAsm::buildIeee754Binary64();
+        // TODO: This needs to be implemented
+        case Cil_fmt_f96: ROSE_ASSERT(false && "Warning, unimplemented type");
         case Cil_fmt_i8:  return SageBuilderAsm::buildTypeU8();
         case Cil_fmt_unknown: ASSERT_not_reachable("Cil_fmt_unknown is not a valid data format");
     }
@@ -380,7 +398,7 @@ DisassemblerCil::makeType(State &state, CilDataFormat fmt) const
     ASSERT_not_reachable("invalid CIL data format: " + stringifyBinaryAnalysisCilDataFormat(fmt));
 #else
     ROSE_ASSERT(false);
-    return NULL;
+    return nullptr;
 #endif
 }
 
@@ -636,10 +654,10 @@ DisassemblerCil::makeMacAccumulatorRegister(State &state, unsigned accumIndex) c
 SgAsmRegisterReferenceExpression *
 DisassemblerCil::makeFPRegister(State &state, unsigned regnum) const
 {
-    CilDataFormat fmt = floatingFormatForFamily(family);
     SgAsmType *type = NULL;
 #if 0
  // DQ (10/9/2021): Eliminate this code for Cil.
+    CilDataFormat fmt = floatingFormatForFamily(family);
     switch (fmt) {
         case Cil_fmt_f64:
             type = makeType(state, fmt);
@@ -818,6 +836,7 @@ DisassemblerCil::makeEffectiveAddress(State &state, unsigned mode, unsigned reg,
 #else
     ROSE_ASSERT(false);
 #endif
+    return nullptr;
 }
 
 SgAsmExpression *
@@ -3312,7 +3331,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 #endif
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
-             insn = makeInstruction(start_va,Cil_conv_ovf_u_un,"conv_ovf_u_un");
+             insn = makeInstruction(start_va,Cil_conv_ovf_u_un,"conv_ovf_u_un",operand);
              raw_bytes.resize(1);
              insn->set_raw_bytes(raw_bytes);
              break;
@@ -3357,7 +3376,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 #endif
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
-             insn = makeInstruction(start_va,Cil_ldlen,"ldlen");
+             insn = makeInstruction(start_va,Cil_ldlen,"ldlen",operand);
              raw_bytes.resize(1);
              insn->set_raw_bytes(raw_bytes);
              break;

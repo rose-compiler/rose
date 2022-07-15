@@ -52,10 +52,6 @@ SgAsmJvmFileHeader::parse()
   ASSERT_not_null(gf);
   ROSE_ASSERT(get_size() > 0);
 
-  auto header = gf->get_header(SgAsmGenericFile::FAMILY_JVM);
-  ASSERT_not_null(header);
-  ROSE_ASSERT(header == this);
-
   /* parse base class */
   SgAsmGenericHeader::parse();
 

@@ -29,43 +29,6 @@ JvmEngine::reset() {
     disassembler_ = nullptr;
 }
 
-// Returns true if the specified vertex has at least one E_CALL_RETURN edge
-static bool
-hasCallReturnEdges(const ControlFlowGraph::ConstVertexIterator &vertex) {
-    for (const ControlFlowGraph::Edge &edge : vertex->outEdges()) {
-        if (edge.value().type() == E_CALL_RETURN)
-            return true;
-    }
-    return false;
-}
-
-// True if any callee may-return is positive; false if all callees are negative; indeterminate if any are indeterminate
-static boost::logic::tribool
-hasAnyCalleeReturn(const Partitioner &partitioner, const ControlFlowGraph::ConstVertexIterator &caller) {
-    bool hasIndeterminateCallee = false;
-    for (ControlFlowGraph::ConstEdgeIterator edge=caller->outEdges().begin(); edge != caller->outEdges().end(); ++edge) {
-        if (edge->value().type() == E_FUNCTION_CALL) {
-            bool mayReturn = false;
-            if (!partitioner.basicBlockOptionalMayReturn(edge->target()).assignTo(mayReturn)) {
-                hasIndeterminateCallee = true;
-            } else if (mayReturn) {
-                return true;
-            }
-        }
-    }
-    if (hasIndeterminateCallee)
-        return boost::logic::indeterminate;
-    return false;
-}
-
-// Increment the address as far as possible while avoiding overflow.
-static rose_addr_t
-incrementAddress(rose_addr_t va, rose_addr_t amount, rose_addr_t maxaddr) {
-    if (maxaddr - va < amount)
-        return maxaddr;
-    return va + amount;
-}
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Top-level, do everything functions
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

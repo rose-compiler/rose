@@ -114,8 +114,6 @@ void Class::partition()
 
 void Class::digraph()
 {
-  int mindex{0};
-
   std::ofstream dotFile;
   dotFile.open(name() + ".dot");
   dotFile << "digraph g {" << endl;
@@ -134,9 +132,9 @@ void Class::digraph()
   dotFile << endl;
 
   // Blocks for each method
-  for (int midx = 0; midx < methods().size(); midx++) {
+  for (size_t midx = 0; midx < methods().size(); midx++) {
     auto method = methods()[midx];
-    for (int bidx = 0; bidx < method->blocks().size(); bidx++) {
+    for (size_t bidx = 0; bidx < method->blocks().size(); bidx++) {
       auto block = method->blocks()[bidx];
       dotFile << "  block_" << midx << "_" << bidx << " [\n    label=\"";
       for (auto insn : block->instructions()) {
@@ -148,11 +146,11 @@ void Class::digraph()
   }
   dotFile << endl;
 
-  for (int midx = 0; midx < methods().size(); midx++) {
+  for (size_t midx = 0; midx < methods().size(); midx++) {
     auto method = methods()[midx];
 
     std::map<rose_addr_t,int> vaToBlock{};
-    for (int bidx = 0; bidx < method->blocks().size(); bidx++) {
+    for (size_t bidx = 0; bidx < method->blocks().size(); bidx++) {
       auto block = method->blocks()[bidx];
       for (auto insn : block->instructions()) {
         vaToBlock.emplace(insn->get_address(),bidx);
@@ -164,7 +162,7 @@ void Class::digraph()
     dotFile << "  \"" << method->name() << "\" -> "
             << "block_" << midx << "_0:" << blockHead->instructions()[0]->get_address() << endl;
 
-    for (int bidx = 0; bidx < method->blocks().size(); bidx++) {
+    for (size_t bidx = 0; bidx < method->blocks().size(); bidx++) {
       auto block = method->blocks()[bidx];
       auto tail = block->instructions().back();
       // Successors edges from the block

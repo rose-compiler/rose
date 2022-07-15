@@ -34,7 +34,7 @@ DisassemblerJvm::append_operand(const MemoryMap::Ptr &map, rose_addr_t va,
   operands->append_operand(SageBuilderAsm::buildValue(val));
 
   // TODO: Perhaps there is a more efficient way to do this
-  for (int i = 0; i < nRead; i++) {
+  for (size_t i = 0; i < nRead; i++) {
     chars.push_back(buf[i]);
   }
 
@@ -61,7 +61,7 @@ DisassemblerJvm::append_tableswitch(const MemoryMap::Ptr &map, rose_addr_t start
   }
   va += nRead;
 
-  for (int i = 0; i < nRead; i++) {
+  for (size_t i = 0; i < nRead; i++) {
     chars.push_back(buf[i]);
   }
 
@@ -682,12 +682,10 @@ DisassemblerJvm::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start, Ad
         mnemonic = "ret";
         va += append_operand<uint8_t>(map, va, chars, operands);
         break;
-      case opcode::tableswitch: { // 0xaa (170)
+      case opcode::tableswitch: // 0xaa (170)
         mnemonic = "tableswitch";
-        rose_addr_t sva{va};
         va += append_tableswitch(map, va, chars, operands);
         break;
-      }
 
 //    case opcode::lookupswitch: // 0xab (171)
 
@@ -835,7 +833,7 @@ DisassemblerJvm::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start, Ad
 #if DEBUG_ON
   cout << "... insn: " << (int)kind << ": " << insn->get_mnemonic()
        << " nOperands:" << insn->nOperands() << ":chars:";
-  for (int i = 0; i < chars.size(); i++) {
+  for (size_t i = 0; i < chars.size(); i++) {
     cout << (int)chars[i] << ":";
   }
   cout << endl;
