@@ -49,6 +49,8 @@ public:
         // plus 2.
         dispatcher->advanceInstructionPointer(insn);
         SgAsmExpressionPtrList &operands = insn->get_operandList()->get_operands();
+
+        operators->comment("executing instruction core");
         p(dispatcher.get(), operators.get(), insn, operands);
     }
 

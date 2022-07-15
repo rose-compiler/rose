@@ -4,10 +4,12 @@
 
 0x080482c8: push ebp
 Symbolic: startInstruction(0x080482c8: push ebp)
+Symbolic insn@0x080482c8[0]: // advancing instruction pointer
 Symbolic insn@0x080482c8[0]: number_(32, 134513352) = 0x080482c8<134513352>[u32]
 Symbolic insn@0x080482c8[0]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x080482c8[0]: add(0x080482c8<134513352>[u32], 0x00000001[u32]) = 0x080482c9<134513353>[u32]
 Symbolic insn@0x080482c8[0]: writeRegister(eip, 0x080482c9<134513353>[u32])
+Symbolic insn@0x080482c8[0]: // executing instruction core
 Symbolic insn@0x080482c8[0]: undefined_(32) = V1[u32]
 Symbolic insn@0x080482c8[0]: readRegister(ebp, V1[u32]) = ebp_0[u32]
 Symbolic insn@0x080482c8[0]: undefined_(32) = V2[u32]
@@ -34,10 +36,12 @@ memory:
 
 0x080482c9: mov ebp, esp
 Symbolic: startInstruction(0x080482c9: mov ebp, esp)
+Symbolic insn@0x080482c9[1]: // advancing instruction pointer
 Symbolic insn@0x080482c9[1]: number_(32, 134513353) = 0x080482c9<134513353>[u32]
 Symbolic insn@0x080482c9[1]: number_(32, 2) = 0x00000002[u32]
 Symbolic insn@0x080482c9[1]: add(0x080482c9<134513353>[u32], 0x00000002[u32]) = 0x080482cb<134513355>[u32]
 Symbolic insn@0x080482c9[1]: writeRegister(eip, 0x080482cb<134513355>[u32])
+Symbolic insn@0x080482c9[1]: // executing instruction core
 Symbolic insn@0x080482c9[1]: undefined_(32) = V3[u32]
 Symbolic insn@0x080482c9[1]: readRegister(esp, V3[u32]) = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
 Symbolic insn@0x080482c9[1]: writeRegister(ebp, (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32]))
@@ -59,10 +63,12 @@ memory:
 
 0x080482cb: sub esp, 0x08
 Symbolic: startInstruction(0x080482cb: sub esp, 0x08)
+Symbolic insn@0x080482cb[2]: // advancing instruction pointer
 Symbolic insn@0x080482cb[2]: number_(32, 134513355) = 0x080482cb<134513355>[u32]
 Symbolic insn@0x080482cb[2]: number_(32, 3) = 0x00000003[u32]
 Symbolic insn@0x080482cb[2]: add(0x080482cb<134513355>[u32], 0x00000003[u32]) = 0x080482ce<134513358>[u32]
 Symbolic insn@0x080482cb[2]: writeRegister(eip, 0x080482ce<134513358>[u32])
+Symbolic insn@0x080482cb[2]: // executing instruction core
 Symbolic insn@0x080482cb[2]: undefined_(32) = V4[u32]
 Symbolic insn@0x080482cb[2]: readRegister(esp, V4[u32]) = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
 Symbolic insn@0x080482cb[2]: number_(8, 8) = 0x08[u8]
@@ -128,10 +134,12 @@ memory:
 
 0x080482ce: call 0x08048364<(func)call_gmon_start>
 Symbolic: startInstruction(0x080482ce: call 0x08048364<(func)call_gmon_start>)
+Symbolic insn@0x080482ce[3]: // advancing instruction pointer
 Symbolic insn@0x080482ce[3]: number_(32, 134513358) = 0x080482ce<134513358>[u32]
 Symbolic insn@0x080482ce[3]: number_(32, 5) = 0x00000005[u32]
 Symbolic insn@0x080482ce[3]: add(0x080482ce<134513358>[u32], 0x00000005[u32]) = 0x080482d3<134513363>[u32]
 Symbolic insn@0x080482ce[3]: writeRegister(eip, 0x080482d3<134513363>[u32])
+Symbolic insn@0x080482ce[3]: // executing instruction core
 Symbolic insn@0x080482ce[3]: number_(32, 134513508) = 0x08048364<134513508>[u32]
 Symbolic insn@0x080482ce[3]: unsignedExtend(0x08048364<134513508>[u32], 32) = 0x08048364<134513508>[u32]
 Symbolic insn@0x080482ce[3]: undefined_(32) = V5[u32]
@@ -177,10 +185,12 @@ Symbolic: operators destroyed
 
 0x080482d3: call 0x080483d0<(func)frame_dummy>
 Symbolic: startInstruction(0x080482d3: call 0x080483d0<(func)frame_dummy>)
+Symbolic insn@0x080482d3[0]: // advancing instruction pointer
 Symbolic insn@0x080482d3[0]: number_(32, 134513363) = 0x080482d3<134513363>[u32]
 Symbolic insn@0x080482d3[0]: number_(32, 5) = 0x00000005[u32]
 Symbolic insn@0x080482d3[0]: add(0x080482d3<134513363>[u32], 0x00000005[u32]) = 0x080482d8<134513368>[u32]
 Symbolic insn@0x080482d3[0]: writeRegister(eip, 0x080482d8<134513368>[u32])
+Symbolic insn@0x080482d3[0]: // executing instruction core
 Symbolic insn@0x080482d3[0]: number_(32, 134513616) = 0x080483d0<134513616>[u32]
 Symbolic insn@0x080482d3[0]: unsignedExtend(0x080483d0<134513616>[u32], 32) = 0x080483d0<134513616>[u32]
 Symbolic insn@0x080482d3[0]: undefined_(32) = V1[u32]
@@ -215,10 +225,12 @@ Symbolic: operators destroyed
 
 0x080482d8: call 0x08048580<(func)__do_global_ctors_aux>
 Symbolic: startInstruction(0x080482d8: call 0x08048580<(func)__do_global_ctors_aux>)
+Symbolic insn@0x080482d8[0]: // advancing instruction pointer
 Symbolic insn@0x080482d8[0]: number_(32, 134513368) = 0x080482d8<134513368>[u32]
 Symbolic insn@0x080482d8[0]: number_(32, 5) = 0x00000005[u32]
 Symbolic insn@0x080482d8[0]: add(0x080482d8<134513368>[u32], 0x00000005[u32]) = 0x080482dd<134513373>[u32]
 Symbolic insn@0x080482d8[0]: writeRegister(eip, 0x080482dd<134513373>[u32])
+Symbolic insn@0x080482d8[0]: // executing instruction core
 Symbolic insn@0x080482d8[0]: number_(32, 134514048) = 0x08048580<134514048>[u32]
 Symbolic insn@0x080482d8[0]: unsignedExtend(0x08048580<134514048>[u32], 32) = 0x08048580<134514048>[u32]
 Symbolic insn@0x080482d8[0]: undefined_(32) = V1[u32]
@@ -253,10 +265,12 @@ Symbolic: operators destroyed
 
 0x080482dd: leave 
 Symbolic: startInstruction(0x080482dd: leave)
+Symbolic insn@0x080482dd[0]: // advancing instruction pointer
 Symbolic insn@0x080482dd[0]: number_(32, 134513373) = 0x080482dd<134513373>[u32]
 Symbolic insn@0x080482dd[0]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x080482dd[0]: add(0x080482dd<134513373>[u32], 0x00000001[u32]) = 0x080482de<134513374>[u32]
 Symbolic insn@0x080482dd[0]: writeRegister(eip, 0x080482de<134513374>[u32])
+Symbolic insn@0x080482dd[0]: // executing instruction core
 Symbolic insn@0x080482dd[0]: undefined_(32) = V1[u32]
 Symbolic insn@0x080482dd[0]: readRegister(ebp, V1[u32]) = ebp_0[u32]
 Symbolic insn@0x080482dd[0]: writeRegister(esp, ebp_0[u32])
@@ -287,10 +301,12 @@ memory:
 
 0x080482de: ret 
 Symbolic: startInstruction(0x080482de: ret)
+Symbolic insn@0x080482de[1]: // advancing instruction pointer
 Symbolic insn@0x080482de[1]: number_(32, 134513374) = 0x080482de<134513374>[u32]
 Symbolic insn@0x080482de[1]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x080482de[1]: add(0x080482de<134513374>[u32], 0x00000001[u32]) = 0x080482df<134513375>[u32]
 Symbolic insn@0x080482de[1]: writeRegister(eip, 0x080482df<134513375>[u32])
+Symbolic insn@0x080482de[1]: // executing instruction core
 Symbolic insn@0x080482de[1]: undefined_(32) = V4[u32]
 Symbolic insn@0x080482de[1]: readRegister(esp, V4[u32]) = (add[u32] ebp_0[u32] 0x00000004[u32])
 Symbolic insn@0x080482de[1]: number_(32, 4) = 0x00000004[u32]
@@ -327,10 +343,12 @@ Symbolic: operators destroyed
 
 0x080482e0: push dword ds:[0x080496cc<.got.plt+4>]
 Symbolic: startInstruction(0x080482e0: push dword ds:[0x080496cc<.got.plt+4>])
+Symbolic insn@0x080482e0[0]: // advancing instruction pointer
 Symbolic insn@0x080482e0[0]: number_(32, 134513376) = 0x080482e0<134513376>[u32]
 Symbolic insn@0x080482e0[0]: number_(32, 6) = 0x00000006[u32]
 Symbolic insn@0x080482e0[0]: add(0x080482e0<134513376>[u32], 0x00000006[u32]) = 0x080482e6<134513382>[u32]
 Symbolic insn@0x080482e0[0]: writeRegister(eip, 0x080482e6<134513382>[u32])
+Symbolic insn@0x080482e0[0]: // executing instruction core
 Symbolic insn@0x080482e0[0]: number_(32, 134518476) = 0x080496cc<134518476>[u32]
 Symbolic insn@0x080482e0[0]: undefined_(32) = V1[u32]
 Symbolic insn@0x080482e0[0]: boolean_(1) = true[u1]
@@ -363,10 +381,12 @@ memory:
 
 0x080482e6: jmp dword ds:[0x080496d0<.got.plt+8>]
 Symbolic: startInstruction(0x080482e6: jmp dword ds:[0x080496d0<.got.plt+8>])
+Symbolic insn@0x080482e6[1]: // advancing instruction pointer
 Symbolic insn@0x080482e6[1]: number_(32, 134513382) = 0x080482e6<134513382>[u32]
 Symbolic insn@0x080482e6[1]: number_(32, 6) = 0x00000006[u32]
 Symbolic insn@0x080482e6[1]: add(0x080482e6<134513382>[u32], 0x00000006[u32]) = 0x080482ec<134513388>[u32]
 Symbolic insn@0x080482e6[1]: writeRegister(eip, 0x080482ec<134513388>[u32])
+Symbolic insn@0x080482e6[1]: // executing instruction core
 Symbolic insn@0x080482e6[1]: number_(32, 134518480) = 0x080496d0<134518480>[u32]
 Symbolic insn@0x080482e6[1]: undefined_(32) = V3[u32]
 Symbolic insn@0x080482e6[1]: boolean_(1) = true[u1]
@@ -403,10 +423,12 @@ Symbolic: operators destroyed
 
 0x080482f0: jmp dword ds:[0x080496d4<.got.plt+0x0c>]
 Symbolic: startInstruction(0x080482f0: jmp dword ds:[0x080496d4<.got.plt+0x0c>])
+Symbolic insn@0x080482f0[0]: // advancing instruction pointer
 Symbolic insn@0x080482f0[0]: number_(32, 134513392) = 0x080482f0<134513392>[u32]
 Symbolic insn@0x080482f0[0]: number_(32, 6) = 0x00000006[u32]
 Symbolic insn@0x080482f0[0]: add(0x080482f0<134513392>[u32], 0x00000006[u32]) = 0x080482f6<134513398>[u32]
 Symbolic insn@0x080482f0[0]: writeRegister(eip, 0x080482f6<134513398>[u32])
+Symbolic insn@0x080482f0[0]: // executing instruction core
 Symbolic insn@0x080482f0[0]: number_(32, 134518484) = 0x080496d4<134518484>[u32]
 Symbolic insn@0x080482f0[0]: undefined_(32) = V1[u32]
 Symbolic insn@0x080482f0[0]: boolean_(1) = true[u1]
@@ -434,10 +456,12 @@ Symbolic: operators destroyed
 
 0x08048300: jmp dword ds:[0x080496d8<.got.plt+0x10>]
 Symbolic: startInstruction(0x08048300: jmp dword ds:[0x080496d8<.got.plt+0x10>])
+Symbolic insn@0x08048300[0]: // advancing instruction pointer
 Symbolic insn@0x08048300[0]: number_(32, 134513408) = 0x08048300<134513408>[u32]
 Symbolic insn@0x08048300[0]: number_(32, 6) = 0x00000006[u32]
 Symbolic insn@0x08048300[0]: add(0x08048300<134513408>[u32], 0x00000006[u32]) = 0x08048306<134513414>[u32]
 Symbolic insn@0x08048300[0]: writeRegister(eip, 0x08048306<134513414>[u32])
+Symbolic insn@0x08048300[0]: // executing instruction core
 Symbolic insn@0x08048300[0]: number_(32, 134518488) = 0x080496d8<134518488>[u32]
 Symbolic insn@0x08048300[0]: undefined_(32) = V1[u32]
 Symbolic insn@0x08048300[0]: boolean_(1) = true[u1]
@@ -465,10 +489,12 @@ Symbolic: operators destroyed
 
 0x08048310: jmp dword ds:[0x080496dc<.got.plt+0x14>]
 Symbolic: startInstruction(0x08048310: jmp dword ds:[0x080496dc<.got.plt+0x14>])
+Symbolic insn@0x08048310[0]: // advancing instruction pointer
 Symbolic insn@0x08048310[0]: number_(32, 134513424) = 0x08048310<134513424>[u32]
 Symbolic insn@0x08048310[0]: number_(32, 6) = 0x00000006[u32]
 Symbolic insn@0x08048310[0]: add(0x08048310<134513424>[u32], 0x00000006[u32]) = 0x08048316<134513430>[u32]
 Symbolic insn@0x08048310[0]: writeRegister(eip, 0x08048316<134513430>[u32])
+Symbolic insn@0x08048310[0]: // executing instruction core
 Symbolic insn@0x08048310[0]: number_(32, 134518492) = 0x080496dc<134518492>[u32]
 Symbolic insn@0x08048310[0]: undefined_(32) = V1[u32]
 Symbolic insn@0x08048310[0]: boolean_(1) = true[u1]
@@ -496,10 +522,12 @@ Symbolic: operators destroyed
 
 0x08048320: jmp dword ds:[0x080496e0<.got.plt+0x18>]
 Symbolic: startInstruction(0x08048320: jmp dword ds:[0x080496e0<.got.plt+0x18>])
+Symbolic insn@0x08048320[0]: // advancing instruction pointer
 Symbolic insn@0x08048320[0]: number_(32, 134513440) = 0x08048320<134513440>[u32]
 Symbolic insn@0x08048320[0]: number_(32, 6) = 0x00000006[u32]
 Symbolic insn@0x08048320[0]: add(0x08048320<134513440>[u32], 0x00000006[u32]) = 0x08048326<134513446>[u32]
 Symbolic insn@0x08048320[0]: writeRegister(eip, 0x08048326<134513446>[u32])
+Symbolic insn@0x08048320[0]: // executing instruction core
 Symbolic insn@0x08048320[0]: number_(32, 134518496) = 0x080496e0<134518496>[u32]
 Symbolic insn@0x08048320[0]: undefined_(32) = V1[u32]
 Symbolic insn@0x08048320[0]: boolean_(1) = true[u1]
@@ -527,10 +555,12 @@ Symbolic: operators destroyed
 
 0x08048330: jmp dword ds:[0x080496e4<.got.plt+0x1c>]
 Symbolic: startInstruction(0x08048330: jmp dword ds:[0x080496e4<.got.plt+0x1c>])
+Symbolic insn@0x08048330[0]: // advancing instruction pointer
 Symbolic insn@0x08048330[0]: number_(32, 134513456) = 0x08048330<134513456>[u32]
 Symbolic insn@0x08048330[0]: number_(32, 6) = 0x00000006[u32]
 Symbolic insn@0x08048330[0]: add(0x08048330<134513456>[u32], 0x00000006[u32]) = 0x08048336<134513462>[u32]
 Symbolic insn@0x08048330[0]: writeRegister(eip, 0x08048336<134513462>[u32])
+Symbolic insn@0x08048330[0]: // executing instruction core
 Symbolic insn@0x08048330[0]: number_(32, 134518500) = 0x080496e4<134518500>[u32]
 Symbolic insn@0x08048330[0]: undefined_(32) = V1[u32]
 Symbolic insn@0x08048330[0]: boolean_(1) = true[u1]
@@ -558,10 +588,12 @@ Symbolic: operators destroyed
 
 0x08048340: xor ebp, ebp
 Symbolic: startInstruction(0x08048340: xor ebp, ebp)
+Symbolic insn@0x08048340[0]: // advancing instruction pointer
 Symbolic insn@0x08048340[0]: number_(32, 134513472) = 0x08048340<134513472>[u32]
 Symbolic insn@0x08048340[0]: number_(32, 2) = 0x00000002[u32]
 Symbolic insn@0x08048340[0]: add(0x08048340<134513472>[u32], 0x00000002[u32]) = 0x08048342<134513474>[u32]
 Symbolic insn@0x08048340[0]: writeRegister(eip, 0x08048342<134513474>[u32])
+Symbolic insn@0x08048340[0]: // executing instruction core
 Symbolic insn@0x08048340[0]: number_(32, 0) = 0x00000000[u32]
 Symbolic insn@0x08048340[0]: extract(0x00000000[u32], 0, 8) = 0x00[u8]
 Symbolic insn@0x08048340[0]: extract(0x00[u8], 1, 2) = false[u1]
@@ -611,10 +643,12 @@ memory:
 
 0x08048342: pop esi
 Symbolic: startInstruction(0x08048342: pop esi)
+Symbolic insn@0x08048342[1]: // advancing instruction pointer
 Symbolic insn@0x08048342[1]: number_(32, 134513474) = 0x08048342<134513474>[u32]
 Symbolic insn@0x08048342[1]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x08048342[1]: add(0x08048342<134513474>[u32], 0x00000001[u32]) = 0x08048343<134513475>[u32]
 Symbolic insn@0x08048342[1]: writeRegister(eip, 0x08048343<134513475>[u32])
+Symbolic insn@0x08048342[1]: // executing instruction core
 Symbolic insn@0x08048342[1]: undefined_(32) = V2[u32]
 Symbolic insn@0x08048342[1]: readRegister(esp, V2[u32]) = esp_0[u32]
 Symbolic insn@0x08048342[1]: number_(32, 4) = 0x00000004[u32]
@@ -649,10 +683,12 @@ memory:
 
 0x08048343: mov ecx, esp
 Symbolic: startInstruction(0x08048343: mov ecx, esp)
+Symbolic insn@0x08048343[2]: // advancing instruction pointer
 Symbolic insn@0x08048343[2]: number_(32, 134513475) = 0x08048343<134513475>[u32]
 Symbolic insn@0x08048343[2]: number_(32, 2) = 0x00000002[u32]
 Symbolic insn@0x08048343[2]: add(0x08048343<134513475>[u32], 0x00000002[u32]) = 0x08048345<134513477>[u32]
 Symbolic insn@0x08048343[2]: writeRegister(eip, 0x08048345<134513477>[u32])
+Symbolic insn@0x08048343[2]: // executing instruction core
 Symbolic insn@0x08048343[2]: undefined_(32) = V4[u32]
 Symbolic insn@0x08048343[2]: readRegister(esp, V4[u32]) = (add[u32] esp_0[u32] 0x00000004[u32])
 Symbolic insn@0x08048343[2]: writeRegister(ecx, (add[u32] esp_0[u32] 0x00000004[u32]))
@@ -682,10 +718,12 @@ memory:
 
 0x08048345: and esp, 0xf0<-16>
 Symbolic: startInstruction(0x08048345: and esp, 0xf0<-16>)
+Symbolic insn@0x08048345[3]: // advancing instruction pointer
 Symbolic insn@0x08048345[3]: number_(32, 134513477) = 0x08048345<134513477>[u32]
 Symbolic insn@0x08048345[3]: number_(32, 3) = 0x00000003[u32]
 Symbolic insn@0x08048345[3]: add(0x08048345<134513477>[u32], 0x00000003[u32]) = 0x08048348<134513480>[u32]
 Symbolic insn@0x08048345[3]: writeRegister(eip, 0x08048348<134513480>[u32])
+Symbolic insn@0x08048345[3]: // executing instruction core
 Symbolic insn@0x08048345[3]: undefined_(32) = V5[u32]
 Symbolic insn@0x08048345[3]: readRegister(esp, V5[u32]) = (add[u32] esp_0[u32] 0x00000004[u32])
 Symbolic insn@0x08048345[3]: number_(8, 18446744073709551600) = 0xf0<-16>[u8]
@@ -746,10 +784,12 @@ memory:
 
 0x08048348: push eax
 Symbolic: startInstruction(0x08048348: push eax)
+Symbolic insn@0x08048348[4]: // advancing instruction pointer
 Symbolic insn@0x08048348[4]: number_(32, 134513480) = 0x08048348<134513480>[u32]
 Symbolic insn@0x08048348[4]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x08048348[4]: add(0x08048348<134513480>[u32], 0x00000001[u32]) = 0x08048349<134513481>[u32]
 Symbolic insn@0x08048348[4]: writeRegister(eip, 0x08048349<134513481>[u32])
+Symbolic insn@0x08048348[4]: // executing instruction core
 Symbolic insn@0x08048348[4]: undefined_(32) = V7[u32]
 Symbolic insn@0x08048348[4]: readRegister(eax, V7[u32]) = eax_0[u32]
 Symbolic insn@0x08048348[4]: undefined_(32) = V8[u32]
@@ -789,10 +829,12 @@ memory:
 
 0x08048349: push esp
 Symbolic: startInstruction(0x08048349: push esp)
+Symbolic insn@0x08048349[5]: // advancing instruction pointer
 Symbolic insn@0x08048349[5]: number_(32, 134513481) = 0x08048349<134513481>[u32]
 Symbolic insn@0x08048349[5]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x08048349[5]: add(0x08048349<134513481>[u32], 0x00000001[u32]) = 0x0804834a<134513482>[u32]
 Symbolic insn@0x08048349[5]: writeRegister(eip, 0x0804834a<134513482>[u32])
+Symbolic insn@0x08048349[5]: // executing instruction core
 Symbolic insn@0x08048349[5]: undefined_(32) = V9[u32]
 Symbolic insn@0x08048349[5]: readRegister(esp, V9[u32]) = (add[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32]) 0xfffffffc<4294967292,-4>[u32])
 Symbolic insn@0x08048349[5]: undefined_(32) = V10[u32]
@@ -836,10 +878,12 @@ memory:
 
 0x0804834a: push edx
 Symbolic: startInstruction(0x0804834a: push edx)
+Symbolic insn@0x0804834a[6]: // advancing instruction pointer
 Symbolic insn@0x0804834a[6]: number_(32, 134513482) = 0x0804834a<134513482>[u32]
 Symbolic insn@0x0804834a[6]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x0804834a[6]: add(0x0804834a<134513482>[u32], 0x00000001[u32]) = 0x0804834b<134513483>[u32]
 Symbolic insn@0x0804834a[6]: writeRegister(eip, 0x0804834b<134513483>[u32])
+Symbolic insn@0x0804834a[6]: // executing instruction core
 Symbolic insn@0x0804834a[6]: undefined_(32) = V11[u32]
 Symbolic insn@0x0804834a[6]: readRegister(edx, V11[u32]) = edx_0[u32]
 Symbolic insn@0x0804834a[6]: undefined_(32) = V12[u32]
@@ -887,10 +931,12 @@ memory:
 
 0x0804834b: push 0x08048520<(func)__libc_csu_fini>
 Symbolic: startInstruction(0x0804834b: push 0x08048520<(func)__libc_csu_fini>)
+Symbolic insn@0x0804834b[7]: // advancing instruction pointer
 Symbolic insn@0x0804834b[7]: number_(32, 134513483) = 0x0804834b<134513483>[u32]
 Symbolic insn@0x0804834b[7]: number_(32, 5) = 0x00000005[u32]
 Symbolic insn@0x0804834b[7]: add(0x0804834b<134513483>[u32], 0x00000005[u32]) = 0x08048350<134513488>[u32]
 Symbolic insn@0x0804834b[7]: writeRegister(eip, 0x08048350<134513488>[u32])
+Symbolic insn@0x0804834b[7]: // executing instruction core
 Symbolic insn@0x0804834b[7]: number_(32, 134513952) = 0x08048520<134513952>[u32]
 Symbolic insn@0x0804834b[7]: undefined_(32) = V13[u32]
 Symbolic insn@0x0804834b[7]: readRegister(esp, V13[u32]) = (add[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32]) 0xfffffff4<4294967284,-12>[u32])
@@ -941,10 +987,12 @@ memory:
 
 0x08048350: push 0x080484b0<(func)__libc_csu_init>
 Symbolic: startInstruction(0x08048350: push 0x080484b0<(func)__libc_csu_init>)
+Symbolic insn@0x08048350[8]: // advancing instruction pointer
 Symbolic insn@0x08048350[8]: number_(32, 134513488) = 0x08048350<134513488>[u32]
 Symbolic insn@0x08048350[8]: number_(32, 5) = 0x00000005[u32]
 Symbolic insn@0x08048350[8]: add(0x08048350<134513488>[u32], 0x00000005[u32]) = 0x08048355<134513493>[u32]
 Symbolic insn@0x08048350[8]: writeRegister(eip, 0x08048355<134513493>[u32])
+Symbolic insn@0x08048350[8]: // executing instruction core
 Symbolic insn@0x08048350[8]: number_(32, 134513840) = 0x080484b0<134513840>[u32]
 Symbolic insn@0x08048350[8]: undefined_(32) = V14[u32]
 Symbolic insn@0x08048350[8]: readRegister(esp, V14[u32]) = (add[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32]) 0xfffffff0<4294967280,-16>[u32])
@@ -999,10 +1047,12 @@ memory:
 
 0x08048355: push ecx
 Symbolic: startInstruction(0x08048355: push ecx)
+Symbolic insn@0x08048355[9]: // advancing instruction pointer
 Symbolic insn@0x08048355[9]: number_(32, 134513493) = 0x08048355<134513493>[u32]
 Symbolic insn@0x08048355[9]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x08048355[9]: add(0x08048355<134513493>[u32], 0x00000001[u32]) = 0x08048356<134513494>[u32]
 Symbolic insn@0x08048355[9]: writeRegister(eip, 0x08048356<134513494>[u32])
+Symbolic insn@0x08048355[9]: // executing instruction core
 Symbolic insn@0x08048355[9]: undefined_(32) = V15[u32]
 Symbolic insn@0x08048355[9]: readRegister(ecx, V15[u32]) = (add[u32] esp_0[u32] 0x00000004[u32])
 Symbolic insn@0x08048355[9]: undefined_(32) = V16[u32]
@@ -1062,10 +1112,12 @@ memory:
 
 0x08048356: push esi
 Symbolic: startInstruction(0x08048356: push esi)
+Symbolic insn@0x08048356[10]: // advancing instruction pointer
 Symbolic insn@0x08048356[10]: number_(32, 134513494) = 0x08048356<134513494>[u32]
 Symbolic insn@0x08048356[10]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x08048356[10]: add(0x08048356<134513494>[u32], 0x00000001[u32]) = 0x08048357<134513495>[u32]
 Symbolic insn@0x08048356[10]: writeRegister(eip, 0x08048357<134513495>[u32])
+Symbolic insn@0x08048356[10]: // executing instruction core
 Symbolic insn@0x08048356[10]: undefined_(32) = V17[u32]
 Symbolic insn@0x08048356[10]: readRegister(esi, V17[u32]) = V3[u32]
 Symbolic insn@0x08048356[10]: undefined_(32) = V18[u32]
@@ -1129,10 +1181,12 @@ memory:
 
 0x08048357: push 0x08048410<(func)main>
 Symbolic: startInstruction(0x08048357: push 0x08048410<(func)main>)
+Symbolic insn@0x08048357[11]: // advancing instruction pointer
 Symbolic insn@0x08048357[11]: number_(32, 134513495) = 0x08048357<134513495>[u32]
 Symbolic insn@0x08048357[11]: number_(32, 5) = 0x00000005[u32]
 Symbolic insn@0x08048357[11]: add(0x08048357<134513495>[u32], 0x00000005[u32]) = 0x0804835c<134513500>[u32]
 Symbolic insn@0x08048357[11]: writeRegister(eip, 0x0804835c<134513500>[u32])
+Symbolic insn@0x08048357[11]: // executing instruction core
 Symbolic insn@0x08048357[11]: number_(32, 134513680) = 0x08048410<134513680>[u32]
 Symbolic insn@0x08048357[11]: undefined_(32) = V19[u32]
 Symbolic insn@0x08048357[11]: readRegister(esp, V19[u32]) = (add[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32]) 0xffffffe4<4294967268,-28>[u32])
@@ -1199,10 +1253,12 @@ memory:
 
 0x0804835c: call 0x08048310<__libc_start_main@plt>
 Symbolic: startInstruction(0x0804835c: call 0x08048310<__libc_start_main@plt>)
+Symbolic insn@0x0804835c[12]: // advancing instruction pointer
 Symbolic insn@0x0804835c[12]: number_(32, 134513500) = 0x0804835c<134513500>[u32]
 Symbolic insn@0x0804835c[12]: number_(32, 5) = 0x00000005[u32]
 Symbolic insn@0x0804835c[12]: add(0x0804835c<134513500>[u32], 0x00000005[u32]) = 0x08048361<134513505>[u32]
 Symbolic insn@0x0804835c[12]: writeRegister(eip, 0x08048361<134513505>[u32])
+Symbolic insn@0x0804835c[12]: // executing instruction core
 Symbolic insn@0x0804835c[12]: number_(32, 134513424) = 0x08048310<134513424>[u32]
 Symbolic insn@0x0804835c[12]: unsignedExtend(0x08048310<134513424>[u32], 32) = 0x08048310<134513424>[u32]
 Symbolic insn@0x0804835c[12]: undefined_(32) = V20[u32]
@@ -1282,10 +1338,12 @@ Symbolic: operators destroyed
 
 0x08048361: hlt 
 Symbolic: startInstruction(0x08048361: hlt)
+Symbolic insn@0x08048361[0]: // advancing instruction pointer
 Symbolic insn@0x08048361[0]: number_(32, 134513505) = 0x08048361<134513505>[u32]
 Symbolic insn@0x08048361[0]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x08048361[0]: add(0x08048361<134513505>[u32], 0x00000001[u32]) = 0x08048362<134513506>[u32]
 Symbolic insn@0x08048361[0]: writeRegister(eip, 0x08048362<134513506>[u32])
+Symbolic insn@0x08048361[0]: // executing instruction core
 Symbolic insn@0x08048361[0]: hlt()
 Symbolic insn@0x08048361[0]: number_(32, 134513505) = 0x08048361<134513505>[u32]
 Symbolic insn@0x08048361[0]: writeRegister(eip, 0x08048361<134513505>[u32])
@@ -1305,10 +1363,12 @@ Symbolic: operators destroyed
 
 0x08048364: push ebp
 Symbolic: startInstruction(0x08048364: push ebp)
+Symbolic insn@0x08048364[0]: // advancing instruction pointer
 Symbolic insn@0x08048364[0]: number_(32, 134513508) = 0x08048364<134513508>[u32]
 Symbolic insn@0x08048364[0]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x08048364[0]: add(0x08048364<134513508>[u32], 0x00000001[u32]) = 0x08048365<134513509>[u32]
 Symbolic insn@0x08048364[0]: writeRegister(eip, 0x08048365<134513509>[u32])
+Symbolic insn@0x08048364[0]: // executing instruction core
 Symbolic insn@0x08048364[0]: undefined_(32) = V1[u32]
 Symbolic insn@0x08048364[0]: readRegister(ebp, V1[u32]) = ebp_0[u32]
 Symbolic insn@0x08048364[0]: undefined_(32) = V2[u32]
@@ -1335,10 +1395,12 @@ memory:
 
 0x08048365: mov ebp, esp
 Symbolic: startInstruction(0x08048365: mov ebp, esp)
+Symbolic insn@0x08048365[1]: // advancing instruction pointer
 Symbolic insn@0x08048365[1]: number_(32, 134513509) = 0x08048365<134513509>[u32]
 Symbolic insn@0x08048365[1]: number_(32, 2) = 0x00000002[u32]
 Symbolic insn@0x08048365[1]: add(0x08048365<134513509>[u32], 0x00000002[u32]) = 0x08048367<134513511>[u32]
 Symbolic insn@0x08048365[1]: writeRegister(eip, 0x08048367<134513511>[u32])
+Symbolic insn@0x08048365[1]: // executing instruction core
 Symbolic insn@0x08048365[1]: undefined_(32) = V3[u32]
 Symbolic insn@0x08048365[1]: readRegister(esp, V3[u32]) = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
 Symbolic insn@0x08048365[1]: writeRegister(ebp, (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32]))
@@ -1360,10 +1422,12 @@ memory:
 
 0x08048367: push ebx
 Symbolic: startInstruction(0x08048367: push ebx)
+Symbolic insn@0x08048367[2]: // advancing instruction pointer
 Symbolic insn@0x08048367[2]: number_(32, 134513511) = 0x08048367<134513511>[u32]
 Symbolic insn@0x08048367[2]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x08048367[2]: add(0x08048367<134513511>[u32], 0x00000001[u32]) = 0x08048368<134513512>[u32]
 Symbolic insn@0x08048367[2]: writeRegister(eip, 0x08048368<134513512>[u32])
+Symbolic insn@0x08048367[2]: // executing instruction core
 Symbolic insn@0x08048367[2]: undefined_(32) = V4[u32]
 Symbolic insn@0x08048367[2]: readRegister(ebx, V4[u32]) = ebx_0[u32]
 Symbolic insn@0x08048367[2]: undefined_(32) = V5[u32]
@@ -1395,10 +1459,12 @@ memory:
 
 0x08048368: push ecx
 Symbolic: startInstruction(0x08048368: push ecx)
+Symbolic insn@0x08048368[3]: // advancing instruction pointer
 Symbolic insn@0x08048368[3]: number_(32, 134513512) = 0x08048368<134513512>[u32]
 Symbolic insn@0x08048368[3]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x08048368[3]: add(0x08048368<134513512>[u32], 0x00000001[u32]) = 0x08048369<134513513>[u32]
 Symbolic insn@0x08048368[3]: writeRegister(eip, 0x08048369<134513513>[u32])
+Symbolic insn@0x08048368[3]: // executing instruction core
 Symbolic insn@0x08048368[3]: undefined_(32) = V6[u32]
 Symbolic insn@0x08048368[3]: readRegister(ecx, V6[u32]) = ecx_0[u32]
 Symbolic insn@0x08048368[3]: undefined_(32) = V7[u32]
@@ -1434,10 +1500,12 @@ memory:
 
 0x08048369: call 0x0804836e<<Insn>>
 Symbolic: startInstruction(0x08048369: call 0x0804836e<<Insn>>)
+Symbolic insn@0x08048369[4]: // advancing instruction pointer
 Symbolic insn@0x08048369[4]: number_(32, 134513513) = 0x08048369<134513513>[u32]
 Symbolic insn@0x08048369[4]: number_(32, 5) = 0x00000005[u32]
 Symbolic insn@0x08048369[4]: add(0x08048369<134513513>[u32], 0x00000005[u32]) = 0x0804836e<134513518>[u32]
 Symbolic insn@0x08048369[4]: writeRegister(eip, 0x0804836e<134513518>[u32])
+Symbolic insn@0x08048369[4]: // executing instruction core
 Symbolic insn@0x08048369[4]: number_(32, 134513518) = 0x0804836e<134513518>[u32]
 Symbolic insn@0x08048369[4]: unsignedExtend(0x0804836e<134513518>[u32], 32) = 0x0804836e<134513518>[u32]
 Symbolic insn@0x08048369[4]: undefined_(32) = V8[u32]
@@ -1485,10 +1553,12 @@ Symbolic: operators destroyed
 
 0x0804836e: pop ebx
 Symbolic: startInstruction(0x0804836e: pop ebx)
+Symbolic insn@0x0804836e[0]: // advancing instruction pointer
 Symbolic insn@0x0804836e[0]: number_(32, 134513518) = 0x0804836e<134513518>[u32]
 Symbolic insn@0x0804836e[0]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x0804836e[0]: add(0x0804836e<134513518>[u32], 0x00000001[u32]) = 0x0804836f<134513519>[u32]
 Symbolic insn@0x0804836e[0]: writeRegister(eip, 0x0804836f<134513519>[u32])
+Symbolic insn@0x0804836e[0]: // executing instruction core
 Symbolic insn@0x0804836e[0]: undefined_(32) = V1[u32]
 Symbolic insn@0x0804836e[0]: readRegister(esp, V1[u32]) = esp_0[u32]
 Symbolic insn@0x0804836e[0]: number_(32, 4) = 0x00000004[u32]
@@ -1516,10 +1586,12 @@ memory:
 
 0x0804836f: add ebx, 0x0000135a<4954>
 Symbolic: startInstruction(0x0804836f: add ebx, 0x0000135a<4954>)
+Symbolic insn@0x0804836f[1]: // advancing instruction pointer
 Symbolic insn@0x0804836f[1]: number_(32, 134513519) = 0x0804836f<134513519>[u32]
 Symbolic insn@0x0804836f[1]: number_(32, 6) = 0x00000006[u32]
 Symbolic insn@0x0804836f[1]: add(0x0804836f<134513519>[u32], 0x00000006[u32]) = 0x08048375<134513525>[u32]
 Symbolic insn@0x0804836f[1]: writeRegister(eip, 0x08048375<134513525>[u32])
+Symbolic insn@0x0804836f[1]: // executing instruction core
 Symbolic insn@0x0804836f[1]: boolean_(0) = false[u1]
 Symbolic insn@0x0804836f[1]: number_(32, 4954) = 0x0000135a<4954>[u32]
 Symbolic insn@0x0804836f[1]: undefined_(32) = V3[u32]
@@ -1580,10 +1652,12 @@ memory:
 
 0x08048375: mov edx, dword ds:[ebx + 0xfffffffc<-4>]
 Symbolic: startInstruction(0x08048375: mov edx, dword ds:[ebx + 0xfffffffc<-4>])
+Symbolic insn@0x08048375[2]: // advancing instruction pointer
 Symbolic insn@0x08048375[2]: number_(32, 134513525) = 0x08048375<134513525>[u32]
 Symbolic insn@0x08048375[2]: number_(32, 6) = 0x00000006[u32]
 Symbolic insn@0x08048375[2]: add(0x08048375<134513525>[u32], 0x00000006[u32]) = 0x0804837b<134513531>[u32]
 Symbolic insn@0x08048375[2]: writeRegister(eip, 0x0804837b<134513531>[u32])
+Symbolic insn@0x08048375[2]: // executing instruction core
 Symbolic insn@0x08048375[2]: undefined_(32) = V4[u32]
 Symbolic insn@0x08048375[2]: readRegister(ebx, V4[u32]) = (add[u32] V2[u32] 0x0000135a<4954>[u32])
 Symbolic insn@0x08048375[2]: number_(32, 4294967292) = 0xfffffffc<4294967292,-4>[u32]
@@ -1621,10 +1695,12 @@ memory:
 
 0x0804837b: test edx, edx
 Symbolic: startInstruction(0x0804837b: test edx, edx)
+Symbolic insn@0x0804837b[3]: // advancing instruction pointer
 Symbolic insn@0x0804837b[3]: number_(32, 134513531) = 0x0804837b<134513531>[u32]
 Symbolic insn@0x0804837b[3]: number_(32, 2) = 0x00000002[u32]
 Symbolic insn@0x0804837b[3]: add(0x0804837b<134513531>[u32], 0x00000002[u32]) = 0x0804837d<134513533>[u32]
 Symbolic insn@0x0804837b[3]: writeRegister(eip, 0x0804837d<134513533>[u32])
+Symbolic insn@0x0804837b[3]: // executing instruction core
 Symbolic insn@0x0804837b[3]: undefined_(32) = V6[u32]
 Symbolic insn@0x0804837b[3]: readRegister(edx, V6[u32]) = V5[u32]
 Symbolic insn@0x0804837b[3]: undefined_(32) = V7[u32]
@@ -1687,10 +1763,12 @@ memory:
 
 0x0804837d: je 0x08048384<<BBlock>>
 Symbolic: startInstruction(0x0804837d: je 0x08048384<<BBlock>>)
+Symbolic insn@0x0804837d[4]: // advancing instruction pointer
 Symbolic insn@0x0804837d[4]: number_(32, 134513533) = 0x0804837d<134513533>[u32]
 Symbolic insn@0x0804837d[4]: number_(32, 2) = 0x00000002[u32]
 Symbolic insn@0x0804837d[4]: add(0x0804837d<134513533>[u32], 0x00000002[u32]) = 0x0804837f<134513535>[u32]
 Symbolic insn@0x0804837d[4]: writeRegister(eip, 0x0804837f<134513535>[u32])
+Symbolic insn@0x0804837d[4]: // executing instruction core
 Symbolic insn@0x0804837d[4]: undefined_(1) = V9[u1]
 Symbolic insn@0x0804837d[4]: readRegister(zf, V9[u1]) = (zerop[u1] V5[u32])
 Symbolic insn@0x0804837d[4]: undefined_(32) = V10[u32]
@@ -1733,10 +1811,12 @@ Symbolic: operators destroyed
 
 0x0804837f: call 0x08048330<__gmon_start__@plt>
 Symbolic: startInstruction(0x0804837f: call 0x08048330<__gmon_start__@plt>)
+Symbolic insn@0x0804837f[0]: // advancing instruction pointer
 Symbolic insn@0x0804837f[0]: number_(32, 134513535) = 0x0804837f<134513535>[u32]
 Symbolic insn@0x0804837f[0]: number_(32, 5) = 0x00000005[u32]
 Symbolic insn@0x0804837f[0]: add(0x0804837f<134513535>[u32], 0x00000005[u32]) = 0x08048384<134513540>[u32]
 Symbolic insn@0x0804837f[0]: writeRegister(eip, 0x08048384<134513540>[u32])
+Symbolic insn@0x0804837f[0]: // executing instruction core
 Symbolic insn@0x0804837f[0]: number_(32, 134513456) = 0x08048330<134513456>[u32]
 Symbolic insn@0x0804837f[0]: unsignedExtend(0x08048330<134513456>[u32], 32) = 0x08048330<134513456>[u32]
 Symbolic insn@0x0804837f[0]: undefined_(32) = V1[u32]
@@ -1771,10 +1851,12 @@ Symbolic: operators destroyed
 
 0x08048384: pop eax
 Symbolic: startInstruction(0x08048384: pop eax)
+Symbolic insn@0x08048384[0]: // advancing instruction pointer
 Symbolic insn@0x08048384[0]: number_(32, 134513540) = 0x08048384<134513540>[u32]
 Symbolic insn@0x08048384[0]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x08048384[0]: add(0x08048384<134513540>[u32], 0x00000001[u32]) = 0x08048385<134513541>[u32]
 Symbolic insn@0x08048384[0]: writeRegister(eip, 0x08048385<134513541>[u32])
+Symbolic insn@0x08048384[0]: // executing instruction core
 Symbolic insn@0x08048384[0]: undefined_(32) = V1[u32]
 Symbolic insn@0x08048384[0]: readRegister(esp, V1[u32]) = esp_0[u32]
 Symbolic insn@0x08048384[0]: number_(32, 4) = 0x00000004[u32]
@@ -1802,10 +1884,12 @@ memory:
 
 0x08048385: pop ebx
 Symbolic: startInstruction(0x08048385: pop ebx)
+Symbolic insn@0x08048385[1]: // advancing instruction pointer
 Symbolic insn@0x08048385[1]: number_(32, 134513541) = 0x08048385<134513541>[u32]
 Symbolic insn@0x08048385[1]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x08048385[1]: add(0x08048385<134513541>[u32], 0x00000001[u32]) = 0x08048386<134513542>[u32]
 Symbolic insn@0x08048385[1]: writeRegister(eip, 0x08048386<134513542>[u32])
+Symbolic insn@0x08048385[1]: // executing instruction core
 Symbolic insn@0x08048385[1]: undefined_(32) = V3[u32]
 Symbolic insn@0x08048385[1]: readRegister(esp, V3[u32]) = (add[u32] esp_0[u32] 0x00000004[u32])
 Symbolic insn@0x08048385[1]: number_(32, 4) = 0x00000004[u32]
@@ -1838,10 +1922,12 @@ memory:
 
 0x08048386: leave 
 Symbolic: startInstruction(0x08048386: leave)
+Symbolic insn@0x08048386[2]: // advancing instruction pointer
 Symbolic insn@0x08048386[2]: number_(32, 134513542) = 0x08048386<134513542>[u32]
 Symbolic insn@0x08048386[2]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x08048386[2]: add(0x08048386<134513542>[u32], 0x00000001[u32]) = 0x08048387<134513543>[u32]
 Symbolic insn@0x08048386[2]: writeRegister(eip, 0x08048387<134513543>[u32])
+Symbolic insn@0x08048386[2]: // executing instruction core
 Symbolic insn@0x08048386[2]: undefined_(32) = V5[u32]
 Symbolic insn@0x08048386[2]: readRegister(ebp, V5[u32]) = ebp_0[u32]
 Symbolic insn@0x08048386[2]: writeRegister(esp, ebp_0[u32])
@@ -1882,10 +1968,12 @@ memory:
 
 0x08048387: ret 
 Symbolic: startInstruction(0x08048387: ret)
+Symbolic insn@0x08048387[3]: // advancing instruction pointer
 Symbolic insn@0x08048387[3]: number_(32, 134513543) = 0x08048387<134513543>[u32]
 Symbolic insn@0x08048387[3]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x08048387[3]: add(0x08048387<134513543>[u32], 0x00000001[u32]) = 0x08048388<134513544>[u32]
 Symbolic insn@0x08048387[3]: writeRegister(eip, 0x08048388<134513544>[u32])
+Symbolic insn@0x08048387[3]: // executing instruction core
 Symbolic insn@0x08048387[3]: undefined_(32) = V8[u32]
 Symbolic insn@0x08048387[3]: readRegister(esp, V8[u32]) = (add[u32] ebp_0[u32] 0x00000004[u32])
 Symbolic insn@0x08048387[3]: number_(32, 4) = 0x00000004[u32]
@@ -1932,10 +2020,12 @@ Symbolic: operators destroyed
 
 0x08048390: push ebp
 Symbolic: startInstruction(0x08048390: push ebp)
+Symbolic insn@0x08048390[0]: // advancing instruction pointer
 Symbolic insn@0x08048390[0]: number_(32, 134513552) = 0x08048390<134513552>[u32]
 Symbolic insn@0x08048390[0]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x08048390[0]: add(0x08048390<134513552>[u32], 0x00000001[u32]) = 0x08048391<134513553>[u32]
 Symbolic insn@0x08048390[0]: writeRegister(eip, 0x08048391<134513553>[u32])
+Symbolic insn@0x08048390[0]: // executing instruction core
 Symbolic insn@0x08048390[0]: undefined_(32) = V1[u32]
 Symbolic insn@0x08048390[0]: readRegister(ebp, V1[u32]) = ebp_0[u32]
 Symbolic insn@0x08048390[0]: undefined_(32) = V2[u32]
@@ -1962,10 +2052,12 @@ memory:
 
 0x08048391: mov ebp, esp
 Symbolic: startInstruction(0x08048391: mov ebp, esp)
+Symbolic insn@0x08048391[1]: // advancing instruction pointer
 Symbolic insn@0x08048391[1]: number_(32, 134513553) = 0x08048391<134513553>[u32]
 Symbolic insn@0x08048391[1]: number_(32, 2) = 0x00000002[u32]
 Symbolic insn@0x08048391[1]: add(0x08048391<134513553>[u32], 0x00000002[u32]) = 0x08048393<134513555>[u32]
 Symbolic insn@0x08048391[1]: writeRegister(eip, 0x08048393<134513555>[u32])
+Symbolic insn@0x08048391[1]: // executing instruction core
 Symbolic insn@0x08048391[1]: undefined_(32) = V3[u32]
 Symbolic insn@0x08048391[1]: readRegister(esp, V3[u32]) = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
 Symbolic insn@0x08048391[1]: writeRegister(ebp, (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32]))
@@ -1987,10 +2079,12 @@ memory:
 
 0x08048393: sub esp, 0x08
 Symbolic: startInstruction(0x08048393: sub esp, 0x08)
+Symbolic insn@0x08048393[2]: // advancing instruction pointer
 Symbolic insn@0x08048393[2]: number_(32, 134513555) = 0x08048393<134513555>[u32]
 Symbolic insn@0x08048393[2]: number_(32, 3) = 0x00000003[u32]
 Symbolic insn@0x08048393[2]: add(0x08048393<134513555>[u32], 0x00000003[u32]) = 0x08048396<134513558>[u32]
 Symbolic insn@0x08048393[2]: writeRegister(eip, 0x08048396<134513558>[u32])
+Symbolic insn@0x08048393[2]: // executing instruction core
 Symbolic insn@0x08048393[2]: undefined_(32) = V4[u32]
 Symbolic insn@0x08048393[2]: readRegister(esp, V4[u32]) = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
 Symbolic insn@0x08048393[2]: number_(8, 8) = 0x08[u8]
@@ -2056,10 +2150,12 @@ memory:
 
 0x08048396: cmp byte ds:[0x080496f4<_edata>], 0x00
 Symbolic: startInstruction(0x08048396: cmp byte ds:[0x080496f4<_edata>], 0x00)
+Symbolic insn@0x08048396[3]: // advancing instruction pointer
 Symbolic insn@0x08048396[3]: number_(32, 134513558) = 0x08048396<134513558>[u32]
 Symbolic insn@0x08048396[3]: number_(32, 7) = 0x00000007[u32]
 Symbolic insn@0x08048396[3]: add(0x08048396<134513558>[u32], 0x00000007[u32]) = 0x0804839d<134513565>[u32]
 Symbolic insn@0x08048396[3]: writeRegister(eip, 0x0804839d<134513565>[u32])
+Symbolic insn@0x08048396[3]: // executing instruction core
 Symbolic insn@0x08048396[3]: number_(32, 134518516) = 0x080496f4<134518516>[u32]
 Symbolic insn@0x08048396[3]: undefined_(8) = V5[u8]
 Symbolic insn@0x08048396[3]: boolean_(1) = true[u1]
@@ -2126,10 +2222,12 @@ memory:
 
 0x0804839d: jne 0x080483cc<<BBlock>>
 Symbolic: startInstruction(0x0804839d: jne 0x080483cc<<BBlock>>)
+Symbolic insn@0x0804839d[4]: // advancing instruction pointer
 Symbolic insn@0x0804839d[4]: number_(32, 134513565) = 0x0804839d<134513565>[u32]
 Symbolic insn@0x0804839d[4]: number_(32, 2) = 0x00000002[u32]
 Symbolic insn@0x0804839d[4]: add(0x0804839d<134513565>[u32], 0x00000002[u32]) = 0x0804839f<134513567>[u32]
 Symbolic insn@0x0804839d[4]: writeRegister(eip, 0x0804839f<134513567>[u32])
+Symbolic insn@0x0804839d[4]: // executing instruction core
 Symbolic insn@0x0804839d[4]: undefined_(1) = V6[u1]
 Symbolic insn@0x0804839d[4]: readRegister(zf, V6[u1]) = (zerop[u1] V5[u8])
 Symbolic insn@0x0804839d[4]: invert((zerop[u1] V5[u8])) = (invert[u1] (zerop[u1] V5[u8]))
@@ -2169,10 +2267,12 @@ Symbolic: operators destroyed
 
 0x0804839f: mov eax, dword ds:[0x080496f0<(data)p.0>]
 Symbolic: startInstruction(0x0804839f: mov eax, dword ds:[0x080496f0<(data)p.0>])
+Symbolic insn@0x0804839f[0]: // advancing instruction pointer
 Symbolic insn@0x0804839f[0]: number_(32, 134513567) = 0x0804839f<134513567>[u32]
 Symbolic insn@0x0804839f[0]: number_(32, 5) = 0x00000005[u32]
 Symbolic insn@0x0804839f[0]: add(0x0804839f<134513567>[u32], 0x00000005[u32]) = 0x080483a4<134513572>[u32]
 Symbolic insn@0x0804839f[0]: writeRegister(eip, 0x080483a4<134513572>[u32])
+Symbolic insn@0x0804839f[0]: // executing instruction core
 Symbolic insn@0x0804839f[0]: number_(32, 134518512) = 0x080496f0<134518512>[u32]
 Symbolic insn@0x0804839f[0]: undefined_(32) = V1[u32]
 Symbolic insn@0x0804839f[0]: boolean_(1) = true[u1]
@@ -2195,10 +2295,12 @@ memory:
 
 0x080483a4: mov edx, dword ds:[eax]
 Symbolic: startInstruction(0x080483a4: mov edx, dword ds:[eax])
+Symbolic insn@0x080483a4[1]: // advancing instruction pointer
 Symbolic insn@0x080483a4[1]: number_(32, 134513572) = 0x080483a4<134513572>[u32]
 Symbolic insn@0x080483a4[1]: number_(32, 2) = 0x00000002[u32]
 Symbolic insn@0x080483a4[1]: add(0x080483a4<134513572>[u32], 0x00000002[u32]) = 0x080483a6<134513574>[u32]
 Symbolic insn@0x080483a4[1]: writeRegister(eip, 0x080483a6<134513574>[u32])
+Symbolic insn@0x080483a4[1]: // executing instruction core
 Symbolic insn@0x080483a4[1]: undefined_(32) = V2[u32]
 Symbolic insn@0x080483a4[1]: readRegister(eax, V2[u32]) = V1[u32]
 Symbolic insn@0x080483a4[1]: undefined_(32) = V3[u32]
@@ -2227,10 +2329,12 @@ memory:
 
 0x080483a6: test edx, edx
 Symbolic: startInstruction(0x080483a6: test edx, edx)
+Symbolic insn@0x080483a6[2]: // advancing instruction pointer
 Symbolic insn@0x080483a6[2]: number_(32, 134513574) = 0x080483a6<134513574>[u32]
 Symbolic insn@0x080483a6[2]: number_(32, 2) = 0x00000002[u32]
 Symbolic insn@0x080483a6[2]: add(0x080483a6<134513574>[u32], 0x00000002[u32]) = 0x080483a8<134513576>[u32]
 Symbolic insn@0x080483a6[2]: writeRegister(eip, 0x080483a8<134513576>[u32])
+Symbolic insn@0x080483a6[2]: // executing instruction core
 Symbolic insn@0x080483a6[2]: undefined_(32) = V4[u32]
 Symbolic insn@0x080483a6[2]: readRegister(edx, V4[u32]) = V3[u32]
 Symbolic insn@0x080483a6[2]: undefined_(32) = V5[u32]
@@ -2292,10 +2396,12 @@ memory:
 
 0x080483a8: je 0x080483c5<<BBlock>>
 Symbolic: startInstruction(0x080483a8: je 0x080483c5<<BBlock>>)
+Symbolic insn@0x080483a8[3]: // advancing instruction pointer
 Symbolic insn@0x080483a8[3]: number_(32, 134513576) = 0x080483a8<134513576>[u32]
 Symbolic insn@0x080483a8[3]: number_(32, 2) = 0x00000002[u32]
 Symbolic insn@0x080483a8[3]: add(0x080483a8<134513576>[u32], 0x00000002[u32]) = 0x080483aa<134513578>[u32]
 Symbolic insn@0x080483a8[3]: writeRegister(eip, 0x080483aa<134513578>[u32])
+Symbolic insn@0x080483a8[3]: // executing instruction core
 Symbolic insn@0x080483a8[3]: undefined_(1) = V7[u1]
 Symbolic insn@0x080483a8[3]: readRegister(zf, V7[u1]) = (zerop[u1] V3[u32])
 Symbolic insn@0x080483a8[3]: undefined_(32) = V8[u32]
@@ -2337,10 +2443,12 @@ Symbolic: operators destroyed
 
 0x080483aa: lea esi, [esi + 0x00000000]
 Symbolic: startInstruction(0x080483aa: lea esi, [esi + 0x00000000])
+Symbolic insn@0x080483aa[0]: // advancing instruction pointer
 Symbolic insn@0x080483aa[0]: number_(32, 134513578) = 0x080483aa<134513578>[u32]
 Symbolic insn@0x080483aa[0]: number_(32, 6) = 0x00000006[u32]
 Symbolic insn@0x080483aa[0]: add(0x080483aa<134513578>[u32], 0x00000006[u32]) = 0x080483b0<134513584>[u32]
 Symbolic insn@0x080483aa[0]: writeRegister(eip, 0x080483b0<134513584>[u32])
+Symbolic insn@0x080483aa[0]: // executing instruction core
 Symbolic insn@0x080483aa[0]: undefined_(32) = V1[u32]
 Symbolic insn@0x080483aa[0]: readRegister(esi, V1[u32]) = esi_0[u32]
 Symbolic insn@0x080483aa[0]: number_(32, 0) = 0x00000000[u32]
@@ -2359,10 +2467,12 @@ memory:
 
 0x080483b0: add eax, 0x04
 Symbolic: startInstruction(0x080483b0: add eax, 0x04)
+Symbolic insn@0x080483b0[1]: // advancing instruction pointer
 Symbolic insn@0x080483b0[1]: number_(32, 134513584) = 0x080483b0<134513584>[u32]
 Symbolic insn@0x080483b0[1]: number_(32, 3) = 0x00000003[u32]
 Symbolic insn@0x080483b0[1]: add(0x080483b0<134513584>[u32], 0x00000003[u32]) = 0x080483b3<134513587>[u32]
 Symbolic insn@0x080483b0[1]: writeRegister(eip, 0x080483b3<134513587>[u32])
+Symbolic insn@0x080483b0[1]: // executing instruction core
 Symbolic insn@0x080483b0[1]: boolean_(0) = false[u1]
 Symbolic insn@0x080483b0[1]: number_(8, 4) = 0x04[u8]
 Symbolic insn@0x080483b0[1]: undefined_(32) = V2[u32]
@@ -2419,10 +2529,12 @@ memory:
 
 0x080483b3: mov dword ds:[0x080496f0<(data)p.0>], eax
 Symbolic: startInstruction(0x080483b3: mov dword ds:[0x080496f0<(data)p.0>], eax)
+Symbolic insn@0x080483b3[2]: // advancing instruction pointer
 Symbolic insn@0x080483b3[2]: number_(32, 134513587) = 0x080483b3<134513587>[u32]
 Symbolic insn@0x080483b3[2]: number_(32, 5) = 0x00000005[u32]
 Symbolic insn@0x080483b3[2]: add(0x080483b3<134513587>[u32], 0x00000005[u32]) = 0x080483b8<134513592>[u32]
 Symbolic insn@0x080483b3[2]: writeRegister(eip, 0x080483b8<134513592>[u32])
+Symbolic insn@0x080483b3[2]: // executing instruction core
 Symbolic insn@0x080483b3[2]: undefined_(32) = V3[u32]
 Symbolic insn@0x080483b3[2]: readRegister(eax, V3[u32]) = (add[u32] eax_0[u32] 0x00000004[u32])
 Symbolic insn@0x080483b3[2]: number_(32, 134518512) = 0x080496f0<134518512>[u32]
@@ -2451,10 +2563,12 @@ memory:
 
 0x080483b8: call edx
 Symbolic: startInstruction(0x080483b8: call edx)
+Symbolic insn@0x080483b8[3]: // advancing instruction pointer
 Symbolic insn@0x080483b8[3]: number_(32, 134513592) = 0x080483b8<134513592>[u32]
 Symbolic insn@0x080483b8[3]: number_(32, 2) = 0x00000002[u32]
 Symbolic insn@0x080483b8[3]: add(0x080483b8<134513592>[u32], 0x00000002[u32]) = 0x080483ba<134513594>[u32]
 Symbolic insn@0x080483b8[3]: writeRegister(eip, 0x080483ba<134513594>[u32])
+Symbolic insn@0x080483b8[3]: // executing instruction core
 Symbolic insn@0x080483b8[3]: undefined_(32) = V4[u32]
 Symbolic insn@0x080483b8[3]: readRegister(edx, V4[u32]) = edx_0[u32]
 Symbolic insn@0x080483b8[3]: unsignedExtend(edx_0[u32], 32) = edx_0[u32]
@@ -2501,10 +2615,12 @@ Symbolic: operators destroyed
 
 0x080483ba: mov eax, dword ds:[0x080496f0<(data)p.0>]
 Symbolic: startInstruction(0x080483ba: mov eax, dword ds:[0x080496f0<(data)p.0>])
+Symbolic insn@0x080483ba[0]: // advancing instruction pointer
 Symbolic insn@0x080483ba[0]: number_(32, 134513594) = 0x080483ba<134513594>[u32]
 Symbolic insn@0x080483ba[0]: number_(32, 5) = 0x00000005[u32]
 Symbolic insn@0x080483ba[0]: add(0x080483ba<134513594>[u32], 0x00000005[u32]) = 0x080483bf<134513599>[u32]
 Symbolic insn@0x080483ba[0]: writeRegister(eip, 0x080483bf<134513599>[u32])
+Symbolic insn@0x080483ba[0]: // executing instruction core
 Symbolic insn@0x080483ba[0]: number_(32, 134518512) = 0x080496f0<134518512>[u32]
 Symbolic insn@0x080483ba[0]: undefined_(32) = V1[u32]
 Symbolic insn@0x080483ba[0]: boolean_(1) = true[u1]
@@ -2527,10 +2643,12 @@ memory:
 
 0x080483bf: mov edx, dword ds:[eax]
 Symbolic: startInstruction(0x080483bf: mov edx, dword ds:[eax])
+Symbolic insn@0x080483bf[1]: // advancing instruction pointer
 Symbolic insn@0x080483bf[1]: number_(32, 134513599) = 0x080483bf<134513599>[u32]
 Symbolic insn@0x080483bf[1]: number_(32, 2) = 0x00000002[u32]
 Symbolic insn@0x080483bf[1]: add(0x080483bf<134513599>[u32], 0x00000002[u32]) = 0x080483c1<134513601>[u32]
 Symbolic insn@0x080483bf[1]: writeRegister(eip, 0x080483c1<134513601>[u32])
+Symbolic insn@0x080483bf[1]: // executing instruction core
 Symbolic insn@0x080483bf[1]: undefined_(32) = V2[u32]
 Symbolic insn@0x080483bf[1]: readRegister(eax, V2[u32]) = V1[u32]
 Symbolic insn@0x080483bf[1]: undefined_(32) = V3[u32]
@@ -2559,10 +2677,12 @@ memory:
 
 0x080483c1: test edx, edx
 Symbolic: startInstruction(0x080483c1: test edx, edx)
+Symbolic insn@0x080483c1[2]: // advancing instruction pointer
 Symbolic insn@0x080483c1[2]: number_(32, 134513601) = 0x080483c1<134513601>[u32]
 Symbolic insn@0x080483c1[2]: number_(32, 2) = 0x00000002[u32]
 Symbolic insn@0x080483c1[2]: add(0x080483c1<134513601>[u32], 0x00000002[u32]) = 0x080483c3<134513603>[u32]
 Symbolic insn@0x080483c1[2]: writeRegister(eip, 0x080483c3<134513603>[u32])
+Symbolic insn@0x080483c1[2]: // executing instruction core
 Symbolic insn@0x080483c1[2]: undefined_(32) = V4[u32]
 Symbolic insn@0x080483c1[2]: readRegister(edx, V4[u32]) = V3[u32]
 Symbolic insn@0x080483c1[2]: undefined_(32) = V5[u32]
@@ -2624,10 +2744,12 @@ memory:
 
 0x080483c3: jne 0x080483b0<<BBlock>>
 Symbolic: startInstruction(0x080483c3: jne 0x080483b0<<BBlock>>)
+Symbolic insn@0x080483c3[3]: // advancing instruction pointer
 Symbolic insn@0x080483c3[3]: number_(32, 134513603) = 0x080483c3<134513603>[u32]
 Symbolic insn@0x080483c3[3]: number_(32, 2) = 0x00000002[u32]
 Symbolic insn@0x080483c3[3]: add(0x080483c3<134513603>[u32], 0x00000002[u32]) = 0x080483c5<134513605>[u32]
 Symbolic insn@0x080483c3[3]: writeRegister(eip, 0x080483c5<134513605>[u32])
+Symbolic insn@0x080483c3[3]: // executing instruction core
 Symbolic insn@0x080483c3[3]: undefined_(1) = V7[u1]
 Symbolic insn@0x080483c3[3]: readRegister(zf, V7[u1]) = (zerop[u1] V3[u32])
 Symbolic insn@0x080483c3[3]: invert((zerop[u1] V3[u32])) = (invert[u1] (zerop[u1] V3[u32]))
@@ -2670,10 +2792,12 @@ Symbolic: operators destroyed
 
 0x080483c5: mov byte ds:[0x080496f4<_edata>], 0x01
 Symbolic: startInstruction(0x080483c5: mov byte ds:[0x080496f4<_edata>], 0x01)
+Symbolic insn@0x080483c5[0]: // advancing instruction pointer
 Symbolic insn@0x080483c5[0]: number_(32, 134513605) = 0x080483c5<134513605>[u32]
 Symbolic insn@0x080483c5[0]: number_(32, 7) = 0x00000007[u32]
 Symbolic insn@0x080483c5[0]: add(0x080483c5<134513605>[u32], 0x00000007[u32]) = 0x080483cc<134513612>[u32]
 Symbolic insn@0x080483c5[0]: writeRegister(eip, 0x080483cc<134513612>[u32])
+Symbolic insn@0x080483c5[0]: // executing instruction core
 Symbolic insn@0x080483c5[0]: number_(8, 1) = 0x01[u8]
 Symbolic insn@0x080483c5[0]: number_(32, 134518516) = 0x080496f4<134518516>[u32]
 Symbolic insn@0x080483c5[0]: boolean_(1) = true[u1]
@@ -2691,10 +2815,12 @@ memory:
 
 0x080483cc: leave 
 Symbolic: startInstruction(0x080483cc: leave)
+Symbolic insn@0x080483cc[1]: // advancing instruction pointer
 Symbolic insn@0x080483cc[1]: number_(32, 134513612) = 0x080483cc<134513612>[u32]
 Symbolic insn@0x080483cc[1]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x080483cc[1]: add(0x080483cc<134513612>[u32], 0x00000001[u32]) = 0x080483cd<134513613>[u32]
 Symbolic insn@0x080483cc[1]: writeRegister(eip, 0x080483cd<134513613>[u32])
+Symbolic insn@0x080483cc[1]: // executing instruction core
 Symbolic insn@0x080483cc[1]: undefined_(32) = V1[u32]
 Symbolic insn@0x080483cc[1]: readRegister(ebp, V1[u32]) = ebp_0[u32]
 Symbolic insn@0x080483cc[1]: writeRegister(esp, ebp_0[u32])
@@ -2726,10 +2852,12 @@ memory:
 
 0x080483cd: ret 
 Symbolic: startInstruction(0x080483cd: ret)
+Symbolic insn@0x080483cd[2]: // advancing instruction pointer
 Symbolic insn@0x080483cd[2]: number_(32, 134513613) = 0x080483cd<134513613>[u32]
 Symbolic insn@0x080483cd[2]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x080483cd[2]: add(0x080483cd<134513613>[u32], 0x00000001[u32]) = 0x080483ce<134513614>[u32]
 Symbolic insn@0x080483cd[2]: writeRegister(eip, 0x080483ce<134513614>[u32])
+Symbolic insn@0x080483cd[2]: // executing instruction core
 Symbolic insn@0x080483cd[2]: undefined_(32) = V4[u32]
 Symbolic insn@0x080483cd[2]: readRegister(esp, V4[u32]) = (add[u32] ebp_0[u32] 0x00000004[u32])
 Symbolic insn@0x080483cd[2]: number_(32, 4) = 0x00000004[u32]
@@ -2767,10 +2895,12 @@ Symbolic: operators destroyed
 
 0x080483d0: push ebp
 Symbolic: startInstruction(0x080483d0: push ebp)
+Symbolic insn@0x080483d0[0]: // advancing instruction pointer
 Symbolic insn@0x080483d0[0]: number_(32, 134513616) = 0x080483d0<134513616>[u32]
 Symbolic insn@0x080483d0[0]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x080483d0[0]: add(0x080483d0<134513616>[u32], 0x00000001[u32]) = 0x080483d1<134513617>[u32]
 Symbolic insn@0x080483d0[0]: writeRegister(eip, 0x080483d1<134513617>[u32])
+Symbolic insn@0x080483d0[0]: // executing instruction core
 Symbolic insn@0x080483d0[0]: undefined_(32) = V1[u32]
 Symbolic insn@0x080483d0[0]: readRegister(ebp, V1[u32]) = ebp_0[u32]
 Symbolic insn@0x080483d0[0]: undefined_(32) = V2[u32]
@@ -2797,10 +2927,12 @@ memory:
 
 0x080483d1: mov ebp, esp
 Symbolic: startInstruction(0x080483d1: mov ebp, esp)
+Symbolic insn@0x080483d1[1]: // advancing instruction pointer
 Symbolic insn@0x080483d1[1]: number_(32, 134513617) = 0x080483d1<134513617>[u32]
 Symbolic insn@0x080483d1[1]: number_(32, 2) = 0x00000002[u32]
 Symbolic insn@0x080483d1[1]: add(0x080483d1<134513617>[u32], 0x00000002[u32]) = 0x080483d3<134513619>[u32]
 Symbolic insn@0x080483d1[1]: writeRegister(eip, 0x080483d3<134513619>[u32])
+Symbolic insn@0x080483d1[1]: // executing instruction core
 Symbolic insn@0x080483d1[1]: undefined_(32) = V3[u32]
 Symbolic insn@0x080483d1[1]: readRegister(esp, V3[u32]) = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
 Symbolic insn@0x080483d1[1]: writeRegister(ebp, (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32]))
@@ -2822,10 +2954,12 @@ memory:
 
 0x080483d3: sub esp, 0x08
 Symbolic: startInstruction(0x080483d3: sub esp, 0x08)
+Symbolic insn@0x080483d3[2]: // advancing instruction pointer
 Symbolic insn@0x080483d3[2]: number_(32, 134513619) = 0x080483d3<134513619>[u32]
 Symbolic insn@0x080483d3[2]: number_(32, 3) = 0x00000003[u32]
 Symbolic insn@0x080483d3[2]: add(0x080483d3<134513619>[u32], 0x00000003[u32]) = 0x080483d6<134513622>[u32]
 Symbolic insn@0x080483d3[2]: writeRegister(eip, 0x080483d6<134513622>[u32])
+Symbolic insn@0x080483d3[2]: // executing instruction core
 Symbolic insn@0x080483d3[2]: undefined_(32) = V4[u32]
 Symbolic insn@0x080483d3[2]: readRegister(esp, V4[u32]) = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
 Symbolic insn@0x080483d3[2]: number_(8, 8) = 0x08[u8]
@@ -2891,10 +3025,12 @@ memory:
 
 0x080483d6: mov eax, dword ds:[0x080495f8<(data)__JCR_END__>]
 Symbolic: startInstruction(0x080483d6: mov eax, dword ds:[0x080495f8<(data)__JCR_END__>])
+Symbolic insn@0x080483d6[3]: // advancing instruction pointer
 Symbolic insn@0x080483d6[3]: number_(32, 134513622) = 0x080483d6<134513622>[u32]
 Symbolic insn@0x080483d6[3]: number_(32, 5) = 0x00000005[u32]
 Symbolic insn@0x080483d6[3]: add(0x080483d6<134513622>[u32], 0x00000005[u32]) = 0x080483db<134513627>[u32]
 Symbolic insn@0x080483d6[3]: writeRegister(eip, 0x080483db<134513627>[u32])
+Symbolic insn@0x080483d6[3]: // executing instruction core
 Symbolic insn@0x080483d6[3]: number_(32, 134518264) = 0x080495f8<134518264>[u32]
 Symbolic insn@0x080483d6[3]: undefined_(32) = V5[u32]
 Symbolic insn@0x080483d6[3]: boolean_(1) = true[u1]
@@ -2929,10 +3065,12 @@ memory:
 
 0x080483db: test eax, eax
 Symbolic: startInstruction(0x080483db: test eax, eax)
+Symbolic insn@0x080483db[4]: // advancing instruction pointer
 Symbolic insn@0x080483db[4]: number_(32, 134513627) = 0x080483db<134513627>[u32]
 Symbolic insn@0x080483db[4]: number_(32, 2) = 0x00000002[u32]
 Symbolic insn@0x080483db[4]: add(0x080483db<134513627>[u32], 0x00000002[u32]) = 0x080483dd<134513629>[u32]
 Symbolic insn@0x080483db[4]: writeRegister(eip, 0x080483dd<134513629>[u32])
+Symbolic insn@0x080483db[4]: // executing instruction core
 Symbolic insn@0x080483db[4]: undefined_(32) = V6[u32]
 Symbolic insn@0x080483db[4]: readRegister(eax, V6[u32]) = V5[u32]
 Symbolic insn@0x080483db[4]: undefined_(32) = V7[u32]
@@ -2995,10 +3133,12 @@ memory:
 
 0x080483dd: je 0x08048400<<BBlock>>
 Symbolic: startInstruction(0x080483dd: je 0x08048400<<BBlock>>)
+Symbolic insn@0x080483dd[5]: // advancing instruction pointer
 Symbolic insn@0x080483dd[5]: number_(32, 134513629) = 0x080483dd<134513629>[u32]
 Symbolic insn@0x080483dd[5]: number_(32, 2) = 0x00000002[u32]
 Symbolic insn@0x080483dd[5]: add(0x080483dd<134513629>[u32], 0x00000002[u32]) = 0x080483df<134513631>[u32]
 Symbolic insn@0x080483dd[5]: writeRegister(eip, 0x080483df<134513631>[u32])
+Symbolic insn@0x080483dd[5]: // executing instruction core
 Symbolic insn@0x080483dd[5]: undefined_(1) = V9[u1]
 Symbolic insn@0x080483dd[5]: readRegister(zf, V9[u1]) = (zerop[u1] V5[u32])
 Symbolic insn@0x080483dd[5]: undefined_(32) = V10[u32]
@@ -3041,10 +3181,12 @@ Symbolic: operators destroyed
 
 0x080483df: mov eax, 0x00000000
 Symbolic: startInstruction(0x080483df: mov eax, 0x00000000)
+Symbolic insn@0x080483df[0]: // advancing instruction pointer
 Symbolic insn@0x080483df[0]: number_(32, 134513631) = 0x080483df<134513631>[u32]
 Symbolic insn@0x080483df[0]: number_(32, 5) = 0x00000005[u32]
 Symbolic insn@0x080483df[0]: add(0x080483df<134513631>[u32], 0x00000005[u32]) = 0x080483e4<134513636>[u32]
 Symbolic insn@0x080483df[0]: writeRegister(eip, 0x080483e4<134513636>[u32])
+Symbolic insn@0x080483df[0]: // executing instruction core
 Symbolic insn@0x080483df[0]: number_(32, 0) = 0x00000000[u32]
 Symbolic insn@0x080483df[0]: writeRegister(eax, 0x00000000[u32])
 Symbolic insn@0x080483df[0]: finishInstruction(mov eax, 0x00000000)
@@ -3060,10 +3202,12 @@ memory:
 
 0x080483e4: test eax, eax
 Symbolic: startInstruction(0x080483e4: test eax, eax)
+Symbolic insn@0x080483e4[1]: // advancing instruction pointer
 Symbolic insn@0x080483e4[1]: number_(32, 134513636) = 0x080483e4<134513636>[u32]
 Symbolic insn@0x080483e4[1]: number_(32, 2) = 0x00000002[u32]
 Symbolic insn@0x080483e4[1]: add(0x080483e4<134513636>[u32], 0x00000002[u32]) = 0x080483e6<134513638>[u32]
 Symbolic insn@0x080483e4[1]: writeRegister(eip, 0x080483e6<134513638>[u32])
+Symbolic insn@0x080483e4[1]: // executing instruction core
 Symbolic insn@0x080483e4[1]: undefined_(32) = V1[u32]
 Symbolic insn@0x080483e4[1]: readRegister(eax, V1[u32]) = 0x00000000[u32]
 Symbolic insn@0x080483e4[1]: undefined_(32) = V2[u32]
@@ -3116,10 +3260,12 @@ memory:
 
 0x080483e6: je 0x08048400<<BBlock>>
 Symbolic: startInstruction(0x080483e6: je 0x08048400<<BBlock>>)
+Symbolic insn@0x080483e6[2]: // advancing instruction pointer
 Symbolic insn@0x080483e6[2]: number_(32, 134513638) = 0x080483e6<134513638>[u32]
 Symbolic insn@0x080483e6[2]: number_(32, 2) = 0x00000002[u32]
 Symbolic insn@0x080483e6[2]: add(0x080483e6<134513638>[u32], 0x00000002[u32]) = 0x080483e8<134513640>[u32]
 Symbolic insn@0x080483e6[2]: writeRegister(eip, 0x080483e8<134513640>[u32])
+Symbolic insn@0x080483e6[2]: // executing instruction core
 Symbolic insn@0x080483e6[2]: undefined_(1) = V4[u1]
 Symbolic insn@0x080483e6[2]: readRegister(zf, V4[u1]) = true[u1]
 Symbolic insn@0x080483e6[2]: undefined_(32) = V5[u32]
@@ -3148,10 +3294,12 @@ memory:
 
 0x08048400: mov esp, ebp
 Symbolic: startInstruction(0x08048400: mov esp, ebp)
+Symbolic insn@0x08048400[3]: // advancing instruction pointer
 Symbolic insn@0x08048400[3]: number_(32, 134513664) = 0x08048400<134513664>[u32]
 Symbolic insn@0x08048400[3]: number_(32, 2) = 0x00000002[u32]
 Symbolic insn@0x08048400[3]: add(0x08048400<134513664>[u32], 0x00000002[u32]) = 0x08048402<134513666>[u32]
 Symbolic insn@0x08048400[3]: writeRegister(eip, 0x08048402<134513666>[u32])
+Symbolic insn@0x08048400[3]: // executing instruction core
 Symbolic insn@0x08048400[3]: undefined_(32) = V6[u32]
 Symbolic insn@0x08048400[3]: readRegister(ebp, V6[u32]) = ebp_0[u32]
 Symbolic insn@0x08048400[3]: writeRegister(esp, ebp_0[u32])
@@ -3175,10 +3323,12 @@ memory:
 
 0x08048402: pop ebp
 Symbolic: startInstruction(0x08048402: pop ebp)
+Symbolic insn@0x08048402[4]: // advancing instruction pointer
 Symbolic insn@0x08048402[4]: number_(32, 134513666) = 0x08048402<134513666>[u32]
 Symbolic insn@0x08048402[4]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x08048402[4]: add(0x08048402<134513666>[u32], 0x00000001[u32]) = 0x08048403<134513667>[u32]
 Symbolic insn@0x08048402[4]: writeRegister(eip, 0x08048403<134513667>[u32])
+Symbolic insn@0x08048402[4]: // executing instruction core
 Symbolic insn@0x08048402[4]: undefined_(32) = V7[u32]
 Symbolic insn@0x08048402[4]: readRegister(esp, V7[u32]) = ebp_0[u32]
 Symbolic insn@0x08048402[4]: number_(32, 4) = 0x00000004[u32]
@@ -3213,10 +3363,12 @@ memory:
 
 0x08048403: ret 
 Symbolic: startInstruction(0x08048403: ret)
+Symbolic insn@0x08048403[5]: // advancing instruction pointer
 Symbolic insn@0x08048403[5]: number_(32, 134513667) = 0x08048403<134513667>[u32]
 Symbolic insn@0x08048403[5]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x08048403[5]: add(0x08048403<134513667>[u32], 0x00000001[u32]) = 0x08048404<134513668>[u32]
 Symbolic insn@0x08048403[5]: writeRegister(eip, 0x08048404<134513668>[u32])
+Symbolic insn@0x08048403[5]: // executing instruction core
 Symbolic insn@0x08048403[5]: undefined_(32) = V9[u32]
 Symbolic insn@0x08048403[5]: readRegister(esp, V9[u32]) = (add[u32] ebp_0[u32] 0x00000004[u32])
 Symbolic insn@0x08048403[5]: number_(32, 4) = 0x00000004[u32]
@@ -3260,10 +3412,12 @@ Symbolic: operators destroyed
 
 0x080483e8: mov dword ss:[esp], 0x080495f8<(data)__JCR_END__>
 Symbolic: startInstruction(0x080483e8: mov dword ss:[esp], 0x080495f8<(data)__JCR_END__>)
+Symbolic insn@0x080483e8[0]: // advancing instruction pointer
 Symbolic insn@0x080483e8[0]: number_(32, 134513640) = 0x080483e8<134513640>[u32]
 Symbolic insn@0x080483e8[0]: number_(32, 7) = 0x00000007[u32]
 Symbolic insn@0x080483e8[0]: add(0x080483e8<134513640>[u32], 0x00000007[u32]) = 0x080483ef<134513647>[u32]
 Symbolic insn@0x080483e8[0]: writeRegister(eip, 0x080483ef<134513647>[u32])
+Symbolic insn@0x080483e8[0]: // executing instruction core
 Symbolic insn@0x080483e8[0]: number_(32, 134518264) = 0x080495f8<134518264>[u32]
 Symbolic insn@0x080483e8[0]: undefined_(32) = V1[u32]
 Symbolic insn@0x080483e8[0]: readRegister(esp, V1[u32]) = esp_0[u32]
@@ -3285,10 +3439,12 @@ memory:
 
 0x080483ef: call 0x00000000
 Symbolic: startInstruction(0x080483ef: call 0x00000000)
+Symbolic insn@0x080483ef[1]: // advancing instruction pointer
 Symbolic insn@0x080483ef[1]: number_(32, 134513647) = 0x080483ef<134513647>[u32]
 Symbolic insn@0x080483ef[1]: number_(32, 5) = 0x00000005[u32]
 Symbolic insn@0x080483ef[1]: add(0x080483ef<134513647>[u32], 0x00000005[u32]) = 0x080483f4<134513652>[u32]
 Symbolic insn@0x080483ef[1]: writeRegister(eip, 0x080483f4<134513652>[u32])
+Symbolic insn@0x080483ef[1]: // executing instruction core
 Symbolic insn@0x080483ef[1]: number_(32, 0) = 0x00000000[u32]
 Symbolic insn@0x080483ef[1]: unsignedExtend(0x00000000[u32], 32) = 0x00000000[u32]
 Symbolic insn@0x080483ef[1]: undefined_(32) = V2[u32]
@@ -3327,10 +3483,12 @@ Symbolic: operators destroyed
 
 0x080483f4: lea esi, [esi + 0x00000000]
 Symbolic: startInstruction(0x080483f4: lea esi, [esi + 0x00000000])
+Symbolic insn@0x080483f4[0]: // advancing instruction pointer
 Symbolic insn@0x080483f4[0]: number_(32, 134513652) = 0x080483f4<134513652>[u32]
 Symbolic insn@0x080483f4[0]: number_(32, 6) = 0x00000006[u32]
 Symbolic insn@0x080483f4[0]: add(0x080483f4<134513652>[u32], 0x00000006[u32]) = 0x080483fa<134513658>[u32]
 Symbolic insn@0x080483f4[0]: writeRegister(eip, 0x080483fa<134513658>[u32])
+Symbolic insn@0x080483f4[0]: // executing instruction core
 Symbolic insn@0x080483f4[0]: undefined_(32) = V1[u32]
 Symbolic insn@0x080483f4[0]: readRegister(esi, V1[u32]) = esi_0[u32]
 Symbolic insn@0x080483f4[0]: number_(32, 0) = 0x00000000[u32]
@@ -3349,10 +3507,12 @@ memory:
 
 0x080483fa: lea edi, [edi + 0x00000000]
 Symbolic: startInstruction(0x080483fa: lea edi, [edi + 0x00000000])
+Symbolic insn@0x080483fa[1]: // advancing instruction pointer
 Symbolic insn@0x080483fa[1]: number_(32, 134513658) = 0x080483fa<134513658>[u32]
 Symbolic insn@0x080483fa[1]: number_(32, 6) = 0x00000006[u32]
 Symbolic insn@0x080483fa[1]: add(0x080483fa<134513658>[u32], 0x00000006[u32]) = 0x08048400<134513664>[u32]
 Symbolic insn@0x080483fa[1]: writeRegister(eip, 0x08048400<134513664>[u32])
+Symbolic insn@0x080483fa[1]: // executing instruction core
 Symbolic insn@0x080483fa[1]: undefined_(32) = V2[u32]
 Symbolic insn@0x080483fa[1]: readRegister(edi, V2[u32]) = edi_0[u32]
 Symbolic insn@0x080483fa[1]: number_(32, 0) = 0x00000000[u32]
@@ -3375,10 +3535,12 @@ Symbolic: operators destroyed
 
 0x08048410: push ebp
 Symbolic: startInstruction(0x08048410: push ebp)
+Symbolic insn@0x08048410[0]: // advancing instruction pointer
 Symbolic insn@0x08048410[0]: number_(32, 134513680) = 0x08048410<134513680>[u32]
 Symbolic insn@0x08048410[0]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x08048410[0]: add(0x08048410<134513680>[u32], 0x00000001[u32]) = 0x08048411<134513681>[u32]
 Symbolic insn@0x08048410[0]: writeRegister(eip, 0x08048411<134513681>[u32])
+Symbolic insn@0x08048410[0]: // executing instruction core
 Symbolic insn@0x08048410[0]: undefined_(32) = V1[u32]
 Symbolic insn@0x08048410[0]: readRegister(ebp, V1[u32]) = ebp_0[u32]
 Symbolic insn@0x08048410[0]: undefined_(32) = V2[u32]
@@ -3405,10 +3567,12 @@ memory:
 
 0x08048411: mov edx, 0x08048480<(func)handler>
 Symbolic: startInstruction(0x08048411: mov edx, 0x08048480<(func)handler>)
+Symbolic insn@0x08048411[1]: // advancing instruction pointer
 Symbolic insn@0x08048411[1]: number_(32, 134513681) = 0x08048411<134513681>[u32]
 Symbolic insn@0x08048411[1]: number_(32, 5) = 0x00000005[u32]
 Symbolic insn@0x08048411[1]: add(0x08048411<134513681>[u32], 0x00000005[u32]) = 0x08048416<134513686>[u32]
 Symbolic insn@0x08048411[1]: writeRegister(eip, 0x08048416<134513686>[u32])
+Symbolic insn@0x08048411[1]: // executing instruction core
 Symbolic insn@0x08048411[1]: number_(32, 134513792) = 0x08048480<134513792>[u32]
 Symbolic insn@0x08048411[1]: writeRegister(edx, 0x08048480<134513792>[u32])
 Symbolic insn@0x08048411[1]: finishInstruction(mov edx, 0x08048480<(func)handler>)
@@ -3429,10 +3593,12 @@ memory:
 
 0x08048416: mov ebp, esp
 Symbolic: startInstruction(0x08048416: mov ebp, esp)
+Symbolic insn@0x08048416[2]: // advancing instruction pointer
 Symbolic insn@0x08048416[2]: number_(32, 134513686) = 0x08048416<134513686>[u32]
 Symbolic insn@0x08048416[2]: number_(32, 2) = 0x00000002[u32]
 Symbolic insn@0x08048416[2]: add(0x08048416<134513686>[u32], 0x00000002[u32]) = 0x08048418<134513688>[u32]
 Symbolic insn@0x08048416[2]: writeRegister(eip, 0x08048418<134513688>[u32])
+Symbolic insn@0x08048416[2]: // executing instruction core
 Symbolic insn@0x08048416[2]: undefined_(32) = V3[u32]
 Symbolic insn@0x08048416[2]: readRegister(esp, V3[u32]) = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
 Symbolic insn@0x08048416[2]: writeRegister(ebp, (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32]))
@@ -3455,10 +3621,12 @@ memory:
 
 0x08048418: sub esp, 0x08
 Symbolic: startInstruction(0x08048418: sub esp, 0x08)
+Symbolic insn@0x08048418[3]: // advancing instruction pointer
 Symbolic insn@0x08048418[3]: number_(32, 134513688) = 0x08048418<134513688>[u32]
 Symbolic insn@0x08048418[3]: number_(32, 3) = 0x00000003[u32]
 Symbolic insn@0x08048418[3]: add(0x08048418<134513688>[u32], 0x00000003[u32]) = 0x0804841b<134513691>[u32]
 Symbolic insn@0x08048418[3]: writeRegister(eip, 0x0804841b<134513691>[u32])
+Symbolic insn@0x08048418[3]: // executing instruction core
 Symbolic insn@0x08048418[3]: undefined_(32) = V4[u32]
 Symbolic insn@0x08048418[3]: readRegister(esp, V4[u32]) = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
 Symbolic insn@0x08048418[3]: number_(8, 8) = 0x08[u8]
@@ -3525,10 +3693,12 @@ memory:
 
 0x0804841b: and esp, 0xf0<-16>
 Symbolic: startInstruction(0x0804841b: and esp, 0xf0<-16>)
+Symbolic insn@0x0804841b[4]: // advancing instruction pointer
 Symbolic insn@0x0804841b[4]: number_(32, 134513691) = 0x0804841b<134513691>[u32]
 Symbolic insn@0x0804841b[4]: number_(32, 3) = 0x00000003[u32]
 Symbolic insn@0x0804841b[4]: add(0x0804841b<134513691>[u32], 0x00000003[u32]) = 0x0804841e<134513694>[u32]
 Symbolic insn@0x0804841b[4]: writeRegister(eip, 0x0804841e<134513694>[u32])
+Symbolic insn@0x0804841b[4]: // executing instruction core
 Symbolic insn@0x0804841b[4]: undefined_(32) = V5[u32]
 Symbolic insn@0x0804841b[4]: readRegister(esp, V5[u32]) = (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])
 Symbolic insn@0x0804841b[4]: number_(8, 18446744073709551600) = 0xf0<-16>[u8]
@@ -3588,10 +3758,12 @@ memory:
 
 0x0804841e: mov dword ss:[esp + 0x04], edx
 Symbolic: startInstruction(0x0804841e: mov dword ss:[esp + 0x04], edx)
+Symbolic insn@0x0804841e[5]: // advancing instruction pointer
 Symbolic insn@0x0804841e[5]: number_(32, 134513694) = 0x0804841e<134513694>[u32]
 Symbolic insn@0x0804841e[5]: number_(32, 4) = 0x00000004[u32]
 Symbolic insn@0x0804841e[5]: add(0x0804841e<134513694>[u32], 0x00000004[u32]) = 0x08048422<134513698>[u32]
 Symbolic insn@0x0804841e[5]: writeRegister(eip, 0x08048422<134513698>[u32])
+Symbolic insn@0x0804841e[5]: // executing instruction core
 Symbolic insn@0x0804841e[5]: undefined_(32) = V7[u32]
 Symbolic insn@0x0804841e[5]: readRegister(edx, V7[u32]) = 0x08048480<134513792>[u32]
 Symbolic insn@0x0804841e[5]: undefined_(32) = V8[u32]
@@ -3630,10 +3802,12 @@ memory:
 
 0x08048422: mov dword ss:[esp], 0x0000000a
 Symbolic: startInstruction(0x08048422: mov dword ss:[esp], 0x0000000a)
+Symbolic insn@0x08048422[6]: // advancing instruction pointer
 Symbolic insn@0x08048422[6]: number_(32, 134513698) = 0x08048422<134513698>[u32]
 Symbolic insn@0x08048422[6]: number_(32, 7) = 0x00000007[u32]
 Symbolic insn@0x08048422[6]: add(0x08048422<134513698>[u32], 0x00000007[u32]) = 0x08048429<134513705>[u32]
 Symbolic insn@0x08048422[6]: writeRegister(eip, 0x08048429<134513705>[u32])
+Symbolic insn@0x08048422[6]: // executing instruction core
 Symbolic insn@0x08048422[6]: number_(32, 10) = 0x0000000a[u32]
 Symbolic insn@0x08048422[6]: undefined_(32) = V9[u32]
 Symbolic insn@0x08048422[6]: readRegister(esp, V9[u32]) = (and[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32]) 0xfffffff0<4294967280>[u32])
@@ -3672,10 +3846,12 @@ memory:
 
 0x08048429: call 0x080482f0<signal@plt>
 Symbolic: startInstruction(0x08048429: call 0x080482f0<signal@plt>)
+Symbolic insn@0x08048429[7]: // advancing instruction pointer
 Symbolic insn@0x08048429[7]: number_(32, 134513705) = 0x08048429<134513705>[u32]
 Symbolic insn@0x08048429[7]: number_(32, 5) = 0x00000005[u32]
 Symbolic insn@0x08048429[7]: add(0x08048429<134513705>[u32], 0x00000005[u32]) = 0x0804842e<134513710>[u32]
 Symbolic insn@0x08048429[7]: writeRegister(eip, 0x0804842e<134513710>[u32])
+Symbolic insn@0x08048429[7]: // executing instruction core
 Symbolic insn@0x08048429[7]: number_(32, 134513392) = 0x080482f0<134513392>[u32]
 Symbolic insn@0x08048429[7]: unsignedExtend(0x080482f0<134513392>[u32], 32) = 0x080482f0<134513392>[u32]
 Symbolic insn@0x08048429[7]: undefined_(32) = V10[u32]
@@ -3730,10 +3906,12 @@ Symbolic: operators destroyed
 
 0x0804842e: mov esp, ebp
 Symbolic: startInstruction(0x0804842e: mov esp, ebp)
+Symbolic insn@0x0804842e[0]: // advancing instruction pointer
 Symbolic insn@0x0804842e[0]: number_(32, 134513710) = 0x0804842e<134513710>[u32]
 Symbolic insn@0x0804842e[0]: number_(32, 2) = 0x00000002[u32]
 Symbolic insn@0x0804842e[0]: add(0x0804842e<134513710>[u32], 0x00000002[u32]) = 0x08048430<134513712>[u32]
 Symbolic insn@0x0804842e[0]: writeRegister(eip, 0x08048430<134513712>[u32])
+Symbolic insn@0x0804842e[0]: // executing instruction core
 Symbolic insn@0x0804842e[0]: undefined_(32) = V1[u32]
 Symbolic insn@0x0804842e[0]: readRegister(ebp, V1[u32]) = ebp_0[u32]
 Symbolic insn@0x0804842e[0]: writeRegister(esp, ebp_0[u32])
@@ -3750,10 +3928,12 @@ memory:
 
 0x08048430: xor eax, eax
 Symbolic: startInstruction(0x08048430: xor eax, eax)
+Symbolic insn@0x08048430[1]: // advancing instruction pointer
 Symbolic insn@0x08048430[1]: number_(32, 134513712) = 0x08048430<134513712>[u32]
 Symbolic insn@0x08048430[1]: number_(32, 2) = 0x00000002[u32]
 Symbolic insn@0x08048430[1]: add(0x08048430<134513712>[u32], 0x00000002[u32]) = 0x08048432<134513714>[u32]
 Symbolic insn@0x08048430[1]: writeRegister(eip, 0x08048432<134513714>[u32])
+Symbolic insn@0x08048430[1]: // executing instruction core
 Symbolic insn@0x08048430[1]: number_(32, 0) = 0x00000000[u32]
 Symbolic insn@0x08048430[1]: extract(0x00000000[u32], 0, 8) = 0x00[u8]
 Symbolic insn@0x08048430[1]: extract(0x00[u8], 1, 2) = false[u1]
@@ -3804,10 +3984,12 @@ memory:
 
 0x08048432: pop ebp
 Symbolic: startInstruction(0x08048432: pop ebp)
+Symbolic insn@0x08048432[2]: // advancing instruction pointer
 Symbolic insn@0x08048432[2]: number_(32, 134513714) = 0x08048432<134513714>[u32]
 Symbolic insn@0x08048432[2]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x08048432[2]: add(0x08048432<134513714>[u32], 0x00000001[u32]) = 0x08048433<134513715>[u32]
 Symbolic insn@0x08048432[2]: writeRegister(eip, 0x08048433<134513715>[u32])
+Symbolic insn@0x08048432[2]: // executing instruction core
 Symbolic insn@0x08048432[2]: undefined_(32) = V3[u32]
 Symbolic insn@0x08048432[2]: readRegister(esp, V3[u32]) = ebp_0[u32]
 Symbolic insn@0x08048432[2]: number_(32, 4) = 0x00000004[u32]
@@ -3842,10 +4024,12 @@ memory:
 
 0x08048433: ret 
 Symbolic: startInstruction(0x08048433: ret)
+Symbolic insn@0x08048433[3]: // advancing instruction pointer
 Symbolic insn@0x08048433[3]: number_(32, 134513715) = 0x08048433<134513715>[u32]
 Symbolic insn@0x08048433[3]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x08048433[3]: add(0x08048433<134513715>[u32], 0x00000001[u32]) = 0x08048434<134513716>[u32]
 Symbolic insn@0x08048433[3]: writeRegister(eip, 0x08048434<134513716>[u32])
+Symbolic insn@0x08048433[3]: // executing instruction core
 Symbolic insn@0x08048433[3]: undefined_(32) = V5[u32]
 Symbolic insn@0x08048433[3]: readRegister(esp, V5[u32]) = (add[u32] ebp_0[u32] 0x00000004[u32])
 Symbolic insn@0x08048433[3]: number_(32, 4) = 0x00000004[u32]
@@ -3889,10 +4073,12 @@ Symbolic: operators destroyed
 
 0x08048440: push ebp
 Symbolic: startInstruction(0x08048440: push ebp)
+Symbolic insn@0x08048440[0]: // advancing instruction pointer
 Symbolic insn@0x08048440[0]: number_(32, 134513728) = 0x08048440<134513728>[u32]
 Symbolic insn@0x08048440[0]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x08048440[0]: add(0x08048440<134513728>[u32], 0x00000001[u32]) = 0x08048441<134513729>[u32]
 Symbolic insn@0x08048440[0]: writeRegister(eip, 0x08048441<134513729>[u32])
+Symbolic insn@0x08048440[0]: // executing instruction core
 Symbolic insn@0x08048440[0]: undefined_(32) = V1[u32]
 Symbolic insn@0x08048440[0]: readRegister(ebp, V1[u32]) = ebp_0[u32]
 Symbolic insn@0x08048440[0]: undefined_(32) = V2[u32]
@@ -3919,10 +4105,12 @@ memory:
 
 0x08048441: mov ebp, esp
 Symbolic: startInstruction(0x08048441: mov ebp, esp)
+Symbolic insn@0x08048441[1]: // advancing instruction pointer
 Symbolic insn@0x08048441[1]: number_(32, 134513729) = 0x08048441<134513729>[u32]
 Symbolic insn@0x08048441[1]: number_(32, 2) = 0x00000002[u32]
 Symbolic insn@0x08048441[1]: add(0x08048441<134513729>[u32], 0x00000002[u32]) = 0x08048443<134513731>[u32]
 Symbolic insn@0x08048441[1]: writeRegister(eip, 0x08048443<134513731>[u32])
+Symbolic insn@0x08048441[1]: // executing instruction core
 Symbolic insn@0x08048441[1]: undefined_(32) = V3[u32]
 Symbolic insn@0x08048441[1]: readRegister(esp, V3[u32]) = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
 Symbolic insn@0x08048441[1]: writeRegister(ebp, (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32]))
@@ -3944,10 +4132,12 @@ memory:
 
 0x08048443: sub esp, 0x08
 Symbolic: startInstruction(0x08048443: sub esp, 0x08)
+Symbolic insn@0x08048443[2]: // advancing instruction pointer
 Symbolic insn@0x08048443[2]: number_(32, 134513731) = 0x08048443<134513731>[u32]
 Symbolic insn@0x08048443[2]: number_(32, 3) = 0x00000003[u32]
 Symbolic insn@0x08048443[2]: add(0x08048443<134513731>[u32], 0x00000003[u32]) = 0x08048446<134513734>[u32]
 Symbolic insn@0x08048443[2]: writeRegister(eip, 0x08048446<134513734>[u32])
+Symbolic insn@0x08048443[2]: // executing instruction core
 Symbolic insn@0x08048443[2]: undefined_(32) = V4[u32]
 Symbolic insn@0x08048443[2]: readRegister(esp, V4[u32]) = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
 Symbolic insn@0x08048443[2]: number_(8, 8) = 0x08[u8]
@@ -4013,10 +4203,12 @@ memory:
 
 0x08048446: mov dword ss:[esp], 0x080485d4<"Hello, world.\n">
 Symbolic: startInstruction(0x08048446: mov dword ss:[esp], 0x080485d4<"Hello, world.\n">)
+Symbolic insn@0x08048446[3]: // advancing instruction pointer
 Symbolic insn@0x08048446[3]: number_(32, 134513734) = 0x08048446<134513734>[u32]
 Symbolic insn@0x08048446[3]: number_(32, 7) = 0x00000007[u32]
 Symbolic insn@0x08048446[3]: add(0x08048446<134513734>[u32], 0x00000007[u32]) = 0x0804844d<134513741>[u32]
 Symbolic insn@0x08048446[3]: writeRegister(eip, 0x0804844d<134513741>[u32])
+Symbolic insn@0x08048446[3]: // executing instruction core
 Symbolic insn@0x08048446[3]: number_(32, 134514132) = 0x080485d4<134514132>[u32]
 Symbolic insn@0x08048446[3]: undefined_(32) = V5[u32]
 Symbolic insn@0x08048446[3]: readRegister(esp, V5[u32]) = (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])
@@ -4050,10 +4242,12 @@ memory:
 
 0x0804844d: call 0x08048300<puts@plt>
 Symbolic: startInstruction(0x0804844d: call 0x08048300<puts@plt>)
+Symbolic insn@0x0804844d[4]: // advancing instruction pointer
 Symbolic insn@0x0804844d[4]: number_(32, 134513741) = 0x0804844d<134513741>[u32]
 Symbolic insn@0x0804844d[4]: number_(32, 5) = 0x00000005[u32]
 Symbolic insn@0x0804844d[4]: add(0x0804844d<134513741>[u32], 0x00000005[u32]) = 0x08048452<134513746>[u32]
 Symbolic insn@0x0804844d[4]: writeRegister(eip, 0x08048452<134513746>[u32])
+Symbolic insn@0x0804844d[4]: // executing instruction core
 Symbolic insn@0x0804844d[4]: number_(32, 134513408) = 0x08048300<134513408>[u32]
 Symbolic insn@0x0804844d[4]: unsignedExtend(0x08048300<134513408>[u32], 32) = 0x08048300<134513408>[u32]
 Symbolic insn@0x0804844d[4]: undefined_(32) = V6[u32]
@@ -4103,10 +4297,12 @@ Symbolic: operators destroyed
 
 0x08048452: mov esp, ebp
 Symbolic: startInstruction(0x08048452: mov esp, ebp)
+Symbolic insn@0x08048452[0]: // advancing instruction pointer
 Symbolic insn@0x08048452[0]: number_(32, 134513746) = 0x08048452<134513746>[u32]
 Symbolic insn@0x08048452[0]: number_(32, 2) = 0x00000002[u32]
 Symbolic insn@0x08048452[0]: add(0x08048452<134513746>[u32], 0x00000002[u32]) = 0x08048454<134513748>[u32]
 Symbolic insn@0x08048452[0]: writeRegister(eip, 0x08048454<134513748>[u32])
+Symbolic insn@0x08048452[0]: // executing instruction core
 Symbolic insn@0x08048452[0]: undefined_(32) = V1[u32]
 Symbolic insn@0x08048452[0]: readRegister(ebp, V1[u32]) = ebp_0[u32]
 Symbolic insn@0x08048452[0]: writeRegister(esp, ebp_0[u32])
@@ -4123,10 +4319,12 @@ memory:
 
 0x08048454: pop ebp
 Symbolic: startInstruction(0x08048454: pop ebp)
+Symbolic insn@0x08048454[1]: // advancing instruction pointer
 Symbolic insn@0x08048454[1]: number_(32, 134513748) = 0x08048454<134513748>[u32]
 Symbolic insn@0x08048454[1]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x08048454[1]: add(0x08048454<134513748>[u32], 0x00000001[u32]) = 0x08048455<134513749>[u32]
 Symbolic insn@0x08048454[1]: writeRegister(eip, 0x08048455<134513749>[u32])
+Symbolic insn@0x08048454[1]: // executing instruction core
 Symbolic insn@0x08048454[1]: undefined_(32) = V2[u32]
 Symbolic insn@0x08048454[1]: readRegister(esp, V2[u32]) = ebp_0[u32]
 Symbolic insn@0x08048454[1]: number_(32, 4) = 0x00000004[u32]
@@ -4154,10 +4352,12 @@ memory:
 
 0x08048455: ret 
 Symbolic: startInstruction(0x08048455: ret)
+Symbolic insn@0x08048455[2]: // advancing instruction pointer
 Symbolic insn@0x08048455[2]: number_(32, 134513749) = 0x08048455<134513749>[u32]
 Symbolic insn@0x08048455[2]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x08048455[2]: add(0x08048455<134513749>[u32], 0x00000001[u32]) = 0x08048456<134513750>[u32]
 Symbolic insn@0x08048455[2]: writeRegister(eip, 0x08048456<134513750>[u32])
+Symbolic insn@0x08048455[2]: // executing instruction core
 Symbolic insn@0x08048455[2]: undefined_(32) = V4[u32]
 Symbolic insn@0x08048455[2]: readRegister(esp, V4[u32]) = (add[u32] ebp_0[u32] 0x00000004[u32])
 Symbolic insn@0x08048455[2]: number_(32, 4) = 0x00000004[u32]
@@ -4194,10 +4394,12 @@ Symbolic: operators destroyed
 
 0x08048460: push ebp
 Symbolic: startInstruction(0x08048460: push ebp)
+Symbolic insn@0x08048460[0]: // advancing instruction pointer
 Symbolic insn@0x08048460[0]: number_(32, 134513760) = 0x08048460<134513760>[u32]
 Symbolic insn@0x08048460[0]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x08048460[0]: add(0x08048460<134513760>[u32], 0x00000001[u32]) = 0x08048461<134513761>[u32]
 Symbolic insn@0x08048460[0]: writeRegister(eip, 0x08048461<134513761>[u32])
+Symbolic insn@0x08048460[0]: // executing instruction core
 Symbolic insn@0x08048460[0]: undefined_(32) = V1[u32]
 Symbolic insn@0x08048460[0]: readRegister(ebp, V1[u32]) = ebp_0[u32]
 Symbolic insn@0x08048460[0]: undefined_(32) = V2[u32]
@@ -4224,10 +4426,12 @@ memory:
 
 0x08048461: mov ebp, esp
 Symbolic: startInstruction(0x08048461: mov ebp, esp)
+Symbolic insn@0x08048461[1]: // advancing instruction pointer
 Symbolic insn@0x08048461[1]: number_(32, 134513761) = 0x08048461<134513761>[u32]
 Symbolic insn@0x08048461[1]: number_(32, 2) = 0x00000002[u32]
 Symbolic insn@0x08048461[1]: add(0x08048461<134513761>[u32], 0x00000002[u32]) = 0x08048463<134513763>[u32]
 Symbolic insn@0x08048461[1]: writeRegister(eip, 0x08048463<134513763>[u32])
+Symbolic insn@0x08048461[1]: // executing instruction core
 Symbolic insn@0x08048461[1]: undefined_(32) = V3[u32]
 Symbolic insn@0x08048461[1]: readRegister(esp, V3[u32]) = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
 Symbolic insn@0x08048461[1]: writeRegister(ebp, (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32]))
@@ -4249,10 +4453,12 @@ memory:
 
 0x08048463: sub esp, 0x08
 Symbolic: startInstruction(0x08048463: sub esp, 0x08)
+Symbolic insn@0x08048463[2]: // advancing instruction pointer
 Symbolic insn@0x08048463[2]: number_(32, 134513763) = 0x08048463<134513763>[u32]
 Symbolic insn@0x08048463[2]: number_(32, 3) = 0x00000003[u32]
 Symbolic insn@0x08048463[2]: add(0x08048463<134513763>[u32], 0x00000003[u32]) = 0x08048466<134513766>[u32]
 Symbolic insn@0x08048463[2]: writeRegister(eip, 0x08048466<134513766>[u32])
+Symbolic insn@0x08048463[2]: // executing instruction core
 Symbolic insn@0x08048463[2]: undefined_(32) = V4[u32]
 Symbolic insn@0x08048463[2]: readRegister(esp, V4[u32]) = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
 Symbolic insn@0x08048463[2]: number_(8, 8) = 0x08[u8]
@@ -4318,10 +4524,12 @@ memory:
 
 0x08048466: mov dword ss:[esp], 0x080485d4<"Hello, world.\n">
 Symbolic: startInstruction(0x08048466: mov dword ss:[esp], 0x080485d4<"Hello, world.\n">)
+Symbolic insn@0x08048466[3]: // advancing instruction pointer
 Symbolic insn@0x08048466[3]: number_(32, 134513766) = 0x08048466<134513766>[u32]
 Symbolic insn@0x08048466[3]: number_(32, 7) = 0x00000007[u32]
 Symbolic insn@0x08048466[3]: add(0x08048466<134513766>[u32], 0x00000007[u32]) = 0x0804846d<134513773>[u32]
 Symbolic insn@0x08048466[3]: writeRegister(eip, 0x0804846d<134513773>[u32])
+Symbolic insn@0x08048466[3]: // executing instruction core
 Symbolic insn@0x08048466[3]: number_(32, 134514132) = 0x080485d4<134514132>[u32]
 Symbolic insn@0x08048466[3]: undefined_(32) = V5[u32]
 Symbolic insn@0x08048466[3]: readRegister(esp, V5[u32]) = (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])
@@ -4355,10 +4563,12 @@ memory:
 
 0x0804846d: call 0x08048300<puts@plt>
 Symbolic: startInstruction(0x0804846d: call 0x08048300<puts@plt>)
+Symbolic insn@0x0804846d[4]: // advancing instruction pointer
 Symbolic insn@0x0804846d[4]: number_(32, 134513773) = 0x0804846d<134513773>[u32]
 Symbolic insn@0x0804846d[4]: number_(32, 5) = 0x00000005[u32]
 Symbolic insn@0x0804846d[4]: add(0x0804846d<134513773>[u32], 0x00000005[u32]) = 0x08048472<134513778>[u32]
 Symbolic insn@0x0804846d[4]: writeRegister(eip, 0x08048472<134513778>[u32])
+Symbolic insn@0x0804846d[4]: // executing instruction core
 Symbolic insn@0x0804846d[4]: number_(32, 134513408) = 0x08048300<134513408>[u32]
 Symbolic insn@0x0804846d[4]: unsignedExtend(0x08048300<134513408>[u32], 32) = 0x08048300<134513408>[u32]
 Symbolic insn@0x0804846d[4]: undefined_(32) = V6[u32]
@@ -4408,10 +4618,12 @@ Symbolic: operators destroyed
 
 0x08048472: mov dword ss:[esp], 0x00000000
 Symbolic: startInstruction(0x08048472: mov dword ss:[esp], 0x00000000)
+Symbolic insn@0x08048472[0]: // advancing instruction pointer
 Symbolic insn@0x08048472[0]: number_(32, 134513778) = 0x08048472<134513778>[u32]
 Symbolic insn@0x08048472[0]: number_(32, 7) = 0x00000007[u32]
 Symbolic insn@0x08048472[0]: add(0x08048472<134513778>[u32], 0x00000007[u32]) = 0x08048479<134513785>[u32]
 Symbolic insn@0x08048472[0]: writeRegister(eip, 0x08048479<134513785>[u32])
+Symbolic insn@0x08048472[0]: // executing instruction core
 Symbolic insn@0x08048472[0]: number_(32, 0) = 0x00000000[u32]
 Symbolic insn@0x08048472[0]: undefined_(32) = V1[u32]
 Symbolic insn@0x08048472[0]: readRegister(esp, V1[u32]) = esp_0[u32]
@@ -4433,10 +4645,12 @@ memory:
 
 0x08048479: call 0x08048320<_exit@plt>
 Symbolic: startInstruction(0x08048479: call 0x08048320<_exit@plt>)
+Symbolic insn@0x08048479[1]: // advancing instruction pointer
 Symbolic insn@0x08048479[1]: number_(32, 134513785) = 0x08048479<134513785>[u32]
 Symbolic insn@0x08048479[1]: number_(32, 5) = 0x00000005[u32]
 Symbolic insn@0x08048479[1]: add(0x08048479<134513785>[u32], 0x00000005[u32]) = 0x0804847e<134513790>[u32]
 Symbolic insn@0x08048479[1]: writeRegister(eip, 0x0804847e<134513790>[u32])
+Symbolic insn@0x08048479[1]: // executing instruction core
 Symbolic insn@0x08048479[1]: number_(32, 134513440) = 0x08048320<134513440>[u32]
 Symbolic insn@0x08048479[1]: unsignedExtend(0x08048320<134513440>[u32], 32) = 0x08048320<134513440>[u32]
 Symbolic insn@0x08048479[1]: undefined_(32) = V2[u32]
@@ -4475,10 +4689,12 @@ Symbolic: operators destroyed
 
 0x08048480: push ebp
 Symbolic: startInstruction(0x08048480: push ebp)
+Symbolic insn@0x08048480[0]: // advancing instruction pointer
 Symbolic insn@0x08048480[0]: number_(32, 134513792) = 0x08048480<134513792>[u32]
 Symbolic insn@0x08048480[0]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x08048480[0]: add(0x08048480<134513792>[u32], 0x00000001[u32]) = 0x08048481<134513793>[u32]
 Symbolic insn@0x08048480[0]: writeRegister(eip, 0x08048481<134513793>[u32])
+Symbolic insn@0x08048480[0]: // executing instruction core
 Symbolic insn@0x08048480[0]: undefined_(32) = V1[u32]
 Symbolic insn@0x08048480[0]: readRegister(ebp, V1[u32]) = ebp_0[u32]
 Symbolic insn@0x08048480[0]: undefined_(32) = V2[u32]
@@ -4505,10 +4721,12 @@ memory:
 
 0x08048481: mov ebp, esp
 Symbolic: startInstruction(0x08048481: mov ebp, esp)
+Symbolic insn@0x08048481[1]: // advancing instruction pointer
 Symbolic insn@0x08048481[1]: number_(32, 134513793) = 0x08048481<134513793>[u32]
 Symbolic insn@0x08048481[1]: number_(32, 2) = 0x00000002[u32]
 Symbolic insn@0x08048481[1]: add(0x08048481<134513793>[u32], 0x00000002[u32]) = 0x08048483<134513795>[u32]
 Symbolic insn@0x08048481[1]: writeRegister(eip, 0x08048483<134513795>[u32])
+Symbolic insn@0x08048481[1]: // executing instruction core
 Symbolic insn@0x08048481[1]: undefined_(32) = V3[u32]
 Symbolic insn@0x08048481[1]: readRegister(esp, V3[u32]) = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
 Symbolic insn@0x08048481[1]: writeRegister(ebp, (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32]))
@@ -4530,10 +4748,12 @@ memory:
 
 0x08048483: sub esp, 0x08
 Symbolic: startInstruction(0x08048483: sub esp, 0x08)
+Symbolic insn@0x08048483[2]: // advancing instruction pointer
 Symbolic insn@0x08048483[2]: number_(32, 134513795) = 0x08048483<134513795>[u32]
 Symbolic insn@0x08048483[2]: number_(32, 3) = 0x00000003[u32]
 Symbolic insn@0x08048483[2]: add(0x08048483<134513795>[u32], 0x00000003[u32]) = 0x08048486<134513798>[u32]
 Symbolic insn@0x08048483[2]: writeRegister(eip, 0x08048486<134513798>[u32])
+Symbolic insn@0x08048483[2]: // executing instruction core
 Symbolic insn@0x08048483[2]: undefined_(32) = V4[u32]
 Symbolic insn@0x08048483[2]: readRegister(esp, V4[u32]) = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
 Symbolic insn@0x08048483[2]: number_(8, 8) = 0x08[u8]
@@ -4599,10 +4819,12 @@ memory:
 
 0x08048486: inc dword ds:[0x080496f8<(data)ncaught>]
 Symbolic: startInstruction(0x08048486: inc dword ds:[0x080496f8<(data)ncaught>])
+Symbolic insn@0x08048486[3]: // advancing instruction pointer
 Symbolic insn@0x08048486[3]: number_(32, 134513798) = 0x08048486<134513798>[u32]
 Symbolic insn@0x08048486[3]: number_(32, 6) = 0x00000006[u32]
 Symbolic insn@0x08048486[3]: add(0x08048486<134513798>[u32], 0x00000006[u32]) = 0x0804848c<134513804>[u32]
 Symbolic insn@0x08048486[3]: writeRegister(eip, 0x0804848c<134513804>[u32])
+Symbolic insn@0x08048486[3]: // executing instruction core
 Symbolic insn@0x08048486[3]: number_(32, 134518520) = 0x080496f8<134518520>[u32]
 Symbolic insn@0x08048486[3]: undefined_(32) = V5[u32]
 Symbolic insn@0x08048486[3]: boolean_(1) = true[u1]
@@ -4674,10 +4896,12 @@ memory:
 
 0x0804848c: mov dword ss:[esp], 0x080485d4<"Hello, world.\n">
 Symbolic: startInstruction(0x0804848c: mov dword ss:[esp], 0x080485d4<"Hello, world.\n">)
+Symbolic insn@0x0804848c[4]: // advancing instruction pointer
 Symbolic insn@0x0804848c[4]: number_(32, 134513804) = 0x0804848c<134513804>[u32]
 Symbolic insn@0x0804848c[4]: number_(32, 7) = 0x00000007[u32]
 Symbolic insn@0x0804848c[4]: add(0x0804848c<134513804>[u32], 0x00000007[u32]) = 0x08048493<134513811>[u32]
 Symbolic insn@0x0804848c[4]: writeRegister(eip, 0x08048493<134513811>[u32])
+Symbolic insn@0x0804848c[4]: // executing instruction core
 Symbolic insn@0x0804848c[4]: number_(32, 134514132) = 0x080485d4<134514132>[u32]
 Symbolic insn@0x0804848c[4]: undefined_(32) = V6[u32]
 Symbolic insn@0x0804848c[4]: readRegister(esp, V6[u32]) = (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])
@@ -4719,10 +4943,12 @@ memory:
 
 0x08048493: call 0x08048300<puts@plt>
 Symbolic: startInstruction(0x08048493: call 0x08048300<puts@plt>)
+Symbolic insn@0x08048493[5]: // advancing instruction pointer
 Symbolic insn@0x08048493[5]: number_(32, 134513811) = 0x08048493<134513811>[u32]
 Symbolic insn@0x08048493[5]: number_(32, 5) = 0x00000005[u32]
 Symbolic insn@0x08048493[5]: add(0x08048493<134513811>[u32], 0x00000005[u32]) = 0x08048498<134513816>[u32]
 Symbolic insn@0x08048493[5]: writeRegister(eip, 0x08048498<134513816>[u32])
+Symbolic insn@0x08048493[5]: // executing instruction core
 Symbolic insn@0x08048493[5]: number_(32, 134513408) = 0x08048300<134513408>[u32]
 Symbolic insn@0x08048493[5]: unsignedExtend(0x08048300<134513408>[u32], 32) = 0x08048300<134513408>[u32]
 Symbolic insn@0x08048493[5]: undefined_(32) = V7[u32]
@@ -4780,10 +5006,12 @@ Symbolic: operators destroyed
 
 0x08048498: mov dword ss:[esp], 0x00000000
 Symbolic: startInstruction(0x08048498: mov dword ss:[esp], 0x00000000)
+Symbolic insn@0x08048498[0]: // advancing instruction pointer
 Symbolic insn@0x08048498[0]: number_(32, 134513816) = 0x08048498<134513816>[u32]
 Symbolic insn@0x08048498[0]: number_(32, 7) = 0x00000007[u32]
 Symbolic insn@0x08048498[0]: add(0x08048498<134513816>[u32], 0x00000007[u32]) = 0x0804849f<134513823>[u32]
 Symbolic insn@0x08048498[0]: writeRegister(eip, 0x0804849f<134513823>[u32])
+Symbolic insn@0x08048498[0]: // executing instruction core
 Symbolic insn@0x08048498[0]: number_(32, 0) = 0x00000000[u32]
 Symbolic insn@0x08048498[0]: undefined_(32) = V1[u32]
 Symbolic insn@0x08048498[0]: readRegister(esp, V1[u32]) = esp_0[u32]
@@ -4805,10 +5033,12 @@ memory:
 
 0x0804849f: call 0x08048320<_exit@plt>
 Symbolic: startInstruction(0x0804849f: call 0x08048320<_exit@plt>)
+Symbolic insn@0x0804849f[1]: // advancing instruction pointer
 Symbolic insn@0x0804849f[1]: number_(32, 134513823) = 0x0804849f<134513823>[u32]
 Symbolic insn@0x0804849f[1]: number_(32, 5) = 0x00000005[u32]
 Symbolic insn@0x0804849f[1]: add(0x0804849f<134513823>[u32], 0x00000005[u32]) = 0x080484a4<134513828>[u32]
 Symbolic insn@0x0804849f[1]: writeRegister(eip, 0x080484a4<134513828>[u32])
+Symbolic insn@0x0804849f[1]: // executing instruction core
 Symbolic insn@0x0804849f[1]: number_(32, 134513440) = 0x08048320<134513440>[u32]
 Symbolic insn@0x0804849f[1]: unsignedExtend(0x08048320<134513440>[u32], 32) = 0x08048320<134513440>[u32]
 Symbolic insn@0x0804849f[1]: undefined_(32) = V2[u32]
@@ -4847,10 +5077,12 @@ Symbolic: operators destroyed
 
 0x080484b0: push ebp
 Symbolic: startInstruction(0x080484b0: push ebp)
+Symbolic insn@0x080484b0[0]: // advancing instruction pointer
 Symbolic insn@0x080484b0[0]: number_(32, 134513840) = 0x080484b0<134513840>[u32]
 Symbolic insn@0x080484b0[0]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x080484b0[0]: add(0x080484b0<134513840>[u32], 0x00000001[u32]) = 0x080484b1<134513841>[u32]
 Symbolic insn@0x080484b0[0]: writeRegister(eip, 0x080484b1<134513841>[u32])
+Symbolic insn@0x080484b0[0]: // executing instruction core
 Symbolic insn@0x080484b0[0]: undefined_(32) = V1[u32]
 Symbolic insn@0x080484b0[0]: readRegister(ebp, V1[u32]) = ebp_0[u32]
 Symbolic insn@0x080484b0[0]: undefined_(32) = V2[u32]
@@ -4877,10 +5109,12 @@ memory:
 
 0x080484b1: mov ebp, esp
 Symbolic: startInstruction(0x080484b1: mov ebp, esp)
+Symbolic insn@0x080484b1[1]: // advancing instruction pointer
 Symbolic insn@0x080484b1[1]: number_(32, 134513841) = 0x080484b1<134513841>[u32]
 Symbolic insn@0x080484b1[1]: number_(32, 2) = 0x00000002[u32]
 Symbolic insn@0x080484b1[1]: add(0x080484b1<134513841>[u32], 0x00000002[u32]) = 0x080484b3<134513843>[u32]
 Symbolic insn@0x080484b1[1]: writeRegister(eip, 0x080484b3<134513843>[u32])
+Symbolic insn@0x080484b1[1]: // executing instruction core
 Symbolic insn@0x080484b1[1]: undefined_(32) = V3[u32]
 Symbolic insn@0x080484b1[1]: readRegister(esp, V3[u32]) = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
 Symbolic insn@0x080484b1[1]: writeRegister(ebp, (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32]))
@@ -4902,10 +5136,12 @@ memory:
 
 0x080484b3: push edi
 Symbolic: startInstruction(0x080484b3: push edi)
+Symbolic insn@0x080484b3[2]: // advancing instruction pointer
 Symbolic insn@0x080484b3[2]: number_(32, 134513843) = 0x080484b3<134513843>[u32]
 Symbolic insn@0x080484b3[2]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x080484b3[2]: add(0x080484b3<134513843>[u32], 0x00000001[u32]) = 0x080484b4<134513844>[u32]
 Symbolic insn@0x080484b3[2]: writeRegister(eip, 0x080484b4<134513844>[u32])
+Symbolic insn@0x080484b3[2]: // executing instruction core
 Symbolic insn@0x080484b3[2]: undefined_(32) = V4[u32]
 Symbolic insn@0x080484b3[2]: readRegister(edi, V4[u32]) = edi_0[u32]
 Symbolic insn@0x080484b3[2]: undefined_(32) = V5[u32]
@@ -4937,10 +5173,12 @@ memory:
 
 0x080484b4: push esi
 Symbolic: startInstruction(0x080484b4: push esi)
+Symbolic insn@0x080484b4[3]: // advancing instruction pointer
 Symbolic insn@0x080484b4[3]: number_(32, 134513844) = 0x080484b4<134513844>[u32]
 Symbolic insn@0x080484b4[3]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x080484b4[3]: add(0x080484b4<134513844>[u32], 0x00000001[u32]) = 0x080484b5<134513845>[u32]
 Symbolic insn@0x080484b4[3]: writeRegister(eip, 0x080484b5<134513845>[u32])
+Symbolic insn@0x080484b4[3]: // executing instruction core
 Symbolic insn@0x080484b4[3]: undefined_(32) = V6[u32]
 Symbolic insn@0x080484b4[3]: readRegister(esi, V6[u32]) = esi_0[u32]
 Symbolic insn@0x080484b4[3]: undefined_(32) = V7[u32]
@@ -4976,10 +5214,12 @@ memory:
 
 0x080484b5: push ebx
 Symbolic: startInstruction(0x080484b5: push ebx)
+Symbolic insn@0x080484b5[4]: // advancing instruction pointer
 Symbolic insn@0x080484b5[4]: number_(32, 134513845) = 0x080484b5<134513845>[u32]
 Symbolic insn@0x080484b5[4]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x080484b5[4]: add(0x080484b5<134513845>[u32], 0x00000001[u32]) = 0x080484b6<134513846>[u32]
 Symbolic insn@0x080484b5[4]: writeRegister(eip, 0x080484b6<134513846>[u32])
+Symbolic insn@0x080484b5[4]: // executing instruction core
 Symbolic insn@0x080484b5[4]: undefined_(32) = V8[u32]
 Symbolic insn@0x080484b5[4]: readRegister(ebx, V8[u32]) = ebx_0[u32]
 Symbolic insn@0x080484b5[4]: undefined_(32) = V9[u32]
@@ -5019,10 +5259,12 @@ memory:
 
 0x080484b6: sub esp, 0x0c
 Symbolic: startInstruction(0x080484b6: sub esp, 0x0c)
+Symbolic insn@0x080484b6[5]: // advancing instruction pointer
 Symbolic insn@0x080484b6[5]: number_(32, 134513846) = 0x080484b6<134513846>[u32]
 Symbolic insn@0x080484b6[5]: number_(32, 3) = 0x00000003[u32]
 Symbolic insn@0x080484b6[5]: add(0x080484b6<134513846>[u32], 0x00000003[u32]) = 0x080484b9<134513849>[u32]
 Symbolic insn@0x080484b6[5]: writeRegister(eip, 0x080484b9<134513849>[u32])
+Symbolic insn@0x080484b6[5]: // executing instruction core
 Symbolic insn@0x080484b6[5]: undefined_(32) = V10[u32]
 Symbolic insn@0x080484b6[5]: readRegister(esp, V10[u32]) = (add[u32] esp_0[u32] 0xfffffff0<4294967280,-16>[u32])
 Symbolic insn@0x080484b6[5]: number_(8, 12) = 0x0c[u8]
@@ -5100,10 +5342,12 @@ memory:
 
 0x080484b9: call 0x080484be<<Insn>>
 Symbolic: startInstruction(0x080484b9: call 0x080484be<<Insn>>)
+Symbolic insn@0x080484b9[6]: // advancing instruction pointer
 Symbolic insn@0x080484b9[6]: number_(32, 134513849) = 0x080484b9<134513849>[u32]
 Symbolic insn@0x080484b9[6]: number_(32, 5) = 0x00000005[u32]
 Symbolic insn@0x080484b9[6]: add(0x080484b9<134513849>[u32], 0x00000005[u32]) = 0x080484be<134513854>[u32]
 Symbolic insn@0x080484b9[6]: writeRegister(eip, 0x080484be<134513854>[u32])
+Symbolic insn@0x080484b9[6]: // executing instruction core
 Symbolic insn@0x080484b9[6]: number_(32, 134513854) = 0x080484be<134513854>[u32]
 Symbolic insn@0x080484b9[6]: unsignedExtend(0x080484be<134513854>[u32], 32) = 0x080484be<134513854>[u32]
 Symbolic insn@0x080484b9[6]: undefined_(32) = V11[u32]
@@ -5161,10 +5405,12 @@ Symbolic: operators destroyed
 
 0x080484be: pop ebx
 Symbolic: startInstruction(0x080484be: pop ebx)
+Symbolic insn@0x080484be[0]: // advancing instruction pointer
 Symbolic insn@0x080484be[0]: number_(32, 134513854) = 0x080484be<134513854>[u32]
 Symbolic insn@0x080484be[0]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x080484be[0]: add(0x080484be<134513854>[u32], 0x00000001[u32]) = 0x080484bf<134513855>[u32]
 Symbolic insn@0x080484be[0]: writeRegister(eip, 0x080484bf<134513855>[u32])
+Symbolic insn@0x080484be[0]: // executing instruction core
 Symbolic insn@0x080484be[0]: undefined_(32) = V1[u32]
 Symbolic insn@0x080484be[0]: readRegister(esp, V1[u32]) = esp_0[u32]
 Symbolic insn@0x080484be[0]: number_(32, 4) = 0x00000004[u32]
@@ -5192,10 +5438,12 @@ memory:
 
 0x080484bf: add ebx, 0x0000120a<4618>
 Symbolic: startInstruction(0x080484bf: add ebx, 0x0000120a<4618>)
+Symbolic insn@0x080484bf[1]: // advancing instruction pointer
 Symbolic insn@0x080484bf[1]: number_(32, 134513855) = 0x080484bf<134513855>[u32]
 Symbolic insn@0x080484bf[1]: number_(32, 6) = 0x00000006[u32]
 Symbolic insn@0x080484bf[1]: add(0x080484bf<134513855>[u32], 0x00000006[u32]) = 0x080484c5<134513861>[u32]
 Symbolic insn@0x080484bf[1]: writeRegister(eip, 0x080484c5<134513861>[u32])
+Symbolic insn@0x080484bf[1]: // executing instruction core
 Symbolic insn@0x080484bf[1]: boolean_(0) = false[u1]
 Symbolic insn@0x080484bf[1]: number_(32, 4618) = 0x0000120a<4618>[u32]
 Symbolic insn@0x080484bf[1]: undefined_(32) = V3[u32]
@@ -5256,10 +5504,12 @@ memory:
 
 0x080484c5: call 0x080482c8<(func)_init>
 Symbolic: startInstruction(0x080484c5: call 0x080482c8<(func)_init>)
+Symbolic insn@0x080484c5[2]: // advancing instruction pointer
 Symbolic insn@0x080484c5[2]: number_(32, 134513861) = 0x080484c5<134513861>[u32]
 Symbolic insn@0x080484c5[2]: number_(32, 5) = 0x00000005[u32]
 Symbolic insn@0x080484c5[2]: add(0x080484c5<134513861>[u32], 0x00000005[u32]) = 0x080484ca<134513866>[u32]
 Symbolic insn@0x080484c5[2]: writeRegister(eip, 0x080484ca<134513866>[u32])
+Symbolic insn@0x080484c5[2]: // executing instruction core
 Symbolic insn@0x080484c5[2]: number_(32, 134513352) = 0x080482c8<134513352>[u32]
 Symbolic insn@0x080484c5[2]: unsignedExtend(0x080482c8<134513352>[u32], 32) = 0x080482c8<134513352>[u32]
 Symbolic insn@0x080484c5[2]: undefined_(32) = V4[u32]
@@ -5304,10 +5554,12 @@ Symbolic: operators destroyed
 
 0x080484ca: lea eax, [ebx + 0xffffff20<-224>]
 Symbolic: startInstruction(0x080484ca: lea eax, [ebx + 0xffffff20<-224>])
+Symbolic insn@0x080484ca[0]: // advancing instruction pointer
 Symbolic insn@0x080484ca[0]: number_(32, 134513866) = 0x080484ca<134513866>[u32]
 Symbolic insn@0x080484ca[0]: number_(32, 6) = 0x00000006[u32]
 Symbolic insn@0x080484ca[0]: add(0x080484ca<134513866>[u32], 0x00000006[u32]) = 0x080484d0<134513872>[u32]
 Symbolic insn@0x080484ca[0]: writeRegister(eip, 0x080484d0<134513872>[u32])
+Symbolic insn@0x080484ca[0]: // executing instruction core
 Symbolic insn@0x080484ca[0]: undefined_(32) = V1[u32]
 Symbolic insn@0x080484ca[0]: readRegister(ebx, V1[u32]) = ebx_0[u32]
 Symbolic insn@0x080484ca[0]: number_(32, 4294967072) = 0xffffff20<4294967072,-224>[u32]
@@ -5327,10 +5579,12 @@ memory:
 
 0x080484d0: lea edx, [ebx + 0xffffff20<-224>]
 Symbolic: startInstruction(0x080484d0: lea edx, [ebx + 0xffffff20<-224>])
+Symbolic insn@0x080484d0[1]: // advancing instruction pointer
 Symbolic insn@0x080484d0[1]: number_(32, 134513872) = 0x080484d0<134513872>[u32]
 Symbolic insn@0x080484d0[1]: number_(32, 6) = 0x00000006[u32]
 Symbolic insn@0x080484d0[1]: add(0x080484d0<134513872>[u32], 0x00000006[u32]) = 0x080484d6<134513878>[u32]
 Symbolic insn@0x080484d0[1]: writeRegister(eip, 0x080484d6<134513878>[u32])
+Symbolic insn@0x080484d0[1]: // executing instruction core
 Symbolic insn@0x080484d0[1]: undefined_(32) = V2[u32]
 Symbolic insn@0x080484d0[1]: readRegister(ebx, V2[u32]) = ebx_0[u32]
 Symbolic insn@0x080484d0[1]: number_(32, 4294967072) = 0xffffff20<4294967072,-224>[u32]
@@ -5351,10 +5605,12 @@ memory:
 
 0x080484d6: sub eax, edx
 Symbolic: startInstruction(0x080484d6: sub eax, edx)
+Symbolic insn@0x080484d6[2]: // advancing instruction pointer
 Symbolic insn@0x080484d6[2]: number_(32, 134513878) = 0x080484d6<134513878>[u32]
 Symbolic insn@0x080484d6[2]: number_(32, 2) = 0x00000002[u32]
 Symbolic insn@0x080484d6[2]: add(0x080484d6<134513878>[u32], 0x00000002[u32]) = 0x080484d8<134513880>[u32]
 Symbolic insn@0x080484d6[2]: writeRegister(eip, 0x080484d8<134513880>[u32])
+Symbolic insn@0x080484d6[2]: // executing instruction core
 Symbolic insn@0x080484d6[2]: undefined_(32) = V3[u32]
 Symbolic insn@0x080484d6[2]: readRegister(eax, V3[u32]) = (add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32])
 Symbolic insn@0x080484d6[2]: undefined_(32) = V4[u32]
@@ -5416,10 +5672,12 @@ memory:
 
 0x080484d8: sar eax, 0x02
 Symbolic: startInstruction(0x080484d8: sar eax, 0x02)
+Symbolic insn@0x080484d8[3]: // advancing instruction pointer
 Symbolic insn@0x080484d8[3]: number_(32, 134513880) = 0x080484d8<134513880>[u32]
 Symbolic insn@0x080484d8[3]: number_(32, 3) = 0x00000003[u32]
 Symbolic insn@0x080484d8[3]: add(0x080484d8<134513880>[u32], 0x00000003[u32]) = 0x080484db<134513883>[u32]
 Symbolic insn@0x080484d8[3]: writeRegister(eip, 0x080484db<134513883>[u32])
+Symbolic insn@0x080484d8[3]: // executing instruction core
 Symbolic insn@0x080484d8[3]: number_(8, 2) = 0x02[u8]
 Symbolic insn@0x080484d8[3]: unspecified_(32) = V5[u32]<unspec>
 Symbolic insn@0x080484d8[3]: undefined_(32) = V6[u32]
@@ -5516,10 +5774,12 @@ memory:
 
 0x080484db: mov dword ss:[ebp + 0xf0<-16>], eax
 Symbolic: startInstruction(0x080484db: mov dword ss:[ebp + 0xf0<-16>], eax)
+Symbolic insn@0x080484db[4]: // advancing instruction pointer
 Symbolic insn@0x080484db[4]: number_(32, 134513883) = 0x080484db<134513883>[u32]
 Symbolic insn@0x080484db[4]: number_(32, 3) = 0x00000003[u32]
 Symbolic insn@0x080484db[4]: add(0x080484db<134513883>[u32], 0x00000003[u32]) = 0x080484de<134513886>[u32]
 Symbolic insn@0x080484db[4]: writeRegister(eip, 0x080484de<134513886>[u32])
+Symbolic insn@0x080484db[4]: // executing instruction core
 Symbolic insn@0x080484db[4]: undefined_(32) = V15[u32]
 Symbolic insn@0x080484db[4]: readRegister(eax, V15[u32]) = (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32])) ebx_0[u32] 0xffffff21<4294967073,-223>[u32]))
 Symbolic insn@0x080484db[4]: undefined_(32) = V16[u32]
@@ -5553,10 +5813,12 @@ memory:
 
 0x080484de: jne 0x080484f0<<BBlock>>
 Symbolic: startInstruction(0x080484de: jne 0x080484f0<<BBlock>>)
+Symbolic insn@0x080484de[5]: // advancing instruction pointer
 Symbolic insn@0x080484de[5]: number_(32, 134513886) = 0x080484de<134513886>[u32]
 Symbolic insn@0x080484de[5]: number_(32, 2) = 0x00000002[u32]
 Symbolic insn@0x080484de[5]: add(0x080484de<134513886>[u32], 0x00000002[u32]) = 0x080484e0<134513888>[u32]
 Symbolic insn@0x080484de[5]: writeRegister(eip, 0x080484e0<134513888>[u32])
+Symbolic insn@0x080484de[5]: // executing instruction core
 Symbolic insn@0x080484de[5]: undefined_(1) = V17[u1]
 Symbolic insn@0x080484de[5]: readRegister(zf, V17[u1]) = (zerop[u1] (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32])) ebx_0[u32] 0xffffff21<4294967073,-223>[u32])))
 Symbolic insn@0x080484de[5]: invert((zerop[u1] (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32])) ebx_0[u32] 0xffffff21<4294967073,-223>[u32])))) = (invert[u1] (zerop[u1] (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32])) ebx_0[u32] 0xffffff21<4294967073,-223>[u32]))))
@@ -5595,10 +5857,12 @@ Symbolic: operators destroyed
 
 0x080484e0: add esp, 0x0c
 Symbolic: startInstruction(0x080484e0: add esp, 0x0c)
+Symbolic insn@0x080484e0[0]: // advancing instruction pointer
 Symbolic insn@0x080484e0[0]: number_(32, 134513888) = 0x080484e0<134513888>[u32]
 Symbolic insn@0x080484e0[0]: number_(32, 3) = 0x00000003[u32]
 Symbolic insn@0x080484e0[0]: add(0x080484e0<134513888>[u32], 0x00000003[u32]) = 0x080484e3<134513891>[u32]
 Symbolic insn@0x080484e0[0]: writeRegister(eip, 0x080484e3<134513891>[u32])
+Symbolic insn@0x080484e0[0]: // executing instruction core
 Symbolic insn@0x080484e0[0]: boolean_(0) = false[u1]
 Symbolic insn@0x080484e0[0]: number_(8, 12) = 0x0c[u8]
 Symbolic insn@0x080484e0[0]: undefined_(32) = V1[u32]
@@ -5655,10 +5919,12 @@ memory:
 
 0x080484e3: pop ebx
 Symbolic: startInstruction(0x080484e3: pop ebx)
+Symbolic insn@0x080484e3[1]: // advancing instruction pointer
 Symbolic insn@0x080484e3[1]: number_(32, 134513891) = 0x080484e3<134513891>[u32]
 Symbolic insn@0x080484e3[1]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x080484e3[1]: add(0x080484e3<134513891>[u32], 0x00000001[u32]) = 0x080484e4<134513892>[u32]
 Symbolic insn@0x080484e3[1]: writeRegister(eip, 0x080484e4<134513892>[u32])
+Symbolic insn@0x080484e3[1]: // executing instruction core
 Symbolic insn@0x080484e3[1]: undefined_(32) = V2[u32]
 Symbolic insn@0x080484e3[1]: readRegister(esp, V2[u32]) = (add[u32] esp_0[u32] 0x0000000c[u32])
 Symbolic insn@0x080484e3[1]: number_(32, 4) = 0x00000004[u32]
@@ -5692,10 +5958,12 @@ memory:
 
 0x080484e4: pop esi
 Symbolic: startInstruction(0x080484e4: pop esi)
+Symbolic insn@0x080484e4[2]: // advancing instruction pointer
 Symbolic insn@0x080484e4[2]: number_(32, 134513892) = 0x080484e4<134513892>[u32]
 Symbolic insn@0x080484e4[2]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x080484e4[2]: add(0x080484e4<134513892>[u32], 0x00000001[u32]) = 0x080484e5<134513893>[u32]
 Symbolic insn@0x080484e4[2]: writeRegister(eip, 0x080484e5<134513893>[u32])
+Symbolic insn@0x080484e4[2]: // executing instruction core
 Symbolic insn@0x080484e4[2]: undefined_(32) = V4[u32]
 Symbolic insn@0x080484e4[2]: readRegister(esp, V4[u32]) = (add[u32] esp_0[u32] 0x00000010[u32])
 Symbolic insn@0x080484e4[2]: number_(32, 4) = 0x00000004[u32]
@@ -5734,10 +6002,12 @@ memory:
 
 0x080484e5: pop edi
 Symbolic: startInstruction(0x080484e5: pop edi)
+Symbolic insn@0x080484e5[3]: // advancing instruction pointer
 Symbolic insn@0x080484e5[3]: number_(32, 134513893) = 0x080484e5<134513893>[u32]
 Symbolic insn@0x080484e5[3]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x080484e5[3]: add(0x080484e5<134513893>[u32], 0x00000001[u32]) = 0x080484e6<134513894>[u32]
 Symbolic insn@0x080484e5[3]: writeRegister(eip, 0x080484e6<134513894>[u32])
+Symbolic insn@0x080484e5[3]: // executing instruction core
 Symbolic insn@0x080484e5[3]: undefined_(32) = V6[u32]
 Symbolic insn@0x080484e5[3]: readRegister(esp, V6[u32]) = (add[u32] esp_0[u32] 0x00000014[u32])
 Symbolic insn@0x080484e5[3]: number_(32, 4) = 0x00000004[u32]
@@ -5781,10 +6051,12 @@ memory:
 
 0x080484e6: pop ebp
 Symbolic: startInstruction(0x080484e6: pop ebp)
+Symbolic insn@0x080484e6[4]: // advancing instruction pointer
 Symbolic insn@0x080484e6[4]: number_(32, 134513894) = 0x080484e6<134513894>[u32]
 Symbolic insn@0x080484e6[4]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x080484e6[4]: add(0x080484e6<134513894>[u32], 0x00000001[u32]) = 0x080484e7<134513895>[u32]
 Symbolic insn@0x080484e6[4]: writeRegister(eip, 0x080484e7<134513895>[u32])
+Symbolic insn@0x080484e6[4]: // executing instruction core
 Symbolic insn@0x080484e6[4]: undefined_(32) = V8[u32]
 Symbolic insn@0x080484e6[4]: readRegister(esp, V8[u32]) = (add[u32] esp_0[u32] 0x00000018[u32])
 Symbolic insn@0x080484e6[4]: number_(32, 4) = 0x00000004[u32]
@@ -5833,10 +6105,12 @@ memory:
 
 0x080484e7: ret 
 Symbolic: startInstruction(0x080484e7: ret)
+Symbolic insn@0x080484e7[5]: // advancing instruction pointer
 Symbolic insn@0x080484e7[5]: number_(32, 134513895) = 0x080484e7<134513895>[u32]
 Symbolic insn@0x080484e7[5]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x080484e7[5]: add(0x080484e7<134513895>[u32], 0x00000001[u32]) = 0x080484e8<134513896>[u32]
 Symbolic insn@0x080484e7[5]: writeRegister(eip, 0x080484e8<134513896>[u32])
+Symbolic insn@0x080484e7[5]: // executing instruction core
 Symbolic insn@0x080484e7[5]: undefined_(32) = V10[u32]
 Symbolic insn@0x080484e7[5]: readRegister(esp, V10[u32]) = (add[u32] esp_0[u32] 0x0000001c[u32])
 Symbolic insn@0x080484e7[5]: number_(32, 4) = 0x00000004[u32]
@@ -5894,10 +6168,12 @@ Symbolic: operators destroyed
 
 0x080484e8: nop 
 Symbolic: startInstruction(0x080484e8: nop)
+Symbolic insn@0x080484e8[0]: // advancing instruction pointer
 Symbolic insn@0x080484e8[0]: number_(32, 134513896) = 0x080484e8<134513896>[u32]
 Symbolic insn@0x080484e8[0]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x080484e8[0]: add(0x080484e8<134513896>[u32], 0x00000001[u32]) = 0x080484e9<134513897>[u32]
 Symbolic insn@0x080484e8[0]: writeRegister(eip, 0x080484e9<134513897>[u32])
+Symbolic insn@0x080484e8[0]: // executing instruction core
 Symbolic insn@0x080484e8[0]: finishInstruction(nop)
 registers:
  es = 0x0000[u16]
@@ -5910,10 +6186,12 @@ memory:
 
 0x080484e9: lea esi, [esi + 0x00000000]
 Symbolic: startInstruction(0x080484e9: lea esi, [esi + 0x00000000])
+Symbolic insn@0x080484e9[1]: // advancing instruction pointer
 Symbolic insn@0x080484e9[1]: number_(32, 134513897) = 0x080484e9<134513897>[u32]
 Symbolic insn@0x080484e9[1]: number_(32, 7) = 0x00000007[u32]
 Symbolic insn@0x080484e9[1]: add(0x080484e9<134513897>[u32], 0x00000007[u32]) = 0x080484f0<134513904>[u32]
 Symbolic insn@0x080484e9[1]: writeRegister(eip, 0x080484f0<134513904>[u32])
+Symbolic insn@0x080484e9[1]: // executing instruction core
 Symbolic insn@0x080484e9[1]: undefined_(32) = V1[u32]
 Symbolic insn@0x080484e9[1]: readRegister(esi, V1[u32]) = esi_0[u32]
 Symbolic insn@0x080484e9[1]: number_(32, 0) = 0x00000000[u32]
@@ -5932,10 +6210,12 @@ memory:
 
 0x080484f0: xor edi, edi
 Symbolic: startInstruction(0x080484f0: xor edi, edi)
+Symbolic insn@0x080484f0[2]: // advancing instruction pointer
 Symbolic insn@0x080484f0[2]: number_(32, 134513904) = 0x080484f0<134513904>[u32]
 Symbolic insn@0x080484f0[2]: number_(32, 2) = 0x00000002[u32]
 Symbolic insn@0x080484f0[2]: add(0x080484f0<134513904>[u32], 0x00000002[u32]) = 0x080484f2<134513906>[u32]
 Symbolic insn@0x080484f0[2]: writeRegister(eip, 0x080484f2<134513906>[u32])
+Symbolic insn@0x080484f0[2]: // executing instruction core
 Symbolic insn@0x080484f0[2]: number_(32, 0) = 0x00000000[u32]
 Symbolic insn@0x080484f0[2]: extract(0x00000000[u32], 0, 8) = 0x00[u8]
 Symbolic insn@0x080484f0[2]: extract(0x00[u8], 1, 2) = false[u1]
@@ -5985,10 +6265,12 @@ memory:
 
 0x080484f2: mov esi, edx
 Symbolic: startInstruction(0x080484f2: mov esi, edx)
+Symbolic insn@0x080484f2[3]: // advancing instruction pointer
 Symbolic insn@0x080484f2[3]: number_(32, 134513906) = 0x080484f2<134513906>[u32]
 Symbolic insn@0x080484f2[3]: number_(32, 2) = 0x00000002[u32]
 Symbolic insn@0x080484f2[3]: add(0x080484f2<134513906>[u32], 0x00000002[u32]) = 0x080484f4<134513908>[u32]
 Symbolic insn@0x080484f2[3]: writeRegister(eip, 0x080484f4<134513908>[u32])
+Symbolic insn@0x080484f2[3]: // executing instruction core
 Symbolic insn@0x080484f2[3]: undefined_(32) = V3[u32]
 Symbolic insn@0x080484f2[3]: readRegister(edx, V3[u32]) = edx_0[u32]
 Symbolic insn@0x080484f2[3]: writeRegister(esi, edx_0[u32])
@@ -6012,10 +6294,12 @@ memory:
 
 0x080484f4: lea esi, [esi + 0x00000000]
 Symbolic: startInstruction(0x080484f4: lea esi, [esi + 0x00000000])
+Symbolic insn@0x080484f4[4]: // advancing instruction pointer
 Symbolic insn@0x080484f4[4]: number_(32, 134513908) = 0x080484f4<134513908>[u32]
 Symbolic insn@0x080484f4[4]: number_(32, 6) = 0x00000006[u32]
 Symbolic insn@0x080484f4[4]: add(0x080484f4<134513908>[u32], 0x00000006[u32]) = 0x080484fa<134513914>[u32]
 Symbolic insn@0x080484f4[4]: writeRegister(eip, 0x080484fa<134513914>[u32])
+Symbolic insn@0x080484f4[4]: // executing instruction core
 Symbolic insn@0x080484f4[4]: undefined_(32) = V4[u32]
 Symbolic insn@0x080484f4[4]: readRegister(esi, V4[u32]) = edx_0[u32]
 Symbolic insn@0x080484f4[4]: number_(32, 0) = 0x00000000[u32]
@@ -6042,10 +6326,12 @@ memory:
 
 0x080484fa: lea edi, [edi + 0x00000000]
 Symbolic: startInstruction(0x080484fa: lea edi, [edi + 0x00000000])
+Symbolic insn@0x080484fa[5]: // advancing instruction pointer
 Symbolic insn@0x080484fa[5]: number_(32, 134513914) = 0x080484fa<134513914>[u32]
 Symbolic insn@0x080484fa[5]: number_(32, 6) = 0x00000006[u32]
 Symbolic insn@0x080484fa[5]: add(0x080484fa<134513914>[u32], 0x00000006[u32]) = 0x08048500<134513920>[u32]
 Symbolic insn@0x080484fa[5]: writeRegister(eip, 0x08048500<134513920>[u32])
+Symbolic insn@0x080484fa[5]: // executing instruction core
 Symbolic insn@0x080484fa[5]: undefined_(32) = V5[u32]
 Symbolic insn@0x080484fa[5]: readRegister(edi, V5[u32]) = 0x00000000[u32]
 Symbolic insn@0x080484fa[5]: number_(32, 0) = 0x00000000[u32]
@@ -6072,10 +6358,12 @@ memory:
 
 0x08048500: call dword ds:[esi]
 Symbolic: startInstruction(0x08048500: call dword ds:[esi])
+Symbolic insn@0x08048500[6]: // advancing instruction pointer
 Symbolic insn@0x08048500[6]: number_(32, 134513920) = 0x08048500<134513920>[u32]
 Symbolic insn@0x08048500[6]: number_(32, 2) = 0x00000002[u32]
 Symbolic insn@0x08048500[6]: add(0x08048500<134513920>[u32], 0x00000002[u32]) = 0x08048502<134513922>[u32]
 Symbolic insn@0x08048500[6]: writeRegister(eip, 0x08048502<134513922>[u32])
+Symbolic insn@0x08048500[6]: // executing instruction core
 Symbolic insn@0x08048500[6]: undefined_(32) = V6[u32]
 Symbolic insn@0x08048500[6]: readRegister(esi, V6[u32]) = edx_0[u32]
 Symbolic insn@0x08048500[6]: undefined_(32) = V7[u32]
@@ -6126,10 +6414,12 @@ Symbolic: operators destroyed
 
 0x08048502: inc edi
 Symbolic: startInstruction(0x08048502: inc edi)
+Symbolic insn@0x08048502[0]: // advancing instruction pointer
 Symbolic insn@0x08048502[0]: number_(32, 134513922) = 0x08048502<134513922>[u32]
 Symbolic insn@0x08048502[0]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x08048502[0]: add(0x08048502<134513922>[u32], 0x00000001[u32]) = 0x08048503<134513923>[u32]
 Symbolic insn@0x08048502[0]: writeRegister(eip, 0x08048503<134513923>[u32])
+Symbolic insn@0x08048502[0]: // executing instruction core
 Symbolic insn@0x08048502[0]: undefined_(32) = V1[u32]
 Symbolic insn@0x08048502[0]: readRegister(edi, V1[u32]) = edi_0[u32]
 Symbolic insn@0x08048502[0]: boolean_(0) = false[u1]
@@ -6183,10 +6473,12 @@ memory:
 
 0x08048503: add esi, 0x04
 Symbolic: startInstruction(0x08048503: add esi, 0x04)
+Symbolic insn@0x08048503[1]: // advancing instruction pointer
 Symbolic insn@0x08048503[1]: number_(32, 134513923) = 0x08048503<134513923>[u32]
 Symbolic insn@0x08048503[1]: number_(32, 3) = 0x00000003[u32]
 Symbolic insn@0x08048503[1]: add(0x08048503<134513923>[u32], 0x00000003[u32]) = 0x08048506<134513926>[u32]
 Symbolic insn@0x08048503[1]: writeRegister(eip, 0x08048506<134513926>[u32])
+Symbolic insn@0x08048503[1]: // executing instruction core
 Symbolic insn@0x08048503[1]: boolean_(0) = false[u1]
 Symbolic insn@0x08048503[1]: number_(8, 4) = 0x04[u8]
 Symbolic insn@0x08048503[1]: undefined_(32) = V2[u32]
@@ -6244,10 +6536,12 @@ memory:
 
 0x08048506: cmp edi, dword ss:[ebp + 0xf0<-16>]
 Symbolic: startInstruction(0x08048506: cmp edi, dword ss:[ebp + 0xf0<-16>])
+Symbolic insn@0x08048506[2]: // advancing instruction pointer
 Symbolic insn@0x08048506[2]: number_(32, 134513926) = 0x08048506<134513926>[u32]
 Symbolic insn@0x08048506[2]: number_(32, 3) = 0x00000003[u32]
 Symbolic insn@0x08048506[2]: add(0x08048506<134513926>[u32], 0x00000003[u32]) = 0x08048509<134513929>[u32]
 Symbolic insn@0x08048506[2]: writeRegister(eip, 0x08048509<134513929>[u32])
+Symbolic insn@0x08048506[2]: // executing instruction core
 Symbolic insn@0x08048506[2]: undefined_(32) = V3[u32]
 Symbolic insn@0x08048506[2]: readRegister(edi, V3[u32]) = (add[u32] edi_0[u32] 0x00000001[u32])
 Symbolic insn@0x08048506[2]: undefined_(32) = V4[u32]
@@ -6318,10 +6612,12 @@ memory:
 
 0x08048509: jb 0x08048500<<BBlock>>
 Symbolic: startInstruction(0x08048509: jb 0x08048500<<BBlock>>)
+Symbolic insn@0x08048509[3]: // advancing instruction pointer
 Symbolic insn@0x08048509[3]: number_(32, 134513929) = 0x08048509<134513929>[u32]
 Symbolic insn@0x08048509[3]: number_(32, 2) = 0x00000002[u32]
 Symbolic insn@0x08048509[3]: add(0x08048509<134513929>[u32], 0x00000002[u32]) = 0x0804850b<134513931>[u32]
 Symbolic insn@0x08048509[3]: writeRegister(eip, 0x0804850b<134513931>[u32])
+Symbolic insn@0x08048509[3]: // executing instruction core
 Symbolic insn@0x08048509[3]: undefined_(1) = V6[u1]
 Symbolic insn@0x08048509[3]: readRegister(cf, V6[u1]) = (invert[u1] (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] (add[u32] edi_0[u32] 0x00000001[u32])) (uextend[u33] 0x00000021[u32] (invert[u32] V5[u32])) 0x000000001[u33]) (uextend[u33] 0x00000021[u32] (add[u32] edi_0[u32] 0x00000001[u32])) (uextend[u33] 0x00000021[u32] (invert[u32] V5[u32])))))
 Symbolic insn@0x08048509[3]: undefined_(32) = V7[u32]
@@ -6359,10 +6655,12 @@ Symbolic: operators destroyed
 
 0x0804850b: add esp, 0x0c
 Symbolic: startInstruction(0x0804850b: add esp, 0x0c)
+Symbolic insn@0x0804850b[0]: // advancing instruction pointer
 Symbolic insn@0x0804850b[0]: number_(32, 134513931) = 0x0804850b<134513931>[u32]
 Symbolic insn@0x0804850b[0]: number_(32, 3) = 0x00000003[u32]
 Symbolic insn@0x0804850b[0]: add(0x0804850b<134513931>[u32], 0x00000003[u32]) = 0x0804850e<134513934>[u32]
 Symbolic insn@0x0804850b[0]: writeRegister(eip, 0x0804850e<134513934>[u32])
+Symbolic insn@0x0804850b[0]: // executing instruction core
 Symbolic insn@0x0804850b[0]: boolean_(0) = false[u1]
 Symbolic insn@0x0804850b[0]: number_(8, 12) = 0x0c[u8]
 Symbolic insn@0x0804850b[0]: undefined_(32) = V1[u32]
@@ -6419,10 +6717,12 @@ memory:
 
 0x0804850e: pop ebx
 Symbolic: startInstruction(0x0804850e: pop ebx)
+Symbolic insn@0x0804850e[1]: // advancing instruction pointer
 Symbolic insn@0x0804850e[1]: number_(32, 134513934) = 0x0804850e<134513934>[u32]
 Symbolic insn@0x0804850e[1]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x0804850e[1]: add(0x0804850e<134513934>[u32], 0x00000001[u32]) = 0x0804850f<134513935>[u32]
 Symbolic insn@0x0804850e[1]: writeRegister(eip, 0x0804850f<134513935>[u32])
+Symbolic insn@0x0804850e[1]: // executing instruction core
 Symbolic insn@0x0804850e[1]: undefined_(32) = V2[u32]
 Symbolic insn@0x0804850e[1]: readRegister(esp, V2[u32]) = (add[u32] esp_0[u32] 0x0000000c[u32])
 Symbolic insn@0x0804850e[1]: number_(32, 4) = 0x00000004[u32]
@@ -6456,10 +6756,12 @@ memory:
 
 0x0804850f: pop esi
 Symbolic: startInstruction(0x0804850f: pop esi)
+Symbolic insn@0x0804850f[2]: // advancing instruction pointer
 Symbolic insn@0x0804850f[2]: number_(32, 134513935) = 0x0804850f<134513935>[u32]
 Symbolic insn@0x0804850f[2]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x0804850f[2]: add(0x0804850f<134513935>[u32], 0x00000001[u32]) = 0x08048510<134513936>[u32]
 Symbolic insn@0x0804850f[2]: writeRegister(eip, 0x08048510<134513936>[u32])
+Symbolic insn@0x0804850f[2]: // executing instruction core
 Symbolic insn@0x0804850f[2]: undefined_(32) = V4[u32]
 Symbolic insn@0x0804850f[2]: readRegister(esp, V4[u32]) = (add[u32] esp_0[u32] 0x00000010[u32])
 Symbolic insn@0x0804850f[2]: number_(32, 4) = 0x00000004[u32]
@@ -6498,10 +6800,12 @@ memory:
 
 0x08048510: pop edi
 Symbolic: startInstruction(0x08048510: pop edi)
+Symbolic insn@0x08048510[3]: // advancing instruction pointer
 Symbolic insn@0x08048510[3]: number_(32, 134513936) = 0x08048510<134513936>[u32]
 Symbolic insn@0x08048510[3]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x08048510[3]: add(0x08048510<134513936>[u32], 0x00000001[u32]) = 0x08048511<134513937>[u32]
 Symbolic insn@0x08048510[3]: writeRegister(eip, 0x08048511<134513937>[u32])
+Symbolic insn@0x08048510[3]: // executing instruction core
 Symbolic insn@0x08048510[3]: undefined_(32) = V6[u32]
 Symbolic insn@0x08048510[3]: readRegister(esp, V6[u32]) = (add[u32] esp_0[u32] 0x00000014[u32])
 Symbolic insn@0x08048510[3]: number_(32, 4) = 0x00000004[u32]
@@ -6545,10 +6849,12 @@ memory:
 
 0x08048511: pop ebp
 Symbolic: startInstruction(0x08048511: pop ebp)
+Symbolic insn@0x08048511[4]: // advancing instruction pointer
 Symbolic insn@0x08048511[4]: number_(32, 134513937) = 0x08048511<134513937>[u32]
 Symbolic insn@0x08048511[4]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x08048511[4]: add(0x08048511<134513937>[u32], 0x00000001[u32]) = 0x08048512<134513938>[u32]
 Symbolic insn@0x08048511[4]: writeRegister(eip, 0x08048512<134513938>[u32])
+Symbolic insn@0x08048511[4]: // executing instruction core
 Symbolic insn@0x08048511[4]: undefined_(32) = V8[u32]
 Symbolic insn@0x08048511[4]: readRegister(esp, V8[u32]) = (add[u32] esp_0[u32] 0x00000018[u32])
 Symbolic insn@0x08048511[4]: number_(32, 4) = 0x00000004[u32]
@@ -6597,10 +6903,12 @@ memory:
 
 0x08048512: ret 
 Symbolic: startInstruction(0x08048512: ret)
+Symbolic insn@0x08048512[5]: // advancing instruction pointer
 Symbolic insn@0x08048512[5]: number_(32, 134513938) = 0x08048512<134513938>[u32]
 Symbolic insn@0x08048512[5]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x08048512[5]: add(0x08048512<134513938>[u32], 0x00000001[u32]) = 0x08048513<134513939>[u32]
 Symbolic insn@0x08048512[5]: writeRegister(eip, 0x08048513<134513939>[u32])
+Symbolic insn@0x08048512[5]: // executing instruction core
 Symbolic insn@0x08048512[5]: undefined_(32) = V10[u32]
 Symbolic insn@0x08048512[5]: readRegister(esp, V10[u32]) = (add[u32] esp_0[u32] 0x0000001c[u32])
 Symbolic insn@0x08048512[5]: number_(32, 4) = 0x00000004[u32]
@@ -6658,10 +6966,12 @@ Symbolic: operators destroyed
 
 0x08048520: push ebp
 Symbolic: startInstruction(0x08048520: push ebp)
+Symbolic insn@0x08048520[0]: // advancing instruction pointer
 Symbolic insn@0x08048520[0]: number_(32, 134513952) = 0x08048520<134513952>[u32]
 Symbolic insn@0x08048520[0]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x08048520[0]: add(0x08048520<134513952>[u32], 0x00000001[u32]) = 0x08048521<134513953>[u32]
 Symbolic insn@0x08048520[0]: writeRegister(eip, 0x08048521<134513953>[u32])
+Symbolic insn@0x08048520[0]: // executing instruction core
 Symbolic insn@0x08048520[0]: undefined_(32) = V1[u32]
 Symbolic insn@0x08048520[0]: readRegister(ebp, V1[u32]) = ebp_0[u32]
 Symbolic insn@0x08048520[0]: undefined_(32) = V2[u32]
@@ -6688,10 +6998,12 @@ memory:
 
 0x08048521: mov ebp, esp
 Symbolic: startInstruction(0x08048521: mov ebp, esp)
+Symbolic insn@0x08048521[1]: // advancing instruction pointer
 Symbolic insn@0x08048521[1]: number_(32, 134513953) = 0x08048521<134513953>[u32]
 Symbolic insn@0x08048521[1]: number_(32, 2) = 0x00000002[u32]
 Symbolic insn@0x08048521[1]: add(0x08048521<134513953>[u32], 0x00000002[u32]) = 0x08048523<134513955>[u32]
 Symbolic insn@0x08048521[1]: writeRegister(eip, 0x08048523<134513955>[u32])
+Symbolic insn@0x08048521[1]: // executing instruction core
 Symbolic insn@0x08048521[1]: undefined_(32) = V3[u32]
 Symbolic insn@0x08048521[1]: readRegister(esp, V3[u32]) = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
 Symbolic insn@0x08048521[1]: writeRegister(ebp, (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32]))
@@ -6713,10 +7025,12 @@ memory:
 
 0x08048523: push edi
 Symbolic: startInstruction(0x08048523: push edi)
+Symbolic insn@0x08048523[2]: // advancing instruction pointer
 Symbolic insn@0x08048523[2]: number_(32, 134513955) = 0x08048523<134513955>[u32]
 Symbolic insn@0x08048523[2]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x08048523[2]: add(0x08048523<134513955>[u32], 0x00000001[u32]) = 0x08048524<134513956>[u32]
 Symbolic insn@0x08048523[2]: writeRegister(eip, 0x08048524<134513956>[u32])
+Symbolic insn@0x08048523[2]: // executing instruction core
 Symbolic insn@0x08048523[2]: undefined_(32) = V4[u32]
 Symbolic insn@0x08048523[2]: readRegister(edi, V4[u32]) = edi_0[u32]
 Symbolic insn@0x08048523[2]: undefined_(32) = V5[u32]
@@ -6748,10 +7062,12 @@ memory:
 
 0x08048524: push esi
 Symbolic: startInstruction(0x08048524: push esi)
+Symbolic insn@0x08048524[3]: // advancing instruction pointer
 Symbolic insn@0x08048524[3]: number_(32, 134513956) = 0x08048524<134513956>[u32]
 Symbolic insn@0x08048524[3]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x08048524[3]: add(0x08048524<134513956>[u32], 0x00000001[u32]) = 0x08048525<134513957>[u32]
 Symbolic insn@0x08048524[3]: writeRegister(eip, 0x08048525<134513957>[u32])
+Symbolic insn@0x08048524[3]: // executing instruction core
 Symbolic insn@0x08048524[3]: undefined_(32) = V6[u32]
 Symbolic insn@0x08048524[3]: readRegister(esi, V6[u32]) = esi_0[u32]
 Symbolic insn@0x08048524[3]: undefined_(32) = V7[u32]
@@ -6787,10 +7103,12 @@ memory:
 
 0x08048525: push ebx
 Symbolic: startInstruction(0x08048525: push ebx)
+Symbolic insn@0x08048525[4]: // advancing instruction pointer
 Symbolic insn@0x08048525[4]: number_(32, 134513957) = 0x08048525<134513957>[u32]
 Symbolic insn@0x08048525[4]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x08048525[4]: add(0x08048525<134513957>[u32], 0x00000001[u32]) = 0x08048526<134513958>[u32]
 Symbolic insn@0x08048525[4]: writeRegister(eip, 0x08048526<134513958>[u32])
+Symbolic insn@0x08048525[4]: // executing instruction core
 Symbolic insn@0x08048525[4]: undefined_(32) = V8[u32]
 Symbolic insn@0x08048525[4]: readRegister(ebx, V8[u32]) = ebx_0[u32]
 Symbolic insn@0x08048525[4]: undefined_(32) = V9[u32]
@@ -6830,10 +7148,12 @@ memory:
 
 0x08048526: sub esp, 0x0c
 Symbolic: startInstruction(0x08048526: sub esp, 0x0c)
+Symbolic insn@0x08048526[5]: // advancing instruction pointer
 Symbolic insn@0x08048526[5]: number_(32, 134513958) = 0x08048526<134513958>[u32]
 Symbolic insn@0x08048526[5]: number_(32, 3) = 0x00000003[u32]
 Symbolic insn@0x08048526[5]: add(0x08048526<134513958>[u32], 0x00000003[u32]) = 0x08048529<134513961>[u32]
 Symbolic insn@0x08048526[5]: writeRegister(eip, 0x08048529<134513961>[u32])
+Symbolic insn@0x08048526[5]: // executing instruction core
 Symbolic insn@0x08048526[5]: undefined_(32) = V10[u32]
 Symbolic insn@0x08048526[5]: readRegister(esp, V10[u32]) = (add[u32] esp_0[u32] 0xfffffff0<4294967280,-16>[u32])
 Symbolic insn@0x08048526[5]: number_(8, 12) = 0x0c[u8]
@@ -6911,10 +7231,12 @@ memory:
 
 0x08048529: call 0x0804852e<<Insn>>
 Symbolic: startInstruction(0x08048529: call 0x0804852e<<Insn>>)
+Symbolic insn@0x08048529[6]: // advancing instruction pointer
 Symbolic insn@0x08048529[6]: number_(32, 134513961) = 0x08048529<134513961>[u32]
 Symbolic insn@0x08048529[6]: number_(32, 5) = 0x00000005[u32]
 Symbolic insn@0x08048529[6]: add(0x08048529<134513961>[u32], 0x00000005[u32]) = 0x0804852e<134513966>[u32]
 Symbolic insn@0x08048529[6]: writeRegister(eip, 0x0804852e<134513966>[u32])
+Symbolic insn@0x08048529[6]: // executing instruction core
 Symbolic insn@0x08048529[6]: number_(32, 134513966) = 0x0804852e<134513966>[u32]
 Symbolic insn@0x08048529[6]: unsignedExtend(0x0804852e<134513966>[u32], 32) = 0x0804852e<134513966>[u32]
 Symbolic insn@0x08048529[6]: undefined_(32) = V11[u32]
@@ -6972,10 +7294,12 @@ Symbolic: operators destroyed
 
 0x0804852e: pop ebx
 Symbolic: startInstruction(0x0804852e: pop ebx)
+Symbolic insn@0x0804852e[0]: // advancing instruction pointer
 Symbolic insn@0x0804852e[0]: number_(32, 134513966) = 0x0804852e<134513966>[u32]
 Symbolic insn@0x0804852e[0]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x0804852e[0]: add(0x0804852e<134513966>[u32], 0x00000001[u32]) = 0x0804852f<134513967>[u32]
 Symbolic insn@0x0804852e[0]: writeRegister(eip, 0x0804852f<134513967>[u32])
+Symbolic insn@0x0804852e[0]: // executing instruction core
 Symbolic insn@0x0804852e[0]: undefined_(32) = V1[u32]
 Symbolic insn@0x0804852e[0]: readRegister(esp, V1[u32]) = esp_0[u32]
 Symbolic insn@0x0804852e[0]: number_(32, 4) = 0x00000004[u32]
@@ -7003,10 +7327,12 @@ memory:
 
 0x0804852f: add ebx, 0x0000119a<4506>
 Symbolic: startInstruction(0x0804852f: add ebx, 0x0000119a<4506>)
+Symbolic insn@0x0804852f[1]: // advancing instruction pointer
 Symbolic insn@0x0804852f[1]: number_(32, 134513967) = 0x0804852f<134513967>[u32]
 Symbolic insn@0x0804852f[1]: number_(32, 6) = 0x00000006[u32]
 Symbolic insn@0x0804852f[1]: add(0x0804852f<134513967>[u32], 0x00000006[u32]) = 0x08048535<134513973>[u32]
 Symbolic insn@0x0804852f[1]: writeRegister(eip, 0x08048535<134513973>[u32])
+Symbolic insn@0x0804852f[1]: // executing instruction core
 Symbolic insn@0x0804852f[1]: boolean_(0) = false[u1]
 Symbolic insn@0x0804852f[1]: number_(32, 4506) = 0x0000119a<4506>[u32]
 Symbolic insn@0x0804852f[1]: undefined_(32) = V3[u32]
@@ -7067,10 +7393,12 @@ memory:
 
 0x08048535: lea eax, [ebx + 0xffffff20<-224>]
 Symbolic: startInstruction(0x08048535: lea eax, [ebx + 0xffffff20<-224>])
+Symbolic insn@0x08048535[2]: // advancing instruction pointer
 Symbolic insn@0x08048535[2]: number_(32, 134513973) = 0x08048535<134513973>[u32]
 Symbolic insn@0x08048535[2]: number_(32, 6) = 0x00000006[u32]
 Symbolic insn@0x08048535[2]: add(0x08048535<134513973>[u32], 0x00000006[u32]) = 0x0804853b<134513979>[u32]
 Symbolic insn@0x08048535[2]: writeRegister(eip, 0x0804853b<134513979>[u32])
+Symbolic insn@0x08048535[2]: // executing instruction core
 Symbolic insn@0x08048535[2]: undefined_(32) = V4[u32]
 Symbolic insn@0x08048535[2]: readRegister(ebx, V4[u32]) = (add[u32] V2[u32] 0x0000119a<4506>[u32])
 Symbolic insn@0x08048535[2]: number_(32, 4294967072) = 0xffffff20<4294967072,-224>[u32]
@@ -7102,10 +7430,12 @@ memory:
 
 0x0804853b: lea edx, [ebx + 0xffffff20<-224>]
 Symbolic: startInstruction(0x0804853b: lea edx, [ebx + 0xffffff20<-224>])
+Symbolic insn@0x0804853b[3]: // advancing instruction pointer
 Symbolic insn@0x0804853b[3]: number_(32, 134513979) = 0x0804853b<134513979>[u32]
 Symbolic insn@0x0804853b[3]: number_(32, 6) = 0x00000006[u32]
 Symbolic insn@0x0804853b[3]: add(0x0804853b<134513979>[u32], 0x00000006[u32]) = 0x08048541<134513985>[u32]
 Symbolic insn@0x0804853b[3]: writeRegister(eip, 0x08048541<134513985>[u32])
+Symbolic insn@0x0804853b[3]: // executing instruction core
 Symbolic insn@0x0804853b[3]: undefined_(32) = V5[u32]
 Symbolic insn@0x0804853b[3]: readRegister(ebx, V5[u32]) = (add[u32] V2[u32] 0x0000119a<4506>[u32])
 Symbolic insn@0x0804853b[3]: number_(32, 4294967072) = 0xffffff20<4294967072,-224>[u32]
@@ -7138,10 +7468,12 @@ memory:
 
 0x08048541: sub eax, edx
 Symbolic: startInstruction(0x08048541: sub eax, edx)
+Symbolic insn@0x08048541[4]: // advancing instruction pointer
 Symbolic insn@0x08048541[4]: number_(32, 134513985) = 0x08048541<134513985>[u32]
 Symbolic insn@0x08048541[4]: number_(32, 2) = 0x00000002[u32]
 Symbolic insn@0x08048541[4]: add(0x08048541<134513985>[u32], 0x00000002[u32]) = 0x08048543<134513987>[u32]
 Symbolic insn@0x08048541[4]: writeRegister(eip, 0x08048543<134513987>[u32])
+Symbolic insn@0x08048541[4]: // executing instruction core
 Symbolic insn@0x08048541[4]: undefined_(32) = V6[u32]
 Symbolic insn@0x08048541[4]: readRegister(eax, V6[u32]) = (add[u32] V2[u32] 0x000010ba<4282>[u32])
 Symbolic insn@0x08048541[4]: undefined_(32) = V7[u32]
@@ -7209,10 +7541,12 @@ memory:
 
 0x08048543: sar eax, 0x02
 Symbolic: startInstruction(0x08048543: sar eax, 0x02)
+Symbolic insn@0x08048543[5]: // advancing instruction pointer
 Symbolic insn@0x08048543[5]: number_(32, 134513987) = 0x08048543<134513987>[u32]
 Symbolic insn@0x08048543[5]: number_(32, 3) = 0x00000003[u32]
 Symbolic insn@0x08048543[5]: add(0x08048543<134513987>[u32], 0x00000003[u32]) = 0x08048546<134513990>[u32]
 Symbolic insn@0x08048543[5]: writeRegister(eip, 0x08048546<134513990>[u32])
+Symbolic insn@0x08048543[5]: // executing instruction core
 Symbolic insn@0x08048543[5]: number_(8, 2) = 0x02[u8]
 Symbolic insn@0x08048543[5]: unspecified_(32) = V8[u32]<unspec>
 Symbolic insn@0x08048543[5]: undefined_(32) = V9[u32]
@@ -7315,10 +7649,12 @@ memory:
 
 0x08048546: mov dword ss:[ebp + 0xf0<-16>], eax
 Symbolic: startInstruction(0x08048546: mov dword ss:[ebp + 0xf0<-16>], eax)
+Symbolic insn@0x08048546[6]: // advancing instruction pointer
 Symbolic insn@0x08048546[6]: number_(32, 134513990) = 0x08048546<134513990>[u32]
 Symbolic insn@0x08048546[6]: number_(32, 3) = 0x00000003[u32]
 Symbolic insn@0x08048546[6]: add(0x08048546<134513990>[u32], 0x00000003[u32]) = 0x08048549<134513993>[u32]
 Symbolic insn@0x08048546[6]: writeRegister(eip, 0x08048549<134513993>[u32])
+Symbolic insn@0x08048546[6]: // executing instruction core
 Symbolic insn@0x08048546[6]: undefined_(32) = V18[u32]
 Symbolic insn@0x08048546[6]: readRegister(eax, V18[u32]) = (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32])) V2[u32] 0x000010bb<4283>[u32]))
 Symbolic insn@0x08048546[6]: undefined_(32) = V19[u32]
@@ -7358,10 +7694,12 @@ memory:
 
 0x08048549: dec eax
 Symbolic: startInstruction(0x08048549: dec eax)
+Symbolic insn@0x08048549[7]: // advancing instruction pointer
 Symbolic insn@0x08048549[7]: number_(32, 134513993) = 0x08048549<134513993>[u32]
 Symbolic insn@0x08048549[7]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x08048549[7]: add(0x08048549<134513993>[u32], 0x00000001[u32]) = 0x0804854a<134513994>[u32]
 Symbolic insn@0x08048549[7]: writeRegister(eip, 0x0804854a<134513994>[u32])
+Symbolic insn@0x08048549[7]: // executing instruction core
 Symbolic insn@0x08048549[7]: undefined_(32) = V20[u32]
 Symbolic insn@0x08048549[7]: readRegister(eax, V20[u32]) = (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32])) V2[u32] 0x000010bb<4283>[u32]))
 Symbolic insn@0x08048549[7]: boolean_(0) = false[u1]
@@ -7428,10 +7766,12 @@ memory:
 
 0x0804854a: cmp eax, 0xff<-1>
 Symbolic: startInstruction(0x0804854a: cmp eax, 0xff<-1>)
+Symbolic insn@0x0804854a[8]: // advancing instruction pointer
 Symbolic insn@0x0804854a[8]: number_(32, 134513994) = 0x0804854a<134513994>[u32]
 Symbolic insn@0x0804854a[8]: number_(32, 3) = 0x00000003[u32]
 Symbolic insn@0x0804854a[8]: add(0x0804854a<134513994>[u32], 0x00000003[u32]) = 0x0804854d<134513997>[u32]
 Symbolic insn@0x0804854a[8]: writeRegister(eip, 0x0804854d<134513997>[u32])
+Symbolic insn@0x0804854a[8]: // executing instruction core
 Symbolic insn@0x0804854a[8]: undefined_(32) = V21[u32]
 Symbolic insn@0x0804854a[8]: readRegister(eax, V21[u32]) = (add[u32] (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32])) V2[u32] 0x000010bb<4283>[u32])) 0xffffffff<4294967295,-1>[u32])
 Symbolic insn@0x0804854a[8]: number_(8, 18446744073709551615) = 0xff<-1>[u8]
@@ -7502,10 +7842,12 @@ memory:
 
 0x0804854d: je 0x0804856b<<BBlock>>
 Symbolic: startInstruction(0x0804854d: je 0x0804856b<<BBlock>>)
+Symbolic insn@0x0804854d[9]: // advancing instruction pointer
 Symbolic insn@0x0804854d[9]: number_(32, 134513997) = 0x0804854d<134513997>[u32]
 Symbolic insn@0x0804854d[9]: number_(32, 2) = 0x00000002[u32]
 Symbolic insn@0x0804854d[9]: add(0x0804854d<134513997>[u32], 0x00000002[u32]) = 0x0804854f<134513999>[u32]
 Symbolic insn@0x0804854d[9]: writeRegister(eip, 0x0804854f<134513999>[u32])
+Symbolic insn@0x0804854d[9]: // executing instruction core
 Symbolic insn@0x0804854d[9]: undefined_(1) = V22[u1]
 Symbolic insn@0x0804854d[9]: readRegister(zf, V22[u1]) = (zerop[u1] (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32])) V2[u32] 0x000010bb<4283>[u32])))
 Symbolic insn@0x0804854d[9]: undefined_(32) = V23[u32]
@@ -7549,10 +7891,12 @@ Symbolic: operators destroyed
 
 0x0804854f: lea esi, [edx + eax*0x04]
 Symbolic: startInstruction(0x0804854f: lea esi, [edx + eax*0x04])
+Symbolic insn@0x0804854f[0]: // advancing instruction pointer
 Symbolic insn@0x0804854f[0]: number_(32, 134513999) = 0x0804854f<134513999>[u32]
 Symbolic insn@0x0804854f[0]: number_(32, 3) = 0x00000003[u32]
 Symbolic insn@0x0804854f[0]: add(0x0804854f<134513999>[u32], 0x00000003[u32]) = 0x08048552<134514002>[u32]
 Symbolic insn@0x0804854f[0]: writeRegister(eip, 0x08048552<134514002>[u32])
+Symbolic insn@0x0804854f[0]: // executing instruction core
 Symbolic insn@0x0804854f[0]: undefined_(32) = V1[u32]
 Symbolic insn@0x0804854f[0]: readRegister(edx, V1[u32]) = edx_0[u32]
 Symbolic insn@0x0804854f[0]: undefined_(32) = V2[u32]
@@ -7577,10 +7921,12 @@ memory:
 
 0x08048552: xor edi, edi
 Symbolic: startInstruction(0x08048552: xor edi, edi)
+Symbolic insn@0x08048552[1]: // advancing instruction pointer
 Symbolic insn@0x08048552[1]: number_(32, 134514002) = 0x08048552<134514002>[u32]
 Symbolic insn@0x08048552[1]: number_(32, 2) = 0x00000002[u32]
 Symbolic insn@0x08048552[1]: add(0x08048552<134514002>[u32], 0x00000002[u32]) = 0x08048554<134514004>[u32]
 Symbolic insn@0x08048552[1]: writeRegister(eip, 0x08048554<134514004>[u32])
+Symbolic insn@0x08048552[1]: // executing instruction core
 Symbolic insn@0x08048552[1]: number_(32, 0) = 0x00000000[u32]
 Symbolic insn@0x08048552[1]: extract(0x00000000[u32], 0, 8) = 0x00[u8]
 Symbolic insn@0x08048552[1]: extract(0x00[u8], 1, 2) = false[u1]
@@ -7631,10 +7977,12 @@ memory:
 
 0x08048554: lea esi, [esi + 0x00000000]
 Symbolic: startInstruction(0x08048554: lea esi, [esi + 0x00000000])
+Symbolic insn@0x08048554[2]: // advancing instruction pointer
 Symbolic insn@0x08048554[2]: number_(32, 134514004) = 0x08048554<134514004>[u32]
 Symbolic insn@0x08048554[2]: number_(32, 6) = 0x00000006[u32]
 Symbolic insn@0x08048554[2]: add(0x08048554<134514004>[u32], 0x00000006[u32]) = 0x0804855a<134514010>[u32]
 Symbolic insn@0x08048554[2]: writeRegister(eip, 0x0804855a<134514010>[u32])
+Symbolic insn@0x08048554[2]: // executing instruction core
 Symbolic insn@0x08048554[2]: undefined_(32) = V4[u32]
 Symbolic insn@0x08048554[2]: readRegister(esi, V4[u32]) = (add[u32] (extract[u32] 0x00000000[u32] 0x00000020[u32] (umul[u64] eax_0[u32] 0x00000004[u32])) edx_0[u32])
 Symbolic insn@0x08048554[2]: number_(32, 0) = 0x00000000[u32]
@@ -7661,10 +8009,12 @@ memory:
 
 0x0804855a: lea edi, [edi + 0x00000000]
 Symbolic: startInstruction(0x0804855a: lea edi, [edi + 0x00000000])
+Symbolic insn@0x0804855a[3]: // advancing instruction pointer
 Symbolic insn@0x0804855a[3]: number_(32, 134514010) = 0x0804855a<134514010>[u32]
 Symbolic insn@0x0804855a[3]: number_(32, 6) = 0x00000006[u32]
 Symbolic insn@0x0804855a[3]: add(0x0804855a<134514010>[u32], 0x00000006[u32]) = 0x08048560<134514016>[u32]
 Symbolic insn@0x0804855a[3]: writeRegister(eip, 0x08048560<134514016>[u32])
+Symbolic insn@0x0804855a[3]: // executing instruction core
 Symbolic insn@0x0804855a[3]: undefined_(32) = V5[u32]
 Symbolic insn@0x0804855a[3]: readRegister(edi, V5[u32]) = 0x00000000[u32]
 Symbolic insn@0x0804855a[3]: number_(32, 0) = 0x00000000[u32]
@@ -7691,10 +8041,12 @@ memory:
 
 0x08048560: call dword ds:[esi]
 Symbolic: startInstruction(0x08048560: call dword ds:[esi])
+Symbolic insn@0x08048560[4]: // advancing instruction pointer
 Symbolic insn@0x08048560[4]: number_(32, 134514016) = 0x08048560<134514016>[u32]
 Symbolic insn@0x08048560[4]: number_(32, 2) = 0x00000002[u32]
 Symbolic insn@0x08048560[4]: add(0x08048560<134514016>[u32], 0x00000002[u32]) = 0x08048562<134514018>[u32]
 Symbolic insn@0x08048560[4]: writeRegister(eip, 0x08048562<134514018>[u32])
+Symbolic insn@0x08048560[4]: // executing instruction core
 Symbolic insn@0x08048560[4]: undefined_(32) = V6[u32]
 Symbolic insn@0x08048560[4]: readRegister(esi, V6[u32]) = (add[u32] (extract[u32] 0x00000000[u32] 0x00000020[u32] (umul[u64] eax_0[u32] 0x00000004[u32])) edx_0[u32])
 Symbolic insn@0x08048560[4]: undefined_(32) = V7[u32]
@@ -7745,10 +8097,12 @@ Symbolic: operators destroyed
 
 0x08048562: inc edi
 Symbolic: startInstruction(0x08048562: inc edi)
+Symbolic insn@0x08048562[0]: // advancing instruction pointer
 Symbolic insn@0x08048562[0]: number_(32, 134514018) = 0x08048562<134514018>[u32]
 Symbolic insn@0x08048562[0]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x08048562[0]: add(0x08048562<134514018>[u32], 0x00000001[u32]) = 0x08048563<134514019>[u32]
 Symbolic insn@0x08048562[0]: writeRegister(eip, 0x08048563<134514019>[u32])
+Symbolic insn@0x08048562[0]: // executing instruction core
 Symbolic insn@0x08048562[0]: undefined_(32) = V1[u32]
 Symbolic insn@0x08048562[0]: readRegister(edi, V1[u32]) = edi_0[u32]
 Symbolic insn@0x08048562[0]: boolean_(0) = false[u1]
@@ -7802,10 +8156,12 @@ memory:
 
 0x08048563: sub esi, 0x04
 Symbolic: startInstruction(0x08048563: sub esi, 0x04)
+Symbolic insn@0x08048563[1]: // advancing instruction pointer
 Symbolic insn@0x08048563[1]: number_(32, 134514019) = 0x08048563<134514019>[u32]
 Symbolic insn@0x08048563[1]: number_(32, 3) = 0x00000003[u32]
 Symbolic insn@0x08048563[1]: add(0x08048563<134514019>[u32], 0x00000003[u32]) = 0x08048566<134514022>[u32]
 Symbolic insn@0x08048563[1]: writeRegister(eip, 0x08048566<134514022>[u32])
+Symbolic insn@0x08048563[1]: // executing instruction core
 Symbolic insn@0x08048563[1]: undefined_(32) = V2[u32]
 Symbolic insn@0x08048563[1]: readRegister(esi, V2[u32]) = esi_0[u32]
 Symbolic insn@0x08048563[1]: number_(8, 4) = 0x04[u8]
@@ -7867,10 +8223,12 @@ memory:
 
 0x08048566: cmp dword ss:[ebp + 0xf0<-16>], edi
 Symbolic: startInstruction(0x08048566: cmp dword ss:[ebp + 0xf0<-16>], edi)
+Symbolic insn@0x08048566[2]: // advancing instruction pointer
 Symbolic insn@0x08048566[2]: number_(32, 134514022) = 0x08048566<134514022>[u32]
 Symbolic insn@0x08048566[2]: number_(32, 3) = 0x00000003[u32]
 Symbolic insn@0x08048566[2]: add(0x08048566<134514022>[u32], 0x00000003[u32]) = 0x08048569<134514025>[u32]
 Symbolic insn@0x08048566[2]: writeRegister(eip, 0x08048569<134514025>[u32])
+Symbolic insn@0x08048566[2]: // executing instruction core
 Symbolic insn@0x08048566[2]: undefined_(32) = V3[u32]
 Symbolic insn@0x08048566[2]: readRegister(ebp, V3[u32]) = ebp_0[u32]
 Symbolic insn@0x08048566[2]: number_(8, 240) = 0xf0<-16>[u8]
@@ -7941,10 +8299,12 @@ memory:
 
 0x08048569: jne 0x08048560<<BBlock>>
 Symbolic: startInstruction(0x08048569: jne 0x08048560<<BBlock>>)
+Symbolic insn@0x08048569[3]: // advancing instruction pointer
 Symbolic insn@0x08048569[3]: number_(32, 134514025) = 0x08048569<134514025>[u32]
 Symbolic insn@0x08048569[3]: number_(32, 2) = 0x00000002[u32]
 Symbolic insn@0x08048569[3]: add(0x08048569<134514025>[u32], 0x00000002[u32]) = 0x0804856b<134514027>[u32]
 Symbolic insn@0x08048569[3]: writeRegister(eip, 0x0804856b<134514027>[u32])
+Symbolic insn@0x08048569[3]: // executing instruction core
 Symbolic insn@0x08048569[3]: undefined_(1) = V6[u1]
 Symbolic insn@0x08048569[3]: readRegister(zf, V6[u1]) = (zerop[u1] (add[u32] (invert[u32] (add[u32] edi_0[u32] 0x00000001[u32])) V4[u32] 0x00000001[u32]))
 Symbolic insn@0x08048569[3]: invert((zerop[u1] (add[u32] (invert[u32] (add[u32] edi_0[u32] 0x00000001[u32])) V4[u32] 0x00000001[u32]))) = (invert[u1] (zerop[u1] (add[u32] (invert[u32] (add[u32] edi_0[u32] 0x00000001[u32])) V4[u32] 0x00000001[u32])))
@@ -7983,10 +8343,12 @@ Symbolic: operators destroyed
 
 0x0804856b: call 0x080485b0<(func)_fini>
 Symbolic: startInstruction(0x0804856b: call 0x080485b0<(func)_fini>)
+Symbolic insn@0x0804856b[0]: // advancing instruction pointer
 Symbolic insn@0x0804856b[0]: number_(32, 134514027) = 0x0804856b<134514027>[u32]
 Symbolic insn@0x0804856b[0]: number_(32, 5) = 0x00000005[u32]
 Symbolic insn@0x0804856b[0]: add(0x0804856b<134514027>[u32], 0x00000005[u32]) = 0x08048570<134514032>[u32]
 Symbolic insn@0x0804856b[0]: writeRegister(eip, 0x08048570<134514032>[u32])
+Symbolic insn@0x0804856b[0]: // executing instruction core
 Symbolic insn@0x0804856b[0]: number_(32, 134514096) = 0x080485b0<134514096>[u32]
 Symbolic insn@0x0804856b[0]: unsignedExtend(0x080485b0<134514096>[u32], 32) = 0x080485b0<134514096>[u32]
 Symbolic insn@0x0804856b[0]: undefined_(32) = V1[u32]
@@ -8021,10 +8383,12 @@ Symbolic: operators destroyed
 
 0x08048570: add esp, 0x0c
 Symbolic: startInstruction(0x08048570: add esp, 0x0c)
+Symbolic insn@0x08048570[0]: // advancing instruction pointer
 Symbolic insn@0x08048570[0]: number_(32, 134514032) = 0x08048570<134514032>[u32]
 Symbolic insn@0x08048570[0]: number_(32, 3) = 0x00000003[u32]
 Symbolic insn@0x08048570[0]: add(0x08048570<134514032>[u32], 0x00000003[u32]) = 0x08048573<134514035>[u32]
 Symbolic insn@0x08048570[0]: writeRegister(eip, 0x08048573<134514035>[u32])
+Symbolic insn@0x08048570[0]: // executing instruction core
 Symbolic insn@0x08048570[0]: boolean_(0) = false[u1]
 Symbolic insn@0x08048570[0]: number_(8, 12) = 0x0c[u8]
 Symbolic insn@0x08048570[0]: undefined_(32) = V1[u32]
@@ -8081,10 +8445,12 @@ memory:
 
 0x08048573: pop ebx
 Symbolic: startInstruction(0x08048573: pop ebx)
+Symbolic insn@0x08048573[1]: // advancing instruction pointer
 Symbolic insn@0x08048573[1]: number_(32, 134514035) = 0x08048573<134514035>[u32]
 Symbolic insn@0x08048573[1]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x08048573[1]: add(0x08048573<134514035>[u32], 0x00000001[u32]) = 0x08048574<134514036>[u32]
 Symbolic insn@0x08048573[1]: writeRegister(eip, 0x08048574<134514036>[u32])
+Symbolic insn@0x08048573[1]: // executing instruction core
 Symbolic insn@0x08048573[1]: undefined_(32) = V2[u32]
 Symbolic insn@0x08048573[1]: readRegister(esp, V2[u32]) = (add[u32] esp_0[u32] 0x0000000c[u32])
 Symbolic insn@0x08048573[1]: number_(32, 4) = 0x00000004[u32]
@@ -8118,10 +8484,12 @@ memory:
 
 0x08048574: pop esi
 Symbolic: startInstruction(0x08048574: pop esi)
+Symbolic insn@0x08048574[2]: // advancing instruction pointer
 Symbolic insn@0x08048574[2]: number_(32, 134514036) = 0x08048574<134514036>[u32]
 Symbolic insn@0x08048574[2]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x08048574[2]: add(0x08048574<134514036>[u32], 0x00000001[u32]) = 0x08048575<134514037>[u32]
 Symbolic insn@0x08048574[2]: writeRegister(eip, 0x08048575<134514037>[u32])
+Symbolic insn@0x08048574[2]: // executing instruction core
 Symbolic insn@0x08048574[2]: undefined_(32) = V4[u32]
 Symbolic insn@0x08048574[2]: readRegister(esp, V4[u32]) = (add[u32] esp_0[u32] 0x00000010[u32])
 Symbolic insn@0x08048574[2]: number_(32, 4) = 0x00000004[u32]
@@ -8160,10 +8528,12 @@ memory:
 
 0x08048575: pop edi
 Symbolic: startInstruction(0x08048575: pop edi)
+Symbolic insn@0x08048575[3]: // advancing instruction pointer
 Symbolic insn@0x08048575[3]: number_(32, 134514037) = 0x08048575<134514037>[u32]
 Symbolic insn@0x08048575[3]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x08048575[3]: add(0x08048575<134514037>[u32], 0x00000001[u32]) = 0x08048576<134514038>[u32]
 Symbolic insn@0x08048575[3]: writeRegister(eip, 0x08048576<134514038>[u32])
+Symbolic insn@0x08048575[3]: // executing instruction core
 Symbolic insn@0x08048575[3]: undefined_(32) = V6[u32]
 Symbolic insn@0x08048575[3]: readRegister(esp, V6[u32]) = (add[u32] esp_0[u32] 0x00000014[u32])
 Symbolic insn@0x08048575[3]: number_(32, 4) = 0x00000004[u32]
@@ -8207,10 +8577,12 @@ memory:
 
 0x08048576: pop ebp
 Symbolic: startInstruction(0x08048576: pop ebp)
+Symbolic insn@0x08048576[4]: // advancing instruction pointer
 Symbolic insn@0x08048576[4]: number_(32, 134514038) = 0x08048576<134514038>[u32]
 Symbolic insn@0x08048576[4]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x08048576[4]: add(0x08048576<134514038>[u32], 0x00000001[u32]) = 0x08048577<134514039>[u32]
 Symbolic insn@0x08048576[4]: writeRegister(eip, 0x08048577<134514039>[u32])
+Symbolic insn@0x08048576[4]: // executing instruction core
 Symbolic insn@0x08048576[4]: undefined_(32) = V8[u32]
 Symbolic insn@0x08048576[4]: readRegister(esp, V8[u32]) = (add[u32] esp_0[u32] 0x00000018[u32])
 Symbolic insn@0x08048576[4]: number_(32, 4) = 0x00000004[u32]
@@ -8259,10 +8631,12 @@ memory:
 
 0x08048577: ret 
 Symbolic: startInstruction(0x08048577: ret)
+Symbolic insn@0x08048577[5]: // advancing instruction pointer
 Symbolic insn@0x08048577[5]: number_(32, 134514039) = 0x08048577<134514039>[u32]
 Symbolic insn@0x08048577[5]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x08048577[5]: add(0x08048577<134514039>[u32], 0x00000001[u32]) = 0x08048578<134514040>[u32]
 Symbolic insn@0x08048577[5]: writeRegister(eip, 0x08048578<134514040>[u32])
+Symbolic insn@0x08048577[5]: // executing instruction core
 Symbolic insn@0x08048577[5]: undefined_(32) = V10[u32]
 Symbolic insn@0x08048577[5]: readRegister(esp, V10[u32]) = (add[u32] esp_0[u32] 0x0000001c[u32])
 Symbolic insn@0x08048577[5]: number_(32, 4) = 0x00000004[u32]
@@ -8320,10 +8694,12 @@ Symbolic: operators destroyed
 
 0x08048580: push ebp
 Symbolic: startInstruction(0x08048580: push ebp)
+Symbolic insn@0x08048580[0]: // advancing instruction pointer
 Symbolic insn@0x08048580[0]: number_(32, 134514048) = 0x08048580<134514048>[u32]
 Symbolic insn@0x08048580[0]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x08048580[0]: add(0x08048580<134514048>[u32], 0x00000001[u32]) = 0x08048581<134514049>[u32]
 Symbolic insn@0x08048580[0]: writeRegister(eip, 0x08048581<134514049>[u32])
+Symbolic insn@0x08048580[0]: // executing instruction core
 Symbolic insn@0x08048580[0]: undefined_(32) = V1[u32]
 Symbolic insn@0x08048580[0]: readRegister(ebp, V1[u32]) = ebp_0[u32]
 Symbolic insn@0x08048580[0]: undefined_(32) = V2[u32]
@@ -8350,10 +8726,12 @@ memory:
 
 0x08048581: mov ebp, esp
 Symbolic: startInstruction(0x08048581: mov ebp, esp)
+Symbolic insn@0x08048581[1]: // advancing instruction pointer
 Symbolic insn@0x08048581[1]: number_(32, 134514049) = 0x08048581<134514049>[u32]
 Symbolic insn@0x08048581[1]: number_(32, 2) = 0x00000002[u32]
 Symbolic insn@0x08048581[1]: add(0x08048581<134514049>[u32], 0x00000002[u32]) = 0x08048583<134514051>[u32]
 Symbolic insn@0x08048581[1]: writeRegister(eip, 0x08048583<134514051>[u32])
+Symbolic insn@0x08048581[1]: // executing instruction core
 Symbolic insn@0x08048581[1]: undefined_(32) = V3[u32]
 Symbolic insn@0x08048581[1]: readRegister(esp, V3[u32]) = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
 Symbolic insn@0x08048581[1]: writeRegister(ebp, (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32]))
@@ -8375,10 +8753,12 @@ memory:
 
 0x08048583: push ebx
 Symbolic: startInstruction(0x08048583: push ebx)
+Symbolic insn@0x08048583[2]: // advancing instruction pointer
 Symbolic insn@0x08048583[2]: number_(32, 134514051) = 0x08048583<134514051>[u32]
 Symbolic insn@0x08048583[2]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x08048583[2]: add(0x08048583<134514051>[u32], 0x00000001[u32]) = 0x08048584<134514052>[u32]
 Symbolic insn@0x08048583[2]: writeRegister(eip, 0x08048584<134514052>[u32])
+Symbolic insn@0x08048583[2]: // executing instruction core
 Symbolic insn@0x08048583[2]: undefined_(32) = V4[u32]
 Symbolic insn@0x08048583[2]: readRegister(ebx, V4[u32]) = ebx_0[u32]
 Symbolic insn@0x08048583[2]: undefined_(32) = V5[u32]
@@ -8410,10 +8790,12 @@ memory:
 
 0x08048584: sub esp, 0x04
 Symbolic: startInstruction(0x08048584: sub esp, 0x04)
+Symbolic insn@0x08048584[3]: // advancing instruction pointer
 Symbolic insn@0x08048584[3]: number_(32, 134514052) = 0x08048584<134514052>[u32]
 Symbolic insn@0x08048584[3]: number_(32, 3) = 0x00000003[u32]
 Symbolic insn@0x08048584[3]: add(0x08048584<134514052>[u32], 0x00000003[u32]) = 0x08048587<134514055>[u32]
 Symbolic insn@0x08048584[3]: writeRegister(eip, 0x08048587<134514055>[u32])
+Symbolic insn@0x08048584[3]: // executing instruction core
 Symbolic insn@0x08048584[3]: undefined_(32) = V6[u32]
 Symbolic insn@0x08048584[3]: readRegister(esp, V6[u32]) = (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])
 Symbolic insn@0x08048584[3]: number_(8, 4) = 0x04[u8]
@@ -8483,10 +8865,12 @@ memory:
 
 0x08048587: mov ebx, 0x080495e8<__init_array_start>
 Symbolic: startInstruction(0x08048587: mov ebx, 0x080495e8<__init_array_start>)
+Symbolic insn@0x08048587[4]: // advancing instruction pointer
 Symbolic insn@0x08048587[4]: number_(32, 134514055) = 0x08048587<134514055>[u32]
 Symbolic insn@0x08048587[4]: number_(32, 5) = 0x00000005[u32]
 Symbolic insn@0x08048587[4]: add(0x08048587<134514055>[u32], 0x00000005[u32]) = 0x0804858c<134514060>[u32]
 Symbolic insn@0x08048587[4]: writeRegister(eip, 0x0804858c<134514060>[u32])
+Symbolic insn@0x08048587[4]: // executing instruction core
 Symbolic insn@0x08048587[4]: number_(32, 134518248) = 0x080495e8<134518248>[u32]
 Symbolic insn@0x08048587[4]: writeRegister(ebx, 0x080495e8<134518248>[u32])
 Symbolic insn@0x08048587[4]: finishInstruction(mov ebx, 0x080495e8<__init_array_start>)
@@ -8518,10 +8902,12 @@ memory:
 
 0x0804858c: mov eax, dword ds:[0x080495e8<__init_array_start>]
 Symbolic: startInstruction(0x0804858c: mov eax, dword ds:[0x080495e8<__init_array_start>])
+Symbolic insn@0x0804858c[5]: // advancing instruction pointer
 Symbolic insn@0x0804858c[5]: number_(32, 134514060) = 0x0804858c<134514060>[u32]
 Symbolic insn@0x0804858c[5]: number_(32, 5) = 0x00000005[u32]
 Symbolic insn@0x0804858c[5]: add(0x0804858c<134514060>[u32], 0x00000005[u32]) = 0x08048591<134514065>[u32]
 Symbolic insn@0x0804858c[5]: writeRegister(eip, 0x08048591<134514065>[u32])
+Symbolic insn@0x0804858c[5]: // executing instruction core
 Symbolic insn@0x0804858c[5]: number_(32, 134518248) = 0x080495e8<134518248>[u32]
 Symbolic insn@0x0804858c[5]: undefined_(32) = V7[u32]
 Symbolic insn@0x0804858c[5]: boolean_(1) = true[u1]
@@ -8561,10 +8947,12 @@ memory:
 
 0x08048591: cmp eax, 0xff<-1>
 Symbolic: startInstruction(0x08048591: cmp eax, 0xff<-1>)
+Symbolic insn@0x08048591[6]: // advancing instruction pointer
 Symbolic insn@0x08048591[6]: number_(32, 134514065) = 0x08048591<134514065>[u32]
 Symbolic insn@0x08048591[6]: number_(32, 3) = 0x00000003[u32]
 Symbolic insn@0x08048591[6]: add(0x08048591<134514065>[u32], 0x00000003[u32]) = 0x08048594<134514068>[u32]
 Symbolic insn@0x08048591[6]: writeRegister(eip, 0x08048594<134514068>[u32])
+Symbolic insn@0x08048591[6]: // executing instruction core
 Symbolic insn@0x08048591[6]: undefined_(32) = V8[u32]
 Symbolic insn@0x08048591[6]: readRegister(eax, V8[u32]) = V7[u32]
 Symbolic insn@0x08048591[6]: number_(8, 18446744073709551615) = 0xff<-1>[u8]
@@ -8639,10 +9027,12 @@ memory:
 
 0x08048594: je 0x080485ac<<BBlock>>
 Symbolic: startInstruction(0x08048594: je 0x080485ac<<BBlock>>)
+Symbolic insn@0x08048594[7]: // advancing instruction pointer
 Symbolic insn@0x08048594[7]: number_(32, 134514068) = 0x08048594<134514068>[u32]
 Symbolic insn@0x08048594[7]: number_(32, 2) = 0x00000002[u32]
 Symbolic insn@0x08048594[7]: add(0x08048594<134514068>[u32], 0x00000002[u32]) = 0x08048596<134514070>[u32]
 Symbolic insn@0x08048594[7]: writeRegister(eip, 0x08048596<134514070>[u32])
+Symbolic insn@0x08048594[7]: // executing instruction core
 Symbolic insn@0x08048594[7]: undefined_(1) = V9[u1]
 Symbolic insn@0x08048594[7]: readRegister(zf, V9[u1]) = (zerop[u1] (add[u32] V7[u32] 0x00000001[u32]))
 Symbolic insn@0x08048594[7]: undefined_(32) = V10[u32]
@@ -8690,10 +9080,12 @@ Symbolic: operators destroyed
 
 0x08048596: lea esi, [esi + 0x00]
 Symbolic: startInstruction(0x08048596: lea esi, [esi + 0x00])
+Symbolic insn@0x08048596[0]: // advancing instruction pointer
 Symbolic insn@0x08048596[0]: number_(32, 134514070) = 0x08048596<134514070>[u32]
 Symbolic insn@0x08048596[0]: number_(32, 3) = 0x00000003[u32]
 Symbolic insn@0x08048596[0]: add(0x08048596<134514070>[u32], 0x00000003[u32]) = 0x08048599<134514073>[u32]
 Symbolic insn@0x08048596[0]: writeRegister(eip, 0x08048599<134514073>[u32])
+Symbolic insn@0x08048596[0]: // executing instruction core
 Symbolic insn@0x08048596[0]: undefined_(32) = V1[u32]
 Symbolic insn@0x08048596[0]: readRegister(esi, V1[u32]) = esi_0[u32]
 Symbolic insn@0x08048596[0]: number_(8, 0) = 0x00[u8]
@@ -8713,10 +9105,12 @@ memory:
 
 0x08048599: lea edi, [edi + 0x00000000]
 Symbolic: startInstruction(0x08048599: lea edi, [edi + 0x00000000])
+Symbolic insn@0x08048599[1]: // advancing instruction pointer
 Symbolic insn@0x08048599[1]: number_(32, 134514073) = 0x08048599<134514073>[u32]
 Symbolic insn@0x08048599[1]: number_(32, 7) = 0x00000007[u32]
 Symbolic insn@0x08048599[1]: add(0x08048599<134514073>[u32], 0x00000007[u32]) = 0x080485a0<134514080>[u32]
 Symbolic insn@0x08048599[1]: writeRegister(eip, 0x080485a0<134514080>[u32])
+Symbolic insn@0x08048599[1]: // executing instruction core
 Symbolic insn@0x08048599[1]: undefined_(32) = V2[u32]
 Symbolic insn@0x08048599[1]: readRegister(edi, V2[u32]) = edi_0[u32]
 Symbolic insn@0x08048599[1]: number_(32, 0) = 0x00000000[u32]
@@ -8735,10 +9129,12 @@ memory:
 
 0x080485a0: sub ebx, 0x04
 Symbolic: startInstruction(0x080485a0: sub ebx, 0x04)
+Symbolic insn@0x080485a0[2]: // advancing instruction pointer
 Symbolic insn@0x080485a0[2]: number_(32, 134514080) = 0x080485a0<134514080>[u32]
 Symbolic insn@0x080485a0[2]: number_(32, 3) = 0x00000003[u32]
 Symbolic insn@0x080485a0[2]: add(0x080485a0<134514080>[u32], 0x00000003[u32]) = 0x080485a3<134514083>[u32]
 Symbolic insn@0x080485a0[2]: writeRegister(eip, 0x080485a3<134514083>[u32])
+Symbolic insn@0x080485a0[2]: // executing instruction core
 Symbolic insn@0x080485a0[2]: undefined_(32) = V3[u32]
 Symbolic insn@0x080485a0[2]: readRegister(ebx, V3[u32]) = ebx_0[u32]
 Symbolic insn@0x080485a0[2]: number_(8, 4) = 0x04[u8]
@@ -8799,10 +9195,12 @@ memory:
 
 0x080485a3: call eax
 Symbolic: startInstruction(0x080485a3: call eax)
+Symbolic insn@0x080485a3[3]: // advancing instruction pointer
 Symbolic insn@0x080485a3[3]: number_(32, 134514083) = 0x080485a3<134514083>[u32]
 Symbolic insn@0x080485a3[3]: number_(32, 2) = 0x00000002[u32]
 Symbolic insn@0x080485a3[3]: add(0x080485a3<134514083>[u32], 0x00000002[u32]) = 0x080485a5<134514085>[u32]
 Symbolic insn@0x080485a3[3]: writeRegister(eip, 0x080485a5<134514085>[u32])
+Symbolic insn@0x080485a3[3]: // executing instruction core
 Symbolic insn@0x080485a3[3]: undefined_(32) = V4[u32]
 Symbolic insn@0x080485a3[3]: readRegister(eax, V4[u32]) = eax_0[u32]
 Symbolic insn@0x080485a3[3]: unsignedExtend(eax_0[u32], 32) = eax_0[u32]
@@ -8845,10 +9243,12 @@ Symbolic: operators destroyed
 
 0x080485a5: mov eax, dword ds:[ebx]
 Symbolic: startInstruction(0x080485a5: mov eax, dword ds:[ebx])
+Symbolic insn@0x080485a5[0]: // advancing instruction pointer
 Symbolic insn@0x080485a5[0]: number_(32, 134514085) = 0x080485a5<134514085>[u32]
 Symbolic insn@0x080485a5[0]: number_(32, 2) = 0x00000002[u32]
 Symbolic insn@0x080485a5[0]: add(0x080485a5<134514085>[u32], 0x00000002[u32]) = 0x080485a7<134514087>[u32]
 Symbolic insn@0x080485a5[0]: writeRegister(eip, 0x080485a7<134514087>[u32])
+Symbolic insn@0x080485a5[0]: // executing instruction core
 Symbolic insn@0x080485a5[0]: undefined_(32) = V1[u32]
 Symbolic insn@0x080485a5[0]: readRegister(ebx, V1[u32]) = ebx_0[u32]
 Symbolic insn@0x080485a5[0]: undefined_(32) = V2[u32]
@@ -8872,10 +9272,12 @@ memory:
 
 0x080485a7: cmp eax, 0xff<-1>
 Symbolic: startInstruction(0x080485a7: cmp eax, 0xff<-1>)
+Symbolic insn@0x080485a7[1]: // advancing instruction pointer
 Symbolic insn@0x080485a7[1]: number_(32, 134514087) = 0x080485a7<134514087>[u32]
 Symbolic insn@0x080485a7[1]: number_(32, 3) = 0x00000003[u32]
 Symbolic insn@0x080485a7[1]: add(0x080485a7<134514087>[u32], 0x00000003[u32]) = 0x080485aa<134514090>[u32]
 Symbolic insn@0x080485a7[1]: writeRegister(eip, 0x080485aa<134514090>[u32])
+Symbolic insn@0x080485a7[1]: // executing instruction core
 Symbolic insn@0x080485a7[1]: undefined_(32) = V3[u32]
 Symbolic insn@0x080485a7[1]: readRegister(eax, V3[u32]) = V2[u32]
 Symbolic insn@0x080485a7[1]: number_(8, 18446744073709551615) = 0xff<-1>[u8]
@@ -8939,10 +9341,12 @@ memory:
 
 0x080485aa: jne 0x080485a0<<BBlock>>
 Symbolic: startInstruction(0x080485aa: jne 0x080485a0<<BBlock>>)
+Symbolic insn@0x080485aa[2]: // advancing instruction pointer
 Symbolic insn@0x080485aa[2]: number_(32, 134514090) = 0x080485aa<134514090>[u32]
 Symbolic insn@0x080485aa[2]: number_(32, 2) = 0x00000002[u32]
 Symbolic insn@0x080485aa[2]: add(0x080485aa<134514090>[u32], 0x00000002[u32]) = 0x080485ac<134514092>[u32]
 Symbolic insn@0x080485aa[2]: writeRegister(eip, 0x080485ac<134514092>[u32])
+Symbolic insn@0x080485aa[2]: // executing instruction core
 Symbolic insn@0x080485aa[2]: undefined_(1) = V4[u1]
 Symbolic insn@0x080485aa[2]: readRegister(zf, V4[u1]) = (zerop[u1] (add[u32] V2[u32] 0x00000001[u32]))
 Symbolic insn@0x080485aa[2]: invert((zerop[u1] (add[u32] V2[u32] 0x00000001[u32]))) = (invert[u1] (zerop[u1] (add[u32] V2[u32] 0x00000001[u32])))
@@ -8980,10 +9384,12 @@ Symbolic: operators destroyed
 
 0x080485ac: pop eax
 Symbolic: startInstruction(0x080485ac: pop eax)
+Symbolic insn@0x080485ac[0]: // advancing instruction pointer
 Symbolic insn@0x080485ac[0]: number_(32, 134514092) = 0x080485ac<134514092>[u32]
 Symbolic insn@0x080485ac[0]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x080485ac[0]: add(0x080485ac<134514092>[u32], 0x00000001[u32]) = 0x080485ad<134514093>[u32]
 Symbolic insn@0x080485ac[0]: writeRegister(eip, 0x080485ad<134514093>[u32])
+Symbolic insn@0x080485ac[0]: // executing instruction core
 Symbolic insn@0x080485ac[0]: undefined_(32) = V1[u32]
 Symbolic insn@0x080485ac[0]: readRegister(esp, V1[u32]) = esp_0[u32]
 Symbolic insn@0x080485ac[0]: number_(32, 4) = 0x00000004[u32]
@@ -9011,10 +9417,12 @@ memory:
 
 0x080485ad: pop ebx
 Symbolic: startInstruction(0x080485ad: pop ebx)
+Symbolic insn@0x080485ad[1]: // advancing instruction pointer
 Symbolic insn@0x080485ad[1]: number_(32, 134514093) = 0x080485ad<134514093>[u32]
 Symbolic insn@0x080485ad[1]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x080485ad[1]: add(0x080485ad<134514093>[u32], 0x00000001[u32]) = 0x080485ae<134514094>[u32]
 Symbolic insn@0x080485ad[1]: writeRegister(eip, 0x080485ae<134514094>[u32])
+Symbolic insn@0x080485ad[1]: // executing instruction core
 Symbolic insn@0x080485ad[1]: undefined_(32) = V3[u32]
 Symbolic insn@0x080485ad[1]: readRegister(esp, V3[u32]) = (add[u32] esp_0[u32] 0x00000004[u32])
 Symbolic insn@0x080485ad[1]: number_(32, 4) = 0x00000004[u32]
@@ -9047,10 +9455,12 @@ memory:
 
 0x080485ae: pop ebp
 Symbolic: startInstruction(0x080485ae: pop ebp)
+Symbolic insn@0x080485ae[2]: // advancing instruction pointer
 Symbolic insn@0x080485ae[2]: number_(32, 134514094) = 0x080485ae<134514094>[u32]
 Symbolic insn@0x080485ae[2]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x080485ae[2]: add(0x080485ae<134514094>[u32], 0x00000001[u32]) = 0x080485af<134514095>[u32]
 Symbolic insn@0x080485ae[2]: writeRegister(eip, 0x080485af<134514095>[u32])
+Symbolic insn@0x080485ae[2]: // executing instruction core
 Symbolic insn@0x080485ae[2]: undefined_(32) = V5[u32]
 Symbolic insn@0x080485ae[2]: readRegister(esp, V5[u32]) = (add[u32] esp_0[u32] 0x00000008[u32])
 Symbolic insn@0x080485ae[2]: number_(32, 4) = 0x00000004[u32]
@@ -9088,10 +9498,12 @@ memory:
 
 0x080485af: ret 
 Symbolic: startInstruction(0x080485af: ret)
+Symbolic insn@0x080485af[3]: // advancing instruction pointer
 Symbolic insn@0x080485af[3]: number_(32, 134514095) = 0x080485af<134514095>[u32]
 Symbolic insn@0x080485af[3]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x080485af[3]: add(0x080485af<134514095>[u32], 0x00000001[u32]) = 0x080485b0<134514096>[u32]
 Symbolic insn@0x080485af[3]: writeRegister(eip, 0x080485b0<134514096>[u32])
+Symbolic insn@0x080485af[3]: // executing instruction core
 Symbolic insn@0x080485af[3]: undefined_(32) = V7[u32]
 Symbolic insn@0x080485af[3]: readRegister(esp, V7[u32]) = (add[u32] esp_0[u32] 0x0000000c[u32])
 Symbolic insn@0x080485af[3]: number_(32, 4) = 0x00000004[u32]
@@ -9138,10 +9550,12 @@ Symbolic: operators destroyed
 
 0x080485b0: push ebp
 Symbolic: startInstruction(0x080485b0: push ebp)
+Symbolic insn@0x080485b0[0]: // advancing instruction pointer
 Symbolic insn@0x080485b0[0]: number_(32, 134514096) = 0x080485b0<134514096>[u32]
 Symbolic insn@0x080485b0[0]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x080485b0[0]: add(0x080485b0<134514096>[u32], 0x00000001[u32]) = 0x080485b1<134514097>[u32]
 Symbolic insn@0x080485b0[0]: writeRegister(eip, 0x080485b1<134514097>[u32])
+Symbolic insn@0x080485b0[0]: // executing instruction core
 Symbolic insn@0x080485b0[0]: undefined_(32) = V1[u32]
 Symbolic insn@0x080485b0[0]: readRegister(ebp, V1[u32]) = ebp_0[u32]
 Symbolic insn@0x080485b0[0]: undefined_(32) = V2[u32]
@@ -9168,10 +9582,12 @@ memory:
 
 0x080485b1: mov ebp, esp
 Symbolic: startInstruction(0x080485b1: mov ebp, esp)
+Symbolic insn@0x080485b1[1]: // advancing instruction pointer
 Symbolic insn@0x080485b1[1]: number_(32, 134514097) = 0x080485b1<134514097>[u32]
 Symbolic insn@0x080485b1[1]: number_(32, 2) = 0x00000002[u32]
 Symbolic insn@0x080485b1[1]: add(0x080485b1<134514097>[u32], 0x00000002[u32]) = 0x080485b3<134514099>[u32]
 Symbolic insn@0x080485b1[1]: writeRegister(eip, 0x080485b3<134514099>[u32])
+Symbolic insn@0x080485b1[1]: // executing instruction core
 Symbolic insn@0x080485b1[1]: undefined_(32) = V3[u32]
 Symbolic insn@0x080485b1[1]: readRegister(esp, V3[u32]) = (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])
 Symbolic insn@0x080485b1[1]: writeRegister(ebp, (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32]))
@@ -9193,10 +9609,12 @@ memory:
 
 0x080485b3: push ebx
 Symbolic: startInstruction(0x080485b3: push ebx)
+Symbolic insn@0x080485b3[2]: // advancing instruction pointer
 Symbolic insn@0x080485b3[2]: number_(32, 134514099) = 0x080485b3<134514099>[u32]
 Symbolic insn@0x080485b3[2]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x080485b3[2]: add(0x080485b3<134514099>[u32], 0x00000001[u32]) = 0x080485b4<134514100>[u32]
 Symbolic insn@0x080485b3[2]: writeRegister(eip, 0x080485b4<134514100>[u32])
+Symbolic insn@0x080485b3[2]: // executing instruction core
 Symbolic insn@0x080485b3[2]: undefined_(32) = V4[u32]
 Symbolic insn@0x080485b3[2]: readRegister(ebx, V4[u32]) = ebx_0[u32]
 Symbolic insn@0x080485b3[2]: undefined_(32) = V5[u32]
@@ -9228,10 +9646,12 @@ memory:
 
 0x080485b4: push eax
 Symbolic: startInstruction(0x080485b4: push eax)
+Symbolic insn@0x080485b4[3]: // advancing instruction pointer
 Symbolic insn@0x080485b4[3]: number_(32, 134514100) = 0x080485b4<134514100>[u32]
 Symbolic insn@0x080485b4[3]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x080485b4[3]: add(0x080485b4<134514100>[u32], 0x00000001[u32]) = 0x080485b5<134514101>[u32]
 Symbolic insn@0x080485b4[3]: writeRegister(eip, 0x080485b5<134514101>[u32])
+Symbolic insn@0x080485b4[3]: // executing instruction core
 Symbolic insn@0x080485b4[3]: undefined_(32) = V6[u32]
 Symbolic insn@0x080485b4[3]: readRegister(eax, V6[u32]) = eax_0[u32]
 Symbolic insn@0x080485b4[3]: undefined_(32) = V7[u32]
@@ -9267,10 +9687,12 @@ memory:
 
 0x080485b5: call 0x080485ba<<Insn>>
 Symbolic: startInstruction(0x080485b5: call 0x080485ba<<Insn>>)
+Symbolic insn@0x080485b5[4]: // advancing instruction pointer
 Symbolic insn@0x080485b5[4]: number_(32, 134514101) = 0x080485b5<134514101>[u32]
 Symbolic insn@0x080485b5[4]: number_(32, 5) = 0x00000005[u32]
 Symbolic insn@0x080485b5[4]: add(0x080485b5<134514101>[u32], 0x00000005[u32]) = 0x080485ba<134514106>[u32]
 Symbolic insn@0x080485b5[4]: writeRegister(eip, 0x080485ba<134514106>[u32])
+Symbolic insn@0x080485b5[4]: // executing instruction core
 Symbolic insn@0x080485b5[4]: number_(32, 134514106) = 0x080485ba<134514106>[u32]
 Symbolic insn@0x080485b5[4]: unsignedExtend(0x080485ba<134514106>[u32], 32) = 0x080485ba<134514106>[u32]
 Symbolic insn@0x080485b5[4]: undefined_(32) = V8[u32]
@@ -9318,10 +9740,12 @@ Symbolic: operators destroyed
 
 0x080485ba: pop ebx
 Symbolic: startInstruction(0x080485ba: pop ebx)
+Symbolic insn@0x080485ba[0]: // advancing instruction pointer
 Symbolic insn@0x080485ba[0]: number_(32, 134514106) = 0x080485ba<134514106>[u32]
 Symbolic insn@0x080485ba[0]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x080485ba[0]: add(0x080485ba<134514106>[u32], 0x00000001[u32]) = 0x080485bb<134514107>[u32]
 Symbolic insn@0x080485ba[0]: writeRegister(eip, 0x080485bb<134514107>[u32])
+Symbolic insn@0x080485ba[0]: // executing instruction core
 Symbolic insn@0x080485ba[0]: undefined_(32) = V1[u32]
 Symbolic insn@0x080485ba[0]: readRegister(esp, V1[u32]) = esp_0[u32]
 Symbolic insn@0x080485ba[0]: number_(32, 4) = 0x00000004[u32]
@@ -9349,10 +9773,12 @@ memory:
 
 0x080485bb: add ebx, 0x0000110e<4366>
 Symbolic: startInstruction(0x080485bb: add ebx, 0x0000110e<4366>)
+Symbolic insn@0x080485bb[1]: // advancing instruction pointer
 Symbolic insn@0x080485bb[1]: number_(32, 134514107) = 0x080485bb<134514107>[u32]
 Symbolic insn@0x080485bb[1]: number_(32, 6) = 0x00000006[u32]
 Symbolic insn@0x080485bb[1]: add(0x080485bb<134514107>[u32], 0x00000006[u32]) = 0x080485c1<134514113>[u32]
 Symbolic insn@0x080485bb[1]: writeRegister(eip, 0x080485c1<134514113>[u32])
+Symbolic insn@0x080485bb[1]: // executing instruction core
 Symbolic insn@0x080485bb[1]: boolean_(0) = false[u1]
 Symbolic insn@0x080485bb[1]: number_(32, 4366) = 0x0000110e<4366>[u32]
 Symbolic insn@0x080485bb[1]: undefined_(32) = V3[u32]
@@ -9413,10 +9839,12 @@ memory:
 
 0x080485c1: call 0x08048390<(func)__do_global_dtors_aux>
 Symbolic: startInstruction(0x080485c1: call 0x08048390<(func)__do_global_dtors_aux>)
+Symbolic insn@0x080485c1[2]: // advancing instruction pointer
 Symbolic insn@0x080485c1[2]: number_(32, 134514113) = 0x080485c1<134514113>[u32]
 Symbolic insn@0x080485c1[2]: number_(32, 5) = 0x00000005[u32]
 Symbolic insn@0x080485c1[2]: add(0x080485c1<134514113>[u32], 0x00000005[u32]) = 0x080485c6<134514118>[u32]
 Symbolic insn@0x080485c1[2]: writeRegister(eip, 0x080485c6<134514118>[u32])
+Symbolic insn@0x080485c1[2]: // executing instruction core
 Symbolic insn@0x080485c1[2]: number_(32, 134513552) = 0x08048390<134513552>[u32]
 Symbolic insn@0x080485c1[2]: unsignedExtend(0x08048390<134513552>[u32], 32) = 0x08048390<134513552>[u32]
 Symbolic insn@0x080485c1[2]: undefined_(32) = V4[u32]
@@ -9461,10 +9889,12 @@ Symbolic: operators destroyed
 
 0x080485c6: pop eax
 Symbolic: startInstruction(0x080485c6: pop eax)
+Symbolic insn@0x080485c6[0]: // advancing instruction pointer
 Symbolic insn@0x080485c6[0]: number_(32, 134514118) = 0x080485c6<134514118>[u32]
 Symbolic insn@0x080485c6[0]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x080485c6[0]: add(0x080485c6<134514118>[u32], 0x00000001[u32]) = 0x080485c7<134514119>[u32]
 Symbolic insn@0x080485c6[0]: writeRegister(eip, 0x080485c7<134514119>[u32])
+Symbolic insn@0x080485c6[0]: // executing instruction core
 Symbolic insn@0x080485c6[0]: undefined_(32) = V1[u32]
 Symbolic insn@0x080485c6[0]: readRegister(esp, V1[u32]) = esp_0[u32]
 Symbolic insn@0x080485c6[0]: number_(32, 4) = 0x00000004[u32]
@@ -9492,10 +9922,12 @@ memory:
 
 0x080485c7: pop ebx
 Symbolic: startInstruction(0x080485c7: pop ebx)
+Symbolic insn@0x080485c7[1]: // advancing instruction pointer
 Symbolic insn@0x080485c7[1]: number_(32, 134514119) = 0x080485c7<134514119>[u32]
 Symbolic insn@0x080485c7[1]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x080485c7[1]: add(0x080485c7<134514119>[u32], 0x00000001[u32]) = 0x080485c8<134514120>[u32]
 Symbolic insn@0x080485c7[1]: writeRegister(eip, 0x080485c8<134514120>[u32])
+Symbolic insn@0x080485c7[1]: // executing instruction core
 Symbolic insn@0x080485c7[1]: undefined_(32) = V3[u32]
 Symbolic insn@0x080485c7[1]: readRegister(esp, V3[u32]) = (add[u32] esp_0[u32] 0x00000004[u32])
 Symbolic insn@0x080485c7[1]: number_(32, 4) = 0x00000004[u32]
@@ -9528,10 +9960,12 @@ memory:
 
 0x080485c8: leave 
 Symbolic: startInstruction(0x080485c8: leave)
+Symbolic insn@0x080485c8[2]: // advancing instruction pointer
 Symbolic insn@0x080485c8[2]: number_(32, 134514120) = 0x080485c8<134514120>[u32]
 Symbolic insn@0x080485c8[2]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x080485c8[2]: add(0x080485c8<134514120>[u32], 0x00000001[u32]) = 0x080485c9<134514121>[u32]
 Symbolic insn@0x080485c8[2]: writeRegister(eip, 0x080485c9<134514121>[u32])
+Symbolic insn@0x080485c8[2]: // executing instruction core
 Symbolic insn@0x080485c8[2]: undefined_(32) = V5[u32]
 Symbolic insn@0x080485c8[2]: readRegister(ebp, V5[u32]) = ebp_0[u32]
 Symbolic insn@0x080485c8[2]: writeRegister(esp, ebp_0[u32])
@@ -9572,10 +10006,12 @@ memory:
 
 0x080485c9: ret 
 Symbolic: startInstruction(0x080485c9: ret)
+Symbolic insn@0x080485c9[3]: // advancing instruction pointer
 Symbolic insn@0x080485c9[3]: number_(32, 134514121) = 0x080485c9<134514121>[u32]
 Symbolic insn@0x080485c9[3]: number_(32, 1) = 0x00000001[u32]
 Symbolic insn@0x080485c9[3]: add(0x080485c9<134514121>[u32], 0x00000001[u32]) = 0x080485ca<134514122>[u32]
 Symbolic insn@0x080485c9[3]: writeRegister(eip, 0x080485ca<134514122>[u32])
+Symbolic insn@0x080485c9[3]: // executing instruction core
 Symbolic insn@0x080485c9[3]: undefined_(32) = V8[u32]
 Symbolic insn@0x080485c9[3]: readRegister(esp, V8[u32]) = (add[u32] ebp_0[u32] 0x00000004[u32])
 Symbolic insn@0x080485c9[3]: number_(32, 4) = 0x00000004[u32]

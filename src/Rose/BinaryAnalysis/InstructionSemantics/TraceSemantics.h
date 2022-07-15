@@ -317,7 +317,8 @@ public:
     virtual void isNoopRead(bool) override;
     virtual void startInstruction(SgAsmInstruction*) override;
     virtual void finishInstruction(SgAsmInstruction*) override;
-    
+    virtual void comment(const std::string&) override;
+
     virtual BaseSemantics::SValuePtr undefined_(size_t nbits) override;
     virtual BaseSemantics::SValuePtr unspecified_(size_t nbits) override;
     virtual BaseSemantics::SValuePtr number_(size_t nbits, uint64_t value) override;

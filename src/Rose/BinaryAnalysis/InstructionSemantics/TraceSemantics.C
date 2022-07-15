@@ -3,7 +3,10 @@
 #include "sage3basic.h"
 #include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
 
+#include <Rose/StringUtility/SplitJoin.h>
 #include "AsmUnparser_compat.h"
+
+#include <boost/algorithm/string/trim.hpp>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -449,6 +452,16 @@ RiscOperators::finishInstruction(SgAsmInstruction *insn) {
         throw;
     }
     BaseSemantics::RiscOperators::finishInstruction(insn);
+}
+
+void
+RiscOperators::comment(const std::string &cmt) {
+    if (shouldPrint()) {
+        for (const std::string &line: StringUtility::stringToList(cmt)) {
+            linePrefix();
+            stream_ <<"// " <<boost::trim_right_copy(line) <<"\n";
+        }
+    }
 }
 
 BaseSemantics::SValuePtr

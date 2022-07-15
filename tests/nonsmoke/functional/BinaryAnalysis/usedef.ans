@@ -4,10 +4,12 @@
 
 0x080480a0: je 0x080480a3<case1>
 Symbolic: startInstruction(0x080480a0: je 0x080480a3<case1>)
+Symbolic insn@0x080480a0[0]: // advancing instruction pointer
 Symbolic insn@0x080480a0[0]: number_(32, 134512800) = {defs={0x080480a0}, expr=0x080480a0<134512800>[u32]}
 Symbolic insn@0x080480a0[0]: number_(32, 2) = {defs={0x080480a0}, expr=0x00000002[u32]}
 Symbolic insn@0x080480a0[0]: add({defs={0x080480a0}, expr=0x080480a0<134512800>[u32]}, {defs={0x080480a0}, expr=0x00000002[u32]}) = {defs={0x080480a0}, expr=0x080480a2<134512802>[u32]}
 Symbolic insn@0x080480a0[0]: writeRegister(eip, {defs={0x080480a0}, expr=0x080480a2<134512802>[u32]})
+Symbolic insn@0x080480a0[0]: // executing instruction core
 Symbolic insn@0x080480a0[0]: undefined_(1) = V1[u1]
 Symbolic insn@0x080480a0[0]: readRegister(zf, V1[u1]) = zf_0[u1]
 Symbolic insn@0x080480a0[0]: undefined_(32) = V2[u32]
@@ -33,10 +35,12 @@ Symbolic: operators destroyed
 
 0x080480a2: hlt 
 Symbolic: startInstruction(0x080480a2: hlt)
+Symbolic insn@0x080480a2[0]: // advancing instruction pointer
 Symbolic insn@0x080480a2[0]: number_(32, 134512802) = {defs={0x080480a2}, expr=0x080480a2<134512802>[u32]}
 Symbolic insn@0x080480a2[0]: number_(32, 1) = {defs={0x080480a2}, expr=0x00000001[u32]}
 Symbolic insn@0x080480a2[0]: add({defs={0x080480a2}, expr=0x080480a2<134512802>[u32]}, {defs={0x080480a2}, expr=0x00000001[u32]}) = {defs={0x080480a2}, expr=0x080480a3<134512803>[u32]}
 Symbolic insn@0x080480a2[0]: writeRegister(eip, {defs={0x080480a2}, expr=0x080480a3<134512803>[u32]})
+Symbolic insn@0x080480a2[0]: // executing instruction core
 Symbolic insn@0x080480a2[0]: hlt()
 Symbolic insn@0x080480a2[0]: number_(32, 134512802) = {defs={0x080480a2}, expr=0x080480a2<134512802>[u32]}
 Symbolic insn@0x080480a2[0]: writeRegister(eip, {defs={0x080480a2}, expr=0x080480a2<134512802>[u32]})
@@ -56,10 +60,12 @@ Symbolic: operators destroyed
 
 0x080480a3: mov eax, ebx
 Symbolic: startInstruction(0x080480a3: mov eax, ebx)
+Symbolic insn@0x080480a3[0]: // advancing instruction pointer
 Symbolic insn@0x080480a3[0]: number_(32, 134512803) = {defs={0x080480a3}, expr=0x080480a3<134512803>[u32]}
 Symbolic insn@0x080480a3[0]: number_(32, 2) = {defs={0x080480a3}, expr=0x00000002[u32]}
 Symbolic insn@0x080480a3[0]: add({defs={0x080480a3}, expr=0x080480a3<134512803>[u32]}, {defs={0x080480a3}, expr=0x00000002[u32]}) = {defs={0x080480a3}, expr=0x080480a5<134512805>[u32]}
 Symbolic insn@0x080480a3[0]: writeRegister(eip, {defs={0x080480a3}, expr=0x080480a5<134512805>[u32]})
+Symbolic insn@0x080480a3[0]: // executing instruction core
 Symbolic insn@0x080480a3[0]: undefined_(32) = V1[u32]
 Symbolic insn@0x080480a3[0]: readRegister(ebx, V1[u32]) = ebx_0[u32]
 Symbolic insn@0x080480a3[0]: writeRegister(eax, ebx_0[u32])
@@ -76,10 +82,12 @@ memory:
 
 0x080480a5: mov eax, eax
 Symbolic: startInstruction(0x080480a5: mov eax, eax)
+Symbolic insn@0x080480a5[1]: // advancing instruction pointer
 Symbolic insn@0x080480a5[1]: number_(32, 134512805) = {defs={0x080480a5}, expr=0x080480a5<134512805>[u32]}
 Symbolic insn@0x080480a5[1]: number_(32, 2) = {defs={0x080480a5}, expr=0x00000002[u32]}
 Symbolic insn@0x080480a5[1]: add({defs={0x080480a5}, expr=0x080480a5<134512805>[u32]}, {defs={0x080480a5}, expr=0x00000002[u32]}) = {defs={0x080480a5}, expr=0x080480a7<134512807>[u32]}
 Symbolic insn@0x080480a5[1]: writeRegister(eip, {defs={0x080480a5}, expr=0x080480a7<134512807>[u32]})
+Symbolic insn@0x080480a5[1]: // executing instruction core
 Symbolic insn@0x080480a5[1]: undefined_(32) = V2[u32]
 Symbolic insn@0x080480a5[1]: readRegister(eax, V2[u32]) = ebx_0[u32]
 Symbolic insn@0x080480a5[1]: writeRegister(eax, ebx_0[u32])
@@ -96,10 +104,12 @@ memory:
 
 0x080480a7: je 0x080480a2<end>
 Symbolic: startInstruction(0x080480a7: je 0x080480a2<end>)
+Symbolic insn@0x080480a7[2]: // advancing instruction pointer
 Symbolic insn@0x080480a7[2]: number_(32, 134512807) = {defs={0x080480a7}, expr=0x080480a7<134512807>[u32]}
 Symbolic insn@0x080480a7[2]: number_(32, 2) = {defs={0x080480a7}, expr=0x00000002[u32]}
 Symbolic insn@0x080480a7[2]: add({defs={0x080480a7}, expr=0x080480a7<134512807>[u32]}, {defs={0x080480a7}, expr=0x00000002[u32]}) = {defs={0x080480a7}, expr=0x080480a9<134512809>[u32]}
 Symbolic insn@0x080480a7[2]: writeRegister(eip, {defs={0x080480a7}, expr=0x080480a9<134512809>[u32]})
+Symbolic insn@0x080480a7[2]: // executing instruction core
 Symbolic insn@0x080480a7[2]: undefined_(1) = V3[u1]
 Symbolic insn@0x080480a7[2]: readRegister(zf, V3[u1]) = zf_0[u1]
 Symbolic insn@0x080480a7[2]: undefined_(32) = V4[u32]
@@ -126,10 +136,12 @@ Symbolic: operators destroyed
 
 0x080480a9: add eax, eax
 Symbolic: startInstruction(0x080480a9: add eax, eax)
+Symbolic insn@0x080480a9[0]: // advancing instruction pointer
 Symbolic insn@0x080480a9[0]: number_(32, 134512809) = {defs={0x080480a9}, expr=0x080480a9<134512809>[u32]}
 Symbolic insn@0x080480a9[0]: number_(32, 2) = {defs={0x080480a9}, expr=0x00000002[u32]}
 Symbolic insn@0x080480a9[0]: add({defs={0x080480a9}, expr=0x080480a9<134512809>[u32]}, {defs={0x080480a9}, expr=0x00000002[u32]}) = {defs={0x080480a9}, expr=0x080480ab<134512811>[u32]}
 Symbolic insn@0x080480a9[0]: writeRegister(eip, {defs={0x080480a9}, expr=0x080480ab<134512811>[u32]})
+Symbolic insn@0x080480a9[0]: // executing instruction core
 Symbolic insn@0x080480a9[0]: boolean_(0) = {defs={0x080480a9}, expr=false[u1]}
 Symbolic insn@0x080480a9[0]: undefined_(32) = V1[u32]
 Symbolic insn@0x080480a9[0]: readRegister(eax, V1[u32]) = eax_0[u32]
@@ -186,10 +198,12 @@ memory:
 
 0x080480ab: add ebx, ebx
 Symbolic: startInstruction(0x080480ab: add ebx, ebx)
+Symbolic insn@0x080480ab[1]: // advancing instruction pointer
 Symbolic insn@0x080480ab[1]: number_(32, 134512811) = {defs={0x080480ab}, expr=0x080480ab<134512811>[u32]}
 Symbolic insn@0x080480ab[1]: number_(32, 2) = {defs={0x080480ab}, expr=0x00000002[u32]}
 Symbolic insn@0x080480ab[1]: add({defs={0x080480ab}, expr=0x080480ab<134512811>[u32]}, {defs={0x080480ab}, expr=0x00000002[u32]}) = {defs={0x080480ab}, expr=0x080480ad<134512813>[u32]}
 Symbolic insn@0x080480ab[1]: writeRegister(eip, {defs={0x080480ab}, expr=0x080480ad<134512813>[u32]})
+Symbolic insn@0x080480ab[1]: // executing instruction core
 Symbolic insn@0x080480ab[1]: boolean_(0) = {defs={0x080480ab}, expr=false[u1]}
 Symbolic insn@0x080480ab[1]: undefined_(32) = V3[u32]
 Symbolic insn@0x080480ab[1]: readRegister(ebx, V3[u32]) = ebx_0[u32]
@@ -247,10 +261,12 @@ memory:
 
 0x080480ad: add eax, ebx
 Symbolic: startInstruction(0x080480ad: add eax, ebx)
+Symbolic insn@0x080480ad[2]: // advancing instruction pointer
 Symbolic insn@0x080480ad[2]: number_(32, 134512813) = {defs={0x080480ad}, expr=0x080480ad<134512813>[u32]}
 Symbolic insn@0x080480ad[2]: number_(32, 2) = {defs={0x080480ad}, expr=0x00000002[u32]}
 Symbolic insn@0x080480ad[2]: add({defs={0x080480ad}, expr=0x080480ad<134512813>[u32]}, {defs={0x080480ad}, expr=0x00000002[u32]}) = {defs={0x080480ad}, expr=0x080480af<134512815>[u32]}
 Symbolic insn@0x080480ad[2]: writeRegister(eip, {defs={0x080480ad}, expr=0x080480af<134512815>[u32]})
+Symbolic insn@0x080480ad[2]: // executing instruction core
 Symbolic insn@0x080480ad[2]: boolean_(0) = {defs={0x080480ad}, expr=false[u1]}
 Symbolic insn@0x080480ad[2]: undefined_(32) = V5[u32]
 Symbolic insn@0x080480ad[2]: readRegister(ebx, V5[u32]) = {defs={0x080480ab}, expr=(add[u32] ebx_0[u32] ebx_0[u32])}
@@ -308,10 +324,12 @@ memory:
 
 0x080480af: je 0x080480a2<end>
 Symbolic: startInstruction(0x080480af: je 0x080480a2<end>)
+Symbolic insn@0x080480af[3]: // advancing instruction pointer
 Symbolic insn@0x080480af[3]: number_(32, 134512815) = {defs={0x080480af}, expr=0x080480af<134512815>[u32]}
 Symbolic insn@0x080480af[3]: number_(32, 2) = {defs={0x080480af}, expr=0x00000002[u32]}
 Symbolic insn@0x080480af[3]: add({defs={0x080480af}, expr=0x080480af<134512815>[u32]}, {defs={0x080480af}, expr=0x00000002[u32]}) = {defs={0x080480af}, expr=0x080480b1<134512817>[u32]}
 Symbolic insn@0x080480af[3]: writeRegister(eip, {defs={0x080480af}, expr=0x080480b1<134512817>[u32]})
+Symbolic insn@0x080480af[3]: // executing instruction core
 Symbolic insn@0x080480af[3]: undefined_(1) = V7[u1]
 Symbolic insn@0x080480af[3]: readRegister(zf, V7[u1]) = {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(zerop[u1] (add[u32] eax_0[u32] eax_0[u32] ebx_0[u32] ebx_0[u32]))}
 Symbolic insn@0x080480af[3]: undefined_(32) = V8[u32]
@@ -345,10 +363,12 @@ Symbolic: operators destroyed
 
 0x080480b1: mov eax, 0x00000001
 Symbolic: startInstruction(0x080480b1: mov eax, 0x00000001)
+Symbolic insn@0x080480b1[0]: // advancing instruction pointer
 Symbolic insn@0x080480b1[0]: number_(32, 134512817) = {defs={0x080480b1}, expr=0x080480b1<134512817>[u32]}
 Symbolic insn@0x080480b1[0]: number_(32, 5) = {defs={0x080480b1}, expr=0x00000005[u32]}
 Symbolic insn@0x080480b1[0]: add({defs={0x080480b1}, expr=0x080480b1<134512817>[u32]}, {defs={0x080480b1}, expr=0x00000005[u32]}) = {defs={0x080480b1}, expr=0x080480b6<134512822>[u32]}
 Symbolic insn@0x080480b1[0]: writeRegister(eip, {defs={0x080480b1}, expr=0x080480b6<134512822>[u32]})
+Symbolic insn@0x080480b1[0]: // executing instruction core
 Symbolic insn@0x080480b1[0]: number_(32, 1) = {defs={0x080480b1}, expr=0x00000001[u32]}
 Symbolic insn@0x080480b1[0]: writeRegister(eax, {defs={0x080480b1}, expr=0x00000001[u32]})
 Symbolic insn@0x080480b1[0]: finishInstruction(mov eax, 0x00000001)
@@ -364,10 +384,12 @@ memory:
 
 0x080480b6: je 0x080480a2<end>
 Symbolic: startInstruction(0x080480b6: je 0x080480a2<end>)
+Symbolic insn@0x080480b6[1]: // advancing instruction pointer
 Symbolic insn@0x080480b6[1]: number_(32, 134512822) = {defs={0x080480b6}, expr=0x080480b6<134512822>[u32]}
 Symbolic insn@0x080480b6[1]: number_(32, 2) = {defs={0x080480b6}, expr=0x00000002[u32]}
 Symbolic insn@0x080480b6[1]: add({defs={0x080480b6}, expr=0x080480b6<134512822>[u32]}, {defs={0x080480b6}, expr=0x00000002[u32]}) = {defs={0x080480b6}, expr=0x080480b8<134512824>[u32]}
 Symbolic insn@0x080480b6[1]: writeRegister(eip, {defs={0x080480b6}, expr=0x080480b8<134512824>[u32]})
+Symbolic insn@0x080480b6[1]: // executing instruction core
 Symbolic insn@0x080480b6[1]: undefined_(1) = V1[u1]
 Symbolic insn@0x080480b6[1]: readRegister(zf, V1[u1]) = zf_0[u1]
 Symbolic insn@0x080480b6[1]: undefined_(32) = V2[u32]
@@ -394,10 +416,12 @@ Symbolic: operators destroyed
 
 0x080480b8: mov eax, 0x00000003
 Symbolic: startInstruction(0x080480b8: mov eax, 0x00000003)
+Symbolic insn@0x080480b8[0]: // advancing instruction pointer
 Symbolic insn@0x080480b8[0]: number_(32, 134512824) = {defs={0x080480b8}, expr=0x080480b8<134512824>[u32]}
 Symbolic insn@0x080480b8[0]: number_(32, 5) = {defs={0x080480b8}, expr=0x00000005[u32]}
 Symbolic insn@0x080480b8[0]: add({defs={0x080480b8}, expr=0x080480b8<134512824>[u32]}, {defs={0x080480b8}, expr=0x00000005[u32]}) = {defs={0x080480b8}, expr=0x080480bd<134512829>[u32]}
 Symbolic insn@0x080480b8[0]: writeRegister(eip, {defs={0x080480b8}, expr=0x080480bd<134512829>[u32]})
+Symbolic insn@0x080480b8[0]: // executing instruction core
 Symbolic insn@0x080480b8[0]: number_(32, 3) = {defs={0x080480b8}, expr=0x00000003[u32]}
 Symbolic insn@0x080480b8[0]: writeRegister(eax, {defs={0x080480b8}, expr=0x00000003[u32]})
 Symbolic insn@0x080480b8[0]: finishInstruction(mov eax, 0x00000003)
@@ -413,10 +437,12 @@ memory:
 
 0x080480bd: mov ebx, 0x00000004
 Symbolic: startInstruction(0x080480bd: mov ebx, 0x00000004)
+Symbolic insn@0x080480bd[1]: // advancing instruction pointer
 Symbolic insn@0x080480bd[1]: number_(32, 134512829) = {defs={0x080480bd}, expr=0x080480bd<134512829>[u32]}
 Symbolic insn@0x080480bd[1]: number_(32, 5) = {defs={0x080480bd}, expr=0x00000005[u32]}
 Symbolic insn@0x080480bd[1]: add({defs={0x080480bd}, expr=0x080480bd<134512829>[u32]}, {defs={0x080480bd}, expr=0x00000005[u32]}) = {defs={0x080480bd}, expr=0x080480c2<134512834>[u32]}
 Symbolic insn@0x080480bd[1]: writeRegister(eip, {defs={0x080480bd}, expr=0x080480c2<134512834>[u32]})
+Symbolic insn@0x080480bd[1]: // executing instruction core
 Symbolic insn@0x080480bd[1]: number_(32, 4) = {defs={0x080480bd}, expr=0x00000004[u32]}
 Symbolic insn@0x080480bd[1]: writeRegister(ebx, {defs={0x080480bd}, expr=0x00000004[u32]})
 Symbolic insn@0x080480bd[1]: finishInstruction(mov ebx, 0x00000004)
@@ -433,10 +459,12 @@ memory:
 
 0x080480c2: add eax, ebx
 Symbolic: startInstruction(0x080480c2: add eax, ebx)
+Symbolic insn@0x080480c2[2]: // advancing instruction pointer
 Symbolic insn@0x080480c2[2]: number_(32, 134512834) = {defs={0x080480c2}, expr=0x080480c2<134512834>[u32]}
 Symbolic insn@0x080480c2[2]: number_(32, 2) = {defs={0x080480c2}, expr=0x00000002[u32]}
 Symbolic insn@0x080480c2[2]: add({defs={0x080480c2}, expr=0x080480c2<134512834>[u32]}, {defs={0x080480c2}, expr=0x00000002[u32]}) = {defs={0x080480c2}, expr=0x080480c4<134512836>[u32]}
 Symbolic insn@0x080480c2[2]: writeRegister(eip, {defs={0x080480c2}, expr=0x080480c4<134512836>[u32]})
+Symbolic insn@0x080480c2[2]: // executing instruction core
 Symbolic insn@0x080480c2[2]: boolean_(0) = {defs={0x080480c2}, expr=false[u1]}
 Symbolic insn@0x080480c2[2]: undefined_(32) = V1[u32]
 Symbolic insn@0x080480c2[2]: readRegister(ebx, V1[u32]) = {defs={0x080480bd}, expr=0x00000004[u32]}
@@ -494,10 +522,12 @@ memory:
 
 0x080480c4: neg ecx
 Symbolic: startInstruction(0x080480c4: neg ecx)
+Symbolic insn@0x080480c4[3]: // advancing instruction pointer
 Symbolic insn@0x080480c4[3]: number_(32, 134512836) = {defs={0x080480c4}, expr=0x080480c4<134512836>[u32]}
 Symbolic insn@0x080480c4[3]: number_(32, 2) = {defs={0x080480c4}, expr=0x00000002[u32]}
 Symbolic insn@0x080480c4[3]: add({defs={0x080480c4}, expr=0x080480c4<134512836>[u32]}, {defs={0x080480c4}, expr=0x00000002[u32]}) = {defs={0x080480c4}, expr=0x080480c6<134512838>[u32]}
 Symbolic insn@0x080480c4[3]: writeRegister(eip, {defs={0x080480c4}, expr=0x080480c6<134512838>[u32]})
+Symbolic insn@0x080480c4[3]: // executing instruction core
 Symbolic insn@0x080480c4[3]: undefined_(32) = V3[u32]
 Symbolic insn@0x080480c4[3]: readRegister(ecx, V3[u32]) = ecx_0[u32]
 Symbolic insn@0x080480c4[3]: boolean_(0) = {defs={0x080480c4}, expr=false[u1]}
@@ -559,10 +589,12 @@ memory:
 
 0x080480c6: je 0x080480a2<end>
 Symbolic: startInstruction(0x080480c6: je 0x080480a2<end>)
+Symbolic insn@0x080480c6[4]: // advancing instruction pointer
 Symbolic insn@0x080480c6[4]: number_(32, 134512838) = {defs={0x080480c6}, expr=0x080480c6<134512838>[u32]}
 Symbolic insn@0x080480c6[4]: number_(32, 2) = {defs={0x080480c6}, expr=0x00000002[u32]}
 Symbolic insn@0x080480c6[4]: add({defs={0x080480c6}, expr=0x080480c6<134512838>[u32]}, {defs={0x080480c6}, expr=0x00000002[u32]}) = {defs={0x080480c6}, expr=0x080480c8<134512840>[u32]}
 Symbolic insn@0x080480c6[4]: writeRegister(eip, {defs={0x080480c6}, expr=0x080480c8<134512840>[u32]})
+Symbolic insn@0x080480c6[4]: // executing instruction core
 Symbolic insn@0x080480c6[4]: undefined_(1) = V4[u1]
 Symbolic insn@0x080480c6[4]: readRegister(zf, V4[u1]) = {defs={0x080480c4}, expr=(zerop[u1] (add[u32] (invert[u32] ecx_0[u32]) 0x00000001[u32]))}
 Symbolic insn@0x080480c6[4]: undefined_(32) = V5[u32]
@@ -597,10 +629,12 @@ Symbolic: operators destroyed
 
 0x080480c8: mov eax, ebx
 Symbolic: startInstruction(0x080480c8: mov eax, ebx)
+Symbolic insn@0x080480c8[0]: // advancing instruction pointer
 Symbolic insn@0x080480c8[0]: number_(32, 134512840) = {defs={0x080480c8}, expr=0x080480c8<134512840>[u32]}
 Symbolic insn@0x080480c8[0]: number_(32, 2) = {defs={0x080480c8}, expr=0x00000002[u32]}
 Symbolic insn@0x080480c8[0]: add({defs={0x080480c8}, expr=0x080480c8<134512840>[u32]}, {defs={0x080480c8}, expr=0x00000002[u32]}) = {defs={0x080480c8}, expr=0x080480ca<134512842>[u32]}
 Symbolic insn@0x080480c8[0]: writeRegister(eip, {defs={0x080480c8}, expr=0x080480ca<134512842>[u32]})
+Symbolic insn@0x080480c8[0]: // executing instruction core
 Symbolic insn@0x080480c8[0]: undefined_(32) = V1[u32]
 Symbolic insn@0x080480c8[0]: readRegister(ebx, V1[u32]) = ebx_0[u32]
 Symbolic insn@0x080480c8[0]: writeRegister(eax, ebx_0[u32])
@@ -617,10 +651,12 @@ memory:
 
 0x080480ca: mov ah, bh
 Symbolic: startInstruction(0x080480ca: mov ah, bh)
+Symbolic insn@0x080480ca[1]: // advancing instruction pointer
 Symbolic insn@0x080480ca[1]: number_(32, 134512842) = {defs={0x080480ca}, expr=0x080480ca<134512842>[u32]}
 Symbolic insn@0x080480ca[1]: number_(32, 2) = {defs={0x080480ca}, expr=0x00000002[u32]}
 Symbolic insn@0x080480ca[1]: add({defs={0x080480ca}, expr=0x080480ca<134512842>[u32]}, {defs={0x080480ca}, expr=0x00000002[u32]}) = {defs={0x080480ca}, expr=0x080480cc<134512844>[u32]}
 Symbolic insn@0x080480ca[1]: writeRegister(eip, {defs={0x080480ca}, expr=0x080480cc<134512844>[u32]})
+Symbolic insn@0x080480ca[1]: // executing instruction core
 Symbolic insn@0x080480ca[1]: undefined_(8) = V2[u8]
 Symbolic insn@0x080480ca[1]: readRegister(bh, V2[u8]) = (extract[u8] 0x00000008[u32] 0x00000010[u32] ebx_0[u32])
 Symbolic insn@0x080480ca[1]: writeRegister(ah, (extract[u8] 0x00000008[u32] 0x00000010[u32] ebx_0[u32]))
@@ -642,10 +678,12 @@ memory:
 
 0x080480cc: mov ah, bl
 Symbolic: startInstruction(0x080480cc: mov ah, bl)
+Symbolic insn@0x080480cc[2]: // advancing instruction pointer
 Symbolic insn@0x080480cc[2]: number_(32, 134512844) = {defs={0x080480cc}, expr=0x080480cc<134512844>[u32]}
 Symbolic insn@0x080480cc[2]: number_(32, 2) = {defs={0x080480cc}, expr=0x00000002[u32]}
 Symbolic insn@0x080480cc[2]: add({defs={0x080480cc}, expr=0x080480cc<134512844>[u32]}, {defs={0x080480cc}, expr=0x00000002[u32]}) = {defs={0x080480cc}, expr=0x080480ce<134512846>[u32]}
 Symbolic insn@0x080480cc[2]: writeRegister(eip, {defs={0x080480cc}, expr=0x080480ce<134512846>[u32]})
+Symbolic insn@0x080480cc[2]: // executing instruction core
 Symbolic insn@0x080480cc[2]: undefined_(8) = V3[u8]
 Symbolic insn@0x080480cc[2]: readRegister(bl, V3[u8]) = (extract[u8] 0x00000000[u32] 0x00000008[u32] ebx_0[u32])
 Symbolic insn@0x080480cc[2]: writeRegister(ah, (extract[u8] 0x00000000[u32] 0x00000008[u32] ebx_0[u32]))
@@ -667,10 +705,12 @@ memory:
 
 0x080480ce: mov ax, cx
 Symbolic: startInstruction(0x080480ce: mov ax, cx)
+Symbolic insn@0x080480ce[3]: // advancing instruction pointer
 Symbolic insn@0x080480ce[3]: number_(32, 134512846) = {defs={0x080480ce}, expr=0x080480ce<134512846>[u32]}
 Symbolic insn@0x080480ce[3]: number_(32, 3) = {defs={0x080480ce}, expr=0x00000003[u32]}
 Symbolic insn@0x080480ce[3]: add({defs={0x080480ce}, expr=0x080480ce<134512846>[u32]}, {defs={0x080480ce}, expr=0x00000003[u32]}) = {defs={0x080480ce}, expr=0x080480d1<134512849>[u32]}
 Symbolic insn@0x080480ce[3]: writeRegister(eip, {defs={0x080480ce}, expr=0x080480d1<134512849>[u32]})
+Symbolic insn@0x080480ce[3]: // executing instruction core
 Symbolic insn@0x080480ce[3]: undefined_(16) = V4[u16]
 Symbolic insn@0x080480ce[3]: readRegister(cx, V4[u16]) = cx_0[u16]
 Symbolic insn@0x080480ce[3]: writeRegister(ax, cx_0[u16])
@@ -691,10 +731,12 @@ memory:
 
 0x080480d1: mov eax, ebx
 Symbolic: startInstruction(0x080480d1: mov eax, ebx)
+Symbolic insn@0x080480d1[4]: // advancing instruction pointer
 Symbolic insn@0x080480d1[4]: number_(32, 134512849) = {defs={0x080480d1}, expr=0x080480d1<134512849>[u32]}
 Symbolic insn@0x080480d1[4]: number_(32, 2) = {defs={0x080480d1}, expr=0x00000002[u32]}
 Symbolic insn@0x080480d1[4]: add({defs={0x080480d1}, expr=0x080480d1<134512849>[u32]}, {defs={0x080480d1}, expr=0x00000002[u32]}) = {defs={0x080480d1}, expr=0x080480d3<134512851>[u32]}
 Symbolic insn@0x080480d1[4]: writeRegister(eip, {defs={0x080480d1}, expr=0x080480d3<134512851>[u32]})
+Symbolic insn@0x080480d1[4]: // executing instruction core
 Symbolic insn@0x080480d1[4]: undefined_(32) = V5[u32]
 Symbolic insn@0x080480d1[4]: readRegister(ebx, V5[u32]) = ebx_0[u32]
 Symbolic insn@0x080480d1[4]: writeRegister(eax, ebx_0[u32])
@@ -711,10 +753,12 @@ memory:
 
 0x080480d3: je 0x080480a2<end>
 Symbolic: startInstruction(0x080480d3: je 0x080480a2<end>)
+Symbolic insn@0x080480d3[5]: // advancing instruction pointer
 Symbolic insn@0x080480d3[5]: number_(32, 134512851) = {defs={0x080480d3}, expr=0x080480d3<134512851>[u32]}
 Symbolic insn@0x080480d3[5]: number_(32, 2) = {defs={0x080480d3}, expr=0x00000002[u32]}
 Symbolic insn@0x080480d3[5]: add({defs={0x080480d3}, expr=0x080480d3<134512851>[u32]}, {defs={0x080480d3}, expr=0x00000002[u32]}) = {defs={0x080480d3}, expr=0x080480d5<134512853>[u32]}
 Symbolic insn@0x080480d3[5]: writeRegister(eip, {defs={0x080480d3}, expr=0x080480d5<134512853>[u32]})
+Symbolic insn@0x080480d3[5]: // executing instruction core
 Symbolic insn@0x080480d3[5]: undefined_(1) = V6[u1]
 Symbolic insn@0x080480d3[5]: readRegister(zf, V6[u1]) = zf_0[u1]
 Symbolic insn@0x080480d3[5]: undefined_(32) = V7[u32]
@@ -741,10 +785,12 @@ Symbolic: operators destroyed
 
 0x080480d5: mov dword ds:[eax], ebx
 Symbolic: startInstruction(0x080480d5: mov dword ds:[eax], ebx)
+Symbolic insn@0x080480d5[0]: // advancing instruction pointer
 Symbolic insn@0x080480d5[0]: number_(32, 134512853) = {defs={0x080480d5}, expr=0x080480d5<134512853>[u32]}
 Symbolic insn@0x080480d5[0]: number_(32, 2) = {defs={0x080480d5}, expr=0x00000002[u32]}
 Symbolic insn@0x080480d5[0]: add({defs={0x080480d5}, expr=0x080480d5<134512853>[u32]}, {defs={0x080480d5}, expr=0x00000002[u32]}) = {defs={0x080480d5}, expr=0x080480d7<134512855>[u32]}
 Symbolic insn@0x080480d5[0]: writeRegister(eip, {defs={0x080480d5}, expr=0x080480d7<134512855>[u32]})
+Symbolic insn@0x080480d5[0]: // executing instruction core
 Symbolic insn@0x080480d5[0]: undefined_(32) = V1[u32]
 Symbolic insn@0x080480d5[0]: readRegister(ebx, V1[u32]) = ebx_0[u32]
 Symbolic insn@0x080480d5[0]: undefined_(32) = V2[u32]
@@ -767,10 +813,12 @@ memory:
 
 0x080480d7: je 0x080480a2<end>
 Symbolic: startInstruction(0x080480d7: je 0x080480a2<end>)
+Symbolic insn@0x080480d7[1]: // advancing instruction pointer
 Symbolic insn@0x080480d7[1]: number_(32, 134512855) = {defs={0x080480d7}, expr=0x080480d7<134512855>[u32]}
 Symbolic insn@0x080480d7[1]: number_(32, 2) = {defs={0x080480d7}, expr=0x00000002[u32]}
 Symbolic insn@0x080480d7[1]: add({defs={0x080480d7}, expr=0x080480d7<134512855>[u32]}, {defs={0x080480d7}, expr=0x00000002[u32]}) = {defs={0x080480d7}, expr=0x080480d9<134512857>[u32]}
 Symbolic insn@0x080480d7[1]: writeRegister(eip, {defs={0x080480d7}, expr=0x080480d9<134512857>[u32]})
+Symbolic insn@0x080480d7[1]: // executing instruction core
 Symbolic insn@0x080480d7[1]: undefined_(1) = V3[u1]
 Symbolic insn@0x080480d7[1]: readRegister(zf, V3[u1]) = zf_0[u1]
 Symbolic insn@0x080480d7[1]: undefined_(32) = V4[u32]
@@ -800,10 +848,12 @@ Symbolic: operators destroyed
 
 0x080480d9: mov eax, dword ds:[ebx]
 Symbolic: startInstruction(0x080480d9: mov eax, dword ds:[ebx])
+Symbolic insn@0x080480d9[0]: // advancing instruction pointer
 Symbolic insn@0x080480d9[0]: number_(32, 134512857) = {defs={0x080480d9}, expr=0x080480d9<134512857>[u32]}
 Symbolic insn@0x080480d9[0]: number_(32, 2) = {defs={0x080480d9}, expr=0x00000002[u32]}
 Symbolic insn@0x080480d9[0]: add({defs={0x080480d9}, expr=0x080480d9<134512857>[u32]}, {defs={0x080480d9}, expr=0x00000002[u32]}) = {defs={0x080480d9}, expr=0x080480db<134512859>[u32]}
 Symbolic insn@0x080480d9[0]: writeRegister(eip, {defs={0x080480d9}, expr=0x080480db<134512859>[u32]})
+Symbolic insn@0x080480d9[0]: // executing instruction core
 Symbolic insn@0x080480d9[0]: undefined_(32) = V1[u32]
 Symbolic insn@0x080480d9[0]: readRegister(ebx, V1[u32]) = ebx_0[u32]
 Symbolic insn@0x080480d9[0]: undefined_(32) = V2[u32]
@@ -827,10 +877,12 @@ memory:
 
 0x080480db: je 0x080480a2<end>
 Symbolic: startInstruction(0x080480db: je 0x080480a2<end>)
+Symbolic insn@0x080480db[1]: // advancing instruction pointer
 Symbolic insn@0x080480db[1]: number_(32, 134512859) = {defs={0x080480db}, expr=0x080480db<134512859>[u32]}
 Symbolic insn@0x080480db[1]: number_(32, 2) = {defs={0x080480db}, expr=0x00000002[u32]}
 Symbolic insn@0x080480db[1]: add({defs={0x080480db}, expr=0x080480db<134512859>[u32]}, {defs={0x080480db}, expr=0x00000002[u32]}) = {defs={0x080480db}, expr=0x080480dd<134512861>[u32]}
 Symbolic insn@0x080480db[1]: writeRegister(eip, {defs={0x080480db}, expr=0x080480dd<134512861>[u32]})
+Symbolic insn@0x080480db[1]: // executing instruction core
 Symbolic insn@0x080480db[1]: undefined_(1) = V3[u1]
 Symbolic insn@0x080480db[1]: readRegister(zf, V3[u1]) = zf_0[u1]
 Symbolic insn@0x080480db[1]: undefined_(32) = V4[u32]
@@ -861,10 +913,12 @@ Symbolic: operators destroyed
 
 0x080480dd: shr eax, 0x0a
 Symbolic: startInstruction(0x080480dd: shr eax, 0x0a)
+Symbolic insn@0x080480dd[0]: // advancing instruction pointer
 Symbolic insn@0x080480dd[0]: number_(32, 134512861) = {defs={0x080480dd}, expr=0x080480dd<134512861>[u32]}
 Symbolic insn@0x080480dd[0]: number_(32, 3) = {defs={0x080480dd}, expr=0x00000003[u32]}
 Symbolic insn@0x080480dd[0]: add({defs={0x080480dd}, expr=0x080480dd<134512861>[u32]}, {defs={0x080480dd}, expr=0x00000003[u32]}) = {defs={0x080480dd}, expr=0x080480e0<134512864>[u32]}
 Symbolic insn@0x080480dd[0]: writeRegister(eip, {defs={0x080480dd}, expr=0x080480e0<134512864>[u32]})
+Symbolic insn@0x080480dd[0]: // executing instruction core
 Symbolic insn@0x080480dd[0]: number_(8, 10) = {defs={0x080480dd}, expr=0x0a[u8]}
 Symbolic insn@0x080480dd[0]: unspecified_(32) = V1[u32]<unspec>
 Symbolic insn@0x080480dd[0]: undefined_(32) = V2[u32]
@@ -960,10 +1014,12 @@ memory:
 
 0x080480e0: shr eax, 0x0a
 Symbolic: startInstruction(0x080480e0: shr eax, 0x0a)
+Symbolic insn@0x080480e0[1]: // advancing instruction pointer
 Symbolic insn@0x080480e0[1]: number_(32, 134512864) = {defs={0x080480e0}, expr=0x080480e0<134512864>[u32]}
 Symbolic insn@0x080480e0[1]: number_(32, 3) = {defs={0x080480e0}, expr=0x00000003[u32]}
 Symbolic insn@0x080480e0[1]: add({defs={0x080480e0}, expr=0x080480e0<134512864>[u32]}, {defs={0x080480e0}, expr=0x00000003[u32]}) = {defs={0x080480e0}, expr=0x080480e3<134512867>[u32]}
 Symbolic insn@0x080480e0[1]: writeRegister(eip, {defs={0x080480e0}, expr=0x080480e3<134512867>[u32]})
+Symbolic insn@0x080480e0[1]: // executing instruction core
 Symbolic insn@0x080480e0[1]: number_(8, 10) = {defs={0x080480e0}, expr=0x0a[u8]}
 Symbolic insn@0x080480e0[1]: unspecified_(32) = V12[u32]<unspec>
 Symbolic insn@0x080480e0[1]: undefined_(32) = V13[u32]
@@ -1059,10 +1115,12 @@ memory:
 
 0x080480e3: shr eax, 0x0a
 Symbolic: startInstruction(0x080480e3: shr eax, 0x0a)
+Symbolic insn@0x080480e3[2]: // advancing instruction pointer
 Symbolic insn@0x080480e3[2]: number_(32, 134512867) = {defs={0x080480e3}, expr=0x080480e3<134512867>[u32]}
 Symbolic insn@0x080480e3[2]: number_(32, 3) = {defs={0x080480e3}, expr=0x00000003[u32]}
 Symbolic insn@0x080480e3[2]: add({defs={0x080480e3}, expr=0x080480e3<134512867>[u32]}, {defs={0x080480e3}, expr=0x00000003[u32]}) = {defs={0x080480e3}, expr=0x080480e6<134512870>[u32]}
 Symbolic insn@0x080480e3[2]: writeRegister(eip, {defs={0x080480e3}, expr=0x080480e6<134512870>[u32]})
+Symbolic insn@0x080480e3[2]: // executing instruction core
 Symbolic insn@0x080480e3[2]: number_(8, 10) = {defs={0x080480e3}, expr=0x0a[u8]}
 Symbolic insn@0x080480e3[2]: unspecified_(32) = V23[u32]<unspec>
 Symbolic insn@0x080480e3[2]: undefined_(32) = V24[u32]
@@ -1158,10 +1216,12 @@ memory:
 
 0x080480e6: shr eax, 0x02
 Symbolic: startInstruction(0x080480e6: shr eax, 0x02)
+Symbolic insn@0x080480e6[3]: // advancing instruction pointer
 Symbolic insn@0x080480e6[3]: number_(32, 134512870) = {defs={0x080480e6}, expr=0x080480e6<134512870>[u32]}
 Symbolic insn@0x080480e6[3]: number_(32, 3) = {defs={0x080480e6}, expr=0x00000003[u32]}
 Symbolic insn@0x080480e6[3]: add({defs={0x080480e6}, expr=0x080480e6<134512870>[u32]}, {defs={0x080480e6}, expr=0x00000003[u32]}) = {defs={0x080480e6}, expr=0x080480e9<134512873>[u32]}
 Symbolic insn@0x080480e6[3]: writeRegister(eip, {defs={0x080480e6}, expr=0x080480e9<134512873>[u32]})
+Symbolic insn@0x080480e6[3]: // executing instruction core
 Symbolic insn@0x080480e6[3]: number_(8, 2) = {defs={0x080480e6}, expr=0x02[u8]}
 Symbolic insn@0x080480e6[3]: unspecified_(32) = V34[u32]<unspec>
 Symbolic insn@0x080480e6[3]: undefined_(32) = V35[u32]
@@ -1257,10 +1317,12 @@ memory:
 
 0x080480e9: mov eax, ebx
 Symbolic: startInstruction(0x080480e9: mov eax, ebx)
+Symbolic insn@0x080480e9[4]: // advancing instruction pointer
 Symbolic insn@0x080480e9[4]: number_(32, 134512873) = {defs={0x080480e9}, expr=0x080480e9<134512873>[u32]}
 Symbolic insn@0x080480e9[4]: number_(32, 2) = {defs={0x080480e9}, expr=0x00000002[u32]}
 Symbolic insn@0x080480e9[4]: add({defs={0x080480e9}, expr=0x080480e9<134512873>[u32]}, {defs={0x080480e9}, expr=0x00000002[u32]}) = {defs={0x080480e9}, expr=0x080480eb<134512875>[u32]}
 Symbolic insn@0x080480e9[4]: writeRegister(eip, {defs={0x080480e9}, expr=0x080480eb<134512875>[u32]})
+Symbolic insn@0x080480e9[4]: // executing instruction core
 Symbolic insn@0x080480e9[4]: undefined_(32) = V45[u32]
 Symbolic insn@0x080480e9[4]: readRegister(ebx, V45[u32]) = ebx_0[u32]
 Symbolic insn@0x080480e9[4]: writeRegister(eax, ebx_0[u32])
@@ -1283,10 +1345,12 @@ memory:
 
 0x080480eb: je 0x080480a2<end>
 Symbolic: startInstruction(0x080480eb: je 0x080480a2<end>)
+Symbolic insn@0x080480eb[5]: // advancing instruction pointer
 Symbolic insn@0x080480eb[5]: number_(32, 134512875) = {defs={0x080480eb}, expr=0x080480eb<134512875>[u32]}
 Symbolic insn@0x080480eb[5]: number_(32, 2) = {defs={0x080480eb}, expr=0x00000002[u32]}
 Symbolic insn@0x080480eb[5]: add({defs={0x080480eb}, expr=0x080480eb<134512875>[u32]}, {defs={0x080480eb}, expr=0x00000002[u32]}) = {defs={0x080480eb}, expr=0x080480ed<134512877>[u32]}
 Symbolic insn@0x080480eb[5]: writeRegister(eip, {defs={0x080480eb}, expr=0x080480ed<134512877>[u32]})
+Symbolic insn@0x080480eb[5]: // executing instruction core
 Symbolic insn@0x080480eb[5]: undefined_(1) = V46[u1]
 Symbolic insn@0x080480eb[5]: readRegister(zf, V46[u1]) = {defs={0x080480dd,0x080480e0,0x080480e3,0x080480e6}, expr=true[u1]}
 Symbolic insn@0x080480eb[5]: undefined_(32) = V47[u32]
@@ -1319,10 +1383,12 @@ Symbolic: operators destroyed
 
 0x080480ed: mov eax, 0x00000001
 Symbolic: startInstruction(0x080480ed: mov eax, 0x00000001)
+Symbolic insn@0x080480ed[0]: // advancing instruction pointer
 Symbolic insn@0x080480ed[0]: number_(32, 134512877) = {defs={0x080480ed}, expr=0x080480ed<134512877>[u32]}
 Symbolic insn@0x080480ed[0]: number_(32, 5) = {defs={0x080480ed}, expr=0x00000005[u32]}
 Symbolic insn@0x080480ed[0]: add({defs={0x080480ed}, expr=0x080480ed<134512877>[u32]}, {defs={0x080480ed}, expr=0x00000005[u32]}) = {defs={0x080480ed}, expr=0x080480f2<134512882>[u32]}
 Symbolic insn@0x080480ed[0]: writeRegister(eip, {defs={0x080480ed}, expr=0x080480f2<134512882>[u32]})
+Symbolic insn@0x080480ed[0]: // executing instruction core
 Symbolic insn@0x080480ed[0]: number_(32, 1) = {defs={0x080480ed}, expr=0x00000001[u32]}
 Symbolic insn@0x080480ed[0]: writeRegister(eax, {defs={0x080480ed}, expr=0x00000001[u32]})
 Symbolic insn@0x080480ed[0]: finishInstruction(mov eax, 0x00000001)
@@ -1338,10 +1404,12 @@ memory:
 
 0x080480f2: xor eax, eax
 Symbolic: startInstruction(0x080480f2: xor eax, eax)
+Symbolic insn@0x080480f2[1]: // advancing instruction pointer
 Symbolic insn@0x080480f2[1]: number_(32, 134512882) = {defs={0x080480f2}, expr=0x080480f2<134512882>[u32]}
 Symbolic insn@0x080480f2[1]: number_(32, 2) = {defs={0x080480f2}, expr=0x00000002[u32]}
 Symbolic insn@0x080480f2[1]: add({defs={0x080480f2}, expr=0x080480f2<134512882>[u32]}, {defs={0x080480f2}, expr=0x00000002[u32]}) = {defs={0x080480f2}, expr=0x080480f4<134512884>[u32]}
 Symbolic insn@0x080480f2[1]: writeRegister(eip, {defs={0x080480f2}, expr=0x080480f4<134512884>[u32]})
+Symbolic insn@0x080480f2[1]: // executing instruction core
 Symbolic insn@0x080480f2[1]: number_(32, 0) = {defs={0x080480f2}, expr=0x00000000[u32]}
 Symbolic insn@0x080480f2[1]: extract({defs={0x080480f2}, expr=0x00000000[u32]}, 0, 8) = {defs={0x080480f2}, expr=0x00[u8]}
 Symbolic insn@0x080480f2[1]: extract({defs={0x080480f2}, expr=0x00[u8]}, 1, 2) = {defs={0x080480f2}, expr=false[u1]}
@@ -1391,10 +1459,12 @@ memory:
 
 0x080480f4: neg ecx
 Symbolic: startInstruction(0x080480f4: neg ecx)
+Symbolic insn@0x080480f4[2]: // advancing instruction pointer
 Symbolic insn@0x080480f4[2]: number_(32, 134512884) = {defs={0x080480f4}, expr=0x080480f4<134512884>[u32]}
 Symbolic insn@0x080480f4[2]: number_(32, 2) = {defs={0x080480f4}, expr=0x00000002[u32]}
 Symbolic insn@0x080480f4[2]: add({defs={0x080480f4}, expr=0x080480f4<134512884>[u32]}, {defs={0x080480f4}, expr=0x00000002[u32]}) = {defs={0x080480f4}, expr=0x080480f6<134512886>[u32]}
 Symbolic insn@0x080480f4[2]: writeRegister(eip, {defs={0x080480f4}, expr=0x080480f6<134512886>[u32]})
+Symbolic insn@0x080480f4[2]: // executing instruction core
 Symbolic insn@0x080480f4[2]: undefined_(32) = V2[u32]
 Symbolic insn@0x080480f4[2]: readRegister(ecx, V2[u32]) = ecx_0[u32]
 Symbolic insn@0x080480f4[2]: boolean_(0) = {defs={0x080480f4}, expr=false[u1]}
@@ -1455,10 +1525,12 @@ memory:
 
 0x080480f6: je 0x080480a2<end>
 Symbolic: startInstruction(0x080480f6: je 0x080480a2<end>)
+Symbolic insn@0x080480f6[3]: // advancing instruction pointer
 Symbolic insn@0x080480f6[3]: number_(32, 134512886) = {defs={0x080480f6}, expr=0x080480f6<134512886>[u32]}
 Symbolic insn@0x080480f6[3]: number_(32, 2) = {defs={0x080480f6}, expr=0x00000002[u32]}
 Symbolic insn@0x080480f6[3]: add({defs={0x080480f6}, expr=0x080480f6<134512886>[u32]}, {defs={0x080480f6}, expr=0x00000002[u32]}) = {defs={0x080480f6}, expr=0x080480f8<134512888>[u32]}
 Symbolic insn@0x080480f6[3]: writeRegister(eip, {defs={0x080480f6}, expr=0x080480f8<134512888>[u32]})
+Symbolic insn@0x080480f6[3]: // executing instruction core
 Symbolic insn@0x080480f6[3]: undefined_(1) = V3[u1]
 Symbolic insn@0x080480f6[3]: readRegister(zf, V3[u1]) = {defs={0x080480f4}, expr=(zerop[u1] (add[u32] (invert[u32] ecx_0[u32]) 0x00000001[u32]))}
 Symbolic insn@0x080480f6[3]: undefined_(32) = V4[u32]
@@ -1492,10 +1564,12 @@ Symbolic: operators destroyed
 
 0x080480f8: push 0x00000003
 Symbolic: startInstruction(0x080480f8: push 0x00000003)
+Symbolic insn@0x080480f8[0]: // advancing instruction pointer
 Symbolic insn@0x080480f8[0]: number_(32, 134512888) = {defs={0x080480f8}, expr=0x080480f8<134512888>[u32]}
 Symbolic insn@0x080480f8[0]: number_(32, 5) = {defs={0x080480f8}, expr=0x00000005[u32]}
 Symbolic insn@0x080480f8[0]: add({defs={0x080480f8}, expr=0x080480f8<134512888>[u32]}, {defs={0x080480f8}, expr=0x00000005[u32]}) = {defs={0x080480f8}, expr=0x080480fd<134512893>[u32]}
 Symbolic insn@0x080480f8[0]: writeRegister(eip, {defs={0x080480f8}, expr=0x080480fd<134512893>[u32]})
+Symbolic insn@0x080480f8[0]: // executing instruction core
 Symbolic insn@0x080480f8[0]: number_(32, 3) = {defs={0x080480f8}, expr=0x00000003[u32]}
 Symbolic insn@0x080480f8[0]: undefined_(32) = V1[u32]
 Symbolic insn@0x080480f8[0]: readRegister(esp, V1[u32]) = esp_0[u32]
@@ -1521,10 +1595,12 @@ memory:
 
 0x080480fd: mov eax, 0x00000007
 Symbolic: startInstruction(0x080480fd: mov eax, 0x00000007)
+Symbolic insn@0x080480fd[1]: // advancing instruction pointer
 Symbolic insn@0x080480fd[1]: number_(32, 134512893) = {defs={0x080480fd}, expr=0x080480fd<134512893>[u32]}
 Symbolic insn@0x080480fd[1]: number_(32, 5) = {defs={0x080480fd}, expr=0x00000005[u32]}
 Symbolic insn@0x080480fd[1]: add({defs={0x080480fd}, expr=0x080480fd<134512893>[u32]}, {defs={0x080480fd}, expr=0x00000005[u32]}) = {defs={0x080480fd}, expr=0x08048102<134512898>[u32]}
 Symbolic insn@0x080480fd[1]: writeRegister(eip, {defs={0x080480fd}, expr=0x08048102<134512898>[u32]})
+Symbolic insn@0x080480fd[1]: // executing instruction core
 Symbolic insn@0x080480fd[1]: number_(32, 7) = {defs={0x080480fd}, expr=0x00000007[u32]}
 Symbolic insn@0x080480fd[1]: writeRegister(eax, {defs={0x080480fd}, expr=0x00000007[u32]})
 Symbolic insn@0x080480fd[1]: finishInstruction(mov eax, 0x00000007)
@@ -1545,10 +1621,12 @@ memory:
 
 0x08048102: push eax
 Symbolic: startInstruction(0x08048102: push eax)
+Symbolic insn@0x08048102[2]: // advancing instruction pointer
 Symbolic insn@0x08048102[2]: number_(32, 134512898) = {defs={0x08048102}, expr=0x08048102<134512898>[u32]}
 Symbolic insn@0x08048102[2]: number_(32, 1) = {defs={0x08048102}, expr=0x00000001[u32]}
 Symbolic insn@0x08048102[2]: add({defs={0x08048102}, expr=0x08048102<134512898>[u32]}, {defs={0x08048102}, expr=0x00000001[u32]}) = {defs={0x08048102}, expr=0x08048103<134512899>[u32]}
 Symbolic insn@0x08048102[2]: writeRegister(eip, {defs={0x08048102}, expr=0x08048103<134512899>[u32]})
+Symbolic insn@0x08048102[2]: // executing instruction core
 Symbolic insn@0x08048102[2]: undefined_(32) = V2[u32]
 Symbolic insn@0x08048102[2]: readRegister(eax, V2[u32]) = {defs={0x080480fd}, expr=0x00000007[u32]}
 Symbolic insn@0x08048102[2]: undefined_(32) = V3[u32]
@@ -1580,10 +1658,12 @@ memory:
 
 0x08048103: je 0x080480a2<end>
 Symbolic: startInstruction(0x08048103: je 0x080480a2<end>)
+Symbolic insn@0x08048103[3]: // advancing instruction pointer
 Symbolic insn@0x08048103[3]: number_(32, 134512899) = {defs={0x08048103}, expr=0x08048103<134512899>[u32]}
 Symbolic insn@0x08048103[3]: number_(32, 2) = {defs={0x08048103}, expr=0x00000002[u32]}
 Symbolic insn@0x08048103[3]: add({defs={0x08048103}, expr=0x08048103<134512899>[u32]}, {defs={0x08048103}, expr=0x00000002[u32]}) = {defs={0x08048103}, expr=0x08048105<134512901>[u32]}
 Symbolic insn@0x08048103[3]: writeRegister(eip, {defs={0x08048103}, expr=0x08048105<134512901>[u32]})
+Symbolic insn@0x08048103[3]: // executing instruction core
 Symbolic insn@0x08048103[3]: undefined_(1) = V4[u1]
 Symbolic insn@0x08048103[3]: readRegister(zf, V4[u1]) = zf_0[u1]
 Symbolic insn@0x08048103[3]: undefined_(32) = V5[u32]
@@ -1619,10 +1699,12 @@ Symbolic: operators destroyed
 
 0x08048105: hlt 
 Symbolic: startInstruction(0x08048105: hlt)
+Symbolic insn@0x08048105[0]: // advancing instruction pointer
 Symbolic insn@0x08048105[0]: number_(32, 134512901) = {defs={0x08048105}, expr=0x08048105<134512901>[u32]}
 Symbolic insn@0x08048105[0]: number_(32, 1) = {defs={0x08048105}, expr=0x00000001[u32]}
 Symbolic insn@0x08048105[0]: add({defs={0x08048105}, expr=0x08048105<134512901>[u32]}, {defs={0x08048105}, expr=0x00000001[u32]}) = {defs={0x08048105}, expr=0x08048106<134512902>[u32]}
 Symbolic insn@0x08048105[0]: writeRegister(eip, {defs={0x08048105}, expr=0x08048106<134512902>[u32]})
+Symbolic insn@0x08048105[0]: // executing instruction core
 Symbolic insn@0x08048105[0]: hlt()
 Symbolic insn@0x08048105[0]: number_(32, 134512901) = {defs={0x08048105}, expr=0x08048105<134512901>[u32]}
 Symbolic insn@0x08048105[0]: writeRegister(eip, {defs={0x08048105}, expr=0x08048105<134512901>[u32]})
