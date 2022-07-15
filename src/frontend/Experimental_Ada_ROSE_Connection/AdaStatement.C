@@ -4847,6 +4847,18 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         scope.append_statement(&sgnode);
         ADA_ASSERT (sgnode.get_parent() == &scope);
 
+        if (Element_Struct* dclElem = retrieveAsOpt(elemMap(), decl.Corresponding_Declaration))
+        {
+          handleDeclaration(*dclElem, ctx.scope(SG_DEREF(sgnode.get_prototypeScope())));
+
+          // look up declarations
+          SgDeclarationStatement* protoDecl = findFirst(asisDecls(), decl.Corresponding_Declaration);
+
+          ASSERT_not_null(protoDecl);
+          sgnode.set_prototype(protoDecl);
+        }
+
+
         /* unused field
              Declaration_ID                 Corresponding_Declaration;
           +  A_Formal_Package_Declaration
