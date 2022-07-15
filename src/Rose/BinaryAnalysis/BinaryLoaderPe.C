@@ -188,20 +188,31 @@ BinaryLoaderPe::addLibDefaults(SgAsmGenericHeader *hdr/*=NULL*/) {
 
 std::string
 BinaryLoaderPe::findSoFile(const std::string &libname) const {
+    static std::map<std::string,bool> notFound;
+    if(notFound.count(libname) == 1) return "";
     mlog[TRACE] <<"find library=" <<libname <<"\n";
     if (!libname.empty() && '/'==libname[0])
         return libname;
+    std::string lowerlibname = libname;
+    boost::to_lower(lowerlibname);
     for (std::vector<std::string>::const_iterator di=directories().begin(); di!=directories().end(); ++di) {
         mlog[TRACE] <<"  looking in " <<*di <<"\n";
         std::string libpath = *di + "/" + libname;
+        std::string lowerlibpath = *di + "/" + lowerlibname;
         struct stat sb;
 #ifndef _MSC_VER
         if (stat(libpath.c_str(), &sb)>=0 && S_ISREG(sb.st_mode) && access(libpath.c_str(), R_OK)>=0) {
             mlog[TRACE] <<"    found.\n";
+            mlog[INFO] <<"found library "<<libpath<<std::endl;
             return libpath;
+        }else if(stat(lowerlibpath.c_str(), &sb)>=0 ){
+            mlog[TRACE] <<"    found.\n";
+            mlog[INFO] <<"found library "<<lowerlibpath<<std::endl;
+            return lowerlibpath;
         }
 #endif
     }
+    notFound[libname] = false;
     if (mlog[TRACE]) {
         if (directories().empty())
             mlog[TRACE] <<"no search directories\n";
