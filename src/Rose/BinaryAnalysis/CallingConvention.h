@@ -93,6 +93,7 @@ private:
     std::string comment_;                               // Long name, like "Windows Borland x86-32 fastcall"
     size_t wordWidth_ = 0;                              // Natural width word size in bits
     const RegisterDictionary *regDict_ = nullptr;       // Register dictionary used when this definition was created
+    std::vector<ConcreteLocation> nonParameterInputs_;  // Inputs that are not considered normal function parameters
     std::vector<ConcreteLocation> inputParameters_;     // Input (inc. in-out) parameters; additional stack-based are implied
     std::vector<ConcreteLocation> outputParameters_;    // Return values and output parameters.
     StackParameterOrder stackParameterOrder_ = StackParameterOrder::UNSPECIFIED; // Order of arguments on the stack
@@ -228,10 +229,22 @@ public:
     }
     /** @} */
 
+    /** Non-parameter inputs.
+     *
+     *  This is the list of all allowed inputs that are not function parameters. For instance, things like the instruction
+     *  pointer which the caller initializes to be the entry point of the function, or the x86 direction flag "df" which is
+     *  normally set by the caller but not considered a function argument.
+     *
+     * @{ */
+    const std::vector<ConcreteLocation>& nonParameterInputs() const { return nonParameterInputs_; }
+    std::vector<ConcreteLocation>& nonParameterInputs() { return nonParameterInputs_; }
+    /** @} */
+
     /** Erase all parameters.
      *
      *  Removes all input parameters, output parameters, and object pointer parameter. */
     void clearParameters() {
+        nonParameterInputs_.clear();
         clearInputParameters();
         clearOutputParameters();
         thisParameter_ = ConcreteLocation();
@@ -243,7 +256,10 @@ public:
      *  parameters.  This property is read-only; see also @ref appendInputParameter and @ref clearInputParameters. */
     const std::vector<ConcreteLocation>& inputParameters() const { return inputParameters_; }
 
-    /** Compute the set of input registers. */
+    /** Compute the set of input registers.
+     *
+     *  The returned list is all registers that might serve as function inputs, both function input parameters and
+     *  non-parameter inputs. */
     RegisterParts inputRegisterParts() const;
 
     /** Erase enumerated input parameters.

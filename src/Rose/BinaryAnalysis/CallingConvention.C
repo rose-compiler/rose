@@ -199,38 +199,45 @@ Definition::x86_cdecl(const RegisterDictionary *regDict) {
                       "x86-" + StringUtility::numberToString(SP.nBits()) + " cdecl",
                       regDict);
 
-    // Address locations
+    //==== Address locations ====
     cc->instructionPointerRegister(regDict->findLargestRegister(x86_regclass_ip, 0));
     cc->returnAddressLocation(ConcreteLocation(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp), 0));
 
-    // Stack characteristics
+    //==== Stack characteristics ====
     cc->stackPointerRegister(SP);
     cc->stackDirection(StackDirection::GROWS_DOWN);
     cc->nonParameterStackSize(cc->wordWidth() >> 3);    // return address
 
+    //==== Function parameters ====
     // All parameters are passed on the stack.
     cc->stackParameterOrder(StackParameterOrder::RIGHT_TO_LEFT);
     cc->stackCleanup(StackCleanup::BY_CALLER);
 
-    // Other inputs
-    cc->appendInputParameter(regDict->findOrThrow("df"));   // direction flag is always assumed to be valid
-    cc->appendInputParameter(regDict->findOrThrow("cs"));   // code segment register is assumed to be valid
-    cc->appendInputParameter(regDict->findOrThrow("ds"));   // data segment register is assumed to be valid
-    cc->appendInputParameter(regDict->findOrThrow("ss"));   // stack segment register is assumed to be valid
+    //==== Other inputs ====
+    // direction flag is always assumed to be valid
+    cc->nonParameterInputs().push_back(ConcreteLocation(regDict->findOrThrow("df"), Sawyer::Nothing(), regDict));
+    // code segment register is assumed to be valid
+    cc->nonParameterInputs().push_back(ConcreteLocation(regDict->findOrThrow("cs"), Sawyer::Nothing(), regDict));
+    // data segment register is assumed to be valid
+    cc->nonParameterInputs().push_back(ConcreteLocation(regDict->findOrThrow("ds"), Sawyer::Nothing(), regDict));
+    // stack segment register is assumed to be valid
+    cc->nonParameterInputs().push_back(ConcreteLocation(regDict->findOrThrow("ss"), Sawyer::Nothing(), regDict));
 
-    // Return values
+    //==== Return values ====
     cc->appendOutputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_ax));
     cc->appendOutputParameter(regDict->findLargestRegister(x86_regclass_st, x86_st_0));
     cc->appendOutputParameter(SP);                      // final value is usually one word greater than initial value
 
-    // Scratch registers (i.e., modified, not callee-saved, not return registers)
+    //==== Scratch registers ====
+    // (i.e., modified, not callee-saved, not return registers)
     cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_cx));
     cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_dx));
     cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_ip, 0));
     cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_flags, x86_flags_status));
     cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_flags, x86_flags_fpstatus));
 
-    // Callee-saved registers (everything else)
+    //==== Callee-saved registers ====
+    // Everything else
     RegisterParts regParts = regDict->getAllParts() - cc->getUsedRegisterParts();
     std::vector<RegisterDescriptor> registers = regParts.extract(regDict);
     cc->calleeSavedRegisters().insert(registers.begin(), registers.end());
@@ -255,16 +262,16 @@ Definition::ppc_ibm(const RegisterDictionary *regDict) {
     const RegisterDescriptor SP = regDict->findLargestRegister(powerpc_regclass_gpr, 1);
     Ptr cc = instance(SP.nBits(), "IBM", "PowerPC-" + StringUtility::numberToString(SP.nBits()) + " IBM", regDict);
 
-    // Address locations
+    //==== Address locations ====
     cc->instructionPointerRegister(regDict->findLargestRegister(powerpc_regclass_iar, 0));
     cc->returnAddressLocation(ConcreteLocation(regDict->findLargestRegister(powerpc_regclass_spr, powerpc_spr_lr)));
 
-    // Stack characteristics
+    //==== Stack characteristics ====
     cc->stackPointerRegister(SP);
     cc->stackDirection(StackDirection::GROWS_DOWN);
     cc->nonParameterStackSize(0);                       // return address is in link register
 
-    // Function arguments are passed in registers
+    //==== Function parameters ====
     cc->appendInputParameter(regDict->findLargestRegister(powerpc_regclass_gpr, 3));
     cc->appendInputParameter(regDict->findLargestRegister(powerpc_regclass_gpr, 4));
     cc->appendInputParameter(regDict->findLargestRegister(powerpc_regclass_gpr, 5));
@@ -292,7 +299,7 @@ Definition::ppc_ibm(const RegisterDictionary *regDict) {
     cc->stackParameterOrder(StackParameterOrder::RIGHT_TO_LEFT);
     cc->stackCleanup(StackCleanup::BY_CALLER);
 
-    // Return values
+    //==== Return values ====
     cc->appendOutputParameter(regDict->findLargestRegister(powerpc_regclass_gpr, 3)); // primary return
     cc->appendOutputParameter(regDict->findLargestRegister(powerpc_regclass_gpr, 4)); // secondary return
 
@@ -301,7 +308,8 @@ Definition::ppc_ibm(const RegisterDictionary *regDict) {
     cc->appendOutputParameter(regDict->findLargestRegister(powerpc_regclass_fpr, 3));
     cc->appendOutputParameter(regDict->findLargestRegister(powerpc_regclass_fpr, 4));
 
-    // Scratch registers (function arguments that are not return values, plus others)
+    //==== Scratch registers ====
+    // function arguments that are not return values, plus others.
     cc->scratchRegisters().insert(regDict->findLargestRegister(powerpc_regclass_gpr, 0));
     cc->scratchRegisters().insert(regDict->findLargestRegister(powerpc_regclass_gpr, 5));
     cc->scratchRegisters().insert(regDict->findLargestRegister(powerpc_regclass_gpr, 6));
@@ -327,7 +335,8 @@ Definition::ppc_ibm(const RegisterDictionary *regDict) {
     cc->scratchRegisters().insert(regDict->findLargestRegister(powerpc_regclass_fpscr, 0));
     cc->scratchRegisters().insert(regDict->findLargestRegister(powerpc_regclass_iar, 0));
 
-    // Callee-saved registers (everything else)
+    //==== Callee-saved registers ====
+    // Everything else
     RegisterParts regParts = regDict->getAllParts() - cc->getUsedRegisterParts();
     std::vector<RegisterDescriptor> registers = regParts.extract(regDict);
     cc->calleeSavedRegisters().insert(registers.begin(), registers.end());
@@ -362,38 +371,45 @@ Definition::x86_stdcall(const RegisterDictionary *regDict) {
                       "x86-" + StringUtility::numberToString(SP.nBits()) + " stdcall",
                       regDict);
 
-    // Address locations
+    //==== Address locations ====
     cc->instructionPointerRegister(regDict->findLargestRegister(x86_regclass_ip, 0));
     cc->returnAddressLocation(ConcreteLocation(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp), 0));
 
-    // Stack characteristics
+    //==== Stack characteristics ====
     cc->stackPointerRegister(SP);
     cc->stackDirection(StackDirection::GROWS_DOWN);
     cc->nonParameterStackSize(cc->wordWidth() >> 3);    // return address
 
+    //==== Function parameters ====
     // All parameters are passed on the stack
     cc->stackParameterOrder(StackParameterOrder::RIGHT_TO_LEFT);
     cc->stackCleanup(StackCleanup::BY_CALLEE);
 
-    // Other inputs
-    cc->appendInputParameter(regDict->findOrThrow("df"));   // direction flag is always assumed to be valid
-    cc->appendInputParameter(regDict->findOrThrow("cs"));   // code segment register is assumed to be valid
-    cc->appendInputParameter(regDict->findOrThrow("ds"));   // data segment register is assumed to be valid
-    cc->appendInputParameter(regDict->findOrThrow("ss"));   // stack segment register is assumed to be valid
+    //==== Other inputs ====
+    // direction flag is always assumed to be valid
+    cc->nonParameterInputs().push_back(ConcreteLocation(regDict->findOrThrow("df"), Sawyer::Nothing(), regDict));
+    // code segment register is assumed to be valid
+    cc->nonParameterInputs().push_back(ConcreteLocation(regDict->findOrThrow("cs"), Sawyer::Nothing(), regDict));
+    // data segment register is assumed to be valid
+    cc->nonParameterInputs().push_back(ConcreteLocation(regDict->findOrThrow("ds"), Sawyer::Nothing(), regDict));
+    // stack segment register is assumed to be valid
+    cc->nonParameterInputs().push_back(ConcreteLocation(regDict->findOrThrow("ss"), Sawyer::Nothing(), regDict));
 
-    // Return values
+    //==== Return values ====
     cc->appendOutputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_ax));
     cc->appendOutputParameter(regDict->findLargestRegister(x86_regclass_st, x86_st_0));
     cc->appendOutputParameter(SP);
 
-    // Scratch registers (i.e., modified, not callee-saved, not return registers)
+    //==== Scratch registers ====
+    // Modified, not callee-saved, not return registers
     cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_cx));
     cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_dx));
     cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_ip, 0));
     cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_flags, x86_flags_status));
     cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_flags, x86_flags_fpstatus));
 
-    // Callee-saved registers (everything else)
+    //==== Callee-saved registers ====
+    // Everything else
     RegisterParts regParts = regDict->getAllParts() - cc->getUsedRegisterParts();
     std::vector<RegisterDescriptor> registers = regParts.extract(regDict);
     cc->calleeSavedRegisters().insert(registers.begin(), registers.end());
@@ -419,40 +435,47 @@ Definition::x86_fastcall(const RegisterDictionary *regDict) {
                              "x86-" + StringUtility::numberToString(SP.nBits()) + " fastcall",
                              regDict);
 
-    // Address locations
+    //==== Address locations ====
     cc->instructionPointerRegister(regDict->findLargestRegister(x86_regclass_ip, 0));
     cc->returnAddressLocation(ConcreteLocation(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp), 0));
 
-    // Stack characteristics
+    //==== Stack characteristics ====
     cc->stackPointerRegister(SP);
     cc->stackDirection(StackDirection::GROWS_DOWN);
     cc->nonParameterStackSize(cc->wordWidth() >> 3);    // return address
 
+    //==== Function parameters ====
     // Uses ECX and EDX for first args that fit; all other parameters are passed on the stack.
     cc->appendInputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_cx));
     cc->appendInputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_dx));
     cc->stackParameterOrder(StackParameterOrder::RIGHT_TO_LEFT);
     cc->stackCleanup(StackCleanup::BY_CALLEE);
 
-    // Other inputs
-    cc->appendInputParameter(regDict->findOrThrow("df"));   // direction flag is always assumed to be valid
-    cc->appendInputParameter(regDict->findOrThrow("cs"));   // code segment register is assumed to be valid
-    cc->appendInputParameter(regDict->findOrThrow("ds"));   // data segment register is assumed to be valid
-    cc->appendInputParameter(regDict->findOrThrow("ss"));   // stack segment register is assumed to be valid
+    //==== Other inputs ====
+    // direction flag is always assumed to be valid
+    cc->nonParameterInputs().push_back(ConcreteLocation(regDict->findOrThrow("df"), Sawyer::Nothing(), regDict));
+    // code segment register is assumed to be valid
+    cc->nonParameterInputs().push_back(ConcreteLocation(regDict->findOrThrow("cs"), Sawyer::Nothing(), regDict));
+    // data segment register is assumed to be valid
+    cc->nonParameterInputs().push_back(ConcreteLocation(regDict->findOrThrow("ds"), Sawyer::Nothing(), regDict));
+    // stack segment register is assumed to be valid
+    cc->nonParameterInputs().push_back(ConcreteLocation(regDict->findOrThrow("ss"), Sawyer::Nothing(), regDict));
 
-    // Return values
+    //==== Return values ====
     cc->appendOutputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_ax));
     cc->appendOutputParameter(regDict->findLargestRegister(x86_regclass_st, x86_st_0));
     cc->appendOutputParameter(SP);
 
-    // Scratch registers (i.e., modified, not callee-saved, not return registers)
+    //==== Scratch registers ====
+    // I.e., modified, not callee-saved, not return registers
     cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_cx));
     cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_dx));
     cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_ip, 0));
     cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_flags, x86_flags_status));
     cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_flags, x86_flags_fpstatus));
 
-    // Callee-saved registers (everything else)
+    //==== Callee-saved registers ====
+    // Everything else
     RegisterParts regParts = regDict->getAllParts() - cc->getUsedRegisterParts();
     std::vector<RegisterDescriptor> registers = regParts.extract(regDict);
     cc->calleeSavedRegisters().insert(registers.begin(), registers.end());
@@ -470,16 +493,16 @@ Definition::x86_64bit_sysv() {
 
         cc = instance(64, "sysv", "x86-64 sysv", regDict);
 
-        // Address locations
+        //==== Address locations ====
         cc->instructionPointerRegister(regDict->findLargestRegister(x86_regclass_ip, 0));
         cc->returnAddressLocation(ConcreteLocation(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp), 0));
 
-        // Stack characteristics
+        //==== Stack characteristics ====
         cc->stackPointerRegister(SP);
         cc->stackDirection(StackDirection::GROWS_DOWN);
         cc->nonParameterStackSize(cc->wordWidth() >> 3); // return address
 
-        //---- Function arguments ----
+        //==== Function parameters ====
 
         // The first six integer or pointer arguments are passed in registers RDI, RSI, RDX, RCX, R8, and R9.
         // These registers are also not preserved across the call.
@@ -504,17 +527,23 @@ Definition::x86_64bit_sysv() {
         // is also part of the first return value).
         cc->appendInputParameter(RegisterDescriptor(x86_regclass_gpr, x86_gpr_ax, 0, 8)); // for varargs calls
 
-        // Other inputs
-        cc->appendInputParameter(regDict->findOrThrow("df")); // direction flag is assuemd to be valid
-        cc->appendInputParameter(regDict->findOrThrow("cs")); // code segment register is assumed to be valid
-        cc->appendInputParameter(regDict->findOrThrow("ds")); // data segment register is assumed to be valid
-        cc->appendInputParameter(regDict->findOrThrow("ss")); // stack segment register is assumed to be valid
-
         // Arguments that don't fit in the input registers are passed on the stack
         cc->stackParameterOrder(StackParameterOrder::RIGHT_TO_LEFT);
         cc->stackCleanup(StackCleanup::BY_CALLER);
 
-        //---- Return values ----
+        //==== Other inputs ====
+
+        // direction flag is assuemd to be valid
+        cc->nonParameterInputs().push_back(ConcreteLocation(regDict->findOrThrow("df"), Sawyer::Nothing(), regDict));
+        // code segment register is assumed to be valid
+        cc->nonParameterInputs().push_back(ConcreteLocation(regDict->findOrThrow("cs"), Sawyer::Nothing(), regDict));
+        // data segment register is assumed to be valid
+        cc->nonParameterInputs().push_back(ConcreteLocation(regDict->findOrThrow("ds"), Sawyer::Nothing(), regDict));
+        // stack segment register is assumed to be valid
+        cc->nonParameterInputs().push_back(ConcreteLocation(regDict->findOrThrow("ss"), Sawyer::Nothing(), regDict));
+
+
+        //==== Return values ====
         cc->appendOutputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_ax));
         cc->appendOutputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_dx)); // second integer return
         cc->appendOutputParameter(SP);                   // final value is usually 8 greater than initial value
@@ -523,7 +552,8 @@ Definition::x86_64bit_sysv() {
         //cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_st, 0)); // dynamic st(0), overlaps mm<i>
         //cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_st, 1)); // dynamic st(1), overlaps mm<i+1>
 
-        //---- Scratch registers (modified, not callee-saved, not return values) ----
+        //==== Scratch registers ====
+        // Modified, not callee-saved, not return values
 
         // Registers that hold arguments are also scratch registers (as long as they're not return values)
         cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_di));
@@ -569,7 +599,8 @@ Definition::x86_64bit_sysv() {
         cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_st, 6));
         cc->scratchRegisters().insert(regDict->findLargestRegister(x86_regclass_st, 7));
 
-        // Callee-saved registers (everything else)
+        //==== Callee-saved registers ====
+        // Everything else
         RegisterParts regParts = regDict->getAllParts() - cc->getUsedRegisterParts();
         std::vector<RegisterDescriptor> registers = regParts.extract(regDict);
         cc->calleeSavedRegisters().insert(registers.begin(), registers.end());
@@ -609,6 +640,10 @@ RegisterParts
 Definition::inputRegisterParts() const {
     RegisterParts retval;
     for (const ConcreteLocation &loc: inputParameters_) {
+        if (loc.type() == ConcreteLocation::REGISTER)
+            retval.insert(loc.reg());
+    }
+    for (const ConcreteLocation &loc: nonParameterInputs_) {
         if (loc.type() == ConcreteLocation::REGISTER)
             retval.insert(loc.reg());
     }
@@ -666,8 +701,17 @@ Definition::print(std::ostream &out, const RegisterDictionary *regDict/*=NULL*/)
     }
 
     if (!inputParameters_.empty()) {
-        out <<", inputs={";
+        out <<", input-parameters={";
         for (const ConcreteLocation &loc: inputParameters_) {
+            out <<" ";
+            loc.print(out, regDict ? regDict : loc.registerDictionary());
+        }
+        out <<" }";
+    }
+
+    if (!nonParameterInputs_.empty()) {
+        out <<", non-parameter-inputs={";
+        for (const ConcreteLocation &loc: nonParameterInputs_) {
             out <<" ";
             loc.print(out, regDict ? regDict : loc.registerDictionary());
         }
@@ -1191,7 +1235,7 @@ Analysis::match(const Definition::Ptr &cc) const {
         return false;
     }
 
-    // All analysis input registers must be a definition's input or "this" register.
+    // All analysis input registers must be a definition's input parameters, non-parameter inputs, or "this" register.
     if (!(inputRegisters_ - ccInputRegisters).isEmpty()) {
         if (debug) {
             RegisterNames regName(registerDictionary());
