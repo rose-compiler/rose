@@ -36,12 +36,21 @@ public:
         ASSERT_not_null(insn);
         ASSERT_require(insn == operators->currentInstruction());
         dispatcher->advanceInstructionPointer(insn);    // branch instructions will reassign
+
+        operators->comment("thumb mode?");
         dispatcher->setThumbMode(insn);
+
         SgAsmExpressionPtrList &operands = insn->get_operandList()->get_operands();
         SValuePtr enabled = dispatcher->conditionHolds(insn->get_condition());
+
+        operators->comment("operand pre-updates");
         for (size_t i = 0; i < operands.size(); ++i)
             dispatcher->preUpdate(operands[i], enabled);
+
+        operators->comment("executing instruction core");
         p(dispatcher.get(), operators.get(), insn, operands, enabled);
+
+        operators->comment("operand post-updates");
         for (size_t i = 0; i < operands.size(); ++i)
             dispatcher->postUpdate(operands[i], enabled);
     }

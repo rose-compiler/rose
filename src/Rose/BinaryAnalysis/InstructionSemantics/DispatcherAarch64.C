@@ -38,9 +38,15 @@ public:
         ASSERT_require(insn == operators->currentInstruction());
         dispatcher->advanceInstructionPointer(insn);    // branch instructions will reassign
         SgAsmExpressionPtrList &operands = insn->get_operandList()->get_operands();
+
+        operators->comment("operand pre-updates");
         for (size_t i = 0; i < operands.size(); ++i)
             dispatcher->preUpdate(operands[i], operators->boolean_(true));
+
+        operators->comment("executing instruction core");
         p(dispatcher.get(), operators.get(), insn, operands);
+
+        operators->comment("operand post-updates");
         for (size_t i = 0; i < operands.size(); ++i)
             dispatcher->postUpdate(operands[i], operators->boolean_(true));
     }

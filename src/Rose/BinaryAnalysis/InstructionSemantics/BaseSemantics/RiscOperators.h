@@ -305,6 +305,11 @@ public:
      *  instruction.  This is not called if there's an exception during processing. */
     virtual void finishInstruction(SgAsmInstruction *insn);
 
+    /** Inject a line comment into debugging streams.
+     *
+     *  If this operators object supports it, the specified string will appear in the debugging output as a comment. */
+    virtual void comment(const std::string&);
+
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Value Construction Operations

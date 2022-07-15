@@ -51,6 +51,8 @@ public:
         ASSERT_require(insn!=NULL && insn==operators->currentInstruction());
         dispatcher->advanceInstructionPointer(insn);
         SgAsmExpressionPtrList &operands = insn->get_operandList()->get_operands();
+
+        operators->comment("executing instruction core");
         p(dispatcher.get(), operators.get(), insn, operands);
     }
 

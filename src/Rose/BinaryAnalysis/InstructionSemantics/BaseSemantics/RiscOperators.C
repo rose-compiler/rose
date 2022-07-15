@@ -8,6 +8,7 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/State.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/SValue.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/Util.h>
+#include <Rose/StringUtility/Convert.h>
 
 using namespace Sawyer::Message::Common;
 
@@ -107,6 +108,11 @@ RiscOperators::finishInstruction(SgAsmInstruction *insn) {
     currentInsn_ = nullptr;
     isNoopRead_ = false;
 };
+
+void
+RiscOperators::comment(const std::string &comment) {
+    SAWYER_MESG(mlog[DEBUG]) <<StringUtility::prefixLines(comment, "// ");
+}
 
 std::pair<SValuePtr /*low*/, SValuePtr /*high*/>
 RiscOperators::split(const SValuePtr &a, size_t splitPoint) {

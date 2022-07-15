@@ -56,6 +56,7 @@ Dispatcher::number_(size_t nbits, uint64_t number) const {
 
 void
 Dispatcher::advanceInstructionPointer(SgAsmInstruction *insn) {
+    operators()->comment("advancing instruction pointer");
     RegisterDescriptor ipReg = instructionPointerRegister();
     size_t nBits = ipReg.nBits();
     BaseSemantics::SValuePtr ipValue;

@@ -41,6 +41,8 @@ InsnProcessor::process(const BaseSemantics::DispatcherPtr &dispatcher_, SgAsmIns
     dispatcher->advanceInstructionPointer(insn);
     SgAsmExpressionPtrList &operands = insn->get_operandList()->get_operands();
     check_arg_width(dispatcher.get(), insn, operands);
+
+    operators->comment("executing instruction core");
     p(dispatcher.get(), operators.get(), insn, operands);
 }
 
