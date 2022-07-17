@@ -3194,6 +3194,11 @@ Grammar::setUpStatements ()
                                              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AdaFormalPackageDecl.setDataPrototype ( "SgExprListExp*", "actual_parameters", "= NULL",
                                              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     // PP (7/15/22): adding support for storing prototype instantiations
+     AdaFormalPackageDecl.setDataPrototype ( "SgDeclarationStatement*", "prototype", "= nullptr",
+                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AdaFormalPackageDecl.setDataPrototype ( "SgScopeStatement*", "prototypeScope", "= nullptr",
+                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      AdaGenericInstanceDecl.setFunctionPrototype ( "HEADER_ADA_GENERIC_INSTANCE_DECL", "../Grammar/Statement.code" );
      AdaGenericInstanceDecl.setDataPrototype ( "SgName", "name", "=\"\"",
