@@ -780,7 +780,10 @@ mkAdaFormalPackageDecl(const std::string& name, SgDeclarationStatement& gendecl,
              );
 
   SgAdaFormalPackageDecl& sgnode = mkLocatedNode<SgAdaFormalPackageDecl>(name, &gendecl, &args);
+  //~ SgScopeStatement&       dclscope = mkDeclarationScope(scope);
+  SgScopeStatement&       dclscope = mkBasicBlock();
 
+  sg::linkParentChild(sgnode, dclscope, &SgAdaFormalPackageDecl::set_prototypeScope);
   sgnode.set_firstNondefiningDeclaration(&sgnode);
   scope.insert_symbol(name, &mkBareNode<SgAdaFormalPackageSymbol>(&sgnode));
   return sgnode;
@@ -810,7 +813,6 @@ mkAdaFormalTypeDecl(const std::string& name, SgScopeStatement& scope)
 
   sgnode.set_parent(&scope);
   sgnode.set_firstNondefiningDeclaration(&sgnode);
-
   scope.insert_symbol(name, &mkBareNode<SgAdaGenericSymbol>(&sgnode));
 
   return sgnode;
