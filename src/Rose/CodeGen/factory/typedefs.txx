@@ -43,8 +43,8 @@ reference_t<Object::a_typedef> * __factory_helper_t<CRT, API, Object::a_typedef>
   SgClassType * parent,
   Args... args
 ) {
-  ROSE_ABORT(); // TODO
-  return nullptr;
+  ROSE_ASSERT(!parent); // TODO case of a field or method
+  return sym->get_declaration()->get_type();
 }
 
 } }

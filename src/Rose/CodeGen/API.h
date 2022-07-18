@@ -24,10 +24,9 @@ class API {
     using a_function  = symbol_t<Object::a_function> *;
 
     void load(Driver & driver);
-
-    void add_nodes_for_namequal(Driver & driver, SgSourceFile * srcfile) const;
-
     void display(std::ostream & out) const;
+
+    std::set<size_t> const & fids() const { return file_ids; };
 
   private: // Static fields provided by user code
     static std::string const name;

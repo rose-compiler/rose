@@ -6,5 +6,24 @@ namespace MyNsp {
 
   void my_function();
 
-  int my_variable;  
+  int my_variable;
 };
+
+namespace OtherNsp {
+  template <typename T, bool>
+  struct MyTplCls {
+    using type_t = T const *;
+  };
+
+  template <typename T>
+  struct MyTplCls<T,false> {
+    using type_t = T const &;
+  };
+
+  template <typename T>
+  using OtherTplClass1 = MyTplCls<T, false>;
+
+  template <typename T>
+  using OtherTplClass2 = MyTplCls<T, true>;
+};
+

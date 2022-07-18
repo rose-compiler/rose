@@ -55,20 +55,30 @@ class Driver {
     //! Retrieve the global scope of a file from its file-id
     SgGlobal * getGlobalScope(size_t file_id) const;
 
+    //! Retrieve the source-file node from a file-id
+    SgSourceFile * getSourceFile(size_t file_id) const;
+
     //! Set a file to be unparsed with the project (by default file added to the driver are *NOT* unparsed)
     void setUnparsedFile(size_t file_id) const;
 
     //! Set a file to be compiled with the project (by default file added to the driver are *NOT* compiled)
     void setCompiledFile(size_t file_id) const;
 
-    //! Add include statement for header inside of target.
-    void addIncludeDirectives(size_t target_file_id, size_t header_file_id);
-
-    /// Import external header for a given file
-    void addExternalHeader(size_t file_id, std::string header_name, bool is_system_header = true);
+    /// Insert external header for a given file
+    void addExternalHeader(size_t file_id, std::string header_name, bool is_system_header = true) const;
 
     /// Add a pragma at the begining of the file
-    void addPragmaDecl(size_t file_id, std::string str);
+    void addPragmaDecl(size_t file_id, std::string str) const;
+
+    template <typename ContainerFileID0, typename ContainerFileID1>
+    void exportNameQualification(ContainerFileID0 const & unparsed_ids, ContainerFileID1 const & header_ids) const {  
+      for (auto unparsed_id: unparsed_ids) {
+        auto & extra_nodes_for_namequal_init = getSourceFile(unparsed_id)->get_extra_nodes_for_namequal_init();
+        for (auto header_id: header_ids) {
+          extra_nodes_for_namequal_init.push_back(getGlobalScope(header_id));
+        }
+      }
+    }
 };
 
 } }
