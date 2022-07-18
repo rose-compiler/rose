@@ -1,5 +1,6 @@
 [
   {
+    "Baseclass": "AsmCilMetadata",
     "Fields": [
       {
         "Doc": "a 4-byte constant of type AssemblyHashAlgorithm",
@@ -39,19 +40,19 @@
       },
       {
         "Doc": "an index into the Blob heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_BLOB_HEAP)",
         "Name": "PublicKey",
         "Type": "uint32_t"
       },
       {
         "Doc": "an index into the String heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_STRING_HEAP)",
         "Name": "Name",
         "Type": "uint32_t"
       },
       {
         "Doc": "an index into the String heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_STRING_HEAP)",
         "Name": "Culture",
         "Type": "uint32_t"
       }
@@ -60,6 +61,7 @@
     "Section": "II.22.2"
   },
   {
+    "Baseclass": "AsmCilMetadata",
     "Fields": [
       {
         "Doc": "a 4-byte constant",
@@ -84,6 +86,7 @@
     "Section": "II.22.3"
   },
   {
+    "Baseclass": "AsmCilMetadata",
     "Fields": [
       {
         "Doc": "a 4-byte constant",
@@ -96,6 +99,7 @@
     "Section": "II.22.4"
   },
   {
+    "Baseclass": "AsmCilMetadata",
     "Fields": [
       {
         "Doc": "version number",
@@ -128,26 +132,26 @@
         "Type": "uint32_t"
       },
       {
-        "Doc": "can be null, or non-null.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Doc": "an index into the Blob heap, can be null, or non-null.",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_BLOB_HEAP)",
         "Name": "PublicKeyOrToken",
         "Type": "uint32_t"
       },
       {
         "Doc": "an index into the String heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_STRING_HEAP)",
         "Name": "Name",
         "Type": "uint32_t"
       },
       {
-        "Doc": "null or non-null",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Doc": "an index into the String heap, null or non-null",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_STRING_HEAP)",
         "Name": "Culture",
         "Type": "uint32_t"
       },
       {
         "Doc": "an index into the Blob heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_BLOB_HEAP)",
         "Name": "HashValue",
         "Type": "uint32_t"
       }
@@ -156,6 +160,7 @@
     "Section": "II.22.5"
   },
   {
+    "Baseclass": "AsmCilMetadata",
     "Fields": [
       {
         "Doc": "a 4-byte constant",
@@ -177,7 +182,7 @@
       },
       {
         "Doc": "an index into the AssemblyRef table.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_ASSEMBLY_REF)",
         "Name": "AssemblyRefOS",
         "Type": "uint32_t"
       }
@@ -186,6 +191,7 @@
     "Section": "II.22.6"
   },
   {
+    "Baseclass": "AsmCilMetadata",
     "Fields": [
       {
         "Doc": "a 4-byte constant",
@@ -195,7 +201,7 @@
       },
       {
         "Doc": "an index into the AssemblyRef table.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_ASSEMBLY_REF)",
         "Name": "AssemblyRef",
         "Type": "uint32_t"
       }
@@ -204,6 +210,7 @@
     "Section": "II.22.7"
   },
   {
+    "Baseclass": "AsmCilMetadata",
     "Fields": [
       {
         "Doc": "a 2-byte constant",
@@ -219,7 +226,7 @@
       },
       {
         "Doc": "an index into the TypeDef table.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_TYPE_DEF)",
         "Name": "Parent",
         "Type": "uint32_t"
       }
@@ -228,6 +235,7 @@
     "Section": "II.22.8"
   },
   {
+    "Baseclass": "AsmCilMetadata",
     "Fields": [
       {
         "Doc": "a 1-byte constant",
@@ -243,13 +251,13 @@
       },
       {
         "Doc": "an index into the Param, Field, or Property table.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_HAS_CONSTANT)",
         "Name": "Parent",
         "Type": "uint32_t"
       },
       {
         "Doc": "an index into the Blob heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_BLOB_HEAP)",
         "Name": "Value",
         "Type": "uint32_t"
       }
@@ -259,22 +267,23 @@
     "Notes" : ["PP (06/15/22) added padding field."]
   },
   {
+    "Baseclass": "AsmCilMetadata",
     "Fields": [
       {
         "Doc": "an index into a metadata table that has an associated HasCustomAttribute index.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_HAS_CUSTOM_ATTRIBUTE)",
         "Name": "Parent",
         "Type": "uint32_t"
       },
       {
-        "Doc": "n index into the MethodDef or MemberRef table.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Doc": "an index into the MethodDef or MemberRef table.",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_METHOD_DEF_OR_REF)",
         "Name": "Type",
         "Type": "uint32_t"
       },
       {
         "Doc": "an index into the Blob heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_BLOB_HEAP)",
         "Name": "Value",
         "Type": "uint32_t"
       }
@@ -283,6 +292,7 @@
     "Section": "II.22.10"
   },
   {
+    "Baseclass": "AsmCilMetadata",
     "Fields": [
       {
         "Doc": "a 2-byte value.",
@@ -292,13 +302,13 @@
       },
       {
         "Doc": "an index into the TypeDef, MethodDef, or Assembly table.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_HAS_DECL_SECURITY)",
         "Name": "Parent",
         "Type": "uint32_t"
       },
       {
         "Doc": "an index into the Blob heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_BLOB_HEAP)",
         "Name": "PermissionSet",
         "Type": "uint32_t"
       }
@@ -307,6 +317,7 @@
     "Section": "II.22.11"
   },
   {
+    "Baseclass": "AsmCilMetadata",
     "Fields": [
       {
         "Doc": "a 2-byte bitmask of type EventAttribute.",
@@ -316,13 +327,13 @@
       },
       {
         "Doc": "an index into the String heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_STRING_HEAP)",
         "Name": "Name",
         "Type": "uint32_t"
       },
       {
         "Doc": "an index into a TypeDef, a TypeRef, or TypeSpec table.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_TYPE_DEF_OR_REF)",
         "Name": "EventType",
         "Type": "uint32_t"
       }
@@ -331,16 +342,17 @@
     "Section": "II.22.13"
   },
   {
+    "Baseclass": "AsmCilMetadata",
     "Fields": [
       {
         "Doc": "an index into the TypeDef table.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_TYPE_DEF)",
         "Name": "Parent",
         "Type": "uint32_t"
       },
       {
         "Doc": "an index into the Event table.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_EVENT)",
         "Name": "EventList",
         "Type": "uint32_t"
       }
@@ -349,6 +361,7 @@
     "Section": "II.22.12"
   },
   {
+    "Baseclass": "AsmCilMetadata",
     "Fields": [
       {
         "Doc": "a 4-byte bitmask of type TypeAttribute.",
@@ -364,19 +377,19 @@
       },
       {
         "Doc": "an index into the String heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_STRING_HEAP)",
         "Name": "TypeName",
         "Type": "uint32_t"
       },
       {
         "Doc": "an index into the String heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_STRING_HEAP)",
         "Name": "TypeNamespace",
         "Type": "uint32_t"
       },
       {
         "Doc": "an index into the File table, ExportedType table, or the AssemblyRef table.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_IMPLEMENTATION)",
         "Name": "Implementation",
         "Type": "uint32_t"
       }
@@ -385,6 +398,7 @@
     "Section": "II.22.14"
   },
   {
+    "Baseclass": "AsmCilMetadata",
     "Fields": [
       {
         "Doc": "a 2-byte bitmask of type FieldAttributes",
@@ -394,13 +408,13 @@
       },
       {
         "Doc": "an index into the String heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_STRING_HEAP)",
         "Name": "Name",
         "Type": "uint32_t"
       },
       {
         "Doc": "an index into the Blob heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_BLOB_HEAP)",
         "Name": "Signature",
         "Type": "uint32_t"
       }
@@ -409,6 +423,7 @@
     "Section": "II.22.15"
   },
   {
+    "Baseclass": "AsmCilMetadata",
     "Fields": [
       {
         "Doc": "a 4-byte constant.",
@@ -418,7 +433,7 @@
       },
       {
         "Doc": "an index into the Field table.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_FIELD)",
         "Name": "Field",
         "Type": "uint32_t"
       }
@@ -427,16 +442,17 @@
     "Section": "II.22.16"
   },
   {
+    "Baseclass": "AsmCilMetadata",
     "Fields": [
       {
         "Doc": "an index into Field or Param table.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_HAS_FIELD_MARSHALL)",
         "Name": "Parent",
         "Type": "uint32_t"
       },
       {
         "Doc": "an index into the Blob heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_BLOB_HEAP)",
         "Name": "NativeType",
         "Type": "uint32_t"
       }
@@ -445,16 +461,17 @@
     "Section": "II.22.17"
   },
   {
+    "Baseclass": "AsmCilMetadata",
     "Fields": [
       {
         "Doc": "a 4-byte constant.",
-        "Init": "(read16bitValue(buf,index))",
+        "Init": "read16bitValue(buf,index)",
         "Name": "RVA",
         "Type": "uint32_t"
       },
       {
         "Doc": "an index into Field table",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_FIELD)",
         "Name": "Field",
         "Type": "uint32_t"
       }
@@ -463,6 +480,7 @@
     "Section": "II.22.18"
   },
   {
+    "Baseclass": "AsmCilMetadata",
     "Fields": [
       {
         "Doc": "a 4-byte bitmask of type FileAttributes.",
@@ -472,13 +490,13 @@
       },
       {
         "Doc": "an index into the String heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_STRING_HEAP)",
         "Name": "Name",
         "Type": "uint32_t"
       },
       {
         "Doc": "an index into the Blob heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_BLOB_HEAP)",
         "Name": "HashValue",
         "Type": "uint32_t"
       }
@@ -487,6 +505,7 @@
     "Section": "II.22.19"
   },
   {
+    "Baseclass": "AsmCilMetadata",
     "Fields": [
       {
         "Doc": "the 2-byte index of the generic parameter.",
@@ -502,13 +521,13 @@
       },
       {
         "Doc": "an index into the TypeDef or MethodDef table.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_TYPE_OR_METHOD_DEF)",
         "Name": "Owner",
         "Type": "uint32_t"
       },
       {
         "Doc": "an index into the String heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_STRING_HEAP)",
         "Name": "Name",
         "Type": "uint32_t"
       }
@@ -517,16 +536,17 @@
     "Section": "II.22.20"
   },
   {
+    "Baseclass": "AsmCilMetadata",
     "Fields": [
       {
         "Doc": "an index into the GenericParam table.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_GENERIC_PARAM)",
         "Name": "Owner",
         "Type": "uint32_t"
       },
       {
         "Doc": "an index into the TypeDef, TypeRef, or TypeSpec table.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_TYPE_DEF_OR_REF)",
         "Name": "Constraint",
         "Type": "uint32_t"
       }
@@ -535,6 +555,7 @@
     "Section": "II.22.21"
   },
   {
+    "Baseclass": "AsmCilMetadata",
     "Fields": [
       {
         "Doc": "a 2-byte bitmask of type PInvokeAttributes.",
@@ -544,19 +565,19 @@
       },
       {
         "Doc": "an index into the Field or MethodDef table.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_MEMBER_FORWARDED)",
         "Name": "MemberForwarded",
         "Type": "uint32_t"
       },
       {
         "Doc": "an index into the String heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_STRING_HEAP)",
         "Name": "ImportName",
         "Type": "uint32_t"
       },
       {
         "Doc": "an index into the ModuleRef table.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_MODULE_REF)",
         "Name": "ImportScope",
         "Type": "uint32_t"
       }
@@ -565,16 +586,17 @@
     "Section": "II.22.22"
   },
   {
+    "Baseclass": "AsmCilMetadata",
     "Fields": [
       {
         "Doc": "an index into the TypeDef table.",
-        "Init": "(read16bitValue(buf,index))",
+        "Init": "read16bitValue(buf,index)",
         "Name": "Class",
         "Type": "uint32_t"
       },
       {
         "Doc": "an index into the TypeDef, TypeRef, or TypeSpec table.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_TYPE_DEF_OR_REF)",
         "Name": "Interface",
         "Type": "uint32_t"
       }
@@ -583,6 +605,7 @@
     "Section": "II.22.23"
   },
   {
+    "Baseclass": "AsmCilMetadata",
     "Fields": [
       {
         "Doc": "a 4-byte constant.",
@@ -598,13 +621,13 @@
       },
       {
         "Doc": "an index into the String heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_STRING_HEAP)",
         "Name": "Name",
         "Type": "uint32_t"
       },
       {
-        "Doc": "an index into a File table, a AssemblyRef table.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Doc": "an index into a File table, a AssemblyRef table, or null.",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_IMPLEMENTATION)",
         "Name": "Implementation",
         "Type": "uint32_t"
       }
@@ -613,22 +636,23 @@
     "Section": "II.22.24"
   },
   {
+    "Baseclass": "AsmCilMetadata",
     "Fields": [
       {
-        "Doc": "an index into the MethodDef, ModuleRef, TypeDef, TypeRef, or TypeSpec tables; more precisely, a MemberRefParent (II.24.2.6) coded index.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Doc": "an index into the MethodDef, ModuleRef, TypeDef, TypeRef, or TypeSpec tables.",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_MEMBER_REF_PARENT)",
         "Name": "Class",
         "Type": "uint32_t"
       },
       {
         "Doc": "an index into the String heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_STRING_HEAP)",
         "Name": "Name",
         "Type": "uint32_t"
       },
       {
         "Doc": "an index into the Blob heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_BLOB_HEAP)",
         "Name": "Signature",
         "Type": "uint32_t"
       }
@@ -638,6 +662,7 @@
     "Notes": ["PP (06/15/22) created from ECMA spec (not extracted from test code base)."]
   },
   {
+    "Baseclass": "AsmCilMetadata",
     "Fields": [
       {
         "Doc": "a 4-byte constant.",
@@ -647,7 +672,7 @@
       },
       {
         "Doc": "a 2-byte bitmask of type MethodImplAttributes.",
-        "Init": "(read16bitValue(buf,index))",
+        "Init": "read16bitValue(buf,index)",
         "Name": "ImplFlags",
         "Type": "uint32_t"
       },
@@ -659,19 +684,19 @@
       },
       {
         "Doc": "an index into the String heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_STRING_HEAP)",
         "Name": "Name",
         "Type": "uint32_t"
       },
       {
         "Doc": "an index into the Blob heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_BLOB_HEAP)",
         "Name": "Signature",
         "Type": "uint32_t"
       },
       {
         "Doc": "an index into the Param table",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_PARAM)",
         "Name": "ParamList",
         "Type": "uint32_t"
       }
@@ -680,22 +705,23 @@
     "Section": "II.22.26"
   },
   {
+    "Baseclass": "AsmCilMetadata",
     "Fields": [
       {
         "Doc": "an index into the TypeDef table.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_TYPE_DEF)",
         "Name": "Class",
         "Type": "uint32_t"
       },
       {
         "Doc": "an index into the MethodDef or MemberRef table.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_METHOD_DEF_OR_REF)",
         "Name": "MethodBody",
         "Type": "uint32_t"
       },
       {
         "Doc": "an index into the MethodDef or MemberRef table.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_METHOD_DEF_OR_REF)",
         "Name": "MethodDeclaration",
         "Type": "uint32_t"
       }
@@ -704,6 +730,7 @@
     "Section": "II.22.27"
   },
   {
+    "Baseclass": "AsmCilMetadata",
     "Fields": [
       {
         "Doc": "a 2-byte bitmask of type MethodSemanticsAttributes.",
@@ -713,13 +740,13 @@
       },
       {
         "Doc": "an index into the MethodDef table.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_METHOD_DEF)",
         "Name": "Method",
         "Type": "uint32_t"
       },
       {
         "Doc": "an index into the Event or Property table.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_HAS_SEMANTICS)",
         "Name": "Association",
         "Type": "uint32_t"
       }
@@ -728,16 +755,17 @@
     "Section": "II.22.28"
   },
   {
+    "Baseclass": "AsmCilMetadata",
     "Fields": [
       {
         "Doc": "an index into the MethodDef or MemberRef table.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_METHOD_DEF_OR_REF)",
         "Name": "Method",
         "Type": "uint32_t"
       },
       {
         "Doc": "an index into the Blob heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_BLOB_HEAP)",
         "Name": "Instantiation",
         "Type": "uint32_t"
       }
@@ -746,6 +774,7 @@
     "Section": "II.22.29"
   },
   {
+    "Baseclass": "AsmCilMetadata",
     "Fields": [
       {
         "Doc": "a 2-byte value, reserved, shall be zero",
@@ -755,25 +784,25 @@
       },
       {
         "Doc": "an index into the String heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_STRING_HEAP)",
         "Name": "Name",
         "Type": "uint32_t"
       },
       {
         "Doc": "an index into the Guid heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_GUID_HEAP)",
         "Name": "Mvid",
         "Type": "uint32_t"
       },
       {
         "Doc": "an index into the Guid heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_GUID_HEAP)",
         "Name": "Encld",
         "Type": "uint32_t"
       },
       {
         "Doc": "an index into the Guid heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_GUID_HEAP)",
         "Name": "EncBaseId",
         "Type": "uint32_t"
       }
@@ -782,10 +811,11 @@
     "Section": "II.22.30"
   },
   {
+    "Baseclass": "AsmCilMetadata",
     "Fields": [
       {
         "Doc": "an index into the String heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_STRING_HEAP)",
         "Name": "Name",
         "Type": "uint32_t"
       }
@@ -794,16 +824,17 @@
     "Section": "II.22.31"
   },
   {
+    "Baseclass": "AsmCilMetadata",
     "Fields": [
       {
         "Doc": "an index into the TypeDef table.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_TYPE_DEF)",
         "Name": "NestedClass",
         "Type": "uint32_t"
       },
       {
         "Doc": "an index into the TypeDef table.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_TYPE_DEF)",
         "Name": "EnclosingClass",
         "Type": "uint32_t"
       }
@@ -812,6 +843,7 @@
     "Section": "II.22.32"
   },
   {
+    "Baseclass": "AsmCilMetadata",
     "Fields": [
       {
         "Doc": "a 2-byte bitmask of type ParamAttributes.",
@@ -827,7 +859,7 @@
       },
       {
         "Doc": "an index into the Blob heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_BLOB_HEAP)",
         "Name": "Name",
         "Type": "uint32_t"
       }
@@ -836,6 +868,7 @@
     "Section": "II.22.33"
   },
   {
+    "Baseclass": "AsmCilMetadata",
     "Fields": [
       {
         "Doc": "a 2-byte bitmask of type PropertyAttributes.",
@@ -845,13 +878,13 @@
       },
       {
         "Doc": "an index into the String heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_STRING_HEAP)",
         "Name": "Name",
         "Type": "uint32_t"
       },
       {
         "Doc": "an index into the Blob heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_BLOB_HEAP)",
         "Name": "Type",
         "Type": "uint32_t"
       }
@@ -860,16 +893,17 @@
     "Section": "II.22.34"
   },
   {
+    "Baseclass": "AsmCilMetadata",
     "Fields": [
       {
         "Doc": "an index into the TypeDef table.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_TYPE_DEF)",
         "Name": "Parent",
         "Type": "uint32_t"
       },
       {
         "Doc": "an index into the Property table",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_PROPERTY)",
         "Name": "PropertyList",
         "Type": "uint32_t"
       }
@@ -878,10 +912,11 @@
     "Section": "II.22.35"
   },
   {
+    "Baseclass": "AsmCilMetadata",
     "Fields": [
       {
         "Doc": "an index into the Blob heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_BLOB_HEAP)",
         "Name": "Signature",
         "Type": "uint32_t"
       }
@@ -890,6 +925,7 @@
     "Section": "II.22.36"
   },
   {
+    "Baseclass": "AsmCilMetadata",
     "Fields": [
       {
         "Doc": "a 4-byte bitmask of type TypeAttributes.",
@@ -899,31 +935,31 @@
       },
       {
         "Doc": "an index into the String heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_STRING_HEAP)",
         "Name": "TypeName",
         "Type": "uint32_t"
       },
       {
         "Doc": "an index into the String heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_STRING_HEAP)",
         "Name": "TypeNamespace",
         "Type": "uint32_t"
       },
       {
         "Doc": "an index into the TypeDef, TypeRef, or TypeSpec table.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_TYPE_DEF_OR_REF)",
         "Name": "Extends",
         "Type": "uint32_t"
       },
       {
         "Doc": "an index into the Field table.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_FIELD)",
         "Name": "FieldList",
         "Type": "uint32_t"
       },
       {
         "Doc": "an index into the MethodDef table.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_METHOD_DEF)",
         "Name": "MethodList",
         "Type": "uint32_t"
       }
@@ -932,6 +968,7 @@
     "Section": "II.22.37"
   },
   {
+    "Baseclass": "AsmCilMetadata",
     "Fields": [
       {
         "Doc": "An index into a Module, ModuleRef, AssemblyRef or TypeRef table, or null.",
@@ -941,13 +978,13 @@
       },
       {
         "Doc": "an index into the String heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_STRING_HEAP)",
         "Name": "TypeName",
         "Type": "uint32_t"
       },
       {
         "Doc": "an index into the String heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_STRING_HEAP)",
         "Name": "TypeNamespace",
         "Type": "uint32_t"
       }
@@ -956,10 +993,11 @@
     "Section": "II.22.38"
   },
   {
+    "Baseclass": "AsmCilMetadata",
     "Fields": [
       {
         "Doc": "An index into the Blob heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing)",
+        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_BLOB_HEAP)",
         "Name": "Signature",
         "Type": "uint32_t"
       }

@@ -1080,3 +1080,9 @@ SgAsmCilTypeDef
 SgAsmCilTypeRef
 SgAsmCilTypeSpec
 SgAdaParameterList
+SgAsmCilMetadata
+SgAsmCilMetadataRoot
+SgAsmCilDataStream
+SgAsmCilMetadataHeap
+SgAsmCilUint8Heap
+SgAsmCilUint32Heap
