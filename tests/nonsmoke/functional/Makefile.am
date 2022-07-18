@@ -80,7 +80,7 @@ noinst_PROGRAMS = \
    readFileTwice 
 
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
-   noinst_PROGRAMS += testLinearDisassembler2
+   noinst_PROGRAMS += testLinearDisassembler2 testLinearDisassembler3
 endif
 
 if ROSE_WITH_LIBHARU
@@ -152,6 +152,7 @@ readFileTwice_SOURCES = readFileTwice.C
 
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 testLinearDisassembler2_SOURCES = testLinearDisassembler2.C
+testLinearDisassembler3_SOURCES = testLinearDisassembler3.C
 endif
 
 # DQ (7/3/2013): Added support to output some pre-defined macro values.

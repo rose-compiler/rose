@@ -17,7 +17,7 @@
     /** CIL %%Class.Name%% table.
      *
      */
-    class SgAsmCil%%Class.Name%%: public SgAsmCilNode {
+    class SgAsmCil%%Class.Name%%: public Sg%%Class.Baseclass%% {
     public:
 #endif
 
@@ -32,7 +32,7 @@
         void set_%%Fields.Name%%(%%Fields.Type%%);
         /** @} */
 #else
-        AsmCil%%Class.Name%%.setDataPrototype("%%Fields.Type%%", "%%Fields.Name%%", "= 0", NO_CONSTRUCTOR_PARAMETER,
+        AsmCil%%Class.Name%%.setDataPrototype("%%Fields.Type%%", "%%Fields.Name%%", "", NO_CONSTRUCTOR_PARAMETER,
                                             BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 %%end_for%%
@@ -41,7 +41,7 @@
 #if defined(SgAsmCil%%Class.Name%%_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(uint8_t* buf, size_t& index, bool uses4byteIndexing);
+        void parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing);
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -70,5 +70,1240 @@
     };
 #endif
 %%end_for%%
+
+    /*************************************************************************************************************************
+     *                                      Root of a branch of CIL IR classes
+     *************************************************************************************************************************/
+
+    NEW_NONTERMINAL_MACRO(AsmCilMetadata,
+                          AsmCilAssembly        | AsmCilAssemblyOS           | AsmCilAssemblyProcessor | AsmCilAssemblyRef |
+                          AsmCilAssemblyRefOS   | AsmCilAssemblyRefProcessor | AsmCilClassLayout       | AsmCilConstant |
+                          AsmCilCustomAttribute | AsmCilDeclSecurity         | AsmCilEvent             | AsmCilEventMap |
+                          AsmCilExportedType    | AsmCilField                | AsmCilFieldLayout       | AsmCilFieldMarshal |
+                          AsmCilFieldRVA        | AsmCilFile                 | AsmCilGenericParam      | AsmCilGenericParamConstraint |
+                          AsmCilImplMap         | AsmCilInterfaceImpl        | AsmCilManifestResource  | AsmCilMemberRef |
+                          AsmCilMethodDef       | AsmCilMethodImpl           | AsmCilMethodSemantics   | AsmCilMethodSpec |
+                          AsmCilModule          | AsmCilModuleRef            | AsmCilNestedClass       | AsmCilParam |
+                          AsmCilProperty        | AsmCilPropertyMap          | AsmCilStandAloneSig     | AsmCilTypeDef |
+                          AsmCilTypeRef         | AsmCilTypeSpec,
+                          "AsmCilMetadata", "AsmCilMetadataTag", false);
+    AsmCilMetadata.setCppCondition("!defined(DOCUMENTATION)");
+    IS_SERIALIZABLE(AsmCilMetadata);
+
+#ifdef DOCUMENTATION
+    /** Base class for CIL branch of binary analysis IR nodes. */
+    class SgAsmCilMetadata : public SgAsmCilNode {
+    public:
+#endif
+
+        DECLARE_OTHERS(AsmCilMetadata);
+#if defined(SgAsmCilMetadata_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
+        }
+#endif
+
+#endif // SgAsmCilMetadata_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+////// from metadataHeap_C.txt
+
+    DECLARE_LEAF_CLASS(AsmCilMetadataHeap);
+    IS_SERIALIZABLE(AsmCilMetadataHeap);
+
+#ifdef DOCUMENTATION
+    /** CIL AsmCilMetadataHeap.
+     *
+     */
+    class SgAsmCilMetadataHeap: public SgAsmCilDataStream {
+    public:
+#endif
+
+
+
+#ifdef DOCUMENTATION
+        /** Property: 4 reserved bytes
+         * @{ */
+        uint32_t get_ReservedAlwaysZero() const;
+        void set_ReservedAlwaysZero(uint32_t);
+        /** @} */
+#else
+        AsmCilMetadataHeap.setDataPrototype("uint32_t", "ReservedAlwaysZero", "", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: a 1-byte constant.
+         * @{ */
+        uint8_t get_MajorVersion() const;
+        void set_MajorVersion(uint8_t);
+        /** @} */
+#else
+        AsmCilMetadataHeap.setDataPrototype("uint8_t", "MajorVersion", "", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: a 1-byte constant.
+         * @{ */
+        uint8_t get_MinorVersion() const;
+        void set_MinorVersion(uint8_t);
+        /** @} */
+#else
+        AsmCilMetadataHeap.setDataPrototype("uint8_t", "MinorVersion", "", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: a 1-byte constant indicating the index sizes of streams.
+         * @{ */
+        uint8_t get_HeapSizes() const;
+        void set_HeapSizes(uint8_t);
+        /** @} */
+#else
+        AsmCilMetadataHeap.setDataPrototype("uint8_t", "HeapSizes", "", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: a 1-byte constant.
+         * @{ */
+        uint8_t get_ReservedAlwaysOne() const;
+        void set_ReservedAlwaysOne(uint8_t);
+        /** @} */
+#else
+        AsmCilMetadataHeap.setDataPrototype("uint8_t", "ReservedAlwaysOne", "", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: a 4-byte value indicating which metadata tables are present.
+         * @{ */
+        uint64_t get_Valid() const;
+        void set_Valid(uint64_t);
+        /** @} */
+#else
+        AsmCilMetadataHeap.setDataPrototype("uint64_t", "Valid", "", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: a 4-byte value.
+         * @{ */
+        uint64_t get_Sorted() const;
+        void set_Sorted(uint64_t);
+        /** @} */
+#else
+        AsmCilMetadataHeap.setDataPrototype("uint64_t", "Sorted", "", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: a vector indicating how many rows the present tables contain.
+         * @{ */
+        std::vector<uint32_t> get_NumberOfRows() const;
+        void set_NumberOfRows(std::vector<uint32_t>);
+        /** @} */
+#else
+        AsmCilMetadataHeap.setDataPrototype("std::vector<uint32_t>", "NumberOfRows", "", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: precomputed flags that determine whether a metadata reference is stored as 2 or 4 byte value in the file.
+         * @{ */
+        uint64_t get_DataSizeFlags() const;
+        void set_DataSizeFlags(uint64_t);
+        /** @} */
+#else
+        AsmCilMetadataHeap.setDataPrototype("uint64_t", "DataSizeFlags", "", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+
+
+
+#ifdef DOCUMENTATION
+        /** Property: assembly table
+         * @{ */
+        std::vector<SgAsmCilAssembly>& get_assembly() const;
+        // void set_assembly(const std::vector<SgAsmCilAssembly>&);
+        /** @} */
+#else
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilAssembly*>", "assembly", "", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: assemblyProcessor table
+         * @{ */
+        std::vector<SgAsmCilAssemblyProcessor>& get_assemblyProcessor() const;
+        // void set_assemblyProcessor(const std::vector<SgAsmCilAssemblyProcessor>&);
+        /** @} */
+#else
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilAssemblyProcessor*>", "assemblyProcessor", "", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: assemblyOS table
+         * @{ */
+        std::vector<SgAsmCilAssemblyOS>& get_assemblyOS() const;
+        // void set_assemblyOS(const std::vector<SgAsmCilAssemblyOS>&);
+        /** @} */
+#else
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilAssemblyOS*>", "assemblyOS", "", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: assemblyRef table
+         * @{ */
+        std::vector<SgAsmCilAssemblyRef>& get_assemblyRef() const;
+        // void set_assemblyRef(const std::vector<SgAsmCilAssemblyRef>&);
+        /** @} */
+#else
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilAssemblyRef*>", "assemblyRef", "", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: assemblyRefProcessor table
+         * @{ */
+        std::vector<SgAsmCilAssemblyRefProcessor>& get_assemblyRefProcessor() const;
+        // void set_assemblyRefProcessor(const std::vector<SgAsmCilAssemblyRefProcessor>&);
+        /** @} */
+#else
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilAssemblyRefProcessor*>", "assemblyRefProcessor", "", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: assemblyRefOS table
+         * @{ */
+        std::vector<SgAsmCilAssemblyRefOS>& get_assemblyRefOS() const;
+        // void set_assemblyRefOS(const std::vector<SgAsmCilAssemblyRefOS>&);
+        /** @} */
+#else
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilAssemblyRefOS*>", "assemblyRefOS", "", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: classLayout table
+         * @{ */
+        std::vector<SgAsmCilClassLayout>& get_classLayout() const;
+        // void set_classLayout(const std::vector<SgAsmCilClassLayout>&);
+        /** @} */
+#else
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilClassLayout*>", "classLayout", "", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: constant table
+         * @{ */
+        std::vector<SgAsmCilConstant>& get_constant() const;
+        // void set_constant(const std::vector<SgAsmCilConstant>&);
+        /** @} */
+#else
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilConstant*>", "constant", "", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: customAttribute table
+         * @{ */
+        std::vector<SgAsmCilCustomAttribute>& get_customAttribute() const;
+        // void set_customAttribute(const std::vector<SgAsmCilCustomAttribute>&);
+        /** @} */
+#else
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilCustomAttribute*>", "customAttribute", "", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: declSecurity table
+         * @{ */
+        std::vector<SgAsmCilDeclSecurity>& get_declSecurity() const;
+        // void set_declSecurity(const std::vector<SgAsmCilDeclSecurity>&);
+        /** @} */
+#else
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilDeclSecurity*>", "declSecurity", "", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: eventMap table
+         * @{ */
+        std::vector<SgAsmCilEventMap>& get_eventMap() const;
+        // void set_eventMap(const std::vector<SgAsmCilEventMap>&);
+        /** @} */
+#else
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilEventMap*>", "eventMap", "", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: event table
+         * @{ */
+        std::vector<SgAsmCilEvent>& get_event() const;
+        // void set_event(const std::vector<SgAsmCilEvent>&);
+        /** @} */
+#else
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilEvent*>", "event", "", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: exportedType table
+         * @{ */
+        std::vector<SgAsmCilExportedType>& get_exportedType() const;
+        // void set_exportedType(const std::vector<SgAsmCilExportedType>&);
+        /** @} */
+#else
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilExportedType*>", "exportedType", "", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: field table
+         * @{ */
+        std::vector<SgAsmCilField>& get_field() const;
+        // void set_field(const std::vector<SgAsmCilField>&);
+        /** @} */
+#else
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilField*>", "field", "", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: fieldLayout table
+         * @{ */
+        std::vector<SgAsmCilFieldLayout>& get_fieldLayout() const;
+        // void set_fieldLayout(const std::vector<SgAsmCilFieldLayout>&);
+        /** @} */
+#else
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilFieldLayout*>", "fieldLayout", "", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: fieldMarshal table
+         * @{ */
+        std::vector<SgAsmCilFieldMarshal>& get_fieldMarshal() const;
+        // void set_fieldMarshal(const std::vector<SgAsmCilFieldMarshal>&);
+        /** @} */
+#else
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilFieldMarshal*>", "fieldMarshal", "", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: fieldRVA table
+         * @{ */
+        std::vector<SgAsmCilFieldRVA>& get_fieldRVA() const;
+        // void set_fieldRVA(const std::vector<SgAsmCilFieldRVA>&);
+        /** @} */
+#else
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilFieldRVA*>", "fieldRVA", "", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: file table
+         * @{ */
+        std::vector<SgAsmCilFile>& get_file() const;
+        // void set_file(const std::vector<SgAsmCilFile>&);
+        /** @} */
+#else
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilFile*>", "file", "", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: genericParam table
+         * @{ */
+        std::vector<SgAsmCilGenericParam>& get_genericParam() const;
+        // void set_genericParam(const std::vector<SgAsmCilGenericParam>&);
+        /** @} */
+#else
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilGenericParam*>", "genericParam", "", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: genericParamConstraint table
+         * @{ */
+        std::vector<SgAsmCilGenericParamConstraint>& get_genericParamConstraint() const;
+        // void set_genericParamConstraint(const std::vector<SgAsmCilGenericParamConstraint>&);
+        /** @} */
+#else
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilGenericParamConstraint*>", "genericParamConstraint", "", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: implMap table
+         * @{ */
+        std::vector<SgAsmCilImplMap>& get_implMap() const;
+        // void set_implMap(const std::vector<SgAsmCilImplMap>&);
+        /** @} */
+#else
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilImplMap*>", "implMap", "", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: interfaceImpl table
+         * @{ */
+        std::vector<SgAsmCilInterfaceImpl>& get_interfaceImpl() const;
+        // void set_interfaceImpl(const std::vector<SgAsmCilInterfaceImpl>&);
+        /** @} */
+#else
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilInterfaceImpl*>", "interfaceImpl", "", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: manifestResource table
+         * @{ */
+        std::vector<SgAsmCilManifestResource>& get_manifestResource() const;
+        // void set_manifestResource(const std::vector<SgAsmCilManifestResource>&);
+        /** @} */
+#else
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilManifestResource*>", "manifestResource", "", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: memberRef table
+         * @{ */
+        std::vector<SgAsmCilMemberRef>& get_memberRef() const;
+        // void set_memberRef(const std::vector<SgAsmCilMemberRef>&);
+        /** @} */
+#else
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilMemberRef*>", "memberRef", "", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: methodDef table
+         * @{ */
+        std::vector<SgAsmCilMethodDef>& get_methodDef() const;
+        // void set_methodDef(const std::vector<SgAsmCilMethodDef>&);
+        /** @} */
+#else
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilMethodDef*>", "methodDef", "", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: methodImpl table
+         * @{ */
+        std::vector<SgAsmCilMethodImpl>& get_methodImpl() const;
+        // void set_methodImpl(const std::vector<SgAsmCilMethodImpl>&);
+        /** @} */
+#else
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilMethodImpl*>", "methodImpl", "", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: methodSemantics table
+         * @{ */
+        std::vector<SgAsmCilMethodSemantics>& get_methodSemantics() const;
+        // void set_methodSemantics(const std::vector<SgAsmCilMethodSemantics>&);
+        /** @} */
+#else
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilMethodSemantics*>", "methodSemantics", "", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: methodSpec table
+         * @{ */
+        std::vector<SgAsmCilMethodSpec>& get_methodSpec() const;
+        // void set_methodSpec(const std::vector<SgAsmCilMethodSpec>&);
+        /** @} */
+#else
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilMethodSpec*>", "methodSpec", "", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: module table
+         * @{ */
+        std::vector<SgAsmCilModule>& get_module() const;
+        // void set_module(const std::vector<SgAsmCilModule>&);
+        /** @} */
+#else
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilModule*>", "module", "", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: moduleRef table
+         * @{ */
+        std::vector<SgAsmCilModuleRef>& get_moduleRef() const;
+        // void set_moduleRef(const std::vector<SgAsmCilModuleRef>&);
+        /** @} */
+#else
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilModuleRef*>", "moduleRef", "", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: nestedClass table
+         * @{ */
+        std::vector<SgAsmCilNestedClass>& get_nestedClass() const;
+        // void set_nestedClass(const std::vector<SgAsmCilNestedClass>&);
+        /** @} */
+#else
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilNestedClass*>", "nestedClass", "", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: param table
+         * @{ */
+        std::vector<SgAsmCilParam>& get_param() const;
+        // void set_param(const std::vector<SgAsmCilParam>&);
+        /** @} */
+#else
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilParam*>", "param", "", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: property table
+         * @{ */
+        std::vector<SgAsmCilProperty>& get_property() const;
+        // void set_property(const std::vector<SgAsmCilProperty>&);
+        /** @} */
+#else
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilProperty*>", "property", "", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: propertyMap table
+         * @{ */
+        std::vector<SgAsmCilPropertyMap>& get_propertyMap() const;
+        // void set_propertyMap(const std::vector<SgAsmCilPropertyMap>&);
+        /** @} */
+#else
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilPropertyMap*>", "propertyMap", "", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: standAloneSig table
+         * @{ */
+        std::vector<SgAsmCilStandAloneSig>& get_standAloneSig() const;
+        // void set_standAloneSig(const std::vector<SgAsmCilStandAloneSig>&);
+        /** @} */
+#else
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilStandAloneSig*>", "standAloneSig", "", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: typeDef table
+         * @{ */
+        std::vector<SgAsmCilTypeDef>& get_typeDef() const;
+        // void set_typeDef(const std::vector<SgAsmCilTypeDef>&);
+        /** @} */
+#else
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilTypeDef*>", "typeDef", "", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: typeRef table
+         * @{ */
+        std::vector<SgAsmCilTypeRef>& get_typeRef() const;
+        // void set_typeRef(const std::vector<SgAsmCilTypeRef>&);
+        /** @} */
+#else
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilTypeRef*>", "typeRef", "", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: typeSpec table
+         * @{ */
+        std::vector<SgAsmCilTypeSpec>& get_typeSpec() const;
+        // void set_typeSpec(const std::vector<SgAsmCilTypeSpec>&);
+        /** @} */
+#else
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilTypeSpec*>", "typeSpec", "", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+
+        DECLARE_OTHERS(AsmCilMetadataHeap);
+#if defined(SgAsmCilMetadataHeap_OTHERS) || defined(DOCUMENTATION)
+
+    public:
+        // using SgAsmCilDataStream::SgAsmCilDataStream;
+        SgAsmCilMetadataHeap() = default;
+
+        void parse(uint8_t* buf, size_t startOfMetaData) override;
+
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilDataStream);
+
+            s & BOOST_SERIALIZATION_NVP(p_ReservedAlwaysZero);
+            s & BOOST_SERIALIZATION_NVP(p_MajorVersion);
+            s & BOOST_SERIALIZATION_NVP(p_MinorVersion);
+            s & BOOST_SERIALIZATION_NVP(p_HeapSizes);
+            s & BOOST_SERIALIZATION_NVP(p_ReservedAlwaysOne);
+            s & BOOST_SERIALIZATION_NVP(p_Valid);
+            s & BOOST_SERIALIZATION_NVP(p_Sorted);
+            s & BOOST_SERIALIZATION_NVP(p_NumberOfRows);
+            s & BOOST_SERIALIZATION_NVP(p_DataSizeFlags);
+
+            s & BOOST_SERIALIZATION_NVP(p_assembly);
+            s & BOOST_SERIALIZATION_NVP(p_assemblyProcessor);
+            s & BOOST_SERIALIZATION_NVP(p_assemblyOS);
+            s & BOOST_SERIALIZATION_NVP(p_assemblyRef);
+            s & BOOST_SERIALIZATION_NVP(p_assemblyRefProcessor);
+            s & BOOST_SERIALIZATION_NVP(p_assemblyRefOS);
+            s & BOOST_SERIALIZATION_NVP(p_classLayout);
+            s & BOOST_SERIALIZATION_NVP(p_constant);
+            s & BOOST_SERIALIZATION_NVP(p_customAttribute);
+            s & BOOST_SERIALIZATION_NVP(p_declSecurity);
+            s & BOOST_SERIALIZATION_NVP(p_eventMap);
+            s & BOOST_SERIALIZATION_NVP(p_event);
+            s & BOOST_SERIALIZATION_NVP(p_exportedType);
+            s & BOOST_SERIALIZATION_NVP(p_field);
+            s & BOOST_SERIALIZATION_NVP(p_fieldLayout);
+            s & BOOST_SERIALIZATION_NVP(p_fieldMarshal);
+            s & BOOST_SERIALIZATION_NVP(p_fieldRVA);
+            s & BOOST_SERIALIZATION_NVP(p_file);
+            s & BOOST_SERIALIZATION_NVP(p_genericParam);
+            s & BOOST_SERIALIZATION_NVP(p_genericParamConstraint);
+            s & BOOST_SERIALIZATION_NVP(p_implMap);
+            s & BOOST_SERIALIZATION_NVP(p_interfaceImpl);
+            s & BOOST_SERIALIZATION_NVP(p_manifestResource);
+            s & BOOST_SERIALIZATION_NVP(p_memberRef);
+            s & BOOST_SERIALIZATION_NVP(p_methodDef);
+            s & BOOST_SERIALIZATION_NVP(p_methodImpl);
+            s & BOOST_SERIALIZATION_NVP(p_methodSemantics);
+            s & BOOST_SERIALIZATION_NVP(p_methodSpec);
+            s & BOOST_SERIALIZATION_NVP(p_module);
+            s & BOOST_SERIALIZATION_NVP(p_moduleRef);
+            s & BOOST_SERIALIZATION_NVP(p_nestedClass);
+            s & BOOST_SERIALIZATION_NVP(p_param);
+            s & BOOST_SERIALIZATION_NVP(p_property);
+            s & BOOST_SERIALIZATION_NVP(p_propertyMap);
+            s & BOOST_SERIALIZATION_NVP(p_standAloneSig);
+            s & BOOST_SERIALIZATION_NVP(p_typeDef);
+            s & BOOST_SERIALIZATION_NVP(p_typeRef);
+            s & BOOST_SERIALIZATION_NVP(p_typeSpec);
+        }
+#endif
+
+
+#endif // SgAsmCilMetadataHeap_OTHERS
+
+#ifdef DOCUMENTATION
+    protected:
+
+      uint32_t p_ReservedAlwaysZero;
+      uint8_t p_MajorVersion;
+      uint8_t p_MinorVersion;
+      uint8_t p_HeapSizes;
+      uint8_t p_ReservedAlwaysOne;
+      uint64_t p_Valid;
+      uint64_t p_Sorted;
+      std::vector<uint32_t> p_NumberOfRows;
+      uint64_t p_DataSizeFlags;
+
+      std::vector<SgAsmCilAssembly*> p_assembly;
+      std::vector<SgAsmCilAssemblyProcessor*> p_assemblyProcessor;
+      std::vector<SgAsmCilAssemblyOS*> p_assemblyOS;
+      std::vector<SgAsmCilAssemblyRef*> p_assemblyRef;
+      std::vector<SgAsmCilAssemblyRefProcessor*> p_assemblyRefProcessor;
+      std::vector<SgAsmCilAssemblyRefOS*> p_assemblyRefOS;
+      std::vector<SgAsmCilClassLayout*> p_classLayout;
+      std::vector<SgAsmCilConstant*> p_constant;
+      std::vector<SgAsmCilCustomAttribute*> p_customAttribute;
+      std::vector<SgAsmCilDeclSecurity*> p_declSecurity;
+      std::vector<SgAsmCilEventMap*> p_eventMap;
+      std::vector<SgAsmCilEvent*> p_event;
+      std::vector<SgAsmCilExportedType*> p_exportedType;
+      std::vector<SgAsmCilField*> p_field;
+      std::vector<SgAsmCilFieldLayout*> p_fieldLayout;
+      std::vector<SgAsmCilFieldMarshal*> p_fieldMarshal;
+      std::vector<SgAsmCilFieldRVA*> p_fieldRVA;
+      std::vector<SgAsmCilFile*> p_file;
+      std::vector<SgAsmCilGenericParam*> p_genericParam;
+      std::vector<SgAsmCilGenericParamConstraint*> p_genericParamConstraint;
+      std::vector<SgAsmCilImplMap*> p_implMap;
+      std::vector<SgAsmCilInterfaceImpl*> p_interfaceImpl;
+      std::vector<SgAsmCilManifestResource*> p_manifestResource;
+      std::vector<SgAsmCilMemberRef*> p_memberRef;
+      std::vector<SgAsmCilMethodDef*> p_methodDef;
+      std::vector<SgAsmCilMethodImpl*> p_methodImpl;
+      std::vector<SgAsmCilMethodSemantics*> p_methodSemantics;
+      std::vector<SgAsmCilMethodSpec*> p_methodSpec;
+      std::vector<SgAsmCilModule*> p_module;
+      std::vector<SgAsmCilModuleRef*> p_moduleRef;
+      std::vector<SgAsmCilNestedClass*> p_nestedClass;
+      std::vector<SgAsmCilParam*> p_param;
+      std::vector<SgAsmCilProperty*> p_property;
+      std::vector<SgAsmCilPropertyMap*> p_propertyMap;
+      std::vector<SgAsmCilStandAloneSig*> p_standAloneSig;
+      std::vector<SgAsmCilTypeDef*> p_typeDef;
+      std::vector<SgAsmCilTypeRef*> p_typeRef;
+      std::vector<SgAsmCilTypeSpec*> p_typeSpec;
+#endif
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+////// end from metadataHeap_C.txt
+
+
+
+
+    DECLARE_LEAF_CLASS(AsmCilUint8Heap);
+    IS_SERIALIZABLE(AsmCilUint8Heap);
+
+#ifdef DOCUMENTATION
+    /** Base class for CIL branch of binary analysis IR nodes. */
+    class SgAsmCilUint8Heap : public SgAsmCilDataStream {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Start offset of the byte stream
+         * @{ */
+        std::vector<uint8_t> get_Stream() const;
+        // void set_Stream(std::vector<uint8_t>);
+        /** @} */
+#else
+        AsmCilUint8Heap.setDataPrototype("std::vector<uint8_t>", "Stream", "", NO_CONSTRUCTOR_PARAMETER,
+                                         BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+    DECLARE_OTHERS(AsmCilUint8Heap);
+
+#if defined(SgAsmCilUint8Heap_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    public:
+        // using SgAsmCilDataStream::SgAsmCilDataStream;
+        SgAsmCilUint8Heap() = default;
+
+        void parse(uint8_t* buf, size_t startOfMetaData) override;
+
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilDataStream);
+
+            s & BOOST_SERIALIZATION_NVP(p_Stream);
+        }
+#endif
+
+#endif // SgAsmCilUint8Heap_OTHERS
+
+#ifdef DOCUMENTATION
+    protected:
+        std::vector<uint8_t> p_Stream;
+#endif
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+
+    DECLARE_LEAF_CLASS(AsmCilUint32Heap);
+    IS_SERIALIZABLE(AsmCilUint32Heap);
+
+#ifdef DOCUMENTATION
+    /** Base class for CIL branch of binary analysis IR nodes. */
+    class SgAsmCilUint32Heap : public SgAsmCilDataStream {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Start offset of the byte stream
+         * @{ */
+        std::vector<uint32_t> get_Stream() const;
+        // void set_Stream(std::vector<uint32_t>);
+        /** @} */
+#else
+        AsmCilUint32Heap.setDataPrototype("std::vector<uint32_t>", "Stream", "", NO_CONSTRUCTOR_PARAMETER,
+                                         BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+    DECLARE_OTHERS(AsmCilUint32Heap);
+
+#if defined(SgAsmCilUint32Heap_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    public:
+        // using SgAsmCilDataStream::SgAsmCilDataStream;
+        SgAsmCilUint32Heap() = default;
+
+        void parse(uint8_t* buf, size_t startOfMetaData) override;
+
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilDataStream);
+
+            s & BOOST_SERIALIZATION_NVP(p_Stream);
+        }
+#endif
+
+#endif // SgAsmCilUint32Heap_OTHERS
+
+#ifdef DOCUMENTATION
+    protected:
+        std::vector<uint32_t> p_Stream;
+#endif
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+
+    NEW_NONTERMINAL_MACRO(AsmCilDataStream,
+                          AsmCilMetadataHeap | AsmCilUint8Heap | AsmCilUint32Heap,
+                          "AsmCilDataStream", "AsmCilDataStreamTag", false);
+    AsmCilDataStream.setCppCondition("!defined(DOCUMENTATION)");
+    IS_SERIALIZABLE(AsmCilDataStream);
+
+#ifdef DOCUMENTATION
+    /** Base class for CIL branch of binary analysis IR nodes. */
+    class SgAsmCilDataStream : public SgAsmCilNode {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Start offset of the byte stream
+         * @{ */
+        uint32_t get_Offset() const;
+        void set_Offset(uint32_t);
+        /** @} */
+#else
+        AsmCilDataStream.setDataPrototype("uint32_t", "Offset", "", CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Length of the byte stream
+         * @{ */
+        uint32_t get_Size() const;
+        void set_Size(uint32_t);
+        /** @} */
+#else
+        AsmCilDataStream.setDataPrototype("uint32_t", "Size", "", CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Name of the byte stream
+         * @{ */
+        std::string get_Name() const;
+        void set_Name(std::string);
+        /** @} */
+#else
+        AsmCilDataStream.setDataPrototype("std::string", "Name", "", CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Name of the byte stream
+         * @{ */
+        uint32_t get_NamePadding() const;
+        void set_NamePadding(uint32_t);
+        /** @} */
+#else
+        AsmCilDataStream.setDataPrototype("uint32_t", "NamePadding", "", CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+    DECLARE_OTHERS(AsmCilDataStream);
+
+#if defined(SgAsmCilDataStream_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    public:
+        /** Define constant strings for the known stream types
+         *  @{
+         */
+        static const std::string ID_STRING_HEAP;
+        static const std::string ID_BLOB_HEAP;
+        static const std::string ID_US_HEAP;
+        static const std::string ID_GUID_HEAP;
+        static const std::string ID_METADATA_HEAP;
+        /** }@ */
+
+        /**
+         * Defines the parse function.
+         * @param buf the binary buffer.
+         * @param startOfMetaData the location in buf where the metadata root (CIL ECMA II.24.2.1)
+         *        is located.
+         * @details
+         *   buf[startOfMetaData] is the location of the metadata root magic number.
+         *   parse will add get_Offset to startOfMetaData to find the first byte of a
+         *   stream.
+         */
+        virtual void parse(uint8_t* buf, size_t startOfMetaData) = 0;
+
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
+
+            s & BOOST_SERIALIZATION_NVP(p_Offset);
+            s & BOOST_SERIALIZATION_NVP(p_Size);
+            s & BOOST_SERIALIZATION_NVP(p_Name);
+            s & BOOST_SERIALIZATION_NVP(p_NamePadding);
+        }
+#endif
+
+#endif // SgAsmCilDataStream_OTHERS
+
+#ifdef DOCUMENTATION
+    protected:
+        uint32_t    p_Offset;
+        uint32_t    p_Size;
+        std::string p_Name;
+        uint32_t    p_NamePadding;
+#endif
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+
+////// from metadataRoot_C.txt
+
+    DECLARE_LEAF_CLASS(AsmCilMetadataRoot);
+    IS_SERIALIZABLE(AsmCilMetadataRoot);
+
+#ifdef DOCUMENTATION
+    /** CIL SgAsmCilMetadataRoot.
+     *
+     */
+    class SgAsmCilMetadataRoot: public SgAsmCilNode {
+    public:
+#endif
+
+
+
+#ifdef DOCUMENTATION
+        /** Property: Magic signature for physical metadata (always 0x424A5342)
+         * @{ */
+        uint32_t get_Signature() const;
+        void set_Signature(uint32_t);
+        /** @} */
+#else
+        AsmCilMetadataRoot.setDataPrototype("uint32_t", "Signature", "", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: Major version number
+         * @{ */
+        uint16_t get_MajorVersion() const;
+        void set_MajorVersion(uint16_t);
+        /** @} */
+#else
+        AsmCilMetadataRoot.setDataPrototype("uint16_t", "MajorVersion", "", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: Minor version number
+         * @{ */
+        uint16_t get_MinorVersion() const;
+        void set_MinorVersion(uint16_t);
+        /** @} */
+#else
+        AsmCilMetadataRoot.setDataPrototype("uint16_t", "MinorVersion", "", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: Reserved space
+         * @{ */
+        uint32_t get_Reserved0() const;
+        void set_Reserved0(uint32_t);
+        /** @} */
+#else
+        AsmCilMetadataRoot.setDataPrototype("uint32_t", "Reserved0", "", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: Number of bytes allocated to hold version string (including null terminator)
+         * @{ */
+        uint32_t get_Length() const;
+        void set_Length(uint32_t);
+        /** @} */
+#else
+        AsmCilMetadataRoot.setDataPrototype("uint32_t", "Length", "", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: Version string
+         * @{ */
+        std::string get_Version() const;
+        void set_Version(std::string);
+        /** @} */
+#else
+        AsmCilMetadataRoot.setDataPrototype("std::string", "Version", "", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: Padding to next 4-byte boundary
+         * @{ */
+        uint32_t get_VersionPadding() const;
+        void set_VersionPadding(uint32_t);
+        /** @} */
+#else
+        AsmCilMetadataRoot.setDataPrototype("uint32_t", "VersionPadding", "", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: Reserved space
+         * @{ */
+        uint16_t get_Flags() const;
+        void set_Flags(uint16_t);
+        /** @} */
+#else
+        AsmCilMetadataRoot.setDataPrototype("uint16_t", "Flags", "", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+#ifdef DOCUMENTATION
+        /** Property: Reserved space
+         * @{ */
+        uint16_t get_NumberOfStreams() const;
+        void set_NumberOfStreams(uint16_t);
+        /** @} */
+#else
+        AsmCilMetadataRoot.setDataPrototype("uint16_t", "NumberOfStreams", "", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+
+
+
+#ifdef DOCUMENTATION
+
+#else
+        AsmCilMetadataRoot.setDataPrototype("std::vector<SgAsmCilDataStream**>", "Streams", "", NO_CONSTRUCTOR_PARAMETER,
+                                            NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+
+        DECLARE_OTHERS(AsmCilMetadataRoot);
+#if defined(SgAsmCilMetadataRoot_OTHERS) || defined(DOCUMENTATION)
+    private:
+        /** indices to efficienty access the different heaps
+         * @{ */
+        mutable int8_t idxStringHeap = -1;
+        mutable int8_t idxBlobHeap = -1;
+        mutable int8_t idxUsHeap = -1;
+        mutable int8_t idxGuidHeap = -1;
+        mutable int8_t idxMetadataHeap = -1;
+        /** }@ */
+
+    public:
+        /** 4-byte indicating the start of the metadata root in the .text section.
+         */
+        static constexpr uint32_t MAGIC_SIGNATURE = 0x424A5342;
+
+        /** Defines the parse function.
+         *  @param buf the binary buffer
+         *  @param index the start location of the metadata root object.
+         *         buf[index] is the location of the magic number.
+         */
+        void parse(uint8_t* buf, size_t index);
+
+        /** accessor functions to return specific heaps
+         * @{ */
+        SgAsmCilUint8Heap*    get_StringHeap() const;
+        SgAsmCilUint8Heap*    get_BlobHeap() const;
+        SgAsmCilUint8Heap*    get_UsHeap() const;
+        SgAsmCilUint32Heap*   get_GuidHeap() const;
+        SgAsmCilMetadataHeap* get_MetadataHeap() const;
+        /** }@ */
+
+
+        /** Streams accessor
+         * @{ */
+        const std::vector<SgAsmCilDataStream*>& get_Streams() const;
+        std::vector<SgAsmCilDataStream*>& get_Streams();
+        /** @} */
+
+
+
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilDataStream);
+
+            s & BOOST_SERIALIZATION_NVP(p_Signature);
+            s & BOOST_SERIALIZATION_NVP(p_MajorVersion);
+            s & BOOST_SERIALIZATION_NVP(p_MinorVersion);
+            s & BOOST_SERIALIZATION_NVP(p_Reserved0);
+            s & BOOST_SERIALIZATION_NVP(p_Length);
+            s & BOOST_SERIALIZATION_NVP(p_Version);
+            s & BOOST_SERIALIZATION_NVP(p_VersionPadding);
+            s & BOOST_SERIALIZATION_NVP(p_Flags);
+            s & BOOST_SERIALIZATION_NVP(p_NumberOfStreams);
+
+            s & BOOST_SERIALIZATION_NVP(p_Streams);
+        }
+#endif
+
+
+#endif // SgAsmCilMetadataRoot_OTHERS
+
+#ifdef DOCUMENTATION
+    protected:
+
+      uint32_t p_Signature;
+      uint16_t p_MajorVersion;
+      uint16_t p_MinorVersion;
+      uint32_t p_Reserved0;
+      uint32_t p_Length;
+      std::string p_Version;
+      uint32_t p_VersionPadding;
+      uint16_t p_Flags;
+      uint16_t p_NumberOfStreams;
+
+      std::vector<SgAsmCilDataStream**> p_Streams;
+#endif
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+////// end from metadataRoot_C.txt
+
+
+    NEW_NONTERMINAL_MACRO(AsmCilNode,
+                          AsmCilMetadata | AsmCilDataStream | AsmCilMetadataRoot,
+                          "AsmCilNode", "AsmCilNodeTag", false);
+    AsmCilNode.setCppCondition("!defined(DOCUMENTATION)");
+    IS_SERIALIZABLE(AsmCilNode);
+
+#ifdef DOCUMENTATION
+    /** Base class for CIL branch of binary analysis IR nodes. */
+    class SgAsmCilNode: public SgAsmNode {
+    public:
+#endif
+
+        DECLARE_OTHERS(AsmCilNode);
+#if defined(SgAsmCilNode_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmNode);
+        }
+#endif
+
+#endif // SgAsmCilNode_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
 
 // --- END generated code. ------------------------------------------------------

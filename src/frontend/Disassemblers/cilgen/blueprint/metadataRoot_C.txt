@@ -1,0 +1,207 @@
+////// from metadataRoot_C.txt
+
+    DECLARE_LEAF_CLASS(AsmCilMetadataRoot);
+    IS_SERIALIZABLE(AsmCilMetadataRoot);
+
+#ifdef DOCUMENTATION
+    /** CIL SgAsmCilMetadataRoot.
+     *
+     */
+    class SgAsmCilMetadataRoot: public SgAsmCilNode {
+    public:
+#endif
+
+%%forall Fields%%
+
+#ifdef DOCUMENTATION
+        /** Property: %%Fields.Doc%%
+         * @{ */
+        %%Fields.Type%% get_%%Fields.Name%%() const;
+        void set_%%Fields.Name%%(%%Fields.Type%%);
+        /** @} */
+#else
+        AsmCilMetadataRoot.setDataPrototype("%%Fields.Type%%", "%%Fields.Name%%", "", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+%%end_for%%
+
+
+%%forall Streams%%
+
+#ifdef DOCUMENTATION
+
+#else
+        AsmCilMetadataRoot.setDataPrototype("std::vector<%%Streams.Type%%*>", "%%Streams.Name%%", "", NO_CONSTRUCTOR_PARAMETER,
+                                            NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+%%end_for%%
+
+
+        DECLARE_OTHERS(AsmCilMetadataRoot);
+#if defined(SgAsmCilMetadataRoot_OTHERS) || defined(DOCUMENTATION)
+    private:
+        /** indices to efficienty access the different heaps
+         * @{ */
+        mutable int8_t idxStringHeap = -1;
+        mutable int8_t idxBlobHeap = -1;
+        mutable int8_t idxUsHeap = -1;
+        mutable int8_t idxGuidHeap = -1;
+        mutable int8_t idxMetadataHeap = -1;
+        /** }@ */
+
+    public:
+        /** 4-byte indicating the start of the metadata root in the .text section.
+         */
+        static constexpr uint32_t MAGIC_SIGNATURE = 0x424A5342;
+
+        /** Defines the parse function.
+         *  @param buf the binary buffer
+         *  @param index the start location of the metadata root object.
+         *         buf[index] is the location of the magic number.
+         */
+        void parse(uint8_t* buf, size_t index);
+
+        /** accessor functions to return specific heaps
+         * @{ */
+        SgAsmCilUint8Heap*    get_StringHeap() const;
+        SgAsmCilUint8Heap*    get_BlobHeap() const;
+        SgAsmCilUint8Heap*    get_UsHeap() const;
+        SgAsmCilUint32Heap*   get_GuidHeap() const;
+        SgAsmCilMetadataHeap* get_MetadataHeap() const;
+        /** }@ */
+
+%%forall Streams%%
+        /** %%Streams.Name%% accessor
+         * @{ */
+        const std::vector<%%Streams.Type%%>& get_%%Streams.Name%%() const;
+        std::vector<%%Streams.Type%%>& get_%%Streams.Name%%();
+        /** @} */
+%%end_for%%
+
+
+
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilDataStream);
+            %%forall Fields%%
+            s & BOOST_SERIALIZATION_NVP(p_%%Fields.Name%%);
+            %%end_for%%
+            %%forall Streams%%
+            s & BOOST_SERIALIZATION_NVP(p_%%Streams.Name%%);
+            %%end_for%%
+        }
+#endif
+
+
+#endif // SgAsmCilMetadataRoot_OTHERS
+
+#ifdef DOCUMENTATION
+    protected:
+      %%forall Fields%%
+      %%Fields.Type%% p_%%Fields.Name%%;
+      %%end_for%%
+      %%forall Streams%%
+      std::vector<%%Streams.Type%%*> p_%%Streams.Name%%;
+      %%end_for%%
+#endif
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+////// end from metadataRoot_C.txt
+
+////// from metadataRoot_C.txt
+
+void SgAsmCilMetadataRoot::parse(uint8_t* buf, size_t index)
+{
+  size_t start_of_MetadataRoot = index;
+
+  if (TRACE_CONSTRUCTION)
+    std::cerr << "Initialize the elements of the data structure" << std::endl;
+
+  %%forall Fields%%
+  p_%%Fields.Name%% = %%Fields.Init%%;
+  if (TRACE_CONSTRUCTION)
+    std::cerr << "%%Fields.Name%% = " << p_%%Fields.Name%% << std::endl;
+  %%end_for%%
+
+  %%forall Streams%%
+  p_%%Streams.Name%% = %%Streams.Init%%;
+  if (TRACE_CONSTRUCTION)
+    std::cerr << "%%Streams.Name%% has " << p_%%Streams.Name%%.size() << "elements." << std::endl;
+  %%end_for%%
+}
+
+%%forall Streams%%
+const std::vector<%%Streams.Type%%*>&
+SgAsmCilMetadataRoot::get_%%Streams.Name%%() const
+{
+  return p_%%Streams.Name%%;
+}
+
+std::vector<%%Streams.Type%%*>&
+SgAsmCilMetadataRoot::get_%%Streams.Name%%()
+{
+  return p_%%Streams.Name%%;
+}
+%%end_for%%
+
+namespace
+{
+  template <class SageAsmCilHeap>
+  SageAsmCilHeap*
+  getHeapInternal(const std::vector<SgAsmCilDataStream*>& streams, int8_t& idx, const std::string& streamID)
+  {
+    const int numHeaps = streams.size();
+
+    if (idx < 0)
+    {
+      while ((++idx < numHeaps) && (streams[idx]->get_Name() != streamID));
+    }
+
+    if (idx < numHeaps)
+      return dynamic_cast<SageAsmCilHeap*>(streams[idx]);
+
+    return nullptr;
+  }
+}
+
+
+SgAsmCilUint8Heap*
+SgAsmCilMetadataRoot::get_StringHeap() const
+{
+  return getHeapInternal<SgAsmCilUint8Heap>(get_Streams(), idxStringHeap, SgAsmCilDataStream::ID_STRING_HEAP);
+}
+
+SgAsmCilUint8Heap*
+SgAsmCilMetadataRoot::get_BlobHeap() const
+{
+  return getHeapInternal<SgAsmCilUint8Heap>(get_Streams(), idxBlobHeap, SgAsmCilDataStream::ID_BLOB_HEAP);
+}
+
+SgAsmCilUint8Heap*
+SgAsmCilMetadataRoot::get_UsHeap() const
+{
+  return getHeapInternal<SgAsmCilUint8Heap>(get_Streams(), idxUsHeap, SgAsmCilDataStream::ID_US_HEAP);
+}
+
+SgAsmCilUint32Heap*
+SgAsmCilMetadataRoot::get_GuidHeap() const
+{
+  return getHeapInternal<SgAsmCilUint32Heap>(get_Streams(), idxGuidHeap, SgAsmCilDataStream::ID_GUID_HEAP);
+}
+
+SgAsmCilMetadataHeap*
+SgAsmCilMetadataRoot::get_MetadataHeap() const
+{
+  return getHeapInternal<SgAsmCilMetadataHeap>(get_Streams(), idxMetadataHeap, SgAsmCilDataStream::ID_METADATA_HEAP);
+}
+
+////// end from metadataRoot_C.txt

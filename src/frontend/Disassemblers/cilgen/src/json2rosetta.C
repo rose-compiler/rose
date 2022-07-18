@@ -294,6 +294,9 @@ namespace
                                                         }
                                                       );
 
+    //~ if (pos == objs.rend())
+      //~ std::cerr << "Unable to find " << name << std::endl;
+
     assert(pos != objs.rend());
     json::json* root = pos->second;
     assert(root);
@@ -317,7 +320,12 @@ namespace
 
     json::json& res = obj[field];
 
-    assert(res.is_array());
+    if (!res.is_array())
+    {
+      std::cerr << "field is not an array in obj: " << obj << std::endl;
+      assert(false);
+    }
+
     return res;
   }
 

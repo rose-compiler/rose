@@ -108,15 +108,17 @@ void f() {
 #endif
 
 
-template <class SageAsmCilNode, class... Args>
+template <class SageAsmCilNode>
 SageAsmCilNode*
-parseAsmCilNode(Args&&... args)
+parseAsmCilNode(uint8_t* buf, size_t& index, uint8_t expected)
 {
     SageAsmCilNode* res = new SageAsmCilNode;
-
     ASSERT_not_null(res);
-    //~ res->parse(std::forward(args)...);
-    res->parse(args...);
+
+    ::mlog[INFO] << "Creating " << res->class_name() << " node at " << index
+                 << std::endl;
+
+    res->parse(buf, index, expected);
     return res;
 }
 
@@ -373,6 +375,7 @@ class MetadataTable
                uint64_t tmp_valid_value = ByteOrder::le_to_host(*((uint64_t*)(buf+index)));
 
                valid = tmp_valid_value;
+               printf ("valid = %" PRIu64 "\n",valid);
 #if 0
                printf ("valid = %zu \n",valid);
                printf ("valid = 0x%x \n",valid);
@@ -1663,7 +1666,7 @@ class MetadataRoot
 #endif
 
      public:
-          MetadataRoot(uint8_t* buf, size_t index)
+          MetadataRoot(uint8_t* buf, size_t& index)
              {
                size_t start_of_MetadataRoot = index;
 
@@ -1773,7 +1776,7 @@ class MetadataRoot
                         printf ("start_of_MetadataRoot = %zu stream_header->offset = %" PRIu32 " offset = %zu \n",start_of_MetadataRoot,stream_header->offset,offset);
 
                         // \todo PP (06/16/22): Where shall we store the MetadataTable object?
-                        //       talk with Robb where this should go
+                        //       talk with Robb where this should go.
                         MetadataTable* metadataTable = new MetadataTable(buf,offset);
                       }
                  }
@@ -1828,8 +1831,7 @@ void look_for_cil_streams(Settings & settings,MemoryMap::Ptr map)
      AddressInterval where = map->atOrAfter(va).require(MemoryMap::EXECUTABLE).limit(sizeof buf).read(buf);
 
   // DQ (12/2/2021): Location of .text section and it's size: 0x00402004 + 0x000003fc
-
-     std::cout << "where: " << where << std::endl;
+     ::mlog[INFO] << "where: " << where << std::endl;
 
   // printf ("Output the value of where: \n");
   // Rose::StringUtility::addrToString(where);
@@ -1885,7 +1887,7 @@ void look_for_cil_streams(Settings & settings,MemoryMap::Ptr map)
                printf (" --- index %zu stream name = %x %x %c%c \n",index,current_char,next_char,current_char,next_char);
              }
 #endif
-          index++;
+          ++index;
         }
 
 #if 0

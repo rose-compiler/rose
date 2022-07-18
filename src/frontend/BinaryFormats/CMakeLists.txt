@@ -49,6 +49,9 @@ add_library(roseBinaryFormats OBJECT
   PeStringTable.C
   PeSymbolTable.C
 
+  ### CIL class implementations
+  CilImpl.C
+
   ### Other Formats (partial implementations and not so well tested) ###
   ExecDOS.C
   ExecNE.C

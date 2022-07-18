@@ -1,0 +1,190 @@
+////// from metadataHeap_C.txt
+
+    DECLARE_LEAF_CLASS(AsmCilMetadataHeap);
+    IS_SERIALIZABLE(AsmCilMetadataHeap);
+
+#ifdef DOCUMENTATION
+    /** CIL AsmCilMetadataHeap.
+     *
+     */
+    class SgAsmCilMetadataHeap: public SgAsmCilDataStream {
+    public:
+#endif
+
+%%forall Fields%%
+
+#ifdef DOCUMENTATION
+        /** Property: %%Fields.Doc%%
+         * @{ */
+        %%Fields.Type%% get_%%Fields.Name%%() const;
+        void set_%%Fields.Name%%(%%Fields.Type%%);
+        /** @} */
+#else
+        AsmCilMetadataHeap.setDataPrototype("%%Fields.Type%%", "%%Fields.Name%%", "", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+%%end_for%%
+
+
+%%forall Tables%%
+
+#ifdef DOCUMENTATION
+        /** Property: %%Tables.Name%% table
+         * @{ */
+        std::vector<%%Tables.Type%%>& get_%%Tables.Name%%() const;
+        // void set_%%Tables.Name%%(const std::vector<%%Tables.Type%%>&);
+        /** @} */
+#else
+        AsmCilMetadataHeap.setDataPrototype("std::vector<%%Tables.Type%%*>", "%%Tables.Name%%", "", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+%%end_for%%
+
+
+        DECLARE_OTHERS(AsmCilMetadataHeap);
+#if defined(SgAsmCilMetadataHeap_OTHERS) || defined(DOCUMENTATION)
+
+    public:
+        // using SgAsmCilDataStream::SgAsmCilDataStream;
+        SgAsmCilMetadataHeap() = default;
+
+        void parse(uint8_t* buf, size_t startOfMetaData) override;
+
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilDataStream);
+            %%forall Fields%%
+            s & BOOST_SERIALIZATION_NVP(p_%%Fields.Name%%);
+            %%end_for%%
+            %%forall Tables%%
+            s & BOOST_SERIALIZATION_NVP(p_%%Tables.Name%%);
+            %%end_for%%
+        }
+#endif
+
+
+#endif // SgAsmCilMetadataHeap_OTHERS
+
+#ifdef DOCUMENTATION
+    protected:
+      %%forall Fields%%
+      %%Fields.Type%% p_%%Fields.Name%%;
+      %%end_for%%
+      %%forall Tables%%
+      std::vector<%%Tables.Type%%*> p_%%Tables.Name%%;
+      %%end_for%%
+#endif
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+////// end from metadataHeap_C.txt
+
+////// from metadataHeap_C.txt
+
+namespace
+{
+
+template <class SageAsmCilMetadata>
+std::vector<SageAsmCilMetadata*>
+parseMetadataTable(uint8_t* buf, size_t& index, uint64_t sizeFlags, size_t rows, const char* tblName)
+{
+  std::vector<SageAsmCilMetadata*> res;
+
+  if (TRACE_CONSTRUCTION)
+    std::cerr << "Build the e_" << tblName << " table; rows = " << rows << std::endl;
+
+  for (size_t j=0; j < rows; ++j)
+  {
+    if (TRACE_CONSTRUCTION)
+      std::cerr << " --- processing row j = " << j << std::endl;
+
+    SageAsmCilMetadata* table_rose = parseAsmCilNode<SageAsmCilMetadata>(buf,index,sizeFlags);
+    res.push_back(table_rose);
+
+    if (TRACE_CONSTRUCTION)
+      std::cerr << "DONE: processing row j = " << j << std::endl;
+  }
+
+  if (TRACE_CONSTRUCTION)
+    std::cerr << "DONE: Build the e_" << tblName << " table; rows = " << rows << std::endl;
+
+  return res;
+}
+
+template <class T>
+T traceRep(const T& el) { return el; }
+
+template <class T>
+int traceRep(const std::vector<T>& vec) { return vec.size(); }
+
+}
+
+
+void SgAsmCilMetadataHeap::parse(uint8_t* buf, size_t startOfMetaData)
+{
+  const uint32_t ofs = get_Offset();
+
+  if (TRACE_CONSTRUCTION)
+    printf ("In MetadataTable constructor: buf = 0x%" PRIxPTR ", index = %zu, offset = %" PRIu32 "\n",(uintptr_t)buf,startOfMetaData,ofs);
+
+  size_t index = startOfMetaData + ofs;
+
+%%forall Fields%%
+  p_%%Fields.Name%% = %%Fields.Init%%;
+
+  if (TRACE_CONSTRUCTION)
+    std::cerr << "%%Fields.Name%% = " << traceRep(p_%%Fields.Name%%) << std::endl;
+%%end_for%%
+
+  if (TRACE_CONSTRUCTION)
+    std::cerr << "Build the tables: " << std::endl;
+
+  for (size_t kind = 0; kind < posInRowVector.size(); ++kind)
+  {
+    const int    tblpos = posInRowVector[kind];
+    if (tblpos < 0) continue;
+
+    const size_t rows = p_NumberOfRows.at(tblpos);
+
+    // Build the associated table.
+    switch (kind)
+    {
+      %%forall Tables%%
+      case e_%%Tables.Name%%:
+        p_%%Tables.Name%% = parseMetadataTable<%%Tables.Type%%>(buf, index, get_DataSizeFlags(), rows, "%%Tables.Name%%");
+        break;
+
+      %%end_for%%
+      default:
+        std::cerr << "default reached:\n"
+                  << "parsing not implemented for kind = " << kind << table_kind_to_string(Table_kinds(kind))
+                  << std::endl;
+        ROSE_ABORT();
+        break;
+    }
+
+#if 0
+    if (TRACE_CONSTRUCTION)
+      std::cerr <<"Generate the RVAs for each method: \n");
+
+    for (size_t i=0; i < methodDef_table.size(); i++)
+    {
+      SgAsmCilMethodDef* row = methodDef_table[i];
+      uint32_t RVA = row->get_RVA();
+
+    // Save the RVA.
+      rvaList.push_back(RVA);
+    }
+#endif /* 0 */
+  }
+}
+
+////// end from metadataHeap_C.txt
