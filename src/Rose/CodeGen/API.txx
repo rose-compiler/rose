@@ -120,6 +120,7 @@ struct SymbolScanner : public ROSE_VisitTraversal {
   template <typename SymT>
   void visit(SymT * sym, std::map<std::string, SymT * API::* > const & objmap) {
     auto str = sym->get_declaration()->get_qualified_name().getString();
+    std::cout << "str: " << str << std::endl;
     auto it = objmap.find(str);
     if (it != objmap.end()) {
       api.*(it->second) = sym;

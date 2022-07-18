@@ -10,7 +10,7 @@ struct __factory_helper_t<CRT, API, Object::a_class> {
   static declaration_t<Object::a_class> * instantiate(
       Factory<CRT, API> & factory,
       symbol_t<Object::a_class> * sym,
-      SgClassType * parent,
+      SgNamedType * parent,
       Args... args
   );
 
@@ -18,7 +18,7 @@ struct __factory_helper_t<CRT, API, Object::a_class> {
   static reference_t<Object::a_class> * reference(
       Factory<CRT, API> & factory,
       symbol_t<Object::a_class> * sym,
-      SgClassType * parent,
+      SgNamedType * parent,
       Args... args
   );
 };
@@ -28,7 +28,7 @@ template <typename... Args>
 declaration_t<Object::a_class> * __factory_helper_t<CRT, API, Object::a_class>::instantiate(
   Factory<CRT, API> & factory,
   symbol_t<Object::a_class> * sym,
-  SgClassType * parent,
+  SgNamedType * parent,
   Args... args
 ) {
   ROSE_ABORT(); // TODO
@@ -40,7 +40,7 @@ template <typename... Args>
 reference_t<Object::a_class> * __factory_helper_t<CRT, API, Object::a_class>::reference(
   Factory<CRT, API> & factory,
   symbol_t<Object::a_class> * sym,
-  SgClassType * parent,
+  SgNamedType * parent,
   Args... args
 ) {
   ROSE_ASSERT(!parent); // TODO case of a field or method

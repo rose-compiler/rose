@@ -8,15 +8,16 @@
 #endif
 
 struct my_api_t : Rose::CodeGen::API<my_api_t> {
-  a_namespace MyNsp          { nullptr };
-  a_typedef   my_typedef_t   { nullptr };
-  a_class     my_class_t     { nullptr };
-  a_function  my_function    { nullptr };
-  a_variable  my_variable    { nullptr };
-  a_namespace OtherNsp       { nullptr };
-  a_class     MyTplCls       { nullptr };
-  a_typedef   OtherTplClass1 { nullptr };
-  a_typedef   OtherTplClass2 { nullptr };
+  a_namespace MyNsp               { nullptr };
+  a_typedef   my_typedef_t        { nullptr };
+  a_class     my_class_t          { nullptr };
+  a_function  my_function         { nullptr };
+  a_variable  my_variable         { nullptr };
+  a_namespace OtherNsp            { nullptr };
+  a_class     MyTplCls            { nullptr };
+  a_typedef   OtherTplClass1      { nullptr };
+  a_typedef   OtherTplClass2      { nullptr };
+  a_typedef   MyTplCls__type_t    { nullptr };
 };
 
 namespace Rose { namespace CodeGen {
@@ -50,9 +51,10 @@ std::map<std::string, API<my_api_t>::a_class my_api_t::* > const API<my_api_t>::
 
 template <>
 std::map<std::string, API<my_api_t>::a_typedef my_api_t::* > const API<my_api_t>::typedefs{
-  { "::MyNsp::my_typedef_t", &my_api_t::my_typedef_t     },
-  { "::OtherNsp::OtherTplClass1", &my_api_t::OtherTplClass1     },
-  { "::OtherNsp::OtherTplClass2", &my_api_t::OtherTplClass2     }
+  { "::MyNsp::my_typedef_t", &my_api_t::my_typedef_t        },
+  { "::OtherNsp::OtherTplClass1", &my_api_t::OtherTplClass1 },
+  { "::OtherNsp::OtherTplClass2", &my_api_t::OtherTplClass2 },
+  { "::OtherNsp::MyTplCls::type_t", &my_api_t::MyTplCls__type_t }
 };
 
 template <>
@@ -110,21 +112,35 @@ int main( int argc, char * argv[] ) {
 
   // Test 0: reference to variable from API
 
-  auto varref_0 = my_factory.reference<Rose::CodeGen::Object::a_variable>(&my_api_t::my_variable);
+  auto varref_0 = my_factory.reference<Rose::CodeGen::Object::a_variable>(&my_api_t::my_variable, (SgNamedType*)nullptr);
   std::cout << "varref_0 = " << std::hex << varref_0 << " : " << (varref_0 ? varref_0->class_name() : "") << std::endl;
   main_defn->append_statement(SageBuilder::buildExprStatement(varref_0));
 
   // Test 1: variable declaration with class-type from API
 
-  auto type_1 = my_factory.reference<Rose::CodeGen::Object::a_class>(&my_api_t::my_class_t);
+  auto type_1 = my_factory.reference<Rose::CodeGen::Object::a_class>(&my_api_t::my_class_t, (SgNamedType*)nullptr);
   std::cout << "type_1 = " << std::hex << type_1 << " : " << (type_1 ? type_1->class_name() : "") << std::endl;
   main_defn->append_statement(SageBuilder::buildVariableDeclaration("var_1", type_1, nullptr, main_defn));
 
-  // Test 1: variable declaration with alias-type from API
+  // Test 2: variable declaration with alias-type from API
 
-  auto type_2 = my_factory.reference<Rose::CodeGen::Object::a_typedef>(&my_api_t::my_typedef_t);
+  auto type_2 = my_factory.reference<Rose::CodeGen::Object::a_typedef>(&my_api_t::my_typedef_t, (SgNamedType*)nullptr);
   std::cout << "type_2 = " << std::hex << type_2 << " : " << (type_2 ? type_2->class_name() : "") << std::endl;
   main_defn->append_statement(SageBuilder::buildVariableDeclaration("var_2", type_2, nullptr, main_defn));
+
+  // Test 3: "::OtherNsp::OtherTplClass2<int> var3;"
+
+//auto type_3 = my_factory.reference<Rose::CodeGen::Object::a_typedef>(&my_api_t::OtherTplClass2, nullptr, SageBuilder::buildIntType());
+//std::cout << "type_3 = " << std::hex << type_3 << " : " << (type_3 ? type_3->class_name() : "") << std::endl;
+//main_defn->append_statement(SageBuilder::buildVariableDeclaration("var_3", type_3, nullptr, main_defn));
+
+  // Test 4: "::OtherNsp::OtherTplClass2<int>::type_t var4;"
+
+//auto type_4 = my_factory.reference<Rose::CodeGen::Object::a_typedef>(&my_api_t::MyTplCls__type_t, type_3);
+//std::cout << "type_4 = " << std::hex << type_4 << " : " << (type_4 ? type_4->class_name() : "") << std::endl;
+//main_defn->append_statement(SageBuilder::buildVariableDeclaration("var_4", type_4, nullptr, main_defn));
+
+  // TODO
 
   // Done: add `main` to its file at last
 
