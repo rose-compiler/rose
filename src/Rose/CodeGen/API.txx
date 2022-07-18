@@ -81,14 +81,6 @@ void API<CRT>::set_command_line(Driver & driver) const {
 }
 
 template <typename CRT>
-void API<CRT>::add_nodes_for_namequal(Driver & driver, SgSourceFile * srcfile) const {
-  auto & extra_nodes_for_namequal_init = srcfile->get_extra_nodes_for_namequal_init();
-  for (auto fid: file_ids) {
-    extra_nodes_for_namequal_init.push_back(driver.getGlobalScope(fid));
-  }
-}
-
-template <typename CRT>
 void API<CRT>::load_headers(Driver & driver) {
   set_command_line(driver);
   driver.addCxxExtension("hxx");

@@ -196,36 +196,7 @@ void Driver::setCompiledFile(size_t file_id) const {
   it_file->second->set_skipfinalCompileStep(false);
 }
 
-void Driver::addIncludeDirectives(size_t target_file_id, size_t header_file_id) {
-  std::string header_file_name;
-
-  auto it_file = id_to_file_map.find(target_file_id);
-  assert(it_file != id_to_file_map.end());
-  SgSourceFile * target_file = it_file->second;
-  assert(target_file != NULL);
-
-  it_file = id_to_file_map.find(header_file_id);
-  assert(it_file != id_to_file_map.end());
-  SgSourceFile * header_file = it_file->second;
-  assert(header_file != NULL);
-
-  header_file_name = header_file->getFileName(); //! \todo find minimum file name (based on include path...)
-  auto const & arg_list = project->get_originalCommandLineArgumentList();
-  for (auto it_arg = arg_list.begin(); it_arg != arg_list.end(); it_arg++) {
-    if ((*it_arg).find("-I") == 0) {
-      std::string inc_path = resolve(boost::filesystem::path((*it_arg).substr(2))).string();
-      if (header_file_name.find(inc_path) == 0) {
-        header_file_name = header_file_name.substr(inc_path.length());
-        while (header_file_name[0] == '/') header_file_name = header_file_name.substr(1);
-        break;
-      }
-    }
-  }
-
-  SageInterface::insertHeader(target_file, header_file_name);
-}
-
-void Driver::addExternalHeader(size_t file_id, std::string header_name, bool is_system_header) {
+void Driver::addExternalHeader(size_t file_id, std::string header_name, bool is_system_header) const {
   auto it_file = id_to_file_map.find(file_id);
   assert(it_file != id_to_file_map.end());
   
@@ -235,7 +206,7 @@ void Driver::addExternalHeader(size_t file_id, std::string header_name, bool is_
   SageInterface::insertHeader(file, header_name, is_system_header);
 }
 
-void Driver::addPragmaDecl(size_t file_id, std::string str) {
+void Driver::addPragmaDecl(size_t file_id, std::string str) const {
   auto it_file = id_to_file_map.find(file_id);
   assert(it_file != id_to_file_map.end());
   
@@ -244,6 +215,11 @@ void Driver::addPragmaDecl(size_t file_id, std::string str) {
   SgGlobal * global = file->get_globalScope();
 
   SageInterface::prependStatement(SageBuilder::buildPragmaDeclaration(str, global), global);
+}
+
+SgSourceFile * Driver::getSourceFile(size_t id) const {
+  auto it = id_to_file_map.find(id);
+  return it != id_to_file_map.end() ? it->second : NULL;  
 }
 
 SgGlobal * Driver::getGlobalScope(size_t id) const {
