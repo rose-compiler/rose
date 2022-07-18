@@ -10,7 +10,7 @@ struct __factory_helper_t<CRT, API, Object::a_namespace> {
   static reference_t<Object::a_namespace> * reference(
       Factory<CRT, API> & factory,
       symbol_t<Object::a_namespace> * sym,
-      SgClassType * parent,
+      SgNamedType * parent,
       Args... args
   );
 };
@@ -20,7 +20,7 @@ template <typename... Args>
 reference_t<Object::a_namespace> * __factory_helper_t<CRT, API, Object::a_namespace>::reference(
   Factory<CRT, API> & factory,
   symbol_t<Object::a_namespace> * sym,
-  SgClassType * parent,
+  SgNamedType * parent,
   Args... args
 ) {
   ROSE_ABORT(); // TODO

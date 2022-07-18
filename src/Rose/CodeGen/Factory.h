@@ -56,7 +56,7 @@ class Factory {
      *
      */
     template <Object otag, typename... Args>
-    declaration_t<otag> * instantiate(symbol_t<otag> * API::* obj, Args... args, SgClassType * parent=nullptr) {
+    declaration_t<otag> * instantiate(symbol_t<otag> * API::* obj, SgNamedType * parent, Args... args) {
       symbol_t<otag> * sym = api.*obj;
       ROSE_ASSERT(sym);
       ROSE_ASSERT(is_template_symbol_variant<otag>(sym->variantT()));
@@ -77,12 +77,12 @@ class Factory {
      *
      */
     template <Object otag, typename... Args>
-    reference_t<otag> * reference(symbol_t<otag> * API::* obj, Args... args, SgClassType * parent=nullptr) {
+    reference_t<otag> * reference(symbol_t<otag> * API::* obj, SgNamedType * parent, Args... args) {
       symbol_t<otag> * sym = api.*obj;
       ROSE_ASSERT(sym);
       
       if (is_template_symbol_variant<otag>(sym->variantT())) {
-        declaration_t<otag> * decl = instantiate<otag>(obj, args..., parent);
+        declaration_t<otag> * decl = instantiate<otag>(obj, parent, args...);
         ROSE_ASSERT(decl != nullptr);
 
         ROSE_ABORT(); // TODO get symbol from decl
@@ -119,7 +119,7 @@ class Factory {
       SgClassType * xtype = isSgClassType(ptype);
       ROSE_ASSERT(xtype != nullptr);
 
-      reference_t<otag> * rhs = reference(obj, args..., ptype);
+      reference_t<otag> * rhs = reference(obj, ptype, args...);
       ROSE_ASSERT(rhs != nullptr);
 
       if (lhs_has_ptr_type) {
