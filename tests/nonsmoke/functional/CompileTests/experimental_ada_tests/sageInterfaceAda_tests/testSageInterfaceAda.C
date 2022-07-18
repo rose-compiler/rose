@@ -109,6 +109,34 @@ namespace
         checker.traverse(srcfile, preorder);
     }
   }
+/*
+  struct ConversionOnTypes
+  {
+    template <class SageNode>
+    auto _handle(SageNode& n) -> decltype(n.get_type())
+    {
+
+    }
+
+    void _handle(SgNode& n) {}
+
+    template <class SageNode>
+    void handle(SageNode& n) { _handle(n); }
+    {
+
+    }
+  };
+*/
+
+  void checkConvertToOperatorRepOnTypes(SgNode* ast)
+  {
+    VariantVector vv{V_SgType};
+
+    for (SgNode* el : NodeQuery::queryMemoryPool(vv))
+      SageInterface::ada::convertToOperatorRepresentation(el);
+  }
+
+
 }
 
 int main( int argc, char * argv[] )
@@ -142,8 +170,12 @@ int main( int argc, char * argv[] )
 
     // last: check conversion functions
     si::ada::convertToOperatorRepresentation(project, false /* convert operators that have the syntax flag set */);
+    // std::cerr << "checked si::ada::convertToOperatorRepresentation(project, false)" << std::endl;
+
     si::ada::convertToOperatorRepresentation(project, true /* convert all operators */, true /* resolve named args */);
     si::ada::convertToCaseSensitiveSymbolTables(project);
+
+    checkConvertToOperatorRepOnTypes(project);
   }
   catch (...)
   {

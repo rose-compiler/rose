@@ -11009,6 +11009,26 @@ std::pair<SgVariableDeclaration*, SgExpression*> SageInterface::createTempVariab
 }
 
 
+namespace
+{
+  void
+  replaceExpressionInSgExpressionPtrList(SgExpression* oldExp, SgExpression* newExp, SgExpressionPtrList& lst, bool replAll = false)
+  {
+    SgExpressionPtrList::iterator lim = lst.end();
+    SgExpressionPtrList::iterator pos = lst.begin();
+    bool                          chg = false;
+
+    do
+    {
+      pos = std::find(pos, lim, oldExp);
+
+      if (pos != lim) { *pos = newExp; ++pos; chg = true; }
+    } while (replAll && (pos != lim));
+
+    ROSE_ASSERT(chg);
+  }
+}
+
 // This code is based on OpenMP translator's ASTtools::replaceVarRefExp() and astInling's replaceExpressionWithExpression()
 // Motivation: It involves the parent node to replace a VarRefExp with a new node
 // Used to replace shared variables with the dereference expression of their addresses
@@ -11096,20 +11116,6 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
        // break; //replace the first occurrence only??
       }
     }
-  } else if (SgAdaIndexConstraint* ada_idx_c = isSgAdaIndexConstraint(parent))
-  {
-    SgExpressionPtrList& explist= ada_idx_c->get_indexRanges();
- // parent set to wrong node??
-     for (Rose_STL_Container<SgExpression*>::iterator i=explist.begin();i!=explist.end();i++) {
-      if (isSgExpression(*i)==oldExp) {
-        //SgExprListExp* parentExpListExp = isSgExprListExp(parent);
-        //parentExpListExp->replace_expression(oldExp,newExp);
-        //ada_idx_c->replace_expression(oldExp,newExp);
-        *i = newExp;
-        newExp->set_parent(ada_idx_c);
-       // break; //replace the first occurrence only??
-      }
-     }
   }
   else if (isSgValueExp(parent)) {
       // For compiler generated code, this could happen.
@@ -11190,6 +11196,19 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
   } else if (SgAdaSelectAlternativeStmt* stm = isSgAdaSelectAlternativeStmt(parent)) {
     ROSE_ASSERT(oldExp == stm->get_guard());
     stm->set_guard(newExp);
+  } else if (SgAdaDeltaConstraint* delc = isSgAdaDeltaConstraint(parent)) {
+    ROSE_ASSERT(oldExp == delc->get_delta());
+    delc->set_delta(newExp);
+  } else if (SgAdaDigitsConstraint* digc = isSgAdaDigitsConstraint(parent)) {
+    ROSE_ASSERT(oldExp == digc->get_digits());
+    digc->set_digits(newExp);
+  } else if (SgAdaDiscriminantConstraint* disc = isSgAdaDiscriminantConstraint(parent)) {
+    replaceExpressionInSgExpressionPtrList(oldExp, newExp, disc->get_discriminants());
+  } else if (SgAdaRangeConstraint* rngc = isSgAdaRangeConstraint(parent)) {
+    ROSE_ASSERT(oldExp == rngc->get_range());
+    rngc->set_range(newExp);
+  } else if (SgAdaIndexConstraint* idxc = isSgAdaIndexConstraint(parent)) {
+    replaceExpressionInSgExpressionPtrList(oldExp, newExp, idxc->get_indexRanges());
   } else if (SgAdaComponentClause* clause = isSgAdaComponentClause(parent)) {
     if (oldExp == clause->get_offset())
       clause->set_offset(newExp);
