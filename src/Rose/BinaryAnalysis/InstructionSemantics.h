@@ -20,6 +20,7 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics/SourceAstSemantics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/StaticSemantics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/TaintSemantics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/TestSemantics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/Util.h>

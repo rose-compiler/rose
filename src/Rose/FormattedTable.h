@@ -1,5 +1,5 @@
-#ifndef ROSE_StringUtility_FormattedTable_H
-#define ROSE_StringUtility_FormattedTable_H
+#ifndef ROSE_FormattedTable_H
+#define ROSE_FormattedTable_H
 
 #include <Rose/Color.h>
 #include <boost/lexical_cast.hpp>

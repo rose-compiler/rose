@@ -12,6 +12,7 @@
 #include <Rose/BinaryAnalysis/CallingConvention.h>
 #include <Rose/BinaryAnalysis/CodeInserter.h>
 #include <Rose/BinaryAnalysis/Concolic.h>
+#include <Rose/BinaryAnalysis/ConcreteLocation.h>
 #include <Rose/BinaryAnalysis/ControlFlow.h>
 #include <Rose/BinaryAnalysis/DataFlow.h>
 #include <Rose/BinaryAnalysis/Debugger.h>
@@ -38,6 +39,7 @@
 #include <Rose/BinaryAnalysis/InstructionEnumsPowerpc.h>
 #include <Rose/BinaryAnalysis/InstructionEnumsX86.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics.h>
+#include <Rose/BinaryAnalysis/LibraryIdentification.h>
 #include <Rose/BinaryAnalysis/MagicNumber.h>
 #include <Rose/BinaryAnalysis/Matrix.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
