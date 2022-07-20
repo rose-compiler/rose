@@ -395,21 +395,25 @@ private:
 #if !defined(ROSE_DEBUG_SERIAL_IO)
         try {
 #endif
+            std::string roseVersion = ROSE_PACKAGE_VERSION;
             objectType(ERROR);
             switch (format()) {
                 case BINARY:
                     ASSERT_not_null(binary_archive_);
                     *binary_archive_ <<BOOST_SERIALIZATION_NVP(objectTypeId);
+                    *binary_archive_ <<BOOST_SERIALIZATION_NVP(roseVersion);
                     *binary_archive_ <<BOOST_SERIALIZATION_NVP(object);
                     break;
                 case TEXT:
                     ASSERT_not_null(text_archive_);
                     *text_archive_ <<BOOST_SERIALIZATION_NVP(objectTypeId);
+                    *text_archive_ <<BOOST_SERIALIZATION_NVP(roseVersion);
                     *text_archive_ <<BOOST_SERIALIZATION_NVP(object);
                     break;
                 case XML:
                     ASSERT_not_null(xml_archive_);
                     *xml_archive_ <<BOOST_SERIALIZATION_NVP(objectTypeId);
+                    *xml_archive_ <<BOOST_SERIALIZATION_NVP(roseVersion);
                     *xml_archive_ <<BOOST_SERIALIZATION_NVP(object);
                     break;
             }
@@ -561,17 +565,24 @@ private:
 #if !defined(ROSE_DEBUG_SERIAL_IO)
         try {
 #endif
+            std::string roseVersion;
             switch (format()) {
                 case BINARY:
                     ASSERT_not_null(binary_archive_);
-                    *binary_archive_ >>object;
+                    *binary_archive_ >>BOOST_SERIALIZATION_NVP(roseVersion);
+                    checkCompatibility(roseVersion);
+                    *binary_archive_ >>BOOST_SERIALIZATION_NVP(object);
                     break;
                 case TEXT:
                     ASSERT_not_null(text_archive_);
-                    *text_archive_ >>object;
+                    *text_archive_ >>BOOST_SERIALIZATION_NVP(roseVersion);
+                    checkCompatibility(roseVersion);
+                    *text_archive_ >>BOOST_SERIALIZATION_NVP(object);
                     break;
                 case XML:
                     ASSERT_not_null(xml_archive_);
+                    *xml_archive_ >>BOOST_SERIALIZATION_NVP(roseVersion);
+                    checkCompatibility(roseVersion);
                     *xml_archive_ >>BOOST_SERIALIZATION_NVP(object);
                     break;
             }
@@ -584,6 +595,8 @@ private:
 #endif
 #endif
     }
+
+    void checkCompatibility(const std::string &fileVersion);
 
 protected:
     // Read the next object type from the input stream
