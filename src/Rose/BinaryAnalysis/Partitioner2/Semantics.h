@@ -1,5 +1,5 @@
-#ifndef ROSE_BinaryAnalysis_Partitioner_Semantics_H
-#define ROSE_BinaryAnalysis_Partitioner_Semantics_H
+#ifndef ROSE_BinaryAnalysis_Partitioner2_Semantics_H
+#define ROSE_BinaryAnalysis_Partitioner2_Semantics_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 

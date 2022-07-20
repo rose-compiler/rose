@@ -1,5 +1,5 @@
-#ifndef ROSE_BinaryAnalysis_Disassembler_Null_H
-#define ROSE_BinaryAnalysis_Disassembler_Null_H
+#ifndef ROSE_BinaryAnalysis_DisassemblerNull_H
+#define ROSE_BinaryAnalysis_DisassemblerNull_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 

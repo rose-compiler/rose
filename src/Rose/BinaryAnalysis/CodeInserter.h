@@ -1,5 +1,5 @@
-#ifndef Rose_BinaryAnalysis_CodeInserter_H
-#define Rose_BinaryAnalysis_CodeInserter_H
+#ifndef ROSE_BinaryAnalysis_CodeInserter_H
+#define ROSE_BinaryAnalysis_CodeInserter_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
