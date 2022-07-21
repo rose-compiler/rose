@@ -16625,6 +16625,8 @@ void Grammar::setUpBinaryInstructions() {
                           "AsmDwarfConstruct", "AsmDwarfConstructTag", false);
     AsmDwarfConstruct.setFunctionPrototype("HEADER_DWARF_CONSTRUCT", "../Grammar/BinaryInstruction.code");
     AsmDwarfConstruct.setFunctionSource("SOURCE_DWARF_CONSTRUCT", "../Grammar/BinaryInstruction.code");
+    AsmDwarfConstruct.setFunctionPrototype("HEADER_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
+    AsmDwarfConstruct.setFunctionSource("SOURCE_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
     // For now we will store the nesting level (just to support debugging), then it will be removed.
     AsmDwarfConstruct.setDataPrototype("int", "nesting_level", "= 0",
                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -16639,6 +16641,8 @@ void Grammar::setUpBinaryInstructions() {
     // hand).
     AsmDwarfConstruct.setDataPrototype("SgAsmDwarfLine*", "source_position", "= NULL",
                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+    AsmDwarfConstruct.setDataPrototype("AstAttributeMechanism*","attributeMechanism","= NULL",
+                                       NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, CLONE_PTR);
 
 
 
