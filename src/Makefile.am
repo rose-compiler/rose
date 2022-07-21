@@ -327,6 +327,9 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/DisassemblerNull.h						\
 	Rose/BinaryAnalysis/DisassemblerPowerpc.h					\
 	Rose/BinaryAnalysis/DisassemblerX86.h						\
+	Rose/BinaryAnalysis/Dwarf.h                                                     \
+	Rose/BinaryAnalysis/Dwarf/Attributes.h                                          \
+	Rose/BinaryAnalysis/Dwarf/Constants.h                                           \
 	Rose/BinaryAnalysis/FeasiblePath.h						\
 	Rose/BinaryAnalysis/FunctionCall.h						\
 	Rose/BinaryAnalysis/FunctionSimilarity.h					\

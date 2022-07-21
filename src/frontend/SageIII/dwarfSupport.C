@@ -1,6 +1,6 @@
 // This file represents initial support in the ROSE AST for Dwarf debug information.
 // Dwarf is generated when source code is compiled using a compiler's debug mode.
-// the Dwarf information is represented a special sections in the file format of 
+// the Dwarf information is represented a special sections in the file format of
 // the binary executable.  These sections are read using libdwarf (open source
 // library used for reading and writing dwarf sections).  In ROSE we read the
 // Dwarf information and build special IR nodes into the AST.  This work effects
@@ -8,19 +8,19 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Rose/BinaryAnalysis/Dwarf.h>
+#include <stringify.h>
+#include <Rose/Diagnostics.h>
+
+using namespace Rose::Diagnostics;
+
 // DONE: Dwarf support handles sections: .debug_info, .debug_line
 // TODO: Add support for sections: .debug_pubnames, .debug_pubtypes, and .debug_macinfo
-
-
-// DQ (3/14/2009): This should only be used for debugging the static and dynamic
-// linking of dwarf within ROSE and optional packages used with ROSE (e.g. Intel Pin).
-#define TEST_DEBUG_DWARF_LINKING 0
 
 #include "sage3basic.h"
 
 // Allow "string" and "pair" to be used (whether or not ROSE_HAVE_LIBDWARF id defined to be true).
 using namespace std;
-
 
 // This is controled by using the --with-dwarf configure command line option.
 #ifdef ROSE_HAVE_LIBDWARF
@@ -31,8 +31,8 @@ using namespace std;
 #define DIE_STACK_SIZE 300
 static Dwarf_Die die_stack[DIE_STACK_SIZE];
 
-#define PUSH_DIE_STACK(x) { die_stack[indent_level] = x; }
-#define POP_DIE_STACK { die_stack[indent_level] = 0; }
+#define PUSH_DIE_STACK(x) { ROSE_ASSERT(indent_level < DIE_STACK_SIZE); die_stack[indent_level] = x; }
+#define POP_DIE_STACK { ROSE_ASSERT(indent_level < DIE_STACK_SIZE); die_stack[indent_level] = 0; }
 
 int indent_level = 0;
 bool local_symbols_already_began = false;
@@ -65,51 +65,23 @@ Dwarf_Check_Result tag_tree_result;
 Dwarf_Check_Result type_offset_result;
 Dwarf_Check_Result decl_file_result;
 
-bool info_flag = true;
-
 // Dwarf variables
 Dwarf_Debug rose_dwarf_dbg;
 Dwarf_Error rose_dwarf_error;
 
 int verbose = 1;
-// bool dense = false;
-
-bool ellipsis            = false;
-
-int break_after_n_units = INT_MAX;
 
 char cu_name[BUFSIZ];
 bool cu_name_flag = false;
 Dwarf_Unsigned cu_offset = 0;
 
-std::string program_name = "roseDwarfReader";
-
-
-
 void
 print_error(Dwarf_Debug dbg, string msg, int dwarf_code, Dwarf_Error err)
    {
   // Simple error message function
-     printf ("Error: %s \n",msg.c_str());
+     mlog[FATAL] << "ERROR: " << msg << std::endl;
      ROSE_ABORT();
    }
-
-void
-print_source_intro(Dwarf_Die cu_die)
-   {
-     Dwarf_Off off = 0;
-     int ores = dwarf_dieoffset(cu_die, &off, &rose_dwarf_error);
-
-     if (ores == DW_DLV_OK)
-        {
-          printf("Source lines (from CU-DIE at .debug_info offset %llu):\n",(unsigned long long) off);
-        }
-       else
-        {
-          printf("Source lines (for the CU-DIE at unknown location):\n");
-        }
-   }
-
 
 char *
 makename(char *s)
@@ -132,646 +104,22 @@ makename(char *s)
 string
 get_TAG_name (Dwarf_Debug dbg, Dwarf_Half val)
 {
-        switch (val) {
-        case DW_TAG_array_type:
-                        return "DW_TAG_array_type";
-        case DW_TAG_class_type:
-                        return "DW_TAG_class_type";
-        case DW_TAG_entry_point:
-                        return "DW_TAG_entry_point";
-        case DW_TAG_enumeration_type:
-                        return "DW_TAG_enumeration_type";
-        case DW_TAG_formal_parameter:
-                        return "DW_TAG_formal_parameter";
-        case DW_TAG_imported_declaration:
-                        return "DW_TAG_imported_declaration";
-        case DW_TAG_label:
-                        return "DW_TAG_label";
-        case DW_TAG_lexical_block:
-                        return "DW_TAG_lexical_block";
-        case DW_TAG_member:
-                        return "DW_TAG_member";
-        case DW_TAG_pointer_type:
-                        return "DW_TAG_pointer_type";
-        case DW_TAG_reference_type:
-                        return "DW_TAG_reference_type";
-        case DW_TAG_compile_unit:
-                        return "DW_TAG_compile_unit";
-        case DW_TAG_string_type:
-                        return "DW_TAG_string_type";
-        case DW_TAG_structure_type:
-                        return "DW_TAG_structure_type";
-        case DW_TAG_subroutine_type:
-                        return "DW_TAG_subroutine_type";
-        case DW_TAG_typedef:
-                        return "DW_TAG_typedef";
-        case DW_TAG_union_type:
-                        return "DW_TAG_union_type";
-        case DW_TAG_unspecified_parameters:
-                        return "DW_TAG_unspecified_parameters";
-        case DW_TAG_variant:
-                        return "DW_TAG_variant";
-        case DW_TAG_common_block:
-                        return "DW_TAG_common_block";
-        case DW_TAG_common_inclusion:
-                        return "DW_TAG_common_inclusion";
-        case DW_TAG_inheritance:
-                        return "DW_TAG_inheritance";
-        case DW_TAG_inlined_subroutine:
-                        return "DW_TAG_inlined_subroutine";
-        case DW_TAG_module:
-                        return "DW_TAG_module";
-        case DW_TAG_ptr_to_member_type:
-                        return "DW_TAG_ptr_to_member_type";
-        case DW_TAG_set_type:
-                        return "DW_TAG_set_type";
-        case DW_TAG_subrange_type:
-                        return "DW_TAG_subrange_type";
-        case DW_TAG_with_stmt:
-                        return "DW_TAG_with_stmt";
-        case DW_TAG_access_declaration:
-                        return "DW_TAG_access_declaration";
-        case DW_TAG_base_type:
-                        return "DW_TAG_base_type";
-        case DW_TAG_catch_block:
-                        return "DW_TAG_catch_block";
-        case DW_TAG_const_type:
-                        return "DW_TAG_const_type";
-        case DW_TAG_constant:
-                        return "DW_TAG_constant";
-        case DW_TAG_enumerator:
-                        return "DW_TAG_enumerator";
-        case DW_TAG_file_type:
-                        return "DW_TAG_file_type";
-        case DW_TAG_friend:
-                        return "DW_TAG_friend";
-        case DW_TAG_namelist:
-                        return "DW_TAG_namelist";
-        case DW_TAG_namelist_item:
-                        return "DW_TAG_namelist_item";
-        case DW_TAG_packed_type:
-                        return "DW_TAG_packed_type";
-        case DW_TAG_subprogram:
-                        return "DW_TAG_subprogram";
-        case DW_TAG_template_type_parameter:
-                        return "DW_TAG_template_type_parameter";
-        case DW_TAG_template_value_parameter:
-                        return "DW_TAG_template_value_parameter";
-        case DW_TAG_thrown_type:
-                        return "DW_TAG_thrown_type";
-        case DW_TAG_try_block:
-                        return "DW_TAG_try_block";
-        case DW_TAG_variant_part:
-                        return "DW_TAG_variant_part";
-        case DW_TAG_variable:
-                        return "DW_TAG_variable";
-        case DW_TAG_volatile_type:
-                        return "DW_TAG_volatile_type";
-        case DW_TAG_dwarf_procedure:
-                        return "DW_TAG_dwarf_procedure";
-        case DW_TAG_restrict_type:
-                        return "DW_TAG_restrict_type";
-        case DW_TAG_interface_type:
-                        return "DW_TAG_interface_type";
-        case DW_TAG_namespace:
-                        return "DW_TAG_namespace";
-        case DW_TAG_imported_module:
-                        return "DW_TAG_imported_module";
-        case DW_TAG_unspecified_type:
-                        return "DW_TAG_unspecified_type";
-        case DW_TAG_partial_unit:
-                        return "DW_TAG_partial_unit";
-        case DW_TAG_imported_unit:
-                        return "DW_TAG_imported_unit";
-        case DW_TAG_mutable_type:
-                        return "DW_TAG_mutable_type";
-        case DW_TAG_condition:
-                        return "DW_TAG_condition";
-        case DW_TAG_shared_type:
-                        return "DW_TAG_shared_type";
-        case DW_TAG_lo_user:
-                        return "DW_TAG_lo_user";
-        case DW_TAG_MIPS_loop:
-                        return "DW_TAG_MIPS_loop";
-        case DW_TAG_HP_array_descriptor:
-                        return "DW_TAG_HP_array_descriptor";
-        case DW_TAG_format_label:
-                        return "DW_TAG_format_label";
-        case DW_TAG_function_template:
-                        return "DW_TAG_function_template";
-        case DW_TAG_class_template:
-                        return "DW_TAG_class_template";
-        case DW_TAG_GNU_BINCL:
-                        return "DW_TAG_GNU_BINCL";
-        case DW_TAG_GNU_EINCL:
-                        return "DW_TAG_GNU_EINCL";
-        case DW_TAG_ALTIUM_circ_type:
-                        return "DW_TAG_ALTIUM_circ_type";
-        case DW_TAG_ALTIUM_mwa_circ_type:
-                        return "DW_TAG_ALTIUM_mwa_circ_type";
-        case DW_TAG_ALTIUM_rev_carry_type:
-                        return "DW_TAG_ALTIUM_rev_carry_type";
-        case DW_TAG_ALTIUM_rom:
-                        return "DW_TAG_ALTIUM_rom";
-        case DW_TAG_upc_shared_type:
-                        return "DW_TAG_upc_shared_type";
-        case DW_TAG_upc_strict_type:
-                        return "DW_TAG_upc_strict_type";
-        case DW_TAG_upc_relaxed_type:
-                        return "DW_TAG_upc_relaxed_type";
-        case DW_TAG_PGI_kanji_type:
-                        return "DW_TAG_PGI_kanji_type";
-        case DW_TAG_PGI_interface_block:
-                        return "DW_TAG_PGI_interface_block";
-        case DW_TAG_SUN_function_template:
-                        return "DW_TAG_SUN_function_template";
-        case DW_TAG_SUN_class_template:
-                        return "DW_TAG_SUN_class_template";
-        case DW_TAG_SUN_struct_template:
-                        return "DW_TAG_SUN_struct_template";
-        case DW_TAG_SUN_union_template:
-                        return "DW_TAG_SUN_union_template";
-        case DW_TAG_SUN_indirect_inheritance:
-                        return "DW_TAG_SUN_indirect_inheritance";
-        case DW_TAG_SUN_codeflags:
-                        return "DW_TAG_SUN_codeflags";
-        case DW_TAG_SUN_memop_info:
-                        return "DW_TAG_SUN_memop_info";
-        case DW_TAG_SUN_omp_child_func:
-                        return "DW_TAG_SUN_omp_child_func";
-        case DW_TAG_SUN_rtti_descriptor:
-                        return "DW_TAG_SUN_rtti_descriptor";
-        case DW_TAG_SUN_dtor_info:
-                        return "DW_TAG_SUN_dtor_info";
-        case DW_TAG_SUN_dtor:
-                        return "DW_TAG_SUN_dtor";
-        case DW_TAG_SUN_f90_interface:
-                        return "DW_TAG_SUN_f90_interface";
-        case DW_TAG_SUN_fortran_vax_structure:
-                        return "DW_TAG_SUN_fortran_vax_structure";
-        case DW_TAG_SUN_hi:
-                        return "DW_TAG_SUN_hi";
-        case DW_TAG_hi_user:
-                        return "DW_TAG_hi_user";
-
-        default:
-                { 
-                  char buf[100]; 
-                  char *n; 
-                  snprintf(buf,sizeof(buf),"<Unknown TAG value 0x%x>",(int)val);
-        fprintf(stderr,"TAG of %d (0x%x) is unknown to dwarfdump. " "Continuing. \n",(int)val,(int)val );  
-                  n = makename(buf);
-                  return n;
-                }
-        }
-
+  // MS 7/22 : move to stringified enum instead of having the strings all here
+  return string(stringify::Rose::BinaryAnalysis::Dwarf::DWARF_TAG(val));
 }
-
-#if 0
-void
-print_attribute(Dwarf_Debug dbg, Dwarf_Die die, Dwarf_Half attr,Dwarf_Attribute attr_in,bool print_information,char **srcfiles, Dwarf_Signed cnt, SgAsmDwarfConstruct* asmDwarfConstruct)
-   {
-  // This function is not implemented!
-
-     printf ("Error: print_attribute is not implemented! \n");
-  // ROSE_ASSERT(false);
-   }
-#else
 
 string
 get_AT_name (Dwarf_Debug dbg, Dwarf_Half val)
 {
-        switch (val) {
-        case DW_AT_sibling:
-                        return "DW_AT_sibling";
-        case DW_AT_location:
-                        return "DW_AT_location";
-        case DW_AT_name:
-                        return "DW_AT_name";
-        case DW_AT_ordering:
-                        return "DW_AT_ordering";
-        case DW_AT_subscr_data:
-                        return "DW_AT_subscr_data";
-        case DW_AT_byte_size:
-                        return "DW_AT_byte_size";
-        case DW_AT_bit_offset:
-                        return "DW_AT_bit_offset";
-        case DW_AT_bit_size:
-                        return "DW_AT_bit_size";
-        case DW_AT_element_list:
-                        return "DW_AT_element_list";
-        case DW_AT_stmt_list:
-                        return "DW_AT_stmt_list";
-        case DW_AT_low_pc:
-                        return "DW_AT_low_pc";
-        case DW_AT_high_pc:
-                        return "DW_AT_high_pc";
-        case DW_AT_language:
-                        return "DW_AT_language";
-        case DW_AT_member:
-                        return "DW_AT_member";
-        case DW_AT_discr:
-                        return "DW_AT_discr";
-        case DW_AT_discr_value:
-                        return "DW_AT_discr_value";
-        case DW_AT_visibility:
-                        return "DW_AT_visibility";
-        case DW_AT_import:
-                        return "DW_AT_import";
-        case DW_AT_string_length:
-                        return "DW_AT_string_length";
-        case DW_AT_common_reference:
-                        return "DW_AT_common_reference";
-        case DW_AT_comp_dir:
-                        return "DW_AT_comp_dir";
-        case DW_AT_const_value:
-                        return "DW_AT_const_value";
-        case DW_AT_containing_type:
-                        return "DW_AT_containing_type";
-        case DW_AT_default_value:
-                        return "DW_AT_default_value";
-        case DW_AT_inline:
-                        return "DW_AT_inline";
-        case DW_AT_is_optional:
-                        return "DW_AT_is_optional";
-        case DW_AT_lower_bound:
-                        return "DW_AT_lower_bound";
-        case DW_AT_producer:
-                        return "DW_AT_producer";
-        case DW_AT_prototyped:
-                        return "DW_AT_prototyped";
-        case DW_AT_return_addr:
-                        return "DW_AT_return_addr";
-        case DW_AT_start_scope:
-                        return "DW_AT_start_scope";
-        case DW_AT_bit_stride:
-                        return "DW_AT_bit_stride";
-        case DW_AT_upper_bound:
-                        return "DW_AT_upper_bound";
-        case DW_AT_abstract_origin:
-                        return "DW_AT_abstract_origin";
-        case DW_AT_accessibility:
-                        return "DW_AT_accessibility";
-        case DW_AT_address_class:
-                        return "DW_AT_address_class";
-        case DW_AT_artificial:
-                        return "DW_AT_artificial";
-        case DW_AT_base_types:
-                        return "DW_AT_base_types";
-        case DW_AT_calling_convention:
-                        return "DW_AT_calling_convention";
-        case DW_AT_count:
-                        return "DW_AT_count";
-        case DW_AT_data_member_location:
-                        return "DW_AT_data_member_location";
-        case DW_AT_decl_column:
-                        return "DW_AT_decl_column";
-        case DW_AT_decl_file:
-                        return "DW_AT_decl_file";
-        case DW_AT_decl_line:
-                        return "DW_AT_decl_line";
-        case DW_AT_declaration:
-                        return "DW_AT_declaration";
-        case DW_AT_discr_list:
-                        return "DW_AT_discr_list";
-        case DW_AT_encoding:
-                        return "DW_AT_encoding";
-        case DW_AT_external:
-                        return "DW_AT_external";
-        case DW_AT_frame_base:
-                        return "DW_AT_frame_base";
-        case DW_AT_friend:
-                        return "DW_AT_friend";
-        case DW_AT_identifier_case:
-                        return "DW_AT_identifier_case";
-        case DW_AT_macro_info:
-                        return "DW_AT_macro_info";
-        case DW_AT_namelist_item:
-                        return "DW_AT_namelist_item";
-        case DW_AT_priority:
-                        return "DW_AT_priority";
-        case DW_AT_segment:
-                        return "DW_AT_segment";
-        case DW_AT_specification:
-                        return "DW_AT_specification";
-        case DW_AT_static_link:
-                        return "DW_AT_static_link";
-        case DW_AT_type:
-                        return "DW_AT_type";
-        case DW_AT_use_location:
-                        return "DW_AT_use_location";
-        case DW_AT_variable_parameter:
-                        return "DW_AT_variable_parameter";
-        case DW_AT_virtuality:
-                        return "DW_AT_virtuality";
-        case DW_AT_vtable_elem_location:
-                        return "DW_AT_vtable_elem_location";
-        case DW_AT_allocated:
-                        return "DW_AT_allocated";
-        case DW_AT_associated:
-                        return "DW_AT_associated";
-        case DW_AT_data_location:
-                        return "DW_AT_data_location";
-        case DW_AT_byte_stride:
-                        return "DW_AT_byte_stride";
-        case DW_AT_entry_pc:
-                        return "DW_AT_entry_pc";
-        case DW_AT_use_UTF8:
-                        return "DW_AT_use_UTF8";
-        case DW_AT_extension:
-                        return "DW_AT_extension";
-        case DW_AT_ranges:
-                        return "DW_AT_ranges";
-        case DW_AT_trampoline:
-                        return "DW_AT_trampoline";
-        case DW_AT_call_column:
-                        return "DW_AT_call_column";
-        case DW_AT_call_file:
-                        return "DW_AT_call_file";
-        case DW_AT_call_line:
-                        return "DW_AT_call_line";
-        case DW_AT_description:
-                        return "DW_AT_description";
-        case DW_AT_binary_scale:
-                        return "DW_AT_binary_scale";
-        case DW_AT_decimal_scale:
-                        return "DW_AT_decimal_scale";
-        case DW_AT_small:
-                        return "DW_AT_small";
-        case DW_AT_decimal_sign:
-                        return "DW_AT_decimal_sign";
-        case DW_AT_digit_count:
-                        return "DW_AT_digit_count";
-        case DW_AT_picture_string:
-                        return "DW_AT_picture_string";
-        case DW_AT_mutable:
-                        return "DW_AT_mutable";
-        case DW_AT_threads_scaled:
-                        return "DW_AT_threads_scaled";
-        case DW_AT_explicit:
-                        return "DW_AT_explicit";
-        case DW_AT_object_pointer:
-                        return "DW_AT_object_pointer";
-        case DW_AT_endianity:
-                        return "DW_AT_endianity";
-        case DW_AT_elemental:
-                        return "DW_AT_elemental";
-        case DW_AT_pure:
-                        return "DW_AT_pure";
-        case DW_AT_recursive:
-                        return "DW_AT_recursive";
-        case DW_AT_HP_block_index:
-                        return "DW_AT_HP_block_index";
-        case DW_AT_MIPS_fde:
-                        return "DW_AT_MIPS_fde";
-        case DW_AT_MIPS_loop_begin:
-                        return "DW_AT_MIPS_loop_begin";
-        case DW_AT_MIPS_tail_loop_begin:
-                        return "DW_AT_MIPS_tail_loop_begin";
-        case DW_AT_MIPS_epilog_begin:
-                        return "DW_AT_MIPS_epilog_begin";
-        case DW_AT_MIPS_loop_unroll_factor:
-                        return "DW_AT_MIPS_loop_unroll_factor";
-        case DW_AT_MIPS_software_pipeline_depth:
-                        return "DW_AT_MIPS_software_pipeline_depth";
-        case DW_AT_MIPS_linkage_name:
-                        return "DW_AT_MIPS_linkage_name";
-        case DW_AT_MIPS_stride:
-                        return "DW_AT_MIPS_stride";
-        case DW_AT_MIPS_abstract_name:
-                        return "DW_AT_MIPS_abstract_name";
-        case DW_AT_MIPS_clone_origin:
-                        return "DW_AT_MIPS_clone_origin";
-        case DW_AT_MIPS_has_inlines:
-                        return "DW_AT_MIPS_has_inlines";
-        case DW_AT_MIPS_stride_byte:
-                        return "DW_AT_MIPS_stride_byte";
-        case DW_AT_MIPS_stride_elem:
-                        return "DW_AT_MIPS_stride_elem";
-        case DW_AT_MIPS_ptr_dopetype:
-                        return "DW_AT_MIPS_ptr_dopetype";
-        case DW_AT_MIPS_allocatable_dopetype:
-                        return "DW_AT_MIPS_allocatable_dopetype";
-        case DW_AT_MIPS_assumed_shape_dopetype:
-                        return "DW_AT_MIPS_assumed_shape_dopetype";
-        case DW_AT_MIPS_assumed_size:
-                        return "DW_AT_MIPS_assumed_size";
-        case DW_AT_HP_raw_data_ptr:
-                        return "DW_AT_HP_raw_data_ptr";
-        case DW_AT_HP_pass_by_reference:
-                        return "DW_AT_HP_pass_by_reference";
-        case DW_AT_HP_opt_level:
-                        return "DW_AT_HP_opt_level";
-        case DW_AT_HP_prof_version_id:
-                        return "DW_AT_HP_prof_version_id";
-        case DW_AT_HP_opt_flags:
-                        return "DW_AT_HP_opt_flags";
-        case DW_AT_HP_cold_region_low_pc:
-                        return "DW_AT_HP_cold_region_low_pc";
-        case DW_AT_HP_cold_region_high_pc:
-                        return "DW_AT_HP_cold_region_high_pc";
-        case DW_AT_HP_all_variables_modifiable:
-                        return "DW_AT_HP_all_variables_modifiable";
-        case DW_AT_HP_linkage_name:
-                        return "DW_AT_HP_linkage_name";
-        case DW_AT_HP_prof_flags:
-                        return "DW_AT_HP_prof_flags";
-        case DW_AT_sf_names:
-                        return "DW_AT_sf_names";
-        case DW_AT_src_info:
-                        return "DW_AT_src_info";
-        case DW_AT_mac_info:
-                        return "DW_AT_mac_info";
-        case DW_AT_src_coords:
-                        return "DW_AT_src_coords";
-        case DW_AT_body_begin:
-                        return "DW_AT_body_begin";
-        case DW_AT_body_end:
-                        return "DW_AT_body_end";
-        case DW_AT_GNU_vector:
-                        return "DW_AT_GNU_vector";
-        case DW_AT_ALTIUM_loclist:
-                        return "DW_AT_ALTIUM_loclist";
-        case DW_AT_PGI_lbase:
-                        return "DW_AT_PGI_lbase";
-        case DW_AT_PGI_soffset:
-                        return "DW_AT_PGI_soffset";
-        case DW_AT_PGI_lstride:
-                        return "DW_AT_PGI_lstride";
-        case DW_AT_upc_threads_scaled:
-                        return "DW_AT_upc_threads_scaled";
-        case DW_AT_SUN_template:
-                        return "DW_AT_SUN_template";
-        case DW_AT_SUN_alignment:
-                        return "DW_AT_SUN_alignment";
-        case DW_AT_SUN_vtable:
-                        return "DW_AT_SUN_vtable";
-        case DW_AT_SUN_count_guarantee:
-                        return "DW_AT_SUN_count_guarantee";
-        case DW_AT_SUN_command_line:
-                        return "DW_AT_SUN_command_line";
-        case DW_AT_SUN_vbase:
-                        return "DW_AT_SUN_vbase";
-        case DW_AT_SUN_compile_options:
-                        return "DW_AT_SUN_compile_options";
-        case DW_AT_SUN_language:
-                        return "DW_AT_SUN_language";
-        case DW_AT_SUN_browser_file:
-                        return "DW_AT_SUN_browser_file";
-        case DW_AT_SUN_vtable_abi:
-                        return "DW_AT_SUN_vtable_abi";
-        case DW_AT_SUN_func_offsets:
-                        return "DW_AT_SUN_func_offsets";
-        case DW_AT_SUN_cf_kind:
-                        return "DW_AT_SUN_cf_kind";
-        case DW_AT_SUN_vtable_index:
-                        return "DW_AT_SUN_vtable_index";
-        case DW_AT_SUN_omp_tpriv_addr:
-                        return "DW_AT_SUN_omp_tpriv_addr";
-        case DW_AT_SUN_omp_child_func:
-                        return "DW_AT_SUN_omp_child_func";
-        case DW_AT_SUN_func_offset:
-                        return "DW_AT_SUN_func_offset";
-        case DW_AT_SUN_memop_type_ref:
-                        return "DW_AT_SUN_memop_type_ref";
-        case DW_AT_SUN_profile_id:
-                        return "DW_AT_SUN_profile_id";
-        case DW_AT_SUN_memop_signature:
-                        return "DW_AT_SUN_memop_signature";
-        case DW_AT_SUN_obj_dir:
-                        return "DW_AT_SUN_obj_dir";
-        case DW_AT_SUN_obj_file:
-                        return "DW_AT_SUN_obj_file";
-        case DW_AT_SUN_original_name:
-                        return "DW_AT_SUN_original_name";
-        case DW_AT_SUN_hwcprof_signature:
-                        return "DW_AT_SUN_hwcprof_signature";
-        case DW_AT_SUN_amd64_parmdump:
-                        return "DW_AT_SUN_amd64_parmdump";
-        case DW_AT_SUN_part_link_name:
-                        return "DW_AT_SUN_part_link_name";
-        case DW_AT_SUN_link_name:
-                        return "DW_AT_SUN_link_name";
-        case DW_AT_SUN_pass_with_const:
-                        return "DW_AT_SUN_pass_with_const";
-        case DW_AT_SUN_return_with_const:
-                        return "DW_AT_SUN_return_with_const";
-        case DW_AT_SUN_import_by_name:
-                        return "DW_AT_SUN_import_by_name";
-        case DW_AT_SUN_f90_pointer:
-                        return "DW_AT_SUN_f90_pointer";
-        case DW_AT_SUN_pass_by_ref:
-                        return "DW_AT_SUN_pass_by_ref";
-        case DW_AT_SUN_f90_allocatable:
-                        return "DW_AT_SUN_f90_allocatable";
-        case DW_AT_SUN_f90_assumed_shape_array:
-                        return "DW_AT_SUN_f90_assumed_shape_array";
-        case DW_AT_SUN_c_vla:
-                        return "DW_AT_SUN_c_vla";
-        case DW_AT_SUN_return_value_ptr:
-                        return "DW_AT_SUN_return_value_ptr";
-        case DW_AT_SUN_dtor_start:
-                        return "DW_AT_SUN_dtor_start";
-        case DW_AT_SUN_dtor_length:
-                        return "DW_AT_SUN_dtor_length";
-        case DW_AT_SUN_dtor_state_initial:
-                        return "DW_AT_SUN_dtor_state_initial";
-        case DW_AT_SUN_dtor_state_final:
-                        return "DW_AT_SUN_dtor_state_final";
-        case DW_AT_SUN_dtor_state_deltas:
-                        return "DW_AT_SUN_dtor_state_deltas";
-        case DW_AT_SUN_import_by_lname:
-                        return "DW_AT_SUN_import_by_lname";
-        case DW_AT_SUN_f90_use_only:
-                        return "DW_AT_SUN_f90_use_only";
-        case DW_AT_SUN_namelist_spec:
-                        return "DW_AT_SUN_namelist_spec";
-        case DW_AT_SUN_is_omp_child_func:
-                        return "DW_AT_SUN_is_omp_child_func";
-        case DW_AT_SUN_fortran_main_alias:
-                        return "DW_AT_SUN_fortran_main_alias";
-        case DW_AT_SUN_fortran_based:
-                        return "DW_AT_SUN_fortran_based";
-        case DW_AT_hi_user:
-                        return "DW_AT_hi_user";
-
-        default:
-                { 
-        char buf[100]; 
-        char *n; 
-        snprintf(buf,sizeof(buf),"<Unknown AT value 0x%x>",(int)val);
-        fprintf(stderr,"AT of %d (0x%x) is unknown to dwarfdump. Continuing. \n",(int)val,(int)val );  
-        n = makename(buf);
-        return n; 
-                }
-        }
+  // MS 7/22 : move to stringified enum instead of having the strings all here
+  return string(stringify::Rose::BinaryAnalysis::Dwarf::DWARF_AT(val));
 }
 
 string
 get_LANG_name (Dwarf_Debug dbg, Dwarf_Half val)
 {
-        switch (val) {
-        case DW_LANG_C89:
-                        return "DW_LANG_C89";
-        case DW_LANG_C:
-                        return "DW_LANG_C";
-        case DW_LANG_Ada83:
-                        return "DW_LANG_Ada83";
-        case DW_LANG_C_plus_plus:
-                        return "DW_LANG_C_plus_plus";
-        case DW_LANG_Cobol74:
-                        return "DW_LANG_Cobol74";
-        case DW_LANG_Cobol85:
-                        return "DW_LANG_Cobol85";
-        case DW_LANG_Fortran77:
-                        return "DW_LANG_Fortran77";
-        case DW_LANG_Fortran90:
-                        return "DW_LANG_Fortran90";
-        case DW_LANG_Pascal83:
-                        return "DW_LANG_Pascal83";
-        case DW_LANG_Modula2:
-                        return "DW_LANG_Modula2";
-        case DW_LANG_Java:
-                        return "DW_LANG_Java";
-        case DW_LANG_C99:
-                        return "DW_LANG_C99";
-        case DW_LANG_Ada95:
-                        return "DW_LANG_Ada95";
-        case DW_LANG_Fortran95:
-                        return "DW_LANG_Fortran95";
-        case DW_LANG_PLI:
-                        return "DW_LANG_PLI";
-        case DW_LANG_ObjC:
-                        return "DW_LANG_ObjC";
-        case DW_LANG_ObjC_plus_plus:
-                        return "DW_LANG_ObjC_plus_plus";
-        case DW_LANG_UPC:
-                        return "DW_LANG_UPC";
-        case DW_LANG_D:
-                        return "DW_LANG_D";
-        case DW_LANG_lo_user:
-                        return "DW_LANG_lo_user";
-        case DW_LANG_Mips_Assembler:
-                        return "DW_LANG_Mips_Assembler";
-        case DW_LANG_Upc:
-                        return "DW_LANG_Upc";
-        case DW_LANG_ALTIUM_Assembler:
-                        return "DW_LANG_ALTIUM_Assembler";
-        case DW_LANG_SUN_Assembler:
-                        return "DW_LANG_SUN_Assembler";
-        case DW_LANG_hi_user:
-                        return "DW_LANG_hi_user";
-
-        default:
-                { 
-        char buf[100]; 
-        char *n; 
-        snprintf(buf,sizeof(buf),"<Unknown LANG value 0x%x>",(int)val);
-        fprintf(stderr,"LANG of %d (0x%x) is unknown to dwarfdump. Continuing. \n",(int)val,(int)val );  
-        n = makename(buf);
-        return n; 
-                } 
-        }
+  // MS 7/22 : move to stringified enum instead of having the strings all here
+  return string(stringify::Rose::BinaryAnalysis::Dwarf::DWARF_LANG(val));
 }
 
 
@@ -812,31 +160,22 @@ get_small_encoding_integer_and_name( Dwarf_Debug dbg, Dwarf_Attribute attrib, Dw
      return DW_DLV_OK;
    }
 
-// static void formx_unsigned(Dwarf_Unsigned u, struct esb_s *esbp)
 static void formx_unsigned(Dwarf_Unsigned u, string *esbp)
    {
-     char small_buf[40];
-     snprintf(small_buf, sizeof(small_buf),"%llu", (unsigned long long)u);
-  // esb_append(esbp, small_buf);
-     *esbp += small_buf;
+     *esbp += std::to_string((unsigned long long)u);
    }
 
-// static void formx_signed(Dwarf_Signed u, struct esb_s *esbp)
 void formx_signed(Dwarf_Signed u, string *esbp)
    {
-     char small_buf[40];
-     snprintf(small_buf, sizeof(small_buf),"%lld", (long long)u);
-  // esb_append(esbp, small_buf);
-     *esbp += small_buf;
+     *esbp += std::to_string((long long)u);
    }
 
 /* We think this is an integer. Figure out how to print it.
-   In case the signedness is ambiguous (such as on 
+   In case the signedness is ambiguous (such as on
    DW_FORM_data1 (ie, unknown signedness) print two ways.
 */
-// static int formxdata_print_value(Dwarf_Attribute attrib, struct esb_s *esbp, Dwarf_Error * err)
 int formxdata_print_value(Dwarf_Attribute attrib, string *esbp, Dwarf_Error * err)
-   {
+{
     Dwarf_Signed tempsd = 0;
     Dwarf_Unsigned tempud = 0;
     int sres = 0;
@@ -844,10 +183,10 @@ int formxdata_print_value(Dwarf_Attribute attrib, string *esbp, Dwarf_Error * er
     Dwarf_Error serr = 0;
     ures = dwarf_formudata(attrib, &tempud, err);
     sres = dwarf_formsdata(attrib, &tempsd, &serr);
+
     if(ures == DW_DLV_OK) {
       if(sres == DW_DLV_OK) {
 
-     // if(tempud == tempsd)
         if((Dwarf_Signed)tempud == tempsd)
         {
            /* Data is the same value, so makes no difference which
@@ -855,10 +194,8 @@ int formxdata_print_value(Dwarf_Attribute attrib, string *esbp, Dwarf_Error * er
            formx_unsigned(tempud,esbp);
         } else {
            formx_unsigned(tempud,esbp);
-        // esb_append(esbp,"(as signed = ");
            *esbp += "(as signed = ";
            formx_signed(tempsd,esbp);
-        // esb_append(esbp,")");
            *esbp += ")";
         }
       } else if (sres == DW_DLV_NO_ENTRY) {
@@ -877,22 +214,20 @@ int formxdata_print_value(Dwarf_Attribute attrib, string *esbp, Dwarf_Error * er
         *err = serr;
         return sres;
       }
-    } 
-    /* else ures ==  DW_DLV_ERROR */ 
+    }
+    /* else ures ==  DW_DLV_ERROR */
     if(sres == DW_DLV_OK) {
         formx_signed(tempsd,esbp);
     } else if (sres == DW_DLV_NO_ENTRY) {
         return ures;
-    } 
+    }
     /* DW_DLV_ERROR */
     return ures;
 }
 
-
-
 /* Fill buffer with attribute value.
    We pass in tag so we can try to do the right thing with
-   broken compiler DW_TAG_enumerator 
+   broken compiler DW_TAG_enumerator
 
    We append to esbp's buffer.
 
@@ -920,9 +255,8 @@ void get_attr_value(Dwarf_Debug dbg, Dwarf_Half tag, Dwarf_Attribute attrib,char
     char small_buf[100];
 
   // DQ: Added these here instead of in global scope
-     Dwarf_Off fde_offset_for_cu_low = DW_DLV_BADOFFSET;
-     Dwarf_Off fde_offset_for_cu_high = DW_DLV_BADOFFSET;
-
+    Dwarf_Off fde_offset_for_cu_low = DW_DLV_BADOFFSET;
+    Dwarf_Off fde_offset_for_cu_high = DW_DLV_BADOFFSET;
 
     fres = dwarf_whatform(attrib, &theform, &rose_dwarf_error);
     /* depending on the form and the attribute, process the form */
@@ -934,7 +268,6 @@ void get_attr_value(Dwarf_Debug dbg, Dwarf_Half tag, Dwarf_Attribute attrib,char
 
     dwarf_whatform_direct(attrib, &direct_form, &rose_dwarf_error);
     /* ignore errors in dwarf_whatform_direct() */
-
 
     switch (theform) {
     case DW_FORM_addr:
@@ -1098,8 +431,8 @@ void get_attr_value(Dwarf_Debug dbg, Dwarf_Half tag, Dwarf_Attribute attrib,char
                                                            &tempud,
                                                            /* attrname */
                                                            (char *) NULL,
-                                                           /* err_string 
-                                                            */ 
+                                                           /* err_string
+                                                            */
                                                            (string*)NULL,
                                                            (encoding_type_func) 0,
                                                            &rose_dwarf_error);
@@ -1154,8 +487,8 @@ void get_attr_value(Dwarf_Debug dbg, Dwarf_Half tag, Dwarf_Attribute attrib,char
                 } else {
                    print_error(dbg,"Cannot get DW_AT_const_value ",wres,rose_dwarf_error);
                 }
-  
-                
+
+
                 break;
             case DW_AT_upper_bound:
             case DW_AT_lower_bound:
@@ -1250,6 +583,13 @@ void get_attr_value(Dwarf_Debug dbg, Dwarf_Half tag, Dwarf_Attribute attrib,char
 
      // *esbp += get_FORM_name(dbg, theform);
         break;
+
+    case DW_FORM_sec_offset:
+    case DW_FORM_exprloc:
+    case DW_FORM_flag_present:
+    case DW_FORM_ref_sig8:
+      /* all of these are DWARF4 related and currently unsupported. */
+      break;
     default:
         // Failure to parse a DWARF construct must not be a non-recoverable error. [Robb P Matzke 2017-05-16]
         //print_error(dbg, "dwarf_whatform unexpected value", DW_DLV_OK,rose_dwarf_error);
@@ -1270,11 +610,11 @@ void
 print_attribute(Dwarf_Debug dbg, Dwarf_Die die, Dwarf_Half attr, Dwarf_Attribute attr_in,bool print_information,char **srcfiles, Dwarf_Signed cnt, SgAsmDwarfConstruct* asmDwarfConstruct)
    {
      Dwarf_Attribute attrib = 0;
-     Dwarf_Unsigned uval = 0;
-     string atname;
-     string valname;
-     int tres = 0;
-     Dwarf_Half tag = 0;
+     Dwarf_Unsigned  uval = 0;
+     string          atname;
+     string          valname;
+     int             tres = 0;
+     Dwarf_Half      tag = 0;
 
   // Added C++ string support to replace C style string support
      string esb_base;
@@ -1286,11 +626,11 @@ print_attribute(Dwarf_Debug dbg, Dwarf_Die die, Dwarf_Half attr, Dwarf_Attribute
   // Set the name in the SgAsmDwarfConstruct (base class)
   // asmDwarfConstruct->set_name(atname);
 
-  /* the following gets the real attribute, even in the face of an 
+  /* the following gets the real attribute, even in the face of an
      incorrect doubling, or worse, of attributes */
      attrib = attr_in;
 
-  /* do not get attr via dwarf_attr: if there are (erroneously) 
+  /* do not get attr via dwarf_attr: if there are (erroneously)
      multiple of an attr in a DIE, dwarf_attr will not get the
      second, erroneous one and dwarfdump will print the first one
      multiple times. Oops. */
@@ -1312,57 +652,15 @@ print_attribute(Dwarf_Debug dbg, Dwarf_Die die, Dwarf_Half attr, Dwarf_Attribute
              }
         }
 
-#if 0
-  // This is just Dwarf error checking.
-
-  // DQ: added bool value directly
-     bool check_attr_tag = true;
-
-     if (check_attr_tag)
-        {
-          string tagname = "<tag invalid>";
-
-          attr_tag_result.checks++;
-          if (tres == DW_DLV_ERROR)
-             {
-               attr_tag_result.errors++;
-               DWARF_CHECK_ERROR3(tagname.c_str(),get_AT_name(dbg, attr).c_str(),"check the tag-attr combination.");
-             }
-            else
-             {
-               if (tres == DW_DLV_NO_ENTRY)
-                  {
-                    attr_tag_result.errors++;
-                    DWARF_CHECK_ERROR3(tagname.c_str(),get_AT_name(dbg, attr).c_str(),"check the tag-attr combination..")
-                  }
-                 else 
-                  {
-                    if (tag_attr_combination(tag, attr))
-                       {
-                      /* OK */
-                       }
-                      else
-                       {
-                         attr_tag_result.errors++;
-                         tagname = get_TAG_name(dbg, tag);
-                         DWARF_CHECK_ERROR3(tagname.c_str(),get_AT_name(dbg, attr).c_str(),"check the tag-attr combination")
-                       }
-                  }
-             }
-        }
-#endif
-
      switch (attr)
         {
           case DW_AT_language:
              {
-            // get_small_encoding_integer_and_name(dbg, attrib, &uval,"DW_AT_language", &valname,get_LANG_name, &rose_dwarf_error);
                get_small_encoding_integer_and_name(dbg, attrib, &uval,strdup("DW_AT_language"), &valname,get_LANG_name, &rose_dwarf_error);
 
             // The language is only set in the SgAsmDwarfCompilationUnit IR node.
                SgAsmDwarfCompilationUnit* asmDwarfCompilationUnit = isSgAsmDwarfCompilationUnit(asmDwarfConstruct);
                ROSE_ASSERT(asmDwarfCompilationUnit != NULL);
-            // printf ("Setting language string in SgAsmDwarfCompilationUnit valname = %s \n",valname.c_str());
                asmDwarfCompilationUnit->set_language(valname);
                break;
              }
@@ -1518,7 +816,7 @@ print_attribute(Dwarf_Debug dbg, Dwarf_Die die, Dwarf_Half attr, Dwarf_Attribute
                     but are instead offset from pc.
                     One could test for DWARF4 here before adding
                     this string, but that seems unnecessary as this
-                    could not happen with DWARF3 or earlier. 
+                    could not happen with DWARF3 or earlier.
                     A normal consumer would have to add this value to
                     DW_AT_low_pc to get a true pc. */
                  // esb_append(&esb_base,"<offset-from-lowpc>");
@@ -1530,23 +828,18 @@ print_attribute(Dwarf_Debug dbg, Dwarf_Die die, Dwarf_Half attr, Dwarf_Attribute
              }
 #endif
           default:
-            // valname = "Need to use C++ class!!!";
-            // printf ("This should be replaced by the C++ string object! \n");
-            // ROSE_ASSERT(false);
-               esb_base = "";
-               get_attr_value(dbg, tag, attrib, srcfiles, cnt, &esb_base);
-               valname = esb_base;
-            // esb_empty_string(&esb_base);
-            // get_attr_value(dbg, tag, attrib, srcfiles, cnt, &esb_base);
-            // valname = esb_get_string(&esb_base);
-               break;
+            esb_base = "";
+            get_attr_value(dbg, tag, attrib, srcfiles, cnt, &esb_base);
+
+            /* add the attribute as an AST attribute on the asmDwarfConstruct that we're
+               working on */
+            Rose::BinaryAnalysis::Dwarf::DwarfAttribute *att
+              = new Rose::BinaryAnalysis::Dwarf::DwarfAttribute(esb_base);
+            asmDwarfConstruct->addNewAttribute(stringify::Rose::BinaryAnalysis::Dwarf::DWARF_AT(attr), att);
+
+            valname = esb_base;
+            break;
         }
-
-  // printf ("In print_attribute: setting name for asmDwarfConstruct = %s using valname = %s \n",asmDwarfConstruct->class_name().c_str(),valname.c_str());
-
-  // Set the name in the base class to valname
-  // if ( isSgAsmDwarfSubprogram(asmDwarfConstruct) || isSgAsmDwarfvariable(asmDwarfConstruct) )
-  //      asmDwarfConstruct->set_name(valname);
 
   // Set the name in the base clas only when the input attribute is DW_AT_name.
      if (attr == DW_AT_name)
@@ -1554,20 +847,10 @@ print_attribute(Dwarf_Debug dbg, Dwarf_Die die, Dwarf_Half attr, Dwarf_Attribute
           asmDwarfConstruct->set_name(valname);
         }
 
-#if 0
-  // Supress Dwarf output
-     if (print_information)
-        {
-          printf("\t\t%-28s%s\n", atname.c_str(), valname.c_str());
-        }
-#endif
    }
-#endif
-
 
 /* print info about die */
-// void
-SgAsmDwarfConstruct* 
+SgAsmDwarfConstruct*
 build_dwarf_IR_node_from_print_one_die(Dwarf_Debug dbg, Dwarf_Die die, bool print_information, char **srcfiles, Dwarf_Signed cnt /* , SgAsmDwarfCompilationUnit* asmDwarfCompilationUnit */)
    {
      Dwarf_Signed i;
@@ -1587,7 +870,6 @@ build_dwarf_IR_node_from_print_one_die(Dwarf_Debug dbg, Dwarf_Die die, bool prin
         }
 
      tagname = get_TAG_name(dbg, tag);
-  // printf ("In build_dwarf_IR_node_from_print_one_die(): tag = %d tagname = %s \n",tag,tagname.c_str());
 
      ores = dwarf_dieoffset(die, &overall_offset, &rose_dwarf_error);
      if (ores != DW_DLV_OK)
@@ -1606,22 +888,17 @@ build_dwarf_IR_node_from_print_one_die(Dwarf_Debug dbg, Dwarf_Die die, bool prin
         {
           if (indent_level == 0)
             {
-           // printf("\nCOMPILE_UNIT<header overall offset = %llu>:\n",overall_offset - offset);
-
            // Initialize the information in the SgAsmDwarfCompilationUnit IR node
 
             }
            else
             {
-           // if (local_symbols_already_began == false && indent_level == 1 && !dense)
               if (local_symbols_already_began == false && indent_level == 1)
                  {
-                // printf("\nLOCAL_SYMBOLS:\n");
                    local_symbols_already_began = true;
                  }
             }
 
-      // printf("<%d><%5llu GOFF=%llu>\t%s\n", indent_level, offset,overall_offset, tagname.c_str());
        }
 
      atres = dwarf_attrlist(die, &atlist, &atcnt, &rose_dwarf_error);
@@ -1634,7 +911,6 @@ build_dwarf_IR_node_from_print_one_die(Dwarf_Debug dbg, Dwarf_Die die, bool prin
           if (atres == DW_DLV_NO_ENTRY)
              {
             /* indicates there are no attrs.  It is not an error. */
-            // printf ("No attributes found (not an error) \n");
                atcnt = 0;
              }
         }
@@ -1649,19 +925,9 @@ build_dwarf_IR_node_from_print_one_die(Dwarf_Debug dbg, Dwarf_Die die, bool prin
         }
 
   // Build the ROSE dwarf construct IR node (use a factory design to build the appropriate IR nodes
-#if 0
-  // This is used to limit the Dwarf representation to just the SgAsmDwarfCompilationUnit IR nodes
-  // (the test file from BGL has 1200+ CU's so this is useful for debugging).
-     SgAsmDwarfConstruct* asmDwarfConstruct = NULL;
-     if (tag == DW_TAG_compile_unit)
-        {
-          asmDwarfConstruct = SgAsmDwarfConstruct::createDwarfConstruct( tag, indent_level, offset, overall_offset );
-        }
-#else
+
   // This will cause all Dwarf IR nodes to be properly represented in the AST.
      SgAsmDwarfConstruct* asmDwarfConstruct = SgAsmDwarfConstruct::createDwarfConstruct( tag, indent_level, offset, overall_offset );
-#endif
-  // printf ("Handle attributes: atcnt = %d \n",(int)atcnt);
 
   // Setup attribute specific fields in the different kinds of Dwarf nodes
      for (i = 0; i < atcnt; i++)
@@ -1674,7 +940,7 @@ build_dwarf_IR_node_from_print_one_die(Dwarf_Debug dbg, Dwarf_Die die, bool prin
              {
                if (asmDwarfConstruct != NULL)
                   {
-                    print_attribute(dbg, die, attr,atlist[i],print_information, srcfiles, cnt, asmDwarfConstruct);
+                    print_attribute(dbg, die, attr, atlist[i], print_information, srcfiles, cnt, asmDwarfConstruct);
                   }
                  else
                   {
@@ -1706,37 +972,24 @@ build_dwarf_IR_node_from_print_one_die(Dwarf_Debug dbg, Dwarf_Die die, bool prin
           dwarf_dealloc(dbg, atlist, DW_DLA_LIST);
         }
 
-#if 0
-  // if (dense && print_information)
-     if (false && print_information)
-        {
-          printf("\n\n");
-        }
-#endif
-
      return asmDwarfConstruct;
    }
 
 
 
 /* recursively follow the die tree */
-// void build_dwarf_IR_node_from_die_and_children(Dwarf_Debug dbg, Dwarf_Die in_die_in,char **srcfiles, Dwarf_Signed cnt, SgAsmDwarfCompilationUnit* asmDwarfCompilationUnit)
-// void build_dwarf_IR_node_from_die_and_children(Dwarf_Debug dbg, Dwarf_Die in_die_in,char **srcfiles, Dwarf_Signed cnt, SgAsmDwarfConstruct* parentDwarfConstruct )
-SgAsmDwarfConstruct* 
-build_dwarf_IR_node_from_die_and_children(Dwarf_Debug dbg, Dwarf_Die in_die_in,char **srcfiles, Dwarf_Signed cnt, SgAsmDwarfConstruct* parentDwarfConstruct )
+SgAsmDwarfConstruct*
+build_dwarf_IR_node_from_die_and_children(Dwarf_Debug dbg, Dwarf_Die in_die_in, char **srcfiles, Dwarf_Signed cnt, SgAsmDwarfConstruct* parentDwarfConstruct )
    {
-  // NOTE: The first time this function is called the parentDwarfConstruct is NULL.
+     // NOTE: The first time this function is called the parentDwarfConstruct is NULL.
 
      Dwarf_Die child;
      Dwarf_Die sibling;
      Dwarf_Error err;
-  // int tres;
      int cdres;
      Dwarf_Die in_die = in_die_in;
 
      SgAsmDwarfConstruct* astDwarfConstruct = NULL;
-
-  // printf ("Inside of build_dwarf_IR_node_from_die_and_children() \n");
 
      for (;;)
         {
@@ -1744,83 +997,6 @@ build_dwarf_IR_node_from_die_and_children(Dwarf_Debug dbg, Dwarf_Die in_die_in,c
 
           PUSH_DIE_STACK(in_die);
 
-#if 0
-       // DQ: This just does error checking on dwarf format
-
-          if (check_tag_tree)
-             {
-               tag_tree_result.checks++;
-               if (indent_level == 0)
-                  {
-                    Dwarf_Half tag;
-
-                    tres = dwarf_tag(in_die, &tag, &err);
-                    if (tres != DW_DLV_OK)
-                       {
-                         tag_tree_result.errors++;
-                         DWARF_CHECK_ERROR("Tag-tree root is not DW_TAG_compile_unit")
-                       }
-                      else
-                         if (tag == DW_TAG_compile_unit)
-                            {
-                              /* OK */
-                            }
-                           else
-                            {
-                              tag_tree_result.errors++;
-                              DWARF_CHECK_ERROR("tag-tree root is not DW_TAG_compile_unit")
-                            }
-                  }
-                 else
-                  {
-                    Dwarf_Half tag_parent, tag_child;
-                    int pres;
-                    int cres;
-                    string ctagname = "<child tag invalid>";
-                    string ptagname = "<parent tag invalid>";
-
-                    pres = dwarf_tag(die_stack[indent_level - 1], &tag_parent,&err);
-                    cres = dwarf_tag(in_die, &tag_child, &err);
-
-                    if (pres != DW_DLV_OK)
-                         tag_parent = 0;
-
-                    if (cres != DW_DLV_OK)
-                         tag_child = 0;
-
-                    if (cres != DW_DLV_OK || pres != DW_DLV_OK) 
-                       {
-                         if (cres == DW_DLV_OK)
-                            {
-                              ctagname = get_TAG_name(dbg, tag_child);
-                            }
-
-                         if (pres == DW_DLV_OK)
-                            {
-                              ptagname = get_TAG_name(dbg, tag_parent);
-                            }
-
-                         DWARF_CHECK_ERROR3(ptagname.c_str(),ctagname.c_str(),"Tag-tree relation is not standard..");
-                      }
-                     else
-                      {
-#if 0
-                     // DQ (11/7/2008): This is error checking and I want to remove the dependence upon dwarfdump code.
-                        if (tag_tree_combination(tag_parent, tag_child))
-                           {
-                          /* OK */
-                           }
-                          else
-                           {
-                             DWARF_CHECK_ERROR3(get_TAG_name(dbg, tag_parent).c_str(),get_TAG_name(dbg, tag_child).c_str(),"tag-tree relation is not standard.");
-                           }
-#endif
-                      }
-                  }
-             }
-#endif
-
-#if 1
        // Suppress output!
 
        // DQ (11/4/2008): This is the location were we will have to generate IR nodes using each debug info entry (die)
@@ -1837,7 +1013,6 @@ build_dwarf_IR_node_from_die_and_children(Dwarf_Debug dbg, Dwarf_Die in_die_in,c
 
             // if (parentDwarfConstruct->get_children() == NULL)
             //      parentDwarfConstruct->set_children(new SgAsmDwarfConstructList());
-#if 1
             // When this work we know that we have the child support for Dwarf IR nodes in place (in all the right places).
                  // According to Kewen Meng at uoregon.edu, this assertion fails when the input specimen is compiled with "gcc
                  // -O1" (input and gcc version were unspecified by user), but works if -O1 is removed, or if C++ compiler
@@ -1845,25 +1020,11 @@ build_dwarf_IR_node_from_die_and_children(Dwarf_Debug dbg, Dwarf_Die in_die_in,c
                  // Matzke 2016-09-29]
                ROSE_ASSERT(parentDwarfConstruct->get_children() != NULL);
                parentDwarfConstruct->get_children()->get_list().push_back(astDwarfConstruct);
-#else
-            // Optional support for parents without child support implemented yet!
-            // I want to know what IR nodes require it and how many there are.
-               if (parentDwarfConstruct->get_children() != NULL)
-                  {
-                    parentDwarfConstruct->get_children()->get_list().push_back(astDwarfConstruct);
-                  }
-                 else
-                  {
-                    printf ("Error: Sorry not implemented (child support on IR nodes %s \n",parentDwarfConstruct->class_name().c_str());
-                  }
-#endif
                // The new dwarf construct's parent should be the SgAsmDwarfConstructList, not the parent of the list.
                // [Robb P. Matzke 2013-04-15]
                astDwarfConstruct->set_parent(parentDwarfConstruct->get_children());
              }
 
-       // printf ("Process children \n");
-#endif
           cdres = dwarf_child(in_die, &child, &err);
        /* child first: we are doing depth-first walk */
           if (cdres == DW_DLV_OK)
@@ -1879,12 +1040,8 @@ build_dwarf_IR_node_from_die_and_children(Dwarf_Debug dbg, Dwarf_Die in_die_in,c
             // Old function: print_die_and_children(dbg, child, srcfiles, cnt);
 
             // Ignore the return result (children are added to the parent).
-#if 0
-               build_dwarf_IR_node_from_die_and_children(dbg, child, srcfiles, cnt, astDwarfConstruct);
-#else
                if (astDwarfConstruct != NULL)
                     build_dwarf_IR_node_from_die_and_children(dbg, child, srcfiles, cnt, astDwarfConstruct);
-#endif
                indent_level--;
 
                if (indent_level == 0)
@@ -1909,7 +1066,7 @@ build_dwarf_IR_node_from_die_and_children(Dwarf_Debug dbg, Dwarf_Die in_die_in,c
                recursing. Recursing is horribly wasteful of stack
                space. */
              }
-            else 
+            else
              {
                if (cdres == DW_DLV_ERROR)
                   {
@@ -1924,8 +1081,8 @@ build_dwarf_IR_node_from_die_and_children(Dwarf_Debug dbg, Dwarf_Die in_die_in,c
           POP_DIE_STACK;
           if (in_die != in_die_in)
              {
-            /* Dealloc our in_die, but not the argument die, it belongs 
-               to our caller. Whether the siblingof call worked or not. 
+            /* Dealloc our in_die, but not the argument die, it belongs
+               to our caller. Whether the siblingof call worked or not.
              */
                dwarf_dealloc(dbg, in_die, DW_DLA_DIE);
              }
@@ -1953,8 +1110,8 @@ build_dwarf_IR_node_from_die_and_children(Dwarf_Debug dbg, Dwarf_Die in_die_in,c
 void
 build_dwarf_line_numbers_this_cu(Dwarf_Debug dbg, Dwarf_Die cu_die, SgAsmDwarfCompilationUnit* asmDwarfCompilationUnit)
    {
-  // This function build the IR nodes in the AST that hold the mappings of instruction addresses 
-  // to source line and column numbers.  From this we generate STL maps and higher level interfaces 
+  // This function build the IR nodes in the AST that hold the mappings of instruction addresses
+  // to source line and column numbers.  From this we generate STL maps and higher level interfaces
   // that make the information easier to use.
 
      Dwarf_Signed linecount = 0;
@@ -2080,7 +1237,7 @@ build_dwarf_line_numbers_this_cu(Dwarf_Debug dbg, Dwarf_Die cu_die, SgAsmDwarfCo
                  // printf("%s:\t[%3llu,%2lld]\t%#llx", filename, lineno,column, pc);
 
                  // Build an IR node to represent the instruction address for each line.
-                 // This uses the static maps in the Sg_File_Info to support a table similar 
+                 // This uses the static maps in the Sg_File_Info to support a table similar
                  // to Dwarf's and which maps filenames to integers and back.  This avoids
                  // building and deleting a Sg_File_Info object.
                     int filename_id = Sg_File_Info::addFilenameToMap(filename);
@@ -2196,9 +1353,6 @@ build_dwarf_IR_nodes(Dwarf_Debug dbg, SgAsmGenericFile* file)
      Dwarf_Die cu_die = NULL;
      Dwarf_Unsigned next_cu_offset = 0;
      int nres = DW_DLV_OK;
-     int   cu_count = 0;
-
-  // printf("\n.debug_info\n");
 
      ROSE_ASSERT(file->get_dwarf_info() == NULL);
 
@@ -2206,52 +1360,9 @@ build_dwarf_IR_nodes(Dwarf_Debug dbg, SgAsmGenericFile* file)
      file->set_dwarf_info(asmDwarfCompilationUnitList);
      asmDwarfCompilationUnitList->set_parent(file);
 
-  // This permits restricting number of CU's read so that we can have a 
-  // manageable problem to debug the Dwarf represnetation in ROSE.
-     int compilationUnitCounter = 0;
-  // int compilationUnitLimit   = 10;
-     int compilationUnitLimit   = 1000000;
-
   /* Loop until it fails.  */
-     while ( ((nres = dwarf_next_cu_header(dbg, &cu_header_length, &version_stamp,&abbrev_offset, &address_size,&next_cu_offset, &rose_dwarf_error)) == DW_DLV_OK) && (compilationUnitCounter < compilationUnitLimit) )
+     while ((nres = dwarf_next_cu_header(dbg, &cu_header_length, &version_stamp, &abbrev_offset, &address_size, &next_cu_offset, &rose_dwarf_error)) == DW_DLV_OK)
         {
-#if 0
-       // printf ("In loop over the headers: nres = %d \n",nres);
-       // printf ("next_cu_offset   = %lu \n",(unsigned long) next_cu_offset);
-          printf ("cu_header_length = %lu \n",(unsigned long) cu_header_length);
-#endif
-
-       // printf ("Processing CU: %d \n",compilationUnitCounter);
-          compilationUnitCounter++;
-
-#if 0
-       // This permits restricting size of the CU's read so that we can have a 
-       // manageable problem to debug the Dwarf represnetation in ROSE.
-          if (cu_header_length > 500)
-             {
-               printf ("Skipping the handling of this CU (too large for debugging): cu_header_length = %lu \n",(unsigned long) cu_header_length);
-               continue;
-             }
-#endif
-
-       // printf ("loop count: cu_count = %d \n",cu_count);
-
-          ROSE_ASSERT(cu_count < break_after_n_units);
-#if 0
-          if (cu_count >=  break_after_n_units)
-             {
-               printf("Break at %d\n",cu_count);
-
-               printf ("I think this should be an error for now! \n");
-               ROSE_ABORT();
-
-               break;
-             }
-#endif
-
-#if 0
-          printf ("cu_name_flag = %s \n",cu_name_flag ? "true" : "false");
-#endif
 
        // error status variable
           int sres = 0;
@@ -2262,228 +1373,82 @@ build_dwarf_IR_nodes(Dwarf_Debug dbg, SgAsmGenericFile* file)
 
           ROSE_ASSERT(cu_name_flag == false);
 
-#if 0
-       // DQ: I think that this code is unimportant to the construction or IR nodes!
-
-          if (cu_name_flag)
-             {
-               int tres = 0;
-               Dwarf_Half tag = 0;
-               Dwarf_Attribute attrib = 0;
-               Dwarf_Half theform = 0;
-               int fres = 0;
-               int ares = 0;
-
-               sres = dwarf_siblingof(dbg, NULL, &cu_die, &rose_dwarf_error);
-               if (sres != DW_DLV_OK)
-                  {
-                    print_error(dbg, "siblingof cu header", sres, rose_dwarf_error);
-                  }
-
-               tres = dwarf_tag(cu_die, &tag, &rose_dwarf_error);
-               if (tres != DW_DLV_OK)
-                  {
-                    print_error(dbg, "tag of cu die", tres, rose_dwarf_error);
-                  }
-
-               ares = dwarf_attr(cu_die, DW_AT_name, &attrib, &rose_dwarf_error);
-               if (ares != DW_DLV_OK)
-                  {
-                    print_error(dbg, "dwarf DW_AT_name ", ares, rose_dwarf_error);
-                  }
-
-               fres = dwarf_whatform(attrib, &theform, &rose_dwarf_error);
-               if (fres != DW_DLV_OK)
-                  {
-                    print_error(dbg, "dwarf_whatform problem ", fres, rose_dwarf_error);
-                  }
-                 else
-                  {
-                    if (theform == DW_FORM_string || theform == DW_FORM_strp) 
-                       {
-                         char* temps;
-                         int strres;
-                         char* p;
-
-                         strres = dwarf_formstring(attrib, &temps, &rose_dwarf_error);
-                         p = temps;
-
-                         printf ("temps = %s \n",temps);
-
-                         if (strres != DW_DLV_OK)
-                            {
-                              print_error(dbg,"formstring failed unexpectedly",strres, rose_dwarf_error);
-                            }
-
-                         if (cu_name[0] != '/')
-                            {
-                              p = strrchr(temps, '/');
-                              if (p == NULL)
-                                 {
-                                   p = temps;
-                                 }
-                                else
-                                 {
-                                   p++;
-                                 }
-                            }
-
-                         if (strcmp(cu_name, p))
-                            {
-                              printf ("Exiting from loop... (continue) \n");
-                              continue;
-                            }
-                       }
-                      else
-                       {
-                         print_error(dbg,"dwarf_whatform unexpected value",fres, rose_dwarf_error);
-                       }
-                  }
-
-               dwarf_dealloc(dbg, attrib, DW_DLA_ATTR);
-               dwarf_dealloc(dbg, cu_die, DW_DLA_DIE);
-             }
-#endif
-
-#if 0
-          printf ("build_dwarf_IR_nodes(): verbose = %s \n",verbose ? "true" : "false");
-       // printf ("build_dwarf_IR_nodes(): dense   = %s \n",dense ? "true" : "false");
-#endif
-
-#if 0
-       // Supress output!
-          if (verbose)
-             {
-               printf("\nCU_HEADER:\n");
-               printf("\t\t%-28s%llu\n", "cu_header_length",cu_header_length);
-               printf("\t\t%-28s%d\n", "version_stamp", version_stamp);
-               printf("\t\t%-28s%llu\n", "abbrev_offset",abbrev_offset);
-               printf("\t\t%-28s%d", "address_size", address_size);
-             }
-
-          printf ("\nbuild_dwarf_IR_nodes(): Calling dwarf_siblingof() \n");
-#endif
-
        /* process a single compilation unit in .debug_info. */
           sres = dwarf_siblingof(dbg, NULL, &cu_die, &rose_dwarf_error);
 
-       // printf ("build_dwarf_IR_nodes(): status of call to dwarf_siblingof(): sres = %d \n",sres);
+          switch (sres) {
+          case DW_DLV_OK:
+            {
+              Dwarf_Signed cnt = 0;
+              char **srcfiles = 0;
 
-          if (sres == DW_DLV_OK)
-             {
-#if 0
-               printf ("Processing sibling information \n");
-               printf ("info_flag    = %s \n",info_flag    ? "true" : "false");
-               printf ("cu_name_flag = %s \n",cu_name_flag ? "true" : "false");
-#endif
-            // printf ("Explicitly setting info_flag == true \n");
-               info_flag = true;
+              // We need to call this function so that we can generate filenames to support the line number mapping below.
+              int srcf = dwarf_srcfiles(cu_die, &srcfiles, &cnt, &rose_dwarf_error);
 
-            // if (info_flag || cu_name_flag)
-            //    {
-                    Dwarf_Signed cnt = 0;
-                    char **srcfiles = 0;
+              if (srcf != DW_DLV_OK)
+                {
+                  // I think we can make this an error.
+                  mlog[FATAL] << "Error: No source file information found: (dwarf_srcfiles() != DW_DLV_OK)\n";
+                  ROSE_ABORT();
 
-                 // We need to call this function so that we can generate filenames to support the line number mapping below.
-                    int srcf = dwarf_srcfiles(cu_die, &srcfiles, &cnt, &rose_dwarf_error);
+                  srcfiles = NULL;
+                  cnt = 0;
+                }
 
-                    if (srcf != DW_DLV_OK)
-                       {
-                      // I think we can make this an error.
-                         printf ("Error: No source file information found: (dwarf_srcfiles() != DW_DLV_OK) \n");
-                         ROSE_ABORT();
+              // This function call will traverse the list of child debug info entries and
+              // within this function we will generate the IR nodes specific to Dwarf. This
+              // should define an course view of the AST which can be used to relate the binary
+              // to the source code.
+              SgAsmDwarfConstruct* asmDwarfConstruct = build_dwarf_IR_node_from_die_and_children(dbg, cu_die, srcfiles, cnt, NULL);
+              ROSE_ASSERT(asmDwarfConstruct != NULL);
 
-                         srcfiles = NULL;
-                         cnt = 0;
-                       }
+              // Handle the case of many Dwarf Compile Units
+              // asmInterpretation->get_dwarf_info()->get_cu_list().push_back(asmDwarfCompilationUnit);
+              SgAsmDwarfCompilationUnit* asmDwarfCompilationUnit = isSgAsmDwarfCompilationUnit(asmDwarfConstruct);
+              ROSE_ASSERT(asmDwarfCompilationUnit != NULL);
 
-                 // This function call will traverse the list of child debug info entries and 
-                 // within this function we will generate the IR nodes specific to Dwarf. This
-                 // should define an course view of the AST which can be used to relate the binary
-                 // to the source code.
+              asmDwarfCompilationUnitList->get_cu_list().push_back(asmDwarfCompilationUnit);
+              asmDwarfCompilationUnit->set_parent(asmDwarfCompilationUnitList);
 
-                 // printf ("In print_infos(): Calling build_dwarf_IR_node_from_die_and_children() \n");
-                 // print_die_and_children(dbg, cu_die, srcfiles, cnt);
-                    SgAsmDwarfConstruct* asmDwarfConstruct = build_dwarf_IR_node_from_die_and_children(dbg, cu_die, srcfiles, cnt, NULL);
-                    ROSE_ASSERT(asmDwarfConstruct != NULL);
+              if (srcf == DW_DLV_OK)
+                {
+                  for (int si = 0; si < cnt; ++si)
+                    {
+                      dwarf_dealloc(dbg, srcfiles[si], DW_DLA_STRING);
+                    }
+                  dwarf_dealloc(dbg, srcfiles, DW_DLA_LIST);
+                }
 
-#if 0
-                    SgAsmDwarfCompilationUnit* asmDwarfCompilationUnit = isSgAsmDwarfCompilationUnit(asmDwarfConstruct);
-                    ROSE_ASSERT(asmDwarfCompilationUnit != NULL);
+              bool line_flag = true;
 
-                    asmInterpretation->set_dwarf_info(asmDwarfCompilationUnit);
-                    asmDwarfCompilationUnit->set_parent(asmInterpretation);
+              if (line_flag)
+                {
+                  build_dwarf_line_numbers_this_cu(dbg, cu_die, asmDwarfCompilationUnit);
+                }
+              else
+                {
+                  mlog[INFO] << "Skipping line number <--> instruction address mapping information\n";
+                }
 
-                    ROSE_ASSERT(asmInterpretation->get_dwarf_info() != NULL);
-#else
-                 // Handle the case of many Dwarf Compile Units
-                 // asmInterpretation->get_dwarf_info()->get_cu_list().push_back(asmDwarfCompilationUnit);
-                    SgAsmDwarfCompilationUnit* asmDwarfCompilationUnit = isSgAsmDwarfCompilationUnit(asmDwarfConstruct);
-                    ROSE_ASSERT(asmDwarfCompilationUnit != NULL);
+              dwarf_dealloc(dbg, cu_die, DW_DLA_DIE);
+              break;
+            }
+          case DW_DLV_NO_ENTRY:
+            break;
 
-                    asmDwarfCompilationUnitList->get_cu_list().push_back(asmDwarfCompilationUnit);
-                    asmDwarfCompilationUnit->set_parent(asmDwarfCompilationUnitList);
-#endif
+          default:
+            print_error(dbg, "Regetting cu_die", sres, rose_dwarf_error);
+          }
 
-                    if (srcf == DW_DLV_OK)
-                       {
-                         int si;
-
-                         for (si = 0; si < cnt; ++si)
-                            {
-                              dwarf_dealloc(dbg, srcfiles[si], DW_DLA_STRING);
-                            }
-                         dwarf_dealloc(dbg, srcfiles, DW_DLA_LIST);
-                       }
-            //    }
-
-            // printf ("Explicitly setting line_flag == true \n");
-               bool line_flag = true;
-
-               if (line_flag)
-                  {
-                 // printf ("\n\nOutput the line information by calling print_line_numbers_this_cu() \n");
-                 // print_line_numbers_this_cu(dbg, cu_die);
-                    build_dwarf_line_numbers_this_cu(dbg, cu_die, asmDwarfCompilationUnit);
-                  }
-                 else
-                  {
-                    printf ("Skipping line number <--> instruction address mapping information \n");
-                  }
-
-               dwarf_dealloc(dbg, cu_die, DW_DLA_DIE);
-             }
-            else
-             {
-               if (sres == DW_DLV_NO_ENTRY)
-                  {
-                 /* do nothing I guess. */
-                  }
-                 else
-                  {
-                    print_error(dbg, "Regetting cu_die", sres, rose_dwarf_error);
-                  }
-             }
-
-          ++cu_count;
           cu_offset = next_cu_offset;
         }
-
-  // printf ("error checking: nres = %d \n",nres);
 
      if (nres == DW_DLV_ERROR)
         {
           string errmsg = dwarf_errmsg(rose_dwarf_error);
           Dwarf_Unsigned myerr = dwarf_errno(rose_dwarf_error);
-
-          fprintf(stderr, "%s ERROR:  %s:  %s (%lu)\n",program_name.c_str(), "attempting to print .debug_info",errmsg.c_str(), (unsigned long) myerr);
-       // fprintf(stderr, "attempting to continue.\n");
-
-       // printf ("Error: nres = %d \n",nres);
-       // ROSE_ASSERT(false);
+          mlog[FATAL] << "DWARF error : " << errmsg << " (" << (unsigned long)myerr << ")\n";
         }
-
-  // printf ("Exiting print_infos() \n");
    }
 
 
@@ -2494,7 +1459,7 @@ build_dwarf_IR_nodes(Dwarf_Debug dbg, SgAsmGenericFile* file)
 void commentOutSymbolsFromDotGraph (SgNode* node)
    {
   // Remove the symbols and related symbol lists so that the generated DOT file will be simpler.
-  // To do this we add an attribute that implements the virtual commentOutNodeInGraph() member 
+  // To do this we add an attribute that implements the virtual commentOutNodeInGraph() member
   // function and return "true".
 
   // Define the attribute class containing the virtual function "commentOutNodeInGraph()"
@@ -2549,7 +1514,7 @@ void commentOutSymbolsFromDotGraph (SgNode* node)
 void commentOutEvertythingButDwarf (SgNode* node)
    {
   // Remove the symbols and related symbol lists so that the generated DOT file will be simpler.
-  // To do this we add an attribute that implements the virtual commentOutNodeInGraph() member 
+  // To do this we add an attribute that implements the virtual commentOutNodeInGraph() member
   // function and return "true".
 
   // Define the attribute class containing the virtual function "commentOutNodeInGraph()"
@@ -2645,123 +1610,6 @@ void commentOutEvertythingButDwarf (SgNode* node)
    }
 
 
-#if TEST_DEBUG_DWARF_LINKING
-// DQ (3/14/2009):
-// ************************************************************
-// This is a test code that is useful in debuggin the use of 
-// dwarf within other project optionally used with ROSE. The 
-// short solution is to make everything a dynamic library so 
-// that no two dynamic libraries will statically include the 
-// same static code.
-// ************************************************************
-
-//#include "sys/fcntl.h"
-#include "elf.h"
-#include "libelf.h"
-#include "assert.h"
-#include "libdwarf.h"
-
-void
-test_dwarf(string file_name)
-   {
-    int f;
-    Elf_Cmd cmd;
-    Elf* elf;
-    Elf *arf;
-    int archive = 0;
-
-     printf ("In test_dwarf(): file = %s \n",file_name.c_str());
-
-    (void) elf_version(EV_NONE);
-
-     printf ("In test_dwarf(): Test 0 \n");
-
-    if (elf_version(EV_CURRENT) == EV_NONE) {
-
-         printf ("In test_dwarf(): Test 0.5 \n");
-
-        (void) fprintf(stderr, "dwarfdump: libelf.a out of date.\n");
-        ROSE_ABORT();
-    }
-
-     printf ("In test_dwarf(): Test 1 \n");
-
-    f = open(file_name.c_str(), O_RDONLY);
-    if (f == -1) {
-        fprintf(stderr, "ERROR:  can't open %s \n",file_name.c_str());
-        ROSE_ABORT();
-    }
-
-     printf ("In test_dwarf(): Test 2 \n");
-
-    cmd = ELF_C_READ;
-    arf = elf_begin(f, cmd, (Elf *) 0);
-    if (elf_kind(arf) == ELF_K_AR)
-       {
-         archive = 1;
-       }
-
-     Dwarf_Debug dbg;
-     Dwarf_Error err;
-
-     printf ("In test_dwarf(): Test 3 \n");
-
-     while ((elf = elf_begin(f, cmd, arf)) != 0)
-        {
-          Elf32_Ehdr *eh32;
-
-     printf ("In test_dwarf(): Test 4 \n");
-
-#ifdef HAVE_ELF64_GETEHDR
-          Elf64_Ehdr *eh64;
-#endif /* HAVE_ELF64_GETEHDR */
-          eh32 = elf32_getehdr(elf);
-          if (!eh32)
-             {
-#ifdef HAVE_ELF64_GETEHDR
-            /* not a 32-bit obj */
-               eh64 = elf64_getehdr(elf);
-               if (!eh64) {
-                /* not a 64-bit obj either! */
-                /* dwarfdump is quiet when not an object */
-               }
-#endif /* HAVE_ELF64_GETEHDR */
-             }
-
-          printf ("Calling dwarf_elf_init() \n");
-          ROSE_ASSERT(elf != NULL);
-
-          // Test calling dwarf_elf_init()
-          int dres = dwarf_elf_init(elf, DW_DLC_READ, NULL, NULL, &dbg, &err);
-
-          if (dres == DW_DLV_NO_ENTRY)
-             {
-               printf("No DWARF information present in %s\n", file_name.c_str());
-               ROSE_ABORT();
-             }
-
-          if (dres != DW_DLV_OK)
-             {
-               printf ("Dwarf error: dwarf_elf_init \n");
-               ROSE_ABORT();
-             }
-
-          cmd = elf_next(elf);
-          elf_end(elf);
-        }
-
-     printf ("In test_dwarf(): Test 5 \n");
-
-     elf_end(arf);
-
-     printf ("Calling dwarf_init_status() \n");
-     int dwarf_init_status = dwarf_init (f, DW_DLC_READ, NULL, NULL, &dbg, &err);
-
-     printf ("Leaving process_dwarf() for file = %s dwarf_init_status = %d \n",file_name.c_str(),dwarf_init_status);
-   }
-#endif
-
-
 void
 readDwarf ( SgAsmGenericFile* asmFile )
    {
@@ -2770,37 +1618,17 @@ readDwarf ( SgAsmGenericFile* asmFile )
      SgAsmGenericFile* genericFile = asmFile;
      ROSE_ASSERT(genericFile != NULL);
 
-#if TEST_DEBUG_DWARF_LINKING
-  // DQ (3/13/2009): Added as a test (part of debugging the use of Dwarf in ROSE and also in Intel Pin used with ROSE).
-     test_dwarf("input_testcode");
-#endif
-
      int fileDescriptor = genericFile->get_fd();
 
   // DQ (3/13/2009): Added as a test.
      Dwarf_Debug rose_dwarf_dbg;
      Dwarf_Error rose_dwarf_error;
 
-#if TEST_DEBUG_DWARF_LINKING
-     if (SgProject::get_verbose() > 0)
-        {
-          printf ("Calling first libdwarf function: dwarf_init() \n");
-          printf ("fileDescriptor = %d \n",fileDescriptor);
-        }
-#endif
-
-  // DQ (3/13/2009): This function gets a lot of surrounding debugging information because it is 
-  // the first dwarf function call and is a special problem in the compatability between Intel Pin 
+  // DQ (3/13/2009): This function gets a lot of surrounding debugging information because it is
+  // the first dwarf function call and is a special problem in the compatability between Intel Pin
   // and ROSE over the use of Dwarf.
   // int dwarf_init_status = dwarf_init (fileDescriptor, DW_DLC_READ, NULL, NULL, &rose_dwarf_dbg, &rose_dwarf_error);
      int dwarf_init_status = dwarf_init (fileDescriptor, DW_DLC_READ, NULL, NULL, &rose_dwarf_dbg, &rose_dwarf_error);
-
-#if TEST_DEBUG_DWARF_LINKING
-     if (SgProject::get_verbose() > 0)
-        {
-          printf ("DONE: Calling first libdwarf function: dwarf_init(): dwarf_init_status = %d \n",dwarf_init_status);
-        }
-#endif
 
   // Test if the call to dwarf_init worked!
   // ROSE_ASSERT(dwarf_init_status == DW_DLV_OK);
@@ -2823,7 +1651,7 @@ readDwarf ( SgAsmGenericFile* asmFile )
        // This might be a PE file (or just non-ELF)
           if (SgProject::get_verbose() > 0)
              {
-               printf ("No dwarf debug sections found! \n");
+               mlog[INFO] << "No dwarf debug sections found\n";
              }
         }
 
@@ -2857,13 +1685,9 @@ SgAsmDwarfConstruct::createDwarfConstruct( int tag, int nesting_level, uint64_t 
 
      SgAsmDwarfConstruct* returnConstruct = NULL;
 
-  // printf ("In SgAsmDwarfConstruct::createDwarfConstruct(): tag = %d nesting_level = %d \n",tag,nesting_level);
-
   // This uses the libdwarf tag id values
      switch(tag)
         {
-       // case DW_TAG_: { returnConstruct = new SgAsmDwarf(nesting_level,offset,overall_offset); break; }
-
           case DW_TAG_array_type: { returnConstruct = new SgAsmDwarfArrayType(nesting_level,offset,overall_offset); break; }
           case DW_TAG_class_type: { returnConstruct = new SgAsmDwarfClassType(nesting_level,offset,overall_offset); break; }
           case DW_TAG_entry_point: { returnConstruct = new SgAsmDwarfEntryPoint(nesting_level,offset,overall_offset); break; }
@@ -2936,10 +1760,6 @@ SgAsmDwarfConstruct::createDwarfConstruct( int tag, int nesting_level, uint64_t 
              }
         }
 
-#if 0
-     printf ("createDwarfConstruct(): nesting_level = %d building: %s \n",nesting_level,returnConstruct->class_name().c_str());
-#endif
-
      return returnConstruct;
    }
 
@@ -2955,9 +1775,7 @@ SgAsmDwarfConstruct::createDwarfConstruct( int tag, int nesting_level, uint64_t 
 
      SgAsmDwarfConstruct* returnConstruct = NULL;
 
-#if 1
-     printf ("Dwarf support not enabled (configure command-line option: --with-dwarf) \n");
-#endif
+     mlog[INFO] << "Dwarf support not enabled (configure command-line option: --with-dwarf) \n";
 
      return returnConstruct;
    }
@@ -2987,7 +1805,7 @@ SgAsmDwarfLineList::instructionRange()
 
      return std::pair<uint64_t,uint64_t>(lowerBound->first,upperBound->first);
    }
- 
+
 std::pair<LineColumnFilePosition,LineColumnFilePosition>
 SgAsmDwarfLineList::sourceCodeRange( int file_id )
    {
@@ -3025,7 +1843,7 @@ SgAsmDwarfLineList::sourceCodeRange( int file_id )
 
      return std::pair<LineColumnFilePosition,LineColumnFilePosition>(start,end);
    }
- 
+
 
 uint64_t
 SgAsmDwarfLineList::sourceCodeToAddress ( FileIdLineColumnFilePosition sourcePosition )
@@ -3045,7 +1863,7 @@ SgAsmDwarfLineList::sourceCodeToAddress ( FileIdLineColumnFilePosition sourcePos
   // I think this is redundant code
      SgSourcePositionInstructionAddressMapPtrList::iterator upperBound = source_code_instruction_map.upper_bound(sourcePosition);
 #endif
-     
+
      returnAddress = lowerBound->second;
 
      if (lowerBound == source_code_instruction_map.begin())
@@ -3159,7 +1977,7 @@ SgAsmDwarfLineList::display( const string & label )
              {
                printf ("Source range for file = %s (id = %d) [(line=%d, col=%d), (line=%d, col=%d)] \n",
                     filename.c_str(),i,
-                    sourceFileRange.first.first, sourceFileRange.first.second, 
+                    sourceFileRange.first.first, sourceFileRange.first.second,
                     sourceFileRange.second.first, sourceFileRange.second.second);
              }
         }
