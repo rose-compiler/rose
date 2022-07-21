@@ -94,7 +94,7 @@ TaintedFlow::TransferFunction::operator()(size_t cfgVertex, const StatePtr &in) 
     StatePtr out = in->copy();
 
     Stringifier taintednessStr(stringifyBinaryAnalysisTaintedFlowTaintedness);
-    Stringifier edgeTypeStr(stringifyBinaryAnalysisInstructionSemantics2DataFlowSemanticsDataFlowEdgeEdgeType);
+    Stringifier edgeTypeStr(stringifyBinaryAnalysisInstructionSemanticsDataFlowSemanticsDataFlowEdgeEdgeType);
 
     mlog[TRACE] <<"transfer function for CFG vertex " <<cfgVertex <<"\n";
 
