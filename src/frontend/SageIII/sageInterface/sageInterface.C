@@ -25269,6 +25269,9 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
   if (SgFunctionDeclaration* f = isSgFunctionDeclaration(node) )
     out<<" "<< f->get_qualified_name();
 
+  if (SgAdaFunctionRenamingDecl* f = isSgAdaFunctionRenamingDecl(node) )
+    out<<" renamed_function "<< f->get_renamed_function();
+
   if (SgClassDeclaration* f = isSgClassDeclaration(node) )
     out<<" "<< f->get_qualified_name();
 
@@ -25325,6 +25328,30 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
     out<<" value="<< v->get_value() <<" valueString="<< v->get_valueString();
 
   if (SgLongIntVal* v= isSgLongIntVal(node))
+    out<<" value="<< v->get_value() <<" valueString="<< v->get_valueString();
+
+  if (SgLongLongIntVal* v= isSgLongLongIntVal(node))
+    out<<" value="<< v->get_value() <<" valueString="<< v->get_valueString();
+
+  if (SgUnsignedIntVal* v= isSgUnsignedIntVal(node))
+    out<<" value="<< v->get_value() <<" valueString="<< v->get_valueString();
+
+  if (SgUnsignedShortVal* v= isSgUnsignedShortVal(node))
+    out<<" value="<< v->get_value() <<" valueString="<< v->get_valueString();
+
+  if (SgUnsignedLongVal* v= isSgUnsignedLongVal(node))
+    out<<" value="<< v->get_value() <<" valueString="<< v->get_valueString();
+
+  if (SgUnsignedLongLongIntVal* v= isSgUnsignedLongLongIntVal(node))
+    out<<" value="<< v->get_value() <<" valueString="<< v->get_valueString();
+
+  if (SgFloatVal* v= isSgFloatVal(node))
+    out<<" value="<< v->get_value() <<" valueString="<< v->get_valueString();
+
+  if (SgDoubleVal* v= isSgDoubleVal(node))
+    out<<" value="<< v->get_value() <<" valueString="<< v->get_valueString();
+
+  if (SgLongDoubleVal* v= isSgLongDoubleVal(node))
     out<<" value="<< v->get_value() <<" valueString="<< v->get_valueString();
 
   if (SgVarRefExp* var_ref= isSgVarRefExp(node) )
