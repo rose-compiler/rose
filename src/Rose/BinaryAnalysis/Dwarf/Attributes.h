@@ -1,5 +1,5 @@
-#ifndef Rose_BinaryAnalysis_Dwarf_Attributes_H
-#define Rose_BinaryAnalysis_Dwarf_Attributes_H
+#ifndef ROSE_BinaryAnalysis_Dwarf_Attributes_H
+#define ROSE_BinaryAnalysis_Dwarf_Attributes_H
 
 #include <AstAttributeMechanism.h>
 
@@ -22,4 +22,4 @@ namespace Dwarf {
 }
 }
 
-#endif // Rose_BinaryAnalysis_Dwarf_Attributes_H
+#endif // ROSE_BinaryAnalysis_Dwarf_Attributes_H
