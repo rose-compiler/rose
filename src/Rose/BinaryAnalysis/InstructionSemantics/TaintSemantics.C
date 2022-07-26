@@ -188,22 +188,25 @@ BaseSemantics::SValue::Ptr
 RiscOperators::iteWithStatus(const BaseSemantics::SValue::Ptr &sel_, const BaseSemantics::SValue::Ptr &a_,
                              const BaseSemantics::SValue::Ptr &b_, IteStatus &status)
 {
+    SValue::Ptr sel = SValue::promote(sel_);
     SValue::Ptr retval = SValue::promote(Super::iteWithStatus(sel_, a_, b_, status));
+
     SValue::Ptr a = SValue::promote(a_);
     SValue::Ptr b = SValue::promote(b_);
 
     switch (status) {
         case IteStatus::NEITHER:
-            retval->taintedness(Taintedness::BOTTOM);
+            retval->taintedness(sel->taintedness());
             break;
         case IteStatus::A:
-            retval->taintedness(a->taintedness());
+            retval->taintedness(mergeTaintedness(sel, a));
             break;
         case IteStatus::B:
-            retval->taintedness(b->taintedness());
+            retval->taintedness(mergeTaintedness(sel, b));
             break;
         case IteStatus::BOTH:
-            retval->taintedness(SValue::mergeTaintedness(a->taintedness(), b->taintedness()));
+            retval->taintedness(SValue::mergeTaintedness(sel->taintedness(),
+                                                         SValue::mergeTaintedness(a->taintedness(), b->taintedness())));
             break;
     }
 
