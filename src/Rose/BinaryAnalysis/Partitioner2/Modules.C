@@ -754,17 +754,22 @@ findSymbolFunctions(const Partitioner &partitioner, SgAsmInterpretation *interp)
 }
 
 void
-nameConstants(const Partitioner &partitioner) {
+nameConstants(const Partitioner &partitioner, const AddressInterval &where) {
     struct ConstantNamer: AstSimpleProcessing {
         const Partitioner &partitioner;
-        ConstantNamer(const Partitioner &partitioner): partitioner(partitioner) {}
+        const AddressInterval &where;
+
+        ConstantNamer(const Partitioner &partitioner, const AddressInterval &where)
+            : partitioner(partitioner), where(where) {}
+
         void visit(SgNode *node) {
             if (SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(node)) {
-                if (ival->get_comment().empty())
-                    ival->set_comment(partitioner.addressName(ival->get_absoluteValue()));
+                const auto va = ival->get_absoluteValue();
+                if (ival->get_comment().empty() && where.isContaining(va))
+                    ival->set_comment(partitioner.addressName(va));
             }
         }
-    } constantRenamer(partitioner);
+    } constantRenamer(partitioner, where);
 
     for (SgAsmInstruction *insn: partitioner.instructionsOverlapping(AddressInterval::whole()))
         constantRenamer.traverse(insn, preorder);
