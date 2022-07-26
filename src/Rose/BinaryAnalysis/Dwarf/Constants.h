@@ -1,5 +1,5 @@
-#ifndef Rose_BinaryAnalysis_Dwarf_Constants_H
-#define Rose_BinaryAnalysis_Dwarf_Constants_H
+#ifndef ROSE_BinaryAnalysis_Dwarf_Constants_H
+#define ROSE_BinaryAnalysis_Dwarf_Constants_H
 
 namespace Rose {
 namespace BinaryAnalysis {
