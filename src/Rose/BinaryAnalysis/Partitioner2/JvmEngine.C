@@ -214,15 +214,18 @@ JvmEngine::partitionerSwitches(PartitionerSettings &settings) {
               .hidden(true));
 
     sg.insert(Switch("name-constants")
-              .intrinsicValue(true, settings.namingConstants)
+              .argument("addresses", addressIntervalParser(settings.namingConstants), "all")
               .doc("Scans the instructions and gives labels to constants that refer to entities that have that address "
                    "and also have a name.  For instance, if a constant refers to the beginning of a file section then "
-                   "the constant will be labeled so it has the same name as the section.  The @s{no-name-constants} "
-                   "turns this feature off. The default is to " + std::string(settings.namingConstants?"":"not ") +
-                   "do this step."));
+                   "the constant will be labeled so it has the same name as the section. The argument for this switch is the "
+                   "range of integer values that can be labeled, defaulting to all addresses. The @s{no-name-constants} switch "
+                   "turns this feature off. The default is to " +
+                   (settings.namingConstants ?
+                    "try to label constants within " + StringUtility::addrToString(settings.namingConstants) + "." :
+                    "not perform this labeling.")));
     sg.insert(Switch("no-name-constants")
               .key("name-constants")
-              .intrinsicValue(false, settings.namingConstants)
+              .intrinsicValue(AddressInterval(), settings.namingConstants)
               .hidden(true));
 
     sg.insert(Switch("name-strings")

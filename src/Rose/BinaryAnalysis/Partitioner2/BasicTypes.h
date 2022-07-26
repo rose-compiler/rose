@@ -416,7 +416,7 @@ struct PartitionerSettings {
     bool findingThunks;                             /**< Look for common thunk patterns in undiscovered areas. */
     bool splittingThunks;                           /**< Split thunks into their own separate functions. */
     SemanticMemoryParadigm semanticMemoryParadigm;  /**< Container used for semantic memory states. */
-    bool namingConstants;                           /**< Give names to constants by calling @ref Modules::nameConstants. */
+    AddressInterval namingConstants;                /**< Give possible names to constants if they're in this range. */
     AddressInterval namingStrings;                  /**< Addresses that might be string literals for commenting integers. */
     bool namingSyscalls;                            /**< Give names (comments) to system calls if possible. */
     boost::filesystem::path syscallHeader;          /**< Name of header file containing system call numbers. */
@@ -472,7 +472,17 @@ private:
         s & BOOST_SERIALIZATION_NVP(findingThunks);
         s & BOOST_SERIALIZATION_NVP(splittingThunks);
         s & BOOST_SERIALIZATION_NVP(semanticMemoryParadigm);
-        s & BOOST_SERIALIZATION_NVP(namingConstants);
+        if (version >= 8) {
+            s & BOOST_SERIALIZATION_NVP(namingConstants);
+        } else if (S::is_loading()) {
+            bool b;
+            s & boost::serialization::make_nvp("namingConstants", b);
+            if (b) {
+                namingConstants = AddressInterval::whole();
+            } else {
+                namingConstants = AddressInterval();
+            }
+        }
         if (version >= 7) {
             s & BOOST_SERIALIZATION_NVP(namingStrings);
         } else if (S::is_loading()) {
@@ -508,7 +518,8 @@ public:
           doingPostAnalysis(true), doingPostFunctionMayReturn(true), doingPostFunctionStackDelta(true),
           doingPostCallingConvention(false), doingPostFunctionNoop(false), functionReturnAnalysis(MAYRETURN_DEFAULT_YES),
           functionReturnAnalysisMaxSorts(50), findingDataFunctionPointers(false), findingCodeFunctionPointers(false),
-          findingThunks(true), splittingThunks(false), semanticMemoryParadigm(LIST_BASED_MEMORY), namingConstants(true),
+          findingThunks(true), splittingThunks(false), semanticMemoryParadigm(LIST_BASED_MEMORY),
+          namingConstants(AddressInterval::hull(4096, AddressInterval::whole().greatest())),
           namingStrings(AddressInterval::hull(4096, AddressInterval::whole().greatest())),
           namingSyscalls(true), demangleNames(true) {}
 };
@@ -552,7 +563,7 @@ typedef Sawyer::SharedPointer<ThunkPredicates> ThunkPredicatesPtr;
 } // namespace
 
 // Class versions must be at global scope
-BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::PartitionerSettings, 7);
+BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::PartitionerSettings, 8);
 BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::BasePartitionerSettings, 1);
 BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::LoaderSettings, 1);
 BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Partitioner2::DisassemblerSettings, 1);

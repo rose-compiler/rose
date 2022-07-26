@@ -1619,11 +1619,16 @@ public:
 
     /** Property: Give names to constants.
      *
-     *  If this property is set, then the partitioner calls @ref Modules::nameConstants as part of its final steps.
+     *  Within instruciton operands, any constants that fall within this set of addresses and which have a label associated
+     *  with them (such as names of symbols) are given a comment consisting of that label. Setting this to empty disables
+     *  assigning such labels to integer values.
+     *
+     *  See also, @ref Modules::nameConstants.
      *
      * @{ */
-    bool namingConstants() const /*final*/ { return settings_.partitioner.namingConstants; }
-    virtual void namingConstants(bool b) { settings_.partitioner.namingConstants = b; }
+    const AddressInterval& namingConstants() const /*final*/ { return settings_.partitioner.namingConstants; }
+    virtual void namingConstants(const AddressInterval &where) { settings_.partitioner.namingConstants = where; }
+    void namingConstants(bool b) ROSE_DEPRECATED("this property now stores an interval instead of a Boolean");
     /** @} */
 
     /** Property: Addresses where strings might start.
