@@ -25,6 +25,7 @@
 #include <Rose/BinaryAnalysis/DisassemblerNull.h>
 #include <Rose/BinaryAnalysis/DisassemblerPowerpc.h>
 #include <Rose/BinaryAnalysis/DisassemblerX86.h>
+#include <Rose/BinaryAnalysis/Dwarf.h>
 #include <Rose/BinaryAnalysis/FeasiblePath.h>
 #include <Rose/BinaryAnalysis/FunctionCall.h>
 #include <Rose/BinaryAnalysis/FunctionSimilarity.h>
