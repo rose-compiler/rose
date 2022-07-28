@@ -931,6 +931,13 @@ namespace
       std::string s = si::get_name(scope);
     }
 
+    //~ void logVarRefExp(SgVarRefExp* n)
+    //~ {
+      //~ if (!n) return;
+
+      //~ logWarn() << "verref = " << n->unparseToString() << std::endl;
+    //~ }
+
     void visit(SgNode* sageNode) override
     {
       SgLocatedNode* n = isSgLocatedNode(sageNode);
@@ -974,8 +981,9 @@ namespace
       //~ checkType(isSgExpression(n));
       //~ checkType(isSgInitializedName(n));
       //~ checkExpr(isSgAdaAttributeExp(n));
-      checkDecl(isSgDeclarationStatement(n));
-      checkScope(isSgScopeStatement(n));
+      //~ checkDecl(isSgDeclarationStatement(n));
+      //~ checkScope(isSgScopeStatement(n));
+      //~ logVarRefExp(isSgVarRefExp(n));
     }
   };
 
