@@ -3332,6 +3332,52 @@ void handleDefinition(Element_Struct& elem, AstContext ctx)
   }
 }
 
+
+namespace
+{
+  Parameter_Specification_List
+  usableParameterProfile(Declaration_Struct& decl)
+  {
+    // PP (7/29/22): RC-1372
+    // In the Asis rep. parameter references inside of routine bodies
+    //   refer back to the parameter list of the first declaration.
+    //   Not sure if this is by design or a bug (\todo ask CR or PL).
+    //   As work around, use the first decl's parameter list to
+    //   generate the body's parameter list. Unlike C++, Ada requires
+    //   parameter names AND default initializers of the declaration and
+    //   definition to match.
+    //   One caveat is that multiple initialized names could have a combined
+    //   VariableDeclaration in the declaration, while having separate
+    //   VariableDeclarations in the definition (and vice versa).
+
+    // if the @decl is not a body, return the original parameter list
+    if (  (decl.Declaration_Kind != A_Procedure_Body_Declaration)
+       && (decl.Declaration_Kind != A_Function_Body_Declaration)
+       && (decl.Declaration_Kind != An_Entry_Body_Declaration)
+       )
+      return decl.Parameter_Profile;
+
+    Element_Struct* firstDeclElem = retrieveAsOpt(elemMap(), decl.Corresponding_Declaration);
+
+    if (firstDeclElem == nullptr) return decl.Parameter_Profile;
+
+    ADA_ASSERT (firstDeclElem->Element_Kind == A_Declaration);
+
+    Declaration_Struct& firstDecl = firstDeclElem->The_Union.Declaration;
+
+    ADA_ASSERT(  (firstDecl.Declaration_Kind == A_Procedure_Declaration)
+              || (firstDecl.Declaration_Kind == A_Generic_Procedure_Declaration)
+              || (firstDecl.Declaration_Kind == A_Function_Declaration)
+              || (firstDecl.Declaration_Kind == A_Generic_Function_Declaration)
+              || (firstDecl.Declaration_Kind == A_Generic_Procedure_Declaration)
+              || (firstDecl.Declaration_Kind == An_Entry_Declaration)
+              );
+
+    return firstDecl.Parameter_Profile;
+  }
+}
+
+
 void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 {
   ADA_ASSERT (elem.Element_Kind == A_Declaration);
@@ -3682,7 +3728,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         const bool              isFunc  = decl.Declaration_Kind == A_Function_Body_Declaration;
         SgScopeStatement&       outer   = ctx.scope();
         NameData                adaname = singleName(decl, ctx);
-        ElemIdRange             params  = idRange(decl.Parameter_Profile);
+        ElemIdRange             params  = idRange(usableParameterProfile(decl));
         SgType&                 rettype = isFunc ? getDeclTypeID(decl.Result_Profile, ctx)
                                                  : mkTypeVoid();
 
@@ -4290,11 +4336,11 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
         //~ SgScopeStatement&       logicalScope = adaname.parent_scope();
         //~ SgAdaEntryDecl&         sgnode  = mkAdaEntryDef(entrydcl, logicalScope, ParameterCompletion{range, ctx});
-        ElemIdRange             range   = idRange(decl.Parameter_Profile);
+        ElemIdRange             params  = idRange(usableParameterProfile(decl));
         SgScopeStatement&       outer   = ctx.scope();
         SgAdaEntryDecl&         sgnode  = mkAdaEntryDefn( entrydcl,
                                                           outer,
-                                                          ParameterCompletion{range, ctx},
+                                                          ParameterCompletion{params, ctx},
                                                           EntryIndexCompletion{decl.Entry_Index_Specification, ctx}
                                                        );
 
