@@ -11989,6 +11989,255 @@ void Grammar::setUpBinaryInstructions() {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /*************************************************************************************************************************
+     *                                           CLI Header (ECMA-335 II.25.3.3)
+     *************************************************************************************************************************/
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmCliHeader);
+    IS_SERIALIZABLE(AsmCliHeader);
+    AsmCliHeader.setAutomaticGenerationOfDestructor(false);
+
+#ifdef DOCUMENTATION
+    /** CIL Managed Code section. */
+    class SgAsmCliHeader: public SgAsmGenericSection {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Cb
+         *
+         *  Size of the header in bytes
+         *
+         * @{ */
+        const uint32_t get_cb() const;
+        void set_cb(uint32_t);
+        /** @} */
+#else
+        AsmCliHeader.setDataPrototype("uint32_t", "cb", "= 0",
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: MajorRuntimeVersion
+         *
+         *  The minimum version of the runtime required to run this program, currently 2.
+         *
+         * @{ */
+        const uint16_t get_majorRuntimeVersion() const;
+        void set_majorRuntimeVersion(uint16_t);
+        /** @} */
+#else
+        AsmCliHeader.setDataPrototype("uint16_t", "majorRuntimeVersion", "= 0",
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: MinorRuntimeVersion
+         *
+         *  The minor portion of the version, currently 0.
+         *
+         * @{ */
+        const uint16_t get_minorRuntimeVersion() const;
+        void set_minorRuntimeVersion(uint16_t);
+        /** @} */
+#else
+        AsmCliHeader.setDataPrototype("uint16_t", "minorRuntimeVersion", "= 0",
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: MetaData
+         *
+         *  RVA and size of implementation-specific resources (II.24).
+         *
+         * @{ */
+        const uint64_t get_metaData() const;
+        void set_metaData(uint64_t);
+        /** @} */
+#else
+        AsmCliHeader.setDataPrototype("uint64_t", "metaData", "= 0",
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Flags
+         *
+         *  Flags describing this runtime image (II.25.3.3.1).
+         *
+         * @{ */
+        const uint32_t get_flags() const;
+        void set_flags(uint32_t);
+        /** @} */
+#else
+        AsmCliHeader.setDataPrototype("uint32_t", "flags", "= 0",
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: EntryPointToken
+         *
+         *  Token for the MethodDef or File of the entry point for the image.
+         *
+         * @{ */
+        const uint32_t get_entryPointToken() const;
+        void set_entryPointToken(uint32_t);
+        /** @} */
+#else
+        AsmCliHeader.setDataPrototype("uint32_t", "entryPointToken", "= 0",
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Resources
+         *
+         *  RVA and size of implementation-specific resources.
+         *
+         * @{ */
+        const uint64_t get_resources() const;
+        void set_resources(uint64_t);
+        /** @} */
+#else
+        AsmCliHeader.setDataPrototype("uint64_t", "resources", "= 0",
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: StrongNameSignature
+         *
+         *  RVA of the hash data for this PE file used by the CLI loader for binding and versioning.
+         *
+         * @{ */
+        const uint64_t get_strongNameSignature() const;
+        void set_strongNameSignature(uint64_t);
+        /** @} */
+#else
+        AsmCliHeader.setDataPrototype("uint64_t", "strongNameSignature", "= 0",
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: CodeManagerTable
+         *
+         *  Always 0 (II.24.1)
+         *
+         * @{ */
+        const uint64_t get_codeManagerTable() const;
+        void set_codeManagerTable(uint64_t);
+        /** @} */
+#else
+        AsmCliHeader.setDataPrototype("uint64_t", "codeManagerTable", "= 0",
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: VTableFixups
+         *
+         *  RVA of an array of locations in the file that contain an array of function pointers (e.g., vtable slots).
+         *
+         * @{ */
+        const uint64_t get_vTableFixups() const;
+        void set_vTableFixups(uint64_t);
+        /** @} */
+#else
+        AsmCliHeader.setDataPrototype("uint64_t", "vTableFixups", "= 0",
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: ExportAddressTableJumps
+         *
+         *  Always 0 (II.24.1)
+         *
+         * @{ */
+        const uint64_t get_exportAddressTableJumps() const;
+        void set_exportAddressTableJumps(uint64_t);
+        /** @} */
+#else
+        AsmCliHeader.setDataPrototype("uint64_t", "exportAddressTableJumps", "= 0",
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: ManagedNativeHeader
+         *
+         *  Always 0 (II.24.1)
+         *
+         * @{ */
+        const uint64_t get_managedNativeHeader() const;
+        void set_managedNativeHeader(uint64_t);
+        /** @} */
+#else
+        AsmCliHeader.setDataPrototype("uint64_t", "managedNativeHeader", "= 0",
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+    protected:
+      uint32_t p_cb;
+      uint16_t p_majorRuntimeVersion;
+      uint16_t p_minorRuntimeVersion;
+      uint64_t p_metaData;
+      uint32_t p_flags;
+      uint32_t p_entryPointToken;
+      uint64_t p_resources;
+      uint64_t p_strongNameSignature;
+      uint64_t p_codeManagerTable;
+      uint64_t p_vTableFixups;
+      uint64_t p_exportAddressTableJumps;
+      uint64_t p_managedNativeHeader;
+    public:
+#endif
+
+        DECLARE_OTHERS(AsmCliHeader);
+#if defined(SgAsmCliHeader_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
+            s & BOOST_SERIALIZATION_NVP(p_cb);
+            s & BOOST_SERIALIZATION_NVP(p_majorRuntimeVersion);
+            s & BOOST_SERIALIZATION_NVP(p_minorRuntimeVersion);
+            s & BOOST_SERIALIZATION_NVP(p_metaData);
+            s & BOOST_SERIALIZATION_NVP(p_flags);
+            s & BOOST_SERIALIZATION_NVP(p_entryPointToken);
+            s & BOOST_SERIALIZATION_NVP(p_resources);
+            s & BOOST_SERIALIZATION_NVP(p_strongNameSignature);
+            s & BOOST_SERIALIZATION_NVP(p_codeManagerTable);
+            s & BOOST_SERIALIZATION_NVP(p_vTableFixups);
+            s & BOOST_SERIALIZATION_NVP(p_exportAddressTableJumps);
+            s & BOOST_SERIALIZATION_NVP(p_managedNativeHeader);
+        }
+#endif
+
+     public:
+        /** Initialize the object before parsing.
+         *
+         *  This is the preferred constructor to use before parsing.  It
+         *  shall set its parent.
+         */
+        explicit SgAsmCliHeader(SgAsmPEFileHeader *fhdr);
+        virtual ~SgAsmCliHeader() {}
+
+        /** Initialize the object by parsing content from the PE file. */
+        virtual SgAsmCliHeader* parse() override;
+
+        /** Print some debugging information */
+        virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
+
+#endif // SgAsmCliHeader_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /*************************************************************************************************************************
      *                                        JVM Method (section 4.6)
      *************************************************************************************************************************/
 
@@ -17703,7 +17952,7 @@ void Grammar::setUpBinaryInstructions() {
                           AsmPESectionTable | AsmDOSExtendedHeader | AsmCoffSymbolTable | AsmNESection | AsmNESectionTable |
                           AsmNENameTable | AsmNEModuleTable | AsmNEStringTable | AsmNEEntryTable | AsmNERelocTable |
                           AsmLESection | AsmLESectionTable | AsmLENameTable | AsmLEPageTable | AsmLEEntryTable | AsmLERelocTable |
-                          AsmJvmConstantPool | AsmJvmAttributeTable | AsmJvmFieldTable | AsmJvmMethodTable,
+                          AsmJvmConstantPool | AsmJvmAttributeTable | AsmJvmFieldTable | AsmJvmMethodTable | AsmCliHeader,
                           "AsmGenericSection", "AsmGenericSectionTag", true);
     AsmGenericSection.setCppCondition("!defined(DOCUMENTATION)");
     AsmGenericSection.setAutomaticGenerationOfDestructor(false);
@@ -24315,6 +24564,7 @@ void Grammar::setUpBinaryInstructions() {
          *         buf[index] is the location of the magic number.
          */
         void parse(uint8_t* buf, size_t index);
+        virtual SgAsmCilMetadataRoot* parse() /* override */;
 
         /** accessor functions to return specific heaps
          * @{ */
