@@ -43,6 +43,8 @@ parseCommandLine(int argc, char *argv[]) {
 
 stack<SgConcatenationOp*> opStack;
 vector<SgConcatenationOp*> removeList;
+stack<SgFunctionCallExp*> funcCallStack;
+vector<SgFunctionCallExp*> removeFucList;
 
 class ACATSTraversal : public AstSimpleProcessing
 {
@@ -53,6 +55,7 @@ class ACATSTraversal : public AstSimpleProcessing
 
 void ACATSTraversal::visit(SgNode* n)
 {
+  //std::cout << n->class_name() << std::endl;
   switch(n->variantT())
   {
     case V_SgConcatenationOp:
@@ -61,10 +64,50 @@ void ACATSTraversal::visit(SgNode* n)
         opStack.push(concatOp);
         break;
       }
+    case V_SgStringVal:
+      {
+        std::cout << "String:" << isSgStringVal(n)->get_value() << std::endl;
+        break;
+      }
+    case V_SgFunctionCallExp:
+      {
+        SgFunctionSymbol* funcSym = isSgFunctionCallExp(n)->getAssociatedFunctionSymbol();
+        //std::cout << "funcName:" << isSgFunctionCallExp(n)->getAssociatedFunctionSymbol()->get_name() << std::endl;
+        std::string funcName;
+        if(funcSym) 
+           funcName = funcSym->get_name().getString();
+        if(funcName.compare("operator&") == 0)
+          funcCallStack.push(isSgFunctionCallExp(n)); 
+        break;
+      }
     default:
       break;
 
   }
+}
+
+void concatAdaString(SgFunctionCallExp* funcCallExp)
+{
+
+  SgExprListExp* exprListExp = funcCallExp->get_args();
+
+  SgExpressionPtrList exprList = exprListExp->get_expressions();
+
+  string newval = "";
+  for(auto e:exprList)
+  {
+    SgStringVal* strVal = isSgStringVal(e);
+    if(strVal)
+      newval += strVal->get_value();
+    else return;
+  }
+  SgStringVal* newStrVal = SageBuilder::buildStringVal(newval);
+  newStrVal->set_stringDelimiter(isSgStringVal(exprList[0])->get_stringDelimiter());
+  cout << "Concat new string:" << newval << endl;
+
+
+    SageInterface::replaceExpression(funcCallExp, newStrVal, false);
+//    removeList.push_back(concatOp);
 }
 
 void concatAdaString(SgConcatenationOp* concatOp)
@@ -111,6 +154,12 @@ int main( int argc, char * argv[] ){
     SgConcatenationOp* concatOp = opStack.top();
     concatAdaString(concatOp);
     opStack.pop();
+  }
+  while(!funcCallStack.empty())
+  {
+    SgFunctionCallExp* funcCallExp = funcCallStack.top();
+    concatAdaString(funcCallExp);
+    funcCallStack.pop();
   }
 /*
   for(vector<SgConcatenationOp*>::iterator i= removeList.begin(); i != removeList.end(); ++i)
