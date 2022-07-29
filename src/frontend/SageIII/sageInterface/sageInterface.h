@@ -1477,9 +1477,9 @@ NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf = fal
   // the newer version (below) is what we want to use I will resolve this conflict by keeping
   // the previous version in place.
 
-     if (NULL == astNode)
+     if (nullptr == astNode)
         {
-          return NULL;
+          return nullptr;
         }
 
      if ( (includingSelf ) && (dynamic_cast<const NodeType*>(astNode)) )
@@ -1501,7 +1501,7 @@ NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf = fal
      printf ("In getEnclosingNode(): previouslySeenParent = %p = %s \n",previouslySeenParent,previouslySeenParent->class_name().c_str());
 #endif
 
-     while ( (foundCycle == false) && (parent != NULL) && (!dynamic_cast<const NodeType*>(parent)) )
+     while ( (foundCycle == false) && (parent != nullptr) && (!dynamic_cast<const NodeType*>(parent)) )
         {
           ROSE_ASSERT(parent->get_parent() != parent);
 
@@ -1542,7 +1542,7 @@ NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf = fal
      parent = previouslySeenParent;
 
      SgDeclarationStatement* declarationStatement = isSgDeclarationStatement(parent);
-     if (declarationStatement != NULL)
+     if (declarationStatement != nullptr)
         {
 #if 0
           printf ("Found a SgDeclarationStatement \n");
@@ -1559,7 +1559,7 @@ NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf = fal
           if (firstNondefiningDeclaration != NULL && firstNondefiningDeclaration->get_parent() != NULL)
                printf (" --- firstNondefiningDeclaration ->get_parent() = %p = %s \n",firstNondefiningDeclaration->get_parent(),firstNondefiningDeclaration->get_parent()->class_name().c_str());
 #endif
-          if (definingDeclaration != NULL && declarationStatement != firstNondefiningDeclaration)
+          if (definingDeclaration != nullptr && declarationStatement != firstNondefiningDeclaration)
              {
 #if 0
                printf ("Found a nondefining declaration so use the non-defining declaration instead \n");
@@ -1589,7 +1589,7 @@ NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf = fal
         {
 
 
-          while ( (parent != NULL) && (!dynamic_cast<const NodeType*>(parent)) )
+          while ( (parent != nullptr) && (!dynamic_cast<const NodeType*>(parent)) )
              {
                ROSE_ASSERT(parent->get_parent() != parent);
 #if 0
@@ -1598,25 +1598,14 @@ NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf = fal
                     parent->get_file_info()->display("In getEnclosingNode() (2nd try): debug");
 #endif
                SgDeclarationStatement* declarationStatement = isSgDeclarationStatement(parent);
-               if (declarationStatement != NULL)
+               if (declarationStatement != nullptr)
                   {
 #if DEBUG_GET_ENCLOSING_NODE
                     printf ("Found a SgDeclarationStatement \n");
 #endif
                     SgDeclarationStatement* definingDeclaration         = declarationStatement->get_definingDeclaration();
                     SgDeclarationStatement* firstNondefiningDeclaration = declarationStatement->get_firstNondefiningDeclaration();
-#if 0
-                    printf (" --- declarationStatement                       = %p = %s \n",declarationStatement,(declarationStatement != NULL) ? declarationStatement->class_name().c_str() : "null");
-
-                    printf (" --- definingDeclaration                        = %p \n",definingDeclaration);
-                    if (definingDeclaration != NULL && definingDeclaration->get_parent() != NULL)
-                         printf (" --- definingDeclaration ->get_parent()         = %p = %s \n",definingDeclaration->get_parent(),definingDeclaration->get_parent()->class_name().c_str());
-
-                    printf (" --- firstNondefiningDeclaration                = %p \n",firstNondefiningDeclaration);
-                    if (firstNondefiningDeclaration != NULL && firstNondefiningDeclaration->get_parent() != NULL)
-                         printf (" --- firstNondefiningDeclaration ->get_parent() = %p = %s \n",firstNondefiningDeclaration->get_parent(),firstNondefiningDeclaration->get_parent()->class_name().c_str());
-#endif
-                    if (definingDeclaration != NULL && declarationStatement != firstNondefiningDeclaration)
+                    if (definingDeclaration != nullptr && declarationStatement != firstNondefiningDeclaration)
                        {
 #if 0
                          printf ("Found a nondefining declaration so use the firstNondefining declaration instead \n");

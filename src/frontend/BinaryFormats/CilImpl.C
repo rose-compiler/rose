@@ -1361,6 +1361,35 @@ void SgAsmCilMetadataHeap::parse(uint8_t* buf, size_t startOfMetaData)
 
 ////// from metadataRoot_C.txt
 
+SgAsmCilMetadataRoot* SgAsmCilMetadataRoot::parse()
+{
+  SgAsmCliHeader* clih = isSgAsmCliHeader(get_parent());
+  ASSERT_not_null(clih);
+
+  SgAsmPEFileHeader* fhdr = SageInterface::getEnclosingNode<SgAsmPEFileHeader>(this);
+  ROSE_ASSERT(fhdr!=nullptr);
+
+  uint64_t metaData = clih->get_metaData();
+  uint8_t* data = reinterpret_cast<uint8_t*>(&metaData);
+  rose_addr_t rva = ByteOrder::le_to_host(*reinterpret_cast<uint32_t*>(data));
+  size_t size = ByteOrder::le_to_host(*reinterpret_cast<uint32_t*>(data+4));
+
+  rose_addr_t base_va = clih->get_base_va();
+  rose_addr_t rva_offset = clih->get_rva_offset((rose_addr_t)rva);
+
+  std::cout << "------------------------SgAsmCilMetadataRoot::parse-----------------------------\n";
+  std::cout << "    rva: " << rva << " size: " << size << std::endl;
+  std::cout << "    base_va: " << base_va << " rva_offset: " << rva_offset << std::endl;
+
+  /* Read the Signature via loader map. */
+  // Note: probably want to allocate a larger buffer
+  uint32_t buf;
+  size_t nread = fhdr->get_loader_map()->readQuick(&buf, base_va + rva, sizeof buf);
+  std::cout << "    nread: " << nread << " buf: " << buf << " :isMagic:" << (buf == 0x424A5342) << "\n\n";
+
+  return this;
+}
+
 void SgAsmCilMetadataRoot::parse(uint8_t* buf, size_t index)
 {
   size_t start_of_MetadataRoot = index;

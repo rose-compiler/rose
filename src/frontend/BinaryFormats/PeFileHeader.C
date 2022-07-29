@@ -559,6 +559,7 @@ SgAsmPEFileHeader::create_table_sections()
     /* First, only create the sections. */
     for (size_t i=0; i<p_rvasize_pairs->get_pairs().size(); i++) {
         SgAsmPERVASizePair *pair = p_rvasize_pairs->get_pairs()[i];
+
         if (0==pair->get_e_size())
             continue;
 
@@ -617,6 +618,15 @@ SgAsmPEFileHeader::create_table_sections()
                 } else {
                     tabsec = new SgAsmPEImportSection(this);
                 }
+                break;
+            }
+            case 14: {
+                /* 14==IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR
+                 * CLR metadata is stored in this section. It is used to indicate that the object file contains
+                 * managed code. The format of the metadata is not documented, but can be handed to the CLR
+                 * interfaces for handling metadata. https://docs.microsoft.com/en-us/windows/win32/debug/pe-format
+                 */
+                tabsec = new SgAsmCliHeader(this);
                 break;
             }
             default: {
