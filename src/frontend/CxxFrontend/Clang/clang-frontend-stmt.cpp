@@ -3249,10 +3249,11 @@ bool ClangToSageTranslator::VisitMemberExpr(clang::MemberExpr * member_expr, SgN
 
     SgVariableSymbol * var_sym  = isSgVariableSymbol(sym);
     SgMemberFunctionSymbol * func_sym = isSgMemberFunctionSymbol(sym);
+    SgClassSymbol * class_sym  = isSgClassSymbol(sym);
 
     SgExpression * sg_member_expr = NULL;
 
-    bool successful_cast = var_sym || func_sym;
+    bool successful_cast = var_sym || func_sym || class_sym;
     if (sym != NULL && !successful_cast) {
         std::cerr << "Runtime error: Unknown type of symbol for a member reference." << std::endl;
         std::cerr << "    sym->class_name() = " << sym->class_name()  << std::endl;
@@ -3263,6 +3264,22 @@ bool ClangToSageTranslator::VisitMemberExpr(clang::MemberExpr * member_expr, SgN
     }
     else if (func_sym != NULL) { // C++
         sg_member_expr = SageBuilder::buildMemberFunctionRefExp_nfi(func_sym, false, false); // FIXME 2nd and 3rd params ?
+    }
+    else if (class_sym != NULL) { 
+        SgClassDeclaration* classDecl = class_sym->get_declaration();
+        SgClassDeclaration* classDefDecl = isSgClassDeclaration(classDecl->get_definition());
+        SgType* classType = classDecl->get_type();
+//        if(classDecl->get_isUnNamed())
+        {
+          SgName varName(generate_name_for_variable(member_expr));
+          std::cerr << "build varName:" << varName << std::endl;
+          SgVariableDeclaration * var_decl = SageBuilder::buildVariableDeclaration(varName, classType, NULL,SageBuilder::topScopeStack());
+          var_decl->set_baseTypeDefiningDeclaration(classDefDecl);
+          var_decl->set_variableDeclarationContainsBaseTypeDefiningDeclaration(true);
+          var_decl->set_parent(SageBuilder::topScopeStack());
+          
+          sg_member_expr = SageBuilder::buildVarRefExp(var_decl);
+        }
     }
 
     ROSE_ASSERT(sg_member_expr != NULL);
