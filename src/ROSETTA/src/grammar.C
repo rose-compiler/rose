@@ -4101,7 +4101,6 @@ Grammar::GrammarNodeInfo Grammar::getGrammarNodeInfo(AstNodeClass* grammarnode) 
           nodeName == "SgVariableDeclaration"
      // DQ (12/21/2011): Added exception for SgTemplateVariableDeclaration derived from SgVariableDeclaration.
         ||nodeName == "SgTemplateVariableDeclaration"
-        ||nodeName == "SgAdaVariantFieldDecl"
         ||nodeName == "SgOmpClauseBodyStatement"
         ||nodeName == "SgOmpParallelStatement"
         ||nodeName == "SgOmpSectionsStatement"
@@ -4324,7 +4323,7 @@ Grammar::buildTreeTraversalFunctions(AstNodeClass& node, StringUtility::FileWith
                     outputFile << successorContainerName << ".push_back(compute_baseTypeDefiningDeclaration());\n";
                   }
             // else if (nodeName == "SgVariableDeclaration" && memberVariableName == "baseTypeDefiningDeclaration")
-               else if ( (nodeName == "SgVariableDeclaration" || nodeName == "SgTemplateVariableDeclaration" || nodeName == "SgAdaVariantFieldDecl")
+               else if ( (nodeName == "SgVariableDeclaration" || nodeName == "SgTemplateVariableDeclaration")
                        && memberVariableName == "baseTypeDefiningDeclaration"
                        )
                   {
@@ -4402,7 +4401,6 @@ Grammar::buildTreeTraversalFunctions(AstNodeClass& node, StringUtility::FileWith
             // if (string(node.getName()) == "SgVariableDeclaration")
                if (  string(node.getName()) == "SgVariableDeclaration"
                   || string(node.getName()) == "SgTemplateVariableDeclaration"
-                  || string(node.getName()) == "SgAdaVariantFieldDecl"
                   )
                   {
                     outputFile << "if (idx == 0) return compute_baseTypeDefiningDeclaration();\n"
@@ -4511,7 +4509,6 @@ Grammar::buildTreeTraversalFunctions(AstNodeClass& node, StringUtility::FileWith
             // if (string(node.getName()) == "SgVariableDeclaration")
                if (  string(node.getName()) == "SgVariableDeclaration"
                   || string(node.getName()) == "SgTemplateVariableDeclaration"
-                  || string(node.getName()) == "SgAdaVariantFieldDecl"
                   )
                   {
                     outputFile << "if (child == compute_baseTypeDefiningDeclaration()) return 0;\n"
