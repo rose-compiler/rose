@@ -565,6 +565,12 @@ std::string ClangToSageTranslator::generate_source_position_string(clang::Source
 
 }
 
+
+std::string ClangToSageTranslator::generate_name_for_variable(clang::Stmt* p)
+   {
+     return "__anonymous_" + Rose::StringUtility::numberToString(p);
+   }
+
 std::string ClangToSageTranslator::generate_name_for_type(clang::TypeSourceInfo* typeInfo)
 {
    clang::SourceManager& SM = p_compiler_instance->getSourceManager();

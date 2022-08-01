@@ -71,12 +71,12 @@
 #include "llvm/Frontend/OpenMP/OMPIRBuilder.h"
 
 // DQ (11/27/2020): Turn on/off the debugging information as we visit clang IR nodes.
-#define DEBUG_VISITOR             0
-#define DEBUG_TRAVERSAL           0
-#define DEBUG_SOURCE_LOCATION     0
-#define DEBUG_SYMBOL_TABLE_LOOKUP 0
-#define DEBUG_ARGS                0
-#define DEBUG_TRAVERSE_DECL       0
+#define DEBUG_VISITOR             1
+#define DEBUG_TRAVERSAL           1
+#define DEBUG_SOURCE_LOCATION     1
+#define DEBUG_SYMBOL_TABLE_LOOKUP 1
+#define DEBUG_ARGS                1
+#define DEBUG_TRAVERSE_DECL       1
 
 // Print visitor name when visiting a node inheritance hierarchy
 #ifdef DEBUG_VISITOR
@@ -573,6 +573,7 @@ class ClangToSageTranslator : public clang::ASTConsumer {
         SgInitializedName::asm_register_name_enum get_sgAsmRegister(std::string reg);
 
         std::string generate_source_position_string(clang::SourceLocation srcLoc);
+        std::string generate_name_for_variable(clang::Stmt* stmt);
         std::string generate_name_for_type(clang::TypeSourceInfo* typeInfo);
 };
 
