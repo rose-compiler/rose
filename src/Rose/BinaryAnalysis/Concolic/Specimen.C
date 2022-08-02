@@ -3,7 +3,8 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Concolic/Specimen.h>
 
-#include <Rose/BinaryAnalysis/Concolic/io-utility.h>
+#include <Rose/BinaryAnalysis/Concolic/Database.h>
+#include <Rose/FileSystem.h>
 
 #include <boost/lexical_cast.hpp>
 
@@ -39,7 +40,7 @@ void
 Specimen::open(const boost::filesystem::path &executableName) {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
 
-    content_ = loadBinaryFile(executableName);
+    content_ = FileSystem::readFile<std::vector<uint8_t>>(executableName);
     empty_ = false;
 }
 
