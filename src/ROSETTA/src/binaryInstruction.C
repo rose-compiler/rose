@@ -17759,7 +17759,7 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
     /** Base class for string tables. */
-    class AsmGenericStrtab: public SgAsmExecutableFileFormat {
+    class SgAsmGenericStrtab: public SgAsmExecutableFileFormat {
     public:
 #endif
 
@@ -17844,7 +17844,7 @@ void Grammar::setUpBinaryInstructions() {
 
         virtual ~SgAsmGenericStrtab() {}
 
-        // documented in base class
+        /** Parse a string table. */
         virtual SgAsmGenericStrtab* parse() {return this;}
 
         /** Print some debugging info. */
