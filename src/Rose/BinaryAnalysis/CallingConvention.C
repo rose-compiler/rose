@@ -55,7 +55,57 @@ dictionaryAarch64() {
 const Dictionary&
 dictionaryM68k() {
     static Dictionary dict;
-    // FIXME[Robb P. Matzke 2015-08-20]: none defined yet
+    if (dict.empty()) {
+        // https://m680x0.github.io/doc/abi.html
+        const RegisterDictionary *regdict = RegisterDictionary::dictionary_coldfire();
+        const RegisterDescriptor SP = regdict->findOrThrow("a7"); // a.k.a., "sp" in some dictionaries
+
+        Definition::Ptr cc = Definition::instance(SP.nBits(), "sysv", "m68k-sysv", regdict);
+
+        //==== Address locations ====
+        cc->instructionPointerRegister(regdict->findOrThrow("pc"));
+        cc->returnAddressLocation(ConcreteLocation(SP, 0));
+
+        //==== Stack characteristics ====
+        cc->stackPointerRegister(SP);
+        cc->stackDirection(StackDirection::GROWS_DOWN);
+        cc->nonParameterStackSize(cc->wordWidth() >> 3); // return address
+
+        //====  Function parameters ====
+        // All parameters are passed on the stack.
+        cc->stackParameterOrder(StackParameterOrder::RIGHT_TO_LEFT);
+        cc->stackCleanup(StackCleanup::BY_CALLER);
+
+        //==== Other inputs ====
+
+
+        //==== Return values ====
+        cc->appendOutputParameter(regdict->findOrThrow("d0"));
+        cc->appendOutputParameter(regdict->findOrThrow("a0"));
+        cc->appendOutputParameter(regdict->findOrThrow("fp0"));
+        cc->appendOutputParameter(SP);                  // final value is usually one word greater than initial value
+
+        //====  Scratch registers ====
+        // (i.e., modified, not callee-saved, not return registers
+        cc->scratchRegisters().insert(regdict->findOrThrow("d0"));
+        cc->scratchRegisters().insert(regdict->findOrThrow("d1"));
+        cc->scratchRegisters().insert(regdict->findOrThrow("a0"));
+        cc->scratchRegisters().insert(regdict->findOrThrow("a1"));
+        cc->scratchRegisters().insert(regdict->findOrThrow("pc"));
+        cc->scratchRegisters().insert(regdict->findOrThrow("ccr"));
+        cc->scratchRegisters().insert(regdict->findOrThrow("fp0"));
+        cc->scratchRegisters().insert(regdict->findOrThrow("fp1"));
+
+
+        //==== Callee-saved registers
+        // Everything else
+        RegisterParts regParts = regdict->getAllParts() - cc->getUsedRegisterParts();
+        std::vector<RegisterDescriptor> registers = regParts.extract(regdict);
+        cc->calleeSavedRegisters().insert(registers.begin(), registers.end());
+
+        dict.push_back(cc);
+    }
+
     return dict;
 }
 
@@ -201,7 +251,7 @@ Definition::x86_cdecl(const RegisterDictionary *regDict) {
 
     //==== Address locations ====
     cc->instructionPointerRegister(regDict->findLargestRegister(x86_regclass_ip, 0));
-    cc->returnAddressLocation(ConcreteLocation(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp), 0));
+    cc->returnAddressLocation(ConcreteLocation(SP, 0));
 
     //==== Stack characteristics ====
     cc->stackPointerRegister(SP);
