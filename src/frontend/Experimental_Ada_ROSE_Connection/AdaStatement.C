@@ -225,8 +225,7 @@ namespace
     Statement_Struct& stmt = elem.The_Union.Statement;
     SgStatement&      sgn  = labelIfNeeded(sgnode, stmt, ctx);
 
-    ctx.scope().append_statement(&sgn);
-    ADA_ASSERT (sgn.get_parent() == &ctx.scope());
+    ctx.appendStatement(sgn);
   }
 
   template <class SageScopeStmt>
@@ -242,8 +241,7 @@ namespace
     Statement_Struct& stmt = elem.The_Union.Statement;
     SgStatement&      sgn  = labelIfNeeded(sgn0, stmt, ctx);
 
-    ctx.scope().append_statement(&sgn);
-    ADA_ASSERT (sgn.get_parent() == &ctx.scope());
+    ctx.appendStatement(sgn);
   }
 
   /// @}
@@ -567,6 +565,7 @@ namespace
 
   struct VariantCreator
   {
+      explicit
       VariantCreator(AstContext astctx)
       : ctx(astctx)
       {}
@@ -574,13 +573,21 @@ namespace
       void operator()(Element_Struct& elem)
       {
         ADA_ASSERT (elem.Element_Kind == A_Definition);
-        Definition_Struct& def = elem.The_Union.Definition;
 
+        Definition_Struct&  def = elem.The_Union.Definition;
         ADA_ASSERT (def.Definition_Kind == A_Variant);
-        Variant_Struct&    variant = def.The_Union.The_Variant;
-        ElemIdRange        range = idRange(variant.Record_Components);
 
-        traverseIDs(range, elemMap(), ElemCreator{ ctx.variantChoice(variant.Variant_Choices) });
+        Variant_Struct&     variant = def.The_Union.The_Variant;
+        ElemIdRange         choiceRange = idRange(variant.Variant_Choices);
+        SgExpressionPtrList exprlst   = traverseIDs(choiceRange, elemMap(), ExprSeqCreator{ctx});
+        SgExprListExp&      choicelst = mkExprListExp(exprlst);
+
+        SgAdaVariantWhenStmt& sgnode  = mkAdaVariantWhenStmt(choicelst);
+        ElemIdRange         compRange = idRange(variant.Record_Components);
+        SgAdaUnscopedBlock& blk = SG_DEREF(sgnode.get_components());
+
+        ctx.appendStatement(sgnode);
+        traverseIDs(compRange, elemMap(), ElemCreator{ ctx.unscopedBlock(blk) });
 
         /* unused fields:
            Record_Component_List Implicit_Components
@@ -728,13 +735,6 @@ namespace
   //
   // helper function for combined handling of variables and constant declarations
 
-  using VarMakerFn = std::function<SgVariableDeclaration&(const SgInitializedNamePtrList&, SgScopeStatement&)>;
-
-  SgVariableDeclaration&
-  varMaker_default(const SgInitializedNamePtrList& vars, SgScopeStatement& scope)
-  {
-    return mkVarDecl(vars, scope);
-  }
 
   void
   handleNumVarCstDecl( Element_Struct& elem,
@@ -742,8 +742,7 @@ namespace
                        AstContext ctx,
                        bool isPrivate,
                        SgType& dclType,
-                       SgType* expectedType = nullptr,
-                       VarMakerFn varMaker = varMaker_default
+                       SgType* expectedType = nullptr
                      )
   {
     typedef NameCreator::result_container name_container;
@@ -758,13 +757,11 @@ namespace
                                                                          getVarInit(decl, expectedType, ctx),
                                                                          true /* reuse first initialized name for secondary inits */
                                                                        );
-    SgVariableDeclaration&   vardcl   = varMaker(dclnames, scope);
+    SgVariableDeclaration&   vardcl   = mkVarDecl(dclnames, scope);
 
     attachSourceLocation(vardcl, elem, ctx);
     privatize(vardcl, isPrivate);
-    scope.append_statement(&vardcl);
-
-    ADA_ASSERT (vardcl.get_parent() == &scope);
+    ctx.appendStatement(vardcl);
   }
 
   void
@@ -780,14 +777,13 @@ namespace
                     Declaration_Struct& dcl,
                     AstContext ctx,
                     bool isPrivate,
-                    TypeModifierFn constMaker,
-                    VarMakerFn varMaker = varMaker_default
+                    TypeModifierFn constMaker
                   )
   {
     SgType& basety = constMaker(getVarType(dcl, ctx));
     SgType& varty  = dcl.Has_Aliased ? mkAliasedType(basety) : basety;
 
-    handleNumVarCstDecl(elem, dcl, ctx, isPrivate, varty, nullptr, varMaker);
+    handleNumVarCstDecl(elem, dcl, ctx, isPrivate, varty);
   }
 
 
@@ -1506,14 +1502,13 @@ namespace
   using TryBlockNodes = std::pair<SgTryStmt*, std::reference_wrapper<SgScopeStatement> >;
 
   SgScopeStatement&
-  createBlockIfNeeded(bool newStatementBlock, SgScopeStatement& outer)
+  createBlockIfNeeded(bool newStatementBlock, AstContext ctx)
   {
-    if (!newStatementBlock) return outer;
+    if (!newStatementBlock) return ctx.scope();
 
     SgBasicBlock& newblk = mkBasicBlock();
 
-    outer.append_statement(&newblk);
-    ROSE_ASSERT(newblk.get_parent() == &outer);
+    ctx.appendStatement(newblk);
     return newblk;
   }
 
@@ -1525,16 +1520,14 @@ namespace
   /// \returns a pair where second indicates the scope/block in which new statements will reside;
   ///                       first is an optional try statement (can be nullptr if no handlers exist)
   TryBlockNodes
-  createTryOrBlockIfNeeded(bool hasHandlers, bool requiresStmtBlock, SgScopeStatement& outer)
+  createTryOrBlockIfNeeded(bool hasHandlers, bool requiresStmtBlock, AstContext ctx)
   {
-    if (!hasHandlers) return TryBlockNodes{nullptr, createBlockIfNeeded(requiresStmtBlock, outer)};
+    if (!hasHandlers) return TryBlockNodes{nullptr, createBlockIfNeeded(requiresStmtBlock, ctx)};
 
     SgBasicBlock& tryBlock = mkBasicBlock();
     SgTryStmt&    tryStmt  = mkTryStmt(tryBlock);
 
-    //~ link_parent_child(outer, as<SgStatement>(tryStmt), SgBasicBlock::append_statement);
-    outer.append_statement(&tryStmt);
-    ADA_ASSERT (tryStmt.get_parent() == &outer);
+    ctx.appendStatement(tryStmt);
 
     return TryBlockNodes{&tryStmt, tryBlock};
   }
@@ -1587,7 +1580,7 @@ namespace
                            )
   {
     ElemIdRange       hndlrs  = idRange(exceptionHandlers);
-    TryBlockNodes     trydata = createTryOrBlockIfNeeded(hndlrs.size() > 0, requiresStatementBlock, dominantBlock);
+    TryBlockNodes     trydata = createTryOrBlockIfNeeded( hndlrs.size() > 0, requiresStatementBlock, ctx.scope(dominantBlock));
     SgTryStmt*        trystmt = trydata.first;
     SgScopeStatement& stmtblk = trydata.second;
 
@@ -2201,7 +2194,7 @@ namespace
 
 
         //~ sg::linkParentChild(scope, as<SgStatement>(sgnode), &SgScopeStatement::append_statement);
-        scope.append_statement(&sgnode);
+        ctx.appendStatement(sgnode);
 
         // an imported element may not be in the AST
         //   -> add the mapping if the element has not been seen.
@@ -2232,7 +2225,6 @@ namespace
         ADA_ASSERT (el.Element_Kind == An_Expression);
 
         NameData                     usedEl = getName(el, ctx); // either unit or type
-        SgScopeStatement&            scope  = ctx.scope();
         Expression_Struct&           expr   = asisExpression(usedEl.elem());
         SgDeclarationStatement*      used   = findFirst(m, expr.Corresponding_Name_Definition, expr.Corresponding_Name_Declaration);
 
@@ -2260,9 +2252,7 @@ namespace
 
         recordNode(asisDecls(), el.ID, sgnode);
         attachSourceLocation(sgnode, el, ctx);
-        scope.append_statement(&sgnode);
-
-        ADA_ASSERT (sgnode.get_parent() == &scope);
+        ctx.appendStatement(sgnode);
       }
 
     private:
@@ -2298,7 +2288,7 @@ namespace
         //~ recordNode(asisDecls(), el.ID, sgnode);
         attachSourceLocation(sgnode, el, ctx);
 
-        ctx.scope().append_statement(&sgnode);
+        ctx.appendStatement(sgnode);
       }
 
     private:
@@ -2849,11 +2839,9 @@ namespace
 
     SgScopeStatement&           scope  = ctx.scope();
     SgAdaDiscriminatedTypeDecl& sgnode = mkAdaDiscriminatedTypeDecl(scope);
-
-    scope.append_statement(&sgnode);
-    ROSE_ASSERT(sgnode.get_parent());
-
     Definition_Struct&          def = elem.The_Union.Definition;
+
+    ctx.appendStatement(sgnode);
 
     if (def.Definition_Kind == A_Known_Discriminant_Part)
     {
@@ -2907,8 +2895,8 @@ namespace
       parentScope = discr->get_discriminantScope();
     }
 
-    Element_ID              id     = adaname.id();
     SgScopeStatement&       scope  = SG_DEREF(parentScope);
+    Element_ID              id     = adaname.id();
     SgDeclarationStatement& sgdecl = createOpaqueDecl(adaname, decl, defdata, ctx.scope(scope));
 
     attachSourceLocation(sgdecl, elem, ctx);
@@ -2918,8 +2906,8 @@ namespace
 
     if (!discr)
     {
-      scope.append_statement(&sgdecl);
-      ADA_ASSERT (sgdecl.get_parent() == &scope);
+      ADA_ASSERT(&ctx.scope() == parentScope);
+      ctx.appendStatement(sgdecl);
     }
     else
     {
@@ -2927,35 +2915,6 @@ namespace
       completeDiscriminatedDecl(*discr, nullptr /* no nondef dcl */, id, sgdecl, elem, isPrivate, ctx);
     }
   }
-
-  SgExprListExp* createVariantChoice_opt(AstContext ctx)
-  {
-    const std::vector<Name>&            variantNames = ctx.variantNames();
-
-    if (variantNames.size() == 0) return nullptr;
-
-    const std::vector<Element_ID_List>& variantChoices = ctx.variantChoices();
-    SgExpressionPtrList                 reslst;
-
-    ADA_ASSERT (variantNames.size() == variantChoices.size());
-
-    std::transform( variantNames.begin(), variantNames.end(),
-                    variantChoices.begin(),
-                    std::back_inserter(reslst),
-                    [=](Name n, Element_ID_List els) -> SgExpression*
-                    {
-                      SgExpression&       nameexpr  = getExprID(n, ctx);
-                      ElemIdRange         range     = idRange(els);
-                      SgExpressionPtrList exprlst   = traverseIDs(range, elemMap(), ExprSeqCreator{ctx});
-                      SgExprListExp&      choicelst = mkExprListExp(exprlst);
-
-                      return sb::buildIsOp(&nameexpr, &choicelst);
-                    }
-                  );
-
-    return &mkExprListExp(reslst);
-  }
-
 
   // returns a function declaration statement for a declaration statement
   //   checks if the function is an Ada generic function, where the declaration
@@ -3121,7 +3080,7 @@ void handleRepresentationClause(Element_Struct& elem, AstContext ctx)
 
         // sgnode is not a decl: recordNode(asisDecls(), el.ID, sgnode);
         attachSourceLocation(sgnode, elem, ctx);
-        ctx.scope().append_statement(&sgnode);
+        ctx.appendStatement(sgnode);
 
         traverseIDs(range, elemMap(), ComponentClauseCreator{ctx.scope(components)});
 
@@ -3142,7 +3101,7 @@ void handleRepresentationClause(Element_Struct& elem, AstContext ctx)
         SageRecordClause& sgnode = mkAdaRepresentationClause(ty, modexp, true /* at-clause */);
 
         attachSourceLocation(sgnode, elem, ctx);
-        ctx.scope().append_statement(&sgnode);
+        ctx.appendStatement(sgnode);
 
         /* unhandled fields:
          */
@@ -3156,7 +3115,7 @@ void handleRepresentationClause(Element_Struct& elem, AstContext ctx)
         SgAdaAttributeClause& sgnode  = mkAdaAttributeClause(lenattr, lenexpr);
 
         attachSourceLocation(sgnode, elem, ctx);
-        ctx.scope().append_statement(&sgnode);
+        ctx.appendStatement(sgnode);
         /* unhandled fields:
          */
         break;
@@ -3179,7 +3138,7 @@ void handleRepresentationClause(Element_Struct& elem, AstContext ctx)
         SgAdaEnumRepresentationClause& sgnode = mkAdaEnumRepresentationClause(enumty, enumvals);
 
         attachSourceLocation(sgnode, elem, ctx);
-        ctx.scope().append_statement(&sgnode);
+        ctx.appendStatement(sgnode);
         /* unhandled fields:
          */
         break;
@@ -3250,7 +3209,12 @@ void handleVariant(Element_Struct& elem, Variant_Part_Struct& variant, AstContex
 {
   ElemIdRange range = idRange(variant.Variants);
 
-  traverseIDs(range, elemMap(), VariantCreator{ctx.variantName(variant.Discriminant_Direct_Name)});
+  SgExpression&       discrExpr = getExprID(variant.Discriminant_Direct_Name, ctx);
+  SgAdaVariantDecl&   sgnode    = mkAdaVariantDecl(discrExpr);
+  SgAdaUnscopedBlock& blk       = SG_DEREF(sgnode.get_variants());
+
+  ctx.appendStatement(sgnode);
+  traverseIDs(range, elemMap(), VariantCreator{ctx.unscopedBlock(blk)});
 
   /* unused fields:
   */
@@ -3270,15 +3234,10 @@ void handleDefinition(Element_Struct& elem, AstContext ctx)
   {
     case A_Null_Component:                 // 3.8(4)
       {
-        SgScopeStatement&       scope = ctx.scope();
-        SgExprListExp*          variant_choice = createVariantChoice_opt(ctx);
-        SgDeclarationStatement& sgnode = variant_choice
-                                            ? mkAdaVariantFieldDecl(*variant_choice, scope)
-                                            : static_cast<SgDeclarationStatement&>(mkNullDecl());
+        SgDeclarationStatement& sgnode = mkNullDecl();
 
         attachSourceLocation(sgnode, elem, ctx);
-        scope.append_statement(&sgnode);
-        ADA_ASSERT (sgnode.get_parent() == &scope);
+        ctx.appendStatement(sgnode);
         break;
       }
 
@@ -3366,10 +3325,9 @@ namespace
     Declaration_Struct& firstDecl = firstDeclElem->The_Union.Declaration;
 
     ADA_ASSERT(  (firstDecl.Declaration_Kind == A_Procedure_Declaration)
-              || (firstDecl.Declaration_Kind == A_Generic_Procedure_Declaration)
               || (firstDecl.Declaration_Kind == A_Function_Declaration)
-              || (firstDecl.Declaration_Kind == A_Generic_Function_Declaration)
               || (firstDecl.Declaration_Kind == A_Generic_Procedure_Declaration)
+              || (firstDecl.Declaration_Kind == A_Generic_Function_Declaration)
               || (firstDecl.Declaration_Kind == An_Entry_Declaration)
               );
 
@@ -3391,7 +3349,6 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
       {
         logKind("A_Package_Declaration");
 
-        SgScopeStatement&     outer   = ctx.scope();
         NameData              adaname = singleName(decl, ctx);
         SgAdaPackageSpecDecl& sgnode  = mkAdaPackageSpecDecl(adaname.ident, adaname.parent_scope());
         SgAdaPackageSpec&     pkgspec = SG_DEREF(sgnode.get_definition());
@@ -3406,9 +3363,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         privatize(sgnode, isPrivate);
         attachSourceLocation(pkgspec, elem, ctx);
         attachSourceLocation(sgnode, elem, ctx);
-        outer.append_statement(&sgnode);
+        ctx.appendStatement(sgnode);
 
-        ADA_ASSERT (sgnode.get_parent() == &outer);
         ADA_ASSERT (sgnode.search_for_symbol_from_symbol_table());
 
         // visible items
@@ -3442,7 +3398,6 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
       {
         logKind("A_Package_Body_Declaration");
 
-        SgScopeStatement&     outer    = ctx.scope();
         Element_ID            specID   = decl.Corresponding_Declaration;
 
         if (specID == 0)
@@ -3497,8 +3452,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         sgnode.set_scope(specdcl->get_scope());
         attachSourceLocation(pkgbody, elem, ctx);
         attachSourceLocation(sgnode, elem, ctx);
-        outer.append_statement(&sgnode);
-        ADA_ASSERT (sgnode.get_parent() == &outer);
+        ctx.appendStatement(sgnode);
 
         const bool hasBodyStatements = idRange(decl.Body_Statements).size() > 0;
 
@@ -3555,8 +3509,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         attachSourceLocation(gen_defn, elem, ctx);
         attachSourceLocation(sgnode, elem, ctx);
 
-        outer.append_statement(&sgnode);
-        ADA_ASSERT (sgnode.get_parent() == &outer);
+        ctx.appendStatement(sgnode);
         ADA_ASSERT (pkgnode.get_parent() == &gen_defn);
 
         ADA_ASSERT (pkgnode.search_for_symbol_from_symbol_table());
@@ -3652,9 +3605,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         attachSourceLocation(sgnode, elem, ctx);
         attachSourceLocation(gen_defn, elem, ctx);
 
-        outer.append_statement(&sgnode);
+        ctx.appendStatement(sgnode);
         ADA_ASSERT (fundec.get_parent() == &gen_defn);
-        ADA_ASSERT (sgnode.get_parent() == &outer);
 
         /* unhandled fields
              bool                          Has_Abstract
@@ -3676,7 +3628,6 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         logKind(decl.Declaration_Kind == A_Function_Declaration ? "A_Function_Declaration" : "A_Procedure_Declaration");
 
         const bool             isFunc  = decl.Declaration_Kind == A_Function_Declaration;
-        SgScopeStatement&      outer   = ctx.scope();
         NameData               adaname = singleName(decl, ctx);
         ElemIdRange            params  = idRange(decl.Parameter_Profile);
         SgType&                rettype = isFunc ? getDeclTypeID(decl.Result_Profile, ctx)
@@ -3697,8 +3648,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
         privatize(sgnode, isPrivate);
         attachSourceLocation(sgnode, elem, ctx);
-        outer.append_statement(&sgnode);
-        ADA_ASSERT (sgnode.get_parent() == &outer);
+        ctx.appendStatement(sgnode);
 
         /* unhandled fields
              bool                          Has_Abstract
@@ -3726,7 +3676,6 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
           logKind("A_Null_Procedure_Declaration");
 
         const bool              isFunc  = decl.Declaration_Kind == A_Function_Body_Declaration;
-        SgScopeStatement&       outer   = ctx.scope();
         NameData                adaname = singleName(decl, ctx);
         ElemIdRange             params  = idRange(usableParameterProfile(decl));
         SgType&                 rettype = isFunc ? getDeclTypeID(decl.Result_Profile, ctx)
@@ -3744,8 +3693,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         recordNode(asisDecls(), adaname.id(), sgnode);
         privatize(sgnode, isPrivate);
         attachSourceLocation(sgnode, elem, ctx);
-        outer.append_statement(&sgnode);
-        ADA_ASSERT (sgnode.get_parent() == &outer);
+        ctx.appendStatement(sgnode);
 
         // PP 2/6/22: Since a null procedure does not have any body,
         //            there should be no pragmas to process.
@@ -3792,9 +3740,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
           attachSourceLocation(sgnode, elem, ctx);
           privatize(sgnode, isPrivate);
-          scope.append_statement(&sgnode);
+          ctx.appendStatement(sgnode);
           recordNode(asisTypes(), adaname.id(), sgnode);
-          ADA_ASSERT (sgnode.get_parent() == &scope);
         }
 
         /*
@@ -3866,10 +3813,9 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
         if (!discr)
         {
-          scope.append_statement(&sgdecl);
-          ADA_ASSERT (sgdecl.get_parent() == &scope);
-
-          processInheritedElementsOfDerivedTypes(ty, sgdecl, ctx.scope(scope));
+          ADA_ASSERT(&ctx.scope() == parentScope);
+          ctx.appendStatement(sgdecl);
+          processInheritedElementsOfDerivedTypes(ty, sgdecl, ctx);
         }
         else
         {
@@ -3894,7 +3840,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
       {
         SgVariableDeclaration& sgnode = getParm(elem, ctx);
 
-        ctx.scope().append_statement(&sgnode);
+        ctx.appendStatement(sgnode);
         /* unused fields:
         */
         break;
@@ -3905,10 +3851,10 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         logKind("A_Formal_Type_Declaration");
 
         NameData              adaname = singleName(decl, ctx);
-        ROSE_ASSERT(adaname.fullName == adaname.ident);
+        ADA_ASSERT(adaname.fullName == adaname.ident);
         TypeData              ty = getFormalTypeFoundation(adaname.ident, decl, ctx);
         SgScopeStatement&     scope = ctx.scope();
-        ROSE_ASSERT(scope.get_parent());
+        ADA_ASSERT(scope.get_parent());
 
         Element_ID              id     = adaname.id();
         SgDeclarationStatement* nondef = findFirst(asisTypes(), id);
@@ -3919,9 +3865,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         privatize(sgnode, isPrivate);
         recordNode(asisTypes(), id, sgnode, nondef != nullptr);
         attachSourceLocation(sgnode, elem, ctx);
-        scope.append_statement(&sgnode);
-        ROSE_ASSERT(sgnode.get_parent() == &scope);
-
+        ctx.appendStatement(sgnode);
         break;
       }
 
@@ -3953,7 +3897,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         recordNode(asisDecls(), adaname.id(), sgnode);
 
         attachSourceLocation(sgnode, elem, ctx);
-        ctx.scope().append_statement(&sgnode);
+        ctx.appendStatement(sgnode);
 
         /* unused fields:
               bool                           Has_Abstract;
@@ -3981,9 +3925,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
         privatize(sgnode, isPrivate);
         attachSourceLocation(sgnode, elem, ctx);
-        scope.append_statement(&sgnode);
+        ctx.appendStatement(sgnode);
         recordNode(asisTypes(), adaname.id(), sgnode);
-        ADA_ASSERT (sgnode.get_parent() == &scope);
 
         /* unused fields:
               Declaration_ID                 Corresponding_First_Subtype;
@@ -4055,8 +3998,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
         attachSourceLocation(loopvar, elem, ctx);
         attachSourceLocation(sgnode, elem, ctx);
-        scope.append_statement(&sgnode);
-        ADA_ASSERT (sgnode.get_parent() == &scope);
+        ctx.appendStatement(sgnode);
 
         /* unused fields:
          */
@@ -4088,8 +4030,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
         attachSourceLocation(sgnode, elem, ctx);
         privatize(sgnode, isPrivate);
-        ctx.scope().append_statement(&sgnode);
-        ADA_ASSERT (sgnode.get_parent() == &ctx.scope());
+        ctx.appendStatement(sgnode);
         recordNode(asisTypes(), adaname.id(), sgnode, nondef != nullptr);
         recordNode(asisDecls(), adaname.id(), sgnode);
         recordNode(asisDecls(), elem.ID, sgnode);
@@ -4131,8 +4072,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
         attachSourceLocation(sgnode, elem, ctx);
         privatize(sgnode, isPrivate);
-        ctx.scope().append_statement(&sgnode);
-        ADA_ASSERT (sgnode.get_parent() == &ctx.scope());
+        ctx.appendStatement(sgnode);
 
         recordNode(asisTypes(), nameId, sgnode, nondef != nullptr);
         recordNode(asisDecls(), nameId, sgnode);
@@ -4167,8 +4107,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
         attachSourceLocation(sgnode, elem, ctx);
         privatize(sgnode, isPrivate);
-        ctx.scope().append_statement(&sgnode);
-        ADA_ASSERT (sgnode.get_parent() == &ctx.scope());
+        ctx.appendStatement(sgnode);
         //~ recordNode(asisTypes(), adaname.id(), sgnode);
         recordNode(asisDecls(), elem.ID, sgnode);
         recordNode(asisDecls(), adaname.id(), sgnode);
@@ -4195,8 +4134,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
         attachSourceLocation(sgnode, elem, ctx);
         privatize(sgnode, isPrivate);
-        ctx.scope().append_statement(&sgnode);
-        ADA_ASSERT (sgnode.get_parent() == &ctx.scope());
+        ctx.appendStatement(sgnode);
         //~ recordNode(asisTypes(), adaname.id(), sgnode);
         recordNode(asisDecls(), elem.ID, sgnode);
         recordNode(asisDecls(), adaname.id(), sgnode);
@@ -4216,7 +4154,6 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
       {
         logKind("A_Protected_Body_Declaration");
 
-        SgScopeStatement&       outer   = ctx.scope();
         SgAdaProtectedBody&     pobody  = mkAdaProtectedBody();
         NameData                adaname = singleName(decl, ctx);
         SgDeclarationStatement* ndef    = findFirst(asisDecls(), decl.Corresponding_Body_Stub);
@@ -4229,8 +4166,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
         attachSourceLocation(sgnode, elem, ctx);
         privatize(sgnode, isPrivate);
-        outer.append_statement(&sgnode);
-        ADA_ASSERT (sgnode.get_parent() == &outer);
+        ctx.appendStatement(sgnode);
         //~ recordNode(asisDecls(), elem.ID, sgnode);
         recordNode(asisDecls(), adaname.id(), sgnode);
 
@@ -4255,7 +4191,6 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
       {
         logKind("A_Task_Body_Declaration");
 
-        SgScopeStatement&       outer   = ctx.scope();
         SgAdaTaskBody&          tskbody = mkAdaTaskBody();
         NameData                adaname = singleName(decl, ctx);
         SgDeclarationStatement* ndef    = findFirst(asisDecls(), decl.Corresponding_Body_Stub);
@@ -4270,8 +4205,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
         attachSourceLocation(sgnode, elem, ctx);
         privatize(sgnode, isPrivate);
-        outer.append_statement(&sgnode);
-        ADA_ASSERT (sgnode.get_parent() == &outer);
+        ctx.appendStatement(sgnode);
 
         //~ recordNode(asisDecls(), elem.ID, sgnode);
         recordNode(asisDecls(), adaname.id(), sgnode);
@@ -4310,8 +4244,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
         attachSourceLocation(sgnode, elem, ctx);
         privatize(sgnode, isPrivate);
-        ctx.scope().append_statement(&sgnode);
-        ADA_ASSERT (sgnode.get_parent() == &ctx.scope());
+        ctx.appendStatement(sgnode);
 
         // the entry call links back to the declaration ID
         recordNode(asisDecls(), elem.ID, sgnode);
@@ -4349,8 +4282,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         privatize(sgnode, isPrivate);
         attachSourceLocation(sgnode, elem, ctx);
 
-        outer.append_statement(&sgnode);
-        ADA_ASSERT (sgnode.get_parent() == &outer);
+        ctx.appendStatement(sgnode);
 
         SgFunctionDefinition&   fndef   = SG_DEREF(sgnode.get_definition());
         SgBasicBlock&           declblk = SG_DEREF(fndef.get_body());
@@ -4378,7 +4310,6 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
         logKind(isFunc ? "A_Function_Body_Stub" : "A_Procedure_Body_Stub");
 
-        SgScopeStatement&       outer   = ctx.scope();
         NameData                adaname = singleName(decl, ctx);
         ElemIdRange             params  = idRange(decl.Parameter_Profile);
         SgType&                 rettype = isFunc ? getDeclTypeID(decl.Result_Profile, ctx)
@@ -4398,8 +4329,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         recordNode(asisDecls(), adaname.id(), sgnode);
         privatize(sgnode, isPrivate);
         attachSourceLocation(sgnode, elem, ctx);
-        outer.append_statement(&sgnode);
-        ADA_ASSERT (sgnode.get_parent() == &outer);
+        ctx.appendStatement(sgnode);
 
         /* unhandled field
            bool                           Is_Overriding_Declaration;
@@ -4419,7 +4349,6 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
       {
         logKind("A_Task_Body_Stub");
 
-        SgScopeStatement&       outer   = ctx.scope();
         NameData                adaname = singleName(decl, ctx);
         SgDeclarationStatement& tskdecl = lookupNode(asisDecls(), decl.Corresponding_Declaration);
         SgScopeStatement&       logicalScope = adaname.parent_scope();
@@ -4431,8 +4360,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         recordNode(asisDecls(), adaname.id(), sgnode);
         privatize(sgnode, isPrivate);
         attachSourceLocation(sgnode, elem, ctx);
-        outer.append_statement(&sgnode);
-        ADA_ASSERT (sgnode.get_parent() == &outer);
+        ctx.appendStatement(sgnode);
 
         /* unhandled field
             bool                           Has_Task;
@@ -4446,7 +4374,6 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         logKind("A_Protected_Body_Stub");
 
         // \todo combine code with A_Task_Body_Stub
-        SgScopeStatement&       outer   = ctx.scope();
         NameData                adaname = singleName(decl, ctx);
         SgDeclarationStatement& podecl  = lookupNode(asisDecls(), decl.Corresponding_Declaration);
         SgScopeStatement&       logicalScope = adaname.parent_scope();
@@ -4458,8 +4385,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         recordNode(asisDecls(), adaname.id(), sgnode);
         privatize(sgnode, isPrivate);
         attachSourceLocation(sgnode, elem, ctx);
-        outer.append_statement(&sgnode);
-        ADA_ASSERT (sgnode.get_parent() == &outer);
+        ctx.appendStatement(sgnode);
 
         /* unhandled field
             bool                           Has_Protected;
@@ -4473,7 +4399,6 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         logKind("A_Package_Body_Stub");
 
         // \todo combine code with A_Task_Body_Stub
-        SgScopeStatement&       outer    = ctx.scope();
         NameData                adaname  = singleName(decl, ctx);
         SgDeclarationStatement& declnode = lookupNode(asisDecls(), decl.Corresponding_Declaration);
         SgAdaPackageSpecDecl*   specdcl  = isSgAdaPackageSpecDecl(&declnode);
@@ -4486,8 +4411,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         recordNode(asisDecls(), adaname.id(), sgnode);
         privatize(sgnode, isPrivate);
         attachSourceLocation(sgnode, elem, ctx);
-        outer.append_statement(&sgnode);
-        ADA_ASSERT (sgnode.get_parent() == &outer);
+        ctx.appendStatement(sgnode);
         /* unhandled field
             Declaration_ID                 Corresponding_Declaration;
             Declaration_ID                 Corresponding_Subunit;
@@ -4510,8 +4434,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
         attachSourceLocation(sgnode, elem, ctx);
         privatize(sgnode, isPrivate);
-        scope.append_statement(&sgnode);
-        ADA_ASSERT (sgnode.get_parent() == &scope);
+        ctx.appendStatement(sgnode);
         break;
       }
 
@@ -4519,20 +4442,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
       {
         logKind("A_Component_Declaration");
 
-        ADA_ASSERT (ctx.variantChoices().size() == ctx.variantNames().size());
-
-        SgExprListExp* variant_choice = createVariantChoice_opt(ctx);
-
-        auto compMaker =
-            [&variant_choice](const SgInitializedNamePtrList& names, SgScopeStatement& scope) -> SgVariableDeclaration&
-            {
-              if (variant_choice == nullptr)
-                return mkVarDecl(names, scope);
-
-              return mkAdaVariantFieldDecl(names, *variant_choice, scope);
-            };
-
-        handleVarCstDecl(elem, decl, ctx, isPrivate, tyIdentity, compMaker);
+        handleVarCstDecl(elem, decl, ctx, isPrivate, tyIdentity);
         /* unused clause:
               Pragma_Element_ID_List         Corresponding_Pragmas;
               Element_ID_List                Aspect_Specifications;
@@ -4594,8 +4504,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
         attachSourceLocation(sgnode, elem, ctx);
         privatize(sgnode, isPrivate);
-        scope.append_statement(&sgnode);
-        ADA_ASSERT (sgnode.get_parent() == &scope);
+        ctx.appendStatement(sgnode);
         /* unhandled field
              Declaration_ID                 Corresponding_Declaration;
              Expression_ID                  Corresponding_Base_Entity;
@@ -4649,8 +4558,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
         privatize(sgnode, isPrivate);
         attachSourceLocation(sgnode, elem, ctx);
-        outer.append_statement(&sgnode);
-        ADA_ASSERT (sgnode.get_parent() == &outer);
+        ctx.appendStatement(sgnode);
 
         /*
            bool                           Is_Not_Null_Return;
@@ -4690,8 +4598,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
         attachSourceLocation(sgnode, elem, ctx);
         privatize(sgnode, isPrivate);
-        scope.append_statement(&sgnode);
-        ADA_ASSERT (sgnode.get_parent() == &scope);
+        ctx.appendStatement(sgnode);
         break;
       }
 
@@ -4734,8 +4641,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
         attachSourceLocation(sgnode, elem, ctx);
         privatize(sgnode, isPrivate);
-        scope.append_statement(&sgnode);
-        ADA_ASSERT (sgnode.get_parent() == &scope);
+        ctx.appendStatement(sgnode);
         break;
       }
 
@@ -4775,8 +4681,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
         attachSourceLocation(sgnode, elem, ctx);
         privatize(sgnode, isPrivate);
-        scope.append_statement(&sgnode);
-        ADA_ASSERT (sgnode.get_parent() == &scope);
+        ctx.appendStatement(sgnode);
 
         /* unused field
              Declaration_ID                 Corresponding_Declaration;
@@ -4797,7 +4702,6 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         else
           logKind("A_Package_Instantiation");
 
-        SgScopeStatement&         outer   = ctx.scope();
         NameData                  adaname = singleName(decl, ctx);
 
         // need to look up the Generic_Unit_Name to find the ID for the generic
@@ -4839,8 +4743,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
         attachSourceLocation(sgnode, elem, ctx);
         privatize(sgnode, isPrivate);
-        outer.append_statement(&sgnode);
-        ADA_ASSERT (sgnode.get_parent() == &outer);
+        ctx.appendStatement(sgnode);
         ADA_ASSERT (sgnode.get_instantiatedScope()->get_parent() == &sgnode);
 
         // PP (4/1/22): fill in the declaration
@@ -4890,8 +4793,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
         attachSourceLocation(sgnode, elem, ctx);
         //~ privatize(sgnode, isPrivate);
-        scope.append_statement(&sgnode);
-        ADA_ASSERT (sgnode.get_parent() == &scope);
+        ctx.appendStatement(sgnode);
 
         if (Element_Struct* dclElem = retrieveAsOpt(elemMap(), decl.Corresponding_Declaration))
         {

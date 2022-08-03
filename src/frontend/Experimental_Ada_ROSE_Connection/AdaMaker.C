@@ -1573,24 +1573,6 @@ mkVarDecl(const SgInitializedNamePtrList& vars, SgScopeStatement& scope)
   return mkVarDeclInternal<SgVariableDeclaration>(vars.begin(), vars.end(), scope);
 }
 
-/// creates a variant field with (i.e., a variable with conditions)
-SgAdaVariantFieldDecl&
-mkAdaVariantFieldDecl(const SgInitializedNamePtrList& vars, SgExprListExp& choices, SgScopeStatement& scope)
-{
-  SgAdaVariantFieldDecl& sgnode = mkVarDeclInternal<SgAdaVariantFieldDecl>(vars.begin(), vars.end(), scope, &choices);
-
-  choices.set_parent(&sgnode);
-  return sgnode;
-}
-
-SgAdaVariantFieldDecl&
-mkAdaVariantFieldDecl(SgExprListExp& choices, SgScopeStatement& scope)
-{
-  SgInitializedNamePtrList empty;
-
-  return mkAdaVariantFieldDecl(empty, choices, scope);
-}
-
 
 SgVariableDeclaration&
 mkVarDecl(SgInitializedName& var, SgScopeStatement& scope)
@@ -1610,6 +1592,29 @@ mkExceptionDecl(const SgInitializedNamePtrList& vars, SgScopeStatement& scope)
   sgnode.set_definingDeclaration(&sgnode); //??
   return sgnode;
 }
+
+SgAdaVariantDecl&
+mkAdaVariantDecl(SgExpression& discr)
+{
+  SgAdaUnscopedBlock& blk = mkLocatedNode<SgAdaUnscopedBlock>();
+  SgAdaVariantDecl&   sgnode = mkLocatedNode<SgAdaVariantDecl>(&discr, &blk);
+
+  discr.set_parent(&sgnode);
+  blk.set_parent(&sgnode);
+  return sgnode;
+}
+
+SgAdaVariantWhenStmt&
+mkAdaVariantWhenStmt(SgExprListExp& choices)
+{
+  SgAdaUnscopedBlock&   blk = mkLocatedNode<SgAdaUnscopedBlock>();
+  SgAdaVariantWhenStmt& sgnode = mkLocatedNode<SgAdaVariantWhenStmt>(&choices, &blk);
+
+  choices.set_parent(&sgnode);
+  blk.set_parent(&sgnode);
+  return sgnode;
+}
+
 
 SgAdaComponentClause&
 mkAdaComponentClause(SgVarRefExp& field, SgExpression& offset, SgRangeExp& range)

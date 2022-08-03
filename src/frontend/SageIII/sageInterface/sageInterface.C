@@ -1936,6 +1936,12 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
               break;
             }
 
+            case V_SgAdaVariantDecl:
+            {
+              name = "_ada_variant_decl_";
+              break;
+            }
+
             case V_SgAdaAttributeClause:
             {
               name = "_ada_attribute_clause_";
@@ -2005,26 +2011,6 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
             case V_SgAdaGenericInstanceDecl:
             {
               name = genericGetName(isSgAdaGenericInstanceDecl(declaration));
-              break;
-            }
-
-            case V_SgAdaVariantFieldDecl:
-            {
-              const SgAdaVariantFieldDecl* variantDecl = isSgAdaVariantFieldDecl(declaration);
-              ROSE_ASSERT(variantDecl);
-
-              const SgInitializedNamePtrList& lst = variantDecl->get_variables();
-
-              name = "_ada_variant_field_";
-
-              if (lst.empty()) name += "null_";
-
-              for (const SgInitializedName* el : lst)
-              {
-                name += el->get_name();
-                name += "_";
-              }
-
               break;
             }
 
@@ -11209,6 +11195,14 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
     rngc->set_range(newExp);
   } else if (SgAdaIndexConstraint* idxc = isSgAdaIndexConstraint(parent)) {
     replaceExpressionInSgExpressionPtrList(oldExp, newExp, idxc->get_indexRanges());
+  } else if (SgAdaVariantDecl* vtdcl = isSgAdaVariantDecl(parent)) {
+    ROSE_ASSERT(oldExp == vtdcl->get_discriminant());
+    vtdcl->set_discriminant(newExp);
+  } else if (SgAdaVariantWhenStmt* vtwhen = isSgAdaVariantWhenStmt(parent)) {
+    ROSE_ASSERT(oldExp == vtwhen->get_choices());
+    SgExprListExp* newLst = isSgExprListExp(newExp);
+    ROSE_ASSERT(newLst);
+    vtwhen->set_choices(newLst);
   } else if (SgAdaComponentClause* clause = isSgAdaComponentClause(parent)) {
     if (oldExp == clause->get_offset())
       clause->set_offset(newExp);
