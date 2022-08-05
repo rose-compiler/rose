@@ -3,7 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <Rose/BinaryAnalysis/ByteCode/ByteCode.h>
+#include <Rose/BinaryAnalysis/ByteCode/Analysis.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -30,12 +30,11 @@ public:
     offset_ = off;
   }
 
-  explicit JvmCode(SgAsmJvmFileHeader* jfh, uint8_t* bytes, size_t size, rose_addr_t offset)
-    : jfh_{jfh}, bytes_{bytes}, size_{size}, offset_{offset} {
+  explicit JvmCode(uint8_t* bytes, size_t size, rose_addr_t offset)
+    : bytes_{bytes}, size_{size}, offset_{offset} {
   }
 
 private:
-  SgAsmJvmFileHeader* jfh_;
   const uint8_t* bytes_;
   size_t size_;
   rose_addr_t offset_;
