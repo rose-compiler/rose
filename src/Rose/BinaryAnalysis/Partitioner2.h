@@ -15,6 +15,7 @@
 #include <Rose/BinaryAnalysis/Partitioner2/FunctionCallGraph.h>
 #include <Rose/BinaryAnalysis/Partitioner2/GraphViz.h>
 #include <Rose/BinaryAnalysis/Partitioner2/InstructionProvider.h>
+#include <Rose/BinaryAnalysis/Partitioner2/JvmEngine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Modules.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesElf.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesLinux.h>

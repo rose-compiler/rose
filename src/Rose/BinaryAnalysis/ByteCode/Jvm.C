@@ -23,7 +23,7 @@ const std::string JvmField::name() const
 }
 
 JvmMethod::JvmMethod(SgAsmJvmFileHeader* jfh, SgAsmJvmMethod* method)
-  : jfh_{jfh}, sgMethod_{method}, code_{jfh,nullptr,0,0}
+  : jfh_{jfh}, sgMethod_{method}, code_{nullptr,0,0}
 {
   ASSERT_not_null(jfh);
   ASSERT_not_null(method);

@@ -3,7 +3,7 @@
 #include <sage3basic.h>
 #include <iostream>
 
-#include <Rose/BinaryAnalysis/ByteCode/ByteCode.h>
+#include <Rose/BinaryAnalysis/ByteCode/Analysis.h>
 
 #define DEBUG_PRINT 0
 
