@@ -161,6 +161,20 @@ testYaml.passed: $(top_srcdir)/scripts/test_exit_status testYaml
 		CMD="./testYaml"		\
 		$< $@
 
+########################################################################################################################
+# Number parsing
+########################################################################################################################
+
+noinst_PROGRAMS += testToNumber
+testToNumber_SOURCES = testToNumber.C
+
+TEST_TARGETS += testToNumber.passed
+testToNumber.passed: $(top_srcdir)/scripts/test_exit_status testToNumber
+	@$(RTH_RUN)					\
+		TITLE="test number parsing [$@]"	\
+		CMD="./testToNumber"			\
+		$< $@
+
 ###############################################################################################################################
 # Boilerplate
 ###############################################################################################################################
