@@ -84,13 +84,6 @@ namespace Ada_ROSE_Translation
   SgDeclarationStatement*
   queryDecl(Expression_Struct& expr, AstContext ctx);
 
-  /// returns an AST node identified by \ref expr that introduces a scope.
-  ///   if no record was found, nullptr is returned
-  /// \note in addition to result found by queryDecl, this function may also
-  ///       returned named SgBasicBlock nodes.
-  SgStatement*
-  queryScopeStmt(Expression_Struct& expr, AstContext ctx);
-
   /// returns a function declaration identified by \ref expr.
   /// \note in addition to result found by queryDecl, this function also
   ///         queries implied declaration in the Standard package.

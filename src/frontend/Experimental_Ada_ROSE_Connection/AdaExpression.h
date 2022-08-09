@@ -71,6 +71,23 @@ namespace Ada_ROSE_Translation
   /// creates a call to subroutine expression \ref target, and passes params as arguments.
   SgExpression& createCall(Element_ID tgtid, ElemIdRange params, bool callSyntax, AstContext ctx);
 
+  /// queries the corresponding ROSE AST node for a built-in identifer
+  SgNode*
+  queryBuiltIn(AdaIdentifier adaIdent);
+
+  /// queries the corresponding ROSE AST node in ROSE for a given Asis representation.
+  /// @{
+  SgNode*
+  queryCorrespondingAstNode(Expression_Struct& asis, AstContext ctx);
+
+  SgNode*
+  queryCorrespondingAstNode(Element_Struct& asis, AstContext ctx);
+
+  SgNode*
+  queryCorrespondingAstNodeID(Element_ID asis, AstContext ctx);
+  /// @}
+
+
   /// creates a sequence of SgExpressions from a sequence of Asis elements
   ///   (eiter expression or definition).
   struct ExprSeqCreator
