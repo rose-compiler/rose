@@ -6031,6 +6031,7 @@ public:
                e_Binary_language,  /*!< value used to specify output of Binary ISA */
                e_Fortran_language, /*!< value used to specify output of Fortran (for testing the Fortran unparser) */
                e_Java_language,    /*!< value used to specify output of Java (for testing Java unparser) */
+               e_Jvm_language,     /*!< value used to specify Java binary JVM language */
                e_X10_language,     /*!< value used to specify output of X10 (for testing X10 unparser) */
                e_Promela_language, /*!< value used to specify output of Promela for uses with SPIN (unsupported option) */
                e_PHP_language,     /*!< value used to specify output of PHP    */

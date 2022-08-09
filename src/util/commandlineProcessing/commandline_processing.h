@@ -129,7 +129,8 @@ namespace CommandlineProcessing
 
        // DQ (10/11/2010): Adding Java support.
           ROSE_UTIL_API bool isJavaFileNameSuffix ( const std::string & suffix );
-          ROSE_UTIL_API bool isX10FileNameSuffix (const std::string& suffix);
+          ROSE_UTIL_API bool isJvmFileNameSuffix  ( const std::string & suffix );
+          ROSE_UTIL_API bool isX10FileNameSuffix  ( const std::string & suffix );
 
           ROSE_UTIL_API void initSourceFileSuffixList();
           static Rose_STL_Container<std::string> validSourceFileSuffixes;
