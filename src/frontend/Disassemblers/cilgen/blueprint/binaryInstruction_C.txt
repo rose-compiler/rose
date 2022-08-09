@@ -840,14 +840,9 @@
 #endif
 
 #ifdef DOCUMENTATION
-        /** Property: Start offset of the byte stream
-         * @{ */
-        std::vector<uint8_t> get_Stream() const;
-        // void set_Stream(std::vector<uint8_t>);
-        /** @} */
 #else
         AsmCilUint8Heap.setDataPrototype("std::vector<uint8_t>", "Stream", "", NO_CONSTRUCTOR_PARAMETER,
-                                         BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                         NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
 
@@ -860,6 +855,12 @@
         SgAsmCilUint8Heap() = default;
 
         void parse(std::vector<uint8_t>& buf, size_t startOfMetaData) override;
+
+        /** Property: Returns stream representation
+         * @{ */
+              std::vector<uint8_t>& get_Stream()       { return p_Stream; }
+        const std::vector<uint8_t>& get_Stream() const { return p_Stream; }
+        /** @} */
 
     private:
         friend class boost::serialization::access;
@@ -894,14 +895,9 @@
 #endif
 
 #ifdef DOCUMENTATION
-        /** Property: Start offset of the byte stream
-         * @{ */
-        std::vector<uint32_t> get_Stream() const;
-        // void set_Stream(std::vector<uint32_t>);
-        /** @} */
 #else
         AsmCilUint32Heap.setDataPrototype("std::vector<uint32_t>", "Stream", "", NO_CONSTRUCTOR_PARAMETER,
-                                         BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                          NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
 
@@ -914,6 +910,12 @@
         SgAsmCilUint32Heap() = default;
 
         void parse(std::vector<uint8_t>& buf, size_t startOfMetaData) override;
+        /** Property: Returns stream representation
+         * @{ */
+              std::vector<uint32_t>& get_Stream()       { return p_Stream; }
+        const std::vector<uint32_t>& get_Stream() const { return p_Stream; }
+        /** @} */
+
 
     private:
         friend class boost::serialization::access;
