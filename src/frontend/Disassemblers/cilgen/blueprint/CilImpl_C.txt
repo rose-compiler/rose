@@ -150,74 +150,79 @@ namespace // anonymous namespace for auxiliary functions
     return res;
   }
 
-  uint8_t read8bitValue (uint8_t* buf, size_t & index)
+  /// This function abstracts the details of reading a x-byte value from the disk image,
+  /// where x == N / CHAR_BIT;
+  template <class T>
+  T readNBitValue(std::vector<uint8_t>& buf, size_t& index)
   {
-     // This function abstracts the details of reading 2 byte values from the disk image.
-     uint8_t value = ByteOrder::le_to_host(*((uint8_t*)(buf+index)));
-     index += 1;
+     static constexpr int NUM_BYTES = sizeof T;
 
+     ROSE_ASSERT(index+NUM_BYTES <= buf.size());
+     T value = ByteOrder::le_to_host(*reinterpret_cast<T*>(buf.data()+index));
+
+     index += NUM_BYTES;
      return value;
   }
 
-  uint16_t read16bitValue (uint8_t* buf, size_t & index)
+  /// This function abstracts the details of reading a 1-byte values from the disk image.
+  uint8_t read8bitValue(std::vector<uint8_t>& buf, size_t& index)
   {
-     // This function abstracts the details of reading 2 byte values from the disk image.
-     uint16_t value = ByteOrder::le_to_host(*((uint16_t*)(buf+index)));
-     index += 2;
-
-     return value;
+     return readNBitValue<uint8_t>(buf, index);
   }
 
-  uint32_t read32bitValue(uint8_t* buf, size_t & index)
+  /// This function abstracts the details of reading a 2-byte values from the disk image.
+  uint16_t read16bitValue(std::vector<uint8_t>& buf, size_t& index)
   {
-    // This function abstracts the details of reading 4 byte values from the disk image.
-     uint32_t value = ByteOrder::le_to_host(*((uint32_t*)(buf+index)));
-     index += 4;
-
-     return value;
+     return readNBitValue<uint16_t>(buf, index);
   }
 
-  uint64_t read64bitValue(uint8_t* buf, size_t & index)
+  /// This function abstracts the details of reading a 4-byte values from the disk image.
+  uint32_t read32bitValue(std::vector<uint8_t>& buf, size_t& index)
   {
-    // This function abstracts the details of reading 4 byte values from the disk image.
-     uint64_t value = ByteOrder::le_to_host(*((uint64_t*)(buf+index)));
-     index += 8;
-
-     return value;
+     return readNBitValue<uint32_t>(buf, index);
   }
 
-  uint32_t readValue (uint8_t* buf, size_t & index, bool uses4byteIndexing)
+  /// This function abstracts the details of reading a 8-byte values from the disk image.
+  uint64_t read64bitValue(std::vector<uint8_t>& buf, size_t& index)
+  {
+     return readNBitValue<uint64_t>(buf, index);
+  }
+
+  /// This function abstracts the details of reading either a 2-byte or 4-byte value.
+  uint32_t readValue (std::vector<uint8_t>& buf, size_t& index, bool uses4byteIndexing)
   {
      // This function abstracts the details of reading 2 byte or 4 byte values from the disk image.
      return uses4byteIndexing ? read32bitValue(buf,index) : read16bitValue(buf,index);
   }
 
+  /// This function abstracts the details of reading either a 2-byte or 4-byte value.
   std::string
-  readString(uint8_t* buf, size_t& index, size_t maxLen = std::numeric_limits<size_t>::max())
+  readString(std::vector<uint8_t>& buf, size_t& index, size_t maxLen = std::numeric_limits<size_t>::max())
   {
     std::string res;
     size_t      i = 0;
 
-    while (char charValue = *(static_cast<uint8_t*>(buf+index+i)))
+    while (char charValue = buf.at(index+i))
     {
       ROSE_ASSERT(i < maxLen);
       res += charValue;
       ++i;
     }
 
+    ROSE_ASSERT(index + i <= buf.size());
     index += i;
     return res;
   }
 
   std::string
-  readUtf8String(uint8_t* buf, size_t& index, size_t maxLen = std::numeric_limits<size_t>::max())
+  readUtf8String(std::vector<uint8_t>& buf, size_t& index, size_t maxLen = std::numeric_limits<size_t>::max())
   {
     // FIXME: read real Utf8 string
     return readString(buf, index, maxLen);
   }
 
   uint32_t
-  readStringPadding(uint8_t* buf, size_t& index, size_t strLen, size_t reservedLen)
+  readStringPadding(std::vector<uint8_t>& buf, size_t& index, size_t strLen, size_t reservedLen)
   {
     ROSE_ASSERT(strLen <= reservedLen);
 
@@ -226,18 +231,20 @@ namespace // anonymous namespace for auxiliary functions
     printf ("skip string padding of %zu bytes\n", (reservedLen - strLen));
     while (strLen < reservedLen)
     {
-      res = (res<<8) + *(buf+index);
+      res = (res<<8) + buf.at(index);
+
+      ROSE_ASSERT(index + 1 <= buf.size());
       ++index; ++strLen;
     }
 
-    printf ("padding bytes value = %" PRIu32 "\n", res);
+    // printf ("padding bytes value = %" PRIu32 "\n", res);
     return res;
   }
 
 
   template <class Reader>
   auto
-  readExpected(Reader rd, uint8_t* buf, size_t& index, decltype(rd(buf, index)) expected) -> decltype(rd(buf, index))
+  readExpected(Reader rd, std::vector<uint8_t>& buf, size_t& index, decltype(rd(buf, index)) expected) -> decltype(rd(buf, index))
   {
     using elem_type = decltype(rd(buf, index));
 
@@ -246,14 +253,14 @@ namespace // anonymous namespace for auxiliary functions
     return res;
   }
 
-  uint8_t read8bitPadding (uint8_t* buf, size_t & index, uint8_t expected)
+  uint8_t read8bitPadding (std::vector<uint8_t>& buf, size_t& index, uint8_t expected)
   {
      return readExpected(read8bitValue, buf, index, expected);
   }
 
   template <class Reader>
   auto
-  readVector(Reader rd, uint64_t num, uint8_t* buf, size_t &index) -> std::vector<decltype(rd(buf, index))>
+  readVector(Reader rd, uint64_t num, std::vector<uint8_t>& buf, size_t &index) -> std::vector<decltype(rd(buf, index))>
   {
     using elem_type = decltype(rd(buf, index));
 
@@ -282,11 +289,11 @@ namespace // anonymous namespace for auxiliary functions
     uint32_t           namePadding() const { return std::get<3>(*this); }
 
     static
-    StreamHeader parse(uint8_t* buf, size_t& index);
+    StreamHeader parse(std::vector<uint8_t>& buf, size_t& index);
   };
 
   StreamHeader
-  StreamHeader::parse(uint8_t* buf, size_t& index)
+  StreamHeader::parse(std::vector<uint8_t>& buf, size_t& index)
   {
     uint32_t offset      = read32bitValue(buf, index);
     uint32_t size        = read32bitValue(buf, index);
@@ -298,7 +305,7 @@ namespace // anonymous namespace for auxiliary functions
 
 
   std::vector<SgAsmCilDataStream*>
-  parseStreams(uint8_t* buf, size_t& index, size_t start_of_MetadataRoot, uint16_t numberOfStreams)
+  parseStreams(SgAsmCilMetadataRoot* parent, std::vector<uint8_t>& buf, size_t& index, size_t start_of_MetadataRoot, uint16_t numberOfStreams)
   {
     std::vector<SgAsmCilDataStream*> res;
 
@@ -323,6 +330,7 @@ namespace // anonymous namespace for auxiliary functions
 
       ASSERT_not_null(dataStream);
 
+      dataStream->set_parent(parent);
       dataStream->parse(buf, start_of_MetadataRoot);
       res.push_back(dataStream);
 
@@ -337,16 +345,17 @@ namespace // anonymous namespace for auxiliary functions
 
   template <class SageAsmCilNode>
   SageAsmCilNode*
-  parseAsmCilNode(uint8_t* buf, size_t& index, uint64_t dataSizeflags)
+  parseAsmCilNode(SgAsmCilMetadataHeap* parent, std::vector<uint8_t>& buf, size_t& index, uint64_t dataSizeflags)
   {
       SageAsmCilNode* res = new SageAsmCilNode;
       ASSERT_not_null(res);
 
+      res->set_parent(parent);
       // ::mlog[INFO] << "Creating " << res->class_name() << " node."
       //              << std::endl;
 
       if (TRACE_CONSTRUCTION)
-        std::cerr << "Creating " << res->class_name() << " node."
+        std::cerr << "Creating " << res->class_name() << " node at " << index
                   << std::endl;
 
       res->parse(buf, index, dataSizeflags);
@@ -461,7 +470,7 @@ namespace // anonymous namespace for auxiliary functions
     // factored out for notational convenience
     const std::vector<uint8_t> hasCustomAttr = { e_methodDef, e_field, e_typeRef, e_typeDef
                                                , e_param, e_interfaceImpl, e_memberRef, e_module
-                                               , e_unknown_table_kind // instead of: e_permission
+                                               , e_unknown_table_kind // FIXME instead of: e_permission
                                                , e_property, e_event, e_standAloneSig
                                                , e_moduleRef, e_typeSpec, e_assembly, e_assemblyRef
                                                , e_file, e_exportedType, e_manifestResource, e_genericParam
@@ -499,7 +508,7 @@ namespace // anonymous namespace for auxiliary functions
 
 %%forall Class%%
 
-void SgAsmCil%%Class.Name%%::parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing)
+void SgAsmCil%%Class.Name%%::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
    { %%forall Fields%%
      p_%%Fields.Name%% = %%Fields.Init%%;
      %%end_for%%
@@ -516,7 +525,7 @@ namespace
 {
   template <class IntT>
   std::vector<IntT>
-  parseIntStream(uint8_t* buf, size_t start, size_t ofs, size_t len)
+  parseIntStream(std::vector<uint8_t>& buf, size_t start, size_t ofs, size_t len)
   {
     const size_t pos = start + ofs;
     const IntT*  beg = reinterpret_cast<IntT*>(buf + pos);
@@ -527,12 +536,12 @@ namespace
   }
 }
 
-void SgAsmCilUint8Heap::parse(uint8_t* buf, size_t startOfMetaData)
+void SgAsmCilUint8Heap::parse(std::vector<uint8_t>& buf, size_t startOfMetaData)
 {
   p_Stream = parseIntStream<uint8_t>(buf, startOfMetaData, get_Offset(), get_Size());
 }
 
-void SgAsmCilUint32Heap::parse(uint8_t* buf, size_t startOfMetaData)
+void SgAsmCilUint32Heap::parse(std::vector<uint8_t>& buf, size_t startOfMetaData)
 {
   p_Stream = parseIntStream<uint32_t>(buf, startOfMetaData, get_Offset(), get_Size());
 }
@@ -551,7 +560,7 @@ namespace
 
 template <class SageAsmCilMetadata>
 std::vector<SageAsmCilMetadata*>
-parseMetadataTable(uint8_t* buf, size_t& index, uint64_t sizeFlags, size_t rows, const char* tblName)
+parseMetadataTable(std::vector<uint8_t>& buf, size_t& index, uint64_t sizeFlags, size_t rows, const char* tblName)
 {
   std::vector<SageAsmCilMetadata*> res;
 
@@ -563,8 +572,8 @@ parseMetadataTable(uint8_t* buf, size_t& index, uint64_t sizeFlags, size_t rows,
     if (TRACE_CONSTRUCTION)
       std::cerr << " --- processing row j = " << j << std::endl;
 
-    SageAsmCilMetadata* table_rose = parseAsmCilNode<SageAsmCilMetadata>(buf,index,sizeFlags);
-    res.push_back(table_rose);
+    SageAsmCilMetadata* obj = parseAsmCilNode<SageAsmCilMetadata>(parent, buf,index,sizeFlags);
+    res.push_back(obj);
 
     if (TRACE_CONSTRUCTION)
       std::cerr << "DONE: processing row j = " << j << std::endl;
@@ -585,15 +594,14 @@ int traceRep(const std::vector<T>& vec) { return vec.size(); }
 }
 
 
-void SgAsmCilMetadataHeap::parse(uint8_t* buf, size_t startOfMetaData)
+void SgAsmCilMetadataHeap::parse(std::vector<uint8_t>& buf, size_t startOfMetaData)
 {
   const uint32_t ofs = get_Offset();
 
   if (TRACE_CONSTRUCTION)
-    printf ("In MetadataTable constructor: buf = 0x%" PRIxPTR ", index = %zu, offset = %" PRIu32 "\n",(uintptr_t)buf,startOfMetaData,ofs);
+    printf ("In MetadataTable constructor: buf = 0x%" PRIxPTR ", index = %zu, offset = %" PRIu32 "\n",(uintptr_t)buf.data(),startOfMetaData,ofs);
 
   size_t index = startOfMetaData + ofs;
-
 
   p_ReservedAlwaysZero = readExpected(read32bitValue, buf, index, 0);
 
@@ -645,7 +653,6 @@ void SgAsmCilMetadataHeap::parse(uint8_t* buf, size_t startOfMetaData)
     // Build the associated table.
     switch (kind)
     {
-
       case e_assembly:
         p_assembly = parseMetadataTable<SgAsmCilAssembly>(buf, index, get_DataSizeFlags(), rows, "assembly");
         break;
@@ -826,7 +833,7 @@ void SgAsmCilMetadataHeap::parse(uint8_t* buf, size_t startOfMetaData)
 
 ////// from metadataRoot_C.txt
 
-void SgAsmCilMetadataRoot::parse(uint8_t* buf, size_t index)
+void SgAsmCilMetadataRoot::parse(std::vector<uint8_t>& buf, size_t index)
 {
   size_t start_of_MetadataRoot = index;
 
@@ -863,7 +870,7 @@ void SgAsmCilMetadataRoot::parse(uint8_t* buf, size_t index)
     std::cerr << "NumberOfStreams = " << p_NumberOfStreams << std::endl;
 
 
-  p_Streams = parseStreams(buf, index, start_of_MetadataRoot, get_NumberOfStreams());
+  p_Streams = parseStreams(this, buf, index, start_of_MetadataRoot, get_NumberOfStreams());
   if (TRACE_CONSTRUCTION)
     std::cerr << "Streams has " << p_Streams.size() << "elements." << std::endl;
 }

@@ -150,74 +150,79 @@ namespace // anonymous namespace for auxiliary functions
     return res;
   }
 
-  uint8_t read8bitValue (uint8_t* buf, size_t & index)
+  /// This function abstracts the details of reading a x-byte value from the disk image,
+  /// where x == N / CHAR_BIT;
+  template <class T>
+  T readNBitValue(std::vector<uint8_t>& buf, size_t& index)
   {
-     // This function abstracts the details of reading 2 byte values from the disk image.
-     uint8_t value = ByteOrder::le_to_host(*((uint8_t*)(buf+index)));
-     index += 1;
+     static constexpr int NUM_BYTES = sizeof(T);
 
+     ROSE_ASSERT(index+NUM_BYTES <= buf.size());
+     T value = ByteOrder::le_to_host(*reinterpret_cast<T*>(buf.data()+index));
+
+     index += NUM_BYTES;
      return value;
   }
 
-  uint16_t read16bitValue (uint8_t* buf, size_t & index)
+  /// This function abstracts the details of reading a 1-byte values from the disk image.
+  uint8_t read8bitValue(std::vector<uint8_t>& buf, size_t& index)
   {
-     // This function abstracts the details of reading 2 byte values from the disk image.
-     uint16_t value = ByteOrder::le_to_host(*((uint16_t*)(buf+index)));
-     index += 2;
-
-     return value;
+     return readNBitValue<uint8_t>(buf, index);
   }
 
-  uint32_t read32bitValue(uint8_t* buf, size_t & index)
+  /// This function abstracts the details of reading a 2-byte values from the disk image.
+  uint16_t read16bitValue(std::vector<uint8_t>& buf, size_t& index)
   {
-    // This function abstracts the details of reading 4 byte values from the disk image.
-     uint32_t value = ByteOrder::le_to_host(*((uint32_t*)(buf+index)));
-     index += 4;
-
-     return value;
+     return readNBitValue<uint16_t>(buf, index);
   }
 
-  uint64_t read64bitValue(uint8_t* buf, size_t & index)
+  /// This function abstracts the details of reading a 4-byte values from the disk image.
+  uint32_t read32bitValue(std::vector<uint8_t>& buf, size_t& index)
   {
-    // This function abstracts the details of reading 4 byte values from the disk image.
-     uint64_t value = ByteOrder::le_to_host(*((uint64_t*)(buf+index)));
-     index += 8;
-
-     return value;
+     return readNBitValue<uint32_t>(buf, index);
   }
 
-  uint32_t readValue (uint8_t* buf, size_t & index, bool uses4byteIndexing)
+  /// This function abstracts the details of reading a 8-byte values from the disk image.
+  uint64_t read64bitValue(std::vector<uint8_t>& buf, size_t& index)
+  {
+     return readNBitValue<uint64_t>(buf, index);
+  }
+
+  /// This function abstracts the details of reading either a 2-byte or 4-byte value.
+  uint32_t readValue (std::vector<uint8_t>& buf, size_t& index, bool uses4byteIndexing)
   {
      // This function abstracts the details of reading 2 byte or 4 byte values from the disk image.
      return uses4byteIndexing ? read32bitValue(buf,index) : read16bitValue(buf,index);
   }
 
+  /// This function abstracts the details of reading either a 2-byte or 4-byte value.
   std::string
-  readString(uint8_t* buf, size_t& index, size_t maxLen = std::numeric_limits<size_t>::max())
+  readString(std::vector<uint8_t>& buf, size_t& index, size_t maxLen = std::numeric_limits<size_t>::max())
   {
     std::string res;
     size_t      i = 0;
 
-    while (char charValue = *(static_cast<uint8_t*>(buf+index+i)))
+    while (char charValue = buf.at(index+i))
     {
       ROSE_ASSERT(i < maxLen);
       res += charValue;
       ++i;
     }
 
+    ROSE_ASSERT(index + i <= buf.size());
     index += i;
     return res;
   }
 
   std::string
-  readUtf8String(uint8_t* buf, size_t& index, size_t maxLen = std::numeric_limits<size_t>::max())
+  readUtf8String(std::vector<uint8_t>& buf, size_t& index, size_t maxLen = std::numeric_limits<size_t>::max())
   {
     // FIXME: read real Utf8 string
     return readString(buf, index, maxLen);
   }
 
   uint32_t
-  readStringPadding(uint8_t* buf, size_t& index, size_t strLen, size_t reservedLen)
+  readStringPadding(std::vector<uint8_t>& buf, size_t& index, size_t strLen, size_t reservedLen)
   {
     ROSE_ASSERT(strLen <= reservedLen);
 
@@ -226,18 +231,20 @@ namespace // anonymous namespace for auxiliary functions
     printf ("skip string padding of %zu bytes\n", (reservedLen - strLen));
     while (strLen < reservedLen)
     {
-      res = (res<<8) + *(buf+index);
+      res = (res<<8) + buf.at(index);
+
+      ROSE_ASSERT(index + 1 <= buf.size());
       ++index; ++strLen;
     }
 
-    printf ("padding bytes value = %" PRIu32 "\n", res);
+    // printf ("padding bytes value = %" PRIu32 "\n", res);
     return res;
   }
 
 
   template <class Reader>
   auto
-  readExpected(Reader rd, uint8_t* buf, size_t& index, decltype(rd(buf, index)) expected) -> decltype(rd(buf, index))
+  readExpected(Reader rd, std::vector<uint8_t>& buf, size_t& index, decltype(rd(buf, index)) expected) -> decltype(rd(buf, index))
   {
     using elem_type = decltype(rd(buf, index));
 
@@ -246,14 +253,14 @@ namespace // anonymous namespace for auxiliary functions
     return res;
   }
 
-  uint8_t read8bitPadding (uint8_t* buf, size_t & index, uint8_t expected)
+  uint8_t read8bitPadding (std::vector<uint8_t>& buf, size_t& index, uint8_t expected)
   {
      return readExpected(read8bitValue, buf, index, expected);
   }
 
   template <class Reader>
   auto
-  readVector(Reader rd, uint64_t num, uint8_t* buf, size_t &index) -> std::vector<decltype(rd(buf, index))>
+  readVector(Reader rd, uint64_t num, std::vector<uint8_t>& buf, size_t &index) -> std::vector<decltype(rd(buf, index))>
   {
     using elem_type = decltype(rd(buf, index));
 
@@ -282,11 +289,11 @@ namespace // anonymous namespace for auxiliary functions
     uint32_t           namePadding() const { return std::get<3>(*this); }
 
     static
-    StreamHeader parse(uint8_t* buf, size_t& index);
+    StreamHeader parse(std::vector<uint8_t>& buf, size_t& index);
   };
 
   StreamHeader
-  StreamHeader::parse(uint8_t* buf, size_t& index)
+  StreamHeader::parse(std::vector<uint8_t>& buf, size_t& index)
   {
     uint32_t offset      = read32bitValue(buf, index);
     uint32_t size        = read32bitValue(buf, index);
@@ -298,7 +305,7 @@ namespace // anonymous namespace for auxiliary functions
 
 
   std::vector<SgAsmCilDataStream*>
-  parseStreams(uint8_t* buf, size_t& index, size_t start_of_MetadataRoot, uint16_t numberOfStreams)
+  parseStreams(SgAsmCilMetadataRoot* parent, std::vector<uint8_t>& buf, size_t& index, size_t start_of_MetadataRoot, uint16_t numberOfStreams)
   {
     std::vector<SgAsmCilDataStream*> res;
 
@@ -323,6 +330,7 @@ namespace // anonymous namespace for auxiliary functions
 
       ASSERT_not_null(dataStream);
 
+      dataStream->set_parent(parent);
       dataStream->parse(buf, start_of_MetadataRoot);
       res.push_back(dataStream);
 
@@ -337,11 +345,12 @@ namespace // anonymous namespace for auxiliary functions
 
   template <class SageAsmCilNode>
   SageAsmCilNode*
-  parseAsmCilNode(uint8_t* buf, size_t& index, uint64_t dataSizeflags)
+  parseAsmCilNode(SgAsmCilMetadataHeap* parent, std::vector<uint8_t>& buf, size_t& index, uint64_t dataSizeflags)
   {
       SageAsmCilNode* res = new SageAsmCilNode;
       ASSERT_not_null(res);
 
+      res->set_parent(parent);
       // ::mlog[INFO] << "Creating " << res->class_name() << " node."
       //              << std::endl;
 
@@ -461,7 +470,7 @@ namespace // anonymous namespace for auxiliary functions
     // factored out for notational convenience
     const std::vector<uint8_t> hasCustomAttr = { e_methodDef, e_field, e_typeRef, e_typeDef
                                                , e_param, e_interfaceImpl, e_memberRef, e_module
-                                               , e_unknown_table_kind // instead of: e_permission
+                                               , e_unknown_table_kind // FIXME instead of: e_permission
                                                , e_property, e_event, e_standAloneSig
                                                , e_moduleRef, e_typeSpec, e_assembly, e_assemblyRef
                                                , e_file, e_exportedType, e_manifestResource, e_genericParam
@@ -499,7 +508,7 @@ namespace // anonymous namespace for auxiliary functions
 
 
 
-void SgAsmCilAssembly::parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing)
+void SgAsmCilAssembly::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
    {
      p_HashAlgId = read32bitValue(buf,index);
      p_MajorVersion = read16bitValue(buf,index);
@@ -525,7 +534,7 @@ void SgAsmCilAssembly::parse(uint8_t* buf, size_t& index, uint64_t uses4byteInde
         }
    }
 
-void SgAsmCilAssemblyOS::parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing)
+void SgAsmCilAssemblyOS::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
    {
      p_OSPlatformID = read32bitValue(buf,index);
      p_OSMajorVersion = read32bitValue(buf,index);
@@ -539,7 +548,7 @@ void SgAsmCilAssemblyOS::parse(uint8_t* buf, size_t& index, uint64_t uses4byteIn
         }
    }
 
-void SgAsmCilAssemblyProcessor::parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing)
+void SgAsmCilAssemblyProcessor::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
    {
      p_Processor = read32bitValue(buf,index);
 
@@ -549,7 +558,7 @@ void SgAsmCilAssemblyProcessor::parse(uint8_t* buf, size_t& index, uint64_t uses
         }
    }
 
-void SgAsmCilAssemblyRef::parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing)
+void SgAsmCilAssemblyRef::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
    {
      p_MajorVersion = read16bitValue(buf,index);
      p_MinorVersion = read16bitValue(buf,index);
@@ -575,7 +584,7 @@ void SgAsmCilAssemblyRef::parse(uint8_t* buf, size_t& index, uint64_t uses4byteI
         }
    }
 
-void SgAsmCilAssemblyRefOS::parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing)
+void SgAsmCilAssemblyRefOS::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
    {
      p_OSPlatformID = read32bitValue(buf,index);
      p_OSMajorVersion = read32bitValue(buf,index);
@@ -591,7 +600,7 @@ void SgAsmCilAssemblyRefOS::parse(uint8_t* buf, size_t& index, uint64_t uses4byt
         }
    }
 
-void SgAsmCilAssemblyRefProcessor::parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing)
+void SgAsmCilAssemblyRefProcessor::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
    {
      p_Processor = read32bitValue(buf,index);
      p_AssemblyRef = readValue(buf,index,uses4byteIndexing & CIL_RS_ASSEMBLY_REF);
@@ -603,7 +612,7 @@ void SgAsmCilAssemblyRefProcessor::parse(uint8_t* buf, size_t& index, uint64_t u
         }
    }
 
-void SgAsmCilClassLayout::parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing)
+void SgAsmCilClassLayout::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
    {
      p_PackingSize = read16bitValue(buf,index);
      p_ClassSize = read32bitValue(buf,index);
@@ -617,7 +626,7 @@ void SgAsmCilClassLayout::parse(uint8_t* buf, size_t& index, uint64_t uses4byteI
         }
    }
 
-void SgAsmCilConstant::parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing)
+void SgAsmCilConstant::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
    {
      p_Type = read8bitValue(buf,index);
      p_Padding = read8bitPadding(buf,index,0);
@@ -633,7 +642,7 @@ void SgAsmCilConstant::parse(uint8_t* buf, size_t& index, uint64_t uses4byteInde
         }
    }
 
-void SgAsmCilCustomAttribute::parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing)
+void SgAsmCilCustomAttribute::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
    {
      p_Parent = readValue(buf,index,uses4byteIndexing & CIL_RS_HAS_CUSTOM_ATTRIBUTE);
      p_Type = readValue(buf,index,uses4byteIndexing & CIL_RS_METHOD_DEF_OR_REF);
@@ -647,7 +656,7 @@ void SgAsmCilCustomAttribute::parse(uint8_t* buf, size_t& index, uint64_t uses4b
         }
    }
 
-void SgAsmCilDeclSecurity::parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing)
+void SgAsmCilDeclSecurity::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
    {
      p_Action = read16bitValue(buf,index);
      p_Parent = readValue(buf,index,uses4byteIndexing & CIL_RS_HAS_DECL_SECURITY);
@@ -661,7 +670,7 @@ void SgAsmCilDeclSecurity::parse(uint8_t* buf, size_t& index, uint64_t uses4byte
         }
    }
 
-void SgAsmCilEvent::parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing)
+void SgAsmCilEvent::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
    {
      p_EventFlags = read16bitValue(buf,index);
      p_Name = readValue(buf,index,uses4byteIndexing & CIL_RS_STRING_HEAP);
@@ -675,7 +684,7 @@ void SgAsmCilEvent::parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexin
         }
    }
 
-void SgAsmCilEventMap::parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing)
+void SgAsmCilEventMap::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
    {
      p_Parent = readValue(buf,index,uses4byteIndexing & CIL_RS_TYPE_DEF);
      p_EventList = readValue(buf,index,uses4byteIndexing & CIL_RS_EVENT);
@@ -687,7 +696,7 @@ void SgAsmCilEventMap::parse(uint8_t* buf, size_t& index, uint64_t uses4byteInde
         }
    }
 
-void SgAsmCilExportedType::parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing)
+void SgAsmCilExportedType::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
    {
      p_EventFlags = read32bitValue(buf,index);
      p_TypeDefIdName = read32bitValue(buf,index);
@@ -705,7 +714,7 @@ void SgAsmCilExportedType::parse(uint8_t* buf, size_t& index, uint64_t uses4byte
         }
    }
 
-void SgAsmCilField::parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing)
+void SgAsmCilField::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
    {
      p_Flags = read16bitValue(buf,index);
      p_Name = readValue(buf,index,uses4byteIndexing & CIL_RS_STRING_HEAP);
@@ -719,7 +728,7 @@ void SgAsmCilField::parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexin
         }
    }
 
-void SgAsmCilFieldLayout::parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing)
+void SgAsmCilFieldLayout::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
    {
      p_Offset = read32bitValue(buf,index);
      p_Field = readValue(buf,index,uses4byteIndexing & CIL_RS_FIELD);
@@ -731,7 +740,7 @@ void SgAsmCilFieldLayout::parse(uint8_t* buf, size_t& index, uint64_t uses4byteI
         }
    }
 
-void SgAsmCilFieldMarshal::parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing)
+void SgAsmCilFieldMarshal::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
    {
      p_Parent = readValue(buf,index,uses4byteIndexing & CIL_RS_HAS_FIELD_MARSHALL);
      p_NativeType = readValue(buf,index,uses4byteIndexing & CIL_RS_BLOB_HEAP);
@@ -743,7 +752,7 @@ void SgAsmCilFieldMarshal::parse(uint8_t* buf, size_t& index, uint64_t uses4byte
         }
    }
 
-void SgAsmCilFieldRVA::parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing)
+void SgAsmCilFieldRVA::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
    {
      p_RVA = read16bitValue(buf,index);
      p_Field = readValue(buf,index,uses4byteIndexing & CIL_RS_FIELD);
@@ -755,7 +764,7 @@ void SgAsmCilFieldRVA::parse(uint8_t* buf, size_t& index, uint64_t uses4byteInde
         }
    }
 
-void SgAsmCilFile::parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing)
+void SgAsmCilFile::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
    {
      p_Flags = read32bitValue(buf,index);
      p_Name = readValue(buf,index,uses4byteIndexing & CIL_RS_STRING_HEAP);
@@ -769,7 +778,7 @@ void SgAsmCilFile::parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing
         }
    }
 
-void SgAsmCilGenericParam::parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing)
+void SgAsmCilGenericParam::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
    {
      p_Number = read16bitValue(buf,index);
      p_Flags = read16bitValue(buf,index);
@@ -785,7 +794,7 @@ void SgAsmCilGenericParam::parse(uint8_t* buf, size_t& index, uint64_t uses4byte
         }
    }
 
-void SgAsmCilGenericParamConstraint::parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing)
+void SgAsmCilGenericParamConstraint::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
    {
      p_Owner = readValue(buf,index,uses4byteIndexing & CIL_RS_GENERIC_PARAM);
      p_Constraint = readValue(buf,index,uses4byteIndexing & CIL_RS_TYPE_DEF_OR_REF);
@@ -797,7 +806,7 @@ void SgAsmCilGenericParamConstraint::parse(uint8_t* buf, size_t& index, uint64_t
         }
    }
 
-void SgAsmCilImplMap::parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing)
+void SgAsmCilImplMap::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
    {
      p_MappingFlags = read16bitValue(buf,index);
      p_MemberForwarded = readValue(buf,index,uses4byteIndexing & CIL_RS_MEMBER_FORWARDED);
@@ -813,7 +822,7 @@ void SgAsmCilImplMap::parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndex
         }
    }
 
-void SgAsmCilInterfaceImpl::parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing)
+void SgAsmCilInterfaceImpl::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
    {
      p_Class = read16bitValue(buf,index);
      p_Interface = readValue(buf,index,uses4byteIndexing & CIL_RS_TYPE_DEF_OR_REF);
@@ -825,7 +834,7 @@ void SgAsmCilInterfaceImpl::parse(uint8_t* buf, size_t& index, uint64_t uses4byt
         }
    }
 
-void SgAsmCilManifestResource::parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing)
+void SgAsmCilManifestResource::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
    {
      p_Offset = read32bitValue(buf,index);
      p_Flags = read32bitValue(buf,index);
@@ -841,7 +850,7 @@ void SgAsmCilManifestResource::parse(uint8_t* buf, size_t& index, uint64_t uses4
         }
    }
 
-void SgAsmCilMemberRef::parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing)
+void SgAsmCilMemberRef::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
    {
      p_Class = readValue(buf,index,uses4byteIndexing & CIL_RS_MEMBER_REF_PARENT);
      p_Name = readValue(buf,index,uses4byteIndexing & CIL_RS_STRING_HEAP);
@@ -855,7 +864,7 @@ void SgAsmCilMemberRef::parse(uint8_t* buf, size_t& index, uint64_t uses4byteInd
         }
    }
 
-void SgAsmCilMethodDef::parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing)
+void SgAsmCilMethodDef::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
    {
      p_RVA = read32bitValue(buf,index);
      p_ImplFlags = read16bitValue(buf,index);
@@ -875,7 +884,7 @@ void SgAsmCilMethodDef::parse(uint8_t* buf, size_t& index, uint64_t uses4byteInd
         }
    }
 
-void SgAsmCilMethodImpl::parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing)
+void SgAsmCilMethodImpl::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
    {
      p_Class = readValue(buf,index,uses4byteIndexing & CIL_RS_TYPE_DEF);
      p_MethodBody = readValue(buf,index,uses4byteIndexing & CIL_RS_METHOD_DEF_OR_REF);
@@ -889,7 +898,7 @@ void SgAsmCilMethodImpl::parse(uint8_t* buf, size_t& index, uint64_t uses4byteIn
         }
    }
 
-void SgAsmCilMethodSemantics::parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing)
+void SgAsmCilMethodSemantics::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
    {
      p_Semantics = read16bitValue(buf,index);
      p_Method = readValue(buf,index,uses4byteIndexing & CIL_RS_METHOD_DEF);
@@ -903,7 +912,7 @@ void SgAsmCilMethodSemantics::parse(uint8_t* buf, size_t& index, uint64_t uses4b
         }
    }
 
-void SgAsmCilMethodSpec::parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing)
+void SgAsmCilMethodSpec::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
    {
      p_Method = readValue(buf,index,uses4byteIndexing & CIL_RS_METHOD_DEF_OR_REF);
      p_Instantiation = readValue(buf,index,uses4byteIndexing & CIL_RS_BLOB_HEAP);
@@ -915,7 +924,7 @@ void SgAsmCilMethodSpec::parse(uint8_t* buf, size_t& index, uint64_t uses4byteIn
         }
    }
 
-void SgAsmCilModule::parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing)
+void SgAsmCilModule::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
    {
      p_Generation = read16bitValue(buf,index);
      p_Name = readValue(buf,index,uses4byteIndexing & CIL_RS_STRING_HEAP);
@@ -933,7 +942,7 @@ void SgAsmCilModule::parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexi
         }
    }
 
-void SgAsmCilModuleRef::parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing)
+void SgAsmCilModuleRef::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
    {
      p_Name = readValue(buf,index,uses4byteIndexing & CIL_RS_STRING_HEAP);
 
@@ -943,7 +952,7 @@ void SgAsmCilModuleRef::parse(uint8_t* buf, size_t& index, uint64_t uses4byteInd
         }
    }
 
-void SgAsmCilNestedClass::parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing)
+void SgAsmCilNestedClass::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
    {
      p_NestedClass = readValue(buf,index,uses4byteIndexing & CIL_RS_TYPE_DEF);
      p_EnclosingClass = readValue(buf,index,uses4byteIndexing & CIL_RS_TYPE_DEF);
@@ -955,7 +964,7 @@ void SgAsmCilNestedClass::parse(uint8_t* buf, size_t& index, uint64_t uses4byteI
         }
    }
 
-void SgAsmCilParam::parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing)
+void SgAsmCilParam::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
    {
      p_Flags = read16bitValue(buf,index);
      p_Sequence = read16bitValue(buf,index);
@@ -969,7 +978,7 @@ void SgAsmCilParam::parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexin
         }
    }
 
-void SgAsmCilProperty::parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing)
+void SgAsmCilProperty::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
    {
      p_Flags = read16bitValue(buf,index);
      p_Name = readValue(buf,index,uses4byteIndexing & CIL_RS_STRING_HEAP);
@@ -983,7 +992,7 @@ void SgAsmCilProperty::parse(uint8_t* buf, size_t& index, uint64_t uses4byteInde
         }
    }
 
-void SgAsmCilPropertyMap::parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing)
+void SgAsmCilPropertyMap::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
    {
      p_Parent = readValue(buf,index,uses4byteIndexing & CIL_RS_TYPE_DEF);
      p_PropertyList = readValue(buf,index,uses4byteIndexing & CIL_RS_PROPERTY);
@@ -995,7 +1004,7 @@ void SgAsmCilPropertyMap::parse(uint8_t* buf, size_t& index, uint64_t uses4byteI
         }
    }
 
-void SgAsmCilStandAloneSig::parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing)
+void SgAsmCilStandAloneSig::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
    {
      p_Signature = readValue(buf,index,uses4byteIndexing & CIL_RS_BLOB_HEAP);
 
@@ -1005,7 +1014,7 @@ void SgAsmCilStandAloneSig::parse(uint8_t* buf, size_t& index, uint64_t uses4byt
         }
    }
 
-void SgAsmCilTypeDef::parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing)
+void SgAsmCilTypeDef::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
    {
      p_Flags = read32bitValue(buf,index);
      p_TypeName = readValue(buf,index,uses4byteIndexing & CIL_RS_STRING_HEAP);
@@ -1025,7 +1034,7 @@ void SgAsmCilTypeDef::parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndex
         }
    }
 
-void SgAsmCilTypeRef::parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing)
+void SgAsmCilTypeRef::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
    {
      p_ResolutionScope = read16bitValue(buf,index);
      p_TypeName = readValue(buf,index,uses4byteIndexing & CIL_RS_STRING_HEAP);
@@ -1039,7 +1048,7 @@ void SgAsmCilTypeRef::parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndex
         }
    }
 
-void SgAsmCilTypeSpec::parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing)
+void SgAsmCilTypeSpec::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
    {
      p_Signature = readValue(buf,index,uses4byteIndexing & CIL_RS_BLOB_HEAP);
 
@@ -1053,10 +1062,10 @@ namespace
 {
   template <class IntT>
   std::vector<IntT>
-  parseIntStream(uint8_t* buf, size_t start, size_t ofs, size_t len)
+  parseIntStream(std::vector<uint8_t>& buf, size_t start, size_t ofs, size_t len)
   {
     const size_t pos = start + ofs;
-    const IntT*  beg = reinterpret_cast<IntT*>(buf + pos);
+    const IntT*  beg = reinterpret_cast<IntT*>(buf.data() + pos);
     const IntT*  lim = beg + (len / sizeof(IntT));
 
     ROSE_ASSERT(len % sizeof(IntT) == 0);
@@ -1064,12 +1073,12 @@ namespace
   }
 }
 
-void SgAsmCilUint8Heap::parse(uint8_t* buf, size_t startOfMetaData)
+void SgAsmCilUint8Heap::parse(std::vector<uint8_t>& buf, size_t startOfMetaData)
 {
   p_Stream = parseIntStream<uint8_t>(buf, startOfMetaData, get_Offset(), get_Size());
 }
 
-void SgAsmCilUint32Heap::parse(uint8_t* buf, size_t startOfMetaData)
+void SgAsmCilUint32Heap::parse(std::vector<uint8_t>& buf, size_t startOfMetaData)
 {
   p_Stream = parseIntStream<uint32_t>(buf, startOfMetaData, get_Offset(), get_Size());
 }
@@ -1088,7 +1097,13 @@ namespace
 
 template <class SageAsmCilMetadata>
 std::vector<SageAsmCilMetadata*>
-parseMetadataTable(uint8_t* buf, size_t& index, uint64_t sizeFlags, size_t rows, const char* tblName)
+parseMetadataTable( SgAsmCilMetadataHeap* parent,
+                    std::vector<uint8_t>& buf,
+                    size_t& index,
+                    uint64_t sizeFlags,
+                    size_t rows,
+                    const char* tblName
+                  )
 {
   std::vector<SageAsmCilMetadata*> res;
 
@@ -1100,8 +1115,10 @@ parseMetadataTable(uint8_t* buf, size_t& index, uint64_t sizeFlags, size_t rows,
     if (TRACE_CONSTRUCTION)
       std::cerr << " --- processing row j = " << j << std::endl;
 
-    SageAsmCilMetadata* table_rose = parseAsmCilNode<SageAsmCilMetadata>(buf,index,sizeFlags);
-    res.push_back(table_rose);
+    SageAsmCilMetadata* obj = parseAsmCilNode<SageAsmCilMetadata>(parent, buf,index,sizeFlags);
+    ASSERT_not_null(obj);
+
+    res.push_back(obj);
 
     if (TRACE_CONSTRUCTION)
       std::cerr << "DONE: processing row j = " << j << std::endl;
@@ -1122,12 +1139,12 @@ int traceRep(const std::vector<T>& vec) { return vec.size(); }
 }
 
 
-void SgAsmCilMetadataHeap::parse(uint8_t* buf, size_t startOfMetaData)
+void SgAsmCilMetadataHeap::parse(std::vector<uint8_t>& buf, size_t startOfMetaData)
 {
   const uint32_t ofs = get_Offset();
 
   if (TRACE_CONSTRUCTION)
-    printf ("In MetadataTable constructor: buf = 0x%" PRIxPTR ", index = %zu, offset = %" PRIu32 "\n",(uintptr_t)buf,startOfMetaData,ofs);
+    printf ("In MetadataTable constructor: buf = 0x%" PRIxPTR ", index = %zu, offset = %" PRIu32 "\n",(uintptr_t)buf.data(),startOfMetaData,ofs);
 
   size_t index = startOfMetaData + ofs;
 
@@ -1182,155 +1199,155 @@ void SgAsmCilMetadataHeap::parse(uint8_t* buf, size_t startOfMetaData)
     switch (kind)
     {
       case e_assembly:
-        p_assembly = parseMetadataTable<SgAsmCilAssembly>(buf, index, get_DataSizeFlags(), rows, "assembly");
+        p_assembly = parseMetadataTable<SgAsmCilAssembly>(this, buf, index, get_DataSizeFlags(), rows, "assembly");
         break;
 
       case e_assemblyProcessor:
-        p_assemblyProcessor = parseMetadataTable<SgAsmCilAssemblyProcessor>(buf, index, get_DataSizeFlags(), rows, "assemblyProcessor");
+        p_assemblyProcessor = parseMetadataTable<SgAsmCilAssemblyProcessor>(this, buf, index, get_DataSizeFlags(), rows, "assemblyProcessor");
         break;
 
       case e_assemblyOS:
-        p_assemblyOS = parseMetadataTable<SgAsmCilAssemblyOS>(buf, index, get_DataSizeFlags(), rows, "assemblyOS");
+        p_assemblyOS = parseMetadataTable<SgAsmCilAssemblyOS>(this, buf, index, get_DataSizeFlags(), rows, "assemblyOS");
         break;
 
       case e_assemblyRef:
-        p_assemblyRef = parseMetadataTable<SgAsmCilAssemblyRef>(buf, index, get_DataSizeFlags(), rows, "assemblyRef");
+        p_assemblyRef = parseMetadataTable<SgAsmCilAssemblyRef>(this, buf, index, get_DataSizeFlags(), rows, "assemblyRef");
         break;
 
       case e_assemblyRefProcessor:
-        p_assemblyRefProcessor = parseMetadataTable<SgAsmCilAssemblyRefProcessor>(buf, index, get_DataSizeFlags(), rows, "assemblyRefProcessor");
+        p_assemblyRefProcessor = parseMetadataTable<SgAsmCilAssemblyRefProcessor>(this, buf, index, get_DataSizeFlags(), rows, "assemblyRefProcessor");
         break;
 
       case e_assemblyRefOS:
-        p_assemblyRefOS = parseMetadataTable<SgAsmCilAssemblyRefOS>(buf, index, get_DataSizeFlags(), rows, "assemblyRefOS");
+        p_assemblyRefOS = parseMetadataTable<SgAsmCilAssemblyRefOS>(this, buf, index, get_DataSizeFlags(), rows, "assemblyRefOS");
         break;
 
       case e_classLayout:
-        p_classLayout = parseMetadataTable<SgAsmCilClassLayout>(buf, index, get_DataSizeFlags(), rows, "classLayout");
+        p_classLayout = parseMetadataTable<SgAsmCilClassLayout>(this, buf, index, get_DataSizeFlags(), rows, "classLayout");
         break;
 
       case e_constant:
-        p_constant = parseMetadataTable<SgAsmCilConstant>(buf, index, get_DataSizeFlags(), rows, "constant");
+        p_constant = parseMetadataTable<SgAsmCilConstant>(this, buf, index, get_DataSizeFlags(), rows, "constant");
         break;
 
       case e_customAttribute:
-        p_customAttribute = parseMetadataTable<SgAsmCilCustomAttribute>(buf, index, get_DataSizeFlags(), rows, "customAttribute");
+        p_customAttribute = parseMetadataTable<SgAsmCilCustomAttribute>(this, buf, index, get_DataSizeFlags(), rows, "customAttribute");
         break;
 
       case e_declSecurity:
-        p_declSecurity = parseMetadataTable<SgAsmCilDeclSecurity>(buf, index, get_DataSizeFlags(), rows, "declSecurity");
+        p_declSecurity = parseMetadataTable<SgAsmCilDeclSecurity>(this, buf, index, get_DataSizeFlags(), rows, "declSecurity");
         break;
 
       case e_eventMap:
-        p_eventMap = parseMetadataTable<SgAsmCilEventMap>(buf, index, get_DataSizeFlags(), rows, "eventMap");
+        p_eventMap = parseMetadataTable<SgAsmCilEventMap>(this, buf, index, get_DataSizeFlags(), rows, "eventMap");
         break;
 
       case e_event:
-        p_event = parseMetadataTable<SgAsmCilEvent>(buf, index, get_DataSizeFlags(), rows, "event");
+        p_event = parseMetadataTable<SgAsmCilEvent>(this, buf, index, get_DataSizeFlags(), rows, "event");
         break;
 
       case e_exportedType:
-        p_exportedType = parseMetadataTable<SgAsmCilExportedType>(buf, index, get_DataSizeFlags(), rows, "exportedType");
+        p_exportedType = parseMetadataTable<SgAsmCilExportedType>(this, buf, index, get_DataSizeFlags(), rows, "exportedType");
         break;
 
       case e_field:
-        p_field = parseMetadataTable<SgAsmCilField>(buf, index, get_DataSizeFlags(), rows, "field");
+        p_field = parseMetadataTable<SgAsmCilField>(this, buf, index, get_DataSizeFlags(), rows, "field");
         break;
 
       case e_fieldLayout:
-        p_fieldLayout = parseMetadataTable<SgAsmCilFieldLayout>(buf, index, get_DataSizeFlags(), rows, "fieldLayout");
+        p_fieldLayout = parseMetadataTable<SgAsmCilFieldLayout>(this, buf, index, get_DataSizeFlags(), rows, "fieldLayout");
         break;
 
       case e_fieldMarshal:
-        p_fieldMarshal = parseMetadataTable<SgAsmCilFieldMarshal>(buf, index, get_DataSizeFlags(), rows, "fieldMarshal");
+        p_fieldMarshal = parseMetadataTable<SgAsmCilFieldMarshal>(this, buf, index, get_DataSizeFlags(), rows, "fieldMarshal");
         break;
 
       case e_fieldRVA:
-        p_fieldRVA = parseMetadataTable<SgAsmCilFieldRVA>(buf, index, get_DataSizeFlags(), rows, "fieldRVA");
+        p_fieldRVA = parseMetadataTable<SgAsmCilFieldRVA>(this, buf, index, get_DataSizeFlags(), rows, "fieldRVA");
         break;
 
       case e_file:
-        p_file = parseMetadataTable<SgAsmCilFile>(buf, index, get_DataSizeFlags(), rows, "file");
+        p_file = parseMetadataTable<SgAsmCilFile>(this, buf, index, get_DataSizeFlags(), rows, "file");
         break;
 
       case e_genericParam:
-        p_genericParam = parseMetadataTable<SgAsmCilGenericParam>(buf, index, get_DataSizeFlags(), rows, "genericParam");
+        p_genericParam = parseMetadataTable<SgAsmCilGenericParam>(this, buf, index, get_DataSizeFlags(), rows, "genericParam");
         break;
 
       case e_genericParamConstraint:
-        p_genericParamConstraint = parseMetadataTable<SgAsmCilGenericParamConstraint>(buf, index, get_DataSizeFlags(), rows, "genericParamConstraint");
+        p_genericParamConstraint = parseMetadataTable<SgAsmCilGenericParamConstraint>(this, buf, index, get_DataSizeFlags(), rows, "genericParamConstraint");
         break;
 
       case e_implMap:
-        p_implMap = parseMetadataTable<SgAsmCilImplMap>(buf, index, get_DataSizeFlags(), rows, "implMap");
+        p_implMap = parseMetadataTable<SgAsmCilImplMap>(this, buf, index, get_DataSizeFlags(), rows, "implMap");
         break;
 
       case e_interfaceImpl:
-        p_interfaceImpl = parseMetadataTable<SgAsmCilInterfaceImpl>(buf, index, get_DataSizeFlags(), rows, "interfaceImpl");
+        p_interfaceImpl = parseMetadataTable<SgAsmCilInterfaceImpl>(this, buf, index, get_DataSizeFlags(), rows, "interfaceImpl");
         break;
 
       case e_manifestResource:
-        p_manifestResource = parseMetadataTable<SgAsmCilManifestResource>(buf, index, get_DataSizeFlags(), rows, "manifestResource");
+        p_manifestResource = parseMetadataTable<SgAsmCilManifestResource>(this, buf, index, get_DataSizeFlags(), rows, "manifestResource");
         break;
 
       case e_memberRef:
-        p_memberRef = parseMetadataTable<SgAsmCilMemberRef>(buf, index, get_DataSizeFlags(), rows, "memberRef");
+        p_memberRef = parseMetadataTable<SgAsmCilMemberRef>(this, buf, index, get_DataSizeFlags(), rows, "memberRef");
         break;
 
       case e_methodDef:
-        p_methodDef = parseMetadataTable<SgAsmCilMethodDef>(buf, index, get_DataSizeFlags(), rows, "methodDef");
+        p_methodDef = parseMetadataTable<SgAsmCilMethodDef>(this, buf, index, get_DataSizeFlags(), rows, "methodDef");
         break;
 
       case e_methodImpl:
-        p_methodImpl = parseMetadataTable<SgAsmCilMethodImpl>(buf, index, get_DataSizeFlags(), rows, "methodImpl");
+        p_methodImpl = parseMetadataTable<SgAsmCilMethodImpl>(this, buf, index, get_DataSizeFlags(), rows, "methodImpl");
         break;
 
       case e_methodSemantics:
-        p_methodSemantics = parseMetadataTable<SgAsmCilMethodSemantics>(buf, index, get_DataSizeFlags(), rows, "methodSemantics");
+        p_methodSemantics = parseMetadataTable<SgAsmCilMethodSemantics>(this, buf, index, get_DataSizeFlags(), rows, "methodSemantics");
         break;
 
       case e_methodSpec:
-        p_methodSpec = parseMetadataTable<SgAsmCilMethodSpec>(buf, index, get_DataSizeFlags(), rows, "methodSpec");
+        p_methodSpec = parseMetadataTable<SgAsmCilMethodSpec>(this, buf, index, get_DataSizeFlags(), rows, "methodSpec");
         break;
 
       case e_module:
-        p_module = parseMetadataTable<SgAsmCilModule>(buf, index, get_DataSizeFlags(), rows, "module");
+        p_module = parseMetadataTable<SgAsmCilModule>(this, buf, index, get_DataSizeFlags(), rows, "module");
         break;
 
       case e_moduleRef:
-        p_moduleRef = parseMetadataTable<SgAsmCilModuleRef>(buf, index, get_DataSizeFlags(), rows, "moduleRef");
+        p_moduleRef = parseMetadataTable<SgAsmCilModuleRef>(this, buf, index, get_DataSizeFlags(), rows, "moduleRef");
         break;
 
       case e_nestedClass:
-        p_nestedClass = parseMetadataTable<SgAsmCilNestedClass>(buf, index, get_DataSizeFlags(), rows, "nestedClass");
+        p_nestedClass = parseMetadataTable<SgAsmCilNestedClass>(this, buf, index, get_DataSizeFlags(), rows, "nestedClass");
         break;
 
       case e_param:
-        p_param = parseMetadataTable<SgAsmCilParam>(buf, index, get_DataSizeFlags(), rows, "param");
+        p_param = parseMetadataTable<SgAsmCilParam>(this, buf, index, get_DataSizeFlags(), rows, "param");
         break;
 
       case e_property:
-        p_property = parseMetadataTable<SgAsmCilProperty>(buf, index, get_DataSizeFlags(), rows, "property");
+        p_property = parseMetadataTable<SgAsmCilProperty>(this, buf, index, get_DataSizeFlags(), rows, "property");
         break;
 
       case e_propertyMap:
-        p_propertyMap = parseMetadataTable<SgAsmCilPropertyMap>(buf, index, get_DataSizeFlags(), rows, "propertyMap");
+        p_propertyMap = parseMetadataTable<SgAsmCilPropertyMap>(this, buf, index, get_DataSizeFlags(), rows, "propertyMap");
         break;
 
       case e_standAloneSig:
-        p_standAloneSig = parseMetadataTable<SgAsmCilStandAloneSig>(buf, index, get_DataSizeFlags(), rows, "standAloneSig");
+        p_standAloneSig = parseMetadataTable<SgAsmCilStandAloneSig>(this, buf, index, get_DataSizeFlags(), rows, "standAloneSig");
         break;
 
       case e_typeDef:
-        p_typeDef = parseMetadataTable<SgAsmCilTypeDef>(buf, index, get_DataSizeFlags(), rows, "typeDef");
+        p_typeDef = parseMetadataTable<SgAsmCilTypeDef>(this, buf, index, get_DataSizeFlags(), rows, "typeDef");
         break;
 
       case e_typeRef:
-        p_typeRef = parseMetadataTable<SgAsmCilTypeRef>(buf, index, get_DataSizeFlags(), rows, "typeRef");
+        p_typeRef = parseMetadataTable<SgAsmCilTypeRef>(this, buf, index, get_DataSizeFlags(), rows, "typeRef");
         break;
 
       case e_typeSpec:
-        p_typeSpec = parseMetadataTable<SgAsmCilTypeSpec>(buf, index, get_DataSizeFlags(), rows, "typeSpec");
+        p_typeSpec = parseMetadataTable<SgAsmCilTypeSpec>(this, buf, index, get_DataSizeFlags(), rows, "typeSpec");
         break;
 
       default:
@@ -1361,42 +1378,44 @@ void SgAsmCilMetadataHeap::parse(uint8_t* buf, size_t startOfMetaData)
 
 ////// from metadataRoot_C.txt
 
-SgAsmCilMetadataRoot* SgAsmCilMetadataRoot::parse()
+void SgAsmCilMetadataRoot::parse()
 {
   SgAsmCliHeader* clih = isSgAsmCliHeader(get_parent());
   ASSERT_not_null(clih);
 
   SgAsmPEFileHeader* fhdr = SageInterface::getEnclosingNode<SgAsmPEFileHeader>(this);
-  ROSE_ASSERT(fhdr!=nullptr);
+  ASSERT_not_null(fhdr);
 
-  uint64_t metaData = clih->get_metaData();
-  uint8_t* data = reinterpret_cast<uint8_t*>(&metaData);
+  uint64_t    metaData = clih->get_metaData();
+  uint8_t*    data = reinterpret_cast<uint8_t*>(&metaData);
   rose_addr_t rva = ByteOrder::le_to_host(*reinterpret_cast<uint32_t*>(data));
-  size_t size = ByteOrder::le_to_host(*reinterpret_cast<uint32_t*>(data+4));
-
+  size_t      size = ByteOrder::le_to_host(*reinterpret_cast<uint32_t*>(data+4));
   rose_addr_t base_va = clih->get_base_va();
-  rose_addr_t rva_offset = clih->get_rva_offset((rose_addr_t)rva);
+  rose_addr_t rva_offset = clih->get_rva_offset(rva);
 
-  std::cout << "------------------------SgAsmCilMetadataRoot::parse-----------------------------\n";
-  std::cout << "    rva: " << rva << " size: " << size << std::endl;
-  std::cout << "    base_va: " << base_va << " rva_offset: " << rva_offset << std::endl;
+  if (TRACE_CONSTRUCTION)
+  {
+    std::cerr << "------------------------SgAsmCilMetadataRoot::parse-----------------------------\n";
+    std::cerr << "    rva: " << rva << " size: " << size << std::endl;
+    std::cerr << "    base_va: " << base_va << " rva_offset: " << rva_offset << std::endl;
+  }
 
   /* Read the Signature via loader map. */
   // Note: probably want to allocate a larger buffer
-  uint32_t buf;
-  size_t nread = fhdr->get_loader_map()->readQuick(&buf, base_va + rva, sizeof buf);
-  std::cout << "    nread: " << nread << " buf: " << buf << " :isMagic:" << (buf == 0x424A5342) << "\n\n";
+  std::vector<uint8_t> buf(size, 0);
 
-  return this;
+  size_t nread = fhdr->get_loader_map()->readQuick(buf.data(), base_va + rva, size);
+  ROSE_ASSERT(nread == size);
+
+  this->parse(buf, 0);
 }
 
-void SgAsmCilMetadataRoot::parse(uint8_t* buf, size_t index)
+void SgAsmCilMetadataRoot::parse(std::vector<uint8_t>& buf, size_t index)
 {
   size_t start_of_MetadataRoot = index;
 
   if (TRACE_CONSTRUCTION)
     std::cerr << "Initialize the elements of the data structure" << std::endl;
-
 
   p_Signature = readExpected(read32bitValue, buf, index, MAGIC_SIGNATURE);
   if (TRACE_CONSTRUCTION)
@@ -1426,8 +1445,7 @@ void SgAsmCilMetadataRoot::parse(uint8_t* buf, size_t index)
   if (TRACE_CONSTRUCTION)
     std::cerr << "NumberOfStreams = " << p_NumberOfStreams << std::endl;
 
-
-  p_Streams = parseStreams(buf, index, start_of_MetadataRoot, get_NumberOfStreams());
+  p_Streams = parseStreams(this, buf, index, start_of_MetadataRoot, get_NumberOfStreams());
   if (TRACE_CONSTRUCTION)
     std::cerr << "Streams has " << p_Streams.size() << "elements." << std::endl;
 }
