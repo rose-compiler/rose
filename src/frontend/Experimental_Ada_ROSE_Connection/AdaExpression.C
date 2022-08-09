@@ -643,7 +643,11 @@ namespace
   {
     void handle(const SgNode& n)                 { SG_UNEXPECTED_NODE(n); }
 
-    void handle(const SgDeclarationStatement&)   { res = true; }
+    // scope qual requried for
+    void handle(const SgDeclarationStatement&)   { res = true; } // default for declarations
+    void handle(const SgInitializedName&)        { res = true; }
+
+    // no scope qual needed for
     void handle(const SgAdaTaskSpecDecl&)        { res = false; }
     void handle(const SgAdaProtectedSpecDecl&)   { res = false; }
     void handle(const SgAdaPackageSpecDecl&)     { res = false; }
@@ -652,7 +656,7 @@ namespace
     void handle(const SgAdaGenericInstanceDecl&) { res = false; }
     //~ void handle(const SgFunctionDeclaration&)  { res = false; }
 
-
+    // dependent on underlying data
     void handle(const SgAdaRenamingDecl& n)
     {
       res = si::ada::isObjectRenaming(n);
@@ -671,16 +675,15 @@ namespace
 
     if (expr.Expression_Kind == An_Identifier)
     {
-      const SgStatement* stmt = queryScopeStmt(expr, ctx);
+      const SgNode* astnode = queryCorrespondingAstNode(expr, ctx);
 
-      logTrace() << "An_Identifier? " << expr.Name_Image << " "
-                 << (stmt == nullptr ? std::string{"<0>"} : typeid(*stmt).name())
-                 << std::endl;
+      logTrace() << "An_Identifier?" << std::endl;
 
-      // \note getDecl_opt does not retrieve variable declarations
-      //       => assuming a is a variable of record: a.x (the dcl for a would be nullptr)
-      return stmt == nullptr || sg::dispatch(RoseRequiresScopeQual{}, stmt);
-      //~ return dcl != nullptr && sg::dispatch(RoseRequiresScopeQual(), dcl);
+      if (!astnode)
+        logTrace() << "Identifier '" << expr.Name_Image << "' has no corresponding node in ROSE."
+                   << std::endl;
+
+      return astnode == nullptr || sg::dispatch(RoseRequiresScopeQual{}, astnode);
     }
 
     if (expr.Expression_Kind == A_Selected_Component)
@@ -1015,9 +1018,9 @@ namespace
     return elem.The_Union.Expression.Expression_Kind;
   }
 
+
   SgExpression&
   getExprID_undecorated(Element_ID el, AstContext ctx, OperatorCallSupplement suppl = {});
-
 
   /// creates expressions from elements, but does not decorate
   ///   aggregates with SgAggregateInitializers
@@ -1033,6 +1036,8 @@ namespace
     {
       case An_Identifier:                             // 4.1
         {
+          // \todo use the queryCorrespondingAstNode function and the
+          //       generate the expression based on that result.
           logKind("An_Identifier");
 
           if (SgInitializedName* var = findFirst(asisVars(), expr.Corresponding_Name_Definition, expr.Corresponding_Name_Declaration))
@@ -1717,6 +1722,58 @@ getEnumRepresentationValue(Element_Struct& el, AstContext ctx)
             );
 
   return mkAdaIntegerLiteral(def.Representation_Value_Image);
+}
+
+SgNode*
+queryBuiltIn(AdaIdentifier adaIdent)
+{
+  static constexpr bool findFirstMatch = false /* syntactic sugar, always false */;
+
+  SgNode* res = nullptr;
+
+  findFirstMatch
+  || (res = findFirst(adaTypes(), adaIdent))
+  || (res = findFirst(adaPkgs(),  adaIdent))
+  || (res = findFirst(adaVars(),  adaIdent))
+  || (res = findFirst(adaExcps(), adaIdent))
+  ;
+
+  return res;
+}
+
+SgNode*
+queryCorrespondingAstNode(Expression_Struct& expr, AstContext ctx)
+{
+  static constexpr bool findFirstMatch = false /* syntactic sugar, always false */;
+
+  ADA_ASSERT(expr.Expression_Kind == An_Identifier);
+
+  SgNode* res = nullptr;
+
+  findFirstMatch
+  || (res = findFirst(asisVars(),   expr.Corresponding_Name_Definition, expr.Corresponding_Name_Declaration))
+  || (res = findFirst(asisDecls(),  expr.Corresponding_Name_Definition, expr.Corresponding_Name_Declaration))
+  || (res = findFirst(asisExcps(),  expr.Corresponding_Name_Definition, expr.Corresponding_Name_Declaration))
+  || (res = findFirst(asisTypes(),  expr.Corresponding_Name_Definition, expr.Corresponding_Name_Declaration))
+  || (res = findFirst(asisBlocks(), expr.Corresponding_Name_Declaration))
+  || (res = queryBuiltIn(expr.Name_Image))
+  ;
+
+  return res;
+}
+
+SgNode*
+queryCorrespondingAstNode(Element_Struct& elem, AstContext ctx)
+{
+  ADA_ASSERT(elem.Element_Kind == An_Expression);
+
+  return queryCorrespondingAstNode(elem.The_Union.Expression, ctx);
+}
+
+SgNode*
+queryCorrespondingAstNodeID(Element_ID id, AstContext ctx)
+{
+  return queryCorrespondingAstNode(retrieveAs(elemMap(), id), ctx);
 }
 
 } // namespace Ada_ROSE_Translation
