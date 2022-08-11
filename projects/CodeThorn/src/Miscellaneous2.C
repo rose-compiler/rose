@@ -3,11 +3,12 @@
 #include <cstdlib>
 #include "CodeThornException.h"
 
-#include "boost/algorithm/string.hpp"
-#include "boost/algorithm/string/trim.hpp"
-#include "boost/algorithm/string/regex.hpp"
-#include "boost/regex.hpp"
-#include "boost/lexical_cast.hpp"
+//#include "boost/algorithm/string.hpp"
+//#include "boost/algorithm/string/trim.hpp"
+//#include "boost/algorithm/string/regex.hpp"
+//#include "boost/regex.hpp"
+//#include "boost/lexical_cast.hpp"
+#include <regex>
 
 using namespace std;
 
@@ -226,8 +227,14 @@ list<int> CodeThorn::nDifferentRandomIntsInRange(int n, pair<int,int> range) {
 }
 
 std::vector<std::string> CodeThorn::Parse::commandLineArgs(std::string commandLine) {
-  vector<std::string> v; 		
-  boost::split_regex(v, commandLine, boost::regex("( )+"));
+  vector<std::string> v;	
+  //std::split_regex(v, commandLine, std::regex("( )+")); // below code shows how to replace boost split_regex
+  std::regex re("( )+");
+  sregex_token_iterator it(commandLine.begin(), commandLine.end(), re, -1);
+  sregex_token_iterator reg_end;
+  for (; it != reg_end; ++it) {
+    v.push_back(*it);
+  }
   cout<<"Parsing command line: found "<<v.size()<<" arguments."<<endl;
   return v;
 }
