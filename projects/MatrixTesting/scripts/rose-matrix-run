@@ -11,12 +11,13 @@ ETCDIR="$dir0/../etc/matrix"
 BALANCE_LANGUAGES=--balance-failures
 DATABASE="$ROSE_MATRIX_DATABASE"
 DRY_RUN=
+HOST_ROOT=
 IGNORE_SETUP_FAILURES=
 INTERACTIVE=
 KEEP_CONTAINERS=
 LIMIT_TESTS=
 LIMIT_TIME=
-MAX_SAVED_LINES=500
+MAX_SAVED_LINES=1000
 ONLY_SUPPORTED=
 PROJECT_NAME="mx"
 REBUILD_IMAGES=
@@ -50,6 +51,10 @@ help() {
     echo "        Loop endlessly, running tests forever, regardless of what other limits"
     echo "        might be set.  For instance, --forever overrides --max-count=1 and"
     echo "        --max-time=2h."
+    echo
+    echo "    --host-root=DIR"
+    echo "        Prefix to add to all source directories when mounting them in Docker"
+    echo "        containers."
     echo
     echo "    --ignore-setup-failures"
     echo "        Do not report to the database those builds that failed during a \"setup\""
@@ -518,9 +523,9 @@ remove-or-keep-container() {
 	    echo "set -x"
 	    echo "docker commit $container_name $restart_image_name"
 	    echo "docker run -it --hostname $image_name --privileged" \
-		 "--mount type=bind,src=${VARDIR}/spock,dst=/home/user/.spock" \
-		 "--mount type=bind,src=${SOURCE_CODE},dst=/home/user/project-source-ro" \
-		 "--mount type=bind,src=${rundir},dst=/home/user/run" \
+		 "--mount type=bind,src=${HOST_ROOT}${VARDIR}/spock,dst=/home/user/.spock" \
+		 "--mount type=bind,src=${HOST_ROOT}${SOURCE_CODE},dst=/home/user/project-source-ro" \
+		 "--mount type=bind,src=${HOST_ROOT}${rundir},dst=/home/user/run" \
 		 "--name $restart_container_name" \
 		 "$restart_image_name" \
 		 "sudo --login -u user"
@@ -666,9 +671,15 @@ run-test() {
 	[ -n "$KEEP_CONTAINERS" ] && echo "Restart command (if saved): ${rundir}/debug-container"
 	echo
     ) >"${rundir}/dribble"
+    chmod 666 "${rundir}/dribble"
 
     >"${rundir}/output"
-    [ -n "$INTERACTIVE" ] && touch "${rundir}/interactive"
+    chmod 666 "${rundir}/output"
+
+    if [ -n "$INTERACTIVE" ]; then
+	touch "${rundir}/interactive"
+	chmod 666 "${rundir}/interactive"
+    fi
 
     # Run the test
     echo
@@ -686,12 +697,12 @@ run-test() {
 
 	local mount_spock_switches=
 	if [ "$(get-phase-config "$phasedir" mount-spock yes)" = yes ]; then
-	    mount_spock_switches="--mount type=bind,src=${VARDIR}/spock,dst=/home/user/.spock"
+	    mount_spock_switches="--mount type=bind,src=${HOST_ROOT}${VARDIR}/spock,dst=/home/user/.spock"
 	fi
 
 	local mount_project_switches=
 	if [ "$(get-phase-config "$phasedir" mount-project yes)" = yes ]; then
-	    mount_project_switches="--mount type=bind,src=$SOURCE_CODE,dst=/home/user/project-source-ro,readonly"
+	    mount_project_switches="--mount type=bind,src=${HOST_ROOT}${SOURCE_CODE},dst=/home/user/project-source-ro,readonly"
 	fi
 
 	run docker run \
@@ -700,7 +711,7 @@ run-test() {
 	    --hostname "$image_name" \
 	    $mount_spock_switches \
 	    $mount_project_switches \
-	    --mount type=bind,src="${rundir}",dst="/home/user/run" \
+	    --mount type=bind,src="${HOST_ROOT}${rundir}",dst="/home/user/run" \
 	    --name "${container_name}" "$image_name" 2>&1 | scan-for-health
 
 	if [ "${PIPESTATUS[0]}" -eq 0 ]; then
@@ -748,6 +759,11 @@ while [ "$#" -gt 0 ]; do
 	--help|-h)
 	    help
 	    exit 0
+	    ;;
+
+	--host-root=*)
+	    HOST_ROOT="${1#--host-root=}"
+	    shift
 	    ;;
 
 	--ignore-setup-failures)

@@ -2,6 +2,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 bin_SCRIPTS =					\
 	rose-matrix-all-warning-types		\
 	rose-matrix-count-warnings		\
+	rose-matrix-docker-run			\
 	rose-matrix-monitor			\
 	rose-matrix-output			\
 	rose-matrix-prune-errors		\

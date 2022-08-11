@@ -68,7 +68,7 @@ run yum -y install vim hostname
 #########################################################################################################################
 
 add --chown=user:user container-scripts /home/user/container-scripts
-cmd sudo -i -u user bash -c 'container-scripts/run-test'
+cmd chown --quiet -R user:user /home/user; sudo -i -u user bash -c 'container-scripts/run-test'
 
 
 

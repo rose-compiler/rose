@@ -162,6 +162,7 @@ if [ "$FORMAT" == html ]; then
     echo "      </ul>"
     echo "    </li>"
     echo "    <li><a href=\"#dependencies\">Dependencies</a></li>"
+    echo "    <li><a href=\"#all_tabular\">All tabular information</a></li>"
     echo "    <li><a href=\"#info\">Additional information</a></li>"
     echo "  </ol>"
     echo "</p>"
@@ -227,7 +228,7 @@ These are the tests that completed in the last 24 hours.
 EOF
 echo
 rose-matrix-query -F$FORMAT reporting_time+$(one-day-ago) \
-		  rose reporting_time.d slave id os compiler languages build boost status \
+		  rose reporting_time.d slave id os compiler languages build boost status duration warnings \
     | indent
 
 ####################################################################################################
@@ -293,6 +294,18 @@ columns are for ROSE version $ROSE.
 EOF
 
 rose-matrix-dependencies -F$FORMAT status |indent
+
+####################################################################################################
+echo
+echo
+section "All tabular information" "all_tabular"
+paragraph <<EOF
+This is all the tabular information about the current test campaign. Each test also has additional
+information such as output and configuration files that are not part of this table but can be
+obtained with various portability testing command-line tools.
+EOF
+
+rose-matrix-query -F$FORMAT --limit=1000 id.d all |indent
 
 ####################################################################################################
 echo
