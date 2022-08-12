@@ -41,7 +41,7 @@
 #if defined(SgAsmCil%%Class.Name%%_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -704,7 +704,7 @@
         // using SgAsmCilDataStream::SgAsmCilDataStream;
         SgAsmCilMetadataHeap() = default;
 
-        void parse(uint8_t* buf, size_t startOfMetaData) override;
+        void parse(std::vector<uint8_t>& buf, size_t startOfMetaData) override;
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -840,14 +840,9 @@
 #endif
 
 #ifdef DOCUMENTATION
-        /** Property: Start offset of the byte stream
-         * @{ */
-        std::vector<uint8_t> get_Stream() const;
-        // void set_Stream(std::vector<uint8_t>);
-        /** @} */
 #else
         AsmCilUint8Heap.setDataPrototype("std::vector<uint8_t>", "Stream", "", NO_CONSTRUCTOR_PARAMETER,
-                                         BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                         NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
 
@@ -859,7 +854,13 @@
         // using SgAsmCilDataStream::SgAsmCilDataStream;
         SgAsmCilUint8Heap() = default;
 
-        void parse(uint8_t* buf, size_t startOfMetaData) override;
+        void parse(std::vector<uint8_t>& buf, size_t startOfMetaData) override;
+
+        /** Property: Returns stream representation
+         * @{ */
+              std::vector<uint8_t>& get_Stream()       { return p_Stream; }
+        const std::vector<uint8_t>& get_Stream() const { return p_Stream; }
+        /** @} */
 
     private:
         friend class boost::serialization::access;
@@ -894,14 +895,9 @@
 #endif
 
 #ifdef DOCUMENTATION
-        /** Property: Start offset of the byte stream
-         * @{ */
-        std::vector<uint32_t> get_Stream() const;
-        // void set_Stream(std::vector<uint32_t>);
-        /** @} */
 #else
         AsmCilUint32Heap.setDataPrototype("std::vector<uint32_t>", "Stream", "", NO_CONSTRUCTOR_PARAMETER,
-                                         BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                          NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
 
@@ -913,7 +909,13 @@
         // using SgAsmCilDataStream::SgAsmCilDataStream;
         SgAsmCilUint32Heap() = default;
 
-        void parse(uint8_t* buf, size_t startOfMetaData) override;
+        void parse(std::vector<uint8_t>& buf, size_t startOfMetaData) override;
+        /** Property: Returns stream representation
+         * @{ */
+              std::vector<uint32_t>& get_Stream()       { return p_Stream; }
+        const std::vector<uint32_t>& get_Stream() const { return p_Stream; }
+        /** @} */
+
 
     private:
         friend class boost::serialization::access;
@@ -1019,7 +1021,7 @@
          *   parse will add get_Offset to startOfMetaData to find the first byte of a
          *   stream.
          */
-        virtual void parse(uint8_t* buf, size_t startOfMetaData) = 0;
+        virtual void parse(std::vector<uint8_t>& buf, size_t startOfMetaData) = 0;
 
     private:
         friend class boost::serialization::access;
@@ -1202,12 +1204,17 @@
          */
         static constexpr uint32_t MAGIC_SIGNATURE = 0x424A5342;
 
+        /** Declares the parse function as called from the Cil section header object
+         *  @pre isSgAsmCliHeader(this->get_parent()) != nullptr
+         */
+        void parse();
+
         /** Defines the parse function.
          *  @param buf the binary buffer
          *  @param index the start location of the metadata root object.
          *         buf[index] is the location of the magic number.
          */
-        void parse(uint8_t* buf, size_t index);
+        void parse(std::vector<uint8_t>& buf, size_t index);
 
         /** accessor functions to return specific heaps
          * @{ */
