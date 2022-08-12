@@ -380,7 +380,7 @@ Unparser::computeNameQualification(SgSourceFile* file)
 
        // DQ (10/17/2020): I have discovered that this was added by Tristan, and it is not clear to me what it is about.
        // After discussion with Tristan, this is specific to Jovial to C++ translator, and supports the development of
-       // seperate header files that are built, instead of using the single translation unit and the unparse header file
+       // separate header files that are built, instead of using the single translation unit and the unparse header file
        // support that has been recently built into ROSE (last year).  This is fine, but it brings up a possible somewhat
        // philosophical discussion about how to defaine a translation unit in C and C++, nameily that the SgFile and SgSourceFile
        // is really a translation unit for the source code in any source file (and does not refer to only the source file
@@ -442,7 +442,7 @@ Unparser::computeNameQualification(SgSourceFile* file)
    }
 
 
-// DQ (9/2/2008): Seperate out the details of unparsing source files from binary files.
+// DQ (9/2/2008): Separate out the details of unparsing source files from binary files.
 void
 Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStatement* unparseScope )
    {
@@ -453,7 +453,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
 
      ASSERT_not_null(file);
 
-  // DQ (10/29/2018): I now think we need to support this mechanism of specifying the scope to be unparsed seperately.
+  // DQ (10/29/2018): I now think we need to support this mechanism of specifying the scope to be unparsed separately.
   // This is essential to the support for header files representing nested scopes inside of the global scope.
   // Traversing the global scope does not permit these inner nested scopes to be traversed using the unparser.
 
@@ -836,7 +836,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
         {
           if (file->get_unparse_tokens() == true)
              {
-            // This now unparses the raw token stream as a seperate file with the prefix "rose_tokens_"
+            // This now unparses the raw token stream as a separate file with the prefix "rose_tokens_"
 
             // This is just unparsing the token stream WITHOUT using the mapping information that relates it to the AST.
             // MH-20140701 removed comment-out
@@ -910,7 +910,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
                printf ("Unparse using C/C++ unparser by default: unparseScope = %p \n",unparseScope);
                printf ("In Unparser::unparseFile(): case SgFile::e_Cxx_language: this->currentFile->getFileName() = %s \n",this->currentFile->getFileName().c_str());
 #endif
-            // DQ (10/29/2018): I now think we need to support this mechanism of specifying the scope to be unparsed seperately.
+            // DQ (10/29/2018): I now think we need to support this mechanism of specifying the scope to be unparsed separately.
             // This is essential to the support for header files representing nested scopes inside of the global scope.
             // Traversing the global scope does not permit these inner nested scopes to be traversed using the unparser.
 
@@ -3119,7 +3119,7 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
 #endif
 
 #if 0
-  // DQ (10/29/2018): I now think we need to support this mechanism of specifying the scope to be unparsed seperately.
+  // DQ (10/29/2018): I now think we need to support this mechanism of specifying the scope to be unparsed separately.
   // This is essential to the support for header files representing nested scopes inside of the global scope.
   // Traversing the global scope does not permit these inner nested scopes to be traversed using the unparser.
 
@@ -3944,7 +3944,7 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
                     printf ("In unparseFile(SgFile*): inheritedAttributeInfo.get_current_source_file() = %p filename = %s \n",
                          inheritedAttributeInfo.get_current_source_file(),inheritedAttributeInfo.get_current_source_file()->getFileName().c_str());
 #endif
-                 // DQ (10/29/2018): I now think we need to support this mechanism of specifying the scope to be unparsed seperately.
+                 // DQ (10/29/2018): I now think we need to support this mechanism of specifying the scope to be unparsed separately.
                  // This is essential to the support for header files representing nested scopes inside of the global scope.
                  // Traversing the global scope does not permit these inner nested scopes to be traversed using the unparser.
 
@@ -4142,8 +4142,8 @@ namespace EDG_ROSE_Translation
 SgSourceFile*
 buildSourceFileForHeaderFile(SgProject* project, string includedFileName)
    {
-  // When we have not processed all of the header files we need to support specific ones seperately.
-  // This function supports this seperate handlign for individual header files and is part of the
+  // When we have not processed all of the header files we need to support specific ones separately.
+  // This function supports this separate handlign for individual header files and is part of the
   // header fine unparsing optimization.
 
      SgSourceFile* include_sourceFile = NULL;
@@ -4995,7 +4995,7 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
   // DQ (3/10/2021): Add performance analysis support.
      TimingPerformance timer ("AST unparseIncludedFiles:");
 
-  // DQ (3/11/2020): The transformation of header files causes them to be output into a seperate directory location.
+  // DQ (3/11/2020): The transformation of header files causes them to be output into a separate directory location.
   // The paths associated with each transformed header file must be saved so that then can be output on the compile
   // line for the generated source files.  The current design supports an extra include path list so that we can support
   // the specification of the paths to the transformed header files ahead of the source file's original include path list.
@@ -5469,7 +5469,7 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
                        }
 #endif
 #if 0
-                 // DQ (9/27/2019): Since header files are in a seperate list (I think) it should not be an error to misss it in this list.
+                 // DQ (9/27/2019): Since header files are in a separate list (I think) it should not be an error to misss it in this list.
                  // I think I need to re-evaluate this!
                     printf ("NOTE: originalFileName = %s not found in unparseSourceFileMap \n",originalFileName.c_str());
 #endif
@@ -5505,7 +5505,7 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
 #endif
                   }
 #if 1
-            // DQ (9/27/2019): Since header files are in a seperate list (I think) it should not be an error to misss it in this list.
+            // DQ (9/27/2019): Since header files are in a separate list (I think) it should not be an error to misss it in this list.
             // I think I need to re-evaluate this!
                ROSE_ASSERT(unparseSourceFileMap.find(originalFileName) != unparseSourceFileMap.end());
 #endif
@@ -5522,7 +5522,7 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
                   }
 #endif
 #if 1
-            // DQ (9/27/2019): Since header files are in a seperate list (I think) it should not be an error to misss it in this list.
+            // DQ (9/27/2019): Since header files are in a separate list (I think) it should not be an error to misss it in this list.
             // I think I need to re-evaluate this!
                ROSE_ASSERT(unparseSourceFileMap.find(originalFileName) != unparseSourceFileMap.end());
 #endif
@@ -5860,7 +5860,7 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
                       // DQ (11/7/2018): We need a way to add include directories to the generated command line for the backend compiler.
                       // Then we need to add the adjusted_header_file_directory as an include directory to the backend compiler's command line.
                       // We should maybe add a list of include directories to add the the generated command line for the backend compiler.
-                      // This would be seperated from the list of includes that is collected from the user specified command line (since
+                      // This would be separated from the list of includes that is collected from the user specified command line (since
                       // that is used directly so that we capture anything that we don't explicitly collect).
 
                       // unparsedFile->get_project()->get_quotedIncludesSearchPaths().push_back(source_file_directory);
@@ -6254,7 +6254,7 @@ void unparseProject ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, 
   // DQ (8/7/2018): Call the name qualification support on each file in the project.
      for (size_t i=0; i < project->get_fileList_ptr()->get_listOfFiles().size(); ++i)
         {
-       // These are actually seperate translation units.
+       // These are actually separate translation units.
           SgFile* file = project->get_fileList_ptr()->get_listOfFiles()[i];
           ASSERT_not_null(file);
           SgSourceFile* sourceFile = isSgSourceFile(file);
