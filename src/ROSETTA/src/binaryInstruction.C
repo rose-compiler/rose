@@ -19933,7 +19933,7 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilAssembly_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -20037,7 +20037,7 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilAssemblyOS_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -20103,7 +20103,7 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilAssemblyProcessor_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -20269,7 +20269,7 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilAssemblyRef_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -20386,7 +20386,7 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilAssemblyRefOS_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -20467,7 +20467,7 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilAssemblyRefProcessor_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -20557,7 +20557,7 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilClassLayout_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -20662,7 +20662,7 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilConstant_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -20756,7 +20756,7 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilCustomAttribute_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -20848,7 +20848,7 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilDeclSecurity_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -20940,7 +20940,7 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilEvent_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -21019,7 +21019,7 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilEventMap_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -21135,7 +21135,7 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilExportedType_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -21231,7 +21231,7 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilField_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -21310,7 +21310,7 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilFieldLayout_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -21387,7 +21387,7 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilFieldMarshal_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -21464,7 +21464,7 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilFieldRVA_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -21554,7 +21554,7 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilFile_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -21659,7 +21659,7 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilGenericParam_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -21740,7 +21740,7 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilGenericParamConstraint_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -21843,7 +21843,7 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilImplMap_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -21924,7 +21924,7 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilInterfaceImpl_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -22027,7 +22027,7 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilManifestResource_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -22121,7 +22121,7 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilMemberRef_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -22252,7 +22252,7 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilMethodDef_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -22350,7 +22350,7 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilMethodImpl_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -22442,7 +22442,7 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilMethodSemantics_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -22521,7 +22521,7 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilMethodSpec_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -22637,7 +22637,7 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilModule_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -22707,7 +22707,7 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilModuleRef_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -22782,7 +22782,7 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilNestedClass_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -22872,7 +22872,7 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilParam_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -22964,7 +22964,7 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilProperty_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -23043,7 +23043,7 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilPropertyMap_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -23107,7 +23107,7 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilStandAloneSig_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -23234,7 +23234,7 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilTypeDef_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -23332,7 +23332,7 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilTypeRef_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -23398,7 +23398,7 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilTypeSpec_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(uint8_t* buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -24058,7 +24058,7 @@ void Grammar::setUpBinaryInstructions() {
         // using SgAsmCilDataStream::SgAsmCilDataStream;
         SgAsmCilMetadataHeap() = default;
 
-        void parse(uint8_t* buf, size_t startOfMetaData) override;
+        void parse(std::vector<uint8_t>& buf, size_t startOfMetaData) override;
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -24194,14 +24194,9 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
 #ifdef DOCUMENTATION
-        /** Property: Start offset of the byte stream
-         * @{ */
-        std::vector<uint8_t> get_Stream() const;
-        // void set_Stream(std::vector<uint8_t>);
-        /** @} */
 #else
         AsmCilUint8Heap.setDataPrototype("std::vector<uint8_t>", "Stream", "", NO_CONSTRUCTOR_PARAMETER,
-                                         BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                         NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
 
@@ -24213,7 +24208,14 @@ void Grammar::setUpBinaryInstructions() {
         // using SgAsmCilDataStream::SgAsmCilDataStream;
         SgAsmCilUint8Heap() = default;
 
-        void parse(uint8_t* buf, size_t startOfMetaData) override;
+        void parse(std::vector<uint8_t>& buf, size_t startOfMetaData) override;
+
+        /** Property: Returns stream representation
+         * @{ */
+              std::vector<uint8_t>& get_Stream()       { return p_Stream; }
+        const std::vector<uint8_t>& get_Stream() const { return p_Stream; }
+        /** @} */
+
 
     private:
         friend class boost::serialization::access;
@@ -24248,14 +24250,9 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
 #ifdef DOCUMENTATION
-        /** Property: Start offset of the byte stream
-         * @{ */
-        std::vector<uint32_t> get_Stream() const;
-        // void set_Stream(std::vector<uint32_t>);
-        /** @} */
 #else
         AsmCilUint32Heap.setDataPrototype("std::vector<uint32_t>", "Stream", "", NO_CONSTRUCTOR_PARAMETER,
-                                         BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                          NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
 
@@ -24267,7 +24264,13 @@ void Grammar::setUpBinaryInstructions() {
         // using SgAsmCilDataStream::SgAsmCilDataStream;
 
         SgAsmCilUint32Heap() = default;
-        void parse(uint8_t* buf, size_t startOfMetaData) override;
+        void parse(std::vector<uint8_t>& buf, size_t startOfMetaData) override;
+
+        /** Property: Returns stream representation
+         * @{ */
+              std::vector<uint32_t>& get_Stream()       { return p_Stream; }
+        const std::vector<uint32_t>& get_Stream() const { return p_Stream; }
+        /** @} */
 
     private:
         friend class boost::serialization::access;
@@ -24375,7 +24378,7 @@ void Grammar::setUpBinaryInstructions() {
          *   parse will add get_Offset to startOfMetaData to find the first byte of a
          *   stream.
          */
-        virtual void parse(uint8_t* buf, size_t startOfMetaData) {};
+        virtual void parse(std::vector<uint8_t>& buf, size_t startOfMetaData) {};
 
     private:
         friend class boost::serialization::access;
@@ -24558,13 +24561,17 @@ void Grammar::setUpBinaryInstructions() {
          */
         static constexpr uint32_t MAGIC_SIGNATURE = 0x424A5342;
 
-        /** Defines the parse function.
+        /** Declares the parse function as called from the Cil section header object
+         *  @pre isSgAsmCliHeader(this->get_parent()) != nullptr
+         */
+        void parse();
+
+        /** Declares the parse function based of buffer and index.
          *  @param buf the binary buffer
          *  @param index the start location of the metadata root object.
          *         buf[index] is the location of the magic number.
          */
-        void parse(uint8_t* buf, size_t index);
-        virtual SgAsmCilMetadataRoot* parse() /* override */;
+        void parse(std::vector<uint8_t>& buf, size_t index);
 
         /** accessor functions to return specific heaps
          * @{ */

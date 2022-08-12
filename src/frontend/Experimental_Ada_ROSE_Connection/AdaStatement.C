@@ -118,7 +118,7 @@ namespace
     ADA_ASSERT (expr.Expression_Kind == An_Identifier);
     logKind("An_Identifier");
 
-    SgStatement* dcl = queryScopeStmt(expr, ctx);
+    SgNode* dcl = queryCorrespondingAstNode(expr, ctx);
 
     if (dcl == nullptr)
     {
@@ -127,7 +127,7 @@ namespace
       ROSE_ABORT();
     }
 
-    SgScopeStatement*       res = sg::dispatch(ScopeQuery{}, dcl);
+    SgScopeStatement* res = sg::dispatch(ScopeQuery{}, dcl);
 
     return SG_DEREF(res);
   }
@@ -3019,15 +3019,6 @@ queryDecl(Expression_Struct& expr, AstContext ctx)
   return res;
 }
 
-SgStatement*
-queryScopeStmt(Expression_Struct& expr, AstContext ctx)
-{
-  SgStatement* res = queryDecl(expr, ctx);
-
-  if (res == nullptr) res = findFirst(asisBlocks(), expr.Corresponding_Name_Declaration);
-
-  return res;
-}
 
 SgFunctionDeclaration*
 queryFunctionDecl(Expression_Struct& expr, SgFunctionParameterList&, AstContext ctx)
