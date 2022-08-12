@@ -73,10 +73,10 @@ MarkBackendSpecificFunctionsAsCompilerGenerated::MarkBackendSpecificFunctionsAsC
      targetFile = visitor.targetFileInfo;
 
   // DQ (12/6/2007): Skip the output of this message for Fortran applications
-  // (since we handle Fortran intrinsit functions more directly in the front-end)
+  // (since we handle Fortran intrinsic functions more directly in the front-end)
   // if (targetFile == NULL)
   // Rasmussen (3/12/2018): Added check for Jovial language
-     if (targetFile == NULL &&
+     if (targetFile == nullptr &&
              (     SageInterface::is_Fortran_language() == false
                 && SageInterface::is_Ada_language() == false
                 && SageInterface::is_Jovial_language() == false
