@@ -3747,7 +3747,56 @@ bool ClangToSageTranslator::VisitUnaryExprOrTypeTraitExpr(clang::UnaryExprOrType
 
     switch (unary_expr_or_type_trait_expr->getKind()) {
         case clang::UETT_SizeOf:
-            if (type != NULL) *node = SageBuilder::buildSizeOfOp_nfi(type);
+            if (type != NULL) 
+            {
+        std::map<SgClassType *, bool>::iterator bool_it = p_class_type_decl_first_see_in_type.find(isSgClassType(type));
+               SgSizeOfOp* sizeofOp = SageBuilder::buildSizeOfOp_nfi(type);
+
+               //Pei-Hung (08/16/22): try to follow VisitTypedefDecl to check if the classType is first seen 
+
+               clang::QualType argumentQualType = unary_expr_or_type_trait_expr->getArgumentType();
+               const clang::Type* argumentType = argumentQualType.getTypePtr();
+               bool isembedded = false;
+               bool iscompleteDefined = false;
+
+               while((isa<clang::ElaboratedType>(argumentType)) || (isa<clang::PointerType>(argumentType)) || (isa<clang::ArrayType>(argumentType)))
+               {
+                  if(isa<clang::ElaboratedType>(argumentType))
+                  {
+                    argumentQualType = ((clang::ElaboratedType *)argumentType)->getNamedType();
+                  }
+                  else if(isa<clang::PointerType>(argumentType))
+                  {
+                    argumentQualType = ((clang::PointerType *)argumentType)->getPointeeType();
+                  }
+                  else if(isa<clang::ArrayType>(argumentType))
+                  {
+                    argumentQualType = ((clang::ArrayType *)argumentType)->getElementType();
+                  }
+                  argumentType = argumentQualType.getTypePtr();
+               }
+
+               if(isa<clang::RecordType>(argumentType))
+               {
+                  clang::RecordType* argumentRecordType = (clang::RecordType*)argumentType;
+                  clang::RecordDecl* recordDeclaration = argumentRecordType->getDecl();
+                  isembedded = recordDeclaration->isEmbeddedInDeclarator();
+                  iscompleteDefined = recordDeclaration->isCompleteDefinition();
+               }
+
+               if (isSgClassType(type) && iscompleteDefined) {
+                   std::map<SgClassType *, bool>::iterator bool_it = p_class_type_decl_first_see_in_type.find(isSgClassType(type));
+                   ROSE_ASSERT(bool_it != p_class_type_decl_first_see_in_type.end());
+                   if (bool_it->second) {
+                       // Pei-Hung (08/16/22) If it is first seen, the definition should be unparsed in sizeofOp
+                       sizeofOp->set_sizeOfContainsBaseTypeDefiningDeclaration(true);
+                       bool_it->second = false;
+                   }
+                 
+               }
+
+               *node = sizeofOp;
+            }
             else if (expr != NULL) *node = SageBuilder::buildSizeOfOp_nfi(expr);
             else res = false;
             break;
