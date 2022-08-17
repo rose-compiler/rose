@@ -65,6 +65,9 @@ ifeq (@(ENABLE_TESTS),yes)
     run $(tool_compile_linkexe) workListTests.C
     run $(test) workListTests
 
+    run $(tool_compile_linkexe) resultUnitTests.C
+    run $(test) resultUnitTests
+
     # Test SQLite database
     ifneq (@(WITH_SQLITE),no)
         run $(tool_compile_linkexe) -DDRIVER=1 databaseUnitTests.C

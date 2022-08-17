@@ -112,7 +112,16 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private:
     template<class Derived, class Value, class BaseIterator>
-    class BidirectionalIterator: public std::iterator<std::bidirectional_iterator_tag, Value> {
+    class BidirectionalIterator {
+
+    public:
+        // Five standard iterator types
+        using iterator_category = std::bidirectional_iterator_tag;
+        using value_type = Value;
+        using difference_type = std::ptrdiff_t;
+        using pointer = Value*;
+        using reference = Value&;
+
     protected:
         BaseIterator base_;
         BidirectionalIterator() {}

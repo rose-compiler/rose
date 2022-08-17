@@ -728,7 +728,16 @@ public:                                                 // public only for the s
     /** Base class for edge iterators. This isn't normally used directly by users except for its public methods inherited by
      *  subclasses. */
     template<class Derived, class Value, class Node, class BaseIter, class VList>
-    class EdgeBaseIterator: public std::iterator<std::bidirectional_iterator_tag, Value> {
+    class EdgeBaseIterator {
+    public:
+        // Five standard iterator types
+        using iterator_category = std::bidirectional_iterator_tag;
+        using value_type = Value;
+        using difference_type = std::ptrdiff_t;
+        using pointer = Value*;
+        using reference = Value&;
+
+    private:
         EdgePhase phase_;                               // IN_EDGES, OUT_EDGES or N_PHASES (graph edges)
         BaseIter iter_;                                 // EdgeList::NodeIterator or EdgeList::ConstNodeIterator
         VList *vlist_;                                  // (const) VirtualList<Edge> when phase_ is IN_EDGES or OUT_EDGES
@@ -841,7 +850,16 @@ public:                                                 // public only for the s
 
     /** Base class for vertex iterators. */
     template<class Derived, class Value, class Node, class BaseIter>
-    class VertexBaseIterator: public std::iterator<std::bidirectional_iterator_tag, Value> {
+    class VertexBaseIterator {
+    public:
+        // Five standard iterator types
+        using iterator_category = std::bidirectional_iterator_tag;
+        using value_type = Value;
+        using difference_type = std::ptrdiff_t;
+        using pointer = Value*;
+        using reference = Value&;
+
+    private:
         BaseIter base_;                                 // VertexList::NodeIterator or VertexList::ConstNodeIterator
     protected:
         friend class Graph;
