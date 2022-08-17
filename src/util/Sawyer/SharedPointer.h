@@ -86,9 +86,9 @@ private:
 
     template<class S>
     void load(S &s, const unsigned /*version*/) {
-        if (pointee_!=NULL && 0==releaseOwnership(pointee_))
+        if (pointee_ != nullptr && 0==releaseOwnership(pointee_))
             delete pointee_;
-        pointee_ = NULL;
+        pointee_ = nullptr;
         s >> BOOST_SERIALIZATION_NVP(pointee_);
         acquireOwnership(pointee_);
     }
@@ -97,7 +97,7 @@ private:
     
 public:
     /** Constructs an empty shared pointer. */
-    SharedPointer(): pointee_(NULL) {}
+    SharedPointer(): pointee_(nullptr) {}
 
     /** Constructs a new pointer that shares ownership of the pointed-to object with the @p other pointer. The pointed-to
      *  object will only be deleted after both pointers are deleted.
@@ -118,7 +118,7 @@ public:
      *  undefined behavior. */
     template<class Y>
     explicit SharedPointer(Y *rawPtr): pointee_(rawPtr) {
-        if (pointee_!=nullptr)
+        if (pointee_ != nullptr)
             acquireOwnership(pointee_);
     }
 
@@ -137,7 +137,7 @@ public:
     template<class Y>
     SharedPointer& operator=(const SharedPointer<Y> &other) {
         if (pointee_!=other.getRawPointer()) {
-            if (pointee_!=NULL && 0==releaseOwnership(pointee_))
+            if (pointee_ != nullptr && 0 == releaseOwnership(pointee_))
                 delete pointee_;
             pointee_ = other.getRawPointer();
             acquireOwnership(pointee_);
@@ -148,9 +148,9 @@ public:
 
     /** Assignment.  This pointer is caused to point to nothing. */
     SharedPointer& operator=(const Sawyer::Nothing&) {
-        if (pointee_!=NULL && 0==releaseOwnership(pointee_))
+        if (pointee_ != nullptr && 0 == releaseOwnership(pointee_))
             delete pointee_;
-        pointee_ = NULL;
+        pointee_ = nullptr;
         return *this;
     }
 
@@ -247,7 +247,7 @@ public:
      *  SharedPointer<Object> obj = ...;
      *  if (!obj) ...
      * @endcode */
-    bool operator!() const { return pointee_==NULL; }
+    bool operator!() const { return pointee_ == nullptr; }
 
     /** Print a shared pointer.
      *
@@ -398,7 +398,7 @@ inline size_t SharedPointer<T>::ownershipCount(T *rawPtr) {
 
 template<class T>
 inline void SharedPointer<T>::acquireOwnership(Pointee *rawPtr) {
-    if (rawPtr!=nullptr) {
+    if (rawPtr != nullptr) {
         SAWYER_THREAD_TRAITS::LockGuard lock(rawPtr->SharedObject::mutex_);
         ++rawPtr->SharedObject::nrefs_;
     }
@@ -406,7 +406,7 @@ inline void SharedPointer<T>::acquireOwnership(Pointee *rawPtr) {
 
 template<class T>
 inline size_t SharedPointer<T>::releaseOwnership(Pointee *rawPtr) {
-    if (rawPtr!=nullptr) {
+    if (rawPtr != nullptr) {
         SAWYER_THREAD_TRAITS::LockGuard lock(rawPtr->SharedObject::mutex_);
         assert(rawPtr->SharedObject::nrefs_ > 0);
         return --rawPtr->SharedObject::nrefs_;
