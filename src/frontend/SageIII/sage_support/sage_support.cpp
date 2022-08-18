@@ -1527,70 +1527,6 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
           file->set_disable_edg_backend(true);
         }
 
-  // DQ (2/6/2009): Can use this assertion with the build function SageBuilder::buildFile().
-  // DQ (2/3/2009): I think this is a new assertion!
-  // ROSE_ASSERT(file != NULL);
-  // file->display("SgFile* determineFileType(): before calling file->callFrontEnd()");
-
-#if 0
-  // DQ (6/12/2013): This is the functionality that we need to separate out and run after all
-  // of the SgSourceFile IR nodes are constructed.
-
-  // The frontend is called explicitly outside the constructor since that allows for a cleaner
-  // control flow. The callFrontEnd() relies on all the "set_" flags to be already called therefore
-  // it was placed here.
-  // if ( isSgUnknownFile(file) == NULL && file != NULL  )
-     if ( file != NULL && isSgUnknownFile(file) == NULL )
-        {
-       // printf ("Calling file->callFrontEnd() \n");
-
-       // TOO1 (05/14/2013): Signal handling for -rose:keep_going
-          if (file->get_project()->get_keep_going())
-             {
-               struct sigaction act;
-               act.sa_handler = HandleFrontendSignal;
-               sigemptyset(&act.sa_mask);
-               act.sa_flags = 0;
-               sigaction(SIGSEGV, &act, 0);
-               sigaction(SIGABRT, &act, 0);
-             }
-
-          if (sigsetjmp(rose__sgproject_parse_mark, 0) == -1)
-             {
-               std::cout
-                    << "[WARN] Ignoring frontend failure "
-                    << " as directed by -rose:keep_going"
-                    << std::endl;
-               file->set_frontendErrorCode(-1);
-             }
-            else
-             {
-               try
-                  {
-                    nextErrorCode = file->callFrontEnd();
-                  }
-               catch (...)
-                  {
-                 // TOO1 (05/14/2013): Handling for -rose:keep_going
-                    std::cout << "[WARN] Caught frontend exception" << std::endl;
-                    if (file->get_project()->get_keep_going())
-                       {
-                         file->set_frontendErrorCode(-1);
-                       }
-                      else
-                       {
-                         throw;
-                       }
-                  }
-             }
-
-       // printf ("DONE: Calling file->callFrontEnd() \n");
-          ROSE_ASSERT ( nextErrorCode <= 3);
-        }
-
-#error "DEAD CODE!"
-
-#else
 #if 0
   // DQ (6/12/2013): I think this is required to support having all of the SgSourceFile
   // IR nodes pre-built as part of the new Java support required to be better performance
@@ -1600,7 +1536,6 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
      printf ("Disabling the call to the frontend so that we can setup the SgSourceFile IR nodes once at the start and then call the frontend on each of them as we process all of the files \n");
      printf ("***************************************************************************************************************************************************************************** \n");
      printf ("***************************************************************************************************************************************************************************** \n");
-#endif
 #endif
 
   // Keep the filename stored in the Sg_File_Info consistant.  Later we will want to remove this redundency
@@ -2315,7 +2250,8 @@ SgProject::parse()
      Rose_STL_Container<string>::iterator nameIterator = p_sourceFileNameList.begin();
      unsigned int i = 0;
 
-#if 0
+#define DEADCODE 0
+#if DEADCODE
   // DQ (6/13/2013): This is older code from when we build each SgFile and processed in immediately.
   // We don't want such a design, thus we now build all of the SgFile IR nodes first, and then iterate
   // over them to call the frontend on each of them (this could likely be done in parallel as well).
