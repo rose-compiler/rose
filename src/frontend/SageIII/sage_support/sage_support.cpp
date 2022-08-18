@@ -323,23 +323,10 @@ SgValueExp::get_constant_folded_value_as_string() const
           case V_SgTemplateParameterVal:
              {
             // Note that constant folding on SgTemplateParameterVal expressions does not make any sense!
-#define DEADCODE 0
-#define UNDEADCODE 1
-#if UNDEADCODE
                const SgTemplateParameterVal* templateParameterValueExpression = isSgTemplateParameterVal(this);
                ASSERT_not_null(templateParameterValueExpression);
                string stringName = templateParameterValueExpression->get_template_parameter_name();
-            // printf ("stringName of constant folded expression = %s \n",stringName);
-            // snprintf (buffer,max_buffer_size,"%s",stringName.c_str());
-            // s = buffer;
                s = stringName;
-#else
-#error "DEAD CODE!"
-            // DQ (11/28/2011): I hope that it does not make since to call this case...make it an error to do so...
-               printf ("Note that constant folding on SgTemplateParameterVal expressions does not make any sense! \n");
-               s = "_constant_folding_on_SgTemplateParameterVal_expressions_does_not_make_any_sense_";
-#error "DEAD CODE!"
-#endif
                break;
              }
 
