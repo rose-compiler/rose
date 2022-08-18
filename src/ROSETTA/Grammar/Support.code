@@ -11272,7 +11272,15 @@ SgSymbolTable::find_function()
              {
             // if(isSgFunctionSymbol((*p_iterator).second))
             //      return ((SgFunctionSymbol *)(*p_iterator).second);
-               if (p_iterator->second->variantT() == V_SgFunctionSymbol)
+
+            // DQ (8/3/2022): I think this needs to support the variant being either a V_SgFunctionSymbol or a V_SgMemberFunctionSymbol.
+            // Else we would need another function to support member functions (which might be the better solution).
+            // Better yet, this code should be using a consistant way to check for SgFunctionSymbol IR nodes as is done in 
+            // the next_function_symbol() function.
+            // if (p_iterator->second->variantT() == V_SgFunctionSymbol)
+            //      return (SgFunctionSymbol *) p_iterator->second;
+            // if (p_iterator->second->variantT() == V_SgFunctionSymbol || p_iterator->second->variantT() == V_SgMemberFunctionSymbol)
+               if (isSgFunctionSymbol((*p_iterator).second))
                     return (SgFunctionSymbol *) p_iterator->second;
                p_iterator++;
              }

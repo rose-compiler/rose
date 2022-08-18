@@ -7896,18 +7896,35 @@ Unparse_ExprStmt::unparseTrailingFunctionModifiers(SgMemberFunctionDeclaration* 
              }
         }
 
+  // DQ (7/9/2022): This can only be output for member function declarations defined in the class.
   // DQ (8/11/2014): Added support for final keyword unparsing.
      if (mfuncdecl_stmt->get_declarationModifier().isFinal() == true)
         {
        // DQ (2/12/2019): Testing, final can't be used on prototypes (I think).
        // curprint(" /* output from test 1 */ ");
-          curprint(" final");
+       // curprint(" final");
+       // DQ (7/10/2022): "final" is not a keyword, but it can only be used like a keyword 
+       // with member function declarations inside of the associated class definition.
+       // curprint(" override");
+          SgClassDefinition* parentClassDefinition = isSgClassDefinition(mfuncdecl_stmt->get_parent());
+          if (parentClassDefinition != NULL && mfuncdecl_stmt->get_scope() == parentClassDefinition)
+             {
+               curprint(" final");
+             }
         }
 
+  // DQ (7/9/2022): This can only be output for member function declarations defined in the class.
   // DQ (8/11/2014): Added support for final keyword unparsing.
      if (mfuncdecl_stmt->get_declarationModifier().isOverride() == true)
         {
-          curprint(" override");
+       // DQ (7/10/2022): "override" is not a keyword, but it can only be used like a keyword 
+       // with member function declarations inside of the associated class definition.
+       // curprint(" override");
+          SgClassDefinition* parentClassDefinition = isSgClassDefinition(mfuncdecl_stmt->get_parent());
+          if (parentClassDefinition != NULL && mfuncdecl_stmt->get_scope() == parentClassDefinition)
+             {
+               curprint(" override");
+             }
         }
 
   // DQ (4/13/2019): Added support for default keyword unparsing.

@@ -7451,7 +7451,73 @@ NameQualificationTraversal::traverseType ( SgType* type, SgNode* nodeReferenceTo
        // unparseInfoPointer->display("In NameQualificationTraversal::traverseType(): unparseInfoPointer \n");
 #endif
 
-          string typeNameString = globalUnparseToString(type,unparseInfoPointer);
+          bool isContainedInTemplateInstantiationDefn = false;
+          SgTemplateInstantiationDefn* templateInstantiationDefn = NULL;
+          SgScopeStatement* parentScope = NULL;
+          SgStatement*       statement       = isSgStatement(nodeReferenceToType);
+          SgInitializedName* initializedName = isSgInitializedName(nodeReferenceToType);
+          if (statement != NULL)
+             {
+               parentScope = statement->get_scope();
+             }
+            else
+             {
+               if (initializedName != NULL)
+                  {
+                    parentScope = initializedName->get_scope();
+                  }
+                 else
+                  {
+                    parentScope = NULL;
+                  }
+             }
+
+       // SgGlobal* globalScope = isSgGlobal(parentScope);
+          while (isSgGlobal(parentScope) == NULL && parentScope != NULL)
+             {
+#if 0
+               printf ("parentScope = %p = %s \n",parentScope,parentScope->class_name().c_str());
+#endif
+               templateInstantiationDefn = isSgTemplateInstantiationDefn(parentScope);
+               if (templateInstantiationDefn != NULL)
+                  {
+                    isContainedInTemplateInstantiationDefn = true;
+#if 0
+                    if (statement != NULL)
+                       {
+                         parentScope = statement->get_scope();
+                       }
+                      else
+                       {
+                         if (initializedName != NULL)
+                            {
+                              parentScope = initializedName->get_scope();
+                            }
+                           else
+                            {
+                              parentScope = NULL;
+                            }
+                       }
+#endif
+                 }
+
+              parentScope = parentScope->get_scope();
+            }
+
+       // DQ (7/12/2022): If this is inside of a SgTemplateInstantiationDefn then see if we can
+       // suppress the generation since this is where the type names that are too long come from.
+       // string typeNameString = globalUnparseToString(type,unparseInfoPointer);
+          string typeNameString;
+#if 1
+       // DQ (7/13/2022): Modified code to avoid name qualification in template class instantiations.
+          if (isContainedInTemplateInstantiationDefn == false)
+             {
+               typeNameString = globalUnparseToString(type,unparseInfoPointer);
+             }
+#else
+       // DQ (7/13/2022): Original code before modification.
+          typeNameString = globalUnparseToString(type,unparseInfoPointer);
+#endif
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_TRAVERSE_TYPE || 0
           mfprintf(mlog [ WARN ] ) ("++++++++++++++++ typeNameString (globalUnparseToString()) = %s \n",typeNameString.c_str());
@@ -7516,6 +7582,13 @@ NameQualificationTraversal::traverseType ( SgType* type, SgNode* nodeReferenceTo
                  // If your ever curious, you can output the type name.
                  // mfprintf(mlog [ WARN ] ) ("Error: typeNameString = %s \n",typeNameString.c_str());
 #if 1
+
+                 // DQ (7/11/2022): Output the type info:
+                    mfprintf(mlog [ WARN ] ) ("Type name from unparseToString is too long: type = %p = %s \n",type,type->class_name().c_str());
+
+                    printf ("Output debugging info: calling recursivePrintCurrentAndParent() \n");
+                    SageInterface::recursivePrintCurrentAndParent(nodeReferenceToType);
+
                  // DQ (2/7/2017): Output offending type name string to a file for inspection.
                     ASSERT_not_null(positionStatement);
                     positionStatement->get_file_info()->display("Output offending type name string to a file for inspection: debug");
@@ -7525,19 +7598,35 @@ NameQualificationTraversal::traverseType ( SgType* type, SgNode* nodeReferenceTo
                     filename += ".typename";
 
                     mfprintf(mlog [ WARN ] ) ("Generating a file (%s) to hold the typename \n",filename.c_str());
-
+#if 0
                     std::ofstream output_file(filename.c_str());
                  // std::ofstream output_file(filename);
-                    output_file << typeNameString;
+                 // output_file << typeNameString;
+                    for (size_t i = 0; i < (typeNameString.length() - 100); i+=100)
+                       {
+                         string substring = typeNameString.substr(i,100);
+                      // printf ("substring.length() = %zu \n",substring.length());
+                         output_file << substring << endl;
+                      // output_file << typeNameString << endl;
+                       }
+
                     output_file.close();
 #endif
+#endif
+
                     mfprintf(mlog [ WARN ] ) ("Error: type names should not be this long... (even in boost, I think) typeNameString.length() = %" PRIuPTR " \n",typeNameString.length());
                     mfprintf(mlog [ WARN ] ) ("nodeReferenceToType = %p = %s \n",nodeReferenceToType,nodeReferenceToType->class_name().c_str());
                     if (nodeReferenceToType->get_file_info())
                        {
                          nodeReferenceToType->get_file_info()->display("Error: type names should not be this long...: debug");
                        }
+
+#if 0
+                 // DQ (7/11/2022): Test this to see if we can ignore this problem for now in the sponsor source file.
+                    typeNameString = "42 /* type name is too long */ ";
+#else
                     ROSE_ABORT();
+#endif
                   }
 #if 0
             // DQ (2/18/2013): I think that the output if such long strings in a problem for the Jenkins tests,
