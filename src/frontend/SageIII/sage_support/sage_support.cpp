@@ -306,25 +306,16 @@ SgValueExp::get_constant_folded_value_as_string() const
              {
                const SgComplexVal* complexValueExpression = isSgComplexVal(this);
                ASSERT_not_null(complexValueExpression);
-#if 0
-               float numericValue_realPart      = complexValueExpression->get_real_value();
-               float numericValue_imaginaryPart = complexValueExpression->get_imaginary_value();
-               printf ("numericValue of constant folded expression = (%f,%f) \n",numericValue_realPart,numericValue_imaginaryPart);
-               snprintf (buffer,max_buffer_size,"(%f,%f)",numericValue_realPart,numericValue_imaginaryPart);
-               s = buffer;
-#else
-            // ROSE_ASSERT(complexValueExpression->get_real_value() != NULL);
+
                string real_string = "null";
                if (complexValueExpression->get_real_value() != nullptr)
                     real_string = complexValueExpression->get_real_value()->get_constant_folded_value_as_string();
 
-            // ROSE_ASSERT(complexValueExpression->get_imaginary_value() != NULL);
                string imaginary_string = "null";
                if (complexValueExpression->get_imaginary_value() != nullptr)
                     imaginary_string = complexValueExpression->get_imaginary_value()->get_constant_folded_value_as_string();
 
                s = "(" + real_string + "," + imaginary_string + ")";
-#endif
                break;
              }
 
@@ -332,7 +323,9 @@ SgValueExp::get_constant_folded_value_as_string() const
           case V_SgTemplateParameterVal:
              {
             // Note that constant folding on SgTemplateParameterVal expressions does not make any sense!
-#if 1
+#define DEADCODE 0
+#define UNDEADCODE 1
+#if UNDEADCODE
                const SgTemplateParameterVal* templateParameterValueExpression = isSgTemplateParameterVal(this);
                ASSERT_not_null(templateParameterValueExpression);
                string stringName = templateParameterValueExpression->get_template_parameter_name();
@@ -341,10 +334,11 @@ SgValueExp::get_constant_folded_value_as_string() const
             // s = buffer;
                s = stringName;
 #else
+#error "DEAD CODE!"
             // DQ (11/28/2011): I hope that it does not make since to call this case...make it an error to do so...
                printf ("Note that constant folding on SgTemplateParameterVal expressions does not make any sense! \n");
-            // ROSE_ASSERT(false);
                s = "_constant_folding_on_SgTemplateParameterVal_expressions_does_not_make_any_sense_";
+#error "DEAD CODE!"
 #endif
                break;
              }
