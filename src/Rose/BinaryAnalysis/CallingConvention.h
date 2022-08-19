@@ -726,6 +726,14 @@ private:
 InstructionSemantics::BaseSemantics::SValuePtr
 readArgument(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&, const Definition::Ptr&, size_t argNumber);
 
+/** Write a function argument to a semantic state. */
+void writeArgument(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&, const Definition::Ptr&,
+                   size_t argNumber, const InstructionSemantics::BaseSemantics::SValuePtr &value);
+
+/** Read the return value that a function is returning. */
+InstructionSemantics::BaseSemantics::SValuePtr
+readReturnValue(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&, const Definition::Ptr&);
+
 /** Write a value to a function return semantic state. */
 void writeReturnValue(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&, const Definition::Ptr&,
                       const InstructionSemantics::BaseSemantics::SValuePtr &returnValue);

@@ -1357,12 +1357,82 @@ operator<<(std::ostream &out, const Analysis &x) {
 // Functions
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-InstructionSemantics::BaseSemantics::SValue::Ptr
-readArgument(const InstructionSemantics::BaseSemantics::RiscOperators::Ptr &ops,
-             const Definition::Ptr &ccDef, size_t argNumber) {
+SValue::Ptr
+readArgument(const RiscOperators::Ptr &ops, const Definition::Ptr &ccDef, size_t argNumber) {
     ASSERT_not_null(ops);
     ASSERT_not_null(ccDef);
     ops->comment("reading function argument #" + boost::lexical_cast<std::string>(argNumber) +
+                 " using calling convention " + ccDef->name());
+    const size_t nBits = ccDef->wordWidth();
+    SValue::Ptr retval;
+    if (argNumber < ccDef->inputParameters().size()) {
+        // Argument is explicit in the definition
+        const ConcreteLocation &loc = ccDef->inputParameters()[argNumber];
+
+        switch (loc.type()) {
+            case ConcreteLocation::REGISTER:
+                retval = ops->readRegister(loc.reg());
+                break;
+
+            case ConcreteLocation::RELATIVE: {
+                const auto base = ops->readRegister(loc.reg());
+                const auto offset = ops->signExtend(ops->number_(64, loc.offset()), base->nBits());
+                const auto address = ops->add(base, offset);
+                const auto dflt = ops->undefined_(nBits);
+                retval = ops->readMemory(RegisterDescriptor(), address, dflt, ops->boolean_(true));
+                break;
+            }
+
+            case ConcreteLocation::ABSOLUTE: {
+                auto address = ops->number_(64, loc.address());
+                const auto dflt = ops->undefined_(nBits);
+                retval = ops->readMemory(RegisterDescriptor(), address, dflt, ops->boolean_(true));
+                break;
+            }
+
+            case ConcreteLocation::NO_LOCATION:
+                break;
+        }
+
+    } else {
+        // Argument is at an implied stack location
+        argNumber = argNumber - ccDef->inputParameters().size();
+        ASSERT_require(argNumber >= 0);
+        switch (ccDef->stackParameterOrder()) {
+            case StackParameterOrder::RIGHT_TO_LEFT:
+                break;
+            case StackParameterOrder::LEFT_TO_RIGHT:
+                ASSERT_not_implemented("we need to know how many parameters were pushed");
+            case StackParameterOrder::UNSPECIFIED:
+                ASSERT_not_implemented("invalid stack paramter order");
+        }
+        int64_t stackOffset = ccDef->nonParameterStackSize() + argNumber * nBits/8;
+        switch (ccDef->stackDirection()) {
+            case StackDirection::GROWS_DOWN:
+                break;
+            case StackDirection::GROWS_UP:
+                stackOffset = -stackOffset - nBits/8;
+                break;
+        }
+
+        const RegisterDescriptor reg_sp = ccDef->stackPointerRegister();
+        const auto base = ops->readRegister(reg_sp);
+        const auto offset = ops->signExtend(ops->number_(64, stackOffset), base->nBits());
+        const auto address = ops->add(base, offset);
+        const auto dflt = ops->undefined_(nBits);
+        retval = ops->readMemory(RegisterDescriptor(), address, dflt, ops->boolean_(true));
+    }
+
+    ASSERT_always_not_null2(retval, "invalid parameter location");
+    ops->comment("argument value is " + retval->toString());
+    return retval;
+}
+
+void
+writeArgument(const RiscOperators::Ptr &ops, const Definition::Ptr &ccDef, size_t argNumber, const SValue::Ptr &value) {
+    ASSERT_not_null(ops);
+    ASSERT_not_null(ccDef);
+    ops->comment("writing function argument #" + boost::lexical_cast<std::string>(argNumber) +
                  " using calling convention " + ccDef->name());
     const size_t nBits = ccDef->wordWidth();
     if (argNumber < ccDef->inputParameters().size()) {
@@ -1371,20 +1441,24 @@ readArgument(const InstructionSemantics::BaseSemantics::RiscOperators::Ptr &ops,
 
         switch (loc.type()) {
             case ConcreteLocation::REGISTER:
-                return ops->readRegister(loc.reg());
+                ops->writeRegister(loc.reg(), value);
+                ops->comment("argument written");
+                return;
 
             case ConcreteLocation::RELATIVE: {
                 const auto base = ops->readRegister(loc.reg());
                 const auto offset = ops->signExtend(ops->number_(64, loc.offset()), base->nBits());
                 const auto address = ops->add(base, offset);
-                const auto dflt = ops->undefined_(nBits);
-                return ops->readMemory(RegisterDescriptor(), address, dflt, ops->boolean_(true));
+                ops->writeMemory(RegisterDescriptor(), address, value, ops->boolean_(true));
+                ops->comment("argument written");
+                return;
             }
 
             case ConcreteLocation::ABSOLUTE: {
                 auto address = ops->number_(64, loc.address());
-                const auto dflt = ops->undefined_(nBits);
-                return ops->readMemory(RegisterDescriptor(), address, dflt, ops->boolean_(true));
+                ops->writeMemory(RegisterDescriptor(), address, value, ops->boolean_(true));
+                ops->comment("argument written");
+                return;
             }
 
             case ConcreteLocation::NO_LOCATION:
@@ -1417,14 +1491,54 @@ readArgument(const InstructionSemantics::BaseSemantics::RiscOperators::Ptr &ops,
         const auto base = ops->readRegister(reg_sp);
         const auto offset = ops->signExtend(ops->number_(64, stackOffset), base->nBits());
         const auto address = ops->add(base, offset);
-        const auto dflt = ops->undefined_(nBits);
-        return ops->readMemory(RegisterDescriptor(), address, dflt, ops->boolean_(true));
+        ops->writeMemory(RegisterDescriptor(), address, value, ops->boolean_(true));
+        ops->comment("argument written");
     }
 }
 
+SValuePtr
+readReturnValue(const RiscOperators::Ptr &ops, const Definition::Ptr &ccDef) {
+    ASSERT_not_null(ops);
+    ASSERT_not_null(ccDef);
+    ops->comment("reading function return value using calling convention " + ccDef->name());
+
+    if (ccDef->outputParameters().empty())
+        throw Exception("calling convention has no output parameters");
+
+    // Assume that the first output parameter is the main integer return location.
+    const ConcreteLocation &loc = ccDef->outputParameters()[0];
+    SValuePtr retval;
+    switch (loc.type()) {
+        case ConcreteLocation::REGISTER:
+            retval = ops->readRegister(loc.reg());
+            break;
+
+        case ConcreteLocation::RELATIVE: {
+            const auto base = ops->readRegister(loc.reg());
+            const auto offset = ops->signExtend(ops->number_(64, loc.offset()), base->nBits());
+            const auto address = ops->add(base, offset);
+            const auto dflt = ops->undefined_(loc.reg().nBits());
+            retval = ops->readMemory(RegisterDescriptor(), address, dflt, ops->boolean_(true));
+            break;
+        }
+
+        case ConcreteLocation::ABSOLUTE: {
+            auto address = ops->number_(64, loc.address());
+            const auto dflt = ops->undefined_(loc.reg().nBits());
+            retval = ops->readMemory(RegisterDescriptor(), address, dflt, ops->boolean_(true));
+            break;
+        }
+
+        case ConcreteLocation::NO_LOCATION:
+            break;
+    }
+    ASSERT_always_not_null2(retval, "invalid parameter location type");
+    ops->comment("return value is " + retval->toString());
+    return retval;
+}
+
 void
-writeReturnValue(const InstructionSemantics::BaseSemantics::RiscOperators::Ptr &ops, const Definition::Ptr &ccDef,
-                 const InstructionSemantics::BaseSemantics::SValue::Ptr &returnValue) {
+writeReturnValue(const RiscOperators::Ptr &ops, const Definition::Ptr &ccDef, const SValue::Ptr &returnValue) {
     ASSERT_not_null(ops);
     ASSERT_not_null(ccDef);
     ASSERT_not_null(returnValue);
@@ -1438,6 +1552,7 @@ writeReturnValue(const InstructionSemantics::BaseSemantics::RiscOperators::Ptr &
     switch (loc.type()) {
         case ConcreteLocation::REGISTER:
             ops->writeRegister(loc.reg(), returnValue);
+            ops->comment("return value written");
             return;
 
         case ConcreteLocation::RELATIVE: {
@@ -1445,12 +1560,14 @@ writeReturnValue(const InstructionSemantics::BaseSemantics::RiscOperators::Ptr &
             const auto offset = ops->signExtend(ops->number_(64, loc.offset()), base->nBits());
             const auto address = ops->add(base, offset);
             ops->writeMemory(RegisterDescriptor(), address, returnValue, ops->boolean_(true));
+            ops->comment("return value written");
             return;
         }
 
         case ConcreteLocation::ABSOLUTE: {
             auto address = ops->number_(64, loc.address());
             ops->writeMemory(RegisterDescriptor(), address, returnValue, ops->boolean_(true));
+            ops->comment("return value written");
             return;
         }
 
@@ -1461,8 +1578,7 @@ writeReturnValue(const InstructionSemantics::BaseSemantics::RiscOperators::Ptr &
 }
 
 void
-simulateFunctionReturn(const InstructionSemantics::BaseSemantics::RiscOperators::Ptr &ops,
-                       const Definition::Ptr &ccDef) {
+simulateFunctionReturn(const RiscOperators::Ptr &ops, const Definition::Ptr &ccDef) {
     ASSERT_not_null(ops);
     ASSERT_not_null(ccDef);
     ops->comment("simulating function return using calling convention " + ccDef->name());
@@ -1489,7 +1605,7 @@ simulateFunctionReturn(const InstructionSemantics::BaseSemantics::RiscOperators:
 
     // Obtain the return address
     const ConcreteLocation &retVaLoc = ccDef->returnAddressLocation();
-    InstructionSemantics::BaseSemantics::SValue::Ptr retVa;
+    SValue::Ptr retVa;
     switch (retVaLoc.type()) {
         case ConcreteLocation::REGISTER:
             retVa = ops->readRegister(retVaLoc.reg());
@@ -1517,7 +1633,7 @@ simulateFunctionReturn(const InstructionSemantics::BaseSemantics::RiscOperators:
     ASSERT_not_null2(retVa, "unknown location for fuction return address");
 
     // Pop things from the stack
-    InstructionSemantics::BaseSemantics::SValue::Ptr newSp;
+    SValue::Ptr newSp;
     switch (ccDef->stackDirection()) {
         case StackDirection::GROWS_DOWN:
             newSp = ops->add(originalSp, ops->number_(originalSp->nBits(), nArgBytes + nNonArgBytes));
@@ -1532,6 +1648,7 @@ simulateFunctionReturn(const InstructionSemantics::BaseSemantics::RiscOperators:
     // Change the instruction pointer to be the return address.
     const RegisterDescriptor IP = ccDef->instructionPointerRegister();
     ops->writeRegister(IP, retVa);
+    ops->comment("function return has been simulated");
 }
 
 } // namespace
