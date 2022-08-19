@@ -179,7 +179,7 @@ namespace
 
     for (const ct::OverrideDesc& fn: functions)
     {
-      const ct::FunctionKeyType      funid = fn.functionId();
+      const ct::FunctionKeyType      funid = fn.function();
       const ct::VirtualFunctionDesc& other = vfuns.at(funid);
 
       os << className(other.classId())

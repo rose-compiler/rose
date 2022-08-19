@@ -99,8 +99,14 @@ struct OverrideDesc : std::tuple<FunctionKeyType, bool>
   using base = std::tuple<FunctionKeyType, bool>;
   using base::base;
 
-  FunctionKeyType functionId() const { return std::get<0>(*this); }
-  bool       covariantReturn() const { return std::get<1>(*this); }
+  FunctionKeyType function()        const { return std::get<0>(*this); }
+  bool            covariantReturn() const { return std::get<1>(*this); }
+  
+  /// returns true of an object adjustment is needed upon return.
+  /// this should be a subset of covariantReturn() [only if the original
+  /// and the new return types have different primary base classes], 
+  /// but currently we use the same value.
+  bool            adjustReturnObj() const { return std::get<1>(*this); }
 };
 
 using OverrideContainer = std::vector<OverrideDesc>;
@@ -323,7 +329,7 @@ class CastAnalysis : std::unordered_map<CastDesc, std::vector<CastKeyType> >
 
 
 /// stores the results of virtual function analysis by Id
-class VirtualFunctionAnalysis : std::unordered_map<FunctionKeyType, VirtualFunctionDesc>
+class VirtualFunctionAnalysis : private std::unordered_map<FunctionKeyType, VirtualFunctionDesc>
 {
   public:
     using base = std::unordered_map<FunctionKeyType, VirtualFunctionDesc>;
@@ -331,6 +337,7 @@ class VirtualFunctionAnalysis : std::unordered_map<FunctionKeyType, VirtualFunct
 
     using base::value_type;
     using base::key_type;
+    using base::mapped_type;
     using base::iterator;
     using base::const_iterator;
     using base::begin;
