@@ -264,6 +264,12 @@ public:
     virtual void print(std::ostream&, Formatter&) const = 0;
     /** @} */
 
+    /** Render this symbolic expression as a string.
+     *
+     *  Don't use this if you're just printing the value, since it's more efficient to stream the value with operator<< or using
+     *  the @ref print method. */
+    std::string toString() const;
+
     /** SValue with formatter. See with_formatter(). */
     class WithFormatter {
         SValuePtr obj;
