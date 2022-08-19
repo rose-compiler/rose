@@ -8064,31 +8064,6 @@ SgNode::depthOfSubtree()
      return value;
    }
 
-#if 0
-#error "DEAD CODE!"
-// We only need one definition for this function at the SgNode IR node.
-size_t
-SgFile::numberOfNodesInSubtree()
-   {
-     printf ("Base class of virtual function (SgFile::numberOfNodesInSubtree() should not be called! \n");
-     ROSE_ABORT();
-   }
-
-size_t
-SgSourceFile::numberOfNodesInSubtree()
-   {
-     return get_globalScope()->numberOfNodesInSubtree() + 1;
-   }
-
-size_t
-SgBinaryComposite::numberOfNodesInSubtree()
-   {
-     return get_binaryFile()->numberOfNodesInSubtree() + 1;
-   }
-#error "DEAD CODE!"
-#endif
-
-
 // DQ (10/3/2008): Added support for getting interfaces in a module
 std::vector<SgInterfaceStatement*>
 SgModuleStatement::get_interfaces() const
