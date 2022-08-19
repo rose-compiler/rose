@@ -166,9 +166,9 @@ SValue::print(std::ostream &output, BaseSemantics::Formatter&) const {
         for (const Interval &interval: intervals_.intervals()) {
             if (interval.least() != intervals_.hull().least())
                 output <<", ";
-            output <<toString(interval.least(), nBits());
+            output <<IntervalSemantics::toString(interval.least(), nBits());
             if (!interval.isSingleton())
-                output <<".." <<toString(interval.greatest(), nBits());
+                output <<".." <<IntervalSemantics::toString(interval.greatest(), nBits());
         }
         output <<"}";
     }
