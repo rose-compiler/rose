@@ -414,7 +414,10 @@ outputTypeOfFileAndExit( const string & name )
 
   // printf ("In outputTypeOfFileAndExit(%s): Evaluate the file type \n",name.c_str());
 
-#if 0
+#define DEAD_CODE_POTENTIALLY_USEFUL 0
+#if DEAD_CODE_POTENTIALLY_USEFUL
+#error "DEAD CODE!"
+
   // DQ (2/3/2009): This works now, I think that Andreas fixed it.
 
   // Use file(1) to try to figure out the file type to report in the exception
@@ -458,19 +461,15 @@ outputTypeOfFileAndExit( const string & name )
 
           throw SgAsmGenericFile::FormatError(buffer.c_str());
         }
+#error "DEAD CODE!"
 #else
      whatTypeOfFileIsThis(name);
 
-#if 1
      printf ("In outputTypeOfFileAndExit(): name = %s \n",name.c_str());
      printf ("\n\nExiting: Unknown file Error \n\n");
      ROSE_ABORT();
 #endif
-
-     abort();
-#endif
    }
-
 
 
 // DQ (1/5/2008): These are functions separated out of the generated
@@ -786,12 +785,9 @@ SgSourceFile::initializeGlobalScope()
 
   // printf ("get_requires_C_preprocessor() = %s filename = %s \n",get_requires_C_preprocessor() ? "true" : "false",filename.c_str());
 
-  // get_globalScope()->get_startOfConstruct()->set_filenameString(p_sourceFileNameWithPath);
      get_globalScope()->get_startOfConstruct()->set_filenameString(filename);
      ROSE_ASSERT(get_globalScope()->get_startOfConstruct()->get_filenameString().empty() == false);
 
-  // DQ (8/21/2008): Uncommented to make the endOfConstruct consistant (avoids warning in AST consistancy check).
-  // get_globalScope()->get_endOfConstruct()->set_filenameString(p_sourceFileNameWithPath);
      get_globalScope()->get_endOfConstruct()->set_filenameString(filename);
      ROSE_ASSERT(get_globalScope()->get_endOfConstruct()->get_filenameString().empty() == false);
 
@@ -809,12 +805,7 @@ SgSourceFile::initializeGlobalScope()
    }
 
 SgFile*
-#if 0
-// FMZ (07/07/2010): "nextErrorCode" should be call by reference argument
-determineFileType ( vector<string> argv, int nextErrorCode, SgProject* project )
-#else
 determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project )
-#endif
    {
      SgFile* file = nullptr;
 
@@ -2231,47 +2222,6 @@ SgProject::parse()
      Rose_STL_Container<string>::iterator nameIterator = p_sourceFileNameList.begin();
      unsigned int i = 0;
 
-#define DEADCODE 0
-#if DEADCODE
-  // DQ (6/13/2013): This is older code from when we build each SgFile and processed in immediately.
-  // We don't want such a design, thus we now build all of the SgFile IR nodes first, and then iterate
-  // over them to call the frontend on each of them (this could likely be done in parallel as well).
-
-#error "DEAD CODE!"
-
-     while (nameIterator != p_sourceFileNameList.end())
-        {
-          int nextErrorCode = 0;
-
-       // DQ (4/20/2006): Exclude other files from list in argc and argv
-          vector<string> argv = get_originalCommandLineArgumentList();
-          string currentFileName = *nameIterator;
-
-#error "DEAD CODE!"
-
-          CommandlineProcessing::removeAllFileNamesExcept(argv,p_sourceFileNameList,currentFileName);
-
-       // DQ (11/13/2008): Removed overly complex logic here!
-
-          SgFile* newFile = determineFileType(argv, nextErrorCode, this);
-          ASSERT_not_null(newFile);
-          ASSERT_not_null(newFile->get_startOfConstruct());
-          ASSERT_not_null(newFile->get_parent());
-
-#error "DEAD CODE!"
-
-       // This just adds the new file to the list of files stored internally
-          set_file ( *newFile );
-
-          errorCode = max(errorCode,nextErrorCode); // use STL max
-
-          nameIterator++;
-          i++;
-        }
-
-#error "DEAD CODE!"
-
-#else
   // The goal in this version of the code is to seperate the construction of the SgFile objects
   // from the invocation of the frontend on each of the SgFile objects.  In general this allows
   // the compilation to reference the other SgFile objects on an as needed basis as part of running
@@ -2338,7 +2288,6 @@ SgProject::parse()
         {
           return errorCode;
         }
-#endif
 
   // DQ (6/13/2013): Test the new function to lookup the SgFile from the name with full path.
   // This is a simple consistency test for that new function.
@@ -8284,6 +8233,7 @@ SgNode::depthOfSubtree()
    }
 
 #if 0
+#error "DEAD CODE!"
 // We only need one definition for this function at the SgNode IR node.
 size_t
 SgFile::numberOfNodesInSubtree()
@@ -8303,6 +8253,7 @@ SgBinaryComposite::numberOfNodesInSubtree()
    {
      return get_binaryFile()->numberOfNodesInSubtree() + 1;
    }
+#error "DEAD CODE!"
 #endif
 
 
@@ -8421,9 +8372,6 @@ StringUtility::popen_wrapper ( const string & command, vector<string> & result )
 
      result = vector<string>();
 
-
-
-
      // CH (4/6/2010): The Windows version of popen is _popen
 #ifdef _MSC_VER
      if ((fp = _popen(command.c_str (), "r")) == nullptr)
@@ -8459,7 +8407,6 @@ StringUtility::popen_wrapper ( const string & command, vector<string> & result )
           cerr << ("Cannot execute pclose");
           returnValue = false;
         }
-//#endif
 
      return returnValue;
    }
