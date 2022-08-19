@@ -1,3 +1,5 @@
+// compile: CXX -Wall -Wextra -pedantic -I$ROSE_SOURCE/src/3rdPartyLibraries/json/ src/json2rosetta.C -o json2rosetta.bin
+
 #include <iostream>
 #include <fstream>
 #include <limits>
@@ -308,6 +310,8 @@ namespace
     return *root;
   }
 
+  struct empty_object {};
+
   json::json&
   arrayObject(const std::vector<std::pair<std::string, json::json*> >& objs, const std::string& field)
   {
@@ -317,6 +321,9 @@ namespace
 
     if (obj.is_array())
       return obj;
+
+    if (!obj.contains(field))
+      throw empty_object{};
 
     json::json& res = obj[field];
 
@@ -354,18 +361,22 @@ namespace
 
       case ModelToken::forall:
       {
-        std::string var = m.string_value();
-        json::json& arr = arrayObject(objs, var);
-
-        for (const auto& el : arr.items())
+        try
         {
-          objs.emplace_back(var, &el.value());
+          std::string var = m.string_value();
+          json::json& arr = arrayObject(objs, var);
 
-          for (const ModelBlock2& child : m)
-            runModel(os, child, objs);
+          for (const auto& el : arr.items())
+          {
+            objs.emplace_back(var, &el.value());
 
-          objs.pop_back();
+            for (const ModelBlock2& child : m)
+              runModel(os, child, objs);
+
+            objs.pop_back();
+          }
         }
+        catch (const empty_object&) {}
 
         break;
       }

@@ -59,7 +59,7 @@
     "Streams": [
       {
         "Doc": "Metadata streams",
-        "Init": "parseStreams(buf, index, start_of_MetadataRoot, get_NumberOfStreams())",
+        "Init": "parseStreams(this, buf, index, start_of_MetadataRoot, get_NumberOfStreams())",
         "Name": "Streams",
         "Type": "SgAsmCilDataStream"
       }
