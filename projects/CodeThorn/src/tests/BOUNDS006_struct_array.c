@@ -8,5 +8,5 @@ struct s1 a[10];
  
 void main() {
   struct s1* ap = {&a[0]};
-  (ap +1)->x=1;
+  (ap +9)->x=1;
 }
