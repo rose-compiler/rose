@@ -1490,6 +1490,11 @@ bool ClangToSageTranslator::VisitFunctionDecl(clang::FunctionDecl * function_dec
     if(funcProtoType != nullptr && funcProtoType->getNumParams() != function_decl->getNumParams())
         diffInProtoType = true;
 
+    SgDeclarationScope* declScope = SageBuilder::buildDeclarationScope();
+    declScope->set_parent(SageBuilder::topScopeStack());
+    SageBuilder::pushScopeStack(declScope);
+    
+
     for (unsigned i = 0; i < function_decl->getNumParams(); i++) {
         if(funcProtoType != nullptr && function_decl->getParamDecl(i)->getType() != funcProtoType->getParamType(i))
         {
@@ -1507,13 +1512,27 @@ bool ClangToSageTranslator::VisitFunctionDecl(clang::FunctionDecl * function_dec
         {
           SgNamedType* namedType = isSgNamedType(init_name->get_type());
           SgDeclarationStatement* namedTypeDecl = isSgDeclarationStatement(namedType->get_declaration());
-          SgScopeStatement* enclosingScope = namedTypeDecl->get_scope();
-          SgDeclarationStatementPtrList& declList = enclosingScope->getDeclarationList();
-          SgDeclarationStatement* definingNamedTypeDecl = isSgDeclarationStatement(namedTypeDecl->get_definingDeclaration());
-          if(definingNamedTypeDecl != NULL  && std::find(declList.begin(), declList.end(), definingNamedTypeDecl) == declList.end())
+          SgDeclarationStatement* definingDecl = namedTypeDecl->get_definingDeclaration(); 
+          if(definingDecl != NULL)
           {
-            init_name->set_needs_definitions(true);
-          }
+            SgDeclarationStatement* definingNamedTypeDecl = isSgDeclarationStatement(definingDecl);
+            SgScopeStatement* definitionEnclosingScope = definingNamedTypeDecl->get_scope();
+            // case 1: definition is under SgDeclarationScope
+            if(isSgScopeStatement(definitionEnclosingScope) == SageBuilder::topScopeStack()) 
+            {
+              init_name->set_needs_definitions(true);
+            }
+            // case 2: definition is at other scope but not in the SgDeclarationStatementPtrList from that scope
+            // e.g. test2018_15.c, test2018_13.c 
+            else
+            {
+              SgDeclarationStatementPtrList& declList = definitionEnclosingScope->getDeclarationList();
+              if(std::find(declList.begin(), declList.end(), definingNamedTypeDecl) == declList.end())
+              {
+                init_name->set_needs_definitions(true);
+              }
+            }
+          } 
         }
 
         if (tmp_init_name != NULL && init_name == NULL) {
@@ -1524,6 +1543,8 @@ bool ClangToSageTranslator::VisitFunctionDecl(clang::FunctionDecl * function_dec
 
         param_list->append_arg(init_name);
     }
+
+    SageBuilder::popScopeStack();
 
     if (function_decl->isVariadic()) {
         SgName empty = "";
@@ -1673,6 +1694,9 @@ bool ClangToSageTranslator::VisitFunctionDecl(clang::FunctionDecl * function_dec
             sg_function_decl->set_firstNondefiningDeclaration(sg_function_decl);
         }
     }
+
+    sg_function_decl->set_declarationScope(declScope);
+    declScope->set_parent(sg_function_decl);
 
     ROSE_ASSERT(sg_function_decl->get_firstNondefiningDeclaration() != NULL);
 /* // TODO Fix problem with function symbols...
