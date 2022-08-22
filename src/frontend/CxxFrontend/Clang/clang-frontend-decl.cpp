@@ -67,20 +67,20 @@ SgSymbol * ClangToSageTranslator::GetSymbolFromSymbolTable(clang::NamedDecl * de
 
             const clang::Type* fieldType = fieldQualType.getTypePtr();
 
-            while((isa<clang::ElaboratedType>(fieldType)) || (isa<clang::ArrayType>(fieldType)))
+            while((llvm::isa<clang::ElaboratedType>(fieldType)) || (llvm::isa<clang::ArrayType>(fieldType)))
             {
-               if(isa<clang::ElaboratedType>(fieldType))
+               if(llvm::isa<clang::ElaboratedType>(fieldType))
                {
                  fieldQualType = ((clang::ElaboratedType *)fieldType)->getNamedType();
                }
-               else if(isa<clang::ArrayType>(fieldType))
+               else if(llvm::isa<clang::ArrayType>(fieldType))
                {
                  fieldQualType = ((clang::ArrayType *)fieldType)->getElementType();
                }
                fieldType = fieldQualType.getTypePtr();
             }
             bool isAnonymousStructOrUnion = false;
-            if(isa<clang::RecordType>(fieldType))
+            if(llvm::isa<clang::RecordType>(fieldType))
             {
                 isAnonymousStructOrUnion = ((clang::FieldDecl *)decl)->isAnonymousStructOrUnion();
             }
@@ -1090,24 +1090,24 @@ bool ClangToSageTranslator::VisitTypedefDecl(clang::TypedefDecl * typedef_decl, 
     bool iscompleteDefined = false;
 
     // Adding check for EaboratedType and PointerType to retrieve base EnumType
-    while((isa<clang::ElaboratedType>(underlyingType)) || (isa<clang::PointerType>(underlyingType)) || (isa<clang::ArrayType>(underlyingType)))
+    while((llvm::isa<clang::ElaboratedType>(underlyingType)) || (llvm::isa<clang::PointerType>(underlyingType)) || (llvm::isa<clang::ArrayType>(underlyingType)))
     {
-       if(isa<clang::ElaboratedType>(underlyingType))
+       if(llvm::isa<clang::ElaboratedType>(underlyingType))
        {
          underlyingQualType = ((clang::ElaboratedType *)underlyingType)->getNamedType();
        }
-       else if(isa<clang::PointerType>(underlyingType))
+       else if(llvm::isa<clang::PointerType>(underlyingType))
        {
          underlyingQualType = ((clang::PointerType *)underlyingType)->getPointeeType();
        }
-       else if(isa<clang::ArrayType>(underlyingType))
+       else if(llvm::isa<clang::ArrayType>(underlyingType))
        {
          underlyingQualType = ((clang::ArrayType *)underlyingType)->getElementType();
        }
        underlyingType = underlyingQualType.getTypePtr();
     }
 
-    if(isa<clang::EnumType>(underlyingType))
+    if(llvm::isa<clang::EnumType>(underlyingType))
     {
        clang::EnumType* underlyingEnumType = (clang::EnumType*)underlyingType;
        clang::EnumDecl* enumDeclaration = underlyingEnumType->getDecl();
@@ -1115,7 +1115,7 @@ bool ClangToSageTranslator::VisitTypedefDecl(clang::TypedefDecl * typedef_decl, 
        iscompleteDefined = enumDeclaration->isCompleteDefinition();
     }
 
-    if(isa<clang::RecordType>(underlyingType))
+    if(llvm::isa<clang::RecordType>(underlyingType))
     {
        clang::RecordType* underlyingRecordType = (clang::RecordType*)underlyingType;
        clang::RecordDecl* recordDeclaration = underlyingRecordType->getDecl();
@@ -1321,20 +1321,20 @@ bool ClangToSageTranslator::VisitFieldDecl(clang::FieldDecl * field_decl, SgNode
 
     // Adding check for EaboratedType and PointerType to retrieve base EnumType
     // Removing PointerType here before finding a better implementation to handle pointer
-    while((isa<clang::ElaboratedType>(fieldType)) || (isa<clang::ArrayType>(fieldType)))
+    while((llvm::isa<clang::ElaboratedType>(fieldType)) || (llvm::isa<clang::ArrayType>(fieldType)))
     {
-       if(isa<clang::ElaboratedType>(fieldType))
+       if(llvm::isa<clang::ElaboratedType>(fieldType))
        {
          fieldQualType = ((clang::ElaboratedType *)fieldType)->getNamedType();
        }
-       else if(isa<clang::ArrayType>(fieldType))
+       else if(llvm::isa<clang::ArrayType>(fieldType))
        {
          fieldQualType = ((clang::ArrayType *)fieldType)->getElementType();
        }
        fieldType = fieldQualType.getTypePtr();
     }
 
-    if(isa<clang::EnumType>(fieldType))
+    if(llvm::isa<clang::EnumType>(fieldType))
     {
        clang::EnumType* underlyingEnumType = (clang::EnumType*)fieldType;
        clang::EnumDecl* enumDeclaration = underlyingEnumType->getDecl();
@@ -1342,7 +1342,7 @@ bool ClangToSageTranslator::VisitFieldDecl(clang::FieldDecl * field_decl, SgNode
        iscompleteDefined = enumDeclaration->isCompleteDefinition();
     }
 
-    if(isa<clang::RecordType>(fieldType))
+    if(llvm::isa<clang::RecordType>(fieldType))
     {
        clang::RecordType* underlyingRecordType = (clang::RecordType*)fieldType;
        clang::RecordDecl* recordDeclaration = underlyingRecordType->getDecl();
@@ -1474,7 +1474,7 @@ bool ClangToSageTranslator::VisitFunctionDecl(clang::FunctionDecl * function_dec
 
     const clang::Type* funcType = funcQualType.getTypePtr();
 
-    const clang::FunctionProtoType* funcProtoType = (isa<clang::FunctionProtoType>(funcType)) ? (clang::FunctionProtoType*)funcType : nullptr;
+    const clang::FunctionProtoType* funcProtoType = (llvm::isa<clang::FunctionProtoType>(funcType)) ? (clang::FunctionProtoType*)funcType : nullptr;
 
     bool diffInProtoType = false;
 
@@ -1818,24 +1818,24 @@ bool ClangToSageTranslator::VisitVarDecl(clang::VarDecl * var_decl, SgNode ** no
 
     // Adding check for EaboratedType and PointerType to retrieve base EnumType
     //while((varType->getTypeClass() == clang::Type::Elaborated) || (varType->getTypeClass() == clang::Type::Pointer) || (varType->getTypeClass() == clang::Type::Array))
-    while((isa<clang::ElaboratedType>(varType)) || (isa<clang::PointerType>(varType)) || (isa<clang::ArrayType>(varType)))
+    while((llvm::isa<clang::ElaboratedType>(varType)) || (llvm::isa<clang::PointerType>(varType)) || (llvm::isa<clang::ArrayType>(varType)))
     {
-       if(isa<clang::ElaboratedType>(varType))
+       if(llvm::isa<clang::ElaboratedType>(varType))
        {
          varQualType = ((clang::ElaboratedType *)varType)->getNamedType();
        }
-       else if(isa<clang::PointerType>(varType))
+       else if(llvm::isa<clang::PointerType>(varType))
        {
          varQualType = ((clang::PointerType *)varType)->getPointeeType();
        }
-       else if(isa<clang::ArrayType>(varType))
+       else if(llvm::isa<clang::ArrayType>(varType))
        {
          varQualType = ((clang::ArrayType *)varType)->getElementType();
        }
        varType = varQualType.getTypePtr();
     }
 
-    if(isa<clang::EnumType>(varType))
+    if(llvm::isa<clang::EnumType>(varType))
     {
        clang::EnumType* underlyingEnumType = (clang::EnumType*)varType;
        clang::EnumDecl* enumDeclaration = underlyingEnumType->getDecl();
@@ -1843,7 +1843,7 @@ bool ClangToSageTranslator::VisitVarDecl(clang::VarDecl * var_decl, SgNode ** no
        iscompleteDefined = enumDeclaration->isCompleteDefinition();
     }
 
-    if(isa<clang::RecordType>(varType))
+    if(llvm::isa<clang::RecordType>(varType))
     {
        clang::RecordType* underlyingRecordType = (clang::RecordType*)varType;
        clang::RecordDecl* recordDeclaration = underlyingRecordType->getDecl();
