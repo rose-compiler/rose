@@ -1029,7 +1029,7 @@ bool ClangToSageTranslator::VisitDeclStmt(clang::DeclStmt * decl_stmt, SgNode **
 
     if (decl_stmt->isSingleDecl()) {
         *node = Traverse(decl_stmt->getSingleDecl());
-#if 1
+#if DEBUG_VISIT_STMT
         printf ("In VisitDeclStmt(): *node = %p = %s \n",*node,(*node)->class_name().c_str());
 #endif
     }
@@ -1081,7 +1081,7 @@ bool ClangToSageTranslator::VisitDeclStmt(clang::DeclStmt * decl_stmt, SgNode **
         *node = last_decl_Stmt;
     }
 
-#if 1
+#if DEBUG_VISIT_STMT
     printf ("In VisitDeclStmt(): identify where the parent is not set: *node = %p = %s \n",*node,(*node)->class_name().c_str());
     printf (" --- *node parent = %p \n",(*node)->get_parent());
 #endif
@@ -1138,15 +1138,10 @@ bool ClangToSageTranslator::VisitForStmt(clang::ForStmt * for_stmt, SgNode ** no
 
     bool res = true;
 
-    printf ("Calling SageBuilder::buildForStatement_nfi(): so we can add associated expressions and statements \n");
-
  // DQ (11/28/2020): We have to build the scope first, and then build the rest bottom up.
- // SgForStatement * sg_for_stmt = SageBuilder::buildForStatement_nfi((SgForInitStatement *)NULL, NULL, NULL, NULL);
     SgForStatement* sg_for_stmt = new SgForStatement((SgStatement*)NULL,(SgExpression*)NULL,(SgStatement*)NULL);
 
-    printf ("DONE: Calling SageBuilder::buildForStatement_nfi(): so we can add associated expressions and statements \n");
-
-#if 1
+#if DEBUG_VISIT_STMT
     printf ("In VisitForStmt(): Setting the parent of the sg_for_stmt \n");
 #endif
 
@@ -1187,7 +1182,9 @@ bool ClangToSageTranslator::VisitForStmt(clang::ForStmt * for_stmt, SgNode ** no
 
         for_init_stmt = SageBuilder::buildForInitStatement_nfi(for_init_stmt_list);
 
+#if DEBUG_VISIT_STMT
         printf ("In VisitForStmt(): for_init_stmt = %p  \n");
+#endif
 
         if (for_stmt->getInit() != NULL)
             applySourceRange(for_init_stmt, for_stmt->getInit()->getSourceRange());
