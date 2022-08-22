@@ -677,7 +677,7 @@ bool ClangToSageTranslator::VisitFunctionProtoType(clang::FunctionProtoType * fu
 #if DEBUG_VISIT_TYPE
         std::cerr << "funcProtoType: " << i << " th param" << std::endl;
 #endif
-	SgType * param_type = buildTypeFromQualifiedType(function_proto_type->getParamType(i));
+        SgType * param_type = buildTypeFromQualifiedType(function_proto_type->getParamType(i));
 
         param_type_list->append_argument(param_type);
     }
