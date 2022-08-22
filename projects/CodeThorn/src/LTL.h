@@ -2,7 +2,6 @@
 #ifndef __LTL_H__
 #define __LTL_H__
 
-//#include <boost/shared_ptr.hpp>
 #include <string>
 #include <iostream>
 #include <sstream>
@@ -37,8 +36,6 @@ namespace LTL {
   /// Inherited Attribute for visitor pattern
   class InheritedAttribute {};
 
-  //MS: removed smart pointers
-  //typedef boost::shared_ptr<InheritedAttribute> IAttr;
   typedef InheritedAttribute* IAttr;
 
   class Expr;
