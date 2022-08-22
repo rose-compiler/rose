@@ -71,12 +71,12 @@
 #include "llvm/Frontend/OpenMP/OMPIRBuilder.h"
 
 // DQ (11/27/2020): Turn on/off the debugging information as we visit clang IR nodes.
-#define DEBUG_VISITOR             1
-#define DEBUG_TRAVERSAL           1
-#define DEBUG_SOURCE_LOCATION     1
-#define DEBUG_SYMBOL_TABLE_LOOKUP 1
-#define DEBUG_ARGS                1
-#define DEBUG_TRAVERSE_DECL       1
+#define DEBUG_VISITOR             0
+#define DEBUG_TRAVERSAL           0
+#define DEBUG_SOURCE_LOCATION     0
+#define DEBUG_SYMBOL_TABLE_LOOKUP 0
+#define DEBUG_ARGS                0
+#define DEBUG_TRAVERSE_DECL       0
 
 // Print visitor name when visiting a node inheritance hierarchy
 #ifdef DEBUG_VISITOR
@@ -90,10 +90,10 @@
 #    define DEBUG_VISIT_TYPE DEBUG_VISITOR
 #  endif
 #else
-#  define DEBUG_VISITOR    1
-#  define DEBUG_VISIT_STMT 1
-#  define DEBUG_VISIT_DECL 1
-#  define DEBUG_VISIT_TYPE 1
+#  define DEBUG_VISITOR    0
+#  define DEBUG_VISIT_STMT 0
+#  define DEBUG_VISIT_DECL 0
+#  define DEBUG_VISIT_TYPE 0
 #endif
 
 // Print results of traversal of the nodes: "already done?" and "generated Sage ptr"
@@ -108,25 +108,25 @@
 #    define DEBUG_TRAVERSE_TYPE DEBUG_TRAVERSAL
 #  endif
 #else
-#  define DEBUG_TRAVERSAL     1
-#  define DEBUG_TRAVERSE_STMT 1
-#  define DEBUG_TRAVERSE_DECL 1
-#  define DEBUG_TRAVERSE_TYPE 1
+#  define DEBUG_TRAVERSAL     0
+#  define DEBUG_TRAVERSE_STMT 0
+#  define DEBUG_TRAVERSE_DECL 0
+#  define DEBUG_TRAVERSE_TYPE 0
 #endif
 
 // Print debug info when attaching source location
 #ifndef DEBUG_SOURCE_LOCATION
-#  define DEBUG_SOURCE_LOCATION 1
+#  define DEBUG_SOURCE_LOCATION 0
 #endif
 
 // Display symbol lookup process
 #ifndef DEBUG_SYMBOL_TABLE_LOOKUP
-#  define DEBUG_SYMBOL_TABLE_LOOKUP 1
+#  define DEBUG_SYMBOL_TABLE_LOOKUP 0
 #endif
 
 // Print args receive by clang_main
 #ifndef DEBUG_ARGS
-#  define DEBUG_ARGS 1
+#  define DEBUG_ARGS 0
 #endif
 
 // Fail when a FIXME is reach
