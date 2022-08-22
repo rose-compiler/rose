@@ -139,8 +139,8 @@ namespace
     {
       const ct::ClassKeyType src         = std::get<0>(elem.first);
       const ct::ClassKeyType tgt         = std::get<1>(elem.first);
-      const bool             isDownCast  = classes.areBaseDerived(src, tgt);
-      const bool             isUpCast    = !isDownCast && classes.areBaseDerived(tgt, src);
+      const bool             isDownCast  = classes.isBaseOf(src, tgt);
+      const bool             isUpCast    = !isDownCast && classes.isBaseOf(tgt, src);
       const bool             isCrossCast = !isDownCast && !isUpCast;
 
       // exclude up casts

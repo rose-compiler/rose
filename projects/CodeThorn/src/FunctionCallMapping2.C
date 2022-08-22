@@ -191,7 +191,7 @@ namespace
       const SgMemberFunctionDeclaration& ovrdcl = SG_DEREF(isSgMemberFunctionDeclaration(fundcl));
       const SgClassDefinition&           ovrcls = getClassDef(ovrdcl);
 
-      if (cha.areBaseDerived(&clsdef, &ovrcls))
+      if (cha.isBaseOf(&clsdef, &ovrcls))
         res.push_back(const_cast<SgFunctionDeclaration*>(fundcl));
     }
 
@@ -334,7 +334,7 @@ void FunctionCallMapping2::computeFunctionCallMapping(SgProject* root)
            {
              SgClassDefinition* candClass = &getClassDef(SG_DEREF(fn));
 
-             if ((clsdef == candClass) || classes.areBaseDerived(candClass, clsdef))
+             if ((clsdef == candClass) || classes.isBaseOf(candClass, clsdef))
              {
                candidates.insert(fn);
 

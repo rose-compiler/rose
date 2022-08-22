@@ -710,7 +710,7 @@ namespace
         if (drvDef == basDef)
           return RoseCompatibilityBridge::sametype;
 
-        if (classes.areBaseDerived(basDef, drvDef))
+        if (classes.isBaseOf(basDef, drvDef))
           return RoseCompatibilityBridge::covariant;
 
         return RoseCompatibilityBridge::unrelated;

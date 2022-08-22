@@ -244,6 +244,7 @@ class ClassAnalysis : std::unordered_map<ClassKeyType, ClassData>
     using base::base;
 
     using base::value_type;
+    using base::mapped_type;
     using base::key_type;
     using base::begin;
     using base::end;
@@ -274,8 +275,13 @@ class ClassAnalysis : std::unordered_map<ClassKeyType, ClassData>
     /// \details
     ///   returns false when ancestorKey == descendantKey
     bool
-    areBaseDerived(ClassKeyType ancestorKey, ClassKeyType descendantKey) const;
+    isBaseOf(ClassKeyType ancestorKey, ClassKeyType descendantKey) const;
 
+    /// returns true, iff \ref ancestorKey is a (direct or indirect) virtual base class
+    /// of \ref descendantKey.    
+    bool
+    isVirtualBaseOf(ClassKeyType ancestorKey, ClassKeyType descendantKey) const;
+    
     /// convenience function to access the map using a SgClassDefinition&.
     const ClassData& at(const SgClassDefinition& clsdef) const { return this->at(&clsdef); }
 };

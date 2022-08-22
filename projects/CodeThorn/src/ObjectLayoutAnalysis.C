@@ -120,7 +120,7 @@ namespace
       
       for (const ct::OverrideDesc& ovrdsc : vfn.overridden())
       {
-        auto status = over.emplace(ovrdsc.function(), ct::VTableLayoutEntry{fn, vfn.isPureVirtual(), ovrdsc.adjustReturnObj()});
+        auto status = over.emplace(ovrdsc.function(), ct::VirtualFunctionEntry{fn, vfn.isPureVirtual(), ovrdsc.adjustReturnObj()});
         
         ROSE_ASSERT(status.second);
       }
@@ -135,7 +135,7 @@ namespace
     
     return VirtualMemberFnSummary{std::move(over), std::move(fresh)};
   }
-  
+    
   void 
   processInherited( ct::VTableLayout& vt, 
                     const ct::VTableLayout& base, 
@@ -160,9 +160,107 @@ namespace
                     std::back_inserter(vt),
                     [&overriders](const ct::VTableLayoutEntry& el) -> ct::VTableLayoutEntry
                     {
-                      auto pos = overriders.find(el.function());
+                      const ct::VirtualFunctionEntry& vfn = boost::get<ct::VirtualFunctionEntry>(el);
+                      auto                            pos = overriders.find(vfn.function());
                       
-                      return pos == overriders.end() ? el : pos->second;
+                      return pos == overriders.end() ? vfn : pos->second;
+                    }
+                  );
+    
+    sect.numInherited(numFn);
+    sect.numTotal(numFn);
+  }
+  
+  std::vector<ct::VTableLayout::const_iterator>    
+  collectVirtualBaseSections( const ct::VTableLayout& vt,
+                              const ct::VTableLayout& base,
+                              const ct::ClassAnalysis& all,
+                              const ct::VTableLayoutContainer& layouts
+                            )
+  {
+    using result_type =std::vector<ct::VTableLayout::const_iterator>;
+    
+    result_type                           res;
+    const ct::ClassAnalysis::mapped_type& thisClass = all.at(vt.getClass());
+    
+    for (ct::InheritanceDesc inh : thisClass.ancestors())
+    {
+      if (!inh.isDirect() && !inh.isVirtual()) continue;
+      if (!all.isVirtualBaseOf(base.getClass(), inh.getClass())) continue;
+      
+      // inh.getClass also inherits from base      
+      const ct::VTableLayout&  baseLayout  = layouts.at(inh.getClass());
+      const ct::VTableSection& baseSection = baseLayout.virtualBaseSection(base.getClass());
+      
+      res.push_back(baseLayout.begin() + baseSection.startOffset());
+    }
+    
+    return res;
+  }
+  
+  void 
+  processInheritedVirtualBases( ct::VTableLayout& vt, 
+                                const ct::ClassAnalysis& all,
+                                const ct::VTableLayout& base,
+                                const ct::VTableLayoutContainer& layouts, 
+                                const OverriderInfo& overriders, 
+                                ct::VTableSection& sect
+                              )
+  {
+    using VTableSections = ct::VTableLayout::VTableSections;
+    
+    // 1) find the non-virtual part in the inherited vtable
+    const VTableSections&          baseSects = base.vtableSections();
+    VTableSections::const_iterator beg = baseSects.begin();    
+    VTableSections::const_iterator lim = std::find_if( beg, baseSects.end(), 
+                                                       [](const ct::VTableSection& baseSec)->bool
+                                                       {
+                                                         return baseSec.virtualBase();
+                                                       }
+                                                     );
+    auto         sumFn = [](size_t n, const ct::VTableSection& s) -> size_t { return n+s.numTotal(); };
+    const size_t numFn = std::accumulate(beg, lim, size_t{0}, sumFn);
+    
+    // 2) compute overrider candidates based on base classes
+    std::vector<ct::VTableLayout::const_iterator>    candBaseSects = collectVirtualBaseSections(vt, base, all, layouts);
+    std::vector<std::vector<ct::VTableLayoutEntry> > candidates;
+    
+    candidates.resize(numFn);
+    
+    for (size_t slot = 0; slot < numFn; ++slot)
+    {
+      std::vector<ct::VTableLayoutEntry> entries;
+      
+      for (ct::VTableLayout::const_iterator candBaseBeg : candBaseSects)
+        entries.push_back(*(candBaseBeg+slot));
+      
+      const std::vector<ct::VTableLayoutEntry>::iterator aaa = entries.begin();
+      const std::vector<ct::VTableLayoutEntry>::iterator zzz = entries.end();
+      auto entryLessThan = [](const ct::VTableLayoutEntry& lhs, const ct::VTableLayoutEntry& rhs) -> bool
+                           {
+                             const ct::VirtualFunctionEntry& lhsFn = boost::get<ct::VirtualFunctionEntry>(lhs);
+                             const ct::VirtualFunctionEntry& rhsFn = boost::get<ct::VirtualFunctionEntry>(rhs);
+                             
+                             return lhsFn.function() < rhsFn.function();
+                           };
+        
+      std::sort(aaa, zzz, entryLessThan);
+      const std::vector<ct::VTableLayoutEntry>::iterator unq = std::unique(aaa, zzz, entryLessThan);
+               
+      entries.erase(unq, zzz);         
+
+      candidates.emplace_back(std::move(entries)); 
+    }
+            
+    // 3) compute final overrider
+    std::transform( base.begin(), base.begin()+numFn, 
+                    std::back_inserter(vt),
+                    [&overriders](const ct::VTableLayoutEntry& el) -> ct::VTableLayoutEntry
+                    {
+                      const ct::VirtualFunctionEntry& vfn = boost::get<ct::VirtualFunctionEntry>(el);
+                      auto pos = overriders.find(vfn.function());
+                      
+                      return pos == overriders.end() ? vfn : pos->second;
                     }
                   );
     
@@ -182,7 +280,7 @@ namespace
                     std::back_inserter(vt),
                     [](const FreshVirtualFunctions::value_type& el) -> ct::VTableLayoutEntry
                     {
-                      return ct::VTableLayoutEntry{el.first, false /* no ptr adj */, el.second};
+                      return ct::VirtualFunctionEntry{el.first, false /* no ptr adj */, el.second};
                     }
                   );
     
@@ -198,10 +296,10 @@ namespace
   {
     using Vec = std::vector<ct::InheritanceDesc>;
 
-    static constexpr bool virtually = true;
-    static constexpr bool directly  = true;
+    //~ static constexpr bool virtually = true;
+    //~ static constexpr bool directly  = true;
 
-    ct::VTableLayout          res;
+    ct::VTableLayout          res{clazz.first};
     PrimarySubobjectFinder    aPrimarySubobj{&all};
     const Vec&                parents = clazz.second.ancestors();
     const Vec::const_iterator aa      = parents.begin();
@@ -240,6 +338,7 @@ namespace
       processInherited(res, layouts.at(it->getClass()), summary.overriderInfo(), nonprimarySect);
     }
 
+
     // 5) Add all vtables from virtual ancestors
     for (Vec::const_iterator it = aa; it != zz; ++it)
     {
@@ -250,14 +349,22 @@ namespace
       
       virtualSect.virtualBase(true);
       virtualSect.associatedClass(it->getClass());
-      processInherited(res, layouts.at(it->getClass()), summary.overriderInfo(), virtualSect);
+      processInheritedVirtualBases( res, 
+                                    all, 
+                                    layouts.at(it->getClass()), 
+                                    layouts, 
+                                    summary.overriderInfo(), 
+                                    virtualSect
+                                  );
     }
     
     ct::VTableLayout::iterator zzz = res.end();
     ct::VTableLayout::iterator pos = std::find_if( res.begin(), zzz,
-                                                   [](const ct::VTableLayoutEntry& e)->bool
+                                                   [](const ct::VTableLayoutEntry& el)->bool
                                                    {
-                                                     return e.isPureVirtual();
+                                                     const ct::VirtualFunctionEntry& vfn = boost::get<ct::VirtualFunctionEntry>(el);
+                                                     
+                                                     return vfn.isPureVirtual();
                                                    }
                                                  );
     res.isAbstractClass(pos != zzz);
@@ -312,10 +419,22 @@ computeVTableLayouts(const ClassAnalysis& all, const VirtualFunctionAnalysis& vf
           {
             if (!clazz.second.hasVirtualTable()) return;
             
-            res[clazz.first] = computeVTableLayout(all, res, clazz, vfa);
+            res.emplace(clazz.first, computeVTableLayout(all, res, clazz, vfa));
           };
   topDownTraversal(all, vtableLayoutComputation);
   return res;
+}
+
+const VTableSection& 
+VTableLayout::virtualBaseSection(ClassKeyType key) const
+{
+  VTableSections::const_iterator pos = sections.begin(); 
+  VTableSections::const_iterator lim = sections.end(); 
+  auto pred = [key](const VTableSection& sec) { return sec.virtualBase() && sec.associatedClass() == key; };
+  
+  pos = std::find_if(pos, lim, pred);
+  ROSE_ASSERT(pos != lim);
+  return *pos; 
 }
 
 }
