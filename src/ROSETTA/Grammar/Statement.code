@@ -5487,24 +5487,12 @@ SgScopeStatement::insert_symbol ( const SgName& n, SgSymbol* s )
              globalScopeAcrossFiles->get_symbol_table()->insert(n, asym);
            }
          } else {
-           printf ("Warning: In SgScopeStatement::insert_symbol(): global_scope == globalScopeAcrossFiles: skip insertion of redundant SgAliasSymbol \n");
+           mprintf ("Warning: In SgScopeStatement::insert_symbol(): global_scope == globalScopeAcrossFiles: skip insertion of redundant SgAliasSymbol \n");
          }
        } else {
-         printf ("In SgScopeStatement::insert_symbol(): project == NULL \n");
+         mprintf ("In SgScopeStatement::insert_symbol(): project == NULL \n");
        }
      }
-
-#if 0
-     ROSE_ASSERT(s != NULL);
-     SgNode* symbolBasis = s->get_symbol_basis();
-  // printf ("In SgScopeStatement::insert_symbol(%s,%p) into scope = %p = %s parent = %p = %s symbol = %p = %s s->get_symbol_basis() = %p = %s \n",
-     printf ("In SgScopeStatement::insert_symbol(%s,%p) into scope = %p = %s symbol = %p = %s s->get_symbol_basis() = %p = %s \n",
-          n.str(),s,
-          this,this->class_name().c_str(),
-       // this->get_parent(),this->get_parent()->class_name().c_str(),
-          s,s->class_name().c_str(),
-          symbolBasis,symbolBasis != NULL ? symbolBasis->class_name().c_str() : "NULL");
-#endif
 
   // Make sure that this specific symbol and name combination don't already exist in the AST.
      bool symbolAlreadyPresentLookupName = p_symbol_table->exists(n,s);
