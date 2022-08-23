@@ -96,7 +96,7 @@ read_trace_file(const string & traceFileName, uint64_t & entry_va )
 
      SgAsmGenericFile *file = new SgAsmGenericFile();
      SgAsmPEFileHeader *pe = new SgAsmPEFileHeader(file);
-     Disassembler *disassembler = Disassembler::lookup(pe)->clone();
+     Disassembler::Base *disassembler = Disassembler::lookup(pe)->clone();
      ROSE_ASSERT(disassembler!=NULL);
 
   // typedef std::map<rose_addr_t, SgAsmInstruction*> InstructionMap;

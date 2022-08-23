@@ -1,13 +1,14 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
-#include <Rose/BinaryAnalysis/DisassemblerNull.h>
+#include <Rose/BinaryAnalysis/Disassembler/Null.h>
 #include <Rose/BinaryAnalysis/Unparser/Null.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
+namespace Disassembler {
 
-DisassemblerNull::DisassemblerNull() {
+Null::Null() {
     name("null");
     wordSizeBytes(1);
     byteOrder(ByteOrder::ORDER_LSB);
@@ -17,25 +18,25 @@ DisassemblerNull::DisassemblerNull() {
     REG_SP = registerDictionary()->findOrThrow("sp");
 }
 
-DisassemblerNull::~DisassemblerNull() {}
+Null::~Null() {}
 
-Disassembler*
-DisassemblerNull::clone() const {
-    return new DisassemblerNull;
+Base*
+Null::clone() const {
+    return new Null;
 }
 
 bool
-DisassemblerNull::canDisassemble(SgAsmGenericHeader*) const {
+Null::canDisassemble(SgAsmGenericHeader*) const {
     return false;
 }
 
 Unparser::BasePtr
-DisassemblerNull::unparser() const {
+Null::unparser() const {
     return Unparser::Null::instance();
 }
 
 SgAsmInstruction*
-DisassemblerNull::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*) {
+Null::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet*) {
     uint8_t byte = 0;
     size_t nRead = map->at(va).limit(1).require(MemoryMap::EXECUTABLE).read(&byte).size();
     if (0 == nRead)
@@ -47,7 +48,7 @@ DisassemblerNull::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, Addr
 }
 
 SgAsmInstruction*
-DisassemblerNull::makeUnknownInstruction(const Exception &e) {
+Null::makeUnknownInstruction(const Exception &e) {
     SgAsmInstruction *insn = new SgAsmNullInstruction(e.ip, "unknown");
     SgAsmOperandList *operands = new SgAsmOperandList;
     insn->set_operandList(operands);
@@ -56,6 +57,7 @@ DisassemblerNull::makeUnknownInstruction(const Exception &e) {
     return insn;
 }
 
+} // namespace
 } // namespace
 } // namespace
 

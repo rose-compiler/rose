@@ -281,8 +281,8 @@ floatingFormat(DisassemblerCil::State &state, unsigned fmtNumber)
         case Cil_fmt_i8 :
             return (CilDataFormat)fmtNumber;
         default:
-            throw Disassembler::Exception("invalid floating point format code=" + StringUtility::numberToString(fmtNumber),
-                                          state.insn_va);
+            throw Exception("invalid floating point format code=" + StringUtility::numberToString(fmtNumber),
+                            state.insn_va);
     }
 }
 #endif
@@ -385,7 +385,7 @@ DisassemblerCil::makeType(State &state, CilDataFormat fmt) const
      // DQ (10/9/2021): Eliminate this code for Cil.
      // case Cil_fmt_f96: return SageBuilderAsm::buildTypeCilFloat96();
 
-        case Cil_fmt_p96: throw Exception("96-bit binary coded decimal not implemented", state.insn_va);
+        case Cil_fmt_p96: throw Disassembler::Exception("96-bit binary coded decimal not implemented", state.insn_va);
         case Cil_fmt_i16: return SageBuilderAsm::buildTypeU16();
         case Cil_fmt_f64: return SageBuilderAsm::buildIeee754Binary64();
         // TODO: This needs to be implemented
@@ -424,7 +424,7 @@ DisassemblerCil::makeAddressRegister(State &state, unsigned regnum, CilDataForma
     ASSERT_require2(0==bit_offset || 16==bit_offset, "register offset is " + plural(bit_offset, "bits"));
     ASSERT_require(bit_offset+nbits <= 32);
     if (16!=nbits && 32!=nbits) // in particular, 8-bit access is not possible
-        throw Exception("invalid address register size: " + numberToString(nbits), state.insn_va);
+        throw Disassembler::Exception("invalid address register size: " + numberToString(nbits), state.insn_va);
     RegisterDescriptor desc(Cil_regclass_addr, regnum, bit_offset, nbits);
     SgAsmRegisterReferenceExpression *expr = new SgAsmDirectRegisterExpression(desc);
     expr->set_type(makeType(state, fmt));
@@ -615,7 +615,7 @@ DisassemblerCil::makeColdFireControlRegister(State &state, unsigned regnum) cons
             // "Not all control registers are implemented in every processor design. Attempted access to undefined or
             // unimplemented control register space produces undefined results." [Programmer's Reference Manual].
             throw Disassembler::Exception("invalid control register number: " + StringUtility::toHex2(regnum, 12, false, false),
-                                          state.insn_va);
+                            state.insn_va);
     }
     SgAsmRegisterReferenceExpression *expr = new SgAsmDirectRegisterExpression(rd);
     ASSERT_require(rd.nBits() == 32);
@@ -868,14 +868,14 @@ DisassemblerCil::makeOffsetWidthPair(State &state, unsigned w1) const
     SgAsmExpression *offset=NULL, *width=NULL;
     if (extract<11, 11>(w1)) {
         if (extract<9, 11>(w1))
-            throw Exception("bits 9 and 10 of extension word 1 should be zero when bit 11 is set", state.insn_va);
+            throw Disassembler::Exception("bits 9 and 10 of extension word 1 should be zero when bit 11 is set", state.insn_va);
         offset = makeDataRegister(state, extract<6, 8>(w1), Cil_fmt_i32);
     } else {
         offset = makeImmediateValue(state, Cil_fmt_i8, extract<6, 10>(w1));
     }
     if (extract<5, 5>(w1)) {
         if (extract<3, 4>(w1))
-            throw Exception("bits 3 and 4 of extension word 1 should be zero when bit 5 is set", state.insn_va);
+            throw Disassembler::Exception("bits 3 and 4 of extension word 1 should be zero when bit 5 is set", state.insn_va);
         width = makeDataRegister(state, extract<0, 2>(w1), Cil_fmt_i32);
     } else {
         width = makeImmediateValue(state, Cil_fmt_i8, extract<0, 4>(w1));
@@ -1036,9 +1036,9 @@ uint16_t
 DisassemblerCil::instructionWord(State &state, size_t n) const
 {
     if (n>10)
-        throw Exception("malformed instruction uses more than 11 extension words", state.insn_va);
+        throw Disassembler::Exception("malformed instruction uses more than 11 extension words", state.insn_va);
     if (n>=state.niwords)
-        throw Exception("short read for instruction word " + numberToString(n), state.insn_va);
+        throw Disassembler::Exception("short read for instruction word " + numberToString(n), state.insn_va);
     state.niwords_used = std::max(state.niwords_used, n+1);
     return state.iwords[n];
 }
@@ -1064,7 +1064,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
     State state; // all mutable state for this function and its descendences is stored here.
     start_instruction(state, map, start_va);
     if (start_va % instructionAlignment_ != 0)
-        throw Exception("instruction is not properly aligned", start_va);
+        throw Disassembler::Exception("instruction is not properly aligned", start_va);
 
 #if DEBUG_DISASSEMBLE_ONE || 0
  // DQ (10/19/2021): Tracing through the CIL disassembly.
@@ -4793,7 +4793,7 @@ DisassemblerCil::insert_idis(Cil *idis)
             std::cerr <<" for '" <<idis->name <<"' conflicts with existing key ";
             (*ti)->pattern.print(std::cerr, alternatives.second);
             std::cerr <<" for '" <<(*ti)->name <<"'\n";
-            throw Exception("insert_idis() would cause an ambiguity in the Cil instruction disassembly table");
+            throw Disassembler::Exception("insert_idis() would cause an ambiguity in the Cil instruction disassembly table");
         }
     }
 

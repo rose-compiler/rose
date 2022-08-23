@@ -281,7 +281,7 @@ int main(int argc, char *argv[]) {
     P2::Engine engine;
     std::vector<std::string> specimenName = engine.parseCommandLine(argc, argv, purpose, description).unreachedArgs();
     MemoryMap::Ptr memory = engine.loadSpecimens(specimenName);
-    Disassembler *decoder = engine.obtainDisassembler();
+    Disassembler::Base *decoder = engine.obtainDisassembler();
 
     // Create the parallel partitioner
     PP::Settings ppSettings;

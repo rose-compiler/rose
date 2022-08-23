@@ -1,18 +1,19 @@
-#ifndef ROSE_BinaryAnalysis_DisassemblerAarch32_H
-#define ROSE_BinaryAnalysis_DisassemblerAarch32_H
-#include <Rose/BinaryAnalysis/Disassembler.h>
+#ifndef ROSE_BinaryAnalysis_Disassembler_Aarch32_H
+#define ROSE_BinaryAnalysis_Disassembler_Aarch32_H
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #ifdef ROSE_ENABLE_ASM_AARCH32
 
 #include <capstone/capstone.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
+namespace Disassembler {
 
 /** Instruction decoder for ARM A32 and T32 instruction sets.
  *
  * Most of the useful disassembly methods can be found in the @ref Disassembler superclass.  Some of the constants
  * have the same ill-defined meanings as they do in the Capstone library. */
-class DisassemblerAarch32: public Disassembler {
+class Aarch32: public Base {
 public:
     /** Capstone "Mode type", limited to those related to AArch32. Warning: these are non-orthogonal concepts. */
     enum class Mode {
@@ -32,24 +33,24 @@ private:
 
 public:
     /** Constructor for specific architecture. */
-    explicit DisassemblerAarch32(Modes modes = Modes())
+    explicit Aarch32(Modes modes = Modes())
         : modes_(modes), capstoneOpened_(false) {
         init();
     }
 
-    static DisassemblerAarch32* instanceA32() {
-        return new DisassemblerAarch32(Modes(Mode::ARM32));
+    static Aarch32* instanceA32() {
+        return new Aarch32(Modes(Mode::ARM32));
     }
 
-    static DisassemblerAarch32* instanceT32() {
-        return new DisassemblerAarch32(Modes(Mode::THUMB));
+    static Aarch32* instanceT32() {
+        return new Aarch32(Modes(Mode::THUMB));
     }
 
-    ~DisassemblerAarch32();
+    ~Aarch32();
 
     // overrides
     bool canDisassemble(SgAsmGenericHeader*) const override;
-    Disassembler* clone() const override;
+    Base* clone() const override;
     Unparser::BasePtr unparser() const override;
     SgAsmInstruction* disassembleOne(const MemoryMap::Ptr&, rose_addr_t startVa, AddressSet *successors=nullptr) override;
     SgAsmInstruction* makeUnknownInstruction(const Exception&) override;
@@ -100,6 +101,7 @@ private:
     uint32_t opcode(const cs_insn&);
 };
 
+} // namespace
 } // namespace
 } // namespace
 

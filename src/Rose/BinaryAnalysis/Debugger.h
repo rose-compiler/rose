@@ -8,7 +8,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/regex.hpp>
-#include <Rose/BinaryAnalysis/Disassembler.h>
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Sawyer/BitVector.h>
 #include <Sawyer/Message.h>
 #include <Sawyer/Optional.h>
@@ -246,7 +246,7 @@ private:
     size_t kernelWordSize_;                             // cached width in bits of kernel's words
     RegisterPage regsPage_;                             // latest register information read from subordinate
     RegPageStatus regsPageStatus_;                      // what are the contents of regsPage_?
-    Disassembler *disassembler_;                        // how to disassemble instructions
+    Disassembler::Base *disassembler_;                  // how to disassemble instructions
     Sawyer::Optional<rose_addr_t> syscallVa_;           // address of some executable system call instruction.
 
     //----------------------------------------
@@ -521,7 +521,7 @@ public:
     const RegisterDictionary* registerDictionary() const;
 
     /** Disassembler. */
-    Disassembler* disassembler() const {
+    Disassembler::Base* disassembler() const {
         return disassembler_;
     }
 

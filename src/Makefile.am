@@ -317,15 +317,16 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/Debugger.h							\
 	Rose/BinaryAnalysis/Demangler.h							\
 	Rose/BinaryAnalysis/Disassembler.h						\
-	Rose/BinaryAnalysis/DisassemblerAarch32.h					\
-	Rose/BinaryAnalysis/DisassemblerAarch64.h					\
+	Rose/BinaryAnalysis/Disassembler/Aarch32.h					\
+	Rose/BinaryAnalysis/Disassembler/Aarch64.h					\
+	Rose/BinaryAnalysis/Disassembler/Base.h						\
 	Rose/BinaryAnalysis/DisassemblerCil.h						\
 	Rose/BinaryAnalysis/DisassemblerJvm.h						\
-	Rose/BinaryAnalysis/DisassemblerM68k.h						\
-	Rose/BinaryAnalysis/DisassemblerMips.h						\
-	Rose/BinaryAnalysis/DisassemblerNull.h						\
-	Rose/BinaryAnalysis/DisassemblerPowerpc.h					\
-	Rose/BinaryAnalysis/DisassemblerX86.h						\
+	Rose/BinaryAnalysis/Disassembler/M68k.h						\
+	Rose/BinaryAnalysis/Disassembler/Mips.h						\
+	Rose/BinaryAnalysis/Disassembler/Null.h						\
+	Rose/BinaryAnalysis/Disassembler/Powerpc.h					\
+	Rose/BinaryAnalysis/Disassembler/X86.h						\
 	Rose/BinaryAnalysis/Dwarf.h                                                     \
 	Rose/BinaryAnalysis/Dwarf/Attributes.h                                          \
 	Rose/BinaryAnalysis/Dwarf/Constants.h                                           \

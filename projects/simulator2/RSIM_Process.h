@@ -435,7 +435,7 @@ private:
 private:
     typedef std::map<rose_addr_t, SgAsmInstruction*> InstructionMap;
 
-    Rose::BinaryAnalysis::Disassembler *disassembler_;  /* Disassembler to use for obtaining instructions */
+    Rose::BinaryAnalysis::Disassembler::Base *disassembler_;  /* Disassembler to use for obtaining instructions */
     InstructionMap icache;                              /* Cache of disassembled instructions */
 
 public:
@@ -477,8 +477,8 @@ public:
      *  threads. See documentation for Disassembler for thread safety details.
      *
      * @{ */
-    Rose::BinaryAnalysis::Disassembler *disassembler() const { return disassembler_; }
-    void disassembler(Rose::BinaryAnalysis::Disassembler *d) { disassembler_ = d; }
+    Rose::BinaryAnalysis::Disassembler::Base *disassembler() const { return disassembler_; }
+    void disassembler(Rose::BinaryAnalysis::Disassembler::Base *d) { disassembler_ = d; }
     /** @} */
 
     /** Returns the total number of instructions processed across all threads.

@@ -25,7 +25,9 @@ namespace Rose {
 namespace BinaryAnalysis {
 
 // Forwards
-class Disassembler;
+namespace Disassembler {
+class Base;
+} // namespace
 
 /** Support for binary calling conventions.
  *
@@ -575,7 +577,7 @@ public:
     /** Construct an analyzer using a specified disassembler.
      *
      *  This constructor chooses a symbolic domain and a dispatcher appropriate for the disassembler's architecture. */
-    explicit Analysis(Disassembler *d)
+    explicit Analysis(Disassembler::Base *d)
         : regDict_(NULL), hasResults_(false), didConverge_(false) {
         init(d);
     }
@@ -696,7 +698,7 @@ public:
 
 private:
     // Finish constructing
-    void init(Disassembler*);
+    void init(Disassembler::Base*);
 
     // Recompute the restoredRegisters_ data member.
     void updateRestoredRegisters(const InstructionSemantics::BaseSemantics::StatePtr &initialState,

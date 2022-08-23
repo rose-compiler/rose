@@ -1,7 +1,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
-#include <Rose/BinaryAnalysis/DisassemblerPowerpc.h>
+#include <Rose/BinaryAnalysis/Disassembler/Powerpc.h>
 
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesElf.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesPowerpc.h>
@@ -138,7 +138,7 @@ matchElfDynamicStub(const Partitioner &partitioner, const Function::Ptr &functio
 
 void
 nameImportThunks(const Partitioner &partitioner, SgAsmInterpretation *interp) {
-    if (!dynamic_cast<DisassemblerPowerpc*>(partitioner.instructionProvider().disassembler()))
+    if (!dynamic_cast<Disassembler::Powerpc*>(partitioner.instructionProvider().disassembler()))
         return;
 
     // Find the locations of all the PLTs

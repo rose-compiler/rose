@@ -3,7 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <Rose/BinaryAnalysis/Disassembler.h>
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
 
@@ -14,7 +14,7 @@ namespace BinaryAnalysis {
  *
  *  This disassembler decodes JVM instructions.
  */
-class DisassemblerJvm: public Disassembler {
+class DisassemblerJvm: public Disassembler::Base {
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
@@ -22,17 +22,17 @@ private:
 
   template<class S>
   void serialize(S &s, const unsigned /*version*/) {
-    s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Disassembler);
+      s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Disassembler::Base);
   }
 #endif
 
 public:
   DisassemblerJvm();
   virtual ~DisassemblerJvm();
-  virtual Disassembler* clone() const override;
+  virtual Disassembler::Base* clone() const override;
   virtual bool canDisassemble(SgAsmGenericHeader*) const override;
   virtual Unparser::BasePtr unparser() const override;
-  virtual SgAsmInstruction* makeUnknownInstruction(const Exception&) override;
+    virtual SgAsmInstruction* makeUnknownInstruction(const Disassembler::Exception&) override;
   virtual SgAsmInstruction* disassembleOne(const MemoryMap::Ptr&, rose_addr_t va, AddressSet *successors = NULL) override;
 
 private:

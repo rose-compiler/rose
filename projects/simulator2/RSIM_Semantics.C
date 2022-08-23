@@ -1,7 +1,7 @@
 #include <rose.h>
 #include <Rose/Diagnostics.h>
-#include <Rose/BinaryAnalysis/DisassemblerX86.h>
-#include <Rose/BinaryAnalysis/DisassemblerM68k.h>
+#include <Rose/BinaryAnalysis/Disassembler/X86.h>
+#include <Rose/BinaryAnalysis/Disassembler/M68k.h>
 
 #include "RSIM_Semantics.h"
 #include "RSIM_Thread.h"
@@ -68,11 +68,11 @@ struct IP_sysenter: public X86::InsnProcessor {
 
 DispatcherPtr
 createDispatcher(RSIM_Thread *owningThread) {
-    BinaryAnalysis::Disassembler *disassembler = owningThread->get_process()->disassembler();
+    BinaryAnalysis::Disassembler::Base *disassembler = owningThread->get_process()->disassembler();
     Architecture arch = ARCH_NONE;
-    if (dynamic_cast<BinaryAnalysis::DisassemblerX86*>(disassembler)) {
+    if (dynamic_cast<BinaryAnalysis::Disassembler::X86*>(disassembler)) {
         arch = ARCH_X86;
-    } else if (dynamic_cast<BinaryAnalysis::DisassemblerM68k*>(disassembler)) {
+    } else if (dynamic_cast<BinaryAnalysis::Disassembler::M68k*>(disassembler)) {
         arch = ARCH_M68k;
     } else {
         TODO("architecture not supported");

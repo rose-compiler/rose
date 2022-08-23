@@ -6,7 +6,7 @@
 
 #include <Rose/BinaryAnalysis/NoOperation.h>
 #include <Rose/Diagnostics.h>
-#include <Rose/BinaryAnalysis/Disassembler.h>
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Dispatcher.h>
 #include "AsmUnparser_compat.h"
 
@@ -147,7 +147,7 @@ buildNopAnalyzer(SgAsmInterpretation *interp) {
         return NoOperation(BaseSemantics::DispatcherPtr());
     }
 
-    Disassembler *disassembler = Disassembler::lookup(interp);
+    Disassembler::Base *disassembler = Disassembler::lookup(interp);
     return NoOperation(disassembler);
 }
 

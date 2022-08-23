@@ -32,7 +32,7 @@ namespace BinaryAnalysis {
  *  dictionaries created by the ROSE library do use compatible descriptors across each family. Looking up the "eax" register in
  *  one dictionary may return a different descriptor than "eax" looked up in a different dictionary (but not in ROSE-created
  *  dictinaries).  Components of the ROSE binary support that generate RegisterDescriptors provide a mechanism for obtaining
- *  (and possibly setting) the register dictionary.  For instance, the Disassembler class has get_registers() and
+ *  (and possibly setting) the register dictionary.  For instance, the @ref Disassembler::Base class has get_registers() and
  *  set_registers() methods. */
 class RegisterDictionary {
 public:

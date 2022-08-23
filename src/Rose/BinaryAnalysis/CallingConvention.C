@@ -841,7 +841,7 @@ operator<<(std::ostream &out, const Definition &x) {
 
 
 void
-Analysis::init(Disassembler *disassembler) {
+Analysis::init(Disassembler::Base *disassembler) {
     if (disassembler) {
         const RegisterDictionary *registerDictionary = disassembler->registerDictionary();
         ASSERT_not_null(registerDictionary);

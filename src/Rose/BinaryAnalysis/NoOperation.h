@@ -9,7 +9,9 @@
 namespace Rose {
 namespace BinaryAnalysis {
 
-class Disassembler;
+namespace Disassembler {
+class Base;
+} // namespace
 
 /** Analysis that looks for no-op equivalents. */
 class NoOperation {
@@ -81,7 +83,7 @@ public:
     /** Construct a new analysis for a specific disassembler.
      *
      *  An analysis constructed this way will use the symbolic semantics domain. */
-    explicit NoOperation(BinaryAnalysis::Disassembler*);
+    explicit NoOperation(BinaryAnalysis::Disassembler::Base*);
 
     /** Property: state normalizer.
      *

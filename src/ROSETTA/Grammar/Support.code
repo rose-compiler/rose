@@ -16089,7 +16089,7 @@ SgFile::SgFile ( const SgFile & X )
      ROSE_ASSERT(false);
    }
 
-#include <Rose/BinaryAnalysis/Disassembler.h>
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
 
 void
 SgFile::initialization()

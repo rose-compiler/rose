@@ -1,5 +1,6 @@
 add_subdirectory(ByteCode)
 add_subdirectory(Concolic)
+add_subdirectory(Disassembler)
 add_subdirectory(InstructionSemantics)
 add_subdirectory(InstructionSemantics2)
 add_subdirectory(ModelChecker)
@@ -22,16 +23,8 @@ add_library(roseBinaryAnalysis OBJECT
   DataFlow.C
   Debugger.C
   Demangler.C
-  Disassembler.C
-  DisassemblerAarch32.C
-  DisassemblerAarch64.C
   DisassemblerCil.C
   DisassemblerJvm.C
-  DisassemblerM68k.C
-  DisassemblerMips.C
-  DisassemblerNull.C
-  DisassemblerPowerpc.C
-  DisassemblerX86.C
   FeasiblePath.C
   FunctionCall.C
   FunctionSimilarity.C
@@ -61,8 +54,7 @@ add_library(roseBinaryAnalysis OBJECT
   TaintedFlow.C
   ToSource.C
   Variables.C
-  Z3Solver.C
-  )
+  Z3Solver.C)
 
 add_dependencies(roseBinaryAnalysis rosetta_generated)
 
@@ -84,15 +76,8 @@ install(FILES
   Debugger.h
   Demangler.h
   Disassembler.h
-  DisassemblerAarch32.h
-  DisassemblerAarch64.h
   DisassemblerCil.h
   DisassemblerJvm.h
-  DisassemblerM68k.h
-  DisassemblerMips.h
-  DisassemblerNull.h
-  DisassemblerPowerpc.h
-  DisassemblerX86.h
   FeasiblePath.h
   FunctionCall.h
   FunctionSimilarity.h

@@ -3,7 +3,7 @@
 
 #include <sage3basic.h>
 #include <Rose/BitOps.h>
-#include <Rose/BinaryAnalysis/DisassemblerAarch32.h>
+#include <Rose/BinaryAnalysis/Disassembler/Aarch32.h>
 #include <Rose/BinaryAnalysis/Unparser/Aarch32.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherAarch32.h>
 
@@ -11,14 +11,15 @@ using namespace Rose::Diagnostics;
 
 namespace Rose {
 namespace BinaryAnalysis {
+namespace Disassembler {
 
-Disassembler*
-DisassemblerAarch32::clone() const {
-    return new DisassemblerAarch32(*this);
+Base*
+Aarch32::clone() const {
+    return new Aarch32(*this);
 }
 
 bool
-DisassemblerAarch32::canDisassemble(SgAsmGenericHeader *header) const {
+Aarch32::canDisassemble(SgAsmGenericHeader *header) const {
     SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
     if ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_ARM_Family) {
         if (header->get_exec_format()->get_word_size() == 4) {
@@ -31,7 +32,7 @@ DisassemblerAarch32::canDisassemble(SgAsmGenericHeader *header) const {
 }
 
 void
-DisassemblerAarch32::init() {
+Aarch32::init() {
     // Warning: the "mode" constants are not orthogonal with each other or the "arch" values.
     cs_mode mode = (cs_mode)modes_.vector();
 
@@ -68,7 +69,7 @@ DisassemblerAarch32::init() {
         throw Exception("capstone cs_option failed");
 }
 
-DisassemblerAarch32::~DisassemblerAarch32() {
+Aarch32::~Aarch32() {
     if (capstoneOpened_) {
         cs_err err = cs_close(&capstone_);
         ASSERT_always_require2(CS_ERR_OK == err, "capstone cs_close failed");
@@ -76,12 +77,12 @@ DisassemblerAarch32::~DisassemblerAarch32() {
 }
 
 Unparser::BasePtr
-DisassemblerAarch32::unparser() const {
+Aarch32::unparser() const {
     return Unparser::Aarch32::instance();
 }
 
 uint32_t
-DisassemblerAarch32::bytesToWord(size_t nBytes, const uint8_t *bytes) {
+Aarch32::bytesToWord(size_t nBytes, const uint8_t *bytes) {
     ASSERT_require(nBytes <= 4);
     uint32_t retval = 0;
     switch (byteOrder()) {
@@ -100,7 +101,7 @@ DisassemblerAarch32::bytesToWord(size_t nBytes, const uint8_t *bytes) {
 }
 
 SgAsmInstruction*
-DisassemblerAarch32::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet *successors/*=nullptr*/) {
+Aarch32::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet *successors/*=nullptr*/) {
     // Resources that must be explicitly reclaimed before returning.
     struct Resources {
         cs_insn *csi = nullptr;
@@ -270,7 +271,7 @@ DisassemblerAarch32::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, A
 }
 
 void
-DisassemblerAarch32::commentIpRelative(SgAsmInstruction *insn) {
+Aarch32::commentIpRelative(SgAsmInstruction *insn) {
     ASSERT_not_null(insn);
 
     struct Visitor: AstSimpleProcessing {
@@ -306,7 +307,7 @@ DisassemblerAarch32::commentIpRelative(SgAsmInstruction *insn) {
 }
 
 SgAsmInstruction*
-DisassemblerAarch32::makeUnknownInstruction(const Exception &e) {
+Aarch32::makeUnknownInstruction(const Exception &e) {
     SgAsmAarch32Instruction *insn = new SgAsmAarch32Instruction(e.ip, "unknown", ARM_INS_INVALID);
     SgAsmOperandList *operands = new SgAsmOperandList();
     insn->set_operandList(operands);
@@ -317,7 +318,7 @@ DisassemblerAarch32::makeUnknownInstruction(const Exception &e) {
 }
 
 std::string
-DisassemblerAarch32::fixMnemonic(const std::string &orig, arm_cc cc) {
+Aarch32::fixMnemonic(const std::string &orig, arm_cc cc) {
     std::string suffix;
     switch (cc) {
         case ARM_CC_INVALID:
@@ -377,7 +378,7 @@ DisassemblerAarch32::fixMnemonic(const std::string &orig, arm_cc cc) {
 }
 
 SgAsmExpression*
-DisassemblerAarch32::makeOperand(const cs_insn &insn, const cs_arm_op &op) {
+Aarch32::makeOperand(const cs_insn &insn, const cs_arm_op &op) {
     SgAsmExpression *retval = nullptr;
     SgAsmType *u32 = SageBuilderAsm::buildTypeU32();
     bool shiftedOrRotated = false;
@@ -485,7 +486,7 @@ DisassemblerAarch32::makeOperand(const cs_insn &insn, const cs_arm_op &op) {
 }
 
 SgAsmExpression*
-DisassemblerAarch32::shiftOrRotate(SgAsmExpression *baseExpr, const cs_arm_op &op) {
+Aarch32::shiftOrRotate(SgAsmExpression *baseExpr, const cs_arm_op &op) {
     ASSERT_not_null(baseExpr);
     if (op.shift.type != ARM_SFT_INVALID && op.shift.value != 0) {
         SgAsmType *u32 = SageBuilderAsm::buildTypeU32();
@@ -562,17 +563,17 @@ DisassemblerAarch32::shiftOrRotate(SgAsmExpression *baseExpr, const cs_arm_op &o
 }
 
 SgAsmType*
-DisassemblerAarch32::registerType(RegisterDescriptor reg) {
+Aarch32::registerType(RegisterDescriptor reg) {
     return SageBuilderAsm::buildTypeU(reg.nBits());
 }
 
 RegisterDescriptor
-DisassemblerAarch32::makeCoprocRegister(int registerNumber) {
+Aarch32::makeCoprocRegister(int registerNumber) {
     return RegisterDescriptor(aarch32_regclass_coproc, registerNumber, 0, 32);
 }
 
 RegisterDescriptor
-DisassemblerAarch32::makeRegister(arm_reg reg) {
+Aarch32::makeRegister(arm_reg reg) {
     ASSERT_not_null(registerDictionary());
     const RegisterDictionary &dict = *registerDictionary();
     RegisterDescriptor retval;
@@ -920,7 +921,7 @@ DisassemblerAarch32::makeRegister(arm_reg reg) {
 }
 
 SgAsmExpression*
-DisassemblerAarch32::makeSystemRegister(arm_sysreg capreg) {
+Aarch32::makeSystemRegister(arm_sysreg capreg) {
     ASSERT_not_null(registerDictionary());
     const RegisterDictionary &dict = *registerDictionary();
     SgAsmExpression *retval = nullptr;
@@ -1230,7 +1231,7 @@ DisassemblerAarch32::makeSystemRegister(arm_sysreg capreg) {
 }
 
 SgAsmType*
-DisassemblerAarch32::typeForMemoryRead(const cs_insn &insn) {
+Aarch32::typeForMemoryRead(const cs_insn &insn) {
     using namespace Rose::BitOps;
     using Kind = ::Rose::BinaryAnalysis::Aarch32InstructionKind;
     uint32_t code = opcode(insn);
@@ -1349,7 +1350,7 @@ DisassemblerAarch32::typeForMemoryRead(const cs_insn &insn) {
 }
 
 uint32_t
-DisassemblerAarch32::opcode(const cs_insn &insn) {
+Aarch32::opcode(const cs_insn &insn) {
     ASSERT_require(insn.size <= 4);
     uint32_t retval = 0;
     for (size_t i = 0; i < insn.size; ++i)
@@ -1358,7 +1359,7 @@ DisassemblerAarch32::opcode(const cs_insn &insn) {
 }
 
 RegisterDescriptor
-DisassemblerAarch32::subRegister(RegisterDescriptor reg, int idx) {
+Aarch32::subRegister(RegisterDescriptor reg, int idx) {
     // This isn't really complete yet, just stubbed out to return something that doesn't crash ROSE.
     if (idx >= 0)
         mlog[WARN] <<"register indexing not supported yet for A32/T32\n";
@@ -1366,7 +1367,7 @@ DisassemblerAarch32::subRegister(RegisterDescriptor reg, int idx) {
 }
 
 void
-DisassemblerAarch32::wrapPrePostIncrement(SgAsmAarch32Instruction *insn, const cs_insn &csInsn, const uint32_t word) {
+Aarch32::wrapPrePostIncrement(SgAsmAarch32Instruction *insn, const cs_insn &csInsn, const uint32_t word) {
     ASSERT_not_null(insn);
     SgAsmOperandList *operands = insn->get_operandList();
     ASSERT_not_null(operands);
@@ -1615,6 +1616,7 @@ DisassemblerAarch32::wrapPrePostIncrement(SgAsmAarch32Instruction *insn, const c
     ASSERT_not_reachable("no pre/post update replacement performed for insn = " + StringUtility::addrToString(word));
 }
 
+} // namespace
 } // namespace
 } // namespace
 

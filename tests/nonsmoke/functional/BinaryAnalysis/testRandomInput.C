@@ -9,7 +9,7 @@ static const char *description =
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
-#include <Rose/BinaryAnalysis/Disassembler.h>
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <LinearCongruentialGenerator.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
@@ -105,7 +105,7 @@ main(int argc, char *argv[]) {
     P2::Engine engine;
     engine.settings().disassembler.isaName = settings.isa;
     P2::Partitioner partitioner = engine.createPartitioner();
-    Disassembler *disassembler = partitioner.instructionProvider().disassembler();
+    Disassembler::Base *disassembler = partitioner.instructionProvider().disassembler();
     ASSERT_not_null(disassembler);
 
     // Configure unparser

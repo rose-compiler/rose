@@ -52,16 +52,16 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/DataFlow.C							\
 	BinaryAnalysis/Debugger.C							\
 	BinaryAnalysis/Demangler.C							\
-	BinaryAnalysis/DisassemblerAarch32.C						\
-	BinaryAnalysis/DisassemblerAarch64.C						\
-	BinaryAnalysis/Disassembler.C							\
+	BinaryAnalysis/Disassembler/Aarch32.C						\
+	BinaryAnalysis/Disassembler/Aarch64.C						\
+	BinaryAnalysis/Disassembler/Base.C						\
 	BinaryAnalysis/DisassemblerCil.C						\
 	BinaryAnalysis/DisassemblerJvm.C						\
-	BinaryAnalysis/DisassemblerM68k.C						\
-	BinaryAnalysis/DisassemblerMips.C						\
-	BinaryAnalysis/DisassemblerNull.C						\
-	BinaryAnalysis/DisassemblerPowerpc.C						\
-	BinaryAnalysis/DisassemblerX86.C						\
+	BinaryAnalysis/Disassembler/M68k.C						\
+	BinaryAnalysis/Disassembler/Mips.C						\
+	BinaryAnalysis/Disassembler/Null.C						\
+	BinaryAnalysis/Disassembler/Powerpc.C						\
+	BinaryAnalysis/Disassembler/X86.C						\
 	BinaryAnalysis/FeasiblePath.C							\
 	BinaryAnalysis/FunctionCall.C							\
 	BinaryAnalysis/FunctionSimilarity.C						\

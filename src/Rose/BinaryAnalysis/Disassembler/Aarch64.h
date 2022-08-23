@@ -1,21 +1,22 @@
-#ifndef ROSE_BinaryAnalysis_DisassemblerAarch64_H
-#define ROSE_BinaryAnalysis_DisassemblerAarch64_H
-#include <Rose/BinaryAnalysis/Disassembler.h>
+#ifndef ROSE_BinaryAnalysis_Disassembler_Aarch64_H
+#define ROSE_BinaryAnalysis_Disassembler_Aarch64_H
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #ifdef ROSE_ENABLE_ASM_AARCH64
 
 #include <capstone/capstone.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
+namespace Disassembler {
 
 /** ARM instruction decoder for AArch64.
  *
  *  This is the decoder for the A64 instruction set of the AArch64 architecture. At the time of this writing, A64 is the only
  *  instruction set for this architecture.
  *
- *  Most of the useful disassembly methods can be found in the @ref Disassembler superclass.  Some of the constants have the
+ *  Most of the useful disassembly methods can be found in the @ref Base superclass.  Some of the constants have the
  *  same ill-defined meanings as they do in the Capstone library. */
-class DisassemblerAarch64: public Disassembler {
+class Aarch64: public Base {
 public:
     // <rant>
     //
@@ -53,16 +54,16 @@ private:
 
 public:
     /** Constructor for specific architecture. */
-    explicit DisassemblerAarch64(Modes modes = Modes())
+    explicit Aarch64(Modes modes = Modes())
         : modes_(modes), capstoneOpened_(false) {
         init();
     }
 
-    ~DisassemblerAarch64();
+    ~Aarch64();
 
     // overrides
     bool canDisassemble(SgAsmGenericHeader*) const override;
-    Disassembler* clone() const override;
+    Base* clone() const override;
     Unparser::BasePtr unparser() const override;
     SgAsmInstruction* disassembleOne(const MemoryMap::Ptr&, rose_addr_t startVa, AddressSet *successors=nullptr) override;
     SgAsmInstruction* makeUnknownInstruction(const Exception&) override;
@@ -103,6 +104,7 @@ private:
     void wrapPrePostIncrement(SgAsmOperandList*, const cs_arm64&);
 };
 
+} // namespace
 } // namespace
 } // namespace
 

@@ -19,7 +19,9 @@ class SgAsmInterpretation;
 namespace Rose {
 namespace BinaryAnalysis {
 
-class Disassembler;
+namespace Disassembler {
+class Base;
+} // namespace
 
 /** Unparses binary AST into text.
  *
@@ -145,7 +147,7 @@ class Disassembler;
  *
  *  @code
  *  SgAsmInterpretation *interp = ...;
- *  Disassembler *disassembler = Disassembler::lookup(interp)->clone();
+ *  Disassembler::Base *disassembler = Disassembler::lookup(interp)->clone();
  *  disassembler->set_search(Disassembler::SEARCH_DEFAULT | Disassembler::SEARCH_DEADEND |
  *                           Disassembler::SEARCH_UNKNOWN | Disassembler::SEARCH_UNUSED);
  *  AsmUnparser unparser;
@@ -608,13 +610,13 @@ public:
         };
 
         DataNote data_note;
-        Disassembler *disassembler;
+        Disassembler::Base *disassembler;
         AsmUnparser *unparser;
         bool unparser_allocated_here;
         StaticDataDisassembler(): disassembler(NULL), unparser(NULL), unparser_allocated_here(false) {}
         ~StaticDataDisassembler() { reset(); }
         virtual void reset();
-        virtual void init(Disassembler *disassembler, AsmUnparser *unparser=NULL);
+        virtual void init(Disassembler::Base *disassembler, AsmUnparser *unparser=NULL);
         virtual bool operator()(bool enabled, const StaticDataArgs &args);
     };
 

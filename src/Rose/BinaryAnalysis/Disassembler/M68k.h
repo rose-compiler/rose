@@ -1,9 +1,9 @@
 /* Disassembly specific to Motorola architectures */
-#ifndef ROSE_BinaryAnalysis_DisassemblerM68k_H
-#define ROSE_BinaryAnalysis_DisassemblerM68k_H
+#ifndef ROSE_BinaryAnalysis_Disassembler_M68k_H
+#define ROSE_BinaryAnalysis_Disassembler_M68k_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <Rose/BinaryAnalysis/Disassembler.h>
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
 
 #include <Rose/BinaryAnalysis/InstructionEnumsM68k.h>
 #include "BitPattern.h"
@@ -15,9 +15,10 @@
 
 namespace Rose {
 namespace BinaryAnalysis {
+namespace Disassembler {
 
 /** Disassembler for Motorola M68k-based instruction set architectures. */
-class DisassemblerM68k: public Disassembler {
+class M68k: public Base {
 public:
     // State mutated during the call to disassembleOne. Used internally.
     struct State: boost::noncopyable { // noncopyable is so we don't accidentally pass it by value
@@ -38,17 +39,17 @@ public:
      *  disassembled, the list is scanned to find the first entry that matches, and then its operator() is invoked.  An entry
      *  matches if the instruction bits to be disassembled match any of the BitPattern objects.
      *
-     *  An instruction decoder is enabled if the disassembler's family (see DisassemblerM68k constructors) bit-wise ANDed with
-     *  the decoder family (see DisassemblerM68k::M68k constructor) is non-zero. */
-    class M68k {
+     *  An instruction decoder is enabled if the disassembler's family (see M68k constructors) bit-wise ANDed with
+     *  the decoder family (see M68k constructor) is non-zero. */
+    class Decoder {
     public:
-        M68k(const std::string &name, unsigned family, const BitPattern<uint16_t> &pattern)
+        Decoder(const std::string &name, unsigned family, const BitPattern<uint16_t> &pattern)
             : name(name), family(family), pattern(pattern) {}
-        virtual ~M68k() {}
+        virtual ~Decoder() {}
         std::string name;                               // for debugging; same as class name but without the "M68k_" prefix
         unsigned family;                                // bitmask of M68kFamily bits
         BitPattern<uint16_t> pattern;                   // bits that match
-        typedef DisassemblerM68k D;
+        typedef M68k D;
         virtual SgAsmM68kInstruction *operator()(State&, const D *d, unsigned w0) = 0;
     };
 
@@ -60,7 +61,7 @@ private:
     // bits, we can divide the table into 16 entries for these invariant bits, and another entry (index 16) for the cases
     // with a variable operator byte.  Each of these 17 buckets is an unordered list of instruction disassemblers whose
     // patterns we attempt to match one at a time (the insertion function checks that there are no ambiguities).
-    typedef std::list<M68k*> IdisList;
+    typedef std::list<Decoder*> IdisList;
     typedef std::vector<IdisList> IdisTable;
     IdisTable idis_table;
 
@@ -70,7 +71,7 @@ private:
 
     template<class S>
     void serialize_common(S &s, const unsigned /*version*/) {
-        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Disassembler);
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Base);
         s & BOOST_SERIALIZATION_NVP(family);
         //s & idis_table; -- not saved
     }
@@ -91,7 +92,7 @@ private:
 
 protected:
     // undocumented constructor for serialization. The init() will be called by the serialization.
-    DisassemblerM68k()
+    M68k()
         : family(m68k_freescale_cpu32) {}
         
 public:
@@ -101,17 +102,17 @@ public:
      *  disassembler specific to the FreeScale ColdFire series using "ISA_B", invoke as:
      *
      * @code
-     *  Disassembler *disassembler = new DisassemblerM68k(m68k_freescale_isab);
+     *  Disassembler *disassembler = new M68k(m68k_freescale_isab);
      * @endcode */
-    explicit DisassemblerM68k(M68kFamily family)
+    explicit M68k(M68kFamily family)
         : family(family) {
         init();
     }
-    virtual DisassemblerM68k *clone() const override { return new DisassemblerM68k(*this); }
+    virtual M68k *clone() const override { return new M68k(*this); }
     virtual bool canDisassemble(SgAsmGenericHeader*) const override;
     virtual SgAsmInstruction *disassembleOne(const MemoryMap::Ptr&, rose_addr_t start_va,
                                              AddressSet *successors=NULL) override;
-    virtual SgAsmInstruction *makeUnknownInstruction(const Disassembler::Exception&) override;
+    virtual SgAsmInstruction *makeUnknownInstruction(const Exception&) override;
     virtual Unparser::BasePtr unparser() const override;
 
     typedef std::pair<SgAsmExpression*, SgAsmExpression*> ExpressionPair;
@@ -119,11 +120,11 @@ public:
     /** Find an instruction-specific disassembler.  Using the specified instruction bits, search for and return an
      *  instruction-specific disassembler.  Returns null if no appropriate disassembler can be found.  Instruction-specific
      *  disassemblers know how to disassemble specific instruction types (or groups of closely related instructions). */
-    M68k *find_idis(uint16_t *insn_bytes, size_t nbytes) const;
+    Decoder* find_idis(uint16_t *insn_bytes, size_t nbytes) const;
 
     /** Insert an instruction-specific disassembler. The table must not already contain an entry that has the same @p mask and
      *  @p match values. The pointers are managed by the caller and must not be deleted while they are in the table. */
-    void insert_idis(M68k*);
+    void insert_idis(Decoder*);
 
     /** Called by disassembleOne() to initialize the disassembler state for the next instruction. */
     void start_instruction(State &state, const MemoryMap::Ptr &map, rose_addr_t start_va) const{
@@ -242,9 +243,10 @@ private:
 
 } // namespace
 } // namespace
+} // namespace
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::DisassemblerM68k);
+BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::Disassembler::M68k);
 #endif
 
 #endif

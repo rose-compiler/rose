@@ -272,7 +272,7 @@ main(int argc, char *argv[]) {
 
     // Obtain info about the specimen, including a disassembler.
     engine.parseContainers(args.front());
-    Disassembler *disassembler = engine.obtainDisassembler();
+    Disassembler::Base *disassembler = engine.obtainDisassembler();
     if (!disassembler)
         throw std::runtime_error("architecture is not supported by this tool");
     size_t addrWidth = disassembler->stackPointerRegister().nBits();

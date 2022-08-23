@@ -203,7 +203,7 @@ void
 RSIM_Linux32::loadVsyscalls(RSIM_Process *process) {}
 
 void
-RSIM_Linux32::loadSpecimenNative(RSIM_Process *process, Disassembler *disassembler, int existingPid/*=-1*/) {
+RSIM_Linux32::loadSpecimenNative(RSIM_Process *process, Disassembler::Base *disassembler, int existingPid/*=-1*/) {
     TODO("[Robb P. Matzke 2015-06-03]");
 }
 

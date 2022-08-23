@@ -4,7 +4,7 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics/SourceAstSemantics.h>
 
 #include <AsmUnparser_compat.h>
-#include <Rose/BinaryAnalysis/Disassembler.h>
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
 #include <integerOps.h>

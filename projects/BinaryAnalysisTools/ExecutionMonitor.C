@@ -14,7 +14,7 @@ static const char* description =
 #include <Sawyer/IntervalSet.h>
 #include <Sawyer/Interval.h>
 #include <Rose/BinaryAnalysis/Debugger.h>
-#include <Rose/BinaryAnalysis/Disassembler.h>
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
@@ -81,7 +81,7 @@ namespace
 
   // "borrowed" from nativeExecutionTrace
   SgAsmInstruction*
-  disassembleOne(Rose::BinaryAnalysis::Disassembler* disasm, const uint8_t* buf, size_t bufSize, rose_addr_t ip)
+  disassembleOne(Rose::BinaryAnalysis::Disassembler::Base* disasm, const uint8_t* buf, size_t bufSize, rose_addr_t ip)
   {
     try
     {
@@ -114,13 +114,7 @@ namespace BinaryAnalysis {
       typedef Sawyer::Container::Interval<addr_t>             AddressInterval;
       typedef Sawyer::Container::IntervalSet<AddressInterval> AddressIntervalSet;
 
-/*
-      ExecutionMonitor(const boost::filesystem::path& exeName, const std::vector<std::string>& args, Disassembler* disasm) 
-      : Debugger(exeName, args, Debugger::CLOSE_FILES),
-        disassembler(disasm), currIval(), intervals()
-      {}
-*/
-      ExecutionMonitor(const std::vector<std::string>& exeNameAndArgs, Disassembler* disasm)
+      ExecutionMonitor(const std::vector<std::string>& exeNameAndArgs, Disassembler::Base* disasm)
           : disassembler(disasm), currIval(), intervals()
       {
           Debugger::Specimen specimen(exeNameAndArgs);
@@ -183,7 +177,7 @@ namespace BinaryAnalysis {
       }
 
     private:
-      Disassembler* const disassembler; ///< disassembler for architectures
+      Disassembler::Base* const disassembler; ///< disassembler for architectures
                                         ///<   using variable-length instruction encoding.
       AddressInterval     currIval;     ///< current code interval
       AddressIntervalSet  intervals;    ///< all code intervals
@@ -281,7 +275,7 @@ parseCommandLine(int argc, char** argv, P2::Engine& engine, Settings& settings)
 int main(int argc, char** argv)
 {
   using Rose::BinaryAnalysis::ExecutionMonitor;
-  using Rose::BinaryAnalysis::Disassembler;
+  using Rose::BinaryAnalysis::Disassembler::Base;
 
   ROSE_INITIALIZE;
   Rose::Diagnostics::initAndRegister(&::mlog, "tool");
@@ -291,7 +285,7 @@ int main(int argc, char** argv)
   if (specpos != argv+argc) ++specpos;
 
   std::vector<std::string> specimenAndArgs(specpos, argv+argc);
-  Disassembler*            disassembler = NULL;
+  Disassembler::Base*            disassembler = NULL;
 
   // Parse command-line
   P2::Engine               engine;

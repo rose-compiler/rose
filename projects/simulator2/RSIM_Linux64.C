@@ -184,7 +184,7 @@ RSIM_Linux64::loadVsyscalls(RSIM_Process *process) {
 }
 
 void
-RSIM_Linux64::loadSpecimenNative(RSIM_Process *process, Disassembler *disassembler, int existingPid/*=-1*/) {
+RSIM_Linux64::loadSpecimenNative(RSIM_Process *process, Disassembler::Base *disassembler, int existingPid/*=-1*/) {
     process->mem_transaction_start("specimen main memory");
     Debugger::Ptr debugger = Debugger::instance();
     if (existingPid != -1) {

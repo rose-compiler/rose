@@ -1,7 +1,7 @@
 // Disassembles all bytes from a buffer and tries to find function entry addresses
 
 #include "rose.h"
-#include <Rose/BinaryAnalysis/DisassemblerX86.h>
+#include <Rose/BinaryAnalysis/Disassembler/X86.h>
 
 #include <cstdlib>
 #include <cstring>
@@ -41,7 +41,7 @@ main(int argc, char *argv[])
     // Try to disassemble every byte, and print the CALL/FARCALL targets
     InstructionMap insns;
     size_t nerrors=0;
-    Disassembler *disassembler = new DisassemblerX86(4);
+    Disassembler::Base *disassembler = new Disassembler::X86(4);
     for (rose_addr_t offset=0; offset<file_size; ++offset) {
         try {
             rose_addr_t insn_va = start_va + offset;

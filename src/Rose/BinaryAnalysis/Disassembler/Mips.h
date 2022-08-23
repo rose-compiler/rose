@@ -1,28 +1,29 @@
 /* Disassembly specific to the MIPS architecture */
-#ifndef ROSE_BinaryAnalysis_DisassemblerMips_H
-#define ROSE_BinaryAnalysis_DisassemblerMips_H
+#ifndef ROSE_BinaryAnalysis_Disassembler_Mips_H
+#define ROSE_BinaryAnalysis_Disassembler_Mips_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <Rose/BinaryAnalysis/Disassembler.h>
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
 
 #include <Rose/BinaryAnalysis/InstructionEnumsMips.h>
 #include "SageBuilderAsm.h"
 
 namespace Rose {
 namespace BinaryAnalysis {
+namespace Disassembler {
 
-class DisassemblerMips: public Disassembler {
+class Mips: public Base {
 public:
     /** Create a MIPS disassembler.
      *
      *  MIPS executables can be big- or little-endian. */
-    explicit DisassemblerMips(ByteOrder::Endianness sex = ByteOrder::ORDER_MSB) { init(sex); }
+    explicit Mips(ByteOrder::Endianness sex = ByteOrder::ORDER_MSB) { init(sex); }
 
-    virtual DisassemblerMips *clone() const override { return new DisassemblerMips(*this); }
+    virtual Mips *clone() const override { return new Mips(*this); }
     virtual bool canDisassemble(SgAsmGenericHeader*) const override;
     virtual SgAsmInstruction *disassembleOne(const MemoryMap::Ptr&, rose_addr_t start_va,
                                              AddressSet *successors=NULL) override;
-    virtual SgAsmInstruction *makeUnknownInstruction(const Disassembler::Exception&) override;
+    virtual SgAsmInstruction *makeUnknownInstruction(const Exception&) override;
     SgAsmMipsInstruction *makeUnknownInstruction(rose_addr_t insn_va, unsigned opcode) const;
     virtual Unparser::BasePtr unparser() const override;
 
@@ -32,27 +33,27 @@ public:
      *  disassembled, the list is scanned to find the first entry that matches, and then its operator() is invoked.  An entry
      *  matches if the instruction bits to be disassembled match the @p match data member after both are masked according to
      *  the @p mask data member.  The @p mask and @p match (as a pair) are unique across all the subclass instances. */
-    class Mips32 {
+    class Decoder {
     public:
         enum Architecture { Release1, Release2, Release3, Micro };
-        Mips32(Architecture arch, unsigned match, unsigned mask): arch(arch), match(match), mask(mask) {}
-        virtual ~Mips32() {}
+        Decoder(Architecture arch, unsigned match, unsigned mask): arch(arch), match(match), mask(mask) {}
+        virtual ~Decoder() {}
         Architecture arch;      // architecture where this instruction was introduced
         unsigned match;         // value of compared bits
         unsigned mask;          // bits of 'match' that will be compared
-        typedef DisassemblerMips D;
+        typedef Mips D;
         virtual SgAsmMipsInstruction *operator()(rose_addr_t insn_va, const D *d, unsigned insn_bits) = 0;
     };
 
     /** Find an instruction-specific disassembler.  Using the specified instruction bits, search for and return an
      *  instruction-specific disassembler.  Returns null if no appropriate disassembler can be found.  Instruction-specific
      *  disassemblers know how to disassemble specific instruction types (or groups of closely related instructions). */
-    Mips32 *find_idis(rose_addr_t insn_va, unsigned insn_bits) const;
+    Decoder *find_idis(rose_addr_t insn_va, unsigned insn_bits) const;
 
     /** Insert an instruction-specific disassembler. If @p replace is false (the default) then the table must not already
      *  contain an entry that has the same @p mask and @p match values. The pointers are managed by the caller and must not be
      *  deleted while they are in the table. */
-    void insert_idis(Mips32*, bool replace=false);
+    void insert_idis(Decoder*, bool replace=false);
 
     /** Disassemble a single instruction. Given the bits of a MIPS32 instruction, attempt to disassemble the instruction.  If
      *  the bits can be disassembled, then a new SgAsmMipsInstruction is returned, otherwise it returns the null pointer. It
@@ -138,9 +139,10 @@ protected:
 protected:
     /** Table of instruction-specific disassemblers.  This is the table of instruction-specific disassemblers consulted by
      *  find_idis(). */
-    std::vector<Mips32*> idis_table;
+    std::vector<Decoder*> idis_table;
 };
 
+} // namespace
 } // namespace
 } // namespace
 

@@ -17,15 +17,9 @@
 #include <Rose/BinaryAnalysis/DataFlow.h>
 #include <Rose/BinaryAnalysis/Debugger.h>
 #include <Rose/BinaryAnalysis/Demangler.h>
-#include <Rose/BinaryAnalysis/DisassemblerAarch32.h>
-#include <Rose/BinaryAnalysis/DisassemblerAarch64.h>
 #include <Rose/BinaryAnalysis/Disassembler.h>
+#include <Rose/BinaryAnalysis/DisassemblerCil.h>
 #include <Rose/BinaryAnalysis/DisassemblerJvm.h>
-#include <Rose/BinaryAnalysis/DisassemblerM68k.h>
-#include <Rose/BinaryAnalysis/DisassemblerMips.h>
-#include <Rose/BinaryAnalysis/DisassemblerNull.h>
-#include <Rose/BinaryAnalysis/DisassemblerPowerpc.h>
-#include <Rose/BinaryAnalysis/DisassemblerX86.h>
 #include <Rose/BinaryAnalysis/Dwarf.h>
 #include <Rose/BinaryAnalysis/FeasiblePath.h>
 #include <Rose/BinaryAnalysis/FunctionCall.h>

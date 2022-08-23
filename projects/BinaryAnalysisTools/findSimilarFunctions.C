@@ -1,7 +1,7 @@
 #include <rose.h>
 
 #include <Rose/CommandLine.h>
-#include <Rose/BinaryAnalysis/Disassembler.h>
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <EditDistance/TreeEditDistance.h>
 #include <EditDistance/LinearEditDistance.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>

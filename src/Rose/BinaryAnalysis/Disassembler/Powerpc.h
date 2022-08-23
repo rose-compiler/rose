@@ -1,18 +1,19 @@
 /* Disassembly specific to the PowerPC architecture. */
-#ifndef ROSE_BinaryAnalysis_DisassemblerPowerpc_H
-#define ROSE_BinaryAnalysis_DisassemblerPowerpc_H
+#ifndef ROSE_BinaryAnalysis_Disassembler_Powerpc_H
+#define ROSE_BinaryAnalysis_Disassembler_Powerpc_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <Rose/BinaryAnalysis/Disassembler.h>
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
 
 #include "integerOps.h"
 #include "SageBuilderAsm.h"
 
 namespace Rose {
 namespace BinaryAnalysis {
+namespace Disassembler {
 
 /** Disassembler for the PowerPC architecture. */
-class DisassemblerPowerpc: public Disassembler {
+class Powerpc: public Base {
     // Per-instruction state
     struct State {
         uint64_t ip;                                        // Instruction pointer
@@ -25,14 +26,14 @@ class DisassemblerPowerpc: public Disassembler {
 
 public:
     /** Constructor for 32- or 64-bit disassembler. */
-    explicit DisassemblerPowerpc(PowerpcWordSize wordSize, ByteOrder::Endianness sex)
+    explicit Powerpc(PowerpcWordSize wordSize, ByteOrder::Endianness sex)
         : wordSize_(wordSize), sex_(sex) {
         init();
     }
     
     // Overrides documented in a super class
-    virtual ~DisassemblerPowerpc() {}
-    virtual DisassemblerPowerpc *clone() const { return new DisassemblerPowerpc(*this); }
+    virtual ~Powerpc() {}
+    virtual Powerpc *clone() const { return new Powerpc(*this); }
     virtual bool canDisassemble(SgAsmGenericHeader*) const;
     virtual Unparser::BasePtr unparser() const;
     virtual SgAsmInstruction *disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va, AddressSet *successors=NULL);
@@ -40,9 +41,9 @@ public:
     virtual SgAsmInstruction *makeUnknownInstruction(const Exception&);
 
 private:
-    // Same as Disassembler::Exception except with a different constructor for ease of use in DisassemblerPowerpc. This
-    // constructor should be used when an exception occurs during disassembly of an instruction; it is not suitable for errors
-    // that occur before or after (use superclass constructors for that case).
+    // Same as Exception except with a different constructor for ease of use in Powerpc. This constructor should be used when
+    // an exception occurs during disassembly of an instruction; it is not suitable for errors that occur before or after (use
+    // superclass constructors for that case).
     class ExceptionPowerpc: public Exception {
     public:
         ExceptionPowerpc(const std::string &mesg, const State &state, size_t bit=0)
@@ -351,6 +352,7 @@ private:
     }
 };
 
+} // namespace
 } // namespace
 } // namespace
 

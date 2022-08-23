@@ -1,9 +1,9 @@
 /* Disassembly specific to the x86 architecture. */
-#ifndef ROSE_BinaryAnalysis_DisassemblerX86_H
-#define ROSE_BinaryAnalysis_DisassemblerX86_H
+#ifndef ROSE_BinaryAnalysis_Disassembler_X86_H
+#define ROSE_BinaryAnalysis_Disassembler_X86_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <Rose/BinaryAnalysis/Disassembler.h>
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
 
 #include <Rose/BinaryAnalysis/InstructionEnumsX86.h>
 #include "Cxx_GrammarSerialization.h"
@@ -15,10 +15,11 @@
 
 namespace Rose {
 namespace BinaryAnalysis {
+namespace Disassembler {
 
 /** Disassembler for the x86 architecture.  Most of the useful disassembly methods can be found in the superclass. There's
  *  really not much reason to use this class directly or to call any of these methods directly. */
-class DisassemblerX86: public Disassembler {
+class X86: public Base {
     /* Per-disassembler settings; see init() */
     X86InstructionSize insnSize;                    /**< Default size of instructions, based on architecture; see init() */
     size_t wordSize;                                /**< Base word size. */
@@ -68,7 +69,7 @@ private:
         // Most of the data members don't need to be saved because we'll only save/restore disassemblers that are between
         // instructions (we never save one while it's processing an instruction). Therefore, most of the data members can be
         // constructed in their initial state by a combination of default constructor and init().
-        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Disassembler);
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Base);
         s & BOOST_SERIALIZATION_NVP(wordSize);
     }
 
@@ -92,18 +93,18 @@ private:
 
 protected:
     // Default constructor for serialization
-    DisassemblerX86()
+    X86()
         : insnSize(x86_insnsize_none), wordSize(0) {}
 
 public:
-    explicit DisassemblerX86(size_t wordsize)
+    explicit X86(size_t wordsize)
         : insnSize(x86_insnsize_none), wordSize(0) {
         init(wordsize);
     }
 
-    virtual ~DisassemblerX86() {}
+    virtual ~X86() {}
 
-    virtual DisassemblerX86 *clone() const override { return new DisassemblerX86(*this); }
+    virtual X86 *clone() const override { return new X86(*this); }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Public methods
@@ -124,7 +125,7 @@ public:
      *========================================================================================================================*/
 private:
 
-    /** Same as Disassembler::Exception except with a different constructor for ease of use in DisassemblerX86.  This
+    /** Same as Exception except with a different constructor for ease of use in X86.  This
      *  constructor should be used when an exception occurs during disassembly of an instruction; it is not suitable for
      *  errors that occur before or after (use superclass constructors for that case). */
     class ExceptionX86: public Exception {
@@ -291,15 +292,15 @@ private:
     /** Decodes the ModR/M byte of an instruction. The ModR/M byte is used to carry operand information when the first byte
      *  (after prefixes) cannot do so.  It consists of three parts:
      *
-     *     * Bits 6-7: the "Mod" (i.e., mode) bits. They are saved in the DisassemblerX86::modeField data member.  A mode of
+     *     * Bits 6-7: the "Mod" (i.e., mode) bits. They are saved in the X86::modeField data member.  A mode of
      *       3 indicates that the "M" bits designate a register; otherwise the M bits are used for memory coding.
      *
-     *     * Bits 3-5: the "R" (i.e., register) bits, saved in the DisassemblerX86::regField data member.
+     *     * Bits 3-5: the "R" (i.e., register) bits, saved in the X86::regField data member.
      *
-     *     * Bits 0-2: the "M" (i.e., memory) bits, saved in the DisassemblerX86::rmField data member. These are used to
+     *     * Bits 0-2: the "M" (i.e., memory) bits, saved in the X86::rmField data member. These are used to
      *       specify or help specify a memory location except when the mode bits have the value 3.
      *
-     * The @p regMode is the register kind for the "R" bits and is used when constructing the DisassemblerX86::reg data member.
+     * The @p regMode is the register kind for the "R" bits and is used when constructing the X86::reg data member.
      * The @p rmMode is the register kind for the "RM" field when the mode refers to a register. */
     void getModRegRM(State &state, RegisterMode regMode, RegisterMode rmMode, SgAsmType *t, SgAsmType *tForReg = NULL) const;
 
@@ -475,9 +476,10 @@ private:
 
 } // namespace
 } // namespace
+} // namespace
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::DisassemblerX86);
+BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::Disassembler::X86);
 #endif
 
 #endif

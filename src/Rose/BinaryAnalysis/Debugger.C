@@ -3,7 +3,7 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Debugger.h>
 
-#include <Rose/BinaryAnalysis/DisassemblerX86.h>
+#include <Rose/BinaryAnalysis/Disassembler/X86.h>
 #include <integerOps.h>
 #include <Rose/BinaryAnalysis/Registers.h>
 #include <rose_pragma_message.h>
@@ -345,7 +345,7 @@ Debugger::init() {
     // descriptors in this table have sizes that correspond to the data member in the user_regs_struct, not necessarily the
     // natural size of the register (e.g., The 16-bit segment registers are listed as 32 or 64 bits).
 #if defined(__linux) && defined(__x86_64) && __WORDSIZE==64
-    disassembler_ = new DisassemblerX86(8 /*bytes*/);
+    disassembler_ = new Disassembler::X86(8 /*bytes*/);
 
     //------------------------------------                                                 struct  struct
     // Entries for 64-bit user_regs_struct                                                 offset  size
@@ -416,7 +416,7 @@ Debugger::init() {
     //                                                                                       0x01a0
 
 #elif defined(__linux) && defined(__x86) && __WORDSIZE==32
-    disassembler_ = new DisassemblerX86(4 /*bytes*/);
+    disassembler_ = new Disassembler::X86(4 /*bytes*/);
 
     //------------------------------------                                                 struct  struct
     // Entries for 32-bit user_regs_struct                                                 offset  size

@@ -1,18 +1,18 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
-#include <Rose/BinaryAnalysis/DisassemblerPowerpc.h>
+#include <Rose/BinaryAnalysis/Disassembler/Powerpc.h>
 
 #include "Assembler.h"
 #include "AssemblerX86.h"
 #include "AsmUnparser_compat.h"
-#include <Rose/BinaryAnalysis/Disassembler.h>
 #include "SageBuilderAsm.h"
 #include <Rose/BinaryAnalysis/Unparser/Powerpc.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherPowerpc.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
+namespace Disassembler {
 
 /* See header file for full documentation. */
 
@@ -35,7 +35,7 @@ namespace BinaryAnalysis {
 #define T_V2_FLOAT64 (SageBuilderAsm::buildTypeVector(2, T_FLOAT64))
 
 bool
-DisassemblerPowerpc::canDisassemble(SgAsmGenericHeader *header) const {
+Powerpc::canDisassemble(SgAsmGenericHeader *header) const {
     // Check the architecture and word size
     SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
     switch (wordSize_) {
@@ -61,12 +61,12 @@ DisassemblerPowerpc::canDisassemble(SgAsmGenericHeader *header) const {
 }
 
 Unparser::BasePtr
-DisassemblerPowerpc::unparser() const {
+Powerpc::unparser() const {
     return Unparser::Powerpc::instance();
 }
 
 void
-DisassemblerPowerpc::init() {
+Powerpc::init() {
     const RegisterDictionary *regdict = NULL;
     switch (wordSize_) {
         case powerpc_32:
@@ -107,7 +107,7 @@ DisassemblerPowerpc::init() {
 
 // This is a bit of a kludge for now because we're trying to use an unmodified version of the PowerpcDisassembler name space.
 SgAsmInstruction*
-DisassemblerPowerpc::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va, AddressSet *successors) {
+Powerpc::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va, AddressSet *successors) {
     // The old PowerpcDisassembler::disassemble() function doesn't understand MemoryMap mappings. Therefore, remap the next few
     // bytes (enough for at least one instruction) into a temporary buffer.
     unsigned char temp[4];
@@ -137,7 +137,7 @@ DisassemblerPowerpc::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start
 }
 
 SgAsmInstruction*
-DisassemblerPowerpc::makeUnknownInstruction(const Exception &e) {
+Powerpc::makeUnknownInstruction(const Exception &e) {
     SgAsmPowerpcInstruction *insn = new SgAsmPowerpcInstruction(e.ip, "unknown", powerpc_unknown_instruction);
     SgAsmOperandList *operands = new SgAsmOperandList();
     insn->set_operandList(operands);
@@ -148,7 +148,7 @@ DisassemblerPowerpc::makeUnknownInstruction(const Exception &e) {
 
 template <size_t First, size_t Last>
 uint64_t
-DisassemblerPowerpc::fld(State &state) const {
+Powerpc::fld(State &state) const {
     return (state.insn >> (31 - Last)) & (IntegerOps::GenMask<uint32_t, Last - First + 1>::value);
 }
 
@@ -171,7 +171,7 @@ DisassemblerPowerpc::fld(State &state) const {
 #define MAKE_INSN5_RC(Mne, Op1, Op2, Op3, Op4, Op5) (SageBuilderAsm::appendOperand(MAKE_INSN4_RC(Mne, Op1, Op2, Op3, Op4), (Op5)))
 
 SgAsmIntegerValueExpression*
-DisassemblerPowerpc::makeBranchTarget(uint64_t targetAddr) const {
+Powerpc::makeBranchTarget(uint64_t targetAddr) const {
     switch (wordSize_) {
         case powerpc_32:
             return SageBuilderAsm::buildValueU32(targetAddr);
@@ -182,7 +182,7 @@ DisassemblerPowerpc::makeBranchTarget(uint64_t targetAddr) const {
 }
 
 bool
-DisassemblerPowerpc::is64bitInsn(PowerpcInstructionKind kind) {
+Powerpc::is64bitInsn(PowerpcInstructionKind kind) {
     switch (kind) {
         case powerpc_cntlzd:
         case powerpc_cntlzd_record:
@@ -242,7 +242,7 @@ DisassemblerPowerpc::is64bitInsn(PowerpcInstructionKind kind) {
 }
 
 SgAsmPowerpcInstruction*
-DisassemblerPowerpc::makeInstructionWithoutOperands(uint64_t address, const std::string& mnemonic, PowerpcInstructionKind kind,
+Powerpc::makeInstructionWithoutOperands(uint64_t address, const std::string& mnemonic, PowerpcInstructionKind kind,
                                                     uint32_t insn) {
 
     if (powerpc_32 == wordSize_ && is64bitInsn(kind)) {
@@ -287,7 +287,7 @@ DisassemblerPowerpc::makeInstructionWithoutOperands(uint64_t address, const std:
 // and "r1") have descriptors that map to non-overlapping areas of the descriptor address space {major,minor,offset,size} while
 // related registers (e.g., "spr8" and "lr") map to overlapping areas of the descriptor address space.
 SgAsmRegisterReferenceExpression*
-DisassemblerPowerpc::makeRegister(State &state, PowerpcRegisterClass reg_class, int reg_number,
+Powerpc::makeRegister(State &state, PowerpcRegisterClass reg_class, int reg_number,
                                   PowerpcConditionRegisterAccessGranularity cr_granularity,
                                   SgAsmType *registerType /*=NULL*/) const {
     // Obtain a register name and override the registerType for certain registers
@@ -423,7 +423,7 @@ DisassemblerPowerpc::makeRegister(State &state, PowerpcRegisterClass reg_class, 
 }
 
 SgAsmPowerpcInstruction*
-DisassemblerPowerpc::disassemble(State &state) {
+Powerpc::disassemble(State &state) {
     // The Primary Opcode Field is bits 0-5, 6-bits wide, so there are max 64 primary opcode values
     uint8_t primaryOpcode = (state.insn >> 26) & 0x3F;
 
@@ -559,7 +559,7 @@ DisassemblerPowerpc::disassemble(State &state) {
 }
 
 SgAsmPowerpcInstruction*
-DisassemblerPowerpc::decode_I_formInstruction(State &state) {
+Powerpc::decode_I_formInstruction(State &state) {
     uint8_t primaryOpcode = (state.insn >> 26) & 0x3F;
     switch(primaryOpcode) {
         case 0x12: {
@@ -591,7 +591,7 @@ DisassemblerPowerpc::decode_I_formInstruction(State &state) {
 }
 
 SgAsmPowerpcInstruction*
-DisassemblerPowerpc::decode_B_formInstruction(State &state) {
+Powerpc::decode_B_formInstruction(State &state) {
      uint8_t primaryOpcode = (state.insn >> 26) & 0x3F;
      switch(primaryOpcode) {
          case 0x10: {
@@ -623,7 +623,7 @@ DisassemblerPowerpc::decode_B_formInstruction(State &state) {
 }
 
 SgAsmPowerpcInstruction*
-DisassemblerPowerpc::decode_SC_formInstruction(State &state) {
+Powerpc::decode_SC_formInstruction(State &state) {
     uint8_t primaryOpcode = (state.insn >> 26) & 0x3F;
     ASSERT_always_require(primaryOpcode == 0x11);
 
@@ -636,7 +636,7 @@ DisassemblerPowerpc::decode_SC_formInstruction(State &state) {
 }
 
 SgAsmPowerpcInstruction*
-DisassemblerPowerpc::decode_DS_formInstruction(State &state) {
+Powerpc::decode_DS_formInstruction(State &state) {
     uint8_t primaryOpcode = (state.insn >> 26) & 0x3f;
     ASSERT_always_require(primaryOpcode == 0x3e);
 
@@ -651,7 +651,7 @@ DisassemblerPowerpc::decode_DS_formInstruction(State &state) {
 }
 
 SgAsmPowerpcInstruction*
-DisassemblerPowerpc::decode_X_formInstruction_1F(State &state) {
+Powerpc::decode_X_formInstruction_1F(State &state) {
     uint8_t primaryOpcode = (state.insn >> 26) & 0x3F;
     ASSERT_always_require(primaryOpcode == 0x1F);
 
@@ -842,7 +842,7 @@ DisassemblerPowerpc::decode_X_formInstruction_1F(State &state) {
 }
 
 SgAsmPowerpcInstruction*
-DisassemblerPowerpc::decode_X_formInstruction_3F(State &state) {
+Powerpc::decode_X_formInstruction_3F(State &state) {
     uint8_t primaryOpcode = (state.insn >> 26) & 0x3F;
     ASSERT_always_require(primaryOpcode == 0x3F);
 
@@ -869,7 +869,7 @@ DisassemblerPowerpc::decode_X_formInstruction_3F(State &state) {
 }
 
 SgAsmPowerpcInstruction*
-DisassemblerPowerpc::decode_X_formInstruction_00(State &state) {
+Powerpc::decode_X_formInstruction_00(State &state) {
     if (state.insn == 0)
         throw ExceptionPowerpc("zero instruction", state, 0);
 
@@ -897,7 +897,7 @@ DisassemblerPowerpc::decode_X_formInstruction_00(State &state) {
 }
 
 SgAsmPowerpcInstruction*
-DisassemblerPowerpc::decode_XL_formInstruction(State &state) {
+Powerpc::decode_XL_formInstruction(State &state) {
     // The primaryOpcode
     uint8_t primaryOpcode = (state.insn >> 26) & 0x3F;
     ASSERT_always_require(primaryOpcode == 0x13);
@@ -937,7 +937,7 @@ DisassemblerPowerpc::decode_XL_formInstruction(State &state) {
 }
 
 SgAsmPowerpcInstruction*
-DisassemblerPowerpc::decode_A_formInstruction_00(State &state) {
+Powerpc::decode_A_formInstruction_00(State &state) {
     switch(fld<26, 30>(state)) {
         case 0x05: return MAKE_INSN4(fpsel, FRT(state), FRA(state), FRB(state), FRC(state));
         case 0x08: return MAKE_INSN3(fpmul, FRT(state), FRA(state), FRC(state));
@@ -971,7 +971,7 @@ DisassemblerPowerpc::decode_A_formInstruction_00(State &state) {
 }
 
 SgAsmPowerpcInstruction*
-DisassemblerPowerpc::decode_A_formInstruction_04(State &state) {
+Powerpc::decode_A_formInstruction_04(State &state) {
     // FIXME: Make the floating point registers use the powerpc_regclass_fpr instead of powerpc_regclass_gpr
     switch(fld<26, 30>(state)) {
         case 0x18: return MAKE_INSN4(fxcpnpma, FRT(state), FRA(state), FRB(state), FRC(state));
@@ -989,7 +989,7 @@ DisassemblerPowerpc::decode_A_formInstruction_04(State &state) {
 }
 
 SgAsmPowerpcInstruction*
-DisassemblerPowerpc::decode_A_formInstruction_3B(State &state) {
+Powerpc::decode_A_formInstruction_3B(State &state) {
     switch(fld<26, 30>(state)) {
         case 0x12: return MAKE_INSN3_RC(fdivs, FRT(state), FRA(state), FRB(state));
         case 0x14: return MAKE_INSN3_RC(fsubs, FRT(state), FRA(state), FRB(state));
@@ -1009,7 +1009,7 @@ DisassemblerPowerpc::decode_A_formInstruction_3B(State &state) {
 }
 
 SgAsmPowerpcInstruction*
-DisassemblerPowerpc::decode_A_formInstruction_3F(State &state) {
+Powerpc::decode_A_formInstruction_3F(State &state) {
     // FIXME: Make the floating point registers use the powerpc_regclass_fpr instead of powerpc_regclass_gpr
     switch(fld<26, 30>(state)) {
         case 0x12: return MAKE_INSN3_RC(fdiv, FRT(state), FRA(state), FRB(state));
@@ -1031,7 +1031,7 @@ DisassemblerPowerpc::decode_A_formInstruction_3F(State &state) {
 }
 
 SgAsmPowerpcInstruction*
-DisassemblerPowerpc::decode_MD_formInstruction(State &state) {
+Powerpc::decode_MD_formInstruction(State &state) {
     switch (fld<27, 29>(state)) {
         case 0: return MAKE_INSN4_RC(rldicl, RA(state), RS(state), SH_64bit(state), MB_64bit(state));
         case 1: return MAKE_INSN4_RC(rldicr, RA(state), RS(state), SH_64bit(state), ME_64bit(state));
@@ -1045,7 +1045,7 @@ DisassemblerPowerpc::decode_MD_formInstruction(State &state) {
 }
 
 SgAsmPowerpcInstruction*
-DisassemblerPowerpc::decode_MDS_formInstruction(State &state) {
+Powerpc::decode_MDS_formInstruction(State &state) {
     switch (fld<27, 30>(state)) {
         case 8: return MAKE_INSN4_RC(rldcl, RA(state), RS(state), RB(state), MB_64bit(state));
         case 9: return MAKE_INSN4_RC(rldcr, RA(state), RS(state), RB(state), ME_64bit(state));
@@ -1055,6 +1055,7 @@ DisassemblerPowerpc::decode_MDS_formInstruction(State &state) {
     ASSERT_not_reachable("opcode not handled");
 }
 
+} // namespace
 } // namespace
 } // namespace
 

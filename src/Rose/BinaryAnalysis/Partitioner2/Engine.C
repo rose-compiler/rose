@@ -14,10 +14,10 @@
 #include <boost/regex.hpp>
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
-#include <Rose/BinaryAnalysis/DisassemblerM68k.h>
-#include <Rose/BinaryAnalysis/DisassemblerMips.h>
-#include <Rose/BinaryAnalysis/DisassemblerPowerpc.h>
-#include <Rose/BinaryAnalysis/DisassemblerX86.h>
+#include <Rose/BinaryAnalysis/Disassembler/M68k.h>
+#include <Rose/BinaryAnalysis/Disassembler/Mips.h>
+#include <Rose/BinaryAnalysis/Disassembler/Powerpc.h>
+#include <Rose/BinaryAnalysis/Disassembler/X86.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Modules.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesElf.h>
@@ -1469,8 +1469,8 @@ Engine::loadSpecimens(const std::vector<std::string> &fileNames) {
 //                                      Disassembler creation
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Disassembler*
-Engine::obtainDisassembler(Disassembler *hint) {
+Disassembler::Base*
+Engine::obtainDisassembler(Disassembler::Base *hint) {
     if (!disassembler_ && !settings_.disassembler.isaName.empty() &&
         (disassembler_ = Disassembler::lookup(settings_.disassembler.isaName)))
         disassembler_ = disassembler_->clone();
@@ -1607,7 +1607,7 @@ Partitioner
 Engine::createTunedPartitioner() {
     obtainDisassembler();
 
-    if (dynamic_cast<DisassemblerM68k*>(disassembler_)) {
+    if (dynamic_cast<Disassembler::M68k*>(disassembler_)) {
         checkCreatePartitionerPrerequisites();
         Partitioner p = createBarePartitioner();
         p.functionPrologueMatchers().push_back(ModulesM68k::MatchLink::instance());
@@ -1616,7 +1616,7 @@ Engine::createTunedPartitioner() {
         return boost::move(p);
     }
 
-    if (dynamic_cast<DisassemblerX86*>(disassembler_)) {
+    if (dynamic_cast<Disassembler::X86*>(disassembler_)) {
         checkCreatePartitionerPrerequisites();
         Partitioner p = createBarePartitioner();
         p.functionPrologueMatchers().push_back(ModulesX86::MatchHotPatchPrologue::instance());
@@ -1632,14 +1632,14 @@ Engine::createTunedPartitioner() {
         return boost::move(p);
     }
 
-    if (dynamic_cast<DisassemblerPowerpc*>(disassembler_)) {
+    if (dynamic_cast<Disassembler::Powerpc*>(disassembler_)) {
         checkCreatePartitionerPrerequisites();
         Partitioner p = createBarePartitioner();
         p.functionPrologueMatchers().push_back(ModulesPowerpc::MatchStwuPrologue::instance());
         return boost::move(p);
     }
 
-    if (dynamic_cast<DisassemblerMips*>(disassembler_)) {
+    if (dynamic_cast<Disassembler::Mips*>(disassembler_)) {
         checkCreatePartitionerPrerequisites();
         Partitioner p = createBarePartitioner();
         p.functionPrologueMatchers().push_back(ModulesMips::MatchRetAddiu::instance());
@@ -2078,10 +2078,10 @@ Engine::makeInterruptVectorFunctions(Partitioner &partitioner, const AddressInte
     std::vector<Function::Ptr> functions;
     if (interruptVector.isEmpty())
         return functions;
-    Disassembler *disassembler = disassembler_ ? disassembler_ : partitioner.instructionProvider().disassembler();
+    Disassembler::Base *disassembler = disassembler_ ? disassembler_ : partitioner.instructionProvider().disassembler();
     if (!disassembler) {
         throw std::runtime_error("cannot decode interrupt vector without architecture information");
-    } else if (dynamic_cast<DisassemblerM68k*>(disassembler)) {
+    } else if (dynamic_cast<Disassembler::M68k*>(disassembler)) {
         for (const Function::Ptr &f: ModulesM68k::findInterruptFunctions(partitioner, interruptVector.least()))
             insertUnique(functions, partitioner.attachOrMergeFunction(f), sortFunctionsByAddress);
     } else if (1 == interruptVector.size()) {

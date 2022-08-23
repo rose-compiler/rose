@@ -1,7 +1,7 @@
 #include <rose.h>
 #include <rosePublicConfig.h>
 
-#include <Rose/BinaryAnalysis/Disassembler.h>
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherM68k.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
@@ -100,7 +100,7 @@ int main(int argc, char *argv[])
     MemoryMap::Ptr map = engine.loadSpecimens(specimenNames);
     map->dump(::mlog[INFO]);
     map->dump(std::cout);
-    Disassembler *disassembler = engine.obtainDisassembler();
+    Disassembler::Base *disassembler = engine.obtainDisassembler();
 
     // Obtain an unparser suitable for this disassembler
     AsmUnparser unparser;

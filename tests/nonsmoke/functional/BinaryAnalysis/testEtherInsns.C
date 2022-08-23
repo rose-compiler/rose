@@ -85,7 +85,7 @@ int main(int argc, char *argv[])
 
         /* Create the disassembler based on static analysis */
         struct T1: public SgSimpleProcessing {
-            Disassembler *disassembler;
+            Disassembler::Base *disassembler;
             T1(): disassembler(NULL) {}
             void visit(SgNode *node) {
                 SgAsmGenericHeader *fhdr = isSgAsmGenericHeader(node);

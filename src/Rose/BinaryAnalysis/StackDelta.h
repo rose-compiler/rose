@@ -4,7 +4,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
-#include <Rose/BinaryAnalysis/Disassembler.h>
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Sawyer/Map.h>
 
 #include <boost/serialization/access.hpp>
@@ -105,7 +105,7 @@ public:
     /** Construct an analyzer using a specified disassembler.
      *
      *  This constructor chooses a symbolic domain and a dispatcher appropriate for the disassembler's architecture. */
-    explicit Analysis(Disassembler *d)
+    explicit Analysis(Disassembler::Base *d)
         : hasResults_(false), didConverge_(false) {
         init(d);
     }
@@ -284,7 +284,7 @@ public:
                            const InstructionSemantics::BaseSemantics::SValuePtr &delta);
 
 private:
-    void init(Disassembler*);
+    void init(Disassembler::Base*);
 };
 
 std::ostream& operator<<(std::ostream&, const Analysis&);

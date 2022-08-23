@@ -1,7 +1,7 @@
 #include <rose.h>
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
 #include <Rose/CommandLine.h>
-#include <Rose/BinaryAnalysis/Disassembler.h>
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <rose_getline.h>
 #include <rose_strtoull.h>
@@ -91,7 +91,7 @@ int main(int argc, char *argv[]) {
     
     P2::mlog[WARN].disable(); // warnings about empty memory map
     P2::Partitioner partitioner = engine.createPartitioner();
-    Disassembler *disassembler = engine.obtainDisassembler();
+    Disassembler::Base *disassembler = engine.obtainDisassembler();
     ASSERT_always_not_null(disassembler);
     BinaryAnalysis::Unparser::BasePtr unparser = partitioner.unparser();
     ASSERT_always_not_null(unparser);

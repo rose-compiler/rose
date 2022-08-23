@@ -4,7 +4,7 @@
 #include "AsmUnparser.h"
 
 #include "AsmUnparser_compat.h" /*FIXME: needed until no longer dependent upon unparseInstruction()*/
-#include <Rose/BinaryAnalysis/Disassembler.h>
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -980,7 +980,7 @@ AsmUnparser::StaticDataDisassembler::reset()
 }
 
 void
-AsmUnparser::StaticDataDisassembler::init(Disassembler *d, AsmUnparser *u)
+AsmUnparser::StaticDataDisassembler::init(Disassembler::Base *d, AsmUnparser *u)
 {
     reset();
     disassembler = d;

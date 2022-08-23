@@ -8,11 +8,11 @@
 #include <Rose/BinaryAnalysis/SymbolicExprParser.h>
 #include <Combinatorics.h>
 #include <Rose/CommandLine.h>
-#include <Rose/BinaryAnalysis/DisassemblerAarch32.h>
-#include <Rose/BinaryAnalysis/DisassemblerAarch64.h>
-#include <Rose/BinaryAnalysis/DisassemblerM68k.h>
-#include <Rose/BinaryAnalysis/DisassemblerPowerpc.h>
-#include <Rose/BinaryAnalysis/DisassemblerX86.h>
+#include <Rose/BinaryAnalysis/Disassembler/Aarch32.h>
+#include <Rose/BinaryAnalysis/Disassembler/Aarch64.h>
+#include <Rose/BinaryAnalysis/Disassembler/M68k.h>
+#include <Rose/BinaryAnalysis/Disassembler/Powerpc.h>
+#include <Rose/BinaryAnalysis/Disassembler/X86.h>
 #include <Rose/BinaryAnalysis/Partitioner2/GraphViz.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesElf.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
@@ -915,25 +915,25 @@ FeasiblePath::buildVirtualCpu(const P2::Partitioner &partitioner, const P2::CfgP
         // Where are return values stored?  See also, end of this function. FIXME[Robb Matzke 2015-12-01]: We need to support
         // returning multiple values. We should be using the new calling convention analysis to detect these.
         ASSERT_require(REG_RETURN_.isEmpty());
-        Disassembler *dis = partitioner.instructionProvider().disassembler();
+        Disassembler::Base *dis = partitioner.instructionProvider().disassembler();
         ASSERT_not_null(dis);
         RegisterDescriptor r;
-        if (dynamic_cast<DisassemblerX86*>(dis)) {
+        if (dynamic_cast<Disassembler::X86*>(dis)) {
             if ((r = registers_->find("rax")) || (r = registers_->find("eax")) || (r = registers_->find("ax")))
                 REG_RETURN_ = r;
-        } else if (dynamic_cast<DisassemblerM68k*>(dis)) {
+        } else if (dynamic_cast<Disassembler::M68k*>(dis)) {
             if ((r = registers_->find("d0")))
                 REG_RETURN_ = r;                        // m68k also typically has other return registers
-        } else if (dynamic_cast<DisassemblerPowerpc*>(dis)) {
+        } else if (dynamic_cast<Disassembler::Powerpc*>(dis)) {
             if ((r = registers_->find("r3")))
                 REG_RETURN_ = r;                        // PowerPC also returns via r4
 #ifdef ROSE_ENABLE_ASM_AARCH32
-        } else if (dynamic_cast<DisassemblerAarch32*>(dis)) {
+        } else if (dynamic_cast<Disassembler::Aarch32*>(dis)) {
             if ((r = registers_->find("r0")))
                 REG_RETURN_ = r;
 #endif
 #ifdef ROSE_ENABLE_ASM_AARCH64
-        } else if (dynamic_cast<DisassemblerAarch64*>(dis)) {
+        } else if (dynamic_cast<Disassembler::Aarch64*>(dis)) {
             if ((r = registers_->find("r0")))
                 REG_RETURN_ = r;
 #endif

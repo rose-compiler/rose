@@ -3,7 +3,7 @@
 
 #include <sage3basic.h>
 #include <Rose/BitOps.h>
-#include <Rose/BinaryAnalysis/DisassemblerAarch64.h>
+#include <Rose/BinaryAnalysis/Disassembler/Aarch64.h>
 #include <Rose/BinaryAnalysis/Unparser/Aarch64.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherAarch64.h>
 
@@ -11,21 +11,22 @@ using namespace Rose::Diagnostics;
 
 namespace Rose {
 namespace BinaryAnalysis {
+namespace Disassembler {
 
-Disassembler*
-DisassemblerAarch64::clone() const {
-    return new DisassemblerAarch64(*this);
+Base*
+Aarch64::clone() const {
+    return new Aarch64(*this);
 }
 
 bool
-DisassemblerAarch64::canDisassemble(SgAsmGenericHeader *header) const {
+Aarch64::canDisassemble(SgAsmGenericHeader *header) const {
     SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
     return ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_ARM_Family &&
             header->get_exec_format()->get_word_size() == 8);
 }
 
 void
-DisassemblerAarch64::init() {
+Aarch64::init() {
     // Warning: the "mode" constants are not orthogonal with each other or the "arch" values.
     cs_mode mode = (cs_mode)modes_.vector();
 
@@ -56,7 +57,7 @@ DisassemblerAarch64::init() {
         throw Exception("capstone cs_option failed");
 }
 
-DisassemblerAarch64::~DisassemblerAarch64() {
+Aarch64::~Aarch64() {
     if (capstoneOpened_) {
         cs_err err = cs_close(&capstone_);
         ASSERT_always_require2(CS_ERR_OK == err, "capstone cs_close failed");
@@ -64,12 +65,12 @@ DisassemblerAarch64::~DisassemblerAarch64() {
 }
 
 Unparser::BasePtr
-DisassemblerAarch64::unparser() const {
+Aarch64::unparser() const {
     return Unparser::Aarch64::instance();
 }
 
 SgAsmInstruction*
-DisassemblerAarch64::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet *successors/*=nullptr*/) {
+Aarch64::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet *successors/*=nullptr*/) {
     // Resources that must be explicitly reclaimed before returning.
     struct Resources {
         cs_insn *csi = nullptr;
@@ -187,7 +188,7 @@ DisassemblerAarch64::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, A
 }
 
 SgAsmInstruction*
-DisassemblerAarch64::makeUnknownInstruction(const Exception &e) {
+Aarch64::makeUnknownInstruction(const Exception &e) {
     SgAsmAarch64Instruction *insn = new SgAsmAarch64Instruction(e.ip, "unknown", ARM64_INS_INVALID, ARM64_CC_INVALID);
     SgAsmOperandList *operands = new SgAsmOperandList();
     insn->set_operandList(operands);
@@ -197,7 +198,7 @@ DisassemblerAarch64::makeUnknownInstruction(const Exception &e) {
 }
 
 SgAsmExpression*
-DisassemblerAarch64::makeOperand(const cs_insn &insn, const cs_arm64_op &op) {
+Aarch64::makeOperand(const cs_insn &insn, const cs_arm64_op &op) {
     SgAsmExpression *retval = nullptr;
 
     switch (op.type) {
@@ -318,7 +319,7 @@ DisassemblerAarch64::makeOperand(const cs_insn &insn, const cs_arm64_op &op) {
 }
 
 RegisterDescriptor
-DisassemblerAarch64::subRegister(RegisterDescriptor reg, int idx, arm64_vess elmtSize) {
+Aarch64::subRegister(RegisterDescriptor reg, int idx, arm64_vess elmtSize) {
     size_t nBits = reg.nBits();
     switch (elmtSize) {
         case ARM64_VESS_INVALID:
@@ -346,7 +347,7 @@ DisassemblerAarch64::subRegister(RegisterDescriptor reg, int idx, arm64_vess elm
 }
 
 //SgAsmExpression*
-//DisassemblerAarch64::extractElement(SgAsmExpression *expr, arm64_vess elmtSizeSpec, int idx) {
+//Aarch64::extractElement(SgAsmExpression *expr, arm64_vess elmtSizeSpec, int idx) {
 //    ASSERT_not_null(expr);
 //    ASSERT_not_null(expr->get_type());
 //    if (idx < 0)
@@ -385,8 +386,8 @@ DisassemblerAarch64::subRegister(RegisterDescriptor reg, int idx, arm64_vess elm
 //}
 
 SgAsmExpression*
-DisassemblerAarch64::extendOperand(SgAsmExpression *expr, const cs_insn &insn, arm64_extender extender, SgAsmType *dstType,
-                                   arm64_shifter shifter, unsigned shiftAmount) const {
+Aarch64::extendOperand(SgAsmExpression *expr, const cs_insn &insn, arm64_extender extender, SgAsmType *dstType,
+                       arm64_shifter shifter, unsigned shiftAmount) const {
     using namespace ::Rose::BitOps;
 
     ASSERT_not_null(expr);
@@ -477,7 +478,7 @@ DisassemblerAarch64::extendOperand(SgAsmExpression *expr, const cs_insn &insn, a
 }
 
 void
-DisassemblerAarch64::wrapPrePostIncrement(SgAsmOperandList *operands, const cs_arm64 &cs_detail) {
+Aarch64::wrapPrePostIncrement(SgAsmOperandList *operands, const cs_arm64 &cs_detail) {
     ASSERT_not_null(operands);
 
     if (cs_detail.writeback) {
@@ -556,13 +557,13 @@ DisassemblerAarch64::wrapPrePostIncrement(SgAsmOperandList *operands, const cs_a
 }
 
 uint32_t
-DisassemblerAarch64::opcode(const cs_insn &insn) {
+Aarch64::opcode(const cs_insn &insn) {
     uint32_t code = insn.bytes[0] | (insn.bytes[1] << 8) | (insn.bytes[2] << 16) | (insn.bytes[3] << 24);
     return ByteOrder::disk_to_host(byteOrder(), code);
 }
 
 uint32_t
-DisassemblerAarch64::opcode(SgAsmInstruction *insn) {
+Aarch64::opcode(SgAsmInstruction *insn) {
     ASSERT_not_null(insn);
     const std::vector<uint8_t> &bytes = insn->get_raw_bytes();
     ASSERT_require(bytes.size() == 4);
@@ -571,7 +572,7 @@ DisassemblerAarch64::opcode(SgAsmInstruction *insn) {
 }
 
 SgAsmType*
-DisassemblerAarch64::typeForMemoryRead(const cs_insn &insn) {
+Aarch64::typeForMemoryRead(const cs_insn &insn) {
     using namespace ::Rose::BitOps;
     using Kind = ::Rose::BinaryAnalysis::Aarch64InstructionKind;
     uint32_t code = opcode(insn);
@@ -916,7 +917,7 @@ DisassemblerAarch64::typeForMemoryRead(const cs_insn &insn) {
 }
 
 SgAsmType*
-DisassemblerAarch64::registerType(RegisterDescriptor reg, arm64_vas arrangement) {
+Aarch64::registerType(RegisterDescriptor reg, arm64_vas arrangement) {
     SgAsmType *type = nullptr;
     switch (arrangement) {
         case ARM64_VAS_INVALID:
@@ -955,7 +956,7 @@ DisassemblerAarch64::registerType(RegisterDescriptor reg, arm64_vas arrangement)
 }
 
 RegisterDescriptor
-DisassemblerAarch64::makeRegister(arm64_reg reg) {
+Aarch64::makeRegister(arm64_reg reg) {
     ASSERT_not_null(registerDictionary());
     const RegisterDictionary &dict = *registerDictionary();
     RegisterDescriptor retval;
@@ -1746,6 +1747,7 @@ DisassemblerAarch64::makeRegister(arm64_reg reg) {
     return retval;
 }
 
+} // namespace
 } // namespace
 } // namespace
 

@@ -3,7 +3,7 @@
 #define ROSE_BinaryAnalysis_DisassemblerCil_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <Rose/BinaryAnalysis/Disassembler.h>
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
 
 #include <Rose/BinaryAnalysis/InstructionEnumsCil.h>
 #include "BitPattern.h"
@@ -17,7 +17,7 @@ namespace Rose {
 namespace BinaryAnalysis {
 
 /** Disassembler for CIL instruction set architectures. */
-class DisassemblerCil: public Disassembler {
+class DisassemblerCil: public Disassembler::Base {
 public:
     // State mutated during the call to disassembleOne. Used internally.
     struct State: boost::noncopyable { // noncopyable is so we don't accidentally pass it by value
@@ -70,7 +70,7 @@ private:
 
     template<class S>
     void serialize_common(S &s, const unsigned /*version*/) {
-        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Disassembler);
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Disassembler::Base);
         s & BOOST_SERIALIZATION_NVP(family);
         //s & idis_table; -- not saved
     }

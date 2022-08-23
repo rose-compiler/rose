@@ -7,7 +7,7 @@
 #include <Rose/BinaryAnalysis/SerialIo.h>
 #include <boost/noncopyable.hpp>
 #include <boost/regex.hpp>
-#include <Rose/BinaryAnalysis/Disassembler.h>
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/FileSystem.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesLinux.h>
@@ -236,7 +236,7 @@ private:
     Settings settings_;                                 // Settings for the partitioner.
     SgAsmInterpretation *interp_;                       // interpretation set by loadSpecimen
     BinaryLoader::Ptr binaryLoader_;                    // how to remap, link, and fixup
-    Disassembler *disassembler_;                        // not ref-counted yet, but don't destroy it since user owns it
+    Disassembler::Base *disassembler_;                  // not ref-counted yet, but don't destroy it since user owns it
     MemoryMap::Ptr map_;                                // memory map initialized by load()
     BasicBlockWorkList::Ptr basicBlockWorkList_;        // what blocks to work on next
     CodeConstants::Ptr codeFunctionPointers_;           // generates constants that are found in instruction ASTs
@@ -622,7 +622,7 @@ public:
      *  @li Fail by throwing an <code>std::runtime_error</code>.
      *
      *  In any case, the @ref disassembler property is set to this method's return value. */
-    virtual Disassembler* obtainDisassembler(Disassembler *hint=NULL);
+    virtual Disassembler::Base* obtainDisassembler(Disassembler::Base *hint=NULL);
     /** @} */
 
 
@@ -1195,8 +1195,8 @@ public:
      *  a disassembler based on the binary container (unless @ref doDisassemble property is clear).
      *
      * @{ */
-    Disassembler *disassembler() const /*final*/ { return disassembler_; }
-    virtual void disassembler(Disassembler *d) { disassembler_ = d; }
+    Disassembler::Base *disassembler() const /*final*/ { return disassembler_; }
+    virtual void disassembler(Disassembler::Base *d) { disassembler_ = d; }
     /** @} */
 
     /** Property: Instruction set architecture name.

@@ -601,7 +601,7 @@ JvmEngine::parseCommandLine(const std::vector<std::string> &args, const std::str
     cout << "-----------\n";
 #endif
 
-    Disassembler* disassembler = obtainDisassembler();
+    Disassembler::Base* disassembler = obtainDisassembler();
     ASSERT_not_null(disassembler);
 
     method->decode(disassembler);
@@ -685,8 +685,8 @@ JvmEngine::parseContainers(const std::string &fileName) {
 //                                      Disassembler creation
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Disassembler*
-JvmEngine::obtainDisassembler(Disassembler *hint) {
+Disassembler::Base*
+JvmEngine::obtainDisassembler(Disassembler::Base *hint) {
   if (disassembler_ == nullptr) {
     disassembler_ = new DisassemblerJvm();
   }

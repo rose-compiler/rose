@@ -1,12 +1,11 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
-#include <Rose/BinaryAnalysis/DisassemblerX86.h>
+#include <Rose/BinaryAnalysis/Disassembler/X86.h>
 
 #include <Assembler.h>
 #include <AssemblerX86.h>
 #include <AsmUnparser_compat.h>
-#include <Rose/BinaryAnalysis/Disassembler.h>
 #include <SageBuilderAsm.h>
 #include <integerOps.h>
 #include <stringify.h>
@@ -17,7 +16,7 @@
 
 namespace Rose {
 namespace BinaryAnalysis {
-
+namespace Disassembler {
 
 /* See header file for full documentation. */
 
@@ -42,11 +41,11 @@ namespace BinaryAnalysis {
 #define V2DOUBLET (SageBuilderAsm::buildTypeVector(2, DOUBLET))
 
 /*========================================================================================================================
- * DisassemblerX86 primary methods, mostly defined by the superclass.
+ * X86 primary methods, mostly defined by the superclass.
  *========================================================================================================================*/
 
 bool
-DisassemblerX86::canDisassemble(SgAsmGenericHeader *header) const
+X86::canDisassemble(SgAsmGenericHeader *header) const
 {
     SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
     if (isSgAsmDOSFileHeader(header))
@@ -59,12 +58,12 @@ DisassemblerX86::canDisassemble(SgAsmGenericHeader *header) const
 }
 
 Unparser::BasePtr
-DisassemblerX86::unparser() const {
+X86::unparser() const {
     return Unparser::X86::instance();
 }
 
 void
-DisassemblerX86::init(size_t wordsize)
+X86::init(size_t wordsize)
 {
     /* The default register dictionary.  If a register dictionary is specified in an SgAsmInterpretation, then that one will be
      * used instead of the default we set here. */
@@ -124,7 +123,7 @@ DisassemblerX86::init(size_t wordsize)
 }
 
 void
-DisassemblerX86::commentIpRelative(SgAsmInstruction *insn) {
+X86::commentIpRelative(SgAsmInstruction *insn) {
     ASSERT_not_null(insn);
 
     struct Visitor: AstSimpleProcessing {
@@ -162,7 +161,7 @@ DisassemblerX86::commentIpRelative(SgAsmInstruction *insn) {
 }
 
 SgAsmInstruction *
-DisassemblerX86::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va, AddressSet *successors)
+X86::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va, AddressSet *successors)
 {
     /* The low-level disassembly function don't understand MemoryMap mappings. Therefore, remap the next few bytes (enough
      * for at least one instruction) into a temporary buffer. The longest x86 instruction is 15 bytes in 16-bit mode and 13
@@ -200,7 +199,7 @@ DisassemblerX86::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 }
 
 SgAsmInstruction *
-DisassemblerX86::makeUnknownInstruction(const Exception &e)
+X86::makeUnknownInstruction(const Exception &e)
 {
     // We don't need any of the state except the opcodes, and since this is a variable width instruction set architecture
     // whose smallest instruction in a single byte, the unknown instructions are always single bytes.
@@ -219,7 +218,7 @@ DisassemblerX86::makeUnknownInstruction(const Exception &e)
  *========================================================================================================================*/
 
 uint8_t
-DisassemblerX86::getByte(State &state) const
+X86::getByte(State &state) const
 {
     if (state.insnbufat>=15)
         throw ExceptionX86("instruction longer than 15 bytes", state);
@@ -229,7 +228,7 @@ DisassemblerX86::getByte(State &state) const
 }
 
 uint16_t
-DisassemblerX86::getWord(State &state) const
+X86::getWord(State &state) const
 {
     uint16_t lo = getByte(state);
     uint16_t hi = getByte(state);
@@ -237,7 +236,7 @@ DisassemblerX86::getWord(State &state) const
 }
 
 uint32_t
-DisassemblerX86::getDWord(State &state) const
+X86::getDWord(State &state) const
 {
     uint32_t lo = getWord(state);
     uint32_t hi = getWord(state);
@@ -245,7 +244,7 @@ DisassemblerX86::getDWord(State &state) const
 }
 
 uint64_t
-DisassemblerX86::getQWord(State &state) const
+X86::getQWord(State &state) const
 {
     uint64_t lo = getDWord(state);
     uint64_t hi = getDWord(state);
@@ -260,14 +259,14 @@ DisassemblerX86::getQWord(State &state) const
  *========================================================================================================================*/
 
 SgAsmExpression *
-DisassemblerX86::currentDataSegment(State &state) const {
+X86::currentDataSegment(State &state) const {
     if (state.segOverride != x86_segreg_none)
         return makeSegmentRegister(state, state.segOverride, insnSize==x86_insnsize_64);
     return makeSegmentRegister(state, x86_segreg_ds, insnSize==x86_insnsize_64);
 }
 
 X86InstructionSize
-DisassemblerX86::effectiveAddressSize(State &state) const
+X86::effectiveAddressSize(State &state) const
 {
     if (state.addressSizeOverride) {
         switch (insnSize) {
@@ -287,7 +286,7 @@ DisassemblerX86::effectiveAddressSize(State &state) const
 }
 
 X86InstructionSize
-DisassemblerX86::effectiveOperandSize(State &state) const
+X86::effectiveOperandSize(State &state) const
 {
     if (state.operandSizeOverride) {
         switch (insnSize) {
@@ -320,8 +319,8 @@ DisassemblerX86::effectiveOperandSize(State &state) const
     }
 }
 
-DisassemblerX86::MMPrefix
-DisassemblerX86::mmPrefix(State &state) const
+X86::MMPrefix
+X86::mmPrefix(State &state) const
 {
     switch (state.repeatPrefix) {
         case x86_repeat_none: {
@@ -355,7 +354,7 @@ DisassemblerX86::mmPrefix(State &state) const
 }
 
 void
-DisassemblerX86::setRex(State &state, uint8_t opcode) const
+X86::setRex(State &state, uint8_t opcode) const
 {
     state.rexPresent = true;
     state.rexW = (opcode & 8) != 0;
@@ -364,8 +363,8 @@ DisassemblerX86::setRex(State &state, uint8_t opcode) const
     state.rexB = (opcode & 1) != 0;
 }
 
-DisassemblerX86::RegisterMode
-DisassemblerX86::sizeToMode(X86InstructionSize s)
+X86::RegisterMode
+X86::sizeToMode(X86InstructionSize s)
 {
     switch (s) {
         case x86_insnsize_16: return rmWord;
@@ -381,7 +380,7 @@ DisassemblerX86::sizeToMode(X86InstructionSize s)
 }
 
 SgAsmType *
-DisassemblerX86::sizeToType(X86InstructionSize s)
+X86::sizeToType(X86InstructionSize s)
 {
     switch (s) {
         case x86_insnsize_none: return NULL;
@@ -405,7 +404,7 @@ DisassemblerX86::sizeToType(X86InstructionSize s)
  *========================================================================================================================*/
 
 SgAsmExpression *
-DisassemblerX86::makeAddrSizeValue(State &state, int64_t val, size_t bit_offset, size_t bit_size) const
+X86::makeAddrSizeValue(State &state, int64_t val, size_t bit_offset, size_t bit_size) const
 {
     SgAsmValueExpression *retval = NULL;
     switch (effectiveAddressSize(state)) {
@@ -428,7 +427,7 @@ DisassemblerX86::makeAddrSizeValue(State &state, int64_t val, size_t bit_offset,
 }
 
 SgAsmX86Instruction *
-DisassemblerX86::makeInstruction(State &state, X86InstructionKind kind, const std::string &mnemonic,
+X86::makeInstruction(State &state, X86InstructionKind kind, const std::string &mnemonic,
                                  SgAsmExpression *op1, SgAsmExpression *op2, SgAsmExpression *op3, SgAsmExpression *op4) const
 {
     SgAsmX86Instruction *insn = new SgAsmX86Instruction(state.ip, mnemonic, kind, insnSize, effectiveOperandSize(state),
@@ -469,7 +468,7 @@ DisassemblerX86::makeInstruction(State &state, X86InstructionKind kind, const st
 }
 
 SgAsmRegisterReferenceExpression *
-DisassemblerX86::makeIP() const
+X86::makeIP() const
 {
     ASSERT_forbid(REG_IP.isEmpty());
     SgAsmRegisterReferenceExpression *r = new SgAsmDirectRegisterExpression(REG_IP);
@@ -478,14 +477,14 @@ DisassemblerX86::makeIP() const
 }
 
 SgAsmRegisterReferenceExpression *
-DisassemblerX86::makeOperandRegisterByte(State &state, bool rexExtension, uint8_t registerNumber) const
+X86::makeOperandRegisterByte(State &state, bool rexExtension, uint8_t registerNumber) const
 {
     return makeRegister(state, (rexExtension ? 8 : 0) + registerNumber,
                         (state.rexPresent ? rmRexByte : rmLegacyByte));
 }
 
 SgAsmRegisterReferenceExpression *
-DisassemblerX86::makeOperandRegisterFull(State &state, bool rexExtension, uint8_t registerNumber) const
+X86::makeOperandRegisterFull(State &state, bool rexExtension, uint8_t registerNumber) const
 {
     return makeRegister(state, (rexExtension ? 8 : 0) + registerNumber,
                         sizeToMode(insnSize));
@@ -507,7 +506,7 @@ DisassemblerX86::makeOperandRegisterFull(State &state, bool rexExtension, uint8_
  * non-overlapping areas of the descriptor address space {major,minor,offset,size} while related registers (e.g., "eax" vs
  * "ax") map to overlapping areas of the descriptor address space. */
 SgAsmRegisterReferenceExpression *
-DisassemblerX86::makeRegister(State &state, uint8_t fullRegisterNumber, RegisterMode m, SgAsmType *registerType) const
+X86::makeRegister(State &state, uint8_t fullRegisterNumber, RegisterMode m, SgAsmType *registerType) const
 {
     /* Register names for various RegisterMode, indexed by the fullRegisterNumber. The names and order of these names come from
      * Intel documentation. */
@@ -621,7 +620,7 @@ DisassemblerX86::makeRegister(State &state, uint8_t fullRegisterNumber, Register
 }
 
 SgAsmExpression *
-DisassemblerX86::makeSegmentRegister(State &state, X86SegmentRegister so, bool insn64) const
+X86::makeSegmentRegister(State &state, X86SegmentRegister so, bool insn64) const
 {
     switch (so) {
         case x86_segreg_none: ASSERT_not_reachable("makeSegmentRegister must not be x86_segreg_none");
@@ -647,7 +646,7 @@ DisassemblerX86::makeSegmentRegister(State &state, X86SegmentRegister so, bool i
  *========================================================================================================================*/
 
 void
-DisassemblerX86::getModRegRM(State &state, RegisterMode regMode, RegisterMode rmMode, SgAsmType *t, SgAsmType *tForReg) const
+X86::getModRegRM(State &state, RegisterMode regMode, RegisterMode rmMode, SgAsmType *t, SgAsmType *tForReg) const
 {
     if (!tForReg)
         tForReg = t;
@@ -661,7 +660,7 @@ DisassemblerX86::getModRegRM(State &state, RegisterMode regMode, RegisterMode rm
 }
 
 SgAsmMemoryReferenceExpression *
-DisassemblerX86::decodeModrmMemory(State &state) const
+X86::decodeModrmMemory(State &state) const
 {
     ASSERT_require(state.modregrmByteSet);
     SgAsmExpression* addressExpr = NULL;
@@ -833,7 +832,7 @@ DisassemblerX86::decodeModrmMemory(State &state) const
 }
 
 void
-DisassemblerX86::fillInModRM(State &state, RegisterMode rmMode, SgAsmType *t) const
+X86::fillInModRM(State &state, RegisterMode rmMode, SgAsmType *t) const
 {
     if (state.modeField == 3) {
         state.modrm = makeRegister(state, (state.rexB ? 8 : 0) + state.rmField, rmMode, t);
@@ -843,7 +842,7 @@ DisassemblerX86::fillInModRM(State &state, RegisterMode rmMode, SgAsmType *t) co
 }
 
 SgAsmExpression *
-DisassemblerX86::makeModrmNormal(State &state, RegisterMode m, SgAsmType* mrType) const
+X86::makeModrmNormal(State &state, RegisterMode m, SgAsmType* mrType) const
 {
     ASSERT_require(state.modregrmByteSet);
     if (state.modeField == 3) {
@@ -859,7 +858,7 @@ DisassemblerX86::makeModrmNormal(State &state, RegisterMode m, SgAsmType* mrType
 }
 
 SgAsmRegisterReferenceExpression *
-DisassemblerX86::makeModrmRegister(State &state, RegisterMode m, SgAsmType* mrType) const
+X86::makeModrmRegister(State &state, RegisterMode m, SgAsmType* mrType) const
 {
     ASSERT_require(state.modregrmByteSet);
     if (m == rmLegacyByte && state.rexPresent)
@@ -876,7 +875,7 @@ DisassemblerX86::makeModrmRegister(State &state, RegisterMode m, SgAsmType* mrTy
  *========================================================================================================================*/
 
 SgAsmExpression *
-DisassemblerX86::getImmByte(State &state) const
+X86::getImmByte(State &state) const
 {
     size_t bit_offset = 8*state.insnbufat;
     SgAsmValueExpression *retval = SageBuilderAsm::buildValueX86Byte(getByte(state));
@@ -886,7 +885,7 @@ DisassemblerX86::getImmByte(State &state) const
 }
 
 SgAsmExpression *
-DisassemblerX86::getImmWord(State &state) const
+X86::getImmWord(State &state) const
 {
     size_t bit_offset = 8*state.insnbufat;
     SgAsmValueExpression *retval = SageBuilderAsm::buildValueX86Word(getWord(state));
@@ -896,7 +895,7 @@ DisassemblerX86::getImmWord(State &state) const
 }
 
 SgAsmExpression *
-DisassemblerX86::getImmDWord(State &state) const
+X86::getImmDWord(State &state) const
 {
     size_t bit_offset = 8*state.insnbufat;
     SgAsmValueExpression *retval = SageBuilderAsm::buildValueX86DWord(getDWord(state));
@@ -906,7 +905,7 @@ DisassemblerX86::getImmDWord(State &state) const
 }
 
 SgAsmExpression *
-DisassemblerX86::getImmQWord(State &state) const
+X86::getImmQWord(State &state) const
 {
     size_t bit_offset = 8*state.insnbufat;
     SgAsmValueExpression *retval = SageBuilderAsm::buildValueX86QWord(getQWord(state));
@@ -916,7 +915,7 @@ DisassemblerX86::getImmQWord(State &state) const
 }
 
 SgAsmExpression *
-DisassemblerX86::getImmForAddr(State &state) const
+X86::getImmForAddr(State &state) const
 {
     switch (effectiveAddressSize(state)) {
         case x86_insnsize_16: return getImmWord(state);
@@ -932,7 +931,7 @@ DisassemblerX86::getImmForAddr(State &state) const
 }
 
 SgAsmExpression *
-DisassemblerX86::getImmIv(State &state) const
+X86::getImmIv(State &state) const
 {
     switch (effectiveOperandSize(state)) {
         case x86_insnsize_16: return getImmWord(state);
@@ -948,7 +947,7 @@ DisassemblerX86::getImmIv(State &state) const
 }
 
 SgAsmExpression *
-DisassemblerX86::getImmJz(State &state) const
+X86::getImmJz(State &state) const
 {
     uint64_t val;
     size_t bit_offset=8*state.insnbufat, bit_size=0;
@@ -980,7 +979,7 @@ DisassemblerX86::getImmJz(State &state) const
 }
 
 SgAsmExpression *
-DisassemblerX86::getImmByteAsIv(State &state) const
+X86::getImmByteAsIv(State &state) const
 {
     SgAsmValueExpression *retval = NULL;
     size_t bit_offset = 8*state.insnbufat;
@@ -992,7 +991,7 @@ DisassemblerX86::getImmByteAsIv(State &state) const
 }
 
 SgAsmExpression *
-DisassemblerX86::getImmIzAsIv(State &state) const
+X86::getImmIzAsIv(State &state) const
 {
     switch (effectiveOperandSize(state)) {
         case x86_insnsize_16:
@@ -1012,7 +1011,7 @@ DisassemblerX86::getImmIzAsIv(State &state) const
 }
 
 SgAsmExpression *
-DisassemblerX86::getImmJb(State &state) const
+X86::getImmJb(State &state) const
 {
     size_t bit_offset = 8*state.insnbufat;
     uint8_t val = getByte(state);
@@ -1048,7 +1047,7 @@ DisassemblerX86::getImmJb(State &state) const
 
 /* Mostly copied from the old x86Disassembler.C version */
 SgAsmX86Instruction *
-DisassemblerX86::disassemble(State &state) const
+X86::disassemble(State &state) const
 {
     uint8_t opcode = getByte(state);
     SgAsmX86Instruction *insn = 0;
@@ -2834,7 +2833,7 @@ done:
 }
 
 SgAsmX86Instruction *
-DisassemblerX86::decodeOpcode0F(State &state) const
+X86::decodeOpcode0F(State &state) const
 {
     uint8_t opcode = getByte(state);
     switch (opcode) {
@@ -5278,7 +5277,7 @@ DisassemblerX86::decodeOpcode0F(State &state) const
 
 /* SSSE3 (opcode 0F38) */
 SgAsmX86Instruction *
-DisassemblerX86::decodeOpcode0F38(State &state) const
+X86::decodeOpcode0F38(State &state) const
 {
     // Get the third byte of the opcode (the first two were read by the caller (decodeOpcode0F())
     uint8_t opcode = getByte(state);
@@ -5305,7 +5304,7 @@ DisassemblerX86::decodeOpcode0F38(State &state) const
 }
 
 SgAsmX86Instruction *
-DisassemblerX86::decodeX87InstructionD8(State &state) const
+X86::decodeX87InstructionD8(State &state) const
 {
     getModRegRM(state, rmReturnNull, rmST, FLOATT);
     if (isSgAsmMemoryReferenceExpression(state.modrm)) {
@@ -5347,7 +5346,7 @@ DisassemblerX86::decodeX87InstructionD8(State &state) const
 }
 
 SgAsmX86Instruction *
-DisassemblerX86::decodeX87InstructionD9(State &state) const
+X86::decodeX87InstructionD9(State &state) const
 {
     getModRegRM(state, rmReturnNull, rmReturnNull, NULL);
     if (state.modeField < 3) {
@@ -5425,7 +5424,7 @@ DisassemblerX86::decodeX87InstructionD9(State &state) const
 }
 
 SgAsmX86Instruction *
-DisassemblerX86::decodeX87InstructionDA(State &state) const
+X86::decodeX87InstructionDA(State &state) const
 {
     getModRegRM(state, rmReturnNull, rmReturnNull, DWORDT);
     if (state.modeField < 3) {
@@ -5460,7 +5459,7 @@ DisassemblerX86::decodeX87InstructionDA(State &state) const
 }
 
 SgAsmX86Instruction *
-DisassemblerX86::decodeX87InstructionDB(State &state) const
+X86::decodeX87InstructionDB(State &state) const
 {
     getModRegRM(state, rmReturnNull, rmReturnNull, NULL);
     if (state.modeField < 3) {
@@ -5505,7 +5504,7 @@ DisassemblerX86::decodeX87InstructionDB(State &state) const
 }
 
 SgAsmX86Instruction *
-DisassemblerX86::decodeX87InstructionDC(State &state) const
+X86::decodeX87InstructionDC(State &state) const
 {
     getModRegRM(state, rmReturnNull, rmST, DOUBLET);
     if (state.modeField < 3) { // Using memory
@@ -5538,7 +5537,7 @@ DisassemblerX86::decodeX87InstructionDC(State &state) const
 }
 
 SgAsmX86Instruction *
-DisassemblerX86::decodeX87InstructionDD(State &state) const
+X86::decodeX87InstructionDD(State &state) const
 {
     getModRegRM(state, rmReturnNull, rmST, NULL);
     if (state.modeField < 3) { // Using memory
@@ -5589,7 +5588,7 @@ DisassemblerX86::decodeX87InstructionDD(State &state) const
 }
 
 SgAsmX86Instruction *
-DisassemblerX86::decodeX87InstructionDE(State &state) const
+X86::decodeX87InstructionDE(State &state) const
 {
     getModRegRM(state, rmReturnNull, rmST, WORDT);
     if (state.modeField < 3) { // Using memory
@@ -5627,7 +5626,7 @@ DisassemblerX86::decodeX87InstructionDE(State &state) const
 }
 
 SgAsmX86Instruction *
-DisassemblerX86::decodeX87InstructionDF(State &state) const
+X86::decodeX87InstructionDF(State &state) const
 {
     getModRegRM(state, rmReturnNull, rmReturnNull, NULL);
     if (state.modeField < 3) { // Using memory
@@ -5669,7 +5668,7 @@ DisassemblerX86::decodeX87InstructionDF(State &state) const
 }
 
 SgAsmX86Instruction *
-DisassemblerX86::decodeGroup1(State &state, SgAsmExpression* imm) const
+X86::decodeGroup1(State &state, SgAsmExpression* imm) const
 {
     switch (state.regField) {
         case 0: return makeInstruction(state, x86_add, "add", state.modrm, imm);
@@ -5687,7 +5686,7 @@ DisassemblerX86::decodeGroup1(State &state, SgAsmExpression* imm) const
 }
 
 SgAsmX86Instruction *
-DisassemblerX86::decodeGroup1a(State &state) const
+X86::decodeGroup1a(State &state) const
 {
     if (state.regField != 0)
         throw ExceptionX86("bad ModR/M value for Group 1a opcode", state);
@@ -5695,7 +5694,7 @@ DisassemblerX86::decodeGroup1a(State &state) const
 }
 
 SgAsmX86Instruction *
-DisassemblerX86::decodeGroup2(State &state, SgAsmExpression* count) const
+X86::decodeGroup2(State &state, SgAsmExpression* count) const
 {
     switch (state.regField) {
         case 0: return makeInstruction(state, x86_rol, "rol", state.modrm, count);
@@ -5713,7 +5712,7 @@ DisassemblerX86::decodeGroup2(State &state, SgAsmExpression* count) const
 }
 
 SgAsmX86Instruction *
-DisassemblerX86::decodeGroup3(State &state, SgAsmExpression* immMaybe) const
+X86::decodeGroup3(State &state, SgAsmExpression* immMaybe) const
 {
     switch (state.regField) {
         case 0:
@@ -5740,7 +5739,7 @@ DisassemblerX86::decodeGroup3(State &state, SgAsmExpression* immMaybe) const
 }
 
 SgAsmX86Instruction *
-DisassemblerX86::decodeGroup4(State &state) const
+X86::decodeGroup4(State &state) const
 {
     switch (state.regField) {
         case 0: return makeInstruction(state, x86_inc, "inc", state.modrm);
@@ -5752,7 +5751,7 @@ DisassemblerX86::decodeGroup4(State &state) const
 }
 
 SgAsmX86Instruction *
-DisassemblerX86::decodeGroup5(State &state) const
+X86::decodeGroup5(State &state) const
 {
     switch (state.regField) {
         case 0:
@@ -5781,7 +5780,7 @@ DisassemblerX86::decodeGroup5(State &state) const
 }
 
 SgAsmX86Instruction *
-DisassemblerX86::decodeGroup6(State &state) const
+X86::decodeGroup6(State &state) const
 {
     switch (state.regField) {
         case 0: return makeInstruction(state, x86_sldt, "sldt", state.modrm); // FIXME adjust register size
@@ -5799,7 +5798,7 @@ DisassemblerX86::decodeGroup6(State &state) const
 }
 
 SgAsmX86Instruction *
-DisassemblerX86::decodeGroup7(State &state) const
+X86::decodeGroup7(State &state) const
 {
     getModRegRM(state, rmReturnNull, rmReturnNull, NULL);
     switch (state.regField) {
@@ -5889,7 +5888,7 @@ DisassemblerX86::decodeGroup7(State &state) const
 }
 
 SgAsmX86Instruction *
-DisassemblerX86::decodeGroup8(State &state, SgAsmExpression* imm) const
+X86::decodeGroup8(State &state, SgAsmExpression* imm) const
 {
     switch (state.regField) {
         case 0: throw ExceptionX86("bad ModR/M value for Group 8 opcode", state);
@@ -5907,7 +5906,7 @@ DisassemblerX86::decodeGroup8(State &state, SgAsmExpression* imm) const
 }
 
 SgAsmX86Instruction *
-DisassemblerX86::decodeGroup11(State &state, SgAsmExpression* imm) const
+X86::decodeGroup11(State &state, SgAsmExpression* imm) const
 {
     switch (state.regField) {
         case 0: return makeInstruction(state, x86_mov, "mov", state.modrm, imm);
@@ -5918,7 +5917,7 @@ DisassemblerX86::decodeGroup11(State &state, SgAsmExpression* imm) const
 }
 
 SgAsmX86Instruction *
-DisassemblerX86::decodeGroup15(State &state) const
+X86::decodeGroup15(State &state) const
 {
     getModRegRM(state, rmReturnNull, rmReturnNull, NULL);
     switch (state.regField) {
@@ -5969,7 +5968,7 @@ DisassemblerX86::decodeGroup15(State &state) const
 }
 
 SgAsmX86Instruction *
-DisassemblerX86::decodeGroup16(State &state) const
+X86::decodeGroup16(State &state) const
 {
     requireMemory(state);
     switch (state.regField) {
@@ -5982,7 +5981,7 @@ DisassemblerX86::decodeGroup16(State &state) const
 }
 
 SgAsmX86Instruction *
-DisassemblerX86::decodeGroupP(State &state) const
+X86::decodeGroupP(State &state) const
 {
     getModRegRM(state, rmReturnNull, rmLegacyByte, BYTET);
     requireMemory(state);
@@ -5996,9 +5995,10 @@ DisassemblerX86::decodeGroupP(State &state) const
 
 } // namespace
 } // namespace
+} // namespace
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::DisassemblerX86);
+BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::Disassembler::X86);
 #endif
 
 #endif

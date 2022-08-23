@@ -3,7 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <Rose/BinaryAnalysis/Disassembler.h>
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 #include "AstSerialization.h"
 
@@ -36,7 +36,7 @@ public:
     typedef Sawyer::Container::HashMap<rose_addr_t, SgAsmInstruction*> InsnMap;
 
 private:
-    Disassembler *disassembler_;
+    Disassembler::Base *disassembler_;
     MemoryMap::Ptr memMap_;
     mutable InsnMap insnMap_;                           // this is a cache
     bool useDisassembler_;
@@ -85,7 +85,7 @@ protected:
         insnMap_.rehash(1000000);
     }
 
-    InstructionProvider(Disassembler *disassembler, const MemoryMap::Ptr &map)
+    InstructionProvider(Disassembler::Base *disassembler, const MemoryMap::Ptr &map)
         : disassembler_(disassembler), memMap_(map), useDisassembler_(true) {
         ASSERT_not_null(disassembler);
         // Start off with a large map to reduce early rehashing. There will probably be a lot of instructions.
@@ -103,7 +103,7 @@ public:
      *
      *  The disassembler is owned by the caller and should not be freed until after the instruction provider is destroyed.  The
      *  memory map is copied into the instruction provider. */
-    static Ptr instance(Disassembler *disassembler, const MemoryMap::Ptr &map) {
+    static Ptr instance(Disassembler::Base *disassembler, const MemoryMap::Ptr &map) {
         return Ptr(new InstructionProvider(disassembler, map));
     }
 
@@ -143,7 +143,7 @@ public:
      *
      *  Returns the disassembler pointer provided in the constructor.  The disassembler is not owned by this instruction
      *  provider, but must not be freed until after the instruction provider is destroyed. */
-    Disassembler* disassembler() const { return disassembler_; }
+    Disassembler::Base* disassembler() const { return disassembler_; }
 
     /** Returns number of cached starting addresses.
      *
