@@ -80,8 +80,8 @@
 %%forall Streams%%
         /** %%Streams.Name%% accessor
          * @{ */
-        const std::vector<%%Streams.Type%%>& get_%%Streams.Name%%() const;
-        std::vector<%%Streams.Type%%>& get_%%Streams.Name%%();
+        const std::vector<%%Streams.Type%%*>& get_%%Streams.Name%%() const;
+        std::vector<%%Streams.Type%%*>& get_%%Streams.Name%%();
         /** @} */
 %%end_for%%
 
@@ -93,7 +93,7 @@
 
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
-            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilDataStream);
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
             %%forall Fields%%
             s & BOOST_SERIALIZATION_NVP(p_%%Fields.Name%%);
             %%end_for%%
@@ -123,6 +123,161 @@
 ////// end from metadataRoot_C.txt
 
 ////// from metadataRoot_C.txt
+
+namespace
+{
+
+struct MethodHeader : std::tuple<std::uint16_t, std::uint16_t, std::uint32_t, std::uint32_t>
+{
+  static constexpr std::uint8_t TINY        = 0x2;
+  static constexpr std::uint8_t FAT         = 0x3;
+  static constexpr std::uint8_t FORMAT      = TINY | FAT;
+  static constexpr std::uint8_t MORE_SECTS  = 0x8;
+  static constexpr std::uint8_t INIT_LOCALS = 0x10;
+  static constexpr std::uint8_t FLAGS       = MORE_SECTS | INIT_LOCALS;
+
+  using base = std::tuple<std::uint16_t, std::uint16_t, std::uint32_t, std::uint32_t>;
+  using base::base;
+
+  std::uint16_t flags() const          { return std::get<0>(*this); }
+  bool          tiny()  const          { return (flags() & FORMAT) == TINY; }
+  bool          moreSections()  const  { return (flags() & FLAGS) == MORE_SECTS; }
+  bool          initLocals()  const    { return (flags() & FLAGS) == INIT_LOCALS; }
+  std::uint8_t  headerSize() const     { return tiny() ? 1 : (flags() >> 12); }
+
+  std::uint16_t maxStackSize() const   { return std::get<1>(*this); }
+  std::uint32_t codeSize() const       { return std::get<2>(*this); }
+  std::uint32_t localVarSigTok() const { return std::get<3>(*this); }
+};
+
+MethodHeader
+parseFatHeader(rose_addr_t base_va, std::uint32_t rva, SgAsmPEFileHeader* fhdr)
+{
+  std::uint8_t         buf[12];
+  const std::size_t    nread = fhdr->get_loader_map()->readQuick(&buf, base_va + rva, sizeof(buf));
+  ROSE_ASSERT(nread == 12);
+
+  const std::uint16_t  flags    = ByteOrder::le_to_host(*reinterpret_cast<uint16_t*>(buf+0));
+  const std::uint16_t  maxStack = ByteOrder::le_to_host(*reinterpret_cast<uint16_t*>(buf+2));
+  const std::uint16_t  codeSize = ByteOrder::le_to_host(*reinterpret_cast<uint32_t*>(buf+4));
+  const std::uint16_t  localIni = ByteOrder::le_to_host(*reinterpret_cast<uint32_t*>(buf+8));
+  const MethodHeader   res{ flags, maxStack, codeSize, localIni };
+
+  ROSE_ASSERT(!res.tiny());
+  ROSE_ASSERT(res.headerSize() == 3);
+  return res;
+}
+
+MethodHeader
+parseTinyHeader(std::uint8_t header)
+{
+  return { header & MethodHeader::FORMAT, 8, header >> 2, 0 };
+}
+
+SgAsmBlock*
+disassemble(SgAsmCilMethodDef* m, MethodHeader mh, std::vector<std::uint8_t>& buf, Rose::BinaryAnalysis::Disassembler&& disasm)
+{
+  const std::size_t              sz = buf.size();
+  rose_addr_t                    addr = 0;
+  std::uint8_t*                  b = buf.data();
+  std::vector<SgAsmInstruction*> lst;
+
+  while (addr < sz)
+  {
+    SgAsmInstruction* instr = disasm.disassembleOne(b, 0, sz, addr);
+    ASSERT_not_null(instr);
+
+    lst.push_back(instr);
+
+    addr += instr->get_size();
+  }
+
+  return sb::buildBasicBlock(lst);
+}
+
+void decodeMetadata(rose_addr_t base_va, SgAsmCilMetadataHeap* mdh, SgAsmCilMetadataRoot* root)
+{
+  constexpr std::uint8_t CIL_CODE       = 0;
+  constexpr std::uint8_t NATIVE_CODE    = 1;
+  constexpr std::uint8_t OPTIL_RESERVED = 2;
+  constexpr std::uint8_t RUNTIME_CODE   = 3;
+  constexpr std::uint8_t CODE_TYPE_MASK = CIL_CODE | NATIVE_CODE | OPTIL_RESERVED | RUNTIME_CODE;
+
+  ASSERT_not_null(mdh); ASSERT_not_null(root);
+
+  SgAsmCilUint8Heap* stringHeap = root->get_StringHeap();
+  ASSERT_not_null(stringHeap);
+
+  SgAsmPEFileHeader* fhdr = SageInterface::getEnclosingNode<SgAsmPEFileHeader>(root);
+  ASSERT_not_null(fhdr);
+
+  // decode methods
+  for (SgAsmCilMethodDef* m : mdh->get_methodDef())
+  {
+    ASSERT_not_null(m);
+
+    std::size_t nameidx = m->get_Name();
+    std::cerr << "proc " << readUtf8String(stringHeap->get_Stream(), nameidx)
+              << std::endl;
+
+    // parse header
+    std::uint32_t  rva = m->get_RVA();
+    std::uint8_t   mh0;
+    std::size_t    nread = fhdr->get_loader_map()->readQuick(&mh0, base_va + rva, 1);
+    ROSE_ASSERT(nread == 1);
+
+    bool           isTiny = (mh0 & MethodHeader::FORMAT) == MethodHeader::TINY;
+    ROSE_ASSERT((!isTiny) || (((base_va+rva)%4) == 0));
+    MethodHeader   mh = isTiny ? parseTinyHeader(mh0) : parseFatHeader(base_va, rva, fhdr);
+
+    m->set_stackSize(mh.maxStackSize());
+    m->set_hasMoreSections(mh.moreSections());
+    m->set_initLocals(mh.initLocals());
+
+    // parse code
+    std::uint32_t  codeRVA = rva + mh.headerSize();
+    std::uint32_t  codeLen = mh.codeSize();
+
+    std::vector<std::uint8_t> code(codeLen, 0);
+    std::size_t    nreadCode = fhdr->get_loader_map()->readQuick(code.data(), base_va + codeRVA, codeLen);
+    ROSE_ASSERT(nreadCode == codeLen);
+
+    SgAsmBlock* blk = nullptr;
+
+    switch (m->get_ImplFlags() & CODE_TYPE_MASK)
+    {
+      namespace rb = Rose::BinaryAnalysis;
+
+      case CIL_CODE:
+        //~ std::cerr << "  - disassembling CIL code: " << code.size() << " bytes."
+        //~           << std::endl;
+        blk = disassemble(m, mh, code, rb::DisassemblerCil());
+        break;
+
+      case NATIVE_CODE:
+        //~ std::cerr << "  - disassembling x86 code: " << code.size() << " bytes."
+        //~           << std::endl;
+        blk = disassemble(m, mh, code, rb::DisassemblerX86(4 /* word size */));
+        break;
+
+      case RUNTIME_CODE:
+        std::cerr << "  - runtime provided: " << code.size()
+                  << std::endl;
+        // looking for sample code
+        ROSE_ABORT();
+        break;
+
+      default:
+        ROSE_ABORT();
+    }
+
+    ASSERT_not_null(blk);
+    m->set_body(blk);
+  }
+}
+
+}
+
 
 void SgAsmCilMetadataRoot::parse()
 {
@@ -154,6 +309,7 @@ void SgAsmCilMetadataRoot::parse()
   ROSE_ASSERT(nread == size);
 
   this->parse(buf, 0);
+  decodeMetadata(base_va, get_MetadataHeap(), this);
 }
 
 

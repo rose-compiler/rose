@@ -59,155 +59,193 @@
     "Tables": [
       {
         "Name": "assembly",
-        "Type": "SgAsmCilAssembly"
+        "Type": "SgAsmCilAssembly",
+        "Code": "0x20"
       },
       {
         "Name": "assemblyProcessor",
-        "Type": "SgAsmCilAssemblyProcessor"
+        "Type": "SgAsmCilAssemblyProcessor",
+        "Code": "0x21"
       },
       {
         "Name": "assemblyOS",
-        "Type": "SgAsmCilAssemblyOS"
+        "Type": "SgAsmCilAssemblyOS",
+        "Code": "0x22"
       },
       {
         "Name": "assemblyRef",
-        "Type": "SgAsmCilAssemblyRef"
+        "Type": "SgAsmCilAssemblyRef",
+        "Code": "0x23"
       },
       {
         "Name": "assemblyRefProcessor",
-        "Type": "SgAsmCilAssemblyRefProcessor"
+        "Type": "SgAsmCilAssemblyRefProcessor",
+        "Code": "0x24"
       },
       {
         "Name": "assemblyRefOS",
-        "Type": "SgAsmCilAssemblyRefOS"
+        "Type": "SgAsmCilAssemblyRefOS",
+        "Code": "0x25"
       },
       {
         "Name": "classLayout",
-        "Type": "SgAsmCilClassLayout"
+        "Type": "SgAsmCilClassLayout",
+        "Code": "0x0F"
       },
       {
         "Name": "constant",
-        "Type": "SgAsmCilConstant"
+        "Type": "SgAsmCilConstant",
+        "Code": "0x0B"
       },
       {
         "Name": "customAttribute",
-        "Type": "SgAsmCilCustomAttribute"
+        "Type": "SgAsmCilCustomAttribute",
+        "Code": "0x0C"
       },
       {
         "Name": "declSecurity",
-        "Type": "SgAsmCilDeclSecurity"
+        "Type": "SgAsmCilDeclSecurity",
+        "Code": "0x0E"
       },
       {
         "Name": "eventMap",
-        "Type": "SgAsmCilEventMap"
+        "Type": "SgAsmCilEventMap",
+        "Code": "0x12"
       },
       {
         "Name": "event",
-        "Type": "SgAsmCilEvent"
+        "Type": "SgAsmCilEvent",
+        "Code": "0x14"
       },
       {
         "Name": "exportedType",
-        "Type": "SgAsmCilExportedType"
+        "Type": "SgAsmCilExportedType",
+        "Code": "0x27"
       },
       {
         "Name": "field",
-        "Type": "SgAsmCilField"
+        "Type": "SgAsmCilField",
+        "Code": "0x04"
       },
       {
         "Name": "fieldLayout",
-        "Type": "SgAsmCilFieldLayout"
+        "Type": "SgAsmCilFieldLayout",
+        "Code": "0x10"
       },
       {
         "Name": "fieldMarshal",
-        "Type": "SgAsmCilFieldMarshal"
+        "Type": "SgAsmCilFieldMarshal",
+        "Code": "0x0D"
       },
       {
         "Name": "fieldRVA",
-        "Type": "SgAsmCilFieldRVA"
+        "Type": "SgAsmCilFieldRVA",
+        "Code": "0x1D"
       },
       {
         "Name": "file",
-        "Type": "SgAsmCilFile"
+        "Type": "SgAsmCilFile",
+        "Code": "0x26"
       },
       {
         "Name": "genericParam",
-        "Type": "SgAsmCilGenericParam"
+        "Type": "SgAsmCilGenericParam",
+        "Code": "0x2A"
       },
       {
         "Name": "genericParamConstraint",
-        "Type": "SgAsmCilGenericParamConstraint"
+        "Type": "SgAsmCilGenericParamConstraint",
+        "Code": "0x2C"
       },
       {
         "Name": "implMap",
-        "Type": "SgAsmCilImplMap"
+        "Type": "SgAsmCilImplMap",
+        "Code": "0x1C"
       },
       {
         "Name": "interfaceImpl",
-        "Type": "SgAsmCilInterfaceImpl"
+        "Type": "SgAsmCilInterfaceImpl",
+        "Code": "0x09"
       },
       {
         "Name": "manifestResource",
-        "Type": "SgAsmCilManifestResource"
+        "Type": "SgAsmCilManifestResource",
+        "Code": "0x28"
       },
       {
         "Name": "memberRef",
-        "Type": "SgAsmCilMemberRef"
+        "Type": "SgAsmCilMemberRef",
+        "Code": "0x0A"
       },
       {
         "Name": "methodDef",
-        "Type": "SgAsmCilMethodDef"
+        "Type": "SgAsmCilMethodDef",
+        "Code": "0x06"
       },
       {
         "Name": "methodImpl",
-        "Type": "SgAsmCilMethodImpl"
+        "Type": "SgAsmCilMethodImpl",
+        "Code": "0x19"
       },
       {
         "Name": "methodSemantics",
-        "Type": "SgAsmCilMethodSemantics"
+        "Type": "SgAsmCilMethodSemantics",
+        "Code": "0x18"
       },
       {
         "Name": "methodSpec",
-        "Type": "SgAsmCilMethodSpec"
+        "Type": "SgAsmCilMethodSpec",
+        "Code": "0x2B"
       },
       {
         "Name": "module",
-        "Type": "SgAsmCilModule"
+        "Type": "SgAsmCilModule",
+        "Code": "0x00"
       },
       {
         "Name": "moduleRef",
-        "Type": "SgAsmCilModuleRef"
+        "Type": "SgAsmCilModuleRef",
+        "Code": "0x1A"
       },
       {
         "Name": "nestedClass",
-        "Type": "SgAsmCilNestedClass"
+        "Type": "SgAsmCilNestedClass",
+        "Code": "0x29"
       },
       {
         "Name": "param",
-        "Type": "SgAsmCilParam"
+        "Type": "SgAsmCilParam",
+        "Code": "0x08"
       },
       {
         "Name": "property",
-        "Type": "SgAsmCilProperty"
+        "Type": "SgAsmCilProperty",
+        "Code": "0x17"
       },
       {
         "Name": "propertyMap",
-        "Type": "SgAsmCilPropertyMap"
+        "Type": "SgAsmCilPropertyMap",
+        "Code": "0x15"
       },
       {
         "Name": "standAloneSig",
-        "Type": "SgAsmCilStandAloneSig"
+        "Type": "SgAsmCilStandAloneSig",
+        "Code": "0x11"
       },
       {
         "Name": "typeDef",
-        "Type": "SgAsmCilTypeDef"
+        "Type": "SgAsmCilTypeDef",
+        "Code": "0x02"
       },
       {
         "Name": "typeRef",
-        "Type": "SgAsmCilTypeRef"
+        "Type": "SgAsmCilTypeRef",
+        "Code": "0x01"
       },
       {
         "Name": "typeSpec",
-        "Type": "SgAsmCilTypeSpec"
+        "Type": "SgAsmCilTypeSpec",
+        "Code": "0x1B"
       }
     ],
     "Name" : "AsmCilMetadataHeap"

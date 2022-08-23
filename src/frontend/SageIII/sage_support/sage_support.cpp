@@ -3466,7 +3466,8 @@ SgFile::callFrontEnd()
   // the frontend separately for each SgFile.  so we have to set the output file name to be compiled
   // late in the processing (at backend compile time since we don't know when or if the frontend will
   // be called for each SgFile).
-     set_skip_unparse(false);
+  // PP (8/23/2022): Experimental: Do not override the flag from the command line. RC-1381
+  //   set_skip_unparse(false);
 
      if ((get_C_only() || get_Cxx_only()) &&
       // DQ (1/22/2004): As I recall this has a name that really

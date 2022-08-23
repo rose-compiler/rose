@@ -163,6 +163,13 @@ generateRVAs(SgAsmCilMetadataRoot* n)
               << std::endl;
 
     res.push_back(methodDef->get_RVA());
+    
+    SgAsmBlock* blk = methodDef->get_body();
+    ASSERT_not_null(blk);
+    
+    for (SgAsmStatement* stmt : blk->get_statementList())
+      if (SgAsmCilInstruction* insn = isSgAsmCilInstruction(stmt))
+        std::cout << insn->get_mnemonic() << std::endl;
   }
 
   return res;
@@ -187,19 +194,20 @@ int main(int argc, char *argv[])
 
     // Load the specimen as raw data or an ELF or PE container
     MemoryMap::Ptr map = engine.loadSpecimens(specimenNames);
-
+#if 0
     map->dump(::mlog[INFO]);
     map->dump(std::cout);
-    Disassembler *disassembler = engine.obtainDisassembler();
+#endif
 
-    // Obtain an unparser suitable for this disassembler
     AsmUnparser unparser;
+    Disassembler *disassembler = engine.obtainDisassembler();
+    // Obtain an unparser suitable for this disassembler
     unparser.set_registers(disassembler->registerDictionary());
+
 
  // DQ (12/18/2021): See if we can comment this out, I think we are not using it.
  // Build semantics framework; only used when settings.runSemantics is set
     BaseSemantics::DispatcherPtr dispatcher;
-
 #if 0
     if (settings.runSemantics) {
         BaseSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(disassembler->registerDictionary());
@@ -300,7 +308,7 @@ int main(int argc, char *argv[])
        }
 
     printf ("After reset using RVA: va = 0x%" PRIu64 "\n",va);
-#endif
+#endif /* XYZ */
 
 #if 1
     printf ("Exiting before processing instructions \n");
@@ -390,7 +398,7 @@ int main(int argc, char *argv[])
                         default:
                             break;
                     }
-#endif /* XYZ */
+#endif
 
                     if (!skipThisInstruction) {
                         //ops->currentState()->clear();
