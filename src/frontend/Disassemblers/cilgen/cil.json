@@ -40,21 +40,24 @@
       },
       {
         "Doc": "an index into the Blob heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_BLOB_HEAP)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_blob_heap)",
         "Name": "PublicKey",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_blob_heap"
       },
       {
         "Doc": "an index into the String heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_STRING_HEAP)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap)",
         "Name": "Name",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_string_heap"
       },
       {
         "Doc": "an index into the String heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_STRING_HEAP)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap)",
         "Name": "Culture",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_string_heap"
       }
     ],
     "Name": "Assembly",
@@ -133,27 +136,31 @@
       },
       {
         "Doc": "an index into the Blob heap, can be null, or non-null.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_BLOB_HEAP)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_blob_heap)",
         "Name": "PublicKeyOrToken",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_blob_heap"
       },
       {
         "Doc": "an index into the String heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_STRING_HEAP)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap)",
         "Name": "Name",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_string_heap"
       },
       {
         "Doc": "an index into the String heap, null or non-null",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_STRING_HEAP)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap)",
         "Name": "Culture",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_string_heap"
       },
       {
         "Doc": "an index into the Blob heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_BLOB_HEAP)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_blob_heap)",
         "Name": "HashValue",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_blob_heap"
       }
     ],
     "Name": "AssemblyRef",
@@ -182,9 +189,10 @@
       },
       {
         "Doc": "an index into the AssemblyRef table.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_ASSEMBLY_REF)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_assembly_ref)",
         "Name": "AssemblyRefOS",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_assembly_ref"
       }
     ],
     "Name": "AssemblyRefOS",
@@ -201,9 +209,10 @@
       },
       {
         "Doc": "an index into the AssemblyRef table.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_ASSEMBLY_REF)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_assembly_ref)",
         "Name": "AssemblyRef",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_assembly_ref"
       }
     ],
     "Name": "AssemblyRefProcessor",
@@ -226,9 +235,10 @@
       },
       {
         "Doc": "an index into the TypeDef table.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_TYPE_DEF)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_type_def)",
         "Name": "Parent",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_type_def"
       }
     ],
     "Name": "ClassLayout",
@@ -251,15 +261,17 @@
       },
       {
         "Doc": "an index into the Param, Field, or Property table.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_HAS_CONSTANT)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_has_constant)",
         "Name": "Parent",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_has_constant"
       },
       {
         "Doc": "an index into the Blob heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_BLOB_HEAP)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_blob_heap)",
         "Name": "Value",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_blob_heap"
       }
     ],
     "Name": "Constant",
@@ -271,21 +283,24 @@
     "Fields": [
       {
         "Doc": "an index into a metadata table that has an associated HasCustomAttribute index.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_HAS_CUSTOM_ATTRIBUTE)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_has_custom_attribute)",
         "Name": "Parent",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_has_custom_attribute"
       },
       {
         "Doc": "an index into the MethodDef or MemberRef table.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_METHOD_DEF_OR_REF)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_method_def_or_ref)",
         "Name": "Type",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_method_def_or_ref"
       },
       {
         "Doc": "an index into the Blob heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_BLOB_HEAP)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_blob_heap)",
         "Name": "Value",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_blob_heap"
       }
     ],
     "Name": "CustomAttribute",
@@ -302,15 +317,17 @@
       },
       {
         "Doc": "an index into the TypeDef, MethodDef, or Assembly table.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_HAS_DECL_SECURITY)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_has_decl_security)",
         "Name": "Parent",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_has_decl_security"
       },
       {
         "Doc": "an index into the Blob heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_BLOB_HEAP)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_blob_heap)",
         "Name": "PermissionSet",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_blob_heap"
       }
     ],
     "Name": "DeclSecurity",
@@ -327,15 +344,17 @@
       },
       {
         "Doc": "an index into the String heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_STRING_HEAP)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap)",
         "Name": "Name",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_string_heap"
       },
       {
         "Doc": "an index into a TypeDef, a TypeRef, or TypeSpec table.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_TYPE_DEF_OR_REF)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_type_def_or_ref)",
         "Name": "EventType",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_type_def_or_ref"
       }
     ],
     "Name": "Event",
@@ -346,15 +365,17 @@
     "Fields": [
       {
         "Doc": "an index into the TypeDef table.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_TYPE_DEF)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_type_def)",
         "Name": "Parent",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_type_def"
       },
       {
         "Doc": "an index into the Event table.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_EVENT)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_event)",
         "Name": "EventList",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_event"
       }
     ],
     "Name": "EventMap",
@@ -377,21 +398,24 @@
       },
       {
         "Doc": "an index into the String heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_STRING_HEAP)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap)",
         "Name": "TypeName",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_string_heap"
       },
       {
         "Doc": "an index into the String heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_STRING_HEAP)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap)",
         "Name": "TypeNamespace",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_string_heap"
       },
       {
         "Doc": "an index into the File table, ExportedType table, or the AssemblyRef table.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_IMPLEMENTATION)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_implementation)",
         "Name": "Implementation",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_implementation"
       }
     ],
     "Name": "ExportedType",
@@ -408,15 +432,17 @@
       },
       {
         "Doc": "an index into the String heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_STRING_HEAP)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap)",
         "Name": "Name",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_string_heap"
       },
       {
         "Doc": "an index into the Blob heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_BLOB_HEAP)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_blob_heap)",
         "Name": "Signature",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_blob_heap"
       }
     ],
     "Name": "Field",
@@ -433,9 +459,10 @@
       },
       {
         "Doc": "an index into the Field table.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_FIELD)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_field)",
         "Name": "Field",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_field"
       }
     ],
     "Name": "FieldLayout",
@@ -446,15 +473,17 @@
     "Fields": [
       {
         "Doc": "an index into Field or Param table.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_HAS_FIELD_MARSHALL)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_has_field_marshall)",
         "Name": "Parent",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_has_field_marshall"
       },
       {
         "Doc": "an index into the Blob heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_BLOB_HEAP)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_blob_heap)",
         "Name": "NativeType",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_blob_heap"
       }
     ],
     "Name": "FieldMarshal",
@@ -471,9 +500,10 @@
       },
       {
         "Doc": "an index into Field table",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_FIELD)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_field)",
         "Name": "Field",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_field"
       }
     ],
     "Name": "FieldRVA",
@@ -490,15 +520,17 @@
       },
       {
         "Doc": "an index into the String heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_STRING_HEAP)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap)",
         "Name": "Name",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_string_heap"
       },
       {
         "Doc": "an index into the Blob heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_BLOB_HEAP)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_blob_heap)",
         "Name": "HashValue",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_blob_heap"
       }
     ],
     "Name": "File",
@@ -521,15 +553,17 @@
       },
       {
         "Doc": "an index into the TypeDef or MethodDef table.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_TYPE_OR_METHOD_DEF)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_type_or_method_def)",
         "Name": "Owner",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_type_or_method_def"
       },
       {
         "Doc": "an index into the String heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_STRING_HEAP)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap)",
         "Name": "Name",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_string_heap"
       }
     ],
     "Name": "GenericParam",
@@ -540,15 +574,17 @@
     "Fields": [
       {
         "Doc": "an index into the GenericParam table.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_GENERIC_PARAM)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_generic_param)",
         "Name": "Owner",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_generic_param"
       },
       {
         "Doc": "an index into the TypeDef, TypeRef, or TypeSpec table.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_TYPE_DEF_OR_REF)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_type_def_or_ref)",
         "Name": "Constraint",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_type_def_or_ref"
       }
     ],
     "Name": "GenericParamConstraint",
@@ -565,21 +601,24 @@
       },
       {
         "Doc": "an index into the Field or MethodDef table.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_MEMBER_FORWARDED)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_member_forwarded)",
         "Name": "MemberForwarded",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_member_forwarded"
       },
       {
         "Doc": "an index into the String heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_STRING_HEAP)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap)",
         "Name": "ImportName",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_string_heap"
       },
       {
         "Doc": "an index into the ModuleRef table.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_MODULE_REF)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_module_ref)",
         "Name": "ImportScope",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_module_ref"
       }
     ],
     "Name": "ImplMap",
@@ -596,9 +635,10 @@
       },
       {
         "Doc": "an index into the TypeDef, TypeRef, or TypeSpec table.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_TYPE_DEF_OR_REF)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_type_def_or_ref)",
         "Name": "Interface",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_type_def_or_ref"
       }
     ],
     "Name": "InterfaceImpl",
@@ -621,15 +661,17 @@
       },
       {
         "Doc": "an index into the String heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_STRING_HEAP)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap)",
         "Name": "Name",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_string_heap"
       },
       {
         "Doc": "an index into a File table, a AssemblyRef table, or null.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_IMPLEMENTATION)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_implementation)",
         "Name": "Implementation",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_implementation"
       }
     ],
     "Name": "ManifestResource",
@@ -640,21 +682,24 @@
     "Fields": [
       {
         "Doc": "an index into the MethodDef, ModuleRef, TypeDef, TypeRef, or TypeSpec tables.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_MEMBER_REF_PARENT)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_member_ref_parent)",
         "Name": "Class",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_member_ref_parent"
       },
       {
         "Doc": "an index into the String heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_STRING_HEAP)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap)",
         "Name": "Name",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_string_heap"
       },
       {
         "Doc": "an index into the Blob heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_BLOB_HEAP)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_blob_heap)",
         "Name": "Signature",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_blob_heap"
       }
     ],
     "Name": "MemberRef",
@@ -663,6 +708,32 @@
   },
   {
     "Baseclass": "AsmCilMetadata",
+    "Extras": [
+      {
+        "Doc": "A block containing an instruction sequence (either x86 or CIL)",
+        "Init": "= nullptr",
+        "Name": "body",
+        "Type": "SgAsmBlock*"
+      },
+      {
+        "Doc": "Returns true if locals are initialized",
+        "Init": "= false",
+        "Name": "initLocals",
+        "Type": "bool"
+      },
+      {
+        "Doc": "Returns the max stack size required for this method",
+        "Init": "= 0",
+        "Name": "stackSize",
+        "Type": "uint32_t"
+      },
+      {
+        "Doc": "Returns true if this method has more sections in addition to the body",
+        "Init": "= false",
+        "Name": "hasMoreSections",
+        "Type": "bool"
+      }
+    ],
     "Fields": [
       {
         "Doc": "a 4-byte constant.",
@@ -684,21 +755,24 @@
       },
       {
         "Doc": "an index into the String heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_STRING_HEAP)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap)",
         "Name": "Name",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_string_heap"
       },
       {
         "Doc": "an index into the Blob heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_BLOB_HEAP)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_blob_heap)",
         "Name": "Signature",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_blob_heap"
       },
       {
         "Doc": "an index into the Param table",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_PARAM)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_param)",
         "Name": "ParamList",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_param"
       }
     ],
     "Name": "MethodDef",
@@ -709,21 +783,24 @@
     "Fields": [
       {
         "Doc": "an index into the TypeDef table.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_TYPE_DEF)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_type_def)",
         "Name": "Class",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_type_def"
       },
       {
         "Doc": "an index into the MethodDef or MemberRef table.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_METHOD_DEF_OR_REF)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_method_def_or_ref)",
         "Name": "MethodBody",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_method_def_or_ref"
       },
       {
         "Doc": "an index into the MethodDef or MemberRef table.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_METHOD_DEF_OR_REF)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_method_def_or_ref)",
         "Name": "MethodDeclaration",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_method_def_or_ref"
       }
     ],
     "Name": "MethodImpl",
@@ -740,15 +817,17 @@
       },
       {
         "Doc": "an index into the MethodDef table.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_METHOD_DEF)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_method_def)",
         "Name": "Method",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_method_def"
       },
       {
         "Doc": "an index into the Event or Property table.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_HAS_SEMANTICS)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_has_semantics)",
         "Name": "Association",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_has_semantics"
       }
     ],
     "Name": "MethodSemantics",
@@ -759,15 +838,17 @@
     "Fields": [
       {
         "Doc": "an index into the MethodDef or MemberRef table.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_METHOD_DEF_OR_REF)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_method_def_or_ref)",
         "Name": "Method",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_method_def_or_ref"
       },
       {
         "Doc": "an index into the Blob heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_BLOB_HEAP)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_blob_heap)",
         "Name": "Instantiation",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_blob_heap"
       }
     ],
     "Name": "MethodSpec",
@@ -784,27 +865,31 @@
       },
       {
         "Doc": "an index into the String heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_STRING_HEAP)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap)",
         "Name": "Name",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_string_heap"
       },
       {
         "Doc": "an index into the Guid heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_GUID_HEAP)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_guid_heap)",
         "Name": "Mvid",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_guid_heap"
       },
       {
         "Doc": "an index into the Guid heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_GUID_HEAP)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_guid_heap)",
         "Name": "Encld",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_guid_heap"
       },
       {
         "Doc": "an index into the Guid heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_GUID_HEAP)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_guid_heap)",
         "Name": "EncBaseId",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_guid_heap"
       }
     ],
     "Name": "Module",
@@ -815,9 +900,10 @@
     "Fields": [
       {
         "Doc": "an index into the String heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_STRING_HEAP)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap)",
         "Name": "Name",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_string_heap"
       }
     ],
     "Name": "ModuleRef",
@@ -828,15 +914,17 @@
     "Fields": [
       {
         "Doc": "an index into the TypeDef table.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_TYPE_DEF)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_type_def)",
         "Name": "NestedClass",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_type_def"
       },
       {
         "Doc": "an index into the TypeDef table.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_TYPE_DEF)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_type_def)",
         "Name": "EnclosingClass",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_type_def"
       }
     ],
     "Name": "NestedClass",
@@ -859,9 +947,10 @@
       },
       {
         "Doc": "an index into the Blob heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_BLOB_HEAP)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_blob_heap)",
         "Name": "Name",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_blob_heap"
       }
     ],
     "Name": "Param",
@@ -878,15 +967,17 @@
       },
       {
         "Doc": "an index into the String heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_STRING_HEAP)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap)",
         "Name": "Name",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_string_heap"
       },
       {
         "Doc": "an index into the Blob heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_BLOB_HEAP)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_blob_heap)",
         "Name": "Type",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_blob_heap"
       }
     ],
     "Name": "Property",
@@ -897,15 +988,17 @@
     "Fields": [
       {
         "Doc": "an index into the TypeDef table.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_TYPE_DEF)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_type_def)",
         "Name": "Parent",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_type_def"
       },
       {
         "Doc": "an index into the Property table",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_PROPERTY)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_property)",
         "Name": "PropertyList",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_property"
       }
     ],
     "Name": "PropertyMap",
@@ -916,9 +1009,10 @@
     "Fields": [
       {
         "Doc": "an index into the Blob heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_BLOB_HEAP)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_blob_heap)",
         "Name": "Signature",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_blob_heap"
       }
     ],
     "Name": "StandAloneSig",
@@ -935,33 +1029,38 @@
       },
       {
         "Doc": "an index into the String heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_STRING_HEAP)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap)",
         "Name": "TypeName",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_string_heap"
       },
       {
         "Doc": "an index into the String heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_STRING_HEAP)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap)",
         "Name": "TypeNamespace",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_string_heap"
       },
       {
         "Doc": "an index into the TypeDef, TypeRef, or TypeSpec table.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_TYPE_DEF_OR_REF)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_type_def_or_ref)",
         "Name": "Extends",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_type_def_or_ref"
       },
       {
         "Doc": "an index into the Field table.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_FIELD)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_field)",
         "Name": "FieldList",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_field"
       },
       {
         "Doc": "an index into the MethodDef table.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_METHOD_DEF)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_method_def)",
         "Name": "MethodList",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_method_def"
       }
     ],
     "Name": "TypeDef",
@@ -978,15 +1077,17 @@
       },
       {
         "Doc": "an index into the String heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_STRING_HEAP)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap)",
         "Name": "TypeName",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_string_heap"
       },
       {
         "Doc": "an index into the String heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_STRING_HEAP)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_string_heap)",
         "Name": "TypeNamespace",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_string_heap"
       }
     ],
     "Name": "TypeRef",
@@ -997,9 +1098,10 @@
     "Fields": [
       {
         "Doc": "An index into the Blob heap.",
-        "Init": "readValue(buf,index,uses4byteIndexing & CIL_RS_BLOB_HEAP)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_blob_heap)",
         "Name": "Signature",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_blob_heap"
       }
     ],
     "Name": "TypeSpec",
