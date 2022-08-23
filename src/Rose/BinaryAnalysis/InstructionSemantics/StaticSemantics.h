@@ -4,7 +4,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <Rose/BinaryAnalysis/Disassembler.h>
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/NullSemantics.h>
 #include "SageBuilderAsm.h"
 
@@ -53,7 +53,7 @@ namespace StaticSemantics {
  *  StaticSemantics dispatcher since all side effects are attached to the AST instead of being written to some state.
  *
  * @{ */
-void attachInstructionSemantics(SgNode *ast, Disassembler*);
+void attachInstructionSemantics(SgNode *ast, Disassembler::Base*);
 void attachInstructionSemantics(SgNode *ast, const BaseSemantics::DispatcherPtr&);
 /** @} */
 

@@ -451,7 +451,7 @@ public:
      *
      *  The partitioner must be provided with a disassembler, which also determines the specimen's target architecture, and a
      *  memory map that represents a (partially) loaded instance of the specimen (i.e., a process). */
-    Partitioner(Disassembler *disassembler, const MemoryMap::Ptr &map);
+    Partitioner(Disassembler::Base *disassembler, const MemoryMap::Ptr &map);
 
 #ifdef ROSE_PARTITIONER_MOVE
     /** Move constructor. */
@@ -2544,7 +2544,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private:
-    void init(Disassembler*, const MemoryMap::Ptr&);
+    void init(Disassembler::Base*, const MemoryMap::Ptr&);
     void init(const Partitioner&);
     void updateCfgProgress();
 

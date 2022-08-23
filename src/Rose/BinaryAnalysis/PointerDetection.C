@@ -6,7 +6,7 @@
 #include <AsmUnparser_compat.h>
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
-#include <Rose/BinaryAnalysis/Disassembler.h>
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCellList.h>
 #include <Rose/BinaryAnalysis/Partitioner2/DataFlow.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
@@ -43,7 +43,7 @@ PointerDescriptorLessp::operator()(const PointerDescriptor &a, const PointerDesc
 }
 
 void
-Analysis::init(Disassembler *disassembler) {
+Analysis::init(Disassembler::Base *disassembler) {
     if (disassembler) {
         const RegisterDictionary *registerDictionary = disassembler->registerDictionary();
         ASSERT_not_null(registerDictionary);

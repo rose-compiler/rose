@@ -45,7 +45,7 @@ public:
     }
 
     void eval(const P2::Partitioner &partitioner) const {
-        if (Disassembler *d = partitioner.instructionProvider().disassembler()) {
+        if (Disassembler::Base *d = partitioner.instructionProvider().disassembler()) {
             std::cout <<d->name() <<"\n";
         } else {
             std::cout <<"none\n";

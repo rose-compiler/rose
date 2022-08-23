@@ -315,7 +315,7 @@ Scheduler::reportStatus(std::ostream &out) const {
 // Partitioner
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Partitioner::Partitioner(const MemoryMap::Ptr &memory, Disassembler *decoder, const Settings &settings)
+Partitioner::Partitioner(const MemoryMap::Ptr &memory, Disassembler::Base *decoder, const Settings &settings)
     : settings_(settings), nExeVas_(0), isRunning_(false) {
     insnCache_ = std::make_shared<InstructionCache>(memory, decoder);
 

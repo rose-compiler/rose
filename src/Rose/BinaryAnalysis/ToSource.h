@@ -60,7 +60,7 @@ public:
 private:
     static Diagnostics::Facility mlog;
     Settings settings_;
-    Disassembler *disassembler_;
+    Disassembler::Base *disassembler_;
     InstructionSemantics::SourceAstSemantics::RiscOperatorsPtr raisingOps_;
     InstructionSemantics::TraceSemantics::RiscOperatorsPtr tracingOps_;
     InstructionSemantics::BaseSemantics::DispatcherPtr raisingCpu_;

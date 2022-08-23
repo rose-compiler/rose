@@ -4,7 +4,7 @@
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesLinux.h>
 
 #include <Rose/BinaryAnalysis/SystemCall.h>
-#include <Rose/BinaryAnalysis/DisassemblerX86.h>
+#include <Rose/BinaryAnalysis/Disassembler/X86.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 
 using namespace Rose::Diagnostics;
@@ -19,7 +19,7 @@ systemCallAnalyzer(const Partitioner &partitioner, const boost::filesystem::path
     SystemCall analyzer;
 
     // We only support x86 Linux (32- or 64-bit)
-    if (dynamic_cast<DisassemblerX86*>(partitioner.instructionProvider().disassembler())) {
+    if (dynamic_cast<Disassembler::X86*>(partitioner.instructionProvider().disassembler())) {
         if (!syscallHeader.empty())
             analyzer.declare(syscallHeader);
         switch (partitioner.instructionProvider().instructionPointerRegister().nBits()) {

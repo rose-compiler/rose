@@ -6,7 +6,7 @@
 #include <Rose/BinaryAnalysis/NoOperation.h>
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
-#include <Rose/BinaryAnalysis/Disassembler.h>
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCellList.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 
@@ -131,7 +131,7 @@ NoOperation::StateNormalizer::toString(const BaseSemantics::DispatcherPtr &cpu, 
 
 NoOperation::NoOperation() {}
 
-NoOperation::NoOperation(Disassembler *disassembler) {
+NoOperation::NoOperation(Disassembler::Base *disassembler) {
     normalizer_ = StateNormalizer::instance();
 
     if (disassembler) {

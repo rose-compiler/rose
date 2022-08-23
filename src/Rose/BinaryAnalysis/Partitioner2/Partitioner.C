@@ -14,7 +14,7 @@
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
-#include <Rose/BinaryAnalysis/DisassemblerNull.h>
+#include <Rose/BinaryAnalysis/Disassembler/Null.h>
 #include <Rose/RecursionCounter.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 
@@ -60,7 +60,7 @@ Partitioner::Partitioner()
     init(NULL, memoryMap_);
 }
 
-Partitioner::Partitioner(Disassembler *disassembler, const MemoryMap::Ptr &map)
+Partitioner::Partitioner(Disassembler::Base *disassembler, const MemoryMap::Ptr &map)
     : memoryMap_(map), solver_(SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver)),
       autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), stackDeltaInterproceduralLimit_(1),
       semanticMemoryParadigm_(LIST_BASED_MEMORY), progress_(Progress::instance()), cfgProgressTotal_(0) {
@@ -225,7 +225,7 @@ Partitioner::~Partitioner() {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void
-Partitioner::init(Disassembler *disassembler, const MemoryMap::Ptr &map) {
+Partitioner::init(Disassembler::Base *disassembler, const MemoryMap::Ptr &map) {
     // Start with a large hash table to reduce early rehashing. There's a high chance that we'll need this much.
     vertexIndex_.rehash(100000);
 
@@ -237,7 +237,7 @@ Partitioner::init(Disassembler *disassembler, const MemoryMap::Ptr &map) {
         insnPlainUnparser_ = disassembler->unparser()->copy();
         configureInsnPlainUnparser(insnPlainUnparser_);
     } else {
-        instructionProvider_ = InstructionProvider::instance(new DisassemblerNull, map);
+        instructionProvider_ = InstructionProvider::instance(new Disassembler::Null, map);
     }
     undiscoveredVertex_ = cfg_.insertVertex(CfgVertex(V_UNDISCOVERED));
     indeterminateVertex_ = cfg_.insertVertex(CfgVertex(V_INDETERMINATE));

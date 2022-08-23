@@ -3,7 +3,7 @@
 #include "sage3basic.h"
 #include <Rose/BinaryAnalysis/InstructionSemantics/StaticSemantics.h>
 
-#include <Rose/BinaryAnalysis/Disassembler.h>
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include "stringify.h"
 
 namespace Rose {
@@ -15,7 +15,7 @@ namespace StaticSemantics {
 //                                      User-level supporting functions
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void attachInstructionSemantics(SgNode *ast, Disassembler *disassembler) {
+void attachInstructionSemantics(SgNode *ast, Disassembler::Base *disassembler) {
     ASSERT_not_null(ast);
     ASSERT_not_null(disassembler);
     RiscOperatorsPtr ops = RiscOperators::instance(SValue::instance(), SmtSolverPtr());

@@ -49,7 +49,7 @@ const std::string JvmMethod::name() const
   return std::string{""};
 }
 
-void const JvmMethod::decode(Disassembler* disassembler) const {
+void const JvmMethod::decode(Disassembler::Base* disassembler) const {
   rose_addr_t va{code_.offset()};
   rose_addr_t endVa{code_.offset() + code_.size()};
 

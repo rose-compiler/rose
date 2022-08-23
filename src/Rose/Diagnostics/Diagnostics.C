@@ -23,7 +23,7 @@
 #include <Rose/BinaryAnalysis/TaintedFlow.h>
 #include <Rose/BinaryAnalysis/ToSource.h>
 #include <BinaryVxcoreParser.h>                         // Rose::BinaryAnalysis::VxcoreParser
-#include <Rose/BinaryAnalysis/Disassembler.h>
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
