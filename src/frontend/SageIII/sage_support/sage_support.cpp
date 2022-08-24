@@ -940,12 +940,6 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                        ||
                           //if the command line includes "-D" options
                           ! getProject()->get_macroSpecifierList().empty()
-#if 0
-            // SKW: disabled because the "*_postprocessed" dregs cause "ompLoweringTests/fortran" to fail 'distcleancheck'
-                       ||
-                          //if the command line includes "-I" options
-                          ! getProject()->get_includeDirectorySpecifierList().empty()
-#endif
                       );
 
 #if 0
@@ -7459,17 +7453,12 @@ SgProject::compileOutput()
 
 #if DEBUG_PROJECT_COMPILE_COMMAND_LINE
           printf ("In SgProject::compileOutput(): get_compileOnly() = %s \n",get_compileOnly() ? "true" : "false");
-#endif
-
-#if 0
           printf ("In SgProject::compileOutput(): errorCode = %d \n",errorCode);
 #endif
        // case 3: linking at the project level
 
        // DQ (1/9/2017): Only proceed with linking step if the compilation step finished without error.
        // DQ (30/8/2017): Note that Csharp does not use linking the same way that C/C++ does (as I understand it).
-       // if (! (get_Java_only() || get_Python_only() || get_X10_only()) )
-       // if (! (get_Java_only() || get_Python_only() || get_X10_only() || get_Csharp_only() ) )
           if ( (errorCode == 0) && (! (get_Java_only() || get_Python_only() || get_X10_only() || get_Csharp_only() ) ) )
              {
 
@@ -7489,31 +7478,8 @@ SgProject::compileOutput()
 
             // DQ (4/13/2015): Check if the compile line supported the link step.
             // Could this call the linker even we we don't want it called, or skipp calling it when we do want it to be called?
-            // if (get_compileOnly() == true)
                if (get_compileOnly() == false)
                   {
-#if 0 // Liao 5/5/2015, comment out this, using a uniform handling for both single file and multiple-file cases
-                    if (multifile_support_compile_only_flag == true)
-                       {
-#if DEBUG_PROJECT_COMPILE_COMMAND_LINE
-                         printf ("In SgProject::compileOutput(): multifile_support_compile_only_flag == true: Calling the linker if the compile line didn't handle the link step! \n");
-#endif
-#ifndef _MSC_VER
-                      // tps 08/18/2010 : Do not link right now in Windows - it breaks - want test to pass here for now.
-                      // todo windows: put this back in.
-                      // linkingReturnVal = link (compilerName);
-                         linkingReturnVal = link (BACKEND_CXX_COMPILER_NAME_WITH_PATH);
-#else
-   #pragma message ("sageSupport.C : linkingReturnVal = link (compilerName); not implemented yet.")
-#endif
-                       }
-                      else
-                       {
-#if DEBUG_PROJECT_COMPILE_COMMAND_LINE
-                         printf ("In SgProject::compileOutput(): multifile_support_compile_only_flag == false: Linking as a seperate step is not required when multifile_support_compile_only_flag == false \n");
-#endif
-                       }
-#endif
                    // Liao 5/1/2015
                       linkingReturnVal = link (BACKEND_CXX_COMPILER_NAME_WITH_PATH);
                   }
@@ -7526,12 +7492,6 @@ SgProject::compileOutput()
              }
         } // end if preprocessing-only is false
 
-#if 0
-     printf ("Exiting as a test! \n");
-     ROSE_ABORT();
-#endif
-
-  // return errorCode;
      return errorCode + linkingReturnVal;
    }
 
@@ -7574,9 +7534,6 @@ int SgProject::link ( std::string linkerName )
    {
 #if 0
      printf ("In SgProject::link(): linkerName = %s \n",linkerName.c_str());
-#endif
-
-#if 0
      printf ("Exiting as a test! \n");
      ROSE_ABORT();
 #endif
@@ -7863,8 +7820,6 @@ int SgProject::link ( const std::vector<std::string>& argv, std::string linkerNa
         {
 #if 0
           printf ("Detected non-zero status in link process: status = %d \n",status);
-#endif
-#if 0
           printf ("Exiting as a test! \n");
           ROSE_ABORT();
 #endif
@@ -8249,10 +8204,6 @@ StringUtility::demangledName ( string s )
    }
 
 
-#if 1
-// DQ (2/16/2009): Moved from expression.code to sageSupport.C while this is tested and debugged!
-
-// DQ (2/8/2009): I always wanted to have this function!
 SgFunctionDeclaration*
 SgFunctionCallExp::getAssociatedFunctionDeclaration() const
    {
@@ -8617,7 +8568,6 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
 
      return returnSymbol;
    }
-#endif
 
 
 // DQ (10/19/2010): This is moved from src/ROSETTA/Grammar/Cxx_GlobalDeclarations.macro to here
