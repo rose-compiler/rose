@@ -51,7 +51,7 @@ namespace
 
   bool isPureVirtual(const SgMemberFunctionDeclaration& dcl)
   {
-    return dcl.get_functionModifier().isPureVirtual();
+    return dcl.get_functionModifier().isPureVirtual();;
   }
 
   bool isPureVirtual(FunctionKeyType fn)
@@ -529,7 +529,7 @@ void inheritanceEdges( const SgClassDefinition* def,
 
 
 namespace
-{
+{  
   ClassKeyType classDefinition_opt(SgDeclarationStatement& n)
   {
     SgDeclarationStatement* defdcl = n.get_definingDeclaration();
@@ -564,7 +564,7 @@ namespace
 
       static
       ReturnType get(TypeKeyType n);
-  };
+  };  
 }
 
 
@@ -593,13 +593,9 @@ RoseCompatibilityBridge::compareNames(FunctionKeyType lhs, FunctionKeyType rhs) 
   const std::string rhsname{functionName(rhs)};
   const bool        lhsIsDtor = lhsname.front() == '~';
   const bool        rhsIsDtor = rhsname.front() == '~';
-  int               cmpres = 0;
+  const int         cmpres = (lhsIsDtor && rhsIsDtor) ? 0 : lhsname.compare(rhsname);
 
-  firstDecisiveComparison
-  || (cmpres = cmpValue(lhsIsDtor, rhsIsDtor))
-  || (cmpres = lhsname.compare(rhsname))
-  ;
-
+  //~ std::cerr << lhsname << " == " << rhsname << " " << cmpres << std::endl;
   return cmpres;
 }
 
@@ -849,6 +845,24 @@ RoseCompatibilityBridge::constructors(ClassKeyType cls) const
                         );
 }
 
+FunctionKeyType
+RoseCompatibilityBridge::destructor(ClassKeyType cls) const
+{
+  const SgDeclarationStatementPtrList& lst = cls->get_members();
+  auto lim = lst.end();
+  auto pos = std::find_if( lst.begin(), lim,
+                           [](SgDeclarationStatement* el) -> bool
+                           {
+                             const SgMemberFunctionDeclaration* fn = isSgMemberFunctionDeclaration(el);
+
+                             return fn && fn->get_specialFunctionModifier().isDestructor();
+                           }
+                         );
+                         
+  return (pos != lim) ? isSgMemberFunctionDeclaration(*pos) : nullptr;
+}
+
+
 
 RoseCompatibilityBridge::ReturnTypeRelation
 RoseCompatibilityBridge::haveSameOrCovariantReturn( const ClassAnalysis& classes,
@@ -921,6 +935,86 @@ RoseCompatibilityBridge::classNomenclator() const
 {
   return typeNameOf;
 }
+
+
+namespace
+{
+  // \todo complete these functions
+  
+  /// returns iff the function signature would be a legal copy-assignment operator 
+  ///   in the class.
+  bool isCopyAssignIn(const SgMemberFunctionDeclaration*, const ClassDefinition*)
+  {
+    return false;
+  }
+  
+  /// returns all existing functions that would prevent the compiler from
+  ///   creating a copy-assignment operator.
+  std::vector<FunctionKeyType>
+  copyAssignConflicts(const SgClassDefinition*)
+  {
+    return std::vector<FunctionKeyType>{};
+  }
+
+  /// returns iff the function signature would be a legal move-assignment operator 
+  ///   in the class.
+  bool isMoveAssignIn(const SgMemberFunctionDeclaration*, const ClassDefinition*)
+  {
+    return false;
+  }
+
+  /// returns all existing functions that would prevent the compiler from
+  ///   creating a move-assignment operator.  
+  std::vector<FunctionKeyType>
+  copyAssignConflicts(const SgClassDefinition* clsdef)
+  {
+    return std::vector<FunctionKeyType>{};
+  }
+}
+
+bool 
+RoseCompatibilityBridge::isAutoGeneratable(ClassKeyType clkey, FunctionKeyType fnkey) const
+{
+  ASSERT_require(clkey != ClassKeyType{});
+  ASSERT_require(fnkey != FunctionKeyType{});
+  
+  bool                             res = false;
+  const SgSpecialFunctionModifier& fnmod = fnkey->get_specialFunctionModifier();
+  
+  if (fnmod.isDestructor())
+  {
+    // there can only be one destructor. If it exists, it cannot be generated.
+    res = (destructor(clkey) == nullptr);
+  }
+  else if (fnmod.isConstructor())
+    logError() << "RoseCompatibilityBridge::isAutoGeneratable does not yet support "
+               << "constructors: " << fnkey->get_name() 
+               << std::endl;
+  else if (fnmod.isOperator())
+  {
+    if (fnkey->get_name() != "operator=")
+    {
+      // only copy/move assignment operators can be generated
+      res = false;
+    }
+    else if (clkey == getClassDef(*fnkey))
+    {
+      // if the function is already in the class, then there is no need 
+      // to generate it.
+      res = false;
+    }
+    else if (isCopyAssignIn(fnkey, clkey))
+      res = (copyAssignConflicts(clkey).size() == 0)
+    else if (isMoveAssignIn(fnkey, clkey))
+      res = (moveAssignConflicts(clkey).size() == 0)
+    else
+      logError() << "RoseCompatibilityBridge::isAutoGeneratable not yet implemented"
+                 << std::endl;
+  }
+                   
+  return res;
+}
+  
 
 SgClassDefinition& getClassDef(const SgDeclarationStatement& n)
 {
