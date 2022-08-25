@@ -1,11 +1,14 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
+#include <Rose/BinaryAnalysis/ToSource.h>
+
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
+#include <Rose/CommandLine.h>
+
+#include <AsmUnparser_compat.h>
 
 #include <boost/algorithm/string/replace.hpp>
-#include <AsmUnparser_compat.h>
-#include <Rose/BinaryAnalysis/ToSource.h>
-#include <Rose/CommandLine.h>
 
 using namespace Rose::BinaryAnalysis::InstructionSemantics;
 using namespace Sawyer::Message::Common;

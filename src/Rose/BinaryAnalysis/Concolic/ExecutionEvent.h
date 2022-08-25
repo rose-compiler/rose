@@ -7,6 +7,7 @@
 #include <Rose/BinaryAnalysis/Concolic/Database.h>
 #include <Rose/BinaryAnalysis/Concolic/ExecutionLocation.h>
 #include <Rose/BinaryAnalysis/Debugger.h>
+#include <Rose/BinaryAnalysis/SymbolicExpr.h>
 #include <Combinatorics.h>                              // rose
 
 namespace Rose {

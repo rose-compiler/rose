@@ -6,7 +6,7 @@
 
 #include <Rose/BinaryAnalysis/NoOperation.h>
 #include <Rose/Diagnostics.h>
-#include <Rose/BinaryAnalysis/Disassembler/Base.h>
+#include <Rose/BinaryAnalysis/Disassembler/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Dispatcher.h>
 #include "AsmUnparser_compat.h"
 

@@ -4,13 +4,15 @@
 #include <Rose/BinaryAnalysis/CallingConvention.h>
 
 #include <Rose/BinaryAnalysis/DataFlow.h>
-#include <Rose/CommandLine.h>
-#include <Rose/Diagnostics.h>
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCellList.h>
 #include <Rose/BinaryAnalysis/Partitioner2/DataFlow.h>    // Dataflow components that we can re-use
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h> // Fast binary analysis data structures
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>    // Fast function data structures
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
+#include <Rose/CommandLine.h>
+#include <Rose/Diagnostics.h>
+
 #include <Sawyer/ProgressBar.h>
 
 using namespace Rose::Diagnostics;

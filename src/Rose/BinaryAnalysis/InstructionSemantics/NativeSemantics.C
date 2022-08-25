@@ -3,6 +3,8 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/NativeSemantics.h>
 
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
+
 namespace Rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics {

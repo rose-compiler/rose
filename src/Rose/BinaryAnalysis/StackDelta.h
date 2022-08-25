@@ -3,8 +3,9 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Rose/BinaryAnalysis/Disassembler/BasicTypes.h>
+#include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
-#include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Sawyer/Map.h>
 
 #include <boost/serialization/access.hpp>
@@ -137,7 +138,7 @@ public:
      *  specified function need not be attached to the partitioner. Results of the analysis are stored in this analysis object
      *  to be queried after the analysis completes. */
     void
-    analyzeFunction(const Partitioner2::Partitioner&, const Sawyer::SharedPointer<Partitioner2::Function>&,
+    analyzeFunction(const Partitioner2::Partitioner&, const Partitioner2::FunctionPtr&,
                     Partitioner2::DataFlow::InterproceduralPredicate&);
 
     /** Whether a function has been analyzed.

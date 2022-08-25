@@ -7,7 +7,7 @@
 #include <Rose/BinaryAnalysis/SerialIo.h>
 #include <boost/noncopyable.hpp>
 #include <boost/regex.hpp>
-#include <Rose/BinaryAnalysis/Disassembler/Base.h>
+#include <Rose/BinaryAnalysis/Disassembler/BasicTypes.h>
 #include <Rose/FileSystem.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesLinux.h>

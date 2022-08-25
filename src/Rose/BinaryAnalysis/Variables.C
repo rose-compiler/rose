@@ -3,13 +3,17 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Variables.h>
 
+#include <Rose/BinaryAnalysis/Partitioner2/Function.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+
+#include <integerOps.h>
+#include <stringify.h>
+
+#include <Sawyer/Attribute.h>
+
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/integer_traits.hpp>
-#include <Rose/BinaryAnalysis/Partitioner2/Function.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
-#include <Sawyer/Attribute.h>
-#include <stringify.h>
 
 using namespace Sawyer::Message::Common;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;

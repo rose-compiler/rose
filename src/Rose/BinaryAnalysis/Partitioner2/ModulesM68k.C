@@ -4,7 +4,10 @@
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesM68k.h>
 
 #include <Rose/BinaryAnalysis/Partitioner2/Utility.h>
+
+#include <integerOps.h>
 #include <SageBuilderAsm.h>
+
 #include <set>
 
 namespace Rose {

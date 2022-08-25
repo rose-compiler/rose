@@ -4,6 +4,7 @@
 #include <Rose/BinaryAnalysis/Concolic/InputVariables.h>
 
 #include <Rose/BinaryAnalysis/Concolic/ExecutionEvent.h>
+#include <Rose/BinaryAnalysis/SmtSolver.h>
 #include <boost/lexical_cast.hpp>
 
 namespace Rose {
