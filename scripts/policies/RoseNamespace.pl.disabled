@@ -17,12 +17,13 @@ EOF
 
 # The following is a list of policies that we are enforcing for everything
 # under the new $ROSE/src/Rose directory.
-my %policies = (
+my @policies = (
 
     #------------------------------------------------------------------------
-    namespace_capitalization => {
+    {
+	name => 'namespace_capitalization',
+	
 	policy =>
-
 	'A namespace MUST be capitalized as PascalCase, where the first letter
 	of each word is capitalized and the remaining letters are lower-case.
 	Abbreviations and acronyms (when allowed) are treated as words except
@@ -36,12 +37,14 @@ my %policies = (
 	like "AstToPdf" and "CfgCsvIo" are generally easier to read than
 	"ASTToPDF" and "CFGCSVIO". The exception for the few stand alone
 	acronyms is because they\'re usually spelled that way already in ROSE
-	and occur frequently.'},
+	and occur frequently.'
+    },
 
     #------------------------------------------------------------------------
-    english_words => {
+    {
+	name => 'english_words',
+	
 	policy =>
-
 	'The individual words componsing a PascalCase symbol MUST be standard
 	English words, words created consistently from standard English words,
 	or a list of exceptional words. You can find the exceptional words in
@@ -54,10 +57,13 @@ my %policies = (
 	and their abbreviations or acronyms since lack of consistent spelling
 	would force users to consult the documentation more often to find out
 	how to spell things. Users and ROSE authors are free to create their own
-	private aliases if they\'re burdened by increased symbol lengths.'},
+	private aliases if they\'re burdened by increased symbol lengths.'
+    },
 
     #------------------------------------------------------------------------
-    namespace_header_exists => {
+    {
+	name => 'namespace_header_exists',
+	
 	policy =>
 	'For every namespace (e.g., Rose::Foo::Bar), there MUST be a header file
 	whose name mirrors the namespace (e.g., <Rose/Foo/Bar.h>. This is called
@@ -67,10 +73,14 @@ my %policies = (
 
 	reason =>
 	'This is so that users know which file they need to include in order
-	to use that namespace.'},
+	to use that namespace.'
+    },
 
     #------------------------------------------------------------------------
-    namespace_directory_exists => {
+    {
+	# FIXME: untested
+	name => 'namespace_directory_exists',
+	
 	policy =>
 	'If a namespace has more than one header file, or more than one
 	compilation unit, or it has sub-namespaces, then it MUST have its own
@@ -85,12 +95,14 @@ my %policies = (
 	'Placing source files in a directory is a form of encapsulation, with
 	all its benefits, and makes the directory hierarchy mirror the namespace
 	hierarchy. It also eliminates the need to prefix its files with a common
-	string to avoid potential clashes with other files.'},
+	string to avoid potential clashes with other files.'
+    },
 
     #------------------------------------------------------------------------
-    doxygen_input => {
+    {
+	name => 'doxygen_input',
+	
 	policy =>
-
 	'Every directory that contains a public header file MUST be listed as a
 	Doxygen input, and all directories listed as Doxygen input MUST contain
 	at least one header.',
@@ -99,10 +111,13 @@ my %policies = (
 	'Namespaces are useless if they\'re not documented, and Doxygen will not
 	pick up the documentation if the directory is not listed as an input. We
 	also want to make sure that our Doxygen configuration stays clean by not
-	listing directories that have been removed (or misspelled).'},
+	listing directories that have been removed (or misspelled).'
+    },
 
     #------------------------------------------------------------------------
-    namespace_header_includes_all => {
+    {
+	name => 'namespace_header_includes_all',
+	
 	policy =>
 	'If a namespace has a namespace directory, then the namespace header
 	(located in the directory of the parent namespace) MUST #include all
@@ -116,10 +131,13 @@ my %policies = (
 	that are necessary in order to use a particular namespace. This
 	addresses the concern that having finer granularity header files will
 	cause a burden to the user by increasing the number of
-	#include directives they need.'},
+	#include directives they need.'
+    },
 
     #------------------------------------------------------------------------
-    h_extension => {
+    {
+	name => 'h_extension',
+	
 	policy =>
 	'Every public header file MUST use the extension ".h".',
 
@@ -127,10 +145,13 @@ my %policies = (
 	'This consistency permits users to spell header files correctly without
 	having to consult the documentation. Also, by avoiding uncommon
 	extensions, it increases the chance that a user\'s editor will properly
-	recognize the file as containing source code.'},
+	recognize the file as containing source code.'
+    },
 
     #------------------------------------------------------------------------
-    include_by_angle_brackets => {
+    {
+	name => 'include_by_angle_brackets',
+	
 	policy =>
 	'All #include directives MUST use angle brackets instead of quotes.',
 
@@ -145,10 +166,13 @@ my %policies = (
 	and could result in finding a user\'s header file instead of a ROSE
 	header file (although this is mostly of concern when a header file is
 	included using only its base name and the base name is a common name
-	like "version.h", "utility.h", "tree.h", "exception.h", etc.'},
+	like "version.h", "utility.h", "tree.h", "exception.h", etc.'
+    },
 
     #------------------------------------------------------------------------
-    include_once => {
+    {
+	name => 'include_once',
+	
 	policy =>
 	'Every header file MUST be protected from multiple inclusion of the form
 	"#ifndef SYMBOL" followed by "#define SYMBOL".',
@@ -156,10 +180,13 @@ my %policies = (
 	reason =>
 	'This permits the header to be safely and efficiently included multiple
 	times directly and/or indirectly. Do not use "#pragma once" because it
-	is not portable.'},
+	is not portable.'
+    },
 
     #------------------------------------------------------------------------
-    once_symbol => {
+    {
+	name => 'once_symbol',
+	
 	policy =>
 	'The C preprocessor symbol used for multiple inclusion protection MUST
 	be of the form "ROSE_x_H" where "x" is formed by taking the fully
@@ -177,10 +204,13 @@ my %policies = (
 	if this version of ROSE supports analysis of Java class files. The
 	reason for "ROSE" being allcaps is because we have a separate policy
 	that states that all ROSE-related C preprocessor symbols begin with
-	"ROSE_".'},
-    );
+	"ROSE_".'
+    },
+);
 
-
+# Policies indexed by name
+my %policies;
+$policies{$_->{name}} = $_ for @policies;
     
 ###############################################################################################################################
 # List of ROSE words that don't appear in the dictionary.
@@ -435,15 +465,14 @@ sub printViolations {
 
     my $i = 0;
     my $policy_number = 0;
-    foreach (keys %policies) {
-	my $policy_name = $_;
-	my $policy = $policies{$policy_name};
+    foreach (@policies) {
+	my $policy = $_;
 	print "\n    ", '-' x 90, "\n";
-	print "    Policy #", ++$policy_number, " \"", $policy_name, "\"\n\n";
+	print "    Policy #", ++$policy_number, " \"", $policy->{name}, "\"\n\n";
 	print indent("    ", "Requirement: " . $policy->{policy}), "\n";
 	print indent("    ", "Reason: " . $policy->{reason}), "\n";
-	printf "        (%d) %s\n", ++$i, $_ for @{$violations->{$policy_name}};
-	print  "        No violations found for this policy\n" if 0 == @{$violations->{$policy_name}};
+	printf "        (%d) %s\n", ++$i, $_ for @{$violations->{$policy->{name}}};
+	print  "        No violations found for this policy\n" if 0 == @{$violations->{$policy->{name}}};
     }
     return $total;
 }
