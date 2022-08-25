@@ -1,5 +1,5 @@
-#ifndef ROSE_BinaryAnalysis_ByteCode_H
-#define ROSE_BinaryAnalysis_ByteCode_H
+#ifndef ROSE_BinaryAnalysis_ByteCode_Analysis_H
+#define ROSE_BinaryAnalysis_ByteCode_Analysis_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 

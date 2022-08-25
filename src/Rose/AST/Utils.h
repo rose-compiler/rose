@@ -1,6 +1,5 @@
-
-#ifndef ROSE_AST_UTILS_H
-#define ROSE_AST_UTILS_H
+#ifndef ROSE_AST_Utils_H
+#define ROSE_AST_Utils_H
 
 #include <map>
 
@@ -24,5 +23,4 @@ void edgePointerReplacement(SgNode * root, replacement_map_t const &);
 
 } } }
 
-#endif /* ROSE_AST_UTILS_H */
-
+#endif
