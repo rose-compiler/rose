@@ -5,6 +5,7 @@
 #include "AsmUnparser_compat.h"
 
 #include <Rose/BinaryAnalysis/ControlFlow.h>
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/Unparser/Aarch32.h>
 #include <Rose/BinaryAnalysis/Unparser/Aarch64.h>
 #include <Rose/BinaryAnalysis/Unparser/M68k.h>
@@ -12,7 +13,6 @@
 #include <Rose/BinaryAnalysis/Unparser/Powerpc.h>
 #include <Rose/BinaryAnalysis/Unparser/X86.h>
 #include <Rose/Diagnostics.h>
-#include <Rose/BinaryAnalysis/Disassembler/Base.h>
 
 using namespace Rose;
 using namespace Rose::BinaryAnalysis;

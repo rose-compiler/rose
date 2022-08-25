@@ -1,7 +1,9 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
-#include "InstructionProvider.h"
+
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
+#include <Rose/BinaryAnalysis/Partitioner2/InstructionProvider.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -36,6 +38,61 @@ void
 InstructionProvider::insert(SgAsmInstruction *insn) {
     ASSERT_not_null(insn);
     insnMap_.insert(insn->get_address(), insn);
+}
+
+const RegisterDictionary*
+InstructionProvider::registerDictionary() const {
+    return disassembler_->registerDictionary();
+}
+
+const CallingConvention::Dictionary&
+InstructionProvider::callingConventions() const {
+    return disassembler_->callingConventions();
+}
+
+RegisterDescriptor
+InstructionProvider::instructionPointerRegister() const {
+    return disassembler_->instructionPointerRegister();
+}
+
+RegisterDescriptor
+InstructionProvider::stackPointerRegister() const {
+    return disassembler_->stackPointerRegister();
+}
+
+RegisterDescriptor
+InstructionProvider::stackFrameRegister() const {
+    return disassembler_->stackFrameRegister();
+}
+
+RegisterDescriptor
+InstructionProvider::callReturnRegister() const {
+    return disassembler_->callReturnRegister();
+}
+
+RegisterDescriptor
+InstructionProvider::stackSegmentRegister() const {
+    return disassembler_->stackSegmentRegister();
+}
+
+ByteOrder::Endianness
+InstructionProvider::defaultByteOrder() const {
+    return disassembler_->byteOrder();
+}
+
+size_t
+InstructionProvider::wordSize() const {
+    return 8 * disassembler_->wordSizeBytes();
+}
+
+size_t
+InstructionProvider::instructionAlignment() const {
+    return disassembler_->instructionAlignment();
+}
+
+InstructionSemantics::BaseSemantics::DispatcherPtr
+InstructionProvider::dispatcher() const {
+    return disassembler_->dispatcher();
 }
 
 void

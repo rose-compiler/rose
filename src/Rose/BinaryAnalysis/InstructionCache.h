@@ -2,15 +2,14 @@
 #define ROSE_BinaryAnalysis_InstructionCache_H
 #include <featureTests.h>
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS) && __cplusplus >= 201103L
+
+#include <Rose/BinaryAnalysis/Disassembler/BasicTypes.h>
+
 #include <memory>
 #include <unordered_map>
 
 namespace Rose {
 namespace BinaryAnalysis {
-
-namespace Disassembler {
-class Base; // from DisassemblerBase.h, but we only need the forward here.
-} // namespace
 
 class InstructionCache;
 class InstructionPtr;

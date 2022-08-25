@@ -8,17 +8,20 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 
 #include <rose.h>
 
-#include <AsmUnparser_compat.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/ConcreteSemantics.h>
 #include <Rose/BinaryAnalysis/Debugger.h>
-#include <Rose/Diagnostics.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherX86.h>
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCellList.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherX86.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/ConcreteSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/Diagnostics.h>
+
+#include <AsmUnparser_compat.h>
+
 #include <Sawyer/BitVector.h>
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/ProgressBar.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
 
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 using namespace Rose;

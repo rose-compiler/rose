@@ -1,9 +1,11 @@
 #include <rose.h>
 
-#include <AsmUnparser_compat.h>
-#include <Rose/Diagnostics.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/ConcreteSemantics.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/Diagnostics.h>
+
+#include <AsmUnparser_compat.h>
 
 using namespace Rose;
 using namespace Rose::BinaryAnalysis;

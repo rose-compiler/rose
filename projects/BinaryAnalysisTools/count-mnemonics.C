@@ -1,6 +1,8 @@
 #include <rose.h>
 
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+
 #include <boost/lexical_cast.hpp>
 
 using namespace Rose::BinaryAnalysis;

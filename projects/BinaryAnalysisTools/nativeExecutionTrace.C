@@ -4,10 +4,11 @@ static const char *description =
 
 #include <rose.h>
 #include <Rose/BinaryAnalysis/Debugger.h>
-#include <Rose/CommandLine.h>
-#include <Rose/Diagnostics.h>
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/InstructionProvider.h>
+#include <Rose/CommandLine.h>
+#include <Rose/Diagnostics.h>
 
 #include <boost/filesystem.hpp>
 #include <Sawyer/CommandLine.h>

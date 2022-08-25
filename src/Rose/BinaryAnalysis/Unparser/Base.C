@@ -3,16 +3,19 @@
 #include <sage3basic.h>
 
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
+#include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/Reachability.h>
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
-#include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
-#include <Sawyer/ProgressBar.h>
 #include <Rose/SourceLocation.h>
+
+#include <Sawyer/ProgressBar.h>
+
+#include <integerOps.h>
 #include <stringify.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
 
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/lexical_cast.hpp>

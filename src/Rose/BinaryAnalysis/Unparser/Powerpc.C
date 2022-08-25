@@ -3,6 +3,8 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Unparser/Powerpc.h>
 
+#include <integerOps.h>
+
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Unparser {

@@ -8,7 +8,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/regex.hpp>
-#include <Rose/BinaryAnalysis/Disassembler/Base.h>
+#include <Rose/BinaryAnalysis/Disassembler/BasicTypes.h>
 #include <Sawyer/BitVector.h>
 #include <Sawyer/Message.h>
 #include <Sawyer/Optional.h>

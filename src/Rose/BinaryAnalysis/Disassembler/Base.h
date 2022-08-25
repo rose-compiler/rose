@@ -4,14 +4,16 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <Rose/BinaryAnalysis/CallingConvention.h>
-#include <Rose/BinaryAnalysis/Unparser/Settings.h>
-#include <Rose/Diagnostics.h>
+#include <Rose/BinaryAnalysis/Disassembler/BasicTypes.h>
+#include <Rose/BinaryAnalysis/Disassembler/Exception.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
 #include <Rose/BinaryAnalysis/Registers.h>
-#include "Rose/Exception.h"
+#include <Rose/BinaryAnalysis/Unparser/Settings.h>
+#include <Rose/Diagnostics.h>
+
 #include "integerOps.h"
 #include "Map.h"
-#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/string.hpp>
@@ -26,88 +28,8 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace Disassembler {
 
-class Base;
-
-/**< Disassembler diagnostic streams. */
-extern Sawyer::Message::Facility mlog;
-
-/** Initializes and registers disassembler diagnostic streams. See Diagnostics::initialize(). */
-void initDiagnostics();
-
-/** Exception thrown by the disassemblers. */
-class Exception: public Rose::Exception {
-public:
-    /** A bare exception not bound to any particular instruction. */
-    Exception(const std::string &reason)
-        : Rose::Exception(reason), ip(0), bit(0), insn(NULL)
-        {}
-
-    /** An exception bound to a virtual address but no raw data or instruction. */
-    Exception(const std::string &reason, rose_addr_t ip)
-        : Rose::Exception(reason), ip(ip), bit(0), insn(NULL)
-        {}
-
-    /** An exception bound to a particular instruction being disassembled. */
-    Exception(const std::string &reason, rose_addr_t ip, const SgUnsignedCharList &raw_data, size_t bit)
-        : Rose::Exception(reason), ip(ip), bytes(raw_data), bit(bit), insn(NULL)
-        {}
-
-    /** An exception bound to a particular instruction being assembled. */
-    Exception(const std::string &reason, SgAsmInstruction *insn)
-        : Rose::Exception(reason), ip(insn->get_address()), bit(0), insn(insn)
-        {}
-
-    ~Exception() throw() {}
-
-    void print(std::ostream&) const;
-    friend std::ostream& operator<<(std::ostream &o, const Exception &e);
-
-    rose_addr_t ip;                 /**< Virtual address where failure occurred; zero if no associated instruction */
-    SgUnsignedCharList bytes;       /**< Bytes (partial) of failed disassembly, including byte at failure. Empty if the
-                                     *   exception is not associated with a particular byte sequence, such as if an
-                                     *   attempt was made to disassemble at an invalid address. */
-    size_t bit;                     /**< Bit offset in instruction byte sequence where disassembly failed (bit/8 is the
-                                     *   index into the "bytes" list, while bit%8 is the bit within that byte. */
-    SgAsmInstruction *insn;         /**< Instruction associated with an assembly error. */
-};
-
 /** The InstructionMap is a mapping from (absolute) virtual address to disassembled instruction. */
 typedef Map<rose_addr_t, SgAsmInstruction*> InstructionMap;
-
-/** Register a disassembler instance. More specific disassembler instances should be registered after more general
- *  disassemblers since the lookup() method will inspect disassemblers in reverse order of their registration.
- *
- *  Thread safety: Multiple threads can register disassemblers simultaneously.  However, one seldom does this because the order
- *  that disassemblers are registered determines which disassembler is returned by the lookup() class methods. */
-void registerSubclass(Base*);
-
-/** Finds a suitable disassembler. Looks through the list of registered disassembler instances (from most recently registered
- *  to earliest registered) and returns the first one whose can_disassemble() predicate returns true.  Throws an exception if
- *  no suitable disassembler can be found.
- *
- *  Thread safety: Multiple threads can call this class method simultaneously even when other threads are registering
- *  additional disassemblers. */
-Base* lookup(SgAsmGenericHeader*);
-
-/** Finds a suitable disassembler. Looks through the list of registered disassembler instances (from most recently
- *  registered to earliest registered) and returns the first one whose can_disassemble() predicate returns true. This is
- *  done for each header contained in the interpretation and the disassembler for each header must match the other
- *  headers. An exception is thrown if no suitable disassembler can be found.
- *
- *  Thread safety: Multiple threads can call this class method simultaneously even when other threads are registering
- *  additional disassembles. However, no other thread can be changing attributes of the specified interpretation,
- *  particularly the list of file headers referenced by the interpretation. */
-Base* lookup(SgAsmInterpretation*);
-
-/** Finds a suitable disassembler.  Looks up a common disassembler by name.  If the name is the word "list" then a
- *  list of known names is printed to <code>std::cout</code>. */
-Base* lookup(const std::string&);
-
-/** List of names recognized by @ref lookup.
- *
- *  Returns the list of names that the @ref lookup method recognizes. These are the disassemblers that are actually enabled in
- *  this configuration of ROSE. */
-std::vector<std::string> isaNames();
 
 /** Virtual base class for instruction disassemblers.
  *

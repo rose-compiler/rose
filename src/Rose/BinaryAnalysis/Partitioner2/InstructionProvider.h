@@ -3,7 +3,8 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <Rose/BinaryAnalysis/Disassembler/Base.h>
+#include <Rose/BinaryAnalysis/CallingConvention.h>
+#include <Rose/BinaryAnalysis/Disassembler/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 #include "AstSerialization.h"
 
@@ -54,7 +55,7 @@ private:
         s <<BOOST_SERIALIZATION_NVP(memMap_);
         s <<BOOST_SERIALIZATION_NVP(insnMap_);
         if (hasDisassembler) {
-            std::string disName = disassembler_->name();
+            std::string disName = Disassembler::name(disassembler_);
             s <<BOOST_SERIALIZATION_NVP(disName);
         }
     }
@@ -154,48 +155,48 @@ public:
     size_t nCached() const { return insnMap_.size(); }
 
     /** Returns the register dictionary. */
-    const RegisterDictionary* registerDictionary() const { return disassembler_->registerDictionary(); }
+    const RegisterDictionary* registerDictionary() const;
 
     /** Returns the calling convention dictionary. */
-    const CallingConvention::Dictionary& callingConventions() const { return disassembler_->callingConventions(); }
+    const CallingConvention::Dictionary& callingConventions() const;
 
     /** Register used as the instruction pointer. */
-    RegisterDescriptor instructionPointerRegister() const { return disassembler_->instructionPointerRegister(); }
+    RegisterDescriptor instructionPointerRegister() const;
 
     /** Register used as a user-mode stack pointer. */
-    RegisterDescriptor stackPointerRegister() const { return disassembler_->stackPointerRegister(); }
+    RegisterDescriptor stackPointerRegister() const;
 
     /** Register used for function call frames.
      *
      *  Not all architectures have such a register, in which case a default-constructed register descriptor is returned. */
-    RegisterDescriptor stackFrameRegister() const { return disassembler_->stackFrameRegister(); }
+    RegisterDescriptor stackFrameRegister() const;
 
     /** Register holding a function call's return address.
      *
      *  Not all architectures have such a register, in which case a default-constructed register descriptor is returned. Some
      *  architectures call this a "link" register (e.g., PowerPC). */
-    RegisterDescriptor callReturnRegister() const { return disassembler_->callReturnRegister(); }
+    RegisterDescriptor callReturnRegister() const;
 
     /** Register used as a segment to access stack memory.
      *
      *  Not all architectures have such a register, in which case a default-constructed register descriptor is returned. */
-    RegisterDescriptor stackSegmentRegister() const { return disassembler_->stackSegmentRegister(); }
+    RegisterDescriptor stackSegmentRegister() const;
 
     /** Default memory byte order. */
-    ByteOrder::Endianness defaultByteOrder() const { return disassembler_->byteOrder(); }
+    ByteOrder::Endianness defaultByteOrder() const;
 
     /** Word size in bits. */
-    size_t wordSize() const { return 8 * disassembler_->wordSizeBytes(); }
+    size_t wordSize() const;
 
     /** Alignment requirement for instructions. */
-    size_t instructionAlignment() const { return disassembler_->instructionAlignment(); }
+    size_t instructionAlignment() const;
 
     /** Instruction dispatcher.
      *
      *  Returns a pointer to a dispatcher used for instruction semantics.  Not all architectures support instruction semantics,
      *  in which case a null pointer is returned.  The returned dispatcher is not connected to any semantic domain, so it can
      *  only be used to call its virtual constructor to create a valid dispatcher. */
-    InstructionSemantics::BaseSemantics::DispatcherPtr dispatcher() const { return disassembler_->dispatcher(); }
+    InstructionSemantics::BaseSemantics::DispatcherPtr dispatcher() const;
 
     /** Print some partitioner performance statistics. */
     void showStatistics() const;
