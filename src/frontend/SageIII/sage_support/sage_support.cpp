@@ -6178,7 +6178,6 @@ SgSourceFile::build_Cobol_AST( vector<string> argv, vector<string> inputCommandL
      return frontendErrorLevel;
    }
 
-
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 /* Parses a single binary file and adds a SgAsmGenericFile node under this SgBinaryComposite node. */
 void
@@ -6285,57 +6284,6 @@ SgBinaryComposite::buildAST(vector<string> /*argv*/, vector<string> /*inputComma
      int frontendErrorLevel = 0;
      return frontendErrorLevel;
    }
-
-
-#if 0
-/* Builds the entire AST under the SgBinaryFile node:
- *    - figures out what binary files are needed
- *    - parses binary container of each file (SgAsmGenericFile nodes)
- *    - optionally disassembles instructions (SgAsmInterpretation nodes) */
-int
-SgBinaryFile::buildAST(vector<string> /*argv*/, vector<string> /*inputCommandLine*/)
-{
-    if (get_isLibraryArchive()) {
-        ROSE_ASSERT(get_libraryArchiveObjectFileNameList().empty() == false);
-        ROSE_ASSERT(get_libraryArchiveObjectFileNameList().empty() == (get_isLibraryArchive() == false));
-
-        for (size_t i = 0; i < get_libraryArchiveObjectFileNameList().size(); i++) {
-            printf("Build binary AST for get_libraryArchiveObjectFileNameList()[%" PRIuPTR "] = %s \n",
-                    i, get_libraryArchiveObjectFileNameList()[i].c_str());
-            string filename = "tmp_objects/" + get_libraryArchiveObjectFileNameList()[i];
-            printf("Build SgAsmGenericFile from: %s \n", filename.c_str());
-            buildAsmAST(filename);
-        }
-    } else {
-        ROSE_ASSERT(get_libraryArchiveObjectFileNameList().empty() == true);
-        buildAsmAST(this->get_sourceFileNameWithPath());
-    }
-
-    /* Disassemble each interpretation */
-    if (get_read_executable_file_format_only()) {
-        printf ("\nWARNING: Skipping instruction disassembly \n\n");
-    } else {
-        const SgAsmInterpretationPtrList &interps = get_interpretations()->get_interpretations();
-        for (size_t i=0; i<interps.size(); i++) {
-            Partitioner::disassembleInterpretation(interps[i]);
-        }
-    }
-
-    // DQ (1/22/2008): The generated unparsed assemble code can not currently be compiled because the
-    // addresses are unparsed (see Jeremiah for details).
-    // Skip running gnu assemble on the output since we include text that would make this a problem.
-    if (get_verbose() > 1)
-        printf("set_skipfinalCompileStep(true) because we are on a binary '%s'\n", this->get_sourceFileNameWithoutPath().c_str());
-    this->set_skipfinalCompileStep(true);
-
-    // This is now done below in the Secondary file processing phase.
-    // Generate the ELF executable format structure into the AST
-    // generateBinaryExecutableFileInformation(executableFileName,asmFile);
-
-    int frontendErrorLevel = 0;
-    return frontendErrorLevel;
-}
-#endif
 #endif
 
 int
