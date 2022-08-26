@@ -641,6 +641,10 @@ SgNode * ClangToSageTranslator::Traverse(clang::Stmt * stmt) {
             ret_status = VisitBinaryOperator((clang::BinaryOperator *)stmt, &result);
             ROSE_ASSERT(result != NULL);
             break;
+        case clang::Stmt::RecoveryExprClass:
+            result = SageBuilder::buildIntVal(42);
+            ROSE_ASSERT(FAIL_FIXME == 0); // There is no concept of recovery expression in ROSE
+            break;
 
         default:
             std::cerr << "Unknown statement kind: " << stmt->getStmtClassName() << " !" << std::endl;
@@ -2726,12 +2730,16 @@ bool ClangToSageTranslator::VisitDeclRefExpr(clang::DeclRefExpr * decl_ref_expr,
        // DQ (11/29/2020): Added assertion.
           ROSE_ASSERT(tmp_decl != NULL);
 
+#if DEBUG_VISIT_STMT
           printf ("tmp_decl = %p = %s \n",tmp_decl,tmp_decl->class_name().c_str());
+#endif
           SgInitializedName* initializedName = isSgInitializedName(tmp_decl);
+#if DEBUG_VISIT_STMT
           if (initializedName != NULL)
              {
                printf ("Found SgInitializedName: initializedName->get_name() = %s \n",initializedName->get_name().str());
              }
+#endif
 
           if (tmp_decl != NULL)
              {
