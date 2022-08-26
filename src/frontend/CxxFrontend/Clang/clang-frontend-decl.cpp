@@ -2184,7 +2184,14 @@ bool ClangToSageTranslator::VisitStaticAssertDecl(clang::StaticAssertDecl * prag
 #endif
     bool res = true;
 
-    ROSE_ASSERT(FAIL_TODO == 0); // TODO
+    SgNode * tmp_condition = Traverse(pragma_static_assert_decl->getAssertExpr());
+    SgExpression * condition = isSgExpression(tmp_condition);
+    if (tmp_condition != NULL && condition == NULL) {
+        std::cerr << "Runtime error: tmp_condition != NULL && condition == NULL" << std::endl;
+        res = false;
+    } else {
+      *node = SageBuilder::buildStaticAssertionDeclaration(condition, pragma_static_assert_decl->getMessage()->getString().str());
+    }
 
     return VisitDecl(pragma_static_assert_decl, node) && res;
 }

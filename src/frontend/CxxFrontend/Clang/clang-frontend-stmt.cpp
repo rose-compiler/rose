@@ -3754,7 +3754,7 @@ bool ClangToSageTranslator::VisitUnaryExprOrTypeTraitExpr(clang::UnaryExprOrType
         case clang::UETT_SizeOf:
             if (type != NULL) 
             {
-        std::map<SgClassType *, bool>::iterator bool_it = p_class_type_decl_first_see_in_type.find(isSgClassType(type));
+               std::map<SgClassType *, bool>::iterator bool_it = p_class_type_decl_first_see_in_type.find(isSgClassType(type));
                SgSizeOfOp* sizeofOp = SageBuilder::buildSizeOfOp_nfi(type);
 
                //Pei-Hung (08/16/22): try to follow VisitTypedefDecl to check if the classType is first seen 
@@ -3806,9 +3806,18 @@ bool ClangToSageTranslator::VisitUnaryExprOrTypeTraitExpr(clang::UnaryExprOrType
             else res = false;
             break;
         case clang::UETT_AlignOf:
-            ROSE_ASSERT(!"C/C++  - AlignOf is not supported!");
+        case clang::UETT_PreferredAlignOf:
+            if (type != NULL) {
+              *node = SageBuilder::buildSizeOfOp_nfi(type);
+              ROSE_ASSERT(FAIL_FIXME == 0); // difference between AlignOf and PreferredAlignOf is not represented in ROSE
+            }
+            else if (expr != NULL) *node = SageBuilder::buildSizeOfOp_nfi(expr);
+            else res = false;
+            break;
         case clang::UETT_VecStep:
             ROSE_ASSERT(!"OpenCL - VecStep is not supported!");
+        default:
+            ROSE_ASSERT(!"Unknown clang::UETT_xx");
     }
 
     return VisitStmt(unary_expr_or_type_trait_expr, node) && res;
