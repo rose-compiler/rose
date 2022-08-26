@@ -2021,7 +2021,8 @@ SgSourceFile::callFrontEnd()
      return frontendErrorLevel;
    }
 
-#ifdef ROSE_ENABLE_BINARY_ANALYSIS
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS_MOVED
+#error "DEAD CODE!"
 int
 SgBinaryComposite::callFrontEnd()
    {
@@ -2039,7 +2040,8 @@ SgUnknownFile::callFrontEnd()
      ROSE_ABORT();
    }
 
-#ifdef ROSE_ENABLE_BINARY_ANALYSIS
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS_MOVED
+#error "DEAD CODE!"
 SgBinaryComposite::SgBinaryComposite ( vector<string> & argv ,  SgProject* project )
     : p_genericFileList(nullptr), p_interpretations(nullptr)
 {
@@ -2809,7 +2811,8 @@ SgSourceFile::doSetupForConstructor(const vector<string>& argv, SgProject* proje
      SgFile::doSetupForConstructor(argv, project);
    }
 
-#ifdef ROSE_ENABLE_BINARY_ANALYSIS
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS_MOVED
+#error "DEAD CODE!"
 void
 SgBinaryComposite::doSetupForConstructor(const vector<string>& argv, SgProject* project)
    {
@@ -6178,7 +6181,9 @@ SgSourceFile::build_Cobol_AST( vector<string> argv, vector<string> inputCommandL
      return frontendErrorLevel;
    }
 
-#ifdef ROSE_ENABLE_BINARY_ANALYSIS
+
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS_MOVED
+#error "DEAD CODE!"
 /* Parses a single binary file and adds a SgAsmGenericFile node under this SgBinaryComposite node. */
 void
 SgBinaryComposite::buildAsmAST(string executableFileName)
@@ -6233,6 +6238,7 @@ SgBinaryComposite::buildAsmAST(string executableFileName)
  *    - figures out what binary files are needed
  *    - parses binary container of each file (SgAsmGenericFile nodes)
  *    - optionally disassembles instructions (SgAsmInterpretation nodes) */
+#error "DEAD CODE!"
 int
 SgBinaryComposite::buildAST(vector<string> /*argv*/, vector<string> /*inputCommandLine*/)
    {

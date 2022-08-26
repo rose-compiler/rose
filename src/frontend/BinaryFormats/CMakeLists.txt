@@ -8,6 +8,10 @@ add_library(roseBinaryFormats OBJECT
   Rva.C
   BinaryVxcoreParser.C
 
+  ### BinaryComposite classes ###
+  BinaryComposite.C
+  #TODO: JvmComposite.C
+
   ### Generic Base Classes ###
   GenericDynamicLinking.C
   GenericFile.C
