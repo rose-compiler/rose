@@ -940,10 +940,11 @@ RoseCompatibilityBridge::classNomenclator() const
 namespace
 {
   // \todo complete these functions
+  // https://stackoverflow.com/questions/15590832/conditions-under-which-compiler-will-not-define-implicits-constructor-destruct
   
   /// returns iff the function signature would be a legal copy-assignment operator 
   ///   in the class.
-  bool isCopyAssignIn(const SgMemberFunctionDeclaration*, const ClassDefinition*)
+  bool isCopyAssignIn(const SgMemberFunctionDeclaration*, const SgClassDefinition*)
   {
     return false;
   }
@@ -958,7 +959,7 @@ namespace
 
   /// returns iff the function signature would be a legal move-assignment operator 
   ///   in the class.
-  bool isMoveAssignIn(const SgMemberFunctionDeclaration*, const ClassDefinition*)
+  bool isMoveAssignIn(const SgMemberFunctionDeclaration*, const SgClassDefinition*)
   {
     return false;
   }
@@ -966,7 +967,7 @@ namespace
   /// returns all existing functions that would prevent the compiler from
   ///   creating a move-assignment operator.  
   std::vector<FunctionKeyType>
-  copyAssignConflicts(const SgClassDefinition* clsdef)
+  moveAssignConflicts(const SgClassDefinition*)
   {
     return std::vector<FunctionKeyType>{};
   }
@@ -997,16 +998,16 @@ RoseCompatibilityBridge::isAutoGeneratable(ClassKeyType clkey, FunctionKeyType f
       // only copy/move assignment operators can be generated
       res = false;
     }
-    else if (clkey == getClassDef(*fnkey))
+    else if (clkey == &getClassDef(*fnkey))
     {
       // if the function is already in the class, then there is no need 
       // to generate it.
       res = false;
     }
     else if (isCopyAssignIn(fnkey, clkey))
-      res = (copyAssignConflicts(clkey).size() == 0)
+      res = (copyAssignConflicts(clkey).size() == 0);
     else if (isMoveAssignIn(fnkey, clkey))
-      res = (moveAssignConflicts(clkey).size() == 0)
+      res = (moveAssignConflicts(clkey).size() == 0);
     else
       logError() << "RoseCompatibilityBridge::isAutoGeneratable not yet implemented"
                  << std::endl;
