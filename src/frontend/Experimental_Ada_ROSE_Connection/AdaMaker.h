@@ -691,14 +691,6 @@ namespace Ada_ROSE_Translation
   SgVariableDeclaration&
   mkVarDecl(SgInitializedName& var, SgScopeStatement& scope);
 
-  /// creates a variant field with (i.e., a variable with conditions)
-  SgAdaVariantFieldDecl&
-  mkAdaVariantFieldDecl(const SgInitializedNamePtrList& vars, SgExprListExp& choices, SgScopeStatement& scope);
-
-  /// creates a null field with (i.e., an empty SgAdaVariantFieldDecl)
-  SgAdaVariantFieldDecl&
-  mkAdaVariantFieldDecl(SgExprListExp& choices, SgScopeStatement& scope);
-
   /// creates an exception declaration
   /// \note exceptions in Ada are objects (*), in ROSE each exception is represented
   ///       as a variable of type Exception.
@@ -715,6 +707,19 @@ namespace Ada_ROSE_Translation
   ///       e.g., BaseClassExp(TypeExpression(class_type)) ??
   SgBaseClass&
   mkRecordParent(SgType& n);
+
+  /// creates an Ada variant declaration statement
+  /// \param discr the discriminant indicating which variant is valid
+  /// \return a node representing an Ada variant part of a variant record.
+  SgAdaVariantDecl&
+  mkAdaVariantDecl(SgExpression& discr);
+
+  /// creates an Ada variant when statement
+  /// \param choices a list of choices that indicate if the children
+  ///        of the Ada variant when statement are valid.
+  /// \return a node representing an Ada variant when part of a variant record.
+  SgAdaVariantWhenStmt&
+  mkAdaVariantWhenStmt(SgExprListExp& choices);
 
   /// creates an Ada component clause (part of a record representation clause)
   SgAdaComponentClause&

@@ -802,7 +802,7 @@ namespace
       /// computes the name qualification for a non-shared node \ref n.
       /// \details
       ///    suitable for declarations, expressions, and other non-shared nodes.
-      ///    note: some expression subtrees (e.g., those in types, AdaVariantFieldDecl, ..)
+      ///    note: some expression subtrees (e.g., those in types, ..)
       ///          are not reached by the type traversal mechanism. Those need to be
       ///          visited separately.
       ///          e.g., SgDeclType::get_base_expression
@@ -1065,12 +1065,6 @@ namespace
         handleBaseClass(n.get_adaParentType());
       }
 
-      void handle(const SgAdaVariantFieldDecl& n)
-      {
-        handle(sg::asBaseType(n));
-
-        computeNameQualForNonshared(n.get_variantConditions(), false /* not a type subtree */);
-      }
 
       //
       // declaration-like nodes

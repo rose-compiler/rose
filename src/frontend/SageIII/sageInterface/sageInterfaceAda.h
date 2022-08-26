@@ -321,55 +321,6 @@ namespace ada
   bool isExceptionRenaming(const SgAdaRenamingDecl& dcl);
   /// @}
 
-
-  //
-  // Ada Variant processing
-
-  struct VariantInfo : std::tuple<SgExprListExp*, int>
-  {
-    using base = std::tuple<SgExprListExp*, int>;
-    using base::base;
-
-    /// the exprlist condition
-    SgExprListExp* variants() const { return std::get<0>(*this); }
-
-    /// the variant nesting level
-    int            depth()    const { return std::get<1>(*this); }
-  };
-
-  /// returns basic information about the variant declaration
-  VariantInfo
-  variantInfo(const SgAdaVariantFieldDecl* n);
-
-  /// get the depth of shared of control variables
-  int getSharedControlDepth(const VariantInfo& prev, const VariantInfo& next);
-
-  /// test if \ref prev and \rev next have the same variant condition at position \ref i
-  bool haveSameConditionAt(const VariantInfo& prev, const VariantInfo& next, int i);
-
-  struct VariantEntry : std::tuple<SgVarRefExp*, SgExprListExp*>
-  {
-    using base = std::tuple<SgVarRefExp*, SgExprListExp*>;
-    using base::base;
-
-    SgVarRefExp*   control()    const { return std::get<0>(*this); }
-    SgExprListExp* conditions() const { return std::get<1>(*this); }
-  };
-
-  /// get the control/conditions of the \ref i th entry.
-  VariantEntry getVariant(const VariantInfo& prev, int i);
-
-  /// finds the next statement in the range [\ref begin, \ref end) that has a different
-  ///   variant condition than \ref lastVariant
-  SgDeclarationStatementPtrList::const_iterator
-  findVariantConditionChange( SgDeclarationStatementPtrList::const_iterator begin,
-                              SgDeclarationStatementPtrList::const_iterator end,
-                              const SgAdaVariantFieldDecl* lastVariant
-                            );
-
-  //
-
-
   struct PrimitiveParameterDesc : std::tuple<size_t, const SgInitializedName*>
   {
     using base = std::tuple<size_t, const SgInitializedName*>;

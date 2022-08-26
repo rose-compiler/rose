@@ -3,6 +3,11 @@
 
 void fixupPrettyFunctionVariables ( SgNode* node )
    {
+     // PP (7/28/22): fix RC-1370: avoid updating AST nodes that look like
+     //               EDG's __PRETTY_FUNCTION__ representation.
+     if (SageInterface::is_Ada_language())
+       return;
+
      TimingPerformance timer ("Fixup Pretty Print variables:");
 
   // This simplifies how the traversal is called!

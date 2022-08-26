@@ -4,7 +4,9 @@
 #include <Rose/BinaryAnalysis/Unparser/Aarch32.h>
 #include <Rose/BinaryAnalysis/Unparser/Aarch64.h>
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
+#include <Rose/BinaryAnalysis/Unparser/Cil.h>
 #include <Rose/BinaryAnalysis/Unparser/EdgeArrows.h>
+#include <Rose/BinaryAnalysis/Unparser/Jvm.h>
 #include <Rose/BinaryAnalysis/Unparser/M68k.h>
 #include <Rose/BinaryAnalysis/Unparser/Mips.h>
 #include <Rose/BinaryAnalysis/Unparser/Null.h>

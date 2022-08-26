@@ -145,7 +145,23 @@ BaseSemantics::SValue::Ptr
 RiscOperators::xor_(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b) {
     SValue::Ptr retval = SValue::promote(Super::xor_(a, b));
 
-    if (a->must_equal(b)) {
+    if (!a->isConcrete() && !b->isConcrete() && a->must_equal(b)) {
+        // This handles code like i386's "xor eax, eax". However, it's risky because if the operands come from different
+        // locations then they might still be tainted.
+        //
+        // For example, this result should be untainted:
+        //    xor eax, eax   ; untainted no matter the value of eax
+        //
+        // And this result should be untainted:
+        //    mov ebx, eax
+        //    xor eax, ebx   ; untainted no matter the original value of eax
+        //
+        // But this result should be tainted:
+        //    mov ebx, eax
+        //    shr ebx, 1
+        //    and eax, 1
+        //    and ebx, 1
+        //    xor eax, ebx   ; taint depends on original eax value even if both bits are equal
         retval->taintedness(Taintedness::UNTAINTED);
     } else {
         retval->taintedness(mergeTaintedness(a, b));

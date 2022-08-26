@@ -171,12 +171,12 @@ struct LabelAndLoopManager
 };
 
 
-
-
 /// The context class for translation from Asis to ROSE
 ///   containts context that is passed top-down
 struct AstContext
 {
+    using StatementHandler = std::function<void(AstContext, SgStatement&)>;
+
     AstContext()                             = default;
     AstContext(AstContext&&)                 = default;
     AstContext& operator=(AstContext&&)      = default;
@@ -212,18 +212,6 @@ struct AstContext
     /// \note the passed object needs to survive the lifetime of the return AstContext
     AstContext sourceFileName(std::string& file) const;
 
-    /// adds a variant name to the context
-    AstContext variantName(Name) const;
-
-    /// gets all variant names in the context
-    const std::vector<Name>& variantNames() const;
-
-    /// adds a variant choice list in the context
-    AstContext variantChoice(Element_ID_List) const;
-
-    /// gets all variant choice lists in the context
-    const std::vector<Element_ID_List>& variantChoices() const;
-
     /// instantiation property
     /// \details
     ///   Inside an instantiation, the Asis representation may be incomplete
@@ -233,6 +221,11 @@ struct AstContext
     SgAdaGenericInstanceDecl* instantiation() const { return enclosing_instantiation; }
     AstContext                instantiation(SgAdaGenericInstanceDecl& instance) const;
     /// \}
+
+    /// appends new statements to \ref blk instead of the current scope, \ref the_scope.
+    AstContext unscopedBlock(SgAdaUnscopedBlock& blk) const;
+
+    void appendStatement(SgStatement& s) const { stmtHandler(*this, s); }
 
     //
     // policies for building the AST depending on context
@@ -245,14 +238,15 @@ struct AstContext
     Element_struct& element() const;
 **/
 
+    static
+    void defaultStatementHandler(AstContext, SgStatement&);
+
   private:
     SgScopeStatement*            the_scope               = nullptr;
     LabelAndLoopManager*         all_labels_loops        = nullptr;
     const std::string*           unit_file_name          = nullptr;
     SgAdaGenericInstanceDecl*    enclosing_instantiation = nullptr;
-    std::vector<Name>            active_variant_names;
-    std::vector<Element_ID_List> active_variant_choices;
-
+    StatementHandler             stmtHandler             = defaultStatementHandler;
     //~ Element_Struct*      elem;
 };
 
