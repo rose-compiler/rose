@@ -42,6 +42,13 @@ BinaryToSource::initDiagnostics() {
     }
 }
 
+BinaryToSource::BinaryToSource() {}
+
+BinaryToSource::BinaryToSource(const Settings &settings)
+    : settings_(settings) {}
+
+BinaryToSource::~BinaryToSource() {}
+
 void
 BinaryToSource::init(const P2::Partitioner &partitioner) {
     disassembler_ = partitioner.instructionProvider().disassembler();

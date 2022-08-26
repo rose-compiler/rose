@@ -8,6 +8,7 @@
 
 #include "callbacks.h"                                  // Needed for Rose::Callbacks::List<>
 #include <Rose/BinaryAnalysis/ControlFlow.h>
+#include <Rose/BinaryAnalysis/Disassembler/BasicTypes.h>
 #include <Rose/BinaryAnalysis/FunctionCall.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 
@@ -147,7 +148,7 @@ class Base;
  *
  *  @code
  *  SgAsmInterpretation *interp = ...;
- *  Disassembler::Base *disassembler = Disassembler::lookup(interp)->clone();
+ *  Disassembler::BasePtr disassembler = Disassembler::lookup(interp)->clone();
  *  disassembler->set_search(Disassembler::SEARCH_DEFAULT | Disassembler::SEARCH_DEADEND |
  *                           Disassembler::SEARCH_UNKNOWN | Disassembler::SEARCH_UNUSED);
  *  AsmUnparser unparser;
@@ -610,13 +611,13 @@ public:
         };
 
         DataNote data_note;
-        Disassembler::Base *disassembler;
-        AsmUnparser *unparser;
-        bool unparser_allocated_here;
-        StaticDataDisassembler(): disassembler(NULL), unparser(NULL), unparser_allocated_here(false) {}
-        ~StaticDataDisassembler() { reset(); }
+        Disassembler::BasePtr disassembler;
+        AsmUnparser *unparser = nullptr;
+        bool unparser_allocated_here = false;
+        StaticDataDisassembler();
+        ~StaticDataDisassembler();
         virtual void reset();
-        virtual void init(Disassembler::Base *disassembler, AsmUnparser *unparser=NULL);
+        virtual void init(const Disassembler::BasePtr &disassembler, AsmUnparser *unparser=NULL);
         virtual bool operator()(bool enabled, const StaticDataArgs &args);
     };
 

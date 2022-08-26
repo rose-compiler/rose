@@ -52,7 +52,13 @@ typedef Map<rose_addr_t, SgAsmInstruction*> InstructionMap;
  *  of those architectures.When ROSE needs to disassemble something, it calls @ref lookup, which in turn calls the @ref
  *  can_disassemble method for all registered disassemblers.  The first disassembler whose @ref can_disassemble returns true is
  *  used for the disassembly. */
-class Base {
+class Base: public Sawyer::SharedObject {
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Types
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    using Ptr = BasePtr;
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Data members
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -60,12 +66,12 @@ private:
     CallingConvention::Dictionary callingConventions_;
 
 protected:
-    const RegisterDictionary *p_registers;              /**< Description of registers available for this platform. */
+    const RegisterDictionary *p_registers = nullptr;             /**< Description of registers available for this platform. */
     RegisterDescriptor REG_IP, REG_SP, REG_SS, REG_SF, REG_LINK; /**< Register descriptors initialized during construction. */
-    ByteOrder::Endianness p_byteOrder;                  /**< Byte order of instructions in memory. */
-    size_t p_wordSizeBytes;                             /**< Basic word size in bytes. */
-    std::string p_name;                                 /**< Name by which this dissassembler is registered. */
-    size_t instructionAlignment_;                       /**< Positive alignment constraint for instruction addresses. */
+    ByteOrder::Endianness p_byteOrder = ByteOrder::ORDER_LSB;    /**< Byte order of instructions in memory. */
+    size_t p_wordSizeBytes = 4;                                  /**< Basic word size in bytes. */
+    std::string p_name;                                          /**< Name by which this dissassembler is registered. */
+    size_t instructionAlignment_ = 1;                            /**< Positive alignment constraint for instruction addresses. */
 
     /** Prototypical dispatcher for creating real dispatchers */
     InstructionSemantics::BaseSemantics::DispatcherPtr p_proto_dispatcher;
@@ -99,10 +105,11 @@ private:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Constructors
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-public:
-    Base(): p_registers(NULL), p_byteOrder(ByteOrder::ORDER_LSB), p_wordSizeBytes(4), instructionAlignment_(1) {}
-    virtual ~Base() {}
+protected:
+    Base() {}
 
+public:
+    virtual ~Base() {}
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Registration and lookup methods
@@ -130,7 +137,7 @@ public:
     /** Creates a new copy of a disassembler. The new copy has all the same settings as the original.
      *
      *  Thread safety: The thread safety of this virtual method depends on the implementation in the subclass. */
-    virtual Base *clone() const = 0;
+    virtual Ptr clone() const = 0;
 
 
     /***************************************************************************************************************************

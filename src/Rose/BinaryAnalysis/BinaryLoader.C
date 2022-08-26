@@ -6,7 +6,7 @@
 #include <Rose/BinaryAnalysis/BinaryLoaderElf.h>
 #include <Rose/BinaryAnalysis/BinaryLoaderElfObj.h>
 #include <Rose/BinaryAnalysis/BinaryLoaderPe.h>
-#include <Rose/BinaryAnalysis/Disassembler/BasicTypes.h>
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/Registers.h>
 #include <Rose/Diagnostics.h>
 #include "dwarfSupport.h"
@@ -236,10 +236,10 @@ BinaryLoader::link(SgAsmInterpretation* interp) {
 SgAsmGenericHeaderPtrList
 BinaryLoader::findSimilarHeaders(SgAsmGenericHeader *match, SgAsmGenericHeaderPtrList &candidates) {
     SgAsmGenericHeaderPtrList retval;
-    Disassembler::Base *d1 = Disassembler::lookup(match);
+    Disassembler::Base::Ptr d1 = Disassembler::lookup(match);
 
     for (SgAsmGenericHeaderPtrList::iterator ci=candidates.begin(); ci!=candidates.end(); ++ci) {
-        Disassembler::Base *d2 = d1 ? Disassembler::lookup(*ci) : NULL;
+        Disassembler::Base::Ptr d2 = d1 ? Disassembler::lookup(*ci) : Disassembler::Base::Ptr();
         if (!d1 && !d2) {
             if (match->variantT() == (*ci)->variantT())
                 retval.push_back(*ci);

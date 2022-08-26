@@ -138,7 +138,7 @@ matchElfDynamicStub(const Partitioner &partitioner, const Function::Ptr &functio
 
 void
 nameImportThunks(const Partitioner &partitioner, SgAsmInterpretation *interp) {
-    if (!dynamic_cast<Disassembler::Powerpc*>(partitioner.instructionProvider().disassembler()))
+    if (!partitioner.instructionProvider().disassembler().dynamicCast<Disassembler::Powerpc>())
         return;
 
     // Find the locations of all the PLTs

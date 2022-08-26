@@ -3,16 +3,18 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <array>
-#include <Rose/BitFlags.h>
-#include <boost/filesystem.hpp>
-#include <boost/noncopyable.hpp>
-#include <boost/regex.hpp>
 #include <Rose/BinaryAnalysis/Disassembler/BasicTypes.h>
+#include <Rose/BitFlags.h>
+
 #include <Sawyer/BitVector.h>
 #include <Sawyer/Message.h>
 #include <Sawyer/Optional.h>
 #include <Sawyer/Trace.h>
+
+#include <array>
+#include <boost/filesystem.hpp>
+#include <boost/noncopyable.hpp>
+#include <boost/regex.hpp>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -236,41 +238,30 @@ private:
     enum RegPageStatus { REGPAGE_NONE, REGPAGE_REGS, REGPAGE_FPREGS };
 
     Specimen specimen_;                                 // description of specimen being debugged
-    int child_;                                         // process being debugged (int, not pid_t, for Windows portability)
-    DetachMode autoDetach_;                             // how to detach from the subordinate when deleting this debugger
-    int wstat_;                                         // last status from waitpid
+    int child_ = 0;                                     // process being debugged (int, not pid_t, for Windows portability)
+    DetachMode autoDetach_ = KILL;                      // how to detach from the subordinate when deleting this debugger
+    int wstat_ = -1;                                    // last status from waitpid
     AddressIntervalSet breakpoints_;                    // list of breakpoint addresses
-    int sendSignal_;                                    // pending signal
+    int sendSignal_ = 0;                                // pending signal
     UserRegDefs userRegDefs_;                           // how registers map to user_regs_struct in <sys/user.h>
     UserRegDefs userFpRegDefs_;                         // how registers map to user_fpregs_struct in <sys/user.h>
-    size_t kernelWordSize_;                             // cached width in bits of kernel's words
+    size_t kernelWordSize_ = 0;                         // cached width in bits of kernel's words
     RegisterPage regsPage_;                             // latest register information read from subordinate
-    RegPageStatus regsPageStatus_;                      // what are the contents of regsPage_?
-    Disassembler::Base *disassembler_;                  // how to disassemble instructions
+    RegPageStatus regsPageStatus_ = REGPAGE_NONE;       // what are the contents of regsPage_?
+    Disassembler::BasePtr disassembler_;                // how to disassemble instructions
     Sawyer::Optional<rose_addr_t> syscallVa_;           // address of some executable system call instruction.
 
     //----------------------------------------
     // Real constructors
     //----------------------------------------
 protected:
-    Debugger()
-        : child_(0), autoDetach_(KILL), wstat_(-1), sendSignal_(0), kernelWordSize_(0), regsPageStatus_(REGPAGE_NONE),
-          disassembler_(NULL) {
-        init();
-    }
+    Debugger();
 
     /** Construct a debugger attached to a specimen. */
-    explicit Debugger(const Specimen &specimen)
-        : child_(0), autoDetach_(KILL), wstat_(-1), sendSignal_(0), kernelWordSize_(0), regsPageStatus_(REGPAGE_NONE),
-          disassembler_(NULL) {
-        init();
-        attach(specimen);
-    }
+    explicit Debugger(const Specimen &specimen);
 
 public:
-    ~Debugger() {
-        detach(autoDetach_);
-    }
+    ~Debugger();
 
     //----------------------------------------
     // Static allocating constructors
@@ -521,9 +512,7 @@ public:
     const RegisterDictionary* registerDictionary() const;
 
     /** Disassembler. */
-    Disassembler::Base* disassembler() const {
-        return disassembler_;
-    }
+    Disassembler::BasePtr disassembler() const;
 
     /** Returns the last status from a call to waitpid. */
     int waitpidStatus() const { return wstat_; }

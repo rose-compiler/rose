@@ -20,9 +20,14 @@ Null::Null() {
 
 Null::~Null() {}
 
-Base*
+Null::Ptr
+Null::instance() {
+    return Ptr(new Null);
+}
+
+Base::Ptr
 Null::clone() const {
-    return new Null;
+    return Ptr(new Null);
 }
 
 bool

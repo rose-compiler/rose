@@ -34,6 +34,21 @@ namespace Disassembler {
 #define T_V2_FLOAT32 (SageBuilderAsm::buildTypeVector(2, T_FLOAT32))
 #define T_V2_FLOAT64 (SageBuilderAsm::buildTypeVector(2, T_FLOAT64))
 
+Powerpc::Powerpc(PowerpcWordSize wordSize, ByteOrder::Endianness sex)
+    : wordSize_(wordSize), sex_(sex) {
+    init();
+}
+
+Powerpc::Ptr
+Powerpc::instance(PowerpcWordSize wordSize, ByteOrder::Endianness sex) {
+    return Ptr(new Powerpc(wordSize, sex));
+}
+
+Base::Ptr
+Powerpc::clone() const {
+    return Ptr(new Powerpc(*this));
+}
+
 bool
 Powerpc::canDisassemble(SgAsmGenericHeader *header) const {
     // Check the architecture and word size

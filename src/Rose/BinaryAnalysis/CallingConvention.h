@@ -4,6 +4,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <Rose/BinaryAnalysis/ConcreteLocation.h>
+#include <Rose/BinaryAnalysis/Disassembler/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Registers.h>
@@ -577,7 +578,7 @@ public:
     /** Construct an analyzer using a specified disassembler.
      *
      *  This constructor chooses a symbolic domain and a dispatcher appropriate for the disassembler's architecture. */
-    explicit Analysis(Disassembler::Base *d)
+    explicit Analysis(const Disassembler::BasePtr &d)
         : regDict_(NULL), hasResults_(false), didConverge_(false) {
         init(d);
     }
@@ -698,7 +699,7 @@ public:
 
 private:
     // Finish constructing
-    void init(Disassembler::Base*);
+    void init(const Disassembler::BasePtr&);
 
     // Recompute the restoredRegisters_ data member.
     void updateRestoredRegisters(const InstructionSemantics::BaseSemantics::StatePtr &initialState,

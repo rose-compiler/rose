@@ -7,7 +7,7 @@
 #include "sage3basic.h"
 
 #include <unordered_map>
-#include "Rose/BinaryAnalysis/DisassemblerX86.h"
+#include "Rose/BinaryAnalysis/Disassembler/X86.h"
 #include "Rose/BinaryAnalysis/DisassemblerCil.h"
 #include "frontend/SageIII/sageInterface/SageBuilderAsm.h"
 
@@ -1554,7 +1554,7 @@ parseTinyHeader(std::uint8_t header)
 }
 
 SgAsmBlock*
-disassemble(SgAsmCilMethodDef* m, MethodHeader mh, std::vector<std::uint8_t>& buf, Rose::BinaryAnalysis::Disassembler&& disasm)
+disassemble(SgAsmCilMethodDef* m, MethodHeader mh, std::vector<std::uint8_t>& buf, const Rose::BinaryAnalysis::Disassembler::Base::Ptr& disasm)
 {
   const std::size_t              sz = buf.size();
   rose_addr_t                    addr = 0;
@@ -1563,7 +1563,7 @@ disassemble(SgAsmCilMethodDef* m, MethodHeader mh, std::vector<std::uint8_t>& bu
 
   while (addr < sz)
   {
-    SgAsmInstruction* instr = disasm.disassembleOne(b, 0, sz, addr);
+    SgAsmInstruction* instr = disasm->disassembleOne(b, 0, sz, addr);
     ASSERT_not_null(instr);
 
     lst.push_back(instr);
@@ -1630,13 +1630,13 @@ void decodeMetadata(rose_addr_t base_va, SgAsmCilMetadataHeap* mdh, SgAsmCilMeta
       case CIL_CODE:
         //~ std::cerr << "  - disassembling CIL code: " << code.size() << " bytes."
         //~           << std::endl;
-        blk = disassemble(m, mh, code, rb::DisassemblerCil());
+        blk = disassemble(m, mh, code, rb::DisassemblerCil::instance());
         break;
 
       case NATIVE_CODE:
         //~ std::cerr << "  - disassembling x86 code: " << code.size() << " bytes."
         //~           << std::endl;
-        blk = disassemble(m, mh, code, rb::DisassemblerX86(4 /* word size */));
+          blk = disassemble(m, mh, code, rb::Disassembler::X86::instance(4 /* word size */));
         break;
 
       case RUNTIME_CODE:

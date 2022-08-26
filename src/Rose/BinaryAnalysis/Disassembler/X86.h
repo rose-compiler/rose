@@ -20,6 +20,11 @@ namespace Disassembler {
 /** Disassembler for the x86 architecture.  Most of the useful disassembly methods can be found in the superclass. There's
  *  really not much reason to use this class directly or to call any of these methods directly. */
 class X86: public Base {
+public:
+    /** Reference counting pointer. */
+    using Ptr = X86Ptr;
+
+private:
     /* Per-disassembler settings; see init() */
     X86InstructionSize insnSize;                    /**< Default size of instructions, based on architecture; see init() */
     size_t wordSize;                                /**< Base word size. */
@@ -93,18 +98,17 @@ private:
 
 protected:
     // Default constructor for serialization
-    X86()
-        : insnSize(x86_insnsize_none), wordSize(0) {}
+    X86();
+
+    explicit X86(size_t wordsize);
 
 public:
-    explicit X86(size_t wordsize)
-        : insnSize(x86_insnsize_none), wordSize(0) {
-        init(wordsize);
-    }
+    /** Allocating constructor. */
+    static Ptr instance(size_t wordSize);
 
     virtual ~X86() {}
 
-    virtual X86 *clone() const override { return new X86(*this); }
+    virtual Base::Ptr clone() const override;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Public methods

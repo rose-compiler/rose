@@ -13,29 +13,8 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace Disassembler {
 
-Base*
-Aarch32::clone() const {
-    return new Aarch32(*this);
-}
-
-bool
-Aarch32::canDisassemble(SgAsmGenericHeader *header) const {
-    SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
-    if ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_ARM_Family) {
-        if (header->get_exec_format()->get_word_size() == 4) {
-            return !modes_.isSet(Mode::THUMB);
-        } else if (header->get_exec_format()->get_word_size() == 2) {
-            return modes_.isSet(Mode::THUMB);
-        }
-    }
-    return false;
-}
-
-void
-Aarch32::init() {
-    // Warning: the "mode" constants are not orthogonal with each other or the "arch" values.
-    cs_mode mode = (cs_mode)modes_.vector();
-
+Aarch32::Aarch32(Modes modes)
+    : modes_(modes) {
     // ROSE disassembler properties, and choose a somewhat descriptive name (at least something better than "ARM").
     std::string name;
     if (modes_.isSet(Mode::THUMB)) {
@@ -60,8 +39,52 @@ Aarch32::init() {
     REG_SP = registerDictionary()->findOrThrow("sp");
     REG_SF = registerDictionary()->findOrThrow("fp");
     REG_LINK = registerDictionary()->findOrThrow("lr");
+}
 
-    // Build the Capstone context object, which must be explicitly closed in the destructor.
+Aarch32::Ptr
+Aarch32::instanceA32() {
+    return Ptr(new Aarch32(Modes(Mode::ARM32)));
+}
+
+Aarch32::Ptr
+Aarch32::instanceT32() {
+    return Ptr(new Aarch32(Modes(Mode::THUMB)));
+}
+
+Aarch32::Ptr
+Aarch32::instance() {
+    return Ptr(new Aarch32);
+}
+
+Base::Ptr
+Aarch32::clone() const {
+    return Ptr(new Aarch32(*this));
+}
+
+bool
+Aarch32::canDisassemble(SgAsmGenericHeader *header) const {
+    SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
+    if ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_ARM_Family) {
+        if (header->get_exec_format()->get_word_size() == 4) {
+            return !modes_.isSet(Mode::THUMB);
+        } else if (header->get_exec_format()->get_word_size() == 2) {
+            return modes_.isSet(Mode::THUMB);
+        }
+    }
+    return false;
+}
+
+void
+Aarch32::openCapstone() {
+    // Build the Capstone context object, which must be explicitly closed in the destructor. Furthermore, since capstone is a
+    // shared library, it might not be possible to call cs_close (in the Aarch32 destructor) after libcapstone has been shut
+    // down during program termination. For instance, if you store any static pointers to Aarch32 objects that have open
+    // capstone connections, then its likely that the C++ runtime will close the capstone library before calling the
+    // destructors for those Aarch32 objects.
+
+    // Warning: the "mode" constants are not orthogonal with each other or the "arch" values.
+    cs_mode mode = (cs_mode)modes_.vector();
+
     if (CS_ERR_OK != cs_open(CS_ARCH_ARM /*i.e., AArch32*/, mode, &capstone_))
         throw Exception("capstone cs_open failed");
     capstoneOpened_ = true;
@@ -102,6 +125,8 @@ Aarch32::bytesToWord(size_t nBytes, const uint8_t *bytes) {
 
 SgAsmInstruction*
 Aarch32::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet *successors/*=nullptr*/) {
+    openCapstone();
+
     // Resources that must be explicitly reclaimed before returning.
     struct Resources {
         cs_insn *csi = nullptr;

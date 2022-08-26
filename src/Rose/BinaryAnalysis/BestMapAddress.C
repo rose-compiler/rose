@@ -48,7 +48,7 @@ BestMapAddress::mask() const {
 
 void
 BestMapAddress::gatherAddresses(P2::Engine &engine) {
-    Disassembler::Base *dis = engine.obtainDisassembler();
+    Disassembler::Base::Ptr dis = engine.obtainDisassembler();
     if (0 == nBits_) {
         if (!dis)
             throw Exception("no disassembler");

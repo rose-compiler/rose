@@ -34,7 +34,7 @@ void initDiagnostics() {
 static boost::mutex class_mutex;
 
 /* List of disassembler subclasses (protect with class_mutex) */
-static std::vector<Base*> disassemblers;
+static std::vector<Base::Ptr> disassemblers;
 
 /* Initialize the class. Thread safe. */
 static void
@@ -44,20 +44,20 @@ initclassHelper() {
     registerSubclass(Aarch32::instanceT32());
 #endif
 #ifdef ROSE_ENABLE_ASM_AARCH64
-    registerSubclass(new Aarch64());
+    registerSubclass(Aarch64::instance());
 #endif
 #ifdef ROSE_ENABLE_ASM_AARCH32
-    registerSubclass(new Aarch32());
+    registerSubclass(Aarch32::instance());
 #endif
-    registerSubclass(new Disassembler::Powerpc(powerpc_32, ByteOrder::ORDER_MSB));
-    registerSubclass(new Disassembler::Powerpc(powerpc_32, ByteOrder::ORDER_LSB));
-    registerSubclass(new Disassembler::Powerpc(powerpc_64, ByteOrder::ORDER_MSB));
-    registerSubclass(new Disassembler::Powerpc(powerpc_64, ByteOrder::ORDER_LSB));
-    registerSubclass(new Disassembler::M68k(m68k_freescale_isab));
-    registerSubclass(new Disassembler::Mips());
-    registerSubclass(new Disassembler::X86(2)); /*16-bit*/
-    registerSubclass(new Disassembler::X86(4)); /*32-bit*/
-    registerSubclass(new Disassembler::X86(8)); /*64-bit*/
+    registerSubclass(Disassembler::Powerpc::instance(powerpc_32, ByteOrder::ORDER_MSB));
+    registerSubclass(Disassembler::Powerpc::instance(powerpc_32, ByteOrder::ORDER_LSB));
+    registerSubclass(Disassembler::Powerpc::instance(powerpc_64, ByteOrder::ORDER_MSB));
+    registerSubclass(Disassembler::Powerpc::instance(powerpc_64, ByteOrder::ORDER_LSB));
+    registerSubclass(Disassembler::M68k::instance(m68k_freescale_isab));
+    registerSubclass(Disassembler::Mips::instance());
+    registerSubclass(Disassembler::X86::instance(2)); /*16-bit*/
+    registerSubclass(Disassembler::X86::instance(4)); /*32-bit*/
+    registerSubclass(Disassembler::X86::instance(8)); /*64-bit*/
 }
 
 static boost::once_flag initFlag = BOOST_ONCE_INIT;
@@ -68,7 +68,7 @@ initclass() {
 }
 
 // Thread safe by virtue of lookup(SgAsmGenericHeader*).
-Base *
+Base::Ptr
 lookup(SgAsmInterpretation *interp) {
     ASSERT_not_null(interp);
 
@@ -76,10 +76,10 @@ lookup(SgAsmInterpretation *interp) {
     const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
     if (headers.empty())
         throw Exception("no file headers from which to choose disassembler");
-    typedef Sawyer::Container::Map<Base*, size_t> DisassemblerCounts;
+    typedef Sawyer::Container::Map<Base::Ptr, size_t> DisassemblerCounts;
     DisassemblerCounts disassemblerCounts;
-    for (size_t i=0; i<headers.size(); i++) {
-        Base *candidate = NULL;
+    for (size_t i = 0; i < headers.size(); ++i) {
+        Base::Ptr candidate;
         try {
             candidate = lookup(headers[i]);
         } catch (const Exception&) {
@@ -88,14 +88,14 @@ lookup(SgAsmInterpretation *interp) {
     }
 
     // Choose the best disassembler based on how often it matched.
-    Base *bestDisassembler = NULL;
+    Base::Ptr bestDisassembler;
     if (disassemblerCounts.size() == 1) {
         bestDisassembler = disassemblerCounts.least();
     } else if (disassemblerCounts.size() > 1) {
         mlog[WARN] <<"ambiguous disassemblers for file headers\n";
         size_t bestCount = 0;
         for (const DisassemblerCounts::Node &node: disassemblerCounts.nodes()) {
-            if (Base *disassembler = node.key()) {
+            if (Base::Ptr disassembler = node.key()) {
                 mlog[WARN] <<"  " <<StringUtility::plural(node.value(), "file headers")
                             <<" using " <<disassembler->name() <<" disassember\n";
             } else {
@@ -115,13 +115,13 @@ lookup(SgAsmInterpretation *interp) {
     return bestDisassembler;
 }
 
-Base *
+Base::Ptr
 lookup(SgAsmGenericHeader *header) {
     initclass();
-    Base *retval = NULL;
+    Base::Ptr retval;
 
     boost::lock_guard<boost::mutex> lock(class_mutex);
-    for (size_t i=disassemblers.size(); i>0 && !retval; --i) {
+    for (size_t i = disassemblers.size(); i > 0 && !retval; --i) {
         if (disassemblers[i-1]->canDisassemble(header))
             retval = disassemblers[i-1];
     }
@@ -131,9 +131,9 @@ lookup(SgAsmGenericHeader *header) {
     throw Exception("no disassembler for architecture");
 }
 
-Base *
+Base::Ptr
 lookup(const std::string &name) {
-    Base *retval = NULL;
+    Base::Ptr retval;
     if (name == "list") {
         std::cout <<"The following ISAs are supported:\n";
         for (const std::string &name: isaNames())
@@ -153,34 +153,34 @@ lookup(const std::string &name) {
 #endif
     } else if (name == "a64") {
 #ifdef ROSE_ENABLE_ASM_AARCH64
-        retval = new Aarch64();
+        retval = Aarch64::instance();
 #else
         throw Exception(name + " disassembler is not enabled in this ROSE configuration");
 #endif
     } else if (name == "ppc32-be") {
-        retval = new Disassembler::Powerpc(powerpc_32, ByteOrder::ORDER_MSB);
+        retval = Disassembler::Powerpc::instance(powerpc_32, ByteOrder::ORDER_MSB);
     } else if (name == "ppc32-le") {
-        retval = new Disassembler::Powerpc(powerpc_32, ByteOrder::ORDER_LSB);
+        retval = Disassembler::Powerpc::instance(powerpc_32, ByteOrder::ORDER_LSB);
     } else if (name == "ppc64-be") {
-        retval = new Disassembler::Powerpc(powerpc_64, ByteOrder::ORDER_MSB);
+        retval = Disassembler::Powerpc::instance(powerpc_64, ByteOrder::ORDER_MSB);
     } else if (name == "ppc64-le") {
-        retval = new Disassembler::Powerpc(powerpc_64, ByteOrder::ORDER_MSB);
+        retval = Disassembler::Powerpc::instance(powerpc_64, ByteOrder::ORDER_MSB);
     } else if (name == "mips-be") {
-        retval = new Disassembler::Mips(ByteOrder::ORDER_MSB);
+        retval = Disassembler::Mips::instance(ByteOrder::ORDER_MSB);
     } else if (name == "mips-le") {
-        retval = new Disassembler::Mips(ByteOrder::ORDER_LSB);
+        retval = Disassembler::Mips::instance(ByteOrder::ORDER_LSB);
     } else if (name == "i286") {
-        retval = new Disassembler::X86(2);
+        retval = Disassembler::X86::instance(2);
     } else if (name == "i386") {
-        retval = new Disassembler::X86(4);
+        retval = Disassembler::X86::instance(4);
     } else if (name == "amd64") {
-        retval = new Disassembler::X86(8);
+        retval = Disassembler::X86::instance(8);
     } else if (name == "m68040") {
-        retval = new Disassembler::M68k(m68k_68040);
+        retval = Disassembler::M68k::instance(m68k_68040);
     } else if (name == "coldfire") {
-        retval = new Disassembler::M68k(m68k_freescale_emacb);
+        retval = Disassembler::M68k::instance(m68k_freescale_emacb);
     } else if (name == "null") {
-        retval = new Disassembler::Null;
+        retval = Disassembler::Null::instance();
     } else {
         throw std::runtime_error("invalid ISA name \"" + StringUtility::cEscape(name) + "\"; use --isa=list");
     }
@@ -215,14 +215,14 @@ isaNames() {
 }
 
 void
-registerSubclass(Base *factory) {
+registerSubclass(const Base::Ptr &factory) {
     boost::lock_guard<boost::mutex> lock(class_mutex);
     ASSERT_not_null(factory);
     disassemblers.push_back(factory);
 }
 
 const std::string&
-name(const Base *disassembler) {
+name(const Base::Ptr &disassembler) {
     return disassembler->name();
 }
 

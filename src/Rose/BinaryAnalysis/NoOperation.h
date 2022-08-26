@@ -3,15 +3,12 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Rose/BinaryAnalysis/Disassembler/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 #include <Sawyer/Message.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
-
-namespace Disassembler {
-class Base;
-} // namespace
 
 /** Analysis that looks for no-op equivalents. */
 class NoOperation {
@@ -83,7 +80,7 @@ public:
     /** Construct a new analysis for a specific disassembler.
      *
      *  An analysis constructed this way will use the symbolic semantics domain. */
-    explicit NoOperation(BinaryAnalysis::Disassembler::Base*);
+    explicit NoOperation(const BinaryAnalysis::Disassembler::BasePtr&);
 
     /** Property: state normalizer.
      *

@@ -15,7 +15,7 @@ namespace StaticSemantics {
 //                                      User-level supporting functions
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void attachInstructionSemantics(SgNode *ast, Disassembler::Base *disassembler) {
+void attachInstructionSemantics(SgNode *ast, const Disassembler::Base::Ptr &disassembler) {
     ASSERT_not_null(ast);
     ASSERT_not_null(disassembler);
     RiscOperatorsPtr ops = RiscOperators::instance(SValue::instance(), SmtSolverPtr());

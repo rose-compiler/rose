@@ -3,12 +3,14 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <Rose/Diagnostics.h>
+#include <Rose/BinaryAnalysis/Disassembler/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
-#include <Rose/Exception.h>
-#include <Sawyer/CommandLine.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SourceAstSemantics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
+#include <Rose/Diagnostics.h>
+#include <Rose/Exception.h>
+
+#include <Sawyer/CommandLine.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -60,7 +62,7 @@ public:
 private:
     static Diagnostics::Facility mlog;
     Settings settings_;
-    Disassembler::Base *disassembler_;
+    Disassembler::BasePtr disassembler_;
     InstructionSemantics::SourceAstSemantics::RiscOperatorsPtr raisingOps_;
     InstructionSemantics::TraceSemantics::RiscOperatorsPtr tracingOps_;
     InstructionSemantics::BaseSemantics::DispatcherPtr raisingCpu_;
@@ -70,15 +72,15 @@ public:
      *
      *  Constructs an analysis object that is not tied to any particular architecture yet, and which uses default
      *  settings. */
-    BinaryToSource()
-        : disassembler_(NULL) {}
+    BinaryToSource();
 
     /** Construct the analyzer with specified settings.
      *
      *  Constructs an analysis object that is not tied to any particular architecture yet, but which uses the specified
      *  settings. */
-    explicit BinaryToSource(const Settings &settings)
-        : settings_(settings), disassembler_(NULL) {}
+    explicit BinaryToSource(const Settings&);
+
+    ~BinaryToSource();
 
     /** Command-line switch parsing. */
     static Sawyer::CommandLine::SwitchGroup commandLineSwitches(Settings&);

@@ -1,14 +1,15 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
-
-#include <AsmUnparser_compat.h>
 #include <Rose/BinaryAnalysis/NoOperation.h>
-#include <Rose/CommandLine.h>
-#include <Rose/Diagnostics.h>
+
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCellList.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
+#include <Rose/CommandLine.h>
+#include <Rose/Diagnostics.h>
+
+#include <AsmUnparser_compat.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -131,7 +132,7 @@ NoOperation::StateNormalizer::toString(const BaseSemantics::DispatcherPtr &cpu, 
 
 NoOperation::NoOperation() {}
 
-NoOperation::NoOperation(Disassembler::Base *disassembler) {
+NoOperation::NoOperation(const Disassembler::Base::Ptr &disassembler) {
     normalizer_ = StateNormalizer::instance();
 
     if (disassembler) {

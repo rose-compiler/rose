@@ -39,6 +39,9 @@ public:
     //
     // </rant>
 
+    /** Shared ownership pointer for an Aarch64 decoder. */
+    using Ptr = Aarch64Ptr;
+
     /** Capstone "Mode type", limited to those related to AArch64. */
     enum Mode {
         MODE_MCLASS = CS_MODE_MCLASS,                   /**< Capstone: "ARM's Cortex-M series". */
@@ -50,26 +53,27 @@ public:
 private:
     Modes modes_;                                       // a subset of Capstone's cs_mode constants (warning: nonorthoganal concepts)
     csh capstone_;                                      // the capstone handle
-    bool capstoneOpened_;                               // whether capstone_ is initialized
+    bool capstoneOpened_ = false;                       // whether capstone_ is initialized
+
+protected:
+    // Constructor for specific architecture.
+    explicit Aarch64(Modes);
 
 public:
-    /** Constructor for specific architecture. */
-    explicit Aarch64(Modes modes = Modes())
-        : modes_(modes), capstoneOpened_(false) {
-        init();
-    }
+    /** Allocating constructor for Aarch64 decoder. */
+    static Ptr instance(Modes modes = Modes());
 
     ~Aarch64();
 
     // overrides
     bool canDisassemble(SgAsmGenericHeader*) const override;
-    Base* clone() const override;
+    Base::Ptr clone() const override;
     Unparser::BasePtr unparser() const override;
     SgAsmInstruction* disassembleOne(const MemoryMap::Ptr&, rose_addr_t startVa, AddressSet *successors=nullptr) override;
     SgAsmInstruction* makeUnknownInstruction(const Exception&) override;
 
 private:
-    void init();
+    void openCapstone();
 
     // Returns the opcode as a 32-bit value.
     uint32_t opcode(const cs_insn&);
