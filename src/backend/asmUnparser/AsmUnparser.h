@@ -148,7 +148,7 @@ class Base;
  *
  *  @code
  *  SgAsmInterpretation *interp = ...;
- *  Disassembler::BasePtr disassembler = Disassembler::lookup(interp)->clone();
+ *  Disassembler::BasePtr disassembler = Disassembler::lookup(interp);
  *  disassembler->set_search(Disassembler::SEARCH_DEFAULT | Disassembler::SEARCH_DEADEND |
  *                           Disassembler::SEARCH_UNKNOWN | Disassembler::SEARCH_UNUSED);
  *  AsmUnparser unparser;

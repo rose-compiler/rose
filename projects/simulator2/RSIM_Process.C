@@ -204,7 +204,7 @@ RSIM_Process::load(int existingPid /*=-1*/) {
 
     /* Find a disassembler. */
     if (!disassembler_) {
-        disassembler_ = Disassembler::lookup(interpretation_)->clone();
+        disassembler_ = Disassembler::lookup(interpretation_);
         ASSERT_not_null(disassembler_);
     }
     wordSize_ = disassembler_->instructionPointerRegister().nBits();
