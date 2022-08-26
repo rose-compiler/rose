@@ -995,16 +995,6 @@ namespace
       }
     }
 
-    void associationList(SgExprListExp& exprlst)
-    {
-      SgExpressionPtrList& lst = exprlst.get_expressions();
-      if (lst.empty()) return;
-
-      prn("(");
-      expr(&exprlst);
-      prn(")");
-    }
-
     void handle(SgAdaGenericInstanceDecl& n)
     {
       SgName                  name    = n.get_name();
@@ -1142,18 +1132,24 @@ namespace
       prn(STMT_SEP);
     }
 
-    void handle(SgAdaVariantFieldDecl& n)
+    void handle(SgAdaVariantDecl& n)
     {
-      const bool isNullDecl = n.get_variables().size() == 0;
+      prn("case ");
+      expr(n.get_discriminant());
+      prn(" is\n");
 
-      if (isNullDecl)
-      {
-        prn("NULL");
-        prn(STMT_SEP);
-        return;
-      }
+      list(SG_DEREF(n.get_variants()).get_statements());
 
-      handle(static_cast<SgVariableDeclaration&>(n));
+      prn("end case");
+      prn(STMT_SEP);
+    }
+
+    void handle(SgAdaVariantWhenStmt& n)
+    {
+      prn("when ");
+      choicelst(n.get_choices());
+      prn(" =>\n");
+      list(SG_DEREF(n.get_components()).get_statements());
     }
 
     void handle(SgFunctionDefinition& n)
@@ -1786,32 +1782,13 @@ namespace
       prn(STMT_SEP);
     }
 
-    void printVariantConditionChange(SgAdaVariantFieldDecl* prev, SgAdaVariantFieldDecl* next);
+    // void printVariantConditionChange(SgAdaVariantFieldDecl* prev, SgAdaVariantFieldDecl* next);
 
     void handle(SgClassDefinition& n)
     {
-      using Iterator = SgDeclarationStatementPtrList::const_iterator;
+      ScopeUpdateGuard scopeGuard{unparser, info, n}; // \todo not required any more?
 
-      ScopeUpdateGuard scopeGuard{unparser, info, n}; // \todo required?
-
-      Iterator               pos = n.get_members().begin();
-      const Iterator         zz  = n.get_members().end();
-      SgAdaVariantFieldDecl* lastVariantField = nullptr;
-
-      while (pos != zz)
-      {
-        Iterator               varfld = si::ada::findVariantConditionChange(pos, zz, lastVariantField);
-        SgAdaVariantFieldDecl* nextVariantField = (varfld != zz) ? isSgAdaVariantFieldDecl(*varfld)
-                                                                 : nullptr;
-
-        list(pos, varfld);
-        printVariantConditionChange(lastVariantField, nextVariantField);
-
-        pos = varfld;
-        lastVariantField = nextVariantField;
-      }
-
-      printVariantConditionChange(lastVariantField, nullptr);
+      list(n.get_members());
     }
 
     void handle(SgTryStmt& n)
@@ -1891,10 +1868,26 @@ namespace
       unparser.unparseExpression(e, info);
     }
 
+    void exprlst(SgExprListExp* e, std::string sep = ", ")
+    {
+      unparser.unparseExprListExp(e, info, std::move(sep));
+    }
+
     void choicelst(SgExprListExp* e)
     {
-      unparser.unparseExprListExp(e, info, "| ");
+      exprlst(e, "| ");
     }
+
+    void associationList(SgExprListExp& e)
+    {
+      if (e.get_expressions().empty())
+        return;
+
+      prn("(");
+      exprlst(&e);
+      prn(")");
+    }
+
 
     void expr_opt(SgExpression* e, std::string prefix_opt = std::string(), std::string postfix_opt = std::string())
     {
@@ -2420,52 +2413,6 @@ namespace
 
     tmp.pendingDiscriminants = n;
     return tmp;
-  }
-
-  void
-  AdaStatementUnparser::printVariantConditionChange(SgAdaVariantFieldDecl* prev, SgAdaVariantFieldDecl* next)
-  {
-    if (prev == nullptr && next == nullptr)
-      return;
-
-    si::ada::VariantInfo previnfo = si::ada::variantInfo(prev);
-    si::ada::VariantInfo nextinfo = si::ada::variantInfo(next);
-    ROSE_ASSERT(previnfo.depth() || nextinfo.depth());
-
-    const int   sharedControlDepth = si::ada::getSharedControlDepth(previnfo, nextinfo);
-
-    // close variant headers (if needed)
-    for (int i = sharedControlDepth; i < previnfo.depth(); ++i)
-    {
-      prn("end case");
-      prn(STMT_SEP);
-    }
-
-    // open variant headers (if needed)
-    for (int i = sharedControlDepth; i < nextinfo.depth(); ++i)
-    {
-      si::ada::VariantEntry variantEntry = si::ada::getVariant(nextinfo, i);
-
-      prn("case ");
-      expr(variantEntry.control());
-      prn(" is\n");
-      prn("when ");
-      choicelst(variantEntry.conditions());
-      prn(" =>\n");
-    }
-
-    // print new variant condition (if needed)
-    if (  (sharedControlDepth > 0)
-       && (sharedControlDepth == nextinfo.depth())
-       && (!si::ada::haveSameConditionAt(previnfo, nextinfo, sharedControlDepth-1))
-       )
-    {
-      si::ada::VariantEntry variantEntry = si::ada::getVariant(nextinfo, sharedControlDepth-1);
-
-      prn("when ");
-      choicelst(variantEntry.conditions());
-      prn(" =>\n");
-    }
   }
 
 

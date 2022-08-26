@@ -51,6 +51,7 @@ add_library(roseBinaryFormats OBJECT
 
   ### CIL class implementations
   CilImpl.C
+  CliHeader.C
 
   ### Other Formats (partial implementations and not so well tested) ###
   ExecDOS.C

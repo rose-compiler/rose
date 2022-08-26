@@ -187,11 +187,11 @@ namespace
     // query overriders and add them to the candidate list
     for (const OverrideDesc& desc : vfunc->overriders())
     {
-      const SgFunctionDeclaration*       fundcl = desc.functionId();
+      const SgFunctionDeclaration*       fundcl = desc.function();
       const SgMemberFunctionDeclaration& ovrdcl = SG_DEREF(isSgMemberFunctionDeclaration(fundcl));
       const SgClassDefinition&           ovrcls = getClassDef(ovrdcl);
 
-      if (cha.areBaseDerived(&clsdef, &ovrcls))
+      if (cha.isBaseOf(&clsdef, &ovrcls))
         res.push_back(const_cast<SgFunctionDeclaration*>(fundcl));
     }
 
@@ -334,7 +334,7 @@ void FunctionCallMapping2::computeFunctionCallMapping(SgProject* root)
            {
              SgClassDefinition* candClass = &getClassDef(SG_DEREF(fn));
 
-             if ((clsdef == candClass) || classes.areBaseDerived(candClass, clsdef))
+             if ((clsdef == candClass) || classes.isBaseOf(candClass, clsdef))
              {
                candidates.insert(fn);
 
@@ -350,7 +350,7 @@ void FunctionCallMapping2::computeFunctionCallMapping(SgProject* root)
 
            for (SgMemberFunctionDeclaration* fn : virtualFunctions)
              for (const OverrideDesc& ovr : vfa.at(fn).overriders())
-               candidates.insert(const_cast<SgMemberFunctionDeclaration*>(ovr.functionId()));
+               candidates.insert(const_cast<SgMemberFunctionDeclaration*>(ovr.function()));
          }
 
          {

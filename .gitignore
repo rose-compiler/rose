@@ -17,6 +17,7 @@ Makefile.in
 /autom4te.cache
 /*.tar.gz
 /libltdl
+/configure.orig
 
 # Integrated Development Evironment files
 GPATH
@@ -42,6 +43,9 @@ GTAGS
 /config/lt~obsolete.m4
 /config/support-projects.m4
 /config/test-driver
+/config/missing
+/config/depcomp
+/config/ltargz.m4
 
 # Eclipse project files
 .cproject

@@ -3282,11 +3282,6 @@ HEADER_TEMPLATE_VARIABLE_DECLARATION_STATEMENT_START
 
 HEADER_TEMPLATE_VARIABLE_DECLARATION_STATEMENT_END
 
-HEADER_ADA_VARIANT_FIELD_DECL_START
-  // PP (6/8/21): see comment in HEADER_TEMPLATE_VARIABLE_DECLARATION_STATEMENT_START.
-  using SgVariableDeclaration::compute_baseTypeDefiningDeclaration;
-HEADER_ADA_VARIANT_FIELD_DECL_END
-
 
 HEADER_TEMPLATE_TYPEDEF_DECLARATION_STATEMENT_START
 
@@ -3667,10 +3662,22 @@ HEADER_ADA_SELECT_ALTERNATIVE_STATEMENT_END
 HEADER_ADA_TERMINATE_STATEMENT_START
 HEADER_ADA_TERMINATE_STATEMENT_END
 
+HEADER_ADA_UNSCOPED_BLOCK_START
+HEADER_LIST_DECLARATIONS
+HEADER_ADA_UNSCOPED_BLOCK_END
+
+HEADER_ADA_VARIANT_WHEN_STMT_START
+HEADER_ADA_VARIANT_WHEN_STMT_END
+
 HEADER_ADA_RENAMING_DECL_STATEMENT_START
 SgSymbol* get_symbol_from_symbol_table() const override;
 SgName get_mangled_name() const override;
 HEADER_ADA_RENAMING_DECL_STATEMENT_END
+
+HEADER_ADA_VARIANT_DECL_START
+SgSymbol* get_symbol_from_symbol_table() const override;
+SgName get_mangled_name() const override;
+HEADER_ADA_VARIANT_DECL_END
 
 HEADER_ADA_DISCRIMINATED_TYPE_DECL_STATEMENT_START
 SgSymbol* get_symbol_from_symbol_table() const override;
@@ -5480,24 +5487,12 @@ SgScopeStatement::insert_symbol ( const SgName& n, SgSymbol* s )
              globalScopeAcrossFiles->get_symbol_table()->insert(n, asym);
            }
          } else {
-           printf ("Warning: In SgScopeStatement::insert_symbol(): global_scope == globalScopeAcrossFiles: skip insertion of redundant SgAliasSymbol \n");
+           mprintf ("Warning: In SgScopeStatement::insert_symbol(): global_scope == globalScopeAcrossFiles: skip insertion of redundant SgAliasSymbol \n");
          }
        } else {
-         printf ("In SgScopeStatement::insert_symbol(): project == NULL \n");
+         mprintf ("In SgScopeStatement::insert_symbol(): project == NULL \n");
        }
      }
-
-#if 0
-     ROSE_ASSERT(s != NULL);
-     SgNode* symbolBasis = s->get_symbol_basis();
-  // printf ("In SgScopeStatement::insert_symbol(%s,%p) into scope = %p = %s parent = %p = %s symbol = %p = %s s->get_symbol_basis() = %p = %s \n",
-     printf ("In SgScopeStatement::insert_symbol(%s,%p) into scope = %p = %s symbol = %p = %s s->get_symbol_basis() = %p = %s \n",
-          n.str(),s,
-          this,this->class_name().c_str(),
-       // this->get_parent(),this->get_parent()->class_name().c_str(),
-          s,s->class_name().c_str(),
-          symbolBasis,symbolBasis != NULL ? symbolBasis->class_name().c_str() : "NULL");
-#endif
 
   // Make sure that this specific symbol and name combination don't already exist in the AST.
      bool symbolAlreadyPresentLookupName = p_symbol_table->exists(n,s);
@@ -18107,10 +18102,6 @@ SgTemplateMemberFunctionDeclaration::post_construction_initialization()
 
 SOURCE_TEMPLATE_MEMBER_FUNCTION_DECLARATION_STATEMENT_END
 
-SOURCE_ADA_VARIANT_FIELD_DECL_START
-void SgAdaVariantFieldDecl::post_construction_initialization() {}
-SOURCE_ADA_VARIANT_FIELD_DECL_END
-
 
 SOURCE_TEMPLATE_VARIABLE_DECLARATION_STATEMENT_START
 
@@ -21137,10 +21128,30 @@ SOURCE_ADA_SELECT_ALTERNATIVE_STATEMENT_END
 
 
 SOURCE_ADA_TERMINATE_STATEMENT_START
-
 void SgAdaTerminateStmt::post_construction_initialization() {}
-
 SOURCE_ADA_TERMINATE_STATEMENT_END
+
+SOURCE_ADA_VARIANT_WHEN_STMT_START
+void SgAdaVariantWhenStmt::post_construction_initialization() {}
+SOURCE_ADA_VARIANT_WHEN_STMT_END
+
+SOURCE_ADA_UNSCOPED_BLOCK_START
+void
+SgAdaUnscopedBlock::post_construction_initialization() {}
+
+void
+SgAdaUnscopedBlock::append_statement(SgStatement* element)
+{
+  get_statements().push_back(element);
+}
+
+void
+SgAdaUnscopedBlock::prepend_statement(SgStatement* element)
+{
+  get_statements().insert(get_statements().begin(), element);
+}
+
+SOURCE_ADA_UNSCOPED_BLOCK_END
 
 SOURCE_ADA_RENAMING_DECL_STATEMENT_START
 void SgAdaRenamingDecl::post_construction_initialization() {}
@@ -21163,6 +21174,29 @@ SgAdaRenamingDecl::get_mangled_name() const
   return name;
 }
 SOURCE_ADA_RENAMING_DECL_STATEMENT_END
+
+SOURCE_ADA_VARIANT_DECL_START
+void
+SgAdaVariantDecl::post_construction_initialization() {}
+
+SgName
+SgAdaVariantDecl::get_mangled_name() const
+{
+  std::stringstream ns;
+
+  ns << "ada$variantswitch$" << this;
+  return SgName(ns.str());
+}
+
+SgSymbol*
+SgAdaVariantDecl::get_symbol_from_symbol_table() const
+{
+  return nullptr; // FIXME \todo PP: what else?
+}
+
+
+SOURCE_ADA_VARIANT_DECL_END
+
 
 SOURCE_ADA_DISCRIMINATED_TYPE_DECL_STATEMENT_START
 void SgAdaDiscriminatedTypeDecl::post_construction_initialization()

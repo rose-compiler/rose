@@ -20,6 +20,7 @@
 #include <Rose/BinaryAnalysis/DisassemblerAarch32.h>
 #include <Rose/BinaryAnalysis/DisassemblerAarch64.h>
 #include <Rose/BinaryAnalysis/Disassembler.h>
+#include <Rose/BinaryAnalysis/DisassemblerJvm.h>
 #include <Rose/BinaryAnalysis/DisassemblerM68k.h>
 #include <Rose/BinaryAnalysis/DisassemblerMips.h>
 #include <Rose/BinaryAnalysis/DisassemblerNull.h>

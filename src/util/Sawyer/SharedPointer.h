@@ -118,7 +118,7 @@ public:
      *  undefined behavior. */
     template<class Y>
     explicit SharedPointer(Y *rawPtr): pointee_(rawPtr) {
-        if (pointee_!=NULL)
+        if (pointee_!=nullptr)
             acquireOwnership(pointee_);
     }
 
@@ -275,7 +275,7 @@ public:
      *   }
      *  @endcode */
     operator unspecified_bool() const {
-        return pointee_ ? &SharedPointer::this_type_does_not_support_comparisons : 0;
+        return pointee_ ? &SharedPointer::this_type_does_not_support_comparisons : nullptr;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -398,7 +398,7 @@ inline size_t SharedPointer<T>::ownershipCount(T *rawPtr) {
 
 template<class T>
 inline void SharedPointer<T>::acquireOwnership(Pointee *rawPtr) {
-    if (rawPtr!=NULL) {
+    if (rawPtr!=nullptr) {
         SAWYER_THREAD_TRAITS::LockGuard lock(rawPtr->SharedObject::mutex_);
         ++rawPtr->SharedObject::nrefs_;
     }
@@ -406,7 +406,7 @@ inline void SharedPointer<T>::acquireOwnership(Pointee *rawPtr) {
 
 template<class T>
 inline size_t SharedPointer<T>::releaseOwnership(Pointee *rawPtr) {
-    if (rawPtr!=NULL) {
+    if (rawPtr!=nullptr) {
         SAWYER_THREAD_TRAITS::LockGuard lock(rawPtr->SharedObject::mutex_);
         assert(rawPtr->SharedObject::nrefs_ > 0);
         return --rawPtr->SharedObject::nrefs_;

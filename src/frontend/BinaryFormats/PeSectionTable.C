@@ -42,7 +42,7 @@ void
 SgAsmPESectionTableEntry::update_from_section(SgAsmPESection *section)
 {
     SgAsmPEFileHeader *fhdr = SageInterface::getEnclosingNode<SgAsmPEFileHeader>(section);
-    ROSE_ASSERT(fhdr!=NULL);
+    ROSE_ASSERT(fhdr!=nullptr);
 
     p_virtual_size = section->get_mapped_size();
     p_rva = section->get_mapped_preferred_rva();
@@ -197,7 +197,7 @@ void
 SgAsmPESectionTable::ctor()
 {
     SgAsmPEFileHeader *fhdr = dynamic_cast<SgAsmPEFileHeader*>(get_header());
-    ROSE_ASSERT(fhdr!=NULL);
+    ROSE_ASSERT(fhdr!=nullptr);
     fhdr->set_section_table(this);
 
     set_synthesized(true);
@@ -212,7 +212,7 @@ SgAsmPESectionTable::parse()
     SgAsmGenericSection::parse();
 
     SgAsmPEFileHeader *fhdr = dynamic_cast<SgAsmPEFileHeader*>(get_header());
-    ROSE_ASSERT(fhdr!=NULL);
+    ROSE_ASSERT(fhdr!=nullptr);
 
     /* Parse section table and construct section objects, but do not parse the sections yet. */
     SgAsmGenericSectionPtrList pending;
@@ -225,7 +225,7 @@ SgAsmPESectionTable::parse()
                        <<" extends beyond end of defined section table.\n";
         SgAsmPESectionTableEntry *entry = new SgAsmPESectionTableEntry(&disk);
 
-        SgAsmPESection *section = NULL;
+        SgAsmPESection *section = nullptr;
         if (entry->get_name() == ".idata") {
             // If the PAIR_IMPORTS rva/size pair has a non-zero pointer, then avoid creating an import table from this ".idata"
             // section. Sometimes the rva/size pair will point to a different region in memory than ".idata", in which case the
@@ -246,7 +246,7 @@ SgAsmPESectionTable::parse()
     /* Build the memory mapping like the real loader would do. This is the same code used by
      * SgAsmExecutableFileFormat::parseBinaryFormat() except we're doing it here early because we need it in the rest of the
      * PE parser. */
-    ROSE_ASSERT(NULL==fhdr->get_loader_map());
+    ROSE_ASSERT(nullptr==fhdr->get_loader_map());
     BinaryLoader::Ptr loader = BinaryLoader::lookup(fhdr); /*no need to clone; we're not changing any settings*/
     ASSERT_not_null(loader);
     MemoryMap::Ptr loader_map = MemoryMap::instance();
@@ -263,13 +263,13 @@ SgAsmPESectionTable::parse()
 void
 SgAsmPESectionTable::add_section(SgAsmPESection *section)
 {
-    ROSE_ASSERT(section!=NULL);
+    ROSE_ASSERT(section!=nullptr);
     ROSE_ASSERT(section->get_file()==get_file());
     ROSE_ASSERT(section->get_header()==get_header());
-    ROSE_ASSERT(section->get_section_entry()==NULL);            /* must not be in the section table yet */
+    ROSE_ASSERT(section->get_section_entry()==nullptr);         /* must not be in the section table yet */
     
     SgAsmPEFileHeader *fhdr = dynamic_cast<SgAsmPEFileHeader*>(get_header());
-    ROSE_ASSERT(fhdr!=NULL);
+    ROSE_ASSERT(fhdr!=nullptr);
     
     /* Assign an ID if there isn't one yet. */
     if (section->get_id()<0) {
@@ -298,7 +298,7 @@ SgAsmPESectionTable::reallocate()
     
     /* Resize based on section having largest ID */
     SgAsmPEFileHeader *fhdr = dynamic_cast<SgAsmPEFileHeader*>(get_header());
-    ROSE_ASSERT(fhdr != NULL);
+    ROSE_ASSERT(fhdr != nullptr);
     SgAsmGenericSectionPtrList sections = fhdr->get_sections()->get_sections();
     int max_id = 0;
     for (size_t i=0; i<sections.size(); i++) {
@@ -329,13 +329,13 @@ void
 SgAsmPESectionTable::unparse(std::ostream &f) const
 {
     SgAsmPEFileHeader *fhdr = dynamic_cast<SgAsmPEFileHeader*>(get_header());
-    ROSE_ASSERT(fhdr != NULL);
+    ROSE_ASSERT(fhdr != nullptr);
     SgAsmGenericSectionPtrList sections = fhdr->get_sections()->get_sections();
 
     for (size_t i = 0; i < sections.size(); i++) {
         if (sections[i]->get_id()>=0) {
             SgAsmPESection *section = isSgAsmPESection(sections[i]);
-            ROSE_ASSERT(section!=NULL);
+            ROSE_ASSERT(section!=nullptr);
 
             /* Write the table entry */
             ROSE_ASSERT(section->get_id() > 0); /*ID's are 1-origin in PE*/

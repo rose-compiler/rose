@@ -291,6 +291,7 @@ namespace Rose
      extern bool is_C99_language;
      extern bool is_Cxx_language;
      extern bool is_Java_language;
+     extern bool is_Jvm_language;
      extern bool is_Jovial_language;
      extern bool is_Fortran_language;
      extern bool is_CAF_language;

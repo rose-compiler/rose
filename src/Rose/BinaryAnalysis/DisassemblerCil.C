@@ -230,7 +230,7 @@ EAM_BACKWARD(unsigned eamodes, size_t lobit=0)
     return retval;
 }
 #endif // Unused function
-    
+
 template<size_t lo, size_t hi>
 Pattern BITS(unsigned val)
 {
@@ -452,7 +452,7 @@ DisassemblerCil::makeAddressRegisterPostIncrement(State &state, unsigned regnum,
     rre->set_adjustment(nbits/8); // post increment number of bytes
     return SageBuilderAsm::buildMemoryReferenceExpression(rre, NULL/*segment*/, type);
 }
-    
+
 
 SgAsmRegisterReferenceExpression *
 DisassemblerCil::makeDataAddressRegister(State &state, unsigned regnum, CilDataFormat fmt, size_t bit_offset) const
@@ -693,7 +693,7 @@ DisassemblerCil::makeImmediateExtension(State &state, CilDataFormat fmt, size_t 
     ASSERT_require(nBits > 0);
     if (8==nBits)
         return SageBuilderAsm::buildValueInteger(instructionWord(state, ext_word_number+1) & 0xff, makeType(state, fmt));
-        
+
     ASSERT_require(nBits % 16 == 0);
     size_t nWords = nBits / 16;
     Sawyer::Container::BitVector bv(nBits);
@@ -704,7 +704,7 @@ DisassemblerCil::makeImmediateExtension(State &state, CilDataFormat fmt, size_t 
     }
     return SageBuilderAsm::buildValueInteger(bv, makeType(state, fmt));
 }
-            
+
 // The modreg should be 6 bits: upper three bits are the mode, lower three bits are usually a register number.
 SgAsmExpression *
 DisassemblerCil::makeEffectiveAddress(State &state, unsigned modreg, CilDataFormat fmt, size_t ext_offset) const
@@ -1027,7 +1027,7 @@ DisassemblerCil::makeInstruction(rose_addr_t start_va, CilInstructionKind kind, 
 //              |     1 |      011 | memory indirect with long outer displacement      |
 //              |     1 |      1xx | reserved                                          |
 //              |-------+----------+---------------------------------------------------|
-//              
+//
 //      Special operand specifiers (if any, one or two words)
 //      Immediate operand or source effective address extension (if any, one to six words)
 //      Destination effective address extension (if any, one to six words)
@@ -1094,16 +1094,24 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
     printf ("nbytes = %zu sizeof(state.iwords[0]) = %zu \n",nbytes,sizeof(state.iwords[0]));
 #endif
 
+#if PP_NEEDED_OR_NOT
     state.niwords = nbytes / sizeof(state.iwords[0]);
 
 #if DEBUG_DISASSEMBLE_ONE
  // DQ (10/19/2021): Tracing through the CIL disassembly.
     printf ("state.niwords = %zu \n",state.niwords);
 #endif
+#endif /* PP_NEEDED_OR_NOT */
 
-    if (0==state.niwords)
-        throw Exception("short read from memory map", start_va);
+    // PP (08/17/22) A Cil instruction code is either one or two bytes long
+    //               e.g., ret is one byte
+    // => The following code does not hold for ret
+    //~ if (0==state.niwords)
+        //~ throw Exception("short read from memory map", start_va);
+    // Instead clear the remaining buffer bytes
+    for (size_t i = nbytes; i < sizeof buf; ++i) buf[i] = 0;
 
+#if PP_NEEDED_OR_NOT
 #if DEBUG_DISASSEMBLE_ONE
  // DQ (10/19/2021): Tracing through the CIL disassembly.
  // printf ("Loop over state.iwords array: state.iwords.size() = %zu \n",state.iwords.size());
@@ -1129,6 +1137,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
  // DQ (10/19/2021): Tracing through the CIL disassembly.
     printf ("sizeof(state.iwords) = %zu \n",sizeof(state.iwords));
 #endif
+#endif /* PP_NEEDED_OR_NOT */
 
     state.niwords_used = 1;
 
@@ -1143,8 +1152,6 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
  // DQ (10/19/2021): Tracing through the CIL disassembly.
     printf ("DONE: Calling find_idis() in DisassemblerCil::disassembleOne \n");
 #endif
-
-    ASSERT_require(state.niwords_used>0);
 
 #if DEBUG_DISASSEMBLE_ONE || 0
  // DQ (10/19/2021): Tracing through the CIL disassembly.
@@ -1448,7 +1455,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 #if 1
              printf ("Found Cil_ldnull instruction (push a null reference on the stack) \n");
 #endif
-          // This should have one operand which should be the target, not yet clear how to resolve 
+          // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              insn = makeInstruction(start_va,Cil_ldc_i4_m1,"ldnull");
              raw_bytes.resize(1);
@@ -1461,7 +1468,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 #if 1
              printf ("Found Cil_ldc_i4_m1 instruction (load numeric constant) \n");
 #endif
-          // This should have one operand which should be the target, not yet clear how to resolve 
+          // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              insn = makeInstruction(start_va,Cil_ldc_i4_m1,"ldc_i4_m1");
              raw_bytes.resize(1);
@@ -1474,7 +1481,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 #if 1
              printf ("Found Cil_ldc_i4_0 instruction (load numeric constant) \n");
 #endif
-          // This should have one operand which should be the target, not yet clear how to resolve 
+          // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              insn = makeInstruction(start_va,Cil_ldc_i4_0,"ldc_i4_0");
              raw_bytes.resize(1);
@@ -1487,7 +1494,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 #if 1
              printf ("Found Cil_ldc_i4_1 instruction (load numeric constant) \n");
 #endif
-          // This should have one operand which should be the target, not yet clear how to resolve 
+          // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              insn = makeInstruction(start_va,Cil_ldc_i4_1,"ldc_i4_1");
              raw_bytes.resize(1);
@@ -1500,7 +1507,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 #if 1
              printf ("Found Cil_ldc_i4_2 instruction (load numeric constant) \n");
 #endif
-          // This should have one operand which should be the target, not yet clear how to resolve 
+          // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              insn = makeInstruction(start_va,Cil_ldc_i4_2,"ldc_i4_2");
              raw_bytes.resize(1);
@@ -1513,7 +1520,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 #if 1
              printf ("Found Cil_ldc_i4_3 instruction (load numeric constant) \n");
 #endif
-          // This should have one operand which should be the target, not yet clear how to resolve 
+          // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              insn = makeInstruction(start_va,Cil_ldc_i4_3,"ldc_i4_3");
              raw_bytes.resize(1);
@@ -1526,7 +1533,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 #if 1
              printf ("Found Cil_ldc_i4_4 instruction (load numeric constant) \n");
 #endif
-          // This should have one operand which should be the target, not yet clear how to resolve 
+          // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              insn = makeInstruction(start_va,Cil_ldc_i4_4,"ldc_i4_4");
              raw_bytes.resize(1);
@@ -1539,7 +1546,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 #if 1
              printf ("Found Cil_ldc_i4_5 instruction (load numeric constant) \n");
 #endif
-          // This should have one operand which should be the target, not yet clear how to resolve 
+          // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              insn = makeInstruction(start_va,Cil_ldc_i4_5,"ldc_i4_5");
              raw_bytes.resize(1);
@@ -1552,7 +1559,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 #if 1
              printf ("Found Cil_ldc_i4_6 instruction (load numeric constant) \n");
 #endif
-          // This should have one operand which should be the target, not yet clear how to resolve 
+          // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              insn = makeInstruction(start_va,Cil_ldc_i4_6,"ldc_i4_6");
              raw_bytes.resize(1);
@@ -1565,7 +1572,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 #if 1
              printf ("Found Cil_ldc_i4_7 instruction (load numeric constant) \n");
 #endif
-          // This should have one operand which should be the target, not yet clear how to resolve 
+          // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              insn = makeInstruction(start_va,Cil_ldc_i4_7,"ldc_i4_7");
              raw_bytes.resize(1);
@@ -1618,7 +1625,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
           // SgAsmIntegerValueExpression* operand = buildValueInteger((int64_t)value,NULL);
              SgAsmIntegerValueExpression* operand = SageBuilderAsm::buildValueI32(value);
 
-          // This should have one operand which should be the target, not yet clear how to resolve 
+          // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              insn = makeInstruction(start_va,Cil_ldc_i4,"ldc_i4",operand);
              raw_bytes.resize(5);
@@ -1641,7 +1648,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
           // SgAsmIntegerValueExpression* operand = new SgAsmIntegerValueExpression(value,NULL);
              SgAsmIntegerValueExpression* operand = SageBuilderAsm::buildValueI64(value);
 
-          // This should have one operand which should be the target, not yet clear how to resolve 
+          // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              insn = makeInstruction(start_va,Cil_ldc_i8,"ldc_i8",operand);
              raw_bytes.resize(9);
@@ -1667,7 +1674,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
              SgAsmFloatValueExpression* operand = SageBuilderAsm::buildValueIeee754Binary32(float_value);
 
-          // This should have one operand which should be the target, not yet clear how to resolve 
+          // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              insn = makeInstruction(start_va,Cil_ldc_r4,"ldc_r4",operand);
              raw_bytes.resize(5);
@@ -1689,7 +1696,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
              SgAsmFloatValueExpression* operand = SageBuilderAsm::buildValueIeee754Binary64(float_value);
 
-          // This should have one operand which should be the target, not yet clear how to resolve 
+          // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              insn = makeInstruction(start_va,Cil_ldc_r8,"ldc_r8",operand);
              raw_bytes.resize(5);
@@ -1715,7 +1722,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 #if 1
              printf ("Found Cil_pop instruction (remove the top element from the stack) \n");
 #endif
-          // This should have one operand which should be the target, not yet clear how to resolve 
+          // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              insn = makeInstruction(start_va,Cil_pop,"pop");
              raw_bytes.resize(1);
@@ -1891,7 +1898,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 #if 1
              printf ("Found Cil_ble_s instruction (branch to target if less than or equal to) \n");
 #endif
-          // This should have one operand which should be the target, not yet clear how to resolve 
+          // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              insn = makeInstruction(start_va,Cil_bgt_s,"bgt_s");
              raw_bytes.resize(1);
@@ -2270,7 +2277,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 #endif
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
-          // This should have one operand which should be the target, not yet clear how to resolve 
+          // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              insn = makeInstruction(start_va,Cil_ldind_i1,"ldind_i1",operand);
              raw_bytes.resize(1);
@@ -2285,7 +2292,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 #endif
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
-          // This should have one operand which should be the target, not yet clear how to resolve 
+          // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              insn = makeInstruction(start_va,Cil_ldind_u1,"ldind_u1",operand);
              raw_bytes.resize(1);
@@ -2300,7 +2307,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 #endif
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
-          // This should have one operand which should be the target, not yet clear how to resolve 
+          // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              insn = makeInstruction(start_va,Cil_ldind_i2,"ldind_i2",operand);
              raw_bytes.resize(1);
@@ -2315,7 +2322,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 #endif
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
-          // This should have one operand which should be the target, not yet clear how to resolve 
+          // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              insn = makeInstruction(start_va,Cil_ldind_u2,"ldind_u2",operand);
              raw_bytes.resize(1);
@@ -2330,7 +2337,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 #endif
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
-          // This should have one operand which should be the target, not yet clear how to resolve 
+          // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              insn = makeInstruction(start_va,Cil_ldind_i4,"ldind_i4",operand);
              raw_bytes.resize(1);
@@ -2345,7 +2352,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 #endif
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
-          // This should have one operand which should be the target, not yet clear how to resolve 
+          // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              insn = makeInstruction(start_va,Cil_ldind_i4,"ldind_i4",operand);
              raw_bytes.resize(1);
@@ -2360,7 +2367,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 #endif
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
-          // This should have one operand which should be the target, not yet clear how to resolve 
+          // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              insn = makeInstruction(start_va,Cil_ldind_u8,"ldind_u8",operand);
              raw_bytes.resize(1);
@@ -2375,7 +2382,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 #endif
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
-          // This should have one operand which should be the target, not yet clear how to resolve 
+          // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              insn = makeInstruction(start_va,Cil_ldind_i,"ldind_i",operand);
              raw_bytes.resize(1);
@@ -2390,7 +2397,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 #endif
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
-          // This should have one operand which should be the target, not yet clear how to resolve 
+          // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              insn = makeInstruction(start_va,Cil_ldind_r4,"ldind_r4",operand);
              raw_bytes.resize(1);
@@ -2405,7 +2412,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 #endif
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
-          // This should have one operand which should be the target, not yet clear how to resolve 
+          // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              insn = makeInstruction(start_va,Cil_ldind_r8,"ldind_r8",operand);
              raw_bytes.resize(1);
@@ -2420,7 +2427,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 #endif
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
-          // This should have one operand which should be the target, not yet clear how to resolve 
+          // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              insn = makeInstruction(start_va,Cil_ldind_ref,"ldind_ref",operand);
              raw_bytes.resize(1);
@@ -2534,7 +2541,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
              SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
              SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
 
-          // This should have one operand which should be the target, not yet clear how to resolve 
+          // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              insn = makeInstruction(start_va,Cil_add,"add",operand_0,operand_1);
 
@@ -2554,7 +2561,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
              SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
              SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
 
-          // This should have one operand which should be the target, not yet clear how to resolve 
+          // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              insn = makeInstruction(start_va,Cil_sub,"sub",operand_0,operand_1);
 
@@ -2574,7 +2581,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
              SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
              SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
 
-          // This should have one operand which should be the target, not yet clear how to resolve 
+          // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              insn = makeInstruction(start_va,Cil_mul,"mul",operand_0,operand_1);
 
@@ -2594,7 +2601,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
              SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
              SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
 
-          // This should have one operand which should be the target, not yet clear how to resolve 
+          // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              insn = makeInstruction(start_va,Cil_div,"div",operand_0,operand_1);
 
@@ -2614,7 +2621,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
              SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
              SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
 
-          // This should have one operand which should be the target, not yet clear how to resolve 
+          // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              insn = makeInstruction(start_va,Cil_div_un,"div_un",operand_0,operand_1);
 
@@ -2634,7 +2641,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
              SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
              SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
 
-          // This should have one operand which should be the target, not yet clear how to resolve 
+          // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              insn = makeInstruction(start_va,Cil_rem,"rem",operand_0,operand_1);
 
@@ -2654,7 +2661,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
              SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
              SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
 
-          // This should have one operand which should be the target, not yet clear how to resolve 
+          // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              insn = makeInstruction(start_va,Cil_rem_un,"rem_un",operand_0,operand_1);
 
@@ -2674,7 +2681,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
              SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
              SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
 
-          // This should have one operand which should be the target, not yet clear how to resolve 
+          // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              insn = makeInstruction(start_va,Cil_and,"and",operand_0,operand_1);
 
@@ -2694,7 +2701,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
              SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
              SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
 
-          // This should have one operand which should be the target, not yet clear how to resolve 
+          // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              insn = makeInstruction(start_va,Cil_or,"or",operand_0,operand_1);
 
@@ -2714,7 +2721,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
              SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
              SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
 
-          // This should have one operand which should be the target, not yet clear how to resolve 
+          // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              insn = makeInstruction(start_va,Cil_xor,"xor",operand_0,operand_1);
 
@@ -2731,7 +2738,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 #if 1
              printf ("Found Cil_shl instruction (shift an integer left (shift in zero), return an integer) \n");
 #endif
-          // This should have one operand which should be the target, not yet clear how to resolve 
+          // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
              SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
@@ -2747,7 +2754,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 #if 1
              printf ("Found Cil_shr instruction (shift an integer right (shift in zero), return an integer) \n");
 #endif
-          // This should have one operand which should be the target, not yet clear how to resolve 
+          // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
              SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
@@ -2763,7 +2770,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 #if 1
              printf ("Found Cil_shr_un instruction (shift an integer right (shift in zero), return an integer) \n");
 #endif
-          // This should have one operand which should be the target, not yet clear how to resolve 
+          // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
              SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
@@ -2779,7 +2786,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 #if 1
              printf ("Found Cil_neg instruction (negates value from stack and pushes new value onto the stack) \n");
 #endif
-          // This should have one operand which should be the target, not yet clear how to resolve 
+          // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
@@ -2794,7 +2801,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 #if 1
              printf ("Found Cil_not instruction (bitwise complement) \n");
 #endif
-          // This should have one operand which should be the target, not yet clear how to resolve 
+          // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
@@ -2809,7 +2816,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 #if 1
              printf ("Found Cil_conv_i1 instruction (data conversion to int8, pushing int32 on stack) \n");
 #endif
-          // This should have one operand which should be the target, not yet clear how to resolve 
+          // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
@@ -2824,7 +2831,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 #if 1
              printf ("Found Cil_conv_i2 instruction (data conversion to int16, pushing int32 on stack) \n");
 #endif
-          // This should have one operand which should be the target, not yet clear how to resolve 
+          // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
@@ -2839,7 +2846,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 #if 1
              printf ("Found Cil_conv_i4 instruction (data conversion to int32, pushing int32 on stack) \n");
 #endif
-          // This should have one operand which should be the target, not yet clear how to resolve 
+          // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
@@ -2854,7 +2861,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 #if 1
              printf ("Found Cil_conv_i8 instruction (data conversion to int64, pushing int64 on stack) \n");
 #endif
-          // This should have one operand which should be the target, not yet clear how to resolve 
+          // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
@@ -2869,7 +2876,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 #if 1
              printf ("Found Cil_conv_r4 instruction (data conversion to float32, pushing F on stack) \n");
 #endif
-          // This should have one operand which should be the target, not yet clear how to resolve 
+          // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
@@ -2884,7 +2891,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 #if 1
              printf ("Found Cil_conv_r8 instruction (data conversion to float64, pushing F on stack) \n");
 #endif
-          // This should have one operand which should be the target, not yet clear how to resolve 
+          // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
@@ -2899,7 +2906,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 #if 1
              printf ("Found Cil_conv_u4 instruction (data conversion to int32, pushing int32 on stack) \n");
 #endif
-          // This should have one operand which should be the target, not yet clear how to resolve 
+          // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
@@ -2914,7 +2921,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 #if 1
              printf ("Found Cil_conv_u8 instruction (data conversion to unsigned int64, pushing int64 on stack) \n");
 #endif
-          // This should have one operand which should be the target, not yet clear how to resolve 
+          // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
@@ -3922,7 +3929,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 #if 1
              printf ("Found Cil_conv_u2 instruction (data conversion to unsigned int16, pushing int32 on stack) \n");
 #endif
-          // This should have one operand which should be the target, not yet clear how to resolve 
+          // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
@@ -3937,7 +3944,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 #if 1
              printf ("Found Cil_conv_u1 instruction (data conversion to unsigned int8, pushing int32 on stack) \n");
 #endif
-          // This should have one operand which should be the target, not yet clear how to resolve 
+          // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
@@ -3952,7 +3959,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 #if 1
              printf ("Found Cil_conv_i instruction (data conversion to native int, pushing native int on stack) \n");
 #endif
-          // This should have one operand which should be the target, not yet clear how to resolve 
+          // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
@@ -4133,7 +4140,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 #if 1
              printf ("Found Cil_conv_u instruction (data conversion native unsigned int, pushing native int on stack) \n");
 #endif
-          // This should have one operand which should be the target, not yet clear how to resolve 
+          // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
@@ -4775,7 +4782,7 @@ DisassemblerCil::insert_idis(Cil *idis)
     // nybble is invariant, and entry 16 is the catch-all.
     std::pair<uint16_t, uint16_t> invariantValMask = idis->pattern.invariants(0xf000, 0);
     size_t idisIdx = 0xf000==invariantValMask.second ? (invariantValMask.first>>12) & 0xf : 16;
-    
+
     // Check whether this instruction disassembler's bit pattern is ambiguous with an existing pattern
     for (IdisList::iterator ti=idis_table[idisIdx].begin(); ti!=idis_table[idisIdx].end(); ++ti) {
         std::pair<size_t, size_t> alternatives;
@@ -4856,13 +4863,13 @@ DisassemblerCil::find_idis(uint16_t *insn_bytes, size_t nbytes) const
 typedef DisassemblerCil::Cil Cil;
 
 // DQ (10/20/2021): Added NOP instruction
-struct Cil_nop: Cil 
+struct Cil_nop: Cil
    {
      Cil_nop(): Cil("nop", Cil_family, OP(4) & BITS<0, 11>(0xe71)) {}
 
 #if 0
   // DQ (10/20/2021): We don't need this functor.
-     SgAsmCilInstruction *operator()(DisassemblerCil::State &state, const D *d, unsigned w0) 
+     SgAsmCilInstruction *operator()(DisassemblerCil::State &state, const D *d, unsigned w0)
         {
           return d->makeInstruction(state, Cil_nop, "nop");
         }
@@ -4871,13 +4878,13 @@ struct Cil_nop: Cil
 
 
 // DQ (10/20/2021): Added break instruction
-struct Cil_break: Cil 
+struct Cil_break: Cil
    {
      Cil_break(): Cil("break", Cil_family, OP(4) & BITS<0, 11>(0xe71)) {}
 
 #if 0
   // DQ (10/20/2021): We don't need this functor.
-     SgAsmCilInstruction *operator()(DisassemblerCil::State &state, const D *d, unsigned w0) 
+     SgAsmCilInstruction *operator()(DisassemblerCil::State &state, const D *d, unsigned w0)
         {
           return d->makeInstruction(state, Cil_break, "break");
         }
@@ -5130,12 +5137,12 @@ struct Cil_ashift_1: Cil {
     }
 };
 
-// ASL.B #<nbits>, Dx        
-// ASL.W #<nbits>, Dx        
-// ASL.L #<nbits>, Dx        
-// ASR.B #<nbits>, Dx        
-// ASR.W #<nbits>, Dx        
-// ASR.L #<nbits>, Dx        
+// ASL.B #<nbits>, Dx
+// ASL.W #<nbits>, Dx
+// ASL.L #<nbits>, Dx
+// ASR.B #<nbits>, Dx
+// ASR.W #<nbits>, Dx
+// ASR.L #<nbits>, Dx
 struct Cil_ashift_2: Cil {
     Cil_ashift_2(): Cil("ashift_2", Cil_family,
                           OP(14) & (BITS<6, 7>(0) | BITS<6, 7>(1) | BITS<6, 7>(2)) & BITS<3, 5>(0)) {}
@@ -5930,7 +5937,7 @@ struct Cil_divu_w: Cil {
         return d->makeInstruction(state, Cil_divu, "divu.w", src, dst);
     }
 };
-    
+
 // DIVS.L <ea>, Dq                      Dq[32] / <ea>[32] -> Dq
 // DIVU.L <ea>, Dq                      Dq[32] / <ea>[32] -> Dq
 // DIVS.L <ea>, Dr, Dq                  (Dr:Dq)[64] / <ea>[32] -> Dq[32] and (Dr:Dq)[64] % <ea>[32] -> Dr[32]
@@ -7366,7 +7373,7 @@ struct Cil_jmp: Cil {
         return d->makeInstruction(state, Cil_jmp, "jmp", target);
     }
 };
-                
+
 // JSR <ea>x
 struct Cil_jsr: Cil {
     Cil_jsr(): Cil("jsr", Cil_family,
@@ -7879,7 +7886,7 @@ struct Cil_movem_rm: Cil {
         return d->makeInstruction(state, Cil_movem, "movem."+formatLetter(fmt), src, dst);
     }
 };
-                
+
 // MOVEP.W Dx, (d16,Ay)
 // MOVEP.L Dx, (d16,Ay)
 // MOVEP.W (d16,Ay), Dx
@@ -8572,7 +8579,7 @@ struct Cil_trapcc: Cil {
         }
     }
 };
-        
+
 // TRAPV
 struct Cil_trapv: Cil {
     Cil_trapv(): Cil("trapv", Cil_family,
@@ -8632,11 +8639,11 @@ struct Cil_unpk: Cil {
 #endif
 
 
-    
+
 //                              Instructions from MFC5484 that we don't use anymore
-//  
-//  
-//  
+//
+//
+//
 //  // BITREV.L Dx
 //  struct Cil_bitrev: Cil {
 //      Cil_bitrev(): Cil("bitrev", OP(0) & BITS<3, 11>(0x18)) {}
@@ -8644,7 +8651,7 @@ struct Cil_unpk: Cil {
 //          return d->makeInstruction(state, Cil_bitrev, "bitrev.l", d->makeDataRegister(state, extract<0, 2>(w0), 32));
 //      }
 //  };
-//  
+//
 //  // BYTEREV.L Dx
 //  struct Cil_byterev: Cil {
 //      Cil_byterev(): Cil("byterev", OP(0) & BITS<3, 11>(0x58)) {}
@@ -8652,7 +8659,7 @@ struct Cil_unpk: Cil {
 //          return d->makeInstruction(state, Cil_byterev, "byterev.l", d->makeDataRegister(state, extract<0, 2>(w0), 32));
 //      }
 //  };
-//  
+//
 //  // FF1.L Dx
 //  struct Cil_ff1: Cil {
 //      Cil_ff1(): Cil("ff1", OP(0) & BITS<3, 11>(0x98)) {}
@@ -8660,9 +8667,9 @@ struct Cil_unpk: Cil {
 //          return d->makeInstruction(state, Cil_ff1, "ff1.l", d->makeDataRegister(state, extract<0, 2>(w0), 32));
 //      }
 //  };
-//  
-//  
-//  
+//
+//
+//
 //  // MOVE.L MACSR, CCR
 //  struct Cil_move_macsr2ccr: Cil {
 //      Cil_move_macsr2ccr(): Cil("move_macsr2ccr", OP(10) & BITS<0, 11>(0x9c0)) {}
@@ -8672,8 +8679,8 @@ struct Cil_unpk: Cil {
 //                                    d->makeConditionCodeRegister(state));
 //      }
 //  };
-//  
-//  
+//
+//
 //  // MSAC.W Ry.{U,L}, Rx.{U,L} SF, <ea>y&, Rw
 //  struct Cil_msac_w2: Cil {
 //      Cil_msac_w2(): Cil("msac_w2", OP(10) & BITS<7, 8>(1) & EAM(Cil_eam_ari|Cil_eam_inc|Cil_eam_dec|Cil_eam_dsp) &
@@ -8692,7 +8699,7 @@ struct Cil_unpk: Cil {
 //          return d->makeInstruction(state, Cil_msac, "msac.w", ry, rx, sf, eay, use_mask, rw);
 //      }
 //  };
-//  
+//
 //  // PULSE
 //  struct Cil_pulse: Cil {
 //      Cil_pulse(): Cil("pulse", OP(4) & BITS<0, 11>(0xacc)) {}
@@ -8700,7 +8707,7 @@ struct Cil_unpk: Cil {
 //          return d->makeInstruction(state, Cil_pulse, "pulse");
 //      }
 //  };
-//  
+//
 //  // SATS.L Dx
 //  struct Cil_sats: Cil {
 //      Cil_sats(): Cil("sats", OP(4) & BITS<3, 11>(0x190)) {}
@@ -8709,8 +8716,8 @@ struct Cil_unpk: Cil {
 //          return d->makeInstruction(state, Cil_sats, "sats.l", dx);
 //      }
 //  };
-//  
-//                  
+//
+//
 //  // TPF
 //  // TPF.W #<data>
 //  // TPF.L #<data>
@@ -8734,7 +8741,7 @@ struct Cil_unpk: Cil {
 //          }
 //      }
 //  };
-//  
+//
 //  // WDDATA.B <ea>y
 //  // WDDATA.W <ea>y
 //  // WDDATA.L <ea>y
@@ -8756,7 +8763,7 @@ struct Cil_unpk: Cil {
 //          return d->makeInstruction(state, Cil_wddata, "wddata."+sizeToLetter(nbits), src);
 //      }
 //  };
-        
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void
 DisassemblerCil::init()

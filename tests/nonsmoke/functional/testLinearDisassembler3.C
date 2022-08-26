@@ -88,72 +88,93 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
     return parser.with(switches).parse(argc, argv).apply().unreachedArgs();
 }
 
-} // anonymous namespace
 
+SgAsmCilMetadataRoot*
+obtainMetaDataRoot()
+{
+  SgAsmCilMetadataRoot* res = nullptr;
+  VariantVector         vv{V_SgAsmCilMetadataRoot};
+  std::vector<SgNode*>  all = NodeQuery::queryMemoryPool(vv);
 
-// DQ (12/18/2021): Temporary global RVA list for each method.
-vector<uint32_t> rvaList;
+  ROSE_ASSERT(all.size() > 0);
 
-// Do a traversal over the AST, get the sections, look for the section with name ".text" and get its mapped address (get_mapped_actual_va()) and size (get_size()).
+  if (all.size() > 1)
+    ::mlog[ERROR] << "more than one SgAsmCilMetadataRoot objects." << std::endl;
 
-void look_for_cil_streams(Settings & settings,MemoryMap::Ptr map)
-   {
-     rose_addr_t va = settings.startVa;
+  res = isSgAsmCilMetadataRoot(all.front());
 
-     printf ("va = %zx \n",va);
+#if 0
+// DQ (12/23/2021): After discussion with Robb, here is the way to compute the constant value.
+// Need to compute the value 0x00400000
+  SgAsmInterpretation* interpretation = engine.interpretation();
 
-     size_t max_section_size = 1024*100;
-     uint8_t buf[max_section_size];
-     AddressInterval where = map->atOrAfter(va).require(MemoryMap::EXECUTABLE).limit(sizeof buf).read(buf);
+// Find the
+  SgAsmGenericList* headerList = interpretation.get_headers();
 
-  // DQ (12/2/2021): Location of .text section and it's size: 0x00402004 + 0x000003fc
-     ::mlog[INFO] << "where: " << where << std::endl;
+// Look for the SgAsmPEFileHeader
+  SgAsmPEFileHeader* peFileHeader = (found in headerList)
 
-  // printf ("Output the value of where: \n");
-  // Rose::StringUtility::addrToString(where);
+// Look for SgAsmCilHeader
+  SgAsmCilHeader* cilheader = ...
 
-  // Generate the upper and lower bounds.
-  // rose_addr_t least    = where.least();
-  // rose_addr_t greatest = where.greatest();
+// look for SgAsmCilMetadataRoot
+  res = /* connection from CilHeader to MetadataRoot object is missing */;
 
-  // Might overflow to zero if the section is the whole space.
-     rose_addr_t size = where.size();
-     max_section_size = size;
+// Should generate constant: 0x00400000
+  //~ rose_addr_t base_va = PeFileHeader->get_base_va();
 
-  // Make sure this is not a result of overlow and set to zero.
-     ROSE_ASSERT(max_section_size > 0);
+  //~ va = base_va + rvaList[0];
+#endif
+  ASSERT_not_null(res);
+  return res;
+}
 
-  // Now we can iterate through the buffer directly.
-     size_t index = 0;
+std::string
+getString(const SgAsmCilUint8Heap& heap, size_t idx)
+{
+  std::string          res;
+  std::vector<uint8_t> data = heap.get_Stream();
 
-     while (  (index < max_section_size)
-           && (SgAsmCilMetadataRoot::MAGIC_SIGNATURE != ByteOrder::le_to_host(*((uint32_t*)(buf+index))))
-           )
-     {
-       ++index;
-     }
-
-     if (index < max_section_size)
-     {
-       printf ("Found the start of a Cil Metadata Root in the .text section \n");
-
-       SgAsmCilMetadataRoot* metadata_root = new SgAsmCilMetadataRoot;
-       ASSERT_not_null(metadata_root);
-
-       metadata_root->parse(buf, index);
-
-       printf ("Generate the RVAs for each method: \n");
-       SgAsmCilMetadataHeap* metadataHeap = metadata_root->get_MetadataHeap();
-       ASSERT_not_null(metadataHeap);
-
-       for (SgAsmCilMethodDef* methodDef : metadataHeap->get_methodDef())
-       {
-         ASSERT_not_null(methodDef);
-
-         rvaList.push_back(methodDef->get_RVA());
-       }
-     }
+  while (char c = data.at(idx))
+  {
+    res += c;
+    ++idx;
   }
+
+  return res;
+}
+
+vector<uint32_t>
+generateRVAs(SgAsmCilMetadataRoot* n)
+{
+  vector<uint32_t> res;
+
+  printf ("Generate the RVAs for each method: \n");
+  SgAsmCilMetadataHeap* metadataHeap = n->get_MetadataHeap();
+  SgAsmCilUint8Heap*    stringHeap = n->get_StringHeap();
+  ASSERT_not_null(metadataHeap);
+  ASSERT_not_null(stringHeap);
+
+  for (SgAsmCilMethodDef* methodDef : metadataHeap->get_methodDef())
+  {
+    ASSERT_not_null(methodDef);
+    std::cerr << "Method at StringHeap[" << methodDef->get_Name()
+              << "] = " << getString(*stringHeap, methodDef->get_Name())
+              << std::endl;
+
+    res.push_back(methodDef->get_RVA());
+    
+    SgAsmBlock* blk = methodDef->get_body();
+    ASSERT_not_null(blk);
+    
+    for (SgAsmStatement* stmt : blk->get_statementList())
+      if (SgAsmCilInstruction* insn = isSgAsmCilInstruction(stmt))
+        std::cout << insn->get_mnemonic() << std::endl;
+  }
+
+  return res;
+}
+} // anonymous namespace
 
 
 int main(int argc, char *argv[])
@@ -173,19 +194,21 @@ int main(int argc, char *argv[])
 
     // Load the specimen as raw data or an ELF or PE container
     MemoryMap::Ptr map = engine.loadSpecimens(specimenNames);
+#if 0
     map->dump(::mlog[INFO]);
     map->dump(std::cout);
-    Disassembler *disassembler = engine.obtainDisassembler();
+#endif
 
-    // Obtain an unparser suitable for this disassembler
     AsmUnparser unparser;
+    Disassembler *disassembler = engine.obtainDisassembler();
+    // Obtain an unparser suitable for this disassembler
     unparser.set_registers(disassembler->registerDictionary());
+
 
  // DQ (12/18/2021): See if we can comment this out, I think we are not using it.
  // Build semantics framework; only used when settings.runSemantics is set
     BaseSemantics::DispatcherPtr dispatcher;
-
-#if 1
+#if 0
     if (settings.runSemantics) {
         BaseSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(disassembler->registerDictionary());
         ops = TraceSemantics::RiscOperators::instance(ops);
@@ -194,10 +217,14 @@ int main(int argc, char *argv[])
     }
 #endif
 
-#if 1
+#if 0
+    // PP (8/9/2022): metadata objects are loaded through the loader
     // DQ (11/7/2021): Start looking for the streams (Cil terminology) within the .text section.
     look_for_cil_streams(settings, map);
 #endif
+
+    SgAsmCilMetadataRoot* metadata = obtainMetaDataRoot();
+    std::vector<uint32_t> rvaList = generateRVAs(metadata);
 
 #if 0
     printf ("Exiting after unparsing the CIL streams (skipping disassembly of instructions until we can resolve RVA) \n");
@@ -222,26 +249,11 @@ int main(int argc, char *argv[])
 
     printf ("Before reset using RVA: va = 0x%" PRIu64 " \n",va);
 
-#if 1
+#if 1 /* XYZ */
  // Reset the va to incude the generated RVA
  // va = rvaList[0];
 #if 1
     va = 0x00400000 + rvaList[0];
-#else
- // DQ (12/23/2021): After discussion with Robb, here is the way to compute the constant value.
- // Need to compute the value 0x00400000
-    SgAsmInterpretation* interpretation = engine.interpretation();
-
- // Find the
-    SgAsmGenericList* headerList = interpretation.get_headers();
-
- // Look for the SgAsmPEFileHeader
-    SgAsmPEFileHeader* PeFileHeader = (found in headerList)
-
- // Should generate constant: 0x00400000
-    rose_addr_t base_va = PeFileHeader->get_base_va();
-
-    va = base_va + rvaList[0];
 #endif
 
     printf ("After explicitly setting va(using 0x00400000 + RVA): va = 0x%" PRIu64 " \n",va);
@@ -296,7 +308,7 @@ int main(int argc, char *argv[])
        }
 
     printf ("After reset using RVA: va = 0x%" PRIu64 "\n",va);
-#endif
+#endif /* XYZ */
 
 #if 1
     printf ("Exiting before processing instructions \n");

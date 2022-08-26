@@ -128,7 +128,7 @@ namespace
   };
 */
 
-  void checkConvertToOperatorRepOnTypes(SgNode* ast)
+  void checkConvertToOperatorRepOnTypes()
   {
     VariantVector vv{V_SgType};
 
@@ -175,7 +175,7 @@ int main( int argc, char * argv[] )
     si::ada::convertToOperatorRepresentation(project, true /* convert all operators */, true /* resolve named args */);
     si::ada::convertToCaseSensitiveSymbolTables(project);
 
-    checkConvertToOperatorRepOnTypes(project);
+    checkConvertToOperatorRepOnTypes();
   }
   catch (...)
   {

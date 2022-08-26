@@ -8,33 +8,6 @@
 
 #include "clang-to-dot.hpp"
 
-#if 0
-// DQ (4/5/2017): nothing works since we need the version of Clang/LLVM that we are using to be compilied without the "-fno-rtti" option.
-// DQ (3/1/2017): Trying to get rid of linker error.
-#ifdef ROSE_USE_CLANG_FRONTEND
-#include "typeinfo"
-// clang::ASTConsumer::typeinfo() {};
-// clang::PPCallbacks::typeinfo() {};
-// extern "C" {
-#if 0
-namespace clang {
-  namespace ASTConsumer {
-     typeinfo() {};
-  }
-  namespace PPCallbacks {
-     typeinfo() {};
-  }
-}
-#endif
-
-void clang::ASTConsumer::type_info() {};
-void clang::PPCallbacks::type_info() {};
-
-// }
-#endif
-#endif
-
-
 extern bool roseInstallPrefix(std::string&);
 
 // DQ (11/28/2020): Use this for testing the DOT graph generator.
@@ -184,20 +157,20 @@ int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
     switch (language) {
         case ClangToSageTranslator::C:
             inc_dirs_list.insert(inc_dirs_list.begin(), c_config_include_dirs.begin(), c_config_include_dirs.end());
-            inc_list.push_back("clang-builtin-c.h");
+//            inc_list.push_back("clang-builtin-c.h");
             break;
         case ClangToSageTranslator::CPLUSPLUS:
             inc_dirs_list.insert(inc_dirs_list.begin(), cxx_config_include_dirs.begin(), cxx_config_include_dirs.end());
-            inc_list.push_back("clang-builtin-cpp.hpp");
+//            inc_list.push_back("clang-builtin-cpp.hpp");
             break;
         case ClangToSageTranslator::CUDA:
             inc_dirs_list.insert(inc_dirs_list.begin(), cxx_config_include_dirs.begin(), cxx_config_include_dirs.end());
-            inc_list.push_back("clang-builtin-cuda.hpp");
+//            inc_list.push_back("clang-builtin-cuda.hpp");
             break;
         case ClangToSageTranslator::OPENCL:
          // inc_dirs_list.insert(inc_dirs_list.begin(), c_config_include_dirs.begin(), c_config_include_dirs.end());
          // FIXME get the path right
-            inc_list.push_back("clang-builtin-opencl.h");
+//            inc_list.push_back("clang-builtin-opencl.h");
             break;
         case ClangToSageTranslator::OBJC:
           {
@@ -500,7 +473,6 @@ void ClangToSageTranslator::applySourceRange(SgNode * node, clang::SourceRange s
                     std::string filenameWithoutPath = Rose::StringUtility::stripPathFromFileName(rawFileName);
                     printf ("filenameWithoutPath = %s file = %s \n",filenameWithoutPath.c_str(),file.c_str());
 #endif
-                 // if (file == "clang-builtin-c.h")
                     if (file.find("clang-builtin-c.h") != std::string::npos) 
                        {
 #if 0

@@ -4,6 +4,7 @@ bin_SCRIPTS =					\
 	rose-matrix-count-warnings		\
 	rose-matrix-monitor			\
 	rose-matrix-output			\
+	rose-matrix-prune-errors		\
 	rose-matrix-run				\
 	rose-matrix-show-latest			\
 	rose-matrix-slave-run			\

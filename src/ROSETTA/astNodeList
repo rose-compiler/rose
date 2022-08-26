@@ -1006,7 +1006,7 @@ SgAdaDiscriminatedTypeDecl
 SgAdaDiscriminatedType
 SgAdaDiscriminantConstraint
 SgAdaGenericInstanceDecl
-SgAdaVariantFieldDecl
+SgAdaUnscopedBlock
 SgAdaInheritedFunctionSymbol
 SgAdaProtectedBody
 SgAdaProtectedBodyDecl
@@ -1086,3 +1086,6 @@ SgAsmCilDataStream
 SgAsmCilMetadataHeap
 SgAsmCilUint8Heap
 SgAsmCilUint32Heap
+SgAsmCliHeader
+SgAdaVariantDecl
+SgAdaVariantWhenStmt

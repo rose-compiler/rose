@@ -144,13 +144,30 @@ void LabelAndLoopManager::gotojmp(Element_ID id, SgGotoStatement& gotostmt)
 AstContext
 AstContext::scope_npc(SgScopeStatement& s) const
 {
+  // make sure that the installed handler handles SgScopeStatement
+  // ADA_ASSERT(stmtHandler.target() == &defaultStatementHandler);
+
   AstContext tmp{*this};
 
   tmp.the_scope = &s;
   return tmp;
 }
 
-AstContext AstContext::instantiation(SgAdaGenericInstanceDecl& instance) const
+AstContext
+AstContext::unscopedBlock(SgAdaUnscopedBlock& blk) const
+{
+  AstContext tmp{*this};
+
+  tmp.stmtHandler = [&blk](AstContext, SgStatement& stmt)
+                    {
+                      sg::linkParentChild(blk, stmt, &SgAdaUnscopedBlock::append_statement);
+                    };
+
+  return tmp;
+}
+
+AstContext
+AstContext::instantiation(SgAdaGenericInstanceDecl& instance) const
 {
   AstContext tmp{*this};
 
@@ -184,34 +201,14 @@ AstContext::sourceFileName(std::string& file) const
   return tmp;
 }
 
-AstContext
-AstContext::variantName(Name name) const
+// static
+void
+AstContext::defaultStatementHandler(AstContext ctx, SgStatement& s)
 {
-  AstContext tmp{*this};
+  SgScopeStatement& scope = ctx.scope();
 
-  tmp.active_variant_names.push_back(name);
-  return tmp;
-}
-
-AstContext
-AstContext::variantChoice(Element_ID_List choice) const
-{
-  AstContext tmp{*this};
-
-  tmp.active_variant_choices.push_back(choice);
-  return tmp;
-}
-
-const std::vector<Name>&
-AstContext::variantNames() const
-{
-  return active_variant_names;
-}
-
-const std::vector<Element_ID_List>&
-AstContext::variantChoices() const
-{
-  return active_variant_choices;
+  scope.append_statement(&s);
+  ADA_ASSERT(s.get_parent() == &scope);
 }
 
 
@@ -931,6 +928,13 @@ namespace
       std::string s = si::get_name(scope);
     }
 
+    //~ void logVarRefExp(SgVarRefExp* n)
+    //~ {
+      //~ if (!n) return;
+
+      //~ logWarn() << "verref = " << n->unparseToString() << std::endl;
+    //~ }
+
     void visit(SgNode* sageNode) override
     {
       SgLocatedNode* n = isSgLocatedNode(sageNode);
@@ -974,8 +978,9 @@ namespace
       //~ checkType(isSgExpression(n));
       //~ checkType(isSgInitializedName(n));
       //~ checkExpr(isSgAdaAttributeExp(n));
-      checkDecl(isSgDeclarationStatement(n));
-      checkScope(isSgScopeStatement(n));
+      //~ checkDecl(isSgDeclarationStatement(n));
+      //~ checkScope(isSgScopeStatement(n));
+      //~ logVarRefExp(isSgVarRefExp(n));
     }
   };
 

@@ -1936,6 +1936,12 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
               break;
             }
 
+            case V_SgAdaVariantDecl:
+            {
+              name = "_ada_variant_decl_";
+              break;
+            }
+
             case V_SgAdaAttributeClause:
             {
               name = "_ada_attribute_clause_";
@@ -2005,26 +2011,6 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
             case V_SgAdaGenericInstanceDecl:
             {
               name = genericGetName(isSgAdaGenericInstanceDecl(declaration));
-              break;
-            }
-
-            case V_SgAdaVariantFieldDecl:
-            {
-              const SgAdaVariantFieldDecl* variantDecl = isSgAdaVariantFieldDecl(declaration);
-              ROSE_ASSERT(variantDecl);
-
-              const SgInitializedNamePtrList& lst = variantDecl->get_variables();
-
-              name = "_ada_variant_field_";
-
-              if (lst.empty()) name += "null_";
-
-              for (const SgInitializedName* el : lst)
-              {
-                name += el->get_name();
-                name += "_";
-              }
-
               break;
             }
 
@@ -5469,6 +5455,28 @@ SageInterface::is_Java_language()
 #endif
    }
 
+bool
+SageInterface::is_Jvm_language()
+   {
+#if OPTIMIZE_IS_LANGUAGE_KIND_FUNCTIONS
+  // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
+     return Rose::is_Jvm_language;
+#else
+     bool returnValue = false;
+
+     vector<SgFile*> fileList = generateFileList();
+
+     int size = (int)fileList.size();
+     for (int i = 0; i < size; i++)
+        {
+          if (fileList[i]->get_Jvm_only() == true)
+               returnValue = true;
+        }
+
+     return returnValue;
+#endif
+   }
+
 // Rasmussen (4/4/2018): Added Jovial
 bool
 SageInterface::is_Jovial_language()
@@ -7831,21 +7839,21 @@ bool SageInterface::isMain(const SgNode* n)
       }
    }
    else {
-      if (isSgFunctionDeclaration(n) != NULL) {
+      if (isSgFunctionDeclaration(n) != nullptr) {
          bool either = false;
          if (SageInterface::is_Java_language()) {
             either = true;
          }
          else {
             const SgStatement* stmnt = isSgStatement(n);
-            ROSE_ASSERT(stmnt != NULL);
+            ROSE_ASSERT(stmnt != nullptr);
             if (isSgGlobal(stmnt->get_scope())) {
                either = true;
             }
          }
          if (either) {
             const SgFunctionDeclaration* funcDefn = isSgFunctionDeclaration(n);
-            ROSE_ASSERT(funcDefn != NULL);
+            ROSE_ASSERT(funcDefn != nullptr);
             if (funcDefn->get_name() == "main") {
                result = true;
             }
@@ -11209,6 +11217,14 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
     rngc->set_range(newExp);
   } else if (SgAdaIndexConstraint* idxc = isSgAdaIndexConstraint(parent)) {
     replaceExpressionInSgExpressionPtrList(oldExp, newExp, idxc->get_indexRanges());
+  } else if (SgAdaVariantDecl* vtdcl = isSgAdaVariantDecl(parent)) {
+    ROSE_ASSERT(oldExp == vtdcl->get_discriminant());
+    vtdcl->set_discriminant(newExp);
+  } else if (SgAdaVariantWhenStmt* vtwhen = isSgAdaVariantWhenStmt(parent)) {
+    ROSE_ASSERT(oldExp == vtwhen->get_choices());
+    SgExprListExp* newLst = isSgExprListExp(newExp);
+    ROSE_ASSERT(newLst);
+    vtwhen->set_choices(newLst);
   } else if (SgAdaComponentClause* clause = isSgAdaComponentClause(parent)) {
     if (oldExp == clause->get_offset())
       clause->set_offset(newExp);

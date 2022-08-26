@@ -104,7 +104,7 @@ SgValueExp::get_constant_folded_value_as_string() const
   // expression tree and we want the constant folded value.
 
   // DQ (7/24/2012): Added a test.
-     ROSE_ASSERT(this != NULL);
+     ASSERT_not_null(this);
 
      string s;
      const int max_buffer_size = 500;
@@ -114,7 +114,7 @@ SgValueExp::get_constant_folded_value_as_string() const
           case V_SgIntVal:
              {
                const SgIntVal* integerValueExpression = isSgIntVal(this);
-               ROSE_ASSERT(integerValueExpression != NULL);
+               ASSERT_not_null(integerValueExpression);
                int numericValue = integerValueExpression->get_value();
             // printf ("numericValue of constant folded expression = %d \n",numericValue);
                snprintf (buffer,max_buffer_size,"%d",numericValue);
@@ -126,7 +126,7 @@ SgValueExp::get_constant_folded_value_as_string() const
           case V_SgLongIntVal:
              {
                const SgLongIntVal* integerValueExpression = isSgLongIntVal(this);
-               ROSE_ASSERT(integerValueExpression != NULL);
+               ASSERT_not_null(integerValueExpression);
                long int numericValue = integerValueExpression->get_value();
             // printf ("numericValue of constant folded expression = %ld \n",numericValue);
                snprintf (buffer,max_buffer_size,"%ld",numericValue);
@@ -137,7 +137,7 @@ SgValueExp::get_constant_folded_value_as_string() const
          case V_SgLongLongIntVal:
          {
             const SgLongLongIntVal* integerValueExpression = isSgLongLongIntVal(this);
-            ROSE_ASSERT(integerValueExpression != NULL);
+            ASSERT_not_null(integerValueExpression);
             long long int numericValue = integerValueExpression->get_value();
             // printf ("numericValue of constant folded expression = %ld \n",numericValue);
             snprintf (buffer,max_buffer_size,"%lld",numericValue);
@@ -149,7 +149,7 @@ SgValueExp::get_constant_folded_value_as_string() const
           case V_SgShortVal:
              {
                const SgShortVal* integerValueExpression = isSgShortVal(this);
-               ROSE_ASSERT(integerValueExpression != NULL);
+               ASSERT_not_null(integerValueExpression);
                short int numericValue = integerValueExpression->get_value();
             // printf ("numericValue of constant folded expression = %ld \n",numericValue);
                snprintf (buffer,max_buffer_size,"%d",numericValue);
@@ -160,7 +160,7 @@ SgValueExp::get_constant_folded_value_as_string() const
           case V_SgUnsignedShortVal:
              {
                const SgUnsignedShortVal* integerValueExpression = isSgUnsignedShortVal(this);
-               ROSE_ASSERT(integerValueExpression != NULL);
+               ASSERT_not_null(integerValueExpression);
                unsigned short int numericValue = integerValueExpression->get_value();
             // printf ("numericValue of constant folded expression = %ld \n",numericValue);
                snprintf (buffer,max_buffer_size,"%u",numericValue);
@@ -171,7 +171,7 @@ SgValueExp::get_constant_folded_value_as_string() const
           case V_SgUnsignedLongLongIntVal:
              {
                const SgUnsignedLongLongIntVal* integerValueExpression = isSgUnsignedLongLongIntVal(this);
-               ROSE_ASSERT(integerValueExpression != NULL);
+               ASSERT_not_null(integerValueExpression);
                unsigned long long int numericValue = integerValueExpression->get_value();
             // printf ("numericValue of constant folded expression = %llu \n",numericValue);
                snprintf (buffer,max_buffer_size,"%llu",numericValue);
@@ -183,7 +183,7 @@ SgValueExp::get_constant_folded_value_as_string() const
           case V_SgUnsignedLongVal:
              {
                const SgUnsignedLongVal* integerValueExpression = isSgUnsignedLongVal(this);
-               ROSE_ASSERT(integerValueExpression != NULL);
+               ASSERT_not_null(integerValueExpression);
                unsigned long int numericValue = integerValueExpression->get_value();
             // printf ("numericValue of constant folded expression = %llu \n",numericValue);
                snprintf (buffer,max_buffer_size,"%lu",numericValue);
@@ -195,7 +195,7 @@ SgValueExp::get_constant_folded_value_as_string() const
           case V_SgUnsignedIntVal:
              {
                const SgUnsignedIntVal* integerValueExpression = isSgUnsignedIntVal(this);
-               ROSE_ASSERT(integerValueExpression != NULL);
+               ASSERT_not_null(integerValueExpression);
                unsigned int numericValue = integerValueExpression->get_value();
             // printf ("numericValue of constant folded expression = %llu \n",numericValue);
                snprintf (buffer,max_buffer_size,"%u",numericValue);
@@ -207,7 +207,7 @@ SgValueExp::get_constant_folded_value_as_string() const
           case V_SgBoolValExp:
              {
                const SgBoolValExp* booleanValueExpression = isSgBoolValExp(this);
-               ROSE_ASSERT(booleanValueExpression != NULL);
+               ASSERT_not_null(booleanValueExpression);
                bool booleanValue = booleanValueExpression->get_value();
                snprintf (buffer,max_buffer_size,"%s",booleanValue == true ? "true" : "false");
                s = buffer;
@@ -218,7 +218,7 @@ SgValueExp::get_constant_folded_value_as_string() const
           case V_SgStringVal:
              {
                const SgStringVal* stringValueExpression = isSgStringVal(this);
-               ROSE_ASSERT(stringValueExpression != NULL);
+               ASSERT_not_null(stringValueExpression);
                s = stringValueExpression->get_value();
                break;
              }
@@ -227,7 +227,7 @@ SgValueExp::get_constant_folded_value_as_string() const
           case V_SgCharVal:
              {
                const SgCharVal* charValueExpression = isSgCharVal(this);
-               ROSE_ASSERT(charValueExpression != NULL);
+               ASSERT_not_null(charValueExpression);
             // DQ (9/24/2011): Handle case where this is non-printable character (see test2011_140.C, where
             // the bug was the the dot file had a non-printable character and caused zgrviewer to crash).
             // s = charValueExpression->get_value();
@@ -250,7 +250,7 @@ SgValueExp::get_constant_folded_value_as_string() const
           case V_SgFloatVal:
              {
                const SgFloatVal* floatValueExpression = isSgFloatVal(this);
-               ROSE_ASSERT(floatValueExpression != NULL);
+               ASSERT_not_null(floatValueExpression);
                float numericValue = floatValueExpression->get_value();
             // printf ("numericValue of constant folded expression = %f \n",numericValue);
                snprintf (buffer,max_buffer_size,"%f",numericValue);
@@ -262,7 +262,7 @@ SgValueExp::get_constant_folded_value_as_string() const
           case V_SgDoubleVal:
              {
                const SgDoubleVal* floatValueExpression = isSgDoubleVal(this);
-               ROSE_ASSERT(floatValueExpression != NULL);
+               ASSERT_not_null(floatValueExpression);
                double numericValue = floatValueExpression->get_value();
             // printf ("numericValue of constant folded expression = %f \n",numericValue);
                snprintf (buffer,max_buffer_size,"%lf",numericValue);
@@ -274,7 +274,7 @@ SgValueExp::get_constant_folded_value_as_string() const
           case V_SgLongDoubleVal:
              {
                const SgLongDoubleVal* floatValueExpression = isSgLongDoubleVal(this);
-               ROSE_ASSERT(floatValueExpression != NULL);
+               ASSERT_not_null(floatValueExpression);
                long double numericValue = floatValueExpression->get_value();
             // printf ("numericValue of constant folded expression = %f \n",numericValue);
                snprintf (buffer,max_buffer_size,"%Lf",numericValue);
@@ -286,7 +286,7 @@ SgValueExp::get_constant_folded_value_as_string() const
           case V_SgEnumVal:
              {
                const SgEnumVal* enumValueExpression = isSgEnumVal(this);
-               ROSE_ASSERT(enumValueExpression != NULL);
+               ASSERT_not_null(enumValueExpression);
                int numericValue = enumValueExpression->get_value();
             // printf ("numericValue of constant folded expression = %d \n",numericValue);
                snprintf (buffer,max_buffer_size,"%d",numericValue);
@@ -305,26 +305,17 @@ SgValueExp::get_constant_folded_value_as_string() const
           case V_SgComplexVal:
              {
                const SgComplexVal* complexValueExpression = isSgComplexVal(this);
-               ROSE_ASSERT(complexValueExpression != NULL);
-#if 0
-               float numericValue_realPart      = complexValueExpression->get_real_value();
-               float numericValue_imaginaryPart = complexValueExpression->get_imaginary_value();
-               printf ("numericValue of constant folded expression = (%f,%f) \n",numericValue_realPart,numericValue_imaginaryPart);
-               snprintf (buffer,max_buffer_size,"(%f,%f)",numericValue_realPart,numericValue_imaginaryPart);
-               s = buffer;
-#else
-            // ROSE_ASSERT(complexValueExpression->get_real_value() != NULL);
+               ASSERT_not_null(complexValueExpression);
+
                string real_string = "null";
-               if (complexValueExpression->get_real_value() != NULL)
+               if (complexValueExpression->get_real_value() != nullptr)
                     real_string = complexValueExpression->get_real_value()->get_constant_folded_value_as_string();
 
-            // ROSE_ASSERT(complexValueExpression->get_imaginary_value() != NULL);
                string imaginary_string = "null";
-               if (complexValueExpression->get_imaginary_value() != NULL)
+               if (complexValueExpression->get_imaginary_value() != nullptr)
                     imaginary_string = complexValueExpression->get_imaginary_value()->get_constant_folded_value_as_string();
 
                s = "(" + real_string + "," + imaginary_string + ")";
-#endif
                break;
              }
 
@@ -332,20 +323,10 @@ SgValueExp::get_constant_folded_value_as_string() const
           case V_SgTemplateParameterVal:
              {
             // Note that constant folding on SgTemplateParameterVal expressions does not make any sense!
-#if 1
                const SgTemplateParameterVal* templateParameterValueExpression = isSgTemplateParameterVal(this);
-               ROSE_ASSERT(templateParameterValueExpression != NULL);
+               ASSERT_not_null(templateParameterValueExpression);
                string stringName = templateParameterValueExpression->get_template_parameter_name();
-            // printf ("stringName of constant folded expression = %s \n",stringName);
-            // snprintf (buffer,max_buffer_size,"%s",stringName.c_str());
-            // s = buffer;
                s = stringName;
-#else
-            // DQ (11/28/2011): I hope that it does not make since to call this case...make it an error to do so...
-               printf ("Note that constant folding on SgTemplateParameterVal expressions does not make any sense! \n");
-            // ROSE_ASSERT(false);
-               s = "_constant_folding_on_SgTemplateParameterVal_expressions_does_not_make_any_sense_";
-#endif
                break;
              }
 
@@ -369,7 +350,7 @@ SgValueExp::get_constant_folded_value_as_string() const
           case V_SgWcharVal:
              {
                const SgWcharVal* wideCharValueExpression = isSgWcharVal(this);
-               ROSE_ASSERT(wideCharValueExpression != NULL);
+               ASSERT_not_null(wideCharValueExpression);
             // DQ (9/24/2011): Handle case where this is non-printable character (see test2011_140.C, where
             // the bug was the the dot file had a non-printable character and caused zgrviewer to crash).
             // s = charValueExpression->get_value();
@@ -433,7 +414,10 @@ outputTypeOfFileAndExit( const string & name )
 
   // printf ("In outputTypeOfFileAndExit(%s): Evaluate the file type \n",name.c_str());
 
-#if 0
+#define DEAD_CODE_POTENTIALLY_USEFUL 0
+#if DEAD_CODE_POTENTIALLY_USEFUL
+#error "DEAD CODE!"
+
   // DQ (2/3/2009): This works now, I think that Andreas fixed it.
 
   // Use file(1) to try to figure out the file type to report in the exception
@@ -454,7 +438,7 @@ outputTypeOfFileAndExit( const string & name )
           dup2(child_stdout[1], 1);
           close(child_stdout[0]);
           close(child_stdout[1]);
-          execlp("/usr/bin/file", "/usr/bin/file", "-b", name.c_str(), NULL);
+          execlp("/usr/bin/file", "/usr/bin/file", "-b", name.c_str(), nullptr);
           exit(1);
         }
        else
@@ -477,19 +461,15 @@ outputTypeOfFileAndExit( const string & name )
 
           throw SgAsmGenericFile::FormatError(buffer.c_str());
         }
+#error "DEAD CODE!"
 #else
      whatTypeOfFileIsThis(name);
 
-#if 1
      printf ("In outputTypeOfFileAndExit(): name = %s \n",name.c_str());
      printf ("\n\nExiting: Unknown file Error \n\n");
      ROSE_ABORT();
 #endif
-
-     abort();
-#endif
    }
-
 
 
 // DQ (1/5/2008): These are functions separated out of the generated
@@ -568,24 +548,24 @@ bool roseInstallPrefix(std::string& result) {
  // DQ (4/8/2011): Check for NULL pointer before handling it as a parameter to strdup(),
  // but I think it is always non-NULL (added assertion and put back the original code).
  // char* libroseName = (info.dli_fname == NULL) ? NULL : strdup(info.dli_fname);
-    ROSE_ASSERT(info.dli_fname != NULL);
+    ASSERT_not_null(info.dli_fname);
     char* libroseName = strdup(info.dli_fname);
 #if __INSURE__
     _Insure_checking_enable(1); // re-enable Insure++ checking
 #endif
 
-    if (libroseName == NULL) goto default_check;
+    if (libroseName == nullptr) goto default_check;
     char* libdir = dirname(libroseName);
-    if (libdir == NULL) {free(libroseName); goto default_check;}
+    if (libdir == nullptr) {free(libroseName); goto default_check;}
     char* libdirCopy1 = strdup(libdir);
     char* libdirCopy2 = strdup(libdir);
-    if (libdirCopy1 == NULL || libdirCopy2 == NULL) { free(libroseName); free(libdirCopy1); free(libdirCopy2); goto default_check;}
+    if (libdirCopy1 == nullptr || libdirCopy2 == nullptr) { free(libroseName); free(libdirCopy1); free(libdirCopy2); goto default_check;}
     char* libdirBasenameCS = basename(libdirCopy1);
-    if (libdirBasenameCS == NULL) {free(libroseName); free(libdirCopy1); free(libdirCopy2); goto default_check;}
+    if (libdirBasenameCS == nullptr) {free(libroseName); free(libdirCopy1); free(libdirCopy2); goto default_check;}
     string libdirBasename = libdirBasenameCS;
     free(libdirCopy1);
     char* prefixCS = dirname(libdirCopy2);
-    if (prefixCS == NULL) {free(libroseName); goto default_check;}
+    if (prefixCS == nullptr) {free(libroseName); goto default_check;}
     string prefix = prefixCS;
     free(libdirCopy2);
 
@@ -638,7 +618,7 @@ default_check:
 #endif
   // dladdr is not supported, we check an environment variables to tell if the
   // translator is running from a build tree or an installation tree
-  if (getenv("ROSE_IN_BUILD_TREE") != NULL) {
+  if (getenv("ROSE_IN_BUILD_TREE") != nullptr) {
     return false;
   } else {
 // Liao, 12/1/2009
@@ -724,29 +704,29 @@ isLibraryArchiveFile ( string sourceFilename )
 void
 SgFile::initializeSourcePosition( const std::string & sourceFilename )
    {
-     ROSE_ASSERT(this != NULL);
+     ASSERT_not_null(this);
 
   // printf ("Inside of SgFile::initializeSourcePosition() \n");
 
      Sg_File_Info* fileInfo = new Sg_File_Info(sourceFilename,1,1);
-     ROSE_ASSERT(fileInfo != NULL);
+     ASSERT_not_null(fileInfo);
 
   // set_file_info(fileInfo);
      set_startOfConstruct(fileInfo);
      fileInfo->set_parent(this);
-     ROSE_ASSERT(get_startOfConstruct() != NULL);
-     ROSE_ASSERT(get_file_info() != NULL);
+     ASSERT_not_null(get_startOfConstruct());
+     ASSERT_not_null(get_file_info());
    }
 
 void
 SgSourceFile::initializeGlobalScope()
    {
-     ROSE_ASSERT(this != NULL);
+     ASSERT_not_null(this);
 
   // printf ("Inside of SgSourceFile::initializeGlobalScope() \n");
 
   // Note that SgFile::initializeSourcePosition() should have already been called.
-     ROSE_ASSERT(get_startOfConstruct() != NULL);
+     ASSERT_not_null(get_startOfConstruct());
 
      string sourceFilename = get_startOfConstruct()->get_filename();
 
@@ -754,23 +734,12 @@ SgSourceFile::initializeGlobalScope()
   // enforce that the filename is always an absolute path (starting with "/").
   // Sg_File_Info* globalScopeFileInfo = new Sg_File_Info("SgGlobal::SgGlobal",0,0);
      Sg_File_Info* globalScopeFileInfo = new Sg_File_Info(sourceFilename,0,0);
-     ROSE_ASSERT (globalScopeFileInfo != NULL);
+     ASSERT_not_null(globalScopeFileInfo);
 
   // printf ("&&&&&&&&&& In SgSourceFile::initializeGlobalScope(): Building SgGlobal (with empty filename) &&&&&&&&&& \n");
 
      set_globalScope( new SgGlobal( globalScopeFileInfo ) );
-     ROSE_ASSERT (get_globalScope() != NULL);
-
-#if 0
-  // DQ (6/23/2011): Changed my mind, I would like to avoid using this if possible.
-  // DQ (6/15/2011): Added scope to hold unhandled declarations (see test2011_80.C).
-     Sg_File_Info* holdingScopeFileInfo = new Sg_File_Info(sourceFilename,0,0);
-     ROSE_ASSERT (holdingScopeFileInfo != NULL);
-     set_temp_holding_scope( new SgGlobal( holdingScopeFileInfo ) );
-     ROSE_ASSERT (get_temp_holding_scope() != NULL);
-
-     get_temp_holding_scope()->set_parent(this);
-#endif
+     ASSERT_not_null(get_globalScope());
 
   // Rasmussen (3/22/2020): Fixed setting case insensitivity
   // if (SageBuilder::symbol_table_case_insensitive_semantics == true)
@@ -786,9 +755,9 @@ SgSourceFile::initializeGlobalScope()
 
   // DQ (8/21/2008): Set the end of the global scope (even if it is updated later)
   // printf ("In SgFile::initialization(): p_root->get_endOfConstruct() = %p \n",p_root->get_endOfConstruct());
-     ROSE_ASSERT(get_globalScope()->get_endOfConstruct() == NULL);
+     ROSE_ASSERT(get_globalScope()->get_endOfConstruct() == nullptr);
      get_globalScope()->set_endOfConstruct(new Sg_File_Info(sourceFilename,0,0));
-     ROSE_ASSERT(get_globalScope()->get_endOfConstruct() != NULL);
+     ASSERT_not_null(get_globalScope()->get_endOfConstruct());
 
   // DQ (1/21/2008): Set the filename in the SgGlobal IR node so that the traversal to add CPP directives and comments will succeed.
      ROSE_ASSERT (get_globalScope() != NULL);
@@ -816,12 +785,9 @@ SgSourceFile::initializeGlobalScope()
 
   // printf ("get_requires_C_preprocessor() = %s filename = %s \n",get_requires_C_preprocessor() ? "true" : "false",filename.c_str());
 
-  // get_globalScope()->get_startOfConstruct()->set_filenameString(p_sourceFileNameWithPath);
      get_globalScope()->get_startOfConstruct()->set_filenameString(filename);
      ROSE_ASSERT(get_globalScope()->get_startOfConstruct()->get_filenameString().empty() == false);
 
-  // DQ (8/21/2008): Uncommented to make the endOfConstruct consistant (avoids warning in AST consistancy check).
-  // get_globalScope()->get_endOfConstruct()->set_filenameString(p_sourceFileNameWithPath);
      get_globalScope()->get_endOfConstruct()->set_filenameString(filename);
      ROSE_ASSERT(get_globalScope()->get_endOfConstruct()->get_filenameString().empty() == false);
 
@@ -839,14 +805,9 @@ SgSourceFile::initializeGlobalScope()
    }
 
 SgFile*
-#if 0
-// FMZ (07/07/2010): "nextErrorCode" should be call by reference argument
-determineFileType ( vector<string> argv, int nextErrorCode, SgProject* project )
-#else
 determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project )
-#endif
    {
-     SgFile* file = NULL;
+     SgFile* file = nullptr;
 
 #if 0
      printf("In determineFileType():\n");
@@ -979,12 +940,6 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                        ||
                           //if the command line includes "-D" options
                           ! getProject()->get_macroSpecifierList().empty()
-#if 0
-            // SKW: disabled because the "*_postprocessed" dregs cause "ompLoweringTests/fortran" to fail 'distcleancheck'
-                       ||
-                          //if the command line includes "-I" options
-                          ! getProject()->get_includeDirectorySpecifierList().empty()
-#endif
                       );
 
 #if 0
@@ -1492,7 +1447,7 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                                 // This should have already been setup!
                                 // file->initializeSourcePosition();
 
-                                   ROSE_ASSERT(file->get_parent() != NULL);
+                                   ASSERT_not_null(file->get_parent());
                                    ROSE_ASSERT(file->get_parent() == project);
 
                                 // If all else fails, then output the type of file and exit.
@@ -1503,7 +1458,7 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
 #endif
                                    file->set_requires_C_preprocessor(false);
 
-                                   ROSE_ASSERT(file->get_file_info() != NULL);
+                                   ASSERT_not_null(file->get_file_info());
                                 // file->set_parent(project);
 
                                 // DQ (2/3/2009): Uncommented this to report the file type when we don't process it...
@@ -1522,7 +1477,6 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
         {
        // DQ (2/6/2009): This case is used by the build function SageBuilder::buildFile().
 
-#if 1
        // DQ (12/22/2008): Make any error message from this branch more clear for debugging!
        // AS Is this option possible?
           printf ("Is this branch reachable? \n");
@@ -1537,71 +1491,8 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
        //   2) called as part of the SageBuilder::buildFile()
        // using the C++ compiler.  In this case skip the EDG processing.
           file->set_disable_edg_backend(true);
-#endif
-       // printf ("No source file found on command line, assuming to be linker command line \n");
         }
 
-  // DQ (2/6/2009): Can use this assertion with the build function SageBuilder::buildFile().
-  // DQ (2/3/2009): I think this is a new assertion!
-  // ROSE_ASSERT(file != NULL);
-  // file->display("SgFile* determineFileType(): before calling file->callFrontEnd()");
-
-#if 0
-  // DQ (6/12/2013): This is the functionality that we need to separate out and run after all
-  // of the SgSourceFile IR nodes are constructed.
-
-  // The frontend is called explicitly outside the constructor since that allows for a cleaner
-  // control flow. The callFrontEnd() relies on all the "set_" flags to be already called therefore
-  // it was placed here.
-  // if ( isSgUnknownFile(file) == NULL && file != NULL  )
-     if ( file != NULL && isSgUnknownFile(file) == NULL )
-        {
-       // printf ("Calling file->callFrontEnd() \n");
-
-       // TOO1 (05/14/2013): Signal handling for -rose:keep_going
-          if (file->get_project()->get_keep_going())
-             {
-               struct sigaction act;
-               act.sa_handler = HandleFrontendSignal;
-               sigemptyset(&act.sa_mask);
-               act.sa_flags = 0;
-               sigaction(SIGSEGV, &act, 0);
-               sigaction(SIGABRT, &act, 0);
-             }
-
-          if (sigsetjmp(rose__sgproject_parse_mark, 0) == -1)
-             {
-               std::cout
-                    << "[WARN] Ignoring frontend failure "
-                    << " as directed by -rose:keep_going"
-                    << std::endl;
-               file->set_frontendErrorCode(-1);
-             }
-            else
-             {
-               try
-                  {
-                    nextErrorCode = file->callFrontEnd();
-                  }
-               catch (...)
-                  {
-                 // TOO1 (05/14/2013): Handling for -rose:keep_going
-                    std::cout << "[WARN] Caught frontend exception" << std::endl;
-                    if (file->get_project()->get_keep_going())
-                       {
-                         file->set_frontendErrorCode(-1);
-                       }
-                      else
-                       {
-                         throw;
-                       }
-                  }
-             }
-
-       // printf ("DONE: Calling file->callFrontEnd() \n");
-          ROSE_ASSERT ( nextErrorCode <= 3);
-        }
-#else
 #if 0
   // DQ (6/12/2013): I think this is required to support having all of the SgSourceFile
   // IR nodes pre-built as part of the new Java support required to be better performance
@@ -1612,22 +1503,20 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
      printf ("***************************************************************************************************************************************************************************** \n");
      printf ("***************************************************************************************************************************************************************************** \n");
 #endif
-#endif
 
   // Keep the filename stored in the Sg_File_Info consistant.  Later we will want to remove this redundency
   // The reason we have the Sg_File_Info object is so that we can easily support filename matching based on
   // the integer values instead of string comparisions.  Required for the handling co CPP directives and comments.
 
 #if 0
-     if (file != NULL)
+     if (file != nullptr)
         {
           printf ("Calling file->display() \n");
           file->display("SgFile* determineFileType()");
         }
 #endif
 
-  // DQ (9/24/2013): Added assertion.
-     ROSE_ASSERT(file != NULL);
+     ASSERT_not_null(file);
 
 #if 0
      printf ("Leaving determineFileType() = %d \n",file->get_outputLanguage());
@@ -1635,16 +1524,16 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
 #endif
 
   // DQ (6/13/2013): Added to support error checking (seperation of construction of SgFile IR nodes from calling the fronend on each one).
-     ROSE_ASSERT(file->get_parent() != NULL);
-     ROSE_ASSERT(isSgProject(file->get_parent()) != NULL);
+     ASSERT_not_null(file->get_parent());
+     ASSERT_not_null(isSgProject(file->get_parent()));
      ROSE_ASSERT(file->get_parent() == project);
 
   // DQ (7/2/2020): Added assertion (fails for snippet tests).
-     if (file->get_preprocessorDirectivesAndCommentsList() == NULL)
+     if (file->get_preprocessorDirectivesAndCommentsList() == nullptr)
         {
           file->set_preprocessorDirectivesAndCommentsList(new ROSEAttributesListContainer());
         }
-     ROSE_ASSERT(file->get_preprocessorDirectivesAndCommentsList() != NULL);
+     ASSERT_not_null(file->get_preprocessorDirectivesAndCommentsList());
 
      return file;
    }
@@ -1668,7 +1557,7 @@ SgFile::runFrontend(int & nextErrorCode)
 #endif
 
   // DQ (11/4/2015): Added assertion.
-     ROSE_ASSERT(this != NULL);
+     ASSERT_not_null(this);
 
   // DQ (6/13/2013): Added to support error checking (seperation of construction of SgFile IR nodes from calling the fronend on each one).
      ROSE_ASSERT(get_parent() != NULL);
@@ -1686,7 +1575,7 @@ SgFile::runFrontend(int & nextErrorCode)
 
   // DQ (3/25/2017): The NULL check is done above and Clang reports it as a warning that we want to remove.
   // if ( this != NULL && isSgUnknownFile(this) == NULL )
-    if ( isSgUnknownFile(this) == NULL )
+    if ( isSgUnknownFile(this) == nullptr )
     {
         nextErrorCode = this->callFrontEnd();
         this->set_frontendErrorCode(nextErrorCode);
@@ -2033,16 +1922,14 @@ SgProject::parse(const vector<string>& argv)
 #endif
 #endif
                     errorCode = parse();
-
-                 // FMZ deleteComm jserver_finish();
                   }
 
 #if 1
   // DQ (8/22/2009): We test the parent of SgFunctionTypeTable in the AST post processing,
   // so we need to make sure that it is set.
      SgFunctionTypeTable* functionTypeTable = SgNode::get_globalFunctionTypeTable();
-     ROSE_ASSERT(functionTypeTable != NULL);
-     if (functionTypeTable->get_parent() == NULL)
+     ASSERT_not_null(functionTypeTable);
+     if (functionTypeTable->get_parent() == nullptr)
         {
 #if 0
           printf ("This (globalFunctionTypeTable) should have been set to point to the SgProject not the SgFile \n");
@@ -2065,8 +1952,8 @@ SgProject::parse(const vector<string>& argv)
   // DQ (7/25/2010): We test the parent of SgTypeTable in the AST post processing,
   // so we need to make sure that it is set.
      SgTypeTable* typeTable = SgNode::get_globalTypeTable();
-     ROSE_ASSERT(typeTable != NULL);
-     if (typeTable->get_parent() == NULL)
+     ASSERT_not_null(typeTable);
+     if (typeTable->get_parent() == nullptr)
         {
 #if 0
           printf ("This (globalTypeTable) should have been set to point to the SgProject not the SgFile \n");
@@ -2079,7 +1966,7 @@ SgProject::parse(const vector<string>& argv)
             else
                typeTable->set_parent(this);
         }
-     ROSE_ASSERT(typeTable->get_parent() != NULL);
+     ASSERT_not_null(typeTable->get_parent());
 
   // DQ (7/30/2010): This test fails in tests/nonsmoke/functional/CompilerOptionsTests/testCpreprocessorOption
   // DQ (7/25/2010): Added new test.
@@ -2099,51 +1986,37 @@ SgSourceFile::SgSourceFile ( vector<string> & argv , SgProject* project )
    {
   // printf ("In the SgSourceFile constructor \n");
 
-     this->p_package = NULL;
-     this->p_import_list = NULL;
-     this->p_class_list = NULL;
-     this->p_associated_include_file = NULL;
-     this->p_headerFileReport = NULL;
+     this->p_package = nullptr;
+     this->p_import_list = nullptr;
+     this->p_class_list = nullptr;
+     this->p_associated_include_file = nullptr;
+     this->p_headerFileReport = nullptr;
      this->p_processedToIncludeCppDirectivesAndComments = false;
      this->p_isHeaderFile = false;
 
-     set_globalScope(NULL);
+     set_globalScope(nullptr);
 
   // DQ (6/15/2011): Added scope to hold unhandled declarations (see test2011_80.C).
-     set_temp_holding_scope(NULL);
+     set_temp_holding_scope(nullptr);
 
   // This constructor actually makes the call to EDG/OFP/ECJ to build the AST (via callFrontEnd()).
   // printf ("In SgSourceFile::SgSourceFile(): Calling doSetupForConstructor() \n");
      doSetupForConstructor(argv,  project);
     }
 
-#if 0
-SgSourceFile::SgSourceFile ( vector<string> & argv , int & errorCode, int fileNameIndex, SgProject* project )
-// : SgFile (argv,errorCode,fileNameIndex,project)
-   {
-  // printf ("In the SgSourceFile constructor \n");
-
-     set_globalScope(NULL);
-
-  // This constructor actually makes the call to EDG to build the AST (via callFrontEnd()).
-     doSetupForConstructor(argv, errorCode, fileNameIndex, project);
-
-    }
-#endif
-
 int
 SgSourceFile::callFrontEnd()
    {
      int frontendErrorLevel = SgFile::callFrontEnd();
   // DQ (1/21/2008): This must be set for all languages
-     ROSE_ASSERT(get_globalScope() != NULL);
-     ROSE_ASSERT(get_globalScope()->get_file_info() != NULL);
+     ASSERT_not_null(get_globalScope());
+     ASSERT_not_null(get_globalScope()->get_file_info());
      ROSE_ASSERT(get_globalScope()->get_file_info()->get_filenameString().empty() == false);
   // printf ("p_root->get_file_info()->get_filenameString() = %s \n",p_root->get_file_info()->get_filenameString().c_str());
 
   // DQ (8/21/2008): Added assertion.
-     ROSE_ASSERT (get_globalScope()->get_startOfConstruct() != NULL);
-     ROSE_ASSERT (get_globalScope()->get_endOfConstruct()   != NULL);
+     ASSERT_not_null (get_globalScope()->get_startOfConstruct());
+     ASSERT_not_null (get_globalScope()->get_endOfConstruct()  );
 
      return frontendErrorLevel;
    }
@@ -2168,7 +2041,7 @@ SgUnknownFile::callFrontEnd()
 
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 SgBinaryComposite::SgBinaryComposite ( vector<string> & argv ,  SgProject* project )
-    : p_genericFileList(NULL), p_interpretations(NULL)
+    : p_genericFileList(nullptr), p_interpretations(nullptr)
 {
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
     p_interpretations = new SgAsmInterpretationList();
@@ -2199,8 +2072,7 @@ SgProject::RunFrontend()
 {
   TimingPerformance timer ("AST (SgProject::RunFrontend()):");
 
-  // DQ (11/4/2015): Added assertion.
-     ROSE_ASSERT(this != NULL);
+     ASSERT_not_null(this);
 
   int status_of_function = 0;
   {
@@ -2236,12 +2108,12 @@ void compute_IR_node_pointers ( SgSourceFile* sourceFile, unordered_map < SgNode
 
                void visit(SgNode* n)
                   {
-                    ROSE_ASSERT( n != NULL);
+                    ASSERT_not_null(n);
 #if 0
                     printf ("n = %p = %s \n",n,n->class_name().c_str());
 #endif
                     SgLocatedNode* locatedNode = isSgLocatedNode(n);
-                    if (locatedNode != NULL)
+                    if (locatedNode != nullptr)
                        {
                       // int file_id = locatedNode->get_file_info()->get_file_id();
                          int file_id = sourceFile->get_startOfConstruct()->get_file_id();
@@ -2344,47 +2216,6 @@ SgProject::parse()
      Rose_STL_Container<string>::iterator nameIterator = p_sourceFileNameList.begin();
      unsigned int i = 0;
 
-#if 0
-  // DQ (6/13/2013): This is older code from when we build each SgFile and processed in immediately.
-  // We don't want such a design, thus we now build all of the SgFile IR nodes first, and then iterate
-  // over them to call the frontend on each of them (this could likely be done in parallel as well).
-
-#error "DEAD CODE!"
-
-     while (nameIterator != p_sourceFileNameList.end())
-        {
-          int nextErrorCode = 0;
-
-       // DQ (4/20/2006): Exclude other files from list in argc and argv
-          vector<string> argv = get_originalCommandLineArgumentList();
-          string currentFileName = *nameIterator;
-
-#error "DEAD CODE!"
-
-          CommandlineProcessing::removeAllFileNamesExcept(argv,p_sourceFileNameList,currentFileName);
-
-       // DQ (11/13/2008): Removed overly complex logic here!
-
-          SgFile* newFile = determineFileType(argv, nextErrorCode, this);
-          ROSE_ASSERT (newFile != NULL);
-
-          ROSE_ASSERT (newFile->get_startOfConstruct() != NULL);
-          ROSE_ASSERT (newFile->get_parent() != NULL);
-
-#error "DEAD CODE!"
-
-       // This just adds the new file to the list of files stored internally
-          set_file ( *newFile );
-
-          errorCode = max(errorCode,nextErrorCode); // use STL max
-
-          nameIterator++;
-          i++;
-        }
-
-#error "DEAD CODE!"
-
-#else
   // The goal in this version of the code is to seperate the construction of the SgFile objects
   // from the invocation of the frontend on each of the SgFile objects.  In general this allows
   // the compilation to reference the other SgFile objects on an as needed basis as part of running
@@ -2415,23 +2246,23 @@ SgProject::parse()
           printf ("In SgProject::parse(): Calling determineFileType() currentFileName = %s \n",currentFileName.c_str());
 #endif
           SgFile* newFile = determineFileType(argv, nextErrorCode, this);
-          ROSE_ASSERT (newFile != NULL);
+          ASSERT_not_null(newFile);
 #if 0
           printf ("+++++++++++++++ DONE: Calling determineFileType() currentFileName = %s \n",currentFileName.c_str());
           printf ("In SgProject::parse(): newFile = %p = %s \n",newFile,newFile->class_name().c_str());
 #endif
-          ROSE_ASSERT (newFile->get_startOfConstruct() != NULL);
-          ROSE_ASSERT (newFile->get_parent() != NULL);
+          ASSERT_not_null(newFile->get_startOfConstruct());
+          ASSERT_not_null(newFile->get_parent());
 
        // DQ (6/13/2013): Added to support error checking (seperation of construction of SgFile IR nodes from calling the fronend on each one).
-          ROSE_ASSERT(isSgProject(newFile->get_parent()) != NULL);
+          ASSERT_not_null(isSgProject(newFile->get_parent()));
           ROSE_ASSERT(newFile->get_parent() == this);
 
        // This just adds the new file to the list of files stored internally (note: this sets the parent of the newFile).
           set_file ( *newFile );
 
        // DQ (6/13/2013): Added to support error checking (seperation of construction of SgFile IR nodes from calling the fronend on each one).
-          ROSE_ASSERT(newFile->get_parent() != NULL);
+          ASSERT_not_null(newFile->get_parent());
 
        // This list of files will be iterated over to call the frontend in the next loop.
           vectorOfFiles.push_back(newFile);
@@ -2451,7 +2282,6 @@ SgProject::parse()
         {
           return errorCode;
         }
-#endif
 
   // DQ (6/13/2013): Test the new function to lookup the SgFile from the name with full path.
   // This is a simple consistency test for that new function.
@@ -2459,7 +2289,7 @@ SgProject::parse()
         {
           string filename = vectorOfFiles[i]->get_sourceFileNameWithPath();
           SgFile* file = this->operator[](filename);
-          ROSE_ASSERT(file != NULL);
+          ASSERT_not_null(file);
 
           if ( SgProject::get_verbose() > 0 )
              {
@@ -2495,7 +2325,7 @@ SgProject::parse()
 #endif
             // umap[file_id] = file;
                SgSourceFile* sourceFile = isSgSourceFile(file);
-               ROSE_ASSERT(sourceFile != NULL);
+               ASSERT_not_null(sourceFile);
 
                compute_IR_node_pointers(sourceFile, umap);
              }
@@ -2589,13 +2419,13 @@ SgProject::parse()
 
      BOOST_FOREACH(SgFile* file, files)
         {
-          ROSE_ASSERT(file != NULL);
+          ASSERT_not_null(file);
 
           SgSourceFile* sourceFile = isSgSourceFile(file);
 
        // We can't assert this when supporting binary analysis.
        // ROSE_ASSERT(sourceFile != NULL);
-          if (sourceFile != NULL)
+          if (sourceFile != nullptr)
              {
             // DQ (4/25/2021): I think this should be a static bool data member.
                if (unparse_using_tokens == false)
@@ -2614,7 +2444,7 @@ SgProject::parse()
                     << "SgFile::secondaryPassOverSourceFile()"
                     << std::endl;
 
-               if (file != NULL)
+               if (file != nullptr)
                   {
                     file->set_frontendErrorCode(100);
                     errorCode = std::max(100, errorCode);
@@ -2803,7 +2633,7 @@ SgProject::parse()
               set<PreprocessingInfo*>::const_iterator jj = j->second.begin();
               while (jj != j->second.end())
                  {
-                   ROSE_ASSERT(*jj != NULL);
+                   ASSERT_not_null(*jj);
                    printf (" --- --- includingPreprocessingInfosMap: j.second element->get_string() = %s \n",(*jj)->getString().c_str());
                    jj++;
                  }
@@ -2824,7 +2654,7 @@ SgProject::parse()
           printf ("This may be where we need to support the non optimized header file unparsing, and process ALL header files \n");
 #endif
 #if 0
-          BOOST_FOREACH(SgFile* file, files)
+          for (SgFile* file : files)
              {
                printf ("file = %s \n",file->getFileName().c_str());
                printf (" --- file->get_header_file_unparsing_optimization()             = %s \n",file->get_header_file_unparsing_optimization() ? "true" : "false");
@@ -2847,14 +2677,13 @@ SgProject::parse()
                     printf ("filename = %s \n",filename.c_str());
 #endif
                     SgIncludeFile* include_file = i->second;
-                    if (include_file != NULL)
+                    if (include_file != nullptr)
                        {
 #if 0
                          printf ("include_file = %p filename = %s \n",include_file,include_file->get_filename().str());
 #endif
                          SgSourceFile* sourceFile = include_file->get_source_file();
-                      // ROSE_ASSERT(sourceFile != NULL);
-                         if (sourceFile != NULL)
+                         if (sourceFile != nullptr)
                             {
 #if 0
                               printf ("sourceFile = %p filename = %s \n",sourceFile,sourceFile->getFileName().c_str());
@@ -2868,7 +2697,6 @@ SgProject::parse()
 #endif
                                    sourceFile->set_unparse_tokens(true);
                                  }
-
                               ROSE_ASSERT(sourceFile->get_unparse_tokens() == unparse_using_tokens);
 
                               sourceFile->secondaryPassOverSourceFile();
@@ -2899,176 +2727,8 @@ SgProject::parse()
         }
 
 #if 0
-     printf ("Exiting after test! \n");
-     ROSE_ABORT();
-#endif
+     printf ("Skipping processing of token stream for header files in the parse() function (should be moved to be consistent with attaching comments and CPP directives to header files) \n");
 
-#if 0
-  // DQ (7/2/2020): This code has to be moved to where the other support for collect of comments
-  // and CPP directives is located.  At this early stage we don't know yet which header files are
-  // required to be processed, and until we do we can't process the token stream, else we would
-  // have to do so for all header files, and this is inconsistant with the new design that
-  // supports an optimized handling of header file processing (namely, only processing the
-  // header files that are required to be processed (this is a huge optimization and so it is
-  // important).
-
-#error "DEAD CODE!"
-
-  // DQ (12/6/2014): This code has been moved from the unparser to here so that it is run after
-  // AST Postprocessing and before any transformations are done. The token stream mapping only
-  // really makes since at this position in the time-line since otherwise removed statements would
-  // be included as whitespace between remaining statements.
-
-  // SgFilePtrList &files = get_fileList();
-        {
-       // DQ (8/18/2019): Add performance analysis support.
-          TimingPerformance timer ("EDG-ROSE header file support for tokens:");
-
-#error "DEAD CODE!"
-
-          BOOST_FOREACH(SgFile* file, files)
-             {
-               ROSE_ASSERT(file != NULL);
-               SgSourceFile* sourceFile = isSgSourceFile(file);
-               if (sourceFile != NULL)
-                  {
-                 // DQ (10/27/2013): Adding support for token stream use in unparser. We might want to only turn this of when -rose:unparse_tokens is specified.
-                 // if ( ( (SageInterface::is_C_language() == true) || (SageInterface::is_Cxx_language() == true) ) && file->get_unparse_tokens() == true)
-                    if ( ( (SageInterface::is_C_language() == true) || (SageInterface::is_Cxx_language() == true) ) &&
-                         ( (file->get_unparse_tokens() == true)     || (file->get_use_token_stream_to_improve_source_position_info() == true) ) )
-                       {
-                      // This is only currently being tested and evaluated for C language (should also work for C++, but not yet for Fortran).
-                         if (file->get_translateCommentsAndDirectivesIntoAST() == true)
-                            {
-                              printf ("translateCommentsAndDirectivesIntoAST option not yet supported! \n");
-                              ROSE_ABORT();
-
-                           // DQ (3/29/2019): This still needs to be debugged.
-                              SageInterface::translateToUseCppDeclarations(sourceFile);
-                            }
-
-#error "DEAD CODE!"
-
-#if 0
-                         printf ("In SgProject::parse(): Building token stream mapping map! \n");
-#endif
-                      // This function builds the data base (STL map) for the different subsequences ranges of the token stream.
-                      // and attaches the toke stream to the SgSourceFile IR node.
-                      // *** Next we have to attached the data base ***
-                         buildTokenStreamMapping(sourceFile);
-#if 0
-                         printf ("sourceFile->get_token_list().size() = %zu \n",sourceFile->get_token_list().size());
-#endif
-
-#error "DEAD CODE!"
-
-#if 0
-                      // DQ (7/1/2020): Debugging the token collection into the AST.
-                         printf ("Exiting after test! \n");
-                         ROSE_ABORT();
-#endif
-                      // DQ (9/26/2018): We should be able to enforce this for the current header file we have just processed.
-                         ROSE_ASSERT(sourceFile->get_globalScope() != NULL);
-
-#error "DEAD CODE!"
-
-                      // DQ (12/2/2018): We can't enforce this for an empty file (see test in roseTests/astTokenStreamTests).
-                      // ROSE_ASSERT(sourceFile->get_tokenSubsequenceMap().find(sourceFile->get_globalScope()) != sourceFile->get_tokenSubsequenceMap().end());
-#if 0
-                      // DQ (7/1/2020): Debugging output.
-                         printf ("Calling display on token sequence for global scope (for *.C file) \n");
-                         ROSE_ASSERT(sourceFile->get_tokenSubsequenceMap()[sourceFile->get_globalScope()] != NULL);
-                         TokenStreamSequenceToNodeMapping* tokenSequence = sourceFile->get_tokenSubsequenceMap()[sourceFile->get_globalScope()];
-                         ROSE_ASSERT(tokenSequence != NULL);
-                         printf ("sourceFile->get_tokenSubsequenceMap().size() = %zu \n",sourceFile->get_tokenSubsequenceMap().size());
-                         tokenSequence->display("token sequence for global scope (*.C file)");
-#endif
-                      // Search over the list of include files
-
-                      // DQ (11/15/2018): We have removed the include_file_list from the SgSourceFile so that we can support traversals on the SgIncludeFile tree.
-                      // SgIncludeFilePtrList & include_file_list = sourceFile->get_include_file_list();
-                      // ROSE_ASSERT(sourceFile->get_associated_include_file() != NULL);
-                         if (sourceFile->get_associated_include_file() != NULL)
-                            {
-                              SgIncludeFilePtrList & include_file_list = sourceFile->get_associated_include_file()->get_include_file_list();
-#error "DEAD CODE!"
-
-#if 0
-                              printf ("In SgProject::parse(): include_file_list.size() = %zu \n",include_file_list.size());
-#endif
-                              for (size_t i = 0; i < include_file_list.size(); i++)
-                                 {
-                                   SgIncludeFile* includeFile = include_file_list[i];
-                                   ROSE_ASSERT(includeFile != NULL);
-#if 0
-                                   printf ("In SgProject::parse(): includeFile->get_filename() = %s \n",includeFile->get_filename().str());
-#endif
-                                // DQ (9/26/2018): Note that this is null for include files that are not explicit in the source file (e.g. -isystem option).
-                                // The common example is the header file "rose_edg_required_macros_and_functions.h", which is never explicit include by the
-                                // the source (*.C) file.
-                                   SgSourceFile* header_file = includeFile->get_source_file();
-                                // ROSE_ASSERT(header_file != NULL);
-                                   if (header_file != NULL)
-                                      {
-#if 0
-                                     // DQ (11/10/2018): Added debugging output.
-                                        printf ("header_file = %p header_file->getFileName() = %s \n",header_file,header_file->getFileName().c_str());
-                                        printf (" --- header_file->getFileName() = %s \n",header_file->getFileName().c_str());
-#endif
-                                     // DQ (11/29/2018): I think this is only valid when header file unparsing and token unparsing are used together.
-                                     // ROSE_ASSERT(header_file->get_globalScope() != NULL);
-                                        if (header_file->get_globalScope() != NULL)
-                                           {
-#if 0
-                                             printf ("header_file->get_globalScope() = %p = %s \n",header_file->get_globalScope(),header_file->get_globalScope()->class_name().c_str());
-                                             printf (" --- header_file->get_tokenSubsequenceMap().size() = %zu \n",header_file->get_tokenSubsequenceMap().size());
-#endif
-                                             ROSE_ASSERT(header_file->get_tokenSubsequenceMap().find(header_file->get_globalScope()) != header_file->get_tokenSubsequenceMap().end());
-#if 0
-                                             printf ("Calling display on token sequence for global scope (for *.h file) \n");
-                                             ROSE_ASSERT(header_file->get_tokenSubsequenceMap()[header_file->get_globalScope()] != NULL);
-                                             TokenStreamSequenceToNodeMapping* tokenSequence = header_file->get_tokenSubsequenceMap()[header_file->get_globalScope()];
-                                             ROSE_ASSERT(tokenSequence != NULL);
-                                             printf ("header_file->get_tokenSubsequenceMap().size() = %zu \n",header_file->get_tokenSubsequenceMap().size());
-                                             tokenSequence->display("token sequence for global scope (*.h file)");
-#endif
-                                           }
-                                      }
-                                 }
-                            }
-#if 0
-                         printf ("Exiting as a test! \n");
-                         ROSE_ABORT();
-#endif
-                      // DQ (11/30/2015): Add support to detect macro and include file expansions (can use the token sequence mapping if available).
-                      // Not clear if I want to require the token sequence mapping, it is likely useful to detect macro expansions even without the
-                      // token sequence, but usig the token sequence permit us to gather more data.
-                         detectMacroOrIncludeFileExpansions(sourceFile);
-                       }
-#error "DEAD CODE!"
-
-#if 0
-                    if ( SgProject::get_verbose() > 0 )
-                       {
-                         printf ("In SgProject::parse(): SgTokenPtrList token_list: token_list.size() = %zu \n",sourceFile->get_token_list().size());
-                       }
-#endif
-#if 0
-                    printf ("DONE: Building token stream mapping map! \n");
-#endif
-                  }
-             }
-        }
-
-#error "DEAD CODE!"
-
-#else
-#if 0
-     printf ("Skipping processing of token stream for header files in the parse() function (should be moved to be consistant with attaching comments and CPP directives to header files) \n");
-#endif
-#endif
-
-#if 0
   // DQ (8/18/2019): Test if we are calling this parsing support (which had dependence on the SgIncludeFile IR nodes.
      printf ("Exiting after test! \n");
      ROSE_ABORT();
@@ -3177,16 +2837,16 @@ SgFile::doSetupForConstructor(const vector<string>& argv, SgProject* project)
   // the parent if needed (useful for template handling but also makes sure the parent is
   // set (and avoids fixup (currently done, but too late in the construction process for
   // the template support).
-     if (project != NULL)
+     if (project != nullptr)
           set_parent(project);
 
-     ROSE_ASSERT(project != NULL);
-     ROSE_ASSERT(get_parent() != NULL);
+     ASSERT_not_null(project);
+     ASSERT_not_null(get_parent());
 
   // initalize all local variables to default values
      initialization();
 
-     ROSE_ASSERT(get_parent() != NULL);
+     ASSERT_not_null(get_parent());
 
   // DQ (2/4/2009): The specification of "-rose:binary" causes filenames to be interpreted
   // differently if they are object files or libary archive files.
@@ -3212,7 +2872,7 @@ SgFile::doSetupForConstructor(const vector<string>& argv, SgProject* project)
      set_sourceFileNameWithoutPath( StringUtility::stripPathFromFileName(get_sourceFileNameWithPath().c_str()) );
 
      initializeSourcePosition(sourceFilename);
-     ROSE_ASSERT(get_file_info() != NULL);
+     ASSERT_not_null(get_file_info());
 
   // printf ("In SgFile::doSetupForConstructor(): source position set for sourceFilename = %s \n",sourceFilename.c_str());
 
@@ -3235,14 +2895,11 @@ SgFile::doSetupForConstructor(const vector<string>& argv, SgProject* project)
   // error checking
      ROSE_ASSERT (argv.size() > 1);
 
-  // DQ (12/23/2008): Added assertion.
-     ROSE_ASSERT(get_file_info() != NULL);
-
-  // DQ (5/3/2007): Added assertion.
-     ROSE_ASSERT (get_startOfConstruct() != NULL);
+     ASSERT_not_null(get_file_info());
+     ASSERT_not_null(get_startOfConstruct());
 
   // DQ (6/13/2013): Added to support error checking (seperation of construction of SgFile IR nodes from calling the fronend on each one).
-     ROSE_ASSERT(get_parent() != NULL);
+     ASSERT_not_null(get_parent());
      ROSE_ASSERT(get_parent() == project);
 
 #if 0
@@ -3466,7 +3123,8 @@ SgFile::callFrontEnd()
   // the frontend separately for each SgFile.  so we have to set the output file name to be compiled
   // late in the processing (at backend compile time since we don't know when or if the frontend will
   // be called for each SgFile).
-     set_skip_unparse(false);
+  // PP (8/23/2022): Experimental: Do not override the flag from the command line. RC-1381
+  //   set_skip_unparse(false);
 
      if ((get_C_only() || get_Cxx_only()) &&
       // DQ (1/22/2004): As I recall this has a name that really
@@ -3542,7 +3200,7 @@ SgFile::callFrontEnd()
                     case V_SgSourceFile:
                        {
                          SgSourceFile* sourceFile = const_cast<SgSourceFile*>(isSgSourceFile(this));
-                         ROSE_ASSERT(sourceFile != NULL);
+                         ASSERT_not_null(sourceFile);
                          frontendErrorLevel = sourceFile->buildAST(localCopy_argv, inputCommandLine);
                          break;
                        }
@@ -3551,7 +3209,7 @@ SgFile::callFrontEnd()
                     case V_SgBinaryComposite:
                        {
                          SgBinaryComposite* binary = const_cast<SgBinaryComposite*>(isSgBinaryComposite(this));
-                         ROSE_ASSERT(binary != NULL);
+                         ASSERT_not_null(binary);
                          frontendErrorLevel = binary->buildAST(localCopy_argv, inputCommandLine);
                          break;
                        }
@@ -3789,7 +3447,7 @@ SgFile::secondaryPassOverSourceFile()
        // DQ (4/24/2021): Trying to debug the header file optimization support.
           if (header_file_unparsing_optimization_header_file == true)
              {
-               ROSE_ASSERT (p_preprocessorDirectivesAndCommentsList != NULL);
+               ASSERT_not_null(p_preprocessorDirectivesAndCommentsList);
              }
             else
 #endif
@@ -3797,7 +3455,7 @@ SgFile::secondaryPassOverSourceFile()
             // DQ (9/23/2019): We need to support calling this function multiple times.
             // ROSE_ASSERT (p_preprocessorDirectivesAndCommentsList == NULL);
             // p_preprocessorDirectivesAndCommentsList = new ROSEAttributesListContainer();
-               if (p_preprocessorDirectivesAndCommentsList == NULL)
+               if (p_preprocessorDirectivesAndCommentsList == nullptr)
                   {
 #if DEBUG_SECONDARY_PASS
                     printf ("Initialize NULL p_preprocessorDirectivesAndCommentsList to empty ROSEAttributesListContainer \n");
@@ -3812,7 +3470,7 @@ SgFile::secondaryPassOverSourceFile()
                     printf (" --- p_preprocessorDirectivesAndCommentsList->getList().size() = %zu \n",p_preprocessorDirectivesAndCommentsList->getList().size());
 #endif
                   }
-               ROSE_ASSERT (p_preprocessorDirectivesAndCommentsList != NULL);
+               ASSERT_not_null(p_preprocessorDirectivesAndCommentsList);
              }
 #if 0
        // This is empty so there is nothing to display!
@@ -3838,7 +3496,7 @@ SgFile::secondaryPassOverSourceFile()
             // printf ("Secondary pass over source file = %s to comment comments and CPP directives \n",this->get_file_info()->get_filenameString().c_str());
             // SgSourceFile* sourceFile = const_cast<SgSourceFile*>(this);
                SgSourceFile* sourceFile = isSgSourceFile(this);
-               ROSE_ASSERT(sourceFile != NULL);
+               ASSERT_not_null(sourceFile);
 
             // Save the state of the requirement fo CPP processing (fortran only)
                bool requiresCPP = false;
@@ -3939,16 +3597,16 @@ SgFile::secondaryPassOverSourceFile()
                ROSE_ABORT();
 #endif
             // DQ (9/26/2018): We should be able to enforce this for the current header file we have just processed.
-               ROSE_ASSERT(sourceFile->get_globalScope() != NULL);
+               ASSERT_not_null(sourceFile->get_globalScope());
 
             // DQ (12/2/2018): We can't enforce this for an empty file (see test in roseTests/astTokenStreamTests).
             // ROSE_ASSERT(sourceFile->get_tokenSubsequenceMap().find(sourceFile->get_globalScope()) != sourceFile->get_tokenSubsequenceMap().end());
 #if 0
             // DQ (7/1/2020): Debugging output.
                printf ("Calling display on token sequence for global scope (for *.C file) \n");
-               ROSE_ASSERT(sourceFile->get_tokenSubsequenceMap()[sourceFile->get_globalScope()] != NULL);
+               ASSERT_not_null(sourceFile->get_tokenSubsequenceMap()[sourceFile->get_globalScope()]);
                TokenStreamSequenceToNodeMapping* tokenSequence = sourceFile->get_tokenSubsequenceMap()[sourceFile->get_globalScope()];
-               ROSE_ASSERT(tokenSequence != NULL);
+               ASSERT_not_null(tokenSequence);
                printf ("sourceFile->get_tokenSubsequenceMap().size() = %zu \n",sourceFile->get_tokenSubsequenceMap().size());
                tokenSequence->display("token sequence for global scope (*.C file)");
 #endif
@@ -3959,7 +3617,7 @@ SgFile::secondaryPassOverSourceFile()
             // DQ (11/15/2018): We have removed the include_file_list from the SgSourceFile so that we can support traversals on the SgIncludeFile tree.
             // SgIncludeFilePtrList & include_file_list = sourceFile->get_include_file_list();
             // ROSE_ASSERT(sourceFile->get_associated_include_file() != NULL);
-               if (sourceFile->get_associated_include_file() != NULL)
+               if (sourceFile->get_associated_include_file() != nullptr)
                   {
 #error "DEAD CODE!"
                     SgIncludeFilePtrList & include_file_list = sourceFile->get_associated_include_file()->get_include_file_list();
@@ -3969,7 +3627,7 @@ SgFile::secondaryPassOverSourceFile()
                     for (size_t i = 0; i < include_file_list.size(); i++)
                        {
                          SgIncludeFile* includeFile = include_file_list[i];
-                         ROSE_ASSERT(includeFile != NULL);
+                         ASSERT_not_null(includeFile);
 #if 0
                          printf ("In SgProject::parse(): includeFile->get_filename() = %s \n",includeFile->get_filename().str());
 #endif
@@ -3979,7 +3637,7 @@ SgFile::secondaryPassOverSourceFile()
                          SgSourceFile* header_file = includeFile->get_source_file();
                       // ROSE_ASSERT(header_file != NULL);
 #error "DEAD CODE!"
-                         if (header_file != NULL)
+                         if (header_file != nullptr)
                             {
 #if 0
                            // DQ (11/10/2018): Added debugging output.
@@ -3989,7 +3647,7 @@ SgFile::secondaryPassOverSourceFile()
                            // DQ (11/29/2018): I think this is only valid when header file unparsing and token unparsing are used together.
                            // ROSE_ASSERT(header_file->get_globalScope() != NULL);
 #error "DEAD CODE!"
-                              if (header_file->get_globalScope() != NULL)
+                              if (header_file->get_globalScope() != nullptr)
                                  {
 #if 0
                                    printf ("header_file->get_globalScope() = %p = %s \n",header_file->get_globalScope(),header_file->get_globalScope()->class_name().c_str());
@@ -4063,7 +3721,7 @@ SgFile::secondaryPassOverSourceFile()
        // DQ (3/14/2021): Test this on our regression tests.
        // void buildFirstAndLastStatementsForIncludeFiles(SgSourceFile* sourceFile);
           SgSourceFile* sourceFile = isSgSourceFile(this);
-          if (sourceFile != NULL)
+          if (sourceFile != nullptr)
              {
 
                printf ("sourceFile->getFileName() = %s \n",sourceFile->getFileName().c_str());
@@ -4135,7 +3793,7 @@ SgFile::secondaryPassOverSourceFile()
             // not unparsing all of the code from the token.c file (because some of it is assigned to the filename "toke.l".
             // For the case of the sudo application code this prevents the generated code from linking properly (undefined symbols).
             // Since many application include generated code (including ROSE itself) we would like to support this better.
-               ROSE_ASSERT(sourceFile != NULL);
+               ASSERT_not_null(sourceFile);
             // sourceFile->gatherASTSourcePositionsBasedOnDetectedLineDirectives();
             // sourceFile->fixupASTSourcePositionsBasedOnDetectedLineDirectives();
 
@@ -4155,7 +3813,7 @@ SgFile::secondaryPassOverSourceFile()
   // so we need to make sure that it is set.
      SgFunctionTypeTable* functionTypeTable = SgNode::get_globalFunctionTypeTable();
   // ROSE_ASSERT(functionTypeTable != NULL);
-     if (functionTypeTable != NULL && functionTypeTable->get_parent() == NULL)
+     if (functionTypeTable != nullptr && functionTypeTable->get_parent() == nullptr)
         {
        // printf ("In SgFile::callFrontEnd(): set the parent of SgFunctionTypeTable \n");
           functionTypeTable->set_parent(this);
@@ -4217,9 +3875,9 @@ SgSourceFile_processCppLinemarkers::GatherASTSourcePositionsBasedOnDetectedLineD
 
      SgStatement* statement = isSgStatement(astNode);
 
-     printf ("GatherASTSourcePositionsBasedOnDetectedLineDirectives::visit(): statement = %p = %s \n",statement,(statement != NULL) ? statement->class_name().c_str() : "NULL");
+     printf ("GatherASTSourcePositionsBasedOnDetectedLineDirectives::visit(): statement = %p = %s \n",statement,(statement != nullptr) ? statement->class_name().c_str() : "NULL");
 
-     if (statement != NULL)
+     if (statement != nullptr)
         {
           if ( SgProject::get_verbose() > 1)
                printf ("GatherASTSourcePositionsBasedOnDetectedLineDirectives::visit(): statement = %p = %s \n",statement,statement->class_name().c_str());
@@ -4229,7 +3887,7 @@ SgSourceFile_processCppLinemarkers::GatherASTSourcePositionsBasedOnDetectedLineD
           if (SgProject::get_verbose() > 1)
                printf ("GatherASTSourcePositionsBasedOnDetectedLineDirectives::visit(): commentOrDirectiveList = %p (size = %" PRIuPTR ") \n",commentOrDirectiveList,(commentOrDirectiveList != NULL) ? commentOrDirectiveList->size() : 0);
 
-          if (commentOrDirectiveList != NULL)
+          if (commentOrDirectiveList != nullptr)
              {
                AttachedPreprocessingInfoType::iterator i = commentOrDirectiveList->begin();
                while(i != commentOrDirectiveList->end())
@@ -4389,15 +4047,15 @@ SgSourceFile_processCppLinemarkers::FixupASTSourcePositionsBasedOnDetectedLineDi
      SgStatement* statement = isSgStatement(astNode);
 
 #if 0
-     printf ("FixupASTSourcePositionsBasedOnDetectedLineDirectives::visit(): statement = %p = %s \n",statement,(statement != NULL) ? statement->class_name().c_str() : "NULL");
+     printf ("FixupASTSourcePositionsBasedOnDetectedLineDirectives::visit(): statement = %p = %s \n",statement,(statement != nullptr) ? statement->class_name().c_str() : "NULL");
 #endif
 
-     if (statement != NULL)
+     if (statement != nullptr)
         {
           if ( SgProject::get_verbose() > 1)
                printf ("FixupASTSourcePositionsBasedOnDetectedLineDirectives::visit(): statement = %p = %s \n",statement,statement->class_name().c_str());
 
-          ROSE_ASSERT(statement->get_file_info() != NULL);
+          ASSERT_not_null(statement->get_file_info());
           int fileId = statement->get_file_info()->get_file_id();
 
        // Check if this fileId is associated with set of fileId that we would like to output.
@@ -4981,7 +4639,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
        // This fails, I think because we can't call the openFortranParser_main twice.
        // DQ (11/30/2008):  Does the work by Rice fix this now?
           int openFortranParser_dump_argc    = 0;
-          char** openFortranParser_dump_argv = NULL;
+          char** openFortranParser_dump_argv = nullptr;
           CommandlineProcessing::generateArgcArgvFromList(OFPCommandLine,openFortranParser_dump_argc,openFortranParser_dump_argv);
           frontendErrorLevel = openFortranParser_main (openFortranParser_dump_argc, openFortranParser_dump_argv);
 
@@ -5061,7 +4719,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 
        // This fails, I think because we can't call the openFortranParser_main twice.
           int openFortranParser_only_argc    = 0;
-          char** openFortranParser_only_argv = NULL;
+          char** openFortranParser_only_argv = nullptr;
           CommandlineProcessing::generateArgcArgvFromList(OFPCommandLine,openFortranParser_only_argc,openFortranParser_only_argv);
           int errorCode = openFortranParser_main (openFortranParser_only_argc, openFortranParser_only_argv);
 
@@ -5151,14 +4809,14 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
         }
 
      int openFortranParser_argc    = 0;
-     char** openFortranParser_argv = NULL;
+     char** openFortranParser_argv = nullptr;
      CommandlineProcessing::generateArgcArgvFromList(frontEndCommandLine,openFortranParser_argc,openFortranParser_argv);
 
   // DQ (8/19/2007): Setup the global pointer used to pass the SgFile to which the Open Fortran Parser
   // should attach the AST.  This is a bit ugly, but the parser interface only takes a commandline so it
   // would be more ackward to pass a pointer to a C++ object through the commandline or the Java interface.
      OpenFortranParser_globalFilePointer = const_cast<SgSourceFile*>(this);
-     ROSE_ASSERT(OpenFortranParser_globalFilePointer != NULL);
+     ASSERT_not_null(OpenFortranParser_globalFilePointer);
 
      if ( get_verbose() > 1 )
           printf ("Calling openFortranParser_main(): OpenFortranParser_globalFilePointer = %p \n",OpenFortranParser_globalFilePointer);
@@ -5204,7 +4862,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
           experimentalFrontEndCommandLine.push_back(get_sourceFileNameWithPath());
 
           int experimental_FortranParser_argc    = 0;
-          char** experimental_FortranParser_argv = NULL;
+          char** experimental_FortranParser_argv = nullptr;
           CommandlineProcessing::generateArgcArgvFromList(experimentalFrontEndCommandLine,experimental_FortranParser_argc,experimental_FortranParser_argv);
 
           if ( SgProject::get_verbose() > 1 )
@@ -5255,7 +4913,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
           printf ("DONE: Calling the openFortranParser_main() function (which loads the JVM) \n");
 
   // Reset this global pointer after we are done (just to be safe and avoid it being used later and causing strange bugs).
-     OpenFortranParser_globalFilePointer = NULL;
+     OpenFortranParser_globalFilePointer = nullptr;
 
   // Now read the CPP directives such as "# <number> <filename> <optional numeric code>", in the generated file from CPP.
      if (requires_C_preprocessor == true)
@@ -5286,7 +4944,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
        // CPP directives that indicate source file boundaries of included regions of source code.
        // E.g. # 42 "foobar.f" 2
           ROSEAttributesList* currentListOfAttributes = new ROSEAttributesList();
-          ROSE_ASSERT(currentListOfAttributes != NULL);
+          ASSERT_not_null(currentListOfAttributes);
 
        // DQ (11/28/2008): This will collect the CPP directives from the generated CPP file so that
        // we can associate parts of the AST included from different files with the correct file.
@@ -5321,7 +4979,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
   // DQ (10/26/2010): Moved from SgSourceFile::callFrontEnd() so that the stack will
   // be empty when processing Java language support (not Fortran).
      delete  currStks;
-     currStks = NULL;
+     currStks = nullptr;
 
      return frontendErrorLevel;
 #else
@@ -5337,7 +4995,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 int
 Rose::Frontend::Run(SgProject* project)
 {
-  ROSE_ASSERT(project != NULL);
+  ASSERT_not_null(project);
 
   int status = 0;
   {
@@ -5367,9 +5025,9 @@ Rose::Frontend::RunSerial(SgProject* project)
   std::vector<SgFile*> all_files = project->get_fileList();
   {
       int status_of_file = 0;
-      BOOST_FOREACH(SgFile* file, all_files)
+      for (SgFile* file : all_files)
       {
-          ROSE_ASSERT(file != NULL);
+          ASSERT_not_null(file);
           if (KEEP_GOING_CAUGHT_FRONTEND_SIGNAL)
           {
               std::cout
@@ -5378,7 +5036,7 @@ Rose::Frontend::RunSerial(SgProject* project)
                   << "signal in SgFile::RunFrontend()"
                   << std::endl;
 
-              if (file != NULL)
+              if (file != nullptr)
               {
                   file->set_frontendErrorCode(100);
                   status_of_function =
@@ -5415,7 +5073,7 @@ Rose::Frontend::RunSerial(SgProject* project)
               }
               catch(...)
               {
-                  if (file != NULL)
+                  if (file != nullptr)
                   {
                      file->set_frontendErrorCode(100);
                   }
@@ -5440,7 +5098,7 @@ Rose::Frontend::RunSerial(SgProject* project)
                       file->runFrontend(status_of_file);
                       status_of_function = max(status_of_file, status_of_function);
                   } catch (...) {
-                      if (file != NULL) {
+                      if (file != nullptr) {
                          file->set_frontendErrorCode(100);
                       } else {
                           std::cout
@@ -5462,8 +5120,7 @@ Rose::Frontend::RunSerial(SgProject* project)
       }//BOOST_FOREACH
   }//all_files->callFrontEnd
 
-  // DQ (11/4/2015): Added assertion.
-     ROSE_ASSERT(project != NULL);
+  ASSERT_not_null(project);
 
   project->set_frontendErrorCode(status_of_function);
 
@@ -5477,7 +5134,7 @@ Rose::Frontend::RunSerial(SgProject* project)
 int
 Rose::Frontend::Java::Run(SgProject* project)
 {
-  ROSE_ASSERT(project != NULL);
+  ASSERT_not_null(project);
 
   int status = 0;
   {
@@ -5490,9 +5147,7 @@ Rose::Frontend::Java::Run(SgProject* project)
           // Default to generic serial frontend
           status = Rose::Frontend::RunSerial(project);
       }
-
-  // DQ (11/4/2015): Added assertion.
-     ROSE_ASSERT(project != NULL);
+      ASSERT_not_null(project);
 
       project->set_frontendErrorCode(status);
   }
@@ -5519,12 +5174,12 @@ Rose::Frontend::Java::Ecj::RunBatchMode(SgProject* project)
        // ECJ AST will be attached to this project's shared global scope
              {
                ecj::Ecj_globalProjectPointer = project;
-               ROSE_ASSERT(ecj::Ecj_globalProjectPointer != NULL);
+               ASSERT_not_null(ecj::Ecj_globalProjectPointer);
              }
 
        // Call ECJ
           int argc = 0;
-          char** argv = NULL;
+          char** argv = nullptr;
              {
             // Process command line options specific to ROSE to
             // set SgFile attributes.
@@ -5533,9 +5188,9 @@ Rose::Frontend::Java::Ecj::RunBatchMode(SgProject* project)
             // argv list.
             //
             // Note: Function has historically been defined as member of SgFile.
-               BOOST_FOREACH(SgFile* file, project->get_files())
+               for (SgFile* file : project->get_files())
                   {
-                    ROSE_ASSERT(file != NULL);
+                    ASSERT_not_null(file);
                  // argv is modified so we need to use a copy
                     std::vector<std::string> argv_copy = project->get_originalCommandLineArgumentList();
                        {
@@ -5696,7 +5351,7 @@ Rose::Frontend::Java::Ecj::GetVerbosity(const SgProject* project)
 int
 SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLine )
    {
-     if (this -> get_package() != NULL || this -> attributeExists("error")) { // Has this file been processed already? If so, ignore it.
+     if (this -> get_package() != nullptr || this -> attributeExists("error")) { // Has this file been processed already? If so, ignore it.
         return 0;
      }
 
@@ -5921,12 +5576,12 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
           printf ("Java numberOfCommandLineArguments = %" PRIuPTR " frontEndCommandLine = %s \n",inputCommandLine.size(),CommandlineProcessing::generateStringFromArgList(frontEndCommandLine,false,false).c_str());
 
      int ecjArgc = 0;
-     char** ecjArgv = NULL;
+     char** ecjArgv = nullptr;
      CommandlineProcessing::generateArgcArgvFromList(frontEndCommandLine,ecjArgc,ecjArgv);
 
   // ECJ AST will attach to this project's shared global scope [TOO1, 2014-04-02]
      Rose::Frontend::Java::Ecj::Ecj_globalProjectPointer = this->get_project();
-     ROSE_ASSERT(Rose::Frontend::Java::Ecj::Ecj_globalProjectPointer != NULL);
+     ASSERT_not_null(Rose::Frontend::Java::Ecj::Ecj_globalProjectPointer);
 
 #if USE_ROSE_SSL_SUPPORT
   // The use of the JVM required to support Java is a problem when linking to the SSL library (either -lssl or -lcrypto)
@@ -5945,7 +5600,7 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
           printf ("DONE: Calling the openFortranParser_main() function (which loads the JVM) \n");
 
   // Reset this global pointer after we are done (just to be safe and avoid it being used later and causing strange bugs).
-     Rose::Frontend::Java::Ecj::Ecj_globalProjectPointer = NULL;
+     Rose::Frontend::Java::Ecj::Ecj_globalProjectPointer = nullptr;
 
      return frontendErrorLevel;
 #else
@@ -5966,7 +5621,7 @@ SgSourceFile::build_X10_AST(const vector<string>& p_argv)
       if (SgProject::get_verbose() >= 1)
           std::cout << "[INFO] Building the X10 AST" << std::endl;
   #endif
-    if (this -> get_package() != NULL || this -> attributeExists("error")) { // Has this file been processed already? If so, ignore it.
+    if (this -> get_package() != nullptr || this -> attributeExists("error")) { // Has this file been processed already? If so, ignore it.
         return 0;
     }
 
@@ -6003,25 +5658,18 @@ SgSourceFile::build_X10_AST(const vector<string>& p_argv)
 #endif
 
   int argc = p_argv.size();
-  char** argv = NULL;
+  char** argv = nullptr;
 
         CommandlineProcessing::
         generateArgcArgvFromList(frontEndCommandLine, argc, argv);
 
 #ifdef ROSE_BUILD_X10_LANGUAGE_SUPPORT
         Rose::Frontend::X10::X10c::X10c_globalFilePointer = const_cast<SgSourceFile*>(this);
-    ROSE_ASSERT(Rose::Frontend::X10::X10c::X10c_globalFilePointer != NULL);
-/* REMOVE this! MH-2014
-    cout << "Filename from GFP=" << Rose::Frontend::X10::X10c::X10c_globalFilePointer->getFileName()  << endl;
-    for (Rose_STL_Container<string>::iterator i = sourceFilenames.begin(); i != sourceFilenames.end(); i++) {
-        string targetSourceFileToRemove = StringUtility::getAbsolutePathFromRelativePath(*i);
-                cout << "sourceFileNames=" << targetSourceFileToRemove << endl;
-    }
-*/
+    ASSERT_not_null(Rose::Frontend::X10::X10c::X10c_globalFilePointer);
 #endif
         int status = x10_main(argc, argv);
 #ifdef ROSE_BUILD_X10_LANGUAGE_SUPPORT
-    Rose::Frontend::X10::X10c::X10c_globalFilePointer = NULL;
+    Rose::Frontend::X10::X10c::X10c_globalFilePointer = nullptr;
 #endif
 
   return status;
@@ -6087,8 +5735,8 @@ SgSourceFile_processCppLinemarkers::LinemarkerTraversal::visit ( SgNode* astNode
         }
 
      SgStatement* statement = isSgStatement(astNode);
-  // printf ("LinemarkerTraversal::visit(): statement = %p = %s \n",statement,(statement != NULL) ? statement->class_name().c_str() : "NULL");
-     if (statement != NULL)
+  // printf ("LinemarkerTraversal::visit(): statement = %p = %s \n",statement,(statement != nullptr) ? statement->class_name().c_str() : "NULL");
+     if (statement != nullptr)
         {
           if ( SgProject::get_verbose() > 1 )
                printf ("LinemarkerTraversal::visit(): statement = %p = %s \n",statement,statement->class_name().c_str());
@@ -6098,7 +5746,7 @@ SgSourceFile_processCppLinemarkers::LinemarkerTraversal::visit ( SgNode* astNode
           if ( SgProject::get_verbose() > 1 )
                printf ("LinemarkerTraversal::visit(): commentOrDirectiveList = %p (size = %" PRIuPTR ") \n",commentOrDirectiveList,(commentOrDirectiveList != NULL) ? commentOrDirectiveList->size() : 0);
 
-          if (commentOrDirectiveList != NULL)
+          if (commentOrDirectiveList != nullptr)
              {
                AttachedPreprocessingInfoType::iterator i = commentOrDirectiveList->begin();
                while(i != commentOrDirectiveList->end())
@@ -6165,7 +5813,7 @@ SgSourceFile_processCppLinemarkers::LinemarkerTraversal::visit ( SgNode* astNode
                     printf ("filename = %s \n",statement->get_file_info()->get_filenameString().c_str());
                   }
 
-               ROSE_ASSERT(statement->get_file_info()->get_filename() != NULL);
+               ASSERT_not_null(statement->get_file_info()->get_filename());
                ROSE_ASSERT(statement->get_file_info()->get_filenameString().empty() == false);
              }
         }
@@ -6209,7 +5857,7 @@ SgSourceFile::build_C_and_Cxx_AST( vector<string> argv, vector<string> inputComm
         }
 
      int c_cxx_argc = 0;
-     char **c_cxx_argv = NULL;
+     char **c_cxx_argv = nullptr;
      CommandlineProcessing::generateArgcArgvFromList(inputCommandLine, c_cxx_argc, c_cxx_argv);
 
 #ifdef ROSE_BUILD_CXX_LANGUAGE_SUPPORT
@@ -6346,7 +5994,7 @@ SgSourceFile::build_Csharp_AST( vector<string> argv, vector<string> inputCommand
 
      int frontendErrorLevel = 0;
      int csharp_argc = 0;
-     char **csharp_argv = NULL;
+     char **csharp_argv = nullptr;
      CommandlineProcessing::generateArgcArgvFromList(inputCommandLine, csharp_argc, csharp_argv);
 
      string sourceFileNameWithPath = this->get_sourceFileNameWithPath();
@@ -6451,7 +6099,7 @@ SgSourceFile::build_Jovial_AST( vector<string> argv, vector<string> inputCommand
      int frontendErrorLevel = 0;
 
      int jovial_argc = 0;
-     char **jovial_argv = NULL;
+     char **jovial_argv = nullptr;
      CommandlineProcessing::generateArgcArgvFromList(inputCommandLine, jovial_argc, jovial_argv);
 
   // Prototype declaration.
@@ -6459,7 +6107,7 @@ SgSourceFile::build_Jovial_AST( vector<string> argv, vector<string> inputCommand
      int jovial_main(int argc, char** argv, SgSourceFile* file);
 
      SgSourceFile* nonconst_file = const_cast<SgSourceFile*>(this);
-     ROSE_ASSERT(nonconst_file != NULL);
+     ASSERT_not_null(nonconst_file);
 
   // Rasmussen (10/21/2017) Added compile time check to build if not configured for Jovial
 #ifdef ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION
@@ -6499,7 +6147,7 @@ SgSourceFile::build_Cobol_AST( vector<string> argv, vector<string> inputCommandL
 
      int frontendErrorLevel = 0;
      int cobol_argc = 0;
-     char **cobol_argv = NULL;
+     char **cobol_argv = nullptr;
      CommandlineProcessing::generateArgcArgvFromList(inputCommandLine, cobol_argc, cobol_argv);
 
   // Prototype declaration.
@@ -6507,7 +6155,7 @@ SgSourceFile::build_Cobol_AST( vector<string> argv, vector<string> inputCommandL
      int cobol_main(int argc, char** argv, SgSourceFile* file);
 
      SgSourceFile* nonconst_file = const_cast<SgSourceFile*>(this);
-     ROSE_ASSERT(nonconst_file != NULL);
+     ASSERT_not_null(nonconst_file);
 
   // Rasmussen (10/9/2017) Added compile time check to build if not configured for Cobol
 #ifdef ROSE_EXPERIMENTAL_COBOL_ROSE_CONNECTION
@@ -6530,7 +6178,6 @@ SgSourceFile::build_Cobol_AST( vector<string> argv, vector<string> inputCommandL
      return frontendErrorLevel;
    }
 
-
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 /* Parses a single binary file and adds a SgAsmGenericFile node under this SgBinaryComposite node. */
 void
@@ -6542,7 +6189,7 @@ SgBinaryComposite::buildAsmAST(string executableFileName)
 
   // Parse the binary container, but do not disassemble instructions yet.
      SgAsmGenericFile *file = SgAsmExecutableFileFormat::parseBinaryFormat(executableFileName.c_str());
-     ROSE_ASSERT(file != NULL);
+     ASSERT_not_null(file);
 
   // Attach the file to this node
      get_genericFileList()->get_files().push_back(file);
@@ -6637,57 +6284,6 @@ SgBinaryComposite::buildAST(vector<string> /*argv*/, vector<string> /*inputComma
      int frontendErrorLevel = 0;
      return frontendErrorLevel;
    }
-
-
-#if 0
-/* Builds the entire AST under the SgBinaryFile node:
- *    - figures out what binary files are needed
- *    - parses binary container of each file (SgAsmGenericFile nodes)
- *    - optionally disassembles instructions (SgAsmInterpretation nodes) */
-int
-SgBinaryFile::buildAST(vector<string> /*argv*/, vector<string> /*inputCommandLine*/)
-{
-    if (get_isLibraryArchive()) {
-        ROSE_ASSERT(get_libraryArchiveObjectFileNameList().empty() == false);
-        ROSE_ASSERT(get_libraryArchiveObjectFileNameList().empty() == (get_isLibraryArchive() == false));
-
-        for (size_t i = 0; i < get_libraryArchiveObjectFileNameList().size(); i++) {
-            printf("Build binary AST for get_libraryArchiveObjectFileNameList()[%" PRIuPTR "] = %s \n",
-                    i, get_libraryArchiveObjectFileNameList()[i].c_str());
-            string filename = "tmp_objects/" + get_libraryArchiveObjectFileNameList()[i];
-            printf("Build SgAsmGenericFile from: %s \n", filename.c_str());
-            buildAsmAST(filename);
-        }
-    } else {
-        ROSE_ASSERT(get_libraryArchiveObjectFileNameList().empty() == true);
-        buildAsmAST(this->get_sourceFileNameWithPath());
-    }
-
-    /* Disassemble each interpretation */
-    if (get_read_executable_file_format_only()) {
-        printf ("\nWARNING: Skipping instruction disassembly \n\n");
-    } else {
-        const SgAsmInterpretationPtrList &interps = get_interpretations()->get_interpretations();
-        for (size_t i=0; i<interps.size(); i++) {
-            Partitioner::disassembleInterpretation(interps[i]);
-        }
-    }
-
-    // DQ (1/22/2008): The generated unparsed assemble code can not currently be compiled because the
-    // addresses are unparsed (see Jeremiah for details).
-    // Skip running gnu assemble on the output since we include text that would make this a problem.
-    if (get_verbose() > 1)
-        printf("set_skipfinalCompileStep(true) because we are on a binary '%s'\n", this->get_sourceFileNameWithoutPath().c_str());
-    this->set_skipfinalCompileStep(true);
-
-    // This is now done below in the Secondary file processing phase.
-    // Generate the ELF executable format structure into the AST
-    // generateBinaryExecutableFileInformation(executableFileName,asmFile);
-
-    int frontendErrorLevel = 0;
-    return frontendErrorLevel;
-}
-#endif
 #endif
 
 int
@@ -7003,8 +6599,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
        // It's use here is similar to that in the unparse.C file, but less clear here that it is correct since we
        // don't have tests of the -rose:keep_going option (that I know of directly in ROSE).
           SgProject* project = TransformationSupport::getProject(this);
-       // ROSE_ASSERT(project != NULL);
-          if (project != NULL)
+          if (project != nullptr)
              {
 #if DEBUG_PROJECT_COMPILE_COMMAND_LINE_WITH_ARGS
                printf ("In SgFile::compileOutput(): project->get_unparse_in_same_directory_as_input_file() = %s \n",project->get_unparse_in_same_directory_as_input_file() ? "true" : "false");
@@ -7429,9 +7024,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
 int
 Rose::Backend::Java::CompileBatch(SgProject* project, std::vector<std::string> argv)
 {
-  // DQ (11/4/2015): Added assertion.
-     ROSE_ASSERT(project != NULL);
-
+  ASSERT_not_null(project);
   ROSE_ASSERT (project->get_Java_only() == true);
 
   std::cout << "[INFO] Backend::Java::CompileBatch" << std::endl;
@@ -7698,22 +7291,8 @@ SgProject::compileOutput()
 
           errorCode = systemFromVector(originalCommandLine);
 
-#if 0
-       // DQ (8/22/2009): We test the parent of SgFunctionTypeTable in the AST post processing,
-       // so we need to make sure that it is set.
-          SgFunctionTypeTable* functionTypeTable = SgNode::get_globalFunctionTypeTable();
-          ROSE_ASSERT(functionTypeTable != NULL);
-          if (functionTypeTable->get_parent() == NULL)
-             {
-               ROSE_ASSERT(numberOfFiles() > 0);
-               printf ("set the parent of SgFunctionTypeTable \n");
-               functionTypeTable->set_parent(&get_file(0));
-             }
-          ROSE_ASSERT(functionTypeTable->get_parent() != NULL);
-#endif
-
-          ROSE_ASSERT(SgNode::get_globalFunctionTypeTable() != NULL);
-          ROSE_ASSERT(SgNode::get_globalFunctionTypeTable()->get_parent() != NULL);
+          ASSERT_not_null(SgNode::get_globalFunctionTypeTable());
+          ASSERT_not_null(SgNode::get_globalFunctionTypeTable()->get_parent());
 
        // printf ("Exiting after call to compiler using -E option! \n");
        // ROSE_ASSERT(false);
@@ -7823,17 +7402,12 @@ SgProject::compileOutput()
 
 #if DEBUG_PROJECT_COMPILE_COMMAND_LINE
           printf ("In SgProject::compileOutput(): get_compileOnly() = %s \n",get_compileOnly() ? "true" : "false");
-#endif
-
-#if 0
           printf ("In SgProject::compileOutput(): errorCode = %d \n",errorCode);
 #endif
        // case 3: linking at the project level
 
        // DQ (1/9/2017): Only proceed with linking step if the compilation step finished without error.
        // DQ (30/8/2017): Note that Csharp does not use linking the same way that C/C++ does (as I understand it).
-       // if (! (get_Java_only() || get_Python_only() || get_X10_only()) )
-       // if (! (get_Java_only() || get_Python_only() || get_X10_only() || get_Csharp_only() ) )
           if ( (errorCode == 0) && (! (get_Java_only() || get_Python_only() || get_X10_only() || get_Csharp_only() ) ) )
              {
 
@@ -7853,31 +7427,8 @@ SgProject::compileOutput()
 
             // DQ (4/13/2015): Check if the compile line supported the link step.
             // Could this call the linker even we we don't want it called, or skipp calling it when we do want it to be called?
-            // if (get_compileOnly() == true)
                if (get_compileOnly() == false)
                   {
-#if 0 // Liao 5/5/2015, comment out this, using a uniform handling for both single file and multiple-file cases
-                    if (multifile_support_compile_only_flag == true)
-                       {
-#if DEBUG_PROJECT_COMPILE_COMMAND_LINE
-                         printf ("In SgProject::compileOutput(): multifile_support_compile_only_flag == true: Calling the linker if the compile line didn't handle the link step! \n");
-#endif
-#ifndef _MSC_VER
-                      // tps 08/18/2010 : Do not link right now in Windows - it breaks - want test to pass here for now.
-                      // todo windows: put this back in.
-                      // linkingReturnVal = link (compilerName);
-                         linkingReturnVal = link (BACKEND_CXX_COMPILER_NAME_WITH_PATH);
-#else
-   #pragma message ("sageSupport.C : linkingReturnVal = link (compilerName); not implemented yet.")
-#endif
-                       }
-                      else
-                       {
-#if DEBUG_PROJECT_COMPILE_COMMAND_LINE
-                         printf ("In SgProject::compileOutput(): multifile_support_compile_only_flag == false: Linking as a seperate step is not required when multifile_support_compile_only_flag == false \n");
-#endif
-                       }
-#endif
                    // Liao 5/1/2015
                       linkingReturnVal = link (BACKEND_CXX_COMPILER_NAME_WITH_PATH);
                   }
@@ -7890,12 +7441,6 @@ SgProject::compileOutput()
              }
         } // end if preprocessing-only is false
 
-#if 0
-     printf ("Exiting as a test! \n");
-     ROSE_ABORT();
-#endif
-
-  // return errorCode;
      return errorCode + linkingReturnVal;
    }
 
@@ -7914,15 +7459,13 @@ SgFile::isPrelinkPhase() const
   // DQ (5/9/2004): If the parent is not set then this was compiled as a SgFile directly
   // (likely by the rewrite mechanism). IF so it can't be a prelink phase, which is
   // called only on SgProjects). Not happy with this mechanism!
-     if (get_parent() != NULL)
+     if (get_parent() != nullptr)
         {
-          ROSE_ASSERT ( get_parent() != NULL );
-
        // DQ (1/24/2010): Now that we have directory support, the parent of a SgFile does not have to be a SgProject.
        // SgProject* project = isSgProject(get_parent());
           SgProject* project = TransformationSupport::getProject(this);
 
-          ROSE_ASSERT ( project != NULL );
+          ASSERT_not_null(project);
           returnValue = project->get_prelink();
         }
 
@@ -7940,9 +7483,6 @@ int SgProject::link ( std::string linkerName )
    {
 #if 0
      printf ("In SgProject::link(): linkerName = %s \n",linkerName.c_str());
-#endif
-
-#if 0
      printf ("Exiting as a test! \n");
      ROSE_ABORT();
 #endif
@@ -8229,8 +7769,6 @@ int SgProject::link ( const std::vector<std::string>& argv, std::string linkerNa
         {
 #if 0
           printf ("Detected non-zero status in link process: status = %d \n",status);
-#endif
-#if 0
           printf ("Exiting as a test! \n");
           ROSE_ABORT();
 #endif
@@ -8300,7 +7838,7 @@ StringUtility::FileNameLocation
 get_location ( Sg_File_Info* X )
    {
      SgFile* file = TransformationSupport::getFile(X->get_parent());
-     ROSE_ASSERT(file != NULL);
+     ASSERT_not_null(file);
      string sourceFilename = file->getFileName();
      string sourceDirectory = StringUtility::getPathFromFileName(sourceFilename);
 
@@ -8314,7 +7852,7 @@ StringUtility::FileNameLibrary
 get_library ( Sg_File_Info* X )
    {
      SgFile* file = TransformationSupport::getFile(X->get_parent());
-     ROSE_ASSERT(file != NULL);
+     ASSERT_not_null(file);
      string sourceFilename = file->getFileName();
      string sourceDirectory = StringUtility::getPathFromFileName(sourceFilename);
 
@@ -8328,7 +7866,7 @@ std::string
 get_libraryName ( Sg_File_Info* X )
    {
      SgFile* file = TransformationSupport::getFile(X->get_parent());
-     ROSE_ASSERT(file != NULL);
+     ASSERT_not_null(file);
      string sourceFilename = file->getFileName();
      string sourceDirectory = StringUtility::getPathFromFileName(sourceFilename);
 
@@ -8349,7 +7887,7 @@ int
 get_distanceFromSourceDirectory ( Sg_File_Info* X )
    {
      SgFile* file = TransformationSupport::getFile(X->get_parent());
-     ROSE_ASSERT(file != NULL);
+     ASSERT_not_null(file);
      string sourceFilename = file->getFileName();
      string sourceDirectory = StringUtility::getPathFromFileName(sourceFilename);
 
@@ -8430,29 +7968,6 @@ SgNode::depthOfSubtree()
      return value;
    }
 
-#if 0
-// We only need one definition for this function at the SgNode IR node.
-size_t
-SgFile::numberOfNodesInSubtree()
-   {
-     printf ("Base class of virtual function (SgFile::numberOfNodesInSubtree() should not be called! \n");
-     ROSE_ABORT();
-   }
-
-size_t
-SgSourceFile::numberOfNodesInSubtree()
-   {
-     return get_globalScope()->numberOfNodesInSubtree() + 1;
-   }
-
-size_t
-SgBinaryComposite::numberOfNodesInSubtree()
-   {
-     return get_binaryFile()->numberOfNodesInSubtree() + 1;
-   }
-#endif
-
-
 // DQ (10/3/2008): Added support for getting interfaces in a module
 std::vector<SgInterfaceStatement*>
 SgModuleStatement::get_interfaces() const
@@ -8460,10 +7975,10 @@ SgModuleStatement::get_interfaces() const
      std::vector<SgInterfaceStatement*> returnList;
 
      SgModuleStatement* definingModuleStatement = isSgModuleStatement(get_definingDeclaration());
-     ROSE_ASSERT(definingModuleStatement != NULL);
+     ASSERT_not_null(definingModuleStatement);
 
      SgClassDefinition* moduleDefinition = definingModuleStatement->get_definition();
-     ROSE_ASSERT(moduleDefinition != NULL);
+     ASSERT_not_null(moduleDefinition);
 
      SgDeclarationStatementPtrList & declarationList = moduleDefinition->getDeclarationList();
 
@@ -8471,7 +7986,7 @@ SgModuleStatement::get_interfaces() const
      while (i != declarationList.end())
         {
           SgInterfaceStatement* interfaceStatement = isSgInterfaceStatement(*i);
-          if (interfaceStatement != NULL)
+          if (interfaceStatement != nullptr)
              {
                returnList.push_back(interfaceStatement);
              }
@@ -8490,7 +8005,7 @@ SgC_PreprocessorDirectiveStatement::createDirective ( PreprocessingInfo* current
      PreprocessingInfo::DirectiveType directive = currentPreprocessingInfo->getTypeOfDirective();
 
   // SgC_PreprocessorDirectiveStatement* cppDirective = new SgEmptyDirectiveStatement();
-     SgC_PreprocessorDirectiveStatement* cppDirective = NULL;
+     SgC_PreprocessorDirectiveStatement* cppDirective = nullptr;
 
      switch(directive)
         {
@@ -8538,7 +8053,7 @@ SgC_PreprocessorDirectiveStatement::createDirective ( PreprocessingInfo* current
              }
         }
 
-     ROSE_ASSERT(cppDirective != NULL);
+     ASSERT_not_null(cppDirective);
 
      printf ("In SgC_PreprocessorDirectiveStatement::createDirective(): currentPreprocessingInfo->getString() = %s \n",currentPreprocessingInfo->getString().c_str());
 
@@ -8563,19 +8078,16 @@ StringUtility::popen_wrapper ( const string & command, vector<string> & result )
 
      const int  SIZE = 10000;
      bool       returnValue = true;
-     FILE*      fp = NULL;
+     FILE*      fp = nullptr;
      char       buffer[SIZE];
 
      result = vector<string>();
 
-
-
-
      // CH (4/6/2010): The Windows version of popen is _popen
 #ifdef _MSC_VER
-     if ((fp = _popen(command.c_str (), "r")) == NULL)
+     if ((fp = _popen(command.c_str (), "r")) == nullptr)
 #else
-     if ((fp = popen(command.c_str (), "r")) == NULL)
+     if ((fp = popen(command.c_str (), "r")) == nullptr)
 #endif
         {
           cerr << "Files or processes cannot be created" << endl;
@@ -8606,7 +8118,6 @@ StringUtility::popen_wrapper ( const string & command, vector<string> & result )
           cerr << ("Cannot execute pclose");
           returnValue = false;
         }
-//#endif
 
      return returnValue;
    }
@@ -8642,20 +8153,16 @@ StringUtility::demangledName ( string s )
    }
 
 
-#if 1
-// DQ (2/16/2009): Moved from expression.code to sageSupport.C while this is tested and debugged!
-
-// DQ (2/8/2009): I always wanted to have this function!
 SgFunctionDeclaration*
 SgFunctionCallExp::getAssociatedFunctionDeclaration() const
    {
   // This is helpful in chasing down the associated declaration to this function reference.
-     SgFunctionDeclaration* returnFunctionDeclaration = NULL;
+     SgFunctionDeclaration* returnFunctionDeclaration = nullptr;
 
      SgFunctionSymbol* associatedFunctionSymbol = getAssociatedFunctionSymbol();
      // It can be NULL for a function pointer
      //ROSE_ASSERT(associatedFunctionSymbol != NULL);
-     if (associatedFunctionSymbol != NULL)
+     if (associatedFunctionSymbol != nullptr)
        returnFunctionDeclaration = associatedFunctionSymbol->get_declaration();
 
     // ROSE_ASSERT(returnFunctionDeclaration != NULL);
@@ -8670,7 +8177,7 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
   // This is helpful in chasing down the associated declaration to this function reference.
   // But this refactored function does the first step of getting the symbol, so that it
   // can also be used separately in the outlining support.
-     SgFunctionSymbol* returnSymbol = NULL;
+     SgFunctionSymbol* returnSymbol = nullptr;
 
   // Note that as I recall there are a number of different types of IR nodes that
   // the functionCallExp->get_function() can return (this is the complete list,
@@ -8721,11 +8228,11 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
           case V_SgFunctionRefExp:
              {
                SgFunctionRefExp* functionRefExp = isSgFunctionRefExp(functionExp);
-               ROSE_ASSERT(functionRefExp != NULL);
+               ASSERT_not_null(functionRefExp);
                returnSymbol = functionRefExp->get_symbol();
 
             // DQ (2/8/2009): Can we assert this! What about pointers to functions?
-               ROSE_ASSERT(returnSymbol != NULL);
+               ASSERT_not_null(returnSymbol);
                break;
              }
 
@@ -8734,11 +8241,11 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
           case V_SgTemplateFunctionRefExp:
              {
                SgTemplateFunctionRefExp* functionRefExp = isSgTemplateFunctionRefExp(functionExp);
-               ROSE_ASSERT(functionRefExp != NULL);
+               ASSERT_not_null(functionRefExp);
                returnSymbol = functionRefExp->get_symbol();
 
             // DQ (2/8/2009): Can we assert this! What about pointers to functions?
-               ROSE_ASSERT(returnSymbol != NULL);
+               ASSERT_not_null(returnSymbol);
                break;
              }
 
@@ -8747,22 +8254,22 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
           case V_SgTemplateMemberFunctionRefExp:
              {
                SgTemplateMemberFunctionRefExp* templateMemberFunctionRefExp = isSgTemplateMemberFunctionRefExp(functionExp);
-               ROSE_ASSERT(templateMemberFunctionRefExp != NULL);
+               ASSERT_not_null(templateMemberFunctionRefExp);
                returnSymbol = templateMemberFunctionRefExp->get_symbol();
 
             // DQ (2/8/2009): Can we assert this! What about pointers to functions?
-               ROSE_ASSERT(returnSymbol != NULL);
+               ASSERT_not_null(returnSymbol);
                break;
              }
 
           case V_SgMemberFunctionRefExp:
              {
                SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(functionExp);
-               ROSE_ASSERT(memberFunctionRefExp != NULL);
+               ASSERT_not_null(memberFunctionRefExp);
                returnSymbol = memberFunctionRefExp->get_symbol();
 
             // DQ (2/8/2009): Can we assert this! What about pointers to functions?
-               ROSE_ASSERT(returnSymbol != NULL);
+               ASSERT_not_null(returnSymbol);
                break;
              }
 
@@ -8770,18 +8277,18 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
              {
             // The lhs is the this pointer (SgThisExp) and the rhs is the member function.
                SgArrowExp* arrayExp = isSgArrowExp(functionExp);
-               ROSE_ASSERT(arrayExp != NULL);
+               ASSERT_not_null(arrayExp);
 
                SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(arrayExp->get_rhs_operand());
 
             // DQ (2/21/2010): Relaxed this constraint because it failes in fixupPrettyFunction test.
             // ROSE_ASSERT(memberFunctionRefExp != NULL);
-               if (memberFunctionRefExp != NULL)
+               if (memberFunctionRefExp != nullptr)
                   {
                     returnSymbol = memberFunctionRefExp->get_symbol();
 
                  // DQ (2/8/2009): Can we assert this! What about pointers to functions?
-                    ROSE_ASSERT(returnSymbol != NULL);
+                    ASSERT_not_null(returnSymbol);
                   }
                break;
              }
@@ -8789,32 +8296,30 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
           case V_SgDotExp:
              {
                SgDotExp * dotExp = isSgDotExp(functionExp);
-               ROSE_ASSERT(dotExp != NULL);
-
-            // DQ (2/24/2013): Added assertion.
-               ROSE_ASSERT(dotExp->get_rhs_operand() != NULL);
+               ASSERT_not_null(dotExp);
+               ASSERT_not_null(dotExp->get_rhs_operand());
 #if 0
                printf ("In SgFunctionCallExp::getAssociatedFunctionSymbol(): case V_SgDotExp: dotExp->get_rhs_operand() = %p = %s \n",dotExp->get_rhs_operand(),dotExp->get_rhs_operand()->class_name().c_str());
 #endif
             // There are four different types of function call reference expression in ROSE.
                SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(dotExp->get_rhs_operand());
-               if (memberFunctionRefExp == NULL)
+               if (memberFunctionRefExp == nullptr)
                   {
                  // This could be a SgTemplateMemberFunctionRefExp (not derived from SgMemberFunctionRefExp or SgFunctionRefExp). See test2013_70.C
                     SgTemplateMemberFunctionRefExp* templateMemberFunctionRefExp = isSgTemplateMemberFunctionRefExp(dotExp->get_rhs_operand());
-                    if (templateMemberFunctionRefExp == NULL)
+                    if (templateMemberFunctionRefExp == nullptr)
                        {
                          SgTemplateFunctionRefExp* templateFunctionRefExp = isSgTemplateFunctionRefExp(dotExp->get_rhs_operand());
-                         if (templateFunctionRefExp == NULL)
+                         if (templateFunctionRefExp == nullptr)
                             {
                               SgFunctionRefExp* functionRefExp = isSgFunctionRefExp(dotExp->get_rhs_operand());
-                              if (functionRefExp == NULL)
+                              if (functionRefExp == nullptr)
                                  {
                                    SgVarRefExp* varRefExp = isSgVarRefExp(dotExp->get_rhs_operand());
-                                   if (varRefExp == NULL)
+                                   if (varRefExp == nullptr)
                                       {
                                         SgNonrealRefExp* nrRefExp = isSgNonrealRefExp(dotExp->get_rhs_operand());
-                                        if (nrRefExp == NULL) {
+                                        if (nrRefExp == nullptr) {
                                           dotExp->get_rhs_operand()->get_file_info()->display("In SgFunctionCallExp::getAssociatedFunctionSymbol(): case of SgDotExp: templateMemberFunctionRefExp == NULL: debug");
                                           printf ("In SgFunctionCallExp::getAssociatedFunctionSymbol(): case of SgDotExp: dotExp->get_rhs_operand() = %p = %s \n",dotExp->get_rhs_operand(),dotExp->get_rhs_operand()->class_name().c_str());
                                         } else {
@@ -8823,7 +8328,7 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
                                       }
                                      else
                                       {
-                                        ROSE_ASSERT(varRefExp != NULL);
+                                        ASSERT_not_null(varRefExp);
 
                                      // DQ (8/20/2013): This is not a SgFunctionSymbol so we can't return a valid symbol from this case of a function call from a pointer to a function.
                                      // returnSymbol = varRefExp->get_symbol();
@@ -8832,39 +8337,35 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
                                 else
                                  {
                                 // I am unclear when this is possible, but STL code exercises it.
-                                   ROSE_ASSERT(functionRefExp != NULL);
+                                   ASSERT_not_null(functionRefExp);
                                    returnSymbol = functionRefExp->get_symbol();
 
-                                // DQ (8/20/2013): Add assertion to the specific valide cases.
-                                   ROSE_ASSERT(returnSymbol != NULL);
+                                   ASSERT_not_null(returnSymbol);
                                  }
                             }
                            else
                             {
                            // I am unclear when this is possible, but STL code exercises it.
-                              ROSE_ASSERT(templateFunctionRefExp != NULL);
+                              ASSERT_not_null(templateFunctionRefExp);
                               returnSymbol = templateFunctionRefExp->get_symbol();
 
-                           // DQ (8/20/2013): Add assertion to the specific valide cases.
-                              ROSE_ASSERT(returnSymbol != NULL);
+                              ASSERT_not_null(returnSymbol);
                             }
                        }
                       else
                        {
-                         ROSE_ASSERT(templateMemberFunctionRefExp != NULL);
+                         ASSERT_not_null(templateMemberFunctionRefExp);
                          returnSymbol = templateMemberFunctionRefExp->get_symbol();
 
-                      // DQ (8/20/2013): Add assertion to the specific valide cases.
-                         ROSE_ASSERT(returnSymbol != NULL);
+                         ASSERT_not_null(returnSymbol);
                        }
                   }
                  else
                   {
-                    ROSE_ASSERT(memberFunctionRefExp != NULL);
+                    ASSERT_not_null(memberFunctionRefExp);
                     returnSymbol = memberFunctionRefExp->get_symbol();
 
-                 // DQ (8/20/2013): Add assertion to the specific valide cases.
-                    ROSE_ASSERT(returnSymbol != NULL);
+                    ASSERT_not_null(returnSymbol);
                   }
 
             // DQ (8/20/2013): Function pointers don't allow us to generate a proper valid SgFunctionSymbol.
@@ -8898,7 +8399,7 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
        // It might be that this should resolve to a symbol.
           case V_SgConstructorInitializer:
              {
-               ROSE_ASSERT(functionExp->get_file_info() != NULL);
+               ASSERT_not_null(functionExp->get_file_info());
 #if 0
                printf ("In SgFunctionCallExp::getAssociatedFunctionSymbol(): Found a case of SgConstructorInitializer \n");
                functionExp->get_file_info()->display("In SgFunctionCallExp::getAssociatedFunctionSymbol(): new case to be supported: checking this out: debug");
@@ -8915,7 +8416,7 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
        // DQ (2/25/2013): Added support for this case, but I would like to review this (likely OK).
           case V_SgFunctionCallExp:
              {
-               ROSE_ASSERT(functionExp->get_file_info() != NULL);
+               ASSERT_not_null(functionExp->get_file_info());
 #if 0
                printf ("In SgFunctionCallExp::getAssociatedFunctionSymbol(): Found a case of SgFunctionCallExp \n");
                functionExp->get_file_info()->display("In SgFunctionCallExp::getAssociatedFunctionSymbol(): new case to be supported: checking this out: debug");
@@ -8934,7 +8435,7 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
              {
 #if 0
                printf ("In SgFunctionCallExp::getAssociatedFunctionSymbol(): Found a case of SgPntrArrRefExp \n");
-               ROSE_ASSERT(functionExp->get_file_info() != NULL);
+               ASSERT_not_null(functionExp->get_file_info());
                functionExp->get_file_info()->display("In SgFunctionCallExp::getAssociatedFunctionSymbol(): new case to be supported: checking this out: debug");
 #endif
                break;
@@ -8986,7 +8487,7 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
                // Send out error message before the assertion, which may fail and stop first otherwise.
                  mprintf("Error: There should be no other cases functionExp = %p = %s \n", functionExp, functionExp->class_name().c_str());
 
-               ROSE_ASSERT(functionExp->get_file_info() != NULL);
+               ASSERT_not_null(functionExp->get_file_info());
 
             // DQ (3/15/2017): Fixed to use mlog message logging.
                if (Rose::ir_node_mlog[Rose::Diagnostics::DEBUG])
@@ -9005,18 +8506,17 @@ SgFunctionCallExp::getAssociatedFunctionSymbol() const
 
   // If the function is virtual, the function call might actually be to a different symbol.
   // We should return NULL in this case to preserve correctness
-     if (returnSymbol != NULL && !isAlwaysResolvedStatically)
+     if (returnSymbol != nullptr && !isAlwaysResolvedStatically)
         {
           SgFunctionModifier& functionModifier = returnSymbol->get_declaration()->get_functionModifier();
           if (functionModifier.isVirtual() || functionModifier.isPureVirtual())
              {
-               returnSymbol = NULL;
+               returnSymbol = nullptr;
              }
         }
 
      return returnSymbol;
    }
-#endif
 
 
 // DQ (10/19/2010): This is moved from src/ROSETTA/Grammar/Cxx_GlobalDeclarations.macro to here
