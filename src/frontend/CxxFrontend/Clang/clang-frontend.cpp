@@ -298,13 +298,13 @@ int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
 
   // 3 - Translate
 
- // printf ("Calling clang::ParseAST() (generate ROSE AST) \n");
+//  printf ("Calling clang::ParseAST()\n");
 
     compiler_instance->getDiagnosticClient().BeginSourceFile(compiler_instance->getLangOpts(), &(compiler_instance->getPreprocessor()));
     clang::ParseAST(compiler_instance->getPreprocessor(), &translator, compiler_instance->getASTContext());
     compiler_instance->getDiagnosticClient().EndSourceFile();
 
- // printf ("DONE: Calling clang::ParseAST()  (generate ROSE AST) \n");
+//  printf ("Clang found %d warning and %d errors\n", diag_printer->getNumWarnings(), diag_printer->getNumErrors());
 
     SgGlobal * global_scope = translator.getGlobalScope();
 
@@ -329,7 +329,7 @@ int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
 
     finishSageAST(translator);
 
-    return 0;
+    return diag_printer->getNumErrors();
 }
 
 void finishSageAST(ClangToSageTranslator & translator) {
