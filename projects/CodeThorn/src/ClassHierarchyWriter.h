@@ -57,5 +57,13 @@ void classLayoutDot( std::ostream& os,
                      ClassFilterFn include,
                      const ObjectLayoutContainer& classLayout
                    );
+
+/// writes out the vtable layout as text
+void vtableLayoutTxt( std::ostream& os,
+                      ClassNameFn& className,
+                      FuncNameFn& funcName,
+                      ClassFilterFn include,
+                      const VTableLayoutContainer& vtableLayout
+                    );
 }
 #endif /* CLASS_HIERARCHY_WRITER_H */

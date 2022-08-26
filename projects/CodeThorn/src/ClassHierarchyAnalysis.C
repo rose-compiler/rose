@@ -492,6 +492,9 @@ struct ComputeVFunctionRelation
       return;
     }
 
+    //~ std::cerr << rcb.nameOf(drv) << " overrides " << rcb.nameOf(bas)
+              //~ << std::endl;
+
     const bool               covariant = rel == RoseCompatibilityBridge::covariant;
 
     vfunAnalysis.at(drv).overridden().emplace_back(bas, covariant);
