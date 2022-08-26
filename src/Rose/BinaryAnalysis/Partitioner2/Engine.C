@@ -1491,13 +1491,11 @@ Engine::obtainDisassembler() {
 
 Disassembler::Base::Ptr
 Engine::obtainDisassembler(const Disassembler::Base::Ptr &hint) {
-    if (!disassembler_ && !settings_.disassembler.isaName.empty() &&
-        (disassembler_ = Disassembler::lookup(settings_.disassembler.isaName)))
-        disassembler_ = disassembler_->clone();
+    if (!disassembler_ && !settings_.disassembler.isaName.empty())
+        disassembler_ = Disassembler::lookup(settings_.disassembler.isaName);
 
-    if (!disassembler_ && interp_ &&
-        (disassembler_ = Disassembler::lookup(interp_)))
-        disassembler_ = disassembler_->clone();
+    if (!disassembler_ && interp_)
+        disassembler_ = Disassembler::lookup(interp_);
 
     if (!disassembler_ && hint)
         disassembler_ = hint;

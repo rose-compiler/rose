@@ -6,12 +6,15 @@
 #include <Rose/BinaryAnalysis/Disassembler/Aarch32.h>
 #include <Rose/BinaryAnalysis/Disassembler/Aarch64.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
+#include <Rose/BinaryAnalysis/Disassembler/Exception.h>
 #include <Rose/BinaryAnalysis/Disassembler/M68k.h>
 #include <Rose/BinaryAnalysis/Disassembler/Mips.h>
 #include <Rose/BinaryAnalysis/Disassembler/Null.h>
 #include <Rose/BinaryAnalysis/Disassembler/Powerpc.h>
 #include <Rose/BinaryAnalysis/Disassembler/X86.h>
 #include <Rose/Diagnostics.h>
+
+#include <Sawyer/Synchronization.h>
 
 using namespace Sawyer::Message::Common;
 
@@ -30,46 +33,49 @@ void initDiagnostics() {
     }
 }
 
-/* Mutex for class-wide operations (such as adjusting Base::disassemblers) */
-static boost::mutex class_mutex;
+// Mutex for the disasassembler registry
+static SAWYER_THREAD_TRAITS::Mutex registryMutex;
 
-/* List of disassembler subclasses (protect with class_mutex) */
-static std::vector<Base::Ptr> disassemblers;
+// List of registered disassembler factories (protected by registryMutex)
+static std::vector<Base::Ptr> registry;
 
-/* Initialize the class. Thread safe. */
+// Initialize the disassembler registry with ROSE's built-in disassembler factories.
 static void
-initclassHelper() {
+initRegistryHelper() {
+    SAWYER_THREAD_TRAITS::LockGuard lock(registryMutex);
+    registry.push_back(Null::instance());
 #ifdef ROSE_ENABLE_ASM_AARCH32
-    registerSubclass(Aarch32::instanceA32());
-    registerSubclass(Aarch32::instanceT32());
+    registry.push_back(Aarch32::instanceA32());
+    registry.push_back(Aarch32::instanceT32());
 #endif
 #ifdef ROSE_ENABLE_ASM_AARCH64
-    registerSubclass(Aarch64::instance());
+    registry.push_back(Aarch64::instance());
 #endif
 #ifdef ROSE_ENABLE_ASM_AARCH32
-    registerSubclass(Aarch32::instance());
+    registry.push_back(Aarch32::instance());
 #endif
-    registerSubclass(Disassembler::Powerpc::instance(powerpc_32, ByteOrder::ORDER_MSB));
-    registerSubclass(Disassembler::Powerpc::instance(powerpc_32, ByteOrder::ORDER_LSB));
-    registerSubclass(Disassembler::Powerpc::instance(powerpc_64, ByteOrder::ORDER_MSB));
-    registerSubclass(Disassembler::Powerpc::instance(powerpc_64, ByteOrder::ORDER_LSB));
-    registerSubclass(Disassembler::M68k::instance(m68k_freescale_isab));
-    registerSubclass(Disassembler::Mips::instance());
-    registerSubclass(Disassembler::X86::instance(2)); /*16-bit*/
-    registerSubclass(Disassembler::X86::instance(4)); /*32-bit*/
-    registerSubclass(Disassembler::X86::instance(8)); /*64-bit*/
+    registry.push_back(Disassembler::Powerpc::instance(powerpc_32, ByteOrder::ORDER_MSB));
+    registry.push_back(Disassembler::Powerpc::instance(powerpc_32, ByteOrder::ORDER_LSB));
+    registry.push_back(Disassembler::Powerpc::instance(powerpc_64, ByteOrder::ORDER_MSB));
+    registry.push_back(Disassembler::Powerpc::instance(powerpc_64, ByteOrder::ORDER_LSB));
+    registry.push_back(Disassembler::M68k::instance(m68k_freescale_isab));
+    registry.push_back(Disassembler::Mips::instance());
+    registry.push_back(Disassembler::X86::instance(2)); /*16-bit*/
+    registry.push_back(Disassembler::X86::instance(4)); /*32-bit*/
+    registry.push_back(Disassembler::X86::instance(8)); /*64-bit*/
 }
 
 static boost::once_flag initFlag = BOOST_ONCE_INIT;
 
 static void
-initclass() {
-    boost::call_once(&initclassHelper, initFlag);
+initRegistry() {
+    boost::call_once(&initRegistryHelper, initFlag);
 }
 
 // Thread safe by virtue of lookup(SgAsmGenericHeader*).
 Base::Ptr
 lookup(SgAsmInterpretation *interp) {
+    initRegistry();
     ASSERT_not_null(interp);
 
     // Find a disassembler for each header in the interpretation
@@ -117,108 +123,78 @@ lookup(SgAsmInterpretation *interp) {
 
 Base::Ptr
 lookup(SgAsmGenericHeader *header) {
-    initclass();
-    Base::Ptr retval;
+    initRegistry();
 
-    boost::lock_guard<boost::mutex> lock(class_mutex);
-    for (size_t i = disassemblers.size(); i > 0 && !retval; --i) {
-        if (disassemblers[i-1]->canDisassemble(header))
-            retval = disassemblers[i-1];
+    SAWYER_THREAD_TRAITS::LockGuard lock(registryMutex);
+    for (auto factory = registry.rbegin(); factory != registry.rend(); ++factory) {
+        if ((*factory)->canDisassemble(header))
+            return *factory;
     }
-
-    if (retval)
-        return retval;
     throw Exception("no disassembler for architecture");
 }
 
 Base::Ptr
 lookup(const std::string &name) {
-    Base::Ptr retval;
+    initRegistry();
     if (name == "list") {
         std::cout <<"The following ISAs are supported:\n";
         for (const std::string &name: isaNames())
             std::cout <<"  " <<name <<"\n";
         exit(0);
-    } else if (name == "a32") {
-#ifdef ROSE_ENABLE_ASM_AARCH32
-        retval = Aarch32::instanceA32();
-#else
-        throw Exception(name + " disassembler is not enabled in this ROSE configuration");
-#endif
-    } else if (name == "t32") {
-#ifdef ROSE_ENABLE_ASM_AARCH32
-        retval = Aarch32::instanceT32();
-#else
-        throw Exception(name + " disassembler is not enabled in this ROSE configuration");
-#endif
-    } else if (name == "a64") {
-#ifdef ROSE_ENABLE_ASM_AARCH64
-        retval = Aarch64::instance();
-#else
-        throw Exception(name + " disassembler is not enabled in this ROSE configuration");
-#endif
-    } else if (name == "ppc32-be") {
-        retval = Disassembler::Powerpc::instance(powerpc_32, ByteOrder::ORDER_MSB);
-    } else if (name == "ppc32-le") {
-        retval = Disassembler::Powerpc::instance(powerpc_32, ByteOrder::ORDER_LSB);
-    } else if (name == "ppc64-be") {
-        retval = Disassembler::Powerpc::instance(powerpc_64, ByteOrder::ORDER_MSB);
-    } else if (name == "ppc64-le") {
-        retval = Disassembler::Powerpc::instance(powerpc_64, ByteOrder::ORDER_MSB);
-    } else if (name == "mips-be") {
-        retval = Disassembler::Mips::instance(ByteOrder::ORDER_MSB);
-    } else if (name == "mips-le") {
-        retval = Disassembler::Mips::instance(ByteOrder::ORDER_LSB);
-    } else if (name == "i286") {
-        retval = Disassembler::X86::instance(2);
-    } else if (name == "i386") {
-        retval = Disassembler::X86::instance(4);
-    } else if (name == "amd64") {
-        retval = Disassembler::X86::instance(8);
-    } else if (name == "m68040") {
-        retval = Disassembler::M68k::instance(m68k_68040);
-    } else if (name == "coldfire") {
-        retval = Disassembler::M68k::instance(m68k_freescale_emacb);
-    } else if (name == "null") {
-        retval = Disassembler::Null::instance();
     } else {
-        throw std::runtime_error("invalid ISA name \"" + StringUtility::cEscape(name) + "\"; use --isa=list");
+        SAWYER_THREAD_TRAITS::LockGuard lock(registryMutex);
+        for (auto factory = registry.rbegin(); factory != registry.rend(); ++factory) {
+            if (name == (*factory)->name())
+                return *factory;
+        }
+        throw Exception("invalid ISA name \"" + StringUtility::cEscape(name) + "\"; use \"list\" to get a list of valid names");
     }
-    ASSERT_not_null(retval);
-    retval->name(name);
-    return retval;
 }
 
 std::vector<std::string>
 isaNames() {
-    std::vector<std::string> v;
-    v.push_back("amd64");
-#ifdef ROSE_ENABLE_ASM_AARCH32
-    v.push_back("a32");                                 // AArch32 A32
-    v.push_back("t32");                                 // AArch32 T32
-#endif
-#ifdef ROSE_ENABLE_ASM_AARCH64
-    v.push_back("a64");                                 // AArch64 A64
-#endif
-    v.push_back("coldfire");
-    v.push_back("i286");
-    v.push_back("i386");
-    v.push_back("m68040");
-    v.push_back("mips-be");
-    v.push_back("mips-le");
-    // v.push_back("null"); -- intentionally undocumented
-    v.push_back("ppc32-be");
-    v.push_back("ppc32-le");
-    v.push_back("ppc64-be");
-    v.push_back("ppc64-le");
-    return v;
+    initRegistry();
+    std::vector<std::string> names;
+    {
+        SAWYER_THREAD_TRAITS::LockGuard lock(registryMutex);
+        for (const Base::Ptr &factory: registry)
+            names.push_back(factory->name());
+    }
+
+    std::sort(names.begin(), names.end());
+    names.erase(std::unique(names.begin(), names.end()), names.end());
+    return names;
 }
 
 void
-registerSubclass(const Base::Ptr &factory) {
-    boost::lock_guard<boost::mutex> lock(class_mutex);
+registerFactory(const Base::Ptr &factory) {
+    initRegistry();
     ASSERT_not_null(factory);
-    disassemblers.push_back(factory);
+    SAWYER_THREAD_TRAITS::LockGuard lock(registryMutex);
+    registry.push_back(factory);
+}
+
+bool
+deregisterFactory(const Base::Ptr &factory) {
+    ASSERT_not_null(factory);
+    SAWYER_THREAD_TRAITS::LockGuard lock(registryMutex);
+    for (auto iter = registry.rbegin(); iter != registry.rend(); ++iter) {
+        if (*iter == factory) {
+            registry.erase(std::next(iter).base());
+            return true;
+        }
+    }
+    return false;
+}
+
+std::vector<Base::Ptr>
+registeredFactories() {
+    std::vector<Base::Ptr> retval;
+    SAWYER_THREAD_TRAITS::LockGuard lock(registryMutex);
+    retval.reserve(registry.size());
+    for (const Base::Ptr &factory: registry)
+        retval.push_back(factory);
+    return retval;
 }
 
 const std::string&

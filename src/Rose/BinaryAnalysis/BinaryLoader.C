@@ -243,7 +243,7 @@ BinaryLoader::findSimilarHeaders(SgAsmGenericHeader *match, SgAsmGenericHeaderPt
         if (!d1 && !d2) {
             if (match->variantT() == (*ci)->variantT())
                 retval.push_back(*ci);
-        } else if (d1==d2) {
+        } else if (d1->name() == d2->name()) {
             retval.push_back(*ci);
         }
     }
