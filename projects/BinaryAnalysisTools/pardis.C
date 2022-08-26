@@ -7,10 +7,13 @@ static const char *description =
 
 // ROSE headers. Don't use <rose/...> because that's broken for programs distributed as part of ROSE.
 #include <rose.h>                                       // must be first ROSE header
-#include <Rose/Color.h>
-#include <Rose/CommandLine.h>
+
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ParallelPartitioner.h>
+#include <Rose/Color.h>
+#include <Rose/CommandLine.h>
+
 #include <rose_strtoull.h>
 
 using namespace Rose;
@@ -281,7 +284,7 @@ int main(int argc, char *argv[]) {
     P2::Engine engine;
     std::vector<std::string> specimenName = engine.parseCommandLine(argc, argv, purpose, description).unreachedArgs();
     MemoryMap::Ptr memory = engine.loadSpecimens(specimenName);
-    Disassembler::Base *decoder = engine.obtainDisassembler();
+    Disassembler::Base::Ptr decoder = engine.obtainDisassembler();
 
     // Create the parallel partitioner
     PP::Settings ppSettings;

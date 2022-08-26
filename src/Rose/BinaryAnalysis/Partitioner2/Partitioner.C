@@ -57,10 +57,10 @@ Partitioner::Partitioner()
     : solver_(SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver)), autoAddCallReturnEdges_(false),
       assumeFunctionsReturn_(true), stackDeltaInterproceduralLimit_(1), semanticMemoryParadigm_(LIST_BASED_MEMORY),
       progress_(Progress::instance()), cfgProgressTotal_(0) {
-    init(NULL, memoryMap_);
+    init(Disassembler::Base::Ptr(), memoryMap_);
 }
 
-Partitioner::Partitioner(Disassembler::Base *disassembler, const MemoryMap::Ptr &map)
+Partitioner::Partitioner(const Disassembler::Base::Ptr &disassembler, const MemoryMap::Ptr &map)
     : memoryMap_(map), solver_(SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver)),
       autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), stackDeltaInterproceduralLimit_(1),
       semanticMemoryParadigm_(LIST_BASED_MEMORY), progress_(Progress::instance()), cfgProgressTotal_(0) {
@@ -225,7 +225,7 @@ Partitioner::~Partitioner() {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void
-Partitioner::init(Disassembler::Base *disassembler, const MemoryMap::Ptr &map) {
+Partitioner::init(const Disassembler::Base::Ptr &disassembler, const MemoryMap::Ptr &map) {
     // Start with a large hash table to reduce early rehashing. There's a high chance that we'll need this much.
     vertexIndex_.rehash(100000);
 
@@ -237,7 +237,7 @@ Partitioner::init(Disassembler::Base *disassembler, const MemoryMap::Ptr &map) {
         insnPlainUnparser_ = disassembler->unparser()->copy();
         configureInsnPlainUnparser(insnPlainUnparser_);
     } else {
-        instructionProvider_ = InstructionProvider::instance(new Disassembler::Null, map);
+        instructionProvider_ = InstructionProvider::instance(Disassembler::Null::instance(), map);
     }
     undiscoveredVertex_ = cfg_.insertVertex(CfgVertex(V_UNDISCOVERED));
     indeterminateVertex_ = cfg_.insertVertex(CfgVertex(V_INDETERMINATE));

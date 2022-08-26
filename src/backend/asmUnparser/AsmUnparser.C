@@ -69,6 +69,12 @@ build_noop_index(const std::vector <std::pair <size_t /*offset*/, size_t /*size*
     return retval;
 }
 
+AsmUnparser::StaticDataDisassembler::StaticDataDisassembler() {}
+
+AsmUnparser::StaticDataDisassembler::~StaticDataDisassembler() {
+    reset();
+}
+
 // class method
 void AsmUnparser::initDiagnostics() {
     static bool initialized = false;
@@ -975,12 +981,12 @@ AsmUnparser::StaticDataDisassembler::reset()
     if (unparser_allocated_here)
         delete unparser;
     unparser_allocated_here = false;
-    disassembler = NULL;
+    disassembler = Disassembler::Base::Ptr();
     unparser = NULL;
 }
 
 void
-AsmUnparser::StaticDataDisassembler::init(Disassembler::Base *d, AsmUnparser *u)
+AsmUnparser::StaticDataDisassembler::init(const Disassembler::Base::Ptr &d, AsmUnparser *u)
 {
     reset();
     disassembler = d;

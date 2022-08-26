@@ -100,7 +100,7 @@ int main(int argc, char *argv[])
     MemoryMap::Ptr map = engine.loadSpecimens(specimenNames);
     map->dump(::mlog[INFO]);
     map->dump(std::cout);
-    Disassembler::Base *disassembler = engine.obtainDisassembler();
+    Disassembler::Base::Ptr disassembler = engine.obtainDisassembler();
 
     // Obtain an unparser suitable for this disassembler
     AsmUnparser unparser;

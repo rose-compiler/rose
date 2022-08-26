@@ -15,6 +15,9 @@ namespace BinaryAnalysis {
  *  This disassembler decodes JVM instructions.
  */
 class DisassemblerJvm: public Disassembler::Base {
+public:
+  /** Reference counting pointer. */
+  using Ptr = Sawyer::SharedPointer<DisassemblerJvm>;
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
@@ -26,10 +29,15 @@ private:
   }
 #endif
 
-public:
+protected:
   DisassemblerJvm();
+
+public:
+  /** Allocating constructor. */
+  static Ptr instance();
+
   virtual ~DisassemblerJvm();
-  virtual Disassembler::Base* clone() const override;
+  virtual Base::Ptr clone() const override;
   virtual bool canDisassemble(SgAsmGenericHeader*) const override;
   virtual Unparser::BasePtr unparser() const override;
     virtual SgAsmInstruction* makeUnknownInstruction(const Disassembler::Exception&) override;

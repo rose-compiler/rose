@@ -15,6 +15,9 @@ namespace Disassembler {
  * have the same ill-defined meanings as they do in the Capstone library. */
 class Aarch32: public Base {
 public:
+    /** Shared ownership pointer. */
+    using Ptr = Aarch32Ptr;
+
     /** Capstone "Mode type", limited to those related to AArch32. Warning: these are non-orthogonal concepts. */
     enum class Mode {
         ARM32 = CS_MODE_ARM,                            /**< Capstone: "32-bit ARM". */ // probably zero, not really a bit flag
@@ -29,34 +32,34 @@ public:
 private:
     Modes modes_;                                       // a subset of Capstone's cs_mode constants (warning: nonorthoganal concepts)
     csh capstone_;                                      // the capstone handle
-    bool capstoneOpened_;                               // whether capstone_ is initialized
+    bool capstoneOpened_ = false;                       // whether capstone_ is initialized
+
+protected:
+    // Constructor for specific architecture. */
+    explicit Aarch32(Modes = Modes());
 
 public:
-    /** Constructor for specific architecture. */
-    explicit Aarch32(Modes modes = Modes())
-        : modes_(modes), capstoneOpened_(false) {
-        init();
-    }
+    /** Allocating constructor for an A32 instruction set decoder. */
+    static Ptr instanceA32();
 
-    static Aarch32* instanceA32() {
-        return new Aarch32(Modes(Mode::ARM32));
-    }
+    /** Allocating constructor for a T32 instruction set decoder. */
+    static Ptr instanceT32();
 
-    static Aarch32* instanceT32() {
-        return new Aarch32(Modes(Mode::THUMB));
-    }
+    /** Allocating constructor for A32 instruction set decoder. */
+    static Ptr instance();
 
     ~Aarch32();
 
     // overrides
     bool canDisassemble(SgAsmGenericHeader*) const override;
-    Base* clone() const override;
+    Base::Ptr clone() const override;
     Unparser::BasePtr unparser() const override;
     SgAsmInstruction* disassembleOne(const MemoryMap::Ptr&, rose_addr_t startVa, AddressSet *successors=nullptr) override;
     SgAsmInstruction* makeUnknownInstruction(const Exception&) override;
 
 private:
-    void init();
+    // Open the capstone library connection
+    void openCapstone();
 
     // Convert the instruction bytes to a 32- or 16- bit integer.
     uint32_t bytesToWord(size_t nBytes, const uint8_t *bytes);

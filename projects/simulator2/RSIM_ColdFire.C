@@ -78,7 +78,7 @@ RSIM_ColdFire::initialRegistersArch(RSIM_Process *process) {
 }
 
 void
-RSIM_ColdFire::loadSpecimenNative(RSIM_Process*, Rose::BinaryAnalysis::Disassembler::Base*, int existingPid) {
+RSIM_ColdFire::loadSpecimenNative(RSIM_Process*, const Rose::BinaryAnalysis::Disassembler::Base::Ptr&, int existingPid) {
     ASSERT_not_reachable("native loading not possible for naked hardware");
 }
 

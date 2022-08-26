@@ -68,11 +68,11 @@ struct IP_sysenter: public X86::InsnProcessor {
 
 DispatcherPtr
 createDispatcher(RSIM_Thread *owningThread) {
-    BinaryAnalysis::Disassembler::Base *disassembler = owningThread->get_process()->disassembler();
+    BinaryAnalysis::Disassembler::Base::Ptr disassembler = owningThread->get_process()->disassembler();
     Architecture arch = ARCH_NONE;
-    if (dynamic_cast<BinaryAnalysis::Disassembler::X86*>(disassembler)) {
+    if (disassembler.dynamicCast<BinaryAnalysis::Disassembler::X86>()) {
         arch = ARCH_X86;
-    } else if (dynamic_cast<BinaryAnalysis::Disassembler::M68k*>(disassembler)) {
+    } else if (disassembler.dynamicCast<BinaryAnalysis::Disassembler::M68k>()) {
         arch = ARCH_M68k;
     } else {
         TODO("architecture not supported");

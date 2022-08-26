@@ -74,7 +74,7 @@ int main(int argc, char *argv[]) {
 
     // Configure instruction semantics
     Partitioner2::Partitioner partitioner = engine.createPartitioner();
-    Disassembler::Base *disassembler = engine.obtainDisassembler();
+    Disassembler::Base::Ptr disassembler = engine.obtainDisassembler();
     const RegisterDictionary *regdict = disassembler->registerDictionary();
     if (disassembler->dispatcher() == NULL)
         throw std::runtime_error("no instruction semantics for this architecture");    

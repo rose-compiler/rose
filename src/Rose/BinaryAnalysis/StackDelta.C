@@ -34,7 +34,7 @@ initDiagnostics() {
 }
 
 void
-Analysis::init(Disassembler::Base *disassembler) {
+Analysis::init(const Disassembler::Base::Ptr &disassembler) {
     if (disassembler) {
         const RegisterDictionary *regdict = disassembler->registerDictionary();
         ASSERT_not_null(regdict);

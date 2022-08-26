@@ -102,11 +102,16 @@ DisassemblerJvm::DisassemblerJvm() {
     REG_SP = registerDictionary()->findOrThrow("sp");
 }
 
+DisassemblerJvm::Ptr
+DisassemblerJvm::instance() {
+    return Ptr(new DisassemblerJvm);
+}
+
 DisassemblerJvm::~DisassemblerJvm() {}
 
-Disassembler::Base*
+Disassembler::Base::Ptr
 DisassemblerJvm::clone() const {
-    return new DisassemblerJvm;
+    return Ptr(new DisassemblerJvm);
 }
 
 bool

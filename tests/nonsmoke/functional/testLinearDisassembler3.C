@@ -200,7 +200,7 @@ int main(int argc, char *argv[])
 #endif
 
     AsmUnparser unparser;
-    Disassembler *disassembler = engine.obtainDisassembler();
+    Disassembler::Base::Ptr disassembler = engine.obtainDisassembler();
     // Obtain an unparser suitable for this disassembler
     unparser.set_registers(disassembler->registerDictionary());
 

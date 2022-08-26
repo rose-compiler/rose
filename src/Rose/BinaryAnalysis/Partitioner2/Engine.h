@@ -236,7 +236,7 @@ private:
     Settings settings_;                                 // Settings for the partitioner.
     SgAsmInterpretation *interp_;                       // interpretation set by loadSpecimen
     BinaryLoader::Ptr binaryLoader_;                    // how to remap, link, and fixup
-    Disassembler::Base *disassembler_;                  // not ref-counted yet, but don't destroy it since user owns it
+    Disassembler::BasePtr disassembler_;                // not ref-counted yet, but don't destroy it since user owns it
     MemoryMap::Ptr map_;                                // memory map initialized by load()
     BasicBlockWorkList::Ptr basicBlockWorkList_;        // what blocks to work on next
     CodeConstants::Ptr codeFunctionPointers_;           // generates constants that are found in instruction ASTs
@@ -250,22 +250,12 @@ private:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     /** Default constructor. */
-    Engine()
-        : interp_(NULL), disassembler_(NULL),
-        basicBlockWorkList_(BasicBlockWorkList::instance(this, settings_.partitioner.functionReturnAnalysisMaxSorts)),
-        progress_(Progress::instance()) {
-        init();
-    }
+    Engine();
 
     /** Construct engine with settings. */
-    explicit Engine(const Settings &settings)
-        : settings_(settings), interp_(NULL), disassembler_(NULL),
-        basicBlockWorkList_(BasicBlockWorkList::instance(this, settings_.partitioner.functionReturnAnalysisMaxSorts)),
-        progress_(Progress::instance()) {
-        init();
-    }
+    explicit Engine(const Settings &settings);
 
-    virtual ~Engine() {}
+    virtual ~Engine();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  The very top-level use case
@@ -622,7 +612,8 @@ public:
      *  @li Fail by throwing an <code>std::runtime_error</code>.
      *
      *  In any case, the @ref disassembler property is set to this method's return value. */
-    virtual Disassembler::Base* obtainDisassembler(Disassembler::Base *hint=NULL);
+    virtual Disassembler::BasePtr obtainDisassembler();
+    virtual Disassembler::BasePtr obtainDisassembler(const Disassembler::BasePtr &hint);
     /** @} */
 
 
@@ -1195,8 +1186,8 @@ public:
      *  a disassembler based on the binary container (unless @ref doDisassemble property is clear).
      *
      * @{ */
-    Disassembler::Base *disassembler() const /*final*/ { return disassembler_; }
-    virtual void disassembler(Disassembler::Base *d) { disassembler_ = d; }
+    Disassembler::BasePtr disassembler() const;
+    virtual void disassembler(const Disassembler::BasePtr&);
     /** @} */
 
     /** Property: Instruction set architecture name.

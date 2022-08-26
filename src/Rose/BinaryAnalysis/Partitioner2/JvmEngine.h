@@ -122,7 +122,7 @@ private:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private:
     Settings settings_;                                 // Settings for the partitioner.
-    Disassembler::Base *disassembler_;                  // not ref-counted yet, but don't destroy it since user owns it
+    Disassembler::BasePtr disassembler_;                // not ref-counted yet, but don't destroy it since user owns it
     Progress::Ptr progress_;                            // optional progress reporting
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -130,20 +130,12 @@ private:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     /** Default constructor. */
-    JvmEngine()
-        : disassembler_(nullptr),
-        progress_(Progress::instance()) {
-        init();
-    }
+    JvmEngine();
 
     /** Construct engine with settings. */
-    explicit JvmEngine(const Settings &settings)
-        : settings_(settings), disassembler_(nullptr),
-        progress_(Progress::instance()) {
-        init();
-    }
+    explicit JvmEngine(const Settings &settings);
 
-    virtual ~JvmEngine() {}
+    virtual ~JvmEngine();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  The very top-level use case
@@ -364,7 +356,7 @@ public:
      *  @li Fail by throwing an <code>std::runtime_error</code>.
      *
      *  In any case, the @ref disassembler property is set to this method's return value. */
-    virtual Disassembler::Base* obtainDisassembler(Disassembler::Base *hint=NULL);
+    virtual Disassembler::BasePtr obtainDisassembler(const Disassembler::BasePtr &hint = Disassembler::BasePtr());
     /** @} */
 
 
@@ -474,8 +466,8 @@ public:
      *  a disassembler based on the binary container (unless @ref doDisassemble property is clear).
      *
      * @{ */
-    Disassembler::Base *disassembler() const /*final*/ { return disassembler_; }
-    virtual void disassembler(Disassembler::Base *d) { disassembler_ = d; }
+    Disassembler::BasePtr disassembler() const /*final*/;
+    virtual void disassembler(const Disassembler::BasePtr&);
     /** @} */
 
     /** Property: Instruction set architecture name.

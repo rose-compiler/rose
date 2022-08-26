@@ -172,7 +172,7 @@ main(int argc, char *argv[]) {
         P2::Engine::Settings settings = engine.settings();
         settings.partitioner.doingPostAnalysis = false;
         if (settings.disassembler.isaName.empty()) {
-            Disassembler::Base *disassembler = engine.obtainDisassembler();
+            Disassembler::Base::Ptr disassembler = engine.obtainDisassembler();
             if (!disassembler) {
                 mlog[FATAL] <<"no disassembler found and none specified\n";
                 exit(1);

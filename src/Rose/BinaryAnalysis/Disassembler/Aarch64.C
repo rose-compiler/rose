@@ -13,23 +13,8 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace Disassembler {
 
-Base*
-Aarch64::clone() const {
-    return new Aarch64(*this);
-}
-
-bool
-Aarch64::canDisassemble(SgAsmGenericHeader *header) const {
-    SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
-    return ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_ARM_Family &&
-            header->get_exec_format()->get_word_size() == 8);
-}
-
-void
-Aarch64::init() {
-    // Warning: the "mode" constants are not orthogonal with each other or the "arch" values.
-    cs_mode mode = (cs_mode)modes_.vector();
-
+Aarch64::Aarch64(Modes modes)
+    : modes_(modes) {
     // ROSE disassembler properties, and choose a somewhat descriptive name (at least something better than "ARM").
     std::string name = "a64";
     wordSizeBytes(8);
@@ -48,8 +33,36 @@ Aarch64::init() {
     REG_IP = registerDictionary()->findOrThrow("pc");
     REG_SP = registerDictionary()->findOrThrow("sp");
     REG_LINK = registerDictionary()->findOrThrow("lr");
+}
 
-    // Build the Capstone context object, which must be explicitly closed in the destructor.
+Aarch64::Ptr
+Aarch64::instance(Modes modes) {
+    return Ptr(new Aarch64(modes));
+}
+
+Base::Ptr
+Aarch64::clone() const {
+    return Ptr(new Aarch64(*this));
+}
+
+bool
+Aarch64::canDisassemble(SgAsmGenericHeader *header) const {
+    SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
+    return ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_ARM_Family &&
+            header->get_exec_format()->get_word_size() == 8);
+}
+
+void
+Aarch64::openCapstone() {
+    // Build the Capstone context object, which must be explicitly closed in the destructor. Furthermore, since capstone is a
+    // shared library, it might not be possible to call cs_close (in the Aarch32 destructor) after libcapstone has been shut
+    // down during program termination. For instance, if you store any static pointers to Aarch32 objects that have open
+    // capstone connections, then its likely that the C++ runtime will close the capstone library before calling the
+    // destructors for those Aarch32 objects.
+
+    // Warning: the "mode" constants are not orthogonal with each other or the "arch" values.
+    cs_mode mode = (cs_mode)modes_.vector();
+
     if (CS_ERR_OK != cs_open(CS_ARCH_ARM64, mode, &capstone_))
         throw Exception("capstone cs_open failed");
     capstoneOpened_ = true;
@@ -71,6 +84,8 @@ Aarch64::unparser() const {
 
 SgAsmInstruction*
 Aarch64::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, AddressSet *successors/*=nullptr*/) {
+    openCapstone();
+
     // Resources that must be explicitly reclaimed before returning.
     struct Resources {
         cs_insn *csi = nullptr;

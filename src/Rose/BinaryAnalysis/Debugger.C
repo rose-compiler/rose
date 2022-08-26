@@ -324,10 +324,28 @@ Debugger::initDiagnostics() {
     }
 }
 
+Debugger::Debugger() {
+    init();
+}
+
+Debugger::Debugger(const Specimen &specimen) {
+    init();
+    attach(specimen);
+}
+
+Debugger::~Debugger() {
+    detach(autoDetach_);
+}
+
 const RegisterDictionary*
 Debugger::registerDictionary() const {
     ASSERT_not_null(disassembler_);
     return disassembler_->registerDictionary();
+}
+
+Disassembler::Base::Ptr
+Debugger::disassembler() const {
+    return disassembler_;
 }
 
 void
@@ -345,7 +363,7 @@ Debugger::init() {
     // descriptors in this table have sizes that correspond to the data member in the user_regs_struct, not necessarily the
     // natural size of the register (e.g., The 16-bit segment registers are listed as 32 or 64 bits).
 #if defined(__linux) && defined(__x86_64) && __WORDSIZE==64
-    disassembler_ = new Disassembler::X86(8 /*bytes*/);
+    disassembler_ = Disassembler::X86::instance(8 /*bytes*/);
 
     //------------------------------------                                                 struct  struct
     // Entries for 64-bit user_regs_struct                                                 offset  size

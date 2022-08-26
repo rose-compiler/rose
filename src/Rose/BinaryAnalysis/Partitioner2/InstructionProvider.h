@@ -37,7 +37,7 @@ public:
     typedef Sawyer::Container::HashMap<rose_addr_t, SgAsmInstruction*> InsnMap;
 
 private:
-    Disassembler::Base *disassembler_;
+    Disassembler::BasePtr disassembler_;
     MemoryMap::Ptr memMap_;
     mutable InsnMap insnMap_;                           // this is a cache
     bool useDisassembler_;
@@ -80,20 +80,13 @@ private:
 #endif
 
 protected:
-    InstructionProvider()
-        : disassembler_(NULL), useDisassembler_(false) {
-        // Start off with a large map to reduce early rehashing. There will probably be a lot of instructions.
-        insnMap_.rehash(1000000);
-    }
+    InstructionProvider();
 
-    InstructionProvider(Disassembler::Base *disassembler, const MemoryMap::Ptr &map)
-        : disassembler_(disassembler), memMap_(map), useDisassembler_(true) {
-        ASSERT_not_null(disassembler);
-        // Start off with a large map to reduce early rehashing. There will probably be a lot of instructions.
-        insnMap_.rehash(1000000);
-    }
+    InstructionProvider(const Disassembler::BasePtr &disassembler, const MemoryMap::Ptr &map);
 
 public:
+    ~InstructionProvider();
+
     /** Static allocating Constructor.
      *
      *  The disassembler is required even if the user plans to turn off the ability to obtain instructions from the
@@ -104,7 +97,7 @@ public:
      *
      *  The disassembler is owned by the caller and should not be freed until after the instruction provider is destroyed.  The
      *  memory map is copied into the instruction provider. */
-    static Ptr instance(Disassembler::Base *disassembler, const MemoryMap::Ptr &map) {
+    static Ptr instance(const Disassembler::BasePtr &disassembler, const MemoryMap::Ptr &map) {
         return Ptr(new InstructionProvider(disassembler, map));
     }
 
@@ -117,10 +110,7 @@ public:
     bool isDisassemblerEnabled() const {
         return useDisassembler_;
     }
-    void enableDisassembler(bool enable=true) {
-        ASSERT_require(!enable || disassembler_);
-        useDisassembler_ = enable;
-    }
+    void enableDisassembler(bool enable=true);
     void disableDisassembler() {
         useDisassembler_ = false;
     }
@@ -144,7 +134,7 @@ public:
      *
      *  Returns the disassembler pointer provided in the constructor.  The disassembler is not owned by this instruction
      *  provider, but must not be freed until after the instruction provider is destroyed. */
-    Disassembler::Base* disassembler() const { return disassembler_; }
+    Disassembler::BasePtr disassembler() const;
 
     /** Returns number of cached starting addresses.
      *

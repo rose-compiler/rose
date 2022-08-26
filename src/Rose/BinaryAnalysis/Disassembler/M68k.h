@@ -20,6 +20,9 @@ namespace Disassembler {
 /** Disassembler for Motorola M68k-based instruction set architectures. */
 class M68k: public Base {
 public:
+    /** Reference counted pointer. */
+    using Ptr = M68kPtr;
+
     // State mutated during the call to disassembleOne. Used internally.
     struct State: boost::noncopyable { // noncopyable is so we don't accidentally pass it by value
         MemoryMap::Ptr map;                         /**< Map from which to read instruction words. */
@@ -92,26 +95,25 @@ private:
 
 protected:
     // undocumented constructor for serialization. The init() will be called by the serialization.
-    M68k()
-        : family(m68k_freescale_cpu32) {}
-        
+    M68k();
+
+    explicit M68k(M68kFamily family);
+
 public:
-    /** Constructor for a specific family.
+    /** Allocating constructor for a specific family.
      *
      *  The @p family argument selectively activates certain features of the generic m68k disassembler.  For instance, to get a
      *  disassembler specific to the FreeScale ColdFire series using "ISA_B", invoke as:
      *
      * @code
-     *  Disassembler *disassembler = new M68k(m68k_freescale_isab);
+     *  Disassembler::Ptr disassembler = M68k::instance(m68k_freescale_isab);
      * @endcode */
-    explicit M68k(M68kFamily family)
-        : family(family) {
-        init();
-    }
-    virtual M68k *clone() const override { return new M68k(*this); }
+    static Ptr instance(M68kFamily);
+
+    virtual Base::Ptr clone() const override;
     virtual bool canDisassemble(SgAsmGenericHeader*) const override;
     virtual SgAsmInstruction *disassembleOne(const MemoryMap::Ptr&, rose_addr_t start_va,
-                                             AddressSet *successors=NULL) override;
+                                             AddressSet *successors = nullptr) override;
     virtual SgAsmInstruction *makeUnknownInstruction(const Exception&) override;
     virtual Unparser::BasePtr unparser() const override;
 

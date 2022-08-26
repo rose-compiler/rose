@@ -51,6 +51,21 @@ namespace Partitioner2 {
 //                                      Utility functions
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+Engine::Engine()
+    : interp_(NULL), basicBlockWorkList_(BasicBlockWorkList::instance(this, settings_.partitioner.functionReturnAnalysisMaxSorts)),
+      progress_(Progress::instance()) {
+    init();
+}
+
+Engine::Engine(const Settings &settings)
+    : settings_(settings), interp_(NULL),
+      basicBlockWorkList_(BasicBlockWorkList::instance(this, settings_.partitioner.functionReturnAnalysisMaxSorts)),
+      progress_(Progress::instance()) {
+    init();
+}
+
+Engine::~Engine() {}
+
 void
 Engine::init() {
     ASSERT_require(map_ == NULL);
@@ -70,7 +85,7 @@ void
 Engine::reset() {
     interp_ = NULL;
     binaryLoader_ = BinaryLoader::Ptr();
-    disassembler_ = NULL;
+    disassembler_ = Disassembler::Base::Ptr();
     map_ = MemoryMap::Ptr();
     basicBlockWorkList_ = BasicBlockWorkList::instance(this, settings_.partitioner.functionReturnAnalysisMaxSorts);
 }
@@ -1469,8 +1484,13 @@ Engine::loadSpecimens(const std::vector<std::string> &fileNames) {
 //                                      Disassembler creation
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Disassembler::Base*
-Engine::obtainDisassembler(Disassembler::Base *hint) {
+Disassembler::Base::Ptr
+Engine::obtainDisassembler() {
+    return obtainDisassembler(Disassembler::Base::Ptr());
+}
+
+Disassembler::Base::Ptr
+Engine::obtainDisassembler(const Disassembler::Base::Ptr &hint) {
     if (!disassembler_ && !settings_.disassembler.isaName.empty() &&
         (disassembler_ = Disassembler::lookup(settings_.disassembler.isaName)))
         disassembler_ = disassembler_->clone();
@@ -1607,7 +1627,7 @@ Partitioner
 Engine::createTunedPartitioner() {
     obtainDisassembler();
 
-    if (dynamic_cast<Disassembler::M68k*>(disassembler_)) {
+    if (disassembler_.dynamicCast<Disassembler::M68k>()) {
         checkCreatePartitionerPrerequisites();
         Partitioner p = createBarePartitioner();
         p.functionPrologueMatchers().push_back(ModulesM68k::MatchLink::instance());
@@ -1616,7 +1636,7 @@ Engine::createTunedPartitioner() {
         return boost::move(p);
     }
 
-    if (dynamic_cast<Disassembler::X86*>(disassembler_)) {
+    if (disassembler_.dynamicCast<Disassembler::X86>()) {
         checkCreatePartitionerPrerequisites();
         Partitioner p = createBarePartitioner();
         p.functionPrologueMatchers().push_back(ModulesX86::MatchHotPatchPrologue::instance());
@@ -1632,14 +1652,14 @@ Engine::createTunedPartitioner() {
         return boost::move(p);
     }
 
-    if (dynamic_cast<Disassembler::Powerpc*>(disassembler_)) {
+    if (disassembler_.dynamicCast<Disassembler::Powerpc>()) {
         checkCreatePartitionerPrerequisites();
         Partitioner p = createBarePartitioner();
         p.functionPrologueMatchers().push_back(ModulesPowerpc::MatchStwuPrologue::instance());
         return boost::move(p);
     }
 
-    if (dynamic_cast<Disassembler::Mips*>(disassembler_)) {
+    if (disassembler_.dynamicCast<Disassembler::Mips>()) {
         checkCreatePartitionerPrerequisites();
         Partitioner p = createBarePartitioner();
         p.functionPrologueMatchers().push_back(ModulesMips::MatchRetAddiu::instance());
@@ -2078,10 +2098,10 @@ Engine::makeInterruptVectorFunctions(Partitioner &partitioner, const AddressInte
     std::vector<Function::Ptr> functions;
     if (interruptVector.isEmpty())
         return functions;
-    Disassembler::Base *disassembler = disassembler_ ? disassembler_ : partitioner.instructionProvider().disassembler();
+    Disassembler::Base::Ptr disassembler = disassembler_ ? disassembler_ : partitioner.instructionProvider().disassembler();
     if (!disassembler) {
         throw std::runtime_error("cannot decode interrupt vector without architecture information");
-    } else if (dynamic_cast<Disassembler::M68k*>(disassembler)) {
+    } else if (disassembler.dynamicCast<Disassembler::M68k>()) {
         for (const Function::Ptr &f: ModulesM68k::findInterruptFunctions(partitioner, interruptVector.least()))
             insertUnique(functions, partitioner.attachOrMergeFunction(f), sortFunctionsByAddress);
     } else if (1 == interruptVector.size()) {
@@ -3142,6 +3162,20 @@ Engine::buildAst(const std::vector<std::string> &fileNames) {
 SgAsmBlock*
 Engine::buildAst(const std::string &fileName) {
     return buildAst(std::vector<std::string>(1, fileName));
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Settings and Properties
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Disassembler::Base::Ptr
+Engine::disassembler() const {
+    return disassembler_;
+}
+
+void
+Engine::disassembler(const Disassembler::Base::Ptr &d) {
+    disassembler_ = d;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

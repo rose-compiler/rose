@@ -41,7 +41,7 @@ main(int argc, char *argv[])
 
     // Try to disassemble every byte, and print the CALL/FARCALL targets
     size_t ninsns=0, nerrors=0;
-    Disassembler::Base *disassembler = new Disassembler::X86(4);
+    Disassembler::Base::Ptr disassembler = Disassembler::X86::instance(4);
     for (rose_addr_t offset=0; offset<file_size; ++offset) {
         try {
             rose_addr_t insn_va = start_va + offset;

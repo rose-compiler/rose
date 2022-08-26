@@ -322,6 +322,25 @@ formatNBits(M68kDataFormat fmt)
     ASSERT_not_reachable("invalid m68k data format: " + stringifyBinaryAnalysisM68kDataFormat(fmt));
 }
 
+M68k::M68k()
+    : family(m68k_freescale_cpu32) {}
+
+M68k::M68k(M68kFamily family)
+    : family(family) {
+    init();
+}
+
+M68k::Ptr
+M68k::instance(M68kFamily family) {
+    return Ptr(new M68k(family));
+}
+
+Base::Ptr
+M68k::clone() const {
+    return Ptr(new M68k(*this));
+}
+
+
 // see base class
 bool
 M68k::canDisassemble(SgAsmGenericHeader *header) const

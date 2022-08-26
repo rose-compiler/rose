@@ -4,10 +4,11 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Dispatcher.h>
 #include <Rose/BinaryAnalysis/NoOperation.h>
 #include <Rose/Diagnostics.h>
-#include <Rose/BinaryAnalysis/Disassembler/BasicTypes.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Dispatcher.h>
+
 #include "AsmUnparser_compat.h"
 
 using namespace Rose;
@@ -147,7 +148,7 @@ buildNopAnalyzer(SgAsmInterpretation *interp) {
         return NoOperation(BaseSemantics::DispatcherPtr());
     }
 
-    Disassembler::Base *disassembler = Disassembler::lookup(interp);
+    Disassembler::Base::Ptr disassembler = Disassembler::lookup(interp);
     return NoOperation(disassembler);
 }
 

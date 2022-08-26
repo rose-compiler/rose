@@ -16,6 +16,9 @@ namespace Disassembler {
  *  This disassembler is a stub that can be used when no ISA is specified.  It's never chosen automatically. It has unknown
  *  byte order. It always decodes to an unknown instruction that's one byte long. */
 class Null: public Base {
+public:
+    /** Reference counting pointer. */
+    using Ptr = NullPtr;
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
@@ -27,10 +30,16 @@ private:
     }
 #endif
 
-public:
+protected:
     Null();
+
+public:
     virtual ~Null();
-    virtual Base* clone() const override;
+
+    /** Allocating constructor. */
+    static Ptr instance();
+
+    virtual Base::Ptr clone() const override;
     virtual bool canDisassemble(SgAsmGenericHeader*) const override;
     virtual Unparser::BasePtr unparser() const override;
     virtual SgAsmInstruction* disassembleOne(const MemoryMap::Ptr&, rose_addr_t va, AddressSet *successors = NULL) override;

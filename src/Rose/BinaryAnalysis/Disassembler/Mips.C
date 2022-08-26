@@ -77,6 +77,20 @@ static SgAsmType *type_U16() { return SageBuilderAsm::buildTypeU16(); }
 
 /*****************************************************************************************************************************/
 
+Mips::Mips(ByteOrder::Endianness sex) {
+    init(sex);
+}
+
+Mips::Ptr
+Mips::instance(ByteOrder::Endianness sex) {
+    return Ptr(new Mips(sex));
+}
+
+Base::Ptr
+Mips::clone() const {
+    return Ptr(new Mips(*this));
+}
+
 // see base class
 bool
 Mips::canDisassemble(SgAsmGenericHeader *header) const

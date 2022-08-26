@@ -22,7 +22,7 @@ namespace BinaryAnalysis {
  *  @code
  *  // Disassemble the interpretation (normally happens automatically)
  *  SgAsmInterpretation *interp = ....;
- *  Disassembler::Base *d = Disassembler::lookup(interp);
+ *  Disassembler::BasePtr d = Disassembler::lookup(interp);
  *  d->disassemble(interp);
  *
  *  // Create an assembler that can handle instructions in this interpretation.

@@ -19,7 +19,7 @@ systemCallAnalyzer(const Partitioner &partitioner, const boost::filesystem::path
     SystemCall analyzer;
 
     // We only support x86 Linux (32- or 64-bit)
-    if (dynamic_cast<Disassembler::X86*>(partitioner.instructionProvider().disassembler())) {
+    if (partitioner.instructionProvider().disassembler().dynamicCast<Disassembler::X86>()) {
         if (!syscallHeader.empty())
             analyzer.declare(syscallHeader);
         switch (partitioner.instructionProvider().instructionPointerRegister().nBits()) {

@@ -91,7 +91,7 @@ int main(int argc, char *argv[]) {
     
     P2::mlog[WARN].disable(); // warnings about empty memory map
     P2::Partitioner partitioner = engine.createPartitioner();
-    Disassembler::Base *disassembler = engine.obtainDisassembler();
+    Disassembler::Base::Ptr disassembler = engine.obtainDisassembler();
     ASSERT_always_not_null(disassembler);
     BinaryAnalysis::Unparser::BasePtr unparser = partitioner.unparser();
     ASSERT_always_not_null(unparser);

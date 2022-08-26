@@ -14,6 +14,11 @@ namespace Disassembler {
 
 /** Disassembler for the PowerPC architecture. */
 class Powerpc: public Base {
+public:
+    /** Reference counting pointer. */
+    using Ptr = PowerpcPtr;
+
+private:
     // Per-instruction state
     struct State {
         uint64_t ip;                                        // Instruction pointer
@@ -24,16 +29,16 @@ class Powerpc: public Base {
     PowerpcWordSize wordSize_;
     ByteOrder::Endianness sex_;
 
+protected:
+    explicit Powerpc(PowerpcWordSize, ByteOrder::Endianness);
+
 public:
-    /** Constructor for 32- or 64-bit disassembler. */
-    explicit Powerpc(PowerpcWordSize wordSize, ByteOrder::Endianness sex)
-        : wordSize_(wordSize), sex_(sex) {
-        init();
-    }
-    
+    /** Allocating constructor for 32- or 64-bit disassembler. */
+    static Ptr instance(PowerpcWordSize wordSize, ByteOrder::Endianness sex);
+
     // Overrides documented in a super class
     virtual ~Powerpc() {}
-    virtual Powerpc *clone() const { return new Powerpc(*this); }
+    virtual Base::Ptr clone() const;
     virtual bool canDisassemble(SgAsmGenericHeader*) const;
     virtual Unparser::BasePtr unparser() const;
     virtual SgAsmInstruction *disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va, AddressSet *successors=NULL);

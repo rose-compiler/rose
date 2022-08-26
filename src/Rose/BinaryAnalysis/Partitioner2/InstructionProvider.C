@@ -8,6 +8,27 @@
 namespace Rose {
 namespace BinaryAnalysis {
 
+InstructionProvider::InstructionProvider()
+    : useDisassembler_(false) {
+    // Start off with a large map to reduce early rehashing. There will probably be a lot of instructions.
+    insnMap_.rehash(1000000);
+}
+
+InstructionProvider::InstructionProvider(const Disassembler::Base::Ptr &disassembler, const MemoryMap::Ptr &map)
+    : disassembler_(disassembler), memMap_(map), useDisassembler_(true) {
+    ASSERT_not_null(disassembler);
+    // Start off with a large map to reduce early rehashing. There will probably be a lot of instructions.
+    insnMap_.rehash(1000000);
+}
+
+InstructionProvider::~InstructionProvider() {}
+
+void
+InstructionProvider::enableDisassembler(bool enable) {
+    ASSERT_require(!enable || disassembler_);
+    useDisassembler_ = enable;
+}
+
 SgAsmInstruction*
 InstructionProvider::operator[](rose_addr_t va) const {
     SgAsmInstruction *insn = NULL;
@@ -38,6 +59,11 @@ void
 InstructionProvider::insert(SgAsmInstruction *insn) {
     ASSERT_not_null(insn);
     insnMap_.insert(insn->get_address(), insn);
+}
+
+Disassembler::Base::Ptr
+InstructionProvider::disassembler() const {
+    return disassembler_;
 }
 
 const RegisterDictionary*

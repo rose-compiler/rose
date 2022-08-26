@@ -106,7 +106,7 @@ public:
     /** Construct an analyzer using a specified disassembler.
      *
      *  This constructor chooses a symbolic domain and a dispatcher appropriate for the disassembler's architecture. */
-    explicit Analysis(Disassembler::Base *d)
+    explicit Analysis(const Disassembler::BasePtr &d)
         : hasResults_(false), didConverge_(false) {
         init(d);
     }
@@ -285,7 +285,7 @@ public:
                            const InstructionSemantics::BaseSemantics::SValuePtr &delta);
 
 private:
-    void init(Disassembler::Base*);
+    void init(const Disassembler::BasePtr&);
 };
 
 std::ostream& operator<<(std::ostream&, const Analysis&);

@@ -105,7 +105,7 @@ main(int argc, char *argv[]) {
     P2::Engine engine;
     engine.settings().disassembler.isaName = settings.isa;
     P2::Partitioner partitioner = engine.createPartitioner();
-    Disassembler::Base *disassembler = partitioner.instructionProvider().disassembler();
+    Disassembler::Base::Ptr disassembler = partitioner.instructionProvider().disassembler();
     ASSERT_not_null(disassembler);
 
     // Configure unparser

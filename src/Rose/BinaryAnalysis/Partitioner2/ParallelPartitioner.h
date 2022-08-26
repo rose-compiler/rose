@@ -692,7 +692,7 @@ public:
      *  The memory mapping and the memory contents should not change after the partitioner is initialized, nor should the
      *  decoder or its behavior change after initialization. This is due to the requirement that any instruction AST can
      *  be deleted and when it's recreated later it must be the same as the original. */
-    Partitioner(const MemoryMap::Ptr &memory, Disassembler::Base *decoder, const Settings &settings = Settings());
+    Partitioner(const MemoryMap::Ptr &memory, const Disassembler::BasePtr &decoder, const Settings &settings = Settings());
 
     /** Behavior settings.
      *

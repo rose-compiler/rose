@@ -32,7 +32,7 @@ namespace
     using Rose::BinaryAnalysis::Disassembler::Base;
     using Rose::BinaryAnalysis::MemoryMap;
 
-    Disassembler::Base*  disasm = engine.obtainDisassembler();
+    Disassembler::Base::Ptr disasm = engine.obtainDisassembler();
     MemoryMap::Ptr memmap = engine.memoryMap();
 
     if (!disasm)
@@ -56,7 +56,7 @@ namespace
   }
 
   SgAsmInstruction*
-  disassembleOne(Disassembler::Base *disassembler, const uint8_t *buf, size_t bufSize, rose_addr_t ip)
+  disassembleOne(const Disassembler::Base::Ptr &disassembler, const uint8_t *buf, size_t bufSize, rose_addr_t ip)
   try {
       return disassembler->disassembleOne(buf, ip, bufSize, ip);
   } catch (const Disassembler::Exception &e) {
@@ -131,7 +131,7 @@ main(int argc, char *argv[]) {
 
     if (WITH_INSTRUCTION_PROVIDER) instructionProvider = makeInstructionProvider(engine);
 
-    Disassembler::Base *disassembler = engine.obtainDisassembler();
+    Disassembler::Base::Ptr disassembler = engine.obtainDisassembler();
     if (!disassembler) {
         ::mlog[FATAL] <<"no disassembler for this architecture\n";
         exit(1);

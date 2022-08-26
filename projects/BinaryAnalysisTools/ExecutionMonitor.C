@@ -81,7 +81,7 @@ namespace
 
   // "borrowed" from nativeExecutionTrace
   SgAsmInstruction*
-  disassembleOne(Rose::BinaryAnalysis::Disassembler::Base* disasm, const uint8_t* buf, size_t bufSize, rose_addr_t ip)
+  disassembleOne(const Rose::BinaryAnalysis::Disassembler::Base::Ptr &disasm, const uint8_t* buf, size_t bufSize, rose_addr_t ip)
   {
     try
     {
@@ -114,7 +114,7 @@ namespace BinaryAnalysis {
       typedef Sawyer::Container::Interval<addr_t>             AddressInterval;
       typedef Sawyer::Container::IntervalSet<AddressInterval> AddressIntervalSet;
 
-      ExecutionMonitor(const std::vector<std::string>& exeNameAndArgs, Disassembler::Base* disasm)
+      ExecutionMonitor(const std::vector<std::string>& exeNameAndArgs, const Disassembler::Base::Ptr &disasm)
           : disassembler(disasm), currIval(), intervals()
       {
           Debugger::Specimen specimen(exeNameAndArgs);
@@ -177,7 +177,7 @@ namespace BinaryAnalysis {
       }
 
     private:
-      Disassembler::Base* const disassembler; ///< disassembler for architectures
+      Disassembler::Base::Ptr disassembler; ///< disassembler for architectures
                                         ///<   using variable-length instruction encoding.
       AddressInterval     currIval;     ///< current code interval
       AddressIntervalSet  intervals;    ///< all code intervals
@@ -285,7 +285,7 @@ int main(int argc, char** argv)
   if (specpos != argv+argc) ++specpos;
 
   std::vector<std::string> specimenAndArgs(specpos, argv+argc);
-  Disassembler::Base*            disassembler = NULL;
+  Disassembler::Base::Ptr disassembler;
 
   // Parse command-line
   P2::Engine               engine;

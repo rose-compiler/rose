@@ -13,7 +13,7 @@ public:
     virtual SgAsmInterpretation* parseMainExecutable(RSIM_Process*) override;
     virtual bool isSupportedArch(SgAsmGenericHeader*) override;
     virtual PtRegs initialRegistersArch(RSIM_Process*) override;
-    virtual void loadSpecimenNative(RSIM_Process*, Rose::BinaryAnalysis::Disassembler::Base*, int existingPid=-1) override;
+    virtual void loadSpecimenNative(RSIM_Process*, const Rose::BinaryAnalysis::Disassembler::BasePtr&, int existingPid=-1) override;
     virtual void loadSpecimenArch(RSIM_Process*, SgAsmInterpretation*, const std::string &interpName) override;
     virtual void initializeStackArch(RSIM_Thread*, SgAsmGenericHeader *) override;
     virtual void initializeSimulatedOs(RSIM_Process*, SgAsmGenericHeader*) override;

@@ -43,7 +43,7 @@ PointerDescriptorLessp::operator()(const PointerDescriptor &a, const PointerDesc
 }
 
 void
-Analysis::init(Disassembler::Base *disassembler) {
+Analysis::init(const Disassembler::Base::Ptr &disassembler) {
     if (disassembler) {
         const RegisterDictionary *registerDictionary = disassembler->registerDictionary();
         ASSERT_not_null(registerDictionary);

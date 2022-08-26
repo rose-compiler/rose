@@ -44,6 +44,24 @@ namespace Disassembler {
  * X86 primary methods, mostly defined by the superclass.
  *========================================================================================================================*/
 
+X86::X86()
+    : insnSize(x86_insnsize_none), wordSize(0) {}
+
+X86::X86(size_t wordsize)
+    : insnSize(x86_insnsize_none), wordSize(wordsize) {
+    init(wordSize);
+}
+
+X86::Ptr
+X86::instance(size_t wordSize) {
+    return Ptr(new X86(wordSize));
+}
+
+Base::Ptr
+X86::clone() const {
+    return Ptr(new X86(*this));
+}
+
 bool
 X86::canDisassemble(SgAsmGenericHeader *header) const
 {

@@ -6,7 +6,9 @@
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 
 #include <Rose/BinaryAnalysis/InstructionEnumsMips.h>
-#include "SageBuilderAsm.h"
+
+#include <ByteOrder.h>
+#include <SageBuilderAsm.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -14,12 +16,19 @@ namespace Disassembler {
 
 class Mips: public Base {
 public:
-    /** Create a MIPS disassembler.
+    /** Reference counting pointer. */
+    using Ptr = MipsPtr;
+
+protected:
+    explicit Mips(ByteOrder::Endianness sex = ByteOrder::ORDER_MSB);
+
+public:
+    /** Allocating constructor for MIPS decoder.
      *
      *  MIPS executables can be big- or little-endian. */
-    explicit Mips(ByteOrder::Endianness sex = ByteOrder::ORDER_MSB) { init(sex); }
+    static Ptr instance(ByteOrder::Endianness sex = ByteOrder::ORDER_MSB);
 
-    virtual Mips *clone() const override { return new Mips(*this); }
+    virtual Base::Ptr clone() const override;
     virtual bool canDisassemble(SgAsmGenericHeader*) const override;
     virtual SgAsmInstruction *disassembleOne(const MemoryMap::Ptr&, rose_addr_t start_va,
                                              AddressSet *successors=NULL) override;

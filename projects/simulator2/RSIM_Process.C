@@ -4,6 +4,7 @@
 #ifdef ROSE_ENABLE_SIMULATOR
 
 #include <Rose/Diagnostics.h>
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/replace.hpp>
@@ -17,6 +18,15 @@
 using namespace Rose;
 using namespace Rose::BinaryAnalysis;
 using namespace Rose::Diagnostics;
+
+RSIM_Process::RSIM_Process(RSIM_Simulator *simulator)
+    : simulator(simulator), tracingFile_(NULL), tracingFlags_(0),
+      brkVa_(0), mmapNextVa_(0), mmapRecycle_(false), mmapGrowsDown_(false), futexes(NULL),
+      interpretation_(NULL), entryPointOriginalVa_(0), entryPointStartVa_(0),
+      terminated(false), termination_status(0), mainHeader_(NULL), project_(NULL), wordSize_(0), core_flags(0),
+      btrace_file(NULL), core_styles(CORE_ELF), core_base_name("x-core.rose") {
+    ctor();
+}
 
 RSIM_Process::~RSIM_Process() {
     delete futexes;
@@ -1355,6 +1365,16 @@ RSIM_Process::disassemble(bool fast, MemoryMap::Ptr map/*=null*/)
     }
 
     return block;
+}
+
+Rose::BinaryAnalysis::Disassembler::Base::Ptr
+RSIM_Process::disassembler() const {
+    return disassembler_;
+}
+
+void
+RSIM_Process::disassembler(const Rose::BinaryAnalysis::Disassembler::Base::Ptr &d) {
+    disassembler_ = d;
 }
 
 void

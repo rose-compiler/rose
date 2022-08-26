@@ -85,7 +85,7 @@ main(int argc, char *argv[]) {
         if (map->isEmpty())
             continue;
 
-        Disassembler::Base *disassembler = engine.obtainDisassembler();
+        Disassembler::Base::Ptr disassembler = engine.obtainDisassembler();
         rose_addr_t va = map->hull().least();
         while (map->atOrAfter(va).require(MemoryMap::EXECUTABLE).next().assignTo(va)) {
             va = alignUp(va, disassembler->instructionAlignment());

@@ -357,6 +357,16 @@ formatNBits(CilDataFormat fmt)
 #endif
 }
 
+DisassemblerCil::Ptr
+DisassemblerCil::instance() {
+    return Ptr(new DisassemblerCil);
+}
+
+Disassembler::Base::Ptr
+DisassemblerCil::clone() const {
+    return Ptr(new DisassemblerCil(*this));
+}
+
 // see base class
 bool
 DisassemblerCil::canDisassemble(SgAsmGenericHeader *header) const
