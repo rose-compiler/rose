@@ -9004,7 +9004,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                      Rose_STL_Container<string>::iterator j = i;
                      j++;
                      ROSE_ASSERT(j != argcArgvList.end());
-#if DEBUG_COMPILER_COMMAND_LINE || 1
+#if DEBUG_COMPILER_COMMAND_LINE
                      printf ("In SgFile::buildCompilerCommandLineOptions: Found object file as specified = %s \n",(*j).c_str());
 #endif
                      set_objectFileNameWithPath(*j);

@@ -6939,7 +6939,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                   }
              }
 
-#if DEBUG_PROJECT_COMPILE_COMMAND_LINE_WITH_ARGS || 1
+#if DEBUG_PROJECT_COMPILE_COMMAND_LINE_WITH_ARGS
        // DQ (2/6/2022): Set to "1" to output the backend compiler command line.
           printf ("In SgFile::compileOutput(): Calling systemFromVector(): compilerCmdLine = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerCmdLine,false,false).c_str());
 #endif
