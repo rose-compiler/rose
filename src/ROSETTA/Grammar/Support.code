@@ -17029,9 +17029,9 @@ SgFile::generateOutputFileName() const
         {
           if (get_objectFileNameWithPath() == "")
              {
-               printf ("NOTE: both objectFileNameWithPath and objectFileNameWithoutPath must be set consistantly \n");
-               printf (" --- get_objectFileNameWithoutPath() = %s \n",get_objectFileNameWithoutPath().c_str());
-               printf (" --- get_objectFileNameWithPath()    = %s \n",get_objectFileNameWithPath().c_str());
+               mprintf ("NOTE: both objectFileNameWithPath and objectFileNameWithoutPath must be set consistantly \n");
+               mprintf (" --- get_objectFileNameWithoutPath() = %s \n",get_objectFileNameWithoutPath().c_str());
+               mprintf (" --- get_objectFileNameWithPath()    = %s \n",get_objectFileNameWithPath().c_str());
 #if 0
                set_objectFileNameWithPath(get_objectFileNameWithoutPath());
                printf (" --- after reset: get_objectFileNameWithPath() = %s \n",get_objectFileNameWithPath().c_str());
@@ -17043,9 +17043,9 @@ SgFile::generateOutputFileName() const
         {
           if (get_objectFileNameWithPath() != "")
              {
-               printf ("NOTE: both objectFileNameWithPath and objectFileNameWithoutPath must be set consistantly \n");
-               printf (" --- get_objectFileNameWithoutPath() = %s \n",get_objectFileNameWithoutPath().c_str());
-               printf (" --- get_objectFileNameWithPath()    = %s \n",get_objectFileNameWithPath().c_str());
+               mprintf ("NOTE: both objectFileNameWithPath and objectFileNameWithoutPath must be set consistantly \n");
+               mprintf (" --- get_objectFileNameWithoutPath() = %s \n",get_objectFileNameWithoutPath().c_str());
+               mprintf (" --- get_objectFileNameWithPath()    = %s \n",get_objectFileNameWithPath().c_str());
 #if 0
                set_objectFileNameWithoutPath(get_objectFileNameWithPath());
                printf (" --- after reset: get_objectFileNameWithoutPath() = %s \n",get_objectFileNameWithoutPath().c_str());
