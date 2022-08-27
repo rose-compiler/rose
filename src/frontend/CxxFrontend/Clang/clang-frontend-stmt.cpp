@@ -1295,18 +1295,26 @@ bool ClangToSageTranslator::VisitGotoStmt(clang::GotoStmt * goto_stmt, SgNode **
 #endif
 
     bool res = true;
-/*
+
     SgSymbol * tmp_sym = GetSymbolFromSymbolTable(goto_stmt->getLabel());
     SgLabelSymbol * sym = isSgLabelSymbol(tmp_sym);
     if (sym == NULL) {
-        std::cerr << "Runtime error: Cannot find the symbol for the label: \"" << goto_stmt->getLabel()->getStmt()->getName() << "\"." << std::endl;
-        res = false;
+        SgNode * tmp_label = Traverse(goto_stmt->getLabel()->getStmt());
+        SgLabelStatement * label_stmt = isSgLabelStatement(tmp_label);
+        if (label_stmt == NULL) {
+            std::cerr << "Runtime error: Cannot find the symbol for the label: \"" << goto_stmt->getLabel()->getStmt()->getName() << "\"." << std::endl;
+            std::cerr << "Runtime Error: Cannot find the label: \"" << goto_stmt->getLabel()->getStmt()->getName() << "\"." << std::endl;
+            res = false;
+        }
+        else {
+            *node = SageBuilder::buildGotoStatement(label_stmt);
+        }
     }
     else {
         *node = SageBuilder::buildGotoStatement(sym->get_declaration());
     }
-*/
 
+/*
     SgNode * tmp_label = Traverse(goto_stmt->getLabel()->getStmt());
     SgLabelStatement * label_stmt = isSgLabelStatement(tmp_label);
     if (label_stmt == NULL) {
@@ -1316,7 +1324,7 @@ bool ClangToSageTranslator::VisitGotoStmt(clang::GotoStmt * goto_stmt, SgNode **
     else {
         *node = SageBuilder::buildGotoStatement(label_stmt);
     }
-
+*/
     return VisitStmt(goto_stmt, node) && res;
 }
 
@@ -3892,19 +3900,9 @@ bool ClangToSageTranslator::VisitLabelStmt(clang::LabelStmt * label_stmt, SgNode
 
     SgName name(label_stmt->getName());
 
-    SgNode * tmp_sub_stmt = Traverse(label_stmt->getSubStmt());
-    SgStatement * sg_sub_stmt = isSgStatement(tmp_sub_stmt);
-    if (sg_sub_stmt == NULL) {
-        SgExpression * sg_sub_expr = isSgExpression(tmp_sub_stmt);
-        ROSE_ASSERT(sg_sub_expr != NULL);
-        sg_sub_stmt = SageBuilder::buildExprStatement(sg_sub_expr);
-    }
-
-    ROSE_ASSERT(sg_sub_stmt != NULL);
-
-    *node = SageBuilder::buildLabelStatement_nfi(name, sg_sub_stmt, SageBuilder::topScopeStack());
-
+    *node = SageBuilder::buildLabelStatement_nfi(name, NULL, SageBuilder::topScopeStack());
     SgLabelStatement * sg_label_stmt = isSgLabelStatement(*node);
+
     SgFunctionDefinition * label_scope = NULL;
     std::list<SgScopeStatement *>::reverse_iterator it = SageBuilder::ScopeStack.rbegin();
     while (it != SageBuilder::ScopeStack.rend() && label_scope == NULL) {
@@ -3920,6 +3918,19 @@ bool ClangToSageTranslator::VisitLabelStmt(clang::LabelStmt * label_stmt, SgNode
         SgLabelSymbol* label_sym = new SgLabelSymbol(sg_label_stmt);
         label_scope->insert_symbol(label_sym->get_name(), label_sym);
     }
+
+    SgNode * tmp_sub_stmt = Traverse(label_stmt->getSubStmt());
+    SgStatement * sg_sub_stmt = isSgStatement(tmp_sub_stmt);
+    if (sg_sub_stmt == NULL) {
+        SgExpression * sg_sub_expr = isSgExpression(tmp_sub_stmt);
+        ROSE_ASSERT(sg_sub_expr != NULL);
+        sg_sub_stmt = SageBuilder::buildExprStatement(sg_sub_expr);
+    }
+
+    ROSE_ASSERT(sg_sub_stmt != NULL);
+
+    sg_sub_stmt->set_parent(sg_label_stmt);
+    sg_label_stmt->set_statement(sg_sub_stmt);
 
     return VisitStmt(label_stmt, node) && res;
 }
