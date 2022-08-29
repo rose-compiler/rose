@@ -8,6 +8,7 @@
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BinaryAnalysis/SymbolicExpr.h>
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
 
@@ -553,7 +554,7 @@ Partitioner::basicBlockSemantics(const InsnInfo::List &insns) {
     // first part of this basic block--they'll always ask for the whole block.
     if (prefix.empty()) {
         SmtSolver::Ptr solver; // FIXME[Robb Matzke 2020-07-29]: use a solver for semantics? Probably not needed.
-        const RegisterDictionary *regdict = instructionCache().decoder()->registerDictionary();
+        RegisterDictionary::Ptr regdict = instructionCache().decoder()->registerDictionary();
         ops = Semantics::RiscOperators::instance(regdict, solver, settings_.semanticMemoryParadigm);
         BaseSemantics::MemoryStatePtr mem = ops->currentState()->memoryState();
         if (auto ml = boost::dynamic_pointer_cast<Semantics::MemoryListState>(mem)) {
@@ -570,7 +571,7 @@ Partitioner::basicBlockSemantics(const InsnInfo::List &insns) {
     // be wrong anyway. If there is no current state then there's no point in processing the instruction.
     if (ops->currentState()) {
         if (BaseSemantics::DispatcherPtr protoCpu = instructionCache().decoder()->dispatcher()) {
-            BaseSemantics::DispatcherPtr cpu = protoCpu->create(ops);
+            BaseSemantics::DispatcherPtr cpu = protoCpu->create(ops, 0, RegisterDictionary::Ptr());
             for (auto insn = insns.begin() + prefix.size(); insn != insns.end(); ++insn) {
                 try {
                     cpu->processInstruction((*insn)->ast().lock().get());

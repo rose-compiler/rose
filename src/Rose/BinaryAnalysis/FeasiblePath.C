@@ -16,6 +16,8 @@
 #include <Rose/BinaryAnalysis/Partitioner2/GraphViz.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesElf.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
+#include <Rose/BinaryAnalysis/RegisterNames.h>
 #include <Sawyer/GraphAlgorithm.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/SymbolicMemory.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
@@ -161,7 +163,7 @@ protected:
     }
 
 public:
-    static RiscOperatorsPtr instance(const P2::Partitioner *partitioner, const RegisterDictionary *regdict,
+    static RiscOperatorsPtr instance(const P2::Partitioner *partitioner, const RegisterDictionary::Ptr &regdict,
                                      FeasiblePath *fpAnalyzer, const P2::CfgPath *path, FeasiblePath::PathProcessor *pathProcessor,
                                      const Rose::BinaryAnalysis::SmtSolverPtr &solver = Rose::BinaryAnalysis::SmtSolverPtr()) {
         ASSERT_not_null(fpAnalyzer);
@@ -271,7 +273,7 @@ private:
 
     /** Description a variable stored in a register. */
     FeasiblePath::VarDetail detailForVariable(RegisterDescriptor reg, const std::string &accessMode) const {
-        const RegisterDictionary *regs = currentState()->registerState()->registerDictionary();
+        RegisterDictionary::Ptr regs = currentState()->registerState()->registerDictionary();
         FeasiblePath::VarDetail retval;
         retval.registerName = RegisterNames(regs)(reg);
         retval.firstAccessMode = accessMode;
@@ -664,6 +666,22 @@ FeasiblePath::FeasiblePath() {}
 
 FeasiblePath::~FeasiblePath() {}
 
+void
+FeasiblePath::reset() {
+    partitioner_ = NULL;
+    registers_ = RegisterDictionary::Ptr();
+    REG_PATH = REG_RETURN_ = RegisterDescriptor();
+    functionSummaries_.clear();
+    vmap_.clear();
+    paths_.clear();
+    pathsBeginVertices_.clear();
+    pathsEndVertices_.clear();
+    isDirectedSearch_ = true;
+    cfgAvoidEdges_.clear();
+    cfgEndAvoidVertices_.clear();
+    resetStatistics();
+}
+
 // class method
 void
 FeasiblePath::initDiagnostics() {
@@ -906,7 +924,7 @@ FeasiblePath::buildVirtualCpu(const P2::Partitioner &partitioner, const P2::CfgP
     // Augment the register dictionary with a "path" register that holds the expression describing how the location is
     // reachable along some path.
     if (NULL == registers_) {
-        registers_ = new RegisterDictionary("Rose::BinaryAnalysis::FeasiblePath");
+        registers_ = RegisterDictionary::instance("Rose::BinaryAnalysis::FeasiblePath");
         registers_->insert(partitioner.instructionProvider().registerDictionary());
         ASSERT_require(REG_PATH.isEmpty());
         REG_PATH = RegisterDescriptor(registers_->firstUnusedMajor(), 0, 0, 1);
@@ -956,7 +974,7 @@ FeasiblePath::buildVirtualCpu(const P2::Partitioner &partitioner, const P2::CfgP
     }
 
     ASSERT_not_null(partitioner.instructionProvider().dispatcher());
-    BaseSemantics::DispatcherPtr cpu = partitioner.instructionProvider().dispatcher()->create(ops);
+    BaseSemantics::DispatcherPtr cpu = partitioner.instructionProvider().dispatcher()->create(ops, 0, RegisterDictionary::Ptr());
     ASSERT_not_null(cpu);
 
     // More return value stuff, continued from above

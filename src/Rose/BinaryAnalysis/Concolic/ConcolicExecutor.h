@@ -4,6 +4,7 @@
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 #include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
 
+#include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Concolic/LinuxI386.h>
 #include <Rose/BinaryAnalysis/Debugger.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherX86.h>
@@ -183,7 +184,7 @@ public:
     size_t wordSizeBits() const;
 
     /** Register definitions. */
-    const RegisterDictionary* registerDictionary() const;
+    RegisterDictionaryPtr registerDictionary() const;
 
     /** Create and save info about initial program inputs.
      *

@@ -6,6 +6,7 @@
 #include <Rose/BinaryAnalysis/SystemCall.h>
 #include <Rose/BinaryAnalysis/Disassembler/X86.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 
 using namespace Rose::Diagnostics;
 
@@ -167,7 +168,7 @@ LibcStartMain::operator()(bool chain, const Args &args) {
     std::vector<BaseSemantics::SValuePtr> functionPtrs;
 
     // Location and size of argument varies by architecture
-    const RegisterDictionary *regs = args.partitioner.instructionProvider().registerDictionary();
+    RegisterDictionary::Ptr regs = args.partitioner.instructionProvider().registerDictionary();
     if (isSgAsmX86Instruction(args.bblock->instructions().back())) {
         if (dispatcher->addressWidth() == 64) {
             // Amd64 integer arguments are passed in registers: rdi, rsi, rdx, rcx, r8, and r9

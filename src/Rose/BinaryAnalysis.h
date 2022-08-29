@@ -45,8 +45,9 @@
 #include <Rose/BinaryAnalysis/PointerDetection.h>
 #include <Rose/BinaryAnalysis/Reachability.h>
 #include <Rose/BinaryAnalysis/RegisterDescriptor.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
+#include <Rose/BinaryAnalysis/RegisterNames.h>
 #include <Rose/BinaryAnalysis/RegisterParts.h>
-#include <Rose/BinaryAnalysis/Registers.h>
 #include <Rose/BinaryAnalysis/ReturnValueUsed.h>
 #include <Rose/BinaryAnalysis/SerialIo.h>
 #include <Rose/BinaryAnalysis/SmtCommandLine.h>

@@ -5,6 +5,7 @@
 
 #include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/Util.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include "AsmUnparser_compat.h"
 #include "integerOps.h"
 #include "stringify.h"
@@ -17,6 +18,54 @@ namespace LlvmSemantics {
 using namespace Rose::Diagnostics;
 
 static unsigned nVersionWarnings = 0;
+
+RiscOperators::RiscOperators(const BaseSemantics::SValue::Ptr &protoval, const SmtSolver::Ptr &solver)
+    : SymbolicSemantics::RiscOperators(protoval, solver), indent_level(0), indent_string("    "), llvmVersion_(0) {
+    name("Llvm");
+}
+
+RiscOperators::RiscOperators(const BaseSemantics::State::Ptr &state, const SmtSolver::Ptr &solver)
+    : SymbolicSemantics::RiscOperators(state, solver), indent_level(0), indent_string("    "), llvmVersion_(0) {
+    name("Llvm");
+}
+
+RiscOperators::~RiscOperators() {}
+
+RiscOperators::Ptr
+RiscOperators::instanceFromRegisters(const RegisterDictionary::Ptr &regdict, const SmtSolver::Ptr &solver) {
+    BaseSemantics::SValue::Ptr protoval = SValue::instance();
+    BaseSemantics::RegisterState::Ptr registers = RegisterState::instance(protoval, regdict);
+    BaseSemantics::MemoryState::Ptr memory = MemoryState::instance(protoval, protoval);
+    BaseSemantics::State::Ptr state = State::instance(registers, memory);
+    return Ptr(new RiscOperators(state, solver));
+}
+
+RiscOperators::Ptr
+RiscOperators::instanceFromProtoval(const BaseSemantics::SValue::Ptr &protoval, const SmtSolver::Ptr &solver) {
+    return Ptr(new RiscOperators(protoval, solver));
+}
+
+RiscOperators::Ptr
+RiscOperators::instanceFromState(const BaseSemantics::State::Ptr &state, const SmtSolver::Ptr &solver) {
+    return Ptr(new RiscOperators(state, solver));
+}
+
+BaseSemantics::RiscOperators::Ptr
+RiscOperators::create(const BaseSemantics::SValue::Ptr &protoval, const SmtSolver::Ptr &solver) const {
+    return instanceFromProtoval(protoval, solver);
+}
+
+BaseSemantics::RiscOperators::Ptr
+RiscOperators::create(const BaseSemantics::State::Ptr &state, const SmtSolver::Ptr &solver) const {
+    return instanceFromState(state, solver);
+}
+
+RiscOperators::Ptr
+RiscOperators::promote(const BaseSemantics::RiscOperators::Ptr &x) {
+    Ptr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
+    ASSERT_not_null(retval);
+    return retval;
+}
 
 BaseSemantics::SValuePtr
 RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr_,
@@ -87,7 +136,7 @@ RiscOperators::reset()
 void
 RiscOperators::emit_changed_state(std::ostream &o)
 {
-    const RegisterDictionary *dictionary = currentState()->registerState()->registerDictionary();
+    RegisterDictionary::Ptr dictionary = currentState()->registerState()->registerDictionary();
     RegisterDescriptors modified_registers = get_modified_registers();
     emit_prerequisites(o, modified_registers, dictionary);
     emit_register_definitions(o, modified_registers);
@@ -110,7 +159,7 @@ RiscOperators::get_important_registers()
 {
     if (important_registers.empty()) {
         ASSERT_not_null(currentState());
-        const RegisterDictionary *dictionary = currentState()->registerState()->registerDictionary();
+        RegisterDictionary::Ptr dictionary = currentState()->registerState()->registerDictionary();
 
         // General-purpose registers
         important_registers.push_back(dictionary->findOrThrow("eax"));
@@ -179,7 +228,7 @@ RiscOperators::get_stored_registers()
 {
     RegisterDescriptors retval;
     RegisterStatePtr regstate = RegisterState::promote(currentState()->registerState());
-    const RegisterDictionary *dictionary = regstate->registerDictionary();
+    RegisterDictionary::Ptr dictionary = regstate->registerDictionary();
     const std::vector<RegisterDescriptor> &regs = get_important_registers();
     for (size_t i=0; i<regs.size(); ++i) {
         if (regstate->is_partly_stored(regs[i])) {
@@ -205,7 +254,7 @@ RiscOperators::get_modified_registers()
 {
     RegisterDescriptors retval;
     RegisterStatePtr cur_regstate = RegisterState::promote(currentState()->registerState());
-    const RegisterDictionary *dictionary = cur_regstate->registerDictionary();
+    RegisterDictionary::Ptr dictionary = cur_regstate->registerDictionary();
     const std::vector<RegisterDescriptor> &regs = get_important_registers();
     for (size_t i=0; i<regs.size(); ++i) {
         if (cur_regstate->is_partly_stored(regs[i])) {
@@ -232,7 +281,7 @@ RiscOperators::get_modified_registers()
 RegisterDescriptor
 RiscOperators::get_insn_pointer_register()
 {
-    const RegisterDictionary *dictionary = currentState()->registerState()->registerDictionary();
+    RegisterDictionary::Ptr dictionary = currentState()->registerState()->registerDictionary();
     return dictionary->findOrThrow("eip");
 }
 
@@ -246,15 +295,15 @@ RiscOperators::get_instruction_pointer()
 
 // Create temporary LLVM variables for all definers of the specified registers.
 void
-RiscOperators::emit_prerequisites(std::ostream &o, const RegisterDescriptors &regs, const RegisterDictionary *dictionary)
+RiscOperators::emit_prerequisites(std::ostream &o, const RegisterDescriptors &regs, const RegisterDictionary::Ptr& dictionary)
 {
     struct T1: SymbolicExpr::Visitor {
         RiscOperators *ops;
         std::ostream &o;
         const RegisterDescriptors &regs;
-        const RegisterDictionary *dictionary;
+        RegisterDictionary::Ptr dictionary;
         std::set<SymbolicExpr::Hash> seen;
-        T1(RiscOperators *ops, std::ostream &o, const RegisterDescriptors &regs, const RegisterDictionary *dictionary)
+        T1(RiscOperators *ops, std::ostream &o, const RegisterDescriptors &regs, const RegisterDictionary::Ptr &dictionary)
             : ops(ops), o(o), regs(regs), dictionary(dictionary) {}
         virtual SymbolicExpr::VisitAction preVisit(const ExpressionPtr &node) override {
             if (!seen.insert(node->hash()).second)
@@ -303,7 +352,7 @@ RiscOperators::emit_prerequisites(std::ostream &o, const RegisterDescriptors &re
 void
 RiscOperators::emit_register_declarations(std::ostream &o, const RegisterDescriptors &regs)
 {
-    const RegisterDictionary *dictionary = currentState()->registerState()->registerDictionary();
+    RegisterDictionary::Ptr dictionary = currentState()->registerState()->registerDictionary();
     for (size_t i=0; i<regs.size(); ++i) {
         const std::string &name = dictionary->lookup(regs[i]);
         ASSERT_require(!name.empty());
@@ -315,7 +364,7 @@ void
 RiscOperators::emit_register_definitions(std::ostream &o, const RegisterDescriptors &regs)
 {
     RegisterStatePtr regstate = RegisterState::promote(currentState()->registerState());
-    const RegisterDictionary *dictionary = regstate->registerDictionary();
+    RegisterDictionary::Ptr dictionary = regstate->registerDictionary();
     for (size_t i=0; i<regs.size(); ++i) {
         const std::string &name = dictionary->lookup(regs[i]);
         ASSERT_require(!name.empty());
@@ -1390,6 +1439,27 @@ RiscOperators::emit_assignment(std::ostream &o, const ExpressionPtr &rhs)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Transcoder
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Transcoder::Transcoder(const BaseSemantics::Dispatcher::Ptr &dispatcher)
+    : dispatcher(dispatcher), emit_funcfrags(false), quiet_errors(false) {
+    operators = RiscOperators::promote(dispatcher->operators());
+}
+
+Transcoder::~Transcoder() {}
+
+Transcoder::Ptr
+Transcoder::instance(const BaseSemantics::Dispatcher::Ptr &dispatcher) {
+    return Ptr(new Transcoder(dispatcher));
+}
+
+Transcoder::Ptr
+Transcoder::instanceX86() {
+    RegisterDictionary::Ptr regdict = RegisterDictionary::instancePentium4();
+    SmtSolver::Ptr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
+    RiscOperators::Ptr ops = RiscOperators::instanceFromRegisters(regdict, solver);
+    BaseSemantics::Dispatcher::Ptr dispatcher = DispatcherX86::instance(ops, 32, RegisterDictionary::Ptr());
+    return instance(dispatcher);
+}
 
 int
 Transcoder::llvmVersion() const {

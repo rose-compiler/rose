@@ -17,6 +17,7 @@
 #include <Rose/BinaryAnalysis/Disassembler/Null.h>
 #include <Rose/RecursionCounter.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/config.hpp>
@@ -637,7 +638,7 @@ Partitioner::newDispatcher(const BaseSemantics::RiscOperatorsPtr &ops) const {
     ASSERT_not_null(ops);
     if (instructionProvider_->dispatcher() == NULL)
         return BaseSemantics::DispatcherPtr();          // instruction semantics are not implemented for this architecture
-    return instructionProvider_->dispatcher()->create(ops);
+    return instructionProvider_->dispatcher()->create(ops, 0, RegisterDictionary::Ptr());
 }
 
 BasicBlock::Ptr

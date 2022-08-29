@@ -6,6 +6,7 @@
 
 #include <Rose/BinaryAnalysis/ControlFlow.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BinaryAnalysis/Unparser/Aarch32.h>
 #include <Rose/BinaryAnalysis/Unparser/Aarch64.h>
 #include <Rose/BinaryAnalysis/Unparser/M68k.h>
@@ -18,8 +19,13 @@ using namespace Rose;
 using namespace Rose::BinaryAnalysis;
 using namespace Rose::BinaryAnalysis::Unparser;
 
+std::string unparseInstruction(SgAsmInstruction *insn, const Rose::BinaryAnalysis::AsmUnparser::LabelMap *labels) {
+    return unparseInstruction(insn, labels, RegisterDictionary::Ptr());
+}
+
 /* FIXME: this should be a SgAsmInstruction class method. */
-std::string unparseInstruction(SgAsmInstruction* insn, const AsmUnparser::LabelMap *labels, const RegisterDictionary *registers) {
+std::string unparseInstruction(SgAsmInstruction* insn, const AsmUnparser::LabelMap *labels,
+                               const RegisterDictionary::Ptr &registers) {
     /* Mnemonic */
     if (!insn) return "BOGUS:NULL";
     std::string result = unparseMnemonic(insn);
@@ -36,9 +42,14 @@ std::string unparseInstruction(SgAsmInstruction* insn, const AsmUnparser::LabelM
     return result;
 }
 
+std::string unparseInstructionWithAddress(SgAsmInstruction *insn,
+                                          const Rose::BinaryAnalysis::AsmUnparser::LabelMap *labels) {
+    return unparseInstructionWithAddress(insn, labels, RegisterDictionary::Ptr());
+}
+
 /* FIXME: This should be a SgAsmInstruction class method. */
 std::string unparseInstructionWithAddress(SgAsmInstruction* insn, const AsmUnparser::LabelMap *labels,
-                                          const RegisterDictionary *registers) {
+                                          const RegisterDictionary::Ptr &registers) {
     if (!insn) return "BOGUS:NULL";
     return StringUtility::addrToString(insn->get_address()) + ": " + unparseInstruction(insn, labels, registers);
 }
@@ -71,7 +82,8 @@ std::string unparseMnemonic(SgAsmInstruction *insn) {
 }
 
 /* FIXME: This should be an SgAsmExpression class method */
-std::string unparseExpression(SgAsmExpression *expr, const AsmUnparser::LabelMap *labels, const RegisterDictionary *registers) {
+std::string unparseExpression(SgAsmExpression *expr, const AsmUnparser::LabelMap *labels,
+                              const RegisterDictionary::Ptr &registers) {
     // Find the instruction with which this expression is associated. If we go through the instruction's p_semantics member to
     // get there then don't unparse this (it's static semantics, not instruction arguments).
     SgAsmInstruction *insn = NULL;

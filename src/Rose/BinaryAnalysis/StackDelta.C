@@ -7,6 +7,7 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/DataFlow.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/CommandLine.h>
 
 #include <Sawyer/ProgressBar.h>
@@ -36,7 +37,7 @@ initDiagnostics() {
 void
 Analysis::init(const Disassembler::Base::Ptr &disassembler) {
     if (disassembler) {
-        const RegisterDictionary *regdict = disassembler->registerDictionary();
+        RegisterDictionary::Ptr regdict = disassembler->registerDictionary();
         ASSERT_not_null(regdict);
         size_t addrWidth = disassembler->instructionPointerRegister().nBits();
 
@@ -45,7 +46,7 @@ Analysis::init(const Disassembler::Base::Ptr &disassembler) {
         BaseSemantics::RegisterStatePtr registers = SymbolicSemantics::RegisterState::instance(protoval, regdict);
         BaseSemantics::MemoryStatePtr memory = NullSemantics::MemoryState::instance(protoval, protoval);
         BaseSemantics::StatePtr state = SymbolicSemantics::State::instance(registers, memory);
-        BaseSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(state, solver);
+        BaseSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instanceFromState(state, solver);
 
         cpu_ = disassembler->dispatcher()->create(ops, addrWidth, regdict);
     }

@@ -7,6 +7,7 @@
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/Reachability.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
@@ -45,7 +46,7 @@ void initDiagnostics() {
 }
 
 std::string
-invalidRegister(SgAsmInstruction *insn, RegisterDescriptor reg, const RegisterDictionary *regdict) {
+invalidRegister(SgAsmInstruction *insn, RegisterDescriptor reg, const RegisterDictionary::Ptr &regdict) {
     using namespace StringUtility;
     Stream warn(mlog[WARN]);
 
@@ -70,7 +71,7 @@ invalidRegister(SgAsmInstruction *insn, RegisterDescriptor reg, const RegisterDi
              <<"  and minor numbers for the register, \"c\" is the bit offset within the underlying machine\n"
              <<"  register, and \"d\" is the number of significant bits.\n";
         if (regdict!=NULL)
-            warn <<"  Dictionary in use at time of warning: " <<regdict->get_architecture_name() <<"\n";
+            warn <<"  Dictionary in use at time of warning: " <<regdict->name() <<"\n";
         wasDescribed = true;
     }
     return "BAD_REGISTER(" + regstr + ")";
@@ -179,7 +180,7 @@ State::State(const P2::Partitioner &p, const Settings &settings, const Base &fro
     styleStack_.colorization(settings.colorization.merge(CommandLine::genericSwitchArgs.colorization));
 }
 
-State::State(const P2::Partitioner &p, const RegisterDictionary *regdict, const Settings &settings, const Base &frontUnparser)
+State::State(const P2::Partitioner &p, const RegisterDictionary::Ptr &regdict, const Settings &settings, const Base &frontUnparser)
     : partitioner_(p), registerNames_(regdict), frontUnparser_(frontUnparser) {
     if (settings.function.cg.showing)
         cg_ = p.functionCallGraph(P2::AllowParallelEdges::NO);

@@ -11,6 +11,7 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherM68k.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/PartialSymbolicSemantics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 
 using namespace Rose;                                   // temporary until this lives in "rose"
 using namespace Rose::BinaryAnalysis;
@@ -171,11 +172,11 @@ SgAsmM68kInstruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& i
         using namespace Rose::BinaryAnalysis::InstructionSemantics;
         using namespace Rose::BinaryAnalysis::InstructionSemantics::SymbolicSemantics;
         const InstructionMap &imap = interp->get_instruction_map();
-        const RegisterDictionary *regdict = RegisterDictionary::dictionary_for_isa(interp);
+        RegisterDictionary::Ptr regdict = RegisterDictionary::instanceForIsa(interp);
         SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
-        BaseSemantics::RiscOperatorsPtr ops = RiscOperators::instance(regdict, solver);
+        BaseSemantics::RiscOperatorsPtr ops = RiscOperators::instanceFromRegisters(regdict, solver);
         ASSERT_not_null(ops);
-        DispatcherM68kPtr dispatcher = DispatcherM68k::instance(ops, 32);
+        DispatcherM68kPtr dispatcher = DispatcherM68k::instance(ops, 32, RegisterDictionary::Ptr());
         SValuePtr orig_sp = SValue::promote(ops->peekRegister(dispatcher->REG_A[7]));
         try {
             for (size_t i=0; i<insns.size(); ++i)
@@ -228,10 +229,10 @@ SgAsmM68kInstruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& i
         using namespace Rose::BinaryAnalysis;
         using namespace Rose::BinaryAnalysis::InstructionSemantics;
         using namespace Rose::BinaryAnalysis::InstructionSemantics::SymbolicSemantics;
-        const RegisterDictionary *regdict = RegisterDictionary::dictionary_coldfire_emac();
+        RegisterDictionary::Ptr regdict = RegisterDictionary::instanceColdfireEmac();
         SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
-        BaseSemantics::RiscOperatorsPtr ops = RiscOperators::instance(regdict, solver);
-        DispatcherM68kPtr dispatcher = DispatcherM68k::instance(ops, 32);
+        BaseSemantics::RiscOperatorsPtr ops = RiscOperators::instanceFromRegisters(regdict, solver);
+        DispatcherM68kPtr dispatcher = DispatcherM68k::instance(ops, 32, RegisterDictionary::Ptr());
         try {
             for (size_t i=0; i<insns.size(); ++i)
                 dispatcher->processInstruction(insns[i]);
@@ -444,10 +445,10 @@ SgAsmM68kInstruction::getSuccessors(const std::vector<SgAsmInstruction*>& insns,
     if (!complete || successors.size()>1) {
         using namespace Rose::BinaryAnalysis::InstructionSemantics::PartialSymbolicSemantics;
 
-        const RegisterDictionary *regdict = RegisterDictionary::dictionary_coldfire_emac();
-        RiscOperatorsPtr ops = RiscOperators::instance(regdict);
+        RegisterDictionary::Ptr regdict = RegisterDictionary::instanceColdfireEmac();
+        RiscOperatorsPtr ops = RiscOperators::instanceFromRegisters(regdict);
         ops->set_memory_map(initial_memory);
-        DispatcherM68kPtr dispatcher = DispatcherM68k::instance(ops, 32);
+        DispatcherM68kPtr dispatcher = DispatcherM68k::instance(ops, 32, RegisterDictionary::Ptr());
         
         try {
             for (size_t i=0; i<insns.size(); ++i) {

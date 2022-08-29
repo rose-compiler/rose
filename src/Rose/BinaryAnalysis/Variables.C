@@ -5,6 +5,7 @@
 
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 
 #include <integerOps.h>
 #include <stringify.h>
@@ -442,7 +443,7 @@ protected:
 public:
     static RiscOperatorsPtr instance(const StackFrame &frame, const P2::Partitioner &partitioner,
                                      StackVariable::Boundaries &boundaries /*in,out*/) {
-        const RegisterDictionary *regdict = partitioner.instructionProvider().registerDictionary();
+        RegisterDictionary::Ptr regdict = partitioner.instructionProvider().registerDictionary();
         S2::BaseSemantics::SValuePtr protoval = SValue::instance();
         S2::BaseSemantics::RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
         S2::BaseSemantics::MemoryStatePtr memory = P2::Semantics::MemoryMapState::instance(protoval, protoval);
@@ -1227,7 +1228,7 @@ VariableFinder::findGlobalVariableVas(const P2::Partitioner &partitioner) {
     Sawyer::Stopwatch timer;
 
     S2::SymbolicSemantics::RiscOperatorsPtr ops =
-        S2::SymbolicSemantics::RiscOperators::instance(partitioner.instructionProvider().registerDictionary());
+        S2::SymbolicSemantics::RiscOperators::instanceFromRegisters(partitioner.instructionProvider().registerDictionary());
     S2::BaseSemantics::DispatcherPtr cpu = partitioner.newDispatcher(ops);
     ASSERT_not_null(cpu);
     AddressToAddresses retval;

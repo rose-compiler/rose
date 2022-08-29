@@ -10,6 +10,7 @@
 #include <integerOps.h>
 #include <stringify.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherX86.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BinaryAnalysis/Unparser/X86.h>
 
 #include <sstream>
@@ -85,7 +86,7 @@ X86::init(size_t wordsize)
 {
     /* The default register dictionary.  If a register dictionary is specified in an SgAsmInterpretation, then that one will be
      * used instead of the default we set here. */
-    const RegisterDictionary *regdict = NULL;
+    RegisterDictionary::Ptr regdict;
     size_t addrWidth=0;
     switch (wordsize) {
         case 2:
@@ -93,13 +94,13 @@ X86::init(size_t wordsize)
             addrWidth = 16;
             insnSize = x86_insnsize_16;
 #if 0 // [Robb P. Matzke 2015-06-23]
-            regdict = RegisterDictionary::dictionary_i286();
+            regdict = RegisterDictionary::instanceI286();
 #else
             // A word size of 2 bytes doesn't necessarily mean 80286. E.g., $ROSE/binaries/samples/exefmt.exe has a header that
             // advertises architecture ISA_IA32_Family with a word size of 2 and which contains an occasional 32-bit floating
             // point instruction, although perhaps because of disassembling data with a disassembler that understands 32-bit op
             // codes.
-            regdict = RegisterDictionary::dictionary_i386_387();
+            regdict = RegisterDictionary::instanceI386Math();
 #endif
             REG_IP = regdict->findOrThrow("ip");
             REG_SP = regdict->findOrThrow("sp");
@@ -110,7 +111,7 @@ X86::init(size_t wordsize)
             name("i386");
             addrWidth = 32;
             insnSize = x86_insnsize_32;
-            regdict = RegisterDictionary::dictionary_pentium4();
+            regdict = RegisterDictionary::instancePentium4();
             REG_IP = regdict->findOrThrow("eip");
             REG_SP = regdict->findOrThrow("esp");
             REG_SS = regdict->findOrThrow("ss");
@@ -121,7 +122,7 @@ X86::init(size_t wordsize)
             name("amd64");
             addrWidth = 64;
             insnSize = x86_insnsize_64;
-            regdict = RegisterDictionary::dictionary_amd64();
+            regdict = RegisterDictionary::instanceAmd64();
             REG_IP = regdict->findOrThrow("rip");
             REG_SP = regdict->findOrThrow("rsp");
             REG_SS = regdict->findOrThrow("ss");
@@ -615,8 +616,7 @@ X86::makeRegister(State &state, uint8_t fullRegisterNumber, RegisterMode m, SgAs
     ASSERT_not_null(registerDictionary());
     const RegisterDescriptor rdesc = registerDictionary()->find(name);
     if (!rdesc)
-        throw ExceptionX86("register \"" + name + "\" is not available for " + registerDictionary()->get_architecture_name(),
-                           state);
+        throw ExceptionX86("register \"" + name + "\" is not available for " + registerDictionary()->name(), state);
 
     /* Construct the return value. */
     SgAsmRegisterReferenceExpression *rre = NULL;
@@ -625,7 +625,7 @@ X86::makeRegister(State &state, uint8_t fullRegisterNumber, RegisterMode m, SgAs
     } else {
         // ST registers are different than most others. Starting with i387, the CPU has eight physical ST registers which
         // are treated as a circular stack, with ST(0) being the top of the stack.  See comments in
-        // RegisterDictionary::dictionary_i386_387 for details.
+        // RegisterDictionary::instanceI386Math for details.
         RegisterDescriptor stride(0, 1, 0, 0);          // increment the minor number
         RegisterDescriptor offset(x86_regclass_flags, x86_flags_fpstatus, 11, 3); // "fpstatus_top"
         size_t index = fullRegisterNumber;

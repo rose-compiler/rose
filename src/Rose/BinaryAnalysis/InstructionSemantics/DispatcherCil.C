@@ -2152,9 +2152,7 @@ struct IP_mac: P {
             d->REG_MACSR_Z.isEmpty()  || d->REG_MACSR_V.isEmpty()  || d->REG_MACSR_C.isEmpty() ||
             d->REG_MAC_MASK.isEmpty() || d->REG_MACEXT0.isEmpty()  || d->REG_MACEXT1.isEmpty() ||
             d->REG_MACEXT2.isEmpty()  || d->REG_MACEXT3.isEmpty()) {
-            throw BaseSemantics::Exception("MAC registers are not available for " +
-                                           d->registerDictionary()->get_architecture_name(),
-                                           insn);
+            throw BaseSemantics::Exception("MAC registers are not available for " + d->registerDictionary()->name(),insn);
         }
         
         // Produce the product
@@ -3496,6 +3494,44 @@ struct IP_unpk: P {
 //                                      DispatcherCil
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+DispatcherCil::DispatcherCil()
+    : BaseSemantics::Dispatcher(32, RegisterDictionary::instanceColdfireEmac()) {}
+
+DispatcherCil::DispatcherCil(const BaseSemantics::RiscOperators::Ptr &ops, size_t addrWidth, const RegisterDictionary::Ptr &regs)
+    : BaseSemantics::Dispatcher(ops, addrWidth, regs ? regs : RegisterDictionary::instanceColdfireEmac()) {
+    ASSERT_require(32==addrWidth);
+    regcache_init();
+    iproc_init();
+    memory_init();
+    initializeState(ops->currentState());
+}
+
+DispatcherCil::~DispatcherCil() {}
+
+DispatcherCil::Ptr
+DispatcherCil::instance() {
+    return Ptr(new DispatcherCil);
+}
+
+DispatcherCil::Ptr
+DispatcherCil::instance(const BaseSemantics::RiscOperators::Ptr &ops, size_t addrWidth, const RegisterDictionary::Ptr &regs) {
+    return Ptr(new DispatcherCil(ops, addrWidth, regs));
+}
+
+BaseSemantics::Dispatcher::Ptr
+DispatcherCil::create(const BaseSemantics::RiscOperators::Ptr &ops, size_t addrWidth, const RegisterDictionary::Ptr &regs) const {
+    if (0 == addrWidth)
+        addrWidth = addressWidth();
+    return instance(ops, addrWidth, regs ? regs : registerDictionary());
+}
+
+DispatcherCil::Ptr
+DispatcherCil::promote(const BaseSemantics::Dispatcher::Ptr &d) {
+    Ptr retval = boost::dynamic_pointer_cast<DispatcherCil>(d);
+    ASSERT_not_null(retval);
+    return retval;
+}
+
 void
 DispatcherCil::iproc_init() {
 #if M68K
@@ -3832,7 +3868,7 @@ DispatcherCil::callReturnRegister() const {
 }
 
 void
-DispatcherCil::set_register_dictionary(const RegisterDictionary *regdict) {
+DispatcherCil::set_register_dictionary(const RegisterDictionary::Ptr &regdict) {
     BaseSemantics::Dispatcher::set_register_dictionary(regdict);
     regcache_init();
 }

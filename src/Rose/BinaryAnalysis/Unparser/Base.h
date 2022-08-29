@@ -4,6 +4,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Unparser/EdgeArrows.h>
 #include <Rose/BinaryAnalysis/Reachability.h>
 #include <Rose/BinaryAnalysis/Unparser/Settings.h>
@@ -11,11 +12,11 @@
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ControlFlowGraph.h>
 #include <Rose/BinaryAnalysis/Partitioner2/FunctionCallGraph.h>
+#include <Rose/BinaryAnalysis/RegisterNames.h>
 #include <Sawyer/Map.h>
 #include <Sawyer/Message.h>
 #include <Sawyer/SharedObject.h>
 #include <Rose/Progress.h>
-#include <Rose/BinaryAnalysis/Registers.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -39,7 +40,7 @@ void initDiagnostics();
 /** Constructs a string to describe the invalid register.
  *
  *  May also optionally emit a diagnostic message. */
-std::string invalidRegister(SgAsmInstruction*, RegisterDescriptor, const RegisterDictionary*);
+std::string invalidRegister(SgAsmInstruction*, RegisterDescriptor, const RegisterDictionaryPtr&);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Margins containing arrows
@@ -220,7 +221,7 @@ private:
 
 public:
     State(const Partitioner2::Partitioner&, const Settings&, const Base &frontUnparser);
-    State(const Partitioner2::Partitioner&, const RegisterDictionary*, const Settings&, const Base &frontUnparser);
+    State(const Partitioner2::Partitioner&, const RegisterDictionaryPtr&, const Settings&, const Base &frontUnparser);
     virtual ~State();
 
     const Partitioner2::Partitioner& partitioner() const;

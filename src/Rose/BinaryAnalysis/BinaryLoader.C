@@ -7,7 +7,7 @@
 #include <Rose/BinaryAnalysis/BinaryLoaderElfObj.h>
 #include <Rose/BinaryAnalysis/BinaryLoaderPe.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
-#include <Rose/BinaryAnalysis/Registers.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/Diagnostics.h>
 #include "dwarfSupport.h"
 
@@ -292,7 +292,7 @@ BinaryLoader::createAsmAST(SgBinaryComposite* binaryFile, std::string filePath) 
             interp = new SgAsmInterpretation();
             interps.push_back(interp);
             interp->set_parent(binaryFile->get_interpretations());
-            if (const RegisterDictionary *registers = RegisterDictionary::dictionary_for_isa(header->get_isa()))
+            if (RegisterDictionary::Ptr registers = RegisterDictionary::instanceForIsa(header->get_isa()))
                 interp->set_registers(registers);
         }
         interp->get_headers()->get_headers().push_back(header);

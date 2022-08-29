@@ -7,6 +7,9 @@
 #include <Rose/BinaryAnalysis/Partitioner2/DataFlow.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Semantics.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
+#include <Rose/BinaryAnalysis/RegisterNames.h>
+
 #if 1 // DEBUGGING [Robb P Matzke 2017-03-04]
 #include <AsmUnparser_compat.h>
 #endif
@@ -32,7 +35,7 @@ initDiagnostics() {
 }
 
 static std::string
-locationNames(const RegisterParts &parts, const RegisterDictionary *regdict) {
+locationNames(const RegisterParts &parts, const RegisterDictionary::Ptr &regdict) {
     std::vector<std::string> retval;
     RegisterNames regNames(regdict);
     for (RegisterDescriptor reg: parts.listAll(regdict))
@@ -64,7 +67,7 @@ class RiscOperators: public P2::Semantics::RiscOperators {
     RegisterParts calleeOutputRegisters_;
     Variables::StackVariables calleeOutputParameters_;
     CallSiteResults *results_;
-    const RegisterDictionary *registerDictionary_;
+    RegisterDictionary::Ptr registerDictionary_;
 
 public:
     typedef P2::Semantics::RiscOperators Super;
@@ -85,13 +88,13 @@ private:
 
 protected:
     explicit RiscOperators(const S2::BaseSemantics::SValuePtr &protoval, const SmtSolverPtr &solver = SmtSolverPtr())
-        : Super(protoval, solver), results_(NULL), registerDictionary_(NULL) {}
+        : Super(protoval, solver), results_(NULL) {}
 
     explicit RiscOperators(const S2::BaseSemantics::StatePtr &state, const SmtSolverPtr &solver = SmtSolverPtr())
-        : Super(state, solver), results_(NULL), registerDictionary_(NULL) {}
+        : Super(state, solver), results_(NULL) {}
 
 public:
-    static RiscOperatorsPtr instance(const RegisterDictionary *regdict, const SmtSolverPtr &solver = SmtSolverPtr()) {
+    static RiscOperatorsPtr instance(const RegisterDictionary::Ptr &regdict, const SmtSolverPtr &solver = SmtSolverPtr()) {
         SValuePtr protoval = SValue::instance();
         RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
         MemoryStatePtr memory = MemoryState::instance(protoval, protoval);
@@ -160,8 +163,8 @@ public:
      *  output.
      *
      * @{ */
-    const RegisterDictionary* registerDictionary() const { return registerDictionary_; }
-    void registerDictionary(const RegisterDictionary *rd) { registerDictionary_ = rd; }
+    RegisterDictionary::Ptr registerDictionary() const { return registerDictionary_; }
+    void registerDictionary(const RegisterDictionary::Ptr &rd) { registerDictionary_ = rd; }
     /** @} */
 
 public:
@@ -316,7 +319,7 @@ Analysis::analyzeCallSite(const P2::Partitioner &partitioner, const P2::ControlF
     // means (1) the caller reads the callee output location without first writing to it, or (2) the caller calls a second
     // function whose input is one of the original callee outputs with no intervening write, or (3) one of the caller's own
     // return values is one of the calle's return values with no intervening write.
-    const RegisterDictionary *regdict = partitioner.instructionProvider().registerDictionary();
+    RegisterDictionary::Ptr regdict = partitioner.instructionProvider().registerDictionary();
     ASSERT_not_null(regdict);
     SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
     RiscOperatorsPtr ops = RiscOperators::instance(regdict, solver);

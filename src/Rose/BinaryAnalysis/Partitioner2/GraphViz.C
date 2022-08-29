@@ -7,6 +7,7 @@
 #include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/GraphViz.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Sawyer/GraphTraversal.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #ifdef _MSC_VER
@@ -184,9 +185,9 @@ CfgEmitter::init() {
     // Instance initialization
     if (BaseSemantics::DispatcherPtr cpu = partitioner_.instructionProvider().dispatcher()) {
         SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
-        const RegisterDictionary *regdict = partitioner_.instructionProvider().registerDictionary();
+        RegisterDictionary::Ptr regdict = partitioner_.instructionProvider().registerDictionary();
         size_t addrWidth = partitioner_.instructionProvider().instructionPointerRegister().nBits();
-        BaseSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(regdict, solver);
+        BaseSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instanceFromRegisters(regdict, solver);
         noOpAnalysis_ = NoOperation(cpu->create(ops, addrWidth, regdict));
         noOpAnalysis_.initialStackPointer(0xdddd0001); // optional; odd prevents false positives for stack aligning instructions
     }

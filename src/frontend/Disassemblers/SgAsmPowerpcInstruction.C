@@ -5,16 +5,17 @@
 #include "sage3basic.h"
 
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 
 using namespace Rose;                                   // temporary until this lives in "rose"
 using namespace Rose::BinaryAnalysis;
 
 // class method
-const RegisterDictionary*
+RegisterDictionary::Ptr
 SgAsmPowerpcInstruction::registersForWidth(size_t nBits) {
     switch (nBits) {
-        case 32: return RegisterDictionary::dictionary_powerpc32();
-        case 64: return RegisterDictionary::dictionary_powerpc64();
+        case 32: return RegisterDictionary::instancePowerpc32();
+        case 64: return RegisterDictionary::instancePowerpc64();
         default: ASSERT_not_reachable("invalid PowerPC instruction size");
     }
 }

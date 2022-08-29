@@ -6,7 +6,6 @@
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
-#include <Rose/BinaryAnalysis/Registers.h>
 #include <Rose/StringUtility/Escape.h>
 #include <Rose/StringUtility/SplitJoin.h>
 

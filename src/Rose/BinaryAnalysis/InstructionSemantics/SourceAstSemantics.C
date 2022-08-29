@@ -7,6 +7,7 @@
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <integerOps.h>
 
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
@@ -91,6 +92,56 @@ SValue::print(std::ostream &out, BaseSemantics::Formatter &fmt) const {
 //                                      Supporting functions
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+RiscOperators::RiscOperators(const BaseSemantics::SValue::Ptr &protoval, const SmtSolver::Ptr &solver)
+    : BaseSemantics::RiscOperators(protoval, solver), executionHalted_(false) {
+    name("SourceAstSemantics");
+    (void) SValue::promote(protoval); // make sure its dynamic type is a SourceAstSemantics::SValue
+}
+
+RiscOperators::RiscOperators(const BaseSemantics::State::Ptr &state, const SmtSolver::Ptr &solver)
+    : BaseSemantics::RiscOperators(state, solver), executionHalted_(false) {
+    name("SourceAstSemantics");
+    (void) SValue::promote(state->protoval());      // values must have SourceAstSemantics::SValue dynamic type
+}
+
+RiscOperators::Ptr
+RiscOperators::instanceFromRegisters(const RegisterDictionary::Ptr &regdict, const SmtSolver::Ptr &solver) {
+    BaseSemantics::SValue::Ptr protoval = SValue::instance();
+    RegisterState::Ptr registers = RegisterState::instance(protoval, regdict);
+    BaseSemantics::MemoryState::Ptr memory = MemoryState::instance(protoval, protoval);
+    BaseSemantics::State::Ptr state = State::instance(registers, memory);
+    Ptr ops = Ptr(new RiscOperators(state, solver));
+    ops->resetState();
+    return ops;
+}
+
+RiscOperators::Ptr
+RiscOperators::instanceFromProtoval(const BaseSemantics::SValue::Ptr &protoval, const SmtSolver::Ptr &solver) {
+    return Ptr(new RiscOperators(protoval, solver));
+}
+
+RiscOperators::Ptr
+RiscOperators::instanceFromState(const BaseSemantics::State::Ptr &state, const SmtSolver::Ptr &solver) {
+    return Ptr(new RiscOperators(state, solver));
+}
+
+BaseSemantics::RiscOperators::Ptr
+RiscOperators::create(const BaseSemantics::SValue::Ptr &protoval, const SmtSolver::Ptr &solver) const {
+    return instanceFromProtoval(protoval, solver);
+}
+
+BaseSemantics::RiscOperators::Ptr
+RiscOperators::create(const BaseSemantics::State::Ptr &state, const SmtSolver::Ptr &solver) const {
+    return instanceFromState(state, solver);
+}
+
+RiscOperators::Ptr
+RiscOperators::promote(const BaseSemantics::RiscOperators::Ptr &x) {
+    Ptr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
+    ASSERT_not_null(retval);
+    return retval;
+}
+
 void
 RiscOperators::resetState() {
     // Initialize registers so they correspond to the C global variables we'll generate, and then lock the register state so
@@ -142,7 +193,7 @@ RiscOperators::substitute(const BaseSemantics::SValuePtr &expression) {
 std::string
 RiscOperators::registerVariableName(RegisterDescriptor reg) {
     using namespace StringUtility;
-    const RegisterDictionary *registers = currentState()->registerState()->registerDictionary();
+    RegisterDictionary::Ptr registers = currentState()->registerState()->registerDictionary();
     std::string name = registers->lookup(reg);
     if (name.empty()) {
         return ("R_" + numberToString(reg.majorNumber()) +

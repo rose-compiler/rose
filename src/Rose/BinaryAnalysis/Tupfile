@@ -30,8 +30,9 @@ run $(librose_compile)				\
     PointerDetection.C				\
     Reachability.C				\
     RegisterDescriptor.C			\
+    RegisterDictionary.C			\
+    RegisterNames.C				\
     RegisterParts.C				\
-    Registers.C					\
     ReturnValueUsed.C				\
     SerialIo.C					\
     SmtCommandLine.C				\
@@ -53,6 +54,7 @@ run $(public_header) -o include/rose/Rose/BinaryAnalysis	\
     AbstractLocation.h						\
     AsmFunctionIndex.h						\
     AstHash.h							\
+    BasicTypes.h						\
     BestMapAddress.h						\
     BinaryLoader.h						\
     BinaryLoaderElf.h						\
@@ -95,7 +97,8 @@ run $(public_header) -o include/rose/Rose/BinaryAnalysis	\
     Reachability.h						\
     RegisterDescriptor.h					\
     RegisterParts.h						\
-    Registers.h							\
+    RegisterDictionary.h					\
+    RegisterNames.h						\
     ReturnValueUsed.h						\
     SerialIo.h							\
     SmtCommandLine.h						\

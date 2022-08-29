@@ -3572,6 +3572,12 @@ Grammar::buildCode ()
      string defines5 = "#define mprintf Rose::Diagnostics::mfprintf(Rose::ir_node_mlog[Rose::Diagnostics::DEBUG])\n\n";
      includeHeaderString += defines5;
 
+     // Some IR nodes have pointers to reference counted objects, and for better compiling speed, only the forward declarations
+     // are included into most headers. Destructors for these IR nodes need to have definitions for the reference counted
+     // objects in order to call the destructors for those objects when the pointer goes out of scope.  It would be better if
+     // these heavy-weight definitions were only included for the IR nodes that need them, but alas, ROSETTA places the code
+     // for all the IR nodes into a single gigantic .C file.
+     includeHeaderString += "#include <Rose/BinaryAnalysis/RegisterDictionary.h>\n";
 
      includeHeaderString += "\nusing namespace std;\n";
 

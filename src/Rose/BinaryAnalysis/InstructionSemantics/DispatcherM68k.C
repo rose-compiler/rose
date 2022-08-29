@@ -7,6 +7,7 @@
 #include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherM68k.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/Util.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include "integerOps.h"
 #include "stringify.h"
 
@@ -2143,8 +2144,7 @@ struct IP_mac: P {
             d->REG_MACSR_Z.isEmpty()  || d->REG_MACSR_V.isEmpty()  || d->REG_MACSR_C.isEmpty() ||
             d->REG_MAC_MASK.isEmpty() || d->REG_MACEXT0.isEmpty()  || d->REG_MACEXT1.isEmpty() ||
             d->REG_MACEXT2.isEmpty()  || d->REG_MACEXT3.isEmpty()) {
-            throw BaseSemantics::Exception("MAC registers are not available for " +
-                                           d->registerDictionary()->get_architecture_name(),
+            throw BaseSemantics::Exception("MAC registers are not available for " + d->registerDictionary()->name(),
                                            insn);
         }
         
@@ -3481,6 +3481,46 @@ struct IP_unpk: P {
 //                                      DispatcherM68k
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+DispatcherM68k::DispatcherM68k()
+    : BaseSemantics::Dispatcher(32, RegisterDictionary::instanceColdfireEmac()) {}
+
+
+DispatcherM68k::~DispatcherM68k() {}
+
+DispatcherM68k::DispatcherM68k(const BaseSemantics::RiscOperators::Ptr &ops, size_t addrWidth, const RegisterDictionary::Ptr &regs)
+    : BaseSemantics::Dispatcher(ops, addrWidth, regs ? regs : RegisterDictionary::instanceColdfireEmac()) {
+    ASSERT_require(32==addrWidth);
+    regcache_init();
+    iproc_init();
+    memory_init();
+    initializeState(ops->currentState());
+}
+
+DispatcherM68k::Ptr
+DispatcherM68k::instance() {
+    return Ptr(new DispatcherM68k);
+}
+
+DispatcherM68k::Ptr
+DispatcherM68k::instance(const BaseSemantics::RiscOperators::Ptr &ops, size_t addrWidth,
+                         const RegisterDictionary::Ptr &regs) {
+    return Ptr(new DispatcherM68k(ops, addrWidth, regs));
+}
+
+BaseSemantics::Dispatcher::Ptr
+DispatcherM68k::create(const BaseSemantics::RiscOperators::Ptr &ops, size_t addrWidth, const RegisterDictionary::Ptr &regs) const {
+    if (0 == addrWidth)
+        addrWidth = addressWidth();
+    return instance(ops, addrWidth, regs ? regs : registerDictionary());
+}
+
+DispatcherM68k::Ptr
+DispatcherM68k::promote(const BaseSemantics::Dispatcher::Ptr &d) {
+    Ptr retval = boost::dynamic_pointer_cast<DispatcherM68k>(d);
+    ASSERT_not_null(retval);
+    return retval;
+}
+
 void
 DispatcherM68k::iproc_init() {
     iprocSet(m68k_abcd,        new M68k::IP_abcd);
@@ -3815,7 +3855,7 @@ DispatcherM68k::callReturnRegister() const {
 }
 
 void
-DispatcherM68k::set_register_dictionary(const RegisterDictionary *regdict) {
+DispatcherM68k::set_register_dictionary(const RegisterDictionary::Ptr &regdict) {
     BaseSemantics::Dispatcher::set_register_dictionary(regdict);
     regcache_init();
 }

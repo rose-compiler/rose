@@ -7,6 +7,7 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RegisterStateGeneric.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RiscOperators.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/State.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 
 #include <boost/scope_exit.hpp>
 
@@ -14,6 +15,23 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics {
 namespace BaseSemantics {
+
+Dispatcher::Dispatcher()
+    : addrWidth_(0), autoResetInstructionPointer_(true) {}
+
+Dispatcher::Dispatcher(size_t addrWidth, const RegisterDictionary::Ptr &regs)
+    : regdict(regs), addrWidth_(addrWidth), autoResetInstructionPointer_(true) {}
+
+Dispatcher::Dispatcher(const RiscOperators::Ptr &ops, size_t addrWidth, const RegisterDictionary::Ptr &regs)
+    : operators_(ops), regdict(regs), addrWidth_(addrWidth), autoResetInstructionPointer_(true) {
+    ASSERT_not_null(operators_);
+    ASSERT_not_null(regs);
+}
+
+Dispatcher::~Dispatcher() {
+    for (InsnProcessors::iterator iter = iproc_table.begin(); iter != iproc_table.end(); ++iter)
+        delete *iter;
+}
 
 void
 Dispatcher::operators(const RiscOperatorsPtr &ops) {
@@ -52,6 +70,26 @@ SValuePtr
 Dispatcher::number_(size_t nbits, uint64_t number) const {
     ASSERT_not_null(operators());
     return operators()->number_(nbits, number);
+}
+
+RegisterDictionary::Ptr
+Dispatcher::registerDictionary() const {
+    return get_register_dictionary();
+}
+
+void
+Dispatcher::registerDictionary(const RegisterDictionary::Ptr &rd) {
+    set_register_dictionary(rd);
+}
+
+RegisterDictionary::Ptr
+Dispatcher::get_register_dictionary() const {
+    return regdict;
+}
+
+void
+Dispatcher::set_register_dictionary(const RegisterDictionary::Ptr &rd) {
+    regdict = rd;
 }
 
 void
@@ -135,7 +173,7 @@ Dispatcher::iprocGet(int key)
 RegisterDescriptor
 Dispatcher::findRegister(const std::string &regname, size_t nbits/*=0*/, bool allowMissing) const
 {
-    const RegisterDictionary *regdict = registerDictionary();
+    RegisterDictionary::Ptr regdict = registerDictionary();
     if (!regdict)
         throw Exception("no register dictionary", currentInstruction());
 
@@ -144,7 +182,7 @@ Dispatcher::findRegister(const std::string &regname, size_t nbits/*=0*/, bool al
         if (allowMissing)
             return reg;
         std::ostringstream ss;
-        ss <<"Invalid register \"" <<regname <<"\" in dictionary \"" <<regdict->get_architecture_name() <<"\"";
+        ss <<"Invalid register \"" <<regname <<"\" in dictionary \"" <<regdict->name() <<"\"";
         throw Exception(ss.str(), currentInstruction());
     }
 

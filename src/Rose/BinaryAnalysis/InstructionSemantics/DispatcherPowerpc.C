@@ -2,6 +2,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
 
+#include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 #include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherPowerpc.h>
@@ -2465,6 +2466,54 @@ struct IP_xoris: P {
  *                                      DispatcherPowerpc
  *******************************************************************************************************************************/
 
+DispatcherPowerpc::DispatcherPowerpc()
+    : BaseSemantics::Dispatcher(32, RegisterDictionary::instancePowerpc32()) {}
+
+DispatcherPowerpc::DispatcherPowerpc(size_t addrWidth, const RegisterDictionary::Ptr &regs/*=NULL*/)
+    : BaseSemantics::Dispatcher(addrWidth, regs ? regs : SgAsmPowerpcInstruction::registersForWidth(addrWidth)) {}
+
+DispatcherPowerpc::DispatcherPowerpc(const BaseSemantics::RiscOperators::Ptr &ops, size_t addrWidth,
+                                     const RegisterDictionary::Ptr &regs)
+    : BaseSemantics::Dispatcher(ops, addrWidth, regs ? regs : SgAsmPowerpcInstruction::registersForWidth(addrWidth)) {
+    ASSERT_require(32==addrWidth || 64==addrWidth);
+    regcache_init();
+    iproc_init();
+    memory_init();
+    initializeState(ops->currentState());
+}
+
+DispatcherPowerpc::~DispatcherPowerpc() {}
+
+DispatcherPowerpc::Ptr
+DispatcherPowerpc::instance() {
+    return Ptr(new DispatcherPowerpc);
+}
+
+DispatcherPowerpc::Ptr
+DispatcherPowerpc::instance(size_t addrWidth, const RegisterDictionary::Ptr &regs) {
+    return Ptr(new DispatcherPowerpc(addrWidth, regs));
+}
+
+DispatcherPowerpc::Ptr
+DispatcherPowerpc::instance(const BaseSemantics::RiscOperators::Ptr &ops, size_t addrWidth, const RegisterDictionary::Ptr &regs) {
+    return Ptr(new DispatcherPowerpc(ops, addrWidth, regs));
+}
+
+BaseSemantics::Dispatcher::Ptr
+DispatcherPowerpc::create(const BaseSemantics::RiscOperators::Ptr &ops, size_t addrWidth,
+                          const RegisterDictionary::Ptr &regs) const {
+    if (0 == addrWidth)
+        addrWidth = addressWidth();
+    return instance(ops, addrWidth, regs ? regs : registerDictionary());
+}
+
+DispatcherPowerpc::Ptr
+DispatcherPowerpc::promote(const BaseSemantics::Dispatcher::Ptr &d) {
+    Ptr retval = boost::dynamic_pointer_cast<DispatcherPowerpc>(d);
+    ASSERT_not_null(retval);
+    return retval;
+}
+
 void
 DispatcherPowerpc::iproc_init() {
     iprocSet(powerpc_addc,             new Powerpc::IP_addc(UpdateCr::NO));
@@ -2756,7 +2805,7 @@ DispatcherPowerpc::memory_init() {
 }
 
 void
-DispatcherPowerpc::set_register_dictionary(const RegisterDictionary *regdict) {
+DispatcherPowerpc::set_register_dictionary(const RegisterDictionary::Ptr &regdict) {
     BaseSemantics::Dispatcher::set_register_dictionary(regdict);
     regcache_init();
 }

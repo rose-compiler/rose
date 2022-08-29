@@ -5,6 +5,7 @@
 
 #include "integerOps.h"
 #include <Rose/Diagnostics.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BinaryAnalysis/Unparser/Mips.h>
 
 namespace Rose {
@@ -3630,7 +3631,7 @@ Mips::init(ByteOrder::Endianness sex)
             ASSERT_not_reachable("invalid MIPS disassembler byte order");
     }
 
-    registerDictionary(RegisterDictionary::dictionary_mips32()); // only a default
+    registerDictionary(RegisterDictionary::instanceMips32()); // only a default
     REG_IP = registerDictionary()->findOrThrow("pc");
     REG_SP = registerDictionary()->findOrThrow("sp");
 

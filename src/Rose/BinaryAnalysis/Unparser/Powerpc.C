@@ -3,6 +3,7 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Unparser/Powerpc.h>
 
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <integerOps.h>
 
 namespace Rose {
@@ -14,9 +15,9 @@ namespace Unparser {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static std::string
-unparsePowerpcRegister(SgAsmInstruction *insn, RegisterDescriptor rdesc, const RegisterDictionary *registers) {
+unparsePowerpcRegister(SgAsmInstruction *insn, RegisterDescriptor rdesc, RegisterDictionary::Ptr registers) {
     if (!registers)
-        registers = RegisterDictionary::dictionary_powerpc32();
+        registers = RegisterDictionary::instancePowerpc32();
     std::string name = registers->lookup(rdesc);
     if (name.empty())
         name = invalidRegister(insn, rdesc, registers);
@@ -24,7 +25,7 @@ unparsePowerpcRegister(SgAsmInstruction *insn, RegisterDescriptor rdesc, const R
 }
 
 static std::string
-unparsePowerpcExpression(SgAsmExpression* expr, const LabelMap *labels, const RegisterDictionary *registers, bool useHex) {
+unparsePowerpcExpression(SgAsmExpression* expr, const LabelMap *labels, const RegisterDictionary::Ptr &registers, bool useHex) {
     std::string result = "";
     if (expr == NULL) return "BOGUS:NULL";
     switch (expr->variantT()) {
@@ -92,7 +93,7 @@ unparsePowerpcMnemonic(SgAsmPowerpcInstruction *insn) {
 }
 
 std::string
-unparsePowerpcExpression(SgAsmExpression *expr, const LabelMap *labels, const RegisterDictionary *registers) {
+unparsePowerpcExpression(SgAsmExpression *expr, const LabelMap *labels, const RegisterDictionary::Ptr &registers) {
     /* Find the instruction with which this expression is associated. */
     SgAsmPowerpcInstruction *insn = NULL;
     for (SgNode *node=expr; !insn && node; node=node->get_parent()) {

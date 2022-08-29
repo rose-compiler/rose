@@ -3,11 +3,11 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/ConcreteLocation.h>
 #include <Rose/BinaryAnalysis/Disassembler/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
-#include <Rose/BinaryAnalysis/Registers.h>
 #include <Rose/BinaryAnalysis/RegisterParts.h>
 #include <Rose/BinaryAnalysis/Variables.h>
 
@@ -95,7 +95,7 @@ private:
     std::string name_;                                  // Official short name of the convention, like "stdcall".
     std::string comment_;                               // Long name, like "Windows Borland x86-32 fastcall"
     size_t wordWidth_ = 0;                              // Natural width word size in bits
-    const RegisterDictionary *regDict_ = nullptr;       // Register dictionary used when this definition was created
+    RegisterDictionaryPtr regDict_;                     // Register dictionary used when this definition was created
     std::vector<ConcreteLocation> nonParameterInputs_;  // Inputs that are not considered normal function parameters
     std::vector<ConcreteLocation> inputParameters_;     // Input (inc. in-out) parameters; additional stack-based are implied
     std::vector<ConcreteLocation> outputParameters_;    // Return values and output parameters.
@@ -143,22 +143,21 @@ protected:
     /** Default constructor.
      *
      *  Constructs a new calling convention with no name or parameters. */
-    Definition() {}
+    Definition();
 
     /** Construct a new calling convention.
      *
      *  The name of the calling convention usually comes from the documentation (see @name) and is a single word. The comment
      *  is a more complete name for the convention perhaps including the operating system and architecture but not containing
      *  line termination. */
-    Definition(size_t wordWidth, const std::string &name, const std::string &comment, const RegisterDictionary *regDict)
-        : name_(name), comment_(comment), wordWidth_(wordWidth), regDict_(regDict) {
-        ASSERT_require2(0 == (wordWidth & 7) && wordWidth > 0, "word size must be a positive multiple of eight");
-        ASSERT_not_null(regDict);
-    }
+    Definition(size_t wordWidth, const std::string &name, const std::string &comment, const RegisterDictionaryPtr&);
+
+public:
+    ~Definition();
 
 public:
     /** Allocating constructor. */
-    static Ptr instance(size_t wordWidth, const std::string &name, const std::string &comment, const RegisterDictionary *regs) {
+    static Ptr instance(size_t wordWidth, const std::string &name, const std::string &comment, const RegisterDictionaryPtr &regs) {
         return Ptr(new Definition(wordWidth, name, comment, regs));
     }
 
@@ -178,10 +177,10 @@ public:
     /** Constructs a new pre-defined calling convention based on a register dictionary.
      *
      * @{ */
-    static Ptr x86_cdecl(const RegisterDictionary*);
-    static Ptr x86_stdcall(const RegisterDictionary*);
-    static Ptr x86_fastcall(const RegisterDictionary*);
-    static Ptr ppc_ibm(const RegisterDictionary*);
+    static Ptr x86_cdecl(const RegisterDictionaryPtr&);
+    static Ptr x86_stdcall(const RegisterDictionaryPtr&);
+    static Ptr x86_fastcall(const RegisterDictionaryPtr&);
+    static Ptr ppc_ibm(const RegisterDictionaryPtr&);
     /** @} */
 
     /** Property: Register dictionary.
@@ -189,8 +188,8 @@ public:
      *  The register dictionary imparts names to the various register descriptors.
      *
      * @{ */
-    const RegisterDictionary* registerDictionary() const { return regDict_; }
-    void registerDictionary(const RegisterDictionary *d) { regDict_ = d; }
+    RegisterDictionaryPtr registerDictionary() const;
+    void registerDictionary(const RegisterDictionaryPtr &d);
     /** @} */
 
     /** Property: Short name of calling convention.
@@ -486,8 +485,12 @@ public:
     /** Print detailed information about this calling convention.
      *
      *  If a register dictionary is supplied then that dictionary is used instead of any dictionary already attached to this
-     *  definition. This feature is mostly for backward compatibility. */
-    void print(std::ostream&, const RegisterDictionary *regDict = NULL) const;
+     *  definition. This feature is mostly for backward compatibility.
+     *
+     * @{ */
+    void print(std::ostream&) const;
+    void print(std::ostream&, const RegisterDictionaryPtr &regDict) const;
+    /** @} */
 };
 
 
@@ -533,7 +536,7 @@ const Dictionary& dictionaryX86();
 class Analysis {
 private:
     InstructionSemantics::BaseSemantics::DispatcherPtr cpu_;
-    const RegisterDictionary *regDict_;                 // Names for the register parts
+    RegisterDictionaryPtr regDict_;                     // Names for the register parts
     Definition::Ptr defaultCc_;                         // Default calling convention for called functions
 
     bool hasResults_;                                   // Are the following data members initialized?
@@ -572,16 +575,13 @@ public:
      *  This creates an analyzer that is not suitable for analysis since it doesn't know anything about the architecture it
      *  would be analyzing. This is mostly for use in situations where an analyzer must be constructed as a member of another
      *  class's default constructor, in containers that initialize their contents with a default constructor, etc. */
-    Analysis()
-        : regDict_(NULL), hasResults_(false), didConverge_(false) {}
+    Analysis();
+    ~Analysis();
 
     /** Construct an analyzer using a specified disassembler.
      *
      *  This constructor chooses a symbolic domain and a dispatcher appropriate for the disassembler's architecture. */
-    explicit Analysis(const Disassembler::BasePtr &d)
-        : regDict_(NULL), hasResults_(false), didConverge_(false) {
-        init(d);
-    }
+    explicit Analysis(const Disassembler::BasePtr&);
 
     /** Construct an analysis using a specified dispatcher.
      *
@@ -589,8 +589,7 @@ public:
      *  should be a symbolic domain that uses @ref InstructionSemantics::BaseSemantics::MemoryCellList "MemoryCellList" and
      *  @ref InstructionSemantics::BaseSemantics::RegisterStateGeneric "RegisterStateGeneric". These happen to also be the
      *  defaults used by @ref InstructionSemantics::SymbolicSemantics. */
-    explicit Analysis(const InstructionSemantics::BaseSemantics::DispatcherPtr &cpu)
-        : cpu_(cpu), regDict_(NULL), hasResults_(false), didConverge_(false) {}
+    explicit Analysis(const InstructionSemantics::BaseSemantics::DispatcherPtr&);
 
     /** Property: Default calling convention.
      *
@@ -641,8 +640,8 @@ public:
      *  this property is non-null after a call to @ref analyzeFunction.
      *
      * @{ */
-    const RegisterDictionary* registerDictionary() const { return regDict_; }
-    void registerDictionary(const RegisterDictionary *d) { regDict_ = d; }
+    RegisterDictionaryPtr registerDictionary() const;
+    void registerDictionary(const RegisterDictionaryPtr &d);
     /** @} */
 
     /** Callee-saved registers.

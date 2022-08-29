@@ -8,7 +8,7 @@
 #include <Rose/BinaryAnalysis/Disassembler/Exception.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
-#include <Rose/BinaryAnalysis/Registers.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BinaryAnalysis/Unparser/Settings.h>
 #include <Rose/Diagnostics.h>
 
@@ -66,7 +66,7 @@ private:
     CallingConvention::Dictionary callingConventions_;
 
 protected:
-    const RegisterDictionary *p_registers = nullptr;             /**< Description of registers available for this platform. */
+    RegisterDictionaryPtr p_registers;                           /**< Description of registers available for this platform. */
     RegisterDescriptor REG_IP, REG_SP, REG_SS, REG_SF, REG_LINK; /**< Register descriptors initialized during construction. */
     ByteOrder::Endianness p_byteOrder = ByteOrder::ORDER_LSB;    /**< Byte order of instructions in memory. */
     size_t p_wordSizeBytes = 4;                                  /**< Basic word size in bytes. */
@@ -180,10 +180,10 @@ public:
      *  object.
      *
      * @{ */
-    void registerDictionary(const RegisterDictionary *rdict) {
+    void registerDictionary(const RegisterDictionaryPtr &rdict) {
         p_registers = rdict;
     }
-    const RegisterDictionary *registerDictionary() const {
+    RegisterDictionaryPtr registerDictionary() const {
         return p_registers;
     }
 

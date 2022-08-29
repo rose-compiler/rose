@@ -4,6 +4,7 @@
 #include <Rose/BinaryAnalysis/ToSource.h>
 
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/CommandLine.h>
 
 #include <AsmUnparser_compat.h>
@@ -52,16 +53,16 @@ BinaryToSource::~BinaryToSource() {}
 void
 BinaryToSource::init(const P2::Partitioner &partitioner) {
     disassembler_ = partitioner.instructionProvider().disassembler();
-    const RegisterDictionary *regDict = disassembler_->registerDictionary();
-    raisingOps_ = RiscOperators::instance(regDict, SmtSolverPtr());
+    RegisterDictionary::Ptr regDict = disassembler_->registerDictionary();
+    raisingOps_ = RiscOperators::instanceFromRegisters(regDict, SmtSolverPtr());
     BaseSemantics::DispatcherPtr protoCpu = disassembler_->dispatcher();
     if (!protoCpu)
         throw Exception("no instruction semantics for architecture");
     if (settings_.traceRiscOps) {
         tracingOps_ = TraceSemantics::RiscOperators::instance(raisingOps_);
-        raisingCpu_ = protoCpu->create(tracingOps_);
+        raisingCpu_ = protoCpu->create(tracingOps_, 0, RegisterDictionary::Ptr());
     } else {
-        raisingCpu_ = protoCpu->create(raisingOps_);
+        raisingCpu_ = protoCpu->create(raisingOps_, 0, RegisterDictionary::Ptr());
     }
 }
 

@@ -7,6 +7,7 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherX86.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RegisterStateGeneric.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/Util.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include "integerOps.h"
 #include <SageBuilderAsm.h>
 
@@ -68,12 +69,11 @@ InsnProcessor::check_arg_width(D d, I insn, A args) {
         T1(D d, I insn, size_t argWidth): d(d), insn(insn), argWidth(argWidth) {}
         void visit(SgNode *node) {
             if (SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(node)) {
-                const RegisterDictionary *regdict = d->registerDictionary();
+                RegisterDictionary::Ptr regdict = d->registerDictionary();
                 ASSERT_not_null(regdict);
                 if (regdict->lookup(rre->get_descriptor()).empty())
                     throw BaseSemantics::Exception(StringUtility::numberToString(argWidth) +
-                                                   "-bit operands not supported for " +
-                                                   regdict->get_architecture_name(),
+                                                   "-bit operands not supported for " + regdict->name(),
                                                    insn);
             }
         }
@@ -4038,6 +4038,54 @@ struct IP_xor: P {
  *                                      DispatcherX86
  *******************************************************************************************************************************/
 
+DispatcherX86::DispatcherX86()
+    : BaseSemantics::Dispatcher(32, SgAsmX86Instruction::registersForInstructionSize(x86_insnsize_32)),
+    processorMode_(x86_insnsize_32) {}
+
+DispatcherX86::DispatcherX86(size_t addrWidth, const RegisterDictionary::Ptr &regs)
+    : BaseSemantics::Dispatcher(addrWidth, regs ? regs : SgAsmX86Instruction::registersForWidth(addrWidth)),
+    processorMode_(SgAsmX86Instruction::instructionSizeForWidth(addrWidth)) {}
+
+DispatcherX86::DispatcherX86(const BaseSemantics::RiscOperators::Ptr &ops, size_t addrWidth, const RegisterDictionary::Ptr &regs)
+    : BaseSemantics::Dispatcher(ops, addrWidth, regs ? regs : SgAsmX86Instruction::registersForWidth(addrWidth)),
+    processorMode_(SgAsmX86Instruction::instructionSizeForWidth(addrWidth)) {
+    regcache_init();
+    iproc_init();
+    memory_init();
+    initializeState(ops->currentState());
+}
+
+DispatcherX86::~DispatcherX86() {}
+
+DispatcherX86::Ptr
+DispatcherX86::instance() {
+    return Ptr(new DispatcherX86);
+}
+
+DispatcherX86::Ptr
+DispatcherX86::instance(size_t addrWidth, const RegisterDictionary::Ptr &regs) {
+    return Ptr(new DispatcherX86(addrWidth, regs));
+}
+
+DispatcherX86::Ptr
+DispatcherX86::instance(const BaseSemantics::RiscOperators::Ptr &ops, size_t addrWidth, const RegisterDictionary::Ptr &regs) {
+    return Ptr(new DispatcherX86(ops, addrWidth, regs));
+}
+
+BaseSemantics::Dispatcher::Ptr
+DispatcherX86::create(const BaseSemantics::RiscOperators::Ptr &ops, size_t addrWidth, const RegisterDictionary::Ptr &regs) const {
+    if (0 == addrWidth)
+        addrWidth = addressWidth();
+    return instance(ops, addrWidth, regs ? regs : registerDictionary());
+}
+
+DispatcherX86::Ptr
+DispatcherX86::promote(const BaseSemantics::Dispatcher::Ptr &d) {
+    Ptr retval = boost::dynamic_pointer_cast<DispatcherX86>(d);
+    ASSERT_not_null(retval);
+    return retval;
+}
+
 void
 DispatcherX86::iproc_init()
 {
@@ -4566,9 +4614,9 @@ isStatusRegister(RegisterDescriptor reg) {
 RegisterDictionary::RegisterDescriptors
 DispatcherX86::get_usual_registers() const
 {
-    RegisterDictionary::RegisterDescriptors registers = regdict->get_largest_registers();
+    RegisterDictionary::RegisterDescriptors registers = regdict->getLargestRegisters();
     registers.erase(std::remove_if(registers.begin(), registers.end(), isStatusRegister), registers.end());
-    for (RegisterDescriptor reg: regdict->get_smallest_registers()) {
+    for (RegisterDescriptor reg: regdict->getSmallestRegisters()) {
         if (isStatusRegister(reg))
             registers.push_back(reg);
     }
@@ -4576,7 +4624,7 @@ DispatcherX86::get_usual_registers() const
 }
 
 void
-DispatcherX86::set_register_dictionary(const RegisterDictionary *regdict)
+DispatcherX86::set_register_dictionary(const RegisterDictionary::Ptr &regdict)
 {
     BaseSemantics::Dispatcher::set_register_dictionary(regdict);
     regcache_init();

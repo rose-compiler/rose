@@ -2,6 +2,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Disassembler/Null.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BinaryAnalysis/Unparser/Null.h>
 
 namespace Rose {
@@ -12,7 +13,7 @@ Null::Null() {
     name("null");
     wordSizeBytes(1);
     byteOrder(ByteOrder::ORDER_LSB);
-    registerDictionary(RegisterDictionary::dictionary_null());
+    registerDictionary(RegisterDictionary::instanceNull());
 
     REG_IP = registerDictionary()->findOrThrow("pc");
     REG_SP = registerDictionary()->findOrThrow("sp");
