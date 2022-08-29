@@ -1,0 +1,4 @@
+namespace year 
+{
+   int test; 
+}
