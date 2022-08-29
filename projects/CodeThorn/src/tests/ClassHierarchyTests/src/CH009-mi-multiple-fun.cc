@@ -6,6 +6,8 @@ struct A
 struct B : A
 {
   void f() override {}
+
+  void test(B) {}
 };
 
 struct C : A
@@ -21,10 +23,7 @@ struct D : B,C
 struct E : D
 {
   void f() override {}
+
+  void test(E) {}
 };
 
-
-int main()
-{
-  E d;
-}

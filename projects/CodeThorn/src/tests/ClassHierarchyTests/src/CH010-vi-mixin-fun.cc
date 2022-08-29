@@ -7,6 +7,8 @@ struct Mixin
 struct MixinImpl : virtual Mixin
 {
   void f() override {}
+
+  void test(MixinImpl) {}
 };
 
 struct A : virtual Mixin
@@ -23,10 +25,13 @@ struct B : A
 struct C : virtual MixinImpl, B
 {  
   void run() override {}
+
+  void test(C) {}
 };
 
 struct D : virtual Mixin, C
 {
+  void test(D) {}
 };
 
 

@@ -482,6 +482,39 @@ namespace
 
     return cmpres;
   }
+  
+  std::vector<const SgClassDefinition*> 
+  collectAncestors(const SgClassDefinition* cls, std::vector<const SgClassDefinition*>&& res = {})
+  {
+    ASSERT_not_null(cls);
+    res.push_back(cls);
+    
+    for (const SgBaseClass* bscls : cls->get_inheritances())
+    {
+      ASSERT_not_null(bscls);
+      
+      if (!bscls->get_isDirectBaseClass()) continue;
+
+      const SgClassDeclaration* bsdcl = bscls->get_base_class();
+
+      if (!bsdcl)
+      {
+        logWarn() << "base class declaration is not available "
+                  << typeid(*bscls).name()
+                  << std::endl;
+
+        continue;
+      }
+
+      const SgDeclarationStatement* defdcl = bsdcl->get_definingDeclaration();
+      const SgClassDeclaration*     bsdefn = isSgClassDeclaration(defdcl);
+      ASSERT_not_null(bsdefn);
+      
+      res = collectAncestors(bsdefn->get_definition(), std::move(res));
+    }
+      
+    return res;  
+  }
 }
 
 namespace CodeThorn
@@ -705,8 +738,22 @@ namespace
 
         if (drvDef == basDef)
           return RoseCompatibilityBridge::sametype;
+          
+        bool isCovariant = false;
+        
+        try
+        {
+          isCovariant = classes.isBaseOf(basDef, drvDef);
+        }
+        catch (const std::out_of_range&)
+        {
+          if (classes.containsAllClasses()) throw;
+          
+          logWarn() << "Assuming covariant return [requires full translation unit analysis]" << std::endl;
+          isCovariant = true;
+        }
 
-        if (classes.isBaseOf(basDef, drvDef))
+        if (isCovariant)
           return RoseCompatibilityBridge::covariant;
 
         return RoseCompatibilityBridge::unrelated;
@@ -905,6 +952,20 @@ RoseCompatibilityBridge::extractFromProject(ClassAnalysis& classes, CastAnalysis
   NodeCollector::NodeTracker visited;
 
   sg::dispatch(NodeCollector{visited, classes, casts, *this}, n);
+}
+
+void
+RoseCompatibilityBridge::extractClassAndBaseClasses(ClassAnalysis& classes, ClassKeyType n) const
+{
+  std::vector<ClassKeyType>  ancestors = collectAncestors(n);
+  CastAnalysis               tmpCasts;
+  NodeCollector::NodeTracker visited;
+  
+  for (ClassKeyType cls : ancestors)
+  {
+    if (classes.find(cls) == classes.end())
+      sg::dispatch(NodeCollector{visited, classes, tmpCasts, *this}, cls);
+  }
 }
 
 bool

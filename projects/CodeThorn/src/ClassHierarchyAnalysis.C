@@ -579,7 +579,7 @@ analyzeVirtualFunctions(const ClassAnalysis& all, bool normalizedSignature)
 AnalysesTuple
 analyzeClassesAndCasts(const RoseCompatibilityBridge& rcb, ASTRootType n)
 {
-  ClassAnalysis classes;
+  ClassAnalysis classes{true /* full view of translation unit */};
   CastAnalysis  casts;
 
   rcb.extractFromProject(classes, casts, n);
@@ -599,6 +599,20 @@ ClassAnalysis
 analyzeClasses(ASTRootType n)
 {
   return analyzeClasses(RoseCompatibilityBridge{}, n);
+}
+
+ClassAnalysis analyzeClass(ClassKeyType n)
+{
+  RoseCompatibilityBridge rcb;
+  ClassAnalysis           classes{false /* incomplete view */};
+  
+  // collect all classes reachable upwards from n
+  rcb.extractClassAndBaseClasses(classes, n);
+  
+  inheritanceRelations(classes);
+  analyzeClassRelationships(classes);
+  
+  return classes;
 }
 
 }

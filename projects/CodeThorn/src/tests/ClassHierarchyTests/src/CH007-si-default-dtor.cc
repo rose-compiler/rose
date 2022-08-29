@@ -6,6 +6,8 @@ struct A
 struct B : A
 {
   ~B() override = default;
+
+  void test(B) {}
 };
 
 

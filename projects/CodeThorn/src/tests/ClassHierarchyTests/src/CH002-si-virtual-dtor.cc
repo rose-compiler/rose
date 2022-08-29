@@ -6,4 +6,6 @@ struct A
 struct B : A
 {
   ~B() override {}
+
+  void test(B) {}
 };

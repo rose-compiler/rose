@@ -1,19 +1,19 @@
 
 struct Mixin
 {
-  virtual void f() = 0;
+  virtual ~Mixin() = 0;
 };
 
-// OVERSIGHT: inheritance misses virtual
 struct MixinImpl : Mixin
 {
-  void f() override {}
+  ~MixinImpl() = default;
 
   void test(MixinImpl) {}
 };
 
 struct A : virtual Mixin
 {
+  virtual ~A() = 0;
   virtual void run() {}
 };
 
@@ -27,20 +27,12 @@ struct C : virtual MixinImpl, B
 {  
   void run() override {}
 
-  // class still considered abstract
-  // void test(C) {}
+  void test(C) {}
 };
 
 struct D : virtual Mixin, C
 {
-  // void test(D) {}
-};
-
-struct E : D
-{
-  void f() override {}
-
-  void test(E) {}
+  void test(D) {}
 };
 
 

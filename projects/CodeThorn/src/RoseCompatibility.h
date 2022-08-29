@@ -116,6 +116,10 @@ class RoseCompatibilityBridge
 
     /// extracts class and cast information under the root
     void extractFromProject(ClassAnalysis&, CastAnalysis&, ASTRootType) const;
+    
+    /// extracts all classes and base classes of \ref n and stores 
+    ///   the extracted data in \ref n.
+    void extractClassAndBaseClasses(ClassAnalysis& all, ClassKeyType n) const;
 
     /// returns iff \ref id is a pure virtual member function
     bool isPureVirtual(FunctionKeyType id) const;

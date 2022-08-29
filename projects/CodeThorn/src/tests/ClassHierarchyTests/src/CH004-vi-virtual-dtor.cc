@@ -16,10 +16,6 @@ struct C : virtual A
 
 struct D : B,C
 {
+  void test(D) {}
 };
 
-
-int main()
-{
-  D d;
-}
