@@ -1622,6 +1622,8 @@ ROSE_DLL_API SgMicrosoftAttributeDeclaration* buildMicrosoftAttributeDeclaration
 //! Liao (9/18/2015): experimental support of building a statement from a string
 ROSE_DLL_API SgStatement* buildStatementFromString(const std::string & stmt_str, SgScopeStatement* scope);
 
+//! Build a using directive statement
+ROSE_DLL_API SgUsingDirectiveStatement* buildUsingDirectiveStatement(SgNamespaceDeclarationStatement * ns_decl);
 //@}
 
 //--------------------------------------------------------------
