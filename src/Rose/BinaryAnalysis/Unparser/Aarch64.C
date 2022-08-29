@@ -4,6 +4,7 @@
 #include <Rose/BinaryAnalysis/Unparser/Aarch64.h>
 
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BitOps.h>
 #include <boost/regex.hpp>
 #include <stringify.h>
@@ -23,9 +24,9 @@ unparseAarch64Mnemonic(SgAsmAarch64Instruction *insn) {
 }
 
 std::string
-unparseAarch64Expression(SgAsmExpression *expr, const LabelMap *labels, const RegisterDictionary *registers) {
+unparseAarch64Expression(SgAsmExpression *expr, const LabelMap *labels, RegisterDictionary::Ptr registers) {
     if (!registers)
-        registers = RegisterDictionary::dictionary_aarch64();
+        registers = RegisterDictionary::instanceAarch64();
     auto unparser = Aarch64::instance(Aarch64Settings());
     std::ostringstream ss;
     Partitioner2::Partitioner p;

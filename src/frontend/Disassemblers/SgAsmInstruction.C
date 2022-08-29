@@ -213,7 +213,7 @@ SgAsmInstruction::toString() const {
         const SgAsmExpressionPtrList &operands = opList->get_operands();
         for (size_t i = 0; i < operands.size(); ++i) {
             retval += i == 0 ? " " : ", ";
-            retval += StringUtility::trim(unparseExpression(operands[i], NULL, NULL));
+            retval += StringUtility::trim(unparseExpression(operands[i], NULL, RegisterDictionary::Ptr()));
         }
     }
     return retval;

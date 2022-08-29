@@ -9,6 +9,7 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics/PartialSymbolicSemantics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherX86.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
 #include "x86InstructionProperties.h"
@@ -53,18 +54,18 @@ SgAsmX86Instruction::widthForInstructionSize(X86InstructionSize isize) {
 }
 
 // class method
-const RegisterDictionary*
+RegisterDictionary::Ptr
 SgAsmX86Instruction::registersForInstructionSize(X86InstructionSize isize) {
     switch (isize) {
-        case x86_insnsize_16: return RegisterDictionary::dictionary_i286();
-        case x86_insnsize_32: return RegisterDictionary::dictionary_pentium4();
-        case x86_insnsize_64: return RegisterDictionary::dictionary_amd64();
+        case x86_insnsize_16: return RegisterDictionary::instanceI286();
+        case x86_insnsize_32: return RegisterDictionary::instancePentium4();
+        case x86_insnsize_64: return RegisterDictionary::instanceAmd64();
         default: ASSERT_not_reachable("invalid x86 instruction size");
     }
 }
 
 // class method
-const RegisterDictionary*
+RegisterDictionary::Ptr
 SgAsmX86Instruction::registersForWidth(size_t nbits) {
     return registersForInstructionSize(instructionSizeForWidth(nbits));
 }
@@ -116,12 +117,12 @@ SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*> &in
         using namespace Rose::BinaryAnalysis::InstructionSemantics;
         using namespace Rose::BinaryAnalysis::InstructionSemantics::SymbolicSemantics;
         const InstructionMap &imap = interp->get_instruction_map();
-        const RegisterDictionary *regdict = RegisterDictionary::dictionary_for_isa(interp);
+        RegisterDictionary::Ptr regdict = RegisterDictionary::instanceForIsa(interp);
         SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
-        BaseSemantics::RiscOperatorsPtr ops = RiscOperators::instance(regdict, solver);
+        BaseSemantics::RiscOperatorsPtr ops = RiscOperators::instanceFromRegisters(regdict, solver);
         ASSERT_not_null(ops);
         const RegisterDescriptor SP = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp);
-        DispatcherX86Ptr dispatcher = DispatcherX86::instance(ops, SP.nBits());
+        DispatcherX86::Ptr dispatcher = DispatcherX86::instance(ops, SP.nBits(), RegisterDictionary::Ptr());
         SValuePtr orig_esp = SValue::promote(ops->peekRegister(dispatcher->REG_anySP));
         try {
             for (size_t i=0; i<insns.size(); ++i)
@@ -182,10 +183,10 @@ SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*> &in
         if (x86insn->get_addressSize() != x86_insnsize_32)
             return false;
 #endif
-        const RegisterDictionary *regdict = registersForInstructionSize(x86insn->get_addressSize());
+        RegisterDictionary::Ptr regdict = registersForInstructionSize(x86insn->get_addressSize());
         const RegisterDescriptor SP = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp);
-        BaseSemantics::RiscOperatorsPtr ops = RiscOperators::instance(regdict, solver);
-        DispatcherX86Ptr dispatcher = DispatcherX86::instance(ops, SP.nBits());
+        BaseSemantics::RiscOperatorsPtr ops = RiscOperators::instanceFromRegisters(regdict, solver);
+        DispatcherX86::Ptr dispatcher = DispatcherX86::instance(ops, SP.nBits(), RegisterDictionary::Ptr());
         try {
             for (size_t i=0; i<insns.size(); ++i)
                 dispatcher->processInstruction(insns[i]);
@@ -386,26 +387,26 @@ SgAsmX86Instruction::getSuccessors(const std::vector<SgAsmInstruction*>& insns, 
      * successors, a thorough analysis might be able to narrow it down to a single successor. We should not make special
      * assumptions about CALL and FARCALL instructions -- their only successor is the specified address operand. */
     if (!complete || successors.size()>1) {
-        const RegisterDictionary *regdict;
+        RegisterDictionary::Ptr regdict;
         if (SgAsmInterpretation *interp = SageInterface::getEnclosingNode<SgAsmInterpretation>(this)) {
-            regdict = RegisterDictionary::dictionary_for_isa(interp);
+            regdict = RegisterDictionary::instanceForIsa(interp);
         } else {
             switch (get_baseSize()) {
                 case x86_insnsize_16:
-                    regdict = RegisterDictionary::dictionary_i286();
+                    regdict = RegisterDictionary::instanceI286();
                     break;
                 case x86_insnsize_32:
-                    regdict = RegisterDictionary::dictionary_pentium4();
+                    regdict = RegisterDictionary::instancePentium4();
                     break;
                 case x86_insnsize_64:
-                    regdict = RegisterDictionary::dictionary_amd64();
+                    regdict = RegisterDictionary::instanceAmd64();
                     break;
                 default:
                     ASSERT_not_reachable("invalid x86 instruction size");
             }
         }
         const RegisterDescriptor IP = regdict->findLargestRegister(x86_regclass_ip, 0);
-        PartialSymbolicSemantics::RiscOperatorsPtr ops = PartialSymbolicSemantics::RiscOperators::instance(regdict);
+        PartialSymbolicSemantics::RiscOperatorsPtr ops = PartialSymbolicSemantics::RiscOperators::instanceFromRegisters(regdict);
         ops->set_memory_map(initial_memory);
         BaseSemantics::DispatcherPtr cpu = DispatcherX86::instance(ops, IP.nBits(), regdict);
 

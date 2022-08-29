@@ -4,11 +4,15 @@
 #include <BinaryVxcoreParser.h>
 
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RiscOperators.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
+#include <Rose/BinaryAnalysis/RegisterNames.h>
+
+#include <rose_getline.h>
+#include <rose_strtoull.h>
+
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/regex.hpp>
-#include <rose_getline.h>
-#include <rose_strtoull.h>
 
 using namespace Sawyer::Message::Common;
 namespace BaseSemantics = Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;
@@ -261,8 +265,8 @@ VxcoreParser::unparse(std::ostream &out, const MemoryMap::Ptr &memory, const Add
 
     if (registers) {
         ASSERT_not_null(ops);
-        out <<"registers " <<registers->registerDictionary()->get_architecture_name() <<"\n";
-        RegisterDictionary::RegisterDescriptors regs = registers->registerDictionary()->get_largest_registers();
+        out <<"registers " <<registers->registerDictionary()->name() <<"\n";
+        RegisterDictionary::RegisterDescriptors regs = registers->registerDictionary()->getLargestRegisters();
         RegisterNames registerName(registers->registerDictionary());
         BOOST_FOREACH (RegisterDescriptor reg, regs) {
             BaseSemantics::SValuePtr val = registers->peekRegister(reg, ops->undefined_(reg.nBits()), ops.get());

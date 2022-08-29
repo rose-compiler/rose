@@ -5,6 +5,7 @@
 
 #include "AsmUnparser_compat.h" /*FIXME: needed until no longer dependent upon unparseInstruction()*/
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -85,6 +86,12 @@ void AsmUnparser::initDiagnostics() {
     }
 }
 
+AsmUnparser::AsmUnparser() {
+    init();
+}
+
+AsmUnparser::~AsmUnparser() {}
+
 void
 AsmUnparser::init()
 {
@@ -156,9 +163,8 @@ AsmUnparser::init()
         .append(&interpBody);
 }
 
-const RegisterDictionary *
-AsmUnparser::get_registers() const
-{
+RegisterDictionary::Ptr
+AsmUnparser::get_registers() const {
     return user_registers ? user_registers : interp_registers;
 }
 
@@ -265,6 +271,11 @@ AsmUnparser::find_unparsable_nodes(SgNode *ast)
     } t1(this);
     t1.traverse(ast);
     return t1.found;
+}
+
+void
+AsmUnparser::set_registers(const RegisterDictionary::Ptr &registers) {
+    user_registers = registers;
 }
 
 void
@@ -464,7 +475,7 @@ AsmUnparser::unparse_function(bool enabled, std::ostream &output, SgAsmFunction 
 bool
 AsmUnparser::unparse_interpretation(bool enabled, std::ostream &output, SgAsmInterpretation *interp)
 {
-    const RegisterDictionary *old_interp_registers = interp_registers;
+    RegisterDictionary::Ptr old_interp_registers = interp_registers;
     interp_registers = interp->get_registers();
     try {
         const SgAsmGenericHeaderPtrList &hdrs = interp->get_headers()->get_headers();

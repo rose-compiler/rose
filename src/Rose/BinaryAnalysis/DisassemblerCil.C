@@ -13,6 +13,7 @@
 #include "stringify.h"
 #include "SageBuilderAsm.h"
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherCil.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BinaryAnalysis/Unparser/Cil.h>
 
 #include <Sawyer/Assert.h>                              // FIXME[Robb P. Matzke 2014-06-19]: replace with "Diagnostics.h"
@@ -8779,13 +8780,13 @@ void
 DisassemblerCil::init()
 {
     // Default register dictionary
-    const RegisterDictionary *regdict = NULL;
+    RegisterDictionary::Ptr regdict;
 
 
 #if 1
  // DQ (10/9/2021): Eliminate this code for Cil.
     name("Cil");
-    regdict = RegisterDictionary::dictionary_Cil();
+    regdict = RegisterDictionary::instanceCil();
 #endif
 
     registerDictionary(regdict);

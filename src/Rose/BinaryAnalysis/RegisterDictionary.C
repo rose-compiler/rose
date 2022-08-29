@@ -1,346 +1,82 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
-#include <Rose/BinaryAnalysis/Registers.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 
 #include <Rose/BinaryAnalysis/InstructionEnumsAarch64.h>
 #include <Rose/BinaryAnalysis/InstructionEnumsAarch32.h>
+#include <Rose/BinaryAnalysis/InstructionEnumsCil.h>
+#include <Rose/BinaryAnalysis/InstructionEnumsJvm.h>
 #include <Rose/BinaryAnalysis/InstructionEnumsM68k.h>
 #include <Rose/BinaryAnalysis/InstructionEnumsMips.h>
 #include <Rose/BinaryAnalysis/InstructionEnumsPowerpc.h>
 #include <Rose/BinaryAnalysis/InstructionEnumsX86.h>
 
-// DQ (10/18/2021): Added support for CIL and Java Byte Code.
-#include <Rose/BinaryAnalysis/InstructionEnumsCil.h>
-#include <Rose/BinaryAnalysis/InstructionEnumsJvm.h>
+#include <Sawyer/Assert.h>
 
-// These are here temporarily until the classes in this file can be moved into Rose::BinaryAnalysis
-using namespace Rose;
-using namespace Rose::BinaryAnalysis;
+namespace Rose {
+namespace BinaryAnalysis {
 
-std::ostream&
-operator<<(std::ostream &o, const RegisterDictionary &dict) {
-    dict.print(o);
-    return o;
+RegisterDictionary::RegisterDictionary() {}
+
+RegisterDictionary::RegisterDictionary(const std::string &name)
+    : name_(name) {}
+
+RegisterDictionary::RegisterDictionary(const RegisterDictionary &other) {
+    *this = other;
 }
 
-
-/*******************************************************************************************************************************
- *                                      RegisterNames
- *******************************************************************************************************************************/
-
-std::string
-RegisterNames::operator()(RegisterDescriptor rdesc, const RegisterDictionary *dict_/*=NULL*/) const {
-    if (rdesc.isEmpty())
-        return prefix + (prefix==""?"":"_") + "NONE";
-
-    const RegisterDictionary *dict = dict_ ? dict_ : dflt_dict;
-    if (dict) {
-        std::string name = dict->lookup(rdesc);
-        if (!name.empty())
-            return name;
-    }
-
-    std::ostringstream ss;
-    ss <<prefix <<rdesc.majorNumber() <<"." <<rdesc.minorNumber();
-    if (show_offset>0 || (show_offset<0 && rdesc.offset()!=0))
-        ss <<offset_prefix <<rdesc.offset() <<offset_suffix;
-    if (show_size>0 || (show_size<0 && rdesc.offset()!=0))
-        ss <<size_prefix <<rdesc.nBits() <<size_suffix;
-    ss <<suffix;
-    return ss.str();
+RegisterDictionary::Ptr
+RegisterDictionary::instance(const std::string &name) {
+    return Ptr(new RegisterDictionary(name));
 }
 
-
-/*******************************************************************************************************************************
- *                                      RegisterDictionary
- *******************************************************************************************************************************/
-
-void
-RegisterDictionary::insert(const std::string &name, RegisterDescriptor rdesc) {
-    /* Erase the name from the reverse lookup map, indexed by the old descriptor. */
-    Entries::iterator fi = forward.find(name);
-    if (fi!=forward.end()) {
-        Reverse::iterator ri = reverse.find(fi->second);
-        ROSE_ASSERT(ri!=reverse.end());
-        std::vector<std::string>::iterator vi=std::find(ri->second.begin(), ri->second.end(), name);
-        ROSE_ASSERT(vi!=ri->second.end());
-        ri->second.erase(vi);
-    }
-
-    /* Insert or replace old descriptor with a new one and insert reverse lookup info. */
-    forward[name] = rdesc;
-    reverse[rdesc].push_back(name);
-}
-
-void
-RegisterDictionary::insert(const std::string &name, unsigned majr, unsigned minr, unsigned offset, unsigned nbits) {
-    insert(name, RegisterDescriptor(majr, minr, offset, nbits));
-}
-
-void
-RegisterDictionary::insert(const RegisterDictionary &other) {
-    const Entries &entries = other.get_registers();
-    for (Entries::const_iterator ei=entries.begin(); ei!=entries.end(); ++ei)
-        insert(ei->first, ei->second);
-}
-
-void
-RegisterDictionary::insert(const RegisterDictionary *other) {
-    if (other)
-        insert(*other);
-}
-
-RegisterDescriptor
-RegisterDictionary::find(const std::string &name) const {
-    Entries::const_iterator fi = forward.find(name);
-    return forward.end() == fi ? RegisterDescriptor() : fi->second;
-}
-
-RegisterDescriptor
-RegisterDictionary::findOrThrow(const std::string &name) const {
-    Entries::const_iterator fi = forward.find(name);
-    if (forward.end() == fi)
-        throw std::domain_error("register " + name + " not found");
-    return fi->second;
-}
-
-const std::string &
-RegisterDictionary::lookup(RegisterDescriptor rdesc) const {
-    Reverse::const_iterator ri = reverse.find(rdesc);
-    if (ri!=reverse.end()) {
-        for (size_t i=ri->second.size(); i>0; --i) {
-            const std::string &name = ri->second[i-1];
-            Entries::const_iterator fi = forward.find(name);
-            ROSE_ASSERT(fi!=forward.end());
-            if (fi->second==rdesc)
-                return name;
-        }
-    }
-
-    static const std::string empty;
-    return empty;
-}
-
-const RegisterDescriptor*
-RegisterDictionary::exists(RegisterDescriptor rdesc) const {
-    Reverse::const_iterator found = reverse.find(rdesc);
-    if (found == reverse.end())
-        return NULL;
-    return &found->first;
-}
-
-RegisterDescriptor
-RegisterDictionary::findLargestRegister(unsigned major, unsigned minor, size_t maxWidth) const {
-    RegisterDescriptor retval;
-    for (Entries::const_iterator iter=forward.begin(); iter!=forward.end(); ++iter) {
-        RegisterDescriptor reg = iter->second;
-        if (major == reg.majorNumber() && minor == reg.minorNumber()) {
-            if (maxWidth > 0 && reg.nBits() > maxWidth) {
-                // ignore
-            } else if (retval.isEmpty()) {
-                retval = reg;
-            } else if (retval.nBits() < reg.nBits()) {
-                retval = reg;
-            }
-        }
-    }
-    return retval;
-}
-
-void
-RegisterDictionary::resize(const std::string &name, unsigned new_nbits) {
-    RegisterDescriptor reg = findOrThrow(name);
-    reg.nBits(new_nbits);
-    insert(name, reg);
-}
-
-RegisterParts
-RegisterDictionary::getAllParts() const {
-    RegisterParts retval;
-    for (const Entries::value_type &node: forward)
-        retval.insert(node.second);
-    return retval;
-}
-
-const RegisterDictionary::Entries &
-RegisterDictionary::get_registers() const {
-    return forward;
-}
-
-RegisterDictionary::Entries &
-RegisterDictionary::get_registers() {
-    return forward;
-}
-
-RegisterDictionary::RegisterDescriptors
-RegisterDictionary::get_descriptors() const
-{
-    const Entries &entries = get_registers();
-    RegisterDescriptors retval;
-    retval.reserve(entries.size());
-    for (Entries::const_iterator ei=entries.begin(); ei!=entries.end(); ++ei)
-        retval.push_back(ei->second);
-    return retval;
-}
-
-// Returns lowest possible non-negative value not present in v
-static unsigned
-firstUnused(std::vector<unsigned> &v /*in,out*/) {
-    if (v.empty())
-        return 0;
-    std::sort(v.begin(), v.end());
-    v.erase(std::unique(v.begin(), v.end()), v.end());
-    if (v.back() + 1 == v.size())
-        return v.size();
-    for (size_t i=0; i<v.size(); ++i) {
-        if (v[i] != i)
-            return i;
-    }
-    ASSERT_not_reachable("should have returned by now");
-}
-
-unsigned
-RegisterDictionary::firstUnusedMajor() const {
-    std::vector<unsigned> used;
-    for (const Entries::value_type &entry: forward) {
-        if (used.empty() || used.back()!=entry.second.majorNumber())
-            used.push_back(entry.second.majorNumber());
-    }
-    return firstUnused(used);
-}
-
-unsigned
-RegisterDictionary::firstUnusedMinor(unsigned majr) const {
-    std::vector<unsigned> used;
-    for (const Entries::value_type &entry: forward) {
-        if (entry.second.majorNumber() == majr)
-            used.push_back(entry.second.minorNumber());
-    }
-    return firstUnused(used);
-}
-
-RegisterDictionary::RegisterDescriptors
-RegisterDictionary::get_largest_registers() const {
-    SortBySize order(SortBySize::ASCENDING);
-    return filter_nonoverlapping(get_descriptors(), order, true);
-}
-
-RegisterDictionary::RegisterDescriptors
-RegisterDictionary::get_smallest_registers() const {
-    SortBySize order(SortBySize::DESCENDING);
-    return filter_nonoverlapping(get_descriptors(), order, true);
-}
-
-void
-RegisterDictionary::print(std::ostream &o) const {
-    o <<"RegisterDictionary \"" <<name <<"\" contains " <<forward.size() <<" " <<(1==forward.size()?"entry":"entries") <<"\n";
-    for (Entries::const_iterator ri=forward.begin(); ri!=forward.end(); ++ri)
-        o <<"  \"" <<ri->first <<"\" " <<ri->second <<"\n";
-
-    for (Reverse::const_iterator ri=reverse.begin(); ri!=reverse.end(); ++ri) {
-        o <<"  " <<ri->first;
-        for (std::vector<std::string>::const_iterator vi=ri->second.begin(); vi!=ri->second.end(); ++vi) {
-            o <<" " <<*vi;
-        }
-        o <<"\n";
-    }
-}
-
-// class method
-const RegisterDictionary *
-RegisterDictionary::dictionary_for_isa(SgAsmExecutableFileFormat::InsSetArchitecture isa) {
-    typedef SgAsmExecutableFileFormat EFF;
-    switch (isa & EFF::ISA_FAMILY_MASK) {
-        case EFF::ISA_IA32_Family:
-            switch (isa) {
-                case EFF::ISA_IA32_286:         return dictionary_i286();
-                case EFF::ISA_IA32_386:         return dictionary_i386_387(); // assume '387 coprocessor is present
-                case EFF::ISA_IA32_486:         return dictionary_i486();
-                case EFF::ISA_IA32_Pentium:     return dictionary_pentium();
-                case EFF::ISA_IA32_Pentium4:    return dictionary_pentium4();
-                default:                        return dictionary_pentium4();
-            }
-            break;
-
-        case EFF::ISA_X8664_Family:
-            return dictionary_amd64();
-
-        case EFF::ISA_MIPS_Family:
-            return dictionary_mips32_altnames(); // disassembler assumes only dictionary_mips32()
-
-#ifdef ROSE_ENABLE_ASM_AARCH64
-        case EFF::ISA_ARM_Family:
-            return dictionary_aarch64();
-#endif
-
-        case EFF::ISA_PowerPC:
-            return dictionary_powerpc32();
-
-        case EFF::ISA_PowerPC_64bit:
-            return dictionary_powerpc64();
-
-        case EFF::ISA_M68K_Family:
-            return dictionary_coldfire();
-
-        default:
-            return NULL;
-    }
-}
-
-// class method
-const RegisterDictionary *
-RegisterDictionary::dictionary_for_isa(SgAsmInterpretation *interp) {
-    const SgAsmGenericHeaderPtrList &hdrs = interp->get_headers()->get_headers();
-    return hdrs.empty() ? NULL : dictionary_for_isa(hdrs.front()->get_isa());
-}
-
-const RegisterDictionary*
-RegisterDictionary::dictionary_null() {
+RegisterDictionary::Ptr
+RegisterDictionary::instanceNull() {
     static SAWYER_THREAD_TRAITS::Mutex mutex;
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
 
-    static RegisterDictionary *regs = NULL;
+    static RegisterDictionary::Ptr regs;
     if (!regs) {
-        regs = new RegisterDictionary("null");
+        regs =RegisterDictionary::instance("null");
         regs->insert("pc", 0, 0, 0, 8);                 // program counter
         regs->insert("sp", 0, 1, 0, 8);                 // stack pointer
     }
     return regs;
 }
 
-const RegisterDictionary *
-RegisterDictionary::dictionary_i8086() {
+RegisterDictionary::Ptr
+RegisterDictionary::instanceI8086() {
     static SAWYER_THREAD_TRAITS::Mutex mutex;
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
 
-    static RegisterDictionary *regs = NULL;
+    static RegisterDictionary::Ptr regs;
     if (!regs) {
-        regs = new RegisterDictionary("i8086");
+        regs = RegisterDictionary::instance("i8086");
 
         /*  16-bit general purpose registers. Each has three names depending on which bytes are reference. */
         regs->insert("al", x86_regclass_gpr, x86_gpr_ax, 0, 8);
         regs->insert("ah", x86_regclass_gpr, x86_gpr_ax, 8, 8);
         regs->insert("ax", x86_regclass_gpr, x86_gpr_ax, 0, 16);
-        
+
         regs->insert("bl", x86_regclass_gpr, x86_gpr_bx, 0, 8);
         regs->insert("bh", x86_regclass_gpr, x86_gpr_bx, 8, 8);
         regs->insert("bx", x86_regclass_gpr, x86_gpr_bx, 0, 16);
-        
+
         regs->insert("cl", x86_regclass_gpr, x86_gpr_cx, 0, 8);
         regs->insert("ch", x86_regclass_gpr, x86_gpr_cx, 8, 8);
         regs->insert("cx", x86_regclass_gpr, x86_gpr_cx, 0, 16);
-        
+
         regs->insert("dl", x86_regclass_gpr, x86_gpr_dx, 0, 8);
         regs->insert("dh", x86_regclass_gpr, x86_gpr_dx, 8, 8);
         regs->insert("dx", x86_regclass_gpr, x86_gpr_dx, 0, 16);
-        
+
         /*  16-bit segment registers */
         regs->insert("cs", x86_regclass_segment, x86_segreg_cs, 0, 16);
         regs->insert("ds", x86_regclass_segment, x86_segreg_ds, 0, 16);
         regs->insert("ss", x86_regclass_segment, x86_segreg_ss, 0, 16);
         regs->insert("es", x86_regclass_segment, x86_segreg_es, 0, 16);
-        
+
         /* 16-bit pointer registers */
         regs->insert("sp", x86_regclass_gpr, x86_gpr_sp, 0, 16);        /* stack pointer */
         regs->insert("spl", x86_regclass_gpr, x86_gpr_sp, 0, 8);
@@ -350,7 +86,7 @@ RegisterDictionary::dictionary_i8086() {
 
         regs->insert("ip", x86_regclass_ip, 0, 0, 16);                  /* instruction pointer */
         regs->insert("ipl", x86_regclass_ip, 0, 0, 8);
-        
+
         /* Array indexing registers */
         regs->insert("si", x86_regclass_gpr, x86_gpr_si, 0, 16);
         regs->insert("sil", x86_regclass_gpr, x86_gpr_si, 0, 8);
@@ -382,43 +118,43 @@ RegisterDictionary::dictionary_i8086() {
     return regs;
 }
 
-const RegisterDictionary *
-RegisterDictionary::dictionary_i8088() {
+RegisterDictionary::Ptr
+RegisterDictionary::instanceI8088() {
     static SAWYER_THREAD_TRAITS::Mutex mutex;
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
 
-    static RegisterDictionary *regs = NULL;
+    static RegisterDictionary::Ptr regs;
     if (!regs) {
-        regs = new RegisterDictionary("i8088");
-        regs->insert(dictionary_i8086());
+        regs = RegisterDictionary::instance("i8088");
+        regs->insert(instanceI8086());
     }
     return regs;
 }
 
-const RegisterDictionary *
-RegisterDictionary::dictionary_i286() {
+RegisterDictionary::Ptr
+RegisterDictionary::instanceI286() {
     static SAWYER_THREAD_TRAITS::Mutex mutex;
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
 
-    static RegisterDictionary *regs = NULL;
+    static RegisterDictionary::Ptr regs;
     if (!regs) {
-        regs = new RegisterDictionary("i286");
-        regs->insert(dictionary_i8086());
+        regs = RegisterDictionary::instance("i286");
+        regs->insert(instanceI8086());
         regs->insert("iopl", x86_regclass_flags, x86_flags_status, 12, 2); /*  I/O privilege level flag */
         regs->insert("nt",   x86_regclass_flags, x86_flags_status, 14, 1); /*  nested task system flag */
     }
     return regs;
 }
 
-const RegisterDictionary *
-RegisterDictionary::dictionary_i386() {
+RegisterDictionary::Ptr
+RegisterDictionary::instanceI386() {
     static SAWYER_THREAD_TRAITS::Mutex mutex;
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
 
-    static RegisterDictionary *regs = NULL;
+    static RegisterDictionary::Ptr regs;
     if (!regs) {
-        regs = new RegisterDictionary("i386");
-        regs->insert(dictionary_i286());
+        regs = RegisterDictionary::instance("i386");
+        regs->insert(instanceI286());
 
         /* Additional 32-bit registers */
         regs->insert("eax", x86_regclass_gpr, x86_gpr_ax, 0, 32);
@@ -443,7 +179,7 @@ RegisterDictionary::dictionary_i386() {
         /* Additional flag bits that have no official names */
         for (unsigned i=18; i<32; ++i)
             regs->insert("f"+StringUtility::numberToString(i), x86_regclass_flags, x86_flags_status, i, 1);
-        
+
         /* Control registers */
         regs->insert("cr0", x86_regclass_cr, 0, 0, 32);
         regs->insert("cr1", x86_regclass_cr, 1, 0, 32);
@@ -458,20 +194,20 @@ RegisterDictionary::dictionary_i386() {
         regs->insert("dr3", x86_regclass_dr, 3, 0, 32);                 /* dr4 and dr5 are reserved */
         regs->insert("dr6", x86_regclass_dr, 6, 0, 32);
         regs->insert("dr7", x86_regclass_dr, 7, 0, 32);
-        
+
     }
     return regs;
 }
 
-const RegisterDictionary *
-RegisterDictionary::dictionary_i386_387() {
+RegisterDictionary::Ptr
+RegisterDictionary::instanceI386Math() {
     static SAWYER_THREAD_TRAITS::Mutex mutex;
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
 
-    static RegisterDictionary *regs = NULL;
+    static RegisterDictionary::Ptr regs;
     if (!regs) {
-        regs = new RegisterDictionary("i386 w/387");
-        regs->insert(dictionary_i386());
+        regs = RegisterDictionary::instance("i386 w/387");
+        regs->insert(instanceI386());
 
         // The 387 contains eight floating-point registers that have no names (we call them "st0" through "st7"), and defines
         // expressions of the form "st(n)" to refer to the current nth register from the top of a circular stack.  These
@@ -530,30 +266,30 @@ RegisterDictionary::dictionary_i386_387() {
     }
     return regs;
 }
-        
-const RegisterDictionary *
-RegisterDictionary::dictionary_i486() {
+
+RegisterDictionary::Ptr
+RegisterDictionary::instanceI486() {
     static SAWYER_THREAD_TRAITS::Mutex mutex;
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
 
-    static RegisterDictionary *regs = NULL;
+    static RegisterDictionary::Ptr regs;
     if (!regs) {
-        regs = new RegisterDictionary("i486");
-        regs->insert(dictionary_i386_387());
+        regs = RegisterDictionary::instance("i486");
+        regs->insert(instanceI386Math());
         regs->insert("ac", x86_regclass_flags, x86_flags_status, 18, 1); /* alignment check system flag */
     }
     return regs;
 }
 
-const RegisterDictionary *
-RegisterDictionary::dictionary_pentium() {
+RegisterDictionary::Ptr
+RegisterDictionary::instancePentium() {
     static SAWYER_THREAD_TRAITS::Mutex mutex;
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
 
-    static RegisterDictionary *regs = NULL;
+    static RegisterDictionary::Ptr regs;
     if (!regs) {
-        regs = new RegisterDictionary("pentium");
-        regs->insert(dictionary_i486());
+        regs = RegisterDictionary::instance("pentium");
+        regs->insert(instanceI486());
 
         /* Additional flags */
         regs->insert("vif", x86_regclass_flags, x86_flags_status, 19, 1); /* virtual interrupt flag */
@@ -576,15 +312,15 @@ RegisterDictionary::dictionary_pentium() {
     return regs;
 }
 
-const RegisterDictionary *
-RegisterDictionary::dictionary_pentiumiii() {
+RegisterDictionary::Ptr
+RegisterDictionary::instancePentiumiii() {
     static SAWYER_THREAD_TRAITS::Mutex mutex;
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
 
-    static RegisterDictionary *regs = NULL;
+    static RegisterDictionary::Ptr regs;
     if (!regs) {
-        regs = new RegisterDictionary("pentiumiii");
-        regs->insert(dictionary_pentium());
+        regs = RegisterDictionary::instance("pentiumiii");
+        regs->insert(instancePentium());
         regs->insert("xmm0", x86_regclass_xmm, 0, 0, 128);
         regs->insert("xmm1", x86_regclass_xmm, 1, 0, 128);
         regs->insert("xmm2", x86_regclass_xmm, 2, 0, 128);
@@ -615,28 +351,28 @@ RegisterDictionary::dictionary_pentiumiii() {
     return regs;
 }
 
-const RegisterDictionary *
-RegisterDictionary::dictionary_pentium4() {
+RegisterDictionary::Ptr
+RegisterDictionary::instancePentium4() {
     static SAWYER_THREAD_TRAITS::Mutex mutex;
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
 
-    static RegisterDictionary *regs = NULL;
+    static RegisterDictionary::Ptr regs;
     if (!regs) {
-        regs = new RegisterDictionary("pentium4");
-        regs->insert(dictionary_pentiumiii());
+        regs = RegisterDictionary::instance("pentium4");
+        regs->insert(instancePentiumiii());
     }
     return regs;
 }
 
-const RegisterDictionary *
-RegisterDictionary::dictionary_amd64() {
+RegisterDictionary::Ptr
+RegisterDictionary::instanceAmd64() {
     static SAWYER_THREAD_TRAITS::Mutex mutex;
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
 
-    static RegisterDictionary *regs = NULL;
+    static RegisterDictionary::Ptr regs;
     if (!regs) {
-        regs = new RegisterDictionary("amd64");
-        regs->insert(dictionary_pentium4());
+        regs = RegisterDictionary::instance("amd64");
+        regs->insert(instancePentium4());
 
         /* Additional 64-bit (and hi-end 32-bit) registers */
         regs->insert("rax", x86_regclass_gpr, x86_gpr_ax, 0, 64);
@@ -687,16 +423,16 @@ RegisterDictionary::dictionary_amd64() {
 }
 
 #ifdef ROSE_ENABLE_ASM_AARCH64
-const RegisterDictionary*
-RegisterDictionary::dictionary_aarch64() {
+RegisterDictionary::Ptr
+RegisterDictionary::instanceAarch64() {
     static SAWYER_THREAD_TRAITS::Mutex mutex;
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
-    static RegisterDictionary *regs = NULL;
+    static RegisterDictionary::Ptr regs;
     if (!regs) {
         // References:
         //   [1] "Arm Instruction Set Version 1.0 Reference Guide" copyright 2018 Arm Limited.
         //   [2] "ARM Cortex-A Series Version 1.0 Programmer's Guide for ARMv8-A" copyright 2015 ARM.
-        regs = new RegisterDictionary("AArch64");
+        regs = RegisterDictionary::instance("AArch64");
 
         // 31 64-bit general-purpose registers "x0" through "x30". The names "w0" through "w30" refer to the low-order 32 bits
         // of the corresponding "x" register in that read operations read only the low-order 32 bits and write operations write
@@ -825,8 +561,8 @@ RegisterDictionary::dictionary_aarch64() {
                 regs->insert("vbar_el"+n,  aarch64_regclass_system, aarch64_system_vbar+i,  0, 64); // vector based address register
             }
         }
-            
-            
+
+
         // "Advanced SIMD" registers, which are also the floating-point registers. [1. p. A3-77]
         // also known as "NEON and floating-point registers" [2, p. 4-16]
         for (unsigned i = 0; i < 32; ++i) {
@@ -861,7 +597,7 @@ RegisterDictionary::dictionary_aarch64() {
             regs->insert("q" + boost::lexical_cast<std::string>(i), aarch64_regclass_ext, i, 0, 128); // SIMD
             regs->insert("b" + boost::lexical_cast<std::string>(i), aarch64_regclass_ext, i, 0, 8); // SIMD
         }
-        
+
         // Conditional execution registers. [1. p. A3-79]
         regs->insert("nzcv", aarch64_regclass_cc, 0, 0, 4);
     }
@@ -870,13 +606,13 @@ RegisterDictionary::dictionary_aarch64() {
 #endif
 
 #ifdef ROSE_ENABLE_ASM_AARCH32
-const RegisterDictionary*
-RegisterDictionary::dictionary_aarch32() {
+RegisterDictionary::Ptr
+RegisterDictionary::instanceAarch32() {
     static SAWYER_THREAD_TRAITS::Mutex mutex;
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
-    static RegisterDictionary *regs = nullptr;
+    static RegisterDictionary::Ptr regs;
     if (!regs) {
-        regs = new RegisterDictionary("AArch32");
+        regs = RegisterDictionary::instance("AArch32");
 
         // Pseudo register that returns a new free variable every time it's read.
         regs->insert("unknown", aarch32_regclass_sys, aarch32_sys_unknown, 0, 32);
@@ -1120,8 +856,8 @@ RegisterDictionary::dictionary_aarch32() {
 }
 #endif
 
-const RegisterDictionary *
-RegisterDictionary::dictionary_powerpc32() {
+RegisterDictionary::Ptr
+RegisterDictionary::instancePowerpc32() {
     static SAWYER_THREAD_TRAITS::Mutex mutex;
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
 
@@ -1132,9 +868,9 @@ RegisterDictionary::dictionary_powerpc32() {
     //          reigster.  All PowerPC bit position numbers need to be converted to the ROSE numbering when they appear here.
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    static RegisterDictionary *regs = NULL;
+    static RegisterDictionary::Ptr regs;
     if (!regs) {
-        regs = new RegisterDictionary("powerpc-32");
+        regs = RegisterDictionary::instance("powerpc-32");
 
         /**********************************************************************************************************************
          * General purpose and floating point registers
@@ -1270,8 +1006,8 @@ RegisterDictionary::dictionary_powerpc32() {
     return regs;
 }
 
-const RegisterDictionary *
-RegisterDictionary::dictionary_powerpc64() {
+RegisterDictionary::Ptr
+RegisterDictionary::instancePowerpc64() {
     static SAWYER_THREAD_TRAITS::Mutex mutex;
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
 
@@ -1282,9 +1018,9 @@ RegisterDictionary::dictionary_powerpc64() {
     //          reigster.  All PowerPC bit position numbers need to be converted to the ROSE numbering when they appear here.
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    static RegisterDictionary *regs = NULL;
+    static RegisterDictionary::Ptr regs;
     if (!regs) {
-        regs = new RegisterDictionary("powerpc-64");
+        regs = RegisterDictionary::instance("powerpc-64");
 
         /**********************************************************************************************************************
          * General purpose and floating point registers
@@ -1420,14 +1156,14 @@ RegisterDictionary::dictionary_powerpc64() {
     return regs;
 }
 
-const RegisterDictionary *
-RegisterDictionary::dictionary_mips32() {
+RegisterDictionary::Ptr
+RegisterDictionary::instanceMips32() {
     static SAWYER_THREAD_TRAITS::Mutex mutex;
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
 
-    static RegisterDictionary *regs = NULL;
+    static RegisterDictionary::Ptr regs;
     if (!regs) {
-        regs = new RegisterDictionary("mips32");
+        regs = RegisterDictionary::instance("mips32");
 
         // 32 general purpose registers and hardware registers
         for (size_t i=0; i<32; ++i) {
@@ -1502,15 +1238,15 @@ RegisterDictionary::dictionary_mips32() {
     return regs;
 }
 
-const RegisterDictionary *
-RegisterDictionary::dictionary_mips32_altnames() {
+RegisterDictionary::Ptr
+RegisterDictionary::instanceMips32AlternateNames() {
     static SAWYER_THREAD_TRAITS::Mutex mutex;
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
 
-    static RegisterDictionary *regs = NULL;
+    static RegisterDictionary::Ptr regs;
     if (!regs) {
-        regs = new RegisterDictionary("mips32");
-        regs->insert(dictionary_mips32());
+        regs = RegisterDictionary::instance("mips32");
+        regs->insert(instanceMips32());
 
         // Alternate names for the general purpose registers
         regs->insert("zero", mips_regclass_gpr, 0,  0, 32);                     // always equal to zero
@@ -1550,14 +1286,14 @@ RegisterDictionary::dictionary_mips32_altnames() {
     return regs;
 }
 
-const RegisterDictionary *
-RegisterDictionary::dictionary_m68000() {
+RegisterDictionary::Ptr
+RegisterDictionary::instanceM68000() {
     static SAWYER_THREAD_TRAITS::Mutex mutex;
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
 
-    static RegisterDictionary *regs = NULL;
+    static RegisterDictionary::Ptr regs;
     if (!regs) {
-        regs = new RegisterDictionary("m68000");
+        regs = RegisterDictionary::instance("m68000");
 
         // 32-bit integer data and address registers. When the low-order 16-bits of a data or address register is accessed by a
         // word instruction, or the low-order 8-bits of a data register is accessed by a byte instruction, the size of the
@@ -1639,7 +1375,7 @@ RegisterDictionary::dictionary_m68000() {
 
         // Other floating point registers
         regs->insert("fpiar", m68k_regclass_spr,   m68k_spr_fpiar,   0, 32);    // floating-point instruction address reg
-        
+
         // Supervisor registers (SR register is listed above since its CCR bits are available in user mode)
         regs->insert("ssp",      m68k_regclass_sup, m68k_sup_ssp,       0, 32); // supervisor A7 stack pointer
         regs->insert("vbr",      m68k_regclass_sup, m68k_sup_vbr,       0, 32); // vector base register
@@ -1647,15 +1383,15 @@ RegisterDictionary::dictionary_m68000() {
     return regs;
 }
 
-const RegisterDictionary *
-RegisterDictionary::dictionary_m68000_altnames() {
+RegisterDictionary::Ptr
+RegisterDictionary::instanceM68000AlternateNames() {
     static SAWYER_THREAD_TRAITS::Mutex mutex;
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
 
-    static RegisterDictionary *regs = NULL;
+    static RegisterDictionary::Ptr regs;
     if (!regs) {
-        regs = new RegisterDictionary("m68000");
-        regs->insert(dictionary_m68000());
+        regs = RegisterDictionary::instance("m68000");
+        regs->insert(instanceM68000());
         regs->insert("bp", m68k_regclass_addr, 6, 0, 32);                       // a6 is conventionally the stack frame pointer
         regs->insert("sp", m68k_regclass_addr, 7, 0, 32);                       // a7 is conventionally the stack pointer
     }
@@ -1664,15 +1400,15 @@ RegisterDictionary::dictionary_m68000_altnames() {
 
 // FIXME[Robb P. Matzke 2014-07-15]: This is fairly generic at this point. Eventually we'll split this function into
 // dictionaries for each specific Freescale ColdFire architecture.
-const RegisterDictionary *
-RegisterDictionary::dictionary_coldfire() {
+RegisterDictionary::Ptr
+RegisterDictionary::instanceColdfire() {
     static SAWYER_THREAD_TRAITS::Mutex mutex;
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
 
-    static RegisterDictionary *regs = NULL;
+    static RegisterDictionary::Ptr regs;
     if (!regs) {
-        regs = new RegisterDictionary("freescale MAC");
-        regs->insert(dictionary_m68000());
+        regs = RegisterDictionary::instance("freescale MAC");
+        regs->insert(instanceM68000());
 
         // Floating point data registers.
         // The ColdFire processors do not support extended precision real ("X") format values, and therefore don't need
@@ -1726,16 +1462,16 @@ RegisterDictionary::dictionary_coldfire() {
 }
 
 // FreeScale ColdFire CPUs with EMAC (extended multiply-accumulate) unit.
-const RegisterDictionary *
-RegisterDictionary::dictionary_coldfire_emac() {
+RegisterDictionary::Ptr
+RegisterDictionary::instanceColdfireEmac() {
     static SAWYER_THREAD_TRAITS::Mutex mutex;
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
 
-    static RegisterDictionary *regs = NULL;
+    static RegisterDictionary::Ptr regs;
     if (!regs) {
-        regs = new RegisterDictionary("freescale EMAC");
-        regs->insert(dictionary_coldfire());
-        
+        regs = RegisterDictionary::instance("freescale EMAC");
+        regs->insert(instanceColdfire());
+
         regs->insert("macsr_pav0", m68k_regclass_mac, m68k_mac_macsr,  8,  1);  // overflow flag for accumulator 0
         regs->insert("macsr_pav1", m68k_regclass_mac, m68k_mac_macsr,  9,  1);  // overflow flag for accumulator 1
         regs->insert("macsr_pav2", m68k_regclass_mac, m68k_mac_macsr, 10,  1);  // overflow flag for accumulator 2
@@ -1756,18 +1492,263 @@ RegisterDictionary::dictionary_coldfire_emac() {
     return regs;
 }
 
-
-const RegisterDictionary *
-RegisterDictionary::dictionary_Cil() {
+RegisterDictionary::Ptr
+RegisterDictionary::instanceCil() {
     static SAWYER_THREAD_TRAITS::Mutex mutex;
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex);
 
-    static RegisterDictionary *regs = NULL;
-    if (!regs) {
-        regs = new RegisterDictionary("Cil");
+    static RegisterDictionary::Ptr regs;
+    if (!regs)
+        regs = RegisterDictionary::instance("Cil");
 
-    }
     return regs;
 }
+
+RegisterDictionary::Ptr
+RegisterDictionary::instanceForIsa(SgAsmExecutableFileFormat::InsSetArchitecture isa) {
+    typedef SgAsmExecutableFileFormat EFF;
+    switch (isa & EFF::ISA_FAMILY_MASK) {
+        case EFF::ISA_IA32_Family:
+            switch (isa) {
+                case EFF::ISA_IA32_286:         return instanceI286();
+                case EFF::ISA_IA32_386:         return instanceI386Math(); // assume '387 coprocessor is present
+                case EFF::ISA_IA32_486:         return instanceI486();
+                case EFF::ISA_IA32_Pentium:     return instancePentium();
+                case EFF::ISA_IA32_Pentium4:    return instancePentium4();
+                default:                        return instancePentium4();
+            }
+            break;
+
+        case EFF::ISA_X8664_Family:
+            return instanceAmd64();
+
+        case EFF::ISA_MIPS_Family:
+            return instanceMips32AlternateNames(); // disassembler assumes only mips32()
+
+#ifdef ROSE_ENABLE_ASM_AARCH64
+        case EFF::ISA_ARM_Family:
+            return instanceAarch64();
+#endif
+
+        case EFF::ISA_PowerPC:
+            return instancePowerpc32();
+
+        case EFF::ISA_PowerPC_64bit:
+            return instancePowerpc64();
+
+        case EFF::ISA_M68K_Family:
+            return instanceColdfire();
+
+        default:
+            return Ptr();
+    }
+}
+
+RegisterDictionary::Ptr
+RegisterDictionary::instanceForIsa(SgAsmInterpretation *interp) {
+    const SgAsmGenericHeaderPtrList &hdrs = interp->get_headers()->get_headers();
+    return hdrs.empty() ? Ptr() : instanceForIsa(hdrs.front()->get_isa());
+}
+
+const std::string&
+RegisterDictionary::name() const {
+    return name_;
+}
+
+void
+RegisterDictionary::name(const std::string &s) {
+    name_ = s;
+}
+
+const RegisterDictionary::Entries &
+RegisterDictionary::registers() const {
+    return forward_;
+}
+
+void
+RegisterDictionary::insert(const std::string &name, RegisterDescriptor reg) { //
+    /* Erase the name from the reverse lookup map, indexed by the old descriptor. */
+    Entries::iterator fi = forward_.find(name);
+    if (fi != forward_.end()) {
+        Reverse::iterator ri = reverse_.find(fi->second);
+        ASSERT_require(ri != reverse_.end());
+        std::vector<std::string>::iterator vi=std::find(ri->second.begin(), ri->second.end(), name);
+        ASSERT_require(vi != ri->second.end());
+        ri->second.erase(vi);
+    }
+
+    /* Insert or replace old descriptor with a new one and insert reverse lookup info. */
+    forward_[name] = reg;
+    reverse_[reg].push_back(name);
+}
+
+void
+RegisterDictionary::insert(const std::string &name, unsigned majr, unsigned minr, unsigned offset, unsigned nbits) {
+    insert(name, RegisterDescriptor(majr, minr, offset, nbits));
+}
+
+void
+RegisterDictionary::insert(const Ptr &other) {
+    ASSERT_not_null(other);
+    const Entries &entries = other->registers();
+    for (Entries::const_iterator ei = entries.begin(); ei != entries.end(); ++ei)
+        insert(ei->first, ei->second);
+}
+
+void
+RegisterDictionary::resize(const std::string &name, unsigned new_nbits) {
+    RegisterDescriptor reg = findOrThrow(name);
+    reg.nBits(new_nbits);
+    insert(name, reg);
+}
+
+RegisterDescriptor
+RegisterDictionary::find(const std::string &name) const {
+    Entries::const_iterator fi = forward_.find(name);
+    return forward_.end() == fi ? RegisterDescriptor() : fi->second;
+}
+
+RegisterDescriptor
+RegisterDictionary::findOrThrow(const std::string &name) const {
+    Entries::const_iterator fi = forward_.find(name);
+    if (forward_.end() == fi)
+        throw Exception("register " + name + " not found");
+    return fi->second;
+}
+
+const std::string&
+RegisterDictionary::lookup(RegisterDescriptor reg) const {
+    Reverse::const_iterator ri = reverse_.find(reg);
+    if (ri != reverse_.end()) {
+        for (size_t i = ri->second.size(); i > 0; --i) {
+            const std::string &name = ri->second[i-1];
+            Entries::const_iterator fi = forward_.find(name);
+            ASSERT_require(fi != forward_.end());
+            if (fi->second == reg)
+                return name;
+        }
+    }
+
+    static const std::string empty;
+    return empty;
+}
+
+bool
+RegisterDictionary::exists(RegisterDescriptor rdesc) const {
+    Reverse::const_iterator found = reverse_.find(rdesc);
+    return found == reverse_.end();
+}
+RegisterDescriptor
+RegisterDictionary::findLargestRegister(unsigned major, unsigned minor, size_t maxWidth) const {
+    RegisterDescriptor retval;
+    for (Entries::const_iterator iter = forward_.begin(); iter != forward_.end(); ++iter) {
+        RegisterDescriptor reg = iter->second;
+        if (major == reg.majorNumber() && minor == reg.minorNumber()) {
+            if (maxWidth > 0 && reg.nBits() > maxWidth) {
+                // ignore
+            } else if (retval.isEmpty()) {
+                retval = reg;
+            } else if (retval.nBits() < reg.nBits()) {
+                retval = reg;
+            }
+        }
+    }
+    return retval;
+}
+
+RegisterParts
+RegisterDictionary::getAllParts() const {
+    RegisterParts retval;
+    for (const Entries::value_type &node: forward_)
+        retval.insert(node.second);
+    return retval;
+}
+
+RegisterDictionary::RegisterDescriptors
+RegisterDictionary::getDescriptors() const {
+    const Entries &entries = registers();
+    RegisterDescriptors retval;
+    retval.reserve(entries.size());
+    for (Entries::const_iterator ei = entries.begin(); ei != entries.end(); ++ei)
+        retval.push_back(ei->second);
+    return retval;
+}
+
+// Returns lowest possible non-negative value not present in v
+static unsigned
+firstUnused(std::vector<unsigned> &v /*in,out*/) {
+    if (v.empty())
+        return 0;
+    std::sort(v.begin(), v.end());
+    v.erase(std::unique(v.begin(), v.end()), v.end());
+    if (v.back() + 1 == v.size())
+        return v.size();
+    for (size_t i=0; i<v.size(); ++i) {
+        if (v[i] != i)
+            return i;
+    }
+    ASSERT_not_reachable("should have returned by now");
+}
+
+unsigned
+RegisterDictionary::firstUnusedMajor() const {
+    std::vector<unsigned> used;
+    for (const Entries::value_type &entry: forward_) {
+        if (used.empty() || used.back() != entry.second.majorNumber())
+            used.push_back(entry.second.majorNumber());
+    }
+    return firstUnused(used);
+}
+
+unsigned
+RegisterDictionary::firstUnusedMinor(unsigned majr) const {
+    std::vector<unsigned> used;
+    for (const Entries::value_type &entry: forward_) {
+        if (entry.second.majorNumber() == majr)
+            used.push_back(entry.second.minorNumber());
+    }
+    return firstUnused(used);
+}
+
+RegisterDictionary::RegisterDescriptors
+RegisterDictionary::getLargestRegisters() const {
+    SortBySize order(SortBySize::ASCENDING);
+    return filterNonoverlapping(getDescriptors(), order, true);
+}
+
+RegisterDictionary::RegisterDescriptors
+RegisterDictionary::getSmallestRegisters() const {
+    SortBySize order(SortBySize::DESCENDING);
+    return filterNonoverlapping(getDescriptors(), order, true);
+}
+
+void
+RegisterDictionary::print(std::ostream &o) const {
+    o <<"RegisterDictionary \"" <<name_ <<"\" contains " <<forward_.size() <<" " <<(1 == forward_.size()?"entry":"entries") <<"\n";
+    for (Entries::const_iterator ri = forward_.begin(); ri != forward_.end(); ++ri)
+        o <<"  \"" <<ri->first <<"\" " <<ri->second <<"\n";
+
+    for (Reverse::const_iterator ri = reverse_.begin(); ri != reverse_.end(); ++ri) {
+        o <<"  " <<ri->first;
+        for (std::vector<std::string>::const_iterator vi = ri->second.begin(); vi != ri->second.end(); ++vi) {
+            o <<" " <<*vi;
+        }
+        o <<"\n";
+    }
+}
+
+size_t
+RegisterDictionary::size() const {
+    return forward_.size();
+}
+
+std::ostream&
+operator<<(std::ostream &out, const RegisterDictionary &dict) {
+    dict.print(out);
+    return out;
+}
+
+} // namespace
+} // namespace
 
 #endif

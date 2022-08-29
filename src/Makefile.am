@@ -280,10 +280,12 @@ pkginclude_HEADERS = \
 # Header files organized by namespace. If the directory part of the name doesn't match
 # a C++ namespace, then DO NOT put the header file in this list.
 nobase_pkginclude_HEADERS=								\
+	Rose/BasicTypes.h								\
 	Rose/BinaryAnalysis.h								\
 	Rose/BinaryAnalysis/AbstractLocation.h						\
 	Rose/BinaryAnalysis/AsmFunctionIndex.h						\
 	Rose/BinaryAnalysis/AstHash.h							\
+	Rose/BinaryAnalysis/BasicTypes.h						\
 	Rose/BinaryAnalysis/BestMapAddress.h						\
 	Rose/BinaryAnalysis/BinaryLoader.h						\
 	Rose/BinaryAnalysis/BinaryLoaderElf.h						\
@@ -482,8 +484,9 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/PointerDetection.h						\
 	Rose/BinaryAnalysis/Reachability.h						\
 	Rose/BinaryAnalysis/RegisterDescriptor.h					\
+	Rose/BinaryAnalysis/RegisterDictionary.h					\
+	Rose/BinaryAnalysis/RegisterNames.h						\
 	Rose/BinaryAnalysis/RegisterParts.h						\
-	Rose/BinaryAnalysis/Registers.h							\
 	Rose/BinaryAnalysis/ReturnValueUsed.h						\
 	Rose/BinaryAnalysis/SerialIo.h							\
 	Rose/BinaryAnalysis/SmtCommandLine.h						\

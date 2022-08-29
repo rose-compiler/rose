@@ -3,6 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/CallingConvention.h>
 #include <Rose/BinaryAnalysis/Disassembler/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
@@ -145,7 +146,7 @@ public:
     size_t nCached() const { return insnMap_.size(); }
 
     /** Returns the register dictionary. */
-    const RegisterDictionary* registerDictionary() const;
+    RegisterDictionaryPtr registerDictionary() const;
 
     /** Returns the calling convention dictionary. */
     const CallingConvention::Dictionary& callingConventions() const;

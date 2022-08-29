@@ -2,6 +2,7 @@
 #define PathFinder_Semantics_H
 
 #include <PathFinder/PathFinder.h>
+#include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 
@@ -124,7 +125,7 @@ protected:
 public:
     static RiscOperatorsPtr
     instance(const Rose::BinaryAnalysis::Partitioner2::Partitioner *partitioner,
-             const Rose::BinaryAnalysis::RegisterDictionary *regdict,
+             const Rose::BinaryAnalysis::RegisterDictionaryPtr &regdict,
              const Rose::BinaryAnalysis::SmtSolverPtr &solver=Rose::BinaryAnalysis::SmtSolverPtr());
 
     static RiscOperatorsPtr

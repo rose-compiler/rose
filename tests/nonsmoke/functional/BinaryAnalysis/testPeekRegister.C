@@ -1,6 +1,7 @@
 #include <rose.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RegisterStateGeneric.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <sstream>
 
 using namespace Rose;
@@ -12,8 +13,8 @@ int
 main() {
     
 
-    const RegisterDictionary *regdict = RegisterDictionary::dictionary_amd64();
-    RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(regdict);
+    RegisterDictionary::Ptr regdict = RegisterDictionary::instanceAmd64();
+    RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instanceFromRegisters(regdict);
     ASSERT_always_not_null(ops);
     RegisterStateGenericPtr registers = RegisterStateGeneric::promote(ops->currentState()->registerState());
 

@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
                                                    "0x89 0x18");               //   mov dword ptr [eax], ebx
 
     // Create the instruction semantics and give it an initial MemoryMap containing the instructions we parsed above
-    auto ops = IS::ConcreteSemantics::RiscOperators::instance(partitioner.instructionProvider().registerDictionary());
+    auto ops = IS::ConcreteSemantics::RiscOperators::instanceFromRegisters(partitioner.instructionProvider().registerDictionary());
     IS::ConcreteSemantics::MemoryState::promote(ops->currentState()->memoryState())->memoryMap(partitioner.memoryMap());
 
     // Show the initial state's memory map.

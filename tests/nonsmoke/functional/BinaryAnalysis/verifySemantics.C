@@ -15,6 +15,8 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #include <Rose/BinaryAnalysis/InstructionSemantics/ConcreteSemantics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
+#include <Rose/BinaryAnalysis/RegisterNames.h>
 #include <Rose/Diagnostics.h>
 
 #include <AsmUnparser_compat.h>
@@ -106,7 +108,7 @@ protected:
         name("Verification");
     }
 public:
-    static RiscOperatorsPtr instance(const Debugger::Ptr &subordinate, const RegisterDictionary *regdict) {
+    static RiscOperatorsPtr instance(const Debugger::Ptr &subordinate, const RegisterDictionary::Ptr &regdict) {
         BaseSemantics::SValuePtr protoval = ConcreteSemantics::SValue::instance();
         BaseSemantics::RegisterStatePtr registers = BaseSemantics::RegisterStateGeneric::instance(protoval, regdict);
         BaseSemantics::MemoryStatePtr memory = BaseSemantics::MemoryCellList::instance(protoval, protoval);
@@ -279,7 +281,7 @@ main(int argc, char *argv[]) {
     if (!disassembler)
         throw std::runtime_error("architecture is not supported by this tool");
     size_t addrWidth = disassembler->stackPointerRegister().nBits();
-    const RegisterDictionary *registerDictionary = disassembler->registerDictionary();
+    RegisterDictionary::Ptr registerDictionary = disassembler->registerDictionary();
     typedef Sawyer::Container::Map<rose_addr_t, SgAsmInstruction*> InstructionMap;
     InstructionMap insns;
 
@@ -291,9 +293,9 @@ main(int argc, char *argv[]) {
     if (settings.traceSemantics) {
         TraceSemantics::RiscOperatorsPtr traceOps = TraceSemantics::RiscOperators::instance(checkOps);
         traceOps->stream().destination(Sawyer::Message::StreamSink::instance(trace));
-        cpu = DispatcherX86::instance(traceOps, addrWidth);
+        cpu = DispatcherX86::instance(traceOps, addrWidth, RegisterDictionary::Ptr());
     } else {
-        cpu = DispatcherX86::instance(checkOps, addrWidth);
+        cpu = DispatcherX86::instance(checkOps, addrWidth, RegisterDictionary::Ptr());
     }
     if (!cpu)
         throw std::runtime_error("instruction semantics not supported for this architecture");

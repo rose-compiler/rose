@@ -436,6 +436,72 @@ MemoryMapState::generateCellKey(const BaseSemantics::SValuePtr &addr_) const {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      RISC operators
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+RiscOperators::RiscOperators()
+    : omit_cur_insn(false), computingDefiners_(TRACK_NO_DEFINERS), computingMemoryWriters_(TRACK_LATEST_WRITER),
+      computingRegisterWriters_(TRACK_LATEST_WRITER), trimThreshold_(0), reinterpretMemoryReads_(true),
+      reinterpretRegisterReads_(true) {}
+
+RiscOperators::RiscOperators(const BaseSemantics::SValue::Ptr &protoval, const SmtSolver::Ptr &solver)
+    : BaseSemantics::RiscOperators(protoval, solver), omit_cur_insn(false), computingDefiners_(TRACK_NO_DEFINERS),
+    computingMemoryWriters_(TRACK_LATEST_WRITER), computingRegisterWriters_(TRACK_LATEST_WRITER), trimThreshold_(0),
+    reinterpretMemoryReads_(true), reinterpretRegisterReads_(true) {
+    name("Symbolic");
+    ASSERT_always_not_null(protoval);
+    ASSERT_always_not_null2(protoval.dynamicCast<SValue>(),
+                            "SymbolicSemantics supports only symbolic SValue types or derivatives thereof");
+}
+
+RiscOperators::RiscOperators(const BaseSemantics::State::Ptr &state, const SmtSolver::Ptr &solver)
+    : BaseSemantics::RiscOperators(state, solver), omit_cur_insn(false), computingDefiners_(TRACK_NO_DEFINERS),
+    computingMemoryWriters_(TRACK_LATEST_WRITER), computingRegisterWriters_(TRACK_LATEST_WRITER), trimThreshold_(0),
+    reinterpretMemoryReads_(true), reinterpretRegisterReads_(true) {
+    name("Symbolic");
+    ASSERT_always_not_null(state);
+    ASSERT_always_not_null(state->registerState());
+    ASSERT_always_not_null2(boost::dynamic_pointer_cast<RegisterState>(state->registerState()),
+                            "SymbolicSemantics supports only RegisterStateGeneric or derivatives thereof");
+    ASSERT_always_not_null(state->protoval());
+    ASSERT_always_not_null2(state->protoval().dynamicCast<SValue>(),
+                            "SymbolicSemantics supports only symbolic SValue types or derivatives thereof");
+}
+
+RiscOperators::~RiscOperators() {}
+
+RiscOperators::Ptr
+RiscOperators::instanceFromRegisters(const RegisterDictionary::Ptr &regdict, const SmtSolverPtr &solver) {
+    BaseSemantics::SValuePtr protoval = SValue::instance();
+    BaseSemantics::RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
+    BaseSemantics::MemoryStatePtr memory = MemoryListState::instance(protoval, protoval);
+    BaseSemantics::StatePtr state = State::instance(registers, memory);
+    return Ptr(new RiscOperators(state, solver));
+}
+
+RiscOperators::Ptr
+RiscOperators::instanceFromProtoval(const BaseSemantics::SValue::Ptr &protoval, const SmtSolver::Ptr &solver) {
+    return Ptr(new RiscOperators(protoval, solver));
+}
+
+RiscOperators::Ptr
+RiscOperators::instanceFromState(const BaseSemantics::State::Ptr &state, const SmtSolver::Ptr &solver) {
+    return Ptr(new RiscOperators(state, solver));
+}
+
+BaseSemantics::RiscOperators::Ptr
+RiscOperators::create(const BaseSemantics::SValue::Ptr &protoval, const SmtSolver::Ptr &solver) const {
+    return instanceFromProtoval(protoval, solver);
+}
+
+BaseSemantics::RiscOperators::Ptr
+RiscOperators::create(const BaseSemantics::State::Ptr &state, const SmtSolver::Ptr &solver) const {
+    return instanceFromState(state, solver);
+}
+
+RiscOperators::Ptr
+RiscOperators::promote(const BaseSemantics::RiscOperators::Ptr &x) {
+    Ptr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
+    ASSERT_not_null(retval);
+    return retval;
+}
 
 void
 RiscOperators::substitute(const SValuePtr &from, const SValuePtr &to)

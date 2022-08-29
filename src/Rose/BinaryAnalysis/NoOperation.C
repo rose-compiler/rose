@@ -6,6 +6,7 @@
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCellList.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
 
@@ -136,12 +137,12 @@ NoOperation::NoOperation(const Disassembler::Base::Ptr &disassembler) {
     normalizer_ = StateNormalizer::instance();
 
     if (disassembler) {
-        const RegisterDictionary *registerDictionary = disassembler->registerDictionary();
+        RegisterDictionary::Ptr registerDictionary = disassembler->registerDictionary();
         ASSERT_not_null(registerDictionary);
         size_t addrWidth = disassembler->instructionPointerRegister().nBits();
 
         SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
-        SymbolicSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(registerDictionary, solver);
+        SymbolicSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instanceFromRegisters(registerDictionary, solver);
         ops->computingDefiners(SymbolicSemantics::TRACK_NO_DEFINERS);
         ops->computingMemoryWriters(SymbolicSemantics::TRACK_LATEST_WRITER); // necessary to erase non-written memory
 

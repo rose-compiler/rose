@@ -18,6 +18,7 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/TestSemantics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 
 //=============================================================================================================================
 //                                      User-contributed semantics
@@ -305,7 +306,7 @@ makeProtoVal(const Settings &settings) {
 }
 
 static BaseSemantics::RegisterStatePtr
-makeRegisterState(const Settings &settings, const BaseSemantics::SValuePtr &protoval, const RegisterDictionary *regdict) {
+makeRegisterState(const Settings &settings, const BaseSemantics::SValuePtr &protoval, const RegisterDictionary::Ptr &regdict) {
     const std::string &className = settings.rstateClassName;
     if (className == "list") {
         std::cout <<"register state class names:\n"
@@ -345,7 +346,7 @@ makeRegisterState(const Settings &settings, const BaseSemantics::SValuePtr &prot
 
 static BaseSemantics::MemoryStatePtr
 makeMemoryState(const Settings &settings, const P2::Partitioner &partitioner, const BaseSemantics::SValuePtr &protoval,
-                const BaseSemantics::SValuePtr &protoaddr, const RegisterDictionary *regdict) {
+                const BaseSemantics::SValuePtr &protoaddr, const RegisterDictionary::Ptr &regdict) {
     const std::string &className = settings.mstateClassName;
     if (className == "list") {
         std::cout <<"memory state class names:\n"
@@ -372,7 +373,7 @@ makeMemoryState(const Settings &settings, const P2::Partitioner &partitioner, co
     } else if (className == "null") {
         return NullSemantics::MemoryState::instance(protoval, protoaddr);
     } else if (className == "partial") {
-        BaseSemantics::RiscOperatorsPtr ops = PartialSymbolicSemantics::RiscOperators::instance(regdict);
+        BaseSemantics::RiscOperatorsPtr ops = PartialSymbolicSemantics::RiscOperators::instanceFromRegisters(regdict);
         return ops->currentState()->memoryState();
     } else if (className == "p2-list" || className == "partitioner2") {
         P2::Semantics::MemoryListStatePtr m = P2::Semantics::MemoryListState::instance(protoval, protoaddr);
@@ -414,7 +415,7 @@ makeRiscOperators(const Settings &settings, const P2::Partitioner &partitioner) 
     }
     
     SmtSolverPtr solver = makeSolver(settings);
-    const RegisterDictionary *regdict = partitioner.instructionProvider().registerDictionary();
+    RegisterDictionary::Ptr regdict = partitioner.instructionProvider().registerDictionary();
     BaseSemantics::SValuePtr protoval = makeProtoVal(settings);
     BaseSemantics::RegisterStatePtr rstate = makeRegisterState(settings, protoval, regdict);
     BaseSemantics::MemoryStatePtr mstate = makeMemoryState(settings, partitioner, protoval, protoval, regdict);
@@ -426,20 +427,20 @@ makeRiscOperators(const Settings &settings, const P2::Partitioner &partitioner) 
         return com::example::semantics::RiscOperators::instance(state, solver);
 #endif
     } else if (className == "concrete") {
-        return ConcreteSemantics::RiscOperators::instance(state, solver);
+        return ConcreteSemantics::RiscOperators::instanceFromState(state, solver);
     } else if (className == "interval") {
-        return IntervalSemantics::RiscOperators::instance(state, solver);
+        return IntervalSemantics::RiscOperators::instanceFromState(state, solver);
     } else if (className == "null") {
-        return NullSemantics::RiscOperators::instance(state, solver);
+        return NullSemantics::RiscOperators::instanceFromState(state, solver);
     } else if (className == "partial") {
-        PartialSymbolicSemantics::RiscOperatorsPtr ops = PartialSymbolicSemantics::RiscOperators::instance(state, solver);
+        PartialSymbolicSemantics::RiscOperatorsPtr ops = PartialSymbolicSemantics::RiscOperators::instanceFromState(state, solver);
         if (settings.useMemoryMap)
             ops->set_memory_map(partitioner.memoryMap()->shallowCopy());
         return ops;
     } else if (className == "partitioner2") {
         return P2::Semantics::RiscOperators::instance(state, solver);
     } else if (className == "symbolic") {
-        SymbolicSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(state, solver);
+        SymbolicSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instanceFromState(state, solver);
         ops->computingDefiners(settings.computingDefiners);
         ops->computingRegisterWriters(settings.computingWriters);
         ops->computingMemoryWriters(settings.computingWriters);
@@ -553,7 +554,7 @@ runSemantics(const P2::BasicBlock::Ptr &bblock, const Settings &settings, const 
                   <<"=== Starting a new basic block                                                    ===\n"
                   <<"=====================================================================================\n";
     }
-    const RegisterDictionary *regdict = partitioner.instructionProvider().registerDictionary();
+    RegisterDictionary::Ptr regdict = partitioner.instructionProvider().registerDictionary();
     BaseSemantics::RiscOperatorsPtr ops = makeRiscOperators(settings, partitioner);
 
     BaseSemantics::Formatter formatter;
@@ -569,9 +570,9 @@ runSemantics(const P2::BasicBlock::Ptr &bblock, const Settings &settings, const 
         // on stdout.
         TraceSemantics::RiscOperatorsPtr trace = TraceSemantics::RiscOperators::instance(ops);
         trace->stream().destination(Sawyer::Message::FileSink::instance(stdout, Sawyer::Message::Prefix::silentInstance()));
-        dispatcher = dispatcher->create(trace);
+        dispatcher = dispatcher->create(trace, 0, RegisterDictionary::Ptr());
     } else {
-        dispatcher = dispatcher->create(ops);
+        dispatcher = dispatcher->create(ops, 0, RegisterDictionary::Ptr());
     }
 
     // The fpstatus_top register must have a concrete value if we'll use the x86 floating-point stack (e.g., st(0))
@@ -625,7 +626,7 @@ runSemantics(const P2::BasicBlock::Ptr &bblock, const Settings &settings, const 
             // own semantics.
             BaseSemantics::RiscOperatorsPtr ops2 = makeRiscOperators(settings, partitioner);
             BaseSemantics::DispatcherPtr dispatcher2 = partitioner.instructionProvider().dispatcher();
-            dispatcher2 = dispatcher2->create(ops2);
+            dispatcher2 = dispatcher2->create(ops2, 0, RegisterDictionary::Ptr());
             NoOperation nopAnalyzer(dispatcher2);
             if (nopAnalyzer.isNoop(insn))
                 std::cerr <<"Instruction has no effect (other than changing the instruction pointer register)\n";
@@ -651,12 +652,12 @@ main(int argc, char *argv[]) {
         listAndExit = true;
     }
     if (settings.rstateClassName == "list") {
-        (void) makeRegisterState(settings, BaseSemantics::SValuePtr(), NULL);
+        (void) makeRegisterState(settings, BaseSemantics::SValuePtr(), RegisterDictionary::Ptr());
         listAndExit = true;
     }
     if (settings.mstateClassName == "list") {
         P2::Partitioner p;
-        (void) makeMemoryState(settings, p, BaseSemantics::SValuePtr(), BaseSemantics::SValuePtr(), NULL);
+        (void) makeMemoryState(settings, p, BaseSemantics::SValuePtr(), BaseSemantics::SValuePtr(), RegisterDictionary::Ptr());
         listAndExit = true;
     }
     if (settings.opsClassName == "list") {

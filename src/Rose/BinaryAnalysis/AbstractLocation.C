@@ -4,7 +4,8 @@
 #include <Rose/BinaryAnalysis/AbstractLocation.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Formatter.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/SValue.h>
-#include <Rose/BinaryAnalysis/Registers.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
+#include <Rose/BinaryAnalysis/RegisterNames.h>
 
 #include <ostream>
 #include <sstream>
@@ -30,13 +31,18 @@ AbstractLocation::operator=(const AbstractLocation &other) {
     return *this;
 }
 
-AbstractLocation::AbstractLocation(RegisterDescriptor reg, const RegisterDictionary *regdict)
+AbstractLocation::AbstractLocation(RegisterDescriptor reg)
+    : reg_(reg), nBytes_(0) {
+    ASSERT_require(reg);
+}
+
+AbstractLocation::AbstractLocation(RegisterDescriptor reg, const RegisterDictionary::Ptr &regdict)
     : reg_(reg), nBytes_(0), regdict_(regdict) {
     ASSERT_require(reg);
 }
 
 AbstractLocation::AbstractLocation(const Address &addr, size_t nBytes)
-    : addr_(addr), nBytes_(nBytes), regdict_(nullptr) {
+    : addr_(addr), nBytes_(nBytes) {
     ASSERT_not_null(addr);
 }
 
@@ -70,18 +76,18 @@ AbstractLocation::print(std::ostream &out) const {
 }
 
 void
-AbstractLocation::print(std::ostream &out, const RegisterDictionary *regdict) const {
+AbstractLocation::print(std::ostream &out, const RegisterDictionary::Ptr &regdict) const {
     InstructionSemantics::BaseSemantics::Formatter fmt;
     print(out, regdict, fmt);
 }
 
 void
 AbstractLocation::print(std::ostream &out, InstructionSemantics::BaseSemantics::Formatter &fmt) const {
-    print(out, nullptr, fmt);
+    print(out, RegisterDictionary::Ptr(), fmt);
 }
 
 void
-AbstractLocation::print(std::ostream &out, const RegisterDictionary *regdict,
+AbstractLocation::print(std::ostream &out, const RegisterDictionary::Ptr &regdict,
                         InstructionSemantics::BaseSemantics::Formatter &fmt) const {
     if (isRegister()) {
         out <<RegisterNames()(reg_, regdict ? regdict : regdict_);

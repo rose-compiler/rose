@@ -3,7 +3,7 @@
 #include "sage3basic.h"
 #include <Rose/BinaryAnalysis/RegisterParts.h>
 
-#include <Rose/BinaryAnalysis/Registers.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -70,13 +70,13 @@ RegisterParts::operator&(const RegisterParts &other) const {
 }
 
 std::vector<RegisterDescriptor>
-RegisterParts::extract(const RegisterDictionary *regDict, bool extractAll) {
+RegisterParts::extract(const RegisterDictionary::Ptr &regDict, bool extractAll) {
     std::vector<RegisterDescriptor> retval, allRegs;
     if (isEmpty())
         return retval;
 
     if (regDict) {
-        for (const RegisterDictionary::Entries::value_type &pair: regDict->get_registers())
+        for (const RegisterDictionary::Entries::value_type &pair: regDict->registers())
             allRegs.push_back(pair.second);
         std::sort(allRegs.begin(), allRegs.end(), RegisterDictionary::SortBySize(RegisterDictionary::SortBySize::DESCENDING));
         for (RegisterDescriptor reg: allRegs) {
@@ -101,13 +101,13 @@ RegisterParts::extract(const RegisterDictionary *regDict, bool extractAll) {
 }
 
 std::vector<RegisterDescriptor>
-RegisterParts::listAll(const RegisterDictionary *regDict) const {
+RegisterParts::listAll(const RegisterDictionary::Ptr &regDict) const {
     RegisterParts temp = *this;
     return temp.extract(regDict, true);
 }
 
 std::vector<RegisterDescriptor>
-RegisterParts::listNamed(const RegisterDictionary *regDict) const {
+RegisterParts::listNamed(const RegisterDictionary::Ptr &regDict) const {
     RegisterParts temp = *this;
     return temp.extract(regDict, false);
 }

@@ -7,6 +7,7 @@
 #include <Sawyer/BitVector.h>
 #include <Sawyer/Map.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <integerOps.h>
 #include <rose_strtoull.h>
 #include <sstream>
@@ -868,7 +869,7 @@ SymbolicExprParser::defineRegisters(const InstructionSemantics::BaseSemantics::R
 }
 
 SymbolicExprParser::RegisterSubstituter::Ptr
-SymbolicExprParser::defineRegisters(const RegisterDictionary *regdict) {
+SymbolicExprParser::defineRegisters(const RegisterDictionary::Ptr &regdict) {
     RegisterSubstituter::Ptr retval = RegisterSubstituter::instance(regdict);
     atomTable_.push_back(retval);
     return retval;
@@ -908,7 +909,7 @@ SymbolicExprParser::RegisterToValue::immediateExpansion(const Token &token) {
 
 // class method
 SymbolicExprParser::RegisterSubstituter::Ptr
-SymbolicExprParser::RegisterSubstituter::instance(const RegisterDictionary *regdict) {
+SymbolicExprParser::RegisterSubstituter::instance(const RegisterDictionary::Ptr &regdict) {
     ASSERT_not_null(regdict);
     Ptr functor = Ptr(new RegisterSubstituter(regdict));
     functor->title("Registers");

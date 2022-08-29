@@ -9,6 +9,7 @@
 #include "SageBuilderAsm.h"
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherM68k.h>
 #include <Rose/BinaryAnalysis/Unparser/M68k.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 
 #include <Sawyer/Assert.h>                              // FIXME[Robb P. Matzke 2014-06-19]: replace with "Diagnostics.h"
 
@@ -4864,13 +4865,13 @@ void
 M68k::init()
 {
     // Default register dictionary
-    const RegisterDictionary *regdict = NULL;
+    RegisterDictionary::Ptr regdict;
     if ((family & m68k_freescale) != 0) {
         name("coldfire");
-        regdict = RegisterDictionary::dictionary_coldfire_emac();
+        regdict = RegisterDictionary::instanceColdfireEmac();
     } else {
         name("m68040");
-        regdict = RegisterDictionary::dictionary_m68000();
+        regdict = RegisterDictionary::instanceM68000();
     }
     registerDictionary(regdict);
     REG_IP = registerDictionary()->findOrThrow("pc");

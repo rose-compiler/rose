@@ -1,6 +1,8 @@
 #include <rose.h>
 
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
+#include <Rose/BinaryAnalysis/RegisterNames.h>
 #include <PathFinder/semantics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/SymbolicMemory.h>
 
@@ -32,7 +34,7 @@ symbolicFormat(const std::string &prefix) {
 
 RiscOperatorsPtr
 RiscOperators::instance(const Partitioner2::Partitioner *partitioner,
-                        const RegisterDictionary *regdict,
+                        const RegisterDictionary::Ptr &regdict,
                         const SmtSolver::Ptr &solver) {
     BaseSemantics::SValuePtr protoval = SValue::instance();
     BaseSemantics::RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
@@ -67,7 +69,7 @@ RiscOperators::varComment(const std::string &varName, const std::string &comment
 
 std::string
 RiscOperators::commentForVariable(RegisterDescriptor reg, const std::string &accessMode) const {
-    const RegisterDictionary *regs = currentState()->registerState()->registerDictionary();
+    const RegisterDictionary::Ptr regs = currentState()->registerState()->registerDictionary();
     std::string varComment = RegisterNames(regs)(reg) + " first " + accessMode;
     if (pathInsnIndex_ == INVALID_INDEX && currentInstruction() == NULL) {
         varComment += " by initialization";

@@ -6,8 +6,8 @@ static const char *description =
 #include <rose.h>
 #include <Rose/BinaryAnalysis/SmtSolver.h>
 #include <Rose/CommandLine.h>
-#include <Rose/BinaryAnalysis/Registers.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <sstream>
 #include <string>
 
@@ -40,10 +40,10 @@ main(int argc, char *argv[]) {
     parseCommandLine(argc, argv);
 
     // Create the machine state
-    const RegisterDictionary *registers = RegisterDictionary::dictionary_amd64();
+    RegisterDictionary::Ptr registers = RegisterDictionary::instanceAmd64();
     const RegisterDescriptor EAX = registers->findOrThrow("eax");
     SmtSolverPtr solver;
-    BaseSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(registers, solver);
+    BaseSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instanceFromRegisters(registers, solver);
     ASSERT_always_not_null(ops);
     ops->currentState()->memoryState()->set_byteOrder(ByteOrder::ORDER_LSB);
 

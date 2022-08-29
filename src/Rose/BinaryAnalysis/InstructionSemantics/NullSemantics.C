@@ -2,6 +2,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 #include <Rose/BinaryAnalysis/InstructionSemantics/NullSemantics.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 
 namespace Rose {
 namespace BinaryAnalysis {                              // documented elsewhere
@@ -11,17 +12,48 @@ namespace NullSemantics {                               // documented in the hea
 /*******************************************************************************************************************************
  *                                      RISC operators
  *******************************************************************************************************************************/
+RiscOperators::RiscOperators(const BaseSemantics::SValue::Ptr &protoval, const SmtSolver::Ptr &solver)
+    : BaseSemantics::RiscOperators(protoval, solver) {
+    name("Null");
+}
+
+RiscOperators::RiscOperators(const BaseSemantics::State::Ptr &state, const SmtSolver::Ptr &solver)
+    : BaseSemantics::RiscOperators(state, solver) {
+    name("Null");
+}
+
+RiscOperators::~RiscOperators() {}
+
 
 // class method
-RiscOperatorsPtr
-RiscOperators::instance(const RegisterDictionary *regdict)
-{
-    BaseSemantics::SValuePtr protoval = SValue::instance();
-    BaseSemantics::RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
-    BaseSemantics::MemoryStatePtr memory = MemoryState::instance(protoval, protoval);
-    BaseSemantics::StatePtr state = State::instance(registers, memory);
-    SmtSolverPtr solver;
-    return RiscOperatorsPtr(new RiscOperators(state, solver));
+RiscOperators::Ptr
+RiscOperators::instanceFromRegisters(const RegisterDictionary::Ptr &regdict) {
+    BaseSemantics::SValue::Ptr protoval = SValue::instance();
+    BaseSemantics::RegisterState::Ptr registers = RegisterState::instance(protoval, regdict);
+    BaseSemantics::MemoryState::Ptr memory = MemoryState::instance(protoval, protoval);
+    BaseSemantics::State::Ptr state = State::instance(registers, memory);
+    SmtSolver::Ptr solver;
+    return Ptr(new RiscOperators(state, solver));
+}
+
+RiscOperators::Ptr
+RiscOperators::instanceFromProtoval(const BaseSemantics::SValue::Ptr &protoval, const SmtSolver::Ptr &solver) {
+    return Ptr(new RiscOperators(protoval, solver));
+}
+
+RiscOperators::Ptr
+RiscOperators::instanceFromState(const BaseSemantics::State::Ptr &state, const SmtSolver::Ptr &solver) {
+    return Ptr(new RiscOperators(state, solver));
+}
+
+BaseSemantics::RiscOperators::Ptr
+RiscOperators::create(const BaseSemantics::SValue::Ptr &protoval, const SmtSolver::Ptr &solver) const {
+    return instanceFromProtoval(protoval, solver);
+}
+
+BaseSemantics::RiscOperators::Ptr
+RiscOperators::create(const BaseSemantics::State::Ptr &state, const SmtSolver::Ptr &solver) const {
+    return instanceFromState(state, solver);
 }
 
 BaseSemantics::SValuePtr

@@ -3,6 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 
@@ -260,7 +261,7 @@ protected:
     // Static allocating constructors
 public:
     /** Instantiate a new RiscOperators object and configure it using default values. */
-    static RiscOperatorsPtr instance(const RegisterDictionary *regdict, const SmtSolverPtr &solver = SmtSolverPtr(),
+    static RiscOperatorsPtr instance(const RegisterDictionaryPtr &regdict, const SmtSolverPtr &solver = SmtSolverPtr(),
                                      SemanticMemoryParadigm memoryParadigm = LIST_BASED_MEMORY) {
         InstructionSemantics::BaseSemantics::SValuePtr protoval = SValue::instance();
         InstructionSemantics::BaseSemantics::RegisterStatePtr registers = RegisterState::instance(protoval, regdict);

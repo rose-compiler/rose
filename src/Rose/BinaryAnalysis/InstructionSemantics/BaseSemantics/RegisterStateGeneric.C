@@ -6,6 +6,8 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Formatter.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RiscOperators.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/Util.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
+#include <Rose/BinaryAnalysis/RegisterNames.h>
 #include <Rose/Diagnostics.h>
 #include <Rose/FormatRestorer.h>
 
@@ -45,7 +47,7 @@ RegisterStateGeneric::zero()
 {
     // We're initializing with a concrete value, so it really doesn't matter whether we initialize large registers
     // or small registers.  Constant folding will adjust things as necessary when we start reading registers.
-    std::vector<RegisterDescriptor> regs = regdict->get_largest_registers();
+    std::vector<RegisterDescriptor> regs = regdict->getLargestRegisters();
     initialize_nonoverlapping(regs, true);
 }
 
@@ -53,14 +55,14 @@ void
 RegisterStateGeneric::initialize_large()
 {
     ASSERT_not_null(regdict);
-    std::vector<RegisterDescriptor> regs = regdict->get_largest_registers();
+    std::vector<RegisterDescriptor> regs = regdict->getLargestRegisters();
     initialize_nonoverlapping(regs, false);
 }
 
 void
 RegisterStateGeneric::initialize_small()
 {
-    std::vector<RegisterDescriptor> regs = regdict->get_smallest_registers();
+    std::vector<RegisterDescriptor> regs = regdict->getSmallestRegisters();
     initialize_nonoverlapping(regs, false);
 }
 
@@ -820,7 +822,7 @@ RegisterStateGeneric::hash(Combinatorics::Hasher &hasher, RiscOperators *ops) co
     // was stored as a single piece or broken into multiple smaller pieces.
     ASSERT_not_null(ops);
     ASSERT_not_null(regdict);
-    std::vector<RegisterDescriptor> regs = regdict->get_largest_registers();
+    std::vector<RegisterDescriptor> regs = regdict->getLargestRegisters();
     for (RegisterDescriptor reg: regs) {
         ExtentMap parts = stored_parts(reg);
         for (const auto &node: parts) {
@@ -839,7 +841,7 @@ RegisterStateGeneric::hash(Combinatorics::Hasher &hasher, RiscOperators *ops) co
 void
 RegisterStateGeneric::print(std::ostream &stream, Formatter &fmt) const
 {
-    const RegisterDictionary *regdict = fmt.registerDictionary();
+    RegisterDictionary::Ptr regdict = fmt.registerDictionary();
     if (!regdict)
         regdict = registerDictionary();
     RegisterNames regnames(regdict);

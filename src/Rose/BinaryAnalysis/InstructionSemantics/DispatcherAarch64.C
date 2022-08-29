@@ -1797,6 +1797,43 @@ struct IP_yield: P {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+DispatcherAarch64::DispatcherAarch64()
+    : BaseSemantics::Dispatcher(64, RegisterDictionary::instanceAarch64()) {}
+
+DispatcherAarch64::DispatcherAarch64(const BaseSemantics::RiscOperators::Ptr &ops, const RegisterDictionary::Ptr &regs)
+    : BaseSemantics::Dispatcher(ops, 64, regs ? regs : RegisterDictionary::instanceAarch64()) {
+    initializeRegisterDescriptors();
+    initializeInsnDispatchTable();
+    initializeMemory();
+    initializeState(ops->currentState());
+}
+
+DispatcherAarch64::~DispatcherAarch64() {}
+
+DispatcherAarch64::Ptr
+DispatcherAarch64::instance() {
+    return Ptr(new DispatcherAarch64);
+}
+
+DispatcherAarch64::Ptr
+DispatcherAarch64::instance(const BaseSemantics::RiscOperators::Ptr &ops, const RegisterDictionary::Ptr &regs) {
+    return DispatcherAarch64Ptr(new DispatcherAarch64(ops, regs));
+}
+
+BaseSemantics::Dispatcher::Ptr
+DispatcherAarch64::create(const BaseSemantics::RiscOperators::Ptr &ops, size_t addrWidth,
+                          const RegisterDictionary::Ptr &regs) const {
+    ASSERT_require(0 == addrWidth || 64 == addrWidth);
+    return instance(ops, regs);
+}
+
+DispatcherAarch64::Ptr
+DispatcherAarch64::promote(const BaseSemantics::Dispatcher::Ptr &d) {
+    Ptr retval = boost::dynamic_pointer_cast<DispatcherAarch64>(d);
+    ASSERT_not_null(retval);
+    return retval;
+}
+
 void
 DispatcherAarch64::initializeInsnDispatchTable() {
     iprocSet(ARM64_INS_ADD,    new Aarch64::IP_add);
@@ -1999,7 +2036,7 @@ DispatcherAarch64::callReturnRegister() const {
 }
 
 void
-DispatcherAarch64::set_register_dictionary(const RegisterDictionary *regdict) {
+DispatcherAarch64::set_register_dictionary(const RegisterDictionary::Ptr &regdict) {
     BaseSemantics::Dispatcher::set_register_dictionary(regdict);
     initializeRegisterDescriptors();
 }

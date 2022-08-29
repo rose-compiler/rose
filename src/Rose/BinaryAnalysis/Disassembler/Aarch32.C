@@ -6,6 +6,7 @@
 #include <Rose/BinaryAnalysis/Disassembler/Aarch32.h>
 #include <Rose/BinaryAnalysis/Unparser/Aarch32.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherAarch32.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 
 using namespace Rose::Diagnostics;
 
@@ -26,7 +27,7 @@ Aarch32::Aarch32(Modes modes)
     }
     wordSizeBytes(4);
     byteOrder(ByteOrder::ORDER_LSB);
-    registerDictionary(RegisterDictionary::dictionary_aarch32());
+    registerDictionary(RegisterDictionary::instanceAarch32());
     callingConventions(CallingConvention::dictionaryAarch32());
     p_proto_dispatcher = InstructionSemantics::DispatcherAarch32::instance();
 
@@ -600,7 +601,7 @@ Aarch32::makeCoprocRegister(int registerNumber) {
 RegisterDescriptor
 Aarch32::makeRegister(arm_reg reg) {
     ASSERT_not_null(registerDictionary());
-    const RegisterDictionary &dict = *registerDictionary();
+    RegisterDictionary::Ptr dict = registerDictionary();
     RegisterDescriptor retval;
 
     switch (reg) {
@@ -609,335 +610,335 @@ Aarch32::makeRegister(arm_reg reg) {
             ASSERT_not_reachable("invalid register from Capstone");
         case ARM_REG_APSR:
         case ARM_REG_CPSR:                              // alias for APSR
-            retval = dict.find("apsr");
+            retval = dict->find("apsr");
             break;
         case ARM_REG_APSR_NZCV:
-            retval = dict.find("apsr_nzcv");
+            retval = dict->find("apsr_nzcv");
             break;
         case ARM_REG_LR:
-            retval = dict.find("lr");
+            retval = dict->find("lr");
             break;
         case ARM_REG_PC:
-            retval = dict.find("pc");
+            retval = dict->find("pc");
             break;
         case ARM_REG_SP:
-            retval = dict.find("sp");
+            retval = dict->find("sp");
             break;
         case ARM_REG_R0:
-            retval = dict.find("r0");
+            retval = dict->find("r0");
             break;
         case ARM_REG_R1:
-            retval = dict.find("r1");
+            retval = dict->find("r1");
             break;
         case ARM_REG_R2:
-            retval = dict.find("r2");
+            retval = dict->find("r2");
             break;
         case ARM_REG_R3:
-            retval = dict.find("r3");
+            retval = dict->find("r3");
             break;
         case ARM_REG_R4:
-            retval = dict.find("r4");
+            retval = dict->find("r4");
             break;
         case ARM_REG_R5:
-            retval = dict.find("r5");
+            retval = dict->find("r5");
             break;
         case ARM_REG_R6:
-            retval = dict.find("r6");
+            retval = dict->find("r6");
             break;
         case ARM_REG_R7:
-            retval = dict.find("r7");
+            retval = dict->find("r7");
             break;
         case ARM_REG_R8:
-            retval = dict.find("r8");
+            retval = dict->find("r8");
             break;
         case ARM_REG_R9:
-            retval = dict.find("r9");
+            retval = dict->find("r9");
             break;
         case ARM_REG_R10:
-            retval = dict.find("r10");
+            retval = dict->find("r10");
             break;
         case ARM_REG_R11:
-            retval = dict.find("r11");
+            retval = dict->find("r11");
             break;
         case ARM_REG_R12:
-            retval = dict.find("r12");
+            retval = dict->find("r12");
             break;
         case ARM_REG_Q0:
-            retval = dict.find("q0");
+            retval = dict->find("q0");
             break;
         case ARM_REG_Q1:
-            retval = dict.find("q1");
+            retval = dict->find("q1");
             break;
         case ARM_REG_Q2:
-            retval = dict.find("q2");
+            retval = dict->find("q2");
             break;
         case ARM_REG_Q3:
-            retval = dict.find("q3");
+            retval = dict->find("q3");
             break;
         case ARM_REG_Q4:
-            retval = dict.find("q4");
+            retval = dict->find("q4");
             break;
         case ARM_REG_Q5:
-            retval = dict.find("q5");
+            retval = dict->find("q5");
             break;
         case ARM_REG_Q6:
-            retval = dict.find("q6");
+            retval = dict->find("q6");
             break;
         case ARM_REG_Q7:
-            retval = dict.find("q7");
+            retval = dict->find("q7");
             break;
         case ARM_REG_Q8:
-            retval = dict.find("q8");
+            retval = dict->find("q8");
             break;
         case ARM_REG_Q9:
-            retval = dict.find("q9");
+            retval = dict->find("q9");
             break;
         case ARM_REG_Q10:
-            retval = dict.find("q10");
+            retval = dict->find("q10");
             break;
         case ARM_REG_Q11:
-            retval = dict.find("q11");
+            retval = dict->find("q11");
             break;
         case ARM_REG_Q12:
-            retval = dict.find("q12");
+            retval = dict->find("q12");
             break;
         case ARM_REG_Q13:
-            retval = dict.find("q13");
+            retval = dict->find("q13");
             break;
         case ARM_REG_Q14:
-            retval = dict.find("q14");
+            retval = dict->find("q14");
             break;
         case ARM_REG_Q15:
-            retval = dict.find("q15");
+            retval = dict->find("q15");
             break;
         case ARM_REG_D0:
-            retval = dict.find("d0");
+            retval = dict->find("d0");
             break;
         case ARM_REG_D1:
-            retval = dict.find("d1");
+            retval = dict->find("d1");
             break;
         case ARM_REG_D2:
-            retval = dict.find("d2");
+            retval = dict->find("d2");
             break;
         case ARM_REG_D3:
-            retval = dict.find("d3");
+            retval = dict->find("d3");
             break;
         case ARM_REG_D4:
-            retval = dict.find("d4");
+            retval = dict->find("d4");
             break;
         case ARM_REG_D5:
-            retval = dict.find("d5");
+            retval = dict->find("d5");
             break;
         case ARM_REG_D6:
-            retval = dict.find("d6");
+            retval = dict->find("d6");
             break;
         case ARM_REG_D7:
-            retval = dict.find("d7");
+            retval = dict->find("d7");
             break;
         case ARM_REG_D8:
-            retval = dict.find("d8");
+            retval = dict->find("d8");
             break;
         case ARM_REG_D9:
-            retval = dict.find("d9");
+            retval = dict->find("d9");
             break;
         case ARM_REG_D10:
-            retval = dict.find("d10");
+            retval = dict->find("d10");
             break;
         case ARM_REG_D11:
-            retval = dict.find("d11");
+            retval = dict->find("d11");
             break;
         case ARM_REG_D12:
-            retval = dict.find("d12");
+            retval = dict->find("d12");
             break;
         case ARM_REG_D13:
-            retval = dict.find("d13");
+            retval = dict->find("d13");
             break;
         case ARM_REG_D14:
-            retval = dict.find("d14");
+            retval = dict->find("d14");
             break;
         case ARM_REG_D15:
-            retval = dict.find("d15");
+            retval = dict->find("d15");
             break;
         case ARM_REG_D16:
-            retval = dict.find("d16");
+            retval = dict->find("d16");
             break;
         case ARM_REG_D17:
-            retval = dict.find("d17");
+            retval = dict->find("d17");
             break;
         case ARM_REG_D18:
-            retval = dict.find("d18");
+            retval = dict->find("d18");
             break;
         case ARM_REG_D19:
-            retval = dict.find("d19");
+            retval = dict->find("d19");
             break;
         case ARM_REG_D20:
-            retval = dict.find("d20");
+            retval = dict->find("d20");
             break;
         case ARM_REG_D21:
-            retval = dict.find("d21");
+            retval = dict->find("d21");
             break;
         case ARM_REG_D22:
-            retval = dict.find("d22");
+            retval = dict->find("d22");
             break;
         case ARM_REG_D23:
-            retval = dict.find("d23");
+            retval = dict->find("d23");
             break;
         case ARM_REG_D24:
-            retval = dict.find("d24");
+            retval = dict->find("d24");
             break;
         case ARM_REG_D25:
-            retval = dict.find("d25");
+            retval = dict->find("d25");
             break;
         case ARM_REG_D26:
-            retval = dict.find("d26");
+            retval = dict->find("d26");
             break;
         case ARM_REG_D27:
-            retval = dict.find("d27");
+            retval = dict->find("d27");
             break;
         case ARM_REG_D28:
-            retval = dict.find("d28");
+            retval = dict->find("d28");
             break;
         case ARM_REG_D29:
-            retval = dict.find("d29");
+            retval = dict->find("d29");
             break;
         case ARM_REG_D30:
-            retval = dict.find("d30");
+            retval = dict->find("d30");
             break;
         case ARM_REG_D31:
-            retval = dict.find("d31");
+            retval = dict->find("d31");
             break;
         case ARM_REG_S0:
-            retval = dict.find("s0");
+            retval = dict->find("s0");
             break;
         case ARM_REG_S1:
-            retval = dict.find("s1");
+            retval = dict->find("s1");
             break;
         case ARM_REG_S2:
-            retval = dict.find("s2");
+            retval = dict->find("s2");
             break;
         case ARM_REG_S3:
-            retval = dict.find("s3");
+            retval = dict->find("s3");
             break;
         case ARM_REG_S4:
-            retval = dict.find("s4");
+            retval = dict->find("s4");
             break;
         case ARM_REG_S5:
-            retval = dict.find("s5");
+            retval = dict->find("s5");
             break;
         case ARM_REG_S6:
-            retval = dict.find("s6");
+            retval = dict->find("s6");
             break;
         case ARM_REG_S7:
-            retval = dict.find("s7");
+            retval = dict->find("s7");
             break;
         case ARM_REG_S8:
-            retval = dict.find("s8");
+            retval = dict->find("s8");
             break;
         case ARM_REG_S9:
-            retval = dict.find("s9");
+            retval = dict->find("s9");
             break;
         case ARM_REG_S10:
-            retval = dict.find("s10");
+            retval = dict->find("s10");
             break;
         case ARM_REG_S11:
-            retval = dict.find("s11");
+            retval = dict->find("s11");
             break;
         case ARM_REG_S12:
-            retval = dict.find("s12");
+            retval = dict->find("s12");
             break;
         case ARM_REG_S13:
-            retval = dict.find("s13");
+            retval = dict->find("s13");
             break;
         case ARM_REG_S14:
-            retval = dict.find("s14");
+            retval = dict->find("s14");
             break;
         case ARM_REG_S15:
-            retval = dict.find("s15");
+            retval = dict->find("s15");
             break;
         case ARM_REG_S16:
-            retval = dict.find("s16");
+            retval = dict->find("s16");
             break;
         case ARM_REG_S17:
-            retval = dict.find("s17");
+            retval = dict->find("s17");
             break;
         case ARM_REG_S18:
-            retval = dict.find("s18");
+            retval = dict->find("s18");
             break;
         case ARM_REG_S19:
-            retval = dict.find("s19");
+            retval = dict->find("s19");
             break;
         case ARM_REG_S20:
-            retval = dict.find("s20");
+            retval = dict->find("s20");
             break;
         case ARM_REG_S21:
-            retval = dict.find("s21");
+            retval = dict->find("s21");
             break;
         case ARM_REG_S22:
-            retval = dict.find("s22");
+            retval = dict->find("s22");
             break;
         case ARM_REG_S23:
-            retval = dict.find("s23");
+            retval = dict->find("s23");
             break;
         case ARM_REG_S24:
-            retval = dict.find("s24");
+            retval = dict->find("s24");
             break;
         case ARM_REG_S25:
-            retval = dict.find("s25");
+            retval = dict->find("s25");
             break;
         case ARM_REG_S26:
-            retval = dict.find("s26");
+            retval = dict->find("s26");
             break;
         case ARM_REG_S27:
-            retval = dict.find("s27");
+            retval = dict->find("s27");
             break;
         case ARM_REG_S28:
-            retval = dict.find("s28");
+            retval = dict->find("s28");
             break;
         case ARM_REG_S29:
-            retval = dict.find("s29");
+            retval = dict->find("s29");
             break;
         case ARM_REG_S30:
-            retval = dict.find("s30");
+            retval = dict->find("s30");
             break;
         case ARM_REG_S31:
-            retval = dict.find("s31");
+            retval = dict->find("s31");
             break;
         case ARM_REG_SPSR:
             // When we're decoding an instruction to produce ROSE's AST we don't know what interrupt handling state the
             // processor will be in when the instruction is eventually executed. Since the instruction has a single encoding
             // for all the banked SPSR registers, we use a placeholder SPSR register that will be resolved to the correct
             // hardware SPSR_* register when the instruction is executed.
-            retval = dict.find("spsr");
+            retval = dict->find("spsr");
             break;
         case ARM_REG_FPSID:
-            retval = dict.find("fpsid");
+            retval = dict->find("fpsid");
             break;
         case ARM_REG_FPSCR:
-            retval = dict.find("fpscr");
+            retval = dict->find("fpscr");
             break;
         case ARM_REG_FPSCR_NZCV:
-            retval = dict.find("fpscr_nzcv");
+            retval = dict->find("fpscr_nzcv");
             break;
         case ARM_REG_FPEXC:
-            retval = dict.find("fpexc");
+            retval = dict->find("fpexc");
             break;
         case ARM_REG_FPINST:
-            retval = dict.find("fpinst");
+            retval = dict->find("fpinst");
             break;
         case ARM_REG_FPINST2:
-            retval = dict.find("fpinst2");
+            retval = dict->find("fpinst2");
             break;
         case ARM_REG_MVFR0:
-            retval = dict.find("mvfr0");
+            retval = dict->find("mvfr0");
             break;
         case ARM_REG_MVFR1:
-            retval = dict.find("mvfr1");
+            retval = dict->find("mvfr1");
             break;
         case ARM_REG_MVFR2:
-            retval = dict.find("mvfr2");
+            retval = dict->find("mvfr2");
             break;
         case ARM_REG_ITSTATE:
-            retval = dict.find("itstate");
+            retval = dict->find("itstate");
             break;
     }
 
@@ -948,7 +949,7 @@ Aarch32::makeRegister(arm_reg reg) {
 SgAsmExpression*
 Aarch32::makeSystemRegister(arm_sysreg capreg) {
     ASSERT_not_null(registerDictionary());
-    const RegisterDictionary &dict = *registerDictionary();
+    RegisterDictionary::Ptr dict = registerDictionary();
     SgAsmExpression *retval = nullptr;
     RegisterDescriptor reg;
 
@@ -964,25 +965,25 @@ Aarch32::makeSystemRegister(arm_sysreg capreg) {
         BitOps::nSet((unsigned)capreg) > 1) {
         auto regList = new SgAsmRegisterNames;
         if ((capreg & ARM_SYSREG_SPSR_C) != 0) {
-            reg = dict.find("spsr_control");
+            reg = dict->find("spsr_control");
             auto regExpr = new SgAsmDirectRegisterExpression(reg);
             regExpr->set_type(registerType(reg));
             regList->get_registers().push_back(regExpr);
         }
         if ((capreg & ARM_SYSREG_SPSR_X) != 0) {
-            reg = dict.find("spsr_extension");
+            reg = dict->find("spsr_extension");
             auto regExpr = new SgAsmDirectRegisterExpression(reg);
             regExpr->set_type(registerType(reg));
             regList->get_registers().push_back(regExpr);
         }
         if ((capreg & ARM_SYSREG_SPSR_S) != 0) {
-            reg = dict.find("spsr_status");
+            reg = dict->find("spsr_status");
             auto regExpr = new SgAsmDirectRegisterExpression(reg);
             regExpr->set_type(registerType(reg));
             regList->get_registers().push_back(regExpr);
         }
         if ((capreg & ARM_SYSREG_SPSR_F) != 0) {
-            reg = dict.find("spsr_flags");
+            reg = dict->find("spsr_flags");
             auto regExpr = new SgAsmDirectRegisterExpression(reg);
             regExpr->set_type(registerType(reg));
             regList->get_registers().push_back(regExpr);
@@ -992,25 +993,25 @@ Aarch32::makeSystemRegister(arm_sysreg capreg) {
                BitOps::nSet((unsigned)capreg) > 1) {
         auto regList = new SgAsmRegisterNames;
         if ((capreg & ARM_SYSREG_CPSR_C) != 0) {
-            reg = dict.find("cpsr_control");
+            reg = dict->find("cpsr_control");
             auto regExpr = new SgAsmDirectRegisterExpression(reg);
             regExpr->set_type(registerType(reg));
             regList->get_registers().push_back(regExpr);
         }
         if ((capreg & ARM_SYSREG_CPSR_X) != 0) {
-            reg = dict.find("cpsr_extension");
+            reg = dict->find("cpsr_extension");
             auto regExpr = new SgAsmDirectRegisterExpression(reg);
             regExpr->set_type(registerType(reg));
             regList->get_registers().push_back(regExpr);
         }
         if ((capreg & ARM_SYSREG_CPSR_S) != 0) {
-            reg = dict.find("cpsr_status");
+            reg = dict->find("cpsr_status");
             auto regExpr = new SgAsmDirectRegisterExpression(reg);
             regExpr->set_type(registerType(reg));
             regList->get_registers().push_back(regExpr);
         }
         if ((capreg & ARM_SYSREG_CPSR_F) != 0) {
-            reg = dict.find("cpsr_flags");
+            reg = dict->find("cpsr_flags");
             auto regExpr = new SgAsmDirectRegisterExpression(reg);
             regExpr->set_type(registerType(reg));
             regList->get_registers().push_back(regExpr);
@@ -1029,43 +1030,43 @@ Aarch32::makeSystemRegister(arm_sysreg capreg) {
             // for all the banked SPSR registers, we use a placeholder SPSR register that will be resolved to the correct
             // hardware SPSR_* register when the instruction is executed.
             case ARM_SYSREG_SPSR_C:
-                reg = dict.find("spsr_control");
+                reg = dict->find("spsr_control");
                 break;
             case ARM_SYSREG_SPSR_X:
-                reg = dict.find("spsr_extension");
+                reg = dict->find("spsr_extension");
                 break;
             case ARM_SYSREG_SPSR_S:
-                reg = dict.find("spsr_status");
+                reg = dict->find("spsr_status");
                 break;
             case ARM_SYSREG_SPSR_F:
-                reg = dict.find("spsr_flags");
+                reg = dict->find("spsr_flags");
                 break;
 
             case ARM_SYSREG_CPSR_C:
-                reg = dict.find("cpsr_control");
+                reg = dict->find("cpsr_control");
                 break;
             case ARM_SYSREG_CPSR_X:
-                reg = dict.find("cpsr_extension");
+                reg = dict->find("cpsr_extension");
                 break;
             case ARM_SYSREG_CPSR_S:
-                reg = dict.find("cpsr_status");
+                reg = dict->find("cpsr_status");
                 break;
             case ARM_SYSREG_CPSR_F:
-                reg = dict.find("cpsr_flags");
+                reg = dict->find("cpsr_flags");
                 break;
             case ARM_SYSREG_APSR:
-                reg = dict.find("apsr");
+                reg = dict->find("apsr");
                 break;
             case ARM_SYSREG_APSR_NZCVQ:
-                reg = dict.find("apsr_nzcvq");
+                reg = dict->find("apsr_nzcvq");
                 break;
             case ARM_SYSREG_APSR_NZCVQG: {                  // undocumented in capstone, but perhaps N, Z, C, V, Q, and GE
                 // These are discontiguous parts of the register, so we need to create a list of register parts.
-                RegisterDescriptor reg = dict.find("apsr_nzcvq");
+                RegisterDescriptor reg = dict->find("apsr_nzcvq");
                 auto nzcvq = new SgAsmDirectRegisterExpression(reg);
                 nzcvq->set_type(registerType(reg));
 
-                reg = dict.find("apsr_ge");
+                reg = dict->find("apsr_ge");
                 auto ge = new SgAsmDirectRegisterExpression(reg);
                 ge->set_type(registerType(reg));
 
@@ -1081,7 +1082,7 @@ Aarch32::makeSystemRegister(arm_sysreg capreg) {
 
             // IAPSR (not sure what this is)
             case ARM_SYSREG_IAPSR:
-                reg = dict.find("iapsr");
+                reg = dict->find("iapsr");
                 break;
             case ARM_SYSREG_IAPSR_G:
                 ASSERT_not_implemented("iapsr_g");          // undocumented
@@ -1092,7 +1093,7 @@ Aarch32::makeSystemRegister(arm_sysreg capreg) {
 
             // EAPSR (not sure what this is)
             case ARM_SYSREG_EAPSR:
-                reg = dict.find("eapsr");
+                reg = dict->find("eapsr");
                 break;
             case ARM_SYSREG_EAPSR_G:
                 ASSERT_not_implemented("eapsr_g");          // undocumented
@@ -1110,22 +1111,22 @@ Aarch32::makeSystemRegister(arm_sysreg capreg) {
 
             // Other registers with unclear purposes
             case ARM_SYSREG_IPSR:
-                reg = dict.find("ipsr");
+                reg = dict->find("ipsr");
                 break;
             case ARM_SYSREG_EPSR:
-                reg = dict.find("epsr");
+                reg = dict->find("epsr");
                 break;
             case ARM_SYSREG_IEPSR:
-                reg = dict.find("iepsr");
+                reg = dict->find("iepsr");
                 break;
             case ARM_SYSREG_MSP:
-                reg = dict.find("msp");
+                reg = dict->find("msp");
                 break;
             case ARM_SYSREG_PSP:
-                reg = dict.find("psp");
+                reg = dict->find("psp");
                 break;
             case ARM_SYSREG_PRIMASK:
-                reg = dict.find("primask");
+                reg = dict->find("primask");
                 break;
             case ARM_SYSREG_BASEPRI:
                 ASSERT_not_implemented("basepri");          // undocumented
@@ -1134,108 +1135,108 @@ Aarch32::makeSystemRegister(arm_sysreg capreg) {
             case ARM_SYSREG_FAULTMASK:
                 ASSERT_not_implemented("faultmask");        // undocumented
             case ARM_SYSREG_CONTROL:
-                reg = dict.find("control");
+                reg = dict->find("control");
                 break;
 
             // Banked registers
             case ARM_SYSREG_R8_USR:
-                reg = dict.find("r8_usr");
+                reg = dict->find("r8_usr");
                 break;
             case ARM_SYSREG_R9_USR:
-                reg = dict.find("r9_usr");
+                reg = dict->find("r9_usr");
                 break;
             case ARM_SYSREG_R10_USR:
-                reg = dict.find("r10_usr");
+                reg = dict->find("r10_usr");
                 break;
             case ARM_SYSREG_R11_USR:
-                reg = dict.find("r11_usr");
+                reg = dict->find("r11_usr");
                 break;
             case ARM_SYSREG_R12_USR:
-                reg = dict.find("r12_usr");
+                reg = dict->find("r12_usr");
                 break;
             case ARM_SYSREG_SP_USR:
-                reg = dict.find("sp_usr");
+                reg = dict->find("sp_usr");
                 break;
             case ARM_SYSREG_LR_USR:
-                reg = dict.find("lr_usr");
+                reg = dict->find("lr_usr");
                 break;
             case ARM_SYSREG_R8_FIQ:
-                reg = dict.find("r8_fiq");
+                reg = dict->find("r8_fiq");
                 break;
             case ARM_SYSREG_R9_FIQ:
-                reg = dict.find("r9_fiz");
+                reg = dict->find("r9_fiz");
                 break;
             case ARM_SYSREG_R10_FIQ:
-                reg = dict.find("r10_fiq");
+                reg = dict->find("r10_fiq");
                 break;
             case ARM_SYSREG_R11_FIQ:
-                reg = dict.find("r11_fiq");
+                reg = dict->find("r11_fiq");
                 break;
             case ARM_SYSREG_R12_FIQ:
-                reg = dict.find("r12_fiq");
+                reg = dict->find("r12_fiq");
                 break;
             case ARM_SYSREG_SP_FIQ:
-                reg = dict.find("sp_fiq");
+                reg = dict->find("sp_fiq");
                 break;
             case ARM_SYSREG_LR_FIQ:
-                reg = dict.find("lr_fiq");
+                reg = dict->find("lr_fiq");
                 break;
             case ARM_SYSREG_LR_IRQ:
-                reg = dict.find("lr_irq");
+                reg = dict->find("lr_irq");
                 break;
             case ARM_SYSREG_SP_IRQ:
-                reg = dict.find("sp_irq");
+                reg = dict->find("sp_irq");
                 break;
             case ARM_SYSREG_LR_SVC:
-                reg = dict.find("lr_svc");
+                reg = dict->find("lr_svc");
                 break;
             case ARM_SYSREG_SP_SVC:
-                reg = dict.find("sp_svc");
+                reg = dict->find("sp_svc");
                 break;
             case ARM_SYSREG_LR_ABT:
-                reg = dict.find("lr_abt");
+                reg = dict->find("lr_abt");
                 break;
             case ARM_SYSREG_SP_ABT:
-                reg = dict.find("sp_abt");
+                reg = dict->find("sp_abt");
                 break;
             case ARM_SYSREG_LR_UND:
-                reg = dict.find("lr_und");
+                reg = dict->find("lr_und");
                 break;
             case ARM_SYSREG_SP_UND:
-                reg = dict.find("sp_und");
+                reg = dict->find("sp_und");
                 break;
             case ARM_SYSREG_LR_MON:
-                reg = dict.find("lr_mon");
+                reg = dict->find("lr_mon");
                 break;
             case ARM_SYSREG_SP_MON:
-                reg = dict.find("sp_mon");
+                reg = dict->find("sp_mon");
                 break;
             case ARM_SYSREG_ELR_HYP:
-                reg = dict.find("sp_hyp");
+                reg = dict->find("sp_hyp");
                 break;
             case ARM_SYSREG_SP_HYP:
-                reg = dict.find("sp_hyp");
+                reg = dict->find("sp_hyp");
                 break;
             case ARM_SYSREG_SPSR_FIQ:
-                reg = dict.find("spsr_fiq");
+                reg = dict->find("spsr_fiq");
                 break;
             case ARM_SYSREG_SPSR_IRQ:
-                reg = dict.find("spsr_irq");
+                reg = dict->find("spsr_irq");
                 break;
             case ARM_SYSREG_SPSR_SVC:
-                reg = dict.find("spsr_svc");
+                reg = dict->find("spsr_svc");
                 break;
             case ARM_SYSREG_SPSR_ABT:
-                reg = dict.find("spsr_abt");
+                reg = dict->find("spsr_abt");
                 break;
             case ARM_SYSREG_SPSR_UND:
-                reg = dict.find("spsr_und");
+                reg = dict->find("spsr_und");
                 break;
             case ARM_SYSREG_SPSR_MON:
-                reg = dict.find("spsr_mon");
+                reg = dict->find("spsr_mon");
                 break;
             case ARM_SYSREG_SPSR_HYP:
-                reg = dict.find("spsr_hyp");
+                reg = dict->find("spsr_hyp");
                 break;
 
             default:

@@ -2,6 +2,7 @@
 
 #include <Rose/BinaryAnalysis/InstructionSemantics/ConcreteSemantics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Sawyer/CommandLine.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
 
@@ -35,8 +36,8 @@ class VirtualMachine {
 public:
     VirtualMachine(const P2::Partitioner &partitioner, const Settings &settings)
         : wordSize_(0), stackVa_(settings.stackVa), returnMarker_(0xbeef0967) {
-        const RegisterDictionary *regs = partitioner.instructionProvider().registerDictionary();
-        ops_ = ConcreteSemantics::RiscOperators::instance(regs);
+        RegisterDictionary::Ptr regs = partitioner.instructionProvider().registerDictionary();
+        ops_ = ConcreteSemantics::RiscOperators::instanceFromRegisters(regs);
         if (settings.traceSemantics) {
             BaseSemantics::RiscOperatorsPtr traceOps = TraceSemantics::RiscOperators::instance(ops_);
             cpu_ = partitioner.newDispatcher(traceOps);

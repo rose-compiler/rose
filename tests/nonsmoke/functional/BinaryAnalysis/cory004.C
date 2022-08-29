@@ -7,6 +7,7 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #include <rose.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherX86.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 
 using namespace Rose::BinaryAnalysis;
 using namespace Rose::BinaryAnalysis::InstructionSemantics;
@@ -19,13 +20,13 @@ typedef boost::shared_ptr<class SymbolicRegisterState> SymbolicRegisterStatePtr;
 
 class SymbolicRegisterState: public BaseSemantics::RegisterStateGeneric {
 protected:
-    explicit SymbolicRegisterState(const SymbolicValuePtr &proto, const RegisterDictionary *rd):
+    explicit SymbolicRegisterState(const SymbolicValuePtr &proto, const RegisterDictionary::Ptr &rd):
         BaseSemantics::RegisterStateGeneric(proto, rd) {
         myclear();
     }
 
 public:
-    static SymbolicRegisterStatePtr instance(const SymbolicValuePtr &proto, const RegisterDictionary *rd) {
+    static SymbolicRegisterStatePtr instance(const SymbolicValuePtr &proto, const RegisterDictionary::Ptr &rd) {
         return SymbolicRegisterStatePtr(new SymbolicRegisterState(proto, rd));
     }
 
@@ -39,7 +40,7 @@ public:
 int
 main() {
     SymbolicValuePtr svalue = SymbolicValue::instance();
-    const RegisterDictionary* regdict = RegisterDictionary::dictionary_pentium4();
+    RegisterDictionary::Ptr regdict = RegisterDictionary::instancePentium4();
     SymbolicRegisterStatePtr regs = SymbolicRegisterState::instance(svalue, regdict);
     std::cout <<"Initialized registers:\n" <<*regs;
 }

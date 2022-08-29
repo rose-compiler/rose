@@ -3,6 +3,7 @@
 
 #include "RSIM_Common.h"
 
+#include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/ConcreteSemantics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/NullSemantics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherX86.h>
@@ -92,7 +93,7 @@ protected:
 
 public:
     static RiscOperatorsPtr instance(Architecture arch, RSIM_Thread *thread,
-                                     const Rose::BinaryAnalysis::RegisterDictionary *regdict,
+                                     const Rose::BinaryAnalysis::RegisterDictionaryPtr &regdict,
                                      const Rose::BinaryAnalysis::SmtSolverPtr &solver=Rose::BinaryAnalysis::SmtSolverPtr()) {
         using namespace Rose::BinaryAnalysis::InstructionSemantics;
         BaseSemantics::SValuePtr protoval = SValue::instance();

@@ -4,6 +4,7 @@
 #include <PathFinder/semantics.h>
 
 #include <AsmUnparser_compat.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BinaryAnalysis/SourceLocations.h>
 #include <Rose/BinaryAnalysis/SymbolicExprParser.h>
 #include <boost/thread/condition_variable.hpp>
@@ -579,9 +580,9 @@ static BaseSemantics::DispatcherPtr
 buildVirtualCpu(const P2::Partitioner &partitioner) {
 
     // Augment the register dictionary with information about the execution path constraint.
-    static RegisterDictionary *myRegs = NULL;
-    if (NULL==myRegs) {
-        myRegs = new RegisterDictionary("findPath");
+    static RegisterDictionary::Ptr myRegs;
+    if (!myRegs) {
+        myRegs = RegisterDictionary::instance("findPath");
         myRegs->insert(partitioner.instructionProvider().registerDictionary());
         myRegs->insert("path", REG_PATH);
 
@@ -601,7 +602,7 @@ buildVirtualCpu(const P2::Partitioner &partitioner) {
     SmtSolver::Ptr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
     RiscOperatorsPtr ops = RiscOperators::instance(&partitioner, myRegs, solver);
 
-    return partitioner.instructionProvider().dispatcher()->create(ops);
+    return partitioner.instructionProvider().dispatcher()->create(ops, 0, RegisterDictionary::Ptr());
 }
 
 /** Process instructions for one basic block on the specified virtual CPU. */

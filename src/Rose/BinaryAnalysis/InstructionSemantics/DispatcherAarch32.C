@@ -4,6 +4,7 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherAarch32.h>
 
 #include <Rose/BinaryAnalysis/InstructionSemantics/Util.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 
 using namespace Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;
 using namespace Rose::Diagnostics;
@@ -2979,6 +2980,43 @@ struct IP_uxth: P {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+DispatcherAarch32::DispatcherAarch32()
+    : BaseSemantics::Dispatcher(32, RegisterDictionary::instanceAarch32()) {}
+
+DispatcherAarch32::DispatcherAarch32(const BaseSemantics::RiscOperators::Ptr &ops, const RegisterDictionary::Ptr &regs)
+    : BaseSemantics::Dispatcher(ops, 32, regs ? regs : RegisterDictionary::instanceAarch32()) {
+    initializeRegisterDescriptors();
+    initializeInsnDispatchTable();
+    initializeMemory();
+    initializeState(ops->currentState());
+}
+
+DispatcherAarch32::~DispatcherAarch32() {}
+
+DispatcherAarch32::Ptr
+DispatcherAarch32::instance() {
+    return Ptr(new DispatcherAarch32);
+}
+
+DispatcherAarch32::Ptr
+DispatcherAarch32::instance(const BaseSemantics::RiscOperators::Ptr &ops, const RegisterDictionary::Ptr &regs) {
+    return Ptr(new DispatcherAarch32(ops, regs));
+}
+
+BaseSemantics::Dispatcher::Ptr
+DispatcherAarch32::create(const BaseSemantics::RiscOperators::Ptr &ops, size_t addrWidth,
+                          const RegisterDictionary::Ptr &regs) const {
+    ASSERT_require(0 == addrWidth || 32 == addrWidth);
+    return instance(ops, regs);
+}
+
+DispatcherAarch32::Ptr
+DispatcherAarch32::promote(const BaseSemantics::Dispatcher::Ptr &d) {
+    Ptr retval = boost::dynamic_pointer_cast<DispatcherAarch32>(d);
+    ASSERT_not_null(retval);
+    return retval;
+}
+
 void
 DispatcherAarch32::initializeInsnDispatchTable() {
     iprocSet(ARM_INS_ADC,      new Aarch32::IP_adc);
@@ -3207,7 +3245,7 @@ DispatcherAarch32::callReturnRegister() const {
 }
 
 void
-DispatcherAarch32::set_register_dictionary(const RegisterDictionary *regdict) {
+DispatcherAarch32::set_register_dictionary(const RegisterDictionary::Ptr &regdict) {
     BaseSemantics::Dispatcher::set_register_dictionary(regdict);
     initializeRegisterDescriptors();
 }

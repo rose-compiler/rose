@@ -6,17 +6,20 @@ static const char *description =
 
 #include <rose.h>
 
-#include <Rose/BinaryAnalysis/Unparser/Base.h>
-#include <Rose/CommandLine.h>
-#include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
-#include <LinearCongruentialGenerator.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
+#include <Rose/BinaryAnalysis/Unparser/Base.h>
+#include <Rose/CommandLine.h>
+#include <Rose/Diagnostics.h>
+
+#include <LinearCongruentialGenerator.h>
+
 #include <Sawyer/AllocatingBuffer.h>
 #include <Sawyer/CommandLine.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 
 using namespace Rose;
 using namespace Rose::BinaryAnalysis;
@@ -119,8 +122,8 @@ main(int argc, char *argv[]) {
     S2::BaseSemantics::DispatcherPtr cpu = disassembler->dispatcher();
     if (cpu) {
         S2::BaseSemantics::RiscOperatorsPtr ops =
-            S2::SymbolicSemantics::RiscOperators::instance(disassembler->registerDictionary());
-        cpu = cpu->create(ops);
+            S2::SymbolicSemantics::RiscOperators::instanceFromRegisters(disassembler->registerDictionary());
+        cpu = cpu->create(ops, 0, RegisterDictionary::Ptr());
         mlog[INFO] <<"using symbolic semantics\n";
     } else {
         mlog[WARN] <<"instruction semantics aren't implemented for " <<disassembler->name() <<"\n";

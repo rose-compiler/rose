@@ -11,6 +11,7 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BitOps.h>
 
 #include <boost/format.hpp>
@@ -851,7 +852,7 @@ RiscOperators::instance(const Settings &settings, const Database::Ptr &db, const
                         const P2::Partitioner &partitioner, const Architecture::Ptr &process,
                         const BS::SValuePtr &protoval, const SmtSolver::Ptr &solver) {
     // Extend the register set with an additional Boolean register named "path"
-    RegisterDictionary *regdict = new RegisterDictionary("Rose::BinaryAnalysis::Concolic");
+    RegisterDictionary::Ptr regdict = RegisterDictionary::instance("Rose::BinaryAnalysis::Concolic");
     regdict->insert(partitioner.instructionProvider().registerDictionary());
     const RegisterDescriptor path(partitioner.instructionProvider().registerDictionary()->firstUnusedMajor(), 0, 0, 1);
     regdict->insert("path", path);
@@ -896,7 +897,7 @@ RiscOperators::inputVariables() const {
     return process_->inputVariables();
 }
 
-const RegisterDictionary*
+RegisterDictionary::Ptr
 RiscOperators::registerDictionary() const {
     return partitioner_.instructionProvider().registerDictionary();
 }

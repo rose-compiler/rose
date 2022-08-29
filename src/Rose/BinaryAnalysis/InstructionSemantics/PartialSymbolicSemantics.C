@@ -3,6 +3,7 @@
 #include "sage3basic.h"
 #include <Rose/BinaryAnalysis/InstructionSemantics/PartialSymbolicSemantics.h>
 
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/CommandLine.h>
 
 namespace Rose {
@@ -131,27 +132,54 @@ State::discard_popped_memory()
  *                                      RISC Operators
  *******************************************************************************************************************************/
 
+RiscOperators::RiscOperators(const BaseSemantics::SValue::Ptr &protoval, const SmtSolver::Ptr &solver)
+    : BaseSemantics::RiscOperators(protoval, solver) {
+    name("PartialSymbolic");
+}
+
+RiscOperators::RiscOperators(const BaseSemantics::State::Ptr &state, const SmtSolver::Ptr &solver)
+    : BaseSemantics::RiscOperators(state, solver) {
+    name("PartialSymbolic");
+}
+
+RiscOperators::~RiscOperators() {}
+
 RiscOperatorsPtr
-RiscOperators::instance(const RegisterDictionary *regdict)
-{
-    BaseSemantics::SValuePtr protoval = SValue::instance();
-#if defined(__GNUC__)
-#if __GNUC__==4 && __GNUC_MINOR__==2
-    // GCC 4.2.4 may have problems optimizing the function.  It was originally [2014-07] defined in the header file where an
-    // extraneous volatile read from the protoval reference counter defeated the bug.  Later [2014-10] the proval pointer
-    // mechanism was changed to use Sawyer::SharedPointer and the volatile read was no longer an option, but adding extra
-    // function calls (like 'std::cerr <<ownershipCount(protoval) <<"\n"') defeated the bug.  Eventually [2014-10] this
-    // function was moved from the header to the .C file which seems to defeat the bug without the need for volatile reads or
-    // extra function calls.
-#endif
-#endif
-    BaseSemantics::RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
-    MemoryStatePtr memory = MemoryState::instance(protoval, protoval);
+RiscOperators::instanceFromRegisters(const RegisterDictionary::Ptr &regdict) {
+    BaseSemantics::SValue::Ptr protoval = SValue::instance();
+    BaseSemantics::RegisterState::Ptr registers = RegisterState::instance(protoval, regdict);
+    MemoryState::Ptr memory = MemoryState::instance(protoval, protoval);
     memory->byteRestricted(false); // because extracting bytes from a word results in new variables for this domain
-    BaseSemantics::StatePtr state = State::instance(registers, memory);
-    SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
-    RiscOperatorsPtr ops = RiscOperatorsPtr(new RiscOperators(state, solver));
-    return ops;
+    BaseSemantics::State::Ptr state = State::instance(registers, memory);
+    SmtSolver::Ptr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
+    return Ptr(new RiscOperators(state, solver));
+}
+
+RiscOperators::Ptr
+RiscOperators::instanceFromProtoval(const BaseSemantics::SValue::Ptr &protoval, const SmtSolver::Ptr &solver) {
+    return Ptr(new RiscOperators(protoval, solver));
+}
+
+RiscOperators::Ptr
+RiscOperators::instanceFromState(const BaseSemantics::State::Ptr &state, const SmtSolver::Ptr &solver) {
+    return Ptr(new RiscOperators(state, solver));
+}
+
+BaseSemantics::RiscOperators::Ptr
+RiscOperators::create(const BaseSemantics::SValue::Ptr &protoval, const SmtSolver::Ptr &solver) const {
+    return instanceFromProtoval(protoval, solver);
+}
+
+BaseSemantics::RiscOperators::Ptr
+RiscOperators::create(const BaseSemantics::State::Ptr &state, const SmtSolver::Ptr &solver) const {
+    return instanceFromState(state, solver);
+}
+
+RiscOperators::Ptr
+RiscOperators::promote(const BaseSemantics::RiscOperators::Ptr &x) {
+    Ptr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
+    ASSERT_not_null(retval);
+    return retval;
 }
 
 void

@@ -6,6 +6,7 @@
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 
 #include <map>
 #include <Sawyer/Assert.h>
@@ -109,9 +110,10 @@ int main(int argc, char *argv[])
     // Build semantics framework; only used when settings.runSemantics is set
     BaseSemantics::DispatcherPtr dispatcher;
     if (settings.runSemantics) {
-        BaseSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(disassembler->registerDictionary());
+        BaseSemantics::RiscOperatorsPtr ops =
+            SymbolicSemantics::RiscOperators::instanceFromRegisters(disassembler->registerDictionary());
         ops = TraceSemantics::RiscOperators::instance(ops);
-        dispatcher = DispatcherM68k::instance(ops, disassembler->wordSizeBytes()*8);
+        dispatcher = DispatcherM68k::instance(ops, disassembler->wordSizeBytes()*8, RegisterDictionary::Ptr());
         dispatcher->currentState()->memoryState()->set_byteOrder(ByteOrder::ORDER_MSB);
     }
 

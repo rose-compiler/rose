@@ -8,6 +8,7 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 
 #include "rose.h"
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BinaryAnalysis/SmtSolver.h>
 #include <Rose/CommandLine.h>
 
@@ -184,7 +185,7 @@ int main()
     // Refer to SymbolicSemantics::RiscOperators::instance() to see what parts are required, and substitute our class names
     // where appropriate.
     Rose::BinaryAnalysis::SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
-    const RegisterDictionary *regdict = RegisterDictionary::dictionary_pentium4();
+    RegisterDictionary::Ptr regdict = RegisterDictionary::instancePentium4();
     BaseSemantics::SValuePtr protoval = SymbolicSemantics::SValue::instance();
     BaseSemantics::RegisterStatePtr registers = BaseSemantics::RegisterStateGeneric::instance(protoval, regdict);
     BaseSemantics::MemoryStatePtr memory = MyMemoryState::instance(protoval, protoval);

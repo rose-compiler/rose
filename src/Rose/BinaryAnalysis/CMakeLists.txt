@@ -38,7 +38,8 @@ add_library(roseBinaryAnalysis OBJECT
   Reachability.C
   RegisterDescriptor.C
   RegisterParts.C
-  Registers.C
+  RegisterDictionary.C
+  RegisterNames.C
   ReturnValueUsed.C
   SerialIo.C
   SmtCommandLine.C
@@ -62,6 +63,7 @@ install(FILES
   AbstractLocation.h
   AsmFunctionIndex.h
   AstHash.h
+  BasicTypes.h
   BestMapAddress.h
   BinaryLoader.h
   BinaryLoaderElf.h
@@ -103,8 +105,9 @@ install(FILES
   PointerDetection.h
   Reachability.h
   RegisterDescriptor.h
+  RegisterDictionary.h
+  RegisterNames.h
   RegisterParts.h
-  Registers.h
   ReturnValueUsed.h
   SerialIo.h
   SmtCommandLine.h

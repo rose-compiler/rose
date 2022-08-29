@@ -2,6 +2,8 @@
 #include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/Disassembler/X86.h>
 #include <Rose/BinaryAnalysis/Disassembler/M68k.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
+#include <Rose/BinaryAnalysis/RegisterNames.h>
 
 #include "RSIM_Semantics.h"
 #include "RSIM_Thread.h"
@@ -78,7 +80,7 @@ createDispatcher(RSIM_Thread *owningThread) {
         TODO("architecture not supported");
     }
 
-    const RegisterDictionary *regs = disassembler->registerDictionary();
+    RegisterDictionary::Ptr regs = disassembler->registerDictionary();
     RiscOperatorsPtr ops = RiscOperators::instance(arch, owningThread, regs);
     size_t wordSize = disassembler->instructionPointerRegister().nBits();
     ASSERT_require(wordSize == 32 || wordSize == 64);

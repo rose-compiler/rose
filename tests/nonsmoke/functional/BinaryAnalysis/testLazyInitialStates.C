@@ -14,6 +14,8 @@ static const char *description =
 #include <Rose/BinaryAnalysis/Partitioner2/DataFlow.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
+#include <Rose/BinaryAnalysis/RegisterNames.h>
 
 using namespace Rose;
 using namespace Rose::Diagnostics;
@@ -38,10 +40,10 @@ basicReadTest(const P2::Partitioner &partitioner) {
     fmt.set_line_prefix("  ");
 
     // Create the RiscOperators and the initial state.
-    const RegisterDictionary *regdict = partitioner.instructionProvider().registerDictionary();
+    RegisterDictionary::Ptr regdict = partitioner.instructionProvider().registerDictionary();
     const RegisterDescriptor REG = partitioner.instructionProvider().stackPointerRegister();
     const std::string REG_NAME = RegisterNames(regdict)(REG);
-    BaseSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(regdict);
+    BaseSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instanceFromRegisters(regdict);
     ASSERT_always_not_null(ops);
     ops->currentState()->memoryState()->set_byteOrder(partitioner.instructionProvider().defaultByteOrder());
     BaseSemantics::StatePtr initialState = ops->currentState()->clone();
@@ -186,7 +188,7 @@ advancedReadTest(const P2::Partitioner &partitioner) {
     fmt.set_line_prefix("  ");
 
     // Build the semantics framework. We use SymbolicSemantics, but with our own memory state.
-    const RegisterDictionary *regdict = partitioner.instructionProvider().registerDictionary();
+    RegisterDictionary::Ptr regdict = partitioner.instructionProvider().registerDictionary();
     const RegisterDescriptor REG = partitioner.instructionProvider().stackPointerRegister();
     const std::string REG_NAME = RegisterNames(regdict)(REG);
     const RegisterDescriptor REG2(15, 1023, 0, REG.nBits());
@@ -197,7 +199,7 @@ advancedReadTest(const P2::Partitioner &partitioner) {
         BaseSemantics::MemoryStatePtr memory = SymbolicSemantics::MemoryListState::instance(protoval, protoval);
         memory->set_byteOrder(partitioner.instructionProvider().defaultByteOrder());
         BaseSemantics::StatePtr state = MyState::instance(registers, memory);
-        ops = SymbolicSemantics::RiscOperators::instance(state);
+        ops = SymbolicSemantics::RiscOperators::instanceFromState(state);
     }
 
     // Create the lazily-updated initial state

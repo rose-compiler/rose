@@ -3,6 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 #include <Rose/BinaryAnalysis/SmtSolver.h>
 #include <Rose/BinaryAnalysis/SymbolicExprParser.h>
@@ -345,7 +346,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private:
     const Partitioner2::Partitioner *partitioner_ = nullptr; // binary analysis context
-    RegisterDictionary *registers_ = nullptr;           // registers augmented with "path" pseudo-register
+    RegisterDictionaryPtr registers_;                        // registers augmented with "path" pseudo-register
     RegisterDescriptor REG_RETURN_;                     // FIXME[Robb P Matzke 2016-10-11]: see source
     Settings settings_;
     FunctionSummaries functionSummaries_;
@@ -374,20 +375,7 @@ public:
     virtual ~FeasiblePath();
 
     /** Reset to initial state without changing settings. */
-    void reset() {
-        partitioner_ = NULL;
-        registers_ = NULL;
-        REG_PATH = REG_RETURN_ = RegisterDescriptor();
-        functionSummaries_.clear();
-        vmap_.clear();
-        paths_.clear();
-        pathsBeginVertices_.clear();
-        pathsEndVertices_.clear();
-        isDirectedSearch_ = true;
-        cfgAvoidEdges_.clear();
-        cfgEndAvoidVertices_.clear();
-        resetStatistics();
-    }
+    void reset();
 
     /** Reset only statistics.
      *

@@ -7,6 +7,7 @@
 #include "AssemblerX86.h"
 #include "AsmUnparser_compat.h"
 #include "SageBuilderAsm.h"
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BinaryAnalysis/Unparser/Powerpc.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherPowerpc.h>
 
@@ -82,18 +83,18 @@ Powerpc::unparser() const {
 
 void
 Powerpc::init() {
-    const RegisterDictionary *regdict = NULL;
+    RegisterDictionary::Ptr regdict;
     switch (wordSize_) {
         case powerpc_32:
             name("ppc32");
             wordSizeBytes(4);
-            regdict = RegisterDictionary::dictionary_powerpc32();
+            regdict = RegisterDictionary::instancePowerpc32();
             callingConventions(CallingConvention::dictionaryPowerpc32());
             break;
         case powerpc_64:
             name("ppc64");
             wordSizeBytes(8);
-            regdict = RegisterDictionary::dictionary_powerpc64();
+            regdict = RegisterDictionary::instancePowerpc64();
             callingConventions(CallingConvention::dictionaryPowerpc64());
             break;
     }
@@ -425,7 +426,7 @@ Powerpc::makeRegister(State &state, PowerpcRegisterClass reg_class, int reg_numb
     ASSERT_not_null(registerDictionary());
     const RegisterDescriptor rdesc = registerDictionary()->find(name);
     if (!rdesc)
-        throw ExceptionPowerpc("register \"" + name + "\" is not available for " + registerDictionary()->get_architecture_name(), state);
+        throw ExceptionPowerpc("register \"" + name + "\" is not available for " + registerDictionary()->name(), state);
     ASSERT_require2(rdesc.nBits() == registerType->get_nBits(),
                     (boost::format("register width (%|u|) doesn't match type width (%|u|)")
                      % rdesc.nBits() % registerType->get_nBits()).str());

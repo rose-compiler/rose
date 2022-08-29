@@ -6,6 +6,7 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 
 #include "rose.h"
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 
 #include <signal.h>
 #include <time.h>
@@ -26,14 +27,14 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 using namespace Rose::BinaryAnalysis;
 using namespace Rose::BinaryAnalysis::InstructionSemantics;
 
-const RegisterDictionary *regdict = RegisterDictionary::dictionary_i386();
+RegisterDictionary::Ptr regdict = RegisterDictionary::instanceI386();
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #if SEMANTIC_DOMAIN == NULL_DOMAIN
 
 #   include <Rose/BinaryAnalysis/InstructionSemantics/NullSemantics.h>
     static BaseSemantics::RiscOperatorsPtr make_ops() {
-        return NullSemantics::RiscOperators::instance(regdict);
+        return NullSemantics::RiscOperators::instanceFromRegisters(regdict);
     }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -41,7 +42,7 @@ const RegisterDictionary *regdict = RegisterDictionary::dictionary_i386();
 
 #   include <Rose/BinaryAnalysis/InstructionSemantics/PartialSymbolicSemantics.h>
     static BaseSemantics::RiscOperatorsPtr make_ops() {
-        return PartialSymbolicSemantics::RiscOperators::instance(regdict);
+        return PartialSymbolicSemantics::RiscOperators::instanceFromRegisters(regdict);
     }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -49,7 +50,7 @@ const RegisterDictionary *regdict = RegisterDictionary::dictionary_i386();
 
 #   include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
     static BaseSemantics::RiscOperatorsPtr make_ops() {
-        return SymbolicSemantics::RiscOperators::instance(regdict);
+        return SymbolicSemantics::RiscOperators::instanceFromRegisters(regdict);
     }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -57,7 +58,7 @@ const RegisterDictionary *regdict = RegisterDictionary::dictionary_i386();
 
 #   include <Rose/BinaryAnalysis/InstructionSemantics/IntervalSemantics.h>
     static BaseSemantics::RiscOperatorsPtr make_ops() {
-        return IntervalSemantics::RiscOperators::instance(regdict);
+        return IntervalSemantics::RiscOperators::instanceFromRegisters(regdict);
     }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -68,10 +69,10 @@ const RegisterDictionary *regdict = RegisterDictionary::dictionary_i386();
 #   include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #   include <Rose/BinaryAnalysis/InstructionSemantics/IntervalSemantics.h>
     static BaseSemantics::RiscOperatorsPtr make_ops() {
-        MultiSemantics::RiscOperatorsPtr ops = MultiSemantics::RiscOperators::instance(regdict);
-        ops->add_subdomain(PartialSymbolicSemantics::RiscOperators::instance(regdict), "PartialSymbolic");
-        ops->add_subdomain(SymbolicSemantics::RiscOperators::instance(regdict), "Symbolic");
-        ops->add_subdomain(IntervalSemantics::RiscOperators::instance(regdict), "Interval");
+        MultiSemantics::RiscOperatorsPtr ops = MultiSemantics::RiscOperators::instanceFromRegisters(regdict);
+        ops->add_subdomain(PartialSymbolicSemantics::RiscOperators::instanceFromRegisters(regdict), "PartialSymbolic");
+        ops->add_subdomain(SymbolicSemantics::RiscOperators::instanceFromRegisters(regdict), "Symbolic");
+        ops->add_subdomain(IntervalSemantics::RiscOperators::instanceFromRegisters(regdict), "Interval");
         return ops;
     }
 
@@ -124,8 +125,8 @@ main(int argc, char *argv[])
     SgAsmGenericHeader *header = interp->get_headers()->get_headers().front();
     rose_addr_t start_va = header->get_base_va() + header->get_entry_rva();
 
-    BaseSemantics::RiscOperatorsPtr operators = make_ops();
-    BaseSemantics::DispatcherPtr dispatcher = DispatcherX86::instance(operators, 32);
+    BaseSemantics::RiscOperators::Ptr operators = make_ops();
+    BaseSemantics::Dispatcher::Ptr dispatcher = DispatcherX86::instance(operators, 32, RegisterDictionary::Ptr());
     ASSERT_always_not_null(dispatcher);
 
     struct sigaction sa;

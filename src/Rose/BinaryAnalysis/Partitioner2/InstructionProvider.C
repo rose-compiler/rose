@@ -4,6 +4,7 @@
 
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/Partitioner2/InstructionProvider.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -66,7 +67,7 @@ InstructionProvider::disassembler() const {
     return disassembler_;
 }
 
-const RegisterDictionary*
+RegisterDictionary::Ptr
 InstructionProvider::registerDictionary() const {
     return disassembler_->registerDictionary();
 }

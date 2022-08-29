@@ -6,6 +6,7 @@
 #include <Rose/BinaryAnalysis/Disassembler/Aarch64.h>
 #include <Rose/BinaryAnalysis/Unparser/Aarch64.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherAarch64.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 
 using namespace Rose::Diagnostics;
 
@@ -19,7 +20,7 @@ Aarch64::Aarch64(Modes modes)
     std::string name = "a64";
     wordSizeBytes(8);
     byteOrder(ByteOrder::ORDER_LSB);
-    registerDictionary(RegisterDictionary::dictionary_aarch64());
+    registerDictionary(RegisterDictionary::instanceAarch64());
     callingConventions(CallingConvention::dictionaryAarch64());
     p_proto_dispatcher = InstructionSemantics::DispatcherAarch64::instance();
     instructionAlignment_ = 4;
@@ -973,7 +974,7 @@ Aarch64::registerType(RegisterDescriptor reg, arm64_vas arrangement) {
 RegisterDescriptor
 Aarch64::makeRegister(arm64_reg reg) {
     ASSERT_not_null(registerDictionary());
-    const RegisterDictionary &dict = *registerDictionary();
+    RegisterDictionary::Ptr dict = registerDictionary();
     RegisterDescriptor retval;
 
     switch (reg) {
@@ -981,781 +982,781 @@ Aarch64::makeRegister(arm64_reg reg) {
         case ARM64_REG_ENDING:
             ASSERT_not_reachable("invalid register from Capstone");
         case ARM64_REG_X29:
-            retval = dict.find("x29");
+            retval = dict->find("x29");
             break;
         case ARM64_REG_X30:
-            retval = dict.find("x30");
+            retval = dict->find("x30");
             break;
         case ARM64_REG_NZCV:
-            retval = dict.find("nzcv");
+            retval = dict->find("nzcv");
             break;
         case ARM64_REG_SP:
-            retval = dict.find("sp");
+            retval = dict->find("sp");
             break;
         case ARM64_REG_WSP:
-            retval = dict.find("wsp");
+            retval = dict->find("wsp");
             break;
         case ARM64_REG_WZR:
-            retval = dict.find("wzr");
+            retval = dict->find("wzr");
             break;
         case ARM64_REG_XZR:
-            retval = dict.find("xzr");
+            retval = dict->find("xzr");
             break;
         case ARM64_REG_B0:
-            retval = dict.find("b0");
+            retval = dict->find("b0");
             break;
         case ARM64_REG_B1:
-            retval = dict.find("b1");
+            retval = dict->find("b1");
             break;
         case ARM64_REG_B2:
-            retval = dict.find("b2");
+            retval = dict->find("b2");
             break;
         case ARM64_REG_B3:
-            retval = dict.find("b3");
+            retval = dict->find("b3");
             break;
         case ARM64_REG_B4:
-            retval = dict.find("b4");
+            retval = dict->find("b4");
             break;
         case ARM64_REG_B5:
-            retval = dict.find("b5");
+            retval = dict->find("b5");
             break;
         case ARM64_REG_B6:
-            retval = dict.find("b6");
+            retval = dict->find("b6");
             break;
         case ARM64_REG_B7:
-            retval = dict.find("b7");
+            retval = dict->find("b7");
             break;
         case ARM64_REG_B8:
-            retval = dict.find("b8");
+            retval = dict->find("b8");
             break;
         case ARM64_REG_B9:
-            retval = dict.find("b9");
+            retval = dict->find("b9");
             break;
         case ARM64_REG_B10:
-            retval = dict.find("b10");
+            retval = dict->find("b10");
             break;
         case ARM64_REG_B11:
-            retval = dict.find("b11");
+            retval = dict->find("b11");
             break;
         case ARM64_REG_B12:
-            retval = dict.find("b12");
+            retval = dict->find("b12");
             break;
         case ARM64_REG_B13:
-            retval = dict.find("b13");
+            retval = dict->find("b13");
             break;
         case ARM64_REG_B14:
-            retval = dict.find("b14");
+            retval = dict->find("b14");
             break;
         case ARM64_REG_B15:
-            retval = dict.find("b15");
+            retval = dict->find("b15");
             break;
         case ARM64_REG_B16:
-            retval = dict.find("b16");
+            retval = dict->find("b16");
             break;
         case ARM64_REG_B17:
-            retval = dict.find("b17");
+            retval = dict->find("b17");
             break;
         case ARM64_REG_B18:
-            retval = dict.find("b18");
+            retval = dict->find("b18");
             break;
         case ARM64_REG_B19:
-            retval = dict.find("b19");
+            retval = dict->find("b19");
             break;
         case ARM64_REG_B20:
-            retval = dict.find("b20");
+            retval = dict->find("b20");
             break;
         case ARM64_REG_B21:
-            retval = dict.find("b21");
+            retval = dict->find("b21");
             break;
         case ARM64_REG_B22:
-            retval = dict.find("b22");
+            retval = dict->find("b22");
             break;
         case ARM64_REG_B23:
-            retval = dict.find("b23");
+            retval = dict->find("b23");
             break;
         case ARM64_REG_B24:
-            retval = dict.find("b24");
+            retval = dict->find("b24");
             break;
         case ARM64_REG_B25:
-            retval = dict.find("b25");
+            retval = dict->find("b25");
             break;
         case ARM64_REG_B26:
-            retval = dict.find("b26");
+            retval = dict->find("b26");
             break;
         case ARM64_REG_B27:
-            retval = dict.find("b27");
+            retval = dict->find("b27");
             break;
         case ARM64_REG_B28:
-            retval = dict.find("b28");
+            retval = dict->find("b28");
             break;
         case ARM64_REG_B29:
-            retval = dict.find("b29");
+            retval = dict->find("b29");
             break;
         case ARM64_REG_B30:
-            retval = dict.find("b30");
+            retval = dict->find("b30");
             break;
         case ARM64_REG_B31:
-            retval = dict.find("b31");
+            retval = dict->find("b31");
             break;
         case ARM64_REG_D0:
-            retval = dict.find("d0");
+            retval = dict->find("d0");
             break;
         case ARM64_REG_D1:
-            retval = dict.find("d1");
+            retval = dict->find("d1");
             break;
         case ARM64_REG_D2:
-            retval = dict.find("d2");
+            retval = dict->find("d2");
             break;
         case ARM64_REG_D3:
-            retval = dict.find("d3");
+            retval = dict->find("d3");
             break;
         case ARM64_REG_D4:
-            retval = dict.find("d4");
+            retval = dict->find("d4");
             break;
         case ARM64_REG_D5:
-            retval = dict.find("d5");
+            retval = dict->find("d5");
             break;
         case ARM64_REG_D6:
-            retval = dict.find("d6");
+            retval = dict->find("d6");
             break;
         case ARM64_REG_D7:
-            retval = dict.find("d7");
+            retval = dict->find("d7");
             break;
         case ARM64_REG_D8:
-            retval = dict.find("d8");
+            retval = dict->find("d8");
             break;
         case ARM64_REG_D9:
-            retval = dict.find("d9");
+            retval = dict->find("d9");
             break;
         case ARM64_REG_D10:
-            retval = dict.find("d10");
+            retval = dict->find("d10");
             break;
         case ARM64_REG_D11:
-            retval = dict.find("d11");
+            retval = dict->find("d11");
             break;
         case ARM64_REG_D12:
-            retval = dict.find("d12");
+            retval = dict->find("d12");
             break;
         case ARM64_REG_D13:
-            retval = dict.find("d13");
+            retval = dict->find("d13");
             break;
         case ARM64_REG_D14:
-            retval = dict.find("d14");
+            retval = dict->find("d14");
             break;
         case ARM64_REG_D15:
-            retval = dict.find("d15");
+            retval = dict->find("d15");
             break;
         case ARM64_REG_D16:
-            retval = dict.find("d16");
+            retval = dict->find("d16");
             break;
         case ARM64_REG_D17:
-            retval = dict.find("d17");
+            retval = dict->find("d17");
             break;
         case ARM64_REG_D18:
-            retval = dict.find("d18");
+            retval = dict->find("d18");
             break;
         case ARM64_REG_D19:
-            retval = dict.find("d19");
+            retval = dict->find("d19");
             break;
         case ARM64_REG_D20:
-            retval = dict.find("d20");
+            retval = dict->find("d20");
             break;
         case ARM64_REG_D21:
-            retval = dict.find("d21");
+            retval = dict->find("d21");
             break;
         case ARM64_REG_D22:
-            retval = dict.find("d22");
+            retval = dict->find("d22");
             break;
         case ARM64_REG_D23:
-            retval = dict.find("d23");
+            retval = dict->find("d23");
             break;
         case ARM64_REG_D24:
-            retval = dict.find("d24");
+            retval = dict->find("d24");
             break;
         case ARM64_REG_D25:
-            retval = dict.find("d25");
+            retval = dict->find("d25");
             break;
         case ARM64_REG_D26:
-            retval = dict.find("d26");
+            retval = dict->find("d26");
             break;
         case ARM64_REG_D27:
-            retval = dict.find("d27");
+            retval = dict->find("d27");
             break;
         case ARM64_REG_D28:
-            retval = dict.find("d28");
+            retval = dict->find("d28");
             break;
         case ARM64_REG_D29:
-            retval = dict.find("d29");
+            retval = dict->find("d29");
             break;
         case ARM64_REG_D30:
-            retval = dict.find("d30");
+            retval = dict->find("d30");
             break;
         case ARM64_REG_D31:
-            retval = dict.find("d31");
+            retval = dict->find("d31");
             break;
         case ARM64_REG_H0:
-            retval = dict.find("h0");
+            retval = dict->find("h0");
             break;
         case ARM64_REG_H1:
-            retval = dict.find("h1");
+            retval = dict->find("h1");
             break;
         case ARM64_REG_H2:
-            retval = dict.find("h2");
+            retval = dict->find("h2");
             break;
         case ARM64_REG_H3:
-            retval = dict.find("h3");
+            retval = dict->find("h3");
             break;
         case ARM64_REG_H4:
-            retval = dict.find("h4");
+            retval = dict->find("h4");
             break;
         case ARM64_REG_H5:
-            retval = dict.find("h5");
+            retval = dict->find("h5");
             break;
         case ARM64_REG_H6:
-            retval = dict.find("h6");
+            retval = dict->find("h6");
             break;
         case ARM64_REG_H7:
-            retval = dict.find("h7");
+            retval = dict->find("h7");
             break;
         case ARM64_REG_H8:
-            retval = dict.find("h8");
+            retval = dict->find("h8");
             break;
         case ARM64_REG_H9:
-            retval = dict.find("h9");
+            retval = dict->find("h9");
             break;
         case ARM64_REG_H10:
-            retval = dict.find("h10");
+            retval = dict->find("h10");
             break;
         case ARM64_REG_H11:
-            retval = dict.find("h11");
+            retval = dict->find("h11");
             break;
         case ARM64_REG_H12:
-            retval = dict.find("h12");
+            retval = dict->find("h12");
             break;
         case ARM64_REG_H13:
-            retval = dict.find("h13");
+            retval = dict->find("h13");
             break;
         case ARM64_REG_H14:
-            retval = dict.find("h14");
+            retval = dict->find("h14");
             break;
         case ARM64_REG_H15:
-            retval = dict.find("h15");
+            retval = dict->find("h15");
             break;
         case ARM64_REG_H16:
-            retval = dict.find("h16");
+            retval = dict->find("h16");
             break;
         case ARM64_REG_H17:
-            retval = dict.find("h17");
+            retval = dict->find("h17");
             break;
         case ARM64_REG_H18:
-            retval = dict.find("h18");
+            retval = dict->find("h18");
             break;
         case ARM64_REG_H19:
-            retval = dict.find("h19");
+            retval = dict->find("h19");
             break;
         case ARM64_REG_H20:
-            retval = dict.find("h20");
+            retval = dict->find("h20");
             break;
         case ARM64_REG_H21:
-            retval = dict.find("h21");
+            retval = dict->find("h21");
             break;
         case ARM64_REG_H22:
-            retval = dict.find("h22");
+            retval = dict->find("h22");
             break;
         case ARM64_REG_H23:
-            retval = dict.find("h23");
+            retval = dict->find("h23");
             break;
         case ARM64_REG_H24:
-            retval = dict.find("h24");
+            retval = dict->find("h24");
             break;
         case ARM64_REG_H25:
-            retval = dict.find("h25");
+            retval = dict->find("h25");
             break;
         case ARM64_REG_H26:
-            retval = dict.find("h26");
+            retval = dict->find("h26");
             break;
         case ARM64_REG_H27:
-            retval = dict.find("h27");
+            retval = dict->find("h27");
             break;
         case ARM64_REG_H28:
-            retval = dict.find("h28");
+            retval = dict->find("h28");
             break;
         case ARM64_REG_H29:
-            retval = dict.find("h29");
+            retval = dict->find("h29");
             break;
         case ARM64_REG_H30:
-            retval = dict.find("h30");
+            retval = dict->find("h30");
             break;
         case ARM64_REG_H31:
-            retval = dict.find("h31");
+            retval = dict->find("h31");
             break;
         case ARM64_REG_Q0:
-            retval = dict.find("q0");
+            retval = dict->find("q0");
             break;
         case ARM64_REG_Q1:
-            retval = dict.find("q1");
+            retval = dict->find("q1");
             break;
         case ARM64_REG_Q2:
-            retval = dict.find("q2");
+            retval = dict->find("q2");
             break;
         case ARM64_REG_Q3:
-            retval = dict.find("q3");
+            retval = dict->find("q3");
             break;
         case ARM64_REG_Q4:
-            retval = dict.find("q4");
+            retval = dict->find("q4");
             break;
         case ARM64_REG_Q5:
-            retval = dict.find("q5");
+            retval = dict->find("q5");
             break;
         case ARM64_REG_Q6:
-            retval = dict.find("q6");
+            retval = dict->find("q6");
             break;
         case ARM64_REG_Q7:
-            retval = dict.find("q7");
+            retval = dict->find("q7");
             break;
         case ARM64_REG_Q8:
-            retval = dict.find("q8");
+            retval = dict->find("q8");
             break;
         case ARM64_REG_Q9:
-            retval = dict.find("q9");
+            retval = dict->find("q9");
             break;
         case ARM64_REG_Q10:
-            retval = dict.find("q10");
+            retval = dict->find("q10");
             break;
         case ARM64_REG_Q11:
-            retval = dict.find("q11");
+            retval = dict->find("q11");
             break;
         case ARM64_REG_Q12:
-            retval = dict.find("q12");
+            retval = dict->find("q12");
             break;
         case ARM64_REG_Q13:
-            retval = dict.find("q13");
+            retval = dict->find("q13");
             break;
         case ARM64_REG_Q14:
-            retval = dict.find("q14");
+            retval = dict->find("q14");
             break;
         case ARM64_REG_Q15:
-            retval = dict.find("q15");
+            retval = dict->find("q15");
             break;
         case ARM64_REG_Q16:
-            retval = dict.find("q16");
+            retval = dict->find("q16");
             break;
         case ARM64_REG_Q17:
-            retval = dict.find("q17");
+            retval = dict->find("q17");
             break;
         case ARM64_REG_Q18:
-            retval = dict.find("q18");
+            retval = dict->find("q18");
             break;
         case ARM64_REG_Q19:
-            retval = dict.find("q19");
+            retval = dict->find("q19");
             break;
         case ARM64_REG_Q20:
-            retval = dict.find("q20");
+            retval = dict->find("q20");
             break;
         case ARM64_REG_Q21:
-            retval = dict.find("q21");
+            retval = dict->find("q21");
             break;
         case ARM64_REG_Q22:
-            retval = dict.find("q22");
+            retval = dict->find("q22");
             break;
         case ARM64_REG_Q23:
-            retval = dict.find("q23");
+            retval = dict->find("q23");
             break;
         case ARM64_REG_Q24:
-            retval = dict.find("q24");
+            retval = dict->find("q24");
             break;
         case ARM64_REG_Q25:
-            retval = dict.find("q25");
+            retval = dict->find("q25");
             break;
         case ARM64_REG_Q26:
-            retval = dict.find("q26");
+            retval = dict->find("q26");
             break;
         case ARM64_REG_Q27:
-            retval = dict.find("q27");
+            retval = dict->find("q27");
             break;
         case ARM64_REG_Q28:
-            retval = dict.find("q28");
+            retval = dict->find("q28");
             break;
         case ARM64_REG_Q29:
-            retval = dict.find("q29");
+            retval = dict->find("q29");
             break;
         case ARM64_REG_Q30:
-            retval = dict.find("q30");
+            retval = dict->find("q30");
             break;
         case ARM64_REG_Q31:
-            retval = dict.find("q31");
+            retval = dict->find("q31");
             break;
         case ARM64_REG_S0:
-            retval = dict.find("s0");
+            retval = dict->find("s0");
             break;
         case ARM64_REG_S1:
-            retval = dict.find("s1");
+            retval = dict->find("s1");
             break;
         case ARM64_REG_S2:
-            retval = dict.find("s2");
+            retval = dict->find("s2");
             break;
         case ARM64_REG_S3:
-            retval = dict.find("s3");
+            retval = dict->find("s3");
             break;
         case ARM64_REG_S4:
-            retval = dict.find("s4");
+            retval = dict->find("s4");
             break;
         case ARM64_REG_S5:
-            retval = dict.find("s5");
+            retval = dict->find("s5");
             break;
         case ARM64_REG_S6:
-            retval = dict.find("s6");
+            retval = dict->find("s6");
             break;
         case ARM64_REG_S7:
-            retval = dict.find("s7");
+            retval = dict->find("s7");
             break;
         case ARM64_REG_S8:
-            retval = dict.find("s8");
+            retval = dict->find("s8");
             break;
         case ARM64_REG_S9:
-            retval = dict.find("s9");
+            retval = dict->find("s9");
             break;
         case ARM64_REG_S10:
-            retval = dict.find("s10");
+            retval = dict->find("s10");
             break;
         case ARM64_REG_S11:
-            retval = dict.find("s11");
+            retval = dict->find("s11");
             break;
         case ARM64_REG_S12:
-            retval = dict.find("s12");
+            retval = dict->find("s12");
             break;
         case ARM64_REG_S13:
-            retval = dict.find("s13");
+            retval = dict->find("s13");
             break;
         case ARM64_REG_S14:
-            retval = dict.find("s14");
+            retval = dict->find("s14");
             break;
         case ARM64_REG_S15:
-            retval = dict.find("s15");
+            retval = dict->find("s15");
             break;
         case ARM64_REG_S16:
-            retval = dict.find("s16");
+            retval = dict->find("s16");
             break;
         case ARM64_REG_S17:
-            retval = dict.find("s17");
+            retval = dict->find("s17");
             break;
         case ARM64_REG_S18:
-            retval = dict.find("s18");
+            retval = dict->find("s18");
             break;
         case ARM64_REG_S19:
-            retval = dict.find("s19");
+            retval = dict->find("s19");
             break;
         case ARM64_REG_S20:
-            retval = dict.find("s20");
+            retval = dict->find("s20");
             break;
         case ARM64_REG_S21:
-            retval = dict.find("s21");
+            retval = dict->find("s21");
             break;
         case ARM64_REG_S22:
-            retval = dict.find("s22");
+            retval = dict->find("s22");
             break;
         case ARM64_REG_S23:
-            retval = dict.find("s23");
+            retval = dict->find("s23");
             break;
         case ARM64_REG_S24:
-            retval = dict.find("s24");
+            retval = dict->find("s24");
             break;
         case ARM64_REG_S25:
-            retval = dict.find("s25");
+            retval = dict->find("s25");
             break;
         case ARM64_REG_S26:
-            retval = dict.find("s26");
+            retval = dict->find("s26");
             break;
         case ARM64_REG_S27:
-            retval = dict.find("s27");
+            retval = dict->find("s27");
             break;
         case ARM64_REG_S28:
-            retval = dict.find("s28");
+            retval = dict->find("s28");
             break;
         case ARM64_REG_S29:
-            retval = dict.find("s29");
+            retval = dict->find("s29");
             break;
         case ARM64_REG_S30:
-            retval = dict.find("s30");
+            retval = dict->find("s30");
             break;
         case ARM64_REG_S31:
-            retval = dict.find("s31");
+            retval = dict->find("s31");
             break;
         case ARM64_REG_W0:
-            retval = dict.find("w0");
+            retval = dict->find("w0");
             break;
         case ARM64_REG_W1:
-            retval = dict.find("w1");
+            retval = dict->find("w1");
             break;
         case ARM64_REG_W2:
-            retval = dict.find("w2");
+            retval = dict->find("w2");
             break;
         case ARM64_REG_W3:
-            retval = dict.find("w3");
+            retval = dict->find("w3");
             break;
         case ARM64_REG_W4:
-            retval = dict.find("w4");
+            retval = dict->find("w4");
             break;
         case ARM64_REG_W5:
-            retval = dict.find("w5");
+            retval = dict->find("w5");
             break;
         case ARM64_REG_W6:
-            retval = dict.find("w6");
+            retval = dict->find("w6");
             break;
         case ARM64_REG_W7:
-            retval = dict.find("w7");
+            retval = dict->find("w7");
             break;
         case ARM64_REG_W8:
-            retval = dict.find("w8");
+            retval = dict->find("w8");
             break;
         case ARM64_REG_W9:
-            retval = dict.find("w9");
+            retval = dict->find("w9");
             break;
         case ARM64_REG_W10:
-            retval = dict.find("w10");
+            retval = dict->find("w10");
             break;
         case ARM64_REG_W11:
-            retval = dict.find("w11");
+            retval = dict->find("w11");
             break;
         case ARM64_REG_W12:
-            retval = dict.find("w12");
+            retval = dict->find("w12");
             break;
         case ARM64_REG_W13:
-            retval = dict.find("w13");
+            retval = dict->find("w13");
             break;
         case ARM64_REG_W14:
-            retval = dict.find("w14");
+            retval = dict->find("w14");
             break;
         case ARM64_REG_W15:
-            retval = dict.find("w15");
+            retval = dict->find("w15");
             break;
         case ARM64_REG_W16:
-            retval = dict.find("w16");
+            retval = dict->find("w16");
             break;
         case ARM64_REG_W17:
-            retval = dict.find("w17");
+            retval = dict->find("w17");
             break;
         case ARM64_REG_W18:
-            retval = dict.find("w18");
+            retval = dict->find("w18");
             break;
         case ARM64_REG_W19:
-            retval = dict.find("w19");
+            retval = dict->find("w19");
             break;
         case ARM64_REG_W20:
-            retval = dict.find("w20");
+            retval = dict->find("w20");
             break;
         case ARM64_REG_W21:
-            retval = dict.find("w21");
+            retval = dict->find("w21");
             break;
         case ARM64_REG_W22:
-            retval = dict.find("w22");
+            retval = dict->find("w22");
             break;
         case ARM64_REG_W23:
-            retval = dict.find("w23");
+            retval = dict->find("w23");
             break;
         case ARM64_REG_W24:
-            retval = dict.find("w24");
+            retval = dict->find("w24");
             break;
         case ARM64_REG_W25:
-            retval = dict.find("w25");
+            retval = dict->find("w25");
             break;
         case ARM64_REG_W26:
-            retval = dict.find("w26");
+            retval = dict->find("w26");
             break;
         case ARM64_REG_W27:
-            retval = dict.find("w27");
+            retval = dict->find("w27");
             break;
         case ARM64_REG_W28:
-            retval = dict.find("w28");
+            retval = dict->find("w28");
             break;
         case ARM64_REG_W29:
-            retval = dict.find("w29");
+            retval = dict->find("w29");
             break;
         case ARM64_REG_W30:
-            retval = dict.find("w30");
+            retval = dict->find("w30");
             break;
         case ARM64_REG_X0:
-            retval = dict.find("x0");
+            retval = dict->find("x0");
             break;
         case ARM64_REG_X1:
-            retval = dict.find("x1");
+            retval = dict->find("x1");
             break;
         case ARM64_REG_X2:
-            retval = dict.find("x2");
+            retval = dict->find("x2");
             break;
         case ARM64_REG_X3:
-            retval = dict.find("x3");
+            retval = dict->find("x3");
             break;
         case ARM64_REG_X4:
-            retval = dict.find("x4");
+            retval = dict->find("x4");
             break;
         case ARM64_REG_X5:
-            retval = dict.find("x5");
+            retval = dict->find("x5");
             break;
         case ARM64_REG_X6:
-            retval = dict.find("x6");
+            retval = dict->find("x6");
             break;
         case ARM64_REG_X7:
-            retval = dict.find("x7");
+            retval = dict->find("x7");
             break;
         case ARM64_REG_X8:
-            retval = dict.find("x8");
+            retval = dict->find("x8");
             break;
         case ARM64_REG_X9:
-            retval = dict.find("x9");
+            retval = dict->find("x9");
             break;
         case ARM64_REG_X10:
-            retval = dict.find("x10");
+            retval = dict->find("x10");
             break;
         case ARM64_REG_X11:
-            retval = dict.find("x11");
+            retval = dict->find("x11");
             break;
         case ARM64_REG_X12:
-            retval = dict.find("x12");
+            retval = dict->find("x12");
             break;
         case ARM64_REG_X13:
-            retval = dict.find("x13");
+            retval = dict->find("x13");
             break;
         case ARM64_REG_X14:
-            retval = dict.find("x14");
+            retval = dict->find("x14");
             break;
         case ARM64_REG_X15:
-            retval = dict.find("x15");
+            retval = dict->find("x15");
             break;
         case ARM64_REG_X16:
-            retval = dict.find("x16");
+            retval = dict->find("x16");
             break;
         case ARM64_REG_X17:
-            retval = dict.find("x17");
+            retval = dict->find("x17");
             break;
         case ARM64_REG_X18:
-            retval = dict.find("x18");
+            retval = dict->find("x18");
             break;
         case ARM64_REG_X19:
-            retval = dict.find("x19");
+            retval = dict->find("x19");
             break;
         case ARM64_REG_X20:
-            retval = dict.find("x20");
+            retval = dict->find("x20");
             break;
         case ARM64_REG_X21:
-            retval = dict.find("x21");
+            retval = dict->find("x21");
             break;
         case ARM64_REG_X22:
-            retval = dict.find("x22");
+            retval = dict->find("x22");
             break;
         case ARM64_REG_X23:
-            retval = dict.find("x23");
+            retval = dict->find("x23");
             break;
         case ARM64_REG_X24:
-            retval = dict.find("x24");
+            retval = dict->find("x24");
             break;
         case ARM64_REG_X25:
-            retval = dict.find("x25");
+            retval = dict->find("x25");
             break;
         case ARM64_REG_X26:
-            retval = dict.find("x26");
+            retval = dict->find("x26");
             break;
         case ARM64_REG_X27:
-            retval = dict.find("x27");
+            retval = dict->find("x27");
             break;
         case ARM64_REG_X28:
-            retval = dict.find("x28");
+            retval = dict->find("x28");
             break;
         case ARM64_REG_V0:
-            retval = dict.find("v0");
+            retval = dict->find("v0");
             break;
         case ARM64_REG_V1:
-            retval = dict.find("v1");
+            retval = dict->find("v1");
             break;
         case ARM64_REG_V2:
-            retval = dict.find("v2");
+            retval = dict->find("v2");
             break;
         case ARM64_REG_V3:
-            retval = dict.find("v3");
+            retval = dict->find("v3");
             break;
         case ARM64_REG_V4:
-            retval = dict.find("v4");
+            retval = dict->find("v4");
             break;
         case ARM64_REG_V5:
-            retval = dict.find("v5");
+            retval = dict->find("v5");
             break;
         case ARM64_REG_V6:
-            retval = dict.find("v6");
+            retval = dict->find("v6");
             break;
         case ARM64_REG_V7:
-            retval = dict.find("v7");
+            retval = dict->find("v7");
             break;
         case ARM64_REG_V8:
-            retval = dict.find("v8");
+            retval = dict->find("v8");
             break;
         case ARM64_REG_V9:
-            retval = dict.find("v9");
+            retval = dict->find("v9");
             break;
         case ARM64_REG_V10:
-            retval = dict.find("v10");
+            retval = dict->find("v10");
             break;
         case ARM64_REG_V11:
-            retval = dict.find("v11");
+            retval = dict->find("v11");
             break;
         case ARM64_REG_V12:
-            retval = dict.find("v12");
+            retval = dict->find("v12");
             break;
         case ARM64_REG_V13:
-            retval = dict.find("v13");
+            retval = dict->find("v13");
             break;
         case ARM64_REG_V14:
-            retval = dict.find("v14");
+            retval = dict->find("v14");
             break;
         case ARM64_REG_V15:
-            retval = dict.find("v15");
+            retval = dict->find("v15");
             break;
         case ARM64_REG_V16:
-            retval = dict.find("v16");
+            retval = dict->find("v16");
             break;
         case ARM64_REG_V17:
-            retval = dict.find("v17");
+            retval = dict->find("v17");
             break;
         case ARM64_REG_V18:
-            retval = dict.find("v18");
+            retval = dict->find("v18");
             break;
         case ARM64_REG_V19:
-            retval = dict.find("v19");
+            retval = dict->find("v19");
             break;
         case ARM64_REG_V20:
-            retval = dict.find("v20");
+            retval = dict->find("v20");
             break;
         case ARM64_REG_V21:
-            retval = dict.find("v21");
+            retval = dict->find("v21");
             break;
         case ARM64_REG_V22:
-            retval = dict.find("v22");
+            retval = dict->find("v22");
             break;
         case ARM64_REG_V23:
-            retval = dict.find("v23");
+            retval = dict->find("v23");
             break;
         case ARM64_REG_V24:
-            retval = dict.find("v24");
+            retval = dict->find("v24");
             break;
         case ARM64_REG_V25:
-            retval = dict.find("v25");
+            retval = dict->find("v25");
             break;
         case ARM64_REG_V26:
-            retval = dict.find("v26");
+            retval = dict->find("v26");
             break;
         case ARM64_REG_V27:
-            retval = dict.find("v27");
+            retval = dict->find("v27");
             break;
         case ARM64_REG_V28:
-            retval = dict.find("v28");
+            retval = dict->find("v28");
             break;
         case ARM64_REG_V29:
-            retval = dict.find("v29");
+            retval = dict->find("v29");
             break;
         case ARM64_REG_V30:
-            retval = dict.find("v30");
+            retval = dict->find("v30");
             break;
         case ARM64_REG_V31:
-            retval = dict.find("v31");
+            retval = dict->find("v31");
             break;
     }
     ASSERT_require(retval);

@@ -9,6 +9,8 @@
 #include <Rose/BinaryAnalysis/Partitioner2/DataFlow.h>    // Dataflow components that we can re-use
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h> // Fast binary analysis data structures
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>    // Fast function data structures
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
+#include <Rose/BinaryAnalysis/RegisterNames.h>
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
@@ -59,7 +61,7 @@ dictionaryM68k() {
     static Dictionary dict;
     if (dict.empty()) {
         // https://m680x0.github.io/doc/abi.html
-        const RegisterDictionary *regdict = RegisterDictionary::dictionary_coldfire();
+        const RegisterDictionary::Ptr regdict = RegisterDictionary::instanceColdfire();
         const RegisterDescriptor SP = regdict->findOrThrow("a7"); // a.k.a., "sp" in some dictionaries
 
         Definition::Ptr cc = Definition::instance(SP.nBits(), "sysv", "m68k-sysv", regdict);
@@ -224,12 +226,23 @@ dictionaryX86() {
 //                                      Definition
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+Definition::Definition() {}
+
+Definition::Definition(size_t wordWidth, const std::string &name, const std::string &comment,
+                       const RegisterDictionary::Ptr &regDict)
+    : name_(name), comment_(comment), wordWidth_(wordWidth), regDict_(regDict) {
+    ASSERT_require2(0 == (wordWidth & 7) && wordWidth > 0, "word size must be a positive multiple of eight");
+    ASSERT_not_null(regDict);
+}
+
+Definition::~Definition() {}
+
 // class method
 Definition::Ptr
 Definition::x86_32bit_cdecl() {
     static Ptr cc;
     if (!cc)
-        cc = x86_cdecl(RegisterDictionary::dictionary_pentium4());
+        cc = x86_cdecl(RegisterDictionary::instancePentium4());
     return cc;
 }
 
@@ -238,13 +251,13 @@ Definition::Ptr
 Definition::x86_64bit_cdecl() {
     static Ptr cc;
     if (!cc)
-        cc = x86_cdecl(RegisterDictionary::dictionary_amd64());
+        cc = x86_cdecl(RegisterDictionary::instanceAmd64());
     return cc;
 }
 
 // class method
 Definition::Ptr
-Definition::x86_cdecl(const RegisterDictionary *regDict) {
+Definition::x86_cdecl(const RegisterDictionary::Ptr &regDict) {
     ASSERT_not_null(regDict);
     const RegisterDescriptor SP = regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp);
     Ptr cc = instance(SP.nBits(), "cdecl",
@@ -267,13 +280,13 @@ Definition::x86_cdecl(const RegisterDictionary *regDict) {
 
     //==== Other inputs ====
     // direction flag is always assumed to be valid
-    cc->nonParameterInputs().push_back(ConcreteLocation(regDict->findOrThrow("df"), Sawyer::Nothing(), regDict));
+    cc->nonParameterInputs().push_back(ConcreteLocation(regDict->findOrThrow("df"), regDict));
     // code segment register is assumed to be valid
-    cc->nonParameterInputs().push_back(ConcreteLocation(regDict->findOrThrow("cs"), Sawyer::Nothing(), regDict));
+    cc->nonParameterInputs().push_back(ConcreteLocation(regDict->findOrThrow("cs"), regDict));
     // data segment register is assumed to be valid
-    cc->nonParameterInputs().push_back(ConcreteLocation(regDict->findOrThrow("ds"), Sawyer::Nothing(), regDict));
+    cc->nonParameterInputs().push_back(ConcreteLocation(regDict->findOrThrow("ds"), regDict));
     // stack segment register is assumed to be valid
-    cc->nonParameterInputs().push_back(ConcreteLocation(regDict->findOrThrow("ss"), Sawyer::Nothing(), regDict));
+    cc->nonParameterInputs().push_back(ConcreteLocation(regDict->findOrThrow("ss"), regDict));
 
     //==== Return values ====
     cc->appendOutputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_ax));
@@ -302,13 +315,13 @@ Definition::Ptr
 Definition::ppc_32bit_ibm() {
     static Ptr cc;
     if (!cc)
-        cc = ppc_ibm(RegisterDictionary::dictionary_powerpc32());
+        cc = ppc_ibm(RegisterDictionary::instancePowerpc32());
     return cc;
 }
 
 // class method
 Definition::Ptr
-Definition::ppc_ibm(const RegisterDictionary *regDict) {
+Definition::ppc_ibm(const RegisterDictionary::Ptr &regDict) {
     // See https://www.ibm.com/support/knowledgecenter/en/ssw_aix_72/com.ibm.aix.alangref/idalangref_reg_use_conv.htm
     ASSERT_not_null(regDict);
     const RegisterDescriptor SP = regDict->findLargestRegister(powerpc_regclass_gpr, 1);
@@ -401,7 +414,7 @@ Definition::Ptr
 Definition::x86_32bit_stdcall() {
     static Ptr cc;
     if (!cc)
-        cc = x86_stdcall(RegisterDictionary::dictionary_pentium4());
+        cc = x86_stdcall(RegisterDictionary::instancePentium4());
     return cc;
 }
 
@@ -410,13 +423,13 @@ Definition::Ptr
 Definition::x86_64bit_stdcall() {
     static Ptr cc;
     if (!cc)
-        cc = x86_stdcall(RegisterDictionary::dictionary_amd64());
+        cc = x86_stdcall(RegisterDictionary::instanceAmd64());
     return cc;
 }
 
 // class method
 Definition::Ptr
-Definition::x86_stdcall(const RegisterDictionary *regDict) {
+Definition::x86_stdcall(const RegisterDictionary::Ptr &regDict) {
     ASSERT_not_null(regDict);
     const RegisterDescriptor SP = regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp);
     Ptr cc = instance(SP.nBits(), "stdcall",
@@ -439,13 +452,13 @@ Definition::x86_stdcall(const RegisterDictionary *regDict) {
 
     //==== Other inputs ====
     // direction flag is always assumed to be valid
-    cc->nonParameterInputs().push_back(ConcreteLocation(regDict->findOrThrow("df"), Sawyer::Nothing(), regDict));
+    cc->nonParameterInputs().push_back(ConcreteLocation(regDict->findOrThrow("df"), regDict));
     // code segment register is assumed to be valid
-    cc->nonParameterInputs().push_back(ConcreteLocation(regDict->findOrThrow("cs"), Sawyer::Nothing(), regDict));
+    cc->nonParameterInputs().push_back(ConcreteLocation(regDict->findOrThrow("cs"), regDict));
     // data segment register is assumed to be valid
-    cc->nonParameterInputs().push_back(ConcreteLocation(regDict->findOrThrow("ds"), Sawyer::Nothing(), regDict));
+    cc->nonParameterInputs().push_back(ConcreteLocation(regDict->findOrThrow("ds"), regDict));
     // stack segment register is assumed to be valid
-    cc->nonParameterInputs().push_back(ConcreteLocation(regDict->findOrThrow("ss"), Sawyer::Nothing(), regDict));
+    cc->nonParameterInputs().push_back(ConcreteLocation(regDict->findOrThrow("ss"), regDict));
 
     //==== Return values ====
     cc->appendOutputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_ax));
@@ -474,13 +487,13 @@ Definition::Ptr
 Definition::x86_32bit_fastcall() {
     static Ptr cc;
     if (!cc)
-        cc = x86_fastcall(RegisterDictionary::dictionary_pentium4());
+        cc = x86_fastcall(RegisterDictionary::instancePentium4());
     return cc;
 }
 
 // class method
 Definition::Ptr
-Definition::x86_fastcall(const RegisterDictionary *regDict) {
+Definition::x86_fastcall(const RegisterDictionary::Ptr &regDict) {
     ASSERT_not_null(regDict);
     const RegisterDescriptor SP = regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp);
     static Ptr cc = instance(SP.nBits(), "fastcall",
@@ -505,13 +518,13 @@ Definition::x86_fastcall(const RegisterDictionary *regDict) {
 
     //==== Other inputs ====
     // direction flag is always assumed to be valid
-    cc->nonParameterInputs().push_back(ConcreteLocation(regDict->findOrThrow("df"), Sawyer::Nothing(), regDict));
+    cc->nonParameterInputs().push_back(ConcreteLocation(regDict->findOrThrow("df"), regDict));
     // code segment register is assumed to be valid
-    cc->nonParameterInputs().push_back(ConcreteLocation(regDict->findOrThrow("cs"), Sawyer::Nothing(), regDict));
+    cc->nonParameterInputs().push_back(ConcreteLocation(regDict->findOrThrow("cs"), regDict));
     // data segment register is assumed to be valid
-    cc->nonParameterInputs().push_back(ConcreteLocation(regDict->findOrThrow("ds"), Sawyer::Nothing(), regDict));
+    cc->nonParameterInputs().push_back(ConcreteLocation(regDict->findOrThrow("ds"), regDict));
     // stack segment register is assumed to be valid
-    cc->nonParameterInputs().push_back(ConcreteLocation(regDict->findOrThrow("ss"), Sawyer::Nothing(), regDict));
+    cc->nonParameterInputs().push_back(ConcreteLocation(regDict->findOrThrow("ss"), regDict));
 
     //==== Return values ====
     cc->appendOutputParameter(regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_ax));
@@ -540,7 +553,7 @@ Definition::Ptr
 Definition::x86_64bit_sysv() {
     static Ptr cc;
     if (!cc) {
-        const RegisterDictionary *regDict = RegisterDictionary::dictionary_amd64();
+        RegisterDictionary::Ptr regDict = RegisterDictionary::instanceAmd64();
         const RegisterDescriptor SP = regDict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp);
 
         cc = instance(64, "sysv", "x86-64 sysv", regDict);
@@ -586,13 +599,13 @@ Definition::x86_64bit_sysv() {
         //==== Other inputs ====
 
         // direction flag is assuemd to be valid
-        cc->nonParameterInputs().push_back(ConcreteLocation(regDict->findOrThrow("df"), Sawyer::Nothing(), regDict));
+        cc->nonParameterInputs().push_back(ConcreteLocation(regDict->findOrThrow("df"), regDict));
         // code segment register is assumed to be valid
-        cc->nonParameterInputs().push_back(ConcreteLocation(regDict->findOrThrow("cs"), Sawyer::Nothing(), regDict));
+        cc->nonParameterInputs().push_back(ConcreteLocation(regDict->findOrThrow("cs"), regDict));
         // data segment register is assumed to be valid
-        cc->nonParameterInputs().push_back(ConcreteLocation(regDict->findOrThrow("ds"), Sawyer::Nothing(), regDict));
+        cc->nonParameterInputs().push_back(ConcreteLocation(regDict->findOrThrow("ds"), regDict));
         // stack segment register is assumed to be valid
-        cc->nonParameterInputs().push_back(ConcreteLocation(regDict->findOrThrow("ss"), Sawyer::Nothing(), regDict));
+        cc->nonParameterInputs().push_back(ConcreteLocation(regDict->findOrThrow("ss"), regDict));
 
 
         //==== Return values ====
@@ -658,6 +671,16 @@ Definition::x86_64bit_sysv() {
         cc->calleeSavedRegisters().insert(registers.begin(), registers.end());
     }
     return cc;
+}
+
+RegisterDictionary::Ptr
+Definition::registerDictionary() const {
+    return regDict_;
+}
+
+void
+Definition::registerDictionary(const RegisterDictionary::Ptr &dict) {
+    regDict_ = dict;
 }
 
 void
@@ -732,11 +755,15 @@ Definition::getUsedRegisterParts() const {
 }
 
 void
-Definition::print(std::ostream &out, const RegisterDictionary *regDict/*=NULL*/) const {
+Definition::print(std::ostream &out) const {
+    print(out, RegisterDictionary::Ptr());
+}
+
+void
+Definition::print(std::ostream &out, const RegisterDictionary::Ptr &regDictOverride/*=NULL*/) const {
     using namespace StringUtility;
-    ASSERT_require(regDict || regDict_);
-    if (!regDict)
-        regDict = regDict_;
+    ASSERT_require(regDictOverride || regDict_);
+    RegisterDictionary::Ptr regDict = regDictOverride ? regDictOverride : regDict_;
     RegisterNames regNames(regDict);
 
     out <<cEscape(name_);
@@ -841,16 +868,28 @@ operator<<(std::ostream &out, const Definition &x) {
 //                                      Analysis
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+Analysis::Analysis()
+    : hasResults_(false), didConverge_(false) {}
+
+Analysis::Analysis(const Disassembler::BasePtr &d)
+    : hasResults_(false), didConverge_(false) {
+    init(d);
+}
+
+Analysis::Analysis(const InstructionSemantics::BaseSemantics::DispatcherPtr &cpu)
+    : cpu_(cpu), hasResults_(false), didConverge_(false) {}
+
+Analysis::~Analysis() {}
 
 void
 Analysis::init(const Disassembler::Base::Ptr &disassembler) {
     if (disassembler) {
-        const RegisterDictionary *registerDictionary = disassembler->registerDictionary();
+        RegisterDictionary::Ptr registerDictionary = disassembler->registerDictionary();
         ASSERT_not_null(registerDictionary);
         size_t addrWidth = disassembler->instructionPointerRegister().nBits();
 
         SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
-        SymbolicSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(registerDictionary, solver);
+        SymbolicSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instanceFromRegisters(registerDictionary, solver);
 
         cpu_ = disassembler->dispatcher()->create(ops, addrWidth, registerDictionary);
     }
@@ -870,6 +909,16 @@ Analysis::clearResults() {
 void
 Analysis::clearNonResults() {
     cpu_ = DispatcherPtr();
+}
+
+RegisterDictionary::Ptr
+Analysis::registerDictionary() const {
+    return regDict_;
+}
+
+void
+Analysis::registerDictionary(const RegisterDictionary::Ptr &d) {
+    regDict_ = d;
 }
 
 class TransferFunction: public P2::DataFlow::TransferFunction {

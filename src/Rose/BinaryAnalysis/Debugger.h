@@ -3,6 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Disassembler/BasicTypes.h>
 #include <Rose/BitFlags.h>
 
@@ -509,7 +510,7 @@ public:
     std::string howTerminated();
 
     /** Available registers. */
-    const RegisterDictionary* registerDictionary() const;
+    RegisterDictionaryPtr registerDictionary() const;
 
     /** Disassembler. */
     Disassembler::BasePtr disassembler() const;

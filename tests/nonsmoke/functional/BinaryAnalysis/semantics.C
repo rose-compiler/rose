@@ -26,6 +26,7 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #include <Rose/BinaryAnalysis/SymbolicExpr.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherX86.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/TestSemantics.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 using namespace Rose::BinaryAnalysis::InstructionSemantics;
 
 #if !defined(SMT_SOLVER) || SMT_SOLVER == NO_SOLVER
@@ -45,7 +46,7 @@ using namespace Rose::BinaryAnalysis::InstructionSemantics;
 #   error "invalid value for SMT_SOLVER"
 #endif
 
-const Rose::BinaryAnalysis::RegisterDictionary *regdict = Rose::BinaryAnalysis::RegisterDictionary::dictionary_pentium4();
+Rose::BinaryAnalysis::RegisterDictionary::Ptr regdict = Rose::BinaryAnalysis::RegisterDictionary::instancePentium4();
 
 #include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
 
@@ -59,7 +60,7 @@ static bool do_usedef = true;
 
 #   include <Rose/BinaryAnalysis/InstructionSemantics/NullSemantics.h>
     static BaseSemantics::RiscOperatorsPtr make_ops() {
-        BaseSemantics::RiscOperatorsPtr retval = NullSemantics::RiscOperators::instance(regdict);
+        BaseSemantics::RiscOperatorsPtr retval = NullSemantics::RiscOperators::instanceFromRegisters(regdict);
         TestSemantics<
             NullSemantics::SValuePtr, NullSemantics::RegisterStatePtr, NullSemantics::MemoryStatePtr,
             BaseSemantics::StatePtr, NullSemantics::RiscOperatorsPtr> tester;
@@ -71,7 +72,7 @@ static bool do_usedef = true;
 #elif  SEMANTIC_DOMAIN == PARTSYM_DOMAIN
 #   include <Rose/BinaryAnalysis/InstructionSemantics/PartialSymbolicSemantics.h>
     static BaseSemantics::RiscOperatorsPtr make_ops() {
-        BaseSemantics::RiscOperatorsPtr retval = PartialSymbolicSemantics::RiscOperators::instance(regdict);
+        BaseSemantics::RiscOperatorsPtr retval = PartialSymbolicSemantics::RiscOperators::instanceFromRegisters(regdict);
         TestSemantics<PartialSymbolicSemantics::SValuePtr, BaseSemantics::RegisterStateGenericPtr,
                       BaseSemantics::MemoryCellListPtr, BaseSemantics::StatePtr,
                       PartialSymbolicSemantics::RiscOperatorsPtr> tester;
@@ -84,7 +85,7 @@ static bool do_usedef = true;
 
 #   include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
     static BaseSemantics::RiscOperatorsPtr make_ops() {
-        SymbolicSemantics::RiscOperatorsPtr retval = SymbolicSemantics::RiscOperators::instance(regdict);
+        SymbolicSemantics::RiscOperatorsPtr retval = SymbolicSemantics::RiscOperators::instanceFromRegisters(regdict);
         retval->computingDefiners(do_usedef ? SymbolicSemantics::TRACK_ALL_DEFINERS : SymbolicSemantics::TRACK_NO_DEFINERS);
         TestSemantics<SymbolicSemantics::SValuePtr, BaseSemantics::RegisterStateGenericPtr,
                       SymbolicSemantics::MemoryStatePtr, BaseSemantics::StatePtr,
@@ -97,7 +98,7 @@ static bool do_usedef = true;
 #elif SEMANTIC_DOMAIN == INTERVAL_DOMAIN
 #   include <Rose/BinaryAnalysis/InstructionSemantics/IntervalSemantics.h>
     static BaseSemantics::RiscOperatorsPtr make_ops() {
-        BaseSemantics::RiscOperatorsPtr retval = IntervalSemantics::RiscOperators::instance(regdict);
+        BaseSemantics::RiscOperatorsPtr retval = IntervalSemantics::RiscOperators::instanceFromRegisters(regdict);
         TestSemantics<IntervalSemantics::SValuePtr, BaseSemantics::RegisterStateGenericPtr,
                       IntervalSemantics::MemoryStatePtr, BaseSemantics::StatePtr,
                       IntervalSemantics::RiscOperatorsPtr> tester;
@@ -112,11 +113,11 @@ static bool do_usedef = true;
 #   include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #   include <Rose/BinaryAnalysis/InstructionSemantics/IntervalSemantics.h>
     static BaseSemantics::RiscOperatorsPtr make_ops() {
-        MultiSemantics::RiscOperatorsPtr ops = MultiSemantics::RiscOperators::instance(regdict);
-        PartialSymbolicSemantics::RiscOperatorsPtr s1 = PartialSymbolicSemantics::RiscOperators::instance(regdict);
-        SymbolicSemantics::RiscOperatorsPtr s2 = SymbolicSemantics::RiscOperators::instance(regdict);
+        MultiSemantics::RiscOperatorsPtr ops = MultiSemantics::RiscOperators::instanceFromRegisters(regdict);
+        PartialSymbolicSemantics::RiscOperatorsPtr s1 = PartialSymbolicSemantics::RiscOperators::instanceFromRegisters(regdict);
+        SymbolicSemantics::RiscOperatorsPtr s2 = SymbolicSemantics::RiscOperators::instanceFromRegisters(regdict);
         s2->set_compute_usedef();
-        IntervalSemantics::RiscOperatorsPtr s3 = IntervalSemantics::RiscOperators::instance(regdict);
+        IntervalSemantics::RiscOperatorsPtr s3 = IntervalSemantics::RiscOperators::instanceFromRegisters(regdict);
         ops->add_subdomain(s1, "PartialSymbolic");
         ops->add_subdomain(s2, "Symbolic");
         ops->add_subdomain(s3, "Interval");
@@ -171,9 +172,9 @@ analyze_interp(SgAsmInterpretation *interp)
             TraceSemantics::RiscOperatorsPtr trace = TraceSemantics::RiscOperators::instance(operators);
             trace->stream().destination(sink);
             trace->stream().enable();
-            dispatcher = DispatcherX86::instance(trace, 32);
+            dispatcher = DispatcherX86::instance(trace, 32, Rose::BinaryAnalysis::RegisterDictionary::Ptr());
         } else {
-            dispatcher = DispatcherX86::instance(operators, 32);
+            dispatcher = DispatcherX86::instance(operators, 32, Rose::BinaryAnalysis::RegisterDictionary::Ptr());
         }
         operators->solver(make_solver());
 

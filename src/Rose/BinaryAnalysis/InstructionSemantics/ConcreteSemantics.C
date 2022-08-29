@@ -216,10 +216,60 @@ MemoryState::print(std::ostream &out, Formatter &fmt) const {
 //                                      RiscOperators
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+RiscOperators::RiscOperators(const BaseSemantics::SValue::Ptr &protoval, const SmtSolver::Ptr &solver)
+    : BaseSemantics::RiscOperators(protoval, solver) {
+    name("Concrete");
+    (void) SValue::promote(protoval); // make sure its dynamic type is a ConcreteSemantics::SValue
+}
+
+RiscOperators::RiscOperators(const BaseSemantics::State::Ptr &state, const SmtSolver::Ptr &solver)
+    : BaseSemantics::RiscOperators(state, solver) {
+    name("Concrete");
+    (void) SValue::promote(state->protoval());      // values must have ConcreteSemantics::SValue dynamic type
+}
+
+RiscOperators::~RiscOperators() {}
+
+RiscOperators::Ptr
+RiscOperators::instanceFromRegisters(const RegisterDictionary::Ptr &regdict, const SmtSolver::Ptr &solver) {
+    BaseSemantics::SValuePtr protoval = SValue::instance();
+    BaseSemantics::RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
+    BaseSemantics::MemoryStatePtr memory = MemoryState::instance(protoval, protoval);
+    BaseSemantics::StatePtr state = State::instance(registers, memory);
+    return Ptr(new RiscOperators(state, solver));
+}
+
+RiscOperators::Ptr
+RiscOperators::instanceFromProtoval(const BaseSemantics::SValue::Ptr &protoval, const SmtSolver::Ptr &solver) {
+    return Ptr(new RiscOperators(protoval, solver));
+}
+
+RiscOperators::Ptr
+RiscOperators::instanceFromState(const BaseSemantics::State::Ptr &state, const SmtSolver::Ptr &solver) {
+    return Ptr(new RiscOperators(state, solver));
+}
+
+BaseSemantics::RiscOperators::Ptr
+RiscOperators::create(const BaseSemantics::SValue::Ptr &protoval, const SmtSolver::Ptr &solver) const {
+    return instanceFromProtoval(protoval, solver);
+}
+
+BaseSemantics::RiscOperators::Ptr
+RiscOperators::create(const BaseSemantics::State::Ptr &state, const SmtSolver::Ptr &solver) const {
+    return instanceFromState(state, solver);
+}
+
 SValuePtr
 RiscOperators::svalueNumber(const Sawyer::Container::BitVector &bits) {
     SValuePtr retval = SValue::promote(svalueNumber(bits.size(), 0));
     retval->bits(bits);
+    return retval;
+}
+
+RiscOperators::Ptr
+RiscOperators::promote(const BaseSemantics::RiscOperators::Ptr &x) {
+    Ptr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
+    ASSERT_not_null(retval);
     return retval;
 }
 

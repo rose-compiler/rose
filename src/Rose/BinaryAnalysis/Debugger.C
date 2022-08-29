@@ -5,7 +5,7 @@
 
 #include <Rose/BinaryAnalysis/Disassembler/X86.h>
 #include <integerOps.h>
-#include <Rose/BinaryAnalysis/Registers.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <rose_pragma_message.h>
 
 #include <boost/algorithm/string/case_conv.hpp>
@@ -337,7 +337,7 @@ Debugger::~Debugger() {
     detach(autoDetach_);
 }
 
-const RegisterDictionary*
+RegisterDictionary::Ptr
 Debugger::registerDictionary() const {
     ASSERT_not_null(disassembler_);
     return disassembler_->registerDictionary();

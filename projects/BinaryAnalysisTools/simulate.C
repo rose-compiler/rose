@@ -3,6 +3,7 @@
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/ConcreteSemantics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/Diagnostics.h>
 
 #include <AsmUnparser_compat.h>
@@ -75,11 +76,11 @@ int main(int argc, char *argv[]) {
     // Configure instruction semantics
     Partitioner2::Partitioner partitioner = engine.createPartitioner();
     Disassembler::Base::Ptr disassembler = engine.obtainDisassembler();
-    const RegisterDictionary *regdict = disassembler->registerDictionary();
+    RegisterDictionary::Ptr regdict = disassembler->registerDictionary();
     if (disassembler->dispatcher() == NULL)
         throw std::runtime_error("no instruction semantics for this architecture");    
-    BaseSemantics::RiscOperatorsPtr ops = InstructionSemantics::ConcreteSemantics::RiscOperators::instance(regdict);
-    BaseSemantics::DispatcherPtr cpu = disassembler->dispatcher()->create(ops);
+    BaseSemantics::RiscOperators::Ptr ops = InstructionSemantics::ConcreteSemantics::RiscOperators::instanceFromRegisters(regdict);
+    BaseSemantics::Dispatcher::Ptr cpu = disassembler->dispatcher()->create(ops, 0, RegisterDictionary::Ptr());
     ConcreteSemantics::MemoryState::promote(ops->currentState()->memoryState())->memoryMap(map);
 
     // Find starting address

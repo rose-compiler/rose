@@ -4,6 +4,7 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics/StaticSemantics.h>
 
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include "stringify.h"
 
 namespace Rose {
@@ -18,11 +19,11 @@ namespace StaticSemantics {
 void attachInstructionSemantics(SgNode *ast, const Disassembler::Base::Ptr &disassembler) {
     ASSERT_not_null(ast);
     ASSERT_not_null(disassembler);
-    RiscOperatorsPtr ops = RiscOperators::instance(SValue::instance(), SmtSolverPtr());
+    RiscOperators::Ptr ops = RiscOperators::instanceFromProtoval(SValue::instance(), SmtSolver::Ptr());
     BaseSemantics::DispatcherPtr cpu = disassembler->dispatcher();
     if (!cpu)
         throw BaseSemantics::Exception("no instruction semantics for architecture", NULL);
-    cpu = cpu->create(ops);
+    cpu = cpu->create(ops, 0, RegisterDictionary::Ptr());
     attachInstructionSemantics(ast, cpu);
 }
 
@@ -48,6 +49,56 @@ void attachInstructionSemantics(SgNode *ast, const BaseSemantics::DispatcherPtr 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Supporting functions
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+RiscOperators::RiscOperators(const BaseSemantics::SValue::Ptr &protoval, const SmtSolver::Ptr &solver)
+    : BaseSemantics::RiscOperators(protoval, solver) {
+    name("StaticSemantics");
+    (void) SValue::promote(protoval); // make sure its dynamic type is a StaticSemantics::SValue
+}
+
+RiscOperators::RiscOperators(const BaseSemantics::State::Ptr &state, const SmtSolver::Ptr &solver)
+    : BaseSemantics::RiscOperators(state, solver) {
+    name("StaticSemantics");
+    (void) SValue::promote(state->protoval()); // values must have StaticSemantics::SValue dynamic type
+}
+
+RiscOperators::~RiscOperators() {}
+
+RiscOperators::Ptr
+RiscOperators::instanceFromRegisters(const RegisterDictionary::Ptr &regdict, const SmtSolver::Ptr &solver) {
+    BaseSemantics::SValue::Ptr protoval = SValue::instance();
+    BaseSemantics::RegisterState::Ptr registers = RegisterState::instance(protoval, regdict);
+    BaseSemantics::MemoryState::Ptr memory = MemoryState::instance(protoval, protoval);
+    BaseSemantics::State::Ptr state = State::instance(registers, memory);
+    return Ptr(new RiscOperators(state, solver));
+}
+
+RiscOperators::Ptr
+RiscOperators::instanceFromProtoval(const BaseSemantics::SValue::Ptr &protoval, const SmtSolver::Ptr &solver) {
+    return Ptr(new RiscOperators(protoval, solver));
+}
+
+RiscOperators::Ptr
+RiscOperators::instanceFromState(const BaseSemantics::State::Ptr &state, const SmtSolver::Ptr &solver) {
+    return Ptr(new RiscOperators(state, solver));
+}
+
+BaseSemantics::RiscOperators::Ptr
+RiscOperators::create(const BaseSemantics::SValue::Ptr &protoval, const SmtSolver::Ptr &solver) const {
+    return instanceFromProtoval(protoval, solver);
+}
+
+BaseSemantics::RiscOperators::Ptr
+RiscOperators::create(const BaseSemantics::State::Ptr &state, const SmtSolver::Ptr &solver) const {
+    return instanceFromState(state, solver);
+}
+
+RiscOperators::Ptr
+RiscOperators::promote(const BaseSemantics::RiscOperators::Ptr &x) {
+    Ptr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
+    ASSERT_not_null(retval);
+    return retval;
+}
 
 // Make an SValue for an arbitrary SgAsmExpression subtree
 BaseSemantics::SValuePtr

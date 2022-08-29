@@ -3,7 +3,9 @@
 #include "sage3basic.h"
 #include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
 
+#include <Rose/BinaryAnalysis/RegisterNames.h>
 #include <Rose/StringUtility/SplitJoin.h>
+
 #include "AsmUnparser_compat.h"
 
 #include <boost/algorithm/string/trim.hpp>
@@ -95,7 +97,7 @@ RiscOperators::register_name(RegisterDescriptor a) {
     BaseSemantics::RegisterStatePtr regstate;
     if (state!=NULL)
         regstate = state->registerState();
-    RegisterNames regnames(regstate!=NULL ? regstate->registerDictionary() : NULL);
+    RegisterNames regnames(regstate ? regstate->registerDictionary() : RegisterDictionary::Ptr());
     return regnames(a);
 }
 

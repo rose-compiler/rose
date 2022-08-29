@@ -4,7 +4,9 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/CommandLine.h>
 
 namespace Rose {
@@ -76,7 +78,7 @@ public:
     // Compile-time checks for RegisterState
     class RegisterStateSubclass: public RegisterState {
     public:
-        explicit RegisterStateSubclass(const SValuePtr &protoval, const RegisterDictionary *regdict)
+        explicit RegisterStateSubclass(const SValuePtr &protoval, const RegisterDictionaryPtr &regdict)
             : RegisterState(protoval, regdict) {}
     };
 
@@ -119,7 +121,7 @@ public:
               const BaseSemantics::StatePtr &state,
               const BaseSemantics::RiscOperatorsPtr &ops) {
 
-        const RegisterDictionary *regdict = RegisterDictionary::dictionary_pentium4();
+        RegisterDictionary::Ptr regdict = RegisterDictionary::instancePentium4();
         const RegisterDescriptor reg32 = regdict->findOrThrow("eip");
         SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
 

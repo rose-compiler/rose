@@ -73,6 +73,7 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/InstructionSemantics/BaseSemantics/BinaryAnalysis		\
 	BinaryAnalysis/InstructionSemantics/BaseSemantics/Dispatcher.C			\
 	BinaryAnalysis/InstructionSemantics/BaseSemantics/Exception.C			\
+	BinaryAnalysis/InstructionSemantics/BaseSemantics/Formatter.C			\
 	BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCell.C			\
 	BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCellList.C		\
 	BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCellMap.C		\
@@ -165,8 +166,9 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/PointerDetection.C						\
 	BinaryAnalysis/Reachability.C							\
 	BinaryAnalysis/RegisterDescriptor.C						\
+	BinaryAnalysis/RegisterDictionary.C						\
+	BinaryAnalysis/RegisterNames.C							\
 	BinaryAnalysis/RegisterParts.C							\
-	BinaryAnalysis/Registers.C							\
 	BinaryAnalysis/ReturnValueUsed.C						\
 	BinaryAnalysis/SerialIo.C							\
 	BinaryAnalysis/SmtCommandLine.C							\
