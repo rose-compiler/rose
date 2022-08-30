@@ -8,8 +8,8 @@
 
 using namespace Sawyer::Message::Common;
 
-typedef Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::SValuePtr SValuePtr;
-typedef Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::RiscOperatorsPtr RiscOperatorsPtr;
+using SValue = Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::SValue;
+using RiscOperators = Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::RiscOperators;
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -28,7 +28,7 @@ HotPatch::initDiagnostics() {
 }
 
 size_t
-HotPatch::apply(const RiscOperatorsPtr &ops) const {
+HotPatch::apply(const RiscOperators::Ptr &ops) const {
     ASSERT_not_null(ops);
     size_t nMatches = 0;
 
@@ -40,7 +40,7 @@ HotPatch::apply(const RiscOperatorsPtr &ops) const {
 
             case Record::PATCH_REGISTER:
                 if (!record.reg().isEmpty() && record.oldValue() != NULL) {
-                    SValuePtr currentValue = ops->peekRegister(record.reg());
+                    SValue::Ptr currentValue = ops->peekRegister(record.reg());
                     if (record.oldValue()->mustEqual(currentValue)) {
                         ASSERT_not_null(record.newValue());
                         SAWYER_MESG(mlog[DEBUG]) <<"changing " <<record.reg()

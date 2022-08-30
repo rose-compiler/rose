@@ -876,7 +876,7 @@ Analysis::Analysis(const Disassembler::BasePtr &d)
     init(d);
 }
 
-Analysis::Analysis(const InstructionSemantics::BaseSemantics::DispatcherPtr &cpu)
+Analysis::Analysis(const InstructionSemantics::BaseSemantics::Dispatcher::Ptr &cpu)
     : cpu_(cpu), hasResults_(false), didConverge_(false) {}
 
 Analysis::~Analysis() {}
@@ -889,7 +889,7 @@ Analysis::init(const Disassembler::Base::Ptr &disassembler) {
         size_t addrWidth = disassembler->instructionPointerRegister().nBits();
 
         SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
-        SymbolicSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instanceFromRegisters(registerDictionary, solver);
+        SymbolicSemantics::RiscOperators::Ptr ops = SymbolicSemantics::RiscOperators::instanceFromRegisters(registerDictionary, solver);
 
         cpu_ = disassembler->dispatcher()->create(ops, addrWidth, registerDictionary);
     }
@@ -908,7 +908,7 @@ Analysis::clearResults() {
 
 void
 Analysis::clearNonResults() {
-    cpu_ = DispatcherPtr();
+    cpu_ = Dispatcher::Ptr();
 }
 
 RegisterDictionary::Ptr
@@ -1030,7 +1030,7 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
 
     // Build the dataflow engine.  If an instruction dispatcher is already provided then use it, otherwise create one and store
     // it in this analysis object.
-    typedef DataFlow::Engine<DfCfg, StatePtr, TransferFunction, DataFlow::SemanticsMerge> DfEngine;
+    typedef DataFlow::Engine<DfCfg, State::Ptr, TransferFunction, DataFlow::SemanticsMerge> DfEngine;
     if (!cpu_ && NULL==(cpu_ = partitioner.newDispatcher(partitioner.newOperators()))) {
         mlog[DEBUG] <<"  no instruction semantics\n";
         return;
@@ -1046,8 +1046,8 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     regDict_ = cpu_->registerDictionary();
 
     // Build the initial state
-    StatePtr initialState = xfer.initialState();
-    RegisterStateGenericPtr initialRegState = RegisterStateGeneric::promote(initialState->registerState());
+    State::Ptr initialState = xfer.initialState();
+    RegisterStateGeneric::Ptr initialRegState = RegisterStateGeneric::promote(initialState->registerState());
     initialRegState->initialize_large();
 #if 0 // [Robb Matzke 2022-07-12]
     // Initializing the stack pointer register to a constant value will interfere with detecting local variables, since the
@@ -1076,7 +1076,7 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
         // Use this rather than runToFixedPoint because it lets us show a progress report
         Sawyer::ProgressBar<size_t> progress(maxIterations, mlog[MARCH], function->printableName());
         progress.suffix(" iterations");
-        dfEngine.reset(StatePtr());
+        dfEngine.reset(State::Ptr());
         dfEngine.insertStartingVertex(startVertexId, initialState);
         while (dfEngine.runOneIteration())
             ++progress;
@@ -1089,7 +1089,7 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     }
 
     // Get the final dataflow state
-    StatePtr finalState = dfEngine.getInitialState(returnVertex->id());
+    State::Ptr finalState = dfEngine.getInitialState(returnVertex->id());
     if (finalState == NULL) {
         mlog[DEBUG] <<"  data flow analysis did not reach final state\n";
         return;
@@ -1104,7 +1104,7 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
             mlog[DEBUG] <<"  final state:\n" <<(*finalState+fmt);
         }
     }
-    RegisterStateGenericPtr finalRegs = RegisterStateGeneric::promote(finalState->registerState());
+    RegisterStateGeneric::Ptr finalRegs = RegisterStateGeneric::promote(finalState->registerState());
 
     // Update analysis results
     updateRestoredRegisters(initialState, finalState);
@@ -1119,20 +1119,20 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
 }
 
 void
-Analysis::updateRestoredRegisters(const StatePtr &initialState, const StatePtr &finalState) {
+Analysis::updateRestoredRegisters(const State::Ptr &initialState, const State::Ptr &finalState) {
     restoredRegisters_.clear();
 
-    RegisterStateGenericPtr initialRegs = RegisterStateGeneric::promote(initialState->registerState());
-    RegisterStateGenericPtr finalRegs = RegisterStateGeneric::promote(finalState->registerState());
+    RegisterStateGeneric::Ptr initialRegs = RegisterStateGeneric::promote(initialState->registerState());
+    RegisterStateGeneric::Ptr finalRegs = RegisterStateGeneric::promote(finalState->registerState());
     ASSERT_not_null2(cpu_, "analyzer is not properly initialized");
-    RiscOperatorsPtr ops = cpu_->operators();
+    RiscOperators::Ptr ops = cpu_->operators();
 
     InputOutputPropertySet props;
     props.insert(IO_READ_BEFORE_WRITE);
     props.insert(IO_WRITE);
     for (RegisterDescriptor reg: finalRegs->findProperties(props)) {
-        SValuePtr initialValue = initialRegs->peekRegister(reg, ops->undefined_(reg.nBits()), ops.get());
-        SValuePtr finalValue = finalRegs->peekRegister(reg, ops->undefined_(reg.nBits()), ops.get());
+        SValue::Ptr initialValue = initialRegs->peekRegister(reg, ops->undefined_(reg.nBits()), ops.get());
+        SValue::Ptr finalValue = finalRegs->peekRegister(reg, ops->undefined_(reg.nBits()), ops.get());
         SymbolicExpr::Ptr initialExpr = SymbolicSemantics::SValue::promote(initialValue)->get_expression();
         SymbolicExpr::Ptr finalExpr = SymbolicSemantics::SValue::promote(finalValue)->get_expression();
         if (finalExpr->flags() == initialExpr->flags() && finalExpr->mustEqual(initialExpr, ops->solver()))
@@ -1141,32 +1141,32 @@ Analysis::updateRestoredRegisters(const StatePtr &initialState, const StatePtr &
 }
 
 void
-Analysis::updateInputRegisters(const StatePtr &state) {
+Analysis::updateInputRegisters(const State::Ptr &state) {
     inputRegisters_.clear();
-    RegisterStateGenericPtr regs = RegisterStateGeneric::promote(state->registerState());
+    RegisterStateGeneric::Ptr regs = RegisterStateGeneric::promote(state->registerState());
     for (RegisterDescriptor reg: regs->findProperties(IO_READ_BEFORE_WRITE))
         inputRegisters_.insert(reg);
     inputRegisters_ -= restoredRegisters_;
 }
 
 void
-Analysis::updateOutputRegisters(const StatePtr &state) {
+Analysis::updateOutputRegisters(const State::Ptr &state) {
     outputRegisters_.clear();
-    RegisterStateGenericPtr regs = RegisterStateGeneric::promote(state->registerState());
+    RegisterStateGeneric::Ptr regs = RegisterStateGeneric::promote(state->registerState());
     for (RegisterDescriptor reg: regs->findProperties(IO_WRITE))
         outputRegisters_.insert(reg);
     outputRegisters_ -= restoredRegisters_;
 }
 
 void
-Analysis::updateStackParameters(const P2::Function::Ptr &function, const StatePtr &initialState, const StatePtr &finalState) {
+Analysis::updateStackParameters(const P2::Function::Ptr &function, const State::Ptr &initialState, const State::Ptr &finalState) {
     inputStackParameters_.clear();
     outputStackParameters_.clear();
 
     ASSERT_not_null2(cpu_, "analyzer is not properly initialized");
-    RiscOperatorsPtr ops = cpu_->operators();
+    RiscOperators::Ptr ops = cpu_->operators();
     RegisterDescriptor SP = cpu_->stackPointerRegister();
-    SValuePtr initialStackPointer = initialState->peekRegister(SP, ops->undefined_(SP.nBits()), ops.get());
+    SValue::Ptr initialStackPointer = initialState->peekRegister(SP, ops->undefined_(SP.nBits()), ops.get());
     ops->currentState(finalState);
     Variables::StackVariables vars = P2::DataFlow::findFunctionArguments(function, ops, initialStackPointer);
     for (const Variables::StackVariable &var: vars.values()) {
@@ -1179,13 +1179,13 @@ Analysis::updateStackParameters(const P2::Function::Ptr &function, const StatePt
 }
 
 void
-Analysis::updateStackDelta(const StatePtr &initialState, const StatePtr &finalState) {
+Analysis::updateStackDelta(const State::Ptr &initialState, const State::Ptr &finalState) {
     ASSERT_not_null2(cpu_, "analyzer is not properly initialized");
-    RiscOperatorsPtr ops = cpu_->operators();
+    RiscOperators::Ptr ops = cpu_->operators();
     RegisterDescriptor SP = cpu_->stackPointerRegister();
-    SValuePtr initialStackPointer = initialState->peekRegister(SP, ops->undefined_(SP.nBits()), ops.get());
-    SValuePtr finalStackPointer = finalState->peekRegister(SP, ops->undefined_(SP.nBits()), ops.get());
-    SValuePtr stackDelta = ops->subtract(finalStackPointer, initialStackPointer);
+    SValue::Ptr initialStackPointer = initialState->peekRegister(SP, ops->undefined_(SP.nBits()), ops.get());
+    SValue::Ptr finalStackPointer = finalState->peekRegister(SP, ops->undefined_(SP.nBits()), ops.get());
+    SValue::Ptr stackDelta = ops->subtract(finalStackPointer, initialStackPointer);
     stackDelta_ = stackDelta->toSigned();
 }
 
@@ -1547,7 +1547,7 @@ writeArgument(const RiscOperators::Ptr &ops, const Definition::Ptr &ccDef, size_
     }
 }
 
-SValuePtr
+SValue::Ptr
 readReturnValue(const RiscOperators::Ptr &ops, const Definition::Ptr &ccDef) {
     ASSERT_not_null(ops);
     ASSERT_not_null(ccDef);
@@ -1558,7 +1558,7 @@ readReturnValue(const RiscOperators::Ptr &ops, const Definition::Ptr &ccDef) {
 
     // Assume that the first output parameter is the main integer return location.
     const ConcreteLocation &loc = ccDef->outputParameters()[0];
-    SValuePtr retval;
+    SValue::Ptr retval;
     switch (loc.type()) {
         case ConcreteLocation::REGISTER:
             retval = ops->readRegister(loc.reg());

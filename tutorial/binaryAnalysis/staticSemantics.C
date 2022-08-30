@@ -44,7 +44,7 @@ struct ExprPrinter: AstPrePostProcessing {
 // Attach semantic information about side effects to each instruction, printing them as we go.
 struct SemanticsAttacher: AstSimpleProcessing {
     const P2::Partitioner &partitioner;
-    IS::BaseSemantics::RiscOperatorsPtr traceOps;
+    IS::BaseSemantics::RiscOperators::Ptr traceOps;
 
     // Build a symbolic CPU
     explicit SemanticsAttacher(const P2::Partitioner &partitioner)
@@ -58,7 +58,7 @@ struct SemanticsAttacher: AstSimpleProcessing {
             std::cerr <<partitioner.unparse(insn) <<"\n";
 
             // Symbolic execution of this single instruction all by itself.
-            IS::BaseSemantics::DispatcherPtr cpu = partitioner.newDispatcher(traceOps);
+            IS::BaseSemantics::Dispatcher::Ptr cpu = partitioner.newDispatcher(traceOps);
             try {
                 cpu->processInstruction(insn);
             } catch (...) {

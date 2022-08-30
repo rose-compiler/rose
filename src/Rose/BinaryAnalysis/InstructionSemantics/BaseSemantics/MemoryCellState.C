@@ -11,10 +11,10 @@ namespace BinaryAnalysis {
 namespace InstructionSemantics {
 namespace BaseSemantics {
 
-MemoryCellState::MemoryCellState(const MemoryCellPtr &protocell)
+MemoryCellState::MemoryCellState(const MemoryCell::Ptr &protocell)
     : MemoryState(protocell->address(), protocell->value()), protocell(protocell) {}
 
-MemoryCellState::MemoryCellState(const SValuePtr &addrProtoval, const SValuePtr &valProtoval)
+MemoryCellState::MemoryCellState(const SValue::Ptr &addrProtoval, const SValue::Ptr &valProtoval)
     : MemoryState(addrProtoval, valProtoval), protocell(MemoryCell::instance(addrProtoval, valProtoval)) {}
 
 MemoryCellState::MemoryCellState(const MemoryCellState &other)
@@ -24,7 +24,7 @@ MemoryCellState::~MemoryCellState() {}
 
 void
 MemoryCellState::clear() {
-    latestWrittenCell_ = MemoryCellPtr();
+    latestWrittenCell_ = MemoryCell::Ptr();
 }
 
 } // namespace

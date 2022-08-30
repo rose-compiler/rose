@@ -20,10 +20,10 @@ RiscOperators::startInstruction(SgAsmInstruction *insn) {
     ASSERT_not_null(currentState());
     ASSERT_not_null(currentState()->memoryState());
 
-    BaseSemantics::MemoryStatePtr mem = currentState()->memoryState();
-    if (MemoryListStatePtr ml = boost::dynamic_pointer_cast<MemoryListState>(mem)) {
+    BaseSemantics::MemoryState::Ptr mem = currentState()->memoryState();
+    if (MemoryListState::Ptr ml = boost::dynamic_pointer_cast<MemoryListState>(mem)) {
         ml->addressesRead().clear();
-    } else if (MemoryMapStatePtr mm = boost::dynamic_pointer_cast<MemoryMapState>(mem)) {
+    } else if (MemoryMapState::Ptr mm = boost::dynamic_pointer_cast<MemoryMapState>(mem)) {
         mm->addressesRead().clear();
     }
     SymbolicSemantics::RiscOperators::startInstruction(insn);

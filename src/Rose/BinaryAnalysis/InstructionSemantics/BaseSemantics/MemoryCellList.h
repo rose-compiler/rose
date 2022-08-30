@@ -42,7 +42,7 @@ public:
     using Super = MemoryCellState;
 
     /** Shared-ownership pointer. */
-    using Ptr = MemoryCellStatePtr;
+    using Ptr = MemoryCellListPtr;
 
     typedef std::list<MemoryCellPtr> CellList;          /**< List of memory cells. */
 protected:

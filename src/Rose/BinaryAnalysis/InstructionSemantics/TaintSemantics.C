@@ -12,13 +12,13 @@ namespace TaintSemantics {
 //                                      SValue
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Sawyer::Optional<BaseSemantics::SValuePtr>
-SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, const BaseSemantics::MergerPtr &merger_,
+Sawyer::Optional<BaseSemantics::SValue::Ptr>
+SValue::createOptionalMerge(const BaseSemantics::SValue::Ptr &other_, const BaseSemantics::Merger::Ptr &merger_,
                             const SmtSolverPtr &solver) const {
 
     auto retval = Super::createOptionalMerge(other_, merger_, solver);
 
-    SValuePtr other = promote(other_);
+    SValue::Ptr other = promote(other_);
     const Taintedness taintedness = mergeTaintedness(this->taintedness(), other->taintedness());
 
     if (this->taintedness() != taintedness) {
@@ -334,7 +334,7 @@ RiscOperators::shiftRight(const BaseSemantics::SValue::Ptr &a, const BaseSemanti
 }
 
 BaseSemantics::SValue::Ptr
-RiscOperators::shiftRightArithmetic(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValuePtr &sa) {
+RiscOperators::shiftRightArithmetic(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &sa) {
     SValue::Ptr retval = SValue::promote(Super::shiftRightArithmetic(a, sa));
     retval->taintedness(mergeTaintedness(a, sa));
     return retval;

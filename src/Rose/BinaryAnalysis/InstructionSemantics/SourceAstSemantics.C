@@ -147,13 +147,13 @@ RiscOperators::resetState() {
     // Initialize registers so they correspond to the C global variables we'll generate, and then lock the register state so
     // those registers don't change if we access subparts (like if we store EAX and write to AX).
     currentState()->clear();
-    RegisterStatePtr registers = RegisterState::promote(currentState()->registerState());
+    RegisterState::Ptr registers = RegisterState::promote(currentState()->registerState());
     registers->initialize_large();
     registers->accessModifiesExistingLocations(false);
     RegisterState::RegPairs regpairs = registers->get_stored_registers();
     for (RegisterState::RegPair &regpair: regpairs) {
         std::string varName = registerVariableName(regpair.desc);
-        BaseSemantics::SValuePtr value = makeSValue(regpair.desc.nBits(), NULL, varName);
+        BaseSemantics::SValue::Ptr value = makeSValue(regpair.desc.nBits(), NULL, varName);
         registers->writeRegister(regpair.desc, value, this);
     }
     registers->eraseWriters();
@@ -161,30 +161,30 @@ RiscOperators::resetState() {
     executionHalted_ = false;
 }
 
-BaseSemantics::SValuePtr
+BaseSemantics::SValue::Ptr
 RiscOperators::makeSValue(size_t nbits, SgNode *ast, const std::string &ctext) {
     ASSERT_require(nbits > 0);
-    SValuePtr v = SValue::promote(protoval()->undefined_(nbits));
+    SValue::Ptr v = SValue::promote(protoval()->undefined_(nbits));
     v->ctext(ctext);
     return v;
 }
 
 // Append a side effect to the list of side effects.
-BaseSemantics::SValuePtr
-RiscOperators::saveSideEffect(const BaseSemantics::SValuePtr &expression, const BaseSemantics::SValuePtr &location) {
+BaseSemantics::SValue::Ptr
+RiscOperators::saveSideEffect(const BaseSemantics::SValue::Ptr &expression, const BaseSemantics::SValue::Ptr &location) {
     if (executionHalted_)
         return expression;
-    BaseSemantics::SValuePtr retval;
+    BaseSemantics::SValue::Ptr retval;
     if (location)
         retval = undefined_(expression->nBits());
     sideEffects_.push_back(SideEffect(location, retval, expression));
     return retval;
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::substitute(const BaseSemantics::SValuePtr &expression) {
-    BaseSemantics::SValuePtr retval = undefined_(expression->nBits());
-    sideEffects_.push_back(SideEffect(BaseSemantics::SValuePtr(), retval, expression));
+BaseSemantics::SValue::Ptr
+RiscOperators::substitute(const BaseSemantics::SValue::Ptr &expression) {
+    BaseSemantics::SValue::Ptr retval = undefined_(expression->nBits());
+    sideEffects_.push_back(SideEffect(BaseSemantics::SValue::Ptr(), retval, expression));
     return retval;
 }
 
@@ -205,7 +205,7 @@ RiscOperators::registerVariableName(RegisterDescriptor reg) {
 }
 
 // Create a mask consisting of nset shifted upward by sa.
-BaseSemantics::SValuePtr
+BaseSemantics::SValue::Ptr
 RiscOperators::makeMask(size_t nBits, size_t nSet, size_t sa) {
     if (sa >= nBits)
         return number_(nBits, 0);
@@ -222,7 +222,7 @@ RiscOperators::makeMask(size_t nBits, size_t nSet, size_t sa) {
 //                                      RiscOperators operations
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-BaseSemantics::SValuePtr
+BaseSemantics::SValue::Ptr
 RiscOperators::unspecified_(size_t nbits) {
     ASSERT_require(nbits <= 32);
     uint32_t mask = IntegerOps::genMask<uint32_t>(nbits);
@@ -240,38 +240,38 @@ RiscOperators::cpuid() {
     saveSideEffect(makeSValue(1, NULL, "cpuid()"));
 }
 
-BaseSemantics::SValuePtr
+BaseSemantics::SValue::Ptr
 RiscOperators::rdtsc() {
     return makeSValue(64, NULL, "rdtsc()");
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::and_(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
+BaseSemantics::SValue::Ptr
+RiscOperators::and_(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b) {
     std::string ctext = "(" + SValue::promote(a)->ctext() + " & " + SValue::promote(b)->ctext() + ")";
     return makeSValue(a->nBits(), NULL, ctext);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::or_(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
+BaseSemantics::SValue::Ptr
+RiscOperators::or_(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b) {
     std::string ctext = "(" + SValue::promote(a)->ctext() + " | " + SValue::promote(b)->ctext() + ")";
     return makeSValue(a->nBits(), NULL, ctext);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::xor_(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
+BaseSemantics::SValue::Ptr
+RiscOperators::xor_(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b) {
     std::string ctext = "(" + SValue::promote(a)->ctext() + " ^ " + SValue::promote(b)->ctext() + ")";
     return makeSValue(a->nBits(), NULL, ctext);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::invert(const BaseSemantics::SValuePtr &a) {
-    SValuePtr mask = SValue::promote(makeMask(a->nBits(), a->nBits()));
+BaseSemantics::SValue::Ptr
+RiscOperators::invert(const BaseSemantics::SValue::Ptr &a) {
+    SValue::Ptr mask = SValue::promote(makeMask(a->nBits(), a->nBits()));
     std::string ctext = "(~" + SValue::promote(a)->ctext() + " & " + mask->ctext() + ")";
     return makeSValue(a->nBits(), NULL, ctext);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::extract(const BaseSemantics::SValuePtr &a, size_t begin_bit, size_t end_bit) {
+BaseSemantics::SValue::Ptr
+RiscOperators::extract(const BaseSemantics::SValue::Ptr &a, size_t begin_bit, size_t end_bit) {
     ASSERT_require(end_bit <= a->nBits());
     ASSERT_require(begin_bit < end_bit);
     if (0 == begin_bit && end_bit == a->nBits()) {
@@ -285,13 +285,13 @@ RiscOperators::extract(const BaseSemantics::SValuePtr &a, size_t begin_bit, size
     }
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::concat(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
+BaseSemantics::SValue::Ptr
+RiscOperators::concat(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b) {
     size_t resultWidth = a->nBits() + b->nBits();
     std::string resultType = SValue::unsignedTypeNameForSize(resultWidth);
 
     // ctext = ((resultType)a | ((resultType)b << (resultType)aWidth))
-    SValuePtr aWidth = SValue::promote(number_(resultWidth, a->nBits()));
+    SValue::Ptr aWidth = SValue::promote(number_(resultWidth, a->nBits()));
     std::string ctext = "((" + resultType + ")" + SValue::promote(a)->ctext() + " | "
                         "((" + resultType + ")" + SValue::promote(b)->ctext() + " << " +
                         "(" + resultType + ")" + aWidth->ctext() + "))";
@@ -299,20 +299,20 @@ RiscOperators::concat(const BaseSemantics::SValuePtr &a, const BaseSemantics::SV
     return makeSValue(a->nBits() + b->nBits(), NULL, ctext);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::leastSignificantSetBit(const BaseSemantics::SValuePtr &a) {
+BaseSemantics::SValue::Ptr
+RiscOperators::leastSignificantSetBit(const BaseSemantics::SValue::Ptr &a) {
     std::string ctext = "lssb" + StringUtility::numberToString(a->nBits()) + "(" + SValue::promote(a)->ctext() + ")";
     return makeSValue(a->nBits(), NULL, ctext);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::mostSignificantSetBit(const BaseSemantics::SValuePtr &a) {
+BaseSemantics::SValue::Ptr
+RiscOperators::mostSignificantSetBit(const BaseSemantics::SValue::Ptr &a) {
     std::string ctext = "mssb" + StringUtility::numberToString(a->nBits()) + "(" + SValue::promote(a)->ctext() + ")";
     return makeSValue(a->nBits(), NULL, ctext);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::rotateLeft(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &sa) {
+BaseSemantics::SValue::Ptr
+RiscOperators::rotateLeft(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &sa) {
     // Note: '<<' and '>>' are not well defined in C when the shift amount is >= the size of the left operand.
     //   ctext = ((((a) << (             (sa) % (8*sizeof(a)))  |
     //             ((a) >> (8*sizeof(a)-((sa) % (8*sizeof(a)))))) & mask)
@@ -326,8 +326,8 @@ RiscOperators::rotateLeft(const BaseSemantics::SValuePtr &a, const BaseSemantics
     return makeSValue(a->nBits(), NULL, ctext);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::rotateRight(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &sa) {
+BaseSemantics::SValue::Ptr
+RiscOperators::rotateRight(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &sa) {
     // Note: '<<' and '>>' are not well defined in C when the shift amount is >= the size of the left operand.
     //   ((((a) >> (             (sa) % (8*sizeof(a)))  |
     //     ((a) << (8*sizeof(a)-((sa) % (8*sizeof(a)))))) & mask)
@@ -341,8 +341,8 @@ RiscOperators::rotateRight(const BaseSemantics::SValuePtr &a, const BaseSemantic
     return makeSValue(a->nBits(), NULL, ctext);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::shiftLeft(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &sa) {
+BaseSemantics::SValue::Ptr
+RiscOperators::shiftLeft(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &sa) {
     // '<<' is not well defined in C when the shift amount is >= the size of the left operand.
     //   (sa >= 8*sizeof(a) ? (aType)0 : ((a << sa) & mask))
     std::string mask = SValue::promote(makeMask(a->nBits(), a->nBits()))->ctext();
@@ -353,8 +353,8 @@ RiscOperators::shiftLeft(const BaseSemantics::SValuePtr &a, const BaseSemantics:
     return makeSValue(a->nBits(), NULL, ctext);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::shiftRight(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &sa) {
+BaseSemantics::SValue::Ptr
+RiscOperators::shiftRight(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &sa) {
     // '>>' is not well defined in C when the shift amount is >= the size of the left operand.
     //   (sa >= 8*sizeof(a) ? (aType)0 : a >> sa)
     std::string ctext = "(" + SValue::promote(sa)->ctext() + " >= " + StringUtility::numberToString(a->nBits()) + " ? " +
@@ -363,8 +363,8 @@ RiscOperators::shiftRight(const BaseSemantics::SValuePtr &a, const BaseSemantics
     return makeSValue(a->nBits(), NULL, ctext);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::shiftRightArithmetic(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &sa) {
+BaseSemantics::SValue::Ptr
+RiscOperators::shiftRightArithmetic(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &sa) {
     // Do the right shift without any casting to signed types.
     //    signBits = (signBit ? ~(aType)0 : (aType)0)
     //    signExtension = (sa >= 8*sizeof(a) ? signBits : signBits << (8*sizeof(a) - sa))
@@ -383,15 +383,15 @@ RiscOperators::shiftRightArithmetic(const BaseSemantics::SValuePtr &a, const Bas
     return makeSValue(a->nBits(), NULL, ctext);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::equalToZero(const BaseSemantics::SValuePtr &a) {
+BaseSemantics::SValue::Ptr
+RiscOperators::equalToZero(const BaseSemantics::SValue::Ptr &a) {
     std::string ctext =  "(" + SValue::promote(a)->ctext() + " == 0)";
     return makeSValue(1, NULL, ctext);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::iteWithStatus(const BaseSemantics::SValuePtr &sel, const BaseSemantics::SValuePtr &a,
-                             const BaseSemantics::SValuePtr &b, IteStatus &status) {
+BaseSemantics::SValue::Ptr
+RiscOperators::iteWithStatus(const BaseSemantics::SValue::Ptr &sel, const BaseSemantics::SValue::Ptr &a,
+                             const BaseSemantics::SValue::Ptr &b, IteStatus &status) {
     // (sel ? a : b)
     std::string ctext = "(" + SValue::promote(sel)->ctext() + " ? " + SValue::promote(a)->ctext() + " : " +
                         SValue::promote(b)->ctext() + ")";
@@ -399,13 +399,13 @@ RiscOperators::iteWithStatus(const BaseSemantics::SValuePtr &sel, const BaseSema
     return makeSValue(a->nBits(), NULL, ctext);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::unsignedExtend(const BaseSemantics::SValuePtr &a, size_t newWidth) {
+BaseSemantics::SValue::Ptr
+RiscOperators::unsignedExtend(const BaseSemantics::SValue::Ptr &a, size_t newWidth) {
     std::string ctext;
     if (newWidth == a->nBits()) {
         ctext = SValue::promote(a)->ctext();
     } else if (newWidth < a->nBits()) {
-        SValuePtr mask = SValue::promote(makeMask(a->nBits(), newWidth));
+        SValue::Ptr mask = SValue::promote(makeMask(a->nBits(), newWidth));
         std::string dstType = SValue::unsignedTypeNameForSize(newWidth);
         // ctext = ((dstType)(a & mask))
         ctext = "((" + dstType + ")(" + SValue::promote(a)->ctext() + " & " + mask->ctext() + "))";
@@ -418,8 +418,8 @@ RiscOperators::unsignedExtend(const BaseSemantics::SValuePtr &a, size_t newWidth
     return makeSValue(newWidth, NULL, ctext);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::signExtend(const BaseSemantics::SValuePtr &a, size_t newWidth) {
+BaseSemantics::SValue::Ptr
+RiscOperators::signExtend(const BaseSemantics::SValue::Ptr &a, size_t newWidth) {
     std::string ctext;
     if (newWidth == a->nBits()) {
         ctext = SValue::promote(a)->ctext();
@@ -439,22 +439,22 @@ RiscOperators::signExtend(const BaseSemantics::SValuePtr &a, size_t newWidth) {
     return makeSValue(newWidth, NULL, ctext);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::add(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &b_) {
+BaseSemantics::SValue::Ptr
+RiscOperators::add(const BaseSemantics::SValue::Ptr &a_, const BaseSemantics::SValue::Ptr &b_) {
     std::string mask = SValue::promote(makeMask(a_->nBits(), a_->nBits()))->ctext();
     std::string ctext = "((" + SValue::promote(a_)->ctext() + " + " + SValue::promote(b_)->ctext() + ")"
                         " & " + mask + ")";
     return makeSValue(a_->nBits(), NULL, ctext);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::addWithCarries(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b,
-                              const BaseSemantics::SValuePtr &c, BaseSemantics::SValuePtr &carry_out/*out*/) {
-    BaseSemantics::SValuePtr aWide = signExtend(a, a->nBits()+1);
-    BaseSemantics::SValuePtr bWide = signExtend(b, a->nBits()+1);
-    BaseSemantics::SValuePtr cWide = signExtend(c, a->nBits()+1);
-    BaseSemantics::SValuePtr sumWide = add(add(aWide, bWide), cWide);
-    BaseSemantics::SValuePtr mask = makeMask(a->nBits(), a->nBits());
+BaseSemantics::SValue::Ptr
+RiscOperators::addWithCarries(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b,
+                              const BaseSemantics::SValue::Ptr &c, BaseSemantics::SValue::Ptr &carry_out/*out*/) {
+    BaseSemantics::SValue::Ptr aWide = signExtend(a, a->nBits()+1);
+    BaseSemantics::SValue::Ptr bWide = signExtend(b, a->nBits()+1);
+    BaseSemantics::SValue::Ptr cWide = signExtend(c, a->nBits()+1);
+    BaseSemantics::SValue::Ptr sumWide = add(add(aWide, bWide), cWide);
+    BaseSemantics::SValue::Ptr mask = makeMask(a->nBits(), a->nBits());
 
     // carry_out = ((sumWide >> 1) & mask)
     std::string carry_text = "((" + SValue::promote(sumWide)->ctext() +
@@ -472,15 +472,15 @@ RiscOperators::addWithCarries(const BaseSemantics::SValuePtr &a, const BaseSeman
     return makeSValue(a->nBits(), NULL, ctext);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::negate(const BaseSemantics::SValuePtr &a) {
+BaseSemantics::SValue::Ptr
+RiscOperators::negate(const BaseSemantics::SValue::Ptr &a) {
     std::string mask = SValue::promote(makeMask(a->nBits(), a->nBits()))->ctext();
     std::string ctext = "(-" + SValue::promote(a)->ctext() + " & " + mask + ")";
     return makeSValue(a->nBits(), NULL, ctext);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::signedDivide(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
+BaseSemantics::SValue::Ptr
+RiscOperators::signedDivide(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b) {
     std::string ctext;
     std::string aSignedType = SValue::signedTypeNameForSize(a->nBits());
     std::string bSignedType = SValue::signedTypeNameForSize(b->nBits());
@@ -495,13 +495,13 @@ RiscOperators::signedDivide(const BaseSemantics::SValuePtr &a, const BaseSemanti
     return makeSValue(a->nBits(), NULL, ctext);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::signedModulo(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
+BaseSemantics::SValue::Ptr
+RiscOperators::signedModulo(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b) {
     TODO("[Robb P. Matzke 2015-09-23]: generate signed '%' expression");
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::signedMultiply(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
+BaseSemantics::SValue::Ptr
+RiscOperators::signedMultiply(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b) {
     size_t operandsSize = std::max(a->nBits(), b->nBits());
     std::string aSignedType = SValue::signedTypeNameForSize(a->nBits());
     std::string bSignedType = SValue::signedTypeNameForSize(b->nBits());
@@ -516,20 +516,20 @@ RiscOperators::signedMultiply(const BaseSemantics::SValuePtr &a, const BaseSeman
     return makeSValue(productSize, NULL, ctext);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::unsignedDivide(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
+BaseSemantics::SValue::Ptr
+RiscOperators::unsignedDivide(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b) {
     TODO("[Robb P. Matzke 2015-09-23]: generate unsigned '/' expression");
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::unsignedModulo(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
+BaseSemantics::SValue::Ptr
+RiscOperators::unsignedModulo(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b) {
     TODO("[Robb P. Matzke 2015-09-23]: generate unsigned '%' expression");
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::unsignedMultiply(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
-    SValuePtr aWide = SValue::promote(unsignedExtend(a, a->nBits() + b->nBits()));
-    SValuePtr bWide = SValue::promote(unsignedExtend(b, a->nBits() + b->nBits()));
+BaseSemantics::SValue::Ptr
+RiscOperators::unsignedMultiply(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b) {
+    SValue::Ptr aWide = SValue::promote(unsignedExtend(a, a->nBits() + b->nBits()));
+    SValue::Ptr bWide = SValue::promote(unsignedExtend(b, a->nBits() + b->nBits()));
     std::string ctext = "(" + aWide->ctext() + " * " + bWide->ctext() + ")";
     return makeSValue(a->nBits() + b->nBits(), NULL, ctext);
 }
@@ -541,21 +541,21 @@ RiscOperators::interrupt(int majr, int minr) {
     saveSideEffect(makeSValue(1, NULL, ctext.str()));
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::readRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &dflt) {
-    BaseSemantics::SValuePtr retval = Super::readRegister(reg, dflt);
+BaseSemantics::SValue::Ptr
+RiscOperators::readRegister(RegisterDescriptor reg, const BaseSemantics::SValue::Ptr &dflt) {
+    BaseSemantics::SValue::Ptr retval = Super::readRegister(reg, dflt);
     return substitute(retval);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::peekRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &dflt) {
-    BaseSemantics::SValuePtr retval = Super::peekRegister(reg, dflt);
+BaseSemantics::SValue::Ptr
+RiscOperators::peekRegister(RegisterDescriptor reg, const BaseSemantics::SValue::Ptr &dflt) {
+    BaseSemantics::SValue::Ptr retval = Super::peekRegister(reg, dflt);
     return substitute(retval);
 }
 
 void
-RiscOperators::writeRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &value) {
-   RegisterStatePtr registers = RegisterState::promote(currentState()->registerState());
+RiscOperators::writeRegister(RegisterDescriptor reg, const BaseSemantics::SValue::Ptr &value) {
+   RegisterState::Ptr registers = RegisterState::promote(currentState()->registerState());
    RegisterState::BitRange wantLocation = RegisterState::BitRange::baseSize(reg.offset(), reg.nBits());
    RegisterState::RegPairs regpairs = registers->overlappingRegisters(reg);
    for (RegisterState::RegPair &regpair: regpairs) {
@@ -563,7 +563,7 @@ RiscOperators::writeRegister(RegisterDescriptor reg, const BaseSemantics::SValue
        RegisterState::BitRange overlapLocation = wantLocation & storageLocation;
 
        // Create the value to be written back to this storage location.
-       BaseSemantics::SValuePtr toWrite;
+       BaseSemantics::SValue::Ptr toWrite;
        if (overlapLocation.least() > storageLocation.least()) {
            size_t offset = 0;
            size_t nbits = overlapLocation.least() - storageLocation.least();
@@ -572,7 +572,7 @@ RiscOperators::writeRegister(RegisterDescriptor reg, const BaseSemantics::SValue
        {
            size_t offset = overlapLocation.least() - wantLocation.least();
            size_t nbits = overlapLocation.size();
-           BaseSemantics::SValuePtr part = extract(value, offset, offset+nbits);
+           BaseSemantics::SValue::Ptr part = extract(value, offset, offset+nbits);
            toWrite = toWrite ? concat(toWrite, part) : part;
        }
        if (overlapLocation.greatest() < storageLocation.greatest()) {
@@ -586,26 +586,26 @@ RiscOperators::writeRegister(RegisterDescriptor reg, const BaseSemantics::SValue
 
    // Substitute, and write substitution back to register state.
    for (const RegisterState::RegPair &regpair: regpairs) {
-       BaseSemantics::SValuePtr regVar = makeSValue(regpair.desc.nBits(), NULL, registerVariableName(regpair.desc));
-       BaseSemantics::SValuePtr temp = saveSideEffect(regpair.value, regVar);
+       BaseSemantics::SValue::Ptr regVar = makeSValue(regpair.desc.nBits(), NULL, registerVariableName(regpair.desc));
+       BaseSemantics::SValue::Ptr temp = saveSideEffect(regpair.value, regVar);
        registers->writeRegister(regpair.desc, temp, this);
    }
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &address,
-                          const BaseSemantics::SValuePtr &dflt, const BaseSemantics::SValuePtr &cond) {
+BaseSemantics::SValue::Ptr
+RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValue::Ptr &address,
+                          const BaseSemantics::SValue::Ptr &dflt, const BaseSemantics::SValue::Ptr &cond) {
     ASSERT_require2(dflt->nBits() % 8 == 0, "readMemory size must be a multiple of a byte");
     size_t nBytes = dflt->nBits() >> 3;
-    BaseSemantics::SValuePtr retval;
-    BaseSemantics::MemoryStatePtr mem = currentState()->memoryState();
+    BaseSemantics::SValue::Ptr retval;
+    BaseSemantics::MemoryState::Ptr mem = currentState()->memoryState();
 
     // Offset the address by the value of the segment register.
-    BaseSemantics::SValuePtr adjustedVa;
+    BaseSemantics::SValue::Ptr adjustedVa;
     if (segreg.isEmpty()) {
         adjustedVa = address;
     } else {
-        BaseSemantics::SValuePtr segregValue = readRegister(segreg, undefined_(segreg.nBits()));
+        BaseSemantics::SValue::Ptr segregValue = readRegister(segreg, undefined_(segreg.nBits()));
         adjustedVa = add(address, signExtend(segregValue, address->nBits()));
     }
 
@@ -614,7 +614,7 @@ RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValue
         std::string ctext = "mem[" + SValue::promote(adjustedVa)->ctext() +
                             "+" + StringUtility::numberToString(byteOffset) +
                             "]";
-        BaseSemantics::SValuePtr byte = makeSValue(8, NULL, ctext);
+        BaseSemantics::SValue::Ptr byte = makeSValue(8, NULL, ctext);
         if (retval == NULL) {
             retval = byte;
         } else if (ByteOrder::ORDER_MSB == mem->get_byteOrder()) {
@@ -629,31 +629,31 @@ RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValue
     return retval;
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::peekMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &address,
-                          const BaseSemantics::SValuePtr &dflt) {
+BaseSemantics::SValue::Ptr
+RiscOperators::peekMemory(RegisterDescriptor segreg, const BaseSemantics::SValue::Ptr &address,
+                          const BaseSemantics::SValue::Ptr &dflt) {
     ASSERT_not_reachable("operation doesn't make sense in this domain");
 }
 
 void
-RiscOperators::writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &address,
-                           const BaseSemantics::SValuePtr &value, const BaseSemantics::SValuePtr &cond) {
+RiscOperators::writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValue::Ptr &address,
+                           const BaseSemantics::SValue::Ptr &value, const BaseSemantics::SValue::Ptr &cond) {
     ASSERT_require2(value->nBits() % 8 == 0, "writeMemory size must be a multiple of a byte");
     size_t nBytes = value->nBits() >> 3;
-    BaseSemantics::MemoryStatePtr mem = currentState()->memoryState();
+    BaseSemantics::MemoryState::Ptr mem = currentState()->memoryState();
 
     // Offset the address by the value of the segment register.
-    BaseSemantics::SValuePtr adjustedVa;
+    BaseSemantics::SValue::Ptr adjustedVa;
     if (segreg.isEmpty()) {
         adjustedVa = address;
     } else {
-        BaseSemantics::SValuePtr segregValue = readRegister(segreg, undefined_(segreg.nBits()));
+        BaseSemantics::SValue::Ptr segregValue = readRegister(segreg, undefined_(segreg.nBits()));
         adjustedVa = add(address, signExtend(segregValue, address->nBits()));
     }
 
     for (size_t byteNum=0; byteNum<nBytes; ++byteNum) {
         size_t byteOffset = ByteOrder::ORDER_MSB==mem->get_byteOrder() ? nBytes-(byteNum+1) : byteNum;
-        BaseSemantics::SValuePtr byte = extract(value, 8*byteOffset, 8*(byteOffset+1));
+        BaseSemantics::SValue::Ptr byte = extract(value, 8*byteOffset, 8*(byteOffset+1));
         std::string lhs = "mem[" + SValue::promote(adjustedVa)->ctext() +
                           " + " + SValue::promote(number_(adjustedVa->nBits(), byteOffset))->ctext() +
                           "]";
