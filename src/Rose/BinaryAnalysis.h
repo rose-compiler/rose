@@ -4,6 +4,7 @@
 #include <Rose/BinaryAnalysis/AbstractLocation.h>
 #include <Rose/BinaryAnalysis/AsmFunctionIndex.h>
 #include <Rose/BinaryAnalysis/AstHash.h>
+#include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/BestMapAddress.h>
 #include <Rose/BinaryAnalysis/BinaryLoaderElf.h>
 #include <Rose/BinaryAnalysis/BinaryLoaderElfObj.h>
@@ -66,5 +67,13 @@
 #include <Rose/BinaryAnalysis/Utils.h>
 #include <Rose/BinaryAnalysis/Variables.h>
 #include <Rose/BinaryAnalysis/Z3Solver.h>
+
+/** Binary analysis.
+ *
+ *  ROSE supports both source code analysis and binary analysis. This namespace contains most of the binary analysis
+ *  features. The @ref binary_tutorial is a good place to get started, and most of its examples link to the API
+ *  documentation. Follow those links to the enclosing class and/or namespace to obtain an overview of how those classes and
+ *  namespaces work. */
+namespace BinaryAnalysis {}
 
 #endif

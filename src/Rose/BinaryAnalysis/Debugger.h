@@ -20,16 +20,13 @@
 namespace Rose {
 namespace BinaryAnalysis {
 
-/** Shared-ownership pointer to @ref Debugger. See @ref heap_object_shared_ownership. */
-typedef Sawyer::SharedPointer<class Debugger> DebuggerPtr;
-
 /** Simple debugger.
  *
  *  This class implements a very simple debugger. */
 class Debugger: private boost::noncopyable, public Sawyer::SharedObject {
 public:
     /** Shared-ownership pointer to @ref Debugger. See @ref heap_object_shared_ownership. */
-    typedef Sawyer::SharedPointer<Debugger> Ptr;
+    using Ptr = DebuggerPtr;
 
     /** How to detach from a process when the debugger is destroyed. */
     enum DetachMode {

@@ -80,16 +80,13 @@ enum class StackCleanup {
 //                                      Definition
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Reference counting pointer to calling convention definition. */
-typedef Sawyer::SharedPointer<class Definition> DefinitionPtr;
-
 /** Information about calling conventions.
  *
  *  A definition typically comes from external documentation rather than direct analysis. */
 class Definition: public Sawyer::SharedObject {
 public:
     /** Reference counting pointer to calling convention definition. */
-    typedef Sawyer::SharedPointer<Definition> Ptr;
+    using Ptr = DefinitionPtr;
 
 private:
     std::string name_;                                  // Official short name of the convention, like "stdcall".

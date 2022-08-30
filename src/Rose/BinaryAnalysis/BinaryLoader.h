@@ -3,6 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/Exception.h>
 #include <Sawyer/Message.h>
 #include <Sawyer/SharedObject.h>
@@ -10,9 +11,6 @@
 
 namespace Rose {
 namespace BinaryAnalysis {
-
-/** Reference counting pointer to @ref BinaryLoader. */
-typedef Sawyer::SharedPointer<class BinaryLoader> BinaryLoaderPtr;
 
 /** Base class for loading a static or dynamic object.
  *
@@ -59,7 +57,7 @@ class BinaryLoader: public Sawyer::SharedObject {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     /** Referenc counting pointer to @ref BinaryLoader. */
-    typedef Sawyer::SharedPointer<BinaryLoader> Ptr;
+    using Ptr = BinaryLoaderPtr;
 
     /** Describes how a section contributes to the overall memory map. */
     enum MappingContribution
