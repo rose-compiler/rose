@@ -6,17 +6,22 @@ SgSymbol * ClangToSageTranslator::GetSymbolFromSymbolTable(clang::NamedDecl * de
 
     SgScopeStatement * scope = SageBuilder::topScopeStack();
 
-    SgName name(decl->getNameAsString());
-/*
+
+/* Pei-Hung (08/29/2022) fieldDecl can be anonymous.
+ * Following EDG's implementation to apply anonymous name to allow symbol lookup.
+*/
     std::string declName = decl->getNameAsString();
 
-    if(declName.empty())
+    if(llvm::isa<clang::FieldDecl>(decl) && ((clang::FieldDecl*)decl)->isAnonymousStructOrUnion())
     {
       declName = "__anonymous_" +  generate_source_position_string(decl->getBeginLoc());  
+#if DEBUG_SYMBOL_TABLE_LOOKUP
+    std::cerr << "Find anonymous fieldDecl: " << declName << std::endl;
+#endif
     }
 
     SgName name(declName);
-*/
+
 #if DEBUG_SYMBOL_TABLE_LOOKUP
     std::cerr << "Lookup symbol for: " << name << std::endl;
 #endif
@@ -767,15 +772,6 @@ bool ClangToSageTranslator::VisitRecordDecl(clang::RecordDecl * record_decl, SgN
     // FIXME May have to check the symbol table first, because of out-of-order traversal of C++ classes (Could be done in CxxRecord class...)
 
     bool res = true;
-/*
-    std::string recordDeclName = record_decl->getNameAsString();
-    if(recordDeclName.empty())
-    {
-      recordDeclName = "__anonymous_" +  generate_source_position_string(record_decl->getBeginLoc());  
-    }
-
-    SgName name(recordDeclName);
-*/
 #if DEBUG_VISIT_DECL
     std::cerr << "ClangToSageTranslator::VisitRecordDecl name:" <<record_decl->getNameAsString() <<  "\n";
     std:: cerr << "isAnonymousStructOrUnion() " << record_decl->isAnonymousStructOrUnion() << "\n";
@@ -822,7 +818,19 @@ bool ClangToSageTranslator::VisitRecordDecl(clang::RecordDecl * record_decl, SgN
 
   // Name
 
-    SgName name(record_decl->getNameAsString());
+
+/* Pei-Hung (08/29/2022) RecordDecl can be anonymous.
+ * Following EDG's implementation to apply anonymous name to allow symbol lookup.
+ * Need to check later if isAnonymousStructOrUnion is equivalent to Decl with empty name.
+*/
+    std::string recordDeclName = record_decl->getNameAsString();
+    if(isAnonymousStructOrUnion)
+    {
+      recordDeclName = "__anonymous_" +  generate_source_position_string(record_decl->getBeginLoc());
+    }
+
+    SgName name(recordDeclName);
+
 
   // Type of class
 
