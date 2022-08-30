@@ -42,10 +42,10 @@ test_svalues() {
         SymbolicSemantics::RiscOperators::instanceFromProtoval(protoval, SmtSolver::Ptr());
     ASSERT_always_not_null(ops);
 
-    BaseSemantics::SValuePtr a1 = ops->undefined_(32);                 // v1
-    BaseSemantics::SValuePtr a2 = ops->add(a1, ops->number_(32, 4));   // (add v1 4)
-    BaseSemantics::SValuePtr a3 = ops->add(a2, ops->number_(32, 8));   // (add v1 12)
-    BaseSemantics::SValuePtr a4 = ops->subtract(a3, a2);               // (add v1 12 (negate (add v1 4)))
+    BaseSemantics::SValue::Ptr a1 = ops->undefined_(32);                 // v1
+    BaseSemantics::SValue::Ptr a2 = ops->add(a1, ops->number_(32, 4));   // (add v1 4)
+    BaseSemantics::SValue::Ptr a3 = ops->add(a2, ops->number_(32, 8));   // (add v1 12)
+    BaseSemantics::SValue::Ptr a4 = ops->subtract(a3, a2);               // (add v1 12 (negate (add v1 4)))
     std::cout <<"(add v1 4 8 (negate (add v1 4))) = " <<*a4 <<"\n";
 }
 

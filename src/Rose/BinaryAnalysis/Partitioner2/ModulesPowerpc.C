@@ -194,7 +194,7 @@ isFunctionReturn(const Partitioner &partitioner, const BasicBlock::Ptr &bb) {
     ASSERT_not_null(bb);
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     BasicBlockSemantics sem = bb->semantics();
-    BaseSemantics::StatePtr state = sem.finalState();
+    BaseSemantics::State::Ptr state = sem.finalState();
     if (!state)
         return boost::logic::indeterminate;
 
@@ -206,10 +206,10 @@ isFunctionReturn(const Partitioner &partitioner, const BasicBlock::Ptr &bb) {
     ASSERT_forbid(REG_IP.isEmpty());
     ASSERT_forbid(REG_LR.isEmpty());
 
-    BaseSemantics::SValuePtr mask = sem.operators->number_(REG_IP.nBits(), 0xfffffffc);
-    BaseSemantics::SValuePtr retAddr = sem.operators->and_(sem.operators->peekRegister(REG_LR), mask);
-    BaseSemantics::SValuePtr ip = sem.operators->and_(sem.operators->peekRegister(REG_IP), mask);
-    BaseSemantics::SValuePtr isEqual = sem.operators->isEqual(retAddr, ip);
+    BaseSemantics::SValue::Ptr mask = sem.operators->number_(REG_IP.nBits(), 0xfffffffc);
+    BaseSemantics::SValue::Ptr retAddr = sem.operators->and_(sem.operators->peekRegister(REG_LR), mask);
+    BaseSemantics::SValue::Ptr ip = sem.operators->and_(sem.operators->peekRegister(REG_IP), mask);
+    BaseSemantics::SValue::Ptr isEqual = sem.operators->isEqual(retAddr, ip);
     bool isReturn = isEqual->isTrue();
 
     if (debug) {

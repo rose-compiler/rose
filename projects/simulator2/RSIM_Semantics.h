@@ -58,7 +58,8 @@ struct Interrupt {
  *  </ul> */
 class RiscOperators: public Rose::BinaryAnalysis::InstructionSemantics::ConcreteSemantics::RiscOperators {
 public:
-    typedef Rose::BinaryAnalysis::InstructionSemantics::ConcreteSemantics::RiscOperators Super;
+    using Super = Rose::BinaryAnalysis::InstructionSemantics::ConcreteSemantics::RiscOperators;
+    using Ptr = RiscOperatorsPtr;
 
     struct SegmentInfo {
         rose_addr_t base, limit;

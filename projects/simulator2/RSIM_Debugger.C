@@ -387,7 +387,7 @@ public:
 
             if (cmd.size() > 1) {
                 rose_addr_t n = parseInteger(cmd[1]);
-                BaseSemantics::SValuePtr value = thread->operators()->number_(reg.nBits(), n);
+                BaseSemantics::SValue::Ptr value = thread->operators()->number_(reg.nBits(), n);
                 thread->operators()->writeRegister(reg, value);
             }
 

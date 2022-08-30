@@ -2799,7 +2799,7 @@ Engine::BasicBlockFinalizer::addPossibleIndeterminateEdge(const Args &args) {
     // Add an edge
     if (addIndeterminateEdge) {
         ASSERT_require(addrWidth != 0);
-        BaseSemantics::SValuePtr addr = sem.operators->undefined_(addrWidth);
+        BaseSemantics::SValue::Ptr addr = sem.operators->undefined_(addrWidth);
         EdgeType type = args.partitioner.basicBlockIsFunctionReturn(args.bblock) ? E_FUNCTION_RETURN : E_NORMAL;
         args.bblock->insertSuccessor(addr, type);
         SAWYER_MESG(mlog[DEBUG]) <<args.bblock->printableName()

@@ -46,12 +46,12 @@ SValue::toSigned() const {
 }
 
 bool
-SValue::mustEqual(const SValuePtr &other, const SmtSolverPtr &solver) const {
+SValue::mustEqual(const SValue::Ptr &other, const SmtSolverPtr &solver) const {
     return must_equal(other, solver);
 }
 
 bool
-SValue::mayEqual(const SValuePtr &other, const SmtSolverPtr &solver) const {
+SValue::mayEqual(const SValue::Ptr &other, const SmtSolverPtr &solver) const {
     return may_equal(other, solver);
 }
 

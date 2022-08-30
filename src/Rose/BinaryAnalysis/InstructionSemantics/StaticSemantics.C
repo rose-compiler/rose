@@ -20,14 +20,14 @@ void attachInstructionSemantics(SgNode *ast, const Disassembler::Base::Ptr &disa
     ASSERT_not_null(ast);
     ASSERT_not_null(disassembler);
     RiscOperators::Ptr ops = RiscOperators::instanceFromProtoval(SValue::instance(), SmtSolver::Ptr());
-    BaseSemantics::DispatcherPtr cpu = disassembler->dispatcher();
+    BaseSemantics::Dispatcher::Ptr cpu = disassembler->dispatcher();
     if (!cpu)
         throw BaseSemantics::Exception("no instruction semantics for architecture", NULL);
     cpu = cpu->create(ops, 0, RegisterDictionary::Ptr());
     attachInstructionSemantics(ast, cpu);
 }
 
-void attachInstructionSemantics(SgNode *ast, const BaseSemantics::DispatcherPtr &cpu) {
+void attachInstructionSemantics(SgNode *ast, const BaseSemantics::Dispatcher::Ptr &cpu) {
     // We cannot use an AST traversal because we'd be modifying the AST while traversing, which is bad.
     std::vector<SgAsmInstruction*> insns = SageInterface::querySubTree<SgAsmInstruction>(ast);
     for (SgAsmInstruction *insn: insns) {
@@ -101,73 +101,73 @@ RiscOperators::promote(const BaseSemantics::RiscOperators::Ptr &x) {
 }
 
 // Make an SValue for an arbitrary SgAsmExpression subtree
-BaseSemantics::SValuePtr
+BaseSemantics::SValue::Ptr
 RiscOperators::makeSValue(size_t nbits, SgAsmExpression *expr) {
     ASSERT_not_null(expr);
-    SValuePtr v = SValue::promote(protoval()->undefined_(nbits));
+    SValue::Ptr v = SValue::promote(protoval()->undefined_(nbits));
     v->ast(expr);
     return v;
 }
 
 // Make an SValue for a RISC operator that takes no arguments. The width in bits is therefore required.
-BaseSemantics::SValuePtr
+BaseSemantics::SValue::Ptr
 RiscOperators::makeSValue(size_t nbits, SgAsmRiscOperation::RiscOperator op) {
-    SValuePtr v = SValue::promote(protoval()->undefined_(nbits));
+    SValue::Ptr v = SValue::promote(protoval()->undefined_(nbits));
     v->ast(SageBuilderAsm::buildRiscOperation(op));
     return v;
 }
 
 // RISC operator that takes one operand.
-BaseSemantics::SValuePtr
-RiscOperators::makeSValue(size_t nbits, SgAsmRiscOperation::RiscOperator op, const BaseSemantics::SValuePtr &a_) {
-    SValuePtr v = SValue::promote(protoval()->undefined_(nbits));
-    SValuePtr a = SValue::promote(a_);
+BaseSemantics::SValue::Ptr
+RiscOperators::makeSValue(size_t nbits, SgAsmRiscOperation::RiscOperator op, const BaseSemantics::SValue::Ptr &a_) {
+    SValue::Ptr v = SValue::promote(protoval()->undefined_(nbits));
+    SValue::Ptr a = SValue::promote(a_);
     v->ast(SageBuilderAsm::buildRiscOperation(op, a->ast()));
     return v;
 }
 
 // RISC operator that takes two operands.
-BaseSemantics::SValuePtr
-RiscOperators::makeSValue(size_t nbits, SgAsmRiscOperation::RiscOperator op, const BaseSemantics::SValuePtr &a_,
-                          const BaseSemantics::SValuePtr &b_) {
-    SValuePtr v = SValue::promote(protoval()->undefined_(nbits));
-    SValuePtr a = SValue::promote(a_);
-    SValuePtr b = SValue::promote(b_);
+BaseSemantics::SValue::Ptr
+RiscOperators::makeSValue(size_t nbits, SgAsmRiscOperation::RiscOperator op, const BaseSemantics::SValue::Ptr &a_,
+                          const BaseSemantics::SValue::Ptr &b_) {
+    SValue::Ptr v = SValue::promote(protoval()->undefined_(nbits));
+    SValue::Ptr a = SValue::promote(a_);
+    SValue::Ptr b = SValue::promote(b_);
     v->ast(SageBuilderAsm::buildRiscOperation(op, a->ast(), b->ast()));
     return v;
 }
 
 // RISC operator that takes three operands.
-BaseSemantics::SValuePtr
-RiscOperators::makeSValue(size_t nbits, SgAsmRiscOperation::RiscOperator op, const BaseSemantics::SValuePtr &a_,
-                          const BaseSemantics::SValuePtr &b_, const BaseSemantics::SValuePtr &c_) {
-    SValuePtr v = SValue::promote(protoval()->undefined_(nbits));
-    SValuePtr a = SValue::promote(a_);
-    SValuePtr b = SValue::promote(b_);
-    SValuePtr c = SValue::promote(c_);
+BaseSemantics::SValue::Ptr
+RiscOperators::makeSValue(size_t nbits, SgAsmRiscOperation::RiscOperator op, const BaseSemantics::SValue::Ptr &a_,
+                          const BaseSemantics::SValue::Ptr &b_, const BaseSemantics::SValue::Ptr &c_) {
+    SValue::Ptr v = SValue::promote(protoval()->undefined_(nbits));
+    SValue::Ptr a = SValue::promote(a_);
+    SValue::Ptr b = SValue::promote(b_);
+    SValue::Ptr c = SValue::promote(c_);
     v->ast(SageBuilderAsm::buildRiscOperation(op, a->ast(), b->ast(), c->ast()));
     return v;
 }
 
 // RISC operator that takes four operands.
-BaseSemantics::SValuePtr
-RiscOperators::makeSValue(size_t nbits, SgAsmRiscOperation::RiscOperator op, const BaseSemantics::SValuePtr &a_,
-                          const BaseSemantics::SValuePtr &b_, const BaseSemantics::SValuePtr &c_,
-                          const BaseSemantics::SValuePtr &d_) {
-    SValuePtr v = SValue::promote(protoval()->undefined_(nbits));
-    SValuePtr a = SValue::promote(a_);
-    SValuePtr b = SValue::promote(b_);
-    SValuePtr c = SValue::promote(c_);
-    SValuePtr d = SValue::promote(d_);
+BaseSemantics::SValue::Ptr
+RiscOperators::makeSValue(size_t nbits, SgAsmRiscOperation::RiscOperator op, const BaseSemantics::SValue::Ptr &a_,
+                          const BaseSemantics::SValue::Ptr &b_, const BaseSemantics::SValue::Ptr &c_,
+                          const BaseSemantics::SValue::Ptr &d_) {
+    SValue::Ptr v = SValue::promote(protoval()->undefined_(nbits));
+    SValue::Ptr a = SValue::promote(a_);
+    SValue::Ptr b = SValue::promote(b_);
+    SValue::Ptr c = SValue::promote(c_);
+    SValue::Ptr d = SValue::promote(d_);
     v->ast(SageBuilderAsm::buildRiscOperation(op, a->ast(), b->ast(), c->ast(), d->ast()));
     return v;
 }
 
 // Save the semantic effect in the current instruction.
 void
-RiscOperators::saveSemanticEffect(const BaseSemantics::SValuePtr &a_) {
+RiscOperators::saveSemanticEffect(const BaseSemantics::SValue::Ptr &a_) {
     if (SgAsmInstruction *insn = currentInstruction()) {
-        SValuePtr a = SValue::promote(a_);
+        SValue::Ptr a = SValue::promote(a_);
         ASSERT_not_null(a->ast());
 
         // Ensure that the instruction has a place to store semantics
@@ -251,18 +251,18 @@ RiscOperators::startInstruction(SgAsmInstruction *insn) {
     BaseSemantics::RiscOperators::startInstruction(insn);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::filterCallTarget(const BaseSemantics::SValuePtr &a) {
+BaseSemantics::SValue::Ptr
+RiscOperators::filterCallTarget(const BaseSemantics::SValue::Ptr &a) {
     return makeSValue(a->nBits(), SgAsmRiscOperation::OP_filterCallTarget, a);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::filterReturnTarget(const BaseSemantics::SValuePtr &a) {
+BaseSemantics::SValue::Ptr
+RiscOperators::filterReturnTarget(const BaseSemantics::SValue::Ptr &a) {
     return makeSValue(a->nBits(), SgAsmRiscOperation::OP_filterReturnTarget, a);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::filterIndirectJumpTarget(const BaseSemantics::SValuePtr &a) {
+BaseSemantics::SValue::Ptr
+RiscOperators::filterIndirectJumpTarget(const BaseSemantics::SValue::Ptr &a) {
     return makeSValue(a->nBits(), SgAsmRiscOperation::OP_filterIndirectJumpTarget, a);
 }
 
@@ -276,249 +276,249 @@ RiscOperators::cpuid() {
     saveSemanticEffect(makeSValue(1 /*arbitrary*/, SgAsmRiscOperation::OP_cpuid));
 }
 
-BaseSemantics::SValuePtr
+BaseSemantics::SValue::Ptr
 RiscOperators::rdtsc() {
     return makeSValue(64, SgAsmRiscOperation::OP_rdtsc);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::and_(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
+BaseSemantics::SValue::Ptr
+RiscOperators::and_(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b) {
     return makeSValue(a->nBits(), SgAsmRiscOperation::OP_and_, a, b);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::or_(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
+BaseSemantics::SValue::Ptr
+RiscOperators::or_(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b) {
     return makeSValue(a->nBits(), SgAsmRiscOperation::OP_or_, a, b);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::xor_(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
+BaseSemantics::SValue::Ptr
+RiscOperators::xor_(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b) {
     return makeSValue(a->nBits(), SgAsmRiscOperation::OP_xor_, a, b);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::invert(const BaseSemantics::SValuePtr &a) {
+BaseSemantics::SValue::Ptr
+RiscOperators::invert(const BaseSemantics::SValue::Ptr &a) {
     return makeSValue(a->nBits(), SgAsmRiscOperation::OP_invert, a);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::extract(const BaseSemantics::SValuePtr &a, size_t begin_bit, size_t end_bit) {
+BaseSemantics::SValue::Ptr
+RiscOperators::extract(const BaseSemantics::SValue::Ptr &a, size_t begin_bit, size_t end_bit) {
     ASSERT_require(end_bit < 256);
     ASSERT_require(begin_bit < end_bit);
-    BaseSemantics::SValuePtr beginExpr = makeSValue(8, SageBuilderAsm::buildValueU8(begin_bit));
-    BaseSemantics::SValuePtr endExpr   = makeSValue(8, SageBuilderAsm::buildValueU8(end_bit));
+    BaseSemantics::SValue::Ptr beginExpr = makeSValue(8, SageBuilderAsm::buildValueU8(begin_bit));
+    BaseSemantics::SValue::Ptr endExpr   = makeSValue(8, SageBuilderAsm::buildValueU8(end_bit));
     return makeSValue(end_bit-begin_bit, SgAsmRiscOperation::OP_extract, a, beginExpr, endExpr);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::concat(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
+BaseSemantics::SValue::Ptr
+RiscOperators::concat(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b) {
     return makeSValue(a->nBits()+b->nBits(), SgAsmRiscOperation::OP_concat, a, b);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::leastSignificantSetBit(const BaseSemantics::SValuePtr &a) {
+BaseSemantics::SValue::Ptr
+RiscOperators::leastSignificantSetBit(const BaseSemantics::SValue::Ptr &a) {
     return makeSValue(a->nBits(), SgAsmRiscOperation::OP_leastSignificantSetBit, a);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::mostSignificantSetBit(const BaseSemantics::SValuePtr &a) {
+BaseSemantics::SValue::Ptr
+RiscOperators::mostSignificantSetBit(const BaseSemantics::SValue::Ptr &a) {
     return makeSValue(a->nBits(), SgAsmRiscOperation::OP_mostSignificantSetBit, a);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::rotateLeft(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &sa) {
+BaseSemantics::SValue::Ptr
+RiscOperators::rotateLeft(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &sa) {
     return makeSValue(a->nBits(), SgAsmRiscOperation::OP_rotateLeft, a, sa);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::rotateRight(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &sa) {
+BaseSemantics::SValue::Ptr
+RiscOperators::rotateRight(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &sa) {
     return makeSValue(a->nBits(), SgAsmRiscOperation::OP_rotateRight, a, sa);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::shiftLeft(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &sa) {
+BaseSemantics::SValue::Ptr
+RiscOperators::shiftLeft(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &sa) {
     return makeSValue(a->nBits(), SgAsmRiscOperation::OP_shiftLeft, a, sa);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::shiftRight(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &sa) {
+BaseSemantics::SValue::Ptr
+RiscOperators::shiftRight(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &sa) {
     return makeSValue(a->nBits(), SgAsmRiscOperation::OP_shiftRight, a, sa);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::shiftRightArithmetic(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &sa) {
+BaseSemantics::SValue::Ptr
+RiscOperators::shiftRightArithmetic(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &sa) {
     return makeSValue(a->nBits(), SgAsmRiscOperation::OP_shiftRightArithmetic, a, sa);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::equalToZero(const BaseSemantics::SValuePtr &a) {
+BaseSemantics::SValue::Ptr
+RiscOperators::equalToZero(const BaseSemantics::SValue::Ptr &a) {
     return makeSValue(1, SgAsmRiscOperation::OP_equalToZero, a);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::iteWithStatus(const BaseSemantics::SValuePtr &sel, const BaseSemantics::SValuePtr &a,
-                             const BaseSemantics::SValuePtr &b, IteStatus &status) {
+BaseSemantics::SValue::Ptr
+RiscOperators::iteWithStatus(const BaseSemantics::SValue::Ptr &sel, const BaseSemantics::SValue::Ptr &a,
+                             const BaseSemantics::SValue::Ptr &b, IteStatus &status) {
     status = IteStatus::BOTH;
     return makeSValue(a->nBits(), SgAsmRiscOperation::OP_ite, sel, a, b);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::isEqual(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
+BaseSemantics::SValue::Ptr
+RiscOperators::isEqual(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b) {
     return makeSValue(1, SgAsmRiscOperation::OP_isEqual, a, b);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::isNotEqual(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
+BaseSemantics::SValue::Ptr
+RiscOperators::isNotEqual(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b) {
     return makeSValue(1, SgAsmRiscOperation::OP_isNotEqual, a, b);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::isUnsignedLessThan(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
+BaseSemantics::SValue::Ptr
+RiscOperators::isUnsignedLessThan(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b) {
     return makeSValue(1, SgAsmRiscOperation::OP_isUnsignedLessThan, a, b);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::isUnsignedLessThanOrEqual(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
+BaseSemantics::SValue::Ptr
+RiscOperators::isUnsignedLessThanOrEqual(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b) {
     return makeSValue(1, SgAsmRiscOperation::OP_isUnsignedLessThanOrEqual, a, b);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::isUnsignedGreaterThan(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
+BaseSemantics::SValue::Ptr
+RiscOperators::isUnsignedGreaterThan(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b) {
     return makeSValue(1, SgAsmRiscOperation::OP_isUnsignedGreaterThan, a, b);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::isUnsignedGreaterThanOrEqual(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
+BaseSemantics::SValue::Ptr
+RiscOperators::isUnsignedGreaterThanOrEqual(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b) {
     return makeSValue(1, SgAsmRiscOperation::OP_isUnsignedGreaterThanOrEqual, a, b);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::isSignedLessThan(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
+BaseSemantics::SValue::Ptr
+RiscOperators::isSignedLessThan(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b) {
     return makeSValue(1, SgAsmRiscOperation::OP_isSignedLessThan, a, b);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::isSignedLessThanOrEqual(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
+BaseSemantics::SValue::Ptr
+RiscOperators::isSignedLessThanOrEqual(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b) {
     return makeSValue(1, SgAsmRiscOperation::OP_isSignedLessThanOrEqual, a, b);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::isSignedGreaterThan(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
+BaseSemantics::SValue::Ptr
+RiscOperators::isSignedGreaterThan(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b) {
     return makeSValue(1, SgAsmRiscOperation::OP_isSignedGreaterThan, a, b);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::isSignedGreaterThanOrEqual(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
+BaseSemantics::SValue::Ptr
+RiscOperators::isSignedGreaterThanOrEqual(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b) {
     return makeSValue(1, SgAsmRiscOperation::OP_isSignedGreaterThanOrEqual, a, b);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::unsignedExtend(const BaseSemantics::SValuePtr &a, size_t new_width) {
+BaseSemantics::SValue::Ptr
+RiscOperators::unsignedExtend(const BaseSemantics::SValue::Ptr &a, size_t new_width) {
     ASSERT_require(new_width < 256);
-    BaseSemantics::SValuePtr widthExpr = makeSValue(8, SageBuilderAsm::buildValueU8(new_width));
+    BaseSemantics::SValue::Ptr widthExpr = makeSValue(8, SageBuilderAsm::buildValueU8(new_width));
     return makeSValue(new_width, SgAsmRiscOperation::OP_unsignedExtend, a, widthExpr);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::signExtend(const BaseSemantics::SValuePtr &a, size_t new_width) {
+BaseSemantics::SValue::Ptr
+RiscOperators::signExtend(const BaseSemantics::SValue::Ptr &a, size_t new_width) {
     ASSERT_require(new_width < 256);
-    BaseSemantics::SValuePtr widthExpr = makeSValue(8, SageBuilderAsm::buildValueU8(new_width));
+    BaseSemantics::SValue::Ptr widthExpr = makeSValue(8, SageBuilderAsm::buildValueU8(new_width));
     return makeSValue(new_width, SgAsmRiscOperation::OP_signExtend, a, widthExpr);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::add(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
+BaseSemantics::SValue::Ptr
+RiscOperators::add(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b) {
     return makeSValue(a->nBits(), SgAsmRiscOperation::OP_add, a, b);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::addWithCarries(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b,
-                              const BaseSemantics::SValuePtr &c, BaseSemantics::SValuePtr &carry_out/*out*/) {
+BaseSemantics::SValue::Ptr
+RiscOperators::addWithCarries(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b,
+                              const BaseSemantics::SValue::Ptr &c, BaseSemantics::SValue::Ptr &carry_out/*out*/) {
     carry_out = makeSValue(a->nBits(), SgAsmRiscOperation::OP_addCarries, a, b, c);
     return makeSValue(a->nBits(), SgAsmRiscOperation::OP_add, a, b, c);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::subtract(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
+BaseSemantics::SValue::Ptr
+RiscOperators::subtract(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b) {
     return makeSValue(a->nBits(), SgAsmRiscOperation::OP_subtract, a, b);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::negate(const BaseSemantics::SValuePtr &a) {
+BaseSemantics::SValue::Ptr
+RiscOperators::negate(const BaseSemantics::SValue::Ptr &a) {
     return makeSValue(a->nBits(), SgAsmRiscOperation::OP_negate, a);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::signedDivide(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
+BaseSemantics::SValue::Ptr
+RiscOperators::signedDivide(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b) {
     return makeSValue(a->nBits(), SgAsmRiscOperation::OP_signedDivide, a, b);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::signedModulo(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
+BaseSemantics::SValue::Ptr
+RiscOperators::signedModulo(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b) {
     return makeSValue(b->nBits(), SgAsmRiscOperation::OP_signedModulo, a, b);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::signedMultiply(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
+BaseSemantics::SValue::Ptr
+RiscOperators::signedMultiply(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b) {
     return makeSValue(a->nBits() + b->nBits(), SgAsmRiscOperation::OP_signedMultiply, a, b);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::unsignedDivide(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
+BaseSemantics::SValue::Ptr
+RiscOperators::unsignedDivide(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b) {
     return makeSValue(a->nBits(), SgAsmRiscOperation::OP_unsignedDivide, a, b);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::unsignedModulo(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
+BaseSemantics::SValue::Ptr
+RiscOperators::unsignedModulo(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b) {
     return makeSValue(b->nBits(), SgAsmRiscOperation::OP_unsignedModulo, a, b);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::unsignedMultiply(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
+BaseSemantics::SValue::Ptr
+RiscOperators::unsignedMultiply(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b) {
     return makeSValue(a->nBits() + b->nBits(), SgAsmRiscOperation::OP_unsignedMultiply, a, b);
 }
 
 void
 RiscOperators::interrupt(int majr, int minr) {
-    BaseSemantics::SValuePtr majrExpr = makeSValue(32, SageBuilderAsm::buildValueU32(majr));
-    BaseSemantics::SValuePtr minrExpr = makeSValue(32, SageBuilderAsm::buildValueU32(minr));
+    BaseSemantics::SValue::Ptr majrExpr = makeSValue(32, SageBuilderAsm::buildValueU32(majr));
+    BaseSemantics::SValue::Ptr minrExpr = makeSValue(32, SageBuilderAsm::buildValueU32(minr));
     saveSemanticEffect(makeSValue(1 /*arbitrary*/, SgAsmRiscOperation::OP_interrupt, majrExpr, minrExpr));
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::readRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &dflt) {
-    BaseSemantics::SValuePtr regExpr = makeSValue(reg.nBits(), new SgAsmDirectRegisterExpression(reg));
+BaseSemantics::SValue::Ptr
+RiscOperators::readRegister(RegisterDescriptor reg, const BaseSemantics::SValue::Ptr &dflt) {
+    BaseSemantics::SValue::Ptr regExpr = makeSValue(reg.nBits(), new SgAsmDirectRegisterExpression(reg));
     return makeSValue(reg.nBits(), SgAsmRiscOperation::OP_readRegister, regExpr);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::peekRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &dflt) {
-    BaseSemantics::SValuePtr regExpr = makeSValue(reg.nBits(), new SgAsmDirectRegisterExpression(reg));
+BaseSemantics::SValue::Ptr
+RiscOperators::peekRegister(RegisterDescriptor reg, const BaseSemantics::SValue::Ptr &dflt) {
+    BaseSemantics::SValue::Ptr regExpr = makeSValue(reg.nBits(), new SgAsmDirectRegisterExpression(reg));
     return makeSValue(reg.nBits(), SgAsmRiscOperation::OP_peekRegister, regExpr);
 }
 
 void
-RiscOperators::writeRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &a) {
-    BaseSemantics::SValuePtr regExpr = makeSValue(reg.nBits(), new SgAsmDirectRegisterExpression(reg));
+RiscOperators::writeRegister(RegisterDescriptor reg, const BaseSemantics::SValue::Ptr &a) {
+    BaseSemantics::SValue::Ptr regExpr = makeSValue(reg.nBits(), new SgAsmDirectRegisterExpression(reg));
     saveSemanticEffect(makeSValue(1 /*arbitrary*/, SgAsmRiscOperation::OP_writeRegister, regExpr, a)); 
 }
         
-BaseSemantics::SValuePtr
-RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &address,
-                          const BaseSemantics::SValuePtr &dflt, const BaseSemantics::SValuePtr &cond) {
+BaseSemantics::SValue::Ptr
+RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValue::Ptr &address,
+                          const BaseSemantics::SValue::Ptr &dflt, const BaseSemantics::SValue::Ptr &cond) {
     if (!segreg.isEmpty()) {
-        BaseSemantics::SValuePtr segRegExpr = makeSValue(segreg.nBits(), new SgAsmDirectRegisterExpression(segreg));
+        BaseSemantics::SValue::Ptr segRegExpr = makeSValue(segreg.nBits(), new SgAsmDirectRegisterExpression(segreg));
         return makeSValue(dflt->nBits(), SgAsmRiscOperation::OP_readMemory, segRegExpr, address, dflt, cond);
     } else {
         return makeSValue(dflt->nBits(), SgAsmRiscOperation::OP_readMemory,             address, dflt, cond);
     }
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::peekMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &address,
-                          const BaseSemantics::SValuePtr &dflt) {
+BaseSemantics::SValue::Ptr
+RiscOperators::peekMemory(RegisterDescriptor segreg, const BaseSemantics::SValue::Ptr &address,
+                          const BaseSemantics::SValue::Ptr &dflt) {
     if (!segreg.isEmpty()) {
-        BaseSemantics::SValuePtr segRegExpr = makeSValue(segreg.nBits(), new SgAsmDirectRegisterExpression(segreg));
+        BaseSemantics::SValue::Ptr segRegExpr = makeSValue(segreg.nBits(), new SgAsmDirectRegisterExpression(segreg));
         return makeSValue(dflt->nBits(), SgAsmRiscOperation::OP_peekMemory, segRegExpr, address, dflt);
     } else {
         return makeSValue(dflt->nBits(), SgAsmRiscOperation::OP_peekMemory,             address, dflt);
@@ -526,10 +526,10 @@ RiscOperators::peekMemory(RegisterDescriptor segreg, const BaseSemantics::SValue
 }
 
 void
-RiscOperators::writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &address,
-                           const BaseSemantics::SValuePtr &value, const BaseSemantics::SValuePtr &cond) {
+RiscOperators::writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValue::Ptr &address,
+                           const BaseSemantics::SValue::Ptr &value, const BaseSemantics::SValue::Ptr &cond) {
     if (!segreg.isEmpty()) {
-        BaseSemantics::SValuePtr segRegExpr = makeSValue(segreg.nBits(), new SgAsmDirectRegisterExpression(segreg));
+        BaseSemantics::SValue::Ptr segRegExpr = makeSValue(segreg.nBits(), new SgAsmDirectRegisterExpression(segreg));
         saveSemanticEffect(makeSValue(1 /*arbitrary*/, SgAsmRiscOperation::OP_writeMemory, segRegExpr, address, value, cond));
     } else {
         saveSemanticEffect(makeSValue(1 /*arbitrary*/, SgAsmRiscOperation::OP_writeMemory,             address, value, cond));

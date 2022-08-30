@@ -62,15 +62,15 @@ RegisterState::process() const {
     return process_;
 }
 
-BaseSemantics::SValuePtr
-RegisterState::peekRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &dflt, BaseSemantics::RiscOperators *ops) {
+BaseSemantics::SValue::Ptr
+RegisterState::peekRegister(RegisterDescriptor reg, const BaseSemantics::SValue::Ptr &dflt, BaseSemantics::RiscOperators *ops) {
     ASSERT_not_null(process_);
     Sawyer::Container::BitVector value = process_->readRegister(reg);
     return protoval()->number_(value.size(), value.toInteger());
 }
 
 void
-RegisterState::writeRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &value, BaseSemantics::RiscOperators *ops) {
+RegisterState::writeRegister(RegisterDescriptor reg, const BaseSemantics::SValue::Ptr &value, BaseSemantics::RiscOperators *ops) {
     ASSERT_not_null(process_);
     ASSERT_not_implemented("[Robb Matzke 2019-09-05]: Debugger has no writeRegister method");
 }
@@ -132,8 +132,8 @@ MemoryState::process() const {
     return process_;
 }
 
-BaseSemantics::SValuePtr
-MemoryState::peekMemory(const BaseSemantics::SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
+BaseSemantics::SValue::Ptr
+MemoryState::peekMemory(const BaseSemantics::SValue::Ptr &address, const BaseSemantics::SValue::Ptr &dflt,
                         BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps) {
     ASSERT_not_null(process_);
     std::vector<uint8_t> buffer((dflt->nBits() + 7) / 8);

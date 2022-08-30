@@ -27,7 +27,7 @@ namespace RSIM_Semantics {
 struct IP_cpuid: public X86::InsnProcessor {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
-        BaseSemantics::SValuePtr codeExpr = d->readRegister(d->REG_EAX);
+        BaseSemantics::SValue::Ptr codeExpr = d->readRegister(d->REG_EAX);
         unsigned code = codeExpr->toUnsigned().get();
 
         // Return value based on an Intel model "Xeon X5680 @ 3.33GHz"; 3325.017GHz; stepping 2
@@ -68,7 +68,7 @@ struct IP_sysenter: public X86::InsnProcessor {
     }
 };
 
-DispatcherPtr
+Dispatcher::Ptr
 createDispatcher(RSIM_Thread *owningThread) {
     BinaryAnalysis::Disassembler::Base::Ptr disassembler = owningThread->get_process()->disassembler();
     Architecture arch = ARCH_NONE;
@@ -81,18 +81,18 @@ createDispatcher(RSIM_Thread *owningThread) {
     }
 
     RegisterDictionary::Ptr regs = disassembler->registerDictionary();
-    RiscOperatorsPtr ops = RiscOperators::instance(arch, owningThread, regs);
+    RiscOperators::Ptr ops = RiscOperators::instance(arch, owningThread, regs);
     size_t wordSize = disassembler->instructionPointerRegister().nBits();
     ASSERT_require(wordSize == 32 || wordSize == 64);
 
 #if 0 // DEBUGGING [Robb P. Matzke 2015-07-30]
     std::cerr <<"Using TraceSemantics for debugging (" <<__FILE__ <<":" <<__LINE__ <<")\n";
-    TraceSemantics::RiscOperatorsPtr traceOps = TraceSemantics::RiscOperators::instance(ops);
+    TraceSemantics::RiscOperators::Ptr traceOps = TraceSemantics::RiscOperators::instance(ops);
     traceOps->stream().disable();                       // turn it on only when we need it
     ops = traceOps;
 #endif
 
-    DispatcherPtr dispatcher;
+    Dispatcher::Ptr dispatcher;
     switch (arch) {
         case ARCH_X86:
             dispatcher = DispatcherX86::instance(ops, wordSize, regs);
@@ -188,7 +188,7 @@ RiscOperators::interrupt(int majr, int minr) {
 }
 
 void
-RiscOperators::writeRegister(Rose::BinaryAnalysis::RegisterDescriptor reg, const BaseSemantics::SValuePtr &value) {
+RiscOperators::writeRegister(Rose::BinaryAnalysis::RegisterDescriptor reg, const BaseSemantics::SValue::Ptr &value) {
     Super::writeRegister(reg, value);
     if (ARCH_X86 == architecture_ && reg.majorNumber() == x86_regclass_segment) {
         ASSERT_require2(0 == value->toUnsigned().get() || 3 == (value->toUnsigned().get() & 7), "GDT and privilege level 3");
@@ -196,9 +196,9 @@ RiscOperators::writeRegister(Rose::BinaryAnalysis::RegisterDescriptor reg, const
     }
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::readMemory(Rose::BinaryAnalysis::RegisterDescriptor segreg, const BaseSemantics::SValuePtr &address,
-                          const BaseSemantics::SValuePtr &dflt, const BaseSemantics::SValuePtr &cond) {
+BaseSemantics::SValue::Ptr
+RiscOperators::readMemory(Rose::BinaryAnalysis::RegisterDescriptor segreg, const BaseSemantics::SValue::Ptr &address,
+                          const BaseSemantics::SValue::Ptr &dflt, const BaseSemantics::SValue::Ptr &cond) {
     Sawyer::Message::Stream &mesg = thread_->tracing(TRACE_MEM);
     RSIM_Process *process = thread_->get_process();
     rose_addr_t offset = address->toUnsigned().get();
@@ -256,20 +256,20 @@ RiscOperators::readMemory(Rose::BinaryAnalysis::RegisterDescriptor segreg, const
         default:
             ASSERT_not_reachable("invalid architecture");
     }
-    BaseSemantics::SValuePtr retval = svalueNumber(bv);
+    BaseSemantics::SValue::Ptr retval = svalueNumber(bv);
 
     SAWYER_MESG(mesg) <<"-> " <<*retval <<"\n";
     return retval;
 }
 
 void
-RiscOperators::writeMemory(Rose::BinaryAnalysis::RegisterDescriptor segreg, const BaseSemantics::SValuePtr &address,
-                           const BaseSemantics::SValuePtr &value_, const BaseSemantics::SValuePtr &cond) {
+RiscOperators::writeMemory(Rose::BinaryAnalysis::RegisterDescriptor segreg, const BaseSemantics::SValue::Ptr &address,
+                           const BaseSemantics::SValue::Ptr &value_, const BaseSemantics::SValue::Ptr &cond) {
     Sawyer::Message::Stream &mesg = thread_->tracing(TRACE_MEM);
     RSIM_Process *process = thread_->get_process();
     rose_addr_t offset = address->toUnsigned().get();
     rose_addr_t addrMask = IntegerOps::genMask<rose_addr_t>(address->nBits());
-    SValuePtr value = SValue::promote(value_);
+    SValue::Ptr value = SValue::promote(value_);
     rose_addr_t addr = offset & addrMask;
     if (!cond->toUnsigned().get())
         return;

@@ -95,32 +95,35 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 typedef BaseSemantics::RegisterStateGeneric RegisterState;
-typedef BaseSemantics::RegisterStateGenericPtr RegisterStatePtr;
-
 typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
 // A concrete semantics that reads registers and memory from a subordinate process.
 class RiscOperators: public ConcreteSemantics::RiscOperators {
+public:
+    using Ptr = RiscOperatorsPtr;
+
+private:
     Debugger::Ptr subordinate_;
+
 protected:
-    RiscOperators(const BaseSemantics::StatePtr &state, const Debugger::Ptr &subordinate)
+    RiscOperators(const BaseSemantics::State::Ptr &state, const Debugger::Ptr &subordinate)
         : ConcreteSemantics::RiscOperators(state, SmtSolverPtr()), subordinate_(subordinate) {
         name("Verification");
     }
 public:
-    static RiscOperatorsPtr instance(const Debugger::Ptr &subordinate, const RegisterDictionary::Ptr &regdict) {
-        BaseSemantics::SValuePtr protoval = ConcreteSemantics::SValue::instance();
-        BaseSemantics::RegisterStatePtr registers = BaseSemantics::RegisterStateGeneric::instance(protoval, regdict);
-        BaseSemantics::MemoryStatePtr memory = BaseSemantics::MemoryCellList::instance(protoval, protoval);
-        BaseSemantics::StatePtr state = BaseSemantics::State::instance(registers, memory);
-        return RiscOperatorsPtr(new RiscOperators(state, subordinate));
+    static RiscOperators::Ptr instance(const Debugger::Ptr &subordinate, const RegisterDictionary::Ptr &regdict) {
+        BaseSemantics::SValue::Ptr protoval = ConcreteSemantics::SValue::instance();
+        BaseSemantics::RegisterState::Ptr registers = BaseSemantics::RegisterStateGeneric::instance(protoval, regdict);
+        BaseSemantics::MemoryState::Ptr memory = BaseSemantics::MemoryCellList::instance(protoval, protoval);
+        BaseSemantics::State::Ptr state = BaseSemantics::State::instance(registers, memory);
+        return RiscOperators::Ptr(new RiscOperators(state, subordinate));
     }
     
 public:
     // Reads a register from the subordinate process, unless we've already written to that register.
-    virtual BaseSemantics::SValuePtr readRegister(RegisterDescriptor reg) override {
+    virtual BaseSemantics::SValue::Ptr readRegister(RegisterDescriptor reg) override {
         using namespace Sawyer::Container;
-        RegisterStatePtr regs = RegisterState::promote(currentState()->registerState());
+        RegisterState::Ptr regs = RegisterState::promote(currentState()->registerState());
         if (regs->is_partly_stored(reg))
             return ConcreteSemantics::RiscOperators::readRegister(reg);
         try {
@@ -134,10 +137,10 @@ public:
 
 public:
     // Reads memory from the subordinate process.
-    virtual BaseSemantics::SValuePtr readMemory(RegisterDescriptor segreg,
-                                                const BaseSemantics::SValuePtr &addr,
-                                                const BaseSemantics::SValuePtr &dflt,
-                                                const BaseSemantics::SValuePtr &cond) override {
+    virtual BaseSemantics::SValue::Ptr readMemory(RegisterDescriptor segreg,
+                                                const BaseSemantics::SValue::Ptr &addr,
+                                                const BaseSemantics::SValue::Ptr &dflt,
+                                                const BaseSemantics::SValue::Ptr &cond) override {
         using namespace Sawyer::Container;
 
         uint8_t buf[16];
@@ -162,7 +165,7 @@ public:
     // Compare written-to simulated registers with registers in the subordinate process, reporting differences.
     bool checkRegisters(SgAsmInstruction *insn) {
         bool areSame = true;
-        RegisterStatePtr regs = RegisterState::promote(currentState()->registerState());
+        RegisterState::Ptr regs = RegisterState::promote(currentState()->registerState());
         RegisterState::RegPairs cells = regs->get_stored_registers();
         RegisterNames rname(currentState()->registerState()->registerDictionary());
         BOOST_FOREACH (const RegisterState::RegPair &cell, cells) {
@@ -287,11 +290,11 @@ main(int argc, char *argv[]) {
 
     // Build instruction semantics framework
     Debugger::Ptr debugger = Debugger::instance(args);
-    RiscOperatorsPtr checkOps = RiscOperators::instance(debugger, registerDictionary);
-    BaseSemantics::DispatcherPtr cpu;
+    RiscOperators::Ptr checkOps = RiscOperators::instance(debugger, registerDictionary);
+    BaseSemantics::Dispatcher::Ptr cpu;
     std::ostringstream trace;
     if (settings.traceSemantics) {
-        TraceSemantics::RiscOperatorsPtr traceOps = TraceSemantics::RiscOperators::instance(checkOps);
+        TraceSemantics::RiscOperators::Ptr traceOps = TraceSemantics::RiscOperators::instance(checkOps);
         traceOps->stream().destination(Sawyer::Message::StreamSink::instance(trace));
         cpu = DispatcherX86::instance(traceOps, addrWidth, RegisterDictionary::Ptr());
     } else {

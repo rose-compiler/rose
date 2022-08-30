@@ -207,10 +207,10 @@ int main(int argc, char *argv[])
 
  // DQ (12/18/2021): See if we can comment this out, I think we are not using it.
  // Build semantics framework; only used when settings.runSemantics is set
-    BaseSemantics::DispatcherPtr dispatcher;
+    BaseSemantics::Dispatcher::Ptr dispatcher;
 #if 0
     if (settings.runSemantics) {
-        BaseSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(disassembler->registerDictionary());
+        BaseSemantics::RiscOperators::Ptr ops = SymbolicSemantics::RiscOperators::instance(disassembler->registerDictionary());
         ops = TraceSemantics::RiscOperators::instance(ops);
         dispatcher = DispatcherM68k::instance(ops, disassembler->wordSizeBytes()*8);
         dispatcher->currentState()->memoryState()->set_byteOrder(ByteOrder::ORDER_MSB);

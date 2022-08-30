@@ -73,7 +73,7 @@ SyscallSuccessors::operator()(bool chain, const Args &args) {
                 // for the call return.
                 args.bblock->successors(BasicBlock::Successors()); // remove existing successors
                 size_t wordsize = args.partitioner.instructionProvider().instructionPointerRegister().nBits();
-                BaseSemantics::SValuePtr indeterminateVa = args.partitioner.newOperators()->undefined_(wordsize);
+                BaseSemantics::SValue::Ptr indeterminateVa = args.partitioner.newOperators()->undefined_(wordsize);
                 args.bblock->insertSuccessor(indeterminateVa, E_FUNCTION_CALL);
                 args.bblock->insertSuccessor(args.bblock->fallthroughVa(), wordsize, E_CALL_RETURN);
             }
@@ -101,17 +101,17 @@ nameSystemCalls(const Partitioner &partitioner, const boost::filesystem::path &s
     }
 }
 
-BaseSemantics::SValuePtr
-LibcStartMain::readStack(const Partitioner &partitioner, const BaseSemantics::DispatcherPtr &cpu, int byteOffset,
+BaseSemantics::SValue::Ptr
+LibcStartMain::readStack(const Partitioner &partitioner, const BaseSemantics::Dispatcher::Ptr &cpu, int byteOffset,
                          size_t nBits, RegisterDescriptor segmentRegister) {
     const RegisterDescriptor SP = partitioner.instructionProvider().stackPointerRegister();
     if (SP.isEmpty())
-        return BaseSemantics::SValuePtr();
-    BaseSemantics::SValuePtr sp = cpu->operators()->peekRegister(SP, cpu->undefined_(SP.nBits()));
-    BaseSemantics::SValuePtr stackOffset = cpu->number_(SP.nBits(),
+        return BaseSemantics::SValue::Ptr();
+    BaseSemantics::SValue::Ptr sp = cpu->operators()->peekRegister(SP, cpu->undefined_(SP.nBits()));
+    BaseSemantics::SValue::Ptr stackOffset = cpu->number_(SP.nBits(),
                                                         BitOps::signExtend((uint64_t)byteOffset, 8*sizeof(byteOffset)));
-    BaseSemantics::SValuePtr addr = cpu->operators()->add(sp, stackOffset);
-    BaseSemantics::SValuePtr value = cpu->operators()->peekMemory(segmentRegister, addr, cpu->undefined_(nBits));
+    BaseSemantics::SValue::Ptr addr = cpu->operators()->add(sp, stackOffset);
+    BaseSemantics::SValue::Ptr value = cpu->operators()->peekMemory(segmentRegister, addr, cpu->undefined_(nBits));
     return value;
 }
 
@@ -144,9 +144,9 @@ LibcStartMain::operator()(bool chain, const Args &args) {
     // responsible for aligning the stack pointer, the stack pointer ends up often being an somewhat complicated symbolic
     // expression, which in turn causes aliasing-aware memory states to return unknown values when reading the stack (using
     // similar complicated expression) due to possible aliasing.
-    BaseSemantics::DispatcherPtr dispatcher;
-    BaseSemantics::RiscOperatorsPtr ops;
-    BaseSemantics::StatePtr state;
+    BaseSemantics::Dispatcher::Ptr dispatcher;
+    BaseSemantics::RiscOperators::Ptr ops;
+    BaseSemantics::State::Ptr state;
     try {
         ops = args.partitioner.newOperators(MAP_BASED_MEMORY);
         if (ops) {
@@ -165,7 +165,7 @@ LibcStartMain::operator()(bool chain, const Args &args) {
     }
 
     // Some of the arguments are going to be function pointers. Give them names if we can.
-    std::vector<BaseSemantics::SValuePtr> functionPtrs;
+    std::vector<BaseSemantics::SValue::Ptr> functionPtrs;
 
     // Location and size of argument varies by architecture
     RegisterDictionary::Ptr regs = args.partitioner.instructionProvider().registerDictionary();
@@ -175,9 +175,9 @@ LibcStartMain::operator()(bool chain, const Args &args) {
             const RegisterDescriptor FIRST_ARG = regs->findOrThrow("rdi");
             const RegisterDescriptor FOURTH_ARG = regs->findOrThrow("rcx");
             const RegisterDescriptor FIFTH_ARG = regs->findOrThrow("r8");
-            BaseSemantics::SValuePtr firstArg = state->peekRegister(FIRST_ARG, dispatcher->undefined_(64), ops.get());
-            BaseSemantics::SValuePtr fourthArg = state->peekRegister(FOURTH_ARG, dispatcher->undefined_(64), ops.get());
-            BaseSemantics::SValuePtr fifthArg = state->peekRegister(FIFTH_ARG, dispatcher->undefined_(64), ops.get());
+            BaseSemantics::SValue::Ptr firstArg = state->peekRegister(FIRST_ARG, dispatcher->undefined_(64), ops.get());
+            BaseSemantics::SValue::Ptr fourthArg = state->peekRegister(FOURTH_ARG, dispatcher->undefined_(64), ops.get());
+            BaseSemantics::SValue::Ptr fifthArg = state->peekRegister(FIFTH_ARG, dispatcher->undefined_(64), ops.get());
 
             if (firstArg->isConcrete() && fourthArg->isConcrete() && fifthArg->isConcrete() &&
                 args.partitioner.memoryMap()->at(firstArg->toUnsigned().get()).require(MemoryMap::EXECUTABLE).exists() &&
@@ -205,7 +205,7 @@ LibcStartMain::operator()(bool chain, const Args &args) {
         } else if (dispatcher->addressWidth() == 32) {
             // x86 integer arguments are passed on the stack. The address of main is the first argument, which starts four bytes
             // into the stack because the return address has also been pushed onto the stack.
-            BaseSemantics::SValuePtr arg0 = readStack(args.partitioner, dispatcher, 4, 32, RegisterDescriptor());
+            BaseSemantics::SValue::Ptr arg0 = readStack(args.partitioner, dispatcher, 4, 32, RegisterDescriptor());
             if (arg0->toUnsigned().assignTo(mainVa_)) {
                 SAWYER_MESG(debug) <<"LibcStartMain analysis: x86 with main as the first argument\n";
                 functionPtrs.push_back(arg0);
@@ -214,7 +214,7 @@ LibcStartMain::operator()(bool chain, const Args &args) {
     } else if (isSgAsmM68kInstruction(args.bblock->instructions().back())) {
         // M68k integer arguments are passed on the stack. The address of main is the first argument, which starts four bytes
         // into the stack because the return address has also been pushed onto the stack.
-        BaseSemantics::SValuePtr arg0 = readStack(args.partitioner, dispatcher, 4, 32, RegisterDescriptor());
+        BaseSemantics::SValue::Ptr arg0 = readStack(args.partitioner, dispatcher, 4, 32, RegisterDescriptor());
         if (arg0->toUnsigned().assignTo(mainVa_)) {
             SAWYER_MESG(debug) <<"LibcStartMain analysis: m68k with main as the first argument\n";
             functionPtrs.push_back(arg0);
@@ -223,7 +223,7 @@ LibcStartMain::operator()(bool chain, const Args &args) {
     } else if (isSgAsmAarch32Instruction(args.bblock->instructions().back())) {
         // The "main" pointer is passed to __libc_start_main@plt in the r0 register.
         const RegisterDescriptor REG_R0 = regs->findOrThrow("r0");
-        BaseSemantics::SValuePtr r0 = state->peekRegister(REG_R0, dispatcher->undefined_(32), ops.get());
+        BaseSemantics::SValue::Ptr r0 = state->peekRegister(REG_R0, dispatcher->undefined_(32), ops.get());
         if (r0->toUnsigned().assignTo(mainVa_)) {
             SAWYER_MESG(debug) <<"LibcStartMain analysis: AArch32 with main in r0\n";
             functionPtrs.push_back(r0);
@@ -234,7 +234,7 @@ LibcStartMain::operator()(bool chain, const Args &args) {
     if (!functionPtrs.empty()) {
         ASSERT_require(args.bblock->successors().isCached());
         BasicBlock::Successors succs = args.bblock->successors().get();
-        for (const BaseSemantics::SValuePtr &calleeVa: functionPtrs) {
+        for (const BaseSemantics::SValue::Ptr &calleeVa: functionPtrs) {
             succs.push_back(BasicBlock::Successor(Semantics::SValue::promote(calleeVa), E_FUNCTION_CALL));
             SAWYER_MESG(debug) <<"LibcStartMain analysis: fcall to " <<*calleeVa
                                <<(mainVa_ && calleeVa->toUnsigned().get() == *mainVa_ ? ", assumed to be \"main\"" : "") <<"\n";

@@ -34,19 +34,19 @@ Dispatcher::~Dispatcher() {
 }
 
 void
-Dispatcher::operators(const RiscOperatorsPtr &ops) {
+Dispatcher::operators(const RiscOperators::Ptr &ops) {
     ASSERT_not_null(ops);
     operators_ = ops;
 }
 
-StatePtr
+State::Ptr
 Dispatcher::currentState() const {
-    return operators() ? operators()->currentState() : StatePtr();
+    return operators() ? operators()->currentState() : State::Ptr();
 }
 
-SValuePtr
+SValue::Ptr
 Dispatcher::protoval() const {
-    return operators() ? operators()->protoval() : SValuePtr();
+    return operators() ? operators()->protoval() : SValue::Ptr();
 }
 
 SgAsmInstruction*
@@ -54,19 +54,19 @@ Dispatcher::currentInstruction() const {
     return operators() ? operators()->currentInstruction() : NULL;
 }
 
-SValuePtr
+SValue::Ptr
 Dispatcher::undefined_(size_t nBits) const {
     ASSERT_not_null(operators());
     return operators()->undefined_(nBits);
 }
 
-SValuePtr
+SValue::Ptr
 Dispatcher::unspecified_(size_t nBits) const {
     ASSERT_not_null(operators());
     return operators()->unspecified_(nBits);
 }
 
-SValuePtr
+SValue::Ptr
 Dispatcher::number_(size_t nbits, uint64_t number) const {
     ASSERT_not_null(operators());
     return operators()->number_(nbits, number);
@@ -97,9 +97,9 @@ Dispatcher::advanceInstructionPointer(SgAsmInstruction *insn) {
     operators()->comment("advancing instruction pointer");
     RegisterDescriptor ipReg = instructionPointerRegister();
     size_t nBits = ipReg.nBits();
-    BaseSemantics::SValuePtr ipValue;
+    BaseSemantics::SValue::Ptr ipValue;
     if (!autoResetInstructionPointer_ && operators()->currentState() && operators()->currentState()->registerState()) {
-        BaseSemantics::RegisterStateGenericPtr grState =
+        BaseSemantics::RegisterStateGeneric::Ptr grState =
             boost::dynamic_pointer_cast<BaseSemantics::RegisterStateGeneric>(operators()->currentState()->registerState());
         if (grState && grState->is_partly_stored(ipReg))
             ipValue = operators()->readRegister(ipReg);
@@ -196,19 +196,19 @@ Dispatcher::findRegister(const std::string &regname, size_t nbits/*=0*/, bool al
 }
 
 void
-Dispatcher::initializeState(const StatePtr&) {}
+Dispatcher::initializeState(const State::Ptr&) {}
 
 void
 Dispatcher::decrementRegisters(SgAsmExpression *e)
 {
     struct T1: AstSimpleProcessing {
-        RiscOperatorsPtr ops;
-        T1(const RiscOperatorsPtr &ops): ops(ops) {}
+        RiscOperators::Ptr ops;
+        T1(const RiscOperators::Ptr &ops): ops(ops) {}
         void visit(SgNode *node) {
             if (SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(node)) {
                 RegisterDescriptor reg = rre->get_descriptor();
                 if (rre->get_adjustment() < 0) {
-                    SValuePtr adj = ops->number_(64, (int64_t)rre->get_adjustment());
+                    SValue::Ptr adj = ops->number_(64, (int64_t)rre->get_adjustment());
                     if (reg.nBits() <= 64) {
                         adj = ops->unsignedExtend(adj, reg.nBits());  // truncate
                     } else {
@@ -226,13 +226,13 @@ void
 Dispatcher::incrementRegisters(SgAsmExpression *e)
 {
     struct T1: AstSimpleProcessing {
-        RiscOperatorsPtr ops;
-        T1(const RiscOperatorsPtr &ops): ops(ops) {}
+        RiscOperators::Ptr ops;
+        T1(const RiscOperators::Ptr &ops): ops(ops) {}
         void visit(SgNode *node) {
             if (SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(node)) {
                 RegisterDescriptor reg = rre->get_descriptor();
                 if (rre->get_adjustment() > 0) {
-                    SValuePtr adj = ops->unsignedExtend(ops->number_(64, (int64_t)rre->get_adjustment()), reg.nBits());
+                    SValue::Ptr adj = ops->unsignedExtend(ops->number_(64, (int64_t)rre->get_adjustment()), reg.nBits());
                     ops->writeRegister(reg, ops->add(ops->readRegister(reg), adj));
                 }
             }
@@ -242,23 +242,23 @@ Dispatcher::incrementRegisters(SgAsmExpression *e)
 }
 
 void
-Dispatcher::preUpdate(SgAsmExpression *e, const BaseSemantics::SValuePtr &enabled) {
+Dispatcher::preUpdate(SgAsmExpression *e, const BaseSemantics::SValue::Ptr &enabled) {
     struct T1: AstSimpleProcessing {
         Dispatcher *self;
-        BaseSemantics::SValuePtr enabled;
-        T1(Dispatcher *self, const BaseSemantics::SValuePtr &enabled)
+        BaseSemantics::SValue::Ptr enabled;
+        T1(Dispatcher *self, const BaseSemantics::SValue::Ptr &enabled)
             : self(self), enabled(enabled) {}
         void visit(SgNode *node) override {
             if (SgAsmBinaryPreupdate *op = isSgAsmBinaryPreupdate(node)) {
                 if (enabled->isTrue()) {
                     // Definitely updating, therefore not necessary to read old value
-                    BaseSemantics::SValuePtr newValue = self->read(op->get_rhs());
+                    BaseSemantics::SValue::Ptr newValue = self->read(op->get_rhs());
                     self->write(op->get_lhs(), newValue);
                 } else if (!enabled->isConcrete() || enabled->toUnsigned().get() != 0) {
                     // Maybe updating (but not "definitely not updating")
-                    BaseSemantics::SValuePtr oldValue = self->read(op->get_lhs());
-                    BaseSemantics::SValuePtr newValue = self->read(op->get_rhs());
-                    BaseSemantics::SValuePtr maybe = self->operators()->ite(enabled, newValue, oldValue);
+                    BaseSemantics::SValue::Ptr oldValue = self->read(op->get_lhs());
+                    BaseSemantics::SValue::Ptr newValue = self->read(op->get_rhs());
+                    BaseSemantics::SValue::Ptr maybe = self->operators()->ite(enabled, newValue, oldValue);
                     self->write(op->get_lhs(), maybe);
                 }
             }
@@ -268,23 +268,23 @@ Dispatcher::preUpdate(SgAsmExpression *e, const BaseSemantics::SValuePtr &enable
 }
 
 void
-Dispatcher::postUpdate(SgAsmExpression *e, const BaseSemantics::SValuePtr &enabled) {
+Dispatcher::postUpdate(SgAsmExpression *e, const BaseSemantics::SValue::Ptr &enabled) {
     struct T1: AstSimpleProcessing {
         Dispatcher *self;
-        BaseSemantics::SValuePtr enabled;
-        T1(Dispatcher *self, const BaseSemantics::SValuePtr &enabled)
+        BaseSemantics::SValue::Ptr enabled;
+        T1(Dispatcher *self, const BaseSemantics::SValue::Ptr &enabled)
             : self(self), enabled(enabled) {}
         void visit(SgNode *node) override {
             if (SgAsmBinaryPostupdate *op = isSgAsmBinaryPostupdate(node)) {
                 if (enabled->isTrue()) {
                     // Definitely updating, therefore not necessary to read old value
-                    BaseSemantics::SValuePtr newValue = self->read(op->get_rhs());
+                    BaseSemantics::SValue::Ptr newValue = self->read(op->get_rhs());
                     self->write(op->get_lhs(), newValue);
                 } else if (!enabled->isConcrete() || enabled->toUnsigned().get() != 0) {
                     // Maybe updating (but not "definitely not updating")
-                    BaseSemantics::SValuePtr oldValue = self->read(op->get_lhs());
-                    BaseSemantics::SValuePtr newValue = self->read(op->get_rhs());
-                    BaseSemantics::SValuePtr maybe = self->operators()->ite(enabled, newValue, oldValue);
+                    BaseSemantics::SValue::Ptr oldValue = self->read(op->get_lhs());
+                    BaseSemantics::SValue::Ptr newValue = self->read(op->get_rhs());
+                    BaseSemantics::SValue::Ptr maybe = self->operators()->ite(enabled, newValue, oldValue);
                     self->write(op->get_lhs(), maybe);
                 }
             }
@@ -293,10 +293,10 @@ Dispatcher::postUpdate(SgAsmExpression *e, const BaseSemantics::SValuePtr &enabl
     t1.traverse(e, postorder);
 }
     
-SValuePtr
+SValue::Ptr
 Dispatcher::effectiveAddress(SgAsmExpression *e, size_t nbits/*=0*/)
 {
-    BaseSemantics::SValuePtr retval;
+    BaseSemantics::SValue::Ptr retval;
 #if 1 // DEBUGGING [Robb P. Matzke 2015-08-04]
     ASSERT_always_require(retval==NULL);
 #endif
@@ -308,12 +308,12 @@ Dispatcher::effectiveAddress(SgAsmExpression *e, size_t nbits/*=0*/)
     } else if (SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(e)) {
         retval = read(rre, nbits);
     } else if (SgAsmBinaryAdd *op = isSgAsmBinaryAdd(e)) {
-        BaseSemantics::SValuePtr lhs = effectiveAddress(op->get_lhs(), nbits);
-        BaseSemantics::SValuePtr rhs = effectiveAddress(op->get_rhs(), nbits);
+        BaseSemantics::SValue::Ptr lhs = effectiveAddress(op->get_lhs(), nbits);
+        BaseSemantics::SValue::Ptr rhs = effectiveAddress(op->get_rhs(), nbits);
         retval = operators()->add(lhs, rhs);
     } else if (SgAsmBinarySubtract *op = isSgAsmBinarySubtract(e)) {
-        BaseSemantics::SValuePtr lhs = effectiveAddress(op->get_lhs(), nbits);
-        BaseSemantics::SValuePtr rhs = effectiveAddress(op->get_rhs(), nbits);
+        BaseSemantics::SValue::Ptr lhs = effectiveAddress(op->get_lhs(), nbits);
+        BaseSemantics::SValue::Ptr rhs = effectiveAddress(op->get_rhs(), nbits);
         retval = operators()->subtract(lhs, rhs);
     } else if (SgAsmBinaryPreupdate *op = isSgAsmBinaryPreupdate(e)) {
         // The add operation is ignored here, but performed by preUpdate.
@@ -322,38 +322,38 @@ Dispatcher::effectiveAddress(SgAsmExpression *e, size_t nbits/*=0*/)
         // The add operation is ignored here, but performed by postUpdate.
         retval = effectiveAddress(op->get_lhs(), nbits);
     } else if (SgAsmBinaryMultiply *op = isSgAsmBinaryMultiply(e)) {
-        BaseSemantics::SValuePtr lhs = effectiveAddress(op->get_lhs(), nbits);
-        BaseSemantics::SValuePtr rhs = effectiveAddress(op->get_rhs(), nbits);
+        BaseSemantics::SValue::Ptr lhs = effectiveAddress(op->get_lhs(), nbits);
+        BaseSemantics::SValue::Ptr rhs = effectiveAddress(op->get_rhs(), nbits);
         retval = operators()->unsignedMultiply(lhs, rhs);
     } else if (SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(e)) {
         retval = operators()->number_(ival->get_significantBits(), ival->get_value());
     } else if (SgAsmUnaryUnsignedExtend *op = isSgAsmUnaryUnsignedExtend(e)) {
-        BaseSemantics::SValuePtr lhs = effectiveAddress(op->get_operand(), op->get_operand()->get_nBits());
+        BaseSemantics::SValue::Ptr lhs = effectiveAddress(op->get_operand(), op->get_operand()->get_nBits());
         retval = operators()->unsignedExtend(lhs, op->get_nBits());
     } else if (SgAsmUnarySignedExtend *op = isSgAsmUnarySignedExtend(e)) {
-        BaseSemantics::SValuePtr lhs = effectiveAddress(op->get_operand(), op->get_operand()->get_nBits());
+        BaseSemantics::SValue::Ptr lhs = effectiveAddress(op->get_operand(), op->get_operand()->get_nBits());
         retval = operators()->signExtend(lhs, op->get_nBits());
     } else if (SgAsmUnaryTruncate *op = isSgAsmUnaryTruncate(e)) {
-        BaseSemantics::SValuePtr lhs = effectiveAddress(op->get_operand(), op->get_operand()->get_nBits());
+        BaseSemantics::SValue::Ptr lhs = effectiveAddress(op->get_operand(), op->get_operand()->get_nBits());
         retval = operators()->unsignedExtend(lhs, op->get_nBits()); // yes, can be used for truncation
     } else if (SgAsmBinaryLsl *op = isSgAsmBinaryLsl(e)) {
-        BaseSemantics::SValuePtr lhs = effectiveAddress(op->get_lhs(), nbits);
-        BaseSemantics::SValuePtr rhs = effectiveAddress(op->get_rhs(), nbits);
+        BaseSemantics::SValue::Ptr lhs = effectiveAddress(op->get_lhs(), nbits);
+        BaseSemantics::SValue::Ptr rhs = effectiveAddress(op->get_rhs(), nbits);
         retval = operators()->shiftLeft(lhs, rhs);
     } else if (SgAsmBinaryLsr *op = isSgAsmBinaryLsr(e)) {
-        BaseSemantics::SValuePtr lhs = effectiveAddress(op->get_lhs(), nbits);
-        BaseSemantics::SValuePtr rhs = effectiveAddress(op->get_rhs(), nbits);
+        BaseSemantics::SValue::Ptr lhs = effectiveAddress(op->get_lhs(), nbits);
+        BaseSemantics::SValue::Ptr rhs = effectiveAddress(op->get_rhs(), nbits);
         retval = operators()->shiftRight(lhs, rhs);
     } else if (SgAsmBinaryAsr *op = isSgAsmBinaryAsr(e)) {
-        BaseSemantics::SValuePtr lhs = effectiveAddress(op->get_lhs(), nbits);
-        BaseSemantics::SValuePtr rhs = effectiveAddress(op->get_rhs(), nbits);
+        BaseSemantics::SValue::Ptr lhs = effectiveAddress(op->get_lhs(), nbits);
+        BaseSemantics::SValue::Ptr rhs = effectiveAddress(op->get_rhs(), nbits);
         retval = operators()->shiftRightArithmetic(lhs, rhs);
     } else if (SgAsmBinaryRor *op = isSgAsmBinaryRor(e)) {
-        BaseSemantics::SValuePtr lhs = effectiveAddress(op->get_lhs(), nbits);
-        BaseSemantics::SValuePtr rhs = effectiveAddress(op->get_rhs(), nbits);
+        BaseSemantics::SValue::Ptr lhs = effectiveAddress(op->get_lhs(), nbits);
+        BaseSemantics::SValue::Ptr rhs = effectiveAddress(op->get_rhs(), nbits);
         retval = operators()->rotateRight(lhs, rhs);
     } else if (SgAsmUnaryUnsignedExtend *op = isSgAsmUnaryUnsignedExtend(e)) {
-        BaseSemantics::SValuePtr lhs = effectiveAddress(op->get_operand(), op->get_operand()->get_nBits());
+        BaseSemantics::SValue::Ptr lhs = effectiveAddress(op->get_operand(), op->get_operand()->get_nBits());
         retval = operators()->unsignedExtend(lhs, op->get_nBits());
     }
 
@@ -378,7 +378,7 @@ Dispatcher::segmentRegister(SgAsmMemoryReferenceExpression *mre)
 }
 
 void
-Dispatcher::write(SgAsmExpression *e, const SValuePtr &value, size_t addr_nbits/*=0*/)
+Dispatcher::write(SgAsmExpression *e, const SValue::Ptr &value, size_t addr_nbits/*=0*/)
 {
     ASSERT_not_null(e);
     ASSERT_not_null(value);
@@ -389,7 +389,7 @@ Dispatcher::write(SgAsmExpression *e, const SValuePtr &value, size_t addr_nbits/
             reg = RegisterDescriptor(reg.majorNumber(), reg.minorNumber(), reg.offset(), e->get_nBits());
         operators()->writeRegister(reg, value);
     } else if (SgAsmIndirectRegisterExpression *re = isSgAsmIndirectRegisterExpression(e)) {
-        SValuePtr offset = operators()->readRegister(re->get_offset());
+        SValue::Ptr offset = operators()->readRegister(re->get_offset());
         if (!offset->isConcrete()) {
             std::string offset_name = registerDictionary()->lookup(re->get_offset());
             offset_name = offset_name.empty() ? "" : "(" + offset_name + ") ";
@@ -403,7 +403,7 @@ Dispatcher::write(SgAsmExpression *e, const SValuePtr &value, size_t addr_nbits/
         reg.nBits(reg.nBits() + re->get_stride().nBits() * idx);
         operators()->writeRegister(reg, value);
     } else if (SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(e)) {
-        SValuePtr addr = effectiveAddress(mre, addr_nbits);
+        SValue::Ptr addr = effectiveAddress(mre, addr_nbits);
         ASSERT_require(0==addrWidth_ || addr->nBits()==addrWidth_);
         operators()->writeMemory(segmentRegister(mre), addr, value, operators()->boolean_(true));
     } else {
@@ -411,7 +411,7 @@ Dispatcher::write(SgAsmExpression *e, const SValuePtr &value, size_t addr_nbits/
     }
 }
 
-SValuePtr
+SValue::Ptr
 Dispatcher::read(SgAsmExpression *e, size_t value_nbits/*=0*/, size_t addr_nbits/*=0*/)
 {
     ASSERT_not_null(e);
@@ -422,11 +422,11 @@ Dispatcher::read(SgAsmExpression *e, size_t value_nbits/*=0*/, size_t addr_nbits
         ASSERT_require(value_nbits != 0);
     }
 
-    SValuePtr retval;
+    SValue::Ptr retval;
     if (SgAsmDirectRegisterExpression *re = isSgAsmDirectRegisterExpression(e)) {
         retval = operators()->readRegister(re->get_descriptor());
     } else if (SgAsmIndirectRegisterExpression *re = isSgAsmIndirectRegisterExpression(e)) {
-        SValuePtr offset = operators()->readRegister(re->get_offset());
+        SValue::Ptr offset = operators()->readRegister(re->get_offset());
         if (!offset->isConcrete()) {
             std::string offset_name = registerDictionary()->lookup(re->get_offset());
             offset_name = offset_name.empty() ? "" : "(" + offset_name + ") ";
@@ -440,9 +440,9 @@ Dispatcher::read(SgAsmExpression *e, size_t value_nbits/*=0*/, size_t addr_nbits
         reg.nBits(reg.nBits() + re->get_stride().nBits() * idx);
         retval = operators()->readRegister(reg);
     } else if (SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(e)) {
-        BaseSemantics::SValuePtr addr = effectiveAddress(mre, addr_nbits);
+        BaseSemantics::SValue::Ptr addr = effectiveAddress(mre, addr_nbits);
         ASSERT_require(0==addrWidth_ || addr->nBits()==addrWidth_);
-        BaseSemantics::SValuePtr dflt = undefined_(value_nbits);
+        BaseSemantics::SValue::Ptr dflt = undefined_(value_nbits);
         retval = operators()->readMemory(segmentRegister(mre), addr, dflt, operators()->boolean_(true));
     } else if (SgAsmValueExpression *ve = isSgAsmValueExpression(e)) {
         uint64_t val = SageInterface::getAsmSignedConstant(ve);
@@ -464,29 +464,29 @@ Dispatcher::read(SgAsmExpression *e, size_t value_nbits/*=0*/, size_t addr_nbits
         SgAsmExpression *rhs = product->get_rhs();
         retval = operators()->unsignedMultiply(read(lhs, lhs->get_nBits()), read(rhs, rhs->get_nBits()));
     } else if (SgAsmUnaryTruncate *op = isSgAsmUnaryTruncate(e)) {
-        BaseSemantics::SValuePtr operand = read(op->get_operand(), op->get_operand()->get_nBits(), addr_nbits);
+        BaseSemantics::SValue::Ptr operand = read(op->get_operand(), op->get_operand()->get_nBits(), addr_nbits);
         retval = operators()->unsignedExtend(operand, op->get_nBits());
     } else if (SgAsmBinaryLsr *op = isSgAsmBinaryLsr(e)) {
-        BaseSemantics::SValuePtr lhs = read(op->get_lhs(), op->get_lhs()->get_nBits(), addr_nbits);
-        BaseSemantics::SValuePtr rhs = read(op->get_rhs(), op->get_rhs()->get_nBits(), addr_nbits);
+        BaseSemantics::SValue::Ptr lhs = read(op->get_lhs(), op->get_lhs()->get_nBits(), addr_nbits);
+        BaseSemantics::SValue::Ptr rhs = read(op->get_rhs(), op->get_rhs()->get_nBits(), addr_nbits);
         retval = operators()->shiftRight(lhs, rhs);
     } else if (SgAsmBinaryAsr *op = isSgAsmBinaryAsr(e)) {
-        BaseSemantics::SValuePtr lhs = read(op->get_lhs(), op->get_lhs()->get_nBits(), addr_nbits);
-        BaseSemantics::SValuePtr rhs = read(op->get_rhs(), op->get_rhs()->get_nBits(), addr_nbits);
+        BaseSemantics::SValue::Ptr lhs = read(op->get_lhs(), op->get_lhs()->get_nBits(), addr_nbits);
+        BaseSemantics::SValue::Ptr rhs = read(op->get_rhs(), op->get_rhs()->get_nBits(), addr_nbits);
         retval = operators()->shiftRightArithmetic(lhs, rhs);
     } else if (SgAsmBinaryLsl *op = isSgAsmBinaryLsl(e)) {
-        BaseSemantics::SValuePtr lhs = read(op->get_lhs(), op->get_lhs()->get_nBits(), addr_nbits);
-        BaseSemantics::SValuePtr rhs = read(op->get_rhs(), op->get_rhs()->get_nBits(), addr_nbits);
+        BaseSemantics::SValue::Ptr lhs = read(op->get_lhs(), op->get_lhs()->get_nBits(), addr_nbits);
+        BaseSemantics::SValue::Ptr rhs = read(op->get_rhs(), op->get_rhs()->get_nBits(), addr_nbits);
         retval = operators()->shiftLeft(lhs, rhs);
     } else if (SgAsmBinaryRor *op = isSgAsmBinaryRor(e)) {
-        BaseSemantics::SValuePtr lhs = read(op->get_lhs(), op->get_lhs()->get_nBits(), addr_nbits);
-        BaseSemantics::SValuePtr rhs = read(op->get_rhs(), op->get_rhs()->get_nBits(), addr_nbits);
+        BaseSemantics::SValue::Ptr lhs = read(op->get_lhs(), op->get_lhs()->get_nBits(), addr_nbits);
+        BaseSemantics::SValue::Ptr rhs = read(op->get_rhs(), op->get_rhs()->get_nBits(), addr_nbits);
         retval = operators()->rotateRight(lhs, rhs);
     } else if (SgAsmUnaryUnsignedExtend *op = isSgAsmUnaryUnsignedExtend(e)) {
-        BaseSemantics::SValuePtr lhs = effectiveAddress(op->get_operand(), op->get_operand()->get_nBits());
+        BaseSemantics::SValue::Ptr lhs = effectiveAddress(op->get_operand(), op->get_operand()->get_nBits());
         retval = operators()->unsignedExtend(lhs, op->get_nBits());
     } else if (SgAsmUnarySignedExtend *op = isSgAsmUnarySignedExtend(e)) {
-        BaseSemantics::SValuePtr lhs = effectiveAddress(op->get_operand(), op->get_operand()->get_nBits());
+        BaseSemantics::SValue::Ptr lhs = effectiveAddress(op->get_operand(), op->get_operand()->get_nBits());
         retval = operators()->signExtend(lhs, op->get_nBits());
     } else if (SgAsmBinaryPostupdate *op = isSgAsmBinaryPostupdate(e)) {
         return read(op->get_lhs(), value_nbits, addr_nbits);

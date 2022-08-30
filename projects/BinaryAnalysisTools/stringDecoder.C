@@ -28,8 +28,8 @@ struct Settings {
 };
 
 class VirtualMachine {
-    ConcreteSemantics::RiscOperatorsPtr ops_;
-    BaseSemantics::DispatcherPtr cpu_;
+    ConcreteSemantics::RiscOperators::Ptr ops_;
+    BaseSemantics::Dispatcher::Ptr cpu_;
     RegisterDescriptor regIp_, regSp_, regSs_;
     size_t wordSize_;
     rose_addr_t stackVa_, returnMarker_;
@@ -39,7 +39,7 @@ public:
         RegisterDictionary::Ptr regs = partitioner.instructionProvider().registerDictionary();
         ops_ = ConcreteSemantics::RiscOperators::instanceFromRegisters(regs);
         if (settings.traceSemantics) {
-            BaseSemantics::RiscOperatorsPtr traceOps = TraceSemantics::RiscOperators::instance(ops_);
+            BaseSemantics::RiscOperators::Ptr traceOps = TraceSemantics::RiscOperators::instance(ops_);
             cpu_ = partitioner.newDispatcher(traceOps);
         } else {
             cpu_ = partitioner.newDispatcher(ops_);
@@ -56,12 +56,12 @@ public:
     void reset(const MemoryMap::Ptr &map) {
         for (MemoryMap::Segment &segment: map->segments())
             segment.buffer()->copyOnWrite(true);        // prevent the VM from changing the real map
-        BaseSemantics::StatePtr state = ops_->currentState()->clone();
+        BaseSemantics::State::Ptr state = ops_->currentState()->clone();
         state->clear();
-        ConcreteSemantics::MemoryStatePtr memState = ConcreteSemantics::MemoryState::promote(state->memoryState());
+        ConcreteSemantics::MemoryState::Ptr memState = ConcreteSemantics::MemoryState::promote(state->memoryState());
         memState->memoryMap(map);
         ops_->currentState(state);
-        BaseSemantics::SValuePtr sp = ops_->number_(wordSize_, stackVa_);
+        BaseSemantics::SValue::Ptr sp = ops_->number_(wordSize_, stackVa_);
         ops_->writeRegister(regSp_, sp);
         ops_->writeMemory(regSs_, sp, ops_->number_(wordSize_, returnMarker_), ops_->boolean_(true));
     }
@@ -70,10 +70,10 @@ public:
         return ConcreteSemantics::MemoryState::promote(ops_->currentState()->memoryState())->memoryMap();
     }
 
-    BaseSemantics::SValuePtr argument(size_t n) const {
+    BaseSemantics::SValue::Ptr argument(size_t n) const {
         size_t bytesPerWord = wordSize_ / 8;
         rose_addr_t sp = ops_->readRegister(regSp_)->toUnsigned().get();
-        BaseSemantics::SValuePtr addr = ops_->number_(wordSize_,  sp + (n+1)*bytesPerWord);
+        BaseSemantics::SValue::Ptr addr = ops_->number_(wordSize_,  sp + (n+1)*bytesPerWord);
         return ops_->readMemory(regSs_, addr, ops_->undefined_(wordSize_), ops_->boolean_(true));
     }
 
@@ -84,8 +84,8 @@ public:
     }
 
     void writeMemory(rose_addr_t va, uint64_t value) {
-        BaseSemantics::SValuePtr vaExpr = ops_->number_(wordSize_, va);
-        BaseSemantics::SValuePtr valueExpr = ops_->number_(wordSize_, value);
+        BaseSemantics::SValue::Ptr vaExpr = ops_->number_(wordSize_, va);
+        BaseSemantics::SValue::Ptr valueExpr = ops_->number_(wordSize_, value);
         ops_->writeMemory(RegisterDescriptor(), vaExpr, valueExpr, ops_->boolean_(true));
     }
 
@@ -204,7 +204,7 @@ arguments(const VirtualMachine &vm, size_t nArgs) {
     std::ostringstream ss;
     ss <<"(";
     for (size_t i=0; i<nArgs; ++i) {
-        BaseSemantics::SValuePtr arg = vm.argument(i);
+        BaseSemantics::SValue::Ptr arg = vm.argument(i);
         ss <<(i?", ":"") <<"arg_" <<i <<" = " <<*arg;
         if (vm.map()->at(arg->toUnsigned().get()).exists()) {
             if (uint64_t deref = vm.readMemory(arg->toUnsigned().get()))

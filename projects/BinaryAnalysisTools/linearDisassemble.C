@@ -108,9 +108,9 @@ int main(int argc, char *argv[])
     unparser.set_registers(disassembler->registerDictionary());
 
     // Build semantics framework; only used when settings.runSemantics is set
-    BaseSemantics::DispatcherPtr dispatcher;
+    BaseSemantics::Dispatcher::Ptr dispatcher;
     if (settings.runSemantics) {
-        BaseSemantics::RiscOperatorsPtr ops =
+        BaseSemantics::RiscOperators::Ptr ops =
             SymbolicSemantics::RiscOperators::instanceFromRegisters(disassembler->registerDictionary());
         ops = TraceSemantics::RiscOperators::instance(ops);
         dispatcher = DispatcherM68k::instance(ops, disassembler->wordSizeBytes()*8, RegisterDictionary::Ptr());

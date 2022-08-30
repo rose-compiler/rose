@@ -174,10 +174,10 @@ SgAsmM68kInstruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& i
         const InstructionMap &imap = interp->get_instruction_map();
         RegisterDictionary::Ptr regdict = RegisterDictionary::instanceForIsa(interp);
         SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
-        BaseSemantics::RiscOperatorsPtr ops = RiscOperators::instanceFromRegisters(regdict, solver);
+        BaseSemantics::RiscOperators::Ptr ops = RiscOperators::instanceFromRegisters(regdict, solver);
         ASSERT_not_null(ops);
         DispatcherM68kPtr dispatcher = DispatcherM68k::instance(ops, 32, RegisterDictionary::Ptr());
-        SValuePtr orig_sp = SValue::promote(ops->peekRegister(dispatcher->REG_A[7]));
+        SValue::Ptr orig_sp = SValue::promote(ops->peekRegister(dispatcher->REG_A[7]));
         try {
             for (size_t i=0; i<insns.size(); ++i)
                 dispatcher->processInstruction(insns[i]);
@@ -186,7 +186,7 @@ SgAsmM68kInstruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& i
         }
 
         // If the next instruction address is concrete but does not point to a function entry point, then this is not a call.
-        SValuePtr ip = SValue::promote(ops->peekRegister(dispatcher->REG_PC));
+        SValue::Ptr ip = SValue::promote(ops->peekRegister(dispatcher->REG_PC));
         if (auto target_va = ip->toUnsigned()) {
             SgAsmFunction *target_func = SageInterface::getEnclosingNode<SgAsmFunction>(imap.get_value_or(*target_va, NULL));
             if (!target_func || *target_va!=target_func->get_entry_va())
@@ -194,15 +194,15 @@ SgAsmM68kInstruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& i
         }
 
         // If nothing was pushed onto the stack, then this isn't a function call.
-        SValuePtr sp = SValue::promote(ops->peekRegister(dispatcher->REG_A[7]));
-        SValuePtr stack_delta = SValue::promote(ops->add(sp, ops->negate(orig_sp)));
-        SValuePtr stack_delta_sign = SValue::promote(ops->extract(stack_delta, 31, 32));
+        SValue::Ptr sp = SValue::promote(ops->peekRegister(dispatcher->REG_A[7]));
+        SValue::Ptr stack_delta = SValue::promote(ops->add(sp, ops->negate(orig_sp)));
+        SValue::Ptr stack_delta_sign = SValue::promote(ops->extract(stack_delta, 31, 32));
         if (stack_delta_sign->isFalse())
             return false;
 
         // If the top of the stack does not contain a concrete value or the top of the stack does not point to an instruction
         // in this basic block's function, then this is not a function call.
-        SValuePtr top = SValue::promote(ops->peekMemory(RegisterDescriptor(), sp, sp->undefined_(32)));
+        SValue::Ptr top = SValue::promote(ops->peekMemory(RegisterDescriptor(), sp, sp->undefined_(32)));
         if (auto va = top->toUnsigned()) {
             SgAsmFunction *return_func = SageInterface::getEnclosingNode<SgAsmFunction>(imap.get_value_or(*va, NULL));
             if (!return_func || return_func!=func) {
@@ -231,7 +231,7 @@ SgAsmM68kInstruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& i
         using namespace Rose::BinaryAnalysis::InstructionSemantics::SymbolicSemantics;
         RegisterDictionary::Ptr regdict = RegisterDictionary::instanceColdfireEmac();
         SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
-        BaseSemantics::RiscOperatorsPtr ops = RiscOperators::instanceFromRegisters(regdict, solver);
+        BaseSemantics::RiscOperators::Ptr ops = RiscOperators::instanceFromRegisters(regdict, solver);
         DispatcherM68kPtr dispatcher = DispatcherM68k::instance(ops, 32, RegisterDictionary::Ptr());
         try {
             for (size_t i=0; i<insns.size(); ++i)
@@ -241,11 +241,11 @@ SgAsmM68kInstruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& i
         }
 
         // Look at the top of the stack
-        SValuePtr top = SValue::promote(ops->peekMemory(RegisterDescriptor(), ops->peekRegister(dispatcher->REG_A[7]),
+        SValue::Ptr top = SValue::promote(ops->peekMemory(RegisterDescriptor(), ops->peekRegister(dispatcher->REG_A[7]),
                                                         ops->protoval()->undefined_(32)));
         if (top->toUnsigned().orElse(0) == last->get_address() + last->get_size()) {
             if (target_va) {
-                SValuePtr ip = SValue::promote(ops->peekRegister(dispatcher->REG_PC));
+                SValue::Ptr ip = SValue::promote(ops->peekRegister(dispatcher->REG_PC));
                 ip->toUnsigned().assignTo(*target_va);
             }
             if (return_va)
@@ -446,7 +446,7 @@ SgAsmM68kInstruction::getSuccessors(const std::vector<SgAsmInstruction*>& insns,
         using namespace Rose::BinaryAnalysis::InstructionSemantics::PartialSymbolicSemantics;
 
         RegisterDictionary::Ptr regdict = RegisterDictionary::instanceColdfireEmac();
-        RiscOperatorsPtr ops = RiscOperators::instanceFromRegisters(regdict);
+        RiscOperators::Ptr ops = RiscOperators::instanceFromRegisters(regdict);
         ops->set_memory_map(initial_memory);
         DispatcherM68kPtr dispatcher = DispatcherM68k::instance(ops, 32, RegisterDictionary::Ptr());
         
@@ -456,7 +456,7 @@ SgAsmM68kInstruction::getSuccessors(const std::vector<SgAsmInstruction*>& insns,
                 if (debug)
                     debug << "  state after " <<insns[i]->toString() <<"\n" <<*ops;
             }
-            SValuePtr ip = SValue::promote(ops->peekRegister(dispatcher->REG_PC));
+            SValue::Ptr ip = SValue::promote(ops->peekRegister(dispatcher->REG_PC));
             if (auto number = ip->toUnsigned()) {
                 successors.clear();
                 successors.insert(*number);

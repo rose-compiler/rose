@@ -219,7 +219,8 @@ typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
  *  if the expression grows beyond a certain complexity. */
 class RiscOperators: public InstructionSemantics::SymbolicSemantics::RiscOperators {
 public:
-    typedef InstructionSemantics::SymbolicSemantics::RiscOperators Super;
+    using Super = InstructionSemantics::SymbolicSemantics::RiscOperators;
+    using Ptr = RiscOperatorsPtr;
 
 private:
     static const size_t TRIM_THRESHOLD_DFLT = 100;

@@ -611,33 +611,33 @@ Partitioner::basicBlockExists(const BasicBlock::Ptr &bblock) const {
     return bblock==NULL ? BasicBlock::Ptr() : basicBlockExists(bblock->address());
 }
 
-BaseSemantics::RiscOperatorsPtr
+BaseSemantics::RiscOperators::Ptr
 Partitioner::newOperators() const {
     return newOperators(semanticMemoryParadigm_);
 }
 
-BaseSemantics::RiscOperatorsPtr
+BaseSemantics::RiscOperators::Ptr
 Partitioner::newOperators(SemanticMemoryParadigm memType) const {
     //  Create a new SMT solver each call because this might be called from different threads and each thread should have its
     //  own SMT solver.
     SmtSolver::Ptr solver = solver_ ? solver_->create() : SmtSolver::Ptr();
 
-    Semantics::RiscOperatorsPtr ops =
+    Semantics::RiscOperators::Ptr ops =
         Semantics::RiscOperators::instance(instructionProvider_->registerDictionary(), solver, memType);
-    BaseSemantics::MemoryStatePtr mem = ops->currentState()->memoryState();
-    if (Semantics::MemoryListStatePtr ml = boost::dynamic_pointer_cast<Semantics::MemoryListState>(mem)) {
+    BaseSemantics::MemoryState::Ptr mem = ops->currentState()->memoryState();
+    if (Semantics::MemoryListState::Ptr ml = boost::dynamic_pointer_cast<Semantics::MemoryListState>(mem)) {
         ml->memoryMap(memoryMap_);
-    } else if (Semantics::MemoryMapStatePtr mm = boost::dynamic_pointer_cast<Semantics::MemoryMapState>(mem)) {
+    } else if (Semantics::MemoryMapState::Ptr mm = boost::dynamic_pointer_cast<Semantics::MemoryMapState>(mem)) {
         mm->memoryMap(memoryMap_);
     }
     return ops;
 }
 
-BaseSemantics::DispatcherPtr
-Partitioner::newDispatcher(const BaseSemantics::RiscOperatorsPtr &ops) const {
+BaseSemantics::Dispatcher::Ptr
+Partitioner::newDispatcher(const BaseSemantics::RiscOperators::Ptr &ops) const {
     ASSERT_not_null(ops);
     if (instructionProvider_->dispatcher() == NULL)
-        return BaseSemantics::DispatcherPtr();          // instruction semantics are not implemented for this architecture
+        return BaseSemantics::Dispatcher::Ptr();          // instruction semantics are not implemented for this architecture
     return instructionProvider_->dispatcher()->create(ops, 0, RegisterDictionary::Ptr());
 }
 
@@ -763,7 +763,7 @@ Partitioner::discoverBasicBlockInternal(rose_addr_t startVa) const {
 
         if (successors.size()!=1)                                       // case: not exactly one successor
             goto done;
-        SValuePtr successorExpr = successors.front().expr();
+        SValue::Ptr successorExpr = successors.front().expr();
 
         if (!successorExpr->isConcrete())                               // case: successor is indeterminate
             goto done;
@@ -1013,25 +1013,25 @@ Partitioner::basicBlockSuccessors(const BasicBlock::Ptr &bb, Precision::Level pr
     RegisterDescriptor REG_IP = instructionProvider_->instructionPointerRegister();
 
     BasicBlockSemantics sem = bb->semantics();
-    BaseSemantics::StatePtr state;
+    BaseSemantics::State::Ptr state;
     if (settings_.ignoringUnknownInsns && lastInsn->isUnknown()) {
         // Special case for "unknown" instructions... the successor is assumed to be the fall-through address.
         rose_addr_t va = lastInsn->get_address() + lastInsn->get_size();
-        BaseSemantics::RiscOperatorsPtr ops = newOperators();
+        BaseSemantics::RiscOperators::Ptr ops = newOperators();
         successors.push_back(BasicBlock::Successor(Semantics::SValue::promote(ops->number_(REG_IP.nBits(), va))));
     } else if (precision > Precision::LOW && (state = sem.finalState())) {
         // Use our own semantics if we have them.
         ASSERT_not_null(sem.dispatcher);
         ASSERT_not_null(sem.operators);
-        std::vector<Semantics::SValuePtr> worklist(1, Semantics::SValue::promote(sem.operators->peekRegister(REG_IP)));
+        std::vector<Semantics::SValue::Ptr> worklist(1, Semantics::SValue::promote(sem.operators->peekRegister(REG_IP)));
         while (!worklist.empty()) {
-            Semantics::SValuePtr pc = worklist.back();
+            Semantics::SValue::Ptr pc = worklist.back();
             worklist.pop_back();
 
             // Special handling for if-then-else expressions
             if (SymbolicExpr::InteriorPtr ifNode = pc->get_expression()->isInteriorNode()) {
                 if (ifNode->getOperator()==SymbolicExpr::OP_ITE) {
-                    Semantics::SValuePtr expr = Semantics::SValue::promote(sem.operators->undefined_(ifNode->nBits()));
+                    Semantics::SValue::Ptr expr = Semantics::SValue::promote(sem.operators->undefined_(ifNode->nBits()));
                     expr->set_expression(ifNode->child(1));
                     worklist.push_back(expr);
                     expr = Semantics::SValue::promote(sem.operators->undefined_(ifNode->nBits()));
@@ -1048,7 +1048,7 @@ Partitioner::basicBlockSuccessors(const BasicBlock::Ptr &bb, Precision::Level pr
         bool complete = true;
         AddressSet successorVas = lastInsn->getSuccessors(complete/*out*/);
 
-        BaseSemantics::RiscOperatorsPtr ops = newOperators();
+        BaseSemantics::RiscOperators::Ptr ops = newOperators();
         for (rose_addr_t va: successorVas.values())
             successors.push_back(BasicBlock::Successor(Semantics::SValue::promote(ops->number_(REG_IP.nBits(), va))));
         if (!complete)
@@ -1145,8 +1145,8 @@ Partitioner::basicBlockPopsStack(const BasicBlock::Ptr &bb) const {
         ASSERT_not_null(sem.operators);
 
         // Get the block initial and final states
-        BaseSemantics::StatePtr state0 = sem.initialState;
-        BaseSemantics::StatePtr stateN = sem.finalState();
+        BaseSemantics::State::Ptr state0 = sem.initialState;
+        BaseSemantics::State::Ptr stateN = sem.finalState();
         if (!state0 || !stateN) {
             bb->popsStack() = false;
             break;
@@ -1154,9 +1154,9 @@ Partitioner::basicBlockPopsStack(const BasicBlock::Ptr &bb) const {
 
         // Get initial and final stack pointer values
         const RegisterDescriptor REG_SP = instructionProvider_->stackPointerRegister();
-        BaseSemantics::SValuePtr sp0 =
+        BaseSemantics::SValue::Ptr sp0 =
             state0->peekRegister(REG_SP, sem.operators->undefined_(REG_SP.nBits()), sem.operators.get());
-        BaseSemantics::SValuePtr spN =
+        BaseSemantics::SValue::Ptr spN =
             stateN->peekRegister(REG_SP, sem.operators->undefined_(REG_SP.nBits()), sem.operators.get());
 
         // Did the basic block pop the return value from the stack?  This impossible to determine unless we assume that the stack
@@ -1200,7 +1200,7 @@ Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb, Precision::Leve
     // Use our own semantics if we have them.
     if (precision > Precision::LOW) {
         BasicBlockSemantics sem = bb->semantics();
-        if (BaseSemantics::StatePtr state = sem.finalState()) {
+        if (BaseSemantics::State::Ptr state = sem.finalState()) {
             ASSERT_not_null(sem.dispatcher);
             ASSERT_not_null(sem.operators);
             rose_addr_t returnVa = bb->fallthroughVa();
@@ -1222,11 +1222,11 @@ Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb, Precision::Leve
             if (!isInsnCall) {
                 const RegisterDescriptor REG_SP = instructionProvider_->stackPointerRegister();
                 const RegisterDescriptor REG_SS = instructionProvider_->stackSegmentRegister();
-                BaseSemantics::SValuePtr returnExpr = sem.operators->number_(REG_IP.nBits(), returnVa);
-                BaseSemantics::SValuePtr sp = sem.operators->peekRegister(REG_SP);
-                BaseSemantics::SValuePtr topOfStack = sem.operators->undefined_(REG_IP.nBits());
+                BaseSemantics::SValue::Ptr returnExpr = sem.operators->number_(REG_IP.nBits(), returnVa);
+                BaseSemantics::SValue::Ptr sp = sem.operators->peekRegister(REG_SP);
+                BaseSemantics::SValue::Ptr topOfStack = sem.operators->undefined_(REG_IP.nBits());
                 topOfStack = sem.operators->peekMemory(REG_SS, sp, topOfStack);
-                BaseSemantics::SValuePtr z =
+                BaseSemantics::SValue::Ptr z =
                     sem.operators->equalToZero(sem.operators->add(returnExpr,
                                                                   sem.operators->negate(topOfStack)));
                 isSemanticCall = z->isTrue();
@@ -1279,8 +1279,8 @@ Partitioner::basicBlockIsFunctionCall(const BasicBlock::Ptr &bb, Precision::Leve
                     }
 
                     // Did the callee return to somewhere other than caller's return address?
-                    if (BaseSemantics::StatePtr calleeStateN = calleeBb->semantics().finalState()) {
-                        BaseSemantics::SValuePtr ipN =
+                    if (BaseSemantics::State::Ptr calleeStateN = calleeBb->semantics().finalState()) {
+                        BaseSemantics::SValue::Ptr ipN =
                             calleeStateN->peekRegister(REG_IP, sem.operators->undefined_(REG_IP.nBits()), sem.operators.get());
                         if (ipN->toUnsigned().isEqual(returnVa)) {
                             allCalleesPopWithoutReturning = false;
@@ -1361,7 +1361,7 @@ Partitioner::basicBlockIsFunctionReturn(const BasicBlock::Ptr &bb) const {
     return retval;
 }
 
-BaseSemantics::SValuePtr
+BaseSemantics::SValue::Ptr
 Partitioner::basicBlockStackDeltaIn(const BasicBlock::Ptr &bb, const Function::Ptr &function) const {
     ASSERT_not_null(bb);
     ASSERT_not_null(function);
@@ -1370,7 +1370,7 @@ Partitioner::basicBlockStackDeltaIn(const BasicBlock::Ptr &bb, const Function::P
     return function->stackDeltaAnalysis().basicBlockInputStackDeltaWrtFunction(bb->address());
 }
 
-BaseSemantics::SValuePtr
+BaseSemantics::SValue::Ptr
 Partitioner::basicBlockStackDeltaOut(const BasicBlock::Ptr &bb, const Function::Ptr &function) const {
     ASSERT_not_null(bb);
     ASSERT_not_null(function);
@@ -2007,7 +2007,7 @@ Partitioner::functionCallingConvention(const Function::Ptr &function,
     ASSERT_not_null(function);
     if (!function->callingConventionAnalysis().hasResults()) {
         function->callingConventionDefinition(CallingConvention::Definition::Ptr());
-        BaseSemantics::RiscOperatorsPtr ops = newOperators(MAP_BASED_MEMORY); // map works better for calling convention
+        BaseSemantics::RiscOperators::Ptr ops = newOperators(MAP_BASED_MEMORY); // map works better for calling convention
         function->callingConventionAnalysis() = CallingConvention::Analysis(newDispatcher(ops));
         function->callingConventionAnalysis().defaultCallingConvention(dfltCc);
         function->callingConventionAnalysis().analyzeFunction(*this, function);
@@ -2286,17 +2286,17 @@ Partitioner::functionDataFlowConstants(const Function::Ptr &function) const {
     using namespace Rose::BinaryAnalysis::InstructionSemantics;
 
     std::set<rose_addr_t> retval;
-    BaseSemantics::RiscOperatorsPtr ops = newOperators();
-    BaseSemantics::DispatcherPtr cpu = newDispatcher(ops);
+    BaseSemantics::RiscOperators::Ptr ops = newOperators();
+    BaseSemantics::Dispatcher::Ptr cpu = newDispatcher(ops);
     if (!cpu)
         return retval;
 
     // Build the data flow engine. We're using parts from a variety of locations.
     typedef DataFlow::DfCfg DfCfg;
-    typedef BaseSemantics::StatePtr StatePtr;
+    typedef BaseSemantics::State::Ptr StatePtr;
     typedef DataFlow::TransferFunction TransferFunction;
     typedef BinaryAnalysis::DataFlow::SemanticsMerge MergeFunction;
-    typedef BinaryAnalysis::DataFlow::Engine<DfCfg, StatePtr, TransferFunction, MergeFunction> Engine;
+    typedef BinaryAnalysis::DataFlow::Engine<DfCfg, State::Ptr, TransferFunction, MergeFunction> Engine;
 
     ControlFlowGraph::ConstVertexIterator startVertex = findPlaceholder(function->address());
     ASSERT_require2(cfg_.isValidVertex(startVertex), "function does not exist in partitioner");
@@ -2308,10 +2308,10 @@ Partitioner::functionDataFlowConstants(const Function::Ptr &function) const {
     dfEngine.name("find-constants");
     dfEngine.maxIterations(2 * dfCfg.nVertices());        // arbitrary limit for non-convergent flow
 
-    StatePtr initialState = xfer.initialState();
+    State::Ptr initialState = xfer.initialState();
     const RegisterDescriptor SP = cpu->stackPointerRegister();
     const RegisterDescriptor memSegReg;
-    BaseSemantics::SValuePtr initialStackPointer = ops->peekRegister(SP);
+    BaseSemantics::SValue::Ptr initialStackPointer = ops->peekRegister(SP);
 
     // Run the data flow
     try {
@@ -2327,17 +2327,17 @@ Partitioner::functionDataFlowConstants(const Function::Ptr &function) const {
     }
 
     // Scan all outgoing states and accumulate any concrete values we find.
-    for (StatePtr state: dfEngine.getFinalStates()) {
+    for (State::Ptr state: dfEngine.getFinalStates()) {
         if (state) {
             ops->currentState(state);
-            BaseSemantics::RegisterStateGenericPtr regs =
+            BaseSemantics::RegisterStateGeneric::Ptr regs =
                 BaseSemantics::RegisterStateGeneric::promote(state->registerState());
             for (const BaseSemantics::RegisterStateGeneric::RegPair &kv: regs->get_stored_registers()) {
                 if (kv.value->isConcrete() && kv.value->nBits() <= SP.nBits())
                     retval.insert(kv.value->toUnsigned().get());
             }
 
-            BaseSemantics::MemoryCellStatePtr mem = BaseSemantics::MemoryCellState::promote(state->memoryState());
+            BaseSemantics::MemoryCellState::Ptr mem = BaseSemantics::MemoryCellState::promote(state->memoryState());
             std::set<rose_addr_t> vas = Variables::VariableFinder::instance()->findAddressConstants(mem);
             retval.insert(vas.begin(), vas.end());
         }
@@ -2766,7 +2766,7 @@ Partitioner::dumpCfg(std::ostream &out, const std::string &prefix, bool showBloc
         if (Function::Ptr function = vertex->value().isEntryBlock()) {
             if (computeProperties) {
                 out <<"    " <<function->printableName() <<" stack delta: ";
-                if (BaseSemantics::SValuePtr delta = functionStackDelta(function)) {
+                if (BaseSemantics::SValue::Ptr delta = functionStackDelta(function)) {
                     if (auto n = delta->toSigned()) {
                         out <<*n <<"\n";
                     } else {
@@ -2797,7 +2797,7 @@ Partitioner::dumpCfg(std::ostream &out, const std::string &prefix, bool showBloc
             if (computeProperties) {
                 for (const Function::Ptr &function: vertex->value().owningFunctions().values()) {
                     out <<"    incoming stack delta w.r.t. " <<function->printableName() <<": ";
-                    if (BaseSemantics::SValuePtr delta = basicBlockStackDeltaIn(bb, function)) {
+                    if (BaseSemantics::SValue::Ptr delta = basicBlockStackDeltaIn(bb, function)) {
                         if (auto n = delta->toSigned()) {
                             out <<*n <<"\n";
                         } else {
@@ -2851,7 +2851,7 @@ Partitioner::dumpCfg(std::ostream &out, const std::string &prefix, bool showBloc
             if (computeProperties) {
                 for (const Function::Ptr &function: vertex->value().owningFunctions().values()) {
                     out <<"    outgoing stack delta w.r.t. " <<function->printableName() <<": ";
-                    if (BaseSemantics::SValuePtr delta = basicBlockStackDeltaOut(bb, function)) {
+                    if (BaseSemantics::SValue::Ptr delta = basicBlockStackDeltaOut(bb, function)) {
                         if (auto n = delta->toSigned()) {
                             out <<*n <<"\n";
                         } else {

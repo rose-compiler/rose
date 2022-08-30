@@ -40,7 +40,8 @@ typedef boost::shared_ptr<class State> StatePtr;
 // Semantic state holds mapping from symbolic variable names to comments about where the variable came from.
 class State: public Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::State {
 public:
-    typedef Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::State Super;
+    using Ptr = StatePtr;
+    using Super = Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::State;
 
 private:
     VarComments varComments_;
@@ -98,11 +99,14 @@ public:
 //                                      RiscOperators
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
+using RiscOperatorsPtr = boost::shared_ptr<class RiscOperators>;
 
 // RiscOperators that add some additional tracking information for memory values.
 class RiscOperators: public Rose::BinaryAnalysis::InstructionSemantics::SymbolicSemantics::RiscOperators {
-    typedef Rose::BinaryAnalysis::InstructionSemantics::SymbolicSemantics::RiscOperators Super;
+    using Super = Rose::BinaryAnalysis::InstructionSemantics::SymbolicSemantics::RiscOperators;
+public:
+    using Ptr = RiscOperatorsPtr;
+
 public:
     size_t pathInsnIndex_;                              // current location in path, or -1
     const Rose::BinaryAnalysis::Partitioner2::Partitioner *partitioner_;

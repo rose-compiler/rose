@@ -13,12 +13,15 @@ using namespace Rose::BinaryAnalysis;
 using namespace Rose::BinaryAnalysis::InstructionSemantics;
 
 typedef SymbolicSemantics::SValue SymbolicValue;
-typedef SymbolicSemantics::SValuePtr SymbolicValuePtr;
+typedef SymbolicSemantics::SValue::Ptr SymbolicValuePtr;
 typedef DispatcherX86 RoseDispatcherX86;
 
 typedef boost::shared_ptr<class SymbolicRegisterState> SymbolicRegisterStatePtr;
 
 class SymbolicRegisterState: public BaseSemantics::RegisterStateGeneric {
+public:
+    using Ptr = SymbolicRegisterStatePtr;
+
 protected:
     explicit SymbolicRegisterState(const SymbolicValuePtr &proto, const RegisterDictionary::Ptr &rd):
         BaseSemantics::RegisterStateGeneric(proto, rd) {
@@ -26,8 +29,8 @@ protected:
     }
 
 public:
-    static SymbolicRegisterStatePtr instance(const SymbolicValuePtr &proto, const RegisterDictionary::Ptr &rd) {
-        return SymbolicRegisterStatePtr(new SymbolicRegisterState(proto, rd));
+    static SymbolicRegisterState::Ptr instance(const SymbolicValuePtr &proto, const RegisterDictionary::Ptr &rd) {
+        return SymbolicRegisterState::Ptr(new SymbolicRegisterState(proto, rd));
     }
 
     void myclear() {
@@ -41,7 +44,7 @@ int
 main() {
     SymbolicValuePtr svalue = SymbolicValue::instance();
     RegisterDictionary::Ptr regdict = RegisterDictionary::instancePentium4();
-    SymbolicRegisterStatePtr regs = SymbolicRegisterState::instance(svalue, regdict);
+    SymbolicRegisterState::Ptr regs = SymbolicRegisterState::instance(svalue, regdict);
     std::cout <<"Initialized registers:\n" <<*regs;
 }
 

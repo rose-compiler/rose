@@ -33,7 +33,7 @@ RegisterDictionary::Ptr regdict = RegisterDictionary::instanceI386();
 #if SEMANTIC_DOMAIN == NULL_DOMAIN
 
 #   include <Rose/BinaryAnalysis/InstructionSemantics/NullSemantics.h>
-    static BaseSemantics::RiscOperatorsPtr make_ops() {
+    static BaseSemantics::RiscOperators::Ptr make_ops() {
         return NullSemantics::RiscOperators::instanceFromRegisters(regdict);
     }
 
@@ -41,7 +41,7 @@ RegisterDictionary::Ptr regdict = RegisterDictionary::instanceI386();
 #elif SEMANTIC_DOMAIN == PARTSYM_DOMAIN
 
 #   include <Rose/BinaryAnalysis/InstructionSemantics/PartialSymbolicSemantics.h>
-    static BaseSemantics::RiscOperatorsPtr make_ops() {
+    static BaseSemantics::RiscOperators::Ptr make_ops() {
         return PartialSymbolicSemantics::RiscOperators::instanceFromRegisters(regdict);
     }
 
@@ -49,7 +49,7 @@ RegisterDictionary::Ptr regdict = RegisterDictionary::instanceI386();
 #elif SEMANTIC_DOMAIN == SYMBOLIC_DOMAIN
 
 #   include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
-    static BaseSemantics::RiscOperatorsPtr make_ops() {
+    static BaseSemantics::RiscOperators::Ptr make_ops() {
         return SymbolicSemantics::RiscOperators::instanceFromRegisters(regdict);
     }
 
@@ -57,7 +57,7 @@ RegisterDictionary::Ptr regdict = RegisterDictionary::instanceI386();
 #elif SEMANTIC_DOMAIN == INTERVAL_DOMAIN
 
 #   include <Rose/BinaryAnalysis/InstructionSemantics/IntervalSemantics.h>
-    static BaseSemantics::RiscOperatorsPtr make_ops() {
+    static BaseSemantics::RiscOperators::Ptr make_ops() {
         return IntervalSemantics::RiscOperators::instanceFromRegisters(regdict);
     }
 
@@ -68,8 +68,8 @@ RegisterDictionary::Ptr regdict = RegisterDictionary::instanceI386();
 #   include <Rose/BinaryAnalysis/InstructionSemantics/PartialSymbolicSemantics.h>
 #   include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #   include <Rose/BinaryAnalysis/InstructionSemantics/IntervalSemantics.h>
-    static BaseSemantics::RiscOperatorsPtr make_ops() {
-        MultiSemantics::RiscOperatorsPtr ops = MultiSemantics::RiscOperators::instanceFromRegisters(regdict);
+    static BaseSemantics::RiscOperators::Ptr make_ops() {
+        MultiSemantics::RiscOperators::Ptr ops = MultiSemantics::RiscOperators::instanceFromRegisters(regdict);
         ops->add_subdomain(PartialSymbolicSemantics::RiscOperators::instanceFromRegisters(regdict), "PartialSymbolic");
         ops->add_subdomain(SymbolicSemantics::RiscOperators::instanceFromRegisters(regdict), "Symbolic");
         ops->add_subdomain(IntervalSemantics::RiscOperators::instanceFromRegisters(regdict), "Interval");
@@ -146,7 +146,7 @@ main(int argc, char *argv[])
             //std::cerr <<unparseInstructionWithAddress(insn) <<"\n";
             dispatcher->processInstruction(insn);
             ++ninsns;
-            BaseSemantics::SValuePtr ip = operators->readRegister(dispatcher->findRegister("eip"));
+            BaseSemantics::SValue::Ptr ip = operators->readRegister(dispatcher->findRegister("eip"));
             if (!ip->isConcrete())
                 break;
             va = ip->toUnsigned().get();
@@ -155,7 +155,7 @@ main(int argc, char *argv[])
         }
     }
 
-    BaseSemantics::SValuePtr eax = operators->readRegister(dispatcher->findRegister("eax"));
+    BaseSemantics::SValue::Ptr eax = operators->readRegister(dispatcher->findRegister("eax"));
 #if SEMANTIC_DOMAIN == MULTI_DOMAIN
     // This is entirely optional, but the output looks better if it has the names of the subdomains.
     std::cerr <<"eax = " <<(*eax + MultiSemantics::RiscOperators::promote(operators)->get_formatter()) <<"\n";

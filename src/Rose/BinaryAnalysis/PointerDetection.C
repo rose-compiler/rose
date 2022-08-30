@@ -51,7 +51,7 @@ Analysis::init(const Disassembler::Base::Ptr &disassembler) {
         size_t addrWidth = disassembler->instructionPointerRegister().nBits();
 
         SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
-        SymbolicSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instanceFromRegisters(registerDictionary, solver);
+        SymbolicSemantics::RiscOperators::Ptr ops = SymbolicSemantics::RiscOperators::instanceFromRegisters(registerDictionary, solver);
 
         cpu_ = disassembler->dispatcher()->create(ops, addrWidth, registerDictionary);
     }
@@ -66,9 +66,9 @@ Analysis::clearResults() {
 
 void
 Analysis::clearNonResults() {
-    initialState_ = BaseSemantics::StatePtr();
-    finalState_ = BaseSemantics::StatePtr();
-    cpu_ = BaseSemantics::DispatcherPtr();
+    initialState_ = BaseSemantics::State::Ptr();
+    finalState_ = BaseSemantics::State::Ptr();
+    cpu_ = BaseSemantics::Dispatcher::Ptr();
 }
 
 typedef Sawyer::Container::Map<uint64_t /*value_hash*/, SymbolicExpr::ExpressionSet /*addresses*/> MemoryTransfers;
@@ -78,59 +78,55 @@ typedef Sawyer::Container::Map<uint64_t /*value_hash*/, SymbolicExpr::Expression
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 typedef SymbolicSemantics::SValue SValue;
-typedef SymbolicSemantics::SValuePtr SValuePtr;
-
 typedef SymbolicSemantics::RegisterState RegisterState;
-typedef SymbolicSemantics::RegisterStatePtr RegisterStatePtr;
-
 typedef SymbolicSemantics::MemoryState MemoryState;
-typedef SymbolicSemantics::MemoryStatePtr MemoryStatePtr;
 
 // State extended to keep track of multi-byte memory accesses
 typedef boost::shared_ptr<class State> StatePtr;
 
 class State: public SymbolicSemantics::State {
 public:
-    typedef SymbolicSemantics::State Super;
+    using Super = SymbolicSemantics::State;
+    using Ptr = StatePtr;
 
 private:
     MemoryTransfers memoryReads_;                       // memory addresses per (hash of) value read.
 
 protected:
-    State(const BaseSemantics::RegisterStatePtr &registers, const BaseSemantics::MemoryStatePtr &memory)
+    State(const BaseSemantics::RegisterState::Ptr &registers, const BaseSemantics::MemoryState::Ptr &memory)
         : Super(registers, memory) {}
 
     State(const State &other)
         : Super(other), memoryReads_(other.memoryReads_) {}
 
 public:
-    static StatePtr instance(const BaseSemantics::RegisterStatePtr &registers, const BaseSemantics::MemoryStatePtr &memory) {
-        return StatePtr(new State(registers, memory));
+    static Ptr instance(const BaseSemantics::RegisterState::Ptr &registers, const BaseSemantics::MemoryState::Ptr &memory) {
+        return Ptr(new State(registers, memory));
     }
 
-    static StatePtr instance(const StatePtr &other) {
-        return StatePtr(new State(*other));
+    static Ptr instance(const Ptr &other) {
+        return Ptr(new State(*other));
     }
 
 public:
-    virtual BaseSemantics::StatePtr create(const BaseSemantics::RegisterStatePtr &registers,
-                                           const BaseSemantics::MemoryStatePtr &memory) const override {
+    virtual BaseSemantics::State::Ptr create(const BaseSemantics::RegisterState::Ptr &registers,
+                                           const BaseSemantics::MemoryState::Ptr &memory) const override {
         return instance(registers, memory);
     }
 
-    virtual BaseSemantics::StatePtr clone() const override {
-        return StatePtr(new State(*this));
+    virtual BaseSemantics::State::Ptr clone() const override {
+        return Ptr(new State(*this));
     }
 
-    static StatePtr promote(const BaseSemantics::StatePtr &x) {
-        StatePtr retval = boost::dynamic_pointer_cast<State>(x);
+    static Ptr promote(const BaseSemantics::State::Ptr &x) {
+        Ptr retval = boost::dynamic_pointer_cast<State>(x);
         ASSERT_not_null(retval);
         return retval;
     }
 
-    virtual bool merge(const BaseSemantics::StatePtr &other_, BaseSemantics::RiscOperators *ops) override {
+    virtual bool merge(const BaseSemantics::State::Ptr &other_, BaseSemantics::RiscOperators *ops) override {
         bool changed = false;
-        StatePtr other = State::promote(other_);
+        Ptr other = State::promote(other_);
         for (const MemoryTransfers::Node &otherNode: other->memoryReads_.nodes()) {
             SymbolicExpr::ExpressionSet &addresses = memoryReads_.insertMaybeDefault(otherNode.key());
             for (const SymbolicExpr::Ptr &address: otherNode.value().values()) {
@@ -143,7 +139,7 @@ public:
         return changed;
     }
 
-    void saveRead(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &value) {
+    void saveRead(const BaseSemantics::SValue::Ptr &addr, const BaseSemantics::SValue::Ptr &value) {
         SymbolicExpr::Ptr addrExpr = SValue::promote(addr)->get_expression();
         SymbolicExpr::Ptr valueExpr = SValue::promote(value)->get_expression();
         memoryReads_.insertMaybeDefault(valueExpr->hash()).insert(addrExpr);
@@ -155,75 +151,77 @@ public:
 };
 
 // RiscOperators extended to keep track of multi-byte memory accesses
-typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
+using RiscOperatorsPtr = boost::shared_ptr<class RiscOperators>;
 
 class RiscOperators: public SymbolicSemantics::RiscOperators {
 public:
-    typedef SymbolicSemantics::RiscOperators Super;
+    using Super = SymbolicSemantics::RiscOperators;
+    using Ptr = RiscOperatorsPtr;
+
 protected:
-    explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, const SmtSolverPtr &solver = SmtSolverPtr())
+    explicit RiscOperators(const BaseSemantics::SValue::Ptr &protoval, const SmtSolverPtr &solver = SmtSolverPtr())
         : Super(protoval, solver) {}
 
-    explicit RiscOperators(const BaseSemantics::StatePtr &state, const SmtSolverPtr &solver = SmtSolverPtr())
+    explicit RiscOperators(const BaseSemantics::State::Ptr &state, const SmtSolverPtr &solver = SmtSolverPtr())
         : Super(state, solver) {}
 
 public:
-    static RiscOperatorsPtr instance(const RegisterDictionary::Ptr &regdict, const SmtSolverPtr &solver = SmtSolverPtr()) {
-        BaseSemantics::SValuePtr protoval = SValue::instance();
-        BaseSemantics::RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
-        BaseSemantics::MemoryStatePtr memory = MemoryState::instance(protoval, protoval);
-        BaseSemantics::StatePtr state = State::instance(registers, memory);
-        return RiscOperatorsPtr(new RiscOperators(state, solver));
+    static RiscOperators::Ptr instance(const RegisterDictionary::Ptr &regdict, const SmtSolverPtr &solver = SmtSolverPtr()) {
+        BaseSemantics::SValue::Ptr protoval = SValue::instance();
+        BaseSemantics::RegisterState::Ptr registers = RegisterState::instance(protoval, regdict);
+        BaseSemantics::MemoryState::Ptr memory = MemoryState::instance(protoval, protoval);
+        BaseSemantics::State::Ptr state = State::instance(registers, memory);
+        return RiscOperators::Ptr(new RiscOperators(state, solver));
     }
 
-    static RiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval, const SmtSolverPtr &solver = SmtSolverPtr()) {
-        return RiscOperatorsPtr(new RiscOperators(protoval, solver));
+    static RiscOperators::Ptr instance(const BaseSemantics::SValue::Ptr &protoval, const SmtSolverPtr &solver = SmtSolverPtr()) {
+        return RiscOperators::Ptr(new RiscOperators(protoval, solver));
     }
 
-    static RiscOperatorsPtr instance(const BaseSemantics::StatePtr &state, const SmtSolverPtr &solver = SmtSolverPtr()) {
-        return RiscOperatorsPtr(new RiscOperators(state, solver));
+    static RiscOperators::Ptr instance(const BaseSemantics::State::Ptr &state, const SmtSolverPtr &solver = SmtSolverPtr()) {
+        return RiscOperators::Ptr(new RiscOperators(state, solver));
     }
     
 public:
-    virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::SValuePtr &protoval,
+    virtual BaseSemantics::RiscOperators::Ptr create(const BaseSemantics::SValue::Ptr &protoval,
                                                    const SmtSolverPtr &solver = SmtSolverPtr()) const override {
         return instance(protoval, solver);
     }
 
-    virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::StatePtr &state,
+    virtual BaseSemantics::RiscOperators::Ptr create(const BaseSemantics::State::Ptr &state,
                                                    const SmtSolverPtr &solver = SmtSolverPtr()) const override {
         return instance(state, solver);
     }
 
-    static RiscOperatorsPtr promote(const BaseSemantics::RiscOperatorsPtr &x) {
-        RiscOperatorsPtr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
+    static RiscOperators::Ptr promote(const BaseSemantics::RiscOperators::Ptr &x) {
+        RiscOperators::Ptr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
         ASSERT_not_null(retval);
         return retval;
     }
 
 public:
-    virtual BaseSemantics::SValuePtr readMemory(RegisterDescriptor segreg,
-                                                const BaseSemantics::SValuePtr &addr,
-                                                const BaseSemantics::SValuePtr &dflt,
-                                                const BaseSemantics::SValuePtr &cond) override {
+    virtual BaseSemantics::SValue::Ptr readMemory(RegisterDescriptor segreg,
+                                                const BaseSemantics::SValue::Ptr &addr,
+                                                const BaseSemantics::SValue::Ptr &dflt,
+                                                const BaseSemantics::SValue::Ptr &cond) override {
         // Offset the address by the value of the segment register.
-        BaseSemantics::SValuePtr adjustedVa;
+        BaseSemantics::SValue::Ptr adjustedVa;
         if (segreg.isEmpty()) {
             adjustedVa = addr;
         } else {
-            BaseSemantics::SValuePtr segregValue = readRegister(segreg, undefined_(segreg.nBits()));
+            BaseSemantics::SValue::Ptr segregValue = readRegister(segreg, undefined_(segreg.nBits()));
             adjustedVa = add(addr, signExtend(segregValue, addr->nBits()));
         }
 
-        BaseSemantics::SValuePtr retval = Super::readMemory(segreg, addr, dflt, cond);
-        StatePtr state = State::promote(currentState());
+        BaseSemantics::SValue::Ptr retval = Super::readMemory(segreg, addr, dflt, cond);
+        State::Ptr state = State::promote(currentState());
         state->saveRead(adjustedVa, retval);
         return retval;
     }
 };
 
 
-BaseSemantics::RiscOperatorsPtr
+BaseSemantics::RiscOperators::Ptr
 Analysis::makeRiscOperators(const P2::Partitioner &partitioner) const {
     RegisterDictionary::Ptr regdict = partitioner.instructionProvider().registerDictionary();
     return RiscOperators::instance(regdict, partitioner.smtSolver());
@@ -268,7 +266,7 @@ struct ExprVisitor: public SymbolicExpr::Visitor {
 };
 
 void
-Analysis::conditionallySavePointer(const BaseSemantics::SValuePtr &ptrRValue_,
+Analysis::conditionallySavePointer(const BaseSemantics::SValue::Ptr &ptrRValue_,
                                    Sawyer::Container::Set<uint64_t> &ptrRValuesSeen,
                                    size_t wordSize,     // word size in bits
                                    PointerDescriptors &result) {
@@ -277,7 +275,7 @@ Analysis::conditionallySavePointer(const BaseSemantics::SValuePtr &ptrRValue_,
     if (!ptrRValuesSeen.insert(ptrRValue->hash()))
         return;
     SAWYER_MESG(debug) <<"    pointer r-value = " <<*ptrRValue <<"\n";
-    StatePtr finalState = State::promote(finalState_);
+    State::Ptr finalState = State::promote(finalState_);
     ExprVisitor visitor(finalState->memoryReads(), ptrRValue->nBits(), result /*out*/, mlog);
     ptrRValue->depthFirstTraversal(visitor);
 }
@@ -288,8 +286,8 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     printInstructionsForDebugging(partitioner, function);
 
     clearResults();
-    initialState_ = BaseSemantics::StatePtr();
-    finalState_ = BaseSemantics::StatePtr();
+    initialState_ = BaseSemantics::State::Ptr();
+    finalState_ = BaseSemantics::State::Ptr();
             
     // Build the CFG used by the dataflow: dfCfg.  The dfCfg includes only those vertices that are reachable from the entry
     // point for the function we're analyzing and which belong to that function.  All return points in the function will flow
@@ -310,9 +308,9 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     }
 
     // Build the dataflow engine.
-    typedef DataFlow::Engine<DfCfg, BaseSemantics::StatePtr, P2::DataFlow::TransferFunction, DataFlow::SemanticsMerge> DfEngine;
-    BaseSemantics::RiscOperatorsPtr ops = makeRiscOperators(partitioner);
-    BaseSemantics::DispatcherPtr cpu = partitioner.newDispatcher(ops);
+    typedef DataFlow::Engine<DfCfg, BaseSemantics::State::Ptr, P2::DataFlow::TransferFunction, DataFlow::SemanticsMerge> DfEngine;
+    BaseSemantics::RiscOperators::Ptr ops = makeRiscOperators(partitioner);
+    BaseSemantics::Dispatcher::Ptr cpu = partitioner.newDispatcher(ops);
     P2::DataFlow::MergeFunction merge(cpu);
     P2::DataFlow::TransferFunction xfer(cpu);
     DfEngine dfEngine(dfCfg, xfer, merge);
@@ -321,13 +319,13 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
 
     // Build the initial state
     initialState_ = xfer.initialState();
-    BaseSemantics::RegisterStateGenericPtr initialRegState =
+    BaseSemantics::RegisterStateGeneric::Ptr initialRegState =
         BaseSemantics::RegisterStateGeneric::promote(initialState_->registerState());
     initialRegState->initialize_large();
     cpu->initializeState(initialState_);
 
     // Allow data-flow merge operations to create sets of values up to a certain cardinality. This is optional.
-    SymbolicSemantics::MergerPtr merger = SymbolicSemantics::Merger::instance(10 /*arbitrary*/);
+    SymbolicSemantics::Merger::Ptr merger = SymbolicSemantics::Merger::instance(10 /*arbitrary*/);
     initialState_->registerState()->merger(merger);
     initialState_->memoryState()->merger(merger);
 
@@ -337,7 +335,7 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
         // Use this rather than runToFixedPoint because it lets us show a progress report
         Sawyer::ProgressBar<size_t> progress(mlog[MARCH], function->printableName());
         progress.suffix(" iterations");
-        dfEngine.reset(BaseSemantics::StatePtr());
+        dfEngine.reset(BaseSemantics::State::Ptr());
         dfEngine.insertStartingVertex(startVertexId, initialState_);
         while (dfEngine.runOneIteration())
             ++progress;
@@ -346,7 +344,7 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
         converged = false;                              // didn't converge, so just use what we have
     }
     finalState_ = dfEngine.getInitialState(returnVertex->id());
-    StatePtr finalState = State::promote(finalState_);
+    State::Ptr finalState = State::promote(finalState_);
     SAWYER_MESG(mlog[DEBUG]) <<"  " <<(converged ? "data-flow converged" : "DATA-FLOW DID NOT CONVERGE") <<"\n";
 
     if (mlog[DEBUG]) {
@@ -363,9 +361,9 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     SAWYER_MESG(mlog[DEBUG]) <<"  potential data pointers:\n";
     size_t dataWordSize = partitioner.instructionProvider().stackPointerRegister().nBits();
     Sawyer::Container::Set<SymbolicExpr::Hash> addrSeen;
-    for (const BaseSemantics::StatePtr &state: dfEngine.getFinalStates()) {
-        BaseSemantics::MemoryCellStatePtr memState = BaseSemantics::MemoryCellState::promote(state->memoryState());
-        for (const BaseSemantics::MemoryCellPtr &cell: memState->allCells())
+    for (const BaseSemantics::State::Ptr &state: dfEngine.getFinalStates()) {
+        BaseSemantics::MemoryCellState::Ptr memState = BaseSemantics::MemoryCellState::promote(state->memoryState());
+        for (const BaseSemantics::MemoryCell::Ptr &cell: memState->allCells())
             conditionallySavePointer(cell->address(), addrSeen, dataWordSize, dataPointers_);
     }
 
@@ -374,8 +372,8 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     size_t codeWordSize = partitioner.instructionProvider().instructionPointerRegister().nBits();
     addrSeen.clear();
     const RegisterDescriptor IP = partitioner.instructionProvider().instructionPointerRegister();
-    for (const BaseSemantics::StatePtr &state: dfEngine.getFinalStates()) {
-        SymbolicSemantics::SValuePtr ip =
+    for (const BaseSemantics::State::Ptr &state: dfEngine.getFinalStates()) {
+        SymbolicSemantics::SValue::Ptr ip =
             SymbolicSemantics::SValue::promote(state->peekRegister(IP, ops->undefined_(IP.nBits()), ops.get()));
         SymbolicExpr::Ptr ipExpr = ip->get_expression();
         if (!addrSeen.exists(ipExpr->hash())) {

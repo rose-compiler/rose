@@ -25,14 +25,16 @@ typedef boost::shared_ptr<class MyMemoryState> MyMemoryStatePtr;
 
 // MyState subclasses SymbolicSemantics::State
 class MyMemoryState: public SymbolicSemantics::MemoryState {
+public:
+    using Ptr = MyMemoryStatePtr;
 
     // Implement the same real c'tors as the super class. No need to document these since they're private and they would have
     // mostly the same documentation as the corresponding static allocating constructor.
 protected:
-    MyMemoryState(const BaseSemantics::MemoryCellPtr &protocell)
+    MyMemoryState(const BaseSemantics::MemoryCell::Ptr &protocell)
         : SymbolicSemantics::MemoryState(protocell) {}
 
-    explicit MyMemoryState(const BaseSemantics::SValuePtr &addrProtoval, const BaseSemantics::SValuePtr &valProtoval)
+    explicit MyMemoryState(const BaseSemantics::SValue::Ptr &addrProtoval, const BaseSemantics::SValue::Ptr &valProtoval)
         : SymbolicSemantics::MemoryState(addrProtoval, valProtoval) {}
 
     MyMemoryState(const MyMemoryState &other)
@@ -43,18 +45,18 @@ protected:
     // super class.
 public:
     /** Instantiate a new memory state from ... */
-    static MyMemoryStatePtr instance(const BaseSemantics::MemoryCellPtr &protocell) {
-        return MyMemoryStatePtr(new MyMemoryState(protocell));
+    static MyMemoryState::Ptr instance(const BaseSemantics::MemoryCell::Ptr &protocell) {
+        return MyMemoryState::Ptr(new MyMemoryState(protocell));
     }
 
     /** Instantiate a new memory state from ... */
-    static MyMemoryStatePtr instance(const BaseSemantics::SValuePtr &addrProtoval, const BaseSemantics::SValuePtr &valProtoval) {
-        return MyMemoryStatePtr(new MyMemoryState(addrProtoval, valProtoval));
+    static MyMemoryState::Ptr instance(const BaseSemantics::SValue::Ptr &addrProtoval, const BaseSemantics::SValue::Ptr &valProtoval) {
+        return MyMemoryState::Ptr(new MyMemoryState(addrProtoval, valProtoval));
     }
 
     /** Instantiate a new memory state by deep-copying an existing state. */
-    static MyMemoryStatePtr instance(const MyMemoryStatePtr &other) {
-        return MyMemoryStatePtr(new MyMemoryState(*other));
+    static MyMemoryState::Ptr instance(const MyMemoryState::Ptr &other) {
+        return MyMemoryState::Ptr(new MyMemoryState(*other));
     }
 
     // Implement virtual constructors for each of the real constructors.  These are normally named "create" (although SValue
@@ -63,24 +65,24 @@ public:
     // to distinguish between a virtual default constructor that takes no arguments, and the virtual copy constructor which
     // also takes no arguments.  No need for doxygen comments since they're documented in the base class.
 public:
-    virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::MemoryCellPtr &protocell) const override {
+    virtual BaseSemantics::MemoryState::Ptr create(const BaseSemantics::MemoryCell::Ptr &protocell) const override {
         return instance(protocell);
     }
 
-    virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::SValuePtr &addrProtoval,
-                                                 const BaseSemantics::SValuePtr &valProtoval) const override {
+    virtual BaseSemantics::MemoryState::Ptr create(const BaseSemantics::SValue::Ptr &addrProtoval,
+                                                 const BaseSemantics::SValue::Ptr &valProtoval) const override {
         return instance(addrProtoval, valProtoval);
     }
 
-    virtual BaseSemantics::MemoryStatePtr clone() const override {
+    virtual BaseSemantics::MemoryState::Ptr clone() const override {
 #if 0
         // it's easier to call the real constructor than to cast the smart-pointer-to-const-object and promote, but if we
         // really want to do that, here's how:
-        MyMemoryStatePtr self = promote(boost::const_pointer_cast<BaseSemantics::MemoryState>(shared_from_this()));
+        MyMemoryState::Ptr self = promote(boost::const_pointer_cast<BaseSemantics::MemoryState>(shared_from_this()));
         return instance(self);
 #else
         // the easy way
-        return MyMemoryStatePtr(new MyMemoryState(*this));
+        return MyMemoryState::Ptr(new MyMemoryState(*this));
 #endif
     }
 
@@ -88,9 +90,9 @@ public:
     // program logic error rather than a usage error.  Boilerplate doxygen documentation.
 public:
     /** Checked dynamic pointer cast. */
-    static MyMemoryStatePtr promote(const BaseSemantics::MemoryStatePtr &x) {
+    static MyMemoryState::Ptr promote(const BaseSemantics::MemoryState::Ptr &x) {
         // For SValue types use BaseSemantics::dynamic_pointer_cast instead of boost::dynamic_pointer_cast
-        MyMemoryStatePtr retval = boost::dynamic_pointer_cast<MyMemoryState>(x);
+        MyMemoryState::Ptr retval = boost::dynamic_pointer_cast<MyMemoryState>(x);
         assert(retval!=NULL);
         return retval;
     }
@@ -108,43 +110,46 @@ public:
 typedef boost::shared_ptr<class MyRiscOperators> MyRiscOperatorsPtr;
 
 class MyRiscOperators: public SymbolicSemantics::RiscOperators {
+public:
+    using Ptr = MyRiscOperatorsPtr;
+
     // Real constructors
 protected:
-    explicit MyRiscOperators(const BaseSemantics::SValuePtr &protoval,
+    explicit MyRiscOperators(const BaseSemantics::SValue::Ptr &protoval,
                              const Rose::BinaryAnalysis::SmtSolverPtr &solver = Rose::BinaryAnalysis::SmtSolverPtr())
         : SymbolicSemantics::RiscOperators(protoval, solver) {}
-    explicit MyRiscOperators(const BaseSemantics::StatePtr &state,
+    explicit MyRiscOperators(const BaseSemantics::State::Ptr &state,
                              const Rose::BinaryAnalysis::SmtSolverPtr &solver = Rose::BinaryAnalysis::SmtSolverPtr())
         : SymbolicSemantics::RiscOperators(state, solver) {}
 
     // Static allocating constructors
 public:
-    static MyRiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval,
+    static MyRiscOperators::Ptr instance(const BaseSemantics::SValue::Ptr &protoval,
                                        const Rose::BinaryAnalysis::SmtSolverPtr &solver = Rose::BinaryAnalysis::SmtSolverPtr()) {
-        return MyRiscOperatorsPtr(new MyRiscOperators(protoval, solver));
+        return MyRiscOperators::Ptr(new MyRiscOperators(protoval, solver));
     }
-    static MyRiscOperatorsPtr instance(const BaseSemantics::StatePtr &state,
+    static MyRiscOperators::Ptr instance(const BaseSemantics::State::Ptr &state,
                                        const Rose::BinaryAnalysis::SmtSolverPtr &solver = Rose::BinaryAnalysis::SmtSolverPtr()) {
-        return MyRiscOperatorsPtr(new MyRiscOperators(state, solver));
+        return MyRiscOperators::Ptr(new MyRiscOperators(state, solver));
     }
 
     // Virtual constructors
 public:
-    virtual BaseSemantics::RiscOperatorsPtr
-    create(const BaseSemantics::SValuePtr &protoval,
+    virtual BaseSemantics::RiscOperators::Ptr
+    create(const BaseSemantics::SValue::Ptr &protoval,
            const Rose::BinaryAnalysis::SmtSolverPtr &solver = Rose::BinaryAnalysis::SmtSolverPtr()) const {
         return instance(protoval, solver);
     }
-    virtual BaseSemantics::RiscOperatorsPtr
-    create(const BaseSemantics::StatePtr &state,
+    virtual BaseSemantics::RiscOperators::Ptr
+    create(const BaseSemantics::State::Ptr &state,
            const Rose::BinaryAnalysis::SmtSolverPtr &solver = Rose::BinaryAnalysis::SmtSolverPtr()) const {
         return instance(state, solver);
     }
 
     // Checked dynamic casts
 public:
-    static MyRiscOperatorsPtr promote(const BaseSemantics::RiscOperatorsPtr &x) {
-        MyRiscOperatorsPtr retval = boost::dynamic_pointer_cast<MyRiscOperators>(x);
+    static MyRiscOperators::Ptr promote(const BaseSemantics::RiscOperators::Ptr &x) {
+        MyRiscOperators::Ptr retval = boost::dynamic_pointer_cast<MyRiscOperators>(x);
         assert(retval!=NULL);
         return retval;
     }
@@ -153,7 +158,7 @@ public:
 
 #if 0
     // See what happens if you don't use a dynamic constructor.
-    virtual BaseSemantics::SValuePtr xor_(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) override {
+    virtual BaseSemantics::SValue::Ptr xor_(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b) override {
         // This is the wrong way to create a new value.  It assumes that the semantics lattice was built to use the
         // SymbolicSemantics::SValue, but in fact we might be using a subclass thereof.  The error won't be detected until
         // someone tries to use a SymbolicSemantics::SValue subtype, and they might not even notice until this type error
@@ -186,16 +191,16 @@ int main()
     // where appropriate.
     Rose::BinaryAnalysis::SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
     RegisterDictionary::Ptr regdict = RegisterDictionary::instancePentium4();
-    BaseSemantics::SValuePtr protoval = SymbolicSemantics::SValue::instance();
-    BaseSemantics::RegisterStatePtr registers = BaseSemantics::RegisterStateGeneric::instance(protoval, regdict);
-    BaseSemantics::MemoryStatePtr memory = MyMemoryState::instance(protoval, protoval);
-    BaseSemantics::StatePtr state = BaseSemantics::State::instance(registers, memory);
-    BaseSemantics::RiscOperatorsPtr ops = MyRiscOperators::instance(state, solver);
+    BaseSemantics::SValue::Ptr protoval = SymbolicSemantics::SValue::instance();
+    BaseSemantics::RegisterState::Ptr registers = BaseSemantics::RegisterStateGeneric::instance(protoval, regdict);
+    BaseSemantics::MemoryState::Ptr memory = MyMemoryState::instance(protoval, protoval);
+    BaseSemantics::State::Ptr state = BaseSemantics::State::instance(registers, memory);
+    BaseSemantics::RiscOperators::Ptr ops = MyRiscOperators::instance(state, solver);
 
     // Build a tester.  We need to indicate exactly what types are being used in the RiscOperators (fortunately for us,
     // they're from the code above).
-    TestSemantics<SymbolicSemantics::SValuePtr, BaseSemantics::RegisterStateGenericPtr,
-                  MyMemoryStatePtr, BaseSemantics::StatePtr, MyRiscOperatorsPtr> tester;
+    TestSemantics<SymbolicSemantics::SValue::Ptr, BaseSemantics::RegisterStateGeneric::Ptr,
+                  MyMemoryState::Ptr, BaseSemantics::State::Ptr, MyRiscOperators::Ptr> tester;
 
     // Run the test. An exception is thrown if there's a problem.
     tester.test(ops);

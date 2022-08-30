@@ -131,8 +131,8 @@ int main(int argc, char *argv[]) {
 
         if (runSemantics) {
             // Process instruction semantics
-            I2::BaseSemantics::RiscOperatorsPtr ops = partitioner.newOperators();
-            I2::BaseSemantics::DispatcherPtr cpu = partitioner.newDispatcher(ops);
+            I2::BaseSemantics::RiscOperators::Ptr ops = partitioner.newOperators();
+            I2::BaseSemantics::Dispatcher::Ptr cpu = partitioner.newDispatcher(ops);
             cpu->processInstruction(insn);
             std::ostringstream ss;
             ss <<*ops;

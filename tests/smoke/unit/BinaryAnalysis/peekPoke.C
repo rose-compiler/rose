@@ -43,24 +43,24 @@ main(int argc, char *argv[]) {
     RegisterDictionary::Ptr registers = RegisterDictionary::instanceAmd64();
     const RegisterDescriptor EAX = registers->findOrThrow("eax");
     SmtSolverPtr solver;
-    BaseSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instanceFromRegisters(registers, solver);
+    BaseSemantics::RiscOperators::Ptr ops = SymbolicSemantics::RiscOperators::instanceFromRegisters(registers, solver);
     ASSERT_always_not_null(ops);
     ops->currentState()->memoryState()->set_byteOrder(ByteOrder::ORDER_LSB);
 
     // Initialize the machine state with some writes and get the string representation.
-    BaseSemantics::SValuePtr eax = ops->number_(32, 1234);
+    BaseSemantics::SValue::Ptr eax = ops->number_(32, 1234);
     ops->writeRegister(EAX, eax);
-    BaseSemantics::SValuePtr addr0 = ops->number_(32, 0x1000);
-    BaseSemantics::SValuePtr mem0 = ops->number_(8, 123);
+    BaseSemantics::SValue::Ptr addr0 = ops->number_(32, 0x1000);
+    BaseSemantics::SValue::Ptr mem0 = ops->number_(8, 123);
     ops->writeMemory(RegisterDescriptor(), addr0, mem0, ops->boolean_(true));
     std::ostringstream s0;
     s0 <<*ops;
     
     // Peek at parts of the state that exist
-    BaseSemantics::SValuePtr v1 = ops->peekRegister(EAX, ops->undefined_(32));
+    BaseSemantics::SValue::Ptr v1 = ops->peekRegister(EAX, ops->undefined_(32));
     ASSERT_always_not_null(v1);
     ASSERT_always_require(v1->mustEqual(eax, solver));
-    BaseSemantics::SValuePtr mem1 = ops->peekMemory(RegisterDescriptor(), addr0, ops->undefined_(8));
+    BaseSemantics::SValue::Ptr mem1 = ops->peekMemory(RegisterDescriptor(), addr0, ops->undefined_(8));
     ASSERT_always_not_null(mem1);
     ASSERT_always_require(mem1->mustEqual(mem0, solver));
     std::ostringstream s1;
@@ -69,13 +69,13 @@ main(int argc, char *argv[]) {
 
     // Peek at parts of the state that don't exist
     const RegisterDescriptor EBX = registers->findOrThrow("ebx");
-    BaseSemantics::SValuePtr ebx = ops->undefined_(32);
-    BaseSemantics::SValuePtr v2 = ops->peekRegister(EBX, ebx);
+    BaseSemantics::SValue::Ptr ebx = ops->undefined_(32);
+    BaseSemantics::SValue::Ptr v2 = ops->peekRegister(EBX, ebx);
     ASSERT_always_not_null(v2);
     ASSERT_always_require(v2->mustEqual(ebx, solver));
-    BaseSemantics::SValuePtr addr2 = ops->number_(32, 0x2000);
-    BaseSemantics::SValuePtr mem2init = ops->undefined_(8);
-    BaseSemantics::SValuePtr mem2 = ops->peekMemory(RegisterDescriptor(), addr2, mem2init);
+    BaseSemantics::SValue::Ptr addr2 = ops->number_(32, 0x2000);
+    BaseSemantics::SValue::Ptr mem2init = ops->undefined_(8);
+    BaseSemantics::SValue::Ptr mem2 = ops->peekMemory(RegisterDescriptor(), addr2, mem2init);
     ASSERT_always_not_null(mem2);
     ASSERT_always_require(mem2->mustEqual(mem2init, solver));
     std::ostringstream s2;
@@ -84,13 +84,13 @@ main(int argc, char *argv[]) {
 
     // Peek at parts of the state that partly exist.
     const RegisterDescriptor RAX = registers->findOrThrow("rax");
-    BaseSemantics::SValuePtr zero64 = ops->number_(64, 0);
-    BaseSemantics::SValuePtr v3 = ops->peekRegister(RAX, zero64);
+    BaseSemantics::SValue::Ptr zero64 = ops->number_(64, 0);
+    BaseSemantics::SValue::Ptr v3 = ops->peekRegister(RAX, zero64);
     ASSERT_always_not_null(v3);
     ASSERT_always_require(v3->mustEqual(ops->number_(64, 1234), solver));
-    BaseSemantics::SValuePtr zero32 = ops->number_(32, 0);
-    BaseSemantics::SValuePtr mem3ans = ops->number_(32, 123);
-    BaseSemantics::SValuePtr mem3 = ops->peekMemory(RegisterDescriptor(), addr0, zero32);
+    BaseSemantics::SValue::Ptr zero32 = ops->number_(32, 0);
+    BaseSemantics::SValue::Ptr mem3ans = ops->number_(32, 123);
+    BaseSemantics::SValue::Ptr mem3 = ops->peekMemory(RegisterDescriptor(), addr0, zero32);
     ASSERT_always_not_null(mem3);
     ASSERT_always_require(mem3->mustEqual(mem3ans, solver));
     std::ostringstream s3;

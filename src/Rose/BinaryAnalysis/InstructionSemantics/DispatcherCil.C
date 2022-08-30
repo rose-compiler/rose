@@ -3831,8 +3831,8 @@ DispatcherCil::regcache_init() {
 
 void
 DispatcherCil::memory_init() {
-    if (BaseSemantics::StatePtr state = currentState()) {
-        if (BaseSemantics::MemoryStatePtr memory = state->memoryState()) {
+    if (BaseSemantics::State::Ptr state = currentState()) {
+        if (BaseSemantics::MemoryState::Ptr memory = state->memoryState()) {
             switch (memory->get_byteOrder()) {
                 case ByteOrder::ORDER_LSB:
                     mlog[WARN] <<"m68k memory state is using little-endian byte order\n";

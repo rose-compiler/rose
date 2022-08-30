@@ -32,13 +32,13 @@ symbolicFormat(const std::string &prefix) {
 //                                      RiscOperators
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-RiscOperatorsPtr
+RiscOperators::Ptr
 RiscOperators::instance(const Partitioner2::Partitioner *partitioner,
                         const RegisterDictionary::Ptr &regdict,
                         const SmtSolver::Ptr &solver) {
-    BaseSemantics::SValuePtr protoval = SValue::instance();
-    BaseSemantics::RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
-    BaseSemantics::MemoryStatePtr memory;
+    BaseSemantics::SValue::Ptr protoval = SValue::instance();
+    BaseSemantics::RegisterState::Ptr registers = RegisterState::instance(protoval, regdict);
+    BaseSemantics::MemoryState::Ptr memory;
     switch (settings.searchMode) {
         case SEARCH_MULTI:
             // If we're sending multiple paths at a time to the SMT solver then we need to provide the SMT solver with
@@ -53,8 +53,8 @@ RiscOperators::instance(const Partitioner2::Partitioner *partitioner,
             break;
     }
     ASSERT_not_null(memory);
-    BaseSemantics::StatePtr state = State::instance(registers, memory);
-    return RiscOperatorsPtr(new RiscOperators(partitioner, state, solver));
+    BaseSemantics::State::Ptr state = State::instance(registers, memory);
+    return RiscOperators::Ptr(new RiscOperators(partitioner, state, solver));
 }
 
 std::string
@@ -83,7 +83,7 @@ RiscOperators::commentForVariable(RegisterDescriptor reg, const std::string &acc
 }
 
 std::string
-RiscOperators::commentForVariable(const BaseSemantics::SValuePtr &addr, const std::string &accessMode, size_t byteNumber,
+RiscOperators::commentForVariable(const BaseSemantics::SValue::Ptr &addr, const std::string &accessMode, size_t byteNumber,
                                   size_t nBytes) const {
     std::string varComment = "first " + accessMode + " at ";
     if (pathInsnIndex_ != INVALID_INDEX)
@@ -154,9 +154,9 @@ RiscOperators::finishInstruction(SgAsmInstruction *insn) {
     Super::finishInstruction(insn);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::readRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &dflt) {
-    SValuePtr retval = SValue::promote(Super::readRegister(reg, dflt));
+BaseSemantics::SValue::Ptr
+RiscOperators::readRegister(RegisterDescriptor reg, const BaseSemantics::SValue::Ptr &dflt) {
+    SValue::Ptr retval = SValue::promote(Super::readRegister(reg, dflt));
     SymbolicExpr::Ptr expr = retval->get_expression();
     if (expr->isLeafNode()) {
         std::string comment = commentForVariable(reg, "read");
@@ -166,7 +166,7 @@ RiscOperators::readRegister(RegisterDescriptor reg, const BaseSemantics::SValueP
 }
     
 void
-RiscOperators::writeRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &value) {
+RiscOperators::writeRegister(RegisterDescriptor reg, const BaseSemantics::SValue::Ptr &value) {
     SymbolicExpr::Ptr expr = SValue::promote(value)->get_expression();
     if (expr->isLeafNode()) {
         std::string comment = commentForVariable(reg, "write");
@@ -180,11 +180,11 @@ RiscOperators::writeRegister(RegisterDescriptor reg, const BaseSemantics::SValue
  *  If multi-path is enabled, then return a new memory expression that describes the process of reading a value from the
  *  specified address; otherwise, actually read the value and return it.  In any case, record some information about the
  *  address that's being read if we've never seen it before. */
-BaseSemantics::SValuePtr
-RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr,
-                          const BaseSemantics::SValuePtr &dflt_, const BaseSemantics::SValuePtr &cond) {
+BaseSemantics::SValue::Ptr
+RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValue::Ptr &addr,
+                          const BaseSemantics::SValue::Ptr &dflt_, const BaseSemantics::SValue::Ptr &cond) {
 
-    BaseSemantics::SValuePtr dflt = dflt_;
+    BaseSemantics::SValue::Ptr dflt = dflt_;
     const size_t nBytes = dflt->nBits() / 8;
     if (cond->isFalse())
         return dflt_;
@@ -201,7 +201,7 @@ RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValue
     }
 
     // Read from the symbolic state, and update the state with the default from real memory if known.
-    BaseSemantics::SValuePtr retval = Super::readMemory(segreg, addr, dflt, cond);
+    BaseSemantics::SValue::Ptr retval = Super::readMemory(segreg, addr, dflt, cond);
 
     if (!currentInstruction())
         return retval;                              // not called from dispatcher on behalf of an instruction
@@ -215,7 +215,7 @@ RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValue
 
     // Save a description for its addresses
     for (size_t i=0; i<nBytes; ++i) {
-        SValuePtr va = SValue::promote(add(addr, number_(addr->nBits(), i)));
+        SValue::Ptr va = SValue::promote(add(addr, number_(addr->nBits(), i)));
         if (va->get_expression()->isLeafNode()) {
             std::string comment = commentForVariable(addr, "read", i, nBytes);
             State::promote(currentState())->varComment(va->get_expression()->isLeafNode()->toString(), comment);
@@ -230,8 +230,8 @@ RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValue
  *  otherwise update the memory directly.  In any case, record some information about the address that was written if we've
  *  never seen it before. */
 void
-RiscOperators::writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr,
-                           const BaseSemantics::SValuePtr &value, const BaseSemantics::SValuePtr &cond) {
+RiscOperators::writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValue::Ptr &addr,
+                           const BaseSemantics::SValue::Ptr &value, const BaseSemantics::SValue::Ptr &cond) {
     if (cond->isFalse())
         return;
     Super::writeMemory(segreg, addr, value, cond);
@@ -246,7 +246,7 @@ RiscOperators::writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValu
     // Save a description for its addresses
     size_t nBytes = value->nBits() / 8;
     for (size_t i=0; i<nBytes; ++i) {
-        SValuePtr va = SValue::promote(add(addr, number_(addr->nBits(), i)));
+        SValue::Ptr va = SValue::promote(add(addr, number_(addr->nBits(), i)));
         if (va->get_expression()->isLeafNode()) {
             std::string comment = commentForVariable(addr, "read", i, nBytes);
             State::promote(currentState())->varComment(va->get_expression()->isLeafNode()->toString(), comment);

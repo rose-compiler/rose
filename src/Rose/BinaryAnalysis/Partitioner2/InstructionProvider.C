@@ -117,7 +117,7 @@ InstructionProvider::instructionAlignment() const {
     return disassembler_->instructionAlignment();
 }
 
-InstructionSemantics::BaseSemantics::DispatcherPtr
+InstructionSemantics::BaseSemantics::Dispatcher::Ptr
 InstructionProvider::dispatcher() const {
     return disassembler_->dispatcher();
 }

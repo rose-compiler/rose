@@ -119,9 +119,9 @@ main(int argc, char *argv[]) {
 #endif
 
     // Obtain an instruction semantics dispatcher if possible.
-    S2::BaseSemantics::DispatcherPtr cpu = disassembler->dispatcher();
+    S2::BaseSemantics::Dispatcher::Ptr cpu = disassembler->dispatcher();
     if (cpu) {
-        S2::BaseSemantics::RiscOperatorsPtr ops =
+        S2::BaseSemantics::RiscOperators::Ptr ops =
             S2::SymbolicSemantics::RiscOperators::instanceFromRegisters(disassembler->registerDictionary());
         cpu = cpu->create(ops, 0, RegisterDictionary::Ptr());
         mlog[INFO] <<"using symbolic semantics\n";

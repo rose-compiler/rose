@@ -21,59 +21,59 @@ SValue::init(const SValue &other)
     }
 }
 
-BaseSemantics::SValuePtr
+BaseSemantics::SValue::Ptr
 SValue::bottom_(size_t nbits) const {
-    SValuePtr retval = create_empty(nbits);
+    SValue::Ptr retval = create_empty(nbits);
     ASSERT_require(retval->subvalues.empty());
     for (size_t i=0; i<subvalues.size(); ++i)
-        retval->subvalues.push_back(subvalues[i]!=NULL ? subvalues[i]->bottom_(nbits) : BaseSemantics::SValuePtr());
+        retval->subvalues.push_back(subvalues[i]!=NULL ? subvalues[i]->bottom_(nbits) : BaseSemantics::SValue::Ptr());
     return retval;
 }
 
-BaseSemantics::SValuePtr
+BaseSemantics::SValue::Ptr
 SValue::undefined_(size_t nbits) const
 {
-    SValuePtr retval = create_empty(nbits);
+    SValue::Ptr retval = create_empty(nbits);
     ASSERT_require(retval->subvalues.empty());
     for (size_t i=0; i<subvalues.size(); ++i)
-        retval->subvalues.push_back(subvalues[i]!=NULL ? subvalues[i]->undefined_(nbits) : BaseSemantics::SValuePtr());
+        retval->subvalues.push_back(subvalues[i]!=NULL ? subvalues[i]->undefined_(nbits) : BaseSemantics::SValue::Ptr());
     return retval;
 }
 
-BaseSemantics::SValuePtr
+BaseSemantics::SValue::Ptr
 SValue::unspecified_(size_t nbits) const
 {
-    SValuePtr retval = create_empty(nbits);
+    SValue::Ptr retval = create_empty(nbits);
     ASSERT_require(retval->subvalues.empty());
     for (size_t i=0; i<subvalues.size(); ++i)
-        retval->subvalues.push_back(subvalues[i]!=NULL ? subvalues[i]->unspecified_(nbits) : BaseSemantics::SValuePtr());
+        retval->subvalues.push_back(subvalues[i]!=NULL ? subvalues[i]->unspecified_(nbits) : BaseSemantics::SValue::Ptr());
     return retval;
 }
 
-BaseSemantics::SValuePtr
+BaseSemantics::SValue::Ptr
 SValue::number_(size_t nbits, uint64_t number) const
 {
-    SValuePtr retval = create_empty(nbits);
+    SValue::Ptr retval = create_empty(nbits);
     ASSERT_require(retval->subvalues.empty());
     for (size_t i=0; i<subvalues.size(); ++i)
-        retval->subvalues.push_back(subvalues[i]!=NULL ? subvalues[i]->number_(nbits, number) : BaseSemantics::SValuePtr());
+        retval->subvalues.push_back(subvalues[i]!=NULL ? subvalues[i]->number_(nbits, number) : BaseSemantics::SValue::Ptr());
     return retval;
 }
 
-Sawyer::Optional<BaseSemantics::SValuePtr>
-SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, const BaseSemantics::MergerPtr &merger,
+Sawyer::Optional<BaseSemantics::SValue::Ptr>
+SValue::createOptionalMerge(const BaseSemantics::SValue::Ptr &other_, const BaseSemantics::Merger::Ptr &merger,
                             const SmtSolverPtr &solver) const {
-    SValuePtr other = SValue::promote(other_);
-    SValuePtr retval = create_empty(other->nBits());
+    SValue::Ptr other = SValue::promote(other_);
+    SValue::Ptr retval = create_empty(other->nBits());
     bool changed = false;
     for (size_t i=0; i<subvalues.size(); ++i) {
-        BaseSemantics::SValuePtr thisValue = subvalues[i];
-        BaseSemantics::SValuePtr otherValue = other->subvalues[i];
+        BaseSemantics::SValue::Ptr thisValue = subvalues[i];
+        BaseSemantics::SValue::Ptr otherValue = other->subvalues[i];
         if (otherValue) {
             if (thisValue==NULL) {
                 retval->subvalues.push_back(otherValue);
                 changed = true;
-            } else if (BaseSemantics::SValuePtr mergedValue =
+            } else if (BaseSemantics::SValue::Ptr mergedValue =
                        thisValue->createOptionalMerge(otherValue, merger, solver).orDefault()) {
                 changed = true;
                 retval->subvalues.push_back(mergedValue);
@@ -84,13 +84,13 @@ SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, const BaseSe
             retval->subvalues.push_back(thisValue);
         }
     }
-    return changed ? Sawyer::Optional<BaseSemantics::SValuePtr>(retval) : Sawyer::Nothing();
+    return changed ? Sawyer::Optional<BaseSemantics::SValue::Ptr>(retval) : Sawyer::Nothing();
 }
 
 bool
-SValue::may_equal(const BaseSemantics::SValuePtr &other_, const SmtSolverPtr &solver) const 
+SValue::may_equal(const BaseSemantics::SValue::Ptr &other_, const SmtSolverPtr &solver) const
 {
-    SValuePtr other = SValue::promote(other_);
+    SValue::Ptr other = SValue::promote(other_);
     for (size_t i=0; i<subvalues.size(); ++i) {
         if (is_valid(i) && other->is_valid(i) && get_subvalue(i)->mayEqual(other->get_subvalue(i), solver))
             return true;
@@ -99,9 +99,9 @@ SValue::may_equal(const BaseSemantics::SValuePtr &other_, const SmtSolverPtr &so
 }
 
 bool
-SValue::must_equal(const BaseSemantics::SValuePtr &other_, const SmtSolverPtr &solver) const
+SValue::must_equal(const BaseSemantics::SValue::Ptr &other_, const SmtSolverPtr &solver) const
 {
-    SValuePtr other = SValue::promote(other_);
+    SValue::Ptr other = SValue::promote(other_);
     size_t nconsidered = 0;
     for (size_t i=0; i<subvalues.size(); ++i) {
         if (is_valid(i) && other->is_valid(i)) {
@@ -163,7 +163,7 @@ SValue::get_number() const
 
 void
 SValue::hash(Combinatorics::Hasher &hasher) const {
-    for (const BaseSemantics::SValuePtr &subvalue: subvalues)
+    for (const BaseSemantics::SValue::Ptr &subvalue: subvalues)
         subvalue->hash(hasher);
 }
 
@@ -192,7 +192,7 @@ void
 SValue::invalidate(size_t idx)
 {
     if (idx<subvalues.size())
-        subvalues[idx] = BaseSemantics::SValuePtr();
+        subvalues[idx] = BaseSemantics::SValue::Ptr();
 }
 
 
@@ -202,7 +202,7 @@ SValue::invalidate(size_t idx)
  *******************************************************************************************************************************/
 
 void
-RiscOperators::Cursor::init(const SValuePtr &arg1, const SValuePtr &arg2, const SValuePtr &arg3)
+RiscOperators::Cursor::init(const SValue::Ptr &arg1, const SValue::Ptr &arg2, const SValue::Ptr &arg3)
 {
     ASSERT_require((arg1==NULL && arg2==NULL && arg3==NULL) ||
                    (arg1!=NULL && arg2==NULL && arg3==NULL) ||
@@ -226,8 +226,8 @@ RiscOperators::Cursor::init()
 }
 
 RiscOperators::Cursor::Inputs
-RiscOperators::Cursor::inputs(const BaseSemantics::SValuePtr &arg1, const BaseSemantics::SValuePtr &arg2,
-                              const BaseSemantics::SValuePtr &arg3)
+RiscOperators::Cursor::inputs(const BaseSemantics::SValue::Ptr &arg1, const BaseSemantics::SValue::Ptr &arg2,
+                              const BaseSemantics::SValue::Ptr &arg3)
 {
     ASSERT_require((arg1==NULL && arg2==NULL && arg3==NULL) ||
                    (arg1!=NULL && arg2==NULL && arg3==NULL) ||
@@ -266,22 +266,22 @@ RiscOperators::Cursor::idx() const
     return idx_;
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::Cursor::operator()(const BaseSemantics::SValuePtr &a_) const
+BaseSemantics::SValue::Ptr
+RiscOperators::Cursor::operator()(const BaseSemantics::SValue::Ptr &a_) const
 {
     ASSERT_require(!at_end());
-    SValuePtr a = SValue::promote(a_);
+    SValue::Ptr a = SValue::promote(a_);
     return a->get_subvalue(idx_);
 }
 
-BaseSemantics::RiscOperatorsPtr
+BaseSemantics::RiscOperators::Ptr
 RiscOperators::Cursor::operator->() const
 {
     ASSERT_require(!at_end());
     return ops_->get_subdomain(idx_);
 }
 
-BaseSemantics::RiscOperatorsPtr
+BaseSemantics::RiscOperators::Ptr
 RiscOperators::Cursor::operator*() const
 {
     ASSERT_require(!at_end());
@@ -330,7 +330,7 @@ RiscOperators::~RiscOperators() {}
 
 RiscOperators::Ptr
 RiscOperators::instanceFromRegisters(const RegisterDictionary::Ptr &regdict) {
-    BaseSemantics::SValuePtr protoval = SValue::instance();
+    BaseSemantics::SValue::Ptr protoval = SValue::instance();
     return Ptr(new RiscOperators(protoval, SmtSolver::Ptr()));
 }
 
@@ -354,16 +354,16 @@ RiscOperators::create(const BaseSemantics::State::Ptr &state, const SmtSolver::P
     return instanceFromState(state, solver);
 }
 
-RiscOperatorsPtr
-RiscOperators::promote(const BaseSemantics::RiscOperatorsPtr &ops)
+RiscOperators::Ptr
+RiscOperators::promote(const BaseSemantics::RiscOperators::Ptr &ops)
 {
-    RiscOperatorsPtr retval = boost::dynamic_pointer_cast<RiscOperators>(ops);
+    RiscOperators::Ptr retval = boost::dynamic_pointer_cast<RiscOperators>(ops);
     ASSERT_not_null(retval);
     return retval;
 }
 
 size_t
-RiscOperators::add_subdomain(const BaseSemantics::RiscOperatorsPtr &subdomain, const std::string &name, bool activate)
+RiscOperators::add_subdomain(const BaseSemantics::RiscOperators::Ptr &subdomain, const std::string &name, bool activate)
 {
     ASSERT_not_null(subdomain);
     size_t idx = subdomains.size();
@@ -376,11 +376,11 @@ RiscOperators::add_subdomain(const BaseSemantics::RiscOperatorsPtr &subdomain, c
     return idx;
 }
 
-BaseSemantics::RiscOperatorsPtr
+BaseSemantics::RiscOperators::Ptr
 RiscOperators::get_subdomain(size_t idx) const
 {
     if (idx>=subdomains.size())
-        return BaseSemantics::RiscOperatorsPtr();
+        return BaseSemantics::RiscOperators::Ptr();
     return subdomains[idx];
 }
 
@@ -419,212 +419,212 @@ RiscOperators::finishInstruction(SgAsmInstruction *insn)
     BaseSemantics::RiscOperators::finishInstruction(insn);
 }
 
-BaseSemantics::SValuePtr
+BaseSemantics::SValue::Ptr
 RiscOperators::undefined_(size_t nbits)
 {
-    SValuePtr retval = svalue_empty(nbits);
+    SValue::Ptr retval = svalue_empty(nbits);
     SUBDOMAINS(sd, ())
         retval->set_subvalue(sd.idx(), sd->undefined_(nbits));
     return retval;
 }
 
-BaseSemantics::SValuePtr
+BaseSemantics::SValue::Ptr
 RiscOperators::bottom_(size_t nbits)
 {
-    SValuePtr retval = svalue_empty(nbits);
+    SValue::Ptr retval = svalue_empty(nbits);
     SUBDOMAINS(sd, ())
         retval->set_subvalue(sd.idx(), sd->bottom_(nbits));
     return retval;
 }
 
-BaseSemantics::SValuePtr
+BaseSemantics::SValue::Ptr
 RiscOperators::unspecified_(size_t nbits)
 {
-    SValuePtr retval = svalue_empty(nbits);
+    SValue::Ptr retval = svalue_empty(nbits);
     SUBDOMAINS(sd, ())
         retval->set_subvalue(sd.idx(), sd->unspecified_(nbits));
     return retval;
 }
 
-BaseSemantics::SValuePtr
+BaseSemantics::SValue::Ptr
 RiscOperators::number_(size_t nbits, uint64_t value)
 {
-    SValuePtr retval = svalue_empty(nbits);
+    SValue::Ptr retval = svalue_empty(nbits);
     SUBDOMAINS(sd, ())
         retval->set_subvalue(sd.idx(), sd->number_(nbits, value));
     return retval;
 }
 
-BaseSemantics::SValuePtr
+BaseSemantics::SValue::Ptr
 RiscOperators::boolean_(bool value)
 {
-    SValuePtr retval = svalue_empty(1);
+    SValue::Ptr retval = svalue_empty(1);
     SUBDOMAINS(sd, ())
         retval->set_subvalue(sd.idx(), sd->boolean_(value));
     return retval;
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::filterCallTarget(const BaseSemantics::SValuePtr &a)
+BaseSemantics::SValue::Ptr
+RiscOperators::filterCallTarget(const BaseSemantics::SValue::Ptr &a)
 {
-    SValuePtr retval = svalue_empty(a->nBits());
+    SValue::Ptr retval = svalue_empty(a->nBits());
     SUBDOMAINS(sd, (a))
         retval->set_subvalue(sd.idx(), sd->filterCallTarget(sd(a)));
     return retval;
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::filterReturnTarget(const BaseSemantics::SValuePtr &a)
+BaseSemantics::SValue::Ptr
+RiscOperators::filterReturnTarget(const BaseSemantics::SValue::Ptr &a)
 {
-    SValuePtr retval = svalue_empty(a->nBits());
+    SValue::Ptr retval = svalue_empty(a->nBits());
     SUBDOMAINS(sd, (a))
         retval->set_subvalue(sd.idx(), sd->filterReturnTarget(sd(a)));
     return retval;
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::filterIndirectJumpTarget(const BaseSemantics::SValuePtr &a)
+BaseSemantics::SValue::Ptr
+RiscOperators::filterIndirectJumpTarget(const BaseSemantics::SValue::Ptr &a)
 {
-    SValuePtr retval = svalue_empty(a->nBits());
+    SValue::Ptr retval = svalue_empty(a->nBits());
     SUBDOMAINS(sd, (a))
         retval->set_subvalue(sd.idx(), sd->filterIndirectJumpTarget(sd(a)));
     return retval;
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::and_(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b)
+BaseSemantics::SValue::Ptr
+RiscOperators::and_(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b)
 {
-    SValuePtr retval = svalue_empty(a->nBits());
+    SValue::Ptr retval = svalue_empty(a->nBits());
     SUBDOMAINS(sd, (a, b))
         retval->set_subvalue(sd.idx(), sd->and_(sd(a), sd(b)));
     return retval;
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::or_(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b)
+BaseSemantics::SValue::Ptr
+RiscOperators::or_(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b)
 {
-    SValuePtr retval = svalue_empty(a->nBits());
+    SValue::Ptr retval = svalue_empty(a->nBits());
     SUBDOMAINS(sd, (a, b))
         retval->set_subvalue(sd.idx(), sd->or_(sd(a), sd(b)));
     return retval;
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::xor_(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b)
+BaseSemantics::SValue::Ptr
+RiscOperators::xor_(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b)
 {
-    SValuePtr retval = svalue_empty(a->nBits());
+    SValue::Ptr retval = svalue_empty(a->nBits());
     SUBDOMAINS(sd, (a, b))
         retval->set_subvalue(sd.idx(), sd->xor_(sd(a), sd(b)));
     return retval;
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::invert(const BaseSemantics::SValuePtr &a)
+BaseSemantics::SValue::Ptr
+RiscOperators::invert(const BaseSemantics::SValue::Ptr &a)
 {
-    SValuePtr retval = svalue_empty(a->nBits());
+    SValue::Ptr retval = svalue_empty(a->nBits());
     SUBDOMAINS(sd, (a))
         retval->set_subvalue(sd.idx(), sd->invert(sd(a)));
     return retval;
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::extract(const BaseSemantics::SValuePtr &a, size_t begin_bit, size_t end_bit)
+BaseSemantics::SValue::Ptr
+RiscOperators::extract(const BaseSemantics::SValue::Ptr &a, size_t begin_bit, size_t end_bit)
 {
     ASSERT_require(end_bit <= a->nBits());
     ASSERT_require(end_bit > begin_bit);
-    SValuePtr retval = svalue_empty(end_bit-begin_bit);
+    SValue::Ptr retval = svalue_empty(end_bit-begin_bit);
     SUBDOMAINS(sd, (a))
         retval->set_subvalue(sd.idx(), sd->extract(sd(a), begin_bit, end_bit));
     return retval;
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::concat(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b)
+BaseSemantics::SValue::Ptr
+RiscOperators::concat(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b)
 {
-    SValuePtr retval = svalue_empty(a->nBits() + b->nBits());
+    SValue::Ptr retval = svalue_empty(a->nBits() + b->nBits());
     SUBDOMAINS(sd, (a, b))
         retval->set_subvalue(sd.idx(), sd->concat(sd(a), sd(b)));
     return retval;
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::leastSignificantSetBit(const BaseSemantics::SValuePtr &a)
+BaseSemantics::SValue::Ptr
+RiscOperators::leastSignificantSetBit(const BaseSemantics::SValue::Ptr &a)
 {
-    SValuePtr retval = svalue_empty(a->nBits());
+    SValue::Ptr retval = svalue_empty(a->nBits());
     SUBDOMAINS(sd, (a))
         retval->set_subvalue(sd.idx(), sd->leastSignificantSetBit(sd(a)));
     return retval;
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::mostSignificantSetBit(const BaseSemantics::SValuePtr &a)
+BaseSemantics::SValue::Ptr
+RiscOperators::mostSignificantSetBit(const BaseSemantics::SValue::Ptr &a)
 {
-    SValuePtr retval = svalue_empty(a->nBits());
+    SValue::Ptr retval = svalue_empty(a->nBits());
     SUBDOMAINS(sd, (a))
         retval->set_subvalue(sd.idx(), sd->mostSignificantSetBit(sd(a)));
     return retval;
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::rotateLeft(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &nbits)
+BaseSemantics::SValue::Ptr
+RiscOperators::rotateLeft(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &nbits)
 {
-    SValuePtr retval = svalue_empty(a->nBits());
+    SValue::Ptr retval = svalue_empty(a->nBits());
     SUBDOMAINS(sd, (a, nbits))
         retval->set_subvalue(sd.idx(), sd->rotateLeft(sd(a), sd(nbits)));
     return retval;
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::rotateRight(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &nbits)
+BaseSemantics::SValue::Ptr
+RiscOperators::rotateRight(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &nbits)
 {
-    SValuePtr retval = svalue_empty(a->nBits());
+    SValue::Ptr retval = svalue_empty(a->nBits());
     SUBDOMAINS(sd, (a, nbits))
         retval->set_subvalue(sd.idx(), sd->rotateRight(sd(a), sd(nbits)));
     return retval;
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::shiftLeft(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &nbits)
+BaseSemantics::SValue::Ptr
+RiscOperators::shiftLeft(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &nbits)
 {
-    SValuePtr retval = svalue_empty(a->nBits());
+    SValue::Ptr retval = svalue_empty(a->nBits());
     SUBDOMAINS(sd, (a, nbits))
         retval->set_subvalue(sd.idx(), sd->shiftLeft(sd(a), sd(nbits)));
     return retval;
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::shiftRight(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &nbits)
+BaseSemantics::SValue::Ptr
+RiscOperators::shiftRight(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &nbits)
 {
-    SValuePtr retval = svalue_empty(a->nBits());
+    SValue::Ptr retval = svalue_empty(a->nBits());
     SUBDOMAINS(sd, (a, nbits))
         retval->set_subvalue(sd.idx(), sd->shiftRight(sd(a), sd(nbits)));
     return retval;
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::shiftRightArithmetic(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &nbits)
+BaseSemantics::SValue::Ptr
+RiscOperators::shiftRightArithmetic(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &nbits)
 {
-    SValuePtr retval = svalue_empty(a->nBits());
+    SValue::Ptr retval = svalue_empty(a->nBits());
     SUBDOMAINS(sd, (a, nbits))
         retval->set_subvalue(sd.idx(), sd->shiftRightArithmetic(sd(a), sd(nbits)));
     return retval;
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::equalToZero(const BaseSemantics::SValuePtr &a)
+BaseSemantics::SValue::Ptr
+RiscOperators::equalToZero(const BaseSemantics::SValue::Ptr &a)
 {
-    SValuePtr retval = svalue_empty(1);
+    SValue::Ptr retval = svalue_empty(1);
     SUBDOMAINS(sd, (a))
         retval->set_subvalue(sd.idx(), sd->equalToZero(sd(a)));
     return retval;
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::iteWithStatus(const BaseSemantics::SValuePtr &cond,
-                             const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b,
+BaseSemantics::SValue::Ptr
+RiscOperators::iteWithStatus(const BaseSemantics::SValue::Ptr &cond,
+                             const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b,
                              IteStatus &status)
 {
-    SValuePtr retval = svalue_empty(a->nBits());
+    SValue::Ptr retval = svalue_empty(a->nBits());
     unsigned mergedStatus = 0;
     SUBDOMAINS(sd, (cond, a, b)) {
         IteStatus s = IteStatus::NEITHER;
@@ -661,41 +661,41 @@ RiscOperators::iteWithStatus(const BaseSemantics::SValuePtr &cond,
     return retval;
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::unsignedExtend(const BaseSemantics::SValuePtr &a, size_t new_width)
+BaseSemantics::SValue::Ptr
+RiscOperators::unsignedExtend(const BaseSemantics::SValue::Ptr &a, size_t new_width)
 {
-    SValuePtr retval = svalue_empty(new_width);
+    SValue::Ptr retval = svalue_empty(new_width);
     SUBDOMAINS(sd, (a))
         retval->set_subvalue(sd.idx(), sd->unsignedExtend(sd(a), new_width));
     return retval;
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::signExtend(const BaseSemantics::SValuePtr &a, size_t new_width)
+BaseSemantics::SValue::Ptr
+RiscOperators::signExtend(const BaseSemantics::SValue::Ptr &a, size_t new_width)
 {
-    SValuePtr retval = svalue_empty(new_width);
+    SValue::Ptr retval = svalue_empty(new_width);
     SUBDOMAINS(sd, (a))
         retval->set_subvalue(sd.idx(), sd->signExtend(sd(a), new_width));
     return retval;
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::add(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b)
+BaseSemantics::SValue::Ptr
+RiscOperators::add(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b)
 {
-    SValuePtr retval = svalue_empty(a->nBits());
+    SValue::Ptr retval = svalue_empty(a->nBits());
     SUBDOMAINS(sd, (a, b))
         retval->set_subvalue(sd.idx(), sd->add(sd(a), sd(b)));
     return retval;
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::addWithCarries(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b,
-                              const BaseSemantics::SValuePtr &c, BaseSemantics::SValuePtr &carry_out_/*output*/)
+BaseSemantics::SValue::Ptr
+RiscOperators::addWithCarries(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b,
+                              const BaseSemantics::SValue::Ptr &c, BaseSemantics::SValue::Ptr &carry_out_/*output*/)
 {
-    SValuePtr retval = svalue_empty(a->nBits());
-    SValuePtr carry_out = svalue_empty(a->nBits());
+    SValue::Ptr retval = svalue_empty(a->nBits());
+    SValue::Ptr carry_out = svalue_empty(a->nBits());
     SUBDOMAINS(sd, (a, b, c)) {
-        BaseSemantics::SValuePtr co;
+        BaseSemantics::SValue::Ptr co;
         retval->set_subvalue(sd.idx(), sd->addWithCarries(sd(a), sd(b), sd(c), co/*out*/));
         carry_out->set_subvalue(sd.idx(), co);
     }
@@ -703,245 +703,245 @@ RiscOperators::addWithCarries(const BaseSemantics::SValuePtr &a, const BaseSeman
     return retval;
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::negate(const BaseSemantics::SValuePtr &a)
+BaseSemantics::SValue::Ptr
+RiscOperators::negate(const BaseSemantics::SValue::Ptr &a)
 {
-    SValuePtr retval = svalue_empty(a->nBits());
+    SValue::Ptr retval = svalue_empty(a->nBits());
     SUBDOMAINS(sd, (a))
         retval->set_subvalue(sd.idx(), sd->negate(sd(a)));
     return retval;
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::signedDivide(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b)
+BaseSemantics::SValue::Ptr
+RiscOperators::signedDivide(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b)
 {
-    SValuePtr retval = svalue_empty(a->nBits());
+    SValue::Ptr retval = svalue_empty(a->nBits());
     SUBDOMAINS(sd, (a, b))
         retval->set_subvalue(sd.idx(), sd->signedDivide(sd(a), sd(b)));
     return retval;
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::signedModulo(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b)
+BaseSemantics::SValue::Ptr
+RiscOperators::signedModulo(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b)
 {
-    SValuePtr retval = svalue_empty(b->nBits());
+    SValue::Ptr retval = svalue_empty(b->nBits());
     SUBDOMAINS(sd, (a, b))
         retval->set_subvalue(sd.idx(), sd->signedModulo(sd(a), sd(b)));
     return retval;
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::signedMultiply(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b)
+BaseSemantics::SValue::Ptr
+RiscOperators::signedMultiply(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b)
 {
-    SValuePtr retval = svalue_empty(a->nBits() + b->nBits());
+    SValue::Ptr retval = svalue_empty(a->nBits() + b->nBits());
     SUBDOMAINS(sd, (a, b))
         retval->set_subvalue(sd.idx(), sd->signedMultiply(sd(a), sd(b)));
     return retval;
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::unsignedDivide(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b)
+BaseSemantics::SValue::Ptr
+RiscOperators::unsignedDivide(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b)
 {
-    SValuePtr retval = svalue_empty(a->nBits());
+    SValue::Ptr retval = svalue_empty(a->nBits());
     SUBDOMAINS(sd, (a, b))
         retval->set_subvalue(sd.idx(), sd->unsignedDivide(sd(a), sd(b)));
     return retval;
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::unsignedModulo(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b)
+BaseSemantics::SValue::Ptr
+RiscOperators::unsignedModulo(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b)
 {
-    SValuePtr retval = svalue_empty(b->nBits());
+    SValue::Ptr retval = svalue_empty(b->nBits());
     SUBDOMAINS(sd, (a, b))
         retval->set_subvalue(sd.idx(), sd->unsignedModulo(sd(a), sd(b)));
     return retval;
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::unsignedMultiply(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b)
+BaseSemantics::SValue::Ptr
+RiscOperators::unsignedMultiply(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b)
 {
-    SValuePtr retval = svalue_empty(a->nBits() + b->nBits());
+    SValue::Ptr retval = svalue_empty(a->nBits() + b->nBits());
     SUBDOMAINS(sd, (a, b))
         retval->set_subvalue(sd.idx(), sd->unsignedMultiply(sd(a), sd(b)));
     return retval;
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::fpFromInteger(const BaseSemantics::SValuePtr &a, SgAsmFloatType *at) {
-    SValuePtr retval = svalue_empty(at->get_nBits());
+BaseSemantics::SValue::Ptr
+RiscOperators::fpFromInteger(const BaseSemantics::SValue::Ptr &a, SgAsmFloatType *at) {
+    SValue::Ptr retval = svalue_empty(at->get_nBits());
     SUBDOMAINS(sd, (a))
         retval->set_subvalue(sd.idx(), sd->fpFromInteger(sd(a), at));
     return retval;
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::fpToInteger(const BaseSemantics::SValuePtr &a, SgAsmFloatType *at, const BaseSemantics::SValuePtr &b) {
-    SValuePtr retval = svalue_empty(b->nBits());
+BaseSemantics::SValue::Ptr
+RiscOperators::fpToInteger(const BaseSemantics::SValue::Ptr &a, SgAsmFloatType *at, const BaseSemantics::SValue::Ptr &b) {
+    SValue::Ptr retval = svalue_empty(b->nBits());
     SUBDOMAINS(sd, (a, b))
         retval->set_subvalue(sd.idx(), sd->fpToInteger(sd(a), at, sd(b)));
     return retval;
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::fpConvert(const BaseSemantics::SValuePtr &a, SgAsmFloatType *at, SgAsmFloatType *bt) {
-    SValuePtr retval = svalue_empty(bt->get_nBits());
+BaseSemantics::SValue::Ptr
+RiscOperators::fpConvert(const BaseSemantics::SValue::Ptr &a, SgAsmFloatType *at, SgAsmFloatType *bt) {
+    SValue::Ptr retval = svalue_empty(bt->get_nBits());
     SUBDOMAINS(sd, (a))
         retval->set_subvalue(sd.idx(), sd->fpConvert(sd(a), at, bt));
     return retval;
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::fpIsNan(const BaseSemantics::SValuePtr &a, SgAsmFloatType *at) {
-    SValuePtr retval = svalue_empty(1);
+BaseSemantics::SValue::Ptr
+RiscOperators::fpIsNan(const BaseSemantics::SValue::Ptr &a, SgAsmFloatType *at) {
+    SValue::Ptr retval = svalue_empty(1);
     SUBDOMAINS(sd, (a))
         retval->set_subvalue(sd.idx(), sd->fpIsNan(sd(a), at));
     return retval;
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::fpIsDenormalized(const BaseSemantics::SValuePtr &a, SgAsmFloatType *at) {
-    SValuePtr retval = svalue_empty(1);
+BaseSemantics::SValue::Ptr
+RiscOperators::fpIsDenormalized(const BaseSemantics::SValue::Ptr &a, SgAsmFloatType *at) {
+    SValue::Ptr retval = svalue_empty(1);
     SUBDOMAINS(sd, (a))
         retval->set_subvalue(sd.idx(), sd->fpIsDenormalized(sd(a), at));
     return retval;
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::fpIsZero(const BaseSemantics::SValuePtr &a, SgAsmFloatType *at) {
-    SValuePtr retval = svalue_empty(1);
+BaseSemantics::SValue::Ptr
+RiscOperators::fpIsZero(const BaseSemantics::SValue::Ptr &a, SgAsmFloatType *at) {
+    SValue::Ptr retval = svalue_empty(1);
     SUBDOMAINS(sd, (a))
         retval->set_subvalue(sd.idx(), sd->fpIsZero(sd(a), at));
     return retval;
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::fpIsInfinity(const BaseSemantics::SValuePtr &a, SgAsmFloatType *at) {
-    SValuePtr retval = svalue_empty(1);
+BaseSemantics::SValue::Ptr
+RiscOperators::fpIsInfinity(const BaseSemantics::SValue::Ptr &a, SgAsmFloatType *at) {
+    SValue::Ptr retval = svalue_empty(1);
     SUBDOMAINS(sd, (a))
         retval->set_subvalue(sd.idx(), sd->fpIsInfinity(sd(a), at));
     return retval;
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::fpSign(const BaseSemantics::SValuePtr &a, SgAsmFloatType *at) {
-    SValuePtr retval = svalue_empty(1);
+BaseSemantics::SValue::Ptr
+RiscOperators::fpSign(const BaseSemantics::SValue::Ptr &a, SgAsmFloatType *at) {
+    SValue::Ptr retval = svalue_empty(1);
     SUBDOMAINS(sd, (a))
         retval->set_subvalue(sd.idx(), sd->fpSign(sd(a), at));
     return retval;
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::fpEffectiveExponent(const BaseSemantics::SValuePtr &a, SgAsmFloatType *at) {
-    SValuePtr retval = svalue_empty(at->exponentBits().size());
+BaseSemantics::SValue::Ptr
+RiscOperators::fpEffectiveExponent(const BaseSemantics::SValue::Ptr &a, SgAsmFloatType *at) {
+    SValue::Ptr retval = svalue_empty(at->exponentBits().size());
     SUBDOMAINS(sd, (a))
         retval->set_subvalue(sd.idx(), sd->fpEffectiveExponent(sd(a), at));
     return retval;
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::fpAdd(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b, SgAsmFloatType *abt) {
-    SValuePtr retval = svalue_empty(abt->get_nBits());
+BaseSemantics::SValue::Ptr
+RiscOperators::fpAdd(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b, SgAsmFloatType *abt) {
+    SValue::Ptr retval = svalue_empty(abt->get_nBits());
     SUBDOMAINS(sd, (a, b))
         retval->set_subvalue(sd.idx(), sd->fpAdd(sd(a), sd(b), abt));
     return retval;
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::fpSubtract(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b, SgAsmFloatType *abt) {
-    SValuePtr retval = svalue_empty(abt->get_nBits());
+BaseSemantics::SValue::Ptr
+RiscOperators::fpSubtract(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b, SgAsmFloatType *abt) {
+    SValue::Ptr retval = svalue_empty(abt->get_nBits());
     SUBDOMAINS(sd, (a, b))
         retval->set_subvalue(sd.idx(), sd->fpSubtract(sd(a), sd(b), abt));
     return retval;
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::fpMultiply(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b, SgAsmFloatType *abt) {
-    SValuePtr retval = svalue_empty(abt->get_nBits());
+BaseSemantics::SValue::Ptr
+RiscOperators::fpMultiply(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b, SgAsmFloatType *abt) {
+    SValue::Ptr retval = svalue_empty(abt->get_nBits());
     SUBDOMAINS(sd, (a, b))
         retval->set_subvalue(sd.idx(), sd->fpMultiply(sd(a), sd(b), abt));
     return retval;
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::fpDivide(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b, SgAsmFloatType *abt) {
-    SValuePtr retval = svalue_empty(abt->get_nBits());
+BaseSemantics::SValue::Ptr
+RiscOperators::fpDivide(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b, SgAsmFloatType *abt) {
+    SValue::Ptr retval = svalue_empty(abt->get_nBits());
     SUBDOMAINS(sd, (a, b))
         retval->set_subvalue(sd.idx(), sd->fpDivide(sd(a), sd(b), abt));
     return retval;
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::fpSquareRoot(const BaseSemantics::SValuePtr &a, SgAsmFloatType *at) {
-    SValuePtr retval = svalue_empty(at->get_nBits());
+BaseSemantics::SValue::Ptr
+RiscOperators::fpSquareRoot(const BaseSemantics::SValue::Ptr &a, SgAsmFloatType *at) {
+    SValue::Ptr retval = svalue_empty(at->get_nBits());
     SUBDOMAINS(sd, (a))
         retval->set_subvalue(sd.idx(), sd->fpSquareRoot(sd(a), at));
     return retval;
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::fpRoundTowardZero(const BaseSemantics::SValuePtr &a, SgAsmFloatType *at) {
-    SValuePtr retval = svalue_empty(at->get_nBits());
+BaseSemantics::SValue::Ptr
+RiscOperators::fpRoundTowardZero(const BaseSemantics::SValue::Ptr &a, SgAsmFloatType *at) {
+    SValue::Ptr retval = svalue_empty(at->get_nBits());
     SUBDOMAINS(sd, (a))
         retval->set_subvalue(sd.idx(), sd->fpRoundTowardZero(sd(a), at));
     return retval;
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::reinterpret(const BaseSemantics::SValuePtr &a, SgAsmType *type) {
-    SValuePtr retval = svalue_empty(type->get_nBits());
+BaseSemantics::SValue::Ptr
+RiscOperators::reinterpret(const BaseSemantics::SValue::Ptr &a, SgAsmType *type) {
+    SValue::Ptr retval = svalue_empty(type->get_nBits());
     SUBDOMAINS(sd, (a))
         retval->set_subvalue(sd.idx(), sd->reinterpret(sd(a), type));
     return retval;
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::readRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &dflt)
+BaseSemantics::SValue::Ptr
+RiscOperators::readRegister(RegisterDescriptor reg, const BaseSemantics::SValue::Ptr &dflt)
 {
-    SValuePtr retval = svalue_empty(reg.nBits());
+    SValue::Ptr retval = svalue_empty(reg.nBits());
     SUBDOMAINS(sd, ())
         retval->set_subvalue(sd.idx(), sd->readRegister(reg, sd(dflt)));
     return retval;
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::peekRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &dflt)
+BaseSemantics::SValue::Ptr
+RiscOperators::peekRegister(RegisterDescriptor reg, const BaseSemantics::SValue::Ptr &dflt)
 {
-    SValuePtr retval = svalue_empty(reg.nBits());
+    SValue::Ptr retval = svalue_empty(reg.nBits());
     SUBDOMAINS(sd, ())
         retval->set_subvalue(sd.idx(), sd->peekRegister(reg, sd(dflt)));
     return retval;
 }
 
 void
-RiscOperators::writeRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &a)
+RiscOperators::writeRegister(RegisterDescriptor reg, const BaseSemantics::SValue::Ptr &a)
 {
     SUBDOMAINS(sd, (a))
         sd->writeRegister(reg, sd(a));
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr,
-                          const BaseSemantics::SValuePtr &dflt, const BaseSemantics::SValuePtr &cond)
+BaseSemantics::SValue::Ptr
+RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValue::Ptr &addr,
+                          const BaseSemantics::SValue::Ptr &dflt, const BaseSemantics::SValue::Ptr &cond)
 {
-    SValuePtr retval = svalue_empty(dflt->nBits());
+    SValue::Ptr retval = svalue_empty(dflt->nBits());
     SUBDOMAINS(sd, (addr, cond))
         retval->set_subvalue(sd.idx(), sd->readMemory(segreg, sd(addr), sd(dflt), sd(cond)));
     return retval;
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::peekMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr,
-                          const BaseSemantics::SValuePtr &dflt)
+BaseSemantics::SValue::Ptr
+RiscOperators::peekMemory(RegisterDescriptor segreg, const BaseSemantics::SValue::Ptr &addr,
+                          const BaseSemantics::SValue::Ptr &dflt)
 {
-    SValuePtr retval = svalue_empty(dflt->nBits());
+    SValue::Ptr retval = svalue_empty(dflt->nBits());
     SUBDOMAINS(sd, (addr))
         retval->set_subvalue(sd.idx(), sd->peekMemory(segreg, sd(addr), sd(dflt)));
     return retval;
 }
 
 void
-RiscOperators::writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr,
-                           const BaseSemantics::SValuePtr &data, const BaseSemantics::SValuePtr &cond)
+RiscOperators::writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValue::Ptr &addr,
+                           const BaseSemantics::SValue::Ptr &data, const BaseSemantics::SValue::Ptr &cond)
 {
     SUBDOMAINS(sd, (addr, data, cond))
         sd->writeMemory(segreg, sd(addr), sd(data), cond);

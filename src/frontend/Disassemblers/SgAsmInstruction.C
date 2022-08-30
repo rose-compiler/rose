@@ -145,7 +145,7 @@ buildNopAnalyzer(SgAsmInterpretation *interp) {
             InstructionSemantics::mlog[WARN] <<"SgAsmInstruction::buildDispatcher: no binary interpretation\n";
             emitted = true;
         }
-        return NoOperation(BaseSemantics::DispatcherPtr());
+        return NoOperation(BaseSemantics::Dispatcher::Ptr());
     }
 
     Disassembler::Base::Ptr disassembler = Disassembler::lookup(interp);

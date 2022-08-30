@@ -34,9 +34,9 @@ static inline size_t asm_type_width(SgAsmType* ty) {
 namespace X86 {
 
 void
-InsnProcessor::process(const BaseSemantics::DispatcherPtr &dispatcher_, SgAsmInstruction *insn_) {
+InsnProcessor::process(const BaseSemantics::Dispatcher::Ptr &dispatcher_, SgAsmInstruction *insn_) {
     DispatcherX86Ptr dispatcher = DispatcherX86::promote(dispatcher_);
-    BaseSemantics::RiscOperatorsPtr operators = dispatcher->operators();
+    BaseSemantics::RiscOperators::Ptr operators = dispatcher->operators();
     SgAsmX86Instruction *insn = isSgAsmX86Instruction(insn_);
     ASSERT_require(insn!=NULL && insn==operators->currentInstruction());
     dispatcher->advanceInstructionPointer(insn);
@@ -105,8 +105,8 @@ struct IP_aaa: P {
             if (insn->get_lockPrefix()) {
                 ops->interrupt(x86_exception_ud, 0);
             } else {
-                BaseSemantics::SValuePtr nybble = ops->extract(d->readRegister(d->REG_AL), 0, 4);
-                BaseSemantics::SValuePtr incAh = ops->or_(d->readRegister(d->REG_AF), d->greaterOrEqualToTen(nybble));
+                BaseSemantics::SValue::Ptr nybble = ops->extract(d->readRegister(d->REG_AL), 0, 4);
+                BaseSemantics::SValue::Ptr incAh = ops->or_(d->readRegister(d->REG_AF), d->greaterOrEqualToTen(nybble));
                 d->writeRegister(d->REG_AX, 
                                  ops->concat(ops->add(ops->ite(incAh, ops->number_(4, 6), ops->number_(4, 0)),
                                                       ops->extract(d->readRegister(d->REG_AL), 0, 4)),
@@ -137,10 +137,10 @@ struct IP_aad: P {
             if (insn->get_lockPrefix()) {
                 ops->interrupt(x86_exception_ud, 0);
             } else {
-                BaseSemantics::SValuePtr al = d->readRegister(d->REG_AL);
-                BaseSemantics::SValuePtr ah = d->readRegister(d->REG_AH);
-                BaseSemantics::SValuePtr divisor = d->read(args[0], 8);
-                BaseSemantics::SValuePtr newAl = ops->add(al, ops->extract(ops->unsignedMultiply(ah, divisor), 0, 8));
+                BaseSemantics::SValue::Ptr al = d->readRegister(d->REG_AL);
+                BaseSemantics::SValue::Ptr ah = d->readRegister(d->REG_AH);
+                BaseSemantics::SValue::Ptr divisor = d->read(args[0], 8);
+                BaseSemantics::SValue::Ptr newAl = ops->add(al, ops->extract(ops->unsignedMultiply(ah, divisor), 0, 8));
                 d->writeRegister(d->REG_AX, ops->concat(newAl, ops->number_(8, 0)));
                 d->writeRegister(d->REG_OF, ops->unspecified_(1));
                 d->writeRegister(d->REG_AF, ops->unspecified_(1));
@@ -163,15 +163,15 @@ struct IP_aam: P {
         if (d->processorMode() == x86_insnsize_16) {
             throw BaseSemantics::Exception("16-bit processor not implemented", insn);
         } else if (d->processorMode() == x86_insnsize_32) {
-            BaseSemantics::SValuePtr divisor = d->read(args[0], 8);
+            BaseSemantics::SValue::Ptr divisor = d->read(args[0], 8);
             if (insn->get_lockPrefix()) {
                 ops->interrupt(x86_exception_ud, 0);
             } else if (divisor->toUnsigned().isEqual(0)) {
                 ops->interrupt(x86_exception_de, 0);
             } else {
-                BaseSemantics::SValuePtr al = d->readRegister(d->REG_AL);
-                BaseSemantics::SValuePtr newAh = ops->unsignedDivide(al, divisor);
-                BaseSemantics::SValuePtr newAl = ops->unsignedModulo(al, divisor);
+                BaseSemantics::SValue::Ptr al = d->readRegister(d->REG_AL);
+                BaseSemantics::SValue::Ptr newAh = ops->unsignedDivide(al, divisor);
+                BaseSemantics::SValue::Ptr newAl = ops->unsignedModulo(al, divisor);
                 d->writeRegister(d->REG_AX, ops->concat(newAl, newAh));
                 d->writeRegister(d->REG_OF, ops->unspecified_(1));
                 d->writeRegister(d->REG_AF, ops->unspecified_(1));
@@ -195,15 +195,15 @@ struct IP_aas: P {
             if (insn->get_lockPrefix()) {
                 ops->interrupt(x86_exception_ud, 0);
             } else {
-                BaseSemantics::SValuePtr nybble = ops->extract(d->readRegister(d->REG_AL), 0, 4);
-                BaseSemantics::SValuePtr nybbleGte10 = d->greaterOrEqualToTen(nybble);
-                BaseSemantics::SValuePtr decAh = ops->or_(d->readRegister(d->REG_AF), nybbleGte10);
-                BaseSemantics::SValuePtr ah = d->readRegister(d->REG_AH);
-                BaseSemantics::SValuePtr zero8 = ops->number_(8, 0);
-                BaseSemantics::SValuePtr newAh = ops->add(ops->ite(decAh, ops->number_(8, -1), zero8), ah);
-                BaseSemantics::SValuePtr newAhWide = ops->concat(ops->number_(4, 0), newAh);
-                BaseSemantics::SValuePtr alNarrow = ops->extract(d->readRegister(d->REG_AL), 0, 4);
-                BaseSemantics::SValuePtr zero4 = ops->number_(4, 0);
+                BaseSemantics::SValue::Ptr nybble = ops->extract(d->readRegister(d->REG_AL), 0, 4);
+                BaseSemantics::SValue::Ptr nybbleGte10 = d->greaterOrEqualToTen(nybble);
+                BaseSemantics::SValue::Ptr decAh = ops->or_(d->readRegister(d->REG_AF), nybbleGte10);
+                BaseSemantics::SValue::Ptr ah = d->readRegister(d->REG_AH);
+                BaseSemantics::SValue::Ptr zero8 = ops->number_(8, 0);
+                BaseSemantics::SValue::Ptr newAh = ops->add(ops->ite(decAh, ops->number_(8, -1), zero8), ah);
+                BaseSemantics::SValue::Ptr newAhWide = ops->concat(ops->number_(4, 0), newAh);
+                BaseSemantics::SValue::Ptr alNarrow = ops->extract(d->readRegister(d->REG_AL), 0, 4);
+                BaseSemantics::SValue::Ptr zero4 = ops->number_(4, 0);
 
                 d->writeRegister(d->REG_AX, 
                                  ops->concat(ops->add(ops->ite(decAh, ops->number_(4, -6), zero4), alNarrow),
@@ -229,9 +229,9 @@ struct IP_adc: P {
         if (insn->get_lockPrefix() && !isSgAsmMemoryReferenceExpression(args[0])) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr cf = d->readRegister(d->REG_CF);
-            BaseSemantics::SValuePtr arg1 = d->read(args[1]);
-            BaseSemantics::SValuePtr result = d->doAddOperation(d->read(args[0]), arg1, false, cf);
+            BaseSemantics::SValue::Ptr cf = d->readRegister(d->REG_CF);
+            BaseSemantics::SValue::Ptr arg1 = d->read(args[1]);
+            BaseSemantics::SValue::Ptr result = d->doAddOperation(d->read(args[0]), arg1, false, cf);
             d->write(args[0], result);
         }
     }
@@ -244,9 +244,9 @@ struct IP_add: P {
         if (insn->get_lockPrefix() && !isSgAsmMemoryReferenceExpression(args[0])) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr no = ops->boolean_(false);
-            BaseSemantics::SValuePtr arg1 = d->read(args[1]);
-            BaseSemantics::SValuePtr result = d->doAddOperation(d->read(args[0]), arg1, false, no);
+            BaseSemantics::SValue::Ptr no = ops->boolean_(false);
+            BaseSemantics::SValue::Ptr arg1 = d->read(args[1]);
+            BaseSemantics::SValue::Ptr result = d->doAddOperation(d->read(args[0]), arg1, false, no);
             d->write(args[0], result);
         }
     }
@@ -259,11 +259,11 @@ struct IP_and: P {
         if (insn->get_lockPrefix() && !isSgAsmMemoryReferenceExpression(args[0])) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr a = d->read(args[0]);
-            BaseSemantics::SValuePtr b = d->read(args[1]);
+            BaseSemantics::SValue::Ptr a = d->read(args[0]);
+            BaseSemantics::SValue::Ptr b = d->read(args[1]);
             if (b->nBits() < a->nBits())
                 b = ops->signExtend(b, a->nBits());
-            BaseSemantics::SValuePtr result = ops->and_(a, b);
+            BaseSemantics::SValue::Ptr result = ops->and_(a, b);
             d->setFlagsForResult(result);
             d->write(args[0], result);
             d->writeRegister(d->REG_OF, ops->boolean_(false));
@@ -290,17 +290,17 @@ struct IP_bitscan: P {
             d->writeRegister(d->REG_PF, ops->unspecified_(1));
             d->writeRegister(d->REG_CF, ops->unspecified_(1));
             size_t nbits = asm_type_width(args[0]->get_type());
-            BaseSemantics::SValuePtr src = d->read(args[1], nbits);
-            BaseSemantics::SValuePtr isZero = ops->equalToZero(src);
+            BaseSemantics::SValue::Ptr src = d->read(args[1], nbits);
+            BaseSemantics::SValue::Ptr isZero = ops->equalToZero(src);
             d->writeRegister(d->REG_ZF, isZero);
-            BaseSemantics::SValuePtr bitno;
+            BaseSemantics::SValue::Ptr bitno;
             ASSERT_require(insn->get_kind()==kind);
             switch (kind) {
                 case x86_bsf: bitno = ops->leastSignificantSetBit(src); break;
                 case x86_bsr: bitno = ops->mostSignificantSetBit(src); break;
                 default: ASSERT_not_reachable("instruction kind not handled");
             }
-            BaseSemantics::SValuePtr result = ops->ite(isZero, ops->unspecified_(nbits), bitno);
+            BaseSemantics::SValue::Ptr result = ops->ite(isZero, ops->unspecified_(nbits), bitno);
             d->write(args[0], result);
         }
     }
@@ -319,8 +319,8 @@ struct IP_bittest: P {
             ops->interrupt(x86_exception_ud, 0);
         } else if (SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(args[0])) {
             const size_t addrSize = d->REG_anyIP.nBits();
-            BaseSemantics::SValuePtr bitBase = ops->unsignedExtend(d->effectiveAddress(mre), addrSize);
-            BaseSemantics::SValuePtr bitOffset = ops->signExtend(d->read(args[1]), addrSize);
+            BaseSemantics::SValue::Ptr bitBase = ops->unsignedExtend(d->effectiveAddress(mre), addrSize);
+            BaseSemantics::SValue::Ptr bitOffset = ops->signExtend(d->read(args[1]), addrSize);
 
             // Byte offset from bitBase address is signed. If negative, the bit is at the previous memory address. E.g.:
             //   if bitBase==100 && bitOffset==+13 then cf = mem[101] & (1<<5);
@@ -328,19 +328,19 @@ struct IP_bittest: P {
             // Notice that the bit offset within a byte is always positive (i.e., |bitOffset|%8) and that in the second
             // example (for bitOffset==-13) the bit offset within the memory byte is 5, not 3.  This information comes from
             // the Intel Instruction Set Reference and has not been tested by us. [Robb P. Matzke 2015-02-24]
-            BaseSemantics::SValuePtr byteOffset = ops->shiftRightArithmetic(bitOffset, ops->number_(8, 3));
-            BaseSemantics::SValuePtr addr = d->fixMemoryAddress(ops->add(bitBase, byteOffset));
-            BaseSemantics::SValuePtr yes = ops->boolean_(true);
-            BaseSemantics::SValuePtr undefA = ops->undefined_(8);
-            BaseSemantics::SValuePtr fixedAddr = d->fixMemoryAddress(addr);
-            BaseSemantics::SValuePtr byte = ops->readMemory(d->segmentRegister(mre), fixedAddr, undefA, yes);
-            BaseSemantics::SValuePtr offsetA = ops->extract(bitOffset, 0, 3); // for positive bitOffset
-            BaseSemantics::SValuePtr offsetB = ops->extract(ops->negate(bitOffset), 0, 3); // for negative bitOffset
+            BaseSemantics::SValue::Ptr byteOffset = ops->shiftRightArithmetic(bitOffset, ops->number_(8, 3));
+            BaseSemantics::SValue::Ptr addr = d->fixMemoryAddress(ops->add(bitBase, byteOffset));
+            BaseSemantics::SValue::Ptr yes = ops->boolean_(true);
+            BaseSemantics::SValue::Ptr undefA = ops->undefined_(8);
+            BaseSemantics::SValue::Ptr fixedAddr = d->fixMemoryAddress(addr);
+            BaseSemantics::SValue::Ptr byte = ops->readMemory(d->segmentRegister(mre), fixedAddr, undefA, yes);
+            BaseSemantics::SValue::Ptr offsetA = ops->extract(bitOffset, 0, 3); // for positive bitOffset
+            BaseSemantics::SValue::Ptr offsetB = ops->extract(ops->negate(bitOffset), 0, 3); // for negative bitOffset
             
-            BaseSemantics::SValuePtr shiftAmount =
+            BaseSemantics::SValue::Ptr shiftAmount =
                 ops->ite(ops->extract(bitOffset, bitOffset->nBits()-1, bitOffset->nBits()),
                          offsetB, offsetA);
-            BaseSemantics::SValuePtr bit = ops->extract(ops->shiftRight(byte, shiftAmount), 0, 1);
+            BaseSemantics::SValue::Ptr bit = ops->extract(ops->shiftRight(byte, shiftAmount), 0, 1);
             switch (kind) {
                 case x86_bt:                            // test only
                     break;
@@ -366,8 +366,8 @@ struct IP_bittest: P {
             d->writeRegister(d->REG_AF, ops->unspecified_(1));
             d->writeRegister(d->REG_PF, ops->unspecified_(1));
         } else {
-            BaseSemantics::SValuePtr bits = d->read(args[0]);
-            BaseSemantics::SValuePtr bitOffset = d->read(args[1]);
+            BaseSemantics::SValue::Ptr bits = d->read(args[0]);
+            BaseSemantics::SValue::Ptr bitOffset = d->read(args[1]);
             size_t log2modulo;
             switch (bits->nBits()) {
                 case 16: log2modulo = 4; break;
@@ -376,8 +376,8 @@ struct IP_bittest: P {
                 default: ASSERT_not_reachable("invalid width for first operand");
             }
             ASSERT_require(bitOffset->nBits() >= log2modulo);
-            BaseSemantics::SValuePtr shiftAmount = ops->extract(bitOffset, 0, log2modulo);
-            BaseSemantics::SValuePtr bit = ops->extract(ops->shiftRight(bits, shiftAmount), 0, 1);
+            BaseSemantics::SValue::Ptr shiftAmount = ops->extract(bitOffset, 0, log2modulo);
+            BaseSemantics::SValue::Ptr bit = ops->extract(ops->shiftRight(bits, shiftAmount), 0, 1);
             switch (kind) {
                 case x86_bt:                            // test only
                     break;
@@ -418,8 +418,8 @@ struct IP_bswap: P {
             // undefined".
             d->write(args[0], ops->unspecified_(16));
         } else {
-            BaseSemantics::SValuePtr op0 = d->read(args[0], nbits);
-            BaseSemantics::SValuePtr result = ops->extract(op0, 0, 8);
+            BaseSemantics::SValue::Ptr op0 = d->read(args[0], nbits);
+            BaseSemantics::SValue::Ptr result = ops->extract(op0, 0, 8);
             for (size_t startbit=8; startbit<nbits; startbit+=8)
                 result = ops->concat(ops->extract(op0, startbit, startbit+8), result);
             d->write(args[0], result);
@@ -434,14 +434,14 @@ struct IP_call: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr targetVa = ops->unsignedExtend(d->read(args[0]), d->REG_anyIP.nBits());
+            BaseSemantics::SValue::Ptr targetVa = ops->unsignedExtend(d->read(args[0]), d->REG_anyIP.nBits());
             
             // Push return address onto stack
             size_t nBytesPush = d->REG_anyIP.nBits() >> 3;
-            BaseSemantics::SValuePtr oldSp = d->readRegister(d->REG_anySP);
-            BaseSemantics::SValuePtr newSp = ops->add(oldSp, ops->number_(d->REG_anySP.nBits(), -nBytesPush));
-            BaseSemantics::SValuePtr yes = ops->boolean_(true);
-            BaseSemantics::SValuePtr ip = d->readRegister(d->REG_anyIP);
+            BaseSemantics::SValue::Ptr oldSp = d->readRegister(d->REG_anySP);
+            BaseSemantics::SValue::Ptr newSp = ops->add(oldSp, ops->number_(d->REG_anySP.nBits(), -nBytesPush));
+            BaseSemantics::SValue::Ptr yes = ops->boolean_(true);
+            BaseSemantics::SValue::Ptr ip = d->readRegister(d->REG_anyIP);
             ops->writeMemory(d->REG_SS, d->fixMemoryAddress(newSp), ip, yes);
             d->writeRegister(d->REG_anySP, newSp);;
             
@@ -551,8 +551,8 @@ struct IP_cmovcc: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr arg0 = d->read(args[0]);
-            BaseSemantics::SValuePtr arg1 = d->read(args[1]);
+            BaseSemantics::SValue::Ptr arg0 = d->read(args[0]);
+            BaseSemantics::SValue::Ptr arg1 = d->read(args[1]);
             d->write(args[0], ops->ite(d->flagsCombo(kind), arg1, arg0));
         }
     }
@@ -565,14 +565,14 @@ struct IP_cmp: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr a = d->read(args[0]);
-            BaseSemantics::SValuePtr b = d->read(args[1]);
+            BaseSemantics::SValue::Ptr a = d->read(args[0]);
+            BaseSemantics::SValue::Ptr b = d->read(args[1]);
             if (b->nBits() < a->nBits())
                 b = ops->signExtend(b, a->nBits());
             ASSERT_require(a->nBits() == b->nBits());
 
             // Compute a-b for its status register side effects
-            BaseSemantics::SValuePtr no = ops->boolean_(false);
+            BaseSemantics::SValue::Ptr no = ops->boolean_(false);
             (void) d->doAddOperation(a, ops->invert(b), true, no);
         }
     }
@@ -598,7 +598,7 @@ struct IP_cmpstrings: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr inLoop = d->repEnter(repeat);
+            BaseSemantics::SValue::Ptr inLoop = d->repEnter(repeat);
 
             // Get the addresses for the two values to read and compare.
             RegisterDescriptor reg1, reg2;
@@ -620,8 +620,8 @@ struct IP_cmpstrings: P {
             }
             ASSERT_forbid(reg1.isEmpty());
             ASSERT_forbid(reg2.isEmpty());
-            BaseSemantics::SValuePtr addr1 = d->readRegister(reg1);
-            BaseSemantics::SValuePtr addr2 = d->readRegister(reg2);
+            BaseSemantics::SValue::Ptr addr1 = d->readRegister(reg1);
+            BaseSemantics::SValue::Ptr addr2 = d->readRegister(reg2);
 
             // Adjust address width depending on how memory is accessed. All addresses in memory have the same width.
             addr1 = d->fixMemoryAddress(addr1);
@@ -632,20 +632,20 @@ struct IP_cmpstrings: P {
             RegisterDescriptor sr(x86_regclass_segment,
                                   insn->get_segmentOverride()!=x86_segreg_none ? insn->get_segmentOverride() : x86_segreg_ds,
                                   0, 16);
-            BaseSemantics::SValuePtr val1 = ops->readMemory(sr, addr1, ops->undefined_(nbits), inLoop);
-            BaseSemantics::SValuePtr val2 = ops->readMemory(d->REG_ES, addr2, ops->undefined_(nbits), inLoop);
+            BaseSemantics::SValue::Ptr val1 = ops->readMemory(sr, addr1, ops->undefined_(nbits), inLoop);
+            BaseSemantics::SValue::Ptr val2 = ops->readMemory(d->REG_ES, addr2, ops->undefined_(nbits), inLoop);
 
             // Compare values and set status flags.
-            BaseSemantics::SValuePtr no = ops->boolean_(false);
+            BaseSemantics::SValue::Ptr no = ops->boolean_(false);
             (void) d->doAddOperation(val1, ops->invert(val2), true, no, inLoop);
 
             // Adjust the address registers
-            BaseSemantics::SValuePtr positiveNBytes = ops->number_(reg1.nBits(), +nbytes);
-            BaseSemantics::SValuePtr negativeNBytes = ops->number_(reg1.nBits(), -nbytes);
-            BaseSemantics::SValuePtr step = ops->ite(d->readRegister(d->REG_DF), negativeNBytes, positiveNBytes);
-            BaseSemantics::SValuePtr reg1val = d->readRegister(reg1);
+            BaseSemantics::SValue::Ptr positiveNBytes = ops->number_(reg1.nBits(), +nbytes);
+            BaseSemantics::SValue::Ptr negativeNBytes = ops->number_(reg1.nBits(), -nbytes);
+            BaseSemantics::SValue::Ptr step = ops->ite(d->readRegister(d->REG_DF), negativeNBytes, positiveNBytes);
+            BaseSemantics::SValue::Ptr reg1val = d->readRegister(reg1);
             d->writeRegister(reg1, ops->ite(inLoop, ops->add(d->readRegister(reg1), step), reg1val));
-            BaseSemantics::SValuePtr reg2val = d->readRegister(reg2);
+            BaseSemantics::SValue::Ptr reg2val = d->readRegister(reg2);
             d->writeRegister(reg2, ops->ite(inLoop, ops->add(d->readRegister(reg2), step), reg2val));
 
             // Adjust instruction pointer register to either repeat the instruction or fall through
@@ -664,13 +664,13 @@ struct IP_cmpxchg: P {
         } else {
             size_t nbits = asm_type_width(args[0]->get_type());
             ASSERT_require(asm_type_width(args[1]->get_type()) == nbits);
-            BaseSemantics::SValuePtr op0 = d->read(args[0]);
+            BaseSemantics::SValue::Ptr op0 = d->read(args[0]);
             RegisterDescriptor A = d->REG_AX;
             A.nBits(nbits);
-            BaseSemantics::SValuePtr oldA = d->readRegister(A);
-            BaseSemantics::SValuePtr no = ops->boolean_(false);
+            BaseSemantics::SValue::Ptr oldA = d->readRegister(A);
+            BaseSemantics::SValue::Ptr no = ops->boolean_(false);
             (void) d->doAddOperation(oldA, ops->invert(op0), true, no);
-            BaseSemantics::SValuePtr zf = d->readRegister(d->REG_ZF);
+            BaseSemantics::SValue::Ptr zf = d->readRegister(d->REG_ZF);
             d->write(args[0], ops->ite(zf, d->read(args[1]), op0));
             d->writeRegister(A, ops->ite(zf, oldA, op0));
         }
@@ -686,27 +686,27 @@ struct IP_cmpxchg2: P {
         if (!isSgAsmMemoryReferenceExpression(args[0])) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr a = d->read(args[0]);
-            BaseSemantics::SValuePtr b, c;
+            BaseSemantics::SValue::Ptr a = d->read(args[0]);
+            BaseSemantics::SValue::Ptr b, c;
             switch (a->nBits()) {
                 case 64: {
-                    BaseSemantics::SValuePtr edx = d->readRegister(d->REG_EDX);
+                    BaseSemantics::SValue::Ptr edx = d->readRegister(d->REG_EDX);
                     b = ops->concat(d->readRegister(d->REG_EAX), edx);
-                    BaseSemantics::SValuePtr ecx = d->readRegister(d->REG_ECX);
+                    BaseSemantics::SValue::Ptr ecx = d->readRegister(d->REG_ECX);
                     c = ops->concat(d->readRegister(d->REG_EBX), ecx);
                     break;
                 }
                 case 128: {
-                    BaseSemantics::SValuePtr rdx = d->readRegister(d->REG_RDX);
+                    BaseSemantics::SValue::Ptr rdx = d->readRegister(d->REG_RDX);
                     b = ops->concat(d->readRegister(d->REG_RAX), rdx);
-                    BaseSemantics::SValuePtr rcx = d->readRegister(d->REG_RCX);
+                    BaseSemantics::SValue::Ptr rcx = d->readRegister(d->REG_RCX);
                     c = ops->concat(d->readRegister(d->REG_RBX), rcx);
                     break;
                 }
                 default:
                     ASSERT_not_reachable("invalid operand width for CMPXCHG8B instruction");
             }
-            BaseSemantics::SValuePtr eq = ops->isEqual(a, b);
+            BaseSemantics::SValue::Ptr eq = ops->isEqual(a, b);
             d->writeRegister(d->REG_ZF, eq);
             d->write(args[0], ops->ite(eq, c, a));
         }
@@ -756,10 +756,10 @@ struct IP_cvtsi2sd: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr integer = d->read(args[1]);
-            BaseSemantics::SValuePtr fp = ops->fpFromInteger(integer, SageBuilderAsm::buildIeee754Binary64());
-            BaseSemantics::SValuePtr highBits = ops->extract(d->read(args[0]), 64, 128);
-            BaseSemantics::SValuePtr result = ops->concatHiLo(highBits, fp);
+            BaseSemantics::SValue::Ptr integer = d->read(args[1]);
+            BaseSemantics::SValue::Ptr fp = ops->fpFromInteger(integer, SageBuilderAsm::buildIeee754Binary64());
+            BaseSemantics::SValue::Ptr highBits = ops->extract(d->read(args[0]), 64, 128);
+            BaseSemantics::SValue::Ptr result = ops->concatHiLo(highBits, fp);
             d->write(args[0], result);
         }
     }
@@ -784,7 +784,7 @@ struct IP_dec: P {
         if (insn->get_lockPrefix() && !isSgAsmMemoryReferenceExpression(args[0])) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr result = d->doIncOperation(d->read(args[0]), true, false);
+            BaseSemantics::SValue::Ptr result = d->doIncOperation(d->read(args[0]), true, false);
             d->write(args[0], result);
         }
     }
@@ -817,15 +817,15 @@ struct IP_divide: P {
             size_t nbits = asm_type_width(args[0]->get_type());
             RegisterDescriptor regA = d->REG_AX; regA.nBits(8==nbits ? 16 : nbits);
             RegisterDescriptor regD = d->REG_DX; regD.nBits(8==nbits ? 16 : nbits);
-            BaseSemantics::SValuePtr dividend;
+            BaseSemantics::SValue::Ptr dividend;
             if (8==nbits) {
                 dividend = d->readRegister(regA);
             } else {
-                BaseSemantics::SValuePtr regDVal = d->readRegister(regD);
+                BaseSemantics::SValue::Ptr regDVal = d->readRegister(regD);
                 dividend = ops->concat(d->readRegister(regA), regDVal);
             }
-            BaseSemantics::SValuePtr divisor = d->read(args[0]);
-            BaseSemantics::SValuePtr divResult, modResult;
+            BaseSemantics::SValue::Ptr divisor = d->read(args[0]);
+            BaseSemantics::SValue::Ptr divResult, modResult;
             ASSERT_require(insn->get_kind()==kind);
             switch (kind) {
                 case x86_idiv:
@@ -865,7 +865,7 @@ struct IP_fld: P {
             size_t nbits = asm_type_width(args[0]->get_type());
             if (80!=nbits)
                 throw BaseSemantics::Exception(StringUtility::numberToString(nbits)+"-bit FP values not supported yet", insn);
-            BaseSemantics::SValuePtr fp = d->read(args[0], nbits);
+            BaseSemantics::SValue::Ptr fp = d->read(args[0], nbits);
             d->pushFloatingPoint(fp);
         }
     }
@@ -960,7 +960,7 @@ struct IP_imul: P {
         } else {
             // Read the two factors to be multiplied.
             size_t arg0Width = asm_type_width(args[0]->get_type());
-            BaseSemantics::SValuePtr factor1, factor2;
+            BaseSemantics::SValue::Ptr factor1, factor2;
             if (1 == args.size()) {
                 if (8 == arg0Width) {
                     factor1 = d->readRegister(d->REG_AL);
@@ -987,7 +987,7 @@ struct IP_imul: P {
             ASSERT_not_null(factor1);
             ASSERT_not_null(factor2);
             ASSERT_require(factor1->nBits() == factor2->nBits());
-            BaseSemantics::SValuePtr product = ops->signedMultiply(factor1, factor2);
+            BaseSemantics::SValue::Ptr product = ops->signedMultiply(factor1, factor2);
 
             // Store the result
             if (1 == args.size()) {
@@ -1008,13 +1008,13 @@ struct IP_imul: P {
             // low-half sign bit.
             ASSERT_require(product->nBits() % 2 == 0);
             size_t productHalfWidth = product->nBits() / 2;
-            BaseSemantics::SValuePtr lh_signbit = ops->extract(product, productHalfWidth-1, productHalfWidth);
-            BaseSemantics::SValuePtr hh_signbit = ops->extract(product, product->nBits()-1, product->nBits());
-            BaseSemantics::SValuePtr hh = ops->extract(product, productHalfWidth, product->nBits());
-            BaseSemantics::SValuePtr z1 = ops->equalToZero(ops->invert(hh));
-            BaseSemantics::SValuePtr hh_allsame = ops->or_(ops->equalToZero(hh), z1);
-            BaseSemantics::SValuePtr signsame = ops->equalToZero(ops->xor_(lh_signbit, hh_signbit));
-            BaseSemantics::SValuePtr carry = ops->invert(ops->and_(hh_allsame, signsame));
+            BaseSemantics::SValue::Ptr lh_signbit = ops->extract(product, productHalfWidth-1, productHalfWidth);
+            BaseSemantics::SValue::Ptr hh_signbit = ops->extract(product, product->nBits()-1, product->nBits());
+            BaseSemantics::SValue::Ptr hh = ops->extract(product, productHalfWidth, product->nBits());
+            BaseSemantics::SValue::Ptr z1 = ops->equalToZero(ops->invert(hh));
+            BaseSemantics::SValue::Ptr hh_allsame = ops->or_(ops->equalToZero(hh), z1);
+            BaseSemantics::SValue::Ptr signsame = ops->equalToZero(ops->xor_(lh_signbit, hh_signbit));
+            BaseSemantics::SValue::Ptr carry = ops->invert(ops->and_(hh_allsame, signsame));
 
             // Update status flags
             d->writeRegister(d->REG_CF, carry);
@@ -1034,7 +1034,7 @@ struct IP_inc: P {
         if (insn->get_lockPrefix() && !isSgAsmMemoryReferenceExpression(args[0])) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr result = d->doIncOperation(d->read(args[0]), false, false);
+            BaseSemantics::SValue::Ptr result = d->doIncOperation(d->read(args[0]), false, false);
             d->write(args[0], result);
         }
     }
@@ -1077,9 +1077,9 @@ struct IP_jmp: P {
             ops->interrupt(x86_exception_ud, 0);
         } else {
             size_t tgtWidth = d->REG_anyIP.nBits();
-            BaseSemantics::SValuePtr tgt = ops->filterIndirectJumpTarget(ops->unsignedExtend(d->read(args[0]), tgtWidth));
+            BaseSemantics::SValue::Ptr tgt = ops->filterIndirectJumpTarget(ops->unsignedExtend(d->read(args[0]), tgtWidth));
             if (insn->get_operandSize() == x86_insnsize_16 && tgtWidth == 32) {
-                BaseSemantics::SValuePtr zero16 = ops->number_(16, 0);
+                BaseSemantics::SValue::Ptr zero16 = ops->number_(16, 0);
                 tgt = ops->concat(ops->extract(tgt, 0, 16), zero16);
             }
             d->writeRegister(d->REG_anyIP, tgt);
@@ -1102,13 +1102,13 @@ struct IP_jcc: P {
             ops->interrupt(x86_exception_ud, 0);
         } else {
             size_t tgtWidth = d->REG_anyIP.nBits();
-            BaseSemantics::SValuePtr cond = d->flagsCombo(kind);
-            BaseSemantics::SValuePtr ip = d->readRegister(d->REG_anyIP);
-            BaseSemantics::SValuePtr tgt = ops->ite(cond,
+            BaseSemantics::SValue::Ptr cond = d->flagsCombo(kind);
+            BaseSemantics::SValue::Ptr ip = d->readRegister(d->REG_anyIP);
+            BaseSemantics::SValue::Ptr tgt = ops->ite(cond,
                                                     ops->unsignedExtend(d->read(args[0]), tgtWidth),
                                                     ip);
             if (insn->get_operandSize() == x86_insnsize_16 && tgtWidth == 32) {
-                BaseSemantics::SValuePtr zero16 = ops->number_(16, 0);
+                BaseSemantics::SValue::Ptr zero16 = ops->number_(16, 0);
                 tgt = ops->concat(ops->extract(tgt, 0, 16), zero16);
             }
             d->writeRegister(d->REG_anyIP, tgt);
@@ -1150,10 +1150,10 @@ struct IP_leave: P {
         } else {
             size_t nbitsBP = d->REG_anyBP.nBits();
             d->writeRegister(d->REG_anySP, d->readRegister(d->REG_anyBP));
-            BaseSemantics::SValuePtr oldSP = d->readRegister(d->REG_anySP);
-            BaseSemantics::SValuePtr newSP = ops->add(oldSP, ops->number_(oldSP->nBits(), nbitsBP/8));
-            BaseSemantics::SValuePtr addr = d->fixMemoryAddress(oldSP);
-            BaseSemantics::SValuePtr yes = ops->boolean_(true);
+            BaseSemantics::SValue::Ptr oldSP = d->readRegister(d->REG_anySP);
+            BaseSemantics::SValue::Ptr newSP = ops->add(oldSP, ops->number_(oldSP->nBits(), nbitsBP/8));
+            BaseSemantics::SValue::Ptr addr = d->fixMemoryAddress(oldSP);
+            BaseSemantics::SValue::Ptr yes = ops->boolean_(true);
             d->writeRegister(d->REG_anyBP, ops->readMemory(d->REG_SS, addr, ops->undefined_(nbitsBP), yes));
             d->writeRegister(d->REG_anySP, newSP);
         }
@@ -1167,7 +1167,7 @@ struct IP_rdtsc: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr tsc = ops->rdtsc();
+            BaseSemantics::SValue::Ptr tsc = ops->rdtsc();
             d->writeRegister(d->REG_EAX, ops->extract(tsc, 0, 32));
             d->writeRegister(d->REG_EDX, ops->extract(tsc, 32, 64));
         }
@@ -1188,7 +1188,7 @@ struct IP_loadstring: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr inLoop = d->repEnter(repeat);
+            BaseSemantics::SValue::Ptr inLoop = d->repEnter(repeat);
 
             // Get the address for the string to load.
             RegisterDescriptor srcReg;
@@ -1206,25 +1206,25 @@ struct IP_loadstring: P {
                     ASSERT_not_reachable("invalid instruction address size");
             }
             ASSERT_forbid(srcReg.isEmpty());
-            BaseSemantics::SValuePtr stringPtr = d->readRegister(srcReg);
+            BaseSemantics::SValue::Ptr stringPtr = d->readRegister(srcReg);
 
             // Adjust address width based on how memory is accessed.  All addresses in memory have the same width.
-            BaseSemantics::SValuePtr addr = d->fixMemoryAddress(stringPtr);
+            BaseSemantics::SValue::Ptr addr = d->fixMemoryAddress(stringPtr);
 
             // Load the byte, word, dword, or qword from memory.
             RegisterDescriptor sr(x86_regclass_segment,
                                   insn->get_segmentOverride()!=x86_segreg_none ? insn->get_segmentOverride() : x86_segreg_ds,
                                   0, 16);
-            BaseSemantics::SValuePtr val = ops->readMemory(sr, addr, ops->undefined_(nbits), inLoop);
+            BaseSemantics::SValue::Ptr val = ops->readMemory(sr, addr, ops->undefined_(nbits), inLoop);
 
             // Save value into destination register
             RegisterDescriptor dstReg = d->REG_AX; dstReg.nBits(nbits);
             d->writeRegister(dstReg, val);
 
             // Advance pointer register
-            BaseSemantics::SValuePtr positiveNBytes = ops->number_(srcReg.nBits(), +nbytes);
-            BaseSemantics::SValuePtr negativeNBytes = ops->number_(srcReg.nBits(), -nbytes);
-            BaseSemantics::SValuePtr step = ops->ite(d->readRegister(d->REG_DF), negativeNBytes, positiveNBytes);
+            BaseSemantics::SValue::Ptr positiveNBytes = ops->number_(srcReg.nBits(), +nbytes);
+            BaseSemantics::SValue::Ptr negativeNBytes = ops->number_(srcReg.nBits(), -nbytes);
+            BaseSemantics::SValue::Ptr step = ops->ite(d->readRegister(d->REG_DF), negativeNBytes, positiveNBytes);
             d->writeRegister(srcReg, ops->ite(inLoop, ops->add(stringPtr, step), stringPtr));
 
             // Adjust the instruction pointer register to either repeat the instruction or fall through
@@ -1262,24 +1262,24 @@ struct IP_loop: P {
             }
 
             // Decrement the counter
-            BaseSemantics::SValuePtr oldCounter = d->readRegister(counterReg);
-            BaseSemantics::SValuePtr newCounter = ops->add(oldCounter, ops->number_(oldCounter->nBits(), -1));
+            BaseSemantics::SValue::Ptr oldCounter = d->readRegister(counterReg);
+            BaseSemantics::SValue::Ptr newCounter = ops->add(oldCounter, ops->number_(oldCounter->nBits(), -1));
             d->writeRegister(counterReg, newCounter);
 
             // Should we loop?
-            BaseSemantics::SValuePtr doLoop;
+            BaseSemantics::SValue::Ptr doLoop;
             ASSERT_require(insn->get_kind() == kind);
             switch (kind) {
                 case x86_loop:
                     doLoop = ops->invert(ops->equalToZero(newCounter));
                     break;
                 case x86_loopnz: {
-                    BaseSemantics::SValuePtr notZf = ops->invert(d->readRegister(d->REG_ZF));
+                    BaseSemantics::SValue::Ptr notZf = ops->invert(d->readRegister(d->REG_ZF));
                     doLoop = ops->and_(ops->invert(ops->equalToZero(newCounter)), notZf);
                     break;
                 }
                 case x86_loopz: {
-                    BaseSemantics::SValuePtr zf = d->readRegister(d->REG_ZF);
+                    BaseSemantics::SValue::Ptr zf = d->readRegister(d->REG_ZF);
                     doLoop = ops->and_(ops->invert(ops->equalToZero(newCounter)), zf);
                     break;
                 }
@@ -1288,7 +1288,7 @@ struct IP_loop: P {
             }
 
             // Adjust the instruction pointer to either loop or fall through.
-            BaseSemantics::SValuePtr ip = d->readRegister(d->REG_anyIP);
+            BaseSemantics::SValue::Ptr ip = d->readRegister(d->REG_anyIP);
             d->writeRegister(d->REG_anyIP, ops->ite(doLoop, d->read(args[0], d->REG_anyIP.nBits()), ip));
         }
     }
@@ -1302,18 +1302,18 @@ struct IP_maskmov: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr src = d->read(args[0]);
-            BaseSemantics::SValuePtr mask = d->read(args[1]);
+            BaseSemantics::SValue::Ptr src = d->read(args[0]);
+            BaseSemantics::SValue::Ptr mask = d->read(args[1]);
             ASSERT_require(src->nBits() == mask->nBits());
-            BaseSemantics::SValuePtr startVa = d->readRegister(d->REG_EDI);
-            BaseSemantics::SValuePtr yes = ops->boolean_(true);
-            BaseSemantics::SValuePtr mem = ops->readMemory(d->REG_DS, startVa, ops->undefined_(src->nBits()), yes);
-            BaseSemantics::SValuePtr result;
+            BaseSemantics::SValue::Ptr startVa = d->readRegister(d->REG_EDI);
+            BaseSemantics::SValue::Ptr yes = ops->boolean_(true);
+            BaseSemantics::SValue::Ptr mem = ops->readMemory(d->REG_DS, startVa, ops->undefined_(src->nBits()), yes);
+            BaseSemantics::SValue::Ptr result;
             size_t nOps = src->nBits() / 8;
             for (size_t i=0; i<nOps; ++i) {
-                BaseSemantics::SValuePtr partMask = ops->extract(mask, i*8, i*8+1);
-                BaseSemantics::SValuePtr v2 = ops->extract(mem, i*8, i*8+8);
-                BaseSemantics::SValuePtr byte = ops->ite(partMask, ops->extract(src, i*8, i*8+8), v2);
+                BaseSemantics::SValue::Ptr partMask = ops->extract(mask, i*8, i*8+1);
+                BaseSemantics::SValue::Ptr v2 = ops->extract(mem, i*8, i*8+8);
+                BaseSemantics::SValue::Ptr byte = ops->ite(partMask, ops->extract(src, i*8, i*8+8), v2);
                 result = result ? ops->concat(result, byte) : byte;
             }
             ops->writeMemory(d->REG_DS, startVa, result, ops->boolean_(true));
@@ -1329,7 +1329,7 @@ struct IP_mov: P {
             ops->interrupt(x86_exception_ud, 0);
         } else {
             size_t dstWidth = asm_type_width(args[0]->get_type());
-            BaseSemantics::SValuePtr value = d->read(args[1]);
+            BaseSemantics::SValue::Ptr value = d->read(args[1]);
             if (dstWidth > value->nBits()) {
                 // MOV r/m64, imm32 uses sign extend, but all others use unsigned extend or truncation.
                 if (64==dstWidth && isSgAsmIntegerValueExpression(args[1])) {
@@ -1350,11 +1350,11 @@ struct IP_movbe: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr src = d->read(args[1]);
+            BaseSemantics::SValue::Ptr src = d->read(args[1]);
             size_t nBytes = src->nBits() / 8;
-            BaseSemantics::SValuePtr result;
+            BaseSemantics::SValue::Ptr result;
             for (size_t i=0; i<nBytes; ++i) {
-                BaseSemantics::SValuePtr byte = ops->extract(src, i*8, (i+1)*8);
+                BaseSemantics::SValue::Ptr byte = ops->extract(src, i*8, (i+1)*8);
                 result = result ? ops->concat(byte, result) : byte;
             }
             d->write(args[0], result);
@@ -1373,7 +1373,7 @@ struct IP_movhpd: P {
             ASSERT_require(reg.offset() == 0 && reg.nBits() == 128);
             reg.offset(64);
             reg.nBits(64);
-            BaseSemantics::SValuePtr val = d->read(args[1]);
+            BaseSemantics::SValue::Ptr val = d->read(args[1]);
             ASSERT_require(val->nBits() == 64);
             d->writeRegister(reg, val);
         } else if (SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(args[1])) {
@@ -1381,7 +1381,7 @@ struct IP_movhpd: P {
             ASSERT_require(reg.offset() == 0 && reg.nBits() == 128);
             reg.offset(64);
             reg.nBits(64);
-            BaseSemantics::SValuePtr val = d->readRegister(reg);
+            BaseSemantics::SValue::Ptr val = d->readRegister(reg);
             d->write(args[0], val);
         } else {
             ASSERT_not_reachable("one of the args should have been an XMM register");
@@ -1399,14 +1399,14 @@ struct IP_movlpd: P {
             RegisterDescriptor reg = rre->get_descriptor();
             ASSERT_require(reg.offset() == 0 && reg.nBits() == 128);
             reg.nBits(64);
-            BaseSemantics::SValuePtr val = d->read(args[1]);
+            BaseSemantics::SValue::Ptr val = d->read(args[1]);
             ASSERT_require(val->nBits() == 64);
             d->writeRegister(reg, val);
         } else if (SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(args[1])) {
             RegisterDescriptor reg = rre->get_descriptor();
             ASSERT_require(reg.offset() == 0 && reg.nBits() == 128);
             reg.nBits(64);
-            BaseSemantics::SValuePtr val = d->readRegister(reg);
+            BaseSemantics::SValue::Ptr val = d->readRegister(reg);
             d->write(args[0], val);
         } else {
             ASSERT_not_reachable("one of the args should have been an XMM register");
@@ -1423,7 +1423,7 @@ struct IP_movsd: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr src = ops->unsignedExtend(d->read(args[1]), 64);
+            BaseSemantics::SValue::Ptr src = ops->unsignedExtend(d->read(args[1]), 64);
             if (isSgAsmDirectRegisterExpression(args[1])) {
                 // register->memory or register->register. High order 64 bits are unchanged.
                 if (SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(args[0])) {
@@ -1449,7 +1449,7 @@ struct IP_movss: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr src = ops->unsignedExtend(d->read(args[1]), 32);
+            BaseSemantics::SValue::Ptr src = ops->unsignedExtend(d->read(args[1]), 32);
             if (isSgAsmDirectRegisterExpression(args[1])) {
                 // register->memory or register->register. High order 96 bits are unchanged.
                 if (SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(args[0])) {
@@ -1477,7 +1477,7 @@ struct IP_move_zero_extend: P {
             ops->interrupt(x86_exception_ud, 0);
         } else {
             size_t dstWidth = asm_type_width(args[0]->get_type());
-            BaseSemantics::SValuePtr value = d->read(args[1]);
+            BaseSemantics::SValue::Ptr value = d->read(args[1]);
             if (value->nBits() != dstWidth)
                 value = ops->unsignedExtend(value, dstWidth);
             d->write(args[0], value);
@@ -1494,7 +1494,7 @@ struct IP_move_sign_extend: P {
             ops->interrupt(x86_exception_ud, 0);
         } else {
             size_t dstWidth = asm_type_width(args[0]->get_type());
-            BaseSemantics::SValuePtr value = d->read(args[1]);
+            BaseSemantics::SValue::Ptr value = d->read(args[1]);
             if (value->nBits() < dstWidth)
                 value = ops->signExtend(value, dstWidth);
             d->write(args[0], value);
@@ -1530,7 +1530,7 @@ struct IP_movestring: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr inLoop = d->repEnter(repeat);
+            BaseSemantics::SValue::Ptr inLoop = d->repEnter(repeat);
             
             // Get the source and destination addresses
             RegisterDescriptor srcReg, dstReg;
@@ -1552,25 +1552,25 @@ struct IP_movestring: P {
             }
             ASSERT_forbid(srcReg.isEmpty());
             ASSERT_forbid(dstReg.isEmpty());
-            BaseSemantics::SValuePtr srcRegVal = d->readRegister(srcReg);
-            BaseSemantics::SValuePtr dstRegVal = d->readRegister(dstReg);
+            BaseSemantics::SValue::Ptr srcRegVal = d->readRegister(srcReg);
+            BaseSemantics::SValue::Ptr dstRegVal = d->readRegister(dstReg);
 
             // Adjust address width depending on how memory is accessed.  All addresses in memory have the same width.
-            BaseSemantics::SValuePtr srcAddr = d->fixMemoryAddress(srcRegVal);
-            BaseSemantics::SValuePtr dstAddr = d->fixMemoryAddress(dstRegVal);
+            BaseSemantics::SValue::Ptr srcAddr = d->fixMemoryAddress(srcRegVal);
+            BaseSemantics::SValue::Ptr dstAddr = d->fixMemoryAddress(dstRegVal);
             ASSERT_require(srcAddr->nBits() == dstAddr->nBits());
 
             // Copy a value from source to destination
             RegisterDescriptor sr(x86_regclass_segment,
                                   insn->get_segmentOverride()!=x86_segreg_none ? insn->get_segmentOverride() : x86_segreg_ds,
                                   0, 16);
-            BaseSemantics::SValuePtr value = ops->readMemory(sr, srcAddr, ops->undefined_(nbits), inLoop);
+            BaseSemantics::SValue::Ptr value = ops->readMemory(sr, srcAddr, ops->undefined_(nbits), inLoop);
             ops->writeMemory(d->REG_ES, dstAddr, value, inLoop);
 
             // Adjust the address registers
-            BaseSemantics::SValuePtr positiveNBytes = ops->number_(srcReg.nBits(), +nbytes);
-            BaseSemantics::SValuePtr negativeNBytes = ops->number_(srcReg.nBits(), -nbytes);
-            BaseSemantics::SValuePtr step = ops->ite(d->readRegister(d->REG_DF), negativeNBytes, positiveNBytes);
+            BaseSemantics::SValue::Ptr positiveNBytes = ops->number_(srcReg.nBits(), +nbytes);
+            BaseSemantics::SValue::Ptr negativeNBytes = ops->number_(srcReg.nBits(), -nbytes);
+            BaseSemantics::SValue::Ptr step = ops->ite(d->readRegister(d->REG_DF), negativeNBytes, positiveNBytes);
             d->writeRegister(srcReg, ops->ite(inLoop, ops->add(srcRegVal, step), srcRegVal));
             d->writeRegister(dstReg, ops->ite(inLoop, ops->add(dstRegVal, step), dstRegVal));
 
@@ -1589,8 +1589,8 @@ struct IP_mul: P {
             ops->interrupt(x86_exception_ud, 0);
         } else {
             // Read the two factors to be multiplied
-            BaseSemantics::SValuePtr factor1 = d->read(args[0]);
-            BaseSemantics::SValuePtr factor2;
+            BaseSemantics::SValue::Ptr factor1 = d->read(args[0]);
+            BaseSemantics::SValue::Ptr factor2;
             switch (factor1->nBits()) {
                 case 8:
                     factor2 = d->readRegister(d->REG_AL);
@@ -1611,7 +1611,7 @@ struct IP_mul: P {
             // Compute the result
             ASSERT_not_null(factor2);
             ASSERT_require(factor1->nBits() == factor2->nBits());
-            BaseSemantics::SValuePtr product = ops->unsignedMultiply(factor1, factor2);
+            BaseSemantics::SValue::Ptr product = ops->unsignedMultiply(factor1, factor2);
 
             // Save the result
             switch (factor1->nBits()) {
@@ -1635,7 +1635,7 @@ struct IP_mul: P {
             }
 
             // Set flags
-            BaseSemantics::SValuePtr carry = ops->invert(ops->equalToZero(ops->extract(product, factor1->nBits(),
+            BaseSemantics::SValue::Ptr carry = ops->invert(ops->equalToZero(ops->extract(product, factor1->nBits(),
                                                                                        2 * factor1->nBits())));
             d->writeRegister(d->REG_CF, carry);
             d->writeRegister(d->REG_OF, carry);
@@ -1654,10 +1654,10 @@ struct IP_neg: P {
         if (insn->get_lockPrefix() && !isSgAsmMemoryReferenceExpression(args[0])) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr srcVal = d->read(args[0]);
-            BaseSemantics::SValuePtr no = ops->boolean_(false);
-            BaseSemantics::SValuePtr invertedSrcVal = ops->invert(srcVal);
-            BaseSemantics::SValuePtr result = d->doAddOperation(ops->number_(srcVal->nBits(), 0),
+            BaseSemantics::SValue::Ptr srcVal = d->read(args[0]);
+            BaseSemantics::SValue::Ptr no = ops->boolean_(false);
+            BaseSemantics::SValue::Ptr invertedSrcVal = ops->invert(srcVal);
+            BaseSemantics::SValue::Ptr result = d->doAddOperation(ops->number_(srcVal->nBits(), 0),
                                                                 invertedSrcVal, true, no);
             d->write(args[0], result);
         }
@@ -1691,12 +1691,12 @@ struct IP_or: P {
         if (insn->get_lockPrefix() && !isSgAsmMemoryReferenceExpression(args[0])) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr a = d->read(args[0]);
-            BaseSemantics::SValuePtr b = d->read(args[1]);
+            BaseSemantics::SValue::Ptr a = d->read(args[0]);
+            BaseSemantics::SValue::Ptr b = d->read(args[1]);
             if (a->nBits() > b->nBits())
                 b = ops->signExtend(b, a->nBits());
             ASSERT_require(a->nBits() == b->nBits());
-            BaseSemantics::SValuePtr result = ops->or_(a, b);
+            BaseSemantics::SValue::Ptr result = ops->or_(a, b);
             d->setFlagsForResult(result);
             d->write(args[0], result);
             d->writeRegister(d->REG_OF, ops->boolean_(false));
@@ -1718,13 +1718,13 @@ struct IP_pabs: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr src = d->read(args[1]);
-            BaseSemantics::SValuePtr result;
+            BaseSemantics::SValue::Ptr src = d->read(args[1]);
+            BaseSemantics::SValue::Ptr result;
             size_t nOps = src->nBits() / bitsPerOp;
             for (size_t i=0; i<nOps; ++i) {
-                BaseSemantics::SValuePtr part = ops->extract(src, i*bitsPerOp, (i+1)*bitsPerOp);
-                BaseSemantics::SValuePtr signBit = ops->extract(src, (i+1)*bitsPerOp-1, (i+1)*bitsPerOp);
-                BaseSemantics::SValuePtr absVal = ops->ite(signBit, ops->negate(part), part);
+                BaseSemantics::SValue::Ptr part = ops->extract(src, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValue::Ptr signBit = ops->extract(src, (i+1)*bitsPerOp-1, (i+1)*bitsPerOp);
+                BaseSemantics::SValue::Ptr absVal = ops->ite(signBit, ops->negate(part), part);
                 result = result ? ops->concat(result, absVal) : absVal;
             }
             d->write(args[0], result);
@@ -1744,19 +1744,19 @@ struct IP_packss: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr a = d->read(args[0]);
-            BaseSemantics::SValuePtr b = d->read(args[1]);
+            BaseSemantics::SValue::Ptr a = d->read(args[0]);
+            BaseSemantics::SValue::Ptr b = d->read(args[1]);
             ASSERT_require(a->nBits() == b->nBits());
             size_t nOps = a->nBits() / srcBitsPerOp;
-            BaseSemantics::SValuePtr result;
+            BaseSemantics::SValue::Ptr result;
             for (size_t i=0; i<nOps; ++i) {
-                BaseSemantics::SValuePtr src = ops->extract(a, i*srcBitsPerOp, (i+1)*srcBitsPerOp);
-                BaseSemantics::SValuePtr dst = d->saturateSignedToSigned(src, dstBitsPerOp);
+                BaseSemantics::SValue::Ptr src = ops->extract(a, i*srcBitsPerOp, (i+1)*srcBitsPerOp);
+                BaseSemantics::SValue::Ptr dst = d->saturateSignedToSigned(src, dstBitsPerOp);
                 result = result ? ops->concat(result, dst) : dst;
             }
             for (size_t i=0; i<nOps; ++i) {
-                BaseSemantics::SValuePtr src = ops->extract(b, i*srcBitsPerOp, (i+1)*srcBitsPerOp);
-                BaseSemantics::SValuePtr dst = d->saturateSignedToSigned(src, dstBitsPerOp);
+                BaseSemantics::SValue::Ptr src = ops->extract(b, i*srcBitsPerOp, (i+1)*srcBitsPerOp);
+                BaseSemantics::SValue::Ptr dst = d->saturateSignedToSigned(src, dstBitsPerOp);
                 result = result ? ops->concat(result, dst) : dst;
             }
             d->write(args[0], result);
@@ -1776,19 +1776,19 @@ struct IP_packus: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr a = d->read(args[0]);
-            BaseSemantics::SValuePtr b = d->read(args[1]);
+            BaseSemantics::SValue::Ptr a = d->read(args[0]);
+            BaseSemantics::SValue::Ptr b = d->read(args[1]);
             ASSERT_require(a->nBits() == b->nBits());
             size_t nOps = a->nBits() / srcBitsPerOp;
-            BaseSemantics::SValuePtr result;
+            BaseSemantics::SValue::Ptr result;
             for (size_t i=0; i<nOps; ++i) {
-                BaseSemantics::SValuePtr src = ops->extract(a, i*srcBitsPerOp, (i+1)*srcBitsPerOp);
-                BaseSemantics::SValuePtr dst = d->saturateSignedToUnsigned(src, dstBitsPerOp);
+                BaseSemantics::SValue::Ptr src = ops->extract(a, i*srcBitsPerOp, (i+1)*srcBitsPerOp);
+                BaseSemantics::SValue::Ptr dst = d->saturateSignedToUnsigned(src, dstBitsPerOp);
                 result = result ? ops->concat(result, dst) : dst;
             }
             for (size_t i=0; i<nOps; ++i) {
-                BaseSemantics::SValuePtr src = ops->extract(b, i*srcBitsPerOp, (i+1)*srcBitsPerOp);
-                BaseSemantics::SValuePtr dst = d->saturateSignedToUnsigned(src, dstBitsPerOp);
+                BaseSemantics::SValue::Ptr src = ops->extract(b, i*srcBitsPerOp, (i+1)*srcBitsPerOp);
+                BaseSemantics::SValue::Ptr dst = d->saturateSignedToUnsigned(src, dstBitsPerOp);
                 result = result ? ops->concat(result, dst) : dst;
             }
             d->write(args[0], result);
@@ -1809,15 +1809,15 @@ struct IP_padd: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr a = d->read(args[0]);
-            BaseSemantics::SValuePtr b = d->read(args[1]);
+            BaseSemantics::SValue::Ptr a = d->read(args[0]);
+            BaseSemantics::SValue::Ptr b = d->read(args[1]);
             ASSERT_require(a->nBits() == b->nBits());
             size_t nOps = a->nBits() / bitsPerOp;
-            BaseSemantics::SValuePtr result;
+            BaseSemantics::SValue::Ptr result;
             for (size_t i=0; i<nOps; ++i) {
-                BaseSemantics::SValuePtr partA = ops->extract(a, i*bitsPerOp, (i+1)*bitsPerOp);
-                BaseSemantics::SValuePtr partB = ops->extract(b, i*bitsPerOp, (i+1)*bitsPerOp);
-                BaseSemantics::SValuePtr sum = ops->add(partA, partB);
+                BaseSemantics::SValue::Ptr partA = ops->extract(a, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValue::Ptr partB = ops->extract(b, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValue::Ptr sum = ops->add(partA, partB);
                 result = result ? ops->concat(result, sum) : sum;
             }
             d->write(args[0], result);
@@ -1836,15 +1836,15 @@ struct IP_padds: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr a = d->read(args[0]);
-            BaseSemantics::SValuePtr b = d->read(args[1]);
+            BaseSemantics::SValue::Ptr a = d->read(args[0]);
+            BaseSemantics::SValue::Ptr b = d->read(args[1]);
             ASSERT_require(a->nBits() == b->nBits());
             size_t nOps = a->nBits() / bitsPerOp;
-            BaseSemantics::SValuePtr result;
+            BaseSemantics::SValue::Ptr result;
             for (size_t i=0; i<nOps; ++i) {
-                BaseSemantics::SValuePtr partA = ops->signExtend(ops->extract(a, i*bitsPerOp, (i+1)*bitsPerOp), bitsPerOp+1);
-                BaseSemantics::SValuePtr partB = ops->signExtend(ops->extract(b, i*bitsPerOp, (i+1)*bitsPerOp), bitsPerOp+1);
-                BaseSemantics::SValuePtr sum = d->saturateSignedToSigned(ops->add(partA, partB), bitsPerOp);
+                BaseSemantics::SValue::Ptr partA = ops->signExtend(ops->extract(a, i*bitsPerOp, (i+1)*bitsPerOp), bitsPerOp+1);
+                BaseSemantics::SValue::Ptr partB = ops->signExtend(ops->extract(b, i*bitsPerOp, (i+1)*bitsPerOp), bitsPerOp+1);
+                BaseSemantics::SValue::Ptr sum = d->saturateSignedToSigned(ops->add(partA, partB), bitsPerOp);
                 result = result ? ops->concat(result, sum) : sum;
             }
             d->write(args[0], result);
@@ -1863,15 +1863,15 @@ struct IP_paddus: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr a = d->read(args[0]);
-            BaseSemantics::SValuePtr b = d->read(args[1]);
+            BaseSemantics::SValue::Ptr a = d->read(args[0]);
+            BaseSemantics::SValue::Ptr b = d->read(args[1]);
             ASSERT_require(a->nBits() == b->nBits());
             size_t nOps = a->nBits() / bitsPerOp;
-            BaseSemantics::SValuePtr result;
+            BaseSemantics::SValue::Ptr result;
             for (size_t i=0; i<nOps; ++i) {
-                BaseSemantics::SValuePtr partA = ops->signExtend(ops->extract(a, i*bitsPerOp, (i+1)*bitsPerOp), bitsPerOp+1);
-                BaseSemantics::SValuePtr partB = ops->signExtend(ops->extract(b, i*bitsPerOp, (i+1)*bitsPerOp), bitsPerOp+1);
-                BaseSemantics::SValuePtr sum = d->saturateUnsignedToUnsigned(ops->add(partA, partB), bitsPerOp);
+                BaseSemantics::SValue::Ptr partA = ops->signExtend(ops->extract(a, i*bitsPerOp, (i+1)*bitsPerOp), bitsPerOp+1);
+                BaseSemantics::SValue::Ptr partB = ops->signExtend(ops->extract(b, i*bitsPerOp, (i+1)*bitsPerOp), bitsPerOp+1);
+                BaseSemantics::SValue::Ptr sum = d->saturateUnsignedToUnsigned(ops->add(partA, partB), bitsPerOp);
                 result = result ? ops->concat(result, sum) : sum;
             }
             d->write(args[0], result);
@@ -1896,9 +1896,9 @@ struct IP_palignr: P {
             SgAsmIntegerValueExpression *nBytes = isSgAsmIntegerValueExpression(args[2]);
             if (!nBytes)
                 throw BaseSemantics::Exception("third operand must be a byte value expression (imm8)", insn);
-            BaseSemantics::SValuePtr arg1 = d->read(args[1]);
-            BaseSemantics::SValuePtr wide = ops->concat(d->read(args[0]), arg1);
-            BaseSemantics::SValuePtr result = ops->extract(ops->shiftRight(wide, d->number_(8, nBytes->get_value() * 8)),
+            BaseSemantics::SValue::Ptr arg1 = d->read(args[1]);
+            BaseSemantics::SValue::Ptr wide = ops->concat(d->read(args[0]), arg1);
+            BaseSemantics::SValue::Ptr result = ops->extract(ops->shiftRight(wide, d->number_(8, nBytes->get_value() * 8)),
                                                            0, nbits);
             d->write(args[0], result);
         }
@@ -1913,9 +1913,9 @@ struct IP_pand: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr a = d->read(args[0]);
-            BaseSemantics::SValuePtr b = d->read(args[1]);
-            BaseSemantics::SValuePtr result = ops->and_(a, b);
+            BaseSemantics::SValue::Ptr a = d->read(args[0]);
+            BaseSemantics::SValue::Ptr b = d->read(args[1]);
+            BaseSemantics::SValue::Ptr result = ops->and_(a, b);
             d->write(args[0], result);
         }
     }
@@ -1928,9 +1928,9 @@ struct IP_pandn: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr a = d->read(args[0]);
-            BaseSemantics::SValuePtr b = d->read(args[1]);
-            BaseSemantics::SValuePtr result = ops->invert(ops->and_(a, b));
+            BaseSemantics::SValue::Ptr a = d->read(args[0]);
+            BaseSemantics::SValue::Ptr b = d->read(args[1]);
+            BaseSemantics::SValue::Ptr result = ops->invert(ops->and_(a, b));
             d->write(args[0], result);
         }
     }
@@ -1947,19 +1947,19 @@ struct IP_pavg: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr a = d->read(args[0]);
-            BaseSemantics::SValuePtr b = d->read(args[1]);
+            BaseSemantics::SValue::Ptr a = d->read(args[0]);
+            BaseSemantics::SValue::Ptr b = d->read(args[1]);
             ASSERT_require(a->nBits() == b->nBits());
             size_t nOps = a->nBits() / bitsPerOp;
-            BaseSemantics::SValuePtr result;
+            BaseSemantics::SValue::Ptr result;
             for (size_t i=0; i<nOps; ++i) {
-                BaseSemantics::SValuePtr partA = ops->extract(a, i*bitsPerOp, (i+1)*bitsPerOp);
-                BaseSemantics::SValuePtr partB = ops->extract(b, i*bitsPerOp, (i+1)*bitsPerOp);
-                BaseSemantics::SValuePtr partBWide = ops->unsignedExtend(partB, bitsPerOp+1);
-                BaseSemantics::SValuePtr one = ops->number_(bitsPerOp+1, 1);
-                BaseSemantics::SValuePtr sum = ops->add(ops->add(ops->unsignedExtend(partA, bitsPerOp+1), partBWide),
+                BaseSemantics::SValue::Ptr partA = ops->extract(a, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValue::Ptr partB = ops->extract(b, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValue::Ptr partBWide = ops->unsignedExtend(partB, bitsPerOp+1);
+                BaseSemantics::SValue::Ptr one = ops->number_(bitsPerOp+1, 1);
+                BaseSemantics::SValue::Ptr sum = ops->add(ops->add(ops->unsignedExtend(partA, bitsPerOp+1), partBWide),
                                                         one);
-                BaseSemantics::SValuePtr ave = ops->extract(sum, 1, bitsPerOp+1);
+                BaseSemantics::SValue::Ptr ave = ops->extract(sum, 1, bitsPerOp+1);
                 result = result ? ops->concat(result, ave) : ave;
             }
         }
@@ -1974,17 +1974,17 @@ struct IP_pblendvb: P {
             ops->interrupt(x86_exception_ud, 0);
         } else {
             static const size_t bitsPerOp = 8;
-            BaseSemantics::SValuePtr a = d->read(args[0]);
-            BaseSemantics::SValuePtr b = d->read(args[1]);
-            BaseSemantics::SValuePtr xmm0 = d->readRegister(RegisterDescriptor(x86_regclass_xmm, 0, 0, 128));
+            BaseSemantics::SValue::Ptr a = d->read(args[0]);
+            BaseSemantics::SValue::Ptr b = d->read(args[1]);
+            BaseSemantics::SValue::Ptr xmm0 = d->readRegister(RegisterDescriptor(x86_regclass_xmm, 0, 0, 128));
             ASSERT_require(a->nBits() == b->nBits());
             size_t nOps = a->nBits() / bitsPerOp;
-            BaseSemantics::SValuePtr result;
+            BaseSemantics::SValue::Ptr result;
             for (size_t i=0; i<nOps; ++i) {
-                BaseSemantics::SValuePtr partA = ops->extract(a, i*bitsPerOp, (i+1)*bitsPerOp);
-                BaseSemantics::SValuePtr partB = ops->extract(b, i*bitsPerOp, (i+1)*bitsPerOp);
-                BaseSemantics::SValuePtr selector = ops->extract(xmm0, i*8+7, i*8+8);
-                BaseSemantics::SValuePtr selected = ops->ite(selector, b, a);
+                BaseSemantics::SValue::Ptr partA = ops->extract(a, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValue::Ptr partB = ops->extract(b, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValue::Ptr selector = ops->extract(xmm0, i*8+7, i*8+8);
+                BaseSemantics::SValue::Ptr selected = ops->ite(selector, b, a);
                 result = result ? ops->concat(result, selected) : selected;
             }
         }
@@ -1999,17 +1999,17 @@ struct IP_pblendw: P {
             ops->interrupt(x86_exception_ud, 0);
         } else {
             static const size_t bitsPerOp = 16;
-            BaseSemantics::SValuePtr a = d->read(args[0]);
-            BaseSemantics::SValuePtr b = d->read(args[1]);
+            BaseSemantics::SValue::Ptr a = d->read(args[0]);
+            BaseSemantics::SValue::Ptr b = d->read(args[1]);
             uint64_t mask = d->read(args[2])->toUnsigned().get(); // must be an immediate operand
             ASSERT_require(a->nBits() == b->nBits());
             size_t nOps = a->nBits() / bitsPerOp;
-            BaseSemantics::SValuePtr result;
+            BaseSemantics::SValue::Ptr result;
             for (size_t i=0; i<nOps; ++i) {
-                BaseSemantics::SValuePtr partA = ops->extract(a, i*bitsPerOp, (i+1)*bitsPerOp);
-                BaseSemantics::SValuePtr partB = ops->extract(b, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValue::Ptr partA = ops->extract(a, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValue::Ptr partB = ops->extract(b, i*bitsPerOp, (i+1)*bitsPerOp);
                 bool selector = (mask >> i) & 1;
-                BaseSemantics::SValuePtr selected = selector ? b : a;
+                BaseSemantics::SValue::Ptr selected = selector ? b : a;
                 result = result ? ops->concat(result, selected) : selected;
             }
         }
@@ -2025,18 +2025,18 @@ struct IP_pcmpeq: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr a = d->read(args[0]);
-            BaseSemantics::SValuePtr b = d->read(args[1]);
+            BaseSemantics::SValue::Ptr a = d->read(args[0]);
+            BaseSemantics::SValue::Ptr b = d->read(args[1]);
             ASSERT_require(a->nBits() == b->nBits());
             ASSERT_require(a->nBits() % nCmpBits == 0);
-            BaseSemantics::SValuePtr result;
-            BaseSemantics::SValuePtr zero = ops->number_(nCmpBits, 0);
-            BaseSemantics::SValuePtr ones = ops->invert(zero);
+            BaseSemantics::SValue::Ptr result;
+            BaseSemantics::SValue::Ptr zero = ops->number_(nCmpBits, 0);
+            BaseSemantics::SValue::Ptr ones = ops->invert(zero);
             for (size_t i=0; i<a->nBits()/nCmpBits; ++i) {
-                BaseSemantics::SValuePtr partA = ops->extract(a, i*nCmpBits, (i+1)*nCmpBits);
-                BaseSemantics::SValuePtr partB = ops->extract(b, i*nCmpBits, (i+1)*nCmpBits);
-                BaseSemantics::SValuePtr diff = ops->add(partA, ops->negate(partB));
-                BaseSemantics::SValuePtr c = ops->ite(ops->equalToZero(diff), ones, zero);
+                BaseSemantics::SValue::Ptr partA = ops->extract(a, i*nCmpBits, (i+1)*nCmpBits);
+                BaseSemantics::SValue::Ptr partB = ops->extract(b, i*nCmpBits, (i+1)*nCmpBits);
+                BaseSemantics::SValue::Ptr diff = ops->add(partA, ops->negate(partB));
+                BaseSemantics::SValue::Ptr c = ops->ite(ops->equalToZero(diff), ones, zero);
                 if (0==i) {
                     result = c;
                 } else {
@@ -2061,22 +2061,22 @@ struct IP_pcmpgt: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr a = d->read(args[0]);
-            BaseSemantics::SValuePtr b = d->read(args[1]);
+            BaseSemantics::SValue::Ptr a = d->read(args[0]);
+            BaseSemantics::SValue::Ptr b = d->read(args[1]);
             ASSERT_require(a->nBits() == b->nBits());
             size_t nOps = a->nBits() / bitsPerOp;
-            BaseSemantics::SValuePtr zero = ops->number_(bitsPerOp, 0);
-            BaseSemantics::SValuePtr ones = ops->invert(zero);
-            BaseSemantics::SValuePtr result;
+            BaseSemantics::SValue::Ptr zero = ops->number_(bitsPerOp, 0);
+            BaseSemantics::SValue::Ptr ones = ops->invert(zero);
+            BaseSemantics::SValue::Ptr result;
             for (size_t i=0; i<nOps; ++i) {
-                BaseSemantics::SValuePtr partA = ops->extract(a, i*bitsPerOp, (i+1)*bitsPerOp);
-                BaseSemantics::SValuePtr partB = ops->extract(b, i*bitsPerOp, (i+1)*bitsPerOp);
-                BaseSemantics::SValuePtr partBWide = ops->signExtend(partB, bitsPerOp+1);
-                BaseSemantics::SValuePtr diff = ops->subtract(ops->signExtend(partA, bitsPerOp+1), partBWide);
-                BaseSemantics::SValuePtr isLT = ops->extract(diff, bitsPerOp, bitsPerOp+1);
-                BaseSemantics::SValuePtr isEQ = ops->equalToZero(diff);
-                BaseSemantics::SValuePtr isLE = ops->or_(isLT, isEQ);
-                BaseSemantics::SValuePtr answer = ops->ite(isLE, zero, ones);
+                BaseSemantics::SValue::Ptr partA = ops->extract(a, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValue::Ptr partB = ops->extract(b, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValue::Ptr partBWide = ops->signExtend(partB, bitsPerOp+1);
+                BaseSemantics::SValue::Ptr diff = ops->subtract(ops->signExtend(partA, bitsPerOp+1), partBWide);
+                BaseSemantics::SValue::Ptr isLT = ops->extract(diff, bitsPerOp, bitsPerOp+1);
+                BaseSemantics::SValue::Ptr isEQ = ops->equalToZero(diff);
+                BaseSemantics::SValue::Ptr isLE = ops->or_(isLT, isEQ);
+                BaseSemantics::SValue::Ptr answer = ops->ite(isLE, zero, ones);
                 result = result ? ops->concat(result, answer) : answer;
             }
             d->write(args[0], result);
@@ -2097,7 +2097,7 @@ struct IP_pextr: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr src = d->read(args[1]);
+            BaseSemantics::SValue::Ptr src = d->read(args[1]);
             uint64_t index = d->read(args[2])->toUnsigned().get(); // must be an immediate operand
             switch (bitsPerOp) {
                 case 8:
@@ -2119,9 +2119,9 @@ struct IP_pextr: P {
                 default:
                     ASSERT_not_reachable("invalid operand size");
             }
-            BaseSemantics::SValuePtr extracted = ops->extract(src, index*bitsPerOp, (index+1)*bitsPerOp);
+            BaseSemantics::SValue::Ptr extracted = ops->extract(src, index*bitsPerOp, (index+1)*bitsPerOp);
             size_t dstWidth = asm_type_width(args[0]->get_type());
-            BaseSemantics::SValuePtr result = ops->unsignedExtend(extracted, dstWidth);
+            BaseSemantics::SValue::Ptr result = ops->unsignedExtend(extracted, dstWidth);
             d->write(args[0], result);
         }
     }
@@ -2138,21 +2138,21 @@ struct IP_phadd: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr a = d->read(args[0]);
-            BaseSemantics::SValuePtr b = d->read(args[1]);
+            BaseSemantics::SValue::Ptr a = d->read(args[0]);
+            BaseSemantics::SValue::Ptr b = d->read(args[1]);
             ASSERT_require(a->nBits() == b->nBits());
             size_t nOps = a->nBits() / bitsPerOp;
-            BaseSemantics::SValuePtr result;
+            BaseSemantics::SValue::Ptr result;
             for (size_t i=0; i<nOps/2; ++i) {
-                BaseSemantics::SValuePtr term1 = ops->extract(a, (2*i+0)*bitsPerOp, (2*i+1)*bitsPerOp);
-                BaseSemantics::SValuePtr term2 = ops->extract(a, (2*i+1)*bitsPerOp, (2*i+2)*bitsPerOp);
-                BaseSemantics::SValuePtr sum = ops->add(term1, term2);
+                BaseSemantics::SValue::Ptr term1 = ops->extract(a, (2*i+0)*bitsPerOp, (2*i+1)*bitsPerOp);
+                BaseSemantics::SValue::Ptr term2 = ops->extract(a, (2*i+1)*bitsPerOp, (2*i+2)*bitsPerOp);
+                BaseSemantics::SValue::Ptr sum = ops->add(term1, term2);
                 result = result ? ops->concat(result, sum) : sum;
             }
             for (size_t i=0; i<nOps/2; ++i) {
-                BaseSemantics::SValuePtr term1 = ops->extract(b, (2*i+0)*bitsPerOp, (2*i+1)*bitsPerOp);
-                BaseSemantics::SValuePtr term2 = ops->extract(b, (2*i+1)*bitsPerOp, (2*i+2)*bitsPerOp);
-                BaseSemantics::SValuePtr sum = ops->add(term1, term2);
+                BaseSemantics::SValue::Ptr term1 = ops->extract(b, (2*i+0)*bitsPerOp, (2*i+1)*bitsPerOp);
+                BaseSemantics::SValue::Ptr term2 = ops->extract(b, (2*i+1)*bitsPerOp, (2*i+2)*bitsPerOp);
+                BaseSemantics::SValue::Ptr sum = ops->add(term1, term2);
                 result = ops->concat(result, sum);
             }
             d->write(args[0], result);
@@ -2170,25 +2170,25 @@ struct IP_phadds: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr a = d->read(args[0]);
-            BaseSemantics::SValuePtr b = d->read(args[1]);
+            BaseSemantics::SValue::Ptr a = d->read(args[0]);
+            BaseSemantics::SValue::Ptr b = d->read(args[1]);
             ASSERT_require(a->nBits() == b->nBits());
             size_t nOps = a->nBits() / bitsPerOp;
-            BaseSemantics::SValuePtr result;
+            BaseSemantics::SValue::Ptr result;
             for (size_t i=0; i<nOps/2; ++i) {
-                BaseSemantics::SValuePtr term1 = ops->signExtend(ops->extract(a, (2*i+0)*bitsPerOp, (2*i+1)*bitsPerOp),
+                BaseSemantics::SValue::Ptr term1 = ops->signExtend(ops->extract(a, (2*i+0)*bitsPerOp, (2*i+1)*bitsPerOp),
                                                                  bitsPerOp+1);
-                BaseSemantics::SValuePtr term2 = ops->signExtend(ops->extract(a, (2*i+1)*bitsPerOp, (2*i+2)*bitsPerOp),
+                BaseSemantics::SValue::Ptr term2 = ops->signExtend(ops->extract(a, (2*i+1)*bitsPerOp, (2*i+2)*bitsPerOp),
                                                                  bitsPerOp+1);
-                BaseSemantics::SValuePtr sum = d->saturateSignedToSigned(ops->add(term1, term2), bitsPerOp);
+                BaseSemantics::SValue::Ptr sum = d->saturateSignedToSigned(ops->add(term1, term2), bitsPerOp);
                 result = result ? ops->concat(result, sum) : sum;
             }
             for (size_t i=0; i<nOps/2; ++i) {
-                BaseSemantics::SValuePtr term1 = ops->signExtend(ops->extract(b, (2*i+0)*bitsPerOp, (2*i+1)*bitsPerOp),
+                BaseSemantics::SValue::Ptr term1 = ops->signExtend(ops->extract(b, (2*i+0)*bitsPerOp, (2*i+1)*bitsPerOp),
                                                                  bitsPerOp+1);
-                BaseSemantics::SValuePtr term2 = ops->signExtend(ops->extract(b, (2*i+1)*bitsPerOp, (2*i+2)*bitsPerOp),
+                BaseSemantics::SValue::Ptr term2 = ops->signExtend(ops->extract(b, (2*i+1)*bitsPerOp, (2*i+2)*bitsPerOp),
                                                                  bitsPerOp+1);
-                BaseSemantics::SValuePtr sum = d->saturateSignedToSigned(ops->add(term1, term2), bitsPerOp);
+                BaseSemantics::SValue::Ptr sum = d->saturateSignedToSigned(ops->add(term1, term2), bitsPerOp);
                 result = ops->concat(result, sum);
             }
             d->write(args[0], result);
@@ -2205,14 +2205,14 @@ struct IP_phminposuw: P {
             ops->interrupt(x86_exception_ud, 0);
         } else {
             const size_t bitsPerOp = 16;
-            BaseSemantics::SValuePtr src = d->read(args[1]);
+            BaseSemantics::SValue::Ptr src = d->read(args[1]);
             size_t nOps = src->nBits() / bitsPerOp;
-            BaseSemantics::SValuePtr minVal;
-            BaseSemantics::SValuePtr minIndex;
+            BaseSemantics::SValue::Ptr minVal;
+            BaseSemantics::SValue::Ptr minIndex;
             for (size_t i=0; i<nOps; ++i) {
-                BaseSemantics::SValuePtr part = ops->extract(src, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValue::Ptr part = ops->extract(src, i*bitsPerOp, (i+1)*bitsPerOp);
                 if (minVal) {
-                    BaseSemantics::SValuePtr isLessThan = ops->isUnsignedLessThan(part, minVal);
+                    BaseSemantics::SValue::Ptr isLessThan = ops->isUnsignedLessThan(part, minVal);
                     minVal = ops->ite(isLessThan, part, minVal);
                     minIndex = ops->ite(isLessThan, ops->number_(3, i), minIndex);
                 } else {
@@ -2220,7 +2220,7 @@ struct IP_phminposuw: P {
                     minIndex = ops->number_(3, i);
                 }
             }
-            BaseSemantics::SValuePtr result = ops->concat(minVal, minIndex);
+            BaseSemantics::SValue::Ptr result = ops->concat(minVal, minIndex);
             result = ops->unsignedExtend(result, 128);
             d->write(args[0], result);
         }
@@ -2238,21 +2238,21 @@ struct IP_phsub: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr a = d->read(args[0]);
-            BaseSemantics::SValuePtr b = d->read(args[1]);
+            BaseSemantics::SValue::Ptr a = d->read(args[0]);
+            BaseSemantics::SValue::Ptr b = d->read(args[1]);
             ASSERT_require(a->nBits() == b->nBits());
             size_t nOps = a->nBits() / bitsPerOp;
-            BaseSemantics::SValuePtr result;
+            BaseSemantics::SValue::Ptr result;
             for (size_t i=0; i<nOps/2; ++i) {
-                BaseSemantics::SValuePtr minuend = ops->extract(a, (2*i+0)*bitsPerOp, (2*i+1)*bitsPerOp);
-                BaseSemantics::SValuePtr subtrahend = ops->extract(a, (2*i+1)*bitsPerOp, (2*i+2)*bitsPerOp);
-                BaseSemantics::SValuePtr difference = ops->subtract(minuend, subtrahend);
+                BaseSemantics::SValue::Ptr minuend = ops->extract(a, (2*i+0)*bitsPerOp, (2*i+1)*bitsPerOp);
+                BaseSemantics::SValue::Ptr subtrahend = ops->extract(a, (2*i+1)*bitsPerOp, (2*i+2)*bitsPerOp);
+                BaseSemantics::SValue::Ptr difference = ops->subtract(minuend, subtrahend);
                 result = result ? ops->concat(result, difference) : difference;
             }
             for (size_t i=0; i<nOps/2; ++i) {
-                BaseSemantics::SValuePtr minuend = ops->extract(b, (2*i+0)*bitsPerOp, (2*i+1)*bitsPerOp);
-                BaseSemantics::SValuePtr subtrahend = ops->extract(b, (2*i+1)*bitsPerOp, (2*i+2)*bitsPerOp);
-                BaseSemantics::SValuePtr difference = ops->subtract(minuend, subtrahend);
+                BaseSemantics::SValue::Ptr minuend = ops->extract(b, (2*i+0)*bitsPerOp, (2*i+1)*bitsPerOp);
+                BaseSemantics::SValue::Ptr subtrahend = ops->extract(b, (2*i+1)*bitsPerOp, (2*i+2)*bitsPerOp);
+                BaseSemantics::SValue::Ptr difference = ops->subtract(minuend, subtrahend);
                 result = ops->concat(result, difference);
             }
             d->write(args[0], result);
@@ -2270,25 +2270,25 @@ struct IP_phsubs: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr a = d->read(args[0]);
-            BaseSemantics::SValuePtr b = d->read(args[1]);
+            BaseSemantics::SValue::Ptr a = d->read(args[0]);
+            BaseSemantics::SValue::Ptr b = d->read(args[1]);
             ASSERT_require(a->nBits() == b->nBits());
             size_t nOps = a->nBits() / bitsPerOp;
-            BaseSemantics::SValuePtr result;
+            BaseSemantics::SValue::Ptr result;
             for (size_t i=0; i<nOps/2; ++i) {
-                BaseSemantics::SValuePtr minuend = ops->signExtend(ops->extract(a, (2*i+0)*bitsPerOp, (2*i+1)*bitsPerOp),
+                BaseSemantics::SValue::Ptr minuend = ops->signExtend(ops->extract(a, (2*i+0)*bitsPerOp, (2*i+1)*bitsPerOp),
                                                                    bitsPerOp+1);
-                BaseSemantics::SValuePtr subtrahend = ops->signExtend(ops->extract(a, (2*i+1)*bitsPerOp, (2*i+2)*bitsPerOp),
+                BaseSemantics::SValue::Ptr subtrahend = ops->signExtend(ops->extract(a, (2*i+1)*bitsPerOp, (2*i+2)*bitsPerOp),
                                                                       bitsPerOp+1);
-                BaseSemantics::SValuePtr difference = d->saturateSignedToSigned(ops->subtract(minuend, subtrahend), bitsPerOp);
+                BaseSemantics::SValue::Ptr difference = d->saturateSignedToSigned(ops->subtract(minuend, subtrahend), bitsPerOp);
                 result = result ? ops->concat(result, difference) : difference;
             }
             for (size_t i=0; i<nOps/2; ++i) {
-                BaseSemantics::SValuePtr minuend = ops->signExtend(ops->extract(b, (2*i+0)*bitsPerOp, (2*i+1)*bitsPerOp),
+                BaseSemantics::SValue::Ptr minuend = ops->signExtend(ops->extract(b, (2*i+0)*bitsPerOp, (2*i+1)*bitsPerOp),
                                                                    bitsPerOp+1);
-                BaseSemantics::SValuePtr subtrahend = ops->signExtend(ops->extract(b, (2*i+1)*bitsPerOp, (2*i+2)*bitsPerOp),
+                BaseSemantics::SValue::Ptr subtrahend = ops->signExtend(ops->extract(b, (2*i+1)*bitsPerOp, (2*i+2)*bitsPerOp),
                                                                       bitsPerOp+1);
-                BaseSemantics::SValuePtr difference = d->saturateSignedToSigned(ops->subtract(minuend, subtrahend), bitsPerOp);
+                BaseSemantics::SValue::Ptr difference = d->saturateSignedToSigned(ops->subtract(minuend, subtrahend), bitsPerOp);
                 result = ops->concat(result, difference);
             }
             d->write(args[0], result);
@@ -2331,9 +2331,9 @@ struct IP_pinsr: P {
                 default:
                     ASSERT_not_reachable("invalid operand size");
             }
-            BaseSemantics::SValuePtr src = ops->extract(d->read(args[1]), 0, bitsPerOp);
-            BaseSemantics::SValuePtr dst = d->read(args[0]);
-            BaseSemantics::SValuePtr result = index > 0 ? ops->concat(ops->extract(dst, 0, index*bitsPerOp), src) : src;
+            BaseSemantics::SValue::Ptr src = ops->extract(d->read(args[1]), 0, bitsPerOp);
+            BaseSemantics::SValue::Ptr dst = d->read(args[0]);
+            BaseSemantics::SValue::Ptr result = index > 0 ? ops->concat(ops->extract(dst, 0, index*bitsPerOp), src) : src;
             if ((index+1) * bitsPerOp < dst->nBits())
                 result = ops->concat(result, ops->extract(dst, (index+1)*bitsPerOp, dst->nBits()));
             d->write(args[0], result);
@@ -2349,20 +2349,20 @@ struct IP_pmaddubsw: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr a = d->read(args[0]);
-            BaseSemantics::SValuePtr b = d->read(args[1]);
+            BaseSemantics::SValue::Ptr a = d->read(args[0]);
+            BaseSemantics::SValue::Ptr b = d->read(args[1]);
             ASSERT_require(a->nBits() == b->nBits());
             size_t nOps = a->nBits() / 16;
-            BaseSemantics::SValuePtr result;
+            BaseSemantics::SValue::Ptr result;
             for (size_t i=0; i<nOps; ++i) {
-                BaseSemantics::SValuePtr x0 = ops->extract(a, i*16+0, i*16+8);
-                BaseSemantics::SValuePtr x1 = ops->extract(a, i*16+8, i*16+16);
-                BaseSemantics::SValuePtr y0 = ops->extract(b, i*16+0, i*16+8);
-                BaseSemantics::SValuePtr y1 = ops->extract(b, i*16+8, i*16+16);
-                BaseSemantics::SValuePtr prod0 = ops->unsignedMultiply(x0, y0);
-                BaseSemantics::SValuePtr prod1 = ops->unsignedMultiply(x1, y1);
-                BaseSemantics::SValuePtr prod1Wide = ops->signExtend(prod1, 17);
-                BaseSemantics::SValuePtr sum = d->saturateSignedToSigned(ops->add(ops->signExtend(prod0, 17), prod1Wide), 16);
+                BaseSemantics::SValue::Ptr x0 = ops->extract(a, i*16+0, i*16+8);
+                BaseSemantics::SValue::Ptr x1 = ops->extract(a, i*16+8, i*16+16);
+                BaseSemantics::SValue::Ptr y0 = ops->extract(b, i*16+0, i*16+8);
+                BaseSemantics::SValue::Ptr y1 = ops->extract(b, i*16+8, i*16+16);
+                BaseSemantics::SValue::Ptr prod0 = ops->unsignedMultiply(x0, y0);
+                BaseSemantics::SValue::Ptr prod1 = ops->unsignedMultiply(x1, y1);
+                BaseSemantics::SValue::Ptr prod1Wide = ops->signExtend(prod1, 17);
+                BaseSemantics::SValue::Ptr sum = d->saturateSignedToSigned(ops->add(ops->signExtend(prod0, 17), prod1Wide), 16);
                 result = result ? ops->concat(result, sum) : sum;
             }
             d->write(args[0], result);
@@ -2379,19 +2379,19 @@ struct IP_pmaddwd: P {
             ops->interrupt(x86_exception_ud, 0);
         } else {
             const size_t bitsPerOp = 16;
-            BaseSemantics::SValuePtr dst = d->read(args[0]);
-            BaseSemantics::SValuePtr src = d->read(args[1]);
+            BaseSemantics::SValue::Ptr dst = d->read(args[0]);
+            BaseSemantics::SValue::Ptr src = d->read(args[1]);
             ASSERT_require(dst->nBits() == src->nBits());
             size_t nOps = dst->nBits() / bitsPerOp;
-            BaseSemantics::SValuePtr result;
+            BaseSemantics::SValue::Ptr result;
             for (size_t i=0; i<nOps; i+=2) {
-                BaseSemantics::SValuePtr x0 = ops->extract(src, (i+0)*bitsPerOp, (i+1)*bitsPerOp);
-                BaseSemantics::SValuePtr x1 = ops->extract(src, (i+1)*bitsPerOp, (i+2)*bitsPerOp);
-                BaseSemantics::SValuePtr y0 = ops->extract(dst, (i+0)*bitsPerOp, (i+1)*bitsPerOp);
-                BaseSemantics::SValuePtr y1 = ops->extract(dst, (i+1)*bitsPerOp, (i+2)*bitsPerOp);
-                BaseSemantics::SValuePtr prod0 = ops->unsignedMultiply(x0, y0);
-                BaseSemantics::SValuePtr prod1 = ops->unsignedMultiply(x1, y1);
-                BaseSemantics::SValuePtr sum = ops->add(prod0, prod1);
+                BaseSemantics::SValue::Ptr x0 = ops->extract(src, (i+0)*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValue::Ptr x1 = ops->extract(src, (i+1)*bitsPerOp, (i+2)*bitsPerOp);
+                BaseSemantics::SValue::Ptr y0 = ops->extract(dst, (i+0)*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValue::Ptr y1 = ops->extract(dst, (i+1)*bitsPerOp, (i+2)*bitsPerOp);
+                BaseSemantics::SValue::Ptr prod0 = ops->unsignedMultiply(x0, y0);
+                BaseSemantics::SValue::Ptr prod1 = ops->unsignedMultiply(x1, y1);
+                BaseSemantics::SValue::Ptr sum = ops->add(prod0, prod1);
                 result = result ? ops->concat(result, sum) : sum;
             }
             d->write(args[0], result);
@@ -2411,15 +2411,15 @@ struct IP_pmaxs: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr a = d->read(args[0]);
-            BaseSemantics::SValuePtr b = d->read(args[1]);
+            BaseSemantics::SValue::Ptr a = d->read(args[0]);
+            BaseSemantics::SValue::Ptr b = d->read(args[1]);
             ASSERT_require(a->nBits() == b->nBits());
             size_t nOps = a->nBits() / bitsPerOp;
-            BaseSemantics::SValuePtr result;
+            BaseSemantics::SValue::Ptr result;
             for (size_t i=0; i<nOps; ++i) {
-                BaseSemantics::SValuePtr partA = ops->extract(a, i*bitsPerOp, (i+1)*bitsPerOp);
-                BaseSemantics::SValuePtr partB = ops->extract(b, i*bitsPerOp, (i+1)*bitsPerOp);
-                BaseSemantics::SValuePtr maxVal = ops->ite(ops->isSignedLessThan(partA, partB), partB, partA);
+                BaseSemantics::SValue::Ptr partA = ops->extract(a, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValue::Ptr partB = ops->extract(b, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValue::Ptr maxVal = ops->ite(ops->isSignedLessThan(partA, partB), partB, partA);
                 result = result ? ops->concat(result, maxVal) : maxVal;
             }
             d->write(args[0], result);
@@ -2439,15 +2439,15 @@ struct IP_pmaxu: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr a = d->read(args[0]);
-            BaseSemantics::SValuePtr b = d->read(args[1]);
+            BaseSemantics::SValue::Ptr a = d->read(args[0]);
+            BaseSemantics::SValue::Ptr b = d->read(args[1]);
             ASSERT_require(a->nBits() == b->nBits());
             size_t nOps = a->nBits() / bitsPerOp;
-            BaseSemantics::SValuePtr result;
+            BaseSemantics::SValue::Ptr result;
             for (size_t i=0; i<nOps; ++i) {
-                BaseSemantics::SValuePtr partA = ops->extract(a, i*bitsPerOp, (i+1)*bitsPerOp);
-                BaseSemantics::SValuePtr partB = ops->extract(b, i*bitsPerOp, (i+1)*bitsPerOp);
-                BaseSemantics::SValuePtr maxVal = ops->ite(ops->isUnsignedLessThan(partA, partB), partB, partA);
+                BaseSemantics::SValue::Ptr partA = ops->extract(a, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValue::Ptr partB = ops->extract(b, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValue::Ptr maxVal = ops->ite(ops->isUnsignedLessThan(partA, partB), partB, partA);
                 result = result ? ops->concat(result, maxVal) : maxVal;
             }
             d->write(args[0], result);
@@ -2467,15 +2467,15 @@ struct IP_pmins: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr a = d->read(args[0]);
-            BaseSemantics::SValuePtr b = d->read(args[1]);
+            BaseSemantics::SValue::Ptr a = d->read(args[0]);
+            BaseSemantics::SValue::Ptr b = d->read(args[1]);
             ASSERT_require(a->nBits() == b->nBits());
             size_t nOps = a->nBits() / bitsPerOp;
-            BaseSemantics::SValuePtr result;
+            BaseSemantics::SValue::Ptr result;
             for (size_t i=0; i<nOps; ++i) {
-                BaseSemantics::SValuePtr partA = ops->extract(a, i*bitsPerOp, (i+1)*bitsPerOp);
-                BaseSemantics::SValuePtr partB = ops->extract(b, i*bitsPerOp, (i+1)*bitsPerOp);
-                BaseSemantics::SValuePtr minVal = ops->ite(ops->isSignedLessThan(partA, partB), partA, partB);
+                BaseSemantics::SValue::Ptr partA = ops->extract(a, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValue::Ptr partB = ops->extract(b, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValue::Ptr minVal = ops->ite(ops->isSignedLessThan(partA, partB), partA, partB);
                 result = result ? ops->concat(result, minVal) : minVal;
             }
             d->write(args[0], result);
@@ -2495,15 +2495,15 @@ struct IP_pminu: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr a = d->read(args[0]);
-            BaseSemantics::SValuePtr b = d->read(args[1]);
+            BaseSemantics::SValue::Ptr a = d->read(args[0]);
+            BaseSemantics::SValue::Ptr b = d->read(args[1]);
             ASSERT_require(a->nBits() == b->nBits());
             size_t nOps = a->nBits() / bitsPerOp;
-            BaseSemantics::SValuePtr result;
+            BaseSemantics::SValue::Ptr result;
             for (size_t i=0; i<nOps; ++i) {
-                BaseSemantics::SValuePtr partA = ops->extract(a, i*bitsPerOp, (i+1)*bitsPerOp);
-                BaseSemantics::SValuePtr partB = ops->extract(b, i*bitsPerOp, (i+1)*bitsPerOp);
-                BaseSemantics::SValuePtr minVal = ops->ite(ops->isUnsignedLessThan(partA, partB), partA, partB);
+                BaseSemantics::SValue::Ptr partA = ops->extract(a, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValue::Ptr partB = ops->extract(b, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValue::Ptr minVal = ops->ite(ops->isUnsignedLessThan(partA, partB), partA, partB);
                 result = result ? ops->concat(result, minVal) : minVal;
             }
             d->write(args[0], result);
@@ -2519,10 +2519,10 @@ struct IP_pmovmskb: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr src = d->read(args[1]);
-            BaseSemantics::SValuePtr result;
+            BaseSemantics::SValue::Ptr src = d->read(args[1]);
+            BaseSemantics::SValue::Ptr result;
             for (size_t byteIdx=0; byteIdx<src->nBits()/8; ++byteIdx) {
-                BaseSemantics::SValuePtr bit = ops->extract(src, 8*byteIdx+7, 8*byteIdx+8);
+                BaseSemantics::SValue::Ptr bit = ops->extract(src, 8*byteIdx+7, 8*byteIdx+8);
                 result = result ? ops->concat(result, bit) : bit;
             }
             result = ops->unsignedExtend(result, asm_type_width(args[0]->get_type()));
@@ -2547,11 +2547,11 @@ struct IP_pmovsx: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr src = d->read(args[1]);
-            BaseSemantics::SValuePtr result;
+            BaseSemantics::SValue::Ptr src = d->read(args[1]);
+            BaseSemantics::SValue::Ptr result;
             size_t nOps = asm_type_width(args[0]->get_type()) / dstBitsPerOp;
             for (size_t i=0; i<nOps; ++i) {
-                BaseSemantics::SValuePtr part = ops->extract(src, i*srcBitsPerOp, (i+1)*srcBitsPerOp);
+                BaseSemantics::SValue::Ptr part = ops->extract(src, i*srcBitsPerOp, (i+1)*srcBitsPerOp);
                 part = ops->signExtend(part, dstBitsPerOp);
                 result = result ? ops->concat(result, part) : part;
             }
@@ -2576,11 +2576,11 @@ struct IP_pmovzx: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr src = d->read(args[1]);
-            BaseSemantics::SValuePtr result;
+            BaseSemantics::SValue::Ptr src = d->read(args[1]);
+            BaseSemantics::SValue::Ptr result;
             size_t nOps = asm_type_width(args[0]->get_type()) / dstBitsPerOp;
             for (size_t i=0; i<nOps; ++i) {
-                BaseSemantics::SValuePtr part = ops->extract(src, i*srcBitsPerOp, (i+1)*srcBitsPerOp);
+                BaseSemantics::SValue::Ptr part = ops->extract(src, i*srcBitsPerOp, (i+1)*srcBitsPerOp);
                 part = ops->unsignedExtend(part, dstBitsPerOp);
                 result = result ? ops->concat(result, part) : part;
             }
@@ -2597,14 +2597,14 @@ struct IP_pmuldq: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr dst = d->read(args[0]);
-            BaseSemantics::SValuePtr src = d->read(args[1]);
+            BaseSemantics::SValue::Ptr dst = d->read(args[0]);
+            BaseSemantics::SValue::Ptr src = d->read(args[1]);
             ASSERT_require(dst->nBits() == src->nBits());
-            BaseSemantics::SValuePtr dst_0_32 = ops->extract(dst, 0, 32);
-            BaseSemantics::SValuePtr prod0 = ops->signedMultiply(ops->extract(src, 0, 32), dst_0_32);
-            BaseSemantics::SValuePtr dst_64_96 = ops->extract(dst, 64, 96);
-            BaseSemantics::SValuePtr prod1 = ops->signedMultiply(ops->extract(src, 64, 96), dst_64_96);
-            BaseSemantics::SValuePtr result = ops->concat(prod0, prod1);
+            BaseSemantics::SValue::Ptr dst_0_32 = ops->extract(dst, 0, 32);
+            BaseSemantics::SValue::Ptr prod0 = ops->signedMultiply(ops->extract(src, 0, 32), dst_0_32);
+            BaseSemantics::SValue::Ptr dst_64_96 = ops->extract(dst, 64, 96);
+            BaseSemantics::SValue::Ptr prod1 = ops->signedMultiply(ops->extract(src, 64, 96), dst_64_96);
+            BaseSemantics::SValue::Ptr result = ops->concat(prod0, prod1);
             d->write(args[0], result);
         }
     }
@@ -2618,17 +2618,17 @@ struct IP_pmulhrsw: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr a = d->read(args[0]);
-            BaseSemantics::SValuePtr b = d->read(args[1]);
+            BaseSemantics::SValue::Ptr a = d->read(args[0]);
+            BaseSemantics::SValue::Ptr b = d->read(args[1]);
             ASSERT_require(a->nBits() == b->nBits());
             size_t nOps = a->nBits() / 16;
-            BaseSemantics::SValuePtr result;
+            BaseSemantics::SValue::Ptr result;
             for (size_t i=0; i<nOps; ++i) {
-                BaseSemantics::SValuePtr partA = ops->extract(a, i*16, (i+1)*16);
-                BaseSemantics::SValuePtr partB = ops->extract(b, i*16, (i+1)*16);
-                BaseSemantics::SValuePtr product = ops->unsignedMultiply(partA, partB);
-                BaseSemantics::SValuePtr one32 = ops->number_(32, 1);
-                BaseSemantics::SValuePtr scaled = ops->extract(ops->add(ops->shiftRight(product, ops->number_(32, 14)),
+                BaseSemantics::SValue::Ptr partA = ops->extract(a, i*16, (i+1)*16);
+                BaseSemantics::SValue::Ptr partB = ops->extract(b, i*16, (i+1)*16);
+                BaseSemantics::SValue::Ptr product = ops->unsignedMultiply(partA, partB);
+                BaseSemantics::SValue::Ptr one32 = ops->number_(32, 1);
+                BaseSemantics::SValue::Ptr scaled = ops->extract(ops->add(ops->shiftRight(product, ops->number_(32, 14)),
                                                                         one32),
                                                                1, 17);
                 result = result ? ops->concat(result, scaled) : scaled;
@@ -2646,17 +2646,17 @@ struct IP_pmulhuw: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr dst = d->read(args[0]);
-            BaseSemantics::SValuePtr src = d->read(args[1]);
+            BaseSemantics::SValue::Ptr dst = d->read(args[0]);
+            BaseSemantics::SValue::Ptr src = d->read(args[1]);
             ASSERT_require(dst->nBits() == src->nBits());
             const size_t bitsPerOp = 16;
             size_t nOps = dst->nBits() / bitsPerOp;
-            BaseSemantics::SValuePtr result;
+            BaseSemantics::SValue::Ptr result;
             for (size_t i=0; i<nOps; ++i) {
-                BaseSemantics::SValuePtr term0 = ops->extract(dst, i*bitsPerOp, (i+1)*bitsPerOp);
-                BaseSemantics::SValuePtr term1 = ops->extract(src, i*bitsPerOp, (i+1)*bitsPerOp);
-                BaseSemantics::SValuePtr product = ops->unsignedMultiply(term0, term1);
-                BaseSemantics::SValuePtr high = ops->extract(product, bitsPerOp, 2*bitsPerOp);
+                BaseSemantics::SValue::Ptr term0 = ops->extract(dst, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValue::Ptr term1 = ops->extract(src, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValue::Ptr product = ops->unsignedMultiply(term0, term1);
+                BaseSemantics::SValue::Ptr high = ops->extract(product, bitsPerOp, 2*bitsPerOp);
                 result = result ? ops->concat(result, high) : high;
             }
             d->write(args[0], result);
@@ -2672,17 +2672,17 @@ struct IP_pmulhw: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr dst = d->read(args[0]);
-            BaseSemantics::SValuePtr src = d->read(args[1]);
+            BaseSemantics::SValue::Ptr dst = d->read(args[0]);
+            BaseSemantics::SValue::Ptr src = d->read(args[1]);
             ASSERT_require(dst->nBits() == src->nBits());
             const size_t bitsPerOp = 16;
             size_t nOps = dst->nBits() / bitsPerOp;
-            BaseSemantics::SValuePtr result;
+            BaseSemantics::SValue::Ptr result;
             for (size_t i=0; i<nOps; ++i) {
-                BaseSemantics::SValuePtr term0 = ops->extract(dst, i*bitsPerOp, (i+1)*bitsPerOp);
-                BaseSemantics::SValuePtr term1 = ops->extract(src, i*bitsPerOp, (i+1)*bitsPerOp);
-                BaseSemantics::SValuePtr product = ops->signedMultiply(term0, term1);
-                BaseSemantics::SValuePtr high = ops->extract(product, bitsPerOp, 2*bitsPerOp);
+                BaseSemantics::SValue::Ptr term0 = ops->extract(dst, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValue::Ptr term1 = ops->extract(src, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValue::Ptr product = ops->signedMultiply(term0, term1);
+                BaseSemantics::SValue::Ptr high = ops->extract(product, bitsPerOp, 2*bitsPerOp);
                 result = result ? ops->concat(result, high) : high;
             }
             d->write(args[0], result);
@@ -2698,15 +2698,15 @@ struct IP_pmuludq: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr dst = d->read(args[0]);
-            BaseSemantics::SValuePtr src = d->read(args[1]);
+            BaseSemantics::SValue::Ptr dst = d->read(args[0]);
+            BaseSemantics::SValue::Ptr src = d->read(args[1]);
             ASSERT_require(dst->nBits() == src->nBits());
             size_t nOps = dst->nBits() / 64;
-            BaseSemantics::SValuePtr result;
+            BaseSemantics::SValue::Ptr result;
             for (size_t i=0; i<nOps; ++i) {
-                BaseSemantics::SValuePtr term0 = ops->extract(dst, (2*i+0)*32, (2*i+1)*32);
-                BaseSemantics::SValuePtr term1 = ops->extract(src, (2*i+0)*32, (2*i+1)*32);
-                BaseSemantics::SValuePtr product = ops->unsignedMultiply(term0, term1);
+                BaseSemantics::SValue::Ptr term0 = ops->extract(dst, (2*i+0)*32, (2*i+1)*32);
+                BaseSemantics::SValue::Ptr term1 = ops->extract(src, (2*i+0)*32, (2*i+1)*32);
+                BaseSemantics::SValue::Ptr product = ops->unsignedMultiply(term0, term1);
                 result = result ? ops->concat(result, product) : product;
             }
             d->write(args[0], result);
@@ -2723,16 +2723,16 @@ struct IP_pmull: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr dst = d->read(args[0]);
-            BaseSemantics::SValuePtr src = d->read(args[1]);
+            BaseSemantics::SValue::Ptr dst = d->read(args[0]);
+            BaseSemantics::SValue::Ptr src = d->read(args[1]);
             ASSERT_require(dst->nBits() == src->nBits());
             size_t nOps = dst->nBits() / bitsPerOp;
-            BaseSemantics::SValuePtr result;
+            BaseSemantics::SValue::Ptr result;
             for (size_t i=0; i<nOps; ++i) {
-                BaseSemantics::SValuePtr term0 = ops->extract(dst, i*bitsPerOp, (i+1)*bitsPerOp);
-                BaseSemantics::SValuePtr term1 = ops->extract(src, i*bitsPerOp, (i+1)*bitsPerOp);
-                BaseSemantics::SValuePtr product = ops->signedMultiply(term0, term1);
-                BaseSemantics::SValuePtr low = ops->extract(product, 0, bitsPerOp);
+                BaseSemantics::SValue::Ptr term0 = ops->extract(dst, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValue::Ptr term1 = ops->extract(src, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValue::Ptr product = ops->signedMultiply(term0, term1);
+                BaseSemantics::SValue::Ptr low = ops->extract(product, 0, bitsPerOp);
                 result = result ? ops->concat(result, low) : low;
             }
             d->write(args[0], result);
@@ -2762,13 +2762,13 @@ struct IP_pop: P {
             size_t operandWidth = asm_type_width(args[0]->get_type());
             ASSERT_require(operandWidth % 8 == 0);
             size_t stackDelta = operandWidth / 8;
-            BaseSemantics::SValuePtr oldSp = d->readRegister(sp);
-            BaseSemantics::SValuePtr newSp = ops->add(oldSp, ops->number_(sp.nBits(), stackDelta));
+            BaseSemantics::SValue::Ptr oldSp = d->readRegister(sp);
+            BaseSemantics::SValue::Ptr newSp = ops->add(oldSp, ops->number_(sp.nBits(), stackDelta));
             d->writeRegister(sp, newSp);
 
             // Read from stack and write to args[0]
-            BaseSemantics::SValuePtr yes = ops->boolean_(true);
-            BaseSemantics::SValuePtr undefA = ops->undefined_(operandWidth);
+            BaseSemantics::SValue::Ptr yes = ops->boolean_(true);
+            BaseSemantics::SValue::Ptr undefA = ops->undefined_(operandWidth);
             d->write(args[0], ops->readMemory(d->REG_SS, d->fixMemoryAddress(oldSp), undefA, yes));
         }
     }
@@ -2784,9 +2784,9 @@ struct IP_pop_flags: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr stackVa = d->readRegister(d->REG_anySP);
-            BaseSemantics::SValuePtr oldFlags, poppedFlags;
-            BaseSemantics::SValuePtr yes = ops->boolean_(true);
+            BaseSemantics::SValue::Ptr stackVa = d->readRegister(d->REG_anySP);
+            BaseSemantics::SValue::Ptr oldFlags, poppedFlags;
+            BaseSemantics::SValue::Ptr yes = ops->boolean_(true);
             RegisterDescriptor flagsReg;
             switch (insn->get_operandSize()) {
                 case x86_insnsize_16: {
@@ -2802,7 +2802,7 @@ struct IP_pop_flags: P {
                 case x86_insnsize_64: {
                     oldFlags = d->readRegister(flagsReg = d->REG_RFLAGS);
                     poppedFlags = ops->readMemory(d->REG_SS, stackVa, ops->undefined_(64), yes);
-                    BaseSemantics::SValuePtr zero32 = ops->number_(32, 0);
+                    BaseSemantics::SValue::Ptr zero32 = ops->number_(32, 0);
                     poppedFlags = ops->concat(ops->unsignedExtend(poppedFlags, 32), zero32);
                     break;
                 }
@@ -2814,7 +2814,7 @@ struct IP_pop_flags: P {
 
             // Clear VIP (bit 19) and VIF (bit 20); i.e., clear bits 0x00180000
             // Keep IOPL (bits 12 and 13) and VM (bit 17), i.e., preserve bits 0x00023000
-            BaseSemantics::SValuePtr newFlags = ops->extract(poppedFlags, 0, 12);
+            BaseSemantics::SValue::Ptr newFlags = ops->extract(poppedFlags, 0, 12);
             newFlags = ops->concat(newFlags, ops->extract(oldFlags, 12, 14));        // IOPL (bits 12 & 13) is preserved
             newFlags = ops->concat(newFlags, ops->extract(poppedFlags, 14, 16));
             if (oldFlags->nBits() >= 32) {
@@ -2841,60 +2841,60 @@ struct IP_pop_gprs: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else if (insn->get_addressSize() == x86_insnsize_16) {
-            BaseSemantics::SValuePtr oldSp = d->readRegister(d->REG_anySP);
-            BaseSemantics::SValuePtr newSp = ops->add(oldSp, ops->number_(oldSp->nBits(), 16));
-            BaseSemantics::SValuePtr base = d->fixMemoryAddress(oldSp);
-            BaseSemantics::SValuePtr yes = ops->boolean_(true);
+            BaseSemantics::SValue::Ptr oldSp = d->readRegister(d->REG_anySP);
+            BaseSemantics::SValue::Ptr newSp = ops->add(oldSp, ops->number_(oldSp->nBits(), 16));
+            BaseSemantics::SValue::Ptr base = d->fixMemoryAddress(oldSp);
+            BaseSemantics::SValue::Ptr yes = ops->boolean_(true);
             d->writeRegister(d->REG_DI,
                              ops->readMemory(d->REG_SS, base,
                                              ops->undefined_(16), yes));
-            BaseSemantics::SValuePtr undefSI = ops->undefined_(16);
+            BaseSemantics::SValue::Ptr undefSI = ops->undefined_(16);
             d->writeRegister(d->REG_SI,
                              ops->readMemory(d->REG_SS, ops->add(base, ops->number_(base->nBits(), 2)), undefSI, yes));
-            BaseSemantics::SValuePtr undefBP = ops->undefined_(16);
+            BaseSemantics::SValue::Ptr undefBP = ops->undefined_(16);
             d->writeRegister(d->REG_BP,
                              ops->readMemory(d->REG_SS, ops->add(base, ops->number_(base->nBits(), 4)), undefBP, yes));
-            BaseSemantics::SValuePtr undefX = ops->undefined_(16);
+            BaseSemantics::SValue::Ptr undefX = ops->undefined_(16);
             (void)           ops->readMemory(d->REG_SS, ops->add(base, ops->number_(base->nBits(), 6)), undefX, yes);
-            BaseSemantics::SValuePtr undefBX = ops->undefined_(16);
+            BaseSemantics::SValue::Ptr undefBX = ops->undefined_(16);
             d->writeRegister(d->REG_BX,
                              ops->readMemory(d->REG_SS, ops->add(base, ops->number_(base->nBits(), 8)), undefBX, yes));
-            BaseSemantics::SValuePtr undefDX = ops->undefined_(16);
+            BaseSemantics::SValue::Ptr undefDX = ops->undefined_(16);
             d->writeRegister(d->REG_DX,
                              ops->readMemory(d->REG_SS, ops->add(base, ops->number_(base->nBits(), 10)), undefDX, yes));
-            BaseSemantics::SValuePtr undefCX = ops->undefined_(16);
+            BaseSemantics::SValue::Ptr undefCX = ops->undefined_(16);
             d->writeRegister(d->REG_CX,
                              ops->readMemory(d->REG_SS, ops->add(base, ops->number_(base->nBits(), 12)), undefCX, yes));
-            BaseSemantics::SValuePtr undefAX = ops->undefined_(16);
+            BaseSemantics::SValue::Ptr undefAX = ops->undefined_(16);
             d->writeRegister(d->REG_AX,
                              ops->readMemory(d->REG_SS, ops->add(base, ops->number_(base->nBits(), 14)), undefAX, yes));
             d->writeRegister(d->REG_anySP, newSp);
         } else if (insn->get_addressSize() == x86_insnsize_32) {
-            BaseSemantics::SValuePtr oldSp = d->readRegister(d->REG_anySP);
-            BaseSemantics::SValuePtr newSp = ops->add(oldSp, ops->number_(oldSp->nBits(), 32));
-            BaseSemantics::SValuePtr base = d->fixMemoryAddress(oldSp);
-            BaseSemantics::SValuePtr yes = ops->boolean_(true);
+            BaseSemantics::SValue::Ptr oldSp = d->readRegister(d->REG_anySP);
+            BaseSemantics::SValue::Ptr newSp = ops->add(oldSp, ops->number_(oldSp->nBits(), 32));
+            BaseSemantics::SValue::Ptr base = d->fixMemoryAddress(oldSp);
+            BaseSemantics::SValue::Ptr yes = ops->boolean_(true);
             d->writeRegister(d->REG_EDI,
                              ops->readMemory(d->REG_SS, base,
                                              ops->undefined_(32), yes));
-            BaseSemantics::SValuePtr undefESI = ops->undefined_(32);
+            BaseSemantics::SValue::Ptr undefESI = ops->undefined_(32);
             d->writeRegister(d->REG_ESI,
                              ops->readMemory(d->REG_SS, ops->add(base, ops->number_(base->nBits(), 4)), undefESI, yes));
-            BaseSemantics::SValuePtr undefEBP = ops->undefined_(32);
+            BaseSemantics::SValue::Ptr undefEBP = ops->undefined_(32);
             d->writeRegister(d->REG_EBP,
                              ops->readMemory(d->REG_SS, ops->add(base, ops->number_(base->nBits(), 8)), undefEBP, yes));
-            BaseSemantics::SValuePtr undefX = ops->undefined_(32);
+            BaseSemantics::SValue::Ptr undefX = ops->undefined_(32);
             (void)           ops->readMemory(d->REG_SS, ops->add(base, ops->number_(base->nBits(), 12)), undefX, yes);
-            BaseSemantics::SValuePtr undefEBX = ops->undefined_(32);
+            BaseSemantics::SValue::Ptr undefEBX = ops->undefined_(32);
             d->writeRegister(d->REG_EBX,
                              ops->readMemory(d->REG_SS, ops->add(base, ops->number_(base->nBits(), 16)), undefEBX, yes));
-            BaseSemantics::SValuePtr undefEDX = ops->undefined_(32);
+            BaseSemantics::SValue::Ptr undefEDX = ops->undefined_(32);
             d->writeRegister(d->REG_EDX,
                              ops->readMemory(d->REG_SS, ops->add(base, ops->number_(base->nBits(), 20)), undefEDX, yes));
-            BaseSemantics::SValuePtr undefECX = ops->undefined_(32);
+            BaseSemantics::SValue::Ptr undefECX = ops->undefined_(32);
             d->writeRegister(d->REG_ECX,
                              ops->readMemory(d->REG_SS, ops->add(base, ops->number_(base->nBits(), 24)), undefECX, yes));
-            BaseSemantics::SValuePtr undefEAX = ops->undefined_(32);
+            BaseSemantics::SValue::Ptr undefEAX = ops->undefined_(32);
             d->writeRegister(d->REG_EAX,
                              ops->readMemory(d->REG_SS, ops->add(base, ops->number_(base->nBits(), 28)), undefEAX, yes));
             d->writeRegister(d->REG_anySP, newSp);
@@ -2911,10 +2911,10 @@ struct IP_popcnt: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr src = d->read(args[1]);
-            BaseSemantics::SValuePtr total = ops->number_(asm_type_width(args[0]->get_type()), 0);
+            BaseSemantics::SValue::Ptr src = d->read(args[1]);
+            BaseSemantics::SValue::Ptr total = ops->number_(asm_type_width(args[0]->get_type()), 0);
             for (size_t i=0; i<src->nBits(); ++i) {
-                BaseSemantics::SValuePtr srcBit = ops->extract(src, i, i+1);
+                BaseSemantics::SValue::Ptr srcBit = ops->extract(src, i, i+1);
                 total = ops->add(total, ops->unsignedExtend(srcBit, total->nBits()));
             }
             d->write(args[0], total);
@@ -2930,10 +2930,10 @@ struct IP_por: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr dst = d->read(args[0]);
-            BaseSemantics::SValuePtr src = d->read(args[1]);
+            BaseSemantics::SValue::Ptr dst = d->read(args[0]);
+            BaseSemantics::SValue::Ptr src = d->read(args[1]);
             ASSERT_require(dst->nBits() == src->nBits());
-            BaseSemantics::SValuePtr result = ops->or_(dst, src);
+            BaseSemantics::SValue::Ptr result = ops->or_(dst, src);
             d->write(args[0], result);
         }
     }
@@ -2947,20 +2947,20 @@ struct IP_psadbw: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr dst = d->read(args[0]);
-            BaseSemantics::SValuePtr src = d->read(args[1]);
+            BaseSemantics::SValue::Ptr dst = d->read(args[0]);
+            BaseSemantics::SValue::Ptr src = d->read(args[1]);
             ASSERT_require(dst->nBits() == src->nBits());
             ASSERT_require(dst->nBits() == 64 || dst->nBits() == 128);
-            BaseSemantics::SValuePtr result;
+            BaseSemantics::SValue::Ptr result;
             size_t nSums = dst->nBits() / 64;
             for (size_t i=0; i<nSums; ++i) {
-                BaseSemantics::SValuePtr sum;
+                BaseSemantics::SValue::Ptr sum;
                 for (size_t j=0; j<8; ++j) {
-                    BaseSemantics::SValuePtr partA = ops->extract(dst, i*64+j*8, i*64+j*8+8);
-                    BaseSemantics::SValuePtr partB = ops->extract(src, i*64+j*8, i*64+j*8+8);
-                    BaseSemantics::SValuePtr diffAB = ops->subtract(partA, partB);
-                    BaseSemantics::SValuePtr diffBA = ops->subtract(partB, partA);
-                    BaseSemantics::SValuePtr absDiff = ops->ite(ops->isUnsignedLessThan(partA, partB), diffBA, diffAB);
+                    BaseSemantics::SValue::Ptr partA = ops->extract(dst, i*64+j*8, i*64+j*8+8);
+                    BaseSemantics::SValue::Ptr partB = ops->extract(src, i*64+j*8, i*64+j*8+8);
+                    BaseSemantics::SValue::Ptr diffAB = ops->subtract(partA, partB);
+                    BaseSemantics::SValue::Ptr diffBA = ops->subtract(partB, partA);
+                    BaseSemantics::SValue::Ptr absDiff = ops->ite(ops->isUnsignedLessThan(partA, partB), diffBA, diffAB);
                     sum = sum ? ops->add(sum, absDiff) : absDiff;
                 }
                 sum = ops->unsignedExtend(sum, 64);
@@ -2979,18 +2979,18 @@ struct IP_pshufb: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr original = d->read(args[0]);
-            BaseSemantics::SValuePtr indices = d->read(args[1]);
+            BaseSemantics::SValue::Ptr original = d->read(args[0]);
+            BaseSemantics::SValue::Ptr indices = d->read(args[1]);
             ASSERT_require(original->nBits() == indices->nBits());
             size_t nOps = original->nBits() / 8;
             size_t bitsPerIndex = 64 == original->nBits() ? 3 : 4;
-            BaseSemantics::SValuePtr eight = ops->number_(4, 8);
-            BaseSemantics::SValuePtr result;
+            BaseSemantics::SValue::Ptr eight = ops->number_(4, 8);
+            BaseSemantics::SValue::Ptr result;
             for (size_t i=0; i<nOps; ++i) {
-                BaseSemantics::SValuePtr indexMsb = ops->extract(indices, i*8+7, i*8+8);
-                BaseSemantics::SValuePtr index = ops->extract(indices, i*8, i*8+bitsPerIndex);
+                BaseSemantics::SValue::Ptr indexMsb = ops->extract(indices, i*8+7, i*8+8);
+                BaseSemantics::SValue::Ptr index = ops->extract(indices, i*8, i*8+bitsPerIndex);
                 // The extract operator only works with concrete bit indices, so we use right shift and masking instead.
-                BaseSemantics::SValuePtr selected = ops->shiftRight(original, ops->unsignedMultiply(index, eight));
+                BaseSemantics::SValue::Ptr selected = ops->shiftRight(original, ops->unsignedMultiply(index, eight));
                 selected = ops->unsignedExtend(selected, 8);
                 selected = ops->ite(indexMsb, ops->number_(8, 0), selected);
                 result = result ? ops->concat(result, selected) : selected;
@@ -3008,13 +3008,13 @@ struct IP_pshufd: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr src = d->read(args[1]);
-            BaseSemantics::SValuePtr order = d->read(args[2]);
-            BaseSemantics::SValuePtr result;
+            BaseSemantics::SValue::Ptr src = d->read(args[1]);
+            BaseSemantics::SValue::Ptr order = d->read(args[2]);
+            BaseSemantics::SValue::Ptr result;
             ASSERT_require(order->toUnsigned());
             for (size_t i=0; i<4; ++i) {
                 size_t dwordIdx = ((order->toUnsigned().get() >> (i*2)) & 0x3);
-                BaseSemantics::SValuePtr dword = ops->extract(src, 32*dwordIdx, 32*(dwordIdx+1));
+                BaseSemantics::SValue::Ptr dword = ops->extract(src, 32*dwordIdx, 32*(dwordIdx+1));
                 result = result ? ops->concat(result, dword) : dword;
             }
             d->write(args[0], result);
@@ -3032,12 +3032,12 @@ struct IP_pshufhw: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr src = d->read(args[0]);
-            BaseSemantics::SValuePtr result = ops->extract(src, 0, 64);
+            BaseSemantics::SValue::Ptr src = d->read(args[0]);
+            BaseSemantics::SValue::Ptr result = ops->extract(src, 0, 64);
             size_t order = d->read(args[2])->toUnsigned().get();// must be an immediate operand
             for (size_t i=0; i<4; ++i) {
                 size_t wordIdx = (order >> (2*i)) & 3;
-                BaseSemantics::SValuePtr word = ops->extract(src, (4+wordIdx)*16, (4+wordIdx+1)*16);
+                BaseSemantics::SValue::Ptr word = ops->extract(src, (4+wordIdx)*16, (4+wordIdx+1)*16);
                 result = ops->concat(result, word);
             }
             d->write(args[0], result);
@@ -3055,12 +3055,12 @@ struct IP_pshuflw: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr src = d->read(args[0]);
-            BaseSemantics::SValuePtr result;
+            BaseSemantics::SValue::Ptr src = d->read(args[0]);
+            BaseSemantics::SValue::Ptr result;
             size_t order = d->read(args[2])->toUnsigned().get();// must be an immediate operand
             for (size_t i=0; i<4; ++i) {
                 size_t wordIdx = (order >> (2*i)) & 3;
-                BaseSemantics::SValuePtr word = ops->extract(src, wordIdx*16, (wordIdx+1)*16);
+                BaseSemantics::SValue::Ptr word = ops->extract(src, wordIdx*16, (wordIdx+1)*16);
                 result = result ? ops->concat(result, word) : word;
             }
             result = ops->concat(result, ops->extract(src, 64, 128));
@@ -3079,12 +3079,12 @@ struct IP_pshufw: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr src = d->read(args[0]);
-            BaseSemantics::SValuePtr result;
+            BaseSemantics::SValue::Ptr src = d->read(args[0]);
+            BaseSemantics::SValue::Ptr result;
             size_t order = d->read(args[2])->toUnsigned().get();// must be an immediate operand
             for (size_t i=0; i<4; ++i) {
                 size_t wordIdx = (order >> (2*i)) & 3;
-                BaseSemantics::SValuePtr word = ops->extract(src, wordIdx*16, (wordIdx+1)*16);
+                BaseSemantics::SValue::Ptr word = ops->extract(src, wordIdx*16, (wordIdx+1)*16);
                 result = result ? ops->concat(result, word) : word;
             }
             d->write(args[0], result);
@@ -3104,19 +3104,19 @@ struct IP_psign: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr a = d->read(args[0]);
-            BaseSemantics::SValuePtr b = d->read(args[1]);
+            BaseSemantics::SValue::Ptr a = d->read(args[0]);
+            BaseSemantics::SValue::Ptr b = d->read(args[1]);
             ASSERT_require(a->nBits() == b->nBits());
             size_t nOps = a->nBits() / bitsPerOp;
-            BaseSemantics::SValuePtr result;
-            BaseSemantics::SValuePtr zero = ops->number_(bitsPerOp, 0);
-            BaseSemantics::SValuePtr allSet = ops->invert(zero);
+            BaseSemantics::SValue::Ptr result;
+            BaseSemantics::SValue::Ptr zero = ops->number_(bitsPerOp, 0);
+            BaseSemantics::SValue::Ptr allSet = ops->invert(zero);
             for (size_t i=0; i<nOps; ++i) {
-                BaseSemantics::SValuePtr partA = ops->extract(a, i*bitsPerOp, (i+1)*bitsPerOp);
-                BaseSemantics::SValuePtr partB = ops->extract(b, i*bitsPerOp, (i+1)*bitsPerOp);
-                BaseSemantics::SValuePtr isZero = ops->equalToZero(b);
-                BaseSemantics::SValuePtr isNegative = ops->extract(b, bitsPerOp-1, bitsPerOp);
-                BaseSemantics::SValuePtr partC = ops->ite(isNegative, allSet, ops->ite(isZero, zero, partA));
+                BaseSemantics::SValue::Ptr partA = ops->extract(a, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValue::Ptr partB = ops->extract(b, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValue::Ptr isZero = ops->equalToZero(b);
+                BaseSemantics::SValue::Ptr isNegative = ops->extract(b, bitsPerOp-1, bitsPerOp);
+                BaseSemantics::SValue::Ptr partC = ops->ite(isNegative, allSet, ops->ite(isZero, zero, partA));
                 result = result ? ops->concat(result, partC) : partC;
             }
             d->write(args[0], result);
@@ -3132,10 +3132,10 @@ struct IP_pslldq: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr src = d->read(args[0]);
+            BaseSemantics::SValue::Ptr src = d->read(args[0]);
             size_t nBytesShift = d->read(args[1])->toUnsigned().get();// shift amount is an immediate operand
-            BaseSemantics::SValuePtr sa = ops->number_(8, 8*nBytesShift);
-            BaseSemantics::SValuePtr result = ops->shiftLeft(src, sa);
+            BaseSemantics::SValue::Ptr sa = ops->number_(8, 8*nBytesShift);
+            BaseSemantics::SValue::Ptr result = ops->shiftLeft(src, sa);
             d->write(args[0], result);
         }
     }
@@ -3153,13 +3153,13 @@ struct IP_psll: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr src = d->read(args[0]);
-            BaseSemantics::SValuePtr sa = d->read(args[1]);
+            BaseSemantics::SValue::Ptr src = d->read(args[0]);
+            BaseSemantics::SValue::Ptr sa = d->read(args[1]);
             size_t nOps = src->nBits() / bitsPerOp;
-            BaseSemantics::SValuePtr result;
+            BaseSemantics::SValue::Ptr result;
             for (size_t i=0; i<nOps; ++i) {
-                BaseSemantics::SValuePtr part = ops->extract(src, i*bitsPerOp, (i+1)*bitsPerOp);
-                BaseSemantics::SValuePtr shifted = ops->shiftLeft(part, sa);
+                BaseSemantics::SValue::Ptr part = ops->extract(src, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValue::Ptr shifted = ops->shiftLeft(part, sa);
                 result = result ? ops->concat(result, shifted) : shifted;
             }
             d->write(args[0], result);
@@ -3178,13 +3178,13 @@ struct IP_psra: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr src = d->read(args[0]);
-            BaseSemantics::SValuePtr sa = d->read(args[1]);
+            BaseSemantics::SValue::Ptr src = d->read(args[0]);
+            BaseSemantics::SValue::Ptr sa = d->read(args[1]);
             size_t nOps = src->nBits() / bitsPerOp;
-            BaseSemantics::SValuePtr result;
+            BaseSemantics::SValue::Ptr result;
             for (size_t i=0; i<nOps; ++i) {
-                BaseSemantics::SValuePtr part = ops->extract(src, i*bitsPerOp, (i+1)*bitsPerOp);
-                BaseSemantics::SValuePtr shifted = ops->shiftRightArithmetic(part, sa);
+                BaseSemantics::SValue::Ptr part = ops->extract(src, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValue::Ptr shifted = ops->shiftRightArithmetic(part, sa);
                 result = result ? ops->concat(result, shifted) : shifted;
             }
             d->write(args[0], result);
@@ -3200,10 +3200,10 @@ struct IP_psrldq: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr src = d->read(args[0]);
+            BaseSemantics::SValue::Ptr src = d->read(args[0]);
             size_t nBytesShift = d->read(args[1])->toUnsigned().get();// shift amount is an immediate operand
-            BaseSemantics::SValuePtr sa = ops->number_(8, 8*nBytesShift);
-            BaseSemantics::SValuePtr result = ops->shiftRight(src, sa);
+            BaseSemantics::SValue::Ptr sa = ops->number_(8, 8*nBytesShift);
+            BaseSemantics::SValue::Ptr result = ops->shiftRight(src, sa);
             d->write(args[0], result);
         }
     }
@@ -3221,13 +3221,13 @@ struct IP_psrl: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr src = d->read(args[0]);
-            BaseSemantics::SValuePtr sa = d->read(args[1]);
+            BaseSemantics::SValue::Ptr src = d->read(args[0]);
+            BaseSemantics::SValue::Ptr sa = d->read(args[1]);
             size_t nOps = src->nBits() / bitsPerOp;
-            BaseSemantics::SValuePtr result;
+            BaseSemantics::SValue::Ptr result;
             for (size_t i=0; i<nOps; ++i) {
-                BaseSemantics::SValuePtr part = ops->extract(src, i*bitsPerOp, (i+1)*bitsPerOp);
-                BaseSemantics::SValuePtr shifted = ops->shiftRight(part, sa);
+                BaseSemantics::SValue::Ptr part = ops->extract(src, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValue::Ptr shifted = ops->shiftRight(part, sa);
                 result = result ? ops->concat(result, shifted) : shifted;
             }
             d->write(args[0], result);
@@ -3248,14 +3248,14 @@ struct IP_psub: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr dst = d->read(args[0]); // minuends
-            BaseSemantics::SValuePtr src = d->read(args[1]); // subtrahends
-            BaseSemantics::SValuePtr result;
+            BaseSemantics::SValue::Ptr dst = d->read(args[0]); // minuends
+            BaseSemantics::SValue::Ptr src = d->read(args[1]); // subtrahends
+            BaseSemantics::SValue::Ptr result;
             size_t nOps = dst->nBits() / bitsPerOp;
             for (size_t i=0; i<nOps; ++i) {
-                BaseSemantics::SValuePtr minuend = ops->extract(dst, i*bitsPerOp, (i+1)*bitsPerOp);
-                BaseSemantics::SValuePtr subtrahend = ops->extract(src, i*bitsPerOp, (i+1)*bitsPerOp);
-                BaseSemantics::SValuePtr difference = ops->subtract(minuend, subtrahend);
+                BaseSemantics::SValue::Ptr minuend = ops->extract(dst, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValue::Ptr subtrahend = ops->extract(src, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValue::Ptr difference = ops->subtract(minuend, subtrahend);
                 result = result ? ops->concat(result, difference) : difference;
             }
             d->write(args[0], result);
@@ -3274,16 +3274,16 @@ struct IP_psubs: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr dst = d->read(args[0]); // minuends
-            BaseSemantics::SValuePtr src = d->read(args[1]); // subtrahends
-            BaseSemantics::SValuePtr result;
+            BaseSemantics::SValue::Ptr dst = d->read(args[0]); // minuends
+            BaseSemantics::SValue::Ptr src = d->read(args[1]); // subtrahends
+            BaseSemantics::SValue::Ptr result;
             size_t nOps = dst->nBits() / bitsPerOp;
             for (size_t i=0; i<nOps; ++i) {
-                BaseSemantics::SValuePtr minuend = ops->signExtend(ops->extract(dst, i*bitsPerOp, (i+1)*bitsPerOp),
+                BaseSemantics::SValue::Ptr minuend = ops->signExtend(ops->extract(dst, i*bitsPerOp, (i+1)*bitsPerOp),
                                                                    bitsPerOp+1);
-                BaseSemantics::SValuePtr subtrahend = ops->signExtend(ops->extract(src, i*bitsPerOp, (i+1)*bitsPerOp),
+                BaseSemantics::SValue::Ptr subtrahend = ops->signExtend(ops->extract(src, i*bitsPerOp, (i+1)*bitsPerOp),
                                                                       bitsPerOp+1);
-                BaseSemantics::SValuePtr difference = d->saturateSignedToSigned(ops->subtract(minuend, subtrahend), bitsPerOp);
+                BaseSemantics::SValue::Ptr difference = d->saturateSignedToSigned(ops->subtract(minuend, subtrahend), bitsPerOp);
                 result = result ? ops->concat(result, difference) : difference;
             }
             d->write(args[0], result);
@@ -3302,16 +3302,16 @@ struct IP_psubus: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr dst = d->read(args[0]); // minuends
-            BaseSemantics::SValuePtr src = d->read(args[1]); // subtrahends
-            BaseSemantics::SValuePtr result;
+            BaseSemantics::SValue::Ptr dst = d->read(args[0]); // minuends
+            BaseSemantics::SValue::Ptr src = d->read(args[1]); // subtrahends
+            BaseSemantics::SValue::Ptr result;
             size_t nOps = dst->nBits() / bitsPerOp;
             for (size_t i=0; i<nOps; ++i) {
-                BaseSemantics::SValuePtr minuend = ops->signExtend(ops->extract(dst, i*bitsPerOp, (i+1)*bitsPerOp),
+                BaseSemantics::SValue::Ptr minuend = ops->signExtend(ops->extract(dst, i*bitsPerOp, (i+1)*bitsPerOp),
                                                                    bitsPerOp+1);
-                BaseSemantics::SValuePtr subtrahend = ops->signExtend(ops->extract(src, i*bitsPerOp, (i+1)*bitsPerOp),
+                BaseSemantics::SValue::Ptr subtrahend = ops->signExtend(ops->extract(src, i*bitsPerOp, (i+1)*bitsPerOp),
                                                                       bitsPerOp+1);
-                BaseSemantics::SValuePtr difference = d->saturateUnsignedToUnsigned(ops->subtract(minuend, subtrahend),
+                BaseSemantics::SValue::Ptr difference = d->saturateUnsignedToUnsigned(ops->subtract(minuend, subtrahend),
                                                                                     bitsPerOp);
                 result = result ? ops->concat(result, difference) : difference;
             }
@@ -3328,12 +3328,12 @@ struct IP_ptest: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr a = d->read(args[0]);
-            BaseSemantics::SValuePtr b = d->read(args[1]);
+            BaseSemantics::SValue::Ptr a = d->read(args[0]);
+            BaseSemantics::SValue::Ptr b = d->read(args[1]);
             ASSERT_require(a->nBits() == b->nBits());
-            BaseSemantics::SValuePtr zf = ops->equalToZero(ops->and_(a, b));
-            BaseSemantics::SValuePtr cf = ops->equalToZero(ops->and_(a, ops->invert(b)));
-            BaseSemantics::SValuePtr no = ops->boolean_(false);
+            BaseSemantics::SValue::Ptr zf = ops->equalToZero(ops->and_(a, b));
+            BaseSemantics::SValue::Ptr cf = ops->equalToZero(ops->and_(a, ops->invert(b)));
+            BaseSemantics::SValue::Ptr no = ops->boolean_(false);
             d->writeRegister(d->REG_ZF, zf);
             d->writeRegister(d->REG_CF, cf);
             d->writeRegister(d->REG_AF, no);
@@ -3357,16 +3357,16 @@ struct IP_punpckh: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr a = d->read(args[0]);
-            BaseSemantics::SValuePtr b = d->read(args[1]);
+            BaseSemantics::SValue::Ptr a = d->read(args[0]);
+            BaseSemantics::SValue::Ptr b = d->read(args[1]);
             ASSERT_require(a->nBits() == b->nBits());
-            BaseSemantics::SValuePtr result;
+            BaseSemantics::SValue::Ptr result;
             size_t halfWidth = a->nBits() / 2;
             size_t nOps = halfWidth / bitsPerOp;
             for (size_t i=0; i<nOps; ++i) {
-                BaseSemantics::SValuePtr partA = ops->extract(a, halfWidth + i*bitsPerOp, halfWidth + (i+1)*bitsPerOp);
-                BaseSemantics::SValuePtr partB = ops->extract(b, halfWidth + i*bitsPerOp, halfWidth + (i+1)*bitsPerOp);
-                BaseSemantics::SValuePtr pair = ops->concat(partA, partB);
+                BaseSemantics::SValue::Ptr partA = ops->extract(a, halfWidth + i*bitsPerOp, halfWidth + (i+1)*bitsPerOp);
+                BaseSemantics::SValue::Ptr partB = ops->extract(b, halfWidth + i*bitsPerOp, halfWidth + (i+1)*bitsPerOp);
+                BaseSemantics::SValue::Ptr pair = ops->concat(partA, partB);
                 result = result ? ops->concat(result, pair) : pair;
             }
             d->write(args[0], result);
@@ -3387,16 +3387,16 @@ struct IP_punpckl: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr a = d->read(args[0]);
-            BaseSemantics::SValuePtr b = d->read(args[1]);
+            BaseSemantics::SValue::Ptr a = d->read(args[0]);
+            BaseSemantics::SValue::Ptr b = d->read(args[1]);
             ASSERT_require(a->nBits() == b->nBits());
-            BaseSemantics::SValuePtr result;
+            BaseSemantics::SValue::Ptr result;
             size_t halfWidth = a->nBits() / 2;
             size_t nOps = halfWidth / bitsPerOp;
             for (size_t i=0; i<nOps; ++i) {
-                BaseSemantics::SValuePtr partA = ops->extract(a, i*bitsPerOp, (i+1)*bitsPerOp);
-                BaseSemantics::SValuePtr partB = ops->extract(b, i*bitsPerOp, (i+1)*bitsPerOp);
-                BaseSemantics::SValuePtr pair = ops->concat(partA, partB);
+                BaseSemantics::SValue::Ptr partA = ops->extract(a, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValue::Ptr partB = ops->extract(b, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValue::Ptr pair = ops->concat(partA, partB);
                 result = result ? ops->concat(result, pair) : pair;
             }
             d->write(args[0], result);
@@ -3423,7 +3423,7 @@ struct IP_push: P {
             ASSERT_forbid(sp.isEmpty());
 
             // Read the value to push onto the stack before decrementing the stack pointer.
-            BaseSemantics::SValuePtr toPush = d->read(args[0]);
+            BaseSemantics::SValue::Ptr toPush = d->read(args[0]);
             if (isSgAsmIntegerValueExpression(args[0]) && toPush->nBits() < sp.nBits()) {
                 toPush = ops->signExtend(toPush, sp.nBits());
             } else if (isSgAsmRegisterReferenceExpression(args[0]) && toPush->nBits() < sp.nBits() &&
@@ -3434,12 +3434,12 @@ struct IP_push: P {
             
             // Decrement the stack pointer before writing to args[0] just in case args[0] is stack-relative
             int stackDelta = toPush->nBits() / 8;
-            BaseSemantics::SValuePtr oldSp = d->readRegister(sp);
-            BaseSemantics::SValuePtr newSp = ops->add(oldSp, ops->number_(sp.nBits(), -stackDelta));
+            BaseSemantics::SValue::Ptr oldSp = d->readRegister(sp);
+            BaseSemantics::SValue::Ptr newSp = ops->add(oldSp, ops->number_(sp.nBits(), -stackDelta));
             d->writeRegister(sp, newSp);
 
             // Write data to stack
-            BaseSemantics::SValuePtr addr = d->fixMemoryAddress(newSp);
+            BaseSemantics::SValue::Ptr addr = d->fixMemoryAddress(newSp);
             ops->writeMemory(d->REG_SS, addr, toPush, ops->boolean_(true));
         }
     }
@@ -3452,45 +3452,45 @@ struct IP_push_gprs: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else if (insn->get_addressSize() == x86_insnsize_16) {
-            BaseSemantics::SValuePtr oldSp = d->readRegister(d->REG_anySP);
-            BaseSemantics::SValuePtr newSp = ops->add(oldSp, ops->number_(oldSp->nBits(), -16));
-            BaseSemantics::SValuePtr base = d->fixMemoryAddress(newSp);
-            BaseSemantics::SValuePtr yes = ops->boolean_(true);
-            BaseSemantics::SValuePtr di = d->readRegister(d->REG_DI);
+            BaseSemantics::SValue::Ptr oldSp = d->readRegister(d->REG_anySP);
+            BaseSemantics::SValue::Ptr newSp = ops->add(oldSp, ops->number_(oldSp->nBits(), -16));
+            BaseSemantics::SValue::Ptr base = d->fixMemoryAddress(newSp);
+            BaseSemantics::SValue::Ptr yes = ops->boolean_(true);
+            BaseSemantics::SValue::Ptr di = d->readRegister(d->REG_DI);
             ops->writeMemory(d->REG_SS, base, di, yes);
-            BaseSemantics::SValuePtr si = d->readRegister(d->REG_SI);
+            BaseSemantics::SValue::Ptr si = d->readRegister(d->REG_SI);
             ops->writeMemory(d->REG_SS, ops->add(base, ops->number_(base->nBits(), 2)), si, yes);
-            BaseSemantics::SValuePtr bp = d->readRegister(d->REG_BP);
+            BaseSemantics::SValue::Ptr bp = d->readRegister(d->REG_BP);
             ops->writeMemory(d->REG_SS, ops->add(base, ops->number_(base->nBits(), 4)), bp, yes);
             ops->writeMemory(d->REG_SS, ops->add(base, ops->number_(base->nBits(), 6)), oldSp, yes);
-            BaseSemantics::SValuePtr bx = d->readRegister(d->REG_BX);
+            BaseSemantics::SValue::Ptr bx = d->readRegister(d->REG_BX);
             ops->writeMemory(d->REG_SS, ops->add(base, ops->number_(base->nBits(), 8)), bx, yes);
-            BaseSemantics::SValuePtr dx = d->readRegister(d->REG_DX);
+            BaseSemantics::SValue::Ptr dx = d->readRegister(d->REG_DX);
             ops->writeMemory(d->REG_SS, ops->add(base, ops->number_(base->nBits(), 10)), dx, yes);
-            BaseSemantics::SValuePtr cx = d->readRegister(d->REG_CX);
+            BaseSemantics::SValue::Ptr cx = d->readRegister(d->REG_CX);
             ops->writeMemory(d->REG_SS, ops->add(base, ops->number_(base->nBits(), 12)), cx, yes);
-            BaseSemantics::SValuePtr ax = d->readRegister(d->REG_AX);
+            BaseSemantics::SValue::Ptr ax = d->readRegister(d->REG_AX);
             ops->writeMemory(d->REG_SS, ops->add(base, ops->number_(base->nBits(), 14)), ax, yes);
             d->writeRegister(d->REG_anySP, newSp);
         } else if (insn->get_addressSize() == x86_insnsize_32) {
-            BaseSemantics::SValuePtr oldSp = d->readRegister(d->REG_anySP);
-            BaseSemantics::SValuePtr newSp = ops->add(oldSp, ops->number_(oldSp->nBits(), -32));
-            BaseSemantics::SValuePtr base = d->fixMemoryAddress(newSp);
-            BaseSemantics::SValuePtr yes = ops->boolean_(true);
-            BaseSemantics::SValuePtr edi = d->readRegister(d->REG_EDI);
+            BaseSemantics::SValue::Ptr oldSp = d->readRegister(d->REG_anySP);
+            BaseSemantics::SValue::Ptr newSp = ops->add(oldSp, ops->number_(oldSp->nBits(), -32));
+            BaseSemantics::SValue::Ptr base = d->fixMemoryAddress(newSp);
+            BaseSemantics::SValue::Ptr yes = ops->boolean_(true);
+            BaseSemantics::SValue::Ptr edi = d->readRegister(d->REG_EDI);
             ops->writeMemory(d->REG_SS, base, edi, yes);
-            BaseSemantics::SValuePtr esi = d->readRegister(d->REG_ESI);
+            BaseSemantics::SValue::Ptr esi = d->readRegister(d->REG_ESI);
             ops->writeMemory(d->REG_SS, ops->add(base, ops->number_(base->nBits(), 4)), esi, yes);
-            BaseSemantics::SValuePtr ebp = d->readRegister(d->REG_EBP);
+            BaseSemantics::SValue::Ptr ebp = d->readRegister(d->REG_EBP);
             ops->writeMemory(d->REG_SS, ops->add(base, ops->number_(base->nBits(), 8)), ebp, yes);
             ops->writeMemory(d->REG_SS, ops->add(base, ops->number_(base->nBits(), 12)), oldSp, yes);
-            BaseSemantics::SValuePtr ebx = d->readRegister(d->REG_EBX);
+            BaseSemantics::SValue::Ptr ebx = d->readRegister(d->REG_EBX);
             ops->writeMemory(d->REG_SS, ops->add(base, ops->number_(base->nBits(), 16)), ebx, yes);
-            BaseSemantics::SValuePtr edx = d->readRegister(d->REG_EDX);
+            BaseSemantics::SValue::Ptr edx = d->readRegister(d->REG_EDX);
             ops->writeMemory(d->REG_SS, ops->add(base, ops->number_(base->nBits(), 20)), edx, yes);
-            BaseSemantics::SValuePtr ecx = d->readRegister(d->REG_ECX);
+            BaseSemantics::SValue::Ptr ecx = d->readRegister(d->REG_ECX);
             ops->writeMemory(d->REG_SS, ops->add(base, ops->number_(base->nBits(), 24)), ecx, yes);
-            BaseSemantics::SValuePtr eax = d->readRegister(d->REG_EAX);
+            BaseSemantics::SValue::Ptr eax = d->readRegister(d->REG_EAX);
             ops->writeMemory(d->REG_SS, ops->add(base, ops->number_(base->nBits(), 28)), eax, yes);
             d->writeRegister(d->REG_anySP, newSp);
         } else {
@@ -3507,7 +3507,7 @@ struct IP_push_flags: P {
             ops->interrupt(x86_exception_ud, 0);
         } else {
             // Get the value to be pushed. Assume non-priviledged.
-            BaseSemantics::SValuePtr flags;
+            BaseSemantics::SValue::Ptr flags;
             switch (insn->get_operandSize()) {
                 case x86_insnsize_16:
                     flags = d->readRegister(d->REG_FLAGS);
@@ -3522,7 +3522,7 @@ struct IP_push_flags: P {
                     ASSERT_not_reachable("invalid operand size");
             }
 
-            BaseSemantics::SValuePtr valueToPush = ops->extract(flags, 0, 16);
+            BaseSemantics::SValue::Ptr valueToPush = ops->extract(flags, 0, 16);
             if (flags->nBits() >= 32) {
                 valueToPush = ops->concat(valueToPush, ops->number_(2, 0)); // clear VM and RF, bits 16 and 17
                 valueToPush = ops->concat(valueToPush, ops->extract(flags, 18, 32));
@@ -3534,9 +3534,9 @@ struct IP_push_flags: P {
             ASSERT_not_null(valueToPush);
             ASSERT_require(valueToPush->nBits() % 8 == 0);
             size_t valueSize = valueToPush->nBits() / 8;
-            BaseSemantics::SValuePtr oldSp = d->readRegister(d->REG_anySP);
-            BaseSemantics::SValuePtr newSp = ops->add(oldSp, ops->number_(oldSp->nBits(), -valueSize));
-            BaseSemantics::SValuePtr addr = d->fixMemoryAddress(newSp);
+            BaseSemantics::SValue::Ptr oldSp = d->readRegister(d->REG_anySP);
+            BaseSemantics::SValue::Ptr newSp = ops->add(oldSp, ops->number_(oldSp->nBits(), -valueSize));
+            BaseSemantics::SValue::Ptr addr = d->fixMemoryAddress(newSp);
             ops->writeMemory(d->REG_SS, addr, valueToPush, ops->boolean_(true));
             d->writeRegister(d->REG_anySP, newSp);
         }
@@ -3550,7 +3550,7 @@ struct IP_pxor: P {
         size_t nbits = asm_type_width(args[0]->get_type());
         if (nbits!=asm_type_width(args[1]->get_type()))
             throw BaseSemantics::Exception("PXOR operands must be the same width", insn);
-        BaseSemantics::SValuePtr result;
+        BaseSemantics::SValue::Ptr result;
 
         // XOR of a register with itself is an x86 idiom for setting the register to zero, so treat it as such
         if (isSgAsmRegisterReferenceExpression(args[0]) && isSgAsmRegisterReferenceExpression(args[1])) {
@@ -3562,7 +3562,7 @@ struct IP_pxor: P {
 
         // The non-idiomatic behavior
         if (result==NULL) {
-            BaseSemantics::SValuePtr arg1 = d->read(args[1], nbits);
+            BaseSemantics::SValue::Ptr arg1 = d->read(args[1], nbits);
             result = ops->xor_(d->read(args[0], nbits), arg1);
         }
 
@@ -3575,16 +3575,16 @@ struct IP_ret: P {
     void p(D d, Ops ops, I insn, A args) {
         if (args.size()>1)
             throw BaseSemantics::Exception("instruction must have zero or one operand", insn);
-        BaseSemantics::SValuePtr oldSp = d->readRegister(d->REG_anySP);
+        BaseSemantics::SValue::Ptr oldSp = d->readRegister(d->REG_anySP);
         size_t stackDelta = d->REG_anyIP.nBits() / 8;
         if (args.size() == 1) {
             ASSERT_require(isSgAsmIntegerValueExpression(args[0]));
             stackDelta += isSgAsmIntegerValueExpression(args[0])->get_absoluteValue();
         }
-        BaseSemantics::SValuePtr newSp = ops->add(oldSp, ops->number_(oldSp->nBits(), stackDelta));
-        BaseSemantics::SValuePtr stackVa = d->fixMemoryAddress(oldSp);
-        BaseSemantics::SValuePtr yes = ops->boolean_(true);
-        BaseSemantics::SValuePtr retVa = ops->filterReturnTarget(ops->readMemory(d->REG_SS, stackVa,
+        BaseSemantics::SValue::Ptr newSp = ops->add(oldSp, ops->number_(oldSp->nBits(), stackDelta));
+        BaseSemantics::SValue::Ptr stackVa = d->fixMemoryAddress(oldSp);
+        BaseSemantics::SValue::Ptr yes = ops->boolean_(true);
+        BaseSemantics::SValue::Ptr retVa = ops->filterReturnTarget(ops->readMemory(d->REG_SS, stackVa,
                                                                                  ops->undefined_(d->REG_anyIP.nBits()),
                                                                                  yes));
         d->writeRegister(d->REG_anyIP, retVa);
@@ -3610,11 +3610,11 @@ struct IP_rotate: P {
             // count.  We're doing what seems most reasonable: 6-bit counts for any operand (inc. CF) that's wider than 32
             // bits.
             size_t rotateWidth = (nbits>32 || (32==nbits && with_cf)) ? 6 : 5;
-            BaseSemantics::SValuePtr operand = d->read(args[0]);
+            BaseSemantics::SValue::Ptr operand = d->read(args[0]);
             if (with_cf)
                 operand = ops->concat(operand, d->readRegister(d->REG_CF));
-            BaseSemantics::SValuePtr rotateCount = d->read(args[1], 8);
-            BaseSemantics::SValuePtr result = d->doRotateOperation(kind, operand, rotateCount, rotateWidth);
+            BaseSemantics::SValue::Ptr rotateCount = d->read(args[1], 8);
+            BaseSemantics::SValue::Ptr result = d->doRotateOperation(kind, operand, rotateCount, rotateWidth);
             // flags have been updated; we just need to store the result
             if (with_cf)
                 result = ops->extract(result, 0, nbits);
@@ -3630,13 +3630,13 @@ struct IP_sbb: P {
         if (insn->get_lockPrefix() && !isSgAsmMemoryReferenceExpression(args[0])) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr minuend = d->read(args[0]);
-            BaseSemantics::SValuePtr subtrahend = d->read(args[1]);
+            BaseSemantics::SValue::Ptr minuend = d->read(args[0]);
+            BaseSemantics::SValue::Ptr subtrahend = d->read(args[1]);
             if (minuend->nBits() > subtrahend->nBits())
                 subtrahend = ops->signExtend(subtrahend, minuend->nBits());
             ASSERT_require(minuend->nBits() == subtrahend->nBits());
-            BaseSemantics::SValuePtr cf = d->readRegister(d->REG_CF);
-            BaseSemantics::SValuePtr difference = d->doAddOperation(minuend, ops->invert(subtrahend), true, cf);
+            BaseSemantics::SValue::Ptr cf = d->readRegister(d->REG_CF);
+            BaseSemantics::SValue::Ptr difference = d->doAddOperation(minuend, ops->invert(subtrahend), true, cf);
             d->write(args[0], difference);
         }
     }
@@ -3656,7 +3656,7 @@ struct IP_scanstring: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr inLoop = d->repEnter(repeat);
+            BaseSemantics::SValue::Ptr inLoop = d->repEnter(repeat);
 
             // Get the address for the string
             RegisterDescriptor stringReg;
@@ -3674,22 +3674,22 @@ struct IP_scanstring: P {
                     ASSERT_not_reachable("invalid instruction address size");
             }
             ASSERT_forbid(stringReg.isEmpty());
-            BaseSemantics::SValuePtr stringPtr = d->readRegister(stringReg);
+            BaseSemantics::SValue::Ptr stringPtr = d->readRegister(stringReg);
 
             // Adjust address width based on how memory is accessed.  All addresses in memory have the same width.
-            BaseSemantics::SValuePtr addr = d->fixMemoryAddress(stringPtr);
+            BaseSemantics::SValue::Ptr addr = d->fixMemoryAddress(stringPtr);
 
             // Compare values and set status flags.
             RegisterDescriptor compareReg = d->REG_AX; compareReg.nBits(nbits);
-            BaseSemantics::SValuePtr val1 = d->readRegister(compareReg);
-            BaseSemantics::SValuePtr val2 = ops->readMemory(d->REG_ES, addr, ops->undefined_(nbits), inLoop);
-            BaseSemantics::SValuePtr no = ops->boolean_(false);
+            BaseSemantics::SValue::Ptr val1 = d->readRegister(compareReg);
+            BaseSemantics::SValue::Ptr val2 = ops->readMemory(d->REG_ES, addr, ops->undefined_(nbits), inLoop);
+            BaseSemantics::SValue::Ptr no = ops->boolean_(false);
             (void) d->doAddOperation(val1, ops->invert(val2), true, no, inLoop);
 
             // Advance string pointer register
-            BaseSemantics::SValuePtr positiveNBytes = ops->number_(stringReg.nBits(), +nbytes);
-            BaseSemantics::SValuePtr negativeNBytes = ops->number_(stringReg.nBits(), -nbytes);
-            BaseSemantics::SValuePtr step = ops->ite(d->readRegister(d->REG_DF), negativeNBytes, positiveNBytes);
+            BaseSemantics::SValue::Ptr positiveNBytes = ops->number_(stringReg.nBits(), +nbytes);
+            BaseSemantics::SValue::Ptr negativeNBytes = ops->number_(stringReg.nBits(), -nbytes);
+            BaseSemantics::SValue::Ptr step = ops->ite(d->readRegister(d->REG_DF), negativeNBytes, positiveNBytes);
             d->writeRegister(stringReg, ops->ite(inLoop, ops->add(stringPtr, step), stringPtr));
 
             // Adjust the instruction pointer register to either repeat the instruction or fall through
@@ -3713,7 +3713,7 @@ struct IP_setcc: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr cond = d->flagsCombo(kind);
+            BaseSemantics::SValue::Ptr cond = d->flagsCombo(kind);
             d->write(args[0], ops->concat(cond, ops->number_(7, 0)));
         }
     }
@@ -3733,9 +3733,9 @@ struct IP_shift_1: P {
         } else {
             size_t nbits = asm_type_width(args[0]->get_type());
             size_t shiftSignificantBits = nbits <= 32 ? 5 : 6;
-            BaseSemantics::SValuePtr arg1 = d->read(args[1], 8);
-            BaseSemantics::SValuePtr unspecified = ops->unspecified_(nbits);
-            BaseSemantics::SValuePtr result = d->doShiftOperation(kind, d->read(args[0]), unspecified,
+            BaseSemantics::SValue::Ptr arg1 = d->read(args[1], 8);
+            BaseSemantics::SValue::Ptr unspecified = ops->unspecified_(nbits);
+            BaseSemantics::SValue::Ptr result = d->doShiftOperation(kind, d->read(args[0]), unspecified,
                                                                   arg1, shiftSignificantBits);
             d->write(args[0], result);
         }
@@ -3756,9 +3756,9 @@ struct IP_shift_2: P {
         } else {
             size_t halfWidth = asm_type_width(args[0]->get_type());
             size_t shiftSignificantBits = halfWidth <= 32 ? 5 : 6;
-            BaseSemantics::SValuePtr arg2 = d->read(args[2], 8);
-            BaseSemantics::SValuePtr arg1 = d->read(args[1]);
-            BaseSemantics::SValuePtr result = d->doShiftOperation(kind, d->read(args[0]), arg1, arg2, shiftSignificantBits);
+            BaseSemantics::SValue::Ptr arg2 = d->read(args[2], 8);
+            BaseSemantics::SValue::Ptr arg1 = d->read(args[1]);
+            BaseSemantics::SValue::Ptr result = d->doShiftOperation(kind, d->read(args[0]), arg1, arg2, shiftSignificantBits);
             d->write(args[0], result);
         }
     }
@@ -3818,26 +3818,26 @@ struct IP_storestring: P {
                     ASSERT_not_reachable("invalid instruction address size");
             }
             ASSERT_forbid(dstReg.isEmpty());
-            BaseSemantics::SValuePtr stringPtr = d->readRegister(dstReg);
-            BaseSemantics::SValuePtr addr = d->fixMemoryAddress(stringPtr);
-            BaseSemantics::SValuePtr directionFlag = d->readRegister(d->REG_DF);
-            BaseSemantics::SValuePtr positiveNBytes = ops->number_(dstReg.nBits(), +nbytes);
-            BaseSemantics::SValuePtr step = ops->ite(directionFlag,
+            BaseSemantics::SValue::Ptr stringPtr = d->readRegister(dstReg);
+            BaseSemantics::SValue::Ptr addr = d->fixMemoryAddress(stringPtr);
+            BaseSemantics::SValue::Ptr directionFlag = d->readRegister(d->REG_DF);
+            BaseSemantics::SValue::Ptr positiveNBytes = ops->number_(dstReg.nBits(), +nbytes);
+            BaseSemantics::SValue::Ptr step = ops->ite(directionFlag,
                                                      ops->number_(dstReg.nBits(), -nbytes),
                                                      positiveNBytes);
 
             // Source value
             RegisterDescriptor regA = d->REG_AX; regA.nBits(nbits);
-            BaseSemantics::SValuePtr src = d->readRegister(regA);
+            BaseSemantics::SValue::Ptr src = d->readRegister(regA);
 
             // If CX is a known value then we can unroll the loop right now.
             if (x86_repeat_repe==repeat) {
-                BaseSemantics::SValuePtr cx = d->readRegister(d->REG_anyCX);
+                BaseSemantics::SValue::Ptr cx = d->readRegister(d->REG_anyCX);
                 if (cx->toUnsigned().orElse(8192+1) <= 8192 /*arbitrary*/) {
                     size_t n = cx->toUnsigned().get();
-                    BaseSemantics::SValuePtr inLoop = ops->boolean_(true);
+                    BaseSemantics::SValue::Ptr inLoop = ops->boolean_(true);
                     for (size_t i=0; i<n; ++i) {
-                        BaseSemantics::SValuePtr va =
+                        BaseSemantics::SValue::Ptr va =
                             ops->add(addr,
                                      ops->unsignedExtend(ops->unsignedMultiply(ops->number_(addr->nBits(), i), step),
                                                          addr->nBits()));
@@ -3846,7 +3846,7 @@ struct IP_storestring: P {
                     d->writeRegister(d->REG_anyCX, ops->number_(d->REG_anyCX.nBits(), 0));
 
                     // Final value for (E)DI register
-                    BaseSemantics::SValuePtr va =
+                    BaseSemantics::SValue::Ptr va =
                         ops->add(addr,
                                  ops->unsignedExtend(ops->unsignedMultiply(ops->number_(addr->nBits(), n), step),
                                                      addr->nBits()));
@@ -3856,7 +3856,7 @@ struct IP_storestring: P {
             }
             
             // We chose not to unroll the loop, so simulate the loop by manipulating the instruction pointer
-            BaseSemantics::SValuePtr inLoop = d->repEnter(repeat);
+            BaseSemantics::SValue::Ptr inLoop = d->repEnter(repeat);
 
             // Copy value from AL/AX/EAX/RAX to memory
             ops->writeMemory(d->REG_ES, addr, src, inLoop);
@@ -3891,13 +3891,13 @@ struct IP_sub: P {
         if (insn->get_lockPrefix() && !isSgAsmMemoryReferenceExpression(args[0])) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr minuend = d->read(args[0]);
-            BaseSemantics::SValuePtr subtrahend = d->read(args[1]);
+            BaseSemantics::SValue::Ptr minuend = d->read(args[0]);
+            BaseSemantics::SValue::Ptr subtrahend = d->read(args[1]);
             if (minuend->nBits() > subtrahend->nBits())
                 subtrahend = ops->signExtend(subtrahend, minuend->nBits());
             ASSERT_require(minuend->nBits() == subtrahend->nBits());
-            BaseSemantics::SValuePtr no = ops->boolean_(false);
-            BaseSemantics::SValuePtr difference = d->doAddOperation(minuend, ops->invert(subtrahend), true, no);
+            BaseSemantics::SValue::Ptr no = ops->boolean_(false);
+            BaseSemantics::SValue::Ptr difference = d->doAddOperation(minuend, ops->invert(subtrahend), true, no);
             d->write(args[0], difference);
         }
     }
@@ -3934,12 +3934,12 @@ struct IP_test: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr a = d->read(args[0]);
-            BaseSemantics::SValuePtr b = d->read(args[1]);
+            BaseSemantics::SValue::Ptr a = d->read(args[0]);
+            BaseSemantics::SValue::Ptr b = d->read(args[1]);
             if (a->nBits() > b->nBits())
                 b = ops->signExtend(b, a->nBits());
             ASSERT_require(a->nBits() == b->nBits());
-            BaseSemantics::SValuePtr result = ops->and_(a, b);
+            BaseSemantics::SValue::Ptr result = ops->and_(a, b);
             d->setFlagsForResult(result);
             d->writeRegister(d->REG_OF, ops->boolean_(false));
             d->writeRegister(d->REG_AF, ops->unspecified_(1));
@@ -3971,9 +3971,9 @@ struct IP_xadd: P {
             !isSgAsmMemoryReferenceExpression(args[0]) && !isSgAsmMemoryReferenceExpression(args[1])) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr no = ops->boolean_(false);
-            BaseSemantics::SValuePtr arg1 = d->read(args[1]);
-            BaseSemantics::SValuePtr sum = d->doAddOperation(d->read(args[0]), arg1, false, no);
+            BaseSemantics::SValue::Ptr no = ops->boolean_(false);
+            BaseSemantics::SValue::Ptr arg1 = d->read(args[1]);
+            BaseSemantics::SValue::Ptr sum = d->doAddOperation(d->read(args[0]), arg1, false, no);
             d->write(args[1], d->read(args[0]));
             d->write(args[0], sum);
         }
@@ -3988,7 +3988,7 @@ struct IP_xchg: P {
             !isSgAsmMemoryReferenceExpression(args[0]) && !isSgAsmMemoryReferenceExpression(args[1])) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr temp = d->read(args[0]);
+            BaseSemantics::SValue::Ptr temp = d->read(args[0]);
             d->write(args[0], d->read(args[1]));
             d->write(args[1], temp);
         }
@@ -4005,7 +4005,7 @@ struct IP_xor: P {
         if (insn->get_lockPrefix() && !isSgAsmMemoryReferenceExpression(args[0])) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr result;
+            BaseSemantics::SValue::Ptr result;
 
             if (isSgAsmDirectRegisterExpression(args[0]) && isSgAsmDirectRegisterExpression(args[1]) &&
                 (isSgAsmRegisterReferenceExpression(args[0])->get_descriptor() ==
@@ -4015,8 +4015,8 @@ struct IP_xor: P {
                 result = ops->number_(nbits, 0);
             } else {
                 // The non-idiomatic behavior
-                BaseSemantics::SValuePtr a = d->read(args[0]);
-                BaseSemantics::SValuePtr b = d->read(args[1]);
+                BaseSemantics::SValue::Ptr a = d->read(args[0]);
+                BaseSemantics::SValue::Ptr b = d->read(args[1]);
                 if (a->nBits() > b->nBits())
                     b = ops->signExtend(b, a->nBits());
                 ASSERT_require(a->nBits() == b->nBits());
@@ -4538,7 +4538,7 @@ DispatcherX86::regcache_init()
 }
 
 void
-DispatcherX86::initializeState(const BaseSemantics::StatePtr &state) {
+DispatcherX86::initializeState(const BaseSemantics::State::Ptr &state) {
     if (state) {
         // Back in the 16-bit days, segment registers were actually used to increase the amount of memory that could be
         // addressed since addresses where only 16-bits.
@@ -4570,8 +4570,8 @@ DispatcherX86::initializeState(const BaseSemantics::StatePtr &state) {
 
 void
 DispatcherX86::memory_init() {
-    if (BaseSemantics::StatePtr state = currentState()) {
-        if (BaseSemantics::MemoryStatePtr memory = state->memoryState()) {
+    if (BaseSemantics::State::Ptr state = currentState()) {
+        if (BaseSemantics::MemoryState::Ptr memory = state->memoryState()) {
             switch (memory->get_byteOrder()) {
                 case ByteOrder::ORDER_LSB:
                     break;
@@ -4631,7 +4631,7 @@ DispatcherX86::set_register_dictionary(const RegisterDictionary::Ptr &regdict)
 }
 
 void
-DispatcherX86::setFlagsForResult(const BaseSemantics::SValuePtr &result)
+DispatcherX86::setFlagsForResult(const BaseSemantics::SValue::Ptr &result)
 {
     size_t width = result->nBits();
     writeRegister(REG_PF, parity(operators()->extract(result, 0, 8)));
@@ -4640,53 +4640,53 @@ DispatcherX86::setFlagsForResult(const BaseSemantics::SValuePtr &result)
 }
 
 void
-DispatcherX86::setFlagsForResult(const BaseSemantics::SValuePtr &result, const BaseSemantics::SValuePtr &cond)
+DispatcherX86::setFlagsForResult(const BaseSemantics::SValue::Ptr &result, const BaseSemantics::SValue::Ptr &cond)
 {
     ASSERT_require(cond->nBits()==1);
-    BaseSemantics::SValuePtr lo_byte = operators()->extract(result, 0, 8);
-    BaseSemantics::SValuePtr signbit = operators()->extract(result, result->nBits()-1, result->nBits());
-    BaseSemantics::SValuePtr pf = readRegister(REG_PF, PEEK_REGISTER);
+    BaseSemantics::SValue::Ptr lo_byte = operators()->extract(result, 0, 8);
+    BaseSemantics::SValue::Ptr signbit = operators()->extract(result, result->nBits()-1, result->nBits());
+    BaseSemantics::SValue::Ptr pf = readRegister(REG_PF, PEEK_REGISTER);
     writeRegister(REG_PF, operators()->ite(cond, parity(lo_byte), pf));
     writeRegister(REG_SF, operators()->ite(cond, signbit, readRegister(REG_SF, PEEK_REGISTER)));
-    BaseSemantics::SValuePtr zf = readRegister(REG_ZF, PEEK_REGISTER);
+    BaseSemantics::SValue::Ptr zf = readRegister(REG_ZF, PEEK_REGISTER);
     writeRegister(REG_ZF, operators()->ite(cond, operators()->equalToZero(result), zf));
 }
 
-BaseSemantics::SValuePtr
-DispatcherX86::parity(const BaseSemantics::SValuePtr &v)
+BaseSemantics::SValue::Ptr
+DispatcherX86::parity(const BaseSemantics::SValue::Ptr &v)
 {
     ASSERT_require(v->nBits()==8);
-    BaseSemantics::SValuePtr p1 = operators()->extract(v, 1, 2);
-    BaseSemantics::SValuePtr p01 = operators()->xor_(operators()->extract(v, 0, 1), p1);
-    BaseSemantics::SValuePtr p3 = operators()->extract(v, 3, 4);
-    BaseSemantics::SValuePtr p23 = operators()->xor_(operators()->extract(v, 2, 3), p3);
-    BaseSemantics::SValuePtr p5 = operators()->extract(v, 5, 6);
-    BaseSemantics::SValuePtr p45 = operators()->xor_(operators()->extract(v, 4, 5), p5);
-    BaseSemantics::SValuePtr p7 = operators()->extract(v, 7, 8);
-    BaseSemantics::SValuePtr p67 = operators()->xor_(operators()->extract(v, 6, 7), p7);
-    BaseSemantics::SValuePtr p0123 = operators()->xor_(p01, p23);
-    BaseSemantics::SValuePtr p4567 = operators()->xor_(p45, p67);
-    BaseSemantics::SValuePtr pall = operators()->xor_(p0123, p4567);
+    BaseSemantics::SValue::Ptr p1 = operators()->extract(v, 1, 2);
+    BaseSemantics::SValue::Ptr p01 = operators()->xor_(operators()->extract(v, 0, 1), p1);
+    BaseSemantics::SValue::Ptr p3 = operators()->extract(v, 3, 4);
+    BaseSemantics::SValue::Ptr p23 = operators()->xor_(operators()->extract(v, 2, 3), p3);
+    BaseSemantics::SValue::Ptr p5 = operators()->extract(v, 5, 6);
+    BaseSemantics::SValue::Ptr p45 = operators()->xor_(operators()->extract(v, 4, 5), p5);
+    BaseSemantics::SValue::Ptr p7 = operators()->extract(v, 7, 8);
+    BaseSemantics::SValue::Ptr p67 = operators()->xor_(operators()->extract(v, 6, 7), p7);
+    BaseSemantics::SValue::Ptr p0123 = operators()->xor_(p01, p23);
+    BaseSemantics::SValue::Ptr p4567 = operators()->xor_(p45, p67);
+    BaseSemantics::SValue::Ptr pall = operators()->xor_(p0123, p4567);
     return operators()->invert(pall);
 }
 
-BaseSemantics::SValuePtr
-DispatcherX86::invertMaybe(const BaseSemantics::SValuePtr &value, bool maybe)
+BaseSemantics::SValue::Ptr
+DispatcherX86::invertMaybe(const BaseSemantics::SValue::Ptr &value, bool maybe)
 {
     return maybe ? operators()->invert(value) : value;
 }
 
-BaseSemantics::SValuePtr
-DispatcherX86::greaterOrEqualToTen(const BaseSemantics::SValuePtr &w)
+BaseSemantics::SValue::Ptr
+DispatcherX86::greaterOrEqualToTen(const BaseSemantics::SValue::Ptr &w)
 {
     size_t nbits = w->nBits();
-    BaseSemantics::SValuePtr carries;
-    BaseSemantics::SValuePtr no = operators()->boolean_(false);
+    BaseSemantics::SValue::Ptr carries;
+    BaseSemantics::SValue::Ptr no = operators()->boolean_(false);
     operators()->addWithCarries(w, number_(nbits, 6), no, carries/*out*/);
     return operators()->extract(carries, nbits-1, nbits);
 }
 
-BaseSemantics::SValuePtr
+BaseSemantics::SValue::Ptr
 DispatcherX86::flagsCombo(X86InstructionKind k)
 {
     switch (k) {
@@ -4733,39 +4733,39 @@ DispatcherX86::flagsCombo(X86InstructionKind k)
         case x86_jbe:
         case x86_setbe:
         case x86_cmovbe: {
-            BaseSemantics::SValuePtr zf = readRegister(REG_ZF);
+            BaseSemantics::SValue::Ptr zf = readRegister(REG_ZF);
             return operators()->or_(readRegister(REG_CF), zf);
         }
         case x86_ja:
         case x86_seta:
         case x86_cmova: {
-            BaseSemantics::SValuePtr notZf = operators()->invert(readRegister(REG_ZF));
+            BaseSemantics::SValue::Ptr notZf = operators()->invert(readRegister(REG_ZF));
             return operators()->and_(operators()->invert(readRegister(REG_CF)), notZf);
         }
         case x86_jl:
         case x86_setl:
         case x86_cmovl: {
-            BaseSemantics::SValuePtr of = readRegister(REG_OF);
+            BaseSemantics::SValue::Ptr of = readRegister(REG_OF);
             return operators()->xor_(readRegister(REG_SF), of);
         }
         case x86_jge:
         case x86_setge:
         case x86_cmovge: {
-            BaseSemantics::SValuePtr of = readRegister(REG_OF);
+            BaseSemantics::SValue::Ptr of = readRegister(REG_OF);
             return operators()->invert(operators()->xor_(readRegister(REG_SF), of));
         }
         case x86_jle:
         case x86_setle:
         case x86_cmovle: {
-            BaseSemantics::SValuePtr of = readRegister(REG_OF);
-            BaseSemantics::SValuePtr sf_xor_of = operators()->xor_(readRegister(REG_SF), of);
+            BaseSemantics::SValue::Ptr of = readRegister(REG_OF);
+            BaseSemantics::SValue::Ptr sf_xor_of = operators()->xor_(readRegister(REG_SF), of);
             return operators()->or_(readRegister(REG_ZF), sf_xor_of);
         }
         case x86_jg:
         case x86_setg:
         case x86_cmovg: {
-            BaseSemantics::SValuePtr notZf = operators()->invert(readRegister(REG_ZF));
-            BaseSemantics::SValuePtr of = readRegister(REG_OF);
+            BaseSemantics::SValue::Ptr notZf = operators()->invert(readRegister(REG_ZF));
+            BaseSemantics::SValue::Ptr of = readRegister(REG_OF);
             return operators()->and_(operators()->invert(operators()->xor_(readRegister(REG_SF), of)), notZf);
         }
         case x86_jcxz:
@@ -4777,31 +4777,31 @@ DispatcherX86::flagsCombo(X86InstructionKind k)
         }
 }
 
-BaseSemantics::SValuePtr
+BaseSemantics::SValue::Ptr
 DispatcherX86::repEnter(X86RepeatPrefix repeat)
 {
     if (repeat==x86_repeat_none)
         return operators()->boolean_(true);
-    BaseSemantics::SValuePtr cx = readRegister(REG_anyCX);
-    BaseSemantics::SValuePtr in_loop = operators()->invert(operators()->equalToZero(cx));
+    BaseSemantics::SValue::Ptr cx = readRegister(REG_anyCX);
+    BaseSemantics::SValue::Ptr in_loop = operators()->invert(operators()->equalToZero(cx));
     return in_loop;
 }
 
 void
-DispatcherX86::repLeave(X86RepeatPrefix repeat_prefix, const BaseSemantics::SValuePtr &in_loop, rose_addr_t insn_va,
+DispatcherX86::repLeave(X86RepeatPrefix repeat_prefix, const BaseSemantics::SValue::Ptr &in_loop, rose_addr_t insn_va,
                         bool honorZeroFlag)
 {
     ASSERT_require(in_loop!=NULL && in_loop->nBits()==1);
 
     // conditionally decrement the CX register
-    BaseSemantics::SValuePtr zero = operators()->number_(REG_anyCX.nBits(),  0);
-    BaseSemantics::SValuePtr maybeDecrement = operators()->ite(in_loop, operators()->number_(REG_anyCX.nBits(), -1), zero);
-    BaseSemantics::SValuePtr new_cx = operators()->add(readRegister(REG_anyCX), maybeDecrement);
+    BaseSemantics::SValue::Ptr zero = operators()->number_(REG_anyCX.nBits(),  0);
+    BaseSemantics::SValue::Ptr maybeDecrement = operators()->ite(in_loop, operators()->number_(REG_anyCX.nBits(), -1), zero);
+    BaseSemantics::SValue::Ptr new_cx = operators()->add(readRegister(REG_anyCX), maybeDecrement);
     writeRegister(REG_anyCX, new_cx);
-    BaseSemantics::SValuePtr nonzero_cx = operators()->invert(operators()->equalToZero(new_cx));
+    BaseSemantics::SValue::Ptr nonzero_cx = operators()->invert(operators()->equalToZero(new_cx));
 
     // determine whether we should repeat the instruction.
-    BaseSemantics::SValuePtr again;
+    BaseSemantics::SValue::Ptr again;
     switch (repeat_prefix) {
         case x86_repeat_none:
             again = operators()->boolean_(false);
@@ -4809,29 +4809,29 @@ DispatcherX86::repLeave(X86RepeatPrefix repeat_prefix, const BaseSemantics::SVal
         case x86_repeat_repe:
             // REPE is an alias for REP when used with certain instructions.
             if (honorZeroFlag) {
-                BaseSemantics::SValuePtr zf = readRegister(REG_ZF);
+                BaseSemantics::SValue::Ptr zf = readRegister(REG_ZF);
                 again = operators()->and_(operators()->and_(in_loop, nonzero_cx), zf);
             } else {
                 again = operators()->and_(in_loop, nonzero_cx);
             }
             break;
         case x86_repeat_repne: {
-            BaseSemantics::SValuePtr notZf = operators()->invert(readRegister(REG_ZF));
+            BaseSemantics::SValue::Ptr notZf = operators()->invert(readRegister(REG_ZF));
             again = operators()->and_(operators()->and_(in_loop, nonzero_cx), notZf);
             break;
         }
     }
 
-    BaseSemantics::SValuePtr ip = readRegister(REG_anyIP);
+    BaseSemantics::SValue::Ptr ip = readRegister(REG_anyIP);
     writeRegister(REG_anyIP,
                   operators()->ite(again,
                                    operators()->number_(REG_anyIP.nBits(), insn_va),    // repeat
                                    ip)); // exit loop
 }
 
-BaseSemantics::SValuePtr
-DispatcherX86::doAddOperation(BaseSemantics::SValuePtr a, BaseSemantics::SValuePtr b,
-                              bool invertCarries, const BaseSemantics::SValuePtr &carryIn)
+BaseSemantics::SValue::Ptr
+DispatcherX86::doAddOperation(BaseSemantics::SValue::Ptr a, BaseSemantics::SValue::Ptr b,
+                              bool invertCarries, const BaseSemantics::SValue::Ptr &carryIn)
 {
     if (a->nBits() > b->nBits()) {
         b = operators()->signExtend(b, a->nBits());
@@ -4841,21 +4841,21 @@ DispatcherX86::doAddOperation(BaseSemantics::SValuePtr a, BaseSemantics::SValueP
 
     ASSERT_require(1==carryIn->nBits());
     size_t nbits = a->nBits();
-    BaseSemantics::SValuePtr carries;
-    BaseSemantics::SValuePtr result = operators()->addWithCarries(a, b, invertMaybe(carryIn, invertCarries), carries/*out*/);
+    BaseSemantics::SValue::Ptr carries;
+    BaseSemantics::SValue::Ptr result = operators()->addWithCarries(a, b, invertMaybe(carryIn, invertCarries), carries/*out*/);
     setFlagsForResult(result);
-    BaseSemantics::SValuePtr sign = operators()->extract(carries, nbits-1, nbits);
-    BaseSemantics::SValuePtr ofbit = operators()->extract(carries, nbits-2, nbits-1);
+    BaseSemantics::SValue::Ptr sign = operators()->extract(carries, nbits-1, nbits);
+    BaseSemantics::SValue::Ptr ofbit = operators()->extract(carries, nbits-2, nbits-1);
     writeRegister(REG_AF, invertMaybe(operators()->extract(carries, 3, 4), invertCarries));
     writeRegister(REG_CF, invertMaybe(sign, invertCarries));
     writeRegister(REG_OF, operators()->xor_(sign, ofbit));
     return result;
 }
 
-BaseSemantics::SValuePtr
-DispatcherX86::doAddOperation(BaseSemantics::SValuePtr a, BaseSemantics::SValuePtr b,
-                              bool invertCarries, const BaseSemantics::SValuePtr &carryIn,
-                              const BaseSemantics::SValuePtr &cond)
+BaseSemantics::SValue::Ptr
+DispatcherX86::doAddOperation(BaseSemantics::SValue::Ptr a, BaseSemantics::SValue::Ptr b,
+                              bool invertCarries, const BaseSemantics::SValue::Ptr &carryIn,
+                              const BaseSemantics::SValue::Ptr &cond)
 {
     if (a->nBits() > b->nBits()) {
         b = operators()->signExtend(b, a->nBits());
@@ -4866,22 +4866,22 @@ DispatcherX86::doAddOperation(BaseSemantics::SValuePtr a, BaseSemantics::SValueP
     ASSERT_require(1==carryIn->nBits());
     ASSERT_require(cond!=NULL && cond->nBits()==1);
     size_t nbits = a->nBits();
-    BaseSemantics::SValuePtr carries;
-    BaseSemantics::SValuePtr result = operators()->addWithCarries(a, b, invertMaybe(carryIn, invertCarries), carries/*out*/);
+    BaseSemantics::SValue::Ptr carries;
+    BaseSemantics::SValue::Ptr result = operators()->addWithCarries(a, b, invertMaybe(carryIn, invertCarries), carries/*out*/);
     setFlagsForResult(result, cond);
-    BaseSemantics::SValuePtr sign = operators()->extract(carries, nbits-1, nbits);
-    BaseSemantics::SValuePtr ofbit = operators()->extract(carries, nbits-2, nbits-1);
-    BaseSemantics::SValuePtr af = readRegister(REG_AF);
+    BaseSemantics::SValue::Ptr sign = operators()->extract(carries, nbits-1, nbits);
+    BaseSemantics::SValue::Ptr ofbit = operators()->extract(carries, nbits-2, nbits-1);
+    BaseSemantics::SValue::Ptr af = readRegister(REG_AF);
     writeRegister(REG_AF,
                   operators()->ite(cond,
                                    invertMaybe(operators()->extract(carries, 3, 4), invertCarries),
                                    af));
-    BaseSemantics::SValuePtr cf = readRegister(REG_CF);
+    BaseSemantics::SValue::Ptr cf = readRegister(REG_CF);
     writeRegister(REG_CF,
                   operators()->ite(cond,
                                    invertMaybe(sign, invertCarries),
                                    cf));
-    BaseSemantics::SValuePtr of = readRegister(REG_OF);
+    BaseSemantics::SValue::Ptr of = readRegister(REG_OF);
     writeRegister(REG_OF,
                   operators()->ite(cond,
                                    operators()->xor_(sign, ofbit),
@@ -4892,16 +4892,16 @@ DispatcherX86::doAddOperation(BaseSemantics::SValuePtr a, BaseSemantics::SValueP
 
 
 /* Does increment (decrement with DEC set), and adjusts condition flags. */
-BaseSemantics::SValuePtr
-DispatcherX86::doIncOperation(const BaseSemantics::SValuePtr &a, bool dec, bool setCarry)
+BaseSemantics::SValue::Ptr
+DispatcherX86::doIncOperation(const BaseSemantics::SValue::Ptr &a, bool dec, bool setCarry)
 {
     size_t nbits = a->nBits();
-    BaseSemantics::SValuePtr carries;
-    BaseSemantics::SValuePtr no = operators()->boolean_(false);
-    BaseSemantics::SValuePtr result = operators()->addWithCarries(a, number_(nbits, dec?-1:1), no, carries/*out*/);
+    BaseSemantics::SValue::Ptr carries;
+    BaseSemantics::SValue::Ptr no = operators()->boolean_(false);
+    BaseSemantics::SValue::Ptr result = operators()->addWithCarries(a, number_(nbits, dec?-1:1), no, carries/*out*/);
     setFlagsForResult(result);
-    BaseSemantics::SValuePtr sign = operators()->extract(carries, nbits-1, nbits);
-    BaseSemantics::SValuePtr ofbit = operators()->extract(carries, nbits-2, nbits-1);
+    BaseSemantics::SValue::Ptr sign = operators()->extract(carries, nbits-1, nbits);
+    BaseSemantics::SValue::Ptr ofbit = operators()->extract(carries, nbits-2, nbits-1);
     writeRegister(REG_AF, invertMaybe(operators()->extract(carries, 3, 4), dec));
     writeRegister(REG_OF, operators()->xor_(sign, ofbit));
     if (setCarry)
@@ -4909,29 +4909,29 @@ DispatcherX86::doIncOperation(const BaseSemantics::SValuePtr &a, bool dec, bool 
     return result;
 }
 
-BaseSemantics::SValuePtr
-DispatcherX86::doRotateOperation(X86InstructionKind kind, const BaseSemantics::SValuePtr &operand,
-                                 const BaseSemantics::SValuePtr &total_rotate, size_t rotateSignificantBits)
+BaseSemantics::SValue::Ptr
+DispatcherX86::doRotateOperation(X86InstructionKind kind, const BaseSemantics::SValue::Ptr &operand,
+                                 const BaseSemantics::SValue::Ptr &total_rotate, size_t rotateSignificantBits)
 {
     ASSERT_require(x86_rcl==kind || x86_rcr==kind || x86_rol==kind || x86_ror==kind);
     ASSERT_require(total_rotate->nBits()==8 && rotateSignificantBits<8);
 
     // The 8086 does not mask the rotate count; processors starting with the 80286 (including virtual-8086 mode) do mask. We
     // will always mask. The effect (other than timing) is the same either way.
-    BaseSemantics::SValuePtr maskedRotateCount = operators()->extract(total_rotate, 0, rotateSignificantBits);
+    BaseSemantics::SValue::Ptr maskedRotateCount = operators()->extract(total_rotate, 0, rotateSignificantBits);
     if (operand->nBits()==9 || operand->nBits()==17) { //  RCL or RCR on an 8- or 16-bit operand
         maskedRotateCount = operators()->unsignedModulo(maskedRotateCount,
                                                         number_(maskedRotateCount->nBits(), operand->nBits()));
     }
-    BaseSemantics::SValuePtr isZeroRotateCount = operators()->equalToZero(maskedRotateCount);
+    BaseSemantics::SValue::Ptr isZeroRotateCount = operators()->equalToZero(maskedRotateCount);
 
     // isOneBitRotate is true if the (masked) amount by which to rotate is equal to one.
     uintmax_t m = IntegerOps::genMask<uintmax_t>(rotateSignificantBits);
-    BaseSemantics::SValuePtr mask = number_(rotateSignificantBits, m); // -1 in modulo arithmetic
-    BaseSemantics::SValuePtr isOneBitRotate = operators()->equalToZero(operators()->add(maskedRotateCount, mask));
+    BaseSemantics::SValue::Ptr mask = number_(rotateSignificantBits, m); // -1 in modulo arithmetic
+    BaseSemantics::SValue::Ptr isOneBitRotate = operators()->equalToZero(operators()->add(maskedRotateCount, mask));
 
     // Do the actual rotate.
-    BaseSemantics::SValuePtr result;
+    BaseSemantics::SValue::Ptr result;
     switch (kind) {
         case x86_rcl:
         case x86_rol:
@@ -4947,7 +4947,7 @@ DispatcherX86::doRotateOperation(X86InstructionKind kind, const BaseSemantics::S
     ASSERT_require(result->nBits()==operand->nBits());
 
     // Compute the new CF value.
-    BaseSemantics::SValuePtr new_cf;
+    BaseSemantics::SValue::Ptr new_cf;
     switch (kind) {
         case x86_rcl:
         case x86_rcr:
@@ -4962,16 +4962,16 @@ DispatcherX86::doRotateOperation(X86InstructionKind kind, const BaseSemantics::S
     }
 
     // Compute the new OF value.  The new OF value is only used for 1-bit rotates.
-    BaseSemantics::SValuePtr new_of;
+    BaseSemantics::SValue::Ptr new_of;
     switch (kind) {
         case x86_rcl:
         case x86_ror: {
-            BaseSemantics::SValuePtr v1 = operators()->extract(result, result->nBits()-2, result->nBits()-1);
+            BaseSemantics::SValue::Ptr v1 = operators()->extract(result, result->nBits()-2, result->nBits()-1);
             new_of = operators()->xor_(operators()->extract(result, result->nBits()-1, result->nBits()), v1);
             break;
         }
         case x86_rcr: {
-            BaseSemantics::SValuePtr v1 = operators()->extract(operand, operand->nBits()-2, operand->nBits()-1);
+            BaseSemantics::SValue::Ptr v1 = operators()->extract(operand, operand->nBits()-2, operand->nBits()-1);
             new_of = operators()->xor_(operators()->extract(operand, operand->nBits()-1, operand->nBits()), v1);
             break;
         }
@@ -4985,7 +4985,7 @@ DispatcherX86::doRotateOperation(X86InstructionKind kind, const BaseSemantics::S
 
     // Update CF and OF flags. SF, ZF, AF, and PF are not affected.
     writeRegister(REG_CF, new_cf);
-    BaseSemantics::SValuePtr maybeOf = operators()->ite(isOneBitRotate, new_of, unspecified_(1));
+    BaseSemantics::SValue::Ptr maybeOf = operators()->ite(isOneBitRotate, new_of, unspecified_(1));
     writeRegister(REG_OF, operators()->ite(isZeroRotateCount,
                                            readRegister(REG_OF, PEEK_REGISTER),
                                            maybeOf));
@@ -4993,9 +4993,9 @@ DispatcherX86::doRotateOperation(X86InstructionKind kind, const BaseSemantics::S
     return result;
 }
 
-BaseSemantics::SValuePtr
-DispatcherX86::doShiftOperation(X86InstructionKind kind, const BaseSemantics::SValuePtr &operand,
-                                const BaseSemantics::SValuePtr &source_bits, const BaseSemantics::SValuePtr &total_shift,
+BaseSemantics::SValue::Ptr
+DispatcherX86::doShiftOperation(X86InstructionKind kind, const BaseSemantics::SValue::Ptr &operand,
+                                const BaseSemantics::SValue::Ptr &source_bits, const BaseSemantics::SValue::Ptr &total_shift,
                                 size_t shiftSignificantBits)
 {
     ASSERT_require(x86_shr==kind || x86_sar==kind || x86_shl==kind || x86_shld==kind || x86_shrd==kind);
@@ -5004,21 +5004,21 @@ DispatcherX86::doShiftOperation(X86InstructionKind kind, const BaseSemantics::SV
 
     // The 8086 does not mask the shift count; processors starting with the 80286 (including virtual-8086 mode) do
     // mask.  The effect (other than timing) is the same either way.
-    BaseSemantics::SValuePtr maskedShiftCount = operators()->extract(total_shift, 0, shiftSignificantBits);
-    BaseSemantics::SValuePtr isZeroShiftCount = operators()->equalToZero(maskedShiftCount);
+    BaseSemantics::SValue::Ptr maskedShiftCount = operators()->extract(total_shift, 0, shiftSignificantBits);
+    BaseSemantics::SValue::Ptr isZeroShiftCount = operators()->equalToZero(maskedShiftCount);
 
     // isLargeShift is true if the (unmasked) amount by which to shift is greater than or equal to the size in
     // bits of the destination operand.
-    BaseSemantics::SValuePtr extraShiftCount = operators()->extract(total_shift, shiftSignificantBits, 8);
-    BaseSemantics::SValuePtr isLargeShift = operators()->invert(operators()->equalToZero(extraShiftCount));
+    BaseSemantics::SValue::Ptr extraShiftCount = operators()->extract(total_shift, shiftSignificantBits, 8);
+    BaseSemantics::SValue::Ptr isLargeShift = operators()->invert(operators()->equalToZero(extraShiftCount));
 
     // isOneBitShift is true if the (masked) amount by which to shift is equal to one.
     uintmax_t m = IntegerOps::genMask<uintmax_t>(shiftSignificantBits);
-    BaseSemantics::SValuePtr mask = number_(shiftSignificantBits, m); // -1 in modulo arithmetic
-    BaseSemantics::SValuePtr isOneBitShift = operators()->equalToZero(operators()->add(maskedShiftCount, mask));
+    BaseSemantics::SValue::Ptr mask = number_(shiftSignificantBits, m); // -1 in modulo arithmetic
+    BaseSemantics::SValue::Ptr isOneBitShift = operators()->equalToZero(operators()->add(maskedShiftCount, mask));
 
     // Do the actual shift, according to instruction kind.
-    BaseSemantics::SValuePtr result;
+    BaseSemantics::SValue::Ptr result;
     switch (kind) {
         case x86_shr:
             result = operators()->shiftRight(operand, maskedShiftCount);
@@ -5030,20 +5030,20 @@ DispatcherX86::doShiftOperation(X86InstructionKind kind, const BaseSemantics::SV
             result = operators()->shiftLeft(operand, maskedShiftCount);
             break;
         case x86_shrd: {
-            BaseSemantics::SValuePtr v1 = operators()->shiftLeft(source_bits, operators()->negate(maskedShiftCount));
-            BaseSemantics::SValuePtr v2 = operators()->ite(isZeroShiftCount,
+            BaseSemantics::SValue::Ptr v1 = operators()->shiftLeft(source_bits, operators()->negate(maskedShiftCount));
+            BaseSemantics::SValue::Ptr v2 = operators()->ite(isZeroShiftCount,
                                                            number_(operand->nBits(), 0),
                                                            v1);
-            BaseSemantics::SValuePtr v3 = operators()->or_(operators()->shiftRight(operand, maskedShiftCount), v2);
+            BaseSemantics::SValue::Ptr v3 = operators()->or_(operators()->shiftRight(operand, maskedShiftCount), v2);
             result = operators()->ite(isLargeShift, unspecified_(operand->nBits()), v3);
             break;
         }
         case x86_shld: {
-            BaseSemantics::SValuePtr v1 = operators()->shiftRight(source_bits, operators()->negate(maskedShiftCount));
-            BaseSemantics::SValuePtr v2 = operators()->ite(isZeroShiftCount,
+            BaseSemantics::SValue::Ptr v1 = operators()->shiftRight(source_bits, operators()->negate(maskedShiftCount));
+            BaseSemantics::SValue::Ptr v2 = operators()->ite(isZeroShiftCount,
                                                            number_(operand->nBits(), 0),
                                                            v1);
-            BaseSemantics::SValuePtr v3 = operators()->or_(operators()->shiftLeft(operand, maskedShiftCount), v2);
+            BaseSemantics::SValue::Ptr v3 = operators()->or_(operators()->shiftLeft(operand, maskedShiftCount), v2);
             result = operators()->ite(isLargeShift, unspecified_(operand->nBits()), v3);
             break;
         }
@@ -5051,13 +5051,13 @@ DispatcherX86::doShiftOperation(X86InstructionKind kind, const BaseSemantics::SV
             ASSERT_not_reachable("instruction not handled");
     }
     ASSERT_require(operand->nBits()==result->nBits());
-    BaseSemantics::SValuePtr originalSign = operators()->extract(operand, operand->nBits()-1, operand->nBits());
-    BaseSemantics::SValuePtr resultSign = operators()->extract(result, result->nBits()-1, result->nBits());
+    BaseSemantics::SValue::Ptr originalSign = operators()->extract(operand, operand->nBits()-1, operand->nBits());
+    BaseSemantics::SValue::Ptr resultSign = operators()->extract(result, result->nBits()-1, result->nBits());
 
     // The AF flag is undefined if a shift occurs.  The documentation for SHL, SHR, and SAR are somewhat ambiguous about
     // this, but the documentation for SHLD and SHRD is more specific.  We assume that both sets of shift instructions
     // behave the same way.
-    BaseSemantics::SValuePtr unspecAf = unspecified_(1);
+    BaseSemantics::SValue::Ptr unspecAf = unspecified_(1);
     writeRegister(REG_AF,
                   operators()->ite(isZeroShiftCount,
                                    readRegister(REG_AF, PEEK_REGISTER),
@@ -5065,25 +5065,25 @@ DispatcherX86::doShiftOperation(X86InstructionKind kind, const BaseSemantics::SV
 
     // What is the last bit shifted off the operand?  If we're right shifting by N bits, then the original operand N-1 bit
     // is what should make it into the final CF; if we're left shifting by N bits then we need bit operand->nBits()-N.
-    BaseSemantics::SValuePtr bitPosition;
+    BaseSemantics::SValue::Ptr bitPosition;
     if (x86_shr==kind || x86_sar==kind || x86_shrd==kind) {
         bitPosition = operators()->add(maskedShiftCount, mask);
     } else {
-        BaseSemantics::SValuePtr one = number_(shiftSignificantBits, 1);
-        BaseSemantics::SValuePtr term1 = operators()->add(operators()->invert(maskedShiftCount), one);
+        BaseSemantics::SValue::Ptr one = number_(shiftSignificantBits, 1);
+        BaseSemantics::SValue::Ptr term1 = operators()->add(operators()->invert(maskedShiftCount), one);
         bitPosition = operators()->add(number_(shiftSignificantBits, operand->nBits() & m), // probably zero modulo
                                        term1);
     }
-    BaseSemantics::SValuePtr shifted_off = operators()->extract(operators()->shiftRight(operand, bitPosition), 0, 1);
+    BaseSemantics::SValue::Ptr shifted_off = operators()->extract(operators()->shiftRight(operand, bitPosition), 0, 1);
 
     // New carry flag value.  From the Intel manual, the CF flag is "undefined for SHL and SHR [and SAL] instructions where
     // the count is greater than or equal to the size (in bits) of the destination operand", and "if the count is 0, the
     // flags are not affected."  The manual is silent about the value of CF for large SAR shifts, so we use the original
     // sign bit, matching the pseudo-code in the manual.
-    BaseSemantics::SValuePtr newCFite = operators()->ite(isLargeShift,
+    BaseSemantics::SValue::Ptr newCFite = operators()->ite(isLargeShift,
                                                          (x86_sar==kind ? originalSign : unspecified_(1)),
                                                          shifted_off);
-    BaseSemantics::SValuePtr newCF = operators()->ite(isZeroShiftCount, readRegister(REG_CF, PEEK_REGISTER), newCFite);
+    BaseSemantics::SValue::Ptr newCF = operators()->ite(isZeroShiftCount, readRegister(REG_CF, PEEK_REGISTER), newCFite);
     writeRegister(REG_CF, newCF);
 
     // Ajust the overflow flag.  From the Intel manual for the SHL, SHR, and SAR instructions, "The OF flag is affected
@@ -5094,10 +5094,10 @@ DispatcherX86::doShiftOperation(X86InstructionKind kind, const BaseSemantics::SV
     // shifts; otherwise it is undefined."  We're assuming that the statement "if the count is 0, then the flags are not
     // affected" takes precedence. For SHLD and SHRD it says, "for a 1-bit shift, the OF flag is set if a sign changed
     // occurred; otherwise it is cleared. For shifts greater than 1 bit, the OF flag is undefined."
-    BaseSemantics::SValuePtr newOF;
+    BaseSemantics::SValue::Ptr newOF;
     switch (kind) {
         case x86_shr: {
-            BaseSemantics::SValuePtr unspec = unspecified_(1);
+            BaseSemantics::SValue::Ptr unspec = unspecified_(1);
             newOF = operators()->ite(isOneBitShift,
                                      originalSign,
                                      operators()->ite(isZeroShiftCount,
@@ -5106,16 +5106,16 @@ DispatcherX86::doShiftOperation(X86InstructionKind kind, const BaseSemantics::SV
             break;
         }
         case x86_sar: {
-            BaseSemantics::SValuePtr unspec = unspecified_(1);
-            BaseSemantics::SValuePtr v1 = operators()->ite(isZeroShiftCount, readRegister(REG_OF, PEEK_REGISTER), unspec);
+            BaseSemantics::SValue::Ptr unspec = unspecified_(1);
+            BaseSemantics::SValue::Ptr v1 = operators()->ite(isZeroShiftCount, readRegister(REG_OF, PEEK_REGISTER), unspec);
             newOF = operators()->ite(isOneBitShift, operators()->boolean_(false), v1);
             break;
         }
         case x86_shl:
         case x86_shld:
         case x86_shrd: {
-            BaseSemantics::SValuePtr unspec = unspecified_(1);
-            BaseSemantics::SValuePtr v1 = operators()->ite(isZeroShiftCount, readRegister(REG_OF, PEEK_REGISTER), unspec);
+            BaseSemantics::SValue::Ptr unspec = unspecified_(1);
+            BaseSemantics::SValue::Ptr v1 = operators()->ite(isZeroShiftCount, readRegister(REG_OF, PEEK_REGISTER), unspec);
             newOF = operators()->ite(isOneBitShift, operators()->xor_(originalSign, resultSign), v1);
             break;
         }
@@ -5129,12 +5129,12 @@ DispatcherX86::doShiftOperation(X86InstructionKind kind, const BaseSemantics::SV
     return result;
 }
 
-BaseSemantics::SValuePtr
+BaseSemantics::SValue::Ptr
 DispatcherX86::readRegister(RegisterDescriptor reg, AccessMode mode) {
     // When reading FLAGS, EFLAGS as a whole do not coalesce individual flags into the single register.
     if (reg.majorNumber()==x86_regclass_flags && reg.offset()==0 && reg.nBits()>1) {
-        if (BaseSemantics::StatePtr ss = operators()->currentState()) {
-            BaseSemantics::RegisterStatePtr rs = ss->registerState();
+        if (BaseSemantics::State::Ptr ss = operators()->currentState()) {
+            BaseSemantics::RegisterState::Ptr rs = ss->registerState();
             if (BaseSemantics::RegisterStateGeneric *rsg = dynamic_cast<BaseSemantics::RegisterStateGeneric*>(rs.get())) {
                 BaseSemantics::RegisterStateGeneric::AccessModifiesExistingLocationsGuard guard(rsg, false);
                 switch (mode) {
@@ -5156,7 +5156,7 @@ DispatcherX86::readRegister(RegisterDescriptor reg, AccessMode mode) {
 }
 
 void
-DispatcherX86::writeRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &value) {
+DispatcherX86::writeRegister(RegisterDescriptor reg, const BaseSemantics::SValue::Ptr &value) {
     if (reg.nBits() == 32 && reg.offset() == 0 && REG_anyIP.nBits() == 64) {
         // Writing to a 32-bit GPR in x86-64 will also clear the upper 32 bits of the same 64-bit register. E.g., "MOV EDI,
         // EDI" is one way to clear the upper 32-bits in RDI.
@@ -5176,7 +5176,7 @@ DispatcherX86::writeRegister(RegisterDescriptor reg, const BaseSemantics::SValue
 }
 
 void
-DispatcherX86::write(SgAsmExpression *e, const BaseSemantics::SValuePtr &value, size_t addr_nbits/*=0*/)
+DispatcherX86::write(SgAsmExpression *e, const BaseSemantics::SValue::Ptr &value, size_t addr_nbits/*=0*/)
 {
     if (SgAsmDirectRegisterExpression *re = isSgAsmDirectRegisterExpression(e)) {
         writeRegister(re->get_descriptor(), value);
@@ -5186,12 +5186,12 @@ DispatcherX86::write(SgAsmExpression *e, const BaseSemantics::SValuePtr &value, 
 }
 
 void
-DispatcherX86::pushFloatingPoint(const BaseSemantics::SValuePtr &value)
+DispatcherX86::pushFloatingPoint(const BaseSemantics::SValue::Ptr &value)
 {
-    BaseSemantics::SValuePtr topOfStack = readRegister(REG_FPSTATUS_TOP);
+    BaseSemantics::SValue::Ptr topOfStack = readRegister(REG_FPSTATUS_TOP);
     if (!topOfStack->isConcrete())
         throw BaseSemantics::Exception("FP-stack top is not concrete", NULL);
-    BaseSemantics::SValuePtr newTopOfStack = operators()->add(topOfStack, operators()->number_(topOfStack->nBits(), -1));
+    BaseSemantics::SValue::Ptr newTopOfStack = operators()->add(topOfStack, operators()->number_(topOfStack->nBits(), -1));
     ASSERT_require2(newTopOfStack->isConcrete(), "constant folding is required for FP-stack");
 
     RegisterDescriptor reg(REG_ST0.majorNumber(), (REG_ST0.minorNumber() + newTopOfStack->toUnsigned().get()) % 8,
@@ -5200,10 +5200,10 @@ DispatcherX86::pushFloatingPoint(const BaseSemantics::SValuePtr &value)
     writeRegister(REG_FPSTATUS_TOP, newTopOfStack);
 }
 
-BaseSemantics::SValuePtr
+BaseSemantics::SValue::Ptr
 DispatcherX86::readFloatingPointStack(size_t position)
 {
-    BaseSemantics::SValuePtr topOfStack = readRegister(REG_FPSTATUS_TOP);
+    BaseSemantics::SValue::Ptr topOfStack = readRegister(REG_FPSTATUS_TOP);
     if (!topOfStack->isConcrete())
         throw BaseSemantics::Exception("FP-stack top is not concrete", NULL);
     RegisterDescriptor reg(REG_ST0.majorNumber(), (REG_ST0.minorNumber() + topOfStack->toUnsigned().get()) % 8,
@@ -5214,16 +5214,16 @@ DispatcherX86::readFloatingPointStack(size_t position)
 void
 DispatcherX86::popFloatingPoint()
 {
-    BaseSemantics::SValuePtr topOfStack = readRegister(REG_FPSTATUS_TOP);
+    BaseSemantics::SValue::Ptr topOfStack = readRegister(REG_FPSTATUS_TOP);
     if (!topOfStack->isConcrete())
         throw BaseSemantics::Exception("FP-stack top is not concrete", NULL);
-    BaseSemantics::SValuePtr newTopOfStack = operators()->add(topOfStack, operators()->number_(topOfStack->nBits(), 1));
+    BaseSemantics::SValue::Ptr newTopOfStack = operators()->add(topOfStack, operators()->number_(topOfStack->nBits(), 1));
     ASSERT_require2(newTopOfStack->isConcrete(), "constant folding is required for FP-stack");
     writeRegister(REG_FPSTATUS_TOP, newTopOfStack);
 }
 
-BaseSemantics::SValuePtr
-DispatcherX86::fixMemoryAddress(const BaseSemantics::SValuePtr &addr) const
+BaseSemantics::SValue::Ptr
+DispatcherX86::fixMemoryAddress(const BaseSemantics::SValue::Ptr &addr) const
 {
     if (size_t addrWidth = addressWidth()) {
         if (addr->nBits() < addrWidth)
@@ -5234,47 +5234,47 @@ DispatcherX86::fixMemoryAddress(const BaseSemantics::SValuePtr &addr) const
     return addr;
 }
 
-BaseSemantics::SValuePtr
-DispatcherX86::saturateSignedToUnsigned(const BaseSemantics::SValuePtr &src, size_t nBits) {
+BaseSemantics::SValue::Ptr
+DispatcherX86::saturateSignedToUnsigned(const BaseSemantics::SValue::Ptr &src, size_t nBits) {
     ASSERT_not_null(src);
     ASSERT_require(src->nBits() >= nBits);
     if (src->nBits() == nBits)
         return src;
-    BaseSemantics::SValuePtr signBit = operators()->extract(src, src->nBits()-1, src->nBits());
-    BaseSemantics::SValuePtr high = operators()->extract(src, nBits, src->nBits());
-    BaseSemantics::SValuePtr noOverflow = operators()->equalToZero(high);
-    BaseSemantics::SValuePtr v1 = operators()->signExtend(signBit, nBits);
+    BaseSemantics::SValue::Ptr signBit = operators()->extract(src, src->nBits()-1, src->nBits());
+    BaseSemantics::SValue::Ptr high = operators()->extract(src, nBits, src->nBits());
+    BaseSemantics::SValue::Ptr noOverflow = operators()->equalToZero(high);
+    BaseSemantics::SValue::Ptr v1 = operators()->signExtend(signBit, nBits);
     return operators()->ite(noOverflow, operators()->extract(src, 0, nBits), v1);
 }
 
-BaseSemantics::SValuePtr
-DispatcherX86::saturateSignedToSigned(const BaseSemantics::SValuePtr &src, size_t nBits) {
+BaseSemantics::SValue::Ptr
+DispatcherX86::saturateSignedToSigned(const BaseSemantics::SValue::Ptr &src, size_t nBits) {
     ASSERT_not_null(src);
     ASSERT_require(src->nBits() >= nBits);
     if (src->nBits() == nBits)
         return src;
-    BaseSemantics::SValuePtr signBit = operators()->extract(src, src->nBits()-1, src->nBits());
-    BaseSemantics::SValuePtr high = operators()->extract(src, nBits-1, src->nBits());
-    BaseSemantics::SValuePtr zero = operators()->number_(high->nBits(), 0);
-    BaseSemantics::SValuePtr allSet = operators()->invert(zero);
-    BaseSemantics::SValuePtr highZerop = operators()->isEqual(high, allSet);
-    BaseSemantics::SValuePtr noOverflow = operators()->or_(operators()->equalToZero(high), highZerop);
-    BaseSemantics::SValuePtr yes = operators()->boolean_(true);
-    BaseSemantics::SValuePtr minResult = operators()->concat(operators()->number_(nBits-1, 0), yes);
-    BaseSemantics::SValuePtr maxResult = operators()->invert(minResult);
-    BaseSemantics::SValuePtr minOrMax = operators()->ite(signBit, minResult, maxResult);
+    BaseSemantics::SValue::Ptr signBit = operators()->extract(src, src->nBits()-1, src->nBits());
+    BaseSemantics::SValue::Ptr high = operators()->extract(src, nBits-1, src->nBits());
+    BaseSemantics::SValue::Ptr zero = operators()->number_(high->nBits(), 0);
+    BaseSemantics::SValue::Ptr allSet = operators()->invert(zero);
+    BaseSemantics::SValue::Ptr highZerop = operators()->isEqual(high, allSet);
+    BaseSemantics::SValue::Ptr noOverflow = operators()->or_(operators()->equalToZero(high), highZerop);
+    BaseSemantics::SValue::Ptr yes = operators()->boolean_(true);
+    BaseSemantics::SValue::Ptr minResult = operators()->concat(operators()->number_(nBits-1, 0), yes);
+    BaseSemantics::SValue::Ptr maxResult = operators()->invert(minResult);
+    BaseSemantics::SValue::Ptr minOrMax = operators()->ite(signBit, minResult, maxResult);
     return operators()->ite(noOverflow, operators()->extract(src, 0, nBits), minOrMax);
 }
 
-BaseSemantics::SValuePtr
-DispatcherX86::saturateUnsignedToUnsigned(const BaseSemantics::SValuePtr &src, size_t nBits) {
+BaseSemantics::SValue::Ptr
+DispatcherX86::saturateUnsignedToUnsigned(const BaseSemantics::SValue::Ptr &src, size_t nBits) {
     ASSERT_not_null(src);
     ASSERT_require(src->nBits() >= nBits);
     if (src->nBits() == nBits)
         return src;
-    BaseSemantics::SValuePtr high = operators()->extract(src, nBits, src->nBits());
-    BaseSemantics::SValuePtr noOverflow = operators()->equalToZero(high);
-    BaseSemantics::SValuePtr allBits = operators()->invert(operators()->number_(nBits, 0));
+    BaseSemantics::SValue::Ptr high = operators()->extract(src, nBits, src->nBits());
+    BaseSemantics::SValue::Ptr noOverflow = operators()->equalToZero(high);
+    BaseSemantics::SValue::Ptr allBits = operators()->invert(operators()->number_(nBits, 0));
     return operators()->ite(noOverflow, operators()->extract(src, 0, nBits), allBits);
 }
 

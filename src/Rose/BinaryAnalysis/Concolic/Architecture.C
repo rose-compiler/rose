@@ -346,7 +346,7 @@ Architecture::nextEventLocation(When when) {
 }
 
 void
-Architecture::restoreInputVariables(const Partitioner2::Partitioner&, const Emulation::RiscOperatorsPtr&, const SmtSolver::Ptr&) {
+Architecture::restoreInputVariables(const Partitioner2::Partitioner&, const Emulation::RiscOperators::Ptr&, const SmtSolver::Ptr&) {
     for (ExecutionEventId eventId: database()->executionEvents(testCaseId())) {
         ExecutionEvent::Ptr event = database()->object(eventId, Update::NO);
         inputVariables_->playback(event);

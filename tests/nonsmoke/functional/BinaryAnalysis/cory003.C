@@ -16,9 +16,9 @@ using namespace Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;
 int
 main() {
     RegisterDictionary::Ptr regdict = RegisterDictionary::instanceI386();
-    SymbolicSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instanceFromRegisters(regdict);
-    RegisterStateGenericPtr rstate = RegisterStateGeneric::promote(ops->currentState()->registerState());
-    SValuePtr x;
+    SymbolicSemantics::RiscOperators::Ptr ops = SymbolicSemantics::RiscOperators::instanceFromRegisters(regdict);
+    RegisterStateGeneric::Ptr rstate = RegisterStateGeneric::promote(ops->currentState()->registerState());
+    SValue::Ptr x;
     Formatter fmt;
     fmt.set_line_prefix("    ");
 

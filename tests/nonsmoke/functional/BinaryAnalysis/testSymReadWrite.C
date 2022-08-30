@@ -18,7 +18,7 @@ struct Analysis: public AstSimpleProcessing {
         if (block && block->has_instructions()) {
             using namespace Rose::BinaryAnalysis::InstructionSemantics;
             RegisterDictionary::Ptr regdict = RegisterDictionary::instanceI386();
-            SymbolicSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instanceFromRegisters(regdict);
+            SymbolicSemantics::RiscOperators::Ptr ops = SymbolicSemantics::RiscOperators::instanceFromRegisters(regdict);
             ops->computingDefiners(SymbolicSemantics::TRACK_ALL_DEFINERS); // only used so we can test that it works
             BaseSemantics::Dispatcher::Ptr dispatcher = DispatcherX86::instance(ops, 32, RegisterDictionary::Ptr());
             const SgAsmStatementPtrList &stmts = block->get_statementList();

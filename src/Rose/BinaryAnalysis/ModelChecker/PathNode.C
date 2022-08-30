@@ -107,7 +107,7 @@ PathNode::evidence() const {
 }
 
 void
-PathNode::execute(const Settings::Ptr &settings, const SemanticCallbacks::Ptr &semantics, const BS::RiscOperatorsPtr &ops,
+PathNode::execute(const Settings::Ptr &settings, const SemanticCallbacks::Ptr &semantics, const BS::RiscOperators::Ptr &ops,
                   const SmtSolver::Ptr &solver) {
     ASSERT_not_null(settings);
     ASSERT_not_null(semantics);

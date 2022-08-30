@@ -1266,7 +1266,7 @@ Base::emitFunctionStackDelta(std::ostream &out, const P2::Function::Ptr &functio
                 out <<style.render() <<";;; function stack delta is " <<StringUtility::toHex2(delta, 64)
                     <<style.restore() <<"\n";
             }
-        } else if (S2::BaseSemantics::SValuePtr delta = function->stackDelta()) {
+        } else if (S2::BaseSemantics::SValue::Ptr delta = function->stackDelta()) {
             state.frontUnparser().emitLinePrefix(out, state);
             out <<style.render() <<";;; function stack delta is " <<*delta <<style.restore() <<"\n";
         }
@@ -2015,11 +2015,11 @@ void
 Base::emitInstructionSemantics(std::ostream &out, SgAsmInstruction *insn, State &state) const {
     ASSERT_not_null(insn);
     if (settings().insn.semantics.showing) {
-        S2::BaseSemantics::RiscOperatorsPtr ops = state.partitioner().newOperators();
+        S2::BaseSemantics::RiscOperators::Ptr ops = state.partitioner().newOperators();
         if (settings().insn.semantics.tracing)
             ops = S2::TraceSemantics::RiscOperators::instance(ops);
 
-        if (S2::BaseSemantics::DispatcherPtr cpu = state.partitioner().newDispatcher(ops)) {
+        if (S2::BaseSemantics::Dispatcher::Ptr cpu = state.partitioner().newDispatcher(ops)) {
             try {
                 cpu->processInstruction(insn);
                 S2::BaseSemantics::Formatter fmt = settings().insn.semantics.formatter;
