@@ -7,9 +7,6 @@
 namespace Rose {
 namespace BinaryAnalysis {
 
-/** Reference counting pointer to @ref BinaryLoaderElfObj. */
-typedef Sawyer::SharedPointer<class BinaryLoaderElfObj> BinaryLoaderElfObjPtr;
-
 /** A loader suitable for ELF object files.
  *
  *  An ELF object file typically contains one section per function and each section has a preferred virtual address of zero.
@@ -17,7 +14,7 @@ typedef Sawyer::SharedPointer<class BinaryLoaderElfObj> BinaryLoaderElfObjPtr;
 class BinaryLoaderElfObj: public BinaryLoaderElf {
 public:
     /** Reference counting pointer to @ref BinaryLoaderElfObj. */
-    typedef Sawyer::SharedPointer<class BinaryLoaderElfObj> Ptr;
+    using Ptr = BinaryLoaderElfObjPtr;
 
 protected:
     BinaryLoaderElfObj() {}

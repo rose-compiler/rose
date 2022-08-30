@@ -3,6 +3,8 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Rose/BinaryAnalysis/BasicTypes.h>
+
 #include <ByteOrder.h>
 #include <Combinatorics.h>
 #include <Rose/Exception.h>
@@ -109,7 +111,9 @@ alignDown(T address, U alignment) {
  */
 class MemoryMap: public Sawyer::Container::AddressMap<rose_addr_t, uint8_t>, public Sawyer::SharedObject {
 public:
-    typedef Sawyer::SharedPointer<MemoryMap> Ptr;
+    /** Reference counting pointer. */
+    using Ptr = MemoryMapPtr;
+
     typedef rose_addr_t Address;
     typedef uint8_t Value;
     typedef Sawyer::Container::AddressMap<Address, Value> Super;
