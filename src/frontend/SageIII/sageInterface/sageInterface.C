@@ -25404,6 +25404,9 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
   if (SgAdaAttributeExp* v= isSgAdaAttributeExp(node))
     out<<" attribute@"<< v->get_attribute();
 
+  if (SgUsingDirectiveStatement* v= isSgUsingDirectiveStatement(node))
+    out<<" namespaceDeclaration="<< v->get_namespaceDeclaration();
+
   out<<endl;
 
   std::vector<SgNode* > children = node->get_traversalSuccessorContainer();
