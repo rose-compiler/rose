@@ -634,7 +634,7 @@ package body Lal_Adapter.Unit is
 --
 
    procedure Process_Wanted_Compilation_Unit
-     (This             : in out Class;
+     (This                 : in out Class;
       The_Compilation_Unit : in LAL.Compilation_Unit)
    is
       Parent_Name : constant String := Module_Name;
@@ -644,7 +644,7 @@ package body Lal_Adapter.Unit is
 
       function Process_Node
         (Node : in LAL.Ada_Node'Class)
-      return LALCO.Visit_Status
+         return LALCO.Visit_Status
       is
          Node_Processor : Lal_Adapter.Node.Class; -- Initialized
       begin -- Process_Node
@@ -655,15 +655,15 @@ package body Lal_Adapter.Unit is
          return LALCO.Into;
       end Process_Node;
 
-      Traverse_Visit_Status : LALCO.Visit_Status := LALCO.Stop;
-      Dependencies : constant LAL.Compilation_Unit_Array :=
+      Traverse_Visit_Status         : LALCO.Visit_Status := LALCO.Stop;
+      Dependencies                  : constant LAL.Compilation_Unit_Array :=
         LAL.P_Unit_Dependencies (The_Compilation_Unit);
-      File_Name_First_Line_Col : constant String :=
+      File_Name_First_Line_Col      : constant String :=
         Text.Image (The_Compilation_Unit.Full_Sloc_Image);
       Kind_File_Name_Line_Col_Range : constant String :=
         The_Compilation_Unit.Image;
 
-       procedure Start_Output is
+      procedure Start_Output is
            Default_Node  : Dot.Node_Stmt.Class; -- Initialized
            Default_Label : Dot.HTML_Like_Labels.Class; -- Initialized
         begin
@@ -770,13 +770,12 @@ package body Lal_Adapter.Unit is
       is
          Full_Sloc_Image : constant string := Text.Image (Unit.Full_Sloc_Image);
       begin
-         -- This is how I found out there is a space on the end:
+         -- This is how I found out there is a space on the end of "__standard:1:1: ":
          --  Log ("Full_Sloc_Image => """ & Full_Sloc_Image & """");
          return Full_Sloc_Image = "__standard:1:1: ";
       end Is_Standard;
 
    begin -- Process
-      -- Save Outputs for use by Add_To_Dot_Label:
       This.Outputs := Outputs;
 
       if not Is_Standard (Unit) then

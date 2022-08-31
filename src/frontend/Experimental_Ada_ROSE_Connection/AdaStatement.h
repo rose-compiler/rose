@@ -80,10 +80,15 @@ namespace Ada_ROSE_Translation
 
   /// returns the declaration identified by \ref expr
   ///   if no record was found, nullptr is returned
-  /// \note the declaration is only looked up in the map returned by
-  ///       asisDecls(). => variables and exceptions are not found.
+  /// \note the function does not look up variables and exceptions, and built-in operators.
   SgDeclarationStatement*
-  getDecl_opt(Expression_Struct& expr, AstContext ctx);
+  queryDecl(Expression_Struct& expr, AstContext ctx);
+
+  /// returns a function declaration identified by \ref expr.
+  /// \note in addition to result found by queryDecl, this function also
+  ///         queries implied declaration in the Standard package.
+  SgFunctionDeclaration*
+  queryFunctionDecl(Expression_Struct& expr, SgFunctionParameterList&, AstContext ctx);
 
   /// returns the NameData object for a name that is represented
   /// as expression in Asis (e.g., identifier or selected)

@@ -3,7 +3,7 @@
 #include "sage3basic.h"
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 
-#include <Rose/BinaryAnalysis/InstructionSemantics2/DispatcherX86.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherX86.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Utility.h>
 
@@ -41,9 +41,9 @@ BasicBlock::successors(const Successors &successors) {
 }
 
 void
-BasicBlock::insertSuccessor(const BaseSemantics::SValuePtr &successor_, EdgeType type, Confidence confidence) {
+BasicBlock::insertSuccessor(const BaseSemantics::SValue::Ptr &successor_, EdgeType type, Confidence confidence) {
     if (successor_ != NULL) {
-        Semantics::SValuePtr successor = Semantics::SValue::promote(successor_);
+        Semantics::SValue::Ptr successor = Semantics::SValue::promote(successor_);
         if (!successors_.isCached()) {
             Successors successors;
             successors.push_back(Successor(successor, type, confidence));
@@ -67,7 +67,7 @@ BasicBlock::insertSuccessor(const BaseSemantics::SValuePtr &successor_, EdgeType
 
 void
 BasicBlock::insertSuccessor(rose_addr_t va, size_t nBits, EdgeType type, Confidence confidence) {
-    BaseSemantics::RiscOperatorsPtr ops = semantics_.operators;
+    BaseSemantics::RiscOperators::Ptr ops = semantics_.operators;
     ASSERT_not_null(ops);
     return insertSuccessor(ops->number_(nBits, va), type, confidence);
 }
@@ -113,7 +113,7 @@ BasicBlock::dropSemantics(const Partitioner &partitioner) {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
     semantics_.operators = partitioner.newOperators();
     semantics_.dispatcher = partitioner.newDispatcher(semantics_.operators);
-    semantics_.initialState = BaseSemantics::StatePtr();
+    semantics_.initialState = BaseSemantics::State::Ptr();
     semantics_.usingDispatcher = false;
     semantics_.optionalPenultimateState = Sawyer::Nothing();
     ASSERT_require(!semantics_.dispatcher || semantics_.isSemanticsDropped());
@@ -136,13 +136,13 @@ BasicBlock::undropSemanticsNS(const Partitioner &partitioner) {
             ASSERT_not_null(sem.operators);
             sem.dispatcher = partitioner.newDispatcher(sem.operators);
             ASSERT_not_null(sem.dispatcher);
-            BaseSemantics::StatePtr curState = sem.operators->currentState();
+            BaseSemantics::State::Ptr curState = sem.operators->currentState();
             BaseSemantics::RegisterStateGeneric::promote(curState->registerState())->initialize_large();
             sem.dispatcher->initializeState(curState);
             sem.initialState = curState->clone();
             sem.usingDispatcher = true;
 
-            BaseSemantics::StatePtr penultimateState = curState->clone();
+            BaseSemantics::State::Ptr penultimateState = curState->clone();
             for (SgAsmInstruction *insn: instructions()) {
                 penultimateState = sem.operators->currentState()->clone();
                 try {
@@ -201,7 +201,7 @@ BasicBlock::append(const Partitioner &partitioner, SgAsmInstruction *insn) {
     // Process the instruction to create a new state
     semantics_.optionalPenultimateState = semantics_.usingDispatcher ?
                                               semantics_.dispatcher->operators()->currentState()->clone() :
-                                              BaseSemantics::StatePtr();
+                                              BaseSemantics::State::Ptr();
     if (semantics_.usingDispatcher) {
         try {
             semantics_.dispatcher->processInstruction(insn);

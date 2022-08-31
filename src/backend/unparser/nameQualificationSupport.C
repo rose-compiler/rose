@@ -802,10 +802,11 @@ namespace
       /// computes the name qualification for a non-shared node \ref n.
       /// \details
       ///    suitable for declarations, expressions, and other non-shared nodes.
-      ///    note: some expression subtrees within types are not reached by the
-      ///          type traversal mechanism. Those need to be visited separately.
+      ///    note: some expression subtrees (e.g., those in types, ..)
+      ///          are not reached by the type traversal mechanism. Those need to be
+      ///          visited separately.
       ///          e.g., SgDeclType::get_base_expression
-      void computeNameQualForNonshared(const SgNode* n);
+      void computeNameQualForNonshared(const SgNode* n, bool inTypeSubtree = true);
 
       void computeNameQualForDeclLink(const SgNode& ref, const SgDeclarationStatement& n);
 
@@ -902,6 +903,7 @@ namespace
 
       void handle(const SgAdaPackageSpecDecl& n)
       {
+        //~ std::cerr << n.get_name() << std::endl;
         handle(sg::asBaseType(n));
 
         recordNameQualIfNeeded(n, n.get_scope());
@@ -994,6 +996,9 @@ namespace
           basedecl = gendcl->get_declaration();
 
         computeNameQualForDeclLink(n, SG_DEREF(basedecl));
+
+        // since the arguments are not traversed, they are name-qualified explicitly
+        computeNameQualForNonshared(n.get_actual_parameters(), false /* not a type subtree */);
       }
 
       void handle(const SgAdaFormalPackageDecl& n)
@@ -1032,14 +1037,34 @@ namespace
         addUsedScopeIfNeeded(n.get_declaration());
       }
 
+      // needed because SgBaseClass objects cannot be traversed
+      //   see Cxx_GrammarTreeTraversalSuccessorContainer for details!
+      void handleBaseClass(const SgBaseClass* b)
+      {
+        if (b == nullptr)
+          return;
+
+        if (const SgExpBaseClass* eb = isSgExpBaseClass(b))
+          handle(*eb);
+        else
+          handle(*b);
+      }
+
       void handle(const SgClassDefinition& n)
       {
         handle(sg::asBaseType(n));
 
-        // bases seem not to be traverses, so let's traverse them
+        // bases seem not to be traversed, so let's traverse them
         for (const SgBaseClass* base : n.get_inheritances())
-          handle(SG_DEREF(base));
+          handleBaseClass(base);
       }
+
+      void handle(const SgClassDeclaration& n)
+      {
+        handle(sg::asBaseType(n));
+        handleBaseClass(n.get_adaParentType());
+      }
+
 
       //
       // declaration-like nodes
@@ -1059,9 +1084,12 @@ namespace
         recordNameQualIfNeeded(n, decl.get_scope());
       }
 
-      void handle(const SgExpBaseClass&)
+      void handle(const SgExpBaseClass& n)
       {
-        // \todo?
+        // get_base_class_exp would be traversed by default, yet, here it is NOT traversed.
+        // the reason is that we cannot traverse any SgBaseClass objects.. ???
+        //   see Cxx_GrammarTreeTraversalSuccessorContainer for details!
+        computeNameQualForNonshared(n.get_base_class_exp(), false /* not a type subtree */);
       }
 
 
@@ -1083,6 +1111,14 @@ namespace
       {
         if (!elideNameQualification(n))
           recordNameQualIfNeeded(n, declOf(n).get_scope());
+      }
+
+      void handle(const SgEnumVal& n)
+      {
+        // \todo can an enum be elided?
+        //       gets the scope of the enumeration declaration, not the initialized name
+        if (!elideNameQualification(n))
+          recordNameQualIfNeeded(n, SG_DEREF(n.get_declaration()).get_scope());
       }
 
       void handle(const SgAdaUnitRefExp& n)
@@ -1308,6 +1344,10 @@ namespace
       return;
     }
 
+    // \todo for now the expected types are listed separately to understand
+    //       what kind of types can possibly occur here.
+    //       in the long run, just returning should be sufficient.
+
     if (/*const SgAdaTaskRefExp* tskref =*/ isSgAdaTaskRefExp(e))
       return;
 
@@ -1320,7 +1360,15 @@ namespace
     if (/*const SgVariableSymbol* varsym =*/ isSgVarRefExp(e))
       return;
 
-    // \todo fill in other cases that do not require any special handling
+    if (/*const SgPntrArrRefExp* arref =*/ isSgPntrArrRefExp(e))
+      return;
+
+    if (/*const SgDotExp* fldref =*/ isSgDotExp(e))
+      return;
+
+    if (/*const SgPointerDerefExp* ptrref =*/ isSgPointerDerefExp(e))
+      return;
+
     SG_UNEXPECTED_NODE(SG_DEREF(e));
   }
 
@@ -1440,11 +1488,12 @@ namespace
 
 
   void
-  AdaPreNameQualifier::computeNameQualForNonshared(const SgNode* n)
+  AdaPreNameQualifier::computeNameQualForNonshared(const SgNode* n, bool inTypeSubtree)
   {
-    // since we are already in a subtree, we do not need to switch
-    // the local reference map.
-    ROSE_ASSERT(&traversal.get_qualifiedNameMapForNames() != &SgNode::get_globalQualifiedNameMapForNames());
+    // since it is a non-shared node, we do not need to switch the local reference map.
+    ROSE_ASSERT(  (!inTypeSubtree)
+               || (&traversal.get_qualifiedNameMapForNames() != &SgNode::get_globalQualifiedNameMapForNames())
+               );
 
     /// not sure if we need a separate traversal here,
     //    or if we could just reuse traversal.
@@ -2526,6 +2575,7 @@ NameQualificationTraversal::requiresTypeElaboration(SgSymbol* symbol)
           case V_SgNamespaceSymbol: // Note sure about this!!!
           case V_SgTemplateSymbol: // Note sure about this!!!
           case V_SgNonrealSymbol: // Note sure about this!!!
+          case V_SgAdaGenericSymbol: // Note sure about this!!!
           case V_SgTypedefSymbol:
              {
                typeElaborationRequired = false;

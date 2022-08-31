@@ -32,6 +32,12 @@ AC_DEFUN([ROSE_SUPPORT_ELF],
                        LIBELF_CPPFLAGS="-I$LIBELF_PREFIX/include"
                        LIBELF_LDFLAGS="-L$LIBELF_PREFIX/lib -lelf"
                        ])
+        AC_CHECK_FILE(["$LIBELF_PREFIX/lib64/libelf.so"],
+                      [AC_DEFINE(ROSE_HAVE_LIBELF, [], [Defined when libelf is available.])
+                       ROSE_HAVE_LIBELF="$LIBELF_PREFIX"
+                       LIBELF_CPPFLAGS="-I$LIBELF_PREFIX/include"
+                       LIBELF_LDFLAGS="-L$LIBELF_PREFIX/lib64 -lelf"
+                       ])
     fi
 
     # Sanity check: if the user told us to use libelf then we must find the library

@@ -5,7 +5,7 @@
 #include <Rose/BinaryAnalysis/Partitioner2/Modules.h>
 
 #include <Rose/BinaryAnalysis/SystemCall.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Dispatcher.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Dispatcher.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -52,8 +52,8 @@ public:
 
 private:
     // Read a value from the stack
-    InstructionSemantics2::BaseSemantics::SValuePtr
-    readStack(const Partitioner &partitioner, const InstructionSemantics2::BaseSemantics::DispatcherPtr &cpu, int byteOffset,
+    InstructionSemantics::BaseSemantics::SValuePtr
+    readStack(const Partitioner &partitioner, const InstructionSemantics::BaseSemantics::DispatcherPtr &cpu, int byteOffset,
               size_t nBitsToRead, RegisterDescriptor segmentRegister);
 };
 

@@ -19,9 +19,9 @@ using namespace Rose::BinaryAnalysis;
 void
 SgAsmPEImportDirectory::ctor(SgAsmPEImportSection *section, const std::string &dll_name)
 {
-    ROSE_ASSERT(section!=NULL); /* needed for parsing */
+    ROSE_ASSERT(section!=nullptr); /* needed for parsing */
     section->add_import_directory(this);
-    p_time = time(NULL);
+    p_time = time(nullptr);
 
     p_dll_name = new SgAsmBasicString(dll_name);
     p_dll_name->set_parent(this);
@@ -34,7 +34,7 @@ size_t
 SgAsmPEImportDirectory::iat_required_size() const
 {
     SgAsmPEFileHeader *fhdr = SageInterface::getEnclosingNode<SgAsmPEFileHeader>(this);
-    assert(fhdr!=NULL);
+    assert(fhdr!=nullptr);
     return (p_imports->get_vector().size() + 1) * fhdr->get_word_size();
 }
 
@@ -71,7 +71,7 @@ SgAsmPEImportDirectory *
 SgAsmPEImportDirectory::parse(rose_addr_t idir_va, bool isLastEntry)
 {
     SgAsmPEFileHeader *fhdr = SageInterface::getEnclosingNode<SgAsmPEFileHeader>(this);
-    ROSE_ASSERT(fhdr!=NULL);
+    ROSE_ASSERT(fhdr!=nullptr);
 
     /* Read the import directory from disk via loader map. */
     PEImportDirectory_disk disk, zero;
@@ -88,12 +88,12 @@ SgAsmPEImportDirectory::parse(rose_addr_t idir_va, bool isLastEntry)
 
     /* An all-zero entry marks the end of the list. In this case return null. */
     if (!memcmp(&disk, &zero, sizeof zero))
-        return NULL;
+        return nullptr;
 #if 0 // [Robb Matzke 2017-10-16]: this mechanism to find end-of-list is not documented by Microsoft and might be wrong.
     if (isLastEntry) {
         mlog[WARN] <<"SgAsmPEImportDirectory::parse: import directory at va " <<StringUtility::addrToString(idir_va)
                    <<" is last in section but has a non-zero value (pretending it's zero)\n";
-        return NULL;
+        return nullptr;
     }
 #endif
 
@@ -110,7 +110,7 @@ SgAsmPEImportDirectory::parse(rose_addr_t idir_va, bool isLastEntry)
 
     /* Library name.  The PE format specification does not require the name to be contained in the import section, but we issue
      * a warning because ROSE may have problems allocating new space for the name if it's changed. */
-    ROSE_ASSERT(p_dll_name!=NULL);
+    ROSE_ASSERT(p_dll_name!=nullptr);
     std::string dll_name;
     if (0==p_dll_name_rva.get_section()) {
         if (SgAsmPEImportSection::show_import_mesg()) {
@@ -156,11 +156,11 @@ void
 SgAsmPEImportDirectory::parse_ilt_iat(const rose_rva_t &table_start, bool assume_bound)
 {
     SgAsmPEImportSection *isec = SageInterface::getEnclosingNode<SgAsmPEImportSection>(this);
-    assert(isec!=NULL);
+    assert(isec!=nullptr);
     SgAsmPEFileHeader *fhdr = isSgAsmPEFileHeader(isec->get_header());
-    assert(fhdr!=NULL);
+    assert(fhdr!=nullptr);
     assert(fhdr->get_word_size() <= sizeof(uint64_t));
-    assert(get_imports()!=NULL);
+    assert(get_imports()!=nullptr);
     SgAsmPEImportItemPtrList &imports = get_imports()->get_vector();
     bool processing_iat = !imports.empty(); // we always process the ILT first (but it might be empty)
 
@@ -380,9 +380,9 @@ SgAsmPEImportDirectory::unparse_ilt_iat(std::ostream &f, const rose_rva_t &table
                                         size_t tablesize) const
 {
     SgAsmPEImportSection *isec = SageInterface::getEnclosingNode<SgAsmPEImportSection>(this);
-    assert(isec!=NULL);
+    assert(isec!=nullptr);
     SgAsmPEFileHeader *fhdr = isSgAsmPEFileHeader(isec->get_header());
-    assert(fhdr!=NULL);
+    assert(fhdr!=nullptr);
     assert(fhdr->get_word_size() <= sizeof(uint64_t));
     const SgAsmPEImportItemPtrList &imports = get_imports()->get_vector();
     size_t entry_size = fhdr->get_word_size();
@@ -434,7 +434,7 @@ SgAsmPEImportDirectory::unparse_ilt_iat(std::ostream &f, const rose_rva_t &table
                 }
             }
             entry_word |= by_ordinal_bit | (imports[idx]->get_ordinal() & 0xffff);
-        } else if (0==hn_rva.get_rva() || NULL==hn_rva.get_section()) {
+        } else if (0==hn_rva.get_rva() || nullptr==hn_rva.get_section()) {
             if (SgAsmPEImportSection::show_import_mesg()) {
                 mlog[WARN] <<"SgAsmPEImportDirectory: ILT/IAT entry #" <<idx
                            <<" at rva " <<entry_rva.get_rva()
@@ -559,7 +559,7 @@ void
 SgAsmPEImportDirectory::unparse(std::ostream &f, const SgAsmPEImportSection *section, size_t idx) const
 {
     /* The DLL name */
-    if (0==p_dll_name_rva.get_rva() || NULL==p_dll_name_rva.get_section()) {
+    if (0==p_dll_name_rva.get_rva() || nullptr==p_dll_name_rva.get_section()) {
         if (SgAsmPEImportSection::show_import_mesg()) {
             mlog[WARN] <<"SgAsmPEImportDirectory: DLL name address " <<p_dll_name_rva
                        <<" is invalid or not bound to any file section\n";

@@ -7,6 +7,9 @@ with Asis.Set_Get;
 with Asis.Compilation_Units;
 with Asis_Adapter.Element;
 with Asis_Adapter.Unit;
+with A4G.A_Types;       use A4G.A_Types;
+with Types;  use Types;
+with Sinfo;  use Sinfo;
 package body Asis_Adapter.Element.Declarations is
 
    procedure Do_Pre_Child_Processing
@@ -130,7 +133,8 @@ package body Asis_Adapter.Element.Declarations is
          if Asis.Elements.Declaration_Kind(decl) /= Not_A_Declaration then
             if Declaration_Kind = A_PACKAGE_INSTANTIATION  
               or else Declaration_Kind = A_PROCEDURE_INSTANTIATION 
-              or else Declaration_Kind = A_FUNCTION_INSTANTIATION then
+              or else Declaration_Kind = A_FUNCTION_INSTANTIATION 
+              or else Declaration_Kind = A_FORMAL_PACKAGE_DECLARATION then
                 -- PUT_LINE("Corresponding_Declaration kind:" & Declaration_Kind'Image & " body ID:" & To_String(ID)); 
                 additional_Element.Process_Instantiation(decl);
                 additional_Element.Process_Element_Tree(decl, state.Outputs);
@@ -632,6 +636,8 @@ package body Asis_Adapter.Element.Declarations is
       end Add_Common_Items;
 
       use all type Asis.Declaration_Kinds;
+      N_ID : Node_Id := Asis.Set_Get.Node_Value (Element);
+      R_ID : Node_Id := Asis.Set_Get.R_Node_Value (Element);
    begin -- Process_Declaration
       If Declaration_Kind /= Not_A_Declaration then
          Add_Common_Items;
@@ -877,7 +883,11 @@ package body Asis_Adapter.Element.Declarations is
          Add_Corresponding_Declaration;
          Add_Corresponding_Body;
          Add_Visible_Part_Declarative_Items;
-         Add_Is_Private_Present;
+         -- Added for JACCEL-292 as Asis.Declarations.Is_Private_Present
+         -- checks Node_Id but might not be valid result
+         if N_ID = R_ID then 
+           Add_Is_Private_Present;
+         end if;
          Add_Private_Part_Declarative_Items;
 
       when A_Package_Body_Declaration =>

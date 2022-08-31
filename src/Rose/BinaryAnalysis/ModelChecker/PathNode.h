@@ -4,7 +4,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <Rose/BinaryAnalysis/ModelChecker/Types.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Types.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Types.h>
 #include <Rose/BinaryAnalysis/SmtSolver.h>
 #include <Rose/BinaryAnalysis/SymbolicExpr.h>
 
@@ -41,8 +41,8 @@ private:
     //    When a path is extended by creating new paths each with an additional node, the new nodes' incomingState_ points to
     //    the original path's outgoingState_, then the original path's outgoingState_ is set to null. Thus the new paths all
     //    point to a shared incoming state.
-    InstructionSemantics2::BaseSemantics::StatePtr incomingState_; // shared state before execution, then null afterward
-    InstructionSemantics2::BaseSemantics::StatePtr outgoingState_; // state after execution, or null if error during execution
+    InstructionSemantics::BaseSemantics::StatePtr incomingState_;  // shared state before execution, then null afterward
+    InstructionSemantics::BaseSemantics::StatePtr outgoingState_;  // state after execution, or null if error during execution
 
     bool executionFailed_ = false;                                 // true iff execution failed (and outgoingState_ therefore null)
     std::vector<SymbolicExpr::Ptr> assertions_;                    // assertions for the model checker for this node of the path
@@ -64,7 +64,7 @@ protected:
      *
      *  Create a non-initial path node. This node is a continuation of the path ending at parent. See @ref instance. */
     PathNode(const Ptr &parent, const ExecutionUnitPtr&, const SymbolicExpr::Ptr &assertion,
-             const SmtSolver::Evidence&, const InstructionSemantics2::BaseSemantics::StatePtr &parentOutgoingState);
+             const SmtSolver::Evidence&, const InstructionSemantics::BaseSemantics::StatePtr &parentOutgoingState);
 
 public:
     ~PathNode();
@@ -85,7 +85,7 @@ public:
      *
      *  Thread safety: This constructor is thread safe. */
     static Ptr instance(const Ptr &parent, const ExecutionUnitPtr&, const SymbolicExpr::Ptr &assertion,
-                        const SmtSolver::Evidence&, const InstructionSemantics2::BaseSemantics::StatePtr &parentOutgoingState);
+                        const SmtSolver::Evidence&, const InstructionSemantics::BaseSemantics::StatePtr &parentOutgoingState);
 
     /** Property: Identifier.
      *
@@ -165,7 +165,7 @@ public:
      *  used by the model checker itself.
      *
      *  Thread safety: This method is thread safe, but the RISC operators must be thread local. */
-    void execute(const SettingsPtr&, const SemanticCallbacksPtr&, const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&,
+    void execute(const SettingsPtr&, const SemanticCallbacksPtr&, const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&,
                  const SmtSolver::Ptr&);
 
     /** Property: Whether execution has failed.
@@ -183,18 +183,18 @@ public:
      * See also, @ref execute, which creates the outgoing state if necessary.
      *
      * Thread safety: This method is thread safe. The state is owned by only this node. */
-    InstructionSemantics2::BaseSemantics::StatePtr copyOutgoingState() const;
+    InstructionSemantics::BaseSemantics::StatePtr copyOutgoingState() const;
 
     class BorrowedOutgoingState {
         friend class PathNode;
     private:
         PathNode* const node;
     public:
-        const InstructionSemantics2::BaseSemantics::StatePtr state;
+        const InstructionSemantics::BaseSemantics::StatePtr state;
     private:
         BorrowedOutgoingState() = delete;
         BorrowedOutgoingState& operator=(const BorrowedOutgoingState&) = delete;
-        BorrowedOutgoingState(PathNode*, const InstructionSemantics2::BaseSemantics::StatePtr&);
+        BorrowedOutgoingState(PathNode*, const InstructionSemantics::BaseSemantics::StatePtr&);
     public:
         ~BorrowedOutgoingState();
     };
@@ -286,7 +286,7 @@ public:
                      size_t stepOrigin, size_t maxSteps) const;
 
 private:
-    void restoreOutgoingState(const InstructionSemantics2::BaseSemantics::StatePtr&);
+    void restoreOutgoingState(const InstructionSemantics::BaseSemantics::StatePtr&);
 };
 
 } // namespace

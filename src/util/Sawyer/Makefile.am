@@ -94,6 +94,7 @@ sawyerinclude_HEADERS =				\
 	Optional.h				\
 	PoolAllocator.h				\
 	ProgressBar.h				\
+	Result.h				\
 	Sawyer.h				\
 	Set.h					\
 	SharedObject.h				\

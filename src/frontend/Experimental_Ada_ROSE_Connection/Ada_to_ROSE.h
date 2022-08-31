@@ -77,6 +77,10 @@ struct AdaIdentifier : std::string
   AdaIdentifier(const char* rep)
   : AdaIdentifier(std::string(rep))
   {}
+
+  AdaIdentifier(const char* rep, int n)
+  : AdaIdentifier(std::string(rep, n))
+  {}
 };
 
 /// returns a mapping from Unit_ID to constructed root node in AST
@@ -111,6 +115,14 @@ map_t<AdaIdentifier, SgInitializedName*>& adaExcps();
 
 /// returns a mapping from string to builtin exception types
 map_t<AdaIdentifier, SgAdaPackageSpecDecl*>& adaPkgs();
+
+/// returns a mapping from string to builtin function declarations
+map_t<AdaIdentifier, std::vector<SgFunctionDeclaration*> >& adaFuncs();
+
+/// returns a mapping from string to variables
+/// \note currently used to support the obsolescent ASCII package,
+///       as long as there is no proper Character Type.
+map_t<AdaIdentifier, SgInitializedName*>& adaVars();
 
 /// returns a map that collects inherited function symbols for
 map_t<std::pair<const SgFunctionDeclaration*, const SgTypedefType*>, SgAdaInheritedFunctionSymbol*>&
@@ -159,13 +171,13 @@ struct LabelAndLoopManager
 };
 
 
-
-
 /// The context class for translation from Asis to ROSE
 ///   containts context that is passed top-down
 struct AstContext
 {
-    AstContext();
+    using StatementHandler = std::function<void(AstContext, SgStatement&)>;
+
+    AstContext()                             = default;
     AstContext(AstContext&&)                 = default;
     AstContext& operator=(AstContext&&)      = default;
     AstContext(const AstContext&)            = default;
@@ -200,29 +212,23 @@ struct AstContext
     /// \note the passed object needs to survive the lifetime of the return AstContext
     AstContext sourceFileName(std::string& file) const;
 
-    /// adds a variant name to the context
-    AstContext variantName(Name) const;
+    /// instantiation property
+    /// \details
+    ///   Inside an instantiation, the Asis representation may be incomplete
+    ///   Thus, the argument mapping needs to switch to lookup mode to find
+    ///   generic arguments, if the Asis link is not present.
+    /// \{
+    SgAdaGenericInstanceDecl* instantiation() const { return enclosing_instantiation; }
+    AstContext                instantiation(SgAdaGenericInstanceDecl& instance) const;
+    /// \}
 
-    /// gets all variant names in the context
-    const std::vector<Name>& variantNames() const;
+    /// appends new statements to \ref blk instead of the current scope, \ref the_scope.
+    AstContext unscopedBlock(SgAdaUnscopedBlock& blk) const;
 
-    /// adds a variant choice list in the context
-    AstContext variantChoice(Element_ID_List) const;
-
-    /// gets all variant choice lists in the context
-    const std::vector<Element_ID_List>& variantChoices() const;
+    void appendStatement(SgStatement& s) const { stmtHandler(*this, s); }
 
     //
     // policies for building the AST depending on context
-
-    /// enumerator (i.e., elements of an enum) builder
-    using EnumeratorBuilder = std::function<SgExpression&(SgEnumDeclaration&, SgInitializedName&)>;
-
-    /// sets new context for building enums
-    AstContext enumBuilder(EnumeratorBuilder bld) const;
-
-    /// gets the current policy for building enumerators
-    EnumeratorBuilder enumBuilder() const;
 
 /**
     /// returns a new context with the element
@@ -232,14 +238,15 @@ struct AstContext
     Element_struct& element() const;
 **/
 
+    static
+    void defaultStatementHandler(AstContext, SgStatement&);
+
   private:
     SgScopeStatement*            the_scope               = nullptr;
     LabelAndLoopManager*         all_labels_loops        = nullptr;
     const std::string*           unit_file_name          = nullptr;
-    std::vector<Name>            active_variant_names;
-    std::vector<Element_ID_List> active_variant_choices;
-    EnumeratorBuilder            enum_builder;
-
+    SgAdaGenericInstanceDecl*    enclosing_instantiation = nullptr;
+    StatementHandler             stmtHandler             = defaultStatementHandler;
     //~ Element_Struct*      elem;
 };
 
@@ -289,6 +296,8 @@ struct Range : std::pair<T, T>
   : std::pair<T, T>(lhs, rhs)
   {}
 
+  Range() : Range(T{}, T{}) {}
+
   bool empty() const { return this->first == this->second; }
   int  size()  const { return this->second - this->first; }
 };
@@ -296,21 +305,19 @@ struct Range : std::pair<T, T>
 /// A range of Asis Units
 struct UnitIdRange : Range<Unit_ID_Ptr>
 {
-  typedef Unit_Struct value_type;
+  using base = Range<Unit_ID_Ptr>;
+  using value_type = Unit_Struct;
 
-  UnitIdRange(Unit_ID_Ptr lhs, Unit_ID_Ptr rhs)
-  : Range<Unit_ID_Ptr>(lhs, rhs)
-  {}
+  using base::base;
 };
 
 /// A range of Asis Elements
 struct ElemIdRange : Range<Element_ID_Ptr>
 {
-  typedef Element_Struct value_type;
+  using base = Range<Element_ID_Ptr>;
+  using value_type = Element_Struct;
 
-  ElemIdRange(Element_ID_Ptr lhs, Element_ID_Ptr rhs)
-  : Range<Element_ID_Ptr>(lhs, rhs)
-  {}
+  using base::base;
 };
 
 
@@ -542,13 +549,13 @@ namespace
   template <>
   struct range_types<Element_ID_List>
   {
-    typedef ElemIdRange type;
+    using type = ElemIdRange;
   };
 
   template <>
   struct range_types<Unit_ID_Array_Struct>
   {
-    typedef UnitIdRange type;
+    using type = UnitIdRange;
   };
 
 

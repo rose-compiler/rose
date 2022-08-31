@@ -41,11 +41,16 @@
 
 // Derived classes needed for serialization
 #include <Rose/BinaryAnalysis/Z3Solver.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/DispatcherAarch32.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/DispatcherAarch64.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/DispatcherM68k.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/DispatcherPowerpc.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/DispatcherX86.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherAarch32.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherAarch64.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherM68k.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherPowerpc.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherX86.h>
+
+// [Robb Matzke 2022-06-22]: deprecated. Needed because some user code doesn't include the old InstructionSemantics2 header
+// files where this same thing is defined, yet they use InstructionSemantics2 because such things were once declared by this
+// header file due to it originally including InstructionSemantics2 headers (which it no longer does).
+namespace Rose { namespace BinaryAnalysis { namespace InstructionSemantics2 = InstructionSemantics; }}
 
 // Define ROSE_PARTITIONER_MOVE if boost::move works. Mainly this is to work around a GCC bug that reports this error:
 //
@@ -362,17 +367,17 @@ private:
 
     template<class S>
     void serializeCommon(S &s, const unsigned version) {
-        s.template register_type<InstructionSemantics2::SymbolicSemantics::SValue>();
-        s.template register_type<InstructionSemantics2::SymbolicSemantics::RiscOperators>();
+        s.template register_type<InstructionSemantics::SymbolicSemantics::SValue>();
+        s.template register_type<InstructionSemantics::SymbolicSemantics::RiscOperators>();
 #ifdef ROSE_ENABLE_ASM_AARCH64
-        s.template register_type<InstructionSemantics2::DispatcherAarch64>();
+        s.template register_type<InstructionSemantics::DispatcherAarch64>();
 #endif
 #ifdef ROSE_ENABLE_ASM_AARCH32
-        s.template register_type<InstructionSemantics2::DispatcherAarch32>();
+        s.template register_type<InstructionSemantics::DispatcherAarch32>();
 #endif
-        s.template register_type<InstructionSemantics2::DispatcherX86>();
-        s.template register_type<InstructionSemantics2::DispatcherM68k>();
-        s.template register_type<InstructionSemantics2::DispatcherPowerpc>();
+        s.template register_type<InstructionSemantics::DispatcherX86>();
+        s.template register_type<InstructionSemantics::DispatcherM68k>();
+        s.template register_type<InstructionSemantics::DispatcherPowerpc>();
         s.template register_type<SymbolicExpr::Interior>();
         s.template register_type<SymbolicExpr::Leaf>();
         s.template register_type<Z3Solver>();
@@ -446,7 +451,7 @@ public:
      *
      *  The partitioner must be provided with a disassembler, which also determines the specimen's target architecture, and a
      *  memory map that represents a (partially) loaded instance of the specimen (i.e., a process). */
-    Partitioner(Disassembler *disassembler, const MemoryMap::Ptr &map);
+    Partitioner(const Disassembler::BasePtr &disassembler, const MemoryMap::Ptr &map);
 
 #ifdef ROSE_PARTITIONER_MOVE
     /** Move constructor. */
@@ -2539,7 +2544,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private:
-    void init(Disassembler*, const MemoryMap::Ptr&);
+    void init(const Disassembler::BasePtr&, const MemoryMap::Ptr&);
     void init(const Partitioner&);
     void updateCfgProgress();
 

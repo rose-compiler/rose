@@ -3,15 +3,19 @@
 #include <sage3basic.h>
 #include <BinaryVxcoreParser.h>
 
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/RiscOperators.h>
-#include <boost/format.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/regex.hpp>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RiscOperators.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
+#include <Rose/BinaryAnalysis/RegisterNames.h>
+
 #include <rose_getline.h>
 #include <rose_strtoull.h>
 
+#include <boost/format.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/regex.hpp>
+
 using namespace Sawyer::Message::Common;
-namespace BaseSemantics = Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
+namespace BaseSemantics = Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -73,25 +77,25 @@ VxcoreParser::parseUrl(const std::string &spec) {
 
 void
 VxcoreParser::parse(const boost::filesystem::path &fileName, const MemoryMap::Ptr &memory) {
-    return parse(fileName, memory, BaseSemantics::RegisterStatePtr(), BaseSemantics::RiscOperatorsPtr());
+    return parse(fileName, memory, BaseSemantics::RegisterState::Ptr(), BaseSemantics::RiscOperators::Ptr());
 }
 
 void
-VxcoreParser::parse(const boost::filesystem::path &fileName, const BaseSemantics::RegisterStatePtr &registers,
-                    const BaseSemantics::RiscOperatorsPtr &ops) {
+VxcoreParser::parse(const boost::filesystem::path &fileName, const BaseSemantics::RegisterState::Ptr &registers,
+                    const BaseSemantics::RiscOperators::Ptr &ops) {
     return parse(fileName, MemoryMap::Ptr(), registers, ops);
 }
 
 void
 VxcoreParser::parse(const boost::filesystem::path &fileName, const MemoryMap::Ptr &memory,
-                    const BaseSemantics::RegisterStatePtr &registers, const BaseSemantics::RiscOperatorsPtr &ops) {
+                    const BaseSemantics::RegisterState::Ptr &registers, const BaseSemantics::RiscOperators::Ptr &ops) {
     std::ifstream input(fileName.string().c_str(), std::ios::binary);
     parse(input, memory, registers, ops, fileName.string());
 }
 
 void
-VxcoreParser::parse(std::istream &input, const MemoryMap::Ptr &memory, const BaseSemantics::RegisterStatePtr &registers,
-                    const BaseSemantics::RiscOperatorsPtr &ops, const std::string &inputName) {
+VxcoreParser::parse(std::istream &input, const MemoryMap::Ptr &memory, const BaseSemantics::RegisterState::Ptr &registers,
+                    const BaseSemantics::RiscOperators::Ptr &ops, const std::string &inputName) {
     for (size_t segmentIdx = 0; input; ++segmentIdx) {
         size_t headerOffset = input.tellg();
         std::string header = rose_getline(input);
@@ -167,8 +171,8 @@ VxcoreParser::parseMemory(const std::string &header, std::istream &input, const 
 }
 
 bool
-VxcoreParser::parseRegisters(const std::string &header, std::istream &input, const BaseSemantics::RegisterStatePtr &registers,
-                             const BaseSemantics::RiscOperatorsPtr &ops, const std::string &inputName, size_t headerOffset) {
+VxcoreParser::parseRegisters(const std::string &header, std::istream &input, const BaseSemantics::RegisterState::Ptr &registers,
+                             const BaseSemantics::RiscOperators::Ptr &ops, const std::string &inputName, size_t headerOffset) {
     // Match the register section's header
     //                                      ISA
     boost::regex headerRe("\\s*registers\\s+(\\w+)\\s*");
@@ -202,18 +206,18 @@ VxcoreParser::parseRegisters(const std::string &header, std::istream &input, con
 void
 VxcoreParser::unparse(std::ostream &out, const MemoryMap::Ptr &memory, const AddressInterval &memoryLimit,
                       const std::string &outputName) {
-    unparse(out, memory, memoryLimit, BaseSemantics::RegisterStatePtr(), BaseSemantics::RiscOperatorsPtr(), outputName);
+    unparse(out, memory, memoryLimit, BaseSemantics::RegisterState::Ptr(), BaseSemantics::RiscOperators::Ptr(), outputName);
 }
 
 void
-VxcoreParser::unparse(std::ostream &out, const InstructionSemantics2::BaseSemantics::RegisterStatePtr &registers,
-                      const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr &ops, const std::string &outputName) {
+VxcoreParser::unparse(std::ostream &out, const InstructionSemantics::BaseSemantics::RegisterState::Ptr &registers,
+                      const InstructionSemantics::BaseSemantics::RiscOperators::Ptr &ops, const std::string &outputName) {
     unparse(out, MemoryMap::Ptr(), AddressInterval(), registers, ops, outputName);
 }
 
 void
 VxcoreParser::unparse(std::ostream &out, const MemoryMap::Ptr &memory, const AddressInterval &memoryLimit,
-                      const BaseSemantics::RegisterStatePtr &registers, const BaseSemantics::RiscOperatorsPtr &ops,
+                      const BaseSemantics::RegisterState::Ptr &registers, const BaseSemantics::RiscOperators::Ptr &ops,
                       const std::string &outputName) {
     if (memory && !memoryLimit.isEmpty()) {
         rose_addr_t va = memoryLimit.least();
@@ -261,11 +265,11 @@ VxcoreParser::unparse(std::ostream &out, const MemoryMap::Ptr &memory, const Add
 
     if (registers) {
         ASSERT_not_null(ops);
-        out <<"registers " <<registers->registerDictionary()->get_architecture_name() <<"\n";
-        RegisterDictionary::RegisterDescriptors regs = registers->registerDictionary()->get_largest_registers();
+        out <<"registers " <<registers->registerDictionary()->name() <<"\n";
+        RegisterDictionary::RegisterDescriptors regs = registers->registerDictionary()->getLargestRegisters();
         RegisterNames registerName(registers->registerDictionary());
         BOOST_FOREACH (RegisterDescriptor reg, regs) {
-            BaseSemantics::SValuePtr val = registers->peekRegister(reg, ops->undefined_(reg.nBits()), ops.get());
+            BaseSemantics::SValue::Ptr val = registers->peekRegister(reg, ops->undefined_(reg.nBits()), ops.get());
             if (auto number = val->toUnsigned())
                 out <<(boost::format("%s 0x%x\n") % registerName(reg) % *number);
         }

@@ -3,6 +3,8 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <AssemblerX86Init.h>                           // for X86InstructionKind
+
 namespace Rose {
 
 /** Functions to build binary analysis ASTs. */
@@ -50,7 +52,7 @@ SgAsmIntegerType* buildTypeI8();                        /**< 8-bit signed. */
 SgAsmIntegerType* buildTypeI16();                       /**< 16-bit signed. */
 SgAsmIntegerType* buildTypeI32();                       /**< 32-bit signed. */
 SgAsmIntegerType* buildTypeI64();                       /**< 64-bit signed. */
-SgAsmFloatType* buildIeee754Binary16();                  /**< 16-bit IEEE-754 floating-point. */
+SgAsmFloatType* buildIeee754Binary16();                 /**< 16-bit IEEE-754 floating-point. */
 SgAsmFloatType* buildIeee754Binary32();                 /**< 32-bit IEEE-754 floating-point. */
 SgAsmFloatType* buildIeee754Binary64();                 /**< 64-bit IEEE-754 floating-point. */
 SgAsmFloatType* buildIeee754Binary80();                 /**< 80-bit IEEE-754 floating-point (as in x86). */
@@ -91,6 +93,10 @@ SgAsmIntegerValueExpression* buildValueI32(int32_t);
 SgAsmIntegerValueExpression* buildValueI64(int64_t);
 SgAsmFloatValueExpression* buildValueIeee754Binary32(double);
 SgAsmFloatValueExpression* buildValueIeee754Binary64(double);
+
+// Template specializations for building integer values
+template <class T>
+SgAsmIntegerValueExpression* buildValue(T);
 
 // Building integer or FP values with x86-specific type names
 SgAsmIntegerValueExpression* buildValueX86Byte(uint8_t);

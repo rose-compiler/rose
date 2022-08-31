@@ -1,26 +1,25 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
-
-#include <boost/algorithm/string/replace.hpp>
-#include <AsmUnparser_compat.h>
 #include <Rose/BinaryAnalysis/ToSource.h>
+
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/CommandLine.h>
 
-using namespace Rose::BinaryAnalysis::InstructionSemantics2;
+#include <AsmUnparser_compat.h>
+
+#include <boost/algorithm/string/replace.hpp>
+
+using namespace Rose::BinaryAnalysis::InstructionSemantics;
 using namespace Sawyer::Message::Common;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 typedef SourceAstSemantics::SValue SValue;
-typedef SourceAstSemantics::SValuePtr SValuePtr;
 typedef SourceAstSemantics::RegisterState RegisterState;
-typedef SourceAstSemantics::RegisterStatePtr RegisterStatePtr;
 typedef SourceAstSemantics::MemoryState MemoryState;
-typedef SourceAstSemantics::MemoryStatePtr MemoryStatePtr;
 typedef SourceAstSemantics::State State;
-typedef SourceAstSemantics::StatePtr StatePtr;
 typedef SourceAstSemantics::RiscOperators RiscOperators;
-typedef SourceAstSemantics::RiscOperatorsPtr RiscOperatorsPtr;
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -39,19 +38,26 @@ BinaryToSource::initDiagnostics() {
     }
 }
 
+BinaryToSource::BinaryToSource() {}
+
+BinaryToSource::BinaryToSource(const Settings &settings)
+    : settings_(settings) {}
+
+BinaryToSource::~BinaryToSource() {}
+
 void
 BinaryToSource::init(const P2::Partitioner &partitioner) {
     disassembler_ = partitioner.instructionProvider().disassembler();
-    const RegisterDictionary *regDict = disassembler_->registerDictionary();
-    raisingOps_ = RiscOperators::instance(regDict, SmtSolverPtr());
-    BaseSemantics::DispatcherPtr protoCpu = disassembler_->dispatcher();
+    RegisterDictionary::Ptr regDict = disassembler_->registerDictionary();
+    raisingOps_ = RiscOperators::instanceFromRegisters(regDict, SmtSolverPtr());
+    BaseSemantics::Dispatcher::Ptr protoCpu = disassembler_->dispatcher();
     if (!protoCpu)
         throw Exception("no instruction semantics for architecture");
     if (settings_.traceRiscOps) {
         tracingOps_ = TraceSemantics::RiscOperators::instance(raisingOps_);
-        raisingCpu_ = protoCpu->create(tracingOps_);
+        raisingCpu_ = protoCpu->create(tracingOps_, 0, RegisterDictionary::Ptr());
     } else {
-        raisingCpu_ = protoCpu->create(raisingOps_);
+        raisingCpu_ = protoCpu->create(raisingOps_, 0, RegisterDictionary::Ptr());
     }
 }
 
@@ -166,7 +172,7 @@ BinaryToSource::emitFilePrologue(const P2::Partitioner &partitioner, std::ostrea
 void
 BinaryToSource::declareGlobalRegisters(std::ostream &out) {
     out <<"\n/* Global register variables */\n";
-    RegisterStatePtr regs = RegisterState::promote(raisingOps_->currentState()->registerState());
+    RegisterState::Ptr regs = RegisterState::promote(raisingOps_->currentState()->registerState());
     for (const RegisterState::RegPair &regpair: regs->get_stored_registers()) {
         std::string ctext = SValue::unsignedTypeNameForSize(regpair.desc.nBits()) + " " +
                             raisingOps_->registerVariableName(regpair.desc);
@@ -333,8 +339,8 @@ BinaryToSource::emitFunctionDispatcher(const P2::Partitioner &partitioner, std::
     const RegisterDescriptor SP = disassembler_->stackPointerRegister();
     const RegisterDescriptor SS = disassembler_->stackSegmentRegister();
     raisingOps_->reset();
-    BaseSemantics::SValuePtr spDflt = raisingOps_->undefined_(SP.nBits());
-    BaseSemantics::SValuePtr returnTarget = raisingOps_->readMemory(SS,
+    BaseSemantics::SValue::Ptr spDflt = raisingOps_->undefined_(SP.nBits());
+    BaseSemantics::SValue::Ptr returnTarget = raisingOps_->readMemory(SS,
                                                                     raisingOps_->peekRegister(SP, spDflt),
                                                                     raisingOps_->undefined_(IP.nBits()),
                                                                     raisingOps_->boolean_(true));
@@ -422,13 +428,13 @@ BinaryToSource::emitMain(const P2::Partitioner &partitioner, std::ostream &out) 
         mlog[ERROR] <<"no initial value specified for instruction pointer register, an no \"_start\" function found\n";
     } else {
         const RegisterDescriptor reg = disassembler_->instructionPointerRegister();
-        SValuePtr val = SValue::promote(raisingOps_->number_(reg.nBits(), *initialIp));
+        SValue::Ptr val = SValue::promote(raisingOps_->number_(reg.nBits(), *initialIp));
         out <<"    " <<raisingOps_->registerVariableName(reg) <<" = " <<val->ctext() <<";\n";
     }
 
     if (settings_.initialStackPointer) {
         const RegisterDescriptor reg = disassembler_->stackPointerRegister();
-        SValuePtr val = SValue::promote(raisingOps_->number_(reg.nBits(), *settings_.initialStackPointer));
+        SValue::Ptr val = SValue::promote(raisingOps_->number_(reg.nBits(), *settings_.initialStackPointer));
         out <<"    " <<raisingOps_->registerVariableName(reg) <<" = " <<val->ctext() <<";\n";
     }
 

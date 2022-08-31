@@ -36,7 +36,7 @@ GrammarString::getDefaultInitializerString() const
 
 std::string
 GrammarString::infoFieldsToString() const {
-  //  typeNameString    
+  //  typeNameString
   //   variableNameString
   //  toBeTraversed
   stringstream ss;
@@ -119,7 +119,7 @@ string
 forLoopOpening ( string iteratorName, string listName, string accessOperator )
    {
      string returnString = "     for ( /* empty by design */; " + iteratorName
-                         + " != " + listName + accessOperator + "end(); ++" 
+                         + " != " + listName + accessOperator + "end(); ++"
                          + iteratorName + ") \n        { \n";
      return returnString;
    }
@@ -144,13 +144,13 @@ string
 conditionalToSetParent ( string variableName)
    {
 #if 0
-     string returnString = "          if (" + variableName + " != NULL && " + variableName + "->get_parent() == NULL ) \n" 
+     string returnString = "          if (" + variableName + " != NULL && " + variableName + "->get_parent() == NULL ) \n"
                          + "             { \n"
                          + "               " + variableName + "->set_parent(result); \n"
                          + "             } \n";
 #else
   // DQ (8/29/2006): Skip setting the parents of types since they are shared and it is enforced that they have NULL valued parent pointers.
-     string returnString = "          if ( (" + variableName + " != NULL) && (" + variableName + "->get_parent() == NULL) && (isSgType(" + variableName + ") == NULL) ) \n" 
+     string returnString = "          if ( (" + variableName + " != NULL) && (" + variableName + "->get_parent() == NULL) && (isSgType(" + variableName + ") == NULL) ) \n"
                          + "             { \n"
                          + "               " + variableName + "->set_parent(result); \n"
                          + "             } \n";
@@ -164,7 +164,7 @@ conditionalToCopyVariable ( string typeName, string variableNameSource, string v
    {
   // string returnString = "          " + typeName + " " + variableNameCopy + " = NULL; \n"
   // PC (8/3/2006): Flexibility improvement to copy mechanism
-     string returnString = "          if (" + variableNameSource + " != NULL) \n" 
+     string returnString = "          if (" + variableNameSource + " != NULL) \n"
                          + "             { \n"
                          + "               " + variableNameCopy + " = static_cast<" + typeName + ">(help.copyAst(" + iteratorName + ")); \n"
                          + "             } \n"
@@ -211,12 +211,12 @@ string
 conditionalToBuildNewVariable ( string typeName, string variableNameSource, string newVariableName )
    {
      string rhs;
-  // Handle special case of Sg_File_Info, where we want to build the source file position 
+  // Handle special case of Sg_File_Info, where we want to build the source file position
   // information to be marked as a transformation (using the static member fuction:
   // "Sg_File_Info::generateDefaultFileInfoForTransformationNode()").
      if (typeName == "$GRAMMAR_PREFIX__File_Info")
         {
-       // DQ (10/21/2005): The copy should be a semantic preserving as possible 
+       // DQ (10/21/2005): The copy should be a semantic preserving as possible
        // (so don't make copies as transformations and call the copy constructor).
        // rhs = "          " + newVariableName + " = Sg_File_Info::generateDefaultFileInfoForTransformationNode(); \n";
           rhs = "          " + newVariableName + " = new Sg_File_Info(*" + variableNameSource + "); \n";
@@ -228,7 +228,7 @@ conditionalToBuildNewVariable ( string typeName, string variableNameSource, stri
      string returnString = "     if ( " + variableNameSource + " != NULL ) \n"
                          + "        { \n"
                          + rhs
-                         + "        } \n" 
+                         + "        } \n"
                          + "       else \n"
                          + "        { \n"
                          + "          " + newVariableName + " = NULL; \n"
@@ -257,11 +257,11 @@ GrammarString::buildCopyMemberFunctionSetParentSource ( string copyString )
 
   // Check if the type name is "char*"
      bool typeIsCharString = typeName.find("char*") != string::npos && typeName.find("char**") == string::npos;
-     
+
   // if ( strstr(typeName.c_str(),"char*") != NULL && strstr(typeName.c_str(),"char**") == NULL)
      if ( typeIsCharString )
         {
-       // Nothing to do since strings don't have parents 
+       // Nothing to do since strings don't have parents
           returnString = "  // case: typeName == char* or char** for " + variableName + "\n";
           returnString += "";
           return returnString;
@@ -306,14 +306,14 @@ GrammarString::buildCopyMemberFunctionSetParentSource ( string copyString )
             // name constant for all cases below (in this scope)
                string listElementName = "list_element";
 
-            // names that are set differently for different cases 
+            // names that are set differently for different cases
                string iteratorBaseType;
                string needPointer;
                string listElementType;
                string copyOfList;
                string iteratorName;
 
-            // Access member functions using "->" or "." (set to some string 
+            // Access member functions using "->" or "." (set to some string
             // that will cause an error if used, instead of empty string).
                string accessOperator = "error string for access operator";
 
@@ -351,7 +351,7 @@ GrammarString::buildCopyMemberFunctionSetParentSource ( string copyString )
                     accessOperator = ".";
 
                  // Need to generate different code, for example:
-                 //      SgStatementPtrList::const_iterator cpinit_stmt = get_init_stmt().begin(); 
+                 //      SgStatementPtrList::const_iterator cpinit_stmt = get_init_stmt().begin();
                  // instead of:
                  //      SgStatementPtrList::const_iterator init_stmt_copy_iterator = init_stmt_copy.begin();
 
@@ -394,7 +394,7 @@ GrammarString::buildCopyMemberFunctionSetParentSource ( string copyString )
      return returnString;
    }
 
-// DQ (9/26/2005): This is the new source code generator for the copy mechanism.  
+// DQ (9/26/2005): This is the new source code generator for the copy mechanism.
 // the previous version was coplex and didn't generate the correct code to support
 // the copy of a SgFile within the pointer to the list of SgFile in SgProject.
 // I will see if I can fix this :-).
@@ -421,7 +421,7 @@ GrammarString::buildCopyMemberFunctionSource ( bool buildConstructorArgument )
 
   // Check if the type name is "char*"
      bool typeIsCharString = typeName.find("char*") != string::npos && typeName.find("char**") == string::npos;
-     
+
   // if ( strstr(typeName.c_str(),"char*") != NULL && strstr(typeName.c_str(),"char**") == NULL)
      if ( typeIsCharString )
         {
@@ -441,8 +441,8 @@ GrammarString::buildCopyMemberFunctionSource ( bool buildConstructorArgument )
 
           if (buildConstructorArgument == false)
              {
-            // For constructor arguments we can't reference the "result" pointer in the generated 
-            // code because it will be set with the call to the constructor.  So don't output this 
+            // For constructor arguments we can't reference the "result" pointer in the generated
+            // code because it will be set with the call to the constructor.  So don't output this
             // generated code when generating code to handle constructor arguments.
                returnString += variableInitialization(copyOfVariableName,sourceVariableName);
 
@@ -482,6 +482,7 @@ GrammarString::buildCopyMemberFunctionSource ( bool buildConstructorArgument )
           printf ("typeIsList                       = %s \n",typeIsList ? "true" : "false");
           printf ("typeIsSgNode                     = %s \n",typeIsSgNode ? "true" : "false");
 #endif
+          //~ std::cerr << typeName << std::endl;
 
        // One of these should be true!
           ROSE_ASSERT(typeIsList == true  || typeIsSgNode == true);
@@ -501,13 +502,13 @@ GrammarString::buildCopyMemberFunctionSource ( bool buildConstructorArgument )
                string listElementName       = "source_list_element";
                string copyOfListElementName = "copy_list_element";
 
-            // names that are set differently for different cases 
+            // names that are set differently for different cases
                string iteratorBaseType;
                string needPointer;
                string originalList;
                string iteratorName;
 
-            // Access member functions using "->" or "." (set to some string 
+            // Access member functions using "->" or "." (set to some string
             // that will cause an error if used, instead of empty string).
                string accessOperator = "error string for access operator";
 
@@ -549,7 +550,7 @@ GrammarString::buildCopyMemberFunctionSource ( bool buildConstructorArgument )
                     accessOperator = ".";
 
                  // Need to generate different code, for example:
-                 //      SgStatementPtrList::const_iterator cpinit_stmt = get_init_stmt().begin(); 
+                 //      SgStatementPtrList::const_iterator cpinit_stmt = get_init_stmt().begin();
                  // instead of:
                  //      SgStatementPtrList::const_iterator init_stmt_copy_iterator = init_stmt_copy.begin();
 
@@ -670,8 +671,8 @@ GrammarString::buildCopyMemberFunctionSource ( bool buildConstructorArgument )
                string copyOfVariableName = "result->p_" + variableName;
                if (buildConstructorArgument == false)
                   {
-                 // For constructor arguments we can't reference the "result" pointer in the generated 
-                 // code because it will be set with the call to the constructor.  So don't output this 
+                 // For constructor arguments we can't reference the "result" pointer in the generated
+                 // code because it will be set with the call to the constructor.  So don't output this
                  // generated code when generating code to handle constructor arguments.
                     returnString += variableInitialization(copyOfVariableName,sourceVariableName);
                   }
@@ -752,7 +753,7 @@ GrammarString::getDataAccessFunctionPrototypeString () const
      string typeNameStringTmp = typeNameString;
 
   // DQ (12/20/2005): strip the "static " substring from the typeName
-  // so that we generate non-static member access functions and non-static 
+  // so that we generate non-static member access functions and non-static
   // parameter variable types (which are not legal C++).
      string::size_type positionOfSubstring = typeNameStringTmp.find("static ");
      if (positionOfSubstring != string::npos)
@@ -767,7 +768,7 @@ GrammarString::getDataAccessFunctionPrototypeString () const
      bool use_override_keyword = generate_override_keyword(variableNameStringTmp);
 
      string returnString;
-     switch (automaticGenerationOfDataAccessFunctions) 
+     switch (automaticGenerationOfDataAccessFunctions)
         {
           case NO_ACCESS_FUNCTIONS:
                break;
@@ -776,31 +777,31 @@ GrammarString::getDataAccessFunctionPrototypeString () const
           case BUILD_FLAG_ACCESS_FUNCTIONS:
 #if 0
                returnString = "     public: \n         " + typeNameStringTmp + " get_" +
-                         variableNameStringTmp + "() const;\n         void set_"  
-                         + variableNameStringTmp + "(" + typeNameStringTmp + " " + 
+                         variableNameStringTmp + "() const;\n         void set_"
+                         + variableNameStringTmp + "(" + typeNameStringTmp + " " +
                          variableNameStringTmp + ");\n";
 #else
             // DQ (3/21/2017): Added support to eliminate override warnings for Clang C++11 mode.
                if (use_override_keyword == true)
                   {
                     returnString = "     public: \n         " + typeNameStringTmp + " get_" +
-                         variableNameStringTmp + "() const $ROSE_OVERRIDE_GET /* (getDataAccessFunctionPrototypeString) */;\n         void set_"  
-                         + variableNameStringTmp + "(" + typeNameStringTmp + " " + 
+                         variableNameStringTmp + "() const $ROSE_OVERRIDE_GET /* (getDataAccessFunctionPrototypeString) */;\n         void set_"
+                         + variableNameStringTmp + "(" + typeNameStringTmp + " " +
                          variableNameStringTmp + ") $ROSE_OVERRIDE_SET /* (getDataAccessFunctionPrototypeString) */;\n";
                   }
                  else
                   {
                     returnString = "     public: \n         " + typeNameStringTmp + " get_" +
-                         variableNameStringTmp + "() const;\n         void set_"  
-                         + variableNameStringTmp + "(" + typeNameStringTmp + " " + 
+                         variableNameStringTmp + "() const;\n         void set_"
+                         + variableNameStringTmp + "(" + typeNameStringTmp + " " +
                          variableNameStringTmp + ");\n";
                   }
 #endif
                break;
 
           case BUILD_LIST_ACCESS_FUNCTIONS:
-               returnString = "     public: \n         const " + typeNameStringTmp + 
-                         "& " + " get_" + variableNameStringTmp + "() const;\n         " + 
+               returnString = "     public: \n         const " + typeNameStringTmp +
+                         "& " + " get_" + variableNameStringTmp + "() const;\n         " +
                          typeNameStringTmp + "& " + "get_" + variableNameStringTmp
                          + "(); \n";
                break;
@@ -885,7 +886,7 @@ GrammarString::getConstructorPrototypeParameterString()
   // This function assembles the parameter in a form in which it can be used
   // within the constructor prototype code declaration.
 
-  // Verify that this is a GrammarString object representing a 
+  // Verify that this is a GrammarString object representing a
   // data variable (with type, variable name, and an initializer)
 
 #if 1   // BP : 10/25/2001, rewritten to make only one alloc instead of allocs and deletes
@@ -925,30 +926,30 @@ GrammarString::~GrammarString()
    }
 
 GrammarString::GrammarString()
-   : pureVirtualFunction(0), functionNameString(""), 
-     typeNameString(""), variableNameString(""), 
-     defaultInitializerString(""), p_isInConstructorParameterList(CONSTRUCTOR_PARAMETER), 
+   : pureVirtualFunction(0), functionNameString(""),
+     typeNameString(""), variableNameString(""),
+     defaultInitializerString(""), p_isInConstructorParameterList(CONSTRUCTOR_PARAMETER),
      toBeCopied(COPY_DATA), toBeTraversed(DEF_TRAVERSAL), key(0),
      automaticGenerationOfDataAccessFunctions(BUILD_ACCESS_FUNCTIONS),
      toBeDeleted(NO_DELETE)
    {
    }
 
-GrammarString::GrammarString( 
+GrammarString::GrammarString(
    const string& inputTypeNameString,
    const string& inputVariableNameString,
    const string& inputDefaultInitializerString,
-   const ConstructParamEnum& isConstructorParameter, 
+   const ConstructParamEnum& isConstructorParameter,
    const BuildAccessEnum& inputAutomaticGenerationOfDataAccessFunctions,
-   const TraversalEnum& toBeTraversedDuringTreeTraversal, 
+   const TraversalEnum& toBeTraversedDuringTreeTraversal,
    const DeleteEnum& delete_flag,
    const CopyConfigEnum& _toBeCopied)
-   : pureVirtualFunction(0), 
+   : pureVirtualFunction(0),
      typeNameString(inputTypeNameString),
-     variableNameString(inputVariableNameString), 
+     variableNameString(inputVariableNameString),
      defaultInitializerString(inputDefaultInitializerString),
-     p_isInConstructorParameterList(isConstructorParameter), 
-     toBeCopied(_toBeCopied), 
+     p_isInConstructorParameterList(isConstructorParameter),
+     toBeCopied(_toBeCopied),
      toBeTraversed(toBeTraversedDuringTreeTraversal),
      toBeDeleted(delete_flag)
 {
@@ -958,7 +959,7 @@ GrammarString::GrammarString(
 
   // setup the main function string from the type and variable name (not indented properly)
   functionNameString = inputTypeNameString + " " + inputVariableNameString + " " + inputDefaultInitializerString + ";";
-  
+
   // Compute the key once as the object is constructed (this is used to test equality between strings)
   key = computeKey();
 
@@ -967,9 +968,9 @@ GrammarString::GrammarString(
 
 GrammarString::GrammarString( const string& inputFunctionNameString )
   // DQ (12/7/2003): Reordered parameters
-   : pureVirtualFunction(0), functionNameString(inputFunctionNameString), 
-     typeNameString(""), variableNameString(""), 
-     defaultInitializerString(""), p_isInConstructorParameterList(CONSTRUCTOR_PARAMETER), 
+   : pureVirtualFunction(0), functionNameString(inputFunctionNameString),
+     typeNameString(""), variableNameString(""),
+     defaultInitializerString(""), p_isInConstructorParameterList(CONSTRUCTOR_PARAMETER),
      toBeCopied(COPY_DATA), toBeTraversed(DEF_TRAVERSAL), key(0),
      automaticGenerationOfDataAccessFunctions(BUILD_ACCESS_FUNCTIONS),
      toBeDeleted(NO_DELETE)
@@ -980,9 +981,9 @@ GrammarString::GrammarString( const string& inputFunctionNameString )
 
 GrammarString::GrammarString( const GrammarString & X )
   // DQ (12/7/2003): Reordered parameters
-   : pureVirtualFunction(0), functionNameString(""), 
-     typeNameString(""), variableNameString(""), 
-     defaultInitializerString(""), p_isInConstructorParameterList(CONSTRUCTOR_PARAMETER), 
+   : pureVirtualFunction(0), functionNameString(""),
+     typeNameString(""), variableNameString(""),
+     defaultInitializerString(""), p_isInConstructorParameterList(CONSTRUCTOR_PARAMETER),
      toBeCopied(X.toBeCopied), toBeTraversed(DEF_TRAVERSAL), key(0),
      automaticGenerationOfDataAccessFunctions(BUILD_ACCESS_FUNCTIONS),
      toBeDeleted(NO_DELETE)
@@ -990,12 +991,12 @@ GrammarString::GrammarString( const GrammarString & X )
   // printf ("Calling the GrammarString copy CONSTRUCTOR! \n");
 
   // It is a common technique to implement the copy constructor using the operator=
-  // so that we can consolidate detail on the implementation and provide a consistent 
+  // so that we can consolidate detail on the implementation and provide a consistent
   // semantics.
      *this = X;
    }
 
-GrammarString & 
+GrammarString &
 GrammarString::operator= ( const GrammarString & X )
    {
      functionNameString = X.functionNameString;
@@ -1018,20 +1019,20 @@ GrammarString::operator= ( const GrammarString & X )
      return *this;
    }
 
-void 
+void
 GrammarString::setVirtual ( const bool & X )
    {
      pureVirtualFunction = X;
    }
 
-bool 
+bool
 operator!= ( const GrammarString & X, const GrammarString & Y )
    {
   // The not equals logical operator is implemented using the equals logical operator
      return !(X == Y);
    }
 
-bool 
+bool
 operator== ( const GrammarString & X, const GrammarString & Y )
    {
   // Implementation of operator== (checks only if the strings in X and Y are identical)
@@ -1081,7 +1082,7 @@ GrammarString::getToBeDeleted() const
      return toBeDeleted;
    }
 
-int 
+int
 GrammarString::getKey() const
    {
   // This function returns the key that should already be computed
@@ -1162,8 +1163,8 @@ GrammarString::display( const string& label ) const
 
 // BP : 10/25/2001, a non recursive version that
 // allocs memory only once
-string GrammarString::copyEdit ( const string& inputString, 
-                                 const string& oldToken, 
+string GrammarString::copyEdit ( const string& inputString,
+                                 const string& oldToken,
                                  const string& newToken )
 {
   return StringUtility::copyEdit(inputString, oldToken, newToken);
@@ -1201,7 +1202,7 @@ GrammarString::buildDestructorSource()
 
   // Check if the type name is "char*"
      bool typeIsCharString = typeName.find("char*") != string::npos && typeName.find("char**") == string::npos;
-     
+
      if ( typeIsCharString )
         {
        // Always copy C style strings
@@ -1263,13 +1264,13 @@ GrammarString::buildDestructorSource()
                string listElementName       = "source_list_element";
                string copyOfListElementName = "copy_list_element";
 
-            // names that are set differently for different cases 
+            // names that are set differently for different cases
                string iteratorBaseType;
                string needPointer;
                string originalList;
                string iteratorName;
 
-            // Access member functions using "->" or "." (set to some string 
+            // Access member functions using "->" or "." (set to some string
             // that will cause an error if used, instead of empty string).
                string accessOperator = "error string for access operator";
 
@@ -1516,7 +1517,7 @@ GrammarString::containerElementTypeString(AstNodeClass & node) const
 
           if (typenameString == "SgAsmLERelocEntryPtrList")
              {
-            // This is a typedef in Node.code: 
+            // This is a typedef in Node.code:
             //      typedef SgAsmNERelocEntry SgAsmLERelocEntry;
             // I think this is thus missing from the header files we use for this file.
             // returnString = "SgAsmLERelocEntry";
@@ -1921,7 +1922,7 @@ GrammarString::containerAppendFunctionNameString(AstNodeClass & node) const
 
           if (typenameString == "SgAsmLERelocEntryPtrList")
              {
-            // This is a typedef in Node.code: 
+            // This is a typedef in Node.code:
             //      typedef SgAsmNERelocEntry SgAsmLERelocEntry;
             // I think this is thus missing from the header files we use for this file.
             // returnString = "SgAsmLERelocEntry";

@@ -1976,11 +1976,6 @@ AC_CONFIG_SUBDIRS([libltdl])
 CLASSPATH_COND_IF([ROSE_HAS_EDG_SOURCE], [test "x$has_edg_source" = "xyes"], [
 AC_CONFIG_FILES([
 src/frontend/CxxFrontend/EDG/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.12/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.12/misc/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.12/src/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.12/src/disp/Makefile
-src/frontend/CxxFrontend/EDG/EDG_4.12/lib/Makefile
 src/frontend/CxxFrontend/EDG/EDG_5.0/Makefile
 src/frontend/CxxFrontend/EDG/EDG_5.0/misc/Makefile
 src/frontend/CxxFrontend/EDG/EDG_5.0/src/Makefile
@@ -1991,11 +1986,11 @@ src/frontend/CxxFrontend/EDG/EDG_6.0/misc/Makefile
 src/frontend/CxxFrontend/EDG/EDG_6.0/src/Makefile
 src/frontend/CxxFrontend/EDG/EDG_6.0/src/disp/Makefile
 src/frontend/CxxFrontend/EDG/EDG_6.0/lib/Makefile
-src/frontend/CxxFrontend/EDG/EDG_6.2/Makefile
-src/frontend/CxxFrontend/EDG/EDG_6.2/misc/Makefile
-src/frontend/CxxFrontend/EDG/EDG_6.2/src/Makefile
-src/frontend/CxxFrontend/EDG/EDG_6.2/src/disp/Makefile
-src/frontend/CxxFrontend/EDG/EDG_6.2/lib/Makefile
+src/frontend/CxxFrontend/EDG/EDG_6.3/Makefile
+src/frontend/CxxFrontend/EDG/EDG_6.3/misc/Makefile
+src/frontend/CxxFrontend/EDG/EDG_6.3/src/Makefile
+src/frontend/CxxFrontend/EDG/EDG_6.3/src/disp/Makefile
+src/frontend/CxxFrontend/EDG/EDG_6.3/lib/Makefile
 src/frontend/CxxFrontend/EDG/edgRose/Makefile
 ])], [])
 
@@ -2211,6 +2206,8 @@ src/3rdPartyLibraries/qrose/Widgets/Makefile
 src/Makefile
 src/Rose/Makefile
 src/Rose/AST/Makefile
+src/Rose/CodeGen/Makefile
+src/Rose/Traits/Makefile
 src/ROSETTA/Makefile
 src/ROSETTA/src/Makefile
 src/backend/Makefile
@@ -2518,6 +2515,8 @@ tests/nonsmoke/functional/roseTests/roseHPCToolkitTests/data/03/PROFILE/Makefile
 tests/nonsmoke/functional/roseTests/roseHPCToolkitTests/data/03/struct_ls/Makefile
 tests/nonsmoke/functional/roseTests/roseHPCToolkitTests/data/Makefile
 tests/nonsmoke/functional/roseTests/varDeclNorm/Makefile
+tests/nonsmoke/functional/roseTests/roseCodeGen/Makefile
+tests/nonsmoke/functional/roseTests/roseTraits/Makefile
 tests/nonsmoke/functional/testSupport/Makefile
 tests/nonsmoke/functional/testSupport/gtest/Makefile
 tests/nonsmoke/functional/translatorTests/Makefile

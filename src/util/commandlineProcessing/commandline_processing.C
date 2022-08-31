@@ -1010,9 +1010,9 @@ CommandlineProcessing::isAdaFileNameSuffix ( const std::string & suffix )
   //                RC-571 support Rational Apex .ada 
 
 #if(CASE_SENSITIVE_SYSTEM == 1)
-     if ( suffix == "ads" || suffix == "adb" || suffix == "ada")
+     if ( suffix == "ads" || suffix == "adb" || suffix == "ada" || suffix == "a")
 #else //It is a case insensitive system
-     if ( suffix == "ads" || suffix == "adb" || suffix == "ada")
+     if ( suffix == "ads" || suffix == "adb" || suffix == "ada" || suffix == "a")
 #endif
         {
           returnValue = true;
@@ -1116,6 +1116,19 @@ CommandlineProcessing::isJavaFileNameSuffix ( const std::string & suffix )
 #else//It is a case insensitive system
      if ( suffix == "java" )
 #endif
+        {
+          returnValue = true;
+        }
+
+     return returnValue;
+   }
+
+bool
+CommandlineProcessing::isJvmFileNameSuffix ( const std::string & suffix )
+   {
+     bool returnValue = false;
+     if ( suffix == "class" ||
+          suffix == "jar" )
         {
           returnValue = true;
         }

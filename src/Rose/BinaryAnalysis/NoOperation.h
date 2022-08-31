@@ -3,13 +3,12 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics.h>
+#include <Rose/BinaryAnalysis/Disassembler/BasicTypes.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 #include <Sawyer/Message.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
-
-class Disassembler;
 
 /** Analysis that looks for no-op equivalents. */
 class NoOperation {
@@ -48,18 +47,18 @@ public:
         /** @} */
 
         /** Constructs an initial state. */
-        virtual InstructionSemantics2::BaseSemantics::StatePtr
-        initialState(const InstructionSemantics2::BaseSemantics::DispatcherPtr&, SgAsmInstruction *firstInsn);
+        virtual InstructionSemantics::BaseSemantics::StatePtr
+        initialState(const InstructionSemantics::BaseSemantics::DispatcherPtr&, SgAsmInstruction *firstInsn);
 
         /** Takes a state and returns a normalized string.
          *
          *  States are considered equal if their strings are equal. */
-        virtual std::string toString(const InstructionSemantics2::BaseSemantics::DispatcherPtr&,
-                                     const InstructionSemantics2::BaseSemantics::StatePtr&);
+        virtual std::string toString(const InstructionSemantics::BaseSemantics::DispatcherPtr&,
+                                     const InstructionSemantics::BaseSemantics::StatePtr&);
     };
 
 private:
-    InstructionSemantics2::BaseSemantics::DispatcherPtr cpu_;
+    InstructionSemantics::BaseSemantics::DispatcherPtr cpu_;
     StateNormalizer::Ptr normalizer_;
     Sawyer::Optional<rose_addr_t> initialSp_;
     bool ignoreTerminalBranches_ = true;
@@ -75,13 +74,13 @@ public:
     NoOperation();
 
     /** Construct a new analysis with specified virtual CPU. */
-    explicit NoOperation(const InstructionSemantics2::BaseSemantics::DispatcherPtr &cpu)
+    explicit NoOperation(const InstructionSemantics::BaseSemantics::DispatcherPtr &cpu)
         : cpu_(cpu), normalizer_(StateNormalizer::instance()) {}
 
     /** Construct a new analysis for a specific disassembler.
      *
      *  An analysis constructed this way will use the symbolic semantics domain. */
-    explicit NoOperation(BinaryAnalysis::Disassembler*);
+    explicit NoOperation(const BinaryAnalysis::Disassembler::BasePtr&);
 
     /** Property: state normalizer.
      *
@@ -90,8 +89,8 @@ public:
      *  the other are effectively a no-op.  In particular, the state normalizer should probably not try to compare instruction
      *  pointer registers, or memory that was read without being written (i.e., memory that sprang into existence by reading).
      *  The default normalizer does both of these things if the register state is derived from @ref
-     *  InstructionSemantics2::BaseSemantics::RegisterStateGeneric and the memory state is derived from @ref
-     *  InstructionSemantics2::BaseSemantics::MemoryCellList.
+     *  InstructionSemantics::BaseSemantics::RegisterStateGeneric and the memory state is derived from @ref
+     *  InstructionSemantics::BaseSemantics::MemoryCellList.
      *
      * @{ */
     StateNormalizer::Ptr stateNormalizer() const { return normalizer_; }
@@ -146,8 +145,8 @@ public:
     static void initDiagnostics();
 
 protected:
-    InstructionSemantics2::BaseSemantics::StatePtr initialState(SgAsmInstruction *firstInsn) const;
-    std::string normalizeState(const InstructionSemantics2::BaseSemantics::StatePtr&) const;
+    InstructionSemantics::BaseSemantics::StatePtr initialState(SgAsmInstruction *firstInsn) const;
+    std::string normalizeState(const InstructionSemantics::BaseSemantics::StatePtr&) const;
 };
 
 } // namespace

@@ -23,12 +23,12 @@
 #include <Rose/BinaryAnalysis/TaintedFlow.h>
 #include <Rose/BinaryAnalysis/ToSource.h>
 #include <BinaryVxcoreParser.h>                         // Rose::BinaryAnalysis::VxcoreParser
-#include <Rose/BinaryAnalysis/Disassembler.h>
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
     namespace CallingConvention { void initDiagnostics(); }
-    namespace InstructionSemantics2 { void initDiagnostics(); }
+    namespace InstructionSemantics { void initDiagnostics(); }
     namespace Partitioner2 { void initDiagnostics(); }
     namespace PointerDetection { void initDiagnostics(); }
     namespace ReturnValueUsed { void initDiagnostics(); }
@@ -139,7 +139,7 @@ void initialize() {
         BinaryAnalysis::FeasiblePath::initDiagnostics();
         BinaryAnalysis::FunctionSimilarity::initDiagnostics();
         BinaryAnalysis::HotPatch::initDiagnostics();
-        BinaryAnalysis::InstructionSemantics2::initDiagnostics();
+        BinaryAnalysis::InstructionSemantics::initDiagnostics();
 #ifdef ROSE_ENABLE_LIBRARY_IDENTIFICATION
         BinaryAnalysis::LibraryIdentification::initDiagnostics();
 #endif
@@ -187,12 +187,6 @@ void initialize() {
 
 bool isInitialized() {
     return isInitialized_;
-}
-
-// [Robb P Matzke 2017-02-16]: deprecated
-void
-initAndRegister(Facility &mlog, const std::string &name) {
-    initAndRegister(&mlog, name);
 }
 
 void

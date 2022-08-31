@@ -43,14 +43,14 @@ using namespace Rose;
 // ################################################################
 
 //#########################################################################################################
-/* JH (11/07/2005): method that generates the soure code for following methods of the IRNode 
+/* JH (11/07/2005): method that generates the soure code for following methods of the IRNode
  * StoarageClasses:
- *   * pickOutIRNodeData : method that initializes a storage element from the data of its corresponding 
+ *   * pickOutIRNodeData : method that initializes a storage element from the data of its corresponding
  *     IRNode object
- *   * arrangeStaticDataInOneBlock : method that is only needed before we do the file I/O. Since the 
- *     static data of the class StorageClassMemoryManagement is organized in static memory pools with 
+ *   * arrangeStaticDataInOneBlock : method that is only needed before we do the file I/O. Since the
+ *     static data of the class StorageClassMemoryManagement is organized in static memory pools with
  *     memory blocks (see also StorageClassMemeoryManagement.h) we need to copy all data in one memory
- *     block to access it with the positions that are stored. However, when the data is read from disk, 
+ *     block to access it with the positions that are stored. However, when the data is read from disk,
  *     it will already be in one block.
  *   * deleteStaticData : since the pick of the data works memory-pool-wise, we can delete the static data
  *     of our StorageClassMemoryManagement after finishing every type of IRNode memory pool
@@ -106,8 +106,8 @@ Grammar::buildStringForStorageClassSource ( AstNodeClass & node )
    }
 
 //#########################################################################################################
-/* JH (11/07/2005): build the source for one IR nodes StorageClass, while reading the macro file, 
- * calling the method above and replacing all the $CLASSNAME, etc. 
+/* JH (11/07/2005): build the source for one IR nodes StorageClass, while reading the macro file,
+ * calling the method above and replacing all the $CLASSNAME, etc.
  */
 void
 Grammar::buildStorageClassSourceFiles( AstNodeClass & node, StringUtility::FileWithLineNumbers & outputFile )
@@ -127,7 +127,7 @@ Grammar::buildStorageClassSourceFiles( AstNodeClass & node, StringUtility::FileW
      outputFile += editedSourceFileString;
      DO_ON_CHILDREN(node, buildStorageClassSourceFiles);
    }
-      
+
 
 //#########################################################################################################
 /* JH (11/07/2005): build the source IR node constructors that take its corresponding StorageClass type
@@ -147,7 +147,7 @@ Grammar::buildIRNodeConstructorOfStorageClassSource( AstNodeClass & node, String
      StringUtility::FileWithLineNumbers editedSourceFileString = sourceBeforeInsertion + editedStringMiddle + sourceAfterInsertion;
   // Now apply the edit/subsitution specified within the grammar (by the user)
      editedSourceFileString = editSubstitution (node,editedSourceFileString);
-  // JH Add the parent in position   
+  // JH Add the parent in position
      AstNodeClass *term = &node;
      ROSE_ASSERT( term  != NULL );
      std::string parent = " ";
@@ -166,7 +166,7 @@ Grammar::buildIRNodeConstructorOfStorageClassSource( AstNodeClass & node, String
 
 //#########################################################################################################
 /* JH (11/24/2005): Method that generates the code of constructor the AstSpecificDataManagingClass, that
- * takes the root of an AST. 
+ * takes the root of an AST.
  */
 std::string
 Grammar::buildStaticDataMemberListClassConstructor(AstNodeClass & node)
@@ -194,7 +194,7 @@ Grammar::buildStaticDataMemberListSetStaticDataSource(AstNodeClass & node)
 
 //#########################################################################################################
 /* JH (11/24/2005): Method that generates the code of the AstSpecificDataManagingClass members, i.e. the
- * static members of the IR nodes. 
+ * static members of the IR nodes.
  */
 std::string
 Grammar::buildStaticDataMemberListClassEntries(AstNodeClass & node)
@@ -207,8 +207,8 @@ Grammar::buildStaticDataMemberListClassEntries(AstNodeClass & node)
    }
 
 //#########################################################################################################
-/* JH (11/24/2005): Method that builds the data member variables of the StorageClass of the 
- * AstSpecificDataMangingClass, i.e. AstSpecificDataMangingClassStorageClass.  
+/* JH (11/24/2005): Method that builds the data member variables of the StorageClass of the
+ * AstSpecificDataMangingClass, i.e. AstSpecificDataMangingClassStorageClass.
  */
 std::string
 Grammar::buildDataMemberStorageClass(AstNodeClass & node)
@@ -221,7 +221,7 @@ Grammar::buildDataMemberStorageClass(AstNodeClass & node)
    }
 
 //#########################################################################################################
-/* JH (11/24/2005): Method that builds the access functions declarations for accessing the data contained 
+/* JH (11/24/2005): Method that builds the access functions declarations for accessing the data contained
  * in the AstSpecificDataManagingClass.
  */
 std::string
@@ -249,7 +249,7 @@ Grammar::generateStaticDataConstructorSource(AstNodeClass & node)
    }
 
 //#########################################################################################################
-/* JH (11/24/2005): Method that builds the code for the method 
+/* JH (11/24/2005): Method that builds the code for the method
  * writeEasyStorageDataToFile of AstSpecificDataManagingClassStorageClass
  */
 std::string
@@ -263,7 +263,7 @@ Grammar::generateStaticDataWriteEasyStorageDataToFileSource(AstNodeClass & node)
    }
 
 //#########################################################################################################
-/* JH (11/24/2005): Method that builds the code for the method 
+/* JH (11/24/2005): Method that builds the code for the method
  * readEasyStorageDataFromFile of AstSpecificDataManagingClassStorageClass
  */
 std::string
@@ -277,7 +277,7 @@ Grammar::generateStaticDataReadEasyStorageDataFromFileSource(AstNodeClass & node
    }
 
 //#########################################################################################################
-/* JH (11/24/2005): Method that builds the code for the method 
+/* JH (11/24/2005): Method that builds the code for the method
  * arrangeStaticDataOfEasyStorageClassesInOneBlock of AstSpecificDataManagingClassStorageClass
  */
 std::string
@@ -291,7 +291,7 @@ Grammar::generateStaticDataArrangeEasyStorageInOnePoolSource(AstNodeClass & node
    }
 
 //#########################################################################################################
-/* JH (11/24/2005): Method that builds the code for the method 
+/* JH (11/24/2005): Method that builds the code for the method
  * deleteStaticDataOfEasyStorageClasses of AstSpecificDataManagingClassStorageClass
  */
 std::string
@@ -305,7 +305,7 @@ Grammar::generateStaticDataDeleteEasyStorageMemoryPoolSource(AstNodeClass & node
    }
 
 //#########################################################################################################
-/* JH (11/24/2005): Method that builds the code for the method pickOutIRNodeData of the 
+/* JH (11/24/2005): Method that builds the code for the method pickOutIRNodeData of the
  * AstSpecificDataManagingClassStorageClass that takes the data out of a AstSpecificDataManaging object
  */
 std::string
@@ -319,7 +319,7 @@ Grammar::buildStaticStorageClassPickOutSource(AstNodeClass & node)
    }
 
 //#########################################################################################################
-/* JH (11/24/2005): Method that builds the source code for list of access 
+/* JH (11/24/2005): Method that builds the source code for list of access
  * functions of the data members contained in AstSpecificDataManagingClassStorageClass
  */
 std::string
@@ -353,9 +353,9 @@ Grammar::buildStorageClassHeaderFiles( AstNodeClass & node, StringUtility::FileW
      if ( term->getBaseClass() != NULL )
         {
           term = term->getBaseClass();
-          parent = " : public "; 
+          parent = " : public ";
           parent += term->name;
-          parent += "StorageClass"; 
+          parent += "StorageClass";
         }
      editStringStart = GrammarString::copyEdit (editStringStart,"$PARENT_CLASSNAME",parent.c_str());
 
@@ -377,7 +377,7 @@ Grammar::buildStorageClassHeaderFiles( AstNodeClass & node, StringUtility::FileW
 
 //#########################################################################################################
 //JH (11/24/2005): Method that generates the code of the StroageClasses.h and the StorageClasses.C files
-void 
+void
 Grammar::generateStorageClassesFiles()
    {
 
@@ -429,11 +429,11 @@ Grammar::generateStorageClassesFiles()
      myStream2 << maxVariant + 1 << std::flush;
      totalNumberOfIRNodes = myStream2.str();
      readFromFile = GrammarString::copyEdit(readFromFile,"$REPLACE_NUMBEROFIRNODES", totalNumberOfIRNodes.c_str() );
-       
+
      StorageClassSourceFile += readFromFile;
      StorageClassSourceFile << buildAccessFunctionSources(*rootNode);
 
-     std::string staticConstructorSource; 
+     std::string staticConstructorSource;
      staticConstructorSource += "AstSpecificDataManagingClass::AstSpecificDataManagingClass( SgProject* root )\n";
      staticConstructorSource += "   {\n";
 #if 0
@@ -460,7 +460,7 @@ Grammar::generateStorageClassesFiles()
      staticConstructorSource += "   }\n\n";
      StorageClassSourceFile << staticConstructorSource;
 
-     std::string staticSetSource; 
+     std::string staticSetSource;
      staticSetSource += "void\n";
      staticSetSource += "AstSpecificDataManagingClass::setStaticDataMembersOfIRNodes ( ) const\n";
      staticSetSource += "   {\n";
@@ -470,7 +470,7 @@ Grammar::generateStorageClassesFiles()
      staticSetSource += "   }\n\n";
      StorageClassSourceFile << staticSetSource;
 
-     std::string staticPickOutSource; 
+     std::string staticPickOutSource;
      staticPickOutSource += "void\n";
      staticPickOutSource += "AstSpecificDataManagingClassStorageClass::pickOutIRNodeData ( AstSpecificDataManagingClass* source )\n";
      staticPickOutSource += "   {\n";
@@ -483,7 +483,7 @@ Grammar::generateStorageClassesFiles()
      staticPickOutSource += "   }\n\n";
      StorageClassSourceFile << staticPickOutSource;
 
-     std::string staticDataConstructorSource; 
+     std::string staticDataConstructorSource;
      staticDataConstructorSource += "AstSpecificDataManagingClass::AstSpecificDataManagingClass(const AstSpecificDataManagingClassStorageClass& source)\n";
      staticDataConstructorSource += "   {\n";
 #if 0
@@ -551,7 +551,7 @@ Grammar::generateStorageClassesFiles()
      staticDataConstructorSource += "   }\n\n";
      StorageClassSourceFile << staticDataConstructorSource;
 
-     std::string staticDataWriteEasyStorageDataToFileSource; 
+     std::string staticDataWriteEasyStorageDataToFileSource;
      staticDataWriteEasyStorageDataToFileSource += "void\n";
      staticDataWriteEasyStorageDataToFileSource += "AstSpecificDataManagingClassStorageClass:: writeEasyStorageDataToFile (std::ostream& out)\n";
      staticDataWriteEasyStorageDataToFileSource += "   {\n";
@@ -559,7 +559,7 @@ Grammar::generateStorageClassesFiles()
      staticDataWriteEasyStorageDataToFileSource += "   }\n\n";
      StorageClassSourceFile << staticDataWriteEasyStorageDataToFileSource;
 
-     std::string staticDataReadEasyStorageDataFromFileSource; 
+     std::string staticDataReadEasyStorageDataFromFileSource;
      staticDataReadEasyStorageDataFromFileSource += "void\n";
      staticDataReadEasyStorageDataFromFileSource += "AstSpecificDataManagingClassStorageClass:: readEasyStorageDataFromFile (std::istream& in)\n";
      staticDataReadEasyStorageDataFromFileSource += "   {\n";
@@ -568,7 +568,7 @@ Grammar::generateStorageClassesFiles()
      StorageClassSourceFile << staticDataReadEasyStorageDataFromFileSource;
 
 
-     std::string staticDataArrangeEasyStorageInOnePoolSource; 
+     std::string staticDataArrangeEasyStorageInOnePoolSource;
      staticDataArrangeEasyStorageInOnePoolSource += "void\n";
      staticDataArrangeEasyStorageInOnePoolSource += "AstSpecificDataManagingClassStorageClass:: arrangeStaticDataOfEasyStorageClassesInOneBlock()\n";
      staticDataArrangeEasyStorageInOnePoolSource += "   {\n";
@@ -576,7 +576,7 @@ Grammar::generateStorageClassesFiles()
      staticDataArrangeEasyStorageInOnePoolSource += "   }\n\n";
      StorageClassSourceFile << staticDataArrangeEasyStorageInOnePoolSource;
 
-     std::string staticDataDeleteEasyStorageSource; 
+     std::string staticDataDeleteEasyStorageSource;
      staticDataDeleteEasyStorageSource += "void\n";
      staticDataDeleteEasyStorageSource += "AstSpecificDataManagingClassStorageClass:: deleteStaticDataOfEasyStorageClasses()\n";
      staticDataDeleteEasyStorageSource += "   {\n";
@@ -599,7 +599,7 @@ Grammar::generateStorageClassesFiles()
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 //#########################################################################################################
 /* JH (12/01/2005): function for splitting the Sg-class member data into their diffrent types.
-     Since I need this twice or more, I decided to build an own method! A big advantage is 
+     Since I need this twice or more, I decided to build an own method! A big advantage is
      that if we have a variable, that is not handled yet, it runs into a special case TO_HANDLE!
 */
 AstNodeClass::TypeEvaluation
@@ -681,8 +681,8 @@ AstNodeClass::evaluateType(std::string& varTypeString)
         }
      else if (
                (varTypeString == "SgFunctionTypeTable*" ) ||
-               (varTypeString == "$CLASSNAME*" ) || 
-               (varTypeString == "$CLASSNAME *" ) || 
+               (varTypeString == "$CLASSNAME*" ) ||
+               (varTypeString == "$CLASSNAME *" ) ||
                (
                  (
                    ( varTypeString.substr(0,15) == "$GRAMMAR_PREFIX" ) ||
@@ -792,8 +792,8 @@ AstNodeClass::evaluateType(std::string& varTypeString)
      else  if ( 9 < length && varTypeString.substr (length-8,length) == "Modifier" )
        {
           returnType = MODIFIERCLASS;
-          if (varTypeString == "SgAccessModifier" || 
-              varTypeString == "SgStorageModifier" || 
+          if (varTypeString == "SgAccessModifier" ||
+              varTypeString == "SgStorageModifier" ||
               varTypeString == "SgElaboratedTypeModifier" ||
               varTypeString == "SgUPC_AccessModifier" ||
               varTypeString == "SgConstVolatileModifier" ||
@@ -858,7 +858,7 @@ AstNodeClass::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgDataStatementValue::data_statement_value_enum" ) ||
                  ( varTypeString == "SgFile::outputFormatOption_enum" ) ||
 
-              // DQ (29/8/2017): Added generalization of language specifications so we can use 
+              // DQ (29/8/2017): Added generalization of language specifications so we can use
               // a single language enum for specification of both input and output languges.
               // ( varTypeString == "SgFile::outputLanguageOption_enum" ) ||
                  ( varTypeString == "SgFile::languageOption_enum" ) ||
@@ -893,6 +893,7 @@ AstNodeClass::evaluateType(std::string& varTypeString)
                  ( varTypeString == "PowerpcConditionRegisterAccessGranularity" ) || "Rose::BinaryAnalysis::PowerpcConditionRegisterAccessGranularity" == varTypeString ||
                  ( varTypeString == "PowerpcSpecialPurposeRegister" ) || "Rose::BinaryAnalysis::PowerpcSpecialPurposeRegister" == varTypeString ||
                  ( varTypeString == "PowerpcTimeBaseRegister" ) || "Rose::BinaryAnalysis::PowerpcTimeBaseRegister" == varTypeString ||
+                 ( varTypeString == "CilInstructionKind") || "Rose::BinaryAnalysis::CilInstructionKind" == varTypeString ||
                  ( varTypeString == "JvmInstructionKind") || "Rose::BinaryAnalysis::JvmInstructionKind" == varTypeString ||
                  ( varTypeString == "MipsInstructionKind") || "Rose::BinaryAnalysis::MipsInstructionKind" == varTypeString ||
                  ( varTypeString == "M68kInstructionKind") || "Rose::BinaryAnalysis::M68kInstructionKind" == varTypeString ||
@@ -928,17 +929,17 @@ AstNodeClass::evaluateType(std::string& varTypeString)
               // DQ (12/9/2015): Added to support use of enums from SgUntypedType class.
                  ( varTypeString == "SgUntypedType::type_enum" ) ||
                  ( varTypeString == "SgFile::standard_enum" ) ||
-                 false 
+                 false
               )
        {
           returnType = ENUM_TYPE;
        }
      else  if (  // basic data types
                  ( varTypeString == "bool" ) ||
-                 ( varTypeString == "int" ) || 
+                 ( varTypeString == "int" ) ||
                  ( varTypeString == "signed int" ) ||
                  ( varTypeString == "unsigned int" ) ||
-                 ( varTypeString == "unsigned" ) ||  
+                 ( varTypeString == "unsigned" ) ||
                  ( varTypeString == "long" ) ||
                  ( varTypeString == "unsigned long" ) ||
                  ( varTypeString == "signed long" ) ||
@@ -951,7 +952,7 @@ AstNodeClass::evaluateType(std::string& varTypeString)
                  ( varTypeString == "unsigned long int" ) ||
                  ( varTypeString == "char" ) ||
                  ( varTypeString == "unsigned char" ) ||
-                 ( varTypeString == "long int" ) || 
+                 ( varTypeString == "long int" ) ||
                  ( varTypeString == "long long int" ) ||
                  ( varTypeString == "unsigned long long int" ) ||
                  ( varTypeString == "int64_t") ||
@@ -963,7 +964,7 @@ AstNodeClass::evaluateType(std::string& varTypeString)
                  ( varTypeString == "uint8_t" ) ||
                  ( varTypeString == "size_t" ) ||
                  ( varTypeString == "time_t" ) ||
-              // DQ (8/7/2008): Note that these are not primative types, but I will account 
+              // DQ (8/7/2008): Note that these are not primative types, but I will account
               // for them as such at least temporarily so that we can be the IR in place.
                  ( varTypeString == "SgAsmNERelocEntry::iref_type" ) ||
                  ( varTypeString == "SgAsmNERelocEntry::iord_type" ) ||
@@ -985,6 +986,15 @@ AstNodeClass::evaluateType(std::string& varTypeString)
        {
          return SGCLASS_POINTER_LIST;
        }
+     // PP (7/20/22): added support for std::vector to support CIL streams
+     else if ( 8 < length && varTypeString.substr(0,7) == "vector<" && varTypeString.rfind(">" ) == length-1 )
+        {
+          returnType = STL_CONTAINER;
+        }
+     else if ( 13 < length && varTypeString.substr(0,12) == "std::vector<" && varTypeString.rfind(">" ) == length-1 )
+        {
+          returnType = STL_CONTAINER;
+        }
      else
        {
           returnType = TO_HANDLE;
@@ -994,8 +1004,8 @@ AstNodeClass::evaluateType(std::string& varTypeString)
 
 //#########################################################################################################
 /* JH (10/28/2005) : Build the member data for the IR node's StorageClasses. Using the switch we can decide
-   if a data has to be stored and also in which manner. The static data members become static data 
-   become static data members in the StorageClasses. 
+   if a data has to be stored and also in which manner. The static data members become static data
+   become static data members in the StorageClasses.
 */
 std::string AstNodeClass::buildStorageClassHeader ()
    {
@@ -1010,7 +1020,7 @@ std::string AstNodeClass::buildStorageClassHeader ()
           string varNameString = string(data->getVariableNameString());
           string varTypeString = string(data->getTypeNameString());
           string varStorageNameString = "storageOf_" + varNameString;
-          if ( varNameString != "freepointer" && varTypeString.substr(0,7) !=  "static " ) 
+          if ( varNameString != "freepointer" && varTypeString.substr(0,7) !=  "static " )
              {
                switch (evaluateType(varTypeString) )
                   {
@@ -1064,13 +1074,13 @@ std::string AstNodeClass::buildStorageClassHeader ()
                       break;
                     case TO_HANDLE:
                     default:
-                   /* JH (01/29/2006) If ROSETTA stops at this assert, then a variable occurred, that is 
+                   /* JH (01/29/2006) If ROSETTA stops at this assert, then a variable occurred, that is
                     * not yet handled. However, there is only an assert at this point, nowehere else in
                     * the following methods below!
                     */
-                      std::cout << " There is a class not handled in buildStorageClasses.C, Line " 
+                      std::cout << " There is a class not handled in buildStorageClasses.C, Line "
                                 << __LINE__ << std::endl ;
-                      std::cout << "In class " + classNameString + " caused by variable " 
+                      std::cout << "In class " + classNameString + " caused by variable "
                                 << varTypeString + " p_" + varNameString << std::endl ;
                       assert (!"Stop immediately, since variable to build is not found ... " ) ;
                       break;
@@ -1081,17 +1091,17 @@ std::string AstNodeClass::buildStorageClassHeader ()
    }
 
 //#########################################################################################################
-/* JH (10/28/2005) : building the source code of the initializer method of the StorageClasses. All data 
+/* JH (10/28/2005) : building the source code of the initializer method of the StorageClasses. All data
  * members of the IR node counterparts (except of static members) are visited and their contents are stored
  * in the designated variables of the StoragClass. We have to get the data members of the parents of the IR
- * node, as well ! 
+ * node, as well !
  * REMARKS:
  *  * This methods operate on the data members of the parent classes, as well.
- *  * Actually, NULL pointers only are rebuilt for char*, rose_hash_multimap, AstAttributeMechanism, 
- *    AttachedPreprocessingInfoType, and pointers to STL containers containing pointers to IR nodes (and 
+ *  * Actually, NULL pointers only are rebuilt for char*, rose_hash_multimap, AstAttributeMechanism,
+ *    AttachedPreprocessingInfoType, and pointers to STL containers containing pointers to IR nodes (and
  *    pointers to other IR nodes, of course).
  *  * The pointer to an STL container that stores pointers to other IR nodes is still shared in my version.
- *    Thus, we copy the pointers, replace the pointers by its global indices in the container, store the 
+ *    Thus, we copy the pointers, replace the pointers by its global indices in the container, store the
  *    container and copy back the original ones.
  */
 string AstNodeClass::buildStorageClassPickOutIRNodeDataSource ()
@@ -1513,9 +1523,9 @@ string AstNodeClass::buildStorageClassPickOutIRNodeDataSource ()
    }
 
 //#########################################################################################################
-/* JH (10/28/2005) : build the source code for deleting the static data caused by the EasyStorage members 
-   within the StorageClasses! Since a StorageClass holds all data of its counterpart and those parents, we 
-   have to call this method on all suitable members! But since we what to avoid repeatings in the call of 
+/* JH (10/28/2005) : build the source code for deleting the static data caused by the EasyStorage members
+   within the StorageClasses! Since a StorageClass holds all data of its counterpart and those parents, we
+   have to call this method on all suitable members! But since we what to avoid repeatings in the call of
    the methods, we skip dublicates (realized by the addString)!
 */
 string AstNodeClass::buildStorageClassDeleteStaticDataSource ()
@@ -1605,7 +1615,7 @@ string AstNodeClass::buildStorageClassDeleteStaticDataSource ()
    }
 
 //#########################################################################################################
-/* JH (10/28/2005) : Similar to the method above, but it arranges the static data of the EasyStorage to be 
+/* JH (10/28/2005) : Similar to the method above, but it arranges the static data of the EasyStorage to be
    contained in one block!
 */
 string AstNodeClass::buildStorageClassArrangeStaticDataInOneBlockSource ()
@@ -1696,8 +1706,8 @@ string AstNodeClass::buildStorageClassArrangeStaticDataInOneBlockSource ()
 
 //#########################################################################################################
 
-/* JH (10/28/2005) : This method creates the source code for the IR node constructor, that has as 
-   its corresponding StorageClass as parameter! Since we call the initialization for the parents, 
+/* JH (10/28/2005) : This method creates the source code for the IR node constructor, that has as
+   its corresponding StorageClass as parameter! Since we call the initialization for the parents,
    we only need to handle the data members of the IR node itself!
 */
 string AstNodeClass::buildSourceForIRNodeStorageClassConstructor ()
@@ -1733,7 +1743,7 @@ string AstNodeClass::buildSourceForIRNodeStorageClassConstructor ()
                       break;
                     case CHAR_POINTER:
                     case CONST_CHAR_POINTER:
-                      s += "     p_" + varNameString + " = const_cast<" + varTypeString +" >( storageSource." + 
+                      s += "     p_" + varNameString + " = const_cast<" + varTypeString +" >( storageSource." +
                            varStorageNameString + ".rebuildDataStoredInEasyStorageClass() ) ;\n" ;
                       break;
                     case ROSE_HASH_MULTIMAP:
@@ -1911,7 +1921,7 @@ string AstNodeClass::buildSourceForIRNodeStorageClassConstructor ()
 
                     case SGCLASS_POINTER_LIST_POINTER:
                       sg_string = varTypeString.substr(0,varTypeString.size()-7) ;
-                      s += "     p_" + varNameString + " = new " + varTypeString + " ( storageSource." + 
+                      s += "     p_" + varNameString + " = new " + varTypeString + " ( storageSource." +
                            varStorageNameString + ".rebuildDataStoredInEasyStorageClass() );\n" ;
                       s += "     " + varTypeString + "::iterator i_" + varNameString + " = p_" + varNameString + "->begin() ; \n" ;
                       s += "     for ( ; i_" + varNameString + " != p_" + varNameString + "->end(); ++i_" + varNameString + " ) \n";
@@ -2051,7 +2061,7 @@ string AstNodeClass::buildStorageClassWriteStaticDataToFileSource ()
 
 //#########################################################################################################
 /* JH (10/28/2005) : This methods builds the source for reading the static data members of the EasyStorage
-   classes, caused by the StorageClasses to disk! 
+   classes, caused by the StorageClasses to disk!
 */
 string AstNodeClass::buildStorageClassReadStaticDataFromFileSource()
    {
@@ -2139,9 +2149,9 @@ string AstNodeClass::buildStorageClassReadStaticDataFromFileSource()
    }
 
 //#########################################################################################################
-/* JH (10/28/2005) : Checking, wheather a teminal or nonterminal has data members, that will be stored in 
-   in EasyStorage classes. 
-   REMARK: This checking of the data members INCLUDES the checking of the data memebers of the parent! 
+/* JH (10/28/2005) : Checking, wheather a teminal or nonterminal has data members, that will be stored in
+   in EasyStorage classes.
+   REMARK: This checking of the data members INCLUDES the checking of the data memebers of the parent!
 */
 bool AstNodeClass::hasMembersThatAreStoredInEasyStorageClass()
    {
@@ -2241,9 +2251,9 @@ bool AstNodeClass::hasStaticMembers()
    }
 
 //#########################################################################################################
-/* JH (10/28/2005) : Checking, wheather a teminal or nonterminal has data members, that will be stored in 
-   in EasyStorage classes. 
-   REMARK: This checking of the data members INCLUDES the checking of the static ones. This is done, because 
+/* JH (10/28/2005) : Checking, wheather a teminal or nonterminal has data members, that will be stored in
+   in EasyStorage classes.
+   REMARK: This checking of the data members INCLUDES the checking of the static ones. This is done, because
    we want to call the storing and reading of the EasyStorage classes caused by the static data members not
    explicitly!
 */
@@ -2269,7 +2279,7 @@ std::string AstNodeClass::buildStaticDataMemberList()
    }
 
 //#########################################################################################################
-/* JH (04/04/2006) Method for generating the constructor source contributed by an IR node to the 
+/* JH (04/04/2006) Method for generating the constructor source contributed by an IR node to the
  * AstSpecificDataManagingClass
  */
 std::string AstNodeClass::buildStaticDataMemberListConstructor()
@@ -2295,7 +2305,7 @@ std::string AstNodeClass::buildStaticDataMemberListConstructor()
 
 //#########################################################################################################
 /* JH (04/05/2006) Method for generating the data member list within the AstSpecificDataManaginClass which
- * are added by an IR node. 
+ * are added by an IR node.
  */
 std::string AstNodeClass::buildStaticDataMemberListSetStaticData()
    {
@@ -2303,7 +2313,7 @@ std::string AstNodeClass::buildStaticDataMemberListSetStaticData()
      std::string classNameString = this->name;
      vector<GrammarString *> copyList;
      vector<GrammarString *>::const_iterator stringListIterator;
-      
+
      copyList        = this->getMemberDataPrototypeList(AstNodeClass::LOCAL_LIST,AstNodeClass::INCLUDE_LIST);
      for ( stringListIterator = copyList.begin(); stringListIterator != copyList.end(); stringListIterator++ )
         {
@@ -2327,7 +2337,7 @@ std::string AstNodeClass::buildStaticDataMemberListSetStaticData()
                     s += "             }\n" ;
                     s += "        }\n" ;
                   }
-               else 
+               else
                   {
                     s += "     " + classNameString + "::p_" + varNameString + " = " + classNameString + "_" + varNameString + ";\n" ;
                   }
@@ -2337,8 +2347,8 @@ std::string AstNodeClass::buildStaticDataMemberListSetStaticData()
    }
 
 //#########################################################################################################
-/* JH (04/05/2006) Method for generating the data member list within the 
- * AstSpecificDataManagingClassStorageClass which are added by an IR node. 
+/* JH (04/05/2006) Method for generating the data member list within the
+ * AstSpecificDataManagingClassStorageClass which are added by an IR node.
  */
 std::string AstNodeClass::buildStaticDataMemberListOfStorageClass()
    {
@@ -2358,7 +2368,7 @@ std::string AstNodeClass::buildStaticDataMemberListOfStorageClass()
              {
                string varStorageNameString =  "storageOf_" + classNameString + "_"  + varNameString;
                varTypeString = varTypeString.substr(7,varTypeString.size()-1 ) ;
-            
+
                if (varNameString != "freepointer" )
                   {
                     switch (evaluateType(varTypeString) )
@@ -2417,8 +2427,8 @@ std::string AstNodeClass::buildStaticDataMemberListOfStorageClass()
    }
 
 //#########################################################################################################
-/* JH (04/05/2006) Method for generating the access functions headers of the AstSpecificDataManagingClass, 
- * that are yielded by an IR node. 
+/* JH (04/05/2006) Method for generating the access functions headers of the AstSpecificDataManagingClass,
+ * that are yielded by an IR node.
  */
 std::string AstNodeClass::buildAccessFunctionsForStaticDataMember()
    {
@@ -2435,15 +2445,15 @@ std::string AstNodeClass::buildAccessFunctionsForStaticDataMember()
           if ( varTypeString.substr(0,7) ==  "static " )
              {
                varTypeString =  varTypeString.substr( 7,  varTypeString.size()-1 ) ;
-               s += "     " + varTypeString + "  get_" + classNameString + "_" + varNameString + "() const;\n"; 
+               s += "     " + varTypeString + "  get_" + classNameString + "_" + varNameString + "() const;\n";
              }
         }
      return s;
    }
 
 //#########################################################################################################
-/* JH (04/05/2006) Method for generating the access functions source of the AstSpecificDataManagingClass, 
- * that are yielded by an IR node. 
+/* JH (04/05/2006) Method for generating the access functions source of the AstSpecificDataManagingClass,
+ * that are yielded by an IR node.
  */
 std::string AstNodeClass::buildAccessFunctionsForStaticDataMemberSource()
    {
@@ -2547,8 +2557,8 @@ string AstNodeClass::buildSourceForStoringStaticMembers ()
    }
 
 //#########################################################################################################
-/* JH (10/28/2005) : Building the contribute of an IR node to the constructor of 
- * AstSpecificDataManagingClass that takes its corresponding StorageClass as parameter. 
+/* JH (10/28/2005) : Building the contribute of an IR node to the constructor of
+ * AstSpecificDataManagingClass that takes its corresponding StorageClass as parameter.
  */
 string AstNodeClass::buildStaticDataConstructorSource ()
    {
@@ -2613,7 +2623,7 @@ string AstNodeClass::buildStaticDataConstructorSource ()
    }
 
 //#########################################################################################################
-/* JH (10/28/2005) : Writing the static data members of the AstSpecificDataManagingClassStorageClasses to 
+/* JH (10/28/2005) : Writing the static data members of the AstSpecificDataManagingClassStorageClasses to
  * file.
  */
 string AstNodeClass::buildStaticDataWriteEasyStorageDataToFileSource()
@@ -2629,7 +2639,7 @@ string AstNodeClass::buildStaticDataWriteEasyStorageDataToFileSource()
           GrammarString *data = *stringListIterator;
           string varNameString = string(data->getVariableNameString());
           string varTypeString = string(data->getTypeNameString());
-          if ( varTypeString.substr(0,7) ==  "static " ) 
+          if ( varTypeString.substr(0,7) ==  "static " )
              {
                string varStorageNameString =  "storageOf_" + classNameString + "_"  + varNameString;
                varTypeString = varTypeString.substr(7,varTypeString.size()-1 ) ;
@@ -2674,11 +2684,11 @@ string AstNodeClass::buildStaticDataWriteEasyStorageDataToFileSource()
    }
 
 //#########################################################################################################
-/* JH (10/28/2005) : This methods builds the source for reading the static data members of an IR node 
-   from disk and rebuilds the EasyStorage data of them! Do not mistake this method with the 
+/* JH (10/28/2005) : This methods builds the source for reading the static data members of an IR node
+   from disk and rebuilds the EasyStorage data of them! Do not mistake this method with the
    buildStorageClassReadStaticDataFromFileSource, that soes the same for the StorageClasses!!!!!!!!!
 */
- 
+
 string AstNodeClass::buildStaticDataReadEasyStorageDataFromFileSource()
    {
      vector<GrammarString *> copyList;
@@ -2692,7 +2702,7 @@ string AstNodeClass::buildStaticDataReadEasyStorageDataFromFileSource()
           GrammarString *data = *stringListIterator;
           string varNameString = string(data->getVariableNameString());
           string varTypeString = string(data->getTypeNameString());
-          if ( varTypeString.substr(0,7) ==  "static " ) 
+          if ( varTypeString.substr(0,7) ==  "static " )
              {
                std::string addString;
                string varStorageNameString =  "storageOf_" + classNameString + "_"  + varNameString;
@@ -2739,8 +2749,8 @@ string AstNodeClass::buildStaticDataReadEasyStorageDataFromFileSource()
    }
 
 //#########################################################################################################
-/* JH (10/28/2005) : This methods builds the source for reading the static data members of an IR node 
-   from disk and rebuilds the EasyStorage data of them! Do not mistake this method with the 
+/* JH (10/28/2005) : This methods builds the source for reading the static data members of an IR node
+   from disk and rebuilds the EasyStorage data of them! Do not mistake this method with the
    buildStorageClassReadStaticDataFromFileSource, that soes the same for the StorageClasses!!!!!!!!!
 */
 string AstNodeClass::buildStaticDataArrangeEasyStorageInOnePoolSource()
@@ -2755,7 +2765,7 @@ string AstNodeClass::buildStaticDataArrangeEasyStorageInOnePoolSource()
           GrammarString *data = *stringListIterator;
           string varNameString = string(data->getVariableNameString());
           string varTypeString = string(data->getTypeNameString());
-          if ( varTypeString.substr(0,7) ==  "static " ) 
+          if ( varTypeString.substr(0,7) ==  "static " )
              {
                std::string addString;
                string varStorageNameString =  "storageOf_" + classNameString + "_"  + varNameString;
@@ -2800,7 +2810,7 @@ string AstNodeClass::buildStaticDataArrangeEasyStorageInOnePoolSource()
 
 //#########################################################################################################
 /* JH (10/28/2005) : This methods builds the source for deleting the EasyStorage memory pools
-   for the static data members of the IR nodes! Do not mistake this method with the 
+   for the static data members of the IR nodes! Do not mistake this method with the
    buildStorageClassReadStaticDataFromFileSource, that does the same for the StorageClasses!!!!!!!!!
 */
 string AstNodeClass::buildStaticDataDeleteEasyStorageMemoryPoolSource()
@@ -2815,7 +2825,7 @@ string AstNodeClass::buildStaticDataDeleteEasyStorageMemoryPoolSource()
           GrammarString *data = *stringListIterator;
           string varNameString = string(data->getVariableNameString());
           string varTypeString = string(data->getTypeNameString());
-          if ( varTypeString.substr(0,7) ==  "static " ) 
+          if ( varTypeString.substr(0,7) ==  "static " )
              {
                std::string addString;
                string varStorageNameString =  "storageOf_" + classNameString + "_"  + varNameString;
@@ -2847,7 +2857,7 @@ string AstNodeClass::buildStaticDataDeleteEasyStorageMemoryPoolSource()
                            break;
                       }
                  }
-            /* We only want to add the deletion of the memory pool, if this is not 
+            /* We only want to add the deletion of the memory pool, if this is not
              * already in the string.
              */
                if ( addString != "" )

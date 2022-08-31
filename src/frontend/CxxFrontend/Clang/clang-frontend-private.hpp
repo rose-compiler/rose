@@ -77,6 +77,7 @@
 #define DEBUG_SYMBOL_TABLE_LOOKUP 0
 #define DEBUG_ARGS                0
 #define DEBUG_TRAVERSE_DECL       0
+#define DEBUG_VISIT_STMT          0
 
 // Print visitor name when visiting a node inheritance hierarchy
 #ifdef DEBUG_VISITOR
@@ -90,10 +91,10 @@
 #    define DEBUG_VISIT_TYPE DEBUG_VISITOR
 #  endif
 #else
-#  define DEBUG_VISITOR    1
-#  define DEBUG_VISIT_STMT 1
-#  define DEBUG_VISIT_DECL 1
-#  define DEBUG_VISIT_TYPE 1
+#  define DEBUG_VISITOR    0
+#  define DEBUG_VISIT_STMT 0
+#  define DEBUG_VISIT_DECL 0
+#  define DEBUG_VISIT_TYPE 0
 #endif
 
 // Print results of traversal of the nodes: "already done?" and "generated Sage ptr"
@@ -108,25 +109,25 @@
 #    define DEBUG_TRAVERSE_TYPE DEBUG_TRAVERSAL
 #  endif
 #else
-#  define DEBUG_TRAVERSAL     1
-#  define DEBUG_TRAVERSE_STMT 1
-#  define DEBUG_TRAVERSE_DECL 1
-#  define DEBUG_TRAVERSE_TYPE 1
+#  define DEBUG_TRAVERSAL     0
+#  define DEBUG_TRAVERSE_STMT 0
+#  define DEBUG_TRAVERSE_DECL 0
+#  define DEBUG_TRAVERSE_TYPE 0
 #endif
 
 // Print debug info when attaching source location
 #ifndef DEBUG_SOURCE_LOCATION
-#  define DEBUG_SOURCE_LOCATION 1
+#  define DEBUG_SOURCE_LOCATION 0
 #endif
 
 // Display symbol lookup process
 #ifndef DEBUG_SYMBOL_TABLE_LOOKUP
-#  define DEBUG_SYMBOL_TABLE_LOOKUP 1
+#  define DEBUG_SYMBOL_TABLE_LOOKUP 0
 #endif
 
 // Print args receive by clang_main
 #ifndef DEBUG_ARGS
-#  define DEBUG_ARGS 1
+#  define DEBUG_ARGS 0
 #endif
 
 // Fail when a FIXME is reach
@@ -567,6 +568,14 @@ class ClangToSageTranslator : public clang::ASTConsumer {
   // Preprocessing access
         std::pair<Sg_File_Info *, PreprocessingInfo *> preprocessor_top();
         bool preprocessor_pop();
+
+        SgAsmOp::asm_operand_modifier_enum get_sgAsmOperandModifier(std::string modifier);
+        SgAsmOp::asm_operand_constraint_enum get_sgAsmOperandConstraint(std::string constraint);
+        SgInitializedName::asm_register_name_enum get_sgAsmRegister(std::string reg);
+
+        std::string generate_source_position_string(clang::SourceLocation srcLoc);
+        std::string generate_name_for_variable(clang::Stmt* stmt);
+        std::string generate_name_for_type(clang::TypeSourceInfo* typeInfo);
 };
 
 void finishSageAST(ClangToSageTranslator & translator);

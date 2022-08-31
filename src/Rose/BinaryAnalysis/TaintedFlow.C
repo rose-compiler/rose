@@ -58,7 +58,7 @@ TaintedFlow::State::setIfExists(const DataFlow::Variable &variable, Taintedness 
 }
 
 bool
-TaintedFlow::State::merge(const StatePtr &other) {
+TaintedFlow::State::merge(const State::Ptr &other) {
     bool changed = false;
     for (const VarTaintList::value_type &otherNode: other->taints_) {
         Taintedness otherTaint = otherNode.second;
@@ -86,15 +86,15 @@ TaintedFlow::State::print(std::ostream &out) const {
     }
 }
 
-TaintedFlow::StatePtr
-TaintedFlow::TransferFunction::operator()(size_t cfgVertex, const StatePtr &in) {
+TaintedFlow::State::Ptr
+TaintedFlow::TransferFunction::operator()(size_t cfgVertex, const State::Ptr &in) {
     using namespace Diagnostics;
 
     const DataFlow::Graph &dfg = index_[cfgVertex]; // data flow for this basic block
-    StatePtr out = in->copy();
+    State::Ptr out = in->copy();
 
     Stringifier taintednessStr(stringifyBinaryAnalysisTaintedFlowTaintedness);
-    Stringifier edgeTypeStr(stringifyBinaryAnalysisInstructionSemantics2DataFlowSemanticsDataFlowEdgeEdgeType);
+    Stringifier edgeTypeStr(stringifyBinaryAnalysisInstructionSemanticsDataFlowSemanticsDataFlowEdgeEdgeType);
 
     mlog[TRACE] <<"transfer function for CFG vertex " <<cfgVertex <<"\n";
 
@@ -128,7 +128,7 @@ TaintedFlow::TransferFunction::operator()(size_t cfgVertex, const StatePtr &in) 
             }
 
             case OVER_APPROXIMATE: {
-                StatePtr tmp = out->copy();
+                State::Ptr tmp = out->copy();
                 for (VariableTaint &varTaint: tmp->variables()) {
                     DataFlow::Variable &dstVariable = varTaint.first;
                     Taintedness &dstTaint = varTaint.second;
@@ -162,7 +162,7 @@ TaintedFlow::TransferFunction::operator()(size_t cfgVertex, const StatePtr &in) 
 }
 
 std::string
-TaintedFlow::TransferFunction::toString(const StatePtr &state) {
+TaintedFlow::TransferFunction::toString(const State::Ptr &state) {
     if (!state)
         return "null state";
     std::ostringstream ss;

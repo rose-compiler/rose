@@ -424,7 +424,7 @@ void VariableRenaming::insertDefsForExternalVariables(SgFunctionDeclaration* fun
             if (SageInterface::isAncestor(function->get_definition(), rootName[0])) {
                 //When else could a var be declared inside a function and be global?
                 if(SgVariableDeclaration* varDecl = isSgVariableDeclaration(rootName[0]->get_parent())){
-                    ROSE_ASSERT(varDecl->get_declarationModifier().get_storageModifier().isExtern());
+                    ASSERT_always_require(varDecl->get_declarationModifier().get_storageModifier().isExtern());
                     continue;
                 } else if (isSgFunctionParameterList(rootName[0]->get_parent())) {
                     // x can also have global scope when it appears as a formal parameter in an extern function declaration,

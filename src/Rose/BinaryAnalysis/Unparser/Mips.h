@@ -4,13 +4,15 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
 
+#include <Rose/BinaryAnalysis/BasicTypes.h>
+
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Unparser {
 
 std::string unparseMipsMnemonic(SgAsmMipsInstruction*);
-std::string unparseMipsRegister(SgAsmInstruction*, RegisterDescriptor, const RegisterDictionary*);
-std::string unparseMipsExpression(SgAsmExpression*, const LabelMap*, const RegisterDictionary*);
+std::string unparseMipsRegister(SgAsmInstruction*, RegisterDescriptor, RegisterDictionaryPtr);
+std::string unparseMipsExpression(SgAsmExpression*, const LabelMap*, const RegisterDictionaryPtr&);
 
 struct MipsSettings: public Settings {};
 

@@ -4,15 +4,17 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
 
+#include <Rose/BinaryAnalysis/BasicTypes.h>
+
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Unparser {
 
 std::string unparseX86Mnemonic(SgAsmX86Instruction*);
-std::string unparseX86Register(SgAsmInstruction*, RegisterDescriptor, const RegisterDictionary*);
-std::string unparseX86Register(RegisterDescriptor, const RegisterDictionary*);
-std::string unparseX86Expression(SgAsmExpression*, const LabelMap*, const RegisterDictionary*, bool leaMode);
-std::string unparseX86Expression(SgAsmExpression*, const LabelMap*, const RegisterDictionary*);
+std::string unparseX86Register(SgAsmInstruction*, RegisterDescriptor, RegisterDictionaryPtr);
+std::string unparseX86Register(RegisterDescriptor, const RegisterDictionaryPtr&);
+std::string unparseX86Expression(SgAsmExpression*, const LabelMap*, const RegisterDictionaryPtr&, bool leaMode);
+std::string unparseX86Expression(SgAsmExpression*, const LabelMap*, const RegisterDictionaryPtr&);
 
 struct X86Settings: public Settings {};
 

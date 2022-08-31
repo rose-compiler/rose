@@ -63,7 +63,7 @@ public:
     virtual Sawyer::Optional<rose_addr_t> address() const override;
 
     virtual std::vector<TagPtr>
-    execute(const SettingsPtr&, const SemanticCallbacksPtr&, const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&) override;
+    execute(const SettingsPtr&, const SemanticCallbacksPtr&, const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&) override;
 };
 
 } // namespace

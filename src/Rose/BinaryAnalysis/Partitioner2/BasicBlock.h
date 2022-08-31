@@ -25,7 +25,7 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
-namespace BaseSemantics = Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
+namespace BaseSemantics = Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // BasicBlockSemantics
@@ -430,9 +430,8 @@ public:
      *  When adding multiple instructions:
      *
      * @code
-     *  BasicBlock::Ptr bb = protoBlock->create(startingVa)
-     *      ->append(insn1)->append(p, insn2)->append(p, insn3)
-     *      ->freeze();
+     *  BasicBlock::Ptr bb = protoBlock->instance(startingVa, partitioner)
+     *      ->append(partitioner, insn1)->append(parititoner, insn2)->append(partitioner, insn3);
      * @endcode
      *
      *  Thread safety: This method is not thread safe. */
@@ -604,6 +603,7 @@ public:
      *
      *  Thread safety: This method is not thread safe since it returns a reference. */
     const Sawyer::Cached<bool>& isFunctionCall() const { return isFunctionCall_; }
+    void isFunctionCall(bool flag) const { isFunctionCall_.set(flag); }
 
     /** Is a function return?
      *
@@ -613,6 +613,7 @@ public:
      *
      *  Thread safety: This method is not thread safe since it returns a reference. */
     const Sawyer::Cached<bool>& isFunctionReturn() const { return isFunctionReturn_; }
+    void isFunctionReturn(bool flag) const { isFunctionReturn_.set(flag); }
 
     /** May-return property.
      *
@@ -621,6 +622,7 @@ public:
      *
      *  Thread safety: This method is not thread safe since it returns a reference. */
     const Sawyer::Cached<bool>& mayReturn() const { return mayReturn_; }
+    void mayReturn(bool flag) const { mayReturn_.set(flag); }
 
     /** Pops stack property.
      *
@@ -628,6 +630,7 @@ public:
      *
      *  Thread safety: This method is not thread safe since it returns a reference. */
     const Sawyer::Cached<bool>& popsStack() const { return popsStack_; }
+    void popsStack(bool flag) const { popsStack_.set(flag); }
 
     
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

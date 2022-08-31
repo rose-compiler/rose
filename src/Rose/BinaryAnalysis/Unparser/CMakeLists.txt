@@ -3,6 +3,8 @@ add_library(roseBinaryAnalysisUnparser OBJECT
   Aarch32.C
   Aarch64.C
   Base.C
+  Cil.C
+  Jvm.C
   M68k.C
   Mips.C
   Null.C
@@ -16,6 +18,8 @@ install(FILES
   Aarch32.h
   Aarch64.h
   Base.h
+  Cil.h
+  Jvm.h
   M68k.h
   Mips.h
   Null.h

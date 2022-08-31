@@ -35,9 +35,6 @@
 namespace Rose {
 namespace BinaryAnalysis {
 
-class SmtSolver;
-using SmtSolverPtr = std::shared_ptr<SmtSolver>;
-
 /** Namespace supplying types and functions for symbolic expressions.
  *
  *  These are used by certain instruction semantics policies and satisfiability modulo theory (SMT) solvers. These expressions
@@ -151,28 +148,10 @@ enum Operator {
     OP_CONVERT,             /**< Convert from one type to another. Argument is the source value. */
     OP_REINTERPRET,         /**< Interpret the value as a different type without converting. Argument is the source value. */
 
-    OP_NONE,                /**< No operation. Result of getOperator on a node that doesn't have an operator. */
-
-    OP_BV_AND = OP_AND,                                 // [Robb Matzke 2017-11-14]: deprecated NO_STRINGIFY
-    OP_BV_OR = OP_OR,                                   // [Robb Matzke 2017-11-14]: deprecated NO_STRINGIFY
-    OP_BV_XOR = OP_XOR                                  // [Robb Matzke 2017-11-14]: deprecated NO_STRINGIFY
+    OP_NONE                 /**< No operation. Result of getOperator on a node that doesn't have an operator. */
 };
 
 std::string toStr(Operator);
-
-class Node;
-class Interior;
-class Leaf;
-class ExprExprHashMap;
-
-/** Shared-ownership pointer to an expression @ref Node. See @ref heap_object_shared_ownership. */
-typedef Sawyer::SharedPointer<Node> Ptr;
-
-/** Shared-ownership pointer to an expression @ref Interior node. See @ref heap_object_shared_ownership. */
-typedef Sawyer::SharedPointer<Interior> InteriorPtr;
-
-/** Shared-ownership pointer to an expression @ref Leaf node. See @ref heap_object_shared_ownership. */
-typedef Sawyer::SharedPointer<Leaf> LeafPtr;
 
 typedef std::vector<Ptr> Nodes;
 typedef Map<uint64_t, uint64_t> RenameMap;

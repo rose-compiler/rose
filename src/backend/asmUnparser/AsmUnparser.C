@@ -4,7 +4,8 @@
 #include "AsmUnparser.h"
 
 #include "AsmUnparser_compat.h" /*FIXME: needed until no longer dependent upon unparseInstruction()*/
-#include <Rose/BinaryAnalysis/Disassembler.h>
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -69,6 +70,12 @@ build_noop_index(const std::vector <std::pair <size_t /*offset*/, size_t /*size*
     return retval;
 }
 
+AsmUnparser::StaticDataDisassembler::StaticDataDisassembler() {}
+
+AsmUnparser::StaticDataDisassembler::~StaticDataDisassembler() {
+    reset();
+}
+
 // class method
 void AsmUnparser::initDiagnostics() {
     static bool initialized = false;
@@ -78,6 +85,12 @@ void AsmUnparser::initDiagnostics() {
         mlog.comment("generating assembly listings (vers 1)");
     }
 }
+
+AsmUnparser::AsmUnparser() {
+    init();
+}
+
+AsmUnparser::~AsmUnparser() {}
 
 void
 AsmUnparser::init()
@@ -150,9 +163,8 @@ AsmUnparser::init()
         .append(&interpBody);
 }
 
-const RegisterDictionary *
-AsmUnparser::get_registers() const
-{
+RegisterDictionary::Ptr
+AsmUnparser::get_registers() const {
     return user_registers ? user_registers : interp_registers;
 }
 
@@ -259,6 +271,11 @@ AsmUnparser::find_unparsable_nodes(SgNode *ast)
     } t1(this);
     t1.traverse(ast);
     return t1.found;
+}
+
+void
+AsmUnparser::set_registers(const RegisterDictionary::Ptr &registers) {
+    user_registers = registers;
 }
 
 void
@@ -458,7 +475,7 @@ AsmUnparser::unparse_function(bool enabled, std::ostream &output, SgAsmFunction 
 bool
 AsmUnparser::unparse_interpretation(bool enabled, std::ostream &output, SgAsmInterpretation *interp)
 {
-    const RegisterDictionary *old_interp_registers = interp_registers;
+    RegisterDictionary::Ptr old_interp_registers = interp_registers;
     interp_registers = interp->get_registers();
     try {
         const SgAsmGenericHeaderPtrList &hdrs = interp->get_headers()->get_headers();
@@ -975,12 +992,12 @@ AsmUnparser::StaticDataDisassembler::reset()
     if (unparser_allocated_here)
         delete unparser;
     unparser_allocated_here = false;
-    disassembler = NULL;
+    disassembler = Disassembler::Base::Ptr();
     unparser = NULL;
 }
 
 void
-AsmUnparser::StaticDataDisassembler::init(Disassembler *d, AsmUnparser *u)
+AsmUnparser::StaticDataDisassembler::init(const Disassembler::Base::Ptr &d, AsmUnparser *u)
 {
     reset();
     disassembler = d;

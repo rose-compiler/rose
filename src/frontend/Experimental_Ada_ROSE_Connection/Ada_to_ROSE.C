@@ -67,6 +67,13 @@ namespace
   /// stores a mapping from string to builtin exception nodes
   map_t<AdaIdentifier, SgAdaPackageSpecDecl*> adaPkgsMap;
 
+  /// stores a mapping from string to builtin function declaration nodes
+  map_t<AdaIdentifier, std::vector<SgFunctionDeclaration*> > adaFuncsMap;
+
+  /// stores variables defined in Standard or Ascii
+  map_t<AdaIdentifier, SgInitializedName*> adaVarsMap;
+
+  /// map of inherited symbols
   map_t<std::pair<const SgFunctionDeclaration*, const SgTypedefType*>, SgAdaInheritedFunctionSymbol*> inheritedSymbolMap;
 } // anonymous namespace
 
@@ -79,6 +86,13 @@ map_t<int, SgBasicBlock*>&                   asisBlocks() { return asisBlocksMap
 map_t<AdaIdentifier, SgType*>&               adaTypes()   { return adaTypesMap;   }
 map_t<AdaIdentifier, SgInitializedName*>&    adaExcps()   { return adaExcpsMap;   }
 map_t<AdaIdentifier, SgAdaPackageSpecDecl*>& adaPkgs()    { return adaPkgsMap;    }
+map_t<AdaIdentifier, SgInitializedName*>&    adaVars()    { return adaVarsMap;    }
+
+map_t<AdaIdentifier, std::vector<SgFunctionDeclaration*> >&
+adaFuncs()
+{
+  return adaFuncsMap;
+}
 
 map_t<std::pair<const SgFunctionDeclaration*, const SgTypedefType*>, SgAdaInheritedFunctionSymbol*>&
 inheritedSymbols()
@@ -127,16 +141,37 @@ void LabelAndLoopManager::gotojmp(Element_ID id, SgGotoStatement& gotostmt)
   gotos.emplace_back(&gotostmt, id);
 }
 
-AstContext::AstContext()
-: enum_builder(mkEnumeratorRef) /* all other members are default initialzied */
-{}
-
 AstContext
 AstContext::scope_npc(SgScopeStatement& s) const
 {
+  // make sure that the installed handler handles SgScopeStatement
+  // ADA_ASSERT(stmtHandler.target() == &defaultStatementHandler);
+
   AstContext tmp{*this};
 
   tmp.the_scope = &s;
+  return tmp;
+}
+
+AstContext
+AstContext::unscopedBlock(SgAdaUnscopedBlock& blk) const
+{
+  AstContext tmp{*this};
+
+  tmp.stmtHandler = [&blk](AstContext, SgStatement& stmt)
+                    {
+                      sg::linkParentChild(blk, stmt, &SgAdaUnscopedBlock::append_statement);
+                    };
+
+  return tmp;
+}
+
+AstContext
+AstContext::instantiation(SgAdaGenericInstanceDecl& instance) const
+{
+  AstContext tmp{*this};
+
+  tmp.enclosing_instantiation = &instance;
   return tmp;
 }
 
@@ -166,49 +201,14 @@ AstContext::sourceFileName(std::string& file) const
   return tmp;
 }
 
-AstContext
-AstContext::variantName(Name name) const
+// static
+void
+AstContext::defaultStatementHandler(AstContext ctx, SgStatement& s)
 {
-  AstContext tmp{*this};
+  SgScopeStatement& scope = ctx.scope();
 
-  tmp.active_variant_names.push_back(name);
-  return tmp;
-}
-
-AstContext
-AstContext::variantChoice(Element_ID_List choice) const
-{
-  AstContext tmp{*this};
-
-  tmp.active_variant_choices.push_back(choice);
-  return tmp;
-}
-
-const std::vector<Name>&
-AstContext::variantNames() const
-{
-  return active_variant_names;
-}
-
-const std::vector<Element_ID_List>&
-AstContext::variantChoices() const
-{
-  return active_variant_choices;
-}
-
-AstContext
-AstContext::enumBuilder(EnumeratorBuilder bld) const
-{
-  AstContext cpy{*this};
-
-  cpy.enum_builder = std::move(bld);
-  return cpy;
-}
-
-AstContext::EnumeratorBuilder
-AstContext::enumBuilder() const
-{
-  return enum_builder;
+  scope.append_statement(&s);
+  ADA_ASSERT(s.get_parent() == &scope);
 }
 
 
@@ -309,9 +309,7 @@ namespace
   /// clears all mappings created during translation
   void clearMappings()
   {
-    //~ asisUnits().clear();
     elemMap().clear();
-    //~ unitMap().clear();
 
     asisVars().clear();
     asisExcps().clear();
@@ -321,6 +319,9 @@ namespace
     adaTypes().clear();
     adaExcps().clear();
     adaPkgs().clear();
+    adaVars().clear();
+    adaFuncs().clear();
+
     inheritedSymbols().clear();
   }
 
@@ -590,6 +591,7 @@ namespace
     }
   }
 
+/*
   std::string
   astDotFileName(const SgSourceFile& file)
   {
@@ -602,6 +604,7 @@ namespace
     res += "_rose";
     return res;
   }
+*/
 
   struct UnitEntry
   {
@@ -851,6 +854,7 @@ namespace
       dfs(deps, *pos, res);
     }
 
+#if 0
     // print all module dependencies
     for (Unit_Struct_List_Struct* unit : allUnits)
     {
@@ -859,13 +863,12 @@ namespace
       ROSE_ASSERT(pos != deps.end());
       DependencyMap::value_type& el = *pos;
 
-      logWarn() << el.first.name << "\n  ";
-
       for (const std::string& n : el.second.dependencies)
         logWarn() << n << ", ";
 
       logWarn() << std::endl << std::endl;
     }
+#endif
 
     logTrace() << "\nTopologically sorted module processing order"
                << std::endl;
@@ -925,6 +928,13 @@ namespace
       std::string s = si::get_name(scope);
     }
 
+    //~ void logVarRefExp(SgVarRefExp* n)
+    //~ {
+      //~ if (!n) return;
+
+      //~ logWarn() << "verref = " << n->unparseToString() << std::endl;
+    //~ }
+
     void visit(SgNode* sageNode) override
     {
       SgLocatedNode* n = isSgLocatedNode(sageNode);
@@ -968,8 +978,9 @@ namespace
       //~ checkType(isSgExpression(n));
       //~ checkType(isSgInitializedName(n));
       //~ checkExpr(isSgAdaAttributeExp(n));
-      checkDecl(isSgDeclarationStatement(n));
-      checkScope(isSgScopeStatement(n));
+      //~ checkDecl(isSgDeclarationStatement(n));
+      //~ checkScope(isSgScopeStatement(n));
+      //~ logVarRefExp(isSgVarRefExp(n));
     }
   };
 
@@ -978,6 +989,7 @@ namespace
   ///   While some issues, such as parent pointers will be fixed at the
   ///   post processing stage, it may be good to point inconsistencies
   ///   out anyway.
+  inline
   void astSanityCheck(SgSourceFile* file)
   {
     AstSanityCheck checker;
@@ -1009,16 +1021,18 @@ void convertAsisToROSE(Nodes_Struct& headNodes, SgSourceFile* file)
   std::for_each(units.begin(), units.end(), UnitCreator{AstContext{}.scope(astScope)});
   clearMappings();
 
-  std::string astDotFile = astDotFileName(*file);
-  logTrace() << "Generating DOT file for ROSE AST: " << astDotFile << std::endl;
-  generateDOT(&astScope, astDotFile);
+  //~ std::string astDotFile = astDotFileName(*file);
+  //~ logTrace() << "Generating DOT file for ROSE AST: " << astDotFile << std::endl;
+  //~ generateDOT(&astScope, astDotFile);
 
   logInfo() << "Checking AST post-production" << std::endl;
   inheritFileInfo(file);
-  astSanityCheck(file);
+  //~ astSanityCheck(file);
 
   file->set_processedToIncludeCppDirectivesAndComments(false);
   logInfo() << "Building ROSE AST done" << std::endl;
+
+  //~ si::ada::convertToOperatorRepresentation(&astScope);
 }
 
 bool FAIL_ON_ERROR(AstContext ctx)

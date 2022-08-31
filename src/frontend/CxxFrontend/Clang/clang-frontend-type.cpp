@@ -47,12 +47,14 @@ SgNode * ClangToSageTranslator::Traverse(const clang::Type * type) {
         return NULL;
 
     std::map<const clang::Type *, SgNode *>::iterator it = p_type_translation_map.find(type);
-        std::cerr << "Traverse Type : " << type << " " << type->getTypeClassName ()<< std::endl;
+#if DEBUG_TRAVERSE_TYPE
+    std::cerr << "Traverse Type : " << type << " " << type->getTypeClassName ()<< std::endl;
+#endif
     if (it != p_type_translation_map.end()) {
 #if DEBUG_TRAVERSE_TYPE
-        std::cerr << " already visited : node = " << it->second << std::endl;
+      std::cerr << " already visited : node = " << it->second << std::endl;
 #endif
-         return it->second;
+      return it->second;
     }
 
     SgNode * result = NULL;
@@ -672,7 +674,9 @@ bool ClangToSageTranslator::VisitFunctionProtoType(clang::FunctionProtoType * fu
     bool res = true;
     SgFunctionParameterTypeList * param_type_list = new SgFunctionParameterTypeList();
     for (unsigned i = 0; i < function_proto_type->getNumParams(); i++) {
-std::cerr << "funcProtoType: " << i << " th param" << std::endl;
+#if DEBUG_VISIT_TYPE
+        std::cerr << "funcProtoType: " << i << " th param" << std::endl;
+#endif
         SgType * param_type = buildTypeFromQualifiedType(function_proto_type->getParamType(i));
 
         param_type_list->append_argument(param_type);
@@ -860,7 +864,6 @@ bool ClangToSageTranslator::VisitEnumType(clang::EnumType * enum_type, SgNode **
         SgEnumDeclaration * sg_decl = isSgEnumDeclaration(tmp_decl);
 
         ROSE_ASSERT(sg_decl != NULL);
-
         *node = sg_decl->get_type();
     }
     else {
@@ -989,6 +992,12 @@ bool ClangToSageTranslator::VisitTypeOfType(clang::TypeOfType * type_of_type, Sg
     std::cerr << "ClangToSageTranslator::TypeOfType" << std::endl;
 #endif
     bool res = true;
+
+    SgType* underlyinigType = buildTypeFromQualifiedType(type_of_type->getUnderlyingType());
+
+    SgType* type = SageBuilder::buildTypeOfType(NULL,underlyinigType);
+
+    *node = type;
 
     ROSE_ASSERT(FAIL_FIXME == 0); // FIXME 
 

@@ -114,7 +114,7 @@ unparseToCompleteStringForDOT( SgNode* astNode )
      inputUnparseInfoPointer->unset_SkipComments();    // generate comments
      inputUnparseInfoPointer->unset_SkipWhitespaces(); // generate all whitespaces to format the code
      string outputString = globalUnparseToString(astNode,inputUnparseInfoPointer);
-     string returnString = StringUtility::escapeNewLineCharaters(outputString);
+     string returnString = StringUtility::escapeNewlineAndDoubleQuoteCharacters(outputString);
      return returnString;
    }
 

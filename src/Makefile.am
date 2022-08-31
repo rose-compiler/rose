@@ -229,6 +229,7 @@ libroseLibraries = \
    $(top_builddir)/src/roseExtensions/failSafe/libfailsafe.la \
    $(top_builddir)/src/Rose/librose_partial.la \
    $(top_builddir)/src/Rose/AST/libRoseAST.la \
+   $(top_builddir)/src/Rose/CodeGen/libRoseCodeGen.la \
    $(libroseSqlite3xConnection) \
    $(libroseQtExtension)
 
@@ -279,18 +280,22 @@ pkginclude_HEADERS = \
 # Header files organized by namespace. If the directory part of the name doesn't match
 # a C++ namespace, then DO NOT put the header file in this list.
 nobase_pkginclude_HEADERS=								\
+	Rose/BasicTypes.h								\
 	Rose/BinaryAnalysis.h								\
 	Rose/BinaryAnalysis/AbstractLocation.h						\
 	Rose/BinaryAnalysis/AsmFunctionIndex.h						\
 	Rose/BinaryAnalysis/AstHash.h							\
+	Rose/BinaryAnalysis/BasicTypes.h						\
 	Rose/BinaryAnalysis/BestMapAddress.h						\
 	Rose/BinaryAnalysis/BinaryLoader.h						\
 	Rose/BinaryAnalysis/BinaryLoaderElf.h						\
 	Rose/BinaryAnalysis/BinaryLoaderElfObj.h					\
 	Rose/BinaryAnalysis/BinaryLoaderPe.h						\
+	Rose/BinaryAnalysis/ByteCode/Analysis.h						\
 	Rose/BinaryAnalysis/CallingConvention.h						\
 	Rose/BinaryAnalysis/CodeInserter.h						\
 	Rose/BinaryAnalysis/Concolic.h							\
+	Rose/BinaryAnalysis/ConcreteLocation.h						\
 	Rose/BinaryAnalysis/Concolic/Architecture.h					\
 	Rose/BinaryAnalysis/Concolic/BasicTypes.h					\
 	Rose/BinaryAnalysis/Concolic/ConcolicExecutor.h					\
@@ -309,19 +314,26 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/Concolic/SystemCall.h					\
 	Rose/BinaryAnalysis/Concolic/TestCase.h						\
 	Rose/BinaryAnalysis/Concolic/TestSuite.h					\
-	Rose/BinaryAnalysis/Concolic/io-utility.h					\
 	Rose/BinaryAnalysis/ControlFlow.h						\
 	Rose/BinaryAnalysis/DataFlow.h							\
 	Rose/BinaryAnalysis/Debugger.h							\
 	Rose/BinaryAnalysis/Demangler.h							\
 	Rose/BinaryAnalysis/Disassembler.h						\
-	Rose/BinaryAnalysis/DisassemblerAarch32.h					\
-	Rose/BinaryAnalysis/DisassemblerAarch64.h					\
-	Rose/BinaryAnalysis/DisassemblerM68k.h						\
-	Rose/BinaryAnalysis/DisassemblerMips.h						\
-	Rose/BinaryAnalysis/DisassemblerNull.h						\
-	Rose/BinaryAnalysis/DisassemblerPowerpc.h					\
-	Rose/BinaryAnalysis/DisassemblerX86.h						\
+	Rose/BinaryAnalysis/Disassembler/Aarch32.h					\
+	Rose/BinaryAnalysis/Disassembler/Aarch64.h					\
+	Rose/BinaryAnalysis/Disassembler/Base.h						\
+	Rose/BinaryAnalysis/Disassembler/BasicTypes.h					\
+	Rose/BinaryAnalysis/DisassemblerCil.h						\
+	Rose/BinaryAnalysis/Disassembler/Exception.h					\
+	Rose/BinaryAnalysis/DisassemblerJvm.h						\
+	Rose/BinaryAnalysis/Disassembler/M68k.h						\
+	Rose/BinaryAnalysis/Disassembler/Mips.h						\
+	Rose/BinaryAnalysis/Disassembler/Null.h						\
+	Rose/BinaryAnalysis/Disassembler/Powerpc.h					\
+	Rose/BinaryAnalysis/Disassembler/X86.h						\
+	Rose/BinaryAnalysis/Dwarf.h                                                     \
+	Rose/BinaryAnalysis/Dwarf/Attributes.h                                          \
+	Rose/BinaryAnalysis/Dwarf/Constants.h                                           \
 	Rose/BinaryAnalysis/FeasiblePath.h						\
 	Rose/BinaryAnalysis/FunctionCall.h						\
 	Rose/BinaryAnalysis/FunctionSimilarity.h					\
@@ -329,11 +341,50 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/InstructionCache.h						\
 	Rose/BinaryAnalysis/InstructionEnumsAarch32.h					\
 	Rose/BinaryAnalysis/InstructionEnumsAarch64.h					\
+	Rose/BinaryAnalysis/InstructionEnumsCil.h					\
 	Rose/BinaryAnalysis/InstructionEnumsJvm.h					\
 	Rose/BinaryAnalysis/InstructionEnumsM68k.h					\
 	Rose/BinaryAnalysis/InstructionEnumsMips.h					\
 	Rose/BinaryAnalysis/InstructionEnumsPowerpc.h					\
 	Rose/BinaryAnalysis/InstructionEnumsX86.h					\
+	Rose/BinaryAnalysis/InstructionSemantics.h					\
+	Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Dispatcher.h		\
+	Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Exception.h		\
+	Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Formatter.h		\
+	Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCell.h		\
+	Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCellList.h		\
+	Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCellMap.h		\
+	Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCellState.h	\
+	Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryState.h		\
+	Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Merger.h			\
+	Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RegisterState.h		\
+	Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RegisterStateGeneric.h	\
+	Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RiscOperators.h		\
+	Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/State.h			\
+	Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/SValue.h			\
+	Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/SymbolicMemory.h		\
+	Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Types.h			\
+	Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h			\
+	Rose/BinaryAnalysis/InstructionSemantics/ConcreteSemantics.h			\
+	Rose/BinaryAnalysis/InstructionSemantics/DataFlowSemantics.h			\
+	Rose/BinaryAnalysis/InstructionSemantics/DispatcherAarch32.h			\
+	Rose/BinaryAnalysis/InstructionSemantics/DispatcherAarch64.h			\
+	Rose/BinaryAnalysis/InstructionSemantics/DispatcherM68k.h			\
+	Rose/BinaryAnalysis/InstructionSemantics/DispatcherPowerpc.h			\
+	Rose/BinaryAnalysis/InstructionSemantics/DispatcherX86.h			\
+	Rose/BinaryAnalysis/InstructionSemantics/IntervalSemantics.h			\
+	Rose/BinaryAnalysis/InstructionSemantics/LlvmSemantics.h			\
+	Rose/BinaryAnalysis/InstructionSemantics/MultiSemantics.h			\
+	Rose/BinaryAnalysis/InstructionSemantics/NativeSemantics.h			\
+	Rose/BinaryAnalysis/InstructionSemantics/NullSemantics.h			\
+	Rose/BinaryAnalysis/InstructionSemantics/PartialSymbolicSemantics.h		\
+	Rose/BinaryAnalysis/InstructionSemantics/SourceAstSemantics.h			\
+	Rose/BinaryAnalysis/InstructionSemantics/StaticSemantics.h			\
+	Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h			\
+	Rose/BinaryAnalysis/InstructionSemantics/TestSemantics.h			\
+	Rose/BinaryAnalysis/InstructionSemantics/TaintSemantics.h			\
+	Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h			\
+	Rose/BinaryAnalysis/InstructionSemantics/Util.h					\
 	Rose/BinaryAnalysis/InstructionSemantics2.h					\
 	Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Dispatcher.h		\
 	Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Exception.h		\
@@ -352,16 +403,6 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/SymbolicMemory.h	\
 	Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Types.h			\
 	Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics.h			\
-	Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsDispatcher.h		\
-	Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsException.h		\
-	Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsFormatter.h		\
-	Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsMemoryState.h		\
-	Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsMerger.h			\
-	Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsRegisterState.h		\
-	Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsRiscOperators.h		\
-	Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsState.h			\
-	Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsSValue.h			\
-	Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsTypes.h			\
 	Rose/BinaryAnalysis/InstructionSemantics2/ConcreteSemantics.h			\
 	Rose/BinaryAnalysis/InstructionSemantics2/DataFlowSemantics.h			\
 	Rose/BinaryAnalysis/InstructionSemantics2/DispatcherAarch32.h			\
@@ -371,18 +412,12 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/InstructionSemantics2/DispatcherX86.h			\
 	Rose/BinaryAnalysis/InstructionSemantics2/IntervalSemantics.h			\
 	Rose/BinaryAnalysis/InstructionSemantics2/LlvmSemantics.h			\
-	Rose/BinaryAnalysis/InstructionSemantics2/MemoryCell.h				\
-	Rose/BinaryAnalysis/InstructionSemantics2/MemoryCellList.h			\
-	Rose/BinaryAnalysis/InstructionSemantics2/MemoryCellMap.h			\
-	Rose/BinaryAnalysis/InstructionSemantics2/MemoryCellState.h			\
 	Rose/BinaryAnalysis/InstructionSemantics2/MultiSemantics.h			\
 	Rose/BinaryAnalysis/InstructionSemantics2/NativeSemantics.h			\
 	Rose/BinaryAnalysis/InstructionSemantics2/NullSemantics.h			\
 	Rose/BinaryAnalysis/InstructionSemantics2/PartialSymbolicSemantics.h		\
-	Rose/BinaryAnalysis/InstructionSemantics2/RegisterStateGeneric.h		\
 	Rose/BinaryAnalysis/InstructionSemantics2/SourceAstSemantics.h			\
 	Rose/BinaryAnalysis/InstructionSemantics2/StaticSemantics.h			\
-	Rose/BinaryAnalysis/InstructionSemantics2/SymbolicMemory.h			\
 	Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h			\
 	Rose/BinaryAnalysis/InstructionSemantics2/TestSemantics.h			\
 	Rose/BinaryAnalysis/InstructionSemantics2/TraceSemantics.h			\
@@ -449,8 +484,9 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/PointerDetection.h						\
 	Rose/BinaryAnalysis/Reachability.h						\
 	Rose/BinaryAnalysis/RegisterDescriptor.h					\
+	Rose/BinaryAnalysis/RegisterDictionary.h					\
+	Rose/BinaryAnalysis/RegisterNames.h						\
 	Rose/BinaryAnalysis/RegisterParts.h						\
-	Rose/BinaryAnalysis/Registers.h							\
 	Rose/BinaryAnalysis/ReturnValueUsed.h						\
 	Rose/BinaryAnalysis/SerialIo.h							\
 	Rose/BinaryAnalysis/SmtCommandLine.h						\
@@ -498,6 +534,7 @@ nobase_pkginclude_HEADERS=								\
 	Rose/FormattedTable.h								\
 	Rose/GraphUtility.h								\
 	Rose/Initialize.h								\
+	Rose/Location.h									\
 	Rose/Progress.h									\
 	Rose/RecursionCounter.h								\
 	Rose/SourceLocation.h								\
@@ -508,7 +545,8 @@ nobase_pkginclude_HEADERS=								\
 	Rose/StringUtility/NumberToString.h						\
 	Rose/StringUtility/Predicate.h							\
 	Rose/StringUtility/SplitJoin.h							\
-	Rose/StringUtility/StringToNumber.h
+	Rose/StringUtility/StringToNumber.h						\
+	Rose/Yaml.h
 
 
 ########################################################################################################################
@@ -656,7 +694,7 @@ rose_config_installed_cppflags =		\
 	$(ROSE_PHP_INCLUDES)			\
 	$(ROSE_YICES_INCLUDES)			\
 	$(ROSE_Z3_INCLUDES)			\
-	$(ROSE_YAML_INCLUDES)			\
+	$(ROSE_YAMLCPP_INCLUDES)		\
 	$(ROSE_LIBMAGIC_INCLUDES)		\
 	$(ROSE_ELF_INCLUDES)			\
 	$(ROSE_DWARF_INCLUDES)			\
@@ -698,7 +736,7 @@ rose_config_installed_ldflags =			\
 	$(ROSE_ATERM_LIBS)			\
 	$(ROSE_FLANG_LIBS)			\
 	$(ROSE_COBOL_PT_LIBS_WITH_PATH)         \
-	$(ROSE_YAML_LIBS_WITH_PATH)		\
+	$(ROSE_YAMLCPP_LIBS_WITH_PATH)		\
 	$(ROSE_LIBMAGIC_LIBS_WITH_PATH)		\
 	$(ROSE_DLIB_LIBS_WITH_PATH)		\
 	$(ROSE_GCRYPT_LIBS_WITH_PATH)		\

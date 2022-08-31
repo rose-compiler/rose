@@ -65,6 +65,7 @@ Grammar::setUpStatements ()
 
      NEW_TERMINAL_MACRO (CatchStatementSeq,         "CatchStatementSeq",         "CATCH_STATEMENT_SEQ" );
      NEW_TERMINAL_MACRO (FunctionParameterList,     "FunctionParameterList",     "FUNCTION_PARAMETER_LIST" );
+     NEW_TERMINAL_MACRO (AdaParameterList,          "AdaParameterList",          "ADA_PARAMETER_LIST" );
      NEW_TERMINAL_MACRO (CtorInitializerList,       "CtorInitializerList",       "CTOR_INITIALIZER_LIST" );
      NEW_TERMINAL_MACRO (BasicBlock,                "BasicBlock",                "BASIC_BLOCK_STMT");
      NEW_TERMINAL_MACRO (Global,                    "Global",                    "GLOBAL_STMT" );
@@ -121,6 +122,8 @@ Grammar::setUpStatements ()
      NEW_TERMINAL_MACRO (AdaSelectStmt,             "AdaSelectStmt",             "ADA_SELECT_STMT" );
      NEW_TERMINAL_MACRO (AdaSelectAlternativeStmt,  "AdaSelectAlternativeStmt",  "ADA_SELECT_ALTERNATIVE_STMT" );
      NEW_TERMINAL_MACRO (AdaTerminateStmt,          "AdaTerminateStmt",          "ADA_TERMINATE_STMT" );
+     NEW_TERMINAL_MACRO (AdaUnscopedBlock,          "AdaUnscopedBlock",          "ADA_UNSCOPED_BLOCK" );
+     NEW_TERMINAL_MACRO (AdaVariantWhenStmt,        "AdaVariantWhenStmt",        "ADA_VARIANT_WHEN_STMT" );
      NEW_TERMINAL_MACRO (SpawnStmt,                 "SpawnStmt",                 "SPAWN_STMT" );
 
   // DQ (10/14/2014): Added template typedef as part of C++11 support.
@@ -161,21 +164,9 @@ Grammar::setUpStatements ()
   // representation of the template declaration.  In this case a template function declaration is more like a function declaration than a template declaration.
      NEW_TERMINAL_MACRO (TemplateDeclaration, "TemplateDeclaration", "TEMPLATE_DECL_STMT");
 
-  // PP (8/6/21): Adding support for Ada variant records
-  //   type Point2D (ty : FieldType) is record
-  //     case (ty)
-  //       when IntField  => xi, yi : Integer;
-  //       when RealField => xf, yf : Real;
-  //     end case;
-  //   end record;
-  //   xi, yi, xf, and xf are conditional fields. Since records are modeled as structs,
-  //   they cannot contain case statements (= SgSwitchStatement)
-  //   => solution: add the conditions to VariableDeclaration and call it AdaVariantFieldDecl
-     NEW_TERMINAL_MACRO (AdaVariantFieldDecl, "AdaVariantFieldDecl", "ADA_VARIANT_FIELD_DECL");
-
 
   // DQ (12/21/2011): Newer version of code.
-     NEW_NONTERMINAL_MACRO (VariableDeclaration, TemplateVariableDeclaration | AdaVariantFieldDecl,
+     NEW_NONTERMINAL_MACRO (VariableDeclaration, TemplateVariableDeclaration,
            "VariableDeclaration",       "VAR_DECL_STMT", true );
 
   // DQ (9/12/2004): Adding new IR node to support instantiation directives (C++ template language construct)
@@ -576,6 +567,7 @@ Grammar::setUpStatements ()
      NEW_TERMINAL_MACRO (AdaFormalPackageDecl,  "AdaFormalPackageDecl", "ADA_FORMAL_PACKAGE_DECL_STMT" );
   // PP (07/14/20): Adding Ada discriminated type declarations
      NEW_TERMINAL_MACRO (AdaDiscriminatedTypeDecl, "AdaDiscriminatedTypeDecl", "ADA_DISCRIMINATED_TYPE_DECL" );
+     NEW_TERMINAL_MACRO (AdaVariantDecl,      "AdaVariantDecl", "ADA_VARIANT_DECL_STATEMENT" );
 
      NEW_NONTERMINAL_MACRO (DeclarationStatement,
           FunctionParameterList                   | VariableDeclaration       | VariableDefinition           |
@@ -598,7 +590,8 @@ Grammar::setUpStatements ()
           AdaProtectedSpecDecl                    | AdaProtectedBodyDecl      | AdaProtectedTypeDecl         |
           AdaRepresentationClause                 | AdaComponentClause        | AdaAttributeClause           |
           AdaEnumRepresentationClause             | AdaGenericDecl            | AdaFormalTypeDecl            |
-          AdaDiscriminatedTypeDecl                | AdaGenericInstanceDecl    | AdaFormalPackageDecl
+          AdaDiscriminatedTypeDecl                | AdaGenericInstanceDecl    | AdaFormalPackageDecl         |
+          AdaParameterList                        | AdaVariantDecl
           /*| ClassPropertyList |*/,
           "DeclarationStatement", "DECL_STMT", false);
 
@@ -621,7 +614,7 @@ Grammar::setUpStatements ()
              JavaSynchronizedStatement | AsyncStmt              | FinishStmt                      | AtStmt                |
              AtomicStmt                | WhenStmt               | ImageControlStatement | /* JavaPackageDeclaration | */
              AdaExitStmt               | AdaDelayStmt           | AdaLoopStmt                     | AdaSelectStmt         |
-             AdaSelectAlternativeStmt  | AdaTerminateStmt,
+             AdaSelectAlternativeStmt  | AdaTerminateStmt       | AdaUnscopedBlock                | AdaVariantWhenStmt,
              "Statement","StatementTag", false);
 
   // DQ (11/24/2007): These have been moved to be declarations, so they can appear where only declaration statements are allowed
@@ -1666,9 +1659,31 @@ Grammar::setUpStatements ()
      VariableDefinition.setDataPrototype ( "SgExpression*", "bitfield", "= NULL",
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
+     AdaVariantDecl.setFunctionPrototype  ( "HEADER_ADA_VARIANT_DECL", "../Grammar/Statement.code" );
+     AdaVariantDecl.setDataPrototype("SgExpression*", "discriminant", "= nullptr",
+                                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     AdaVariantDecl.setDataPrototype("SgAdaUnscopedBlock*", "variants", "= nullptr",
+                                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+
+
   // VariableDefinition.setDataPrototype("SgExpressionRoot*", "initializer_expr_root", "= NULL",
   //                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL,
   //                                      NO_COPY_DATA);
+
+     AdaParameterList.setFunctionPrototype ( "HEADER_ADA_PARAMETER_LIST", "../Grammar/Statement.code" );
+
+     AdaParameterList.editSubstitute ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
+     AdaParameterList.editSubstitute ( "LIST_DATA_TYPE", "SgDeclarationStatementPtrList" );
+     AdaParameterList.editSubstitute ( "LIST_NAME", "parameters" );
+     AdaParameterList.editSubstitute ( "LIST_FUNCTION_RETURN_TYPE", "SgDeclarationStatementPtrList::iterator" );
+     AdaParameterList.editSubstitute ( "LIST_FUNCTION_NAME", "parameter" );
+     AdaParameterList.editSubstitute ( "LIST_ELEMENT_DATA_TYPE", "SgDeclarationStatement*" );
+     AdaParameterList.setDataPrototype ( "SgDeclarationStatementPtrList", "parameters", "",
+                                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+
+
 
      ClassDeclaration.setFunctionPrototype ( "HEADER_CLASS_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
      ClassDeclaration.setFunctionPrototype ( "HEADER_TEMPLATE_SPECIALIZATION_SUPPORT", "../Grammar/Statement.code" );
@@ -2023,17 +2038,6 @@ Grammar::setUpStatements ()
 
   // *******************************************************************************
 
-
-  // *******************************************************************************
-  // PP (6/8/21): Adding support for Ada variant records
-  // *******************************************************************************
-
-     AdaVariantFieldDecl.setFunctionPrototype ( "HEADER_ADA_VARIANT_FIELD_DECL", "../Grammar/Statement.code" );
-
-     AdaVariantFieldDecl.setDataPrototype ( "SgExprListExp*", "variantConditions", "= NULL",
-                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // *******************************************************************************
 
 
 
@@ -2731,6 +2735,22 @@ Grammar::setUpStatements ()
 
      AdaTerminateStmt.setFunctionPrototype ( "HEADER_ADA_TERMINATE_STATEMENT", "../Grammar/Statement.code" );
 
+     AdaUnscopedBlock.setFunctionPrototype ( "HEADER_ADA_UNSCOPED_BLOCK", "../Grammar/Statement.code" );
+     AdaUnscopedBlock.editSubstitute( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
+     AdaUnscopedBlock.editSubstitute( "LIST_DATA_TYPE", "SgStatementPtrList");
+     AdaUnscopedBlock.editSubstitute( "LIST_NAME", "statements" );
+     AdaUnscopedBlock.editSubstitute( "LIST_FUNCTION_RETURN_TYPE", "void" );
+     AdaUnscopedBlock.editSubstitute( "LIST_FUNCTION_NAME", "statement" );
+     AdaUnscopedBlock.editSubstitute( "LIST_ELEMENT_DATA_TYPE", "SgStatement*" );
+     AdaUnscopedBlock.setDataPrototype( "SgStatementPtrList", "statements", "= {}",
+                                        NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE );
+
+     AdaVariantWhenStmt.setFunctionPrototype ( "HEADER_ADA_VARIANT_WHEN_STMT", "../Grammar/Statement.code" );
+     AdaVariantWhenStmt.setDataPrototype( "SgExprListExp*", "choices", "= nullptr",
+                                          CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE );
+     AdaVariantWhenStmt.setDataPrototype( "SgAdaUnscopedBlock*", "components", "= nullptr",
+                                          CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE );
+
      // Ada end
 
      AsmStmt.setFunctionPrototype  ( "HEADER_ASM_STATEMENT", "../Grammar/Statement.code" );
@@ -3178,6 +3198,11 @@ Grammar::setUpStatements ()
                                              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AdaFormalPackageDecl.setDataPrototype ( "SgExprListExp*", "actual_parameters", "= NULL",
                                              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     // PP (7/15/22): adding support for storing prototype instantiations
+     AdaFormalPackageDecl.setDataPrototype ( "SgDeclarationStatement*", "prototype", "= nullptr",
+                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AdaFormalPackageDecl.setDataPrototype ( "SgScopeStatement*", "prototypeScope", "= nullptr",
+                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      AdaGenericInstanceDecl.setFunctionPrototype ( "HEADER_ADA_GENERIC_INSTANCE_DECL", "../Grammar/Statement.code" );
      AdaGenericInstanceDecl.setDataPrototype ( "SgName", "name", "=\"\"",
@@ -3186,13 +3211,17 @@ Grammar::setUpStatements ()
      // was: AdaGenericInstanceDecl.setDataPrototype ( "SgAdaGenericDecl*", "declaration", "= NULL",
      AdaGenericInstanceDecl.setDataPrototype ( "SgDeclarationStatement*", "declaration", "= nullptr",
                                                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AdaGenericInstanceDecl.setDataPrototype ( "SgType*", "return_type", "= NULL",
-                                               CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     // PP (4/1/22): adding scope to store actual instantiation
+     //              \todo specify which scope it will be..
+     AdaGenericInstanceDecl.setDataPrototype ( "SgScopeStatement*", "instantiatedScope", "= nullptr",
+                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     // PP (4/1/22): return_type is not used currently
+     //~ AdaGenericInstanceDecl.setDataPrototype ( "SgType*", "return_type", "= NULL",
+                                               //~ CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AdaGenericInstanceDecl.setDataPrototype ( "SgExprListExp*", "actual_parameters", "= NULL",
                                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AdaGenericInstanceDecl.setDataPrototype ( "SgScopeStatement*", "scope", "= nullptr",
                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
 
 
      // tasks
@@ -3260,22 +3289,15 @@ Grammar::setUpStatements ()
 
      AdaDiscriminatedTypeDecl.setFunctionPrototype  ( "HEADER_ADA_DISCRIMINATED_TYPE_DECL_STATEMENT", "../Grammar/Statement.code" );
 
-     AdaDiscriminatedTypeDecl.editSubstitute   ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
-     AdaDiscriminatedTypeDecl.editSubstitute   ( "LIST_DATA_TYPE", "SgInitializedNamePtrList" );
-     AdaDiscriminatedTypeDecl.editSubstitute   ( "LIST_NAME", "discriminants" );
-     AdaDiscriminatedTypeDecl.editSubstitute   ( "LIST_FUNCTION_RETURN_TYPE", "SgInitializedNamePtrList::iterator" );
-     AdaDiscriminatedTypeDecl.editSubstitute   ( "LIST_FUNCTION_NAME", "discriminant" );
-     AdaDiscriminatedTypeDecl.editSubstitute   ( "LIST_ELEMENT_DATA_TYPE", "SgInitializedName*" );
 
-     AdaDiscriminatedTypeDecl.setDataPrototype ( "SgInitializedNamePtrList", "discriminants", "",
-                                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AdaDiscriminatedTypeDecl.setDataPrototype ( "SgDeclarationScope*", "discriminantScope", "= nullptr",
+                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AdaDiscriminatedTypeDecl.setDataPrototype ( "SgAdaParameterList*", "discriminants", "= nullptr",
+                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     AdaDiscriminatedTypeDecl.setDataPrototype ( "SgDeclarationStatement*", "discriminatedDecl", "= nullptr",
+                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      AdaDiscriminatedTypeDecl.setDataPrototype ( "SgAdaDiscriminatedType*", "type", "= nullptr",
                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-     AdaDiscriminatedTypeDecl.setDataPrototype ( "SgDeclarationScope*", "discriminantScope", "= NULL",
-                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AdaDiscriminatedTypeDecl.setDataPrototype ( "SgDeclarationStatement*", "discriminatedDecl", "= NULL",
-                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 #if 0 /* NO_NAME */
      // the name is computed from the child
      AdaDiscriminatedTypeDecl.setDataPrototype ( "SgName", "name", "= \"\"",
@@ -4395,6 +4417,9 @@ Grammar::setUpStatements ()
      AdaSelectStmt.setFunctionSource        ( "SOURCE_ADA_SELECT_STATEMENT", "../Grammar/Statement.code" );
      AdaSelectAlternativeStmt.setFunctionSource ( "SOURCE_ADA_SELECT_ALTERNATIVE_STATEMENT", "../Grammar/Statement.code" );
      AdaTerminateStmt.setFunctionSource     ( "SOURCE_ADA_TERMINATE_STATEMENT", "../Grammar/Statement.code" );
+     AdaUnscopedBlock.setFunctionSource     ( "SOURCE_ADA_UNSCOPED_BLOCK", "../Grammar/Statement.code" );
+     AdaVariantWhenStmt.setFunctionSource           ( "SOURCE_ADA_VARIANT_WHEN_STMT", "../Grammar/Statement.code" );
+
      AsmStmt.setFunctionSource              ( "SOURCE_ASM_STATEMENT", "../Grammar/Statement.code" );
      SpawnStmt.setFunctionSource            ( "SOURCE_SPAWN_STATEMENT", "../Grammar/Statement.code" );
 
@@ -4408,6 +4433,7 @@ Grammar::setUpStatements ()
      ForInitStatement.setFunctionSource     ( "SOURCE_FOR_INIT_STATEMENT", "../Grammar/Statement.code" );
      CatchStatementSeq.setFunctionSource           ( "SOURCE_CATCH_STATEMENT_SEQ", "../Grammar/Statement.code" );
      FunctionParameterList.setFunctionSource( "SOURCE_FUNCTION_PARAMETER_LIST", "../Grammar/Statement.code" );
+     AdaParameterList.setFunctionSource( "SOURCE_ADA_PARAMETER_LIST", "../Grammar/Statement.code" );
      CtorInitializerList.setFunctionSource  ( "SOURCE_CTOR_INITIALIZER_LIST", "../Grammar/Statement.code" );
 
      TypedefDeclaration.setFunctionSource   ( "SOURCE_TYPEDEF_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
@@ -4442,9 +4468,6 @@ Grammar::setUpStatements ()
   // DQ (12/6/2011): Adding support for template variables (e.g. static template data members).
      TemplateVariableDeclaration.setFunctionSource       ( "SOURCE_TEMPLATE_VARIABLE_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
 
-  // PP (06/08/21): Ada
-     AdaVariantFieldDecl.setFunctionSource       ( "SOURCE_ADA_VARIANT_FIELD_DECL", "../Grammar/Statement.code" );
-
   // DQ (10/14/2014): Adding template typedef for C++11 support.
      TemplateTypedefDeclaration.setFunctionSource       ( "SOURCE_TEMPLATE_TYPEDEF_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
 
@@ -4474,6 +4497,7 @@ Grammar::setUpStatements ()
      AdaGenericInstanceDecl.setFunctionSource ( "SOURCE_ADA_GENERIC_INSTANCE_DECL", "../Grammar/Statement.code" );
      AdaFormalTypeDecl.setFunctionSource ( "SOURCE_ADA_FORMAL_TYPE_DECL_STATEMENT", "../Grammar/Statement.code" );
      AdaFormalPackageDecl.setFunctionSource ( "SOURCE_ADA_FORMAL_PACKAGE_DECL_STATEMENT", "../Grammar/Statement.code" );
+     AdaVariantDecl.setFunctionSource ( "SOURCE_ADA_VARIANT_DECL", "../Grammar/Statement.code" );
 
   // DQ (3/22/2019): Adding EmptyDeclaration to support addition of comments and CPP directives that will permit
   // token-based unparsing to work with greater precision. For example, used to add an include directive with

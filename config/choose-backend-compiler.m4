@@ -330,19 +330,24 @@ AC_MSG_NOTICE([testing value of FC = "$FC"])
                       BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER=0
                       ;;
                   *)
-                      AC_MSG_FAILURE([unknown or unsupported version of XCode: XCODE_VERSION_MINOR = "$XCODE_VERSION_MINOR"])
+                      AC_MSG_FAILURE([unknown or unsupported version of XCode: Major version is 12, XCODE_VERSION_PATCH = "$XCODE_VERSION_PATCH"])
                       ;;
               esac
           elif test $XCODE_VERSION_MAJOR -eq 13; then
-            # Rasmussen (01/27/2022): Added results for clang --version 13.0.0
-              case "$XCODE_VERSION_PATCH" in
+            # Rasmussen (05/19/2022): Updated results for clang --version 13.0.0-13.1.6
+              case "$XCODE_VERSION_MINOR" in
                   0)
                       BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=12
                       BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=0
                       BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER=0
                       ;;
+                  1)
+                      BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=13
+                      BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=0
+                      BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER=0
+                      ;;
                   *)
-                      AC_MSG_FAILURE([unknown or unsupported version of XCode: XCODE_VERSION_MINOR = "$XCODE_VERSION_MINOR"])
+                      AC_MSG_FAILURE([unknown or unsupported version of XCode: Major version is 13, XCODE_VERSION_MINOR = "$XCODE_VERSION_MINOR"])
                       ;;
               esac
           else

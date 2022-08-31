@@ -87,6 +87,10 @@ namespace
       support_opt(n.get_subConstraint());
     }
 
+    void handle(SgAdaNullConstraint&)
+    { /* nothing */
+    }
+
     void handle(SgAdaIndexConstraint& n)
     {
       prn(" (");

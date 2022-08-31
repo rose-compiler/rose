@@ -14,10 +14,10 @@
 #include <boost/regex.hpp>
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
-#include <Rose/BinaryAnalysis/DisassemblerM68k.h>
-#include <Rose/BinaryAnalysis/DisassemblerMips.h>
-#include <Rose/BinaryAnalysis/DisassemblerPowerpc.h>
-#include <Rose/BinaryAnalysis/DisassemblerX86.h>
+#include <Rose/BinaryAnalysis/Disassembler/M68k.h>
+#include <Rose/BinaryAnalysis/Disassembler/Mips.h>
+#include <Rose/BinaryAnalysis/Disassembler/Powerpc.h>
+#include <Rose/BinaryAnalysis/Disassembler/X86.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Modules.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesElf.h>
@@ -37,7 +37,7 @@
 #include <Sawyer/Stopwatch.h>
 #include <Rose/BinaryAnalysis/SRecord.h>
 
-#ifdef ROSE_HAVE_LIBYAML
+#ifdef ROSE_HAVE_YAMLCPP
 #include <yaml-cpp/yaml.h>
 #endif
 
@@ -50,6 +50,21 @@ namespace Partitioner2 {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Utility functions
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Engine::Engine()
+    : interp_(NULL), basicBlockWorkList_(BasicBlockWorkList::instance(this, settings_.partitioner.functionReturnAnalysisMaxSorts)),
+      progress_(Progress::instance()) {
+    init();
+}
+
+Engine::Engine(const Settings &settings)
+    : settings_(settings), interp_(NULL),
+      basicBlockWorkList_(BasicBlockWorkList::instance(this, settings_.partitioner.functionReturnAnalysisMaxSorts)),
+      progress_(Progress::instance()) {
+    init();
+}
+
+Engine::~Engine() {}
 
 void
 Engine::init() {
@@ -70,7 +85,7 @@ void
 Engine::reset() {
     interp_ = NULL;
     binaryLoader_ = BinaryLoader::Ptr();
-    disassembler_ = NULL;
+    disassembler_ = Disassembler::Base::Ptr();
     map_ = MemoryMap::Ptr();
     basicBlockWorkList_ = BasicBlockWorkList::instance(this, settings_.partitioner.functionReturnAnalysisMaxSorts);
 }
@@ -631,15 +646,18 @@ Engine::partitionerSwitches(PartitionerSettings &settings) {
                    "otherwise the entire table is read."));
 
     sg.insert(Switch("name-constants")
-              .intrinsicValue(true, settings.namingConstants)
+              .argument("addresses", addressIntervalParser(settings.namingConstants), "all")
               .doc("Scans the instructions and gives labels to constants that refer to entities that have that address "
                    "and also have a name.  For instance, if a constant refers to the beginning of a file section then "
-                   "the constant will be labeled so it has the same name as the section.  The @s{no-name-constants} "
-                   "turns this feature off. The default is to " + std::string(settings.namingConstants?"":"not ") +
-                   "do this step."));
+                   "the constant will be labeled so it has the same name as the section. The argument for this switch is the "
+                   "range of integer values that can be labeled, defaulting to all addresses. The @s{no-name-constants} switch "
+                   "turns this feature off. The default is to " +
+                   (settings.namingConstants ?
+                    "try to label constants within " + StringUtility::addrToString(settings.namingConstants) + "." :
+                    "not perform this labeling.")));
     sg.insert(Switch("no-name-constants")
               .key("name-constants")
-              .intrinsicValue(false, settings.namingConstants)
+              .intrinsicValue(AddressInterval(), settings.namingConstants)
               .hidden(true));
 
     sg.insert(Switch("name-strings")
@@ -1233,9 +1251,6 @@ Engine::obtainLoader(const BinaryLoader::Ptr &hint) {
     if (!binaryLoader_ && interp_) {
         if ((binaryLoader_ = BinaryLoader::lookup(interp_))) {
             binaryLoader_ = binaryLoader_->clone();
-            binaryLoader_->performingRemap(true);
-            binaryLoader_->performingDynamicLinking(false);
-            binaryLoader_->performingRelocations(false);
         }
     }
 
@@ -1469,15 +1484,18 @@ Engine::loadSpecimens(const std::vector<std::string> &fileNames) {
 //                                      Disassembler creation
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Disassembler*
-Engine::obtainDisassembler(Disassembler *hint) {
-    if (!disassembler_ && !settings_.disassembler.isaName.empty() &&
-        (disassembler_ = Disassembler::lookup(settings_.disassembler.isaName)))
-        disassembler_ = disassembler_->clone();
+Disassembler::Base::Ptr
+Engine::obtainDisassembler() {
+    return obtainDisassembler(Disassembler::Base::Ptr());
+}
 
-    if (!disassembler_ && interp_ &&
-        (disassembler_ = Disassembler::lookup(interp_)))
-        disassembler_ = disassembler_->clone();
+Disassembler::Base::Ptr
+Engine::obtainDisassembler(const Disassembler::Base::Ptr &hint) {
+    if (!disassembler_ && !settings_.disassembler.isaName.empty())
+        disassembler_ = Disassembler::lookup(settings_.disassembler.isaName);
+
+    if (!disassembler_ && interp_)
+        disassembler_ = Disassembler::lookup(interp_);
 
     if (!disassembler_ && hint)
         disassembler_ = hint;
@@ -1607,7 +1625,7 @@ Partitioner
 Engine::createTunedPartitioner() {
     obtainDisassembler();
 
-    if (dynamic_cast<DisassemblerM68k*>(disassembler_)) {
+    if (disassembler_.dynamicCast<Disassembler::M68k>()) {
         checkCreatePartitionerPrerequisites();
         Partitioner p = createBarePartitioner();
         p.functionPrologueMatchers().push_back(ModulesM68k::MatchLink::instance());
@@ -1616,7 +1634,7 @@ Engine::createTunedPartitioner() {
         return boost::move(p);
     }
 
-    if (dynamic_cast<DisassemblerX86*>(disassembler_)) {
+    if (disassembler_.dynamicCast<Disassembler::X86>()) {
         checkCreatePartitionerPrerequisites();
         Partitioner p = createBarePartitioner();
         p.functionPrologueMatchers().push_back(ModulesX86::MatchHotPatchPrologue::instance());
@@ -1632,14 +1650,14 @@ Engine::createTunedPartitioner() {
         return boost::move(p);
     }
 
-    if (dynamic_cast<DisassemblerPowerpc*>(disassembler_)) {
+    if (disassembler_.dynamicCast<Disassembler::Powerpc>()) {
         checkCreatePartitionerPrerequisites();
         Partitioner p = createBarePartitioner();
         p.functionPrologueMatchers().push_back(ModulesPowerpc::MatchStwuPrologue::instance());
         return boost::move(p);
     }
 
-    if (dynamic_cast<DisassemblerMips*>(disassembler_)) {
+    if (disassembler_.dynamicCast<Disassembler::Mips>()) {
         checkCreatePartitionerPrerequisites();
         Partitioner p = createBarePartitioner();
         p.functionPrologueMatchers().push_back(ModulesMips::MatchRetAddiu::instance());
@@ -1807,7 +1825,7 @@ Engine::runPartitionerFinal(Partitioner &partitioner) {
     }
     if (settings_.partitioner.namingConstants) {
         SAWYER_MESG(where) <<"naming constants\n";
-        Modules::nameConstants(partitioner);
+        Modules::nameConstants(partitioner, settings_.partitioner.namingConstants);
     }
     if (!settings_.partitioner.namingStrings.isEmpty()) {
         SAWYER_MESG(where) <<"naming strings\n";
@@ -2035,30 +2053,40 @@ Engine::makeContainerFunctions(Partitioner &partitioner, SgAsmInterpretation *in
     std::vector<Function::Ptr> retval;
     Sawyer::Message::Stream where(mlog[WHERE]);
 
-    if (settings_.partitioner.findingEntryFunctions) {
-        SAWYER_MESG(where) <<"making entry point functions\n";
-        for (const Function::Ptr &function: makeEntryFunctions(partitioner, interp))
-            insertUnique(retval, function, sortFunctionsByAddress);
-    }
-    if (settings_.partitioner.findingErrorFunctions) {
-        SAWYER_MESG(where) <<"making error-handling functions\n";
-        for (const Function::Ptr &function: makeErrorHandlingFunctions(partitioner, interp))
-            insertUnique(retval, function, sortFunctionsByAddress);
-    }
     if (settings_.partitioner.findingImportFunctions) {
         SAWYER_MESG(where) <<"making import functions\n";
-        for (const Function::Ptr &function: makeImportFunctions(partitioner, interp))
-            insertUnique(retval, function, sortFunctionsByAddress);
+        for (const Function::Ptr &function: makeImportFunctions(partitioner, interp)) {
+            if (auto exists = getOrInsertUnique(retval, function, sortFunctionsByAddress))
+                (*exists)->insertReasons(SgAsmFunction::FUNC_IMPORT);
+        }
     }
     if (settings_.partitioner.findingExportFunctions) {
         SAWYER_MESG(where) <<"making export functions\n";
-        for (const Function::Ptr &function: makeExportFunctions(partitioner, interp))
-            insertUnique(retval, function, sortFunctionsByAddress);
+        for (const Function::Ptr &function: makeExportFunctions(partitioner, interp)) {
+            if (auto exists = getOrInsertUnique(retval, function, sortFunctionsByAddress))
+                (*exists)->insertReasons(SgAsmFunction::FUNC_EXPORT);
+        }
     }
     if (settings_.partitioner.findingSymbolFunctions) {
         SAWYER_MESG(where) <<"making symbol table functions\n";
-        for (const Function::Ptr &function: makeSymbolFunctions(partitioner, interp))
-            insertUnique(retval, function, sortFunctionsByAddress);
+        for (const Function::Ptr &function: makeSymbolFunctions(partitioner, interp)) {
+            if (auto exists = getOrInsertUnique(retval, function, sortFunctionsByAddress))
+                (*exists)->insertReasons(SgAsmFunction::FUNC_SYMBOL);
+        }
+    }
+    if (settings_.partitioner.findingEntryFunctions) {
+        SAWYER_MESG(where) <<"making entry point functions\n";
+        for (const Function::Ptr &function: makeEntryFunctions(partitioner, interp)) {
+            if (auto exists = getOrInsertUnique(retval, function, sortFunctionsByAddress))
+                (*exists)->insertReasons(SgAsmFunction::FUNC_ENTRY_POINT);
+        }
+    }
+    if (settings_.partitioner.findingErrorFunctions) {
+        SAWYER_MESG(where) <<"making error-handling functions\n";
+        for (const Function::Ptr &function: makeErrorHandlingFunctions(partitioner, interp)) {
+            if (auto exists = getOrInsertUnique(retval, function, sortFunctionsByAddress))
+                (*exists)->insertReasons(SgAsmFunction::FUNC_EH_FRAME);
+        }
     }
     return retval;
 }
@@ -2068,10 +2096,10 @@ Engine::makeInterruptVectorFunctions(Partitioner &partitioner, const AddressInte
     std::vector<Function::Ptr> functions;
     if (interruptVector.isEmpty())
         return functions;
-    Disassembler *disassembler = disassembler_ ? disassembler_ : partitioner.instructionProvider().disassembler();
+    Disassembler::Base::Ptr disassembler = disassembler_ ? disassembler_ : partitioner.instructionProvider().disassembler();
     if (!disassembler) {
         throw std::runtime_error("cannot decode interrupt vector without architecture information");
-    } else if (dynamic_cast<DisassemblerM68k*>(disassembler)) {
+    } else if (disassembler.dynamicCast<Disassembler::M68k>()) {
         for (const Function::Ptr &f: ModulesM68k::findInterruptFunctions(partitioner, interruptVector.least()))
             insertUnique(functions, partitioner.attachOrMergeFunction(f), sortFunctionsByAddress);
     } else if (1 == interruptVector.size()) {
@@ -2771,7 +2799,7 @@ Engine::BasicBlockFinalizer::addPossibleIndeterminateEdge(const Args &args) {
     // Add an edge
     if (addIndeterminateEdge) {
         ASSERT_require(addrWidth != 0);
-        BaseSemantics::SValuePtr addr = sem.operators->undefined_(addrWidth);
+        BaseSemantics::SValue::Ptr addr = sem.operators->undefined_(addrWidth);
         EdgeType type = args.partitioner.basicBlockIsFunctionReturn(args.bblock) ? E_FUNCTION_RETURN : E_NORMAL;
         args.bblock->insertSuccessor(addr, type);
         SAWYER_MESG(mlog[DEBUG]) <<args.bblock->printableName()
@@ -3135,6 +3163,20 @@ Engine::buildAst(const std::string &fileName) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Settings and Properties
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Disassembler::Base::Ptr
+Engine::disassembler() const {
+    return disassembler_;
+}
+
+void
+Engine::disassembler(const Disassembler::Base::Ptr &d) {
+    disassembler_ = d;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Python API support
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #ifdef ROSE_ENABLE_PYTHON_API
@@ -3162,6 +3204,19 @@ Engine::pythonParseSingle(const std::string &specimen, const std::string &purpos
 }
 
 #endif
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Deprecated functions
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+Engine::namingConstants(bool b) {
+    if (b) {
+        settings_.partitioner.namingConstants = AddressInterval::whole();
+    } else {
+        settings_.partitioner.namingConstants = AddressInterval();
+    }
+}
 
 } // namespace
 } // namespace
