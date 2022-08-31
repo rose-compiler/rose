@@ -18,8 +18,6 @@ libsageInterface_la_SOURCES      = \
      sageBuilder.C \
      sageBuilder_fortran.C \
      abiStuff.C \
-     sageBuilder_untypedNodes.C \
-     untypedBuilder.C  \
      sageInterfaceAsm.C \
      sageInterface_asm.C \
      SageBuilderAsm.C
@@ -34,7 +32,6 @@ pkginclude_HEADERS = \
      sageGeneric.h \
      sageFunctors.h \
      integerOps.h \
-     untypedBuilder.h \
      abiStuff.h \
      sageInterfaceAsm.h \
      SageBuilderAsm.h

@@ -12861,37 +12861,6 @@ namespace Rose {
     const std::vector<int64_t>& stringifyE_SgOmpScheduleClause();
 }
 
-// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /buildTree/src/frontend/SageIII/Cxx_GrammarTreeTraversalAccessEnums.h line 372
-namespace stringify {
-    /** Convert E_SgUntypedUnaryOperator enum constant to a string. */
-    const char* E_SgUntypedUnaryOperator(int64_t);
-
-    /** Convert E_SgUntypedUnaryOperator enum constant to a string. */
-    std::string E_SgUntypedUnaryOperator(int64_t, const std::string &strip);
-
-    /** Return all E_SgUntypedUnaryOperator member values as a vector. */
-    const std::vector<int64_t>& E_SgUntypedUnaryOperator();
-}
-
-namespace Rose {
-    std::string stringifyE_SgUntypedUnaryOperator(int64_t n, const char *strip=NULL, bool canonic=false);
-    const std::vector<int64_t>& stringifyE_SgUntypedUnaryOperator();
-}
-
-// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /buildTree/src/frontend/SageIII/Cxx_GrammarTreeTraversalAccessEnums.h line 375
-namespace stringify {
-    /** Convert E_SgUntypedBinaryOperator enum constant to a string. */
-    const char* E_SgUntypedBinaryOperator(int64_t);
-
-    /** Convert E_SgUntypedBinaryOperator enum constant to a string. */
-    std::string E_SgUntypedBinaryOperator(int64_t, const std::string &strip);
-
-    /** Return all E_SgUntypedBinaryOperator member values as a vector. */
-    const std::vector<int64_t>& E_SgUntypedBinaryOperator();
-}
-
 namespace Rose {
     std::string stringifyE_SgUntypedBinaryOperator(int64_t n, const char *strip=NULL, bool canonic=false);
     const std::vector<int64_t>& stringifyE_SgUntypedBinaryOperator();
