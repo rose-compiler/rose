@@ -1,4 +1,5 @@
 #ifndef ROSE_RecursionCounter_H
+#define ROSE_RecursionCounter_H
 
 namespace Rose {
 

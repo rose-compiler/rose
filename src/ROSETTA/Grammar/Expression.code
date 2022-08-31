@@ -2715,7 +2715,10 @@ SgExpression::hasExplicitType()
           isSgUpcLocalsizeofExpression(this) != NULL || isSgUpcBlocksizeofExpression(this) != NULL || isSgUpcElemsizeofExpression(this)  != NULL ||
           isSgJavaAnnotation(this) != NULL           || isSgJavaTypeExpression(this) != NULL       || isSgJavaTypeExpression(this)  != NULL      ||
        // isSgConstructorInitializer(this) != NULL   || isSgAssignInitializer(this) != NULL        || isSgPseudoDestructorRefExp(this)  != NULL  ||
-          isSgConstructorInitializer(this) != NULL   || isSgPseudoDestructorRefExp(this)  != NULL  || isSgFunctionParameterRefExp(this) != NULL )
+          isSgConstructorInitializer(this) != NULL   || isSgPseudoDestructorRefExp(this)  != NULL  || isSgFunctionParameterRefExp(this) != NULL  ||
+       // PP (04/22/22) store type of Attribute directly in AST
+          isSgAdaAttributeExp(this) != NULL
+          )
         {
           returnValue = true;
         }
@@ -4481,21 +4484,12 @@ SOURCE_ADA_RENAMING_REF_EXPRESSION_END
 
 
 SOURCE_ADA_ATTRIBUTE_EXPRESSION_START
+
 SgType* SgAdaAttributeExp::get_type() const
 {
-  // \todo \pp repl w/ type of attribute
-  //       ==> introduce type as a member?
-  return SgTypeUnknown::createType(NULL);
+  return get_attrType();
 }
-/*
-void
-SgAdaAttributeExp::append_arg(SgExpression* expr)
-{
-  ROSE_ASSERT(p_args != NULL);
 
-  p_args->append_expression(expr);
-}
-*/
 SOURCE_ADA_ATTRIBUTE_EXPRESSION_END
 
 

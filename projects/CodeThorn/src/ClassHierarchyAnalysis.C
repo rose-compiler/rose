@@ -112,7 +112,7 @@ ClassAnalysis::addInheritanceEdge(value_type& descendant, const InheritanceDesc&
 }
 
 bool
-ClassAnalysis::areBaseDerived(ClassKeyType ancestorKey, ClassKeyType descendantKey) const
+ClassAnalysis::isBaseOf(ClassKeyType ancestorKey, ClassKeyType descendantKey) const
 {
   using container = ClassData::AncestorContainer;
 
@@ -126,6 +126,23 @@ ClassAnalysis::areBaseDerived(ClassKeyType ancestorKey, ClassKeyType descendantK
                              }
                            );
 }
+
+bool
+ClassAnalysis::isVirtualBaseOf(ClassKeyType ancestorKey, ClassKeyType descendantKey) const
+{
+  using container = ClassData::AncestorContainer;
+
+  const container&          ancestors = this->at(descendantKey).ancestors();
+  container::const_iterator zz = ancestors.end();
+
+  return zz != std::find_if( ancestors.begin(), zz,
+                             [ancestorKey](const InheritanceDesc& desc) -> bool
+                             {
+                               return desc.isVirtual() && desc.getClass() == ancestorKey;
+                             }
+                           );
+}
+
 
 
 namespace
@@ -352,7 +369,7 @@ namespace
       ClassKeyType                     parent = parentDesc.getClass();
       const std::vector<ClassKeyType>& parentInit = classes.at(parent).virtualBaseClassOrder();
 
-      // add the virtual bases that had not been seen before
+      // add the virtual bases that have not been seen before
       for (ClassKeyType vbase : parentInit)
         if (alreadySeen.insert(vbase).second)
           initorder.push_back(vbase);
@@ -475,6 +492,9 @@ struct ComputeVFunctionRelation
       return;
     }
 
+    //~ std::cerr << rcb.nameOf(drv) << " overrides " << rcb.nameOf(bas)
+              //~ << std::endl;
+
     const bool               covariant = rel == RoseCompatibilityBridge::covariant;
 
     vfunAnalysis.at(drv).overridden().emplace_back(bas, covariant);
@@ -559,7 +579,7 @@ analyzeVirtualFunctions(const ClassAnalysis& all, bool normalizedSignature)
 AnalysesTuple
 analyzeClassesAndCasts(const RoseCompatibilityBridge& rcb, ASTRootType n)
 {
-  ClassAnalysis classes;
+  ClassAnalysis classes{true /* full view of translation unit */};
   CastAnalysis  casts;
 
   rcb.extractFromProject(classes, casts, n);
@@ -579,6 +599,20 @@ ClassAnalysis
 analyzeClasses(ASTRootType n)
 {
   return analyzeClasses(RoseCompatibilityBridge{}, n);
+}
+
+ClassAnalysis analyzeClass(ClassKeyType n)
+{
+  RoseCompatibilityBridge rcb;
+  ClassAnalysis           classes{false /* incomplete view */};
+  
+  // collect all classes reachable upwards from n
+  rcb.extractClassAndBaseClasses(classes, n);
+  
+  inheritanceRelations(classes);
+  analyzeClassRelationships(classes);
+  
+  return classes;
 }
 
 }

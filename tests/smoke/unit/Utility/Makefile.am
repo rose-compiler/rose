@@ -147,6 +147,34 @@ testBitOps.passed: $(top_srcdir)/scripts/test_exit_status testBitOps
 		CMD="./testBitOps"			\
 		$< $@
 
+########################################################################################################################
+# YAML parsing
+########################################################################################################################
+
+noinst_PROGRAMS += testYaml
+testYaml_SOURCES = testYaml.C
+
+TEST_TARGETS += testYaml.passed
+testYaml.passed: $(top_srcdir)/scripts/test_exit_status testYaml
+	@$(RTH_RUN)				\
+		TITLE="test YAML parsing [$@]"	\
+		CMD="./testYaml"		\
+		$< $@
+
+########################################################################################################################
+# Number parsing
+########################################################################################################################
+
+noinst_PROGRAMS += testToNumber
+testToNumber_SOURCES = testToNumber.C
+
+TEST_TARGETS += testToNumber.passed
+testToNumber.passed: $(top_srcdir)/scripts/test_exit_status testToNumber
+	@$(RTH_RUN)					\
+		TITLE="test number parsing [$@]"	\
+		CMD="./testToNumber"			\
+		$< $@
+
 ###############################################################################################################################
 # Boilerplate
 ###############################################################################################################################

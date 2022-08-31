@@ -33,6 +33,9 @@ libastOutliner_la_SOURCES = \
 	GenerateFunc.cc \
 	Insert.cc \
 	Transform.cc
+# runtime support for dynamic loadable libraries storing outlined functions
+lib_LIBRARIES = liboutlining.a
+liboutlining.a = outlining_lib.c
 
 include_HEADERS = \
 	Outliner.hh \
@@ -48,6 +51,7 @@ include_HEADERS = \
 	IfDirectiveContextFinder.hh \
 	IfDirectiveExtractor.hh \
 	If.hh \
+	outlining_lib.h \
         Preprocess.hh 
 #        Transform.hh
 

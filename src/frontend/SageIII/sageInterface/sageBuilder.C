@@ -2031,7 +2031,7 @@ SageBuilder::buildTemplateVariableDeclaration (const SgName & name, SgType* type
 {
   SgTemplateVariableDeclaration* res = buildTemplateVariableDeclaration_nfi(name, type, varInit, scope);
   setOneSourcePositionForTransformation(res);
-  return res; 
+  return res;
 }
 
 // DQ (12/6/2011): Adding support for template declarations into the AST.
@@ -2557,30 +2557,9 @@ SageBuilder::buildTemplateTypedefDeclaration_nfi(const SgName & name, SgType* ba
      return type_decl;
    }
 
-
-// ROSE_DLL_API SgTemplateInstantiationTypedefDeclaration*
-// SageBuilder::buildTemplateInstantiationTypedefDeclaration_nfi(SgName name, SgType* base_type, SgScopeStatement* scope, bool has_defining_base, SgTemplateTypedefDeclaration* templateTypedefDeclaration, SgTemplateArgumentPtrList templateArgumentList)
-// ROSE_DLL_API SgTemplateInstantiationTypedefDeclaration*
-// SageBuilder::buildTemplateInstantiationTypedefDeclaration_nfi(SgName name, SgType* base_type, SgScopeStatement* scope, bool has_defining_base, SgTemplateTypedefDeclaration* templateTypedefDeclaration)
-// ROSE_DLL_API SgTemplateInstantiationTypedefDeclaration*
-// SageBuilder::buildTemplateInstantiationTypedefDeclaration_nfi()
 ROSE_DLL_API SgTemplateInstantiationTypedefDeclaration*
 SageBuilder::buildTemplateInstantiationTypedefDeclaration_nfi(SgName & name, SgType* base_type, SgScopeStatement* scope, bool has_defining_base, SgTemplateTypedefDeclaration* templateTypedefDeclaration, SgTemplateArgumentPtrList & templateArgumentsList)
    {
-  // DQ (11/2/2014): Adding support for instantiation of templated typedef.
-
-#if 0
-  // Temporary fix for problems in linking with this function parameter.
-     SgName name = "ERROR_SgTemplateInstantiationTypedefDeclaration";
-     SgType* base_type = NULL;
-     SgScopeStatement* scope = NULL;
-     bool has_defining_base = false;
-     SgTemplateTypedefDeclaration* templateTypedefDeclaration = NULL;
-
-  // Temporary fix for problems in linking with this function parameter.
-     SgTemplateArgumentPtrList templateArgumentList;
-#endif
-
      ROSE_ASSERT (base_type != NULL);
   // ROSE_ASSERT(templateArgumentList != NULL);
 
@@ -2636,42 +2615,13 @@ SageBuilder::buildTemplateInstantiationTypedefDeclaration_nfi(SgName & name, SgT
      printf ("In buildTemplateInstantiationTypedefDeclaration_nfi(): parent_scope = %p \n",parent_scope);
 #endif
 
-  // DQ (2/25/2018): Note that the constructor calls the post_construction initialization which sets up the type.
-  // Since this happens for the SgtypedefDeclaration (calling the SgtypedefType::createType() function, we get a SgTypedefType.
-
-  // DQ (2/28/2018): Added debugging to track down redundnat symbol.
-  // if (scope->lookup_template_typedef_symbol(nameWithTemplateArguments) != NULL)
-  // SgSymbol* prexisting_symbol = scope->lookup_template_typedef_symbol(nameWithTemplateArguments);
-  // if (prexisting_symbol != NULL)
-  //    {
-  //      printf ("In buildTemplateInstantiationTypedefDeclaration_nfi(): prexisting_symbol = %p = %s \n",prexisting_symbol,prexisting_symbol->class_name().c_str());
-  //    }
-  // SgTemplateTypedefSymbol* prexisting_template_typedef_symbol = isSgTemplateTypedefSymbol(prexisting_symbol);
      SgTemplateTypedefSymbol* prexisting_template_typedef_symbol = scope->lookup_template_typedef_symbol(nameWithTemplateArguments);
      if (prexisting_template_typedef_symbol != NULL)
         {
-#if 0
-          printf ("Error: it appears that there is already a symbol in scope = %p = %s for name = %s \n",scope,scope->class_name().c_str(),name.str());
-
-          printf ("In buildTemplateInstantiationTypedefDeclaration_nfi(): DONE: calling SgTemplateInstantiationTypedefDeclaration constructor \n");
-       // printf ("In buildTemplateInstantiationTypedefDeclaration_nfi(): type_decl->get_name()         = %s \n",type_decl->get_name().str());
-       // printf ("In buildTemplateInstantiationTypedefDeclaration_nfi(): type_decl->get_templateName() = %s \n",type_decl->get_templateName().str());
-#endif
-       // DQ (3/4/2018): If we have previously processed this typedef and there is a symbol in place, then return the declaration from that symbol.
           SgDeclarationStatement* declarationStatement = prexisting_template_typedef_symbol->get_declaration();
           ROSE_ASSERT(declarationStatement != NULL);
-#if 0
-          printf ("In buildTemplateInstantiationTypedefDeclaration_nfi(): Reusing the declaration from the symbol:\n");
-          printf ("    declarationStatement = %p (%s)\n", declarationStatement, declarationStatement ? declarationStatement->class_name().c_str() : "");
-#endif
           SgTemplateInstantiationTypedefDeclaration* return_declaration = isSgTemplateInstantiationTypedefDeclaration(declarationStatement);
           ROSE_ASSERT(return_declaration != NULL);
-#if 0
-          printf ("In buildTemplateInstantiationTypedefDeclaration_nfi(): Reusing the declaration from the symbol: return_declaration = %p \n",return_declaration);
-          printf ("In buildTemplateInstantiationTypedefDeclaration_nfi(): return_declaration->get_firstNondefiningDeclaration()       = %p \n",return_declaration->get_firstNondefiningDeclaration());
-          printf ("In buildTemplateInstantiationTypedefDeclaration_nfi(): return_declaration->get_definingDeclaration()               = %p \n",return_declaration->get_definingDeclaration());
-#endif
-
           return return_declaration;
         }
      ROSE_ASSERT(scope->lookup_template_typedef_symbol(nameWithTemplateArguments) == NULL);
@@ -2683,8 +2633,6 @@ SageBuilder::buildTemplateInstantiationTypedefDeclaration_nfi(SgName & name, SgT
   // DQ (2/25/2018): Not clear if we want to use the template name with arguments.
   // Calling: SgTemplateInstantiationTypedefDeclaration(SgName, SgType*, SgTypedefType*, SgDeclarationStatement*, SgSymbol*, SgTemplateTypedefDeclaration*, SgTemplateArgumentPtrList)
      SgTypedefType* typedefType = NULL;
-  // SgTemplateInstantiationTypedefDeclaration* type_decl =
-  //      new SgTemplateInstantiationTypedefDeclaration(name, base_type, typedefType, base_decl, parent_scope, templateTypedefDeclaration, templateArgumentsList);
      SgTemplateInstantiationTypedefDeclaration* type_decl =
           new SgTemplateInstantiationTypedefDeclaration(nameWithTemplateArguments, base_type, typedefType, base_decl, parent_scope, templateTypedefDeclaration, templateArgumentsList);
      ROSE_ASSERT(type_decl != NULL);
@@ -2693,40 +2641,16 @@ SageBuilder::buildTemplateInstantiationTypedefDeclaration_nfi(SgName & name, SgT
   // printf ("We now have to build the type explicitly \n");
      ROSE_ASSERT(type_decl->get_type() == NULL);
 
-#if 0
-     printf ("In buildTemplateInstantiationTypedefDeclaration_nfi(): DONE: calling SgTemplateInstantiationTypedefDeclaration constructor \n");
-     printf ("In buildTemplateInstantiationTypedefDeclaration_nfi(): type_decl->get_name()         = %s \n",type_decl->get_name().str());
-     printf ("In buildTemplateInstantiationTypedefDeclaration_nfi(): type_decl->get_templateName() = %s \n",type_decl->get_templateName().str());
-#endif
 
   // DQ (2/27/2018): Set the template name that this instantiation is using.
      type_decl->set_templateName(nameWithoutTemplateArguments);
 
-#if 0
-     printf ("In buildTemplateInstantiationTypedefDeclaration_nfi(): type_decl->get_templateName() = %s \n",type_decl->get_templateName().str());
-#endif
-#if 0
-     printf ("Calling type_decl->set_parent(parent_scope) nameWithTemplateArguments = %s \n",nameWithTemplateArguments.str());
-#endif
 
   // ROSE_ASSERT(parent_scope != NULL);
   // type_decl->set_parent(parent_scope);
      ROSE_ASSERT(scope != NULL);
   // type_decl->set_parent(scope);
      type_decl->set_scope(scope);
-
-#if 0
-     printf ("&&&&& Calling reset template nameWithTemplateArguments = %s \n",nameWithTemplateArguments.str());
-#endif
-#if 0
-     printf ("BEFORE: type_decl->get_name()         = %s \n",type_decl->get_name().str());
-     printf ("BEFORE: type_decl->get_templateName() = %s \n",type_decl->get_templateName().str());
-#endif
-
-#if 0
-     printf ("In buildTemplateInstantiationTypedefDeclaration_nfi(): Skipping call to type_decl->resetTemplateName() \n");
-#endif
-  // type_decl->resetTemplateName();
 
   // DQ (3/1/2018): A bug in the name of the template with arguments has been detected (extra spaces in
   // the name generated by type_decl->resetTemplateName()), make sure that we have a consistant naming.
@@ -2739,200 +2663,51 @@ SageBuilder::buildTemplateInstantiationTypedefDeclaration_nfi(SgName & name, SgT
         }
      ROSE_ASSERT(scope->lookup_template_typedef_symbol(nameWithTemplateArguments) == NULL);
 
-#if 0
-     printf ("AFTER: type_decl->get_name()         = %s \n",type_decl->get_name().str());
-     printf ("AFTER: type_decl->get_templateName() = %s \n",type_decl->get_templateName().str());
-#endif
-
-  // DQ (4/15/2018): I don't think we want to reset the template name and certainly not to a name that
-  // includes template arguments (which is inconsistant with all other usage).
-  // type_decl->set_templateName(type_decl->get_name());
-
-#if 0
-     printf ("AFTER: type_decl->set_templateName(): type_decl->get_templateName() = %s \n",type_decl->get_templateName().str());
-#endif
-#if 0
-     printf ("&&&&& DONE: Calling reset template nameWithTemplateArguments = %s \n",nameWithTemplateArguments.str());
-     ROSE_ASSERT(type_decl->get_templateName() != "");
-#endif
-#if 0
-     printf ("##### Calling SgTypedefType::createType(type_decl) nameWithTemplateArguments = %s \n",nameWithTemplateArguments.str());
-#endif
 
   // DQ (2/26/2018): Can we assert this?
      ROSE_ASSERT(type_decl->get_type() == NULL);
 
-#if 0
-     printf ("!!!!! In buildTemplateInstantiationTypedefDeclaration_nfi(): DONE: building the SgTypedefType for SgTemplateTypedefDeclaration type_decl = %p = %s \n",
-          type_decl,type_decl->get_name().str());
-#endif
-
      SgTypedefType* new_typedefType = SgTypedefType::createType(type_decl);
      ROSE_ASSERT(new_typedefType != NULL);
 
-#if 0
-     printf ("!!!!! In buildTemplateInstantiationTypedefDeclaration_nfi(): DONE: building the SgTypedefType for SgTemplateTypedefDeclaration type_decl = %p = %s new_typedefType = %p \n",
-          type_decl,type_decl->get_name().str(),new_typedefType);
-#endif
-
      type_decl->set_type(new_typedefType);
-
-#if 0
-     printf ("##### DONE: Calling SgTypedefType::createType(templateInstantiationTypedefDeclaration) nameWithTemplateArguments = %s \n",nameWithTemplateArguments.str());
-     printf ("   --- new_typedefType = %p \n",new_typedefType);
-#endif
-
-  // DQ (2/25/2018): Adding the support to set the template name for the instantiation.
-  // type_decl->set_templateName(nameWithTemplateArguments);
-
-  // DQ (4/25/2018): The type should not be set yet, acutally it is set via the SgTemplateInstantiationTypedefDeclaration::post_construction_initialization() function.
-  // ROSE_ASSERT(type_decl->get_type() == NULL);
      ROSE_ASSERT(type_decl->get_type() != NULL);
-
-  // DQ (2/26/2018): This was already done above (to support the resetTemplateName() function.
-  // ROSE_ASSERT(type_decl->get_scope() == NULL);
-  // type_decl->set_scope(scope);
-
      ROSE_ASSERT(type_decl->get_scope() != NULL);
 
-  // DQ (4/25/2018): The type should not be set yet.
-  // ROSE_ASSERT(type_decl->get_type() == NULL);
-     ROSE_ASSERT(type_decl->get_type() != NULL);
-
-#if 0
-     printf ("In buildTemplateInstantiationTypedefDeclaration_nfi(): After SgTemplateInstantiationTypedefDeclaration constructor: type_decl->get_scope() = %p \n",type_decl->get_scope());
-     printf ("In buildTemplateInstantiationTypedefDeclaration_nfi(): After SgTemplateInstantiationTypedefDeclaration constructor: type_decl->get_type()  = %p \n",type_decl->get_type());
-     printf ("In buildTemplateInstantiationTypedefDeclaration_nfi(): After SgTemplateInstantiationTypedefDeclaration constructor: typedefType  = %p \n",typedefType);
-#endif
-
-  // DQ (4/25/2018): The type should not be set yet.
-  // ROSE_ASSERT(type_decl->get_type() == NULL);
-
-  // DQ (3/20/2012): Comment ouly, these are always set this way. first defining is a self reference, and defining is always NULL (required for AST consistancy)).
      type_decl->set_firstNondefiningDeclaration (type_decl);
      type_decl->set_definingDeclaration(NULL);
 
-  // Set the source code position information.
      setOneSourcePositionNull(type_decl);
 
      SgName mangled_name = type_decl->get_mangled_name();
-
 #if 0
      printf ("In buildTemplateInstantiationTypedefDeclaration_nfi(): mangled_name                 = %s \n",mangled_name.str());
 #endif
-
-  // DQ (2/19/2018): Calling function to set the template arguments (before adding the symbol (in case that makes a difference).
      setTemplateArgumentsInDeclaration(type_decl,&templateArgumentsList);
 
-  // DQ (2/24/2018): All typedefs are non-defining declarations (since they can appears redundantly in C or C++, including C++11).
-  // DQ (2/20/2018): We also need to test some rules about the firstNondefiningDeclaration and definingDeclaration declarations as well.
-  // ROSE_ASSERT(type_decl->get_firstNondefiningDeclaration() == NULL);
-  // ROSE_ASSERT(type_decl->get_definingDeclaration() == type_decl);
      ROSE_ASSERT(type_decl->get_firstNondefiningDeclaration() != NULL);
      ROSE_ASSERT(type_decl->get_definingDeclaration() == NULL);
      ROSE_ASSERT(type_decl->get_firstNondefiningDeclaration() == type_decl);
 
-  // DQ (4/25/2018): The type should not be set yet.
-  // ROSE_ASSERT(type_decl->get_type() == NULL);
-
-#if 0
-  // DQ (2/25/2018): The reason we have to rest this type is because the SgTypedefDeclaration::post_constructor_initialization() set the type and, maybe, to the wrong type.
-  // I have fixed this by implementing a SgTemplateInstantiationTypedefDeclaration::post_constructor_initialization() (to set it to a different type).
-     if (type_decl->get_type() != NULL)
-        {
-          printf ("In buildTemplateInstantiationTypedefDeclaration_nfi(): type_decl->get_type() = %p = %s \n",type_decl->get_type(),type_decl->get_type()->class_name().c_str());
-          SgTypedefType* typedefType = isSgTypedefType(type_decl->get_type());
-          ROSE_ASSERT(typedefType != NULL);
-          printf ("In buildTemplateInstantiationTypedefDeclaration_nfi(): typedefType->get_name()         = %s \n",typedefType->get_name().str());
-          SgDeclarationStatement* declarationStatement = typedefType->get_declaration();
-          ROSE_ASSERT(declarationStatement != NULL);
-          printf ("In buildTemplateInstantiationTypedefDeclaration_nfi(): typedefType->get_declaration() = %p = %s \n",declarationStatement,declarationStatement->class_name().c_str());
-
-          SgTemplateTypedefDeclaration* templateTypedefDeclaration = isSgTemplateTypedefDeclaration(declarationStatement);
-          printf ("In buildTemplateInstantiationTypedefDeclaration_nfi(): templateTypedefDeclaration = %p = %s \n",templateTypedefDeclaration,templateTypedefDeclaration->get_name().str());
-       // printf ("In buildTemplateInstantiationTypedefDeclaration_nfi(): templateTypedefDeclaration templateName = %s \n",templateTypedefDeclaration->get_templateName().str());
-
-       // printf ("In buildTemplateInstantiationTypedefDeclaration_nfi(): typedefType->get_templateName() = %s \n",typedefType->get_templateName().str());
-        }
-#endif
-
      ROSE_ASSERT(type_decl->get_type() != NULL);
-
-#if 0
-  // DQ (2/20/2018): This should not alread be set.
-     ROSE_ASSERT(type_decl->get_type() == NULL);
-
-  // DQ (2/20/2018): Note that the other build functions (e.g. for class declarations) all build the associated type, so we need to do the same.
-  // nondefdecl->set_type(SgClassType::createType(firstNondefdecl));
-  // type_decl->set_type(SgTemplateType::createType(type_decl));
-  // SgType* templateTypedefType = SgTemplateType::createType(type_decl);
-     SgTypedefType* templateTypedefType = SgTypedefType::createType(type_decl);
-     ROSE_ASSERT(templateTypedefType != NULL);
-     type_decl->set_type(templateTypedefType);
-
-  // SgType* baseType = type_decl->get_baseType();
-  // ROSE_ASSERT(baseType != NULL);
-  // type_decl->set_type(baseType);
-#endif
-
-  // DQ (2/28/2018): Added assertion (I think we can do this).
      ROSE_ASSERT(scope != NULL);
 
      if (scope != NULL)
         {
-       // DQ (2/28/2018): Added assertion (I think we can do this).
-
           if (scope->lookup_template_typedef_symbol(nameWithTemplateArguments) != NULL)
              {
                printf ("Error: it appears that there is already a symbol in scope = %p = %s for nameWithTemplateArguments = %s \n",scope,scope->class_name().c_str(),nameWithTemplateArguments.str());
              }
           ROSE_ASSERT(scope->lookup_template_typedef_symbol(nameWithTemplateArguments) == NULL);
 
-       // SgTypedefSymbol* typedef_symbol = new SgTypedefSymbol(type_decl);
           SgTemplateTypedefSymbol* typedef_symbol = new SgTemplateTypedefSymbol(type_decl);
           ROSE_ASSERT(typedef_symbol);
 
-       // DQ (5/16/2013): This is the code we want now that we have implemented the namespace support behind the scope symbol bable interface.
-       // scope->insert_symbol(Sgname(name),typedef_symbol);
-       // scope->insert_symbol(name,typedef_symbol);
-       // scope->insert_symbol(name,typedef_symbol);
           scope->insert_symbol(nameWithTemplateArguments,typedef_symbol);
           type_decl->set_scope(scope);
-
-       // DQ (3/20/2012): Comment added only: The parent is always the scope in this case, I think.
           type_decl->set_parent(scope);
-
-       // DQ (2/19/2018): Added test (but I think we are missing the template arguments).
-       // ROSE_ASSERT(scope->lookup_template_typedef_symbol(name) != NULL);
           ROSE_ASSERT(scope->lookup_template_typedef_symbol(nameWithTemplateArguments) != NULL);
         }
-
-#if 0
-  // We have to setup the template arguments (need specialization and partial specialization support).
-     printf ("Template parameters not setup in buildTemplateTypedefDeclaration_nfi() \n");
-#endif
-
-#if 0
-     printf ("Leaving buildTemplateInstantiationTypedefDeclaration_nfi(): type_decl = %p = %s name = %s \n",type_decl,type_decl->class_name().c_str(),type_decl->get_name().str());
-     printf ("Leaving buildTemplateInstantiationTypedefDeclaration_nfi(): type_decl: name = %s templateName   = %s \n",type_decl->get_name().str(),type_decl->get_templateName().str());
-     printf ("Leaving buildTemplateInstantiationTypedefDeclaration_nfi(): type_decl: templateArguments.size() = %zu \n",type_decl->get_templateArguments().size());
-     printf ("Leaving buildTemplateInstantiationTypedefDeclaration_nfi(): type_decl: get_type()               = %p \n",type_decl->get_type());
-     printf ("Leaving buildTemplateInstantiationTypedefDeclaration_nfi(): type_decl: get_name()               = %s \n",type_decl->get_name().str());
-     printf ("Leaving buildTemplateInstantiationTypedefDeclaration_nfi(): type_decl: get_templateName()       = %s \n",type_decl->get_templateName().str());
-     printf ("Leaving buildTemplateInstantiationTypedefDeclaration_nfi(): type_decl: get_templateDeclaration()= %p \n",type_decl->get_templateDeclaration());
-     ROSE_ASSERT(type_decl->get_templateDeclaration() != NULL);
-     printf ("Leaving buildTemplateInstantiationTypedefDeclaration_nfi(): type_decl: get_templateDeclaration()->get_type() = %p \n",type_decl->get_templateDeclaration()->get_type());
-     printf ("Leaving buildTemplateInstantiationTypedefDeclaration_nfi(): type_decl: get_templateDeclaration()->get_name() = %s \n",type_decl->get_templateDeclaration()->get_name().str());
-#endif
-
-#if 0
-     printf ("Leaving buildTemplateInstantiationTypedefDeclaration_nfi(): type_decl: unparseNameToString() = %s \n",type_decl->unparseNameToString().c_str());
-#endif
-
-#if 0
-     printf ("Exiting as a test! \n");
-     ROSE_ABORT();
-#endif
 
      return type_decl;
    }
@@ -7399,6 +7174,7 @@ BUILD_UNARY_DEF(MinusOp)
 BUILD_UNARY_DEF(NotOp)
 BUILD_UNARY_DEF(PointerDerefExp)
 BUILD_UNARY_DEF(UnaryAddOp)
+BUILD_UNARY_DEF(AbsOp)
 BUILD_UNARY_DEF(MinusMinusOp)
 BUILD_UNARY_DEF(PlusPlusOp)
 BUILD_UNARY_DEF(RealPartOp)
@@ -7607,6 +7383,7 @@ BUILD_BINARY_DEF(NonMembershipOp)
 BUILD_BINARY_DEF(OrOp)
 BUILD_BINARY_DEF(PlusAssignOp)
 BUILD_BINARY_DEF(PntrArrRefExp)
+BUILD_BINARY_DEF(RemOp)
 BUILD_BINARY_DEF(RshiftAssignOp)
 BUILD_BINARY_DEF(JavaUnsignedRshiftAssignOp)
 
@@ -15506,7 +15283,7 @@ SageBuilder::buildTemplateClassDeclaration(const SgName& XXX_name, SgClassDeclar
 {
   SgTemplateClassDeclaration * res = buildTemplateClassDeclaration_nfi (XXX_name, kind, scope, nonDefiningDecl, templateParameterList, templateSpecializationArgumentList);
   setSourcePositionForTransformation (res);
-  return res; 
+  return res;
 }
 
 SgTemplateClassDeclaration *
@@ -21146,6 +20923,15 @@ SgStatement* SageBuilder::buildStatementFromString(const std::string& s, SgScope
   return result;
 }
 
+SgUsingDirectiveStatement* SageBuilder::buildUsingDirectiveStatement(SgNamespaceDeclarationStatement * ns_decl)
+{
+  SgUsingDirectiveStatement* res = new SgUsingDirectiveStatement(ns_decl);
+  res->set_definingDeclaration(res);
+  res->set_firstNondefiningDeclaration(res);
+
+  setOneSourcePositionForTransformation(res);
+  return res; 
+}
 
 //
 // pp (07/16/16)

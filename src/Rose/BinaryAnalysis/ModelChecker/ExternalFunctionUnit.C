@@ -3,19 +3,21 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/ModelChecker/ExternalFunctionUnit.h>
 
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/RiscOperators.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RiscOperators.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 #include <Rose/BinaryAnalysis/ModelChecker/SemanticCallbacks.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Settings.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Tag.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
+#include <Rose/BinaryAnalysis/RegisterNames.h>
 
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
 
 using namespace Sawyer::Message::Common;
-namespace BS = Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
+namespace BS = Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;
 namespace CC = Rose::BinaryAnalysis::CallingConvention;
-namespace IS = Rose::BinaryAnalysis::InstructionSemantics2;
+namespace IS = Rose::BinaryAnalysis::InstructionSemantics;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 namespace Rose {
@@ -97,16 +99,16 @@ ExternalFunctionUnit::address() const {
 }
 
 BS::SValue::Ptr
-ExternalFunctionUnit::readLocation(const BS::Dispatcher::Ptr &cpu, const CC::ParameterLocation &param,
+ExternalFunctionUnit::readLocation(const BS::Dispatcher::Ptr &cpu, const ConcreteLocation &param,
                                    const BS::SValue::Ptr &dflt) {
     ASSERT_not_null(cpu);
     BS::RiscOperators::Ptr ops = cpu->operators();
 
     switch (param.type()) {
-        case CC::ParameterLocation::REGISTER:
+        case ConcreteLocation::REGISTER:
             return ops->readRegister(param.reg());
 
-        case CC::ParameterLocation::STACK: {
+        case ConcreteLocation::RELATIVE: {
             const RegisterDescriptor baseReg = param.reg();
             BS::SValue::Ptr base = ops->readRegister(baseReg);
             BS::SValue::Ptr offset = ops->number_(baseReg.nBits(), BitOps::signExtend(param.offset(), baseReg.nBits()));
@@ -114,30 +116,30 @@ ExternalFunctionUnit::readLocation(const BS::Dispatcher::Ptr &cpu, const CC::Par
             return ops->readMemory(RegisterDescriptor(), stackVa, dflt, ops->boolean_(true));
         }
 
-        case CC::ParameterLocation::ABSOLUTE: {
+        case ConcreteLocation::ABSOLUTE: {
             size_t nBits = cpu->stackPointerRegister().nBits();
             BS::SValue::Ptr va = ops->number_(nBits, param.address());
             ops->readMemory(RegisterDescriptor(), va, dflt, ops->boolean_(true));
             break;
         }
 
-        case CC::ParameterLocation::NO_LOCATION:
+        case ConcreteLocation::NO_LOCATION:
             break;
     }
     ASSERT_not_reachable("invalid parameter location");
 }
 
 void
-ExternalFunctionUnit::writeLocation(const BS::Dispatcher::Ptr &cpu, const CC::ParameterLocation &param,
+ExternalFunctionUnit::writeLocation(const BS::Dispatcher::Ptr &cpu, const ConcreteLocation &param,
                                     const BS::SValue::Ptr &value) {
     ASSERT_not_null(cpu);
     BS::RiscOperators::Ptr ops = cpu->operators();
 
     switch (param.type()) {
-        case CC::ParameterLocation::REGISTER:
+        case ConcreteLocation::REGISTER:
             return ops->writeRegister(param.reg(), value);
 
-        case CC::ParameterLocation::STACK: {
+        case ConcreteLocation::RELATIVE: {
             const RegisterDescriptor baseReg = param.reg();
             BS::SValue::Ptr base = ops->readRegister(baseReg);
             BS::SValue::Ptr offset = ops->number_(baseReg.nBits(), BitOps::signExtend(param.offset(), baseReg.nBits()));
@@ -145,14 +147,14 @@ ExternalFunctionUnit::writeLocation(const BS::Dispatcher::Ptr &cpu, const CC::Pa
             return ops->writeMemory(RegisterDescriptor(), stackVa, value, ops->boolean_(true));
         }
 
-        case CC::ParameterLocation::ABSOLUTE: {
+        case ConcreteLocation::ABSOLUTE: {
             size_t nBits = cpu->stackPointerRegister().nBits();
             BS::SValue::Ptr va = ops->number_(nBits, param.address());
             ops->writeMemory(RegisterDescriptor(), va, value, ops->boolean_(true));
             break;
         }
 
-        case CC::ParameterLocation::NO_LOCATION:
+        case ConcreteLocation::NO_LOCATION:
             break;
     }
     ASSERT_not_reachable("invalid parameter location");
@@ -162,26 +164,26 @@ void
 ExternalFunctionUnit::clearReturnValues(const BS::Dispatcher::Ptr &cpu) {
     ASSERT_not_null(cpu);
     BS::RiscOperators::Ptr ops = cpu->operators();
-    const RegisterDictionary *regDict = cpu->registerDictionary();
+    RegisterDictionary::Ptr regDict = cpu->registerDictionary();
 
     // Set return value locations to unknown values. Using calling convention analysis is the right way,
     // but if that's not available fall back to the stupid closed list of dynamic casts.
     if (CC::Definition::Ptr ccDefn = function_->callingConventionDefinition()) {
-        for (const CC::ParameterLocation &param: ccDefn->outputParameters()) {
+        for (const ConcreteLocation &param: ccDefn->outputParameters()) {
             size_t nBits = 0;
             switch (param.type()) {
-                case CC::ParameterLocation::REGISTER:
+                case ConcreteLocation::REGISTER:
                     if (param.reg() != cpu->stackPointerRegister() &&
                         param.reg() != cpu->stackFrameRegister() &&
                         param.reg() != cpu->callReturnRegister()) {
                         nBits = param.reg().nBits();
                     }
                     break;
-                case CC::ParameterLocation::STACK:
-                case CC::ParameterLocation::ABSOLUTE:
+                case ConcreteLocation::RELATIVE:
+                case ConcreteLocation::ABSOLUTE:
                     nBits = cpu->stackPointerRegister().nBits();
                     break;
-                case CC::ParameterLocation::NO_LOCATION:
+                case ConcreteLocation::NO_LOCATION:
                     ASSERT_not_reachable("invalid parameter location");
             }
             if (nBits != 0) {

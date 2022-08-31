@@ -139,8 +139,8 @@ namespace
     {
       const ct::ClassKeyType src         = std::get<0>(elem.first);
       const ct::ClassKeyType tgt         = std::get<1>(elem.first);
-      const bool             isDownCast  = classes.areBaseDerived(src, tgt);
-      const bool             isUpCast    = !isDownCast && classes.areBaseDerived(tgt, src);
+      const bool             isDownCast  = classes.isBaseOf(src, tgt);
+      const bool             isUpCast    = !isDownCast && classes.isBaseOf(tgt, src);
       const bool             isCrossCast = !isDownCast && !isUpCast;
 
       // exclude up casts
@@ -179,7 +179,7 @@ namespace
 
     for (const ct::OverrideDesc& fn: functions)
     {
-      const ct::FunctionKeyType      funid = fn.functionId();
+      const ct::FunctionKeyType      funid = fn.function();
       const ct::VirtualFunctionDesc& other = vfuns.at(funid);
 
       os << className(other.classId())
@@ -214,7 +214,8 @@ namespace
 
   bool printsData(const ct::VirtualFunctionDesc& vfn, bool withOverridden)
   {
-    return vfn.overriders().size() || vfn.overridden().size();
+    return true;
+    // return vfn.overriders().size() || vfn.overridden().size();
   }
 
   void writeFunctionsInClass( std::ostream& os,
@@ -225,7 +226,7 @@ namespace
                               bool withOverridden = false
                             )
   {
-    os << "Class " << className(clazz.first) << "\n"
+    os << "Class " << className(clazz.first) << " " << clazz.second.virtualFunctions().size() << "\n"
        << std::endl;
 
     for (ct::FunctionKeyType vfnId : clazz.second.virtualFunctions())
@@ -280,36 +281,36 @@ namespace
         return s;
       }
 
-      virtual void operator()(const ct::Subobject& subobj) const
+      virtual void operator()(const ct::Subobject& subobj)
       {
         out() << "subobj " << escapeName(className(subobj.ref))
               << (subobj.isVirtual ? " (virtual)" : "");
       }
 
-      virtual void operator()(const ct::Field& fld) const
+      virtual void operator()(const ct::Field& fld)
       {
         out() << "field  " << escapeName(varName(fld.id));
       }
 
-      virtual void operator()(const ct::VTable& vtbl) const
+      virtual void operator()(const ct::VTable& vtbl)
       {
         out() << "vtable " << escapeName(className(vtbl.ref))
               << (vtbl.isPrimary ? " (primary)" : "");
       }
 
-      virtual void printEntry(const ct::ObjectLayoutEntry& el) const
+      virtual void printEntry(const ct::ObjectLayoutEntry& el)
       {
         boost::apply_visitor(*this, el.element());
       }
 
-      virtual void printClassHeader(ct::ClassKeyType key) const
+      virtual void printClassHeader(const ct::ObjectLayoutContainer::value_type& el)
       {
-        out() << "class " << escapeName(className(key));
+        out() << "class " << escapeName(className(el.first));
       }
 
-      virtual void printClassFooter() const {}
+      virtual void printClassFooter() {}
 
-      std::ostream& out() const { return os; }
+      std::ostream& out() { return os; }
 
     private:
       std::ostream&    os;
@@ -341,23 +342,23 @@ namespace
       : base(out, classNamer, varNamer), include(incl), edges(), currentClass()
       {}
 
-      void elem_begin(const void* elem) const;
-      void elem_end() const;
-      void class_begin(const void* elem) const;
-      void class_end() const;
+      void elem_begin(const void* elem) ;
+      void elem_end() ;
+      void class_begin(const void* elem) ;
+      void class_end() ;
 
       template <class ClassElem>
-      void elem(const ClassElem& el) const
+      void elem(const ClassElem& el)
       {
         elem_begin(&el);
         base::operator()(el);
         elem_end();
       }
 
-      void operator()(const ct::Field& el) const override     { elem(el); }
-      void operator()(const ct::VTable& el) const override    { elem(el); }
+      void operator()(const ct::Field& el) override     { elem(el); }
+      void operator()(const ct::VTable& el) override    { elem(el); }
 
-      void operator()(const ct::Subobject& el) const override
+      void operator()(const ct::Subobject& el) override
       {
         elem(el);
 
@@ -365,17 +366,17 @@ namespace
           edges.emplace_back(&el, el.ref, el.isVirtual, el.isDirect);
       }
 
-      void printClassHeader(ct::ClassKeyType key) const override
+      void printClassHeader(const ct::ObjectLayoutContainer::value_type& el) override
       {
-        currentClass = key;
+        currentClass = el.first;
 
-        class_begin(key);
+        class_begin(currentClass);
         out() << "=";
-        base::printClassHeader(key);
+        base::printClassHeader(el);
         out() << "=";
       }
 
-      void printClassFooter() const override
+      void printClassFooter() override
       {
         class_end();
 
@@ -411,24 +412,24 @@ namespace
       }
 
     private:
-      ct::ClassFilterFn                       include;
-      mutable std::vector<InheritanceEdgeDot> edges;
-      mutable ct::ClassKeyType                currentClass;
+      ct::ClassFilterFn               include;
+      std::vector<InheritanceEdgeDot> edges;
+      ct::ClassKeyType                currentClass;
   };
 
-  void ObjectLayoutElementPrinterDot::elem_begin(const void* elem) const
+  void ObjectLayoutElementPrinterDot::elem_begin(const void* elem)
   {
     out() << "|<p" << std::hex << (elem) << ">";
   }
 
-  void ObjectLayoutElementPrinterDot::elem_end() const {}
+  void ObjectLayoutElementPrinterDot::elem_end() {}
 
-  void ObjectLayoutElementPrinterDot::class_begin(const void* elem) const
+  void ObjectLayoutElementPrinterDot::class_begin(const void* elem)
   {
     out() << "p" << std::hex << (elem) << "[label=\"<0>";
   }
 
-  void ObjectLayoutElementPrinterDot::class_end() const
+  void ObjectLayoutElementPrinterDot::class_end()
   {
     out() << "\"];" << std::endl;
   }
@@ -438,39 +439,147 @@ namespace
       using base = ObjectLayoutElementPrinter;
       using base::base;
 
-      void printEntry(const ct::ObjectLayoutEntry& el) const override
+      void printEntry(const ct::ObjectLayoutEntry& el) override
       {
         out() << el.offset() << " ";
 
         base::printEntry(el);
+        // out() << std::endl;
       }
 
-      void printClassHeader(ct::ClassKeyType key) const override
+      void printClassHeader(const ct::ObjectLayoutContainer::value_type& el) override
       {
-        base::printClassHeader(key);
+        base::printClassHeader(el);
         out() << std::endl;
       }
   };
 
 
-  void prnClassLayout( const ObjectLayoutElementPrinter& printer,
+  struct VTableLayoutElementPrinter : boost::static_visitor<void>
+  {
+      VTableLayoutElementPrinter(std::ostream& out, ct::ClassNameFn& classNamer, ct::FuncNameFn& funcNamer)
+      : os(out), className(classNamer), funcName(funcNamer), classKey()
+      {}
+
+      virtual std::string escapeName(std::string s) const
+      {
+        return s;
+      }
+
+      virtual void operator()(const ct::VirtualCallOffset& /* callOfs */)
+      {
+        out() << "callOfs (todo)";
+      }
+
+      virtual void operator()(const ct::VirtualBaseOffset& /* baseOfs */)
+      {
+        out() << "baseOfs (todo)";
+      }
+
+      virtual void operator()(const ct::OffsetToTop& /* ofsToTop */)
+      {
+        out() << "ofsToTop (todo)";
+      }
+
+      virtual void operator()(const ct::TypeInfoPointer& tyinf)
+      {
+        out() << "typeinfo (todo)";
+      }
+
+      virtual void operator()(const ct::VirtualFunctionEntry& vfn)
+      {
+        out() << escapeName(funcName(vfn.function()))
+              << " " << vfn.function()
+              << (vfn.getClass() != classKey    ? " inh"   : "")
+              << (vfn.adjustReturnObj()         ? " covar" : "")
+              << (vfn.needsCompilerGeneration() ? " compgen" : "")
+              << (vfn.isPureVirtual()           ? " pure"  : "")
+              ;
+      }
+
+      virtual void printClassHeader(const ct::VTableLayoutContainer::value_type& el)
+      {
+        //~ const ct::VTableLayout::VTableSections& sects = el.second.vtableSections();
+
+        classKey = el.first;
+
+        out() << "class " << escapeName(className(classKey))
+              << (el.second.isAbstractClass() ? " abstract " : "")
+              //~ << " (" << sects.size() << " sub-vtables)"
+              //~ << sects.front().numTotal() << " / " << sects.front().numInherited()
+              ;
+      }
+
+      virtual void printClassFooter() { classKey = ct::ClassKeyType{}; }
+
+      std::ostream& out() { return os; }
+
+      virtual void printEntry(const ct::VTableLayoutElement& el)
+      {
+        //~ boost::apply_visitor(*this, el.element());
+        boost::apply_visitor(*this, el);
+      }
+
+    private:
+      std::ostream&    os;
+      ct::ClassNameFn& className;
+      ct::FuncNameFn&  funcName;
+      ct::ClassKeyType classKey;
+  };
+
+  struct VTableLayoutElementPrinterTxt : VTableLayoutElementPrinter
+  {
+      using base = VTableLayoutElementPrinter;
+      using base::base;
+
+      void printEntry(const ct::VTableLayoutElement& el) override
+      {
+        base::printEntry(el);
+        out() << std::endl;
+      }
+
+      void printClassFooter() override { out() << std::endl; }
+
+      void printClassHeader(const ct::VTableLayoutContainer::value_type& el) override
+      {
+        base::printClassHeader(el);
+        out() << std::endl;
+      }
+  };
+
+
+  template<class Printer, class LayoutContainer>
+  void prnLayout(Printer&& prn, ct::ClassFilterFn include, const LayoutContainer& cont)
+  {
+    for (const typename LayoutContainer::value_type& entry : cont)
+    {
+      if (!include(entry.first)) continue;
+
+      prn.printClassHeader(entry);
+
+      for (const auto& elem : entry.second)
+        prn.printEntry(elem);
+
+      prn.printClassFooter();
+    }
+  }
+
+
+  void prnClassLayout( ObjectLayoutElementPrinter&& printer,
                        ct::ClassFilterFn include,
                        const ct::ObjectLayoutContainer& cont
                      )
   {
-    for (const ct::ObjectLayoutContainer::value_type& entry : cont)
-    {
-      if (!include) continue;
-
-      printer.printClassHeader(entry.first);
-
-      for (const ct::ObjectLayoutEntry& elem : entry.second)
-        printer.printEntry(elem);
-
-      printer.printClassFooter();
-    }
+    prnLayout(printer, include, cont);
   }
 
+  void prnVTableLayout( VTableLayoutElementPrinter&& printer,
+                        ct::ClassFilterFn include,
+                        const ct::VTableLayoutContainer& cont
+                      )
+  {
+    prnLayout(printer, include, cont);
+  }
 }
 
 namespace CodeThorn
@@ -575,6 +684,16 @@ void classLayoutDot( std::ostream& os,
 
   prnClassLayout(ObjectLayoutElementPrinterDot{os, className, varName, include}, include, classLayout);
   dot_footer(os);
+}
+
+void vtableLayoutTxt( std::ostream& os,
+                      ClassNameFn& className,
+                      FuncNameFn& funcName,
+                      ClassFilterFn include,
+                      const VTableLayoutContainer& vtableLayout
+                    )
+{
+  prnVTableLayout(VTableLayoutElementPrinterTxt{os, className, funcName}, include, vtableLayout);
 }
 
 

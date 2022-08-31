@@ -3,6 +3,8 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Rose/BinaryAnalysis/BasicTypes.h>
+
 #include <ByteOrder.h>
 #include <Combinatorics.h>
 #include <Rose/Exception.h>
@@ -109,7 +111,9 @@ alignDown(T address, U alignment) {
  */
 class MemoryMap: public Sawyer::Container::AddressMap<rose_addr_t, uint8_t>, public Sawyer::SharedObject {
 public:
-    typedef Sawyer::SharedPointer<MemoryMap> Ptr;
+    /** Reference counting pointer. */
+    using Ptr = MemoryMapPtr;
+
     typedef rose_addr_t Address;
     typedef uint8_t Value;
     typedef Sawyer::Container::AddressMap<Address, Value> Super;
@@ -458,6 +462,11 @@ public:
     /** Documentation string for @ref insertProcess. */
     static std::string insertProcessDocumentation();
 
+    /** Insert part of another map by reference.
+     *
+     *  The specified addresses of the other map are copied into this map. */
+    void linkTo(const MemoryMap::Ptr &other, const AddressIntervalSet &parts);
+
     /** Copy part of a file into a buffer.
      *
      *  This copies (rather than directly references) part of a file and returns a pointer to a new buffer containing the data.
@@ -513,6 +522,35 @@ public:
         ByteOrder::convert((void*)&val, sizeof val, endianness_, ByteOrder::host_order());
         return val;
     }
+
+    /** Read a long unsigned value.
+     *
+     *  Reads a long unsigned value from memory and converts it from the memory byte order to the host byte order.  If the entire
+     *  value is not mapped in memory then return nothing (not even any part of the multi-byte value that might have been
+     *  present. */
+    Sawyer::Optional<uint64_t> readLongUnsinged(rose_addr_t startVa) const {
+        uint64_t val = 0;
+        if (at(startVa).limit(sizeof val).read((uint8_t*)&val).size() != sizeof val)
+            return Sawyer::Nothing();
+        ByteOrder::convert((void*)&val, sizeof val, endianness_, ByteOrder::host_order());
+        return val;
+    }
+    
+     /** Write an unsigned value.
+     *
+     *  Takes a unsigned value converts it from the memory byte order to the host byte order then writes to memory. 
+     *  This does not verify the memory is writable. Returns the number of bytes written. */
+    size_t writeUnsigned(uint32_t value, rose_addr_t startVa) {
+        return at(startVa).limit(sizeof(uint32_t)).write((const uint8_t*)(&value)).size(); 
+    }
+
+     /** Write a long unsigned value.
+     *
+     *  Takes a long unsigned value converts it from the memory byte order to the host byte order then writes to memory. 
+     *  This does not verify the memory is writable. Returns the number of bytes written. */
+    size_t writeUnsigned(uint64_t value, rose_addr_t startVa) {
+        return at(startVa).limit(sizeof(uint64_t)).write((const uint8_t*)(&value)).size(); 
+    } 
 
     /** Read a byte from memory.
      *

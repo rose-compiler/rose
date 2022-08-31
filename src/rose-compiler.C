@@ -1,6 +1,6 @@
 
 #include "sage3basic.h"
-#include "Rose/AST/io.h"
+#include "Rose/AST/IO.h"
 
 int main( int argc, char * argv[] ) {
   ROSE_INITIALIZE;

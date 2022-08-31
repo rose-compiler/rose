@@ -15,13 +15,13 @@ namespace Rose {
  *
  *  This is used, among other places, as a default argument for functions that limit the size of their return value in some
  *  way. Use this instead of "(size_t)(-1)" for better self-documenting code. */
-const size_t UNLIMITED(-1);
+const size_t UNLIMITED(static_cast<size_t>(-1));
 
 /** Invalid array index.
  *
  *  This is used to represent lack of a valid array index. Use this instead of "(size_t)(-1)" for better self-documenting
  *  code. */
-const size_t INVALID_INDEX(-1);
+const size_t INVALID_INDEX(static_cast<size_t>(-1));
 
 } // namespace
 #endif

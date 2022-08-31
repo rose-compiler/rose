@@ -13,10 +13,13 @@ static const char *description =
 
 #include <rose.h>
 #include <batSupport.h>
+
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/BestMapAddress.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+
 #include <Sawyer/Stopwatch.h>
 
 #include <boost/filesystem.hpp>
@@ -103,7 +106,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
 // Rewrites the global CFG as the program is disassembled.
 class IpRewrite: public P2::BasicBlockCallback {
 public:
-    typedef std::pair<P2::Semantics::SValuePtr, P2::Semantics::SValuePtr> SValueSValue;
+    typedef std::pair<P2::Semantics::SValue::Ptr, P2::Semantics::SValue::Ptr> SValueSValue;
 private:
     std::vector<SValueSValue> rewrites_;
 
@@ -111,10 +114,10 @@ protected:
     IpRewrite(const P2::Partitioner &partitioner, const std::vector<rose_addr_t> &vaPairs) {
         ASSERT_require(vaPairs.size() % 2 == 0);
         const RegisterDescriptor REG_IP = partitioner.instructionProvider().instructionPointerRegister();
-        InstructionSemantics2::BaseSemantics::RiscOperatorsPtr ops = partitioner.newOperators();
+        InstructionSemantics::BaseSemantics::RiscOperators::Ptr ops = partitioner.newOperators();
         for (size_t i=0; i < vaPairs.size(); i += 2) {
-            P2::Semantics::SValuePtr oldVal = P2::Semantics::SValue::promote(ops->number_(REG_IP.nBits(), vaPairs[i+0]));
-            P2::Semantics::SValuePtr newVal = P2::Semantics::SValue::promote(ops->number_(REG_IP.nBits(), vaPairs[i+1]));
+            P2::Semantics::SValue::Ptr oldVal = P2::Semantics::SValue::promote(ops->number_(REG_IP.nBits(), vaPairs[i+0]));
+            P2::Semantics::SValue::Ptr newVal = P2::Semantics::SValue::promote(ops->number_(REG_IP.nBits(), vaPairs[i+1]));
             rewrites_.push_back(std::make_pair(oldVal, newVal));
         }
     }
@@ -169,7 +172,7 @@ main(int argc, char *argv[]) {
         P2::Engine::Settings settings = engine.settings();
         settings.partitioner.doingPostAnalysis = false;
         if (settings.disassembler.isaName.empty()) {
-            Disassembler *disassembler = engine.obtainDisassembler();
+            Disassembler::Base::Ptr disassembler = engine.obtainDisassembler();
             if (!disassembler) {
                 mlog[FATAL] <<"no disassembler found and none specified\n";
                 exit(1);

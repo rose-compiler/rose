@@ -1,8 +1,8 @@
 #include <rose.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/NativeSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/NativeSemantics.h>
 
 using namespace Rose::BinaryAnalysis;
-namespace IS = Rose::BinaryAnalysis::InstructionSemantics2;
+namespace IS = Rose::BinaryAnalysis::InstructionSemantics;
 namespace BaseSemantics = IS::BaseSemantics;
 namespace NativeSemantics = IS::NativeSemantics;
 
@@ -12,9 +12,9 @@ int main(int argc, char *argv[]) {
     Debugger::Specimen exe(argv[1]);
     exe.arguments(std::vector<std::string>(argv+2, argv+argc));
 
-    NativeSemantics::DispatcherPtr cpu = NativeSemantics::Dispatcher::instance(exe);
+    NativeSemantics::Dispatcher::Ptr cpu = NativeSemantics::Dispatcher::instance(exe);
     ASSERT_not_null(cpu);
-    BaseSemantics::RiscOperatorsPtr ops = cpu->operators();
+    BaseSemantics::RiscOperators::Ptr ops = cpu->operators();
 
     const RegisterDescriptor IP = cpu->instructionPointerRegister();
 

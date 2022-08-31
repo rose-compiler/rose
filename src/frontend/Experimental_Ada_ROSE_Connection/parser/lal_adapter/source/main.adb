@@ -28,7 +28,7 @@ procedure Main is
       Put_Line
         ("Line" & Slocs.Line_Number'Image (Node.Sloc_Range.Start_Line) & ": " &
            LALCO.Ada_Node_Kind_Type'Image (Node.kind) & ": " & 
-           Node.Debug_Text);
+           Node.Image);
       --  end if;
       return LALCO.Into;
    end Process_Node;

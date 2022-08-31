@@ -23,7 +23,7 @@ using namespace Rose;
 using namespace Rose::BinaryAnalysis;
 using namespace Sawyer::Message::Common;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
-namespace BaseSemantics = Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
+namespace BaseSemantics = Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;
 
 namespace {
 
@@ -93,7 +93,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
 
 void
 insertDeltaPairs(StackDeltaMap &sdmap /*in,out*/, const AddressIntervalSet &intervals,
-                 const BaseSemantics::SValuePtr &preDelta, const BaseSemantics::SValuePtr &postDelta) {
+                 const BaseSemantics::SValue::Ptr &preDelta, const BaseSemantics::SValue::Ptr &postDelta) {
     StackDeltaPair sdpair;
     if (preDelta)
         preDelta->toSigned().assignTo(sdpair.preDelta);
@@ -108,7 +108,7 @@ insertDeltaPairs(StackDeltaMap &sdmap /*in,out*/, const AddressIntervalSet &inte
 
 void
 insertDeltaPairs(StackDeltaMap &sdmap /*in,out*/, const AddressInterval &interval,
-                 const BaseSemantics::SValuePtr &preDelta, const BaseSemantics::SValuePtr &postDelta) {
+                 const BaseSemantics::SValue::Ptr &preDelta, const BaseSemantics::SValue::Ptr &postDelta) {
     StackDeltaPair sdpair;
     if (preDelta)
         preDelta->toSigned().assignTo(sdpair.preDelta);
@@ -121,7 +121,7 @@ insertDeltaPairs(StackDeltaMap &sdmap /*in,out*/, const AddressInterval &interva
 
 void
 insertDeltaPairs(StackDeltaMap &sdmap /*in,out*/, const AddressIntervalSet &intervals,
-                 const BaseSemantics::SValuePtr &postDelta) {
+                 const BaseSemantics::SValue::Ptr &postDelta) {
     StackDeltaPair sdpair;
     sdpair.preDelta = 0;
     if (postDelta)
@@ -153,21 +153,21 @@ main(int argc, char *argv[]) {
     StackDeltaMap sdmap;
     for (const P2::Function::Ptr &function: partitioner.functions()) {
         if (SD_FUNCTION == settings.domain) {
-            BaseSemantics::SValuePtr postDelta = partitioner.functionStackDelta(function);
+            BaseSemantics::SValue::Ptr postDelta = partitioner.functionStackDelta(function);
             insertDeltaPairs(sdmap, partitioner.functionBasicBlockExtent(function), postDelta);
         } else {
             for (const rose_addr_t bbva: function->basicBlockAddresses()) {
                 if (P2::BasicBlock::Ptr bb = partitioner.basicBlockExists(bbva)) {
                     if (SD_BASIC_BLOCK == settings.domain) {
-                        BaseSemantics::SValuePtr preDelta = partitioner.basicBlockStackDeltaIn(bb, function);
-                        BaseSemantics::SValuePtr postDelta = partitioner.basicBlockStackDeltaOut(bb, function);
+                        BaseSemantics::SValue::Ptr preDelta = partitioner.basicBlockStackDeltaIn(bb, function);
+                        BaseSemantics::SValue::Ptr postDelta = partitioner.basicBlockStackDeltaOut(bb, function);
                         insertDeltaPairs(sdmap, partitioner.basicBlockInstructionExtent(bb), preDelta, postDelta);
                     } else {
                         ASSERT_require(SD_INSTRUCTION == settings.domain);
                         const BinaryAnalysis::StackDelta::Analysis &sda = function->stackDeltaAnalysis();
                         for (SgAsmInstruction *insn: bb->instructions()) {
-                            BaseSemantics::SValuePtr preDelta = sda.instructionInputStackDeltaWrtFunction(insn);
-                            BaseSemantics::SValuePtr postDelta = sda.instructionOutputStackDeltaWrtFunction(insn);
+                            BaseSemantics::SValue::Ptr preDelta = sda.instructionInputStackDeltaWrtFunction(insn);
+                            BaseSemantics::SValue::Ptr postDelta = sda.instructionOutputStackDeltaWrtFunction(insn);
                             insertDeltaPairs(sdmap, partitioner.instructionExtent(insn), preDelta, postDelta);
                         }
                     }

@@ -980,6 +980,30 @@ MemoryMap::insertProcess(pid_t pid, Attach::Boolean doAttach) {
 #endif
 }
 
+void
+MemoryMap::linkTo(const MemoryMap::Ptr &other, const AddressIntervalSet &parts) {
+    ASSERT_not_null(other);
+    for (const AddressInterval &part: parts.intervals()) {
+        for (auto node: other->findAll(part)) {
+            const AddressInterval srcAddrs = node.key();
+            const Segment &srcSegment = node.value();
+            const AddressInterval dstAddrs = part & srcAddrs;
+            ASSERT_forbid(dstAddrs.isEmpty());
+
+            // Which part of the src's buffer do we want to link to?
+            const rose_addr_t bufferOffset = srcAddrs.least() <= part.least() ?
+                                             part.least() - srcAddrs.least() + srcSegment.offset() :
+                                             srcSegment.offset();
+            ASSERT_require(bufferOffset < srcSegment.buffer()->size());
+            ASSERT_require(bufferOffset + dstAddrs.size() <= srcSegment.buffer()->size());
+
+            // Create a new segment for the destination map, which points into the same buffer as the source map.
+            Segment dstSegment(srcSegment.buffer(), bufferOffset, srcSegment.accessibility(), srcSegment.name());
+            insert(dstAddrs, dstSegment);
+        }
+    }
+}
+
 Sawyer::Optional<uint8_t>
 MemoryMap::readByte(rose_addr_t va) const {
     uint8_t byte = 0;

@@ -31,16 +31,11 @@ libroseSupport_la_SOURCES =			\
 
 pkginclude_HEADERS =				\
 	Combinatorics.h				\
-	CommandLine.h				\
-	Diagnostics.h				\
 	IncludeDirective.h			\
-	RoseException.h				\
 	callbacks.h				\
-	initialize.h				\
 	optionDeclaration.h			\
 	rangemap.h				\
 	roseTranslators.h			\
-	SourceLocation.h			\
 	sourceLocationInheritedAttribute.h	\
 	stringify.h				\
 	transformationSupport.h			\

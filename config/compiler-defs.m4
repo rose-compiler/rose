@@ -178,19 +178,24 @@ AC_DEFUN([GET_CXX_VERSION_INFO],[
                             CXX_VERSION_PATCH=0
                             ;;
                         *)
-                            AC_MSG_FAILURE([unknown or unsupported version of XCode (XCODE_VERSION_MINOR = "$XCODE_VERSION_MINOR")])
+                            AC_MSG_FAILURE([unknown or unsupported version of XCode: Major version is 12, XCODE_VERSION_PATCH = "$XCODE_VERSION_PATCH"])
                             ;;
                     esac
                 elif test $XCODE_VERSION_MAJOR -eq 13; then
-                  # Rasmussen (01/27/2022): Added results for clang --version 13.0.0
-                    case "$XCODE_VERSION_PATCH" in
+                  # Rasmussen (05/19/2022): Updated results for clang --version 13.0.0-13.1.6
+                    case "$XCODE_VERSION_MINOR" in
                         0)
                             CXX_VERSION_MAJOR=12
                             CXX_VERSION_MINOR=0
                             CXX_VERSION_PATCH=0
                             ;;
+                        1)
+                            CXX_VERSION_MAJOR=13
+                            CXX_VERSION_MINOR=0
+                            CXX_VERSION_PATCH=0
+                            ;;
                         *)
-                            AC_MSG_FAILURE([unknown or unsupported version of XCode (XCODE_VERSION_MINOR = "$XCODE_VERSION_MINOR")])
+                      AC_MSG_FAILURE([unknown or unsupported version of XCode: Major version is 13, XCODE_VERSION_MINOR = "$XCODE_VERSION_MINOR"])
                             ;;
                     esac
                 else

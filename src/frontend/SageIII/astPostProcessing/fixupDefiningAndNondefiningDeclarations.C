@@ -634,7 +634,14 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                  // reset the firstNondefiningDeclaration
                     firstNondefiningDeclaration = declaration->get_firstNondefiningDeclaration();
                   }
-               ROSE_ASSERT(firstNondefiningDeclaration != definingDeclaration);
+
+               if (firstNondefiningDeclaration == definingDeclaration)
+                  {
+                    mlog[WARN] << "firstNondefiningDeclaration == definingDeclaration failed for node of " << node->sage_class_name()
+                               << " / " << node->unparseToString()
+                               << std::endl;
+                    ROSE_ASSERT(firstNondefiningDeclaration != definingDeclaration);
+                  }
 
             // DQ (8/18/2005): New test added
                SgTemplateInstantiationMemberFunctionDecl* templateMemberFunction = isSgTemplateInstantiationMemberFunctionDecl(declaration);

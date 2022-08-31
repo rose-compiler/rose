@@ -1,4 +1,7 @@
+add_subdirectory(ByteCode)
 add_subdirectory(Concolic)
+add_subdirectory(Disassembler)
+add_subdirectory(InstructionSemantics)
 add_subdirectory(InstructionSemantics2)
 add_subdirectory(ModelChecker)
 add_subdirectory(Partitioner2)
@@ -15,18 +18,13 @@ add_library(roseBinaryAnalysis OBJECT
   BinaryLoaderPe.C
   CallingConvention.C
   CodeInserter.C
+  ConcreteLocation.C
   ControlFlow.C
   DataFlow.C
   Debugger.C
   Demangler.C
-  Disassembler.C
-  DisassemblerAarch32.C
-  DisassemblerAarch64.C
-  DisassemblerM68k.C
-  DisassemblerMips.C
-  DisassemblerNull.C
-  DisassemblerPowerpc.C
-  DisassemblerX86.C
+  DisassemblerCil.C
+  DisassemblerJvm.C
   FeasiblePath.C
   FunctionCall.C
   FunctionSimilarity.C
@@ -40,7 +38,8 @@ add_library(roseBinaryAnalysis OBJECT
   Reachability.C
   RegisterDescriptor.C
   RegisterParts.C
-  Registers.C
+  RegisterDictionary.C
+  RegisterNames.C
   ReturnValueUsed.C
   SerialIo.C
   SmtCommandLine.C
@@ -56,8 +55,7 @@ add_library(roseBinaryAnalysis OBJECT
   TaintedFlow.C
   ToSource.C
   Variables.C
-  Z3Solver.C
-  )
+  Z3Solver.C)
 
 add_dependencies(roseBinaryAnalysis rosetta_generated)
 
@@ -65,6 +63,7 @@ install(FILES
   AbstractLocation.h
   AsmFunctionIndex.h
   AstHash.h
+  BasicTypes.h
   BestMapAddress.h
   BinaryLoader.h
   BinaryLoaderElf.h
@@ -73,18 +72,14 @@ install(FILES
   CallingConvention.h
   CodeInserter.h
   Concolic.h
+  ConcreteLocation.h
   ControlFlow.h
   DataFlow.h
   Debugger.h
   Demangler.h
   Disassembler.h
-  DisassemblerAarch32.h
-  DisassemblerAarch64.h
-  DisassemblerM68k.h
-  DisassemblerMips.h
-  DisassemblerNull.h
-  DisassemblerPowerpc.h
-  DisassemblerX86.h
+  DisassemblerCil.h
+  DisassemblerJvm.h
   FeasiblePath.h
   FunctionCall.h
   FunctionSimilarity.h
@@ -92,11 +87,13 @@ install(FILES
   InstructionCache.h
   InstructionEnumsAarch32.h
   InstructionEnumsAarch64.h
+  InstructionEnumsCil.h
   InstructionEnumsJvm.h
   InstructionEnumsM68k.h
   InstructionEnumsMips.h
   InstructionEnumsPowerpc.h
   InstructionEnumsX86.h
+  InstructionSemantics.h
   InstructionSemantics2.h
   LibraryIdentification.h
   MagicNumber.h
@@ -108,8 +105,9 @@ install(FILES
   PointerDetection.h
   Reachability.h
   RegisterDescriptor.h
+  RegisterDictionary.h
+  RegisterNames.h
   RegisterParts.h
-  Registers.h
   ReturnValueUsed.h
   SerialIo.h
   SmtCommandLine.h

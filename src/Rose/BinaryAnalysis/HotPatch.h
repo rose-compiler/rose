@@ -3,7 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/SValue.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/SValue.h>
 #include <Rose/BinaryAnalysis/HotPatch.h>
 #include <Rose/BinaryAnalysis/SmtSolver.h>
 #include <Sawyer/Message.h>
@@ -42,8 +42,8 @@ public:
     private:
         Type type_;                                     // record type
         RegisterDescriptor register_;                   // register to be modified for PATCH_REGISTER types.
-        InstructionSemantics2::BaseSemantics::SValuePtr oldValue_; // value to match
-        InstructionSemantics2::BaseSemantics::SValuePtr newValue_; // replacement value
+        InstructionSemantics::BaseSemantics::SValuePtr oldValue_; // value to match
+        InstructionSemantics::BaseSemantics::SValuePtr newValue_; // replacement value
         Behavior behavior_;                             // whether to continue matching more records
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -69,8 +69,8 @@ public:
          *
          *  If @p reg is an empty (default constructed) register descriptor or if the @p oldValue is null then the returned record will
          *  never match any state.  The @p newValue must be non-null. */
-        Record(RegisterDescriptor reg, const InstructionSemantics2::BaseSemantics::SValuePtr &oldValue,
-               const InstructionSemantics2::BaseSemantics::SValuePtr &newValue, Behavior behavior = MATCH_CONTINUE)
+        Record(RegisterDescriptor reg, const InstructionSemantics::BaseSemantics::SValuePtr &oldValue,
+               const InstructionSemantics::BaseSemantics::SValuePtr &newValue, Behavior behavior = MATCH_CONTINUE)
             : type_(PATCH_REGISTER), register_(reg), oldValue_(oldValue), newValue_(newValue), behavior_(behavior) {
             ASSERT_not_null(newValue);
         }
@@ -102,10 +102,10 @@ public:
          *  anything.
          *
          * @{ */
-        InstructionSemantics2::BaseSemantics::SValuePtr oldValue() const {
+        InstructionSemantics::BaseSemantics::SValuePtr oldValue() const {
             return oldValue_;
         }
-        void oldValue(const InstructionSemantics2::BaseSemantics::SValuePtr &v) {
+        void oldValue(const InstructionSemantics::BaseSemantics::SValuePtr &v) {
             oldValue_ = v;
         }
         /** @} */
@@ -116,10 +116,10 @@ public:
          *  be null.
          *
          * @{ */
-        InstructionSemantics2::BaseSemantics::SValuePtr newValue() const {
+        InstructionSemantics::BaseSemantics::SValuePtr newValue() const {
             return newValue_;
         }
-        void newValue(const InstructionSemantics2::BaseSemantics::SValuePtr &v) {
+        void newValue(const InstructionSemantics::BaseSemantics::SValuePtr &v) {
             newValue_ = v;
         }
         /** @} */
@@ -214,8 +214,8 @@ public:
      *  Returns the number of matching records that were applied.
      *
      * @{ */
-    size_t apply(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&) const;
-    size_t operator()(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr &ops) const {
+    size_t apply(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&) const;
+    size_t operator()(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr &ops) const {
         return apply(ops);
     }
     /** @} */

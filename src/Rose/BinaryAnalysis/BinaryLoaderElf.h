@@ -7,14 +7,11 @@
 namespace Rose {
 namespace BinaryAnalysis {
 
-/** Reference counting pointer to @ref BinaryLoaderElf. */
-typedef Sawyer::SharedPointer<class BinaryLoaderElf> BinaryLoaderElfPtr;
-
 /** Loader for ELF files. */
 class BinaryLoaderElf: public BinaryLoader {
 public:
     /** Reference counting pointer to @ref BinaryLoaderElf. */
-    typedef Sawyer::SharedPointer<class BinaryLoaderElf> Ptr;
+    using Ptr = BinaryLoaderElfPtr;
 
 public:
     /* FIXME: These should probably be in SgAsmElfSymver* classes instead. [RPM 2010-09-14] */

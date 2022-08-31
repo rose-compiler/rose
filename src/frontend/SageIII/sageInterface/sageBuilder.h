@@ -576,6 +576,7 @@ BUILD_UNARY_PROTO(ImagPartOp)
 BUILD_UNARY_PROTO(ConjugateOp)
 BUILD_UNARY_PROTO(VarArgStartOneOperandOp)
 BUILD_UNARY_PROTO(VarArgEndOp)
+BUILD_UNARY_PROTO(AbsOp)
 
 //Matlab transpose op
 BUILD_UNARY_PROTO(MatrixTransposeOp)
@@ -676,6 +677,7 @@ BUILD_BINARY_PROTO(NotEqualOp)
 BUILD_BINARY_PROTO(OrOp)
 BUILD_BINARY_PROTO(PlusAssignOp)
 BUILD_BINARY_PROTO(PntrArrRefExp)
+BUILD_BINARY_PROTO(RemOp)
 BUILD_BINARY_PROTO(RshiftAssignOp)
 BUILD_BINARY_PROTO(JavaUnsignedRshiftAssignOp)
 
@@ -1620,6 +1622,8 @@ ROSE_DLL_API SgMicrosoftAttributeDeclaration* buildMicrosoftAttributeDeclaration
 //! Liao (9/18/2015): experimental support of building a statement from a string
 ROSE_DLL_API SgStatement* buildStatementFromString(const std::string & stmt_str, SgScopeStatement* scope);
 
+//! Build a using directive statement
+ROSE_DLL_API SgUsingDirectiveStatement* buildUsingDirectiveStatement(SgNamespaceDeclarationStatement * ns_decl);
 //@}
 
 //--------------------------------------------------------------

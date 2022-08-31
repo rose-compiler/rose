@@ -3,11 +3,13 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/StackDelta.h>
 
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics.h>
-#include <Rose/CommandLine.h>
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/DataFlow.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/RegisterStateGeneric.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
+#include <Rose/CommandLine.h>
+
 #include <Sawyer/ProgressBar.h>
 #include <integerOps.h>
 
@@ -16,7 +18,7 @@ namespace BinaryAnalysis {
 namespace StackDelta {
 
 using namespace Rose::Diagnostics;
-using namespace Rose::BinaryAnalysis::InstructionSemantics2;
+using namespace Rose::BinaryAnalysis::InstructionSemantics;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 
@@ -33,18 +35,18 @@ initDiagnostics() {
 }
 
 void
-Analysis::init(Disassembler *disassembler) {
+Analysis::init(const Disassembler::Base::Ptr &disassembler) {
     if (disassembler) {
-        const RegisterDictionary *regdict = disassembler->registerDictionary();
+        RegisterDictionary::Ptr regdict = disassembler->registerDictionary();
         ASSERT_not_null(regdict);
         size_t addrWidth = disassembler->instructionPointerRegister().nBits();
 
         SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
-        BaseSemantics::SValuePtr protoval = SymbolicSemantics::SValue::instance();
-        BaseSemantics::RegisterStatePtr registers = SymbolicSemantics::RegisterState::instance(protoval, regdict);
-        BaseSemantics::MemoryStatePtr memory = NullSemantics::MemoryState::instance(protoval, protoval);
-        BaseSemantics::StatePtr state = SymbolicSemantics::State::instance(registers, memory);
-        BaseSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(state, solver);
+        BaseSemantics::SValue::Ptr protoval = SymbolicSemantics::SValue::instance();
+        BaseSemantics::RegisterState::Ptr registers = SymbolicSemantics::RegisterState::instance(protoval, regdict);
+        BaseSemantics::MemoryState::Ptr memory = NullSemantics::MemoryState::instance(protoval, protoval);
+        BaseSemantics::State::Ptr state = SymbolicSemantics::State::instance(registers, memory);
+        BaseSemantics::RiscOperators::Ptr ops = SymbolicSemantics::RiscOperators::instanceFromState(state, solver);
 
         cpu_ = disassembler->dispatcher()->create(ops, addrWidth, regdict);
     }
@@ -59,7 +61,7 @@ Analysis::clearResults() {
 
 void
 Analysis::clearStackDeltas() {
-    functionDelta_ = BaseSemantics::SValuePtr();
+    functionDelta_ = BaseSemantics::SValue::Ptr();
     bblockDeltas_.clear();
     insnDeltas_.clear();
 }
@@ -73,7 +75,7 @@ Analysis::clearStackPointers() {
 
 void
 Analysis::clearNonResults() {
-    cpu_ = BaseSemantics::DispatcherPtr();
+    cpu_ = BaseSemantics::Dispatcher::Ptr();
 }
 
 
@@ -86,13 +88,13 @@ public:
         : P2::DataFlow::TransferFunction(analysis->cpu()), analysis_(analysis) {}
 
     // Override the base class by initializing only the stack pointer register.
-    BaseSemantics::StatePtr initialState() const {
-        BaseSemantics::RiscOperatorsPtr ops = cpu()->operators();
-        BaseSemantics::StatePtr newState = ops->currentState()->clone();
+    BaseSemantics::State::Ptr initialState() const {
+        BaseSemantics::RiscOperators::Ptr ops = cpu()->operators();
+        BaseSemantics::State::Ptr newState = ops->currentState()->clone();
         newState->clear();
         cpu()->initializeState(newState);
 
-        BaseSemantics::RegisterStateGenericPtr regState =
+        BaseSemantics::RegisterStateGeneric::Ptr regState =
             BaseSemantics::RegisterStateGeneric::promote(newState->registerState());
 
         const RegisterDescriptor SP = cpu()->stackPointerRegister();
@@ -106,21 +108,21 @@ public:
     }
 
     // Required by data-flow engine: compute next state from current state and dfCfg vertex
-    BaseSemantics::StatePtr
-    operator()(const P2::DataFlow::DfCfg &dfCfg, size_t vertexId, const BaseSemantics::StatePtr &incomingState) const {
+    BaseSemantics::State::Ptr
+    operator()(const P2::DataFlow::DfCfg &dfCfg, size_t vertexId, const BaseSemantics::State::Ptr &incomingState) const {
         P2::DataFlow::DfCfg::ConstVertexIterator vertex = dfCfg.findVertex(vertexId);
         ASSERT_require(dfCfg.isValidVertex(vertex));
         if (P2::DataFlow::DfCfgVertex::BBLOCK == vertex->value().type()) {
-            BaseSemantics::StatePtr retval = incomingState->clone();
-            BaseSemantics::RiscOperatorsPtr ops = analysis_->cpu()->operators();
+            BaseSemantics::State::Ptr retval = incomingState->clone();
+            BaseSemantics::RiscOperators::Ptr ops = analysis_->cpu()->operators();
             ops->currentState(retval);
             ASSERT_not_null(vertex->value().bblock());
             RegisterDescriptor SP = cpu()->stackPointerRegister();
-            BaseSemantics::SValuePtr oldSp = retval->peekRegister(SP, ops->undefined_(SP.nBits()), ops.get());
+            BaseSemantics::SValue::Ptr oldSp = retval->peekRegister(SP, ops->undefined_(SP.nBits()), ops.get());
             for (SgAsmInstruction *insn: vertex->value().bblock()->instructions()) {
                 cpu()->processInstruction(insn);
-                BaseSemantics::SValuePtr newSp = retval->peekRegister(SP, ops->undefined_(SP.nBits()), ops.get());
-                BaseSemantics::SValuePtr delta = ops->subtract(newSp, oldSp);
+                BaseSemantics::SValue::Ptr newSp = retval->peekRegister(SP, ops->undefined_(SP.nBits()), ops.get());
+                BaseSemantics::SValue::Ptr delta = ops->subtract(newSp, oldSp);
                 analysis_->adjustInstruction(insn, oldSp, newSp, delta);
                 oldSp = newSp;
             }
@@ -159,7 +161,7 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
 
     // Build the dataflow engine. If an instruction dispatcher is already provided then use it, otherwise create one and store
     // it in this analysis object.
-    typedef DataFlow::Engine<DfCfg, BaseSemantics::StatePtr, TransferFunction, DataFlow::SemanticsMerge> DfEngine;
+    typedef DataFlow::Engine<DfCfg, BaseSemantics::State::Ptr, TransferFunction, DataFlow::SemanticsMerge> DfEngine;
     if (!cpu_ && NULL==(cpu_ = partitioner.newDispatcher(partitioner.newOperators()))) {
         SAWYER_MESG(debug) <<"  no instruction semantics\n";
         return;
@@ -169,13 +171,14 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     TransferFunction xfer(this);
     xfer.defaultCallingConvention(ccDefs.empty() ? CallingConvention::Definition::Ptr() : ccDefs.front());
     DfEngine dfEngine(dfCfg, xfer, merge);
+    dfEngine.name("stack-delta");
     size_t maxIterations = dfCfg.nVertices() * 5;       // arbitrary
     dfEngine.maxIterations(maxIterations);
-    BaseSemantics::RiscOperatorsPtr ops = cpu_->operators();
+    BaseSemantics::RiscOperators::Ptr ops = cpu_->operators();
 
     // Build the initial state
-    BaseSemantics::StatePtr initialState = xfer.initialState();
-    BaseSemantics::RegisterStateGenericPtr initialRegState =
+    BaseSemantics::State::Ptr initialState = xfer.initialState();
+    BaseSemantics::RegisterStateGeneric::Ptr initialRegState =
         BaseSemantics::RegisterStateGeneric::promote(initialState->registerState());
 
     // Run data flow analysis
@@ -184,7 +187,7 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
         // Use this rather than runToFixedPoint because it lets us show a progress report
         Sawyer::ProgressBar<size_t> progress(maxIterations, mlog[MARCH], function->printableName());
         progress.suffix(" iterations");
-        dfEngine.reset(BaseSemantics::StatePtr());
+        dfEngine.reset(BaseSemantics::State::Ptr());
         dfEngine.insertStartingVertex(startVertexId, initialState);
         while (dfEngine.runOneIteration())
             ++progress;
@@ -200,8 +203,8 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     }
 
     // Get the final dataflow state
-    BaseSemantics::StatePtr finalState;
-    BaseSemantics::RegisterStateGenericPtr finalRegState;
+    BaseSemantics::State::Ptr finalState;
+    BaseSemantics::RegisterStateGeneric::Ptr finalRegState;
     if (dfCfg.isValidVertex(returnVertex)) {
         finalState = dfEngine.getInitialState(returnVertex->id());
         if (finalState == NULL) {
@@ -227,16 +230,16 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
         if (vertex.value().type() == P2::DataFlow::DfCfgVertex::BBLOCK) {
             P2::BasicBlock::Ptr bblock = vertex.value().bblock();
             ASSERT_not_null(bblock);
-            BaseSemantics::SValuePtr sp0, sp1;
+            BaseSemantics::SValue::Ptr sp0, sp1;
             RegisterDescriptor SP = cpu_->stackPointerRegister();
-            if (BaseSemantics::StatePtr state = dfEngine.getInitialState(vertex.id()))
+            if (BaseSemantics::State::Ptr state = dfEngine.getInitialState(vertex.id()))
                 sp0 = state->peekRegister(SP, ops->undefined_(SP.nBits()), ops.get());
-            if (BaseSemantics::StatePtr state = dfEngine.getFinalState(vertex.id()))
+            if (BaseSemantics::State::Ptr state = dfEngine.getFinalState(vertex.id()))
                 sp1 = state->peekRegister(SP, ops->undefined_(SP.nBits()), ops.get());
             bblockStackPtrs_.insert(bblock->address(), SValuePair(sp0, sp1));
 
             if (sp0 && sp1) {
-                BaseSemantics::SValuePtr delta = ops->subtract(sp1, sp0);
+                BaseSemantics::SValue::Ptr delta = ops->subtract(sp1, sp0);
                 bblockDeltas_.insert(bblock->address(), delta);
             }
         }
@@ -270,7 +273,7 @@ Analysis::basicBlockStackPointers(rose_addr_t basicBlockAddress) const {
     return bblockStackPtrs_.getOrDefault(basicBlockAddress);
 }
 
-BaseSemantics::SValuePtr
+BaseSemantics::SValue::Ptr
 Analysis::basicBlockStackDelta(rose_addr_t basicBlockAddress) const {
     return bblockDeltas_.getOrDefault(basicBlockAddress);
 }
@@ -280,21 +283,21 @@ Analysis::basicBlockStackDeltaConcrete(rose_addr_t basicBlockAddress) const {
     return toInt(basicBlockStackDelta(basicBlockAddress));
 }
 
-BaseSemantics::SValuePtr
+BaseSemantics::SValue::Ptr
 Analysis::basicBlockInputStackDeltaWrtFunction(rose_addr_t basicBlockAddress) const {
-    BaseSemantics::SValuePtr initialSp = functionStackPtrs_.first;
-    BaseSemantics::SValuePtr finalSp = bblockStackPtrs_.getOrDefault(basicBlockAddress).first;
+    BaseSemantics::SValue::Ptr initialSp = functionStackPtrs_.first;
+    BaseSemantics::SValue::Ptr finalSp = bblockStackPtrs_.getOrDefault(basicBlockAddress).first;
     if (NULL == initialSp || NULL == finalSp || NULL == cpu_)
-        return BaseSemantics::SValuePtr();
+        return BaseSemantics::SValue::Ptr();
     return cpu_->operators()->subtract(finalSp, initialSp);
 }
 
-BaseSemantics::SValuePtr
+BaseSemantics::SValue::Ptr
 Analysis::basicBlockOutputStackDeltaWrtFunction(rose_addr_t basicBlockAddress) const {
-    BaseSemantics::SValuePtr initialSp = functionStackPtrs_.first;
-    BaseSemantics::SValuePtr finalSp = bblockStackPtrs_.getOrDefault(basicBlockAddress).second;
+    BaseSemantics::SValue::Ptr initialSp = functionStackPtrs_.first;
+    BaseSemantics::SValue::Ptr finalSp = bblockStackPtrs_.getOrDefault(basicBlockAddress).second;
     if (NULL == initialSp || NULL == finalSp || NULL == cpu_)
-        return BaseSemantics::SValuePtr();
+        return BaseSemantics::SValue::Ptr();
     return cpu_->operators()->subtract(finalSp, initialSp);
 }
 
@@ -305,10 +308,10 @@ Analysis::instructionStackPointers(SgAsmInstruction *insn) const {
     return insnStackPtrs_.getOrDefault(insn->get_address());
 }
 
-BaseSemantics::SValuePtr
+BaseSemantics::SValue::Ptr
 Analysis::instructionStackDelta(SgAsmInstruction *insn) const {
     if (NULL == insn)
-        return BaseSemantics::SValuePtr();
+        return BaseSemantics::SValue::Ptr();
     return insnDeltas_.getOrDefault(insn->get_address());
 }
 
@@ -317,21 +320,21 @@ Analysis::instructionStackDeltaConcrete(SgAsmInstruction *insn) const {
     return toInt(instructionStackDelta(insn));
 }
 
-BaseSemantics::SValuePtr
+BaseSemantics::SValue::Ptr
 Analysis::instructionInputStackDeltaWrtFunction(SgAsmInstruction *insn) const {
-    BaseSemantics::SValuePtr initialSp = functionStackPtrs_.first;
-    BaseSemantics::SValuePtr finalSp = insnStackPtrs_.getOrDefault(insn->get_address()).first;
+    BaseSemantics::SValue::Ptr initialSp = functionStackPtrs_.first;
+    BaseSemantics::SValue::Ptr finalSp = insnStackPtrs_.getOrDefault(insn->get_address()).first;
     if (NULL == initialSp || NULL == finalSp || NULL == cpu_)
-        return BaseSemantics::SValuePtr();
+        return BaseSemantics::SValue::Ptr();
     return cpu_->operators()->subtract(finalSp, initialSp);
 }
 
-BaseSemantics::SValuePtr
+BaseSemantics::SValue::Ptr
 Analysis::instructionOutputStackDeltaWrtFunction(SgAsmInstruction*insn) const {
-    BaseSemantics::SValuePtr initialSp = functionStackPtrs_.first;
-    BaseSemantics::SValuePtr finalSp = insnStackPtrs_.getOrDefault(insn->get_address()).second;
+    BaseSemantics::SValue::Ptr initialSp = functionStackPtrs_.first;
+    BaseSemantics::SValue::Ptr finalSp = insnStackPtrs_.getOrDefault(insn->get_address()).second;
     if (NULL == initialSp || NULL == finalSp || NULL == cpu_)
-        return BaseSemantics::SValuePtr();
+        return BaseSemantics::SValue::Ptr();
     return cpu_->operators()->subtract(finalSp, initialSp);
 }
 
@@ -341,15 +344,15 @@ Analysis::saveAnalysisResults(SgAsmFunction *function) const {
         clearAstStackDeltas(function);
         if (hasResults_) {
             function->set_stackDelta(functionStackDeltaConcrete());
-            BaseSemantics::RiscOperatorsPtr ops = cpu_ ? cpu_->operators() : BaseSemantics::RiscOperatorsPtr();
-            BaseSemantics::SValuePtr sp0 = functionStackPtrs_.first;
+            BaseSemantics::RiscOperators::Ptr ops = cpu_ ? cpu_->operators() : BaseSemantics::RiscOperators::Ptr();
+            BaseSemantics::SValue::Ptr sp0 = functionStackPtrs_.first;
             if (sp0 && ops) {
                 for (SgAsmBlock *block: SageInterface::querySubTree<SgAsmBlock>(function)) {
-                    if (BaseSemantics::SValuePtr blkAbs = basicBlockStackPointers(block->get_address()).second) {
+                    if (BaseSemantics::SValue::Ptr blkAbs = basicBlockStackPointers(block->get_address()).second) {
                         block->set_stackDeltaOut(toInt(ops->subtract(blkAbs, sp0)));
 
                         for (SgAsmInstruction *insn: SageInterface::querySubTree<SgAsmInstruction>(block)) {
-                            if (BaseSemantics::SValuePtr insnAbs = instructionStackPointers(insn).first)
+                            if (BaseSemantics::SValue::Ptr insnAbs = instructionStackPointers(insn).first)
                                 insn->set_stackDeltaIn(toInt(ops->subtract(insnAbs, sp0)));
                         }
                     }
@@ -394,17 +397,17 @@ Analysis::print(std::ostream &out) const {
         bblockVas.insert(va);
     for (rose_addr_t va: bblockVas) {
         out <<"    Basic block " <<StringUtility::addrToString(va) <<":\n";
-        if (BaseSemantics::SValuePtr v = basicBlockStackPointers(va).first) {
+        if (BaseSemantics::SValue::Ptr v = basicBlockStackPointers(va).first) {
             out <<"      Initial stack pointer: " <<*v <<"\n";
         } else {
             out <<"      Initial stack pointer: none\n";
         }
-        if (BaseSemantics::SValuePtr v = basicBlockStackPointers(va).second) {
+        if (BaseSemantics::SValue::Ptr v = basicBlockStackPointers(va).second) {
             out <<"      Final stack pointer:   " <<*v <<"\n";
         } else {
             out <<"      Final stack pointer:   none\n";
         }
-        if (BaseSemantics::SValuePtr v = basicBlockStackDelta(va)) {
+        if (BaseSemantics::SValue::Ptr v = basicBlockStackDelta(va)) {
             out <<"      Stack delta:           " <<*v <<"\n";
         } else {
             out <<"      Stack delta:           none\n";
@@ -419,17 +422,17 @@ Analysis::print(std::ostream &out) const {
         insnVas.insert(va);
     for (rose_addr_t va: insnVas) {
         out <<"    Instruction " <<StringUtility::addrToString(va) <<":\n";
-        if (BaseSemantics::SValuePtr v = insnStackPtrs_.getOrDefault(va).first) {
+        if (BaseSemantics::SValue::Ptr v = insnStackPtrs_.getOrDefault(va).first) {
             out <<"      Initial stack pointer: " <<*v <<"\n";
         } else {
             out <<"      Initial stack pointer: none\n";
         }
-        if (BaseSemantics::SValuePtr v = insnStackPtrs_.getOrDefault(va).second) {
+        if (BaseSemantics::SValue::Ptr v = insnStackPtrs_.getOrDefault(va).second) {
             out <<"      Final stack pointer:   " <<*v <<"\n";
         } else {
             out <<"      Final stack pointer:   none\n";
         }
-        if (BaseSemantics::SValuePtr v = insnDeltas_.getOrDefault(va)) {
+        if (BaseSemantics::SValue::Ptr v = insnDeltas_.getOrDefault(va)) {
             out <<"      Stack delta:           " <<*v <<"\n";
         } else {
             out <<"      Stack delta:           none\n";
@@ -439,7 +442,7 @@ Analysis::print(std::ostream &out) const {
 
 // class method
 int64_t
-Analysis::toInt(const BaseSemantics::SValuePtr &v) {
+Analysis::toInt(const BaseSemantics::SValue::Ptr &v) {
     if (v) {
         if (auto vval = v->toSigned())
             return *vval;
@@ -466,8 +469,8 @@ Analysis::clearAstStackDeltas(SgNode *ast) {
 
 // internal
 void
-Analysis::adjustInstruction(SgAsmInstruction *insn, const BaseSemantics::SValuePtr &spIn,
-                            const BaseSemantics::SValuePtr &spOut, const BaseSemantics::SValuePtr &delta) {
+Analysis::adjustInstruction(SgAsmInstruction *insn, const BaseSemantics::SValue::Ptr &spIn,
+                            const BaseSemantics::SValue::Ptr &spOut, const BaseSemantics::SValue::Ptr &delta) {
     if (insn) {
         insnStackPtrs_.insert(insn->get_address(), SValuePair(spIn, spOut));
         insnDeltas_.insert(insn->get_address(), delta);

@@ -3,6 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_ASM_AARCH64
 
+#include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
 
 namespace Rose {
@@ -10,7 +11,7 @@ namespace BinaryAnalysis {
 namespace Unparser {
 
 std::string unparseAarch64Mnemonic(SgAsmAarch64Instruction*);
-std::string unparseAarch64Expression(SgAsmExpression*, const LabelMap*, const RegisterDictionary*);
+std::string unparseAarch64Expression(SgAsmExpression*, const LabelMap*, RegisterDictionaryPtr);
 
 struct Aarch64Settings: public Settings {};
 

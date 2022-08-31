@@ -68,7 +68,7 @@ dnl  Some of the following need to be reevaluated to see whether they're actuall
 
 
 # Is the C++ libyaml available? [https://code.google.com/p/yaml-cpp]
-ROSE_SUPPORT_YAML
+ROSE_SUPPORT_YAMLCPP
 
 # Is the GNU readline library available?  This is used by some projects to allow users to edit inputs. E.g., simulator2
 # has an interactive debugger that uses readline to read debugger commands.

@@ -147,7 +147,7 @@ rose_rva_t::get_va() const
     if (!section)
         return addr;
     assert(section->is_mapped());
-    return addr + section->get_mapped_preferred_rva() + section->get_base_va();
+    return addr + section->get_mapped_actual_va();
 }
 
 /** Returns an offset from the currently bound section.  If this rose_rva_t is not bound to a section then the RVA numeric

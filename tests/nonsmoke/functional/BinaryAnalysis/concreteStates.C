@@ -1,15 +1,15 @@
 #include <rose.h>                                       // must be first ROSE include
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/ConcreteSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/ConcreteSemantics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <sstream>
 
 using namespace Rose::BinaryAnalysis;
-namespace BS = Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
-namespace IS = Rose::BinaryAnalysis::InstructionSemantics2;
+namespace BS = Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;
+namespace IS = Rose::BinaryAnalysis::InstructionSemantics;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 static void
@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
                                                    "0x89 0x18");               //   mov dword ptr [eax], ebx
 
     // Create the instruction semantics and give it an initial MemoryMap containing the instructions we parsed above
-    auto ops = IS::ConcreteSemantics::RiscOperators::instance(partitioner.instructionProvider().registerDictionary());
+    auto ops = IS::ConcreteSemantics::RiscOperators::instanceFromRegisters(partitioner.instructionProvider().registerDictionary());
     IS::ConcreteSemantics::MemoryState::promote(ops->currentState()->memoryState())->memoryMap(partitioner.memoryMap());
 
     // Show the initial state's memory map.

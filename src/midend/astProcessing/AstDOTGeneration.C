@@ -26,6 +26,8 @@
    #include "AsmUnparser_compat.h"
 #endif
 
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
+
 using namespace std;                                    // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace Rose;                                   // until this file is all moved into the rose namespace
 
@@ -650,7 +652,7 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
      SgAsmExpression* genericExpression = isSgAsmExpression(node);
      if (genericExpression != NULL)
         {
-          string name = unparseExpression(genericExpression, NULL, NULL);
+          string name = unparseExpression(genericExpression, NULL, BinaryAnalysis::RegisterDictionary::Ptr());
           if (!name.empty())
               nodelabel += string("\\n") + name;
         }

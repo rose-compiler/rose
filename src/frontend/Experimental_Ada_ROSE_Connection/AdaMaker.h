@@ -92,6 +92,10 @@ namespace Ada_ROSE_Translation
   SgAdaDigitsConstraint&
   mkAdaDigitsConstraint(SgExpression& digits, SgAdaTypeConstraint* constraint_opt);
 
+  /// builds a null constraint
+  SgAdaNullConstraint&
+  mkAdaNullConstraint();
+
   /// builds a delta constraint for floating point numbers
   /// \param digits an expression indicating the number of digits
   /// \param constraint_opt an optional floating point constraint
@@ -599,11 +603,22 @@ namespace Ada_ROSE_Translation
                    std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
                  );
 
+
+  /// creates an Ada renaming declaration
+  /// \param name       the name of this declaration
+  /// \param scope      the enclosing scope
+  /// \param retty      return type of a function (SgTypeVoid for procedures)
+  /// \param complete   a functor that is called after the function parameter list and
+  ///                   the function parameter scope have been constructed. The task of complete
+  ///                   is to fill these objects with function parameters.
+  /// \param nondef_opt when this is a renaming-as-body, then nondef_opt indicates the nondefining
+  ///                   declaration that gets defined by this renaming.
   SgAdaFunctionRenamingDecl&
   mkAdaFunctionRenamingDecl( const std::string& name,
                              SgScopeStatement& scope,
                              SgType& retty,
-                             std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
+                             std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete,
+                             SgAdaFunctionRenamingDecl* nondef_opt = nullptr
                            );
 
 
@@ -676,14 +691,6 @@ namespace Ada_ROSE_Translation
   SgVariableDeclaration&
   mkVarDecl(SgInitializedName& var, SgScopeStatement& scope);
 
-  /// creates a variant field with (i.e., a variable with conditions)
-  SgAdaVariantFieldDecl&
-  mkAdaVariantFieldDecl(const SgInitializedNamePtrList& vars, SgExprListExp& choices, SgScopeStatement& scope);
-
-  /// creates a null field with (i.e., an empty SgAdaVariantFieldDecl)
-  SgAdaVariantFieldDecl&
-  mkAdaVariantFieldDecl(SgExprListExp& choices, SgScopeStatement& scope);
-
   /// creates an exception declaration
   /// \note exceptions in Ada are objects (*), in ROSE each exception is represented
   ///       as a variable of type Exception.
@@ -691,18 +698,28 @@ namespace Ada_ROSE_Translation
   SgVariableDeclaration&
   mkExceptionDecl(const SgInitializedNamePtrList& vars, SgScopeStatement& scope);
 
-  /// creates a SgBaseClass object for an Ada type
-  /// \todo currently only direct base classes are represented in the Ast
+  /// creates a SgBaseClass object for an Ada type \ref n
+  /// \param n a representation of the base type (often an SgClassType, but could be any type in principle.
+  ///          e.g., often expression based, wrapped in an SgTypeExpression)
+  /// \return  a node representing the base class (SgBaseClass when n is SgClassType, SgExpBaseClass otherwise).
+  /// \note currently only direct base classes are represented in the Ast
   /// \todo should we represent base classes and other base types uniformly
   ///       e.g., BaseClassExp(TypeExpression(class_type)) ??
   SgBaseClass&
-  mkRecordParent(SgClassDeclaration& n);
-
-  /// creates a SgBaseClassExp representation for a parent type that is not a class
-  ///   (i.e., typedef type or formal type argument).
-  /// \todo currently only direct base classes are represented in the Ast
-  SgExpBaseClass&
   mkRecordParent(SgType& n);
+
+  /// creates an Ada variant declaration statement
+  /// \param discr the discriminant indicating which variant is valid
+  /// \return a node representing an Ada variant part of a variant record.
+  SgAdaVariantDecl&
+  mkAdaVariantDecl(SgExpression& discr);
+
+  /// creates an Ada variant when statement
+  /// \param choices a list of choices that indicate if the children
+  ///        of the Ada variant when statement are valid.
+  /// \return a node representing an Ada variant when part of a variant record.
+  SgAdaVariantWhenStmt&
+  mkAdaVariantWhenStmt(SgExprListExp& choices);
 
   /// creates an Ada component clause (part of a record representation clause)
   SgAdaComponentClause&
@@ -812,12 +829,19 @@ namespace Ada_ROSE_Translation
   SgCastExp&
   mkCastExp(SgExpression& expr, SgType& ty);
 
+  /// creates a call in the form of target(arglist).
+  /// \param target the expression denoting the callee
+  /// \param arglist the arguments
+  /// \param usesOperatorSyntax true if call should be unparsed
+  ///        using operator syntax instead of function call syntax
+  SgFunctionCallExp&
+  mkFunctionCallExp(SgExpression& target, SgExprListExp& arglst, bool usesOperatorSyntax = false);
+
   /// creates a qualified expression for \ref expr and type qualification \ref ty.
   /// \todo consider whether the explicit representation in code is necessary
   ///       or whether it can be reproduced by the backend.
   SgExpression&
   mkQualifiedExp(SgExpression& expr, SgType& ty);
-
 
   /// returns a representation of an Ada Attribute in expression context
   /// \param exp the attribute's prefix expression
@@ -853,23 +877,12 @@ namespace Ada_ROSE_Translation
   SgExpression&
   mkEnumeratorRef(SgEnumDeclaration&, SgInitializedName&);
 
+#if OBSOLETE
   /// builds a reference to an enumerator in form of an SgVarRefExp
   /// (special case for SgAdaEnumRepresentationClause - RC-1147)
   SgExpression&
   mkEnumeratorRef_repclause(SgEnumDeclaration&, SgInitializedName&);
-
-  /// creates a remainder operation (different from SgModOp)
-  /// \todo move to SageBuilder
-  ///       should SgRemOp be called SgAdaRem?
-  SgRemOp*
-  buildRemOp(SgExpression* lhs, SgExpression* rhs);
-
-  /// creates an abs function
-  /// \todo move to SageBuilder
-  ///       should SgAbsOp be called SgAdaAbs?
-  SgAbsOp*
-  buildAbsOp(SgExpression* op);
-
+#endif /* OBSOLETE */
 
   /// creates and if statement
   SgIfStmt&

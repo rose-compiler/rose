@@ -1,7 +1,7 @@
 
 #include "sage3basic.h"
 
-#include "Rose/AST/utils.h"
+#include "Rose/AST/Utils.h"
 
 #if !defined(ROSE_PEDANTIC_FIXUP_CONSTANT_FOLDING)
 #  define ROSE_PEDANTIC_FIXUP_CONSTANT_FOLDING 0

@@ -122,6 +122,14 @@ CXX4_TESTS_REQUIRED_TO_RUN=	\
 
 CXX4_TESTS_OBJECT_REQUIRED_TO_RUN=${CXX4_TESTS_REQUIRED_TO_RUN:.cpp=.o}	
 
+
+# another test, used for testing dlopen simple call convention
+CXX5_TESTS_REQUIRED_TO_RUN=	\
+	ft_cfftz_omp2.cpp
+CXX5_TESTS_OBJECT_REQUIRED_TO_RUN=${CXX5_TESTS_REQUIRED_TO_RUN:.cpp=.o}	
+
+
+
 # DQ (11/14/2017): This is failing and I need to learn the depth of what is the problem for the outlining tests.
 # I think I need to work with Liao on this when he is back from vacation.
 #	moreTest2.cpp				
@@ -308,7 +316,12 @@ $(tofile_test_targets): tofile_%.passed: % outline
 # shortcut to test new_file
 
 test_newfile: $(tofile_test_targets)
-
+# runtime lib and its header: note that they are in two different paths.
+OUTLINING_LIB_PATH = $(abs_top_builddir)/src/midend
+$(OUTLINING_LIB_PATH)/.libs/liboutlining.a:
+	make -C $(OUTLINING_LIB_PATH)
+INCLUDE_OUTLINING_LIB_HEADER = -I$(abs_top_srcdir)/src/midend/programTransformation/astOutlining
+# we use $(abs_top_srcdir) since the build will happen within a temp directory!!
 #------------------------------------------------------------------------------------------------------------------------
 # Test outlining to a separate file using dlopen
 
@@ -316,8 +329,8 @@ dlopen_test_targets  = $(addprefix dlopen_,  $(addsuffix .passed, $(C_TESTS_REQU
 dlopen_test_targets  += $(addprefix dlopen_,  $(addsuffix .passed, $(CXX_TESTS_REQUIRED_TO_PASS)))
 C_CXX_RESULTS +=  $(dlopen_test_targets)
 dlopen_test_flags =				\
+	$(INCLUDE_OUTLINING_LIB_HEADER)	\
 	-rose:outline:use_dlopen		\
-	-I$(abs_top_srcdir)/projects/autoTuning	\
 	-rose:outline:output_path .
 
 $(dlopen_test_targets): dlopen_%.passed: % outline
@@ -332,9 +345,9 @@ dlopen2_test_targets  = $(addprefix dlopen2_,  $(addsuffix .passed, $(C_TESTS_RE
 dlopen2_test_targets  += $(addprefix dlopen2_,  $(addsuffix .passed, $(CXX_TESTS_REQUIRED_TO_PASS)))
 C_CXX_RESULTS += $(dlopen2_test_targets)  
 dlopen2_test_flags =				\
+        $(INCLUDE_OUTLINING_LIB_HEADER)	 \
 	-rose:outline:use_dlopen		\
 	-rose:outline:copy_orig_file		\
-	-I$(abs_top_srcdir)/projects/autoTuning	\
 	-rose:outline:output_path .
 
 $(dlopen2_test_targets): dlopen2_%.passed: % outline
@@ -352,9 +365,9 @@ if !USING_INTEL_COMPILER
 dlopen3_test_targets = $(addprefix dlopen3_,  $(addsuffix .passed, $(CXX2_TESTS_REQUIRED_TO_PASS)))
 C_CXX_RESULTS += $(dlopen3_test_targets)  
 dlopen3_test_flags =				\
-	-rose:outline:use_dlopen		\
+	$(INCLUDE_OUTLINING_LIB_HEADER)	\
+	-rose:outline:use_dlopen	\
 	-rose:outline:copy_orig_file		\
-	-I$(abs_top_srcdir)/projects/autoTuning	\
 	-rose:outline:exclude_headers -rose:unparseHeaderFiles -rose:unparseHeaderFilesRootFolder unparseHeaderRoot_test_20_2019
 
 $(dlopen3_test_targets): dlopen3_%.passed: % outline
@@ -363,25 +376,41 @@ $(dlopen3_test_targets): dlopen3_%.passed: % outline
 		USE_SUBDIR=yes \
 		CMD="$$(pwd)/outline$(EXEEXT) $(TEST_INCLUDES) $(dlopen3_test_flags) -c $(abspath $<)" \
 		$(TEST_EXIT_STATUS) $@
+
+dlopensimple_test_targets = $(addprefix dlopensimple_,  $(addsuffix .passed, $(CXX2_TESTS_REQUIRED_TO_PASS)))
+C_CXX_RESULTS += $(dlopensimple_test_targets)  
+dlopensimple_test_flags =				\
+	$(INCLUDE_OUTLINING_LIB_HEADER)	\
+	-rose:outline:use_dlopen_simple	\
+	-rose:outline:copy_orig_file		\
+	-rose:outline:exclude_headers -rose:unparseHeaderFiles -rose:unparseHeaderFilesRootFolder unparseHeaderRoot_test_simple
+
+$(dlopensimple_test_targets): dlopensimple_%.passed: % outline
+	@$(RTH_RUN) \
+		TITLE="outine dlopensimple $(notdir $<) [$@]" \
+		USE_SUBDIR=yes \
+		CMD="$$(pwd)/outline$(EXEEXT) $(TEST_INCLUDES) $(dlopensimple_test_flags) -c $(abspath $<)" \
+		$(TEST_EXIT_STATUS) $@
 endif
 
 # shortcut to test the dlopen feature
+test_dlopensimple: $(dlopensimple_test_targets)
 test_dlopen3: $(dlopen3_test_targets)
 
 # Liao, 2020/8/24
 # Test select_omp_loop option 
 # rose_inputfile_lib.cpp
-
+# only a single test: required to have main and compile to run
 dlopen4_test_targets = $(addprefix dlopen4_,  $(CXX4_TESTS_REQUIRED_TO_RUN))
 dlopen4_test_lib_targets = $(addprefix rose_, $(addsuffix .cpp, $(addsuffix _lib, $(basename $(CXX4_TESTS_REQUIRED_TO_RUN)))))
 dlopen4_test_lib_so_targets = $(addprefix rose_, $(addsuffix .so, $(addsuffix _lib, $(basename $(CXX4_TESTS_REQUIRED_TO_RUN)))))
 C_CXX_RESULTS += $(dlopen4_test_targets)
 
 dlopen4_test_flags = -fpermissive	\
+	$(INCLUDE_OUTLINING_LIB_HEADER)	\
 	-rose:outline:select_omp_loop           \
 	-rose:outline:use_dlopen		\
 	-rose:outline:copy_orig_file		\
-	-I$(abs_top_srcdir)/projects/autoTuning	\
 	-rose:unparseHeaderFilesRootFolder unparseHeaderRoot_dlopen4
 $(dlopen4_test_targets): dlopen4_%: % outline
 	./outline$(EXEEXT) $(TEST_INCLUDES) $(dlopen4_test_flags) -c $(abspath $<) -rose:output $@
@@ -390,24 +419,50 @@ $(dlopen4_test_targets): dlopen4_%: % outline
 $(CXX4_TESTS_OBJECT_REQUIRED_TO_RUN): %.o: dlopen4_%.cpp
 $(dlopen4_test_lib_targets): rose_%_lib.cpp: dlopen4_%.cpp
 
+# test dlopen simple call convention: a single statement implementing all logic at the call site
+dlopen5_test_targets = $(addprefix dlopen5_,  $(CXX5_TESTS_REQUIRED_TO_RUN))
+dlopen5_test_lib_targets = $(addprefix rose_, $(addsuffix .cpp, $(addsuffix _lib, $(basename $(CXX5_TESTS_REQUIRED_TO_RUN)))))
+dlopen5_test_lib_so_targets = $(addprefix rose_, $(addsuffix .so, $(addsuffix _lib, $(basename $(CXX5_TESTS_REQUIRED_TO_RUN)))))
+C_CXX_RESULTS += $(dlopen5_test_targets)
+
+dlopen5_test_flags = -fpermissive	\
+	$(INCLUDE_OUTLINING_LIB_HEADER)	\
+	-rose:outline:select_omp_loop           \
+	-rose:outline:use_dlopen_simple		\
+	-rose:outline:copy_orig_file		\
+	-rose:unparseHeaderFilesRootFolder unparseHeaderRoot_dlopen4
+$(dlopen5_test_targets): dlopen5_%: % outline
+	./outline$(EXEEXT) $(TEST_INCLUDES) $(dlopen5_test_flags) -c $(abspath $<) -rose:output $@
+
+$(CXX5_TESTS_OBJECT_REQUIRED_TO_RUN): %.o: dlopen5_%.cpp
+$(dlopen5_test_lib_targets): rose_%_lib.cpp: dlopen5_%.cpp
+
 # shortcut to test the dlopen feature
-test_dlopen: $(dlopen_test_targets) $(dlopen2_test_targets) $(dlopen3_test_targets) $(dlopen4_test_targets)
+test_dlopen: $(dlopen_test_targets) $(dlopen2_test_targets) $(dlopen3_test_targets) $(dlopen4_test_targets) $(dlopen5_test_targets)
 test_dlopen4: $(dlopen4_test_targets)
+test_dlopen5: $(dlopen5_test_targets)
 
 #build rose_input_lib.so
-$(dlopen4_test_lib_so_targets):%.so: %.cpp
+Test_lib_so_targets = $(dlopen4_test_lib_so_targets) $(dlopen5_test_lib_so_targets) 
+#$(dlopen4_test_lib_so_targets):%.so: %.cpp
+$(Test_lib_so_targets):%.so: %.cpp
 	$(CXX) -I. -g -fPIC -shared $< -o $@
 	cp $@ /tmp/.
 
 # build the executables
-AUTO_TUNING_PATH = $(top_builddir)/projects/autoTuning
+#AUTO_TUNING_PATH = $(top_builddir)/projects/autoTuning
 
-$(AUTO_TUNING_PATH)/libautoTuning.a:
-	make -C $(AUTO_TUNING_PATH)
+#$(AUTO_TUNING_PATH)/libautoTuning.a:
+#	make -C $(AUTO_TUNING_PATH)
 
-MY_FINAL_LINK = $(AUTO_TUNING_PATH)/libautoTuning.a -Wl,--export-dynamic -g -ldl -lm  $(LDFLAGS)
-PASSING_CXX_TEST_Executables = ${CXX4_TESTS_OBJECT_REQUIRED_TO_RUN:.o=.out}
-$(PASSING_CXX_TEST_Executables): %.out: %.o $(AUTO_TUNING_PATH)/libautoTuning.a rose_%_lib.so
+#MY_FINAL_LINK = $(AUTO_TUNING_PATH)/libautoTuning.a -Wl,--export-dynamic -g -ldl -lm  $(LDFLAGS)
+MY_FINAL_LINK = $(OUTLINING_LIB_PATH)/.libs/liboutlining.a -Wl,--export-dynamic -g -ldl -lm  $(LDFLAGS)
+
+PASSING_CXX_TEST_Executables = ${CXX4_TESTS_OBJECT_REQUIRED_TO_RUN:.o=.out}  
+PASSING_CXX_TEST_Executables += ${CXX5_TESTS_OBJECT_REQUIRED_TO_RUN:.o=.out}
+
+#$(PASSING_CXX_TEST_Executables): %.out: %.o $(AUTO_TUNING_PATH)/libautoTuning.a rose_%_lib.so
+$(PASSING_CXX_TEST_Executables): %.out: %.o $(OUTLINING_LIB_PATH)/.libs/liboutlining.a rose_%_lib.so
 	$(LIBTOOL) --mode=link $(CXX) $< $(MY_FINAL_LINK) -o $@
 
 check_PROGRAM = $(PASSING_CXX_TEST_Executables)
@@ -494,6 +549,24 @@ complexStruct_flags = \
 
 C_CXX_RESULTS += complexStruct.passed
 
+# test linking outlined functions from inline functions
+rose_test_inline_1_2022_lib.cpp: test_inline_1_2022.cpp outline$(EXEEXT)
+	./outline$(EXEEXT) $(TEST_INCLUDES) $(dlopen2_test_flags) -c $< 
+rose_test_inline_2_2022_lib.cpp: rose_test_inline_1_2022_lib.cpp
+	cp $^ $@
+
+OUT_1_test_inline_2022_6.o:rose_test_inline_1_2022_lib.cpp
+	g++ -c -fPIC $(TEST_INCLUDES) $< -o $@ 
+
+OUT_2_test_inline_2022_6.o:rose_test_inline_2_2022_lib.cpp
+	g++ -c -fPIC $(TEST_INCLUDES) $< -o $@ 
+
+test_inline_2022_6.so:OUT_1_test_inline_2022_6.o OUT_2_test_inline_2022_6.o
+	g++ -shared $^ -o $@
+testlinking:test_inline_2022_6.so
+
+C_CXX_RESULTS += test_inline_2022_6.so
+
 complexStruct.passed: complexStruct.c outline
 	@$(RTH_RUN) \
 		USE_SUBDIR=yes \
@@ -524,6 +597,6 @@ test-c-cxx:$(C_CXX_RESULTS)
 check-local: $(TEST_TARGETS) 
 
 clean-local:
-	rm -f $(TEST_TARGETS) OUT__*.cpp rose_*.cpp
+	rm -f $(TEST_TARGETS) OUT__*.cpp rose_*.cpp *.so
 	rm -f $(TEST_TARGETS:.passed=.failed)
 	rm -rf unparseHeaderRoot_test_20_2019

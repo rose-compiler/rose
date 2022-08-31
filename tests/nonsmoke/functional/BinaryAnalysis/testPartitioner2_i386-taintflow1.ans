@@ -63,7 +63,7 @@
 0x080482c8: Outgoing stack delta: +0
 0x080482c8: Successor blocks: unknown
 
-0x080482e0: ================================== Function (entry point, graph) <_start>
+0x080482e0: ================================== Function (entry point, symbol, graph) <_start>
 0x080482e0: Function does not return to caller.
 
 0x080482e0: Basic block reasons: entry point, CFG head

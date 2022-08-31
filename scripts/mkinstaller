@@ -27,11 +27,11 @@ $foundInDir  = "";
 
 $mkinstaller_ver_major = "2";
 $mkinstaller_ver_minor = "6";
-$mkinstaller_ver_build = "20";
-$mkinstaller_ver_patch = "";
-$mkinstaller_ver_name  = "2.6.20";
-$mkinstaller_ver_time  = "11Apr2022,18:11:34z";
-$mkinstaller_ver_id    = "@(#)mkinstaller 2.6.20 - 11Apr2022,18:11:34z";
+$mkinstaller_ver_build = "21";
+$mkinstaller_ver_patch = "1";
+$mkinstaller_ver_name  = "2.6.21.1";
+$mkinstaller_ver_time  = "10May2022,20:09:34z";
+$mkinstaller_ver_id    = "@(#)mkinstaller 2.6.21.1 - 10May2022,20:09:34z";
 
 # MyUniqueFileId: d34be5e4-1cfc-49b6-d988-25ab878c795f
 
@@ -100,29 +100,29 @@ $TBG_LIB_PFX    = "lib";
 #
 #---------------------------------------
 
-$TBG_PREFIX     = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4";
-$TBG_BinDir     = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/bin";
-$TBG_HtmlDir    = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/html";
-$TBG_Html1Dir   = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/html/html1";
-$TBG_Html2Dir   = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/html/html2";
-$TBG_Html3Dir   = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/html/html3";
-$TBG_Html4Dir   = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/html/html4";
-$TBG_Html5Dir   = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/html/html5";
-$TBG_Html6Dir   = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/html/html6";
-$TBG_Html7Dir   = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/html/html7";
-$TBG_Html8Dir   = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/html/html8";
-$TBG_IncludeDir = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/include";
-$TBG_LibDir     = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/lib";
-$TBG_ManDir     = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/man";
-$TBG_Man1Dir    = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/man/man1";
-$TBG_Man2Dir    = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/man/man2";
-$TBG_Man3Dir    = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/man/man3";
-$TBG_Man4Dir    = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/man/man4";
-$TBG_Man5Dir    = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/man/man5";
-$TBG_Man6Dir    = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/man/man6";
-$TBG_Man7Dir    = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/man/man7";
-$TBG_Man8Dir    = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/man/man8";
-$TBG_SrcDir     = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/src";
+$TBG_PREFIX     = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8";
+$TBG_BinDir     = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8/bin";
+$TBG_HtmlDir    = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8/html";
+$TBG_Html1Dir   = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8/html/html1";
+$TBG_Html2Dir   = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8/html/html2";
+$TBG_Html3Dir   = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8/html/html3";
+$TBG_Html4Dir   = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8/html/html4";
+$TBG_Html5Dir   = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8/html/html5";
+$TBG_Html6Dir   = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8/html/html6";
+$TBG_Html7Dir   = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8/html/html7";
+$TBG_Html8Dir   = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8/html/html8";
+$TBG_IncludeDir = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8/include";
+$TBG_LibDir     = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8/lib";
+$TBG_ManDir     = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8/man";
+$TBG_Man1Dir    = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8/man/man1";
+$TBG_Man2Dir    = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8/man/man2";
+$TBG_Man3Dir    = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8/man/man3";
+$TBG_Man4Dir    = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8/man/man4";
+$TBG_Man5Dir    = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8/man/man5";
+$TBG_Man6Dir    = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8/man/man6";
+$TBG_Man7Dir    = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8/man/man7";
+$TBG_Man8Dir    = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8/man/man8";
+$TBG_SrcDir     = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8/src";
 
 #----------------------------------------
 #
@@ -130,12 +130,12 @@ $TBG_SrcDir     = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/src";
 #
 #----------------------------------------
 
-$TBG_DataDir    = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/data";
-$TBG_DocDir     = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/doc";
-$TBG_DocTextDir = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/doc/text";
-$TBG_FontDir    = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/fonts";
-$TBG_IconDir    = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/icons";
-$TBG_ImageDir   = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/images";
+$TBG_DataDir    = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8/data";
+$TBG_DocDir     = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8/doc";
+$TBG_DocTextDir = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8/doc/text";
+$TBG_FontDir    = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8/fonts";
+$TBG_IconDir    = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8/icons";
+$TBG_ImageDir   = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8/images";
 $TBG_WWWDir     = "";
 
 #}------------------------------------------------------------------------------
@@ -247,11 +247,11 @@ $TBG_WWWDir     = "";
    my $OSname                          = lc $^O;
    my $OSversion                       = "";
    my $postInstallBasename             = "";
+   my $postInstallFlavour              = "";
    my $postInstallPathname             = "";
-   my $postInstallStyle                = "";
    my $preInstallBasename              = "";
+   my $preInstallFlavour               = "";
    my $preInstallPathname              = "";
-   my $preInstallStyle                 = "";
    my $ProjectName                     = "";
    my $ProjectVer                      = "";  # Set by --project-version option
    my $ProjectVerMajor                 = "";
@@ -1100,7 +1100,7 @@ $TBG_WWWDir     = "";
                              }
                              $postInstallPathname = $given;
                              $postInstallBasename = pKit_basename($postInstallPathname);
-                             $postInstallStyle    = "binary";
+                             $postInstallFlavour  = "binary";
                              if ($postInstallBasename eq "") {
                                 print STDERR "mkinstaller: error: can't extract basename of \"".pKit_nativePathname($postInstallPathname)."\"\n";
                                 cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging_app);
@@ -1110,7 +1110,7 @@ $TBG_WWWDir     = "";
                              print DBGOUT "mkinstaller:    ...binary post-install script\n" if $debugging_app;
                              print DBGOUT "mkinstaller:       pathname [$postInstallPathname]\n" if $debugging_app;
                              print DBGOUT "mkinstaller:       basename [$postInstallBasename]\n" if $debugging_app;
-                             print DBGOUT "mkinstaller:          style [$postInstallStyle]\n" if $debugging_app;
+                             print DBGOUT "mkinstaller:          style [$postInstallFlavour]\n" if $debugging_app;
                              last parseArgs;
                           };
 
@@ -1144,7 +1144,7 @@ $TBG_WWWDir     = "";
                              }
                              $postInstallPathname = $given;
                              $postInstallBasename = pKit_basename($postInstallPathname);
-                             $postInstallStyle    = "perl";
+                             $postInstallFlavour  = "perl";
                              if ($postInstallBasename eq "") {
                                 print STDERR "mkinstaller: error: can't extract basename of \"".pKit_nativePathname($postInstallPathname)."\"\n";
                                 cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging_app);
@@ -1154,7 +1154,7 @@ $TBG_WWWDir     = "";
                              print DBGOUT "mkinstaller:    ...perl post-install script\n" if $debugging_app;
                              print DBGOUT "mkinstaller:       pathname [$postInstallPathname]\n" if $debugging_app;
                              print DBGOUT "mkinstaller:       basename [$postInstallBasename]\n" if $debugging_app;
-                             print DBGOUT "mkinstaller:          style [$postInstallStyle]\n" if $debugging_app;
+                             print DBGOUT "mkinstaller:          style [$postInstallFlavour]\n" if $debugging_app;
                              last parseArgs;
                           };
 
@@ -1188,7 +1188,7 @@ $TBG_WWWDir     = "";
                              }
                              $postInstallPathname = $given;
                              $postInstallBasename = pKit_basename($postInstallPathname);
-                             $postInstallStyle    = "python";
+                             $postInstallFlavour  = "python";
                              if ($postInstallBasename eq "") {
                                 print STDERR "mkinstaller: error: can't extract basename of \"".pKit_nativePathname($postInstallPathname)."\"\n";
                                 cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging_app);
@@ -1198,7 +1198,7 @@ $TBG_WWWDir     = "";
                              print DBGOUT "mkinstaller:    ...python post-install script\n" if $debugging_app;
                              print DBGOUT "mkinstaller:       pathname [$postInstallPathname]\n" if $debugging_app;
                              print DBGOUT "mkinstaller:       basename [$postInstallBasename]\n" if $debugging_app;
-                             print DBGOUT "mkinstaller:          style [$postInstallStyle]\n" if $debugging_app;
+                             print DBGOUT "mkinstaller:          style [$postInstallFlavour]\n" if $debugging_app;
                              last parseArgs;
                           };
 
@@ -1232,7 +1232,7 @@ $TBG_WWWDir     = "";
                              }
                              $postInstallPathname = $given;
                              $postInstallBasename = pKit_basename($postInstallPathname);
-                             $postInstallStyle    = "sh";
+                             $postInstallFlavour  = "sh";
                              if ($postInstallBasename eq "") {
                                 print STDERR "mkinstaller: error: can't extract basename of \"".pKit_nativePathname($postInstallPathname)."\"\n";
                                 cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging_app);
@@ -1242,7 +1242,7 @@ $TBG_WWWDir     = "";
                              print DBGOUT "mkinstaller:    ...shell post-install script\n" if $debugging_app;
                              print DBGOUT "mkinstaller:       pathname [$postInstallPathname]\n" if $debugging_app;
                              print DBGOUT "mkinstaller:       basename [$postInstallBasename]\n" if $debugging_app;
-                             print DBGOUT "mkinstaller:          style [$postInstallStyle]\n" if $debugging_app;
+                             print DBGOUT "mkinstaller:          style [$postInstallFlavour]\n" if $debugging_app;
                              last parseArgs;
                           };
 
@@ -1276,7 +1276,7 @@ $TBG_WWWDir     = "";
                              }
                              $preInstallPathname = $given;
                              $preInstallBasename = pKit_basename($preInstallPathname);
-                             $preInstallStyle    = "binary";
+                             $preInstallFlavour  = "binary";
                              if ($preInstallBasename eq "") {
                                 print STDERR "mkinstaller: error: can't extract basename of \"".pKit_nativePathname($preInstallPathname)."\"\n";
                                 cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging_app);
@@ -1286,7 +1286,7 @@ $TBG_WWWDir     = "";
                              print DBGOUT "mkinstaller:    ...binary pre-install script\n" if $debugging_app;
                              print DBGOUT "mkinstaller:       pathname [$preInstallPathname]\n" if $debugging_app;
                              print DBGOUT "mkinstaller:       basename [$preInstallBasename]\n" if $debugging_app;
-                             print DBGOUT "mkinstaller:          style [$preInstallStyle]\n" if $debugging_app;
+                             print DBGOUT "mkinstaller:          style [$preInstallFlavour]\n" if $debugging_app;
                              last parseArgs;
                           };
 
@@ -1320,7 +1320,7 @@ $TBG_WWWDir     = "";
                              }
                              $preInstallPathname = $given;
                              $preInstallBasename = pKit_basename($preInstallPathname);
-                             $preInstallStyle    = "perl";
+                             $preInstallFlavour  = "perl";
                              if ($preInstallBasename eq "") {
                                 print STDERR "mkinstaller: error: can't extract basename of \"".pKit_nativePathname($preInstallPathname)."\"\n";
                                 cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging_app);
@@ -1330,7 +1330,7 @@ $TBG_WWWDir     = "";
                              print DBGOUT "mkinstaller:    ...perl pre-install script\n" if $debugging_app;
                              print DBGOUT "mkinstaller:       pathname [$preInstallPathname]\n" if $debugging_app;
                              print DBGOUT "mkinstaller:       basename [$preInstallBasename]\n" if $debugging_app;
-                             print DBGOUT "mkinstaller:          style [$preInstallStyle]\n" if $debugging_app;
+                             print DBGOUT "mkinstaller:          style [$preInstallFlavour]\n" if $debugging_app;
                              last parseArgs;
                           };
 
@@ -1364,7 +1364,7 @@ $TBG_WWWDir     = "";
                              }
                              $preInstallPathname = $given;
                              $preInstallBasename = pKit_basename($preInstallPathname);
-                             $preInstallStyle    = "python";
+                             $preInstallFlavour  = "python";
                              if ($preInstallBasename eq "") {
                                 print STDERR "mkinstaller: error: can't extract basename of \"".pKit_nativePathname($preInstallPathname)."\"\n";
                                 cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging_app);
@@ -1374,7 +1374,7 @@ $TBG_WWWDir     = "";
                              print DBGOUT "mkinstaller:    ...python pre-install script\n" if $debugging_app;
                              print DBGOUT "mkinstaller:       pathname [$preInstallPathname]\n" if $debugging_app;
                              print DBGOUT "mkinstaller:       basename [$preInstallBasename]\n" if $debugging_app;
-                             print DBGOUT "mkinstaller:          style [$preInstallStyle]\n" if $debugging_app;
+                             print DBGOUT "mkinstaller:          style [$preInstallFlavour]\n" if $debugging_app;
                              last parseArgs;
                           };
 
@@ -1408,7 +1408,7 @@ $TBG_WWWDir     = "";
                              }
                              $preInstallPathname = $given;
                              $preInstallBasename = pKit_basename($preInstallPathname);
-                             $preInstallStyle    = "sh";
+                             $preInstallFlavour  = "sh";
                              if ($preInstallBasename eq "") {
                                 print STDERR "mkinstaller: error: can't extract basename of \"".pKit_nativePathname($preInstallPathname)."\"\n";
                                 cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging_app);
@@ -1418,7 +1418,7 @@ $TBG_WWWDir     = "";
                              print DBGOUT "mkinstaller:    ...shell pre-install script\n" if $debugging_app;
                              print DBGOUT "mkinstaller:       pathname [$preInstallPathname]\n" if $debugging_app;
                              print DBGOUT "mkinstaller:       basename [$preInstallBasename]\n" if $debugging_app;
-                             print DBGOUT "mkinstaller:          style [$preInstallStyle]\n" if $debugging_app;
+                             print DBGOUT "mkinstaller:          style [$preInstallFlavour]\n" if $debugging_app;
                              last parseArgs;
                           };
 
@@ -2779,7 +2779,7 @@ $TBG_WWWDir     = "";
 
    #----------------------------------------------------------------------------
    #
-   #  Deal with defaults...
+   #  Make sure what was given was consistant and deal with defaults...
    #
    #----------------------------------------------------------------------------
 
@@ -3039,8 +3039,10 @@ $TBG_WWWDir     = "";
 
    #----------------------------------------------------------------------------
    #
-   #  Check if we're running in an empty directory (a good idea but not
-   #  required)...
+   #  Check if we're running in an empty directory (while not a requirement is
+   #  still a very good idea)...
+   #
+   #  Note that .dummy and .my.manifest files are ignored.
    #
    #----------------------------------------------------------------------------
 
@@ -3050,14 +3052,16 @@ $TBG_WWWDir     = "";
          my $foundSomething = 0;
          while (defined($thisName = readdir(DIR))) {
             if (($thisName ne "" ) && ($thisName ne ".") && ($thisName ne "..")) {
-               if ( ! ($thisName =~ /^.my.manifest$/i)) {
-                  if ( ! $foundSomething) {
-                     print STDERR "mkinstaller: warning: current directory \"".pKit_nativePathname($here)."\" is not empty\n";
-                     print STDERR "mkinstaller: ...found: \"".$thisName."\"\n";
-                     $foundSomething = 1;
-                  }
-                  else {
-                     print STDERR "mkinstaller:           \"".$thisName."\"\n";
+               if ( ! ($thisName =~ /^.dummy$/i)) {
+                  if ( ! ($thisName =~ /^.my.manifest$/i)) {
+                     if ( ! $foundSomething) {
+                        print STDERR "mkinstaller: warning: current directory \"".pKit_nativePathname($here)."\" is not empty\n";
+                        print STDERR "mkinstaller: ...found: \"".$thisName."\"\n";
+                        $foundSomething = 1;
+                     }
+                     else {
+                        print STDERR "mkinstaller:           \"".$thisName."\"\n";
+                     }
                   }
                }
             }
@@ -3072,8 +3076,9 @@ $TBG_WWWDir     = "";
 
    #----------------------------------------------------------------------------
    #
-   #  If operating in standard mode with no given pathnames with standard
-   #  basenames then rebuild the directory hash and list.
+   #  If operating in standard mode with no given individual pathnames with
+   #  standard basenames (such as bin, lib, ...) then rebuild the directory
+   #  hash and list.
    #
    #----------------------------------------------------------------------------
 
@@ -3323,20 +3328,20 @@ $TBG_WWWDir     = "";
          exit 1;
       }
       my $ok = 0;
-      if ($preInstallStyle eq "binary") {
+      if ($preInstallFlavour eq "binary") {
          $ok = 1;
       }
-      elsif ($preInstallStyle eq "perl") {
+      elsif ($preInstallFlavour eq "perl") {
          $ok = 1;
       }
-      elsif ($preInstallStyle eq "python") {
+      elsif ($preInstallFlavour eq "python") {
          $ok = 1;
       }
-      elsif ($preInstallStyle eq "sh") {
+      elsif ($preInstallFlavour eq "sh") {
          $ok = 1;
       }
       if ( ! $ok) {
-         print STDERR "mkinstaller: error: invalid pre-install style(=\"$preInstallStyle\")\n";
+         print STDERR "mkinstaller: error: invalid pre-install style(=\"$preInstallFlavour\")\n";
          cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging_app);
          close DBGOUT if $dbgOutToPathname ne "";
          exit 1;
@@ -3365,7 +3370,7 @@ $TBG_WWWDir     = "";
    }
    else {
       print DBGOUT "mkinstaller: no pre-install script\n" if $debugging_app;
-      $preInstallStyle = "";
+      $preInstallFlavour = "";
    }
 
    #------------------------------------
@@ -3383,20 +3388,20 @@ $TBG_WWWDir     = "";
          exit 1;
       }
       my $ok = 0;
-      if ($postInstallStyle eq "binary") {
+      if ($postInstallFlavour eq "binary") {
          $ok = 1;
       }
-      elsif ($postInstallStyle eq "perl") {
+      elsif ($postInstallFlavour eq "perl") {
          $ok = 1;
       }
-      elsif ($postInstallStyle eq "python") {
+      elsif ($postInstallFlavour eq "python") {
          $ok = 1;
       }
-      elsif ($postInstallStyle eq "sh") {
+      elsif ($postInstallFlavour eq "sh") {
          $ok = 1;
       }
       if ( ! $ok) {
-         print STDERR "mkinstaller: error: invalid post-install style(=\"$postInstallStyle\")\n";
+         print STDERR "mkinstaller: error: invalid post-install style(=\"$postInstallFlavour\")\n";
          cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging_app);
          close DBGOUT if $dbgOutToPathname ne "";
          exit 1;
@@ -3425,7 +3430,7 @@ $TBG_WWWDir     = "";
    }
    else {
       print DBGOUT "mkinstaller: no post-install script\n" if $debugging_app;
-      $postInstallStyle = "";
+      $postInstallFlavour = "";
    }
 
    #---------------------------------------
@@ -3948,20 +3953,20 @@ $TBG_WWWDir     = "";
          exit 1;
       }
       my $ok = 0;
-      if ($preInstallStyle eq "binary") {
+      if ($preInstallFlavour eq "binary") {
          $ok = 1;
       }
-      elsif ($preInstallStyle eq "perl") {
+      elsif ($preInstallFlavour eq "perl") {
          $ok = 1;
       }
-      elsif ($preInstallStyle eq "python") {
+      elsif ($preInstallFlavour eq "python") {
          $ok = 1;
       }
-      elsif ($preInstallStyle eq "sh") {
+      elsif ($preInstallFlavour eq "sh") {
          $ok = 1;
       }
       if ( ! $ok) {
-         print STDERR "mkinstaller: error: invalid pre-install style(=\"$preInstallStyle\")\n";
+         print STDERR "mkinstaller: error: invalid pre-install style(=\"$preInstallFlavour\")\n";
          cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging_app);
          close DBGOUT if $dbgOutToPathname ne "";
          exit 1;
@@ -3990,7 +3995,7 @@ $TBG_WWWDir     = "";
    }
    else {
       print DBGOUT "mkinstaller: no pre-install script\n" if $debugging_app;
-      $preInstallStyle = "";
+      $preInstallFlavour = "";
    }
 
    #------------------------------------
@@ -4008,20 +4013,20 @@ $TBG_WWWDir     = "";
          exit 1;
       }
       my $ok = 0;
-      if ($postInstallStyle eq "binary") {
+      if ($postInstallFlavour eq "binary") {
          $ok = 1;
       }
-      elsif ($postInstallStyle eq "perl") {
+      elsif ($postInstallFlavour eq "perl") {
          $ok = 1;
       }
-      elsif ($postInstallStyle eq "python") {
+      elsif ($postInstallFlavour eq "python") {
          $ok = 1;
       }
-      elsif ($postInstallStyle eq "sh") {
+      elsif ($postInstallFlavour eq "sh") {
          $ok = 1;
       }
       if ( ! $ok) {
-         print STDERR "mkinstaller: error: invalid post-install style(=\"$postInstallStyle\")\n";
+         print STDERR "mkinstaller: error: invalid post-install style(=\"$postInstallFlavour\")\n";
          cleanupTemps($TmpDirT,$keep,$verbosityLevel,$debugging_app);
          close DBGOUT if $dbgOutToPathname ne "";
          exit 1;
@@ -4050,7 +4055,7 @@ $TBG_WWWDir     = "";
    }
    else {
       print DBGOUT "mkinstaller: no post-install script\n" if $debugging_app;
-      $postInstallStyle = "";
+      $postInstallFlavour = "";
    }
 
    #---------------------------------------
@@ -5057,7 +5062,7 @@ $TBG_WWWDir     = "";
          if ($preInstallPathname ne "") {
             if ( -f $preInstallPathname) {
                my $Tstart = time();
-               print STDERR "mkinstaller: working \"$preInstallPathname\" (a $preInstallStyle pre-install script)\n" if (1 <= $verbosityLevel);
+               print STDERR "mkinstaller: working \"$preInstallPathname\" (a $preInstallFlavour pre-install script)\n" if (1 <= $verbosityLevel);
                print DBGOUT "mkinstaller: add \"$preInstallPathname \" wrapper directory...\n" if $debugging_app;
                my $bn     = pKit_basename($preInstallPathname);
                my $cmd    = "cp -p \"$preInstallPathname\" \"$TmpDirW/$bn\"";
@@ -5120,7 +5125,7 @@ $TBG_WWWDir     = "";
          if ($postInstallPathname ne "") {
             if ( -f $postInstallPathname) {
                my $Tstart = time();
-               print STDERR "mkinstaller: working \"$postInstallPathname\" (a $postInstallStyle post-install script)\n" if (1 <= $verbosityLevel);
+               print STDERR "mkinstaller: working \"$postInstallPathname\" (a $postInstallFlavour post-install script)\n" if (1 <= $verbosityLevel);
                print DBGOUT "mkinstaller: add \"$postInstallPathname \" wrapper directory...\n" if $debugging_app;
                my $bn     = pKit_basename($postInstallPathname);
                my $cmd    = "cp -p \"$postInstallPathname\" \"$TmpDirW/$bn\"";
@@ -5270,12 +5275,18 @@ $TBG_WWWDir     = "";
       #
       #  At this point the tarball (aka. the payload) is ready. It is now time to
       #  generate the installer script. Note that the generated installer script
-      #  is a Bourne-Shell script. This is done using a "here document" technique
-      #  the output being sent to a temporary textfile. While generation using a
-      #  "here" document is typically simple, in this case the process is made
-      #  complex due to the conditional generation involved. After the script
-      #  generation is completed this temporary textfile and the tarball will be
-      #  joined (using cat) to form the actual self-extracting installer script.
+      #  is a Bourne-Shell script. This is done using a Perl "here document"
+      #  technique the output being sent to a temporary textfile. While generation
+      #  using such a "here" document is typically simple, in this case the process
+      #  is made rather complex due to the conditional generation involved. After
+      #  the script generation is completed this temporary textfile and the tarball
+      #  will be joined (using cat) to form the actual self-extracting installer
+      #  script.
+      #
+      #  Note that the "here document" is actually a (or will be a) Bourne-shell
+      #  script. This tends to confuse most next editors as they'll probably try
+      #  to syntax-colour this whole thing as Perl not really understanding the
+      #  embedded Bourne-shell.
       #
       #----------------------------------------------------------------------------
 
@@ -5349,24 +5360,52 @@ $TBG_WWWDir     = "";
             close DBGOUT if $dbgOutToPathname ne "";
             exit 1;
          }
-         print SCRIPT "#!/bin/sh\n";
+
+         #-------------------------------------------------------------------------------
+         #
+         #  This is the actual start of the "here document" code. Numerous chunks of
+         #  "here document" are used to produced the script. Note that the lines
+         #  producing the script carry the indenting local to this perl script but
+         #  the text of the generated script carry a uniform 9-space indentation. The
+         #  Perl "here document" text (for the generated Bourne-shell script) the
+         #  leading spaces and single vertical bar are actually stripped-away by the
+         #  pKit_fixIndentStuff() function. The start and end of each "here document"
+         #  chunk are each bound by consecutively numbered "EOFxx" marks. Note that
+         #  these don't really need to be consecutive but it make maintainence easier.
+         #
+         #  This dueling style of indetation may seem strange but several styles were
+         #  tried and this appeared to be the less of a mess.
+         #
+         #-------------------------------------------------------------------------------
+
+         print SCRIPT pKit_fixIndentStuff(<<"EOF01");
+         |#!/bin/sh
+EOF01
          if ($withNotice ne "") {
-            print SCRIPT "#-------------------------------------------------------------------------------\n";
-            print SCRIPT "#\n";
+            print SCRIPT pKit_fixIndentStuff(<<"EOF02");
+         |#-------------------------------------------------------------------------------
+         |#
+EOF02
             my $i;
             for ($i=0; $i<=$#theNotice; $i+=1) {
                my $lineOfText = $theNotice[$i];
                if ($lineOfText ne "") {
-                  print SCRIPT "#   $lineOfText\n";
+                  print SCRIPT pKit_fixIndentStuff(<<"EOF03");
+         |#   $lineOfText
+EOF03
                }
                else {
-                  print SCRIPT "#\n";
+                  print SCRIPT pKit_fixIndentStuff(<<"EOF04");
+         |#
+EOF04
                }
             }
-            print SCRIPT "#\n";
-            print SCRIPT "#-------------------------------------------------------------------------------\n";
+            print SCRIPT pKit_fixIndentStuff(<<"EOF05");
+         |#
+         |#-------------------------------------------------------------------------------
+EOF05
          }
-         print SCRIPT pKit_fixIndentStuff(<<"EOF01");
+         print SCRIPT pKit_fixIndentStuff(<<"EOF06");
          |
          |#-------------------------------------------------------------------------------
          |#
@@ -5374,27 +5413,29 @@ $TBG_WWWDir     = "";
          |#
          |#   Generated by mkinstaller version $mkinstaller_ver_name rev. $mkinstaller_ver_time
          |#   on $GenTime
-EOF01
+EOF06
          if ($theCommandLine ne "") {
-            print SCRIPT pKit_fixIndentStuff(<<"EOF02");
+            print SCRIPT pKit_fixIndentStuff(<<"EOF07");
          |#
          |#   The following command was used to generate this installer:
          |#
          |#       $theCommandLine
-EOF02
+EOF07
          }
-         print SCRIPT pKit_fixIndentStuff(<<"EOF03");
+         print SCRIPT pKit_fixIndentStuff(<<"EOF08");
          |#
          |#-------------------------------------------------------------------------------
          |
          |commandPathname="\$0"
          |debugging=0         # Choose: 0 or 1
          |here="\`pwd\`"
-EOF03
+EOF08
          if ($libDirBasename ne "") {
-            print SCRIPT "LibDirBasename=\"$libDirBasename\"\n";
+            print SCRIPT pKit_fixIndentStuff(<<"EOF09");
+         |LibDirBasename="$libDirBasename"
+EOF09
          }
-         print SCRIPT pKit_fixIndentStuff(<<"EOF04");
+         print SCRIPT pKit_fixIndentStuff(<<"EOF10");
          |
          |if [ "X\${DEBUG_$scriptNameU}" != "X" ]
          |then
@@ -5452,34 +5493,36 @@ EOF03
          |
          |DefaultPrefix="$defaultPrefix"
          |PREFIX=""
-EOF04
+EOF10
 
          my $bn;
          foreach $bn (sort keys %dirBasenames) {
             my $vn = $bn;
             $vn    =~ tr/a-zA-Z0-9_/_/c;
-            print SCRIPT "PREFIX_$vn=\"\"\n";
+            print SCRIPT pKit_fixIndentStuff(<<"EOF11");
+         |PREFIX_$vn=""
+EOF11
          }
 
          if ($debugging_app) {
             if ($preInstallBasename ne "") {
-               print DBGOUT "mkinstaller: ...has a $preInstallStyle pre-install script (\"$preInstallBasename\")\n" if $debugging_app;
+               print DBGOUT "mkinstaller: ...has a $preInstallFlavour pre-install script (\"$preInstallBasename\")\n" if $debugging_app;
             }
             else {
                print DBGOUT "mkinstaller: ...has NO pre-install script\n" if $debugging_app;
             }
             if ($postInstallBasename ne "") {
-               print DBGOUT "mkinstaller: ...has a $postInstallStyle post-install script (\"$postInstallBasename\")\n" if $debugging_app;
+               print DBGOUT "mkinstaller: ...has a $postInstallFlavour post-install script (\"$postInstallBasename\")\n" if $debugging_app;
             }
             else {
                print DBGOUT "mkinstaller: ...has NO post-install script\n" if $debugging_app;
             }
          }
-         print SCRIPT pKit_fixIndentStuff(<<"EOF05");
+         print SCRIPT pKit_fixIndentStuff(<<"EOF12");
          |PreInstallScriptName="$preInstallBasename"
-         |PreInstallScriptStyle="$preInstallStyle"
+         |PreInstallScriptStyle="$preInstallFlavour"
          |PostInstallScriptName="$postInstallBasename"
-         |PostInstallScriptStyle="$postInstallStyle"
+         |PostInstallScriptStyle="$postInstallFlavour"
          |TmpDir=""
          |verbosityLevel=0
          |
@@ -5495,7 +5538,7 @@ EOF04
          |then
          |   verbosityLevel=1
          |fi
-EOF05
+EOF12
 
          my $NlibcList = $#CC_libc_verList + 1;
          my $CC_libc_verListString = "";
@@ -5553,7 +5596,7 @@ EOF05
                }
             }
          }
-         print SCRIPT pKit_fixIndentStuff(<<"EOF06");
+         print SCRIPT pKit_fixIndentStuff(<<"EOF13");
          |
          |#-------------------------------------------------------------------------------
          |#
@@ -5573,8 +5616,11 @@ EOF05
          |#       tar
          |#       uname
          |#
+         |#   Almost every UNIX-like (aka. Linux) system should have all of these.
+         |#
          |#   Note that the PATH environment variable is translated in to a blank
-         |#   separated value in our own local variable (myPath).
+         |#   separated value in our own local variable (myPath). Such a translation
+         |#   is generally easy to work with (for humans at least).
          |#
          |#   IMPORTANT: The method used doesn't work well with directories whose
          |#              names contains a space. There may be a method to get around
@@ -6142,9 +6188,9 @@ EOF05
          |
          |Source_CXX="$CXX_basename"
          |Source_CXX_pathname="$CXX_pathname"
-EOF06
+EOF13
          if ($CXX_basename ne "") {
-            print SCRIPT pKit_fixIndentStuff(<<"EOF07");
+            print SCRIPT pKit_fixIndentStuff(<<"EOF14");
          |Source_CXX_version="$CXX_version"
          |Source_stdcxxlib_pathname="$CXX_stdcxxlib_pathname"
          |Source_stdcxxlib_verList="$CXX_stdcxxlib_verListString"
@@ -6153,9 +6199,9 @@ EOF06
          |Source_stdcxxlib_abiVersion="$CXX_stdcxxlib_abiVersion"
          |Source_stdcxxlib_libcVerList="$CXX_stdcxxlib_libcVerListString"
          |Source_stdcxxlib_libcVersion="$CXX_stdcxxlib_libcVersion"
-EOF07
+EOF14
          }
-         print SCRIPT pKit_fixIndentStuff(<<"EOF08");
+         print SCRIPT pKit_fixIndentStuff(<<"EOF15");
          |
          |#---------------------------------------
          |#
@@ -6181,9 +6227,9 @@ EOF07
          |
          |Target_CXX=""
          |Target_CXX_pathname=""
-EOF08
+EOF15
          if ($CXX_basename ne "") {
-            print SCRIPT pKit_fixIndentStuff(<<"EOF09");
+            print SCRIPT pKit_fixIndentStuff(<<"EOF16");
          |Target_CXX_version=""
          |Target_stdcxxlib_pathname=""
          |Target_stdcxxlib_verList=""
@@ -6192,9 +6238,9 @@ EOF08
          |Target_stdcxxlib_abiVersion=""
          |Target_stdcxxlib_libcVerList=""
          |Target_stdcxxlib_libcVersion=""
-EOF09
+EOF16
          }
-         print SCRIPT pKit_fixIndentStuff(<<"EOF10");
+         print SCRIPT pKit_fixIndentStuff(<<"EOF17");
          |
          |#-------------------------------------------------------------------------------
          |#
@@ -10087,28 +10133,29 @@ EOF09
          |            #
          |            #---------------------------------------
          |
-EOF10
+EOF17
          if ($withNotice ne "") {
-            print SCRIPT pKit_fixIndentStuff(<<"EOF11");
+            print SCRIPT pKit_fixIndentStuff(<<"EOF18");
          |            -copyright|--copyright)
          |                               echo
-EOF11
+EOF18
             my $i;
             for ($i=0; $i<=$#theNotice; $i+=1) {
                my $lineOfText = $theNotice[$i];
                $lineOfText    =~ s/\\/\\\\/g;
                $lineOfText    =~ s/"/\\"/g;
                $lineOfText    =~ s/\$/\\\$/g;
-#              $lineOfText    =~ s/@/\\@/g;
-               print SCRIPT "                               echo \"$lineOfText\"\n";
+               print SCRIPT pKit_fixIndentStuff(<<"EOF19");
+         |                               echo "$lineOfText"
+EOF19
             }
-            print SCRIPT pKit_fixIndentStuff(<<"EOF12");
+            print SCRIPT pKit_fixIndentStuff(<<"EOF20");
          |                               echo
          |                               exit 0
          |                               ;;
-EOF12
+EOF20
          }
-         print SCRIPT pKit_fixIndentStuff(<<"EOF13");
+         print SCRIPT pKit_fixIndentStuff(<<"EOF21");
          |            -help|--help)
          |                               echo
          |                               echo "$titleLine"
@@ -10117,28 +10164,30 @@ EOF12
          |                               echo "    $scriptName -- Self-extracting installer script$ForProject."
          |                               echo
          |                               echo "USAGE"
-EOF13
+EOF21
          if ($withNotice ne "") {
-            print SCRIPT "                               echo \"    $scriptName --copyright\"\n";
+            print SCRIPT pKit_fixIndentStuff(<<"EOF22");
+         |                               echo "    $scriptName --copyright"
+EOF22
          }
-         print SCRIPT pKit_fixIndentStuff(<<"EOF14");
+         print SCRIPT pKit_fixIndentStuff(<<"EOF23");
          |                               echo "    $scriptName --help"
-EOF14
+EOF23
          if ($ProjectVer ne "") {
-         print SCRIPT pKit_fixIndentStuff(<<"EOF15");
+            print SCRIPT pKit_fixIndentStuff(<<"EOF24");
          |                               echo "    $scriptName --vernum"
-EOF15
+EOF24
          }
          if ($ProjectName ne "") {
             if ($ProjectVer ne "") {
-         print SCRIPT pKit_fixIndentStuff(<<"EOF16");
+               print SCRIPT pKit_fixIndentStuff(<<"EOF25");
          |                               echo "    $scriptName --version"
-EOF16
+EOF25
             }
          }
-         print SCRIPT pKit_fixIndentStuff(<<"EOF17");
+         print SCRIPT pKit_fixIndentStuff(<<"EOF26");
          |                               echo
-EOF17
+EOF26
          my $exampleLine = $scriptName." [--keep] [--prefix=<pathname>]";
          {
             my $bn;
@@ -10147,7 +10196,7 @@ EOF17
             }
          }
          $exampleLine    = $exampleLine." [-v[erbose][<digit>]]";
-         print SCRIPT pKit_fixIndentStuff(<<"EOF18");
+         print SCRIPT pKit_fixIndentStuff(<<"EOF27");
          |                               echo "    $exampleLine"
          |                               echo
          |                               echo "DESCRIPTION"
@@ -10188,27 +10237,27 @@ EOF17
          |                               echo "        --help"
          |                               echo
          |                               echo "            Output this man page to <stdout> and quit."
-EOF18
+EOF27
          if ($ProjectVer ne "") {
-            print SCRIPT pKit_fixIndentStuff(<<"EOF19");
+            print SCRIPT pKit_fixIndentStuff(<<"EOF28");
          |                               echo
          |                               echo "        --vernum"
          |                               echo
          |                               echo "            Output version number of the payload to <stdout> and quit."
-EOF19
+EOF28
          }
          if ($ProjectName ne "") {
             if ($ProjectVer ne "") {
-               print SCRIPT pKit_fixIndentStuff(<<"EOF20");
+               print SCRIPT pKit_fixIndentStuff(<<"EOF29");
          |                               echo
          |                               echo "        --version"
          |                               echo
          |                               echo "            Output project name and version number of the payload to <stdout>"
          |                               echo "            and quit."
-EOF20
+EOF29
             }
          }
-         print SCRIPT pKit_fixIndentStuff(<<"EOF21");
+         print SCRIPT pKit_fixIndentStuff(<<"EOF30");
          |                               echo
          |                               echo "        --enforce-check"
          |                               echo
@@ -10227,8 +10276,8 @@ EOF20
          |                               echo "            Don't enforce compatibility. If the source system C and C++"
          |                               echo "            library versions don't agree then simply report the problem"
          |                               echo "            then carry-on with the installation."
-EOF21
-         print SCRIPT pKit_fixIndentStuff(<<"EOF22");
+EOF30
+         print SCRIPT pKit_fixIndentStuff(<<"EOF31");
          |                               echo
          |                               echo "        -k"
          |                               echo "        --keep"
@@ -10245,29 +10294,29 @@ EOF21
          |                               echo "        --prefix=<pathname>"
          |                               echo
          |                               echo "            The pathname of the single directory where all of the payload"
-EOF22
+EOF31
          if (1 <= $fileBasenameCount) {
-            print SCRIPT pKit_fixIndentStuff(<<"EOF23");
+            print SCRIPT pKit_fixIndentStuff(<<"EOF32");
          |                               echo "            directories and files are to be placed."
-EOF23
+EOF32
          }
          else {
-            print SCRIPT pKit_fixIndentStuff(<<"EOF24");
+            print SCRIPT pKit_fixIndentStuff(<<"EOF33");
          |                               echo "            directories are to be placed."
-EOF24
+EOF33
             my $bn;
             foreach $bn (sort keys %dirBasenames) {
-               print SCRIPT pKit_fixIndentStuff(<<"EOF25");
+               print SCRIPT pKit_fixIndentStuff(<<"EOF34");
          |                               echo
          |                               echo "        --prefix-$bn=<pathname>"
          |                               echo
          |                               echo "            The pathname of the directory where the \\"$bn\\" payload directory"
          |                               echo "            is to be placed. Note that if this option is not specified then the"
          |                               echo "            overall --prefix=<pathname> should be used."
-EOF25
+EOF34
             }
          }
-         print SCRIPT pKit_fixIndentStuff(<<"EOF26");
+         print SCRIPT pKit_fixIndentStuff(<<"EOF35");
          |                               echo
          |                               echo "        -q"
          |                               echo "        --query"
@@ -10336,31 +10385,45 @@ EOF25
          |                               echo
          |                               echo "NOTES"
          |                               echo "    Both the sed and tar utilities are required."
-EOF26
+EOF35
          if ($OSname ne "") {
-            print SCRIPT "                               echo\n";
-            print SCRIPT "                               echo \"    This installer script was built on \\\"$OSname\\\" \"\n";
+            print SCRIPT pKit_fixIndentStuff(<<"EOF36");
+         |                               echo
+         |                               echo "    This installer script was built on \\"$OSname\\" "
+EOF36
          }
          if ($CC_pathname ne "") {
-            print SCRIPT "                               echo\n";
+            print SCRIPT pKit_fixIndentStuff(<<"EOF37");
+         |                               echo
+EOF37
             my $bn = pKit_basename($CC_pathname);
             if ($bn eq $CC_basename) {
-               print SCRIPT "                               echo \"    The C compiler \\\"$CC_pathname\\\" was used to build the payload.\"\n";
+               print SCRIPT pKit_fixIndentStuff(<<"EOF38");
+         |                               echo "    The C compiler \\"$CC_pathname\\" was used to build the payload."
+EOF38
             }
             else {
-               print SCRIPT "                               echo \"    The C compiler \\\"$CC_pathname\\\" (aka. \\\"$CC_basename\\\") was used to build the payload.\"\n";
+               print SCRIPT pKit_fixIndentStuff(<<"EOF39");
+         |                               echo "    The C compiler \\"$CC_pathname\\" (aka. \\"$CC_basename\\") was used to build the payload."
+EOF39
             }
          }
          if ($CXX_pathname ne "") {
-            print SCRIPT "                               echo\n";
+            print SCRIPT pKit_fixIndentStuff(<<"EOF40");
+         |                               echo
+EOF40
             if ($bn eq $CXX_basename) {
-               print SCRIPT "                               echo \"    The C++ compiler \\\"$CXX_pathname\\\" was used to build the payload.\"\n";
+               print SCRIPT pKit_fixIndentStuff(<<"EOF41");
+         |                               echo "    The C++ compiler \\"$CXX_pathname\\" was used to build the payload."
+EOF41
             }
             else {
-               print SCRIPT "                               echo \"    The C++ compiler \\\"$CXX_pathname\\\" (aka. \\\"$CXX_basename\\\") was used to build the payload.\"\n";
+               print SCRIPT pKit_fixIndentStuff(<<"EOF42");
+         |                               echo "    The C++ compiler \\"$CXX_pathname\\" (aka. \\"$CXX_basename\\") was used to build the payload."
+EOF42
             }
          }
-         print SCRIPT pKit_fixIndentStuff(<<"EOF27");
+         print SCRIPT pKit_fixIndentStuff(<<"EOF43");
          |                               echo
          |                               echo "    The directory where temporary files are to be placed is determined"
          |                               echo "    as follows:"
@@ -10405,37 +10468,49 @@ EOF26
          |                               echo
          |                               echo "AUTHOR"
          |                               echo "    mkinstaller version $mkinstaller_ver_name rev. $mkinstaller_ver_time"
-EOF27
+EOF43
          if ($Contact ne "") {
-            print SCRIPT "                               echo\n";
-            print SCRIPT "                               echo \"CONTACT\"\n";
+            print SCRIPT pKit_fixIndentStuff(<<"EOF44");
+         |                               echo
+         |                               echo "CONTACT"
+EOF44
             if ($ProjectName ne "") {
-               print SCRIPT "                               echo \"    Please contact the $ProjectName team at:\"\n";
+            print SCRIPT pKit_fixIndentStuff(<<"EOF45");
+         |                               echo "    Please contact the $ProjectName team at:"
+EOF45
             }
             else {
-               print SCRIPT "                               echo \"    Please contact:\"\n";
+            print SCRIPT pKit_fixIndentStuff(<<"EOF46");
+         |                               echo "    Please contact:"
+EOF46
             }
-            print SCRIPT "                               echo\n";
-            print SCRIPT "                               echo \"        $Contact\"\n";
+            print SCRIPT pKit_fixIndentStuff(<<"EOF47");
+         |                               echo
+         |                               echo "        $Contact"
+EOF47
          }
-         print SCRIPT pKit_fixIndentStuff(<<"EOF28");
+         print SCRIPT pKit_fixIndentStuff(<<"EOF48");
          |                               echo
          |                               exit 0
          |                               ;;
-EOF28
+EOF48
          if ($ProjectVer ne "") {
-            print SCRIPT "\n";
-            print SCRIPT "            --vernum)          echo $ProjectVer\n";
-            print SCRIPT "                               exit 0\n";
-            print SCRIPT "                               ;;\n";
+            print SCRIPT pKit_fixIndentStuff(<<"EOF49");
+         |
+         |            --vernum)          echo $ProjectVer
+         |                               exit 0
+         |                               ;;
+EOF49
             if ($ProjectName ne "") {
-               print SCRIPT "\n";
-               print SCRIPT "            --version)         echo $ProjectName: version $ProjectVer\n";
-               print SCRIPT "                               exit 0\n";
-               print SCRIPT "                               ;;\n";
+            print SCRIPT pKit_fixIndentStuff(<<"EOF50");
+         |
+         |            --version)         echo $ProjectName: version $ProjectVer
+         |                               exit 0
+         |                               ;;
+EOF50
             }
          }
-         print SCRIPT pKit_fixIndentStuff(<<"EOF29");
+         print SCRIPT pKit_fixIndentStuff(<<"EOF51");
          |
          |            #---------------------------------------
          |            #
@@ -10510,13 +10585,13 @@ EOF28
          |                               fi
          |                               PREFIX="\${given}"
          |                               ;;
-EOF29
+EOF51
          if ($fileBasenameCount <= 0) {
             my $bn;
             foreach $bn (sort keys %dirBasenames) {
                my $vn = $bn;
                $vn    =~ tr/a-zA-Z0-9_/_/c;
-               print SCRIPT pKit_fixIndentStuff(<<"EOF30");
+               print SCRIPT pKit_fixIndentStuff(<<"EOF52");
          |
          |            --prefix-$bn=*)
          |                               given="\${opt}"
@@ -10544,10 +10619,10 @@ EOF29
          |                                  IntermediateName=
          |                               fi
          |                               ;;
-EOF30
+EOF52
             }
          }
-         print SCRIPT pKit_fixIndentStuff(<<"EOF31");
+         print SCRIPT pKit_fixIndentStuff(<<"EOF53");
          |
          |            -q|--query)        JustQuery=true
          |                               ;;
@@ -10700,21 +10775,21 @@ EOF30
          |      echo "$scriptName: dealing with PREFIX..." >&2
          |   fi
          |   haveAll=true
-EOF31
+EOF53
          {
             my $bn;
             foreach $bn (sort keys %dirBasenames) {
                my $vn = $bn;
                $vn    =~ tr/a-zA-Z0-9_/_/c;
-               print SCRIPT pKit_fixIndentStuff(<<"EOF32");
+               print SCRIPT pKit_fixIndentStuff(<<"EOF54");
          |   if [ "X\${PREFIX_$vn}" = "X" ]
          |   then
          |      haveAll=false
          |   fi
-EOF32
+EOF54
             }
          }
-         print SCRIPT pKit_fixIndentStuff(<<"EOF33");
+         print SCRIPT pKit_fixIndentStuff(<<"EOF55");
          |
          |   if [ "X\${haveAll}" != Xtrue ]
          |   then
@@ -10778,13 +10853,13 @@ EOF32
          |             PREFIX=\"\${here}/\${PREFIX}\"
          |             ;;
          |      esac
-EOF33
+EOF55
          {
             my $bn;
             foreach $bn (sort keys %dirBasenames) {
                my $vn = $bn;
                $vn    =~ tr/a-zA-Z0-9_/_/c;
-               print SCRIPT pKit_fixIndentStuff(<<"EOF34");
+               print SCRIPT pKit_fixIndentStuff(<<"EOF56");
          |
          |      #---------------------------------------
          |      #
@@ -10796,31 +10871,31 @@ EOF33
          |      then
          |         PREFIX_$vn="\${PREFIX}"
          |      fi
-EOF34
+EOF56
             }
          }
-         print SCRIPT pKit_fixIndentStuff(<<"EOF35");
+         print SCRIPT pKit_fixIndentStuff(<<"EOF57");
          |   fi
          |
          |   if [ 1 -le \${verbosityLevel} ]
          |   then
          |      echo "$scriptName: install under:" >&2
          |      echo "$scriptName: ...PREFIX=\\"\${PREFIX}\\" " >&2
-EOF35
+EOF57
          {
             my $bn;
             foreach $bn (sort keys %dirBasenames) {
                my $vn = $bn;
                $vn    =~ tr/a-zA-Z0-9_/_/c;
-               print SCRIPT pKit_fixIndentStuff(<<"EOF36");
+               print SCRIPT pKit_fixIndentStuff(<<"EOF58");
          |      if [ "X\${PREFIX_$vn}" != "X\${PREFIX}" ]
          |      then
          |         echo "$scriptName: ...PREFIX_$vn=\\"\${PREFIX_$vn}\\" " >&2
          |      fi
-EOF36
+EOF58
             }
          }
-         print SCRIPT pKit_fixIndentStuff(<<"EOF37");
+         print SCRIPT pKit_fixIndentStuff(<<"EOF59");
          |   fi
          |
          |   #---------------------------------------
@@ -10834,18 +10909,18 @@ EOF36
          |   if [ "X\${IntermediateName}" != "X" ]
          |   then
          |      PREFIX=\"\${PREFIX}/\${IntermediateName}\"
-EOF37
+EOF59
          {
             my $bn;
             foreach $bn (sort keys %dirBasenames) {
                my $vn = $bn;
                $vn    =~ tr/a-zA-Z0-9_/_/c;
-               print SCRIPT pKit_fixIndentStuff(<<"EOF38");
+               print SCRIPT pKit_fixIndentStuff(<<"EOF60");
          |      PREFIX_$vn=\"\${PREFIX_$vn}/\${IntermediateName}\"
-EOF38
+EOF60
             }
          }
-         print SCRIPT pKit_fixIndentStuff(<<"EOF39");
+         print SCRIPT pKit_fixIndentStuff(<<"EOF61");
          |   fi
          |   if [ "X\${debugging}" != "X0" ]
          |   then
@@ -11550,9 +11625,9 @@ EOF38
          |      fi
          |   fi
          |fi
-EOF39
+EOF61
          if ($CXX_basename ne "") {
-            print SCRIPT pKit_fixIndentStuff(<<"EOF40");
+            print SCRIPT pKit_fixIndentStuff(<<"EOF62");
          |
          |if [ "X\${Target_CXX}" = "X" ]
          |then
@@ -11982,9 +12057,9 @@ EOF39
          |      fi
          |   fi
          |fi
-EOF40
+EOF62
          }
-         print SCRIPT pKit_fixIndentStuff(<<"EOF41");
+         print SCRIPT pKit_fixIndentStuff(<<"EOF63");
          |
          |showInfo=false
          |if [ "X\${JustQuery}" != "Xfalse" ]
@@ -12015,9 +12090,9 @@ EOF40
          |   echo "$scriptName:    Source_libc_XversionX        = [\${Source_libc_XversionX}]" >&2
          |   echo "$scriptName:    Source_CXX                   = [\${Source_CXX}]" >&2
          |   echo "$scriptName:    Source_CXX_pathname          = [\${Source_CXX_pathname}]" >&2
-EOF41
+EOF63
          if ($CXX_basename ne "") {
-            print SCRIPT pKit_fixIndentStuff(<<"EOF42");
+            print SCRIPT pKit_fixIndentStuff(<<"EOF64");
          |   echo "$scriptName:    Source_CXX_version           = [\${Source_CXX_version}]" >&2
          |   echo "$scriptName:    Source_stdcxxlib_pathname    = [\${Source_stdcxxlib_pathname}]" >&2
          |   echo "$scriptName:    Source_stdcxxlib_verList     = [\${Source_stdcxxlib_verList}]" >&2
@@ -12026,9 +12101,9 @@ EOF41
          |   echo "$scriptName:    Source_stdcxxlib_abiVersion  = [\${Source_stdcxxlib_abiVersion}]" >&2
          |   echo "$scriptName:    Source_stdcxxlib_libcVerList = [\${Source_stdcxxlib_libcVerList}]" >&2
          |   echo "$scriptName:    Source_stdcxxlib_libcVersion = [\${Source_stdcxxlib_libcVersion}]" >&2
-EOF42
+EOF64
          }
-         print SCRIPT pKit_fixIndentStuff(<<"EOF43");
+         print SCRIPT pKit_fixIndentStuff(<<"EOF65");
          |   echo "$scriptName: derived info:" >&2
          |   echo "$scriptName: ...Target_hw                    = [\${Target_hw}]" >&2
          |   echo "$scriptName:    Target_os                    = [\${Target_os}]" >&2
@@ -12041,9 +12116,9 @@ EOF42
          |   echo "$scriptName:    Target_libc_version          = [\${Target_libc_version}]" >&2
          |   echo "$scriptName:    Target_libc_XversionX        = [\${Target_libc_XversionX}]" >&2
          |   echo "$scriptName:    Target_CXX                   = [\${Target_CXX}]" >&2
-EOF43
+EOF65
          if ($CXX_basename ne "") {
-            print SCRIPT pKit_fixIndentStuff(<<"EOF44");
+            print SCRIPT pKit_fixIndentStuff(<<"EOF66");
          |   echo "$scriptName:    Target_CXX_version           = [\${Target_CXX_version}]" >&2
          |   echo "$scriptName:    Target_stdcxxlib_pathname    = [\${Target_stdcxxlib_pathname}]" >&2
          |   echo "$scriptName:    Target_stdcxxlib_verList     = [\${Target_stdcxxlib_verList}]" >&2
@@ -12052,9 +12127,9 @@ EOF43
          |   echo "$scriptName:    Target_stdcxxlib_abiVersion  = [\${Target_stdcxxlib_abiVersion}]" >&2
          |   echo "$scriptName:    Target_stdcxxlib_libcVerList = [\${Target_stdcxxlib_libcVerList}]" >&2
          |   echo "$scriptName:    Target_stdcxxlib_libcVersion = [\${Target_stdcxxlib_libcVersion}]" >&2
-EOF44
+EOF66
          }
-         print SCRIPT pKit_fixIndentStuff(<<"EOF45");
+         print SCRIPT pKit_fixIndentStuff(<<"EOF67");
          |fi
          |
          |#-------------------------------------------------------------------------------
@@ -12343,13 +12418,13 @@ EOF44
          |      fi
          |   fi
          |fi
-EOF45
+EOF67
          {
             my $bn;
             foreach $bn (sort keys %dirBasenames) {
                my $vn = $bn;
                $vn    =~ tr/a-zA-Z0-9_/_/c;
-               print SCRIPT pKit_fixIndentStuff(<<"EOF46");
+               print SCRIPT pKit_fixIndentStuff(<<"EOF68");
          |
          |if [ "X\${PREFIX_$vn}" != "X" ]
          |then
@@ -12382,11 +12457,11 @@ EOF45
          |      fi
          |   fi
          |fi
-EOF46
+EOF68
             }
          }
          if ($withPayload) {
-            print SCRIPT pKit_fixIndentStuff(<<"EOF47");
+            print SCRIPT pKit_fixIndentStuff(<<"EOF69");
          |
          |if [ "X\${debugging}" = "Xtrue" ]
          |then
@@ -12394,10 +12469,10 @@ EOF46
          |   echo "$scriptName: contents of "\${amNowIn}" " >&2
          |   /bin/ls -alF
          |fi
-EOF47
+EOF69
          }
          else {
-            print SCRIPT pKit_fixIndentStuff(<<"EOF48");
+            print SCRIPT pKit_fixIndentStuff(<<"EOF70");
          |
          |if [ "X\${debugging}" = "Xtrue" ]
          |then
@@ -12405,10 +12480,10 @@ EOF47
          |   echo "$scriptName: contents of "\${amNowIn}" " >&2
          |   /bin/ls -alF
          |fi
-EOF48
+EOF70
          }
          if ($withPayload) {
-         print SCRIPT pKit_fixIndentStuff(<<"EOF49");
+         print SCRIPT pKit_fixIndentStuff(<<"EOF71");
          |
          |#-------------------------------------------------------------------------------
          |#
@@ -12417,16 +12492,16 @@ EOF48
          |#  FIX: The untar process reports:
          |#
          |#          wrapper/
-EOF49
+EOF71
          {
             my $bn;
             foreach $bn (sort keys %dirBasenames) {
-               print SCRIPT pKit_fixIndentStuff(<<"EOF50");
+               print SCRIPT pKit_fixIndentStuff(<<"EOF72");
          |#          wrapper/$bn.tar.gz
-EOF50
+EOF72
             }
          }
-         print SCRIPT pKit_fixIndentStuff(<<"EOF51");
+         print SCRIPT pKit_fixIndentStuff(<<"EOF73");
          |#
          |#          gzip: stdin: unexpected end of file
          |#          tar: Child returned status 1
@@ -12573,10 +12648,10 @@ EOF50
          |   echo "$scriptName: \"\${amNowIn}\" after extraction..." >&2
          |   /bin/ls -alF
          |fi
-EOF51
+EOF73
          }
          if ($withPayload) {
-            print SCRIPT pKit_fixIndentStuff(<<"EOF52");
+            print SCRIPT pKit_fixIndentStuff(<<"EOF74");
          |
          |#-------------------------------------------------------------------------------
          |#
@@ -12599,10 +12674,10 @@ EOF51
          |fi
          |
          |allThere=true
-EOF52
+EOF74
             if ($preInstallPathname ne "") {
                my $bn = pKit_basename($preInstallPathname);
-               print SCRIPT pKit_fixIndentStuff(<<"EOF53");
+               print SCRIPT pKit_fixIndentStuff(<<"EOF75");
          |
          |#---------------------------------------
          |#
@@ -12621,11 +12696,11 @@ EOF52
          |      echo "$scriptName: ...have \\"$bn\\" in \\"wrapper\\" " >&2
          |   fi
          |fi
-EOF53
+EOF75
             }
             if ($postInstallPathname ne "") {
                my $bn = pKit_basename($postInstallPathname);
-               print SCRIPT pKit_fixIndentStuff(<<"EOF54");
+               print SCRIPT pKit_fixIndentStuff(<<"EOF76");
          |
          |#---------------------------------------
          |#
@@ -12644,14 +12719,14 @@ EOF53
          |      echo "$scriptName: ...have \\"$bn\\" in \\"wrapper\\" " >&2
          |   fi
          |fi
-EOF54
+EOF76
             }
             {
                my $bn;
                foreach $bn (sort keys %dirBasenames) {
                   my $vn = $bn;
                   $vn    =~ tr/a-zA-Z0-9_/_/c;
-                  print SCRIPT pKit_fixIndentStuff(<<"EOF55");
+                  print SCRIPT pKit_fixIndentStuff(<<"EOF77");
          |
          |#---------------------------------------
          |#
@@ -12669,17 +12744,17 @@ EOF54
          |      echo "$scriptName: ...have \\"$bn.tar.gz\\" in \\"wrapper\\" " >&2
          |   fi
          |fi
-EOF55
+EOF77
                }
-               print SCRIPT pKit_fixIndentStuff(<<"EOF56");
+               print SCRIPT pKit_fixIndentStuff(<<"EOF78");
          |if [ "X\${allThere}" != "Xtrue" ]
          |then
          |   exit 1
          |fi
-EOF56
+EOF78
             }
             if ($preInstallBasename ne "") {
-               print SCRIPT pKit_fixIndentStuff(<<"EOF57");
+               print SCRIPT pKit_fixIndentStuff(<<"EOF79");
             |
             |#-------------------------------------------------------------------------------
             |#
@@ -12698,7 +12773,7 @@ EOF56
             |   then
             |      echo "$scriptName: running pre-install script \\"\${PostInstallScriptName}\\" " >&2
             |   fi
-EOF57
+EOF79
                my $theCmd = "\"./$preInstallBasename\"\${Vflag}";
                {
                   my $bn;
@@ -12711,7 +12786,7 @@ EOF57
                if ($preInstallStyle ne "binary") {
                   $theCmd = $preInstallStyle." ".$theCmd;
                }
-               print SCRIPT pKit_fixIndentStuff(<<"EOF58");
+               print SCRIPT pKit_fixIndentStuff(<<"EOF80");
             |   if [ "X\${debugging}" != "X0" ]
             |   then
             |      echo "$scriptName: ...from \\"\${amIn}\\" " >&2
@@ -12742,20 +12817,20 @@ EOF57
             |   echo "$scriptName: error: didn't find pre-install script \\"$preInstallBasename\\" " >&2
             |   exit 1
             |fi
-EOF58
+EOF80
             }
             {
-            print SCRIPT pKit_fixIndentStuff(<<"EOF59");
+            print SCRIPT pKit_fixIndentStuff(<<"EOF81");
             |if [ 1 -le \${verbosityLevel} ]
             |then
             |   echo "$scriptName:" >&2
             |fi
-EOF59
+EOF81
                my $bn;
                foreach $bn (sort keys %dirBasenames) {
                   my $vn = $bn;
                   $vn    =~ tr/a-zA-Z0-9_/_/c;
-                  print SCRIPT pKit_fixIndentStuff(<<"EOF60");
+                  print SCRIPT pKit_fixIndentStuff(<<"EOF82");
          |
          |#---------------------------------------
          |#
@@ -12845,11 +12920,11 @@ EOF59
          |      fi
          |   fi
          |cd "\${wasIn}"
-EOF60
+EOF82
                }
             }
             if (1 <= $fileBasenameCount) {
-               print SCRIPT pKit_fixIndentStuff(<<"EOF61");
+               print SCRIPT pKit_fixIndentStuff(<<"EOF83");
          |#---------------------------------------
          |#
          |#   Copy the individual files into the
@@ -12862,12 +12937,12 @@ EOF60
          |then
          |   echo "$scriptName: was in \\"\${wasIn}\\" " >&2
          |fi
-EOF61
+EOF83
                my $bn;
                foreach $bn (sort keys %fileBasenames) {
                   my $vn = $bn;
                   $vn    =~ tr/a-zA-Z0-9_/_/c;
-                  print SCRIPT pKit_fixIndentStuff(<<"EOF62");
+                  print SCRIPT pKit_fixIndentStuff(<<"EOF84");
          |cd "\${PREFIX}"
          |   if [ 1 -le \${verbosityLevel} ]
          |   then
@@ -12898,11 +12973,11 @@ EOF61
          |      fi
          |   fi
          |cd "\${wasIn}"
-EOF62
+EOF84
                }
             }
             if ($postInstallBasename ne "") {
-               print SCRIPT pKit_fixIndentStuff(<<"EOF63");
+               print SCRIPT pKit_fixIndentStuff(<<"EOF85");
             |
             |#-------------------------------------------------------------------------------
             |#
@@ -12921,7 +12996,7 @@ EOF62
             |   then
             |      echo "$scriptName: running post-install script \\"$postInstallBasename\\" " >&2
             |   fi
-EOF63
+EOF85
             my $theCmd = "\"./$postInstallBasename\"\${Vflag}";
             {
                my $bn;
@@ -12934,7 +13009,7 @@ EOF63
             if ($postInstallStyle ne "binary") {
                $theCmd = $postInstallStyle." ".$theCmd;
             }
-            print SCRIPT pKit_fixIndentStuff(<<"EOF64");
+            print SCRIPT pKit_fixIndentStuff(<<"EOF86");
             |   if [ "X\${debugging}" != "X0" ]
             |   then
             |      echo "$scriptName: ...from \\"\${amIn}\\" " >&2
@@ -12965,9 +13040,9 @@ EOF63
             |   echo "$scriptName: error: didn't find post-install script \\"$postInstallBasename\\" " >&2
             |   exit 1
             |fi
-EOF64
+EOF86
             }
-            print SCRIPT pKit_fixIndentStuff(<<"EOF65");
+            print SCRIPT pKit_fixIndentStuff(<<"EOF87");
          |
          |#if [ 1 -le \${verbosityLevel} ]
          |#then
@@ -13076,9 +13151,9 @@ EOF64
          |      echo "$scriptName:" >&2
          |   fi
          |fi
-EOF65
+EOF87
          }
-         print SCRIPT pKit_fixIndentStuff(<<"EOF66");
+         print SCRIPT pKit_fixIndentStuff(<<"EOF88");
          |
          |#-------------------------------------------------------------------------------
          |#
@@ -13143,11 +13218,11 @@ EOF65
          |
          |exit \${exitCode}
          |
-EOF66
+EOF88
          if ($withPayload) {
-            print SCRIPT pKit_fixIndentStuff(<<"EOF67");
+            print SCRIPT pKit_fixIndentStuff(<<"EOF89");
          |__PAYLOAD_BELOW__
-EOF67
+EOF89
          }
 
          close(SCRIPT);
@@ -20754,7 +20829,7 @@ sub pKit_getTotebagId {
    #
    #---------------------------------------
 
-   my $TBG_PrefixDir  = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4";
+   my $TBG_PrefixDir  = "/home/reus1/opt/totebag/x86_64_linux4.18.rhel8x.gnu8";
 
    #}--------------------------------------
 
@@ -20788,7 +20863,7 @@ sub pKit_getTotebagId {
    #
    #---------------------------------------
 
-   my $TBG_uniqueId = "00aa09ab51b663fa6f473fc12a5513f7ee76fb90fc1a1998e68f8301b5f5e875";
+   my $TBG_uniqueId = "ca7f145b5f4d1380b422df89be177c90c973b1b293b81848165cf39011a0dfb4";
 
    #}--------------------------------------
 

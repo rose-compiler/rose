@@ -14,7 +14,10 @@ case "$0" in
 esac
 
 # Directory where portability tools are (or will be) installed.
-MATRIX_ROOT="$HOME/var/rose-portability-testing"
+: ${MATRIX_ROOT:-"$HOME/var/rose-portability-testing"}
+
+# Prefix to be added to docker host mount points.
+: ${MATRIX_HOST_ROOT:-$(pwd)/}
 
 # Minimum amount of free disk space in GiB. At the end of each test, this script deletes as many cached software
 # dependencies as necessary to reach this amount of free space.
@@ -164,7 +167,7 @@ matrix-update-system-software() {
     
     # Ubuntu insists on updating system software willy nilly, which is confusing to matrix testing since it needs a
     # stable system. Therefore, turn it off.
-    if [ -n "$SETUP" ]; then
+    if [ -n "$SETUP" ] && [ -f /etc/apt/apt.conf.d/10periodic ]; then
 	echo "disabling automatic software updates -- we want a stable test environment"
 	(set -x; sudo sed -i~ 's/Update-Package-Lists "1"/Update-Package-Lists "0"/' /etc/apt/apt.conf.d/10periodic)
     fi
@@ -279,6 +282,14 @@ matrix-get-initial-configuration() {
 	fi
     fi
 
+    # Default location for downloading the portability testing tools that are part of ROSE.
+    if [ "$MATRIX_REPOSITORY" = "" ]; then
+	MATRIX_REPOSITORY='https://github.com/rose-compiler/rose'
+    fi
+    if [ "$MATRIX_COMMITTISH" = "" ]; then
+	MATRIX_COMMITTISH='weekly'
+    fi
+    
     # Export the URL to be used by the various tools
     echo
     echo "Checking database credentials"
@@ -372,8 +383,8 @@ matrix-install-matrix-tools() {
     echo
     echo
     echo "================================================================================"
-    echo "== Installing ROSE portability testing tools version $MATRIX_COMMITTISH"
-    echo "== Downloading from $MATRIX_REPOSITORY"
+    echo "== Installing ROSE portability testing tools version \"$MATRIX_COMMITTISH\""
+    echo "== Downloading from \"$MATRIX_REPOSITORY\""
     echo "================================================================================"
     echo
 
@@ -416,7 +427,7 @@ matrix-install-matrix-tools() {
 	(
 	    mkdir matrix-src/_build
 	    cd matrix-src/_build
-	    INSTALL="$MATRIX_ROOT/rose-installed" BUILD=tup OPTIMIZE=yes BOOST=1.69 PQXX=6.4.3 WT=none \
+	    INSTALL="$MATRIX_ROOT/rose-installed" BUILD=tup OPTIMIZE=yes BOOST=1.78 PQXX=6.4.3 WT=none \
 		   rmc init --batch --project=matrix ..
 	    rmc --install=yes build
 	    rmc config
@@ -660,7 +671,7 @@ while [ "$SETUP" = "" ]; do
     echo "================================================================================"
     echo
     matrix-report-health run-test "iteration $test_number"
-    rose-matrix-run --var="$MATRIX_ROOT" --slave="$SLAVE_NAME" $TEST_FLAGS -n1 $MATRIX_ROOT/rose
+    rose-matrix-run --host-root="${MATRIX_HOST_ROOT}" --var="$MATRIX_ROOT" --slave="$SLAVE_NAME" $TEST_FLAGS -n1 $MATRIX_ROOT/rose
 done
 
 # Finish setup actions

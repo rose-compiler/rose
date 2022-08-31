@@ -4,13 +4,14 @@
 
 #include <AsmUnparser_compat.h>
 #include <Rose/Color.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/MemoryCellList.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCellList.h>
 #include <Rose/BinaryAnalysis/Partitioner2/DataFlow.h>
 #include <Rose/BinaryAnalysis/Partitioner2/GraphViz.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesElf.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Sawyer/GraphTraversal.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 
 #include <boost/range/adaptor/reversed.hpp>
 #include <sstream>
@@ -34,7 +35,7 @@ public:
     InterproceduralPredicate &interproceduralPredicate;      // returns true when a call should be inlined
 
     // maps CFG vertex ID to dataflow vertex
-    typedef Sawyer::Container::GraphIteratorMap<ControlFlowGraph::ConstVertexIterator, DfCfg::VertexIterator> VertexMap;
+    using VertexMap = Sawyer::Container::GraphIteratorMap<ControlFlowGraph::ConstVertexIterator, DfCfg::VertexIterator>;
 
     // Info about one function call
     struct CallFrame {
@@ -49,7 +50,7 @@ public:
               functionReturnVertex(dfCfg.vertices().end()) {}
     };
 
-    typedef std::list<CallFrame> CallStack;             // we use a list since there's no default constructor for an iterator
+    using CallStack = std::list<CallFrame>;             // we use a list since there's no default constructor for an iterator
     CallStack callStack;
     size_t maxCallStackSize;                            // safety to prevent infinite recursion
     size_t nextInliningId;                              // next ID when crating a CallFrame
@@ -58,7 +59,7 @@ public:
         : partitioner(partitioner), cfg(cfg), interproceduralPredicate(predicate),
           maxCallStackSize(10), nextInliningId(0) {}
 
-    typedef DepthFirstForwardGraphTraversal<const ControlFlowGraph> CfgTraversal;
+    using CfgTraversal = DepthFirstForwardGraphTraversal<const ControlFlowGraph>;
 
     // Given a CFG vertex, find the corresponding data-flow vertex. Since function CFGs are inlined into the dfCFG repeatedly,
     // this method looks only at the top of the virtual function call stack.  Returns the end dfCFG vertex if the top of the
@@ -338,8 +339,8 @@ dumpDfCfg(std::ostream &out, const DfCfg &dfCfg) {
 // If the expression is an offset from the initial stack register then return the offset, else nothing.
 static Sawyer::Optional<int64_t>
 isStackAddress(const Rose::BinaryAnalysis::SymbolicExpr::Ptr &expr,
-               const BaseSemantics::SValuePtr &initialStackPointer, const SmtSolverPtr &solver) {
-    using namespace Rose::BinaryAnalysis::InstructionSemantics2;
+               const BaseSemantics::SValue::Ptr &initialStackPointer, const SmtSolverPtr &solver) {
+    using namespace Rose::BinaryAnalysis::InstructionSemantics;
 
     if (!initialStackPointer)
         return Sawyer::Nothing();
@@ -374,9 +375,9 @@ isStackAddress(const Rose::BinaryAnalysis::SymbolicExpr::Ptr &expr,
 // Info about stack variables that is distributed across function frame offsets using a Sawyer::IntervalMap.
 struct StackVariableMeta {
     AddressSet writers;
-    InstructionSemantics2::BaseSemantics::InputOutputPropertySet ioProperties;
+    InstructionSemantics::BaseSemantics::InputOutputPropertySet ioProperties;
 
-    StackVariableMeta(const AddressSet &writers, const InstructionSemantics2::BaseSemantics::InputOutputPropertySet &io)
+    StackVariableMeta(const AddressSet &writers, const InstructionSemantics::BaseSemantics::InputOutputPropertySet &io)
         : writers(writers), ioProperties(io) {}
 
     bool operator==(const StackVariableMeta &other) const {
@@ -385,12 +386,12 @@ struct StackVariableMeta {
 };
 
 Variables::StackVariables
-findStackVariables(const Function::Ptr &function, const BaseSemantics::RiscOperatorsPtr &ops,
-                   const BaseSemantics::SValuePtr &initialStackPointer) {
-    using namespace Rose::BinaryAnalysis::InstructionSemantics2;
+findStackVariables(const Function::Ptr &function, const BaseSemantics::RiscOperators::Ptr &ops,
+                   const BaseSemantics::SValue::Ptr &initialStackPointer) {
+    using namespace Rose::BinaryAnalysis::InstructionSemantics;
     ASSERT_not_null(ops);
     ASSERT_not_null(initialStackPointer);
-    BaseSemantics::StatePtr state = ops->currentState();
+    BaseSemantics::State::Ptr state = ops->currentState();
     ASSERT_not_null(state);
     SmtSolverPtr solver = ops->solver();                // might be null
 
@@ -402,14 +403,14 @@ findStackVariables(const Function::Ptr &function, const BaseSemantics::RiscOpera
 
     // Find groups of consecutive addresses that were written to by the same instruction(s) and which have the same I/O
     // properties. This is how we coalesce adjacent bytes into larger variables.
-    typedef Sawyer::Container::IntervalMap<Variables::OffsetInterval, StackVariableMeta> CellCoalescer;
+    using CellCoalescer = Sawyer::Container::IntervalMap<Variables::OffsetInterval, StackVariableMeta>;
     CellCoalescer cellCoalescer;
-    typedef Sawyer::Container::Map<int64_t, BaseSemantics::SValuePtr> OffsetAddress; // full address per stack offset
+    using OffsetAddress = Sawyer::Container::Map<int64_t, BaseSemantics::SValue::Ptr>; // full address per stack offset
     OffsetAddress offsetAddresses;
-    BaseSemantics::MemoryCellStatePtr mem = BaseSemantics::MemoryCellState::promote(state->memoryState());
+    BaseSemantics::MemoryCellState::Ptr mem = BaseSemantics::MemoryCellState::promote(state->memoryState());
     auto cells = mem->allCells();
-    for (const BaseSemantics::MemoryCellPtr &cell: boost::adaptors::reverse(cells)) {
-        SymbolicSemantics::SValuePtr address = SymbolicSemantics::SValue::promote(cell->address());
+    for (const BaseSemantics::MemoryCell::Ptr &cell: boost::adaptors::reverse(cells)) {
+        SymbolicSemantics::SValue::Ptr address = SymbolicSemantics::SValue::promote(cell->address());
         ASSERT_require2(0 == cell->value()->nBits() % 8, "memory must be byte addressable");
         size_t nBytes = cell->value()->nBits() / 8;
         ASSERT_require(nBytes > 0);
@@ -418,7 +419,7 @@ findStackVariables(const Function::Ptr &function, const BaseSemantics::RiscOpera
             StackVariableMeta meta(cell->getWriters(), cell->ioProperties());
             cellCoalescer.insert(location, meta);
             for (size_t i=0; i<nBytes; ++i) {
-                BaseSemantics::SValuePtr byteAddr = ops->add(address, ops->number_(address->nBits(), i));
+                BaseSemantics::SValue::Ptr byteAddr = ops->add(address, ops->number_(address->nBits(), i));
                 offsetAddresses.insert(*stackOffset+i, byteAddr);
             }
         }
@@ -432,7 +433,7 @@ findStackVariables(const Function::Ptr &function, const BaseSemantics::RiscOpera
         int64_t nRemaining = interval.size();
         ASSERT_require2(nRemaining > 0, "overflow");
         while (nRemaining > 0) {
-            BaseSemantics::SValuePtr address = offsetAddresses[offset];
+            BaseSemantics::SValue::Ptr address = offsetAddresses[offset];
             int64_t nBytes = nRemaining;
 
             // Never create a variable that spans memory below and above (or equal to) the initial stack pointer. The initial
@@ -461,8 +462,8 @@ findStackVariables(const Function::Ptr &function, const BaseSemantics::RiscOpera
 }
 
 Variables::StackVariables
-findLocalVariables(const Function::Ptr &function, const BaseSemantics::RiscOperatorsPtr &ops,
-                   const BaseSemantics::SValuePtr &initialStackPointer) {
+findLocalVariables(const Function::Ptr &function, const BaseSemantics::RiscOperators::Ptr &ops,
+                   const BaseSemantics::SValue::Ptr &initialStackPointer) {
     Variables::StackVariables vars = findStackVariables(function, ops, initialStackPointer);
     Variables::StackVariables retval;
     for (const Variables::StackVariable &var: vars.values()) {
@@ -473,8 +474,8 @@ findLocalVariables(const Function::Ptr &function, const BaseSemantics::RiscOpera
 }
 
 Variables::StackVariables
-findFunctionArguments(const Function::Ptr &function, const BaseSemantics::RiscOperatorsPtr &ops,
-                      const BaseSemantics::SValuePtr &initialStackPointer) {
+findFunctionArguments(const Function::Ptr &function, const BaseSemantics::RiscOperators::Ptr &ops,
+                      const BaseSemantics::SValue::Ptr &initialStackPointer) {
     Variables::StackVariables vars = findStackVariables(function, ops, initialStackPointer);
     Variables::StackVariables retval;
     for (const Variables::StackVariable &var: vars.values()) {
@@ -485,21 +486,21 @@ findFunctionArguments(const Function::Ptr &function, const BaseSemantics::RiscOp
 }
 
 std::vector<AbstractLocation>
-findGlobalVariables(const BaseSemantics::RiscOperatorsPtr &ops, size_t wordNBytes) {
+findGlobalVariables(const BaseSemantics::RiscOperators::Ptr &ops, size_t wordNBytes) {
     ASSERT_not_null(ops);
-    BaseSemantics::StatePtr state = ops->currentState();
+    BaseSemantics::State::Ptr state = ops->currentState();
     ASSERT_not_null(state);
     ASSERT_require(wordNBytes>0);
 
 
     // Find groups of consecutive addresses that were written to by the same instruction.  This is how we coalesce adjacent
     // bytes into larger variables.
-    typedef Sawyer::Container::IntervalMap<AddressInterval, rose_addr_t /*writer*/> StackWriters;
-    typedef Sawyer::Container::Map<rose_addr_t, BaseSemantics::SValuePtr> SymbolicAddresses;
+    using StackWriters = Sawyer::Container::IntervalMap<AddressInterval, rose_addr_t /*writer*/>;
+    using SymbolicAddresses = Sawyer::Container::Map<rose_addr_t, BaseSemantics::SValue::Ptr>;
     StackWriters stackWriters;
     SymbolicAddresses symbolicAddrs;
-    BaseSemantics::MemoryCellStatePtr mem = BaseSemantics::MemoryCellState::promote(state->memoryState());
-    for (const BaseSemantics::MemoryCellPtr &cell: boost::adaptors::reverse(mem->allCells())) {
+    BaseSemantics::MemoryCellState::Ptr mem = BaseSemantics::MemoryCellState::promote(state->memoryState());
+    for (const BaseSemantics::MemoryCell::Ptr &cell: boost::adaptors::reverse(mem->allCells())) {
         ASSERT_require2(0 == cell->value()->nBits() % 8, "memory must be byte addressable");
         size_t nBytes = cell->value()->nBits() / 8;
         ASSERT_require(nBytes > 0);
@@ -522,7 +523,7 @@ findGlobalVariables(const BaseSemantics::RiscOperatorsPtr &ops, size_t wordNByte
         rose_addr_t nRemaining = interval.size();
         ASSERT_require2(nRemaining>0, "overflow");
         while (nRemaining > 0) {
-            BaseSemantics::SValuePtr addr = symbolicAddrs.get(va);
+            BaseSemantics::SValue::Ptr addr = symbolicAddrs.get(va);
             rose_addr_t nBytes = std::min(nRemaining, (rose_addr_t)wordNBytes);
             retval.push_back(AbstractLocation(addr, nBytes));
             va += nBytes;
@@ -533,15 +534,15 @@ findGlobalVariables(const BaseSemantics::RiscOperatorsPtr &ops, size_t wordNByte
 }
 
 // Construct a new state from scratch
-BaseSemantics::StatePtr
+BaseSemantics::State::Ptr
 TransferFunction::initialState() const {
-    BaseSemantics::RiscOperatorsPtr ops = cpu_->operators();
-    BaseSemantics::StatePtr newState = ops->currentState()->clone();
+    BaseSemantics::RiscOperators::Ptr ops = cpu_->operators();
+    BaseSemantics::State::Ptr newState = ops->currentState()->clone();
     newState->clear();
     ASSERT_not_null(cpu_);
     cpu_->initializeState(newState);
 
-    BaseSemantics::RegisterStateGenericPtr regState =
+    BaseSemantics::RegisterStateGeneric::Ptr regState =
         BaseSemantics::RegisterStateGeneric::promote(newState->registerState());
 
     // Any register for which we need its initial state must be initialized rather than just springing into existence. We could
@@ -553,11 +554,11 @@ TransferFunction::initialState() const {
 }
 
 // Required by dataflow engine: compute new output state given a vertex and input state.
-BaseSemantics::StatePtr
-TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSemantics::StatePtr &incomingState) const {
-    BaseSemantics::RiscOperatorsPtr ops = cpu_->operators();
-    BaseSemantics::StatePtr retval = incomingState->clone();
-    const RegisterDictionary *regDict = cpu_->registerDictionary();
+BaseSemantics::State::Ptr
+TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSemantics::State::Ptr &incomingState) const {
+    BaseSemantics::RiscOperators::Ptr ops = cpu_->operators();
+    BaseSemantics::State::Ptr retval = incomingState->clone();
+    RegisterDictionary::Ptr regDict = cpu_->registerDictionary();
     ops->currentState(retval);
 
     DfCfg::ConstVertexIterator vertex = dfCfg.findVertex(vertexId);
@@ -565,11 +566,11 @@ TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSema
     if (DfCfgVertex::FAKED_CALL == vertex->value().type()) {
         CallingConvention::Definition::Ptr ccDefn;
         Function::Ptr callee = vertex->value().callee();
-        BaseSemantics::RegisterStateGenericPtr genericRegState =
+        BaseSemantics::RegisterStateGeneric::Ptr genericRegState =
             boost::dynamic_pointer_cast<BaseSemantics::RegisterStateGeneric>(retval->registerState());
-        BaseSemantics::SValuePtr origStackPtr = ops->peekRegister(STACK_POINTER_REG);
+        BaseSemantics::SValue::Ptr origStackPtr = ops->peekRegister(STACK_POINTER_REG);
 
-        BaseSemantics::SValuePtr stackDelta;            // non-null if a stack delta is known for the callee
+        BaseSemantics::SValue::Ptr stackDelta;            // non-null if a stack delta is known for the callee
         if (callee)
             stackDelta = callee->stackDelta();
 
@@ -590,8 +591,8 @@ TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSema
         } else if ((ccDefn = defaultCallingConvention_)) {
             // Use a default calling convention definition to decide what registers should be clobbered. Don't clobber the
             // stack pointer because we might be able to adjust it more intelligently below.
-            for (const CallingConvention::ParameterLocation &loc: ccDefn->outputParameters()) {
-                if (loc.type() == CallingConvention::ParameterLocation::REGISTER && loc.reg() != STACK_POINTER_REG) {
+            for (const ConcreteLocation &loc: ccDefn->outputParameters()) {
+                if (loc.type() == ConcreteLocation::REGISTER && loc.reg() != STACK_POINTER_REG) {
                     ops->writeRegister(loc.reg(), ops->undefined_(loc.reg().nBits()));
                     if (genericRegState)
                         genericRegState->updateWriteProperties(loc.reg(), BaseSemantics::IO_WRITE);
@@ -608,9 +609,9 @@ TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSema
             // Use the stack delta from the default calling convention only if we don't already know the stack delta from a
             // stack delta analysis, and only if the default CC is caller-cleanup.
             if (!stackDelta || !stackDelta->toUnsigned()) {
-                if (ccDefn->stackCleanup() == CallingConvention::CLEANUP_BY_CALLER) {
+                if (ccDefn->stackCleanup() == CallingConvention::StackCleanup::BY_CALLER) {
                     stackDelta = ops->number_(origStackPtr->nBits(), ccDefn->nonParameterStackSize());
-                    if (ccDefn->stackDirection() == CallingConvention::GROWS_UP)
+                    if (ccDefn->stackDirection() == CallingConvention::StackDirection::GROWS_UP)
                         stackDelta = ops->negate(stackDelta);
                 }
             }
@@ -620,9 +621,10 @@ TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSema
             // conservative approach would need to set all registers to bottom.  We'll only adjust the stack pointer (below).
         }
 
-        BaseSemantics::SValuePtr newStack;
+        BaseSemantics::SValue::Ptr newStack;
         if (stackDelta && stackDelta->toUnsigned()) {
-            newStack = ops->add(origStackPtr, stackDelta);
+            // stackDelta might not be the same semantic domain as what we need, so create a new delta
+            newStack = ops->add(origStackPtr, ops->number_(origStackPtr->nBits(), *stackDelta->toUnsigned()));
         } else {
             // We don't know the callee's delta, therefore we don't know how to adjust the delta for the callee's effect.
             newStack = ops->undefined_(STACK_POINTER_REG.nBits());
@@ -657,7 +659,7 @@ TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSema
 }
 
 std::string
-TransferFunction::toString(const BaseSemantics::StatePtr &state) {
+TransferFunction::toString(const BaseSemantics::State::Ptr &state) {
     if (!state)
         return "null state";
     std::ostringstream ss;

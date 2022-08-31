@@ -1391,6 +1391,7 @@ generate_override_keyword_for_set_functions( AstNodeClass & node, GrammarString 
           (nodeName == "AdaProtectedSpecDecl"       && variableNameString == "type")  ||
           (nodeName == "AdaRenamingDecl"            && variableNameString == "type")  ||
           (nodeName == "AdaFormalTypeDecl"          && variableNameString == "type")  ||
+          (nodeName == "AdaAttributeExp"            && variableNameString == "type")  ||
           (nodeName == "ClassDeclaration"           && variableNameString == "type")  ||
           (nodeName == "FunctionDeclaration"        && variableNameString == "type")  ||
           (nodeName == "FunctionTypeSymbol"         && variableNameString == "type")  ||
@@ -1717,6 +1718,33 @@ Grammar::buildDataMemberVariableDeclarations ( AstNodeClass & node )
      result.push_back(StringUtility::StringWithLineNumber("    protected:", "" /* "<buildDataMemberVariableDeclarations on " + node.getToken().getName() + ">" */, 1));
      result += buildStringForDataDeclaration(node);
 
+     return result;
+   }
+
+
+StringUtility::FileWithLineNumbers
+Grammar::buildFriendDeclarations ( AstNodeClass & node )
+   {
+     StringUtility::FileWithLineNumbers result;
+
+     std::string prefix("    friend struct Rose::Traits::generated::describe_");
+     std::string name = node.baseName;
+
+     result.push_back(StringUtility::StringWithLineNumber(prefix + "node_t<Sg" + name + ">;", "", 1));
+
+     std::vector<GrammarString *> fields;
+     for (auto gsp: node.memberDataPrototypeList[0][0]) {
+       if (gsp->typeNameString.find("static ") != 0) {
+         auto vname = gsp->variableNameString;
+         auto type_str = gsp->typeNameString;
+
+         if (type_str == "hash_iterator")    type_str = "Sg" + name + "::hash_iterator";
+         else if (type_str == "$CLASSNAME*") type_str = "Sg" + name + "*";
+
+         std::string decl_str = "field_t<Sg" + name + ", " + type_str + ",&Sg" + name + "::p_" + vname + ">;";
+         result.push_back(StringUtility::StringWithLineNumber(prefix + decl_str, "", 1));
+       }
+     }
      return result;
    }
 
@@ -2223,6 +2251,9 @@ Grammar::buildHeaderFiles( AstNodeClass & node, StringUtility::FileWithLineNumbe
   // DQ (3/24/2006): Add the data members to the end of the class in the generated code.
      StringUtility::FileWithLineNumbers editStringMiddleNodeData = buildDataMemberVariableDeclarations(node);
      editedStringMiddle += editStringMiddleNodeData;
+
+     StringUtility::FileWithLineNumbers editStringMiddleNodeFriends = buildFriendDeclarations(node);
+     editedStringMiddle += editStringMiddleNodeFriends;
 
   // printf ("editStringMiddleNodeMemberFunctions = %s \n",editStringMiddleNodeMemberFunctions);
   // char* editStringForParserPrototype = buildParserPrototype (node);
@@ -3541,6 +3572,12 @@ Grammar::buildCode ()
      string defines5 = "#define mprintf Rose::Diagnostics::mfprintf(Rose::ir_node_mlog[Rose::Diagnostics::DEBUG])\n\n";
      includeHeaderString += defines5;
 
+     // Some IR nodes have pointers to reference counted objects, and for better compiling speed, only the forward declarations
+     // are included into most headers. Destructors for these IR nodes need to have definitions for the reference counted
+     // objects in order to call the destructors for those objects when the pointer goes out of scope.  It would be better if
+     // these heavy-weight definitions were only included for the IR nodes that need them, but alas, ROSETTA places the code
+     // for all the IR nodes into a single gigantic .C file.
+     includeHeaderString += "#include <Rose/BinaryAnalysis/RegisterDictionary.h>\n";
 
      includeHeaderString += "\nusing namespace std;\n";
 
@@ -3973,6 +4010,7 @@ Grammar::buildCode ()
   /////////////////////////////////////////////////////////////////////////////////////////////
 
 
+     Grammar::generateRoseTraits();
 
 #if 1
   // -----------------------------------------------------------------------------------------------------------------------
@@ -4069,7 +4107,6 @@ Grammar::GrammarNodeInfo Grammar::getGrammarNodeInfo(AstNodeClass* grammarnode) 
           nodeName == "SgVariableDeclaration"
      // DQ (12/21/2011): Added exception for SgTemplateVariableDeclaration derived from SgVariableDeclaration.
         ||nodeName == "SgTemplateVariableDeclaration"
-        ||nodeName == "SgAdaVariantFieldDecl"
         ||nodeName == "SgOmpClauseBodyStatement"
         ||nodeName == "SgOmpParallelStatement"
         ||nodeName == "SgOmpSectionsStatement"
@@ -4292,7 +4329,7 @@ Grammar::buildTreeTraversalFunctions(AstNodeClass& node, StringUtility::FileWith
                     outputFile << successorContainerName << ".push_back(compute_baseTypeDefiningDeclaration());\n";
                   }
             // else if (nodeName == "SgVariableDeclaration" && memberVariableName == "baseTypeDefiningDeclaration")
-               else if ( (nodeName == "SgVariableDeclaration" || nodeName == "SgTemplateVariableDeclaration" || nodeName == "SgAdaVariantFieldDecl")
+               else if ( (nodeName == "SgVariableDeclaration" || nodeName == "SgTemplateVariableDeclaration")
                        && memberVariableName == "baseTypeDefiningDeclaration"
                        )
                   {
@@ -4370,7 +4407,6 @@ Grammar::buildTreeTraversalFunctions(AstNodeClass& node, StringUtility::FileWith
             // if (string(node.getName()) == "SgVariableDeclaration")
                if (  string(node.getName()) == "SgVariableDeclaration"
                   || string(node.getName()) == "SgTemplateVariableDeclaration"
-                  || string(node.getName()) == "SgAdaVariantFieldDecl"
                   )
                   {
                     outputFile << "if (idx == 0) return compute_baseTypeDefiningDeclaration();\n"
@@ -4479,7 +4515,6 @@ Grammar::buildTreeTraversalFunctions(AstNodeClass& node, StringUtility::FileWith
             // if (string(node.getName()) == "SgVariableDeclaration")
                if (  string(node.getName()) == "SgVariableDeclaration"
                   || string(node.getName()) == "SgTemplateVariableDeclaration"
-                  || string(node.getName()) == "SgAdaVariantFieldDecl"
                   )
                   {
                     outputFile << "if (child == compute_baseTypeDefiningDeclaration()) return 0;\n"

@@ -57,7 +57,7 @@ public:
 
     virtual std::vector<TagPtr>
     execute(const SettingsPtr&, const SemanticCallbacksPtr&,
-            const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&) override;
+            const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&) override;
 };
 
 

@@ -1,0 +1,8 @@
+include_rules
+
+run $(public_header) -o include/rose/Rose/CodeGen/factory \
+    classes.txx \
+    functions.txx \
+    namespaces.txx \
+    typedefs.txx \
+    variables.txx

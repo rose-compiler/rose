@@ -11,6 +11,8 @@ add_subdirectory(Diagnostics)
 add_subdirectory(FileSystem)
 add_subdirectory(StringUtility)
 add_subdirectory(AST)
+add_subdirectory(CodeGen)
+add_subdirectory(Traits)
 
 # needed to properly define ROSE_UTIL_API
 add_definitions(-DROSE_UTIL_EXPORTS)
@@ -20,12 +22,14 @@ add_library(roseNamespace OBJECT
   FormattedTable.C
   Initialize.C
   Progress.C
-  SourceLocation.C)
+  SourceLocation.C
+  Yaml.C)
 
 add_dependencies(roseNamespace rosetta_generated)
 
 # Public header files for the ::Rose namespace (see top comment)
 install(FILES
+  BasicTypes.h
   BinaryAnalysis.h
   BitFlags.h
   BitOps.h
@@ -39,9 +43,11 @@ install(FILES
   FormattedTable.h
   GraphUtility.h
   Initialize.h
+  Location.h
   Progress.h
   RecursionCounter.h
   SourceLocation.h
   StringUtility.h
+  Yaml.h
 
   DESTINATION ${INCLUDE_INSTALL_DIR}/Rose)

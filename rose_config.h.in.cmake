@@ -77,7 +77,7 @@
 #cmakedefine ROSE_HAVE_LIBGCRYPT
 
 /* Define if YAML-CPP library is available. */
-#cmakedefine ROSE_HAVE_LIBYAML
+#cmakedefine ROSE_HAVE_YAMLCPP
 
 /* Define if Dlib is available. */
 #cmakedefine ROSE_HAVE_DLIB

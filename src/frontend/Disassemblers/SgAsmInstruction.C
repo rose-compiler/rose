@@ -4,10 +4,11 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Dispatcher.h>
 #include <Rose/BinaryAnalysis/NoOperation.h>
 #include <Rose/Diagnostics.h>
-#include <Rose/BinaryAnalysis/Disassembler.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Dispatcher.h>
+
 #include "AsmUnparser_compat.h"
 
 using namespace Rose;
@@ -125,18 +126,6 @@ SgAsmInstruction::branchTarget() {
     ASSERT_not_reachable("you forgot to implement this in a subclass"); // runtime error is the best we can do with ROSETTA
 }
 
-// FIXME[Robb Matzke 2021-03-02]: deprecated
-bool
-SgAsmInstruction::getBranchTarget(rose_addr_t *target/*out*/) {
-    if (Sawyer::Optional<rose_addr_t> va = branchTarget()) {
-        if (target)
-            *target = *va;
-        return true;
-    } else {
-        return false;
-    }
-}
-
 bool
 SgAsmInstruction::hasEffect()
 {
@@ -148,18 +137,18 @@ SgAsmInstruction::hasEffect()
 // Build analyzer for no-ops
 static NoOperation
 buildNopAnalyzer(SgAsmInterpretation *interp) {
-    using namespace InstructionSemantics2;
+    using namespace InstructionSemantics;
 
     if (!interp) {
         static bool emitted = false;
-        if (!emitted && InstructionSemantics2::mlog[WARN]) {
-            InstructionSemantics2::mlog[WARN] <<"SgAsmInstruction::buildDispatcher: no binary interpretation\n";
+        if (!emitted && InstructionSemantics::mlog[WARN]) {
+            InstructionSemantics::mlog[WARN] <<"SgAsmInstruction::buildDispatcher: no binary interpretation\n";
             emitted = true;
         }
-        return NoOperation(BaseSemantics::DispatcherPtr());
+        return NoOperation(BaseSemantics::Dispatcher::Ptr());
     }
 
-    Disassembler *disassembler = Disassembler::lookup(interp);
+    Disassembler::Base::Ptr disassembler = Disassembler::lookup(interp);
     return NoOperation(disassembler);
 }
 
@@ -172,8 +161,8 @@ SgAsmInstruction::hasEffect(const std::vector<SgAsmInstruction*> &insns, bool al
 
     if (relax_stack_semantics) {
         static bool emitted = false;
-        if (!emitted && InstructionSemantics2::mlog[WARN]) {
-            InstructionSemantics2::mlog[WARN] <<"SgAsmInstruction::hasEffect: relax_stack_semantics not implemented\n";
+        if (!emitted && InstructionSemantics::mlog[WARN]) {
+            InstructionSemantics::mlog[WARN] <<"SgAsmInstruction::hasEffect: relax_stack_semantics not implemented\n";
             emitted = true;
         }
     }
@@ -190,8 +179,8 @@ SgAsmInstruction::findNoopSubsequences(const std::vector<SgAsmInstruction*>& ins
 
     if (relax_stack_semantics) {
         static bool emitted = false;
-        if (!emitted && InstructionSemantics2::mlog[WARN]) {
-            InstructionSemantics2::mlog[WARN] <<"SgAsmInstruction::hasEffect: relax_stack_semantics not implemented\n";
+        if (!emitted && InstructionSemantics::mlog[WARN]) {
+            InstructionSemantics::mlog[WARN] <<"SgAsmInstruction::hasEffect: relax_stack_semantics not implemented\n";
             emitted = true;
         }
     }
@@ -224,7 +213,7 @@ SgAsmInstruction::toString() const {
         const SgAsmExpressionPtrList &operands = opList->get_operands();
         for (size_t i = 0; i < operands.size(); ++i) {
             retval += i == 0 ? " " : ", ";
-            retval += StringUtility::trim(unparseExpression(operands[i], NULL, NULL));
+            retval += StringUtility::trim(unparseExpression(operands[i], NULL, RegisterDictionary::Ptr()));
         }
     }
     return retval;

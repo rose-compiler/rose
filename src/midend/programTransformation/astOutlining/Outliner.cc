@@ -41,6 +41,7 @@ namespace Outliner {
 #endif
   bool exclude_headers=false;
   bool use_dlopen=false; // Outlining the target to a separated file and calling it using a dlopen() scheme. It turns on useNewFile.
+  bool use_dlopen_simple=false; // Same as use_dlopen, except that using a simple call convention to find and call the outlined function. 
   bool enable_template=false; // Outlining code blocks inside C++ templates
   bool select_omp_loop = false;  // Find OpenMP for loops and outline them. This is used for testing purposes.
   std::string output_path=""; // default output path is the original file's directory
@@ -240,6 +241,10 @@ Outliner::commandLineSwitches() {
                     .intrinsicValue(true, use_dlopen)
                     .doc("Use @man{dlopen}(3) to find an outlined function saved into a new source file."));
 
+    switches.insert(Switch("use_dlopen_simple")
+                    .intrinsicValue(true, use_dlopen_simple)
+                    .doc("Use @man{dlopen}(3) to find and call an outlined function saved into a new source file, through a simple call convention."));
+
     switches.insert(Switch("enable_template")
                     .intrinsicValue(true, enable_template)
                     .doc("Enable outlining code blocks inside C++ templates."));
@@ -302,9 +307,10 @@ Outliner::validateSettings()
         useParameterWrapper = true;
     }
     //    use_dlopen = false;
-    if (use_dlopen) {
+    if (use_dlopen|| use_dlopen_simple) {
         // turn on useNewFile as a side effect
         useNewFile= true;
+        use_dlopen = true; // if use_dlopen_simple, we also turn on use_dlopen
         // also use parameter wrapper to simplify the call
         useParameterWrapper = true;
         temp_variable = true;
@@ -411,6 +417,14 @@ void Outliner::commandLineProcessing(std::vector<std::string> &argvList)
       cout<<"Using dlopen() to find an outilned function saved into a new source file ..."<<endl;
     use_dlopen = true;
   }
+
+  if (CommandlineProcessing::isOption (argvList,"-rose:outline:","use_dlopen_simple",true))
+  {
+    if (enable_debug)
+      cout<<"Using simple dlopen() call convention to find and call an outilned function saved into a new source file ..."<<endl;
+    use_dlopen_simple = true;
+  }
+ 
   //  else   // this option may be set by other module
    std::string opstr;   
   if (CommandlineProcessing::isOptionWithParameter (argvList,"-rose:outline:","abstract_handle",opstr, true))
@@ -440,7 +454,7 @@ void Outliner::commandLineProcessing(std::vector<std::string> &argvList)
     argvList.push_back("-rose:openmp:ast_only");
   }
  
- if (use_dlopen || temp_variable)    
+ if (use_dlopen || temp_variable || use_dlopen_simple)    
   {
     if (CommandlineProcessing::isOption (argvList,"-rose:outline:","enable_liveness",true))
       enable_liveness = true;
@@ -466,6 +480,7 @@ void Outliner::commandLineProcessing(std::vector<std::string> &argvList)
     cout<<"\t-rose:outline:output_path                      the path to store newly generated files for outlined functions, if requested by new_file. The original source file's path is used by default."<<endl;
     cout<<"\t-rose:outline:exclude_headers                  do not include any headers in the new file for outlined functions"<<endl;
     cout<<"\t-rose:outline:use_dlopen                       use dlopen() to find the outlined functions saved in new files.It will turn on new_file and parameter_wrapper flags internally"<<endl;
+    cout<<"\t-rose:outline:use_dlopen_simple                use simple dlopen() call convention to find and call the outlined functions saved in new files.It will turn on new_file and parameter_wrapper flags internally"<<endl;
     cout<<"\t-rose:outline:copy_orig_file                   used with dlopen(): single lib source file copied from the entire original input file. All generated outlined functions are appended to the lib source file"<<endl;
     cout<<"\t-rose:outline:enable_template                  support outlining code blocks inside C++ templates (experimental)"<<endl;
     cout<<"\t-rose:outline:enable_debug                     run outliner in a debugging mode"<<endl;

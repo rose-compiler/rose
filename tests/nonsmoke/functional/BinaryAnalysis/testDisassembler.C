@@ -1,7 +1,7 @@
 #include <rose.h>
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
 #include <Rose/CommandLine.h>
-#include <Rose/BinaryAnalysis/Disassembler.h>
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <rose_getline.h>
 #include <rose_strtoull.h>
@@ -14,7 +14,7 @@ using namespace Rose;
 using namespace Rose::BinaryAnalysis;
 using namespace Sawyer::Message::Common;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
-namespace I2 = Rose::BinaryAnalysis::InstructionSemantics2;
+namespace I2 = Rose::BinaryAnalysis::InstructionSemantics;
 
 bool runSemantics = false;
 
@@ -91,7 +91,7 @@ int main(int argc, char *argv[]) {
     
     P2::mlog[WARN].disable(); // warnings about empty memory map
     P2::Partitioner partitioner = engine.createPartitioner();
-    Disassembler *disassembler = engine.obtainDisassembler();
+    Disassembler::Base::Ptr disassembler = engine.obtainDisassembler();
     ASSERT_always_not_null(disassembler);
     BinaryAnalysis::Unparser::BasePtr unparser = partitioner.unparser();
     ASSERT_always_not_null(unparser);
@@ -131,8 +131,8 @@ int main(int argc, char *argv[]) {
 
         if (runSemantics) {
             // Process instruction semantics
-            I2::BaseSemantics::RiscOperatorsPtr ops = partitioner.newOperators();
-            I2::BaseSemantics::DispatcherPtr cpu = partitioner.newDispatcher(ops);
+            I2::BaseSemantics::RiscOperators::Ptr ops = partitioner.newOperators();
+            I2::BaseSemantics::Dispatcher::Ptr cpu = partitioner.newDispatcher(ops);
             cpu->processInstruction(insn);
             std::ostringstream ss;
             ss <<*ops;

@@ -88,7 +88,7 @@ SystemCall::hasSystemCall(const Partitioner2::BasicBlock::Ptr &bblock) const {
 Sawyer::Optional<SystemCall::Declaration>
 SystemCall::analyze(const Partitioner2::Partitioner &partitioner, const Partitioner2::BasicBlock::Ptr &bblock,
                     SgAsmInstruction *syscallInsn, const SmtSolver::Ptr &solver /*=null*/) const {
-    using namespace Rose::BinaryAnalysis::InstructionSemantics2;
+    using namespace Rose::BinaryAnalysis::InstructionSemantics;
     ASSERT_not_null(bblock);
 
     if (!ident_.isValid())
@@ -99,8 +99,8 @@ SystemCall::analyze(const Partitioner2::Partitioner &partitioner, const Partitio
         return Sawyer::Nothing();
     
     // Instantiate the instruction semantics layers
-    BaseSemantics::RiscOperatorsPtr ops = partitioner.newOperators();
-    BaseSemantics::DispatcherPtr cpu = partitioner.newDispatcher(ops); 
+    BaseSemantics::RiscOperators::Ptr ops = partitioner.newOperators();
+    BaseSemantics::Dispatcher::Ptr cpu = partitioner.newDispatcher(ops);
     if (!cpu)
         throw Exception("no instruction semantics for architecture");
 
@@ -117,7 +117,7 @@ SystemCall::analyze(const Partitioner2::Partitioner &partitioner, const Partitio
         return Sawyer::Nothing();
     
     // Read the value from the abstract location
-    BaseSemantics::SValuePtr baseVal;
+    BaseSemantics::SValue::Ptr baseVal;
     if (ident_.isRegister()) {
         baseVal = ops->undefined_(ident_.getRegister().nBits());
         baseVal = ops->peekRegister(ident_.getRegister(), baseVal);

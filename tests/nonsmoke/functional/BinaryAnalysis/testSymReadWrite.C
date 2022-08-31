@@ -6,8 +6,9 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 
 #include "rose.h"
 
-#include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/DispatcherX86.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherX86.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 
 using namespace Rose::BinaryAnalysis;
 
@@ -15,11 +16,11 @@ struct Analysis: public AstSimpleProcessing {
     void visit(SgNode *node) {
         SgAsmBlock *block = isSgAsmBlock(node);
         if (block && block->has_instructions()) {
-            using namespace Rose::BinaryAnalysis::InstructionSemantics2;
-            const RegisterDictionary *regdict = RegisterDictionary::dictionary_i386();
-            SymbolicSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(regdict);
+            using namespace Rose::BinaryAnalysis::InstructionSemantics;
+            RegisterDictionary::Ptr regdict = RegisterDictionary::instanceI386();
+            SymbolicSemantics::RiscOperators::Ptr ops = SymbolicSemantics::RiscOperators::instanceFromRegisters(regdict);
             ops->computingDefiners(SymbolicSemantics::TRACK_ALL_DEFINERS); // only used so we can test that it works
-            BaseSemantics::DispatcherPtr dispatcher = DispatcherX86::instance(ops, 32);
+            BaseSemantics::Dispatcher::Ptr dispatcher = DispatcherX86::instance(ops, 32, RegisterDictionary::Ptr());
             const SgAsmStatementPtrList &stmts = block->get_statementList();
             for (SgAsmStatementPtrList::const_iterator si=stmts.begin(); si!=stmts.end(); ++si) {
                 SgAsmX86Instruction *insn = isSgAsmX86Instruction(*si);

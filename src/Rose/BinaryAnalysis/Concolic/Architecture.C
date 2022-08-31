@@ -12,7 +12,7 @@
 #include <Rose/BinaryAnalysis/Concolic/TestCase.h>
 
 using namespace Sawyer::Message::Common;
-namespace BS = Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
+namespace BS = Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 namespace Rose {
@@ -346,7 +346,7 @@ Architecture::nextEventLocation(When when) {
 }
 
 void
-Architecture::restoreInputVariables(const Partitioner2::Partitioner&, const Emulation::RiscOperatorsPtr&, const SmtSolver::Ptr&) {
+Architecture::restoreInputVariables(const Partitioner2::Partitioner&, const Emulation::RiscOperators::Ptr&, const SmtSolver::Ptr&) {
     for (ExecutionEventId eventId: database()->executionEvents(testCaseId())) {
         ExecutionEvent::Ptr event = database()->object(eventId, Update::NO);
         inputVariables_->playback(event);

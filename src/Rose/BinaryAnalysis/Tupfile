@@ -11,18 +11,13 @@ run $(librose_compile)				\
     BinaryLoaderPe.C				\
     CallingConvention.C				\
     CodeInserter.C				\
+    ConcreteLocation.C				\
     ControlFlow.C				\
     DataFlow.C					\
     Debugger.C					\
     Demangler.C					\
-    Disassembler.C				\
-    DisassemblerAarch32.C			\
-    DisassemblerAarch64.C			\
-    DisassemblerM68k.C				\
-    DisassemblerMips.C				\
-    DisassemblerNull.C				\
-    DisassemblerPowerpc.C			\
-    DisassemblerX86.C				\
+    DisassemblerCil.C				\
+    DisassemblerJvm.C				\
     FeasiblePath.C				\
     FunctionCall.C				\
     FunctionSimilarity.C			\
@@ -35,8 +30,9 @@ run $(librose_compile)				\
     PointerDetection.C				\
     Reachability.C				\
     RegisterDescriptor.C			\
+    RegisterDictionary.C			\
+    RegisterNames.C				\
     RegisterParts.C				\
-    Registers.C					\
     ReturnValueUsed.C				\
     SerialIo.C					\
     SmtCommandLine.C				\
@@ -58,6 +54,7 @@ run $(public_header) -o include/rose/Rose/BinaryAnalysis	\
     AbstractLocation.h						\
     AsmFunctionIndex.h						\
     AstHash.h							\
+    BasicTypes.h						\
     BestMapAddress.h						\
     BinaryLoader.h						\
     BinaryLoaderElf.h						\
@@ -66,18 +63,14 @@ run $(public_header) -o include/rose/Rose/BinaryAnalysis	\
     CallingConvention.h						\
     CodeInserter.h						\
     Concolic.h							\
+    ConcreteLocation.h						\
     ControlFlow.h						\
     DataFlow.h							\
     Debugger.h							\
     Demangler.h							\
     Disassembler.h						\
-    DisassemblerAarch32.h					\
-    DisassemblerAarch64.h					\
-    DisassemblerM68k.h						\
-    DisassemblerMips.h						\
-    DisassemblerNull.h						\
-    DisassemblerPowerpc.h					\
-    DisassemblerX86.h						\
+    DisassemblerCil.h						\
+    DisassemblerJvm.h						\
     FeasiblePath.h						\
     FunctionCall.h						\
     FunctionSimilarity.h					\
@@ -85,11 +78,13 @@ run $(public_header) -o include/rose/Rose/BinaryAnalysis	\
     InstructionCache.h						\
     InstructionEnumsAarch32.h					\
     InstructionEnumsAarch64.h					\
+    InstructionEnumsCil.h					\
     InstructionEnumsJvm.h					\
     InstructionEnumsM68k.h					\
     InstructionEnumsMips.h					\
     InstructionEnumsPowerpc.h					\
     InstructionEnumsX86.h					\
+    InstructionSemantics.h					\
     InstructionSemantics2.h					\
     LibraryIdentification.h					\
     MagicNumber.h						\
@@ -102,7 +97,8 @@ run $(public_header) -o include/rose/Rose/BinaryAnalysis	\
     Reachability.h						\
     RegisterDescriptor.h					\
     RegisterParts.h						\
-    Registers.h							\
+    RegisterDictionary.h					\
+    RegisterNames.h						\
     ReturnValueUsed.h						\
     SerialIo.h							\
     SmtCommandLine.h						\

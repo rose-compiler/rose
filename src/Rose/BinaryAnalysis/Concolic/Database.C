@@ -14,8 +14,8 @@
 #include <Rose/BinaryAnalysis/Concolic/Specimen.h>
 #include <Rose/BinaryAnalysis/Concolic/TestCase.h>
 #include <Rose/BinaryAnalysis/Concolic/TestSuite.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
 
 #include <boost/algorithm/string/predicate.hpp>
@@ -40,8 +40,8 @@
 #include <Sawyer/DatabasePostgresql.h>
 #endif
 
-namespace BS = Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
-namespace IS = Rose::BinaryAnalysis::InstructionSemantics2;
+namespace BS = Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;
+namespace IS = Rose::BinaryAnalysis::InstructionSemantics;
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -898,7 +898,7 @@ Database::symbolicStateExists(TestCaseId id) {
 }
 
 void
-Database::saveSymbolicState(TestCaseId id, const BS::StatePtr &state) {
+Database::saveSymbolicState(TestCaseId id, const BS::State::Ptr &state) {
     ASSERT_require(id);
     if (state) {
         Sawyer::FileSystem::TemporaryFile tempFile;
@@ -924,7 +924,7 @@ Database::saveSymbolicState(TestCaseId id, const BS::StatePtr &state) {
     }
 }
 
-BS::StatePtr
+BS::State::Ptr
 Database::extractSymbolicState(TestCaseId id) {
     ASSERT_require(id);
 
@@ -945,7 +945,7 @@ Database::extractSymbolicState(TestCaseId id) {
     std::ifstream in(tempFile.name().string().c_str(), std::ios_base::binary);
     boost::archive::binary_iarchive archive(in);
     registerTypes(archive);
-    BS::StatePtr retval;
+    BS::State::Ptr retval;
     archive >>retval;
     return retval;
 }

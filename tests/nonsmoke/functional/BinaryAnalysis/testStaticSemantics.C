@@ -5,8 +5,10 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #else
 
 #include <rose.h>
+
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/StaticSemantics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/StaticSemantics.h>
 
 
 using namespace Rose;
@@ -24,7 +26,7 @@ main(int argc, char *argv[]) {
         "Semantics2 API, and that is what this program tests.";
     P2::Engine engine;
     SgAsmBlock *gblock = engine.frontend(argc, argv, purpose, description);
-    InstructionSemantics2::StaticSemantics::attachInstructionSemantics(gblock, engine.disassembler());
+    InstructionSemantics::StaticSemantics::attachInstructionSemantics(gblock, engine.disassembler());
 
 #if 1 // DEBUGGING [Robb P. Matzke 2015-06-08]
     generateDOT(*SageInterface::getProject());

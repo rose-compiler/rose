@@ -4,7 +4,7 @@
 #ifdef ROSE_ENABLE_SIMULATOR
 
 #include <Rose/Diagnostics.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/TraceSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
 #include <errno.h>
 #include <stdarg.h>
 #include <syscall.h>
@@ -17,7 +17,7 @@
 using namespace Rose;
 using namespace Rose::Diagnostics;
 using namespace Rose::BinaryAnalysis;
-using namespace Rose::BinaryAnalysis::InstructionSemantics2;
+using namespace Rose::BinaryAnalysis::InstructionSemantics;
 
 size_t RSIM_Thread::next_sequence_number = 1;
 
@@ -35,15 +35,15 @@ RSIM_Thread::ctor()
     dispatcher_ = RSIM_Semantics::createDispatcher(this);
 }
 
-BaseSemantics::SValuePtr
+BaseSemantics::SValue::Ptr
 RSIM_Thread::pop() {
     RegisterDescriptor SP = get_process()->disassembler()->stackPointerRegister();
     RegisterDescriptor SS = get_process()->disassembler()->stackSegmentRegister();
     size_t resultWidth = SP.nBits();                    // number bits to read from memory
-    BaseSemantics::SValuePtr oldSp = operators()->readRegister(SP);
-    BaseSemantics::SValuePtr dflt = operators()->undefined_(resultWidth);
-    BaseSemantics::SValuePtr retval = operators()->readMemory(SS, oldSp, dflt, operators()->boolean_(true));
-    BaseSemantics::SValuePtr newSp = operators()->add(oldSp, operators()->number_(oldSp->nBits(), resultWidth/8));
+    BaseSemantics::SValue::Ptr oldSp = operators()->readRegister(SP);
+    BaseSemantics::SValue::Ptr dflt = operators()->undefined_(resultWidth);
+    BaseSemantics::SValue::Ptr retval = operators()->readMemory(SS, oldSp, dflt, operators()->boolean_(true));
+    BaseSemantics::SValue::Ptr newSp = operators()->add(oldSp, operators()->number_(oldSp->nBits(), resultWidth/8));
     operators()->writeRegister(SP, newSp);
     return retval;
 }
@@ -101,19 +101,19 @@ RSIM_Thread::tracing(TracingFacility tf)
     return *trace_mesg[tf];
 }
 
-RSIM_Semantics::RiscOperatorsPtr
+RSIM_Semantics::RiscOperators::Ptr
 RSIM_Thread::operators() const
 {
-    BaseSemantics::RiscOperatorsPtr baseOps = dispatcher_->operators();
+    BaseSemantics::RiscOperators::Ptr baseOps = dispatcher_->operators();
 
     // This is the usual case, so keep it here to be fast.
-    if (RSIM_Semantics::RiscOperatorsPtr retval = boost::dynamic_pointer_cast<RSIM_Semantics::RiscOperators>(baseOps))
+    if (RSIM_Semantics::RiscOperators::Ptr retval = boost::dynamic_pointer_cast<RSIM_Semantics::RiscOperators>(baseOps))
         return retval;
 
     // This unusual case might happen when we turn on semantic tracing when debugging the simulator.
-    if (TraceSemantics::RiscOperatorsPtr traceOps = boost::dynamic_pointer_cast<TraceSemantics::RiscOperators>(baseOps)) {
-        BaseSemantics::RiscOperatorsPtr subOps = traceOps->subdomain();
-        if (RSIM_Semantics::RiscOperatorsPtr retval = boost::dynamic_pointer_cast<RSIM_Semantics::RiscOperators>(subOps))
+    if (TraceSemantics::RiscOperators::Ptr traceOps = boost::dynamic_pointer_cast<TraceSemantics::RiscOperators>(baseOps)) {
+        BaseSemantics::RiscOperators::Ptr subOps = traceOps->subdomain();
+        if (RSIM_Semantics::RiscOperators::Ptr retval = boost::dynamic_pointer_cast<RSIM_Semantics::RiscOperators>(subOps))
             return retval;
     }
 
@@ -714,7 +714,7 @@ RSIM_Thread::report_stack_frames(Sawyer::Message::Stream &mesg, const std::strin
 }
 
 void
-RSIM_Thread::syscall_return(const BaseSemantics::SValuePtr &retval)
+RSIM_Thread::syscall_return(const BaseSemantics::SValue::Ptr &retval)
 {
     RegisterDescriptor reg = get_process()->get_simulator()->syscallReturnRegister();
     operators()->writeRegister(reg, retval);

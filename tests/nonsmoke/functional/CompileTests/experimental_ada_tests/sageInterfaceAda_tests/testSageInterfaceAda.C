@@ -65,7 +65,7 @@ namespace
       if (!n) return;
       switch (n->variantT())
       {
-      // types    
+      // types
       case V_SgInitializedName:
         {
           SgInitializedName* init_name = isSgInitializedName(n);
@@ -81,7 +81,7 @@ namespace
           }
           break;
         }
-      
+
       default: ;
       }
 */
@@ -94,7 +94,7 @@ namespace
 
     std::stringstream output;
   };
-  
+
 
   template<class Checker>
   void check(SgProject* n)
@@ -109,10 +109,40 @@ namespace
         checker.traverse(srcfile, preorder);
     }
   }
+/*
+  struct ConversionOnTypes
+  {
+    template <class SageNode>
+    auto _handle(SageNode& n) -> decltype(n.get_type())
+    {
+
+    }
+
+    void _handle(SgNode& n) {}
+
+    template <class SageNode>
+    void handle(SageNode& n) { _handle(n); }
+    {
+
+    }
+  };
+*/
+
+  void checkConvertToOperatorRepOnTypes()
+  {
+    VariantVector vv{V_SgType};
+
+    for (SgNode* el : NodeQuery::queryMemoryPool(vv))
+      SageInterface::ada::convertToOperatorRepresentation(el);
+  }
+
+
 }
 
 int main( int argc, char * argv[] )
 {
+  int errCode = 0;
+
   // Initialize and check compatibility. See Rose::initialize
   ROSE_INITIALIZE;
 
@@ -126,14 +156,31 @@ int main( int argc, char * argv[] )
           Rose::global_options.set_backend_warnings(false);
   }
 
-  SgProject* project = frontend(argc,argv);
+  // try to prevent "terminate called recursively" errors from the ASIS frontend
+  try
+  {
+    Rose::failedAssertionBehavior(Rose::throwOnFailedAssertion);
 
-  // AST consistency tests (optional for users, but this enforces more of our tests)
-  AstTests::runAllTests(project);
+    SgProject* project = frontend(argc,argv);
 
-  check<SageInterfaceAdaCheck>(project);
+    // AST consistency tests (optional for users, but this enforces more of our tests)
+    AstTests::runAllTests(project);
 
-  // last check, tests if symbol table conversion to case sensitive succeeds.
-  si::ada::convertToCaseSensitiveSymbolTables(project);
-  return 0;
+    check<SageInterfaceAdaCheck>(project);
+
+    // last: check conversion functions
+    si::ada::convertToOperatorRepresentation(project, false /* convert operators that have the syntax flag set */);
+    // std::cerr << "checked si::ada::convertToOperatorRepresentation(project, false)" << std::endl;
+
+    si::ada::convertToOperatorRepresentation(project, true /* convert all operators */, true /* resolve named args */);
+    si::ada::convertToCaseSensitiveSymbolTables(project);
+
+    checkConvertToOperatorRepOnTypes();
+  }
+  catch (...)
+  {
+    errCode = 1;
+  }
+
+  return errCode;
 }

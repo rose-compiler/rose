@@ -1,21 +1,16 @@
 #ifndef ROSE_BinaryAnalysis_InstructionSemantics2_Util_H
 #define ROSE_BinaryAnalysis_InstructionSemantics2_Util_H
-#include <featureTests.h>
-#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+// [Robb Matzke 2022-06-22]: deprecated
+#include <rose_pragma_message.h>
+ROSE_PRAGMA_MESSAGE("This header is deprecated; use Rose/BinaryAnalysis/InstructionSemantics/Util.h instead");
+#include <Rose/BinaryAnalysis/InstructionSemantics/Util.h>
+
+// [Robb Matzke 2022-06-22]: deprecated
 namespace Rose {
 namespace BinaryAnalysis {
-namespace InstructionSemantics2 {
-
-/** Diagnostics logging facility for instruction semantics. */
-extern Sawyer::Message::Facility mlog;
-
-/** Initialize diagnostics for instruction semantics. */
-void initDiagnostics();
-
-} // namespace
+namespace InstructionSemantics2 = Rose::BinaryAnalysis::InstructionSemantics;
 } // namespace
 } // namespace
 
-#endif
 #endif

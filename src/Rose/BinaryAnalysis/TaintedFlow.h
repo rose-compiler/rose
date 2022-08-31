@@ -173,7 +173,7 @@ public:
      *  semantic domain will be used to identify variables in the analyzed specimen.  The symbolic domain is the usual choice.
      *  The dispatcher need not have a valid state at this time; however, the state must be initialized before calling @ref
      *  computeFlowGraphs (if that method is called). */
-    explicit TaintedFlow(const InstructionSemantics2::BaseSemantics::DispatcherPtr &userDispatcher)
+    explicit TaintedFlow(const InstructionSemantics::BaseSemantics::DispatcherPtr &userDispatcher)
         : approximation_(UNDER_APPROXIMATE), dataFlow_(userDispatcher), vlistInitialized_(false) {}
 
     /** Initialize diagnostics.
@@ -281,6 +281,7 @@ public:
         TransferFunction xfer(vertexFlowGraphs_, approximation_, smtSolver_, mlog);
         MergeFunction merge;
         DataFlow::Engine<CFG, StatePtr, TransferFunction, MergeFunction> dfEngine(cfg, xfer, merge);
+        dfEngine.name("tainted-flow");
         dfEngine.runToFixedPoint(cfgStartVertex, initialState);
         results_ = dfEngine.getFinalStates();
         mesg <<"; results for " <<StringUtility::plural(results_.size(), "vertices", "vertex") <<"\n";

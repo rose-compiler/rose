@@ -1,10 +1,11 @@
-#ifndef ROSE_BinaryAnalysis_Partitioner_Semantics_H
-#define ROSE_BinaryAnalysis_Partitioner_Semantics_H
+#ifndef ROSE_BinaryAnalysis_Partitioner2_Semantics_H
+#define ROSE_BinaryAnalysis_Partitioner2_Semantics_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
@@ -18,28 +19,28 @@ namespace Partitioner2 {
 /** Instruction semantics for the partitioner.
  *
  *  The partitioner semantic domain is closely related to the basic @ref
- *  Rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics "symbolic" domain and its classes inherit from the semantic
+ *  Rose::BinaryAnalysis::InstructionSemantics::SymbolicSemantics "symbolic" domain and its classes inherit from the semantic
  *  domain. The main difference is that the partitioner's domain also takes into account the concrete memory of the
  *  specimen; e.g., the @ref MemoryMap that was initialized by loading the specimen into virtual memory. */
 namespace Semantics {
 
 /** Semantic value in the partitioner. */
-typedef InstructionSemantics2::SymbolicSemantics::SValue SValue;
+typedef InstructionSemantics::SymbolicSemantics::SValue SValue;
 
 /** Reference counting pointer to semantic value. */
-typedef InstructionSemantics2::SymbolicSemantics::SValuePtr SValuePtr;
+typedef InstructionSemantics::SymbolicSemantics::SValuePtr SValuePtr;
 
 /** Register state for the partitioner. */
-typedef InstructionSemantics2::BaseSemantics::RegisterStateGeneric RegisterState;
+typedef InstructionSemantics::BaseSemantics::RegisterStateGeneric RegisterState;
 
 /** Reference counting pointer to register state. */
-typedef InstructionSemantics2::BaseSemantics::RegisterStateGenericPtr RegisterStatePtr;
+typedef InstructionSemantics::BaseSemantics::RegisterStateGenericPtr RegisterStatePtr;
 
 /** Total state (registers and memory) for the partitioner. */
-typedef InstructionSemantics2::BaseSemantics::State State;
+typedef InstructionSemantics::BaseSemantics::State State;
 
 /** Reference counting pointer to total state. */
-typedef InstructionSemantics2::BaseSemantics::StatePtr StatePtr;
+typedef InstructionSemantics::BaseSemantics::StatePtr StatePtr;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Memory State
@@ -51,7 +52,7 @@ typedef InstructionSemantics2::BaseSemantics::StatePtr StatePtr;
  *  MemoryMap::INITIALIZED) obtains the data directly from the memory map.
  *
  *  Addresses for each read operation are saved in a list which is nominally reset at the beginning of each instruction. */
-template<class Super = InstructionSemantics2::SymbolicSemantics::MemoryListState> // or MemoryMapState
+template<class Super = InstructionSemantics::SymbolicSemantics::MemoryListState> // or MemoryMapState
 class MemoryState: public Super {
 public:
     /** Shared-ownership pointer to a @ref MemoryState. See @ref heap_object_shared_ownership. */
@@ -79,22 +80,22 @@ protected:
     MemoryState()                                       // for serialization
         : enabled_(true) {}
 
-    explicit MemoryState(const InstructionSemantics2::BaseSemantics::MemoryCellPtr &protocell)
+    explicit MemoryState(const InstructionSemantics::BaseSemantics::MemoryCellPtr &protocell)
         : Super(protocell), enabled_(true) {}
 
-    MemoryState(const InstructionSemantics2::BaseSemantics::SValuePtr &addrProtoval,
-                const InstructionSemantics2::BaseSemantics::SValuePtr &valProtoval)
+    MemoryState(const InstructionSemantics::BaseSemantics::SValuePtr &addrProtoval,
+                const InstructionSemantics::BaseSemantics::SValuePtr &valProtoval)
         : Super(addrProtoval, valProtoval), enabled_(true) {}
 
 public:
     /** Instantiates a new memory state having specified prototypical cells and value. */
-    static Ptr instance(const InstructionSemantics2::BaseSemantics::MemoryCellPtr &protocell) {
+    static Ptr instance(const InstructionSemantics::BaseSemantics::MemoryCellPtr &protocell) {
         return Ptr(new MemoryState(protocell));
     }
 
     /** Instantiates a new memory state having specified prototypical value. */
-    static  Ptr instance(const InstructionSemantics2::BaseSemantics::SValuePtr &addrProtoval,
-                         const InstructionSemantics2::BaseSemantics::SValuePtr &valProtoval) {
+    static  Ptr instance(const InstructionSemantics::BaseSemantics::SValuePtr &addrProtoval,
+                         const InstructionSemantics::BaseSemantics::SValuePtr &valProtoval) {
         return Ptr(new MemoryState(addrProtoval, valProtoval));
     }
 
@@ -105,20 +106,20 @@ public:
 
 public:
     /** Virtual constructor. Creates a memory state having specified prototypical value. */
-    virtual InstructionSemantics2::BaseSemantics::MemoryStatePtr
-    create(const InstructionSemantics2::BaseSemantics::SValuePtr &addrProtoval,
-           const InstructionSemantics2::BaseSemantics::SValuePtr &valProtoval) const override {
+    virtual InstructionSemantics::BaseSemantics::MemoryStatePtr
+    create(const InstructionSemantics::BaseSemantics::SValuePtr &addrProtoval,
+           const InstructionSemantics::BaseSemantics::SValuePtr &valProtoval) const override {
         return instance(addrProtoval, valProtoval);
     }
 
     /** Virtual constructor. Creates a new memory state having specified prototypical cells and value. */
-    virtual InstructionSemantics2::BaseSemantics::MemoryStatePtr
-    create(const InstructionSemantics2::BaseSemantics::MemoryCellPtr &protocell) const override {
+    virtual InstructionSemantics::BaseSemantics::MemoryStatePtr
+    create(const InstructionSemantics::BaseSemantics::MemoryCellPtr &protocell) const override {
         return instance(protocell);
     }
 
     /** Virtual copy constructor. Creates a new deep copy of this memory state. */
-    virtual InstructionSemantics2::BaseSemantics::MemoryStatePtr
+    virtual InstructionSemantics::BaseSemantics::MemoryStatePtr
     clone() const override {
         return Ptr(new MemoryState(*this));
     }
@@ -127,7 +128,7 @@ public:
     /** Recasts a base pointer to a symbolic memory state. This is a checked cast that will fail if the specified pointer does
      *  not point to an object of our class. */
     static Ptr
-    promote(const InstructionSemantics2::BaseSemantics::MemoryStatePtr &x) {
+    promote(const InstructionSemantics::BaseSemantics::MemoryStatePtr &x) {
         Ptr retval = boost::dynamic_pointer_cast<MemoryState>(x);
         assert(x!=NULL);
         return retval;
@@ -163,41 +164,41 @@ public:
     /** @} */
 
 public:
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr
-    readMemory(const InstructionSemantics2::BaseSemantics::SValuePtr &addr,
-               const InstructionSemantics2::BaseSemantics::SValuePtr &dflt,
-               InstructionSemantics2::BaseSemantics::RiscOperators *addrOps,
-               InstructionSemantics2::BaseSemantics::RiscOperators *valOps) override;
+    virtual InstructionSemantics::BaseSemantics::SValuePtr
+    readMemory(const InstructionSemantics::BaseSemantics::SValuePtr &addr,
+               const InstructionSemantics::BaseSemantics::SValuePtr &dflt,
+               InstructionSemantics::BaseSemantics::RiscOperators *addrOps,
+               InstructionSemantics::BaseSemantics::RiscOperators *valOps) override;
 
     virtual void
-    writeMemory(const InstructionSemantics2::BaseSemantics::SValuePtr &addr,
-                const InstructionSemantics2::BaseSemantics::SValuePtr &value,
-                InstructionSemantics2::BaseSemantics::RiscOperators *addrOps,
-                InstructionSemantics2::BaseSemantics::RiscOperators *valOps) override;
+    writeMemory(const InstructionSemantics::BaseSemantics::SValuePtr &addr,
+                const InstructionSemantics::BaseSemantics::SValuePtr &value,
+                InstructionSemantics::BaseSemantics::RiscOperators *addrOps,
+                InstructionSemantics::BaseSemantics::RiscOperators *valOps) override;
 
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr
-    peekMemory(const InstructionSemantics2::BaseSemantics::SValuePtr &addr,
-               const InstructionSemantics2::BaseSemantics::SValuePtr &dflt,
-               InstructionSemantics2::BaseSemantics::RiscOperators *addrOps,
-               InstructionSemantics2::BaseSemantics::RiscOperators *valOps) override;
+    virtual InstructionSemantics::BaseSemantics::SValuePtr
+    peekMemory(const InstructionSemantics::BaseSemantics::SValuePtr &addr,
+               const InstructionSemantics::BaseSemantics::SValuePtr &dflt,
+               InstructionSemantics::BaseSemantics::RiscOperators *addrOps,
+               InstructionSemantics::BaseSemantics::RiscOperators *valOps) override;
 
 private:
-    InstructionSemantics2::BaseSemantics::SValuePtr
-    readOrPeekMemory(const InstructionSemantics2::BaseSemantics::SValuePtr &addr,
-                     const InstructionSemantics2::BaseSemantics::SValuePtr &dflt,
-                     InstructionSemantics2::BaseSemantics::RiscOperators *addrOps,
-                     InstructionSemantics2::BaseSemantics::RiscOperators *valOps,
+    InstructionSemantics::BaseSemantics::SValuePtr
+    readOrPeekMemory(const InstructionSemantics::BaseSemantics::SValuePtr &addr,
+                     const InstructionSemantics::BaseSemantics::SValuePtr &dflt,
+                     InstructionSemantics::BaseSemantics::RiscOperators *addrOps,
+                     InstructionSemantics::BaseSemantics::RiscOperators *valOps,
                      bool withSideEffects);
 
 public:
-    void print(std::ostream&, InstructionSemantics2::BaseSemantics::Formatter&) const override;
+    void print(std::ostream&, InstructionSemantics::BaseSemantics::Formatter&) const override;
 };
 
 /** Memory state using a chronological list of cells. */
-typedef MemoryState<InstructionSemantics2::SymbolicSemantics::MemoryListState> MemoryListState;
+typedef MemoryState<InstructionSemantics::SymbolicSemantics::MemoryListState> MemoryListState;
 
 /** Memory state indexed by hash of address expressions. */
-typedef MemoryState<InstructionSemantics2::SymbolicSemantics::MemoryMapState> MemoryMapState;
+typedef MemoryState<InstructionSemantics::SymbolicSemantics::MemoryMapState> MemoryMapState;
 
 /** Shared-ownership pointer to a @ref MemoryListState. See @ref heap_object_shared_ownership. */
 typedef boost::shared_ptr<MemoryListState> MemoryListStatePtr;
@@ -216,9 +217,10 @@ typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
  *
  *  Most operations are delegated to the symbolic state. The return value from the symbolic state is replaced with an unknown
  *  if the expression grows beyond a certain complexity. */
-class RiscOperators: public InstructionSemantics2::SymbolicSemantics::RiscOperators {
+class RiscOperators: public InstructionSemantics::SymbolicSemantics::RiscOperators {
 public:
-    typedef InstructionSemantics2::SymbolicSemantics::RiscOperators Super;
+    using Super = InstructionSemantics::SymbolicSemantics::RiscOperators;
+    using Ptr = RiscOperatorsPtr;
 
 private:
     static const size_t TRIM_THRESHOLD_DFLT = 100;
@@ -240,17 +242,17 @@ private:
 protected:
     RiscOperators() {}                                  // for serialization
 
-    explicit RiscOperators(const InstructionSemantics2::BaseSemantics::SValuePtr &protoval,
+    explicit RiscOperators(const InstructionSemantics::BaseSemantics::SValuePtr &protoval,
                            const SmtSolverPtr &solver = SmtSolverPtr())
-        : InstructionSemantics2::SymbolicSemantics::RiscOperators(protoval, solver) {
+        : InstructionSemantics::SymbolicSemantics::RiscOperators(protoval, solver) {
         name("PartitionerSemantics");
         (void)SValue::promote(protoval);                // make sure its dynamic type is appropriate
         trimThreshold(TRIM_THRESHOLD_DFLT);
     }
 
-    explicit RiscOperators(const InstructionSemantics2::BaseSemantics::StatePtr &state,
+    explicit RiscOperators(const InstructionSemantics::BaseSemantics::StatePtr &state,
                            const SmtSolverPtr &solver = SmtSolverPtr())
-        : InstructionSemantics2::SymbolicSemantics::RiscOperators(state, solver) {
+        : InstructionSemantics::SymbolicSemantics::RiscOperators(state, solver) {
         name("PartitionerSemantics");
         (void)SValue::promote(state->protoval());
         trimThreshold(TRIM_THRESHOLD_DFLT);
@@ -260,11 +262,11 @@ protected:
     // Static allocating constructors
 public:
     /** Instantiate a new RiscOperators object and configure it using default values. */
-    static RiscOperatorsPtr instance(const RegisterDictionary *regdict, const SmtSolverPtr &solver = SmtSolverPtr(),
+    static RiscOperatorsPtr instance(const RegisterDictionaryPtr &regdict, const SmtSolverPtr &solver = SmtSolverPtr(),
                                      SemanticMemoryParadigm memoryParadigm = LIST_BASED_MEMORY) {
-        InstructionSemantics2::BaseSemantics::SValuePtr protoval = SValue::instance();
-        InstructionSemantics2::BaseSemantics::RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
-        InstructionSemantics2::BaseSemantics::MemoryStatePtr memory;
+        InstructionSemantics::BaseSemantics::SValuePtr protoval = SValue::instance();
+        InstructionSemantics::BaseSemantics::RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
+        InstructionSemantics::BaseSemantics::MemoryStatePtr memory;
         switch (memoryParadigm) {
             case LIST_BASED_MEMORY:
                 memory = MemoryListState::instance(protoval, protoval);
@@ -273,33 +275,33 @@ public:
                 memory = MemoryMapState::instance(protoval, protoval);
                 break;
         }
-        InstructionSemantics2::BaseSemantics::StatePtr state = State::instance(registers, memory);
+        InstructionSemantics::BaseSemantics::StatePtr state = State::instance(registers, memory);
         return RiscOperatorsPtr(new RiscOperators(state, solver));
     }
 
     /** Instantiate a new RiscOperators object with specified prototypical values. */
     static RiscOperatorsPtr
-    instance(const InstructionSemantics2::BaseSemantics::SValuePtr &protoval, const SmtSolverPtr &solver = SmtSolverPtr()) {
+    instance(const InstructionSemantics::BaseSemantics::SValuePtr &protoval, const SmtSolverPtr &solver = SmtSolverPtr()) {
         return RiscOperatorsPtr(new RiscOperators(protoval, solver));
     }
 
     /** Instantiate a new RiscOperators with specified state. */
     static RiscOperatorsPtr
-    instance(const InstructionSemantics2::BaseSemantics::StatePtr &state, const SmtSolverPtr &solver = SmtSolverPtr()) {
+    instance(const InstructionSemantics::BaseSemantics::StatePtr &state, const SmtSolverPtr &solver = SmtSolverPtr()) {
         return RiscOperatorsPtr(new RiscOperators(state, solver));
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Virtual constructors
 public:
-    virtual InstructionSemantics2::BaseSemantics::RiscOperatorsPtr
-    create(const InstructionSemantics2::BaseSemantics::SValuePtr &protoval,
+    virtual InstructionSemantics::BaseSemantics::RiscOperatorsPtr
+    create(const InstructionSemantics::BaseSemantics::SValuePtr &protoval,
            const SmtSolverPtr &solver = SmtSolverPtr()) const override {
         return instance(protoval, solver);
     }
 
-    virtual InstructionSemantics2::BaseSemantics::RiscOperatorsPtr
-    create(const InstructionSemantics2::BaseSemantics::StatePtr &state,
+    virtual InstructionSemantics::BaseSemantics::RiscOperatorsPtr
+    create(const InstructionSemantics::BaseSemantics::StatePtr &state,
            const SmtSolverPtr &solver = SmtSolverPtr()) const override {
         return instance(state, solver);
     }
@@ -310,7 +312,7 @@ public:
     /** Run-time promotion of a base RiscOperators pointer to our operators. This is a checked conversion--it
      *  will fail if @p x does not point to our object. */
     static RiscOperatorsPtr
-    promote(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr &x) {
+    promote(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr &x) {
         RiscOperatorsPtr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
         assert(retval!=NULL);
         return retval;
@@ -327,31 +329,31 @@ public:
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 template<class Super>
-InstructionSemantics2::BaseSemantics::SValuePtr
-MemoryState<Super>::readMemory(const InstructionSemantics2::BaseSemantics::SValuePtr &addr,
-                               const InstructionSemantics2::BaseSemantics::SValuePtr &dflt,
-                               InstructionSemantics2::BaseSemantics::RiscOperators *addrOps,
-                               InstructionSemantics2::BaseSemantics::RiscOperators *valOps) {
+InstructionSemantics::BaseSemantics::SValuePtr
+MemoryState<Super>::readMemory(const InstructionSemantics::BaseSemantics::SValuePtr &addr,
+                               const InstructionSemantics::BaseSemantics::SValuePtr &dflt,
+                               InstructionSemantics::BaseSemantics::RiscOperators *addrOps,
+                               InstructionSemantics::BaseSemantics::RiscOperators *valOps) {
     return readOrPeekMemory(addr, dflt, addrOps, valOps, true/*with side effects*/);
 }
 
 template<class Super>
-InstructionSemantics2::BaseSemantics::SValuePtr
-MemoryState<Super>::peekMemory(const InstructionSemantics2::BaseSemantics::SValuePtr &addr,
-                               const InstructionSemantics2::BaseSemantics::SValuePtr &dflt,
-                               InstructionSemantics2::BaseSemantics::RiscOperators *addrOps,
-                               InstructionSemantics2::BaseSemantics::RiscOperators *valOps) {
+InstructionSemantics::BaseSemantics::SValuePtr
+MemoryState<Super>::peekMemory(const InstructionSemantics::BaseSemantics::SValuePtr &addr,
+                               const InstructionSemantics::BaseSemantics::SValuePtr &dflt,
+                               InstructionSemantics::BaseSemantics::RiscOperators *addrOps,
+                               InstructionSemantics::BaseSemantics::RiscOperators *valOps) {
     return readOrPeekMemory(addr, dflt, addrOps, valOps, false/*no side effects*/);
 }
 
 template<class Super>
-InstructionSemantics2::BaseSemantics::SValuePtr
-MemoryState<Super>::readOrPeekMemory(const InstructionSemantics2::BaseSemantics::SValuePtr &addr,
-                                     const InstructionSemantics2::BaseSemantics::SValuePtr &dflt,
-                                     InstructionSemantics2::BaseSemantics::RiscOperators *addrOps,
-                                     InstructionSemantics2::BaseSemantics::RiscOperators *valOps,
+InstructionSemantics::BaseSemantics::SValuePtr
+MemoryState<Super>::readOrPeekMemory(const InstructionSemantics::BaseSemantics::SValuePtr &addr,
+                                     const InstructionSemantics::BaseSemantics::SValuePtr &dflt,
+                                     InstructionSemantics::BaseSemantics::RiscOperators *addrOps,
+                                     InstructionSemantics::BaseSemantics::RiscOperators *valOps,
                                      bool withSideEffects) {
-    using namespace InstructionSemantics2;
+    using namespace InstructionSemantics;
 
     if (!enabled_)
         return dflt->copy();
@@ -386,10 +388,10 @@ MemoryState<Super>::readOrPeekMemory(const InstructionSemantics2::BaseSemantics:
 
 template<class Super>
 void
-MemoryState<Super>::writeMemory(const InstructionSemantics2::BaseSemantics::SValuePtr &addr,
-                                const InstructionSemantics2::BaseSemantics::SValuePtr &value,
-                                InstructionSemantics2::BaseSemantics::RiscOperators *addrOps,
-                                InstructionSemantics2::BaseSemantics::RiscOperators *valOps) {
+MemoryState<Super>::writeMemory(const InstructionSemantics::BaseSemantics::SValuePtr &addr,
+                                const InstructionSemantics::BaseSemantics::SValuePtr &value,
+                                InstructionSemantics::BaseSemantics::RiscOperators *addrOps,
+                                InstructionSemantics::BaseSemantics::RiscOperators *valOps) {
     if (!enabled_)
         return;
     Super::writeMemory(addr, value, addrOps, valOps);
@@ -397,7 +399,7 @@ MemoryState<Super>::writeMemory(const InstructionSemantics2::BaseSemantics::SVal
 
 template<class Super>
 void
-MemoryState<Super>::print(std::ostream &out, InstructionSemantics2::BaseSemantics::Formatter &fmt) const {
+MemoryState<Super>::print(std::ostream &out, InstructionSemantics::BaseSemantics::Formatter &fmt) const {
     if (map_) {
         map_->dump(out, fmt.get_line_prefix());
     } else {

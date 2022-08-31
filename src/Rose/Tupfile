@@ -4,12 +4,15 @@ run $(librose_compile)				\
     FormattedTable.C				\
     Initialize.C				\
     Progress.C					\
-    SourceLocation.C
+    SourceLocation.C				\
+    Yaml.C
 
 run $(public_header) -o include/rose/Rose	\
+    BasicTypes.h     				\
     BinaryAnalysis.h				\
     BitFlags.h					\
     BitOps.h					\
+    CodeGen.h					\
     Color.h					\
     CommandLine.h				\
     Constants.h					\
@@ -20,7 +23,9 @@ run $(public_header) -o include/rose/Rose	\
     FormattedTable.h				\
     GraphUtility.h				\
     Initialize.h				\
+    Location.h					\
     Progress.h					\
     RecursionCounter.h				\
     SourceLocation.h				\
-    StringUtility.h
+    StringUtility.h				\
+    Yaml.h

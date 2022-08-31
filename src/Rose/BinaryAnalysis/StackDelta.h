@@ -3,8 +3,9 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics.h>
-#include <Rose/BinaryAnalysis/Disassembler.h>
+#include <Rose/BinaryAnalysis/Disassembler/BasicTypes.h>
+#include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 #include <Sawyer/Map.h>
 
 #include <boost/serialization/access.hpp>
@@ -53,20 +54,20 @@ extern Sawyer::Message::Facility mlog;
  *  the "push", subtracting -4 from the current ESP value will give you the original ESP, from which you can find the frame. */
 class Analysis {
 public:
-    typedef Sawyer::Container::Map<rose_addr_t, InstructionSemantics2::BaseSemantics::SValuePtr> DeltasPerAddress;
-    typedef std::pair<InstructionSemantics2::BaseSemantics::SValuePtr,
-                      InstructionSemantics2::BaseSemantics::SValuePtr> SValuePair;
+    typedef Sawyer::Container::Map<rose_addr_t, InstructionSemantics::BaseSemantics::SValuePtr> DeltasPerAddress;
+    typedef std::pair<InstructionSemantics::BaseSemantics::SValuePtr,
+                      InstructionSemantics::BaseSemantics::SValuePtr> SValuePair;
     typedef Sawyer::Container::Map<rose_addr_t, SValuePair> SValuePairPerAddress;
 
 private:
-    InstructionSemantics2::BaseSemantics::DispatcherPtr cpu_;
+    InstructionSemantics::BaseSemantics::DispatcherPtr cpu_;
     Sawyer::Optional<rose_addr_t> initialConcreteStackPointer_; // where to start
 
     bool hasResults_;                                   // Are the following data members initialized?
     bool didConverge_;                                  // Are the following data membeers valid (else only approximations)?
 
     SValuePair functionStackPtrs_;                      // Initial and final stack pointers
-    InstructionSemantics2::BaseSemantics::SValuePtr functionDelta_; // Stack delta for entire function
+    InstructionSemantics::BaseSemantics::SValuePtr functionDelta_; // Stack delta for entire function
     
     SValuePairPerAddress bblockStackPtrs_;              // Per-basic block initial and final stack pointers
     DeltasPerAddress bblockDeltas_;                     // Stack delta per basic block (net effect of BB on stack ptr)
@@ -105,7 +106,7 @@ public:
     /** Construct an analyzer using a specified disassembler.
      *
      *  This constructor chooses a symbolic domain and a dispatcher appropriate for the disassembler's architecture. */
-    explicit Analysis(Disassembler *d)
+    explicit Analysis(const Disassembler::BasePtr &d)
         : hasResults_(false), didConverge_(false) {
         init(d);
     }
@@ -113,11 +114,11 @@ public:
     /** Construct an analysis using a specified dispatcher.
      *
      *  This constructor uses the supplied dispatcher and associated semantic domain. For best results, the semantic domain
-     *  should be a symbolic domain that uses @ref InstructionSemantics2::BaseSemantics::RegisterStateGeneric
+     *  should be a symbolic domain that uses @ref InstructionSemantics::BaseSemantics::RegisterStateGeneric
      *  "RegisterStateGeneric". The memory state can be the @ref Semantics2::NullSemantics "NullSemantics" memory state to
      *  speed up dataflow converging when the stack pointer is known to not be saved/restored (which is usually the case), and
      *  is what the analysis uses when no state is specified. */
-    explicit Analysis(const InstructionSemantics2::BaseSemantics::DispatcherPtr &cpu)
+    explicit Analysis(const InstructionSemantics::BaseSemantics::DispatcherPtr &cpu)
         : cpu_(cpu), hasResults_(false), didConverge_(false) {}
 
     /** Property: Initial value to use for stack pointers.
@@ -137,7 +138,7 @@ public:
      *  specified function need not be attached to the partitioner. Results of the analysis are stored in this analysis object
      *  to be queried after the analysis completes. */
     void
-    analyzeFunction(const Partitioner2::Partitioner&, const Sawyer::SharedPointer<Partitioner2::Function>&,
+    analyzeFunction(const Partitioner2::Partitioner&, const Partitioner2::FunctionPtr&,
                     Partitioner2::DataFlow::InterproceduralPredicate&);
 
     /** Whether a function has been analyzed.
@@ -184,7 +185,7 @@ public:
      *
      *  Returns the net effect that an analyzed function has on the stack pointer. If the data-flow did not complete then
      *  returns a null pointer. See also, @ref functionStackDeltaConcrete. */
-    InstructionSemantics2::BaseSemantics::SValuePtr functionStackDelta() const { return functionDelta_; }
+    InstructionSemantics::BaseSemantics::SValuePtr functionStackDelta() const { return functionDelta_; }
 
     /** Concrete stack delta for an analyzed function.
      *
@@ -202,7 +203,7 @@ public:
      *
      *  Returns the net effect that an analyzed basic block has on the stack pointer.  If the data-flow did not reach this
      *  basic block then returns a null pointer. See also, @ref basicBlockStackDeltaConcrete. */
-    InstructionSemantics2::BaseSemantics::SValuePtr basicBlockStackDelta(rose_addr_t basicBlockAddress) const;
+    InstructionSemantics::BaseSemantics::SValuePtr basicBlockStackDelta(rose_addr_t basicBlockAddress) const;
 
     /** Stack delta for block w.r.t. function.
      *
@@ -210,8 +211,8 @@ public:
      *  null pointer if the data-flow did not reach the beginning or end of this block.
      *
      * @{ */
-    InstructionSemantics2::BaseSemantics::SValuePtr basicBlockInputStackDeltaWrtFunction(rose_addr_t basicBlockAddress) const;
-    InstructionSemantics2::BaseSemantics::SValuePtr basicBlockOutputStackDeltaWrtFunction(rose_addr_t basicBlockAddress) const;
+    InstructionSemantics::BaseSemantics::SValuePtr basicBlockInputStackDeltaWrtFunction(rose_addr_t basicBlockAddress) const;
+    InstructionSemantics::BaseSemantics::SValuePtr basicBlockOutputStackDeltaWrtFunction(rose_addr_t basicBlockAddress) const;
     /** @} */
 
     /** Concrete stack delta for an analyzed basic block.
@@ -231,7 +232,7 @@ public:
      *  Returns the stack delta for a single instruction if known, otherwise a null pointer. See also, @ref
      *  instructionStackDeltaConcrete. The stack delta for an instruction is the difference between the stack pointer after the
      *  instruction executes and the stack pointer before the instruction executes. */
-    InstructionSemantics2::BaseSemantics::SValuePtr instructionStackDelta(SgAsmInstruction*) const;
+    InstructionSemantics::BaseSemantics::SValuePtr instructionStackDelta(SgAsmInstruction*) const;
 
     /** Stack delta for instruction w.r.t. function.
      *
@@ -239,8 +240,8 @@ public:
      *  a null pointer if the data-flow did not reach the beginning or end of the instruction.
      *
      * @{ */
-    InstructionSemantics2::BaseSemantics::SValuePtr instructionInputStackDeltaWrtFunction(SgAsmInstruction*) const;
-    InstructionSemantics2::BaseSemantics::SValuePtr instructionOutputStackDeltaWrtFunction(SgAsmInstruction*) const;
+    InstructionSemantics::BaseSemantics::SValuePtr instructionInputStackDeltaWrtFunction(SgAsmInstruction*) const;
+    InstructionSemantics::BaseSemantics::SValuePtr instructionOutputStackDeltaWrtFunction(SgAsmInstruction*) const;
     /** @} */
 
     /** Concrete stack delta for an instruction.
@@ -265,13 +266,13 @@ public:
      *
      *  Returns the dispatcher set by the constructor or the latest analysis. If no dispatcher is set in the constructor then
      *  the analysis itself may set one. */
-    InstructionSemantics2::BaseSemantics::DispatcherPtr cpu() const { return cpu_; }
+    InstructionSemantics::BaseSemantics::DispatcherPtr cpu() const { return cpu_; }
 
     /** Convert a symbolic value to an integer.
      *
      *  Converts the specified symbolic value to a 64-bit signed stack delta.  If the symbolic value is a null pointer or is
      *  not an integer, or is wider than 64 bits, then the @ref SgAsmInstruction::INVALID_STACK_DELTA constant is returned. */
-    static int64_t toInt(const InstructionSemantics2::BaseSemantics::SValuePtr&);
+    static int64_t toInt(const InstructionSemantics::BaseSemantics::SValuePtr&);
 
     /** Print multi-line value to specified stream. */
     void print(std::ostream&) const;
@@ -279,12 +280,12 @@ public:
 public:
     // Used internally. Do not document with doxygen.
     void adjustInstruction(SgAsmInstruction*,
-                           const InstructionSemantics2::BaseSemantics::SValuePtr &spIn,
-                           const InstructionSemantics2::BaseSemantics::SValuePtr &spOut,
-                           const InstructionSemantics2::BaseSemantics::SValuePtr &delta);
+                           const InstructionSemantics::BaseSemantics::SValuePtr &spIn,
+                           const InstructionSemantics::BaseSemantics::SValuePtr &spOut,
+                           const InstructionSemantics::BaseSemantics::SValuePtr &delta);
 
 private:
-    void init(Disassembler*);
+    void init(const Disassembler::BasePtr&);
 };
 
 std::ostream& operator<<(std::ostream&, const Analysis&);

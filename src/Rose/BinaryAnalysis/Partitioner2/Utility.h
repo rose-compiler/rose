@@ -129,6 +129,21 @@ getUnique(const Container &container, const Value &item, Comparator cmp) {
     return *lb;
 }
 
+// Find an existing item if possible and return the item. If not found, insert the item and return false.
+template<class Container, class Value, class Comparator>
+Sawyer::Optional<Value>
+getOrInsertUnique(Container &container, const Value &item, Comparator cmp) {
+    ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || isSorted(container, cmp, true)); // unique, sorted items
+    typename Container::iterator lb = lowerBound(container, item, cmp);
+    if (lb != container.end() && equalUnique(*lb, item, cmp)) {
+        return *lb;
+    } else {
+        container.insert(lb, item);
+        ASSERT_require(!ROSE_PARTITIONER_EXPENSIVE_CHECKS || isSorted(container, cmp, true));
+        return Sawyer::Nothing();
+    }
+}
+
 template<class Container, class Comparator>
 bool
 isSupersetUnique(const Container &sup, const Container &sub, Comparator lessThan) {

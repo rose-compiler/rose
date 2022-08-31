@@ -1,19 +1,21 @@
 #include <rose.h>
 #include <Rose/Diagnostics.h>
-#include <Rose/BinaryAnalysis/DisassemblerX86.h>
-#include <Rose/BinaryAnalysis/DisassemblerM68k.h>
+#include <Rose/BinaryAnalysis/Disassembler/X86.h>
+#include <Rose/BinaryAnalysis/Disassembler/M68k.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
+#include <Rose/BinaryAnalysis/RegisterNames.h>
 
 #include "RSIM_Semantics.h"
 #include "RSIM_Thread.h"
 
 #if 1 // DEBUGGING [Robb P. Matzke 2015-06-01]
-#include <Rose/BinaryAnalysis/InstructionSemantics2/TraceSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
 #endif
 
 using namespace Rose;
 using namespace Rose::Diagnostics;
 using namespace Rose::BinaryAnalysis;
-using namespace Rose::BinaryAnalysis::InstructionSemantics2;
+using namespace Rose::BinaryAnalysis::InstructionSemantics;
 
 namespace RSIM_Semantics {
 
@@ -25,7 +27,7 @@ namespace RSIM_Semantics {
 struct IP_cpuid: public X86::InsnProcessor {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
-        BaseSemantics::SValuePtr codeExpr = d->readRegister(d->REG_EAX);
+        BaseSemantics::SValue::Ptr codeExpr = d->readRegister(d->REG_EAX);
         unsigned code = codeExpr->toUnsigned().get();
 
         // Return value based on an Intel model "Xeon X5680 @ 3.33GHz"; 3325.017GHz; stepping 2
@@ -66,31 +68,31 @@ struct IP_sysenter: public X86::InsnProcessor {
     }
 };
 
-DispatcherPtr
+Dispatcher::Ptr
 createDispatcher(RSIM_Thread *owningThread) {
-    BinaryAnalysis::Disassembler *disassembler = owningThread->get_process()->disassembler();
+    BinaryAnalysis::Disassembler::Base::Ptr disassembler = owningThread->get_process()->disassembler();
     Architecture arch = ARCH_NONE;
-    if (dynamic_cast<BinaryAnalysis::DisassemblerX86*>(disassembler)) {
+    if (disassembler.dynamicCast<BinaryAnalysis::Disassembler::X86>()) {
         arch = ARCH_X86;
-    } else if (dynamic_cast<BinaryAnalysis::DisassemblerM68k*>(disassembler)) {
+    } else if (disassembler.dynamicCast<BinaryAnalysis::Disassembler::M68k>()) {
         arch = ARCH_M68k;
     } else {
         TODO("architecture not supported");
     }
 
-    const RegisterDictionary *regs = disassembler->registerDictionary();
-    RiscOperatorsPtr ops = RiscOperators::instance(arch, owningThread, regs);
+    RegisterDictionary::Ptr regs = disassembler->registerDictionary();
+    RiscOperators::Ptr ops = RiscOperators::instance(arch, owningThread, regs);
     size_t wordSize = disassembler->instructionPointerRegister().nBits();
     ASSERT_require(wordSize == 32 || wordSize == 64);
 
 #if 0 // DEBUGGING [Robb P. Matzke 2015-07-30]
     std::cerr <<"Using TraceSemantics for debugging (" <<__FILE__ <<":" <<__LINE__ <<")\n";
-    TraceSemantics::RiscOperatorsPtr traceOps = TraceSemantics::RiscOperators::instance(ops);
+    TraceSemantics::RiscOperators::Ptr traceOps = TraceSemantics::RiscOperators::instance(ops);
     traceOps->stream().disable();                       // turn it on only when we need it
     ops = traceOps;
 #endif
 
-    DispatcherPtr dispatcher;
+    Dispatcher::Ptr dispatcher;
     switch (arch) {
         case ARCH_X86:
             dispatcher = DispatcherX86::instance(ops, wordSize, regs);
@@ -186,7 +188,7 @@ RiscOperators::interrupt(int majr, int minr) {
 }
 
 void
-RiscOperators::writeRegister(Rose::BinaryAnalysis::RegisterDescriptor reg, const BaseSemantics::SValuePtr &value) {
+RiscOperators::writeRegister(Rose::BinaryAnalysis::RegisterDescriptor reg, const BaseSemantics::SValue::Ptr &value) {
     Super::writeRegister(reg, value);
     if (ARCH_X86 == architecture_ && reg.majorNumber() == x86_regclass_segment) {
         ASSERT_require2(0 == value->toUnsigned().get() || 3 == (value->toUnsigned().get() & 7), "GDT and privilege level 3");
@@ -194,9 +196,9 @@ RiscOperators::writeRegister(Rose::BinaryAnalysis::RegisterDescriptor reg, const
     }
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::readMemory(Rose::BinaryAnalysis::RegisterDescriptor segreg, const BaseSemantics::SValuePtr &address,
-                          const BaseSemantics::SValuePtr &dflt, const BaseSemantics::SValuePtr &cond) {
+BaseSemantics::SValue::Ptr
+RiscOperators::readMemory(Rose::BinaryAnalysis::RegisterDescriptor segreg, const BaseSemantics::SValue::Ptr &address,
+                          const BaseSemantics::SValue::Ptr &dflt, const BaseSemantics::SValue::Ptr &cond) {
     Sawyer::Message::Stream &mesg = thread_->tracing(TRACE_MEM);
     RSIM_Process *process = thread_->get_process();
     rose_addr_t offset = address->toUnsigned().get();
@@ -254,20 +256,20 @@ RiscOperators::readMemory(Rose::BinaryAnalysis::RegisterDescriptor segreg, const
         default:
             ASSERT_not_reachable("invalid architecture");
     }
-    BaseSemantics::SValuePtr retval = svalueNumber(bv);
+    BaseSemantics::SValue::Ptr retval = svalueNumber(bv);
 
     SAWYER_MESG(mesg) <<"-> " <<*retval <<"\n";
     return retval;
 }
 
 void
-RiscOperators::writeMemory(Rose::BinaryAnalysis::RegisterDescriptor segreg, const BaseSemantics::SValuePtr &address,
-                           const BaseSemantics::SValuePtr &value_, const BaseSemantics::SValuePtr &cond) {
+RiscOperators::writeMemory(Rose::BinaryAnalysis::RegisterDescriptor segreg, const BaseSemantics::SValue::Ptr &address,
+                           const BaseSemantics::SValue::Ptr &value_, const BaseSemantics::SValue::Ptr &cond) {
     Sawyer::Message::Stream &mesg = thread_->tracing(TRACE_MEM);
     RSIM_Process *process = thread_->get_process();
     rose_addr_t offset = address->toUnsigned().get();
     rose_addr_t addrMask = IntegerOps::genMask<rose_addr_t>(address->nBits());
-    SValuePtr value = SValue::promote(value_);
+    SValue::Ptr value = SValue::promote(value_);
     rose_addr_t addr = offset & addrMask;
     if (!cond->toUnsigned().get())
         return;

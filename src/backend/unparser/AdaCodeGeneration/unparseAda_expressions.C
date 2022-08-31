@@ -54,6 +54,12 @@ namespace
   }
 
   inline
+  SgName nameOf(const SgEnumVal& n)
+  {
+    return n.get_name();
+  }
+
+  inline
   SgName nameOf(const SgFunctionRefExp& n)
   {
     return nameOf(symOf(n));
@@ -165,7 +171,7 @@ namespace
   {
     void handle(const SgNode& n)                   { SG_UNEXPECTED_NODE(n); }
     void handle(const SgAdaPackageSpecDecl& n)     { res = n.get_name(); }
-    void handle(const SgAdaGenericInstanceDecl& n) { res = n.get_name(); }
+    void handle(const SgAdaGenericInstanceDecl& n) { res = si::ada::convertRoseOperatorNameToAdaName(n.get_name()); }
     void handle(const SgFunctionDeclaration& n)    { res = n.get_name(); }
 
     void handle(const SgAdaGenericDecl& n)         { res = nameOfUnitRef(n.get_declaration()); }
@@ -285,12 +291,34 @@ namespace
       exprlst(n);
     }
 
-    void handle(SgCallExpression& n)
+    void handle(SgFunctionCallExp& n)
     {
-      SgExprListExp& args = SG_DEREF(n.get_args());
+      SgExprListExp&         args = SG_DEREF(n.get_args());
+      SgFunctionDeclaration* fndcl = n.getAssociatedFunctionDeclaration();
 
-      expr(n.get_function());
-      arglst_opt(args);
+      if ((fndcl == nullptr) || (n.get_uses_operator_syntax() == false))
+      {
+        expr(n.get_function());
+        arglst_opt(args);
+        return;
+      }
+
+      SgExpressionPtrList& lst = args.get_expressions();
+      ROSE_ASSERT((lst.size() > 0) && (lst.size() < 3));
+
+      std::string op = si::ada::convertRoseOperatorNameToAdaOperator(fndcl->get_name());
+      ROSE_ASSERT(op.size());
+
+      if (lst.size() == 2)
+      {
+        expr(lst.front());
+        prn(" ");
+      }
+
+      prn(op);
+      // add a space for binary and named unary (op.size > 1) operators
+      if ((lst.size() == 2) || (op.size() > 1)) prn(" ");
+      expr(lst.back());
     }
 
     void prnIfBranch(const si::ada::IfExpressionInfo& branch, const std::string& cond)
@@ -385,7 +413,7 @@ namespace
     void handle(SgThrowOp& n)
     {
       prn("raise ");
-      expr(n.get_operand());
+      expr_opt(n.get_operand());
     }
 
     void handle(SgActualArgumentExpression& n)
@@ -408,6 +436,18 @@ namespace
 
       prn(nameOf(n));
     }
+
+    void handle(SgEnumVal& n)
+    {
+      if (USE_COMPUTED_NAME_QUALIFICATION_EXPR)
+        prnNameQual(n);
+      else if (ctxRequiresScopeQualification)
+        prn(scopeQual(SG_DEREF(n.get_declaration()).get_scope()));
+
+      //~ std::cerr << "enumval: " << nameOf(n) << std::endl;
+      prn(nameOf(n));
+    }
+
 
     void handle(SgAdaRenamingRefExp& n)
     {
@@ -458,9 +498,11 @@ namespace
 
     void handle(SgNullExpression& n)
     {
-      // \todo should not be reached
+      // should not be reached because all parents with legitimate null-expressions
+      // such as "raise;" should unparse using expr_opt.
       prn("<null>");
     }
+
 
     // Ada's derived types "inherit" the primitive functions of their base type.
     // Asis does not create new declaration for these functions, but instead links
@@ -492,7 +534,9 @@ namespace
       else if (SgScopeStatement* dclscope = assumedDeclarativeScope(n))
         prn(scopeQual(dclscope));
 
-      prn(nameOf(n));
+      std::string fn = si::ada::convertRoseOperatorNameToAdaName(nameOf(n));
+
+      prn(std::move(fn));
     }
 
     template <class SageAdaRefExp>
@@ -552,6 +596,7 @@ namespace
                 );
 
     void expr(SgExpression* exp, bool requiresScopeQual = true);
+    void expr_opt(SgExpression* exp);
     void exprlst(SgExprListExp& exp, std::string sep = ", ", bool requiresScopeQual = true);
     void aggregate(SgExprListExp& exp);
     void arglst_opt(SgExprListExp& args);
@@ -596,6 +641,14 @@ namespace
     if (withParens) prn(")");
   }
 
+  void AdaExprUnparser::expr_opt(SgExpression* exp)
+  {
+    if (exp == nullptr || isSgNullExpression(exp))
+      return;
+
+    expr(exp);
+  }
+
   void AdaExprUnparser::handle(SgBinaryOp& n)
   {
     // print either lhs binop rhs
@@ -603,22 +656,28 @@ namespace
 
     SgExpression* lhs        = n.get_lhs_operand();
     SgExpression* rhs        = n.get_rhs_operand();
+    const bool    opref      = (lhs == nullptr) && (rhs == nullptr);
     const bool    callsyntax = (  argRequiresCallSyntax(lhs)
                                || argRequiresCallSyntax(rhs)
                                );
 
-    if (callsyntax)
+    if (opref || callsyntax)
     {
       prn("\"");
       prn(operator_sym(n));
-      prn("\" (");
+      prn("\"");
+
+      if (callsyntax) prn("(");
     }
 
-    expr(lhs);
-    prn(" ");
-    prn(callsyntax ? std::string(", ") : operator_sym(n));
-    prn(" ");
-    expr(rhs);
+    if (!opref)
+    {
+      expr(lhs);
+      prn(" ");
+      prn(callsyntax ? std::string(", ") : operator_sym(n));
+      prn(" ");
+      expr(rhs);
+    }
 
     if (callsyntax) prn(")");
   }
@@ -626,14 +685,14 @@ namespace
   void AdaExprUnparser::handle(SgUnaryOp& n)
   {
     SgExpression* oper       = n.get_operand();
+    const bool    opref      = (oper == nullptr);
     const bool    callsyntax = argRequiresCallSyntax(oper);
 
-    // are there any postfix operators in Ada
-
-    if (callsyntax) prn("\"");
+    if (opref || callsyntax) prn("\"");
     prn(operator_sym(n));
-    prn(callsyntax ? "\" (" : " ");
-    expr(n.get_operand());
+    if (opref || callsyntax) prn("\"");
+    prn(callsyntax ? " (" : " ");
+    if (!opref) expr(n.get_operand());
     if (callsyntax) prn(")");
   }
 

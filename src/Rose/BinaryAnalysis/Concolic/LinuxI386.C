@@ -12,7 +12,7 @@
 #include <Rose/BinaryAnalysis/Concolic/SystemCall.h>
 #include <Rose/BinaryAnalysis/Concolic/TestCase.h>
 #include <Rose/BinaryAnalysis/Debugger.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/StringUtility.h>
 
@@ -23,8 +23,8 @@
 #include <unistd.h>
 
 using namespace Sawyer::Message::Common;
-namespace BS = Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
-namespace IS = Rose::BinaryAnalysis::InstructionSemantics2;
+namespace BS = Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;
+namespace IS = Rose::BinaryAnalysis::InstructionSemantics;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 namespace Rose {
@@ -514,7 +514,7 @@ LinuxI386SyscallBase::operator()(bool /*handled*/, SyscallContext &ctx) {
             SAWYER_MESG(debug) <<"  created " <<ctx.returnEvent->printableName(i386->database()) <<"\n";
 
             // Update the symbolic state
-            BS::SValuePtr retSValue = ctx.ops->svalueExpr(ctx.symbolicReturn);
+            BS::SValue::Ptr retSValue = ctx.ops->svalueExpr(ctx.symbolicReturn);
             ctx.ops->writeRegister(SYS_RET, retSValue);
             SAWYER_MESG(debug) <<"  return value saved in symbolic state: " <<*retSValue <<"\n";
         }
@@ -1399,7 +1399,7 @@ LinuxI386::executeInstruction(const P2::Partitioner &partitioner) {
 }
 
 void
-LinuxI386::executeInstruction(const BS::RiscOperatorsPtr &ops_, SgAsmInstruction *insn) {
+LinuxI386::executeInstruction(const BS::RiscOperators::Ptr &ops_, SgAsmInstruction *insn) {
     auto ops = Emulation::RiscOperators::promote(ops_);
     ASSERT_not_null(ops);
     ASSERT_not_null(insn);
@@ -1490,7 +1490,7 @@ LinuxI386::unmapAllMemory() {
 }
 
 void
-LinuxI386::createInputVariables(const P2::Partitioner &partitioner, const Emulation::RiscOperatorsPtr &ops,
+LinuxI386::createInputVariables(const P2::Partitioner &partitioner, const Emulation::RiscOperators::Ptr &ops,
                                 const SmtSolver::Ptr &solver) {
     ASSERT_not_null(ops);
     ASSERT_not_null(solver);
@@ -1727,17 +1727,17 @@ LinuxI386::createInputVariables(const P2::Partitioner &partitioner, const Emulat
 }
 
 uint64_t
-LinuxI386::systemCallFunctionNumber(const P2::Partitioner &partitioner, const BS::RiscOperatorsPtr &ops) {
+LinuxI386::systemCallFunctionNumber(const P2::Partitioner &partitioner, const BS::RiscOperators::Ptr &ops) {
     ASSERT_not_null(ops);
 
     const RegisterDescriptor AX = partitioner.instructionProvider().registerDictionary()->findOrThrow("eax");
-    BS::SValuePtr retvalSValue = ops->readRegister(AX);
+    BS::SValue::Ptr retvalSValue = ops->readRegister(AX);
     ASSERT_require2(retvalSValue->isConcrete(), "non-concrete system call numbers not handled yet");
     return retvalSValue->toUnsigned().get();
 }
 
-BS::SValuePtr
-LinuxI386::systemCallArgument(const P2::Partitioner &partitioner, const BS::RiscOperatorsPtr &ops, size_t idx) {
+BS::SValue::Ptr
+LinuxI386::systemCallArgument(const P2::Partitioner &partitioner, const BS::RiscOperators::Ptr &ops, size_t idx) {
     switch (idx) {
         case 0: {
             const RegisterDescriptor r = partitioner.instructionProvider().registerDictionary()->findOrThrow("ebx");
@@ -1774,16 +1774,16 @@ LinuxI386::systemCallReturnRegister() {
     return RegisterDescriptor(x86_regclass_gpr, x86_gpr_ax, 0, 32);
 }
 
-BS::SValuePtr
-LinuxI386::systemCallReturnValue(const P2::Partitioner &partitioner, const BS::RiscOperatorsPtr &ops) {
+BS::SValue::Ptr
+LinuxI386::systemCallReturnValue(const P2::Partitioner &partitioner, const BS::RiscOperators::Ptr &ops) {
     ASSERT_not_null(ops);
     const RegisterDescriptor reg = systemCallReturnRegister();
     return ops->readRegister(reg);
 }
 
-BS::SValuePtr
-LinuxI386::systemCallReturnValue(const P2::Partitioner &partitioner, const BS::RiscOperatorsPtr &ops,
-                                 const BS::SValuePtr &retval) {
+BS::SValue::Ptr
+LinuxI386::systemCallReturnValue(const P2::Partitioner &partitioner, const BS::RiscOperators::Ptr &ops,
+                                 const BS::SValue::Ptr &retval) {
     ASSERT_not_null(ops);
     const RegisterDescriptor reg = systemCallReturnRegister();
     ops->writeRegister(reg, retval);
@@ -1791,7 +1791,7 @@ LinuxI386::systemCallReturnValue(const P2::Partitioner &partitioner, const BS::R
 }
 
 void
-LinuxI386::systemCall(const P2::Partitioner &partitioner, const BS::RiscOperatorsPtr &ops_) {
+LinuxI386::systemCall(const P2::Partitioner &partitioner, const BS::RiscOperators::Ptr &ops_) {
     // A system call has been encountered. The INT instruction has been processed symbolically (basically a no-op other than
     // to adjust the instruction pointer), and the concrete execution has stepped into the system call but has not yet executed
     // it (i.e., the subordinate process is in the syscall-enter-stop state).
@@ -1811,7 +1811,7 @@ LinuxI386::systemCall(const P2::Partitioner &partitioner, const BS::RiscOperator
     std::vector<uint64_t> argsConcrete;
     uint64_t functionNumber = systemCallFunctionNumber(partitioner, ops);
     for (size_t i = 0; i < 6; ++i) {
-        BS::SValuePtr argSymbolic = systemCallArgument(partitioner, ops, i);
+        BS::SValue::Ptr argSymbolic = systemCallArgument(partitioner, ops, i);
         if (auto argConcrete = argSymbolic->toUnsigned()) {
             argsConcrete.push_back(*argConcrete);
         } else {

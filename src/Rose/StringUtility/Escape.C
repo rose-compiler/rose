@@ -216,36 +216,6 @@ csvEscape(const std::string &s) {
     return quote + boost::replace_all_copy(s, "\"", "\"\"") + quote;
 }
 
-// [Robb P Matzke 2016-06-15]: deprecated
-std::string
-escapeNewLineCharaters ( const std::string & X )
-   {
-     std::string returnString;
-     int stringLength = X.length();
-
-     for (int i=0; i < stringLength; i++)
-        {
-          if ( X[i] == '\n' )
-             {
-               returnString += "\\l";
-             }
-          else
-             {
-               if ( X[i] == '\"' )
-                  {
-                    returnString += "\\\"";
-                  }
-               else
-                  {
-                    returnString += X[i];
-                  }
-             }
-        }
-
-     return returnString;
-   }
-
-
 // DQ (12/8/2016): This version fixed most of the issues that Robb raised with the escapeNewLineCharaters() function.
 // Unaddressed is: point #4. It escapes newlines using "l" rather than the more customary "n".
 // I have implemented this to support the DOT graphics where it is used.  This can be a subject

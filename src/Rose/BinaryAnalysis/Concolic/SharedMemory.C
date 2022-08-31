@@ -8,11 +8,11 @@
 #include <Rose/BinaryAnalysis/Concolic/ExecutionEvent.h>
 #include <Rose/BinaryAnalysis/Concolic/InputVariables.h>
 #include <Rose/BinaryAnalysis/Concolic/TestCase.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/SValue.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/SValue.h>
 
 using namespace Sawyer::Message::Common;
 
-namespace IS = Rose::BinaryAnalysis::InstructionSemantics2;
+namespace IS = Rose::BinaryAnalysis::InstructionSemantics;
 namespace BS = IS::BaseSemantics;
 
 namespace Rose {

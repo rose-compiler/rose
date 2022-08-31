@@ -138,7 +138,7 @@ parseCommandLine(int argc, char** argv, P2::Engine& engine, Settings& settings)
 int main(int argc, char** argv)
 {
   using Rose::BinaryAnalysis::ExecutionMonitor;
-  using Rose::BinaryAnalysis::Disassembler;
+  using namespace Rose::BinaryAnalysis::Disassembler;
 
   ROSE_INITIALIZE;
   Rose::Diagnostics::initAndRegister(&::mlog, "tool");

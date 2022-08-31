@@ -1966,8 +1966,8 @@ ConcatSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     rose_addr_t prevLoOffset = 0;                       // valid only if isPrevExtract non-null
     for (size_t argno = 0; argno < inode->nChildren(); ++argno) {
 
-        // Does the argument have the form (extract X Y EXPR) where X and Y are known integers. If so, make isExtract point to
-        // this argument.
+        // Does the argument have the form (extract X Y EXPR) where X and Y are known integers. If so, make isCurExtract point
+        // to this argument and remember its low and high offsets.
         const Interior *isCurExtract = inode->childRaw(argno)->isInteriorNodeRaw();
         rose_addr_t curLoOffset = 0, curHiOffset = 0;
         if (isCurExtract != nullptr && isCurExtract->getOperator() == OP_EXTRACT &&
@@ -1984,6 +1984,7 @@ ConcatSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 
         // Can this argument be joined with the previous one?
         if (isPrevExtract && isCurExtract && curHiOffset == prevLoOffset &&
+            isPrevExtract->childRaw(2)->nBits() == isCurExtract->child(2)->nBits() &&
             isPrevExtract->childRaw(2)->mustEqual(isCurExtract->child(2), solver)) {
             newArgs.back() = makeExtract(isCurExtract->child(0), isPrevExtract->child(1), isCurExtract->child(2), solver);
             isPrevExtract = newArgs.back()->isInteriorNodeRaw(); // merged arg is still a valid extract expression

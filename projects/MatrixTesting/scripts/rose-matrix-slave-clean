@@ -9,6 +9,9 @@ if [ -n "$FULL_CLEANUP" ]; then
     rm -rf var/rose-portability-testing/spock/var/installed
     rm -rf var/rose-portability-testing/spock/bin
     rm -rf var/rose-portability-testing/rose-installed
+    rm -rf var/rose-portability-testing/rmc-spock
+    rm -rf var/rose-portability-testing/matrix-src/_build
+    rm -rf var/rose-portability-testing/running
 
     docker container ls -a |cut -d' ' -f1 |tail +2 |xargs -r docker container rm
     docker image prune --all --force

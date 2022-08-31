@@ -38,6 +38,7 @@ static const char *gDescription =
 #include <Sawyer/Database.h>
 #include <Sawyer/Map.h>
 
+#include <boost/algorithm/string/trim.hpp>
 #include <boost/any.hpp>
 #include <boost/format.hpp>
 
@@ -54,6 +55,7 @@ struct Settings {
     bool showAges = true;                               // when showing times, also say "about x days ago" or similar
     bool considerAll = false;                           // consider all tests instead of just the latest ROSE version
     bool dittoize = true;                               // use ditto markers (") when successive rows have same value
+    bool askDelete = true;                              // verify deletion
 };
 
 static Sawyer::Message::Facility mlog;
@@ -97,6 +99,10 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
     sg.insert(Switch("delete")
               .intrinsicValue(true, settings.deleteMatchingTests)
               .doc("Delete the tests that were matched."));
+
+    sg.insert(Switch("force", 'f')
+              .intrinsicValue(false, settings.askDelete)
+              .doc("When deleting, do not ask whether to delete; just do it."));
 
     Rose::CommandLine::insertBooleanSwitch(sg, "show-age", settings.showAges,
                                            "Causes timestamps to also incude an approximate age. For instance, the "
@@ -386,7 +392,7 @@ loadColumns(DB::Connection db) {
                   .type(ColumnType::TIME)
                   .isAggregate(true));
     retval.insert("reporting_user",
-                  Column().tableTitle("Reporting User").sql("auth_identities.identity")
+                  Column().tableTitle("Reporting User").sql("users.name")
                   .doc("User that reported the results")
                   .type(ColumnType::STRING));
     retval.insert("rose",
@@ -801,7 +807,7 @@ static DB::Statement
 buildStatement(const Settings &settings, DB::Connection db, const ColumnList &cols) {
     std::string sql = buildSelectClause(cols) +
                       " from test_results" +
-                      " join auth_identities on test_results.reporting_user = auth_identities.id" +
+                      " join users on test_results.reporting_user = users.uid" +
                       buildWhereClause(cols) +
                       buildGroupByClause(cols) +
                       buildHavingClause(cols) +
@@ -858,6 +864,7 @@ formatValue(const Settings &settings, const Column &c, const std::string &value)
             return Rose::CommandLine::durationParser()->toString(length);
         }
     }
+    ASSERT_not_reachable("invalid column type");
 }
 
 // Adjust table by replacing repeated values with ditto marks.
@@ -1123,7 +1130,7 @@ main(int argc, char *argv[]) {
             if (c.isDisplayed())
                 ++tableColumn;
         }
-        if (firstSorted) {
+        if (firstSorted && table.nRows() > 0) {
             ASSERT_require(*firstSorted <= lastSorted);
             ASSERT_require(lastSorted < table.nColumns());
             dittoize(table, *firstSorted, lastSorted+1);
@@ -1161,14 +1168,23 @@ main(int argc, char *argv[]) {
 
     // Delete tests
     if (settings.deleteMatchingTests && !testIds.empty()) {
-        mlog[INFO] <<"deleting " <<StringUtility::plural(testIds.size(), "matching tests") <<"\n";
-        std::string inClause;
-        for (size_t id: testIds)
-            inClause += (inClause.empty() ? " in (" : ", ") + boost::lexical_cast<std::string>(id);
-        inClause += ")";
+        bool doDeletions = true;
+        if (settings.askDelete) {
+            std::cout <<"delete? [y/N] ";
+            std::string reply;
+            std::getline(std::cin, reply);
+            doDeletions = boost::starts_with(boost::trim_copy(reply), "y");
+        }
+        if (doDeletions) {
+            mlog[INFO] <<"deleting " <<StringUtility::plural(testIds.size(), "matching tests") <<"\n";
+            std::string inClause;
+            for (size_t id: testIds)
+                inClause += (inClause.empty() ? " in (" : ", ") + boost::lexical_cast<std::string>(id);
+            inClause += ")";
 
-        // Delete attachments first, then test records
-        db.stmt("delete from attachments where test_id " + inClause).run();
-        db.stmt("delete from test_results where id " + inClause).run();
+            // Delete attachments first, then test records
+            db.stmt("delete from attachments where test_id " + inClause).run();
+            db.stmt("delete from test_results where id " + inClause).run();
+        }
     }
 }

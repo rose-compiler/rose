@@ -9,7 +9,7 @@ static const char *description =
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
 #include <Rose/CommandLine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/TraceSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
 
 #include <batSupport.h>
 
@@ -17,7 +17,7 @@ using namespace Rose;
 using namespace Rose::BinaryAnalysis;
 using namespace Sawyer::Message::Common;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
-namespace IS = Rose::BinaryAnalysis::InstructionSemantics2;
+namespace IS = Rose::BinaryAnalysis::InstructionSemantics;
 
 Sawyer::Message::Facility mlog;
 
@@ -99,11 +99,11 @@ main(int argc, char *argv[]) {
 
     Facility semanticIo("semantics-trace",
                         Sawyer::Message::StreamSink::instance(std::cout, Sawyer::Message::Prefix::silentInstance()));
-    IS::BaseSemantics::DispatcherPtr cpu;
+    IS::BaseSemantics::Dispatcher::Ptr cpu;
     if (settings.showSideEffects) {
-        if (IS::BaseSemantics::RiscOperatorsPtr ops = partitioner.newOperators()) {
+        if (IS::BaseSemantics::RiscOperators::Ptr ops = partitioner.newOperators()) {
             if (settings.showSemanticTrace) {
-                IS::TraceSemantics::RiscOperatorsPtr tops = IS::TraceSemantics::RiscOperators::instance(ops);
+                IS::TraceSemantics::RiscOperators::Ptr tops = IS::TraceSemantics::RiscOperators::instance(ops);
                 ASSERT_not_null(tops);
                 tops->showingSubdomain(false);
                 tops->showingInstructionVa(false);

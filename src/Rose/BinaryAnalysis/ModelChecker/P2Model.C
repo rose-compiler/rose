@@ -15,8 +15,10 @@
 #include <Rose/BinaryAnalysis/ModelChecker/Settings.h>
 #include <Rose/BinaryAnalysis/ModelChecker/UninitVarTag.h>
 
-#include <Rose/BinaryAnalysis/InstructionSemantics2/TraceSemantics.h>
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BinaryAnalysis/SymbolicExpr.h>
 #include <Rose/BitOps.h>
 #include <Rose/CommandLine.h>
@@ -26,8 +28,8 @@
 #include <chrono>
 
 using namespace Sawyer::Message::Common;
-namespace BS = Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
-namespace IS = Rose::BinaryAnalysis::InstructionSemantics2;
+namespace BS = Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;
+namespace IS = Rose::BinaryAnalysis::InstructionSemantics;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 namespace Rose {
@@ -1227,7 +1229,8 @@ RiscOperators::readMemory(RegisterDescriptor segreg, const BS::SValue::Ptr &addr
     const size_t nBytes = dflt->nBits() / 8;
     uint8_t buf[8];
     if (adjustedVa->toUnsigned() && nBytes <= sizeof(buf) &&
-        nBytes == partitioner_.memoryMap()->at(adjustedVa->toUnsigned().get()).limit(nBytes).read(buf).size()) {
+        nBytes == (partitioner_.memoryMap()->at(adjustedVa->toUnsigned().get()).limit(nBytes)
+                   .require(MemoryMap::READABLE).prohibit(MemoryMap::WRITABLE).read(buf).size())) {
         switch (partitioner_.memoryMap()->byteOrder()) {
             case ByteOrder::ORDER_UNSPECIFIED:
             case ByteOrder::ORDER_LSB: {
@@ -1436,7 +1439,7 @@ BS::Dispatcher::Ptr
 SemanticCallbacks::createDispatcher(const BS::RiscOperators::Ptr &ops) {
     ASSERT_not_null(ops);
     ASSERT_not_null2(partitioner_.instructionProvider().dispatcher(), "no semantics for this ISA");
-    return partitioner_.instructionProvider().dispatcher()->create(ops);
+    return partitioner_.instructionProvider().dispatcher()->create(ops, 0, RegisterDictionary::Ptr());
 }
 
 SmtSolver::Ptr
@@ -1755,7 +1758,7 @@ SemanticCallbacks::filterUninitVar(const BS::SValue::Ptr &addr, const AddressInt
     return true;
 }
 
-#ifdef ROSE_HAVE_LIBYAML
+#ifdef ROSE_HAVE_YAMLCPP
 std::list<ExecutionUnit::Ptr>
 SemanticCallbacks::parsePath(const YAML::Node &root, const std::string &sourceName) {
     std::list<ExecutionUnit::Ptr> retval;
@@ -1806,6 +1809,56 @@ SemanticCallbacks::parsePath(const YAML::Node &root, const std::string &sourceNa
     return retval;
 }
 #endif
+
+std::list<ExecutionUnit::Ptr>
+SemanticCallbacks::parsePath(const Yaml::Node &root, const std::string &sourceName) {
+    std::list<ExecutionUnit::Ptr> retval;
+
+    if (!root.isSequence() || root.size() == 0)
+        throw ParseError(sourceName, "a path must be a non-empty sequence of path nodes");
+
+    for (size_t i = 0; i <root.size(); ++i) {
+        const std::string where = "path vertex #" + boost::lexical_cast<std::string>(i) + " ";
+        if (!root[i].isMap() || !root[i]["vertex-type"])
+            throw ParseError(sourceName, where + "is not an object with a \"vertex-type\" field");
+
+        std::string vertexType = root[i]["vertex-type"].as<std::string>();
+        if ("basic-block" == vertexType) {
+            if (!root[i]["vertex-address"])
+                throw ParseError(sourceName, where + "must have a \"vertex-address\" field");
+            rose_addr_t va = root[i]["vertex-address"].as<rose_addr_t>();
+            if (P2::BasicBlock::Ptr bb = partitioner().basicBlockExists(va)) {
+                retval.push_back(BasicBlockUnit::instance(partitioner(), bb));
+            } else {
+                throw ParseError(sourceName, where + "no such basic block at " + StringUtility::addrToString(va));
+            }
+
+        } else if ("instruction" == vertexType) {
+            if (!root[i]["vertex-address"])
+                throw ParseError(sourceName, where + "must have a \"vertex-address\" field");
+            rose_addr_t va = root[i]["vertex-address"].as<rose_addr_t>();
+            if (SgAsmInstruction *insn = partitioner().instructionProvider()[va]) {
+                retval.push_back(InstructionUnit::instance(insn, partitioner().sourceLocations().get(va)));
+            } else {
+                throw ParseError(sourceName, where + "no instruction at " + StringUtility::addrToString(va));
+            }
+
+        } else if ("extern-function" == vertexType) {
+            if (!root[i]["vertex-address"])
+                throw ParseError(sourceName, where + "must have a \"vertex-address\" field");
+            rose_addr_t va = root[i]["vertex-address"].as<rose_addr_t>();
+            if (P2::Function::Ptr function = partitioner().functionExists(va)) {
+                retval.push_back(ExternalFunctionUnit::instance(function, partitioner().sourceLocations().get(va)));
+            } else {
+                throw ParseError(sourceName, where + "no function at " + StringUtility::addrToString(va));
+            }
+
+        } else {
+            throw ParseError(sourceName, where + "has unrecognized type \"" + StringUtility::cEscape(vertexType) + "\"");
+        }
+    }
+    return retval;
+}
 
 } // namespace
 } // namespace

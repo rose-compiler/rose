@@ -313,6 +313,7 @@ buildOutputSet(const ct::ClassAnalysis& classes)
 struct Parameters
 {
   std::string dotfile_output          = opt_none;
+  std::string txtfile_vtable          = opt_none;
   std::string txtfile_layout          = opt_none;
   std::string dotfile_layout          = opt_none;
   std::string txtfile_vfun            = opt_none;
@@ -321,6 +322,7 @@ struct Parameters
   bool        withOverridden          = false;
 
   static const std::string dot_output;
+  static const std::string txt_vtable;
   static const std::string txt_layout;
   static const std::string dot_layout;
   static const std::string txt_vfun;
@@ -332,6 +334,7 @@ struct Parameters
 };
 
 const std::string Parameters::dot_output("dot");
+const std::string Parameters::txt_vtable("vtable_txt");
 const std::string Parameters::txt_layout("layout_txt");
 const std::string Parameters::dot_layout("layout_dot");
 const std::string Parameters::txt_vfun("virtual_functions");
@@ -365,6 +368,10 @@ struct Acuity
       acuity.insert(scl::Switch(Parameters::dot_output)
             .argument("filename", scl::anyParser(params.dotfile_output))
             .doc("filename for printing class hierarchy"));
+
+      acuity.insert(scl::Switch(Parameters::txt_vtable)
+            .argument("filename", scl::anyParser(params.txtfile_vtable))
+            .doc("filename for printing vtable layouts (work in progress)"));
 
       acuity.insert(scl::Switch(Parameters::dot_layout)
             .argument("filename", scl::anyParser(params.dotfile_layout))
@@ -404,22 +411,63 @@ struct Acuity
                            );
 
     void
-    writeLayoutIfRequested( const ct::RoseCompatibilityBridge& compatLayer,
-                               const Parameters& params,
-                               ct::ClassNameFn& classNameFn,
-                               ct::VarNameFn& varNameFn,
-                               ct::ClassFilterFn include,
-                               const ct::AnalysesTuple& analyses
-                             );
+    writeObjLayoutIfRequested( const ct::RoseCompatibilityBridge& compatLayer,
+                            const Parameters& params,
+                            ct::ClassNameFn& classNameFn,
+                            ct::VarNameFn& varNameFn,
+                            ct::ClassFilterFn include,
+                            const ct::AnalysesTuple& analyses
+                          );
 
     void
-    writeVFunInfoIfRequested( const ct::RoseCompatibilityBridge& compatLayer,
-                              const Parameters& params,
-                              ct::ClassNameFn& classNameFn,
-                              ct::FuncNameFn& funcNameFn,
-                              ct::ClassFilterFn include,
-                              const ct::AnalysesTuple& analyses
-                            );
+    writeVTables( const ct::RoseCompatibilityBridge& compatLayer,
+                  const Parameters& params,
+                  ct::ClassNameFn& classNameFn,
+                  ct::FuncNameFn& funcNameFn,
+                  ct::ClassFilterFn include,
+                  const ct::AnalysesTuple& analyses,
+                  const ct::VirtualFunctionAnalysis& vfa
+                );
+
+    void
+    writeVFunctions( const ct::RoseCompatibilityBridge& compatLayer,
+                     const Parameters& params,
+                     ct::ClassNameFn& classNameFn,
+                     ct::FuncNameFn& funcNameFn,
+                     ct::ClassFilterFn include,
+                     const ct::AnalysesTuple& analyses,
+                     const ct::VirtualFunctionAnalysis& vfa
+                   );
+
+    void
+    writeVFuncInfoIfRequested( const ct::RoseCompatibilityBridge& compatLayer,
+                               const Parameters& params,
+                               ct::ClassNameFn& classNameFn,
+                               ct::FuncNameFn& funcNameFn,
+                               ct::ClassFilterFn include,
+                               const ct::AnalysesTuple& analyses
+                             )
+    {
+      const bool printVtable = (  params.txtfile_vtable != Parameters::opt_none
+                               //~ || params.dotfile_vtable != Parameters::opt_none
+                               );
+
+      const bool printFunInf = (params.txtfile_vfun != Parameters::opt_none);
+
+      if (!printVtable && !printFunInf)
+        return;
+
+      logInfo() << "computing virtual function information"
+          << std::endl;
+
+      ct::VirtualFunctionAnalysis vfa = analyzeVirtualFunctions(compatLayer, analyses.classAnalysis());
+
+      if (printFunInf)
+        writeVFunctions(compatLayer, params, classNameFn, funcNameFn, include, analyses, vfa);
+
+      if (printVtable)
+        writeVTables(compatLayer, params, classNameFn, funcNameFn, include, analyses, vfa);
+    }
 
     void
     writeVBaseInfoIfRequested( const ct::RoseCompatibilityBridge& compatLayer,
@@ -429,7 +477,13 @@ struct Acuity
                                const ct::AnalysesTuple& analyses
                              );
 
-    void process(SgProject& project, ct::VariableIdMapping&, const ct::FunctionIdMapping& fmap)
+    // legacy interface
+    void process(SgProject& project, ct::VariableIdMapping&, const ct::FunctionIdMapping&)
+    {
+      process(project);
+    }
+
+    void process(SgProject& project)
     {
       logInfo() << "Thorn 2: "
                 << params.dotfile_output
@@ -451,8 +505,8 @@ struct Acuity
       ct::VarNameFn       varNameGen = createNameGenerator(compatLayer.variableNomenclator(), "var", maxlen);
 
       writeDotFileIfRequested  (params, clsNameGen, outset, analyses);
-      writeLayoutIfRequested(compatLayer, params, clsNameGen, varNameGen, outset, analyses);
-      writeVFunInfoIfRequested (compatLayer, params, clsNameGen, funNameGen, outset, analyses);
+      writeObjLayoutIfRequested(compatLayer, params, clsNameGen, varNameGen, outset, analyses);
+      writeVFuncInfoIfRequested(compatLayer, params, clsNameGen, funNameGen, outset, analyses);
       writeVBaseInfoIfRequested(compatLayer, params, clsNameGen, outset, analyses);
     }
 
@@ -464,7 +518,7 @@ struct Acuity
 
 
 void
-Acuity::writeLayoutIfRequested( const ct::RoseCompatibilityBridge& compatLayer,
+Acuity::writeObjLayoutIfRequested( const ct::RoseCompatibilityBridge& compatLayer,
                                 const Parameters& params,
                                 ct::ClassNameFn& classNameFn,
                                 ct::VarNameFn& varNameFn,
@@ -506,25 +560,56 @@ Acuity::writeLayoutIfRequested( const ct::RoseCompatibilityBridge& compatLayer,
 }
 
 
+void
+Acuity::writeVTables( const ct::RoseCompatibilityBridge& compatLayer,
+                      const Parameters& params,
+                      ct::ClassNameFn& classNameFn,
+                      ct::FuncNameFn& funcNameFn,
+                      ct::ClassFilterFn include,
+                      const ct::AnalysesTuple& analyses,
+                      const ct::VirtualFunctionAnalysis& vfa
+                    )
+{
+  using OutputGenFn = decltype(&vtableLayoutTxt);
+
+  logInfo() << "computing vtable layout"
+            << std::endl;
+
+  ct::VTableLayoutContainer layouts = ct::computeVTableLayouts(analyses.classAnalysis(), vfa, compatLayer);
+
+  auto outputGen =
+    [&](const std::string& filename, const std::string& filekind, OutputGenFn outfn) -> void
+    {
+      if (filename == Parameters::opt_none) return;
+
+      logInfo() << "writing vtable layout file (" << filekind << "):" << filename << ".."
+                << std::endl;
+
+      std::ofstream outfile{filename};
+
+      outfn(outfile, classNameFn, funcNameFn, include, layouts);
+
+      logInfo() << "done writing layout." << std::endl;
+    };
+
+  outputGen(params.txtfile_vtable, "txt", vtableLayoutTxt);
+  //~ outputGen(params.dotfile_vtable, "dot", vtableLayoutDot);
+}
+
+
+
 
 
 void
-Acuity::writeVFunInfoIfRequested( const ct::RoseCompatibilityBridge& compatLayer,
-                                  const Parameters& params,
-                                  ct::ClassNameFn& classNameFn,
-                                  ct::FuncNameFn& funcNameFn,
-                                  ct::ClassFilterFn include,
-                                  const ct::AnalysesTuple& analyses
-                                )
+Acuity::writeVFunctions( const ct::RoseCompatibilityBridge& compatLayer,
+                         const Parameters& params,
+                         ct::ClassNameFn& classNameFn,
+                         ct::FuncNameFn& funcNameFn,
+                         ct::ClassFilterFn include,
+                         const ct::AnalysesTuple& analyses,
+                         const ct::VirtualFunctionAnalysis& vfa
+                       )
 {
-  if (params.txtfile_vfun == Parameters::opt_none)
-    return;
-
-  logInfo() << "computing virtual function information"
-            << std::endl;
-
-  ct::VirtualFunctionAnalysis vfa = analyzeVirtualFunctions(compatLayer, analyses.classAnalysis());
-
   logInfo() << "writing virtual function information file " << params.txtfile_vfun << ".."
             << std::endl;
 
@@ -636,6 +721,8 @@ namespace
 
 int main( int argc, char * argv[] )
 {
+  constexpr bool LEGACY_MODE = false;
+
   using Sawyer::Message::mfacilities;
   //~ using GuardedVariableIdMapping = std::unique_ptr<ct::VariableIdMappingExtended>;
 
@@ -671,17 +758,20 @@ int main( int argc, char * argv[] )
 
     logTrace() << "Parsing and creating AST finished."<<endl;
 
-    ct::FunctionIdMapping     funMap;
+    if (LEGACY_MODE)
+    {
+      ct::FunctionIdMapping funMap;
+      ct::VariableIdMapping varMap;
 
-    funMap.computeFunctionSymbolMapping(project);
+      funMap.computeFunctionSymbolMapping(project);
+      varMap.computeVariableSymbolMapping(project);
 
-    //~ GuardedVariableIdMapping  varMap{ct::CodeThornLib::createVariableIdMapping(ctOpt,project)};
-    //~ ROSE_ASSERT(varMap);
-    //~ acuity.process(*project, *varMap, funMap);
-
-    ct::VariableIdMapping     varMap;
-    varMap.computeVariableSymbolMapping(project);
-    acuity.process(*project, varMap, funMap);
+      acuity.process(*project, varMap, funMap);
+    }
+    else
+    {
+      acuity.process(*project);
+    }
 
     errorCode = 0;
   } catch(const std::exception& e) {

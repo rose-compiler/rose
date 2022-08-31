@@ -60,8 +60,8 @@ set(rose_util_src
   rose_getline.C
   processSupport.C
   rose_getline.C
-  rose_strtoull.C
-)
+  rose_strtoull.C)
+
 add_library(util_main OBJECT ${rose_util_src})
 add_dependencies(util_main generate_rosePublicConfig)
 
@@ -80,9 +80,8 @@ endif()
 
 ########### install files ###############
 install(FILES
-  BitFlags.h BitOps.h Color.h FileSystem.h FormatRestorer.h
   setup.h processSupport.h ROSE_ABORT.h ROSE_ASSERT.h rose_paths.h
   compilationFileDatabase.h LinearCongruentialGenerator.h
-  Map.h Progress.h timing.h rose_constants.h rose_getline.h rose_strtoull.h
-  roseTraceLib.c ParallelSort.h GraphUtility.h RecursionCounter.h rose_isnan.h rose_pragma_message.h
+  Map.h timing.h rose_getline.h rose_strtoull.h
+  roseTraceLib.c ParallelSort.h rose_isnan.h rose_pragma_message.h
   DESTINATION ${INCLUDE_INSTALL_DIR})

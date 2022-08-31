@@ -457,8 +457,8 @@ size_t findSymbolFunctions(const Partitioner&, SgAsmGenericHeader*, std::vector<
 /** Gives names to constants in instructions.
  *
  *  Scans the entire list of attached instructions and give each constant integer expression a name if the value of the
- *  expression happens to be an address that has a name. */
-void nameConstants(const Partitioner&);
+ *  expression happens to be an address that has a name and lies within the interval. */
+void nameConstants(const Partitioner&, const AddressInterval&);
 
 /** Find functions that are no-ops.
  *

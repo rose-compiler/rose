@@ -1564,7 +1564,7 @@ context-free syntax
 
   AndOperand                               -> LogicalOperand
 
-%% 'AND', 'OR', 'EQV', 'XOR' moved to lexor
+%% 'AND', 'OR', 'EQV', 'XOR' moved to lexer
   LogicalOperand ANDOperator AndOperand    -> LogicalOperand    {cons("AND")}
   LogicalOperand OROperator  AndOperand    -> LogicalOperand    {cons("OR")}
   LogicalOperand EQVOperator AndOperand    -> LogicalOperand    {cons("EQV")}

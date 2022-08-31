@@ -2,7 +2,7 @@
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS) && __cplusplus >= 201103L
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/InstructionCache.h>
-#include <Rose/BinaryAnalysis/Disassembler.h>
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
 
 namespace Rose {
 namespace BinaryAnalysis {

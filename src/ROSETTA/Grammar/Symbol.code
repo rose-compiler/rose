@@ -15,6 +15,8 @@ HEADER_START
        // DQ (12/3/2011): refactoring support for symbol tables and symbols.
           SgName get_mangled_name() const;
 
+#if 0
+       // PP (4/29/22): removed to eliminate confusion
        // DQ (8/21/2013): Added function so that templated lower-level symbol table support will compile.
        // Note that this function can not be called and returns an appropriate error message.
        // Note also that we have to return a declaration for which get_type exists as well
@@ -22,6 +24,7 @@ HEADER_START
        // plus it is a runtime error to call this function.
        // SgFunctionDeclaration* get_declaration() const;
           SgDeclarationStatement* get_declaration() const;
+#endif /* 0 */
 
 HEADER_END
 
@@ -147,6 +150,8 @@ SgSymbol::get_symbol_basis() const
    }
 #endif
 
+#if PHASED_OUT
+
 SgDeclarationStatement*
 SgSymbol::get_declaration() const
    {
@@ -158,7 +163,7 @@ SgSymbol::get_declaration() const
 
      return NULL;
    }
-
+#endif /* PHASED_OUT */
 
 // This function has been implement to support testing of the scope of
 // the declartion with the scope of where the symbols are placed
@@ -1492,14 +1497,21 @@ SOURCE_ADA_GENERIC_SYMBOL_START
 SgName
 SgAdaGenericSymbol::get_name() const
 {
-  if (SgFunctionDeclaration* dcl = isSgFunctionDeclaration(get_declaration()))
-    return dcl->get_name();
+  SgDeclarationStatement* dcl = get_declaration();
 
-if (SgAdaPackageSpecDecl* dcl = isSgAdaPackageSpecDecl(get_declaration()))
-    return dcl->get_name();
+  if (SgAdaFormalTypeDecl* frmdcl = isSgAdaFormalTypeDecl(dcl))
+    return frmdcl->get_name();
 
-  if (SgAdaFormalTypeDecl* dcl = isSgAdaFormalTypeDecl(get_declaration()))
-    return dcl->get_name();
+  SgAdaGenericDecl* gendcl = isSgAdaGenericDecl(dcl);
+  ASSERT_not_null(gendcl);
+
+  SgDeclarationStatement* dclstm = gendcl->get_declaration();
+
+  if (SgFunctionDeclaration* fundcl = isSgFunctionDeclaration(dclstm))
+    return fundcl->get_name();
+
+  if (SgAdaPackageSpecDecl* pkgdcl = isSgAdaPackageSpecDecl(dclstm))
+    return pkgdcl->get_name();
 
   return SgName("undefined");
 }

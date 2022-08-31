@@ -6,12 +6,13 @@
 #include <Rose/BinaryAnalysis/ModelChecker/ErrorTag.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Settings.h>
 #include <Rose/BinaryAnalysis/ModelChecker/SourceLister.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Dispatcher.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Exception.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/RiscOperators.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Dispatcher.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Exception.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RiscOperators.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/State.h>
 
 using namespace Sawyer::Message::Common;
-namespace BS = Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
+namespace BS = Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -51,7 +52,7 @@ ExecutionUnit::executeInstruction(const Settings::Ptr &settings, SgAsmInstructio
         retval = e.tag;
         ASSERT_not_null(retval);
         SAWYER_MESG(mlog[DEBUG]) <<"      semantics threw a " <<retval->printableName() <<" tag\n";
-        cpu->operators()->currentState(BS::StatePtr()); // to indicate that execution was interrupted
+        cpu->operators()->currentState(BS::State::Ptr()); // to indicate that execution was interrupted
     } catch (const BS::Exception &e) {
         if (settings->ignoreSemanticFailures) {
             SAWYER_MESG(mlog[DEBUG]) <<"      semantics failed; continuing as if it were okay\n";
@@ -61,18 +62,18 @@ ExecutionUnit::executeInstruction(const Settings::Ptr &settings, SgAsmInstructio
             const RegisterDescriptor IP = cpu->instructionPointerRegister();
             const rose_addr_t curVa = insn->get_address();
             if (cpu->operators()->peekRegister(IP)->toUnsigned().orElse(curVa) == curVa) {
-                BS::SValuePtr nextVa = cpu->operators()->number_(IP.nBits(), curVa + insn->get_size());
+                BS::SValue::Ptr nextVa = cpu->operators()->number_(IP.nBits(), curVa + insn->get_size());
                 cpu->operators()->writeRegister(cpu->instructionPointerRegister(), nextVa);
             }
 
         } else {
             SAWYER_MESG(mlog[DEBUG]) <<"      semantics exception: " <<e.what() <<"\n";
             retval = ErrorTag::instance(nodeStep, "semantic-failure", e.what(), insn);
-            cpu->operators()->currentState(BS::StatePtr()); // to indicate that execution was interrupted
+            cpu->operators()->currentState(BS::State::Ptr()); // to indicate that execution was interrupted
         }
     } catch (const Rose::Exception &e) {
         SAWYER_MESG(mlog[DEBUG]) <<"      Rose::Exception: " <<e.what() <<"\n";
-        cpu->operators()->currentState(BS::StatePtr()); // to indicate that execution was interrupted
+        cpu->operators()->currentState(BS::State::Ptr()); // to indicate that execution was interrupted
     }
     return retval;
 }

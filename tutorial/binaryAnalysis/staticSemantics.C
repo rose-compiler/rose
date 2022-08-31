@@ -7,15 +7,18 @@ static const char *description =
 
 
 #include <rose.h>
+
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/StaticSemantics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/StaticSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
+
 #include <stringify.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/TraceSemantics.h>
 
 using namespace Sawyer::Message::Common;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
-namespace IS = Rose::BinaryAnalysis::InstructionSemantics2;
+namespace IS = Rose::BinaryAnalysis::InstructionSemantics;
 
 static Rose::Diagnostics::Facility mlog;
 
@@ -41,7 +44,7 @@ struct ExprPrinter: AstPrePostProcessing {
 // Attach semantic information about side effects to each instruction, printing them as we go.
 struct SemanticsAttacher: AstSimpleProcessing {
     const P2::Partitioner &partitioner;
-    IS::BaseSemantics::RiscOperatorsPtr traceOps;
+    IS::BaseSemantics::RiscOperators::Ptr traceOps;
 
     // Build a symbolic CPU
     explicit SemanticsAttacher(const P2::Partitioner &partitioner)
@@ -55,7 +58,7 @@ struct SemanticsAttacher: AstSimpleProcessing {
             std::cerr <<partitioner.unparse(insn) <<"\n";
 
             // Symbolic execution of this single instruction all by itself.
-            IS::BaseSemantics::DispatcherPtr cpu = partitioner.newDispatcher(traceOps);
+            IS::BaseSemantics::Dispatcher::Ptr cpu = partitioner.newDispatcher(traceOps);
             try {
                 cpu->processInstruction(insn);
             } catch (...) {

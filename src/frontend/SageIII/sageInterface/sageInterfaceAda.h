@@ -13,6 +13,11 @@ namespace SageInterface
 /// Contains Ada-specific functionality
 namespace ada
 {
+  extern const std::string roseOperatorPrefix;
+  extern const std::string packageStandardName;
+  extern const std::string durationTypeName;
+  extern const std::string exceptionName;
+
   /// tests if the declaration \ref dcl defines a public type that is completed
   ///   in a private section.
   /// \return true, iff dcl is public and completed in a private section.
@@ -45,6 +50,15 @@ namespace ada
 
   StatementRange
   declsInPackage(SgGlobal& globalScope, const SgSourceFile& mainFile);
+  /// \}
+
+
+  /// returns an integer value for args[0] as used by type attributes first and last
+  /// \throws throws an exception if args[0] cannot be constant folded
+  /// \note currently only constant values are supported
+  /// \{
+  int firstLastDimension(SgExprListExp& args);
+  int firstLastDimension(SgExprListExp* args);
   /// \}
 
   /// defines the result type for \ref getArrayTypeInfo
@@ -86,6 +100,13 @@ namespace ada
   /// returns a flat representation of if-elsif-else statements
   std::vector<IfStatementInfo>
   flattenIfStatements(SgIfStmt& n);
+
+  /// integer constant folding
+  /// \returns an integral value for an Ada expression if possible
+  /// \throws  an exception otherwise.
+  long long int
+  staticIntegralValue(SgExpression* n);
+
 
   /// returns the expression of an expression statement, or nullptr if s is some other node
   SgExpression*
@@ -154,6 +175,8 @@ namespace ada
 
   /// return if the type @ref ty is the corresponding universal type representation in ROSE
   /// @{
+  bool isModularType(const SgType& ty);
+  bool isModularType(const SgType* ty);
   bool isIntegerType(const SgType& ty);
   bool isIntegerType(const SgType* ty);
   bool isFloatingPointType(const SgType& ty);
@@ -178,10 +201,25 @@ namespace ada
   bool isDecimalFixedType(const SgType& ty);
   /// @}
 
-  /// returns if dcl is a generic declaration
+  /// Returns the SgAdaGenericDecl node that makes a declaration (either function/procedure or package)
+  /// generic.
+  /// \param n a declaration that is possibly part of a generic declaration.
+  /// \returns the generic declaration of \ref n, where \ref n is a either function/procedure or package
+  ///          that is declared directly under an SgAdaGenericDecl;
+  ///          nullptr otherwise.
+  /// \details
+  ///   For a subtree SgAdaGenericDecl->SgAdaGenericDefn->n, the SgAdaGenericDecl node is returned.
   /// @{
   SgAdaGenericDecl* isGenericDecl(const SgDeclarationStatement& n);
   SgAdaGenericDecl* isGenericDecl(const SgDeclarationStatement* n);
+  /// @}
+
+  /// Returns SgAdaGenericDecl for a given SgAdaGenericInstanceDecl.
+  /// \details
+  ///    skips over intermediate renaming declarations.
+  /// @{
+  SgAdaGenericDecl& getGenericDecl(const SgAdaGenericInstanceDecl& n);
+  SgAdaGenericDecl* getGenericDecl(const SgAdaGenericInstanceDecl* n);
   /// @}
 
 
@@ -203,6 +241,26 @@ namespace ada
   bool isSeparatedBody(const SgDeclarationStatement& n);
   bool isSeparatedBody(const SgDeclarationStatement* n);
   /// @}
+
+  /// returns the most fundamental type
+  ///   after skipping derived types, subtypes, typedefs, etc.
+  /// @{
+  SgType* typeRoot(SgType&);
+  SgType* typeRoot(SgType*);
+  SgType* typeRoot(SgExpression&);
+  SgType* typeRoot(SgExpression*);
+  /// @}
+
+
+  /// takes a function name as used in ROSE and converts it to a name in Ada
+  ///   (i.e., '"' + operator_text + '"').
+  ///   if \ref nameInRose does not name an operator, then the name is returned as is.
+  std::string convertRoseOperatorNameToAdaName(const std::string& nameInRose);
+
+  /// takes a function name as used in ROSE and converts it to an operator in Ada
+  ///   (i.e., operator_text).
+  ///   if \ref nameInRose does not name an operator, an empty string is returned
+  std::string convertRoseOperatorNameToAdaOperator(const std::string& nameInRose);
 
   /// Details of expression aggregates
   struct AggregateInfo : std::tuple< SgAdaAncestorInitializer*,
@@ -251,53 +309,17 @@ namespace ada
   bool isFunction(const SgFunctionType* ty);
   /// @}
 
-  //
-  // Ada Variant processing
+  /// returns true iff \ref ty refers to an object renaming
+  /// @{
+  bool isObjectRenaming(const SgAdaRenamingDecl* dcl);
+  bool isObjectRenaming(const SgAdaRenamingDecl& dcl);
+  /// @}
 
-  struct VariantInfo : std::tuple<SgExprListExp*, int>
-  {
-    using base = std::tuple<SgExprListExp*, int>;
-    using base::base;
-
-    /// the exprlist condition
-    SgExprListExp* variants() const { return std::get<0>(*this); }
-
-    /// the variant nesting level
-    int            depth()    const { return std::get<1>(*this); }
-  };
-
-  /// returns basic information about the variant declaration
-  VariantInfo
-  variantInfo(const SgAdaVariantFieldDecl* n);
-
-  /// get the depth of shared of control variables
-  int getSharedControlDepth(const VariantInfo& prev, const VariantInfo& next);
-
-  /// test if \ref prev and \rev next have the same variant condition at position \ref i
-  bool haveSameConditionAt(const VariantInfo& prev, const VariantInfo& next, int i);
-
-  struct VariantEntry : std::tuple<SgVarRefExp*, SgExprListExp*>
-  {
-    using base = std::tuple<SgVarRefExp*, SgExprListExp*>;
-    using base::base;
-
-    SgVarRefExp*   control()    const { return std::get<0>(*this); }
-    SgExprListExp* conditions() const { return std::get<1>(*this); }
-  };
-
-  /// get the control/conditions of the \ref i th entry.
-  VariantEntry getVariant(const VariantInfo& prev, int i);
-
-  /// finds the next statement in the range [\ref begin, \ref end) that has a different
-  ///   variant condition than \ref lastVariant
-  SgDeclarationStatementPtrList::const_iterator
-  findVariantConditionChange( SgDeclarationStatementPtrList::const_iterator begin,
-                              SgDeclarationStatementPtrList::const_iterator end,
-                              const SgAdaVariantFieldDecl* lastVariant
-                            );
-
-  //
-
+  /// returns true iff \ref ty refers to an exception renaming
+  /// @{
+  bool isExceptionRenaming(const SgAdaRenamingDecl* dcl);
+  bool isExceptionRenaming(const SgAdaRenamingDecl& dcl);
+  /// @}
 
   struct PrimitiveParameterDesc : std::tuple<size_t, const SgInitializedName*>
   {
@@ -338,7 +360,9 @@ namespace ada
   overridingScope(const SgExprListExp* args, const std::vector<PrimitiveParameterDesc>& primitiveArgs);
   /// @}
 
-  /// finds the type declaration of a type
+  /// finds the type declaration of a type \ref ty
+  /// \returns returns the first named base declaration of ty
+  ///          nullptr if no declaration can be found
   /// \details
   ///    Skips over intermediate derived types, subtypes, etc. until a SgNamedType is found.
   ///    Returns the declaration of said type.
@@ -348,6 +372,20 @@ namespace ada
 
   SgDeclarationStatement*
   baseDeclaration(SgType* ty);
+  /// \}
+
+  /// finds the underlying enum declaration of a type \ref ty
+  /// \returns an enum declaration associated with ty
+  ///          nullptr if no declaration can be found
+  /// \details
+  ///    in contrast to baseDeclaration, baseEnumDeclaration skips
+  ///    over intermediate SgTypedefDeclarations that introduce a new type or a subtype.
+  /// \{
+  SgEnumDeclaration*
+  baseEnumDeclaration(SgType* ty);
+
+  SgEnumDeclaration*
+  baseEnumDeclaration(SgType& ty);
   /// \}
 
   /// returns true, iff \ref fndef is the body of an explicit null procedure
@@ -366,19 +404,14 @@ namespace ada
   ///   - (1, 2, LEN => 3) => 2
   /// @{
   size_t
+  positionalArgumentLimit(const SgExpressionPtrList& arglst);
+
+  size_t
   positionalArgumentLimit(const SgExprListExp& args);
 
   size_t
   positionalArgumentLimit(const SgExprListExp* args);
   /// @}
-
-
-  /// converts all Ada style comments to C++ comments
-  // \todo mv into Ada to C++ converter
-  void convertAdaToCxxComments(SgNode* root, bool cxxLineComments = true);
-
-  /// converts all symbol tables from case insensitive to case sensitive
-  void convertToCaseSensitiveSymbolTables(SgNode* root);
 
   /// converts text to constant values
   /// \{
@@ -392,7 +425,24 @@ namespace ada
   /// \}
 
 
+  /// converts all Ada style comments to C++ comments
+  // \todo mv into Ada to C++ converter
+  void convertAdaToCxxComments(SgNode* root, bool cxxLineComments = true);
 
+  /// converts all symbol tables from case insensitive to case sensitive
+  // \todo mv into Ada to C++ converter
+  void convertToCaseSensitiveSymbolTables(SgNode* root);
+
+  /// converts AST from a function call representation to operator form
+  ///   for fundamental operator declarations.
+  /// \param root                  the subtree is traversed to find operator calls (using the traversal mechanism)
+  /// \param convertCallSyntax     false, only convert those calls where get_uses_operator_syntax() returns false
+  ///                              true,  convert all calls (may result in invalid Ada)
+  /// \param convertNamedArguments not relevant, when withPrefixCalls == false
+  ///                              true, named arguments are resolved
+  ///                              false, named arguments are preserved
+  // \todo mv into Ada to C++ converter
+  void convertToOperatorRepresentation(SgNode* root, bool convertCallSyntax = false, bool convertNamedArguments = false);
 } // Ada
 } // SageInterface
 

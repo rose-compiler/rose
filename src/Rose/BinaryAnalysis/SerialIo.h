@@ -1,5 +1,5 @@
-#ifndef Rose_BinaryAnalysis_SerialIo_H
-#define Rose_BinaryAnalysis_SerialIo_H
+#ifndef ROSE_BinaryAnalysis_SerialIo_H
+#define ROSE_BinaryAnalysis_SerialIo_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
@@ -115,8 +115,8 @@ class Partitioner;
  * @endcode */
 class SerialIo: public Sawyer::SharedObject {
 public:
-    /** Reference-counting pointer. */
-    typedef Sawyer::SharedPointer<SerialIo> Ptr;
+    /** Reference counting pointer. */
+    using Ptr = SerialIoPtr;
 
     /** Format of the state file. */
     enum Format {
@@ -271,7 +271,8 @@ private:
  *  Writes binary analysis state to a file that can be read later to re-initialize ROSE to the same state. */
 class SerialOutput: public SerialIo {
 public:
-    typedef Sawyer::SharedPointer<SerialOutput> Ptr;
+    /** Reference counting pointer. */
+    using Ptr = SerialOutputPtr;
 
 private:
 #ifdef ROSE_SUPPORTS_SERIAL_IO
@@ -395,21 +396,25 @@ private:
 #if !defined(ROSE_DEBUG_SERIAL_IO)
         try {
 #endif
+            std::string roseVersion = ROSE_PACKAGE_VERSION;
             objectType(ERROR);
             switch (format()) {
                 case BINARY:
                     ASSERT_not_null(binary_archive_);
                     *binary_archive_ <<BOOST_SERIALIZATION_NVP(objectTypeId);
+                    *binary_archive_ <<BOOST_SERIALIZATION_NVP(roseVersion);
                     *binary_archive_ <<BOOST_SERIALIZATION_NVP(object);
                     break;
                 case TEXT:
                     ASSERT_not_null(text_archive_);
                     *text_archive_ <<BOOST_SERIALIZATION_NVP(objectTypeId);
+                    *text_archive_ <<BOOST_SERIALIZATION_NVP(roseVersion);
                     *text_archive_ <<BOOST_SERIALIZATION_NVP(object);
                     break;
                 case XML:
                     ASSERT_not_null(xml_archive_);
                     *xml_archive_ <<BOOST_SERIALIZATION_NVP(objectTypeId);
+                    *xml_archive_ <<BOOST_SERIALIZATION_NVP(roseVersion);
                     *xml_archive_ <<BOOST_SERIALIZATION_NVP(object);
                     break;
             }
@@ -435,7 +440,8 @@ private:
  *  Reads a previously saved binary analysis state file to re-initialize ROSE to a previous state. */
 class SerialInput: public SerialIo {
 public:
-    typedef Sawyer::SharedPointer<SerialInput> Ptr;
+    /** Reference counting pointer. */
+    using Ptr = SerialInputPtr;
 
 private:
 #ifdef ROSE_SUPPORTS_SERIAL_IO
@@ -561,17 +567,24 @@ private:
 #if !defined(ROSE_DEBUG_SERIAL_IO)
         try {
 #endif
+            std::string roseVersion;
             switch (format()) {
                 case BINARY:
                     ASSERT_not_null(binary_archive_);
-                    *binary_archive_ >>object;
+                    *binary_archive_ >>BOOST_SERIALIZATION_NVP(roseVersion);
+                    checkCompatibility(roseVersion);
+                    *binary_archive_ >>BOOST_SERIALIZATION_NVP(object);
                     break;
                 case TEXT:
                     ASSERT_not_null(text_archive_);
-                    *text_archive_ >>object;
+                    *text_archive_ >>BOOST_SERIALIZATION_NVP(roseVersion);
+                    checkCompatibility(roseVersion);
+                    *text_archive_ >>BOOST_SERIALIZATION_NVP(object);
                     break;
                 case XML:
                     ASSERT_not_null(xml_archive_);
+                    *xml_archive_ >>BOOST_SERIALIZATION_NVP(roseVersion);
+                    checkCompatibility(roseVersion);
                     *xml_archive_ >>BOOST_SERIALIZATION_NVP(object);
                     break;
             }
@@ -584,6 +597,8 @@ private:
 #endif
 #endif
     }
+
+    void checkCompatibility(const std::string &fileVersion);
 
 protected:
     // Read the next object type from the input stream

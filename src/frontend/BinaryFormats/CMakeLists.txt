@@ -8,6 +8,10 @@ add_library(roseBinaryFormats OBJECT
   Rva.C
   BinaryVxcoreParser.C
 
+  ### BinaryComposite classes ###
+  BinaryComposite.C
+  #TODO: JvmComposite.C
+
   ### Generic Base Classes ###
   GenericDynamicLinking.C
   GenericFile.C
@@ -30,7 +34,7 @@ add_library(roseBinaryFormats OBJECT
   ElfSymbolVersion.C
 
   ### Java Virtual Machine Format (JVM) ###
-  JvmClassFile.C
+  JvmNode.C
   JvmAttribute.C
   JvmConstantPool.C
   JvmField.C
@@ -48,6 +52,10 @@ add_library(roseBinaryFormats OBJECT
   PeSectionTable.C
   PeStringTable.C
   PeSymbolTable.C
+
+  ### CIL class implementations
+  CilImpl.C
+  CliHeader.C
 
   ### Other Formats (partial implementations and not so well tested) ###
   ExecDOS.C

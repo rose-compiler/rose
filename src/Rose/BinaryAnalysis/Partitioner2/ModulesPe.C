@@ -147,24 +147,12 @@ rebaseImportAddressTables(Partitioner &partitioner, const ImportIndex &index) {
         return;
     }
 
-    // FIXME[Robb P. Matzke 2014-08-24]: we should probably check that monkeying with memory won't affect existing instructions
-
-    // First, aggregate neighboring IAT entries so we don't need to create so many map segments (easier for users to debug
-    // their code if we don't introduce hundreds of segments).
-    AddressIntervalSet iatAddresses;
-    for (SgAsmPEImportItem *import: index.values())
-        iatAddresses.insert(AddressInterval::baseSize(import->get_iat_entry_va(), wordSize));
-
-    // Add segments to the memory map.
-    for (const AddressInterval &iatExtent: iatAddresses.intervals()) {
-        partitioner.memoryMap()->insert(iatExtent,
-                                        MemoryMap::Segment::anonymousInstance(iatExtent.size(), MemoryMap::READABLE,
-                                                                              "partitioner-adjusted IAT"));
-    }
-
     // Write IAT entries into the newly mapped IATs
     for (const ImportIndex::Node &node: index.nodes()) {
-        // First, pack it as little-endian
+        //First check if the loader already set the address
+        if(node.value()->get_iat_written()) continue;
+    
+        // Pack it as little-endian
         uint8_t packed[8];
         memset(packed, 0, 8);
         for (size_t i=0; i<wordSize; ++i)
@@ -184,8 +172,11 @@ rebaseImportAddressTables(Partitioner &partitioner, const ImportIndex &index) {
         }
         
         rose_addr_t iatVa = node.value()->get_iat_entry_va();
-        if (wordSize != partitioner.memoryMap()->at(iatVa).limit(wordSize).write(packed).size())
+        if (wordSize != partitioner.memoryMap()->at(iatVa).limit(wordSize).write(packed).size()){
             ASSERT_not_reachable("write failed to map we just created");
+        }else{
+            node.value()->set_iat_written(true);
+        }
     }
 }
 

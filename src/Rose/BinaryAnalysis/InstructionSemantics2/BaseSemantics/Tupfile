@@ -1,22 +1,5 @@
 include_rules
 
-run $(librose_compile)				\
-    BaseSemantics.C				\
-    Dispatcher.C				\
-    Exception.C					\
-    MemoryCell.C				\
-    MemoryCellList.C				\
-    MemoryCellMap.C				\
-    MemoryCellState.C				\
-    MemoryState.C				\
-    Merger.C					\
-    RegisterState.C				\
-    RegisterStateGeneric.C			\
-    RiscOperators.C				\
-    State.C					\
-    SValue.C					\
-    SymbolicMemory.C
-
 run $(public_header) -o include/rose/Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics	\
     Dispatcher.h										\
     Exception.h											\

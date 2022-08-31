@@ -1358,10 +1358,12 @@ Grammar::setUpExpressions ()
      //~ AdaAttributeExp.editSubstitute       ( "LIST_NAME", "arg" );
      AdaAttributeExp.setDataPrototype ( "SgName", "attribute", "",
                                         CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AdaAttributeExp.setDataPrototype ( "SgExpression*", "object", "= NULL",
+     AdaAttributeExp.setDataPrototype ( "SgExpression*", "object", "= nullptr",
                                         CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     AdaAttributeExp.setDataPrototype ( "SgExprListExp*", "args", "= NULL",
+     AdaAttributeExp.setDataPrototype ( "SgExprListExp*", "args", "= nullptr",
                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     AdaAttributeExp.setDataPrototype ( "SgType*", "attrType", "= nullptr",
+                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
 

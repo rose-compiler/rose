@@ -31,6 +31,12 @@ AC_DEFUN([ROSE_SUPPORT_DWARF],
                        LIBDWARF_CPPFLAGS="-I$LIBDWARF_PREFIX/include"
                        LIBDWARF_LDFLAGS="-L$LIBDWARF_PREFIX/lib -ldwarf"
                        ])
+        AC_CHECK_FILE(["$LIBDWARF_PREFIX/lib64/libdwarf.so"],
+                      [AC_DEFINE(ROSE_HAVE_LIBDWARF, [], [Defined when libdwarf is available.])
+                       ROSE_HAVE_LIBDWARF="$LIBDWARF_PREFIX"
+                       LIBDWARF_CPPFLAGS="-I$LIBDWARF_PREFIX/include"
+                       LIBDWARF_LDFLAGS="-L$LIBDWARF_PREFIX/lib64 -ldwarf"
+                       ])
     fi
 
     # Sanity check: if the user told us to use libdwarf then we must find the library
@@ -40,7 +46,7 @@ AC_DEFUN([ROSE_SUPPORT_DWARF],
     if test "$with_dwarf" != no -a "$ROSE_HAVE_LIBDWARF" = yes -a "$ROSE_HAVE_LIBELF" != yes; then
         AC_MSG_ERROR([libdwarf depends on libelf, so you must specify --with-libelf also])
     fi
-    
+
 
     # Results
     #    ROSE_HAVE_LIBDWARF -- shell variable, non-empty when libdwarf is available

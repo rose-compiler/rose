@@ -641,6 +641,10 @@ SgNode * ClangToSageTranslator::Traverse(clang::Stmt * stmt) {
             ret_status = VisitBinaryOperator((clang::BinaryOperator *)stmt, &result);
             ROSE_ASSERT(result != NULL);
             break;
+        case clang::Stmt::RecoveryExprClass:
+            result = SageBuilder::buildIntVal(42);
+            ROSE_ASSERT(FAIL_FIXME == 0); // There is no concept of recovery expression in ROSE
+            break;
 
         default:
             std::cerr << "Unknown statement kind: " << stmt->getStmtClassName() << " !" << std::endl;
@@ -1029,44 +1033,59 @@ bool ClangToSageTranslator::VisitDeclStmt(clang::DeclStmt * decl_stmt, SgNode **
 
     if (decl_stmt->isSingleDecl()) {
         *node = Traverse(decl_stmt->getSingleDecl());
-#if 1
+#if DEBUG_VISIT_STMT
         printf ("In VisitDeclStmt(): *node = %p = %s \n",*node,(*node)->class_name().c_str());
 #endif
     }
     else {
         std::vector<SgNode *> tmp_decls;
-        SgDeclarationStatement * decl;
+        //SgDeclarationStatement * decl;
         clang::DeclStmt::decl_iterator it;
 
         SgScopeStatement * scope = SageBuilder::topScopeStack();
 
-        for (it = decl_stmt->decl_begin(); it != decl_stmt->decl_end(); it++)
-            tmp_decls.push_back(Traverse(*it));
-        for (unsigned i = 0; i < tmp_decls.size() - 1; i++) {
-            decl = isSgDeclarationStatement(tmp_decls[i]);
-            if (tmp_decls[i] != NULL && decl == NULL) {
-                std::cerr << "Runtime error: tmp_decls[i] != NULL && decl == NULL" << std::endl;
+        for (it = decl_stmt->decl_begin(); it != decl_stmt->decl_end()-1; it++) {
+            clang::Decl* decl = (*it);
+            if (decl == nullptr) continue;
+            SgNode * child = Traverse(decl);
+
+            SgDeclarationStatement * sub_decl_stmt = isSgDeclarationStatement(child);
+            if (sub_decl_stmt == NULL && child != NULL) {
+                std::cerr << "Runtime error: the node produce for a clang::Decl is not a SgDeclarationStatement !" << std::endl;
+                std::cerr << "    class = " << child->class_name() << std::endl;
                 res = false;
                 continue;
             }
-            else {
-              SgClassDeclaration * class_decl = isSgClassDeclaration(decl);
-              if (class_decl != NULL && (class_decl->get_name() == "" || class_decl->get_isUnNamed())) continue;
-              SgEnumDeclaration * enum_decl = isSgEnumDeclaration(decl);
-              if (enum_decl != NULL && (enum_decl->get_name() == "" || enum_decl->get_isUnNamed())) continue;
+            else if (child != NULL) {
+                // FIXME This is a hack to avoid autonomous decl of unnamed type to being added to the global scope....
+                SgClassDeclaration * class_decl = isSgClassDeclaration(child);
+                if (class_decl != NULL && (class_decl->get_name() == "" || class_decl->get_isUnNamed())) continue;
+
+                SgEnumDeclaration * enum_decl = isSgEnumDeclaration(child);
+                if (enum_decl != NULL && (enum_decl->get_name() == "" || enum_decl->get_isUnNamed())) continue;
+                if(clang::TagDecl::classof(decl))
+                {
+                  clang::TagDecl* tagDecl = (clang::TagDecl*)decl;
+                  if(tagDecl->isEmbeddedInDeclarator())  continue;
+                }
+
             }
-            scope->append_statement(decl);
-            decl->set_parent(scope);
+            scope->append_statement(sub_decl_stmt);
+            sub_decl_stmt->set_parent(scope);
         }
-        decl = isSgDeclarationStatement(tmp_decls[tmp_decls.size() - 1]);
-        if (tmp_decls[tmp_decls.size() - 1] != NULL && decl == NULL) {
-            std::cerr << "Runtime error: tmp_decls[tmp_decls.size() - 1] != NULL && decl == NULL" << std::endl;
+        // last declaration in scope
+        it = decl_stmt->decl_end();
+        --it;
+        SgNode * lastDecl = Traverse((clang::Decl*)(*it));
+        SgDeclarationStatement * last_decl_Stmt = isSgDeclarationStatement(lastDecl);
+        if (lastDecl != NULL && last_decl_Stmt == NULL) {
+            std::cerr << "Runtime error: lastDecl != NULL && last_decl_Stmt == NULL" << std::endl;
             res = false;
         }
-        *node = decl;
+        *node = last_decl_Stmt;
     }
 
-#if 1
+#if DEBUG_VISIT_STMT
     printf ("In VisitDeclStmt(): identify where the parent is not set: *node = %p = %s \n",*node,(*node)->class_name().c_str());
     printf (" --- *node parent = %p \n",(*node)->get_parent());
 #endif
@@ -1123,15 +1142,10 @@ bool ClangToSageTranslator::VisitForStmt(clang::ForStmt * for_stmt, SgNode ** no
 
     bool res = true;
 
-    printf ("Calling SageBuilder::buildForStatement_nfi(): so we can add associated expressions and statements \n");
-
  // DQ (11/28/2020): We have to build the scope first, and then build the rest bottom up.
- // SgForStatement * sg_for_stmt = SageBuilder::buildForStatement_nfi((SgForInitStatement *)NULL, NULL, NULL, NULL);
     SgForStatement* sg_for_stmt = new SgForStatement((SgStatement*)NULL,(SgExpression*)NULL,(SgStatement*)NULL);
 
-    printf ("DONE: Calling SageBuilder::buildForStatement_nfi(): so we can add associated expressions and statements \n");
-
-#if 1
+#if DEBUG_VISIT_STMT
     printf ("In VisitForStmt(): Setting the parent of the sg_for_stmt \n");
 #endif
 
@@ -1163,9 +1177,18 @@ bool ClangToSageTranslator::VisitForStmt(clang::ForStmt * for_stmt, SgNode ** no
         if (init_stmt != NULL)
             for_init_stmt_list.push_back(init_stmt);
 
+        if(for_init_stmt_list.size() == 0)
+        {
+          SgNullStatement* nullStmt = SageBuilder::buildNullStatement_nfi();
+          setCompilerGeneratedFileInfo(nullStmt, true);
+          for_init_stmt_list.push_back(nullStmt);
+        }
+
         for_init_stmt = SageBuilder::buildForInitStatement_nfi(for_init_stmt_list);
 
+#if DEBUG_VISIT_STMT
         printf ("In VisitForStmt(): for_init_stmt = %p  \n");
+#endif
 
         if (for_stmt->getInit() != NULL)
             applySourceRange(for_init_stmt, for_stmt->getInit()->getSourceRange());
@@ -1190,7 +1213,7 @@ bool ClangToSageTranslator::VisitForStmt(clang::ForStmt * for_stmt, SgNode ** no
         }
         else {
             cond_stmt = SageBuilder::buildNullStatement_nfi();
-            setCompilerGeneratedFileInfo(cond_stmt);
+            setCompilerGeneratedFileInfo(cond_stmt, true);
         }
     }
 
@@ -1207,7 +1230,7 @@ bool ClangToSageTranslator::VisitForStmt(clang::ForStmt * for_stmt, SgNode ** no
         }
         if (inc == NULL) {
             inc = SageBuilder::buildNullExpression_nfi();
-            setCompilerGeneratedFileInfo(inc);
+            setCompilerGeneratedFileInfo(inc, true);
         }
     }
 
@@ -1276,18 +1299,26 @@ bool ClangToSageTranslator::VisitGotoStmt(clang::GotoStmt * goto_stmt, SgNode **
 #endif
 
     bool res = true;
-/*
+
     SgSymbol * tmp_sym = GetSymbolFromSymbolTable(goto_stmt->getLabel());
     SgLabelSymbol * sym = isSgLabelSymbol(tmp_sym);
     if (sym == NULL) {
-        std::cerr << "Runtime error: Cannot find the symbol for the label: \"" << goto_stmt->getLabel()->getStmt()->getName() << "\"." << std::endl;
-        res = false;
+        SgNode * tmp_label = Traverse(goto_stmt->getLabel()->getStmt());
+        SgLabelStatement * label_stmt = isSgLabelStatement(tmp_label);
+        if (label_stmt == NULL) {
+            std::cerr << "Runtime error: Cannot find the symbol for the label: \"" << goto_stmt->getLabel()->getStmt()->getName() << "\"." << std::endl;
+            std::cerr << "Runtime Error: Cannot find the label: \"" << goto_stmt->getLabel()->getStmt()->getName() << "\"." << std::endl;
+            res = false;
+        }
+        else {
+            *node = SageBuilder::buildGotoStatement(label_stmt);
+        }
     }
     else {
         *node = SageBuilder::buildGotoStatement(sym->get_declaration());
     }
-*/
 
+/*
     SgNode * tmp_label = Traverse(goto_stmt->getLabel()->getStmt());
     SgLabelStatement * label_stmt = isSgLabelStatement(tmp_label);
     if (label_stmt == NULL) {
@@ -1297,7 +1328,7 @@ bool ClangToSageTranslator::VisitGotoStmt(clang::GotoStmt * goto_stmt, SgNode **
     else {
         *node = SageBuilder::buildGotoStatement(label_stmt);
     }
-
+*/
     return VisitStmt(goto_stmt, node) && res;
 }
 
@@ -1313,6 +1344,9 @@ bool ClangToSageTranslator::VisitIfStmt(clang::IfStmt * if_stmt, SgNode ** node)
 
     *node = SageBuilder::buildIfStmt_nfi(NULL, NULL, NULL);
 
+    // Pei-Hung (04/22/22) Needs to setup parent node before processing the operands.
+    // Needed for test2013_55.c and other similar tests
+    (*node)->set_parent(SageBuilder::topScopeStack());
     SageBuilder::pushScopeStack(isSgScopeStatement(*node));
 
     SgNode * tmp_cond = Traverse(if_stmt->getCond());
@@ -1804,6 +1838,12 @@ bool ClangToSageTranslator::VisitDefaultStmt(clang::DefaultStmt * default_stmt, 
 
     SgNode * tmp_stmt = Traverse(default_stmt->getSubStmt());
     SgStatement * stmt = isSgStatement(tmp_stmt);
+    SgExpression * expr = isSgExpression(tmp_stmt);
+    if (expr != NULL) {
+        stmt = SageBuilder::buildExprStatement(expr);
+        applySourceRange(stmt, default_stmt->getSubStmt()->getSourceRange());
+    }
+    ROSE_ASSERT(stmt != NULL);
 
     *node = SageBuilder::buildDefaultOptionStmt_nfi(stmt);
 
@@ -1823,6 +1863,8 @@ bool ClangToSageTranslator::VisitSwitchStmt(clang::SwitchStmt * switch_stmt, SgN
         applySourceRange(expr_stmt, switch_stmt->getCond()->getSourceRange());
 
     SgSwitchStatement * sg_switch_stmt = SageBuilder::buildSwitchStatement_nfi(expr_stmt, NULL);
+
+    sg_switch_stmt->set_parent(SageBuilder::topScopeStack());
 
     cond->set_parent(expr_stmt);
     expr_stmt->set_parent(sg_switch_stmt);
@@ -2696,12 +2738,16 @@ bool ClangToSageTranslator::VisitDeclRefExpr(clang::DeclRefExpr * decl_ref_expr,
        // DQ (11/29/2020): Added assertion.
           ROSE_ASSERT(tmp_decl != NULL);
 
+#if DEBUG_VISIT_STMT
           printf ("tmp_decl = %p = %s \n",tmp_decl,tmp_decl->class_name().c_str());
+#endif
           SgInitializedName* initializedName = isSgInitializedName(tmp_decl);
+#if DEBUG_VISIT_STMT
           if (initializedName != NULL)
              {
                printf ("Found SgInitializedName: initializedName->get_name() = %s \n",initializedName->get_name().str());
              }
+#endif
 
           if (tmp_decl != NULL)
              {
@@ -2800,7 +2846,9 @@ bool ClangToSageTranslator::VisitDesignatedInitExpr(clang::DesignatedInitExpr * 
     std::cerr << "ClangToSageTranslator::VisitDesignatedInitExpr" << std::endl;
 #endif
 
-    SgInitializer * init = NULL;    
+    SgInitializer * base_init = NULL;    
+    SgDesignatedInitializer * designated_init = NULL;    
+    SgExprListExp * expr_list_exp = NULL; 
     {
         SgNode * tmp_expr = Traverse(designated_init_expr->getInit());
         SgExpression * expr = isSgExpression(tmp_expr);
@@ -2808,17 +2856,87 @@ bool ClangToSageTranslator::VisitDesignatedInitExpr(clang::DesignatedInitExpr * 
         SgExprListExp * expr_list_exp = isSgExprListExp(expr);
         if (expr_list_exp != NULL) {
             // FIXME get the type right...
-            init = SageBuilder::buildAggregateInitializer_nfi(expr_list_exp, NULL);
+            base_init = SageBuilder::buildAggregateInitializer_nfi(expr_list_exp, NULL);
         }
         else {
-            init = SageBuilder::buildAssignInitializer_nfi(expr, expr->get_type());
+            base_init = SageBuilder::buildAssignInitializer_nfi(expr, expr->get_type());
         }
-        ROSE_ASSERT(init != NULL);
-        applySourceRange(init, designated_init_expr->getInit()->getSourceRange());
+        ROSE_ASSERT(base_init != NULL);
+        applySourceRange(base_init, designated_init_expr->getInit()->getSourceRange());
     }
 
-    SgExprListExp * expr_list_exp = SageBuilder::buildExprListExp_nfi();
+
+/* Pei-Hung (06/10/2022) revision to handle Initializer in test2013_37.c
+ *  After calling getSyntacticForm from InitListExpr, the type and multidimensional array hierarchy is missing.
+ *  This version can construct the array structure but need additional support to grab the type structure from 
+ *  parent AST node, such as VarDecl.
+ */
+
     auto designatorSize = designated_init_expr->size();
+
+    for (auto it=designatorSize; it > 0; it--) {
+        expr_list_exp = SageBuilder::buildExprListExp_nfi();
+        SgExpression * expr = NULL;
+        clang::DesignatedInitExpr::Designator * D = designated_init_expr->getDesignator(it-1);
+        if (D->isFieldDesignator()) {
+            SgSymbol * symbol = GetSymbolFromSymbolTable(D->getField());
+            SgVariableSymbol * var_sym = isSgVariableSymbol(symbol);
+            ROSE_ASSERT(var_sym != NULL);
+            expr = SageBuilder::buildVarRefExp_nfi(var_sym);
+        }
+        else if (D->isArrayDesignator()) {
+            SgNode * tmp_expr = NULL;
+            if(clang::ConstantExpr::classof(designated_init_expr->getArrayIndex(*D)))
+            {
+               clang::FullExpr* fullExpr = (clang::FullExpr*) designated_init_expr->getArrayIndex(*D);
+               clang::IntegerLiteral* integerLiteral = (clang::IntegerLiteral*) fullExpr->getSubExpr();
+               tmp_expr = SageBuilder::buildUnsignedLongVal((unsigned long) integerLiteral->getValue().getSExtValue());
+            }
+            else
+            {
+               tmp_expr = Traverse(designated_init_expr->getArrayIndex(*D));
+            }
+            expr = isSgExpression(tmp_expr);
+            ROSE_ASSERT(expr != NULL);
+
+        }
+        else if (D->isArrayRangeDesignator()) {
+            ROSE_ASSERT(!"I don't believe range designator initializer are supported by ROSE...");    
+        }
+        else ROSE_ABORT();
+
+        ROSE_ASSERT(expr != NULL);
+
+        applySourceRange(expr, D->getSourceRange());
+        expr->set_parent(expr_list_exp);
+        expr_list_exp->append_expression(expr);
+        if(it > 1)
+        {
+            SgDesignatedInitializer * design_init = new SgDesignatedInitializer(expr_list_exp, base_init);
+            applySourceRange(design_init, designated_init_expr->getDesignatorsSourceRange());
+            expr_list_exp->set_parent(design_init);
+            base_init->set_parent(design_init);
+            SgExprListExp* aggListExp = SageBuilder::buildExprListExp_nfi();
+            design_init->set_parent(aggListExp);
+            aggListExp->append_expression(design_init);
+            SgAggregateInitializer* newAggInit = SageBuilder::buildAggregateInitializer_nfi(aggListExp, NULL);
+            expr_list_exp = SageBuilder::buildExprListExp_nfi(); 
+            base_init = newAggInit; 
+        }
+
+    }
+
+    applySourceRange(expr_list_exp, designated_init_expr->getDesignatorsSourceRange());
+    designated_init = new SgDesignatedInitializer(expr_list_exp, base_init);
+    expr_list_exp->set_parent(base_init);
+    base_init->set_parent(designated_init);
+
+    *node = designated_init;
+
+    return VisitExpr(designated_init_expr, node);
+
+// Pei-Hung (06/10/2022) keep the original implementation which has the array information stored in the list
+/*
     for (auto it=0; it < designatorSize; it++) {
         SgExpression * expr = NULL;
         clang::DesignatedInitExpr::Designator * D = designated_init_expr->getDesignator(it);
@@ -2830,7 +2948,18 @@ bool ClangToSageTranslator::VisitDesignatedInitExpr(clang::DesignatedInitExpr * 
             applySourceRange(expr, D->getSourceRange());
         }
         else if (D->isArrayDesignator()) {
-            SgNode * tmp_expr = Traverse(designated_init_expr->getArrayIndex(*D));
+            SgNode * tmp_expr = NULL;
+            if(clang::ConstantExpr::classof(designated_init_expr->getArrayIndex(*D)))
+            {
+               clang::FullExpr* fullExpr = (clang::FullExpr*) designated_init_expr->getArrayIndex(*D);
+               clang::IntegerLiteral* integerLiteral = (clang::IntegerLiteral*) fullExpr->getSubExpr();
+               tmp_expr = SageBuilder::buildUnsignedLongVal((unsigned long) integerLiteral->getValue().getSExtValue());
+std::cerr << "idx:" << integerLiteral->getValue().getSExtValue() << std::endl;
+            }
+            else
+            {
+               tmp_expr = Traverse(designated_init_expr->getArrayIndex(*D));
+            }
             expr = isSgExpression(tmp_expr);
             ROSE_ASSERT(expr != NULL);
         }
@@ -2854,6 +2983,7 @@ bool ClangToSageTranslator::VisitDesignatedInitExpr(clang::DesignatedInitExpr * 
     *node = design_init;
 
     return VisitExpr(designated_init_expr, node);
+*/
 }
 
 bool ClangToSageTranslator::VisitDesignatedInitUpdateExpr(clang::DesignatedInitUpdateExpr * designated_init_update, SgNode ** node) {
@@ -3061,7 +3191,23 @@ bool ClangToSageTranslator::VisitInitListExpr(clang::InitListExpr * init_list_ex
         SgNode * tmp_expr = Traverse(*it);
         SgExpression * expr = isSgExpression(tmp_expr);
         ROSE_ASSERT(expr != NULL);
-        expr_list_expr->append_expression(expr);
+
+        // Pei-Hung (05/13/2022) the expr can another InitListExpr
+        SgExprListExp * child_expr_list_expr = isSgExprListExp(expr);
+        SgInitializer * init = NULL;
+        if (child_expr_list_expr != NULL)
+        {
+            SgType * type = expr->get_type();
+            init = SageBuilder::buildAggregateInitializer(child_expr_list_expr, type);
+        }
+
+        if (init != NULL)
+        {
+            applySourceRange(init, (*it)->getSourceRange());
+            expr_list_expr->append_expression(init);
+        }
+        else
+            expr_list_expr->append_expression(expr);
     }
 
     *node = expr_list_expr;
@@ -3116,10 +3262,11 @@ bool ClangToSageTranslator::VisitMemberExpr(clang::MemberExpr * member_expr, SgN
 
     SgVariableSymbol * var_sym  = isSgVariableSymbol(sym);
     SgMemberFunctionSymbol * func_sym = isSgMemberFunctionSymbol(sym);
+    SgClassSymbol * class_sym  = isSgClassSymbol(sym);
 
     SgExpression * sg_member_expr = NULL;
 
-    bool successful_cast = var_sym || func_sym;
+    bool successful_cast = var_sym || func_sym || class_sym;
     if (sym != NULL && !successful_cast) {
         std::cerr << "Runtime error: Unknown type of symbol for a member reference." << std::endl;
         std::cerr << "    sym->class_name() = " << sym->class_name()  << std::endl;
@@ -3130,6 +3277,22 @@ bool ClangToSageTranslator::VisitMemberExpr(clang::MemberExpr * member_expr, SgN
     }
     else if (func_sym != NULL) { // C++
         sg_member_expr = SageBuilder::buildMemberFunctionRefExp_nfi(func_sym, false, false); // FIXME 2nd and 3rd params ?
+    }
+    else if (class_sym != NULL) { 
+        SgClassDeclaration* classDecl = class_sym->get_declaration();
+        SgClassDeclaration* classDefDecl = isSgClassDeclaration(classDecl->get_definition());
+        SgType* classType = classDecl->get_type();
+//        if(classDecl->get_isUnNamed())
+        {
+          SgName varName(generate_name_for_variable(member_expr));
+          std::cerr << "build varName:" << varName << std::endl;
+          SgVariableDeclaration * var_decl = SageBuilder::buildVariableDeclaration(varName, classType, NULL,SageBuilder::topScopeStack());
+          var_decl->set_baseTypeDefiningDeclaration(classDefDecl);
+          var_decl->set_variableDeclarationContainsBaseTypeDefiningDeclaration(true);
+          var_decl->set_parent(SageBuilder::topScopeStack());
+          
+          sg_member_expr = SageBuilder::buildVarRefExp(var_decl);
+        }
     }
 
     ROSE_ASSERT(sg_member_expr != NULL);
@@ -3183,7 +3346,56 @@ bool ClangToSageTranslator::VisitOffsetOfExpr(clang::OffsetOfExpr * offset_of_ex
 #endif
     bool res = true;
 
-    // TODO
+    SgNodePtrList nodePtrList;
+  
+    SgType* type = buildTypeFromQualifiedType(offset_of_expr->getTypeSourceInfo()->getType());
+
+    nodePtrList.push_back(type);
+
+    SgExpression* topExp = nullptr;
+ 
+    for (unsigned i = 0, n = offset_of_expr->getNumComponents(); i < n; ++i) {
+        clang::OffsetOfNode ON = offset_of_expr->getComponent(i);
+          
+        switch(ON.getKind()) {
+           case clang::OffsetOfNode::Array: {
+               // Array node
+               SgExpression* arrayIdx = isSgExpression(Traverse(offset_of_expr->getIndexExpr(ON.getArrayExprIndex())));
+               SgPntrArrRefExp* pntrArrRefExp = SageBuilder::buildPntrArrRefExp(topExp,arrayIdx);
+               topExp = isSgExpression(pntrArrRefExp);
+               break;
+           }
+           case clang::OffsetOfNode::Field:{
+               SgNode* fieldNode = Traverse(ON.getField());
+               SgName fieldName(ON.getFieldName()->getName().str());
+               SgVarRefExp* varExp = SageBuilder::buildVarRefExp(fieldName);
+               if(topExp == nullptr)
+               {
+                 topExp = isSgExpression(varExp);
+               }
+               else
+               {
+                 SgDotExp* dotExp = SageBuilder::buildDotExp(topExp, varExp);
+                 topExp = isSgExpression(dotExp);
+               }
+               break;
+           }
+           // TODO
+           case clang::OffsetOfNode::Identifier:{
+               SgName fieldName(ON.getFieldName()->getName().str());
+               SgVarRefExp* varExp = SageBuilder::buildVarRefExp(fieldName);
+               break;
+           }
+           // TODO
+           case clang::OffsetOfNode::Base:
+               break;
+        }
+    }
+    nodePtrList.push_back(topExp);
+
+    SgTypeTraitBuiltinOperator* typeTraitBuiltinOperator = SageBuilder::buildTypeTraitBuiltinOperator("__builtin_offsetof", nodePtrList);
+
+    *node = typeTraitBuiltinOperator;
 
     return VisitExpr(offset_of_expr, node) && res;
 }
@@ -3548,14 +3760,72 @@ bool ClangToSageTranslator::VisitUnaryExprOrTypeTraitExpr(clang::UnaryExprOrType
 
     switch (unary_expr_or_type_trait_expr->getKind()) {
         case clang::UETT_SizeOf:
-            if (type != NULL) *node = SageBuilder::buildSizeOfOp_nfi(type);
+            if (type != NULL) 
+            {
+               std::map<SgClassType *, bool>::iterator bool_it = p_class_type_decl_first_see_in_type.find(isSgClassType(type));
+               SgSizeOfOp* sizeofOp = SageBuilder::buildSizeOfOp_nfi(type);
+
+               //Pei-Hung (08/16/22): try to follow VisitTypedefDecl to check if the classType is first seen 
+
+               clang::QualType argumentQualType = unary_expr_or_type_trait_expr->getArgumentType();
+               const clang::Type* argumentType = argumentQualType.getTypePtr();
+               bool isembedded = false;
+               bool iscompleteDefined = false;
+
+               while((isa<clang::ElaboratedType>(argumentType)) || (isa<clang::PointerType>(argumentType)) || (isa<clang::ArrayType>(argumentType)))
+               {
+                  if(isa<clang::ElaboratedType>(argumentType))
+                  {
+                    argumentQualType = ((clang::ElaboratedType *)argumentType)->getNamedType();
+                  }
+                  else if(isa<clang::PointerType>(argumentType))
+                  {
+                    argumentQualType = ((clang::PointerType *)argumentType)->getPointeeType();
+                  }
+                  else if(isa<clang::ArrayType>(argumentType))
+                  {
+                    argumentQualType = ((clang::ArrayType *)argumentType)->getElementType();
+                  }
+                  argumentType = argumentQualType.getTypePtr();
+               }
+
+               if(isa<clang::RecordType>(argumentType))
+               {
+                  clang::RecordType* argumentRecordType = (clang::RecordType*)argumentType;
+                  clang::RecordDecl* recordDeclaration = argumentRecordType->getDecl();
+                  isembedded = recordDeclaration->isEmbeddedInDeclarator();
+                  iscompleteDefined = recordDeclaration->isCompleteDefinition();
+               }
+
+               if (isSgClassType(type) && iscompleteDefined) {
+                   std::map<SgClassType *, bool>::iterator bool_it = p_class_type_decl_first_see_in_type.find(isSgClassType(type));
+                   ROSE_ASSERT(bool_it != p_class_type_decl_first_see_in_type.end());
+                   if (bool_it->second) {
+                       // Pei-Hung (08/16/22) If it is first seen, the definition should be unparsed in sizeofOp
+                       sizeofOp->set_sizeOfContainsBaseTypeDefiningDeclaration(true);
+                       bool_it->second = false;
+                   }
+                 
+               }
+
+               *node = sizeofOp;
+            }
             else if (expr != NULL) *node = SageBuilder::buildSizeOfOp_nfi(expr);
             else res = false;
             break;
         case clang::UETT_AlignOf:
-            ROSE_ASSERT(!"C/C++  - AlignOf is not supported!");
+        case clang::UETT_PreferredAlignOf:
+            if (type != NULL) {
+              *node = SageBuilder::buildSizeOfOp_nfi(type);
+              ROSE_ASSERT(FAIL_FIXME == 0); // difference between AlignOf and PreferredAlignOf is not represented in ROSE
+            }
+            else if (expr != NULL) *node = SageBuilder::buildSizeOfOp_nfi(expr);
+            else res = false;
+            break;
         case clang::UETT_VecStep:
             ROSE_ASSERT(!"OpenCL - VecStep is not supported!");
+        default:
+            ROSE_ASSERT(!"Unknown clang::UETT_xx");
     }
 
     return VisitStmt(unary_expr_or_type_trait_expr, node) && res;
@@ -3600,11 +3870,13 @@ bool ClangToSageTranslator::VisitUnaryOperator(clang::UnaryOperator * unary_oper
         case clang::UO_Minus:
             *node = SageBuilder::buildMinusOp(subexpr);
             break;
+        // Def. in Clang: UNARY_OPERATION(Not, "~")
         case clang::UO_Not:
-            *node = SageBuilder::buildNotOp(subexpr);
-            break;
-        case clang::UO_LNot:
             *node = SageBuilder::buildBitComplementOp(subexpr);
+            break;
+        // Def. in UNARY_OPERATION(LNot, "!")
+        case clang::UO_LNot:
+            *node = SageBuilder::buildNotOp(subexpr);
             break;
         case clang::UO_Real:
             *node = SageBuilder::buildImagPartOp(subexpr);
@@ -3645,19 +3917,9 @@ bool ClangToSageTranslator::VisitLabelStmt(clang::LabelStmt * label_stmt, SgNode
 
     SgName name(label_stmt->getName());
 
-    SgNode * tmp_sub_stmt = Traverse(label_stmt->getSubStmt());
-    SgStatement * sg_sub_stmt = isSgStatement(tmp_sub_stmt);
-    if (sg_sub_stmt == NULL) {
-        SgExpression * sg_sub_expr = isSgExpression(tmp_sub_stmt);
-        ROSE_ASSERT(sg_sub_expr != NULL);
-        sg_sub_stmt = SageBuilder::buildExprStatement(sg_sub_expr);
-    }
-
-    ROSE_ASSERT(sg_sub_stmt != NULL);
-
-    *node = SageBuilder::buildLabelStatement_nfi(name, sg_sub_stmt, SageBuilder::topScopeStack());
-
+    *node = SageBuilder::buildLabelStatement_nfi(name, NULL, SageBuilder::topScopeStack());
     SgLabelStatement * sg_label_stmt = isSgLabelStatement(*node);
+
     SgFunctionDefinition * label_scope = NULL;
     std::list<SgScopeStatement *>::reverse_iterator it = SageBuilder::ScopeStack.rbegin();
     while (it != SageBuilder::ScopeStack.rend() && label_scope == NULL) {
@@ -3673,6 +3935,19 @@ bool ClangToSageTranslator::VisitLabelStmt(clang::LabelStmt * label_stmt, SgNode
         SgLabelSymbol* label_sym = new SgLabelSymbol(sg_label_stmt);
         label_scope->insert_symbol(label_sym->get_name(), label_sym);
     }
+
+    SgNode * tmp_sub_stmt = Traverse(label_stmt->getSubStmt());
+    SgStatement * sg_sub_stmt = isSgStatement(tmp_sub_stmt);
+    if (sg_sub_stmt == NULL) {
+        SgExpression * sg_sub_expr = isSgExpression(tmp_sub_stmt);
+        ROSE_ASSERT(sg_sub_expr != NULL);
+        sg_sub_stmt = SageBuilder::buildExprStatement(sg_sub_expr);
+    }
+
+    ROSE_ASSERT(sg_sub_stmt != NULL);
+
+    sg_sub_stmt->set_parent(sg_label_stmt);
+    sg_label_stmt->set_statement(sg_sub_stmt);
 
     return VisitStmt(label_stmt, node) && res;
 }

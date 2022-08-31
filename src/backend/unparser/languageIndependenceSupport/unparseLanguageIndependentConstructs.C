@@ -9861,6 +9861,7 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
           case V_SgBitAndOp:         // return 8;
                                      precedence_value = 8; break;
 
+          case V_SgBitEqvOp:         // return 9;
           case V_SgEqualityOp:       // return 9;
           case V_SgNotEqualOp:       // return 9;
                                      precedence_value = 9; break;

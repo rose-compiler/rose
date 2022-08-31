@@ -7,7 +7,7 @@
 
 #include <Rose/Diagnostics.h>
 #include <rose_strtoull.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Utility.h>
 #include <boost/algorithm/string/trim.hpp>
 #include <stringify.h>
@@ -22,7 +22,7 @@
 using namespace Rose;
 using namespace Rose::BinaryAnalysis;
 using namespace Rose::Diagnostics;
-using namespace Rose::BinaryAnalysis::InstructionSemantics2;
+using namespace Rose::BinaryAnalysis::InstructionSemantics;
 
 namespace RSIM_Debugger {
 
@@ -387,7 +387,7 @@ public:
 
             if (cmd.size() > 1) {
                 rose_addr_t n = parseInteger(cmd[1]);
-                BaseSemantics::SValuePtr value = thread->operators()->number_(reg.nBits(), n);
+                BaseSemantics::SValue::Ptr value = thread->operators()->number_(reg.nBits(), n);
                 thread->operators()->writeRegister(reg, value);
             }
 

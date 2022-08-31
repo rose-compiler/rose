@@ -339,6 +339,9 @@ nodist_pkginclude_HEADERS = \
    AstQueryMemoryPool.h \
    astFileIO/AstSpecificDataManagingClass.h
 
+libRoseTraits_includedir = $(prefix)/include/Rose/Traits
+libRoseTraits_include_HEADERS = Rose/Traits/generated.h
+
 BUILT_SOURCES = $(GENERATED_SOURCE)
 if ROSE_BUILD_CPP_LANGUAGE_SUPPORT
 if ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT

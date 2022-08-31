@@ -3,6 +3,10 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Concolic/LinuxExecutor.h>
 
+#include <Rose/BinaryAnalysis/Concolic/Database.h>
+#include <Rose/BinaryAnalysis/Concolic/Specimen.h>
+#include <Rose/BinaryAnalysis/Concolic/TestCase.h>
+#include <Rose/FileSystem.h>
 #include <boost/lexical_cast.hpp>
 #include <fcntl.h>
 #include <sys/personality.h>
@@ -13,8 +17,6 @@
 #if BOOST_VERSION >= 105300
 #include <boost/atomic.hpp>
 #endif /* BOOST_VERSION */
-
-#include <Rose/BinaryAnalysis/Concolic/io-utility.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -268,7 +270,7 @@ LinuxExecutor::execute(const TestCase::Ptr& tc)
   bstfs::path              logerr(basename + "_err.log");
   bstfs::path              qualScore(basename + ".qs");
 
-  storeBinaryFile(specimen->content(), binary);
+  FileSystem::writeFile(binary, specimen->content());
   bstfs::permissions(binary, bstfs::add_perms | bstfs::owner_read | bstfs::owner_exe);
 
   Persona                  persona;
@@ -296,14 +298,13 @@ LinuxExecutor::execute(const TestCase::Ptr& tc)
                                                     tc
                                                   );
 
-  const std::string        outstr  = loadTextFile(logout);
-  const std::string        errstr  = loadTextFile(logerr);
+  const std::string        outstr  = FileSystem::readFile<std::string>(logout);
+  const std::string        errstr  = FileSystem::readFile<std::string>(logerr);
   double                   rank    = errcode;
 
   if (withExecMonitor)
   {
-    std::stringstream results(loadTextFile(qualScore));
-
+    std::stringstream results(FileSystem::readFile<std::string>(qualScore));
     results >> errcode >> rank;
     bstfs::remove(qualScore);
   }

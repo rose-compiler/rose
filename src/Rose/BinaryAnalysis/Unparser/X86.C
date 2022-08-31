@@ -3,6 +3,8 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Unparser/X86.h>
 
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
+
 #include <boost/algorithm/string/erase.hpp>
 #include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/string/predicate.hpp>
@@ -40,9 +42,9 @@ unparseX86Mnemonic(SgAsmX86Instruction *insn) {
 // We use the amd64 architecture if no register dictionary is specified because, since it's backward compatible with the 8086,
 // it contains definitions for all the registers from older architectures.
 std::string
-unparseX86Register(SgAsmInstruction *insn, RegisterDescriptor reg, const RegisterDictionary *registers) {
+unparseX86Register(SgAsmInstruction *insn, RegisterDescriptor reg, RegisterDictionary::Ptr registers) {
     if (!registers)
-        registers = RegisterDictionary::dictionary_amd64();
+        registers = RegisterDictionary::instanceAmd64();
     std::string name = registers->lookup(reg);
     if (name.empty())
         name = invalidRegister(insn, reg, registers);
@@ -50,7 +52,7 @@ unparseX86Register(SgAsmInstruction *insn, RegisterDescriptor reg, const Registe
 }
 
 std::string
-unparseX86Register(RegisterDescriptor reg, const RegisterDictionary *registers) {
+unparseX86Register(RegisterDescriptor reg, const RegisterDictionary::Ptr &registers) {
     return unparseX86Register(NULL, reg, registers);
 }
 
@@ -95,7 +97,7 @@ x86TypeToPtrName(SgAsmType* ty) {
 }
 
 std::string
-unparseX86Expression(SgAsmExpression *expr, const LabelMap *labels, const RegisterDictionary *registers, bool leaMode) {
+unparseX86Expression(SgAsmExpression *expr, const LabelMap *labels, const RegisterDictionary::Ptr &registers, bool leaMode) {
     std::string result = "";
     if (expr == NULL) return "BOGUS:NULL";
 
@@ -179,7 +181,7 @@ unparseX86Expression(SgAsmExpression *expr, const LabelMap *labels, const Regist
 
 /** Returns a string containing the specified operand. */
 std::string
-unparseX86Expression(SgAsmExpression *expr, const LabelMap *labels, const RegisterDictionary *registers) {
+unparseX86Expression(SgAsmExpression *expr, const LabelMap *labels, const RegisterDictionary::Ptr &registers) {
     /* Find the instruction with which this expression is associated. */
     SgAsmX86Instruction *insn = NULL;
     for (SgNode *node=expr; !insn && node; node=node->get_parent()) {

@@ -11,7 +11,7 @@
 
 #include "SgNodeHelper.h" //Markus's helper functions
 
-#include "Rose/AST/utils.h"
+#include "Rose/AST/Utils.h"
 
 #include "sageInterface.h"
 
@@ -1936,6 +1936,12 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
               break;
             }
 
+            case V_SgAdaVariantDecl:
+            {
+              name = "_ada_variant_decl_";
+              break;
+            }
+
             case V_SgAdaAttributeClause:
             {
               name = "_ada_attribute_clause_";
@@ -2008,23 +2014,19 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
               break;
             }
 
-            case V_SgAdaVariantFieldDecl:
+            case V_SgAdaParameterList:
             {
-              const SgAdaVariantFieldDecl* variantDecl = isSgAdaVariantFieldDecl(declaration);
-              ROSE_ASSERT(variantDecl);
+              const SgAdaParameterList* plst = isSgAdaParameterList(declaration);
+              ROSE_ASSERT(plst);
 
-              const SgInitializedNamePtrList& lst = variantDecl->get_variables();
-
-              name = "_ada_variant_field_";
-
-              if (lst.empty()) name += "null_";
-
-              for (const SgInitializedName* el : lst)
-              {
-                name += el->get_name();
-                name += "_";
-              }
-
+              name = std::accumulate( plst->get_parameters().begin(), plst->get_parameters().end(),
+                                      std::string{"_ada_parameter_list_"},
+                                      [](std::string n, SgDeclarationStatement* rhs) -> std::string
+                                      {
+                                        n += SageInterface::get_name(rhs);
+                                        return n;
+                                      }
+                                    );
               break;
             }
 
@@ -5453,6 +5455,28 @@ SageInterface::is_Java_language()
 #endif
    }
 
+bool
+SageInterface::is_Jvm_language()
+   {
+#if OPTIMIZE_IS_LANGUAGE_KIND_FUNCTIONS
+  // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
+     return Rose::is_Jvm_language;
+#else
+     bool returnValue = false;
+
+     vector<SgFile*> fileList = generateFileList();
+
+     int size = (int)fileList.size();
+     for (int i = 0; i < size; i++)
+        {
+          if (fileList[i]->get_Jvm_only() == true)
+               returnValue = true;
+        }
+
+     return returnValue;
+#endif
+   }
+
 // Rasmussen (4/4/2018): Added Jovial
 bool
 SageInterface::is_Jovial_language()
@@ -7815,21 +7839,21 @@ bool SageInterface::isMain(const SgNode* n)
       }
    }
    else {
-      if (isSgFunctionDeclaration(n) != NULL) {
+      if (isSgFunctionDeclaration(n) != nullptr) {
          bool either = false;
          if (SageInterface::is_Java_language()) {
             either = true;
          }
          else {
             const SgStatement* stmnt = isSgStatement(n);
-            ROSE_ASSERT(stmnt != NULL);
+            ROSE_ASSERT(stmnt != nullptr);
             if (isSgGlobal(stmnt->get_scope())) {
                either = true;
             }
          }
          if (either) {
             const SgFunctionDeclaration* funcDefn = isSgFunctionDeclaration(n);
-            ROSE_ASSERT(funcDefn != NULL);
+            ROSE_ASSERT(funcDefn != nullptr);
             if (funcDefn->get_name() == "main") {
                result = true;
             }
@@ -10993,6 +11017,26 @@ std::pair<SgVariableDeclaration*, SgExpression*> SageInterface::createTempVariab
 }
 
 
+namespace
+{
+  void
+  replaceExpressionInSgExpressionPtrList(SgExpression* oldExp, SgExpression* newExp, SgExpressionPtrList& lst, bool replAll = false)
+  {
+    SgExpressionPtrList::iterator lim = lst.end();
+    SgExpressionPtrList::iterator pos = lst.begin();
+    bool                          chg = false;
+
+    do
+    {
+      pos = std::find(pos, lim, oldExp);
+
+      if (pos != lim) { *pos = newExp; ++pos; chg = true; }
+    } while (replAll && (pos != lim));
+
+    ROSE_ASSERT(chg);
+  }
+}
+
 // This code is based on OpenMP translator's ASTtools::replaceVarRefExp() and astInling's replaceExpressionWithExpression()
 // Motivation: It involves the parent node to replace a VarRefExp with a new node
 // Used to replace shared variables with the dereference expression of their addresses
@@ -11080,25 +11124,19 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
        // break; //replace the first occurrence only??
       }
     }
-  } else if (SgAdaIndexConstraint* ada_idx_c = isSgAdaIndexConstraint(parent))
-  {
-    SgExpressionPtrList& explist= ada_idx_c->get_indexRanges();
- // parent set to wrong node??
-     for (Rose_STL_Container<SgExpression*>::iterator i=explist.begin();i!=explist.end();i++) {
-      if (isSgExpression(*i)==oldExp) {
-        //SgExprListExp* parentExpListExp = isSgExprListExp(parent);
-        //parentExpListExp->replace_expression(oldExp,newExp);
-        //ada_idx_c->replace_expression(oldExp,newExp);
-        *i = newExp;
-        newExp->set_parent(ada_idx_c);
-       // break; //replace the first occurrence only??
-      }
-     }
   }
   else if (isSgValueExp(parent)) {
       // For compiler generated code, this could happen.
       // We can just ignore this function call since it will not appear in the final AST.
       return;
+  }
+  else if (SgActualArgumentExpression* actexp = isSgActualArgumentExpression(parent)) {
+    // PP (4/25/22) since SgExpression::replace_expression is deprecated, I added the
+    //              functionality for replacing SgActualArgumentExpression::expression
+    //              here.
+    //              Note, this case needs to be ordered before isSgExpression!
+    ROSE_ASSERT(oldExp == actexp->get_expression());
+    actexp->set_expression(newExp);
   } else if ((parentExp=isSgExpression(parent)) != NULL) {
     int worked = parentExp->replace_expression(oldExp, newExp);
     // ROSE_DEPRECATED_FUNCTION
@@ -11142,6 +11180,60 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
     } else {
       ROSE_ABORT();
     }
+  }
+  else if (SgAdaExitStmt* stm = isSgAdaExitStmt(parent)) {
+    ROSE_ASSERT(oldExp == stm->get_condition());
+    stm->set_condition(newExp);
+  }
+  else if (SgAdaModularType* ptype = isSgAdaModularType(parent)) {
+    ROSE_ASSERT(oldExp == ptype->get_modexpr());
+    ptype->set_modexpr(newExp);
+  }
+  else if (SgAdaDelayStmt* stm = isSgAdaDelayStmt(parent)) {
+    ROSE_ASSERT(oldExp == stm->get_time());
+    stm->set_time(newExp);
+  } else if (SgAdaAttributeClause* clause = isSgAdaAttributeClause(parent)) {
+    ROSE_ASSERT(oldExp == clause->get_size());
+    clause->set_size(newExp);
+  } else if (SgAdaRenamingDecl* dcl = isSgAdaRenamingDecl(parent)) {
+    ROSE_ASSERT(oldExp == dcl->get_renamed());
+    dcl->set_renamed(newExp);
+  } else if (SgAdaEntryDecl* dcl = isSgAdaEntryDecl(parent)) {
+    ROSE_ASSERT(oldExp == dcl->get_entryBarrier());
+    dcl->set_entryBarrier(newExp);
+  } else if (SgAdaSelectAlternativeStmt* stm = isSgAdaSelectAlternativeStmt(parent)) {
+    ROSE_ASSERT(oldExp == stm->get_guard());
+    stm->set_guard(newExp);
+  } else if (SgAdaDeltaConstraint* delc = isSgAdaDeltaConstraint(parent)) {
+    ROSE_ASSERT(oldExp == delc->get_delta());
+    delc->set_delta(newExp);
+  } else if (SgAdaDigitsConstraint* digc = isSgAdaDigitsConstraint(parent)) {
+    ROSE_ASSERT(oldExp == digc->get_digits());
+    digc->set_digits(newExp);
+  } else if (SgAdaDiscriminantConstraint* disc = isSgAdaDiscriminantConstraint(parent)) {
+    replaceExpressionInSgExpressionPtrList(oldExp, newExp, disc->get_discriminants());
+  } else if (SgAdaRangeConstraint* rngc = isSgAdaRangeConstraint(parent)) {
+    ROSE_ASSERT(oldExp == rngc->get_range());
+    rngc->set_range(newExp);
+  } else if (SgAdaIndexConstraint* idxc = isSgAdaIndexConstraint(parent)) {
+    replaceExpressionInSgExpressionPtrList(oldExp, newExp, idxc->get_indexRanges());
+  } else if (SgAdaVariantDecl* vtdcl = isSgAdaVariantDecl(parent)) {
+    ROSE_ASSERT(oldExp == vtdcl->get_discriminant());
+    vtdcl->set_discriminant(newExp);
+  } else if (SgAdaVariantWhenStmt* vtwhen = isSgAdaVariantWhenStmt(parent)) {
+    ROSE_ASSERT(oldExp == vtwhen->get_choices());
+    SgExprListExp* newLst = isSgExprListExp(newExp);
+    ROSE_ASSERT(newLst);
+    vtwhen->set_choices(newLst);
+  } else if (SgAdaComponentClause* clause = isSgAdaComponentClause(parent)) {
+    if (oldExp == clause->get_offset())
+      clause->set_offset(newExp);
+    else if (oldExp == clause->get_range() && isSgRangeExp(newExp))
+      clause->set_range(isSgRangeExp(newExp));
+    else if (oldExp == clause->get_component() && isSgVarRefExp(newExp))
+      clause->set_component(isSgVarRefExp(newExp));
+    else
+      ROSE_ABORT();
   } else {
     cerr<<"SageInterface::replaceExpression(). Unhandled parent expression type of SageIII enum value: " <<parent->class_name()<<endl;
     ROSE_ABORT();
@@ -25193,6 +25285,9 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
   if (SgFunctionDeclaration* f = isSgFunctionDeclaration(node) )
     out<<" "<< f->get_qualified_name();
 
+  if (SgAdaFunctionRenamingDecl* f = isSgAdaFunctionRenamingDecl(node) )
+    out<<" renamed_function "<< f->get_renamed_function();
+
   if (SgClassDeclaration* f = isSgClassDeclaration(node) )
     out<<" "<< f->get_qualified_name();
 
@@ -25248,6 +25343,33 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
   if (SgShortVal* v= isSgShortVal(node))
     out<<" value="<< v->get_value() <<" valueString="<< v->get_valueString();
 
+  if (SgLongIntVal* v= isSgLongIntVal(node))
+    out<<" value="<< v->get_value() <<" valueString="<< v->get_valueString();
+
+  if (SgLongLongIntVal* v= isSgLongLongIntVal(node))
+    out<<" value="<< v->get_value() <<" valueString="<< v->get_valueString();
+
+  if (SgUnsignedIntVal* v= isSgUnsignedIntVal(node))
+    out<<" value="<< v->get_value() <<" valueString="<< v->get_valueString();
+
+  if (SgUnsignedShortVal* v= isSgUnsignedShortVal(node))
+    out<<" value="<< v->get_value() <<" valueString="<< v->get_valueString();
+
+  if (SgUnsignedLongVal* v= isSgUnsignedLongVal(node))
+    out<<" value="<< v->get_value() <<" valueString="<< v->get_valueString();
+
+  if (SgUnsignedLongLongIntVal* v= isSgUnsignedLongLongIntVal(node))
+    out<<" value="<< v->get_value() <<" valueString="<< v->get_valueString();
+
+  if (SgFloatVal* v= isSgFloatVal(node))
+    out<<" value="<< v->get_value() <<" valueString="<< v->get_valueString();
+
+  if (SgDoubleVal* v= isSgDoubleVal(node))
+    out<<" value="<< v->get_value() <<" valueString="<< v->get_valueString();
+
+  if (SgLongDoubleVal* v= isSgLongDoubleVal(node))
+    out<<" value="<< v->get_value() <<" valueString="<< v->get_valueString();
+
   if (SgVarRefExp* var_ref= isSgVarRefExp(node) )
     out<<" init name@"<< var_ref->get_symbol()->get_declaration() <<" symbol name="<<var_ref->get_symbol()->get_name();
 
@@ -25282,11 +25404,14 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
   if (SgAdaAttributeExp* v= isSgAdaAttributeExp(node))
     out<<" attribute@"<< v->get_attribute();
 
+  if (SgUsingDirectiveStatement* v= isSgUsingDirectiveStatement(node))
+    out<<" namespaceDeclaration="<< v->get_namespaceDeclaration();
+
   out<<endl;
 
   std::vector<SgNode* > children = node->get_traversalSuccessorContainer();
-  int total_count = children.size();
 #if 0
+  int total_count = children.size();
   int current_index=0;
 #endif
 
@@ -25300,10 +25425,12 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
     }
   }
 
+#if 0
   // some Sg??PtrList are not AST nodes, not part of children , we need to handle them separatedly
   // we sum all children into single total_count to tell if there is remaining children.
   if (isSgTemplateInstantiationDecl (node))
     total_count += 1; // sn->get_templateArguments().size();
+#endif
 
    // handling SgTemplateArgumentPtrList first
   if (SgTemplateInstantiationDecl* sn = isSgTemplateInstantiationDecl (node))

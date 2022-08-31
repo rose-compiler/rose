@@ -1,6 +1,10 @@
 #!/bin/bash
 set -e
 
+# Since the source is mounted read-only and we might be in a container whose user is different than the source
+# and the source user might not even exist, we need to tell git to ignore that.
+git config --global safe.directory '*'
+
 # Save some info about the ROSE version. Do this early so subsequent failures report something meaningful to the
 # database.  We can do all this in the read-only source directory.
 if [ -r project-source-ro/ROSE_VERSION ]; then

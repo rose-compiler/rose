@@ -107,8 +107,8 @@ public:
 
     void emitBasicBlockBody(std::ostream &out, const P2::BasicBlockPtr &bb, BinaryAnalysis::Unparser::State &state) const override {
         ASSERT_not_null(bb);
-        InstructionSemantics2::BaseSemantics::RiscOperatorsPtr ops = state.partitioner().newOperators();
-        if (InstructionSemantics2::BaseSemantics::DispatcherPtr cpu = state.partitioner().newDispatcher(ops)) {
+        InstructionSemantics::BaseSemantics::RiscOperators::Ptr ops = state.partitioner().newOperators();
+        if (InstructionSemantics::BaseSemantics::Dispatcher::Ptr cpu = state.partitioner().newDispatcher(ops)) {
             // Find the largest non-overlapping instruction sequences that are effectively no-ops
             NoOperation nopAnalyzer(cpu);
             nopAnalyzer.initialStackPointer(0xceed0000); // arbitrary

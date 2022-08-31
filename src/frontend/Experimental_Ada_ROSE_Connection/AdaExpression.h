@@ -13,18 +13,24 @@
 
 namespace Ada_ROSE_Translation
 {
+  struct OperatorCallSupplement
+  {
+    bool                        prefixCall = false;
+    std::vector<SgExpression*>* args       = nullptr;
+  };
+
   /// returns the ROSE representation of the Asis expression \ref elem
   SgExpression&
-  getExpr(Element_Struct& elem, AstContext ctx);
+  getExpr(Element_Struct& elem, AstContext ctx, OperatorCallSupplement suppl = {});
 
   /// returns the ROSE representation of the Asis Element_ID \ref el
   SgExpression&
-  getExprID(Element_ID el, AstContext ctx);
+  getExprID(Element_ID el, AstContext ctx, OperatorCallSupplement suppl = {});
 
   /// returns the ROSE representation of a valid Asis Element_ID \ref el.
   ///   if el is not a valid exprression, an SgNullExpression is returned
   SgExpression&
-  getExprID_opt(Element_ID el, AstContext ctx);
+  getExprID_opt(Element_ID el, AstContext ctx, OperatorCallSupplement suppl = {});
 
   /// returns a range expression for the element \ref id.
   /// \pre id identifies a Discrete_Range definition
@@ -47,12 +53,15 @@ namespace Ada_ROSE_Translation
   getDiscreteSubtypeExpr(Element_Struct& el, Definition_Struct& def, AstContext ctx);
 
   /// returns an expression for attribute defined in expr
+  /// \param expr          the representative Asis struct
+  /// \param ctx           the translation context
+  /// \param argRangeSuppl an optional argument to inject the arguments from a function call
   SgAdaAttributeExp&
-  getAttributeExpr(Expression_Struct& expr, AstContext ctx);
+  getAttributeExpr(Expression_Struct& expr, AstContext ctx, ElemIdRange argRangeSuppl = {});
 
   /// returns an expression for an Asis element ID \ref id.
   SgAdaAttributeExp&
-  getAttributeExprID(Element_ID id, AstContext ctx);
+  getAttributeExprID(Element_ID id, AstContext ctx, ElemIdRange argRangeSuppl = {});
 
   /// returns an expression for the representation value of an enumerator
   SgExpression&
@@ -60,7 +69,24 @@ namespace Ada_ROSE_Translation
 
 
   /// creates a call to subroutine expression \ref target, and passes params as arguments.
-  SgExpression& createCall(SgExpression& target, ElemIdRange params, bool callSyntax, AstContext ctx);
+  SgExpression& createCall(Element_ID tgtid, ElemIdRange params, bool callSyntax, AstContext ctx);
+
+  /// queries the corresponding ROSE AST node for a built-in identifer
+  SgNode*
+  queryBuiltIn(AdaIdentifier adaIdent);
+
+  /// queries the corresponding ROSE AST node in ROSE for a given Asis representation.
+  /// @{
+  SgNode*
+  queryCorrespondingAstNode(Expression_Struct& asis, AstContext ctx);
+
+  SgNode*
+  queryCorrespondingAstNode(Element_Struct& asis, AstContext ctx);
+
+  SgNode*
+  queryCorrespondingAstNodeID(Element_ID asis, AstContext ctx);
+  /// @}
+
 
   /// creates a sequence of SgExpressions from a sequence of Asis elements
   ///   (eiter expression or definition).

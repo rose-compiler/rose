@@ -3,7 +3,8 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics.h>
+#include <Rose/BinaryAnalysis/BasicTypes.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 #include <Rose/BinaryAnalysis/SymbolicExpr.h>
 #include <Rose/Exception.h>
 #include <Sawyer/BiMap.h>
@@ -296,15 +297,15 @@ public:
         typedef Sawyer::SharedPointer<RegisterToValue> Ptr;
 
     private:
-        InstructionSemantics2::BaseSemantics::RiscOperatorsPtr ops_;
+        InstructionSemantics::BaseSemantics::RiscOperatorsPtr ops_;
 
     protected:
-        RegisterToValue(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr &ops)
+        RegisterToValue(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr &ops)
             : ops_(ops) {}
 
     public:
         /** Allocating constructor. */
-        static Ptr instance(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&);
+        static Ptr instance(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&);
 
         // internal
         SymbolicExpr::Ptr immediateExpansion(const SymbolicExprParser::Token&) override;
@@ -327,17 +328,17 @@ public:
         typedef Sawyer::Container::BiMap<RegisterDescriptor, SymbolicExpr::Ptr> RegToVarMap;
 
     private:
-        const RegisterDictionary *regdict_;
+        RegisterDictionaryPtr regdict_;
         RegToVarMap reg2var_;
-        InstructionSemantics2::BaseSemantics::RiscOperatorsPtr ops_;
+        InstructionSemantics::BaseSemantics::RiscOperatorsPtr ops_;
 
     protected:
-        RegisterSubstituter(const RegisterDictionary *regdict)
+        RegisterSubstituter(const RegisterDictionaryPtr &regdict)
             : regdict_(regdict) {}
 
     public:
         /** Allocating constructor. */
-        static Ptr instance(const RegisterDictionary*);
+        static Ptr instance(const RegisterDictionaryPtr&);
 
         /** Property: Semantic state used during delayed expansion.
          *
@@ -345,10 +346,10 @@ public:
          *  (@ref delayedExpansion).
          *
          * @{ */
-        InstructionSemantics2::BaseSemantics::RiscOperatorsPtr riscOperators() const {
+        InstructionSemantics::BaseSemantics::RiscOperatorsPtr riscOperators() const {
             return ops_;
         }
-        void riscOperators(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr &ops) {
+        void riscOperators(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr &ops) {
             ops_ = ops;
         }
         /** @} */
@@ -373,7 +374,7 @@ public:
 
     private:
         ExprToMem exprToMem_;
-        InstructionSemantics2::BaseSemantics::RiscOperatorsPtr ops_;
+        InstructionSemantics::BaseSemantics::RiscOperatorsPtr ops_;
 
     protected:
         MemorySubstituter(const SmtSolver::Ptr &solver /*=NULL*/)
@@ -389,10 +390,10 @@ public:
          *  (@ref delayedExpansion).
          *
          * @{ */
-        InstructionSemantics2::BaseSemantics::RiscOperatorsPtr riscOperators() const {
+        InstructionSemantics::BaseSemantics::RiscOperatorsPtr riscOperators() const {
             return ops_;
         }
-        void riscOperators(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr &ops) {
+        void riscOperators(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr &ops) {
             ops_ = ops;
         }
         /** @} */
@@ -537,14 +538,14 @@ public:
      *
      *  If register definitions are specified, then whenever a register name appears as a token during parsing, it will be
      *  immediately replaced with the value of the register queried from the specified operator state.  If a @ref
-     *  Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RiscOperators "RiscOperators" object is specified, then the
+     *  Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::RiscOperators "RiscOperators" object is specified, then the
      *  replacement is the register's current value; if a register dictionary is specified, then the replacement is a new
      *  symbolic variable and an internal table is updated to associate the variable with a register name so that the register
      *  value can be substituted later.
      *
      * @{ */
-    void defineRegisters(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&);
-    RegisterSubstituter::Ptr defineRegisters(const RegisterDictionary*);
+    void defineRegisters(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&);
+    RegisterSubstituter::Ptr defineRegisters(const RegisterDictionaryPtr&);
     /** @} */
 
     /** Perform delayed expansion.

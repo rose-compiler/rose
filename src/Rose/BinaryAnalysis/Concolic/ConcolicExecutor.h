@@ -4,10 +4,11 @@
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 #include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
 
+#include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Concolic/LinuxI386.h>
 #include <Rose/BinaryAnalysis/Debugger.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/DispatcherX86.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherX86.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Sawyer/FileSystem.h>
 
@@ -22,15 +23,15 @@ namespace Concolic {
 /** Semantics for concolic execution. */
 namespace Emulation {
 
-typedef InstructionSemantics2::SymbolicSemantics::Formatter SValueFormatter; /**< How to format expressions when printing. */
-typedef InstructionSemantics2::SymbolicSemantics::SValuePtr SValuePtr; /**< Pointer to semantic values. */
-typedef InstructionSemantics2::SymbolicSemantics::SValue SValue; /**< Type of semantic values. */
-typedef InstructionSemantics2::SymbolicSemantics::RegisterStatePtr RegisterStatePtr; /**< Pointer to semantic registers. */
-typedef InstructionSemantics2::SymbolicSemantics::RegisterState RegisterState; /**< Type of semantic register space. */
-typedef InstructionSemantics2::SymbolicSemantics::MemoryStatePtr MemoryStatePtr; /**< Pointer to semantic memory. */
-typedef InstructionSemantics2::SymbolicSemantics::MemoryState MemoryState; /**< Type of semantic memory space. */
-typedef InstructionSemantics2::SymbolicSemantics::StatePtr StatePtr; /**< Pointer to semantic machine state. */
-typedef InstructionSemantics2::SymbolicSemantics::State State; /**< Semantic machine state. */
+typedef InstructionSemantics::SymbolicSemantics::Formatter SValueFormatter; /**< How to format expressions when printing. */
+typedef InstructionSemantics::SymbolicSemantics::SValuePtr SValuePtr; /**< Pointer to semantic values. */
+typedef InstructionSemantics::SymbolicSemantics::SValue SValue; /**< Type of semantic values. */
+typedef InstructionSemantics::SymbolicSemantics::RegisterStatePtr RegisterStatePtr; /**< Pointer to semantic registers. */
+typedef InstructionSemantics::SymbolicSemantics::RegisterState RegisterState; /**< Type of semantic register space. */
+typedef InstructionSemantics::SymbolicSemantics::MemoryStatePtr MemoryStatePtr; /**< Pointer to semantic memory. */
+typedef InstructionSemantics::SymbolicSemantics::MemoryState MemoryState; /**< Type of semantic memory space. */
+typedef InstructionSemantics::SymbolicSemantics::StatePtr StatePtr; /**< Pointer to semantic machine state. */
+typedef InstructionSemantics::SymbolicSemantics::State State; /**< Semantic machine state. */
 
 /** Values thrown when subordinate exits. */
 class Exit: public Exception {
@@ -49,13 +50,13 @@ public:
 };
 
 /** Semantic operations. */
-class RiscOperators: public InstructionSemantics2::SymbolicSemantics::RiscOperators {
+class RiscOperators: public InstructionSemantics::SymbolicSemantics::RiscOperators {
 public:
     /** Shared ownership pointer. */
     using Ptr = RiscOperatorsPtr;
 
     /** Base class. */
-    typedef InstructionSemantics2::SymbolicSemantics::RiscOperators Super;
+    typedef InstructionSemantics::SymbolicSemantics::RiscOperators Super;
 
     /** Special "path" Boolean register. */
     const RegisterDescriptor REG_PATH;
@@ -77,26 +78,26 @@ private:
 protected:
     /** Allocating constructor. */
     RiscOperators(const Settings&, const DatabasePtr&, const TestCasePtr&, const Partitioner2::Partitioner&,
-                  const ArchitecturePtr&, const InstructionSemantics2::BaseSemantics::StatePtr&, const SmtSolverPtr&);
+                  const ArchitecturePtr&, const InstructionSemantics::BaseSemantics::StatePtr&, const SmtSolverPtr&);
 
 public:
     /** Allocating constructor. */
     static RiscOperatorsPtr instance(const Settings &settings, const DatabasePtr&, const TestCasePtr&,
                                      const Partitioner2::Partitioner&, const ArchitecturePtr &process,
-                                     const InstructionSemantics2::BaseSemantics::SValuePtr &protoval,
+                                     const InstructionSemantics::BaseSemantics::SValuePtr &protoval,
                                      const SmtSolverPtr &solver = SmtSolverPtr());
 
     /** Dynamic pointer downcast. */
-    static RiscOperatorsPtr promote(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&);
+    static RiscOperatorsPtr promote(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&);
 
     // Overrides documented in base class
-    virtual InstructionSemantics2::BaseSemantics::RiscOperatorsPtr
-    create(const InstructionSemantics2::BaseSemantics::SValuePtr &protoval,
+    virtual InstructionSemantics::BaseSemantics::RiscOperatorsPtr
+    create(const InstructionSemantics::BaseSemantics::SValuePtr &protoval,
            const SmtSolverPtr &solver = SmtSolverPtr()) const override {
         ASSERT_not_implemented("[Robb Matzke 2019-09-24]");
     }
-    virtual InstructionSemantics2::BaseSemantics::RiscOperatorsPtr
-    create(const InstructionSemantics2::BaseSemantics::StatePtr &state,
+    virtual InstructionSemantics::BaseSemantics::RiscOperatorsPtr
+    create(const InstructionSemantics::BaseSemantics::StatePtr &state,
            const SmtSolverPtr &solver = SmtSolverPtr()) const override {
         ASSERT_not_implemented("[Robb Matzke 2019-09-24]");
     }
@@ -183,7 +184,7 @@ public:
     size_t wordSizeBits() const;
 
     /** Register definitions. */
-    const RegisterDictionary* registerDictionary() const;
+    RegisterDictionaryPtr registerDictionary() const;
 
     /** Create and save info about initial program inputs.
      *
@@ -212,28 +213,28 @@ public:
 
     virtual void interrupt(int majr, int minr) override;
 
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr
-    readRegister(RegisterDescriptor reg, const InstructionSemantics2::BaseSemantics::SValuePtr &dflt) override;
+    virtual InstructionSemantics::BaseSemantics::SValuePtr
+    readRegister(RegisterDescriptor reg, const InstructionSemantics::BaseSemantics::SValuePtr &dflt) override;
 
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr
+    virtual InstructionSemantics::BaseSemantics::SValuePtr
     readRegister(RegisterDescriptor reg) override {
         return readRegister(reg, undefined_(reg.nBits()));
     }
 
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr
-    peekRegister(RegisterDescriptor reg, const InstructionSemantics2::BaseSemantics::SValuePtr &dflt) override;
+    virtual InstructionSemantics::BaseSemantics::SValuePtr
+    peekRegister(RegisterDescriptor reg, const InstructionSemantics::BaseSemantics::SValuePtr &dflt) override;
 
     virtual void
-    writeRegister(RegisterDescriptor, const InstructionSemantics2::BaseSemantics::SValuePtr&) override;
+    writeRegister(RegisterDescriptor, const InstructionSemantics::BaseSemantics::SValuePtr&) override;
 
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr
-    readMemory(RegisterDescriptor segreg, const InstructionSemantics2::BaseSemantics::SValuePtr &addr,
-               const InstructionSemantics2::BaseSemantics::SValuePtr &dflt,
-               const InstructionSemantics2::BaseSemantics::SValuePtr &cond) override;
+    virtual InstructionSemantics::BaseSemantics::SValuePtr
+    readMemory(RegisterDescriptor segreg, const InstructionSemantics::BaseSemantics::SValuePtr &addr,
+               const InstructionSemantics::BaseSemantics::SValuePtr &dflt,
+               const InstructionSemantics::BaseSemantics::SValuePtr &cond) override;
 
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr
-    peekMemory(RegisterDescriptor segreg, const InstructionSemantics2::BaseSemantics::SValuePtr &addr,
-               const InstructionSemantics2::BaseSemantics::SValuePtr &dflt) override;
+    virtual InstructionSemantics::BaseSemantics::SValuePtr
+    peekMemory(RegisterDescriptor segreg, const InstructionSemantics::BaseSemantics::SValuePtr &addr,
+               const InstructionSemantics::BaseSemantics::SValuePtr &dflt) override;
 
     // Call this when the concrete simulation exits.
     void doExit(uint64_t);
@@ -243,19 +244,19 @@ public:
 typedef boost::shared_ptr<class Dispatcher> DispatcherPtr;
 
 /** CPU for concolic emulation. */
-class Dispatcher: public InstructionSemantics2::DispatcherX86 {
-    typedef InstructionSemantics2::DispatcherX86 Super;
+class Dispatcher: public InstructionSemantics::DispatcherX86 {
+    typedef InstructionSemantics::DispatcherX86 Super;
 public:
     using Ptr = boost::shared_ptr<Dispatcher>;
 
 protected:
     /** Constructor. */
-    explicit Dispatcher(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr &ops)
+    explicit Dispatcher(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr &ops)
         : Super(ops, unwrapEmulationOperators(ops)->wordSizeBits(), unwrapEmulationOperators(ops)->registerDictionary()) {}
 
 public:
     /** Allocating constructor. */
-    static DispatcherPtr instance(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr &ops) {
+    static DispatcherPtr instance(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr &ops) {
         return DispatcherPtr(new Dispatcher(ops));
     }
 
@@ -276,7 +277,7 @@ public:
     RiscOperatorsPtr emulationOperators() const;
 
     /** Unrwap the RISC operators if tracing is enabled. */
-    static RiscOperatorsPtr unwrapEmulationOperators(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&);
+    static RiscOperatorsPtr unwrapEmulationOperators(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&);
 
     /** The concrete half of processInstruction. */
     void processConcreteInstruction(SgAsmInstruction*);
@@ -476,7 +477,7 @@ private:
 
     // Generae a new test case. This must be called only after the SMT solver's assertions have been checked and found
     // to be satisfiable.
-    void generateTestCase(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&, const SymbolicExpr::Ptr &childIp);
+    void generateTestCase(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&, const SymbolicExpr::Ptr &childIp);
 
     // Save the specified symbolic state to the specified test case.
     void saveSymbolicState(const Emulation::RiscOperatorsPtr&, const TestCaseId&);

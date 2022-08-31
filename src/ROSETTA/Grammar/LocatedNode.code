@@ -977,6 +977,15 @@ HEADER_ADA_DELTA_CONSTRAINT_START
 HEADER_ADA_DELTA_CONSTRAINT_END
 
 
+HEADER_ADA_NULL_CONSTRAINT_START
+  void post_construction_initialization() override;
+  std::string displayString() const override;
+  void display ( std::string label ) const;
+  friend std::ostream & operator<< ( std::ostream& os, const SgAdaNullConstraint& c);
+  //~ friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
+HEADER_ADA_NULL_CONSTRAINT_END
+
+
 HEADER_ADA_DISCRIMINANT_CONSTRAINT_START
   void post_construction_initialization() override;
   std::string displayString() const override;
@@ -2417,6 +2426,28 @@ std::ostream & operator<< ( std::ostream& os, const SgAdaDeltaConstraint& c)
 }
 
 SOURCE_ADA_DELTA_CONSTRAINT_END
+
+
+SOURCE_ADA_NULL_CONSTRAINT_START
+void SgAdaNullConstraint::post_construction_initialization() {};
+
+std::string SgAdaNullConstraint::displayString() const
+{
+  return std::string{};
+}
+
+void SgAdaNullConstraint::display ( std::string label ) const
+{
+  mprintf ("In $CLASSNAME::display(%s) \n",label.c_str());
+  mprintf ("%s \n",displayString().c_str());
+}
+
+std::ostream & operator<< ( std::ostream& os, const SgAdaNullConstraint& c)
+{
+  return os << c.displayString();
+}
+
+SOURCE_ADA_NULL_CONSTRAINT_END
 
 
 SOURCE_ADA_DISCRIMINANT_CONSTRAINT_START

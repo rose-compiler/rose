@@ -177,6 +177,12 @@ mkAdaDeltaConstraint(SgExpression& delta, bool isDecimal, SgAdaTypeConstraint* s
   return mkFixedPointConstraint<SgAdaDeltaConstraint>(delta, sub_opt, isDecimal);
 }
 
+SgAdaNullConstraint&
+mkAdaNullConstraint()
+{
+  return mkLocatedNode<SgAdaNullConstraint>();
+}
+
 
 namespace
 {
@@ -711,9 +717,18 @@ mkAdaPackageSpecDecl(const std::string& name, SgScopeStatement& scope)
 namespace
 {
   SgDeclarationScope&
-  mkDeclarationScope(SgScopeStatement& /* not use */)
+  mkDeclarationScope(SgScopeStatement& /* not used */)
   {
     SgDeclarationScope& sgnode = mkScopeStmt<SgDeclarationScope>();
+
+    //~ sgnode.set_scope(&outer);
+    return sgnode;
+  }
+
+  SgAdaParameterList&
+  mkAdaParameterList(SgScopeStatement& /* not used */)
+  {
+    SgAdaParameterList& sgnode = mkLocatedNode<SgAdaParameterList>();
 
     //~ sgnode.set_scope(&outer);
     return sgnode;
@@ -724,9 +739,11 @@ SgAdaDiscriminatedTypeDecl&
 mkAdaDiscriminatedTypeDecl(SgScopeStatement& scope)
 {
   SgDeclarationScope&         dclscope = mkDeclarationScope(scope);
-  SgAdaDiscriminatedTypeDecl& sgnode   = mkLocatedNode<SgAdaDiscriminatedTypeDecl>(&dclscope);
+  SgAdaParameterList&         params   = mkAdaParameterList(dclscope);
+  SgAdaDiscriminatedTypeDecl& sgnode   = mkLocatedNode<SgAdaDiscriminatedTypeDecl>(&dclscope, &params);
 
   dclscope.set_parent(&sgnode);
+  params.set_parent(&sgnode);
   return sgnode;
 }
 
@@ -737,11 +754,19 @@ mkAdaGenericInstanceDecl(const std::string& name, SgDeclarationStatement& gendec
              || isSgAdaRenamingDecl(&gendecl)
              );
 
-  SgAdaGenericInstanceDecl& sgnode = mkLocatedNode<SgAdaGenericInstanceDecl>(name,&gendecl,nullptr);
+  //~ SgDeclarationScope&       dclscope = mkDeclarationScope(scope);
+  SgScopeStatement&         dclscope = mkBasicBlock();
+  SgAdaGenericInstanceDecl& sgnode = mkLocatedNode<SgAdaGenericInstanceDecl>(name,&gendecl,&dclscope);
 
-  sgnode.set_scope(&scope);
+  sg::linkParentChild(sgnode, dclscope, &SgAdaGenericInstanceDecl::set_instantiatedScope);
+
   // PP (2/24/22): should this be set_definingDeclaration ?
+  //               I think not, since we only extract the spec (possibly the impl for procedures...)
   sgnode.set_firstNondefiningDeclaration(&sgnode);
+
+  // \todo not sure if needs an explicit scope
+  //       if not: fix also in nameQualifcationSupport.C, Statement.code, unparseAdaStatement.C
+  sgnode.set_scope(&scope);
 
   scope.insert_symbol(name, &mkBareNode<SgAdaGenericInstanceSymbol>(&sgnode));
   return sgnode;
@@ -755,7 +780,10 @@ mkAdaFormalPackageDecl(const std::string& name, SgDeclarationStatement& gendecl,
              );
 
   SgAdaFormalPackageDecl& sgnode = mkLocatedNode<SgAdaFormalPackageDecl>(name, &gendecl, &args);
+  //~ SgScopeStatement&       dclscope = mkDeclarationScope(scope);
+  SgScopeStatement&       dclscope = mkBasicBlock();
 
+  sg::linkParentChild(sgnode, dclscope, &SgAdaFormalPackageDecl::set_prototypeScope);
   sgnode.set_firstNondefiningDeclaration(&sgnode);
   scope.insert_symbol(name, &mkBareNode<SgAdaFormalPackageSymbol>(&sgnode));
   return sgnode;
@@ -785,7 +813,6 @@ mkAdaFormalTypeDecl(const std::string& name, SgScopeStatement& scope)
 
   sgnode.set_parent(&scope);
   sgnode.set_firstNondefiningDeclaration(&sgnode);
-
   scope.insert_symbol(name, &mkBareNode<SgAdaGenericSymbol>(&sgnode));
 
   return sgnode;
@@ -799,6 +826,7 @@ mkAdaRenamingDecl(const std::string& name, SgExpression& renamed, SgType* ty, Sg
 
   SgAdaRenamingDecl& sgnode = mkLocatedNode<SgAdaRenamingDecl>(name, &renamed, ty);
 
+  renamed.set_parent(&sgnode);
   sgnode.set_parent(&scope);
   sgnode.set_firstNondefiningDeclaration(&sgnode);
   scope.insert_symbol(name, &mkBareNode<SgAdaRenamingSymbol>(&sgnode));
@@ -816,6 +844,7 @@ namespace
     {
       nondef->set_definingDeclaration(&defn);
       defn.set_firstNondefiningDeclaration(nondef);
+      defn.set_definingDeclaration(&defn);
     }
     else
     {
@@ -1244,12 +1273,14 @@ mkProcedureDecl( const std::string& nm,
 }
 
 // MS: 12/20/2020 Ada function renaming declaration maker
+// PP:  5/22/2022 added nondef_opt to support renaming-as-body declarations
 SgAdaFunctionRenamingDecl&
 mkAdaFunctionRenamingDecl( const std::string& name,
                            SgScopeStatement& scope,
                            SgType& retty,
-                           std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
-                           )
+                           std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete,
+                           SgAdaFunctionRenamingDecl* nondef_opt
+                         )
 {
   SgAdaFunctionRenamingDecl& sgnode = mkLocatedNode<SgAdaFunctionRenamingDecl>(name, nullptr, nullptr);
   SgFunctionParameterList&   lst    = SG_DEREF(sgnode.get_parameterList());
@@ -1263,11 +1294,30 @@ mkAdaFunctionRenamingDecl( const std::string& name,
   sgnode.set_type(&funty);
   ADA_ASSERT(sgnode.get_parameterList_syntax() == nullptr);
 
-  SgFunctionSymbol *funsy = scope.find_symbol_by_type_of_function<SgFunctionDeclaration>(name, &funty, NULL, NULL);
-  ADA_ASSERT(funsy == nullptr);
+  if (scope.find_symbol_by_type_of_function<SgFunctionDeclaration>(name, &funty, NULL, NULL))
+  {
+    logWarn() << "found function symbol " << name << " in scope. Type of scope: "
+              << typeid(scope).name()
+              << std::endl;
+    ADA_ASSERT(nondef_opt);
+  }
+  else
+  {
+    SgFunctionSymbol& funsy = mkBareNode<SgFunctionSymbol>(&sgnode);
+    scope.insert_symbol(name, &funsy);
+  }
 
-  funsy = &mkBareNode<SgFunctionSymbol>(&sgnode);
-  scope.insert_symbol(name, funsy);
+  if (nondef_opt)
+  {
+    SgSymbol*         baseSy = nondef_opt->search_for_symbol_from_symbol_table();
+    SgFunctionSymbol& funcSy = SG_DEREF(isSgFunctionSymbol(baseSy));
+
+    // demote to a non-defining declaration
+    nondef_opt->set_firstNondefiningDeclaration(nondef_opt);
+    nondef_opt->setForward();
+    linkDeclDef(funcSy, sgnode);
+  }
+
   sgnode.set_scope(&scope);
   sgnode.set_definingDeclaration(&sgnode);
   sgnode.unsetForward();
@@ -1523,24 +1573,6 @@ mkVarDecl(const SgInitializedNamePtrList& vars, SgScopeStatement& scope)
   return mkVarDeclInternal<SgVariableDeclaration>(vars.begin(), vars.end(), scope);
 }
 
-/// creates a variant field with (i.e., a variable with conditions)
-SgAdaVariantFieldDecl&
-mkAdaVariantFieldDecl(const SgInitializedNamePtrList& vars, SgExprListExp& choices, SgScopeStatement& scope)
-{
-  SgAdaVariantFieldDecl& sgnode = mkVarDeclInternal<SgAdaVariantFieldDecl>(vars.begin(), vars.end(), scope, &choices);
-
-  choices.set_parent(&sgnode);
-  return sgnode;
-}
-
-SgAdaVariantFieldDecl&
-mkAdaVariantFieldDecl(SgExprListExp& choices, SgScopeStatement& scope)
-{
-  SgInitializedNamePtrList empty;
-
-  return mkAdaVariantFieldDecl(empty, choices, scope);
-}
-
 
 SgVariableDeclaration&
 mkVarDecl(SgInitializedName& var, SgScopeStatement& scope)
@@ -1554,8 +1586,35 @@ mkVarDecl(SgInitializedName& var, SgScopeStatement& scope)
 SgVariableDeclaration&
 mkExceptionDecl(const SgInitializedNamePtrList& vars, SgScopeStatement& scope)
 {
-  return mkVarExceptionDeclInternal<SgVariableDeclaration>(vars.begin(), vars.end(), scope);
+  SgVariableDeclaration& sgnode = mkVarExceptionDeclInternal<SgVariableDeclaration>(vars.begin(), vars.end(), scope);
+
+  //~ sgnode.set_firstNondefiningDeclaration(&sgnode); //??
+  sgnode.set_definingDeclaration(&sgnode); //??
+  return sgnode;
 }
+
+SgAdaVariantDecl&
+mkAdaVariantDecl(SgExpression& discr)
+{
+  SgAdaUnscopedBlock& blk = mkLocatedNode<SgAdaUnscopedBlock>();
+  SgAdaVariantDecl&   sgnode = mkLocatedNode<SgAdaVariantDecl>(&discr, &blk);
+
+  discr.set_parent(&sgnode);
+  blk.set_parent(&sgnode);
+  return sgnode;
+}
+
+SgAdaVariantWhenStmt&
+mkAdaVariantWhenStmt(SgExprListExp& choices)
+{
+  SgAdaUnscopedBlock&   blk = mkLocatedNode<SgAdaUnscopedBlock>();
+  SgAdaVariantWhenStmt& sgnode = mkLocatedNode<SgAdaVariantWhenStmt>(&choices, &blk);
+
+  choices.set_parent(&sgnode);
+  blk.set_parent(&sgnode);
+  return sgnode;
+}
+
 
 SgAdaComponentClause&
 mkAdaComponentClause(SgVarRefExp& field, SgExpression& offset, SgRangeExp& range)
@@ -1614,22 +1673,23 @@ mkPragmaDeclaration(const std::string& name, SgExprListExp& args)
   return sgnode;
 }
 
-SgExpBaseClass&
+SgBaseClass&
 mkRecordParent(SgType& n)
 {
-  return mkBareNode<SgExpBaseClass>(nullptr, true /* direct base */, &mkTypeExpression(n));
-}
-
-SgBaseClass&
-mkRecordParent(SgClassDeclaration& n)
-{
-  if (!n.get_definingDeclaration())
+  if (SgClassType* clsty = isSgClassType(&n))
   {
-    logWarn() << "no defining declaration for base class: " << n.get_name()
-              << std::endl;
+    SgClassDeclaration& dcl = SG_DEREF(isSgClassDeclaration(clsty->get_declaration()));
+
+    if (!dcl.get_definingDeclaration())
+    {
+      logWarn() << "no defining declaration for base class: " << dcl.get_name()
+                << std::endl;
+    }
+
+    return mkBareNode<SgBaseClass>(&dcl, true /* direct base */);
   }
 
-  return mkBareNode<SgBaseClass>(&n, true /* direct base */);
+  return mkBareNode<SgExpBaseClass>(nullptr, true /* direct base */, &mkTypeExpression(n));
 }
 
 //
@@ -1778,6 +1838,17 @@ mkCastExp(SgExpression& expr, SgType& ty)
 }
 
 
+SgFunctionCallExp&
+mkFunctionCallExp(SgExpression& target, SgExprListExp& arglst, bool usesOperatorSyntax)
+{
+  SgFunctionCallExp& sgnode = SG_DEREF(sb::buildFunctionCallExp_nfi(&target, &arglst));
+
+  sgnode.set_uses_operator_syntax(usesOperatorSyntax);
+  return sgnode;
+}
+
+
+
 SgExpression&
 mkQualifiedExp(SgExpression& expr, SgType& ty)
 {
@@ -1858,20 +1929,11 @@ mkNullExpression()
 
 namespace
 {
-  struct IntegerValue : sg::DispatchHandler<long long int>
-  {
-    void handle(const SgNode& n)           { SG_UNEXPECTED_NODE(n); }
-    void handle(const SgShortVal& n)       { res = n.get_value(); }
-    void handle(const SgIntVal& n)         { res = n.get_value(); }
-    void handle(const SgLongIntVal& n)     { res = n.get_value(); }
-    void handle(const SgLongLongIntVal& n) { res = n.get_value(); }
-  };
-
   long long int getIntegralValue(SgInitializedName& enumitem)
   {
     SgAssignInitializer& ini = SG_DEREF( isSgAssignInitializer(enumitem.get_initializer()) );
 
-    return sg::dispatch(IntegerValue{}, ini.get_operand());
+    return si::ada::staticIntegralValue(ini.get_operand());
   }
 };
 
@@ -1889,23 +1951,252 @@ mkEnumeratorRef(SgEnumDeclaration& enumdecl, SgInitializedName& enumitem)
   return SG_DEREF( sb::buildEnumVal_nfi(enumval, &enumdecl, enumitem.get_name()) );
 }
 
+#if OBSOLETE
 SgExpression&
 mkEnumeratorRef_repclause(SgEnumDeclaration&, SgInitializedName& enumitem)
 {
   return SG_DEREF( sb::buildVarRefExp(&enumitem, nullptr /* not needed */) );
+}
+#endif /* OBSOLETE */
+
+namespace
+{
+  SgType& accessTypeAttr(SgExpression& expr, SgExprListExp&)
+  {
+    return mkAdaAccessType(SG_DEREF(expr.get_type()));
+  }
+
+  SgType& integralTypeAttr(SgExpression&, SgExprListExp&)
+  {
+    return mkIntegralType();
+  }
+
+  SgType& realTypeAttr(SgExpression&, SgExprListExp&)
+  {
+    return mkRealType();
+  }
+
+  SgType& unknownTypeAttr(SgExpression&, SgExprListExp&)
+  {
+    return mkTypeUnknown();
+  }
+
+  SgType& voidTypeAttr(SgExpression&, SgExprListExp&)
+  {
+    return mkTypeVoid();
+  }
+
+  SgType& boolTypeAttr(SgExpression&, SgExprListExp&)
+  {
+    return lookupNode(adaTypes(), AdaIdentifier{"BOOLEAN"});
+  }
+/*
+  SgType& fixedTypeAttr(SgExpression&, SgExprListExp&)
+  {
+    return mkFixedType();
+  }
+*/
+  SgType& stringTypeAttr(SgExpression&, SgExprListExp&)
+  {
+    return lookupNode(adaTypes(), AdaIdentifier{"STRING"});
+  }
+
+  SgType& wideStringTypeAttr(SgExpression&, SgExprListExp&)
+  {
+    return lookupNode(adaTypes(), AdaIdentifier{"WIDE_STRING"});
+  }
+
+  SgType& wideWideStringTypeAttr(SgExpression&, SgExprListExp&)
+  {
+    return lookupNode(adaTypes(), AdaIdentifier{"WIDE_WIDE_STRING"});
+  }
+
+  SgType& firstLastTypeAttr(SgExpression& obj, SgExprListExp& args)
+  {
+    SgType* basety = nullptr;
+
+    if (SgTypeExpression* tyexp = isSgTypeExpression(&obj))
+      basety = tyexp->get_type();
+    else
+      basety = obj.get_type();
+
+    si::ada::FlatArrayType flatty = si::ada::getArrayTypeInfo(basety);
+
+    if (flatty.first == nullptr)
+      return SG_DEREF(basety);
+
+    SgType* resty = nullptr;
+
+    try
+    {
+      const int dim = si::ada::firstLastDimension(args);
+
+      resty = SG_DEREF(flatty.second.at(dim-1)).get_type();
+    }
+    catch (...)
+    {
+      logWarn() << "unable to fold " << args.get_expressions().at(0)->unparseToString()
+                << std::endl;
+
+      resty = &mkTypeUnknown();
+    }
+
+    return SG_DEREF(resty);
+  }
+
+  SgType& exprTypeAttr(SgExpression& tyrep, SgExprListExp&)
+  {
+    //~ logError() << " >>> " << tyrep.unparseToString() << " " << typeid(*tyrep.get_type()).name()
+                //~ << std::endl;
+
+    return SG_DEREF(tyrep.get_type());
+  }
+
+  SgType& argTypeAttr(SgExpression&, SgExprListExp& args)
+  {
+    SgExpression& exp = SG_DEREF(args.get_expressions().front());
+
+    return SG_DEREF(exp.get_type());
+  }
+
+  SgType&
+  attributeType(SgExpression& expr, const std::string& ident, SgExprListExp& args)
+  {
+    using TypeMaker = SgType& (*) (SgExpression& expr, SgExprListExp& args);
+    using TypeCalc  = std::map<AdaIdentifier, TypeMaker>;
+
+    static const TypeCalc typecalc = { { "access",               &accessTypeAttr }
+                                     , { "address",              &integralTypeAttr }
+                                     , { "address_size",         &integralTypeAttr }
+                                     , { "adjacent",             &argTypeAttr }
+                                     , { "aft",                  &integralTypeAttr }
+                                     , { "alignment",            &integralTypeAttr }
+                                     //~ , { "base",                 &unknownTypeAttr }
+                                     , { "bit",                  &integralTypeAttr }
+                                     , { "bit_order",            &voidTypeAttr }
+                                     , { "body_version",         &stringTypeAttr }
+                                     //~ , { "class",                &unknownTypeAttr }
+                                     , { "callable",             &boolTypeAttr }
+                                     , { "caller",               &stringTypeAttr } // should be Ada.Task_ID
+                                     , { "ceiling",              &argTypeAttr }
+                                     , { "component_size",       &integralTypeAttr }
+                                     , { "compose",              &argTypeAttr }
+                                     , { "constrained",          &boolTypeAttr }
+                                     , { "copy_sign",            &argTypeAttr }
+                                     , { "count",                &integralTypeAttr }
+                                     , { "delta",                &realTypeAttr }
+                                     , { "denorm",               &boolTypeAttr }
+                                     , { "definite",             &boolTypeAttr }
+                                     , { "digits",               &integralTypeAttr }
+                                     , { "exponent",             &integralTypeAttr }
+                                     //~ , { "external_tag",         &tagTypeAttr }
+                                     , { "fraction",             &argTypeAttr }
+                                     , { "first",                &firstLastTypeAttr }
+                                     , { "first_bit",            &integralTypeAttr }
+                                     , { "first_valid",          &exprTypeAttr }
+                                     , { "floor",                &argTypeAttr }
+                                     , { "fore",                 &integralTypeAttr }
+                                     , { "fraction",             &argTypeAttr }
+                                     , { "has_access_values",    &boolTypeAttr }
+                                     , { "has_discriminants",    &boolTypeAttr }
+                                     , { "has_tagged_values",    &boolTypeAttr }
+                                     , { "has_same_storage",     &boolTypeAttr }
+                                     , { "identity",             &stringTypeAttr } // should be an identity (TASK_ID, EXCEPTION_ID ...)
+                                     , { "image",                &stringTypeAttr }
+                                     //~ , { "input",                &unknownTypeAttr }   // ???
+                                     , { "last",                 &firstLastTypeAttr }
+                                     , { "last_valid",           &exprTypeAttr }
+                                     , { "last_bit",             &integralTypeAttr }
+                                     , { "leading_part",         &argTypeAttr }
+                                     , { "length",               &integralTypeAttr }
+                                     , { "machine",              &argTypeAttr }
+                                     , { "machine_emax",         &integralTypeAttr }
+                                     , { "machine_emin",         &integralTypeAttr }
+                                     , { "machine_mantissa",     &integralTypeAttr }
+                                     , { "machine_radix",        &integralTypeAttr }
+                                     , { "machine_rounds",       &boolTypeAttr }
+                                     , { "machine_rounding",     &argTypeAttr }
+                                     , { "machine_overflows",    &boolTypeAttr }
+                                     , { "max",                  &argTypeAttr }
+                                     , { "maximum_alignment",    &integralTypeAttr }
+                                     , { "min",                  &argTypeAttr }
+                                     , { "model",                &argTypeAttr }
+                                     , { "model_emin",           &integralTypeAttr }
+                                     , { "model_epsilon",        &realTypeAttr }
+                                     , { "model_mantissa",       &integralTypeAttr }
+                                     , { "model_small",          &realTypeAttr }
+                                     , { "modulus",              &integralTypeAttr }
+                                     , { "overlaps_storage",     &boolTypeAttr }
+                                     , { "pos",                  &integralTypeAttr }
+                                     , { "position",             &integralTypeAttr }
+                                     //~ , { "pred",                 &argTypeAttr }
+                                     , { "pred",                 &exprTypeAttr }   // Type'Pred may have no arguments when it is passed as function
+                                     , { "remainder",            &argTypeAttr }
+                                     , { "rounding",             &argTypeAttr }
+                                     //~ , { "range",                &unknownTypeAttr }
+                                     //~ , { "output",               &unknownTypeAttr }   // ???
+                                     //~ , { "read",                 &unknownTypeAttr }   // ???
+                                     , { "safe_first",           &realTypeAttr }
+                                     , { "safe_last",            &realTypeAttr }
+                                     , { "scaling",              &argTypeAttr }
+                                     , { "scalar_storage_order", &voidTypeAttr }
+                                     , { "storage_pool",         &voidTypeAttr }
+                                     , { "storage_size",         &integralTypeAttr }
+                                     //~ , { "succ",                 &argTypeAttr }
+                                     , { "succ",                 &exprTypeAttr }  // Type'Pred may have no arguments when it is passed as function
+                                     , { "signed_zeros",         &boolTypeAttr }
+                                     , { "size",                 &integralTypeAttr }
+                                     , { "storage_unit",         &integralTypeAttr }
+                                     //~ , { "tag",                  &tagTypeAttr }
+                                     , { "terminated",           &boolTypeAttr }
+                                     , { "truncation",           &argTypeAttr }
+                                     , { "to_address",           &integralTypeAttr }
+                                     , { "unbiased_rounding",    &argTypeAttr }
+                                     , { "unchecked_access",     &accessTypeAttr }
+                                     , { "unrestricted_access",  &accessTypeAttr }
+                                     , { "val",                  &exprTypeAttr }
+                                     , { "valid",                &boolTypeAttr }
+                                     , { "value",                &exprTypeAttr }
+                                     //~ , { "write",                &unknownTypeAttr }
+                                     , { "wide_identity",        &wideStringTypeAttr } // should be Ada.Task_ID
+                                     , { "wide_value",           &exprTypeAttr } // should be Ada.Task_ID
+                                     , { "wide_wide_identity",   &wideWideStringTypeAttr } // should be Ada.Task_ID
+                                     , { "wide_wide_value",      &exprTypeAttr } // should be Ada.Task_ID
+                                     , { "width",                &integralTypeAttr }
+                                     , { "wide_width",           &integralTypeAttr }
+                                     , { "wide_wide_width",      &integralTypeAttr }
+                                     , { "word_size",            &integralTypeAttr }
+                                     };
+
+    auto      pos = typecalc.find(ident);
+    TypeMaker bldr = ((pos != typecalc.end()) ? pos->second : nullptr);
+
+    if ((bldr == &argTypeAttr) && (args.get_expressions().size() == 0))
+    {
+      logError() << ident << " with zero arguments." << std::endl;
+      ADA_ASSERT(false);
+    }
+
+    if (bldr == nullptr)
+    {
+      bldr = &unknownTypeAttr;
+      logWarn() << "unknown attribute type for '" << ident << std::endl;
+    }
+
+    return bldr(expr, args);
+  }
 }
 
 
 SgAdaAttributeExp&
 mkAdaAttributeExp(SgExpression& expr, const std::string& ident, SgExprListExp& args)
 {
-  SgAdaAttributeExp& sgnode = mkLocatedNode<SgAdaAttributeExp>(ident, &expr, &args);
-  //~ SG_DEREF(sb::buildTypeTraitBuiltinOperator(ident, { &expr, &args }));
+  SgType&            attrty = attributeType(expr, ident, args);
+  SgAdaAttributeExp& sgnode = mkLocatedNode<SgAdaAttributeExp>(ident, &expr, &args, &attrty);
 
   expr.set_parent(&sgnode);
   args.set_parent(&sgnode);
 
-  markCompilerGenerated(sgnode);
   return sgnode;
 }
 
@@ -2068,17 +2359,17 @@ mkAdaIntegerLiteral(const char* textrep)
 //
 // builder functions
 
-SgRemOp*
-buildRemOp(SgExpression* lhs, SgExpression* rhs)
-{
-  return &mkLocatedNode<SgRemOp>(lhs, rhs, nullptr);
-}
+//~ SgRemOp*
+//~ buildRemOp(SgExpression* lhs, SgExpression* rhs)
+//~ {
+  //~ return &mkLocatedNode<SgRemOp>(lhs, rhs, nullptr);
+//~ }
 
-SgAbsOp*
-buildAbsOp(SgExpression* op)
-{
-  return &mkLocatedNode<SgAbsOp>(op, nullptr);
-}
+//~ SgAbsOp*
+//~ buildAbsOp(SgExpression* op)
+//~ {
+  //~ return &mkLocatedNode<SgAbsOp>(op, nullptr);
+//~ }
 
 
 }

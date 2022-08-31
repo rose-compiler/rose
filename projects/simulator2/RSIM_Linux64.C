@@ -11,6 +11,7 @@
 
 #include "RSIM_Linux64.h"
 #include <Rose/BinaryAnalysis/Debugger.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/Diagnostics.h>
 #include <Rose/FileSystem.h>
 
@@ -184,7 +185,7 @@ RSIM_Linux64::loadVsyscalls(RSIM_Process *process) {
 }
 
 void
-RSIM_Linux64::loadSpecimenNative(RSIM_Process *process, Disassembler *disassembler, int existingPid/*=-1*/) {
+RSIM_Linux64::loadSpecimenNative(RSIM_Process *process, const Disassembler::Base::Ptr &disassembler, int existingPid/*=-1*/) {
     process->mem_transaction_start("specimen main memory");
     Debugger::Ptr debugger = Debugger::instance();
     if (existingPid != -1) {
@@ -195,7 +196,7 @@ RSIM_Linux64::loadSpecimenNative(RSIM_Process *process, Disassembler *disassembl
 
     process->get_memory()->insertProcess(debugger->isAttached(), MemoryMap::Attach::NO);
 
-    const RegisterDictionary *regs = disassembler->registerDictionary();
+    RegisterDictionary::Ptr regs = disassembler->registerDictionary();
     initialRegs_.ax = debugger->readRegister(regs->findOrThrow("rax")).toInteger();
     initialRegs_.bx = debugger->readRegister(regs->findOrThrow("rbx")).toInteger();
     initialRegs_.cx = debugger->readRegister(regs->findOrThrow("rcx")).toInteger();

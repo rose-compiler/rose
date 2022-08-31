@@ -1,8 +1,8 @@
 CFG dominators for function 0x00401000:
-  function 0x00401000 dominator of 0x00401012<0> is 0x00401000<3>
-  function 0x00401000 dominator of 0x00401013<1> is 0x00401000<3>
-  function 0x00401000 dominator of 0x0040103f<2> is 0x00401013<1>
-  function 0x00401000 dominator of 0x00401000<3> is none
+  function 0x00401000 dominator of 0x00401000<0> is none
+  function 0x00401000 dominator of 0x00401012<1> is 0x00401000<0>
+  function 0x00401000 dominator of 0x00401013<2> is 0x00401000<0>
+  function 0x00401000 dominator of 0x0040103f<3> is 0x00401013<2>
 CFG dominators for function 0x00401050:
   function 0x00401050 dominator of 0x00401065<0> is 0x00401050<2>
   function 0x00401050 dominator of 0x0040106e<1> is 0x00401050<2>

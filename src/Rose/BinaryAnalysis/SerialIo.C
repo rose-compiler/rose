@@ -3,9 +3,12 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/SerialIo.h>
 
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics.h>
-#include <Rose/BinaryAnalysis/Registers.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
+#include <Rose/StringUtility/Escape.h>
+#include <Rose/StringUtility/SplitJoin.h>
+
 #include <boost/serialization/shared_ptr.hpp>
 
 #ifdef ROSE_SUPPORTS_SERIAL_IO
@@ -15,7 +18,7 @@
 #include <unistd.h>
 #endif
 
-
+using namespace Sawyer::Message::Common;
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -366,6 +369,42 @@ SerialInput::close() {
         fileSize_ = 0;
 #endif
         SerialIo::close();
+    }
+}
+
+void
+SerialInput::checkCompatibility(const std::string &fileVersion) {
+    const std::string roseVersion = ROSE_PACKAGE_VERSION;
+    if (roseVersion == fileVersion)
+        return;
+
+    std::vector<std::string> fileParts = Rose::StringUtility::split('.', fileVersion);
+    std::vector<std::string> roseParts = Rose::StringUtility::split('.', roseVersion);
+
+    // ROSE uses a dotted quad for the version number, as in W.X.Y.Z where W is zero, X is the major version, Y is the minor
+    // version, and Z is the patch version. Backward compatibility is ensured when W and X are the same for the file and the
+    // ROSE library and ROSE's Y.Z is greater than or equal to the file's Y.Z.
+    //
+    // Examples:
+    //       File Version           ROSE library version   ROSE library can read the file?
+    //       0.11.87.0              0.11.87.0              Yes
+    //       0.11.87.0              0.11.87.1              Yes
+    //       0.11.87.0              0.11.88.0              Yes
+    //       0.11.87.0              0.12.0.0               No
+    //       0.11.87.0              1.0.0.0                No
+    //
+    ASSERT_require2(roseParts.size() == 4, roseVersion);
+    if (fileParts.size() != 4)
+        throw Exception("invalid file version string \"" + StringUtility::cEscape(fileVersion) + "\"");
+
+    if (fileParts[0] == roseParts[0] &&
+        fileParts[1] == roseParts[1] &&
+        (fileParts[2] <= roseParts[2] ||
+         (fileParts[2] == roseParts[2] && fileParts[3] <= roseParts[3]))) {
+        if (fileVersion != roseVersion)
+            mlog[WARN] <<"RBA file version " <<fileVersion <<" is being read by ROSE verion " <<roseVersion <<"\n";
+    } else {
+        throw Exception("ROSE library " + roseVersion + " cannot read file version " + fileVersion);
     }
 }
 

@@ -1,21 +1,22 @@
 #include <rose.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/RegisterStateGeneric.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RegisterStateGeneric.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <sstream>
 
 using namespace Rose;
 using namespace Rose::BinaryAnalysis;
-using namespace Rose::BinaryAnalysis::InstructionSemantics2;
-using namespace Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
+using namespace Rose::BinaryAnalysis::InstructionSemantics;
+using namespace Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;
 
 int
 main() {
     
 
-    const RegisterDictionary *regdict = RegisterDictionary::dictionary_amd64();
-    RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(regdict);
+    RegisterDictionary::Ptr regdict = RegisterDictionary::instanceAmd64();
+    RiscOperators::Ptr ops = SymbolicSemantics::RiscOperators::instanceFromRegisters(regdict);
     ASSERT_always_not_null(ops);
-    RegisterStateGenericPtr registers = RegisterStateGeneric::promote(ops->currentState()->registerState());
+    RegisterStateGeneric::Ptr registers = RegisterStateGeneric::promote(ops->currentState()->registerState());
 
     // Store some things in the register state
     const RegisterDescriptor RIP = regdict->findOrThrow("rip");
@@ -29,8 +30,8 @@ main() {
 
     // Read the eight low-order bits
     RegisterDescriptor byte0 = RegisterDescriptor(RIP.majorNumber(), RIP.minorNumber(), 0, 8);
-    SValuePtr zeroByte = ops->number_(8, 0);
-    SValuePtr read = registers->peekRegister(byte0, zeroByte, ops.get());
+    SValue::Ptr zeroByte = ops->number_(8, 0);
+    SValue::Ptr read = registers->peekRegister(byte0, zeroByte, ops.get());
     ASSERT_always_require(read->nBits() == 8);
     ASSERT_always_require(read->isConcrete());
     ASSERT_always_require2(read->toUnsigned().get() == 10, StringUtility::numberToString(read->toUnsigned().get()));
