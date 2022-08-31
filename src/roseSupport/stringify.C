@@ -67188,54 +67188,6 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /buildTree/src/frontend/SageIII/Cxx_GrammarTreeTraversalAccessEnums.h line 372
-namespace stringify {
-    const char* E_SgUntypedUnaryOperator(int64_t i) {
-        switch (i) {
-            case 0L: return "SgUntypedUnaryOperator_operand";
-            default: return "";
-        }
-    }
-
-    std::string E_SgUntypedUnaryOperator(int64_t i, const std::string &strip) {
-        std::string s = E_SgUntypedUnaryOperator(i);
-        if (s.empty())
-            s = "(E_SgUntypedUnaryOperator)" + boost::lexical_cast<std::string>(i);
-        if (boost::starts_with(s, strip))
-            s = s.substr(strip.size());
-        return s;
-    }
-
-    const std::vector<int64_t>& E_SgUntypedUnaryOperator() {
-        static const int64_t values[] = {
-            0L
-        };
-        static const std::vector<int64_t> retval(values, values + 1);
-        return retval;
-    }
-
-}
-
-namespace Rose {
-    std::string stringifyE_SgUntypedUnaryOperator(int64_t i, const char *strip, bool canonic) {
-        std::string retval = stringify::E_SgUntypedUnaryOperator(i);
-        if (retval.empty()) {
-            retval = "(E_SgUntypedUnaryOperator)" + boost::lexical_cast<std::string>(i);
-        } else {
-            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
-                retval = retval.substr(strlen(strip));
-            if (canonic)
-                retval = "E_SgUntypedUnaryOperator::" + retval;
-        }
-        return retval;
-    }
-
-    const std::vector<int64_t>& stringifyE_SgUntypedUnaryOperator() {
-        return stringify::E_SgUntypedUnaryOperator();
-    }
-}
-
-// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
 // /buildTree/src/frontend/SageIII/Cxx_GrammarTreeTraversalAccessEnums.h line 375
 namespace stringify {
     const char* E_SgUntypedBinaryOperator(int64_t i) {
