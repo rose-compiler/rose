@@ -239,7 +239,7 @@ namespace CodeThorn
             }
             info=getPostInfo(lab);
           } else {
-            cerr<<"Error: Ast-annotation: unsupported analysis mode."<<endl;
+            cerr<<"Error: AST-annotation: unsupported analysis mode."<<endl;
             exit(1);
           }
         } else {
@@ -254,7 +254,7 @@ namespace CodeThorn
             }
             info=getPreInfo(lab);
           } else {
-            cerr<<"Error: Ast-annotation: unsupported analysis mode."<<endl;
+            cerr<<"Error: AST-annotation: unsupported analysis mode."<<endl;
             exit(1);
           }
 
