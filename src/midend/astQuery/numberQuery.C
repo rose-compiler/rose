@@ -54,7 +54,8 @@ NumberQuery::queryNumberOfArgsInParenthesisOperator (SgNode * astNode, string ty
         SgFunctionCallExp *functionCallExp = isSgFunctionCallExp (astNode);
         ROSE_ASSERT (functionCallExp != NULL);
 
-        const char *functionTypeName = TransformationSupport::getFunctionTypeName(functionCallExp).data();
+        std::string functionTypeNameStr = TransformationSupport::getFunctionTypeName(functionCallExp); 
+        const char *functionTypeName = functionTypeNameStr.data();
 
         ROSE_ASSERT (functionTypeName != NULL);
 
@@ -243,7 +244,8 @@ NumberQuery::queryNumberOfArgsInScalarIndexingOperator (SgNode * astNode)
         SgFunctionCallExp *functionCallExp = isSgFunctionCallExp (astNode);
         ROSE_ASSERT (functionCallExp != NULL);
 
-        const char *functionTypeName = TransformationSupport::getFunctionTypeName(functionCallExp).data();
+        std::string functionTypeNameStr = TransformationSupport::getFunctionTypeName(functionCallExp); 
+        const char *functionTypeName = functionTypeNameStr.data();
 
         ROSE_ASSERT (functionTypeName != NULL);
 
