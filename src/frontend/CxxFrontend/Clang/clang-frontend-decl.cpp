@@ -1862,7 +1862,12 @@ bool ClangToSageTranslator::VisitVarDecl(clang::VarDecl * var_decl, SgNode ** no
     SgType * sg_varType = buildTypeFromQualifiedType(varQualType);
     SgType * type = buildTypeFromQualifiedType(var_decl->getType());
 
-    clang::Expr * init_expr = var_decl->getInit();
+//    SgVariableDeclaration * sg_var_decl = new SgVariableDeclaration(name, type, init); // scope: obtain from the scope stack.
+   // Pei-Hung (09/01/2022) In test2022_3.c, the variable symbol needs to be avaiable before processing the RHS.
+   // calling buildVariableDeclaration_nfi to get the symbol in place.
+   SgVariableDeclaration * sg_var_decl = SageBuilder::buildVariableDeclaration_nfi(name,type, NULL ,SageBuilder::topScopeStack());
+ 
+   clang::Expr * init_expr = var_decl->getInit();
     SgNode * tmp_init = Traverse(init_expr);
     SgExpression * expr = isSgExpression(tmp_init);
     if (tmp_init != NULL && expr == NULL) {
@@ -1877,9 +1882,12 @@ bool ClangToSageTranslator::VisitVarDecl(clang::VarDecl * var_decl, SgNode ** no
     else if (expr != NULL)
         init = SageBuilder::buildAssignInitializer_nfi(expr, expr->get_type());
     if (init != NULL)
+    {
+        init->set_parent(sg_var_decl);
         applySourceRange(init, init_expr->getSourceRange());
-
-    SgVariableDeclaration * sg_var_decl = new SgVariableDeclaration(name, type, init); // scope: obtain from the scope stack.
+    }
+    // Pei-Hung (09/01/2022) setup initializer once the RHS is processed.
+    sg_var_decl->reset_initializer(init);
 
     // finding the bottom base type and check
     while(type->findBaseType() != type)
