@@ -1024,7 +1024,7 @@ bool arrayElt::operator <  (const variable &that_arg) const
                 
         list<SgExpression*>::const_iterator itThis, itThat;
         for(itThis = indexExprs->begin(), itThat = that.indexExprs->begin();
-            itThis!=indexExprs->end(), itThat!=indexExprs->end();
+            itThis!=indexExprs->end() && itThat!=indexExprs->end();
             itThis++, itThat++)
         {
                 if(*itThis < *itThat) return true;
