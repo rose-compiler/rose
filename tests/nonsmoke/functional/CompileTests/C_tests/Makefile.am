@@ -636,7 +636,8 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2021_17.c \
      test2021_18.c \
      test2022_01.c \
-     test2022_02.c 
+     test2022_02.c \
+     test2022_03.c 
 
 
 TESTCODE_CURRENTLY_FAILING = \
