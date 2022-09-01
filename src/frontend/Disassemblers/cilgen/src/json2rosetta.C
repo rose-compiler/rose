@@ -132,7 +132,9 @@ namespace
         // consumed %%
         std::string::const_iterator lim = std::search(pos, zz, delimstr.begin(), delimstr.end());
 
-        assert(lim != zz);
+        if (lim == zz)
+          throw std::runtime_error{"non-terminated embedded instruction."};
+        
         const std::string           word{pos, lim};
 
         aa = std::next(lim, delimstr.size());

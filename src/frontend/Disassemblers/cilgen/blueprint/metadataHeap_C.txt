@@ -71,7 +71,6 @@
           e_ref_member_forwarded      = 1 << 20,
           e_ref_member_ref_parent     = 1 << 21,
           e_ref_type_or_method_def    = 1 << 22,
-          // defined, but seemingly not used from inside the metadata tables
           e_ref_custom_attribute_type = 1 << 23,
           e_ref_resolution_scope      = 1 << 24,
         };

@@ -493,10 +493,11 @@ struct Acuity
       logInfo() << "getting all classes.. " << std::endl;
       ct::RoseCompatibilityBridge compatLayer;
       ct::AnalysesTuple   analyses = ct::analyzeClassesAndCasts(compatLayer, &project);
-      const int           numClasses = std::get<0>(analyses).size();
+      const ct::ClassAnalysis& allClasses = analyses.classAnalysis();
+      const int           numClasses = allClasses.size();
       logInfo() << "getting all (" << numClasses << ") structs done. " << std::endl;
 
-      IncludeInOutputSet  outset = buildOutputSet(std::get<0>(analyses));
+      IncludeInOutputSet  outset = buildOutputSet(allClasses);
       logInfo() << "number of classes with virtual tables: " << outset.size() << std::endl;
 
       const int           maxlen = params.numCharsOfOriginalName;

@@ -127,6 +127,123 @@
 namespace
 {
 
+struct ExceptionClause : std::tuple<std::uint32_t, std::uint32_t, std::uint32_t, std::uint32_t, std::uint32_t, std::uint32_t>
+{
+  // flags values
+  static constexpr std::uint32_t TYPED   = 0x0000;
+  static constexpr std::uint32_t FILTER  = 0x0001;
+  static constexpr std::uint32_t FINALLY = 0x0002;
+  static constexpr std::uint32_t FAULT   = 0x0003;
+
+  using base = std::tuple<std::uint32_t, std::uint32_t, std::uint32_t, std::uint32_t, std::uint32_t, std::uint32_t>;
+  using base::base;
+  
+  std::uint32_t flags()         const { return std::get<0>(*this); }
+  std::uint32_t tryOffset()     const { return std::get<1>(*this); }
+  std::uint32_t tryLength()     const { return std::get<2>(*this); }
+  std::uint32_t handlerOffset() const { return std::get<3>(*this); }
+  std::uint32_t handlerLength() const { return std::get<4>(*this); }
+  std::uint32_t classToken()    const { ROSE_ASSERT(flags() == TYPED); return std::get<5>(*this); }
+  std::uint32_t filterOffset()  const { ROSE_ASSERT(flags() == FILTER); return std::get<5>(*this); }
+};
+
+struct MethodSectionHeader : std::tuple<std::uint8_t, std::uint32_t, std::vector<ExceptionClause> >
+{
+  static constexpr std::uint8_t EH_TABLE    = 0x01;
+  static constexpr std::uint8_t OPTIL_TABLE = 0x02;
+  static constexpr std::uint8_t FAT_FORMAT  = 0x40;
+  static constexpr std::uint8_t MORE_SECTS  = 0x80;
+  
+  using base = std::tuple<std::uint8_t, std::uint32_t, std::vector<ExceptionClause> >;
+  using base::base;
+
+  std::uint8_t  kind()         const { return std::get<0>(*this); }
+  bool          ehTable()      const { return (kind() & EH_TABLE) == EH_TABLE; }
+  bool          optilTable()   const { return (kind() & OPTIL_TABLE) == OPTIL_TABLE; }
+  bool          small()        const { return (kind() & FAT_FORMAT) == 0; }
+  bool          moreSections() const { return (kind() & MORE_SECTS) == MORE_SECTS; }
+  
+  std::uint32_t size()         const { return std::get<1>(*this); }
+  
+  const std::vector<ExceptionClause> clauses() const { return std::get<2>(*this); }  
+};
+
+std::vector<ExceptionClause>
+parseSmallExceptionClauses(std::uint8_t len, rose_addr_t base_va, std::uint32_t rva, SgAsmPEFileHeader& fhdr)
+{
+  static constexpr int CLAUSE_LEN = 12;
+
+  std::vector<ExceptionClause> res;
+  std::size_t                  idx = 0;
+  std::vector<std::uint8_t>    buf(len, 0);
+  const std::size_t            nread = fhdr.get_loader_map()->readQuick(buf.data(), base_va + rva, len);
+  ROSE_ASSERT(nread == len);
+  const std::uint8_t           n = sz/CLAUSE_LEN;
+  ROSE_ASSERT(sz%CLAUSE_LEN == 0);
+  
+  for (std::uint8_t i = 0; i < n; ++i)
+    res.emplace_back( read16bitValue(buf.data(), idx), 
+                      read16bitValue(buf.data(), idx),
+                      read8bitValue(buf.data(), idx),
+                      read16bitValue(buf.data(), idx),
+                      read8bitValue(buf.data(), idx),
+                      read32bitValue(buf.data(), idx),    
+                    );
+  
+  return res;
+}
+
+std::vector<ExceptionClause>
+parseFatExceptionClauses(std::uint32_t len, rose_addr_t base_va, std::uint32_t rva, SgAsmPEFileHeader& fhdr)
+{
+  static constexpr int CLAUSE_LEN = 24;
+  
+  std::vector<ExceptionClause> res;
+  std::size_t                  idx = 0;
+  std::vector<std::uint8_t>    buf(len, 0);
+  const std::size_t            nread = fhdr.get_loader_map()->readQuick(buf.data(), base_va + rva, len);
+  ROSE_ASSERT(nread == len);
+  const std::uint32_t          n = sz/CLAUSE_LEN;
+  ROSE_ASSERT(sz%CLAUSE_LEN == 0);
+  
+  for (std::uint8_t i = 0; i < n; ++i)
+    res.emplace_back( read32bitValue(buf.data(), idx), 
+                      read32bitValue(buf.data(), idx),
+                      read32bitValue(buf.data(), idx),
+                      read32bitValue(buf.data(), idx),
+                      read32bitValue(buf.data(), idx),
+                      read32bitValue(buf.data(), idx),    
+                    );
+  
+  return res;
+}
+
+MethodSectionHeader parseSmallSectionHeader(std::uint8_t buf[2], rose_addr_t base_va, std::uint32_t rva, SgAsmPEFileHeader& fhdr)
+{
+  const std::uint32_t rvaofs = rva + 4; // small header + padding
+  
+  ROSE_ASSERT(buf[1] >= 4);
+  return MethodSectionHeader{buf[0], buf[1], parseSmallExceptionClauses(buf[1]-4, base_va, rvaofs, fhdr)};
+}
+
+MethodSectionHeader parseFatSectionHeader(rose_addr_t base_va, std::uint32_t rva, SgAsmPEFileHeader& fhdr)
+{
+  std::uint8_t        buf[4];
+  const std::size_t   nread = fhdr.get_loader_map()->readQuick(buf.data(), base_va + rva + 4, sizeof(buf));  
+  ROSE_ASSERT(nread == sizeof(buf));
+  
+  std::size_t         idxF = 0;
+  const std::uint8_t  flags = read8bitValue(buf, idxF);
+  std::size_t         idxS = 0;
+  const std::uint32_t sz = read32bitValue(buf, idxS) >> 8;
+
+  const std::uint32_t rvaofs = rva + 4; // small header + padding
+  
+  ROSE_ASSERT(sz >= 4);
+  return MethodSectionHeader{flags, sz, parseFatExceptionClauses(sz-4, base_va, rvaofs, fhdr)};
+}
+
+
 struct MethodHeader : std::tuple<std::uint16_t, std::uint16_t, std::uint32_t, std::uint32_t>
 {
   static constexpr std::uint8_t TINY        = 0x2;
@@ -141,8 +258,8 @@ struct MethodHeader : std::tuple<std::uint16_t, std::uint16_t, std::uint32_t, st
 
   std::uint16_t flags() const          { return std::get<0>(*this); }
   bool          tiny()  const          { return (flags() & FORMAT) == TINY; }
-  bool          moreSections()  const  { return (flags() & FLAGS) == MORE_SECTS; }
-  bool          initLocals()  const    { return (flags() & FLAGS) == INIT_LOCALS; }
+  bool          moreSections()  const  { return (flags() & MORE_SECTS) == MORE_SECTS; }
+  bool          initLocals()  const    { return (flags() & INIT_LOCALS) == INIT_LOCALS; }
   std::uint8_t  headerSize() const     { return tiny() ? 1 : (flags() >> 12); }
 
   std::uint16_t maxStackSize() const   { return std::get<1>(*this); }
@@ -151,10 +268,10 @@ struct MethodHeader : std::tuple<std::uint16_t, std::uint16_t, std::uint32_t, st
 };
 
 MethodHeader
-parseFatHeader(rose_addr_t base_va, std::uint32_t rva, SgAsmPEFileHeader* fhdr)
+parseFatHeader(rose_addr_t base_va, std::uint32_t rva, SgAsmPEFileHeader& fhdr)
 {
   std::uint8_t         buf[12];
-  const std::size_t    nread = fhdr->get_loader_map()->readQuick(&buf, base_va + rva, sizeof(buf));
+  const std::size_t    nread = fhdr.get_loader_map()->readQuick(&buf, base_va + rva, sizeof(buf));
   ROSE_ASSERT(nread == 12);
 
   const std::uint16_t  flags    = ByteOrder::le_to_host(*reinterpret_cast<uint16_t*>(buf+0));
@@ -195,35 +312,30 @@ disassemble(SgAsmCilMethodDef* m, MethodHeader mh, std::vector<std::uint8_t>& bu
   return sb::buildBasicBlock(lst);
 }
 
-void decodeMetadata(rose_addr_t base_va, SgAsmCilMetadataHeap* mdh, SgAsmCilMetadataRoot* root)
+void decodeMethods(rose_addr_t base_va, SgAsmPEFileHeader& fhdr, SgAsmCilMetadataRoot& root, SgAsmCilMetadataHeap& mdh)
 {
-  constexpr std::uint8_t CIL_CODE       = 0;
-  constexpr std::uint8_t NATIVE_CODE    = 1;
-  constexpr std::uint8_t OPTIL_RESERVED = 2;
-  constexpr std::uint8_t RUNTIME_CODE   = 3;
-  constexpr std::uint8_t CODE_TYPE_MASK = CIL_CODE | NATIVE_CODE | OPTIL_RESERVED | RUNTIME_CODE;
-
-  ASSERT_not_null(mdh); ASSERT_not_null(root);
-
-  SgAsmCilUint8Heap* stringHeap = root->get_StringHeap();
-  ASSERT_not_null(stringHeap);
-
-  SgAsmPEFileHeader* fhdr = SageInterface::getEnclosingNode<SgAsmPEFileHeader>(root);
-  ASSERT_not_null(fhdr);
+  static constexpr std::uint8_t CIL_CODE       = 0;
+  static constexpr std::uint8_t NATIVE_CODE    = 1;
+  static constexpr std::uint8_t OPTIL_RESERVED = 2;
+  static constexpr std::uint8_t RUNTIME_CODE   = 3;
+  static constexpr std::uint8_t CODE_TYPE_MASK = CIL_CODE | NATIVE_CODE | OPTIL_RESERVED | RUNTIME_CODE;
+  
+  SgAsmCilUint8Heap* stringHeap = root.get_StringHeap();
+  ASSERT_not_null(stringHeap);  
 
   // decode methods
-  for (SgAsmCilMethodDef* m : mdh->get_methodDef())
+  for (SgAsmCilMethodDef* m : mdh.get_methodDef())
   {
     ASSERT_not_null(m);
 
     std::size_t nameidx = m->get_Name();
-    std::cerr << "proc " << readUtf8String(stringHeap->get_Stream(), nameidx)
-              << std::endl;
+    //~ std::cerr << "proc " << readUtf8String(stringHeap->get_Stream(), nameidx)
+    //~           << std::endl;
 
     // parse header
     std::uint32_t  rva = m->get_RVA();
     std::uint8_t   mh0;
-    std::size_t    nread = fhdr->get_loader_map()->readQuick(&mh0, base_va + rva, 1);
+    std::size_t    nread = fhdr.get_loader_map()->readQuick(&mh0, base_va + rva, 1);
     ROSE_ASSERT(nread == 1);
 
     bool           isTiny = (mh0 & MethodHeader::FORMAT) == MethodHeader::TINY;
@@ -239,7 +351,7 @@ void decodeMetadata(rose_addr_t base_va, SgAsmCilMetadataHeap* mdh, SgAsmCilMeta
     std::uint32_t  codeLen = mh.codeSize();
 
     std::vector<std::uint8_t> code(codeLen, 0);
-    std::size_t    nreadCode = fhdr->get_loader_map()->readQuick(code.data(), base_va + codeRVA, codeLen);
+    std::size_t    nreadCode = fhdr.get_loader_map()->readQuick(code.data(), base_va + codeRVA, codeLen);
     ROSE_ASSERT(nreadCode == codeLen);
 
     SgAsmBlock* blk = nullptr;
@@ -273,7 +385,36 @@ void decodeMetadata(rose_addr_t base_va, SgAsmCilMetadataHeap* mdh, SgAsmCilMeta
 
     ASSERT_not_null(blk);
     m->set_body(blk);
+    
+    bool hasMoreSects = mh.moreSections();
+    std::uint32_t sectRVA = ((codeRVA + codeLen + 3) / 4) * 4;
+    
+    while (hasMoreSects)
+    {
+      std::uint8_t  sectHead[2];
+      std::size_t   nreadHead = fhdr.get_loader_map()->readQuick(sectHead, base_va + sectRVA, sizeof(sectHead));  
+      ROSE_ASSERT(nreadHead == sizeof(sectHead));
+      
+      bool          isSmall = ((sectHead[0] & SECT_FAT_FORMAT) == 0)
+      SectionHeader sh      = isSmall ? parseSmallSectionHeader(sectHead, base_va, sectRVA, fhdr) 
+                                      : parseFatSectionHeader(base_va, sectRVA, fhdr);
+    
+      std::uint32_t codeLen = mh.codeSize();
+    
+      sectRVA += sh.size();
+      hasMoreSects = ((sectHead[0] & SECT_MORE_SECTS) == SECT_MORE_SECTS);
+    }
   }
+}
+
+void decodeMetadata(rose_addr_t base_va, SgAsmCilMetadataHeap* mdh, SgAsmCilMetadataRoot* root)
+{
+  ASSERT_not_null(mdh); ASSERT_not_null(root);
+
+  SgAsmPEFileHeader* fhdr = SageInterface::getEnclosingNode<SgAsmPEFileHeader>(root);
+  ASSERT_not_null(fhdr);
+  
+  decodeMethods(base_va, *fhdr, *root, *mdh);
 }
 
 }

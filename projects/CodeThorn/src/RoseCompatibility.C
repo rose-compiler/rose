@@ -120,6 +120,10 @@ namespace
 
         descend(n);
       }
+      
+      // \todo consider providing a handler for SgClassDeclaration
+      //       that only descends if the traversal is in allClass mode
+      //       i.e., classes->containsAllClasses()
 
 
       // casts
@@ -487,7 +491,6 @@ namespace
   collectAncestors(const SgClassDefinition* cls, std::vector<const SgClassDefinition*>&& res = {})
   {
     ASSERT_not_null(cls);
-    res.push_back(cls);
     
     for (const SgBaseClass* bscls : cls->get_inheritances())
     {
@@ -513,6 +516,7 @@ namespace
       res = collectAncestors(bsdefn->get_definition(), std::move(res));
     }
       
+    res.push_back(cls);  
     return res;  
   }
 }
@@ -747,9 +751,18 @@ namespace
         }
         catch (const std::out_of_range&)
         {
+          static int prnNumWarn = 3;  
+          
           if (classes.containsAllClasses()) throw;
           
-          logWarn() << "Assuming covariant return [requires full translation unit analysis]" << std::endl;
+          if (prnNumWarn > 0)
+          {
+            --prnNumWarn;
+            logWarn() << "assuming covariant return [requires full translation unit analysis]" 
+                      << (prnNumWarn ? "" : "...")
+                      << std::endl;
+          }  
+            
           isCovariant = true;
         }
 
