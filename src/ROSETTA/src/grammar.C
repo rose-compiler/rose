@@ -1190,12 +1190,10 @@ generate_override_keyword( AstNodeClass & node, GrammarString & data )
      printf ("In generate_override_keyword(): nodeName = %s variableNameString = %s \n",nodeName.c_str(),variableNameString.c_str());
 #endif
 
-  // Rasmussen (8/16-17/2017): Added UntypedSubmoduleDeclaration and UntypedBlockDataDeclaration
-  // Rasmussen (10/01/2017): Added SgUntypedPackageDeclaration,SgUntypedStructureDeclaration,SgUntypedTaskDeclaration,SgUntypedUnitDeclaration
-  // Rasmussen (12/20/2017): Added SgUntypedExprListExpression
-  // Rasmussen (11/20/2018): Added SgUntypedArrayReferenceExpression, SgUntypedForAllStatement, and SgJovialCompoolStatement
-  // Rasmussen (05/22/2019): Moved scope from SgUntypedStructureDeclaration to SgUntypedStructureDefinition
-  // Rasmussen (09/30/2019): Added SgUntypedTypedefDeclaration
+  // Rasmussen (08/25/2022): Removed all untyped Sage nodes. Ultimately it proved easier to
+  // construct regular IR nodes from the Jovial parser. Using the untyped system just led to an
+  // unnecessary step and wasted effort.
+
   // PP (06/03/20): Added Ada nodes
 
   // Except in the root class for the virtual access function.
@@ -1214,26 +1212,9 @@ generate_override_keyword( AstNodeClass & node, GrammarString & data )
           (nodeName == "WhereStatement"             && variableNameString == "end_numeric_label") ||
           (nodeName == "QualifiedName"              && variableNameString == "scope") ||
           (nodeName == "InitializedName"            && variableNameString == "scope") ||
-          (nodeName == "UntypedFunctionDeclaration" && variableNameString == "scope") ||
-          (nodeName == "UntypedModuleDeclaration"   && variableNameString == "scope") ||
-          (nodeName == "UntypedSubmoduleDeclaration"&& variableNameString == "scope") ||
-          (nodeName == "UntypedBlockDataDeclaration"&& variableNameString == "scope") ||
-          (nodeName == "UntypedPackageDeclaration"  && variableNameString == "scope") ||
-          (nodeName == "UntypedStructureDefinition" && variableNameString == "scope") ||
-          (nodeName == "UntypedTaskDeclaration"     && variableNameString == "scope") ||
-          (nodeName == "UntypedUnitDeclaration"     && variableNameString == "scope") ||
-          (nodeName == "UntypedBlockStatement"      && variableNameString == "scope") ||
-          (nodeName == "UntypedFile"                && variableNameString == "scope") ||
           (nodeName == "TemplateParameter"          && variableNameString == "type")  ||
           (nodeName == "TemplateArgument"           && variableNameString == "type")  ||
           (nodeName == "JavaQualifiedType"          && variableNameString == "type")  ||
-          (nodeName == "UntypedExprListExpression"  && variableNameString == "type")  ||
-          (nodeName == "UntypedForAllStatement"     && variableNameString == "type")  ||
-          (nodeName == "UntypedValueExpression"     && variableNameString == "type")  ||
-          (nodeName == "UntypedVariableDeclaration" && variableNameString == "type")  ||
-          (nodeName == "UntypedTypedefDeclaration"  && variableNameString == "type")  ||
-          (nodeName == "UntypedFunctionDeclaration" && variableNameString == "type")  ||
-          (nodeName == "UntypedInitializedName"     && variableNameString == "type")  ||
           (nodeName == "EnumDeclaration"            && variableNameString == "type")  ||
           (nodeName == "TypedefDeclaration"         && variableNameString == "type")  ||
           (nodeName == "AdaDiscriminatedTypeDecl"   && variableNameString == "type")  ||
@@ -1270,19 +1251,6 @@ generate_override_keyword( AstNodeClass & node, GrammarString & data )
           (nodeName == "InitializedName"            && variableNameString == "name")  ||
           (nodeName == "JavaMemberValuePair"        && variableNameString == "name")  ||
           (nodeName == "JovialCompoolStatement"     && variableNameString == "name")  ||
-          (nodeName == "UntypedArrayReferenceExpression" && variableNameString == "name")  ||
-          (nodeName == "UntypedReferenceExpression" && variableNameString == "name")  ||
-          (nodeName == "UntypedFunctionDeclaration" && variableNameString == "name")  ||
-          (nodeName == "UntypedModuleDeclaration"   && variableNameString == "name")  ||
-          (nodeName == "UntypedSubmoduleDeclaration"&& variableNameString == "name")  ||
-          (nodeName == "UntypedBlockDataDeclaration"&& variableNameString == "name")  ||
-          (nodeName == "UntypedPackageDeclaration"  && variableNameString == "name")  ||
-          (nodeName == "UntypedStructureDeclaration"&& variableNameString == "name")  ||
-          (nodeName == "UntypedTypedefDeclaration"  && variableNameString == "name")  ||
-          (nodeName == "UntypedTaskDeclaration"     && variableNameString == "name")  ||
-          (nodeName == "UntypedUnitDeclaration"     && variableNameString == "name")  ||
-          (nodeName == "UntypedInitializedName"     && variableNameString == "name")  ||
-          (nodeName == "UntypedName"                && variableNameString == "name")  ||
           (nodeName == "EnumDeclaration"            && variableNameString == "name")  ||
           (nodeName == "TemplateDeclaration"        && variableNameString == "name")  ||
           (nodeName == "UseStatement"               && variableNameString == "name")  ||
@@ -1347,11 +1315,9 @@ generate_override_keyword_for_set_functions( AstNodeClass & node, GrammarString 
      printf ("In generate_override_keyword(): nodeName = %s variableNameString = %s \n",nodeName.c_str(),variableNameString.c_str());
 #endif
 
-  // Rasmussen (8/16-17/2017): Added UntypedSubmoduleDeclaration and UntypedBlockDataDeclaration
-  // Rasmussen (9/01/2017): Added SgUntypedPackageDeclaration,SgUntypedStructureDeclaration,SgUntypedTaskDeclaration,SgUntypedUnitDeclaration
-  // Rasmussen (12/20/2017): Added SgUntypedExprListExpression
-  // Rasmussen (11/20/2018): Added SgUntypedArrayReferenceExpression, SgUntypedForAllStatement, and SgJovialCompoolStatement
-  // Rasmussen (05/22/2019): Moved scope from SgUntypedStructureDeclaration to SgUntypedStructureDefinition
+  // Rasmussen (08/25/2022): Removed all untyped Sage nodes. Ultimately it proved easier to
+  // construct regular IR nodes from the Jovial parser. Using the untyped system just led to an
+  // unnecessary step and wasted effort.
 
   // Except in the root class for the virtual access function.
      if ( (nodeName == "Pragma"                     && variableNameString == "startOfConstruct")   ||
@@ -1362,26 +1328,9 @@ generate_override_keyword_for_set_functions( AstNodeClass & node, GrammarString 
           (nodeName == "LocatedNode"                && variableNameString == "endOfConstruct")     ||
           (nodeName == "QualifiedName"              && variableNameString == "scope") ||
           (nodeName == "InitializedName"            && variableNameString == "scope") ||
-          (nodeName == "UntypedFunctionDeclaration" && variableNameString == "scope") ||
-          (nodeName == "UntypedModuleDeclaration"   && variableNameString == "scope") ||
-          (nodeName == "UntypedSubmoduleDeclaration"&& variableNameString == "scope") ||
-          (nodeName == "UntypedBlockDataDeclaration"&& variableNameString == "scope") ||
-          (nodeName == "UntypedPackageDeclaration"  && variableNameString == "scope") ||
-          (nodeName == "UntypedStructureDefinition" && variableNameString == "scope") ||
-          (nodeName == "UntypedTaskDeclaration"     && variableNameString == "scope") ||
-          (nodeName == "UntypedUnitDeclaration"     && variableNameString == "scope") ||
-          (nodeName == "UntypedBlockStatement"      && variableNameString == "scope") ||
-          (nodeName == "UntypedFile"                && variableNameString == "scope") ||
           (nodeName == "TemplateParameter"          && variableNameString == "type")  ||
           (nodeName == "TemplateArgument"           && variableNameString == "type")  ||
           (nodeName == "JavaQualifiedType"          && variableNameString == "type")  ||
-          (nodeName == "UntypedExprListExpression"  && variableNameString == "type")  ||
-          (nodeName == "UntypedForAllStatement"     && variableNameString == "type")  ||
-          (nodeName == "UntypedValueExpression"     && variableNameString == "type")  ||
-          (nodeName == "UntypedVariableDeclaration" && variableNameString == "type")  ||
-          (nodeName == "UntypedTypedefDeclaration"  && variableNameString == "type")  ||
-          (nodeName == "UntypedFunctionDeclaration" && variableNameString == "type")  ||
-          (nodeName == "UntypedInitializedName"     && variableNameString == "type")  ||
           (nodeName == "EnumDeclaration"            && variableNameString == "type")  ||
           (nodeName == "TypedefDeclaration"         && variableNameString == "type")  ||
           (nodeName == "AdaDiscriminatedTypeDecl"   && variableNameString == "type")  ||
@@ -1421,19 +1370,6 @@ generate_override_keyword_for_set_functions( AstNodeClass & node, GrammarString 
           (nodeName == "InitializedName"            && variableNameString == "name")  ||
           (nodeName == "JavaMemberValuePair"        && variableNameString == "name")  ||
           (nodeName == "JovialCompoolStatement"     && variableNameString == "name")  ||
-          (nodeName == "UntypedArrayReferenceExpression" && variableNameString == "name")  ||
-          (nodeName == "UntypedReferenceExpression" && variableNameString == "name")  ||
-          (nodeName == "UntypedFunctionDeclaration" && variableNameString == "name")  ||
-          (nodeName == "UntypedModuleDeclaration"   && variableNameString == "name")  ||
-          (nodeName == "UntypedSubmoduleDeclaration"&& variableNameString == "name")  ||
-          (nodeName == "UntypedBlockDataDeclaration"&& variableNameString == "name")  ||
-          (nodeName == "UntypedPackageDeclaration"  && variableNameString == "name")  ||
-          (nodeName == "UntypedStructureDeclaration"&& variableNameString == "name")  ||
-          (nodeName == "UntypedTypedefDeclaration"  && variableNameString == "name")  ||
-          (nodeName == "UntypedTaskDeclaration"     && variableNameString == "name")  ||
-          (nodeName == "UntypedUnitDeclaration"     && variableNameString == "name")  ||
-          (nodeName == "UntypedInitializedName"     && variableNameString == "name")  ||
-          (nodeName == "UntypedName"                && variableNameString == "name")  ||
           (nodeName == "EnumDeclaration"            && variableNameString == "name")  ||
           (nodeName == "TemplateDeclaration"        && variableNameString == "name")  ||
           (nodeName == "UseStatement"               && variableNameString == "name")  ||
@@ -1821,24 +1757,6 @@ Grammar::buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( AstNodeClas
                string constructorParameterString_2 = buildConstructorParameterListString(node,withInitializers,withTypes, cur, &complete);
                constructorPrototype = constructorPrototype + "         " + string(className) + "(" + constructorParameterString_2 + "); \n";
 
-               /* ESSENTIAL DATA MEMBERS CONSTRUCTOR: generate prototype for all data members constructor */
-               if(nameHasPrefix(className,"SgUntyped")) {
-                 string constructorParameterString_3 = buildConstructorParameterListStringForEssentialDataMembers(node,false);
-                 // ensure that the already generated constructor is not generated again
-                 if(constructorParameterString_2!="") {
-                   constructorPrototype+=string(className) + "();\n";
-                   node.setGenerateEnforcedDefaultConstructorImplementation(true);
-                 } else {
-                   node.setGenerateEnforcedDefaultConstructorImplementation(false);
-                 }
-                 if(constructorParameterString_3!=constructorParameterString_2) {
-                   constructorPrototype += string(className) + "(" + constructorParameterString_3 + ");\n";
-                   node.setGenerateEssentialDataMembersConstructorImplementation(true);
-                 } else {
-                   node.setGenerateEssentialDataMembersConstructorImplementation(false);
-                 }
-               }
-
             // DQ (11/7/2006): Turn it back on as a constructor parameter (and reset the defaultInitializerString)
                returnValue->setIsInConstructorParameterList(CONSTRUCTOR_PARAMETER);
                returnValue->defaultInitializerString = defaultInitializer;
@@ -1853,11 +1771,7 @@ Grammar::buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( AstNodeClas
 
           dataAccessFunctionPrototypeString.push_back(StringUtility::StringWithLineNumber(constructorPrototype, "" /* "<constructor>" */, 1));
         } else {
-       // no constructor (only generate default constructor)
-          if(nameHasPrefix(className,"SgUntyped")) {
-            string constructorPrototype=className+"::"+className+"() {}\n";
-            //dataAccessFunctionPrototypeString.push_back(StringUtility::StringWithLineNumber(constructorPrototype, "", 1));
-          }
+       // Rasmussen (08/25/2022): Removed all untyped Sage IR nodes.
         }
 
 #if BUILD_ATERM_SUPPORT
@@ -1915,28 +1829,6 @@ void Grammar::constructorLoopBody(const ConstructParamEnum& config, bool& comple
 
   // NEW CONSTRUCTOR: generate IMPLEMENTATION
   string constructorEssentialDataMembers;
-  // generate new constructor only for Untyped nodes.
-  if(node.baseName.substr(0,7)=="Untyped") {
-    string className=node.getName();
-    string constructorClassName=className+"::"+className;
-    if(node.getGenerateEnforcedDefaultConstructorImplementation()) {
-      constructorEssentialDataMembers+=constructorClassName+" () /* ESSENTIAL DATA MEMBERS ENFORCED DEFAULT CONSTRUCTOR */ {}\n";
-    }
-    if(node.getGenerateEssentialDataMembersConstructorImplementation()) {
-      //cout<<"Generating constructor implementation for "<<node.baseName<<endl;
-      string constructorParameters
-        =buildConstructorParameterListStringForEssentialDataMembers(node,false);
-      // check whether constructor already exists
-      if(constructorParameters!="") {
-        string constructorImpl=node.buildConstructorBodyForEssentialDataMembers();
-        constructorEssentialDataMembers+=
-           constructorClassName
-           +"("+constructorParameters+")"
-           +" /* ESSENTIAL DATA MEMBERS CONSTRUCTOR */ "
-           +"{\n"+constructorImpl+"}\n";
-      }
-    }
-  }
   constructorSource = GrammarString::copyEdit (constructorSource,"$CONSTRUCTOR_ESSENTIAL_DATA_MEMBERS",constructorEssentialDataMembers);
 
   returnString.insert(returnString.end(), constructorSource.begin(), constructorSource.end());

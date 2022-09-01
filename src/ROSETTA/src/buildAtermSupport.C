@@ -604,7 +604,7 @@ Grammar::buildAtermConsumerSupportFunctions(AstNodeClass & node, StringUtility::
   // outputFile << "// In Grammar::buildAtermSupportFunctions(): data member type: " << grammarString->getTypeNameString() << " data member variable: " << grammarString->getVariableNameString() << "\n";
      if (node.getName() == "SgSupport" || node.getName() == "SgScopeStatement" || node.getName() == "SgExpression" || 
          node.getName() == "SgSymbol" || node.getName() == "SgType" || node.getName() == "SgAsmNode" || 
-         node.getName() == "SgUntypedNode" || node.getName() == "SgC_PreprocessorDirectiveStatement")
+         node.getName() == "SgC_PreprocessorDirectiveStatement")
         {
           printf ("Exiting early to debug subset of ATerm to AST functionality \n");
           return;

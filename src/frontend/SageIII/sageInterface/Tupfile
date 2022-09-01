@@ -1,9 +1,8 @@
 include_rules
 
 run $(librose_compile) sageInterface.C sageInterface_type.C generateUniqueName.C sageBuilder.C sageBuilder_fortran.C \
-    abiStuff.C sageBuilder_untypedNodes.C untypedBuilder.C sageInterfaceAsm.C sageInterface_asm.C SageBuilderAsm.C \
-    sageInterfaceAda.C
+    abiStuff.C sageInterfaceAsm.C sageInterface_asm.C SageBuilderAsm.C sageInterfaceAda.C
 
-run $(public_header) sageInterface.h sageBuilder.h sageGeneric.h sageFunctors.h integerOps.h untypedBuilder.h abiStuff.h \
+run $(public_header) sageInterface.h sageBuilder.h sageGeneric.h sageFunctors.h integerOps.h abiStuff.h \
     sageInterfaceAsm.h SageBuilderAsm.h sageInterfaceAda.h
 
