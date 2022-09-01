@@ -289,11 +289,11 @@
         "RefKind": "e_ref_has_custom_attribute"
       },
       {
-        "Doc": "an index into the MethodDef or MemberRef table.",
-        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_method_def_or_ref)",
+        "Doc": "an index into the MethodDef or MemberRef table (more precisely, a CustomAttributeType coded index).",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_custom_attribute_type)",
         "Name": "Type",
         "Type": "uint32_t",
-        "RefKind": "e_ref_method_def_or_ref"
+        "RefKind": "e_ref_custom_attribute_type"
       },
       {
         "Doc": "an index into the Blob heap.",
@@ -629,9 +629,10 @@
     "Fields": [
       {
         "Doc": "an index into the TypeDef table.",
-        "Init": "read16bitValue(buf,index)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_type_def)",
         "Name": "Class",
-        "Type": "uint32_t"
+        "Type": "uint32_t",
+        "RefKind": "e_ref_type_def"
       },
       {
         "Doc": "an index into the TypeDef, TypeRef, or TypeSpec table.",
@@ -1071,9 +1072,10 @@
     "Fields": [
       {
         "Doc": "An index into a Module, ModuleRef, AssemblyRef or TypeRef table, or null.",
-        "Init": "read16bitValue(buf,index)",
+        "Init": "readValue(buf,index,uses4byteIndexing & SgAsmCilMetadataHeap::e_ref_resolution_scope)",
         "Name": "ResolutionScope",
-        "Type": "uint16_t"
+        "Type": "uint16_t",
+        "RefKind": "e_ref_resolution_scope"
       },
       {
         "Doc": "an index into the String heap.",
