@@ -6,6 +6,8 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Formatter.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RiscOperators.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/Util.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
+#include <Rose/BinaryAnalysis/RegisterNames.h>
 #include <Rose/Diagnostics.h>
 #include <Rose/FormatRestorer.h>
 
@@ -45,7 +47,7 @@ RegisterStateGeneric::zero()
 {
     // We're initializing with a concrete value, so it really doesn't matter whether we initialize large registers
     // or small registers.  Constant folding will adjust things as necessary when we start reading registers.
-    std::vector<RegisterDescriptor> regs = regdict->get_largest_registers();
+    std::vector<RegisterDescriptor> regs = regdict->getLargestRegisters();
     initialize_nonoverlapping(regs, true);
 }
 
@@ -53,14 +55,14 @@ void
 RegisterStateGeneric::initialize_large()
 {
     ASSERT_not_null(regdict);
-    std::vector<RegisterDescriptor> regs = regdict->get_largest_registers();
+    std::vector<RegisterDescriptor> regs = regdict->getLargestRegisters();
     initialize_nonoverlapping(regs, false);
 }
 
 void
 RegisterStateGeneric::initialize_small()
 {
-    std::vector<RegisterDescriptor> regs = regdict->get_smallest_registers();
+    std::vector<RegisterDescriptor> regs = regdict->getSmallestRegisters();
     initialize_nonoverlapping(regs, false);
 }
 
@@ -70,7 +72,7 @@ RegisterStateGeneric::initialize_nonoverlapping(const std::vector<RegisterDescri
     clear();
     for (size_t i=0; i<regs.size(); ++i) {
         std::string name = regdict->lookup(regs[i]);
-        SValuePtr val;
+        SValue::Ptr val;
         if (initialize_to_zero) {
             val = protoval()->number_(regs[i].nBits(), 0);
         } else {
@@ -177,12 +179,12 @@ RegisterStateGeneric::clearOverlappingLocations(RegisterDescriptor reg) {
         BitRange storedLocation = regpair.location();
         BitRange overlap = storedLocation & accessedLocation;
         if (!overlap.isEmpty())
-            regpair.value = SValuePtr();
+            regpair.value = SValue::Ptr();
     }
 }
 
-SValuePtr
-RegisterStateGeneric::readRegister(RegisterDescriptor reg, const SValuePtr &dflt, RiscOperators *ops) {
+SValue::Ptr
+RegisterStateGeneric::readRegister(RegisterDescriptor reg, const SValue::Ptr &dflt, RiscOperators *ops) {
     ASSERT_forbid(reg.isEmpty());
     ASSERT_not_null(dflt);
     ASSERT_require2(reg.nBits() == dflt->nBits(), "value being read must be same size as register" +
@@ -200,7 +202,7 @@ RegisterStateGeneric::readRegister(RegisterDescriptor reg, const SValuePtr &dflt
     if (!registers_.exists(reg)) {
         if (!accessCreatesLocations_)
             return dflt;
-        SValuePtr newval = dflt->copy();
+        SValue::Ptr newval = dflt->copy();
         std::string regname = regdict->lookup(reg);
         boost::erase_all(regname, "[");
         boost::erase_all(regname, "]");
@@ -232,14 +234,14 @@ RegisterStateGeneric::readRegister(RegisterDescriptor reg, const SValuePtr &dflt
     for (const BitRange &newLocation: newLocations.intervals()) {
         RegisterDescriptor subreg(reg.majorNumber(), reg.minorNumber(), newLocation.least(), newLocation.size());
         ASSERT_require(newLocation.least() >= reg.offset());
-        SValuePtr newval = ops->extract(dflt,
+        SValue::Ptr newval = ops->extract(dflt,
                                         newLocation.least()-reg.offset(),
                                         newLocation.greatest()+1-reg.offset());
         newParts.push_back(RegPair(subreg, newval));
     }
 
     // Construct the return value by combining all the parts we found or created.
-    SValuePtr retval;
+    SValue::Ptr retval;
     RegPairs retvalParts = accessedParts;
     retvalParts.insert(retvalParts.end(), newParts.begin(), newParts.end());
     std::sort(retvalParts.begin(), retvalParts.end(), sortByOffset);
@@ -262,7 +264,7 @@ RegisterStateGeneric::readRegister(RegisterDescriptor reg, const SValuePtr &dflt
             std::sort(accessedParts.begin(), accessedParts.end(), sortByOffset);
             for (size_t i = 0; i<accessedParts.size(); ++i /*also incremented in body*/) {
                 // Find largest contiguous value starting at i.
-                SValuePtr part = accessedParts[i].value;
+                SValue::Ptr part = accessedParts[i].value;
                 size_t firstOffset = accessedParts[i].desc.offset();
                 size_t nextOffset = firstOffset + accessedParts[i].desc.nBits();
                 while (i+1 < accessedParts.size() && accessedParts[i+1].desc.offset() == nextOffset) {
@@ -284,8 +286,8 @@ RegisterStateGeneric::readRegister(RegisterDescriptor reg, const SValuePtr &dflt
     return retval;
 }
 
-BaseSemantics::SValuePtr
-RegisterStateGeneric::peekRegister(RegisterDescriptor reg, const SValuePtr &dflt, RiscOperators *ops) {
+BaseSemantics::SValue::Ptr
+RegisterStateGeneric::peekRegister(RegisterDescriptor reg, const SValue::Ptr &dflt, RiscOperators *ops) {
     ASSERT_forbid(reg.isEmpty());
     ASSERT_not_null(dflt);
     ASSERT_require2(reg.nBits() == dflt->nBits(), "value being read must be same size as register" +
@@ -315,14 +317,14 @@ RegisterStateGeneric::peekRegister(RegisterDescriptor reg, const SValuePtr &dflt
     for (const BitRange &newLocation: newLocations.intervals()) {
         RegisterDescriptor subreg(reg.majorNumber(), reg.minorNumber(), newLocation.least(), newLocation.size());
         ASSERT_require(newLocation.least() >= reg.offset());
-        SValuePtr newval = ops->extract(dflt,
+        SValue::Ptr newval = ops->extract(dflt,
                                         newLocation.least()-reg.offset(),
                                         newLocation.greatest()+1-reg.offset());
         newParts.push_back(RegPair(subreg, newval));
     }
 
     // Construct the return value by combining all the parts we found or created.
-    SValuePtr retval;
+    SValue::Ptr retval;
     RegPairs retvalParts = accessedParts;
     retvalParts.insert(retvalParts.end(), newParts.begin(), newParts.end());
     std::sort(retvalParts.begin(), retvalParts.end(), sortByOffset);
@@ -335,7 +337,7 @@ RegisterStateGeneric::peekRegister(RegisterDescriptor reg, const SValuePtr &dflt
 }
 
 void
-RegisterStateGeneric::writeRegister(RegisterDescriptor reg, const SValuePtr &value, RiscOperators *ops)
+RegisterStateGeneric::writeRegister(RegisterDescriptor reg, const SValue::Ptr &value, RiscOperators *ops)
 {
     ASSERT_not_null(value);
     ASSERT_require2(reg.nBits()==value->nBits(), "value written to register must be the same width as the register" +
@@ -391,24 +393,24 @@ RegisterStateGeneric::writeRegister(RegisterDescriptor reg, const SValuePtr &val
         for (RegPair &regpair: pairList) {
             BitRange storedLocation = regpair.location();
             if (BitRange overlap = storedLocation & accessedLocation) {
-                SValuePtr valueToWrite;
+                SValue::Ptr valueToWrite;
                 if (overlap.least() > storedLocation.least()) {
                     size_t nbits = overlap.least() - storedLocation.least();
-                    SValuePtr loValue = ops->unsignedExtend(regpair.value, nbits);
+                    SValue::Ptr loValue = ops->unsignedExtend(regpair.value, nbits);
                     valueToWrite = loValue;
                 }
                 {
                     size_t nbits = overlap.size();
                     size_t extractBegin = overlap.least() - accessedLocation.least();
                     size_t extractEnd = extractBegin + nbits;
-                    SValuePtr midValue = ops->extract(value, extractBegin, extractEnd);
+                    SValue::Ptr midValue = ops->extract(value, extractBegin, extractEnd);
                     valueToWrite = valueToWrite ? ops->concat(valueToWrite, midValue) : midValue;
                 }
                 if (overlap.greatest() < storedLocation.greatest()) {
                     size_t nbits = storedLocation.greatest() - overlap.greatest();
                     size_t extractBegin = overlap.greatest()+1 - storedLocation.least();
                     size_t extractEnd = extractBegin + nbits;
-                    SValuePtr hiValue = ops->extract(regpair.value, extractBegin, extractEnd);
+                    SValue::Ptr hiValue = ops->extract(regpair.value, extractBegin, extractEnd);
                     valueToWrite = valueToWrite ? ops->concat(valueToWrite, hiValue) : hiValue;
                 }
                 ASSERT_not_null(valueToWrite);
@@ -421,7 +423,7 @@ RegisterStateGeneric::writeRegister(RegisterDescriptor reg, const SValuePtr &val
         for (const BitRange &newLocation: newLocations.intervals()) {
             size_t extractBegin = newLocation.least() - accessedLocation.least();
             size_t extractEnd = extractBegin + newLocation.size();
-            SValuePtr valueToWrite = ops->extract(value, extractBegin, extractEnd);
+            SValue::Ptr valueToWrite = ops->extract(value, extractBegin, extractEnd);
             ASSERT_require(valueToWrite->nBits() == newLocation.size());
             RegisterDescriptor subreg(reg.majorNumber(), reg.minorNumber(), newLocation.least(), newLocation.size());
             pairList.push_back(RegPair(subreg, valueToWrite));
@@ -484,7 +486,7 @@ RegisterStateGeneric::erase_register(RegisterDescriptor reg, RiscOperators *ops)
                 RegisterDescriptor subreg(reg.majorNumber(), reg.minorNumber(), intersection.greatest()+1, rightSize);
                 nonoverlaps.push_back(RegPair(subreg, ops->extract(reg_val.value, lobit, lobit+rightSize)));
             }
-            reg_val.value = SValuePtr();
+            reg_val.value = SValue::Ptr();
         }
     }
 
@@ -508,7 +510,7 @@ RegisterStateGeneric::traverse(Visitor &visitor)
 {
     for (RegPairs &pairlist: registers_.values()) {
         for (RegPair &pair: pairlist) {
-            if (SValuePtr newval = (visitor)(pair.desc, pair.value)) {
+            if (SValue::Ptr newval = (visitor)(pair.desc, pair.value)) {
                 ASSERT_require(newval->nBits() == pair.desc.nBits());
                 pair.value = newval;
             }
@@ -768,19 +770,19 @@ RegisterStateGeneric::findProperties(const InputOutputPropertySet &required, con
 }
 
 bool
-RegisterStateGeneric::merge(const BaseSemantics::RegisterStatePtr &other_, RiscOperators *ops) {
+RegisterStateGeneric::merge(const BaseSemantics::RegisterState::Ptr &other_, RiscOperators *ops) {
     ASSERT_not_null(ops);
-    RegisterStateGenericPtr other = boost::dynamic_pointer_cast<RegisterStateGeneric>(other_);
+    RegisterStateGeneric::Ptr other = boost::dynamic_pointer_cast<RegisterStateGeneric>(other_);
     ASSERT_not_null(other);
     bool changed = false;
 
     // Merge values stored in registers.
     for (const RegPair &otherRegVal: other->get_stored_registers()) {
         RegisterDescriptor otherReg = otherRegVal.desc;
-        const BaseSemantics::SValuePtr &otherValue = otherRegVal.value;
-        BaseSemantics::SValuePtr dflt = ops->undefined_(otherReg.nBits());
-        BaseSemantics::SValuePtr thisValue = readRegister(otherReg, dflt, ops);
-        if (BaseSemantics::SValuePtr merged = thisValue->createOptionalMerge(otherValue, merger(), ops->solver()).orDefault()) {
+        const BaseSemantics::SValue::Ptr &otherValue = otherRegVal.value;
+        BaseSemantics::SValue::Ptr dflt = ops->undefined_(otherReg.nBits());
+        BaseSemantics::SValue::Ptr thisValue = readRegister(otherReg, dflt, ops);
+        if (BaseSemantics::SValue::Ptr merged = thisValue->createOptionalMerge(otherValue, merger(), ops->solver()).orDefault()) {
             writeRegister(otherReg, merged, ops);
             changed = true;
         }
@@ -820,13 +822,13 @@ RegisterStateGeneric::hash(Combinatorics::Hasher &hasher, RiscOperators *ops) co
     // was stored as a single piece or broken into multiple smaller pieces.
     ASSERT_not_null(ops);
     ASSERT_not_null(regdict);
-    std::vector<RegisterDescriptor> regs = regdict->get_largest_registers();
+    std::vector<RegisterDescriptor> regs = regdict->getLargestRegisters();
     for (RegisterDescriptor reg: regs) {
         ExtentMap parts = stored_parts(reg);
         for (const auto &node: parts) {
             RegisterDescriptor part(reg.majorNumber(), reg.minorNumber(), node.first.first(), node.first.size());
-            BaseSemantics::SValuePtr dflt = ops->undefined_(node.first.size());
-            BaseSemantics::SValuePtr value = const_cast<RegisterStateGeneric*>(this)->peekRegister(part, dflt, ops); // FIXME[Robb Matzke 2021-03-26]
+            BaseSemantics::SValue::Ptr dflt = ops->undefined_(node.first.size());
+            BaseSemantics::SValue::Ptr value = const_cast<RegisterStateGeneric*>(this)->peekRegister(part, dflt, ops); // FIXME[Robb Matzke 2021-03-26]
             hasher.insert(part.majorNumber());
             hasher.insert(part.minorNumber());
             hasher.insert(part.offset());
@@ -839,7 +841,7 @@ RegisterStateGeneric::hash(Combinatorics::Hasher &hasher, RiscOperators *ops) co
 void
 RegisterStateGeneric::print(std::ostream &stream, Formatter &fmt) const
 {
-    const RegisterDictionary *regdict = fmt.registerDictionary();
+    RegisterDictionary::Ptr regdict = fmt.registerDictionary();
     if (!regdict)
         regdict = registerDictionary();
     RegisterNames regnames(regdict);

@@ -7,6 +7,7 @@
 #include <Sawyer/BitVector.h>
 #include <Sawyer/Map.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <integerOps.h>
 #include <rose_strtoull.h>
 #include <sstream>
@@ -863,12 +864,12 @@ public:
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void
-SymbolicExprParser::defineRegisters(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr &ops) {
+SymbolicExprParser::defineRegisters(const InstructionSemantics::BaseSemantics::RiscOperators::Ptr &ops) {
     atomTable_.push_back(RegisterToValue::instance(ops));
 }
 
 SymbolicExprParser::RegisterSubstituter::Ptr
-SymbolicExprParser::defineRegisters(const RegisterDictionary *regdict) {
+SymbolicExprParser::defineRegisters(const RegisterDictionary::Ptr &regdict) {
     RegisterSubstituter::Ptr retval = RegisterSubstituter::instance(regdict);
     atomTable_.push_back(retval);
     return retval;
@@ -876,7 +877,7 @@ SymbolicExprParser::defineRegisters(const RegisterDictionary *regdict) {
 
 // class method
 SymbolicExprParser::RegisterToValue::Ptr
-SymbolicExprParser::RegisterToValue::instance(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr &ops) {
+SymbolicExprParser::RegisterToValue::instance(const InstructionSemantics::BaseSemantics::RiscOperators::Ptr &ops) {
     Ptr functor = Ptr(new RegisterToValue(ops));
     functor->title("Registers");
     std::string doc = "Register locations are specified by just mentioning the name of the register. Register names "
@@ -888,7 +889,7 @@ SymbolicExprParser::RegisterToValue::instance(const InstructionSemantics::BaseSe
 SymbolicExpr::Ptr
 SymbolicExprParser::RegisterToValue::immediateExpansion(const Token &token) {
     using namespace Rose::BinaryAnalysis::InstructionSemantics;
-    BaseSemantics::RegisterStatePtr regState = ops_->currentState()->registerState();
+    BaseSemantics::RegisterState::Ptr regState = ops_->currentState()->registerState();
     const RegisterDescriptor regp = regState->registerDictionary()->find(token.lexeme());
     if (!regp)
         return SymbolicExpr::Ptr();
@@ -898,7 +899,7 @@ SymbolicExprParser::RegisterToValue::immediateExpansion(const Token &token) {
     }
     if (token.exprType().typeClass() == SymbolicExpr::Type::MEMORY)
         throw token.syntaxError("register width must be scalar");
-    BaseSemantics::SValuePtr regValue = regState->peekRegister(regp, ops_->undefined_(regp.nBits()), ops_.get());
+    BaseSemantics::SValue::Ptr regValue = regState->peekRegister(regp, ops_->undefined_(regp.nBits()), ops_.get());
     return SymbolicSemantics::SValue::promote(regValue)->get_expression();
 }
 
@@ -908,7 +909,7 @@ SymbolicExprParser::RegisterToValue::immediateExpansion(const Token &token) {
 
 // class method
 SymbolicExprParser::RegisterSubstituter::Ptr
-SymbolicExprParser::RegisterSubstituter::instance(const RegisterDictionary *regdict) {
+SymbolicExprParser::RegisterSubstituter::instance(const RegisterDictionary::Ptr &regdict) {
     ASSERT_not_null(regdict);
     Ptr functor = Ptr(new RegisterSubstituter(regdict));
     functor->title("Registers");
@@ -964,7 +965,7 @@ SymbolicExprParser::RegisterSubstituter::delayedExpansion(const SymbolicExpr::Pt
         // Earlier (in immediateExpansion), we set the temporary variable's comment to be the original variable (register)
         // name including any "_0" suffix. Now, if we're expanding an "_0" register we should read from the original state
         // rather than the current state.
-        BS::RegisterStatePtr regState;
+        BS::RegisterState::Ptr regState;
         if (boost::ends_with(src->comment(), "_0")) {
             if (!ops_->initialState()) {
                 std::ostringstream ss;
@@ -978,7 +979,7 @@ SymbolicExprParser::RegisterSubstituter::delayedExpansion(const SymbolicExpr::Pt
         }
 
         // Read the register
-        SS::SValuePtr regval = SS::SValue::promote(regState->readRegister(reg, ops_->undefined_(reg.nBits()), ops_.get()));
+        SS::SValue::Ptr regval = SS::SValue::promote(regState->readRegister(reg, ops_->undefined_(reg.nBits()), ops_.get()));
         SAWYER_MESG(debug) <<"register substitution: " <<src->comment() <<" = " <<*regval <<"\n";
         return regval->get_expression();
     }
@@ -1028,10 +1029,10 @@ SymbolicExprParser::MemorySubstituter::delayedExpansion(const SymbolicExpr::Ptr 
 
     if (SymbolicExpr::Ptr addrExpr = exprToMem_.getOrDefault(src)) {
         addrExpr = parser->delayedExpansion(addrExpr);
-        SymbolicSemantics::SValuePtr addr = SymbolicSemantics::SValue::promote(ops_->undefined_(addrExpr->nBits()));
+        SymbolicSemantics::SValue::Ptr addr = SymbolicSemantics::SValue::promote(ops_->undefined_(addrExpr->nBits()));
         addr->set_expression(addrExpr);
-        BaseSemantics::SValuePtr dflt = ops_->undefined_(src->nBits());
-         BaseSemantics::SValuePtr mem = ops_->readMemory(RegisterDescriptor(), addr, dflt, ops_->boolean_(true));
+        BaseSemantics::SValue::Ptr dflt = ops_->undefined_(src->nBits());
+         BaseSemantics::SValue::Ptr mem = ops_->readMemory(RegisterDescriptor(), addr, dflt, ops_->boolean_(true));
         SAWYER_MESG(debug) <<"memory substitution: (memory[" <<src->nBits() <<"] " <<*addr <<") -> " <<*mem <<"\n";
         return SymbolicSemantics::SValue::promote(mem)->get_expression();
     } else {

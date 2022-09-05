@@ -3,14 +3,13 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Rose/BinaryAnalysis/Disassembler/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 #include <Sawyer/Set.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
 
-// Forwards
-class Disassembler;
 namespace Partitioner2 {
     class Partitioner;
     class Function;
@@ -188,7 +187,7 @@ public:
     /** Construct an analysis using a specific disassembler.
      *
      *  This constructor chooses a symbolic domain and a dispatcher appropriate for the disassembler's architecture. */
-    explicit Analysis(Disassembler *d, const Settings &settings = Settings())
+    explicit Analysis(const Disassembler::BasePtr &d, const Settings &settings = Settings())
         : hasResults_(false), didConverge_(false) {
         init(d);
     }
@@ -274,7 +273,7 @@ public:
     }
     
 private:
-    void init(Disassembler*);
+    void init(const Disassembler::BasePtr&);
 
     InstructionSemantics::BaseSemantics::RiscOperatorsPtr
     makeRiscOperators(const Partitioner2::Partitioner&) const;

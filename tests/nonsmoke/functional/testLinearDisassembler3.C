@@ -1,7 +1,7 @@
 #include <rose.h>
 #include <rosePublicConfig.h>
 
-#include <Rose/BinaryAnalysis/Disassembler.h>
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherM68k.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
@@ -200,17 +200,17 @@ int main(int argc, char *argv[])
 #endif
 
     AsmUnparser unparser;
-    Disassembler *disassembler = engine.obtainDisassembler();
+    Disassembler::Base::Ptr disassembler = engine.obtainDisassembler();
     // Obtain an unparser suitable for this disassembler
     unparser.set_registers(disassembler->registerDictionary());
 
 
  // DQ (12/18/2021): See if we can comment this out, I think we are not using it.
  // Build semantics framework; only used when settings.runSemantics is set
-    BaseSemantics::DispatcherPtr dispatcher;
+    BaseSemantics::Dispatcher::Ptr dispatcher;
 #if 0
     if (settings.runSemantics) {
-        BaseSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(disassembler->registerDictionary());
+        BaseSemantics::RiscOperators::Ptr ops = SymbolicSemantics::RiscOperators::instance(disassembler->registerDictionary());
         ops = TraceSemantics::RiscOperators::instance(ops);
         dispatcher = DispatcherM68k::instance(ops, disassembler->wordSizeBytes()*8);
         dispatcher->currentState()->memoryState()->set_byteOrder(ByteOrder::ORDER_MSB);

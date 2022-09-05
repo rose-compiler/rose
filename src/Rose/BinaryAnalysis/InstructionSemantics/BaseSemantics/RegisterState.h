@@ -3,9 +3,10 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Merger.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/SValue.h>
-#include <Rose/BinaryAnalysis/Registers.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/serialization/access.hpp>
@@ -36,7 +37,7 @@ private:
     SValuePtr protoval_;                                /**< Prototypical value for virtual constructors. */
 
 protected:
-    const RegisterDictionary *regdict;                  /**< Registers that are able to be stored by this state. */
+    RegisterDictionaryPtr regdict;                      /**< Registers that are able to be stored by this state. */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Serialization
@@ -57,16 +58,12 @@ private:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
-    RegisterState()
-        : regdict(NULL) {}                                // for serialization
+    RegisterState();                                    // for serialization
 
-    RegisterState(const SValuePtr &protoval, const RegisterDictionary *regdict)
-        : protoval_(protoval), regdict(regdict) {
-        ASSERT_not_null(protoval_);
-    }
+    RegisterState(const SValuePtr &protoval, const RegisterDictionaryPtr &regdict);
 
 public:
-    virtual ~RegisterState() {}
+    virtual ~RegisterState();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Static allocating constructors.  None are needed--this class is abstract.
@@ -79,7 +76,7 @@ public:
      *  to create additional instances of the value via its virtual constructors.  The prototypical value is normally of the
      *  same type for all parts of a semantic analysis. The register state must be compatible with the rest of the binary
      *  analysis objects in use. */
-    virtual RegisterStatePtr create(const SValuePtr &protoval, const RegisterDictionary *regdict) const = 0;
+    virtual RegisterStatePtr create(const SValuePtr &protoval, const RegisterDictionaryPtr &regdict) const = 0;
 
     /** Make a copy of this register state. */
     virtual RegisterStatePtr clone() const = 0;
@@ -117,12 +114,8 @@ public:
      *  this time (May 2013) the dictionary is only used when printing.
      *
      * @{ */
-    const RegisterDictionary *registerDictionary() const /*final*/ {
-        return regdict;
-    }
-    void registerDictionary(const RegisterDictionary *rd) /*final*/ {
-        regdict = rd;
-    }
+    RegisterDictionaryPtr registerDictionary() const /*final*/;
+    void registerDictionary(const RegisterDictionaryPtr&) /*final*/;
     /** @} */
 
     /** Removes stored values from the register state.

@@ -2,6 +2,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/DisassemblerJvm.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BinaryAnalysis/Unparser/Jvm.h>
 
 #define DEBUG_ON 0
@@ -96,17 +97,22 @@ DisassemblerJvm::DisassemblerJvm() {
     name("null");
     wordSizeBytes(1);
     byteOrder(ByteOrder::ORDER_LSB);
-    registerDictionary(RegisterDictionary::dictionary_null());
+    registerDictionary(RegisterDictionary::instanceNull());
 
     REG_IP = registerDictionary()->findOrThrow("pc");
     REG_SP = registerDictionary()->findOrThrow("sp");
 }
 
+DisassemblerJvm::Ptr
+DisassemblerJvm::instance() {
+    return Ptr(new DisassemblerJvm);
+}
+
 DisassemblerJvm::~DisassemblerJvm() {}
 
-Disassembler*
+Disassembler::Base::Ptr
 DisassemblerJvm::clone() const {
-    return new DisassemblerJvm;
+    return Ptr(new DisassemblerJvm);
 }
 
 bool
@@ -128,7 +134,7 @@ DisassemblerJvm::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start, Ad
   uint8_t jbc = static_cast<uint8_t>(JvmInstructionKind::unknown);
   size_t nRead = map->at(va).limit(1).require(MemoryMap::READABLE).read(&jbc).size();
   if (0 == nRead) {
-    throw Exception("short read", va);
+      throw Disassembler::Exception("short read", va);
   }
   va += 1; // advance to operands (if any)
 
@@ -820,7 +826,7 @@ DisassemblerJvm::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start, Ad
   if (kind == opcode::unknown) {
     delete operands;
     return makeUnknownInstruction(
-                 Exception("unknown", start,
+                 Disassembler::Exception("unknown", start,
                            SgUnsignedCharList((const unsigned char*)&jbc, (const unsigned char*)&jbc+1),
                            0));
   }
@@ -853,7 +859,7 @@ DisassemblerJvm::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start, Ad
 }
 
 SgAsmInstruction*
-DisassemblerJvm::makeUnknownInstruction(const Exception &e) {
+DisassemblerJvm::makeUnknownInstruction(const Disassembler::Exception &e) {
     SgAsmInstruction *insn = new SgAsmJvmInstruction(e.ip, "unknown");
     SgAsmOperandList *operands = new SgAsmOperandList;
     insn->set_operandList(operands);

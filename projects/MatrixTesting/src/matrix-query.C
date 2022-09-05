@@ -392,7 +392,7 @@ loadColumns(DB::Connection db) {
                   .type(ColumnType::TIME)
                   .isAggregate(true));
     retval.insert("reporting_user",
-                  Column().tableTitle("Reporting User").sql("auth_identities.identity")
+                  Column().tableTitle("Reporting User").sql("users.name")
                   .doc("User that reported the results")
                   .type(ColumnType::STRING));
     retval.insert("rose",
@@ -807,7 +807,7 @@ static DB::Statement
 buildStatement(const Settings &settings, DB::Connection db, const ColumnList &cols) {
     std::string sql = buildSelectClause(cols) +
                       " from test_results" +
-                      " join auth_identities on test_results.reporting_user = auth_identities.id" +
+                      " join users on test_results.reporting_user = users.uid" +
                       buildWhereClause(cols) +
                       buildGroupByClause(cols) +
                       buildHavingClause(cols) +

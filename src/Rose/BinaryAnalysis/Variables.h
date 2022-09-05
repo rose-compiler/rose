@@ -402,9 +402,6 @@ struct StackFrame {
 // Analyzer
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Shared ownership pointer for @ref VariableFinder. */
-using VariableFinderPtr = Sawyer::SharedPointer<class VariableFinder>;
-
 /** Analysis to find variable locations. */
 class VariableFinder: public Sawyer::SharedObject {
 public:

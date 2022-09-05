@@ -2,6 +2,8 @@
 #define ROSE_RSIM_Process_H
 
 #include "RSIM_Callbacks.h"
+
+#include <Rose/BinaryAnalysis/Disassembler/BasicTypes.h>
 #include <Sawyer/BiMap.h>
 
 class RSIM_Thread;
@@ -16,14 +18,7 @@ class RSIM_FutexTable;
 class RSIM_Process {
 public:
     /** Creates an empty process containing no threads. */
-    explicit RSIM_Process(RSIM_Simulator *simulator)
-        : simulator(simulator), tracingFile_(NULL), tracingFlags_(0),
-          brkVa_(0), mmapNextVa_(0), mmapRecycle_(false), mmapGrowsDown_(false), disassembler_(NULL), futexes(NULL),
-          interpretation_(NULL), entryPointOriginalVa_(0), entryPointStartVa_(0),
-          terminated(false), termination_status(0), mainHeader_(NULL), project_(NULL), wordSize_(0), core_flags(0),
-          btrace_file(NULL), core_styles(CORE_ELF), core_base_name("x-core.rose") {
-        ctor();
-    }
+    explicit RSIM_Process(RSIM_Simulator *simulator);
 
     ~RSIM_Process();
 
@@ -435,8 +430,8 @@ private:
 private:
     typedef std::map<rose_addr_t, SgAsmInstruction*> InstructionMap;
 
-    Rose::BinaryAnalysis::Disassembler *disassembler_;  /* Disassembler to use for obtaining instructions */
-    InstructionMap icache;                              /* Cache of disassembled instructions */
+    Rose::BinaryAnalysis::Disassembler::BasePtr disassembler_;  /* Disassembler to use for obtaining instructions */
+    InstructionMap icache;                                      /* Cache of disassembled instructions */
 
 public:
     /** Disassembles the instruction at the specified virtual address. For efficiency, instructions are cached by the
@@ -477,8 +472,8 @@ public:
      *  threads. See documentation for Disassembler for thread safety details.
      *
      * @{ */
-    Rose::BinaryAnalysis::Disassembler *disassembler() const { return disassembler_; }
-    void disassembler(Rose::BinaryAnalysis::Disassembler *d) { disassembler_ = d; }
+    Rose::BinaryAnalysis::Disassembler::BasePtr disassembler() const;
+    void disassembler(const Rose::BinaryAnalysis::Disassembler::BasePtr &d);
     /** @} */
 
     /** Returns the total number of instructions processed across all threads.

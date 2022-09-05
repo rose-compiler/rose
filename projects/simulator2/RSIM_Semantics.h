@@ -3,6 +3,7 @@
 
 #include "RSIM_Common.h"
 
+#include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/ConcreteSemantics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/NullSemantics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherX86.h>
@@ -57,7 +58,8 @@ struct Interrupt {
  *  </ul> */
 class RiscOperators: public Rose::BinaryAnalysis::InstructionSemantics::ConcreteSemantics::RiscOperators {
 public:
-    typedef Rose::BinaryAnalysis::InstructionSemantics::ConcreteSemantics::RiscOperators Super;
+    using Super = Rose::BinaryAnalysis::InstructionSemantics::ConcreteSemantics::RiscOperators;
+    using Ptr = RiscOperatorsPtr;
 
     struct SegmentInfo {
         rose_addr_t base, limit;
@@ -92,7 +94,7 @@ protected:
 
 public:
     static RiscOperatorsPtr instance(Architecture arch, RSIM_Thread *thread,
-                                     const Rose::BinaryAnalysis::RegisterDictionary *regdict,
+                                     const Rose::BinaryAnalysis::RegisterDictionaryPtr &regdict,
                                      const Rose::BinaryAnalysis::SmtSolverPtr &solver=Rose::BinaryAnalysis::SmtSolverPtr()) {
         using namespace Rose::BinaryAnalysis::InstructionSemantics;
         BaseSemantics::SValuePtr protoval = SValue::instance();

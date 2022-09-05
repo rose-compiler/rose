@@ -3,6 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/Exception.h>
 #include <Sawyer/Message.h>
 #include <Sawyer/SharedObject.h>
@@ -10,9 +11,6 @@
 
 namespace Rose {
 namespace BinaryAnalysis {
-
-/** Reference counting pointer to @ref BinaryLoader. */
-typedef Sawyer::SharedPointer<class BinaryLoader> BinaryLoaderPtr;
 
 /** Base class for loading a static or dynamic object.
  *
@@ -48,7 +46,7 @@ typedef Sawyer::SharedPointer<class BinaryLoader> BinaryLoaderPtr;
  *    <li>to allow a user to register a new loader subclass at runtime and have ROSE use it when appropriate.</li>
  *  </ul>
  *
- *  The general design is similar to the Disassembler class.  The BinaryLoader has class methods to register user-defined
+ *  The general design is similar to the Disassembler::Base class.  The BinaryLoader has class methods to register user-defined
  *  loaders with the library and each loader is able to answer whether it is capable of loading a particular kind of binary.
  *  ROSE (or any user of this class) can obtain a suitable loader for a particular SgAsmInterpretation, clone it (if desired),
  *  modify properties that control its behavior, and use it to load a binary.
@@ -59,7 +57,7 @@ class BinaryLoader: public Sawyer::SharedObject {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     /** Referenc counting pointer to @ref BinaryLoader. */
-    typedef Sawyer::SharedPointer<BinaryLoader> Ptr;
+    using Ptr = BinaryLoaderPtr;
 
     /** Describes how a section contributes to the overall memory map. */
     enum MappingContribution
@@ -463,7 +461,7 @@ public:
      *  Find all headers in @p candidateHeaders that are similar to @p matchHeader.
      *
      *  This is used to determine whether two headers can be placed in the same SgAsmInterpretation. We make this determination
-     *  by looking at whether the Disassembler for each header is the same.  In other words, an x86_64 header will not be
+     *  by looking at whether the Disassembler::Base for each header is the same.  In other words, an x86_64 header will not be
      *  similar to an i386 header even though they are both ELF headers and both x86 architectures. */
     static SgAsmGenericHeaderPtrList findSimilarHeaders(SgAsmGenericHeader *matchHeader,
                                                         SgAsmGenericHeaderPtrList &candidateHeaders);
@@ -471,7 +469,7 @@ public:
     /** Determines whether two headers are similar.
      *
      *  Determines whether two headers are similar enough to be in the same interpretation.  Two headers are similar if
-     *  disassembly would use the same Disassembler for both.  See findSimilarHeaders(). */
+     *  disassembly would use the same Disassembler::Base for both.  See findSimilarHeaders(). */
     static bool isHeaderSimilar(SgAsmGenericHeader*, SgAsmGenericHeader*);
 
     /** MemoryMap permissions.

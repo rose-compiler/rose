@@ -3,6 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 
 namespace Rose {
@@ -166,16 +167,16 @@ protected:
     RegisterState(const RegisterState &other)
         : BaseSemantics::RegisterState(other) {}
 
-    RegisterState(const BaseSemantics::SValuePtr &protoval, const RegisterDictionary *regdict)
+    RegisterState(const BaseSemantics::SValuePtr &protoval, const RegisterDictionaryPtr &regdict)
         : BaseSemantics::RegisterState(protoval, regdict) {}
 
 public:
-    static RegisterStatePtr instance(const BaseSemantics::SValuePtr &protoval, const RegisterDictionary *regdict) {
+    static RegisterStatePtr instance(const BaseSemantics::SValuePtr &protoval, const RegisterDictionaryPtr &regdict) {
         return RegisterStatePtr(new RegisterState(protoval, regdict));
     }
 
     virtual BaseSemantics::RegisterStatePtr create(const BaseSemantics::SValuePtr &protoval,
-                                                   const RegisterDictionary *regdict) const override {
+                                                   const RegisterDictionaryPtr &regdict) const override {
         return instance(protoval, regdict);
     }
 
@@ -321,44 +322,34 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
-    explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, const SmtSolverPtr &solver = SmtSolverPtr())
-        : BaseSemantics::RiscOperators(protoval, solver) {
-        name("Null");
-    }
-    explicit RiscOperators(const BaseSemantics::StatePtr &state, const SmtSolverPtr &solver = SmtSolverPtr())
-        : BaseSemantics::RiscOperators(state, solver) {
-        name("Null");
-    }
+    explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, const SmtSolverPtr&);
+
+    explicit RiscOperators(const BaseSemantics::StatePtr&, const SmtSolverPtr&);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Static allocating constructors
 public:
+    ~RiscOperators();
+
     /** Instantiate a new RiscOperators object and configures it to use semantic values and states
      * that are defaults for NullSemantics. */
-    static RiscOperatorsPtr instance(const RegisterDictionary *regdict);
+    static RiscOperatorsPtr instanceFromRegisters(const RegisterDictionaryPtr &regdict);
 
     /** Static allocating constructor. See the virtual constructor, create(), for details. */
-    static RiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval, const SmtSolverPtr &solver = SmtSolverPtr()) {
-        return RiscOperatorsPtr(new RiscOperators(protoval, solver));
-    }
+    static RiscOperatorsPtr instanceFromProtoval(const BaseSemantics::SValuePtr &protoval,
+                                                 const SmtSolverPtr &solver = SmtSolverPtr());
 
     /** Constructor. See the virtual constructor, create(), for details. */
-    static RiscOperatorsPtr instance(const BaseSemantics::StatePtr &state, const SmtSolverPtr &solver = SmtSolverPtr()) {
-        return RiscOperatorsPtr(new RiscOperators(state, solver));
-    }
+    static RiscOperatorsPtr instanceFromState(const BaseSemantics::StatePtr&, const SmtSolverPtr &solver = SmtSolverPtr());
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Virtual constructors
 public:
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::SValuePtr &protoval,
-                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const override {
-        return instance(protoval, solver);
-    }
+                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const override;
 
-    virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::StatePtr &state,
-                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const override {
-        return instance(state, solver);
-    }
+    virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::StatePtr&,
+                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const override;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Risc operators inherited

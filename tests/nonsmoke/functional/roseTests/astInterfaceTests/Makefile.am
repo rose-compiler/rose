@@ -36,7 +36,7 @@ noinst_PROGRAMS = \
     buildCommonBlock doLoopNormalization buildLabelStatement2 replaceWithPattern \
     insertBeforeUsingCommaOp insertAfterUsingCommaOp deepCopy fixVariableReferences \
     buildJavaPackage createAbstractHandles buildStatementFromString \
-    getArrayElementType interfaceFunctionCoverage buildTemplateClass
+    getArrayElementType interfaceFunctionCoverage buildTemplateClass buildUsingDirectiveStatement
 
 VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-limit=no --show-reachable=yes --trace-children=yes --suppressions=$(top_srcdir)/scripts/rose-suppressions-for-valgrind
 # VALGRIND = valgrind $(VALGRIND_OPTIONS)
@@ -57,6 +57,7 @@ buildPragmaDeclaration_SOURCES           = buildPragmaDeclaration.C
 attachComment_SOURCES                    = attachComment.C
 insertHeader_SOURCES                     = insertHeader.C
 buildExpression_SOURCES                  = buildExpression.C
+buildUsingDirectiveStatement_SOURCES     = buildUsingDirectiveStatement.C
 buildStructDeclaration_SOURCES           = buildStructDeclaration.C
 buildStructDeclaration2_SOURCES          = buildStructDeclaration2.C
 buildTemplateClass_SOURCES               = buildTemplateClass.C
@@ -245,6 +246,7 @@ group1 =						\
 	rose_inputgetDependentDecls.C			\
 	rose_inputreplaceWithPattern.C                  \
 	rose_inputbuildStatementFromString.C            \
+        rose_inputbuildUsingDirectiveStatement.C \
 	rose_inputcreateAbstractHandles.C
 
 $(group1): rose_input%.C: input%.C %
@@ -591,7 +593,7 @@ EXTRA_DIST = astInterface.conf inputBlank1.C inputBlank2.C inputfindMain.C input
        inputinsertAfterUsingCommaOp.C inputdeepCopy.C inputfixVariableReferences.C  inputcreateAbstractHandles.C \
        inputloopCollapsing_2.C  inputloopCollapsing_3.C  inputloopCollapsing_4.C  inputloopCollapsing_5.C \
        inputbuildJavaPackage.C inputloopCollapsing_1.C inputbuildStatementFromString.C inputinterfaceFunctionCoverage.C  \
-       inputbuildTemplateClass.C
+       inputbuildTemplateClass.C inputUsingDirectiveStatement.C
 
 # JP (10/4/14): Added the unit tests
 unit-tests:

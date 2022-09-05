@@ -5,15 +5,19 @@
 
 #include <Rose/BinaryAnalysis/BestMapAddress.h>
 #include <Rose/BinaryAnalysis/DataFlow.h>
-#include <Rose/BinaryAnalysis/SymbolicExpr.h>
-#include <boost/format.hpp>
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
+#include <Rose/BinaryAnalysis/SymbolicExpr.h>
+#include <Rose/BinaryAnalysis/Unparser/Base.h>
+
 #include <Sawyer/WorkList.h>
+
+#include <boost/format.hpp>
 #include <sstream>
 #include <stringify.h>
 #include <unordered_set>
-#include <Rose/BinaryAnalysis/Unparser/Base.h>
 
 using namespace Sawyer::Message::Common;
 using namespace Rose::StringUtility;
@@ -315,7 +319,7 @@ Scheduler::reportStatus(std::ostream &out) const {
 // Partitioner
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Partitioner::Partitioner(const MemoryMap::Ptr &memory, Disassembler *decoder, const Settings &settings)
+Partitioner::Partitioner(const MemoryMap::Ptr &memory, const Disassembler::Base::Ptr &decoder, const Settings &settings)
     : settings_(settings), nExeVas_(0), isRunning_(false) {
     insnCache_ = std::make_shared<InstructionCache>(memory, decoder);
 
@@ -523,9 +527,9 @@ Partitioner::basicBlockContaining(rose_addr_t va) const {
     return retval;
 }
 
-Borrowed<CachedItem<Semantics::RiscOperatorsPtr, uint64_t>>
+Borrowed<CachedItem<Semantics::RiscOperators::Ptr, uint64_t>>
 Partitioner::basicBlockSemantics(const InsnInfo::List &insns) {
-    Semantics::RiscOperatorsPtr ops;
+    Semantics::RiscOperators::Ptr ops;
     ASSERT_forbid(insns.empty());
 
     // Do we already have semantics for some prefix of these instructions? A common case for this call is that we've already
@@ -550,9 +554,9 @@ Partitioner::basicBlockSemantics(const InsnInfo::List &insns) {
     // first part of this basic block--they'll always ask for the whole block.
     if (prefix.empty()) {
         SmtSolver::Ptr solver; // FIXME[Robb Matzke 2020-07-29]: use a solver for semantics? Probably not needed.
-        const RegisterDictionary *regdict = instructionCache().decoder()->registerDictionary();
+        RegisterDictionary::Ptr regdict = instructionCache().decoder()->registerDictionary();
         ops = Semantics::RiscOperators::instance(regdict, solver, settings_.semanticMemoryParadigm);
-        BaseSemantics::MemoryStatePtr mem = ops->currentState()->memoryState();
+        BaseSemantics::MemoryState::Ptr mem = ops->currentState()->memoryState();
         if (auto ml = boost::dynamic_pointer_cast<Semantics::MemoryListState>(mem)) {
             ml->memoryMap(memoryMap());
         } else if (auto mm = boost::dynamic_pointer_cast<Semantics::MemoryMapState>(mem)) {
@@ -566,18 +570,18 @@ Partitioner::basicBlockSemantics(const InsnInfo::List &insns) {
     // Add the non-prefix instructions to the semantic state. If there's a semantic failure then erase the current state (it would
     // be wrong anyway. If there is no current state then there's no point in processing the instruction.
     if (ops->currentState()) {
-        if (BaseSemantics::DispatcherPtr protoCpu = instructionCache().decoder()->dispatcher()) {
-            BaseSemantics::DispatcherPtr cpu = protoCpu->create(ops);
+        if (BaseSemantics::Dispatcher::Ptr protoCpu = instructionCache().decoder()->dispatcher()) {
+            BaseSemantics::Dispatcher::Ptr cpu = protoCpu->create(ops, 0, RegisterDictionary::Ptr());
             for (auto insn = insns.begin() + prefix.size(); insn != insns.end(); ++insn) {
                 try {
                     cpu->processInstruction((*insn)->ast().lock().get());
                 } catch (...) {
-                    ops->currentState(Semantics::StatePtr());
+                    ops->currentState(Semantics::State::Ptr());
                     break;
                 }
             }
         } else {
-            ops->currentState(Semantics::StatePtr());
+            ops->currentState(Semantics::State::Ptr());
         }
     }
 
@@ -585,12 +589,12 @@ Partitioner::basicBlockSemantics(const InsnInfo::List &insns) {
 }
 
 std::vector<SymbolicExpr::Ptr>
-Partitioner::splitSuccessors(const BaseSemantics::RiscOperatorsPtr &ops) {
+Partitioner::splitSuccessors(const BaseSemantics::RiscOperators::Ptr &ops) {
     ASSERT_not_null(ops);
     ASSERT_not_null(ops->currentState());
     std::vector<SymbolicExpr::Ptr> retval;
     const RegisterDescriptor IP = instructionCache().decoder()->instructionPointerRegister();
-    BaseSemantics::SValuePtr dfltIp = ops->undefined_(IP.nBits());
+    BaseSemantics::SValue::Ptr dfltIp = ops->undefined_(IP.nBits());
     SymbolicExpr::Ptr ip = Semantics::SValue::promote(ops->peekRegister(IP, dfltIp))->get_expression();
     if (ip->isIntegerConstant() || ip->isIntegerVariable()) {
         retval.push_back(ip);
@@ -624,7 +628,7 @@ Partitioner::computeSuccessors(const InsnInfo::List &insns, Accuracy accuracy) {
 
     if (Accuracy::HIGH == accuracy) {
         auto borrowedOps = basicBlockSemantics(insns);
-        Semantics::RiscOperatorsPtr ops = borrowedOps.get().orElse(nullptr);
+        Semantics::RiscOperators::Ptr ops = borrowedOps.get().orElse(nullptr);
         if (ops && ops->currentState())
             return splitSuccessors(ops);
     }
@@ -981,14 +985,14 @@ Partitioner::transferResults(Rose::BinaryAnalysis::Partitioner2::Partitioner &ou
         // that we can obtain directly from the CFG edges. The only extra one we need is if there's a branch to an
         // indeterminate address.
         auto borrowedOps = basicBlockSemantics(insns);
-        BaseSemantics::RiscOperatorsPtr ops = borrowedOps.get().orElse(nullptr);
+        BaseSemantics::RiscOperators::Ptr ops = borrowedOps.get().orElse(nullptr);
         ASSERT_not_null(ops);
         const RegisterDescriptor IP = instructionCache().decoder()->instructionPointerRegister();
         auto vertex = insnCfg_.findVertexKey(insns.back()->address());
         ASSERT_require(vertex != insnCfg_.vertices().end());
         for (auto edge: vertex->outEdges()) {
             rose_addr_t targetVa = edge.target()->value()->address();
-            BaseSemantics::SValuePtr targetExpr = ops->number_(IP.nBits(), targetVa);
+            BaseSemantics::SValue::Ptr targetExpr = ops->number_(IP.nBits(), targetVa);
             edge.value().types().each([targetExpr, bblock](EdgeType et) {
                     bblock->insertSuccessor(targetExpr, et);
                 });
@@ -997,7 +1001,7 @@ Partitioner::transferResults(Rose::BinaryAnalysis::Partitioner2::Partitioner &ou
             std::vector<SymbolicExpr::Ptr> successors = splitSuccessors(ops);
             for (auto edge: successors) {
                 if (!edge->isIntegerConstant()) {
-                    BaseSemantics::SValuePtr targetExpr = ops->undefined_(IP.nBits());
+                    BaseSemantics::SValue::Ptr targetExpr = ops->undefined_(IP.nBits());
                     bblock->insertSuccessor(targetExpr, E_NORMAL);
                 }
             }

@@ -2,7 +2,7 @@
 #define RSIM_CloneDetection_H
 
 #include <Rose/BinaryAnalysis/SmtSolver.h>
-#include <Rose/BinaryAnalysis/Disassembler.h>
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include "PartialSymbolicSemantics.h"
 #include "x86InstructionSemantics.h"
 #include "SqlDatabase.h"

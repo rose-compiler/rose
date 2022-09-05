@@ -14,7 +14,7 @@ public:
 
     virtual bool isSupportedArch(SgAsmGenericHeader*) override;
     virtual void loadVsyscalls(RSIM_Process*) override;
-    virtual void loadSpecimenNative(RSIM_Process*, Rose::BinaryAnalysis::Disassembler*, int existingPid=-1) override;
+    virtual void loadSpecimenNative(RSIM_Process*, const Rose::BinaryAnalysis::Disassembler::BasePtr&, int existingPid=-1) override;
     virtual void initializeSimulatedOs(RSIM_Process*, SgAsmGenericHeader*) override;
     virtual PtRegs initialRegistersArch(RSIM_Process*) override;
     virtual rose_addr_t pushAuxVector(RSIM_Process*, rose_addr_t sp, rose_addr_t execfn_va, SgAsmElfFileHeader*,

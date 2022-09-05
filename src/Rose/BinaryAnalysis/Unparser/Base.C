@@ -3,16 +3,20 @@
 #include <sage3basic.h>
 
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
+#include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/Reachability.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
-#include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
-#include <Sawyer/ProgressBar.h>
 #include <Rose/SourceLocation.h>
+
+#include <Sawyer/ProgressBar.h>
+
+#include <integerOps.h>
 #include <stringify.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
 
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/lexical_cast.hpp>
@@ -42,7 +46,7 @@ void initDiagnostics() {
 }
 
 std::string
-invalidRegister(SgAsmInstruction *insn, RegisterDescriptor reg, const RegisterDictionary *regdict) {
+invalidRegister(SgAsmInstruction *insn, RegisterDescriptor reg, const RegisterDictionary::Ptr &regdict) {
     using namespace StringUtility;
     Stream warn(mlog[WARN]);
 
@@ -67,7 +71,7 @@ invalidRegister(SgAsmInstruction *insn, RegisterDescriptor reg, const RegisterDi
              <<"  and minor numbers for the register, \"c\" is the bit offset within the underlying machine\n"
              <<"  register, and \"d\" is the number of significant bits.\n";
         if (regdict!=NULL)
-            warn <<"  Dictionary in use at time of warning: " <<regdict->get_architecture_name() <<"\n";
+            warn <<"  Dictionary in use at time of warning: " <<regdict->name() <<"\n";
         wasDescribed = true;
     }
     return "BAD_REGISTER(" + regstr + ")";
@@ -176,7 +180,7 @@ State::State(const P2::Partitioner &p, const Settings &settings, const Base &fro
     styleStack_.colorization(settings.colorization.merge(CommandLine::genericSwitchArgs.colorization));
 }
 
-State::State(const P2::Partitioner &p, const RegisterDictionary *regdict, const Settings &settings, const Base &frontUnparser)
+State::State(const P2::Partitioner &p, const RegisterDictionary::Ptr &regdict, const Settings &settings, const Base &frontUnparser)
     : partitioner_(p), registerNames_(regdict), frontUnparser_(frontUnparser) {
     if (settings.function.cg.showing)
         cg_ = p.functionCallGraph(P2::AllowParallelEdges::NO);
@@ -1262,7 +1266,7 @@ Base::emitFunctionStackDelta(std::ostream &out, const P2::Function::Ptr &functio
                 out <<style.render() <<";;; function stack delta is " <<StringUtility::toHex2(delta, 64)
                     <<style.restore() <<"\n";
             }
-        } else if (S2::BaseSemantics::SValuePtr delta = function->stackDelta()) {
+        } else if (S2::BaseSemantics::SValue::Ptr delta = function->stackDelta()) {
             state.frontUnparser().emitLinePrefix(out, state);
             out <<style.render() <<";;; function stack delta is " <<*delta <<style.restore() <<"\n";
         }
@@ -2011,11 +2015,11 @@ void
 Base::emitInstructionSemantics(std::ostream &out, SgAsmInstruction *insn, State &state) const {
     ASSERT_not_null(insn);
     if (settings().insn.semantics.showing) {
-        S2::BaseSemantics::RiscOperatorsPtr ops = state.partitioner().newOperators();
+        S2::BaseSemantics::RiscOperators::Ptr ops = state.partitioner().newOperators();
         if (settings().insn.semantics.tracing)
             ops = S2::TraceSemantics::RiscOperators::instance(ops);
 
-        if (S2::BaseSemantics::DispatcherPtr cpu = state.partitioner().newDispatcher(ops)) {
+        if (S2::BaseSemantics::Dispatcher::Ptr cpu = state.partitioner().newDispatcher(ops)) {
             try {
                 cpu->processInstruction(insn);
                 S2::BaseSemantics::Formatter fmt = settings().insn.semantics.formatter;

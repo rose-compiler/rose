@@ -97,12 +97,31 @@ namespace CodeThorn
 void
 ClassAnalysis::addInheritanceEdge(value_type& descendantEntry, ClassKeyType ancestorKey, bool virtualEdge, bool directEdge)
 {
-  ClassKeyType descendantKey = descendantEntry.first;
-  ClassData&   descendant = descendantEntry.second;
-  ClassData&   ancestor = this->at(ancestorKey);
-
-  descendant.ancestors().emplace_back(ancestorKey,   virtualEdge, directEdge);
-  ancestor.descendants().emplace_back(descendantKey, virtualEdge, directEdge);
+  try
+  {
+    ClassKeyType descendantKey = descendantEntry.first;
+    ClassData&   descendant = descendantEntry.second;
+    ClassData&   ancestor = this->at(ancestorKey);
+  
+    descendant.ancestors().emplace_back(ancestorKey,   virtualEdge, directEdge);
+    ancestor.descendants().emplace_back(descendantKey, virtualEdge, directEdge);
+  }
+  catch (const std::out_of_range&)
+  {
+    static int prnNumWarn = 3; 
+    
+    if (containsAllClasses()) 
+      throw;
+    
+    if (prnNumWarn > 0)
+    {
+      --prnNumWarn;
+      
+      logWarn() << "ignoring inheritance edge of inner classes (?) [requires full translation unit analysis]"
+                << (prnNumWarn ? "" : "...")
+                << std::endl;                 
+    }
+  }
 }
 
 void

@@ -52,16 +52,18 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/DataFlow.C							\
 	BinaryAnalysis/Debugger.C							\
 	BinaryAnalysis/Demangler.C							\
-	BinaryAnalysis/DisassemblerAarch32.C						\
-	BinaryAnalysis/DisassemblerAarch64.C						\
-	BinaryAnalysis/Disassembler.C							\
+	BinaryAnalysis/Disassembler/Aarch32.C						\
+	BinaryAnalysis/Disassembler/Aarch64.C						\
+	BinaryAnalysis/Disassembler/Base.C						\
+	BinaryAnalysis/Disassembler/BasicTypes.C					\
 	BinaryAnalysis/DisassemblerCil.C						\
+	BinaryAnalysis/Disassembler/Exception.C						\
 	BinaryAnalysis/DisassemblerJvm.C						\
-	BinaryAnalysis/DisassemblerM68k.C						\
-	BinaryAnalysis/DisassemblerMips.C						\
-	BinaryAnalysis/DisassemblerNull.C						\
-	BinaryAnalysis/DisassemblerPowerpc.C						\
-	BinaryAnalysis/DisassemblerX86.C						\
+	BinaryAnalysis/Disassembler/M68k.C						\
+	BinaryAnalysis/Disassembler/Mips.C						\
+	BinaryAnalysis/Disassembler/Null.C						\
+	BinaryAnalysis/Disassembler/Powerpc.C						\
+	BinaryAnalysis/Disassembler/X86.C						\
 	BinaryAnalysis/FeasiblePath.C							\
 	BinaryAnalysis/FunctionCall.C							\
 	BinaryAnalysis/FunctionSimilarity.C						\
@@ -71,6 +73,7 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/InstructionSemantics/BaseSemantics/BinaryAnalysis		\
 	BinaryAnalysis/InstructionSemantics/BaseSemantics/Dispatcher.C			\
 	BinaryAnalysis/InstructionSemantics/BaseSemantics/Exception.C			\
+	BinaryAnalysis/InstructionSemantics/BaseSemantics/Formatter.C			\
 	BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCell.C			\
 	BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCellList.C		\
 	BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCellMap.C		\
@@ -163,8 +166,9 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/PointerDetection.C						\
 	BinaryAnalysis/Reachability.C							\
 	BinaryAnalysis/RegisterDescriptor.C						\
+	BinaryAnalysis/RegisterDictionary.C						\
+	BinaryAnalysis/RegisterNames.C							\
 	BinaryAnalysis/RegisterParts.C							\
-	BinaryAnalysis/Registers.C							\
 	BinaryAnalysis/ReturnValueUsed.C						\
 	BinaryAnalysis/SerialIo.C							\
 	BinaryAnalysis/SmtCommandLine.C							\

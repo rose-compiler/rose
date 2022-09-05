@@ -4,6 +4,14 @@
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 
 #include <rose_strtoull.h>
+
+#include <Rose/Exception.h>
+
+#include <Sawyer/Callbacks.h>
+#include <Sawyer/Message.h>
+#include <Sawyer/SharedPointer.h>
+
+#include <boost/shared_ptr.hpp>
 #include <memory>
 
 namespace Rose {

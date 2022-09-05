@@ -24,11 +24,11 @@ MemoryCellList::clear() {
     MemoryCellState::clear();
 }
 
-SValuePtr
-MemoryCellList::readMemory(const SValuePtr &addr, const SValuePtr &dflt, RiscOperators *addrOps, RiscOperators *valOps) {
+SValue::Ptr
+MemoryCellList::readMemory(const SValue::Ptr &addr, const SValue::Ptr &dflt, RiscOperators *addrOps, RiscOperators *valOps) {
     CellList::iterator cursor = get_cells().begin();
     CellList cells = scan(cursor /*in,out*/, addr, dflt->nBits(), addrOps, valOps);
-    SValuePtr retval = mergeCellValues(cells, dflt, addrOps, valOps);
+    SValue::Ptr retval = mergeCellValues(cells, dflt, addrOps, valOps);
     updateReadProperties(cells);
     if (cells.empty()) {
         // No matching cells
@@ -52,11 +52,11 @@ MemoryCellList::readMemory(const SValuePtr &addr, const SValuePtr &dflt, RiscOpe
 }
 
 // identical to readMemory but without side effects
-SValuePtr
-MemoryCellList::peekMemory(const SValuePtr &addr, const SValuePtr &dflt, RiscOperators *addrOps, RiscOperators *valOps) {
+SValue::Ptr
+MemoryCellList::peekMemory(const SValue::Ptr &addr, const SValue::Ptr &dflt, RiscOperators *addrOps, RiscOperators *valOps) {
     CellList::iterator cursor = get_cells().begin();
     CellList cells = scan(cursor /*in,out*/, addr, dflt->nBits(), addrOps, valOps);
-    SValuePtr retval = mergeCellValues(cells, dflt, addrOps, valOps);
+    SValue::Ptr retval = mergeCellValues(cells, dflt, addrOps, valOps);
 
     // If there's no must_equal match and at least one may_equal match, then merge the default into the return value.
     if (!cells.empty() && cursor == get_cells().end())
@@ -66,11 +66,11 @@ MemoryCellList::peekMemory(const SValuePtr &addr, const SValuePtr &dflt, RiscOpe
 }
 
 void
-MemoryCellList::writeMemory(const SValuePtr &addr, const SValuePtr &value, RiscOperators *addrOps, RiscOperators *valOps)
+MemoryCellList::writeMemory(const SValue::Ptr &addr, const SValue::Ptr &value, RiscOperators *addrOps, RiscOperators *valOps)
 {
     ASSERT_not_null(addr);
     ASSERT_require(!byteRestricted() || value->nBits() == 8);
-    MemoryCellPtr newCell = protocell->create(addr, value);
+    MemoryCell::Ptr newCell = protocell->create(addr, value);
 
     if (addrOps->currentInstruction() || valOps->currentInstruction()) {
         newCell->ioProperties().insert(IO_WRITE);
@@ -81,7 +81,7 @@ MemoryCellList::writeMemory(const SValuePtr &addr, const SValuePtr &value, RiscO
     // Prune away all cells that must-alias this new one since they will be occluded by this new one.
     if (occlusionsErased_) {
         for (CellList::iterator cli=cells.begin(); cli!=cells.end(); /*void*/) {
-            MemoryCellPtr oldCell = *cli;
+            MemoryCell::Ptr oldCell = *cli;
             if (newCell->mustAlias(oldCell, addrOps)) {
                 cli = cells.erase(cli);
             } else {
@@ -96,11 +96,11 @@ MemoryCellList::writeMemory(const SValuePtr &addr, const SValuePtr &value, RiscO
 }
 
 bool
-MemoryCellList::isAllPresent(const SValuePtr &address, size_t nBytes, RiscOperators *addrOps, RiscOperators *valOps) const {
+MemoryCellList::isAllPresent(const SValue::Ptr &address, size_t nBytes, RiscOperators *addrOps, RiscOperators *valOps) const {
     ASSERT_not_null(addrOps);
     ASSERT_not_null(valOps);
     for (size_t offset = 0; offset < nBytes; ++offset) {
-        SValuePtr byteAddress = 0==offset ? address : addrOps->add(address, addrOps->number_(address->nBits(), offset));
+        SValue::Ptr byteAddress = 0==offset ? address : addrOps->add(address, addrOps->number_(address->nBits(), offset));
         CellList::const_iterator cursor = get_cells().begin();
         if (scan(cursor/*in,out*/, byteAddress, 8, addrOps, valOps).empty())
             return false;
@@ -109,7 +109,7 @@ MemoryCellList::isAllPresent(const SValuePtr &address, size_t nBytes, RiscOperat
 }
 
 bool
-MemoryCellList::merge(const MemoryStatePtr &other, RiscOperators *addrOps, RiscOperators *valOps) {
+MemoryCellList::merge(const MemoryState::Ptr &other, RiscOperators *addrOps, RiscOperators *valOps) {
     if (!merger() || merger()->memoryAddressesMayAlias()) {
         return mergeWithAliasing(other, addrOps, valOps);
     } else {
@@ -118,25 +118,25 @@ MemoryCellList::merge(const MemoryStatePtr &other, RiscOperators *addrOps, RiscO
 }
 
 bool
-MemoryCellList::mergeWithAliasing(const MemoryStatePtr &other_, RiscOperators *addrOps, RiscOperators *valOps) {
+MemoryCellList::mergeWithAliasing(const MemoryState::Ptr &other_, RiscOperators *addrOps, RiscOperators *valOps) {
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     debug.enable(debug.enabled() && merger() && merger()->memoryMergeDebugging());
 
-    MemoryCellListPtr other = boost::dynamic_pointer_cast<MemoryCellList>(other_);
+    MemoryCellList::Ptr other = boost::dynamic_pointer_cast<MemoryCellList>(other_);
     ASSERT_not_null(other);
     bool changed = false;
 
     if (debug) {
         debug <<"MemoryCellList::mergeWithAliasing\n";
         debug <<"  merge into:\n";
-        for (const MemoryCellPtr &cell: get_cells())
+        for (const MemoryCell::Ptr &cell: get_cells())
             debug <<"    addr=" <<*cell->address() <<" value=" <<*cell->value() <<"\n";
         debug <<"  merging from:\n";
-        for (const MemoryCellPtr &cell: other->get_cells())
+        for (const MemoryCell::Ptr &cell: other->get_cells())
             debug <<"    addr=" <<*cell->address() <<" value=" <<*cell->value() <<"\n";
     }
 
-    for (const MemoryCellPtr &otherCell: boost::adaptors::reverse(other->get_cells())) {
+    for (const MemoryCell::Ptr &otherCell: boost::adaptors::reverse(other->get_cells())) {
         SAWYER_MESG(debug) <<"  merging from cell"
                            <<" addr=" <<*otherCell->address()
                            <<" value=" <<*otherCell->value() <<"\n";
@@ -144,7 +144,7 @@ MemoryCellList::mergeWithAliasing(const MemoryStatePtr &other_, RiscOperators *a
         // Is there some later-in-time (earlier-in-list) cell that occludes this one? If so, then we don't need to process this
         // cell.
         bool isOccluded = false;
-        for (const MemoryCellPtr &cell: other->get_cells()) {
+        for (const MemoryCell::Ptr &cell: other->get_cells()) {
             if (cell == otherCell) {
                 break;
             } else if (otherCell->address()->mustEqual(cell->address(), addrOps->solver())) {
@@ -157,11 +157,11 @@ MemoryCellList::mergeWithAliasing(const MemoryStatePtr &other_, RiscOperators *a
         }
 
         // Read the value, writers, and properties without disturbing the states
-        SValuePtr address = otherCell->address();
+        SValue::Ptr address = otherCell->address();
 
         CellList::iterator otherCursor = other->get_cells().begin();
         CellList otherCells = other->scan(otherCursor /*in,out*/, address, 8, addrOps, valOps);
-        SValuePtr otherValue = mergeCellValues(otherCells, valOps->undefined_(8), addrOps, valOps);
+        SValue::Ptr otherValue = mergeCellValues(otherCells, valOps->undefined_(8), addrOps, valOps);
         AddressSet otherWriters = mergeCellWriters(otherCells);
         InputOutputPropertySet otherProps = mergeCellProperties(otherCells);
         SAWYER_MESG(debug) <<"    scan found " <<StringUtility::plural(otherCells.size(), "cells") <<"\n"
@@ -180,8 +180,8 @@ MemoryCellList::mergeWithAliasing(const MemoryStatePtr &other_, RiscOperators *a
             changed = true;
         } else {
             bool cellChanged = false;
-            SValuePtr thisValue = mergeCellValues(thisCells, valOps->undefined_(8), addrOps, valOps);
-            SValuePtr mergedValue = thisValue->createOptionalMerge(otherValue, merger(), valOps->solver()).orDefault();
+            SValue::Ptr thisValue = mergeCellValues(thisCells, valOps->undefined_(8), addrOps, valOps);
+            SValue::Ptr mergedValue = thisValue->createOptionalMerge(otherValue, merger(), valOps->solver()).orDefault();
             SAWYER_MESG(debug) <<"    " <<StringUtility::plural(thisCells.size(), "matching values") <<" in destination\n"
                                <<"    matching values condensed to " <<*thisValue <<"\n";
             if (mergedValue) {
@@ -212,7 +212,7 @@ MemoryCellList::mergeWithAliasing(const MemoryStatePtr &other_, RiscOperators *a
 
             if (debug) {
                 debug <<"    new destination state:\n";
-                for (const MemoryCellPtr &cell: get_cells())
+                for (const MemoryCell::Ptr &cell: get_cells())
                     debug <<"      addr=" <<*cell->address() <<" value=" <<*cell->value() <<"\n";
             }
         }
@@ -221,28 +221,28 @@ MemoryCellList::mergeWithAliasing(const MemoryStatePtr &other_, RiscOperators *a
 }
 
 bool
-MemoryCellList::mergeNoAliasing(const MemoryStatePtr &other_, RiscOperators *addrOps, RiscOperators *valOps) {
+MemoryCellList::mergeNoAliasing(const MemoryState::Ptr &other_, RiscOperators *addrOps, RiscOperators *valOps) {
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     debug.enable(debug.enabled() && merger() && merger()->memoryMergeDebugging());
 
-    MemoryCellListPtr other = boost::dynamic_pointer_cast<MemoryCellList>(other_);
+    MemoryCellList::Ptr other = boost::dynamic_pointer_cast<MemoryCellList>(other_);
     ASSERT_not_null(other);
     bool changed = false;
 
     if (debug) {
         debug <<"MemoryCellList::mergeNoAliasing:\n"
                     <<"  merging into:\n";
-        for (const MemoryCellPtr &cell: get_cells())
+        for (const MemoryCell::Ptr &cell: get_cells())
             debug <<"    addr=" <<*cell->address() <<" value=" <<*cell->value() <<"\n";
         debug <<"  merging from:\n";
-        for (const MemoryCellPtr &cell: other->get_cells())
+        for (const MemoryCell::Ptr &cell: other->get_cells())
             debug <<"    addr=" <<*cell->address() <<" value=" <<*cell->value() <<"\n";
     }
     
-    for (const MemoryCellPtr &otherCell: boost::adaptors::reverse(other->get_cells())) {
+    for (const MemoryCell::Ptr &otherCell: boost::adaptors::reverse(other->get_cells())) {
         // Read the value, writers, and properties without disturbing the states
-        SValuePtr otherAddress = otherCell->address();
-        SValuePtr otherValue = otherCell->value();
+        SValue::Ptr otherAddress = otherCell->address();
+        SValue::Ptr otherValue = otherCell->value();
         AddressSet otherWriters = otherCell->getWriters();
         InputOutputPropertySet otherProps = otherCell->ioProperties();
         SAWYER_MESG(debug) <<"  merging from cell addr=" <<*otherAddress <<" value=" <<*otherValue <<"\n";
@@ -250,7 +250,7 @@ MemoryCellList::mergeNoAliasing(const MemoryStatePtr &other_, RiscOperators *add
         // Is there some later-in-time (earlier-in-list) cell that occludes this one? If so, then we don't need to process this
         // cell.
         bool isOccluded = false;
-        for (const MemoryCellPtr &cell: other->get_cells()) {
+        for (const MemoryCell::Ptr &cell: other->get_cells()) {
             if (cell == otherCell) {
                 break;
             } else if (otherAddress->mustEqual(cell->address(), addrOps->solver())) {
@@ -265,16 +265,16 @@ MemoryCellList::mergeNoAliasing(const MemoryStatePtr &other_, RiscOperators *add
         // If otherAddress is must_equal to something in the destination state, modify the destination state.
         SAWYER_MESG(debug) <<"    looking for must_equal match in destination state\n";
         bool foundExactMatchingAddress = false;
-        for (const MemoryCellPtr &thisCell: get_cells()) {
-            SValuePtr thisAddress = thisCell->address();
-            SValuePtr thisValue = thisCell->value();
+        for (const MemoryCell::Ptr &thisCell: get_cells()) {
+            SValue::Ptr thisAddress = thisCell->address();
+            SValue::Ptr thisValue = thisCell->value();
             AddressSet thisWriters = otherCell->getWriters();
             InputOutputPropertySet thisProps = thisCell->ioProperties();
             SAWYER_MESG(debug) <<"      destination cell addr=" <<*thisAddress <<" value=" <<*thisValue <<"\n";
 
             if (otherAddress->mustEqual(thisCell->address(), addrOps->solver())) {
                 bool cellChanged = false;
-                SValuePtr mergedValue = thisValue->createOptionalMerge(otherValue, merger(), valOps->solver()).orDefault();
+                SValue::Ptr mergedValue = thisValue->createOptionalMerge(otherValue, merger(), valOps->solver()).orDefault();
                 if (mergedValue)
                     cellChanged = true;
                 AddressSet mergedWriters = otherWriters | thisWriters;
@@ -300,7 +300,7 @@ MemoryCellList::mergeNoAliasing(const MemoryStatePtr &other_, RiscOperators *add
                         debug <<"      values are equal (no change)\n";
                     }
                     debug <<"      new destination state:\n";
-                    for (const MemoryCellPtr &cell: get_cells())
+                    for (const MemoryCell::Ptr &cell: get_cells())
                         debug <<"        addr=" <<*cell->address() <<" value=" <<*cell->value() <<"\n";
                 }
                 
@@ -320,20 +320,20 @@ MemoryCellList::mergeNoAliasing(const MemoryStatePtr &other_, RiscOperators *add
         changed = true;
         if (debug) {
             debug <<"    new destination state:\n";
-            for (const MemoryCellPtr &cell: get_cells())
+            for (const MemoryCell::Ptr &cell: get_cells())
             debug <<"      addr=" <<*cell->address() <<" value=" <<*cell->value() <<"\n";
         }
     }
     return changed;
 }
 
-SValuePtr
-MemoryCellList::mergeCellValues(const CellList &cells, const SValuePtr &dflt, RiscOperators *addrOps, RiscOperators *valOps) {
-    SValuePtr retval;
-    for (const MemoryCellPtr &cell: cells) {
+SValue::Ptr
+MemoryCellList::mergeCellValues(const CellList &cells, const SValue::Ptr &dflt, RiscOperators *addrOps, RiscOperators *valOps) {
+    SValue::Ptr retval;
+    for (const MemoryCell::Ptr &cell: cells) {
         // Get the cell's value. If the cell value is not the same width as the desired return value then we've go more work to
         // do. This isn't implemented yet. [Robb P. Matzke 2015-08-17]
-        SValuePtr cellValue = valOps->unsignedExtend(cell->value(), dflt->nBits());
+        SValue::Ptr cellValue = valOps->unsignedExtend(cell->value(), dflt->nBits());
 
         if (!retval) {
             retval = cellValue;
@@ -348,7 +348,7 @@ MemoryCellList::mergeCellValues(const CellList &cells, const SValuePtr &dflt, Ri
 AddressSet
 MemoryCellList::mergeCellWriters(const CellList &cells) {
     AddressSet writers;
-    for (const MemoryCellPtr &cell: cells)
+    for (const MemoryCell::Ptr &cell: cells)
         writers |= cell->getWriters();
     return writers;
 }
@@ -356,14 +356,14 @@ MemoryCellList::mergeCellWriters(const CellList &cells) {
 InputOutputPropertySet
 MemoryCellList::mergeCellProperties(const CellList &cells) {
     InputOutputPropertySet props;
-    for (const MemoryCellPtr &cell: cells)
+    for (const MemoryCell::Ptr &cell: cells)
         props |= cell->ioProperties();
     return props;
 }
 
 void
 MemoryCellList::updateReadProperties(CellList &cells) {
-    for (MemoryCellPtr &cell: cells) {
+    for (MemoryCell::Ptr &cell: cells) {
         cell->ioProperties().insert(IO_READ);
         if (cell->ioProperties().exists(IO_WRITE)) {
             cell->ioProperties().insert(IO_READ_AFTER_WRITE);
@@ -375,9 +375,9 @@ MemoryCellList::updateReadProperties(CellList &cells) {
     }
 }
 
-MemoryCellPtr
-MemoryCellList::insertReadCell(const SValuePtr &addr, const SValuePtr &value) {
-    MemoryCellPtr cell = protocell->create(addr, value);
+MemoryCell::Ptr
+MemoryCellList::insertReadCell(const SValue::Ptr &addr, const SValue::Ptr &value) {
+    MemoryCell::Ptr cell = protocell->create(addr, value);
     cell->ioProperties().insert(IO_READ);
     cell->ioProperties().insert(IO_READ_BEFORE_WRITE);
     cell->ioProperties().insert(IO_READ_UNINITIALIZED);
@@ -385,10 +385,10 @@ MemoryCellList::insertReadCell(const SValuePtr &addr, const SValuePtr &value) {
     return cell;
 }
 
-MemoryCellPtr
-MemoryCellList::insertReadCell(const SValuePtr &addr, const SValuePtr &value,
+MemoryCell::Ptr
+MemoryCellList::insertReadCell(const SValue::Ptr &addr, const SValue::Ptr &value,
                                const AddressSet &writers, const InputOutputPropertySet &props) {
-    MemoryCellPtr cell = protocell->create(addr, value);
+    MemoryCell::Ptr cell = protocell->create(addr, value);
     cell->setWriters(writers);
     cell->ioProperties() = props;
     cells.push_front(cell);
@@ -396,20 +396,20 @@ MemoryCellList::insertReadCell(const SValuePtr &addr, const SValuePtr &value,
 }
 
 AddressSet
-MemoryCellList::getWritersUnion(const SValuePtr &addr, size_t nBits, RiscOperators *addrOps, RiscOperators *valOps) {
+MemoryCellList::getWritersUnion(const SValue::Ptr &addr, size_t nBits, RiscOperators *addrOps, RiscOperators *valOps) {
     AddressSet retval;
     CellList::iterator cursor = get_cells().begin();
-    for (const MemoryCellPtr &cell: scan(cursor, addr, nBits, addrOps, valOps))
+    for (const MemoryCell::Ptr &cell: scan(cursor, addr, nBits, addrOps, valOps))
         retval |= cell->getWriters();
     return retval;
 }
 
 AddressSet
-MemoryCellList::getWritersIntersection(const SValuePtr &addr, size_t nBits, RiscOperators *addrOps, RiscOperators *valOps) {
+MemoryCellList::getWritersIntersection(const SValue::Ptr &addr, size_t nBits, RiscOperators *addrOps, RiscOperators *valOps) {
     AddressSet retval;
     CellList::iterator cursor = get_cells().begin();
     size_t nCells = 0;
-    for (const MemoryCellPtr &cell: scan(cursor, addr, nBits, addrOps, valOps)) {
+    for (const MemoryCell::Ptr &cell: scan(cursor, addr, nBits, addrOps, valOps)) {
         if (1 == ++nCells) {
             retval = cell->getWriters();
         } else {
@@ -432,7 +432,7 @@ MemoryCellList::hash(Combinatorics::Hasher &hasher, RiscOperators*/*addrOps*/, R
     //   etc.
     // because a more recent concrete address (zero in this case) occludes the older cells with the same address. But in
     // order to do this properly, we have to do a better comparison than just checking concrete addresses for equality.
-    for (const MemoryCellPtr &cell: cells)
+    for (const MemoryCell::Ptr &cell: cells)
         cell->hash(hasher);
 }
 
@@ -443,20 +443,20 @@ MemoryCellList::print(std::ostream &stream, Formatter &fmt) const
         stream <<fmt.get_line_prefix() <<(**ci+fmt) <<"\n";
 }
 
-std::vector<MemoryCellPtr>
+std::vector<MemoryCell::Ptr>
 MemoryCellList::matchingCells(MemoryCell::Predicate &p) const {
-    std::vector<MemoryCellPtr> retval;
-    for (const MemoryCellPtr &cell: cells) {
+    std::vector<MemoryCell::Ptr> retval;
+    for (const MemoryCell::Ptr &cell: cells) {
         if (p(cell))
             retval.push_back(cell);
     }
     return retval;
 }
 
-std::vector<MemoryCellPtr>
+std::vector<MemoryCell::Ptr>
 MemoryCellList::leadingCells(MemoryCell::Predicate &p) const {
-    std::vector<MemoryCellPtr> retval;
-    for (const MemoryCellPtr &cell: cells) {
+    std::vector<MemoryCell::Ptr> retval;
+    for (const MemoryCell::Ptr &cell: cells) {
         if (!p(cell))
             break;
         retval.push_back(cell);
@@ -490,7 +490,7 @@ MemoryCellList::eraseLeadingCells(MemoryCell::Predicate &p) {
 
 void
 MemoryCellList::traverse(MemoryCell::Visitor &v) {
-    for (MemoryCellPtr &cell: cells)
+    for (MemoryCell::Ptr &cell: cells)
         v(cell);
 }
 

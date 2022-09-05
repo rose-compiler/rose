@@ -26,9 +26,9 @@ SymbolicMemory::clear() {
     }
 }
 
-SValuePtr
-SymbolicMemory::readMemory(const SValuePtr &address_, const SValuePtr &dflt, RiscOperators *addrOps, RiscOperators *valOps) {
-    SymbolicSemantics::SValuePtr address = SymbolicSemantics::SValue::promote(address_);
+SValue::Ptr
+SymbolicMemory::readMemory(const SValue::Ptr &address_, const SValue::Ptr &dflt, RiscOperators *addrOps, RiscOperators *valOps) {
+    SymbolicSemantics::SValue::Ptr address = SymbolicSemantics::SValue::promote(address_);
     if (address->nBits() != mem_->domainWidth() || dflt->nBits() != mem_->nBits()) {
         ASSERT_require2(mem_->isMemoryVariable(),
                         "invalid address and/or value size for memory; expecting " +
@@ -39,20 +39,20 @@ SymbolicMemory::readMemory(const SValuePtr &address_, const SValuePtr &dflt, Ris
         mem_ = SymbolicExpr::makeMemoryVariable(address->nBits(), dflt->nBits());
     }
     SymbolicExpr::Ptr resultExpr = SymbolicExpr::makeRead(mem_, address->get_expression(), valOps->solver());
-    SymbolicSemantics::SValuePtr retval = SymbolicSemantics::SValue::promote(dflt->copy());
+    SymbolicSemantics::SValue::Ptr retval = SymbolicSemantics::SValue::promote(dflt->copy());
     retval->set_expression(resultExpr);
     return retval;
 }
 
-SValuePtr
-SymbolicMemory::peekMemory(const SValuePtr &address, const SValuePtr &dflt, RiscOperators *addrOps, RiscOperators *valOps) {
+SValue::Ptr
+SymbolicMemory::peekMemory(const SValue::Ptr &address, const SValue::Ptr &dflt, RiscOperators *addrOps, RiscOperators *valOps) {
     return readMemory(address, dflt, addrOps, valOps);  // readMemory doesn't have side effects
 }
 
 void
-SymbolicMemory::writeMemory(const SValuePtr &address_, const SValuePtr &value_, RiscOperators *addrOps, RiscOperators *valOps) {
-    SymbolicSemantics::SValuePtr address = SymbolicSemantics::SValue::promote(address_);
-    SymbolicSemantics::SValuePtr value = SymbolicSemantics::SValue::promote(value_);
+SymbolicMemory::writeMemory(const SValue::Ptr &address_, const SValue::Ptr &value_, RiscOperators *addrOps, RiscOperators *valOps) {
+    SymbolicSemantics::SValue::Ptr address = SymbolicSemantics::SValue::promote(address_);
+    SymbolicSemantics::SValue::Ptr value = SymbolicSemantics::SValue::promote(value_);
     if (address->nBits() != mem_->domainWidth() || value->nBits() != mem_->nBits()) {
         ASSERT_require2(mem_->isMemoryVariable(),
                         "invalid address and/or value size for memory; expecting " +
@@ -67,8 +67,8 @@ SymbolicMemory::writeMemory(const SValuePtr &address_, const SValuePtr &value_, 
 }
 
 bool
-SymbolicMemory::merge(const MemoryStatePtr &other_, RiscOperators *addrOps, RiscOperators *valOps) {
-    SymbolicMemoryPtr other = SymbolicMemory::promote(other_);
+SymbolicMemory::merge(const MemoryState::Ptr &other_, RiscOperators *addrOps, RiscOperators *valOps) {
+    SymbolicMemory::Ptr other = SymbolicMemory::promote(other_);
     TODO("[Robb P. Matzke 2015-08-10]");
 }
 

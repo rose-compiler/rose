@@ -3347,7 +3347,7 @@ bool ClangToSageTranslator::VisitOffsetOfExpr(clang::OffsetOfExpr * offset_of_ex
     bool res = true;
 
     SgNodePtrList nodePtrList;
-  
+
     SgType* type = buildTypeFromQualifiedType(offset_of_expr->getTypeSourceInfo()->getType());
 
     nodePtrList.push_back(type);
@@ -3904,7 +3904,10 @@ bool ClangToSageTranslator::VisitVAArgExpr(clang::VAArgExpr * va_arg_expr, SgNod
     SgExpression * expr = isSgExpression(tmp_expr);
     ROSE_ASSERT(expr != NULL);
 
-    *node = SageBuilder::buildVarArgOp_nfi(expr, expr->get_type());
+    SgType* type = buildTypeFromQualifiedType(va_arg_expr->getWrittenTypeInfo()->getType());
+    ROSE_ASSERT(type != NULL);
+
+    *node = SageBuilder::buildVarArgOp_nfi(expr, type);
 
     return VisitExpr(va_arg_expr, node);
 }

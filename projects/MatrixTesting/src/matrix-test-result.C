@@ -12,6 +12,7 @@ static const char *gDescription =
 #include <Rose/CommandLine.h>
 #include <rose_getline.h>
 #include <boost/algorithm/string/trim.hpp>
+#include <boost/process.hpp>
 
 using namespace Rose;
 using namespace Sawyer::Message::Common;
@@ -19,6 +20,7 @@ namespace DB = Sawyer::Database;
 
 struct Settings {
     std::string databaseUri;                            // e.g., postgresql://user:password@host/database
+    bool dryRun = false;
 };
 
 using KeyValuePairs = Sawyer::Container::Map<std::string /*colname*/, std::string /*value*/>;
@@ -36,6 +38,10 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
 
     SwitchGroup sg("Tool-specific switches");
     insertDatabaseSwitch(sg, settings.databaseUri);
+
+    sg.insert(Switch("dry-run", 'n')
+              .intrinsicValue(true, settings.dryRun)
+              .doc("Do everything but update the database and print a test ID."));
 
     const std::vector<std::string> args = parser
                                           .with(Rose::CommandLine::genericSwitches())
@@ -133,21 +139,26 @@ static std::string
 getUserName() {
     if (const char *s = getenv("LOGNAME"))
         return s;
-    mlog[FATAL] <<"LOGNAME is not set\n";
-    exit(1);
+
+    boost::process::ipstream pipe_stream;
+    boost::process::child c("whoami", boost::process::std_out > pipe_stream);
+    std::string str;
+    if (pipe_stream && std::getline(pipe_stream, str) && !str.empty())
+        return boost::trim_copy(str);
+
+    return "unknown";
 }
 
 static int
 getUserId(DB::Connection db) {
     const std::string userName = getUserName();
-    auto userId = db.stmt("select id from auth_identities where identity = ?user")
-                  .bind("user", userName)
-                  .get<int>();
-    if (!userId) {
-        mlog[FATAL] <<"no such user: \"" <<StringUtility::cEscape(userName) <<"\"\n";
-        exit(1);
+    auto sql = db.stmt("select uid from users where name = ?name").bind("name", userName);
+    for (auto row: sql) {
+        auto userId = row.get<int>(0);
+        return *userId;
     }
-    return *userId;
+    mlog[FATAL] <<"no such user: \"" <<StringUtility::cEscape(userName) <<"\"\n";
+    exit(1);
 }
 
 static std::string
@@ -195,7 +206,9 @@ main(int argc, char *argv[]) {
     for (const auto &node: kvpairs.nodes())
         stmt.bind(node.key(), node.value());
 
-    int testId = stmt.get<int>().get();
-    mlog[INFO] <<"inserted test record #" <<testId <<"\n";
-    std::cout <<testId <<"\n";
+    if (!settings.dryRun) {
+        int testId = stmt.get<int>().get();
+        mlog[INFO] <<"inserted test record #" <<testId <<"\n";
+        std::cout <<testId <<"\n";
+    }
 }

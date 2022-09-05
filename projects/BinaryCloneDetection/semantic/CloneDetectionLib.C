@@ -1005,8 +1005,7 @@ open_specimen(const std::string &specimen_name, const std::string &argv0, bool d
 
     // Disassemble the executable
     std::cerr <<argv0 <<": disassembling and partitioning\n";
-    if (Disassembler *disassembler = Disassembler::lookup(interp)) {
-        disassembler = disassembler->clone(); // so our settings are private
+    if (Disassembler::Base::Ptr disassembler = Disassembler::lookup(interp)) {
 #if 1 // FIXME [Robb P. Matzke 2013-05-14]
         // We need to handle -rose:disassembler_search, -rose:partitioner_search, and -rose:partitioner_config
         // command-line switches.

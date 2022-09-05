@@ -606,38 +606,10 @@ typedef Rose_STL_Container<SgJavaMemberValuePair*> SgJavaMemberValuePairPtrList;
 typedef SgJavaMemberValuePairPtrList* SgJavaMemberValuePairPtrListPtr;
 
 // DQ (3/6/2014): Added support for Untyped IR nodes.
-class SgUntypedInitializedName;
-typedef Rose_STL_Container<SgUntypedInitializedName*> SgUntypedInitializedNamePtrList;
-typedef SgUntypedInitializedNamePtrList*              SgUntypedInitializedNamePtrListPtr;
 
-class SgUntypedName;
-typedef Rose_STL_Container<SgUntypedName*> SgUntypedNamePtrList;
-typedef SgUntypedNamePtrList*              SgUntypedNamePtrListPtr;
-
-class SgUntypedToken;
-typedef Rose_STL_Container<SgUntypedToken*> SgUntypedTokenPtrList;
-typedef SgUntypedTokenPtrList*              SgUntypedTokenPtrListPtr;
-
-class SgUntypedTokenPair;
-typedef Rose_STL_Container<SgUntypedTokenPair*> SgUntypedTokenPairPtrList;
-typedef SgUntypedTokenPairPtrList*              SgUntypedTokenPairPtrListPtr;
-
-// Rasmussen (12/20/2017): Added SgUntypedExprListExpression
-class SgUntypedExpression;
-typedef Rose_STL_Container<SgUntypedExpression*> SgUntypedExpressionPtrList;
-typedef SgUntypedExpressionPtrList*              SgUntypedExpressionPtrListPtr;
-
-class SgUntypedStatement;
-typedef Rose_STL_Container<SgUntypedStatement*> SgUntypedStatementPtrList;
-typedef SgUntypedStatementPtrList*              SgUntypedStatementPtrListPtr;
-
-class SgUntypedDeclarationStatement;
-typedef Rose_STL_Container<SgUntypedDeclarationStatement*> SgUntypedDeclarationStatementPtrList;
-typedef SgUntypedDeclarationStatementPtrList*              SgUntypedDeclarationStatementPtrListPtr;
-
-class SgUntypedFunctionDeclaration;
-typedef Rose_STL_Container<SgUntypedFunctionDeclaration*> SgUntypedFunctionDeclarationPtrList;
-typedef SgUntypedFunctionDeclarationPtrList*              SgUntypedFunctionDeclarationPtrListPtr;
+// Rasmussen (08/25/2022): Removed all untyped Sage nodes. Ultimately it proved easier to
+// construct regular IR nodes from the Jovial parser. Using the untyped system just led to an
+// unnecessary step and wasted effort.
 
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 class SgAsmRegisterReferenceExpression;
