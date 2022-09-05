@@ -83,17 +83,17 @@ Function::isThunk() const {
     return true;
 }
 
-InstructionSemantics::BaseSemantics::SValuePtr
+InstructionSemantics::BaseSemantics::SValue::Ptr
 Function::stackDeltaOverride() const {
     return stackDeltaOverride_;
 }
 
 void
-Function::stackDeltaOverride(const InstructionSemantics::BaseSemantics::SValuePtr &delta) {
+Function::stackDeltaOverride(const InstructionSemantics::BaseSemantics::SValue::Ptr &delta) {
     stackDeltaOverride_ = delta;
 }
 
-InstructionSemantics::BaseSemantics::SValuePtr
+InstructionSemantics::BaseSemantics::SValue::Ptr
 Function::stackDelta() const {
     if (stackDeltaOverride_ != NULL)
         return stackDeltaOverride_;
@@ -102,7 +102,7 @@ Function::stackDelta() const {
 
 int64_t
 Function::stackDeltaConcrete() const {
-    BaseSemantics::SValuePtr v = stackDelta();
+    BaseSemantics::SValue::Ptr v = stackDelta();
     if (v && v->toSigned()) {
         return v->toSigned().get();
     } else {

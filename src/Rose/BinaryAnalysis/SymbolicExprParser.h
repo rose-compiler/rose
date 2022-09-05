@@ -3,6 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 #include <Rose/BinaryAnalysis/SymbolicExpr.h>
 #include <Rose/Exception.h>
@@ -327,17 +328,17 @@ public:
         typedef Sawyer::Container::BiMap<RegisterDescriptor, SymbolicExpr::Ptr> RegToVarMap;
 
     private:
-        const RegisterDictionary *regdict_;
+        RegisterDictionaryPtr regdict_;
         RegToVarMap reg2var_;
         InstructionSemantics::BaseSemantics::RiscOperatorsPtr ops_;
 
     protected:
-        RegisterSubstituter(const RegisterDictionary *regdict)
+        RegisterSubstituter(const RegisterDictionaryPtr &regdict)
             : regdict_(regdict) {}
 
     public:
         /** Allocating constructor. */
-        static Ptr instance(const RegisterDictionary*);
+        static Ptr instance(const RegisterDictionaryPtr&);
 
         /** Property: Semantic state used during delayed expansion.
          *
@@ -544,7 +545,7 @@ public:
      *
      * @{ */
     void defineRegisters(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&);
-    RegisterSubstituter::Ptr defineRegisters(const RegisterDictionary*);
+    RegisterSubstituter::Ptr defineRegisters(const RegisterDictionaryPtr&);
     /** @} */
 
     /** Perform delayed expansion.

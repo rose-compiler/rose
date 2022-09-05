@@ -5,9 +5,8 @@
 // the input code is defined using -DSKIP_ROSE_BUILTIN_DECLARATIONS
 #ifndef SKIP_ROSE_BUILTIN_DECLARATIONS
 
-#if 1
 void * __builtin_va_start(__builtin_va_list, ...);
 void * __builtin_va_end(__builtin_va_list);
-#endif
+void *__builtin_alloca (unsigned size);
 
 #endif

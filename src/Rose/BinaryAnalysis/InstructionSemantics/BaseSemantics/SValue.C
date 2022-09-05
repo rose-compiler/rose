@@ -4,6 +4,7 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/SValue.h>
 
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Formatter.h>
+#include <sstream>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -45,12 +46,12 @@ SValue::toSigned() const {
 }
 
 bool
-SValue::mustEqual(const SValuePtr &other, const SmtSolverPtr &solver) const {
+SValue::mustEqual(const SValue::Ptr &other, const SmtSolverPtr &solver) const {
     return must_equal(other, solver);
 }
 
 bool
-SValue::mayEqual(const SValuePtr &other, const SmtSolverPtr &solver) const {
+SValue::mayEqual(const SValue::Ptr &other, const SmtSolverPtr &solver) const {
     return may_equal(other, solver);
 }
 
@@ -97,6 +98,13 @@ SValue::operator+(const std::string &linePrefix) {
     static Formatter fmt;
     fmt.set_line_prefix(linePrefix);
     return with_format(fmt);
+}
+
+std::string
+SValue::toString() const {
+    std::ostringstream ss;
+    print(ss);
+    return ss.str();
 }
 
 } // namespace

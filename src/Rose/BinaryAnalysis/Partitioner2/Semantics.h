@@ -3,6 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 
@@ -218,7 +219,8 @@ typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
  *  if the expression grows beyond a certain complexity. */
 class RiscOperators: public InstructionSemantics::SymbolicSemantics::RiscOperators {
 public:
-    typedef InstructionSemantics::SymbolicSemantics::RiscOperators Super;
+    using Super = InstructionSemantics::SymbolicSemantics::RiscOperators;
+    using Ptr = RiscOperatorsPtr;
 
 private:
     static const size_t TRIM_THRESHOLD_DFLT = 100;
@@ -260,7 +262,7 @@ protected:
     // Static allocating constructors
 public:
     /** Instantiate a new RiscOperators object and configure it using default values. */
-    static RiscOperatorsPtr instance(const RegisterDictionary *regdict, const SmtSolverPtr &solver = SmtSolverPtr(),
+    static RiscOperatorsPtr instance(const RegisterDictionaryPtr &regdict, const SmtSolverPtr &solver = SmtSolverPtr(),
                                      SemanticMemoryParadigm memoryParadigm = LIST_BASED_MEMORY) {
         InstructionSemantics::BaseSemantics::SValuePtr protoval = SValue::instance();
         InstructionSemantics::BaseSemantics::RegisterStatePtr registers = RegisterState::instance(protoval, regdict);

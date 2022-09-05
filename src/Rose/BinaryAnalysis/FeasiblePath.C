@@ -8,14 +8,16 @@
 #include <Rose/BinaryAnalysis/SymbolicExprParser.h>
 #include <Combinatorics.h>
 #include <Rose/CommandLine.h>
-#include <Rose/BinaryAnalysis/DisassemblerAarch32.h>
-#include <Rose/BinaryAnalysis/DisassemblerAarch64.h>
-#include <Rose/BinaryAnalysis/DisassemblerM68k.h>
-#include <Rose/BinaryAnalysis/DisassemblerPowerpc.h>
-#include <Rose/BinaryAnalysis/DisassemblerX86.h>
+#include <Rose/BinaryAnalysis/Disassembler/Aarch32.h>
+#include <Rose/BinaryAnalysis/Disassembler/Aarch64.h>
+#include <Rose/BinaryAnalysis/Disassembler/M68k.h>
+#include <Rose/BinaryAnalysis/Disassembler/Powerpc.h>
+#include <Rose/BinaryAnalysis/Disassembler/X86.h>
 #include <Rose/BinaryAnalysis/Partitioner2/GraphViz.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesElf.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
+#include <Rose/BinaryAnalysis/RegisterNames.h>
 #include <Sawyer/GraphAlgorithm.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/SymbolicMemory.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
@@ -45,7 +47,7 @@ SymbolicSemantics::Formatter symbolicFormat(const std::string &prefix="") {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 typedef SymbolicSemantics::SValue SValue;
-typedef SymbolicSemantics::SValuePtr SValuePtr;
+typedef SymbolicSemantics::SValue::Ptr SValuePtr;
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -53,7 +55,7 @@ typedef SymbolicSemantics::SValuePtr SValuePtr;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 typedef SymbolicSemantics::RegisterState RegisterState;
-typedef SymbolicSemantics::RegisterStatePtr RegisterStatePtr;
+typedef SymbolicSemantics::RegisterState::Ptr RegisterStatePtr;
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -72,41 +74,42 @@ typedef boost::shared_ptr<class State> StatePtr;
 // Semantic state holds mapping from symbolic variable names to comments about where the variable came from.
 class State: public BaseSemantics::State {
 public:
-    typedef BaseSemantics::State Super;
+    using Super = BaseSemantics::State;
+    using Ptr = StatePtr;
 
 private:
     // Maps symbolic variable names to additional information about where the variable appears in the path.
     FeasiblePath::VarDetails varDetails_;
 
 protected:
-    State(const BaseSemantics::RegisterStatePtr &registers, const BaseSemantics::MemoryStatePtr &memory)
+    State(const BaseSemantics::RegisterState::Ptr &registers, const BaseSemantics::MemoryState::Ptr &memory)
         : Super(registers, memory) {}
 
     State(const State &other)
         : Super(other), varDetails_(other.varDetails_) {}
 
 public:
-    static BaseSemantics::StatePtr instance(const BaseSemantics::RegisterStatePtr &registers,
-                                            const BaseSemantics::MemoryStatePtr &memory) {
-        return StatePtr(new State(registers, memory));
+    static BaseSemantics::State::Ptr instance(const BaseSemantics::RegisterState::Ptr &registers,
+                                            const BaseSemantics::MemoryState::Ptr &memory) {
+        return Ptr(new State(registers, memory));
     }
 
-    static BaseSemantics::StatePtr
-    instance(const StatePtr &other) {
-        return StatePtr(new State(*other));
+    static BaseSemantics::State::Ptr
+    instance(const Ptr &other) {
+        return Ptr(new State(*other));
     }
 
-    virtual BaseSemantics::StatePtr create(const BaseSemantics::RegisterStatePtr &registers,
-                                           const BaseSemantics::MemoryStatePtr &memory) const override {
+    virtual BaseSemantics::State::Ptr create(const BaseSemantics::RegisterState::Ptr &registers,
+                                           const BaseSemantics::MemoryState::Ptr &memory) const override {
         return instance(registers, memory);
     }
 
-    virtual BaseSemantics::StatePtr clone() const override {
-        return StatePtr(new State(*this));
+    virtual BaseSemantics::State::Ptr clone() const override {
+        return Ptr(new State(*this));
     }
 
-    static StatePtr promote(const BaseSemantics::StatePtr &x) {
-        StatePtr retval = boost::dynamic_pointer_cast<State>(x);
+    static Ptr promote(const BaseSemantics::State::Ptr &x) {
+        Ptr retval = boost::dynamic_pointer_cast<State>(x);
         ASSERT_not_null(retval);
         return retval;
     }
@@ -137,6 +140,9 @@ typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 class RiscOperators: public SymbolicSemantics::RiscOperators {
     typedef SymbolicSemantics::RiscOperators Super;
 public:
+    using Ptr = RiscOperatorsPtr;
+
+public:
     size_t pathInsnIndex_;                              // current location in path, or -1
     const P2::Partitioner *partitioner_;
     FeasiblePath *fpAnalyzer_;
@@ -146,14 +152,14 @@ public:
     const P2::CfgPath *path_;
 
 protected:
-    RiscOperators(const P2::Partitioner *partitioner, const BaseSemantics::SValuePtr &protoval,
+    RiscOperators(const P2::Partitioner *partitioner, const BaseSemantics::SValue::Ptr &protoval,
                   const Rose::BinaryAnalysis::SmtSolverPtr &solver)
         : Super(protoval, solver), pathInsnIndex_(-1), partitioner_(partitioner), fpAnalyzer_(NULL),
           pathProcessor_(NULL), pathProcessorAction_(FeasiblePath::PathProcessor::CONTINUE), path_(NULL){
         name("FindPath");
     }
 
-    RiscOperators(const P2::Partitioner *partitioner, const BaseSemantics::StatePtr &state,
+    RiscOperators(const P2::Partitioner *partitioner, const BaseSemantics::State::Ptr &state,
                   const Rose::BinaryAnalysis::SmtSolverPtr &solver)
         : Super(state, solver), pathInsnIndex_(-1), partitioner_(partitioner), fpAnalyzer_(NULL), pathProcessor_(NULL),
           pathProcessorAction_(FeasiblePath::PathProcessor::CONTINUE), path_(NULL) {
@@ -161,13 +167,13 @@ protected:
     }
 
 public:
-    static RiscOperatorsPtr instance(const P2::Partitioner *partitioner, const RegisterDictionary *regdict,
+    static RiscOperators::Ptr instance(const P2::Partitioner *partitioner, const RegisterDictionary::Ptr &regdict,
                                      FeasiblePath *fpAnalyzer, const P2::CfgPath *path, FeasiblePath::PathProcessor *pathProcessor,
                                      const Rose::BinaryAnalysis::SmtSolverPtr &solver = Rose::BinaryAnalysis::SmtSolverPtr()) {
         ASSERT_not_null(fpAnalyzer);
-        BaseSemantics::SValuePtr protoval = SValue::instance();
-        BaseSemantics::RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
-        BaseSemantics::MemoryStatePtr memory;
+        BaseSemantics::SValue::Ptr protoval = SValue::instance();
+        BaseSemantics::RegisterState::Ptr registers = RegisterState::instance(protoval, regdict);
+        BaseSemantics::MemoryState::Ptr memory;
         switch (fpAnalyzer->settings().searchMode) {
             case FeasiblePath::SEARCH_MULTI:
                 // If we're sending multiple paths at a time to the SMT solver then we need to provide the SMT solver with
@@ -193,8 +199,8 @@ public:
         }
         ASSERT_not_null(memory);
         memory->set_byteOrder(partitioner->instructionProvider().defaultByteOrder());
-        BaseSemantics::StatePtr state = State::instance(registers, memory);
-        RiscOperatorsPtr ops = RiscOperatorsPtr(new RiscOperators(partitioner, state, solver));
+        BaseSemantics::State::Ptr state = State::instance(registers, memory);
+        RiscOperators::Ptr ops = RiscOperators::Ptr(new RiscOperators(partitioner, state, solver));
         ops->fpAnalyzer_ = fpAnalyzer;
         ops->pathProcessor_ = pathProcessor;
         ops->path_ = path;
@@ -202,32 +208,32 @@ public:
         return ops;
     }
 
-    static RiscOperatorsPtr instance(const P2::Partitioner *partitioner, const BaseSemantics::SValuePtr &protoval,
+    static RiscOperators::Ptr instance(const P2::Partitioner *partitioner, const BaseSemantics::SValue::Ptr &protoval,
                                      const Rose::BinaryAnalysis::SmtSolverPtr &solver = Rose::BinaryAnalysis::SmtSolverPtr()) {
-        return RiscOperatorsPtr(new RiscOperators(partitioner, protoval, solver));
+        return RiscOperators::Ptr(new RiscOperators(partitioner, protoval, solver));
     }
 
-    static RiscOperatorsPtr instance(const P2::Partitioner *partitioner, const BaseSemantics::StatePtr &state,
+    static RiscOperators::Ptr instance(const P2::Partitioner *partitioner, const BaseSemantics::State::Ptr &state,
                                      const Rose::BinaryAnalysis::SmtSolverPtr &solver = Rose::BinaryAnalysis::SmtSolverPtr()) {
-        return RiscOperatorsPtr(new RiscOperators(partitioner, state, solver));
+        return RiscOperators::Ptr(new RiscOperators(partitioner, state, solver));
     }
 
 public:
-    virtual BaseSemantics::RiscOperatorsPtr
-    create(const BaseSemantics::SValuePtr &protoval,
+    virtual BaseSemantics::RiscOperators::Ptr
+    create(const BaseSemantics::SValue::Ptr &protoval,
            const Rose::BinaryAnalysis::SmtSolverPtr &solver = Rose::BinaryAnalysis::SmtSolverPtr()) const override {
         return instance(NULL, protoval, solver);
     }
 
-    virtual BaseSemantics::RiscOperatorsPtr
-    create(const BaseSemantics::StatePtr &state,
+    virtual BaseSemantics::RiscOperators::Ptr
+    create(const BaseSemantics::State::Ptr &state,
            const Rose::BinaryAnalysis::SmtSolverPtr &solver = Rose::BinaryAnalysis::SmtSolverPtr()) const override {
         return instance(NULL, state, solver);
     }
 
 public:
-    static RiscOperatorsPtr promote(const BaseSemantics::RiscOperatorsPtr &x) {
-        RiscOperatorsPtr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
+    static RiscOperators::Ptr promote(const BaseSemantics::RiscOperators::Ptr &x) {
+        RiscOperators::Ptr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
         ASSERT_not_null(retval);
         return retval;
     }
@@ -271,7 +277,7 @@ private:
 
     /** Description a variable stored in a register. */
     FeasiblePath::VarDetail detailForVariable(RegisterDescriptor reg, const std::string &accessMode) const {
-        const RegisterDictionary *regs = currentState()->registerState()->registerDictionary();
+        RegisterDictionary::Ptr regs = currentState()->registerState()->registerDictionary();
         FeasiblePath::VarDetail retval;
         retval.registerName = RegisterNames(regs)(reg);
         retval.firstAccessMode = accessMode;
@@ -287,7 +293,7 @@ private:
 
     /** Describe a memory address if possible. The nBytes will be non-zero when we're describing an address as opposed to a
      *  value stored across some addresses. */
-    FeasiblePath::VarDetail detailForVariable(const BaseSemantics::SValuePtr &addr,
+    FeasiblePath::VarDetail detailForVariable(const BaseSemantics::SValue::Ptr &addr,
                                               const std::string &accessMode, size_t byteNumber=0, size_t nBytes=0) const {
         FeasiblePath::VarDetail retval;
         retval.firstAccessMode = accessMode;
@@ -346,7 +352,7 @@ private:
     }
 
     // Warning: Caller should create a nullPtrSolver transaction if necessary
-    bool isNullDeref(const BaseSemantics::SValuePtr &addr) {
+    bool isNullDeref(const BaseSemantics::SValue::Ptr &addr) {
         SymbolicExpr::Ptr expr = SymbolicSemantics::SValue::promote(addr)->get_expression();
         return isNullDeref(expr);
     }
@@ -428,9 +434,9 @@ public:
         Super::finishInstruction(insn);
     }
 
-    virtual BaseSemantics::SValuePtr readRegister(RegisterDescriptor reg,
-                 const BaseSemantics::SValuePtr &dflt) override {
-        SValuePtr retval = SValue::promote(Super::readRegister(reg, dflt));
+    virtual BaseSemantics::SValue::Ptr readRegister(RegisterDescriptor reg,
+                 const BaseSemantics::SValue::Ptr &dflt) override {
+        SValue::Ptr retval = SValue::promote(Super::readRegister(reg, dflt));
         SymbolicExpr::Ptr expr = retval->get_expression();
         if (expr->isLeafNode())
             State::promote(currentState())->varDetail(expr->isLeafNode()->toString(), detailForVariable(reg, "read"));
@@ -438,7 +444,7 @@ public:
     }
 
     virtual void writeRegister(RegisterDescriptor reg,
-                  const BaseSemantics::SValuePtr &value) override {
+                  const BaseSemantics::SValue::Ptr &value) override {
         SymbolicExpr::Ptr expr = SValue::promote(value)->get_expression();
         if (expr->isLeafNode())
             State::promote(currentState())->varDetail(expr->isLeafNode()->toString(), detailForVariable(reg, "write"));
@@ -448,20 +454,20 @@ public:
     // If multi-path is enabled, then return a new memory expression that describes the process of reading a value from the
     // specified address; otherwise, actually read the value and return it.  In any case, record some information about the
     // address that's being read if we've never seen it before.
-    virtual BaseSemantics::SValuePtr readMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr_,
-                                                const BaseSemantics::SValuePtr &dflt_,
-                                                const BaseSemantics::SValuePtr &cond) override {
-        BaseSemantics::SValuePtr dflt = dflt_;
+    virtual BaseSemantics::SValue::Ptr readMemory(RegisterDescriptor segreg, const BaseSemantics::SValue::Ptr &addr_,
+                                                const BaseSemantics::SValue::Ptr &dflt_,
+                                                const BaseSemantics::SValue::Ptr &cond) override {
+        BaseSemantics::SValue::Ptr dflt = dflt_;
         const size_t nBytes = dflt->nBits() / 8;
         if (cond->isFalse())
             return dflt_;
 
         // Offset the address by the value of the segment register.
-        BaseSemantics::SValuePtr adjustedVa;
+        BaseSemantics::SValue::Ptr adjustedVa;
         if (segreg.isEmpty()) {
             adjustedVa = addr_;
         } else {
-            BaseSemantics::SValuePtr segregValue = readRegister(segreg, undefined_(segreg.nBits()));
+            BaseSemantics::SValue::Ptr segregValue = readRegister(segreg, undefined_(segreg.nBits()));
             adjustedVa = add(addr_, signExtend(segregValue, addr_->nBits()));
         }
 
@@ -471,7 +477,7 @@ public:
             if (isNullDeref(adjustedVa)) {
                 ASSERT_not_null(fpAnalyzer_);
                 ASSERT_not_null(path_);
-                BaseSemantics::RiscOperatorsPtr cpu = shared_from_this();
+                BaseSemantics::RiscOperators::Ptr cpu = shared_from_this();
                 ASSERT_not_null(cpu);
                 merge(pathProcessor_->nullDeref(*fpAnalyzer_, *path_, currentInstruction(), cpu, nullPtrSolver(),
                                                 FeasiblePath::READ, adjustedVa));
@@ -503,7 +509,7 @@ public:
         }
 
         // Read from the symbolic state, and update the state with the default from real memory if known.
-        BaseSemantics::SValuePtr retval = Super::readMemory(segreg, addr_, dflt, cond);
+        BaseSemantics::SValue::Ptr retval = Super::readMemory(segreg, addr_, dflt, cond);
 
         if (!currentInstruction())
             return retval;                              // not called from dispatcher on behalf of an instruction
@@ -515,7 +521,7 @@ public:
 
         // Save a description for its addresses
         for (size_t i=0; i<nBytes; ++i) {
-            SValuePtr va = SValue::promote(add(adjustedVa, number_(adjustedVa->nBits(), i)));
+            SValue::Ptr va = SValue::promote(add(adjustedVa, number_(adjustedVa->nBits(), i)));
             if (va->get_expression()->isLeafNode()) {
                 State::promote(currentState())->varDetail(va->get_expression()->isLeafNode()->toString(),
                                                           detailForVariable(adjustedVa, "read", i, nBytes));
@@ -528,7 +534,7 @@ public:
             ASSERT_not_null(path_);
             SmtSolver::Ptr s = nullPtrSolver();
             SmtSolver::Transaction tx(s);
-            BaseSemantics::RiscOperatorsPtr cpu = shared_from_this();
+            BaseSemantics::RiscOperators::Ptr cpu = shared_from_this();
             ASSERT_not_null(cpu);
             merge(pathProcessor_->memoryIo(*fpAnalyzer_, *path_, currentInstruction(), cpu, s, FeasiblePath::READ,
                                            adjustedVa, retval));
@@ -540,18 +546,18 @@ public:
     // If multi-path is enabled, then return a new memory expression that updates memory with a new address/value pair;
     // otherwise update the memory directly.  In any case, record some information about the address that was written if we've
     // never seen it before.
-    virtual void writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr_,
-                             const BaseSemantics::SValuePtr &value, const BaseSemantics::SValuePtr &cond) override {
+    virtual void writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValue::Ptr &addr_,
+                             const BaseSemantics::SValue::Ptr &value, const BaseSemantics::SValue::Ptr &cond) override {
         if (cond->isFalse())
             return;
         Super::writeMemory(segreg, addr_, value, cond);
 
         // Offset the address by the value of the segment register.
-        BaseSemantics::SValuePtr adjustedVa;
+        BaseSemantics::SValue::Ptr adjustedVa;
         if (segreg.isEmpty()) {
             adjustedVa = addr_;
         } else {
-            BaseSemantics::SValuePtr segregValue = readRegister(segreg, undefined_(segreg.nBits()));
+            BaseSemantics::SValue::Ptr segregValue = readRegister(segreg, undefined_(segreg.nBits()));
             adjustedVa = add(addr_, signExtend(segregValue, addr_->nBits()));
         }
 
@@ -561,7 +567,7 @@ public:
             if (isNullDeref(adjustedVa)) {
                 ASSERT_not_null(fpAnalyzer_);
                 ASSERT_not_null(path_);
-                BaseSemantics::RiscOperatorsPtr cpu = shared_from_this();
+                BaseSemantics::RiscOperators::Ptr cpu = shared_from_this();
                 ASSERT_not_null(cpu);
                 merge(pathProcessor_->nullDeref(*fpAnalyzer_, *path_, currentInstruction(), cpu, nullPtrSolver(),
                                                 FeasiblePath::WRITE, adjustedVa));
@@ -576,7 +582,7 @@ public:
         // Save a description for its addresses
         size_t nBytes = value->nBits() / 8;
         for (size_t i=0; i<nBytes; ++i) {
-            SValuePtr va = SValue::promote(add(adjustedVa, number_(adjustedVa->nBits(), i)));
+            SValue::Ptr va = SValue::promote(add(adjustedVa, number_(adjustedVa->nBits(), i)));
             if (va->get_expression()->isLeafNode()) {
                 State::promote(currentState())->varDetail(va->get_expression()->isLeafNode()->toString(),
                                                           detailForVariable(adjustedVa, "read", i, nBytes));
@@ -589,7 +595,7 @@ public:
             ASSERT_not_null(path_);
             SmtSolver::Ptr s = nullPtrSolver();
             SmtSolver::Transaction tx(s);
-            BaseSemantics::RiscOperatorsPtr cpu = shared_from_this();
+            BaseSemantics::RiscOperators::Ptr cpu = shared_from_this();
             ASSERT_not_null(cpu);
             merge(pathProcessor_->memoryIo(*fpAnalyzer_, *path_, currentInstruction(), cpu, s, FeasiblePath::WRITE,
                                            adjustedVa, value));
@@ -605,10 +611,10 @@ hasVirtualAddress(const P2::ControlFlowGraph::ConstVertexIterator &vertex) {
 }
 
 // Unwrap ops if necessary to return the feasible path operators
-static RiscOperatorsPtr
-fpOperators(BaseSemantics::RiscOperatorsPtr ops) {
+static RiscOperators::Ptr
+fpOperators(BaseSemantics::RiscOperators::Ptr ops) {
     ASSERT_not_null(ops);
-    if (TraceSemantics::RiscOperatorsPtr traceOps = boost::dynamic_pointer_cast<TraceSemantics::RiscOperators>(ops)) {
+    if (TraceSemantics::RiscOperators::Ptr traceOps = boost::dynamic_pointer_cast<TraceSemantics::RiscOperators>(ops)) {
         ops = traceOps->subdomain();
     }
     ASSERT_not_null(RiscOperators::promote(ops));
@@ -663,6 +669,22 @@ FeasiblePath::Statistics::operator+=(const FeasiblePath::Statistics &other) {
 FeasiblePath::FeasiblePath() {}
 
 FeasiblePath::~FeasiblePath() {}
+
+void
+FeasiblePath::reset() {
+    partitioner_ = NULL;
+    registers_ = RegisterDictionary::Ptr();
+    REG_PATH = REG_RETURN_ = RegisterDescriptor();
+    functionSummaries_.clear();
+    vmap_.clear();
+    paths_.clear();
+    pathsBeginVertices_.clear();
+    pathsEndVertices_.clear();
+    isDirectedSearch_ = true;
+    cfgAvoidEdges_.clear();
+    cfgEndAvoidVertices_.clear();
+    resetStatistics();
+}
 
 // class method
 void
@@ -900,13 +922,13 @@ FeasiblePath::virtualAddress(const P2::ControlFlowGraph::ConstVertexIterator &ve
     ASSERT_not_reachable("invalid vertex type");
 }
 
-BaseSemantics::DispatcherPtr
+BaseSemantics::Dispatcher::Ptr
 FeasiblePath::buildVirtualCpu(const P2::Partitioner &partitioner, const P2::CfgPath *path, PathProcessor *pathProcessor,
                               const SmtSolver::Ptr &solver) {
     // Augment the register dictionary with a "path" register that holds the expression describing how the location is
     // reachable along some path.
     if (NULL == registers_) {
-        registers_ = new RegisterDictionary("Rose::BinaryAnalysis::FeasiblePath");
+        registers_ = RegisterDictionary::instance("Rose::BinaryAnalysis::FeasiblePath");
         registers_->insert(partitioner.instructionProvider().registerDictionary());
         ASSERT_require(REG_PATH.isEmpty());
         REG_PATH = RegisterDescriptor(registers_->firstUnusedMajor(), 0, 0, 1);
@@ -915,25 +937,25 @@ FeasiblePath::buildVirtualCpu(const P2::Partitioner &partitioner, const P2::CfgP
         // Where are return values stored?  See also, end of this function. FIXME[Robb Matzke 2015-12-01]: We need to support
         // returning multiple values. We should be using the new calling convention analysis to detect these.
         ASSERT_require(REG_RETURN_.isEmpty());
-        Disassembler *dis = partitioner.instructionProvider().disassembler();
+        Disassembler::Base::Ptr dis = partitioner.instructionProvider().disassembler();
         ASSERT_not_null(dis);
         RegisterDescriptor r;
-        if (dynamic_cast<DisassemblerX86*>(dis)) {
+        if (dis.dynamicCast<Disassembler::X86>()) {
             if ((r = registers_->find("rax")) || (r = registers_->find("eax")) || (r = registers_->find("ax")))
                 REG_RETURN_ = r;
-        } else if (dynamic_cast<DisassemblerM68k*>(dis)) {
+        } else if (dis.dynamicCast<Disassembler::M68k>()) {
             if ((r = registers_->find("d0")))
                 REG_RETURN_ = r;                        // m68k also typically has other return registers
-        } else if (dynamic_cast<DisassemblerPowerpc*>(dis)) {
+        } else if (dis.dynamicCast<Disassembler::Powerpc>()) {
             if ((r = registers_->find("r3")))
                 REG_RETURN_ = r;                        // PowerPC also returns via r4
 #ifdef ROSE_ENABLE_ASM_AARCH32
-        } else if (dynamic_cast<DisassemblerAarch32*>(dis)) {
+        } else if (dis.dynamicCast<Disassembler::Aarch32>()) {
             if ((r = registers_->find("r0")))
                 REG_RETURN_ = r;
 #endif
 #ifdef ROSE_ENABLE_ASM_AARCH64
-        } else if (dynamic_cast<DisassemblerAarch64*>(dis)) {
+        } else if (dis.dynamicCast<Disassembler::Aarch64>()) {
             if ((r = registers_->find("r0")))
                 REG_RETURN_ = r;
 #endif
@@ -943,20 +965,20 @@ FeasiblePath::buildVirtualCpu(const P2::Partitioner &partitioner, const P2::CfgP
     }
 
     // Create the RiscOperators and Dispatcher.
-    RiscOperatorsPtr ops = RiscOperators::instance(&partitioner, registers_, this, path, pathProcessor);
+    RiscOperators::Ptr ops = RiscOperators::instance(&partitioner, registers_, this, path, pathProcessor);
     ops->trimThreshold(settings_.maxExprSize);
     ops->initialState(ops->currentState()->clone());
     ops->nullPtrSolver(solver);
     for (size_t i = 0; i < settings().ipRewrite.size(); i += 2) {
         const RegisterDescriptor REG_IP = partitioner.instructionProvider().instructionPointerRegister();
-        BaseSemantics::SValuePtr oldValue = ops->number_(REG_IP.nBits(), settings().ipRewrite[i+0]);
-        BaseSemantics::SValuePtr newValue = ops->number_(REG_IP.nBits(), settings().ipRewrite[i+1]);
+        BaseSemantics::SValue::Ptr oldValue = ops->number_(REG_IP.nBits(), settings().ipRewrite[i+0]);
+        BaseSemantics::SValue::Ptr newValue = ops->number_(REG_IP.nBits(), settings().ipRewrite[i+1]);
         SAWYER_MESG(mlog[DEBUG]) <<"ip-rewrite hot-patch from " <<*oldValue <<" to " <<*newValue <<"\n";
         ops->hotPatch().append(HotPatch::Record(REG_IP, oldValue, newValue, HotPatch::Record::MATCH_BREAK));
     }
 
     ASSERT_not_null(partitioner.instructionProvider().dispatcher());
-    BaseSemantics::DispatcherPtr cpu = partitioner.instructionProvider().dispatcher()->create(ops);
+    BaseSemantics::Dispatcher::Ptr cpu = partitioner.instructionProvider().dispatcher()->create(ops, 0, RegisterDictionary::Ptr());
     ASSERT_not_null(cpu);
 
     // More return value stuff, continued from above
@@ -970,17 +992,17 @@ FeasiblePath::buildVirtualCpu(const P2::Partitioner &partitioner, const P2::CfgP
 }
 
 void
-FeasiblePath::setInitialState(const BaseSemantics::DispatcherPtr &cpu,
+FeasiblePath::setInitialState(const BaseSemantics::Dispatcher::Ptr &cpu,
                               const P2::ControlFlowGraph::ConstVertexIterator &pathsBeginVertex) {
     ASSERT_not_null(cpu);
     ASSERT_forbid(REG_PATH.isEmpty());
     checkSettings();
 
     // Create the new state from an existing state and make the new state current.
-    BaseSemantics::StatePtr state = cpu->currentState()->clone();
+    BaseSemantics::State::Ptr state = cpu->currentState()->clone();
     state->clear();
     cpu->initializeState(state);
-    BaseSemantics::RiscOperatorsPtr ops = cpu->operators();
+    BaseSemantics::RiscOperators::Ptr ops = cpu->operators();
     ops->currentState(state);
 
     // Start of path is always feasible.
@@ -1010,7 +1032,7 @@ FeasiblePath::setInitialState(const BaseSemantics::DispatcherPtr &cpu,
 
 /** Process instructions for one basic block on the specified virtual CPU. */
 void
-FeasiblePath::processBasicBlock(const P2::BasicBlock::Ptr &bblock, const BaseSemantics::DispatcherPtr &cpu,
+FeasiblePath::processBasicBlock(const P2::BasicBlock::Ptr &bblock, const BaseSemantics::Dispatcher::Ptr &cpu,
                                 size_t pathInsnIndex) {
     ASSERT_not_null(bblock);
     ASSERT_not_null(cpu);
@@ -1019,11 +1041,11 @@ FeasiblePath::processBasicBlock(const P2::BasicBlock::Ptr &bblock, const BaseSem
     SAWYER_MESG(debug) <<"      processing basic block " <<bblock->printableName() <<"\n";
 
     // Update the path constraint "register"
-    BaseSemantics::RiscOperatorsPtr ops = cpu->operators();
+    BaseSemantics::RiscOperators::Ptr ops = cpu->operators();
     const RegisterDescriptor IP = cpu->instructionPointerRegister();
-    BaseSemantics::SValuePtr ip = ops->readRegister(IP, ops->undefined_(IP.nBits()));
-    BaseSemantics::SValuePtr va = ops->number_(ip->nBits(), bblock->address());
-    BaseSemantics::SValuePtr pathConstraint = ops->isEqual(ip, va);
+    BaseSemantics::SValue::Ptr ip = ops->readRegister(IP, ops->undefined_(IP.nBits()));
+    BaseSemantics::SValue::Ptr va = ops->number_(ip->nBits(), bblock->address());
+    BaseSemantics::SValue::Ptr pathConstraint = ops->isEqual(ip, va);
     ops->writeRegister(REG_PATH, pathConstraint);
 
     if (debug) {
@@ -1044,7 +1066,7 @@ FeasiblePath::processBasicBlock(const P2::BasicBlock::Ptr &bblock, const BaseSem
             if (debug) {
                 // Show stack pointer
                 const RegisterDescriptor SP = cpu->stackPointerRegister();
-                BaseSemantics::SValuePtr sp = ops->readRegister(SP, ops->undefined_(SP.nBits()));
+                BaseSemantics::SValue::Ptr sp = ops->readRegister(SP, ops->undefined_(SP.nBits()));
                 debug <<"          sp = " <<*sp <<"\n";
             }
         } catch (const BaseSemantics::Exception &e) {
@@ -1066,7 +1088,7 @@ FeasiblePath::processBasicBlock(const P2::BasicBlock::Ptr &bblock, const BaseSem
 /** Process an indeterminate block. This represents flow of control through an unknown address. */
 void
 FeasiblePath::processIndeterminateBlock(const P2::ControlFlowGraph::ConstVertexIterator &vertex,
-                                        const BaseSemantics::DispatcherPtr &cpu, size_t pathInsnIndex) {
+                                        const BaseSemantics::Dispatcher::Ptr &cpu, size_t pathInsnIndex) {
     SAWYER_MESG(mlog[DEBUG]) <<"      processing indeterminate vertex\n";
     mlog[WARN] <<"control flow passes through an indeterminate address at path position #" <<pathInsnIndex <<"\n";
 }
@@ -1074,14 +1096,14 @@ FeasiblePath::processIndeterminateBlock(const P2::ControlFlowGraph::ConstVertexI
 /** Process a function summary vertex. */
 void
 FeasiblePath::processFunctionSummary(const P2::ControlFlowGraph::ConstVertexIterator &pathsVertex,
-                                     const BaseSemantics::DispatcherPtr &cpu, size_t pathInsnIndex) {
+                                     const BaseSemantics::Dispatcher::Ptr &cpu, size_t pathInsnIndex) {
     Sawyer::Message::Stream debug(mlog[DEBUG]);
 
     ASSERT_require(functionSummaries_.exists(pathsVertex->value().address()));
     const FunctionSummary &summary = functionSummaries_[pathsVertex->value().address()];
     SAWYER_MESG(debug) <<"      processing function summary " <<summary.name <<"\n";
 
-    BaseSemantics::RiscOperatorsPtr ops = cpu->operators();
+    BaseSemantics::RiscOperators::Ptr ops = cpu->operators();
     if (pathInsnIndex != size_t(-1))
         fpOperators(ops)->pathInsnIndex(pathInsnIndex);
 
@@ -1095,7 +1117,7 @@ FeasiblePath::processFunctionSummary(const P2::ControlFlowGraph::ConstVertexIter
               <<(*ops->currentState() + fmt);
     }
 
-    SymbolicSemantics::SValuePtr retval;
+    SymbolicSemantics::SValue::Ptr retval;
     if (functionSummarizer_ && functionSummarizer_->process(*this, summary, fpOperators(ops))) {
         retval = functionSummarizer_->returnValue(*this, summary, fpOperators(ops));
     } else {
@@ -1108,7 +1130,7 @@ FeasiblePath::processFunctionSummary(const P2::ControlFlowGraph::ConstVertexIter
             // PowerPC calling convention stores the return address in the link register (LR)
             const RegisterDescriptor LR = cpu->callReturnRegister();
             ASSERT_forbid(LR.isEmpty());
-            BaseSemantics::SValuePtr returnTarget = ops->readRegister(LR, ops->undefined_(LR.nBits()));
+            BaseSemantics::SValue::Ptr returnTarget = ops->readRegister(LR, ops->undefined_(LR.nBits()));
             ops->writeRegister(cpu->instructionPointerRegister(), returnTarget);
 
         } else if (boost::dynamic_pointer_cast<InstructionSemantics::DispatcherX86>(cpu) ||
@@ -1116,8 +1138,8 @@ FeasiblePath::processFunctionSummary(const P2::ControlFlowGraph::ConstVertexIter
             // x86, amd64, and m68k store the return address at the top of the stack
             const RegisterDescriptor SP = cpu->stackPointerRegister();
             ASSERT_forbid(SP.isEmpty());
-            BaseSemantics::SValuePtr stackPointer = ops->readRegister(SP, ops->undefined_(SP.nBits()));
-            BaseSemantics::SValuePtr returnTarget = ops->readMemory(RegisterDescriptor(), stackPointer,
+            BaseSemantics::SValue::Ptr stackPointer = ops->readRegister(SP, ops->undefined_(SP.nBits()));
+            BaseSemantics::SValue::Ptr returnTarget = ops->readMemory(RegisterDescriptor(), stackPointer,
                                                                     ops->undefined_(stackPointer->nBits()),
                                                                     ops->boolean_(true));
             ops->writeRegister(cpu->instructionPointerRegister(), returnTarget);
@@ -1133,7 +1155,7 @@ FeasiblePath::processFunctionSummary(const P2::ControlFlowGraph::ConstVertexIter
             // Return address is in the link register, lr
             const RegisterDescriptor LR = cpu->callReturnRegister();
             ASSERT_forbid(LR.isEmpty());
-            BaseSemantics::SValuePtr returnTarget = ops->readRegister(LR, ops->undefined_(LR.nBits()));
+            BaseSemantics::SValue::Ptr returnTarget = ops->readRegister(LR, ops->undefined_(LR.nBits()));
             ops->writeRegister(cpu->instructionPointerRegister(), returnTarget);
 #endif
 #ifdef ROSE_ENABLE_ASM_AARCH32
@@ -1141,7 +1163,7 @@ FeasiblePath::processFunctionSummary(const P2::ControlFlowGraph::ConstVertexIter
             // Return address is in the link register, lr
             const RegisterDescriptor LR = cpu->callReturnRegister();
             ASSERT_forbid(LR.isEmpty());
-            BaseSemantics::SValuePtr returnTarget = ops->readRegister(LR, ops->undefined_(LR.nBits()));
+            BaseSemantics::SValue::Ptr returnTarget = ops->readRegister(LR, ops->undefined_(LR.nBits()));
             ops->writeRegister(cpu->instructionPointerRegister(), returnTarget);
 #endif
         }
@@ -1162,7 +1184,7 @@ FeasiblePath::processFunctionSummary(const P2::ControlFlowGraph::ConstVertexIter
 }
 
 void
-FeasiblePath::processVertex(const BaseSemantics::DispatcherPtr &cpu,
+FeasiblePath::processVertex(const BaseSemantics::Dispatcher::Ptr &cpu,
                             const P2::ControlFlowGraph::ConstVertexIterator &pathsVertex,
                             size_t pathInsnIndex) {
     checkSettings();
@@ -1237,13 +1259,13 @@ FeasiblePath::printPath(std::ostream &out, const P2::CfgPath &path) const {
 }
 
 SymbolicExpr::Ptr
-FeasiblePath::pathEdgeConstraint(const P2::ControlFlowGraph::ConstEdgeIterator &pathEdge, const BaseSemantics::DispatcherPtr &cpu) {
+FeasiblePath::pathEdgeConstraint(const P2::ControlFlowGraph::ConstEdgeIterator &pathEdge, const BaseSemantics::Dispatcher::Ptr &cpu) {
     ASSERT_not_null(cpu);
-    BaseSemantics::RiscOperatorsPtr ops = cpu->operators();
+    BaseSemantics::RiscOperators::Ptr ops = cpu->operators();
     static const char *prefix = "      ";
 
     const RegisterDescriptor IP = partitioner().instructionProvider().instructionPointerRegister();
-    BaseSemantics::SValuePtr ip = ops->peekRegister(IP, ops->undefined_(IP.nBits()));
+    BaseSemantics::SValue::Ptr ip = ops->peekRegister(IP, ops->undefined_(IP.nBits()));
     if (!settings_.nonAddressIsFeasible && !hasVirtualAddress(pathEdge->target())) {
         SAWYER_MESG(mlog[DEBUG]) <<prefix <<"unfeasible at edge " <<partitioner().edgeName(pathEdge)
                                  <<" because settings().nonAddressIsFeasible is false\n";
@@ -1568,14 +1590,14 @@ FeasiblePath::isAnyEndpointReachable(const P2::ControlFlowGraph &cfg,
     return false;
 }
 
-BaseSemantics::StatePtr
+BaseSemantics::State::Ptr
 FeasiblePath::initialState() const {
     return initialState_;
 }
 
-BaseSemantics::StatePtr
+BaseSemantics::State::Ptr
 FeasiblePath::pathPostState(const P2::CfgPath &path, size_t vertexIdx) {
-    return path.vertexAttributes(vertexIdx).attributeOrDefault<BaseSemantics::StatePtr>(POST_STATE);
+    return path.vertexAttributes(vertexIdx).attributeOrDefault<BaseSemantics::State::Ptr>(POST_STATE);
 }
 
 double
@@ -1805,7 +1827,7 @@ FeasiblePath::createSemantics(const P2::CfgPath &path, PathProcessor &pathProces
     ASSERT_not_null(retval.originalState);
 
     if (settings_.traceSemantics) {
-        BaseSemantics::RiscOperatorsPtr tracerOps = TraceSemantics::RiscOperators::instance(retval.ops);
+        BaseSemantics::RiscOperators::Ptr tracerOps = TraceSemantics::RiscOperators::instance(retval.ops);
         retval.cpu->operators(tracerOps);
     }
 
@@ -1839,8 +1861,8 @@ FeasiblePath::positionToIndex(int position, size_t nElmts) {
     }
 }
 
-BaseSemantics::StatePtr
-FeasiblePath::incomingState(const P2::CfgPath &path, int position, const BaseSemantics::StatePtr &initialState) {
+BaseSemantics::State::Ptr
+FeasiblePath::incomingState(const P2::CfgPath &path, int position, const BaseSemantics::State::Ptr &initialState) {
     ASSERT_require2(positionToIndex(position, path.nVertices()), "position is out of range");
     size_t idx = positionToIndex(position, path.nVertices()).orElse(0);
     return 0 == idx ? initialState : pathPostState(path, idx-1);
@@ -1856,7 +1878,7 @@ FeasiblePath::outgoingStepCount(const P2::CfgPath &path, int position) {
     return pathLength(path, position);
 }
 
-BaseSemantics::StatePtr
+BaseSemantics::State::Ptr
 FeasiblePath::evaluate(P2::CfgPath &path, int position, const Semantics &sem) {
     Stream debug(mlog[DEBUG]);
     ASSERT_require2(positionToIndex(position, path.nVertices()), "position is out of range");
@@ -1864,7 +1886,7 @@ FeasiblePath::evaluate(P2::CfgPath &path, int position, const Semantics &sem) {
 
     // Find the most recent path vertex that has been evaluated, and get a copy of its outgoing state.
     size_t idx = goalIdx;
-    BaseSemantics::StatePtr state = incomingState(path, idx, sem.originalState);
+    BaseSemantics::State::Ptr state = incomingState(path, idx, sem.originalState);
     while (!state && idx > 0)
         state = incomingState(path, --idx, sem.originalState);
     ASSERT_not_null(state);
@@ -1877,13 +1899,13 @@ FeasiblePath::evaluate(P2::CfgPath &path, int position, const Semantics &sem) {
             processVertex(sem.cpu, path.vertices()[idx], incomingStepCount(path, idx));
         } catch (...) {
             SAWYER_MESG(debug) <<"    path semantics failed, path idx = " <<idx <<"\n";
-            state = BaseSemantics::StatePtr();
+            state = BaseSemantics::State::Ptr();
             break;
         }
         path.vertexAttributes(idx).setAttribute(POST_STATE, state);
     }
 
-    sem.ops->currentState(BaseSemantics::StatePtr());
+    sem.ops->currentState(BaseSemantics::State::Ptr());
     return state;
 }
 
@@ -1896,7 +1918,7 @@ FeasiblePath::isFeasible(P2::CfgPath &path, const Substitutions &subst, const Se
     boost::logic::tribool retval = false;
 
     bool atEndOfPath = pathsEndVertices_.exists(path.backVertex()); // true if path has reached one of the end goals
-    BaseSemantics::StatePtr oldState = sem.ops->currentState(); // probably null
+    BaseSemantics::State::Ptr oldState = sem.ops->currentState(); // probably null
 
     if (path.nVertices() == 1) {
         switch (solvePathConstraints(solver, path, SymbolicExpr::makeBooleanConstant(true), subst, atEndOfPath)) {
@@ -1916,7 +1938,7 @@ FeasiblePath::isFeasible(P2::CfgPath &path, const Substitutions &subst, const Se
     } else {
         // pathEdgeConstraint needs the incoming state of the last vertex, which is the outgoing state of the penultimate
         // vertex. It doesn't modify the state.
-        BaseSemantics::StatePtr curState = evaluate(path, -2, sem);
+        BaseSemantics::State::Ptr curState = evaluate(path, -2, sem);
         sem.ops->currentState(curState);
 
         if (solver->nAssertions(solver->nLevels()-1) > 0) {
@@ -1952,7 +1974,7 @@ FeasiblePath::PathProcessor::Action
 FeasiblePath::callPathProcessorFound(PathProcessor &pathProcessor, P2::CfgPath &path, const Semantics &sem,
                                      const SmtSolver::Ptr &solver) {
     Stream debug(mlog[DEBUG]);
-    BaseSemantics::StatePtr curState;
+    BaseSemantics::State::Ptr curState;
     if (settings().processFinalVertex)
         curState = evaluate(path, -1, sem);             // might be null for failed semantics
 
@@ -1960,7 +1982,7 @@ FeasiblePath::callPathProcessorFound(PathProcessor &pathProcessor, P2::CfgPath &
     if (curState) {
         sem.ops->currentState(curState->clone());
     } else {
-        sem.ops->currentState(BaseSemantics::StatePtr());
+        sem.ops->currentState(BaseSemantics::State::Ptr());
     }
 
     // Protect our SMT solver from user modifications
@@ -1968,7 +1990,7 @@ FeasiblePath::callPathProcessorFound(PathProcessor &pathProcessor, P2::CfgPath &
 
     // User callback, then restore CPU state
     PathProcessor::Action retval = pathProcessor.found(*this, path, sem.cpu, solver);
-    sem.ops->currentState(BaseSemantics::StatePtr());   // to fail early if we don't specify a state later
+    sem.ops->currentState(BaseSemantics::State::Ptr());   // to fail early if we don't specify a state later
     return retval;
 }
 
@@ -2040,13 +2062,13 @@ FeasiblePath::summarizeOrInline(P2::CfgPath &path, const Semantics &sem) {
                 // address of the call, if possible.  Be careful not to mess up the state that's already been saved as the
                 // incoming state to this block.
                 const RegisterDescriptor IP = partitioner().instructionProvider().instructionPointerRegister();
-                BaseSemantics::SValuePtr ip;
-                if (BaseSemantics::StatePtr state = evaluate(path, -1, sem)) {
+                BaseSemantics::SValue::Ptr ip;
+                if (BaseSemantics::State::Ptr state = evaluate(path, -1, sem)) {
                     ip = state->peekRegister(IP, sem.ops->undefined_(IP.nBits()), sem.ops.get());
                 } else {
                     mlog[ERROR] <<"semantics failed when trying to determine call target address\n";
                 }
-                sem.ops->currentState(BaseSemantics::StatePtr()); // set to null for safety
+                sem.ops->currentState(BaseSemantics::State::Ptr()); // set to null for safety
 
                 // If the IP is concrete, then we found the target of the indirect call and can inline it.
                 if (ip && ip->toUnsigned()) {
@@ -2260,12 +2282,12 @@ FeasiblePath::functionSummary(rose_addr_t entryVa) const {
 }
 
 const FeasiblePath::VarDetail&
-FeasiblePath::varDetail(const BaseSemantics::StatePtr &state, const std::string &varName) const {
+FeasiblePath::varDetail(const BaseSemantics::State::Ptr &state, const std::string &varName) const {
     return State::promote(state)->varDetail(varName);
 }
 
 const FeasiblePath::VarDetails&
-FeasiblePath::varDetails(const BaseSemantics::StatePtr &state) const {
+FeasiblePath::varDetails(const BaseSemantics::State::Ptr &state) const {
     return State::promote(state)->varDetails();
 }
 

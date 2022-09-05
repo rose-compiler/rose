@@ -280,10 +280,12 @@ pkginclude_HEADERS = \
 # Header files organized by namespace. If the directory part of the name doesn't match
 # a C++ namespace, then DO NOT put the header file in this list.
 nobase_pkginclude_HEADERS=								\
+	Rose/BasicTypes.h								\
 	Rose/BinaryAnalysis.h								\
 	Rose/BinaryAnalysis/AbstractLocation.h						\
 	Rose/BinaryAnalysis/AsmFunctionIndex.h						\
 	Rose/BinaryAnalysis/AstHash.h							\
+	Rose/BinaryAnalysis/BasicTypes.h						\
 	Rose/BinaryAnalysis/BestMapAddress.h						\
 	Rose/BinaryAnalysis/BinaryLoader.h						\
 	Rose/BinaryAnalysis/BinaryLoaderElf.h						\
@@ -317,15 +319,18 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/Debugger.h							\
 	Rose/BinaryAnalysis/Demangler.h							\
 	Rose/BinaryAnalysis/Disassembler.h						\
-	Rose/BinaryAnalysis/DisassemblerAarch32.h					\
-	Rose/BinaryAnalysis/DisassemblerAarch64.h					\
+	Rose/BinaryAnalysis/Disassembler/Aarch32.h					\
+	Rose/BinaryAnalysis/Disassembler/Aarch64.h					\
+	Rose/BinaryAnalysis/Disassembler/Base.h						\
+	Rose/BinaryAnalysis/Disassembler/BasicTypes.h					\
 	Rose/BinaryAnalysis/DisassemblerCil.h						\
+	Rose/BinaryAnalysis/Disassembler/Exception.h					\
 	Rose/BinaryAnalysis/DisassemblerJvm.h						\
-	Rose/BinaryAnalysis/DisassemblerM68k.h						\
-	Rose/BinaryAnalysis/DisassemblerMips.h						\
-	Rose/BinaryAnalysis/DisassemblerNull.h						\
-	Rose/BinaryAnalysis/DisassemblerPowerpc.h					\
-	Rose/BinaryAnalysis/DisassemblerX86.h						\
+	Rose/BinaryAnalysis/Disassembler/M68k.h						\
+	Rose/BinaryAnalysis/Disassembler/Mips.h						\
+	Rose/BinaryAnalysis/Disassembler/Null.h						\
+	Rose/BinaryAnalysis/Disassembler/Powerpc.h					\
+	Rose/BinaryAnalysis/Disassembler/X86.h						\
 	Rose/BinaryAnalysis/Dwarf.h                                                     \
 	Rose/BinaryAnalysis/Dwarf/Attributes.h                                          \
 	Rose/BinaryAnalysis/Dwarf/Constants.h                                           \
@@ -479,8 +484,9 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/PointerDetection.h						\
 	Rose/BinaryAnalysis/Reachability.h						\
 	Rose/BinaryAnalysis/RegisterDescriptor.h					\
+	Rose/BinaryAnalysis/RegisterDictionary.h					\
+	Rose/BinaryAnalysis/RegisterNames.h						\
 	Rose/BinaryAnalysis/RegisterParts.h						\
-	Rose/BinaryAnalysis/Registers.h							\
 	Rose/BinaryAnalysis/ReturnValueUsed.h						\
 	Rose/BinaryAnalysis/SerialIo.h							\
 	Rose/BinaryAnalysis/SmtCommandLine.h						\

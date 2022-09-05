@@ -5,6 +5,7 @@
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
 #include <Rose/CommandLine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <rose_strtoull.h>                              // rose
 #include <stringify.h>                                  // rose
 #include <Rose/StringUtility.h>
@@ -228,8 +229,8 @@ PlainTextFormatter::edge(std::ostream &out, const std::string &name) {
 
 void
 PlainTextFormatter::state(std::ostream &out, size_t vertexIdx, const std::string &title,
-                          const Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::StatePtr &state,
-                          const Rose::BinaryAnalysis::RegisterDictionary *regdict) {
+                          const Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::State::Ptr &state,
+                          const Rose::BinaryAnalysis::RegisterDictionary::Ptr &regdict) {
     out <<"      " <<title <<"\n";
     if (state) {
         BS::Formatter fmt;
@@ -474,8 +475,8 @@ YamlFormatter::edge(std::ostream &out, const std::string &name) {
 
 void
 YamlFormatter::state(std::ostream &out, size_t vertexIdx, const std::string &title,
-                          const Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::StatePtr &state,
-                          const Rose::BinaryAnalysis::RegisterDictionary *regdict) {
+                          const Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::State::Ptr &state,
+                     const Rose::BinaryAnalysis::RegisterDictionary::Ptr &regdict) {
     if (state) {
         writeln(out, "      semantics:", title);
         writeln(out, "      state:");
@@ -706,7 +707,7 @@ pathEndpointFunctionNames(const FeasiblePath &fpAnalysis, const P2::CfgPath &pat
 
 void
 printPath(std::ostream &out, const FeasiblePath &fpAnalysis, const P2::CfgPath &path, const SmtSolver::Ptr &solver,
-          const BS::RiscOperatorsPtr &cpu, SgAsmInstruction *lastInsn, ShowStates::Flag showStates,
+          const BS::RiscOperators::Ptr &cpu, SgAsmInstruction *lastInsn, ShowStates::Flag showStates,
           const OutputFormatter::Ptr &formatter) {
     ASSERT_not_null(formatter);
     const P2::Partitioner &partitioner = fpAnalysis.partitioner();
@@ -768,10 +769,10 @@ printPath(std::ostream &out, const FeasiblePath &fpAnalysis, const P2::CfgPath &
 
         // Show virtual machine state after each vertex
         if (ShowStates::YES == showStates) {
-            const RegisterDictionary *regdict = fpAnalysis.partitioner().instructionProvider().registerDictionary();
+            RegisterDictionary::Ptr regdict = fpAnalysis.partitioner().instructionProvider().registerDictionary();
             if (vertexIdx == lastVertexIdx) {
                 formatter->state(out, vertexIdx, "state at detected operation:", cpu->currentState(), regdict);
-            } else if (BS::StatePtr state = fpAnalysis.pathPostState(path, vertexIdx)) {
+            } else if (BS::State::Ptr state = fpAnalysis.pathPostState(path, vertexIdx)) {
                 formatter->state(out, vertexIdx, "state after vertex #" + boost::lexical_cast<std::string>(vertexIdx),
                                  state, regdict);
             }

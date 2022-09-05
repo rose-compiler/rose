@@ -392,8 +392,8 @@ void Grammar::setUpBinaryInstructions() {
     IS_SERIALIZABLE(AsmX86Instruction);
     DECLARE_HEADERS(AsmX86Instruction);
 #if defined(SgAsmX86Instruction_HEADERS) || defined(DOCUMENTATION)
+    #include <Rose/BinaryAnalysis/BasicTypes.h>
     #include <Rose/BinaryAnalysis/InstructionEnumsX86.h>
-    namespace Rose { namespace BinaryAnalysis { class RegisterDictionary; } }
 #endif // SgAsmX86Instruction_HEADERS
 
 #ifdef DOCUMENTATION
@@ -549,13 +549,13 @@ void Grammar::setUpBinaryInstructions() {
          *
          *  Given an instruction size enum constant return the register dictionary that describes the x86 architecture with
          *  the specified word size.  See also, @ref registersForWidth. */
-        static const Rose::BinaryAnalysis::RegisterDictionary* registersForInstructionSize(Rose::BinaryAnalysis::X86InstructionSize);
+        static Rose::BinaryAnalysis::RegisterDictionaryPtr registersForInstructionSize(Rose::BinaryAnalysis::X86InstructionSize);
 
         /** Return the register dictionary for an x86 architecture.
          *
          *  Given an instruction size of 16, 32, or 64 return the register dictionary that describes the x86 architecture with
          *  the specified word size.  See also, @ref registersForInstructionSize. */
-        static const Rose::BinaryAnalysis::RegisterDictionary* registersForWidth(size_t);
+        static Rose::BinaryAnalysis::RegisterDictionaryPtr registersForWidth(size_t);
 
         // Overrides are documented in the base class
         virtual bool terminatesBasicBlock() override;
@@ -636,7 +636,7 @@ void Grammar::setUpBinaryInstructions() {
          *
          *  Given an instruction size of 32 or 64 return the register dictionary that describes the PowerPC architecture with
          *  the specified word size. */
-        static const Rose::BinaryAnalysis::RegisterDictionary* registersForWidth(size_t);
+        static Rose::BinaryAnalysis::RegisterDictionaryPtr registersForWidth(size_t);
 
         // Overrides are documented in the base class
         virtual std::string description() const override;
@@ -5173,8 +5173,8 @@ void Grammar::setUpBinaryInstructions() {
 
     DECLARE_HEADERS(AsmInterpretation);
 #if defined(SgAsmInterpretation_HEADERS) || defined(DOCUMENTATION)
+    #include <Rose/BinaryAnalysis/BasicTypes.h>
     #include <Rose/BinaryAnalysis/MemoryMap.h>
-    namespace Rose { namespace BinaryAnalysis { class RegisterDictionary; } }
 #endif // SgAsmInterpretation_HEADERS
 
 #ifdef DOCUMENTATION
@@ -5229,7 +5229,7 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmInterpretation_OTHERS) || defined(DOCUMENTATION)
     private:
         Rose::BinaryAnalysis::MemoryMap::Ptr p_map;
-        const Rose::BinaryAnalysis::RegisterDictionary *p_registers;
+        Rose::BinaryAnalysis::RegisterDictionaryPtr p_registers;
         bool coverageComputed;                          // true iff percentageCoverage has been computed
         mutable InstructionMap instruction_map;         // cached instruction map
 
@@ -5256,10 +5256,7 @@ void Grammar::setUpBinaryInstructions() {
 
     public:
         /** Default constructor. */
-        SgAsmInterpretation()
-            : p_registers(NULL), coverageComputed(false), percentageCoverage(0.0), p_headers(NULL), p_global_block(NULL) {
-            ctor();
-        }
+        SgAsmInterpretation();
 
         /** Returns a list of all files referenced by an interpretation.
          *
@@ -5282,8 +5279,8 @@ void Grammar::setUpBinaryInstructions() {
          *  effect of descriptors is to describe how registers overlap with each other.
          *
          * @{ */
-        const Rose::BinaryAnalysis::RegisterDictionary *get_registers() const;
-        void set_registers(const Rose::BinaryAnalysis::RegisterDictionary*);
+        Rose::BinaryAnalysis::RegisterDictionaryPtr get_registers() const;
+        void set_registers(const Rose::BinaryAnalysis::RegisterDictionaryPtr&);
         /** @} */
 
         /** Property: Map of instructions by address.

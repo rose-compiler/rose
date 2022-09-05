@@ -22,9 +22,6 @@
 namespace Rose {
 namespace BinaryAnalysis {
 
-/** Reference-counting pointer for SMT solvers. */
-using SmtSolverPtr = std::shared_ptr<class SmtSolver>;
-
 class CompareLeavesByName {
 public:
     bool operator()(const SymbolicExpr::LeafPtr&, const SymbolicExpr::LeafPtr&) const;

@@ -3,6 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 
 namespace Rose {                                // documented elsewhere
@@ -272,49 +273,33 @@ protected:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
-    explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, const SmtSolverPtr &solver = SmtSolverPtr())
-        : BaseSemantics::RiscOperators(protoval, solver) {
-        name("Multi");
-        (void) SValue::promote(protoval); // check that its dynamic type is a MultiSemantics::SValue
-    }
+    explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, const SmtSolverPtr&);
 
-    explicit RiscOperators(const BaseSemantics::StatePtr &state, const SmtSolverPtr &solver = SmtSolverPtr())
-        : BaseSemantics::RiscOperators(state, solver) {
-        name("Multi");
-        (void) SValue::promote(state->protoval());      // dynamic type must be a MultiSemantics::SValue
-    }
+    explicit RiscOperators(const BaseSemantics::StatePtr&, const SmtSolverPtr&);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Static allocating constructors
 public:
+    ~RiscOperators();
+
     /** Static allocating constructor. This constructor creates a new MultiDomain RiscOperators object that does't have any
      *  subdomains.  The subdomains should be added before using this object. The @p regdict argument is not used in this
      *  class and is only present for consistency with other classes and for subclasses. */
-    static RiscOperatorsPtr instance(const RegisterDictionary *regdict) {
-        BaseSemantics::SValuePtr protoval = SValue::instance();
-        return RiscOperatorsPtr(new RiscOperators(protoval));
-    }
+    static RiscOperatorsPtr instanceFromRegisters(const RegisterDictionaryPtr&);
 
-    static RiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval, const SmtSolverPtr &solver = SmtSolverPtr()) {
-        return RiscOperatorsPtr(new RiscOperators(protoval, solver));
-    }
+    static RiscOperatorsPtr instanceFromProtoval(const BaseSemantics::SValuePtr &protoval,
+                                                 const SmtSolverPtr &solver = SmtSolverPtr());
 
-    static RiscOperatorsPtr instance(const BaseSemantics::StatePtr &state, const SmtSolverPtr &solver = SmtSolverPtr()) {
-        return RiscOperatorsPtr(new RiscOperators(state, solver));
-    }
+    static RiscOperatorsPtr instanceFromState(const BaseSemantics::StatePtr&, const SmtSolverPtr &solver = SmtSolverPtr());
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Virtual constructors
 public:
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::SValuePtr &protoval,
-                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const override {
-        return instance(protoval, solver);
-    }
+                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const override;
 
-    virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::StatePtr &state,
-                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const override {
-        return instance(state, solver);
-    }
+    virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::StatePtr&,
+                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const override;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Dynamic pointer casts

@@ -153,12 +153,22 @@ public:
      *  generally not supported--there is no guarantee that iterations will reach all members in these cases.  The
      *  erase-at-iterator method returns an iterator in order to guarantee that the iterator used for erasing does indeed reach
      *  all members. */
-    class ConstIterator: public std::iterator<std::bidirectional_iterator_tag, const Value> {
+    class ConstIterator {
+    public:
+        // Five standard iterator types
+        using iterator_category = std::output_iterator_tag;
+        using value_type = const Value;
+        using difference_type = std::ptrdiff_t;
+        using pointer = const Value*;
+        using reference = const Value&;
+
+    private:
         friend class DenseIntegerSet;
         const DenseIntegerSet *set_;
         const Member *member_;
         mutable Value value_;                           // so we can return a const ref
 
+    private:
         ConstIterator(const DenseIntegerSet *s, const Member *m)
             : set_(s), member_(m) {}
         

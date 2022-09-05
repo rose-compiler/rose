@@ -3,6 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherX86.h>
 #include <Rose/CommandLine.h>
@@ -62,62 +63,41 @@ private:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
-    explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, const SmtSolverPtr &solver = SmtSolverPtr())
-        : SymbolicSemantics::RiscOperators(protoval, solver), indent_level(0), indent_string("    "), llvmVersion_(0) {
-        name("Llvm");
-    }
+    explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, const SmtSolverPtr&);
 
-    explicit RiscOperators(const BaseSemantics::StatePtr &state, const SmtSolverPtr &solver = SmtSolverPtr())
-        : SymbolicSemantics::RiscOperators(state, solver), indent_level(0), indent_string("    "), llvmVersion_(0) {
-        name("Llvm");
-    }
+    explicit RiscOperators(const BaseSemantics::StatePtr&, const SmtSolverPtr&);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Static allocating constructors
 public:
+    ~RiscOperators();
+
     /** Instantiates a new RiscOperators object and configures it to use semantic values and states that are defaults for
      *  LlvmSemantics. */
-    static RiscOperatorsPtr instance(const RegisterDictionary *regdict, const SmtSolverPtr &solver = SmtSolverPtr()) {
-        BaseSemantics::SValuePtr protoval = SValue::instance();
-        BaseSemantics::RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
-        BaseSemantics::MemoryStatePtr memory = MemoryState::instance(protoval, protoval);
-        BaseSemantics::StatePtr state = State::instance(registers, memory);
-        return RiscOperatorsPtr(new RiscOperators(state, solver));
-    }
+    static RiscOperatorsPtr instanceFromRegisters(const RegisterDictionaryPtr&, const SmtSolverPtr &solver = SmtSolverPtr());
 
     /** Instantiates a new RiscOperators object with specified prototypical values. */
-    static RiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval, const SmtSolverPtr &solver = SmtSolverPtr()) {
-        return RiscOperatorsPtr(new RiscOperators(protoval, solver));
-    }
+    static RiscOperatorsPtr instanceFromProtoval(const BaseSemantics::SValuePtr &protoval,
+                                                 const SmtSolverPtr &solver = SmtSolverPtr());
 
     /** Instantiates a new RiscOperators object with specified state. */
-    static RiscOperatorsPtr instance(const BaseSemantics::StatePtr &state, const SmtSolverPtr &solver = SmtSolverPtr()) {
-        return RiscOperatorsPtr(new RiscOperators(state, solver));
-    }
+    static RiscOperatorsPtr instanceFromState(const BaseSemantics::StatePtr&, const SmtSolverPtr &solver = SmtSolverPtr());
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Virtual constructors
 public:
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::SValuePtr &protoval,
-                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const override {
-        return instance(protoval, solver);
-    }
+                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const override;
 
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::StatePtr &state,
-                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const override {
-        return instance(state, solver);
-    }
+                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const override;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Dynamic pointer cases
 public:
     /** Run-time promotion of a base RiscOperators pointer to Llvm operators. This is a checked-converstion--it will fail
      *  if @p x does not point to a LlvmSemantics::RiscOperators object. */
-    static RiscOperatorsPtr promote(const BaseSemantics::RiscOperatorsPtr &x) {
-        RiscOperatorsPtr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
-        assert(retval!=NULL);
-        return retval;
-    }
+    static RiscOperatorsPtr promote(const BaseSemantics::RiscOperatorsPtr&);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
@@ -247,7 +227,7 @@ public:
      *  descriptors.  If a register reference (like "eax_0") corresponds to a register that we're not interested in, then don't
      *  bother emitting a temporary variable for the register.
      */
-    virtual void emit_prerequisites(std::ostream&, const RegisterDescriptors&, const RegisterDictionary*);
+    virtual void emit_prerequisites(std::ostream&, const RegisterDescriptors&, const RegisterDictionaryPtr&);
 
     /** Output an LLVM branch instruction. The @p latest_insn is the most recent instruction that was transcoded, usually
      *  the last instruction of a basic block. */
@@ -360,6 +340,10 @@ typedef boost::shared_ptr<class Transcoder> TranscoderPtr;
 
 /** Translates machine instructions to LLVM. */
 class Transcoder {
+public:
+    /** Reference counting pointer. */
+    using Ptr = TranscoderPtr;
+
 private:
     RiscOperatorsPtr operators;
     BaseSemantics::DispatcherPtr dispatcher;
@@ -367,26 +351,17 @@ private:
     bool quiet_errors;                                  // catch exceptions and emit an LLVM comment instead?
 
 protected:
-    explicit Transcoder(const BaseSemantics::DispatcherPtr &dispatcher)
-        : dispatcher(dispatcher), emit_funcfrags(false), quiet_errors(false) {
-        operators = RiscOperators::promote(dispatcher->operators());
-    }
+    explicit Transcoder(const BaseSemantics::DispatcherPtr&);
 
 public:
+    ~Transcoder();
+
     /** Factory method to create a new transcoder for an arbitrary machine architecture. The supplied dispatcher must use
      *  an LlvmSemantics::RiscOperators or subclass thereof. */
-    static TranscoderPtr instance(const BaseSemantics::DispatcherPtr &dispatcher) {
-        return TranscoderPtr(new Transcoder(dispatcher));
-    }
+    static TranscoderPtr instance(const BaseSemantics::DispatcherPtr&);
 
     /** Factory method to create a new transcoder for 32-bit X86 instructions. */
-    static TranscoderPtr instanceX86() {
-        const RegisterDictionary *regdict = RegisterDictionary::dictionary_pentium4();
-        SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
-        RiscOperatorsPtr ops = RiscOperators::instance(regdict, solver);
-        BaseSemantics::DispatcherPtr dispatcher = DispatcherX86::instance(ops, 32);
-        return instance(dispatcher);
-    }
+    static TranscoderPtr instanceX86();
 
     /** Property: LLVM version number.
      *

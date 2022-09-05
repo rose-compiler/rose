@@ -144,7 +144,7 @@ namespace BinaryAnalysis {
  *      P2::Partitioner partitioner = ....; // disassembly results
  *      SmtSolverPtr solver = ....; // optional SMT solver
  *
- *      const RegisterDictionary *regdict = partitioner.instructionProvider().registerDictionary();
+ *      RegisterDictionary::Ptr regdict = partitioner.instructionProvider().registerDictionary();
  *      Base::SValuePtr prototval = Symbolic::SValue::instance();
  *      Base::RegisterStatePtr regs = Symbolic::RegisterState::instance(protoval, regdict);
  *      Base::MemoryStatePtr mem = Symbolic::MemoryListState::instance(protoval, protoval);

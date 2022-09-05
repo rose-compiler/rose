@@ -5,6 +5,7 @@
 
 #include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/Util.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include "AsmUnparser_compat.h"
 #include "integerOps.h"
 #include "stringify.h"
@@ -18,47 +19,95 @@ using namespace Rose::Diagnostics;
 
 static unsigned nVersionWarnings = 0;
 
-BaseSemantics::SValuePtr
-RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr_,
-                          const BaseSemantics::SValuePtr &dflt, const BaseSemantics::SValuePtr &cond)
+RiscOperators::RiscOperators(const BaseSemantics::SValue::Ptr &protoval, const SmtSolver::Ptr &solver)
+    : SymbolicSemantics::RiscOperators(protoval, solver), indent_level(0), indent_string("    "), llvmVersion_(0) {
+    name("Llvm");
+}
+
+RiscOperators::RiscOperators(const BaseSemantics::State::Ptr &state, const SmtSolver::Ptr &solver)
+    : SymbolicSemantics::RiscOperators(state, solver), indent_level(0), indent_string("    "), llvmVersion_(0) {
+    name("Llvm");
+}
+
+RiscOperators::~RiscOperators() {}
+
+RiscOperators::Ptr
+RiscOperators::instanceFromRegisters(const RegisterDictionary::Ptr &regdict, const SmtSolver::Ptr &solver) {
+    BaseSemantics::SValue::Ptr protoval = SValue::instance();
+    BaseSemantics::RegisterState::Ptr registers = RegisterState::instance(protoval, regdict);
+    BaseSemantics::MemoryState::Ptr memory = MemoryState::instance(protoval, protoval);
+    BaseSemantics::State::Ptr state = State::instance(registers, memory);
+    return Ptr(new RiscOperators(state, solver));
+}
+
+RiscOperators::Ptr
+RiscOperators::instanceFromProtoval(const BaseSemantics::SValue::Ptr &protoval, const SmtSolver::Ptr &solver) {
+    return Ptr(new RiscOperators(protoval, solver));
+}
+
+RiscOperators::Ptr
+RiscOperators::instanceFromState(const BaseSemantics::State::Ptr &state, const SmtSolver::Ptr &solver) {
+    return Ptr(new RiscOperators(state, solver));
+}
+
+BaseSemantics::RiscOperators::Ptr
+RiscOperators::create(const BaseSemantics::SValue::Ptr &protoval, const SmtSolver::Ptr &solver) const {
+    return instanceFromProtoval(protoval, solver);
+}
+
+BaseSemantics::RiscOperators::Ptr
+RiscOperators::create(const BaseSemantics::State::Ptr &state, const SmtSolver::Ptr &solver) const {
+    return instanceFromState(state, solver);
+}
+
+RiscOperators::Ptr
+RiscOperators::promote(const BaseSemantics::RiscOperators::Ptr &x) {
+    Ptr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
+    ASSERT_not_null(retval);
+    return retval;
+}
+
+BaseSemantics::SValue::Ptr
+RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValue::Ptr &addr_,
+                          const BaseSemantics::SValue::Ptr &dflt, const BaseSemantics::SValue::Ptr &cond)
 {
     if (cond->isFalse())
         return dflt;
     size_t nbits = dflt->nBits();
 
     // Offset the address by the value of the segment register.
-    BaseSemantics::SValuePtr adjustedVa;
+    BaseSemantics::SValue::Ptr adjustedVa;
     if (segreg.isEmpty()) {
         adjustedVa = addr_;
     } else {
-        BaseSemantics::SValuePtr segregValue = readRegister(segreg, undefined_(segreg.nBits()));
+        BaseSemantics::SValue::Ptr segregValue = readRegister(segreg, undefined_(segreg.nBits()));
         adjustedVa = add(addr_, signExtend(segregValue, addr_->nBits()));
     }
 
 
-    SValuePtr addr = SValue::promote(adjustedVa);
+    SValue::Ptr addr = SValue::promote(adjustedVa);
     return svalueExpr(SymbolicExpr::makeRead(SymbolicExpr::makeMemoryVariable(addr->nBits(), nbits), addr->get_expression(),
                                              solver()));
 }
 
 void
-RiscOperators::writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr_,
-                           const BaseSemantics::SValuePtr &data_, const BaseSemantics::SValuePtr &cond)
+RiscOperators::writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValue::Ptr &addr_,
+                           const BaseSemantics::SValue::Ptr &data_, const BaseSemantics::SValue::Ptr &cond)
 {
     if (cond->isFalse())
         return;
 
     // Offset the address by the value of the segment register.
-    BaseSemantics::SValuePtr adjustedVa;
+    BaseSemantics::SValue::Ptr adjustedVa;
     if (segreg.isEmpty()) {
         adjustedVa = addr_;
     } else {
-        BaseSemantics::SValuePtr segregValue = readRegister(segreg, undefined_(segreg.nBits()));
+        BaseSemantics::SValue::Ptr segregValue = readRegister(segreg, undefined_(segreg.nBits()));
         adjustedVa = add(addr_, signExtend(segregValue, addr_->nBits()));
     }
 
-    SValuePtr addr = SValue::promote(adjustedVa);
-    SValuePtr data = SValue::promote(data_);
+    SValue::Ptr addr = SValue::promote(adjustedVa);
+    SValue::Ptr data = SValue::promote(data_);
     mem_writes.push_back(SymbolicExpr::makeWrite(SymbolicExpr::makeMemoryVariable(addr->nBits(), data->nBits()),
                                                  addr->get_expression(), data->get_expression(), solver())
                          ->isInteriorNode());
@@ -67,13 +116,13 @@ RiscOperators::writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValu
 void
 RiscOperators::reset()
 {
-    BaseSemantics::StatePtr state = currentState();
-    BaseSemantics::RegisterStatePtr regs = state->registerState();
-    BaseSemantics::MemoryStatePtr mem = state->memoryState();
+    BaseSemantics::State::Ptr state = currentState();
+    BaseSemantics::RegisterState::Ptr regs = state->registerState();
+    BaseSemantics::MemoryState::Ptr mem = state->memoryState();
 
-    RegisterStatePtr new_regs = RegisterState::promote(regs->create(protoval(), regs->registerDictionary()));
-    BaseSemantics::MemoryStatePtr new_mem = mem->create(mem->get_addr_protoval(), mem->get_val_protoval());
-    BaseSemantics::StatePtr new_state = state->create(new_regs, new_mem);
+    RegisterState::Ptr new_regs = RegisterState::promote(regs->create(protoval(), regs->registerDictionary()));
+    BaseSemantics::MemoryState::Ptr new_mem = mem->create(mem->get_addr_protoval(), mem->get_val_protoval());
+    BaseSemantics::State::Ptr new_state = state->create(new_regs, new_mem);
 
     new_regs->initialize_nonoverlapping(get_important_registers(), false);
 
@@ -87,7 +136,7 @@ RiscOperators::reset()
 void
 RiscOperators::emit_changed_state(std::ostream &o)
 {
-    const RegisterDictionary *dictionary = currentState()->registerState()->registerDictionary();
+    RegisterDictionary::Ptr dictionary = currentState()->registerState()->registerDictionary();
     RegisterDescriptors modified_registers = get_modified_registers();
     emit_prerequisites(o, modified_registers, dictionary);
     emit_register_definitions(o, modified_registers);
@@ -110,7 +159,7 @@ RiscOperators::get_important_registers()
 {
     if (important_registers.empty()) {
         ASSERT_not_null(currentState());
-        const RegisterDictionary *dictionary = currentState()->registerState()->registerDictionary();
+        RegisterDictionary::Ptr dictionary = currentState()->registerState()->registerDictionary();
 
         // General-purpose registers
         important_registers.push_back(dictionary->findOrThrow("eax"));
@@ -178,15 +227,15 @@ RegisterDescriptors
 RiscOperators::get_stored_registers()
 {
     RegisterDescriptors retval;
-    RegisterStatePtr regstate = RegisterState::promote(currentState()->registerState());
-    const RegisterDictionary *dictionary = regstate->registerDictionary();
+    RegisterState::Ptr regstate = RegisterState::promote(currentState()->registerState());
+    RegisterDictionary::Ptr dictionary = regstate->registerDictionary();
     const std::vector<RegisterDescriptor> &regs = get_important_registers();
     for (size_t i=0; i<regs.size(); ++i) {
         if (regstate->is_partly_stored(regs[i])) {
             const std::string &name = dictionary->lookup(regs[i]);
             ASSERT_require(!name.empty());
-            BaseSemantics::SValuePtr dflt = undefined_(regs[i].nBits());
-            SValuePtr value = SValue::promote(regstate->readRegister(regs[i], dflt, this));
+            BaseSemantics::SValue::Ptr dflt = undefined_(regs[i].nBits());
+            SValue::Ptr value = SValue::promote(regstate->readRegister(regs[i], dflt, this));
 
             // Sometimes registers only have a value because they've been read.  There is no need to emit a definition for
             // these variables.  By convention, the RegisterStateGeneric will add the register name + "_0" to all registers
@@ -204,21 +253,21 @@ RegisterDescriptors
 RiscOperators::get_modified_registers()
 {
     RegisterDescriptors retval;
-    RegisterStatePtr cur_regstate = RegisterState::promote(currentState()->registerState());
-    const RegisterDictionary *dictionary = cur_regstate->registerDictionary();
+    RegisterState::Ptr cur_regstate = RegisterState::promote(currentState()->registerState());
+    RegisterDictionary::Ptr dictionary = cur_regstate->registerDictionary();
     const std::vector<RegisterDescriptor> &regs = get_important_registers();
     for (size_t i=0; i<regs.size(); ++i) {
         if (cur_regstate->is_partly_stored(regs[i])) {
             const std::string &name = dictionary->lookup(regs[i]);
             ASSERT_require(!name.empty());
-            BaseSemantics::SValuePtr dflt = undefined_(regs[i].nBits());
-            SValuePtr cur_value = SValue::promote(cur_regstate->readRegister(regs[i], dflt, this));
+            BaseSemantics::SValue::Ptr dflt = undefined_(regs[i].nBits());
+            SValue::Ptr cur_value = SValue::promote(cur_regstate->readRegister(regs[i], dflt, this));
             if (0==cur_value->comment().compare(name + "_0")) {
                 // This register has it's initial value, probably because it was read (registers that have never been read or
                 // written won't even get this far in the loop due to the is_partly_stored() check above.
                 continue;
             } else if (prev_regstate!=NULL && prev_regstate->is_partly_stored(regs[i])) {
-                SValuePtr prev_value = SValue::promote(prev_regstate->readRegister(regs[i], dflt, this));
+                SValue::Ptr prev_value = SValue::promote(prev_regstate->readRegister(regs[i], dflt, this));
                 if (cur_value->mustEqual(prev_value))
                     continue;
             }
@@ -232,29 +281,29 @@ RiscOperators::get_modified_registers()
 RegisterDescriptor
 RiscOperators::get_insn_pointer_register()
 {
-    const RegisterDictionary *dictionary = currentState()->registerState()->registerDictionary();
+    RegisterDictionary::Ptr dictionary = currentState()->registerState()->registerDictionary();
     return dictionary->findOrThrow("eip");
 }
 
-SValuePtr
+SValue::Ptr
 RiscOperators::get_instruction_pointer()
 {
     RegisterDescriptor EIP = get_insn_pointer_register();
-    BaseSemantics::SValuePtr dflt = undefined_(EIP.nBits());
+    BaseSemantics::SValue::Ptr dflt = undefined_(EIP.nBits());
     return SValue::promote(currentState()->registerState()->readRegister(EIP, dflt, this));
 }
 
 // Create temporary LLVM variables for all definers of the specified registers.
 void
-RiscOperators::emit_prerequisites(std::ostream &o, const RegisterDescriptors &regs, const RegisterDictionary *dictionary)
+RiscOperators::emit_prerequisites(std::ostream &o, const RegisterDescriptors &regs, const RegisterDictionary::Ptr& dictionary)
 {
     struct T1: SymbolicExpr::Visitor {
         RiscOperators *ops;
         std::ostream &o;
         const RegisterDescriptors &regs;
-        const RegisterDictionary *dictionary;
+        RegisterDictionary::Ptr dictionary;
         std::set<SymbolicExpr::Hash> seen;
-        T1(RiscOperators *ops, std::ostream &o, const RegisterDescriptors &regs, const RegisterDictionary *dictionary)
+        T1(RiscOperators *ops, std::ostream &o, const RegisterDescriptors &regs, const RegisterDictionary::Ptr &dictionary)
             : ops(ops), o(o), regs(regs), dictionary(dictionary) {}
         virtual SymbolicExpr::VisitAction preVisit(const ExpressionPtr &node) override {
             if (!seen.insert(node->hash()).second)
@@ -283,10 +332,10 @@ RiscOperators::emit_prerequisites(std::ostream &o, const RegisterDescriptors &re
     } t1(this, o, regs, dictionary);
 
     // Prerequisites for the registers
-    RegisterStatePtr regstate = RegisterState::promote(currentState()->registerState());
+    RegisterState::Ptr regstate = RegisterState::promote(currentState()->registerState());
     for (size_t i=0; i<regs.size(); ++i) {
-        BaseSemantics::SValuePtr dflt = undefined_(regs[i].nBits());
-        SValuePtr value = SValue::promote(regstate->readRegister(regs[i], dflt, this));
+        BaseSemantics::SValue::Ptr dflt = undefined_(regs[i].nBits());
+        SValue::Ptr value = SValue::promote(regstate->readRegister(regs[i], dflt, this));
         value->get_expression()->depthFirstTraversal(t1);
     }
 
@@ -303,7 +352,7 @@ RiscOperators::emit_prerequisites(std::ostream &o, const RegisterDescriptors &re
 void
 RiscOperators::emit_register_declarations(std::ostream &o, const RegisterDescriptors &regs)
 {
-    const RegisterDictionary *dictionary = currentState()->registerState()->registerDictionary();
+    RegisterDictionary::Ptr dictionary = currentState()->registerState()->registerDictionary();
     for (size_t i=0; i<regs.size(); ++i) {
         const std::string &name = dictionary->lookup(regs[i]);
         ASSERT_require(!name.empty());
@@ -314,13 +363,13 @@ RiscOperators::emit_register_declarations(std::ostream &o, const RegisterDescrip
 void
 RiscOperators::emit_register_definitions(std::ostream &o, const RegisterDescriptors &regs)
 {
-    RegisterStatePtr regstate = RegisterState::promote(currentState()->registerState());
-    const RegisterDictionary *dictionary = regstate->registerDictionary();
+    RegisterState::Ptr regstate = RegisterState::promote(currentState()->registerState());
+    RegisterDictionary::Ptr dictionary = regstate->registerDictionary();
     for (size_t i=0; i<regs.size(); ++i) {
         const std::string &name = dictionary->lookup(regs[i]);
         ASSERT_require(!name.empty());
-        BaseSemantics::SValuePtr dflt = undefined_(regs[i].nBits());
-        SValuePtr value = SValue::promote(regstate->readRegister(regs[i], dflt, this));
+        BaseSemantics::SValue::Ptr dflt = undefined_(regs[i].nBits());
+        SValue::Ptr value = SValue::promote(regstate->readRegister(regs[i], dflt, this));
         o <<prefix() <<"; register " <<name <<" = " <<*value <<"\n";
         ExpressionPtr t1 = emit_expression(o, value);
         o <<prefix() <<"store " <<llvm_integer_type(t1->nBits()) <<" " <<llvm_term(t1)
@@ -338,7 +387,7 @@ RiscOperators::emit_next_eip(std::ostream &o, SgAsmInstruction *latest_insn)
     SgAsmInterpretation *interp = getEnclosingNode<SgAsmInterpretation>(func);
     ASSERT_not_null(interp);                            // instructions must be part of the global AST
     const InstructionMap &insns = interp->get_instruction_map();
-    SValuePtr eip = get_instruction_pointer();
+    SValue::Ptr eip = get_instruction_pointer();
     rose_addr_t fallthrough_va = latest_insn->get_address() + latest_insn->get_size();
 
     // If EIP is a constant then it is one of the following cases:
@@ -502,7 +551,7 @@ RiscOperators::make_current()
 }
 
 LeafPtr
-RiscOperators::emit_expression(std::ostream &o, const SValuePtr &value)
+RiscOperators::emit_expression(std::ostream &o, const SValue::Ptr &value)
 {
     ASSERT_not_null(value);
     LeafPtr result = emit_expression(o, value->get_expression());
@@ -1391,6 +1440,27 @@ RiscOperators::emit_assignment(std::ostream &o, const ExpressionPtr &rhs)
 //                                      Transcoder
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+Transcoder::Transcoder(const BaseSemantics::Dispatcher::Ptr &dispatcher)
+    : dispatcher(dispatcher), emit_funcfrags(false), quiet_errors(false) {
+    operators = RiscOperators::promote(dispatcher->operators());
+}
+
+Transcoder::~Transcoder() {}
+
+Transcoder::Ptr
+Transcoder::instance(const BaseSemantics::Dispatcher::Ptr &dispatcher) {
+    return Ptr(new Transcoder(dispatcher));
+}
+
+Transcoder::Ptr
+Transcoder::instanceX86() {
+    RegisterDictionary::Ptr regdict = RegisterDictionary::instancePentium4();
+    SmtSolver::Ptr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
+    RiscOperators::Ptr ops = RiscOperators::instanceFromRegisters(regdict, solver);
+    BaseSemantics::Dispatcher::Ptr dispatcher = DispatcherX86::instance(ops, 32, RegisterDictionary::Ptr());
+    return instance(dispatcher);
+}
+
 int
 Transcoder::llvmVersion() const {
     return operators->llvmVersion();
@@ -1487,7 +1557,7 @@ Transcoder::transcodeBasicBlock(SgAsmBlock *bb, std::ostream &o)
                 // guaranteed.
                 o <<operators->prefix() <<";;ERROR: " <<e <<"\n";
                 RegisterDescriptor IP_REG = operators->get_insn_pointer_register();
-                BaseSemantics::SValuePtr fallthrough_va = operators->number_(IP_REG.nBits(),
+                BaseSemantics::SValue::Ptr fallthrough_va = operators->number_(IP_REG.nBits(),
                                                                              insn->get_address() + insn->get_size());
                 operators->currentState()->registerState()->writeRegister(IP_REG, fallthrough_va, operators.get());
             } else {

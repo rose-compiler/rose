@@ -115,8 +115,8 @@ class Partitioner;
  * @endcode */
 class SerialIo: public Sawyer::SharedObject {
 public:
-    /** Reference-counting pointer. */
-    typedef Sawyer::SharedPointer<SerialIo> Ptr;
+    /** Reference counting pointer. */
+    using Ptr = SerialIoPtr;
 
     /** Format of the state file. */
     enum Format {
@@ -271,7 +271,8 @@ private:
  *  Writes binary analysis state to a file that can be read later to re-initialize ROSE to the same state. */
 class SerialOutput: public SerialIo {
 public:
-    typedef Sawyer::SharedPointer<SerialOutput> Ptr;
+    /** Reference counting pointer. */
+    using Ptr = SerialOutputPtr;
 
 private:
 #ifdef ROSE_SUPPORTS_SERIAL_IO
@@ -439,7 +440,8 @@ private:
  *  Reads a previously saved binary analysis state file to re-initialize ROSE to a previous state. */
 class SerialInput: public SerialIo {
 public:
-    typedef Sawyer::SharedPointer<SerialInput> Ptr;
+    /** Reference counting pointer. */
+    using Ptr = SerialInputPtr;
 
 private:
 #ifdef ROSE_SUPPORTS_SERIAL_IO

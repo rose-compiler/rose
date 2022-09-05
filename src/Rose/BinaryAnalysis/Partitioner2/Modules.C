@@ -110,12 +110,12 @@ IpRewriter::operator()(bool chain, const Args &args) {
         if (args.bblock->successors().isCached())
             succs = args.bblock->successors().get();
         bool isModified = false;
-        BaseSemantics::RiscOperatorsPtr ops = args.partitioner.newOperators();
+        BaseSemantics::RiscOperators::Ptr ops = args.partitioner.newOperators();
         for (size_t i = 0; i < succs.size(); ++i) {
             for (const AddressPair &rewrite: rewrites_) {
-                BaseSemantics::SValuePtr oldValue = ops->number_(wordSize, rewrite.first);
+                BaseSemantics::SValue::Ptr oldValue = ops->number_(wordSize, rewrite.first);
                 if (succs[i].expr()->mustEqual(oldValue)) {
-                    Semantics::SValuePtr newValue = Semantics::SValue::promote(ops->number_(wordSize, rewrite.second));
+                    Semantics::SValue::Ptr newValue = Semantics::SValue::promote(ops->number_(wordSize, rewrite.second));
                     succs[i] = BasicBlock::Successor(newValue, succs[i].type(), succs[i].confidence());
                     isModified = true;
                     break;
@@ -780,7 +780,7 @@ isStackBasedReturn(const Partitioner &partitioner, const BasicBlock::Ptr &bb) {
     ASSERT_not_null(bb);
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     BasicBlockSemantics sem = bb->semantics();
-    BaseSemantics::StatePtr state = sem.finalState();
+    BaseSemantics::State::Ptr state = sem.finalState();
     if (!state)
         return boost::logic::indeterminate;
 
@@ -794,7 +794,7 @@ isStackBasedReturn(const Partitioner &partitioner, const BasicBlock::Ptr &bb) {
     // Find the pointer to the return address. Since the return instruction (e.g., x86 RET) has been processed semantically
     // already, the return address is beyond the end of the stack.  Here we handle architecture-specific instructions that
     // might pop more than just the return address (e.g., x86 "RET 4").
-    BaseSemantics::SValuePtr stackOffset;           // added to stack ptr to get ptr to return address
+    BaseSemantics::SValue::Ptr stackOffset;           // added to stack ptr to get ptr to return address
     if (SgAsmX86Instruction *x86insn = isSgAsmX86Instruction(bb->instructions().back())) {
         if ((x86insn->get_kind() == x86_ret || x86insn->get_kind() == x86_retf) &&
             x86insn->nOperands() == 1 &&
@@ -810,15 +810,15 @@ isStackBasedReturn(const Partitioner &partitioner, const BasicBlock::Ptr &bb) {
         // downward.
         stackOffset = sem.operators->negate(sem.operators->number_(REG_IP.nBits(), REG_IP.nBits()/8));
     }
-    BaseSemantics::SValuePtr sp = sem.operators->peekRegister(REG_SP);
-    BaseSemantics::SValuePtr retAddrPtr = sem.operators->add(sp, stackOffset);
+    BaseSemantics::SValue::Ptr sp = sem.operators->peekRegister(REG_SP);
+    BaseSemantics::SValue::Ptr retAddrPtr = sem.operators->add(sp, stackOffset);
 
     // Now that we have the ptr to the return address, read it from the stack and compare it with the new instruction
     // pointer. If equal, then the basic block returns to the caller.
-    BaseSemantics::SValuePtr retAddr = sem.operators->undefined_(REG_IP.nBits());
+    BaseSemantics::SValue::Ptr retAddr = sem.operators->undefined_(REG_IP.nBits());
     retAddr = sem.operators->peekMemory(REG_SS, retAddrPtr, retAddr);
-    BaseSemantics::SValuePtr ip = sem.operators->peekRegister(REG_IP);
-    BaseSemantics::SValuePtr isEqual =
+    BaseSemantics::SValue::Ptr ip = sem.operators->peekRegister(REG_IP);
+    BaseSemantics::SValue::Ptr isEqual =
         sem.operators->equalToZero(sem.operators->add(retAddr, sem.operators->negate(ip)));
     bool isReturn = isEqual->isTrue();
 
