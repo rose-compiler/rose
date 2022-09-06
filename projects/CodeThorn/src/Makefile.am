@@ -1005,7 +1005,7 @@ clean-local: clean-thorn4
 	rm -f *.cfg.dot # runParCfgTests
 	rm -f a.out
 	rm -rf ../docs/doxygen
-	rm -f *.imout
+	rm -f *.imout*
 	rm -f *.exe
 	rm -f *.imout.check
 	rm -Rf make_check_log_*
