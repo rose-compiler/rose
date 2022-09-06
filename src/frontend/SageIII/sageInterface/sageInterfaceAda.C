@@ -17,6 +17,17 @@
 namespace si = SageInterface;
 namespace sb = SageBuilder;
 
+namespace SageInterface
+{
+namespace ada
+{
+  // workaround to get the scope of package standard more easily
+  //   set in AdaType.C:initializePkgStandard
+  SgAdaPackageSpecDecl* stdpkg          = nullptr;
+}
+}
+
+
 namespace
 {
   ///
@@ -992,6 +1003,45 @@ namespace ada
       return res;
     };
 
+    struct ExprTypeFinder : sg::DispatchHandler<SgType*>
+    {
+      void handle(SgNode& n)              { SG_UNEXPECTED_NODE(n); }
+
+      // by default use the expression's type
+      void handle(SgExpression& n)        { res = n.get_type(); }
+
+
+      // by default use the expression's type
+      void handle(SgVarRefExp& n)
+      {
+        res = n.get_type();
+
+        if (isSgAutoType(res))
+        {
+          // if this is an auto constant, check the initializer
+          SgVariableSymbol&  sy  = SG_DEREF(n.get_symbol());
+          SgInitializedName& var = SG_DEREF(sy.get_declaration());
+
+          if (SgAssignInitializer* init = isSgAssignInitializer(var.get_initializer()))
+            res = typeRoot(SG_DEREF(init->get_operand()).get_type());
+        }
+      }
+
+      // SgTypeString does not preserve the 'wideness', so let's just get
+      //   this info from the literal.
+      void handle(SgStringVal& n)
+      {
+        SgType* charType = nullptr;
+
+        if (n.get_is16bitString())      charType = sb::buildChar16Type();
+        else if (n.get_is32bitString()) charType = sb::buildChar32Type();
+        else                            charType = sb::buildCharType();
+        ASSERT_not_null(charType);
+
+        res = arrayType(charType);
+      }
+    };
+
     struct RootTypeFinder : sg::DispatchHandler<SgType*>
     {
       void handle(SgNode& n)              { SG_UNEXPECTED_NODE(n); }
@@ -1092,51 +1142,17 @@ namespace ada
       void handle(SgDeclType& n)
       {
         // \todo not sure..
-        res = typeRoot(n.get_base_expression());
+        res = typeRoot(typeOfExpr(n.get_base_expression()));
       }
-
-
-      // expressions
-
-      // by default use the expression's type
-      void handle(SgExpression& n)        { res = &find(n.get_type()); }
-
-
-      // by default use the expression's type
-      void handle(SgVarRefExp& n)
-      {
-        res = &find(n.get_type());
-
-        if (isSgAutoType(res))
-        {
-          // if this is an auto constant, check the initializer
-          SgVariableSymbol&  sy  = SG_DEREF(n.get_symbol());
-          SgInitializedName& var = SG_DEREF(sy.get_declaration());
-
-          if (SgAssignInitializer* init = isSgAssignInitializer(var.get_initializer()))
-            res = &find(SG_DEREF(init->get_operand()).get_type());
-        }
-      }
-
-
-      // SgTypeString does not preserve the 'wideness', so let's just get
-      //   this info from the literal.
-      void handle(SgStringVal& n)
-      {
-        SgType* charType = nullptr;
-
-        if (n.get_is16bitString())      charType = sb::buildChar16Type();
-        else if (n.get_is32bitString()) charType = sb::buildChar32Type();
-        else                            charType = sb::buildCharType();
-        ASSERT_not_null(charType);
-
-        res = arrayType(charType);
-      }
-
 
       static
       SgType& find(SgType* ty);
     };
+
+    SgScopeStatement* pkgStandardScope()
+    {
+      return SG_DEREF(stdpkg).get_definition();
+    }
 
     SgType&
     RootTypeFinder::find(SgType* ty)
@@ -1145,7 +1161,85 @@ namespace ada
 
       return SG_DEREF(res);
     }
-  };
+
+    struct DeclScopeFinder : sg::DispatchHandler<SgScopeStatement*>
+    {
+      void handle(SgNode& n)              { SG_UNEXPECTED_NODE(n); }
+
+      void handle(SgType& n)              { /* \todo do nothing for now; should disappear and raise error */ }
+
+      // all root types (according to the three builder function in AdaMaker.C)
+      void handle(SgTypeLongLong& n)      { res = pkgStandardScope(); }
+      void handle(SgTypeLongDouble& n)    { res = pkgStandardScope(); }
+      void handle(SgTypeFixed& n)         { res = pkgStandardScope(); }
+
+      // modular type: handle like int?
+      void handle(SgAdaModularType& n)    { res = pkgStandardScope(); }
+
+      // are subroutines their own root type?
+      void handle(SgAdaSubroutineType& n) { res = pkgStandardScope(); }
+
+
+      // plus types used by AdaMaker but that do not have a direct correspondence
+      //   in the Ada Standard.
+      void handle(SgTypeVoid& n)          { res = pkgStandardScope(); }
+      void handle(SgTypeUnknown& n)       { res = pkgStandardScope(); }
+      void handle(SgAutoType& n)          { res = pkgStandardScope(); }
+      void handle(SgTypeDefault& n)       { res = pkgStandardScope(); }
+
+      // the package standard uses an enumeration to define boolean, so include the
+      //   ROSE bool type also.
+      // \todo reconsider
+      void handle(SgTypeBool& n)          { res = pkgStandardScope(); }
+
+      // plus composite type of literals in the AST
+      void handle(SgTypeString& n)        { res = pkgStandardScope(); }
+
+
+      // \todo implement generics based on test cases
+      // void handle(SgAdaFormalType& n)     { res = &n; }
+      // void handle(SgAdaDiscreteType& n)   { res = pkgStandardScope(); } // \todo
+
+      // plus: map all other fundamental types introduced by AdaType.C:initializePkgStandard
+      //       onto the root types defined by AdaMaker.C
+      // \todo eventually all types in initializePkgStandard should be rooted in
+      //       the root types as defined by AdaMaker.C.
+      void handle(SgTypeInt&)             { res = pkgStandardScope(); }
+      void handle(SgTypeLong&)            { res = pkgStandardScope(); }
+      void handle(SgTypeShort&)           { res = pkgStandardScope(); }
+
+      void handle(SgTypeFloat&)           { res = pkgStandardScope(); }
+      void handle(SgTypeDouble&)          { res = pkgStandardScope(); }
+
+      void handle(SgTypeChar& n)          { res = pkgStandardScope(); }
+      void handle(SgTypeChar16& n)        { res = pkgStandardScope(); }
+      void handle(SgTypeChar32& n)        { res = pkgStandardScope(); }
+
+
+      // Ada non-fundamental types
+      void handle(SgArrayType& n)         { res = pkgStandardScope(); }
+      void handle(SgPointerType& n)       { res = pkgStandardScope(); } // \todo should not be in Ada
+      void handle(SgAdaAccessType& n)     { res = pkgStandardScope(); }
+      void handle(SgTypeNullptr& n)       { res = pkgStandardScope(); }
+
+      // \todo add string types as introduced by AdaType.C:initializePkgStandard
+      // \todo add other fundamental types as introduced by AdaType.C:initializePkgStandard
+
+      // all type indirections that do not have a separate declaration associated
+      // \todo may need to be reconsidered
+      void handle(SgModifierType& n)         { res = scopeOfTypedecl(n.get_base_type()); }
+      void handle(SgAdaSubtype& n)           { res = scopeOfTypedecl(n.get_base_type()); }
+      void handle(SgAdaDerivedType& n)       { res = scopeOfTypedecl(n.get_base_type()); }
+      // void handle(SgDeclType& n)             { res = pkgStandardScope(); }
+
+      // records, enums,typedefs, discriminated types have real declarations,
+      //   so return the scope where they were defined.
+      //~ void handle(SgNamedType& n)            { res = si::getEnclosingScope(n.get_declaration()); }
+      void handle(SgNamedType& n)            { res = SG_DEREF(n.get_declaration()).get_scope(); }
+    };
+
+
+  } // end anonymous namespace
 
   SgType* typeRoot(SgType& ty)
   {
@@ -1157,14 +1251,24 @@ namespace ada
     return ty ? typeRoot(*ty) : nullptr;
   }
 
-  SgType* typeRoot(SgExpression& exp)
+  SgType* typeOfExpr(SgExpression& exp)
   {
-    return sg::dispatch(RootTypeFinder{}, &exp);
+    return sg::dispatch(ExprTypeFinder{}, &exp);
   }
 
-  SgType* typeRoot(SgExpression* exp)
+  SgType* typeOfExpr(SgExpression* exp)
   {
-    return exp ? typeRoot(*exp) : nullptr;
+    return exp ? typeOfExpr(*exp) : nullptr;
+  }
+
+  SgScopeStatement* scopeOfTypedecl(const SgType& ty)
+  {
+    return sg::dispatch(DeclScopeFinder{}, &ty);
+  }
+
+  SgScopeStatement* scopeOfTypedecl(const SgType* ty)
+  {
+    return ty ? scopeOfTypedecl(*ty) : nullptr;
   }
 
 
