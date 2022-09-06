@@ -1572,7 +1572,7 @@ LinuxI386::createInputVariables(const P2::Partitioner &partitioner, const Emulat
 
                 // Event and input variable
                 std::string name = (boost::format("argv_%d_%d") % i % j).str();
-                SymbolicExpr::Ptr charValue = SymbolicExpr::makeIntegerConstant(8, s[j]);
+                SymbolicExpr::Ptr charValue = SymbolicExpr::makeIntegerConstant(8,  s.c_str()[j]);
                 SymbolicExpr::Ptr charVariable = SymbolicExpr::makeIntegerVariable(8, name);
                 auto charEvent = ExecutionEvent::memoryWrite(testCase(), nextEventLocation(When::PRE), ip(),
                                                              charVa, charVariable, charValue, charVariable);
@@ -1654,7 +1654,7 @@ LinuxI386::createInputVariables(const P2::Partitioner &partitioner, const Emulat
 
                 // Event and input variable
                 std::string name = (boost::format("envp_%d_%d") % i % j).str();
-                SymbolicExpr::Ptr charValue = SymbolicExpr::makeIntegerConstant(8, s[j]);
+                SymbolicExpr::Ptr charValue = SymbolicExpr::makeIntegerConstant(8, s.c_str()[j]);
                 SymbolicExpr::Ptr charVariable = SymbolicExpr::makeIntegerVariable(8, name);
                 auto charEvent = ExecutionEvent::memoryWrite(testCase(), nextEventLocation(When::PRE), ip(),
                                                              charVa, charVariable, charValue, charVariable);
