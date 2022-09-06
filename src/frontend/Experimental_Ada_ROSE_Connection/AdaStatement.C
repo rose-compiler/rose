@@ -312,7 +312,7 @@ namespace
   ///                            otherwise, clone the initexpr
   SgInitializedNamePtrList
   constructInitializedNamePtrList( AstContext ctx,
-                                   std::map<int, SgInitializedName*>& m,
+                                   map_t<int, SgInitializedName*>& m,
                                    const NameCreator::result_container& names,
                                    SgType& dcltype,
                                    SgExpression* initexpr,
@@ -3027,7 +3027,7 @@ queryFunctionDecl(Expression_Struct& expr, SgFunctionParameterList&, AstContext 
 
   if ((res == nullptr) && (expr.Expression_Kind == An_Operator_Symbol))
   {
-    // \todo merge wirh same code in AdaExpression.C
+    // \todo merge with same code in AdaExpression.C
     int len = strlen(expr.Name_Image);
     ADA_ASSERT((len > 2) && (expr.Name_Image[0] == '"') && (expr.Name_Image[len-1] == '"'));
 
@@ -3374,6 +3374,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
           // a package may contain an empty private section
           pkgspec.set_hasPrivate(decl.Is_Private_Present);
         }
+
+        // generateBuiltinFunctionsOnTypes(ctx.scope(pkgspec));
 
         placePragmas(decl.Pragmas, ctx, std::ref(pkgspec));
 
@@ -4506,10 +4508,10 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
     case A_Procedure_Renaming_Declaration:         // 8.5.4(2)
     case A_Function_Renaming_Declaration:          // 8.5.4(2)
       {
-        logKind(decl.Declaration_Kind == A_Function_Renaming_Declaration ?
-                "A_Function_Renaming_Declaration" : "A_Procedure_Renaming_Declaration");
-
         const bool                 isFuncRename = decl.Declaration_Kind == A_Function_Renaming_Declaration;
+
+        logKind(isFuncRename ? "A_Function_Renaming_Declaration" : "A_Procedure_Renaming_Declaration");
+
         SgScopeStatement&          outer     = ctx.scope();
         NameData                   adaname   = singleName(decl, ctx);
         ElemIdRange                range     = idRange(decl.Parameter_Profile);
@@ -4530,6 +4532,14 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         recordNode(asisDecls(), adaname.id(), sgnode);
 
         // find declaration for the thing being renamed
+        SgFunctionType&            fntype = SG_DEREF(isSgFunctionType(sgnode.get_type()));
+        SgTypePtrList&             typlist = SG_DEREF(fntype.get_argument_list()).get_arguments();
+
+        OperatorCallSupplement     suppl{&typlist, &rettype};
+        SgExpression&              renamedFun = getExprID(decl.Renamed_Entity, ctx, suppl);
+
+        sgnode.set_renamed_function(&renamedFun);
+/*
         Element_Struct&        renamedElemFull = retrieveAs(elemMap(), decl.Renamed_Entity);
         NameData               renamedName = getQualName(renamedElemFull, ctx);
         Element_Struct&        renamedElem = renamedName.elem();
@@ -4546,7 +4556,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         {
           logError() << "cannot find renamed proc/func decl for:" << adaname.fullName << std::endl;
         }
-
+*/
         privatize(sgnode, isPrivate);
         attachSourceLocation(sgnode, elem, ctx);
         ctx.appendStatement(sgnode);

@@ -4775,8 +4775,11 @@ Grammar::setUpStatements ()
 
      AdaFunctionRenamingDecl.setFunctionPrototype ( "HEADER_ADA_FUNCTION_RENAMING_DECL_STMT", "../Grammar/Statement.code" );
 
-     AdaFunctionRenamingDecl.setDataPrototype ( "SgFunctionDeclaration*", "renamed_function", "= NULL",
-                                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     // PP 9/2/22 : updated renamed_function from SgFunctionDeclaration to SgExpression
+     //             and enabled traversal
+     //             \todo could the whole use of the class be replaced with AdaRenamingDecl
+     AdaFunctionRenamingDecl.setDataPrototype ( "SgExpression*", "renamed_function", "= NULL",
+                                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      AdaFunctionRenamingDecl.setFunctionSource ( "SOURCE_ADA_FUNCTION_RENAMING_DECL_STMT", "../Grammar/Statement.code" );
 
