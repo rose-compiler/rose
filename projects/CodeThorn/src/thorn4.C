@@ -67,10 +67,10 @@ public:
     thorn4Parser.name("thorn4");  // the optional switch prefix
 
     thorn4Parser.insert(scl::Switch("report-dir")
-                        .argument("reportDir", scl::anyParser(params.reportDir))
+                        .argument("reportDir", scl::anyParser(params.reportFilePath))
                         .doc("filename prefix for all variants of graph files. Provide an absolute paths if thorn4 is invoked in multiple different directories."));
     thorn4Parser.insert(scl::Switch("mode")
-                        .argument("mode", scl::anyParser(params.mode))
+                        .argument("mode", scl::anyParser(params.multiSelectors.analysisMode))
                         .doc("analysis mode: concrete, abstract."));
     thorn4Parser.insert(scl::Switch("input-values")
                         .argument("inputValues", scl::anyParser(params.inputValues))
@@ -85,13 +85,13 @@ public:
       .doc("synopsis",
            "@prop{programName} [@v{switches}] @v{specimen_name}")
       .doc("description",
-           "This program generates AST files in term format. The same term format can be used in the AstMatcher as input for matching AST subtrees.");
+           "This program generates state transition system graph files.");
     scl::ParserResult cmdLine = p.with(thorn4Parser).parse(clArgs).apply();
 
     const std::vector<std::string> remainingArgs = cmdLine.unparsedArgs();
     for (const std::string& arg: remainingArgs) {
       //mlog[DEBUG] <<"remaining arg: \"" <<Rose::StringUtility::cEscape(arg) <<"\"\n";
-      if (boost::starts_with(arg, "--thorn4:")) {
+      if (CppStdUtilities::isPrefix("--thorn4:",arg)) {
         cerr <<"thorn4: unrecognized command line option: \"" <<Rose::StringUtility::cEscape(arg) <<"\"\n";
         exit(1);
       }
@@ -100,11 +100,11 @@ public:
     return cmdLine.unparsedArgs();
   }
 
-  Parameters getParameters() {
+  CodeThornOptions getParameters() {
     return params;
   }
 private:
-  Parameters params;
+  CodeThornOptions params;
 };
 
 namespace
@@ -147,6 +147,29 @@ namespace
   };
 }
 
+void processMultiSelectors(CodeThornOptions& ctOpt) {
+  if(ctOpt.multiSelectors.analysisMode=="abstract") {
+    ctOpt.solver=16; // default solver for this tool
+    ctOpt.sharedPStates=false; // required for solver 16
+    ctOpt.abstractionMode=1;
+    ctOpt.arrayAbstractionIndex=0;
+  } else if(ctOpt.multiSelectors.analysisMode=="concrete") {
+    ctOpt.solver=5; // default solver for concrete mode
+    ctOpt.sharedPStates=false;
+    ctOpt.abstractionMode=0;
+    ctOpt.arrayAbstractionIndex=-1; // no abstraction of arrays
+    if(ctOpt.inputValues=="{}") {
+      cerr<<"Concrete mode selected, but no input values provided. Use option --input-values=\"{ ... }\" to provide a set of input values."<<endl;
+      exit(1);
+    }
+  } else if(ctOpt.multiSelectors.analysisMode=="none") {
+    // no multi select requested
+  } else {
+    cerr<<"Wrong mode '"<<ctOpt.multiSelectors.analysisMode<<"' provided on command line."<<endl;
+    exit(1);
+  }
+}
+
 int main( int argc, char * argv[] )
 {
   using Sawyer::Message::mfacilities;
@@ -161,23 +184,17 @@ int main( int argc, char * argv[] )
     CodeThorn::CodeThornLib::configureRose();
     //configureRersSpecialization();
 
-    CodeThornOptions ctOpt;
     LTLOptions ltlOpt; // not used in this tool, but required for some default parameters
     ParProOptions parProOpt; // not used in this tool, but required for some default parameters
 
-    CodeThorn::colorsEnabled=ctOpt.colors;
     std::vector<std::string> cmdLineArgs{argv+0, argv+argc};
     Thorn4Parser thorn4Parser;
     CStringVector unparsedArgsCStyle(thorn4Parser.parseArgs(std::move(cmdLineArgs)));
-    Thorn4Parser::Parameters params=thorn4Parser.getParameters();
+    CodeThornOptions ctOpt=thorn4Parser.getParameters();
     int thornArgc = unparsedArgsCStyle.size();
     char** thornArgv = unparsedArgsCStyle.firstCArg();
 
-    ctOpt.status=params.status;
-    ctOpt.reportFilePath=params.reportDir;
-    ctOpt.reduceStg=params.reduceStg;
-    ctOpt.inputValues=params.inputValues;
-
+    ctOpt.checkCLanguage=true;
     ctOpt.callStringLength=-1; // unbounded length
     ctOpt.normalizeLevel=2;
     ctOpt.intraProcedural=false; // inter-procedural
@@ -188,27 +205,10 @@ int main( int argc, char * argv[] )
     ctOpt.precisionLevel=2;
     ctOpt.logLevel="none";
     ctOpt.visualization.vis=true; // generates ast, icfg, tg1, tg2
-
     ctOpt.vimReportFileName=""; // do not generated vim report
 
-    if(params.mode=="abstract") {
-      ctOpt.solver=16; // default solver for this tool
-      ctOpt.sharedPStates=false; // required for solver 16
-      ctOpt.abstractionMode=1;
-      ctOpt.arrayAbstractionIndex=0;
-    } else if(params.mode=="concrete") {
-      ctOpt.solver=5; // default solver for concrete mode
-      ctOpt.sharedPStates=false;
-      ctOpt.abstractionMode=0;
-      ctOpt.arrayAbstractionIndex=-1; // no abstraction of arrays
-      if(ctOpt.inputValues=="{}") {
-        cerr<<"Concrete mode selected, but no input values provided. Use option --input-values=\"{ ... }\" to provide a set of input values."<<endl;
-        exit(1);
-      }
-    } else {
-      cerr<<"Wrong mode '"<<params.mode<<"' provided on command line."<<endl;
-      exit(1);
-    }
+    CodeThorn::colorsEnabled=ctOpt.colors;
+    processMultiSelectors(ctOpt);
 
     mfacilities.control(ctOpt.logLevel);
 
@@ -219,7 +219,7 @@ int main( int argc, char * argv[] )
     ROSE_ASSERT(project);
     cout << "Parsing and creating AST finished."<<endl;
 
-    if(params.checkCLanguage) {
+    if(ctOpt.checkCLanguage) {
       LanguageRestrictorC cLangRestrictor;
       bool programOK=cLangRestrictor.checkProgram(project);
       cout<<"C Program check: ";
