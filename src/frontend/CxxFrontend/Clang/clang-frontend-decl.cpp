@@ -1095,14 +1095,31 @@ bool ClangToSageTranslator::VisitTypedefDecl(clang::TypedefDecl * typedef_decl, 
     // Pei-Hung (06/01/2022) check if the declaration is considered embedded in Clang AST.
     // If it is embedded, no explicit SgDeclaration should be placed for ROSE AST.
     bool isembedded = false;
+    // determine if the declaration associated with type (through getDecl()) has complete definition
     bool iscompleteDefined = false;
+    // check if ElaboratedType is part of the type 
+    bool hasElaboratedType = false;
+    // if hasElaboratedType, check if declaration of this type owned by this occurrence of this type is also 
+    // a definition
+    bool isOwnedTagDeclADefinition = false;
+    // checking is definition should be setup in ROSE AST
+    bool isDefinitionaRequired = false; 
 
     // Adding check for EaboratedType and PointerType to retrieve base EnumType
     while((llvm::isa<clang::ElaboratedType>(underlyingType)) || (llvm::isa<clang::PointerType>(underlyingType)) || (llvm::isa<clang::ArrayType>(underlyingType)))
     {
        if(llvm::isa<clang::ElaboratedType>(underlyingType))
        {
+         hasElaboratedType = true;
          underlyingQualType = ((clang::ElaboratedType *)underlyingType)->getNamedType();
+         clang::TagDecl* ownedTagDecl = ((clang::ElaboratedType *)underlyingType)->getOwnedTagDecl();
+         if(ownedTagDecl != nullptr)
+         {
+#if DEBUG_VISIT_DECL
+            std:: cerr << "ClangToSageTranslator::VisitTypedefDecl has ownedTagDecl " << ownedTagDecl->isThisDeclarationADefinition() << "\n";
+#endif
+            isOwnedTagDeclADefinition = ownedTagDecl->isThisDeclarationADefinition();
+         }
        }
        else if(llvm::isa<clang::PointerType>(underlyingType))
        {
@@ -1131,6 +1148,15 @@ bool ClangToSageTranslator::VisitTypedefDecl(clang::TypedefDecl * typedef_decl, 
        iscompleteDefined = recordDeclaration->isCompleteDefinition();
     }
 
+    if(hasElaboratedType)
+    {
+      isDefinitionaRequired = isOwnedTagDeclADefinition;
+    }
+    else
+    {
+      isDefinitionaRequired = iscompleteDefined;
+    }
+
     SgType * sg_underlyingType = buildTypeFromQualifiedType(underlyingQualType);
     SgType * type = buildTypeFromQualifiedType(typedef_decl->getUnderlyingType());
 
@@ -1144,8 +1170,15 @@ bool ClangToSageTranslator::VisitTypedefDecl(clang::TypedefDecl * typedef_decl, 
         break;
     }
 
+#if DEBUG_VISIT_DECL
+    std::cerr << "isDefinitionaRequired = " << isDefinitionaRequired << "\n";
+    std::cerr << "hasElaboratedType = " << hasElaboratedType << "\n";
+    std::cerr << "iscompleteDefined = " << iscompleteDefined << "\n";
+    std::cerr << "isembedded = " << isembedded << "\n";
+    std::cerr << "isOwnedTagDeclADefinition = " << isOwnedTagDeclADefinition << "\n";
+#endif
 // Pei-Hung (05/31/2022) set "bool_it->second = false" to avoid duplicated definition
-    if (isSgClassType(type) && iscompleteDefined) {
+    if (isSgClassType(type) && isDefinitionaRequired) {
         SgClassDeclaration* classDecl = isSgClassDeclaration(isSgClassType(type)->get_declaration());
         SgClassDeclaration* classDefDecl = isSgClassDeclaration(isSgClassType(type)->get_declaration()->get_definingDeclaration());
         if(isembedded && classDefDecl != nullptr && !isSgDeclarationStatement(classDefDecl->get_parent()))
@@ -1164,7 +1197,7 @@ bool ClangToSageTranslator::VisitTypedefDecl(clang::TypedefDecl * typedef_decl, 
             bool_it->second = false;
         }
     }
-    else if (isSgEnumType(type) && iscompleteDefined) {
+    else if (isSgEnumType(type) && isDefinitionaRequired) {
 
 // Pei-Hung (06/01/2022) Clang places a EnumDecl before TypedefDecl.  
 // A SgEnumDeclaration for an  embedded EnumDecl is not attached to the scope but its parent node needs to be setup as the SgTypedefDeclaration
@@ -1325,15 +1358,33 @@ bool ClangToSageTranslator::VisitFieldDecl(clang::FieldDecl * field_decl, SgNode
     // If it is embedded, no explicit SgDeclaration should be placed for ROSE AST.
     bool isembedded = false;
     bool iscompleteDefined = false;
+    // check if ElaboratedType is part of the type 
+    bool hasElaboratedType = false;
+    // if hasElaboratedType, check if declaration of this type owned by this occurrence of this type is also 
+    // a definition
+    bool isOwnedTagDeclADefinition = false;
+    // checking is definition should be setup in ROSE AST
+    bool isDefinitionaRequired = false; 
     bool isAnonymousStructOrUnion = false;
 
     // Adding check for EaboratedType and PointerType to retrieve base EnumType
     // Removing PointerType here before finding a better implementation to handle pointer
-    while((llvm::isa<clang::ElaboratedType>(fieldType)) || (llvm::isa<clang::ArrayType>(fieldType)))
+    while((llvm::isa<clang::ElaboratedType>(fieldType)) || (llvm::isa<clang::PointerType>(fieldType)) || (llvm::isa<clang::ArrayType>(fieldType)))
     {
        if(llvm::isa<clang::ElaboratedType>(fieldType))
        {
+         hasElaboratedType = true;
          fieldQualType = ((clang::ElaboratedType *)fieldType)->getNamedType();
+         clang::TagDecl* ownedTagDecl = ((clang::ElaboratedType *)fieldType)->getOwnedTagDecl();
+         if(ownedTagDecl != nullptr)
+         {
+            std:: cerr << "ownedTagDecl " << ownedTagDecl->isThisDeclarationADefinition() << "\n";
+            isOwnedTagDeclADefinition = ownedTagDecl->isThisDeclarationADefinition();
+         }
+       }
+       else if(llvm::isa<clang::PointerType>(fieldType))
+       {
+         fieldQualType = ((clang::PointerType *)fieldType)->getPointeeType();
        }
        else if(llvm::isa<clang::ArrayType>(fieldType))
        {
@@ -1358,6 +1409,15 @@ bool ClangToSageTranslator::VisitFieldDecl(clang::FieldDecl * field_decl, SgNode
        iscompleteDefined = recordDeclaration->isCompleteDefinition();
     }
 
+    if(hasElaboratedType)
+    {
+      isDefinitionaRequired = isOwnedTagDeclADefinition;
+    }
+    else
+    {
+      isDefinitionaRequired = iscompleteDefined;
+    }
+
     isAnonymousStructOrUnion = field_decl->isAnonymousStructOrUnion();
 
     SgType * sg_fieldType = buildTypeFromQualifiedType(fieldQualType);
@@ -1377,13 +1437,13 @@ bool ClangToSageTranslator::VisitFieldDecl(clang::FieldDecl * field_decl, SgNode
 
     if(isAnonymousStructOrUnion)
     {
-        if (isSgClassType(type) && iscompleteDefined) {
-            SgClassDeclaration* classDecl = isSgClassDeclaration(isSgClassType(type)->get_declaration());
+        if (isSgClassType(type) && isDefinitionaRequired) {
+//            SgClassDeclaration* classDecl = isSgClassDeclaration(isSgClassType(type)->get_declaration());
             SgClassDeclaration* classDefDecl = isSgClassDeclaration(isSgClassType(type)->get_declaration()->get_definingDeclaration());
             *node = classDefDecl;
         }
-        else if (isSgEnumType(type) && iscompleteDefined) {
-            SgEnumDeclaration* enumDecl = isSgEnumDeclaration(isSgEnumType(type)->get_declaration());
+        else if (isSgEnumType(type) && isDefinitionaRequired) {
+//            SgEnumDeclaration* enumDecl = isSgEnumDeclaration(isSgEnumType(type)->get_declaration());
             SgEnumDeclaration* enumDefDecl = isSgEnumDeclaration(isSgEnumType(type)->get_declaration()->get_definingDeclaration());
             *node = enumDefDecl;
         }
@@ -1403,8 +1463,8 @@ bool ClangToSageTranslator::VisitFieldDecl(clang::FieldDecl * field_decl, SgNode
             break;
         }
      
-        if (isSgClassType(type) && iscompleteDefined) {
-            SgClassDeclaration* classDecl = isSgClassDeclaration(isSgClassType(type)->get_declaration());
+        if (isSgClassType(type) && isDefinitionaRequired) {
+//            SgClassDeclaration* classDecl = isSgClassDeclaration(isSgClassType(type)->get_declaration());
             SgClassDeclaration* classDefDecl = isSgClassDeclaration(isSgClassType(type)->get_declaration()->get_definingDeclaration());
             if(isembedded && classDefDecl != nullptr && !isSgDeclarationStatement(classDefDecl->get_parent()))
             {
@@ -1417,13 +1477,13 @@ bool ClangToSageTranslator::VisitFieldDecl(clang::FieldDecl * field_decl, SgNode
             std::map<SgClassType *, bool>::iterator bool_it = p_class_type_decl_first_see_in_type.find(isSgClassType(type));
             ROSE_ASSERT(bool_it != p_class_type_decl_first_see_in_type.end());
             if (bool_it->second) {
-                var_decl->set_baseTypeDefiningDeclaration(isSgNamedType(type)->get_declaration()->get_definingDeclaration());
+//                var_decl->set_baseTypeDefiningDeclaration(isSgNamedType(type)->get_declaration()->get_definingDeclaration());
                 var_decl->set_variableDeclarationContainsBaseTypeDefiningDeclaration(true);
                 bool_it->second = false;
             }
         }
-        else if (isSgEnumType(type) && iscompleteDefined) {
-            SgEnumDeclaration* enumDecl = isSgEnumDeclaration(isSgEnumType(type)->get_declaration());
+        else if (isSgEnumType(type) && isDefinitionaRequired) {
+//            SgEnumDeclaration* enumDecl = isSgEnumDeclaration(isSgEnumType(type)->get_declaration());
             SgEnumDeclaration* enumDefDecl = isSgEnumDeclaration(isSgEnumType(type)->get_declaration()->get_definingDeclaration());
             if(isembedded && enumDefDecl != nullptr && !isSgDeclarationStatement(enumDefDecl->get_parent()))
             {
@@ -1823,6 +1883,13 @@ bool ClangToSageTranslator::VisitVarDecl(clang::VarDecl * var_decl, SgNode ** no
     // If it is embedded, no explicit SgDeclaration should be placed for ROSE AST.
     bool isembedded = false;
     bool iscompleteDefined = false;
+    // check if ElaboratedType is part of the type 
+    bool hasElaboratedType = false;
+    // if hasElaboratedType, check if declaration of this type owned by this occurrence of this type is also 
+    // a definition
+    bool isOwnedTagDeclADefinition = false;
+    // checking is definition should be setup in ROSE AST
+    bool isDefinitionaRequired = false; 
 
     // Adding check for EaboratedType and PointerType to retrieve base EnumType
     //while((varType->getTypeClass() == clang::Type::Elaborated) || (varType->getTypeClass() == clang::Type::Pointer) || (varType->getTypeClass() == clang::Type::Array))
@@ -1830,7 +1897,14 @@ bool ClangToSageTranslator::VisitVarDecl(clang::VarDecl * var_decl, SgNode ** no
     {
        if(llvm::isa<clang::ElaboratedType>(varType))
        {
+         hasElaboratedType = true;
          varQualType = ((clang::ElaboratedType *)varType)->getNamedType();
+         clang::TagDecl* ownedTagDecl = ((clang::ElaboratedType *)varType)->getOwnedTagDecl();
+         if(ownedTagDecl != nullptr)
+         {
+            std:: cerr << "ownedTagDecl " << ownedTagDecl->isThisDeclarationADefinition() << "\n";
+            isOwnedTagDeclADefinition = ownedTagDecl->isThisDeclarationADefinition();
+         }
        }
        else if(llvm::isa<clang::PointerType>(varType))
        {
@@ -1857,6 +1931,15 @@ bool ClangToSageTranslator::VisitVarDecl(clang::VarDecl * var_decl, SgNode ** no
        clang::RecordDecl* recordDeclaration = underlyingRecordType->getDecl();
        isembedded = recordDeclaration->isEmbeddedInDeclarator();
        iscompleteDefined = recordDeclaration->isCompleteDefinition();
+    }
+
+    if(hasElaboratedType)
+    {
+      isDefinitionaRequired = isOwnedTagDeclADefinition;
+    }
+    else
+    {
+      isDefinitionaRequired = iscompleteDefined;
     }
 
     SgType * sg_varType = buildTypeFromQualifiedType(varQualType);
@@ -1897,7 +1980,7 @@ bool ClangToSageTranslator::VisitVarDecl(clang::VarDecl * var_decl, SgNode ** no
         break;
     }
 
-    if (isSgClassType(type) && iscompleteDefined) {
+    if (isSgClassType(type) && isDefinitionaRequired) {
         SgClassDeclaration* classDecl = isSgClassDeclaration(isSgClassType(type)->get_declaration());
         SgClassDeclaration* classDefDecl = isSgClassDeclaration(isSgClassType(type)->get_declaration()->get_definingDeclaration());
         if(isembedded && classDefDecl != nullptr && !isSgDeclarationStatement(classDefDecl->get_parent()))
@@ -1916,7 +1999,7 @@ bool ClangToSageTranslator::VisitVarDecl(clang::VarDecl * var_decl, SgNode ** no
             bool_it->second = false;
         }
     }
-    else if (isSgEnumType(type) && iscompleteDefined) {
+    else if (isSgEnumType(type) && isDefinitionaRequired) {
         SgEnumDeclaration* enumDecl = isSgEnumDeclaration(isSgEnumType(type)->get_declaration());
         SgEnumDeclaration* enumDefDecl = isSgEnumDeclaration(isSgEnumType(type)->get_declaration()->get_definingDeclaration());
         if(isembedded && enumDefDecl != nullptr && !isSgDeclarationStatement(enumDefDecl->get_parent()))
