@@ -32,17 +32,17 @@ namespace CodeThorn {
   bool operator==(const GeneralPriorityElement<Element>& e1, const GeneralPriorityElement<Element>& e2);
   template<typename Element>
   bool operator!=(const GeneralPriorityElement<Element>& c1, const GeneralPriorityElement<Element>& c2);
-  
+
   // functor object to provide greater operator as predicate
   template<typename Element>
   struct GeneralPriorityElementGreaterOp {
-    bool operator()(const GeneralPriorityElement<Element>& e1, const GeneralPriorityElement<Element>& e2) {
+    bool operator()(const GeneralPriorityElement<Element>& e1, const GeneralPriorityElement<Element>& e2) const {
       return !(e1==e2||e1<e2);
     }
   };
   template<typename Element>
   struct GeneralPriorityElementSmallerOp {
-    bool operator()(const GeneralPriorityElement<Element>& e1, const GeneralPriorityElement<Element>& e2) {
+    bool operator()(const GeneralPriorityElement<Element>& e1, const GeneralPriorityElement<Element>& e2) const {
       return e1<e2;
     }
   };

@@ -6,6 +6,7 @@
 //~ #include "sage3basic.h"
 
 #include <map>
+#include <unordered_map>
 #include <vector>
 #include <utility>
 #include <sstream>
@@ -16,6 +17,7 @@
 #include "cmdline.h"
 #include "sageGeneric.h"
 
+#include "Ada_to_ROSE_translation.h"
 #include "a_nodes.h"
 
 #define ADA_ASSERT(COND)      (sg::report_error_if(!(COND), "assertion failed: ", __FILE__, __LINE__))
@@ -39,23 +41,6 @@ void convertAsisToROSE(Nodes_Struct& head_nodes, SgSourceFile* file);
 
 /// initialize translation settins
 void initialize(const Rose::Cmdline::Ada::CmdlineSettings& settings);
-
-//
-// node mapping accessors, storage, and retrieval
-// of globally visible elements
-
-/// returns a mapping from an Asis Element_ID to an Asis struct
-std::map<int, Element_Struct*>& elemMap();
-
-/// returns a mapping from an Asis Unit_ID to an Asis struct
-/// \todo currently this is the same as elementMap, but the Asis mapping
-///       should be split into different maps to avoid pointer casts
-/// \note seems not needed
-// std::map<int, Element_Struct*>& unitMap();
-
-template <class KeyType, class SageNode>
-using map_t = std::map<KeyType, SageNode>;
-
 
 /// Ada identifier that can be used in maps/lookup tables
 /// \brief
@@ -83,6 +68,95 @@ struct AdaIdentifier : std::string
   {}
 };
 
+/// returns a map that collects inherited function symbols for
+struct InheritedSymbolKey : std::tuple<const SgFunctionDeclaration*, const SgTypedefType*>
+{
+  using base = std::tuple<const SgFunctionDeclaration*, const SgTypedefType*>;
+  using base::base;
+
+  std::tuple_element<0, base>::type function()        const { return std::get<0>(*this); }
+  std::tuple_element<1, base>::type associatedType()  const { return std::get<1>(*this); }
+};
+
+/*
+struct OperatorKey : std::tuple<const SgType*, AdaIdentifier>
+{
+  using base = std::tuple<const SgType*, AdaIdentifier>;
+  using base::base;
+
+        std::tuple_element<0, base>::type  principalType() const { return std::get<0>(*this); }
+  const std::tuple_element<1, base>::type& operatorName()  const { return std::get<1>(*this); }
+};
+
+struct OperatorDesc : std::tuple<const SgFunctionDeclaration*, std::uint8_t>
+{
+  enum { COMPILER_GENERATED = 1, DEFINED_IN_STANDARD = 2, USER_DEFINED = 3 };
+
+  using base = std::tuple<const SgFunctionDeclaration*, std::uint8_t>;
+  using base::base;
+
+  std::tuple_element<0, base>::type function() const { return std::get<0>(*this); }
+
+  std::tuple_element<1, base>::type flags()    const { return std::get<1>(*this); }
+  bool isCompilerGenerated() const { return flags() == COMPILER_GENERATED; }
+  bool isDefinedInStandard() const { return flags() == DEFINED_IN_STANDARD; }
+  bool isUserDefined()       const { return flags() == USER_DEFINED; }
+};
+*/
+}
+
+// define specializations of std::hash for user defined types
+//   as recommended by the C++11 standard.
+namespace std
+{
+  template <>
+  struct hash<::Ada_ROSE_Translation::AdaIdentifier>
+  {
+    std::size_t operator()(const ::Ada_ROSE_Translation::AdaIdentifier& el) const
+    {
+      return std::hash<::Ada_ROSE_Translation::AdaIdentifier::base>()(el);
+    }
+  };
+
+  template <>
+  struct hash<::Ada_ROSE_Translation::InheritedSymbolKey>
+  {
+    std::size_t operator()(const ::Ada_ROSE_Translation::InheritedSymbolKey& el) const
+    {
+      static constexpr std::uint8_t lshift = 7;
+      static constexpr std::uint8_t rshift = (sizeof(std::size_t) * CHAR_BIT) - lshift;
+
+      std::size_t val = std::hash<const void*>()(el.function());
+
+      return ( ((val << lshift) + (val >> rshift))
+             ^ std::hash<const void*>()(el.associatedType())
+             );
+    }
+  };
+
+/*
+  template <>
+  struct hash<::Ada_ROSE_Translation::OperatorKey>
+  {
+    std::size_t operator()(const ::Ada_ROSE_Translation::OperatorKey& el) const
+    {
+      static constexpr std::uint8_t lshift = 7;
+      static constexpr std::uint8_t rshift = (sizeof(std::size_t) * CHAR_BIT) - lshift;
+
+      std::size_t val = std::hash<const void*>()(el.principalType());
+
+      return ( ((val << lshift) + (val >> rshift))
+             ^ std::hash<::Ada_ROSE_Translation::AdaIdentifier>()(el.operatorName())
+             );
+    }
+  };
+*/
+}
+
+
+namespace Ada_ROSE_Translation
+{
+
 /// returns a mapping from Unit_ID to constructed root node in AST
 //~ map_t<int, SgDeclarationStatement*>& asisUnits();
 
@@ -100,6 +174,8 @@ map_t<int, SgDeclarationStatement*>& asisDecls();
 map_t<int, SgDeclarationStatement*>& asisTypes();
 
 /// returns a mapping from Element_ID to blocks
+map_t<int, SgBasicBlock*>& asisBlocks();
+
 map_t<int, SgBasicBlock*>& asisBlocks();
 
 //
@@ -124,9 +200,13 @@ map_t<AdaIdentifier, std::vector<SgFunctionDeclaration*> >& adaFuncs();
 ///       as long as there is no proper Character Type.
 map_t<AdaIdentifier, SgInitializedName*>& adaVars();
 
-/// returns a map that collects inherited function symbols for
-map_t<std::pair<const SgFunctionDeclaration*, const SgTypedefType*>, SgAdaInheritedFunctionSymbol*>&
-inheritedSymbols();
+map_t<InheritedSymbolKey, SgAdaInheritedFunctionSymbol*>& inheritedSymbols();
+
+/// returns a map with all functions that a type supports
+/// \details
+///   maps stores information about explicitly or implicitly defined operators on a principal type.
+///     a type may have multiple operators with the same name (e.g., "&"(string, char), "&"(string, string))
+// map_t<OperatorKey, std::vector<OperatorDesc> >& operatorSupport();
 
 
 //
@@ -411,18 +491,18 @@ namespace
 
   /// records a node (value) \ref val with key \ref key in map \ref m.
   /// \param m       the map
-  /// \param key     the record key
+  /// \param key     the recorded key
   /// \param val     the new value
   /// \param replace true, if the key is already in the map, false otherwise
   ///        (this is used for consistency checks).
   /// \pre key is not in the map yet
-  template <class KeyT, class DclT, class ValT>
+  template <class MapT, class ValT>
   inline
   void
-  recordNode(map_t<KeyT, DclT*>& m, KeyT key, ValT& val, bool replace = false)
+  recordNode(MapT& m, typename MapT::key_type key, ValT& val, bool replace = false)
   {
-    if (key == 17172136 || key == 17585081)
-      logError() << "found " << key << std::endl;
+    //~ if (key == 17172136 || key == 17585081)
+      //~ logError() << "found " << key << std::endl;
 
     //~ ADA_ASSERT(replace || m.find(key) == m.end());
     if (!(replace || m.find(key) == m.end()))
@@ -440,10 +520,10 @@ namespace
   /// secondary mappings are ignored, but do not trigger an error.
   /// \note use for non-defining/defining decls and
   ///       other nodes that do not have a single defining mapping.
-  template <class KeyT, class DclT, class ValT>
+  template <class MapT, class ValT>
   inline
   void
-  recordNonUniqueNode(map_t<KeyT, DclT*>& m, KeyT key, ValT& val, bool replace = false)
+  recordNonUniqueNode(MapT& m, typename MapT::key_type key, ValT& val, bool replace = false)
   {
     const bool nodeExists = (m.find(key) != m.end());
 
@@ -454,64 +534,63 @@ namespace
   }
 
   /// retrieves a node from map \ref m with key \ref key.
-  template <class KeyT, class DclT>
+  template <class MapT>
   inline
-  DclT&
-  lookupNode(const map_t<KeyT, DclT*>& m, KeyT key)
+  auto
+  lookupNode(const MapT& m, typename MapT::key_type key) -> decltype(*m.at(key))
   {
-    typename map_t<KeyT, DclT*>::const_iterator pos = m.find(key);
-
-    ADA_ASSERT(pos != m.end());
-    return *(pos->second);
+    return *m.at(key);
   }
 
   /// retrieves a node from map \ref m with key \ref key, under the
-  ///   assumption that it is of real type TgtT.
-  template <class TgtT, class KeyT, class DclT>
+  ///   assumption that it is of dynamic type TgtT.
+  template <class TgtT, class MapT>
   inline
   TgtT&
-  lookupNodeAs(const map_t<KeyT, DclT*>& m, KeyT key)
+  lookupNodeAs(const MapT& m, typename MapT::key_type key)
   {
-    DclT& node = lookupNode(m, key);
+    typename MapT::mapped_type& node = lookupNode(m, key);
 
     return dynamic_cast<TgtT&>(node);
   }
 
   /// retrieves a node from map \ref m with key \ref key if key exists.
   /// returns nullptr otherwise.
-  template <class KeyT, class DclT>
+/*
+  template <class MapT>
   inline
-  DclT*
-  findNode(const map_t<KeyT, DclT*>& m, KeyT key)
+  typename MapT::mapped_type
+  findNode(const MapT& m, typename MapT::key_type key)
   {
-    typename map_t<KeyT, DclT*>::const_iterator pos = m.find(key);
+    typename MapT::const_iterator pos = m.find(key);
 
     if (pos == m.end())
       return nullptr;
 
     return pos->second;
   }
+*/
 
   /// \private
   /// base case when a declaration is not in the map
-  template <class KeyT, class DclT>
+  template <class MapT>
   inline
-  DclT*
-  findFirst(const map_t<KeyT, DclT*>&)
+  typename MapT::mapped_type
+  findFirst(const MapT&)
   {
-    return nullptr;
+    return {};
   }
 
   /// tries one or more keys to find a declaration from map \ref m
-  /// returns nullptr if none of the keys can be found.
-  template <class KeyT, class DclT, class Key0T, class... KeysT>
+  /// returns the default value (e.g., nullptr) if none of the keys exist.
+  template <class MapT, class Key0T, class... KeysT>
   inline
-  DclT*
-  findFirst(const map_t<KeyT, DclT*>& m, Key0T key0, KeysT... keys)
+  typename MapT::mapped_type
+  findFirst(const MapT& m, Key0T key0, KeysT... keys)
   {
-    DclT* dcl = findNode(m, key0);
+    typename MapT::const_iterator pos = m.find(key0);
 
-    return dcl ? dcl : findFirst(m, keys...);
+    return pos != m.end() ? pos->second : findFirst(m, keys...);
   }
 
 
@@ -522,20 +601,20 @@ namespace
   /// returns a nullptr if the element is not in the map.
   inline
   Element_Struct*
-  retrieveAsOpt(std::map<int, Element_Struct*>& map, int key)
+  retrieveAsOpt(const ASIS_element_id_to_ASIS_MapType& map, int key)
   {
     ADA_ASSERT(key >= 0); // fails on invalid elements
 
     //~ logInfo() << "key: " << key << std::endl;
-    std::map<int, Element_Struct*>::iterator pos = map.find(key);
+    auto pos = map.find(key);
 
-    return pos != map.end() ? (*pos).second : nullptr;
+    return pos != map.end() ? pos->second : nullptr;
   }
 
   /// retrieves data from the big Asis map
   inline
   Element_Struct&
-  retrieveAs(std::map<int, Element_Struct*>& map, int key)
+  retrieveAs(const ASIS_element_id_to_ASIS_MapType& map, int key)
   {
     ADA_ASSERT(key != 0); // fails on optional elements
 

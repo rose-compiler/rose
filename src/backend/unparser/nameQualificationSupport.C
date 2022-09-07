@@ -1014,6 +1014,7 @@ namespace
         computeNameQualForDeclLink(n, SG_DEREF(basedecl));
       }
 
+#if OBSOLETE_CODE
       void handle(const SgAdaFunctionRenamingDecl& n)
       {
         handle(sg::asBaseType(n));
@@ -1021,8 +1022,10 @@ namespace
         // ROSE_ASSERT(n.get_renamed_function());
         if (const SgFunctionDeclaration* renamed = n.get_renamed_function())
           computeNameQualForDeclLink(n, *renamed);
+        //~ if (const SgExpression* renamed = n.get_renamed_function())
+          //~ computeNameQualForDeclLink(n, *renamed);
       }
-
+#endif /* OBSOLETE_CODE */
 
       void handle(const SgUsingDeclarationStatement& n)
       {

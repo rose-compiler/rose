@@ -1,24 +1,27 @@
 
-// #include "rose.h"
-
-// DQ (11/13/2017): This is a violation, sage3basic.h must be the first file included.
-// #include "rose_config.h"
-
 #include "sage3basic.h"
-
-#include "rose_config.h"
-
 #include "Ada_to_ROSE_translation.h"
-
 #include "Ada_to_ROSE.h"
-//~ #include "untypedBuilder.h"
 
-Ada_ROSE_Translation::ASIS_element_id_to_ASIS_MapType Ada_ROSE_Translation::asisMap;
+namespace Ada_ROSE_Translation
+{
 
+ASIS_element_id_to_ASIS_MapType asisMap;
 
-// void Ada_ROSE_Translation::ada_to_ROSE_translation(List_Node_Struct *head_node, SgSourceFile* file)
+const ASIS_element_id_to_ASIS_MapType&
+elemMap()
+   {
+      return asisMap;
+   }
+
+ASIS_element_id_to_ASIS_MapType&
+elemMap_update()
+   {
+      return asisMap;
+   }
+
 void
-Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct& head_nodes, SgSourceFile* file)
+ada_to_ROSE_translation(Nodes_Struct& head_nodes, SgSourceFile* file)
    {
      logInfo() << "Start of initial traversal of Ada IR node data structure" << std::endl;
 
@@ -34,8 +37,8 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct& head_nodes, SgSource
                      //~ << std::endl;
 
            // Build the asisMap of Element ids to Element_Struct pointers.
-           Element_Struct & element    = current_element->Element;
-           Element_ID       element_id = element.ID;
+           Element_Struct& element    = current_element->Element;
+           Element_ID      element_id = element.ID;
 
            ROSE_ASSERT(element_id > MAX_NUMBER_OF_UNITS);
 
@@ -56,3 +59,4 @@ Ada_ROSE_Translation::ada_to_ROSE_translation(Nodes_Struct& head_nodes, SgSource
 
      convertAsisToROSE(head_nodes, file);
    }
+}
