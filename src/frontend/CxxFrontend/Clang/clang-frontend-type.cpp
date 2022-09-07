@@ -1044,6 +1044,13 @@ bool ClangToSageTranslator::VisitElaboratedType(clang::ElaboratedType * elaborat
 
     SgType * type = buildTypeFromQualifiedType(elaborated_type->getNamedType());
 
+    clang::TagDecl* ownedTagDecl = elaborated_type->getOwnedTagDecl();
+#if DEBUG_VISIT_TYPE
+    if(ownedTagDecl != nullptr)
+    {
+       std:: cerr << "ClangToSageTranslator::VisitElaboratedType has ownedTagDecl and isThisDeclarationADefinition =" << ownedTagDecl->isThisDeclarationADefinition() << "\n";
+    }
+#endif
     // FIXME clang::ElaboratedType contains the "sugar" of a type reference (eg, "struct A" or "M::N::A"), it should be pass down to ROSE
 
     *node = type;
