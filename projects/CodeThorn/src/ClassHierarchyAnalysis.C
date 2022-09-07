@@ -87,7 +87,7 @@ namespace
       ++aa2;
     }
 
-    return std::move(binop);
+    return binop;
   }
 }
 
@@ -102,24 +102,24 @@ ClassAnalysis::addInheritanceEdge(value_type& descendantEntry, ClassKeyType ance
     ClassKeyType descendantKey = descendantEntry.first;
     ClassData&   descendant = descendantEntry.second;
     ClassData&   ancestor = this->at(ancestorKey);
-  
+
     descendant.ancestors().emplace_back(ancestorKey,   virtualEdge, directEdge);
     ancestor.descendants().emplace_back(descendantKey, virtualEdge, directEdge);
   }
   catch (const std::out_of_range&)
   {
-    static int prnNumWarn = 3; 
-    
-    if (containsAllClasses()) 
+    static int prnNumWarn = 3;
+
+    if (containsAllClasses())
       throw;
-    
+
     if (prnNumWarn > 0)
     {
       --prnNumWarn;
-      
+
       logWarn() << "ignoring inheritance edge of inner classes (?) [requires full translation unit analysis]"
                 << (prnNumWarn ? "" : "...")
-                << std::endl;                 
+                << std::endl;
     }
   }
 }
@@ -624,13 +624,13 @@ ClassAnalysis analyzeClass(ClassKeyType n)
 {
   RoseCompatibilityBridge rcb;
   ClassAnalysis           classes{false /* incomplete view */};
-  
+
   // collect all classes reachable upwards from n
   rcb.extractClassAndBaseClasses(classes, n);
-  
+
   inheritanceRelations(classes);
   analyzeClassRelationships(classes);
-  
+
   return classes;
 }
 
