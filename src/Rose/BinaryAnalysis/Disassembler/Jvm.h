@@ -1,5 +1,5 @@
-#ifndef ROSE_BinaryAnalysis_DisassemblerJvm_H
-#define ROSE_BinaryAnalysis_DisassemblerJvm_H
+#ifndef ROSE_BinaryAnalysis_Disassembler_Jvm_H
+#define ROSE_BinaryAnalysis_Disassembler_Jvm_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
@@ -9,15 +9,16 @@
 
 namespace Rose {
 namespace BinaryAnalysis {
+namespace Disassembler {
 
 /** JVM Disassembler.
  *
  *  This disassembler decodes JVM instructions.
  */
-class DisassemblerJvm: public Disassembler::Base {
+class Jvm: public Base {
 public:
   /** Reference counting pointer. */
-  using Ptr = Sawyer::SharedPointer<DisassemblerJvm>;
+  using Ptr = Sawyer::SharedPointer<Jvm>;
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
@@ -30,13 +31,13 @@ private:
 #endif
 
 protected:
-  DisassemblerJvm();
+  Jvm();
 
 public:
   /** Allocating constructor. */
   static Ptr instance();
 
-  virtual ~DisassemblerJvm();
+  virtual ~Jvm();
   virtual Base::Ptr clone() const override;
   virtual bool canDisassemble(SgAsmGenericHeader*) const override;
   virtual Unparser::BasePtr unparser() const override;
@@ -57,6 +58,7 @@ public:
   void code_offset(rose_addr_t offset) {code_offset_ = offset;}
 };
 
+} // namespace
 } // namespace
 } // namespace
 

@@ -24,7 +24,6 @@ add_library(roseBinaryAnalysis OBJECT
   Debugger.C
   Demangler.C
   DisassemblerCil.C
-  DisassemblerJvm.C
   FeasiblePath.C
   FunctionCall.C
   FunctionSimilarity.C
@@ -79,7 +78,6 @@ install(FILES
   Demangler.h
   Disassembler.h
   DisassemblerCil.h
-  DisassemblerJvm.h
   FeasiblePath.h
   FunctionCall.h
   FunctionSimilarity.h

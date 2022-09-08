@@ -1,7 +1,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
-#include <Rose/BinaryAnalysis/DisassemblerJvm.h>
+#include <Rose/BinaryAnalysis/Disassembler/Jvm.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BinaryAnalysis/Unparser/Jvm.h>
 
@@ -12,12 +12,13 @@ using std::endl;
 
 namespace Rose {
 namespace BinaryAnalysis {
+namespace Disassembler {
 
 using opcode = JvmInstructionKind;
 using namespace ByteOrder;
 
 template <class T> size_t
-DisassemblerJvm::append_operand(const MemoryMap::Ptr &map, rose_addr_t va,
+Jvm::append_operand(const MemoryMap::Ptr &map, rose_addr_t va,
                                 SgUnsignedCharList &chars, SgAsmOperandList* operands)
 {
   const size_t bufSize{sizeof(T)};
@@ -43,7 +44,7 @@ DisassemblerJvm::append_operand(const MemoryMap::Ptr &map, rose_addr_t va,
 }
 
 size_t
-DisassemblerJvm::append_tableswitch(const MemoryMap::Ptr &map, rose_addr_t start,
+Jvm::append_tableswitch(const MemoryMap::Ptr &map, rose_addr_t start,
                                     SgUnsignedCharList &chars, SgAsmOperandList* operands)
 {
   rose_addr_t va{start};
@@ -93,7 +94,7 @@ DisassemblerJvm::append_tableswitch(const MemoryMap::Ptr &map, rose_addr_t start
 }
 
 //TODO...................................
-DisassemblerJvm::DisassemblerJvm() {
+Jvm::Jvm() {
     name("null");
     wordSizeBytes(1);
     byteOrder(ByteOrder::ORDER_LSB);
@@ -103,30 +104,30 @@ DisassemblerJvm::DisassemblerJvm() {
     REG_SP = registerDictionary()->findOrThrow("sp");
 }
 
-DisassemblerJvm::Ptr
-DisassemblerJvm::instance() {
-    return Ptr(new DisassemblerJvm);
+Jvm::Ptr
+Jvm::instance() {
+    return Ptr(new Jvm);
 }
 
-DisassemblerJvm::~DisassemblerJvm() {}
+Jvm::~Jvm() {}
 
 Disassembler::Base::Ptr
-DisassemblerJvm::clone() const {
-    return Ptr(new DisassemblerJvm);
+Jvm::clone() const {
+    return Ptr(new Jvm);
 }
 
 bool
-DisassemblerJvm::canDisassemble(SgAsmGenericHeader*) const {
+Jvm::canDisassemble(SgAsmGenericHeader*) const {
     return false;
 }
 
 Unparser::BasePtr
-DisassemblerJvm::unparser() const {
+Jvm::unparser() const {
     return Unparser::Jvm::instance();
 }
 
 SgAsmInstruction*
-DisassemblerJvm::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start, AddressSet*)
+Jvm::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start, AddressSet*)
 {
   SgAsmJvmInstruction* insn{nullptr};
 
@@ -819,7 +820,7 @@ DisassemblerJvm::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start, Ad
         break;
 
       default:
-        cout << "DisassemblerJvm::disassembleOne: Warning, unknown instruction kind " << (int) kind << endl;
+        cout << "Disassembler::Jvm::disassembleOne: Warning, unknown instruction kind " << (int) kind << endl;
         kind = opcode::unknown;
   }
 
@@ -859,7 +860,7 @@ DisassemblerJvm::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start, Ad
 }
 
 SgAsmInstruction*
-DisassemblerJvm::makeUnknownInstruction(const Disassembler::Exception &e) {
+Jvm::makeUnknownInstruction(const Disassembler::Exception &e) {
     SgAsmInstruction *insn = new SgAsmJvmInstruction(e.ip, "unknown");
     SgAsmOperandList *operands = new SgAsmOperandList;
     insn->set_operandList(operands);
@@ -868,6 +869,7 @@ DisassemblerJvm::makeUnknownInstruction(const Disassembler::Exception &e) {
     return insn;
 }
 
+} // namespace
 } // namespace
 } // namespace
 

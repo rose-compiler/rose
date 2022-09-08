@@ -4,7 +4,7 @@
 
 #include <Rose/CommandLine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/JvmEngine.h>
-#include <Rose/BinaryAnalysis/DisassemblerJvm.h>
+#include <Rose/BinaryAnalysis/Disassembler/Jvm.h>
 #include <Rose/BinaryAnalysis/ByteCode/Jvm.h>
 
 using namespace Rose::Diagnostics;
@@ -700,7 +700,7 @@ JvmEngine::parseContainers(const std::string &fileName) {
 Disassembler::Base::Ptr
 JvmEngine::obtainDisassembler(const Disassembler::Base::Ptr &hint) {
   if (disassembler_ == nullptr) {
-    disassembler_ = DisassemblerJvm::instance();
+    disassembler_ = Disassembler::Jvm::instance();
   }
   return disassembler_;
 }

@@ -17,7 +17,6 @@ run $(librose_compile)				\
     Debugger.C					\
     Demangler.C					\
     DisassemblerCil.C				\
-    DisassemblerJvm.C				\
     FeasiblePath.C				\
     FunctionCall.C				\
     FunctionSimilarity.C			\
@@ -70,7 +69,6 @@ run $(public_header) -o include/rose/Rose/BinaryAnalysis	\
     Demangler.h							\
     Disassembler.h						\
     DisassemblerCil.h						\
-    DisassemblerJvm.h						\
     FeasiblePath.h						\
     FunctionCall.h						\
     FunctionSimilarity.h					\
