@@ -37,7 +37,6 @@ SUBDIRS = \
 	extractMPISkeleton \
 	RoseBlockLevelTracing \
 	xgenTranslator \
-        TemplateAnalysis \
 	$(OPTIONAL_PROJECTS)
 
 #QY (6/11/2018): this directory is no longer used; moved code to POET-ROSE/manycore-stencil
@@ -125,10 +124,6 @@ endif
 if ROSE_WITH_POCC
    SUBDIRS += PolyOpt2
 endif
-
-SUBDIRS += TileK
-SUBDIRS += RaaS
-SUBDIRS += CompilationDB
 
 ########################################################################################################################
 # Associate projects with developers
