@@ -62,6 +62,7 @@ namespace CodeThorn {
     void optionallyGenerateCallGraphDotFile(CodeThornOptions& ctOpt,CTAnalysis* analyzer);
 
     SgProject* runRoseFrontEnd(int argc, char * argv[], CodeThornOptions& ctOpt, TimingCollector& timingCollector);
+    SgProject* runRoseFrontEnd(vector<string>& argvList, CodeThornOptions& ctOpt, TimingCollector& timingCollector);
     void normalizationPass(CodeThornOptions& ctOpt, SgProject* sageProject);
     Labeler* createLabeler(SgProject* sageProject, VariableIdMappingExtended* variableIdMapping, bool withCplusplus = false);
     VariableIdMappingExtended* createVariableIdMapping(CodeThornOptions& ctOpt, SgProject* sageProject);
