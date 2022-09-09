@@ -8,7 +8,6 @@
 #include <Rose/BinaryAnalysis/Disassembler/Exception.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
-#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BinaryAnalysis/Unparser/Settings.h>
 #include <Rose/Diagnostics.h>
 
