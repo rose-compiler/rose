@@ -384,7 +384,8 @@ void print(const GlobalVariables&,const Partitioner2::Partitioner&, std::ostream
  *  A function can access areas of the stack that are outside its own frame.  For instance, x86 function stack arguments are
  *  stored in the caller's frame. Pointers to local variables can point into earlier frames.  The latest function can use parts
  *  of the stack that are after the latest frame and which therefore out outside any frame. */
-struct StackFrame {
+class StackFrame {
+public:
     enum Direction {
         GROWS_UP,                                       /**< New frames are added at higher addresses than old frames. */
         GROWS_DOWN                                      /**< New frames are added at lower addresses than old frames. */
