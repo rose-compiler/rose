@@ -1510,12 +1510,20 @@ RegisterDictionary::instanceForIsa(SgAsmExecutableFileFormat::InsSetArchitecture
     switch (isa & EFF::ISA_FAMILY_MASK) {
         case EFF::ISA_IA32_Family:
             switch (isa) {
-                case EFF::ISA_IA32_286:         return instanceI286();
-                case EFF::ISA_IA32_386:         return instanceI386Math(); // assume '387 coprocessor is present
-                case EFF::ISA_IA32_486:         return instanceI486();
-                case EFF::ISA_IA32_Pentium:     return instancePentium();
-                case EFF::ISA_IA32_Pentium4:    return instancePentium4();
-                default:                        return instancePentium4();
+                case EFF::ISA_IA32_286:
+                    return instanceI286();
+
+                case EFF::ISA_IA32_386:
+                case EFF::ISA_IA32_486:
+                case EFF::ISA_IA32_Pentium:
+                case EFF::ISA_IA32_Pentium4:
+                    // The ROSE x86 disassembler uses Pentium4 registers always. This is because some compilers (such as nasm)
+                    // set the ISA to 386 even for later 32-bit processors. In any case, Pentium4 has all the same registers as
+                    // I386Math; it just has some extras.
+                    return instancePentium4();
+
+                default:
+                    return instancePentium4();
             }
             break;
 
