@@ -1147,10 +1147,6 @@ fi
 
 
 
-# TP (2-27-2009) -- support for RTED
-ROSE_SUPPORT_RTED
-
-AM_CONDITIONAL(ROSE_USE_RTED,test ! "$with_rted" = no)
 
 # TP SUPPORT FOR OPENGL
 #AC_DEFINE([openGL],1,[By default OpenGL is disabled.])
@@ -2054,17 +2050,11 @@ projects/Fortran_to_C/tests/Makefile
 projects/HeaderFilesInclusion/HeaderFilesGraphGenerator/Makefile
 projects/HeaderFilesInclusion/HeaderFilesNotIncludedList/Makefile
 projects/HeaderFilesInclusion/Makefile
-projects/MPI_Tools/MPICodeMotion/Makefile
-projects/MPI_Tools/MPIDeterminismAnalysis/Makefile
-projects/MPI_Tools/Makefile
 projects/Makefile
 projects/ManyCoreRuntime/Makefile
 projects/ManyCoreRuntime/docs/Makefile
 projects/MapleDSL/Makefile
 projects/QtDesignerPlugins/Makefile
-projects/RTED/CppRuntimeSystem/DebuggerQt/Makefile
-projects/RTED/CppRuntimeSystem/Makefile
-projects/RTED/Makefile
 projects/RoseBlockLevelTracing/Makefile
 projects/RoseBlockLevelTracing/src/Makefile
 projects/RoseQt/AstViewer/Makefile

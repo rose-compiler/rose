@@ -19,14 +19,13 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 SUBDIRS = \
 	ArithmeticMeasureTool \
-        POET_ROSE \
+  POET_ROSE \
 	BinaryCloneDetection \
 	CertSecureCodeProject \
 	CloneDetection \
 	EditDistanceMetric \
 	fuse \
 	HeaderFilesInclusion \
-	MPI_Tools \
 	MapleDSL \
 	arrayOptimization \
 	UpcTranslation \
@@ -68,10 +67,6 @@ if !USING_XTENSA_BACKEND_COMPILER
    SUBDIRS += autoTuning
 endif
 
-# DQ (7/21/2010): Removed RTED since it is a problem to compile with ROSE (projects/RTED/CppRuntimeSystem/test.cpp).
-if !ROSE_USING_ROSE_ANALYSIS
-   SUBDIRS += RTED
-endif
 
 SUBDIRS += simulator2
 
