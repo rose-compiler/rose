@@ -4,6 +4,7 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics/NativeSemantics.h>
 
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 
 namespace Rose {
 namespace BinaryAnalysis {

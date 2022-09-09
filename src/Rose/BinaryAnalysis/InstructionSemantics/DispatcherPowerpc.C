@@ -2,11 +2,11 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
 
-#include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
-#include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherPowerpc.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/Util.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
+#include <Rose/Diagnostics.h>
 #include <integerOps.h>
 #include <SageBuilderAsm.h>
 
