@@ -1,4 +1,4 @@
-include_rules
+ include_rules
 ifeq (@(ENABLE_BINARY_ANALYSIS),yes)
 
 # BAT support library. This is also used by tools outside ROSE
@@ -6,50 +6,68 @@ run $(tool_compile_linklib) --install -I. -o libbatSupport batSupport.C ../../sr
 run $(public_header) batSupport.h
 
 # Tools
-run $(tool_compile_linkexe) --install -I. bat-ana.C          libbatSupport
-run $(tool_compile_linkexe) --install -I. bat-cc.C           libbatSupport
-run $(tool_compile_linkexe) --install -I. bat-cfg.C          libbatSupport
-run $(tool_compile_linkexe) --install -I. bat-cg.C           libbatSupport
-run $(tool_compile_linkexe) --install -I. bat-container.C    libbatSupport
-run $(tool_compile_linkexe) --install -I. bat-dis.C          libbatSupport
-run $(tool_compile_linkexe) --install -I. bat-entropy.C      libbatSupport
-run $(tool_compile_linkexe) --install -I. bat-flir-ascribe.C libbatSupport
-run $(tool_compile_linkexe) --install -I. bat-flir-insert.C  libbatSupport
-run $(tool_compile_linkexe) --install -I. bat-flir-lib.C     libbatSupport
-run $(tool_compile_linkexe) --install -I. bat-insnfreq.C     libbatSupport
-run $(tool_compile_linkexe) --install -I. bat-insnfreq-cmp.C libbatSupport
-run $(tool_compile_linkexe) --install -I. bat-linear.C       libbatSupport
-run $(tool_compile_linkexe) --install -I. bat-lsb.C          libbatSupport
-run $(tool_compile_linkexe) --install -I. bat-lsd.C          libbatSupport
-run $(tool_compile_linkexe) --install -I. bat-lsf.C          libbatSupport
-run $(tool_compile_linkexe) --install -I. bat-mem.C          libbatSupport
-run $(tool_compile_linkexe) --install -I. bat-prop.C         libbatSupport
-run $(tool_compile_linkexe) --install -I. bat-stack-deltas.C libbatSupport
-run $(tool_compile_linkexe) --install -I. bat-trace.C        libbatSupport
-run $(tool_compile_linkexe) --install -I. bat-var.C          libbatSupport
+run $(tool_compile_linkexe) --install -I. bat-ana.C               libbatSupport
+run $(tool_compile_linkexe) --install -I. bat-cc.C                libbatSupport
+run $(tool_compile_linkexe) --install -I. bat-cfg.C               libbatSupport
+run $(tool_compile_linkexe) --install -I. bat-cg.C                libbatSupport
+run $(tool_compile_linkexe) --install -I. bat-check-execution.C   libbatSupport
+run $(tool_compile_linkexe) --install -I. bat-container.C         libbatSupport
+run $(tool_compile_linkexe) --install -I. bat-debug-semantics.C   libbatSupport
+run $(tool_compile_linkexe) --install -I. bat-delta-bijection.C   libbatSupport
+run $(tool_compile_linkexe) --install -I. bat-dis.C               libbatSupport
+run $(tool_compile_linkexe) --install -I. bat-dwarf-lines.C       libbatSupport
+run $(tool_compile_linkexe) --install -I. bat-entropy.C           libbatSupport
+run $(tool_compile_linkexe) --install -I. bat-flir-ascribe.C      libbatSupport
+run $(tool_compile_linkexe) --install -I. bat-flir-insert.C       libbatSupport
+run $(tool_compile_linkexe) --install -I. bat-flir-lib.C          libbatSupport
+run $(tool_compile_linkexe) --install -I. bat-insnfreq.C          libbatSupport
+run $(tool_compile_linkexe) --install -I. bat-insnfreq-cmp.C      libbatSupport
+run $(tool_compile_linkexe) --install -I. bat-linear.C            libbatSupport
+run $(tool_compile_linkexe) --install -I. bat-lsb.C               libbatSupport
+run $(tool_compile_linkexe) --install -I. bat-lsd.C               libbatSupport
+run $(tool_compile_linkexe) --install -I. bat-lsf.C               libbatSupport
+run $(tool_compile_linkexe) --install -I. bat-mem.C               libbatSupport
+run $(tool_compile_linkexe) --install -I. bat-native-trace.C      libbatSupport
+run $(tool_compile_linkexe) --install -I. bat-pardis.C            libbatSupport
+run $(tool_compile_linkexe) --install -I. bat-prop.C              libbatSupport
+run $(tool_compile_linkexe) --install -I. bat-scan-magic.C        libbatSupport
+run $(tool_compile_linkexe) --install -I. bat-similar-functions.C libbatSupport
+run $(tool_compile_linkexe) --install -I. bat-stack-deltas.C      libbatSupport
+run $(tool_compile_linkexe) --install -I. bat-to-c.C              libbatSupport
+run $(tool_compile_linkexe) --install -I. bat-trace.C             libbatSupport
+run $(tool_compile_linkexe) --install -I. bat-var.C               libbatSupport
 : bat-dis |> cp -p %f %o |> bat-dis-simple $(ROOT)/$(INSTALL_STAGING)/bin/<staging>
 
 # Tests
 ifeq (@(ENABLE_TESTS),yes)
-    run $(test) bat-ana          ./bat-ana          --self-test --no-error-if-disabled
-    run $(test) bat-cc           ./bat-cc           --self-test --no-error-if-disabled
-    run $(test) bat-cfg          ./bat-cfg          --self-test --no-error-if-disabled
-    run $(test) bat-container    ./bat-container    --self-test --no-error-if-disabled
-    run $(test) bat-dis          ./bat-dis          --self-test --no-error-if-disabled
-    run $(test) bat-entropy      ./bat-entropy      --self-test --no-error-if-disabled
-    run $(test) bat-flir-ascribe ./bat-flir-ascribe --self-test --no-error-if-disabled
-    run $(test) bat-flir-insert  ./bat-flir-insert  --self-test --no-error-if-disabled
-    run $(test) bat-flir-lib     ./bat-flir-lib     --self-test --no-error-if-disabled
-    run $(test) bat-insnfreq     ./bat-insnfreq     --self-test --no-error-if-disabled
-    run $(test) bat-insnfreq-cmp ./bat-insnfreq-cmp --self-test --no-error-if-disabled
-    run $(test) bat-linear       ./bat-linear       --self-test --no-error-if-disabled
-    run $(test) bat-lsb          ./bat-lsb          --self-test --no-error-if-disabled
-    run $(test) bat-lsf          ./bat-lsf          --self-test --no-error-if-disabled
-    run $(test) bat-mem          ./bat-mem          --self-test --no-error-if-disabled
-    run $(test) bat-prop         ./bat-prop         --self-test --no-error-if-disabled
-    run $(test) bat-stack-deltas ./bat-stack-deltas --self-test --no-error-if-disabled
-    run $(test) bat-trace        ./bat-trace        --self-test --no-error-if-disabled
-    run $(test) bat-var          ./bat-var          --self-test --no-error-if-disabled
+    run $(test) bat-ana               ./bat-ana               --self-test --no-error-if-disabled
+    run $(test) bat-cc                ./bat-cc                --self-test --no-error-if-disabled
+    run $(test) bat-cfg               ./bat-cfg               --self-test --no-error-if-disabled
+    run $(test) bat-check-execution   ./bat-check-execution   --self-test --no-error-if-disabled
+    run $(test) bat-container         ./bat-container         --self-test --no-error-if-disabled
+    run $(test) bat-debug-semantics   ./bat-debug-semantics   --self-test --no-error-if-disabled
+    run $(test) bat-delta-bijection   ./bat-delta-bijection   --self-test --no-error-if-disabled
+    run $(test) bat-dis               ./bat-dis               --self-test --no-error-if-disabled
+    run $(test) bat-dwarf-lines       ./bat-dwarf-lines       --self-test --no-error-if-disabled
+    run $(test) bat-entropy           ./bat-entropy           --self-test --no-error-if-disabled
+    run $(test) bat-flir-ascribe      ./bat-flir-ascribe      --self-test --no-error-if-disabled
+    run $(test) bat-flir-insert       ./bat-flir-insert       --self-test --no-error-if-disabled
+    run $(test) bat-flir-lib          ./bat-flir-lib          --self-test --no-error-if-disabled
+    run $(test) bat-insnfreq          ./bat-insnfreq          --self-test --no-error-if-disabled
+    run $(test) bat-insnfreq-cmp      ./bat-insnfreq-cmp      --self-test --no-error-if-disabled
+    run $(test) bat-linear            ./bat-linear            --self-test --no-error-if-disabled
+    run $(test) bat-lsb               ./bat-lsb               --self-test --no-error-if-disabled
+    run $(test) bat-lsf               ./bat-lsf               --self-test --no-error-if-disabled
+    run $(test) bat-mem               ./bat-mem               --self-test --no-error-if-disabled
+    run $(test) bat-native-trace      ./bat-native-trace      --self-test --no-error-if-disabled
+    run $(test) bat-pardis            ./bat-pardis            --self-test --no-error-if-disabled
+    run $(test) bat-prop              ./bat-prop              --self-test --no-error-if-disabled
+    run $(test) bat-scan-magic        ./bat-scan-magic        --self-test --no-error-if-disabled                     
+    run $(test) bat-similar-functions ./bat-similar-functions --self-test --no-error-if-disabled
+    run $(test) bat-stack-deltas      ./bat-stack-deltas      --self-test --no-error-if-disabled
+    run $(test) bat-to-c              ./bat-to-c              --self-test --no-error-if-disabled
+    run $(test) bat-trace             ./bat-trace             --self-test --no-error-if-disabled
+    run $(test) bat-var               ./bat-var               --self-test --no-error-if-disabled
 endif
 
 endif
