@@ -18,10 +18,10 @@
 #pragma GCC diagnostic warning "-Wextra"
 
 
-// workaround
+// workaround: set internal variable before the frontend starts
 namespace SageInterface
 {
-namespace ada
+namespace Ada
 {
 extern SgAdaPackageSpecDecl* stdpkg;
 }
@@ -48,7 +48,7 @@ namespace
       // checks whether this is a discriminated declaration and sets the type accordingly
       void handleDiscrDecl(SgDeclarationStatement& n, SgType* declaredType)
       {
-        if (SgAdaDiscriminatedTypeDecl* discrDcl = si::ada::getAdaDiscriminatedTypeDecl(n))
+        if (SgAdaDiscriminatedTypeDecl* discrDcl = si::Ada::getAdaDiscriminatedTypeDecl(n))
           declaredType = discrDcl->get_type();
 
         set(declaredType);
@@ -203,7 +203,7 @@ namespace
       return extractFundamentalNode(isSgActualArgumentExpression(*expos)->get_expression());
 
     // match argument by position
-    SgAdaGenericDecl& gendcl = si::ada::getGenericDecl(*insdcl);
+    SgAdaGenericDecl& gendcl = si::Ada::getGenericDecl(*insdcl);
     SgAdaGenericDefn& gendfn = SG_DEREF(gendcl.get_definition());
 
     SgDeclarationStatementPtrList& genArglst = gendfn.get_declarations();
@@ -485,7 +485,12 @@ namespace
     ElemIdRange               components = idRange(rec.Record_Components);
     //~ ElemIdRange               implicits  = idRange(rec.Implicit_Components);
 
-    traverseIDs(components, elemMap(), ElemCreator{ctx.scope_npc(sgnode)});
+    sgnode.set_parent(&ctx.scope());
+
+    // NOTE: the true parent is when the record is created; this is set to enable
+    //       traversal from the record body to global scope.
+    traverseIDs(components, elemMap(), ElemCreator{ctx.scope(sgnode)});
+    //~ was: traverseIDs(components, elemMap(), ElemCreator{ctx.scope_npc(sgnode)});
 
     // how to represent implicit components
     //~ traverseIDs(implicits, elemMap(), ElemCreator{ctx.scope_npc(sgnode)});
@@ -1396,8 +1401,8 @@ namespace
   //   (all arguments are called left, right and right respectively)
   // see https://www.adaic.org/resources/add_content/standards/05rm/html/RM-A-1.html
   void declareOp(
-                  //~ map_t<OperatorKey, std::vector<OperatorDesc> >& fns,
-                  map_t<AdaIdentifier, std::vector<SgFunctionDeclaration*> >& fns,
+                  map_t<OperatorKey, std::vector<OperatorDesc> >& fns,
+                  //~ map_t<AdaIdentifier, std::vector<SgFunctionDeclaration*> >& fns,
                   const std::string& name,
                   SgType& retty,
                   std::vector<SgType*> params,
@@ -1406,7 +1411,7 @@ namespace
   {
     ASSERT_require(params.size() > 0);
 
-    std::string            fnname = si::ada::roseOperatorPrefix + name;
+    std::string            fnname = si::Ada::roseOperatorPrefix + name;
     auto                   complete =
        [&params](SgFunctionParameterList& fnParmList, SgScopeStatement& scope)->void
        {
@@ -1432,11 +1437,9 @@ namespace
        };
 
     SgFunctionDeclaration& fndcl  = mkProcedureDecl_nondef(fnname, scope, retty, complete);
-    //~ SgType*                principalType = params.front();
 
-    //~ fns[OperatorKey{principalType, name}].emplace_back(&fndcl, OperatorDesc::DEFINED_IN_STANDARD);
-
-    fns[name].emplace_back(&fndcl);
+    fns[OperatorKey{&scope, name}].emplace_back(&fndcl, OperatorDesc::DECLARED_IN_STANDARD);
+    //~ fns[].emplace_back(&fndcl);
   }
 
   template <class MapT>
@@ -1461,13 +1464,13 @@ void initializePkgStandard(SgGlobal& global)
 
   constexpr auto ADAMAXINT = std::numeric_limits<int>::max();
 
-  SgAdaPackageSpecDecl& stdpkg  = mkAdaPackageSpecDecl(si::ada::packageStandardName, global);
+  SgAdaPackageSpecDecl& stdpkg  = mkAdaPackageSpecDecl(si::Ada::packageStandardName, global);
   SgAdaPackageSpec&     stdspec = SG_DEREF(stdpkg.get_definition());
 
   stdpkg.set_scope(&global);
 
   // \todo reconsider using a true Ada exception representation
-  SgType&               exceptionType = SG_DEREF(sb::buildOpaqueType(si::ada::exceptionName, &stdspec));
+  SgType&               exceptionType = SG_DEREF(sb::buildOpaqueType(si::Ada::exceptionName, &stdspec));
 
   adaTypes()["EXCEPTION"]           = &exceptionType;
 
@@ -1477,7 +1480,7 @@ void initializePkgStandard(SgGlobal& global)
   adaTypes()["BOOLEAN"]             = &adaBoolType;
 
   // \todo reconsider adding a true Ada Duration type
-  SgType& adaDuration               = SG_DEREF(sb::buildOpaqueType(si::ada::durationTypeName, &stdspec));
+  SgType& adaDuration               = SG_DEREF(sb::buildOpaqueType(si::Ada::durationTypeName, &stdspec));
 
   adaTypes()["DURATION"]            = &adaDuration;
 
@@ -1626,7 +1629,7 @@ void initializePkgStandard(SgGlobal& global)
   //
   // build standard functions
   //~ map_t<OperatorKey, std::vector<OperatorDesc> >& opsMap = operatorSupport();
-  auto& opsMap = adaFuncs();
+  auto& opsMap = operatorSupport();
 
   // bool
   declareOp(opsMap, "=",   adaBoolType, { &adaBoolType, &adaBoolType },    stdspec);
@@ -1730,7 +1733,7 @@ void initializePkgStandard(SgGlobal& global)
 
   // set the standard package in the SageInterface::ada namespace
   // \todo this should go away for a cleaner interface
-  si::ada::stdpkg = &stdpkg;
+  si::Ada::stdpkg = &stdpkg;
 }
 
 
