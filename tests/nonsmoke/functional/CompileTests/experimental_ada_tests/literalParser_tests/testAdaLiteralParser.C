@@ -12,7 +12,7 @@ namespace
   {
     std::string tmp;
     stream >> tmp;
-  
+
     return tmp == "" && stream.eof();
   }
 
@@ -30,7 +30,7 @@ namespace
   {
     std::stringstream ss(readStr(stream, sep));
     T                 res;
-    
+
     ss >> res;
     if (!eof(ss))
     {
@@ -47,42 +47,42 @@ namespace
   {
     return readStr(stream, sep);
   }
-  
+
 
   template <class T>
   T convertLiteral(const char* val) { ROSE_ASSERT(false); return T(); }
-  
+
   template <>
-  long long int 
-  convertLiteral<long long int>(const char* val) { return si::ada::convertIntegerLiteral(val); }
-  
+  long long int
+  convertLiteral<long long int>(const char* val) { return si::Ada::convertIntegerLiteral(val); }
+
   template <>
-  long double 
-  convertLiteral<long double>(const char* val) { return si::ada::convertRealLiteral(val); }
-  
+  long double
+  convertLiteral<long double>(const char* val) { return si::Ada::convertRealLiteral(val); }
+
   template <>
-  std::string 
-  convertLiteral<std::string>(const char* val) { return si::ada::convertStringLiteral(val); }
-  
+  std::string
+  convertLiteral<std::string>(const char* val) { return si::Ada::convertStringLiteral(val); }
+
   template <class T>
-  bool eq(const T& lhs, const T& rhs) 
-  { 
-    return lhs == rhs; 
+  bool eq(const T& lhs, const T& rhs)
+  {
+    return lhs == rhs;
   }
-  
+
   template <>
-  bool 
-  eq<long double>(const long double& lhs, const long double& rhs) 
-  { 
+  bool
+  eq<long double>(const long double& lhs, const long double& rhs)
+  {
     constexpr long double tolerance = .0001;
-  
-    return std::abs(lhs - rhs) < tolerance; 
+
+    return std::abs(lhs - rhs) < tolerance;
   }
-  
+
   template <>
-  bool 
-  eq<std::string>(const std::string& lhs, const std::string& rhs) 
-  { 
+  bool
+  eq<std::string>(const std::string& lhs, const std::string& rhs)
+  {
     return boost::trim_left_copy(lhs) == boost::trim_left_copy(rhs);
   }
 
@@ -97,7 +97,7 @@ namespace
     {
       std::cerr << std::endl << valAsNum << " " << valAdaParser << "(" << valAsStr << ")" << std::endl;
 
-      throw std::runtime_error("value mismatch between computed and expected number"); 
+      throw std::runtime_error("value mismatch between computed and expected number");
     }
   }
 
@@ -110,7 +110,7 @@ namespace
     else if (kind == "real")
       checkConversion<long double>(is);
     else if (kind == "string")
-      checkConversion<std::string>(is); 
+      checkConversion<std::string>(is);
   }
 }
 
@@ -124,23 +124,23 @@ int main( int argc, char * argv[] )
 
   std::ifstream inputfile{argv[1]};
 
-  for (;;) 
+  for (;;)
   {
     std::string line = readStr(inputfile, '\n');
-    
+
     // break on eof
     if (!inputfile) break;
 
     if (line.size() == 0 || line[0] == '#')
       continue;
-    
+
     std::stringstream linestream(line);
 
     checkLine(linestream);
     assert(eof(linestream));
-    
+
     // std::cerr << line << " passed." << std::endl;
-  } 
+  }
 
   return 0;
 }

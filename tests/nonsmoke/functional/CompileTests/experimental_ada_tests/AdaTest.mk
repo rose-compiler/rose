@@ -188,11 +188,19 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   entry_index_specification.adb        \
   exception_rename.ads                 \
   fixed_point_definition.ads           \
+  gentask.ads                          \
+  gentask.adb                          \
+  gentask-share.adb                    \ 
   generic_package_declaration.adb      \
   generic_procedure_renaming_declaration.ads  \
   generic_function_renaming_declaration.ads   \
   inherited_primitive_operation.adb    \
   iterate_range.adb                    \
+  digital.ads                          \
+  imageloader.adb                      \
+  m_types.ads                          \
+  m_types_test.ads                     \
+  m_types_use.ads                      \
   namequal_with_renamed_1.adb          \
   namequal_with_renamed_2.adb          \
   nested_package.ads                   \
