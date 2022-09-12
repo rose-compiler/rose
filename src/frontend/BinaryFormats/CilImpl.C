@@ -1514,6 +1514,7 @@ struct MethodHeader : std::tuple<std::uint16_t, std::uint16_t, std::uint32_t, st
   static constexpr std::uint8_t MORE_SECTS  = 0x8;
   static constexpr std::uint8_t INIT_LOCALS = 0x10;
   static constexpr std::uint8_t FLAGS       = MORE_SECTS | INIT_LOCALS;
+  static constexpr std::uint8_t FAT_HEADER_LEN = 12;
 
   using base = std::tuple<std::uint16_t, std::uint16_t, std::uint32_t, std::uint32_t>;
   using base::base;
@@ -1522,7 +1523,7 @@ struct MethodHeader : std::tuple<std::uint16_t, std::uint16_t, std::uint32_t, st
   bool          tiny()  const          { return (flags() & FORMAT) == TINY; }
   bool          moreSections()  const  { return (flags() & FLAGS) == MORE_SECTS; }
   bool          initLocals()  const    { return (flags() & FLAGS) == INIT_LOCALS; }
-  std::uint8_t  headerSize() const     { return tiny() ? 1 : (flags() >> 12); }
+  std::uint8_t  headerSize() const     { return tiny() ? 1 : FAT_HEADER_LEN; }
 
   std::uint16_t maxStackSize() const   { return std::get<1>(*this); }
   std::uint32_t codeSize() const       { return std::get<2>(*this); }
@@ -1543,7 +1544,7 @@ parseFatHeader(rose_addr_t base_va, std::uint32_t rva, SgAsmPEFileHeader* fhdr)
   const MethodHeader   res{ flags, maxStack, codeSize, localIni };
 
   ROSE_ASSERT(!res.tiny());
-  ROSE_ASSERT(res.headerSize() == 3);
+  ROSE_ASSERT(res.headerSize() == MethodHeader::FAT_HEADER_LEN);
   return res;
 }
 
@@ -1567,6 +1568,8 @@ disassemble(SgAsmCilMethodDef* m, MethodHeader mh, std::vector<std::uint8_t>& bu
     ASSERT_not_null(instr);
 
     lst.push_back(instr);
+    std::cerr << "  @" << std::hex << std::setw(4) << addr << std::dec << " " << instr->get_mnemonic() 
+              << std::endl;
 
     addr += instr->get_size();
   }
@@ -1596,23 +1599,32 @@ void decodeMetadata(rose_addr_t base_va, SgAsmCilMetadataHeap* mdh, SgAsmCilMeta
     ASSERT_not_null(m);
 
     std::size_t nameidx = m->get_Name();
-    std::cerr << "proc " << readUtf8String(stringHeap->get_Stream(), nameidx)
+    std::uint32_t  rva = m->get_RVA();
+    
+    std::cerr << ".method " << readUtf8String(stringHeap->get_Stream(), nameidx)
               << std::endl;
 
+    if (rva == 0)
+    {
+      std::cerr << "  is abstract\n" << std::endl;
+      continue;
+    }
+      
     // parse header
-    std::uint32_t  rva = m->get_RVA();
+    std::cerr << '{' << std::endl;
+    
     std::uint8_t   mh0;
     std::size_t    nread = fhdr->get_loader_map()->readQuick(&mh0, base_va + rva, 1);
     ROSE_ASSERT(nread == 1);
 
-    bool           isTiny = (mh0 & MethodHeader::FORMAT) == MethodHeader::TINY;
-    ROSE_ASSERT((!isTiny) || (((base_va+rva)%4) == 0));
+    const bool     isTiny = (mh0 & MethodHeader::FORMAT) == MethodHeader::TINY;
+    ROSE_ASSERT(isTiny || (((base_va+rva)%4) == 0));
     MethodHeader   mh = isTiny ? parseTinyHeader(mh0) : parseFatHeader(base_va, rva, fhdr);
 
     m->set_stackSize(mh.maxStackSize());
     m->set_hasMoreSections(mh.moreSections());
     m->set_initLocals(mh.initLocals());
-
+    
     // parse code
     std::uint32_t  codeRVA = rva + mh.headerSize();
     std::uint32_t  codeLen = mh.codeSize();
@@ -1622,6 +1634,14 @@ void decodeMetadata(rose_addr_t base_va, SgAsmCilMetadataHeap* mdh, SgAsmCilMeta
     ROSE_ASSERT(nreadCode == codeLen);
 
     SgAsmBlock* blk = nullptr;
+    
+    std::cerr << "  // method begins at 0x" << std::hex << (rva) << std::dec << '\n'
+              << "  // header size = " << int(mh.headerSize()) << " (" << (mh.tiny() ? "tiny": "fat") << ")\n"
+              << "  .entrypoint\n" 
+              << "  // code size " << codeLen << " (0x" << std::hex << codeLen << std::dec << ")\n"
+              << "  .maxstack " << m->get_stackSize() << '\n'
+              << "  .localsinit " << m->get_initLocals() << '\n'
+              << std::flush;           
 
     switch (m->get_ImplFlags() & CODE_TYPE_MASK)
     {
@@ -1652,6 +1672,8 @@ void decodeMetadata(rose_addr_t base_va, SgAsmCilMetadataHeap* mdh, SgAsmCilMeta
 
     ASSERT_not_null(blk);
     m->set_body(blk);
+    
+    std::cerr << "}\n" << std::endl;
   }
 }
 
