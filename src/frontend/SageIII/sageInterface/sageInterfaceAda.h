@@ -11,7 +11,7 @@ namespace SageInterface
 {
 
 /// Contains Ada-specific functionality
-namespace ada
+namespace Ada
 {
   extern const std::string roseOperatorPrefix;
   extern const std::string packageStandardName;
@@ -263,6 +263,8 @@ namespace ada
   SgScopeStatement* scopeOfTypedecl(const SgType* ty);
   /// \}
 
+  /// do not use, this is temporary
+  SgScopeStatement* pkgStandardScope();
 
   /// takes a function name as used in ROSE and converts it to a name in Ada
   ///   (i.e., '"' + operator_text + '"').
