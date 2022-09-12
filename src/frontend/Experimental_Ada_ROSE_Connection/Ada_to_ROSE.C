@@ -40,6 +40,8 @@ static bool fail_on_error = false;
 
 namespace
 {
+  constexpr bool PRINT_UNIT_DEPENDENCIES = false;
+
   using FunctionVector = std::vector<SgFunctionDeclaration*>;
 
   /// stores a mapping from Unit_ID to constructed root node in AST
@@ -69,7 +71,7 @@ namespace
   map_t<AdaIdentifier, SgAdaPackageSpecDecl*> adaPkgsMap;
 
   /// stores a mapping from string to builtin function declaration nodes
-  map_t<AdaIdentifier, FunctionVector> adaFuncsMap;
+  //~ map_t<AdaIdentifier, FunctionVector> adaFuncsMap;
 
   /// stores variables defined in Standard or Ascii
   map_t<AdaIdentifier, SgInitializedName*> adaVarsMap;
@@ -77,7 +79,8 @@ namespace
   /// map of inherited symbols
   map_t<InheritedSymbolKey, SgAdaInheritedFunctionSymbol*> inheritedSymbolMap;
 
-  //~ map_t<OperatorKey, std::vector<OperatorDesc> > operatorSupportMap;
+  /// maps generated operators
+  map_t<OperatorKey, std::vector<OperatorDesc> > operatorSupportMap;
 } // anonymous namespace
 
 //~ map_t<int, SgDeclarationStatement*>&        asisUnits() { return asisUnitsMap; }
@@ -90,9 +93,9 @@ map_t<AdaIdentifier, SgType*>&                            adaTypes()         { r
 map_t<AdaIdentifier, SgInitializedName*>&                 adaExcps()         { return adaExcpsMap;        }
 map_t<AdaIdentifier, SgAdaPackageSpecDecl*>&              adaPkgs()          { return adaPkgsMap;         }
 map_t<AdaIdentifier, SgInitializedName*>&                 adaVars()          { return adaVarsMap;         }
-map_t<AdaIdentifier, FunctionVector>&                     adaFuncs()         { return adaFuncsMap;        }
+//~ map_t<AdaIdentifier, FunctionVector>&                     adaFuncs()         { return adaFuncsMap;        }
 map_t<InheritedSymbolKey, SgAdaInheritedFunctionSymbol*>& inheritedSymbols() { return inheritedSymbolMap; }
-//~ map_t<OperatorKey, std::vector<OperatorDesc> >&           operatorSupport()  { return operatorSupportMap; }
+map_t<OperatorKey, std::vector<OperatorDesc> >&           operatorSupport()  { return operatorSupportMap; }
 
 //
 // auxiliary classes and functions
@@ -310,10 +313,10 @@ namespace
     adaExcps().clear();
     adaPkgs().clear();
     adaVars().clear();
-    adaFuncs().clear();
+    //~ adaFuncs().clear();
 
     inheritedSymbols().clear();
-    //~ operatorSupport().clear();
+    operatorSupport().clear();
   }
 
   //
@@ -599,9 +602,10 @@ namespace
 
   struct UnitEntry
   {
-    Unit_Struct*               unit;
-    std::vector<AdaIdentifier> dependencies;
-    bool                       marked;
+    Unit_Struct*         unit;
+    //~ std::vector<AdaIdentifier> dependencies;
+    std::vector<Unit_ID> dependencies;
+    bool                 marked;
   };
 
   struct UniqueUnitId
@@ -610,10 +614,25 @@ namespace
     AdaIdentifier name;
   };
 
+  inline
+  std::ostream& operator<<(std::ostream& os, const UniqueUnitId& id)
+  {
+    return os << id.name << (id.isbody ? " (body)" : "");
+  }
+
   bool startsWith(const std::string& s, const std::string& sub)
   {
     return (s.rfind(sub, 0) == 0);
   }
+
+  bool isSystemPackage(Unit_Struct* unit)
+  {
+    ADA_ASSERT(unit);
+    AdaIdentifier name(unit->Unit_Full_Name);
+
+    return startsWith(name, "SYSTEM");
+  }
+
 
   // sort specifications before bodies
   bool operator<(const UniqueUnitId& lhs, const UniqueUnitId& rhs)
@@ -635,11 +654,13 @@ namespace
     return lhs.name < rhs.name;
   }
 
+  using UnitNameUnitIDMap = std::map<UniqueUnitId, Unit_ID>;
+
   struct DependencyExtractor
   {
     explicit
-    DependencyExtractor(std::vector<AdaIdentifier>& vec, AstContext ctx)
-    : deps(vec), astctx(ctx)
+    DependencyExtractor(std::vector<Unit_ID>& vec, const UnitNameUnitIDMap& nm2id, AstContext ctx)
+    : deps(vec), unitName2Id(nm2id), astctx(ctx)
     {}
 
     void operator()(Element_Struct& elem)
@@ -651,35 +672,55 @@ namespace
       if (clause.Clause_Kind != A_With_Clause)
         return;
 
-      std::vector<AdaIdentifier>& res = deps;
-      AstContext                  ctx{astctx};
+      std::vector<Unit_ID>& res = deps;
+      const UnitNameUnitIDMap& nm2id = unitName2Id;
+      AstContext            ctx{astctx};
 
       traverseIDs( idRange(clause.Clause_Names), elemMap(),
-                   [&res, &ctx](Element_Struct& el) -> void
+                   [&res, &ctx, &nm2id](Element_Struct& el) -> void
                    {
                      ADA_ASSERT (el.Element_Kind == An_Expression);
                      NameData imported = getName(el, ctx);
+                     std::string unitName = imported.fullName;
 
-                     res.emplace_back(imported.fullName);
+                     // try spec first
+                     auto pos = nm2id.find(UniqueUnitId{false, imported.fullName});
+
+                     // functional and procedural units may have bodies
+                     if (pos == nm2id.end())
+                       pos = nm2id.find(UniqueUnitId{true, imported.fullName});
+
+                     if (pos == nm2id.end())
+                     {
+                       logError() << "unknown unit: " << imported.fullName << std::endl;
+                       return;
+                     }
+
+                     res.emplace_back(pos->second);
                    }
                  );
     }
 
-    std::vector<AdaIdentifier>& deps;
-    AstContext                  astctx;
+    std::vector<Unit_ID>&    deps;
+    const UnitNameUnitIDMap& unitName2Id;
+    AstContext               astctx;
   };
 
 
-  void addWithClausDependencies(Unit_Struct& unit, std::vector<AdaIdentifier>& res, AstContext ctx)
+  void addWithClausDependencies( Unit_Struct& unit,
+                                 std::vector<Unit_ID>& res,
+                                 const UnitNameUnitIDMap& unitName2Id,
+                                 AstContext ctx
+                               )
   {
     ElemIdRange range = idRange(unit.Context_Clause_Elements);
 
-    traverseIDs(range, elemMap(), DependencyExtractor{res, ctx});
+    traverseIDs(range, elemMap(), DependencyExtractor{res, unitName2Id, ctx});
   }
 
 
-  void dfs( std::map<UniqueUnitId, UnitEntry>& m,
-            std::map<UniqueUnitId, UnitEntry>::value_type& el,
+  void dfs( std::map<Unit_ID, UnitEntry>& m,
+            std::map<Unit_ID, UnitEntry>::value_type& el,
             std::vector<Unit_Struct*>& res
           )
   {
@@ -687,31 +728,13 @@ namespace
 
     el.second.marked = true;
 
-    // add the spec (package) or body (for routines w/o spec)
-    for (const AdaIdentifier& depname : el.second.dependencies)
+    // handle dependencies first
+    for (Unit_ID depID : el.second.dependencies)
     {
-      auto pos = m.find(UniqueUnitId{false, depname});
-
-      // functional and procedural units may have bodies
-      if (pos == m.end())
-        pos = m.find(UniqueUnitId{true, depname});
-
-      if (pos == m.end())
-      {
-        logError() << "unknown unit: " << depname << std::endl;
-        continue;
-      }
+      auto pos = m.find(depID);
+      ADA_ASSERT(pos != m.end());
 
       dfs(m, *pos, res);
-    }
-
-    // if this is a body, also add the spec as dependency
-    if (el.first.isbody)
-    {
-      auto pos = m.find(UniqueUnitId{false, el.first.name});
-
-      if (pos != m.end())
-        dfs(m, *pos, res);
     }
 
     res.push_back(el.second.unit);
@@ -772,94 +795,108 @@ namespace
     return res;
   }
 
+  Declaration_ID getCorrespondingDeclaration(const Unit_Struct& unit)
+  {
+    const bool hasCorrespDecl = (  (unit.Unit_Kind == A_Procedure_Body)
+                                || (unit.Unit_Kind != A_Function_Body)
+                                || (unit.Unit_Kind != A_Package_Body)
+                                || (unit.Unit_Kind != An_Unknown_Unit)
+                                );
+
+    return hasCorrespDecl ? unit.Corresponding_Declaration : 0;
+  }
+
   std::vector<Unit_Struct*>
   sortUnitsTopologically(Unit_Struct_List_Struct* adaUnit, AstContext ctx)
   {
-    using DependencyMap = std::map<UniqueUnitId, UnitEntry>;
-    using IdEntryMap    = std::map<Unit_ID, DependencyMap::iterator> ;
-    using UnitVector    = std::vector<Unit_Struct_List_Struct*> ;
+    using DependencyMap     = std::map<Unit_ID, UnitEntry> ;
+    using UnitVector        = std::vector<Unit_Struct_List_Struct*> ;
 
-    DependencyMap deps;
-    IdEntryMap    idmap;
-    UnitVector    allUnits;
+    UnitVector        allUnits;
 
     // build maps for all units
     for (Unit_Struct_List_Struct* unit = adaUnit; unit != nullptr; unit = unit->Next)
       allUnits.push_back(unit);
 
+    UnitNameUnitIDMap nameIdMap;
+    DependencyMap     deps;
+
     for (Unit_Struct_List_Struct* unit : allUnits)
     {
       ADA_ASSERT(unit);
 
-      UniqueUnitId uniqueId = uniqueUnitName(unit->Unit);
-
-      auto depres = deps.emplace( uniqueId,
-                                  UnitEntry{&(unit->Unit), std::vector<AdaIdentifier>{}, false}
-                                );
-      ADA_ASSERT(depres.second);
+      auto nmidRes = nameIdMap.emplace(uniqueUnitName(unit->Unit), unit->Unit.ID);
+      ADA_ASSERT(nmidRes.second);
 
       // map specifications to their name
-      auto idmres = idmap.emplace(unit->Unit.ID, depres.first);
-      ADA_ASSERT(idmres.second);
+      auto depsRes = deps.emplace(unit->Unit.ID, UnitEntry{&(unit->Unit), std::vector<int>{}, false});
+      ADA_ASSERT(depsRes.second);
     }
 
     // link the units
     for (Unit_Struct_List_Struct* unit : allUnits)
     {
-      IdEntryMap::iterator    uit = idmap.find(unit->Unit.ID);
-      ADA_ASSERT(uit != idmap.end());
+      DependencyMap::iterator depPos = deps.find(unit->Unit.ID);
+      ADA_ASSERT(depPos != deps.end());
 
-      DependencyMap::iterator pos = uit->second;
-      const size_t            parentID = getUnitIDofParent(unit->Unit);
-      IdEntryMap::iterator    idpos    = idmap.find(parentID);
+      UnitEntry&              unitEntry = depPos->second;
+      const size_t            parentID  = getUnitIDofParent(unit->Unit);
 
-      if (idpos != idmap.end())
+      // add the parent unit, if present
+      if (deps.find(parentID) != deps.end())
       {
-        pos->second.dependencies.emplace_back(idpos->second->first.name);
+        unitEntry.dependencies.emplace_back(parentID);
       }
       else if (parentID > 0)
       {
         // parentID == 1.. 1 refers to the package standard (currently not extracted from Asis)
+        UniqueUnitId uid = uniqueUnitName(unit->Unit);
+
         logWarn() << "unknown unit dependency: "
-                  << pos->first.name << ' '
-                  << (pos->first.isbody ? "[body]" : "[spec]")
-                  << "#" << pos->second.unit->ID
+                  << uid << " #" << unit->Unit.ID
                   << " -> #" << parentID
                   << std::endl;
       }
 
-      addWithClausDependencies(unit->Unit, pos->second.dependencies, ctx);
+      // add the declaration unit (SPEC) if present
+      if (Declaration_ID correspUnit = getCorrespondingDeclaration(unit->Unit))
+      {
+        if (!isInvalidId(correspUnit))
+        {
+          ADA_ASSERT (deps.end() != deps.find(correspUnit));
 
-      // \todo should we also add body->spec constraints?
-      //       unit.Corresponding_Declaration;
+          unitEntry.dependencies.emplace_back(correspUnit);
+        }
+      }
+
+      addWithClausDependencies(unit->Unit, unitEntry.dependencies, nameIdMap, ctx);
     }
 
     std::vector<Unit_Struct*> res;
 
     // topo sort
-    for (Unit_Struct_List_Struct* unit : allUnits)
+
+    // sort system packages first
+    for (DependencyMap::value_type& el : deps)
+      if (isSystemPackage(el.second.unit))
+        dfs(deps, el, res);
+
+    // sort language and user defined packages
+    for (DependencyMap::value_type& el : boost::adaptors::reverse(deps))
+      dfs(deps, el, res);
+
+    if (PRINT_UNIT_DEPENDENCIES)
     {
-      DependencyMap::iterator pos = deps.find(uniqueUnitName(unit->Unit));
+      // print all module dependencies
+      for (DependencyMap::value_type& el : deps)
+      {
+        logWarn() << el.second.unit->Unit_Full_Name << " (" << el.first << "): ";
+        for (int n : el.second.dependencies)
+          logWarn() << deps.at(n).unit->Unit_Full_Name << " (" << n << "), ";
 
-      ROSE_ASSERT(pos != deps.end());
-      dfs(deps, *pos, res);
+        logWarn() << std::endl << std::endl;
+      }
     }
-
-#if 0
-    // print all module dependencies
-    for (Unit_Struct_List_Struct* unit : allUnits)
-    {
-      DependencyMap::iterator pos = deps.find(uniqueUnitName(unit->Unit));
-
-      ROSE_ASSERT(pos != deps.end());
-      DependencyMap::value_type& el = *pos;
-
-      for (const std::string& n : el.second.dependencies)
-        logWarn() << n << ", ";
-
-      logWarn() << std::endl << std::endl;
-    }
-#endif
 
     logTrace() << "\nTopologically sorted module processing order"
                << std::endl;
@@ -1023,7 +1060,7 @@ void convertAsisToROSE(Nodes_Struct& headNodes, SgSourceFile* file)
   file->set_processedToIncludeCppDirectivesAndComments(false);
   logInfo() << "Building ROSE AST done" << std::endl;
 
-  //~ si::ada::convertToOperatorRepresentation(&astScope);
+  //~ si::Ada::convertToOperatorRepresentation(&astScope);
 }
 
 bool FAIL_ON_ERROR(AstContext ctx)

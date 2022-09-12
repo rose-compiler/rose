@@ -3609,6 +3609,8 @@ HEADER_ADA_PROTECTED_TYPE_DECL_STATEMENT_END
 HEADER_ADA_TASK_BODY_DECL_STATEMENT_START
   SgSymbol* get_symbol_from_symbol_table() const override;
   SgName get_mangled_name() const override;
+  void set_scope(SgScopeStatement*) override;
+  SgScopeStatement* get_scope() const override;
 HEADER_ADA_TASK_BODY_DECL_STATEMENT_END
 
 HEADER_ADA_PROTECTED_BODY_DECL_STATEMENT_START
@@ -20977,25 +20979,12 @@ SgSymbol*
 SgAdaTaskBodyDecl::get_symbol_from_symbol_table() const
 {
 /*
-  PP (11/16/21)
+  PP (9/16/22)
   Package bodies do not have their own symbol currently,
   as a body must have seen the spec.
-  ==> Return the spec's symbol.
-  see also SgAdaPackageBodyDecl::get_symbol_from_symbol_table
-
-  SgScopeStatement* scope = get_scope();
-
-  ROSE_ASSERT(scope);
-  return scope->find_symbol_from_declaration(this);
+  ==> Return the specificationDeclaration's
 */
-
-  SgAdaTaskBody* body = get_definition();
-  ROSE_ASSERT(body);
-
-  SgAdaTaskSpec* spec = body->get_spec();
-  ROSE_ASSERT(spec);
-
-  SgDeclarationStatement* specdecl = isSgDeclarationStatement(spec->get_parent());
+  SgDeclarationStatement* specdecl = get_specificationDeclaration();
   ROSE_ASSERT(specdecl);
 
   return specdecl->search_for_symbol_from_symbol_table();
@@ -21009,6 +20998,17 @@ SgAdaTaskBodyDecl::get_mangled_name() const
   name.append(get_name());
   return name;
 }
+
+void SgAdaTaskBodyDecl::set_scope(SgScopeStatement*) {}
+
+SgScopeStatement* SgAdaTaskBodyDecl::get_scope() const
+{
+  SgDeclarationStatement* specdecl = get_specificationDeclaration();
+  ROSE_ASSERT(specdecl);
+
+  return specdecl->get_scope();
+}
+
 
 SOURCE_ADA_TASK_BODY_DECL_STATEMENT_END
 
