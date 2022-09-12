@@ -18,8 +18,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # "make" commands.  To disable your project, just rename its rose.config file and rerun "build" and "configure".
 
 SUBDIRS = \
-	ArithmeticMeasureTool \
-  POET_ROSE \
+        POET_ROSE \
 	BinaryCloneDetection \
 	CertSecureCodeProject \
 	CloneDetection \
@@ -28,14 +27,10 @@ SUBDIRS = \
 	HeaderFilesInclusion \
 	MapleDSL \
 	arrayOptimization \
-	UpcTranslation \
-	autoParallelization \
-	pragmaParsing \
 	ManyCoreRuntime \
 	Fortran_to_C \
 	extractMPISkeleton \
 	RoseBlockLevelTracing \
-	xgenTranslator \
 	$(OPTIONAL_PROJECTS)
 
 #QY (6/11/2018): this directory is no longer used; moved code to POET-ROSE/manycore-stencil
@@ -59,14 +54,6 @@ endif
 #   BinaryDataStructureRecognition 
 
 # DQ (9/26/2011): Directory removed for failing new AST consistancy test for references to deleted IR nodes.
-# UpcTranslation (fails only a single test code shared_2.upc)
-
-# TOO (2/16/2011): Errors with Tensilica's Xtensa compilers as alternative backend compilers. We can
-# gradually enable these tests at a later stage if necessary.
-if !USING_XTENSA_BACKEND_COMPILER
-   SUBDIRS += autoTuning
-endif
-
 
 SUBDIRS += simulator2
 
