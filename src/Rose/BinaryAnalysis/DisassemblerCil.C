@@ -1,6 +1,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
+#include <limits>
 #include <Rose/BinaryAnalysis/DisassemblerCil.h>
 
 #include <Rose/Diagnostics.h>
@@ -288,12 +289,12 @@ floatingFormat(DisassemblerCil::State &state, unsigned fmtNumber)
 }
 #endif
 
+#if 0
 // Default format for floating-point operations. Floating point values are converted to this type internally before any
 // operations are performed on them.
 static CilDataFormat
 floatingFormatForFamily(CilFamily family)
 {
-#if 0
  // DQ (10/9/2021): Eliminate this code for CIL.
     if (0 != (family & Cil_freescale)) {
         // FreeScale ColdFire processors operate on 64-bit double-precision real format ("D") values stored in 64-bit
@@ -305,11 +306,11 @@ floatingFormatForFamily(CilFamily family)
         // floating-point data registers (16 bits of an X-format value are always zero).
         return Cil_fmt_f96;
     }
-#endif
 
     ASSERT_not_reachable("CIL family has no floating point hardware: " + addrToString(family));
     return Cil_fmt_unknown;
 }
+#endif
 
 // TODO: Unused function
 #if 0
@@ -331,7 +332,7 @@ formatLetter(CilDataFormat fmt)
  // DQ (10/9/2021): Eliminate this code for CIL.
     ASSERT_not_reachable("invalid CIL data format: " + stringifyBinaryAnalysisCilDataFormat(fmt));
 #else
-    ROSE_ASSERT(false);
+    ROSE_ABORT();
 #endif
 }
 #endif
@@ -353,7 +354,7 @@ formatNBits(CilDataFormat fmt)
  // DQ (10/9/2021): Eliminate this code for CIL.
     ASSERT_not_reachable("invalid CIL data format: " + stringifyBinaryAnalysisCilDataFormat(fmt));
 #else
-    ROSE_ASSERT(false);
+    ROSE_ABORT();
     return 0;
 #endif
 }
@@ -408,7 +409,7 @@ DisassemblerCil::makeType(State &state, CilDataFormat fmt) const
  // DQ (10/9/2021): Eliminate this code for Cil.
     ASSERT_not_reachable("invalid CIL data format: " + stringifyBinaryAnalysisCilDataFormat(fmt));
 #else
-    ROSE_ASSERT(false);
+    ROSE_ABORT();
     return nullptr;
 #endif
 }
@@ -682,7 +683,7 @@ DisassemblerCil::makeFPRegister(State &state, unsigned regnum) const
             ASSERT_not_reachable("invalid default floating-point format: " + stringifyBinaryAnalysisCilDataFormat(fmt));
     }
 #else
-    ROSE_ASSERT(false);
+    ROSE_ABORT();
 #endif
 
     RegisterDescriptor desc(Cil_regclass_fpr, regnum, 0, type->get_nBits());
@@ -845,7 +846,7 @@ DisassemblerCil::makeEffectiveAddress(State &state, unsigned mode, unsigned reg,
                         state.insn_va);
     }
 #else
-    ROSE_ASSERT(false);
+    ROSE_ABORT();
 #endif
     return nullptr;
 }
@@ -1069,7 +1070,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 #if DEBUG_DISASSEMBLE_ONE || 0
   // DQ (10/18/2021): Tracing through the .Cil disassembly.
     printf ("At TOP of DisassemblerCil::disassembleOne \n");
- // ROSE_ASSERT(false);
+ // ROSE_ABORT();
 #endif
 
     State state; // all mutable state for this function and its descendences is stored here.
@@ -1091,7 +1092,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
  // DQ (10/20/2021): This fills in the buffer (buf).
     size_t nbytes = map->at(start_va).limit(sizeof buf).require(MemoryMap::EXECUTABLE).read(buf).size();
-
+    
 #if DEBUG_DISASSEMBLE_ONE || 0
     for (size_t i=0; i < nbytes; ++i)
        {
@@ -1187,22 +1188,18 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
     insn = makeInstruction(Cil_nop,"nop");
 #endif
 
-#if DEBUG_DISASSEMBLE_ONE || 1
-    static int instruction_counter = 0;
-#endif
+    constexpr bool TRACE_DECODING = false;
 
-    printf ("instruction_counter = %d \n",instruction_counter);
-    instruction_counter++;
 
- // DQ (10/20/2021): Swithc statement over the opt code values.
+ // DQ (10/20/2021): Switch statement over the opt code values.
     switch (buf[0])
       {
      // Add all the cases for different values of opt code here!
         case 0x00:
            {
-#if 1
-             printf ("Found Cil_nop instruction (no operation) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_nop instruction (no operation) \n");
+               
              insn = makeInstruction(start_va,Cil_nop,"nop");
 
           // DQ (11/1/2021): Truncate the size of raw_bytes to the size of the instruction.
@@ -1215,9 +1212,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x01:
            {
-#if 1
-             printf ("Found Cil_break instruction (break) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_break instruction (break) \n");
+
              insn = makeInstruction(start_va,Cil_break,"break");
              raw_bytes.resize(1);
              insn->set_raw_bytes(raw_bytes);
@@ -1226,9 +1223,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x02:
            {
-#if 1
-             printf ("Found Cil_ldarg_0 instruction (load argument 0 onto the stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ldarg_0 instruction (load argument 0 onto the stack) \n");
+
              insn = makeInstruction(start_va,Cil_ldarg_0,"ldarg_0");
              raw_bytes.resize(1);
              insn->set_raw_bytes(raw_bytes);
@@ -1237,9 +1234,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x03:
            {
-#if 1
-             printf ("Found Cil_ldarg_1 instruction (load argument 1 onto the stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ldarg_1 instruction (load argument 1 onto the stack) \n");
+
              insn = makeInstruction(start_va,Cil_ldarg_0,"ldarg_1");
              raw_bytes.resize(1);
              insn->set_raw_bytes(raw_bytes);
@@ -1248,9 +1245,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x04:
            {
-#if 1
-             printf ("Found Cil_ldarg_2 instruction (load argument 2 onto the stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ldarg_2 instruction (load argument 2 onto the stack) \n");
+
              insn = makeInstruction(start_va,Cil_ldarg_2,"ldarg_2");
              raw_bytes.resize(1);
              insn->set_raw_bytes(raw_bytes);
@@ -1259,9 +1256,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x05:
            {
-#if 1
-             printf ("Found Cil_ldarg_3 instruction (load argument 3 onto the stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ldarg_3 instruction (load argument 3 onto the stack) \n");
+
              insn = makeInstruction(start_va,Cil_ldarg_0,"ldarg_3");
              raw_bytes.resize(1);
              insn->set_raw_bytes(raw_bytes);
@@ -1270,9 +1267,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x06:
            {
-#if 1
-             printf ("Found Cil_ldloc_0 instruction (load local variable 0 onto stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ldloc_0 instruction (load local variable 0 onto stack) \n");
+
              insn = makeInstruction(start_va,Cil_ldloc_0,"ldloc_0");
              raw_bytes.resize(1);
              insn->set_raw_bytes(raw_bytes);
@@ -1281,9 +1278,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x07:
            {
-#if 1
-             printf ("Found Cil_ldloc_1 instruction (load local variable 1 onto stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ldloc_1 instruction (load local variable 1 onto stack) \n");
+
              insn = makeInstruction(start_va,Cil_ldloc_1,"ldloc_1");
              raw_bytes.resize(1);
              insn->set_raw_bytes(raw_bytes);
@@ -1292,9 +1289,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x08:
            {
-#if 1
-             printf ("Found Cil_ldloc_2 instruction (load local variable 2 onto stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ldloc_2 instruction (load local variable 2 onto stack) \n");
+
              insn = makeInstruction(start_va,Cil_ldloc_2,"ldloc_2");
              raw_bytes.resize(1);
              insn->set_raw_bytes(raw_bytes);
@@ -1303,9 +1300,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x09:
            {
-#if 1
-             printf ("Found Cil_ldloc_3 instruction (load local variable 3 onto stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ldloc_3 instruction (load local variable 3 onto stack) \n");
+
              insn = makeInstruction(start_va,Cil_ldloc_3,"ldloc_3");
              raw_bytes.resize(1);
              insn->set_raw_bytes(raw_bytes);
@@ -1314,9 +1311,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x0A:
            {
-#if 1
-             printf ("Found Cil_stloc_0 instruction (pop value from stack to local variable) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_stloc_0 instruction (pop value from stack to local variable) \n");
+
              insn = makeInstruction(start_va,Cil_stloc_0,"stloc_0");
              raw_bytes.resize(1);
              insn->set_raw_bytes(raw_bytes);
@@ -1325,9 +1322,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x0B:
            {
-#if 1
-             printf ("Found Cil_stloc_1 instruction (pop value from stack to local variable) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_stloc_1 instruction (pop value from stack to local variable) \n");
+
              insn = makeInstruction(start_va,Cil_stloc_1,"stloc_1");
              raw_bytes.resize(1);
              insn->set_raw_bytes(raw_bytes);
@@ -1336,9 +1333,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x0C:
            {
-#if 1
-             printf ("Found Cil_stloc_2 instruction (pop value from stack to local variable) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_stloc_2 instruction (pop value from stack to local variable) \n");
+
              insn = makeInstruction(start_va,Cil_stloc_2,"stloc_2");
              raw_bytes.resize(1);
              insn->set_raw_bytes(raw_bytes);
@@ -1347,9 +1344,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x0D:
            {
-#if 1
-             printf ("Found Cil_stloc_3 instruction (pop value from stack to local variable) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_stloc_3 instruction (pop value from stack to local variable) \n");
+
              insn = makeInstruction(start_va,Cil_stloc_3,"stloc_3");
              raw_bytes.resize(1);
              insn->set_raw_bytes(raw_bytes);
@@ -1358,9 +1355,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x0E:
            {
-#if 1
-             printf ("Found Cil_ldarg_s instruction (load argument numbered num onto the stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ldarg_s instruction (load argument numbered num onto the stack) \n");
+
           // DQ (11/1/2021): Need to read the second byte as a value to push onto the stack.
           // SgAsmIntegerValueExpression* operand = new SgAsmIntegerValueExpression(raw_bytes[1],NULL);
 
@@ -1377,9 +1374,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x0F:
            {
-#if 1
-             printf ("Found Cil_ldarga_s instruction (fetch the address of the argument argNum) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ldarga_s instruction (fetch the address of the argument argNum) \n");
+
              uint8_t value = ByteOrder::le_to_host(*((uint8_t*)(raw_bytes.data()+1)));
              SgAsmIntegerValueExpression* operand = SageBuilderAsm::buildValueU8(value);
              ROSE_ASSERT(operand != NULL);
@@ -1393,9 +1390,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x10:
            {
-#if 1
-             printf ("Found Cil_starg_s instruction (store value to the argument numbered num) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_starg_s instruction (store value to the argument numbered num) \n");
+
           // DQ (11/1/2021): Need to read the second byte as a value to push onto the stack.
           // SgAsmIntegerValueExpression* operand = new SgAsmIntegerValueExpression(raw_bytes[1],NULL);
 
@@ -1414,9 +1411,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x11:
            {
-#if 1
-             printf ("Found Cil_ldloc_s instruction (load local variable of index onto stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ldloc_s instruction (load local variable of index onto stack) \n");
+
           // SgAsmIntegerValueExpression* operand = new SgAsmIntegerValueExpression(raw_bytes[1],NULL);
 
              uint8_t value = ByteOrder::le_to_host(*((uint8_t*)(raw_bytes.data()+1)));
@@ -1430,9 +1427,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x12:
            {
-#if 1
-             printf ("Found Cil_ldloca_s instruction (load local variable of index onto stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ldloca_s instruction (load local variable of index onto stack) \n");
+
           // SgAsmIntegerValueExpression* operand = new SgAsmIntegerValueExpression(raw_bytes[1],NULL);
 
              uint8_t value = ByteOrder::le_to_host(*((uint8_t*)(raw_bytes.data()+1)));
@@ -1446,9 +1443,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x13:
            {
-#if 1
-             printf ("Found Cil_stloc_s instruction (pop value from stack to local variable) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_stloc_s instruction (pop value from stack to local variable) \n");
+
           // DQ (11/1/2021): Need to get the second byte as the local variable to put the stack value.
           // SgAsmIntegerValueExpression* operand = new SgAsmIntegerValueExpression(raw_bytes[1],NULL);
           // SgAsmIntegerValueExpression* operand = SageBuilderAsm::buildValueI32(value);
@@ -1463,9 +1460,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x14:
            {
-#if 1
-             printf ("Found Cil_ldnull instruction (push a null reference on the stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ldnull instruction (push a null reference on the stack) \n");
+
           // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              insn = makeInstruction(start_va,Cil_ldc_i4_m1,"ldnull");
@@ -1476,9 +1473,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x15:
            {
-#if 1
-             printf ("Found Cil_ldc_i4_m1 instruction (load numeric constant) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ldc_i4_m1 instruction (load numeric constant) \n");
+
           // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              insn = makeInstruction(start_va,Cil_ldc_i4_m1,"ldc_i4_m1");
@@ -1489,9 +1486,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x16:
            {
-#if 1
-             printf ("Found Cil_ldc_i4_0 instruction (load numeric constant) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ldc_i4_0 instruction (load numeric constant) \n");
+
           // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              insn = makeInstruction(start_va,Cil_ldc_i4_0,"ldc_i4_0");
@@ -1502,9 +1499,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x17:
            {
-#if 1
-             printf ("Found Cil_ldc_i4_1 instruction (load numeric constant) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ldc_i4_1 instruction (load numeric constant) \n");
+
           // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              insn = makeInstruction(start_va,Cil_ldc_i4_1,"ldc_i4_1");
@@ -1515,9 +1512,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x18:
            {
-#if 1
-             printf ("Found Cil_ldc_i4_2 instruction (load numeric constant) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ldc_i4_2 instruction (load numeric constant) \n");
+
           // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              insn = makeInstruction(start_va,Cil_ldc_i4_2,"ldc_i4_2");
@@ -1528,9 +1525,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x19:
            {
-#if 1
-             printf ("Found Cil_ldc_i4_3 instruction (load numeric constant) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ldc_i4_3 instruction (load numeric constant) \n");
+
           // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              insn = makeInstruction(start_va,Cil_ldc_i4_3,"ldc_i4_3");
@@ -1541,9 +1538,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x1A:
            {
-#if 1
-             printf ("Found Cil_ldc_i4_4 instruction (load numeric constant) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ldc_i4_4 instruction (load numeric constant) \n");
+
           // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              insn = makeInstruction(start_va,Cil_ldc_i4_4,"ldc_i4_4");
@@ -1554,9 +1551,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x1B:
            {
-#if 1
-             printf ("Found Cil_ldc_i4_5 instruction (load numeric constant) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ldc_i4_5 instruction (load numeric constant) \n");
+
           // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              insn = makeInstruction(start_va,Cil_ldc_i4_5,"ldc_i4_5");
@@ -1567,9 +1564,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x1C:
            {
-#if 1
-             printf ("Found Cil_ldc_i4_6 instruction (load numeric constant) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ldc_i4_6 instruction (load numeric constant) \n");
+
           // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              insn = makeInstruction(start_va,Cil_ldc_i4_6,"ldc_i4_6");
@@ -1580,9 +1577,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x1D:
            {
-#if 1
-             printf ("Found Cil_ldc_i4_7 instruction (load numeric constant) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ldc_i4_7 instruction (load numeric constant) \n");
+
           // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              insn = makeInstruction(start_va,Cil_ldc_i4_7,"ldc_i4_7");
@@ -1593,9 +1590,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x1E:
            {
-#if 1
-             printf ("Found Cil_ldc_i4_8 instruction (load numeric constant) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ldc_i4_8 instruction (load numeric constant) \n");
+
              insn = makeInstruction(start_va,Cil_ldc_i4_8,"ldc_i4_8");
              raw_bytes.resize(1);
              insn->set_raw_bytes(raw_bytes);
@@ -1604,9 +1601,8 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x1F:
            {
-#if 1
-             printf ("Found Cil_ldc_i4_s instruction (load numeric constant) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ldc_i4_s instruction (load numeric constant) \n");
 
           // DQ (11/1/2021): Need to read the second byte as a value to push onto the stack.
           // SgAsmIntegerValueExpression* operand = new SgAsmIntegerValueExpression(raw_bytes[1],NULL);
@@ -1622,9 +1618,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x20:
            {
-#if 1
-             printf ("Found Cil_ldc_i4 instruction (load numeric constant) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ldc_i4 instruction (load numeric constant) \n");
+
           // DQ (11/1/2021): Need to read the second byte as a value to push onto the stack.
           // Convert data from one byte order to another in place.
           // void convert(void *bytes_, size_t nbytes, Endianness from, Endianness to);
@@ -1646,9 +1642,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x21:
            {
-#if 1
-             printf ("Found Cil_ldc_i8 instruction (load numeric constant) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ldc_i8 instruction (load numeric constant) \n");
+
           // DQ (11/1/2021): Need to read the second byte as a value to push onto the stack.
           // Convert data from one byte order to another in place.
           // void convert(void *bytes_, size_t nbytes, Endianness from, Endianness to);
@@ -1667,12 +1663,11 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
              break;
            }
 
-#if 1
         case 0x22:
            {
-#if 1
-             printf ("Found Cil_ldc_r4 instruction (load numeric constant) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ldc_r4 instruction (load numeric constant) \n");
+
           // DQ (11/1/2021): Need to read the second byte as a value to push onto the stack.
           // Convert data from one byte order to another in place.
           // void convert(void *bytes_, size_t nbytes, Endianness from, Endianness to);
@@ -1692,13 +1687,12 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
              insn->set_raw_bytes(raw_bytes);
              break;
            }
-#endif
 
         case 0x23:
            {
-#if 1
-             printf ("Found Cil_ldc_r8 instruction (load numeric constant) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ldc_r8 instruction (load numeric constant) \n");
+
           // DQ (11/1/2021): Need to read the next several bytes as a value to push onto the stack.
           // float64_t value = ByteOrder::le_to_host(*((float64_t*)(raw_bytes.data()+1)));
              uint64_t integer_value = ByteOrder::le_to_host(*((uint64_t*)(raw_bytes.data()+1)));
@@ -1717,9 +1711,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x25:
            {
-#if 1
-             printf ("Found Cil_dup instruction (duplicate the value on the top of the stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_dup instruction (duplicate the value on the top of the stack) \n");
+
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
              insn = makeInstruction(start_va,Cil_dup,"dup",operand);
@@ -1730,9 +1724,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x26:
            {
-#if 1
-             printf ("Found Cil_pop instruction (remove the top element from the stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_pop instruction (remove the top element from the stack) \n");
+
           // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              insn = makeInstruction(start_va,Cil_pop,"pop");
@@ -1743,9 +1737,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x27:
            {
-#if 1
-             printf ("Found Cil_jmp instruction (exit current method and jump to the specified method) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_jmp instruction (exit current method and jump to the specified method) \n");
+
           // DQ (11/3/2021): This is formated as: 72 <T>, where <T> is a "metadata token, encoded as a 4-byte integer.
              int32_t value = ByteOrder::le_to_host(*((int32_t*)(raw_bytes.data()+1)));
 
@@ -1759,9 +1753,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x28:
            {
-#if 1
-             printf ("Found Cil_call instruction (call a method) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_call instruction (call a method) \n");
+
           // DQ (11/3/2021): This is formated as: 72 <T>, where <T> is a "metadata token, encoded as a 4-byte integer.
              int32_t value = ByteOrder::le_to_host(*((int32_t*)(raw_bytes.data()+1)));
 
@@ -1775,9 +1769,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x29:
            {
-#if 1
-             printf ("Found Cil_callsitedescr instruction (call method indicated on the stack with arguments described by callsitedescr) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_callsitedescr instruction (call method indicated on the stack with arguments described by callsitedescr) \n");
+
           // DQ (11/3/2021): This is formated as: 72 <T>, where <T> is a "metadata token, encoded as a 4-byte integer.
              int32_t value = ByteOrder::le_to_host(*((int32_t*)(raw_bytes.data()+1)));
 
@@ -1791,9 +1785,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x2A:
            {
-#if 1
-             printf ("Found Cil_ret instruction (return) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ret instruction (return) \n");
+
           // This may or may not have an operand on the stack that it processes (need to look into this further).
              insn = makeInstruction(start_va,Cil_ret,"ret");
              raw_bytes.resize(1);
@@ -1803,24 +1797,24 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x2B:
            {
-#if 1
-             printf ("Found Cil_br_s instruction (branch to target) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_br_s instruction (branch to target) \n");
+
              int8_t value = ByteOrder::le_to_host(*((int8_t*)(raw_bytes.data()+1)));
 
              SgAsmIntegerValueExpression* operand_0 = SageBuilderAsm::buildValueI8(value);
 
              insn = makeInstruction(start_va,Cil_br_s,"br_s",operand_0);
-             raw_bytes.resize(5);
+             raw_bytes.resize(2);
              insn->set_raw_bytes(raw_bytes);
              break;
            }
 
         case 0x2C:
            {
-#if 1
-             printf ("Found Cil_brfalse_s instruction (branch to target if value is zero (false)) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_brfalse_s instruction (branch to target if value is zero (false)) \n");
+
              int8_t value = ByteOrder::le_to_host(*((int8_t*)(raw_bytes.data()+1)));
 
              SgAsmIntegerValueExpression* operand_0 = SageBuilderAsm::buildValueI8(value);
@@ -1835,9 +1829,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x2D:
            {
-#if 1
-             printf ("Found Cil_brtrue_s instruction (branch to target if value is zero (false)) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_brtrue_s instruction (branch to target if value is zero (false)) \n");
+
              int8_t value = ByteOrder::le_to_host(*((int8_t*)(raw_bytes.data()+1)));
 
              SgAsmIntegerValueExpression* operand_0 = SageBuilderAsm::buildValueI8(value);
@@ -1852,9 +1846,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x2E:
            {
-#if 1
-             printf ("Found Cil_beq_s instruction (branch to target if equal to) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_beq_s instruction (branch to target if equal to) \n");
+
              int8_t value = ByteOrder::le_to_host(*((int8_t*)(raw_bytes.data()+1)));
 
              SgAsmIntegerValueExpression* operand_0 = SageBuilderAsm::buildValueI8(value);
@@ -1870,9 +1864,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x2F:
            {
-#if 1
-             printf ("Found Cil_bge_s instruction (branch to target if equal) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_bge_s instruction (branch to target if equal) \n");
+
              int8_t value = ByteOrder::le_to_host(*((int8_t*)(raw_bytes.data()+1)));
 
              SgAsmIntegerValueExpression* operand_0 = SageBuilderAsm::buildValueI8(value);
@@ -1888,9 +1882,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x30:
            {
-#if 1
-             printf ("Found Cil_bgt_s instruction (branch to target if greater than) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_bgt_s instruction (branch to target if greater than) \n");
+
              int8_t value = ByteOrder::le_to_host(*((int8_t*)(raw_bytes.data()+1)));
 
              SgAsmIntegerValueExpression* operand_0 = SageBuilderAsm::buildValueI8(value);
@@ -1906,9 +1900,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x31:
            {
-#if 1
-             printf ("Found Cil_ble_s instruction (branch to target if less than or equal to) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ble_s instruction (branch to target if less than or equal to) \n");
+               
           // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              insn = makeInstruction(start_va,Cil_bgt_s,"bgt_s");
@@ -1919,9 +1913,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x32:
            {
-#if 1
-             printf ("Found Cil_blt_s instruction (branch to target if less than) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_blt_s instruction (branch to target if less than) \n");
+
              int8_t value = ByteOrder::le_to_host(*((int8_t*)(raw_bytes.data()+1)));
 
              SgAsmIntegerValueExpression* operand_0 = SageBuilderAsm::buildValueI8(value);
@@ -1937,9 +1931,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x33:
            {
-#if 1
-             printf ("Found Cil_bne_un_s instruction (branch to target if not equal) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_bne_un_s instruction (branch to target if not equal) \n");
+
              int8_t value = ByteOrder::le_to_host(*((int8_t*)(raw_bytes.data()+1)));
 
           // SgAsmIntegerValueExpression* operand = new SgAsmIntegerValueExpression(value,NULL);
@@ -1957,9 +1951,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x34:
            {
-#if 1
-             printf ("Found Cil_bge_un_s instruction (branch to target if greater than or equal) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_bge_un_s instruction (branch to target if greater than or equal) \n");
+
              int8_t value = ByteOrder::le_to_host(*((int8_t*)(raw_bytes.data()+1)));
 
           // SgAsmIntegerValueExpression* operand = new SgAsmIntegerValueExpression(value,NULL);
@@ -1977,9 +1971,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x35:
            {
-#if 1
-             printf ("Found Cil_bgt_un instruction (branch on less than, unsigned or unordered) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_bgt_un instruction (branch on less than, unsigned or unordered) \n");
+
              int8_t value = ByteOrder::le_to_host(*((int8_t*)(raw_bytes.data()+1)));
 
              SgAsmIntegerValueExpression* operand_0 = SageBuilderAsm::buildValueI8(value);
@@ -1995,9 +1989,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x36:
            {
-#if 1
-             printf ("Found Cil_ble_un_s instruction (branch to target if less than (unsigned or unordered)) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ble_un_s instruction (branch to target if less than (unsigned or unordered)) \n");
+
              int8_t value = ByteOrder::le_to_host(*((int8_t*)(raw_bytes.data()+1)));
 
              SgAsmIntegerValueExpression* operand_0 = SageBuilderAsm::buildValueI8(value);
@@ -2013,9 +2007,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x37:
            {
-#if 1
-             printf ("Found Cil_blt_un_s instruction (branch to target if less than (unsigned or unordered)) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_blt_un_s instruction (branch to target if less than (unsigned or unordered)) \n");
+
              int8_t value = ByteOrder::le_to_host(*((int8_t*)(raw_bytes.data()+1)));
 
              SgAsmIntegerValueExpression* operand_0 = SageBuilderAsm::buildValueI8(value);
@@ -2031,9 +2025,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x38:
            {
-#if 1
-             printf ("Found Cil_br instruction (branch to target) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_br instruction (branch to target) \n");
+
              int32_t value = ByteOrder::le_to_host(*((int32_t*)(raw_bytes.data()+1)));
 
              SgAsmIntegerValueExpression* operand_0 = SageBuilderAsm::buildValueI32(value);
@@ -2046,9 +2040,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x39:
            {
-#if 1
-             printf ("Found Cil_brfalse instruction (branch to target if value is zero (false)) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_brfalse instruction (branch to target if value is zero (false)) \n");
+
              int32_t value = ByteOrder::le_to_host(*((int32_t*)(raw_bytes.data()+1)));
 
              SgAsmIntegerValueExpression* operand_0 = SageBuilderAsm::buildValueI32(value);
@@ -2063,9 +2057,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x3A:
            {
-#if 1
-             printf ("Found Cil_brtrue instruction (branch to target if value is nonzero (true)) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_brtrue instruction (branch to target if value is nonzero (true)) \n");
+
              int32_t value = ByteOrder::le_to_host(*((int32_t*)(raw_bytes.data()+1)));
 
              SgAsmIntegerValueExpression* operand_0 = SageBuilderAsm::buildValueI32(value);
@@ -2080,9 +2074,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x3B:
            {
-#if 1
-             printf ("Found Cil_beq instruction (branch to target if equal) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_beq instruction (branch to target if equal) \n");
+
              int32_t value = ByteOrder::le_to_host(*((int32_t*)(raw_bytes.data()+1)));
 
              SgAsmIntegerValueExpression* operand_0 = SageBuilderAsm::buildValueI32(value);
@@ -2098,9 +2092,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x3C:
            {
-#if 1
-             printf ("Found Cil_bge instruction (branch to target if equal) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_bge instruction (branch to target if equal) \n");
+
              int32_t value = ByteOrder::le_to_host(*((int32_t*)(raw_bytes.data()+1)));
 
              SgAsmIntegerValueExpression* operand_0 = SageBuilderAsm::buildValueI32(value);
@@ -2116,9 +2110,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x3D:
            {
-#if 1
-             printf ("Found Cil_bgt instruction (branch to target if greater than) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_bgt instruction (branch to target if greater than) \n");
+
              int32_t value = ByteOrder::le_to_host(*((int32_t*)(raw_bytes.data()+1)));
 
              SgAsmIntegerValueExpression* operand_0 = SageBuilderAsm::buildValueI32(value);
@@ -2134,9 +2128,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x3E:
            {
-#if 1
-             printf ("Found Cil_ble instruction (branch to target if less than or equal) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ble instruction (branch to target if less than or equal) \n");
+
              int32_t value = ByteOrder::le_to_host(*((int32_t*)(raw_bytes.data()+1)));
 
              SgAsmIntegerValueExpression* operand_0 = SageBuilderAsm::buildValueI32(value);
@@ -2152,9 +2146,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x3F:
            {
-#if 1
-             printf ("Found Cil_blt instruction (branch to target if less than) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_blt instruction (branch to target if less than) \n");
+
              int32_t value = ByteOrder::le_to_host(*((int32_t*)(raw_bytes.data()+1)));
 
              SgAsmIntegerValueExpression* operand_0 = SageBuilderAsm::buildValueI32(value);
@@ -2170,9 +2164,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x40:
            {
-#if 1
-             printf ("Found Cil_bge_un instruction (branch to target if greater than or equal) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_bge_un instruction (branch to target if greater than or equal) \n");
+
              int32_t value = ByteOrder::le_to_host(*((int32_t*)(raw_bytes.data()+1)));
 
           // SgAsmIntegerValueExpression* operand = new SgAsmIntegerValueExpression(value,NULL);
@@ -2190,9 +2184,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x41:
            {
-#if 1
-             printf ("Found Cil_bge_un instruction (branch to target if greater than or equal) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_bge_un instruction (branch to target if greater than or equal) \n");
+
              int32_t value = ByteOrder::le_to_host(*((int32_t*)(raw_bytes.data()+1)));
 
           // SgAsmIntegerValueExpression* operand = new SgAsmIntegerValueExpression(value,NULL);
@@ -2210,9 +2204,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x42:
            {
-#if 1
-             printf ("Found Cil_bgt_un instruction (branch on greater than, unsigned or unordered) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_bgt_un instruction (branch on greater than, unsigned or unordered) \n");
+
              int32_t value = ByteOrder::le_to_host(*((int32_t*)(raw_bytes.data()+1)));
 
              SgAsmIntegerValueExpression* operand_0 = SageBuilderAsm::buildValueI32(value);
@@ -2228,9 +2222,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x43:
            {
-#if 1
-             printf ("Found Cil_ble_un instruction (branch on less than, unsigned or unordered) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ble_un instruction (branch on less than, unsigned or unordered) \n");
+
              int32_t value = ByteOrder::le_to_host(*((int32_t*)(raw_bytes.data()+1)));
 
              SgAsmIntegerValueExpression* operand_0 = SageBuilderAsm::buildValueI32(value);
@@ -2246,9 +2240,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x44:
            {
-#if 1
-             printf ("Found Cil_blt_un instruction (branch to target if less than (unsigned or unordered)) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_blt_un instruction (branch to target if less than (unsigned or unordered)) \n");
+
              int32_t value = ByteOrder::le_to_host(*((int32_t*)(raw_bytes.data()+1)));
 
              SgAsmIntegerValueExpression* operand_0 = SageBuilderAsm::buildValueI32(value);
@@ -2264,28 +2258,35 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x45:
            {
-#if 1
-             printf ("Found Cil_switch instruction (jump to one of n values)) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_switch instruction (jump to one of n values)) \n");
+
+             const std::int32_t MIN_SWITCH_SIZE = 5; 
+             
              uint32_t value_0 = ByteOrder::le_to_host(*((int32_t*)(raw_bytes.data()+1)));
-             int32_t value_1  = ByteOrder::le_to_host(*((int32_t*)(raw_bytes.data()+1)));
-
              SgAsmIntegerValueExpression* operand_0 = SageBuilderAsm::buildValueU32(value_0);
-             SgAsmIntegerValueExpression* operand_1 = SageBuilderAsm::buildValueI32(value_1);
-
-             SgAsmStackExpression* operand_2 = new SgAsmStackExpression(0);
-
-             insn = makeInstruction(start_va,Cil_switch,"switch",operand_0,operand_1,operand_2);
-             raw_bytes.resize(5);
+             
+             insn = makeInstruction(start_va,Cil_switch,"switch",operand_0);
+             
+             ROSE_ASSERT(std::numeric_limits<std::uint32_t>::max() / sizeof(std::int32_t) >= value_0);
+             const std::uint32_t branchTableSize = sizeof(std::int32_t)*value_0;
+             
+             raw_bytes.resize(MIN_SWITCH_SIZE+branchTableSize);
+             std::uint8_t* const loc = raw_bytes.data() + MIN_SWITCH_SIZE;
+             const rose_addr_t   brtbl_va = start_va + MIN_SWITCH_SIZE;
+             const std::uint32_t bytesRead = map->at(brtbl_va).limit(branchTableSize)
+                                               .require(MemoryMap::EXECUTABLE).read(loc).size();
+             
+             ROSE_ASSERT(bytesRead == branchTableSize);
              insn->set_raw_bytes(raw_bytes);
              break;
            }
 
         case 0x46:
            {
-#if 1
-             printf ("Found Cil_ldind_i1 instruction (load value indirect onto stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ldind_i1 instruction (load value indirect onto stack) \n");
+
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
           // This should have one operand which should be the target, not yet clear how to resolve
@@ -2298,9 +2299,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x47:
            {
-#if 1
-             printf ("Found Cil_ldind_u1 instruction (load value indirect onto stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ldind_u1 instruction (load value indirect onto stack) \n");
+
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
           // This should have one operand which should be the target, not yet clear how to resolve
@@ -2313,9 +2314,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x48:
            {
-#if 1
-             printf ("Found Cil_ldind_i2 instruction (load value indirect onto stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ldind_i2 instruction (load value indirect onto stack) \n");
+
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
           // This should have one operand which should be the target, not yet clear how to resolve
@@ -2328,9 +2329,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x49:
            {
-#if 1
-             printf ("Found Cil_ldind_u2 instruction (load value indirect onto stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ldind_u2 instruction (load value indirect onto stack) \n");
+
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
           // This should have one operand which should be the target, not yet clear how to resolve
@@ -2343,9 +2344,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x4A:
            {
-#if 1
-             printf ("Found Cil_ldind_i4 instruction (load value indirect onto stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ldind_i4 instruction (load value indirect onto stack) \n");
+
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
           // This should have one operand which should be the target, not yet clear how to resolve
@@ -2358,9 +2359,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x4B:
            {
-#if 1
-             printf ("Found Cil_ldind_i4 instruction (load value indirect onto stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ldind_i4 instruction (load value indirect onto stack) \n");
+
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
           // This should have one operand which should be the target, not yet clear how to resolve
@@ -2373,9 +2374,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x4C:
            {
-#if 1
-             printf ("Found Cil_ldind_u8 instruction (load value indirect onto stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ldind_u8 instruction (load value indirect onto stack) \n");
+
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
           // This should have one operand which should be the target, not yet clear how to resolve
@@ -2388,9 +2389,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x4D:
            {
-#if 1
-             printf ("Found Cil_ldind_i instruction (load value indirect onto stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ldind_i instruction (load value indirect onto stack) \n");
+
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
           // This should have one operand which should be the target, not yet clear how to resolve
@@ -2403,9 +2404,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x4E:
            {
-#if 1
-             printf ("Found Cil_ldind_r4 instruction (load value indirect onto stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ldind_r4 instruction (load value indirect onto stack) \n");
+
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
           // This should have one operand which should be the target, not yet clear how to resolve
@@ -2418,9 +2419,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x4F:
            {
-#if 1
-             printf ("Found Cil_ldind_r8 instruction (load value indirect onto stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ldind_r8 instruction (load value indirect onto stack) \n");
+
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
           // This should have one operand which should be the target, not yet clear how to resolve
@@ -2433,9 +2434,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x50:
            {
-#if 1
-             printf ("Found Cil_ldind_ref instruction (load value indirect onto stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ldind_ref instruction (load value indirect onto stack) \n");
+
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
           // This should have one operand which should be the target, not yet clear how to resolve
@@ -2448,9 +2449,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x51:
            {
-#if 1
-             printf ("Found Cil_stind_ref instruction (store value of type object ref (type o) into memory at address) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_stind_ref instruction (store value of type object ref (type o) into memory at address) \n");
+
              SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
              SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
 
@@ -2462,9 +2463,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x52:
            {
-#if 1
-             printf ("Found Cil_stind_i1 instruction (store value of type int8 into memory at address) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_stind_i1 instruction (store value of type int8 into memory at address) \n");
+
              SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
              SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
 
@@ -2476,9 +2477,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x53:
            {
-#if 1
-             printf ("Found Cil_stind_i2 instruction (store value of type int16 into memory at address) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_stind_i2 instruction (store value of type int16 into memory at address) \n");
+
              SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
              SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
 
@@ -2490,9 +2491,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x54:
            {
-#if 1
-             printf ("Found Cil_stind_i4 instruction (store value of type int32 into memory at address) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_stind_i4 instruction (store value of type int32 into memory at address) \n");
+
              SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
              SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
 
@@ -2504,9 +2505,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x55:
            {
-#if 1
-             printf ("Found Cil_stind_i8 instruction (store value of type int64 into memory at address) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_stind_i8 instruction (store value of type int64 into memory at address) \n");
+
              SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
              SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
 
@@ -2518,9 +2519,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x56:
            {
-#if 1
-             printf ("Found Cil_stind_r4 instruction (store value of type float32 into memory at address) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_stind_r4 instruction (store value of type float32 into memory at address) \n");
+
              SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
              SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
 
@@ -2532,9 +2533,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x57:
            {
-#if 1
-             printf ("Found Cil_stind_r8 instruction (store value of type float64 into memory at address) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_stind_r8 instruction (store value of type float64 into memory at address) \n");
+
              SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
              SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
 
@@ -2546,9 +2547,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x58:
            {
-#if 1
-             printf ("Found Cil_add instruction (add values on stack and replace with result onto stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_add instruction (add values on stack and replace with result onto stack) \n");
+
              SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
              SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
 
@@ -2566,9 +2567,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x59:
            {
-#if 1
-             printf ("Found Cil_sub instruction (sub values on stack and replace with result onto stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_sub instruction (sub values on stack and replace with result onto stack) \n");
+
              SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
              SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
 
@@ -2586,9 +2587,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x5A:
            {
-#if 1
-             printf ("Found Cil_mul instruction (multiply values on stack and replace with result onto stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_mul instruction (multiply values on stack and replace with result onto stack) \n");
+
              SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
              SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
 
@@ -2606,9 +2607,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x5B:
            {
-#if 1
-             printf ("Found Cil_div instruction (divide values on stack and replace with result onto stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_div instruction (divide values on stack and replace with result onto stack) \n");
+
              SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
              SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
 
@@ -2626,9 +2627,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x5C:
            {
-#if 1
-             printf ("Found Cil_div_un instruction (divide values on stack and replace with result onto stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_div_un instruction (divide values on stack and replace with result onto stack) \n");
+
              SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
              SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
 
@@ -2646,9 +2647,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x5D:
            {
-#if 1
-             printf ("Found Cil_rem instruction (remiander values on stack and replace with result onto stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_rem instruction (remiander values on stack and replace with result onto stack) \n");
+
              SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
              SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
 
@@ -2666,9 +2667,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x5E:
            {
-#if 1
-             printf ("Found Cil_rem_un instruction (remainder values on stack and replace with result onto stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_rem_un instruction (remainder values on stack and replace with result onto stack) \n");
+
              SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
              SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
 
@@ -2686,9 +2687,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x5F:
            {
-#if 1
-             printf ("Found Cil_and instruction (and values on stack and replace with result onto stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_and instruction (and values on stack and replace with result onto stack) \n");
+
              SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
              SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
 
@@ -2706,9 +2707,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x60:
            {
-#if 1
-             printf ("Found Cil_or instruction (or values on stack and replace with result onto stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_or instruction (or values on stack and replace with result onto stack) \n");
+
              SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
              SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
 
@@ -2726,9 +2727,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x61:
            {
-#if 1
-             printf ("Found Cil_xor instruction (or values on stack and replace with result onto stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_xor instruction (or values on stack and replace with result onto stack) \n");
+
              SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
              SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
 
@@ -2746,9 +2747,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x62:
            {
-#if 1
-             printf ("Found Cil_shl instruction (shift an integer left (shift in zero), return an integer) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_shl instruction (shift an integer left (shift in zero), return an integer) \n");
+
           // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
@@ -2762,9 +2763,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x63:
            {
-#if 1
-             printf ("Found Cil_shr instruction (shift an integer right (shift in zero), return an integer) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_shr instruction (shift an integer right (shift in zero), return an integer) \n");
+
           // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
@@ -2778,9 +2779,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x64:
            {
-#if 1
-             printf ("Found Cil_shr_un instruction (shift an integer right (shift in zero), return an integer) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_shr_un instruction (shift an integer right (shift in zero), return an integer) \n");
+
           // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
@@ -2794,9 +2795,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x65:
            {
-#if 1
-             printf ("Found Cil_neg instruction (negates value from stack and pushes new value onto the stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_neg instruction (negates value from stack and pushes new value onto the stack) \n");
+
           // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
@@ -2809,9 +2810,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x66:
            {
-#if 1
-             printf ("Found Cil_not instruction (bitwise complement) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_not instruction (bitwise complement) \n");
+
           // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
@@ -2824,9 +2825,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x67:
            {
-#if 1
-             printf ("Found Cil_conv_i1 instruction (data conversion to int8, pushing int32 on stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_conv_i1 instruction (data conversion to int8, pushing int32 on stack) \n");
+
           // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
@@ -2839,9 +2840,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x68:
            {
-#if 1
-             printf ("Found Cil_conv_i2 instruction (data conversion to int16, pushing int32 on stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_conv_i2 instruction (data conversion to int16, pushing int32 on stack) \n");
+
           // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
@@ -2854,9 +2855,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x69:
            {
-#if 1
-             printf ("Found Cil_conv_i4 instruction (data conversion to int32, pushing int32 on stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_conv_i4 instruction (data conversion to int32, pushing int32 on stack) \n");
+
           // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
@@ -2869,9 +2870,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x6A:
            {
-#if 1
-             printf ("Found Cil_conv_i8 instruction (data conversion to int64, pushing int64 on stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_conv_i8 instruction (data conversion to int64, pushing int64 on stack) \n");
+
           // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
@@ -2884,9 +2885,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x6B:
            {
-#if 1
-             printf ("Found Cil_conv_r4 instruction (data conversion to float32, pushing F on stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_conv_r4 instruction (data conversion to float32, pushing F on stack) \n");
+
           // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
@@ -2899,9 +2900,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x6C:
            {
-#if 1
-             printf ("Found Cil_conv_r8 instruction (data conversion to float64, pushing F on stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_conv_r8 instruction (data conversion to float64, pushing F on stack) \n");
+
           // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
@@ -2914,9 +2915,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x6D:
            {
-#if 1
-             printf ("Found Cil_conv_u4 instruction (data conversion to int32, pushing int32 on stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_conv_u4 instruction (data conversion to int32, pushing int32 on stack) \n");
+
           // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
@@ -2929,9 +2930,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x6E:
            {
-#if 1
-             printf ("Found Cil_conv_u8 instruction (data conversion to unsigned int64, pushing int64 on stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_conv_u8 instruction (data conversion to unsigned int64, pushing int64 on stack) \n");
+
           // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
@@ -2944,9 +2945,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x6F:
            {
-#if 1
-             printf ("Found Cil_callvirt instruction (call a method associated with an object) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_callvirt instruction (call a method associated with an object) \n");
+
           // DQ (11/3/2021): This is formated as: 72 <T>, where <T> is a "metadata token, encoded as a 4-byte integer.
              int32_t value = ByteOrder::le_to_host(*((int32_t*)(raw_bytes.data()+1)));
 
@@ -2963,9 +2964,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x70:
            {
-#if 1
-             printf ("Found Cil_cpobj instruction (copy a value type from src to dist) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_cpobj instruction (copy a value type from src to dist) \n");
+
           // DQ (11/3/2021): This is formated as: 72 <T>, where <T> is a "metadata token, encoded as a 4-byte integer.
              int32_t value = ByteOrder::le_to_host(*((int32_t*)(raw_bytes.data()+1)));
 
@@ -2984,9 +2985,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x71:
            {
-#if 1
-             printf ("Found Cil_ldobj instruction (copy a valuestored at address src to the stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ldobj instruction (copy a valuestored at address src to the stack) \n");
+
           // DQ (11/3/2021): This is formated as: 72 <T>, where <T> is a "metadata token, encoded as a 4-byte integer.
              int32_t value = ByteOrder::le_to_host(*((int32_t*)(raw_bytes.data()+1)));
 
@@ -3004,9 +3005,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x72:
            {
-#if 1
-             printf ("Found Cil_ldstr instruction (push a string object for the literal string) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ldstr instruction (push a string object for the literal string) \n");
+
           // DQ (11/3/2021): This is formated as: 72 <T>, where <T> is a "metadata token, encoded as a 4-byte integer.
              int32_t value = ByteOrder::le_to_host(*((int32_t*)(raw_bytes.data()+1)));
 
@@ -3020,20 +3021,23 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x73:
            {
-#if 1
-             printf ("Found Cil_newobj instruction (allocate an uninitialized object or value type and call ctor) \n");
-#endif
-             insn = makeInstruction(start_va,Cil_newobj,"newobj");
-             raw_bytes.resize(1);
+             if (TRACE_DECODING)
+               printf ("Found Cil_newobj instruction (allocate an uninitialized object or value type and call ctor) \n");
+               
+             uint32_t value = ByteOrder::le_to_host(*((uint32_t*)(raw_bytes.data()+1)));
+             SgAsmIntegerValueExpression* operand = SageBuilderAsm::buildValueU32(value);               
+
+             insn = makeInstruction(start_va,Cil_newobj,"newobj",operand);
+             raw_bytes.resize(5);
              insn->set_raw_bytes(raw_bytes);
              break;
            }
 
         case 0x74:
            {
-#if 1
-             printf ("Found Cil_castclass instruction (cast obj to a typeTok) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_castclass instruction (cast obj to a typeTok) \n");
+
           // DQ (11/3/2021): This is formated as: 72 <T>, where <T> is a "metadata token, encoded as a 4-byte integer.
              int32_t value = ByteOrder::le_to_host(*((int32_t*)(raw_bytes.data()+1)));
 
@@ -3048,9 +3052,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x75:
            {
-#if 1
-             printf ("Found Cil_isinst instruction (test if obj is an instance of typeTok, returning null or an instance of theat class or interface) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_isinst instruction (test if obj is an instance of typeTok, returning null or an instance of theat class or interface) \n");
+
           // DQ (11/3/2021): This is formated as: 72 <T>, where <T> is a "metadata token, encoded as a 4-byte integer.
              int32_t value = ByteOrder::le_to_host(*((int32_t*)(raw_bytes.data()+1)));
 
@@ -3065,9 +3069,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x76:
            {
-#if 1
-             printf ("Found Cil_conv_r_un instruction (data conversion unsigned integer, to floating-point,pushing F on stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_conv_r_un instruction (data conversion unsigned integer, to floating-point,pushing F on stack) \n");
+
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
              insn = makeInstruction(start_va,Cil_conv_r_un,"conv_r_un",operand);
@@ -3080,9 +3084,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x79:
            {
-#if 1
-             printf ("Found Cil_unbox instruction (extract a value-type from obj, its boxed representation) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_unbox instruction (extract a value-type from obj, its boxed representation) \n");
+
           // DQ (11/3/2021): This is formated as: 72 <T>, where <T> is a "metadata token, encoded as a 4-byte integer.
              int32_t value = ByteOrder::le_to_host(*((int32_t*)(raw_bytes.data()+1)));
 
@@ -3097,9 +3101,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x7A:
            {
-#if 1
-             printf ("Found Cil_throw instruction (throw an exception) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_throw instruction (throw an exception) \n");
+
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
              insn = makeInstruction(start_va,Cil_throw,"throw",operand);
@@ -3110,9 +3114,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x7B:
            {
-#if 1
-             printf ("Found Cil_ldfld instruction (push the address of field of object (or value type), onto the stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ldfld instruction (push the address of field of object (or value type), onto the stack) \n");
+
           // DQ (11/3/2021): This is formated as: 72 <T>, where <T> is a "metadata token, encoded as a 4-byte integer.
              int32_t value = ByteOrder::le_to_host(*((int32_t*)(raw_bytes.data()+1)));
 
@@ -3127,9 +3131,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x7C:
            {
-#if 1
-             printf ("Found Cil_ldflda instruction (push the address of field of object (or value type), onto the stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ldflda instruction (push the address of field of object (or value type), onto the stack) \n");
+
           // DQ (11/3/2021): This is formated as: 72 <T>, where <T> is a "metadata token, encoded as a 4-byte integer.
              int32_t value = ByteOrder::le_to_host(*((int32_t*)(raw_bytes.data()+1)));
 
@@ -3144,9 +3148,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x7D:
            {
-#if 1
-             printf ("Found Cil_stfld instruction (replace the value of field of the object obj with value) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_stfld instruction (replace the value of field of the object obj with value) \n");
+
           // DQ (11/3/2021): This is formated as: 72 <T>, where <T> is a "metadata token, encoded as a 4-byte integer.
              int32_t value = ByteOrder::le_to_host(*((int32_t*)(raw_bytes.data()+1)));
 
@@ -3162,9 +3166,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x7E:
            {
-#if 1
-             printf ("Found Cil_ldsfld instruction (push the value of field on the stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ldsfld instruction (push the value of field on the stack) \n");
+
           // DQ (11/3/2021): This is formated as: 72 <T>, where <T> is a "metadata token, encoded as a 4-byte integer.
              int32_t value = ByteOrder::le_to_host(*((int32_t*)(raw_bytes.data()+1)));
 
@@ -3178,9 +3182,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x7F:
            {
-#if 1
-             printf ("Found Cil_ldsflda instruction (push the address of the static field, field, on the stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ldsflda instruction (push the address of the static field, field, on the stack) \n");
+
           // DQ (11/3/2021): This is formated as: 72 <T>, where <T> is a "metadata token, encoded as a 4-byte integer.
              int32_t value = ByteOrder::le_to_host(*((int32_t*)(raw_bytes.data()+1)));
 
@@ -3194,9 +3198,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x80:
            {
-#if 1
-             printf ("Found Cil_stsfld instruction (replace the value of filed with val) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_stsfld instruction (replace the value of filed with val) \n");
+
           // DQ (11/3/2021): This is formated as: 72 <T>, where <T> is a "metadata token, encoded as a 4-byte integer.
              int32_t value = ByteOrder::le_to_host(*((int32_t*)(raw_bytes.data()+1)));
 
@@ -3211,9 +3215,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x81:
            {
-#if 1
-             printf ("Found Cil_stobj instruction (store a value of type typeTok at an address) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_stobj instruction (store a value of type typeTok at an address) \n");
+
           // DQ (11/3/2021): This is formated as: 72 <T>, where <T> is a "metadata token, encoded as a 4-byte integer.
              int32_t value = ByteOrder::le_to_host(*((int32_t*)(raw_bytes.data()+1)));
 
@@ -3227,9 +3231,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x82:
            {
-#if 1
-             printf ("Found Cil_conv_ovf_i1_un instruction (unsigned data conversion to int8 (on stack as int32) with overflow detection) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_conv_ovf_i1_un instruction (unsigned data conversion to int8 (on stack as int32) with overflow detection) \n");
+
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
              insn = makeInstruction(start_va,Cil_conv_ovf_i1_un,"conv_ovf_i1_un",operand);
@@ -3240,9 +3244,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x83:
            {
-#if 1
-             printf ("Found Cil_conv_ovf_i2_un instruction (unsigned data conversion to int16 (on stack as int32) with overflow detection) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_conv_ovf_i2_un instruction (unsigned data conversion to int16 (on stack as int32) with overflow detection) \n");
+
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
              insn = makeInstruction(start_va,Cil_conv_ovf_i2_un,"conv_ovf_i2_un",operand);
@@ -3253,9 +3257,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x84:
            {
-#if 1
-             printf ("Found Cil_conv_ovf_i4_un instruction (unsigned data conversion to int32 (on stack as int32) with overflow detection) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_conv_ovf_i4_un instruction (unsigned data conversion to int32 (on stack as int32) with overflow detection) \n");
+
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
              insn = makeInstruction(start_va,Cil_conv_ovf_i4_un,"conv_ovf_i4_un",operand);
@@ -3266,9 +3270,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x85:
            {
-#if 1
-             printf ("Found Cil_conv_ovf_i8_un instruction (unsigned data conversion to int64 (on stack as int32) with overflow detection) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_conv_ovf_i8_un instruction (unsigned data conversion to int64 (on stack as int32) with overflow detection) \n");
+
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
              insn = makeInstruction(start_va,Cil_conv_ovf_i8_un,"conv_ovf_i8_un",operand);
@@ -3279,9 +3283,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x86:
            {
-#if 1
-             printf ("Found Cil_conv_ovf_u1_un instruction (unsigned data conversion to unsigned int8 (on stack as int32) with overflow detection) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_conv_ovf_u1_un instruction (unsigned data conversion to unsigned int8 (on stack as int32) with overflow detection) \n");
+
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
              insn = makeInstruction(start_va,Cil_conv_ovf_u1_un,"conv_ovf_u1_un",operand);
@@ -3292,9 +3296,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x87:
            {
-#if 1
-             printf ("Found Cil_conv_ovf_u2_un instruction (unsigned data conversion to unsigned int16 (on stack as int32) with overflow detection) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_conv_ovf_u2_un instruction (unsigned data conversion to unsigned int16 (on stack as int32) with overflow detection) \n");
+
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
              insn = makeInstruction(start_va,Cil_conv_ovf_u2_un,"conv_ovf_u2_un",operand);
@@ -3305,9 +3309,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x88:
            {
-#if 1
-             printf ("Found Cil_conv_ovf_u4_un instruction (unsigned data conversion to unsigned int32 (on stack as int32) with overflow detection) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_conv_ovf_u4_un instruction (unsigned data conversion to unsigned int32 (on stack as int32) with overflow detection) \n");
+
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
              insn = makeInstruction(start_va,Cil_conv_ovf_u4_un,"conv_ovf_u4_un",operand);
@@ -3318,9 +3322,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x89:
            {
-#if 1
-             printf ("Found Cil_conv_ovf_u8_un instruction (unsigned data conversion to unsigned int64 (on stack as int32) with overflow detection) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_conv_ovf_u8_un instruction (unsigned data conversion to unsigned int64 (on stack as int32) with overflow detection) \n");
+
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
              insn = makeInstruction(start_va,Cil_conv_ovf_u8_un,"conv_ovf_u8_un",operand);
@@ -3331,9 +3335,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x8A:
            {
-#if 1
-             printf ("Found Cil_conv_ovf_i_un instruction (unsigned data conversion to native int (on stack as native int) with overflow detection) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_conv_ovf_i_un instruction (unsigned data conversion to native int (on stack as native int) with overflow detection) \n");
+
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
              insn = makeInstruction(start_va,Cil_conv_ovf_i_un,"conv_ovf_i_un",operand);
@@ -3344,9 +3348,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x8B:
            {
-#if 1
-             printf ("Found Cil_conv_ovf_u_un instruction (unsigned data conversion to native unsigned int (on stack as native int) with overflow detection) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_conv_ovf_u_un instruction (unsigned data conversion to native unsigned int (on stack as native int) with overflow detection) \n");
+
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
              insn = makeInstruction(start_va,Cil_conv_ovf_u_un,"conv_ovf_u_un",operand);
@@ -3357,9 +3361,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x8C:
            {
-#if 1
-             printf ("Found Cil_box instruction (convert a boxable value to its boxed form) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_box instruction (convert a boxable value to its boxed form) \n");
+
           // DQ (11/3/2021): This is formated as: 72 <T>, where <T> is a "metadata token, encoded as a 4-byte integer.
              int32_t value = ByteOrder::le_to_host(*((int32_t*)(raw_bytes.data()+1)));
 
@@ -3373,9 +3377,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x8D:
            {
-#if 1
-             printf ("Found Cil_newarr instruction (convert a new array with elements of type etype) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_newarr instruction (convert a new array with elements of type etype) \n");
+
           // DQ (11/3/2021): This is formated as: 72 <T>, where <T> is a "metadata token, encoded as a 4-byte integer.
              int32_t value = ByteOrder::le_to_host(*((int32_t*)(raw_bytes.data()+1)));
 
@@ -3389,9 +3393,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x8E:
            {
-#if 1
-             printf ("Found Cil_ldlen instruction (push the length (of type native unsigned int) or array on the stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ldlen instruction (push the length (of type native unsigned int) or array on the stack) \n");
+
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
              insn = makeInstruction(start_va,Cil_ldlen,"ldlen",operand);
@@ -3402,9 +3406,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x8F:
            {
-#if 1
-             printf ("Found Cil_ldlema instruction (load the address of element at index onto the top of the stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ldlema instruction (load the address of element at index onto the top of the stack) \n");
+
           // DQ (11/3/2021): This is formated as: 72 <T>, where <T> is a "metadata token, encoded as a 4-byte integer.
              int32_t value = ByteOrder::le_to_host(*((int32_t*)(raw_bytes.data()+1)));
 
@@ -3418,9 +3422,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x90:
            {
-#if 1
-             printf ("Found Cil_ldelem_i1 instruction (load the address of element at index onto the top of the stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ldelem_i1 instruction (load the address of element at index onto the top of the stack) \n");
+
              SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
              SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
 
@@ -3432,9 +3436,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x91:
            {
-#if 1
-             printf ("Found Cil_ldelem_u1 instruction (load the address of element at index onto the top of the stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ldelem_u1 instruction (load the address of element at index onto the top of the stack) \n");
+
              SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
              SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
 
@@ -3446,9 +3450,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x92:
            {
-#if 1
-             printf ("Found Cil_ldelem_i2 instruction (load the address of element at index onto the top of the stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ldelem_i2 instruction (load the address of element at index onto the top of the stack) \n");
+
              SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
              SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
 
@@ -3460,9 +3464,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x93:
            {
-#if 1
-             printf ("Found Cil_ldelem_u2 instruction (load the address of element at index onto the top of the stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ldelem_u2 instruction (load the address of element at index onto the top of the stack) \n");
+
              SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
              SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
 
@@ -3474,9 +3478,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x94:
            {
-#if 1
-             printf ("Found Cil_ldelem_i4 instruction (load the address of element at index onto the top of the stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ldelem_i4 instruction (load the address of element at index onto the top of the stack) \n");
+
              SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
              SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
 
@@ -3488,9 +3492,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x95:
            {
-#if 1
-             printf ("Found Cil_ldelem_u4 instruction (load the address of element at index onto the top of the stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ldelem_u4 instruction (load the address of element at index onto the top of the stack) \n");
+
              SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
              SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
 
@@ -3502,9 +3506,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x96:
            {
-#if 1
-             printf ("Found Cil_ldelem_i8 instruction (load the address of element at index onto the top of the stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ldelem_i8 instruction (load the address of element at index onto the top of the stack) \n");
+
              SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
              SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
 
@@ -3516,9 +3520,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x97:
            {
-#if 1
-             printf ("Found Cil_ldelem_i instruction (load the element with type native into the top of the stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ldelem_i instruction (load the element with type native into the top of the stack) \n");
+
              SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
              SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
 
@@ -3530,9 +3534,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x98:
            {
-#if 1
-             printf ("Found Cil_ldelem_r4 instruction (load numeric constant) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ldelem_r4 instruction (load numeric constant) \n");
+
              SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
              SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
 
@@ -3544,9 +3548,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x99:
            {
-#if 1
-             printf ("Found Cil_ldelem_r8 instruction (load numeric constant) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ldelem_r8 instruction (load numeric constant) \n");
+
              SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
              SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
 
@@ -3558,9 +3562,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x9A:
            {
-#if 1
-             printf ("Found Cil_ldelem_ref instruction (load the address of element at index onto the top of the stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ldelem_ref instruction (load the address of element at index onto the top of the stack) \n");
+
              SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
              SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
 
@@ -3572,9 +3576,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x9B:
            {
-#if 1
-             printf ("Found Cil_stelem_i instruction (replace array element at index with the native int value on the stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_stelem_i instruction (replace array element at index with the native int value on the stack) \n");
+
              SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
              SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
              SgAsmStackExpression* operand_2 = new SgAsmStackExpression(2);
@@ -3587,9 +3591,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x9C:
            {
-#if 1
-             printf ("Found Cil_stelem_i1 instruction (replace array element at index with the native int value on the stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_stelem_i1 instruction (replace array element at index with the native int value on the stack) \n");
+
              SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
              SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
              SgAsmStackExpression* operand_2 = new SgAsmStackExpression(2);
@@ -3602,9 +3606,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x9D:
            {
-#if 1
-             printf ("Found Cil_stelem_i2 instruction (replace array element at index with the native int value on the stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_stelem_i2 instruction (replace array element at index with the native int value on the stack) \n");
+
              SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
              SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
              SgAsmStackExpression* operand_2 = new SgAsmStackExpression(2);
@@ -3617,9 +3621,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x9E:
            {
-#if 1
-             printf ("Found Cil_stelem_i4 instruction (replace array element at index with the native int value on the stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_stelem_i4 instruction (replace array element at index with the native int value on the stack) \n");
+
              SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
              SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
              SgAsmStackExpression* operand_2 = new SgAsmStackExpression(2);
@@ -3632,9 +3636,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x9F:
            {
-#if 1
-             printf ("Found Cil_stelem_i8 instruction (replace array element at index with the native int value on the stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_stelem_i8 instruction (replace array element at index with the native int value on the stack) \n");
+
              SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
              SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
              SgAsmStackExpression* operand_2 = new SgAsmStackExpression(2);
@@ -3647,9 +3651,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0xA0:
            {
-#if 1
-             printf ("Found Cil_stelem_r4 instruction (replace array element at index with the native int value on the stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_stelem_r4 instruction (replace array element at index with the native int value on the stack) \n");
+
              SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
              SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
              SgAsmStackExpression* operand_2 = new SgAsmStackExpression(2);
@@ -3662,9 +3666,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0xA1:
            {
-#if 1
-             printf ("Found Cil_stelem_r8 instruction (replace array element at index with the native int value on the stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_stelem_r8 instruction (replace array element at index with the native int value on the stack) \n");
+
              SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
              SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
              SgAsmStackExpression* operand_2 = new SgAsmStackExpression(2);
@@ -3677,9 +3681,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0xA2:
            {
-#if 1
-             printf ("Found Cil_stelem_ref instruction (replace array element at index with the native int value on the stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_stelem_ref instruction (replace array element at index with the native int value on the stack) \n");
+
              SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
              SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
              SgAsmStackExpression* operand_2 = new SgAsmStackExpression(2);
@@ -3692,9 +3696,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0xA3:
            {
-#if 1
-             printf ("Found Cil_ldelem instruction (load the element at index onto the top of the stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ldelem instruction (load the element at index onto the top of the stack) \n");
+
           // DQ (11/3/2021): This is formated as: 72 <T>, where <T> is a "metadata token, encoded as a 4-byte integer.
              int32_t value = ByteOrder::le_to_host(*((int32_t*)(raw_bytes.data()+1)));
 
@@ -3711,9 +3715,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0xA4:
            {
-#if 1
-             printf ("Found Cil_stelem instruction (replace array element at index with the value on the stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_stelem instruction (replace array element at index with the value on the stack) \n");
+
           // DQ (11/3/2021): This is formated as: 72 <T>, where <T> is a "metadata token, encoded as a 4-byte integer.
              int32_t value = ByteOrder::le_to_host(*((int32_t*)(raw_bytes.data()+1)));
 
@@ -3730,9 +3734,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0xA5:
            {
-#if 1
-             printf ("Found Cil_unbox_any instruction (extract a value-type from obj, its boxed representation) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_unbox_any instruction (extract a value-type from obj, its boxed representation) \n");
+
           // DQ (11/3/2021): This is formated as: 72 <T>, where <T> is a "metadata token, encoded as a 4-byte integer.
              int32_t value = ByteOrder::le_to_host(*((int32_t*)(raw_bytes.data()+1)));
 
@@ -3752,9 +3756,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0xB3:
            {
-#if 1
-             printf ("Found Cil_conv_ovf_i1 instruction (convert to an int8 (on the stack as a int32) and throw exception on overflow) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_conv_ovf_i1 instruction (convert to an int8 (on the stack as a int32) and throw exception on overflow) \n");
+
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
              insn = makeInstruction(start_va,Cil_conv_ovf_i1,"conv_ovf_i1",operand);
@@ -3765,9 +3769,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0xB4:
            {
-#if 1
-             printf ("Found Cil_conv_ovf_u1 instruction (convert to an unsigned int8 (on the stack as a int32) and throw exception on overflow) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_conv_ovf_u1 instruction (convert to an unsigned int8 (on the stack as a int32) and throw exception on overflow) \n");
+
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
              insn = makeInstruction(start_va,Cil_conv_ovf_u1,"conv_ovf_u1",operand);
@@ -3778,9 +3782,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0xB5:
            {
-#if 1
-             printf ("Found Cil_conv_ovf_i2 instruction (convert to an int16 (on the stack as a int32) and throw exception on overflow) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_conv_ovf_i2 instruction (convert to an int16 (on the stack as a int32) and throw exception on overflow) \n");
+
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
              insn = makeInstruction(start_va,Cil_conv_ovf_i2,"conv_ovf_i2",operand);
@@ -3791,9 +3795,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0xB6:
            {
-#if 1
-             printf ("Found Cil_conv_ovf_u2 instruction (convert to an unsigned int16 (on the stack as a int32) and throw exception on overflow) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_conv_ovf_u2 instruction (convert to an unsigned int16 (on the stack as a int32) and throw exception on overflow) \n");
+
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
              insn = makeInstruction(start_va,Cil_conv_ovf_u2,"conv_ovf_u2",operand);
@@ -3804,9 +3808,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0xB7:
            {
-#if 1
-             printf ("Found Cil_conv_ovf_i4 instruction (convert to an int32 (on the stack as a int32) and throw exception on overflow) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_conv_ovf_i4 instruction (convert to an int32 (on the stack as a int32) and throw exception on overflow) \n");
+
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
              insn = makeInstruction(start_va,Cil_conv_ovf_i4,"conv_ovf_i4",operand);
@@ -3817,9 +3821,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0xB8:
            {
-#if 1
-             printf ("Found Cil_conv_ovf_u4 instruction (convert to an unsigned int32 (on the stack as a int32) and throw exception on overflow) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_conv_ovf_u4 instruction (convert to an unsigned int32 (on the stack as a int32) and throw exception on overflow) \n");
+
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
              insn = makeInstruction(start_va,Cil_conv_ovf_u4,"conv_ovf_u4",operand);
@@ -3830,9 +3834,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0xB9:
            {
-#if 1
-             printf ("Found Cil_conv_ovf_i8 instruction (convert to an int64 (on the stack as a int64) and throw exception on overflow) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_conv_ovf_i8 instruction (convert to an int64 (on the stack as a int64) and throw exception on overflow) \n");
+
           // Is the stack arranged as 32bit values or 64bit values?
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
@@ -3844,9 +3848,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0xBA:
            {
-#if 1
-             printf ("Found Cil_conv_ovf_u8 instruction (convert to an unsigned int64 (on the stack as a int64) and throw exception on overflow) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_conv_ovf_u8 instruction (convert to an unsigned int64 (on the stack as a int64) and throw exception on overflow) \n");
+
           // Is the stack arranged as 32bit values or 64bit values?
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
@@ -3862,9 +3866,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0xC2:
            {
-#if 1
-             printf ("Found Cil_refanyval instruction (push the address stored in a typedef reference) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_refanyval instruction (push the address stored in a typedef reference) \n");
+
           // DQ (11/3/2021): This is formated as: 72 <T>, where <T> is a "metadata token, encoded as a 4-byte integer.
              int32_t value = ByteOrder::le_to_host(*((int32_t*)(raw_bytes.data()+1)));
 
@@ -3881,9 +3885,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0xC3:
            {
-#if 1
-             printf ("Found Cil_ckfinite instruction (throw ArithmeticException if value is not a finite number) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ckfinite instruction (throw ArithmeticException if value is not a finite number) \n");
+
           // Is the stack arranged as 32bit values or 64bit values?
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
@@ -3897,9 +3901,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0xC6:
            {
-#if 1
-             printf ("Found Cil_mkrefany instruction (push a typed reference ot ptr of type class onto the stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_mkrefany instruction (push a typed reference ot ptr of type class onto the stack) \n");
+
           // DQ (11/3/2021): This is formated as: 72 <T>, where <T> is a "metadata token, encoded as a 4-byte integer.
              int32_t value = ByteOrder::le_to_host(*((int32_t*)(raw_bytes.data()+1)));
 
@@ -3918,9 +3922,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0xD0:
            {
-#if 1
-             printf ("Found Cil_ldtoken instruction (convert metadata token to its runtime representation) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_ldtoken instruction (convert metadata token to its runtime representation) \n");
+
           // DQ (11/3/2021): This is formated as: 72 <T>, where <T> is a "metadata token, encoded as a 4-byte integer.
              int32_t value = ByteOrder::le_to_host(*((int32_t*)(raw_bytes.data()+1)));
 
@@ -3937,9 +3941,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0xD1:
            {
-#if 1
-             printf ("Found Cil_conv_u2 instruction (data conversion to unsigned int16, pushing int32 on stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_conv_u2 instruction (data conversion to unsigned int16, pushing int32 on stack) \n");
+
           // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
@@ -3952,9 +3956,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0xD2:
            {
-#if 1
-             printf ("Found Cil_conv_u1 instruction (data conversion to unsigned int8, pushing int32 on stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_conv_u1 instruction (data conversion to unsigned int8, pushing int32 on stack) \n");
+
           // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
@@ -3967,9 +3971,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0xD3:
            {
-#if 1
-             printf ("Found Cil_conv_i instruction (data conversion to native int, pushing native int on stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_conv_i instruction (data conversion to native int, pushing native int on stack) \n");
+
           // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
@@ -3982,9 +3986,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0xD4:
            {
-#if 1
-             printf ("Found Cil_conv_ovf_i instruction (convert to a native int (on the stack as a native int) and throw exception on overflow) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_conv_ovf_i instruction (convert to a native int (on the stack as a native int) and throw exception on overflow) \n");
+
           // Is the stack arranged as 32bit values or 64bit values?
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
@@ -3996,9 +4000,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0xD5:
            {
-#if 1
-             printf ("Found Cil_conv_ovf_u instruction (convert to a native unsigned int (on the stack as a native int) and throw exception on overflow) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_conv_ovf_u instruction (convert to a native unsigned int (on the stack as a native int) and throw exception on overflow) \n");
+
           // Is the stack arranged as 32bit values or 64bit values?
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
@@ -4010,9 +4014,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0xD6:
            {
-#if 1
-             printf ("Found Cil_add_ovf instruction (add signed integer values with overflow check) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_add_ovf instruction (add signed integer values with overflow check) \n");
+
              SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
              SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
 
@@ -4024,9 +4028,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0xD7:
            {
-#if 1
-             printf ("Found Cil_add_ovf_un instruction (add unsigned integer values with overflow check) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_add_ovf_un instruction (add unsigned integer values with overflow check) \n");
+
              SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
              SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
 
@@ -4038,9 +4042,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0xD8:
            {
-#if 1
-             printf ("Found Cil_mul_ovf instruction (multiply signed integer values with overflow check) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_mul_ovf instruction (multiply signed integer values with overflow check) \n");
+
              SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
              SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
 
@@ -4052,9 +4056,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0xD9:
            {
-#if 1
-             printf ("Found Cil_mul_ovf_un instruction (multiply unsigned integer values with overflow check) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_mul_ovf_un instruction (multiply unsigned integer values with overflow check) \n");
+
              SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
              SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
 
@@ -4066,9 +4070,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0xDA:
            {
-#if 1
-             printf ("Found Cil_sub_ovf instruction (subtract signed integer values with overflow check) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_sub_ovf instruction (subtract signed integer values with overflow check) \n");
+
              SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
              SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
 
@@ -4080,9 +4084,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0xDB:
            {
-#if 1
-             printf ("Found Cil_sub_ovf_un instruction (subtract unsigned integer values with overflow check) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_sub_ovf_un instruction (subtract unsigned integer values with overflow check) \n");
+
              SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
              SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
 
@@ -4095,9 +4099,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
         case 0xDC:
            {
           // Note that this is aliased to the endfault instruction.
-#if 1
-             printf ("Found Cil_endfinally (endfault) instruction (end finally clause of an exception block) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_endfinally (endfault) instruction (end finally clause of an exception block) \n");
+
              insn = makeInstruction(start_va,Cil_endfinally,"endfinally");
              raw_bytes.resize(1);
              insn->set_raw_bytes(raw_bytes);
@@ -4106,9 +4110,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0xDD:
            {
-#if 1
-             printf ("Found Cil_leave instruction (Exit a protected region of code) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_leave instruction (Exit a protected region of code) \n");
+
              int32_t value = ByteOrder::le_to_host(*((int32_t*)(raw_bytes.data()+1)));
              SgAsmIntegerValueExpression* operand = SageBuilderAsm::buildValueI32(value);
 
@@ -4120,9 +4124,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0xDE:
            {
-#if 1
-             printf ("Found Cil_leave_s instruction (Exit a protected region of code) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_leave_s instruction (Exit a protected region of code) \n");
+
              int8_t value = ByteOrder::le_to_host(*((int8_t*)(raw_bytes.data()+1)));
              SgAsmIntegerValueExpression* operand = SageBuilderAsm::buildValueI8(value);
 
@@ -4134,9 +4138,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0xDF:
            {
-#if 1
-             printf ("Found Cil_stind_i instruction (store value of native int into memory at address) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_stind_i instruction (store value of native int into memory at address) \n");
+
              SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
              SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
 
@@ -4148,9 +4152,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0xE0:
            {
-#if 1
-             printf ("Found Cil_conv_u instruction (data conversion native unsigned int, pushing native int on stack) \n");
-#endif
+             if (TRACE_DECODING)
+               printf ("Found Cil_conv_u instruction (data conversion native unsigned int, pushing native int on stack) \n");
+
           // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
              SgAsmStackExpression* operand = new SgAsmStackExpression(0);
@@ -4163,15 +4167,16 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0xFE:
            {
-             printf ("Opt code prefix 0xFE: buf[0] = %04x \n",buf[0]);
+             if (TRACE_DECODING)
+               printf ("Opt code prefix 0xFE: buf[0] = %04x \n",buf[0]);
 
              switch (raw_bytes[1])
                 {
                   case 0x00:
                      {
-#if 1
-                       printf ("Found Cil_arglist instruction (return argument list handle for the current method) \n");
-#endif
+                       if (TRACE_DECODING)
+                         printf ("Found Cil_arglist instruction (return argument list handle for the current method) \n");
+
                        insn = makeInstruction(start_va,Cil_arglist,"arglist");
                        raw_bytes.resize(2);
                        insn->set_raw_bytes(raw_bytes);
@@ -4180,9 +4185,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
                   case 0x01:
                      {
-#if 1
-                       printf ("Found Cil_ceq instruction (push 1 (of type int32) if value 1 equals value2, else push 0) \n");
-#endif
+                       if (TRACE_DECODING)
+                         printf ("Found Cil_ceq instruction (push 1 (of type int32) if value 1 equals value2, else push 0) \n");
+
                        SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
                        SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
 
@@ -4195,9 +4200,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
                   case 0x02:
                      {
-#if 1
-                       printf ("Found Cil_cgt instruction (push 1 (of type int32) if value1 > value2, else push 0) \n");
-#endif
+                       if (TRACE_DECODING)
+                         printf ("Found Cil_cgt instruction (push 1 (of type int32) if value1 > value2, else push 0) \n");
+
                        SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
                        SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
 
@@ -4210,9 +4215,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
                   case 0x03:
                      {
-#if 1
-                       printf ("Found Cil_cgt_un instruction (push 1 (of type uint32) if value1 > value2, else push 0) \n");
-#endif
+                       if (TRACE_DECODING)
+                         printf ("Found Cil_cgt_un instruction (push 1 (of type uint32) if value1 > value2, else push 0) \n");
+
                        SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
                        SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
 
@@ -4225,9 +4230,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
                   case 0x04:
                      {
-#if 1
-                       printf ("Found Cil_clt instruction (push 1 (of type int32) if value1 < value2, else push 0) \n");
-#endif
+                       if (TRACE_DECODING)
+                         printf ("Found Cil_clt instruction (push 1 (of type int32) if value1 < value2, else push 0) \n");
+
                        SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
                        SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
 
@@ -4240,9 +4245,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
                   case 0x05:
                      {
-#if 1
-                       printf ("Found Cil_clt_un instruction (push 1 (of type uint32) if value1 < value2, else push 0) \n");
-#endif
+                       if (TRACE_DECODING)
+                         printf ("Found Cil_clt_un instruction (push 1 (of type uint32) if value1 < value2, else push 0) \n");
+
                        SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
                        SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
 
@@ -4255,9 +4260,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
                   case 0x06:
                      {
-#if 1
-                       printf ("Found Cil_ldftn instruction (push a pointer to a method referenced by method, on the stack) \n");
-#endif
+                       if (TRACE_DECODING)
+                         printf ("Found Cil_ldftn instruction (push a pointer to a method referenced by method, on the stack) \n");
+
                     // DQ (11/3/2021): This is formated as: 72 <T>, where <T> is a "metadata token, encoded as a 4-byte integer.
                        int32_t value = ByteOrder::le_to_host(*((int32_t*)(raw_bytes.data()+1)));
 
@@ -4271,9 +4276,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
                   case 0x07:
                      {
-#if 1
-                       printf ("Found Cil_ldvirtftn instruction (push a pointer to a method referenced by method, on the stack) \n");
-#endif
+                       if (TRACE_DECODING)
+                         printf ("Found Cil_ldvirtftn instruction (push a pointer to a method referenced by method, on the stack) \n");
+
                     // DQ (11/3/2021): This is formated as: 72 <T>, where <T> is a "metadata token, encoded as a 4-byte integer.
                        int32_t value = ByteOrder::le_to_host(*((int32_t*)(raw_bytes.data()+1)));
 
@@ -4290,9 +4295,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
                   case 0x09:
                      {
-#if 1
-                       printf ("Found Cil_ldarg instruction (load argument numbered num onto the stack) \n");
-#endif
+                       if (TRACE_DECODING)
+                         printf ("Found Cil_ldarg instruction (load argument numbered num onto the stack) \n");
+
                     // DQ (11/1/2021): Need to read the second byte as a value to push onto the stack.
                        uint16_t value = ByteOrder::le_to_host(*((uint16_t*)(raw_bytes.data()+1)));
 
@@ -4306,9 +4311,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
                   case 0x0A:
                      {
-#if 1
-                       printf ("Found Cil_ldarga instruction (fetch the address of the argument argNum) \n");
-#endif
+                       if (TRACE_DECODING)
+                         printf ("Found Cil_ldarga instruction (fetch the address of the argument argNum) \n");
+
                        uint16_t value = ByteOrder::le_to_host(*((uint16_t*)(raw_bytes.data()+1)));
                        SgAsmIntegerValueExpression* operand = SageBuilderAsm::buildValueU16(value);
                        ROSE_ASSERT(operand != NULL);
@@ -4322,9 +4327,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
                   case 0x0B:
                      {
-#if 1
-                       printf ("Found Cil_starg instruction (store value to the argument numbered num) \n");
-#endif
+                       if (TRACE_DECODING)
+                         printf ("Found Cil_starg instruction (store value to the argument numbered num) \n");
+
                        uint16_t value = ByteOrder::le_to_host(*((uint16_t*)(raw_bytes.data()+1)));
                        SgAsmIntegerValueExpression* operand_0 = SageBuilderAsm::buildValueU16(value);
                        ROSE_ASSERT(operand_0 != NULL);
@@ -4340,9 +4345,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
                   case 0x0C:
                      {
-#if 1
-                       printf ("Found Cil_ldloc instruction (load local variable of index onto stack) \n");
-#endif
+                       if (TRACE_DECODING)
+                         printf ("Found Cil_ldloc instruction (load local variable of index onto stack) \n");
+
                        uint16_t value = ByteOrder::le_to_host(*((uint16_t*)(raw_bytes.data()+1)));
 
                     // SgAsmIntegerValueExpression* operand = new SgAsmIntegerValueExpression(value,NULL);
@@ -4356,9 +4361,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
                   case 0x0D:
                      {
-#if 1
-                       printf ("Found Cil_ldloca_s instruction (load local variable of index onto stack) \n");
-#endif
+                       if (TRACE_DECODING)
+                         printf ("Found Cil_ldloca_s instruction (load local variable of index onto stack) \n");
+
                     // SgAsmIntegerValueExpression* operand = new SgAsmIntegerValueExpression(raw_bytes[1],NULL);
 
                        uint8_t value = ByteOrder::le_to_host(*((uint8_t*)(raw_bytes.data()+1)));
@@ -4372,9 +4377,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
                   case 0x0E:
                      {
-#if 1
-                       printf ("Found Cil_stloc instruction (pop value from stack to local variable) \n");
-#endif
+                       if (TRACE_DECODING)
+                         printf ("Found Cil_stloc instruction (pop value from stack to local variable) \n");
+
                     // DQ (11/1/2021): Need to get the second byte as the local variable to put the stack value.
                     // SgAsmIntegerValueExpression* operand = new SgAsmIntegerValueExpression(raw_bytes[1],NULL);
                     // SgAsmIntegerValueExpression* operand = SageBuilderAsm::buildValueI32(value);
@@ -4389,9 +4394,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
                   case 0x0F:
                      {
-#if 1
-                       printf ("Found Cil_localloc instruction (allocate space from the local memory pool) \n");
-#endif
+                       if (TRACE_DECODING)
+                         printf ("Found Cil_localloc instruction (allocate space from the local memory pool) \n");
+
                        insn = makeInstruction(start_va,Cil_localloc,"localloc");
                        raw_bytes.resize(2);
                        insn->set_raw_bytes(raw_bytes);
@@ -4413,9 +4418,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
                   case 0x11:
                      {
-#if 1
-                       printf ("Found Cil_endfilter instruction (end an exception handling filter clause) \n");
-#endif
+                       if (TRACE_DECODING)
+                         printf ("Found Cil_endfilter instruction (end an exception handling filter clause) \n");
+
                        SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
                        insn = makeInstruction(start_va,Cil_endfilter,"endfilter",operand);
@@ -4426,9 +4431,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
                   case 0x12:
                      {
-#if 1
-                       printf ("Found Cil_unaligned instruction (subsequence pointer instruction might be unaligned) \n");
-#endif
+                       if (TRACE_DECODING)
+                         printf ("Found Cil_unaligned instruction (subsequence pointer instruction might be unaligned) \n");
+
                        uint8_t value = ByteOrder::le_to_host(*((uint8_t*)(raw_bytes.data()+1)));
 
                        SgAsmIntegerValueExpression* operand_0 = SageBuilderAsm::buildValueU8(value);
@@ -4443,9 +4448,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
                   case 0x13:
                      {
-#if 1
-                       printf ("Found Cil_volatile instruction (subsequent pointer reference is volatile) \n");
-#endif
+                       if (TRACE_DECODING)
+                         printf ("Found Cil_volatile instruction (subsequent pointer reference is volatile) \n");
+
                        SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
                        insn = makeInstruction(start_va,Cil_volatile,"volatile",operand);
@@ -4456,9 +4461,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
                   case 0x14:
                      {
-#if 1
-                       printf ("Found Cil_tail instruction (subsequent call terminates current method) \n");
-#endif
+                       if (TRACE_DECODING)
+                         printf ("Found Cil_tail instruction (subsequent call terminates current method) \n");
+
                        insn = makeInstruction(start_va,Cil_tail,"tail");
                        raw_bytes.resize(2);
                        insn->set_raw_bytes(raw_bytes);
@@ -4467,9 +4472,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
                   case 0x15:
                      {
-#if 1
-                       printf ("Found Cil_initobj instruction (initialize the value at address dest) \n");
-#endif
+                       if (TRACE_DECODING)
+                         printf ("Found Cil_initobj instruction (initialize the value at address dest) \n");
+
                     // DQ (11/3/2021): This is formated as: 72 <T>, where <T> is a "metadata token, encoded as a 4-byte integer.
                        int32_t value = ByteOrder::le_to_host(*((int32_t*)(raw_bytes.data()+1)));
 
@@ -4485,9 +4490,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
                   case 0x16:
                      {
-#if 1
-                       printf ("Found Cil_constrained instruction (call a virtual method on a type constrained to be type T) \n");
-#endif
+                       if (TRACE_DECODING)
+                         printf ("Found Cil_constrained instruction (call a virtual method on a type constrained to be type T) \n");
+
                     // DQ (11/3/2021): This is formated as: 72 <T>, where <T> is a "metadata token, encoded as a 4-byte integer.
                        int32_t value = ByteOrder::le_to_host(*((int32_t*)(raw_bytes.data()+1)));
 
@@ -4505,9 +4510,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
                   case 0x17:
                      {
-#if 1
-                       printf ("Found Cil_cpblk instruction (copy data from memory to memory) \n");
-#endif
+                       if (TRACE_DECODING)
+                         printf ("Found Cil_cpblk instruction (copy data from memory to memory) \n");
+
                        SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
                        SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
                        SgAsmStackExpression* operand_2 = new SgAsmStackExpression(2);
@@ -4520,9 +4525,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
                   case 0x18:
                      {
-#if 1
-                       printf ("Found Cil_initblk instruction (set all bytes in a block of memory to a given byte value) \n");
-#endif
+                       if (TRACE_DECODING)
+                         printf ("Found Cil_initblk instruction (set all bytes in a block of memory to a given byte value) \n");
+
                        SgAsmStackExpression* operand_0 = new SgAsmStackExpression(0);
                        SgAsmStackExpression* operand_1 = new SgAsmStackExpression(1);
                        SgAsmStackExpression* operand_2 = new SgAsmStackExpression(2);
@@ -4535,9 +4540,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
                   case 0x19:
                      {
-#if 1
-                       printf ("Found Cil_no instruction (the specified fault check(s) normally performed as part of the execution of the subsequent instruction can/shall be skipped) \n");
-#endif
+                       if (TRACE_DECODING)
+                         printf ("Found Cil_no instruction (the specified fault check(s) normally performed as part of the execution of the subsequent instruction can/shall be skipped) \n");
+
                        uint8_t value = ByteOrder::le_to_host(*((uint8_t*)(raw_bytes.data()+1)));
 
                        SgAsmIntegerValueExpression* operand = SageBuilderAsm::buildValueU8(value);
@@ -4550,9 +4555,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
                   case 0x1A:
                      {
-#if 1
-                       printf ("Found Cil_rethrow instruction (rethrow the current exception) \n");
-#endif
+                       if (TRACE_DECODING)
+                         printf ("Found Cil_rethrow instruction (rethrow the current exception) \n");
+
                        insn = makeInstruction(start_va,Cil_rethrow,"rethrow");
                        raw_bytes.resize(2);
                        insn->set_raw_bytes(raw_bytes);
@@ -4561,9 +4566,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
                   case 0x1C:
                      {
-#if 1
-                       printf ("Found Cil_sizeof instruction (push the size, in bytes, of a type as an unsigned int32) \n");
-#endif
+                       if (TRACE_DECODING)
+                         printf ("Found Cil_sizeof instruction (push the size, in bytes, of a type as an unsigned int32) \n");
+
                     // DQ (11/3/2021): This is formated as: 72 <T>, where <T> is a "metadata token, encoded as a 4-byte integer.
                        int32_t value = ByteOrder::le_to_host(*((int32_t*)(raw_bytes.data()+1)));
 
@@ -4577,9 +4582,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
                   case 0x1D:
                      {
-#if 1
-                       printf ("Found Cil_refanytype instruction (push the type token stored in a typed reference) \n");
-#endif
+                       if (TRACE_DECODING)
+                         printf ("Found Cil_refanytype instruction (push the type token stored in a typed reference) \n");
+
                        SgAsmStackExpression* operand = new SgAsmStackExpression(0);
 
                        insn = makeInstruction(start_va,Cil_refanytype,"refanytype",operand);
@@ -4590,9 +4595,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
                   case 0x1E:
                      {
-#if 1
-                       printf ("Found Cil_readonly instruction (specify that the subsequent array address operation performs no type check at runtime, and that it returns a controlled-mutability managed pointer) \n");
-#endif
+                       if (TRACE_DECODING)
+                         printf ("Found Cil_readonly instruction (specify that the subsequent array address operation performs no type check at runtime, and that it returns a controlled-mutability managed pointer) \n");
+
                        insn = makeInstruction(start_va,Cil_readonly,"readonly");
                        raw_bytes.resize(2);
                        insn->set_raw_bytes(raw_bytes);
@@ -4603,7 +4608,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
                   case 0x1B:
                   case 0x1F ... 0xFF:
                      {
-                       printf ("Opt code using prefix 0x1B and 0x1F - 0xFF are illegal instructions (calling makeUnknownInstruction): buf[1] = %04x \n",buf[1]);
+                       mprintf ("Error: Opt code using prefix 0x1B and 0x1F - 0xFF are illegal instructions (calling makeUnknownInstruction): buf[1] = %04x \n",buf[1]);
 
                        insn = makeUnknownInstruction(start_va,buf[0]);
 
@@ -4614,10 +4619,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
                   default:
                      {
-                       printf ("Opt code using prefix 0xFE not handled: buf[1] = %04x \n",buf[1]);
-
-                       ROSE_ASSERT(false);
-
+                       mprintf ("Fatal: Opt code using prefix 0xFE not handled: buf[1] = %04x \n",buf[1]);
+                       ROSE_ABORT();
+                       
                     // DQ (10/20/2021): Fill in with a Cil_nop instruction for now so that we can process the whole file.
                        insn = makeInstruction(start_va,Cil_nop,"nop");
 
@@ -4626,11 +4630,13 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
                        break;
                      }
                 }
+                
+              break;  
            }
 
         case 0x24:
            {
-             printf ("Opt code using prefix 0x24 is an illegal instruction (calling makeUnknownInstruction): buf[1] = %04x \n",buf[1]);
+             mprintf ("Error: Opt code using prefix 0x24 is an illegal instruction (calling makeUnknownInstruction): buf[1] = %04x \n",buf[1]);
 
              insn = makeUnknownInstruction(start_va,buf[0]);
 
@@ -4641,7 +4647,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0x77 ... 0x78:
            {
-             printf ("Opt code using prefix 0x77 to 0x78 are illegal instructions (calling makeUnknownInstruction): buf[1] = %04x \n",buf[1]);
+             mprintf ("Error: Opt code using prefix 0x77 to 0x78 are illegal instructions (calling makeUnknownInstruction): buf[1] = %04x \n",buf[1]);
 
              insn = makeUnknownInstruction(start_va,buf[0]);
 
@@ -4652,7 +4658,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0xA6 ... 0xAF:
            {
-             printf ("Opt code using prefix 0xA6 to 0xAF are illegal instructions (calling makeUnknownInstruction): buf[1] = %04x \n",buf[1]);
+             mprintf ("Error: Opt code using prefix 0xA6 to 0xAF are illegal instructions (calling makeUnknownInstruction): buf[1] = %04x \n",buf[1]);
 
              insn = makeUnknownInstruction(start_va,buf[0]);
 
@@ -4664,7 +4670,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
         case 0xB0 ... 0xB2:
         case 0xBB ... 0xBF:
            {
-             printf ("Opt code using prefix 0xB0 to 0xB2 or 0xBB to 0xBF are illegal instructions (calling makeUnknownInstruction): buf[1] = %04x \n",buf[1]);
+             mprintf ("Error: Opt code using prefix 0xB0 to 0xB2 or 0xBB to 0xBF are illegal instructions (calling makeUnknownInstruction): buf[1] = %04x \n",buf[1]);
 
              insn = makeUnknownInstruction(start_va,buf[0]);
 
@@ -4677,7 +4683,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
         case 0xC4 ... 0xC5:
         case 0xC7 ... 0xCF:
            {
-             printf ("Opt code using prefix 0xC0 to 0xC1 or 0xC7 to 0xCF are illegal instructions (calling makeUnknownInstruction): buf[1] = %04x \n",buf[1]);
+             mprintf ("Error: Opt code using prefix 0xC0 to 0xC1 or 0xC7 to 0xCF are illegal instructions (calling makeUnknownInstruction): buf[1] = %04x \n",buf[1]);
 
              insn = makeUnknownInstruction(start_va,buf[0]);
 
@@ -4688,7 +4694,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0xE1 ... 0xEF:
            {
-             printf ("Opt code using prefix 0xE1 to 0xEF are illegal instructions (calling makeUnknownInstruction): buf[1] = %04x \n",buf[1]);
+             mprintf ("Error: Opt code using prefix 0xE1 to 0xEF are illegal instructions (calling makeUnknownInstruction): buf[1] = %04x \n",buf[1]);
 
              insn = makeUnknownInstruction(start_va,buf[0]);
 
@@ -4699,7 +4705,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0xF0 ... 0xFD:
            {
-             printf ("Opt code using prefix 0xF0 to 0xFD are illegal instructions (calling makeUnknownInstruction): buf[1] = %04x \n",buf[1]);
+             mprintf ("Error: Opt code using prefix 0xF0 to 0xFD are illegal instructions (calling makeUnknownInstruction): buf[1] = %04x \n",buf[1]);
 
              insn = makeUnknownInstruction(start_va,buf[0]);
 
@@ -4710,7 +4716,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         case 0xFF:
            {
-             printf ("Opt code using prefix 0xFF is an illegal instructions (calling makeUnknownInstruction): buf[1] = %04x \n",buf[1]);
+             mprintf ("Error: Opt code using prefix 0xFF is an illegal instructions (calling makeUnknownInstruction): buf[1] = %04x \n",buf[1]);
 
              insn = makeUnknownInstruction(start_va,buf[0]);
 
@@ -4721,9 +4727,9 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
         default:
            {
-             printf ("Opt code not handled: buf[0] = %04x (building as Cil_unknown_instruction) \n",buf[0]);
+             mprintf ("Fatal: Opt code not handled: buf[0] = %04x (building as Cil_unknown_instruction) \n",buf[0]);
 
-             ROSE_ASSERT(false);
+             ROSE_ABORT();
 
           // DQ (10/20/2021): Fill in with a Cil_nop instruction for now so that we can process the whole file.
           // insn = makeInstruction(start_va,Cil_nop,"nop");
@@ -4738,8 +4744,8 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
     if (insn == NULL)
        {
-         printf ("No instruction built: Opt code not handled: buf[0] = %04x \n",buf[0]);
-         ROSE_ASSERT(insn != NULL);
+         mprintf ("Fatal: No instruction built: Opt code not handled: buf[0] = %04x \n",buf[0]);
+         ROSE_ABORT();
        }
     // DQ (11/1/2021): To support the variable length instructions we will move this into each case above.
       else
@@ -4752,7 +4758,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
 #if 0
     printf ("Exiting as a test! \n");
-    ROSE_ASSERT(false);
+    ROSE_ABORT();
 #endif
 
 #if DEBUG_DISASSEMBLE_ONE || 0

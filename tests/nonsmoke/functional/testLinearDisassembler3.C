@@ -164,12 +164,12 @@ generateRVAs(SgAsmCilMetadataRoot* n)
 
     res.push_back(methodDef->get_RVA());
     
-    SgAsmBlock* blk = methodDef->get_body();
-    ASSERT_not_null(blk);
-    
-    for (SgAsmStatement* stmt : blk->get_statementList())
-      if (SgAsmCilInstruction* insn = isSgAsmCilInstruction(stmt))
-        std::cout << insn->get_mnemonic() << std::endl;
+    if (SgAsmBlock* blk = methodDef->get_body())
+    {    
+      for (SgAsmStatement* stmt : blk->get_statementList())
+        if (SgAsmCilInstruction* insn = isSgAsmCilInstruction(stmt))
+          std::cout << insn->get_mnemonic() << std::endl;
+    }
   }
 
   return res;
