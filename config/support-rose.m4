@@ -2035,7 +2035,6 @@ exampleTranslators/documentedExamples/dataBaseExamples/Makefile
 exampleTranslators/documentedExamples/simpleTranslatorExamples/Makefile
 exampleTranslators/documentedExamples/simpleTranslatorExamples/exampleMakefile
 LicenseInformation/Makefile
-projects/ArithmeticMeasureTool/Makefile
 projects/BinaryCloneDetection/Makefile
 projects/BinaryCloneDetection/compression/Makefile
 projects/BinaryCloneDetection/semantic/Makefile
@@ -2061,8 +2060,6 @@ projects/RoseQt/AstViewer/Makefile
 projects/RoseQt/Makefile
 projects/SMTPathFeasibility/Makefile
 projects/ShiftCalculus4/Makefile
-projects/UpcTranslation/Makefile
-projects/UpcTranslation/tests/Makefile
 projects/amrShiftDSLcompiler/AMRShift/Makefile
 projects/amrShiftDSLcompiler/Makefile
 projects/arrayDSLcompiler/Makefile
@@ -2073,12 +2070,6 @@ projects/POET_ROSE/manycore-stencil/include/Makefile
 projects/POET_ROSE/manycore-stencil/benchmarks/Makefile
 projects/arrayOptimization/Makefile
 projects/arrayOptimization/test/Makefile
-projects/autoParallelization/Makefile
-projects/autoParallelization/tests/Makefile
-projects/autoParallelization/difftests/Makefile
-projects/autoTuning/Makefile
-projects/autoTuning/doc/Makefile
-projects/autoTuning/tests/Makefile
 projects/compass/Makefile
 projects/compass/src/Makefile
 projects/compass/src/compassSupport/Makefile
@@ -2111,8 +2102,6 @@ projects/fuse/src/Makefile
 projects/fuse/tests/Makefile
 projects/interpreter/Makefile
 projects/palette/Makefile
-projects/pragmaParsing/Makefile
-projects/xgenTranslator/Makefile
 python/Makefile
 python/Rose/Makefile
 python/Rose/BinaryAnalysis/Makefile
