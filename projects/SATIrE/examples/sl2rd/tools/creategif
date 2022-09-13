@@ -1,2 +1,0 @@
-aisee -tm 7px -lm 7px -width 1300px -height 1300px -pngoutput sl1rdtest1.png sl1rd_result.gdl; convert sl1rdtest1.png sl1rdtest1.gif
-

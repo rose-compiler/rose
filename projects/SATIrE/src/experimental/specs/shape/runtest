@@ -1,1 +1,0 @@
-LD_LIBRARY_PATH=/usr/local/mstools/lib/rose-0.8.6c/ shape $1

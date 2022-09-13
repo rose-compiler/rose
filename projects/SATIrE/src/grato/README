@@ -1,6 +1,0 @@
-* run 'make' to create the tool 'grato' and the library 'libgrato.a'
-* run 'make check' for some tests
-* run 'make examples' for creating some examples in directory examples
-* run 'make clean' for removing generated object files
-* run 'make docs' for creating doxygen html files in docs/html
-* run 'make distclean' for removing object files, directory docs, directory examples

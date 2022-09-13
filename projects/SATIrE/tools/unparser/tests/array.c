@@ -1,1 +1,0 @@
-int meinarray[3];
