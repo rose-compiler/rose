@@ -1,2 +1,0 @@
-pred tests/$1.C | grep graph -A 100 > $1.dot; dot2ps $1.dot $1.ps
-
