@@ -56,19 +56,12 @@ if ROSE_BUILD_ATERM_SUPPORT
    libroseExperimentalGeneralLanguagelibraries = \
         frontend/Experimental_General_Language_Support/libexperimentalRoseGeneralLanguage.la \
         frontend/Experimental_General_Language_Support/ATerm/libexperimentalRoseATerm.la
-   pkgdata_DATA += $(top_srcdir)/src/3rdPartyLibraries/experimental-fortran-parser/share/rose/Fortran.tbl
-   pkgdata_DATA += $(top_srcdir)/src/3rdPartyLibraries/experimental-fortran-parser/share/rose/CUDA_Fortran.tbl
    pkgdata_DATA += $(top_srcdir)/src/3rdPartyLibraries/experimental-jovial-parser/share/rose/Jovial.tbl
 else
    libroseExperimentalGeneralLanguagelibraries =
 endif
 
-# Rasmussen (01/29/2018): Removed building of ATerm traversal in 3rdPartyLibraries. Replaced with C++ traversals of ATerms.
-if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
-   libroseExperimentalOpenFortranParserlibraries = frontend/Experimental_OpenFortranParser_ROSE_Connection/libexperimentalRoseFortran.la
-else
-   libroseExperimentalOpenFortranParserlibraries =
-endif
+# Rasmussen (09/14/2022): Removed experimental-ofp-rose-connection (replaced by flang frontend)
 
 # DQ (8/15/2011): Revert back to what we had before to fix Hudson java only test.
 # DQ (8/14/2011): Need this change to match Makefile changes in ECJ_ROSE_Connection/Makefile.am
@@ -206,7 +199,6 @@ libroseLibraries = \
    $(libroseOpenFortranParserlibraries) \
    $(libroseExperimentalFlangParserlibraries) \
    $(libroseExperimentalGeneralLanguagelibraries) \
-   $(libroseExperimentalOpenFortranParserlibraries) \
    $(libroseJavaParserlibraries) \
    $(librosePHPlibraries) \
    $(librosePythonlibraries) \
