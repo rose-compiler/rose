@@ -2957,10 +2957,8 @@ SgFile::generate_C_preprocessor_intermediate_filename( string sourceFilename )
 int openFortranParser_main(int argc, char **argv );
 #endif
 
-#if defined(ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION) || defined(ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION)
-// Added support for usage of Flang front end. Both ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION and
-// ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION should not be configured at the same time.  If so, the best
-// case scenario is that a multiple symbol error will be reported at link time [Rasmussen 2019.08.30].
+#ifdef ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION
+// Added support for usage of Flang front end [Rasmussen 2019.08.30].
    int experimental_fortran_main(int argc, char* argv[], SgSourceFile* sg_source_file);
 #endif
 
@@ -4874,16 +4872,15 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
                 printf ("   --- Fortran numberOfCommandLineArguments = %" PRIuPTR " frontEndCommandLine = %s \n",experimentalFrontEndCommandLine.size(),CommandlineProcessing::generateStringFromArgList(experimentalFrontEndCommandLine,false,false).c_str());
              }
 
-// Added ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION. Note that they both use the same entrance to the parser.
-// The two experimental Fortran versions should not be used at the same time [Rasmussen 2019.08.30]
-#if defined(ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION) || defined(ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION)
+// Added ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION [Rasmussen 2019.08.30].
+#if defined(ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION)
        // Rasmussen (3/12/2018): Modified call to include the source file.
           SgSourceFile* fortranSourceFile = const_cast<SgSourceFile*>(this);
           frontendErrorLevel = experimental_fortran_main (experimental_FortranParser_argc,
                                                           experimental_FortranParser_argv,
                                                           fortranSourceFile);
 #else
-          printf ("Neither ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION nor ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION is defined \n");
+          printf ("ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION is not defined \n");
 #endif
 
           if (frontendErrorLevel == 0)

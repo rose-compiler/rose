@@ -299,24 +299,6 @@ if test "x$enable_debug_output_for_new_edg_interface" = "xyes"; then
   AC_DEFINE([ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION], [], [Controls large volumes of output spew useful for debugging new EDG/ROSE connection code])
 fi
 
-# DQ (6/7/2013): Added support for new Fortran front-end development.
-AC_ARG_ENABLE(experimental_fortran_frontend,
-    AS_HELP_STRING([--enable-experimental_fortran_frontend], [Enable experimental fortran frontend development]))
-AM_CONDITIONAL(ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION, [test "x$enable_experimental_fortran_frontend" = xyes])
-if test "x$enable_experimental_fortran_frontend" = "xyes"; then
-  AC_MSG_WARN([using this mode enables experimental fortran front-end (internal development only)!])
-  AC_DEFINE([ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION], [], [Enables development of experimental fortran frontend])
-fi
-
-# DQ (6/7/2013): Added support for debugging new Fortran front-end development.
-AC_ARG_ENABLE(debug_output_for_experimental_fortran_frontend,
-    AS_HELP_STRING([--enable-debug_output_for_experimental_fortran_frontend], [Enable debugging output (spew) of new OFP/ROSE connection]))
-AM_CONDITIONAL(ROSE_DEBUG_EXPERIMENTAL_OFP_ROSE_CONNECTION, [test "x$enable_debug_output_for_experimental_fortran_frontend" = xyes])
-if test "x$enable_debug_output_for_experimental_fortran_frontend" = "xyes"; then
-  AC_MSG_WARN([using this mode causes large volumes of output spew (internal debugging only)!])
-  AC_DEFINE([ROSE_DEBUG_EXPERIMENTAL_OFP_ROSE_CONNECTION], [], [Controls large volumes of output spew useful for debugging new OFP/ROSE connection code])
-fi
-
 # Added support for Fortran front-end development using the flang (F18) compiler [Rasmussen 8/12/2019]
 AC_ARG_ENABLE(experimental_flang_frontend,
     AS_HELP_STRING([--enable-experimental_flang_frontend], [Enable experimental fortran frontend development using flang]))
@@ -2155,7 +2137,6 @@ src/frontend/Disassemblers/Makefile
 src/frontend/ECJ_ROSE_Connection/Makefile
 src/frontend/Experimental_General_Language_Support/Makefile
 src/frontend/Experimental_General_Language_Support/ATerm/Makefile
-src/frontend/Experimental_OpenFortranParser_ROSE_Connection/Makefile
 src/frontend/Experimental_Flang_ROSE_Connection/Makefile
 src/frontend/Experimental_Csharp_ROSE_Connection/Makefile
 src/frontend/Experimental_Ada_ROSE_Connection/Makefile
