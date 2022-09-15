@@ -1,4 +1,0 @@
-User vs. AutoPar @btheader.h:8
-< #pragma omp threadprivate (cuf,q,ue,buf)
----
-> 
