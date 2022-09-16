@@ -10,6 +10,7 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Exception.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RiscOperators.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/State.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 
 using namespace Sawyer::Message::Common;
 namespace BS = Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;
@@ -40,10 +41,49 @@ ExecutionUnit::containsUnknownInsn() const {
 }
 
 Tag::Ptr
-ExecutionUnit::executeInstruction(const Settings::Ptr &settings, SgAsmInstruction *insn, const BS::Dispatcher::Ptr &cpu, size_t nodeStep) {
+ExecutionUnit::executeInstruction(const Settings::Ptr &settings, SgAsmInstruction *insn, const BS::Dispatcher::Ptr &cpu,
+                                  size_t nodeStep) {
     ASSERT_not_null(settings);
     ASSERT_not_null(insn);
     ASSERT_not_null(cpu);
+
+    // For x86, an addressing mode of FP + (R * C1) + C2 (where FP is the frame pointer register, R is some other register and
+    // C1 and C2 are constants) should be evaluated as if it where FP + C2 + (R * C1). This gives the model checker a chance to
+    // recognize that FP + C2 is the address of the variable that was intended to be accessed before we add the offset for the
+    // index to check for an out-of-bounds access.
+    if (auto x86 = isSgAsmX86Instruction(insn)) {
+        for (size_t i = 0; i < x86->nOperands(); ++i) {
+            if (auto mre = isSgAsmMemoryReferenceExpression(x86->operand(i))) {
+                if (auto add1 = isSgAsmBinaryAdd(mre->get_address())) {
+                    if (auto add2 = isSgAsmBinaryAdd(add1->get_lhs())) {
+                        if (auto fp = isSgAsmDirectRegisterExpression(add2->get_lhs())) {
+                            if (auto mul = isSgAsmBinaryMultiply(add2->get_rhs())) {
+                                if (auto r = isSgAsmDirectRegisterExpression(mul->get_lhs())) {
+                                    if (auto c1 = isSgAsmIntegerValueExpression(mul->get_rhs())) {
+                                        if (auto c2 = isSgAsmIntegerValueExpression(add1->get_rhs())) {
+                                            const RegisterDescriptor REG_FP =
+                                                cpu->registerDictionary()->findLargestRegister(x86_regclass_gpr, x86_gpr_bp);
+                                            ASSERT_require(REG_FP);
+                                            if (fp->get_descriptor() == REG_FP) {
+                                                // Pattern found. Swap some arguments
+                                                add1->set_rhs(mul);
+                                                mul->set_parent(add1);
+
+                                                add2->set_rhs(c2);
+                                                c2->set_parent(add2);
+
+                                                SAWYER_MESG(mlog[DEBUG]) <<"      rearranged argument " <<i <<"\n";
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     Tag::Ptr retval;
     try {
