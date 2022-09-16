@@ -4,6 +4,7 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherAarch64.h>
 
 #include <Rose/BinaryAnalysis/InstructionSemantics/Util.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BitOps.h>
 #include <Rose/Diagnostics.h>
 

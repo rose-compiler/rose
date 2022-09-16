@@ -292,8 +292,6 @@ BinaryLoader::createAsmAST(SgBinaryComposite* binaryFile, std::string filePath) 
             interp = new SgAsmInterpretation();
             interps.push_back(interp);
             interp->set_parent(binaryFile->get_interpretations());
-            if (RegisterDictionary::Ptr registers = RegisterDictionary::instanceForIsa(header->get_isa()))
-                interp->set_registers(registers);
         }
         interp->get_headers()->get_headers().push_back(header);
     }
