@@ -35,18 +35,6 @@ SgAsmInterpretation::get_files() const
     return SgAsmGenericFilePtrList(files.begin(), files.end());
 }
 
-RegisterDictionary::Ptr
-SgAsmInterpretation::get_registers() const
-{
-    return p_registers;
-}
-
-void
-SgAsmInterpretation::set_registers(const RegisterDictionary::Ptr &regs)
-{
-    p_registers = regs;
-}
-
 void
 SgAsmInterpretation::insert_instructions(InstructionMap &imap/*in,out*/)
 {

@@ -5229,7 +5229,6 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmInterpretation_OTHERS) || defined(DOCUMENTATION)
     private:
         Rose::BinaryAnalysis::MemoryMap::Ptr p_map;
-        Rose::BinaryAnalysis::RegisterDictionaryPtr p_registers;
         bool coverageComputed;                          // true iff percentageCoverage has been computed
         mutable InstructionMap instruction_map;         // cached instruction map
 
@@ -5247,7 +5246,6 @@ void Grammar::setUpBinaryInstructions() {
             s & BOOST_SERIALIZATION_NVP(p_headers);
             s & BOOST_SERIALIZATION_NVP(p_global_block);
             s & BOOST_SERIALIZATION_NVP(p_map);
-            s & BOOST_SERIALIZATION_NVP(p_registers);
             s & BOOST_SERIALIZATION_NVP(coverageComputed);
             s & BOOST_SERIALIZATION_NVP(instruction_map);
             s & BOOST_SERIALIZATION_NVP(percentageCoverage);
@@ -5271,16 +5269,6 @@ void Grammar::setUpBinaryInstructions() {
          * @{ */
         Rose::BinaryAnalysis::MemoryMap::Ptr get_map() const {return p_map;}
         void set_map(const Rose::BinaryAnalysis::MemoryMap::Ptr &m) {p_map=m;}
-        /** @} */
-
-        /** Property: Register dictionary.
-         *
-         *  The register dictionary is a list of all register descriptors and how register names map to descriptors. The side
-         *  effect of descriptors is to describe how registers overlap with each other.
-         *
-         * @{ */
-        Rose::BinaryAnalysis::RegisterDictionaryPtr get_registers() const;
-        void set_registers(const Rose::BinaryAnalysis::RegisterDictionaryPtr&);
         /** @} */
 
         /** Property: Map of instructions by address.
