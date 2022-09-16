@@ -5407,15 +5407,6 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           set_skip_unparse_asm_commands(true);
         }
 
-  // DQ (6/7/2013): Added support for alternatively calling the experimental fortran frontend.
-     set_experimental_fortran_frontend(false);
-     if ( CommandlineProcessing::isOption(argv,"-rose:","experimental_fortran_frontend",true) == true )
-        {
-          if ( SgProject::get_verbose() >= 0 )
-               printf ("Using experimental fortran frontend (explicitly set: ON) \n");
-          set_experimental_fortran_frontend(true);
-        }
-
   // Added support the experimental fortran frontend using the Flang parser [Rasmussen 2019.08.30]
      if ( CommandlineProcessing::isOption(argv,"-rose:","experimental_flang_frontend",true) == true )
         {
@@ -5424,40 +5415,6 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
                std::cout << "Using experimental Flang Fortran frontend (explicitly set: ON)\n";
              }
           set_experimental_flang_frontend(true);
-        }
-
-  // Rasmussen (3/12/2018): Added support for CUDA Fortran within the experimental fortran frontend.
-     if ( CommandlineProcessing::isOption(argv,"-rose:","experimental_cuda_fortran_frontend",true) == true )
-        {
-          if ( SgProject::get_verbose() >= 0 )
-             {
-               printf ("Using experimental CUDA fortran frontend (explicitly set: ON) \n");
-               printf ("also: experimental fortran frontend (explicitly set: ON) \n");
-             }
-          set_experimental_fortran_frontend(true);
-          set_experimental_cuda_fortran_frontend(true);
-        }
-
-  // DQ (1/23/2016): Added support for OFP parsing and pretty printing of generated Aterm
-  // (this is part of the internal testing of the new (experimental) Fortran support).
-     set_experimental_fortran_frontend_OFP_test(false);
-     if ( CommandlineProcessing::isOption(argv,"-rose:","experimental_fortran_frontend_OFP_test",true) == true )
-        {
-          if ( SgProject::get_verbose() >= 0 )
-               printf ("Using experimental fortran frontend_OFP_test (explicitly set: ON) \n");
-          set_experimental_fortran_frontend_OFP_test(true);
-        }
-
-  // DQ (1/25/2016): we want to enforce that we only use F08 with the new experimental mode.
-     if (get_experimental_fortran_frontend() == false && get_experimental_flang_frontend() == false)
-        {
-       // We only want to allow Fortran 2008 mode to work with the new experimental fortran frontend.
-          if (get_F2008_only() == true)
-             {
-               printf ("ERROR: Fortran 2008 mode is only supported with the -rose:experimental_fortran_frontend option \n");
-               exit(1);
-            // ROSE_ASSERT(false);
-             }
         }
 
   // DQ (9/26/2011): Adding options to support internal debugging of ROSE based tools and language support.
@@ -5964,17 +5921,8 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
   // DQ (2/17/2013): Added support for skipping AST consistancy testing (for performance evaluation).
      optionCount = sla(argv, "-rose:", "($)", "(skipAstConsistancyTests)",1);
 
-  // DQ (6/8/2013): Added support for experimental fortran frontend.
-     optionCount = sla(argv, "-rose:", "($)", "(experimental_fortran_frontend)",1);
-
   // Rasmussen (8/30/2019): Added support for experimental Flang parser for Fortran
      optionCount = sla(argv, "-rose:", "($)", "(experimental_flang_frontend)",1);
-
-  // Rasmussen (3/12/2018): Added support for CUDA Fortran within the experimental fortran frontend.
-     optionCount = sla(argv, "-rose:", "($)", "(experimental_cuda_fortran_frontend)",1);
-
-  // DQ (1/23/2016): Added support for OFP testing within new experimental Fortran support.
-     optionCount = sla(argv, "-rose:", "($)", "(experimental_fortran_frontend_OFP_test)",1);
 
   // DQ (9/15/2013): Remove this from being output to the backend compiler.
      optionCount = sla(argv, "-rose:", "($)", "(unparse_in_same_directory_as_input_file)",1);

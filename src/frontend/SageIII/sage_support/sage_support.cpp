@@ -4840,25 +4840,12 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 
   // DQ (6/7/2013): Added support for the call to the experimental Fortran frontend (if the associated option is specified on the command line).
      int frontendErrorLevel = 0;
-     if (get_experimental_fortran_frontend() == true || get_experimental_flang_frontend() == true)
+     if (get_experimental_flang_frontend() == true)
         {
+       // These flags likely need to be changed with newer versions of flang [Rasmussen 2022.09.10]
           vector<string> experimentalFrontEndCommandLine;
-
-       // Push an initial argument onto the command line stack so that the command line can be interpreted
-       // as coming from an command shell command line (where the calling program is always argument zero).
-          if (get_experimental_fortran_frontend() == true)
-             {
-                experimentalFrontEndCommandLine.push_back("dummyArg_0");
-             }
-          else
-             {
-                experimentalFrontEndCommandLine.push_back("f18");
-                experimentalFrontEndCommandLine.push_back("-fexternal-builder");
-             }
-
-       // Rasmussen (11/13/2017): Removed usage of --parseTable command-line option.
-       // This information is better known by the individual language support files.
-       // Rasmussen (3/12/2018): Also removed usage of path_to_table for same reason.
+          experimentalFrontEndCommandLine.push_back("f18");
+          experimentalFrontEndCommandLine.push_back("-fexternal-builder");
 
           experimentalFrontEndCommandLine.push_back(get_sourceFileNameWithPath());
 
