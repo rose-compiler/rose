@@ -177,6 +177,13 @@ bat_similar_functions_LDFLAGS = $(ROSE_RPATHS)
 bat_similar_functions_LDADD = libbatSupport.a $(ROSE_LIBS)
 tests += bat-similar-functions.passed
 
+bin_PROGRAMS += bat-simplify
+bat_simplify_SOURCES = bat-simplify.C
+bat_simplify_CPPFLAGS = $(ROSE_INCLUDES)
+bat_simplify_LDFLAGS = $(ROSE_RPATHS)
+bat_simplify_LDADD = libbatSupport.a $(ROSE_LIBS)
+tests += bat-simplify.passed
+
 bin_PROGRAMS += bat-stack-deltas
 bat_stack_deltas_SOURCES = bat-stack-deltas.C
 bat_stack_deltas_CPPFLAGS = $(ROSE_INCLUDES)
@@ -204,6 +211,13 @@ bat_var_CPPFLAGS = $(ROSE_INCLUDES)
 bat_var_LDFLAGS = $(ROSE_RPATHS)
 bat_var_LDADD = libbatSupport.a $(ROSE_LIBS)
 tests += bat-var.passed
+
+bin_PROGRAMS += bat-xml-to-json
+bat_xml_to_json_SOURCES = bat-xml-to-json.C
+bat_xml_to_json_CPPFLAGS = $(ROSE_INCLUDES)
+bat_xml_to_json_LDFLAGS = $(ROSE_RPATHS)
+bat_xml_to_json_LDADD = libbatSupport.a $(ROSE_LIBS)
+tests += bat-xml-to-json.passed
 
 $(tests): %.passed: %
 	@$(RTH_RUN)							\

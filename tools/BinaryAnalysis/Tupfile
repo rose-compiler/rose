@@ -32,10 +32,12 @@ run $(tool_compile_linkexe) --install -I. bat-pardis.C            libbatSupport
 run $(tool_compile_linkexe) --install -I. bat-prop.C              libbatSupport
 run $(tool_compile_linkexe) --install -I. bat-scan-magic.C        libbatSupport
 run $(tool_compile_linkexe) --install -I. bat-similar-functions.C libbatSupport
+run $(tool_compile_linkexe) --install -I. bat-simplify.C          libbatSupport
 run $(tool_compile_linkexe) --install -I. bat-stack-deltas.C      libbatSupport
 run $(tool_compile_linkexe) --install -I. bat-to-c.C              libbatSupport
 run $(tool_compile_linkexe) --install -I. bat-trace.C             libbatSupport
 run $(tool_compile_linkexe) --install -I. bat-var.C               libbatSupport
+run $(tool_compile_linkexe) --install -I. bat-xml-to-json.C	  libbatSupport
 : bat-dis |> cp -p %f %o |> bat-dis-simple $(ROOT)/$(INSTALL_STAGING)/bin/<staging>
 
 # Tests
@@ -64,10 +66,12 @@ ifeq (@(ENABLE_TESTS),yes)
     run $(test) bat-prop              ./bat-prop              --self-test --no-error-if-disabled
     run $(test) bat-scan-magic        ./bat-scan-magic        --self-test --no-error-if-disabled                     
     run $(test) bat-similar-functions ./bat-similar-functions --self-test --no-error-if-disabled
+    run $(test) bat-simplify          ./bat-simplify          --self-test --no-error-if-disabled
     run $(test) bat-stack-deltas      ./bat-stack-deltas      --self-test --no-error-if-disabled
     run $(test) bat-to-c              ./bat-to-c              --self-test --no-error-if-disabled
     run $(test) bat-trace             ./bat-trace             --self-test --no-error-if-disabled
     run $(test) bat-var               ./bat-var               --self-test --no-error-if-disabled
+    run $(test) bat-xml-to-json       ./bat-xml-to-json	      --self-test --no-error-if-disabled
 endif
 
 endif
