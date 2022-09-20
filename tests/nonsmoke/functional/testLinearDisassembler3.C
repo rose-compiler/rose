@@ -155,7 +155,7 @@ generateRVAs(SgAsmCilMetadataRoot* n)
   ASSERT_not_null(metadataHeap);
   ASSERT_not_null(stringHeap);
 
-  for (SgAsmCilMethodDef* methodDef : metadataHeap->get_methodDef())
+  for (SgAsmCilMethodDef* methodDef : metadataHeap->get_MethodDef())
   {
     ASSERT_not_null(methodDef);
     std::cerr << "Method at StringHeap[" << methodDef->get_Name()
