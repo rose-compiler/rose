@@ -5,7 +5,7 @@
 
 #include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
 #include <Rose/BinaryAnalysis/ModelChecker/ExecutionUnit.h>
-#include <Rose/BinaryAnalysis/ModelChecker/P2Model.h>
+#include <Rose/BinaryAnalysis/ModelChecker/PartitionerModel.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Path.h>
 #include <Rose/BinaryAnalysis/ModelChecker/PathNode.h>
 #include <Rose/BinaryAnalysis/ModelChecker/PathPredicate.h>
@@ -920,7 +920,7 @@ Engine::showStatistics(std::ostream &out, const std::string &prefix) const {
         out <<prefix <<"paths terminated due to length limit:         " <<p->kLimitReached() <<"\n";
         out <<prefix <<"paths terminated due to time limit:           " <<p->timeLimitReached() <<"\n";
     }
-    if (auto s = std::dynamic_pointer_cast<P2Model::SemanticCallbacks>(semantics())) {
+    if (auto s = std::dynamic_pointer_cast<PartitionerModel::SemanticCallbacks>(semantics())) {
         out <<prefix <<"paths terminated at duplicate states:         " <<s->nDuplicateStates() <<"\n";
         out <<prefix <<"paths terminated for solver failure:          " <<s->nSolverFailures() <<" (including timeouts)\n";
     }

@@ -7,7 +7,7 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Formatter.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/State.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/SValue.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/Util.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/Utility.h>
 #include <Rose/StringUtility/Convert.h>
 
 using namespace Sawyer::Message::Common;

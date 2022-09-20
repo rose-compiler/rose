@@ -4,7 +4,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Types.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/Util.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/Utility.h>
 #include <Rose/BinaryAnalysis/HotPatch.h>
 #include <Rose/BinaryAnalysis/SmtSolver.h>
 #include <Combinatorics.h>

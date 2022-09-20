@@ -24,7 +24,7 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics/TaintSemantics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/TestSemantics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/Util.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/Utility.h>
 
 namespace Rose {
 namespace BinaryAnalysis {

@@ -59,6 +59,7 @@ run $(public_header) -o include/rose/Rose/BinaryAnalysis	\
     BinaryLoaderElf.h						\
     BinaryLoaderElfObj.h					\
     BinaryLoaderPe.h						\
+    ByteCode.h							\
     CallingConvention.h						\
     CodeInserter.h						\
     Concolic.h							\
@@ -112,6 +113,6 @@ run $(public_header) -o include/rose/Rose/BinaryAnalysis	\
     TaintedFlow.h						\
     ToSource.h							\
     Unparser.h							\
-    Utils.h							\
+    Utility.h							\
     Variables.h							\
     Z3Solver.h

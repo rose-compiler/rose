@@ -10,6 +10,7 @@
 #include <Rose/BinaryAnalysis/BinaryLoaderElfObj.h>
 #include <Rose/BinaryAnalysis/BinaryLoader.h>
 #include <Rose/BinaryAnalysis/BinaryLoaderPe.h>
+#include <Rose/BinaryAnalysis/ByteCode.h>
 #include <Rose/BinaryAnalysis/CallingConvention.h>
 #include <Rose/BinaryAnalysis/CodeInserter.h>
 #include <Rose/BinaryAnalysis/Concolic.h>
@@ -63,7 +64,7 @@
 #include <Rose/BinaryAnalysis/TaintedFlow.h>
 #include <Rose/BinaryAnalysis/ToSource.h>
 #include <Rose/BinaryAnalysis/Unparser.h>
-#include <Rose/BinaryAnalysis/Utils.h>
+#include <Rose/BinaryAnalysis/Utility.h>
 #include <Rose/BinaryAnalysis/Variables.h>
 #include <Rose/BinaryAnalysis/Z3Solver.h>
 

@@ -1953,7 +1953,7 @@ void
 Engine::labelAddresses(Partitioner &partitioner, const Configuration &configuration) {
     Modules::labelSymbolAddresses(partitioner, interp_);
 
-    for (const AddressConfig &c: configuration.addresses().values()) {
+    for (const AddressConfiguration &c: configuration.addresses().values()) {
         if (!c.name().empty())
             partitioner.addressName(c.address(), c.name());
     }
@@ -1962,7 +1962,7 @@ Engine::labelAddresses(Partitioner &partitioner, const Configuration &configurat
 std::vector<DataBlock::Ptr>
 Engine::makeConfiguredDataBlocks(Partitioner &partitioner, const Configuration &configuration) {
     // FIXME[Robb P. Matzke 2015-05-12]: This just adds labels to addresses right now.
-    for (const DataBlockConfig &dconfig: configuration.dataBlocks().values()) {
+    for (const DataBlockConfiguration &dconfig: configuration.dataBlocks().values()) {
         if (!dconfig.name().empty())
             partitioner.addressName(dconfig.address(), dconfig.name());
     }
@@ -1972,7 +1972,7 @@ Engine::makeConfiguredDataBlocks(Partitioner &partitioner, const Configuration &
 std::vector<Function::Ptr>
 Engine::makeConfiguredFunctions(Partitioner &partitioner, const Configuration &configuration) {
     std::vector<Function::Ptr> retval;
-    for (const FunctionConfig &fconfig: configuration.functionConfigsByAddress().values()) {
+    for (const FunctionConfiguration &fconfig: configuration.functionConfigurationsByAddress().values()) {
         rose_addr_t entryVa = 0;
         if (fconfig.address().assignTo(entryVa)) {
             Function::Ptr function = Function::instance(entryVa, fconfig.name(), SgAsmFunction::FUNC_CONFIGURED);
