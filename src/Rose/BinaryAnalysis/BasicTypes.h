@@ -112,7 +112,7 @@ class Utf8CharacterEncodingForm;
 class Utf16CharacterEncodingForm;
 } // namespace
 
-namespace SymbolicExpr {
+namespace SymbolicExpression {
 class Exception;
 class ExprExprHashMap;
 class Formatter;

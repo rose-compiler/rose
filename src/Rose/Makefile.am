@@ -178,7 +178,7 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/SRecord.C							\
 	BinaryAnalysis/StackDelta.C							\
 	BinaryAnalysis/String.C								\
-	BinaryAnalysis/SymbolicExpr.C							\
+	BinaryAnalysis/SymbolicExpression.C						\
 	BinaryAnalysis/SymbolicExpressionParser.C					\
 	BinaryAnalysis/SystemCall.C							\
 	BinaryAnalysis/TaintedFlow.C							\

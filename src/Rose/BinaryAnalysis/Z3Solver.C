@@ -778,7 +778,7 @@ Z3Solver::ctxExpression(SymbolicExpr::Node *expr) {
                 return ctxZerop(inode);
         }
     }
-    ASSERT_not_reachable("unhandled case " + stringify::Rose::BinaryAnalysis::SymbolicExpr::Operator(inode->getOperator(), "") +
+    ASSERT_not_reachable("unhandled case " + stringify::Rose::BinaryAnalysis::SymbolicExpression::Operator(inode->getOperator(), "") +
                          " (" + boost::lexical_cast<std::string>(inode->getOperator()) + ")");
 }
 
