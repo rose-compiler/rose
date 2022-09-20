@@ -59,7 +59,7 @@
 #include <Rose/BinaryAnalysis/StackDelta.h>
 #include <Rose/BinaryAnalysis/String.h>
 #include <Rose/BinaryAnalysis/SymbolicExpr.h>
-#include <Rose/BinaryAnalysis/SymbolicExprParser.h>
+#include <Rose/BinaryAnalysis/SymbolicExpressionParser.h>
 #include <Rose/BinaryAnalysis/SystemCall.h>
 #include <Rose/BinaryAnalysis/TaintedFlow.h>
 #include <Rose/BinaryAnalysis/ToSource.h>

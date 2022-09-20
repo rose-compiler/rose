@@ -21,7 +21,7 @@
 #include <Rose/BinaryAnalysis/NoOperation.h>
 #include <Rose/BinaryAnalysis/Reachability.h>
 #include <Rose/BinaryAnalysis/SmtSolver.h>
-#include <Rose/BinaryAnalysis/SymbolicExprParser.h>
+#include <Rose/BinaryAnalysis/SymbolicExpressionParser.h>
 #include <Rose/BinaryAnalysis/TaintedFlow.h>
 #include <Rose/BinaryAnalysis/ToSource.h>
 
@@ -158,7 +158,7 @@ void initialize() {
         BinaryAnalysis::SmtSolver::initDiagnostics();
         BinaryAnalysis::StackDelta::initDiagnostics();
         BinaryAnalysis::Strings::initDiagnostics();
-        BinaryAnalysis::SymbolicExprParser::initDiagnostics();
+        BinaryAnalysis::SymbolicExpressionParser::initDiagnostics();
         BinaryAnalysis::TaintedFlow::initDiagnostics();
         BinaryAnalysis::BinaryToSource::initDiagnostics();
         BinaryAnalysis::Unparser::initDiagnostics();

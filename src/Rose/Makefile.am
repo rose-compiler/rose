@@ -179,7 +179,7 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/StackDelta.C							\
 	BinaryAnalysis/String.C								\
 	BinaryAnalysis/SymbolicExpr.C							\
-	BinaryAnalysis/SymbolicExprParser.C						\
+	BinaryAnalysis/SymbolicExpressionParser.C					\
 	BinaryAnalysis/SystemCall.C							\
 	BinaryAnalysis/TaintedFlow.C							\
 	BinaryAnalysis/ToSource.C							\

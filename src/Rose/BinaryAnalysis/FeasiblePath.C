@@ -5,7 +5,7 @@
 #include <AsmUnparser_compat.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 #include <Rose/BinaryAnalysis/FeasiblePath.h>
-#include <Rose/BinaryAnalysis/SymbolicExprParser.h>
+#include <Rose/BinaryAnalysis/SymbolicExpressionParser.h>
 #include <Combinatorics.h>
 #include <Rose/CommandLine.h>
 #include <Rose/BinaryAnalysis/Disassembler/Aarch32.h>
@@ -702,7 +702,7 @@ FeasiblePath::initDiagnostics() {
 // class method
 std::string
 FeasiblePath::expressionDocumentation() {
-    return SymbolicExprParser().docString() +
+    return SymbolicExpressionParser().docString() +
         "@named{Registers}{Register locations are specified by just mentioning the name of the register. "
         "Register names are usually lower case, such as \"eax\", \"rip\", etc.}"
 
@@ -1627,7 +1627,7 @@ FeasiblePath::backtrack(P2::CfgPath &path /*in,out*/, const SmtSolver::Ptr &solv
 }
 
 FeasiblePath::Expression
-FeasiblePath::parseExpression(Expression expr, const std::string &where, SymbolicExprParser &exprParser) const {
+FeasiblePath::parseExpression(Expression expr, const std::string &where, SymbolicExpressionParser &exprParser) const {
     if (!expr.parsable.empty() && !expr.expr) {
         expr.expr = exprParser.parse(expr.parsable);
     }
@@ -1671,7 +1671,7 @@ FeasiblePath::parseExpression(Expression expr, const std::string &where, Symboli
 }
 
 SymbolicExpr::Ptr
-FeasiblePath::expandExpression(const Expression &expr, const SymbolicExprParser &parser) {
+FeasiblePath::expandExpression(const Expression &expr, const SymbolicExpressionParser &parser) {
     if (expr.expr) {
         return parser.delayedExpansion(expr.expr);
     } else if (!expr.parsable.empty()) {
@@ -1684,7 +1684,7 @@ FeasiblePath::expandExpression(const Expression &expr, const SymbolicExprParser 
 void
 FeasiblePath::insertAssertions(const SmtSolver::Ptr &solver, const P2::CfgPath &path,
                                const std::vector<Expression> &assertions, bool atEndOfPath,
-                               const SymbolicExprParser &parser) {
+                               const SymbolicExpressionParser &parser) {
     ASSERT_not_null(solver);
     ASSERT_forbid(path.isEmpty());
 
@@ -1781,7 +1781,7 @@ FeasiblePath::parseSubstitutions() {
     Substitutions retval;
 
     retval.regSubber = retval.exprParser.defineRegisters(partitioner().instructionProvider().registerDictionary());
-    retval.memSubber = SymbolicExprParser::MemorySubstituter::instance(SmtSolver::Ptr());
+    retval.memSubber = SymbolicExpressionParser::MemorySubstituter::instance(SmtSolver::Ptr());
     retval.exprParser.appendOperatorExpansion(retval.memSubber);
     ASSERT_require(settings_.assertions.size() == settings_.assertionLocations.size());
     for (size_t i = 0; i < settings_.assertions.size(); ++i)

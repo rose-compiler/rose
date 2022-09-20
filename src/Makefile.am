@@ -491,6 +491,7 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/String.h							\
 	Rose/BinaryAnalysis/SymbolicExpr.h						\
 	Rose/BinaryAnalysis/SymbolicExprParser.h					\
+	Rose/BinaryAnalysis/SymbolicExpressionParser.h					\
 	Rose/BinaryAnalysis/SystemCall.h						\
 	Rose/BinaryAnalysis/TaintedFlow.h						\
 	Rose/BinaryAnalysis/ToSource.h							\
