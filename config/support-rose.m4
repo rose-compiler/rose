@@ -139,11 +139,6 @@ AC_MSG_NOTICE([GFORTRAN_PATH = "$GFORTRAN_PATH"])
 #########################################################################################
 
 
-## Rasmussen (10/24/2017): Support for linking with the GnuCOBOL parse-tree library.
-#
-ROSE_SUPPORT_COBOL
-#########################################################################################
-
 ## Rasmussen (11/19/2017): Support for using the modified GNU Octave parser.
 #
 ROSE_SUPPORT_OCTAVE
@@ -391,23 +386,8 @@ if test "x$enable_debug_output_for_experimental_jovial_frontend" = "xyes"; then
   AC_DEFINE([ROSE_DEBUG_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION], [], [Controls large volumes of output spew useful for debugging new JOVIAL/ROSE connection code])
 fi
 
-# DQ (8/23/2017): Added support for new Cobol front-end development.
-AC_ARG_ENABLE(experimental_cobol_frontend,
-    AS_HELP_STRING([--enable-experimental_cobol_frontend], [Enable experimental cobol frontend development]))
-AM_CONDITIONAL(ROSE_EXPERIMENTAL_COBOL_ROSE_CONNECTION, [test "x$enable_experimental_cobol_frontend" = xyes])
-if test "x$enable_experimental_cobol_frontend" = "xyes"; then
-  AC_MSG_WARN([using this mode enables experimental cobol front-end (internal development only)!])
-  AC_DEFINE([ROSE_EXPERIMENTAL_COBOL_ROSE_CONNECTION], [], [Enables development of experimental cobol frontend])
-fi
-
-# DQ (8/23/2017): Added support for debugging new Cobol front-end development.
-AC_ARG_ENABLE(debug_output_for_experimental_cobol_frontend,
-    AS_HELP_STRING([--enable-debug_output_for_experimental_cobol_frontend], [Enable debugging output (spew) of new COBOL/ROSE connection]))
-AM_CONDITIONAL(ROSE_DEBUG_EXPERIMENTAL_COBOL_ROSE_CONNECTION, [test "x$enable_debug_output_for_experimental_cobol_frontend" = xyes])
-if test "x$enable_debug_output_for_experimental_cobol_frontend" = "xyes"; then
-  AC_MSG_WARN([using this mode causes large volumes of output spew (internal debugging only)!])
-  AC_DEFINE([ROSE_DEBUG_EXPERIMENTAL_COBOL_ROSE_CONNECTION], [], [Controls large volumes of output spew useful for debugging new COBOL/ROSE connection code])
-fi
+# Rasmussen (9/18/2020): Removed --experimental_cobol_frontend option and associated code
+# This was required because the Cobol frontend depended on SgUntyped nodes which have been deleted.
 
 # Rasmussen (10/30/2017): Added support for new Octave/Matlab front-end development.
 AC_ARG_ENABLE([experimental_matlab_frontend],
@@ -1038,13 +1018,6 @@ if test "x$enable_experimental_jovial_frontend" = "xyes"; then
    fi
    if test "x$STRATEGO_LIBRARY_PATH" = "x"; then
       AC_MSG_ERROR([support for experimental_jovial_frontend requires Stratego library support, --with-stratego=PATH must be specified!])
-   fi
-fi
-
-# Rasmussen (10/24/2017): GnuCobol parse-tree library installation required for Cobol support.
-if test "x$enable_experimental_cobol_frontend" = "xyes"; then
-   if test "x$COBPT_LIBRARY_PATH" = "x"; then
-      AC_MSG_ERROR([support for experimental_cobol_frontend requires GnuCobol parse-tree library support, --with-cobpt=PATH must be specified!])
    fi
 fi
 
@@ -2133,7 +2106,6 @@ src/frontend/Experimental_Ada_ROSE_Connection/parser/Makefile
 src/frontend/Experimental_Ada_ROSE_Connection/parser/asis_adapter/Makefile
 src/frontend/Experimental_Ada_ROSE_Connection/parser/ada_main/Makefile
 src/frontend/Experimental_Jovial_ROSE_Connection/Makefile
-src/frontend/Experimental_Cobol_ROSE_Connection/Makefile
 src/frontend/Experimental_Matlab_ROSE_Connection/Makefile
 src/frontend/Makefile
 src/frontend/OpenFortranParser_SAGE_Connection/Makefile
@@ -2298,7 +2270,6 @@ tests/nonsmoke/functional/CompileTests/experimental_ada_tests/ROSEGprIntegration
 tests/nonsmoke/functional/CompileTests/experimental_ada_tests/ROSEGprIntegration_tests/MultiSource/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_fortran_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_jovial_tests/Makefile
-tests/nonsmoke/functional/CompileTests/experimental_cobol_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_matlab_tests/Makefile
 tests/nonsmoke/functional/CompileTests/Makefile
 tests/nonsmoke/functional/CompileTests/MicrosoftWindows_C_tests/Makefile
