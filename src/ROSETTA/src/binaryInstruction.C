@@ -19920,7 +19920,23 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilAssembly_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
+
+  
+  
+  
+  
+  
+  
+  
+    
+        const std::uint8_t* get_PublicKey_blob() const;
+  
+    
+        const std::uint8_t* get_Name_string() const;
+  
+    
+        const std::uint8_t* get_Culture_string() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -19929,7 +19945,7 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
-
+            
             s & BOOST_SERIALIZATION_NVP(p_HashAlgId);
             s & BOOST_SERIALIZATION_NVP(p_MajorVersion);
             s & BOOST_SERIALIZATION_NVP(p_MinorVersion);
@@ -19939,6 +19955,7 @@ void Grammar::setUpBinaryInstructions() {
             s & BOOST_SERIALIZATION_NVP(p_PublicKey);
             s & BOOST_SERIALIZATION_NVP(p_Name);
             s & BOOST_SERIALIZATION_NVP(p_Culture);
+            
         }
 #endif
 
@@ -19947,7 +19964,7 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
     protected:
-
+      
       uint32_t p_HashAlgId;
       uint16_t p_MajorVersion;
       uint16_t p_MinorVersion;
@@ -20026,7 +20043,11 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilAssemblyOS_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
+
+  
+  
+          
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -20035,10 +20056,11 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
-
+            
             s & BOOST_SERIALIZATION_NVP(p_OSPlatformID);
             s & BOOST_SERIALIZATION_NVP(p_OSMajorVersion);
             s & BOOST_SERIALIZATION_NVP(p_OSMinorVersion);
+            
         }
 #endif
 
@@ -20047,7 +20069,7 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
     protected:
-
+      
       uint32_t p_OSPlatformID;
       uint32_t p_OSMajorVersion;
       uint32_t p_OSMinorVersion;
@@ -20094,7 +20116,9 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilAssemblyProcessor_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
+
+          
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -20103,8 +20127,9 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
-
+            
             s & BOOST_SERIALIZATION_NVP(p_Processor);
+            
         }
 #endif
 
@@ -20113,7 +20138,7 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
     protected:
-
+      
       uint32_t p_Processor;
 #endif
 
@@ -20262,7 +20287,25 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilAssemblyRef_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
+
+  
+  
+  
+  
+  
+  
+    
+        const std::uint8_t* get_PublicKeyOrToken_blob() const;
+  
+    
+        const std::uint8_t* get_Name_string() const;
+  
+    
+        const std::uint8_t* get_Culture_string() const;
+  
+    
+        const std::uint8_t* get_HashValue_blob() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -20271,7 +20314,7 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
-
+            
             s & BOOST_SERIALIZATION_NVP(p_MajorVersion);
             s & BOOST_SERIALIZATION_NVP(p_MinorVersion);
             s & BOOST_SERIALIZATION_NVP(p_BuildNumber);
@@ -20281,6 +20324,7 @@ void Grammar::setUpBinaryInstructions() {
             s & BOOST_SERIALIZATION_NVP(p_Name);
             s & BOOST_SERIALIZATION_NVP(p_Culture);
             s & BOOST_SERIALIZATION_NVP(p_HashValue);
+            
         }
 #endif
 
@@ -20289,7 +20333,7 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
     protected:
-
+      
       uint16_t p_MajorVersion;
       uint16_t p_MinorVersion;
       uint16_t p_BuildNumber;
@@ -20381,7 +20425,14 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilAssemblyRefOS_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
+
+  
+  
+  
+  
+    
+        const SgAsmCilMetadata* get_AssemblyRefOS_object() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -20390,11 +20441,12 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
-
+            
             s & BOOST_SERIALIZATION_NVP(p_OSPlatformID);
             s & BOOST_SERIALIZATION_NVP(p_OSMajorVersion);
             s & BOOST_SERIALIZATION_NVP(p_OSMinorVersion);
             s & BOOST_SERIALIZATION_NVP(p_AssemblyRefOS);
+            
         }
 #endif
 
@@ -20403,7 +20455,7 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
     protected:
-
+      
       uint32_t p_OSPlatformID;
       uint32_t p_OSMajorVersion;
       uint32_t p_OSMinorVersion;
@@ -20464,7 +20516,12 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilAssemblyRefProcessor_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
+
+  
+  
+    
+        const SgAsmCilMetadata* get_AssemblyRef_object() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -20473,9 +20530,10 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
-
+            
             s & BOOST_SERIALIZATION_NVP(p_Processor);
             s & BOOST_SERIALIZATION_NVP(p_AssemblyRef);
+            
         }
 #endif
 
@@ -20484,7 +20542,7 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
     protected:
-
+      
       uint32_t p_Processor;
       uint32_t p_AssemblyRef;
 #endif
@@ -20556,7 +20614,13 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilClassLayout_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
+
+  
+  
+  
+    
+        const SgAsmCilMetadata* get_Parent_object() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -20565,10 +20629,11 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
-
+            
             s & BOOST_SERIALIZATION_NVP(p_PackingSize);
             s & BOOST_SERIALIZATION_NVP(p_ClassSize);
             s & BOOST_SERIALIZATION_NVP(p_Parent);
+            
         }
 #endif
 
@@ -20577,7 +20642,7 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
     protected:
-
+      
       uint16_t p_PackingSize;
       uint32_t p_ClassSize;
       uint32_t p_Parent;
@@ -20663,7 +20728,16 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilConstant_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
+
+  
+  
+  
+    
+        const SgAsmCilMetadata* get_Parent_object() const;
+  
+    
+        const std::uint8_t* get_Value_blob() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -20672,11 +20746,12 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
-
+            
             s & BOOST_SERIALIZATION_NVP(p_Type);
             s & BOOST_SERIALIZATION_NVP(p_Padding);
             s & BOOST_SERIALIZATION_NVP(p_Parent);
             s & BOOST_SERIALIZATION_NVP(p_Value);
+            
         }
 #endif
 
@@ -20685,7 +20760,7 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
     protected:
-
+      
       uint8_t p_Type;
       uint8_t p_Padding;
       uint32_t p_Parent;
@@ -20729,7 +20804,7 @@ void Grammar::setUpBinaryInstructions() {
 #ifdef DOCUMENTATION
         /** Property: Type.
          *
-         *  an index into the MethodDef or MemberRef table.
+         *  an index into the MethodDef or MemberRef table (more precisely, a CustomAttributeType coded index).
          *
          * @{ */
         uint32_t get_Type() const;
@@ -20759,7 +20834,17 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilCustomAttribute_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
+
+  
+    
+        const SgAsmCilMetadata* get_Parent_object() const;
+  
+    
+        const SgAsmCilMetadata* get_Type_object() const;
+  
+    
+        const std::uint8_t* get_Value_blob() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -20768,10 +20853,11 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
-
+            
             s & BOOST_SERIALIZATION_NVP(p_Parent);
             s & BOOST_SERIALIZATION_NVP(p_Type);
             s & BOOST_SERIALIZATION_NVP(p_Value);
+            
         }
 #endif
 
@@ -20780,7 +20866,7 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
     protected:
-
+      
       uint32_t p_Parent;
       uint32_t p_Type;
       uint32_t p_Value;
@@ -20853,7 +20939,15 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilDeclSecurity_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
+
+  
+  
+    
+        const SgAsmCilMetadata* get_Parent_object() const;
+  
+    
+        const std::uint8_t* get_PermissionSet_blob() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -20862,10 +20956,11 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
-
+            
             s & BOOST_SERIALIZATION_NVP(p_Action);
             s & BOOST_SERIALIZATION_NVP(p_Parent);
             s & BOOST_SERIALIZATION_NVP(p_PermissionSet);
+            
         }
 #endif
 
@@ -20874,7 +20969,7 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
     protected:
-
+      
       uint16_t p_Action;
       uint32_t p_Parent;
       uint32_t p_PermissionSet;
@@ -20947,7 +21042,15 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilEvent_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
+
+  
+  
+    
+        const std::uint8_t* get_Name_string() const;
+  
+    
+        const SgAsmCilMetadata* get_EventType_object() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -20956,10 +21059,11 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
-
+            
             s & BOOST_SERIALIZATION_NVP(p_EventFlags);
             s & BOOST_SERIALIZATION_NVP(p_Name);
             s & BOOST_SERIALIZATION_NVP(p_EventType);
+            
         }
 #endif
 
@@ -20968,7 +21072,7 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
     protected:
-
+      
       uint16_t p_EventFlags;
       uint32_t p_Name;
       uint32_t p_EventType;
@@ -21028,7 +21132,14 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilEventMap_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
+
+  
+    
+        const SgAsmCilMetadata* get_Parent_object() const;
+  
+    
+        const SgAsmCilMetadata* get_EventList_object() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -21037,9 +21148,10 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
-
+            
             s & BOOST_SERIALIZATION_NVP(p_Parent);
             s & BOOST_SERIALIZATION_NVP(p_EventList);
+            
         }
 #endif
 
@@ -21048,7 +21160,7 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
     protected:
-
+      
       uint32_t p_Parent;
       uint32_t p_EventList;
 #endif
@@ -21146,7 +21258,19 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilExportedType_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
+
+  
+  
+  
+    
+        const std::uint8_t* get_TypeName_string() const;
+  
+    
+        const std::uint8_t* get_TypeNamespace_string() const;
+  
+    
+        const SgAsmCilMetadata* get_Implementation_object() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -21155,12 +21279,13 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
-
+            
             s & BOOST_SERIALIZATION_NVP(p_EventFlags);
             s & BOOST_SERIALIZATION_NVP(p_TypeDefIdName);
             s & BOOST_SERIALIZATION_NVP(p_TypeName);
             s & BOOST_SERIALIZATION_NVP(p_TypeNamespace);
             s & BOOST_SERIALIZATION_NVP(p_Implementation);
+            
         }
 #endif
 
@@ -21169,7 +21294,7 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
     protected:
-
+      
       uint32_t p_EventFlags;
       uint32_t p_TypeDefIdName;
       uint32_t p_TypeName;
@@ -21244,7 +21369,15 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilField_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
+
+  
+  
+    
+        const std::uint8_t* get_Name_string() const;
+  
+    
+        const std::uint8_t* get_Signature_blob() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -21253,10 +21386,11 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
-
+            
             s & BOOST_SERIALIZATION_NVP(p_Flags);
             s & BOOST_SERIALIZATION_NVP(p_Name);
             s & BOOST_SERIALIZATION_NVP(p_Signature);
+            
         }
 #endif
 
@@ -21265,7 +21399,7 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
     protected:
-
+      
       uint16_t p_Flags;
       uint32_t p_Name;
       uint32_t p_Signature;
@@ -21325,7 +21459,12 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilFieldLayout_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
+
+  
+  
+    
+        const SgAsmCilMetadata* get_Field_object() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -21334,9 +21473,10 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
-
+            
             s & BOOST_SERIALIZATION_NVP(p_Offset);
             s & BOOST_SERIALIZATION_NVP(p_Field);
+            
         }
 #endif
 
@@ -21345,7 +21485,7 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
     protected:
-
+      
       uint32_t p_Offset;
       uint32_t p_Field;
 #endif
@@ -21404,7 +21544,14 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilFieldMarshal_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
+
+  
+    
+        const SgAsmCilMetadata* get_Parent_object() const;
+  
+    
+        const std::uint8_t* get_NativeType_blob() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -21413,9 +21560,10 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
-
+            
             s & BOOST_SERIALIZATION_NVP(p_Parent);
             s & BOOST_SERIALIZATION_NVP(p_NativeType);
+            
         }
 #endif
 
@@ -21424,7 +21572,7 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
     protected:
-
+      
       uint32_t p_Parent;
       uint32_t p_NativeType;
 #endif
@@ -21483,7 +21631,12 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilFieldRVA_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
+
+  
+  
+    
+        const SgAsmCilMetadata* get_Field_object() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -21492,9 +21645,10 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
-
+            
             s & BOOST_SERIALIZATION_NVP(p_RVA);
             s & BOOST_SERIALIZATION_NVP(p_Field);
+            
         }
 #endif
 
@@ -21503,7 +21657,7 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
     protected:
-
+      
       uint32_t p_RVA;
       uint32_t p_Field;
 #endif
@@ -21575,7 +21729,15 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilFile_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
+
+  
+  
+    
+        const std::uint8_t* get_Name_string() const;
+  
+    
+        const std::uint8_t* get_HashValue_blob() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -21584,10 +21746,11 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
-
+            
             s & BOOST_SERIALIZATION_NVP(p_Flags);
             s & BOOST_SERIALIZATION_NVP(p_Name);
             s & BOOST_SERIALIZATION_NVP(p_HashValue);
+            
         }
 #endif
 
@@ -21596,7 +21759,7 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
     protected:
-
+      
       uint32_t p_Flags;
       uint32_t p_Name;
       uint32_t p_HashValue;
@@ -21682,7 +21845,16 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilGenericParam_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
+
+  
+  
+  
+    
+        const SgAsmCilMetadata* get_Owner_object() const;
+  
+    
+        const std::uint8_t* get_Name_string() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -21691,11 +21863,12 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
-
+            
             s & BOOST_SERIALIZATION_NVP(p_Number);
             s & BOOST_SERIALIZATION_NVP(p_Flags);
             s & BOOST_SERIALIZATION_NVP(p_Owner);
             s & BOOST_SERIALIZATION_NVP(p_Name);
+            
         }
 #endif
 
@@ -21704,7 +21877,7 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
     protected:
-
+      
       uint16_t p_Number;
       uint16_t p_Flags;
       uint32_t p_Owner;
@@ -21765,7 +21938,14 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilGenericParamConstraint_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
+
+  
+    
+        const SgAsmCilMetadata* get_Owner_object() const;
+  
+    
+        const SgAsmCilMetadata* get_Constraint_object() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -21774,9 +21954,10 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
-
+            
             s & BOOST_SERIALIZATION_NVP(p_Owner);
             s & BOOST_SERIALIZATION_NVP(p_Constraint);
+            
         }
 #endif
 
@@ -21785,7 +21966,7 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
     protected:
-
+      
       uint32_t p_Owner;
       uint32_t p_Constraint;
 #endif
@@ -21870,7 +22051,18 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilImplMap_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
+
+  
+  
+    
+        const SgAsmCilMetadata* get_MemberForwarded_object() const;
+  
+    
+        const std::uint8_t* get_ImportName_string() const;
+  
+    
+        const SgAsmCilMetadata* get_ImportScope_object() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -21879,11 +22071,12 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
-
+            
             s & BOOST_SERIALIZATION_NVP(p_MappingFlags);
             s & BOOST_SERIALIZATION_NVP(p_MemberForwarded);
             s & BOOST_SERIALIZATION_NVP(p_ImportName);
             s & BOOST_SERIALIZATION_NVP(p_ImportScope);
+            
         }
 #endif
 
@@ -21892,7 +22085,7 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
     protected:
-
+      
       uint16_t p_MappingFlags;
       uint32_t p_MemberForwarded;
       uint32_t p_ImportName;
@@ -21953,7 +22146,14 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilInterfaceImpl_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
+
+  
+    
+        const SgAsmCilMetadata* get_Class_object() const;
+  
+    
+        const SgAsmCilMetadata* get_Interface_object() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -21962,9 +22162,10 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
-
+            
             s & BOOST_SERIALIZATION_NVP(p_Class);
             s & BOOST_SERIALIZATION_NVP(p_Interface);
+            
         }
 #endif
 
@@ -21973,7 +22174,7 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
     protected:
-
+      
       uint32_t p_Class;
       uint32_t p_Interface;
 #endif
@@ -22058,7 +22259,16 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilManifestResource_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
+
+  
+  
+  
+    
+        const std::uint8_t* get_Name_string() const;
+  
+    
+        const SgAsmCilMetadata* get_Implementation_object() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -22067,11 +22277,12 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
-
+            
             s & BOOST_SERIALIZATION_NVP(p_Offset);
             s & BOOST_SERIALIZATION_NVP(p_Flags);
             s & BOOST_SERIALIZATION_NVP(p_Name);
             s & BOOST_SERIALIZATION_NVP(p_Implementation);
+            
         }
 #endif
 
@@ -22080,7 +22291,7 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
     protected:
-
+      
       uint32_t p_Offset;
       uint32_t p_Flags;
       uint32_t p_Name;
@@ -22154,7 +22365,17 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilMemberRef_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
+
+  
+    
+        const SgAsmCilMetadata* get_Class_object() const;
+  
+    
+        const std::uint8_t* get_Name_string() const;
+  
+    
+        const std::uint8_t* get_Signature_blob() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -22163,10 +22384,11 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
-
+            
             s & BOOST_SERIALIZATION_NVP(p_Class);
             s & BOOST_SERIALIZATION_NVP(p_Name);
             s & BOOST_SERIALIZATION_NVP(p_Signature);
+            
         }
 #endif
 
@@ -22175,7 +22397,7 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
     protected:
-
+      
       uint32_t p_Class;
       uint32_t p_Name;
       uint32_t p_Signature;
@@ -22339,7 +22561,20 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilMethodDef_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
+
+  
+  
+  
+  
+    
+        const std::uint8_t* get_Name_string() const;
+  
+    
+        const std::uint8_t* get_Signature_blob() const;
+  
+    
+        const SgAsmCilMetadata* get_ParamList_object() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -22348,13 +22583,18 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
-
+            
             s & BOOST_SERIALIZATION_NVP(p_RVA);
             s & BOOST_SERIALIZATION_NVP(p_ImplFlags);
             s & BOOST_SERIALIZATION_NVP(p_Flags);
             s & BOOST_SERIALIZATION_NVP(p_Name);
             s & BOOST_SERIALIZATION_NVP(p_Signature);
             s & BOOST_SERIALIZATION_NVP(p_ParamList);
+            
+            s & BOOST_SERIALIZATION_NVP(p_body);
+            s & BOOST_SERIALIZATION_NVP(p_initLocals);
+            s & BOOST_SERIALIZATION_NVP(p_stackSize);
+            s & BOOST_SERIALIZATION_NVP(p_hasMoreSections);
         }
 #endif
 
@@ -22363,7 +22603,7 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
     protected:
-
+      
       uint32_t p_RVA;
       uint32_t p_ImplFlags;
       uint16_t p_Flags;
@@ -22439,7 +22679,17 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilMethodImpl_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
+
+  
+    
+        const SgAsmCilMetadata* get_Class_object() const;
+  
+    
+        const SgAsmCilMetadata* get_MethodBody_object() const;
+  
+    
+        const SgAsmCilMetadata* get_MethodDeclaration_object() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -22448,10 +22698,11 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
-
+            
             s & BOOST_SERIALIZATION_NVP(p_Class);
             s & BOOST_SERIALIZATION_NVP(p_MethodBody);
             s & BOOST_SERIALIZATION_NVP(p_MethodDeclaration);
+            
         }
 #endif
 
@@ -22460,7 +22711,7 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
     protected:
-
+      
       uint32_t p_Class;
       uint32_t p_MethodBody;
       uint32_t p_MethodDeclaration;
@@ -22533,7 +22784,15 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilMethodSemantics_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
+
+  
+  
+    
+        const SgAsmCilMetadata* get_Method_object() const;
+  
+    
+        const SgAsmCilMetadata* get_Association_object() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -22542,10 +22801,11 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
-
+            
             s & BOOST_SERIALIZATION_NVP(p_Semantics);
             s & BOOST_SERIALIZATION_NVP(p_Method);
             s & BOOST_SERIALIZATION_NVP(p_Association);
+            
         }
 #endif
 
@@ -22554,7 +22814,7 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
     protected:
-
+      
       uint16_t p_Semantics;
       uint32_t p_Method;
       uint32_t p_Association;
@@ -22614,7 +22874,14 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilMethodSpec_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
+
+  
+    
+        const SgAsmCilMetadata* get_Method_object() const;
+  
+    
+        const std::uint8_t* get_Instantiation_blob() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -22623,9 +22890,10 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
-
+            
             s & BOOST_SERIALIZATION_NVP(p_Method);
             s & BOOST_SERIALIZATION_NVP(p_Instantiation);
+            
         }
 #endif
 
@@ -22634,7 +22902,7 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
     protected:
-
+      
       uint32_t p_Method;
       uint32_t p_Instantiation;
 #endif
@@ -22732,7 +23000,21 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilModule_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
+
+  
+  
+    
+        const std::uint8_t* get_Name_string() const;
+  
+    
+        const std::uint32_t* get_Mvid_guid() const;
+  
+    
+        const std::uint32_t* get_Encld_guid() const;
+  
+    
+        const std::uint32_t* get_EncBaseId_guid() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -22741,12 +23023,13 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
-
+            
             s & BOOST_SERIALIZATION_NVP(p_Generation);
             s & BOOST_SERIALIZATION_NVP(p_Name);
             s & BOOST_SERIALIZATION_NVP(p_Mvid);
             s & BOOST_SERIALIZATION_NVP(p_Encld);
             s & BOOST_SERIALIZATION_NVP(p_EncBaseId);
+            
         }
 #endif
 
@@ -22755,7 +23038,7 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
     protected:
-
+      
       uint16_t p_Generation;
       uint32_t p_Name;
       uint32_t p_Mvid;
@@ -22804,7 +23087,11 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilModuleRef_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
+
+  
+    
+        const std::uint8_t* get_Name_string() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -22813,8 +23100,9 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
-
+            
             s & BOOST_SERIALIZATION_NVP(p_Name);
+            
         }
 #endif
 
@@ -22823,7 +23111,7 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
     protected:
-
+      
       uint32_t p_Name;
 #endif
 
@@ -22881,7 +23169,14 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilNestedClass_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
+
+  
+    
+        const SgAsmCilMetadata* get_NestedClass_object() const;
+  
+    
+        const SgAsmCilMetadata* get_EnclosingClass_object() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -22890,9 +23185,10 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
-
+            
             s & BOOST_SERIALIZATION_NVP(p_NestedClass);
             s & BOOST_SERIALIZATION_NVP(p_EnclosingClass);
+            
         }
 #endif
 
@@ -22901,7 +23197,7 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
     protected:
-
+      
       uint32_t p_NestedClass;
       uint32_t p_EnclosingClass;
 #endif
@@ -22973,7 +23269,13 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilParam_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
+
+  
+  
+  
+    
+        const std::uint8_t* get_Name_blob() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -22982,10 +23284,11 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
-
+            
             s & BOOST_SERIALIZATION_NVP(p_Flags);
             s & BOOST_SERIALIZATION_NVP(p_Sequence);
             s & BOOST_SERIALIZATION_NVP(p_Name);
+            
         }
 #endif
 
@@ -22994,7 +23297,7 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
     protected:
-
+      
       uint16_t p_Flags;
       uint16_t p_Sequence;
       uint32_t p_Name;
@@ -23067,7 +23370,15 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilProperty_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
+
+  
+  
+    
+        const std::uint8_t* get_Name_string() const;
+  
+    
+        const std::uint8_t* get_Type_blob() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -23076,10 +23387,11 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
-
+            
             s & BOOST_SERIALIZATION_NVP(p_Flags);
             s & BOOST_SERIALIZATION_NVP(p_Name);
             s & BOOST_SERIALIZATION_NVP(p_Type);
+            
         }
 #endif
 
@@ -23088,7 +23400,7 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
     protected:
-
+      
       uint16_t p_Flags;
       uint32_t p_Name;
       uint32_t p_Type;
@@ -23148,7 +23460,14 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilPropertyMap_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
+
+  
+    
+        const SgAsmCilMetadata* get_Parent_object() const;
+  
+    
+        const SgAsmCilMetadata* get_PropertyList_object() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -23157,9 +23476,10 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
-
+            
             s & BOOST_SERIALIZATION_NVP(p_Parent);
             s & BOOST_SERIALIZATION_NVP(p_PropertyList);
+            
         }
 #endif
 
@@ -23168,7 +23488,7 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
     protected:
-
+      
       uint32_t p_Parent;
       uint32_t p_PropertyList;
 #endif
@@ -23214,7 +23534,11 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilStandAloneSig_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
+
+  
+    
+        const std::uint8_t* get_Signature_blob() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -23223,8 +23547,9 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
-
+            
             s & BOOST_SERIALIZATION_NVP(p_Signature);
+            
         }
 #endif
 
@@ -23233,7 +23558,7 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
     protected:
-
+      
       uint32_t p_Signature;
 #endif
 
@@ -23343,7 +23668,24 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilTypeDef_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
+
+  
+  
+    
+        const std::uint8_t* get_TypeName_string() const;
+  
+    
+        const std::uint8_t* get_TypeNamespace_string() const;
+  
+    
+        const SgAsmCilMetadata* get_Extends_object() const;
+  
+    
+        const SgAsmCilMetadata* get_FieldList_object() const;
+  
+    
+        const SgAsmCilMetadata* get_MethodList_object() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -23352,13 +23694,14 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
-
+            
             s & BOOST_SERIALIZATION_NVP(p_Flags);
             s & BOOST_SERIALIZATION_NVP(p_TypeName);
             s & BOOST_SERIALIZATION_NVP(p_TypeNamespace);
             s & BOOST_SERIALIZATION_NVP(p_Extends);
             s & BOOST_SERIALIZATION_NVP(p_FieldList);
             s & BOOST_SERIALIZATION_NVP(p_MethodList);
+            
         }
 #endif
 
@@ -23367,7 +23710,7 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
     protected:
-
+      
       uint32_t p_Flags;
       uint32_t p_TypeName;
       uint32_t p_TypeNamespace;
@@ -23443,7 +23786,17 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilTypeRef_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
+
+  
+    
+        const SgAsmCilMetadata* get_ResolutionScope_object() const;
+  
+    
+        const std::uint8_t* get_TypeName_string() const;
+  
+    
+        const std::uint8_t* get_TypeNamespace_string() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -23452,10 +23805,11 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
-
+            
             s & BOOST_SERIALIZATION_NVP(p_ResolutionScope);
             s & BOOST_SERIALIZATION_NVP(p_TypeName);
             s & BOOST_SERIALIZATION_NVP(p_TypeNamespace);
+            
         }
 #endif
 
@@ -23464,7 +23818,7 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
     protected:
-
+      
       uint16_t p_ResolutionScope;
       uint32_t p_TypeName;
       uint32_t p_TypeNamespace;
@@ -23511,7 +23865,11 @@ void Grammar::setUpBinaryInstructions() {
 #if defined(SgAsmCilTypeSpec_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
+
+  
+    
+        const std::uint8_t* get_Signature_blob() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -23520,8 +23878,9 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
-
+            
             s & BOOST_SERIALIZATION_NVP(p_Signature);
+            
         }
 #endif
 
@@ -23530,7 +23889,7 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
     protected:
-
+      
       uint32_t p_Signature;
 #endif
 
@@ -23581,7 +23940,8 @@ void Grammar::setUpBinaryInstructions() {
     };
 #endif
 
-////// from metadataHeap_C.txt
+//
+// MetadataHeap
 
     DECLARE_LEAF_CLASS(AsmCilMetadataHeap);
     IS_SERIALIZABLE(AsmCilMetadataHeap);
@@ -23706,269 +24066,268 @@ void Grammar::setUpBinaryInstructions() {
 
 
 
-
 #ifdef DOCUMENTATION
 #else
-        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilAssembly*>", "assembly", "", NO_CONSTRUCTOR_PARAMETER,
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilAssembly*>", "Assembly", "", NO_CONSTRUCTOR_PARAMETER,
                                             NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
 
 #ifdef DOCUMENTATION
 #else
-        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilAssemblyProcessor*>", "assemblyProcessor", "", NO_CONSTRUCTOR_PARAMETER,
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilAssemblyOS*>", "AssemblyOS", "", NO_CONSTRUCTOR_PARAMETER,
                                             NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
 
 #ifdef DOCUMENTATION
 #else
-        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilAssemblyOS*>", "assemblyOS", "", NO_CONSTRUCTOR_PARAMETER,
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilAssemblyProcessor*>", "AssemblyProcessor", "", NO_CONSTRUCTOR_PARAMETER,
                                             NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
 
 #ifdef DOCUMENTATION
 #else
-        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilAssemblyRef*>", "assemblyRef", "", NO_CONSTRUCTOR_PARAMETER,
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilAssemblyRef*>", "AssemblyRef", "", NO_CONSTRUCTOR_PARAMETER,
                                             NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
 
 #ifdef DOCUMENTATION
 #else
-        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilAssemblyRefProcessor*>", "assemblyRefProcessor", "", NO_CONSTRUCTOR_PARAMETER,
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilAssemblyRefOS*>", "AssemblyRefOS", "", NO_CONSTRUCTOR_PARAMETER,
                                             NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
 
 #ifdef DOCUMENTATION
 #else
-        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilAssemblyRefOS*>", "assemblyRefOS", "", NO_CONSTRUCTOR_PARAMETER,
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilAssemblyRefProcessor*>", "AssemblyRefProcessor", "", NO_CONSTRUCTOR_PARAMETER,
                                             NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
 
 #ifdef DOCUMENTATION
 #else
-        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilClassLayout*>", "classLayout", "", NO_CONSTRUCTOR_PARAMETER,
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilClassLayout*>", "ClassLayout", "", NO_CONSTRUCTOR_PARAMETER,
                                             NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
 
 #ifdef DOCUMENTATION
 #else
-        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilConstant*>", "constant", "", NO_CONSTRUCTOR_PARAMETER,
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilConstant*>", "Constant", "", NO_CONSTRUCTOR_PARAMETER,
                                             NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
 
 #ifdef DOCUMENTATION
 #else
-        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilCustomAttribute*>", "customAttribute", "", NO_CONSTRUCTOR_PARAMETER,
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilCustomAttribute*>", "CustomAttribute", "", NO_CONSTRUCTOR_PARAMETER,
                                             NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
 
 #ifdef DOCUMENTATION
 #else
-        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilDeclSecurity*>", "declSecurity", "", NO_CONSTRUCTOR_PARAMETER,
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilDeclSecurity*>", "DeclSecurity", "", NO_CONSTRUCTOR_PARAMETER,
                                             NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
 
 #ifdef DOCUMENTATION
 #else
-        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilEventMap*>", "eventMap", "", NO_CONSTRUCTOR_PARAMETER,
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilEvent*>", "Event", "", NO_CONSTRUCTOR_PARAMETER,
                                             NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
 
 #ifdef DOCUMENTATION
 #else
-        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilEvent*>", "event", "", NO_CONSTRUCTOR_PARAMETER,
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilEventMap*>", "EventMap", "", NO_CONSTRUCTOR_PARAMETER,
                                             NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
 
 #ifdef DOCUMENTATION
 #else
-        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilExportedType*>", "exportedType", "", NO_CONSTRUCTOR_PARAMETER,
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilExportedType*>", "ExportedType", "", NO_CONSTRUCTOR_PARAMETER,
                                             NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
 
 #ifdef DOCUMENTATION
 #else
-        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilField*>", "field", "", NO_CONSTRUCTOR_PARAMETER,
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilField*>", "Field", "", NO_CONSTRUCTOR_PARAMETER,
                                             NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
 
 #ifdef DOCUMENTATION
 #else
-        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilFieldLayout*>", "fieldLayout", "", NO_CONSTRUCTOR_PARAMETER,
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilFieldLayout*>", "FieldLayout", "", NO_CONSTRUCTOR_PARAMETER,
                                             NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
 
 #ifdef DOCUMENTATION
 #else
-        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilFieldMarshal*>", "fieldMarshal", "", NO_CONSTRUCTOR_PARAMETER,
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilFieldMarshal*>", "FieldMarshal", "", NO_CONSTRUCTOR_PARAMETER,
                                             NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
 
 #ifdef DOCUMENTATION
 #else
-        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilFieldRVA*>", "fieldRVA", "", NO_CONSTRUCTOR_PARAMETER,
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilFieldRVA*>", "FieldRVA", "", NO_CONSTRUCTOR_PARAMETER,
                                             NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
 
 #ifdef DOCUMENTATION
 #else
-        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilFile*>", "file", "", NO_CONSTRUCTOR_PARAMETER,
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilFile*>", "File", "", NO_CONSTRUCTOR_PARAMETER,
                                             NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
 
 #ifdef DOCUMENTATION
 #else
-        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilGenericParam*>", "genericParam", "", NO_CONSTRUCTOR_PARAMETER,
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilGenericParam*>", "GenericParam", "", NO_CONSTRUCTOR_PARAMETER,
                                             NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
 
 #ifdef DOCUMENTATION
 #else
-        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilGenericParamConstraint*>", "genericParamConstraint", "", NO_CONSTRUCTOR_PARAMETER,
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilGenericParamConstraint*>", "GenericParamConstraint", "", NO_CONSTRUCTOR_PARAMETER,
                                             NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
 
 #ifdef DOCUMENTATION
 #else
-        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilImplMap*>", "implMap", "", NO_CONSTRUCTOR_PARAMETER,
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilImplMap*>", "ImplMap", "", NO_CONSTRUCTOR_PARAMETER,
                                             NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
 
 #ifdef DOCUMENTATION
 #else
-        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilInterfaceImpl*>", "interfaceImpl", "", NO_CONSTRUCTOR_PARAMETER,
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilInterfaceImpl*>", "InterfaceImpl", "", NO_CONSTRUCTOR_PARAMETER,
                                             NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
 
 #ifdef DOCUMENTATION
 #else
-        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilManifestResource*>", "manifestResource", "", NO_CONSTRUCTOR_PARAMETER,
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilManifestResource*>", "ManifestResource", "", NO_CONSTRUCTOR_PARAMETER,
                                             NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
 
 #ifdef DOCUMENTATION
 #else
-        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilMemberRef*>", "memberRef", "", NO_CONSTRUCTOR_PARAMETER,
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilMemberRef*>", "MemberRef", "", NO_CONSTRUCTOR_PARAMETER,
                                             NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
 
 #ifdef DOCUMENTATION
 #else
-        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilMethodDef*>", "methodDef", "", NO_CONSTRUCTOR_PARAMETER,
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilMethodDef*>", "MethodDef", "", NO_CONSTRUCTOR_PARAMETER,
                                             NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
 
 #ifdef DOCUMENTATION
 #else
-        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilMethodImpl*>", "methodImpl", "", NO_CONSTRUCTOR_PARAMETER,
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilMethodImpl*>", "MethodImpl", "", NO_CONSTRUCTOR_PARAMETER,
                                             NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
 
 #ifdef DOCUMENTATION
 #else
-        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilMethodSemantics*>", "methodSemantics", "", NO_CONSTRUCTOR_PARAMETER,
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilMethodSemantics*>", "MethodSemantics", "", NO_CONSTRUCTOR_PARAMETER,
                                             NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
 
 #ifdef DOCUMENTATION
 #else
-        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilMethodSpec*>", "methodSpec", "", NO_CONSTRUCTOR_PARAMETER,
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilMethodSpec*>", "MethodSpec", "", NO_CONSTRUCTOR_PARAMETER,
                                             NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
 
 #ifdef DOCUMENTATION
 #else
-        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilModule*>", "module", "", NO_CONSTRUCTOR_PARAMETER,
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilModule*>", "Module", "", NO_CONSTRUCTOR_PARAMETER,
                                             NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
 
 #ifdef DOCUMENTATION
 #else
-        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilModuleRef*>", "moduleRef", "", NO_CONSTRUCTOR_PARAMETER,
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilModuleRef*>", "ModuleRef", "", NO_CONSTRUCTOR_PARAMETER,
                                             NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
 
 #ifdef DOCUMENTATION
 #else
-        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilNestedClass*>", "nestedClass", "", NO_CONSTRUCTOR_PARAMETER,
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilNestedClass*>", "NestedClass", "", NO_CONSTRUCTOR_PARAMETER,
                                             NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
 
 #ifdef DOCUMENTATION
 #else
-        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilParam*>", "param", "", NO_CONSTRUCTOR_PARAMETER,
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilParam*>", "Param", "", NO_CONSTRUCTOR_PARAMETER,
                                             NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
 
 #ifdef DOCUMENTATION
 #else
-        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilProperty*>", "property", "", NO_CONSTRUCTOR_PARAMETER,
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilProperty*>", "Property", "", NO_CONSTRUCTOR_PARAMETER,
                                             NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
 
 #ifdef DOCUMENTATION
 #else
-        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilPropertyMap*>", "propertyMap", "", NO_CONSTRUCTOR_PARAMETER,
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilPropertyMap*>", "PropertyMap", "", NO_CONSTRUCTOR_PARAMETER,
                                             NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
 
 #ifdef DOCUMENTATION
 #else
-        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilStandAloneSig*>", "standAloneSig", "", NO_CONSTRUCTOR_PARAMETER,
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilStandAloneSig*>", "StandAloneSig", "", NO_CONSTRUCTOR_PARAMETER,
                                             NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
 
 #ifdef DOCUMENTATION
 #else
-        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilTypeDef*>", "typeDef", "", NO_CONSTRUCTOR_PARAMETER,
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilTypeDef*>", "TypeDef", "", NO_CONSTRUCTOR_PARAMETER,
                                             NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
 
 #ifdef DOCUMENTATION
 #else
-        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilTypeRef*>", "typeRef", "", NO_CONSTRUCTOR_PARAMETER,
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilTypeRef*>", "TypeRef", "", NO_CONSTRUCTOR_PARAMETER,
                                             NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
 
 #ifdef DOCUMENTATION
 #else
-        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilTypeSpec*>", "typeSpec", "", NO_CONSTRUCTOR_PARAMETER,
+        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCilTypeSpec*>", "TypeSpec", "", NO_CONSTRUCTOR_PARAMETER,
                                             NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
@@ -24007,9 +24366,9 @@ void Grammar::setUpBinaryInstructions() {
           e_ref_member_forwarded      = 1 << 20,
           e_ref_member_ref_parent     = 1 << 21,
           e_ref_type_or_method_def    = 1 << 22,
-          // defined, but seemingly not used from inside the metadata tables
           e_ref_custom_attribute_type = 1 << 23,
           e_ref_resolution_scope      = 1 << 24,
+          e_ref_last                  = 1 << 25,  
         };
 
         SgAsmCilMetadataHeap() = default;
@@ -24024,83 +24383,83 @@ void Grammar::setUpBinaryInstructions() {
 
         /** metadata-tables accessor methods
          *  @{ */
-
-              std::vector<SgAsmCilAssembly*>& get_assembly()       { return p_assembly; }
-        const std::vector<SgAsmCilAssembly*>& get_assembly() const { return p_assembly; }
-              std::vector<SgAsmCilAssemblyProcessor*>& get_assemblyProcessor()       { return p_assemblyProcessor; }
-        const std::vector<SgAsmCilAssemblyProcessor*>& get_assemblyProcessor() const { return p_assemblyProcessor; }
-              std::vector<SgAsmCilAssemblyOS*>& get_assemblyOS()       { return p_assemblyOS; }
-        const std::vector<SgAsmCilAssemblyOS*>& get_assemblyOS() const { return p_assemblyOS; }
-              std::vector<SgAsmCilAssemblyRef*>& get_assemblyRef()       { return p_assemblyRef; }
-        const std::vector<SgAsmCilAssemblyRef*>& get_assemblyRef() const { return p_assemblyRef; }
-              std::vector<SgAsmCilAssemblyRefProcessor*>& get_assemblyRefProcessor()       { return p_assemblyRefProcessor; }
-        const std::vector<SgAsmCilAssemblyRefProcessor*>& get_assemblyRefProcessor() const { return p_assemblyRefProcessor; }
-              std::vector<SgAsmCilAssemblyRefOS*>& get_assemblyRefOS()       { return p_assemblyRefOS; }
-        const std::vector<SgAsmCilAssemblyRefOS*>& get_assemblyRefOS() const { return p_assemblyRefOS; }
-              std::vector<SgAsmCilClassLayout*>& get_classLayout()       { return p_classLayout; }
-        const std::vector<SgAsmCilClassLayout*>& get_classLayout() const { return p_classLayout; }
-              std::vector<SgAsmCilConstant*>& get_constant()       { return p_constant; }
-        const std::vector<SgAsmCilConstant*>& get_constant() const { return p_constant; }
-              std::vector<SgAsmCilCustomAttribute*>& get_customAttribute()       { return p_customAttribute; }
-        const std::vector<SgAsmCilCustomAttribute*>& get_customAttribute() const { return p_customAttribute; }
-              std::vector<SgAsmCilDeclSecurity*>& get_declSecurity()       { return p_declSecurity; }
-        const std::vector<SgAsmCilDeclSecurity*>& get_declSecurity() const { return p_declSecurity; }
-              std::vector<SgAsmCilEventMap*>& get_eventMap()       { return p_eventMap; }
-        const std::vector<SgAsmCilEventMap*>& get_eventMap() const { return p_eventMap; }
-              std::vector<SgAsmCilEvent*>& get_event()       { return p_event; }
-        const std::vector<SgAsmCilEvent*>& get_event() const { return p_event; }
-              std::vector<SgAsmCilExportedType*>& get_exportedType()       { return p_exportedType; }
-        const std::vector<SgAsmCilExportedType*>& get_exportedType() const { return p_exportedType; }
-              std::vector<SgAsmCilField*>& get_field()       { return p_field; }
-        const std::vector<SgAsmCilField*>& get_field() const { return p_field; }
-              std::vector<SgAsmCilFieldLayout*>& get_fieldLayout()       { return p_fieldLayout; }
-        const std::vector<SgAsmCilFieldLayout*>& get_fieldLayout() const { return p_fieldLayout; }
-              std::vector<SgAsmCilFieldMarshal*>& get_fieldMarshal()       { return p_fieldMarshal; }
-        const std::vector<SgAsmCilFieldMarshal*>& get_fieldMarshal() const { return p_fieldMarshal; }
-              std::vector<SgAsmCilFieldRVA*>& get_fieldRVA()       { return p_fieldRVA; }
-        const std::vector<SgAsmCilFieldRVA*>& get_fieldRVA() const { return p_fieldRVA; }
-              std::vector<SgAsmCilFile*>& get_file()       { return p_file; }
-        const std::vector<SgAsmCilFile*>& get_file() const { return p_file; }
-              std::vector<SgAsmCilGenericParam*>& get_genericParam()       { return p_genericParam; }
-        const std::vector<SgAsmCilGenericParam*>& get_genericParam() const { return p_genericParam; }
-              std::vector<SgAsmCilGenericParamConstraint*>& get_genericParamConstraint()       { return p_genericParamConstraint; }
-        const std::vector<SgAsmCilGenericParamConstraint*>& get_genericParamConstraint() const { return p_genericParamConstraint; }
-              std::vector<SgAsmCilImplMap*>& get_implMap()       { return p_implMap; }
-        const std::vector<SgAsmCilImplMap*>& get_implMap() const { return p_implMap; }
-              std::vector<SgAsmCilInterfaceImpl*>& get_interfaceImpl()       { return p_interfaceImpl; }
-        const std::vector<SgAsmCilInterfaceImpl*>& get_interfaceImpl() const { return p_interfaceImpl; }
-              std::vector<SgAsmCilManifestResource*>& get_manifestResource()       { return p_manifestResource; }
-        const std::vector<SgAsmCilManifestResource*>& get_manifestResource() const { return p_manifestResource; }
-              std::vector<SgAsmCilMemberRef*>& get_memberRef()       { return p_memberRef; }
-        const std::vector<SgAsmCilMemberRef*>& get_memberRef() const { return p_memberRef; }
-              std::vector<SgAsmCilMethodDef*>& get_methodDef()       { return p_methodDef; }
-        const std::vector<SgAsmCilMethodDef*>& get_methodDef() const { return p_methodDef; }
-              std::vector<SgAsmCilMethodImpl*>& get_methodImpl()       { return p_methodImpl; }
-        const std::vector<SgAsmCilMethodImpl*>& get_methodImpl() const { return p_methodImpl; }
-              std::vector<SgAsmCilMethodSemantics*>& get_methodSemantics()       { return p_methodSemantics; }
-        const std::vector<SgAsmCilMethodSemantics*>& get_methodSemantics() const { return p_methodSemantics; }
-              std::vector<SgAsmCilMethodSpec*>& get_methodSpec()       { return p_methodSpec; }
-        const std::vector<SgAsmCilMethodSpec*>& get_methodSpec() const { return p_methodSpec; }
-              std::vector<SgAsmCilModule*>& get_module()       { return p_module; }
-        const std::vector<SgAsmCilModule*>& get_module() const { return p_module; }
-              std::vector<SgAsmCilModuleRef*>& get_moduleRef()       { return p_moduleRef; }
-        const std::vector<SgAsmCilModuleRef*>& get_moduleRef() const { return p_moduleRef; }
-              std::vector<SgAsmCilNestedClass*>& get_nestedClass()       { return p_nestedClass; }
-        const std::vector<SgAsmCilNestedClass*>& get_nestedClass() const { return p_nestedClass; }
-              std::vector<SgAsmCilParam*>& get_param()       { return p_param; }
-        const std::vector<SgAsmCilParam*>& get_param() const { return p_param; }
-              std::vector<SgAsmCilProperty*>& get_property()       { return p_property; }
-        const std::vector<SgAsmCilProperty*>& get_property() const { return p_property; }
-              std::vector<SgAsmCilPropertyMap*>& get_propertyMap()       { return p_propertyMap; }
-        const std::vector<SgAsmCilPropertyMap*>& get_propertyMap() const { return p_propertyMap; }
-              std::vector<SgAsmCilStandAloneSig*>& get_standAloneSig()       { return p_standAloneSig; }
-        const std::vector<SgAsmCilStandAloneSig*>& get_standAloneSig() const { return p_standAloneSig; }
-              std::vector<SgAsmCilTypeDef*>& get_typeDef()       { return p_typeDef; }
-        const std::vector<SgAsmCilTypeDef*>& get_typeDef() const { return p_typeDef; }
-              std::vector<SgAsmCilTypeRef*>& get_typeRef()       { return p_typeRef; }
-        const std::vector<SgAsmCilTypeRef*>& get_typeRef() const { return p_typeRef; }
-              std::vector<SgAsmCilTypeSpec*>& get_typeSpec()       { return p_typeSpec; }
-        const std::vector<SgAsmCilTypeSpec*>& get_typeSpec() const { return p_typeSpec; }
+        
+        std::vector<SgAsmCilAssembly*>&       get_Assembly()       { return p_Assembly; }
+        std::vector<SgAsmCilAssembly*> const& get_Assembly() const { return p_Assembly; }
+        std::vector<SgAsmCilAssemblyOS*>&       get_AssemblyOS()       { return p_AssemblyOS; }
+        std::vector<SgAsmCilAssemblyOS*> const& get_AssemblyOS() const { return p_AssemblyOS; }
+        std::vector<SgAsmCilAssemblyProcessor*>&       get_AssemblyProcessor()       { return p_AssemblyProcessor; }
+        std::vector<SgAsmCilAssemblyProcessor*> const& get_AssemblyProcessor() const { return p_AssemblyProcessor; }
+        std::vector<SgAsmCilAssemblyRef*>&       get_AssemblyRef()       { return p_AssemblyRef; }
+        std::vector<SgAsmCilAssemblyRef*> const& get_AssemblyRef() const { return p_AssemblyRef; }
+        std::vector<SgAsmCilAssemblyRefOS*>&       get_AssemblyRefOS()       { return p_AssemblyRefOS; }
+        std::vector<SgAsmCilAssemblyRefOS*> const& get_AssemblyRefOS() const { return p_AssemblyRefOS; }
+        std::vector<SgAsmCilAssemblyRefProcessor*>&       get_AssemblyRefProcessor()       { return p_AssemblyRefProcessor; }
+        std::vector<SgAsmCilAssemblyRefProcessor*> const& get_AssemblyRefProcessor() const { return p_AssemblyRefProcessor; }
+        std::vector<SgAsmCilClassLayout*>&       get_ClassLayout()       { return p_ClassLayout; }
+        std::vector<SgAsmCilClassLayout*> const& get_ClassLayout() const { return p_ClassLayout; }
+        std::vector<SgAsmCilConstant*>&       get_Constant()       { return p_Constant; }
+        std::vector<SgAsmCilConstant*> const& get_Constant() const { return p_Constant; }
+        std::vector<SgAsmCilCustomAttribute*>&       get_CustomAttribute()       { return p_CustomAttribute; }
+        std::vector<SgAsmCilCustomAttribute*> const& get_CustomAttribute() const { return p_CustomAttribute; }
+        std::vector<SgAsmCilDeclSecurity*>&       get_DeclSecurity()       { return p_DeclSecurity; }
+        std::vector<SgAsmCilDeclSecurity*> const& get_DeclSecurity() const { return p_DeclSecurity; }
+        std::vector<SgAsmCilEvent*>&       get_Event()       { return p_Event; }
+        std::vector<SgAsmCilEvent*> const& get_Event() const { return p_Event; }
+        std::vector<SgAsmCilEventMap*>&       get_EventMap()       { return p_EventMap; }
+        std::vector<SgAsmCilEventMap*> const& get_EventMap() const { return p_EventMap; }
+        std::vector<SgAsmCilExportedType*>&       get_ExportedType()       { return p_ExportedType; }
+        std::vector<SgAsmCilExportedType*> const& get_ExportedType() const { return p_ExportedType; }
+        std::vector<SgAsmCilField*>&       get_Field()       { return p_Field; }
+        std::vector<SgAsmCilField*> const& get_Field() const { return p_Field; }
+        std::vector<SgAsmCilFieldLayout*>&       get_FieldLayout()       { return p_FieldLayout; }
+        std::vector<SgAsmCilFieldLayout*> const& get_FieldLayout() const { return p_FieldLayout; }
+        std::vector<SgAsmCilFieldMarshal*>&       get_FieldMarshal()       { return p_FieldMarshal; }
+        std::vector<SgAsmCilFieldMarshal*> const& get_FieldMarshal() const { return p_FieldMarshal; }
+        std::vector<SgAsmCilFieldRVA*>&       get_FieldRVA()       { return p_FieldRVA; }
+        std::vector<SgAsmCilFieldRVA*> const& get_FieldRVA() const { return p_FieldRVA; }
+        std::vector<SgAsmCilFile*>&       get_File()       { return p_File; }
+        std::vector<SgAsmCilFile*> const& get_File() const { return p_File; }
+        std::vector<SgAsmCilGenericParam*>&       get_GenericParam()       { return p_GenericParam; }
+        std::vector<SgAsmCilGenericParam*> const& get_GenericParam() const { return p_GenericParam; }
+        std::vector<SgAsmCilGenericParamConstraint*>&       get_GenericParamConstraint()       { return p_GenericParamConstraint; }
+        std::vector<SgAsmCilGenericParamConstraint*> const& get_GenericParamConstraint() const { return p_GenericParamConstraint; }
+        std::vector<SgAsmCilImplMap*>&       get_ImplMap()       { return p_ImplMap; }
+        std::vector<SgAsmCilImplMap*> const& get_ImplMap() const { return p_ImplMap; }
+        std::vector<SgAsmCilInterfaceImpl*>&       get_InterfaceImpl()       { return p_InterfaceImpl; }
+        std::vector<SgAsmCilInterfaceImpl*> const& get_InterfaceImpl() const { return p_InterfaceImpl; }
+        std::vector<SgAsmCilManifestResource*>&       get_ManifestResource()       { return p_ManifestResource; }
+        std::vector<SgAsmCilManifestResource*> const& get_ManifestResource() const { return p_ManifestResource; }
+        std::vector<SgAsmCilMemberRef*>&       get_MemberRef()       { return p_MemberRef; }
+        std::vector<SgAsmCilMemberRef*> const& get_MemberRef() const { return p_MemberRef; }
+        std::vector<SgAsmCilMethodDef*>&       get_MethodDef()       { return p_MethodDef; }
+        std::vector<SgAsmCilMethodDef*> const& get_MethodDef() const { return p_MethodDef; }
+        std::vector<SgAsmCilMethodImpl*>&       get_MethodImpl()       { return p_MethodImpl; }
+        std::vector<SgAsmCilMethodImpl*> const& get_MethodImpl() const { return p_MethodImpl; }
+        std::vector<SgAsmCilMethodSemantics*>&       get_MethodSemantics()       { return p_MethodSemantics; }
+        std::vector<SgAsmCilMethodSemantics*> const& get_MethodSemantics() const { return p_MethodSemantics; }
+        std::vector<SgAsmCilMethodSpec*>&       get_MethodSpec()       { return p_MethodSpec; }
+        std::vector<SgAsmCilMethodSpec*> const& get_MethodSpec() const { return p_MethodSpec; }
+        std::vector<SgAsmCilModule*>&       get_Module()       { return p_Module; }
+        std::vector<SgAsmCilModule*> const& get_Module() const { return p_Module; }
+        std::vector<SgAsmCilModuleRef*>&       get_ModuleRef()       { return p_ModuleRef; }
+        std::vector<SgAsmCilModuleRef*> const& get_ModuleRef() const { return p_ModuleRef; }
+        std::vector<SgAsmCilNestedClass*>&       get_NestedClass()       { return p_NestedClass; }
+        std::vector<SgAsmCilNestedClass*> const& get_NestedClass() const { return p_NestedClass; }
+        std::vector<SgAsmCilParam*>&       get_Param()       { return p_Param; }
+        std::vector<SgAsmCilParam*> const& get_Param() const { return p_Param; }
+        std::vector<SgAsmCilProperty*>&       get_Property()       { return p_Property; }
+        std::vector<SgAsmCilProperty*> const& get_Property() const { return p_Property; }
+        std::vector<SgAsmCilPropertyMap*>&       get_PropertyMap()       { return p_PropertyMap; }
+        std::vector<SgAsmCilPropertyMap*> const& get_PropertyMap() const { return p_PropertyMap; }
+        std::vector<SgAsmCilStandAloneSig*>&       get_StandAloneSig()       { return p_StandAloneSig; }
+        std::vector<SgAsmCilStandAloneSig*> const& get_StandAloneSig() const { return p_StandAloneSig; }
+        std::vector<SgAsmCilTypeDef*>&       get_TypeDef()       { return p_TypeDef; }
+        std::vector<SgAsmCilTypeDef*> const& get_TypeDef() const { return p_TypeDef; }
+        std::vector<SgAsmCilTypeRef*>&       get_TypeRef()       { return p_TypeRef; }
+        std::vector<SgAsmCilTypeRef*> const& get_TypeRef() const { return p_TypeRef; }
+        std::vector<SgAsmCilTypeSpec*>&       get_TypeSpec()       { return p_TypeSpec; }
+        std::vector<SgAsmCilTypeSpec*> const& get_TypeSpec() const { return p_TypeSpec; }
         /** @} */
 
 
@@ -24111,7 +24470,7 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilDataStream);
-
+            
             s & BOOST_SERIALIZATION_NVP(p_ReservedAlwaysZero);
             s & BOOST_SERIALIZATION_NVP(p_MajorVersion);
             s & BOOST_SERIALIZATION_NVP(p_MinorVersion);
@@ -24121,45 +24480,45 @@ void Grammar::setUpBinaryInstructions() {
             s & BOOST_SERIALIZATION_NVP(p_Sorted);
             s & BOOST_SERIALIZATION_NVP(p_NumberOfRows);
             s & BOOST_SERIALIZATION_NVP(p_DataSizeFlags);
-
-            s & BOOST_SERIALIZATION_NVP(p_assembly);
-            s & BOOST_SERIALIZATION_NVP(p_assemblyProcessor);
-            s & BOOST_SERIALIZATION_NVP(p_assemblyOS);
-            s & BOOST_SERIALIZATION_NVP(p_assemblyRef);
-            s & BOOST_SERIALIZATION_NVP(p_assemblyRefProcessor);
-            s & BOOST_SERIALIZATION_NVP(p_assemblyRefOS);
-            s & BOOST_SERIALIZATION_NVP(p_classLayout);
-            s & BOOST_SERIALIZATION_NVP(p_constant);
-            s & BOOST_SERIALIZATION_NVP(p_customAttribute);
-            s & BOOST_SERIALIZATION_NVP(p_declSecurity);
-            s & BOOST_SERIALIZATION_NVP(p_eventMap);
-            s & BOOST_SERIALIZATION_NVP(p_event);
-            s & BOOST_SERIALIZATION_NVP(p_exportedType);
-            s & BOOST_SERIALIZATION_NVP(p_field);
-            s & BOOST_SERIALIZATION_NVP(p_fieldLayout);
-            s & BOOST_SERIALIZATION_NVP(p_fieldMarshal);
-            s & BOOST_SERIALIZATION_NVP(p_fieldRVA);
-            s & BOOST_SERIALIZATION_NVP(p_file);
-            s & BOOST_SERIALIZATION_NVP(p_genericParam);
-            s & BOOST_SERIALIZATION_NVP(p_genericParamConstraint);
-            s & BOOST_SERIALIZATION_NVP(p_implMap);
-            s & BOOST_SERIALIZATION_NVP(p_interfaceImpl);
-            s & BOOST_SERIALIZATION_NVP(p_manifestResource);
-            s & BOOST_SERIALIZATION_NVP(p_memberRef);
-            s & BOOST_SERIALIZATION_NVP(p_methodDef);
-            s & BOOST_SERIALIZATION_NVP(p_methodImpl);
-            s & BOOST_SERIALIZATION_NVP(p_methodSemantics);
-            s & BOOST_SERIALIZATION_NVP(p_methodSpec);
-            s & BOOST_SERIALIZATION_NVP(p_module);
-            s & BOOST_SERIALIZATION_NVP(p_moduleRef);
-            s & BOOST_SERIALIZATION_NVP(p_nestedClass);
-            s & BOOST_SERIALIZATION_NVP(p_param);
-            s & BOOST_SERIALIZATION_NVP(p_property);
-            s & BOOST_SERIALIZATION_NVP(p_propertyMap);
-            s & BOOST_SERIALIZATION_NVP(p_standAloneSig);
-            s & BOOST_SERIALIZATION_NVP(p_typeDef);
-            s & BOOST_SERIALIZATION_NVP(p_typeRef);
-            s & BOOST_SERIALIZATION_NVP(p_typeSpec);
+            
+            s & BOOST_SERIALIZATION_NVP(p_Assembly);
+            s & BOOST_SERIALIZATION_NVP(p_AssemblyOS);
+            s & BOOST_SERIALIZATION_NVP(p_AssemblyProcessor);
+            s & BOOST_SERIALIZATION_NVP(p_AssemblyRef);
+            s & BOOST_SERIALIZATION_NVP(p_AssemblyRefOS);
+            s & BOOST_SERIALIZATION_NVP(p_AssemblyRefProcessor);
+            s & BOOST_SERIALIZATION_NVP(p_ClassLayout);
+            s & BOOST_SERIALIZATION_NVP(p_Constant);
+            s & BOOST_SERIALIZATION_NVP(p_CustomAttribute);
+            s & BOOST_SERIALIZATION_NVP(p_DeclSecurity);
+            s & BOOST_SERIALIZATION_NVP(p_Event);
+            s & BOOST_SERIALIZATION_NVP(p_EventMap);
+            s & BOOST_SERIALIZATION_NVP(p_ExportedType);
+            s & BOOST_SERIALIZATION_NVP(p_Field);
+            s & BOOST_SERIALIZATION_NVP(p_FieldLayout);
+            s & BOOST_SERIALIZATION_NVP(p_FieldMarshal);
+            s & BOOST_SERIALIZATION_NVP(p_FieldRVA);
+            s & BOOST_SERIALIZATION_NVP(p_File);
+            s & BOOST_SERIALIZATION_NVP(p_GenericParam);
+            s & BOOST_SERIALIZATION_NVP(p_GenericParamConstraint);
+            s & BOOST_SERIALIZATION_NVP(p_ImplMap);
+            s & BOOST_SERIALIZATION_NVP(p_InterfaceImpl);
+            s & BOOST_SERIALIZATION_NVP(p_ManifestResource);
+            s & BOOST_SERIALIZATION_NVP(p_MemberRef);
+            s & BOOST_SERIALIZATION_NVP(p_MethodDef);
+            s & BOOST_SERIALIZATION_NVP(p_MethodImpl);
+            s & BOOST_SERIALIZATION_NVP(p_MethodSemantics);
+            s & BOOST_SERIALIZATION_NVP(p_MethodSpec);
+            s & BOOST_SERIALIZATION_NVP(p_Module);
+            s & BOOST_SERIALIZATION_NVP(p_ModuleRef);
+            s & BOOST_SERIALIZATION_NVP(p_NestedClass);
+            s & BOOST_SERIALIZATION_NVP(p_Param);
+            s & BOOST_SERIALIZATION_NVP(p_Property);
+            s & BOOST_SERIALIZATION_NVP(p_PropertyMap);
+            s & BOOST_SERIALIZATION_NVP(p_StandAloneSig);
+            s & BOOST_SERIALIZATION_NVP(p_TypeDef);
+            s & BOOST_SERIALIZATION_NVP(p_TypeRef);
+            s & BOOST_SERIALIZATION_NVP(p_TypeSpec);
         }
 #endif
 
@@ -24168,7 +24527,7 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
     protected:
-
+      
       uint32_t p_ReservedAlwaysZero;
       uint8_t p_MajorVersion;
       uint8_t p_MinorVersion;
@@ -24178,54 +24537,50 @@ void Grammar::setUpBinaryInstructions() {
       uint64_t p_Sorted;
       std::vector<uint32_t> p_NumberOfRows;
       uint64_t p_DataSizeFlags;
-
-      std::vector<SgAsmCilAssembly*> p_assembly;
-      std::vector<SgAsmCilAssemblyProcessor*> p_assemblyProcessor;
-      std::vector<SgAsmCilAssemblyOS*> p_assemblyOS;
-      std::vector<SgAsmCilAssemblyRef*> p_assemblyRef;
-      std::vector<SgAsmCilAssemblyRefProcessor*> p_assemblyRefProcessor;
-      std::vector<SgAsmCilAssemblyRefOS*> p_assemblyRefOS;
-      std::vector<SgAsmCilClassLayout*> p_classLayout;
-      std::vector<SgAsmCilConstant*> p_constant;
-      std::vector<SgAsmCilCustomAttribute*> p_customAttribute;
-      std::vector<SgAsmCilDeclSecurity*> p_declSecurity;
-      std::vector<SgAsmCilEventMap*> p_eventMap;
-      std::vector<SgAsmCilEvent*> p_event;
-      std::vector<SgAsmCilExportedType*> p_exportedType;
-      std::vector<SgAsmCilField*> p_field;
-      std::vector<SgAsmCilFieldLayout*> p_fieldLayout;
-      std::vector<SgAsmCilFieldMarshal*> p_fieldMarshal;
-      std::vector<SgAsmCilFieldRVA*> p_fieldRVA;
-      std::vector<SgAsmCilFile*> p_file;
-      std::vector<SgAsmCilGenericParam*> p_genericParam;
-      std::vector<SgAsmCilGenericParamConstraint*> p_genericParamConstraint;
-      std::vector<SgAsmCilImplMap*> p_implMap;
-      std::vector<SgAsmCilInterfaceImpl*> p_interfaceImpl;
-      std::vector<SgAsmCilManifestResource*> p_manifestResource;
-      std::vector<SgAsmCilMemberRef*> p_memberRef;
-      std::vector<SgAsmCilMethodDef*> p_methodDef;
-      std::vector<SgAsmCilMethodImpl*> p_methodImpl;
-      std::vector<SgAsmCilMethodSemantics*> p_methodSemantics;
-      std::vector<SgAsmCilMethodSpec*> p_methodSpec;
-      std::vector<SgAsmCilModule*> p_module;
-      std::vector<SgAsmCilModuleRef*> p_moduleRef;
-      std::vector<SgAsmCilNestedClass*> p_nestedClass;
-      std::vector<SgAsmCilParam*> p_param;
-      std::vector<SgAsmCilProperty*> p_property;
-      std::vector<SgAsmCilPropertyMap*> p_propertyMap;
-      std::vector<SgAsmCilStandAloneSig*> p_standAloneSig;
-      std::vector<SgAsmCilTypeDef*> p_typeDef;
-      std::vector<SgAsmCilTypeRef*> p_typeRef;
-      std::vector<SgAsmCilTypeSpec*> p_typeSpec;
+      
+      std::vector<SgAsmCilAssembly*> p_Assembly;
+      std::vector<SgAsmCilAssemblyOS*> p_AssemblyOS;
+      std::vector<SgAsmCilAssemblyProcessor*> p_AssemblyProcessor;
+      std::vector<SgAsmCilAssemblyRef*> p_AssemblyRef;
+      std::vector<SgAsmCilAssemblyRefOS*> p_AssemblyRefOS;
+      std::vector<SgAsmCilAssemblyRefProcessor*> p_AssemblyRefProcessor;
+      std::vector<SgAsmCilClassLayout*> p_ClassLayout;
+      std::vector<SgAsmCilConstant*> p_Constant;
+      std::vector<SgAsmCilCustomAttribute*> p_CustomAttribute;
+      std::vector<SgAsmCilDeclSecurity*> p_DeclSecurity;
+      std::vector<SgAsmCilEvent*> p_Event;
+      std::vector<SgAsmCilEventMap*> p_EventMap;
+      std::vector<SgAsmCilExportedType*> p_ExportedType;
+      std::vector<SgAsmCilField*> p_Field;
+      std::vector<SgAsmCilFieldLayout*> p_FieldLayout;
+      std::vector<SgAsmCilFieldMarshal*> p_FieldMarshal;
+      std::vector<SgAsmCilFieldRVA*> p_FieldRVA;
+      std::vector<SgAsmCilFile*> p_File;
+      std::vector<SgAsmCilGenericParam*> p_GenericParam;
+      std::vector<SgAsmCilGenericParamConstraint*> p_GenericParamConstraint;
+      std::vector<SgAsmCilImplMap*> p_ImplMap;
+      std::vector<SgAsmCilInterfaceImpl*> p_InterfaceImpl;
+      std::vector<SgAsmCilManifestResource*> p_ManifestResource;
+      std::vector<SgAsmCilMemberRef*> p_MemberRef;
+      std::vector<SgAsmCilMethodDef*> p_MethodDef;
+      std::vector<SgAsmCilMethodImpl*> p_MethodImpl;
+      std::vector<SgAsmCilMethodSemantics*> p_MethodSemantics;
+      std::vector<SgAsmCilMethodSpec*> p_MethodSpec;
+      std::vector<SgAsmCilModule*> p_Module;
+      std::vector<SgAsmCilModuleRef*> p_ModuleRef;
+      std::vector<SgAsmCilNestedClass*> p_NestedClass;
+      std::vector<SgAsmCilParam*> p_Param;
+      std::vector<SgAsmCilProperty*> p_Property;
+      std::vector<SgAsmCilPropertyMap*> p_PropertyMap;
+      std::vector<SgAsmCilStandAloneSig*> p_StandAloneSig;
+      std::vector<SgAsmCilTypeDef*> p_TypeDef;
+      std::vector<SgAsmCilTypeRef*> p_TypeRef;
+      std::vector<SgAsmCilTypeSpec*> p_TypeSpec;
 #endif
 
 #ifdef DOCUMENTATION
     };
 #endif
-
-////// end from metadataHeap_C.txt
-
-
 
 
     DECLARE_LEAF_CLASS(AsmCilUint8Heap);
@@ -24452,7 +24807,8 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
 
-////// from metadataRoot_C.txt
+//
+// MetadataRoot
 
     DECLARE_LEAF_CLASS(AsmCilMetadataRoot);
     IS_SERIALIZABLE(AsmCilMetadataRoot);
@@ -24641,7 +24997,7 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
-
+            
             s & BOOST_SERIALIZATION_NVP(p_Signature);
             s & BOOST_SERIALIZATION_NVP(p_MajorVersion);
             s & BOOST_SERIALIZATION_NVP(p_MinorVersion);
@@ -24651,7 +25007,7 @@ void Grammar::setUpBinaryInstructions() {
             s & BOOST_SERIALIZATION_NVP(p_VersionPadding);
             s & BOOST_SERIALIZATION_NVP(p_Flags);
             s & BOOST_SERIALIZATION_NVP(p_NumberOfStreams);
-
+            
             s & BOOST_SERIALIZATION_NVP(p_Streams);
         }
 #endif
@@ -24661,7 +25017,7 @@ void Grammar::setUpBinaryInstructions() {
 
 #ifdef DOCUMENTATION
     protected:
-
+      
       uint32_t p_Signature;
       uint16_t p_MajorVersion;
       uint16_t p_MinorVersion;
@@ -24671,7 +25027,7 @@ void Grammar::setUpBinaryInstructions() {
       uint32_t p_VersionPadding;
       uint16_t p_Flags;
       uint16_t p_NumberOfStreams;
-
+      
       std::vector<SgAsmCilDataStream*> p_Streams;
 #endif
 
@@ -24679,7 +25035,6 @@ void Grammar::setUpBinaryInstructions() {
     };
 #endif
 
-////// end from metadataRoot_C.txt
 
 
     NEW_NONTERMINAL_MACRO(AsmCilNode,
