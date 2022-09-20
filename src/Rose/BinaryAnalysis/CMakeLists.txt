@@ -48,7 +48,7 @@ add_library(roseBinaryAnalysis OBJECT
   SRecord.C
   StackDelta.C
   String.C
-  SymbolicExpr.C
+  SymbolicExpression.C
   SymbolicExpressionParser.C
   SystemCall.C
   TaintedFlow.C
@@ -117,6 +117,7 @@ install(FILES
   StackDelta.h
   String.h
   SymbolicExpr.h
+  SymbolicExpression.h
   SymbolicExprParser.h
   SymbolicExpressionParser.h
   SystemCall.h

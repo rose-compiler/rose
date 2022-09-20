@@ -41,7 +41,7 @@ run $(librose_compile)				\
     SRecord.C					\
     StackDelta.C				\
     String.C					\
-    SymbolicExpr.C				\
+    SymbolicExpression.C			\
     SymbolicExpressionParser.C			\
     SystemCall.C				\
     TaintedFlow.C				\
@@ -108,6 +108,7 @@ run $(public_header) -o include/rose/Rose/BinaryAnalysis	\
     StackDelta.h						\
     String.h							\
     SymbolicExpr.h						\
+    SymbolicExpression.h					\
     SymbolicExprParser.h					\
     SymbolicExpressionParser.h					\
     SystemCall.h						\

@@ -20414,8 +20414,8 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/Rose/BinaryAnalysis/SymbolicExpr.h line 65
-namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace SymbolicExpr { namespace TypeStyle {
+// /src/Rose/BinaryAnalysis/SymbolicExpression.h line 65
+namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace SymbolicExpression { namespace TypeStyle {
     const char* Flag(int64_t i) {
         switch (i) {
             case 0L: return "FULL";
@@ -20427,7 +20427,7 @@ namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Symb
     std::string Flag(int64_t i, const std::string &strip) {
         std::string s = Flag(i);
         if (s.empty())
-            s = "(Rose::BinaryAnalysis::SymbolicExpr::TypeStyle::Flag)" + boost::lexical_cast<std::string>(i);
+            s = "(Rose::BinaryAnalysis::SymbolicExpression::TypeStyle::Flag)" + boost::lexical_cast<std::string>(i);
         if (boost::starts_with(s, strip))
             s = s.substr(strip.size());
         return s;
@@ -20445,27 +20445,27 @@ namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Symb
 }}}}}
 
 namespace Rose {
-    std::string stringifyBinaryAnalysisSymbolicExprTypeStyleFlag(int64_t i, const char *strip, bool canonic) {
-        std::string retval = stringify::Rose::BinaryAnalysis::SymbolicExpr::TypeStyle::Flag(i);
+    std::string stringifyBinaryAnalysisSymbolicExpressionTypeStyleFlag(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::Rose::BinaryAnalysis::SymbolicExpression::TypeStyle::Flag(i);
         if (retval.empty()) {
-            retval = "(Rose::BinaryAnalysis::SymbolicExpr::TypeStyle::Flag)" + boost::lexical_cast<std::string>(i);
+            retval = "(Rose::BinaryAnalysis::SymbolicExpression::TypeStyle::Flag)" + boost::lexical_cast<std::string>(i);
         } else {
             if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
                 retval = retval.substr(strlen(strip));
             if (canonic)
-                retval = "Rose::BinaryAnalysis::SymbolicExpr::TypeStyle::Flag::" + retval;
+                retval = "Rose::BinaryAnalysis::SymbolicExpression::TypeStyle::Flag::" + retval;
         }
         return retval;
     }
 
-    const std::vector<int64_t>& stringifyBinaryAnalysisSymbolicExprTypeStyleFlag() {
-        return stringify::Rose::BinaryAnalysis::SymbolicExpr::TypeStyle::Flag();
+    const std::vector<int64_t>& stringifyBinaryAnalysisSymbolicExpressionTypeStyleFlag() {
+        return stringify::Rose::BinaryAnalysis::SymbolicExpression::TypeStyle::Flag();
     }
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/Rose/BinaryAnalysis/SymbolicExpr.h line 83
-namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace SymbolicExpr {
+// /src/Rose/BinaryAnalysis/SymbolicExpression.h line 83
+namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace SymbolicExpression {
     const char* Operator(int64_t i) {
         switch (i) {
             case 0L: return "OP_ADD";
@@ -20543,7 +20543,7 @@ namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Symb
     std::string Operator(int64_t i, const std::string &strip) {
         std::string s = Operator(i);
         if (s.empty())
-            s = "(Rose::BinaryAnalysis::SymbolicExpr::Operator)" + boost::lexical_cast<std::string>(i);
+            s = "(Rose::BinaryAnalysis::SymbolicExpression::Operator)" + boost::lexical_cast<std::string>(i);
         if (boost::starts_with(s, strip))
             s = s.substr(strip.size());
         return s;
@@ -20627,27 +20627,27 @@ namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Symb
 }}}}
 
 namespace Rose {
-    std::string stringifyBinaryAnalysisSymbolicExprOperator(int64_t i, const char *strip, bool canonic) {
-        std::string retval = stringify::Rose::BinaryAnalysis::SymbolicExpr::Operator(i);
+    std::string stringifyBinaryAnalysisSymbolicExpressionOperator(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::Rose::BinaryAnalysis::SymbolicExpression::Operator(i);
         if (retval.empty()) {
-            retval = "(Rose::BinaryAnalysis::SymbolicExpr::Operator)" + boost::lexical_cast<std::string>(i);
+            retval = "(Rose::BinaryAnalysis::SymbolicExpression::Operator)" + boost::lexical_cast<std::string>(i);
         } else {
             if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
                 retval = retval.substr(strlen(strip));
             if (canonic)
-                retval = "Rose::BinaryAnalysis::SymbolicExpr::Operator::" + retval;
+                retval = "Rose::BinaryAnalysis::SymbolicExpression::Operator::" + retval;
         }
         return retval;
     }
 
-    const std::vector<int64_t>& stringifyBinaryAnalysisSymbolicExprOperator() {
-        return stringify::Rose::BinaryAnalysis::SymbolicExpr::Operator();
+    const std::vector<int64_t>& stringifyBinaryAnalysisSymbolicExpressionOperator() {
+        return stringify::Rose::BinaryAnalysis::SymbolicExpression::Operator();
     }
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/Rose/BinaryAnalysis/SymbolicExpr.h line 181
-namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace SymbolicExpr { namespace Formatter {
+// /src/Rose/BinaryAnalysis/SymbolicExpression.h line 181
+namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace SymbolicExpression { namespace Formatter {
     const char* ShowComments(int64_t i) {
         switch (i) {
             case 0L: return "CMT_SILENT";
@@ -20660,7 +20660,7 @@ namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Symb
     std::string ShowComments(int64_t i, const std::string &strip) {
         std::string s = ShowComments(i);
         if (s.empty())
-            s = "(Rose::BinaryAnalysis::SymbolicExpr::Formatter::ShowComments)" + boost::lexical_cast<std::string>(i);
+            s = "(Rose::BinaryAnalysis::SymbolicExpression::Formatter::ShowComments)" + boost::lexical_cast<std::string>(i);
         if (boost::starts_with(s, strip))
             s = s.substr(strip.size());
         return s;
@@ -20679,27 +20679,27 @@ namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Symb
 }}}}}
 
 namespace Rose {
-    std::string stringifyBinaryAnalysisSymbolicExprFormatterShowComments(int64_t i, const char *strip, bool canonic) {
-        std::string retval = stringify::Rose::BinaryAnalysis::SymbolicExpr::Formatter::ShowComments(i);
+    std::string stringifyBinaryAnalysisSymbolicExpressionFormatterShowComments(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::Rose::BinaryAnalysis::SymbolicExpression::Formatter::ShowComments(i);
         if (retval.empty()) {
-            retval = "(Rose::BinaryAnalysis::SymbolicExpr::Formatter::ShowComments)" + boost::lexical_cast<std::string>(i);
+            retval = "(Rose::BinaryAnalysis::SymbolicExpression::Formatter::ShowComments)" + boost::lexical_cast<std::string>(i);
         } else {
             if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
                 retval = retval.substr(strlen(strip));
             if (canonic)
-                retval = "Rose::BinaryAnalysis::SymbolicExpr::Formatter::ShowComments::" + retval;
+                retval = "Rose::BinaryAnalysis::SymbolicExpression::Formatter::ShowComments::" + retval;
         }
         return retval;
     }
 
-    const std::vector<int64_t>& stringifyBinaryAnalysisSymbolicExprFormatterShowComments() {
-        return stringify::Rose::BinaryAnalysis::SymbolicExpr::Formatter::ShowComments();
+    const std::vector<int64_t>& stringifyBinaryAnalysisSymbolicExpressionFormatterShowComments() {
+        return stringify::Rose::BinaryAnalysis::SymbolicExpression::Formatter::ShowComments();
     }
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/Rose/BinaryAnalysis/SymbolicExpr.h line 201
-namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace SymbolicExpr {
+// /src/Rose/BinaryAnalysis/SymbolicExpression.h line 201
+namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace SymbolicExpression {
     const char* VisitAction(int64_t i) {
         switch (i) {
             case 0L: return "CONTINUE";
@@ -20712,7 +20712,7 @@ namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Symb
     std::string VisitAction(int64_t i, const std::string &strip) {
         std::string s = VisitAction(i);
         if (s.empty())
-            s = "(Rose::BinaryAnalysis::SymbolicExpr::VisitAction)" + boost::lexical_cast<std::string>(i);
+            s = "(Rose::BinaryAnalysis::SymbolicExpression::VisitAction)" + boost::lexical_cast<std::string>(i);
         if (boost::starts_with(s, strip))
             s = s.substr(strip.size());
         return s;
@@ -20731,27 +20731,27 @@ namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Symb
 }}}}
 
 namespace Rose {
-    std::string stringifyBinaryAnalysisSymbolicExprVisitAction(int64_t i, const char *strip, bool canonic) {
-        std::string retval = stringify::Rose::BinaryAnalysis::SymbolicExpr::VisitAction(i);
+    std::string stringifyBinaryAnalysisSymbolicExpressionVisitAction(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::Rose::BinaryAnalysis::SymbolicExpression::VisitAction(i);
         if (retval.empty()) {
-            retval = "(Rose::BinaryAnalysis::SymbolicExpr::VisitAction)" + boost::lexical_cast<std::string>(i);
+            retval = "(Rose::BinaryAnalysis::SymbolicExpression::VisitAction)" + boost::lexical_cast<std::string>(i);
         } else {
             if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
                 retval = retval.substr(strlen(strip));
             if (canonic)
-                retval = "Rose::BinaryAnalysis::SymbolicExpr::VisitAction::" + retval;
+                retval = "Rose::BinaryAnalysis::SymbolicExpression::VisitAction::" + retval;
         }
         return retval;
     }
 
-    const std::vector<int64_t>& stringifyBinaryAnalysisSymbolicExprVisitAction() {
-        return stringify::Rose::BinaryAnalysis::SymbolicExpr::VisitAction();
+    const std::vector<int64_t>& stringifyBinaryAnalysisSymbolicExpressionVisitAction() {
+        return stringify::Rose::BinaryAnalysis::SymbolicExpression::VisitAction();
     }
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/Rose/BinaryAnalysis/SymbolicExpr.h line 243
-namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace SymbolicExpr { namespace Type {
+// /src/Rose/BinaryAnalysis/SymbolicExpression.h line 243
+namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace SymbolicExpression { namespace Type {
     const char* TypeClass(int64_t i) {
         switch (i) {
             case 0L: return "INTEGER";
@@ -20765,7 +20765,7 @@ namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Symb
     std::string TypeClass(int64_t i, const std::string &strip) {
         std::string s = TypeClass(i);
         if (s.empty())
-            s = "(Rose::BinaryAnalysis::SymbolicExpr::Type::TypeClass)" + boost::lexical_cast<std::string>(i);
+            s = "(Rose::BinaryAnalysis::SymbolicExpression::Type::TypeClass)" + boost::lexical_cast<std::string>(i);
         if (boost::starts_with(s, strip))
             s = s.substr(strip.size());
         return s;
@@ -20785,21 +20785,21 @@ namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Symb
 }}}}}
 
 namespace Rose {
-    std::string stringifyBinaryAnalysisSymbolicExprTypeTypeClass(int64_t i, const char *strip, bool canonic) {
-        std::string retval = stringify::Rose::BinaryAnalysis::SymbolicExpr::Type::TypeClass(i);
+    std::string stringifyBinaryAnalysisSymbolicExpressionTypeTypeClass(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::Rose::BinaryAnalysis::SymbolicExpression::Type::TypeClass(i);
         if (retval.empty()) {
-            retval = "(Rose::BinaryAnalysis::SymbolicExpr::Type::TypeClass)" + boost::lexical_cast<std::string>(i);
+            retval = "(Rose::BinaryAnalysis::SymbolicExpression::Type::TypeClass)" + boost::lexical_cast<std::string>(i);
         } else {
             if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
                 retval = retval.substr(strlen(strip));
             if (canonic)
-                retval = "Rose::BinaryAnalysis::SymbolicExpr::Type::TypeClass::" + retval;
+                retval = "Rose::BinaryAnalysis::SymbolicExpression::Type::TypeClass::" + retval;
         }
         return retval;
     }
 
-    const std::vector<int64_t>& stringifyBinaryAnalysisSymbolicExprTypeTypeClass() {
-        return stringify::Rose::BinaryAnalysis::SymbolicExpr::Type::TypeClass();
+    const std::vector<int64_t>& stringifyBinaryAnalysisSymbolicExpressionTypeTypeClass() {
+        return stringify::Rose::BinaryAnalysis::SymbolicExpression::Type::TypeClass();
     }
 }
 
@@ -22214,8 +22214,8 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/Rose/BinaryAnalysis/SymbolicExprParser.h line 58
-namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace SymbolicExprParser { namespace Token {
+// /src/Rose/BinaryAnalysis/SymbolicExpressionParser.h line 58
+namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace SymbolicExpressionParser { namespace Token {
     const char* Type(int64_t i) {
         switch (i) {
             case 0L: return "NONE";
@@ -22230,7 +22230,7 @@ namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Symb
     std::string Type(int64_t i, const std::string &strip) {
         std::string s = Type(i);
         if (s.empty())
-            s = "(Rose::BinaryAnalysis::SymbolicExprParser::Token::Type)" + boost::lexical_cast<std::string>(i);
+            s = "(Rose::BinaryAnalysis::SymbolicExpressionParser::Token::Type)" + boost::lexical_cast<std::string>(i);
         if (boost::starts_with(s, strip))
             s = s.substr(strip.size());
         return s;
@@ -22251,21 +22251,21 @@ namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Symb
 }}}}}
 
 namespace Rose {
-    std::string stringifyBinaryAnalysisSymbolicExprParserTokenType(int64_t i, const char *strip, bool canonic) {
-        std::string retval = stringify::Rose::BinaryAnalysis::SymbolicExprParser::Token::Type(i);
+    std::string stringifyBinaryAnalysisSymbolicExpressionParserTokenType(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::Rose::BinaryAnalysis::SymbolicExpressionParser::Token::Type(i);
         if (retval.empty()) {
-            retval = "(Rose::BinaryAnalysis::SymbolicExprParser::Token::Type)" + boost::lexical_cast<std::string>(i);
+            retval = "(Rose::BinaryAnalysis::SymbolicExpressionParser::Token::Type)" + boost::lexical_cast<std::string>(i);
         } else {
             if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
                 retval = retval.substr(strlen(strip));
             if (canonic)
-                retval = "Rose::BinaryAnalysis::SymbolicExprParser::Token::Type::" + retval;
+                retval = "Rose::BinaryAnalysis::SymbolicExpressionParser::Token::Type::" + retval;
         }
         return retval;
     }
 
-    const std::vector<int64_t>& stringifyBinaryAnalysisSymbolicExprParserTokenType() {
-        return stringify::Rose::BinaryAnalysis::SymbolicExprParser::Token::Type();
+    const std::vector<int64_t>& stringifyBinaryAnalysisSymbolicExpressionParserTokenType() {
+        return stringify::Rose::BinaryAnalysis::SymbolicExpressionParser::Token::Type();
     }
 }
 

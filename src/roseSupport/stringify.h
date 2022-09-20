@@ -5392,93 +5392,93 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/Rose/BinaryAnalysis/SymbolicExpr.h line 65
-namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace SymbolicExpr { namespace TypeStyle {
-    /** Convert Rose::BinaryAnalysis::SymbolicExpr::TypeStyle::Flag enum constant to a string. */
+// /src/Rose/BinaryAnalysis/SymbolicExpression.h line 65
+namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace SymbolicExpression { namespace TypeStyle {
+    /** Convert Rose::BinaryAnalysis::SymbolicExpression::TypeStyle::Flag enum constant to a string. */
     const char* Flag(int64_t);
 
-    /** Convert Rose::BinaryAnalysis::SymbolicExpr::TypeStyle::Flag enum constant to a string. */
+    /** Convert Rose::BinaryAnalysis::SymbolicExpression::TypeStyle::Flag enum constant to a string. */
     std::string Flag(int64_t, const std::string &strip);
 
-    /** Return all Rose::BinaryAnalysis::SymbolicExpr::TypeStyle::Flag member values as a vector. */
+    /** Return all Rose::BinaryAnalysis::SymbolicExpression::TypeStyle::Flag member values as a vector. */
     const std::vector<int64_t>& Flag();
 }}}}}
 
 namespace Rose {
-    std::string stringifyBinaryAnalysisSymbolicExprTypeStyleFlag(int64_t n, const char *strip=NULL, bool canonic=false);
-    const std::vector<int64_t>& stringifyBinaryAnalysisSymbolicExprTypeStyleFlag();
+    std::string stringifyBinaryAnalysisSymbolicExpressionTypeStyleFlag(int64_t n, const char *strip=NULL, bool canonic=false);
+    const std::vector<int64_t>& stringifyBinaryAnalysisSymbolicExpressionTypeStyleFlag();
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/Rose/BinaryAnalysis/SymbolicExpr.h line 83
-namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace SymbolicExpr {
-    /** Convert Rose::BinaryAnalysis::SymbolicExpr::Operator enum constant to a string. */
+// /src/Rose/BinaryAnalysis/SymbolicExpression.h line 83
+namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace SymbolicExpression {
+    /** Convert Rose::BinaryAnalysis::SymbolicExpression::Operator enum constant to a string. */
     const char* Operator(int64_t);
 
-    /** Convert Rose::BinaryAnalysis::SymbolicExpr::Operator enum constant to a string. */
+    /** Convert Rose::BinaryAnalysis::SymbolicExpression::Operator enum constant to a string. */
     std::string Operator(int64_t, const std::string &strip);
 
-    /** Return all Rose::BinaryAnalysis::SymbolicExpr::Operator member values as a vector. */
+    /** Return all Rose::BinaryAnalysis::SymbolicExpression::Operator member values as a vector. */
     const std::vector<int64_t>& Operator();
 }}}}
 
 namespace Rose {
-    std::string stringifyBinaryAnalysisSymbolicExprOperator(int64_t n, const char *strip=NULL, bool canonic=false);
-    const std::vector<int64_t>& stringifyBinaryAnalysisSymbolicExprOperator();
+    std::string stringifyBinaryAnalysisSymbolicExpressionOperator(int64_t n, const char *strip=NULL, bool canonic=false);
+    const std::vector<int64_t>& stringifyBinaryAnalysisSymbolicExpressionOperator();
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/Rose/BinaryAnalysis/SymbolicExpr.h line 181
-namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace SymbolicExpr { namespace Formatter {
-    /** Convert Rose::BinaryAnalysis::SymbolicExpr::Formatter::ShowComments enum constant to a string. */
+// /src/Rose/BinaryAnalysis/SymbolicExpression.h line 181
+namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace SymbolicExpression { namespace Formatter {
+    /** Convert Rose::BinaryAnalysis::SymbolicExpression::Formatter::ShowComments enum constant to a string. */
     const char* ShowComments(int64_t);
 
-    /** Convert Rose::BinaryAnalysis::SymbolicExpr::Formatter::ShowComments enum constant to a string. */
+    /** Convert Rose::BinaryAnalysis::SymbolicExpression::Formatter::ShowComments enum constant to a string. */
     std::string ShowComments(int64_t, const std::string &strip);
 
-    /** Return all Rose::BinaryAnalysis::SymbolicExpr::Formatter::ShowComments member values as a vector. */
+    /** Return all Rose::BinaryAnalysis::SymbolicExpression::Formatter::ShowComments member values as a vector. */
     const std::vector<int64_t>& ShowComments();
 }}}}}
 
 namespace Rose {
-    std::string stringifyBinaryAnalysisSymbolicExprFormatterShowComments(int64_t n, const char *strip=NULL, bool canonic=false);
-    const std::vector<int64_t>& stringifyBinaryAnalysisSymbolicExprFormatterShowComments();
+    std::string stringifyBinaryAnalysisSymbolicExpressionFormatterShowComments(int64_t n, const char *strip=NULL, bool canonic=false);
+    const std::vector<int64_t>& stringifyBinaryAnalysisSymbolicExpressionFormatterShowComments();
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/Rose/BinaryAnalysis/SymbolicExpr.h line 201
-namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace SymbolicExpr {
-    /** Convert Rose::BinaryAnalysis::SymbolicExpr::VisitAction enum constant to a string. */
+// /src/Rose/BinaryAnalysis/SymbolicExpression.h line 201
+namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace SymbolicExpression {
+    /** Convert Rose::BinaryAnalysis::SymbolicExpression::VisitAction enum constant to a string. */
     const char* VisitAction(int64_t);
 
-    /** Convert Rose::BinaryAnalysis::SymbolicExpr::VisitAction enum constant to a string. */
+    /** Convert Rose::BinaryAnalysis::SymbolicExpression::VisitAction enum constant to a string. */
     std::string VisitAction(int64_t, const std::string &strip);
 
-    /** Return all Rose::BinaryAnalysis::SymbolicExpr::VisitAction member values as a vector. */
+    /** Return all Rose::BinaryAnalysis::SymbolicExpression::VisitAction member values as a vector. */
     const std::vector<int64_t>& VisitAction();
 }}}}
 
 namespace Rose {
-    std::string stringifyBinaryAnalysisSymbolicExprVisitAction(int64_t n, const char *strip=NULL, bool canonic=false);
-    const std::vector<int64_t>& stringifyBinaryAnalysisSymbolicExprVisitAction();
+    std::string stringifyBinaryAnalysisSymbolicExpressionVisitAction(int64_t n, const char *strip=NULL, bool canonic=false);
+    const std::vector<int64_t>& stringifyBinaryAnalysisSymbolicExpressionVisitAction();
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/Rose/BinaryAnalysis/SymbolicExpr.h line 243
-namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace SymbolicExpr { namespace Type {
-    /** Convert Rose::BinaryAnalysis::SymbolicExpr::Type::TypeClass enum constant to a string. */
+// /src/Rose/BinaryAnalysis/SymbolicExpression.h line 243
+namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace SymbolicExpression { namespace Type {
+    /** Convert Rose::BinaryAnalysis::SymbolicExpression::Type::TypeClass enum constant to a string. */
     const char* TypeClass(int64_t);
 
-    /** Convert Rose::BinaryAnalysis::SymbolicExpr::Type::TypeClass enum constant to a string. */
+    /** Convert Rose::BinaryAnalysis::SymbolicExpression::Type::TypeClass enum constant to a string. */
     std::string TypeClass(int64_t, const std::string &strip);
 
-    /** Return all Rose::BinaryAnalysis::SymbolicExpr::Type::TypeClass member values as a vector. */
+    /** Return all Rose::BinaryAnalysis::SymbolicExpression::Type::TypeClass member values as a vector. */
     const std::vector<int64_t>& TypeClass();
 }}}}}
 
 namespace Rose {
-    std::string stringifyBinaryAnalysisSymbolicExprTypeTypeClass(int64_t n, const char *strip=NULL, bool canonic=false);
-    const std::vector<int64_t>& stringifyBinaryAnalysisSymbolicExprTypeTypeClass();
+    std::string stringifyBinaryAnalysisSymbolicExpressionTypeTypeClass(int64_t n, const char *strip=NULL, bool canonic=false);
+    const std::vector<int64_t>& stringifyBinaryAnalysisSymbolicExpressionTypeTypeClass();
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
@@ -5734,21 +5734,21 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/Rose/BinaryAnalysis/SymbolicExprParser.h line 58
-namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace SymbolicExprParser { namespace Token {
-    /** Convert Rose::BinaryAnalysis::SymbolicExprParser::Token::Type enum constant to a string. */
+// /src/Rose/BinaryAnalysis/SymbolicExpressionParser.h line 58
+namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace SymbolicExpressionParser { namespace Token {
+    /** Convert Rose::BinaryAnalysis::SymbolicExpressionParser::Token::Type enum constant to a string. */
     const char* Type(int64_t);
 
-    /** Convert Rose::BinaryAnalysis::SymbolicExprParser::Token::Type enum constant to a string. */
+    /** Convert Rose::BinaryAnalysis::SymbolicExpressionParser::Token::Type enum constant to a string. */
     std::string Type(int64_t, const std::string &strip);
 
-    /** Return all Rose::BinaryAnalysis::SymbolicExprParser::Token::Type member values as a vector. */
+    /** Return all Rose::BinaryAnalysis::SymbolicExpressionParser::Token::Type member values as a vector. */
     const std::vector<int64_t>& Type();
 }}}}}
 
 namespace Rose {
-    std::string stringifyBinaryAnalysisSymbolicExprParserTokenType(int64_t n, const char *strip=NULL, bool canonic=false);
-    const std::vector<int64_t>& stringifyBinaryAnalysisSymbolicExprParserTokenType();
+    std::string stringifyBinaryAnalysisSymbolicExpressionParserTokenType(int64_t n, const char *strip=NULL, bool canonic=false);
+    const std::vector<int64_t>& stringifyBinaryAnalysisSymbolicExpressionParserTokenType();
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
@@ -24189,7 +24189,7 @@ namespace stringify {
                 }
             }
             /** Stringification. */
-            namespace SymbolicExpr {
+            namespace SymbolicExpression {
                 /** Stringification. */
                 namespace TypeStyle {
                 }
@@ -24225,7 +24225,7 @@ namespace stringify {
             namespace MagicNumber {
             }
             /** Stringification. */
-            namespace SymbolicExprParser {
+            namespace SymbolicExpressionParser {
                 /** Stringification. */
                 namespace Token {
                 }

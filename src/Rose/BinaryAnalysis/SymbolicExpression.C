@@ -2,7 +2,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #define __STDC_LIMIT_MACROS
 #include <sage3basic.h>
-#include <Rose/BinaryAnalysis/SymbolicExpr.h>
+#include <Rose/BinaryAnalysis/SymbolicExpression.h>
 
 #include <Rose/BinaryAnalysis/SmtSolver.h>
 #include <boost/lexical_cast.hpp>
@@ -16,13 +16,13 @@
 #include <sstream>
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
-BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::SymbolicExpr::Interior);
-BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::SymbolicExpr::Leaf);
+BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::SymbolicExpression::Interior);
+BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::SymbolicExpression::Leaf);
 #endif
 
 namespace Rose {
 namespace BinaryAnalysis {
-namespace SymbolicExpr {
+namespace SymbolicExpression {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Supporting functions
@@ -41,7 +41,7 @@ bool serializeVariableIds = false;
 std::string
 toStr(Operator o) {
     char buf[64];
-    std::string s = stringifyBinaryAnalysisSymbolicExprOperator(o, "OP_");
+    std::string s = stringifyBinaryAnalysisSymbolicExpressionOperator(o, "OP_");
     ASSERT_require(s.size()<sizeof buf);
     strcpy(buf, s.c_str());
     for (char *s=buf; *s; s++) {
@@ -579,13 +579,13 @@ Node::assertAcyclic() const {
 uint64_t
 Node::nNodesUnique() const {
     std::vector<Ptr> exprs(1, Ptr(const_cast<Node*>(this)));
-    return SymbolicExpr::nNodesUnique(exprs.begin(), exprs.end());
+    return SymbolicExpression::nNodesUnique(exprs.begin(), exprs.end());
 }
 
 std::vector<Ptr>
 Node::findCommonSubexpressions() const {
     std::vector<Ptr> exprs(1, Ptr(const_cast<Node*>(this)));
-    return SymbolicExpr::findCommonSubexpressions(exprs);
+    return SymbolicExpression::findCommonSubexpressions(exprs);
 }
 
 void

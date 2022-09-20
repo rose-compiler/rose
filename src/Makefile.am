@@ -490,6 +490,7 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/StackDelta.h						\
 	Rose/BinaryAnalysis/String.h							\
 	Rose/BinaryAnalysis/SymbolicExpr.h						\
+	Rose/BinaryAnalysis/SymbolicExpression.h					\
 	Rose/BinaryAnalysis/SymbolicExprParser.h					\
 	Rose/BinaryAnalysis/SymbolicExpressionParser.h					\
 	Rose/BinaryAnalysis/SystemCall.h						\
