@@ -5,7 +5,7 @@
 
 #include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
-#include <Rose/BinaryAnalysis/SymbolicExpr.h>
+#include <Rose/BinaryAnalysis/SymbolicExpression.h>
 #include <Rose/Exception.h>
 #include <Sawyer/BiMap.h>
 #include <Sawyer/CommandLine.h>
@@ -68,7 +68,7 @@ public:
     private:
         Type tokenType_;
         std::string lexeme_;                            // lexeme
-        SymbolicExpr::Type exprType_;                   // type for expression
+        SymbolicExpression::Type exprType_;             // type for expression
         Sawyer::Container::BitVector bits_;             // bits representing constant terms
         unsigned lineNumber_, columnNumber_;            // for start of token
 
@@ -78,7 +78,7 @@ public:
             : tokenType_(NONE), lineNumber_(0), columnNumber_(0) {}
 
         /** Constructs a specific token from a string. Do not use this to construct numeric tokens. */
-        Token(Type tokenType, const SymbolicExpr::Type &exprType, const std::string &lexeme,
+        Token(Type tokenType, const SymbolicExpression::Type &exprType, const std::string &lexeme,
               unsigned lineNumber, unsigned columnNumber)
             : tokenType_(tokenType), lexeme_(lexeme), exprType_(exprType),
               lineNumber_(lineNumber), columnNumber_(columnNumber) {
@@ -86,7 +86,7 @@ public:
         }
 
         /** Construct a token for a numeric constant. */
-        Token(const Sawyer::Container::BitVector &bv, const SymbolicExpr::Type &exprType, const std::string &lexeme,
+        Token(const Sawyer::Container::BitVector &bv, const SymbolicExpression::Type &exprType, const std::string &lexeme,
               unsigned lineNumber, unsigned columnNumber)
             : tokenType_(BITVECTOR), lexeme_(lexeme), exprType_(exprType), bits_(bv),
               lineNumber_(lineNumber), columnNumber_(columnNumber) {
@@ -105,7 +105,7 @@ public:
         const std::string &lexeme() const { return lexeme_; }
 
         /** Type of expression. */
-        SymbolicExpr::Type exprType() const { return exprType_; }
+        SymbolicExpression::Type exprType() const { return exprType_; }
 
         /** Bit vector for numeric constants. The bit vector will be empty for non-numeric tokens. */
         const Sawyer::Container::BitVector& bits() const { return bits_; }
@@ -188,7 +188,7 @@ public:
          *
          *  A type specification is a type name in square brackets. If the square brackets contain only an integer then the
          *  type is an integer type with the specified width. */
-        SymbolicExpr::Type consumeType();
+        SymbolicExpression::Type consumeType();
 
         /** Parse and consume the next token. Parses and consumes the next token and return it. Returns the special NONE token
          * at end-of-input. */
@@ -237,7 +237,8 @@ public:
          *
          *  If the input expression does not need to be substituted, then this function should return the original
          *  expression. */
-        virtual SymbolicExpr::Ptr delayedExpansion(const SymbolicExpr::Ptr &src, const SymbolicExpressionParser *parser) {
+        virtual SymbolicExpression::Ptr delayedExpansion(const SymbolicExpression::Ptr &src,
+                                                         const SymbolicExpressionParser *parser) {
             return src;
         }
     };
@@ -255,7 +256,7 @@ public:
          *  instance, a subclass that recognizes the token "true" would replace it with a single-bit constant 1.  If this
          *  object does not recognize the token, it should return a null pointer. This phase of expansion occurs immediately
          *  during parsing; a second phase may occur later. */
-        virtual SymbolicExpr::Ptr immediateExpansion(const Token &name) = 0;
+        virtual SymbolicExpression::Ptr immediateExpansion(const Token &name) = 0;
     };
 
     /** Ordered atom table. */
@@ -279,7 +280,7 @@ public:
         /** Operator to expand a list into an expression tree. The width in bits is either the width specified in
          *  square brackets for the function symbol, or zero.  Functors are all called for each symbol, and the first one to
          *  return non-null is the one that's used to generate the symbolic expression. */
-        virtual SymbolicExpr::Ptr immediateExpansion(const Token &name, const SymbolicExpr::Nodes &operands) = 0;
+        virtual SymbolicExpression::Ptr immediateExpansion(const Token &name, const SymbolicExpression::Nodes &operands) = 0;
     };
 
     /** Ordered operator table. */
@@ -308,7 +309,7 @@ public:
         static Ptr instance(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&);
 
         // internal
-        SymbolicExpr::Ptr immediateExpansion(const SymbolicExpressionParser::Token&) override;
+        SymbolicExpression::Ptr immediateExpansion(const SymbolicExpressionParser::Token&) override;
     };
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -325,7 +326,7 @@ public:
         typedef Sawyer::SharedPointer<RegisterSubstituter> Ptr;
 
         // internal
-        typedef Sawyer::Container::BiMap<RegisterDescriptor, SymbolicExpr::Ptr> RegToVarMap;
+        typedef Sawyer::Container::BiMap<RegisterDescriptor, SymbolicExpression::Ptr> RegToVarMap;
 
     private:
         RegisterDictionaryPtr regdict_;
@@ -355,8 +356,8 @@ public:
         /** @} */
 
         // internal
-        SymbolicExpr::Ptr immediateExpansion(const SymbolicExpressionParser::Token&) override;
-        SymbolicExpr::Ptr delayedExpansion(const SymbolicExpr::Ptr&, const SymbolicExpressionParser*) override;
+        SymbolicExpression::Ptr immediateExpansion(const SymbolicExpressionParser::Token&) override;
+        SymbolicExpression::Ptr delayedExpansion(const SymbolicExpression::Ptr&, const SymbolicExpressionParser*) override;
     };
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -370,7 +371,7 @@ public:
         typedef Sawyer::SharedPointer<MemorySubstituter> Ptr;
 
         // internal
-        typedef Sawyer::Container::Map<SymbolicExpr::Ptr /*placeholder*/, SymbolicExpr::Ptr /*address*/> ExprToMem;
+        typedef Sawyer::Container::Map<SymbolicExpression::Ptr /*placeholder*/, SymbolicExpression::Ptr /*address*/> ExprToMem;
 
     private:
         ExprToMem exprToMem_;
@@ -399,8 +400,8 @@ public:
         /** @} */
 
         // internal
-        virtual SymbolicExpr::Ptr immediateExpansion(const Token &name, const SymbolicExpr::Nodes &operands) override;
-        virtual SymbolicExpr::Ptr delayedExpansion(const SymbolicExpr::Ptr&, const SymbolicExpressionParser*) override;
+        virtual SymbolicExpression::Ptr immediateExpansion(const Token &name, const SymbolicExpression::Nodes &operands) override;
+        virtual SymbolicExpression::Ptr delayedExpansion(const SymbolicExpression::Ptr&, const SymbolicExpressionParser*) override;
     };
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -415,7 +416,7 @@ public:
         typedef Sawyer::SharedPointer<TermPlaceholders> Ptr;
 
         /** Mapping between term names and placeholder variables. */
-        typedef Sawyer::Container::BiMap<std::string, SymbolicExpr::Ptr> NameToVarMap;
+        typedef Sawyer::Container::BiMap<std::string, SymbolicExpression::Ptr> NameToVarMap;
 
     private:
         NameToVarMap name2var_;
@@ -431,7 +432,7 @@ public:
         const NameToVarMap& map() const { return name2var_; }
 
         // internal
-        SymbolicExpr::Ptr immediateExpansion(const SymbolicExpressionParser::Token&) override;
+        SymbolicExpression::Ptr immediateExpansion(const SymbolicExpressionParser::Token&) override;
     };
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -464,8 +465,8 @@ public:
                                                             const Sawyer::CommandLine::Location &loc) override;
     };
 
-    static SymbolicExprCmdlineParser::Ptr symbolicExprParser(SymbolicExpr::Ptr &storage);
-    static SymbolicExprCmdlineParser::Ptr symbolicExprParser(std::vector<SymbolicExpr::Ptr> &storage);
+    static SymbolicExprCmdlineParser::Ptr symbolicExprParser(SymbolicExpression::Ptr &storage);
+    static SymbolicExprCmdlineParser::Ptr symbolicExprParser(std::vector<SymbolicExpression::Ptr> &storage);
     static SymbolicExprCmdlineParser::Ptr symbolicExprParser();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -495,18 +496,18 @@ public:
      *
      *  Parses an expression from a string. Throws a @ref SyntaxError if problems are encountered, including when the string
      *  contains additional non-white-space following the expression. */
-    SymbolicExpr::Ptr parse(const std::string&, const std::string &inputName="string");
+    SymbolicExpression::Ptr parse(const std::string&, const std::string &inputName="string");
 
     /** Create a symbolic expression by parsing a file.
      *
      *  Parses the file and returns the first expression in the file. Throws a @ref SyntaxError if problems are encountered. */
-    SymbolicExpr::Ptr parse(std::istream &input, const std::string &filename,
-                                    unsigned lineNumber=1, unsigned columnNumber=0);
+    SymbolicExpression::Ptr parse(std::istream &input, const std::string &filename,
+                                  unsigned lineNumber=1, unsigned columnNumber=0);
 
     /** Create a symbolic expression by parsing a token stream.
      *
      *  Parses the token stream and returns its first expression. Throws a @ref SyntaxError if problems are encountered. */
-    SymbolicExpr::Ptr parse(TokenStream&);
+    SymbolicExpression::Ptr parse(TokenStream&);
 
     /** Append a new functor for expanding atoms into symbolic expressions. */
     void appendAtomExpansion(const AtomExpansion::Ptr&);
@@ -551,7 +552,7 @@ public:
     /** Perform delayed expansion.
      *
      *  This runs the @ref Expander::delayedExpansion "delayedExpansion" method for each of the registerd expansion functors. */
-    SymbolicExpr::Ptr delayedExpansion(const SymbolicExpr::Ptr&) const;
+    SymbolicExpression::Ptr delayedExpansion(const SymbolicExpression::Ptr&) const;
 
 private:
     void init();

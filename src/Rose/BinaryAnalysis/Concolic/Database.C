@@ -17,6 +17,7 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
+#include <Rose/BinaryAnalysis/SymbolicExpression.h>
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/filesystem.hpp>
@@ -292,7 +293,7 @@ updateObject(const Database::Ptr &db, TestCaseId id, const TestCase::Ptr &obj) {
     if (auto assertions = iter->get<std::string>(10)) {
         std::istringstream ss(*assertions);
         boost::archive::binary_iarchive archive(ss);
-        std::vector<SymbolicExpr::Ptr> v;
+        std::vector<SymbolicExpression::Ptr> v;
         archive >>v;
         obj->assertions(v);
     } else {

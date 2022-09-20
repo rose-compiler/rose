@@ -6,7 +6,7 @@ static const char *description =
 #include <rose.h>
 #include <batSupport.h>
 
-#include <Rose/BinaryAnalysis/SymbolicExprParser.h>
+#include <Rose/BinaryAnalysis/SymbolicExpressionParser.h>
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
 #include <Sawyer/Optional.h>
@@ -105,15 +105,15 @@ main(int argc, char *argv[]) {
         // Parse the expression
         try {
             SymbolicExpressionParser symbolicParser(smtSolver);
-            SymbolicExpr::Ptr expr = symbolicParser.parse(*line);
+            SymbolicExpression::Ptr expr = symbolicParser.parse(*line);
             std::cout <<"Parsed value = " <<*expr <<"\n\n";
 
             if (testSmtSolver && smtSolver) {
-                SymbolicExpr::Ptr assertion;
+                SymbolicExpression::Ptr assertion;
                 if (expr->nBits() == 1) {
                     assertion = expr;
                 } else {
-                    assertion = SymbolicExpr::makeEq(expr, SymbolicExpr::makeIntegerVariable(expr->nBits()));
+                    assertion = SymbolicExpression::makeEq(expr, SymbolicExpression::makeIntegerVariable(expr->nBits()));
                 }
                 std::cout <<"Checking satisfiability of " <<*assertion <<"\n";
                 switch (smtSolver->satisfiable(assertion)) {
@@ -134,16 +134,16 @@ main(int argc, char *argv[]) {
                 std::cout <<"Serializing\n";
                 std::ostringstream oss;
                 boost::archive::text_oarchive out(oss);
-                out.register_type<SymbolicExpr::Interior>();
-                out.register_type<SymbolicExpr::Leaf>();
+                out.register_type<SymbolicExpression::Interior>();
+                out.register_type<SymbolicExpression::Leaf>();
                 out <<expr;
 
                 std::cout <<"Deserializing\n";
                 std::istringstream iss(oss.str());
                 boost::archive::text_iarchive in(iss);
-                SymbolicExpr::Ptr expr2;
-                in.register_type<SymbolicExpr::Interior>();
-                in.register_type<SymbolicExpr::Leaf>();
+                SymbolicExpression::Ptr expr2;
+                in.register_type<SymbolicExpression::Interior>();
+                in.register_type<SymbolicExpression::Leaf>();
                 in >>expr2;
 
                 std::cout <<"Restored value = " <<*expr2 <<"\n\n";

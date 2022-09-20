@@ -29,6 +29,7 @@
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesX86.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Semantics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Utility.h>
+#include <Rose/BinaryAnalysis/SymbolicExpression.h>
 #include <rose_getline.h>
 #include <rose_strtoull.h>
 #include <Sawyer/FileSystem.h>
@@ -2730,7 +2731,7 @@ Engine::BasicBlockFinalizer::fixFunctionReturnEdge(const Args &args) {
         BasicBlock::Successors successors = args.partitioner.basicBlockSuccessors(args.bblock);
         for (size_t i = 0; i < successors.size(); ++i) {
             if (!successors[i].expr()->isConcrete() ||
-                (successors[i].expr()->get_expression()->flags() & SymbolicExpr::Node::INDETERMINATE) != 0) {
+                (successors[i].expr()->get_expression()->flags() & SymbolicExpression::Node::INDETERMINATE) != 0) {
                 if (successors[i].type() == E_FUNCTION_RETURN) {
                     hadCorrectEdge = true;
                     break;
@@ -2774,8 +2775,8 @@ Engine::BasicBlockFinalizer::fixFunctionCallEdges(const Args &args) {
 // RiscOperators::peekMemory would have returned a free variable to indicate an indeterminate value, or ADDR is writable but
 // its MemoryMap::INITIALIZED bit is set to indicate it has a valid value already, in which case RiscOperators::peekMemory
 // would have returned the value stored there but also marked the value as being INDETERMINATE.  The
-// SymbolicExpr::TreeNode::INDETERMINATE bit in the expression should have been carried along so that things like "MOV EAX,
-// [ADDR]; JMP EAX" will behave the same as "JMP [ADDR]".
+// SymbolicExpression::TreeNode::INDETERMINATE bit in the expression should have been carried along so that things like "MOV
+// EAX, [ADDR]; JMP EAX" will behave the same as "JMP [ADDR]".
 void
 Engine::BasicBlockFinalizer::addPossibleIndeterminateEdge(const Args &args) {
     BasicBlockSemantics sem = args.bblock->semantics();
@@ -2790,7 +2791,7 @@ Engine::BasicBlockFinalizer::addPossibleIndeterminateEdge(const Args &args) {
             addIndeterminateEdge = false;
             break;
         } else if (!addIndeterminateEdge &&
-                   (successor.expr()->get_expression()->flags() & SymbolicExpr::Node::INDETERMINATE) != 0) {
+                   (successor.expr()->get_expression()->flags() & SymbolicExpression::Node::INDETERMINATE) != 0) {
             addIndeterminateEdge = true;
             addrWidth = successor.expr()->nBits();
         }

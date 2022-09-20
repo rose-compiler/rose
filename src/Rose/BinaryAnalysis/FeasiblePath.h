@@ -71,11 +71,11 @@ public:
     struct Expression {
         AddressIntervalSet location;                    /**< Location where constraint applies. Empty implies end-of-path. */
         std::string parsable;                           /**< String to be parsed as an expression. */
-        SymbolicExpr::Ptr expr;                         /**< Symbolic expression. */
+        SymbolicExpression::Ptr expr;                   /**< Symbolic expression. */
 
         Expression() {}
         /*implicit*/ Expression(const std::string &parsable): parsable(parsable) {}
-        /*implicit*/ Expression(const SymbolicExpr::Ptr &expr): expr(expr) {}
+        /*implicit*/ Expression(const SymbolicExpression::Ptr &expr): expr(expr) {}
 
         void print(std::ostream&) const;
     };
@@ -160,7 +160,7 @@ public:
         std::string firstAccessMode;                    /**< How was variable first accessed ("read" or "write"). */
         SgAsmInstruction *firstAccessInsn;              /**< Instruction address where this var was first read. */
         Sawyer::Optional<size_t> firstAccessIdx;        /**< Instruction position in path where this var was first read. */
-        SymbolicExpr::Ptr memAddress;                   /**< Address where variable is located. */
+        SymbolicExpression::Ptr memAddress;             /**< Address where variable is located. */
         size_t memSize;                                 /**< Size of total memory access in bytes. */
         size_t memByteNumber;                           /**< Byte number for memory access. */
         Sawyer::Optional<rose_addr_t> returnFrom;       /**< This variable is the return value from the specified function. */
@@ -671,13 +671,13 @@ private:
     // whose address doesn't match the contents of the instruction pointer register after executing the edge's source
     // block. Otherwise, returns a symbolic expression which must be tree if the edge is feasible. For trivially feasible
     // edges, the return value is the constant 1 (one bit wide; i.e., true).
-    SymbolicExpr::Ptr pathEdgeConstraint(const Partitioner2::ControlFlowGraph::ConstEdgeIterator &pathEdge,
-                                         const InstructionSemantics::BaseSemantics::DispatcherPtr &cpu);
+    SymbolicExpression::Ptr pathEdgeConstraint(const Partitioner2::ControlFlowGraph::ConstEdgeIterator &pathEdge,
+                                               const InstructionSemantics::BaseSemantics::DispatcherPtr &cpu);
 
     // Parse the expression if it's a parsable string, otherwise return the expression as is. */
     Expression parseExpression(Expression, const std::string &where, SymbolicExpressionParser&) const;
 
-    SymbolicExpr::Ptr expandExpression(const Expression&, const SymbolicExpressionParser&);
+    SymbolicExpression::Ptr expandExpression(const Expression&, const SymbolicExpressionParser&);
 
     // Based on the last vertex of the path, insert user-specified assertions into the SMT solver.
     void insertAssertions(const SmtSolver::Ptr&, const Partitioner2::CfgPath&,
@@ -697,7 +697,7 @@ private:
     // Insert the edge assertion and any applicable user assertions (after delayed expansion of the expressions' register
     // and memory references), and run the solver, returning its result.
     SmtSolver::Satisfiable
-    solvePathConstraints(const SmtSolver::Ptr&, const Partitioner2::CfgPath&, const SymbolicExpr::Ptr &edgeAssertion,
+    solvePathConstraints(const SmtSolver::Ptr&, const Partitioner2::CfgPath&, const SymbolicExpression::Ptr &edgeAssertion,
                          const Substitutions&, bool atEndOfPath);
 
     // Mark vertex as being reached

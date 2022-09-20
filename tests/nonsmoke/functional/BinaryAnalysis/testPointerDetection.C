@@ -11,6 +11,7 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+#include <Rose/BinaryAnalysis/SymbolicExpression.h>
 
 #include <rose_strtoull.h>
 
@@ -67,7 +68,7 @@ shouldAnalyze(const Settings &settings, const P2::Function::Ptr &function) {
 int
 main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
-    SymbolicExpr::serializeVariableIds = true;
+    SymbolicExpression::serializeVariableIds = true;
     Settings settings;
     P2::Engine engine;
     std::vector<std::string> specimen = parseCommandLine(argc, argv, engine, settings);

@@ -162,7 +162,7 @@ protected:
 
     SValue(size_t nBits, uint64_t number);
 
-    explicit SValue(const SymbolicExpr::Ptr&);
+    explicit SValue(const SymbolicExpression::Ptr&);
 
 public:
     /** Instantiate a new prototypical value.
@@ -183,7 +183,7 @@ public:
     static Ptr instanceInteger(size_t nBits, uint64_t value);
 
     /** Instantiate a new symbolic value. */
-    static Ptr instanceSymbolic(const SymbolicExpr::Ptr &value);
+    static Ptr instanceSymbolic(const SymbolicExpression::Ptr &value);
 
 public:
     virtual InstructionSemantics::BaseSemantics::SValuePtr bottom_(size_t nBits) const override {

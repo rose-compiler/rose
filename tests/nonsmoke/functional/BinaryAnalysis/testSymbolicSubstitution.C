@@ -1,5 +1,5 @@
 #include <rose.h>
-#include <Rose/BinaryAnalysis/SymbolicExpr.h>
+#include <Rose/BinaryAnalysis/SymbolicExpression.h>
 #include <Rose/BinaryAnalysis/Z3Solver.h>
 #include <Sawyer/Stopwatch.h>
 
@@ -7,13 +7,13 @@ using namespace Rose::BinaryAnalysis;
 
 // Build an expression with lots of common subexpressions. This is a tiny
 // bit tricky because we need to build something that ROSE cannot simplify.
-SymbolicExpr::Ptr highSharing(size_t depth) {
-    SymbolicExpr::Ptr retval = SymbolicExpr::makeIntegerVariable(32);
+SymbolicExpression::Ptr highSharing(size_t depth) {
+    SymbolicExpression::Ptr retval = SymbolicExpression::makeIntegerVariable(32);
     for (size_t i=0; i<depth; ++i) {
         if (i % 2) {
-            retval = SymbolicExpr::makeAdd(retval, retval);
+            retval = SymbolicExpression::makeAdd(retval, retval);
         } else {
-            retval = SymbolicExpr::makeRol(retval, retval);
+            retval = SymbolicExpression::makeRol(retval, retval);
         }
     }
     return retval;
@@ -23,7 +23,7 @@ int main() {
     // Build an initial large expression
     std::cerr <<"building expression with high degree of common subexpressions...\n";
     Sawyer::Stopwatch timer;
-    SymbolicExpr::Ptr e1 = highSharing(30);
+    SymbolicExpression::Ptr e1 = highSharing(30);
     std::cerr <<"  time to build expression:    " <<timer <<"\n";
     std::cerr <<"  logical size of expression:  " <<e1->nNodes() <<" nodes\n";
     std::cerr <<"  physical size of expression: " <<e1->nNodesUnique() <<" nodes\n";
@@ -32,10 +32,10 @@ int main() {
 
     // Rename the variable everywhere it occurs
     std::cerr <<"renaming variables...\n";
-    SymbolicExpr::ExprExprHashMap index;
+    SymbolicExpression::ExprExprHashMap index;
     size_t nextId = 100;
     timer.restart();
-    SymbolicExpr::Ptr e2 = e1->renameVariables(index /*in,out*/, nextId /*in,out*/);
+    SymbolicExpression::Ptr e2 = e1->renameVariables(index /*in,out*/, nextId /*in,out*/);
     std::cerr <<"  time to rename variables:    " <<timer <<"\n";
     std::cerr <<"  logical size of expression:  " <<e2->nNodes() <<" nodes\n";
     std::cerr <<"  physical size of expression: " <<e2->nNodesUnique() <<" nodes\n";
@@ -44,10 +44,10 @@ int main() {
     
     // Substitute one variable for another
     std::cerr <<"performing variable substitution...\n";
-    SymbolicExpr::Ptr oldVar = *e1->getVariables().begin();
-    SymbolicExpr::Ptr newVar = SymbolicExpr::makeIntegerVariable(oldVar->nBits());
+    SymbolicExpression::Ptr oldVar = *e1->getVariables().begin();
+    SymbolicExpression::Ptr newVar = SymbolicExpression::makeIntegerVariable(oldVar->nBits());
     timer.restart();
-    SymbolicExpr::Ptr e3 = e1->substitute(oldVar, newVar);
+    SymbolicExpression::Ptr e3 = e1->substitute(oldVar, newVar);
     std::cerr <<"  time to substitute:          " <<timer <<"\n";
     std::cerr <<"  old variable:                " <<*oldVar <<"\n";
     std::cerr <<"  new variable:                " <<*newVar <<"\n";
@@ -58,10 +58,10 @@ int main() {
 
     // Perform multiple substitutions at once (although we just provide one)
     std::cerr <<"performing multi-substitution...\n";
-    SymbolicExpr::ExprExprHashMap substitutions;
+    SymbolicExpression::ExprExprHashMap substitutions;
     substitutions.insert(std::make_pair(oldVar, newVar)); 
     timer.restart();
-    SymbolicExpr::Ptr e4 = e1->substituteMultiple(substitutions);
+    SymbolicExpression::Ptr e4 = e1->substituteMultiple(substitutions);
     std::cerr <<"  time to substitute:          " <<timer <<"\n";
     std::cerr <<"  old variable:                " <<*oldVar <<"\n";
     std::cerr <<"  new variable:                " <<*newVar <<"\n";

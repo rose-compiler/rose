@@ -5,7 +5,7 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #else
 
 #include <rose.h>
-#include <Rose/BinaryAnalysis/SymbolicExprParser.h>
+#include <Rose/BinaryAnalysis/SymbolicExpressionParser.h>
 
 using namespace Rose::BinaryAnalysis;
 
@@ -54,7 +54,7 @@ main() {
     SymbolicExpressionParser parser;
     for (size_t i=0; i<sizeof(inputs)/sizeof(*inputs); ++i) {
         std::cout <<"Parser input: " <<inputs[i] <<"\n";
-        SymbolicExpr::Ptr symbolicExpression = parser.parse(inputs[i]);
+        SymbolicExpression::Ptr symbolicExpression = parser.parse(inputs[i]);
         std::cout <<"Parse expr:   " <<*symbolicExpression <<"\n\n";
         
     }

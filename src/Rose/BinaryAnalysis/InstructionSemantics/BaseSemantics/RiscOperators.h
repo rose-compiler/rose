@@ -390,7 +390,8 @@ public:
      *  lowBits in the low-order bits and @p highBits in the high order bits. The width of the return value is the sum of the
      *  widths of @p lowBits and @p highBits.
      *
-     *  Note that the order of arguments for this method is the reverse of the @ref SymbolicExpr concatenation function. */
+     *  Note that the order of arguments for this method is the reverse of the @ref SymbolicExpression concatenation
+     *  function. */
     virtual SValuePtr concat(const SValuePtr &lowBits, const SValuePtr &highBits) = 0;
 
     /** Aliases for concatenation.

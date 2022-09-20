@@ -21,6 +21,7 @@
 #include <Sawyer/GraphAlgorithm.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/SymbolicMemory.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
+#include <Rose/BinaryAnalysis/SymbolicExpression.h>
 
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/lexical_cast.hpp>
@@ -303,19 +304,19 @@ private:
 
         // Sometimes we can save useful information about the address.
         if (nBytes != 1) {
-            SymbolicExpr::Ptr addrExpr = SValue::promote(addr)->get_expression();
-            if (SymbolicExpr::LeafPtr addrLeaf = addrExpr->isLeafNode()) {
+            SymbolicExpression::Ptr addrExpr = SValue::promote(addr)->get_expression();
+            if (SymbolicExpression::LeafPtr addrLeaf = addrExpr->isLeafNode()) {
                 if (addrLeaf->isIntegerConstant()) {
                     retval.memSize = nBytes;
                     retval.memByteNumber = byteNumber;
                     retval.memAddress = addrExpr;
                 }
-            } else if (SymbolicExpr::InteriorPtr addrINode = addrExpr->isInteriorNode()) {
-                if (addrINode->getOperator() == SymbolicExpr::OP_ADD && addrINode->nChildren() == 2 &&
+            } else if (SymbolicExpression::InteriorPtr addrINode = addrExpr->isInteriorNode()) {
+                if (addrINode->getOperator() == SymbolicExpression::OP_ADD && addrINode->nChildren() == 2 &&
                     addrINode->child(0)->isLeafNode() && addrINode->child(0)->isLeafNode()->isIntegerVariable() &&
                     addrINode->child(1)->isLeafNode() && addrINode->child(1)->isLeafNode()->isIntegerConstant()) {
-                    SymbolicExpr::LeafPtr base = addrINode->child(0)->isLeafNode();
-                    SymbolicExpr::LeafPtr offset = addrINode->child(1)->isLeafNode();
+                    SymbolicExpression::LeafPtr base = addrINode->child(0)->isLeafNode();
+                    SymbolicExpression::LeafPtr offset = addrINode->child(1)->isLeafNode();
                     retval.memSize = nBytes;
                     retval.memByteNumber = byteNumber;
                     retval.memAddress = addrExpr;
@@ -326,25 +327,25 @@ private:
     }
 
     // True if the expression contains only constants.
-    bool isConstExpr(const SymbolicExpr::Ptr &expr) {
+    bool isConstExpr(const SymbolicExpression::Ptr &expr) {
         ASSERT_not_null(expr);
 
-        struct VarFinder: SymbolicExpr::Visitor {
+        struct VarFinder: SymbolicExpression::Visitor {
             bool hasVariable;
 
             VarFinder(): hasVariable(false) {}
 
-            SymbolicExpr::VisitAction preVisit(const SymbolicExpr::Ptr &node) override {
+            SymbolicExpression::VisitAction preVisit(const SymbolicExpression::Ptr &node) override {
                 if (node->isLeafNode() && !node->isLeafNode()->isIntegerConstant()) {
                     hasVariable = true;
-                    return SymbolicExpr::TERMINATE;
+                    return SymbolicExpression::TERMINATE;
                 } else {
-                    return SymbolicExpr::CONTINUE;
+                    return SymbolicExpression::CONTINUE;
                 }
             }
 
-            SymbolicExpr::VisitAction postVisit(const SymbolicExpr::Ptr &node) override {
-                return SymbolicExpr::CONTINUE;
+            SymbolicExpression::VisitAction postVisit(const SymbolicExpression::Ptr &node) override {
+                return SymbolicExpression::CONTINUE;
             }
         } varFinder;
         expr->depthFirstTraversal(varFinder);
@@ -353,32 +354,38 @@ private:
 
     // Warning: Caller should create a nullPtrSolver transaction if necessary
     bool isNullDeref(const BaseSemantics::SValue::Ptr &addr) {
-        SymbolicExpr::Ptr expr = SymbolicSemantics::SValue::promote(addr)->get_expression();
+        SymbolicExpression::Ptr expr = SymbolicSemantics::SValue::promote(addr)->get_expression();
         return isNullDeref(expr);
     }
 
     // Warning: Caller should create a nullPtrSolver transaction if necessary
-    bool isNullDeref(const SymbolicExpr::Ptr &expr) {
+    bool isNullDeref(const SymbolicExpression::Ptr &expr) {
         ASSERT_not_null(expr);
         Sawyer::Message::Stream debug(fpAnalyzer_->mlog[DEBUG]);
         SAWYER_MESG(debug) <<"          isNullDeref addr = " <<*expr <<"\n";
         SmtSolver::Ptr solver = nullPtrSolver();
 
-        // Instead of using SymbolicExpr::mustEqual and SymbolicExpr::mayEqual, we always call the SMT solver. This is so that
-        // if a null pointer is found, the callback will be able to get the evidence from the solver. The problem with
-        // mustEqual and mayEqual is threefold: (1) these functions can sometimes make the determination themselves without
-        // invoking an SMT solver thus the solver would not be updated with evidence, (2) these functions might invoke a user-defined
-        // callback that does almost anything, (3) when these functions invoke an SMT solver they protect it with a transaction so
-        // the evidence would be gone by time we get control back.
+        // Instead of using SymbolicExpression::mustEqual and SymbolicExpression::mayEqual, we always call the SMT solver. This
+        // is so that if a null pointer is found, the callback will be able to get the evidence from the solver. The problem
+        // with mustEqual and mayEqual is threefold: (1) these functions can sometimes make the determination themselves
+        // without invoking an SMT solver thus the solver would not be updated with evidence, (2) these functions might invoke
+        // a user-defined callback that does almost anything, (3) when these functions invoke an SMT solver they protect it
+        // with a transaction so the evidence would be gone by time we get control back.
         bool retval = false;
         switch (fpAnalyzer_->settings().nullDeref.mode) {
             case FeasiblePath::MAY:
                 if (solver) {
-                    SymbolicExpr::Ptr assertion = SymbolicExpr::makeLt(expr, SymbolicExpr::makeIntegerConstant(expr->nBits(), fpAnalyzer_->settings().nullDeref.minValid));
+                    SymbolicExpression::Ptr assertion =
+                        SymbolicExpression::makeLt(expr,
+                                                   SymbolicExpression::makeIntegerConstant(expr->nBits(),
+                                                                                           fpAnalyzer_->settings().nullDeref.minValid));
                     solver->insert(assertion);
                     retval = SmtSolver::SAT_YES == solver->check();
                 } else {
-                    retval = SymbolicExpr::makeLt(expr, SymbolicExpr::makeIntegerConstant(expr->nBits(), fpAnalyzer_->settings().nullDeref.minValid))->mayEqual(SymbolicExpr::makeIntegerConstant(expr->nBits(), 1));
+                    retval =
+                        SymbolicExpression::makeLt(expr,
+                                                   SymbolicExpression::makeIntegerConstant(expr->nBits(),
+                                                                                           fpAnalyzer_->settings().nullDeref.minValid))->mayEqual(SymbolicExpression::makeIntegerConstant(expr->nBits(), 1));
                 }
                 break;
 
@@ -387,11 +394,11 @@ private:
                 // be able to return quickly.
                 if (!fpAnalyzer_->settings().nullDeref.constOnly ||  isConstExpr(expr)) {
                     if (solver) {
-                        SymbolicExpr::Ptr assertion = SymbolicExpr::makeGe(expr, SymbolicExpr::makeIntegerConstant(expr->nBits(), fpAnalyzer_->settings().nullDeref.minValid));
+                        SymbolicExpression::Ptr assertion = SymbolicExpression::makeGe(expr, SymbolicExpression::makeIntegerConstant(expr->nBits(), fpAnalyzer_->settings().nullDeref.minValid));
                         solver->insert(assertion);
                         retval = SmtSolver::SAT_NO == solver->check();
                     } else {
-                        retval = SymbolicExpr::makeLt(expr, SymbolicExpr::makeIntegerConstant(expr->nBits(), fpAnalyzer_->settings().nullDeref.minValid))->mustEqual(SymbolicExpr::makeIntegerConstant(expr->nBits(), 1));
+                        retval = SymbolicExpression::makeLt(expr, SymbolicExpression::makeIntegerConstant(expr->nBits(), fpAnalyzer_->settings().nullDeref.minValid))->mustEqual(SymbolicExpression::makeIntegerConstant(expr->nBits(), 1));
                     }
                 } else {
                     SAWYER_MESG(debug) <<"          isNullDeref address is not constant as required by settings\n";
@@ -437,7 +444,7 @@ public:
     virtual BaseSemantics::SValue::Ptr readRegister(RegisterDescriptor reg,
                  const BaseSemantics::SValue::Ptr &dflt) override {
         SValue::Ptr retval = SValue::promote(Super::readRegister(reg, dflt));
-        SymbolicExpr::Ptr expr = retval->get_expression();
+        SymbolicExpression::Ptr expr = retval->get_expression();
         if (expr->isLeafNode())
             State::promote(currentState())->varDetail(expr->isLeafNode()->toString(), detailForVariable(reg, "read"));
         return retval;
@@ -445,7 +452,7 @@ public:
 
     virtual void writeRegister(RegisterDescriptor reg,
                   const BaseSemantics::SValue::Ptr &value) override {
-        SymbolicExpr::Ptr expr = SValue::promote(value)->get_expression();
+        SymbolicExpression::Ptr expr = SValue::promote(value)->get_expression();
         if (expr->isLeafNode())
             State::promote(currentState())->varDetail(expr->isLeafNode()->toString(), detailForVariable(reg, "write"));
         Super::writeRegister(reg, value);
@@ -515,7 +522,7 @@ public:
             return retval;                              // not called from dispatcher on behalf of an instruction
 
         // Save a description of the variable
-        SymbolicExpr::Ptr valExpr = SValue::promote(retval)->get_expression();
+        SymbolicExpression::Ptr valExpr = SValue::promote(retval)->get_expression();
         if (valExpr->isLeafNode() && valExpr->isLeafNode()->isIntegerVariable())
             State::promote(currentState())->varDetail(valExpr->isLeafNode()->toString(), detailForVariable(adjustedVa, "read"));
 
@@ -575,7 +582,7 @@ public:
         }
 
         // Save a description of the variable
-        SymbolicExpr::Ptr valExpr = SValue::promote(value)->get_expression();
+        SymbolicExpression::Ptr valExpr = SValue::promote(value)->get_expression();
         if (valExpr->isLeafNode() && valExpr->isLeafNode()->isIntegerVariable())
             State::promote(currentState())->varDetail(valExpr->isLeafNode()->toString(), detailForVariable(adjustedVa, "write"));
 
@@ -1258,7 +1265,7 @@ FeasiblePath::printPath(std::ostream &out, const P2::CfgPath &path) const {
     }
 }
 
-SymbolicExpr::Ptr
+SymbolicExpression::Ptr
 FeasiblePath::pathEdgeConstraint(const P2::ControlFlowGraph::ConstEdgeIterator &pathEdge, const BaseSemantics::Dispatcher::Ptr &cpu) {
     ASSERT_not_null(cpu);
     BaseSemantics::RiscOperators::Ptr ops = cpu->operators();
@@ -1269,7 +1276,7 @@ FeasiblePath::pathEdgeConstraint(const P2::ControlFlowGraph::ConstEdgeIterator &
     if (!settings_.nonAddressIsFeasible && !hasVirtualAddress(pathEdge->target())) {
         SAWYER_MESG(mlog[DEBUG]) <<prefix <<"unfeasible at edge " <<partitioner().edgeName(pathEdge)
                                  <<" because settings().nonAddressIsFeasible is false\n";
-        return SymbolicExpr::Ptr();                     // trivially unfeasible
+        return SymbolicExpression::Ptr();                     // trivially unfeasible
     } else if (auto ipval = ip->toUnsigned()) {
         if (!hasVirtualAddress(pathEdge->target())) {
             // If the IP register is pointing to an instruction but the path vertex is indeterminate (or undiscovered or
@@ -1277,19 +1284,19 @@ FeasiblePath::pathEdgeConstraint(const P2::ControlFlowGraph::ConstEdgeIterator &
             // a sibling edge that points to the correct vertex.
             SAWYER_MESG(mlog[DEBUG]) <<prefix <<"unfeasible at edge " <<partitioner().edgeName(pathEdge) <<" because IP = "
                                      <<StringUtility::addrToString(*ipval) <<" and edge target has no address\n";
-            return SymbolicExpr::Ptr();                 // trivially unfeasible
+            return SymbolicExpression::Ptr();                 // trivially unfeasible
         } else if (*ipval != virtualAddress(pathEdge->target())) {
             // Executing the path forces us to go a different direction than where the path indicates we should go. We
             // don't need an SMT solver to tell us that when the values are just integers.
             SAWYER_MESG(mlog[DEBUG]) <<prefix <<"unfeasible at edge " <<partitioner().edgeName(pathEdge) <<" because IP = "
                                      <<StringUtility::addrToString(*ipval) <<" and edge target is "
                                      <<StringUtility::addrToString(virtualAddress(pathEdge->target())) <<"\n";
-            return SymbolicExpr::Ptr();                 // trivially unfeasible
+            return SymbolicExpression::Ptr();                 // trivially unfeasible
         }
     } else if (hasVirtualAddress(pathEdge->target())) {
-        SymbolicExpr::Ptr targetVa = SymbolicExpr::makeIntegerConstant(ip->nBits(), virtualAddress(pathEdge->target()));
-        SymbolicExpr::Ptr constraint = SymbolicExpr::makeEq(targetVa,
-                                                            SymbolicSemantics::SValue::promote(ip)->get_expression());
+        SymbolicExpression::Ptr targetVa = SymbolicExpression::makeIntegerConstant(ip->nBits(), virtualAddress(pathEdge->target()));
+        SymbolicExpression::Ptr constraint = SymbolicExpression::makeEq(targetVa,
+                                                                        SymbolicSemantics::SValue::promote(ip)->get_expression());
         constraint->comment("cfg edge " + partitioner().edgeName(pathEdge));
         SAWYER_MESG(mlog[DEBUG]) <<prefix <<"constraint at edge " <<partitioner().edgeName(pathEdge)
                                  <<": " <<*constraint <<"\n";
@@ -1297,7 +1304,7 @@ FeasiblePath::pathEdgeConstraint(const P2::ControlFlowGraph::ConstEdgeIterator &
     }
 
     SAWYER_MESG(mlog[DEBUG]) <<prefix <<"trivially feasible at edge " <<partitioner().edgeName(pathEdge) <<"\n";
-    return SymbolicExpr::makeBooleanConstant(true);     // trivially feasible
+    return SymbolicExpression::makeBooleanConstant(true);     // trivially feasible
 }
 
 void
@@ -1670,14 +1677,14 @@ FeasiblePath::parseExpression(Expression expr, const std::string &where, Symboli
     return expr;
 }
 
-SymbolicExpr::Ptr
+SymbolicExpression::Ptr
 FeasiblePath::expandExpression(const Expression &expr, const SymbolicExpressionParser &parser) {
     if (expr.expr) {
         return parser.delayedExpansion(expr.expr);
     } else if (!expr.parsable.empty()) {
         ASSERT_not_reachable("string should have been parsed by now");
     } else {
-        return SymbolicExpr::makeBooleanConstant(false);
+        return SymbolicExpression::makeBooleanConstant(false);
     }
 }
 
@@ -1697,7 +1704,7 @@ FeasiblePath::insertAssertions(const SmtSolver::Ptr &solver, const P2::CfgPath &
         SAWYER_MESG(debug) <<"    assertions for " <<StringUtility::addrToString(*blockVa) <<":\n";
         for (size_t i = 0; i < assertions.size(); ++i) {
             if (assertions[i].location.contains(*blockVa) || (atEndOfPath && assertions[i].location.isEmpty())) {
-                SymbolicExpr::Ptr assertion = expandExpression(assertions[i], parser);
+                SymbolicExpression::Ptr assertion = expandExpression(assertions[i], parser);
                 solver->insert(assertion);
                 if (debug) {
                     debug <<"      #" <<i <<": " <<*assertion <<"\n";
@@ -1715,8 +1722,8 @@ FeasiblePath::insertAssertions(const SmtSolver::Ptr &solver, const P2::CfgPath &
 }
 
 SmtSolver::Satisfiable
-FeasiblePath::solvePathConstraints(const SmtSolver::Ptr &solver, const P2::CfgPath &path, const SymbolicExpr::Ptr &edgeAssertion,
-                                   const Substitutions &subst, bool atEndOfPath) {
+FeasiblePath::solvePathConstraints(const SmtSolver::Ptr &solver, const P2::CfgPath &path,
+                                   const SymbolicExpression::Ptr &edgeAssertion, const Substitutions &subst, bool atEndOfPath) {
     ASSERT_not_null(solver);
     ASSERT_not_null(edgeAssertion);
     Sawyer::Message::Stream debug(mlog[DEBUG]);
@@ -1921,7 +1928,7 @@ FeasiblePath::isFeasible(P2::CfgPath &path, const Substitutions &subst, const Se
     BaseSemantics::State::Ptr oldState = sem.ops->currentState(); // probably null
 
     if (path.nVertices() == 1) {
-        switch (solvePathConstraints(solver, path, SymbolicExpr::makeBooleanConstant(true), subst, atEndOfPath)) {
+        switch (solvePathConstraints(solver, path, SymbolicExpression::makeBooleanConstant(true), subst, atEndOfPath)) {
             case SmtSolver::SAT_YES:
                 SAWYER_MESG(debug) <<" = is feasible\n";
                 retval = true;
@@ -1944,7 +1951,7 @@ FeasiblePath::isFeasible(P2::CfgPath &path, const Substitutions &subst, const Se
         if (solver->nAssertions(solver->nLevels()-1) > 0) {
             SAWYER_MESG(debug) <<" = is feasible (previously computed)\n";
             retval = true;
-        } else if (SymbolicExpr::Ptr edgeConstraint = pathEdgeConstraint(path.edges().back(), sem.cpu)) {
+        } else if (SymbolicExpression::Ptr edgeConstraint = pathEdgeConstraint(path.edges().back(), sem.cpu)) {
             switch (solvePathConstraints(solver, path, edgeConstraint, subst, atEndOfPath)) {
                 case SmtSolver::SAT_YES:
                     SAWYER_MESG(debug) <<" = is feasible\n";

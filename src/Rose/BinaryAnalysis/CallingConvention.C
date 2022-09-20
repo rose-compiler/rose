@@ -11,6 +11,7 @@
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>    // Fast function data structures
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BinaryAnalysis/RegisterNames.h>
+#include <Rose/BinaryAnalysis/SymbolicExpression.h>
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
@@ -1133,8 +1134,8 @@ Analysis::updateRestoredRegisters(const State::Ptr &initialState, const State::P
     for (RegisterDescriptor reg: finalRegs->findProperties(props)) {
         SValue::Ptr initialValue = initialRegs->peekRegister(reg, ops->undefined_(reg.nBits()), ops.get());
         SValue::Ptr finalValue = finalRegs->peekRegister(reg, ops->undefined_(reg.nBits()), ops.get());
-        SymbolicExpr::Ptr initialExpr = SymbolicSemantics::SValue::promote(initialValue)->get_expression();
-        SymbolicExpr::Ptr finalExpr = SymbolicSemantics::SValue::promote(finalValue)->get_expression();
+        SymbolicExpression::Ptr initialExpr = SymbolicSemantics::SValue::promote(initialValue)->get_expression();
+        SymbolicExpression::Ptr finalExpr = SymbolicSemantics::SValue::promote(finalValue)->get_expression();
         if (finalExpr->flags() == initialExpr->flags() && finalExpr->mustEqual(initialExpr, ops->solver()))
             restoredRegisters_.insert(reg);
     }
