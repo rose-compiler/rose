@@ -144,10 +144,49 @@ getString(const SgAsmCilUint8Heap& heap, size_t idx)
   return res;
 }
 
-vector<uint32_t>
-generateRVAs(SgAsmCilMetadataRoot* n)
+
+
+          
+struct DecoderState
 {
-  vector<uint32_t> res;
+  size_t addr;
+};
+
+DecoderState 
+x86Decoder(std::ostream& os, SgAsmStatement* stmt, DecoderState state)
+{
+  SgAsmX86Instruction* insn = SgAsmX86Instruction(stmt);
+  ROSE_ASSERT(insn);
+
+  os << "  @" << std::hex << std::setw(4) << state.addr << std::dec << " " << instr->get_mnemonic() 
+     << std::endl;
+
+  return DecoderState{ state.addr + instr->get_size(); }  
+}
+
+
+DecoderState 
+cilDecoder(std::ostream& os, SgAsmStatement* stmt, DecoderState state)
+{
+  SgAsmCilInstruction* insn = isSgAsmCilInstruction(stmt);
+  ROSE_ASSERT(insn);
+  
+  os << "  @" << std::hex << std::setw(4) << state.addr << std::dec << " " << instr->get_mnemonic() 
+     << std::endl;
+
+  return DecoderState{ state.addr + instr->get_size(); }  
+}
+
+void
+printMethod(std::ostream& os, SgAsmCilMetadataRoot* n)
+{
+  using AsmDecoderFn = std::function<DecoderState(std::ostream&, SgAsmCilInstruction*, DecoderState)>;
+  
+  constexpr std::uint8_t CIL_CODE       = 0;
+  constexpr std::uint8_t NATIVE_CODE    = 1;
+  constexpr std::uint8_t OPTIL_RESERVED = 2;
+  constexpr std::uint8_t RUNTIME_CODE   = 3;
+  constexpr std::uint8_t CODE_TYPE_MASK = CIL_CODE | NATIVE_CODE | OPTIL_RESERVED | RUNTIME_CODE;
 
   printf ("Generate the RVAs for each method: \n");
   SgAsmCilMetadataHeap* metadataHeap = n->get_MetadataHeap();
@@ -157,19 +196,40 @@ generateRVAs(SgAsmCilMetadataRoot* n)
 
   for (SgAsmCilMethodDef* methodDef : metadataHeap->get_MethodDef())
   {
-    ASSERT_not_null(methodDef);
-    std::cerr << "Method at StringHeap[" << methodDef->get_Name()
-              << "] = " << getString(*stringHeap, methodDef->get_Name())
-              << std::endl;
-
-    res.push_back(methodDef->get_RVA());
+    ASSERT_not_null(methodDef);  
+    os << ".method " << getString(*stringHeap, methodDef->get_Name())
+       << std::endl;
+              
+    std::uint32_t rva = m->get_RVA();
     
+    if (rva == 0)
+    {
+      os << "  is abstract\n" << std::endl;
+      continue;
+    }
+    
+    std::uint8_t decoderFlags = m->get_ImplFlags() & CODE_TYPE_MASK;
+    ROSE_ASSSERT(decoderFlags == CIL_CODE || decoderFlags == NATIVE_CODE);
+    
+    os << "{\n" 
+       << "  // " << (decoderFlags == CIL_CODE ? "CIL code" : "Native code") << '\n'
+       << "  // method begins at 0x" << std::hex << (rva) << std::dec << '\n'
+       //~ << "  // header size = " << int(mh.headerSize()) << " (" << (mh.tiny() ? "tiny": "fat") << ")\n"
+       //~ << "  // code size " << codeLen << " (0x" << std::hex << codeLen << std::dec << ")\n"
+       << "  .entrypoint\n" 
+       << "  .maxstack " << m->get_stackSize() << '\n'
+       << "  .localsinit " << m->get_initLocals() << '\n'
+       << std::flush;           
+        
+    AsmDecoderFn decoder = decoderFlags == CIL_CODE ? cilDecoder : x86Decoder;
+       
     if (SgAsmBlock* blk = methodDef->get_body())
     {    
       for (SgAsmStatement* stmt : blk->get_statementList())
-        if (SgAsmCilInstruction* insn = isSgAsmCilInstruction(stmt))
-          std::cout << insn->get_mnemonic() << std::endl;
+        decoder(os, stmt, state);
     }
+    
+    os << "}\n" << std::endl;
   }
 
   return res;

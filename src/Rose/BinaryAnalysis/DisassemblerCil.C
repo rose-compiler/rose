@@ -2263,7 +2263,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
              const std::int32_t MIN_SWITCH_SIZE = 5; 
              
-             uint32_t value_0 = ByteOrder::le_to_host(*((int32_t*)(raw_bytes.data()+1)));
+             const uint32_t value_0 = ByteOrder::le_to_host(*((uint32_t*)(raw_bytes.data()+1)));
              SgAsmIntegerValueExpression* operand_0 = SageBuilderAsm::buildValueU32(value_0);
              
              insn = makeInstruction(start_va,Cil_switch,"switch",operand_0);
@@ -2275,9 +2275,20 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
              std::uint8_t* const loc = raw_bytes.data() + MIN_SWITCH_SIZE;
              const rose_addr_t   brtbl_va = start_va + MIN_SWITCH_SIZE;
              const std::uint32_t bytesRead = map->at(brtbl_va).limit(branchTableSize)
-                                               .require(MemoryMap::EXECUTABLE).read(loc).size();
-             
+                                               .require(MemoryMap::EXECUTABLE).read(loc).size();                                               
              ROSE_ASSERT(bytesRead == branchTableSize);
+             
+             SgAsmOperandList* oplst = insn->get_operandList();
+             ROSE_ASSERT(oplst);
+             
+             for (uint32_t i = 0; i < value_0; ++i)
+             {
+               const int32_t entryofs = MIN_SWITCH_SIZE + i * sizeof(std::int32_t);                
+               const int32_t jmpofs = ByteOrder::le_to_host(*((int32_t*)(raw_bytes.data()+entryofs)));
+               
+               oplst->append_operand(SageBuilderAsm::buildValueI32(jmpofs));  
+             }
+             
              insn->set_raw_bytes(raw_bytes);
              break;
            }

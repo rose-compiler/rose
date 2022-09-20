@@ -57,7 +57,18 @@
 #if defined(SgAsmCil`cl.Name`_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
+`for_each fl = cl.Fields` `if exists fl.RefKind` `if fl.RefKind eq "blob_heap"`
+        const std::uint8_t* get_`fl.Name`_blob() const;
+    `else_if fl.RefKind eq "guid_heap"`
+        const std::uint32_t* get_`fl.Name`_guid() const;
+    `else_if fl.RefKind eq "string_heap"`
+        const std::uint8_t* get_`fl.Name`_string() const;
+    `else`
+        const SgAsmCilMetadata* get_`fl.Name`_object() const;
+    `end_if`
+  `end_if`
+`end_for`        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:

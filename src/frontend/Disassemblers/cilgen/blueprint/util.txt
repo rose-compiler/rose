@@ -225,8 +225,8 @@ namespace // anonymous namespace for auxiliary functions
     return std::vector<IntT>(beg, lim);
   }
   
-  const SgAsmCilMetadataHeap&
   inline
+  const SgAsmCilMetadataHeap&
   getMetadataHeap(const SgAsmCilMetadata* o)
   {
     ROSE_ASSERT(o);
@@ -236,8 +236,8 @@ namespace // anonymous namespace for auxiliary functions
     return *res;
   }
   
-  SgAsmCilMetadataHeap&
   inline
+  SgAsmCilMetadataHeap&
   getMetadataHeap(SgAsmCilMetadata* o)
   {
     ROSE_ASSERT(o);
@@ -247,8 +247,8 @@ namespace // anonymous namespace for auxiliary functions
     return *res;
   }
   
-  const SgAsmCilMetadataRoot&
   inline
+  const SgAsmCilMetadataRoot&
   getMetadataRoot(const SgAsmCilMetadata* o)
   {
     ROSE_ASSERT(o);
@@ -258,8 +258,8 @@ namespace // anonymous namespace for auxiliary functions
     return *res;
   }
   
-  SgAsmCilMetadataRoot&
   inline
+  SgAsmCilMetadataRoot&
   getMetadataRoot(SgAsmCilMetadata* o)
   {
     ROSE_ASSERT(o);

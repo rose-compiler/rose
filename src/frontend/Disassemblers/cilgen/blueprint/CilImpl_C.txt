@@ -27,7 +27,35 @@ void SgAsmCil`cl.Name`::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t
     `end_for`
   }
 }
-`end_for`
+`for_each fl = cl.Fields` `if exists fl.RefKind` `if fl.RefKind eq "blob_heap"`
+const std::uint8_t*
+SgAsmCil`cl.Name`::get_`fl.Name`_blob() const
+{
+  return getMetadataRoot(this).get_BlobHeap()->get_Stream().data() + get_`fl.Name`();
+}
+    `else_if fl.RefKind eq "guid_heap"`
+const std::uint32_t*
+SgAsmCil`cl.Name`::get_`fl.Name`_guid() const
+{
+  return getMetadataRoot(this).get_GuidHeap()->get_Stream().data() + get_`fl.Name`();
+}
+    `else_if fl.RefKind eq "string_heap"`
+const std::uint8_t*
+SgAsmCil`cl.Name`::get_`fl.Name`_string() const
+{
+  return getMetadataRoot(this).get_StringHeap()->get_Stream().data() + get_`fl.Name`();
+}
+    `else`
+const SgAsmCilMetadata*
+SgAsmCil`cl.Name`::get_`fl.Name`_object() const
+{
+  return getMetadataHeap(this).get_MetadataNode(get_`fl.Name`(), SgAsmCilMetadataHeap::e_ref_`fl.RefKind`);
+}    
+    `end_if` 
+    
+  `end_if`
+`end_for`  
+`end_for` 
 
 void SgAsmCilUint8Heap::parse(std::vector<uint8_t>& buf, size_t startOfMetaData)
 {
