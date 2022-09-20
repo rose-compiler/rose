@@ -1336,30 +1336,9 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                                    ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
                                    sourceFile->initializeGlobalScope();
                                 }
-                            // DQ (28/8/2017): Adding language support.
-                               else if (CommandlineProcessing::isCobolFileNameSuffix(filenameExtension) == true)
-                                {
-                                // file = new SgSourceFile ( argv,  project );
-                                   SgSourceFile* sourceFile = new SgSourceFile ( argv,  project );
-                                   file = sourceFile;
-
-                                   file->set_sourceFileUsesCobolFileExtension(true);
-                                   file->set_outputLanguage(SgFile::e_Cobol_language);
-
-                                // DQ (29/8/2017): Set the input language as well.
-                                   file->set_inputLanguage(SgFile::e_Cobol_language);
-
-                                   file->set_Cobol_only(true);
-
-                                // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
-                                   Rose::is_Cobol_language = true;
-
-                                // DQ (12/23/2008): This is the eariliest point where the global scope can be set.
-                                // Note that file->get_requires_C_preprocessor() should be false.
-                                   ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
-                                   sourceFile->initializeGlobalScope();
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-                                } else if (true) {
+                               else if (true)
+                                {
                                    // This is not a source file recognized by ROSE, so it is either a binary executable or
                                    // library archive or something that we can't process.
                                    static bool didWarn = false;
@@ -1438,28 +1417,20 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                                        BOOST_FOREACH (const boost::filesystem::path &memberName, memberNames)
                                            binary->get_libraryArchiveObjectFileNameList().push_back(memberName.string());
                                    }
+                                }
 #endif
-                               }
-                              else
-                               {
+                               else
+                                {
                                    file = new SgUnknownFile ( argv,  project );
-
-                                // This should have already been setup!
-                                // file->initializeSourcePosition();
 
                                    ASSERT_not_null(file->get_parent());
                                    ROSE_ASSERT(file->get_parent() == project);
 
                                 // If all else fails, then output the type of file and exit.
                                    file->set_sourceFileTypeIsUnknown(true);
-
-#if 0
-                                   printf ("@@@@@@@@@@@@@@ Set requires_C_preprocessor to false (test 3) \n");
-#endif
                                    file->set_requires_C_preprocessor(false);
 
                                    ASSERT_not_null(file->get_file_info());
-                                // file->set_parent(project);
 
                                 // DQ (2/3/2009): Uncommented this to report the file type when we don't process it...
                                 // outputTypeOfFileAndExit(sourceFilename);
@@ -6118,54 +6089,6 @@ SgSourceFile::build_Jovial_AST( vector<string> argv, vector<string> inputCommand
    }
 
 
-int
-SgSourceFile::build_Cobol_AST( vector<string> argv, vector<string> inputCommandLine )
-   {
-  // DQ (28/8/2017) In case of a mixed language project, force case sensitivity here.
-     SageBuilder::symbol_table_case_insensitive_semantics = false;
-
-     std::string frontEndCommandLineString;
-     frontEndCommandLineString = std::string(argv[0]) + std::string(" ") + CommandlineProcessing::generateStringFromArgList(inputCommandLine,false,false);
-
-     if ( get_verbose() > 1 )
-        {
-          printf ("In build_Cobol_AST(): Before calling cobol_main(): frontEndCommandLineString = %s \n",frontEndCommandLineString.c_str());
-        }
-
-     int frontendErrorLevel = 0;
-     int cobol_argc = 0;
-     char **cobol_argv = nullptr;
-     CommandlineProcessing::generateArgcArgvFromList(inputCommandLine, cobol_argc, cobol_argv);
-
-  // Prototype declaration.
-  // Rasmussen (10/31/2017): Added SgSourceFile parameter
-     int cobol_main(int argc, char** argv, SgSourceFile* file);
-
-     SgSourceFile* nonconst_file = const_cast<SgSourceFile*>(this);
-     ASSERT_not_null(nonconst_file);
-
-  // Rasmussen (10/9/2017) Added compile time check to build if not configured for Cobol
-#ifdef ROSE_EXPERIMENTAL_COBOL_ROSE_CONNECTION
-     frontendErrorLevel = cobol_main (cobol_argc, cobol_argv, nonconst_file);
-#else
-     printf ("ROSE_EXPERIMENTAL_COBOL_ROSE_CONNECTION is not defined \n");
-     return frontendErrorLevel;
-#endif
-
-     if ( get_verbose() > 1 )
-        {
-          printf ("In build_Cobol_AST(): After calling cobol_main(): frontEndCommandLineString = %s \n",frontEndCommandLineString.c_str());
-        }
-
-#if 1
-     printf ("Exiting after parsing Cobol input... \n");
-     exit(0);
-#endif
-
-     return frontendErrorLevel;
-   }
-
-
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS_MOVED
 #error "DEAD CODE!"
 /* Parses a single binary file and adds a SgAsmGenericFile node under this SgBinaryComposite node. */
@@ -6405,21 +6328,12 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
                                            }
                                           else
                                            {
-                                          // DQ (8/25/2017): Added new langauge support.
-                                             if (get_Cobol_only() == true)
-                                                {
-                                                  frontendErrorLevel = build_Cobol_AST(argv,inputCommandLine);
-                                                  frontend_failed = (frontendErrorLevel > 0);
-                                                }
-                                               else
-                                                {
-                                               // This is the C/C++ case (default).
-                                                  frontendErrorLevel = build_C_and_Cxx_AST(argv,inputCommandLine);
+                                          // This is the C/C++ case (default).
+                                             frontendErrorLevel = build_C_and_Cxx_AST(argv,inputCommandLine);
 
-                                               // DQ (12/29/2008): The newer version of EDG (version 3.10 and 4.0) use different return codes for indicating an error.
-                                               // Any non-zero value indicates an error.
-                                                  frontend_failed = (frontendErrorLevel != 0);
-                                                }
+                                          // DQ (12/29/2008): The newer version of EDG (version 3.10 and 4.0) use different return codes for indicating an error.
+                                          // Any non-zero value indicates an error.
+                                             frontend_failed = (frontendErrorLevel != 0);
                                            }
                                       }
                                  }
@@ -6768,12 +6682,6 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
 
             // DQ (31/8/2017): If this is Jovial then don't use the "-c" flag (not clear what steps are required for linking within Jovial)
                if (get_Jovial_only() == true)
-                  {
-                    addCompileOnlyFlag = false;
-                  }
-
-            // DQ (31/8/2017): If this is Cobol then don't use the "-c" flag (not clear what steps are required for linking within Cobol)
-               if (get_Cobol_only() == true)
                   {
                     addCompileOnlyFlag = false;
                   }
@@ -7478,7 +7386,7 @@ int SgProject::link ( std::string linkerName )
 #endif
 
   // DQ (30/8/2017): Csharp does not include a concept of linking, as I understand it presently.
-     if (get_Csharp_only() == true || get_Ada_only() == true || get_Cobol_only() == true)
+     if (get_Csharp_only() == true || get_Ada_only() == true)
         {
           printf ("WARNING: In SgProject::link(): New language support is skipping the linking step (for now) \n");
           return 0;

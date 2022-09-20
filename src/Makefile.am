@@ -121,13 +121,6 @@ else
    libroseJoviallibraries =
 endif
 
-# DQ (28/8/2017): Adding more general language support.
-if ROSE_EXPERIMENTAL_COBOL_ROSE_CONNECTION
-   libroseCobollibraries = frontend/Experimental_Cobol_ROSE_Connection/libexperimentalRoseCobol.la
-else
-   libroseCobollibraries =
-endif
-
 # Rasmussen (11/19/2017): Adding language support for Matlab
 if ROSE_EXPERIMENTAL_MATLAB_ROSE_CONNECTION
    libroseMatlablibraries = frontend/Experimental_Matlab_ROSE_Connection/libexperimentalRoseMatlab.la
@@ -207,7 +200,6 @@ libroseLibraries = \
    $(libroseCsharplibraries) \
    $(libroseAdalibraries) \
    $(libroseJoviallibraries) \
-   $(libroseCobollibraries) \
    $(top_builddir)/src/midend/programAnalysis/libprogramAnalysis.la \
    $(top_builddir)/src/midend/programTransformation/loopProcessing/libLoopProcessing.la \
    $(top_builddir)/src/midend/programTransformation/extractFunctionArgumentsNormalization/libExtractFunctionArgumentsNormalization.la \
@@ -581,8 +573,7 @@ librose_la_LIBADD = $(BOOST_LDFLAGS) $(libroseLibraries) $(JAVA_JVM_FLAGS) $(LIB
           $(BOOST_SYSTEM_LIB) $(BOOST_SERIALIZATION_LIB) \
           $(BOOST_WAVE_LIB) $(BOOST_IOSTREAMS_LIB) \
           $(OPT_SQLITE3_LDFLAGS) \
-          $(OPT_MYSQL_LDFLAGS) $(ROSE_ATERM_LIBS) $(ROSE_FLANG_LIBS) \
-          $(ROSE_COBOL_PT_LIBS_WITH_PATH)
+          $(OPT_MYSQL_LDFLAGS) $(ROSE_ATERM_LIBS) $(ROSE_FLANG_LIBS)
 
 # DQ (6/9/2017): Removed because it failes for "make install" rule on my machine.
 # This was located after the BOOST_WAVE_LIB line in the librose_la_LIBADD rule above.
@@ -727,7 +718,6 @@ rose_config_installed_ldflags =			\
 	$(ROSE_INTEL_COMPILER_MATH_LIBS)	\
 	$(ROSE_ATERM_LIBS)			\
 	$(ROSE_FLANG_LIBS)			\
-	$(ROSE_COBOL_PT_LIBS_WITH_PATH)         \
 	$(ROSE_YAMLCPP_LIBS_WITH_PATH)		\
 	$(ROSE_LIBMAGIC_LIBS_WITH_PATH)		\
 	$(ROSE_DLIB_LIBS_WITH_PATH)		\
@@ -778,7 +768,6 @@ endif
 #if ROSE_EXPERIMENTAL_CSHARP_ROSE_CONNECTION
 #if ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
 #if ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION
-#if ROSE_EXPERIMENTAL_COBOL_ROSE_CONNECTION
 #if ROSE_EXPERIMENTAL_MATLAB_ROSE_CONNECTION
 
 ROSEBIN_LDADD        = $(ROSE_LIBS)

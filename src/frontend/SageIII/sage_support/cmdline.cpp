@@ -4770,7 +4770,6 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           set_compileOnly(true);
         }
 
-  // DQ (28/8/17): Cobol support
      if ( CommandlineProcessing::isOption(argv,"-rose:","(ada|Ada)",true) == true )
         {
           if ( SgProject::get_verbose() > 0 )
@@ -4783,26 +4782,6 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
 
           set_Ada_only(true);
           set_compileOnly(true);
-        }
-
-  // DQ (28/8/17): Cobol support
-     if ( CommandlineProcessing::isOption(argv,"-rose:","(cobol|Cobol)",true) == true )
-        {
-          if ( SgProject::get_verbose() >= 0 )
-               printf ("Cobol mode ON \n");
-          set_Cobol_only(true);
-          if (get_sourceFileUsesCobolFileExtension() == false)
-             {
-               printf ("Warning, Non Cobol source file name specificed with explicit -rose:cobol Cobol language option! \n");
-               set_Cobol_only(false);
-             }
-
-       // DQ (30/8/2017): For Cobol we need to only compile and not link (at least while debugging initial support).
-          printf ("NOTE: For Cobol support disable link step, at least while debugging initial support \n");
-
-          set_compileOnly(true);
-
-          ROSE_ASSERT(get_compileOnly() == true);
         }
 
   // Fixed format v.s. free format option handling (ROSE defaults to fix or free format, depending on the file extension).
@@ -5955,9 +5934,6 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
 
   // DQ (30/8/2017): Removing option to specify Jovial language support.
      optionCount = sla(argv, "-rose:", "($)", "(joval|jovial_only)",1);
-
-  // DQ (30/8/2017): Removing option to specify Cobol language support.
-     optionCount = sla(argv, "-rose:", "($)", "(cobol|cobol_only)",1);
 
   // DQ (9/20/2018): Removing option to specify support for header file unparsing report.
      optionCount = sla(argv, "-rose:", "($)", "(headerFileUnparsingReport)",1);
@@ -8126,19 +8102,6 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                break;
              }
 
-          case SgFile::e_Cobol_language:
-             {
-               printf ("Error: SgFile::e_Cobol_language detected in SgFile::buildCompilerCommandLineOptions() \n");
-
-            // Rasmussen (11/14/2017): Added check to ensure that COBOL is configured
-#ifdef ROSE_EXPERIMENTAL_COBOL_ROSE_CONNECTION
-               compilerNameString[0] = BACKEND_COBOL_COMPILER_NAME_WITH_PATH;
-#else
-               ROSE_ABORT();
-#endif
-               break;
-             }
-
           case SgFile::e_last_language:
              {
                printf ("Error: SgFile::e_last_language detected in SgFile::buildCompilerCommandLineOptions() \n");
@@ -8888,7 +8851,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
        // DQ (9/7/2017): Avoid use of "-w" on other language compilers as well.
        // DQ (3/7/2017): Avoid use of "-w" on X10 compiler.
        // if (get_X10_only() == false)
-          if (get_X10_only() == false && get_Csharp_only() == false && get_Ada_only() == false && get_Jovial_only() == false && get_Cobol_only() == false)
+          if (get_X10_only() == false && get_Csharp_only() == false && get_Ada_only() == false && get_Jovial_only() == false)
              {
             // This is a portable way to turn off warnings in the backend compilers (GNU, Intel, Clang).
                argcArgvList.push_back("-w");

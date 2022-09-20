@@ -7336,42 +7336,6 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Experimental_Cobol_ROSE_Connection/Cobol_to_ROSE_translation.h line 8
-namespace stringify { namespace Cobol_ROSE_Translation {
-    /** Convert Cobol_ROSE_Translation::ProgramSpec enum constant to a string. */
-    const char* ProgramSpec(int64_t);
-
-    /** Convert Cobol_ROSE_Translation::ProgramSpec enum constant to a string. */
-    std::string ProgramSpec(int64_t, const std::string &strip);
-
-    /** Return all Cobol_ROSE_Translation::ProgramSpec member values as a vector. */
-    const std::vector<int64_t>& ProgramSpec();
-}}
-
-namespace Rose {
-    std::string stringifyCobol_ROSE_TranslationProgramSpec(int64_t n, const char *strip=NULL, bool canonic=false);
-    const std::vector<int64_t>& stringifyCobol_ROSE_TranslationProgramSpec();
-}
-
-// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Experimental_Cobol_ROSE_Connection/Cobol_to_ROSE_translation.h line 21
-namespace stringify { namespace Cobol_ROSE_Translation {
-    /** Convert Cobol_ROSE_Translation::ExpressionKind enum constant to a string. */
-    const char* ExpressionKind(int64_t);
-
-    /** Convert Cobol_ROSE_Translation::ExpressionKind enum constant to a string. */
-    std::string ExpressionKind(int64_t, const std::string &strip);
-
-    /** Return all Cobol_ROSE_Translation::ExpressionKind member values as a vector. */
-    const std::vector<int64_t>& ExpressionKind();
-}}
-
-namespace Rose {
-    std::string stringifyCobol_ROSE_TranslationExpressionKind(int64_t n, const char *strip=NULL, bool canonic=false);
-    const std::vector<int64_t>& stringifyCobol_ROSE_TranslationExpressionKind();
-}
-
-// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
 // /src/frontend/SageIII/sageInterface/sageBuilder.h line 138
 namespace stringify { namespace SageBuilder {
     /** Convert SageBuilder::SourcePositionClassification enum constant to a string. */
@@ -24693,9 +24657,6 @@ namespace stringify {
     }
     /** Stringification. */
     namespace LanguageTranslation {
-    }
-    /** Stringification. */
-    namespace Cobol_ROSE_Translation {
     }
     /** Stringification. */
     namespace SageBuilder {
