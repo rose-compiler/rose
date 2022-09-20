@@ -16,6 +16,7 @@
 #include <Rose/BinaryAnalysis/ModelChecker/WorkerStatus.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
+#include <Rose/BinaryAnalysis/SymbolicExpression.h>
 
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
@@ -557,8 +558,8 @@ struct VarIndexEntry {
 // An index describing each symbolic variable that appears in a constraint along the path.
 using AssertionIndex = Sawyer::Container::Map<uint64_t /*ID*/, std::vector<VarIndexEntry>>;
 
-// Create an index of all the variables in a particular expression. Used with SymbolicExpr::Node::depthFirstTraversal.
-class ExprIndexer: public SymbolicExpr::Visitor {
+// Create an index of all the variables in a particular expression. Used with SymbolicExpression::Node::depthFirstTraversal.
+class ExprIndexer: public SymbolicExpression::Visitor {
 public:
     AssertionIndex index;
 
@@ -574,7 +575,7 @@ public:
         this->assertionIndex = assertionIndex;
     }
 
-    virtual SymbolicExpr::VisitAction preVisit(const SymbolicExpr::Node *node) {
+    virtual SymbolicExpression::VisitAction preVisit(const SymbolicExpression::Node *node) {
         if (auto id = node->variableId()) {
             auto &entryList = index.insertMaybeDefault(*id);
             if (entryList.empty() || entryList.back().assertionIndex != assertionIndex)
@@ -582,11 +583,11 @@ public:
                                                   .pathNode = pathNode,
                                                   .assertionIndex = assertionIndex});
         }
-        return SymbolicExpr::CONTINUE;
+        return SymbolicExpression::CONTINUE;
     }
 
-    virtual SymbolicExpr::VisitAction postVisit(const SymbolicExpr::Node*) {
-        return SymbolicExpr::CONTINUE;
+    virtual SymbolicExpression::VisitAction postVisit(const SymbolicExpression::Node*) {
+        return SymbolicExpression::CONTINUE;
     }
 };
 
@@ -594,14 +595,14 @@ void
 Engine::displaySmtAssertions(const Path::Ptr &path) {
     if (mlog[DEBUG]) {
         Sawyer::Message::Stream debug(mlog[DEBUG]);
-        SymbolicExpr::Ptr t = SymbolicExpr::makeBooleanConstant(true);
+        SymbolicExpression::Ptr t = SymbolicExpression::makeBooleanConstant(true);
 
         // Create an index of all the variables for all the assertions for all the nodes of the path.
         ExprIndexer indexer;
         auto nodes = path->nodes();
         for (size_t i = 0, assertionIdx = 0; i < nodes.size(); ++i) {
             auto assertions = nodes[i]->assertions();
-            for (const SymbolicExpr::Ptr &assertion: assertions) {
+            for (const SymbolicExpression::Ptr &assertion: assertions) {
                 if (!assertion->isEquivalentTo(t)) {
                     indexer.current(i, nodes[i], assertionIdx++);
                     assertion->depthFirstTraversal(indexer);
@@ -625,7 +626,7 @@ Engine::displaySmtAssertions(const Path::Ptr &path) {
         debug <<"  assertions (path constraints):\n";
         for (size_t i = 0, assertionIdx = 0; i < nodes.size(); ++i) {
             auto assertions = nodes[i]->assertions();
-            for (const SymbolicExpr::Ptr &assertion: assertions) {
+            for (const SymbolicExpression::Ptr &assertion: assertions) {
                 if (!assertion->isEquivalentTo(t)) {
                     debug <<"    assertion " <<assertionIdx
                           <<" at node " <<i <<" " <<nodes[i]->printableName() <<"\n";

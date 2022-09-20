@@ -101,7 +101,7 @@ namespace BinaryAnalysis {
  *  @li @ref SymbolicSemantics is a domain whose values are constants, variables, and operations that form an expression
  *  tree. Each vertex of the tree has a specific width measured in bits. Variable are named with the letter "v" followed by a
  *  decimal serial number as in "v1", "v2", etc.  The symbolic @ref SymbolicSemantics::SValue "SValue" points to the symbolic
- *  expression. Symbolic expression trees (which are immutable) are instances of @ref Rose::BinaryAnalysis::SymbolicExpr.
+ *  expression. Symbolic expression trees (which are immutable) are instances of @ref Rose::BinaryAnalysis::SymbolicExpression.
  *
  *  @section instruction_semantics_pointers Memory Management
  *

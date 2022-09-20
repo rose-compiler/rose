@@ -142,10 +142,10 @@ struct Settings {
 
 /** Description of one pointer. */
 struct PointerDescriptor {
-    SymbolicExpr::Ptr lvalue;                           /**< Symbolic address of pointer. */
+    SymbolicExpression::Ptr lvalue;                     /**< Symbolic address of pointer. */
     size_t nBits;                                       /**< Width of pointer in bits. */
 
-    PointerDescriptor(const SymbolicExpr::Ptr &lvalue, size_t nBits)
+    PointerDescriptor(const SymbolicExpression::Ptr &lvalue, size_t nBits)
         : lvalue(lvalue), nBits(nBits) {}
 };
 

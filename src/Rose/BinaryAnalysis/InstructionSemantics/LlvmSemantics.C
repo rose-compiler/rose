@@ -6,6 +6,7 @@
 #include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/Utility.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
+#include <Rose/BinaryAnalysis/SymbolicExpression.h>
 #include "AsmUnparser_compat.h"
 #include "integerOps.h"
 #include "stringify.h"
@@ -86,8 +87,8 @@ RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValue
 
 
     SValue::Ptr addr = SValue::promote(adjustedVa);
-    return svalueExpr(SymbolicExpr::makeRead(SymbolicExpr::makeMemoryVariable(addr->nBits(), nbits), addr->get_expression(),
-                                             solver()));
+    return svalueExpr(SymbolicExpression::makeRead(SymbolicExpression::makeMemoryVariable(addr->nBits(), nbits), addr->get_expression(),
+                                                   solver()));
 }
 
 void
@@ -108,8 +109,8 @@ RiscOperators::writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValu
 
     SValue::Ptr addr = SValue::promote(adjustedVa);
     SValue::Ptr data = SValue::promote(data_);
-    mem_writes.push_back(SymbolicExpr::makeWrite(SymbolicExpr::makeMemoryVariable(addr->nBits(), data->nBits()),
-                                                 addr->get_expression(), data->get_expression(), solver())
+    mem_writes.push_back(SymbolicExpression::makeWrite(SymbolicExpression::makeMemoryVariable(addr->nBits(), data->nBits()),
+                                                       addr->get_expression(), data->get_expression(), solver())
                          ->isInteriorNode());
 }
 
@@ -297,20 +298,20 @@ RiscOperators::get_instruction_pointer()
 void
 RiscOperators::emit_prerequisites(std::ostream &o, const RegisterDescriptors &regs, const RegisterDictionary::Ptr& dictionary)
 {
-    struct T1: SymbolicExpr::Visitor {
+    struct T1: SymbolicExpression::Visitor {
         RiscOperators *ops;
         std::ostream &o;
         const RegisterDescriptors &regs;
         RegisterDictionary::Ptr dictionary;
-        std::set<SymbolicExpr::Hash> seen;
+        std::set<SymbolicExpression::Hash> seen;
         T1(RiscOperators *ops, std::ostream &o, const RegisterDescriptors &regs, const RegisterDictionary::Ptr &dictionary)
             : ops(ops), o(o), regs(regs), dictionary(dictionary) {}
-        virtual SymbolicExpr::VisitAction preVisit(const ExpressionPtr &node) override {
+        virtual SymbolicExpression::VisitAction preVisit(const ExpressionPtr &node) override {
             if (!seen.insert(node->hash()).second)
-                return SymbolicExpr::TRUNCATE; // already processed this same expression
+                return SymbolicExpression::TRUNCATE; // already processed this same expression
             size_t width = node->nBits();
             if (InteriorPtr inode = node->isInteriorNode()) {
-                if (SymbolicExpr::OP_READ==inode->getOperator()) {
+                if (SymbolicExpression::OP_READ==inode->getOperator()) {
                     ASSERT_require(2==inode->nChildren());
                     ops->emit_assignment(o, ops->emit_memory_read(o, inode->child(1), width));
                 }
@@ -324,10 +325,10 @@ RiscOperators::emit_prerequisites(std::ostream &o, const RegisterDescriptors &re
                     LeafPtr t1 = ops->emit_expression(o, leaf);// handles local vars, global vars, and undefs
                 }
             }
-            return SymbolicExpr::CONTINUE;
+            return SymbolicExpression::CONTINUE;
         }
-        virtual SymbolicExpr::VisitAction postVisit(const ExpressionPtr&) override {
-            return SymbolicExpr::CONTINUE;
+        virtual SymbolicExpression::VisitAction postVisit(const ExpressionPtr&) override {
+            return SymbolicExpression::CONTINUE;
         }
     } t1(this, o, regs, dictionary);
 
@@ -427,7 +428,7 @@ RiscOperators::emit_next_eip(std::ostream &o, SgAsmInstruction *latest_insn)
     // addresses isn't valid.  This can happen because the ROSE disassembler might be using a more advanced analysis than we
     // use here.
     InteriorPtr inode = eip->get_expression()->isInteriorNode();
-    if (inode && SymbolicExpr::OP_ITE==inode->getOperator()) {
+    if (inode && SymbolicExpression::OP_ITE==inode->getOperator()) {
         LeafPtr leaf1 = inode->child(1)->isLeafNode();
         LeafPtr leaf2 = inode->child(2)->isLeafNode();
         if (leaf1!=NULL && leaf1->isIntegerConstant() && leaf2!=NULL && leaf2->isIntegerConstant()) {
@@ -534,7 +535,7 @@ RiscOperators::emit_memory_writes(std::ostream &o)
     for (size_t i=0; i<mem_writes.size(); ++i) {
         InteriorPtr inode = mem_writes[i]->isInteriorNode();
         ASSERT_not_null(inode);
-        ASSERT_require(inode->getOperator() == SymbolicExpr::OP_WRITE);
+        ASSERT_require(inode->getOperator() == SymbolicExpression::OP_WRITE);
         ASSERT_require(inode->nChildren()==3);
         ExpressionPtr addr = inode->child(1);
         ExpressionPtr value = inode->child(2);
@@ -594,7 +595,7 @@ RiscOperators::llvm_term(const ExpressionPtr &expr)
 LeafPtr
 RiscOperators::next_temporary(size_t nbits)
 {
-    return SymbolicExpr::makeIntegerVariable(nbits);
+    return SymbolicExpression::makeIntegerVariable(nbits);
 }
 
 std::string
@@ -750,7 +751,7 @@ RiscOperators::emit_logical_right_shift(std::ostream &o, const ExpressionPtr &va
             if (amount_leaf->toUnsigned().get() == 0)
                 return value;
             if (amount_leaf->toUnsigned().get() >= value->nBits())
-                return SymbolicExpr::makeIntegerConstant(value->nBits(), 0);
+                return SymbolicExpression::makeIntegerConstant(value->nBits(), 0);
         }
     }
     return emit_binary(o, "lshr", value, emit_unsigned_resize(o, amount, value->nBits()));
@@ -763,11 +764,11 @@ RiscOperators::emit_logical_right_shift_ones(std::ostream &o, const ExpressionPt
 {
     ExpressionPtr t1 = emit_logical_right_shift(o, value, amount);
     size_t width = std::max(value->nBits(), amount->nBits());
-    ExpressionPtr ones = SymbolicExpr::makeAdd(SymbolicExpr::makeIntegerConstant(width, value->nBits()),
-                                               SymbolicExpr::makeNegate(SymbolicExpr::makeExtend(SymbolicExpr::makeIntegerConstant(8, width),
-                                                                                                 amount, solver()),
-                                                                        solver()),
-                                               solver());
+    ExpressionPtr ones = SymbolicExpression::makeAdd(SymbolicExpression::makeIntegerConstant(width, value->nBits()),
+                                                     SymbolicExpression::makeNegate(SymbolicExpression::makeExtend(SymbolicExpression::makeIntegerConstant(8, width),
+                                                                                                                   amount, solver()),
+                                                                                    solver()),
+                                                     solver());
     return emit_binary(o, "or", t1, ones);
 }
 
@@ -781,7 +782,7 @@ RiscOperators::emit_arithmetic_right_shift(std::ostream &o, const ExpressionPtr 
             if (amount_leaf->toUnsigned().get() == 0)
                 return value;
             if (amount_leaf->toUnsigned().get() >= value->nBits())
-                return SymbolicExpr::makeIntegerConstant(value->nBits(), 0);
+                return SymbolicExpression::makeIntegerConstant(value->nBits(), 0);
         }
     }
     return emit_binary(o, "ashr", value, emit_unsigned_resize(o, amount, value->nBits()));
@@ -797,7 +798,7 @@ RiscOperators::emit_left_shift(std::ostream &o, const ExpressionPtr &value, cons
             if (amount_leaf->toUnsigned().get() == 0)
                 return value;
             if (amount_leaf->toUnsigned().get() >= value->nBits())
-                return SymbolicExpr::makeIntegerConstant(value->nBits(), 0);
+                return SymbolicExpression::makeIntegerConstant(value->nBits(), 0);
         }
     }
     return emit_binary(o, "shl", value, emit_unsigned_resize(o, amount, value->nBits()));
@@ -811,7 +812,7 @@ RiscOperators::emit_left_shift_ones(std::ostream &o, const ExpressionPtr &value,
 {
     size_t width = value->nBits();
     ExpressionPtr t1 = emit_left_shift(o, value, amount);
-    ExpressionPtr ones = emit_invert(o, emit_left_shift(o, SymbolicExpr::makeIntegerConstant(width, -1), amount));
+    ExpressionPtr ones = emit_invert(o, emit_left_shift(o, SymbolicExpression::makeIntegerConstant(width, -1), amount));
     return emit_binary(o, "or", t1, ones);
 }
 
@@ -826,7 +827,7 @@ ExpressionPtr
 RiscOperators::emit_lssb(std::ostream &o, const ExpressionPtr &value)
 {
     size_t width = value->nBits();
-    LeafPtr zero = SymbolicExpr::makeIntegerConstant(width, 0);
+    LeafPtr zero = SymbolicExpression::makeIntegerConstant(width, 0);
     LeafPtr t1 = emit_expression(o, value);
     ExpressionPtr t2 = emit_compare(o, "icmp eq", t1, zero);
     LeafPtr t3 = next_temporary(width);
@@ -848,13 +849,13 @@ ExpressionPtr
 RiscOperators::emit_mssb(std::ostream &o, const ExpressionPtr &value)
 {
     size_t width = value->nBits();
-    LeafPtr zero = SymbolicExpr::makeIntegerConstant(width, 0);
+    LeafPtr zero = SymbolicExpression::makeIntegerConstant(width, 0);
     LeafPtr t1 = emit_expression(o, value);
     ExpressionPtr t2 = emit_compare(o, "icmp eq", t1, zero);
     LeafPtr t3 = next_temporary(width);
     o <<prefix() <<llvm_lvalue(t3) <<" = call " <<llvm_integer_type(width)
       <<" @llvm.ctlz.i" <<StringUtility::numberToString(width) <<"(" <<llvm_integer_type(width) <<" " <<llvm_term(t1) <<")\n";
-    ExpressionPtr t4 = emit_binary(o, "sub", SymbolicExpr::makeIntegerConstant(width, width-1), t3);
+    ExpressionPtr t4 = emit_binary(o, "sub", SymbolicExpression::makeIntegerConstant(width, width-1), t3);
     ExpressionPtr t5 = emit_ite(o, t2, zero, t4);
     return t5;
 }
@@ -871,7 +872,7 @@ RiscOperators::emit_extract(std::ostream &o, const ExpressionPtr &value, const E
 ExpressionPtr
 RiscOperators::emit_invert(std::ostream &o, const ExpressionPtr &value)
 {
-    return emit_binary(o, "xor", value, SymbolicExpr::makeIntegerConstant(value->nBits(), -1));
+    return emit_binary(o, "xor", value, SymbolicExpression::makeIntegerConstant(value->nBits(), -1));
 }
 
 // Emit LLVM instructions for a left-associative binary operator. If only one operand is given, then simply return that operand
@@ -910,7 +911,7 @@ RiscOperators::emit_concat(std::ostream &o, TreeNodes operands)
     for (size_t i=1; i<operands.size(); ++i) {
         ExpressionPtr t1 = emit_zero_extend(o, result, result_width);
         ExpressionPtr t2 = emit_zero_extend(o, operands[i], result_width);
-        ExpressionPtr t3 = emit_left_shift(o, t2, SymbolicExpr::makeIntegerConstant(result_width, shift));
+        ExpressionPtr t3 = emit_left_shift(o, t2, SymbolicExpression::makeIntegerConstant(result_width, shift));
         result = emit_binary(o, "or", t1, t3);
         shift += operands[i]->nBits();
     }
@@ -1020,7 +1021,7 @@ RiscOperators::emit_rotate_left(std::ostream &o, const ExpressionPtr &value, con
 {
     ExpressionPtr t3 = emit_left_shift(o, value, amount);
     ExpressionPtr t4 = emit_unsigned_binary(o, "sub",
-                                            SymbolicExpr::makeIntegerConstant(amount->nBits(), 32),
+                                            SymbolicExpression::makeIntegerConstant(amount->nBits(), 32),
                                             amount);
     ExpressionPtr t5 = emit_arithmetic_right_shift(o, value, t4);
     ExpressionPtr t6 = emit_unsigned_binary(o, "or", t3, t5);
@@ -1038,7 +1039,7 @@ RiscOperators::emit_rotate_right(std::ostream &o, const ExpressionPtr &value, co
 {
     ExpressionPtr t3 = emit_arithmetic_right_shift(o, value, amount);
     ExpressionPtr t4 = emit_unsigned_binary(o, "sub",
-                                            SymbolicExpr::makeIntegerConstant(amount->nBits(), 32),
+                                            SymbolicExpression::makeIntegerConstant(amount->nBits(), 32),
                                             amount);
     ExpressionPtr t5 = emit_left_shift(o, value, t4);
     ExpressionPtr t6 = emit_unsigned_binary(o, "or", t3, t5);
@@ -1182,184 +1183,184 @@ RiscOperators::emit_expression(std::ostream &o, const ExpressionPtr &orig_expr)
         ExpressionPtr operator_result;
         TreeNodes operands = inode->children();
         switch (inode->getOperator()) {
-            case SymbolicExpr::OP_NONE:
+            case SymbolicExpression::OP_NONE:
                 ASSERT_not_reachable("cannot happen for an interior node");
-            case SymbolicExpr::OP_ADD:
+            case SymbolicExpression::OP_ADD:
                 operator_result = emit_left_associative(o, "add", operands);
                 break;
-            case SymbolicExpr::OP_AND:
+            case SymbolicExpression::OP_AND:
                 operator_result = emit_left_associative(o, "and", operands);
                 break;
-            case SymbolicExpr::OP_ASR:
+            case SymbolicExpression::OP_ASR:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_arithmetic_right_shift(o, operands[1], operands[0]);
                 break;
-            case SymbolicExpr::OP_XOR:
+            case SymbolicExpression::OP_XOR:
                 operator_result = emit_left_associative(o, "xor", operands);
                 break;
-            case SymbolicExpr::OP_CONCAT:
+            case SymbolicExpression::OP_CONCAT:
                 operator_result = emit_concat(o, operands);
                 break;
-            case SymbolicExpr::OP_EQ:
+            case SymbolicExpression::OP_EQ:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_compare(o, "icmp eq", operands[0], operands[1]);
                 break;
-            case SymbolicExpr::OP_EXTRACT:
+            case SymbolicExpression::OP_EXTRACT:
                 ASSERT_require(3==operands.size());
                 operator_result = emit_extract(o, operands[2], operands[0], inode->nBits());
                 break;
-            case SymbolicExpr::OP_INVERT:
+            case SymbolicExpression::OP_INVERT:
                 ASSERT_require(1==operands.size());
                 operator_result = emit_invert(o, operands[0]);
                 break;
-            case SymbolicExpr::OP_ITE:
+            case SymbolicExpression::OP_ITE:
                 ASSERT_require(3==operands.size());
                 operator_result = emit_ite(o, operands[0], operands[1], operands[2]);
                 break;
-            case SymbolicExpr::OP_LSSB:
+            case SymbolicExpression::OP_LSSB:
                 ASSERT_require(1==operands.size());
                 operator_result = emit_lssb(o, operands[0]);
                 break;
-            case SymbolicExpr::OP_MSSB:
+            case SymbolicExpression::OP_MSSB:
                 ASSERT_require(1==operands.size());
                 operator_result = emit_mssb(o, operands[0]);
                 break;
-            case SymbolicExpr::OP_NE:
+            case SymbolicExpression::OP_NE:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_compare(o, "icmp ne", operands[0], operands[1]);
                 break;
-            case SymbolicExpr::OP_NEGATE:
+            case SymbolicExpression::OP_NEGATE:
                 ASSERT_require(1==operands.size());
-                operator_result = emit_binary(o, "sub", SymbolicExpr::makeIntegerConstant(operands[0]->nBits(), 0), operands[0]);
+                operator_result = emit_binary(o, "sub", SymbolicExpression::makeIntegerConstant(operands[0]->nBits(), 0), operands[0]);
                 break;
-            case SymbolicExpr::OP_OR:
+            case SymbolicExpression::OP_OR:
                 operator_result = emit_left_associative(o, "or", operands);
                 break;
-            case SymbolicExpr::OP_READ:
+            case SymbolicExpression::OP_READ:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_memory_read(o, operands[1], inode->nBits());
                 break;
-            case SymbolicExpr::OP_ROL:
+            case SymbolicExpression::OP_ROL:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_rotate_left(o, operands[1], operands[0]);
                 break;
-            case SymbolicExpr::OP_ROR:
+            case SymbolicExpression::OP_ROR:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_rotate_right(o, operands[1], operands[0]);
                 break;
-            case SymbolicExpr::OP_SDIV:
+            case SymbolicExpression::OP_SDIV:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_signed_divide(o, operands[0], operands[1]);
                 break;
-            case SymbolicExpr::OP_SEXTEND:
+            case SymbolicExpression::OP_SEXTEND:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_sign_extend(o, operands[1], inode->nBits());
                 break;
-            case SymbolicExpr::OP_SGE:
+            case SymbolicExpression::OP_SGE:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_compare(o, "icmp sge", operands[0], operands[1]);
                 break;
-            case SymbolicExpr::OP_SGT:
+            case SymbolicExpression::OP_SGT:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_compare(o, "icmp sgt", operands[0], operands[1]);
                 break;
-            case SymbolicExpr::OP_SHL0:
+            case SymbolicExpression::OP_SHL0:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_left_shift(o, operands[1], operands[0]);
                 break;
-            case SymbolicExpr::OP_SHL1:
+            case SymbolicExpression::OP_SHL1:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_left_shift_ones(o, operands[1], operands[0]);
                 break;
-            case SymbolicExpr::OP_SHR0:
+            case SymbolicExpression::OP_SHR0:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_logical_right_shift(o, operands[1], operands[0]);
                 break;
-            case SymbolicExpr::OP_SHR1:
+            case SymbolicExpression::OP_SHR1:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_logical_right_shift_ones(o, operands[1], operands[0]);
                 break;
-            case SymbolicExpr::OP_SLE:
+            case SymbolicExpression::OP_SLE:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_compare(o, "icmp sle", operands[0], operands[1]);
                 break;
-            case SymbolicExpr::OP_SLT:
+            case SymbolicExpression::OP_SLT:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_compare(o, "icmp slt", operands[0], operands[1]);
                 break;
-            case SymbolicExpr::OP_SMOD:
+            case SymbolicExpression::OP_SMOD:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_signed_modulo(o, operands[0], operands[1]);
                 break;
-            case SymbolicExpr::OP_SMUL:
+            case SymbolicExpression::OP_SMUL:
                 operator_result = emit_signed_multiply(o, operands);
                 break;
-            case SymbolicExpr::OP_UDIV:
+            case SymbolicExpression::OP_UDIV:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_unsigned_divide(o, operands[0], operands[1]);
                 break;
-            case SymbolicExpr::OP_UEXTEND:
+            case SymbolicExpression::OP_UEXTEND:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_zero_extend(o, operands[1], inode->nBits());
                 break;
-            case SymbolicExpr::OP_UGE:
+            case SymbolicExpression::OP_UGE:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_compare(o, "icmp uge", operands[0], operands[1]);
                 break;
-            case SymbolicExpr::OP_UGT:
+            case SymbolicExpression::OP_UGT:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_compare(o, "icmp ugt", operands[0], operands[1]);
                 break;
-            case SymbolicExpr::OP_ULE:
+            case SymbolicExpression::OP_ULE:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_compare(o, "icmp ule", operands[0], operands[1]);
                 break;
-            case SymbolicExpr::OP_ULT:
+            case SymbolicExpression::OP_ULT:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_compare(o, "icmp ult", operands[0], operands[1]);
                 break;
-            case SymbolicExpr::OP_UMOD:
+            case SymbolicExpression::OP_UMOD:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_unsigned_modulo(o, operands[0], operands[1]);
                 break;
-            case SymbolicExpr::OP_UMUL:
+            case SymbolicExpression::OP_UMUL:
                 operator_result = emit_unsigned_multiply(o, operands);
                 break;
-            case SymbolicExpr::OP_ZEROP:
+            case SymbolicExpression::OP_ZEROP:
                 ASSERT_require(1==operands.size());
                 operator_result = emit_compare(o, "icmp eq", operands[0],
-                                               SymbolicExpr::makeIntegerConstant(operands[0]->nBits(), 0));
+                                               SymbolicExpression::makeIntegerConstant(operands[0]->nBits(), 0));
                 break;
 
-            case SymbolicExpr::OP_LET:
-            case SymbolicExpr::OP_NOOP:
-            case SymbolicExpr::OP_WRITE:
-            case SymbolicExpr::OP_SET:
-            case SymbolicExpr::OP_FP_ABS:
-            case SymbolicExpr::OP_FP_NEGATE:
-            case SymbolicExpr::OP_FP_ADD:
-            case SymbolicExpr::OP_FP_MUL:
-            case SymbolicExpr::OP_FP_DIV:
-            case SymbolicExpr::OP_FP_MULADD:
-            case SymbolicExpr::OP_FP_SQRT:
-            case SymbolicExpr::OP_FP_MOD:
-            case SymbolicExpr::OP_FP_ROUND:
-            case SymbolicExpr::OP_FP_MIN:
-            case SymbolicExpr::OP_FP_MAX:
-            case SymbolicExpr::OP_FP_LE:
-            case SymbolicExpr::OP_FP_LT:
-            case SymbolicExpr::OP_FP_GE:
-            case SymbolicExpr::OP_FP_GT:
-            case SymbolicExpr::OP_FP_EQ:
-            case SymbolicExpr::OP_FP_ISNORM:
-            case SymbolicExpr::OP_FP_ISSUBNORM:
-            case SymbolicExpr::OP_FP_ISZERO:
-            case SymbolicExpr::OP_FP_ISINFINITE:
-            case SymbolicExpr::OP_FP_ISNAN:
-            case SymbolicExpr::OP_FP_ISNEG:
-            case SymbolicExpr::OP_FP_ISPOS:
-            case SymbolicExpr::OP_CONVERT:
-            case SymbolicExpr::OP_REINTERPRET:
+            case SymbolicExpression::OP_LET:
+            case SymbolicExpression::OP_NOOP:
+            case SymbolicExpression::OP_WRITE:
+            case SymbolicExpression::OP_SET:
+            case SymbolicExpression::OP_FP_ABS:
+            case SymbolicExpression::OP_FP_NEGATE:
+            case SymbolicExpression::OP_FP_ADD:
+            case SymbolicExpression::OP_FP_MUL:
+            case SymbolicExpression::OP_FP_DIV:
+            case SymbolicExpression::OP_FP_MULADD:
+            case SymbolicExpression::OP_FP_SQRT:
+            case SymbolicExpression::OP_FP_MOD:
+            case SymbolicExpression::OP_FP_ROUND:
+            case SymbolicExpression::OP_FP_MIN:
+            case SymbolicExpression::OP_FP_MAX:
+            case SymbolicExpression::OP_FP_LE:
+            case SymbolicExpression::OP_FP_LT:
+            case SymbolicExpression::OP_FP_GE:
+            case SymbolicExpression::OP_FP_GT:
+            case SymbolicExpression::OP_FP_EQ:
+            case SymbolicExpression::OP_FP_ISNORM:
+            case SymbolicExpression::OP_FP_ISSUBNORM:
+            case SymbolicExpression::OP_FP_ISZERO:
+            case SymbolicExpression::OP_FP_ISINFINITE:
+            case SymbolicExpression::OP_FP_ISNAN:
+            case SymbolicExpression::OP_FP_ISNEG:
+            case SymbolicExpression::OP_FP_ISPOS:
+            case SymbolicExpression::OP_CONVERT:
+            case SymbolicExpression::OP_REINTERPRET:
                 throw BaseSemantics::Exception("LLVM translation for " +
                                                stringifyBinaryAnalysisSymbolicExpressionOperator(inode->getOperator()) +
                                                " is not implemented yet", NULL);
@@ -1612,7 +1613,7 @@ Transcoder::transcodeBasicBlock(SgAsmBlock *bb, std::ostream &o)
         }
         {
             RiscOperators::Indent indent2(operators);
-            ExpressionPtr t1 = SymbolicExpr::makeIntegerConstant(32, insn->get_address());
+            ExpressionPtr t1 = SymbolicExpression::makeIntegerConstant(32, insn->get_address());
             o <<operators->prefix() <<"store " <<operators->llvm_integer_type(32) <<" " <<operators->llvm_term(t1)
               <<", " <<operators->llvm_integer_type(32) <<"* @eip\n";
             operators->emit_changed_state(o);

@@ -17,12 +17,12 @@ namespace LlvmSemantics {
 
 typedef std::vector<RegisterDescriptor> RegisterDescriptors;
 
-typedef SymbolicExpr::Leaf LeafNode;
-typedef SymbolicExpr::LeafPtr LeafPtr;
-typedef SymbolicExpr::Interior InteriorNode;
-typedef SymbolicExpr::InteriorPtr InteriorPtr;
-typedef SymbolicExpr::Ptr ExpressionPtr;
-typedef SymbolicExpr::Nodes TreeNodes;
+typedef SymbolicExpression::Leaf LeafNode;
+typedef SymbolicExpression::LeafPtr LeafPtr;
+typedef SymbolicExpression::Interior InteriorNode;
+typedef SymbolicExpression::InteriorPtr InteriorPtr;
+typedef SymbolicExpression::Ptr ExpressionPtr;
+typedef SymbolicExpression::Nodes TreeNodes;
 
 typedef SymbolicSemantics::SValuePtr SValuePtr;
 typedef SymbolicSemantics::SValue SValue;
@@ -48,7 +48,7 @@ public:
     using Ptr = RiscOperatorsPtr;
 
 private:
-    typedef Map<SymbolicExpr::Hash, LeafPtr> Rewrites;
+    typedef Map<SymbolicExpression::Hash, LeafPtr> Rewrites;
     typedef Map<uint64_t, std::string> Variables;
 
     Rewrites rewrites;                                  // maps expressions to LLVM variables

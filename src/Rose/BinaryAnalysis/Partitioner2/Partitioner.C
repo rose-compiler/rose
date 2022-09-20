@@ -18,6 +18,7 @@
 #include <Rose/RecursionCounter.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
+#include <Rose/BinaryAnalysis/SymbolicExpression.h>
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/config.hpp>
@@ -1029,8 +1030,8 @@ Partitioner::basicBlockSuccessors(const BasicBlock::Ptr &bb, Precision::Level pr
             worklist.pop_back();
 
             // Special handling for if-then-else expressions
-            if (SymbolicExpr::InteriorPtr ifNode = pc->get_expression()->isInteriorNode()) {
-                if (ifNode->getOperator()==SymbolicExpr::OP_ITE) {
+            if (SymbolicExpression::InteriorPtr ifNode = pc->get_expression()->isInteriorNode()) {
+                if (ifNode->getOperator()==SymbolicExpression::OP_ITE) {
                     Semantics::SValue::Ptr expr = Semantics::SValue::promote(sem.operators->undefined_(ifNode->nBits()));
                     expr->set_expression(ifNode->child(1));
                     worklist.push_back(expr);
@@ -1162,15 +1163,15 @@ Partitioner::basicBlockPopsStack(const BasicBlock::Ptr &bb) const {
         // Did the basic block pop the return value from the stack?  This impossible to determine unless we assume that the stack
         // has an initial value that's not near the minimum or maximum possible value.  Therefore, we'll substitute a concrete
         // value for the stack pointer.
-        SymbolicExpr::Ptr sp0ExprOrig = Semantics::SValue::promote(sp0)->get_expression();
-        SymbolicExpr::Ptr sp0ExprNew = SymbolicExpr::makeIntegerConstant(REG_SP.nBits(), 0x8000); // arbitrary
-        SymbolicExpr::Ptr spNExpr =
+        SymbolicExpression::Ptr sp0ExprOrig = Semantics::SValue::promote(sp0)->get_expression();
+        SymbolicExpression::Ptr sp0ExprNew = SymbolicExpression::makeIntegerConstant(REG_SP.nBits(), 0x8000); // arbitrary
+        SymbolicExpression::Ptr spNExpr =
             Semantics::SValue::promote(spN)->get_expression()->substitute(sp0ExprOrig, sp0ExprNew, sem.operators->solver());
 
         // FIXME[Robb P Matzke 2016-11-15]: assumes stack grows down.
         // SPn > SP0 == true implies at least one byte popped.
-        SymbolicExpr::Ptr cmpExpr = SymbolicExpr::makeGt(spNExpr, sp0ExprNew, sem.operators->solver());
-        bb->popsStack() = cmpExpr->mustEqual(SymbolicExpr::makeBooleanConstant(true));
+        SymbolicExpression::Ptr cmpExpr = SymbolicExpression::makeGt(spNExpr, sp0ExprNew, sem.operators->solver());
+        bb->popsStack() = cmpExpr->mustEqual(SymbolicExpression::makeBooleanConstant(true));
     } while (0);
 
 #if 0 // [Robb Matzke 2019-01-16]: commented out to debug race

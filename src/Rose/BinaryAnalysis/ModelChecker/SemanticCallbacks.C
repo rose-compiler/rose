@@ -8,6 +8,7 @@
 #include <Rose/BinaryAnalysis/ModelChecker/Tag.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/State.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/SymbolicExpression.h>
 
 using namespace Sawyer::Message::Common;
 namespace BS = Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;
@@ -67,8 +68,8 @@ SemanticCallbacks::nextCodeAddresses(const BS::RiscOperators::Ptr &ops) {
     if (auto va = retval.ip->toUnsigned()) {
         retval.addresses.insert(*va);
     } else if (IS::SymbolicSemantics::SValue::Ptr ipSymbolic = retval.ip.dynamicCast<IS::SymbolicSemantics::SValue>()) {
-        SymbolicExpr::Ptr expr = ipSymbolic->get_expression();
-        if (SymbolicExpr::OP_ITE == expr->getOperator()) {
+        SymbolicExpression::Ptr expr = ipSymbolic->get_expression();
+        if (SymbolicExpression::OP_ITE == expr->getOperator()) {
             if (auto va = expr->child(1)->toUnsigned()) {
                 retval.addresses.insert(*va);
             } else {
@@ -80,22 +81,22 @@ SemanticCallbacks::nextCodeAddresses(const BS::RiscOperators::Ptr &ops) {
                 retval.isComplete = false;
             }
         } else {
-            struct T1: SymbolicExpr::Visitor {
-                typedef std::set<const SymbolicExpr::Node*> SeenNodes;
+            struct T1: SymbolicExpression::Visitor {
+                typedef std::set<const SymbolicExpression::Node*> SeenNodes;
                 SeenNodes seen;
                 CodeAddresses &retval;
                 T1(CodeAddresses &retval): retval(retval) {}
-                SymbolicExpr::VisitAction preVisit(const SymbolicExpr::Ptr &node) {
+                SymbolicExpression::VisitAction preVisit(const SymbolicExpression::Ptr &node) {
                     if (seen.insert(getRawPointer(node)).second) {
                         if (auto va = node->toUnsigned())
                             retval.addresses.insert(*va);
-                        return SymbolicExpr::CONTINUE;
+                        return SymbolicExpression::CONTINUE;
                     } else {
-                        return SymbolicExpr::TRUNCATE;
+                        return SymbolicExpression::TRUNCATE;
                     }
                 }
-                SymbolicExpr::VisitAction postVisit(const SymbolicExpr::Ptr&) {
-                    return SymbolicExpr::CONTINUE;
+                SymbolicExpression::VisitAction postVisit(const SymbolicExpression::Ptr&) {
+                    return SymbolicExpression::CONTINUE;
                 }
             } visitor(retval);
             expr->depthFirstTraversal(visitor);

@@ -7,6 +7,7 @@
 #include <Rose/BinaryAnalysis/Concolic/ConcolicExecutor.h>
 #include <Rose/BinaryAnalysis/Concolic/ExecutionEvent.h>
 #include <Rose/BinaryAnalysis/Concolic/InputVariables.h>
+#include <Rose/BinaryAnalysis/SymbolicExpression.h>
 
 using namespace Sawyer::Message::Common;
 
@@ -65,7 +66,7 @@ SyscallCallback::notAnInput(SyscallContext &ctx, const ExecutionEvent::Ptr &even
     ASSERT_not_null(event);
     SAWYER_MESG(mlog[DEBUG]) <<"  " <<event->printableName(ctx.ops->database()) <<" is now not an input variable\n";
     ctx.ops->inputVariables()->deactivate(event);
-    ctx.symbolicReturn = SymbolicExpr::Ptr();
+    ctx.symbolicReturn = SymbolicExpression::Ptr();
 }
 
 } // namespace
