@@ -4,31 +4,33 @@
 #include <Sawyer/ProgressBar.h>
 
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <AsmUnparser.h>                                // Rose::BinaryAnalysis::AsmUnparser
+
 #include <Rose/BinaryAnalysis/BestMapAddress.h>
 #include <Rose/BinaryAnalysis/BinaryLoader.h>
 #include <Rose/BinaryAnalysis/CodeInserter.h>
 #include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
-#include <Rose/BinaryAnalysis/ModelChecker/Types.h>
 #include <Rose/BinaryAnalysis/DataFlow.h>
 #include <Rose/BinaryAnalysis/Debugger.h>
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/FeasiblePath.h>
 #include <Rose/BinaryAnalysis/FunctionSimilarity.h>
 #include <Rose/BinaryAnalysis/HotPatch.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/Utility.h>
 #include <Rose/BinaryAnalysis/LibraryIdentification.h>
+#include <Rose/BinaryAnalysis/ModelChecker/Types.h>
 #include <Rose/BinaryAnalysis/NoOperation.h>
 #include <Rose/BinaryAnalysis/Reachability.h>
 #include <Rose/BinaryAnalysis/SmtSolver.h>
 #include <Rose/BinaryAnalysis/SymbolicExprParser.h>
 #include <Rose/BinaryAnalysis/TaintedFlow.h>
 #include <Rose/BinaryAnalysis/ToSource.h>
+
+#include <AsmUnparser.h>                                // Rose::BinaryAnalysis::AsmUnparser
 #include <BinaryVxcoreParser.h>                         // Rose::BinaryAnalysis::VxcoreParser
-#include <Rose/BinaryAnalysis/Disassembler/Base.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
     namespace CallingConvention { void initDiagnostics(); }
-    namespace InstructionSemantics { void initDiagnostics(); }
     namespace Partitioner2 { void initDiagnostics(); }
     namespace PointerDetection { void initDiagnostics(); }
     namespace ReturnValueUsed { void initDiagnostics(); }

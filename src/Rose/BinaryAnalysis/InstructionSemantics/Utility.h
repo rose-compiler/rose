@@ -1,7 +1,9 @@
-#ifndef ROSE_BinaryAnalysis_InstructionSemantics_Util_H
-#define ROSE_BinaryAnalysis_InstructionSemantics_Util_H
+#ifndef ROSE_BinaryAnalysis_InstructionSemantics_Utility_H
+#define ROSE_BinaryAnalysis_InstructionSemantics_Utility_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
+
+#include <Sawyer/Message.h>
 
 namespace Rose {
 namespace BinaryAnalysis {

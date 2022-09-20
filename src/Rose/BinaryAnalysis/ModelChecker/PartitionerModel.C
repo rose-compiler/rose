@@ -1,7 +1,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
-#include <Rose/BinaryAnalysis/ModelChecker/P2Model.h>
+#include <Rose/BinaryAnalysis/ModelChecker/PartitionerModel.h>
 
 #include <Rose/BinaryAnalysis/ModelChecker/BasicBlockUnit.h>
 #include <Rose/BinaryAnalysis/ModelChecker/ErrorTag.h>
@@ -9,11 +9,11 @@
 #include <Rose/BinaryAnalysis/ModelChecker/ExternalFunctionUnit.h>
 #include <Rose/BinaryAnalysis/ModelChecker/FailureUnit.h>
 #include <Rose/BinaryAnalysis/ModelChecker/InstructionUnit.h>
-#include <Rose/BinaryAnalysis/ModelChecker/NullDerefTag.h>
-#include <Rose/BinaryAnalysis/ModelChecker/OobTag.h>
+#include <Rose/BinaryAnalysis/ModelChecker/NullDereferenceTag.h>
+#include <Rose/BinaryAnalysis/ModelChecker/OutOfBoundsTag.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Path.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Settings.h>
-#include <Rose/BinaryAnalysis/ModelChecker/UninitVarTag.h>
+#include <Rose/BinaryAnalysis/ModelChecker/UninitializedVariableTag.h>
 
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
@@ -35,7 +35,7 @@ namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 namespace Rose {
 namespace BinaryAnalysis {
 namespace ModelChecker {
-namespace P2Model {
+namespace PartitionerModel {
 
 void
 commandLineDebugSwitches(Sawyer::CommandLine::SwitchGroup &sg, Settings &settings) {
@@ -478,11 +478,11 @@ RiscOperators::RiscOperators(const Settings &settings, const P2::Partitioner &pa
                              ModelChecker::SemanticCallbacks *semantics, const BS::SValue::Ptr &protoval,
                              const SmtSolver::Ptr &solver, const Variables::VariableFinder::Ptr &varFinder)
     : Super(protoval, solver), settings_(settings), partitioner_(partitioner),
-      semantics_(dynamic_cast<P2Model::SemanticCallbacks*>(semantics)), variableFinder_unsync(varFinder) {
+      semantics_(dynamic_cast<PartitionerModel::SemanticCallbacks*>(semantics)), variableFinder_unsync(varFinder) {
     ASSERT_not_null(semantics_);
     ASSERT_not_null(variableFinder_unsync);
     (void)SValue::promote(protoval);
-    name("P2Model");
+    name("PartitionerModel");
 
     // Calculate the stack limits.  Start by assuming the stack can occupy all of memory. Then make that smaller based on
     // other information.
@@ -616,7 +616,7 @@ RiscOperators::checkNullAccess(const BS::SValue::Ptr &addrSVal, TestMode testMod
 
     if (isNull) {
         currentState(BS::State::Ptr());                   // indicates that execution failed
-        throw ThrownTag{NullDerefTag::instance(nInstructions(), testMode, ioMode, currentInstruction(), addrSVal)};
+        throw ThrownTag{NullDereferenceTag::instance(nInstructions(), testMode, ioMode, currentInstruction(), addrSVal)};
     }
 }
 
@@ -659,9 +659,9 @@ RiscOperators::checkOobAccess(const BS::SValue::Ptr &addrSVal_, TestMode testMod
                         SAWYER_MESG(mlog[DEBUG]) <<"      buffer overflow rejected by user; this one is ignored\n";
                     } else {
                         currentState(BS::State::Ptr());         // indicates that execution failed
-                        throw ThrownTag{OobTag::instance(nInstructions(), testMode, ioMode, currentInstruction(), addrSVal,
-                                                         whereWhatIntended.second, whereWhatIntended.first,
-                                                         whereWhatActual.second, whereWhatActual.first)};
+                        throw ThrownTag{OutOfBoundsTag::instance(nInstructions(), testMode, ioMode, currentInstruction(), addrSVal,
+                                                                 whereWhatIntended.second, whereWhatIntended.first,
+                                                                 whereWhatActual.second, whereWhatActual.first)};
                     }
                 }
             }
@@ -695,8 +695,9 @@ RiscOperators::checkUninitVar(const BS::SValue::Ptr &addrSVal_, TestMode testMod
                             SAWYER_MESG(mlog[DEBUG]) <<"      uninitialized variable rejected by user; this one is ignored\n";
                         } else {
                             currentState(BS::State::Ptr()); // indicates that execution failed
-                            throw ThrownTag{UninitVarTag::instance(nInstructions(), testMode, currentInstruction(), addrSVal,
-                                                                   whereWhatIntended.second, whereWhatIntended.first)};
+                            throw ThrownTag{UninitializedVariableTag::instance(nInstructions(), testMode, currentInstruction(),
+                                                                               addrSVal, whereWhatIntended.second,
+                                                                               whereWhatIntended.first)};
                         }
                     }
                 }
@@ -1712,7 +1713,7 @@ SemanticCallbacks::nextUnits(const Path::Ptr &path, const BS::RiscOperators::Ptr
                 } else if (settings_.nullRead != TestMode::OFF && va <= settings_.maxNullAddress) {
                     SourceLocation sloc = partitioner_.sourceLocations().get(va);
                     BS::SValue::Ptr addr = ops->number_(partitioner_.instructionProvider().wordSize(), va);
-                    auto tag = NullDerefTag::instance(0, TestMode::MUST, IoMode::READ, nullptr, addr);
+                    auto tag = NullDereferenceTag::instance(0, TestMode::MUST, IoMode::READ, nullptr, addr);
                     auto fail = FailureUnit::instance(va, sloc, "invalid instruction address", tag);
                     units.push_back({fail, assertion, SmtSolver::Evidence()});
                 } else {

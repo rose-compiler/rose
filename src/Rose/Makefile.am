@@ -105,7 +105,7 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/InstructionSemantics/SymbolicSemantics.C				\
 	BinaryAnalysis/InstructionSemantics/TaintSemantics.C				\
 	BinaryAnalysis/InstructionSemantics/TraceSemantics.C				\
-	BinaryAnalysis/InstructionSemantics/Util.C					\
+	BinaryAnalysis/InstructionSemantics/Utility.C					\
 	BinaryAnalysis/LibraryIdentification.C						\
 	BinaryAnalysis/MagicNumber.C							\
 	BinaryAnalysis/MemoryMap.C							\
@@ -116,9 +116,9 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/ModelChecker/ExternalFunctionUnit.C				\
 	BinaryAnalysis/ModelChecker/FailureUnit.C					\
 	BinaryAnalysis/ModelChecker/InstructionUnit.C					\
-	BinaryAnalysis/ModelChecker/NullDerefTag.C					\
-	BinaryAnalysis/ModelChecker/OobTag.C						\
-	BinaryAnalysis/ModelChecker/P2Model.C						\
+	BinaryAnalysis/ModelChecker/NullDereferenceTag.C				\
+	BinaryAnalysis/ModelChecker/OutOfBoundsTag.C					\
+	BinaryAnalysis/ModelChecker/PartitionerModel.C					\
 	BinaryAnalysis/ModelChecker/Path.C						\
 	BinaryAnalysis/ModelChecker/PathNode.C						\
 	BinaryAnalysis/ModelChecker/PathPredicate.C					\
@@ -129,13 +129,13 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/ModelChecker/Settings.C						\
 	BinaryAnalysis/ModelChecker/SourceLister.C					\
 	BinaryAnalysis/ModelChecker/Tag.C						\
-	BinaryAnalysis/ModelChecker/UninitVarTag.C					\
+	BinaryAnalysis/ModelChecker/UninitializedVariableTag.C				\
 	BinaryAnalysis/ModelChecker/WorkerStatus.C					\
 	BinaryAnalysis/NoOperation.C							\
 	BinaryAnalysis/Partitioner2/AddressUsageMap.C					\
 	BinaryAnalysis/Partitioner2/BasicBlock.C					\
 	BinaryAnalysis/Partitioner2/CfgPath.C						\
-	BinaryAnalysis/Partitioner2/Config.C						\
+	BinaryAnalysis/Partitioner2/Configuration.C					\
 	BinaryAnalysis/Partitioner2/ControlFlowGraph.C					\
 	BinaryAnalysis/Partitioner2/DataBlock.C						\
 	BinaryAnalysis/Partitioner2/DataFlow.C						\

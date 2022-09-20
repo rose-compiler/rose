@@ -1,7 +1,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
-#include <Rose/BinaryAnalysis/ModelChecker/UninitVarTag.h>
+#include <Rose/BinaryAnalysis/ModelChecker/UninitializedVariableTag.h>
 
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/SValue.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
@@ -12,27 +12,28 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace ModelChecker {
 
-UninitVarTag::UninitVarTag(size_t nodeStep, TestMode tm, SgAsmInstruction *insn, const BS::SValue::Ptr &addr,
-                           const Variables::StackVariable &variable, const AddressInterval &variableLocation)
+UninitializedVariableTag::UninitializedVariableTag(size_t nodeStep, TestMode tm, SgAsmInstruction *insn,
+                                                   const BS::SValue::Ptr &addr, const Variables::StackVariable &variable,
+                                                   const AddressInterval &variableLocation)
     : Tag(nodeStep), testMode_(tm), insn_(insn), addr_(addr), variable_(variable), variableLocation_(variableLocation) {}
 
-UninitVarTag::~UninitVarTag() {}
+UninitializedVariableTag::~UninitializedVariableTag() {}
 
-UninitVarTag::Ptr
-UninitVarTag::instance(size_t nodeStep, TestMode tm, SgAsmInstruction *insn, const BS::SValue::Ptr &addr,
-                       const Variables::StackVariable &variable, const AddressInterval &variableLocation) {
+UninitializedVariableTag::Ptr
+UninitializedVariableTag::instance(size_t nodeStep, TestMode tm, SgAsmInstruction *insn, const BS::SValue::Ptr &addr,
+                                   const Variables::StackVariable &variable, const AddressInterval &variableLocation) {
     ASSERT_forbid(TestMode::OFF == tm);
     ASSERT_not_null(addr);
-    return Ptr(new UninitVarTag(nodeStep, tm, insn, addr, variable, variableLocation));
+    return Ptr(new UninitializedVariableTag(nodeStep, tm, insn, addr, variable, variableLocation));
 }
 
 std::string
-UninitVarTag::name() const {
+UninitializedVariableTag::name() const {
     return "uninitialized variable";
 }
 
 std::string
-UninitVarTag::printableName() const {
+UninitializedVariableTag::printableName() const {
     // No lock necessary because testMode is a read-only property initialized in the constructor.
     std::string retval;
     switch (testMode_) {
@@ -50,7 +51,7 @@ UninitVarTag::printableName() const {
 }
 
 void
-UninitVarTag::print(std::ostream &out, const std::string &prefix) const {
+UninitializedVariableTag::print(std::ostream &out, const std::string &prefix) const {
     // No locks necessary since all the data members are read-only.
     out <<prefix <<name() <<"\n";
 
@@ -82,7 +83,7 @@ UninitVarTag::print(std::ostream &out, const std::string &prefix) const {
 }
 
 void
-UninitVarTag::toYaml(std::ostream &out, const std::string &prefix1) const {
+UninitializedVariableTag::toYaml(std::ostream &out, const std::string &prefix1) const {
     // No locks necessary since all the data members are read-only.
     out <<prefix1 <<"weakness: " <<name() <<"\n";
     std::string prefix(prefix1.size(), ' ');

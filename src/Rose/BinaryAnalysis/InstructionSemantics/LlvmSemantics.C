@@ -4,7 +4,7 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics/LlvmSemantics.h>
 
 #include <Rose/Diagnostics.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/Util.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/Utility.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include "AsmUnparser_compat.h"
 #include "integerOps.h"

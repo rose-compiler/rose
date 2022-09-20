@@ -4,7 +4,7 @@
 
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherPowerpc.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/Util.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/Utility.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/Diagnostics.h>
 #include <integerOps.h>

@@ -1,5 +1,5 @@
-#ifndef ROSE_BinaryAnalysis_ModelChecker_UninitVarTag_H
-#define ROSE_BinaryAnalysis_ModelChecker_UninitVarTag_H
+#ifndef ROSE_BinaryAnalysis_ModelChecker_UninitializedVariableTag_H
+#define ROSE_BinaryAnalysis_ModelChecker_UninitializedVariableTag_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
@@ -12,9 +12,9 @@ namespace BinaryAnalysis {
 namespace ModelChecker {
 
 /** Tag that describes an out-of-bounds memory access. */
-class UninitVarTag: public Tag {
+class UninitializedVariableTag: public Tag {
 public:
-    using Ptr = UninitVarTagPtr;
+    using Ptr = UninitializedVariableTagPtr;
 
 private:
     const TestMode testMode_;                                    // may or must, but not off
@@ -24,15 +24,15 @@ private:
     const AddressInterval variableLocation_;                     // location and size of stack variable in memory
 
 protected:
-    UninitVarTag() = delete;
-    UninitVarTag(size_t nodeStep, TestMode, SgAsmInstruction*,
-                 const InstructionSemantics::BaseSemantics::SValuePtr &addr,
-                 const Variables::StackVariable &variable, const AddressInterval &variableLocation);
+    UninitializedVariableTag() = delete;
+    UninitializedVariableTag(size_t nodeStep, TestMode, SgAsmInstruction*,
+                             const InstructionSemantics::BaseSemantics::SValuePtr &addr,
+                             const Variables::StackVariable &variable, const AddressInterval &variableLocation);
 
-    UninitVarTag(const UninitVarTag&) = delete;
+    UninitializedVariableTag(const UninitializedVariableTag&) = delete;
 
 public:
-    ~UninitVarTag();
+    ~UninitializedVariableTag();
 
     /** Allocating constructor.
      *

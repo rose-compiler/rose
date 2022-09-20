@@ -283,6 +283,7 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/BinaryLoaderElf.h						\
 	Rose/BinaryAnalysis/BinaryLoaderElfObj.h					\
 	Rose/BinaryAnalysis/BinaryLoaderPe.h						\
+	Rose/BinaryAnalysis/ByteCode.h							\
 	Rose/BinaryAnalysis/ByteCode/Analysis.h						\
 	Rose/BinaryAnalysis/CallingConvention.h						\
 	Rose/BinaryAnalysis/CodeInserter.h						\
@@ -376,7 +377,7 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/InstructionSemantics/TestSemantics.h			\
 	Rose/BinaryAnalysis/InstructionSemantics/TaintSemantics.h			\
 	Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h			\
-	Rose/BinaryAnalysis/InstructionSemantics/Util.h					\
+	Rose/BinaryAnalysis/InstructionSemantics/Utility.h				\
 	Rose/BinaryAnalysis/InstructionSemantics2.h					\
 	Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Dispatcher.h		\
 	Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Exception.h		\
@@ -427,9 +428,9 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/ModelChecker/ExternalFunctionUnit.h				\
 	Rose/BinaryAnalysis/ModelChecker/FailureUnit.h					\
 	Rose/BinaryAnalysis/ModelChecker/InstructionUnit.h				\
-	Rose/BinaryAnalysis/ModelChecker/NullDerefTag.h					\
-	Rose/BinaryAnalysis/ModelChecker/OobTag.h					\
-	Rose/BinaryAnalysis/ModelChecker/P2Model.h					\
+	Rose/BinaryAnalysis/ModelChecker/NullDereferenceTag.h				\
+	Rose/BinaryAnalysis/ModelChecker/OutOfBoundsTag.h				\
+	Rose/BinaryAnalysis/ModelChecker/PartitionerModel.h				\
 	Rose/BinaryAnalysis/ModelChecker/Path.h						\
 	Rose/BinaryAnalysis/ModelChecker/PathNode.h					\
 	Rose/BinaryAnalysis/ModelChecker/PathPredicate.h				\
@@ -441,7 +442,7 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/ModelChecker/SourceLister.h					\
 	Rose/BinaryAnalysis/ModelChecker/Tag.h						\
 	Rose/BinaryAnalysis/ModelChecker/Types.h					\
-	Rose/BinaryAnalysis/ModelChecker/UninitVarTag.h					\
+	Rose/BinaryAnalysis/ModelChecker/UninitializedVariableTag.h			\
 	Rose/BinaryAnalysis/ModelChecker/WorkerStatus.h					\
 	Rose/BinaryAnalysis/NoOperation.h						\
 	Rose/BinaryAnalysis/Partitioner2.h						\
@@ -449,7 +450,7 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/Partitioner2/BasicBlock.h					\
 	Rose/BinaryAnalysis/Partitioner2/BasicTypes.h					\
 	Rose/BinaryAnalysis/Partitioner2/CfgPath.h					\
-	Rose/BinaryAnalysis/Partitioner2/Config.h					\
+	Rose/BinaryAnalysis/Partitioner2/Configuration.h				\
 	Rose/BinaryAnalysis/Partitioner2/ControlFlowGraph.h				\
 	Rose/BinaryAnalysis/Partitioner2/DataBlock.h					\
 	Rose/BinaryAnalysis/Partitioner2/DataFlow.h					\
@@ -504,7 +505,7 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/Unparser/Powerpc.h						\
 	Rose/BinaryAnalysis/Unparser/Settings.h						\
 	Rose/BinaryAnalysis/Unparser/X86.h						\
-	Rose/BinaryAnalysis/Utils.h							\
+	Rose/BinaryAnalysis/Utility.h							\
 	Rose/BinaryAnalysis/Variables.h							\
 	Rose/BinaryAnalysis/Z3Solver.h							\
 	Rose/BitFlags.h									\

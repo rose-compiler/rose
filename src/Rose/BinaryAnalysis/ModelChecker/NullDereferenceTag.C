@@ -1,7 +1,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
-#include <Rose/BinaryAnalysis/ModelChecker/NullDerefTag.h>
+#include <Rose/BinaryAnalysis/ModelChecker/NullDereferenceTag.h>
 
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/SValue.h>
 
@@ -13,25 +13,25 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace ModelChecker {
 
-NullDerefTag::NullDerefTag(size_t nodeStep, TestMode tm, IoMode io, SgAsmInstruction *insn, const BS::SValue::Ptr &addr)
+NullDereferenceTag::NullDereferenceTag(size_t nodeStep, TestMode tm, IoMode io, SgAsmInstruction *insn, const BS::SValue::Ptr &addr)
     : Tag(nodeStep), testMode_(tm), ioMode_(io), insn_(insn), addr_(addr) {}
 
-NullDerefTag::~NullDerefTag() {}
+NullDereferenceTag::~NullDereferenceTag() {}
 
-NullDerefTag::Ptr
-NullDerefTag::instance(size_t nodeStep, TestMode tm, IoMode io, SgAsmInstruction *insn, const BS::SValue::Ptr &addr) {
+NullDereferenceTag::Ptr
+NullDereferenceTag::instance(size_t nodeStep, TestMode tm, IoMode io, SgAsmInstruction *insn, const BS::SValue::Ptr &addr) {
     ASSERT_forbid(TestMode::OFF == tm);
     ASSERT_not_null(addr);
-    return Ptr(new NullDerefTag(nodeStep, tm, io, insn, addr));
+    return Ptr(new NullDereferenceTag(nodeStep, tm, io, insn, addr));
 }
 
 std::string
-NullDerefTag::name() const {
+NullDereferenceTag::name() const {
     return "null pointer dereference";
 }
 
 std::string
-NullDerefTag::printableName() const {
+NullDereferenceTag::printableName() const {
     // No lock necessary because ioMode and testMode are read-only properties initialized in the constructor.
     std::string retval;
     switch (testMode_) {
@@ -58,7 +58,7 @@ NullDerefTag::printableName() const {
 }
 
 void
-NullDerefTag::print(std::ostream &out, const std::string &prefix) const {
+NullDereferenceTag::print(std::ostream &out, const std::string &prefix) const {
     // No locks necessary since all the data members are read-only.
     out <<prefix <<name() <<"\n";
 
@@ -85,7 +85,7 @@ NullDerefTag::print(std::ostream &out, const std::string &prefix) const {
 }
 
 void
-NullDerefTag::toYaml(std::ostream &out, const std::string &prefix1) const {
+NullDereferenceTag::toYaml(std::ostream &out, const std::string &prefix1) const {
     // No locks necessary since all the data members are read-only.
     out <<prefix1 <<"weakness: " <<name() <<"\n";
     std::string prefix(prefix1.size(), ' ');

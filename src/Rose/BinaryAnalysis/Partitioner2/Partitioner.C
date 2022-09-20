@@ -886,7 +886,7 @@ Partitioner::attachBasicBlock(const ControlFlowGraph::ConstVertexIterator &const
         bblock->sourceLocation(sourceLocations_(bblock->address()));
 
     // Adjust the basic block according to configuration information. Configuration overrides automatically-detected values.
-    const BasicBlockConfig &c = config_.basicBlock(bblock->address());
+    const BasicBlockConfiguration &c = config_.basicBlock(bblock->address());
     if (!c.comment().empty())
         bblock->comment(c.comment());
     if (!c.sourceLocation().isEmpty())
@@ -1798,7 +1798,7 @@ Partitioner::attachFunction(const Function::Ptr &function) {
         ASSERT_require(function->isFrozen());
     } else {
         // Give the function a name and comment and make other adjustments according to user configuration files.
-        const FunctionConfig &c = config_.function(function->address());
+        const FunctionConfiguration &c = config_.function(function->address());
         if (!c.name().empty())
             function->name(c.name());                   // forced name from configuration
         if (function->name().empty())

@@ -1,5 +1,5 @@
-#ifndef ROSE_BinaryAnalysis_ModelChecker_OobTag_H
-#define ROSE_BinaryAnalysis_ModelChecker_OobTag_H
+#ifndef ROSE_BinaryAnalysis_ModelChecker_OutOfBoundsTag_H
+#define ROSE_BinaryAnalysis_ModelChecker_OutOfBoundsTag_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
@@ -12,9 +12,9 @@ namespace BinaryAnalysis {
 namespace ModelChecker {
 
 /** Tag that describes an out-of-bounds memory access. */
-class OobTag: public Tag {
+class OutOfBoundsTag: public Tag {
 public:
-    using Ptr = OobTagPtr;
+    using Ptr = OutOfBoundsTagPtr;
 
 private:
     const TestMode testMode_;                                    // may or must, but not off
@@ -27,16 +27,16 @@ private:
     const AddressInterval accessedVariableLocation_;             // optional location and size of variable actually accessed
 
 protected:
-    OobTag() = delete;
-    OobTag(size_t nodeStep, TestMode, IoMode, SgAsmInstruction*,
-           const InstructionSemantics::BaseSemantics::SValuePtr &addr,
-           const Variables::StackVariable &intendedVariable, const AddressInterval &intendedVariableLocation,
-           const Variables::StackVariable &accessedVariable, const AddressInterval &accessedVariableLocation);
+    OutOfBoundsTag() = delete;
+    OutOfBoundsTag(size_t nodeStep, TestMode, IoMode, SgAsmInstruction*,
+                   const InstructionSemantics::BaseSemantics::SValuePtr &addr,
+                   const Variables::StackVariable &intendedVariable, const AddressInterval &intendedVariableLocation,
+                   const Variables::StackVariable &accessedVariable, const AddressInterval &accessedVariableLocation);
 
-    OobTag(const OobTag&) = delete;
+    OutOfBoundsTag(const OutOfBoundsTag&) = delete;
 
 public:
-    ~OobTag();
+    ~OutOfBoundsTag();
 
     /** Allocating constructor.
      *

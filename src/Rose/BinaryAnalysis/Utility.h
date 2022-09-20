@@ -1,8 +1,8 @@
 // This file contains binary analysis utilities that are either not a critical part of the analysis framework, or which cannot
 // be easily incorporated into the main header files because they would introduce circular #include dependencies.
 
-#ifndef ROSE_BinaryAnalysis_Utils_H
-#define ROSE_BinaryAnalysis_Utils_H
+#ifndef ROSE_BinaryAnalysis_Utility_H
+#define ROSE_BinaryAnalysis_Utility_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 

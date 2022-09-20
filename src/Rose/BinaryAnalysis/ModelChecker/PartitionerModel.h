@@ -1,5 +1,5 @@
-#ifndef ROSE_BinaryAnalysis_ModelChecker_P2Model_H
-#define ROSE_BinaryAnalysis_ModelChecker_P2Model_H
+#ifndef ROSE_BinaryAnalysis_ModelChecker_PartitionerModel_H
+#define ROSE_BinaryAnalysis_ModelChecker_PartitionerModel_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
@@ -21,7 +21,7 @@ namespace ModelChecker {
  *  This model uses the symbolic semantics domain. Registers are stored in a generic register state that adapts to the
  *  registers that are in use. Memory can be list- or map-based and could possibly support purely symbolic memory as well. The
  *  list- and map-based memory states can also use concrete state from a @ref MemoryMap. */
-namespace P2Model {
+namespace PartitionerModel {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Settings for this model checker
@@ -372,12 +372,12 @@ public: // Supporting functions
      *  unmapped in order to increase the chance that a null pointer to a struct/class/array still causes a segmentation fault
      *  even when accessing a member other than the first member.
      *
-     *  If a null dereference is detected, then a NullDerefTag is thrown. */
+     *  If a null dereference is detected, then a NullDereferenceTag is thrown. */
     void checkNullAccess(const InstructionSemantics::BaseSemantics::SValuePtr &addr, TestMode, IoMode);
 
     /** Test whether the specified address is out of bounds for variables.
      *
-     *  If an OOB access is detected, then an OobTag is thrown. */
+     *  If an OOB access is detected, then an OutOfBoundsTag is thrown. */
     void checkOobAccess(const InstructionSemantics::BaseSemantics::SValuePtr &addr, TestMode, IoMode, size_t nBytes);
 
     /** Test whether the specified address accesses an uninitialized variable.

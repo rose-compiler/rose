@@ -68,6 +68,7 @@ install(FILES
   BinaryLoaderElf.h
   BinaryLoaderElfObj.h
   BinaryLoaderPe.h
+  ByteCode.h
   CallingConvention.h
   CodeInserter.h
   Concolic.h
@@ -121,7 +122,7 @@ install(FILES
   TaintedFlow.h
   ToSource.h
   Unparser.h
-  Utils.h
+  Utility.h
   Variables.h
   Z3Solver.h
 
