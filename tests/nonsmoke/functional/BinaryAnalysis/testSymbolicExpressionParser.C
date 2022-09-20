@@ -51,7 +51,7 @@ static const char *inputs[] = {
 
 int
 main() {
-    SymbolicExprParser parser;
+    SymbolicExpressionParser parser;
     for (size_t i=0; i<sizeof(inputs)/sizeof(*inputs); ++i) {
         std::cout <<"Parser input: " <<inputs[i] <<"\n";
         SymbolicExpr::Ptr symbolicExpression = parser.parse(inputs[i]);

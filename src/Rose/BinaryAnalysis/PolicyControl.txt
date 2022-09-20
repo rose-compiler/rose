@@ -1,4 +1,3 @@
 # -*- conf -*-
 
 SymbolicExpr.h: disable english_words
-SymbolicExprParser.h: disable english_words

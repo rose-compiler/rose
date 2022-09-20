@@ -42,7 +42,7 @@ run $(librose_compile)				\
     StackDelta.C				\
     String.C					\
     SymbolicExpr.C				\
-    SymbolicExprParser.C			\
+    SymbolicExpressionParser.C			\
     SystemCall.C				\
     TaintedFlow.C				\
     ToSource.C					\
@@ -109,6 +109,7 @@ run $(public_header) -o include/rose/Rose/BinaryAnalysis	\
     String.h							\
     SymbolicExpr.h						\
     SymbolicExprParser.h					\
+    SymbolicExpressionParser.h					\
     SystemCall.h						\
     TaintedFlow.h						\
     ToSource.h							\

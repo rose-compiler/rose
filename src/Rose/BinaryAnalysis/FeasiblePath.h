@@ -6,7 +6,7 @@
 #include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 #include <Rose/BinaryAnalysis/SmtSolver.h>
-#include <Rose/BinaryAnalysis/SymbolicExprParser.h>
+#include <Rose/BinaryAnalysis/SymbolicExpressionParser.h>
 #include <Rose/BinaryAnalysis/Partitioner2/CfgPath.h>
 #include <Rose/Exception.h>
 #include <Sawyer/CommandLine.h>
@@ -675,23 +675,23 @@ private:
                                          const InstructionSemantics::BaseSemantics::DispatcherPtr &cpu);
 
     // Parse the expression if it's a parsable string, otherwise return the expression as is. */
-    Expression parseExpression(Expression, const std::string &where, SymbolicExprParser&) const;
+    Expression parseExpression(Expression, const std::string &where, SymbolicExpressionParser&) const;
 
-    SymbolicExpr::Ptr expandExpression(const Expression&, const SymbolicExprParser&);
+    SymbolicExpr::Ptr expandExpression(const Expression&, const SymbolicExpressionParser&);
 
     // Based on the last vertex of the path, insert user-specified assertions into the SMT solver.
     void insertAssertions(const SmtSolver::Ptr&, const Partitioner2::CfgPath&,
-                          const std::vector<Expression> &assertions, bool atEndOfPath, const SymbolicExprParser&);
+                          const std::vector<Expression> &assertions, bool atEndOfPath, const SymbolicExpressionParser&);
 
     // Size of vertex. How much of "k" does this vertex consume?
     static size_t vertexSize(const Partitioner2::ControlFlowGraph::ConstVertexIterator&);
 
     // Information needed for adding user-supplied assertions to the solver.
     struct Substitutions {
-        SymbolicExprParser exprParser;
+        SymbolicExpressionParser exprParser;
         std::vector<Expression> assertions;
-        SymbolicExprParser::RegisterSubstituter::Ptr regSubber;
-        SymbolicExprParser::MemorySubstituter::Ptr memSubber;
+        SymbolicExpressionParser::RegisterSubstituter::Ptr regSubber;
+        SymbolicExpressionParser::MemorySubstituter::Ptr memSubber;
     };
 
     // Insert the edge assertion and any applicable user assertions (after delayed expansion of the expressions' register

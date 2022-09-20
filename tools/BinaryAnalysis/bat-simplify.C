@@ -104,7 +104,7 @@ main(int argc, char *argv[]) {
 
         // Parse the expression
         try {
-            SymbolicExprParser symbolicParser(smtSolver);
+            SymbolicExpressionParser symbolicParser(smtSolver);
             SymbolicExpr::Ptr expr = symbolicParser.parse(*line);
             std::cout <<"Parsed value = " <<*expr <<"\n\n";
 
@@ -151,7 +151,7 @@ main(int argc, char *argv[]) {
                     std::cerr <<"error: serialization failed structural equivalence test\n";
             }
 #endif
-        } catch (const SymbolicExprParser::SyntaxError &e) {
+        } catch (const SymbolicExpressionParser::SyntaxError &e) {
             std::cerr <<e <<"\n";
             if (e.lineNumber != 0) {
                 std::cerr <<"    input: " <<*line <<"\n"
