@@ -476,7 +476,7 @@ bool
 AsmUnparser::unparse_interpretation(bool enabled, std::ostream &output, SgAsmInterpretation *interp)
 {
     RegisterDictionary::Ptr old_interp_registers = interp_registers;
-    interp_registers = interp->get_registers();
+    interp_registers = RegisterDictionary::instanceForIsa(interp);
     try {
         const SgAsmGenericHeaderPtrList &hdrs = interp->get_headers()->get_headers();
         if (!hdrs.empty()) {

@@ -160,7 +160,8 @@ typedef Map<uint64_t, uint64_t> RenameMap;
 typedef uint64_t Hash;
 
 /** Controls formatting of expression trees when printing. */
-struct Formatter {
+class Formatter {
+public:
     enum ShowComments {
         CMT_SILENT,                             /**< Do not show comments. */
         CMT_AFTER,                              /**< Show comments after the node. */

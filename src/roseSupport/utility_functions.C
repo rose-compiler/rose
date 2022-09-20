@@ -402,7 +402,6 @@ std::string version_message() {
 #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
     ss <<"  --- Fortran analysis:           enabled\n";
 
-    // How is this different than ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION below?
     extern string ofpVersionString();
     ss <<"  ---   OFP Fortran parser:       " <<ofpVersionString() <<"\n";
 
@@ -560,12 +559,6 @@ std::string version_message() {
     ss <<"  --- Matlab analysis:            enabled\n";
 #else
     ss <<"  --- Matlab analysis:            disabled\n";
-#endif
-
-#ifdef ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
-    ss <<"  --- OFP analysis:               enabled\n";
-#else
-    ss <<"  --- OFP analysis:               disabled\n";
 #endif
 
 #ifdef ROSE_BUILD_OPENCL_LANGUAGE_SUPPORT

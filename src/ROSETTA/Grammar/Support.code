@@ -16337,27 +16337,6 @@ SgFile::initialization()
      p_sourceFileUsesJovialFileExtension = false;
      p_sourceFileUsesCobolFileExtension  = false;
 
-#if 0
-     File.setDataPrototype         ( "int", "detect_dangling_pointers", "= false",
-                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // DQ (6/7/2013): Added support for use of experimental fortran front-end.
-     File.setDataPrototype("bool", "experimental_fortran_frontend", "= false",
-            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // Rasmussen (8/30/2010): Added experimental support for using the Flang parser for Fortran
-     File.setDataPrototype("bool", "experimental_flang_frontend", "= false",
-            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // Rasmussen (3/12/2018): Added support for CUDA Fortran within the experimental fortran frontend.
-     File.setDataPrototype("bool", "experimental_cuda_fortran_frontend", "= false",
-            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // DQ (1/23/2016): Added support for OFP parsing and pretty printing of generated Aterm
-  // (this is part of the internal testing of the new (experimental) Fortran support).
-     File.setDataPrototype("bool", "experimental_fortran_frontend_OFP_test", "= false",
-            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
   // DQ (9/26/2011): New support for option to specify debugging support in ROSE to
   // detect dangling pointers to IR nodes as part of the AST Consistancy tests. At
   // some point this will default to always being on as an AST consistancy test.
@@ -16366,16 +16345,7 @@ SgFile::initialization()
   // DQ (9/17/2020): Adding missing data member initialization.
      p_experimental_flang_frontend = false;
 
-  // DQ (6/7/2013): Added support for using experimental fortran frontend.
-  // Rasmussen (3/12/2018): Added support for CUDA Fortran within the experimental fortran frontend.
-     p_experimental_fortran_frontend = false;
-     p_experimental_cuda_fortran_frontend = false;
-
-  // DQ (1/23/2016): Added support for OFP parsing and pretty printing of generated Aterm
-  // (this is part of the internal testing of the new (experimental) Fortran support).
-     p_experimental_fortran_frontend_OFP_test = false;
-
-  // This will cause only the binary file format to be read and skipps instruction disassembly
+  // This will cause only the binary file format to be read and skips instruction disassembly
      p_read_executable_file_format_only = false;
 
   // DQ (11/11/2008): Added to support visualization of only parts of the AST.
@@ -17135,12 +17105,8 @@ SgFile::display ( const std::string & label ) const
 
      printf ("     p_skipAstConsistancyTests                   = %s \n",(p_skipAstConsistancyTests == true) ? "true" : "false");
 
-  // DQ (6/8/2013): Added support for experimental fortran frontend.
-     printf ("     p_experimental_fortran_frontend             = %s \n",(p_experimental_fortran_frontend == true) ? "true" : "false");
-     printf ("     p_experimental_fortran_frontend_OFP_test    = %s \n",(p_experimental_fortran_frontend_OFP_test == true) ? "true" : "false");
-
-  // Rasmussen (3/12/2018): Added support for CUDA Fortran within the experimental fortran frontend.
-     printf ("     p_experimental_cuda_fortran_frontend        = %s \n",(p_experimental_cuda_fortran_frontend == true) ? "true" : "false");
+  // Rasmussen (9/10/2022): Replaced experimental_fortran_frontend with experimental_flang_frontend (removing ATerm usage).
+     printf ("     p_experimental_flang_frontend               = %s \n",(p_experimental_flang_frontend == true) ? "true" : "false");
 
   // DQ (4/17/2015): Adding multifile handling support for commandline generation.
      printf ("     p_multifile_support                         = %s \n",(p_multifile_support == true) ? "true" : "false");

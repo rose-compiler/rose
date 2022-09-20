@@ -5,6 +5,7 @@
 
 #include <integerOps.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCellList.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <SageBuilderAsm.h>
 
 namespace Rose {

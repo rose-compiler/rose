@@ -1,6 +1,1 @@
-%%forall Class%%
-%%forall Notes%%
-%%Class.Name%%
-%%end_for%%
-%%end_for%%
 
