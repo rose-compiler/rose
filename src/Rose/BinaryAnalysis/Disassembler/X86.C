@@ -207,6 +207,41 @@ X86::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va, AddressSet 
     }
     ASSERT_not_null(insn);
 
+    // An addressing mode of FP + (R * C1) + C2 (where FP is the frame pointer register, R is some other register and C1 and C2
+    // are constants) should be rewritten to FP + C2 + (R * C1). This makes it a bit more clear that we're probably starting
+    // with the frame pointer, adding or subtracting something to get to the beginning of an array or structure, and then
+    // indexing into that region of memory. Similarly for using the stack pointer as the base.
+    for (size_t i = 0; i < insn->nOperands(); ++i) {
+        if (auto mre = isSgAsmMemoryReferenceExpression(insn->operand(i))) {
+            if (auto add1 = isSgAsmBinaryAdd(mre->get_address())) {
+                if (auto add2 = isSgAsmBinaryAdd(add1->get_lhs())) {
+                    if (auto fp = isSgAsmDirectRegisterExpression(add2->get_lhs())) {
+                        if (auto mul = isSgAsmBinaryMultiply(add2->get_rhs())) {
+                            if (auto r = isSgAsmDirectRegisterExpression(mul->get_lhs())) {
+                                if (auto c1 = isSgAsmIntegerValueExpression(mul->get_rhs())) {
+                                    if (auto c2 = isSgAsmIntegerValueExpression(add1->get_rhs())) {
+                                        const RegisterDescriptor REG_FP =
+                                            registerDictionary()->findLargestRegister(x86_regclass_gpr, x86_gpr_bp);
+                                        ASSERT_require(REG_FP);
+                                        ASSERT_require(REG_SP);
+                                        if (fp->get_descriptor() == REG_FP || fp->get_descriptor() == REG_SP) {
+                                            // Pattern found. Swap some arguments
+                                            add1->set_rhs(mul);
+                                            mul->set_parent(add1);
+
+                                            add2->set_rhs(c2);
+                                            c2->set_parent(add2);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     /* Note successors if necesssary */
     if (successors) {
         bool complete;

@@ -19,17 +19,16 @@ if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 endif
 
 # Added support for using flang/F18 for parsing for Fortran [Rasmussen 08/14/2019]
-# Don't build both of these
 if ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION
 if ROSE_BUILD_ATERM_SUPPORT_FALSE
+#  Don't add twice
    SUBDIRS += Experimental_General_Language_Support
 endif
    SUBDIRS += Experimental_Flang_ROSE_Connection
 endif
 
-if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
-   SUBDIRS += Experimental_OpenFortranParser_ROSE_Connection
-endif
+# Removed --enable-experimental_fortran_frontend option, replaced by flang frontend [Rasmussen 9/14/2022]
+#
 
 if ROSE_EXPERIMENTAL_CSHARP_ROSE_CONNECTION
    SUBDIRS += Experimental_Csharp_ROSE_Connection

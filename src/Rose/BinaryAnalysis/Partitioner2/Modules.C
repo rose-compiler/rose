@@ -1067,7 +1067,6 @@ buildAst(const Partitioner &partitioner, SgAsmInterpretation *interp/*=NULL*/, c
             if (SgAsmBlock *oldGlobalBlock = interp->get_global_block())
                 oldGlobalBlock->set_parent(NULL);
             interp->set_global_block(global);
-            interp->set_registers(partitioner.instructionProvider().registerDictionary());
             global->set_parent(interp);
         }
         return global;

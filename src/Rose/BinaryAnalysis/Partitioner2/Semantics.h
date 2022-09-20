@@ -3,7 +3,6 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 
@@ -240,23 +239,16 @@ private:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
-    RiscOperators() {}                                  // for serialization
+    RiscOperators();                                    // for serialization
 
     explicit RiscOperators(const InstructionSemantics::BaseSemantics::SValuePtr &protoval,
-                           const SmtSolverPtr &solver = SmtSolverPtr())
-        : InstructionSemantics::SymbolicSemantics::RiscOperators(protoval, solver) {
-        name("PartitionerSemantics");
-        (void)SValue::promote(protoval);                // make sure its dynamic type is appropriate
-        trimThreshold(TRIM_THRESHOLD_DFLT);
-    }
+                           const SmtSolverPtr &solver = SmtSolverPtr());
 
     explicit RiscOperators(const InstructionSemantics::BaseSemantics::StatePtr &state,
-                           const SmtSolverPtr &solver = SmtSolverPtr())
-        : InstructionSemantics::SymbolicSemantics::RiscOperators(state, solver) {
-        name("PartitionerSemantics");
-        (void)SValue::promote(state->protoval());
-        trimThreshold(TRIM_THRESHOLD_DFLT);
-    }
+                           const SmtSolverPtr &solver = SmtSolverPtr());
+
+public:
+    ~RiscOperators();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Static allocating constructors

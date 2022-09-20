@@ -710,8 +710,8 @@
 0x08048e1b: 8d 5d d8                |.].     |<sp-52>   lea    ebx, [ebp + 0xd8<-40>]
 0x08048e1e: 53                      |S       |<sp-52>   push   ebx
 0x08048e1f: 68 e2 9a 04 08          |h....   |<sp-56>   push   0x08049ae2<"/sbin/shutdown">
-0x08048e24: c7 44 85 d8 f1 9a 04 08 |.D......|<sp-60>   mov    dword ss:[ebp + eax*0x04 + 0xd8<-40>], 0x08049af1<"now">
-0x08048e2c: c7 44 85 dc 00 00 00 00 |.D......|<sp-60>   mov    dword ss:[ebp + eax*0x04 + 0xdc<-36>], 0x00000000
+0x08048e24: c7 44 85 d8 f1 9a 04 08 |.D......|<sp-60>   mov    dword ss:[ebp + 0xd8<-40> + eax*0x04], 0x08049af1<"now">
+0x08048e2c: c7 44 85 dc 00 00 00 00 |.D......|<sp-60>   mov    dword ss:[ebp + 0xdc<-36> + eax*0x04], 0x00000000
 0x08048e34: e8 f3 fb ff ff          |.....   |<sp-60>   call   0x08048a2c<execv@plt>
 0x08048e34: Outgoing stack delta: -64
 0x08048e34: Successor blocks: 0x08048a2c<execv@plt>, 0x08048e39
@@ -1744,7 +1744,7 @@
 0x080494d0: Basic block reasons: 
 0x080494d0: 8b 85 c8 fd ff ff       |......  |<sp-588>   mov    eax, dword ss:[ebp + 0xfffffdc8<-568>]
 0x080494d6: c7 84 85 d8 fe ff ff 00 |........|
-0x080494de: 00 00 00                |...     |<sp-588>   mov    dword ss:[ebp + eax*0x04 + 0xfffffed8<-296>], 0x00000000
+0x080494de: 00 00 00                |...     |<sp-588>   mov    dword ss:[ebp + 0xfffffed8<-296> + eax*0x04], 0x00000000
 0x080494d6: Outgoing stack delta: -588
 0x080494d6: Successor blocks: 0x080494e1
 
@@ -1767,7 +1767,7 @@
 
 0x080494f0: Basic block reasons: 
 0x080494f0: 43                      |C       |<sp-588>   inc    ebx
-0x080494f1: 8b 84 9d d8 fe ff ff    |....... |<sp-588>   mov    eax, dword ss:[ebp + ebx*0x04 + 0xfffffed8<-296>]
+0x080494f1: 8b 84 9d d8 fe ff ff    |....... |<sp-588>   mov    eax, dword ss:[ebp + 0xfffffed8<-296> + ebx*0x04]
 0x080494f8: 85 c0                   |..      |<sp-588>   test   eax, eax
 0x080494fa: 74 69                   |ti      |<sp-588>   je     0x08049565<<BBlock>>
 0x080494fa: Outgoing stack delta: -588
@@ -1828,7 +1828,7 @@
 0x08049552: Successor blocks: 0x08048b7c<ioctl@plt>, 0x08049557
 
 0x08049557: Basic block reasons: 
-0x08049557: 8b 84 9d d8 fe ff ff    |....... |<sp-604>   mov    eax, dword ss:[ebp + ebx*0x04 + 0xfffffed8<-296>]
+0x08049557: 8b 84 9d d8 fe ff ff    |....... |<sp-604>   mov    eax, dword ss:[ebp + 0xfffffed8<-296> + ebx*0x04]
 0x0804955e: 83 c4 10                |...     |<sp-604>   add    esp, 0x10
 0x08049561: 85 c0                   |..      |<sp-588>   test   eax, eax
 0x08049563: 75 97                   |u.      |<sp-588>   jne    0x080494fc<<BBlock>>
@@ -1877,7 +1877,7 @@
 
 0x080495a5: Basic block reasons: 
 0x080495a5: 8b bd c8 fd ff ff       |......  |<sp-604>   mov    edi, dword ss:[ebp + 0xfffffdc8<-568>]
-0x080495ab: 89 84 bd d8 fe ff ff    |....... |<sp-604>   mov    dword ss:[ebp + edi*0x04 + 0xfffffed8<-296>], eax
+0x080495ab: 89 84 bd d8 fe ff ff    |....... |<sp-604>   mov    dword ss:[ebp + 0xfffffed8<-296> + edi*0x04], eax
 0x080495b2: 47                      |G       |<sp-604>   inc    edi
 0x080495b3: 83 c4 10                |...     |<sp-604>   add    esp, 0x10
 0x080495b6: 83 ff 40                |..@     |<sp-588>   cmp    edi, 0x40

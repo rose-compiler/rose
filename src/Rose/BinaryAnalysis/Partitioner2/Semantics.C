@@ -15,6 +15,24 @@ namespace SymbolicSemantics = Rose::BinaryAnalysis::InstructionSemantics::Symbol
 //                                      Risc Operators
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+RiscOperators::RiscOperators() {}
+
+RiscOperators::RiscOperators(const InstructionSemantics::BaseSemantics::SValue::Ptr &protoval, const SmtSolver::Ptr &solver)
+    : InstructionSemantics::SymbolicSemantics::RiscOperators(protoval, solver) {
+    name("PartitionerSemantics");
+    (void)SValue::promote(protoval);                // make sure its dynamic type is appropriate
+    trimThreshold(TRIM_THRESHOLD_DFLT);
+}
+
+RiscOperators::RiscOperators(const InstructionSemantics::BaseSemantics::State::Ptr &state, const SmtSolverPtr &solver)
+    : InstructionSemantics::SymbolicSemantics::RiscOperators(state, solver) {
+    name("PartitionerSemantics");
+    (void)SValue::promote(state->protoval());
+    trimThreshold(TRIM_THRESHOLD_DFLT);
+}
+
+RiscOperators::~RiscOperators() {}
+
 void
 RiscOperators::startInstruction(SgAsmInstruction *insn) {
     ASSERT_not_null(currentState());

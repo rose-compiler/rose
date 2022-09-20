@@ -1661,7 +1661,7 @@
 0x004019f0: ff c5                   |..      |<sp-856>   inc    ebp
 0x004019f2: 48 63 cd                |Hc.     |<sp-856>   movsxd rcx, ebp
 0x004019f5: 48 83 bc cc 10 01 00 00 |H.......|
-0x004019fd: 00                      |.       |<sp-856>   cmp    qword ds:[rsp + rcx*0x08 + 0x00000110<272>], 0x00
+0x004019fd: 00                      |.       |<sp-856>   cmp    qword ds:[rsp + 0x00000110<272> + rcx*0x08], 0x00
 0x004019fe: 0f 95 c2                |...     |<sp-856>   setne  dl
 0x00401a01: 31 c0                   |1.      |<sp-856>   xor    eax, eax
 0x00401a03: 83 fd 3f                |..?     |<sp-856>   cmp    ebp, 0x3f
@@ -1672,7 +1672,7 @@
 0x00401a0b: Successor blocks: 0x00401a0d, 0x00401a7e
 
 0x00401a0d: Basic block reasons: 
-0x00401a0d: 48 8b bc cc 10 01 00 00 |H.......|<sp-856>   mov    rdi, qword ds:[rsp + rcx*0x08 + 0x00000110<272>]
+0x00401a0d: 48 8b bc cc 10 01 00 00 |H.......|<sp-856>   mov    rdi, qword ds:[rsp + 0x00000110<272> + rcx*0x08]
 0x00401a15: 31 c0                   |1.      |<sp-856>   xor    eax, eax
 0x00401a17: 41 b5 e0                |A..     |<sp-856>   mov    r13b, 0xe0<-32>
 0x00401a1a: 41 b4 94                |A..     |<sp-856>   mov    r12b, 0x94<-108>
@@ -1718,7 +1718,7 @@
 0x00401a63: Basic block reasons: 
 0x00401a63: 48 63 cd                |Hc.     |<sp-856>   movsxd rcx, ebp
 0x00401a66: 48 83 bc cc 10 01 00 00 |H.......|
-0x00401a6e: 00                      |.       |<sp-856>   cmp    qword ds:[rsp + rcx*0x08 + 0x00000110<272>], 0x00
+0x00401a6e: 00                      |.       |<sp-856>   cmp    qword ds:[rsp + 0x00000110<272> + rcx*0x08], 0x00
 0x00401a6f: 0f 95 c2                |...     |<sp-856>   setne  dl
 0x00401a72: 31 c0                   |1.      |<sp-856>   xor    eax, eax
 0x00401a74: 83 fd 3f                |..?     |<sp-856>   cmp    ebp, 0x3f
@@ -1976,7 +1976,7 @@
 0x00401e4f: Successor blocks: 0x00401e58
 
 0x00401e51: Basic block reasons: 
-0x00401e51: ff 54 dd 00             |.T..    |<sp-24>   call   qword ds:[rbp + rbx*0x08 + 0x00]
+0x00401e51: ff 54 dd 00             |.T..    |<sp-24>   call   qword ds:[rbp + 0x00 + rbx*0x08]
 0x00401e51: Outgoing stack delta: -32
 0x00401e51: Successor blocks: 0x00401e55, unknown
 

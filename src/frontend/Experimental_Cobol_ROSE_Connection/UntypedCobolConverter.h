@@ -9,11 +9,6 @@
 #include "sageBuilder.h"
 #include "CobolBuilderInterface.h"
 
-#ifdef FORTRAN_JUNK
-#include "FASTNodes.hpp"
-#include "FortranBuilderInterface.h"
-#endif
-
 namespace Cobol {
 namespace Untyped {
 

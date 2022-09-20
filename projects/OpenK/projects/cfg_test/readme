@@ -1,2 +1,0 @@
-# to generate CFG report from a ttl file
-swipl --nosignal --quiet run.pl sp_single.c.ttl sp_single.c.ttl_openk_cfg_report.txt

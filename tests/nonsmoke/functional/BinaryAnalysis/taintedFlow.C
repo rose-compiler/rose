@@ -115,7 +115,7 @@ static void analyze(SgAsmFunction *specimen, TaintedFlow::Approximation approxim
 
     SgAsmInterpretation *interp = SageInterface::getEnclosingNode<SgAsmInterpretation>(specimen);
     ASSERT_always_not_null(interp);
-    RegisterDictionary::Ptr regdict = interp->get_registers();
+    RegisterDictionary::Ptr regdict = RegisterDictionary::instanceForIsa(interp);
 
     // List the function
     std::cout <<"\n";
