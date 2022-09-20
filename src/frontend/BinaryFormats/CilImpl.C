@@ -312,35 +312,25 @@ void SgAsmCilAssembly::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t 
     std::cerr << "p_Culture = " << p_Culture << std::endl;
   }
 }
-
-
-  
-  
-  
-  
-  
-  
-  
-    
+        
 const std::uint8_t*
 SgAsmCilAssembly::get_PublicKey_blob() const
 {
   return getMetadataRoot(this).get_BlobHeap()->get_Stream().data() + get_PublicKey();
-}
-  
-    
+} 
+      
 const std::uint8_t*
 SgAsmCilAssembly::get_Name_string() const
 {
   return getMetadataRoot(this).get_StringHeap()->get_Stream().data() + get_Name();
-}
-  
-    
+} 
+      
 const std::uint8_t*
 SgAsmCilAssembly::get_Culture_string() const
 {
   return getMetadataRoot(this).get_StringHeap()->get_Stream().data() + get_Culture();
 } 
+      
 
 void SgAsmCilAssemblyOS::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 { 
@@ -355,11 +345,7 @@ void SgAsmCilAssemblyOS::parse(std::vector<uint8_t>& buf, size_t& index, uint64_
     std::cerr << "p_OSMinorVersion = " << p_OSMinorVersion << std::endl;
   }
 }
-
-
-  
-  
-   
+     
 
 void SgAsmCilAssemblyProcessor::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 { 
@@ -370,8 +356,6 @@ void SgAsmCilAssemblyProcessor::parse(std::vector<uint8_t>& buf, size_t& index, 
     std::cerr << "p_Processor = " << p_Processor << std::endl;
   }
 }
-
-
    
 
 void SgAsmCilAssemblyRef::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
@@ -399,41 +383,31 @@ void SgAsmCilAssemblyRef::parse(std::vector<uint8_t>& buf, size_t& index, uint64
     std::cerr << "p_HashValue = " << p_HashValue << std::endl;
   }
 }
-
-
-  
-  
-  
-  
-  
-  
-    
+       
 const std::uint8_t*
 SgAsmCilAssemblyRef::get_PublicKeyOrToken_blob() const
 {
   return getMetadataRoot(this).get_BlobHeap()->get_Stream().data() + get_PublicKeyOrToken();
-}
-  
-    
+} 
+      
 const std::uint8_t*
 SgAsmCilAssemblyRef::get_Name_string() const
 {
   return getMetadataRoot(this).get_StringHeap()->get_Stream().data() + get_Name();
-}
-  
-    
+} 
+      
 const std::uint8_t*
 SgAsmCilAssemblyRef::get_Culture_string() const
 {
   return getMetadataRoot(this).get_StringHeap()->get_Stream().data() + get_Culture();
-}
-  
-    
+} 
+      
 const std::uint8_t*
 SgAsmCilAssemblyRef::get_HashValue_blob() const
 {
   return getMetadataRoot(this).get_BlobHeap()->get_Stream().data() + get_HashValue();
 } 
+      
 
 void SgAsmCilAssemblyRefOS::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 { 
@@ -450,18 +424,13 @@ void SgAsmCilAssemblyRefOS::parse(std::vector<uint8_t>& buf, size_t& index, uint
     std::cerr << "p_AssemblyRefOS = " << p_AssemblyRefOS << std::endl;
   }
 }
-
-
-  
-  
-  
-  
-    
+     
 const SgAsmCilMetadata*
 SgAsmCilAssemblyRefOS::get_AssemblyRefOS_object() const
 {
   return getMetadataHeap(this).get_MetadataNode(get_AssemblyRefOS(), SgAsmCilMetadataHeap::e_ref_assembly_ref);
 }     
+      
 
 void SgAsmCilAssemblyRefProcessor::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 { 
@@ -474,16 +443,13 @@ void SgAsmCilAssemblyRefProcessor::parse(std::vector<uint8_t>& buf, size_t& inde
     std::cerr << "p_AssemblyRef = " << p_AssemblyRef << std::endl;
   }
 }
-
-
-  
-  
-    
+   
 const SgAsmCilMetadata*
 SgAsmCilAssemblyRefProcessor::get_AssemblyRef_object() const
 {
   return getMetadataHeap(this).get_MetadataNode(get_AssemblyRef(), SgAsmCilMetadataHeap::e_ref_assembly_ref);
 }     
+      
 
 void SgAsmCilClassLayout::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 { 
@@ -498,17 +464,13 @@ void SgAsmCilClassLayout::parse(std::vector<uint8_t>& buf, size_t& index, uint64
     std::cerr << "p_Parent = " << p_Parent << std::endl;
   }
 }
-
-
-  
-  
-  
     
 const SgAsmCilMetadata*
 SgAsmCilClassLayout::get_Parent_object() const
 {
   return getMetadataHeap(this).get_MetadataNode(get_Parent(), SgAsmCilMetadataHeap::e_ref_type_def);
 }     
+      
 
 void SgAsmCilConstant::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 { 
@@ -525,24 +487,19 @@ void SgAsmCilConstant::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t 
     std::cerr << "p_Value = " << p_Value << std::endl;
   }
 }
-
-
-  
-  
-  
     
 const SgAsmCilMetadata*
 SgAsmCilConstant::get_Parent_object() const
 {
   return getMetadataHeap(this).get_MetadataNode(get_Parent(), SgAsmCilMetadataHeap::e_ref_has_constant);
-}    
-  
-    
+}     
+      
 const std::uint8_t*
 SgAsmCilConstant::get_Value_blob() const
 {
   return getMetadataRoot(this).get_BlobHeap()->get_Stream().data() + get_Value();
 } 
+      
 
 void SgAsmCilCustomAttribute::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 { 
@@ -557,29 +514,25 @@ void SgAsmCilCustomAttribute::parse(std::vector<uint8_t>& buf, size_t& index, ui
     std::cerr << "p_Value = " << p_Value << std::endl;
   }
 }
-
-
   
-    
 const SgAsmCilMetadata*
 SgAsmCilCustomAttribute::get_Parent_object() const
 {
   return getMetadataHeap(this).get_MetadataNode(get_Parent(), SgAsmCilMetadataHeap::e_ref_has_custom_attribute);
-}    
-  
-    
+}     
+      
 const SgAsmCilMetadata*
 SgAsmCilCustomAttribute::get_Type_object() const
 {
   return getMetadataHeap(this).get_MetadataNode(get_Type(), SgAsmCilMetadataHeap::e_ref_custom_attribute_type);
-}    
-  
-    
+}     
+      
 const std::uint8_t*
 SgAsmCilCustomAttribute::get_Value_blob() const
 {
   return getMetadataRoot(this).get_BlobHeap()->get_Stream().data() + get_Value();
 } 
+      
 
 void SgAsmCilDeclSecurity::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 { 
@@ -594,23 +547,19 @@ void SgAsmCilDeclSecurity::parse(std::vector<uint8_t>& buf, size_t& index, uint6
     std::cerr << "p_PermissionSet = " << p_PermissionSet << std::endl;
   }
 }
-
-
-  
-  
-    
+   
 const SgAsmCilMetadata*
 SgAsmCilDeclSecurity::get_Parent_object() const
 {
   return getMetadataHeap(this).get_MetadataNode(get_Parent(), SgAsmCilMetadataHeap::e_ref_has_decl_security);
-}    
-  
-    
+}     
+      
 const std::uint8_t*
 SgAsmCilDeclSecurity::get_PermissionSet_blob() const
 {
   return getMetadataRoot(this).get_BlobHeap()->get_Stream().data() + get_PermissionSet();
 } 
+      
 
 void SgAsmCilEvent::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 { 
@@ -625,23 +574,19 @@ void SgAsmCilEvent::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t use
     std::cerr << "p_EventType = " << p_EventType << std::endl;
   }
 }
-
-
-  
-  
-    
+   
 const std::uint8_t*
 SgAsmCilEvent::get_Name_string() const
 {
   return getMetadataRoot(this).get_StringHeap()->get_Stream().data() + get_Name();
-}
-  
-    
+} 
+      
 const SgAsmCilMetadata*
 SgAsmCilEvent::get_EventType_object() const
 {
   return getMetadataHeap(this).get_MetadataNode(get_EventType(), SgAsmCilMetadataHeap::e_ref_type_def_or_ref);
 }     
+      
 
 void SgAsmCilEventMap::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 { 
@@ -654,22 +599,19 @@ void SgAsmCilEventMap::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t 
     std::cerr << "p_EventList = " << p_EventList << std::endl;
   }
 }
-
-
   
-    
 const SgAsmCilMetadata*
 SgAsmCilEventMap::get_Parent_object() const
 {
   return getMetadataHeap(this).get_MetadataNode(get_Parent(), SgAsmCilMetadataHeap::e_ref_type_def);
-}    
-  
-    
+}     
+      
 const SgAsmCilMetadata*
 SgAsmCilEventMap::get_EventList_object() const
 {
   return getMetadataHeap(this).get_MetadataNode(get_EventList(), SgAsmCilMetadataHeap::e_ref_event);
 }     
+      
 
 void SgAsmCilExportedType::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 { 
@@ -688,31 +630,25 @@ void SgAsmCilExportedType::parse(std::vector<uint8_t>& buf, size_t& index, uint6
     std::cerr << "p_Implementation = " << p_Implementation << std::endl;
   }
 }
-
-
-  
-  
-  
     
 const std::uint8_t*
 SgAsmCilExportedType::get_TypeName_string() const
 {
   return getMetadataRoot(this).get_StringHeap()->get_Stream().data() + get_TypeName();
-}
-  
-    
+} 
+      
 const std::uint8_t*
 SgAsmCilExportedType::get_TypeNamespace_string() const
 {
   return getMetadataRoot(this).get_StringHeap()->get_Stream().data() + get_TypeNamespace();
-}
-  
-    
+} 
+      
 const SgAsmCilMetadata*
 SgAsmCilExportedType::get_Implementation_object() const
 {
   return getMetadataHeap(this).get_MetadataNode(get_Implementation(), SgAsmCilMetadataHeap::e_ref_implementation);
 }     
+      
 
 void SgAsmCilField::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 { 
@@ -727,23 +663,19 @@ void SgAsmCilField::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t use
     std::cerr << "p_Signature = " << p_Signature << std::endl;
   }
 }
-
-
-  
-  
-    
+   
 const std::uint8_t*
 SgAsmCilField::get_Name_string() const
 {
   return getMetadataRoot(this).get_StringHeap()->get_Stream().data() + get_Name();
-}
-  
-    
+} 
+      
 const std::uint8_t*
 SgAsmCilField::get_Signature_blob() const
 {
   return getMetadataRoot(this).get_BlobHeap()->get_Stream().data() + get_Signature();
 } 
+      
 
 void SgAsmCilFieldLayout::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 { 
@@ -756,16 +688,13 @@ void SgAsmCilFieldLayout::parse(std::vector<uint8_t>& buf, size_t& index, uint64
     std::cerr << "p_Field = " << p_Field << std::endl;
   }
 }
-
-
-  
-  
-    
+   
 const SgAsmCilMetadata*
 SgAsmCilFieldLayout::get_Field_object() const
 {
   return getMetadataHeap(this).get_MetadataNode(get_Field(), SgAsmCilMetadataHeap::e_ref_field);
 }     
+      
 
 void SgAsmCilFieldMarshal::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 { 
@@ -778,22 +707,19 @@ void SgAsmCilFieldMarshal::parse(std::vector<uint8_t>& buf, size_t& index, uint6
     std::cerr << "p_NativeType = " << p_NativeType << std::endl;
   }
 }
-
-
   
-    
 const SgAsmCilMetadata*
 SgAsmCilFieldMarshal::get_Parent_object() const
 {
   return getMetadataHeap(this).get_MetadataNode(get_Parent(), SgAsmCilMetadataHeap::e_ref_has_field_marshall);
-}    
-  
-    
+}     
+      
 const std::uint8_t*
 SgAsmCilFieldMarshal::get_NativeType_blob() const
 {
   return getMetadataRoot(this).get_BlobHeap()->get_Stream().data() + get_NativeType();
 } 
+      
 
 void SgAsmCilFieldRVA::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 { 
@@ -806,16 +732,13 @@ void SgAsmCilFieldRVA::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t 
     std::cerr << "p_Field = " << p_Field << std::endl;
   }
 }
-
-
-  
-  
-    
+   
 const SgAsmCilMetadata*
 SgAsmCilFieldRVA::get_Field_object() const
 {
   return getMetadataHeap(this).get_MetadataNode(get_Field(), SgAsmCilMetadataHeap::e_ref_field);
 }     
+      
 
 void SgAsmCilFile::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 { 
@@ -830,23 +753,19 @@ void SgAsmCilFile::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses
     std::cerr << "p_HashValue = " << p_HashValue << std::endl;
   }
 }
-
-
-  
-  
-    
+   
 const std::uint8_t*
 SgAsmCilFile::get_Name_string() const
 {
   return getMetadataRoot(this).get_StringHeap()->get_Stream().data() + get_Name();
-}
-  
-    
+} 
+      
 const std::uint8_t*
 SgAsmCilFile::get_HashValue_blob() const
 {
   return getMetadataRoot(this).get_BlobHeap()->get_Stream().data() + get_HashValue();
 } 
+      
 
 void SgAsmCilGenericParam::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 { 
@@ -863,24 +782,19 @@ void SgAsmCilGenericParam::parse(std::vector<uint8_t>& buf, size_t& index, uint6
     std::cerr << "p_Name = " << p_Name << std::endl;
   }
 }
-
-
-  
-  
-  
     
 const SgAsmCilMetadata*
 SgAsmCilGenericParam::get_Owner_object() const
 {
   return getMetadataHeap(this).get_MetadataNode(get_Owner(), SgAsmCilMetadataHeap::e_ref_type_or_method_def);
-}    
-  
-    
+}     
+      
 const std::uint8_t*
 SgAsmCilGenericParam::get_Name_string() const
 {
   return getMetadataRoot(this).get_StringHeap()->get_Stream().data() + get_Name();
 } 
+      
 
 void SgAsmCilGenericParamConstraint::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 { 
@@ -893,22 +807,19 @@ void SgAsmCilGenericParamConstraint::parse(std::vector<uint8_t>& buf, size_t& in
     std::cerr << "p_Constraint = " << p_Constraint << std::endl;
   }
 }
-
-
   
-    
 const SgAsmCilMetadata*
 SgAsmCilGenericParamConstraint::get_Owner_object() const
 {
   return getMetadataHeap(this).get_MetadataNode(get_Owner(), SgAsmCilMetadataHeap::e_ref_generic_param);
-}    
-  
-    
+}     
+      
 const SgAsmCilMetadata*
 SgAsmCilGenericParamConstraint::get_Constraint_object() const
 {
   return getMetadataHeap(this).get_MetadataNode(get_Constraint(), SgAsmCilMetadataHeap::e_ref_type_def_or_ref);
 }     
+      
 
 void SgAsmCilImplMap::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 { 
@@ -925,30 +836,25 @@ void SgAsmCilImplMap::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t u
     std::cerr << "p_ImportScope = " << p_ImportScope << std::endl;
   }
 }
-
-
-  
-  
-    
+   
 const SgAsmCilMetadata*
 SgAsmCilImplMap::get_MemberForwarded_object() const
 {
   return getMetadataHeap(this).get_MetadataNode(get_MemberForwarded(), SgAsmCilMetadataHeap::e_ref_member_forwarded);
-}    
-  
-    
+}     
+      
 const std::uint8_t*
 SgAsmCilImplMap::get_ImportName_string() const
 {
   return getMetadataRoot(this).get_StringHeap()->get_Stream().data() + get_ImportName();
-}
-  
-    
+} 
+      
 const SgAsmCilMetadata*
 SgAsmCilImplMap::get_ImportScope_object() const
 {
   return getMetadataHeap(this).get_MetadataNode(get_ImportScope(), SgAsmCilMetadataHeap::e_ref_module_ref);
 }     
+      
 
 void SgAsmCilInterfaceImpl::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 { 
@@ -961,22 +867,19 @@ void SgAsmCilInterfaceImpl::parse(std::vector<uint8_t>& buf, size_t& index, uint
     std::cerr << "p_Interface = " << p_Interface << std::endl;
   }
 }
-
-
   
-    
 const SgAsmCilMetadata*
 SgAsmCilInterfaceImpl::get_Class_object() const
 {
   return getMetadataHeap(this).get_MetadataNode(get_Class(), SgAsmCilMetadataHeap::e_ref_type_def);
-}    
-  
-    
+}     
+      
 const SgAsmCilMetadata*
 SgAsmCilInterfaceImpl::get_Interface_object() const
 {
   return getMetadataHeap(this).get_MetadataNode(get_Interface(), SgAsmCilMetadataHeap::e_ref_type_def_or_ref);
 }     
+      
 
 void SgAsmCilManifestResource::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 { 
@@ -993,24 +896,19 @@ void SgAsmCilManifestResource::parse(std::vector<uint8_t>& buf, size_t& index, u
     std::cerr << "p_Implementation = " << p_Implementation << std::endl;
   }
 }
-
-
-  
-  
-  
     
 const std::uint8_t*
 SgAsmCilManifestResource::get_Name_string() const
 {
   return getMetadataRoot(this).get_StringHeap()->get_Stream().data() + get_Name();
-}
-  
-    
+} 
+      
 const SgAsmCilMetadata*
 SgAsmCilManifestResource::get_Implementation_object() const
 {
   return getMetadataHeap(this).get_MetadataNode(get_Implementation(), SgAsmCilMetadataHeap::e_ref_implementation);
 }     
+      
 
 void SgAsmCilMemberRef::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 { 
@@ -1025,29 +923,25 @@ void SgAsmCilMemberRef::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t
     std::cerr << "p_Signature = " << p_Signature << std::endl;
   }
 }
-
-
   
-    
 const SgAsmCilMetadata*
 SgAsmCilMemberRef::get_Class_object() const
 {
   return getMetadataHeap(this).get_MetadataNode(get_Class(), SgAsmCilMetadataHeap::e_ref_member_ref_parent);
-}    
-  
-    
+}     
+      
 const std::uint8_t*
 SgAsmCilMemberRef::get_Name_string() const
 {
   return getMetadataRoot(this).get_StringHeap()->get_Stream().data() + get_Name();
-}
-  
-    
+} 
+      
 const std::uint8_t*
 SgAsmCilMemberRef::get_Signature_blob() const
 {
   return getMetadataRoot(this).get_BlobHeap()->get_Stream().data() + get_Signature();
 } 
+      
 
 void SgAsmCilMethodDef::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 { 
@@ -1068,32 +962,25 @@ void SgAsmCilMethodDef::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t
     std::cerr << "p_ParamList = " << p_ParamList << std::endl;
   }
 }
-
-
-  
-  
-  
-  
-    
+     
 const std::uint8_t*
 SgAsmCilMethodDef::get_Name_string() const
 {
   return getMetadataRoot(this).get_StringHeap()->get_Stream().data() + get_Name();
-}
-  
-    
+} 
+      
 const std::uint8_t*
 SgAsmCilMethodDef::get_Signature_blob() const
 {
   return getMetadataRoot(this).get_BlobHeap()->get_Stream().data() + get_Signature();
-}
-  
-    
+} 
+      
 const SgAsmCilMetadata*
 SgAsmCilMethodDef::get_ParamList_object() const
 {
   return getMetadataHeap(this).get_MetadataNode(get_ParamList(), SgAsmCilMetadataHeap::e_ref_param);
 }     
+      
 
 void SgAsmCilMethodImpl::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 { 
@@ -1108,29 +995,25 @@ void SgAsmCilMethodImpl::parse(std::vector<uint8_t>& buf, size_t& index, uint64_
     std::cerr << "p_MethodDeclaration = " << p_MethodDeclaration << std::endl;
   }
 }
-
-
   
-    
 const SgAsmCilMetadata*
 SgAsmCilMethodImpl::get_Class_object() const
 {
   return getMetadataHeap(this).get_MetadataNode(get_Class(), SgAsmCilMetadataHeap::e_ref_type_def);
-}    
-  
-    
+}     
+      
 const SgAsmCilMetadata*
 SgAsmCilMethodImpl::get_MethodBody_object() const
 {
   return getMetadataHeap(this).get_MetadataNode(get_MethodBody(), SgAsmCilMetadataHeap::e_ref_method_def_or_ref);
-}    
-  
-    
+}     
+      
 const SgAsmCilMetadata*
 SgAsmCilMethodImpl::get_MethodDeclaration_object() const
 {
   return getMetadataHeap(this).get_MetadataNode(get_MethodDeclaration(), SgAsmCilMetadataHeap::e_ref_method_def_or_ref);
 }     
+      
 
 void SgAsmCilMethodSemantics::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 { 
@@ -1145,23 +1028,19 @@ void SgAsmCilMethodSemantics::parse(std::vector<uint8_t>& buf, size_t& index, ui
     std::cerr << "p_Association = " << p_Association << std::endl;
   }
 }
-
-
-  
-  
-    
+   
 const SgAsmCilMetadata*
 SgAsmCilMethodSemantics::get_Method_object() const
 {
   return getMetadataHeap(this).get_MetadataNode(get_Method(), SgAsmCilMetadataHeap::e_ref_method_def);
-}    
-  
-    
+}     
+      
 const SgAsmCilMetadata*
 SgAsmCilMethodSemantics::get_Association_object() const
 {
   return getMetadataHeap(this).get_MetadataNode(get_Association(), SgAsmCilMetadataHeap::e_ref_has_semantics);
 }     
+      
 
 void SgAsmCilMethodSpec::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 { 
@@ -1174,22 +1053,19 @@ void SgAsmCilMethodSpec::parse(std::vector<uint8_t>& buf, size_t& index, uint64_
     std::cerr << "p_Instantiation = " << p_Instantiation << std::endl;
   }
 }
-
-
   
-    
 const SgAsmCilMetadata*
 SgAsmCilMethodSpec::get_Method_object() const
 {
   return getMetadataHeap(this).get_MetadataNode(get_Method(), SgAsmCilMetadataHeap::e_ref_method_def_or_ref);
-}    
-  
-    
+}     
+      
 const std::uint8_t*
 SgAsmCilMethodSpec::get_Instantiation_blob() const
 {
   return getMetadataRoot(this).get_BlobHeap()->get_Stream().data() + get_Instantiation();
 } 
+      
 
 void SgAsmCilModule::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 { 
@@ -1208,37 +1084,31 @@ void SgAsmCilModule::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t us
     std::cerr << "p_EncBaseId = " << p_EncBaseId << std::endl;
   }
 }
-
-
-  
-  
-    
+   
 const std::uint8_t*
 SgAsmCilModule::get_Name_string() const
 {
   return getMetadataRoot(this).get_StringHeap()->get_Stream().data() + get_Name();
-}
-  
-    
+} 
+      
 const std::uint32_t*
 SgAsmCilModule::get_Mvid_guid() const
 {
   return getMetadataRoot(this).get_GuidHeap()->get_Stream().data() + get_Mvid();
-}
-  
-    
+} 
+      
 const std::uint32_t*
 SgAsmCilModule::get_Encld_guid() const
 {
   return getMetadataRoot(this).get_GuidHeap()->get_Stream().data() + get_Encld();
-}
-  
-    
+} 
+      
 const std::uint32_t*
 SgAsmCilModule::get_EncBaseId_guid() const
 {
   return getMetadataRoot(this).get_GuidHeap()->get_Stream().data() + get_EncBaseId();
 } 
+      
 
 void SgAsmCilModuleRef::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 { 
@@ -1249,15 +1119,13 @@ void SgAsmCilModuleRef::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t
     std::cerr << "p_Name = " << p_Name << std::endl;
   }
 }
-
-
   
-    
 const std::uint8_t*
 SgAsmCilModuleRef::get_Name_string() const
 {
   return getMetadataRoot(this).get_StringHeap()->get_Stream().data() + get_Name();
 } 
+      
 
 void SgAsmCilNestedClass::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 { 
@@ -1270,22 +1138,19 @@ void SgAsmCilNestedClass::parse(std::vector<uint8_t>& buf, size_t& index, uint64
     std::cerr << "p_EnclosingClass = " << p_EnclosingClass << std::endl;
   }
 }
-
-
   
-    
 const SgAsmCilMetadata*
 SgAsmCilNestedClass::get_NestedClass_object() const
 {
   return getMetadataHeap(this).get_MetadataNode(get_NestedClass(), SgAsmCilMetadataHeap::e_ref_type_def);
-}    
-  
-    
+}     
+      
 const SgAsmCilMetadata*
 SgAsmCilNestedClass::get_EnclosingClass_object() const
 {
   return getMetadataHeap(this).get_MetadataNode(get_EnclosingClass(), SgAsmCilMetadataHeap::e_ref_type_def);
 }     
+      
 
 void SgAsmCilParam::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 { 
@@ -1300,17 +1165,13 @@ void SgAsmCilParam::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t use
     std::cerr << "p_Name = " << p_Name << std::endl;
   }
 }
-
-
-  
-  
-  
     
 const std::uint8_t*
 SgAsmCilParam::get_Name_blob() const
 {
   return getMetadataRoot(this).get_BlobHeap()->get_Stream().data() + get_Name();
 } 
+      
 
 void SgAsmCilProperty::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 { 
@@ -1325,23 +1186,19 @@ void SgAsmCilProperty::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t 
     std::cerr << "p_Type = " << p_Type << std::endl;
   }
 }
-
-
-  
-  
-    
+   
 const std::uint8_t*
 SgAsmCilProperty::get_Name_string() const
 {
   return getMetadataRoot(this).get_StringHeap()->get_Stream().data() + get_Name();
-}
-  
-    
+} 
+      
 const std::uint8_t*
 SgAsmCilProperty::get_Type_blob() const
 {
   return getMetadataRoot(this).get_BlobHeap()->get_Stream().data() + get_Type();
 } 
+      
 
 void SgAsmCilPropertyMap::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 { 
@@ -1354,22 +1211,19 @@ void SgAsmCilPropertyMap::parse(std::vector<uint8_t>& buf, size_t& index, uint64
     std::cerr << "p_PropertyList = " << p_PropertyList << std::endl;
   }
 }
-
-
   
-    
 const SgAsmCilMetadata*
 SgAsmCilPropertyMap::get_Parent_object() const
 {
   return getMetadataHeap(this).get_MetadataNode(get_Parent(), SgAsmCilMetadataHeap::e_ref_type_def);
-}    
-  
-    
+}     
+      
 const SgAsmCilMetadata*
 SgAsmCilPropertyMap::get_PropertyList_object() const
 {
   return getMetadataHeap(this).get_MetadataNode(get_PropertyList(), SgAsmCilMetadataHeap::e_ref_property);
 }     
+      
 
 void SgAsmCilStandAloneSig::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 { 
@@ -1380,15 +1234,13 @@ void SgAsmCilStandAloneSig::parse(std::vector<uint8_t>& buf, size_t& index, uint
     std::cerr << "p_Signature = " << p_Signature << std::endl;
   }
 }
-
-
   
-    
 const std::uint8_t*
 SgAsmCilStandAloneSig::get_Signature_blob() const
 {
   return getMetadataRoot(this).get_BlobHeap()->get_Stream().data() + get_Signature();
 } 
+      
 
 void SgAsmCilTypeDef::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 { 
@@ -1409,44 +1261,37 @@ void SgAsmCilTypeDef::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t u
     std::cerr << "p_MethodList = " << p_MethodList << std::endl;
   }
 }
-
-
-  
-  
-    
+   
 const std::uint8_t*
 SgAsmCilTypeDef::get_TypeName_string() const
 {
   return getMetadataRoot(this).get_StringHeap()->get_Stream().data() + get_TypeName();
-}
-  
-    
+} 
+      
 const std::uint8_t*
 SgAsmCilTypeDef::get_TypeNamespace_string() const
 {
   return getMetadataRoot(this).get_StringHeap()->get_Stream().data() + get_TypeNamespace();
-}
-  
-    
+} 
+      
 const SgAsmCilMetadata*
 SgAsmCilTypeDef::get_Extends_object() const
 {
   return getMetadataHeap(this).get_MetadataNode(get_Extends(), SgAsmCilMetadataHeap::e_ref_type_def_or_ref);
-}    
-  
-    
+}     
+      
 const SgAsmCilMetadata*
 SgAsmCilTypeDef::get_FieldList_object() const
 {
   return getMetadataHeap(this).get_MetadataNode(get_FieldList(), SgAsmCilMetadataHeap::e_ref_field);
-}    
-  
-    
+}     
+      
 const SgAsmCilMetadata*
 SgAsmCilTypeDef::get_MethodList_object() const
 {
   return getMetadataHeap(this).get_MetadataNode(get_MethodList(), SgAsmCilMetadataHeap::e_ref_method_def);
 }     
+      
 
 void SgAsmCilTypeRef::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 { 
@@ -1461,29 +1306,25 @@ void SgAsmCilTypeRef::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t u
     std::cerr << "p_TypeNamespace = " << p_TypeNamespace << std::endl;
   }
 }
-
-
   
-    
 const SgAsmCilMetadata*
 SgAsmCilTypeRef::get_ResolutionScope_object() const
 {
   return getMetadataHeap(this).get_MetadataNode(get_ResolutionScope(), SgAsmCilMetadataHeap::e_ref_resolution_scope);
-}    
-  
-    
+}     
+      
 const std::uint8_t*
 SgAsmCilTypeRef::get_TypeName_string() const
 {
   return getMetadataRoot(this).get_StringHeap()->get_Stream().data() + get_TypeName();
-}
-  
-    
+} 
+      
 const std::uint8_t*
 SgAsmCilTypeRef::get_TypeNamespace_string() const
 {
   return getMetadataRoot(this).get_StringHeap()->get_Stream().data() + get_TypeNamespace();
 } 
+      
 
 void SgAsmCilTypeSpec::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing)
 { 
@@ -1494,15 +1335,13 @@ void SgAsmCilTypeSpec::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t 
     std::cerr << "p_Signature = " << p_Signature << std::endl;
   }
 }
-
-
   
-    
 const std::uint8_t*
 SgAsmCilTypeSpec::get_Signature_blob() const
 {
   return getMetadataRoot(this).get_BlobHeap()->get_Stream().data() + get_Signature();
 } 
+       
 
 void SgAsmCilUint8Heap::parse(std::vector<uint8_t>& buf, size_t startOfMetaData)
 {

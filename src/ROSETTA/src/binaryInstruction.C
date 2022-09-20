@@ -19921,21 +19921,9 @@ void Grammar::setUpBinaryInstructions() {
 
     public:
         void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
-
-  
-  
-  
-  
-  
-  
-  
-    
-        const std::uint8_t* get_PublicKey_blob() const;
-  
-    
-        const std::uint8_t* get_Name_string() const;
-  
-    
+        
+        const std::uint8_t* get_PublicKey_blob() const;  
+        const std::uint8_t* get_Name_string() const;  
         const std::uint8_t* get_Culture_string() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -20044,10 +20032,7 @@ void Grammar::setUpBinaryInstructions() {
 
     public:
         void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
-
-  
-  
-          
+           
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -20117,8 +20102,7 @@ void Grammar::setUpBinaryInstructions() {
 
     public:
         void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
-
-          
+         
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -20288,23 +20272,10 @@ void Grammar::setUpBinaryInstructions() {
 
     public:
         void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
-
-  
-  
-  
-  
-  
-  
-    
-        const std::uint8_t* get_PublicKeyOrToken_blob() const;
-  
-    
-        const std::uint8_t* get_Name_string() const;
-  
-    
-        const std::uint8_t* get_Culture_string() const;
-  
-    
+       
+        const std::uint8_t* get_PublicKeyOrToken_blob() const;  
+        const std::uint8_t* get_Name_string() const;  
+        const std::uint8_t* get_Culture_string() const;  
         const std::uint8_t* get_HashValue_blob() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -20426,12 +20397,7 @@ void Grammar::setUpBinaryInstructions() {
 
     public:
         void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
-
-  
-  
-  
-  
-    
+     
         const SgAsmCilMetadata* get_AssemblyRefOS_object() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -20517,10 +20483,7 @@ void Grammar::setUpBinaryInstructions() {
 
     public:
         void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
-
-  
-  
-    
+   
         const SgAsmCilMetadata* get_AssemblyRef_object() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -20615,10 +20578,6 @@ void Grammar::setUpBinaryInstructions() {
 
     public:
         void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
-
-  
-  
-  
     
         const SgAsmCilMetadata* get_Parent_object() const;        
 
@@ -20729,14 +20688,8 @@ void Grammar::setUpBinaryInstructions() {
 
     public:
         void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
-
-  
-  
-  
     
-        const SgAsmCilMetadata* get_Parent_object() const;
-  
-    
+        const SgAsmCilMetadata* get_Parent_object() const;  
         const std::uint8_t* get_Value_blob() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -20835,15 +20788,9 @@ void Grammar::setUpBinaryInstructions() {
 
     public:
         void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
-
   
-    
-        const SgAsmCilMetadata* get_Parent_object() const;
-  
-    
-        const SgAsmCilMetadata* get_Type_object() const;
-  
-    
+        const SgAsmCilMetadata* get_Parent_object() const;  
+        const SgAsmCilMetadata* get_Type_object() const;  
         const std::uint8_t* get_Value_blob() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -20940,13 +20887,8 @@ void Grammar::setUpBinaryInstructions() {
 
     public:
         void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
-
-  
-  
-    
-        const SgAsmCilMetadata* get_Parent_object() const;
-  
-    
+   
+        const SgAsmCilMetadata* get_Parent_object() const;  
         const std::uint8_t* get_PermissionSet_blob() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -21043,13 +20985,8 @@ void Grammar::setUpBinaryInstructions() {
 
     public:
         void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
-
-  
-  
-    
-        const std::uint8_t* get_Name_string() const;
-  
-    
+   
+        const std::uint8_t* get_Name_string() const;  
         const SgAsmCilMetadata* get_EventType_object() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -21133,12 +21070,8 @@ void Grammar::setUpBinaryInstructions() {
 
     public:
         void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
-
   
-    
-        const SgAsmCilMetadata* get_Parent_object() const;
-  
-    
+        const SgAsmCilMetadata* get_Parent_object() const;  
         const SgAsmCilMetadata* get_EventList_object() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -21259,17 +21192,9 @@ void Grammar::setUpBinaryInstructions() {
 
     public:
         void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
-
-  
-  
-  
     
-        const std::uint8_t* get_TypeName_string() const;
-  
-    
-        const std::uint8_t* get_TypeNamespace_string() const;
-  
-    
+        const std::uint8_t* get_TypeName_string() const;  
+        const std::uint8_t* get_TypeNamespace_string() const;  
         const SgAsmCilMetadata* get_Implementation_object() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -21370,13 +21295,8 @@ void Grammar::setUpBinaryInstructions() {
 
     public:
         void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
-
-  
-  
-    
-        const std::uint8_t* get_Name_string() const;
-  
-    
+   
+        const std::uint8_t* get_Name_string() const;  
         const std::uint8_t* get_Signature_blob() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -21460,10 +21380,7 @@ void Grammar::setUpBinaryInstructions() {
 
     public:
         void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
-
-  
-  
-    
+   
         const SgAsmCilMetadata* get_Field_object() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -21545,12 +21462,8 @@ void Grammar::setUpBinaryInstructions() {
 
     public:
         void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
-
   
-    
-        const SgAsmCilMetadata* get_Parent_object() const;
-  
-    
+        const SgAsmCilMetadata* get_Parent_object() const;  
         const std::uint8_t* get_NativeType_blob() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -21632,10 +21545,7 @@ void Grammar::setUpBinaryInstructions() {
 
     public:
         void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
-
-  
-  
-    
+   
         const SgAsmCilMetadata* get_Field_object() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -21730,13 +21640,8 @@ void Grammar::setUpBinaryInstructions() {
 
     public:
         void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
-
-  
-  
-    
-        const std::uint8_t* get_Name_string() const;
-  
-    
+   
+        const std::uint8_t* get_Name_string() const;  
         const std::uint8_t* get_HashValue_blob() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -21846,14 +21751,8 @@ void Grammar::setUpBinaryInstructions() {
 
     public:
         void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
-
-  
-  
-  
     
-        const SgAsmCilMetadata* get_Owner_object() const;
-  
-    
+        const SgAsmCilMetadata* get_Owner_object() const;  
         const std::uint8_t* get_Name_string() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -21939,12 +21838,8 @@ void Grammar::setUpBinaryInstructions() {
 
     public:
         void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
-
   
-    
-        const SgAsmCilMetadata* get_Owner_object() const;
-  
-    
+        const SgAsmCilMetadata* get_Owner_object() const;  
         const SgAsmCilMetadata* get_Constraint_object() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -22052,16 +21947,9 @@ void Grammar::setUpBinaryInstructions() {
 
     public:
         void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
-
-  
-  
-    
-        const SgAsmCilMetadata* get_MemberForwarded_object() const;
-  
-    
-        const std::uint8_t* get_ImportName_string() const;
-  
-    
+   
+        const SgAsmCilMetadata* get_MemberForwarded_object() const;  
+        const std::uint8_t* get_ImportName_string() const;  
         const SgAsmCilMetadata* get_ImportScope_object() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -22147,12 +22035,8 @@ void Grammar::setUpBinaryInstructions() {
 
     public:
         void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
-
   
-    
-        const SgAsmCilMetadata* get_Class_object() const;
-  
-    
+        const SgAsmCilMetadata* get_Class_object() const;  
         const SgAsmCilMetadata* get_Interface_object() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -22260,14 +22144,8 @@ void Grammar::setUpBinaryInstructions() {
 
     public:
         void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
-
-  
-  
-  
     
-        const std::uint8_t* get_Name_string() const;
-  
-    
+        const std::uint8_t* get_Name_string() const;  
         const SgAsmCilMetadata* get_Implementation_object() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -22366,15 +22244,9 @@ void Grammar::setUpBinaryInstructions() {
 
     public:
         void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
-
   
-    
-        const SgAsmCilMetadata* get_Class_object() const;
-  
-    
-        const std::uint8_t* get_Name_string() const;
-  
-    
+        const SgAsmCilMetadata* get_Class_object() const;  
+        const std::uint8_t* get_Name_string() const;  
         const std::uint8_t* get_Signature_blob() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -22562,18 +22434,9 @@ void Grammar::setUpBinaryInstructions() {
 
     public:
         void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
-
-  
-  
-  
-  
-    
-        const std::uint8_t* get_Name_string() const;
-  
-    
-        const std::uint8_t* get_Signature_blob() const;
-  
-    
+     
+        const std::uint8_t* get_Name_string() const;  
+        const std::uint8_t* get_Signature_blob() const;  
         const SgAsmCilMetadata* get_ParamList_object() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -22680,15 +22543,9 @@ void Grammar::setUpBinaryInstructions() {
 
     public:
         void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
-
   
-    
-        const SgAsmCilMetadata* get_Class_object() const;
-  
-    
-        const SgAsmCilMetadata* get_MethodBody_object() const;
-  
-    
+        const SgAsmCilMetadata* get_Class_object() const;  
+        const SgAsmCilMetadata* get_MethodBody_object() const;  
         const SgAsmCilMetadata* get_MethodDeclaration_object() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -22785,13 +22642,8 @@ void Grammar::setUpBinaryInstructions() {
 
     public:
         void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
-
-  
-  
-    
-        const SgAsmCilMetadata* get_Method_object() const;
-  
-    
+   
+        const SgAsmCilMetadata* get_Method_object() const;  
         const SgAsmCilMetadata* get_Association_object() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -22875,12 +22727,8 @@ void Grammar::setUpBinaryInstructions() {
 
     public:
         void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
-
   
-    
-        const SgAsmCilMetadata* get_Method_object() const;
-  
-    
+        const SgAsmCilMetadata* get_Method_object() const;  
         const std::uint8_t* get_Instantiation_blob() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -23001,19 +22849,10 @@ void Grammar::setUpBinaryInstructions() {
 
     public:
         void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
-
-  
-  
-    
-        const std::uint8_t* get_Name_string() const;
-  
-    
-        const std::uint32_t* get_Mvid_guid() const;
-  
-    
-        const std::uint32_t* get_Encld_guid() const;
-  
-    
+   
+        const std::uint8_t* get_Name_string() const;  
+        const std::uint32_t* get_Mvid_guid() const;  
+        const std::uint32_t* get_Encld_guid() const;  
         const std::uint32_t* get_EncBaseId_guid() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -23088,9 +22927,7 @@ void Grammar::setUpBinaryInstructions() {
 
     public:
         void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
-
   
-    
         const std::uint8_t* get_Name_string() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -23170,12 +23007,8 @@ void Grammar::setUpBinaryInstructions() {
 
     public:
         void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
-
   
-    
-        const SgAsmCilMetadata* get_NestedClass_object() const;
-  
-    
+        const SgAsmCilMetadata* get_NestedClass_object() const;  
         const SgAsmCilMetadata* get_EnclosingClass_object() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -23270,10 +23103,6 @@ void Grammar::setUpBinaryInstructions() {
 
     public:
         void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
-
-  
-  
-  
     
         const std::uint8_t* get_Name_blob() const;        
 
@@ -23371,13 +23200,8 @@ void Grammar::setUpBinaryInstructions() {
 
     public:
         void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
-
-  
-  
-    
-        const std::uint8_t* get_Name_string() const;
-  
-    
+   
+        const std::uint8_t* get_Name_string() const;  
         const std::uint8_t* get_Type_blob() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -23461,12 +23285,8 @@ void Grammar::setUpBinaryInstructions() {
 
     public:
         void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
-
   
-    
-        const SgAsmCilMetadata* get_Parent_object() const;
-  
-    
+        const SgAsmCilMetadata* get_Parent_object() const;  
         const SgAsmCilMetadata* get_PropertyList_object() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -23535,9 +23355,7 @@ void Grammar::setUpBinaryInstructions() {
 
     public:
         void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
-
   
-    
         const std::uint8_t* get_Signature_blob() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -23669,22 +23487,11 @@ void Grammar::setUpBinaryInstructions() {
 
     public:
         void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
-
-  
-  
-    
-        const std::uint8_t* get_TypeName_string() const;
-  
-    
-        const std::uint8_t* get_TypeNamespace_string() const;
-  
-    
-        const SgAsmCilMetadata* get_Extends_object() const;
-  
-    
-        const SgAsmCilMetadata* get_FieldList_object() const;
-  
-    
+   
+        const std::uint8_t* get_TypeName_string() const;  
+        const std::uint8_t* get_TypeNamespace_string() const;  
+        const SgAsmCilMetadata* get_Extends_object() const;  
+        const SgAsmCilMetadata* get_FieldList_object() const;  
         const SgAsmCilMetadata* get_MethodList_object() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -23787,15 +23594,9 @@ void Grammar::setUpBinaryInstructions() {
 
     public:
         void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
-
   
-    
-        const SgAsmCilMetadata* get_ResolutionScope_object() const;
-  
-    
-        const std::uint8_t* get_TypeName_string() const;
-  
-    
+        const SgAsmCilMetadata* get_ResolutionScope_object() const;  
+        const std::uint8_t* get_TypeName_string() const;  
         const std::uint8_t* get_TypeNamespace_string() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -23866,9 +23667,7 @@ void Grammar::setUpBinaryInstructions() {
 
     public:
         void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
-
   
-    
         const std::uint8_t* get_Signature_blob() const;        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -25069,8 +24868,6 @@ void Grammar::setUpBinaryInstructions() {
 
 
 // --- END generated code. ------------------------------------------------------
-
-
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
