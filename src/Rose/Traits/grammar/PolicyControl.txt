@@ -1,0 +1,5 @@
+# -*- conf -*-
+
+lists.h:      disable namespace_capitalization namespace_header_exists doxygen_input
+predicates.h: disable namespace_capitalization namespace_header_exists doxygen_input
+traversal.h:  disable namespace_capitalization namespace_header_exists doxygen_input

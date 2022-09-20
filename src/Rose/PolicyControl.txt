@@ -1,0 +1,3 @@
+# -*- conf -*-
+
+metaprog.h: disable namespace_capitalization english_words
