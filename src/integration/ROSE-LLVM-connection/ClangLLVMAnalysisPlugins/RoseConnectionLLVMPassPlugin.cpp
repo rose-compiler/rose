@@ -32,20 +32,19 @@ PreservedAnalyses ROSEPass::run(Module &M, ModuleAnalysisManager &MAM) {
 
   for (gv_iter = M.global_begin(); gv_iter != M.global_end(); gv_iter++)
   {
-     outs() << header << "\n";
-     runOnGVariable(*gv_iter);
+    outs() << header << "\n";
+    runOnGVariable(*gv_iter);
   }
   
   // Functions
   for (func_iter = M.begin(); func_iter != M.end(); func_iter++)
   {
-
-     // check the alias analysis only when the function definition is defined
-     if(!func_iter->isDeclaration())
-     {
-       outs() << header << "\n";
-       runOnFunction(*func_iter, FAM);
-     }
+    // check the alias analysis only when the function definition is defined
+    if(!func_iter->isDeclaration())
+    {
+      outs() << header << "\n";
+      runOnFunction(*func_iter, FAM);
+    }
   }
 
   boost::property_tree::json_parser::write_json(ss, ptIR);
@@ -65,166 +64,160 @@ PreservedAnalyses ROSEPass::run(Module &M, ModuleAnalysisManager &MAM) {
 
 PreservedAnalyses ROSEPass::runOnFunction(Function &F, FunctionAnalysisManager &FAM)
 {
-	unsigned int i = 0;
-	Function::arg_iterator arg_iter;
-	Function::iterator	bb_iter;
-	BasicBlock::iterator inst_iter;
-   
+  unsigned int i = 0;
+  Function::arg_iterator arg_iter;
+  Function::iterator  bb_iter;
+  BasicBlock::iterator inst_iter;
 
-        AAResults& AAR = FAM.getResult<AAManager>(F);
-        DependenceInfo& Dinfo = FAM.getResult<DependenceAnalysis >(F);
+  AAResults& AAR = FAM.getResult<AAManager>(F);
+  DependenceInfo& Dinfo = FAM.getResult<DependenceAnalysis >(F);
 
-        std::string funcName = F.getName().str(); 
- 	outs() << "Name: " << funcName << "\n";
-      
-        //ptIR.put(funcName,jsonval);
-	
-	// Return type
-	outs() << i << ". Return Type: " << *F.getReturnType() << "\n";
-	i += 1;
+  std::string funcName = F.getName().str(); 
+  outs() << "Name: " << funcName << "\n";
+  //ptIR.put(funcName,jsonval);
+  
+  // Return type
+  outs() << i << ". Return Type: " << *F.getReturnType() << "\n";
+  i += 1;
 
-	// Arguments
-	outs() << i << ". Arguments: ";
-	if (F.arg_size() == 0)
-	{
-		outs() << "No Arguments" << "\n";
-	}
-	else
-	{
-		for (arg_iter = F.arg_begin(); arg_iter != F.arg_end(); arg_iter++)
-		{
-			outs() << *arg_iter;
-			
-			if (arg_iter != F.arg_end())
-			{
-				outs() << ", ";
-			}
-		}
+  // Arguments
+  outs() << i << ". Arguments: ";
+  if (F.arg_size() == 0)
+  {
+    outs() << "No Arguments" << "\n";
+  }
+  else
+  {
+    for (arg_iter = F.arg_begin(); arg_iter != F.arg_end(); arg_iter++)
+    {
+      outs() << *arg_iter;
+      if (arg_iter != F.arg_end())
+      {
+        outs() << ", ";
+      }
+    }
+    outs() << "\n";
+  }
+  i += 1;
 
-		outs() << "\n";
-	}
-	i += 1;
+  // map to record all operands, and their line/column info from the instruction
+  std::map<Value*, std::pair<int,int>> valueList;
+  std::map<Instruction*, std::pair<int,int>> instList;
+  // BasicBlocks
+  outs() << i << ". IR: " << "\n";
+  if (F.isDeclaration() == true)
+  {
+    outs() << "Declaration. No IR" << "\n";
+  }
+  else
+  {
+    for (bb_iter = F.begin(); bb_iter != F.end(); bb_iter++)
+    {
+      // Each BB is made of one/more instructions.
+      // Print them.
+      for (inst_iter = (*bb_iter).begin(); inst_iter != (*bb_iter).end(); inst_iter++)
+      {
+        std::string jsonval = "";
+        std::stringstream address;
+        address << &(*inst_iter);  
+        //jsonval = funcName+".instruction";
+        //ptIR.put(address.str(), jsonval);
+        std::string nodeAddr = funcName + "." + address.str(); 
+        //ptIR.put(jsonval, address.str());
 
-        // map to record all operands, and their line/column info from the instruction
-        std::map<Value*, std::pair<int,int>> valueList;
-        std::map<Instruction*, std::pair<int,int>> instList;
-	// BasicBlocks
-	outs() << i << ". IR: " << "\n";
-	if (F.isDeclaration() == true)
-	{
-		outs() << "Declaration. No IR" << "\n";
-	}
-	else
-	{
-		for (bb_iter = F.begin(); bb_iter != F.end(); bb_iter++)
-		{
-			// Each BB is made of one/more instructions.
-			// Print them.
-			for (inst_iter = (*bb_iter).begin(); inst_iter != (*bb_iter).end(); inst_iter++)
-			{
-                                std::string jsonval = "";
-                                std::stringstream address;
-                                address << &(*inst_iter);  
-                                //jsonval = funcName+".instruction";
-                                //ptIR.put(address.str(), jsonval);
-                                std::string nodeAddr = funcName + "." + address.str(); 
-                                //ptIR.put(jsonval, address.str());
-
-                                std::pair<int, int> srcinfo;
-                                StringRef File;
-                                StringRef Dir;
-                                if(hasDebugInfo())
-                                if (DILocation *Loc = inst_iter->getDebugLoc()) { // Here *inst_iter is an LLVM instruction
-                                    //Line = Loc->getLine();
-                                    //Column = inst_iter->getDebugLoc()->getColumn();
-                                    srcinfo.first = Loc->getLine();
-                                    srcinfo.second = inst_iter->getDebugLoc()->getColumn();
-                                    File = Loc->getFilename();
-                                    Dir = Loc->getDirectory();
-                                    // outs() << "inst file: "<< File << " line:column = " << Line << ":" << Column  << "\n"; 
-                                    std::string str1;
-                                    llvm::raw_string_ostream(str1) << *inst_iter;
-                                    jsonval = nodeAddr+".instruction";
-                                    ptIR.put(jsonval, str1);
-                                    jsonval = nodeAddr+".filename";
-                                    ptIR.put(jsonval, File.str());
-                                    jsonval = nodeAddr+".beginLine";
-                                    ptIR.put(jsonval, std::to_string(srcinfo.first));
-                                    jsonval = nodeAddr+".beginColumn";
-                                    ptIR.put(jsonval, std::to_string(srcinfo.second));
-                                }
-
-                                Instruction* inst = &*inst_iter;
-                                if(instList.find(inst) == instList.end())
-                                   instList.insert({inst,srcinfo});
-
-                                for(unsigned opi = 0; opi < inst_iter->getNumOperands() ; opi++)
-                                {
-                                  Value* val = inst_iter->getOperand (opi);
-                                  if(valueList.find(val) == valueList.end())
-                                     valueList.insert({val,srcinfo});
-                                }
-                                if(hasDebugInfo())	
-				  outs() << "[" << srcinfo.first << ":" << srcinfo.second << "] ";
-                                outs()  <<  *inst_iter << "\n";
-			}
-		}
-	}
-
-        outs()  << "================================================== " << "\n";
-        outs()  << "Data dependence analysis: " << "\n";
-        for(std::map<Instruction*, std::pair<int,int>>::iterator ii = instList.begin(); ii != instList.end(); ii++)
-        {
-          for(std::map<Instruction*, std::pair<int,int>>::iterator jj = std::next(ii); jj != instList.end(); jj++)
-          {
-             
-             std::string str1, str2;
-             Instruction* i1 = ii->first;
-             llvm::raw_string_ostream(str1) << *i1;
-             std::pair<int,int> src1 = ii->second;
-             std::string i1info = getInstInfo(i1, src1);
-
-             Instruction* i2 = jj->first;
-             llvm::raw_string_ostream(str2) << *i2;
-             std::pair<int,int> src2 = jj->second;
-             std::string i2info = getInstInfo(i2, src2);
-
-             std::unique_ptr< Dependence >  DAresult = Dinfo.depends(i1, i2, false);
-             if(DAresult != nullptr)
-             {
-               outs() << getDAResult(DAresult) << "\n";
-               outs() << "\t inst 1: " << str1 << "\n" << i1info << "\n" ;
-               outs() << "\t inst 2: " << str2 << "\n" << i2info << "\n" ;
-               depInfo newDep(std::make_pair(ii->first, ii->second), std::make_pair(jj->first, jj->second), getDAResult(DAresult));
-               depSet.push_back(newDep);
-             }
-          }
-        }
-        outs()  << "================================================== " << "\n";
-        outs()  << "Alias analysis: " << "\n";
-        for(std::map<Value*, std::pair<int,int>>::iterator ii = valueList.begin(); ii != valueList.end(); ii++)
-        {
-          for(std::map<Value*, std::pair<int,int>>::iterator jj = std::next(ii); jj != valueList.end(); jj++)
-          {
-             Value* v1 = ii->first;
-             std::pair<int,int> src1 = ii->second;
-             std::string v1info = getOperandInfo(v1, src1);
-
-             Value* v2 = jj->first;
-             std::pair<int,int> src2 = jj->second;
-             std::string v2info = getOperandInfo(v2, src2);
-
-             const AliasResult::Kind result = AAR.alias(v1, v2);
-             if(static_cast<int>(result) != 0)
-             {
-                outs() <<  getAliasResult(result) << ":\n";
-                outs() << "\t op1: " << v1info << "\n" ;
-                outs() << "\t op2: " << v2info << "\n" ;
-             }
-          }
+        std::pair<int, int> srcinfo;
+        StringRef File;
+        StringRef Dir;
+        if(hasDebugInfo())
+        if (DILocation *Loc = inst_iter->getDebugLoc()) { // Here *inst_iter is an LLVM instruction
+          //Line = Loc->getLine();
+          //Column = inst_iter->getDebugLoc()->getColumn();
+          srcinfo.first = Loc->getLine();
+          srcinfo.second = inst_iter->getDebugLoc()->getColumn();
+          File = Loc->getFilename();
+          Dir = Loc->getDirectory();
+          // outs() << "inst file: "<< File << " line:column = " << Line << ":" << Column  << "\n"; 
+          std::string str1;
+          llvm::raw_string_ostream(str1) << *inst_iter;
+          jsonval = nodeAddr+".instruction";
+          ptIR.put(jsonval, str1);
+          jsonval = nodeAddr+".filename";
+          ptIR.put(jsonval, File.str());
+          jsonval = nodeAddr+".beginLine";
+          ptIR.put(jsonval, std::to_string(srcinfo.first));
+          jsonval = nodeAddr+".beginColumn";
+          ptIR.put(jsonval, std::to_string(srcinfo.second));
         }
 
-  	return PreservedAnalyses::all();
+        Instruction* inst = &*inst_iter;
+        if(instList.find(inst) == instList.end())
+          instList.insert({inst,srcinfo});
+
+        for(unsigned opi = 0; opi < inst_iter->getNumOperands() ; opi++)
+        {
+          Value* val = inst_iter->getOperand (opi);
+          if(valueList.find(val) == valueList.end())
+            valueList.insert({val,srcinfo});
+        }
+        if(hasDebugInfo())  
+          outs() << "[" << srcinfo.first << ":" << srcinfo.second << "] ";
+          outs()  <<  *inst_iter << "\n";
+      }
+    }
+  }
+
+  outs()  << "================================================== " << "\n";
+  outs()  << "Data dependence analysis: " << "\n";
+  for(std::map<Instruction*, std::pair<int,int>>::iterator ii = instList.begin(); ii != instList.end(); ii++)
+  {
+    for(std::map<Instruction*, std::pair<int,int>>::iterator jj = std::next(ii); jj != instList.end(); jj++)
+    {
+      std::string str1, str2;
+      Instruction* i1 = ii->first;
+      llvm::raw_string_ostream(str1) << *i1;
+      std::pair<int,int> src1 = ii->second;
+      std::string i1info = getInstInfo(i1, src1);
+
+      Instruction* i2 = jj->first;
+      llvm::raw_string_ostream(str2) << *i2;
+      std::pair<int,int> src2 = jj->second;
+      std::string i2info = getInstInfo(i2, src2);
+
+      std::unique_ptr< Dependence >  DAresult = Dinfo.depends(i1, i2, false);
+      if(DAresult != nullptr)
+      {
+        outs() << getDAResult(DAresult) << "\n";
+        outs() << "\t inst 1: " << str1 << "\n" << i1info << "\n" ;
+        outs() << "\t inst 2: " << str2 << "\n" << i2info << "\n" ;
+        depInfo newDep(std::make_pair(ii->first, ii->second), std::make_pair(jj->first, jj->second), getDAResult(DAresult));
+        depSet.push_back(newDep);
+      }
+    }
+  }
+  outs()  << "================================================== " << "\n";
+  outs()  << "Alias analysis: " << "\n";
+  for(std::map<Value*, std::pair<int,int>>::iterator ii = valueList.begin(); ii != valueList.end(); ii++)
+  {
+    for(std::map<Value*, std::pair<int,int>>::iterator jj = std::next(ii); jj != valueList.end(); jj++)
+    {
+       Value* v1 = ii->first;
+       std::pair<int,int> src1 = ii->second;
+       std::string v1info = getOperandInfo(v1, src1);
+
+       Value* v2 = jj->first;
+       std::pair<int,int> src2 = jj->second;
+       std::string v2info = getOperandInfo(v2, src2);
+
+       const AliasResult::Kind result = AAR.alias(v1, v2);
+       if(static_cast<int>(result) != 0)
+       {
+          outs() <<  getAliasResult(result) << ":\n";
+          outs() << "\t op1: " << v1info << "\n" ;
+          outs() << "\t op2: " << v2info << "\n" ;
+       }
+    }
+  }
+  return PreservedAnalyses::all();
 }
 
 void ROSEPass::checkCompiledWithDebugInfo(const Module& M) {
@@ -233,9 +226,9 @@ void ROSEPass::checkCompiledWithDebugInfo(const Module& M) {
 
 
 PreservedAnalyses ROSEPass::runOnGVariable(GlobalVariable &G)
-{	
-	outs() << G << "\n";
-	return PreservedAnalyses::all();
+{  
+  outs() << G << "\n";
+  return PreservedAnalyses::all();
 }
 
 
@@ -335,8 +328,6 @@ llvm::PassPluginLibraryInfo getROSEPassPluginInfo() {
               [&](ModulePassManager &MPM, OptimizationLevel Level) {
                 MPM.addPass(ROSEPass());
               });
-
-
           }};
 }
 

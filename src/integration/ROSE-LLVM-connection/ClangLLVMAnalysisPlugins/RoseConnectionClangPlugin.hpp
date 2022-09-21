@@ -14,8 +14,6 @@
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/optional.hpp>
 
-using namespace clang;
-
 boost::property_tree::ptree pt;
 
 #endif // ROSE_CONNECTION_CLANG_PLUGIN_H
