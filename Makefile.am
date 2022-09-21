@@ -88,13 +88,8 @@ tools:
 	$(MAKE) -C $(top_builddir)/tools
 	$(MAKE) -C $(top_builddir)/exampleTranslators
 	$(MAKE) -C $(top_builddir)/projects/compass
-	$(MAKE) -C $(top_builddir)/projects/autoParallelization
 	$(MAKE) -C $(top_builddir)/projects/arrayOptimization
-	$(MAKE) -C $(top_builddir)/projects/autoTuning
 	$(MAKE) -C $(top_builddir)/projects/extractMPISkeleton
-	$(MAKE) -C $(top_builddir)/projects/pragmaParsing
-	$(MAKE) -C $(top_builddir)/projects/UpcTranslation
-	$(MAKE) -C $(top_builddir)/projects/ArithmeticMeasureTool
 if ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT
 	$(MAKE) -C $(top_builddir)/tutorial
 endif
@@ -108,13 +103,8 @@ install-tools: install-core tools
 	$(MAKE) install -C $(top_builddir)/tools
 	$(MAKE) install -C $(top_builddir)/exampleTranslators
 	$(MAKE) install -C $(top_builddir)/projects/compass
-	$(MAKE) install -C $(top_builddir)/projects/autoParallelization
 	$(MAKE) install -C $(top_builddir)/projects/arrayOptimization
-	$(MAKE) install -C $(top_builddir)/projects/autoTuning
 	$(MAKE) install -C $(top_builddir)/projects/extractMPISkeleton
-	$(MAKE) install -C $(top_builddir)/projects/pragmaParsing
-	$(MAKE) install -C $(top_builddir)/projects/UpcTranslation
-	$(MAKE) install -C $(top_builddir)/projects/ArithmeticMeasureTool
 	$(MAKE) install -C $(top_builddir)/tests/nonsmoke/functional/roseTests/astInliningTests
 	$(MAKE) install -C $(top_builddir)/tests/nonsmoke/functional/roseTests/astOutliningTests
 if ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT
@@ -163,13 +153,8 @@ check-tools: tools
 	$(MAKE) check -C $(top_builddir)/tools
 	$(MAKE) check -C $(top_builddir)/exampleTranslators
 	$(MAKE) check -C $(top_builddir)/projects/compass
-	$(MAKE) check -C $(top_builddir)/projects/autoParallelization
 	$(MAKE) check -C $(top_builddir)/projects/arrayOptimization
-	$(MAKE) check -C $(top_builddir)/projects/autoTuning
 	$(MAKE) check -C $(top_builddir)/projects/extractMPISkeleton
-	$(MAKE) check -C $(top_builddir)/projects/pragmaParsing
-	$(MAKE) check -C $(top_builddir)/projects/UpcTranslation
-	$(MAKE) check -C $(top_builddir)/projects/ArithmeticMeasureTool
 if ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT
 	$(MAKE) check -C $(top_builddir)/tutorial
 endif
@@ -480,8 +465,6 @@ docs: FORCE_DOCS_TO_BE_MADE
 	   $(MAKE) -Ctests/nonsmoke/functional/roseTests/astInterfaceTests check && \
 	   $(MAKE) -Ctests/nonsmoke/functional/roseTests/ompLoweringTests check && \
 	   $(MAKE) -Ctests/nonsmoke/functional/CompileTests/UPC_tests check && \
-	   $(MAKE) -Cprojects/UpcTranslation/tests check && \
-	   $(MAKE) -Cprojects/autoParallelization/tests check && \
 	   $(MAKE) -Cdocs docs && \
 	   $(MAKE) -C$(compass_build_tooldir)/compass docs; \
 	else \
