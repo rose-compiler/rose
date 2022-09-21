@@ -208,7 +208,7 @@ linkcolor=black,
 \input{OpenMPsupport}
 
 % Liao, 7/15/2009: describing the support of UPC
-\input{UPCsupport}
+%\input{UPCsupport}
 
 \input{binaryAnalysis}
 
