@@ -112,7 +112,7 @@ endif
 ########################################################################################################################
 
 # The developer-specific project lists used for portability testing have been moved to
-# project/MatrixTesting/lib/matrix/docker-scripts/steps so they can be used by all
+# tools/PortabilityTesting/lib/matrix/docker-scripts/steps so they can be used by all
 # supported build systems. [Matzke, 2019-04-24]
 
 ########################################################################################################################

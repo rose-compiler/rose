@@ -60,9 +60,9 @@ run env DEBIAN_FRONTEND=noninteractive apt-get -y install docker-ce docker-ce-cl
 # FIXME: Once debugging is finished, change the script URLs to something more stable
 run env DEBIAN_FRONTEND=noninteractive apt-get -y install git wget sudo
 run : serial 2022-08-18b
-run cd; wget -O rose-matrix-slave-run     https://raw.githubusercontent.com/matzke1/rose/matzke/rose-dev/projects/MatrixTesting/scripts/rose-matrix-slave-run
-run cd; wget -O rose-matrix-slave-babysit https://raw.githubusercontent.com/matzke1/rose/matzke/rose-dev/projects/MatrixTesting/scripts/rose-matrix-slave-babysit
-run cd; wget -O rose-matrix-slave-clean   https://raw.githubusercontent.com/matzke1/rose/matzke/rose-dev/projects/MatrixTesting/scripts/rose-matrix-slave-clean
+run cd; wget -O rose-matrix-slave-run     https://raw.githubusercontent.com/matzke1/rose/matzke/rose-dev/tools/PortabilityTesting/scripts/rose-matrix-slave-run
+run cd; wget -O rose-matrix-slave-babysit https://raw.githubusercontent.com/matzke1/rose/matzke/rose-dev/tools/PortabilityTesting/scripts/rose-matrix-slave-babysit
+run cd; wget -O rose-matrix-slave-clean   https://raw.githubusercontent.com/matzke1/rose/matzke/rose-dev/tools/PortabilityTesting/scripts/rose-matrix-slave-clean
 run cd; chmod 755 rose-matrix-slave-run rose-matrix-slave-babysit rose-matrix-slave-clean
 
 # Set up the matrix testing

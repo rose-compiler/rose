@@ -44,7 +44,7 @@ insert into slave_settings values ('TEST_REPOSITORY', 'https://github.com/rose-c
 insert into slave_settings values ('TEST_COMMITTISH', 'origin/master');
 insert into slave_settings values ('TEST_FLAGS', '--only-supported');
 
--- Info about what version of the MatrixTesting tools should be used
+-- Info about what version of the PortabilityTesting tools should be used
 insert into slave_settings values ('MATRIX_REPOSITORY', 'https://github.com/rose-compiler/rose');
 insert into slave_settings values ('MATRIX_COMMITTISH', 'origin/master');
 

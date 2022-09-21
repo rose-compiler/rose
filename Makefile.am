@@ -33,16 +33,17 @@ if ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT
    SUBDIRS += projects
 endif
 
-# The MatrixTestingProject is not compiled as part of ROSE but serves as a simple example of an external project.
-# Matrix testing will need to access this project and compile it after installing ROSE and deleting the ROSE source
+# The Portability Test Project is not compiled as part of ROSE but serves as a simple example of an external project.
+# Portability testing will need to access this project and compile it after installing ROSE and deleting the ROSE source
 # and build trees. Therefore, this project's source code should be installed as part of the ROSE installation. These
-# rules are at this high level of the source code because this project must be installed even if the "projects'
-# subdirectory doesn't participate in the $(SUBDIRS).
+# rules are at this high level of the source code because otherwise they would interfere with the Makefile that's
+# distributed as part of the test project, and because it needs to be part of the binary release even if the rest
+# of the ROSE tools are excluded.
 testprojdir = ${datarootdir}/test-project
-testproj_DATA =						\
-	projects/MatrixTestingProject/Makefile		\
-	projects/MatrixTestingProject/README		\
-	projects/MatrixTestingProject/test-rose.C
+testproj_DATA =							\
+	tools/Portability/lib/matrix/test-project/Makefile	\
+	tools/Portability/lib/matrix/test-project/README	\
+	tools/Portability/lib/matrix/test-project/test-rose.C
 EXTRA_DIST += $(testproj_DATA)
 
 # DQ (2/6/2017): Added test to detect if the default mode of the C++ frontend compiler for rOSE is C++11 or not.
@@ -197,7 +198,7 @@ rose-installer-rmc2: install-rose-library
 		--contact="http://rosecompiler.org"									\
 		--prjnam=ROSE												\
 		--prjver=$(PACKAGE_VERSION)										\
-		--postinstall-bin=$(top_srcdir)/projects/MatrixTesting/lib/matrix/container-scripts/post-install-script	\
+		--postinstall-bin=$(top_srcdir)/tools/PortabilityTesting/lib/matrix/container-scripts/post-install-script	\
 		$(prefix)/*												\
 		$(addsuffix /*, $(filter-out / /usr /usr/local,								\
 		    $(BOOST_ROOT)											\
