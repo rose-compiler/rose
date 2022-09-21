@@ -21,12 +21,6 @@
 // scaffolding compiler driver that can test some semantic passes of the
 // F18 compiler under development.
 
-//----------------------------------------------------------------------------//
-
-// Fortran front end driver main program for ROSE scaffolding.
-
-#include "../../frontend/Experimental_Flang_ROSE_Connection/sage-build.h"
-
 #include "flang/Common/Fortran-features.h"
 #include "flang/Common/default-kinds.h"
 #include "flang/Parser/characters.h"
@@ -100,7 +94,6 @@ struct DriverOptions {
   bool dumpUnparse{false};
   bool dumpParseTree{false};
   bool timeParse{false};
-  bool externalBuilder{false}; // ROSE
   std::vector<std::string> fcArgs;
   const char *prefix{nullptr};
 };
@@ -220,13 +213,6 @@ std::string CompileFortran(
     return {};
   }
   auto &parseTree{*parsing.parseTree()};
-
-  // Transform the parse tree using Rose::builder
-  if (driver.externalBuilder) {
-    Rose::builder::Build(parseTree, allCookedSources);
-    return {};
-  }
-
   if (driver.dumpParseTree) {
     Fortran::parser::DumpTree(llvm::outs(), parseTree);
     return {};
@@ -291,14 +277,9 @@ void Link(std::vector<std::string> &relocatables, DriverOptions &driver) {
   Exec(argv, driver.verbose);
 }
 
-class SgSourceFile;
-int flang_external_builder_main(int argc, char *const argv[], SgSourceFile* roseSourceFile)
-{
-  atexit(CleanUpAtExit);
+int main(int argc, char *const argv[]) {
 
-  // This construction with roseSourceFile is a hack needed until Rose compiles with C++17
-  // Meanwhile, the following must be set before Rose::builder::Build functions called.
-  Rose::builder::setSgSourceFile(roseSourceFile);
+  atexit(CleanUpAtExit);
 
   DriverOptions driver;
   const char *fc{getenv("F18_FC")};
@@ -400,8 +381,6 @@ int flang_external_builder_main(int argc, char *const argv[], SgSourceFile* rose
       driver.timeParse = true;
     } else if (arg == "-fparse-only" || arg == "-fsyntax-only") {
       driver.syntaxOnly = true;
-    } else if (arg == "-fexternal-builder") {
-      driver.externalBuilder = true;
     } else if (arg == "-c") {
       driver.compileOnly = true;
     } else if (arg == "-o") {
@@ -490,6 +469,5 @@ int flang_external_builder_main(int argc, char *const argv[], SgSourceFile* rose
   if (!relocatables.empty()) {
     Link(relocatables, driver);
   }
-
   return exitStatus;
 }
