@@ -6039,7 +6039,6 @@ public:
                e_Csharp_language,  /*!< value used to specify output of Csharp */
                e_Ada_language,     /*!< value used to specify output of Ada    */
                e_Jovial_language,  /*!< value used to specify output of Jovial */
-               e_Cobol_language,   /*!< value used to specify output of Cobol  */
                e_last_language     /*!< upper bound on the range of values supported for the outputLanguageOption_enum */
              };
 
@@ -6435,7 +6434,6 @@ HEADER_APPLICATION_SOURCE_FILE_START
           int build_Csharp_AST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
           int build_Ada_AST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
           int build_Jovial_AST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
-          int build_Cobol_AST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
 
           virtual void doSetupForConstructor(const std::vector<std::string>& argv, SgProject* project) override;
 
@@ -6843,13 +6841,6 @@ HEADER_APPLICATION_PROJECT_START
        // DQ (8/25/2017): Added more language support.
           bool get_Jovial_only (void) const;
           void set_Jovial_only (bool value);
-
-       // DQ (8/25/2017): Added more language support.
-          bool get_Cobol_only (void) const;
-       // void set_Cobol_only (bool value);
-
-       // DQ (2/4/2009): This is now a data member at the SgProject and so is automatically generated asa member function.
-       // bool get_binary_only (void) const;
 
           void display ( const std::string & label ) const;
 
@@ -15971,7 +15962,6 @@ SgFile::get_outputLanguageOptionName ( SgFile::languageOption_enum lang )
           case SgFile::e_Csharp_language:  s = "Csharp";  break;
           case SgFile::e_Ada_language:     s = "Ada";     break;
           case SgFile::e_Jovial_language:  s = "Jovial";  break;
-          case SgFile::e_Cobol_language:   s = "Cobol";   break;
           case SgFile::e_Promela_language: s = "Promela"; break;
 
           default:
@@ -16126,7 +16116,6 @@ SgFile::initialization()
      p_Csharp_only             = false;
      p_Ada_only                = false;
      p_Jovial_only             = false;
-     p_Cobol_only              = false;
 
      p_requires_C_preprocessor = false;
 
@@ -16308,8 +16297,6 @@ SgFile::initialization()
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      File.setDataPrototype         ( "bool", "sourceFileUsesJovialFileExtension", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     File.setDataPrototype         ( "bool", "sourceFileUsesCobolFileExtension", "= false",
-                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
   // DQ (9/17/2020): Adding missing data member initialization.
      p_sourceFileUsesFortran2008FileExtension = false;
@@ -16335,7 +16322,6 @@ SgFile::initialization()
      p_sourceFileUsesCsharpFileExtension = false;
      p_sourceFileUsesAdaFileExtension    = false;
      p_sourceFileUsesJovialFileExtension = false;
-     p_sourceFileUsesCobolFileExtension  = false;
 
   // DQ (9/26/2011): New support for option to specify debugging support in ROSE to
   // detect dangling pointers to IR nodes as part of the AST Consistancy tests. At
@@ -16962,7 +16948,6 @@ SgFile::display ( const std::string & label ) const
      printf ("     p_Csharp_only()                             = %s \n",(p_Csharp_only == true) ? "true" : "false");
      printf ("     p_Ada_only()                                = %s \n",(p_Ada_only == true) ? "true" : "false");
      printf ("     p_Jovial_only()                             = %s \n",(p_Jovial_only == true) ? "true" : "false");
-     printf ("     p_Cobol_only()                              = %s \n",(p_Cobol_only == true) ? "true" : "false");
 
      printf ("     p_requires_C_preprocessor                   = %s \n",(p_requires_C_preprocessor == true) ? "true" : "false");
 
@@ -19615,21 +19600,6 @@ SgProject::get_Jovial_only (void) const
         {
           SgFile & file = get_file(i);
           result = result || (bool) file.get_Jovial_only();
-        }
-     return result;
-   }
-
-bool
-SgProject::get_Cobol_only (void) const
-   {
-  // DQ (8/25/2017): Added more language support.
-
-  // look at how the files are set
-     bool result = false;
-     for (int i = 0; i < numberOfFiles(); i++)
-        {
-          SgFile & file = get_file(i);
-          result = result || (bool) file.get_Cobol_only();
         }
      return result;
    }
