@@ -1139,11 +1139,6 @@ Grammar::setUpSupport ()
      File.setDataPrototype         ( "bool", "Ada_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // DQ (8/25/2017): Added more language support.
-  // Cobol support
-     File.setDataPrototype         ( "bool", "Cobol_only", "= false",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
   // DQ (9/7/2018): By default for C/C++ I now think this should be false (and it is set this way for source files.
   // DQ (5/18/2008): Added flag to specify that CPP preprocessing is required (default true for C and C++, and
   // Fortran with *.F?? extension an explicitly set to false for fortran with *.f?? extension and binaries).
@@ -1487,8 +1482,6 @@ Grammar::setUpSupport ()
      File.setDataPrototype         ( "bool", "sourceFileUsesAdaFileExtension", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      File.setDataPrototype         ( "bool", "sourceFileUsesJovialFileExtension", "= false",
-                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     File.setDataPrototype         ( "bool", "sourceFileUsesCobolFileExtension", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (9/26/2011): Added support to detect dangling pointers in ROSE translators.
