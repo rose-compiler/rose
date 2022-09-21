@@ -364,7 +364,7 @@ public:
      *  This function is called as soon as shared memory is accessed, right during the middle of an instruction from within the
      *  RiscOperators::readMemory operation. For memory reads, it should either perform the operation and return the result, or
      *  return null in which case the caller will do the usual operation. */
-    virtual std::pair<ExecutionEventPtr, SymbolicExprPtr>
+    virtual std::pair<ExecutionEventPtr, SymbolicExpressionPtr>
     sharedMemoryAccess(const SharedMemoryCallbacks&, const Partitioner2::Partitioner&, const Emulation::RiscOperatorsPtr&,
                        rose_addr_t memVa, size_t nBytes);
 

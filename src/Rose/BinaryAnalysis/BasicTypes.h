@@ -66,7 +66,7 @@ class SmtSolver;
 using SmtSolverPtr = std::shared_ptr<SmtSolver>;  /**< Reference counting pointer. */
 class SourceLocations;
 class SRecord;
-class SymbolicExprParser;
+class SymbolicExpresssionParser;
 class SystemCall;
 class TaintedFlow;
 class Z3Solver;
@@ -112,7 +112,7 @@ class Utf8CharacterEncodingForm;
 class Utf16CharacterEncodingForm;
 } // namespace
 
-namespace SymbolicExpr {
+namespace SymbolicExpression {
 class Exception;
 class ExprExprHashMap;
 class Formatter;

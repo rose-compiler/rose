@@ -14,6 +14,7 @@
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Sawyer/ProgressBar.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/SymbolicExpression.h>
 
 using namespace Rose::Diagnostics;
 using namespace Rose::BinaryAnalysis;
@@ -71,7 +72,7 @@ Analysis::clearNonResults() {
     cpu_ = BaseSemantics::Dispatcher::Ptr();
 }
 
-typedef Sawyer::Container::Map<uint64_t /*value_hash*/, SymbolicExpr::ExpressionSet /*addresses*/> MemoryTransfers;
+typedef Sawyer::Container::Map<uint64_t /*value_hash*/, SymbolicExpression::ExpressionSet /*addresses*/> MemoryTransfers;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Semantics for pointer detection
@@ -128,8 +129,8 @@ public:
         bool changed = false;
         Ptr other = State::promote(other_);
         for (const MemoryTransfers::Node &otherNode: other->memoryReads_.nodes()) {
-            SymbolicExpr::ExpressionSet &addresses = memoryReads_.insertMaybeDefault(otherNode.key());
-            for (const SymbolicExpr::Ptr &address: otherNode.value().values()) {
+            SymbolicExpression::ExpressionSet &addresses = memoryReads_.insertMaybeDefault(otherNode.key());
+            for (const SymbolicExpression::Ptr &address: otherNode.value().values()) {
                 if (addresses.insert(address))
                     changed = true;
             }
@@ -140,8 +141,8 @@ public:
     }
 
     void saveRead(const BaseSemantics::SValue::Ptr &addr, const BaseSemantics::SValue::Ptr &value) {
-        SymbolicExpr::Ptr addrExpr = SValue::promote(addr)->get_expression();
-        SymbolicExpr::Ptr valueExpr = SValue::promote(value)->get_expression();
+        SymbolicExpression::Ptr addrExpr = SValue::promote(addr)->get_expression();
+        SymbolicExpression::Ptr valueExpr = SValue::promote(value)->get_expression();
         memoryReads_.insertMaybeDefault(valueExpr->hash()).insert(addrExpr);
     }
 
@@ -241,7 +242,7 @@ Analysis::printInstructionsForDebugging(const P2::Partitioner &partitioner, cons
     }
 }
 
-struct ExprVisitor: public SymbolicExpr::Visitor {
+struct ExprVisitor: public SymbolicExpression::Visitor {
     Sawyer::Message::Facility &mlog;
     const MemoryTransfers &memoryReads;
     size_t nBits;
@@ -250,18 +251,18 @@ struct ExprVisitor: public SymbolicExpr::Visitor {
     ExprVisitor(const MemoryTransfers &memoryReads, size_t nBits, PointerDescriptors &result, Sawyer::Message::Facility &mlog)
         : mlog(mlog), memoryReads(memoryReads), nBits(nBits), result(result) {}
 
-    virtual SymbolicExpr::VisitAction preVisit(const SymbolicExpr::Ptr &node) {
-        SymbolicExpr::VisitAction retval = SymbolicExpr::CONTINUE;
-        for (SymbolicExpr::Ptr address: memoryReads.getOrDefault(node->hash()).values()) {
+    virtual SymbolicExpression::VisitAction preVisit(const SymbolicExpression::Ptr &node) {
+        SymbolicExpression::VisitAction retval = SymbolicExpression::CONTINUE;
+        for (SymbolicExpression::Ptr address: memoryReads.getOrDefault(node->hash()).values()) {
             if (result.insert(PointerDescriptor(address, nBits)).second)
                 mlog[DEBUG] <<"            l-value = " <<*address <<"\n";
-            retval = SymbolicExpr::TRUNCATE;
+            retval = SymbolicExpression::TRUNCATE;
         }
         return retval;
     }
 
-    virtual SymbolicExpr::VisitAction postVisit(const SymbolicExpr::Ptr&) {
-        return SymbolicExpr::CONTINUE;
+    virtual SymbolicExpression::VisitAction postVisit(const SymbolicExpression::Ptr&) {
+        return SymbolicExpression::CONTINUE;
     }
 };
 
@@ -271,7 +272,7 @@ Analysis::conditionallySavePointer(const BaseSemantics::SValue::Ptr &ptrRValue_,
                                    size_t wordSize,     // word size in bits
                                    PointerDescriptors &result) {
     Sawyer::Message::Stream debug = mlog[DEBUG];
-    SymbolicExpr::Ptr ptrRValue = SymbolicSemantics::SValue::promote(ptrRValue_)->get_expression();
+    SymbolicExpression::Ptr ptrRValue = SymbolicSemantics::SValue::promote(ptrRValue_)->get_expression();
     if (!ptrRValuesSeen.insert(ptrRValue->hash()))
         return;
     SAWYER_MESG(debug) <<"    pointer r-value = " <<*ptrRValue <<"\n";
@@ -351,7 +352,7 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
         mlog[DEBUG] <<"  memory reads:\n";
         for (const MemoryTransfers::Node &node: finalState->memoryReads().nodes()) {
             mlog[DEBUG] <<"    value-hash = " <<StringUtility::addrToString(node.key()).substr(2) <<"\n";
-            for (const SymbolicExpr::Ptr &address: node.value().values()) {
+            for (const SymbolicExpression::Ptr &address: node.value().values()) {
                 mlog[DEBUG] <<"      address = " <<*address <<"\n";
             }
         }
@@ -360,7 +361,7 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     // Find data pointers
     SAWYER_MESG(mlog[DEBUG]) <<"  potential data pointers:\n";
     size_t dataWordSize = partitioner.instructionProvider().stackPointerRegister().nBits();
-    Sawyer::Container::Set<SymbolicExpr::Hash> addrSeen;
+    Sawyer::Container::Set<SymbolicExpression::Hash> addrSeen;
     for (const BaseSemantics::State::Ptr &state: dfEngine.getFinalStates()) {
         BaseSemantics::MemoryCellState::Ptr memState = BaseSemantics::MemoryCellState::promote(state->memoryState());
         for (const BaseSemantics::MemoryCell::Ptr &cell: memState->allCells())
@@ -375,12 +376,12 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     for (const BaseSemantics::State::Ptr &state: dfEngine.getFinalStates()) {
         SymbolicSemantics::SValue::Ptr ip =
             SymbolicSemantics::SValue::promote(state->peekRegister(IP, ops->undefined_(IP.nBits()), ops.get()));
-        SymbolicExpr::Ptr ipExpr = ip->get_expression();
+        SymbolicExpression::Ptr ipExpr = ip->get_expression();
         if (!addrSeen.exists(ipExpr->hash())) {
             bool isSignificant = false;
             if (!settings_.ignoreConstIp) {
                 isSignificant = true;
-            } else if (ipExpr->isInteriorNode() && ipExpr->isInteriorNode()->getOperator() == SymbolicExpr::OP_ITE) {
+            } else if (ipExpr->isInteriorNode() && ipExpr->isInteriorNode()->getOperator() == SymbolicExpression::OP_ITE) {
                 isSignificant = !ipExpr->isInteriorNode()->child(1)->isIntegerConstant() ||
                                 !ipExpr->isInteriorNode()->child(2)->isIntegerConstant();
             } else if (!ipExpr->isIntegerConstant()) {
