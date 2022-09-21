@@ -1990,14 +1990,8 @@ exampleTranslators/documentedExamples/dataBaseExamples/Makefile
 exampleTranslators/documentedExamples/simpleTranslatorExamples/Makefile
 exampleTranslators/documentedExamples/simpleTranslatorExamples/exampleMakefile
 LicenseInformation/Makefile
-projects/BinaryCloneDetection/Makefile
-projects/BinaryCloneDetection/compression/Makefile
-projects/BinaryCloneDetection/semantic/Makefile
-projects/BinaryCloneDetection/syntactic/Makefile
-projects/BinaryCloneDetection/syntactic/gui/Makefile
 projects/CertSecureCodeProject/Makefile
 projects/CloneDetection/Makefile
-projects/EditDistanceMetric/Makefile
 projects/Fortran_to_C/Makefile
 projects/Fortran_to_C/src/Makefile
 projects/Fortran_to_C/tests/Makefile

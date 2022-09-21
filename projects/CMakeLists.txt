@@ -7,7 +7,6 @@ if(enable-projects-directory)
   # test your project and re-enable it.
   ###################################################################################################################
 
-  add_subdirectory(BinaryCloneDetection)
   add_subdirectory(CloneDetection)
   add_subdirectory(extractMPISkeleton)
   add_subdirectory(Fortran_to_C)
