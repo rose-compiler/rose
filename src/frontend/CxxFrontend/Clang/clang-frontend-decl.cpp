@@ -807,6 +807,7 @@ bool ClangToSageTranslator::VisitRecordDecl(clang::RecordDecl * record_decl, SgN
     clang::RecordDecl * record_Definition = record_decl->getDefinition();
     bool isDefined = record_decl->isThisDeclarationADefinition();
     bool isAnonymousStructOrUnion = record_decl->isAnonymousStructOrUnion();
+    bool hasNameForLinkage = record_decl->hasNameForLinkage();
 
     SgClassSymbol * sg_prev_class_sym = isSgClassSymbol(GetSymbolFromSymbolTable(prev_record_decl));
     SgClassDeclaration * sg_prev_class_decl = sg_prev_class_sym == NULL ? NULL : isSgClassDeclaration(sg_prev_class_sym->get_declaration());
@@ -827,10 +828,20 @@ bool ClangToSageTranslator::VisitRecordDecl(clang::RecordDecl * record_decl, SgN
 
 /* Pei-Hung (08/29/2022) RecordDecl can be anonymous.
  * Following EDG's implementation to apply anonymous name to allow symbol lookup.
- * Need to check later if isAnonymousStructOrUnion is equivalent to Decl with empty name.
+ *
+ * The following in Clang is anonymous:
+ * struct { int i; float f; };
+ * Whereas the following are not:
+ *   struct X { int i; float f; };
+ *   struct { int i; float f; } obj; 
+ *
+ * For EDG, the following is also considered as anonymous:
+ *   struct { int i; float f; } obj;
+ *
+ * recordDecl with hasNameForLinkage set to false is more close to the definition of anonymous defined by EDG
 */
     std::string recordDeclName = record_decl->getNameAsString();
-    if(isAnonymousStructOrUnion)
+    if(!hasNameForLinkage)
     {
       recordDeclName = "__anonymous_" +  generate_source_position_string(record_decl->getBeginLoc());
     }
