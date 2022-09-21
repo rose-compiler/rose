@@ -51,11 +51,11 @@ using LongestPathFirstPtr = std::shared_ptr<LongestPathFirst>;
 class NameTag;
 using NameTagPtr = std::shared_ptr<NameTag>;
 
-class NullDerefTag;
-using NullDerefTagPtr = std::shared_ptr<NullDerefTag>;
+class NullDereferenceTag;
+using NullDereferenceTagPtr = std::shared_ptr<NullDereferenceTag>;
 
-class OobTag;
-using OobTagPtr = std::shared_ptr<OobTag>;
+class OutOfBoundsTag;
+using OutOfBoundsTagPtr = std::shared_ptr<OutOfBoundsTag>;
 
 class ParseError;
 
@@ -95,8 +95,8 @@ using SourceListerPtr = std::shared_ptr<SourceLister>;
 class Tag;
 using TagPtr = std::shared_ptr<Tag>;
 
-class UninitVarTag;
-using UninitVarTagPtr = std::shared_ptr<UninitVarTag>;
+class UninitializedVariableTag;
+using UninitializedVariableTagPtr = std::shared_ptr<UninitializedVariableTag>;
 
 class WorkerStatus;
 using WorkerStatusPtr = std::shared_ptr<WorkerStatus>;
@@ -107,7 +107,7 @@ using WorkPredicatePtr = std::shared_ptr<WorkPredicate>;
 extern Sawyer::Message::Facility mlog;
 void initDiagnostics();
 
-namespace P2Model {
+namespace PartitionerModel {
     class SValue;
     using SValuePtr = Sawyer::SharedPointer<SValue>;
 

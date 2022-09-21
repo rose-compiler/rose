@@ -9,7 +9,7 @@
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
-#include <Rose/BinaryAnalysis/SymbolicExpr.h>
+#include <Rose/BinaryAnalysis/SymbolicExpression.h>
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
 
 #include <Sawyer/WorkList.h>
@@ -588,42 +588,42 @@ Partitioner::basicBlockSemantics(const InsnInfo::List &insns) {
     return borrow(insns.back()->cached().semantics, InsnInfo::hash(insns), ops);
 }
 
-std::vector<SymbolicExpr::Ptr>
+std::vector<SymbolicExpression::Ptr>
 Partitioner::splitSuccessors(const BaseSemantics::RiscOperators::Ptr &ops) {
     ASSERT_not_null(ops);
     ASSERT_not_null(ops->currentState());
-    std::vector<SymbolicExpr::Ptr> retval;
+    std::vector<SymbolicExpression::Ptr> retval;
     const RegisterDescriptor IP = instructionCache().decoder()->instructionPointerRegister();
     BaseSemantics::SValue::Ptr dfltIp = ops->undefined_(IP.nBits());
-    SymbolicExpr::Ptr ip = Semantics::SValue::promote(ops->peekRegister(IP, dfltIp))->get_expression();
+    SymbolicExpression::Ptr ip = Semantics::SValue::promote(ops->peekRegister(IP, dfltIp))->get_expression();
     if (ip->isIntegerConstant() || ip->isIntegerVariable()) {
         retval.push_back(ip);
-    } else if (SymbolicExpr::InteriorPtr inode = ip->isInteriorNode()) {
-        if (inode->getOperator() == SymbolicExpr::OP_ITE) {
+    } else if (SymbolicExpression::InteriorPtr inode = ip->isInteriorNode()) {
+        if (inode->getOperator() == SymbolicExpression::OP_ITE) {
             if (inode->child(0)->isIntegerConstant())
                 retval.push_back(inode->child(0));
             if (inode->child(1)->isIntegerConstant())
                 retval.push_back(inode->child(1));
             if (retval.empty())
-                retval.push_back(SymbolicExpr::makeIntegerVariable(IP.nBits()));
-        } else if (inode->getOperator() == SymbolicExpr::OP_SET) {
-            for (SymbolicExpr::Ptr member: inode->children()) {
+                retval.push_back(SymbolicExpression::makeIntegerVariable(IP.nBits()));
+        } else if (inode->getOperator() == SymbolicExpression::OP_SET) {
+            for (SymbolicExpression::Ptr member: inode->children()) {
                 if (member->isIntegerConstant())
                     retval.push_back(member);
             }
             if (retval.empty())
-                retval.push_back(SymbolicExpr::makeIntegerVariable(IP.nBits()));
+                retval.push_back(SymbolicExpression::makeIntegerVariable(IP.nBits()));
         } else {
-            retval.push_back(SymbolicExpr::makeIntegerVariable(IP.nBits()));
+            retval.push_back(SymbolicExpression::makeIntegerVariable(IP.nBits()));
         }
     }
     return retval;
 }
 
-std::vector<SymbolicExpr::Ptr>
+std::vector<SymbolicExpression::Ptr>
 Partitioner::computeSuccessors(const InsnInfo::List &insns, Accuracy accuracy) {
     accuracy = choose(accuracy, settings_.successorAccuracy);
-    std::vector<SymbolicExpr::Ptr> retval;
+    std::vector<SymbolicExpression::Ptr> retval;
     const RegisterDescriptor IP = instructionCache().decoder()->instructionPointerRegister();
 
     if (Accuracy::HIGH == accuracy) {
@@ -639,9 +639,9 @@ Partitioner::computeSuccessors(const InsnInfo::List &insns, Accuracy accuracy) {
         bool complete = true;
         AddressSet succs = insns.back()->ast().lock().get()->getSuccessors(complete /*out*/);
         for (rose_addr_t va: succs.values())
-            retval.push_back(SymbolicExpr::makeIntegerConstant(IP.nBits(), va));
+            retval.push_back(SymbolicExpression::makeIntegerConstant(IP.nBits(), va));
         if (!complete)
-            retval.push_back(SymbolicExpr::makeIntegerVariable(IP.nBits()));
+            retval.push_back(SymbolicExpression::makeIntegerVariable(IP.nBits()));
     }
 
     ASSERT_forbid(retval.empty());
@@ -650,7 +650,7 @@ Partitioner::computeSuccessors(const InsnInfo::List &insns, Accuracy accuracy) {
 
 
 
-std::vector<SymbolicExpr::Ptr>
+std::vector<SymbolicExpression::Ptr>
 Partitioner::computeSuccessors(rose_addr_t insnVa, Accuracy accuracy) {
     accuracy = choose(accuracy, settings_.successorAccuracy);
     InsnInfo::List insns;
@@ -696,8 +696,8 @@ Partitioner::computedConcreteSuccessors(rose_addr_t insnVa, Accuracy accuracy) {
 
         case Accuracy::HIGH: {
             AddressSet retval;
-            std::vector<SymbolicExpr::Ptr> symbolicSuccessors = computeSuccessors(insnVa, accuracy);
-            for (SymbolicExpr::Ptr expr: symbolicSuccessors) {
+            std::vector<SymbolicExpression::Ptr> symbolicSuccessors = computeSuccessors(insnVa, accuracy);
+            for (SymbolicExpression::Ptr expr: symbolicSuccessors) {
                 if (auto ival = expr->toUnsigned())
                     retval.insert(*ival);
             }
@@ -998,7 +998,7 @@ Partitioner::transferResults(Rose::BinaryAnalysis::Partitioner2::Partitioner &ou
                 });
         }
         if (ops->currentState()) {
-            std::vector<SymbolicExpr::Ptr> successors = splitSuccessors(ops);
+            std::vector<SymbolicExpression::Ptr> successors = splitSuccessors(ops);
             for (auto edge: successors) {
                 if (!edge->isIntegerConstant()) {
                     BaseSemantics::SValue::Ptr targetExpr = ops->undefined_(IP.nBits());

@@ -1,7 +1,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
-#include <Rose/BinaryAnalysis/ModelChecker/P2Model.h>
+#include <Rose/BinaryAnalysis/ModelChecker/PartitionerModel.h>
 
 #include <Rose/BinaryAnalysis/ModelChecker/BasicBlockUnit.h>
 #include <Rose/BinaryAnalysis/ModelChecker/ErrorTag.h>
@@ -9,17 +9,17 @@
 #include <Rose/BinaryAnalysis/ModelChecker/ExternalFunctionUnit.h>
 #include <Rose/BinaryAnalysis/ModelChecker/FailureUnit.h>
 #include <Rose/BinaryAnalysis/ModelChecker/InstructionUnit.h>
-#include <Rose/BinaryAnalysis/ModelChecker/NullDerefTag.h>
-#include <Rose/BinaryAnalysis/ModelChecker/OobTag.h>
+#include <Rose/BinaryAnalysis/ModelChecker/NullDereferenceTag.h>
+#include <Rose/BinaryAnalysis/ModelChecker/OutOfBoundsTag.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Path.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Settings.h>
-#include <Rose/BinaryAnalysis/ModelChecker/UninitVarTag.h>
+#include <Rose/BinaryAnalysis/ModelChecker/UninitializedVariableTag.h>
 
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
-#include <Rose/BinaryAnalysis/SymbolicExpr.h>
+#include <Rose/BinaryAnalysis/SymbolicExpression.h>
 #include <Rose/BitOps.h>
 #include <Rose/CommandLine.h>
 #include <Combinatorics.h>                              // ROSE
@@ -35,7 +35,7 @@ namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 namespace Rose {
 namespace BinaryAnalysis {
 namespace ModelChecker {
-namespace P2Model {
+namespace PartitionerModel {
 
 void
 commandLineDebugSwitches(Sawyer::CommandLine::SwitchGroup &sg, Settings &settings) {
@@ -350,7 +350,7 @@ SValue::~SValue() {}
 SValue::SValue(size_t nBits, uint64_t number)
     : Super(nBits, number) {}
 
-SValue::SValue(const SymbolicExpr::Ptr &expr)
+SValue::SValue(const SymbolicExpression::Ptr &expr)
     : Super(expr) {}
 
 SValue::Ptr
@@ -360,26 +360,26 @@ SValue::instance() {
 
 SValue::Ptr
 SValue::instanceBottom(size_t nBits) {
-    return Ptr(new SValue(SymbolicExpr::makeIntegerVariable(nBits, "", SymbolicExpr::Node::BOTTOM)));
+    return Ptr(new SValue(SymbolicExpression::makeIntegerVariable(nBits, "", SymbolicExpression::Node::BOTTOM)));
 }
 
 SValue::Ptr
 SValue::instanceUndefined(size_t nBits) {
-    return Ptr(new SValue(SymbolicExpr::makeIntegerVariable(nBits)));
+    return Ptr(new SValue(SymbolicExpression::makeIntegerVariable(nBits)));
 }
 
 SValue::Ptr
 SValue::instanceUnspecified(size_t nBits) {
-    return Ptr(new SValue(SymbolicExpr::makeIntegerVariable(nBits, "", SymbolicExpr::Node::UNSPECIFIED)));
+    return Ptr(new SValue(SymbolicExpression::makeIntegerVariable(nBits, "", SymbolicExpression::Node::UNSPECIFIED)));
 }
 
 SValue::Ptr
 SValue::instanceInteger(size_t nBits, uint64_t value) {
-    return Ptr(new SValue(SymbolicExpr::makeIntegerConstant(nBits, value)));
+    return Ptr(new SValue(SymbolicExpression::makeIntegerConstant(nBits, value)));
 }
 
 SValue::Ptr
-SValue::instanceSymbolic(const SymbolicExpr::Ptr &value) {
+SValue::instanceSymbolic(const SymbolicExpression::Ptr &value) {
     ASSERT_not_null(value);
     return Ptr(new SValue(value));
 }
@@ -478,11 +478,11 @@ RiscOperators::RiscOperators(const Settings &settings, const P2::Partitioner &pa
                              ModelChecker::SemanticCallbacks *semantics, const BS::SValue::Ptr &protoval,
                              const SmtSolver::Ptr &solver, const Variables::VariableFinder::Ptr &varFinder)
     : Super(protoval, solver), settings_(settings), partitioner_(partitioner),
-      semantics_(dynamic_cast<P2Model::SemanticCallbacks*>(semantics)), variableFinder_unsync(varFinder) {
+      semantics_(dynamic_cast<PartitionerModel::SemanticCallbacks*>(semantics)), variableFinder_unsync(varFinder) {
     ASSERT_not_null(semantics_);
     ASSERT_not_null(variableFinder_unsync);
     (void)SValue::promote(protoval);
-    name("P2Model");
+    name("PartitionerModel");
 
     // Calculate the stack limits.  Start by assuming the stack can occupy all of memory. Then make that smaller based on
     // other information.
@@ -573,7 +573,7 @@ RiscOperators::checkNullAccess(const BS::SValue::Ptr &addrSVal, TestMode testMod
 
     ASSERT_not_null(addrSVal);
     ASSERT_not_null(modelCheckerSolver_);               // should have all the path assertions already
-    SymbolicExpr::Ptr addr = IS::SymbolicSemantics::SValue::promote(addrSVal)->get_expression();
+    SymbolicExpression::Ptr addr = IS::SymbolicSemantics::SValue::promote(addrSVal)->get_expression();
     const char *direction = IoMode::READ == ioMode ? "read" : "write";
     ProgressTask task(modelCheckerSolver_->progress(), "nullptr");
 
@@ -584,8 +584,8 @@ RiscOperators::checkNullAccess(const BS::SValue::Ptr &addrSVal, TestMode testMod
 
         case TestMode::MAY: {
             // May be null if addr <= max is satisfied
-            SymbolicExpr::Ptr maxNullExpr = SymbolicExpr::makeIntegerConstant(addr->nBits(), settings_.maxNullAddress);
-            SymbolicExpr::Ptr isNullExpr = SymbolicExpr::makeLe(addr, maxNullExpr);
+            SymbolicExpression::Ptr maxNullExpr = SymbolicExpression::makeIntegerConstant(addr->nBits(), settings_.maxNullAddress);
+            SymbolicExpression::Ptr isNullExpr = SymbolicExpression::makeLe(addr, maxNullExpr);
             SmtSolver::Transaction tx(modelCheckerSolver_);
             modelCheckerSolver_->insert(isNullExpr);
             isNull = modelCheckerSolver_->check() == SmtSolver::SAT_YES;
@@ -597,8 +597,8 @@ RiscOperators::checkNullAccess(const BS::SValue::Ptr &addrSVal, TestMode testMod
 
         case TestMode::MUST: {
             // Must be null if addr > max cannot be satisfied
-            SymbolicExpr::Ptr maxNullExpr = SymbolicExpr::makeIntegerConstant(addr->nBits(), settings_.maxNullAddress);
-            SymbolicExpr::Ptr isNullExpr = SymbolicExpr::makeGt(addr, maxNullExpr);
+            SymbolicExpression::Ptr maxNullExpr = SymbolicExpression::makeIntegerConstant(addr->nBits(), settings_.maxNullAddress);
+            SymbolicExpression::Ptr isNullExpr = SymbolicExpression::makeGt(addr, maxNullExpr);
             SmtSolver::Transaction tx(modelCheckerSolver_);
             modelCheckerSolver_->insert(isNullExpr);
             isNull = modelCheckerSolver_->check() == SmtSolver::SAT_NO;
@@ -616,7 +616,7 @@ RiscOperators::checkNullAccess(const BS::SValue::Ptr &addrSVal, TestMode testMod
 
     if (isNull) {
         currentState(BS::State::Ptr());                   // indicates that execution failed
-        throw ThrownTag{NullDerefTag::instance(nInstructions(), testMode, ioMode, currentInstruction(), addrSVal)};
+        throw ThrownTag{NullDereferenceTag::instance(nInstructions(), testMode, ioMode, currentInstruction(), addrSVal)};
     }
 }
 
@@ -659,9 +659,9 @@ RiscOperators::checkOobAccess(const BS::SValue::Ptr &addrSVal_, TestMode testMod
                         SAWYER_MESG(mlog[DEBUG]) <<"      buffer overflow rejected by user; this one is ignored\n";
                     } else {
                         currentState(BS::State::Ptr());         // indicates that execution failed
-                        throw ThrownTag{OobTag::instance(nInstructions(), testMode, ioMode, currentInstruction(), addrSVal,
-                                                         whereWhatIntended.second, whereWhatIntended.first,
-                                                         whereWhatActual.second, whereWhatActual.first)};
+                        throw ThrownTag{OutOfBoundsTag::instance(nInstructions(), testMode, ioMode, currentInstruction(), addrSVal,
+                                                                 whereWhatIntended.second, whereWhatIntended.first,
+                                                                 whereWhatActual.second, whereWhatActual.first)};
                     }
                 }
             }
@@ -695,8 +695,9 @@ RiscOperators::checkUninitVar(const BS::SValue::Ptr &addrSVal_, TestMode testMod
                             SAWYER_MESG(mlog[DEBUG]) <<"      uninitialized variable rejected by user; this one is ignored\n";
                         } else {
                             currentState(BS::State::Ptr()); // indicates that execution failed
-                            throw ThrownTag{UninitVarTag::instance(nInstructions(), testMode, currentInstruction(), addrSVal,
-                                                                   whereWhatIntended.second, whereWhatIntended.first)};
+                            throw ThrownTag{UninitializedVariableTag::instance(nInstructions(), testMode, currentInstruction(),
+                                                                               addrSVal, whereWhatIntended.second,
+                                                                               whereWhatIntended.first)};
                         }
                     }
                 }
@@ -791,21 +792,21 @@ RiscOperators::popCallStack() {
     // discard the stack frame for the function being popped. Assume that the stack grows down, therefore we need to discard
     // any memory address less than the boundary address.
     class IsPopped: public BS::MemoryCell::Predicate {
-        SymbolicExpr::Ptr lowBoundaryInclusive;
-        SymbolicExpr::Ptr highBoundaryExclusive;
+        SymbolicExpression::Ptr lowBoundaryInclusive;
+        SymbolicExpression::Ptr highBoundaryExclusive;
     public:
         size_t nErased = 0;
 
     public:
-        explicit IsPopped(const SymbolicExpr::Ptr &lowBoundaryInclusive, const SymbolicExpr::Ptr &highBoundaryExclusive)
+        explicit IsPopped(const SymbolicExpression::Ptr &lowBoundaryInclusive, const SymbolicExpression::Ptr &highBoundaryExclusive)
             : lowBoundaryInclusive(lowBoundaryInclusive), highBoundaryExclusive(highBoundaryExclusive) {}
 
         bool operator()(const BS::MemoryCell::Ptr &cell) {
-            SymbolicExpr::Ptr va = SValue::promote(cell->address())->get_expression();
-            SymbolicExpr::Ptr stackGe = SymbolicExpr::makeGe(va, lowBoundaryInclusive);
-            SymbolicExpr::Ptr stackLt = SymbolicExpr::makeLt(va, highBoundaryExclusive);
-            SymbolicExpr::Ptr isDiscardable = SymbolicExpr::makeAnd(stackGe, stackLt);
-            bool retval = isDiscardable->mustEqual(SymbolicExpr::makeBooleanConstant(true));
+            SymbolicExpression::Ptr va = SValue::promote(cell->address())->get_expression();
+            SymbolicExpression::Ptr stackGe = SymbolicExpression::makeGe(va, lowBoundaryInclusive);
+            SymbolicExpression::Ptr stackLt = SymbolicExpression::makeLt(va, highBoundaryExclusive);
+            SymbolicExpression::Ptr isDiscardable = SymbolicExpression::makeAnd(stackGe, stackLt);
+            bool retval = isDiscardable->mustEqual(SymbolicExpression::makeBooleanConstant(true));
             if (retval) {
                 ++nErased;
                 SAWYER_MESG(mlog[DEBUG]) <<"        erasing memory cell " <<*cell <<"\n";
@@ -840,8 +841,8 @@ RiscOperators::popCallStack() {
 
         const size_t wordSize = partitioner_.instructionProvider().stackPointerRegister().nBits();
         ASSERT_require(wordSize > 8 && wordSize <= 64);
-        SymbolicExpr::Ptr highBoundaryExclusive = SymbolicExpr::makeIntegerConstant(wordSize, stackBoundary);
-        SymbolicExpr::Ptr lowBoundaryInclusive = SymbolicExpr::makeIntegerConstant(wordSize, stackLimits_.least());
+        SymbolicExpression::Ptr highBoundaryExclusive = SymbolicExpression::makeIntegerConstant(wordSize, stackBoundary);
+        SymbolicExpression::Ptr lowBoundaryInclusive = SymbolicExpression::makeIntegerConstant(wordSize, stackLimits_.least());
         SAWYER_MESG(mlog[DEBUG]) <<"      initial stack pointer = " <<StringUtility::addrToString(*poppedInitialSp) <<"\n"
                                  <<"      erasing memory between " <<*lowBoundaryInclusive <<" (inclusive) and "
                                  <<*highBoundaryExclusive <<" (exclusive)\n";
@@ -1693,7 +1694,7 @@ SemanticCallbacks::nextUnits(const Path::Ptr &path, const BS::RiscOperators::Ptr
         auto tag = ErrorTag::instance(0, "abstract jump", "symbolic address not handled yet", nullptr, ip);
         tag->importance(WARN);
         auto fail = FailureUnit::instance(Sawyer::Nothing(), SourceLocation(), "no concrete instruction pointer", tag);
-        units.push_back({fail, SymbolicExpr::makeBooleanConstant(true)});
+        units.push_back({fail, SymbolicExpression::makeBooleanConstant(true)});
         return units;
     }
 
@@ -1701,7 +1702,7 @@ SemanticCallbacks::nextUnits(const Path::Ptr &path, const BS::RiscOperators::Ptr
     for (rose_addr_t va: next.addresses) {
         // Test whether next address is feasible with the given previous path assertions
         SmtSolver::Transaction tx(solver);
-        auto assertion = SymbolicExpr::makeEq(ip, SymbolicExpr::makeIntegerConstant(ip->nBits(), va));
+        auto assertion = SymbolicExpression::makeEq(ip, SymbolicExpression::makeIntegerConstant(ip->nBits(), va));
         solver->insert(assertion);
 
         switch (solver->check()) {
@@ -1712,7 +1713,7 @@ SemanticCallbacks::nextUnits(const Path::Ptr &path, const BS::RiscOperators::Ptr
                 } else if (settings_.nullRead != TestMode::OFF && va <= settings_.maxNullAddress) {
                     SourceLocation sloc = partitioner_.sourceLocations().get(va);
                     BS::SValue::Ptr addr = ops->number_(partitioner_.instructionProvider().wordSize(), va);
-                    auto tag = NullDerefTag::instance(0, TestMode::MUST, IoMode::READ, nullptr, addr);
+                    auto tag = NullDereferenceTag::instance(0, TestMode::MUST, IoMode::READ, nullptr, addr);
                     auto fail = FailureUnit::instance(va, sloc, "invalid instruction address", tag);
                     units.push_back({fail, assertion, SmtSolver::Evidence()});
                 } else {

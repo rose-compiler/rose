@@ -1,7 +1,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
-#include <Rose/BinaryAnalysis/ModelChecker/OobTag.h>
+#include <Rose/BinaryAnalysis/ModelChecker/OutOfBoundsTag.h>
 
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/SValue.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
@@ -12,33 +12,33 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace ModelChecker {
 
-OobTag::OobTag(size_t nodeStep, TestMode tm, IoMode io, SgAsmInstruction *insn, const BS::SValue::Ptr &addr,
-               const Variables::StackVariable &intendedVariable, const AddressInterval &intendedVariableLocation,
-               const Variables::StackVariable &accessedVariable, const AddressInterval &accessedVariableLocation)
+OutOfBoundsTag::OutOfBoundsTag(size_t nodeStep, TestMode tm, IoMode io, SgAsmInstruction *insn, const BS::SValue::Ptr &addr,
+                               const Variables::StackVariable &intendedVariable, const AddressInterval &intendedVariableLocation,
+                               const Variables::StackVariable &accessedVariable, const AddressInterval &accessedVariableLocation)
     : Tag(nodeStep), testMode_(tm), ioMode_(io), insn_(insn), addr_(addr), intendedVariable_(intendedVariable),
       intendedVariableLocation_(intendedVariableLocation), accessedVariable_(accessedVariable),
       accessedVariableLocation_(accessedVariableLocation) {}
 
-OobTag::~OobTag() {}
+OutOfBoundsTag::~OutOfBoundsTag() {}
 
-OobTag::Ptr
-OobTag::instance(size_t nodeStep, TestMode tm, IoMode io, SgAsmInstruction *insn, const BS::SValue::Ptr &addr,
-                 const Variables::StackVariable &intendedVariable, const AddressInterval &intendedVariableLocation,
-                 const Variables::StackVariable &accessedVariable, const AddressInterval &accessedVariableLocation) {
+OutOfBoundsTag::Ptr
+OutOfBoundsTag::instance(size_t nodeStep, TestMode tm, IoMode io, SgAsmInstruction *insn, const BS::SValue::Ptr &addr,
+                         const Variables::StackVariable &intendedVariable, const AddressInterval &intendedVariableLocation,
+                         const Variables::StackVariable &accessedVariable, const AddressInterval &accessedVariableLocation) {
     ASSERT_forbid(TestMode::OFF == tm);
     ASSERT_not_null(addr);
-    return Ptr(new OobTag(nodeStep, tm, io, insn, addr,
-                          intendedVariable, intendedVariableLocation,
-                          accessedVariable, accessedVariableLocation));
+    return Ptr(new OutOfBoundsTag(nodeStep, tm, io, insn, addr,
+                                  intendedVariable, intendedVariableLocation,
+                                  accessedVariable, accessedVariableLocation));
 }
 
 std::string
-OobTag::name() const {
+OutOfBoundsTag::name() const {
     return "out-of-bounds access";
 }
 
 std::string
-OobTag::printableName() const {
+OutOfBoundsTag::printableName() const {
     // No lock necessary because ioMode and testMode are read-only properties initialized in the constructor.
     std::string retval;
     switch (testMode_) {
@@ -64,7 +64,7 @@ OobTag::printableName() const {
 }
 
 void
-OobTag::print(std::ostream &out, const std::string &prefix) const {
+OutOfBoundsTag::print(std::ostream &out, const std::string &prefix) const {
     // No locks necessary since all the data members are read-only.
     out <<prefix <<name() <<"\n";
 
@@ -107,7 +107,7 @@ OobTag::print(std::ostream &out, const std::string &prefix) const {
 }
 
 void
-OobTag::toYaml(std::ostream &out, const std::string &prefix1) const {
+OutOfBoundsTag::toYaml(std::ostream &out, const std::string &prefix1) const {
     // No locks necessary since all the data members are read-only.
     out <<prefix1 <<"weakness: " <<name() <<"\n";
     std::string prefix(prefix1.size(), ' ');

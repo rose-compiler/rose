@@ -35,7 +35,7 @@ public:
 
 bool
 SValue::isBottom() const {
-    return 0 != (get_expression()->flags() & SymbolicExpr::Node::BOTTOM);
+    return 0 != (get_expression()->flags() & SymbolicExpression::Node::BOTTOM);
 }
 
 Sawyer::Optional<BaseSemantics::SValue::Ptr>
@@ -64,13 +64,13 @@ SValue::createOptionalMerge(const BaseSemantics::SValue::Ptr &other_, const Base
     // limit (or 1 if merger is null) then the result is bottom.  Normal set simplifcations happen first (e.g., {x, x} => {x}
     // => x).
     if (!get_expression()->mustEqual(other->get_expression(), solver)) {
-        ExprPtr expr = SymbolicExpr::makeSet(get_expression(), other->get_expression(), solver, "", mergedFlags);
-        size_t exprSetSize = expr->isInteriorNode() && expr->isInteriorNode()->getOperator()==SymbolicExpr::OP_SET ?
+        ExprPtr expr = SymbolicExpression::makeSet(get_expression(), other->get_expression(), solver, "", mergedFlags);
+        size_t exprSetSize = expr->isInteriorNode() && expr->isInteriorNode()->getOperator()==SymbolicExpression::OP_SET ?
                              expr->isInteriorNode()->nChildren() : (size_t)1;
         size_t setSizeLimit = merger ? merger->setSizeLimit() : (size_t)1;
         if (exprSetSize > setSizeLimit) {
-            expr = SymbolicExpr::makeVariable(retval->get_expression()->type());
-            mergedFlags |= SymbolicExpr::Node::BOTTOM;
+            expr = SymbolicExpression::makeVariable(retval->get_expression()->type());
+            mergedFlags |= SymbolicExpression::Node::BOTTOM;
         }
         retval->set_expression(expr);
         changed = true;
@@ -177,7 +177,7 @@ SValue::set_comment(const std::string &s) const
 void
 SValue::hash(Combinatorics::Hasher &hasher) const {
     if (expr) {
-        // SymbolicExpr doesn't allow a hasher to be specified because of the way it caches hashes for performance for very
+        // SymbolicExpression doesn't allow a hasher to be specified because of the way it caches hashes for performance for very
         // large expressions with a high degree of sharing and parallelism.
         hasher.insert(expr->hash());
     }
@@ -187,8 +187,8 @@ void
 SValue::print(std::ostream &stream, BaseSemantics::Formatter &formatter_) const
 {
     Formatter *formatter = dynamic_cast<Formatter*>(&formatter_);
-    SymbolicExpr::Formatter dflt_expr_formatter;
-    SymbolicExpr::Formatter &expr_formatter = formatter ? formatter->expr_formatter : dflt_expr_formatter;
+    SymbolicExpression::Formatter dflt_expr_formatter;
+    SymbolicExpression::Formatter &expr_formatter = formatter ? formatter->expr_formatter : dflt_expr_formatter;
     std::string closing;
 
     if (!defs.empty()) {
@@ -236,19 +236,19 @@ MemoryListState::CellCompressorMcCarthy::operator()(const SValue::Ptr &address, 
     DefinersMode valDefinersMode = valOpsSymbolic->computingDefiners();
 
     // FIXME: This makes no attempt to remove duplicate values [Robb Matzke 2013-03-01]
-    ExprPtr expr = SymbolicExpr::makeMemoryVariable(address->nBits(), dflt->nBits());
+    ExprPtr expr = SymbolicExpression::makeMemoryVariable(address->nBits(), dflt->nBits());
     InsnSet addrDefiners, valDefiners;
     for (CellList::const_reverse_iterator ci=cells.rbegin(); ci!=cells.rend(); ++ci) {
         SValue::Ptr cell_addr = SValue::promote((*ci)->address());
         SValue::Ptr cell_value  = SValue::promote((*ci)->value());
-        expr = SymbolicExpr::makeWrite(expr, cell_addr->get_expression(), cell_value->get_expression(), valOps->solver());
+        expr = SymbolicExpression::makeWrite(expr, cell_addr->get_expression(), cell_value->get_expression(), valOps->solver());
         if (valDefinersMode != TRACK_NO_DEFINERS) {
             const InsnSet &definers = cell_value->get_defining_instructions();
             valDefiners.insert(definers.begin(), definers.end());
         }
     }
     SValue::Ptr retval = SValue::promote(valOps->undefined_(dflt->nBits()));
-    retval->set_expression(SymbolicExpr::makeRead(expr, address->get_expression(), valOps->solver()));
+    retval->set_expression(SymbolicExpression::makeRead(expr, address->get_expression(), valOps->solver()));
     retval->set_defining_instructions(valDefiners);
     return retval;
 }
@@ -308,18 +308,18 @@ MemoryListState::CellCompressorSet::operator()(const SValue::Ptr &address, const
     RiscOperators *valOpsSymbolic = dynamic_cast<RiscOperators*>(valOps);
     const DefinersMode valDefinersMode = valOpsSymbolic->computingDefiners();
     InsnSet valDefiners;
-    SymbolicExpr::Ptr first, set;
+    SymbolicExpression::Ptr first, set;
     std::cerr <<"ROBB: CellCompressorSet for " <<StringUtility::plural(cells.size(), "cells") <<"\n";
     for (const BaseSemantics::MemoryCell::Ptr &cell: cells) {
         SValue::Ptr cellValue = SValue::promote(cell->value());
-        SymbolicExpr::Ptr cur = cellValue->get_expression();
+        SymbolicExpression::Ptr cur = cellValue->get_expression();
         if (!first) {
             first = cur;
         } else if (!set) {
             ASSERT_not_null(first);
-            set = SymbolicExpr::makeSet(first, cur);
+            set = SymbolicExpression::makeSet(first, cur);
         } else {
-            set = SymbolicExpr::makeSet(set, cur);
+            set = SymbolicExpression::makeSet(set, cur);
         }
 
         if (valDefinersMode != TRACK_NO_DEFINERS) {
@@ -546,9 +546,9 @@ RiscOperators::filterResult(const BaseSemantics::SValue::Ptr &a_) {
     if (a->get_expression()->nNodes() <= trimThreshold_)
         return a_;
 
-    SymbolicExpr::Ptr expr = SymbolicExpr::makeVariable(a->get_expression()->type(),
-                                                        a->get_expression()->comment(),
-                                                        a->get_expression()->flags());
+    SymbolicExpression::Ptr expr = SymbolicExpression::makeVariable(a->get_expression()->type(),
+                                                                    a->get_expression()->comment(),
+                                                                    a->get_expression()->flags());
     a->set_expression(expr);
     ++nTrimmed_;
     return a;
@@ -569,7 +569,7 @@ RiscOperators::and_(const BaseSemantics::SValue::Ptr &a_, const BaseSemantics::S
     if (a->isBottom() || b->isBottom())
         return filterResult(bottom_(a->nBits()));
 
-    SValue::Ptr retval = svalueExpr(SymbolicExpr::makeAnd(a->get_expression(), b->get_expression(), solver()));
+    SValue::Ptr retval = svalueExpr(SymbolicExpression::makeAnd(a->get_expression(), b->get_expression(), solver()));
 
     switch (computingDefiners_) {
         case TRACK_NO_DEFINERS:
@@ -593,7 +593,7 @@ RiscOperators::or_(const BaseSemantics::SValue::Ptr &a_, const BaseSemantics::SV
     if (a->isBottom() || b->isBottom())
         return filterResult(bottom_(a->nBits()));
 
-    SValue::Ptr retval = svalueExpr(SymbolicExpr::makeOr(a->get_expression(), b->get_expression(), solver()));
+    SValue::Ptr retval = svalueExpr(SymbolicExpression::makeOr(a->get_expression(), b->get_expression(), solver()));
 
     switch (computingDefiners_) {
         case TRACK_NO_DEFINERS:
@@ -618,7 +618,7 @@ RiscOperators::xor_(const BaseSemantics::SValue::Ptr &a_, const BaseSemantics::S
         return filterResult(bottom_(a->nBits()));
 
     SValue::Ptr retval;
-    // We leave these simplifications here because SymbolicExpr doesn't yet have a way to pass an SMT solver to its
+    // We leave these simplifications here because SymbolicExpression doesn't yet have a way to pass an SMT solver to its
     // simplifier.
     auto aNum = a->toUnsigned();
     auto bNum = b->toUnsigned();
@@ -627,7 +627,7 @@ RiscOperators::xor_(const BaseSemantics::SValue::Ptr &a_, const BaseSemantics::S
     } else if (a->get_expression()->mustEqual(b->get_expression(), solver())) {
         retval = svalueNumber(a->nBits(), 0);
     } else {
-        retval = svalueExpr(SymbolicExpr::makeXor(a->get_expression(), b->get_expression(), solver()));
+        retval = svalueExpr(SymbolicExpression::makeXor(a->get_expression(), b->get_expression(), solver()));
     }
 
     switch (computingDefiners_) {
@@ -649,7 +649,7 @@ RiscOperators::invert(const BaseSemantics::SValue::Ptr &a_)
     SValue::Ptr a = SValue::promote(a_);
     if (a->isBottom())
         return filterResult(bottom_(a->nBits()));
-    SValue::Ptr retval = svalueExpr(SymbolicExpr::makeInvert(a->get_expression(), solver()));
+    SValue::Ptr retval = svalueExpr(SymbolicExpression::makeInvert(a->get_expression(), solver()));
 
     switch (computingDefiners_) {
         case TRACK_NO_DEFINERS:
@@ -672,9 +672,9 @@ RiscOperators::extract(const BaseSemantics::SValue::Ptr &a_, size_t begin_bit, s
     if (a->isBottom())
         return filterResult(bottom_(end_bit-begin_bit));
 
-    SymbolicExpr::Ptr beginExpr = SymbolicExpr::makeIntegerConstant(32, begin_bit);
-    SymbolicExpr::Ptr endExpr = SymbolicExpr::makeIntegerConstant(32, end_bit);
-    SValue::Ptr retval = svalueExpr(SymbolicExpr::makeExtract(beginExpr, endExpr, a->get_expression(), solver()));
+    SymbolicExpression::Ptr beginExpr = SymbolicExpression::makeIntegerConstant(32, begin_bit);
+    SymbolicExpression::Ptr endExpr = SymbolicExpression::makeIntegerConstant(32, end_bit);
+    SValue::Ptr retval = svalueExpr(SymbolicExpression::makeExtract(beginExpr, endExpr, a->get_expression(), solver()));
     switch (computingDefiners_) {
         case TRACK_NO_DEFINERS:
             if (retval->nBits() == a->nBits())
@@ -704,7 +704,7 @@ RiscOperators::concat(const BaseSemantics::SValue::Ptr &lo_bits_, const BaseSema
     if (lo->isBottom() || hi->isBottom())
         return filterResult(bottom_(lo->nBits() + hi->nBits()));
 
-    SValue::Ptr retval = svalueExpr(SymbolicExpr::makeConcat(hi->get_expression(), lo->get_expression(), solver()));
+    SValue::Ptr retval = svalueExpr(SymbolicExpression::makeConcat(hi->get_expression(), lo->get_expression(), solver()));
     switch (computingDefiners_) {
         case TRACK_NO_DEFINERS:
             break;
@@ -725,7 +725,7 @@ RiscOperators::equalToZero(const BaseSemantics::SValue::Ptr &a_)
     if (a->isBottom())
         return filterResult(bottom_(1));
 
-    SValue::Ptr retval = svalueExpr(SymbolicExpr::makeZerop(a->get_expression(), solver()));
+    SValue::Ptr retval = svalueExpr(SymbolicExpression::makeZerop(a->get_expression(), solver()));
     switch (computingDefiners_) {
         case TRACK_NO_DEFINERS:
             break;
@@ -749,7 +749,7 @@ RiscOperators::iteWithStatus(const BaseSemantics::SValue::Ptr &sel_,
     ASSERT_require(1==sel->nBits());
     ASSERT_require(a->nBits()==b->nBits());
 
-    // (ite bottom A B) should be A when A==B. However, SymbolicExpr would have already simplified that to A.
+    // (ite bottom A B) should be A when A==B. However, SymbolicExpression would have already simplified that to A.
     if (sel->isBottom()) {
         status = IteStatus::NEITHER;
         return filterResult(bottom_(a->nBits()));
@@ -796,7 +796,7 @@ RiscOperators::iteWithStatus(const BaseSemantics::SValue::Ptr &sel_,
         // If the selection expression cannot be false, then return a
         {
             SmtSolver::Transaction transaction(solver());
-            ExprPtr inverseCondition = SymbolicExpr::makeInvert(sel->get_expression(), solver());
+            ExprPtr inverseCondition = SymbolicExpression::makeInvert(sel->get_expression(), solver());
             solver()->insert(inverseCondition);
             bool can_be_false = SmtSolver::SAT_NO != solver()->check();
             if (!can_be_false) {
@@ -816,7 +816,7 @@ RiscOperators::iteWithStatus(const BaseSemantics::SValue::Ptr &sel_,
         }
     }
 
-    retval = svalueExpr(SymbolicExpr::makeIte(sel->get_expression(), a->get_expression(), b->get_expression(), solver()));
+    retval = svalueExpr(SymbolicExpression::makeIte(sel->get_expression(), a->get_expression(), b->get_expression(), solver()));
     status = IteStatus::BOTH;
     switch (computingDefiners_) {
         case TRACK_NO_DEFINERS:
@@ -839,7 +839,7 @@ RiscOperators::leastSignificantSetBit(const BaseSemantics::SValue::Ptr &a_)
     if (a->isBottom())
         return filterResult(bottom_(a->nBits()));
 
-    SValue::Ptr retval = svalueExpr(SymbolicExpr::makeLssb(a->get_expression(), solver()));
+    SValue::Ptr retval = svalueExpr(SymbolicExpression::makeLssb(a->get_expression(), solver()));
     switch (computingDefiners_) {
         case TRACK_NO_DEFINERS:
             break;
@@ -859,7 +859,7 @@ RiscOperators::mostSignificantSetBit(const BaseSemantics::SValue::Ptr &a_)
     if (a->isBottom())
         return filterResult(bottom_(a->nBits()));
 
-    SValue::Ptr retval = svalueExpr(SymbolicExpr::makeMssb(a->get_expression(), solver()));
+    SValue::Ptr retval = svalueExpr(SymbolicExpression::makeMssb(a->get_expression(), solver()));
     switch (computingDefiners_) {
         case TRACK_NO_DEFINERS:
             break;
@@ -880,7 +880,7 @@ RiscOperators::rotateLeft(const BaseSemantics::SValue::Ptr &a_, const BaseSemant
     if (a->isBottom() || sa->isBottom())
         return filterResult(bottom_(a->nBits()));
 
-    SValue::Ptr retval = svalueExpr(SymbolicExpr::makeRol(sa->get_expression(), a->get_expression(), solver()));
+    SValue::Ptr retval = svalueExpr(SymbolicExpression::makeRol(sa->get_expression(), a->get_expression(), solver()));
     switch (computingDefiners_) {
         case TRACK_NO_DEFINERS:
             break;
@@ -902,7 +902,7 @@ RiscOperators::rotateRight(const BaseSemantics::SValue::Ptr &a_, const BaseSeman
     if (a->isBottom() || sa->isBottom())
         return filterResult(bottom_(a->nBits()));
 
-    SValue::Ptr retval = svalueExpr(SymbolicExpr::makeRor(sa->get_expression(), a->get_expression(), solver()));
+    SValue::Ptr retval = svalueExpr(SymbolicExpression::makeRor(sa->get_expression(), a->get_expression(), solver()));
     switch (computingDefiners_) {
         case TRACK_NO_DEFINERS:
             break;
@@ -924,7 +924,7 @@ RiscOperators::shiftLeft(const BaseSemantics::SValue::Ptr &a_, const BaseSemanti
     if (a->isBottom() || sa->isBottom())
         return filterResult(bottom_(a->nBits()));
 
-    SValue::Ptr retval = svalueExpr(SymbolicExpr::makeShl0(sa->get_expression(), a->get_expression(), solver()));
+    SValue::Ptr retval = svalueExpr(SymbolicExpression::makeShl0(sa->get_expression(), a->get_expression(), solver()));
     switch (computingDefiners_) {
         case TRACK_NO_DEFINERS:
             break;
@@ -946,7 +946,7 @@ RiscOperators::shiftRight(const BaseSemantics::SValue::Ptr &a_, const BaseSemant
     if (a->isBottom() || sa->isBottom())
         return filterResult(bottom_(a->nBits()));
 
-    SValue::Ptr retval = svalueExpr(SymbolicExpr::makeShr0(sa->get_expression(), a->get_expression(), solver()));
+    SValue::Ptr retval = svalueExpr(SymbolicExpression::makeShr0(sa->get_expression(), a->get_expression(), solver()));
     switch (computingDefiners_) {
         case TRACK_NO_DEFINERS:
             break;
@@ -968,7 +968,7 @@ RiscOperators::shiftRightArithmetic(const BaseSemantics::SValue::Ptr &a_, const 
     if (a->isBottom() || sa->isBottom())
         return filterResult(bottom_(a->nBits()));
 
-    SValue::Ptr retval = svalueExpr(SymbolicExpr::makeAsr(sa->get_expression(), a->get_expression(), solver()));
+    SValue::Ptr retval = svalueExpr(SymbolicExpression::makeAsr(sa->get_expression(), a->get_expression(), solver()));
     switch (computingDefiners_) {
         case TRACK_NO_DEFINERS:
             break;
@@ -989,8 +989,8 @@ RiscOperators::unsignedExtend(const BaseSemantics::SValue::Ptr &a_, size_t new_w
     if (a->isBottom())
         return filterResult(bottom_(new_width));
 
-    SValue::Ptr retval = svalueExpr(SymbolicExpr::makeExtend(SymbolicExpr::makeIntegerConstant(32, new_width),
-                                                           a->get_expression(), solver()));
+    SValue::Ptr retval = svalueExpr(SymbolicExpression::makeExtend(SymbolicExpression::makeIntegerConstant(32, new_width),
+                                                                   a->get_expression(), solver()));
     switch (computingDefiners_) {
         case TRACK_NO_DEFINERS:
             break;
@@ -1016,7 +1016,7 @@ RiscOperators::add(const BaseSemantics::SValue::Ptr &a_, const BaseSemantics::SV
     if (a->isBottom() || b->isBottom())
         return filterResult(bottom_(a->nBits()));
 
-    SValue::Ptr retval = svalueExpr(SymbolicExpr::makeAdd(a->get_expression(), b->get_expression(), solver()));
+    SValue::Ptr retval = svalueExpr(SymbolicExpression::makeAdd(a->get_expression(), b->get_expression(), solver()));
     switch (computingDefiners_) {
         case TRACK_NO_DEFINERS:
             break;
@@ -1054,7 +1054,7 @@ RiscOperators::negate(const BaseSemantics::SValue::Ptr &a_)
     if (a->isBottom())
         return filterResult(bottom_(a->nBits()));
 
-    SValue::Ptr retval = svalueExpr(SymbolicExpr::makeNegate(a->get_expression(), solver()));
+    SValue::Ptr retval = svalueExpr(SymbolicExpression::makeNegate(a->get_expression(), solver()));
     switch (computingDefiners_) {
         case TRACK_NO_DEFINERS:
             break;
@@ -1075,7 +1075,7 @@ RiscOperators::signedDivide(const BaseSemantics::SValue::Ptr &a_, const BaseSema
     if (a->isBottom() || b->isBottom())
         return filterResult(bottom_(a->nBits()));
 
-    SValue::Ptr retval = svalueExpr(SymbolicExpr::makeSignedDiv(a->get_expression(), b->get_expression(), solver()));
+    SValue::Ptr retval = svalueExpr(SymbolicExpression::makeSignedDiv(a->get_expression(), b->get_expression(), solver()));
     switch (computingDefiners_) {
         case TRACK_NO_DEFINERS:
             break;
@@ -1097,7 +1097,7 @@ RiscOperators::signedModulo(const BaseSemantics::SValue::Ptr &a_, const BaseSema
     if (a->isBottom() || b->isBottom())
         return filterResult(bottom_(b->nBits()));
 
-    SValue::Ptr retval = svalueExpr(SymbolicExpr::makeSignedMod(a->get_expression(), b->get_expression(), solver()));
+    SValue::Ptr retval = svalueExpr(SymbolicExpression::makeSignedMod(a->get_expression(), b->get_expression(), solver()));
     switch (computingDefiners_) {
         case TRACK_NO_DEFINERS:
             break;
@@ -1119,7 +1119,7 @@ RiscOperators::signedMultiply(const BaseSemantics::SValue::Ptr &a_, const BaseSe
     size_t retwidth = a->nBits() + b->nBits();
     if (a->isBottom() || b->isBottom())
         return filterResult(bottom_(retwidth));
-    SValue::Ptr retval = svalueExpr(SymbolicExpr::makeSignedMul(a->get_expression(), b->get_expression(), solver()));
+    SValue::Ptr retval = svalueExpr(SymbolicExpression::makeSignedMul(a->get_expression(), b->get_expression(), solver()));
     switch (computingDefiners_) {
         case TRACK_NO_DEFINERS:
             break;
@@ -1141,7 +1141,7 @@ RiscOperators::unsignedDivide(const BaseSemantics::SValue::Ptr &a_, const BaseSe
     if (a->isBottom() || b->isBottom())
         return filterResult(bottom_(a->nBits()));
 
-    SValue::Ptr retval = svalueExpr(SymbolicExpr::makeDiv(a->get_expression(), b->get_expression(), solver()));
+    SValue::Ptr retval = svalueExpr(SymbolicExpression::makeDiv(a->get_expression(), b->get_expression(), solver()));
     switch (computingDefiners_) {
         case TRACK_NO_DEFINERS:
             break;
@@ -1163,7 +1163,7 @@ RiscOperators::unsignedModulo(const BaseSemantics::SValue::Ptr &a_, const BaseSe
     if (a->isBottom() || b->isBottom())
         return filterResult(bottom_(b->nBits()));
 
-    SValue::Ptr retval = svalueExpr(SymbolicExpr::makeMod(a->get_expression(), b->get_expression(), solver()));
+    SValue::Ptr retval = svalueExpr(SymbolicExpression::makeMod(a->get_expression(), b->get_expression(), solver()));
     switch (computingDefiners_) {
         case TRACK_NO_DEFINERS:
             break;
@@ -1186,7 +1186,7 @@ RiscOperators::unsignedMultiply(const BaseSemantics::SValue::Ptr &a_, const Base
     if (a->isBottom() || b->isBottom())
         return filterResult(bottom_(retwidth));
 
-    SValue::Ptr retval = svalueExpr(SymbolicExpr::makeMul(a->get_expression(), b->get_expression(), solver()));
+    SValue::Ptr retval = svalueExpr(SymbolicExpression::makeMul(a->get_expression(), b->get_expression(), solver()));
     switch (computingDefiners_) {
         case TRACK_NO_DEFINERS:
             break;
@@ -1207,8 +1207,8 @@ RiscOperators::signExtend(const BaseSemantics::SValue::Ptr &a_, size_t new_width
     if (a->isBottom())
         return filterResult(bottom_(new_width));
 
-    SValue::Ptr retval = svalueExpr(SymbolicExpr::makeSignExtend(SymbolicExpr::makeIntegerConstant(32, new_width),
-                                                               a->get_expression(), solver()));
+    SValue::Ptr retval = svalueExpr(SymbolicExpression::makeSignExtend(SymbolicExpression::makeIntegerConstant(32, new_width),
+                                                                       a->get_expression(), solver()));
     switch (computingDefiners_) {
         case TRACK_NO_DEFINERS:
             break;
@@ -1254,7 +1254,7 @@ RiscOperators::sgIsIeee754(SgAsmType *sgType) {
     return fpType;
 }
 
-SymbolicExpr::Type
+SymbolicExpression::Type
 RiscOperators::sgTypeToSymbolicType(SgAsmType *sgType) {
     ASSERT_not_null(sgType);
     if (SgAsmFloatType *fpType = sgIsIeee754(sgType)) {
@@ -1266,9 +1266,10 @@ RiscOperators::sgTypeToSymbolicType(SgAsmType *sgType) {
             throw BaseSemantics::Exception("cannot convert Sage type to symbolic type: "
                                            "IEEE-754 gradual underflow capability is required",
                                            currentInstruction());
-        return SymbolicExpr::Type::floatingPoint(fpType->exponentBits().size(), fpType->significandBits().size()+1/*implicit bit*/);
+        return SymbolicExpression::Type::floatingPoint(fpType->exponentBits().size(),
+                                                       fpType->significandBits().size()+1/*implicit bit*/);
     } else if (SgAsmIntegerType *iType = isSgAsmIntegerType(sgType)) {
-        return SymbolicExpr::Type::integer(iType->get_nBits());
+        return SymbolicExpression::Type::integer(iType->get_nBits());
     } else {
         throw BaseSemantics::Exception("cannot convert Sage type to symbolic type: "
                                        "not an integer or IEEE-754 type",
@@ -1283,15 +1284,15 @@ RiscOperators::fpConvert(const BaseSemantics::SValue::Ptr &a_, SgAsmFloatType *a
     ASSERT_not_null(aType);
     ASSERT_not_null(retType);
 
-    SymbolicExpr::Type srcType = sgTypeToSymbolicType(aType);
+    SymbolicExpression::Type srcType = sgTypeToSymbolicType(aType);
     ASSERT_require(a->get_expression()->type() == srcType);
-    SymbolicExpr::Type dstType = sgTypeToSymbolicType(retType);
+    SymbolicExpression::Type dstType = sgTypeToSymbolicType(retType);
 
     SValue::Ptr result;
     if (srcType == dstType) {
         result = SValue::promote(a->copy());
     } else {
-        result = svalueExpr(SymbolicExpr::makeConvert(a->get_expression(), dstType, solver()));
+        result = svalueExpr(SymbolicExpression::makeConvert(a->get_expression(), dstType, solver()));
     }
     ASSERT_not_null(result);
 
@@ -1312,8 +1313,8 @@ RiscOperators::reinterpret(const BaseSemantics::SValue::Ptr &a_, SgAsmType *retT
     SValue::Ptr a = SValue::promote(a_);
     ASSERT_not_null(a);
     ASSERT_not_null(retType);
-    SymbolicExpr::Type srcType = a->get_expression()->type();
-    SymbolicExpr::Type dstType = sgTypeToSymbolicType(retType);
+    SymbolicExpression::Type srcType = a->get_expression()->type();
+    SymbolicExpression::Type dstType = sgTypeToSymbolicType(retType);
     SValue::Ptr result;
     if (srcType == dstType) {
         result = a;
@@ -1321,7 +1322,7 @@ RiscOperators::reinterpret(const BaseSemantics::SValue::Ptr &a_, SgAsmType *retT
         throw Exception("reinterpret type (" + dstType.toString() + ") is not the same size as the value type (" +
                         srcType.toString() + ")");
     } else {
-        result = svalueExpr(SymbolicExpr::makeReinterpret(a->get_expression(), dstType, solver()));
+        result = svalueExpr(SymbolicExpression::makeReinterpret(a->get_expression(), dstType, solver()));
         result->add_defining_instructions(a);           // reinterpret should have no effect on the definers.
     }
     ASSERT_not_null(result);
@@ -1410,7 +1411,7 @@ RiscOperators::readOrPeekMemory(RegisterDescriptor segreg,
         return retval;
     }
 
-    // Read the bytes and concatenate them together. SymbolicExpr will simplify the expression so that reading after
+    // Read the bytes and concatenate them together. SymbolicExpression will simplify the expression so that reading after
     // writing a multi-byte value will return the original value written rather than a concatenation of byte extractions.
     InsnSet allDefiners;
     size_t nbytes = nbits/8;

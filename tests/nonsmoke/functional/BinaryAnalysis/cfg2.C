@@ -4,7 +4,7 @@
 //   * function return vertices point to the fall through instruction of all of their known call sites
 #include "sage3basic.h"
 #include <Rose/BinaryAnalysis/ControlFlow.h>
-#include <Rose/BinaryAnalysis/Utils.h>
+#include <Rose/BinaryAnalysis/Utility.h>
 
 int main(int argc, char *argv[])
 {

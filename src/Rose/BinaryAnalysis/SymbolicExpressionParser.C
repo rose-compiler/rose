@@ -1,13 +1,14 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
-#include <Rose/BinaryAnalysis/SymbolicExprParser.h>
+#include <Rose/BinaryAnalysis/SymbolicExpressionParser.h>
 
 #include <Rose/BinaryAnalysis/SmtSolver.h>
 #include <Sawyer/BitVector.h>
 #include <Sawyer/Map.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
+#include <Rose/BinaryAnalysis/SymbolicExpression.h>
 #include <integerOps.h>
 #include <rose_strtoull.h>
 #include <sstream>
@@ -29,12 +30,12 @@ static boost::regex hexLiteralRe, signedDecimalLiteralRe;
 //                                      SyntaxError
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-SymbolicExprParser::SyntaxError::SyntaxError(const std::string &mesg, const std::string &inputName,
-                                             unsigned lineNumber, unsigned columnNumber)
+SymbolicExpressionParser::SyntaxError::SyntaxError(const std::string &mesg, const std::string &inputName,
+                                                   unsigned lineNumber, unsigned columnNumber)
     : Rose::Exception(mesg), inputName(inputName), lineNumber(lineNumber), columnNumber(columnNumber) {}
 
 void
-SymbolicExprParser::SyntaxError::print(std::ostream &out) const {
+SymbolicExpressionParser::SyntaxError::print(std::ostream &out) const {
     if (!inputName.empty()) {
         out <<StringUtility::cEscape(inputName);
         if (lineNumber != 0)
@@ -49,13 +50,13 @@ SymbolicExprParser::SyntaxError::print(std::ostream &out) const {
 }
 
 std::ostream&
-operator<<(std::ostream &out, const SymbolicExprParser::SyntaxError &error) {
+operator<<(std::ostream &out, const SymbolicExpressionParser::SyntaxError &error) {
     error.print(out);
     return out;
 }
 
 void
-SymbolicExprParser::SubstitutionError::print(std::ostream &out) const {
+SymbolicExpressionParser::SubstitutionError::print(std::ostream &out) const {
     if (what() && *what()) {
         out <<what();
     } else {
@@ -64,7 +65,7 @@ SymbolicExprParser::SubstitutionError::print(std::ostream &out) const {
 }
 
 std::ostream&
-operator<<(std::ostream &out, const SymbolicExprParser::SubstitutionError &error) {
+operator<<(std::ostream &out, const SymbolicExpressionParser::SubstitutionError &error) {
     error.print(out);
     return out;
 }
@@ -74,19 +75,19 @@ operator<<(std::ostream &out, const SymbolicExprParser::SubstitutionError &error
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void
-SymbolicExprParser::TokenStream::init() {
+SymbolicExpressionParser::TokenStream::init() {
     hexLiteralRe = boost::regex("0x([0-9a-f]+)");
     signedDecimalLiteralRe = boost::regex("[-+]?\\d+");
 }
 
-const SymbolicExprParser::Token&
-SymbolicExprParser::TokenStream::operator[](size_t idx) {
+const SymbolicExpressionParser::Token&
+SymbolicExpressionParser::TokenStream::operator[](size_t idx) {
     fillTokenList(idx);
     return idx < tokens_.size() ? tokens_[idx] : endToken_;
 }
 
 void
-SymbolicExprParser::TokenStream::shift(size_t n) {
+SymbolicExpressionParser::TokenStream::shift(size_t n) {
     if (n >= tokens_.size()) {
         tokens_.clear();
     } else {
@@ -97,14 +98,14 @@ SymbolicExprParser::TokenStream::shift(size_t n) {
 }
 
 int
-SymbolicExprParser::TokenStream::nextCharacter() {
+SymbolicExpressionParser::TokenStream::nextCharacter() {
     if (EOF == readAhead_)
         readAhead_ = input_.get();
     return readAhead_;
 }
 
 int
-SymbolicExprParser::TokenStream::consumeCharacter() {
+SymbolicExpressionParser::TokenStream::consumeCharacter() {
     switch (readAhead_) {
         case EOF:
             break;
@@ -122,21 +123,21 @@ SymbolicExprParser::TokenStream::consumeCharacter() {
 }
 
 void
-SymbolicExprParser::TokenStream::consumeWhiteSpace() {
+SymbolicExpressionParser::TokenStream::consumeWhiteSpace() {
     while (isspace(nextCharacter()))
         consumeCharacter();
 }
 
 int
-SymbolicExprParser::TokenStream::consumeEscapeSequence() {
+SymbolicExpressionParser::TokenStream::consumeEscapeSequence() {
     ASSERT_require('\\' == nextCharacter());
     unsigned startLine = lineNumber_;
     unsigned startColumn = columnNumber_;
     consumeCharacter();
     switch (nextCharacter()) {
         case EOF:
-            throw SymbolicExprParser::SyntaxError("end of input reached in an escape sequence",
-                                                  name_, startLine, startColumn);
+            throw SymbolicExpressionParser::SyntaxError("end of input reached in an escape sequence",
+                                                        name_, startLine, startColumn);
         case 'a':
             consumeCharacter();
             return '\a';
@@ -163,8 +164,8 @@ SymbolicExprParser::TokenStream::consumeEscapeSequence() {
                 int c = 0;
                 for (size_t i=0; i<3; ++i) {
                     if (EOF == nextCharacter() || !strchr("01234567", nextCharacter())) {
-                        throw SymbolicExprParser::SyntaxError("octal escape sequences need three digits",
-                                                              name_, startLine, startColumn);
+                        throw SymbolicExpressionParser::SyntaxError("octal escape sequences need three digits",
+                                                                    name_, startLine, startColumn);
                     }
                     c = (8 * c) + (nextCharacter() - '0');
                     consumeCharacter();
@@ -177,7 +178,7 @@ SymbolicExprParser::TokenStream::consumeEscapeSequence() {
 }
 
 void
-SymbolicExprParser::TokenStream::consumeInlineComment() {
+SymbolicExpressionParser::TokenStream::consumeInlineComment() {
     ASSERT_require('<' == nextCharacter());
     unsigned startLine = lineNumber_;
     unsigned startColumn = columnNumber_;
@@ -185,8 +186,8 @@ SymbolicExprParser::TokenStream::consumeInlineComment() {
     while (1) {
         switch (nextCharacter()) {
             case EOF:
-                throw SymbolicExprParser::SyntaxError("end of comment not found before end of input",
-                                                      name_, startLine, startColumn);
+                throw SymbolicExpressionParser::SyntaxError("end of comment not found before end of input",
+                                                            name_, startLine, startColumn);
             case '<':
                 consumeCharacter();
                 ++depth;
@@ -207,7 +208,7 @@ SymbolicExprParser::TokenStream::consumeInlineComment() {
 }
 
 void
-SymbolicExprParser::TokenStream::consumeWhiteSpaceAndComments() {
+SymbolicExpressionParser::TokenStream::consumeWhiteSpaceAndComments() {
     while (isspace(nextCharacter()) || nextCharacter() == '<') {
         if (isspace(nextCharacter())) {
             consumeWhiteSpace();
@@ -218,7 +219,7 @@ SymbolicExprParser::TokenStream::consumeWhiteSpaceAndComments() {
 }
 
 std::string
-SymbolicExprParser::TokenStream::consumeTerm() {
+SymbolicExpressionParser::TokenStream::consumeTerm() {
     ASSERT_require(EOF!=nextCharacter());
     std::string retval;
     if (EOF == nextCharacter()) {
@@ -245,21 +246,21 @@ SymbolicExprParser::TokenStream::consumeTerm() {
     return retval;
 }
 
-SymbolicExpr::Type
-SymbolicExprParser::TokenStream::consumeType() {
+SymbolicExpression::Type
+SymbolicExpressionParser::TokenStream::consumeType() {
     // '['
     consumeWhiteSpaceAndComments();
     unsigned startLine = lineNumber_;
     unsigned startColumn = columnNumber_;
     if (nextCharacter() != '[') {
-        throw SymbolicExprParser::SyntaxError("expected '[' to start a type specification",
-                                              name_, startLine, startColumn);
+        throw SymbolicExpressionParser::SyntaxError("expected '[' to start a type specification",
+                                                    name_, startLine, startColumn);
     }
     consumeCharacter();
 
     // Type name or width constant
     consumeWhiteSpaceAndComments();
-    SymbolicExpr::Type retval;
+    SymbolicExpression::Type retval;
     if (isdigit(nextCharacter())) {
         // integer width
         std::string s;
@@ -270,7 +271,8 @@ SymbolicExprParser::TokenStream::consumeType() {
             size_t width1 = boost::lexical_cast<size_t>(s);
             consumeCharacter();
             if (nextCharacter() != '>')
-                throw SymbolicExprParser::SyntaxError("expected '->' in type specification", name_, lineNumber_, columnNumber_);
+                throw SymbolicExpressionParser::SyntaxError("expected '->' in type specification",
+                                                            name_, lineNumber_, columnNumber_);
             consumeCharacter();
             consumeWhiteSpaceAndComments();
             s = "";
@@ -278,55 +280,55 @@ SymbolicExprParser::TokenStream::consumeType() {
             while (isdigit(nextCharacter()))
                 s += consumeCharacter();
             if (s.empty())
-                throw SymbolicExprParser::SyntaxError("expected decimal integer domain width after '->'", name_, ln, cn);
+                throw SymbolicExpressionParser::SyntaxError("expected decimal integer domain width after '->'", name_, ln, cn);
             size_t width2 = boost::lexical_cast<size_t>(s);
             consumeWhiteSpaceAndComments();
-            retval = SymbolicExpr::Type::memory(width1, width2);
+            retval = SymbolicExpression::Type::memory(width1, width2);
         } else {
-            retval = SymbolicExpr::Type::integer(boost::lexical_cast<size_t>(s));
+            retval = SymbolicExpression::Type::integer(boost::lexical_cast<size_t>(s));
         }
     } else if (nextCharacter() == 'u') {
         // integer followed by width
         consumeCharacter();
         if (!isdigit(nextCharacter()))
-            throw SymbolicExprParser::SyntaxError("invalid type specification", name_, startLine, startColumn);
+            throw SymbolicExpressionParser::SyntaxError("invalid type specification", name_, startLine, startColumn);
         std::string s;
         while (isdigit(nextCharacter()))
             s += consumeCharacter();
-        retval = SymbolicExpr::Type::integer(boost::lexical_cast<size_t>(s));
+        retval = SymbolicExpression::Type::integer(boost::lexical_cast<size_t>(s));
     } else if (nextCharacter() == 'f') {
         // floating point followed by width
         consumeCharacter();
         if (!isdigit(nextCharacter()))
-            throw SymbolicExprParser::SyntaxError("invalid type specification", name_, startLine, startColumn);
+            throw SymbolicExpressionParser::SyntaxError("invalid type specification", name_, startLine, startColumn);
         std::string s;
         while (isdigit(nextCharacter()))
             s += consumeCharacter();
         if ("32" == s) {
-            retval = SymbolicExpr::Type::floatingPoint(8, 24);
+            retval = SymbolicExpression::Type::floatingPoint(8, 24);
         } else if ("64" == s) {
-            retval = SymbolicExpr::Type::floatingPoint(11, 53);
+            retval = SymbolicExpression::Type::floatingPoint(11, 53);
         } else {
-            throw SymbolicExprParser::SyntaxError("invalid type specification", name_, startLine, startColumn);
+            throw SymbolicExpressionParser::SyntaxError("invalid type specification", name_, startLine, startColumn);
         }
     } else {
-        throw SymbolicExprParser::SyntaxError("invalid type specification", name_, startLine, startColumn);
+        throw SymbolicExpressionParser::SyntaxError("invalid type specification", name_, startLine, startColumn);
     }
     consumeWhiteSpaceAndComments();
 
     // ']'
     if (nextCharacter() == EOF) {
-        throw SymbolicExprParser::SyntaxError("end of input reached inside '[' type expression",
-                                              name_, startLine, startColumn);
+        throw SymbolicExpressionParser::SyntaxError("end of input reached inside '[' type expression",
+                                                    name_, startLine, startColumn);
     }
     if (nextCharacter() != ']')
-        throw SymbolicExprParser::SyntaxError("missing closing ']' in type specification", name_, startLine, startColumn);
+        throw SymbolicExpressionParser::SyntaxError("missing closing ']' in type specification", name_, startLine, startColumn);
     consumeCharacter();
     return retval;
 }
 
-SymbolicExprParser::Token
-SymbolicExprParser::TokenStream::scan() {
+SymbolicExpressionParser::Token
+SymbolicExpressionParser::TokenStream::scan() {
     consumeWhiteSpaceAndComments();
     unsigned startLine = lineNumber_;
     unsigned startColumn = columnNumber_;
@@ -336,39 +338,39 @@ SymbolicExprParser::TokenStream::scan() {
         case '<':
             ASSERT_not_reachable("'<' should have been consumed by consumeWhiteSpaceAndComments");
         case '>':
-            throw SymbolicExprParser::SyntaxError("found '>' outside inline comment", name_, startLine, startColumn);
+            throw SymbolicExpressionParser::SyntaxError("found '>' outside inline comment", name_, startLine, startColumn);
         case '(':
             consumeCharacter();
-            return Token(Token::LTPAREN, SymbolicExpr::Type(), "(", startLine, startColumn);
+            return Token(Token::LTPAREN, SymbolicExpression::Type(), "(", startLine, startColumn);
         case ')':
             consumeCharacter();
-            return Token(Token::RTPAREN, SymbolicExpr::Type(), ")", startLine, startColumn);
+            return Token(Token::RTPAREN, SymbolicExpression::Type(), ")", startLine, startColumn);
         case '[':
-            throw SymbolicExprParser::SyntaxError("unexpected width specification", name_, startLine, startColumn);
+            throw SymbolicExpressionParser::SyntaxError("unexpected width specification", name_, startLine, startColumn);
         case ']':
-            throw SymbolicExprParser::SyntaxError("found ']' outside width specification", name_, startLine, startColumn);
+            throw SymbolicExpressionParser::SyntaxError("found ']' outside width specification", name_, startLine, startColumn);
         default: {
             std::string s = consumeTerm();
             boost::smatch matches;
             if (boost::regex_match(s, matches, hexLiteralRe)) {
-                SymbolicExpr::Type exprType = consumeType();
-                if (exprType.typeClass() == SymbolicExpr::Type::MEMORY)
-                    throw SymbolicExprParser::SyntaxError("type of hex literal must be scalar", name_, startLine, startColumn);
+                SymbolicExpression::Type exprType = consumeType();
+                if (exprType.typeClass() == SymbolicExpression::Type::MEMORY)
+                    throw SymbolicExpressionParser::SyntaxError("type of hex literal must be scalar", name_, startLine, startColumn);
                 Sawyer::Container::BitVector bv(exprType.nBits());
                 bv.fromHex(matches.str(1));         // hex digits without leading "0x"
                 return Token(bv, exprType, s, startLine, startColumn);
             } else if (boost::regex_match(s, signedDecimalLiteralRe)) {
                 int n = boost::lexical_cast<int>(s);
                 consumeWhiteSpaceAndComments();
-                SymbolicExpr::Type exprType = nextCharacter() == '[' ? consumeType() : SymbolicExpr::Type::integer(8*sizeof(int));
-                if (exprType.typeClass() == SymbolicExpr::Type::MEMORY)
-                    throw SymbolicExprParser::SyntaxError("type of decimal literal must be scalar", name_, startLine, startColumn);
+                SymbolicExpression::Type exprType = nextCharacter() == '[' ? consumeType() : SymbolicExpression::Type::integer(8*sizeof(int));
+                if (exprType.typeClass() == SymbolicExpression::Type::MEMORY)
+                    throw SymbolicExpressionParser::SyntaxError("type of decimal literal must be scalar", name_, startLine, startColumn);
                 Sawyer::Container::BitVector bv(exprType.nBits());
                 bv.fromInteger(IntegerOps::signExtend2((uint64_t)n, 8*sizeof(int), 64));
                 return Token(bv, exprType, s, startLine, startColumn);
             } else {
                 consumeWhiteSpaceAndComments();
-                SymbolicExpr::Type exprType = nextCharacter() == '[' ? consumeType() : SymbolicExpr::Type::none();
+                SymbolicExpression::Type exprType = nextCharacter() == '[' ? consumeType() : SymbolicExpression::Type::none();
                 return Token(Token::SYMBOL, exprType, s, startLine, startColumn);
             }
         }
@@ -377,7 +379,7 @@ SymbolicExprParser::TokenStream::scan() {
 }
 
 void
-SymbolicExprParser::TokenStream::fillTokenList(size_t idx) {
+SymbolicExpressionParser::TokenStream::fillTokenList(size_t idx) {
     for (size_t i = tokens_.size(); i <= idx; ++i) {
         Token token = scan();
         if (Token::NONE == token.tokenType())
@@ -391,54 +393,54 @@ SymbolicExprParser::TokenStream::fillTokenList(size_t idx) {
 //                                      OperatorExpansion
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-SymbolicExprParser::OperatorExpansion::OperatorExpansion(const SmtSolverPtr &solver)
+SymbolicExpressionParser::OperatorExpansion::OperatorExpansion(const SmtSolverPtr &solver)
     : solver(solver) {}
 
-SymbolicExprParser::OperatorExpansion::~OperatorExpansion() {}
+SymbolicExpressionParser::OperatorExpansion::~OperatorExpansion() {}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      SMT operators
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Generates symbolic expressions for the SMT operators
-class SmtOperators: public SymbolicExprParser::OperatorExpansion {
+class SmtOperators: public SymbolicExpressionParser::OperatorExpansion {
 protected:
-    Sawyer::Container::Map<std::string, SymbolicExpr::Operator> ops_;
+    Sawyer::Container::Map<std::string, SymbolicExpression::Operator> ops_;
 
     explicit SmtOperators(const SmtSolverPtr &solver)
-        : SymbolicExprParser::OperatorExpansion(solver) {
+        : SymbolicExpressionParser::OperatorExpansion(solver) {
         std::string doc;
-        ops_.insert("add",          SymbolicExpr::OP_ADD);
+        ops_.insert("add",          SymbolicExpression::OP_ADD);
         doc += "@named{add}"
                "{Adds operands together. All operands must have the same width, which is also the width of the result.}";
 
-        ops_.insert("and",          SymbolicExpr::OP_AND);
+        ops_.insert("and",          SymbolicExpression::OP_AND);
         doc += "@named{and}"
                "{Conjunction operation. All operands (one or more) must be the same width. Boolean values are 1 bit.}";
 
-        ops_.insert("asr",          SymbolicExpr::OP_ASR);
+        ops_.insert("asr",          SymbolicExpression::OP_ASR);
         doc += "@named{asr}"
                "{Arithmetic shift right. The second operand is interpreted as a signed value which is shifted right by "
                "the unsigned first argument. The result has the same width as the second operand.}";
 
-        ops_.insert("concat",       SymbolicExpr::OP_CONCAT);
+        ops_.insert("concat",       SymbolicExpression::OP_CONCAT);
         doc += "@named{concat}"
                "{Concatenate operands to produce a result whose width is the sum of the widths of the operands. The "
                "operands are in bit-endian order: the first operand becomes the most significant bits of the result and "
                "the last operand becomes the least significant bits. The operands can be any scalar type and the result "
                "will be an integer type (bit vector).}";
 
-        ops_.insert("convert",      SymbolicExpr::OP_CONVERT);
+        ops_.insert("convert",      SymbolicExpression::OP_CONVERT);
         doc += "@named{convert}"
                "{Converts the argument to the type of the operand. For instance, a 32-bit integer -1 "
                "could be converted to a 64-bit floating-point -1.0, which has an entirely different bit pattern. See also, "
                "\"reinterpret\".}";
 
-        ops_.insert("eq",           SymbolicExpr::OP_EQ);
+        ops_.insert("eq",           SymbolicExpression::OP_EQ);
         doc += "@named{eq}"
                "{Equality comparison. Takes two operands that must be the same width and returns a Boolean.}";
 
-        ops_.insert("extract",      SymbolicExpr::OP_EXTRACT);
+        ops_.insert("extract",      SymbolicExpression::OP_EXTRACT);
         doc += "@named{extract}"
                "{Extract part of a value. The bits of the third operand are numbered from zero (least significant) through "
                "N-1 (most significant) and those bits specified by the first operand (low bit) and second operand "
@@ -446,193 +448,193 @@ protected:
                "and first operands, both of which must have constant numeric values. The third operand can be any scalar "
                "type and the result is always an integer (bit vector) type.}";
 
-        ops_.insert("invert",       SymbolicExpr::OP_INVERT);
+        ops_.insert("invert",       SymbolicExpression::OP_INVERT);
         doc += "@named{invert}"
                "{Bit-wise invert. This operator takes one operand and returns a value having the same width but with "
                "each bit flipped. Since ROSE Boolean values are 1-bit vectors, use \"invert\"; 2's complement negation "
                "of a 1-bit value is a no-op. See also \"not\" and \"!\".}";
 
-        ops_.insert("ite",          SymbolicExpr::OP_ITE);
+        ops_.insert("ite",          SymbolicExpression::OP_ITE);
         doc += "@named{ite}"
                "{If-then-else.  Takes a Boolean condition (first operand) and two alternatives (second and third operands). "
                "If the condition is true, then evaluates to the second operand, otherwise the third operand. The second "
                "and third operand must have the same width, which is also the width of the result.}";
 
-        ops_.insert("lssb",         SymbolicExpr::OP_LSSB);
+        ops_.insert("lssb",         SymbolicExpression::OP_LSSB);
         doc += "@named{lssb}"
                "{Least significant set bit.  Takes one operand and evaluates to a result having the same width. The result "
                "is the lowest index (least significant bit is zero) of a bit of the operand which is set.  Evaluates to "
                "zero if no bits are set.}";
 
-        ops_.insert("mssb",         SymbolicExpr::OP_MSSB);
+        ops_.insert("mssb",         SymbolicExpression::OP_MSSB);
         doc += "@named{mssb}"
                "{Most significant set bit.  Takes one operand and evaluates to a result having the same width. The result "
                "is the highest index (least significant bit is zero) of a bit of the operand which is set.  Evaluates to "
                "zero if no bits are set.}";
 
-        ops_.insert("ne",           SymbolicExpr::OP_NE);
+        ops_.insert("ne",           SymbolicExpression::OP_NE);
         doc += "@named{ne}"
                "{Inequality comparison. Takes two operands that must be the same width and returns a Boolean.}";
 
-        ops_.insert("negate",       SymbolicExpr::OP_NEGATE);
+        ops_.insert("negate",       SymbolicExpression::OP_NEGATE);
         doc += "@named{negate}"
                "{Evauates to the two's complement of the single operand. The result is the same width as the operand.}";
 
-        ops_.insert("not",       SymbolicExpr::OP_INVERT);
+        ops_.insert("not",       SymbolicExpression::OP_INVERT);
         doc += "@named{not}"
                "{Bit-wise invert. This is an alias for \"invert\".}";
 
-        ops_.insert("or",           SymbolicExpr::OP_OR);
+        ops_.insert("or",           SymbolicExpression::OP_OR);
         doc += "@named{or}"
                "{Disjunction operation. All operands (one or more) must be the same width. Boolean values are 1 bit.}";
 
-        ops_.insert("read",         SymbolicExpr::OP_READ);
+        ops_.insert("read",         SymbolicExpression::OP_READ);
         doc += "@named{read}"
                "{Memory read operation. Indicates a value read from a memory state. This operator expects two operands: the "
                "memory state, and the address from which a value is read. The address must have the same width as the "
                "memory state's domain, and the result has the same width as the memory state's range (usually eight).}";
 
-        ops_.insert("reinterpret", SymbolicExpr::OP_REINTERPRET);
+        ops_.insert("reinterpret", SymbolicExpression::OP_REINTERPRET);
         doc += "@named{reinterpret}"
                "{Reinterprets the argument as some other type without changing the bit pattern of the value. For instance, "
                "reinterpreting the 32-bit integer constant -1 as a 32-bit floating-point type will result in NaN since they "
                "can have the same bit pattern.  The source and destination types must have the same width.}";
 
-        ops_.insert("rol",          SymbolicExpr::OP_ROL);
+        ops_.insert("rol",          SymbolicExpression::OP_ROL);
         doc += "@named{rol}"
                "{Rotate left.  Rotates the bits of the second operand left by the amount specified in the first operand. "
                "The first operand must be a numeric constant interpreted as unsigned modulo the width of the second "
                "operand.  Bits shifted off the left side of the second operand are introduced into the right side.}";
 
-        ops_.insert("ror",          SymbolicExpr::OP_ROR);
+        ops_.insert("ror",          SymbolicExpression::OP_ROR);
         doc += "@named{ror}"
                "{Rotate right.  Rotates the bits of the second operand right by the amount specified in the first operand. "
                "The first operand must be a numeric constant interpreted as unsigned modulo the width of the second "
                "operand.  Bits shifted off the right side of the second operand are introduced into the left side.}";
 
-        ops_.insert("sdiv",         SymbolicExpr::OP_SDIV);
+        ops_.insert("sdiv",         SymbolicExpression::OP_SDIV);
         doc += "@named{sdiv}"
                "{Signed division. Divides the first operand by the second. Both operands are interpreted as signed "
                "values, but they need not have the same width. The result width is the same as the width of the first "
                "operand.}";
 
-        ops_.insert("set",          SymbolicExpr::OP_SET);
+        ops_.insert("set",          SymbolicExpression::OP_SET);
         doc += "@named{set}"
                "{A set of expressions.  This expression can evaluate to any of its arguments.}";
 
-        ops_.insert("sextend",      SymbolicExpr::OP_SEXTEND);
+        ops_.insert("sextend",      SymbolicExpression::OP_SEXTEND);
         doc += "@named{sextend}"
                "{Sign extends the second operand so it has the width specified in the first operand. The first operand "
                "must be an unsigned numeric constant not less than the width of the second operand. The second operand "
                "must be an integer type.}";
 
-        ops_.insert("sge",          SymbolicExpr::OP_SGE);
+        ops_.insert("sge",          SymbolicExpression::OP_SGE);
         doc += "@named{sge}"
                "{Signed greater-than or equal comparison. Takes two operands that must be the same width and returns a "
                "Boolean.}";
 
-        ops_.insert("sgt",          SymbolicExpr::OP_SGT);
+        ops_.insert("sgt",          SymbolicExpression::OP_SGT);
         doc += "@named{sgt}"
                "{Signed greater-than comparison. Takes two operands that must be the same width and returns a Boolean.}";
 
-        ops_.insert("shl0",         SymbolicExpr::OP_SHL0);
+        ops_.insert("shl0",         SymbolicExpression::OP_SHL0);
         doc += "@named{shl0}"
                "{Shift left introducing zeros.  Shifts the bits of the second operand left by the amount specified in the "
                "first operand. The first operand must be a numeric constant interpreted as unsigned modulo the width of the "
                "second operand.  Bits introduced into the right side are cleared.}";
 
-        ops_.insert("shl1",         SymbolicExpr::OP_SHL1);
+        ops_.insert("shl1",         SymbolicExpression::OP_SHL1);
         doc += "@named{shl1}"
                "{Shift left introducing ones.  Shifts the bits of the second operand left by the amount specified in the "
                "first operand. The first operand must be a numeric constant interpreted as unsigned modulo the width of the "
                "second operand.  Bits introduced into the right side are set.}";
 
-        ops_.insert("shr0",         SymbolicExpr::OP_SHR0);
+        ops_.insert("shr0",         SymbolicExpression::OP_SHR0);
         doc += "@named{shr0}"
                "{Shift right introducing zeros.  Shifts the bits of the second operand right by the amount specified in the "
                "first operand. The first operand must be a numeric constant interpreted as unsigned modulo the width of the "
                "second operand.  Bits introduced into the left side are cleared.}";
 
-        ops_.insert("shr1",         SymbolicExpr::OP_SHR1);
+        ops_.insert("shr1",         SymbolicExpression::OP_SHR1);
         doc += "@named{shr1}"
                "{Shift right introducing ones.  Shifts the bits of the second operand right by the amount specified in the "
                "first operand. The first operand must be a numeric constant interpreted as unsigned modulo the width of the "
                "second operand.  Bits introduced into the left side are set.}";
 
-        ops_.insert("sle",          SymbolicExpr::OP_SLE);
+        ops_.insert("sle",          SymbolicExpression::OP_SLE);
         doc += "@named{sle}"
                "{Signed less-than or equal comparison. Takes two operands that must be the same width and returns a "
                "Boolean.}";
 
-        ops_.insert("slt",          SymbolicExpr::OP_SLT);
+        ops_.insert("slt",          SymbolicExpression::OP_SLT);
         doc += "@named{slt}"
                "{Signed less-than comparison. Takes two operands that must be the same width and returns a Boolean.}";
 
-        ops_.insert("smod",         SymbolicExpr::OP_SMOD);
+        ops_.insert("smod",         SymbolicExpression::OP_SMOD);
         doc += "@named{smod}"
                "{Signed modulo. Computes the first operand modulo the second. Both operands are interpreted as signed "
                "values, but they need not have the same width. The result width is the same as the width of the second "
                "operand.}";
 
-        ops_.insert("smul",         SymbolicExpr::OP_SMUL);
+        ops_.insert("smul",         SymbolicExpression::OP_SMUL);
         doc += "@named{smul}"
                "{Signed multiply. Computes the product of the operands (one or more). The operands are interpreted as signed "
                "values, but they need not have the same width. The result width is the sum of the operand widthds}";
 
-        ops_.insert("udiv",         SymbolicExpr::OP_UDIV);
+        ops_.insert("udiv",         SymbolicExpression::OP_UDIV);
         doc += "@named{udiv}"
                "{Unsigned division. Divides the first operand by the second. Both operands are interpreted as unsigned "
                "values, but they need not have the same width. The result width is the same as the width of the first "
                "operand.}";
 
-        ops_.insert("uextend",      SymbolicExpr::OP_UEXTEND);
+        ops_.insert("uextend",      SymbolicExpression::OP_UEXTEND);
         doc += "@named{uextend}"
                "{Extends or truncates the second operand so it has the width specified in the first operand. The first operand "
                "must be an unsigned numeric constant, the second operand must be of scalar type, and the result will be "
                "an integer (bit vector) type.}";
 
-        ops_.insert("uge",          SymbolicExpr::OP_UGE);
+        ops_.insert("uge",          SymbolicExpression::OP_UGE);
         doc += "@named{uge}"
                "{Unsigned greater-than or equal comparison. Takes two operands that must be the same width and returns a "
                "Boolean.}";
 
-        ops_.insert("ugt",          SymbolicExpr::OP_UGT);
+        ops_.insert("ugt",          SymbolicExpression::OP_UGT);
         doc += "@named{ugt}"
                "{Unsigned greater-than comparison. Takes two operands that must be the same width and returns a Boolean.}";
 
-        ops_.insert("ule",          SymbolicExpr::OP_ULE);
+        ops_.insert("ule",          SymbolicExpression::OP_ULE);
         doc += "@named{ule}"
                "{Unsigned less-than or equal comparison. Takes two operands that must be the same width and returns a "
                "Boolean.}";
 
-        ops_.insert("ult",          SymbolicExpr::OP_ULT);
+        ops_.insert("ult",          SymbolicExpression::OP_ULT);
         doc += "@named{ult}"
                "{Unsigned less-than comparison. Takes two operands that must be the same width and returns a Boolean.}";
 
-        ops_.insert("umod",         SymbolicExpr::OP_UMOD);
+        ops_.insert("umod",         SymbolicExpression::OP_UMOD);
         doc += "@named{umod}"
                "{Unsigned modulo. Computes the first operand modulo the second. Both operands are interpreted as unsigned "
                "values, but they need not have the same width. The result width is the same as the width of the second "
                "operand.}";
 
-        ops_.insert("umul",         SymbolicExpr::OP_UMUL);
+        ops_.insert("umul",         SymbolicExpression::OP_UMUL);
         doc += "@named{umul}"
                "{Unsigned multiply. Computes the product of the operands (one or more). The operands are interpreted as "
                "unsigned values, but they need not have the same width. The result width is the sum of the operand widthds}";
 
-        ops_.insert("write",        SymbolicExpr::OP_WRITE);
+        ops_.insert("write",        SymbolicExpression::OP_WRITE);
         doc += "@named{write}"
                "{Memory write operation. Indicates writing a value to a memory state. This operator expects three operands: the"
                "memory state, the address to which the value is written, and the value to write. The address must have the "
                "same width as the memory state's domain, and the value must have the same width as the memory state's range "
                "(usually eight). The result of this expression is a new memory state.}";
 
-        ops_.insert("xor",       SymbolicExpr::OP_XOR);
+        ops_.insert("xor",       SymbolicExpression::OP_XOR);
         doc += "@named{xor}"
                "{Exclusive disjunction operation. All operands (one or more) must be the same width, which is also the width of "
                "the result. Booleans are 1 bit.}";
 
-        ops_.insert("zerop",        SymbolicExpr::OP_ZEROP);
+        ops_.insert("zerop",        SymbolicExpression::OP_ZEROP);
         doc += "@named{zerop}"
                "{Equal to zero.  The result is a Boolean value that is true when the single operand is equal to zero and "
                "false if not zero.}";
@@ -646,11 +648,11 @@ public:
         return Ptr(new SmtOperators(solver));
     }
 
-    virtual SymbolicExpr::Ptr
-    immediateExpansion(const SymbolicExprParser::Token &op, const SymbolicExpr::Nodes &args) override {
+    virtual SymbolicExpression::Ptr
+    immediateExpansion(const SymbolicExpressionParser::Token &op, const SymbolicExpression::Nodes &args) override {
         if (!ops_.exists(op.lexeme()))
-            return SymbolicExpr::Ptr();
-        return SymbolicExpr::Interior::instance(op.exprType(), ops_[op.lexeme()], args, solver);
+            return SymbolicExpression::Ptr();
+        return SymbolicExpression::Interior::instance(op.exprType(), ops_[op.lexeme()], args, solver);
     }
 };
 
@@ -659,117 +661,117 @@ public:
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Creates symbolic expressions using more C-like operator names
-class COperators: public SymbolicExprParser::OperatorExpansion {
+class COperators: public SymbolicExpressionParser::OperatorExpansion {
 protected:
-    Sawyer::Container::Map<std::string, SymbolicExpr::Operator> ops_;
+    Sawyer::Container::Map<std::string, SymbolicExpression::Operator> ops_;
 
     explicit COperators(const SmtSolverPtr &solver)
-        : SymbolicExprParser::OperatorExpansion(solver) {
+        : SymbolicExpressionParser::OperatorExpansion(solver) {
         std::string doc;
-        ops_.insert("+",        SymbolicExpr::OP_ADD);
+        ops_.insert("+",        SymbolicExpression::OP_ADD);
         doc += "@named{+}"
                "{Adds operands together. All operands must have the same width, which is also the width of the result.}";
 
-        ops_.insert("&&",       SymbolicExpr::OP_AND);
+        ops_.insert("&&",       SymbolicExpression::OP_AND);
         doc += "@named{&&}"
                "{Conjunction operation. All operands (one or more) must be the same width. Note that ROSE does not "
                "distinguish between Boolean types and 1-bit vectors, therefore \"&&\" and \"&\" are the same thing.}";
 
-        ops_.insert("&",        SymbolicExpr::OP_AND);
+        ops_.insert("&",        SymbolicExpression::OP_AND);
         doc += "@named{&}"
                "{Conjunction operation. All operands (one or more) must be the same width. Note that ROSE does not "
                "distinguish between Boolean types and 1-bit vectors, therefore \"&&\" and \"&\" are the same thing.}";
 
-        ops_.insert("^",        SymbolicExpr::OP_XOR);
+        ops_.insert("^",        SymbolicExpression::OP_XOR);
         doc += "@named{^}"
                "{Exclusive disjunction operation. All operands (one or more) must be the same width, which is also the width "
                "of the result. Note that ROSE does not distinguish between Boolean types and 1-bit vectors.}";
 
-        ops_.insert("==",       SymbolicExpr::OP_EQ);
+        ops_.insert("==",       SymbolicExpression::OP_EQ);
         doc += "@named{==}"
                "{Equality comparison. Takes two operands that must be the same width and returns a Boolean.}";
 
-        ops_.insert("~",        SymbolicExpr::OP_INVERT);
+        ops_.insert("~",        SymbolicExpression::OP_INVERT);
         doc += "@named{~}"
                "{Bit-wise invert. This operator takes one operand and returns a value having the same width but with "
                "each bit flipped. Since ROSE does not distinguish between Boolean and 1-bit vectors, the \"~\" and \"!\" "
                "operators do the same thing.}";
 
-        ops_.insert("!",        SymbolicExpr::OP_INVERT);
+        ops_.insert("!",        SymbolicExpression::OP_INVERT);
         doc += "@named{~}"
                "{Bit-wise invert. This operator takes one operand and returns a value having the same width but with "
                "each bit flipped. Since ROSE does not distinguish between Boolean and 1-bit vectors, the \"~\" and \"!\" "
                "operators do the same thing.}";
 
-        ops_.insert("?",        SymbolicExpr::OP_ITE);
+        ops_.insert("?",        SymbolicExpression::OP_ITE);
         doc += "@named{?}"
                "{If-then-else.  Takes a Boolean condition (first operand) and two alternatives (second and third operands). "
                "If the condition is true, then evaluates to the second operand, otherwise the third operand. The second "
                "and third operand must have the same width, which is also the width of the result.}";
 
-        ops_.insert("!=",       SymbolicExpr::OP_NE);
+        ops_.insert("!=",       SymbolicExpression::OP_NE);
         doc += "@named{!=}"
                "{Inequality comparison. Takes two operands that must be the same width and returns a Boolean.}";
 
-        ops_.insert("-",        SymbolicExpr::OP_NEGATE);
+        ops_.insert("-",        SymbolicExpression::OP_NEGATE);
         doc += "@named{-}"
                "{Evauates to the two's complement of the single operand. The result is the same width as the operand.}";
 
-        ops_.insert("||",       SymbolicExpr::OP_OR);
+        ops_.insert("||",       SymbolicExpression::OP_OR);
         doc += "@named{||}"
                "{Disjunction operation. All operands (one or more) must be the same width, which is also the width of "
                "the result. Note that ROSE does not distinguish between Boolean types and 1-bit vectors, therefore "
                "\"||\" and \"|\" are the same thing.}";
 
-        ops_.insert("|",        SymbolicExpr::OP_OR);
+        ops_.insert("|",        SymbolicExpression::OP_OR);
         doc += "@named{|}"
                "{Disjunction operation. All operands (one or more) must be the same width, which is also the width of "
                "the result. Note that ROSE does not distinguish between Boolean types and 1-bit vectors, therefore "
                "\"||\" and \"|\" are the same thing.}";
 
-        ops_.insert("<<",       SymbolicExpr::OP_SHL0); // requires escapes since '<' introduces a comment
+        ops_.insert("<<",       SymbolicExpression::OP_SHL0); // requires escapes since '<' introduces a comment
         doc += "@named{<<}"
                "{Shift left introducing zeros.  Shifts the bits of the second operand left by the amount specified in the "
                "first operand. The first operand must be a numeric constant interpreted as unsigned modulo the width of the "
                "second operand.  Bits introduced into the right side are cleared.}";
 
-        ops_.insert(">>",       SymbolicExpr::OP_SHR0);
+        ops_.insert(">>",       SymbolicExpression::OP_SHR0);
         doc += "@named{>>}"
                "{Shift right introducing zeros.  Shifts the bits of the second operand right by the amount specified in the "
                "first operand. The first operand must be a numeric constant interpreted as unsigned modulo the width of the "
                "second operand.  Bits introduced into the left side are cleared.}";
 
-        ops_.insert("/",        SymbolicExpr::OP_UDIV);
+        ops_.insert("/",        SymbolicExpression::OP_UDIV);
         doc += "@named{/}"
                "{Unsigned division. Divides the first operand by the second. Both operands are interpreted as unsigned "
                "values, but they need not have the same width. The result width is the same as the width of the first "
                "operand.}";
 
-        ops_.insert(">=",       SymbolicExpr::OP_UGE);
+        ops_.insert(">=",       SymbolicExpression::OP_UGE);
         doc += "@named{>=}"
                "{Unsigned greater-than or equal comparison. Takes two operands that must be the same width and returns a "
                "Boolean.}";
 
-        ops_.insert(">",        SymbolicExpr::OP_UGT);
+        ops_.insert(">",        SymbolicExpression::OP_UGT);
         doc += "@named{>}"
                "{Unsigned greater-than comparison. Takes two operands that must be the same width and returns a Boolean.}";
 
-        ops_.insert("<=",       SymbolicExpr::OP_ULE);  // requires escapes since '<' introduces a comment
+        ops_.insert("<=",       SymbolicExpression::OP_ULE);  // requires escapes since '<' introduces a comment
         doc += "@named{<=}"
                "{Unsigned less-than or equal comparison. Takes two operands that must be the same width and returns a "
                "Boolean.}";
 
-        ops_.insert("<",        SymbolicExpr::OP_ULT);  // requires escapes since '<' introduces a comment
+        ops_.insert("<",        SymbolicExpression::OP_ULT);  // requires escapes since '<' introduces a comment
         doc += "@named{<}"
                "{Unsigned less-than comparison. Takes two operands that must be the same width and returns a Boolean.}";
 
-        ops_.insert("%",        SymbolicExpr::OP_UMOD);
+        ops_.insert("%",        SymbolicExpression::OP_UMOD);
         doc += "@named{%}"
                "{Unsigned modulo. Computes the first operand modulo the second. Both operands are interpreted as unsigned "
                "values, but they need not have the same width. The result width is the same as the width of the second "
                "operand.}";
 
-        ops_.insert("*",        SymbolicExpr::OP_UMUL);
+        ops_.insert("*",        SymbolicExpression::OP_UMUL);
         doc += "@named{*}"
                "{Unsigned multiply. Computes the product of the operands (one or more). The operands are interpreted as "
                "unsigned values, but they need not have the same width. The result width is the sum of the operand widthds}";
@@ -783,11 +785,11 @@ public:
         return Ptr(new COperators(solver));
     }
 
-    virtual SymbolicExpr::Ptr
-    immediateExpansion(const SymbolicExprParser::Token &op, const SymbolicExpr::Nodes &args) override {
+    virtual SymbolicExpression::Ptr
+    immediateExpansion(const SymbolicExpressionParser::Token &op, const SymbolicExpression::Nodes &args) override {
         if (!ops_.exists(op.lexeme()))
-            return SymbolicExpr::Ptr();
-        return SymbolicExpr::Interior::instance(op.exprType(), ops_[op.lexeme()], args, solver);
+            return SymbolicExpression::Ptr();
+        return SymbolicExpression::Interior::instance(op.exprType(), ops_[op.lexeme()], args, solver);
     }
 };
 
@@ -795,7 +797,7 @@ public:
 //                                      Canonical variables
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class CanonicalVariable: public SymbolicExprParser::AtomExpansion {
+class CanonicalVariable: public SymbolicExpressionParser::AtomExpansion {
 public:
     static Ptr instance() {
         Ptr functor = Ptr(new CanonicalVariable);
@@ -809,28 +811,28 @@ public:
                            "width, although this is normally required.");
         return functor;
     }
-    SymbolicExpr::Ptr immediateExpansion(const SymbolicExprParser::Token &symbol) {
+    SymbolicExpression::Ptr immediateExpansion(const SymbolicExpressionParser::Token &symbol) {
         boost::smatch matches;
         if (!boost::regex_match(symbol.lexeme(), matches, boost::regex("[vm](\\d+)")))
-            return SymbolicExpr::Ptr();
+            return SymbolicExpression::Ptr();
         if (symbol.exprType().nBits() == 0) {
             throw symbol.syntaxError("variable \"" + StringUtility::cEscape(symbol.lexeme()) + "\""
                                      " must have a non-zero width specified");
         }
         uint64_t varId = rose_strtoull(matches.str(1).c_str(), NULL, 10);
         if (symbol.lexeme()[0] == 'v') {
-            if (symbol.exprType().typeClass() == SymbolicExpr::Type::MEMORY) {
+            if (symbol.exprType().typeClass() == SymbolicExpression::Type::MEMORY) {
                 throw symbol.syntaxError("scalar variable \"" + StringUtility::cEscape(symbol.lexeme()) + "\""
                                          " should have scalar type");
             }
-            return SymbolicExpr::makeVariable(symbol.exprType(), varId);
+            return SymbolicExpression::makeVariable(symbol.exprType(), varId);
         } else {
             ASSERT_require(symbol.lexeme()[0] == 'm');
-            if (symbol.exprType().typeClass() != SymbolicExpr::Type::MEMORY) {
+            if (symbol.exprType().typeClass() != SymbolicExpression::Type::MEMORY) {
                 throw symbol.syntaxError("memory variable \"" + StringUtility::cEscape(symbol.lexeme()) + "\""
                                          " should have memory type");
             }
-            return SymbolicExpr::makeVariable(symbol.exprType(), varId);
+            return SymbolicExpression::makeVariable(symbol.exprType(), varId);
         }
     }
 };
@@ -839,7 +841,7 @@ public:
 //                                      Boolean literals
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class BooleanConstant: public SymbolicExprParser::AtomExpansion {
+class BooleanConstant: public SymbolicExpressionParser::AtomExpansion {
 public:
     static Ptr instance() {
         Ptr functor = Ptr(new BooleanConstant);
@@ -848,13 +850,13 @@ public:
                            "constants \"1[1]\" and \"0[1]\".");
         return functor;
     }
-    SymbolicExpr::Ptr immediateExpansion(const SymbolicExprParser::Token &symbol) {
+    SymbolicExpression::Ptr immediateExpansion(const SymbolicExpressionParser::Token &symbol) {
         if (symbol.lexeme() == "true") {
-            return SymbolicExpr::makeBooleanConstant(true);
+            return SymbolicExpression::makeBooleanConstant(true);
         } else if (symbol.lexeme() == "false") {
-            return SymbolicExpr::makeBooleanConstant(false);
+            return SymbolicExpression::makeBooleanConstant(false);
         } else {
-            return SymbolicExpr::Ptr();
+            return SymbolicExpression::Ptr();
         }
     }
 };
@@ -864,20 +866,20 @@ public:
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void
-SymbolicExprParser::defineRegisters(const InstructionSemantics::BaseSemantics::RiscOperators::Ptr &ops) {
+SymbolicExpressionParser::defineRegisters(const InstructionSemantics::BaseSemantics::RiscOperators::Ptr &ops) {
     atomTable_.push_back(RegisterToValue::instance(ops));
 }
 
-SymbolicExprParser::RegisterSubstituter::Ptr
-SymbolicExprParser::defineRegisters(const RegisterDictionary::Ptr &regdict) {
+SymbolicExpressionParser::RegisterSubstituter::Ptr
+SymbolicExpressionParser::defineRegisters(const RegisterDictionary::Ptr &regdict) {
     RegisterSubstituter::Ptr retval = RegisterSubstituter::instance(regdict);
     atomTable_.push_back(retval);
     return retval;
 }
 
 // class method
-SymbolicExprParser::RegisterToValue::Ptr
-SymbolicExprParser::RegisterToValue::instance(const InstructionSemantics::BaseSemantics::RiscOperators::Ptr &ops) {
+SymbolicExpressionParser::RegisterToValue::Ptr
+SymbolicExpressionParser::RegisterToValue::instance(const InstructionSemantics::BaseSemantics::RiscOperators::Ptr &ops) {
     Ptr functor = Ptr(new RegisterToValue(ops));
     functor->title("Registers");
     std::string doc = "Register locations are specified by just mentioning the name of the register. Register names "
@@ -886,18 +888,18 @@ SymbolicExprParser::RegisterToValue::instance(const InstructionSemantics::BaseSe
     return functor;
 }
 
-SymbolicExpr::Ptr
-SymbolicExprParser::RegisterToValue::immediateExpansion(const Token &token) {
+SymbolicExpression::Ptr
+SymbolicExpressionParser::RegisterToValue::immediateExpansion(const Token &token) {
     using namespace Rose::BinaryAnalysis::InstructionSemantics;
     BaseSemantics::RegisterState::Ptr regState = ops_->currentState()->registerState();
     const RegisterDescriptor regp = regState->registerDictionary()->find(token.lexeme());
     if (!regp)
-        return SymbolicExpr::Ptr();
+        return SymbolicExpression::Ptr();
     if (token.exprType().nBits() != 0 && token.exprType().nBits() != regp.nBits()) {
         throw token.syntaxError("invalid register width (specified=" + StringUtility::numberToString(token.exprType().nBits()) +
                                 ", actual=" + StringUtility::numberToString(regp.nBits()) + ")");
     }
-    if (token.exprType().typeClass() == SymbolicExpr::Type::MEMORY)
+    if (token.exprType().typeClass() == SymbolicExpression::Type::MEMORY)
         throw token.syntaxError("register width must be scalar");
     BaseSemantics::SValue::Ptr regValue = regState->peekRegister(regp, ops_->undefined_(regp.nBits()), ops_.get());
     return SymbolicSemantics::SValue::promote(regValue)->get_expression();
@@ -908,8 +910,8 @@ SymbolicExprParser::RegisterToValue::immediateExpansion(const Token &token) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // class method
-SymbolicExprParser::RegisterSubstituter::Ptr
-SymbolicExprParser::RegisterSubstituter::instance(const RegisterDictionary::Ptr &regdict) {
+SymbolicExpressionParser::RegisterSubstituter::Ptr
+SymbolicExpressionParser::RegisterSubstituter::instance(const RegisterDictionary::Ptr &regdict) {
     ASSERT_not_null(regdict);
     Ptr functor = Ptr(new RegisterSubstituter(regdict));
     functor->title("Registers");
@@ -921,8 +923,8 @@ SymbolicExprParser::RegisterSubstituter::instance(const RegisterDictionary::Ptr 
     return functor;
 }
 
-SymbolicExpr::Ptr
-SymbolicExprParser::RegisterSubstituter::immediateExpansion(const Token &token) {
+SymbolicExpression::Ptr
+SymbolicExpressionParser::RegisterSubstituter::immediateExpansion(const Token &token) {
     using namespace Rose::BinaryAnalysis::InstructionSemantics;
     ASSERT_not_null(regdict_);
 
@@ -933,32 +935,32 @@ SymbolicExprParser::RegisterSubstituter::immediateExpansion(const Token &token) 
         regp = regdict_->find(boost::erase_tail_copy(registerName, 2));
 
     if (!regp)
-        return SymbolicExpr::Ptr();
+        return SymbolicExpression::Ptr();
     if (token.exprType().nBits() != 0 && token.exprType().nBits() != regp.nBits()) {
         throw token.syntaxError("invalid register width (specified=" + StringUtility::numberToString(token.exprType().nBits()) +
                                 ", actual=" + StringUtility::numberToString(regp.nBits()) + ")");
     }
-    if (token.exprType().typeClass() == SymbolicExpr::Type::MEMORY)
+    if (token.exprType().typeClass() == SymbolicExpression::Type::MEMORY)
         throw token.syntaxError("register width must be scalar");
 
-    SymbolicExpr::Ptr retval;
+    SymbolicExpression::Ptr retval;
     if (reg2var_.forward().getOptional(regp).assignTo(retval))
         return retval;
 
-    retval = SymbolicExpr::makeIntegerVariable(regp.nBits(), token.lexeme());
+    retval = SymbolicExpression::makeIntegerVariable(regp.nBits(), token.lexeme());
     reg2var_.insert(regp, retval);
     return retval;
 }
 
-SymbolicExpr::Ptr
-SymbolicExprParser::RegisterSubstituter::delayedExpansion(const SymbolicExpr::Ptr &src, const SymbolicExprParser *parser) {
+SymbolicExpression::Ptr
+SymbolicExpressionParser::RegisterSubstituter::delayedExpansion(const SymbolicExpression::Ptr &src, const SymbolicExpressionParser *parser) {
     ASSERT_not_null(src);
     ASSERT_not_null(parser);
     ASSERT_not_null(ops_);
 
     namespace SS = Rose::BinaryAnalysis::InstructionSemantics::SymbolicSemantics;
     namespace BS = Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;
-    Sawyer::Message::Stream debug(SymbolicExprParser::mlog[DEBUG]);
+    Sawyer::Message::Stream debug(SymbolicExpressionParser::mlog[DEBUG]);
 
     RegisterDescriptor reg;
     if (reg2var_.reverse().getOptional(src).assignTo(reg)) {
@@ -990,8 +992,8 @@ SymbolicExprParser::RegisterSubstituter::delayedExpansion(const SymbolicExpr::Pt
 //                                      Delayed memory substitutions
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-SymbolicExprParser::MemorySubstituter::Ptr
-SymbolicExprParser::MemorySubstituter::instance(const SmtSolver::Ptr &solver /*=NULL*/) {
+SymbolicExpressionParser::MemorySubstituter::Ptr
+SymbolicExpressionParser::MemorySubstituter::instance(const SmtSolver::Ptr &solver /*=NULL*/) {
     Ptr functor = Ptr(new MemorySubstituter(solver));
     functor->title("Memory");
     functor->docString("Memory can be read using the \"memory\" function. A size should be specified as part of the operator "
@@ -1002,10 +1004,10 @@ SymbolicExprParser::MemorySubstituter::instance(const SmtSolver::Ptr &solver /*=
     return functor;
 }
 
-SymbolicExpr::Ptr
-SymbolicExprParser::MemorySubstituter::immediateExpansion(const Token &func, const SymbolicExpr::Nodes &operands) {
+SymbolicExpression::Ptr
+SymbolicExpressionParser::MemorySubstituter::immediateExpansion(const Token &func, const SymbolicExpression::Nodes &operands) {
     if (func.lexeme() != "memory") {
-        return SymbolicExpr::Ptr();
+        return SymbolicExpression::Ptr();
     } else if (operands.size() != 1) {
         throw func.syntaxError("wrong number of arguments for \"memory\""
                                "(specified=" + StringUtility::numberToString(operands.size()) + ", required=1)");
@@ -1013,21 +1015,22 @@ SymbolicExprParser::MemorySubstituter::immediateExpansion(const Token &func, con
         throw func.syntaxError("invalid memory width (specified=" + StringUtility::numberToString(func.exprType().nBits()) +
                                ", required multiple of 8)");
     } else {
-        SymbolicExpr::Ptr retval = SymbolicExpr::makeIntegerVariable(func.exprType().nBits(), "memory-ref");
+        SymbolicExpression::Ptr retval = SymbolicExpression::makeIntegerVariable(func.exprType().nBits(), "memory-ref");
         exprToMem_.insert(retval, operands[0]);
         return retval;
     }
 }
 
-SymbolicExpr::Ptr
-SymbolicExprParser::MemorySubstituter::delayedExpansion(const SymbolicExpr::Ptr &src, const SymbolicExprParser *parser) {
+SymbolicExpression::Ptr
+SymbolicExpressionParser::MemorySubstituter::delayedExpansion(const SymbolicExpression::Ptr &src,
+                                                              const SymbolicExpressionParser *parser) {
     ASSERT_not_null(src);
     ASSERT_not_null(parser);
     ASSERT_not_null(ops_);
     using namespace Rose::BinaryAnalysis::InstructionSemantics;
-    Sawyer::Message::Stream debug(SymbolicExprParser::mlog[DEBUG]);
+    Sawyer::Message::Stream debug(SymbolicExpressionParser::mlog[DEBUG]);
 
-    if (SymbolicExpr::Ptr addrExpr = exprToMem_.getOrDefault(src)) {
+    if (SymbolicExpression::Ptr addrExpr = exprToMem_.getOrDefault(src)) {
         addrExpr = parser->delayedExpansion(addrExpr);
         SymbolicSemantics::SValue::Ptr addr = SymbolicSemantics::SValue::promote(ops_->undefined_(addrExpr->nBits()));
         addr->set_expression(addrExpr);
@@ -1045,85 +1048,85 @@ SymbolicExprParser::MemorySubstituter::delayedExpansion(const SymbolicExpr::Ptr 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // class method
-SymbolicExprParser::TermPlaceholders::Ptr
-SymbolicExprParser::TermPlaceholders::instance() {
+SymbolicExpressionParser::TermPlaceholders::Ptr
+SymbolicExpressionParser::TermPlaceholders::instance() {
     Ptr functor = Ptr(new TermPlaceholders);
     functor->title("Terms");
     functor->docString("Any variable.");
     return functor;
 }
 
-SymbolicExpr::Ptr
-SymbolicExprParser::TermPlaceholders::immediateExpansion(const Token &token) {
-    SymbolicExpr::Ptr retval;
+SymbolicExpression::Ptr
+SymbolicExpressionParser::TermPlaceholders::immediateExpansion(const Token &token) {
+    SymbolicExpression::Ptr retval;
     if (name2var_.forward().getOptional(token.lexeme()).assignTo(retval))
         return retval;
     if (token.exprType().nBits() == 0)
         throw token.syntaxError("non-zero variable width required");
-    retval = SymbolicExpr::makeIntegerVariable(token.exprType().nBits());
+    retval = SymbolicExpression::makeIntegerVariable(token.exprType().nBits());
     name2var_.insert(token.lexeme(), retval);
     return retval;
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                      SymbolicExprParser
+//                                      SymbolicExpressionParser
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Sawyer::Message::Facility SymbolicExprParser::mlog;
+Sawyer::Message::Facility SymbolicExpressionParser::mlog;
 
 // class method
 void
-SymbolicExprParser::initDiagnostics() {
+SymbolicExpressionParser::initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::SymbolicExprParser");
+        Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::SymbolicExpressionParser");
         mlog.comment("parsing symbolic expressions");
     }
 }
 
 // Throws an exception for functions named "..."
-class AbbreviatedOperator: public SymbolicExprParser::OperatorExpansion {
+class AbbreviatedOperator: public SymbolicExpressionParser::OperatorExpansion {
 protected:
     explicit AbbreviatedOperator(const SmtSolverPtr &solver)
-        : SymbolicExprParser::OperatorExpansion(solver) {}
+        : SymbolicExpressionParser::OperatorExpansion(solver) {}
 
 public:
     static Ptr instance(const SmtSolverPtr &solver) {
         return Ptr(new AbbreviatedOperator(solver));            // undocumented
     }
-    SymbolicExpr::Ptr immediateExpansion(const SymbolicExprParser::Token &op, const SymbolicExpr::Nodes &args) {
+    SymbolicExpression::Ptr immediateExpansion(const SymbolicExpressionParser::Token &op, const SymbolicExpression::Nodes &args) {
         if (op.lexeme() == "...")
             throw op.syntaxError("input is an abbreviated expression; parts are missing");
-        return SymbolicExpr::Ptr();
+        return SymbolicExpression::Ptr();
     }
 };
 
 // Throws an exception for atoms named "..."
-class AbbreviatedAtom: public SymbolicExprParser::AtomExpansion {
+class AbbreviatedAtom: public SymbolicExpressionParser::AtomExpansion {
 public:
     static Ptr instance() {
         return Ptr(new AbbreviatedAtom);                // undocumented
     }
-    SymbolicExpr::Ptr immediateExpansion(const SymbolicExprParser::Token &symbol) {
+    SymbolicExpression::Ptr immediateExpansion(const SymbolicExpressionParser::Token &symbol) {
         if (symbol.lexeme() == "...")
             throw symbol.syntaxError("input is an abbreviated expression; parts are missing");
-        return SymbolicExpr::Ptr();
+        return SymbolicExpression::Ptr();
     }
 };
 
-SymbolicExprParser::SymbolicExprParser() {
+SymbolicExpressionParser::SymbolicExpressionParser() {
     init();
 }
 
-SymbolicExprParser::SymbolicExprParser(const SmtSolverPtr &solver)
+SymbolicExpressionParser::SymbolicExpressionParser(const SmtSolverPtr &solver)
     : solver_(solver) {
     init();
 }
 
-SymbolicExprParser::~SymbolicExprParser() {}
+SymbolicExpressionParser::~SymbolicExpressionParser() {}
 
 void
-SymbolicExprParser::init() {
+SymbolicExpressionParser::init() {
     appendOperatorExpansion(AbbreviatedOperator::instance(solver_));
     appendOperatorExpansion(SmtOperators::instance(solver_));
     appendOperatorExpansion(COperators::instance(solver_));
@@ -1134,7 +1137,7 @@ SymbolicExprParser::init() {
 }
 
 std::string
-SymbolicExprParser::docString() const {
+SymbolicExpressionParser::docString() const {
     std::string s = "Symbolic expressions are parsed as S-expressions in LISP-like notation. Each S-expression is either "
                     "an atom, or a list of S-expressions.  An atom is a bare number or symbol, like \"-45\", \"v120\", or "
                     "\"+\", and a list is a juxtaposition of S-expressions enclosed in parentheses, like \"(add 1 2)\". "
@@ -1159,33 +1162,33 @@ SymbolicExprParser::docString() const {
     return s;
 }
 
-SymbolicExpr::Ptr
-SymbolicExprParser::parse(const std::string &input, const std::string &inputName) {
+SymbolicExpression::Ptr
+SymbolicExpressionParser::parse(const std::string &input, const std::string &inputName) {
     std::istringstream stream(input);
     TokenStream tokens(stream, inputName);
-    SymbolicExpr::Ptr expr = parse(tokens);
+    SymbolicExpression::Ptr expr = parse(tokens);
     if (tokens[0].tokenType() != Token::NONE)
         throw SyntaxError("additional text after end of expression",
                           tokens.name(), tokens[0].lineNumber(), tokens[0].columnNumber());
     return expr;
 }
 
-SymbolicExpr::Ptr
-SymbolicExprParser::parse(std::istream &input, const std::string &inputName, unsigned lineNumber, unsigned columnNumber) {
+SymbolicExpression::Ptr
+SymbolicExpressionParser::parse(std::istream &input, const std::string &inputName, unsigned lineNumber, unsigned columnNumber) {
     TokenStream tokens(input, inputName, lineNumber, columnNumber);
     return parse(tokens);
 }
 
 struct PartialInternalNode {
-    SymbolicExprParser::Token op;
-    std::vector<SymbolicExpr::Ptr> operands;
-    SymbolicExprParser::Token ltparen;                  // for error messages
-    PartialInternalNode(const SymbolicExprParser::Token &op, const SymbolicExprParser::Token &ltparen)
+    SymbolicExpressionParser::Token op;
+    std::vector<SymbolicExpression::Ptr> operands;
+    SymbolicExpressionParser::Token ltparen;                  // for error messages
+    PartialInternalNode(const SymbolicExpressionParser::Token &op, const SymbolicExpressionParser::Token &ltparen)
         : op(op), ltparen(ltparen) {}
 };
 
-SymbolicExpr::Ptr
-SymbolicExprParser::parse(TokenStream &tokens) {
+SymbolicExpression::Ptr
+SymbolicExpressionParser::parse(TokenStream &tokens) {
     std::vector<PartialInternalNode> stack;
     while (tokens[0].tokenType() != Token::NONE) {
         switch (tokens[0].tokenType()) {
@@ -1197,13 +1200,13 @@ SymbolicExprParser::parse(TokenStream &tokens) {
                 break;
             }
             case Token::SYMBOL: {
-                SymbolicExpr::Ptr expr;
+                SymbolicExpression::Ptr expr;
                 try {
                     for (const AtomExpansion::Ptr &functor: atomTable_) {
                         if ((expr = functor->immediateExpansion(tokens[0])))
                             break;
                     }
-                } catch (const SymbolicExpr::Exception &e) {
+                } catch (const SymbolicExpression::Exception &e) {
                     throw tokens[0].syntaxError(e.what(), tokens.name());
                 }
                 if (expr == NULL)
@@ -1216,7 +1219,7 @@ SymbolicExprParser::parse(TokenStream &tokens) {
                 break;
             }
             case Token::BITVECTOR: {
-                SymbolicExpr::Ptr leaf = SymbolicExpr::makeConstant(tokens[0].exprType(), tokens[0].bits());
+                SymbolicExpression::Ptr leaf = SymbolicExpression::makeConstant(tokens[0].exprType(), tokens[0].bits());
                 tokens.shift(1);
                 if (stack.empty())
                     return leaf;
@@ -1227,13 +1230,13 @@ SymbolicExprParser::parse(TokenStream &tokens) {
                 tokens.shift();
                 if (stack.empty())
                     throw tokens[0].syntaxError("unexpected right parenthesis", tokens.name());
-                SymbolicExpr::Ptr expr;
+                SymbolicExpression::Ptr expr;
                 try {
                     for (const OperatorExpansion::Ptr &functor: operatorTable_) {
                         if ((expr = functor->immediateExpansion(stack.back().op, stack.back().operands)))
                             break;
                     }
-                } catch (const SymbolicExpr::Exception &e) {
+                } catch (const SymbolicExpression::Exception &e) {
                     throw stack.back().ltparen.syntaxError(e.what(), tokens.name());
                 }
                 if (expr == NULL) {
@@ -1257,29 +1260,29 @@ SymbolicExprParser::parse(TokenStream &tokens) {
 }
 
 void
-SymbolicExprParser::appendAtomExpansion(const AtomExpansion::Ptr &functor) {
+SymbolicExpressionParser::appendAtomExpansion(const AtomExpansion::Ptr &functor) {
     ASSERT_not_null(functor);
     atomTable_.push_back(functor);
 }
 
 void
-SymbolicExprParser::appendOperatorExpansion(const OperatorExpansion::Ptr &functor) {
+SymbolicExpressionParser::appendOperatorExpansion(const OperatorExpansion::Ptr &functor) {
     ASSERT_not_null(functor);
     operatorTable_.push_back(functor);
 }
 
 struct DelayedSubber {
-    const SymbolicExprParser *parser;
+    const SymbolicExpressionParser *parser;
 
-    explicit DelayedSubber(const SymbolicExprParser *parser)
+    explicit DelayedSubber(const SymbolicExpressionParser *parser)
         : parser(parser) {}
 
-    SymbolicExpr::Ptr operator()(SymbolicExpr::Ptr expr, const SmtSolver::Ptr &solver/*=NULL*/) {
-        for (SymbolicExprParser::AtomExpansion::Ptr expander: parser->atomTable()) {
+    SymbolicExpression::Ptr operator()(SymbolicExpression::Ptr expr, const SmtSolver::Ptr &solver/*=NULL*/) {
+        for (SymbolicExpressionParser::AtomExpansion::Ptr expander: parser->atomTable()) {
             expr = expander->delayedExpansion(expr, parser);
             ASSERT_not_null(expr);
         }
-        for (SymbolicExprParser::OperatorExpansion::Ptr expander: parser->operatorTable()) {
+        for (SymbolicExpressionParser::OperatorExpansion::Ptr expander: parser->operatorTable()) {
             expr = expander->delayedExpansion(expr, parser);
             ASSERT_not_null(expr);
         }
@@ -1287,10 +1290,10 @@ struct DelayedSubber {
     }
 };
 
-SymbolicExpr::Ptr
-SymbolicExprParser::delayedExpansion(const SymbolicExpr::Ptr &expr) const {
+SymbolicExpression::Ptr
+SymbolicExpressionParser::delayedExpansion(const SymbolicExpression::Ptr &expr) const {
     DelayedSubber subber(this);
-    return SymbolicExpr::substitute(expr, subber, solver_);
+    return SymbolicExpression::substitute(expr, subber, solver_);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1299,16 +1302,16 @@ SymbolicExprParser::delayedExpansion(const SymbolicExpr::Ptr &expr) const {
 
 // class method
 std::string
-SymbolicExprParser::SymbolicExprCmdlineParser::docString() {
-    return SymbolicExprParser().docString();
+SymbolicExpressionParser::SymbolicExprCmdlineParser::docString() {
+    return SymbolicExpressionParser().docString();
 }
 
 Sawyer::CommandLine::ParsedValue
-SymbolicExprParser::SymbolicExprCmdlineParser::operator()(const char *input, const char **rest,
+SymbolicExpressionParser::SymbolicExprCmdlineParser::operator()(const char *input, const char **rest,
                                                           const Sawyer::CommandLine::Location &loc) {
-    SymbolicExpr::Ptr expr;
+    SymbolicExpression::Ptr expr;
     try {
-        expr = SymbolicExprParser().parse(input, "command-line");
+        expr = SymbolicExpressionParser().parse(input, "command-line");
     } catch (const SyntaxError &e) {
         *rest = input && *input ? input+1 : input;
         std::ostringstream ss;
@@ -1328,18 +1331,18 @@ SymbolicExprParser::SymbolicExprCmdlineParser::operator()(const char *input, con
     return Sawyer::CommandLine::ParsedValue(expr, loc, input, valueSaver());
 }
 
-SymbolicExprParser::SymbolicExprCmdlineParser::Ptr
-SymbolicExprParser::symbolicExprParser(SymbolicExpr::Ptr &storage) {
-    return SymbolicExprCmdlineParser::instance(Sawyer::CommandLine::TypedSaver<SymbolicExpr::Ptr>::instance(storage));
+SymbolicExpressionParser::SymbolicExprCmdlineParser::Ptr
+SymbolicExpressionParser::symbolicExprParser(SymbolicExpression::Ptr &storage) {
+    return SymbolicExprCmdlineParser::instance(Sawyer::CommandLine::TypedSaver<SymbolicExpression::Ptr>::instance(storage));
 }
 
-SymbolicExprParser::SymbolicExprCmdlineParser::Ptr
-SymbolicExprParser::symbolicExprParser(std::vector<SymbolicExpr::Ptr> &storage) {
-    return SymbolicExprCmdlineParser::instance(Sawyer::CommandLine::TypedSaver<std::vector<SymbolicExpr::Ptr> >::instance(storage));
+SymbolicExpressionParser::SymbolicExprCmdlineParser::Ptr
+SymbolicExpressionParser::symbolicExprParser(std::vector<SymbolicExpression::Ptr> &storage) {
+    return SymbolicExprCmdlineParser::instance(Sawyer::CommandLine::TypedSaver<std::vector<SymbolicExpression::Ptr> >::instance(storage));
 }
 
-SymbolicExprParser::SymbolicExprCmdlineParser::Ptr
-SymbolicExprParser::symbolicExprParser() {
+SymbolicExpressionParser::SymbolicExprCmdlineParser::Ptr
+SymbolicExpressionParser::symbolicExprParser() {
     return SymbolicExprCmdlineParser::instance();
 }
 

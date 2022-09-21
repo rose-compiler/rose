@@ -3,7 +3,7 @@
 #include <sage3basic.h>
 
 #include <Rose/Diagnostics.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Config.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Configuration.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Modules.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Utility.h>
 #include <Rose/Yaml.h>
@@ -90,8 +90,8 @@ Configuration::fileFormatDoc() {
         "names of the form \"@v{lib}:@v{func}\" are translated to the ROSE names \"@v{func}@@@v{lib}\".";
 }
 
-FunctionConfig&
-FunctionConfig::name(const std::string &s) {
+FunctionConfiguration&
+FunctionConfiguration::name(const std::string &s) {
     if (!address()) {
         // Can't change the name since the name is being used as the lookup key.
         throw std::runtime_error("function config name cannot be changed if it has no address");
@@ -119,7 +119,7 @@ Configuration::loadFromFile(const FileSystem::Path &fileName) {
                 std::string functionName = Modules::canonicalFunctionName(iter->first.as<std::string>());
                 YAML::Node functionInfo = iter->second;
                 if (functionInfo["function"] && functionInfo["function"]["delta"]) {
-                    FunctionConfig config(functionName);
+                    FunctionConfiguration config(functionName);
                     static const int wordSize = 4;      // these files don't include popping the return address
                     int delta = functionInfo["function"]["delta"].as<int>() + wordSize;
                     config.stackDelta(delta);
@@ -139,7 +139,7 @@ Configuration::loadFromFile(const FileSystem::Path &fileName) {
                         addr = function["address"].as<rose_addr_t>();
                     if (function["name"])
                         name = Modules::canonicalFunctionName(function["name"].as<std::string>());
-                    FunctionConfig config(addr, name);
+                    FunctionConfiguration config(addr, name);
                     if (function["default_name"])
                         config.defaultName(Modules::canonicalFunctionName(function["default_name"].as<std::string>()));
                     if (function["comment"])
@@ -170,7 +170,7 @@ Configuration::loadFromFile(const FileSystem::Path &fileName) {
                         continue;
                     }
                     rose_addr_t addr = bblock["address"].as<rose_addr_t>();
-                    BasicBlockConfig config(addr);
+                    BasicBlockConfiguration config(addr);
                     if (bblock["comment"])
                         config.comment(bblock["comment"].as<std::string>());
                     if (bblock["final_instruction"])
@@ -194,7 +194,7 @@ Configuration::loadFromFile(const FileSystem::Path &fileName) {
                         continue;
                     }
                     rose_addr_t addr = dblock["address"].as<rose_addr_t>();
-                    DataBlockConfig config(addr);
+                    DataBlockConfiguration config(addr);
                     if (dblock["name"])
                         config.name(dblock["name"].as<std::string>());
                     if (dblock["comment"])
@@ -214,7 +214,7 @@ Configuration::loadFromFile(const FileSystem::Path &fileName) {
                         continue;
                     }
                     rose_addr_t addr = detail["address"].as<rose_addr_t>();
-                    AddressConfig config(addr);
+                    AddressConfiguration config(addr);
                     if (detail["name"])
                         config.name(detail["name"].as<std::string>());
                     if (detail["comment"])
@@ -245,7 +245,7 @@ Configuration::loadFromFile(const FileSystem::Path &fileName) {
                 // This non-idiomatic "if" condition is because Yaml::Node has no bool operator, so we have to negate a
                 // predicate in the negative (i.e., "is not nothing" instead of "is something".
                 if (functionInfo["function"] && functionInfo["function"]["delta"]) {
-                    FunctionConfig config(functionName);
+                    FunctionConfiguration config(functionName);
                     static const int wordSize = 4;      // these files don't include popping the return address
                     int delta = functionInfo["function"]["delta"].as<int>() + wordSize;
                     config.stackDelta(delta);
@@ -267,7 +267,7 @@ Configuration::loadFromFile(const FileSystem::Path &fileName) {
                         addr = function["address"].as<rose_addr_t>();
                     if (function["name"])
                         name = Modules::canonicalFunctionName(function["name"].as<std::string>());
-                    FunctionConfig config(addr, name);
+                    FunctionConfiguration config(addr, name);
                     if (function["default_name"])
                         config.defaultName(Modules::canonicalFunctionName(function["default_name"].as<std::string>()));
                     if (function["comment"])
@@ -300,7 +300,7 @@ Configuration::loadFromFile(const FileSystem::Path &fileName) {
                         continue;
                     }
                     rose_addr_t addr = bblock["address"].as<rose_addr_t>();
-                    BasicBlockConfig config(addr);
+                    BasicBlockConfiguration config(addr);
                     if (bblock["comment"])
                         config.comment(bblock["comment"].as<std::string>());
                     if (bblock["final_instruction"])
@@ -329,7 +329,7 @@ Configuration::loadFromFile(const FileSystem::Path &fileName) {
                         continue;
                     }
                     rose_addr_t addr = dblock["address"].as<rose_addr_t>();
-                    DataBlockConfig config(addr);
+                    DataBlockConfiguration config(addr);
                     if (dblock["name"])
                         config.name(dblock["name"].as<std::string>());
                     if (dblock["comment"])
@@ -351,7 +351,7 @@ Configuration::loadFromFile(const FileSystem::Path &fileName) {
                         continue;
                     }
                     rose_addr_t addr = detail["address"].as<rose_addr_t>();
-                    AddressConfig config(addr);
+                    AddressConfiguration config(addr);
                     if (detail["name"])
                         config.name(detail["name"].as<std::string>());
                     if (detail["comment"])
@@ -373,7 +373,7 @@ Configuration::loadFromFile(const FileSystem::Path &fileName) {
 }
 
 static void
-printFunctionConfig(std::ostream &out, const FunctionConfig &config) {
+printFunctionConfiguration(std::ostream &out, const FunctionConfiguration &config) {
     if (config.address())
         out <<"    - address:" <<StringUtility::addrToString(*config.address()) <<"\n";
     if (!config.name().empty())
@@ -391,7 +391,7 @@ printFunctionConfig(std::ostream &out, const FunctionConfig &config) {
 }
 
 static void
-printBasicBlockConfig(std::ostream &out, const BasicBlockConfig &config) {
+printBasicBlockConfiguration(std::ostream &out, const BasicBlockConfiguration &config) {
     out <<"    - address:" <<StringUtility::addrToString(config.address()) <<"\n";
     if (!config.comment().empty())
         out <<"      comment: " <<StringUtility::yamlEscape(config.comment()) <<"\n";
@@ -407,7 +407,7 @@ printBasicBlockConfig(std::ostream &out, const BasicBlockConfig &config) {
 }
 
 static void
-printDataBlockConfig(std::ostream &out, const DataBlockConfig &config) {
+printDataBlockConfiguration(std::ostream &out, const DataBlockConfiguration &config) {
     out <<"    - address: " <<StringUtility::addrToString(config.address()) <<"\n";
     if (!config.name().empty())
         out <<"      name: " <<StringUtility::yamlEscape(config.name()) <<"\n";
@@ -418,7 +418,7 @@ printDataBlockConfig(std::ostream &out, const DataBlockConfig &config) {
 }
 
 static void
-printAddressConfig(std::ostream &out, const AddressConfig &config) {
+printAddressConfiguration(std::ostream &out, const AddressConfiguration &config) {
     out <<"    - address: " <<StringUtility::addrToString(config.address()) <<"\n";
     if (!config.name().empty())
         out <<"      name: " <<StringUtility::yamlEscape(config.name()) <<"\n";
@@ -430,160 +430,160 @@ printAddressConfig(std::ostream &out, const AddressConfig &config) {
 
 void
 Configuration::print(std::ostream &out) const {
-    if (!functionConfigsByAddress_.isEmpty() || !functionConfigsByName_.isEmpty()) {
+    if (!functionConfigurationsByAddress_.isEmpty() || !functionConfigurationsByName_.isEmpty()) {
         out <<"functions:\n";
-        for (const FunctionConfig &config: functionConfigsByAddress_.values())
-            printFunctionConfig(out, config);
-        for (const FunctionConfig &config: functionConfigsByName_.values())
-            printFunctionConfig(out, config);
+        for (const FunctionConfiguration &config: functionConfigurationsByAddress_.values())
+            printFunctionConfiguration(out, config);
+        for (const FunctionConfiguration &config: functionConfigurationsByName_.values())
+            printFunctionConfiguration(out, config);
     }
 
-    if (!bblockConfigs_.isEmpty()) {
+    if (!bblockConfigurations_.isEmpty()) {
         out <<"bblocks:\n";
-        for (const BasicBlockConfig &config: bblockConfigs_.values())
-            printBasicBlockConfig(out, config);
+        for (const BasicBlockConfiguration &config: bblockConfigurations_.values())
+            printBasicBlockConfiguration(out, config);
     }
 
-    if (!dblockConfigs_.isEmpty()) {
+    if (!dblockConfigurations_.isEmpty()) {
         out <<"dblocks:\n";
-        for (const DataBlockConfig &config: dblockConfigs_.values())
-            printDataBlockConfig(out, config);
+        for (const DataBlockConfiguration &config: dblockConfigurations_.values())
+            printDataBlockConfiguration(out, config);
     }
-    if (!addressConfigs_.isEmpty()) {
+    if (!addressConfigurations_.isEmpty()) {
         out <<"addresses:\n";
-        for (const AddressConfig &config: addressConfigs_.values())
-            printAddressConfig(out, config);
+        for (const AddressConfiguration &config: addressConfigurations_.values())
+            printAddressConfiguration(out, config);
     }
 }
 
-BasicBlockConfig&
+BasicBlockConfiguration&
 Configuration::insertMaybeBasicBlock(rose_addr_t va) {
-    return bblockConfigs_.insertMaybe(va, BasicBlockConfig(va));
+    return bblockConfigurations_.insertMaybe(va, BasicBlockConfiguration(va));
 }
 
-DataBlockConfig&
+DataBlockConfiguration&
 Configuration::insertMaybeDataBlock(rose_addr_t va) {
-    return dblockConfigs_.insertMaybe(va, DataBlockConfig(va));
+    return dblockConfigurations_.insertMaybe(va, DataBlockConfiguration(va));
 }
 
-FunctionConfig&
+FunctionConfiguration&
 Configuration::insertMaybeFunction(rose_addr_t va, const std::string &name) {
-    return functionConfigsByAddress_.insertMaybe(va, FunctionConfig(va, name));
+    return functionConfigurationsByAddress_.insertMaybe(va, FunctionConfiguration(va, name));
 }
 
-FunctionConfig&
+FunctionConfiguration&
 Configuration::insertMaybeFunction(const std::string &name) {
-    return functionConfigsByName_.insertMaybe(name, FunctionConfig(name));
+    return functionConfigurationsByName_.insertMaybe(name, FunctionConfiguration(name));
 }
 
-AddressConfig&
+AddressConfiguration&
 Configuration::insertMaybeAddress(rose_addr_t va) {
-    return addressConfigs_.insertMaybe(va, AddressConfig(va));
+    return addressConfigurations_.insertMaybe(va, AddressConfiguration(va));
 }
 
-const BasicBlockConfig&
+const BasicBlockConfiguration&
 Configuration::basicBlock(rose_addr_t va) const {
-    return bblockConfigs_.getOrDefault(va);
+    return bblockConfigurations_.getOrDefault(va);
 }
 
-const DataBlockConfig&
+const DataBlockConfiguration&
 Configuration::dataBlock(rose_addr_t va) const {
-    return dblockConfigs_.getOrDefault(va);
+    return dblockConfigurations_.getOrDefault(va);
 }
 
-const AddressConfig&
+const AddressConfiguration&
 Configuration::address(rose_addr_t va) const {
-    return addressConfigs_.getOrDefault(va);
+    return addressConfigurations_.getOrDefault(va);
 }
 
-const FunctionConfig&
+const FunctionConfiguration&
 Configuration::function(rose_addr_t va) const {
-    return functionConfigsByAddress_.getOrDefault(va);
+    return functionConfigurationsByAddress_.getOrDefault(va);
 }
 
-const FunctionConfig&
+const FunctionConfiguration&
 Configuration::function(const std::string &name) const {
-    return functionConfigsByName_.getOrDefault(name);
+    return functionConfigurationsByName_.getOrDefault(name);
 }
 
 bool
-Configuration::insertConfiguration(const BasicBlockConfig &config) {
-    bool retval = !bblockConfigs_.exists(config.address());
-    bblockConfigs_.insert(config.address(), config);
+Configuration::insertConfiguration(const BasicBlockConfiguration &config) {
+    bool retval = !bblockConfigurations_.exists(config.address());
+    bblockConfigurations_.insert(config.address(), config);
     return retval;
 }
 
 bool
-Configuration::insertConfiguration(const DataBlockConfig &config) {
-    bool retval = !dblockConfigs_.exists(config.address());
-    dblockConfigs_.insert(config.address(), config);
+Configuration::insertConfiguration(const DataBlockConfiguration &config) {
+    bool retval = !dblockConfigurations_.exists(config.address());
+    dblockConfigurations_.insert(config.address(), config);
     return retval;
 }
 
 bool
-Configuration::insertConfiguration(const FunctionConfig &config) {
+Configuration::insertConfiguration(const FunctionConfiguration &config) {
     if (config.address()) {
-        bool retval = !functionConfigsByAddress_.exists(*config.address());
-        functionConfigsByAddress_.insert(*config.address(), config);
+        bool retval = !functionConfigurationsByAddress_.exists(*config.address());
+        functionConfigurationsByAddress_.insert(*config.address(), config);
         return retval;
     } else {
-        bool retval = !functionConfigsByName_.exists(config.name());
-        functionConfigsByName_.insert(config.name(), config);
+        bool retval = !functionConfigurationsByName_.exists(config.name());
+        functionConfigurationsByName_.insert(config.name(), config);
         return retval;
     }
 }
 
 bool
-Configuration::insertConfiguration(const AddressConfig &config) {
-    bool retval = !addressConfigs_.exists(config.address());
-    addressConfigs_.insert(config.address(), config);
+Configuration::insertConfiguration(const AddressConfiguration &config) {
+    bool retval = !addressConfigurations_.exists(config.address());
+    addressConfigurations_.insert(config.address(), config);
     return retval;
 }
 
 std::string
 Configuration::basicBlockComment(rose_addr_t bblockVa) const {
-    return bblockConfigs_.getOptional(bblockVa).orDefault().comment();
+    return bblockConfigurations_.getOptional(bblockVa).orDefault().comment();
 }
 
 Sawyer::Optional<rose_addr_t>
 Configuration::basicBlockFinalInstructionVa(rose_addr_t bblockVa) const {
-    return bblockConfigs_.getOptional(bblockVa).orDefault().finalInstructionVa();
+    return bblockConfigurations_.getOptional(bblockVa).orDefault().finalInstructionVa();
 }
 
 std::set<rose_addr_t>
 Configuration::basicBlockSuccessorVas(rose_addr_t bblockVa) const {
-    static const BasicBlockConfig emptyConfig;
-    return bblockConfigs_.getOptional(bblockVa).orElse(emptyConfig).successorVas();
+    static const BasicBlockConfiguration emptyConfiguration;
+    return bblockConfigurations_.getOptional(bblockVa).orElse(emptyConfiguration).successorVas();
 }
 
 std::string
 Configuration::dataBlockName(rose_addr_t dblockVa) const {
-    return dblockConfigs_.getOptional(dblockVa).orDefault().name();
+    return dblockConfigurations_.getOptional(dblockVa).orDefault().name();
 }
 
 std::string
 Configuration::dataBlockComment(rose_addr_t dblockVa) const {
-    return dblockConfigs_.getOptional(dblockVa).orDefault().comment();
+    return dblockConfigurations_.getOptional(dblockVa).orDefault().comment();
 }
 
 std::string
 Configuration::functionName(rose_addr_t functionVa) const {
-    return functionConfigsByAddress_.getOptional(functionVa).orDefault().name();
+    return functionConfigurationsByAddress_.getOptional(functionVa).orDefault().name();
 }
 
 std::string
 Configuration::functionDefaultName(rose_addr_t functionVa) const {
-    return functionConfigsByAddress_.getOptional(functionVa).orDefault().defaultName();
+    return functionConfigurationsByAddress_.getOptional(functionVa).orDefault().defaultName();
 }
 
 std::string
 Configuration::functionComment(rose_addr_t functionVa) const {
-    return functionConfigsByAddress_.getOptional(functionVa).orDefault().comment();
+    return functionConfigurationsByAddress_.getOptional(functionVa).orDefault().comment();
 }
 
 std::string
 Configuration::functionComment(const std::string &functionName) const {
-    return functionConfigsByName_.getOptional(functionName).orDefault().comment();
+    return functionConfigurationsByName_.getOptional(functionName).orDefault().comment();
 }
 
 std::string
@@ -598,12 +598,12 @@ Configuration::functionComment(const Function::Ptr &function) const {
 
 Sawyer::Optional<int64_t>
 Configuration::functionStackDelta(rose_addr_t functionVa) const {
-    return functionConfigsByAddress_.getOptional(functionVa).orDefault().stackDelta();
+    return functionConfigurationsByAddress_.getOptional(functionVa).orDefault().stackDelta();
 }
 
 Sawyer::Optional<int64_t>
 Configuration::functionStackDelta(const std::string &functionName) const {
-    return functionConfigsByName_.getOptional(functionName).orDefault().stackDelta();
+    return functionConfigurationsByName_.getOptional(functionName).orDefault().stackDelta();
 }
 
 Sawyer::Optional<int64_t>
@@ -617,12 +617,12 @@ Configuration::functionStackDelta(const Function::Ptr &function) const {
 
 Sawyer::Optional<bool>
 Configuration::functionMayReturn(rose_addr_t functionVa) const {
-    return functionConfigsByAddress_.getOptional(functionVa).orDefault().mayReturn();
+    return functionConfigurationsByAddress_.getOptional(functionVa).orDefault().mayReturn();
 }
 
 Sawyer::Optional<bool>
 Configuration::functionMayReturn(const std::string &functionName) const {
-    return functionConfigsByName_.getOptional(functionName).orDefault().mayReturn();
+    return functionConfigurationsByName_.getOptional(functionName).orDefault().mayReturn();
 }
 
 Sawyer::Optional<bool>
@@ -636,7 +636,7 @@ Configuration::functionMayReturn(const Function::Ptr &function) const {
 
 std::string
 Configuration::addressComment(rose_addr_t va) const {
-    return addressConfigs_.getOptional(va).orDefault().comment();
+    return addressConfigurations_.getOptional(va).orDefault().comment();
 }
 
 std::string

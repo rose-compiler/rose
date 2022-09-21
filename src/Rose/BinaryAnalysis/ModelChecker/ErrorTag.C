@@ -5,6 +5,7 @@
 
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/SValue.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/SymbolicExpression.h>
 
 namespace BS = Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;
 namespace IS = Rose::BinaryAnalysis::InstructionSemantics;
@@ -18,7 +19,7 @@ ErrorTag::ErrorTag(size_t nodeStep, const std::string &name, const std::string &
     : NameTag(nodeStep, name), mesg_(mesg), insn_(insn), concrete_(value) {}
 
 ErrorTag::ErrorTag(size_t nodeStep, const std::string &name, const std::string &mesg, SgAsmInstruction *insn,
-                   const SymbolicExpr::Ptr &value)
+                   const SymbolicExpression::Ptr &value)
     : NameTag(nodeStep, name), mesg_(mesg), insn_(insn), symbolic_(value) {}
 
 ErrorTag::ErrorTag(size_t nodeStep, const std::string &name, const std::string &mesg, SgAsmInstruction *insn,
@@ -40,7 +41,7 @@ ErrorTag::instance(size_t nodeStep, const std::string &name, const std::string &
 
 ErrorTag::Ptr
 ErrorTag::instance(size_t nodeStep, const std::string &name, const std::string &mesg, SgAsmInstruction *insn,
-                   const SymbolicExpr::Ptr &value) {
+                   const SymbolicExpression::Ptr &value) {
     return Ptr(new ErrorTag(nodeStep, name, mesg, insn, value));
 }
 
@@ -75,7 +76,7 @@ ErrorTag::print(std::ostream &out, const std::string &prefix) const {
     if (concrete_)
         out <<prefix <<"  value = " <<StringUtility::toHex(*concrete_) <<"\n";
     if (symbolic_) {
-        SymbolicExpr::Formatter fmt;
+        SymbolicExpression::Formatter fmt;
         fmt.max_depth = 10;
         out <<prefix <<"  value = " <<(*symbolic_+fmt) <<"\n";
     }

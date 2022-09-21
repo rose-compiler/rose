@@ -1,8 +1,8 @@
 #include <rose.h>
-#include <Rose/BinaryAnalysis/SymbolicExpr.h>
+#include <Rose/BinaryAnalysis/SymbolicExpression.h>
 #include <cstdlib>
 
-using namespace Rose::BinaryAnalysis::SymbolicExpr;
+using namespace Rose::BinaryAnalysis::SymbolicExpression;
 
 int main() {
     LeafPtr a = makeIntegerConstant(32, 1);

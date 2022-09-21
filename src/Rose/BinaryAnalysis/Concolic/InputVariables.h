@@ -4,7 +4,7 @@
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 #include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
 
-#include <Rose/BinaryAnalysis/SymbolicExpr.h>
+#include <Rose/BinaryAnalysis/SymbolicExpression.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -28,7 +28,7 @@ public:
 private:
     using Variables = Sawyer::Container::Map<uint64_t, ExecutionEventPtr>; // map symbolic variable ID to program input
     Variables variables_;
-    SymbolicExpr::ExprExprHashMap bindings_;      // used for substitutions
+    SymbolicExpression::ExprExprHashMap bindings_;      // used for substitutions
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Constructors, etc.
@@ -51,7 +51,7 @@ public:
      *
      *  This is the set of all variable-value bindings. It is a list of variables and their corresponding values. This set
      *  is adjusted indirectly through other functions in this API. */
-    const SymbolicExpr::ExprExprHashMap& bindings() const;
+    const SymbolicExpression::ExprExprHashMap& bindings() const;
 
     /** Find an execution event for an input variable.
      *
@@ -60,7 +60,7 @@ public:
      *
      * @{ */
     ExecutionEventPtr event(const std::string &variableName) const;
-    ExecutionEventPtr event(const SymbolicExprPtr &variable) const;
+    ExecutionEventPtr event(const SymbolicExpressionPtr &variable) const;
     /** @} */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -165,13 +165,13 @@ public:
      *
      *  The variable and value must both be non-null. The association between the variable and the value is added to
      *  the @ref bindings property. */
-    void bindVariableValue(const SymbolicExprPtr &variable, const SymbolicExprPtr &value);
+    void bindVariableValue(const SymbolicExpressionPtr &variable, const SymbolicExpressionPtr &value);
 
     /** Unbinds a value from a variable.
      *
      *  Removes the variable and its binding from the @ref bindings property if present. If the variable is null then this
      *  function does nothing. */
-    void unbindVariableValue(const SymbolicExprPtr &variable);
+    void unbindVariableValue(const SymbolicExpressionPtr &variable);
 };
 
 } // namespace

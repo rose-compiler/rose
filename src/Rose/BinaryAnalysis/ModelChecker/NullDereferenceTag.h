@@ -1,5 +1,5 @@
-#ifndef ROSE_BinaryAnalysis_ModelChecker_NullDerefTag_H
-#define ROSE_BinaryAnalysis_ModelChecker_NullDerefTag_H
+#ifndef ROSE_BinaryAnalysis_ModelChecker_NullDereferenceTag_H
+#define ROSE_BinaryAnalysis_ModelChecker_NullDereferenceTag_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
@@ -11,9 +11,9 @@ namespace BinaryAnalysis {
 namespace ModelChecker {
 
 /** Tag that describes a null pointer dereference. */
-class NullDerefTag: public Tag {
+class NullDereferenceTag: public Tag {
 public:
-    using Ptr = NullDerefTagPtr;
+    using Ptr = NullDereferenceTagPtr;
 
 private:
     const TestMode testMode_;                                    // may or must, but not off
@@ -22,11 +22,11 @@ private:
     const InstructionSemantics::BaseSemantics::SValuePtr addr_; // memory address that is considered to be null
 
 protected:
-    NullDerefTag() = delete;
-    NullDerefTag(size_t nodeStep, TestMode, IoMode, SgAsmInstruction*,
-                 const InstructionSemantics::BaseSemantics::SValuePtr &addr);
+    NullDereferenceTag() = delete;
+    NullDereferenceTag(size_t nodeStep, TestMode, IoMode, SgAsmInstruction*,
+                       const InstructionSemantics::BaseSemantics::SValuePtr &addr);
 public:
-    ~NullDerefTag();
+    ~NullDereferenceTag();
 
     /** Allocating constructor.
      *
