@@ -4114,13 +4114,14 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
   // The variable ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION will be defined at configuration
   // but not ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT.  Unfortunately the latter variable is
   // too tightly coupled with Java usage at the moment. The Flang parser doesn't require Java.
+
      if (get_experimental_flang_frontend() == true) {
        int status{-1};
        int flangArgc{0};
        char** flangArgv{nullptr};
 
        vector<string> flangCommandLine;
-       flangCommandLine.push_back("f18");
+       flangCommandLine.push_back("f18-parse-demo");
        flangCommandLine.push_back("-fexternal-builder");
        flangCommandLine.push_back(get_sourceFileNameWithPath());
        CommandlineProcessing::generateArgcArgvFromList(flangCommandLine, flangArgc, flangArgv);
