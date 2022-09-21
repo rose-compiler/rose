@@ -1,0 +1,54 @@
+#!/bin/bash
+set -e
+arg0="${0##*/}"
+
+# Babysits a command and restarts it if necessary. The idea is that this babysit
+# script is small and simple (at least compared to rose-matrix-slave-run) and
+# unlikely to crash. It's typically run as a boot-time cron job on AWS EC2
+# instances that are dedicated to portability testing.
+
+while true; do
+    echo "$arg0: $(date '+%Y-%m-%d %H:%M:%S %Z') running:" "$@" >&2
+    if "$@"; then
+        error="exited with zero status"
+        wait_human="5 minutes"
+        wait_seconds=$[ 5 * 60 ]
+    else
+        error="died or exited with non-zero status"
+        wait_human="30 minutes"
+        wait_seconds=$[ 30 * 60 ]
+    fi
+
+    cat >&2 <<'EOF'
+
+====================================================================================
+                   ____
+                  |  _ \ _ __ ___   __ _ _ __ __ _ _ __ ___
+                  | |_) | '__/ _ \ / _` | '__/ _` | '_ ` _ \
+                  |  __/| | | (_) | (_| | | | (_| | | | | | |
+                  |_|   |_|  \___/ \__, |_|  \__,_|_| |_| |_|
+                                   |___/
+              _____                   _             _           _
+             |_   _|__ _ __ _ __ ___ (_)_ __   __ _| |_ ___  __| |
+               | |/ _ \ '__| '_ ` _ \| | '_ \ / _` | __/ _ \/ _` |
+               | |  __/ |  | | | | | | | | | | (_| | ||  __/ (_| |
+               |_|\___|_|  |_| |_| |_|_|_| |_|\__,_|\__\___|\__,_|
+
+
+                     The command terminated unexpectedly.
+                    I will wait for a while and try again.
+
+====================================================================================
+EOF
+    (
+	echo "$arg0: command that failed: " "$@"
+	echo "$arg0: failure mode:         $error"
+	echo "$arg0: time of failure:      $(date '+%Y-%m-%d %H:%M:%S %Z')"
+	echo "$arg0: resuming in:          $wait_human"
+	resume=$[ $(date +%s) + wait_seconds ]
+	echo "$arg0: resuming at:          $(date --date=@$resume '+%Y-%m-%d %H:%M:%S %Z')"
+	sleep $wait_seconds
+	echo
+	echo
+    ) >&2
+done

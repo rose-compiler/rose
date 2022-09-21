@@ -2425,10 +2425,13 @@ tests/smoke/unit/Sawyer/Makefile
 tests/smoke/unit/Utility/Makefile
 tools/Makefile
 tools/BinaryAnalysis/Makefile
-tools/globalVariablesInLambdas/Makefile
-tools/classMemberVariablesInLambdas/Makefile
 tools/checkFortranInterfaces/Makefile
+tools/classMemberVariablesInLambdas/Makefile
 tools/featureVector/Makefile
+tools/globalVariablesInLambdas/Makefile
+tools/PortabilityTesting/Makefile
+tools/PortabilityTesting/scripts/Makefile
+tools/PortabilityTesting/src/Makefile
 tutorial/Makefile
 tutorial/binaryAnalysis/Makefile
 tutorial/exampleMakefile

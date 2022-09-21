@@ -1,0 +1,24 @@
+#!/bin/bash
+set -e
+
+# Test that a project distributed outside ROSE can be compiled, tested, installed and run using
+# a version of ROSE installed from a binary distribution. This test is quite good because it runs
+# in a new docker container that doesn't have any of the ROSE build support.
+
+(set -x; ./run/artifacts/binary-release --prefix="$HOME/rose-binary-install")
+if [ ! -f "$HOME/rose-binary-install/include/ROSE_LICENSE" ]; then
+    echo "error: binary installation didn't install include/ROSE_LICENSE" >&2
+    exit 1
+fi
+
+(set -x; cp -pdr "$HOME/rose-binary-install/share/test-project" test-project)
+
+if [ -r rose-binary-install/include/rose-installed-make.cfg ]; then
+    (set -x; cp rose-binary-install/include/rose-installed-make.cfg test-project/rose.cfg)
+else
+    (set -x; cp rose-binary-install/lib/rose-config.cfg test-project/rose.cfg)
+fi
+echo "contents of rose.cfg:"
+cat -n test-project/rose.cfg
+
+(set -x; make -C test-project check)
