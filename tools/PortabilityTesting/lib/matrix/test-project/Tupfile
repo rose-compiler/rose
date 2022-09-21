@@ -1,0 +1,6 @@
+include_rules
+
+run $(public_file) -o share/test-project README Makefile test-rose.C
+
+run $(tool_compile_linkexe) -DINTERNAL_BUILD test-rose.C
+run $(test) test-rose

@@ -1,0 +1,332 @@
+#!/bin/bash
+set -e
+set -o pipefail
+arg0="${0##*/}"
+dir0="${0%/*}"
+
+export ROSE_ARGS='--log=none,warn,error,fatal --color=on'
+export PATH="$dir0:$PATH"
+
+FORMAT=plain
+
+die() {
+    echo "$arg0: error:" "$@" >&2
+    exit 1
+}
+
+version-number() {
+    local v="$(rose-matrix-query --version 2>&1)"
+    echo "${v/ROSE /}"
+}
+
+indent() {
+    case "$FORMAT" in
+	plain)
+	    sed 's/^/    /'
+	    ;;
+	html)
+	    cat
+	    ;;
+    esac
+}
+
+section() {
+    local title="$1" anchor="$2"
+    case "$FORMAT" in
+	plain)
+	    echo "================================================================================"
+	    echo "=== $title"
+	    echo "================================================================================"
+	    ;;
+	html)
+	    echo "<hr/><h2 id=\"$anchor\">$title</h2>"
+	    ;;
+    esac
+}
+
+subsection() {
+    local title="$1" anchor="$2"
+    case "$FORMAT" in
+	plain)
+	    echo
+	    echo "$title"
+	    echo
+	    ;;
+	html)
+	    echo "<p id=\"$anchor\">$title</p>"
+	    ;;
+    esac
+}
+
+paragraph() {
+    case "$FORMAT" in
+	plain)
+	    fmt
+	    ;;
+	html)
+	    echo -n "<p>"
+	    cat
+	    echo "</p>"
+	    ;;
+    esac
+}
+
+one-month-ago() {
+    local now=$(date +%s)
+    local before=$[now - 2592000]
+    date --utc --date="@$before" +'%Y%m%dT%H%M%S'
+}
+
+one-day-ago() {
+    local now=$(date +%s)
+    local before=$[now - 86400]
+    date --utc --date="@$before" +'%Y%m%dT%H%M%S'
+}
+
+# Parse command-line
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+	--format=*)
+	    FORMAT="${1#--format=}"
+	    shift
+	    ;;
+	--format)
+	    FORMAT="$2"
+	    shift 2
+	    ;;
+	-F*)
+	    FORMAT="${1#-F}"
+	    shift
+	    ;;
+	--database=*)
+	    ROSE_MATRIX_DATABASE="${1#--database=}"
+	    shift
+	    ;;
+	--database)
+	    ROSE_MATRIX_DATABASE="$2"
+	    shift 2
+	    ;;
+	--)
+	    shift
+	    break
+	    ;;
+	-*)
+	    die "unrecognized switch \"$1\""
+	    ;;
+	*)
+	    echo "usage: $arg0 [SWITCHES]" >&2
+	    exit 1
+	    ;;
+    esac
+done
+
+# Check command-line
+case "$FORMAT" in
+    html|plain)
+	: good
+	;;
+    *)
+	die "unknown output format \"$FORMAT\""
+	;;
+esac
+
+if [ "$FORMAT" == html ]; then
+    echo "<!DOCTYPE html>"
+    echo "<html><head><title>ROSE Portability Matrix</title></head><body>"
+    echo "<h1>ROSE Portability Matrix</h1>"
+    echo "<p>Updated at $(date '+%Y-%m-%d %H:%M:%S %Z') by running $arg0 version $(version-number)."
+    echo "See that shell script for the actual commands you can customize.</p>"
+
+    echo "<hr/>"
+    echo "<p>Table of Contents"
+    echo "  <ol>"
+    echo "    <li><a href=\"#notices\">Notices to ROSE developers</a></li>"
+    echo "    <li><a href=\"#config\">Slave configuration</a></li>"
+    echo "    <li><a href=\"#health\">Slave health</a></li>"
+    echo "    <li><a href=\"#recent\">Recent tests</a></li>"
+    echo "    <li><a href=\"#phases\">Test phases</a></li>"
+    echo "    <li><a href=\"#results\">Test result status</a>"
+    echo "      <ul>"
+    echo "        <li><a href=\"#results_lang\">by language</li>"
+    echo "        <li><a href=\"#results_lang_os\">by language and OS</li>"
+    echo "        <li><a href=\"#results_lang_os_compiler\">by language, OS, and compiler</li>"
+    echo "        <li><a href=\"#results_lang_boost\">by language and boost</li>"
+    echo "      </ul>"
+    echo "    </li>"
+    echo "    <li><a href=\"#errors\">Error messages</a>"
+    echo "      <ul>"
+    echo "        <li><a href=\"#errors_lang\">by language</li>"
+    echo "        <li><a href=\"#errors_lang_os\">by language and OS</li>"
+    echo "        <li><a href=\"#errors_lang_os_compiler\">by language, OS, and compiler</li>"
+    echo "        <li><a href=\"#errors_lang_boost\">by language and boost</li>"
+    echo "      </ul>"
+    echo "    </li>"
+    echo "    <li><a href=\"#dependencies\">Dependencies</a></li>"
+    echo "    <li><a href=\"#all_tabular\">All tabular information</a></li>"
+    echo "    <li><a href=\"#info\">Additional information</a></li>"
+    echo "  </ol>"
+    echo "</p>"
+fi
+
+if [ "$ROSE_MATRIX_DATABASE" = "" ]; then
+    die "no database specified; use --database or set \$ROSE_MATRIX_DATABASE"
+fi
+
+export ROSE_MATRIX_DATABASE
+ROSE="$(rose-matrix-query -q -Fshell rose)"
+[ -n "$ROSE" ] || die "portability testing tools are not properly installed"
+    
+
+####################################################################################################
+section "Notices to ROSE developers" "notices"
+echo
+rose-matrix-slave-config -F$FORMAT notices |indent
+
+####################################################################################################
+echo
+echo
+section "Slave configuration" "config"
+paragraph <<EOF
+This section contains information about what the slaves should be testing, and how. This is also
+the information you need if you want to set up your own testing.
+EOF
+echo
+rose-matrix-slave-config -F$FORMAT |indent
+
+####################################################################################################
+section "Slave health" "health"
+paragraph <<EOF
+This section contains information about what slaves have run in the last week. Each slave typically
+reports many test results.
+EOF
+echo
+rose-matrix-slave-health -F$FORMAT |indent
+
+echo
+paragraph <<EOF
+Sometimes slaves have intermittent or recurring problems related to setting up the test environment.
+This table reports setup failures by slave and operating system.
+EOF
+echo
+rose-matrix-query -F$FORMAT status=setup slave.a os.a id.a reporting_time first_error |indent
+
+####################################################################################################
+echo
+echo
+section "Recent tests" "recent"
+paragraph <<EOF
+These are the ROSE versions that have test results in the last month.
+EOF
+echo
+rose-matrix-query -F$FORMAT rose_date+$(one-month-ago) \
+		  rose rose_date reporting_time.min reporting_time.max.d count \
+    |indent
+echo
+
+paragraph <<EOF
+These are the tests that completed in the last 24 hours.
+EOF
+echo
+rose-matrix-query -F$FORMAT reporting_time+$(one-day-ago) \
+		  rose reporting_time.d slave id os compiler languages build boost status duration warnings \
+    | indent
+
+####################################################################################################
+echo
+echo
+section "Test phases" "phases"
+paragraph <<EOF
+These are the phases performed by each test. If a phase fails, the status for
+the test is the name of the failed phase. The name "end" means that all
+phases of the test passed. The phases are executed in order until one fails
+or the end is reached.
+EOF
+echo
+rose-matrix-phases -F$FORMAT |indent
+
+####################################################################################################
+echo
+echo
+section "Test result status" "results"
+paragraph <<EOF
+These are the test status results for ROSE version $ROSE.
+EOF
+
+subsection "Test results by analysis language." "results_lang"
+rose-matrix-query -F$FORMAT languages.a status count |indent
+
+subsection "Test results by analysis language and operating system." "results_lang_os"
+rose-matrix-query -F$FORMAT languages.a os.a status count |indent
+
+subsection "Test results by analysis language, operating system, and compiler." "results_lang_os_compiler"
+rose-matrix-query -F$FORMAT languages.a os.a compiler.a status count |indent
+
+subsection "Test results by analysis language and boost version." "results_lang_boost"
+rose-matrix-query -F$FORMAT languages.a boost.a status count |indent
+
+####################################################################################################
+echo
+echo
+section "Error messages" "errors"
+paragraph <<EOF
+These are the heuristically detected first error messages for ROSE version $ROSE.
+EOF
+
+subsection "Errors by analysis language." "errors_lang"
+rose-matrix-query -F$FORMAT languages.a status.a first_error{/,} count.d |indent
+
+subsection "Errors by analysis language and operating system." "errors_lang_os"
+rose-matrix-query -F$FORMAT languages.a os.a status.a first_error{/,} count.d |indent
+
+subsection "Errors by analysis language, operating system, and compiler." "errors_lang_os_compiler"
+rose-matrix-query -F$FORMAT languages.a os.a compiler.a status.a first_error{/,} count.d |indent
+
+subsection "Errors by analysis language and boost version." "errors_lang_boost"
+rose-matrix-query -F$FORMAT languages.a boost.a status.a first_error{/,} count.d |indent
+
+####################################################################################################
+echo
+echo
+section "Dependencies" "dependencies"
+paragraph <<EOF
+These are the dependencies being tested at this time. The Pass, Fail, and Grade
+columns are for ROSE version $ROSE.
+EOF
+
+rose-matrix-dependencies -F$FORMAT status |indent
+
+####################################################################################################
+echo
+echo
+section "All tabular information" "all_tabular"
+paragraph <<EOF
+This is all the tabular information about the current test campaign. Each test also has additional
+information such as output and configuration files that are not part of this table but can be
+obtained with various portability testing command-line tools.
+EOF
+
+rose-matrix-query -F$FORMAT --limit=1000 id.d all |indent
+
+####################################################################################################
+echo
+echo
+section "Additional information" "info"
+case "$FORMAT" in
+    plain)
+	paragraph <<EOF
+The data above is only the tip of the iceburg.
+See https://lep.is/w/index.php/ROSE:Portability_testing_results for more of the iceburg.
+EOF
+	;;
+    html)
+	echo "<p>The data above is only the tip of the iceburg. See"
+	echo "<a href=\"https://lep.is/w/index.php/ROSE:Portability_testing_results\">"
+	echo "https://lep.is/w/index.php/ROSE:Portability_testing_results</a>"
+	echo "for more of the iceburg.</p>"
+	;;
+esac
+
+####################################################################################################
+if [ "$FORMAT" == html ]; then
+    echo "</body></html>"
+fi

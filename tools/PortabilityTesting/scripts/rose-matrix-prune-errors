@@ -1,0 +1,12 @@
+#!/bin/bash
+
+echo "errors detected so far:"
+rose-matrix-query --quiet --limit=10000 first_error// languages first_error count |sed 's/^/  /'
+
+rose-matrix-query --quiet -Fshell first_error/ first_error |
+    while IFS= read -r error; do
+	eval "ERROR=$error"
+	echo
+	echo
+	rose-matrix-query --limit=10000 --quiet --delete first_error="$ERROR" languages first_error id </dev/tty
+    done 

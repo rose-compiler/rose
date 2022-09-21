@@ -1,0 +1,14 @@
+#!/bin/bash
+set -e -o pipefail
+
+(set -x; rmc -C ~/rose/_build/src make) 2>&1 |tee "$HOME/library-build.output"
+
+(
+    set +e
+    echo "Location of compiler warnings (top 40):"
+    "$HOME/container-scripts/rose-matrix-count-warnings"         <"$HOME/library-build.output" |sort -nrs |head -n40 |sed 's/^/    /'
+    echo "Types of compiler warnings (top 40):"
+    "$HOME/container-scripts/rose-matrix-count-warnings" --types <"$HOME/library-build.output" |sort -nrs |head -n40 |sed 's/^/    /'
+) >>"$HOME/run/dribble"
+
+rm -f "$HOME/library-build.output"
