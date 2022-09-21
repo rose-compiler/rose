@@ -9,6 +9,10 @@ static const char *gDescription =
 #include <rose.h>
 #include "matrixTools.h"
 
+// boost process.hpp first appeared in boost-1.64.0
+#include <boost/version.hpp>
+#if BOOST_VERSION >= 106400
+
 #include <Rose/CommandLine.h>
 #include <rose_getline.h>
 #include <boost/algorithm/string/trim.hpp>
@@ -212,3 +216,14 @@ main(int argc, char *argv[]) {
         std::cout <<testId <<"\n";
     }
 }
+
+#else
+
+#include <iostream>
+
+int main(int argc, char *argv[]) {
+    std::cerr <<argv[0] <<": not available in this configuration of ROSE (requires boost-1.64.0 or later)\n";
+    return 1;
+}
+
+#endif
