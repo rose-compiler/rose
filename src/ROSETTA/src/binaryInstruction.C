@@ -12158,6 +12158,19 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
 #ifdef DOCUMENTATION
+        /** Property: pointer to the root of the CIL Metadata.
+         *
+         * @{ */
+        SgAsmCilMetadataRoot* get_metadataRoot() const;
+        void set_metadataRoot(SgAsmCilMetadataRoot*);
+        /** @} */
+#else
+        AsmCliHeader.setDataPrototype("SgAsmCilMetadataRoot*", "metadataRoot", "= nullptr",
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+#ifdef DOCUMENTATION
     protected:
       uint32_t p_cb;
       uint16_t p_majorRuntimeVersion;
@@ -12171,6 +12184,7 @@ void Grammar::setUpBinaryInstructions() {
       uint64_t p_vTableFixups;
       uint64_t p_exportAddressTableJumps;
       uint64_t p_managedNativeHeader;
+      SgAsmCilMetadataRoot* p_metadataRoot;
     public:
 #endif
 
@@ -24170,10 +24184,65 @@ void Grammar::setUpBinaryInstructions() {
           e_ref_last                  = 1 << 25,  
         };
 
+        enum TableKind : std::uint8_t
+        {
+          
+          e_Assembly = 0x20,
+          e_AssemblyOS = 0x22,
+          e_AssemblyProcessor = 0x21,
+          e_AssemblyRef = 0x23,
+          e_AssemblyRefOS = 0x25,
+          e_AssemblyRefProcessor = 0x24,
+          e_ClassLayout = 0x0F,
+          e_Constant = 0x0B,
+          e_CustomAttribute = 0x0C,
+          e_DeclSecurity = 0x0E,
+          e_Event = 0x14,
+          e_EventMap = 0x12,
+          e_ExportedType = 0x27,
+          e_Field = 0x04,
+          e_FieldLayout = 0x10,
+          e_FieldMarshal = 0x0D,
+          e_FieldRVA = 0x1D,
+          e_File = 0x26,
+          e_GenericParam = 0x2A,
+          e_GenericParamConstraint = 0x2C,
+          e_ImplMap = 0x1C,
+          e_InterfaceImpl = 0x09,
+          e_ManifestResource = 0x28,
+          e_MemberRef = 0x0A,
+          e_MethodDef = 0x06,
+          e_MethodImpl = 0x19,
+          e_MethodSemantics = 0x18,
+          e_MethodSpec = 0x2B,
+          e_Module = 0x00,
+          e_ModuleRef = 0x1A,
+          e_NestedClass = 0x29,
+          e_Param = 0x08,
+          e_Property = 0x17,
+          e_PropertyMap = 0x15,
+          e_StandAloneSig = 0x11,
+          e_TypeDef = 0x02,
+          e_TypeRef = 0x01,
+          e_TypeSpec = 0x1B,
+          e_Unknown_table_kind = 0xFF
+        };
+        
         SgAsmCilMetadataHeap() = default;
 
         /** parses the metadata objects from the buffer. */
         void parse(std::vector<uint8_t>& buf, size_t startOfMetaData) override;
+
+        /** looks up the node associated with the coded index @ref idx in the metadata table
+         *  associated with @ref tblcode.
+         */
+        SgAsmCilMetadata* get_MetadataNode(std::uint32_t idx, TableKind tblcode) const;        
+        
+        /** looks up the node associated with the coded index @ref refcode in the metadata tables
+         *  under the assumption that @refval is of kind @ref knd
+         */
+        SgAsmCilMetadata* get_CodedMetadataNode(std::uint32_t refcode, ReferenceKind knd) const;
+
 
         /** looks up the node associated with the coded index @ref refcode in the metadata tables
          *  under the assumption that @refval is of kind @ref knd
@@ -24868,6 +24937,7 @@ void Grammar::setUpBinaryInstructions() {
 
 
 // --- END generated code. ------------------------------------------------------
+
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
