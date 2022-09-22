@@ -3169,6 +3169,7 @@ X86::decodeOpcode0F(State &state) const
                 throw ExceptionX86("bad ModR/M value for 0x0f21", state);
             }
         case 0x22:
+            state.sizeMustBe64Bit = x86_insnsize_64 == insnSize;
             getModRegRM(state, rmControl, effectiveOperandMode(state), effectiveOperandType(state));
             if (state.modeField == 3) {
                 return makeInstruction(state, x86_mov, "mov", state.reg, state.modrm);
