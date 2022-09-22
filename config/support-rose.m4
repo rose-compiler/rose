@@ -2077,9 +2077,6 @@ src/3rdPartyLibraries/qrose/QRoseLib/Makefile
 src/3rdPartyLibraries/qrose/Widgets/Makefile
 src/Makefile
 src/Rose/Makefile
-src/Rose/AST/Makefile
-src/Rose/CodeGen/Makefile
-src/Rose/Traits/Makefile
 src/ROSETTA/Makefile
 src/ROSETTA/src/Makefile
 src/backend/Makefile
