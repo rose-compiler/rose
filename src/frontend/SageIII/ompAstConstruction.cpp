@@ -1716,6 +1716,7 @@ namespace OmpSupport
               att->print();
               ROSE_ABORT();
             }
+	    // We should not add break; here. The intention is to fall through
           }
         case e_private:
         case e_firstprivate:
