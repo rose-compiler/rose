@@ -95,7 +95,9 @@ namespace // anonymous namespace for auxiliary functions
 
     uint32_t res = 0;
 
-    printf ("skip string padding of %zu bytes\n", (reservedLen - strLen));
+    if (TRACE_CONSTRUCTION)
+      printf ("skip string padding of %zu bytes\n", (reservedLen - strLen));
+      
     while (strLen < reservedLen)
     {
       res = (res<<8) + buf.at(index);
@@ -133,7 +135,8 @@ namespace // anonymous namespace for auxiliary functions
 
     std::vector<elem_type> res;
 
-    printf ("Output the number of rows for each table: \n");
+    if (TRACE_CONSTRUCTION)
+      printf ("Output the number of rows for each table: \n");
 
     for (uint64_t i = 0; i < num; ++i)
     {
@@ -428,7 +431,7 @@ void SgAsmCilAssemblyRefOS::parse(std::vector<uint8_t>& buf, size_t& index, uint
 const SgAsmCilMetadata*
 SgAsmCilAssemblyRefOS::get_AssemblyRefOS_object() const
 {
-  return getMetadataHeap(this).get_MetadataNode(get_AssemblyRefOS(), SgAsmCilMetadataHeap::e_ref_assembly_ref);
+  return getMetadataHeap(this).get_CodedMetadataNode(get_AssemblyRefOS(), SgAsmCilMetadataHeap::e_ref_assembly_ref);
 }     
       
 
@@ -447,7 +450,7 @@ void SgAsmCilAssemblyRefProcessor::parse(std::vector<uint8_t>& buf, size_t& inde
 const SgAsmCilMetadata*
 SgAsmCilAssemblyRefProcessor::get_AssemblyRef_object() const
 {
-  return getMetadataHeap(this).get_MetadataNode(get_AssemblyRef(), SgAsmCilMetadataHeap::e_ref_assembly_ref);
+  return getMetadataHeap(this).get_CodedMetadataNode(get_AssemblyRef(), SgAsmCilMetadataHeap::e_ref_assembly_ref);
 }     
       
 
@@ -468,7 +471,7 @@ void SgAsmCilClassLayout::parse(std::vector<uint8_t>& buf, size_t& index, uint64
 const SgAsmCilMetadata*
 SgAsmCilClassLayout::get_Parent_object() const
 {
-  return getMetadataHeap(this).get_MetadataNode(get_Parent(), SgAsmCilMetadataHeap::e_ref_type_def);
+  return getMetadataHeap(this).get_CodedMetadataNode(get_Parent(), SgAsmCilMetadataHeap::e_ref_type_def);
 }     
       
 
@@ -491,7 +494,7 @@ void SgAsmCilConstant::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t 
 const SgAsmCilMetadata*
 SgAsmCilConstant::get_Parent_object() const
 {
-  return getMetadataHeap(this).get_MetadataNode(get_Parent(), SgAsmCilMetadataHeap::e_ref_has_constant);
+  return getMetadataHeap(this).get_CodedMetadataNode(get_Parent(), SgAsmCilMetadataHeap::e_ref_has_constant);
 }     
       
 const std::uint8_t*
@@ -518,13 +521,13 @@ void SgAsmCilCustomAttribute::parse(std::vector<uint8_t>& buf, size_t& index, ui
 const SgAsmCilMetadata*
 SgAsmCilCustomAttribute::get_Parent_object() const
 {
-  return getMetadataHeap(this).get_MetadataNode(get_Parent(), SgAsmCilMetadataHeap::e_ref_has_custom_attribute);
+  return getMetadataHeap(this).get_CodedMetadataNode(get_Parent(), SgAsmCilMetadataHeap::e_ref_has_custom_attribute);
 }     
       
 const SgAsmCilMetadata*
 SgAsmCilCustomAttribute::get_Type_object() const
 {
-  return getMetadataHeap(this).get_MetadataNode(get_Type(), SgAsmCilMetadataHeap::e_ref_custom_attribute_type);
+  return getMetadataHeap(this).get_CodedMetadataNode(get_Type(), SgAsmCilMetadataHeap::e_ref_custom_attribute_type);
 }     
       
 const std::uint8_t*
@@ -551,7 +554,7 @@ void SgAsmCilDeclSecurity::parse(std::vector<uint8_t>& buf, size_t& index, uint6
 const SgAsmCilMetadata*
 SgAsmCilDeclSecurity::get_Parent_object() const
 {
-  return getMetadataHeap(this).get_MetadataNode(get_Parent(), SgAsmCilMetadataHeap::e_ref_has_decl_security);
+  return getMetadataHeap(this).get_CodedMetadataNode(get_Parent(), SgAsmCilMetadataHeap::e_ref_has_decl_security);
 }     
       
 const std::uint8_t*
@@ -584,7 +587,7 @@ SgAsmCilEvent::get_Name_string() const
 const SgAsmCilMetadata*
 SgAsmCilEvent::get_EventType_object() const
 {
-  return getMetadataHeap(this).get_MetadataNode(get_EventType(), SgAsmCilMetadataHeap::e_ref_type_def_or_ref);
+  return getMetadataHeap(this).get_CodedMetadataNode(get_EventType(), SgAsmCilMetadataHeap::e_ref_type_def_or_ref);
 }     
       
 
@@ -603,13 +606,13 @@ void SgAsmCilEventMap::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t 
 const SgAsmCilMetadata*
 SgAsmCilEventMap::get_Parent_object() const
 {
-  return getMetadataHeap(this).get_MetadataNode(get_Parent(), SgAsmCilMetadataHeap::e_ref_type_def);
+  return getMetadataHeap(this).get_CodedMetadataNode(get_Parent(), SgAsmCilMetadataHeap::e_ref_type_def);
 }     
       
 const SgAsmCilMetadata*
 SgAsmCilEventMap::get_EventList_object() const
 {
-  return getMetadataHeap(this).get_MetadataNode(get_EventList(), SgAsmCilMetadataHeap::e_ref_event);
+  return getMetadataHeap(this).get_CodedMetadataNode(get_EventList(), SgAsmCilMetadataHeap::e_ref_event);
 }     
       
 
@@ -646,7 +649,7 @@ SgAsmCilExportedType::get_TypeNamespace_string() const
 const SgAsmCilMetadata*
 SgAsmCilExportedType::get_Implementation_object() const
 {
-  return getMetadataHeap(this).get_MetadataNode(get_Implementation(), SgAsmCilMetadataHeap::e_ref_implementation);
+  return getMetadataHeap(this).get_CodedMetadataNode(get_Implementation(), SgAsmCilMetadataHeap::e_ref_implementation);
 }     
       
 
@@ -692,7 +695,7 @@ void SgAsmCilFieldLayout::parse(std::vector<uint8_t>& buf, size_t& index, uint64
 const SgAsmCilMetadata*
 SgAsmCilFieldLayout::get_Field_object() const
 {
-  return getMetadataHeap(this).get_MetadataNode(get_Field(), SgAsmCilMetadataHeap::e_ref_field);
+  return getMetadataHeap(this).get_CodedMetadataNode(get_Field(), SgAsmCilMetadataHeap::e_ref_field);
 }     
       
 
@@ -711,7 +714,7 @@ void SgAsmCilFieldMarshal::parse(std::vector<uint8_t>& buf, size_t& index, uint6
 const SgAsmCilMetadata*
 SgAsmCilFieldMarshal::get_Parent_object() const
 {
-  return getMetadataHeap(this).get_MetadataNode(get_Parent(), SgAsmCilMetadataHeap::e_ref_has_field_marshall);
+  return getMetadataHeap(this).get_CodedMetadataNode(get_Parent(), SgAsmCilMetadataHeap::e_ref_has_field_marshall);
 }     
       
 const std::uint8_t*
@@ -736,7 +739,7 @@ void SgAsmCilFieldRVA::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t 
 const SgAsmCilMetadata*
 SgAsmCilFieldRVA::get_Field_object() const
 {
-  return getMetadataHeap(this).get_MetadataNode(get_Field(), SgAsmCilMetadataHeap::e_ref_field);
+  return getMetadataHeap(this).get_CodedMetadataNode(get_Field(), SgAsmCilMetadataHeap::e_ref_field);
 }     
       
 
@@ -786,7 +789,7 @@ void SgAsmCilGenericParam::parse(std::vector<uint8_t>& buf, size_t& index, uint6
 const SgAsmCilMetadata*
 SgAsmCilGenericParam::get_Owner_object() const
 {
-  return getMetadataHeap(this).get_MetadataNode(get_Owner(), SgAsmCilMetadataHeap::e_ref_type_or_method_def);
+  return getMetadataHeap(this).get_CodedMetadataNode(get_Owner(), SgAsmCilMetadataHeap::e_ref_type_or_method_def);
 }     
       
 const std::uint8_t*
@@ -811,13 +814,13 @@ void SgAsmCilGenericParamConstraint::parse(std::vector<uint8_t>& buf, size_t& in
 const SgAsmCilMetadata*
 SgAsmCilGenericParamConstraint::get_Owner_object() const
 {
-  return getMetadataHeap(this).get_MetadataNode(get_Owner(), SgAsmCilMetadataHeap::e_ref_generic_param);
+  return getMetadataHeap(this).get_CodedMetadataNode(get_Owner(), SgAsmCilMetadataHeap::e_ref_generic_param);
 }     
       
 const SgAsmCilMetadata*
 SgAsmCilGenericParamConstraint::get_Constraint_object() const
 {
-  return getMetadataHeap(this).get_MetadataNode(get_Constraint(), SgAsmCilMetadataHeap::e_ref_type_def_or_ref);
+  return getMetadataHeap(this).get_CodedMetadataNode(get_Constraint(), SgAsmCilMetadataHeap::e_ref_type_def_or_ref);
 }     
       
 
@@ -840,7 +843,7 @@ void SgAsmCilImplMap::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t u
 const SgAsmCilMetadata*
 SgAsmCilImplMap::get_MemberForwarded_object() const
 {
-  return getMetadataHeap(this).get_MetadataNode(get_MemberForwarded(), SgAsmCilMetadataHeap::e_ref_member_forwarded);
+  return getMetadataHeap(this).get_CodedMetadataNode(get_MemberForwarded(), SgAsmCilMetadataHeap::e_ref_member_forwarded);
 }     
       
 const std::uint8_t*
@@ -852,7 +855,7 @@ SgAsmCilImplMap::get_ImportName_string() const
 const SgAsmCilMetadata*
 SgAsmCilImplMap::get_ImportScope_object() const
 {
-  return getMetadataHeap(this).get_MetadataNode(get_ImportScope(), SgAsmCilMetadataHeap::e_ref_module_ref);
+  return getMetadataHeap(this).get_CodedMetadataNode(get_ImportScope(), SgAsmCilMetadataHeap::e_ref_module_ref);
 }     
       
 
@@ -871,13 +874,13 @@ void SgAsmCilInterfaceImpl::parse(std::vector<uint8_t>& buf, size_t& index, uint
 const SgAsmCilMetadata*
 SgAsmCilInterfaceImpl::get_Class_object() const
 {
-  return getMetadataHeap(this).get_MetadataNode(get_Class(), SgAsmCilMetadataHeap::e_ref_type_def);
+  return getMetadataHeap(this).get_CodedMetadataNode(get_Class(), SgAsmCilMetadataHeap::e_ref_type_def);
 }     
       
 const SgAsmCilMetadata*
 SgAsmCilInterfaceImpl::get_Interface_object() const
 {
-  return getMetadataHeap(this).get_MetadataNode(get_Interface(), SgAsmCilMetadataHeap::e_ref_type_def_or_ref);
+  return getMetadataHeap(this).get_CodedMetadataNode(get_Interface(), SgAsmCilMetadataHeap::e_ref_type_def_or_ref);
 }     
       
 
@@ -906,7 +909,7 @@ SgAsmCilManifestResource::get_Name_string() const
 const SgAsmCilMetadata*
 SgAsmCilManifestResource::get_Implementation_object() const
 {
-  return getMetadataHeap(this).get_MetadataNode(get_Implementation(), SgAsmCilMetadataHeap::e_ref_implementation);
+  return getMetadataHeap(this).get_CodedMetadataNode(get_Implementation(), SgAsmCilMetadataHeap::e_ref_implementation);
 }     
       
 
@@ -927,7 +930,7 @@ void SgAsmCilMemberRef::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t
 const SgAsmCilMetadata*
 SgAsmCilMemberRef::get_Class_object() const
 {
-  return getMetadataHeap(this).get_MetadataNode(get_Class(), SgAsmCilMetadataHeap::e_ref_member_ref_parent);
+  return getMetadataHeap(this).get_CodedMetadataNode(get_Class(), SgAsmCilMetadataHeap::e_ref_member_ref_parent);
 }     
       
 const std::uint8_t*
@@ -978,7 +981,7 @@ SgAsmCilMethodDef::get_Signature_blob() const
 const SgAsmCilMetadata*
 SgAsmCilMethodDef::get_ParamList_object() const
 {
-  return getMetadataHeap(this).get_MetadataNode(get_ParamList(), SgAsmCilMetadataHeap::e_ref_param);
+  return getMetadataHeap(this).get_CodedMetadataNode(get_ParamList(), SgAsmCilMetadataHeap::e_ref_param);
 }     
       
 
@@ -999,19 +1002,19 @@ void SgAsmCilMethodImpl::parse(std::vector<uint8_t>& buf, size_t& index, uint64_
 const SgAsmCilMetadata*
 SgAsmCilMethodImpl::get_Class_object() const
 {
-  return getMetadataHeap(this).get_MetadataNode(get_Class(), SgAsmCilMetadataHeap::e_ref_type_def);
+  return getMetadataHeap(this).get_CodedMetadataNode(get_Class(), SgAsmCilMetadataHeap::e_ref_type_def);
 }     
       
 const SgAsmCilMetadata*
 SgAsmCilMethodImpl::get_MethodBody_object() const
 {
-  return getMetadataHeap(this).get_MetadataNode(get_MethodBody(), SgAsmCilMetadataHeap::e_ref_method_def_or_ref);
+  return getMetadataHeap(this).get_CodedMetadataNode(get_MethodBody(), SgAsmCilMetadataHeap::e_ref_method_def_or_ref);
 }     
       
 const SgAsmCilMetadata*
 SgAsmCilMethodImpl::get_MethodDeclaration_object() const
 {
-  return getMetadataHeap(this).get_MetadataNode(get_MethodDeclaration(), SgAsmCilMetadataHeap::e_ref_method_def_or_ref);
+  return getMetadataHeap(this).get_CodedMetadataNode(get_MethodDeclaration(), SgAsmCilMetadataHeap::e_ref_method_def_or_ref);
 }     
       
 
@@ -1032,13 +1035,13 @@ void SgAsmCilMethodSemantics::parse(std::vector<uint8_t>& buf, size_t& index, ui
 const SgAsmCilMetadata*
 SgAsmCilMethodSemantics::get_Method_object() const
 {
-  return getMetadataHeap(this).get_MetadataNode(get_Method(), SgAsmCilMetadataHeap::e_ref_method_def);
+  return getMetadataHeap(this).get_CodedMetadataNode(get_Method(), SgAsmCilMetadataHeap::e_ref_method_def);
 }     
       
 const SgAsmCilMetadata*
 SgAsmCilMethodSemantics::get_Association_object() const
 {
-  return getMetadataHeap(this).get_MetadataNode(get_Association(), SgAsmCilMetadataHeap::e_ref_has_semantics);
+  return getMetadataHeap(this).get_CodedMetadataNode(get_Association(), SgAsmCilMetadataHeap::e_ref_has_semantics);
 }     
       
 
@@ -1057,7 +1060,7 @@ void SgAsmCilMethodSpec::parse(std::vector<uint8_t>& buf, size_t& index, uint64_
 const SgAsmCilMetadata*
 SgAsmCilMethodSpec::get_Method_object() const
 {
-  return getMetadataHeap(this).get_MetadataNode(get_Method(), SgAsmCilMetadataHeap::e_ref_method_def_or_ref);
+  return getMetadataHeap(this).get_CodedMetadataNode(get_Method(), SgAsmCilMetadataHeap::e_ref_method_def_or_ref);
 }     
       
 const std::uint8_t*
@@ -1142,13 +1145,13 @@ void SgAsmCilNestedClass::parse(std::vector<uint8_t>& buf, size_t& index, uint64
 const SgAsmCilMetadata*
 SgAsmCilNestedClass::get_NestedClass_object() const
 {
-  return getMetadataHeap(this).get_MetadataNode(get_NestedClass(), SgAsmCilMetadataHeap::e_ref_type_def);
+  return getMetadataHeap(this).get_CodedMetadataNode(get_NestedClass(), SgAsmCilMetadataHeap::e_ref_type_def);
 }     
       
 const SgAsmCilMetadata*
 SgAsmCilNestedClass::get_EnclosingClass_object() const
 {
-  return getMetadataHeap(this).get_MetadataNode(get_EnclosingClass(), SgAsmCilMetadataHeap::e_ref_type_def);
+  return getMetadataHeap(this).get_CodedMetadataNode(get_EnclosingClass(), SgAsmCilMetadataHeap::e_ref_type_def);
 }     
       
 
@@ -1215,13 +1218,13 @@ void SgAsmCilPropertyMap::parse(std::vector<uint8_t>& buf, size_t& index, uint64
 const SgAsmCilMetadata*
 SgAsmCilPropertyMap::get_Parent_object() const
 {
-  return getMetadataHeap(this).get_MetadataNode(get_Parent(), SgAsmCilMetadataHeap::e_ref_type_def);
+  return getMetadataHeap(this).get_CodedMetadataNode(get_Parent(), SgAsmCilMetadataHeap::e_ref_type_def);
 }     
       
 const SgAsmCilMetadata*
 SgAsmCilPropertyMap::get_PropertyList_object() const
 {
-  return getMetadataHeap(this).get_MetadataNode(get_PropertyList(), SgAsmCilMetadataHeap::e_ref_property);
+  return getMetadataHeap(this).get_CodedMetadataNode(get_PropertyList(), SgAsmCilMetadataHeap::e_ref_property);
 }     
       
 
@@ -1277,19 +1280,19 @@ SgAsmCilTypeDef::get_TypeNamespace_string() const
 const SgAsmCilMetadata*
 SgAsmCilTypeDef::get_Extends_object() const
 {
-  return getMetadataHeap(this).get_MetadataNode(get_Extends(), SgAsmCilMetadataHeap::e_ref_type_def_or_ref);
+  return getMetadataHeap(this).get_CodedMetadataNode(get_Extends(), SgAsmCilMetadataHeap::e_ref_type_def_or_ref);
 }     
       
 const SgAsmCilMetadata*
 SgAsmCilTypeDef::get_FieldList_object() const
 {
-  return getMetadataHeap(this).get_MetadataNode(get_FieldList(), SgAsmCilMetadataHeap::e_ref_field);
+  return getMetadataHeap(this).get_CodedMetadataNode(get_FieldList(), SgAsmCilMetadataHeap::e_ref_field);
 }     
       
 const SgAsmCilMetadata*
 SgAsmCilTypeDef::get_MethodList_object() const
 {
-  return getMetadataHeap(this).get_MetadataNode(get_MethodList(), SgAsmCilMetadataHeap::e_ref_method_def);
+  return getMetadataHeap(this).get_CodedMetadataNode(get_MethodList(), SgAsmCilMetadataHeap::e_ref_method_def);
 }     
       
 
@@ -1310,7 +1313,7 @@ void SgAsmCilTypeRef::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t u
 const SgAsmCilMetadata*
 SgAsmCilTypeRef::get_ResolutionScope_object() const
 {
-  return getMetadataHeap(this).get_MetadataNode(get_ResolutionScope(), SgAsmCilMetadataHeap::e_ref_resolution_scope);
+  return getMetadataHeap(this).get_CodedMetadataNode(get_ResolutionScope(), SgAsmCilMetadataHeap::e_ref_resolution_scope);
 }     
       
 const std::uint8_t*
@@ -1367,108 +1370,58 @@ const std::string SgAsmCilDataStream::ID_METADATA_HEAP{"#~"};
 
 namespace
 {
-/// Metadata table identifiers to support .net metadata layout within the .text section.
-enum MetaDataHeapTableKinds
-{
-// Values of enum fields are the bit positions in the valid array of valid tables (for each table).
-  e_Unknown_table_kind     = 0xFF,
-  e_Error_table_kind       = 0xFE,
-  
-  e_Assembly        = 0x20,
-  e_AssemblyOS        = 0x22,
-  e_AssemblyProcessor        = 0x21,
-  e_AssemblyRef        = 0x23,
-  e_AssemblyRefOS        = 0x25,
-  e_AssemblyRefProcessor        = 0x24,
-  e_ClassLayout        = 0x0F,
-  e_Constant        = 0x0B,
-  e_CustomAttribute        = 0x0C,
-  e_DeclSecurity        = 0x0E,
-  e_Event        = 0x14,
-  e_EventMap        = 0x12,
-  e_ExportedType        = 0x27,
-  e_Field        = 0x04,
-  e_FieldLayout        = 0x10,
-  e_FieldMarshal        = 0x0D,
-  e_FieldRVA        = 0x1D,
-  e_File        = 0x26,
-  e_GenericParam        = 0x2A,
-  e_GenericParamConstraint        = 0x2C,
-  e_ImplMap        = 0x1C,
-  e_InterfaceImpl        = 0x09,
-  e_ManifestResource        = 0x28,
-  e_MemberRef        = 0x0A,
-  e_MethodDef        = 0x06,
-  e_MethodImpl        = 0x19,
-  e_MethodSemantics        = 0x18,
-  e_MethodSpec        = 0x2B,
-  e_Module        = 0x00,
-  e_ModuleRef        = 0x1A,
-  e_NestedClass        = 0x29,
-  e_Param        = 0x08,
-  e_Property        = 0x17,
-  e_PropertyMap        = 0x15,
-  e_StandAloneSig        = 0x11,
-  e_TypeDef        = 0x02,
-  e_TypeRef        = 0x01,
-  e_TypeSpec        = 0x1B,
-  e_Last_table_kind        = 0xFD
-};
-
 const char*
-table_kind_to_string ( enum MetaDataHeapTableKinds e )
+table_kind_to_string ( SgAsmCilMetadataHeap::TableKind e )
 {
   const char* res = nullptr;
 
   switch (e)
   {
-    case e_Unknown_table_kind:     res = "e_unknown_table_kind"; break;
-    case e_Error_table_kind:       res = "e_error_table_kind"; break;
 
-    case e_Assembly:        res = "e_Assembly"; break;
-    case e_AssemblyOS:        res = "e_AssemblyOS"; break;
-    case e_AssemblyProcessor:        res = "e_AssemblyProcessor"; break;
-    case e_AssemblyRef:        res = "e_AssemblyRef"; break;
-    case e_AssemblyRefOS:        res = "e_AssemblyRefOS"; break;
-    case e_AssemblyRefProcessor:        res = "e_AssemblyRefProcessor"; break;
-    case e_ClassLayout:        res = "e_ClassLayout"; break;
-    case e_Constant:        res = "e_Constant"; break;
-    case e_CustomAttribute:        res = "e_CustomAttribute"; break;
-    case e_DeclSecurity:        res = "e_DeclSecurity"; break;
-    case e_Event:        res = "e_Event"; break;
-    case e_EventMap:        res = "e_EventMap"; break;
-    case e_ExportedType:        res = "e_ExportedType"; break;
-    case e_Field:        res = "e_Field"; break;
-    case e_FieldLayout:        res = "e_FieldLayout"; break;
-    case e_FieldMarshal:        res = "e_FieldMarshal"; break;
-    case e_FieldRVA:        res = "e_FieldRVA"; break;
-    case e_File:        res = "e_File"; break;
-    case e_GenericParam:        res = "e_GenericParam"; break;
-    case e_GenericParamConstraint:        res = "e_GenericParamConstraint"; break;
-    case e_ImplMap:        res = "e_ImplMap"; break;
-    case e_InterfaceImpl:        res = "e_InterfaceImpl"; break;
-    case e_ManifestResource:        res = "e_ManifestResource"; break;
-    case e_MemberRef:        res = "e_MemberRef"; break;
-    case e_MethodDef:        res = "e_MethodDef"; break;
-    case e_MethodImpl:        res = "e_MethodImpl"; break;
-    case e_MethodSemantics:        res = "e_MethodSemantics"; break;
-    case e_MethodSpec:        res = "e_MethodSpec"; break;
-    case e_Module:        res = "e_Module"; break;
-    case e_ModuleRef:        res = "e_ModuleRef"; break;
-    case e_NestedClass:        res = "e_NestedClass"; break;
-    case e_Param:        res = "e_Param"; break;
-    case e_Property:        res = "e_Property"; break;
-    case e_PropertyMap:        res = "e_PropertyMap"; break;
-    case e_StandAloneSig:        res = "e_StandAloneSig"; break;
-    case e_TypeDef:        res = "e_TypeDef"; break;
-    case e_TypeRef:        res = "e_TypeRef"; break;
-    case e_TypeSpec:        res = "e_TypeSpec"; break;
-    case e_Last_table_kind:        res = "e_last_table_kind"; break;
+    case SgAsmCilMetadataHeap::e_Assembly: res = "e_Assembly"; break;
+    case SgAsmCilMetadataHeap::e_AssemblyOS: res = "e_AssemblyOS"; break;
+    case SgAsmCilMetadataHeap::e_AssemblyProcessor: res = "e_AssemblyProcessor"; break;
+    case SgAsmCilMetadataHeap::e_AssemblyRef: res = "e_AssemblyRef"; break;
+    case SgAsmCilMetadataHeap::e_AssemblyRefOS: res = "e_AssemblyRefOS"; break;
+    case SgAsmCilMetadataHeap::e_AssemblyRefProcessor: res = "e_AssemblyRefProcessor"; break;
+    case SgAsmCilMetadataHeap::e_ClassLayout: res = "e_ClassLayout"; break;
+    case SgAsmCilMetadataHeap::e_Constant: res = "e_Constant"; break;
+    case SgAsmCilMetadataHeap::e_CustomAttribute: res = "e_CustomAttribute"; break;
+    case SgAsmCilMetadataHeap::e_DeclSecurity: res = "e_DeclSecurity"; break;
+    case SgAsmCilMetadataHeap::e_Event: res = "e_Event"; break;
+    case SgAsmCilMetadataHeap::e_EventMap: res = "e_EventMap"; break;
+    case SgAsmCilMetadataHeap::e_ExportedType: res = "e_ExportedType"; break;
+    case SgAsmCilMetadataHeap::e_Field: res = "e_Field"; break;
+    case SgAsmCilMetadataHeap::e_FieldLayout: res = "e_FieldLayout"; break;
+    case SgAsmCilMetadataHeap::e_FieldMarshal: res = "e_FieldMarshal"; break;
+    case SgAsmCilMetadataHeap::e_FieldRVA: res = "e_FieldRVA"; break;
+    case SgAsmCilMetadataHeap::e_File: res = "e_File"; break;
+    case SgAsmCilMetadataHeap::e_GenericParam: res = "e_GenericParam"; break;
+    case SgAsmCilMetadataHeap::e_GenericParamConstraint: res = "e_GenericParamConstraint"; break;
+    case SgAsmCilMetadataHeap::e_ImplMap: res = "e_ImplMap"; break;
+    case SgAsmCilMetadataHeap::e_InterfaceImpl: res = "e_InterfaceImpl"; break;
+    case SgAsmCilMetadataHeap::e_ManifestResource: res = "e_ManifestResource"; break;
+    case SgAsmCilMetadataHeap::e_MemberRef: res = "e_MemberRef"; break;
+    case SgAsmCilMetadataHeap::e_MethodDef: res = "e_MethodDef"; break;
+    case SgAsmCilMetadataHeap::e_MethodImpl: res = "e_MethodImpl"; break;
+    case SgAsmCilMetadataHeap::e_MethodSemantics: res = "e_MethodSemantics"; break;
+    case SgAsmCilMetadataHeap::e_MethodSpec: res = "e_MethodSpec"; break;
+    case SgAsmCilMetadataHeap::e_Module: res = "e_Module"; break;
+    case SgAsmCilMetadataHeap::e_ModuleRef: res = "e_ModuleRef"; break;
+    case SgAsmCilMetadataHeap::e_NestedClass: res = "e_NestedClass"; break;
+    case SgAsmCilMetadataHeap::e_Param: res = "e_Param"; break;
+    case SgAsmCilMetadataHeap::e_Property: res = "e_Property"; break;
+    case SgAsmCilMetadataHeap::e_PropertyMap: res = "e_PropertyMap"; break;
+    case SgAsmCilMetadataHeap::e_StandAloneSig: res = "e_StandAloneSig"; break;
+    case SgAsmCilMetadataHeap::e_TypeDef: res = "e_TypeDef"; break;
+    case SgAsmCilMetadataHeap::e_TypeRef: res = "e_TypeRef"; break;
+    case SgAsmCilMetadataHeap::e_TypeSpec: res = "e_TypeSpec"; break;
 
     default:
       ROSE_ABORT();
    }
 
+  ASSERT_not_null(res);
   return res;
 }
 
@@ -1505,7 +1458,7 @@ computePositionInRowVector(uint64_t valid)
 /// computes number of bits required to store the table identifier
 ///   ii.24.2.6
 uint64_t
-calcTableIdentifierSize(const std::vector<uint8_t>& tables)
+calcTableIdentifierSize(const std::vector<SgAsmCilMetadataHeap::TableKind>& tables)
 {
   const size_t tblsz = tables.size();
   ROSE_ASSERT(tblsz > 0);
@@ -1518,14 +1471,14 @@ calcTableIdentifierSize(const std::vector<uint8_t>& tables)
 uint32_t
 calcMaxTableSize( const std::vector<uint32_t>& numberOfRows,
                   const std::vector<int8_t>& posInRowVector,
-                  const std::vector<uint8_t>& tables
+                  const std::vector<SgAsmCilMetadataHeap::TableKind>& tables
                 )
 {
   uint32_t max = 0;
 
-  for (uint8_t tbl : tables)
+  for (SgAsmCilMetadataHeap::TableKind tbl : tables)
   {
-    if (tbl == e_Unknown_table_kind) continue;
+    if (tbl == SgAsmCilMetadataHeap::e_Unknown_table_kind) continue;
 
     const int8_t posInRowVec = posInRowVector.at(tbl);
     if (posInRowVec < 0) continue;
@@ -1538,52 +1491,52 @@ calcMaxTableSize( const std::vector<uint32_t>& numberOfRows,
 }
 
 
-const std::unordered_map<std::uint64_t, std::vector<uint8_t> >
+const std::unordered_map<std::uint64_t, std::vector<SgAsmCilMetadataHeap::TableKind> >
 REF_TABLES = { // single table
-               { SgAsmCilMetadataHeap::e_ref_assembly_ref,  { e_Assembly } }
-             , { SgAsmCilMetadataHeap::e_ref_type_def,      { e_TypeDef } }
-             , { SgAsmCilMetadataHeap::e_ref_event,         { e_Event } }
-             , { SgAsmCilMetadataHeap::e_ref_field,         { e_Field } }
-             , { SgAsmCilMetadataHeap::e_ref_generic_param, { e_GenericParam } }
-             , { SgAsmCilMetadataHeap::e_ref_method_def,    { e_MethodDef } }
-             , { SgAsmCilMetadataHeap::e_ref_module_ref,    { e_ModuleRef } }
-             , { SgAsmCilMetadataHeap::e_ref_param,         { e_Param } }
-             , { SgAsmCilMetadataHeap::e_ref_property,      { e_Property } }
+               { SgAsmCilMetadataHeap::e_ref_assembly_ref,  { SgAsmCilMetadataHeap::e_Assembly } }
+             , { SgAsmCilMetadataHeap::e_ref_type_def,      { SgAsmCilMetadataHeap::e_TypeDef } }
+             , { SgAsmCilMetadataHeap::e_ref_event,         { SgAsmCilMetadataHeap::e_Event } }
+             , { SgAsmCilMetadataHeap::e_ref_field,         { SgAsmCilMetadataHeap::e_Field } }
+             , { SgAsmCilMetadataHeap::e_ref_generic_param, { SgAsmCilMetadataHeap::e_GenericParam } }
+             , { SgAsmCilMetadataHeap::e_ref_method_def,    { SgAsmCilMetadataHeap::e_MethodDef } }
+             , { SgAsmCilMetadataHeap::e_ref_module_ref,    { SgAsmCilMetadataHeap::e_ModuleRef } }
+             , { SgAsmCilMetadataHeap::e_ref_param,         { SgAsmCilMetadataHeap::e_Param } }
+             , { SgAsmCilMetadataHeap::e_ref_property,      { SgAsmCilMetadataHeap::e_Property } }
                // multi-table
-             , { SgAsmCilMetadataHeap::e_ref_has_constant,  { e_Field, e_Param, e_Property } }
+             , { SgAsmCilMetadataHeap::e_ref_has_constant,  { SgAsmCilMetadataHeap::e_Field, SgAsmCilMetadataHeap::e_Param, SgAsmCilMetadataHeap::e_Property } }
              , { SgAsmCilMetadataHeap::e_ref_has_custom_attribute,
-                     { e_MethodDef, e_Field, e_TypeRef, e_TypeDef
-                     , e_Param, e_InterfaceImpl, e_MemberRef, e_Module
-                     , e_Unknown_table_kind /* FIXME instead of: e_Permission */
-                     , e_Property, e_Event, e_StandAloneSig
-                     , e_ModuleRef, e_TypeSpec, e_Assembly, e_AssemblyRef
-                     , e_File, e_ExportedType, e_ManifestResource, e_GenericParam
-                     , e_GenericParamConstraint, e_MethodSpec
+                     { SgAsmCilMetadataHeap::e_MethodDef, SgAsmCilMetadataHeap::e_Field, SgAsmCilMetadataHeap::e_TypeRef, SgAsmCilMetadataHeap::e_TypeDef
+                     , SgAsmCilMetadataHeap::e_Param, SgAsmCilMetadataHeap::e_InterfaceImpl, SgAsmCilMetadataHeap::e_MemberRef, SgAsmCilMetadataHeap::e_Module
+                     , SgAsmCilMetadataHeap::e_Unknown_table_kind /* FIXME instead of: e_Permission */
+                     , SgAsmCilMetadataHeap::e_Property, SgAsmCilMetadataHeap::e_Event, SgAsmCilMetadataHeap::e_StandAloneSig
+                     , SgAsmCilMetadataHeap::e_ModuleRef, SgAsmCilMetadataHeap::e_TypeSpec, SgAsmCilMetadataHeap::e_Assembly, SgAsmCilMetadataHeap::e_AssemblyRef
+                     , SgAsmCilMetadataHeap::e_File, SgAsmCilMetadataHeap::e_ExportedType, SgAsmCilMetadataHeap::e_ManifestResource, SgAsmCilMetadataHeap::e_GenericParam
+                     , SgAsmCilMetadataHeap::e_GenericParamConstraint, SgAsmCilMetadataHeap::e_MethodSpec
                      }
                }
-             , { SgAsmCilMetadataHeap::e_ref_has_decl_security, { e_TypeDef, e_MethodDef, e_Assembly } }
-             , { SgAsmCilMetadataHeap::e_ref_has_field_marshall, { e_Field, e_Param } }
-             , { SgAsmCilMetadataHeap::e_ref_has_semantics, { e_Event, e_Property } }
-             , { SgAsmCilMetadataHeap::e_ref_method_def_or_ref, { e_MethodDef, e_MemberRef } }
-             , { SgAsmCilMetadataHeap::e_ref_type_def_or_ref, { e_TypeDef, e_TypeRef, e_TypeSpec } }
-             , { SgAsmCilMetadataHeap::e_ref_implementation, { e_File, e_AssemblyRef, e_ExportedType } }
-             , { SgAsmCilMetadataHeap::e_ref_member_forwarded, { e_Field, e_MethodDef } }
-             , { SgAsmCilMetadataHeap::e_ref_member_ref_parent, { e_TypeDef, e_TypeRef, e_ModuleRef, e_MethodDef, e_TypeSpec } }
-             , { SgAsmCilMetadataHeap::e_ref_type_or_method_def, { e_TypeDef, e_MethodDef } }
+             , { SgAsmCilMetadataHeap::e_ref_has_decl_security, { SgAsmCilMetadataHeap::e_TypeDef, SgAsmCilMetadataHeap::e_MethodDef, SgAsmCilMetadataHeap::e_Assembly } }
+             , { SgAsmCilMetadataHeap::e_ref_has_field_marshall, { SgAsmCilMetadataHeap::e_Field, SgAsmCilMetadataHeap::e_Param } }
+             , { SgAsmCilMetadataHeap::e_ref_has_semantics, { SgAsmCilMetadataHeap::e_Event, SgAsmCilMetadataHeap::e_Property } }
+             , { SgAsmCilMetadataHeap::e_ref_method_def_or_ref, { SgAsmCilMetadataHeap::e_MethodDef, SgAsmCilMetadataHeap::e_MemberRef } }
+             , { SgAsmCilMetadataHeap::e_ref_type_def_or_ref, { SgAsmCilMetadataHeap::e_TypeDef, SgAsmCilMetadataHeap::e_TypeRef, SgAsmCilMetadataHeap::e_TypeSpec } }
+             , { SgAsmCilMetadataHeap::e_ref_implementation, { SgAsmCilMetadataHeap::e_File, SgAsmCilMetadataHeap::e_AssemblyRef, SgAsmCilMetadataHeap::e_ExportedType } }
+             , { SgAsmCilMetadataHeap::e_ref_member_forwarded, { SgAsmCilMetadataHeap::e_Field, SgAsmCilMetadataHeap::e_MethodDef } }
+             , { SgAsmCilMetadataHeap::e_ref_member_ref_parent, { SgAsmCilMetadataHeap::e_TypeDef, SgAsmCilMetadataHeap::e_TypeRef, SgAsmCilMetadataHeap::e_ModuleRef, SgAsmCilMetadataHeap::e_MethodDef, SgAsmCilMetadataHeap::e_TypeSpec } }
+             , { SgAsmCilMetadataHeap::e_ref_type_or_method_def, { SgAsmCilMetadataHeap::e_TypeDef, SgAsmCilMetadataHeap::e_MethodDef } }
                // not used inside the tables
              , { SgAsmCilMetadataHeap::e_ref_custom_attribute_type,
-                     { e_Unknown_table_kind, e_Unknown_table_kind, e_MethodDef, e_MemberRef
-                     , e_Unknown_table_kind
+                     { SgAsmCilMetadataHeap::e_Unknown_table_kind, SgAsmCilMetadataHeap::e_Unknown_table_kind, SgAsmCilMetadataHeap::e_MethodDef, SgAsmCilMetadataHeap::e_MemberRef
+                     , SgAsmCilMetadataHeap::e_Unknown_table_kind
                      }
                }
-             , { SgAsmCilMetadataHeap::e_ref_resolution_scope, { e_Module, e_ModuleRef, e_AssemblyRef, e_TypeRef } }
+             , { SgAsmCilMetadataHeap::e_ref_resolution_scope, { SgAsmCilMetadataHeap::e_Module, SgAsmCilMetadataHeap::e_ModuleRef, SgAsmCilMetadataHeap::e_AssemblyRef, SgAsmCilMetadataHeap::e_TypeRef } }
              };
 
 
 uint64_t
 uses4byteIndex( const std::vector<uint32_t>& numberOfRows,
                 const std::vector<int8_t>& posInRowVector,
-                const std::vector<uint8_t>& tables,
+                const std::vector<SgAsmCilMetadataHeap::TableKind>& tables,
                 uint64_t flag
               )
 {
@@ -1654,13 +1607,13 @@ computeDataSizeFlags( uint8_t heapSizes,
   return res;
 }
 
-struct AccessTuple : std::tuple<uint8_t, std::uint32_t>
+struct AccessTuple : std::tuple<SgAsmCilMetadataHeap::TableKind, std::uint32_t>
 {
-  using base = std::tuple<uint8_t, std::uint32_t>;
+  using base = std::tuple<SgAsmCilMetadataHeap::TableKind, std::uint32_t>;
   using base::base;
 
-  std::uint8_t  table() const { return std::get<0>(*this); }
-  std::uint32_t index() const { return std::get<1>(*this); }
+  SgAsmCilMetadataHeap::TableKind table() const { return std::get<0>(*this); }
+  std::uint32_t                   index() const { return std::get<1>(*this); }
 };
 
 AccessTuple
@@ -1670,23 +1623,18 @@ computeAccessPair( const std::vector<int8_t>& posInRowVector,
                    SgAsmCilMetadataHeap::ReferenceKind knd
                  )
 {
-  const std::vector<uint8_t>& tables = REF_TABLES.at(knd);
+  const std::vector<SgAsmCilMetadataHeap::TableKind>& tables = REF_TABLES.at(knd);
 
   if (tables.size() == 1) return AccessTuple{ tables.front(), refcode };
 
-  const bool                  uses4Bytes = uses4byteIndex(numberOfRows, posInRowVector, tables, knd) != 0;
-
+  const bool          uses4Bytes = uses4byteIndex(numberOfRows, posInRowVector, tables, knd) != 0;
   ROSE_ASSERT(uses4Bytes || (refcode < (1<<16)));
 
-  const std::uint8_t          idxLen = uses4Bytes ? 32 : 16;
-  const std::uint64_t         tableIdSize = calcTableIdentifierSize(tables);
-
-  ROSE_ASSERT(idxLen > tableIdSize);
-  const std::uint8_t          numShifts = (idxLen-tableIdSize);
-  const std::uint8_t          table = refcode >> numShifts;
-  const std::uint32_t         index = refcode ^ (table << numShifts);
-
-  return AccessTuple{ table, index };
+  const std::uint64_t tableIdSize = calcTableIdentifierSize(tables);
+  const std::uint32_t index = refcode >> tableIdSize; 
+  const std::uint8_t  table = refcode ^ (index << tableIdSize);
+  
+  return AccessTuple{ tables.at(table), index };
 }
 
 
@@ -1910,7 +1858,7 @@ void SgAsmCilMetadataHeap::parse(std::vector<uint8_t>& buf, size_t startOfMetaDa
         break;
       default:
         std::cerr << "default reached:\n"
-                  << "parsing not implemented for kind = " << kind << table_kind_to_string(MetaDataHeapTableKinds(kind))
+                  << "parsing not implemented for kind = " << kind << table_kind_to_string(SgAsmCilMetadataHeap::TableKind(kind))
                   << std::endl;
         ROSE_ABORT();
         break;
@@ -1918,132 +1866,128 @@ void SgAsmCilMetadataHeap::parse(std::vector<uint8_t>& buf, size_t startOfMetaDa
   }
 }
 
+
 SgAsmCilMetadata*
-SgAsmCilMetadataHeap::get_MetadataNode(std::uint32_t refcode, ReferenceKind knd) const
+SgAsmCilMetadataHeap::get_MetadataNode(std::uint32_t index, TableKind knd) const
 {
   SgAsmCilMetadata*   res    = nullptr;
 
-  // FIXME: maybe cache result in static or in the object if this turns out to be slow
-  std::vector<std::int8_t> posInRow = computePositionInRowVector(get_Valid());
-  const AccessTuple        access = computeAccessPair(posInRow, get_NumberOfRows(), refcode, knd);
-  const std::uint32_t      index  = access.index();
-
-  switch (access.table())
+  switch (knd)
   {
     
     case e_Assembly:
-      res = get_Assembly().at(index);
+      res = get_Assembly().at(index-1);
       break;
     case e_AssemblyOS:
-      res = get_AssemblyOS().at(index);
+      res = get_AssemblyOS().at(index-1);
       break;
     case e_AssemblyProcessor:
-      res = get_AssemblyProcessor().at(index);
+      res = get_AssemblyProcessor().at(index-1);
       break;
     case e_AssemblyRef:
-      res = get_AssemblyRef().at(index);
+      res = get_AssemblyRef().at(index-1);
       break;
     case e_AssemblyRefOS:
-      res = get_AssemblyRefOS().at(index);
+      res = get_AssemblyRefOS().at(index-1);
       break;
     case e_AssemblyRefProcessor:
-      res = get_AssemblyRefProcessor().at(index);
+      res = get_AssemblyRefProcessor().at(index-1);
       break;
     case e_ClassLayout:
-      res = get_ClassLayout().at(index);
+      res = get_ClassLayout().at(index-1);
       break;
     case e_Constant:
-      res = get_Constant().at(index);
+      res = get_Constant().at(index-1);
       break;
     case e_CustomAttribute:
-      res = get_CustomAttribute().at(index);
+      res = get_CustomAttribute().at(index-1);
       break;
     case e_DeclSecurity:
-      res = get_DeclSecurity().at(index);
+      res = get_DeclSecurity().at(index-1);
       break;
     case e_Event:
-      res = get_Event().at(index);
+      res = get_Event().at(index-1);
       break;
     case e_EventMap:
-      res = get_EventMap().at(index);
+      res = get_EventMap().at(index-1);
       break;
     case e_ExportedType:
-      res = get_ExportedType().at(index);
+      res = get_ExportedType().at(index-1);
       break;
     case e_Field:
-      res = get_Field().at(index);
+      res = get_Field().at(index-1);
       break;
     case e_FieldLayout:
-      res = get_FieldLayout().at(index);
+      res = get_FieldLayout().at(index-1);
       break;
     case e_FieldMarshal:
-      res = get_FieldMarshal().at(index);
+      res = get_FieldMarshal().at(index-1);
       break;
     case e_FieldRVA:
-      res = get_FieldRVA().at(index);
+      res = get_FieldRVA().at(index-1);
       break;
     case e_File:
-      res = get_File().at(index);
+      res = get_File().at(index-1);
       break;
     case e_GenericParam:
-      res = get_GenericParam().at(index);
+      res = get_GenericParam().at(index-1);
       break;
     case e_GenericParamConstraint:
-      res = get_GenericParamConstraint().at(index);
+      res = get_GenericParamConstraint().at(index-1);
       break;
     case e_ImplMap:
-      res = get_ImplMap().at(index);
+      res = get_ImplMap().at(index-1);
       break;
     case e_InterfaceImpl:
-      res = get_InterfaceImpl().at(index);
+      res = get_InterfaceImpl().at(index-1);
       break;
     case e_ManifestResource:
-      res = get_ManifestResource().at(index);
+      res = get_ManifestResource().at(index-1);
       break;
     case e_MemberRef:
-      res = get_MemberRef().at(index);
+      res = get_MemberRef().at(index-1);
       break;
     case e_MethodDef:
-      res = get_MethodDef().at(index);
+      res = get_MethodDef().at(index-1);
       break;
     case e_MethodImpl:
-      res = get_MethodImpl().at(index);
+      res = get_MethodImpl().at(index-1);
       break;
     case e_MethodSemantics:
-      res = get_MethodSemantics().at(index);
+      res = get_MethodSemantics().at(index-1);
       break;
     case e_MethodSpec:
-      res = get_MethodSpec().at(index);
+      res = get_MethodSpec().at(index-1);
       break;
     case e_Module:
-      res = get_Module().at(index);
+      res = get_Module().at(index-1);
       break;
     case e_ModuleRef:
-      res = get_ModuleRef().at(index);
+      res = get_ModuleRef().at(index-1);
       break;
     case e_NestedClass:
-      res = get_NestedClass().at(index);
+      res = get_NestedClass().at(index-1);
       break;
     case e_Param:
-      res = get_Param().at(index);
+      res = get_Param().at(index-1);
       break;
     case e_Property:
-      res = get_Property().at(index);
+      res = get_Property().at(index-1);
       break;
     case e_PropertyMap:
-      res = get_PropertyMap().at(index);
+      res = get_PropertyMap().at(index-1);
       break;
     case e_StandAloneSig:
-      res = get_StandAloneSig().at(index);
+      res = get_StandAloneSig().at(index-1);
       break;
     case e_TypeDef:
-      res = get_TypeDef().at(index);
+      res = get_TypeDef().at(index-1);
       break;
     case e_TypeRef:
-      res = get_TypeRef().at(index);
+      res = get_TypeRef().at(index-1);
       break;
     case e_TypeSpec:
-      res = get_TypeSpec().at(index);
+      res = get_TypeSpec().at(index-1);
       break;
 
     default: ;
@@ -2051,6 +1995,17 @@ SgAsmCilMetadataHeap::get_MetadataNode(std::uint32_t refcode, ReferenceKind knd)
 
   ASSERT_not_null(res);
   return res;
+}
+
+
+SgAsmCilMetadata*
+SgAsmCilMetadataHeap::get_CodedMetadataNode(std::uint32_t refcode, ReferenceKind knd) const
+{
+  // FIXME: maybe cache result in static or in the object if this turns out to be slow
+  std::vector<std::int8_t> posInRow = computePositionInRowVector(get_Valid());
+  const AccessTuple        access = computeAccessPair(posInRow, get_NumberOfRows(), refcode, knd);
+
+  return get_MetadataNode(access.index(), access.table());
 }
 
 
@@ -2122,9 +2077,6 @@ disassemble(SgAsmCilMethodDef* m, MethodHeader mh, std::vector<std::uint8_t>& bu
     ASSERT_not_null(instr);
 
     lst.push_back(instr);
-    std::cerr << "  @" << std::hex << std::setw(4) << addr << std::dec << " " << instr->get_mnemonic() 
-          << std::endl;
-
     addr += instr->get_size();
   }
 
@@ -2152,21 +2104,11 @@ void decodeMetadata(rose_addr_t base_va, SgAsmCilMetadataHeap* mdh, SgAsmCilMeta
   {
     ASSERT_not_null(m);
 
-    std::size_t nameidx = m->get_Name();
     std::uint32_t  rva = m->get_RVA();
     
-    std::cerr << ".method " << readUtf8String(stringHeap->get_Stream(), nameidx)
-              << std::endl;
-
-    if (rva == 0)
-    {
-      std::cerr << "  is abstract\n" << std::endl;
-      continue;
-    }
+    if (rva == 0) continue;
       
     // parse header
-    std::cerr << '{' << std::endl;
-    
     std::uint8_t   mh0;
     std::size_t    nread = fhdr->get_loader_map()->readQuick(&mh0, base_va + rva, 1);
     ROSE_ASSERT(nread == 1);
@@ -2189,28 +2131,16 @@ void decodeMetadata(rose_addr_t base_va, SgAsmCilMetadataHeap* mdh, SgAsmCilMeta
 
     SgAsmBlock* blk = nullptr;
     
-    std::cerr << "  // method begins at 0x" << std::hex << (rva) << std::dec << '\n'
-              << "  // header size = " << int(mh.headerSize()) << " (" << (mh.tiny() ? "tiny": "fat") << ")\n"
-              << "  .entrypoint\n" 
-              << "  // code size " << codeLen << " (0x" << std::hex << codeLen << std::dec << ")\n"
-              << "  .maxstack " << m->get_stackSize() << '\n'
-              << "  .localsinit " << m->get_initLocals() << '\n'
-              << std::flush;           
-
     switch (m->get_ImplFlags() & CODE_TYPE_MASK)
     {
       namespace rb = Rose::BinaryAnalysis;
 
       case CIL_CODE:
-        //~ std::cerr << "  - disassembling CIL code: " << code.size() << " bytes."
-        //~           << std::endl;
         blk = disassemble(m, mh, code, rb::DisassemblerCil::instance());
         break;
 
       case NATIVE_CODE:
-        //~ std::cerr << "  - disassembling x86 code: " << code.size() << " bytes."
-        //~           << std::endl;
-          blk = disassemble(m, mh, code, rb::Disassembler::X86::instance(4 /* word size */));
+        blk = disassemble(m, mh, code, rb::Disassembler::X86::instance(4 /* word size */));
         break;
 
       case RUNTIME_CODE:
@@ -2226,8 +2156,6 @@ void decodeMetadata(rose_addr_t base_va, SgAsmCilMetadataHeap* mdh, SgAsmCilMeta
 
     ASSERT_not_null(blk);
     m->set_body(blk);
-    
-    std::cerr << "}\n" << std::endl;
   }
 }
 
@@ -2374,3 +2302,4 @@ SgAsmCilMetadataRoot::get_MetadataHeap() const
 }
 
 #endif /* ROSE_ENABLE_BINARY_ANALYSIS */
+

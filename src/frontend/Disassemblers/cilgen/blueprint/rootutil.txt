@@ -90,7 +90,6 @@ void decodeMetadata(rose_addr_t base_va, SgAsmCilMetadataHeap* mdh, SgAsmCilMeta
   {
     ASSERT_not_null(m);
 
-    std::size_t nameidx = m->get_Name();
     std::uint32_t  rva = m->get_RVA();
     
     if (rva == 0) continue;

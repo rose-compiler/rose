@@ -2,29 +2,17 @@
 #include <rosePublicConfig.h>
 
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherM68k.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
 
-#include <map>
-#include <Sawyer/Assert.h>
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/Message.h>
-#include <string>
-#include <cinttypes> /* for uintptr_t and PRIxxx format specifiers*/
 
-using namespace Rose;
-using namespace Rose::BinaryAnalysis::InstructionSemantics;
-using namespace Rose::BinaryAnalysis;
-using namespace Sawyer::Message::Common;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 // DQ (12/16/2021): Added to support use of STL types.
-using namespace std;
+//~ using namespace std;
 
 Sawyer::Message::Facility mlog;
-
 
 namespace // anonymous
 {
@@ -39,7 +27,7 @@ struct Settings {
 
 // Describe and parse the command-line
 
-vector<string>
+std::vector<std::string>
 parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
 {
     using namespace Sawyer::CommandLine;
@@ -89,98 +77,362 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
 }
 
 
-SgAsmCilMetadataRoot*
-obtainMetaDataRoot()
+std::string readUtf16String(const std::vector<uint8_t>& buf, size_t ofs, size_t maxLen)
 {
-  SgAsmCilMetadataRoot* res = nullptr;
-  VariantVector         vv{V_SgAsmCilMetadataRoot};
-  std::vector<SgNode*>  all = NodeQuery::queryMemoryPool(vv);
-
-  ROSE_ASSERT(all.size() > 0);
-
-  if (all.size() > 1)
-    ::mlog[ERROR] << "more than one SgAsmCilMetadataRoot objects." << std::endl;
-
-  res = isSgAsmCilMetadataRoot(all.front());
-
-#if 0
-// DQ (12/23/2021): After discussion with Robb, here is the way to compute the constant value.
-// Need to compute the value 0x00400000
-  SgAsmInterpretation* interpretation = engine.interpretation();
-
-// Find the
-  SgAsmGenericList* headerList = interpretation.get_headers();
-
-// Look for the SgAsmPEFileHeader
-  SgAsmPEFileHeader* peFileHeader = (found in headerList)
-
-// Look for SgAsmCilHeader
-  SgAsmCilHeader* cilheader = ...
-
-// look for SgAsmCilMetadataRoot
-  res = /* connection from CilHeader to MetadataRoot object is missing */;
-
-// Should generate constant: 0x00400000
-  //~ rose_addr_t base_va = PeFileHeader->get_base_va();
-
-  //~ va = base_va + rvaList[0];
-#endif
-  ASSERT_not_null(res);
-  return res;
-}
-
-std::string
-getString(const SgAsmCilUint8Heap& heap, size_t idx)
-{
-  std::string          res;
-  std::vector<uint8_t> data = heap.get_Stream();
-
-  while (char c = data.at(idx))
+  std::string         res;
+  std::uint8_t const* chseq = buf.data() + ofs; 
+  std::uint8_t const* chlim = chseq + maxLen;
+  
+  while ((chseq+1) < chlim)
   {
-    res += c;
-    ++idx;
+    std::uint16_t lo = (*chseq);
+    std::uint16_t hi = (*++chseq);
+    std::uint16_t ch = (hi << 8) + lo;
+    
+    ROSE_ASSERT(hi == 0); // \todo decode real UTF16 string
+    
+    res += char(ch);
+    ++chseq;
   }
-
+  
   return res;
 }
 
+std::string decodeUsString(const std::vector<uint8_t>& buf, size_t ofs)
+{
+  static constexpr std::uint8_t LEN_2_BYTES = 1 << 7;
+  static constexpr std::uint8_t LEN_4_BYTES = LEN_2_BYTES + (1 << 6);
+  
+  uint32_t lengthByte = buf.at(ofs);
+  uint32_t len = 0;
+  uint8_t  beg = 0;
+  
+  if ((lengthByte & LEN_4_BYTES) == LEN_4_BYTES)
+  {
+    beg = ofs+4;
+    len = (  ((lengthByte ^ LEN_4_BYTES) << 24)
+          +  (uint32_t(buf.at(ofs+1)) << 16)
+          +  (uint32_t(buf.at(ofs+2)) << 8)
+          +  (uint32_t(buf.at(ofs+3)))
+          );
+  }
+  else if ((lengthByte & LEN_2_BYTES) == LEN_2_BYTES)
+  {
+    beg = ofs+2;
+    len = ((lengthByte ^ LEN_2_BYTES) << 8) + buf.at(ofs+1);
+  }
+  else
+  {
+    beg = ofs+1;
+    len = lengthByte;
+  }
+    
+  return readUtf16String(buf, beg, len);
+}
 
+
+
+const SgAsmCilMetadata*
+lookupNode(const SgAsmCilMetadataHeap* n, std::uint32_t ref) 
+{
+  const std::uint8_t      N   = 24; // 3 * CHAR_BIT;
+  const std::uint8_t      tbl = ref >> N;
+  const std::uint32_t     idx = ref ^ (tbl << N);
+  const SgAsmCilMetadata* res = nullptr;
+  
+  if (idx == 0) return res;  
+  
+  return n->get_MetadataNode(idx, static_cast<SgAsmCilMetadataHeap::TableKind>(tbl));
+}
 
           
 struct DecoderState
 {
-  size_t addr;
+  size_t addr = 0;
 };
 
-DecoderState 
-x86Decoder(std::ostream& os, SgAsmStatement* stmt, DecoderState state)
+struct InstrAddr
 {
-  SgAsmX86Instruction* insn = SgAsmX86Instruction(stmt);
-  ROSE_ASSERT(insn);
+  size_t addr = 0;
+};
 
-  os << "  @" << std::hex << std::setw(4) << state.addr << std::dec << " " << instr->get_mnemonic() 
-     << std::endl;
+std::ostream& operator<<(std::ostream& os, InstrAddr addr)
+{
+  std::stringstream fmt;
+  
+  fmt << std::setfill('0') << std::setw(4) << std::hex << addr.addr;  
+  os << "il_" << fmt.str();
+  return os;
+}
 
-  return DecoderState{ state.addr + instr->get_size(); }  
+template <class T>
+struct PrintValue
+{
+  T val;
+};
+
+template <class T>
+std::ostream& operator<<(std::ostream& os, PrintValue<T> iv)
+{
+  return os << iv.val;
 }
 
 
+PrintValue<std::int64_t>
+intValue(const SgAsmIntegerValueExpression* expr)
+{
+  ASSERT_not_null(expr);
+  
+  return PrintValue<std::int64_t>{expr->get_signedValue()};
+}
+
+PrintValue<std::uint64_t>
+uintValue(const SgAsmIntegerValueExpression* expr)
+{
+  ASSERT_not_null(expr);
+  
+  return PrintValue<std::uint64_t>{expr->get_value()};
+}
+
 DecoderState 
-cilDecoder(std::ostream& os, SgAsmStatement* stmt, DecoderState state)
+x86Decoder(std::ostream& os, SgAsmCilMetadataHeap* heap, SgAsmStatement* stmt, DecoderState state)
+{
+  SgAsmX86Instruction* insn = isSgAsmX86Instruction(stmt);
+  ROSE_ASSERT(insn);
+
+  os << "  @" << InstrAddr{state.addr} << " " << insn->get_mnemonic() 
+     << std::endl;
+
+  return DecoderState{ state.addr + insn->get_size() }  ;
+}
+
+struct PrintName
+{
+  const SgAsmCilMetadata* n = nullptr;
+};
+
+std::ostream&
+operator<<(std::ostream& os, PrintName pn)
+{
+  if (const SgAsmCilTypeDef* ty = isSgAsmCilTypeDef(pn.n))
+    os << ty->get_TypeName_string();
+  else if (const SgAsmCilMethodDef* me = isSgAsmCilMethodDef(pn.n))
+    os << me->get_Name_string();
+  else if (const SgAsmCilField* fld = isSgAsmCilField(pn.n))
+    os << fld->get_Name_string();
+  else if (const SgAsmCilModuleRef* mod = isSgAsmCilModuleRef(pn.n))
+    os << mod->get_Name_string();
+  else if (const SgAsmCilTypeRef* tr = isSgAsmCilTypeRef(pn.n))
+    os << tr->get_TypeName_string();
+  else if (const SgAsmCilMemberRef* mref = isSgAsmCilMemberRef(pn.n))
+    os << PrintName{mref->get_Class_object()} << "::" << mref->get_Name_string();
+  else if (/*const SgAsmCilTypeSpec* tr =*/ isSgAsmCilTypeSpec(pn.n))
+  {
+    // \todo
+    // typeSpec points to a Blob with a type encoding
+    // e.g.,  https://github.com/dotnet/runtime/blob/main/docs/design/specs/Ecma-335-Augments.md
+    os << '[' << "typeSpec encoded blob" << ']';
+  }
+  else if (pn.n)
+    os << '[' << typeid(*pn.n).name() << " ??]";
+  else
+    os << '[' << "null" << ']';
+  
+  return os;
+}
+
+PrintName
+metadataToken(const SgAsmCilMetadataHeap* heap, const SgAsmIntegerValueExpression* expr)
+{
+  return PrintName{expr ? lookupNode(heap, expr->get_value()) : nullptr};
+}
+
+PrintName
+metadataToken(const SgAsmCilMetadataHeap* heap, const SgAsmExpression* expr)
+{
+  return metadataToken(heap, isSgAsmIntegerValueExpression(expr));
+}
+
+DecoderState 
+cilDecoder(std::ostream& os, SgAsmCilMetadataHeap* heap, SgAsmStatement* stmt, DecoderState state)
 {
   SgAsmCilInstruction* insn = isSgAsmCilInstruction(stmt);
   ROSE_ASSERT(insn);
   
-  os << "  @" << std::hex << std::setw(4) << state.addr << std::dec << " " << instr->get_mnemonic() 
-     << std::endl;
+  std::string                   memn = insn->get_mnemonic();
+  const size_t                  nextInsn = state.addr + insn->get_size();   
+  const SgAsmOperandList*       oplst    = insn->get_operandList();
+  const SgAsmExpressionPtrList& offsets  = oplst->get_operands();
+  ROSE_ASSERT(oplst);
+  
+  os << "      " << InstrAddr{state.addr} << ": " << memn << std::flush; 
+     
+  if (memn == "switch")
+  {
+    static constexpr int TARGETS_PER_LINE = 4;
+    
+    os << "\n        ( ";
+    for (std::size_t i = 1; i < offsets.size(); ++i)
+    {
+      const SgAsmIntegerValueExpression* expr = isSgAsmIntegerValueExpression(offsets.at(i));
+      ROSE_ASSERT(expr);
+      
+      if (i != 1) os << ((i-1) % TARGETS_PER_LINE ? ", " : ",\n          ");                          
+      
+      os << InstrAddr{nextInsn + expr->get_signedValue()};
+    }
+    os << "\n        )" << std::endl;
+  }
+  else if (memn == "break")
+  {
+    // nothing to do
+  }
+  else if (memn == "unbox")
+  {
+    // handle value type
+    // \todo UNTESTED
+    os << " " << metadataToken(heap, offsets.at(0));
+  }
+  else if (memn == "newarr")
+  {
+    // handle etype token
+    os << " " << metadataToken(heap, offsets.at(0));
+  }
+  else if (memn == "ldtoken")
+  {
+    // handle token code
+    os << " " << metadataToken(heap, offsets.at(0));
+  }
+  else if (  (memn == "box")       || (memn == "cpobj")  || (memn == "initobj") || (memn == "ldelem") 
+          || (memn == "ldobj")     || (memn == "sizeof") || (memn == "stelem")  || (memn == "stobj")
+          || (memn == "unbox_any")
+          )
+  {
+    // handle type token
+    os << " " << metadataToken(heap, offsets.at(0));
+  }
+  else if ((memn == "castclass") || (memn == "isinst") || (memn == "ldelema") || (memn == "mkrefany"))
+  {
+    // handle class token
+    os << " " << metadataToken(heap, offsets.at(0));
+  }
+  else if ((memn == "refanyval"))
+  {
+    // handle type token?
+    // \todo UNTESTED
+    os << " " << metadataToken(heap, offsets.at(0));
+  }
+  else if ((memn == "constrained"))
+  {
+    // handle this type token?
+    // \todo UNTESTED
+    os << " " << metadataToken(heap, offsets.at(0));
+  }
+  else if (memn.rfind("leave") == 0)
+  {
+    // should this be a InstrAddr?
+    os << " " << intValue( isSgAsmIntegerValueExpression(offsets.at(0)) );
+  }
+  else if (  (memn == "ldfld") || (memn == "ldflda") || (memn == "ldsfld")  || (memn == "ldsflda")
+          || (memn == "stfld") || (memn == "stsfld")
+          )
+  {
+    //~ // handle field token
+    os << " " << metadataToken(heap, offsets.at(0));
+  }
+  else if (memn == "ldstr") 
+  {
+    // handle string
+    const SgAsmIntegerValueExpression* expr = isSgAsmIntegerValueExpression(offsets.at(0));
+    ROSE_ASSERT(expr);
 
-  return DecoderState{ state.addr + instr->get_size(); }  
+    const std::uint32_t     ref = expr->get_value();    
+    const std::uint8_t      N   = 24; // 3 * CHAR_BIT;
+    const std::uint8_t      tbl = ref >> N;
+    const std::uint32_t     idx = ref ^ (tbl << N);    
+    
+    // PP: assuming that ldstr always loads from the USHeap
+    ROSE_ASSERT(tbl == 0x70);
+    const std::vector<std::uint8_t>& usStream = isSgAsmCilMetadataRoot(heap->get_parent())->get_UsHeap()->get_Stream();
+    
+    os << " \"" << decodeUsString(usStream, idx) << "\"";
+  }
+  else if (memn.front() == 'b') // all non-branch mnemonics b.* are handled earlier
+  {
+    const SgAsmIntegerValueExpression* expr = isSgAsmIntegerValueExpression(offsets.at(0));
+    ROSE_ASSERT(expr);
+    
+    os << " " << InstrAddr{nextInsn + expr->get_signedValue()};
+  }
+  else if (  (memn == "call")      || (memn == "callvirt") || (memn == "jmp") || (memn == "ldftn")
+          || (memn == "ldvirtftn") || (memn == "newobj")
+          )
+  {
+    // handle method token
+    // \note newobj is listed as carrying a ctor token. 
+    //       This seems to be the same as a method token.
+    os << " " << metadataToken(heap, offsets.at(0));
+  }
+  else if ((memn == "ldc_i4") || (memn == "ldc_i4_s") || (memn == "ldc_i8"))
+  {
+    os << " " << intValue( isSgAsmIntegerValueExpression(offsets.at(0)) );
+  }
+  else if (  (memn == "ldarg") || (memn == "ldarg_s") || (memn == "ldarga") || (memn == "ldarga_s")
+          || (memn == "ldloc") || (memn == "ldloc_s") || (memn == "ldloca") || (memn == "ldloca_s")
+          || (memn == "starg") || (memn == "starg_s") || (memn == "stloc")  || (memn == "stloc_s")
+          || (memn == "no")    || (memn == "unaligned") 
+          )
+  {
+    os << " " << uintValue( isSgAsmIntegerValueExpression(offsets.at(0)) );
+  }
+
+  os << std::endl;
+  return DecoderState{ nextInsn };
 }
 
 void
-printMethod(std::ostream& os, SgAsmCilMetadataRoot* n)
+printAssemblies(std::ostream& os, const SgAsmCilMetadataRoot* n)
 {
-  using AsmDecoderFn = std::function<DecoderState(std::ostream&, SgAsmCilInstruction*, DecoderState)>;
+  SgAsmCilMetadataHeap* metadataHeap = n->get_MetadataHeap();
+  ASSERT_not_null(metadataHeap);
+
+  for (SgAsmCilAssembly* assembly : metadataHeap->get_Assembly())
+  {
+    ASSERT_not_null(assembly);
+    os << ".assembly " << assembly->get_Name_string()
+       << "\n{"
+       << "\n  // Culture: " << assembly->get_Culture_string()
+       << "\n  // Flags: " << std::hex << assembly->get_Flags() << std::dec
+       << "\n  // Rev: " << assembly->get_RevisionNumber() 
+       << "\n  // Build#: " << assembly->get_BuildNumber() 
+       << "\n  .ver " << assembly->get_MajorVersion() << ':' << assembly->get_MinorVersion()       
+       << "\n  .hash 0x" << std::hex << assembly->get_HashAlgId() << std::dec
+       << "\n  // TODO"
+       << "\n}"
+       << std::endl;    
+  }
+}
+
+void
+printModules(std::ostream& os, const SgAsmCilMetadataRoot* n)
+{
+  SgAsmCilMetadataHeap* metadataHeap = n->get_MetadataHeap();
+  ASSERT_not_null(metadataHeap);
+
+  for (SgAsmCilModule* mod : metadataHeap->get_Module())
+  {
+    ASSERT_not_null(mod);
+    os << ".module " << mod->get_Name_string()
+       << " // GUID"
+       << std::endl;    
+  }
+}
+
+
+void
+printMethods(std::ostream& os, const SgAsmCilMetadataRoot* n, size_t beg = 0, size_t lim = std::numeric_limits<size_t>::max())
+{
+  using AsmDecoderFn = std::function<DecoderState(std::ostream&, SgAsmCilMetadataHeap*, SgAsmStatement*, DecoderState)>;
   
   constexpr std::uint8_t CIL_CODE       = 0;
   constexpr std::uint8_t NATIVE_CODE    = 1;
@@ -188,64 +440,146 @@ printMethod(std::ostream& os, SgAsmCilMetadataRoot* n)
   constexpr std::uint8_t RUNTIME_CODE   = 3;
   constexpr std::uint8_t CODE_TYPE_MASK = CIL_CODE | NATIVE_CODE | OPTIL_RESERVED | RUNTIME_CODE;
 
-  printf ("Generate the RVAs for each method: \n");
   SgAsmCilMetadataHeap* metadataHeap = n->get_MetadataHeap();
-  SgAsmCilUint8Heap*    stringHeap = n->get_StringHeap();
   ASSERT_not_null(metadataHeap);
-  ASSERT_not_null(stringHeap);
-
-  for (SgAsmCilMethodDef* methodDef : metadataHeap->get_MethodDef())
+  
+  const std::vector<SgAsmCilMethodDef*>& methods = metadataHeap->get_MethodDef();
+  
+  lim = std::min(lim, methods.size());
+  
+  for (size_t i = beg; i < lim; ++i)
   {
+    SgAsmCilMethodDef* methodDef = methods.at(i);     
     ASSERT_not_null(methodDef);  
-    os << ".method " << getString(*stringHeap, methodDef->get_Name())
-       << std::endl;
-              
-    std::uint32_t rva = m->get_RVA();
+    os << "    .method " << methodDef->get_Name_string();
+      
+    std::uint32_t rva = methodDef->get_RVA();
     
     if (rva == 0)
     {
-      os << "  is abstract\n" << std::endl;
+      os << " = 0 // abstract" << std::endl;
       continue;
     }
     
-    std::uint8_t decoderFlags = m->get_ImplFlags() & CODE_TYPE_MASK;
-    ROSE_ASSSERT(decoderFlags == CIL_CODE || decoderFlags == NATIVE_CODE);
+    os << std::endl;
     
-    os << "{\n" 
-       << "  // " << (decoderFlags == CIL_CODE ? "CIL code" : "Native code") << '\n'
-       << "  // method begins at 0x" << std::hex << (rva) << std::dec << '\n'
-       //~ << "  // header size = " << int(mh.headerSize()) << " (" << (mh.tiny() ? "tiny": "fat") << ")\n"
-       //~ << "  // code size " << codeLen << " (0x" << std::hex << codeLen << std::dec << ")\n"
-       << "  .entrypoint\n" 
-       << "  .maxstack " << m->get_stackSize() << '\n'
-       << "  .localsinit " << m->get_initLocals() << '\n'
+    std::uint8_t decoderFlags = methodDef->get_ImplFlags() & CODE_TYPE_MASK;
+    ROSE_ASSERT(decoderFlags == CIL_CODE || decoderFlags == NATIVE_CODE);
+    
+    os << "    {\n" 
+       << "      // " << (decoderFlags == CIL_CODE ? "CIL code" : "Native code") << '\n'
+       << "      // method begins at 0x" << std::hex << (rva) << std::dec << '\n'
+       //~ << "      // header size = " << int(mh.headerSize()) << " (" << (mh.tiny() ? "tiny": "fat") << ")\n"
+       //~ << "      // code size " << codeLen << " (0x" << std::hex << codeLen << std::dec << ")\n"
+       << "      .entrypoint\n" 
+       << "      .maxstack " << methodDef->get_stackSize() << '\n'
+       << "      .localsinit " << methodDef->get_initLocals() << '\n'
        << std::flush;           
         
-    AsmDecoderFn decoder = decoderFlags == CIL_CODE ? cilDecoder : x86Decoder;
        
     if (SgAsmBlock* blk = methodDef->get_body())
     {    
+      AsmDecoderFn decoder = decoderFlags == CIL_CODE ? cilDecoder : x86Decoder;
+      DecoderState state;
+      
       for (SgAsmStatement* stmt : blk->get_statementList())
-        decoder(os, stmt, state);
+        state = decoder(os, metadataHeap, stmt, state);
     }
     
-    os << "}\n" << std::endl;
+    os << "    }\n" << std::endl;
   }
-
-  return res;
 }
+
+void
+printTypeDefs(std::ostream& os, const SgAsmCilMetadataRoot* n)
+{
+  SgAsmCilMetadataHeap* metadataHeap = n->get_MetadataHeap();
+  ASSERT_not_null(metadataHeap);
+  
+  const std::uint8_t* lastNamespace = nullptr;
+  const std::vector<SgAsmCilTypeDef*>& tydefs = metadataHeap->get_TypeDef();
+
+  for (size_t i = 0; i < tydefs.size(); ++i)
+  {
+    const SgAsmCilTypeDef* td = tydefs.at(i);
+    ASSERT_not_null(td);
+    
+    if (i)
+    {
+      const std::uint8_t*    thisNamespace = td->get_TypeNamespace_string();
+      
+      if (lastNamespace != thisNamespace)
+      {
+        if (lastNamespace) os << "}" << std::endl;
+        
+        os << ".namespace " << thisNamespace << "\n{\n";
+        
+        lastNamespace = thisNamespace;
+      }
+      
+      os << "\n  .class " << td->get_TypeName_string() 
+         << "\n  {"
+         << std::endl;     
+    }
+    
+    size_t beg = td->get_MethodList()-1;
+    size_t lim  = (i+1 < tydefs.size() ? tydefs.at(i+1)->get_MethodList()-1 : metadataHeap->get_MethodDef().size());
+    
+    printMethods(os, n, beg, lim);    
+
+    if (i) os << "  }" << std::endl;     
+  }
+  
+  if (lastNamespace) os << "}" << std::endl;
+}
+
+
+void forAllMetadataRoots(const SgAsmPEFileHeader& n, std::function<void(const SgAsmCilMetadataRoot*)> fn)
+{
+  for (const SgAsmGenericSection* gs : n.get_mapped_sections())
+  {
+    if (const SgAsmCliHeader* ch = isSgAsmCliHeader(gs)) 
+    {
+      SgAsmCilMetadataRoot* metadata = ch->get_metadataRoot();
+      ROSE_ASSERT(metadata);
+      
+      fn(metadata);
+    } 
+  }
+}
+
+void forAllMetadataRoots(const SgBinaryComposite& n, std::function<void(const SgAsmCilMetadataRoot*)> fn)
+{
+  SgAsmGenericFileList* fl = n.get_genericFileList();
+  ASSERT_not_null(fl);
+       
+  for (SgAsmGenericFile* gf : fl->get_files())
+  {
+    ASSERT_not_null(gf);
+    
+    if (SgAsmPEFileHeader* hd = isSgAsmPEFileHeader(gf->get_header(SgAsmExecutableFileFormat::FAMILY_PE)))
+      forAllMetadataRoots(*hd, fn);
+  }
+}
+
+void forAllMetadataRoots(const SgProject& prj, std::function<void(const SgAsmCilMetadataRoot*)> fn)
+{
+  for (const SgFile* file : prj.get_files())
+  {
+    if (const SgBinaryComposite* bc = isSgBinaryComposite(file))
+      forAllMetadataRoots(*bc, fn);
+  }
+}
+
+
+
 } // anonymous namespace
 
 
 int main(int argc, char *argv[])
 {
     ROSE_INITIALIZE;
-
-#if 1
-    printf ("In TOP of main() \n");
-#endif
-
-    Diagnostics::initAndRegister(&::mlog, "tool");
+    Rose::Diagnostics::initAndRegister(&::mlog, "tool");
 
     // Parse the command-line
     P2::Engine engine;
@@ -253,239 +587,19 @@ int main(int argc, char *argv[])
     std::vector<std::string> specimenNames = parseCommandLine(argc, argv, engine, settings);
 
     // Load the specimen as raw data or an ELF or PE container
-    MemoryMap::Ptr map = engine.loadSpecimens(specimenNames);
-#if 0
-    map->dump(::mlog[INFO]);
-    map->dump(std::cout);
-#endif
+    /* MemoryMap::Ptr map = */ engine.loadSpecimens(specimenNames);
 
-    AsmUnparser unparser;
-    Disassembler::Base::Ptr disassembler = engine.obtainDisassembler();
-    // Obtain an unparser suitable for this disassembler
-    unparser.set_registers(disassembler->registerDictionary());
-
-
- // DQ (12/18/2021): See if we can comment this out, I think we are not using it.
- // Build semantics framework; only used when settings.runSemantics is set
-    BaseSemantics::Dispatcher::Ptr dispatcher;
-#if 0
-    if (settings.runSemantics) {
-        BaseSemantics::RiscOperators::Ptr ops = SymbolicSemantics::RiscOperators::instance(disassembler->registerDictionary());
-        ops = TraceSemantics::RiscOperators::instance(ops);
-        dispatcher = DispatcherM68k::instance(ops, disassembler->wordSizeBytes()*8);
-        dispatcher->currentState()->memoryState()->set_byteOrder(ByteOrder::ORDER_MSB);
-    }
-#endif
-
-#if 0
-    // PP (8/9/2022): metadata objects are loaded through the loader
-    // DQ (11/7/2021): Start looking for the streams (Cil terminology) within the .text section.
-    look_for_cil_streams(settings, map);
-#endif
-
-    SgAsmCilMetadataRoot* metadata = obtainMetaDataRoot();
-    std::vector<uint32_t> rvaList = generateRVAs(metadata);
-
-#if 0
-    printf ("Exiting after unparsing the CIL streams (skipping disassembly of instructions until we can resolve RVA) \n");
-    return 0;
-#endif
-
-    printf ("Generated rvaList.size() = %zu \n",rvaList.size());
-    for (size_t i=0; i < rvaList.size(); i++)
-       {
-      // Note: the location of the instructions for each method are at the 0x00400000 (base of PE Header file) + RVA.
-         uint32_t RVA = rvaList[i];
-         printf ("rvaList[%zu] = RVA = %u 0x%x \n",i,RVA,RVA);
-       }
-
-    // Disassemble at each valid address, and show disassembly errors
-
-    // rose_addr_t va = settings.startVa;
-    // while (map->atOrAfter(va).require(MemoryMap::EXECUTABLE).next().assignTo(va)) {
-    // Start at the first address of the RVA (what ever that is).
-
-    rose_addr_t va = settings.startVa;
-
-    printf ("Before reset using RVA: va = 0x%" PRIu64 " \n",va);
-
-#if 1 /* XYZ */
- // Reset the va to incude the generated RVA
- // va = rvaList[0];
-#if 1
-    va = 0x00400000 + rvaList[0];
-#endif
-
-    printf ("After explicitly setting va(using 0x00400000 + RVA): va = 0x%" PRIu64 " \n",va);
-
- // DQ (12/20/2021): Robb sent me this line of code that is correct since our offset is into the map.
- // uint8_t method_header_leading_byte_value = ByteOrder::le_to_host(*((uint8_t*)va));
-    uint8_t method_header_leading_byte_value = 0;
-    size_t nRead = map->at(va).limit(1).read(&method_header_leading_byte_value).size();
-
-    printf ("read n = %zu \n", nRead);
-    ROSE_ASSERT(nRead == 1);
-
-    printf ("method_header_leading_byte_value = 0x%x \n",method_header_leading_byte_value);
-
-    // uint8_t method_header_leading_byte_value_alt_1 = ByteOrder::le_to_host(*((uint8_t*)rvaList[0]));
-    // printf ("method_header_leading_byte_value_alt_1 = 0x%x \n",method_header_leading_byte_value_alt_1);
-
- // These are zero, could it be that we want the 2nd byte because of little-endian ordering?
-    bool bit_1 = Rose::BitOps::bit(method_header_leading_byte_value,0);
-    bool bit_2 = Rose::BitOps::bit(method_header_leading_byte_value,1);
-
-    printf ("bit_1 = %s \n",bit_1 ? "true" : "false");
-    printf ("bit_2 = %s \n",bit_2 ? "true" : "false");
-
-#if 0
- // I get a different result if these are commented out?????
-    bool bit_3 = Rose::BitOps::bit(method_header_leading_byte_value,2);
-    bool bit_4 = Rose::BitOps::bit(method_header_leading_byte_value,3);
-    bool bit_5 = Rose::BitOps::bit(method_header_leading_byte_value,4);
-    bool bit_6 = Rose::BitOps::bit(method_header_leading_byte_value,5);
-    bool bit_7 = Rose::BitOps::bit(method_header_leading_byte_value,6);
-    bool bit_8 = Rose::BitOps::bit(method_header_leading_byte_value,7);
-
-    printf ("bit_3 = %s \n",bit_3 ? "true" : "false");
-    printf ("bit_4 = %s \n",bit_4 ? "true" : "false");
-    printf ("bit_5 = %s \n",bit_5 ? "true" : "false");
-    printf ("bit_6 = %s \n",bit_6 ? "true" : "false");
-    printf ("bit_7 = %s \n",bit_7 ? "true" : "false");
-    printf ("bit_8 = %s \n",bit_8 ? "true" : "false");
-#endif
-
-    if (bit_2 == true)
-       {
-         if (bit_1 == false)
-            {
-           // This is a tiny header
-            }
-           else
-            {
-           // This is a fat header
-            }
-       }
-
-    printf ("After reset using RVA: va = 0x%" PRIu64 "\n",va);
-#endif /* XYZ */
-
-#if 1
-    printf ("Exiting before processing instructions \n");
-    return 0;
-#endif
-
- // DQ (12/17/2021): Robb is sending a new while loop.
- // while (map->atOrAfter(va).require(MemoryMap::EXECUTABLE).next().assignTo(va))
- // while (map->at(va).require(MemoryMap::EXECUTABLE).next())
-
- // DQ (12/18/2021): Use the original while loop.
- // while (map->atOrAfter(va).require(MemoryMap::EXECUTABLE).next().assignTo(va))
-    while (map->at(va).require(MemoryMap::EXECUTABLE).next())
-       {
-     // We likely don't need this for .NET
-     // va = alignUp(va, settings.alignment);
-
-     // DQ (12/17/2021): Need to accumulate the instructions into a list.
-     // And attach the list to the MethodDef table (or that is an intermediate solution).
-        try {
-#if 0
-            printf ("Before calling disassembler->disassembleOne(map, va): va = 0x%x \n",va);
-#endif
-#if 0
-            printf ("Increment the va using the RVA for the first method \n");
-            va = va + rvaList[0];
-            printf ("Before calling disassembler->disassembleOne(map, va): va = 0x%x \n",va);
-#endif
-#if 0
-            printf ("Reset the va using the RVA for the first method \n");
-            va = rvaList[0];
-            printf ("Before calling disassembler->disassembleOne(map, va): va = 0x%x \n",va);
-#endif
-            SgAsmInstruction *insn = disassembler->disassembleOne(map, va);
-            ASSERT_not_null(insn);
-            unparser.unparse(std::cout, insn);
-
-            if (settings.runSemantics) {
-                if (isSgAsmM68kInstruction(insn)) {
-                    bool skipThisInstruction = false;
-#if 0 // [Robb P. Matzke 2014-07-29]
-                    switch (isSgAsmM68kInstruction(insn)->get_kind()) {
-                        case m68k_cpusha:
-                        case m68k_cpushl:
-                        case m68k_cpushp:
-                            std::cout <<"    No semantics yet for privileged instructions\n";
-                            skipThisInstruction = true;
-                            break;
-
-                        case m68k_fbeq:
-                        case m68k_fbne:
-                        case m68k_fboge:
-                        case m68k_fbogt:
-                        case m68k_fbule:
-                        case m68k_fbult:
-                        case m68k_fcmp:
-                        case m68k_fdabs:
-                        case m68k_fdadd:
-                        case m68k_fddiv:
-                        case m68k_fdiv:
-                        case m68k_fdmove:
-                        case m68k_fdmul:
-                        case m68k_fdneg:
-                        case m68k_fdsqrt:
-                        case m68k_fdsub:
-                        case m68k_fintrz:
-                        case m68k_fmove:
-                        case m68k_fmovem:
-                        case m68k_fsadd:
-                        case m68k_fsdiv:
-                        case m68k_fsmove:
-                        case m68k_fsmul:
-                        case m68k_fsneg:
-                        case m68k_fssub:
-                        case m68k_ftst:
-                            std::cout <<"    No semantics yet for floating-point instructions\n";
-                            skipThisInstruction = true;
-                            break;
-
-                        case m68k_nbcd:
-                        case m68k_rtm:
-                        case m68k_movep:
-                            std::cout <<"    No semantics yet for this odd instruction\n";
-                            skipThisInstruction = true;
-                            break;
-
-                        default:
-                            break;
-                    }
-#endif
-
-                    if (!skipThisInstruction) {
-                        //ops->currentState()->clear();
-                        dispatcher->processInstruction(insn);
-                        std::ostringstream ss;
-                        ss <<*dispatcher->currentState();
-                        std::cout <<StringUtility::prefixLines(ss.str(), "    ") <<"\n";
-                    }
-                }
-            }
-
-
-            va += insn->get_size();
-            if (0 != va % settings.alignment)
-                std::cerr <<StringUtility::addrToString(va) <<": invalid alignment\n";
-#if 0 // [Robb P. Matzke 2014-06-19]: broken
-            deleteAST(insn);
-#endif
-        } catch (const Disassembler::Exception &e) {
-            std::cerr <<StringUtility::addrToString(va) <<": " <<e.what() <<"\n";
-            ++va;
-        }
-    }
-
-#if 1
-    printf ("Leaving main() \n");
-#endif
+    SgProject* p = SageInterface::getProject();
+    ASSERT_not_null(p);
+           
+    forAllMetadataRoots( *p, 
+                         [os = std::ref(std::cout)](const SgAsmCilMetadataRoot* root) mutable
+                         {
+                           printAssemblies(os, root);
+                           printModules(os, root);
+                           printTypeDefs(os, root);                        
+                         }
+                       );
 
     exit(0);
 }
