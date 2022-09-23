@@ -57,7 +57,18 @@
 #if defined(SgAsmCil`cl.Name`_OTHERS) || defined(DOCUMENTATION)
 
     public:
-        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);
+        void parse(std::vector<uint8_t>& buf, size_t& index, uint64_t uses4byteIndexing);        
+`for_each fl = cl.Fields` `if exists fl.RefKind` `if fl.RefKind eq "blob_heap"`
+        const std::uint8_t* get_`fl.Name`_blob() const;
+    `else_if fl.RefKind eq "guid_heap"`
+        const std::uint32_t* get_`fl.Name`_guid() const;
+    `else_if fl.RefKind eq "string_heap"`
+        const std::uint8_t* get_`fl.Name`_string() const;
+    `else`
+        const SgAsmCilMetadata* get_`fl.Name`_object() const;
+    `end_if`
+  `end_if`
+`end_for`        
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -211,10 +222,29 @@
           e_ref_last                  = 1 << 25,  
         };
 
+        enum TableKind : std::uint8_t
+        {
+          `for_each cl = .metadata`
+          e_`cl.Name` = `cl.Code`,
+          `end_for`
+          e_Unknown_table_kind = 0xFF
+        };
+        
         SgAsmCilMetadataHeap() = default;
 
         /** parses the metadata objects from the buffer. */
         void parse(std::vector<uint8_t>& buf, size_t startOfMetaData) override;
+
+        /** looks up the node associated with the coded index @ref idx in the metadata table
+         *  associated with @ref tblcode.
+         */
+        SgAsmCilMetadata* get_MetadataNode(std::uint32_t idx, TableKind tblcode) const;        
+        
+        /** looks up the node associated with the coded index @ref refcode in the metadata tables
+         *  under the assumption that @refval is of kind @ref knd
+         */
+        SgAsmCilMetadata* get_CodedMetadataNode(std::uint32_t refcode, ReferenceKind knd) const;
+
 
         /** looks up the node associated with the coded index @ref refcode in the metadata tables
          *  under the assumption that @refval is of kind @ref knd
