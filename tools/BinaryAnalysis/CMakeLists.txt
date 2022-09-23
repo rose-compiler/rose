@@ -2,7 +2,9 @@ if(enable-binary-analysis)
   include_directories(. ${ROSE_INCLUDES})
 
   add_library(bat SHARED batSupport.C)
+  set_target_properties(bat PROPERTIES OUTPUT_NAME "batSupport")
   target_link_libraries(bat ROSE_DLL)
+  install(TARGETS bat DESTINATION ${ROSE_LIB_DIR_NAME})
 
   add_executable(bat-ana bat-ana.C)
   target_link_libraries(bat-ana bat ROSE_DLL)

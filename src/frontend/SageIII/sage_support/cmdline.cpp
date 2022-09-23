@@ -223,7 +223,7 @@ CommandlineProcessing::isExecutableFilename ( string name )
                if (firstBase == true)
                   {
                     FILE* f = fopen(name.c_str(), "rb");
-                    ROSE_ASSERT(f != NULL);
+                    ASSERT_not_null(f);
 
                  // Check for if this is a binary executable file!
                     int character0 = fgetc(f);
@@ -746,7 +746,7 @@ SgProject::processCommandLine(const vector<string>& input_argv)
 #if ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT
      p_fileList.clear();
 #else
-     ROSE_ASSERT(p_fileList_ptr != NULL);
+     ASSERT_not_null(p_fileList_ptr);
      p_fileList_ptr->get_listOfFiles().clear();
 #endif
 
@@ -1387,24 +1387,12 @@ SgProject::processCommandLine(const vector<string>& input_argv)
        // find the source code filenames and modify them to be the output filenames
           unsigned int length = argv[i].size();
 
-       // printf ("assemble compiler command line option: argv[%d] = %s length = %d \n",i,argv[i],length);
-       // printf ("Rose::sourceFileNamesWithoutPath[%d] = \n",sourceFileNameCounter,
-       //     Rose::sourceFileNamesWithoutPath[sourceFileNameCounter]);
-       // ROSE_ASSERT (Rose::sourceFileNamesWithoutPath[sourceFileNameCounter] != NULL);
-
-       // DQ (12/8/2007): This leverages existing support in commandline processing
-       // p_sourceFileNameList = CommandlineProcessing::generateSourceFilenames(argv);
-
-       // printf ("In SgProject::processCommandLine(): p_sourceFileNameList.size() = %" PRIuPTR " \n",p_sourceFileNameList.size());
-
        // DQ (2/4/2009): Only put *.o files into the objectFileNameList is they are not being
        // processed as binary source files (targets for analysis, as opposed to linking).
        // DQ (1/16/2008): This is a better (simpler) implementation
        // if (CommandlineProcessing::isObjectFilename(argv[i]) == true)
-       // printf ("get_binary_only() = %s \n",get_binary_only() ? "true" : "false");
           if ( (get_binary_only() == false) && (CommandlineProcessing::isObjectFilename(argv[i]) == true) )
              {
-            // printf ("Adding argv[%u] = %s to p_objectFileNameList \n",i,argv[i].c_str());
                p_objectFileNameList.push_back(argv[i]);
              }
 
@@ -1421,7 +1409,6 @@ SgProject::processCommandLine(const vector<string>& input_argv)
                if (get_binary_only() == true)
                   {
                     printf ("This may be an error, since the library archive should be treated as a source file for binary analysis. \n");
-                    //ROSE_ASSERT(false);
                   }
              }
 
@@ -3824,15 +3811,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
      printf ("In SgFile::processRoseCommandLineOptions(): Processing the commandline argv.size() = %zu \n",argv.size());
 #endif
 
-  // int optionCount = 0;
-  // int i = 0;
-
-  // DQ (1/17/2006): test this
-  // ROSE_ASSERT(get_fileInfo() != NULL);
-
   // Split out the ROSE options first
-
-  // printf ("Before processing ROSE options argc = %d \n",argc);
 
   //
   // help option (allows alternative -h or -help instead of just -rose:help)
@@ -3842,11 +3821,8 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           CommandlineProcessing::isOption(argv,"--", "(h|help)",true)    == true ||
           CommandlineProcessing::isOption(argv,"-","(h|help)",true)      == true )
         {
-       // printf ("\nROSE (pre-release alpha version: %s) \n",VERSION);
-       // Rose::usage(0);
           cout << version_message() << endl;
           usage(0);
-       // exit(0);
         }
   //
   // version option
@@ -3855,7 +3831,6 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
         {
        // function in SAGE III to access version number of EDG
           extern std::string edgVersionString();
-       // printf ("\nROSE (pre-release alpha version: %s) \n",VERSION);
           cout << version_message() << endl;
           printf ("     Using C++ and C frontend from EDG (version %s) internally \n",edgVersionString().c_str());
         }
@@ -3866,7 +3841,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
   // code in sla++.C is basically unreadable and its minimal documentation doesn't seem to match its macro-hidden API,
   // specifically the part about being able to return an array of values.
   //
-     Rose::initialize(NULL);
+     Rose::initialize(nullptr);
      static const std::string removalString = "(--REMOVE_ME--)";
      for (size_t i=0; i<argv.size(); ++i) {
          if ((0==strcmp(argv[i].c_str(), "-rose:log")) && i+1 < argv.size()) {
@@ -3897,7 +3872,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
      for (size_t i=0; i<argv.size(); ++i) {
          if (argv[i] == std::string("-rose:assert") && i+1 < argv.size()) {
              std::string switchValue = argv[i+1];
-             Sawyer::Assert::AssertFailureHandler handler = NULL;
+             Sawyer::Assert::AssertFailureHandler handler = nullptr;
              if (switchValue == "abort") {
                  handler = Rose::abortOnFailedAssertion;
              } else if (switchValue == "exit") {
@@ -3905,7 +3880,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
              } else if (switchValue == "throw") {
                  handler = Rose::throwOnFailedAssertion;
              }
-             if (handler != NULL) {
+             if (handler != nullptr) {
                  argv[i] = argv[i+1] = removalString;
                  Rose::failedAssertionBehavior(handler);
              }
@@ -5562,7 +5537,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
 
        // DQ (8/22/2009): Verify that this was set when the command line was processed at the SgProject level.
           SgProject* project = this->get_project();
-          ROSE_ASSERT(project != NULL);
+          ASSERT_not_null(project);
           ROSE_ASSERT(project->get_C_PreprocessorOnly() == true);
         }
 
@@ -5582,7 +5557,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
 
        // DQ (8/22/2009): Verify that this was set when the command line was processed at the SgProject level.
           SgProject* project = this->get_project();
-          ROSE_ASSERT(project != NULL);
+          ASSERT_not_null(project);
           ROSE_ASSERT(project->get_stop_after_compilation_do_not_assemble_file() == true);
         }
 
@@ -5694,7 +5669,7 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
      optionCount = sla(argv, "-rose:", "($)", "(h|help)",1);
      optionCount = sla(argv, "-rose:", "($)", "(V|version)", 1);
   // optionCount = sla(argv, "-rose:", "($)", "(v|verbose)",1);
-     char *loggingSpec = NULL;
+     char *loggingSpec = nullptr;
      optionCount = sla(argv, "-rose:", "($)^", "(log)", loggingSpec, 1);
      optionCount = sla(argv, "-rose:", "($)", "(keep_going)",1);
      int integerOption = 0;
@@ -5814,19 +5789,19 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
      optionCount = sla(argv, "-rose:", "($)", "(skipfinalCompileStep)",1);
      optionCount = sla(argv, "-rose:", "($)", "(prelink)",1);
 
-     char* unparseHeaderFilesRootFolderOption = NULL;
+     char* unparseHeaderFilesRootFolderOption = nullptr;
      optionCount = sla(argv, "-rose:", "($)^", "(unparseHeaderFilesRootFolder)", unparseHeaderFilesRootFolderOption, 1);
 
   // DQ (11/6/2018): Added to support specification of application root directory to support source file and header file unparsing.
-     char* applicationRootDirectoryOption = NULL;
+     char* applicationRootDirectoryOption = nullptr;
      optionCount = sla(argv, "-rose:", "($)^", "(applicationRootDirectory)", applicationRootDirectoryOption, 1);
 
-     char* templateInstationationOption = NULL;
+     char* templateInstationationOption = nullptr;
      optionCount = sla(argv, "-rose:", "($)^", "(instantiation)",templateInstationationOption,1);
 
   // DQ (6/17/2005): Added support for AST merging (sharing common parts of the AST most often represented in common header files of a project)
      optionCount = sla(argv, "-rose:", "($)", "(astMerge)",1);
-     char* filename = NULL;
+     char* filename = nullptr;
      optionCount = sla(argv, "-rose:", "($)^", "(astMergeCommandFile)",filename,1);
      optionCount = sla(argv, "-rose:", "($)^", "(projectSpecificDatabaseFile)",filename,1);
 
@@ -5846,7 +5821,7 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
 
   // Liao 2/26/2009: strip use of -rose:excludePath <pathname> , -rose:excludeFile <filename> ,etc
   // which are introduced in Compass::commandLineProcessing()
-     char* pathname = NULL;
+     char* pathname = nullptr;
      optionCount = sla(argv, "-rose:", "($)^", "(excludePath)", pathname,1);
      optionCount = sla(argv, "-rose:", "($)^", "(excludeFile)", filename,1);
      optionCount = sla(argv, "-rose:", "($)^", "(includeFile)", filename,1);
@@ -5910,7 +5885,7 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
   // This also likely means that we are not passing it on to the backend (linker).
   // At the moment, this fixes a problem where the version number is being treated as a file
   // and causing ROSE to crash in the command line handling.
-     char* version_string = NULL;
+     char* version_string = nullptr;
   // optionCount = sla(argv, "-", "($)^", "(version-info)",filename,1);
      optionCount = sla(argv, "-", "($)^", "(version-info)",version_string,1);
 
@@ -6099,9 +6074,6 @@ SgFile::processBackendSpecificCommandLineOptions ( const vector<string>& argvOri
   // would influence how ROSE instantiates or outputs templates in the code generation phase.
 
   // This function leaves all commandline options in place (for use by the backend)
-
-  // DQ (1/17/2006): test this
-  // ROSE_ASSERT(get_fileInfo() != NULL);
 
   vector<string> argv = argvOrig;
 
@@ -6454,7 +6426,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // DQ (6/13/2013): This was wrong, the parent of the SgFile is the SgFileList IR node and it is better to call the function to get the SgProject.
   // SgProject* project = isSgProject(this->get_parent());
      SgProject* project = TransformationSupport::getProject(this);
-     ROSE_ASSERT (project != NULL);
+     ASSERT_not_null(project);
 
   // AS(063006) Changed implementation so that real paths can be found later
      vector<string> includePaths;
@@ -7567,7 +7539,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 
        // DQ (5/20/2005): Force instantiation of all used templated unless it is specified to instantiate no templates (explicitly to ROSE)
           bool instantiateAll = false;
-          if (get_project() != NULL)
+          if (get_project() != nullptr)
              {
                instantiateAll = (get_project()->get_template_instantiation_mode() == SgProject::e_default) ||
                                 (get_project()->get_template_instantiation_mode() == SgProject::e_used)    ||
@@ -7755,10 +7727,10 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 
 #if DEBUG_COMPILER_COMMAND_LINE
   // DQ (10/10/2020): Output values before manipulation.
-     if (sourceFile != NULL)
+     if (sourceFile != nullptr)
         {
           SgProject* project = TransformationSupport::getProject(sourceFile);
-          ROSE_ASSERT(project != NULL);
+          ASSERT_not_null(project);
 
           printf ("(TOP of buildCompilerCommandLineOptions(): project->get_includeDirectorySpecifierList().size() = %zu \n",project->get_includeDirectorySpecifierList().size());
           for (size_t i = 0; i < project->get_includeDirectorySpecifierList().size(); i++)
@@ -7809,9 +7781,6 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 #endif
         }
 #endif
-
-  // DQ (1/17/2006): test this
-  // ROSE_ASSERT(get_fileInfo() != NULL);
 
 #if 0
      display("SgFile::buildCompilerCommandLineOptions()");
@@ -8449,18 +8418,15 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 #endif
 
   // DQ (12/12/2018): This step to insert extra include paths only applies to source files, not binary files (caught in Jenkins testing).
-  // ROSE_ASSERT(sourceFile != NULL);
-     if (sourceFile != NULL)
+     if (sourceFile != nullptr)
         {
        // DQ (3/12/20202): the extraIncludeDirectorySpecifierList from the SgProject is used to support extra directory paths required as
        // part of header file transformations that are projects wide instead of source file specific.
           SgProject* project = TransformationSupport::getProject(sourceFile);
-          ROSE_ASSERT(project != NULL);
+          ASSERT_not_null(project);
 
 #if DEBUG_INCLUDE_PATHS
-       // ROSE_ASSERT(sourceFile->get_project() != NULL);
           printf ("Output includeDirectorySpecifierList for unparsedFile->getFileName() = %s \n",sourceFile->getFileName().c_str());
-       // printf ("Calling unparsedFile->get_project()->get_includeDirectorySpecifierList().size() \n");
           printf ("project->get_includeDirectorySpecifierList().size() = %zu \n",project->get_includeDirectorySpecifierList().size());
           for (size_t i = 0; i < project->get_includeDirectorySpecifierList().size(); i++)
              {
@@ -8468,7 +8434,6 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
              }
 
           printf ("Output extraIncludeDirectorySpecifierBefore/AfterLists for sourceFile->getFileName() = %s \n",sourceFile->getFileName().c_str());
-       // printf ("Calling sourceFile->get_project()->get_extraIncludeDirectorySpecifierList().size() \n");
           printf ("(added for source file) sourceFile->get_extraIncludeDirectorySpecifierBeforeList().size() = %zu \n",sourceFile->get_extraIncludeDirectorySpecifierBeforeList().size());
           for (size_t i = 0; i < sourceFile->get_extraIncludeDirectorySpecifierBeforeList().size(); i++)
              {
@@ -8482,7 +8447,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
              }
 
        // DQ (3/14/2020): Added output of the extraIncludeDirectorySpecifierList held on the SgProject node.
-          ROSE_ASSERT(project != NULL);
+          ASSERT_not_null(project);
           printf ("(added for source file) project->get_extraIncludeDirectorySpecifierBeforeList().size() = %zu \n",project->get_extraIncludeDirectorySpecifierBeforeList().size());
           for (size_t i = 0; i < project->get_extraIncludeDirectorySpecifierBeforeList().size(); i++)
              {
@@ -8534,7 +8499,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 
 #if DEBUG_INCLUDE_PATHS
        // DQ (6/27/2020): Compress to just the unique elements.
-          ROSE_ASSERT(project != NULL);
+          ASSERT_not_null(project);
           printf ("(After removing duplicate paths) project->get_extraIncludeDirectorySpecifierBeforeList().size() = %zu \n",project->get_extraIncludeDirectorySpecifierBeforeList().size());
           for (size_t i = 0; i < project->get_extraIncludeDirectorySpecifierBeforeList().size(); i++)
              {
@@ -8555,7 +8520,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 #endif
 #if DEBUG_INCLUDE_PATHS
        // DQ (6/29/2020): Debugging.
-          ROSE_ASSERT(project != NULL);
+          ASSERT_not_null(project);
           printf ("Before reserve(): argcArgvList.size() = %zu \n",argcArgvList.size());
           for (size_t i = 0; i < argcArgvList.size(); i++)
              {
@@ -8574,7 +8539,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 #endif
 #if DEBUG_INCLUDE_PATHS
        // DQ (6/29/2020): Debugging.
-          ROSE_ASSERT(project != NULL);
+          ASSERT_not_null(project);
           printf ("After reserve(): argcArgvList.size() = %zu \n",argcArgvList.size());
           for (size_t i = 0; i < argcArgvList.size(); i++)
              {
@@ -8696,18 +8661,13 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 #endif
 #if DEBUG_INCLUDE_PATHS
        // DQ (6/29/2020): Debugging.
-          ROSE_ASSERT(project != NULL);
+          ASSERT_not_null(project);
           printf ("Before insert(): argcArgvList.size() = %zu \n",argcArgvList.size());
           for (size_t i = 0; i < argcArgvList.size(); i++)
              {
                printf ("argcArgvList()[%zu] = %s \n",i,argcArgvList[i].c_str());
              }
 #endif
-
-       // DQ (7/5/2020): This fails for Fortran_tests/test2020_use_iso_c_binding.f90
-       // ROSE_ASSERT(positionForIncludes != argcArgvList.end());
-
-       // argcArgvList.insert(positionForIncludes,project->get_extraIncludeDirectorySpecifierList().begin(),project->get_extraIncludeDirectorySpecifierList().end());
           argcArgvList.insert(positionForIncludes,project->get_extraIncludeDirectorySpecifierBeforeList().begin(),project->get_extraIncludeDirectorySpecifierBeforeList().end());
 
        // DQ (10/10/2020): Insert the after list at the end of the comment line (could be after the last include, which might be more elegant).
@@ -8716,7 +8676,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 
 #if DEBUG_INCLUDE_PATHS
        // DQ (6/29/2020): Debugging.
-          ROSE_ASSERT(project != NULL);
+          ASSERT_not_null(project);
           printf ("After insert(): argcArgvList.size() = %zu \n",argcArgvList.size());
           for (size_t i = 0; i < argcArgvList.size(); i++)
              {
@@ -8761,10 +8721,8 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
      printf ("In buildCompilerCommandLineOptions: test 1: argcArgvList       = \n%s\n",CommandlineProcessing::generateStringFromArgList(argcArgvList,false,false).c_str());
 #endif
 #if DEBUG_COMPILER_COMMAND_LINE
-  // DQ (1/24/2010): Moved this inside of the true branch below.
-  // SgProject* project = isSgProject(this->get_parent());
      SgProject* project = SageInterface::getProject(this);
-     ROSE_ASSERT (project != NULL);
+     ASSERT_not_null (project);
      Rose_STL_Container<string> sourceFilenames = project->get_sourceFileNameList();
 
      printf ("sourceFilenames.size() = %" PRIuPTR " sourceFilenames = %s \n",sourceFilenames.size(),StringUtility::listToString(sourceFilenames).c_str());
@@ -8778,7 +8736,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
        // DQ (1/24/2010): Now that we have directory support, the parent of a SgFile does not have to be a SgProject.
        // SgProject* project = isSgProject(this->get_parent())
           SgProject* project = TransformationSupport::getProject(this);
-          ROSE_ASSERT (project != NULL);
+          ASSERT_not_null (project);
           Rose_STL_Container<string> sourceFilenames = project->get_sourceFileNameList();
 #if DEBUG_COMPILER_COMMAND_LINE
           printf ("sourceFilenames.size() = %" PRIuPTR " sourceFilenames = %s \n",sourceFilenames.size(),StringUtility::listToString(sourceFilenames).c_str());
@@ -8832,7 +8790,6 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 
 #if DEBUG_COMPILER_COMMAND_LINE || 0
      printf ("In buildCompilerCommandLineOptions: After removing source file name: argcArgvList.size() = %" PRIuPTR " argcArgvList = %s \n",argcArgvList.size(),StringUtility::listToString(argcArgvList).c_str());
-  // ROSE_ASSERT(false);
 #endif
 
   // DQ (3/6/2017): Adding support to read the ROSE options data structure to trigger suppression of warnings.
@@ -9023,7 +8980,6 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 
 #if DEBUG_COMPILER_COMMAND_LINE || 0
      printf ("In buildCompilerCommandLineOptions: After processing executable specification: argcArgvList.size() = %" PRIuPTR " argcArgvList = %s \n",argcArgvList.size(),StringUtility::listToString(argcArgvList).c_str());
-  // ROSE_ASSERT(false);
 #endif
 #if 0
      printf ("Exiting as a test! \n");
@@ -9247,15 +9203,14 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                if (this->get_unparseHeaderFiles() == false)
                   {
                  // DQ (11/7/2018): This might be the better way to get at the SgProject IR node.
-                    ROSE_ASSERT(this->get_project() != NULL);
+                    ASSERT_not_null(this->get_project());
 
                  // DQ (9/15/2013): Added support for generated file to be placed into the same directory as the source file.
                  // When (get_unparse_in_same_directory_as_input_file() == true) we don't want to add the include
                  // path to the source directory.
                  // compilerNameString.insert(iter, std::string("-I") + oldFileNamePathOnly);
                     SgProject* project = TransformationSupport::getProject(this);
-                 // ROSE_ASSERT(project != NULL);
-                    if (project != NULL)
+                    if (project != nullptr)
                        {
 #if 0
                          printf ("In SgFile::buildCompilerCommandLineOptions(): project->get_unparse_in_same_directory_as_input_file() = %s \n",
@@ -9413,20 +9368,12 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                                       {
                                         Rose_STL_Container<string>::iterator j = i;
                                         j++;
-                                     // ROSE_ASSERT(j != argcArgvList.end());
                                         ROSE_ASSERT(j != compilerNameString.end());
 
                                         minus_o_string        = i;
-                                     // objectFilename_string = j;
-                                     // delete_set.insert(i);
-                                     // delete_set.insert(j);
-                                     // delete_set.push_back(i);
-                                     // delete_set.push_back(j);
-                                     // argcArgvList.erase(find(argcArgvList.begin(),argcArgvList.end(),*i));
 #if DEBUG_COMPILER_COMMAND_LINE
                                         printf ("In SgFile::buildCompilerCommandLineOptions: Found object file as specified = %s \n",(*j).c_str());
 #endif
-                                     // set_objectFileNameWithPath(*j);
                                       }
 
                                    ROSE_ASSERT(testForObjectNameSpecified == false);

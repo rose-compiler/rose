@@ -1,0 +1,14 @@
+#---------------------------------------
+# Doxygen Config for Calc Pi Example
+#---------------------------------------
+
+PROJECT_NAME  = Calc Pi
+PROJECT_BRIEF = "Calc Pi"
+
+INPUT = @CMAKE_CURRENT_SOURCE_DIR@/../../
+
+GENERATE_XML   = NO
+GENERATE_LATEX = NO
+
+RECURSIVE      = NO
+STRIP_CODE_COMMENTS = NO
