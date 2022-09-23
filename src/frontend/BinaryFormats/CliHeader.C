@@ -106,9 +106,11 @@ SgAsmCliHeader* SgAsmCliHeader::parse()
   /* Construct and parse the CIL metatdata root */
   SgAsmCilMetadataRoot* metadata_root = new SgAsmCilMetadataRoot;
   ASSERT_not_null(metadata_root);
+  
   metadata_root->set_parent(this);
   metadata_root->parse();
-
+  this->set_metadataRoot(metadata_root);
+  
   return this;
 }
 

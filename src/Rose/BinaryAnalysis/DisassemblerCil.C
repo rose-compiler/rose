@@ -1362,7 +1362,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
           // SgAsmIntegerValueExpression* operand = new SgAsmIntegerValueExpression(raw_bytes[1],NULL);
 
              int8_t value = ByteOrder::le_to_host(*((int8_t*)(raw_bytes.data()+1)));
-             SgAsmIntegerValueExpression* operand = SageBuilderAsm::buildValueI8(value);
+             SgAsmIntegerValueExpression* operand = SageBuilderAsm::buildValueU8(value);
              ROSE_ASSERT(operand != NULL);
 
              insn = makeInstruction(start_va,Cil_ldarg_s,"ldarg_s",operand);
@@ -1465,7 +1465,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
           // This should have one operand which should be the target, not yet clear how to resolve
           // the target, but it should be handled within the makeInstruction() function.
-             insn = makeInstruction(start_va,Cil_ldc_i4_m1,"ldnull");
+             insn = makeInstruction(start_va,Cil_ldnull,"ldnull");
              raw_bytes.resize(1);
              insn->set_raw_bytes(raw_bytes);
              break;
@@ -1608,7 +1608,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
           // SgAsmIntegerValueExpression* operand = new SgAsmIntegerValueExpression(raw_bytes[1],NULL);
           // SgAsmIntegerValueExpression* operand = SageBuilderAsm::buildValueI32(value);
              uint8_t value = ByteOrder::le_to_host(*((uint8_t*)(raw_bytes.data()+1)));
-             SgAsmIntegerValueExpression* operand = SageBuilderAsm::buildValueU8(value);
+             SgAsmIntegerValueExpression* operand = SageBuilderAsm::buildValueI8(value);
 
              insn = makeInstruction(start_va,Cil_ldc_i4_s,"ldc_i4_s",operand);
              raw_bytes.resize(2);
@@ -1777,7 +1777,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
              SgAsmIntegerValueExpression* operand = SageBuilderAsm::buildValueI32(value);
 
-             insn = makeInstruction(start_va,Cil_call,"call",operand);
+             insn = makeInstruction(start_va,Cil_calli,"calli",operand);
              raw_bytes.resize(5);
              insn->set_raw_bytes(raw_bytes);
              break;
@@ -2263,7 +2263,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
              const std::int32_t MIN_SWITCH_SIZE = 5; 
              
-             uint32_t value_0 = ByteOrder::le_to_host(*((int32_t*)(raw_bytes.data()+1)));
+             const uint32_t value_0 = ByteOrder::le_to_host(*((uint32_t*)(raw_bytes.data()+1)));
              SgAsmIntegerValueExpression* operand_0 = SageBuilderAsm::buildValueU32(value_0);
              
              insn = makeInstruction(start_va,Cil_switch,"switch",operand_0);
@@ -2275,9 +2275,20 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
              std::uint8_t* const loc = raw_bytes.data() + MIN_SWITCH_SIZE;
              const rose_addr_t   brtbl_va = start_va + MIN_SWITCH_SIZE;
              const std::uint32_t bytesRead = map->at(brtbl_va).limit(branchTableSize)
-                                               .require(MemoryMap::EXECUTABLE).read(loc).size();
-             
+                                               .require(MemoryMap::EXECUTABLE).read(loc).size();                                               
              ROSE_ASSERT(bytesRead == branchTableSize);
+             
+             SgAsmOperandList* oplst = insn->get_operandList();
+             ROSE_ASSERT(oplst);
+                        
+             for (uint32_t i = 0; i < value_0; ++i)
+             {
+               const int32_t entryofs = MIN_SWITCH_SIZE + i * sizeof(std::int32_t);                
+               const int32_t jmpofs = ByteOrder::le_to_host(*((int32_t*)(raw_bytes.data()+entryofs)));
+               
+               oplst->append_operand(SageBuilderAsm::buildValueI32(jmpofs));  
+             }
+             
              insn->set_raw_bytes(raw_bytes);
              break;
            }
@@ -3369,7 +3380,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
              SgAsmIntegerValueExpression* operand = SageBuilderAsm::buildValueI32(value);
 
-             insn = makeInstruction(start_va,Cil_ldelema,"ldelema",operand);
+             insn = makeInstruction(start_va,Cil_box,"box",operand);
              raw_bytes.resize(5);
              insn->set_raw_bytes(raw_bytes);
              break;
@@ -3385,7 +3396,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
              SgAsmIntegerValueExpression* operand = SageBuilderAsm::buildValueI32(value);
 
-             insn = makeInstruction(start_va,Cil_ldelema,"ldelema",operand);
+             insn = makeInstruction(start_va,Cil_newarr,"newarr",operand);
              raw_bytes.resize(5);
              insn->set_raw_bytes(raw_bytes);
              break;
@@ -3877,7 +3888,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
           // Unclear how we determine the number of parameters at present.
              SgAsmStackExpression* operand_1 = new SgAsmStackExpression(0);
 
-             insn = makeInstruction(start_va,Cil_ldtoken,"ldtoken",operand_0,operand_1);
+             insn = makeInstruction(start_va,Cil_refanyval,"refanyval",operand_0,operand_1);
              raw_bytes.resize(5);
              insn->set_raw_bytes(raw_bytes);
              break;
@@ -4303,7 +4314,7 @@ DisassemblerCil::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
 
                        SgAsmIntegerValueExpression* operand = SageBuilderAsm::buildValueU16(value);
 
-                       insn = makeInstruction(start_va,Cil_ldarg_s,"ldarg_s",operand);
+                       insn = makeInstruction(start_va,Cil_ldarg_s,"ldarg",operand);
                        raw_bytes.resize(4);
                        insn->set_raw_bytes(raw_bytes);
                        break;

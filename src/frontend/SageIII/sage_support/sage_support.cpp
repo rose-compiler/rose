@@ -1992,17 +1992,6 @@ SgSourceFile::callFrontEnd()
      return frontendErrorLevel;
    }
 
-#ifdef ROSE_ENABLE_BINARY_ANALYSIS_MOVED
-#error "DEAD CODE!"
-int
-SgBinaryComposite::callFrontEnd()
-   {
-     int frontendErrorLevel = SgFile::callFrontEnd();
-  // DQ (1/21/2008): This must be set for all languages
-     return frontendErrorLevel;
-   }
-#endif
-
 int
 SgUnknownFile::callFrontEnd()
    {
@@ -2010,35 +1999,6 @@ SgUnknownFile::callFrontEnd()
      printf ("Error: calling SgUnknownFile::callFrontEnd() \n");
      ROSE_ABORT();
    }
-
-#ifdef ROSE_ENABLE_BINARY_ANALYSIS_MOVED
-#error "DEAD CODE!"
-SgBinaryComposite::SgBinaryComposite ( vector<string> & argv ,  SgProject* project )
-    : p_genericFileList(nullptr), p_interpretations(nullptr)
-{
-#ifdef ROSE_ENABLE_BINARY_ANALYSIS
-    p_interpretations = new SgAsmInterpretationList();
-    p_interpretations->set_parent(this);
-
-    p_genericFileList = new SgAsmGenericFileList();
-    p_genericFileList->set_parent(this);
-
-  // DQ (2/3/2009): This data member has disappeared (in favor of a list).
-  // p_binaryFile = NULL;
-
-  // printf ("In the SgBinaryComposite constructor \n");
-
-  // This constructor actually makes the call to EDG to build the AST (via callFrontEnd()).
-  // printf ("In SgBinaryComposite::SgBinaryComposite(): Calling doSetupForConstructor() \n");
-     doSetupForConstructor(argv,  project);
-
-  // printf ("Leaving SgBinaryComposite constructor \n");
-#else
-     printf ("Binary analysis not supported in this distribution (turned off in this restricted distribution) \n");
-     ROSE_ABORT();
-#endif
-}
-#endif
 
 int
 SgProject::RunFrontend()
@@ -2067,6 +2027,8 @@ void compute_IR_node_pointers ( SgSourceFile* sourceFile, unordered_map < SgNode
   // and adds each IR node to the hash table or addes to the set of file IDs over which the IR node is
   // shared if it is shared.  The complexity should be in the number of IR nodes over all of the ASTs of
   // the translation units (shared nodes count the number of times that they are shared).
+
+#error Dead Code!
 
      class Visitor: public AstSimpleProcessing
         {
@@ -2148,6 +2110,7 @@ void compute_IR_node_pointers ( SgSourceFile* sourceFile, unordered_map < SgNode
 
      printf ("Leaving compute_IR_node_pointers(): umap.size() = %zu \n",umap.size());
    }
+#error Dead Code!
 #endif
 
 int
@@ -2781,15 +2744,6 @@ SgSourceFile::doSetupForConstructor(const vector<string>& argv, SgProject* proje
   // Call the base class implementation!
      SgFile::doSetupForConstructor(argv, project);
    }
-
-#ifdef ROSE_ENABLE_BINARY_ANALYSIS_MOVED
-#error "DEAD CODE!"
-void
-SgBinaryComposite::doSetupForConstructor(const vector<string>& argv, SgProject* project)
-   {
-     SgFile::doSetupForConstructor(argv, project);
-   }
-#endif
 
 void
 SgUnknownFile::doSetupForConstructor(const vector<string>& argv, SgProject* project)
@@ -3563,11 +3517,6 @@ SgFile::secondaryPassOverSourceFile()
                printf ("sourceFile->get_token_list().size() = %zu \n",sourceFile->get_token_list().size());
 #endif
 
-#if 0
-            // DQ (7/1/2020): Debugging the token collection into the AST.
-               printf ("Exiting after test! \n");
-               ROSE_ABORT();
-#endif
             // DQ (9/26/2018): We should be able to enforce this for the current header file we have just processed.
                ASSERT_not_null(sourceFile->get_globalScope());
 
@@ -3647,10 +3596,6 @@ SgFile::secondaryPassOverSourceFile()
                map<SgNode*,TokenStreamSequenceToNodeMapping*> & temp_tokenStreamSequenceMap = sourceFile->get_tokenSubsequenceMap();
                printf ("DONE: Testing first use of SgSourceFile::get_tokenSubsequenceMap() function:sourceFile = %p = %s \n",sourceFile,sourceFile->getFileName().c_str());
 #endif
-#if 0
-               printf ("Exiting as a test! \n");
-               ROSE_ABORT();
-#endif
             // DQ (11/30/2015): Add support to detect macro and include file expansions (can use the token sequence mapping if available).
             // Not clear if I want to require the token sequence mapping, it is likely useful to detect macro expansions even without the
             // token sequence, but usig the token sequence permit us to gather more data.
@@ -3665,17 +3610,6 @@ SgFile::secondaryPassOverSourceFile()
 #endif
 #if 0
                printf ("(false part of conditional) file->get_unparse_tokens() = %s \n",file->get_unparse_tokens() ? "true" : "false");
-#endif
-#if 0
-               printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
-#endif
-#if 0
-               if (file->getFileName() == "/home/quinlan1/ROSE/ROSE_GARDEN/codeSegregation/tests/sources/test_135.h")
-                  {
-                    printf ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
-                  }
 #endif
              }
 #if 0
