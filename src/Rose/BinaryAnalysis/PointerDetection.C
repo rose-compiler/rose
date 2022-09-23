@@ -37,13 +37,6 @@ initDiagnostics() {
     }
 }
 
-bool
-PointerDescriptorLessp::operator()(const PointerDescriptor &a, const PointerDescriptor &b) const {
-    if (a.lvalue == NULL || b.lvalue == NULL)
-        return a.lvalue == NULL && b.lvalue != NULL;
-    return a.lvalue->hash() < b.lvalue->hash();
-}
-
 void
 Analysis::init(const Disassembler::Base::Ptr &disassembler) {
     if (disassembler) {
@@ -72,7 +65,59 @@ Analysis::clearNonResults() {
     cpu_ = BaseSemantics::Dispatcher::Ptr();
 }
 
+struct MemoryTransfer {
+    rose_addr_t insnVa;                                 // address of instruction that accessed memory
+    SymbolicExpression::Ptr memoryVa;                   // memory address being accessed
+
+    MemoryTransfer(rose_addr_t insnVa, const SymbolicExpression::Ptr &memoryVa)
+        : insnVa(insnVa), memoryVa(memoryVa) {}
+};
+
+using MemoryTransferList = std::list<MemoryTransfer>;
+
+using MemoryTransferMap = Sawyer::Container::Map<uint64_t /*value_hash*/, MemoryTransferList>;
+
 typedef Sawyer::Container::Map<uint64_t /*value_hash*/, SymbolicExpression::ExpressionSet /*addresses*/> MemoryTransfers;
+
+// Insert a new MemoryTranfer into a list of transfers. Return true if inserted.
+bool
+insertMemoryTransfer(MemoryTransferList &list /*in,out*/, const MemoryTransfer &xfer) {
+    ASSERT_not_null(xfer.memoryVa);
+    uint64_t hash = xfer.memoryVa->hash();
+
+    for (auto iter = list.begin(); iter != list.end(); ++iter) {
+        ASSERT_not_null(iter->memoryVa);
+        if (iter->insnVa == xfer.insnVa && iter->memoryVa->hash() == hash)
+            return false;                               // already in the list
+    }
+    list.push_back(xfer);
+    return true;
+}
+
+// Insert a new MemoryTransfer into the list of transfers for a particular value expression. Return true if inserted.
+bool
+insertMemoryTransfer(MemoryTransferMap &map /*in,out*/, const uint64_t valueHash, const MemoryTransfer &xfer) {
+    ASSERT_not_null(xfer.memoryVa);
+    return insertMemoryTransfer(map.insertMaybeDefault(valueHash), xfer);
+}
+
+// Insert a new result into the list of final results and returns true if anything was inserted.
+bool
+insertPointerDescriptor(PointerDescriptors &list /*in,out*/, const PointerDescriptor &next) {
+    bool inserted = false;
+    for (auto cur = list.begin(); cur != list.end(); ++cur) {
+        if (cur->nBits == next.nBits && cur->lvalue->hash() == next.lvalue->hash()) {
+            for (auto insnVa: next.insnVas) {
+                if (cur->insnVas.insert(insnVa).second)
+                    inserted = true;
+            }
+            return inserted;
+        }
+    }
+
+    list.push_back(next);
+    return true;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Semantics for pointer detection
@@ -91,7 +136,7 @@ public:
     using Ptr = StatePtr;
 
 private:
-    MemoryTransfers memoryReads_;                       // memory addresses per (hash of) value read.
+    MemoryTransferMap memoryReads_;                     // memory addresses per (hash of) value read.
 
 protected:
     State(const BaseSemantics::RegisterState::Ptr &registers, const BaseSemantics::MemoryState::Ptr &memory)
@@ -128,10 +173,10 @@ public:
     virtual bool merge(const BaseSemantics::State::Ptr &other_, BaseSemantics::RiscOperators *ops) override {
         bool changed = false;
         Ptr other = State::promote(other_);
-        for (const MemoryTransfers::Node &otherNode: other->memoryReads_.nodes()) {
-            SymbolicExpression::ExpressionSet &addresses = memoryReads_.insertMaybeDefault(otherNode.key());
-            for (const SymbolicExpression::Ptr &address: otherNode.value().values()) {
-                if (addresses.insert(address))
+        for (const MemoryTransferMap::Node &otherNode: other->memoryReads_.nodes()) {
+            for (const MemoryTransfer &otherTransfer: otherNode.value()) {
+                uint64_t valueHash = otherNode.key();
+                if (insertMemoryTransfer(memoryReads_, valueHash, otherTransfer))
                     changed = true;
             }
         }
@@ -140,13 +185,13 @@ public:
         return changed;
     }
 
-    void saveRead(const BaseSemantics::SValue::Ptr &addr, const BaseSemantics::SValue::Ptr &value) {
+    void saveRead(const rose_addr_t insnVa, const BaseSemantics::SValue::Ptr &addr, const BaseSemantics::SValue::Ptr &value) {
         SymbolicExpression::Ptr addrExpr = SValue::promote(addr)->get_expression();
         SymbolicExpression::Ptr valueExpr = SValue::promote(value)->get_expression();
-        memoryReads_.insertMaybeDefault(valueExpr->hash()).insert(addrExpr);
+        insertMemoryTransfer(memoryReads_, valueExpr->hash(), MemoryTransfer(insnVa, addrExpr));
     }
 
-    const MemoryTransfers& memoryReads() const {
+    const MemoryTransferMap& memoryReads() const {
         return memoryReads_;
     }
 };
@@ -215,8 +260,11 @@ public:
         }
 
         BaseSemantics::SValue::Ptr retval = Super::readMemory(segreg, addr, dflt, cond);
-        State::Ptr state = State::promote(currentState());
-        state->saveRead(adjustedVa, retval);
+
+        if (currentInstruction()) {
+            State::Ptr state = State::promote(currentState());
+            state->saveRead(currentInstruction()->get_address(), adjustedVa, retval);
+        }
         return retval;
     }
 };
@@ -244,18 +292,18 @@ Analysis::printInstructionsForDebugging(const P2::Partitioner &partitioner, cons
 
 struct ExprVisitor: public SymbolicExpression::Visitor {
     Sawyer::Message::Facility &mlog;
-    const MemoryTransfers &memoryReads;
+    const MemoryTransferMap &memoryReads;
     size_t nBits;
     PointerDescriptors &result;
 
-    ExprVisitor(const MemoryTransfers &memoryReads, size_t nBits, PointerDescriptors &result, Sawyer::Message::Facility &mlog)
+    ExprVisitor(const MemoryTransferMap &memoryReads, size_t nBits, PointerDescriptors &result, Sawyer::Message::Facility &mlog)
         : mlog(mlog), memoryReads(memoryReads), nBits(nBits), result(result) {}
 
     virtual SymbolicExpression::VisitAction preVisit(const SymbolicExpression::Ptr &node) {
         SymbolicExpression::VisitAction retval = SymbolicExpression::CONTINUE;
-        for (SymbolicExpression::Ptr address: memoryReads.getOrDefault(node->hash()).values()) {
-            if (result.insert(PointerDescriptor(address, nBits)).second)
-                mlog[DEBUG] <<"            l-value = " <<*address <<"\n";
+        for (const MemoryTransfer &xfer: memoryReads.getOrDefault(node->hash())) {
+            if (insertPointerDescriptor(result, PointerDescriptor(xfer.memoryVa, nBits, xfer.insnVa)))
+                mlog[DEBUG] <<"            insn = " <<StringUtility::addrToString(xfer.insnVa) <<", l-value = " <<*xfer.memoryVa <<"\n";
             retval = SymbolicExpression::TRUNCATE;
         }
         return retval;
@@ -267,10 +315,8 @@ struct ExprVisitor: public SymbolicExpression::Visitor {
 };
 
 void
-Analysis::conditionallySavePointer(const BaseSemantics::SValue::Ptr &ptrRValue_,
-                                   Sawyer::Container::Set<uint64_t> &ptrRValuesSeen,
-                                   size_t wordSize,     // word size in bits
-                                   PointerDescriptors &result) {
+Analysis::conditionallySavePointer(const Sawyer::Optional<rose_addr_t> &vertexVa, const BaseSemantics::SValue::Ptr &ptrRValue_,
+                                   Sawyer::Container::Set<uint64_t> &ptrRValuesSeen, PointerDescriptors &result) {
     Sawyer::Message::Stream debug = mlog[DEBUG];
     SymbolicExpression::Ptr ptrRValue = SymbolicSemantics::SValue::promote(ptrRValue_)->get_expression();
     if (!ptrRValuesSeen.insert(ptrRValue->hash()))
@@ -350,30 +396,33 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
 
     if (mlog[DEBUG]) {
         mlog[DEBUG] <<"  memory reads:\n";
-        for (const MemoryTransfers::Node &node: finalState->memoryReads().nodes()) {
+        for (const MemoryTransferMap::Node &node: finalState->memoryReads().nodes()) {
             mlog[DEBUG] <<"    value-hash = " <<StringUtility::addrToString(node.key()).substr(2) <<"\n";
-            for (const SymbolicExpression::Ptr &address: node.value().values()) {
-                mlog[DEBUG] <<"      address = " <<*address <<"\n";
+            for (const MemoryTransfer &xfer: node.value()) {
+                mlog[DEBUG] <<"      address = " <<xfer.memoryVa <<"\n";
             }
         }
     }
 
     // Find data pointers
     SAWYER_MESG(mlog[DEBUG]) <<"  potential data pointers:\n";
-    size_t dataWordSize = partitioner.instructionProvider().stackPointerRegister().nBits();
     Sawyer::Container::Set<SymbolicExpression::Hash> addrSeen;
-    for (const BaseSemantics::State::Ptr &state: dfEngine.getFinalStates()) {
-        BaseSemantics::MemoryCellState::Ptr memState = BaseSemantics::MemoryCellState::promote(state->memoryState());
+
+    for (size_t vertexId = 0; vertexId < dfCfg.nVertices(); ++vertexId) {
+        Sawyer::Optional<rose_addr_t> vertexVa = dfCfg.findVertex(vertexId)->value().address();
+        BaseSemantics::State::Ptr state = dfEngine.getFinalState(vertexId);
+        auto memState = BaseSemantics::MemoryCellState::promote(state->memoryState());
         for (const BaseSemantics::MemoryCell::Ptr &cell: memState->allCells())
-            conditionallySavePointer(cell->address(), addrSeen, dataWordSize, dataPointers_);
+            conditionallySavePointer(vertexVa, cell->address(), addrSeen, dataPointers_);
     }
 
     // Find code pointers
     SAWYER_MESG(mlog[DEBUG]) <<"  potential code pointers:\n";
-    size_t codeWordSize = partitioner.instructionProvider().instructionPointerRegister().nBits();
     addrSeen.clear();
     const RegisterDescriptor IP = partitioner.instructionProvider().instructionPointerRegister();
-    for (const BaseSemantics::State::Ptr &state: dfEngine.getFinalStates()) {
+    for (size_t vertexId = 0; vertexId < dfCfg.nVertices(); ++vertexId) {
+        Sawyer::Optional<rose_addr_t> vertexVa = dfCfg.findVertex(vertexId)->value().address();
+        BaseSemantics::State::Ptr state = dfEngine.getFinalState(vertexId);
         SymbolicSemantics::SValue::Ptr ip =
             SymbolicSemantics::SValue::promote(state->peekRegister(IP, ops->undefined_(IP.nBits()), ops.get()));
         SymbolicExpression::Ptr ipExpr = ip->get_expression();
@@ -388,7 +437,7 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
                 isSignificant = true;
             }
             if (isSignificant)
-                conditionallySavePointer(ip, addrSeen, codeWordSize, codePointers_);
+                conditionallySavePointer(vertexVa, ip, addrSeen, codePointers_);
         }
     }
 
