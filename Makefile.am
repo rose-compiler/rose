@@ -40,10 +40,10 @@ endif
 # distributed as part of the test project, and because it needs to be part of the binary release even if the rest
 # of the ROSE tools are excluded.
 testprojdir = ${datarootdir}/test-project
-testproj_DATA =							\
-	tools/Portability/lib/matrix/test-project/Makefile	\
-	tools/Portability/lib/matrix/test-project/README	\
-	tools/Portability/lib/matrix/test-project/test-rose.C
+testproj_DATA =								\
+	tools/PortabilityTesting/lib/matrix/test-project/Makefile	\
+	tools/PortabilityTesting/lib/matrix/test-project/README		\
+	tools/PortabilityTesting/lib/matrix/test-project/test-rose.C
 EXTRA_DIST += $(testproj_DATA)
 
 # DQ (2/6/2017): Added test to detect if the default mode of the C++ frontend compiler for rOSE is C++11 or not.
