@@ -27,7 +27,35 @@ void SgAsmCil`cl.Name`::parse(std::vector<uint8_t>& buf, size_t& index, uint64_t
     `end_for`
   }
 }
-`end_for`
+`for_each fl = cl.Fields` `if exists fl.RefKind` `if fl.RefKind eq "blob_heap"`
+const std::uint8_t*
+SgAsmCil`cl.Name`::get_`fl.Name`_blob() const
+{
+  return getMetadataRoot(this).get_BlobHeap()->get_Stream().data() + get_`fl.Name`();
+}
+    `else_if fl.RefKind eq "guid_heap"`
+const std::uint32_t*
+SgAsmCil`cl.Name`::get_`fl.Name`_guid() const
+{
+  return getMetadataRoot(this).get_GuidHeap()->get_Stream().data() + get_`fl.Name`();
+}
+    `else_if fl.RefKind eq "string_heap"`
+const std::uint8_t*
+SgAsmCil`cl.Name`::get_`fl.Name`_string() const
+{
+  return getMetadataRoot(this).get_StringHeap()->get_Stream().data() + get_`fl.Name`();
+}
+    `else`
+const SgAsmCilMetadata*
+SgAsmCil`cl.Name`::get_`fl.Name`_object() const
+{
+  return getMetadataHeap(this).get_CodedMetadataNode(get_`fl.Name`(), SgAsmCilMetadataHeap::e_ref_`fl.RefKind`);
+}    
+    `end_if` 
+    
+  `end_if`
+`end_for`  
+`end_for` 
 
 void SgAsmCilUint8Heap::parse(std::vector<uint8_t>& buf, size_t startOfMetaData)
 {
@@ -53,36 +81,22 @@ const std::string SgAsmCilDataStream::ID_METADATA_HEAP{"#~"};
 
 namespace
 {
-/// Metadata table identifiers to support .net metadata layout within the .text section.
-enum MetaDataHeapTableKinds
-{
-// Values of enum fields are the bit positions in the valid array of valid tables (for each table).
-  e_Unknown_table_kind     = 0xFF,
-  e_Error_table_kind       = 0xFE,
-  `for_each cl = .metadata`
-  e_`cl.Name`        = `cl.Code`,
-  `end_for`
-  e_Last_table_kind        = 0xFD
-};
-
 const char*
-table_kind_to_string ( enum MetaDataHeapTableKinds e )
+table_kind_to_string ( SgAsmCilMetadataHeap::TableKind e )
 {
   const char* res = nullptr;
 
   switch (e)
   {
-    case e_Unknown_table_kind:     res = "e_unknown_table_kind"; break;
-    case e_Error_table_kind:       res = "e_error_table_kind"; break;
 `for_each cl = .metadata`
-    case e_`cl.Name`:        res = "e_`cl.Name`"; break;
+    case SgAsmCilMetadataHeap::e_`cl.Name`: res = "e_`cl.Name`"; break;
 `end_for`
-    case e_Last_table_kind:        res = "e_last_table_kind"; break;
 
     default:
       ROSE_ABORT();
    }
 
+  ASSERT_not_null(res);
   return res;
 }
 
@@ -129,7 +143,7 @@ void SgAsmCilMetadataHeap::parse(std::vector<uint8_t>& buf, size_t startOfMetaDa
       `end_for`
       default:
         std::cerr << "default reached:\n"
-                  << "parsing not implemented for kind = " << kind << table_kind_to_string(MetaDataHeapTableKinds(kind))
+                  << "parsing not implemented for kind = " << kind << table_kind_to_string(SgAsmCilMetadataHeap::TableKind(kind))
                   << std::endl;
         ROSE_ABORT();
         break;
@@ -137,21 +151,17 @@ void SgAsmCilMetadataHeap::parse(std::vector<uint8_t>& buf, size_t startOfMetaDa
   }
 }
 
+
 SgAsmCilMetadata*
-SgAsmCilMetadataHeap::get_MetadataNode(std::uint32_t refcode, ReferenceKind knd) const
+SgAsmCilMetadataHeap::get_MetadataNode(std::uint32_t index, TableKind knd) const
 {
   SgAsmCilMetadata*   res    = nullptr;
 
-  // FIXME: maybe cache result in static or in the object if this turns out to be slow
-  std::vector<std::int8_t> posInRow = computePositionInRowVector(get_Valid());
-  const AccessTuple        access = computeAccessPair(posInRow, get_NumberOfRows(), refcode, knd);
-  const std::uint32_t      index  = access.index();
-
-  switch (access.table())
+  switch (knd)
   {
     `for_each tbl = .metadata`
     case e_`tbl.Name`:
-      res = get_`tbl.Name`().at(index);
+      res = get_`tbl.Name`().at(index-1);
       break;
     `end_for`
 
@@ -160,6 +170,17 @@ SgAsmCilMetadataHeap::get_MetadataNode(std::uint32_t refcode, ReferenceKind knd)
 
   ASSERT_not_null(res);
   return res;
+}
+
+
+SgAsmCilMetadata*
+SgAsmCilMetadataHeap::get_CodedMetadataNode(std::uint32_t refcode, ReferenceKind knd) const
+{
+  // FIXME: maybe cache result in static or in the object if this turns out to be slow
+  std::vector<std::int8_t> posInRow = computePositionInRowVector(get_Valid());
+  const AccessTuple        access = computeAccessPair(posInRow, get_NumberOfRows(), refcode, knd);
+
+  return get_MetadataNode(access.index(), access.table());
 }
 
 

@@ -4,7 +4,12 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 AUTOMAKE_OPTIONS = nostdinc subdir-objects
 
-SUBDIRS=AST CodeGen Traits
+# -----  NOTICE  -------------------------------------------------------------------------------------------
+# DO NOT ADD Makefile.am FILES TO SUBDIRECTORIES. Doing so reduces parallelism for GNU make and causes
+# compile times to increase. Instead, add all your targets for compiling *.C files to this makefile, and add
+# all the targets for installing public header files to the src/Makefile.am.
+SUBDIRS =
+# -----------------------------------------------------------------------------------------------------------
 
 # LicenseString.h is included by CommandLine/License.C but is not installed.
 #
@@ -13,10 +18,23 @@ CommandLine/LicenseString.h: $(top_srcdir)/LicenseInformation/ROSE_BSD_License.t
 	perl $(top_srcdir)/scripts/to-c-string.pl < $< > $@
 BUILT_SOURCES = CommandLine/LicenseString.h
 
-# .C files for the ::Rose namespace (see top comment)
+# .C files for the ::Rose namespace (see top comment). Please keep this list in alphabetical order.
 AM_CPPFLAGS = $(ROSE_INCLUDES)
 noinst_LTLIBRARIES = librose_partial.la
 librose_partial_la_SOURCES =								\
+	AST/checker/checker.C								\
+	AST/checker/cmdline.C								\
+	AST/checker/integrity_declarations.C						\
+	AST/checker/integrity_edges.C							\
+	AST/checker/integrity_symbols.C							\
+	AST/checker/integrity_types.C							\
+	AST/graphviz.C									\
+	AST/io/delete.C									\
+	AST/io/link.C									\
+	AST/io/load.C									\
+	AST/io/merge.C									\
+	AST/io/share.C									\
+	AST/utils/edge_ptr_repl.C							\
 	BinaryAnalysis/AbstractLocation.C						\
 	BinaryAnalysis/AsmFunctionIndex.C						\
 	BinaryAnalysis/AstHash.C							\
@@ -196,6 +214,9 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/Unparser/X86.C							\
 	BinaryAnalysis/Variables.C							\
 	BinaryAnalysis/Z3Solver.C							\
+	CodeGen/API.C									\
+	CodeGen/Driver.C								\
+	CodeGen/Factory.C								\
 	Color/Color.C									\
 	CommandLine/DurationParser.C							\
 	CommandLine/License.C								\
@@ -216,8 +237,5 @@ librose_partial_la_SOURCES =								\
 	StringUtility/SplitJoin.C							\
 	StringUtility/StringToNumber.C							\
 	Yaml.C
-
-rose_metaprog_h_includedir = $(prefix)/include/Rose
-rose_metaprog_h_include_HEADERS = metaprog.h
 
 # Public header files are installed from parent makefiles.

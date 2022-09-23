@@ -63,9 +63,6 @@ disassemble(SgAsmCilMethodDef* m, MethodHeader mh, std::vector<std::uint8_t>& bu
     ASSERT_not_null(instr);
 
     lst.push_back(instr);
-    std::cerr << "  @" << std::hex << std::setw(4) << addr << std::dec << " " << instr->get_mnemonic() 
-          << std::endl;
-
     addr += instr->get_size();
   }
 
@@ -93,21 +90,11 @@ void decodeMetadata(rose_addr_t base_va, SgAsmCilMetadataHeap* mdh, SgAsmCilMeta
   {
     ASSERT_not_null(m);
 
-    std::size_t nameidx = m->get_Name();
     std::uint32_t  rva = m->get_RVA();
     
-    std::cerr << ".method " << readUtf8String(stringHeap->get_Stream(), nameidx)
-              << std::endl;
-
-    if (rva == 0)
-    {
-      std::cerr << "  is abstract\n" << std::endl;
-      continue;
-    }
+    if (rva == 0) continue;
       
     // parse header
-    std::cerr << '{' << std::endl;
-    
     std::uint8_t   mh0;
     std::size_t    nread = fhdr->get_loader_map()->readQuick(&mh0, base_va + rva, 1);
     ROSE_ASSERT(nread == 1);
@@ -130,28 +117,16 @@ void decodeMetadata(rose_addr_t base_va, SgAsmCilMetadataHeap* mdh, SgAsmCilMeta
 
     SgAsmBlock* blk = nullptr;
     
-    std::cerr << "  // method begins at 0x" << std::hex << (rva) << std::dec << '\n'
-              << "  // header size = " << int(mh.headerSize()) << " (" << (mh.tiny() ? "tiny": "fat") << ")\n"
-              << "  .entrypoint\n" 
-              << "  // code size " << codeLen << " (0x" << std::hex << codeLen << std::dec << ")\n"
-              << "  .maxstack " << m->get_stackSize() << '\n'
-              << "  .localsinit " << m->get_initLocals() << '\n'
-              << std::flush;           
-
     switch (m->get_ImplFlags() & CODE_TYPE_MASK)
     {
       namespace rb = Rose::BinaryAnalysis;
 
       case CIL_CODE:
-        //~ std::cerr << "  - disassembling CIL code: " << code.size() << " bytes."
-        //~           << std::endl;
         blk = disassemble(m, mh, code, rb::DisassemblerCil::instance());
         break;
 
       case NATIVE_CODE:
-        //~ std::cerr << "  - disassembling x86 code: " << code.size() << " bytes."
-        //~           << std::endl;
-          blk = disassemble(m, mh, code, rb::Disassembler::X86::instance(4 /* word size */));
+        blk = disassemble(m, mh, code, rb::Disassembler::X86::instance(4 /* word size */));
         break;
 
       case RUNTIME_CODE:
