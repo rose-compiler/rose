@@ -58,6 +58,10 @@ class NameQualificationInheritedAttribute
 
           NameQualificationInheritedAttribute();
           NameQualificationInheritedAttribute(const NameQualificationInheritedAttribute & X);
+          
+          NameQualificationInheritedAttribute(NameQualificationInheritedAttribute&&) = default;
+          NameQualificationInheritedAttribute& operator=(const NameQualificationInheritedAttribute&) = default;
+          NameQualificationInheritedAttribute& operator=(NameQualificationInheritedAttribute&&) = default;
 
        // DQ (5/24/2013): Allow the current scope to be tracked from the traversal of the AST
        // instead of being computed at each IR node which is a problem for template arguments.
