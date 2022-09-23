@@ -101,83 +101,98 @@ add_subdirectory(Rose)
 # The ROSE library
 ########################################################################################################################
 
+set(rose_LIB_OBJS   
+  util_main
+  util_commandlineProcessing
+  util_sawyer
+  util_stringSupport
+  util_support
+  util_graphs
+  unparser
+  sage3
+  virtualCFG
+  astFromString
+  roseSupport
+  roseDisassemblers
+  roseBinaryFormats
+  roseAsmUnparser
+  astFixup
+  midend
+  abstractHandle
+  abstractLayer
+  astDiagnostics
+  astProcessing
+  astMatching
+  midend_util
+  midend_binary
+  midend_pt
+  sageInterface
+  astTokenStream
+  astHiddenTypeAndDeclarationLists
+  astVisualization
+  includeDirectivesProcessing
+  astPostProcessing
+  failsafe
+  trans_tracking
+  astRewriteMechanism
+  roseNamespace
+  roseBinaryAnalysis
+  roseBinaryAnalysisByteCode
+  roseBinaryAnalysisConcolic
+  roseBinaryAnalysisDisassembler
+  roseBinaryAnalysisInstructionSemantics
+  roseBinaryAnalysisInstructionSemanticsBaseSemantics
+  roseBinaryAnalysisModelChecker
+  roseBinaryAnalysisPartitioner2
+  roseBinaryAnalysisUnparser
+  roseColor
+  roseCommandLine
+  roseDiagnostics
+  roseFileSystem
+  roseStringUtility
+  RoseAST
+  RoseCodeGen
+  mstl)
+
 set(rose_LIB_SRCS
   dummyCppFileForLibrose.C
-  ${ROSETTA_SRC}
-  $<TARGET_OBJECTS:util_main>
-  $<TARGET_OBJECTS:util_commandlineProcessing>
-  $<TARGET_OBJECTS:util_sawyer>
-  $<TARGET_OBJECTS:util_stringSupport>
-  $<TARGET_OBJECTS:util_support>
-  $<TARGET_OBJECTS:util_graphs>
-  $<TARGET_OBJECTS:unparser>
-  $<TARGET_OBJECTS:sage3>
-  $<TARGET_OBJECTS:virtualCFG>
-  $<TARGET_OBJECTS:astFromString>
-  $<TARGET_OBJECTS:roseSupport>
-  $<TARGET_OBJECTS:roseDisassemblers>
-  $<TARGET_OBJECTS:roseBinaryFormats>
-  $<TARGET_OBJECTS:roseAsmUnparser>
-  $<TARGET_OBJECTS:astFixup>
-  $<TARGET_OBJECTS:midend>
-  $<TARGET_OBJECTS:abstractHandle>
-  $<TARGET_OBJECTS:abstractLayer>
-  $<TARGET_OBJECTS:astDiagnostics>
-  $<TARGET_OBJECTS:astProcessing>
-  $<TARGET_OBJECTS:astMatching>
-  $<TARGET_OBJECTS:midend_util>
-  $<TARGET_OBJECTS:midend_binary>
-  $<TARGET_OBJECTS:midend_pt>
-  $<TARGET_OBJECTS:sageInterface>
-  $<TARGET_OBJECTS:astTokenStream>
-  $<TARGET_OBJECTS:astHiddenTypeAndDeclarationLists>
-  $<TARGET_OBJECTS:astVisualization>
-  $<TARGET_OBJECTS:includeDirectivesProcessing>
-  $<TARGET_OBJECTS:astPostProcessing>
-  $<TARGET_OBJECTS:failsafe>
-  $<TARGET_OBJECTS:trans_tracking>
-  $<TARGET_OBJECTS:astRewriteMechanism>
-  $<TARGET_OBJECTS:roseNamespace>
-  $<TARGET_OBJECTS:roseBinaryAnalysis>
-  $<TARGET_OBJECTS:roseBinaryAnalysisByteCode>
-  $<TARGET_OBJECTS:roseBinaryAnalysisConcolic>
-  $<TARGET_OBJECTS:roseBinaryAnalysisDisassembler>
-  $<TARGET_OBJECTS:roseBinaryAnalysisInstructionSemantics>
-  $<TARGET_OBJECTS:roseBinaryAnalysisInstructionSemanticsBaseSemantics>
-  $<TARGET_OBJECTS:roseBinaryAnalysisModelChecker>
-  $<TARGET_OBJECTS:roseBinaryAnalysisPartitioner2>
-  $<TARGET_OBJECTS:roseBinaryAnalysisUnparser>
-  $<TARGET_OBJECTS:roseColor>
-  $<TARGET_OBJECTS:roseCommandLine>
-  $<TARGET_OBJECTS:roseDiagnostics>
-  $<TARGET_OBJECTS:roseFileSystem>
-  $<TARGET_OBJECTS:roseStringUtility>
-  $<TARGET_OBJECTS:RoseAST>
-  $<TARGET_OBJECTS:RoseCodeGen>
-  $<TARGET_OBJECTS:mstl>)
+  ${ROSETTA_SRC})
 
 if(enable-java)
-  list(APPEND rose_LIB_SRCS $<TARGET_OBJECTS:roseJava>)
+  list(APPEND rose_LIB_OBJS roseJava)
 endif()
 
 if (enable-php)
-  list(APPEND rose_LIB_SRCS $<TARGET_OBJECTS:phpFrontend>)
+  list(APPEND rose_LIB_OBJS phpFrontend)
 endif()
 
 if(NOT enable-internalFrontendDevelopment)
-  list(APPEND rose_LIB_SRCS
-    $<TARGET_OBJECTS:midend_pa>
-    $<TARGET_OBJECTS:midend_loopproc>)
+  list(APPEND rose_LIB_OBJS
+    midend_pa
+    midend_loopproc)
 endif()
 
 if(enable-rosehpct)
-  list(APPEND rose_LIB_SRCS $<TARGET_OBJECTS:roseExtensions>)
+  list(APPEND rose_LIB_OBJS roseExtensions)
 endif()
 
 # TODO Conditional either EDG or CLang or nothing
 if(enable-cpp)
-  list(APPEND rose_LIB_SRCS $<TARGET_OBJECTS:edg_internal> $<TARGET_OBJECTS:newsage>)
+  list(APPEND rose_LIB_OBJS edg_internal newsage)
 endif()
+
+set(rose_LIB_SRC_FILES dummyCppFileForLibrose.C)
+
+foreach(_object IN LISTS rose_LIB_OBJS)
+  list(APPEND rose_LIB_SRCS $<TARGET_OBJECTS:${_object}>)
+  get_target_property(_sources ${_object} SOURCES)
+  get_target_property(_sources_dir ${_object} SOURCE_DIR)
+  foreach(_file IN LISTS _sources)
+    list(APPEND rose_LIB_SRC_FILES ${_sources_dir}/${_file})
+  endforeach()
+endforeach()
+
+list(LENGTH rose_LIB_SRC_FILES list_length)
 
 ########################################################################################################################
 # The ROSE library itself (librose.so, librose.a, librose.dll)
@@ -202,6 +217,11 @@ install(
     featureTests.h rose.h roseInternal.h rose_msvc.h msvc_stdint.h
     ${CMAKE_BINARY_DIR}/rosePublicConfig.h
   DESTINATION ${INCLUDE_INSTALL_DIR})
+
+cmake_host_system_information(RESULT Ncpu QUERY NUMBER_OF_PHYSICAL_CORES)
+blt_add_code_checks(PREFIX "rosecheck"
+                    SOURCES ${rose_LIB_SRC_FILES}
+                    CPPCHECK_FLAGS "-j${Ncpu}")
 
 ########################################################################################################################
 # Dependencies of the ROSE library. librose depends on additional libraries.

@@ -212,8 +212,6 @@ libroseLibraries = \
    $(top_builddir)/src/util/Sawyer/libroseSawyer.la \
    $(top_builddir)/src/roseExtensions/failSafe/libfailsafe.la \
    $(top_builddir)/src/Rose/librose_partial.la \
-   $(top_builddir)/src/Rose/AST/libRoseAST.la \
-   $(top_builddir)/src/Rose/CodeGen/libRoseCodeGen.la \
    $(libroseSqlite3xConnection) \
    $(libroseQtExtension)
 
@@ -264,6 +262,12 @@ pkginclude_HEADERS = \
 # Header files organized by namespace. If the directory part of the name doesn't match
 # a C++ namespace, then DO NOT put the header file in this list.
 nobase_pkginclude_HEADERS=								\
+	Rose/AST.h									\
+	Rose/AST/Checker.h								\
+	Rose/AST/cmdline.h								\
+	Rose/AST/Defect.h								\
+	Rose/AST/IO.h									\
+	Rose/AST/Utils.h								\
 	Rose/BasicTypes.h								\
 	Rose/BinaryAnalysis.h								\
 	Rose/BinaryAnalysis/AbstractLocation.h						\
@@ -504,6 +508,17 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/Z3Solver.h							\
 	Rose/BitFlags.h									\
 	Rose/BitOps.h									\
+	Rose/CodeGen.h									\
+	Rose/CodeGen/API.h								\
+	Rose/CodeGen/API.txx								\
+	Rose/CodeGen/Driver.h								\
+	Rose/CodeGen/Factory.h								\
+	Rose/CodeGen/factory/classes.txx						\
+	Rose/CodeGen/factory/functions.txx						\
+	Rose/CodeGen/factory/namespaces.txx						\
+	Rose/CodeGen/factory/typedefs.txx						\
+	Rose/CodeGen/factory/variables.txx						\
+	Rose/CodeGen/Object.h								\
 	Rose/Color.h									\
 	Rose/CommandLine.h								\
 	Rose/CommandLine/DurationParser.h						\
@@ -522,6 +537,7 @@ nobase_pkginclude_HEADERS=								\
 	Rose/GraphUtility.h								\
 	Rose/Initialize.h								\
 	Rose/Location.h									\
+	Rose/metaprog.h									\
 	Rose/Progress.h									\
 	Rose/RecursionCounter.h								\
 	Rose/SourceLocation.h								\
@@ -533,6 +549,16 @@ nobase_pkginclude_HEADERS=								\
 	Rose/StringUtility/Predicate.h							\
 	Rose/StringUtility/SplitJoin.h							\
 	Rose/StringUtility/StringToNumber.h						\
+	Rose/Traits.h									\
+	Rose/Traits/Describe.h								\
+	Rose/Traits/describe/declarations.h						\
+	Rose/Traits/describe/fields.h							\
+	Rose/Traits/describe/nodes.h							\
+	Rose/Traits/describe/predicates.h						\
+	Rose/Traits/grammar/lists.h							\
+	Rose/Traits/grammar/predicates.h						\
+	Rose/Traits/grammar/traversal.h							\
+	Rose/Traits/Traversal.h								\
 	Rose/Yaml.h
 
 

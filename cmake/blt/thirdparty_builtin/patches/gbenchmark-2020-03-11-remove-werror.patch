@@ -1,0 +1,14 @@
+diff --git a/thirdparty_builtin/benchmark-1.5.0/CMakeLists.txt b/thirdparty_builtin/benchmark-1.5.0/CMakeLists.txt
+index d115ede..c24d29f 100644
+--- a/thirdparty_builtin/benchmark-1.5.0/CMakeLists.txt
++++ b/thirdparty_builtin/benchmark-1.5.0/CMakeLists.txt
+@@ -137,9 +137,6 @@ else()
+   add_cxx_compiler_flag(-Wall)
+   add_cxx_compiler_flag(-Wextra)
+   add_cxx_compiler_flag(-Wshadow)
+-  add_cxx_compiler_flag(-Werror RELEASE)
+-  add_cxx_compiler_flag(-Werror RELWITHDEBINFO)
+-  add_cxx_compiler_flag(-Werror MINSIZEREL)
+   add_cxx_compiler_flag(-pedantic)
+   add_cxx_compiler_flag(-pedantic-errors)
+   add_cxx_compiler_flag(-Wshorten-64-to-32)
