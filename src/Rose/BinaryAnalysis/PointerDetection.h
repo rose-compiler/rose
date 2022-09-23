@@ -142,13 +142,32 @@ struct Settings {
 
 /** Description of one pointer. */
 struct PointerDescriptor {
-    SymbolicExpression::Ptr lvalue;                     /**< Symbolic address of pointer. */
-    size_t nBits;                                       /**< Width of pointer in bits. */
-    std::set<rose_addr_t> insnVas;                      /**< Addresses where pointer was used. */
+    /** Information about how a pointer is dereferenced. */
+    enum Direction {
+        READ,                                           /**< Pointer is used to read from memory. */
+        WRITE                                           /**< Pointer is used to write to memory. */
+    };
 
-    PointerDescriptor(const SymbolicExpression::Ptr &lvalue, size_t nBits, rose_addr_t insnVa)
-        : lvalue(lvalue), nBits(nBits) {
-        insnVas.insert(insnVa);
+    /** Description of a pointer dereference. */
+    struct Access {
+        rose_addr_t insnVa;                             /**< Instruction location where dereference occurs. */
+        Direction direction;                            /**< Direction of the dereference. */
+
+        Access(rose_addr_t insnVa, Direction direction)
+            : insnVa(insnVa), direction(direction) {}
+
+        bool operator<(const Access &other) const {
+            return insnVa < other.insnVa || (insnVa == other.insnVa && direction < other.direction);
+        }
+    };
+
+    SymbolicExpression::Ptr pointerVa;                  /**< Symbolic address where pointer variable is stored. */
+    size_t nBits;                                       /**< Width of pointer in bits. */
+    std::set<Access> pointerAccesses;                   /**< Where ptr variable's value was accessed. */
+
+    PointerDescriptor(const SymbolicExpression::Ptr &pointerVa, size_t nBits, rose_addr_t insnVa, Direction dir)
+        : pointerVa(pointerVa), nBits(nBits) {
+        pointerAccesses.insert(Access(insnVa, dir));
     }
 };
 
@@ -283,8 +302,7 @@ private:
     // result. The pointer's value and the defining instructions are added to the two sets, and the result is not updated for
     // values and instructions that have already been processed.
     void
-    conditionallySavePointer(const Sawyer::Optional<rose_addr_t> &vertexVa,
-                             const InstructionSemantics::BaseSemantics::SValuePtr &ptrValue,
+    conditionallySavePointer(const InstructionSemantics::BaseSemantics::SValuePtr &ptrValue,
                              Sawyer::Container::Set<uint64_t> &ptrValueSeen, PointerDescriptors &result);
 };
 
