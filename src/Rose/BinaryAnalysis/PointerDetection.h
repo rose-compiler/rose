@@ -144,20 +144,17 @@ struct Settings {
 struct PointerDescriptor {
     SymbolicExpression::Ptr lvalue;                     /**< Symbolic address of pointer. */
     size_t nBits;                                       /**< Width of pointer in bits. */
+    std::set<rose_addr_t> insnVas;                      /**< Addresses where pointer was used. */
 
-    PointerDescriptor(const SymbolicExpression::Ptr &lvalue, size_t nBits)
-        : lvalue(lvalue), nBits(nBits) {}
-};
-
-/** Functor to compare two PointerLocation objects. */
-class PointerDescriptorLessp {
-public:
-    bool operator()(const PointerDescriptor &a, const PointerDescriptor &b) const;
+    PointerDescriptor(const SymbolicExpression::Ptr &lvalue, size_t nBits, rose_addr_t insnVa)
+        : lvalue(lvalue), nBits(nBits) {
+        insnVas.insert(insnVa);
+    }
 };
 
 /** Set of pointers. */
-typedef std::set<PointerDescriptor, PointerDescriptorLessp> PointerDescriptors;
-    
+using PointerDescriptors = std::list<PointerDescriptor>;
+
 /** Pointer analysis.
  *
  *  This class is the main analysis class for pointer detection.  See the @ref Rose::BinaryAnalysis::PointerDetection namespace
@@ -286,9 +283,9 @@ private:
     // result. The pointer's value and the defining instructions are added to the two sets, and the result is not updated for
     // values and instructions that have already been processed.
     void
-    conditionallySavePointer(const InstructionSemantics::BaseSemantics::SValuePtr &ptrValue,
-                             Sawyer::Container::Set<uint64_t> &ptrValueSeen,
-                             size_t wordSize, PointerDescriptors &result);
+    conditionallySavePointer(const Sawyer::Optional<rose_addr_t> &vertexVa,
+                             const InstructionSemantics::BaseSemantics::SValuePtr &ptrValue,
+                             Sawyer::Container::Set<uint64_t> &ptrValueSeen, PointerDescriptors &result);
 };
 
 } // namespace
