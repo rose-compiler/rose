@@ -1,5 +1,0 @@
-(api-spec-collection
-  ( include-api "mpi_api.spec"     (omit-deps payload) )
-  ( include-api "stdio_input.spec" (omit-deps buffer) )
-  ; TODO: ability to declare tags as equivalent
-)

@@ -27,7 +27,6 @@ SUBDIRS = \
 	arrayOptimization \
 	ManyCoreRuntime \
 	Fortran_to_C \
-	extractMPISkeleton \
 	RoseBlockLevelTracing \
 	$(OPTIONAL_PROJECTS)
 

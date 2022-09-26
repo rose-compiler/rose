@@ -1,9 +1,0 @@
-
-int main(int argc,char *argv[])
-{
-  int x = 0;
-  int i;
-  int k;
-  MPI_Init(&argc,&argv);
-  return x;
-}

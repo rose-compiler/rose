@@ -8,7 +8,6 @@ if(enable-projects-directory)
   ###################################################################################################################
 
   add_subdirectory(CloneDetection)
-  add_subdirectory(extractMPISkeleton)
   add_subdirectory(Fortran_to_C)
   add_subdirectory(ManyCoreRuntime)
   add_subdirectory(MPI_Tools)
