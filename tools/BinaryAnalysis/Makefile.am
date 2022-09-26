@@ -156,6 +156,13 @@ bat_pardis_LDFLAGS = $(ROSE_RPATHS)
 bat_pardis_LDADD = libbatSupport.a $(ROSE_LIBS)
 tests += bat-pardis.passed
 
+bin_PROGRAMS += bat-pointers
+bat_pointers_SOURCES = bat-pointers.C
+bat_pointers_CPPFLAGS = $(ROSE_INCLUDES)
+bat_pointers_LDFLAGS = $(ROSE_RPATHS)
+bat_pointers_LDADD = libbatSupport.a $(ROSE_LIBS)
+tests += bat-pointers.passed
+
 bin_PROGRAMS += bat-prop
 bat_prop_SOURCES = bat-prop.C
 bat_prop_CPPFLAGS = $(ROSE_INCLUDES)
