@@ -120,6 +120,10 @@ void initDiagnostics();
  *  The facility can be controlled directly or via ROSE's command-line. */
 extern Sawyer::Message::Facility mlog;
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Settings
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /** Settings to control the pointer analysis. */
 struct Settings {
     /** Whether to ignore branches to concrete addresses.
@@ -140,6 +144,10 @@ struct Settings {
         : ignoreConstIp(true), ignoreStrangeSizes(true) {}
 };
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// PointerDescriptor
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /** Description of one pointer. */
 struct PointerDescriptor {
     /** Information about how a pointer is dereferenced. */
@@ -148,16 +156,21 @@ struct PointerDescriptor {
         WRITE                                           /**< Pointer is used to write to memory. */
     };
 
-    /** Description of a pointer dereference. */
+    /** Description of accessing a pointer variable's value. */
     struct Access {
-        rose_addr_t insnVa;                             /**< Instruction location where dereference occurs. */
-        Direction direction;                            /**< Direction of the dereference. */
+        rose_addr_t insnVa;                             /**< Instruction location where pointer variable is accessed. */
+        Direction direction;                            /**< Whether pointer's value is read or written. */
+        SymbolicExpression::Ptr pointerValue;           /**< Value of the pointer. */
 
-        Access(rose_addr_t insnVa, Direction direction)
-            : insnVa(insnVa), direction(direction) {}
+        Access(rose_addr_t insnVa, Direction direction, const SymbolicExpression::Ptr &pointerValue)
+            : insnVa(insnVa), direction(direction), pointerValue(pointerValue) {}
 
         bool operator<(const Access &other) const {
-            return insnVa < other.insnVa || (insnVa == other.insnVa && direction < other.direction);
+            if (insnVa != other.insnVa)
+                return insnVa < other.insnVa;
+            if (direction != other.direction)
+                return direction < other.direction;
+            return pointerValue->hash() < other.pointerValue->hash();
         }
     };
 
@@ -165,14 +178,19 @@ struct PointerDescriptor {
     size_t nBits;                                       /**< Width of pointer in bits. */
     std::set<Access> pointerAccesses;                   /**< Where ptr variable's value was accessed. */
 
-    PointerDescriptor(const SymbolicExpression::Ptr &pointerVa, size_t nBits, rose_addr_t insnVa, Direction dir)
+    PointerDescriptor(const SymbolicExpression::Ptr &pointerVa, size_t nBits, rose_addr_t insnVa, Direction dir,
+                      const SymbolicExpression::Ptr &pointerValue)
         : pointerVa(pointerVa), nBits(nBits) {
-        pointerAccesses.insert(Access(insnVa, dir));
+        pointerAccesses.insert(Access(insnVa, dir, pointerValue));
     }
 };
 
 /** Set of pointers. */
 using PointerDescriptors = std::list<PointerDescriptor>;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Pointer analysis
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Pointer analysis.
  *
