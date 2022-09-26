@@ -94,6 +94,10 @@ if(enable-binary-analysis)
   target_link_libraries(bat-pardis bat ROSE_DLL)
   install(TARGETS bat-pardis DESTINATION bin)
 
+  add_executable(bat-pointers bat-pointers.C)
+  target_link_libraries(bat-pointers bat ROSE_DLL)
+  install(TARGETS bat-pointers DESTINATION bin)
+
   add_executable(bat-prop bat-prop.C)
   target_link_libraries(bat-prop bat ROSE_DLL)
   install(TARGETS bat-prop DESTINATION bin)
