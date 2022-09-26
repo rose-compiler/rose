@@ -319,19 +319,23 @@ Analysis::printInstructionsForDebugging(const P2::Partitioner &partitioner, cons
 struct ExprVisitor: public SymbolicExpression::Visitor {
     Sawyer::Message::Facility &mlog;
     const MemoryTransferMap &memoryTransfers;
-    size_t nBits;
+    SymbolicExpression::Ptr pointerValue;
     PointerDescriptors &result;
 
-    ExprVisitor(const MemoryTransferMap &memoryTransfers, size_t nBits, PointerDescriptors &result, Sawyer::Message::Facility &mlog)
-        : mlog(mlog), memoryTransfers(memoryTransfers), nBits(nBits), result(result) {}
+    ExprVisitor(const MemoryTransferMap &memoryTransfers, const SymbolicExpression::Ptr &pointerValue, PointerDescriptors &result,
+                Sawyer::Message::Facility &mlog)
+        : mlog(mlog), memoryTransfers(memoryTransfers), pointerValue(pointerValue), result(result) {}
 
     virtual SymbolicExpression::VisitAction preVisit(const SymbolicExpression::Ptr &node) {
         SymbolicExpression::VisitAction retval = SymbolicExpression::CONTINUE;
         for (const MemoryTransfer &xfer: memoryTransfers.getOrDefault(node)) {
-            if (insertPointerDescriptor(result, PointerDescriptor(xfer.memoryVa, nBits, xfer.insnVa, xfer.direction)))
+            if (insertPointerDescriptor(result, PointerDescriptor(xfer.memoryVa, pointerValue->nBits(), xfer.insnVa, xfer.direction,
+                                                                  pointerValue))) {
                 mlog[DEBUG] <<"      insn " <<StringUtility::addrToString(xfer.insnVa)
-                            <<(PointerDescriptor::READ == xfer.direction ? "reads from" : "writes to")
-                            <<" pointer stored at " <<*xfer.memoryVa <<"\n";
+                            <<(PointerDescriptor::READ == xfer.direction ? "reads from" : "writes to") <<" pointer\n";
+                mlog[DEBUG] <<"        pointer stored at address: " <<*xfer.memoryVa <<"\n";
+                mlog[DEBUG] <<"        pointed-to address (pointer value): " <<*pointerValue <<"\n";
+            }
             retval = SymbolicExpression::TRUNCATE;
         }
         return retval;
@@ -353,7 +357,7 @@ Analysis::conditionallySavePointer(const BaseSemantics::SValue::Ptr &ptrRValue_,
 #endif
     SAWYER_MESG(debug) <<"    pointed-to address " <<*ptrRValue <<"\n";
     State::Ptr finalState = State::promote(finalState_);
-    ExprVisitor visitor(finalState->memoryTransfers(), ptrRValue->nBits(), result /*out*/, mlog);
+    ExprVisitor visitor(finalState->memoryTransfers(), ptrRValue, result /*out*/, mlog);
     ptrRValue->depthFirstTraversal(visitor);
 }
 
