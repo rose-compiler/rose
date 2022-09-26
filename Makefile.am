@@ -90,7 +90,6 @@ tools:
 	$(MAKE) -C $(top_builddir)/exampleTranslators
 	$(MAKE) -C $(top_builddir)/projects/compass
 	$(MAKE) -C $(top_builddir)/projects/arrayOptimization
-	$(MAKE) -C $(top_builddir)/projects/extractMPISkeleton
 if ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT
 	$(MAKE) -C $(top_builddir)/tutorial
 endif
@@ -105,7 +104,6 @@ install-tools: install-core tools
 	$(MAKE) install -C $(top_builddir)/exampleTranslators
 	$(MAKE) install -C $(top_builddir)/projects/compass
 	$(MAKE) install -C $(top_builddir)/projects/arrayOptimization
-	$(MAKE) install -C $(top_builddir)/projects/extractMPISkeleton
 	$(MAKE) install -C $(top_builddir)/tests/nonsmoke/functional/roseTests/astInliningTests
 	$(MAKE) install -C $(top_builddir)/tests/nonsmoke/functional/roseTests/astOutliningTests
 if ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT
@@ -155,7 +153,6 @@ check-tools: tools
 	$(MAKE) check -C $(top_builddir)/exampleTranslators
 	$(MAKE) check -C $(top_builddir)/projects/compass
 	$(MAKE) check -C $(top_builddir)/projects/arrayOptimization
-	$(MAKE) check -C $(top_builddir)/projects/extractMPISkeleton
 if ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT
 	$(MAKE) check -C $(top_builddir)/tutorial
 endif
