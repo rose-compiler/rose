@@ -26,11 +26,6 @@ HEADER_END
 // ****************************************************
 HEADER_GRAPH_PREDECLARATION_START
 
-#if 0
-// Required for Boost Spanning Tree support.
-#include <boost/graph/adjacency_list.hpp>
-#include <boost/graph/kruskal_min_spanning_tree.hpp>
-#endif
 /*!
     Doxygen documentation for graph class (should maybe be put with the rest of the
 doxygen documentation in docs/testDoxygen directory instead).
@@ -192,22 +187,6 @@ HEADER_GRAPH_START
              };
 
 
-
-#if 0
-
-  // DQ (4/29/2009): Boost graph Type
- //! Boost Graph Type used to represent ROSE graphs within Boost Graph Algorithms.
-     typedef boost::adjacency_list < boost::vecS, boost::vecS, boost::undirectedS, boost::no_property, boost::property < boost::edge_weight_t, int > > BoostGraphType;
-
- //! Supporting graph types required by Boost Graph Library.
-     typedef boost::graph_traits < BoostGraphType >::edge_descriptor   BoostEdgeDescriptor;
-
-  // DQ (4/29/2009): We might need this in the future, but not now!
-  // typedef boost::graph_traits < BoostGraphType >::vertex_descriptor BoostVertexDescriptor;
-
-#endif
-
-
  //! Simple edge type used to input data to Boost algorithms
      typedef std::pair<int, int> BoostEdgeType;
 
@@ -354,24 +333,6 @@ HEADER_DIRECTED_GRAPH_EDGE_START
           SgGraphNode* get_to()   { return p_node_B; }
 HEADER_DIRECTED_GRAPH_EDGE_END
 
-#if 0
-HEADER_DIRECTED_GRAPH_NODE_START
-     public:
-       // DQ (8/18/2008): This is part of the OLD interface introduced for backward compatability!
-          SgDirectedGraphNode(std::string name, std::string type, int n);
-
-       // DQ (4/23/2009): Added to debug use of new Graph node interfaces.
-          SgDirectedGraphNode(std::string);
-          SgDirectedGraphNode();
-HEADER_DIRECTED_GRAPH_NODE_END
-
-
-HEADER_DIRECTED_GRAPH_START
-     public:
-       // DQ (8/18/2008): This is part of the OLD interface introduced for backward compatability!
-          SgDirectedGraph(std::string, std::string);
-HEADER_DIRECTED_GRAPH_END
-#endif
 
 HEADER_GRAPH_NODE_START
 HEADER_GRAPH_NODE_END
@@ -646,27 +607,6 @@ HEADER_STORAGE_MODIFIER_START
           bool isAsm() const;
           void setAsm();
 
-#if 0
-       // DQ (11/18/2007): We store this information differently now!
-#ifdef FORTRAN_SUPPORTED
-       // These remaining access functions are specific to FORTRAN
-          bool isLocal() const;
-          void setLocal();
-
-          bool isCommon() const;
-          void setCommon();
-
-          bool isAssociated() const;
-          void setAssociated();
-
-          bool isIntrinsic() const;
-          void setIntrinsic();
-
-          bool isPointerBased() const;
-          void setPointerBased();
-#endif
-#endif
-
        // Rasmussen (02/06/2018): Fortran contiguous array storage attribute
           bool isContiguous() const;
           void setContiguous();
@@ -736,15 +676,9 @@ HEADER_ACCESS_MODIFIER_START
                e_private   = 1,        /*!< private access (local to class members) */
                e_protected = 2,        /*!< protected access (local to class members and membrs of derived classes) */
                e_public    = 3,        /*!< public access (access within enclosing namespace) */
-#if 0
-            // DQ (8/11/2020): Original code.
-               e_default   = e_public, /*!< default value (public access) */  /*NO_STRINGIFY*/
-               e_undefined = 4,        /*!< fortran default value */
-#else
             // DQ (8/11/2020): new code for bug Cxx_tests/test2020_28.C.
                e_default   = 4,        /*!< default value (public access) */  /*NO_STRINGIFY*/
                e_undefined = 5,        /*!< fortran default value */
-#endif
                e_last_modifier         /*!< last value (upper bound on range of values, used in error checking) */
              };
 
@@ -893,12 +827,7 @@ HEADER_FUNCTION_MODIFIER_START
           bool isExplicit() const;
           void setExplicit();
           void unsetExplicit();
-#if 0
-       // DQ (11/21/2007): support for Fortran bind attribute on functions
-          bool isBind() const;
-          void setBind();
-          void unsetBind();
-#endif
+
        // DQ (11/21/2007): support for Fortran pure attribute on functions
           bool isPure() const;
           void setPure();
@@ -2209,24 +2138,6 @@ HEADER_TYPE_TABLE_END
 
 SOURCE_ATTRIBUTE_SUPPORT_START
 
-#if 0
-// DQ (4/10/2006): Removed in favor of implementation at SgNode using
-// a pointer and the interface represented directly at the SgNode
-AstAttributeMechanism &
-$CLASSNAME::attribute()
-   {
-  // DQ (1/2/2006): This function preserves as much of
-  // the syntax of attribute being a public data member.
-     if (p_attribute == NULL)
-        {
-          mprintf ("Error: p_attribute == NULL  (node = %s) \n",class_name().c_str());
-          assert(false);
-        }
-
-     return *p_attribute;
-   }
-#endif
-
 void
 $CLASSNAME::addNewAttribute( std::string s, AstAttribute* a )
    {
@@ -2275,7 +2186,6 @@ $CLASSNAME::removeAttribute(std::string s)
 
   // DQ (1/2/2006): If we have no more attributes then remove the attribute container
      int remainingCount = numberOfAttributes();
-  // mprintf ("In AstTextAttributesHandling::visit(): remaining number of attributes = %d \n",remainingCount);
      if (remainingCount == 0)
         {
           delete get_attributeMechanism();
@@ -2345,7 +2255,6 @@ SOURCE_MODIFIER_END
 
 SOURCE_MODIFIER_NODES_START
 
-#if 1
 // These are generated
 SgModifierNodes::SgModifierNodes()
    {
@@ -2354,15 +2263,6 @@ SgModifierNodes::SgModifierNodes()
   // MK: Call the following function instead
      post_construction_initialization();
    }
-
-#if 0
-SgModifierNodes::~SgModifierNodes()
-   {
-     // delete nodes[];
-     delete p_next;
-   }
-#endif
-#endif
 
 void
 SgModifierNodes::post_construction_initialization()
@@ -2374,41 +2274,6 @@ SgModifierNodes::post_construction_initialization()
           p_nodes.push_back((SgModifierType*) NULL);
      p_next = (SgModifierNodes*) NULL;
    }
-
-#if 0
-// DQ (4/13/2004): Commented out as a test to see if we need this function
-SgModifierType*
-SgModifierNodes::match(SgType* base, unsigned int f)
-   {
-     for (int j = 0; j < 4; j++)
-        {
-          if (!p_nodes[j])
-             {
-               SgModifierType* newType = new SgModifierType(base, f);
-               assert(newType != NULL);
-
-               p_nodes[j] = newType;
-               assert(p_nodes[j] != NULL);
-
-               return p_nodes[j];
-            // return nodes[j] = new SgModifierType(base, f);
-             }
-          assert(p_nodes[j] != NULL);
-          if (p_nodes[j]->bitfield() == f)
-             {
-               return p_nodes[j];
-             }
-        }
-
-     if (!p_next)
-        {
-          p_next = new SgModifierNodes();
-          assert(p_next != NULL);
-        }
-
-     return p_next->match(base, f);
-   }
-#endif
 
 SOURCE_MODIFIER_NODES_END
 
@@ -2471,14 +2336,7 @@ $CLASSNAME::display ( std::string label ) const
    {
   // DQ (6/25/2020): If we call display, then we mean for it to be displayed, not hidden.
      printf ("In $CLASSNAME::display(%s) \n",label.c_str());
-#if 0
-     mprintf ("   isUnknown()         = %s \n",isUnknown()  ? "true" : "false");
-     mprintf ("   isDefault()         = %s \n",isDefault()  ? "true" : "false");
-     mprintf ("   isConst()           = %s \n",isConst()    ? "true" : "false");
-     mprintf ("   isVolatile()        = %s \n",isVolatile() ? "true" : "false");
-#else
      printf ("%s \n",displayString().c_str());
-#endif
    }
 
 std::ostream & operator<< ( std::ostream & os, const SgConstVolatileModifier & m)
@@ -2821,12 +2679,6 @@ void SgFunctionModifier::unsetPureVirtual()    { unsetBit(e_pure_virtual,p_modif
 bool SgFunctionModifier::isExplicit() const { return checkBit(e_explicit,p_modifierVector); }
 void SgFunctionModifier::setExplicit()      { setBit(e_explicit,p_modifierVector); }
 void SgFunctionModifier::unsetExplicit()    { unsetBit(e_explicit,p_modifierVector); }
-
-#if 0
-bool SgFunctionModifier::isBind() const { return checkBit(e_bind,p_modifierVector); }
-void SgFunctionModifier::setBind()      { setBit(e_bind,p_modifierVector); }
-void SgFunctionModifier::unsetBind()    { unsetBit(e_bind,p_modifierVector); }
-#endif
 
 bool SgFunctionModifier::isPure() const { return checkBit(e_pure,p_modifierVector); }
 void SgFunctionModifier::setPure()      { setBit(e_pure,p_modifierVector); }
@@ -3789,31 +3641,6 @@ bool SgTypeModifier::isRestrict() const { return checkBit(e_restrict,p_modifierV
 void SgTypeModifier::setRestrict()      { setBit(e_restrict,p_modifierVector); }
 void SgTypeModifier::unsetRestrict()    { unsetBit(e_restrict,p_modifierVector); }
 
-#if 0
-               e_allocatable    = 3, /*!< allocatable attribute specifier (for Fortran 90) */
-               e_asynchronous   = 4, /*!< asynchronous attribute specifier (for Fortran 2003) */
-               e_bind           = 5, /*!< bind attribute specifier (for Fortran 2003, this is closely related to the SgLinkageModifier) */
-               e_data           = 6, /*!< data attribute specifier (for Fortran 77) */
-               e_dimension      = 7, /*!< dimension attribute specifier (for Fortran 77) */
-            // This should map to the C/C++ extern modifier in SgStorageModifier
-            // e_external       = x, /*!< external attribute specifier (for Fortran 77, this is less related to the SgLinkageModifier than the SgStorageModifier) */
-               e_intent_in      = 8, /*!< intent(in) attribute specifier (for Fortran 90) */
-               e_intent_out     = 9, /*!< intent(out) attribute specifier (for Fortran 90) */
-               e_intent_inout   = 10,/*!< intent(inout) attribute specifier (for Fortran 90) */
-               e_intrinsic      = 11,/*!< intrinsic attribute specifier (for Fortran 90) */
-               e_optional       = 12,/*!< optional attribute specifier (for Fortran 90) */
-            // This should map to const in the SgConstVolatileModifier
-            // e_parameter      = xx,/*!< parameter attribute specifier (for Fortran 77) */
-
-            // This should be mapped to the SgPointerType in C/C++
-            // e_pointer        = xx,/*!< pointer attribute specifier (for Fortran 90) */
-            // Note that protected access attribute is mapped to the C/C++ protected access modifiers in SgDeclarationModifier
-            // e_protected      = xx,/*!< protected attribute specifier (for Fortran 2003) */
-               e_save           = 13,/*!< save attribute specifier (for Fortran 77) */
-               e_target         = 14,/*!< target attribute specifier (for Fortran 90) */
-               e_value          = 15,/*!< value attribute specifier (for Fortran 2003) */
-#endif
-
 // Fortran specific attribute
 bool SgTypeModifier::isAllocatable() const  { return checkBit(e_allocatable,p_modifierVector); }
 void SgTypeModifier::setAllocatable()       { setBit(e_allocatable,p_modifierVector); }
@@ -4506,51 +4333,22 @@ class rose_hash_multimap : public rose_hash::unordered_multimap<SgName, SgSymbol
 
      public:
        // DQ (12/22/2005): Added initialization of parent pointer as suggested by Jochen
-#if 0
-       // DQ (11/27/2010): Older version of code before adding support for case insensitive behavior.
-          rose_hash_multimap(bool case_insensitive_semantics = false)
-          // : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>(), parent(NULL)
-             : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>(boost::unordered_detail::default_bucket_count,hash_Name(),eqstr(case_insensitive_semantics)), parent(NULL)
-             {}
-
-         rose_hash_multimap(int sz, bool case_insensitive_semantics = false)
-          // : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>(sz), parent(NULL)
-             : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>(sz,hash_Name(),eqstr(case_insensitive_semantics)), parent(NULL)
-             {}
-
-          rose_hash_multimap(const rose_hash_multimap & rhs)
-             : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>(/*(rose_hash_multimap)*/rhs), parent(rhs.parent)
-             {}
-#else
        // DQ (11/27/2010): Newer version of code after adding support for case insensitive behavior.
           rose_hash_multimap()
-          // : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>(boost::unordered_detail::default_bucket_count,hash_Name(this),eqstr(this)), parent(NULL), case_insensitive_semantics(false)
              : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>(17,hash_Name(this),eqstr(this)), parent(NULL), case_insensitive_semantics(false)
              {
-#if 0
-            // DQ (11/5/2020): Added debugging support.
-               printf ("In rose_hash_multimap() default constructor \n");
-#endif
              }
 
          rose_hash_multimap(int sz)
              : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>(sz,hash_Name(this),eqstr(this)), parent(NULL), case_insensitive_semantics(false)
              {
-#if 0
-            // DQ (11/5/2020): Added debugging support.
-               printf ("In rose_hash_multimap(int sz) constructor \n");
-#endif
              }
 
           rose_hash_multimap(const rose_hash_multimap & rhs)
              : rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>(/*(rose_hash_multimap)*/rhs), parent(rhs.parent), case_insensitive_semantics(rhs.case_insensitive_semantics)
              {
-#if 0
-            // DQ (11/5/2020): Added debugging support.
-               printf ("In rose_hash_multimap() copy constructor \n");
-#endif
              }
-#endif
+
           void set_parent(SgNode * new_parent)
              {
                parent = new_parent;
@@ -4577,9 +4375,6 @@ class rose_hash_multimap : public rose_hash::unordered_multimap<SgName, SgSymbol
 
          ~rose_hash_multimap()
              {
-#if 0
-               printf ("Inside of rose_hash_multimap destructor: this = %p derived from public rose_hash::unordered_multimap<SgName, SgSymbol*, hash_Name, eqstr>: \n",this);
-#endif
                delete_elements();
 
             // DQ (12/22/2005): Added initialization of parent pointer as suggested by Jochen
@@ -4633,12 +4428,10 @@ HEADER_SYMBOL_TABLE_START
        // General function used to build AST
           void insert ( const SgName & name, SgSymbol *sp );
 
-#if 1
        // DQ (11/27/2010): Changing the return type to "bool"
        // DQ (1/31/2007): Depricated (is not well named and should return bool)
        // int  find   ( const SgName & name, SgSymbol *sp, bool case_insensitive = false ) ROSE_DEPRECATED_FUNCTION;
           bool find   ( const SgName & name, SgSymbol *sp ) ROSE_DEPRECATED_FUNCTION;
-#endif
 
        // DQ (1/31/2007): New functions that will replace the depricated find() member function
        // Note that this is log n in complexity
@@ -4666,39 +4459,6 @@ HEADER_SYMBOL_TABLE_START
        // tables classes and typedefs can have the same name (e.g. "typedef struct X {} X;")
        // so removing the name might have unexpected results!
           void remove_function_type ( const SgName & name); //! Complexity O(log n)
-
-#if 0
-       // DQ (1/30/2007): Added remove functions for each sort of SgSymbol IR node
-       // This removes all the symbols matching the name or name and type of symbol
-       // These can be dangerous where there are the names in the symbol table are
-       // not unique and especially when using multiple un-names declarations of
-       // the same type or symbol.
-          void remove_function      ( const SgName & );
-          void remove_class         ( const SgName & );
-          void remove_enum          ( const SgName & );
-          void remove_typedef       ( const SgName & );
-          void remove_label         ( const SgName & );
-          void remove_var           ( const SgName & );
-          void remove_enum_field    ( const SgName & );
-          void remove_function_type ( const SgName & );
-          void remove_namespace     ( const SgName & );
-#endif
-
-#if 0
-       // DQ (11/27/2010): Removing these to avoid updating them to have consistant case handling support (deprecated 4-5 years ago).
-
-       // Used by SgScopeStatement::lookup_symbol(const SgName& n)
-          SgSymbol* findany(const SgName &) ROSE_DEPRECATED_FUNCTION;
-
-       // Used only for global function type table
-          SgFunctionTypeSymbol* findfunctype(const SgName&) ROSE_DEPRECATED_FUNCTION;
-
-       // Used by Qing's AST Interface code
-          SgVariableSymbol*  findvar(const SgName &) ROSE_DEPRECATED_FUNCTION;
-          SgClassSymbol*     findclass(const SgName &) ROSE_DEPRECATED_FUNCTION;
-          SgFunctionSymbol*  findfunc(const SgName&) ROSE_DEPRECATED_FUNCTION;
-          SgFunctionSymbol*  findfunc(const SgName&, const SgType*) ROSE_DEPRECATED_FUNCTION;
-#endif
 
        // DQ (1/30/2007): New interface member functions using name.
        // These function search first against the name and then iteratively continue through
@@ -4760,26 +4520,12 @@ HEADER_SYMBOL_TABLE_START
                                                                    // charles4: added 09/12/2011 for Java
           SgNamespaceSymbol* find_namespace(const SgName & name);  //! Complexity O(log n) for first match against name, then O(n)
 
-#if 0
-       // DQ (8/13/2013): Since function templates, member function templates, and class templates are symbols not derived from SgTemplateSymbol,
-       // this function is not very useful since it returns a SgTemplateSymbol.  This was a part of the older pre-EDG4x API.
-       // DQ (8/10/2013): Added support for specification of template parameters (for member and non-member function overloading) and template arguments (for class specialization).
-       // SgTemplateSymbol*  find_template(const SgName & name);
-          SgTemplateSymbol*  find_template(const SgName & name, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateArgumentList);
-#endif
        // DQ (5/19/2013): Find the aliasSymbol for which the (aliasSymbol->get_base() == sp).
           SgAliasSymbol*     find_aliased_symbol(const SgName & nm, SgSymbol *sp);
 
        // DQ (12/26/2011): Added more refined level of support for template declarations in the AST.
        // SgTemplateClassSymbol* find_template_class (const SgName & nm);
 
-#if 0
-       // DQ (11/27/2010): Removing these to avoid updating them to have consistant case handling support (deprecated 4-5 years ago).
-          SgSymbol*          findfirstany() ROSE_DEPRECATED_FUNCTION;
-          SgVariableSymbol*  findfirstvar() ROSE_DEPRECATED_FUNCTION;
-          SgClassSymbol*     findfirstclass() ROSE_DEPRECATED_FUNCTION;
-          SgFunctionSymbol*  findfirstfunction() ROSE_DEPRECATED_FUNCTION;
-#endif
        // DQ (1/30/2007): New interface member functions: get the first symbol using type of SgSymbol
           SgSymbol*          find_any();      //! Complexity O(log n) for first match against name, then O(n)
           SgVariableSymbol*  find_variable(); //! Complexity O(log n) for first match against name, then O(n)
@@ -4832,12 +4578,6 @@ HEADER_SYMBOL_TABLE_START
        // SgClassSymbol*         find_nontemplate_class(const SgName& name);                     //! Complexity O(log n) for first match against name, then O(n)
           SgClassSymbol*         find_nontemplate_class(const SgName& name, SgTemplateArgumentPtrList* templateArgumentsList); //! Complexity O(log n) for first match against name, then O(n)
 
-#if 0
-       // DQ (11/27/2010): Removing these to avoid updating them to have consistant case handling support (deprecated 4-5 years ago).
-          SgSymbol*          nextany() ROSE_DEPRECATED_FUNCTION;
-          SgVariableSymbol*  nextvar() ROSE_DEPRECATED_FUNCTION;
-          SgClassSymbol*     nextclass() ROSE_DEPRECATED_FUNCTION;
-#endif
        // Get the next symbol of a specific type, return NULL if not available.
        // These functions use state information set by the find functions (either
        // the versions using the name or not using a name as a parameter).
@@ -4851,24 +4591,7 @@ HEADER_SYMBOL_TABLE_START
           SgLabelSymbol*     next_label();      //! Complexity O(n)
           SgNamespaceSymbol* next_namespace();  //! Complexity O(n)
           SgTemplateSymbol*  next_template();   //! Complexity O(n)
-#if 0
-       // DQ (11/27/2010): Removing these to avoid updating them to have consistant case handling support (deprecated 4-5 years ago).
-       // for both global function and member functions
-          SgFunctionSymbol*  nextfunc() ROSE_DEPRECATED_FUNCTION;
-#endif
-#if 0
-       // DQ (9/7/2006): Previously removed functionality, restored by request from Beata at ANL.
-       // The next for functions have been placed back into the Sage III interface.
-          SgVariableSymbol*  findfirstvar();
-          SgVariableSymbol*  nextvar();
-          SgSymbol*          nextany();
-          SgSymbol*          findfirstany();
-#endif
-#if 0
-       // DQ (11/27/2010): Removing these to avoid updating them to have consistant case handling support (deprecated 4-5 years ago).
-       // This is a cute operator to use, but since it can't specify a type of SgSymbol it is not so useful in practice.
-          SgSymbol* operator[](const SgName &) ROSE_DEPRECATED_FUNCTION;
-#endif
+
       //! Computes the number of symbols of a specific name
           int count(const SgName &) const;
 
@@ -4888,12 +4611,6 @@ HEADER_SYMBOL_TABLE_START
 
       //! generate an STL set of all symbols (supports AST merge, but may be temporary)
           std::set<SgNode*> get_symbols() const;
-
-#if 0
-// DQ (3/10/2007): This approach in the end, didn't work.  So I think this can be removed!
-      //! Generate unique name for matching named symbols of the same type (support for AST merge)
-          unsigned int generateUniqueNumberForMatchingSymbol( SgDeclarationStatement* symbolBasis ) const;
-#endif
 
       //! Generates name from any IR node used to generate symbols (only works on specific IR nodes)
           SgName get_name( const SgNode* node) const;
@@ -4925,40 +4642,13 @@ HEADER_SYMBOL_TABLE_START
 
      protected:
 
-#if 0
-       // DQ (8/21/2013): This function has been removed in favor of a single low-level (templated) supporting
-       // function that can optionally handle types (only used to support function lookups).
-       // DQ (12/26/2011): Refactoring of code into templated support function.
-       // template<class ReturnType> ReturnType* find_symbol_support (const SgName & nm);
-          template<class ReturnType> ReturnType* find_symbol_support (const SgName & nm, SgTemplateParameterPtrList* templateParameters = NULL, SgTemplateArgumentPtrList* templateArguments = NULL);
-#endif
-
        // DQ (4/14/2017): Test test2017_30.C demonstrates that we need to be able to force the filtering of symbols from templates
        // DQ (5/20/2013): Added refactoring of symbol lookup support so that we can handle new namespace support for symbols.
        // template<class ReturnType> ReturnType* find_symbol_with_type_support (const SgName & nm, const SgType* type);
        // template<class ReturnType> ReturnType* find_symbol_with_type_support (const SgName & nm, const SgType* type, SgTemplateParameterPtrList* templateParameters, SgTemplateArgumentPtrList* templateArgumentList);
           template<class ReturnType> ReturnType* find_symbol_with_type_support (const SgName & nm, const SgType* type, SgTemplateParameterPtrList* templateParameters, SgTemplateArgumentPtrList* templateArgumentList, bool filterTemplateSymbols);
 
-#if 0
-       // DQ (5/20/2013): Added support for better refactoring on the template code so we can use it to support other functions.
-       // DQ (9/9/2012): Adding more template support (need version of function for template parameters (to disambiguate
-       // template names, similar to how we do so for template instantiations using the template argument list).
-       // template<class ReturnType> ReturnType* find_template_symbol_support (const SgName & nm, SgTemplateParameterPtrList* templateParameters, SgTemplateArgumentPtrList* templateArgumentList);
-          template<class ReturnType,class ReturnTypeDeclaration> ReturnType* find_template_symbol_support (const SgName & nm, SgTemplateParameterPtrList* templateParameters, SgTemplateArgumentPtrList* templateArgumentList);
-
-       // DQ (8/12/2013): This function is redundant and is not replaced by the template function find_symbol_support<SgClassName>(nm,NULL,templateArgumentsList).
-       // DQ (5/20/2013): Added refactoring of symbol lookup support so that we can handle new namespace support for symbols.
-          template<class ReturnType> ReturnType* find_symbol_with_template_args_support ( const SgName & nm, SgTemplateArgumentPtrList* templateArgumentsList );
-#endif
-
      public:
-#if 0
-       // DQ (5/21/2013): This function was moved from the symbol table to the SgScopeStatement so that we could
-       // make the symbol table access functions private as part of the new namespace symbol table handling.
-       // DQ (3/13/2012): Added support for organizing how we match function declarations with function symbols.
-          template<class T>
-          SgFunctionSymbol* find_symbol_by_type_of_function (const SgName & name, const SgType* func_type);
-#endif
 
           size_t maxCollisions();
 
@@ -4990,12 +4680,6 @@ HEADER_BASECLASS_START
           bool operator== (const SgBaseClass& ) const;
           bool operator< (const SgBaseClass&) const;
 
-#if 0
-       // DQ (1/21/2019): This should be an automatically generated access function.
-       // DQ (4/25/2004): Part of new modifier interface
-          SgBaseClassModifier & get_baseClassModifier();
-#endif
-
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
           virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const override;
@@ -5017,14 +4701,6 @@ HEADER_BASECLASS_START
        // DQ (6/11/2015): Added support for none ROSETTA generated access functions to avoid isModified flag setting semantics.
           bool get_global_qualification_required() const;
           void set_global_qualification_required(bool global_qualification_required);
-
-#if 0
-  // These are now autogenerated
-     private:
-          int p_specifier;
-          int p_direct;
-          SgClassDeclaration* p_ptr;
-#endif
 
        // DQ (5/29/2011): Added to support for new qualified name generation
       //! This function generates the qualified name prefix to be used with the named declaration (only applied to restricted set of declarations where name qualification can be used).
@@ -5224,20 +4900,6 @@ HEADER_INITIALIZED_NAME_START
           bool isGnuAttributeNoReorder() const;
           void setGnuAttributeNoReorder();
           void unsetGnuAttributeNoReorder();
-
-#if 0
- // DQ (8/17/2014): Associated Microsoft attributes that are valid in a function parameter.
-    appdomain
-    deprecated
-    dllimport
-    dllexport
-    novtable
-    process
-    restrict
-    selectany
-    thread
-    uuid(" ComObjectGUID ")
-#endif
 
           bool is_ms_declspec_parameter_appdomain() const;
           void set_ms_declspec_parameter_appdomain();
@@ -5968,20 +5630,6 @@ HEADER_FILE_INFORMATION_START
        // const SgFileIdList & get_fileIDsToUnparse () const;
        // SgFileIdList & get_fileIDsToUnparse ();
 
-#if 0
-       // DQ (12/20/2005): These have been placed into ROSETTA
-
-       // MK (7/22/05) These maps are used by the file id mechanism
-      //! STL map object to hold file id's to strings
-          static std::map<int, std::string> p_fileidtoname_map;
-      //! STL map to hold reverse map of p_fileidtoname_map
-          static std::map<std::string, int> p_nametofileid_map;
-
-       // MK (7/22/05) These maps are used by the file id mechanism
-      //! This allows us to generate unique file ids for every filename we see.
-          static int p_max_file_id;
-#endif
-
 HEADER_FILE_INFORMATION_END
 
 HEADER_APPLICATION_FILE_PREDECLARATION_START
@@ -6363,19 +6011,6 @@ public:
        // DQ (6/13/2013): Added to support to call the frontend after all SgFiles are built up.
           void runFrontend(int & nextErrorCode);
 
-#if 0
-// DQ (9/5/2008): Moved to SgSourceFile
-#if ALT_FIXUP_COPY
-       // DQ (11/7/2007): These need to be called separately (see documentation)
-          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const override;
-          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const override;
-          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const override;
-#else
-       // DQ (10/5/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
-          virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
-#endif
-#endif
-
        // DQ (9/24/2013): Added function to output the name of the language for the generated code.
        // static std::string get_outputLanguageOptionName ( outputLanguageOption_enum lang );
           static std::string get_outputLanguageOptionName ( languageOption_enum lang );
@@ -6463,14 +6098,10 @@ HEADER_APPLICATION_SOURCE_FILE_START
 
        // DQ (1/20/2021): Changed the API to use a pointer to a std::map<SgNode*,TokenStreamSequenceToNodeMapping*> instead of a reference.
        // DQ (10/28/2013): Abstract access to the new token subsequence map (currently for statements).
-       // map<SgNode*,TokenStreamSequenceToNodeMapping*> tokenStreamSequenceMap;
-       // void set_tokenSubsequenceMap(std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenStreamSequenceMap);
           void set_tokenSubsequenceMap(std::map<SgNode*,TokenStreamSequenceToNodeMapping*>* tokenStreamSequenceMap);
           std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & get_tokenSubsequenceMap();
 
        // DQ (11/27/2013): Added support for definition of the token unparsing frontier in the AST.
-       // void set_token_unparse_frontier(std::vector<FrontierNode*> & tokenStreamSequenceMap);
-       // std::vector<FrontierNode*> & get_token_unparse_frontier();
           void set_token_unparse_frontier(std::map<SgStatement*,FrontierNode*> & tokenStreamSequenceMap);
           std::map<SgStatement*,FrontierNode*> & get_token_unparse_frontier();
 
@@ -6488,24 +6119,13 @@ HEADER_APPLICATION_SOURCE_FILE_START
 
        // DQ (9/28/2018): Removed static keyword (I don't think we wnat this to be a static function.
        // DQ (11/20/2015): Added support for retrieving representative whitespace in unparsing transformations when using the token-based unparsing.
-       // static void set_representativeWhitespaceStatementMap(std::map<SgScopeStatement*,SgStatement*> & representativeWhitespaceStatementMap);
-       // static std::map<SgScopeStatement*,SgStatement*> & get_representativeWhitespaceStatementMap();
           void set_representativeWhitespaceStatementMap(std::map<SgScopeStatement*,SgStatement*> & representativeWhitespaceStatementMap);
           std::map<SgScopeStatement*,SgStatement*> & get_representativeWhitespaceStatementMap();
 
        // DQ (9/28/2018): Removed static keyword (I don't think we wnat this to be a static function.
        // DQ (11/30/2015): Provide a statement to use as a key in the macro expansion map to get info about macro expansions.
-       // static void set_macroExpansionMap(std::map<SgStatement*,MacroExpansion*> & macroExpansionMap);
-       // static std::map<SgStatement*,MacroExpansion*> & get_macroExpansionMap();
           void set_macroExpansionMap(std::map<SgStatement*,MacroExpansion*> & macroExpansionMap);
           std::map<SgStatement*,MacroExpansion*> & get_macroExpansionMap();
-
-#if 0
-       // DQ (9/12/2009): Adding support for new name qualification (not ready yet).
-       // typedef std::vector<SgNode*> NumberToStatementType;
-       // void buildStatementNumbering( NumberToStatementType & numberToStatementContainer );
-          void buildStatementNumbering();
-#endif
 
 HEADER_APPLICATION_SOURCE_FILE_END
 
@@ -6517,13 +6137,9 @@ HEADER_INCLUDE_FILE_END
 HEADER_HEADER_FILE_REPORT_START
      private:
        // Define these as private so that we can control and/or eliminate their use.
-       // SgHeaderFileReport( const SgHeaderFileReport & X );
-       // SgHeaderFileReport & operator= ( const SgHeaderFileReport & X );
 
      public:
           void display( const std::string & label) const;
-
-       // SgHeaderFileReport( SgSourceFile* sourceFile );
 
 HEADER_HEADER_FILE_REPORT_END
 
@@ -6628,13 +6244,6 @@ HEADER_APPLICATION_PROJECT_START
       //! The only useful constructors (constant folding in the frontend is false by default).
           SgProject ( const std::vector<std::string>& argv, bool frontendConstantFolding = false);
           SgProject ( int argc, char** argv, bool frontendConstantFolding = false);
-
-#if 0
-      // DQ (10/16/2005): Depreicated a long time ago, removed it now!
-      //! Deprecated old constructor (test use of gnu attribute (requires gnu 3.1+))
-       // SgProject ( int &argc, char** argv, int & errorCode);
-          SgProject ( int &argc, char** argv, int & errorCode) ROSE_DEPRECATED_FUNCTION;
-#endif
 
        // DQ (4/10/2017): Adding support for use of Saywer for command line handling.
       //! Use of Saywer support for command line handling (work in progress).
@@ -6921,12 +6530,6 @@ HEADER_OPTIONS_START
           inline int logging_level() {return p_logging_level;}
           inline void set_logging(std::ostream& log_file, int level)
              { p_logging_level = level; p_logging_output = &log_file; }
-#if 0
-  // We need a option to permit the generated constructors to be protected or private
-     private:
-          Sg_Options(); /* to stop anyone but Sg_options() instantiating it */
-#endif
-
 HEADER_OPTIONS_END
 
 
@@ -7478,19 +7081,10 @@ HEADER_UNPARSE_INFO_START
           bool usedInUparseToStringFunction() const;
           void set_usedInUparseToStringFunction();
           void unset_usedInUparseToStringFunction();
-#if 0
-       // DQ (11/21/2021): Adding support for types to be unparsed with the context of the correct declaration to support multi-file handling.
-          SgDeclarationStatement* get_declaration_of_context();
-          void set_declaration_of_context(SgDeclarationStatement* d);
-#endif
+
        // DQ (11/21/2021): Adding support for types to be unparsed with the context of the correct declaration to support multi-file handling.
           void unset_declaration_of_context();
 
-#if 0
-   // MK: These access functions are now automatically generated!
-          SgNamedType *get_current_context();
-          void set_current_context(SgNamedType *t);
-#endif
           void unset_current_context();
 
           SgName get_array_index_list();
@@ -7609,7 +7203,6 @@ HEADER_TEMPLATE_ARGUMENT_START
        // Different constructors for use in building the different types of parameters possible
           SgTemplateArgument ( SgType*                      parameter, bool explicitlySpecified );
           SgTemplateArgument ( SgExpression*                parameter, bool explicitlySpecified );
-       // SgTemplateArgument ( SgTemplateInstantiationDecl* parameter, bool explicitlySpecified );
           SgTemplateArgument ( SgTemplateDeclaration*       parameter, bool explicitlySpecified );
 
        // DQ (7/3/2013): Added new type of template argument type to support varadic template arguments.
@@ -7773,13 +7366,7 @@ SOURCE_SYMBOL_TABLE_START
 bool
 eqstr::operator()(const SgName & s1, const SgName & s2) const
    {
-  // DQ (11/27/2010): This is where we can implement the case insensitive support in ROSE.
-  // return s1.getString() == s2.getString();
-  // return s1 == s2;
-
      ROSE_ASSERT(hash_multimap != NULL);
-  // mprintf ("@@@@@ hash_multimap->get_case_insensitive_semantics() = %s s1 = %s s2 = %s \n",(hash_multimap->get_case_insensitive_semantics() == true) ? "true" : "false",s1.str(),s2.str());
-  // ROSE_ASSERT(hash_multimap->get_case_insensitive_semantics() == true);
 
      if (hash_multimap->get_case_insensitive_semantics() == true)
         {
@@ -7821,10 +7408,6 @@ rose_hash_multimap::delete_elements()
 
   // DQ (11/5/2020): Call the clear function so that we can remove all elements.
      clear();
-
-#if 0
-     printf ("DONE: Inside of rose_hash_multimap::delete_elements(): this = %p calling clear(): size() = %zu \n",this,size());
-#endif
    }
 
 
@@ -7835,9 +7418,6 @@ hash_Name::operator()(const SgName & name) const
   // return hasher(name.str());
 
      ROSE_ASSERT(hash_multimap != NULL);
-  // mprintf ("In hash_Name::operator(): hash_multimap->get_case_insensitive_semantics() = %s name = %s \n",hash_multimap->get_case_insensitive_semantics() ? "true" : "false",name.str());
-
-  // ROSE_ASSERT(hash_multimap->get_case_insensitive_semantics() == true);
 
      if (hash_multimap->get_case_insensitive_semantics() == true)
         {
@@ -7846,7 +7426,6 @@ hash_Name::operator()(const SgName & name) const
 
        // Convert string to lower case.
           std::transform(s.begin(), s.end(),s.begin(),::tolower);
-       // mprintf ("In hash_Name::operator(): transformed name = %s to lower case s = %s \n",name.str(),s.c_str());
 
        // Return hashed value on the normalized (lower case) string.
           return hasher(s.c_str());
@@ -7872,12 +7451,7 @@ SgSymbolTable::SgSymbolTable()
      int symbolTableSize = 17;
 
   // CH (4/8/2010): Use boost::unordered instead
-#if 0
-     mprintf ("WARNING: Symbol table built using default constructor in SgSymbolTable(). \n");
-     p_table = new BaseHashType();
-#else
      p_table = new BaseHashType(symbolTableSize);
-#endif
      ROSE_ASSERT (p_table != NULL);
    }
 
@@ -7886,10 +7460,6 @@ SgSymbolTable::SgSymbolTable()
 // larger for certain scopes (e.g global scope usually has a
 // lot more symbols.
 
-// DQ (11/27/2010): Added support for case sensitive and case insensitive symbol table (internal name matching).
-// DQ (1/31/2007): This function is not used!
-// SgSymbolTable::SgSymbolTable(int symbolTableSize)
-// SgSymbolTable::SgSymbolTable(int symbolTableSize, bool case_insensitive)
 SgSymbolTable::SgSymbolTable(int symbolTableSize)
    : p_no_name(true)
    {
@@ -8004,10 +7574,6 @@ SgSymbolTable::get_name( const SgNode* node) const
              {
                const SgTemplateInstantiationDecl* templateInstantiationDeclaration = isSgTemplateInstantiationDecl(node);
             // Note that get_name() returns a name with arguments such as "class_template<int>" while get_templateName() returns the template name withouth arguments.
-            // name = templateInstantiationDeclaration->get_templateName();
-            // mprintf ("In SgSymbolTable::find(const SgStatement*): case V_SgTemplateInstantiationDecl, using get_name() = %s instead of get_templateName() = %s \n",
-            //      templateInstantiationDeclaration->get_name().str(),templateInstantiationDeclaration->get_templateName().str());
-            // mprintf ("Base class get_name() = %s \n",templateInstantiationDeclaration->SgClassDeclaration::get_name().str());
                name = templateInstantiationDeclaration->get_name();
                break;
              }
@@ -8026,9 +7592,6 @@ SgSymbolTable::get_name( const SgNode* node) const
           case V_SgAdaEntryDecl:
              {
                const SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(node);
-            // mprintf ("functionDeclaration                                    = %p \n",functionDeclaration);
-            // mprintf ("functionDeclaration->get_definingDeclaration()         = %p \n",functionDeclaration->get_definingDeclaration());
-            // mprintf ("functionDeclaration->get_firstNondefiningDeclaration() = %p \n",functionDeclaration->get_firstNondefiningDeclaration());
                name = functionDeclaration->get_name();
                break;
              }
@@ -8041,14 +7604,10 @@ SgSymbolTable::get_name( const SgNode* node) const
           case V_SgTemplateInstantiationFunctionDecl:
              {
                const SgTemplateInstantiationFunctionDecl* functionDeclaration = isSgTemplateInstantiationFunctionDecl(node);
-            // mprintf ("functionDeclaration                                    = %p \n",functionDeclaration);
-            // mprintf ("functionDeclaration->get_definingDeclaration()         = %p \n",functionDeclaration->get_definingDeclaration());
-            // mprintf ("functionDeclaration->get_firstNondefiningDeclaration() = %p \n",functionDeclaration->get_firstNondefiningDeclaration());
 
             // DQ (2/14/2007): The name used to insert symbols into the symbol table is the one returned by get_name(),
             // get_templateName returns the name of the template which is required for code generation (where for
             // functions the specialization is not required or not allowed).
-            // name = functionDeclaration->get_templateName();
                name = functionDeclaration->get_name();
                break;
              }
@@ -8056,14 +7615,10 @@ SgSymbolTable::get_name( const SgNode* node) const
           case V_SgTemplateInstantiationMemberFunctionDecl:
              {
                const SgTemplateInstantiationMemberFunctionDecl* functionDeclaration = isSgTemplateInstantiationMemberFunctionDecl(node);
-            // mprintf ("functionDeclaration                                    = %p \n",functionDeclaration);
-            // mprintf ("functionDeclaration->get_definingDeclaration()         = %p \n",functionDeclaration->get_definingDeclaration());
-            // mprintf ("functionDeclaration->get_firstNondefiningDeclaration() = %p \n",functionDeclaration->get_firstNondefiningDeclaration());
 
             // DQ (2/14/2007): The name used to insert symbols into the symbol table is the one returned by get_name(),
             // get_templateName returns the name of the template which is required for code generation (where for
             // functions the specialization is not required or not allowed).
-            // name = functionDeclaration->get_templateName();
                name = functionDeclaration->get_name();
                break;
              }
@@ -8108,15 +7663,6 @@ SgSymbolTable::get_name( const SgNode* node) const
                name = templateDeclaration->get_name();
                break;
              }
-#if 0
-       // DQ (12/26/2011): This is not a required case to handle since a variable declaration dos not have a name.
-          case V_SgTemplateVariableDeclaration:
-             {
-               const SgTemplateVariableDeclaration* templateDeclaration = isSgTemplateVariableDeclaration(node);
-               name = templateDeclaration->get_name();
-               break;
-             }
-#endif
        // DQ (12/26/2011): This is no longer a base class for SgTemplateClassDeclaration and other templae declaration IR nodes.
        // It is used only for the EDG 3.3 compatable support for template declarations.
           case V_SgTemplateDeclaration:
@@ -8370,44 +7916,10 @@ SgSymbolTable::insert ( const SgName & nm , SgSymbol *sp )
                mprintf ("Error (sp->get_symbol_basis() == NULL): name = %s sp = %p = %s \n",nm.str(),sp,sp->class_name().c_str());
              }
           ROSE_ASSERT(sp->get_symbol_basis() != NULL);
-#if 0
-       // This outputs a message for every use of the insert function (for non function type symbols) useful for tracing through bugs
-          mprintf ("In SgSymbolTable::insert(%s,%p) into SgSymbolTable = %p = %s of scope = %p = %s sp = %p = %s sp->get_symbol_basis() = %p = %s \n",
-             nm.str(),sp,this,this->class_name().c_str(),this->get_parent(),this->get_parent()->class_name().c_str(),
-             sp,sp->class_name().c_str(),sp->get_symbol_basis(),sp->get_symbol_basis()->class_name().c_str());
-#endif
         }
 
   // DQ (3/10/2007): This is a simpler assertion equivalent to the one above but without generating any error output
      ROSE_ASSERT(isSgFunctionTypeSymbol(sp) != NULL || sp->get_symbol_basis() != NULL);
-#endif
-
-#if 0
-  // DQ (12/3/2011): Adding debugging support to output p_symbolSet.
-     mprintf ("Output the internal symbol set used for fast existence testing (p_symbolSet size = %" PRIuPTR "): \n",p_symbolSet.size());
-     int counter = 0;
-     SgNodeSet::iterator i = p_symbolSet.begin();
-     while (i != p_symbolSet.end())
-        {
-          SgSymbol* temp_symbol = isSgSymbol(*i);
-          ROSE_ASSERT(temp_symbol != NULL);
-
-          SgNode* symbolBasis = temp_symbol->get_symbol_basis();
-       // mprintf ("--- p_symbolSet[counter=%d] = %p = %s : name = %s symbolBasis = %p mangled_name = %s \n",counter,temp_symbol,temp_symbol->class_name().c_str(),temp_symbol->get_name().str(),symbolBasis,temp_symbol->get_mangled_name().str());
-          mprintf ("--- p_symbolSet[counter=%d] = %p = %s : name = %s symbolBasis = %p \n",counter,temp_symbol,temp_symbol->class_name().c_str(),temp_symbol->get_name().str(),symbolBasis);
-          i++;
-          counter++;
-        }
-     mprintf ("DONE: Output the internal symbol set used for fast existence testing (p_symbolSet size = %" PRIuPTR ") \n",p_symbolSet.size());
-
-#if 0
-  // DQ (12/3/2011): Debugging code...
-     if (p_symbolSet.size() > 1)
-        {
-          mprintf ("Exiting when there is a single symbol in p_symbolSet \n");
-          ROSE_ASSERT(false);
-        }
-#endif
 #endif
 
   // DQ (3/10/2007): Test for if the symbol exists
@@ -8507,7 +8019,6 @@ SgSymbolTable::insert ( const SgName & nm , SgSymbol *sp )
 #endif
 
   // DQ (11/20/2012): Make error checking dependent upon SYMBOL_TABLE_ERROR_CHECKING macro.
-  // #if 1
 #if SYMBOL_TABLE_ERROR_CHECKING
    // Liao 11/12/2012: Fortran numeric label symbol is different: a label "05" is stored as a numeric value of 5 so naive comparison will fail.
    // we have to handle this case specially.
@@ -8525,7 +8036,6 @@ SgSymbolTable::insert ( const SgName & nm , SgSymbol *sp )
    }
 
   // DQ (12/3/2011): Turning on symbol table checking.
-  // #if SYMBOL_TABLE_ERROR_CHECKING
   // DQ (2/14/2007): Added error checking!
      if (!special_handled && (nm != sp->get_name()))
         {
@@ -8654,14 +8164,11 @@ SgSymbolTable::remove_function_type( const SgName & name )
         {
        // DQ (5/9/2007): Moved to after the call to "p_symbolSet.erase((*i)->second);"
        // Remove the existing symbol (associated with the function declaration we will be deleting from the AST.
-       // mprintf ("Erasing symbol %p from symbol table %p in scope = %p \n",(*i)->second,this,this->get_parent());
-       // get_table()->erase(*i);
 
        // DQ (3/10/2007): Remove the symbol from the symbol set used to test for if the symbol exists
           p_symbolSet.erase((*i)->second);
 
        // Remove the existing symbol (associated with the function declaration we will be deleting from the AST.
-       // mprintf ("Erasing symbol %p from symbol table %p in scope = %p \n",(*i)->second,this,this->get_parent());
           get_table()->erase(*i);
 
           i++;
@@ -8870,15 +8377,6 @@ SgSymbolTable::find( const SgStatement* statement)
                mprintf ("Some other symbol was found (no matching variants) \n");
 #endif
              }
-
-#if 0
-             }
-            else
-             {
-               mprintf ("################## In SgSymbolTable::find( const SgStatement* statement): symbolBasis == NULL \n");
-               mprintf ("   --- statement = %p = %s = %s \n",statement,statement->class_name().c_str(),SageInterface::get_name(statement).c_str());
-             }
-#endif
           p_iterator++;
         }
      return NULL;
@@ -8896,7 +8394,6 @@ SgSymbolTable::remove( const SgSymbol* symbol )
      ROSE_ASSERT (p_table != NULL);
 
   // DQ (11/20/2012): Make error checking dependent upon SYMBOL_TABLE_ERROR_CHECKING macro.
-  // #if 1
 #if SYMBOL_TABLE_ERROR_CHECKING
   // This is an expensive linear time search of the symbol table!
      ROSE_ASSERT(exists(symbol) == true);
@@ -8923,11 +8420,9 @@ SgSymbolTable::remove( const SgSymbol* symbol )
   // while ( (it != get_table()->end()) && (elementToDelete == get_table()->end()) && ((*it).first == name) )
      while ( (it != get_table()->end()) && (elementToDelete == get_table()->end()) && get_table()->key_eq()((*it).first,name) )
         {
-       // mprintf ("Looking for symbol to remove (Make sure that we find the correct element) \n");
        // Make sure that we find the correct element
           if (it->second == symbol)
              {
-            // mprintf ("Found iterator for symbol = %p \n",symbol);
                elementToDelete = it;
              }
           it++;
@@ -9032,26 +8527,17 @@ SgSymbolTable::remove( const SgSymbol* symbol )
    ************************************************************************/
 
 // DQ (11/27/2010): Change return type to "bool".
-// DQ (2/10/2007): This is a depricated function
-// int (changed the return type)
 bool
 SgSymbolTable::find(const SgName & nm, SgSymbol *sp)
    {
      ROSE_ASSERT(p_table != NULL);
 
-  // if(!p_table)
-  //      return NULL;
-
   // DQ (5/22/2006): Made this a local variable
-  // hash_iterator p_iterator = p_table->find(nm);
      p_iterator = p_table->find(nm);
-  // while (p_iterator != p_table->end() && (*p_iterator).first == nm)
-  // while (p_iterator != p_table->end() && p_iterator->first == nm)
      while (p_iterator != p_table->end() && get_table()->key_eq()(p_iterator->first,nm))
         {
           p_name    = nm;
           p_no_name = false;
-       // if( ((SgSymbol *)(*p_iterator).second) == sp )
           if( p_iterator->second == sp )
                return true;
           p_iterator++;
@@ -9160,16 +8646,6 @@ SgSymbolTable::exists ( const SgName & nm, SgSymbol *sp ) const
       SgNamespaceSymbol* find_namespace(const SgName &);
 */
 
-#if 0
-// DQ (11/27/2010): Removed deprecated function (depricated three years ago).
-SgSymbol*
-SgSymbolTable::findany(const SgName &nm)
-   {
-     return find_any(nm);
-   }
-#endif
-
-// SgSymbol* SgSymbolTable::find_any(const SgName & nm)
 SgSymbol*
 SgSymbolTable::find_any(const SgName & nm, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateArgumentList)
    {
@@ -9210,42 +8686,13 @@ SgSymbolTable::find_enum_field(const SgName & nm)
      return find_symbol_with_type_support<SgEnumFieldSymbol>(nm,NULL,NULL,NULL,filterTemplateSymbols);
    }
 
-#if 0
-// DQ (11/27/2010): Removed deprecated function (depricated three years ago).
-SgVariableSymbol*
-SgSymbolTable::findvar(const SgName & nm)
-   {
-     return find_variable(nm);
-   }
-#endif
-
 SgVariableSymbol*
 SgSymbolTable::find_variable(const SgName & nm)
    {
   // DQ (8/21/2013): Modified to use single supporting templated lower level function.
-#if 0
-     SgVariableSymbol* s = find_symbol_support<SgVariableSymbol>(nm,NULL,NULL);
-
-  // DQ (5/23/2013): Report when we are not being strict in the symbol that we return.
-     if (isSgTemplateVariableSymbol(s) != NULL)
-        {
-          mprintf ("WARNING: returing a SgTemplateVariableSymbol from find_symbol_support<SgVariableSymbol>(nm = %s); \n",nm.str());
-        }
-
-     return s;
-#endif
      bool filterTemplateSymbols = false;
      return find_symbol_with_type_support<SgVariableSymbol>(nm,NULL,NULL,NULL,filterTemplateSymbols);
    }
-
-#if 0
-// DQ (11/27/2010): Removed deprecated function (depricated three years ago).
-SgClassSymbol*
-SgSymbolTable::findclass(const SgName &nm)
-   {
-     return find_class(nm);
-   }
-#endif
 
 SgClassSymbol*
 SgSymbolTable::find_class(const SgName & nm)
@@ -9263,22 +8710,6 @@ SgSymbolTable::find_class(const SgName & nm)
 
      return s;
    }
-
-#if 0
-// DQ (1/23/2019): This function adds the support to find the SgAlias symbols of a given name.
-// This is important in handling the viability of symbols through base classes when private base
-// class derivation is used.
-SgAliasSymbol*
-SgSymbolTable::find_alias(const SgName & nm)
-   {
-#if 0
-     mprintf ("In SgSymbolTable::find_alias(): nm = %s \n",nm.str());
-#endif
-     bool filterTemplateSymbols = false;
-     return find_symbol_with_type_support<SgAliasSymbol>(nm,NULL,NULL,NULL,filterTemplateSymbols);
-   }
-#endif
-
 
 #define DEBUG_MATCHING_TEMPLATE_ARGUMENTS 0
 
@@ -9481,17 +8912,6 @@ std::vector<SgTemplateArgument*> getTemplateParametersOrArgumentsList<SgTemplate
                break;
              }
 
-#if 0
-       // We have to support these sorts of declarations in the name qualifiaction.
-          SgClassDeclaration*              classDeclaration     = isSgClassDeclaration(declaration);
-          SgVariableDeclaration*           variableDeclaration  = isSgVariableDeclaration(declaration);
-          SgFunctionDeclaration*           functionDeclaration  = isSgFunctionDeclaration(declaration);
-          SgTypedefDeclaration*            typedefDeclaration   = isSgTypedefDeclaration(declaration);
-          SgTemplateDeclaration*           templateDeclaration  = isSgTemplateDeclaration(declaration);
-          SgEnumDeclaration*               enumDeclaration      = isSgEnumDeclaration(declaration);
-          SgNamespaceDeclarationStatement* namespaceDeclaration = isSgNamespaceDeclarationStatement(declaration);
-#endif
-
        // DQ (4/10/2017): Added case for other symbols (but we only return the empty list for this case).
           case V_SgLabelSymbol:
 
@@ -9643,16 +9063,6 @@ std::vector<SgTemplateParameter*> getTemplateParametersOrArgumentsList<SgTemplat
 #endif
                break;
              }
-#if 0
-       // We have to support these sorts of declarations in the name qualifiaction.
-          SgClassDeclaration*              classDeclaration     = isSgClassDeclaration(declaration);
-          SgVariableDeclaration*           variableDeclaration  = isSgVariableDeclaration(declaration);
-          SgFunctionDeclaration*           functionDeclaration  = isSgFunctionDeclaration(declaration);
-          SgTypedefDeclaration*            typedefDeclaration   = isSgTypedefDeclaration(declaration);
-          SgTemplateDeclaration*           templateDeclaration  = isSgTemplateDeclaration(declaration);
-          SgEnumDeclaration*               enumDeclaration      = isSgEnumDeclaration(declaration);
-          SgNamespaceDeclarationStatement* namespaceDeclaration = isSgNamespaceDeclarationStatement(declaration);
-#endif
        // DQ (8/19/2013): Added case for other symbols (but we only return the empty list for this case).
           case V_SgClassSymbol:
           case V_SgVariableSymbol:
@@ -9738,13 +9148,6 @@ SgSymbolTable::hasMatchingTemplateParametersOrArgumentsOrNoTemplateParametersOrA
              {
             // ROSE_ASSERT(templateArgumentsList->size() == templateClassInstantiation->get_templateArguments().size());
             // ROSE_ASSERT(templateArgumentsList->size() == templateArgumentsListFromSymbol.size());
-#if 0
-               if (templateParametersOrArgumentsList->size() != templateParametersOrArgumentsListFromSymbol.size())
-                  {
-                    mprintf ("NOTE: In SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(): symbol = %p = %s = %s templateParametersOrArgumentsList->size() = %" PRIuPTR " templateParametersOrArgumentsListFromSymbol.size() = %" PRIuPTR " \n",
-                            symbol,symbol->class_name().c_str(),symbol->get_name().str(),templateParametersOrArgumentsList->size(),templateParametersOrArgumentsListFromSymbol.size());
-                  }
-#endif
             // DQ (9/19/2013): I now think this should not be an error, since it would not permit the general case where this function is used.
             // ROSE_ASSERT(templateParametersOrArgumentsList->size() == templateParametersOrArgumentsListFromSymbol.size());
              }
@@ -9765,12 +9168,6 @@ SgSymbolTable::hasMatchingTemplateParametersOrArgumentsOrNoTemplateParametersOrA
                if (templateParametersOrArgumentsList->size() == templateParametersOrArgumentsListFromSymbol.size())
                   {
                  // Check if they are the same STL vector values...
-#if 0
-                 // DQ (8/10/2013): We need to get the associated template parameters or template arguments to test the STL vectors.
-                    mprintf ("Exiting in SgSymbolTable::hasMatchingTemplateParametersOrArgumentsOrNoTemplateParametersOrArguments() \n");
-                    ROSE_ASSERT(false);
-#endif
-                 // if (*templateParametersOrArgumentsList == templateClassInstantiation->get_templateArguments())
                     if (*templateParametersOrArgumentsList == templateParametersOrArgumentsListFromSymbol)
                        {
 #if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
@@ -9791,29 +9188,20 @@ SgSymbolTable::hasMatchingTemplateParametersOrArgumentsOrNoTemplateParametersOrA
 
                       // DQ (12/30/2018): I think a better name for this variable would be "is_matching_template_type_boolean".
                          bool isTemplateType = true;
-#if 0
-                      // DQ (12/30/2018): This is the original code.
-                         for (size_t i = 0; i < templateParametersOrArgumentsList->size(); i++)
-#else
                       // DQ 12/30/2018): We only want to test up to the first template parameter or argument that is not matching.
                       // Alternatively a "while" loop might be more clear.
                          for (size_t i = 0; ((isTemplateType == true) && (i < templateParametersOrArgumentsList->size())); i++)
-#endif
                             {
 #if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
                               printf("----- (*templateParametersOrArgumentsList)[%zd]        = %p = %s\n", i, (*templateParametersOrArgumentsList)[i],        (*templateParametersOrArgumentsList)[i]->unparseToString().c_str()        );
                               printf("----- templateParametersOrArgumentsListFromSymbol[%zd] = %p = %s\n", i, templateParametersOrArgumentsListFromSymbol[i], templateParametersOrArgumentsListFromSymbol[i]->unparseToString().c_str() );
 #endif
 
-                           // SgTemplateArgument* templateArgumentLocal      = isSgTemplateArgument((*templateParametersOrArgumentsList)[i]);
-                           // SgTemplateArgument* templateArgumentFromSymbol = isSgTemplateArgument(templateParametersOrArgumentsListFromSymbol[i]);
                               T* templateParameterOrArgumentLocal      = (*templateParametersOrArgumentsList)[i];
                               T* templateParameterOrArgumentFromSymbol = templateParametersOrArgumentsListFromSymbol[i];
                               ROSE_ASSERT(templateParameterOrArgumentLocal != NULL);
                               ROSE_ASSERT(templateParameterOrArgumentFromSymbol != NULL);
-#if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
-                           // mprintf ("----- templateArgumentLocal->get_argumentType() = %d templateArgumentFromSymbol->get_argumentType() = %d \n",templateParameterOrArgumentLocal->get_argumentType(),templateParameterOrArgumentFromSymbol->get_argumentType());
-#endif
+
                            // DQ (6/17/2013): The get_argumentType() can be either of these.
                            //    type_argument               = 1, /*!< type parameter */
                            //    nontype_argument            = 2, /*!< nontype parameter */
@@ -9887,10 +9275,6 @@ SgSymbolTable::hasMatchingTemplateParametersOrArgumentsOrNoTemplateParametersOrA
                                                     // DQ (8/19/2013): The possible problem here is that two SgInitializedName objects might be the same and yet be different pointers.
                                                     // So this might still not be a good enough test.  An alternative might be to double check the name and the scope as what might be
                                                     // a better test.
-#if 0
-
-                                                       printf("-----    --- initializedName objects where not the same (checking the names saved as strings in each SgInitializedName object) \n");
-#endif
                                                     // DQ (12/8/2015): Check if the names are the same (independent of the SgIntializedName object pointers).
                                                        std::string str1 = templateParameterOrArgumentLocal->get_initializedName()->get_name().str();
                                                        std::string str2 = templateParameterOrArgumentFromSymbol->get_initializedName()->get_name().str();
@@ -9929,12 +9313,6 @@ SgSymbolTable::hasMatchingTemplateParametersOrArgumentsOrNoTemplateParametersOrA
                                                                  mprintf (" --- templateParameterOrArgumentLocal->get_initializedName()->get_name()      = %s \n",templateParameterOrArgumentLocal->get_initializedName()->get_name().str());
                                                                  mprintf (" --- templateParameterOrArgumentFromSymbol->get_initializedName()->get_name() = %s \n",templateParameterOrArgumentFromSymbol->get_initializedName()->get_name().str());
 #endif
-#if 0
-                                                              // Extra information to track down the example code.
-                                                                 templateParameterOrArgumentLocal->get_initializedName()->get_file_info()->display("templateParameterOrArgumentLocal: debug");
-                                                                 templateParameterOrArgumentFromSymbol->get_initializedName()->get_file_info()->display("templateParameterOrArgumentLocal: debug");
-#endif
-
                                                                  isTemplateType = false;
                                                                }
                                                          // DQ (2/16/2014): I am not certain that the names have to match, but assert this for now as part of testing!
@@ -10003,10 +9381,6 @@ SgSymbolTable::hasMatchingTemplateParametersOrArgumentsOrNoTemplateParametersOrA
                                           // DQ (5/19/2014): Output more debugging information.
                                              if (T::is_matching_kind(*templateParameterOrArgumentLocal,*templateParameterOrArgumentFromSymbol) == true)
                                                 {
-#if 0
-                                                  mprintf ("Error: templateParameterOrArgumentLocal      = %p = %s \n",templateParameterOrArgumentLocal,templateParameterOrArgumentLocal->class_name().c_str());
-                                                  mprintf ("Error: templateParameterOrArgumentFromSymbol = %p = %s \n",templateParameterOrArgumentFromSymbol,templateParameterOrArgumentFromSymbol->class_name().c_str());
-#endif
                                                   SgTemplateArgument* templateArgumentLocal        = isSgTemplateArgument(templateParameterOrArgumentLocal);
                                                   SgTemplateArgument* templateArgumentFromSymbol   = isSgTemplateArgument(templateParameterOrArgumentFromSymbol);
                                                   SgTemplateParameter* templateParameterLocal      = isSgTemplateParameter(templateParameterOrArgumentLocal);
@@ -10014,19 +9388,11 @@ SgSymbolTable::hasMatchingTemplateParametersOrArgumentsOrNoTemplateParametersOrA
                                                   if (templateArgumentLocal != NULL)
                                                      {
                                                        ROSE_ASSERT(templateArgumentFromSymbol != NULL);
-#if 0
-                                                       mprintf ("templateArgumentLocal->get_argumentType()      = %d \n",templateArgumentLocal->get_argumentType());
-                                                       mprintf ("templateArgumentFromSymbol->get_argumentType() = %d \n",templateArgumentFromSymbol->get_argumentType());
-#endif
                                                      }
                                                     else
                                                      {
                                                        ROSE_ASSERT(templateParameterLocal != NULL);
                                                        ROSE_ASSERT(templateParameterFromSymbol != NULL);
-#if 0
-                                                       mprintf ("templateParameterLocal->get_parameterType()      = %d \n",templateParameterLocal->get_parameterType());
-                                                       mprintf ("templateParameterFromSymbol->get_parameterType() = %d \n",templateParameterFromSymbol->get_parameterType());
-#endif
                                                      }
                                                 }
                                                else
@@ -10042,9 +9408,6 @@ SgSymbolTable::hasMatchingTemplateParametersOrArgumentsOrNoTemplateParametersOrA
                                           // ROSE_ASSERT(T::is_matching_kind(*templateParameterOrArgumentLocal,*templateParameterOrArgumentFromSymbol) == false);
                                              if (T::is_matching_template_pack_expansion(*templateParameterOrArgumentLocal,*templateParameterOrArgumentFromSymbol) == true)
                                                 {
-#if 0
-                                                  mprintf ("----- SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(): This is the case of a template_pack_expansion: not yet supported (edg calls this tak_start_of_pack_expansion) \n");
-#endif
 #if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
                                                   mprintf ("----- SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(): This is the case of a template_pack_expansion: not yet supported (edg calls this tak_start_of_pack_expansion) \n");
 #endif
@@ -10140,19 +9503,6 @@ SgSymbolTable::find_class(const SgName & nm, SgTemplateArgumentPtrList* template
      return find_symbol_with_type_support<SgClassSymbol>(nm,NULL,NULL,templateArgumentsList,filterTemplateSymbols);
    }
 
-#if 0
-SgAliasSymbol*
-SgSymbolTable::find_alias(const SgName & nm, SgTemplateArgumentPtrList* templateArgumentsList)
-   {
-#if 0
-     mprintf ("In SgSymbolTable::find_alias(): nm = %s \n",nm.str());
-#endif
-
-     bool filterTemplateSymbols = false;
-     return find_symbol_with_type_support<SgAliasSymbol>(nm,NULL,NULL,templateArgumentsList,filterTemplateSymbols);
-   }
-#endif
-
 SgNonrealSymbol*
 SgSymbolTable::find_nonreal(const SgName & nm, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateArgumentsList)
    {
@@ -10160,16 +9510,6 @@ SgSymbolTable::find_nonreal(const SgName & nm, SgTemplateParameterPtrList* templ
      return find_symbol_with_type_support<SgNonrealSymbol>(nm,NULL,templateParameterList,templateArgumentsList,filterTemplateSymbols);
    }
 
-
-
-#if 0
-// DQ (11/27/2010): Removed deprecated function (depricated three years ago).
-SgFunctionTypeSymbol*
-SgSymbolTable::findfunctype(const SgName &nm)
-   {
-     return find_function_type(nm);
-   }
-#endif
 
 SgFunctionTypeSymbol*
 SgSymbolTable::find_function_type(const SgName & nm)
@@ -10206,16 +9546,6 @@ SgSymbolTable::find_namespace ( const SgName & nm )
      bool filterTemplateSymbols = false;
      return find_symbol_with_type_support<SgNamespaceSymbol>(nm,NULL,NULL,NULL,filterTemplateSymbols);
    }
-
-#if 0
-// DQ (11/27/2010): Removed deprecated function (depricated three years ago).
-SgFunctionSymbol*
-SgSymbolTable::findfunc(const SgName & nm, const SgType* t)
-   {
-     return find_function(nm,t);
-   }
-#endif
-
 
 // SgFunctionSymbol* SgSymbolTable::find_function (const SgName & nm, const SgType* t)
 SgFunctionSymbol*
@@ -10261,13 +9591,6 @@ SgSymbolTable::find_nontemplate_function(const SgName& nm, const SgType* t, SgTe
 SgTemplateFunctionSymbol*
 SgSymbolTable::find_template_function(const SgName& nm, const SgType* t, SgTemplateParameterPtrList* templateParameterList)
    {
-  // DQ (8/22/2013): We need to allow for functions to be searched for by name if the type is unavailable.
-  // ROSE_ASSERT(t != NULL);
-
-#if 0
-     mprintf ("In SgSymbolTable::find_template_function(): nm = %s t = %p templateParameterList = %p size = %zu \n",nm.str(),t,templateParameterList,templateParameterList->size());
-#endif
-
      bool filterTemplateSymbols = false;
      SgTemplateFunctionSymbol *s = find_symbol_with_type_support<SgTemplateFunctionSymbol>(nm,t,templateParameterList,NULL,filterTemplateSymbols);
 
@@ -10277,10 +9600,6 @@ SgSymbolTable::find_template_function(const SgName& nm, const SgType* t, SgTempl
 SgTemplateVariableSymbol*
 SgSymbolTable::find_template_variable(const SgName& nm, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateArgumentsList)
    {
-#if 0
-     mprintf ("In SgSymbolTable::find_template_variable(): nm = %s templateParameterList = %p size = %zu \n",nm.str(),templateParameterList,templateParameterList->size());
-#endif
-
      bool filterTemplateSymbols = false;
      SgTemplateVariableSymbol *s = find_symbol_with_type_support<SgTemplateVariableSymbol>(nm,NULL,templateParameterList,templateArgumentsList,filterTemplateSymbols);
 
@@ -10295,29 +9614,15 @@ SgSymbolTable::find_nontemplate_member_function(const SgName& nm, const SgType* 
    {
      SgMemberFunctionSymbol *s = NULL;
 
-  // DQ (8/22/2013): We need to allow for functions to be searched for by name if the type is unavailable.
-  // ROSE_ASSERT(t != NULL);
-
      bool filterTemplateSymbols = true;
      s = find_symbol_with_type_support<SgMemberFunctionSymbol>(nm,t,NULL,templateArgumentList,filterTemplateSymbols);
-
-  // DQ (8/22/2013): We have to allow this function to return either SgTemplateFunctionSymbol or
-  // SgTemplateMemberFunctionSymbol when not enough information (type == NULL or templateArgumentList == NULL).
-  // DQ (8/13/2013): We should not be returning a template symbol from this function (verify this).
-  // ROSE_ASSERT(isSgTemplateFunctionSymbol(s) == NULL && isSgTemplateMemberFunctionSymbol(s) == NULL);
 
      return s;
    }
 
-
-// SgTemplateMemberFunctionSymbol* SgSymbolTable::find_template_member_function(const SgName& nm, const SgType* t)
-// SgTemplateMemberFunctionSymbol* SgSymbolTable::find_template_member_function(const SgName& nm, const SgType* t, SgTemplateParameterPtrList* templateList, SgTemplateArgumentPtrList* templateSpecializationArgumentList)
 SgTemplateMemberFunctionSymbol*
 SgSymbolTable::find_template_member_function(const SgName& nm, const SgType* t, SgTemplateParameterPtrList* templateParameterList)
    {
-  // DQ (8/22/2013): We need to allow for functions to be searched for by name if the type is unavailable.
-  // ROSE_ASSERT(t != NULL);
-
      bool filterTemplateSymbols = false;
      SgTemplateMemberFunctionSymbol *s = find_symbol_with_type_support<SgTemplateMemberFunctionSymbol>(nm,t,templateParameterList,NULL,filterTemplateSymbols);
 
@@ -10326,7 +9631,6 @@ SgSymbolTable::find_template_member_function(const SgName& nm, const SgType* t, 
 
 
 // DQ (12/26/2011): Adding revised support for template declarations in the AST.
-// SgClassSymbol* SgSymbolTable::find_nontemplate_class (const SgName & nm)
 SgClassSymbol*
 SgSymbolTable::find_nontemplate_class (const SgName & nm, SgTemplateArgumentPtrList* templateArgumentsList)
    {
@@ -10375,17 +9679,6 @@ SgSymbolTable::find_template_typedef (const SgName & nm)
      return s;
    }
 
-
-#if 0
-// DQ (11/27/2010): Removed deprecated function (depricated three years ago).
-SgFunctionSymbol*
-SgSymbolTable::findfunc(const SgName & nm)
-   {
-     return find_function(nm);
-   }
-#endif
-
-
 SgFunctionSymbol*
 SgSymbolTable::find_function(const SgName & nm)
    {
@@ -10399,29 +9692,6 @@ SgSymbolTable::find_function(const SgName & nm)
 
      return s;
    }
-
-#if 0
-// DQ (8/21/2013): It might be a mistake to remove this symbol lookup function since there may still be
-// some SgTemplateSymbol IR nodes to handle unusual template cases.  This neds to be checked.
-
-// SgTemplateSymbol* SgSymbolTable::find_template(const SgName & nm)
-SgTemplateSymbol*
-SgSymbolTable::find_template(const SgName & nm, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateSpecializationArgumentList)
-   {
-  // DQ (8/13/2013): Since function templates, member function templates, and class templates are symbols not derived from SgTemplateSymbol,
-  // this function is not very useful since it returns a SgTemplateSymbol.  This was a part of the older pre-EDG4x API.
-
-  // DQ (8/12/2013): I think this is the wrong function to call.
-     mprintf ("ERROR: This function is not specific enough, please select find_template_class(), or find_template_function(), or find_template_member_function() \n");
-     ROSE_ASSERT(false);
-
-  // DQ (5/20/2013): New use of template function to abstract the specific type and refactor support for symbol table handling.
-  // return find_symbol_support<SgTemplateSymbol>(nm);
-     SgTemplateSymbol* s = find_symbol_support<SgTemplateSymbol>(nm,templateParameterList,templateSpecializationArgumentList);
-
-     return s;
-   }
-#endif
 
 #define DEBUG_TEMPLATE_PARAMETERS_AND_ARGUMENTS_ERROR_CHECKING 0
 
@@ -10505,48 +9775,6 @@ symbolFilter(ReturnSymbolType* symbol, SgTemplateParameterPtrList* templateParam
           mprintf ("   --- V_SgTemplateFunctionSymbol = %d V_SgTemplateMemberFunctionSymbol = %d V_SgTemplateClassSymbol = %d \n",
                (int)V_SgTemplateFunctionSymbol,(int)V_SgTemplateMemberFunctionSymbol,(int)V_SgTemplateClassSymbol);
           mprintf ("   --- filterTemplateSymbols = %s \n",filterTemplateSymbols ? "true" : "false");
-#if 0
-       // Not all language constructs associated with a symbol are a SgDeclarationStatement.
-       // SgDeclarationStatement* declaration = symbol->get_declaration();
-          SgLocatedNode* declaration = symbol->get_declaration();
-
-          mprintf ("   --- declaration = %p \n",declaration);
-
-          if (declaration != NULL)
-             {
-               mprintf ("   --- declaration = %p = %s \n",declaration,declaration->class_name().c_str());
-
-            // The source positions is not always set (e.g. during AST construction).
-               if (declaration->get_file_info() != NULL)
-                  {
-                    SgStatement* statement = isSgStatement(declaration);
-                    if (statement != NULL)
-                       {
-                         ROSE_ASSERT(statement->get_file_info() != NULL);
-                         statement->get_file_info()->display("symbol declaration location (statement)");
-                       }
-                      else
-                       {
-                         if (declaration->get_file_info() != NULL)
-                            {
-                              declaration->get_file_info()->display("symbol declaration location (non-statement)");
-                            }
-                           else
-                            {
-                              mprintf ("WARNING: In symbolFilter(): statement == NULL: declaration->get_file_info() == NULL \n");
-                            }
-                       }
-                  }
-                 else
-                  {
-                    mprintf ("WARNING: In symbolFilter(): declaration->get_file_info() == NULL \n");
-                  }
-             }
-            else
-             {
-               mprintf ("WARNING: In symbolFilter(): declaration == NULL \n");
-             }
-#endif
 #endif
 
           if (templateParameterList != NULL)
@@ -10648,19 +9876,8 @@ isSubset(const std::vector<SgNode*>& a_vector, const std::set<SgNode*>& b_set)
      for (std::vector<SgNode*>::const_iterator i = a_vector.begin(); i != a_vector.end(); i++)
         {
           bool found = false;
-#if 0
-          for (std::set<SgNode*>::const_iterator j = b_set.begin(); j != b_set.end(); j++)
-             {
-               if (*i == *j)
-                  {
-                    found = true;
-                    break;
-                  }
-             }
-#else
           std::set<SgNode*>::const_iterator j = find(b_set.begin(),b_set.end(),*i);
           found = (j != b_set.end());
-#endif
 #if DEBUG_IS_SUBSET
           mprintf ("In isSubset(): loop: found = %s *i = %p = %s \n",found ? "true" : "false",*i,(*i)->class_name().c_str());
 #endif
@@ -10789,41 +10006,11 @@ ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, con
        // One performance alternative would be to have a specialization of this template for the general
        // case of SgSymbol, but that should be considered later when we are sure that this is the final
        // working implementation (so we will leave the code it is most re-factored state for now).
-       // if (isSgAliasSymbol(symbol) != NULL)
           if ( (symbol != NULL) && (symbol->variantT() == (VariantT)SgAliasSymbol::static_variant) )
              {
                symbol = NULL;
              }
 
-#if 0
-       // DQ (5/20/2013): Note that this is somewhat expensive and redundant, just checking.
-          if (symbol != NULL && get_table()->key_eq()(symbol->get_name(),nm) == false)
-             {
-            // I think that the function name is provided in mangled from and the name from the symbol would be in non-mangled form.
-               mprintf ("Note: In find_symbol_with_type_support(): symbol->get_name() != nm: symbol->get_name() = %s nm = %s \n",symbol->get_name().str(),nm.str());
-             }
-#endif
-#if 0
-       // DQ (8/21/2013): This fails for the case of Fortran labels that are numeric and converted to a numeric
-       // value and thus loose leading 0's.  This function was not previously used for labels so this was not
-       // noticed.  An example is in:
-       //    --- tests/nonsmoke/functional/CompileTests/Fortran_tests/gfortranTestSuite/gfortran.dg/endfile_2.f90
-       // where the numeric label "0023" is used but stored in the SgLabelDeclaration as a numeric value "23"
-       // and thus the string "0023" fails to match with the string "23" in this assertion.  The fundamental
-       // problem is that we ask the symbol for the name and this causes the name to be computed from the
-       // numeric label.  Basically this is a problem that might best be solved by not tryig to compare
-       // the string generated from the numeric label to the name generated in the fortran frontend using
-       // the text string for the label.
-
-       // This may be an expensive assert.
-          ROSE_ASSERT(symbol == NULL || get_table()->key_eq()(symbol->get_name(),nm) == true);
-#endif
-
-       // if (isSgFunctionSymbol(p_iterator->second) && (*p_iterator).first==nm)
-       // if (isSgFunctionSymbol(p_iterator->second) && get_table()->key_eq()((*p_iterator).first,nm))
-       // if (symbol != NULL && get_table()->key_eq()((*p_iterator).first,nm))
-       // if ( (symbol != NULL) && (symbol->get_declaration()->get_type() == type) && get_table()->key_eq()(sym->get_name(),nm))
-       // if ( (symbol != NULL) && (symbol->get_declaration()->get_type() == type) )
           if ( (symbol != NULL) && ( (type == NULL) || ( (type != NULL) && (getTypeOfDeclaration(symbol) == type) ) ) )
              {
                p_name    = nm;
@@ -10837,22 +10024,16 @@ ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, con
             // Note: We are handling the template arguments into the hasMatchingTemplateArgumentsOrNoTemplateArguments()
             // as template specialization arguments which may be incorrect.
 
-            // mprintf ("We are handling the template arguments into the hasMatchingTemplateArgumentsOrNoTemplateArguments() as template specialization arguments which may be incorrect \n");
-
-            // return symbol;
             // DQ (8/22/2012): If we have template arguments then we have a chance to disambiguate SgTemplateInstantiationDecl IR nodes based
             // on the arguments which would otherwise require qulified names (which are difficult to robustly support using as the AST is
             // being constructed).
-            // break;
                if (hasMatchingTemplateParametersArgumentsOrNoTemplateParametersArguments(templateParameterList,templateArgumentList,symbol) == true)
                   {
-                 // return classSymbol;
 #if DEBUG_FIND_SYMBOL_WITH_TEMPLATE_ARGUMENTS
                     mprintf ("In SgSymbolTable::find_symbol_with_type_support(): Found a match: return symbol = %p = %s nm = %s \n",symbol,symbol->class_name().c_str(),nm.str());
 #endif
                  // DQ (8/8/2013): I think we should return the symbol rather than break.
                  // DQ (9/9/2012): We could either call "break" to get out of the loop, or directly "return s".
-                 // break;
                     return symbol;
                   }
                  else
@@ -10873,8 +10054,6 @@ ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, con
             // that is possible within the "use" statement.
                if ( p_iterator->second->variantT() == V_SgRenameSymbol)
                   {
-                 // mprintf ("Found a SgRenameSymbol: p_iterator->second->class_name() = %s p_iterator->second->get_name() = %s \n",p_iterator->second->class_name().c_str(),p_iterator->second->get_name().str());
-
                     p_name    = nm;
                     p_no_name = false;
                     SgRenameSymbol* renameSymbol = isSgRenameSymbol(p_iterator->second);
@@ -11068,9 +10247,6 @@ ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, con
           SgClassDefinition* classDefinition = isSgClassDefinition(parentNode);
           if (classDefinition != NULL)
              {
-#if 0
-               mprintf ("Found SgClassDefinition as parent of SgSymbolTable \n");
-#endif
                SgBaseClassPtrList & base_classes = classDefinition->get_inheritances();
 
                SgBaseClassPtrList::iterator i = base_classes.begin();
@@ -11080,9 +10256,6 @@ ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, con
                     ROSE_ASSERT(baseClass != NULL);
                     SgClassDeclaration* baseClassDeclaration = baseClass->get_base_class();
                     ROSE_ASSERT(baseClassDeclaration != NULL);
-#if 0
-                    mprintf ("   --- baseClassDeclaration = %p = %s = %s \n",baseClassDeclaration,baseClassDeclaration->class_name().c_str(),baseClassDeclaration->get_name().str());
-#endif
                     SgClassDeclaration* baseClassDeclaration_defining = isSgClassDeclaration(baseClassDeclaration->get_definingDeclaration());
 
                  // DQ: Note that we have to implement conditional lookup based on base class permissions, plus the access permissions of base class members.
@@ -11096,13 +10269,6 @@ ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, con
                       // DQ (4/14/2017): Added explicit support to filter symbols associated with templates.
                       // Make a recursive call on the symbol table associated with the base class.
                          ReturnType* symbol = baseClassDefinition->get_symbol_table()->find_symbol_with_type_support<ReturnType>(nm,type,templateParameterList,templateArgumentList,filterTemplateSymbols);
-#if 0
-                         mprintf ("   --- baseClassDefinition = %p symbol = %p \n",baseClassDefinition,symbol);
-#endif
-#if 0
-                         mprintf ("Exiting as a test! \n");
-                         ROSE_ASSERT(false);
-#endif
                          if (symbol != NULL)
                             {
                               return symbol;
@@ -11110,15 +10276,7 @@ ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, con
                        }
 
                     i++;
-#if 0
-                    mprintf ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
-#endif
                   }
-#if 0
-               mprintf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
-#endif
              }
         }
 #endif
@@ -11142,16 +10300,6 @@ ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, con
       SgNamespaceSymbol* find_namespace();
 */
 
-#if 0
-// DQ (11/27/2010): Removed deprecated function (depricated three years ago).
-// DQ (9/7/2006): Previously removed functionality, restored by request from Beata at ANL.
-SgSymbol*
-SgSymbolTable::findfirstany()
-   {
-     return find_any();
-   }
-#endif
-
 SgSymbol*
 SgSymbolTable::find_any()
    {
@@ -11163,16 +10311,6 @@ SgSymbolTable::find_any()
 
      return NULL;
    }
-
-#if 0
-// DQ (11/27/2010): Removed deprecated function (depricated three years ago).
-// DQ (9/7/2006): Previously removed functionality, restored by request from Beata at ANL.
-SgVariableSymbol*
-SgSymbolTable::findfirstvar()
-   {
-     return find_variable();
-   }
-#endif
 
 SgVariableSymbol*
 SgSymbolTable::find_variable()
@@ -11192,16 +10330,6 @@ SgSymbolTable::find_variable()
 
      return NULL;
    }
-
-#if 0
-// DQ (11/27/2010): Removed deprecated function (depricated three years ago).
-// DQ (1/30/2007): Added these back into ROSE.
-SgClassSymbol*
-SgSymbolTable::findfirstclass()
-   {
-     return find_class();
-   }
-#endif
 
 SgClassSymbol*
 SgSymbolTable::find_class()
@@ -11224,16 +10352,6 @@ SgSymbolTable::find_class()
      return NULL;
    }
 
-#if 0
-// DQ (11/27/2010): Removed deprecated function (depricated three years ago).
-// DQ (1/30/2007): Added these back into ROSE.
-SgFunctionSymbol*
-SgSymbolTable::findfirstfunction()
-   {
-     return find_function();
-   }
-#endif
-
 SgFunctionSymbol*
 SgSymbolTable::find_function()
    {
@@ -11254,33 +10372,6 @@ SgSymbolTable::find_function()
 
      return NULL;
    }
-
-#if 0
-// DQ (1/30/2007): Added to make the interface consistant
-// This function is not required since SgFunctionTypeSymbols
-// are stored into their own function table.  So this is
-// equivalent to STL function "begin()".
-SgFunctionSymbol*
-SgSymbolTable::find_function_type()
-   {
-     ROSE_ASSERT(p_table != NULL);
-     if(p_table)
-        {
-          p_iterator = p_table->begin();
-          p_no_name  = true;
-          while(p_iterator != p_table->end())
-             {
-            // if(isSgFunctionSymbol((*p_iterator).second))
-            //      return ((SgFunctionSymbol *)(*p_iterator).second);
-               if (p_iterator->second->variantT() == V_SgFunctionTypeSymbol)
-                    return (SgFunctionTypeSymbol *) p_iterator->second;
-               p_iterator++;
-             }
-        }
-
-     return NULL;
-   }
-#endif
 
 SgTypedefSymbol*
 SgSymbolTable::find_typedef()
@@ -11423,16 +10514,6 @@ SgSymbolTable::find_template()
       SgNamespaceSymbol* next_namespace();
 */
 
-#if 0
-// DQ (11/27/2010): Removed deprecated function (depricated three years ago).
-// DQ (9/7/2006): Previously removed functionality, restored by request from Beata at ANL.
-SgSymbol*
-SgSymbolTable::nextany()
-   {
-     return next_any();
-   }
-#endif
-
 SgSymbol*
 SgSymbolTable::next_any()
    {
@@ -11453,16 +10534,6 @@ SgSymbolTable::next_any()
 
      return NULL;
    }
-
-#if 0
-// DQ (11/27/2010): Removed deprecated function (depricated three years ago).
-// DQ (9/7/2006): Previously removed functionality, restored by request from Beata at ANL.
-SgVariableSymbol*
-SgSymbolTable::nextvar()
-   {
-     return next_variable();
-   }
-#endif
 
 SgVariableSymbol*
 SgSymbolTable::next_variable()
@@ -11485,16 +10556,6 @@ SgSymbolTable::next_variable()
      return NULL;
    }
 
-#if 0
-// DQ (11/27/2010): Removed deprecated function (depricated three years ago).
-// DQ (1/30/2007): Added these back into ROSE.
-SgClassSymbol*
-SgSymbolTable::nextclass()
-   {
-     return next_class();
-   }
-#endif
-
 SgClassSymbol*
 SgSymbolTable::next_class()
    {
@@ -11515,16 +10576,6 @@ SgSymbolTable::next_class()
 
      return NULL;
    }
-
-#if 0
-// DQ (11/27/2010): Removed deprecated function (depricated three years ago).
-// DQ (1/30/2007): Added these back into ROSE.
-SgFunctionSymbol*
-SgSymbolTable::nextfunc()
-   {
-     return next_function();
-   }
-#endif
 
 SgFunctionSymbol*
 SgSymbolTable::next_function()
@@ -11676,26 +10727,6 @@ SgSymbolTable::next_template()
      return NULL;
    }
 
-
-#if 0
-// DQ (11/27/2010): Removed deprecated function (depricated three years ago).
-// DQ (1/30/2007): Added these back into ROSE.
-SgSymbol*
-SgSymbolTable::operator[](const SgName & nm)
-   {
-     ROSE_ASSERT(p_table != NULL);
-     if (p_table != NULL)
-        {
-       // AJ (10/21/2004): Adjusted implementation to use new STL hash map interface
-       // SgSymbolHashBase::iterator i=p_table->find(nm);
-          hash_iterator i=p_table->find(nm);
-          if (i != p_table->end())
-               return (*i).second;
-        }
-
-     return NULL;
-   }
-#endif
 
 // AJ (10/21/2004): Adjusted implementation to use new STL hash map interface
 int
@@ -12038,14 +11069,6 @@ SgBaseClass::post_construction_initialization()
      p_global_qualification_required = false;
    }
 
-#if 0
-// This function should be autogenerated
-SgBaseClass::SgBaseClass(int specifier ,SgClassDeclaration* ptr, int dir)
-   : p_specifier(specifier), p_ptr(ptr), p_isDirectBaseClass(dir)
-   {
-   }
-#endif
-
 SgBaseClass::SgBaseClass(const SgBaseClass& X)
    {
   // these are the old names
@@ -12067,14 +11090,6 @@ SgBaseClass::SgBaseClass(const SgBaseClass& X)
      p_type_elaboration_required     = X.p_type_elaboration_required;
      p_global_qualification_required = X.p_global_qualification_required;
    }
-
-#if 0
-// generated automatically
-SgBaseClass::~SgBaseClass()
-   {
-  /* delete p_ptr; */
-   }
-#endif
 
 SgBaseClass &
 SgBaseClass::operator= (const SgBaseClass & X)
@@ -12102,23 +11117,6 @@ SgBaseClass::operator= (const SgBaseClass & X)
      return *this;
    }
 
-#if 0
-// These are automatically generated now!
-int
-SgBaseClass::get_base_specifier() const
-   { return p_specifier; }
-
-SgClassDeclaration*
-SgBaseClass::get_base_class() const
-   { return p_ptr; }
-#endif
-
-#if 0
-// DQ: I don't think this is used anywhere
-SgClassDeclaration*
-replace_base_class(SgClassDeclaration *);
-#endif
-
 // I assume these relational member functions are added to permit use with STL
 bool
 SgBaseClass::operator== (const SgBaseClass& ) const
@@ -12127,17 +11125,6 @@ SgBaseClass::operator== (const SgBaseClass& ) const
 bool
 SgBaseClass::operator< (const SgBaseClass&) const
    { return false; }
-
-#if 0
-// DQ (1/21/2019): This should be an automatically generated access function.
-// DQ (4/25/2004): Part of new modifier interface
-SgBaseClassModifier &
-SgBaseClass::get_baseClassModifier()
-   {
-     ROSE_ASSERT ( p_baseClassModifier != NULL);
-     return *p_baseClassModifier;
-   }
-#endif
 
 SgName
 SgBaseClass::get_qualified_name_prefix() const
@@ -12446,8 +11433,6 @@ SgInitializedName::post_construction_initialization()
   // JJW 10-26-2007 ensure that this object is not on the stack
      preventConstructionOnStack(this);
 
-  // mprintf ("In SgInitializedName::post_construction_initialization() this = %p \n",this);
-
      p_storageModifier = new SgStorageModifier();
      assert (p_storageModifier != NULL);
      p_storageModifier->setDefault();
@@ -12466,7 +11451,6 @@ SgInitializedName::post_construction_initialization()
   // DQ (12/17/2006): Added semantics that constructors (which are structural) should set the parents of their inputs.
      if (p_initptr != NULL)
         {
-       // mprintf ("In SgInitializedName::post_construction_initialization(): resetting parent of valid initializer (p_initptr = %p) \n",p_initptr);
           p_initptr->set_parent(this);
         }
 
