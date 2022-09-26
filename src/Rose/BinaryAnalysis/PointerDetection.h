@@ -156,27 +156,28 @@ struct PointerDescriptor {
         WRITE                                           /**< Pointer is used to write to memory. */
     };
 
-    /** Description of accessing a pointer variable's value. */
+    /** Description of accessing memory. */
     struct Access {
-        rose_addr_t insnVa;                             /**< Instruction location where pointer variable is accessed. */
-        Direction direction;                            /**< Whether pointer's value is read or written. */
-        SymbolicExpression::Ptr pointerValue;           /**< Value of the pointer. */
+        rose_addr_t insnVa;                             /**< Instruction location where memory is accessed. */
+        Direction direction;                            /**< Whether memory is read or written. */
+        SymbolicExpression::Ptr value;                  /**< Value read or written. */
 
-        Access(rose_addr_t insnVa, Direction direction, const SymbolicExpression::Ptr &pointerValue)
-            : insnVa(insnVa), direction(direction), pointerValue(pointerValue) {}
+        Access(rose_addr_t insnVa, Direction direction, const SymbolicExpression::Ptr &value)
+            : insnVa(insnVa), direction(direction), value(value) {}
 
         bool operator<(const Access &other) const {
             if (insnVa != other.insnVa)
                 return insnVa < other.insnVa;
             if (direction != other.direction)
                 return direction < other.direction;
-            return pointerValue->hash() < other.pointerValue->hash();
+            return value->hash() < other.value->hash();
         }
     };
 
     SymbolicExpression::Ptr pointerVa;                  /**< Symbolic address where pointer variable is stored. */
     size_t nBits;                                       /**< Width of pointer in bits. */
-    std::set<Access> pointerAccesses;                   /**< Where ptr variable's value was accessed. */
+    std::set<Access> pointerAccesses;                   /**< Where pointer variable's value was accessed. */
+    std::set<Access> dereferences;                      /**< Where pointer was dereferenced. */
 
     PointerDescriptor(const SymbolicExpression::Ptr &pointerVa, size_t nBits, rose_addr_t insnVa, Direction dir,
                       const SymbolicExpression::Ptr &pointerValue)

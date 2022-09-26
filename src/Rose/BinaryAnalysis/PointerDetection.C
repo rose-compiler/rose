@@ -361,6 +361,67 @@ Analysis::conditionallySavePointer(const BaseSemantics::SValue::Ptr &ptrRValue_,
     ptrRValue->depthFirstTraversal(visitor);
 }
 
+static bool
+contains(const SymbolicExpression::Ptr &haystack, const SymbolicExpression::Ptr &needle) {
+    struct Visitor: SymbolicExpression::Visitor {
+        bool found = false;
+        SymbolicExpression::Ptr needle;
+
+        Visitor(const SymbolicExpression::Ptr &needle)
+            : needle(needle) {}
+
+        virtual SymbolicExpression::VisitAction preVisit(const SymbolicExpression::Ptr &node) {
+            if (node->hash() == needle->hash()) {
+                found = true;
+                return SymbolicExpression::TRUNCATE;
+            } else {
+                return SymbolicExpression::CONTINUE;
+            }
+        }
+
+        virtual SymbolicExpression::VisitAction postVisit(const SymbolicExpression::Ptr&) {
+            return SymbolicExpression::CONTINUE;
+        }
+    };
+
+    Visitor visitor(needle);
+    haystack->depthFirstTraversal(visitor);
+    return visitor.found;
+}
+
+static void
+discoverDereferences(PointerDescriptors &pointers, const MemoryTransferMap &transferMap) {
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+    SAWYER_MESG(debug) <<"finding pointer dereferences\n";
+    for (PointerDescriptor &pointer: pointers) {
+        SAWYER_MESG(debug) <<"  finding dereferences for pointer stored at " <<*pointer.pointerVa <<"\n";
+
+        // Find all the values this pointer can have; i.e., all the addresses to which this pointer can point.
+        std::set<SymbolicExpression::Ptr, SymbolicLessp> pointerValues;
+        for (const PointerDescriptor::Access &access: pointer.pointerAccesses) {
+            SAWYER_MESG(debug) <<"    at " <<StringUtility::addrToString(access.insnVa)
+                               <<" pointer value = " <<*access.value <<"\n";
+            pointerValues.insert(access.value);
+        }
+
+        // Now find all the memory accesses that have the pointer value as an address.
+        for (const SymbolicExpression::Ptr &pointerValue: pointerValues) {
+            for (const MemoryTransferMap::Node &node: transferMap.nodes()) {
+                for (const MemoryTransfer &xfer: node.value()) {
+                    if (contains(xfer.memoryVa, pointerValue)) {
+                        SAWYER_MESG(debug) <<"    at " <<StringUtility::addrToString(xfer.insnVa)
+                                           <<" there is a " <<(PointerDescriptor::READ==xfer.direction?"read":"write") <<"-dereference "
+                                           <<" using pointer value " <<*pointerValue
+                                           <<" for memory address " <<*xfer.memoryVa
+                                           <<" having value " <<*node.key() <<"\n";
+                        pointer.dereferences.insert(PointerDescriptor::Access(xfer.insnVa, xfer.direction, node.key()));
+                    }
+                }
+            }
+        }
+    }
+}
+
 void
 Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
     mlog[DEBUG] <<"analyzeFunction(" <<function->printableName() <<")\n";
@@ -420,11 +481,17 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
         dfEngine.insertStartingVertex(startVertexId, initialState_);
         while (dfEngine.runOneIteration())
             ++progress;
+    } catch (const InstructionSemantics::BaseSemantics::Exception &e) {
+        mlog[WARN] <<e.what() <<"\n";
+        converged = false;
     } catch (const DataFlow::NotConverging &e) {
         mlog[WARN] <<e.what() <<"\n";
         converged = false;                              // didn't converge, so just use what we have
     }
     finalState_ = dfEngine.getInitialState(returnVertex->id());
+    if (!finalState_)
+        return;
+
     State::Ptr finalState = State::promote(finalState_);
     SAWYER_MESG(mlog[DEBUG]) <<"  " <<(converged ? "data-flow converged" : "DATA-FLOW DID NOT CONVERGE") <<"\n";
 
@@ -444,33 +511,36 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     SAWYER_MESG(mlog[DEBUG]) <<"  potential data pointers:\n";
     Sawyer::Container::Set<SymbolicExpression::Hash> addrSeen;
     for (size_t vertexId = 0; vertexId < dfCfg.nVertices(); ++vertexId) {
-        BaseSemantics::State::Ptr state = dfEngine.getFinalState(vertexId);
-        auto memState = BaseSemantics::MemoryCellState::promote(state->memoryState());
-        for (const BaseSemantics::MemoryCell::Ptr &cell: memState->allCells())
-            conditionallySavePointer(cell->address(), addrSeen, dataPointers_);
+        if (BaseSemantics::State::Ptr state = dfEngine.getFinalState(vertexId)) {
+            auto memState = BaseSemantics::MemoryCellState::promote(state->memoryState());
+            for (const BaseSemantics::MemoryCell::Ptr &cell: memState->allCells())
+                conditionallySavePointer(cell->address(), addrSeen, dataPointers_);
+        }
     }
+    discoverDereferences(dataPointers_, finalState->memoryTransfers());
 
     // Find code pointers
     SAWYER_MESG(mlog[DEBUG]) <<"  potential code pointers:\n";
     addrSeen.clear();
     const RegisterDescriptor IP = partitioner.instructionProvider().instructionPointerRegister();
     for (size_t vertexId = 0; vertexId < dfCfg.nVertices(); ++vertexId) {
-        BaseSemantics::State::Ptr state = dfEngine.getFinalState(vertexId);
-        SymbolicSemantics::SValue::Ptr ip =
-            SymbolicSemantics::SValue::promote(state->peekRegister(IP, ops->undefined_(IP.nBits()), ops.get()));
-        SymbolicExpression::Ptr ipExpr = ip->get_expression();
-        if (!addrSeen.exists(ipExpr->hash())) {
-            bool isSignificant = false;
-            if (!settings_.ignoreConstIp) {
-                isSignificant = true;
-            } else if (ipExpr->isInteriorNode() && ipExpr->isInteriorNode()->getOperator() == SymbolicExpression::OP_ITE) {
-                isSignificant = !ipExpr->isInteriorNode()->child(1)->isIntegerConstant() ||
-                                !ipExpr->isInteriorNode()->child(2)->isIntegerConstant();
-            } else if (!ipExpr->isIntegerConstant()) {
-                isSignificant = true;
+        if (BaseSemantics::State::Ptr state = dfEngine.getFinalState(vertexId)) {
+            SymbolicSemantics::SValue::Ptr ip =
+                SymbolicSemantics::SValue::promote(state->peekRegister(IP, ops->undefined_(IP.nBits()), ops.get()));
+            SymbolicExpression::Ptr ipExpr = ip->get_expression();
+            if (!addrSeen.exists(ipExpr->hash())) {
+                bool isSignificant = false;
+                if (!settings_.ignoreConstIp) {
+                    isSignificant = true;
+                } else if (ipExpr->isInteriorNode() && ipExpr->isInteriorNode()->getOperator() == SymbolicExpression::OP_ITE) {
+                    isSignificant = !ipExpr->isInteriorNode()->child(1)->isIntegerConstant() ||
+                                    !ipExpr->isInteriorNode()->child(2)->isIntegerConstant();
+                } else if (!ipExpr->isIntegerConstant()) {
+                    isSignificant = true;
+                }
+                if (isSignificant)
+                    conditionallySavePointer(ip, addrSeen, codePointers_);
             }
-            if (isSignificant)
-                conditionallySavePointer(ip, addrSeen, codePointers_);
         }
     }
 
