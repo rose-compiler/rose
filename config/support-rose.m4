@@ -2043,9 +2043,6 @@ projects/compass/tools/compass/tests/Makefile
 projects/compass/tools/compassVerifier/Makefile
 projects/compass/tools/sampleCompassSubset/Makefile
 projects/dsl_infrastructure/Makefile
-projects/extractMPISkeleton/Makefile
-projects/extractMPISkeleton/src/Makefile
-projects/extractMPISkeleton/tests/Makefile
 projects/fuse/Makefile
 projects/fuse/src/Makefile
 projects/fuse/tests/Makefile

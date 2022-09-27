@@ -27,7 +27,7 @@ computePositionInRowVector(uint64_t valid)
 /// computes number of bits required to store the table identifier
 ///   ii.24.2.6
 uint64_t
-calcTableIdentifierSize(const std::vector<uint8_t>& tables)
+calcTableIdentifierSize(const std::vector<SgAsmCilMetadataHeap::TableKind>& tables)
 {
   const size_t tblsz = tables.size();
   ROSE_ASSERT(tblsz > 0);
@@ -40,14 +40,14 @@ calcTableIdentifierSize(const std::vector<uint8_t>& tables)
 uint32_t
 calcMaxTableSize( const std::vector<uint32_t>& numberOfRows,
                   const std::vector<int8_t>& posInRowVector,
-                  const std::vector<uint8_t>& tables
+                  const std::vector<SgAsmCilMetadataHeap::TableKind>& tables
                 )
 {
   uint32_t max = 0;
 
-  for (uint8_t tbl : tables)
+  for (SgAsmCilMetadataHeap::TableKind tbl : tables)
   {
-    if (tbl == e_Unknown_table_kind) continue;
+    if (tbl == SgAsmCilMetadataHeap::e_Unknown_table_kind) continue;
 
     const int8_t posInRowVec = posInRowVector.at(tbl);
     if (posInRowVec < 0) continue;
@@ -60,52 +60,52 @@ calcMaxTableSize( const std::vector<uint32_t>& numberOfRows,
 }
 
 
-const std::unordered_map<std::uint64_t, std::vector<uint8_t> >
+const std::unordered_map<std::uint64_t, std::vector<SgAsmCilMetadataHeap::TableKind> >
 REF_TABLES = { // single table
-               { SgAsmCilMetadataHeap::e_ref_assembly_ref,  { e_Assembly } }
-             , { SgAsmCilMetadataHeap::e_ref_type_def,      { e_TypeDef } }
-             , { SgAsmCilMetadataHeap::e_ref_event,         { e_Event } }
-             , { SgAsmCilMetadataHeap::e_ref_field,         { e_Field } }
-             , { SgAsmCilMetadataHeap::e_ref_generic_param, { e_GenericParam } }
-             , { SgAsmCilMetadataHeap::e_ref_method_def,    { e_MethodDef } }
-             , { SgAsmCilMetadataHeap::e_ref_module_ref,    { e_ModuleRef } }
-             , { SgAsmCilMetadataHeap::e_ref_param,         { e_Param } }
-             , { SgAsmCilMetadataHeap::e_ref_property,      { e_Property } }
+               { SgAsmCilMetadataHeap::e_ref_assembly_ref,  { SgAsmCilMetadataHeap::e_Assembly } }
+             , { SgAsmCilMetadataHeap::e_ref_type_def,      { SgAsmCilMetadataHeap::e_TypeDef } }
+             , { SgAsmCilMetadataHeap::e_ref_event,         { SgAsmCilMetadataHeap::e_Event } }
+             , { SgAsmCilMetadataHeap::e_ref_field,         { SgAsmCilMetadataHeap::e_Field } }
+             , { SgAsmCilMetadataHeap::e_ref_generic_param, { SgAsmCilMetadataHeap::e_GenericParam } }
+             , { SgAsmCilMetadataHeap::e_ref_method_def,    { SgAsmCilMetadataHeap::e_MethodDef } }
+             , { SgAsmCilMetadataHeap::e_ref_module_ref,    { SgAsmCilMetadataHeap::e_ModuleRef } }
+             , { SgAsmCilMetadataHeap::e_ref_param,         { SgAsmCilMetadataHeap::e_Param } }
+             , { SgAsmCilMetadataHeap::e_ref_property,      { SgAsmCilMetadataHeap::e_Property } }
                // multi-table
-             , { SgAsmCilMetadataHeap::e_ref_has_constant,  { e_Field, e_Param, e_Property } }
+             , { SgAsmCilMetadataHeap::e_ref_has_constant,  { SgAsmCilMetadataHeap::e_Field, SgAsmCilMetadataHeap::e_Param, SgAsmCilMetadataHeap::e_Property } }
              , { SgAsmCilMetadataHeap::e_ref_has_custom_attribute,
-                     { e_MethodDef, e_Field, e_TypeRef, e_TypeDef
-                     , e_Param, e_InterfaceImpl, e_MemberRef, e_Module
-                     , e_Unknown_table_kind /* FIXME instead of: e_Permission */
-                     , e_Property, e_Event, e_StandAloneSig
-                     , e_ModuleRef, e_TypeSpec, e_Assembly, e_AssemblyRef
-                     , e_File, e_ExportedType, e_ManifestResource, e_GenericParam
-                     , e_GenericParamConstraint, e_MethodSpec
+                     { SgAsmCilMetadataHeap::e_MethodDef, SgAsmCilMetadataHeap::e_Field, SgAsmCilMetadataHeap::e_TypeRef, SgAsmCilMetadataHeap::e_TypeDef
+                     , SgAsmCilMetadataHeap::e_Param, SgAsmCilMetadataHeap::e_InterfaceImpl, SgAsmCilMetadataHeap::e_MemberRef, SgAsmCilMetadataHeap::e_Module
+                     , SgAsmCilMetadataHeap::e_Unknown_table_kind /* FIXME instead of: e_Permission */
+                     , SgAsmCilMetadataHeap::e_Property, SgAsmCilMetadataHeap::e_Event, SgAsmCilMetadataHeap::e_StandAloneSig
+                     , SgAsmCilMetadataHeap::e_ModuleRef, SgAsmCilMetadataHeap::e_TypeSpec, SgAsmCilMetadataHeap::e_Assembly, SgAsmCilMetadataHeap::e_AssemblyRef
+                     , SgAsmCilMetadataHeap::e_File, SgAsmCilMetadataHeap::e_ExportedType, SgAsmCilMetadataHeap::e_ManifestResource, SgAsmCilMetadataHeap::e_GenericParam
+                     , SgAsmCilMetadataHeap::e_GenericParamConstraint, SgAsmCilMetadataHeap::e_MethodSpec
                      }
                }
-             , { SgAsmCilMetadataHeap::e_ref_has_decl_security, { e_TypeDef, e_MethodDef, e_Assembly } }
-             , { SgAsmCilMetadataHeap::e_ref_has_field_marshall, { e_Field, e_Param } }
-             , { SgAsmCilMetadataHeap::e_ref_has_semantics, { e_Event, e_Property } }
-             , { SgAsmCilMetadataHeap::e_ref_method_def_or_ref, { e_MethodDef, e_MemberRef } }
-             , { SgAsmCilMetadataHeap::e_ref_type_def_or_ref, { e_TypeDef, e_TypeRef, e_TypeSpec } }
-             , { SgAsmCilMetadataHeap::e_ref_implementation, { e_File, e_AssemblyRef, e_ExportedType } }
-             , { SgAsmCilMetadataHeap::e_ref_member_forwarded, { e_Field, e_MethodDef } }
-             , { SgAsmCilMetadataHeap::e_ref_member_ref_parent, { e_TypeDef, e_TypeRef, e_ModuleRef, e_MethodDef, e_TypeSpec } }
-             , { SgAsmCilMetadataHeap::e_ref_type_or_method_def, { e_TypeDef, e_MethodDef } }
+             , { SgAsmCilMetadataHeap::e_ref_has_decl_security, { SgAsmCilMetadataHeap::e_TypeDef, SgAsmCilMetadataHeap::e_MethodDef, SgAsmCilMetadataHeap::e_Assembly } }
+             , { SgAsmCilMetadataHeap::e_ref_has_field_marshall, { SgAsmCilMetadataHeap::e_Field, SgAsmCilMetadataHeap::e_Param } }
+             , { SgAsmCilMetadataHeap::e_ref_has_semantics, { SgAsmCilMetadataHeap::e_Event, SgAsmCilMetadataHeap::e_Property } }
+             , { SgAsmCilMetadataHeap::e_ref_method_def_or_ref, { SgAsmCilMetadataHeap::e_MethodDef, SgAsmCilMetadataHeap::e_MemberRef } }
+             , { SgAsmCilMetadataHeap::e_ref_type_def_or_ref, { SgAsmCilMetadataHeap::e_TypeDef, SgAsmCilMetadataHeap::e_TypeRef, SgAsmCilMetadataHeap::e_TypeSpec } }
+             , { SgAsmCilMetadataHeap::e_ref_implementation, { SgAsmCilMetadataHeap::e_File, SgAsmCilMetadataHeap::e_AssemblyRef, SgAsmCilMetadataHeap::e_ExportedType } }
+             , { SgAsmCilMetadataHeap::e_ref_member_forwarded, { SgAsmCilMetadataHeap::e_Field, SgAsmCilMetadataHeap::e_MethodDef } }
+             , { SgAsmCilMetadataHeap::e_ref_member_ref_parent, { SgAsmCilMetadataHeap::e_TypeDef, SgAsmCilMetadataHeap::e_TypeRef, SgAsmCilMetadataHeap::e_ModuleRef, SgAsmCilMetadataHeap::e_MethodDef, SgAsmCilMetadataHeap::e_TypeSpec } }
+             , { SgAsmCilMetadataHeap::e_ref_type_or_method_def, { SgAsmCilMetadataHeap::e_TypeDef, SgAsmCilMetadataHeap::e_MethodDef } }
                // not used inside the tables
              , { SgAsmCilMetadataHeap::e_ref_custom_attribute_type,
-                     { e_Unknown_table_kind, e_Unknown_table_kind, e_MethodDef, e_MemberRef
-                     , e_Unknown_table_kind
+                     { SgAsmCilMetadataHeap::e_Unknown_table_kind, SgAsmCilMetadataHeap::e_Unknown_table_kind, SgAsmCilMetadataHeap::e_MethodDef, SgAsmCilMetadataHeap::e_MemberRef
+                     , SgAsmCilMetadataHeap::e_Unknown_table_kind
                      }
                }
-             , { SgAsmCilMetadataHeap::e_ref_resolution_scope, { e_Module, e_ModuleRef, e_AssemblyRef, e_TypeRef } }
+             , { SgAsmCilMetadataHeap::e_ref_resolution_scope, { SgAsmCilMetadataHeap::e_Module, SgAsmCilMetadataHeap::e_ModuleRef, SgAsmCilMetadataHeap::e_AssemblyRef, SgAsmCilMetadataHeap::e_TypeRef } }
              };
 
 
 uint64_t
 uses4byteIndex( const std::vector<uint32_t>& numberOfRows,
                 const std::vector<int8_t>& posInRowVector,
-                const std::vector<uint8_t>& tables,
+                const std::vector<SgAsmCilMetadataHeap::TableKind>& tables,
                 uint64_t flag
               )
 {
@@ -176,13 +176,13 @@ computeDataSizeFlags( uint8_t heapSizes,
   return res;
 }
 
-struct AccessTuple : std::tuple<uint8_t, std::uint32_t>
+struct AccessTuple : std::tuple<SgAsmCilMetadataHeap::TableKind, std::uint32_t>
 {
-  using base = std::tuple<uint8_t, std::uint32_t>;
+  using base = std::tuple<SgAsmCilMetadataHeap::TableKind, std::uint32_t>;
   using base::base;
 
-  std::uint8_t  table() const { return std::get<0>(*this); }
-  std::uint32_t index() const { return std::get<1>(*this); }
+  SgAsmCilMetadataHeap::TableKind table() const { return std::get<0>(*this); }
+  std::uint32_t                   index() const { return std::get<1>(*this); }
 };
 
 AccessTuple
@@ -192,23 +192,18 @@ computeAccessPair( const std::vector<int8_t>& posInRowVector,
                    SgAsmCilMetadataHeap::ReferenceKind knd
                  )
 {
-  const std::vector<uint8_t>& tables = REF_TABLES.at(knd);
+  const std::vector<SgAsmCilMetadataHeap::TableKind>& tables = REF_TABLES.at(knd);
 
   if (tables.size() == 1) return AccessTuple{ tables.front(), refcode };
 
-  const bool                  uses4Bytes = uses4byteIndex(numberOfRows, posInRowVector, tables, knd) != 0;
-
+  const bool          uses4Bytes = uses4byteIndex(numberOfRows, posInRowVector, tables, knd) != 0;
   ROSE_ASSERT(uses4Bytes || (refcode < (1<<16)));
 
-  const std::uint8_t          idxLen = uses4Bytes ? 32 : 16;
-  const std::uint64_t         tableIdSize = calcTableIdentifierSize(tables);
-
-  ROSE_ASSERT(idxLen > tableIdSize);
-  const std::uint8_t          numShifts = (idxLen-tableIdSize);
-  const std::uint8_t          table = refcode >> numShifts;
-  const std::uint32_t         index = refcode ^ (table << numShifts);
-
-  return AccessTuple{ table, index };
+  const std::uint64_t tableIdSize = calcTableIdentifierSize(tables);
+  const std::uint32_t index = refcode >> tableIdSize; 
+  const std::uint8_t  table = refcode ^ (index << tableIdSize);
+  
+  return AccessTuple{ tables.at(table), index };
 }
 
 

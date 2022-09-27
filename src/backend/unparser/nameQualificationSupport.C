@@ -267,7 +267,24 @@ namespace
       using SkipNameQualificationSet = std::set<const SgNode*>;
 
       using base = NameQualificationInheritedAttribute;
-      using base::base;
+      
+      NameQualificationInheritedAttributeAda() = default;
+      NameQualificationInheritedAttributeAda(const NameQualificationInheritedAttributeAda&) = default;
+      NameQualificationInheritedAttributeAda(NameQualificationInheritedAttributeAda&&)      = default;
+      
+      NameQualificationInheritedAttributeAda& 
+      operator=(const NameQualificationInheritedAttributeAda& that)
+      {
+        static_cast<base&>(*this) = that;
+        this->skipNameQualification = that.skipNameQualification;
+        this->typeMode              = that.typeMode;
+        
+        return *this;
+      }
+      
+      NameQualificationInheritedAttributeAda& 
+      operator=(NameQualificationInheritedAttributeAda&&) = default;
+
 
       /// returns a reference to the set of nodes that does not require name qualification
       SkipNameQualificationSet& get_nameQualIgnoreSet() { return skipNameQualification; }

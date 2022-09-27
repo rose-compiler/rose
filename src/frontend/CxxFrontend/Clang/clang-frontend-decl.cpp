@@ -1093,6 +1093,21 @@ bool ClangToSageTranslator::VisitTypedefDecl(clang::TypedefDecl * typedef_decl, 
     std::cerr << "ClangToSageTranslator::VisitTypedefDecl" << std::endl;
 #endif
     bool res = true;
+    SgTypedefDeclaration * sg_typedef_decl;
+
+    SgSymbol * sym = GetSymbolFromSymbolTable(typedef_decl);
+    SgTypedefSymbol * tdef_sym = isSgTypedefSymbol(sym);
+
+    // Pei-Hung (09/23/2022) if typedefType is referenced before first appearance
+    // of TypedefDecl, tthe TypedefDecl is declared to fulfill the need for symbol
+    // lookup in VisitTypedefType.  Skip declaration here if that's the case.
+    if(tdef_sym != NULL)
+    {
+      sg_typedef_decl = tdef_sym->get_declaration(); 
+      *node = sg_typedef_decl;
+
+      return VisitTypedefNameDecl(typedef_decl, node) && res;
+    }
 
     SgName name(typedef_decl->getNameAsString());
 //    SgType * type = buildTypeFromQualifiedType(typedef_decl->getUnderlyingType());
@@ -1171,7 +1186,7 @@ bool ClangToSageTranslator::VisitTypedefDecl(clang::TypedefDecl * typedef_decl, 
     SgType * sg_underlyingType = buildTypeFromQualifiedType(underlyingQualType);
     SgType * type = buildTypeFromQualifiedType(typedef_decl->getUnderlyingType());
 
-    SgTypedefDeclaration * sg_typedef_decl = SageBuilder::buildTypedefDeclaration_nfi(name, type, SageBuilder::topScopeStack());
+    sg_typedef_decl = SageBuilder::buildTypedefDeclaration_nfi(name, type, SageBuilder::topScopeStack());
 
     // finding the bottom base type and check
     while(type->findBaseType() != type)
