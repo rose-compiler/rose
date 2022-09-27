@@ -1800,6 +1800,12 @@ bool ClangToSageTranslator::VisitFunctionDecl(clang::FunctionDecl * function_dec
     sg_function_decl->set_declarationScope(declScope);
     declScope->set_parent(sg_function_decl);
 
+    //Pei-Hung (09/27/2022) setup linkage
+    if(function_decl->isExternC())
+    {
+      sg_function_decl->get_declarationModifier().get_storageModifier().setExtern();
+    }
+
     ROSE_ASSERT(sg_function_decl->get_firstNondefiningDeclaration() != NULL);
 /* // TODO Fix problem with function symbols...
     SgSymbol * symbol = GetSymbolFromSymbolTable(function_decl);
@@ -2108,6 +2114,12 @@ bool ClangToSageTranslator::VisitVarDecl(clang::VarDecl * var_decl, SgNode ** no
     {
       sg_var_decl->get_declarationModifier().get_storageModifier().setStatic();
     }
+    //Pei-Hung (09/27/2022) setup linkage
+    if(var_decl->hasExternalStorage())
+    {
+      sg_var_decl->get_declarationModifier().get_storageModifier().setExtern();
+    }
+
 
     *node = sg_var_decl;
 
