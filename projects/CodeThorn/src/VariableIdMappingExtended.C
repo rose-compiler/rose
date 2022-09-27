@@ -149,11 +149,11 @@ namespace CodeThorn {
         numErrors++;
         SgVariableSymbol* varSym=v->get_symbol();
 	if(varSym==0) {
-	  appendErrorReportLine("Ast symbol check error#"+std::to_string(numErrors)+": VarRefExp:get_symbol() == 0."+SgNodeHelper::locationToString(varSym));
+	  appendErrorReportLine("AST symbol check error#"+std::to_string(numErrors)+": VarRefExp:get_symbol() == 0."+SgNodeHelper::locationToString(varSym));
 	  continue;
 	}
 	stringstream ss;
-        ss<<"Ast symbol check error #"<<numErrors<<": "<<accessName<<" with unregistered symbol:"<<varSym<<": "<<varSym->get_name();
+        ss<<"AST symbol check error #"<<numErrors<<": "<<accessName<<" with unregistered symbol:"<<varSym<<": "<<varSym->get_name();
         // print expression
         SgExpression* eroot=v;
 	ROSE_ASSERT(eroot);
@@ -192,7 +192,7 @@ namespace CodeThorn {
     list<SgVarRefExp*> structAccesses=structAccessesInsideFunctions(project);
     int32_t numStructErrors=checkVarRefExpAccessList(structAccesses,"struct access");
     if(numVarErrors>0||numStructErrors) {
-      string line="Ast symbol check: FAIL (var access errors:"+std::to_string(numVarErrors)+", struct access errors:"+std::to_string(numStructErrors)+")";
+      string line="AST symbol check: FAIL (var access errors:"+std::to_string(numVarErrors)+", struct access errors:"+std::to_string(numStructErrors)+")";
       cout<<"\nINFO: "<<line<<endl;
       appendErrorReportLine(line);
     } else {
@@ -442,9 +442,9 @@ namespace CodeThorn {
 
     if(getAstSymbolCheckFlag()) {
       if(symbolCheckOk) {
-	if(_status) cout<<"STATUS: Ast symbol check passed."<<endl;
+	if(_status) cout<<"STATUS: AST symbol check passed."<<endl;
       } else {
-	cerr<<"Error: Ast symbol check failed (see file "<<errorReportFileName<<")"<<endl;
+	cerr<<"Error: AST symbol check failed (see file "<<errorReportFileName<<")"<<endl;
         exit(1);
       }
     }
@@ -617,9 +617,9 @@ namespace CodeThorn {
   void VariableIdMappingExtended::generateErrorReport(bool astSymbolCheckResult) {
     stringstream ss;
     if(astSymbolCheckResult) {
-      ss<<"Ast symbol check: PASS"<<endl;
+      ss<<"AST symbol check: PASS"<<endl;
     } else {
-      ss<<"Ast symbol check: FAIL"<<endl;
+      ss<<"AST symbol check: FAIL"<<endl;
     }
     if(errorReport.size()==0) {
       ss<<"VIM check: PASS"<<endl;

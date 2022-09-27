@@ -87,7 +87,7 @@ namespace
       ++aa2;
     }
 
-    return std::move(binop);
+    return binop;
   }
 }
 
@@ -97,12 +97,31 @@ namespace CodeThorn
 void
 ClassAnalysis::addInheritanceEdge(value_type& descendantEntry, ClassKeyType ancestorKey, bool virtualEdge, bool directEdge)
 {
-  ClassKeyType descendantKey = descendantEntry.first;
-  ClassData&   descendant = descendantEntry.second;
-  ClassData&   ancestor = this->at(ancestorKey);
+  try
+  {
+    ClassKeyType descendantKey = descendantEntry.first;
+    ClassData&   descendant = descendantEntry.second;
+    ClassData&   ancestor = this->at(ancestorKey);
 
-  descendant.ancestors().emplace_back(ancestorKey,   virtualEdge, directEdge);
-  ancestor.descendants().emplace_back(descendantKey, virtualEdge, directEdge);
+    descendant.ancestors().emplace_back(ancestorKey,   virtualEdge, directEdge);
+    ancestor.descendants().emplace_back(descendantKey, virtualEdge, directEdge);
+  }
+  catch (const std::out_of_range&)
+  {
+    static int prnNumWarn = 3;
+
+    if (containsAllClasses())
+      throw;
+
+    if (prnNumWarn > 0)
+    {
+      --prnNumWarn;
+
+      logWarn() << "ignoring inheritance edge of inner classes (?) [requires full translation unit analysis]"
+                << (prnNumWarn ? "" : "...")
+                << std::endl;
+    }
+  }
 }
 
 void
@@ -579,7 +598,7 @@ analyzeVirtualFunctions(const ClassAnalysis& all, bool normalizedSignature)
 AnalysesTuple
 analyzeClassesAndCasts(const RoseCompatibilityBridge& rcb, ASTRootType n)
 {
-  ClassAnalysis classes;
+  ClassAnalysis classes{true /* full view of translation unit */};
   CastAnalysis  casts;
 
   rcb.extractFromProject(classes, casts, n);
@@ -599,6 +618,20 @@ ClassAnalysis
 analyzeClasses(ASTRootType n)
 {
   return analyzeClasses(RoseCompatibilityBridge{}, n);
+}
+
+ClassAnalysis analyzeClass(ClassKeyType n)
+{
+  RoseCompatibilityBridge rcb;
+  ClassAnalysis           classes{false /* incomplete view */};
+
+  // collect all classes reachable upwards from n
+  rcb.extractClassAndBaseClasses(classes, n);
+
+  inheritanceRelations(classes);
+  analyzeClassRelationships(classes);
+
+  return classes;
 }
 
 }

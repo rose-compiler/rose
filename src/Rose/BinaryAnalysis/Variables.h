@@ -6,7 +6,7 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Types.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCellState.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
-#include <Rose/BinaryAnalysis/SymbolicExpr.h>
+#include <Rose/BinaryAnalysis/SymbolicExpression.h>
 
 #include <Sawyer/IntervalMap.h>
 #include <Sawyer/Message.h>
@@ -384,7 +384,8 @@ void print(const GlobalVariables&,const Partitioner2::Partitioner&, std::ostream
  *  A function can access areas of the stack that are outside its own frame.  For instance, x86 function stack arguments are
  *  stored in the caller's frame. Pointers to local variables can point into earlier frames.  The latest function can use parts
  *  of the stack that are after the latest frame and which therefore out outside any frame. */
-struct StackFrame {
+class StackFrame {
+public:
     enum Direction {
         GROWS_UP,                                       /**< New frames are added at higher addresses than old frames. */
         GROWS_DOWN                                      /**< New frames are added at lower addresses than old frames. */
@@ -401,9 +402,6 @@ struct StackFrame {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Analyzer
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/** Shared ownership pointer for @ref VariableFinder. */
-using VariableFinderPtr = Sawyer::SharedPointer<class VariableFinder>;
 
 /** Analysis to find variable locations. */
 class VariableFinder: public Sawyer::SharedObject {
@@ -504,7 +502,7 @@ public:
      *  is outside the frame. */
     OffsetInterval referencedFrameArea(const Partitioner2::Partitioner&,
                                        const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&,
-                                       const SymbolicExpr::Ptr &address, size_t nBytes);
+                                       const SymbolicExpression::Ptr &address, size_t nBytes);
 #endif
 
     /** Find stack variable addresses.
@@ -559,7 +557,7 @@ public:
     /** Find address constants in an expression.
      *
      *  Given a symbolic expression, return all the constants that appear in it that have a potential for being addresses. */
-    std::set<rose_addr_t> findConstants(const SymbolicExpr::Ptr&);
+    std::set<rose_addr_t> findConstants(const SymbolicExpression::Ptr&);
 
     /** Find constants syntactically in an instruction. */
     std::set<rose_addr_t> findConstants(SgAsmInstruction*);
@@ -567,7 +565,7 @@ public:
     /** Find addresses in memory state.
      *
      *  Given a cell-based symbolic memory state, return all the memory addresses that appear in it. */
-    std::set<SymbolicExpr::Ptr> getMemoryAddresses(const InstructionSemantics::BaseSemantics::MemoryCellStatePtr&);
+    std::set<SymbolicExpression::Ptr> getMemoryAddresses(const InstructionSemantics::BaseSemantics::MemoryCellStatePtr&);
 
     /** Find constants in memory.
      *

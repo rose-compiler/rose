@@ -12,9 +12,6 @@
 #include "LoopInfo.h"
 #include "CollectionOperators.h"
 
-// BOOST includes
-#include "boost/lexical_cast.hpp"
-
 #include <iostream>
 
 using namespace std;

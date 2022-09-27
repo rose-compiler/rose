@@ -1,10 +1,14 @@
 
 struct A
 {
-  virtual void test() {}
+  virtual void f() {}
+
+  void test(A) {}
 };
 
 struct B : A
 {
-  void test() override {}
+  void f() override {}
+
+  void test(B) {}
 };

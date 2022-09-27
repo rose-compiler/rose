@@ -270,6 +270,11 @@ class CtxLattice : public Lattice,
       deleteLattices(begin(), end());
     }
 
+    //~ typename iterator       begin()       { return context_map::begin(); }
+    //~ typename const_iterator begin() const { return context_map::begin(); }
+    //~ typename iterator       end()         { return context_map::end(); }
+    //~ typename const_iterator end()   const { return context_map::end(); }
+
     void swap(CtxLattice<context_t>& that)
     {
       context_map::swap(that);

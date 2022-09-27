@@ -267,7 +267,24 @@ namespace
       using SkipNameQualificationSet = std::set<const SgNode*>;
 
       using base = NameQualificationInheritedAttribute;
-      using base::base;
+      
+      NameQualificationInheritedAttributeAda() = default;
+      NameQualificationInheritedAttributeAda(const NameQualificationInheritedAttributeAda&) = default;
+      NameQualificationInheritedAttributeAda(NameQualificationInheritedAttributeAda&&)      = default;
+      
+      NameQualificationInheritedAttributeAda& 
+      operator=(const NameQualificationInheritedAttributeAda& that)
+      {
+        static_cast<base&>(*this) = that;
+        this->skipNameQualification = that.skipNameQualification;
+        this->typeMode              = that.typeMode;
+        
+        return *this;
+      }
+      
+      NameQualificationInheritedAttributeAda& 
+      operator=(NameQualificationInheritedAttributeAda&&) = default;
+
 
       /// returns a reference to the set of nodes that does not require name qualification
       SkipNameQualificationSet& get_nameQualIgnoreSet() { return skipNameQualification; }
@@ -1014,6 +1031,7 @@ namespace
         computeNameQualForDeclLink(n, SG_DEREF(basedecl));
       }
 
+#if OBSOLETE_CODE
       void handle(const SgAdaFunctionRenamingDecl& n)
       {
         handle(sg::asBaseType(n));
@@ -1021,8 +1039,10 @@ namespace
         // ROSE_ASSERT(n.get_renamed_function());
         if (const SgFunctionDeclaration* renamed = n.get_renamed_function())
           computeNameQualForDeclLink(n, *renamed);
+        //~ if (const SgExpression* renamed = n.get_renamed_function())
+          //~ computeNameQualForDeclLink(n, *renamed);
       }
-
+#endif /* OBSOLETE_CODE */
 
       void handle(const SgUsingDeclarationStatement& n)
       {

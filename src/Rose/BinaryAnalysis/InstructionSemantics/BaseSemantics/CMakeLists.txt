@@ -2,6 +2,7 @@ add_library(roseBinaryAnalysisInstructionSemanticsBaseSemantics OBJECT
   BaseSemantics.C
   Dispatcher.C
   Exception.C
+  Formatter.C
   MemoryCell.C
   MemoryCellList.C
   MemoryCellMap.C

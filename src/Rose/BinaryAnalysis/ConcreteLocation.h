@@ -3,8 +3,8 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/RegisterDescriptor.h>
-#include <Rose/BinaryAnalysis/Registers.h>
 #include <Rose/Location.h>
 
 #include <boost/serialization/access.hpp>
@@ -36,7 +36,7 @@ public:
 private:
     RegisterDescriptor reg_;
     Sawyer::Optional<uint64_t> va_;
-    const RegisterDictionary *regdict_ = nullptr;
+    RegisterDictionaryPtr regdict_;
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
@@ -70,10 +70,12 @@ public:
      *  FIXME[Robb Matzke 2022-07-15]: The second argument is temporary and unused. It's only purpose is to disambiguate the
      *  call to ConcreteLocation(RegisterDescriptor,int64_t) without the user having to add int64_t casts at all such calls
      *  when the offset is zero. Doing it this way will be easier to change in the future when register dictionaries are
-     *  changed to use smart pointers since the compiler will be able to help us. */
-    explicit ConcreteLocation(RegisterDescriptor,
-                              const Sawyer::Nothing& = Sawyer::Nothing(), // delete this when regdict uses smart pointers
-                              const RegisterDictionary *regdict = nullptr);
+     *  changed to use smart pointers since the compiler will be able to help us.
+     *
+     *  @{ */
+    explicit ConcreteLocation(RegisterDescriptor);
+    explicit ConcreteLocation(RegisterDescriptor, const RegisterDictionaryPtr&);
+    /** @} */
 
     /** Address location.
      *
@@ -104,7 +106,7 @@ public:
      *
      *  Concrete locations have an optional internal register dictionary pointer that's usually used for printing, but this
      *  method provides a way to use some other register dictionary. */
-    void print(std::ostream&, const RegisterDictionary*) const;
+    void print(std::ostream&, const RegisterDictionaryPtr&) const;
 
     /** Compare two concrete locations.
      *
@@ -120,8 +122,8 @@ public:
      *  This is the optional register dictionary associated with this location and used when printing the location.
      *
      * @{ */
-    const RegisterDictionary* registerDictionary() const;
-    void registerDictionary(const RegisterDictionary*);
+    RegisterDictionaryPtr registerDictionary() const;
+    void registerDictionary(const RegisterDictionaryPtr&);
     /** @} */
 
     /** Register part of the location.

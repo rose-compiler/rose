@@ -100,17 +100,15 @@ namespace
       SgAdaInheritedFunctionSymbol*
       inheritedFunctionSymbol(SgType* ty, SgFunctionSymbol& origSymbol)
       {
-        using key_t = std::pair<const SgFunctionDeclaration*, const SgTypedefType*>;
-
         const SgDeclarationStatement* tydcl = si::ada::baseDeclaration(ty);
         const SgTypedefDeclaration*   tydefDcl = isSgTypedefDeclaration(tydcl);
 
         if (tydefDcl == nullptr)
           return nullptr;
 
-        key_t key{origSymbol.get_declaration(), tydefDcl->get_type()};
+        InheritedSymbolKey            key{origSymbol.get_declaration(), tydefDcl->get_type()};
 
-        return findNode(inheritedSymbols(), key);
+        return findFirst(inheritedSymbols(), key);
       }
 
       SgFunctionSymbol&
@@ -501,12 +499,12 @@ namespace
   }
 
   SgFunctionDeclaration*
-  disambiguateOperators(std::vector<SgFunctionDeclaration*>& cands, std::vector<SgExpression*>* args)
+  disambiguateOperators(std::vector<SgFunctionDeclaration*>& cands, OperatorCallSupplement suppl)
   {
-    if ((args == nullptr) || (args->size() == 0))
+    if ((suppl.args() == nullptr) || (suppl.args()->size() == 0))
     {
       logWarn() << "unable to disambiguate operator w/o arguments. "
-                << (args ? int(args->size()) : -1)
+                << (suppl.args() ? int(suppl.args()->size()) : -1)
                 << std::endl;
       return nullptr;
     }
@@ -515,23 +513,22 @@ namespace
 
     std::copy_if( cands.begin(), cands.end(),
                   std::back_inserter(res),
-                  [args](SgFunctionDeclaration* fn) -> bool
+                  [&suppl](SgFunctionDeclaration* fn) -> bool
                   {
                     ADA_ASSERT(fn);
-                    const int numParams = fn->get_args().size();
+                    const std::size_t numParams = fn->get_args().size();
 
-                    if (std::size_t(numParams) != args->size()) return false;
+                    if (numParams != suppl.args()->size()) return false;
 
-                    bool res = true;
-                    int  i   = 0;
+                    bool        res = true;
+                    std::size_t i   = 0;
 
                     while (res && (i < numParams))
                     {
                       SgInitializedName& parm = SG_DEREF(fn->get_args().at(i));
-                      SgExpression*      arg  = args->at(i);
 
                       // \todo consider to replace the simple type check with a proper overload resolution
-                      res = si::ada::typeRoot(parm.get_type()) == si::ada::typeRoot(arg);
+                      res = si::ada::typeRoot(parm.get_type()) == si::ada::typeRoot(suppl.args()->at(i));
 
                       //~ if (!res)
                         //~ logWarn() << i << ". parm/arg: "
@@ -555,6 +552,62 @@ namespace
     return res.size() != 1 ? nullptr : res.front();
   }
 
+  // cmp to declareOp in SgType.C
+  SgExpression*
+  generateOperator(AdaIdentifier name, Expression_Struct& expr, OperatorCallSupplement suppl, AstContext ctx)
+  {
+    ADA_ASSERT(expr.Expression_Kind == An_Operator_Symbol);
+
+    if ((suppl.args() == nullptr) || (suppl.result() == nullptr))
+      return nullptr;
+
+    // add support for generating built in operators on arrays and access types
+    if (name != "=")
+      return nullptr;
+
+    const SgType*          ty     = suppl.args()->front();
+    SgScopeStatement*      scope  = si::ada::scopeOfTypedecl(ty);
+
+    if (scope == nullptr)
+    {
+      logWarn() << "unable to get scope of type declaration: " << std::flush
+                << ty->unparseToString()
+                << std::endl;
+      return nullptr;
+    }
+
+    std::string            opname = si::ada::roseOperatorPrefix + name;
+
+    auto                   complete =
+       [&suppl](SgFunctionParameterList& fnParmList, SgScopeStatement& scope)->void
+       {
+         static constexpr int MAX_PARAMS = 2;
+         static const std::string parmNames[MAX_PARAMS] = { "Left", "Right" };
+
+         int            parmNameIdx = MAX_PARAMS - suppl.args()->size() - 1;
+         SgTypeModifier defaultInMode;
+
+         defaultInMode.setDefault();
+
+         ADA_ASSERT(suppl.args()->size() <= MAX_PARAMS);
+         for (SgType* parmType : *suppl.args())
+         {
+           const std::string&       parmName = parmNames[++parmNameIdx];
+           SgInitializedName&       parmDecl = mkInitializedName(parmName, SG_DEREF(parmType), nullptr);
+           SgInitializedNamePtrList parmList = {&parmDecl};
+           /* SgVariableDeclaration&   pvDecl   =*/ mkParameter(parmList, defaultInMode, scope);
+
+           parmDecl.set_parent(&fnParmList);
+           fnParmList.get_args().push_back(&parmDecl);
+         }
+       };
+
+    SgFunctionDeclaration& opdcl  = mkProcedureDecl_nondef(opname, *scope, *suppl.result(), complete);
+
+    // adaFuncs[name].emplace_back(&fndcl);
+    return sb::buildFunctionRefExp(&opdcl);
+  }
+
   SgExpression&
   getOperator(Expression_Struct& expr, OperatorCallSupplement suppl, AstContext ctx)
   {
@@ -576,7 +629,7 @@ namespace
 
     if (pos != adaFuncs().end())
     {
-      if (SgFunctionDeclaration* fundcl = disambiguateOperators(pos->second, suppl.args))
+      if (SgFunctionDeclaration* fundcl = disambiguateOperators(pos->second, suppl))
         return SG_DEREF(sb::buildFunctionRefExp(fundcl));
     }
     else
@@ -585,6 +638,10 @@ namespace
                  << "' / " << adaFuncs().size()
                  << std::endl;
     }
+
+    // try to generate the operator
+    if (SgExpression* res = generateOperator(fnname, expr, suppl, ctx))
+      return *res;
 
     logWarn() << "Using first version generator as fallback to model operator " << expr.Name_Image
               << std::endl;
@@ -1704,8 +1761,17 @@ SgExpression& createCall(Element_ID tgtid, ElemIdRange args, bool callSyntax, As
 
   // Create the arguments first. They may be needed to disambiguate operator calls
   std::vector<SgExpression*> arglist = traverseIDs(args, elemMap(), ArgListCreator{ctx});
+  auto                       typeExtractor = [](SgExpression* exp)->SgType*
+                                             {
+                                               return si::ada::typeOfExpr(exp);
+                                             };
 
-  SgExpression& tgt = getExprID(tgtid, ctx, OperatorCallSupplement{callSyntax, &arglist});
+  SgTypePtrList              typlist;
+
+  typlist.reserve(arglist.size());
+  std::transform(arglist.begin(), arglist.end(), std::back_inserter(typlist), typeExtractor);
+
+  SgExpression& tgt = getExprID(tgtid, ctx, OperatorCallSupplement{&typlist, nullptr /* unknown return type */});
   SgExpression* res = sg::dispatch(AdaCallBuilder{tgtid, std::move(arglist), callSyntax, ctx}, &tgt);
 
   return SG_DEREF(res);

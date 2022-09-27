@@ -4,6 +4,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <Rose/Location.h>
+#include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Types.h>
 #include <Rose/BinaryAnalysis/SmtSolver.h>
 
@@ -37,7 +38,7 @@ private:
     RegisterDescriptor reg_;
     Address addr_;
     size_t nBytes_ = 0;                                 // size of memory location, or zero if unknown
-    const RegisterDictionary *regdict_ = nullptr;
+    RegisterDictionaryPtr regdict_;
 
 public:
     /** Default constructor.
@@ -55,8 +56,12 @@ public:
 
     /** Register referent.
      *
-     *  Constructs an abstract location that refers to a register. */
-    explicit AbstractLocation(RegisterDescriptor, const RegisterDictionary *regdict = nullptr);
+     *  Constructs an abstract location that refers to a register.
+     *
+     * @{ */
+    explicit AbstractLocation(RegisterDescriptor);
+    explicit AbstractLocation(RegisterDescriptor, const RegisterDictionaryPtr &regdict);
+    /** @} */
 
     /** Memory referent.
      *
@@ -141,9 +146,9 @@ public:
      *  expressions.
      *
      *  @{ */
-    void print(std::ostream &out, const RegisterDictionary *regdict) const;
+    void print(std::ostream &out, const RegisterDictionaryPtr &regdict) const;
     void print(std::ostream &out, InstructionSemantics::BaseSemantics::Formatter &fmt) const;
-    void print(std::ostream &out, const RegisterDictionary *regdict, InstructionSemantics::BaseSemantics::Formatter &fmt) const;
+    void print(std::ostream &out, const RegisterDictionaryPtr &regdict, InstructionSemantics::BaseSemantics::Formatter &fmt) const;
     /** @} */
 };
 

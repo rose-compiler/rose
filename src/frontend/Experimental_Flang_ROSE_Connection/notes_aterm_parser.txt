@@ -1,0 +1,32 @@
+Notes on the new Fortran support
+
+January 2016:
+   1) Organization of remaining work.
+      a. OFP (new version) currently handles free-form formated files
+         and is tested on a NCAR CESM Fortran code. This code base includes POP.
+         Available from: (get this from Craig)
+         Registered at NCAR CESM site: 
+             user name: guestuser password: friendly
+         We should include these codes into the ROSE regeression tests, but not released in ROSE.
+      b. Craig will also add the ROSE fortran regression tests at some point.
+      c. Get latest version of OFP into ROSE.
+         The latest version of OFP generates Aterms in some fomat.
+         OFP now included the unparsing of the Aterm representation back to Fortran code so that
+         round trip testing is now possible.
+
+
+December 2017:
+   1) Coarray type support
+        a. SgCAFCoExpression
+        b. SgExprListExp coarraySpec = entityAttr.buildDimensionInfo()
+            - entityAttr.setCodimExp
+            - entityAttr.setHasCodimesion(true)
+            - DeclAttributes
+            - arrayType->set_dim_info(expressionList isa SgExprListExp)
+   2) SgArrayType
+       - set_index(SgExpression*)
+       - set_dim_info(SgExprListExp*)
+       - set_rank(int)  # should be size_t
+       - set_is_variable_length_array(bool)
+       - set_base_type(SgType*) 
+   3) Experimental_General_Language_Support

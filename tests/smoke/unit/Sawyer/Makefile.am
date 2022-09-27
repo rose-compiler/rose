@@ -34,6 +34,7 @@ sawyer_checkers =				\
 	traceUnitTests				\
 	mesgUnitTests				\
 	markupUnitTests				\
+	resultUnitTests				\
 	workListTests				\
 	cmdUnitTests
 
@@ -66,6 +67,7 @@ noinst_PROGRAMS +=				\
 	traceUnitTests				\
 	mesgUnitTests				\
 	markupUnitTests				\
+	resultUnitTests     			\
 	workListTests				\
 	cmdUnitTests
 
@@ -100,7 +102,8 @@ markupUnitTests_SOURCES		 = markupUnitTests.C
 cmdUnitTests_SOURCES		 = cmdUnitTests.C
 serializationUnitTests_SOURCES	 = serializationUnitTests.C
 databaseUnitTests_SOURCES	 = databaseUnitTests.C
-workListTests_SOURCES		 = workListTests.C 
+workListTests_SOURCES		 = workListTests.C
+resultUnitTests_SOURCES          = resultUnitTests.C
 
 # Test targets
 sawyer_targets = $(addsuffix .passed, $(sawyer_checkers))

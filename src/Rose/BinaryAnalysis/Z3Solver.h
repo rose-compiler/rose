@@ -39,15 +39,15 @@ private:
     z3::solver *solver_;
     std::vector<std::vector<z3::expr> > z3Stack_;       // lazily parallel with parent class' "stack_" data member
 
-    // The symbolic exprs in these maps are referenced (directly or indirectly) by the SymbolicExpr(s) being translated and therefore
-    // are guaranteed to remain allocated at least until the translation process completes.
-    typedef Sawyer::Container::Map<const SymbolicExpr::Node*, Z3ExprTypePair> CommonSubexpressions;
+    // The symbolic exprs in these maps are referenced (directly or indirectly) by the SymbolicExpression(s) being translated
+    // and therefore are guaranteed to remain allocated at least until the translation process completes.
+    typedef Sawyer::Container::Map<const SymbolicExpression::Node*, Z3ExprTypePair> CommonSubexpressions;
     CommonSubexpressions ctxCses_; // common subexpressions
-    typedef Sawyer::Container::Map<const SymbolicExpr::Leaf*, z3::func_decl, CompareRawLeavesByName> VariableDeclarations;
+    typedef Sawyer::Container::Map<const SymbolicExpression::Leaf*, z3::func_decl, CompareRawLeavesByName> VariableDeclarations;
     VariableDeclarations ctxVarDecls_;
 
     // Expressions that we need to hold on to for allocation/deallocation purposes until the translation process is completed.
-    std::vector<SymbolicExpr::Ptr> holdingExprs_;
+    std::vector<SymbolicExpression::Ptr> holdingExprs_;
 #endif
 
 private:
@@ -160,7 +160,7 @@ public:
     virtual void z3Update();
 
 protected:
-    SExprTypePair outputList(const std::string &name, const SymbolicExpr::InteriorPtr&, Type rettype = NO_TYPE);
+    SExprTypePair outputList(const std::string &name, const SymbolicExpression::InteriorPtr&, Type rettype = NO_TYPE);
     SExprTypePair outputList(const std::string &name, const std::vector<SExprTypePair>&, Type rettype = NO_TYPE);
 
     // Overrides
@@ -173,10 +173,10 @@ public:
     virtual void selfTest() override;
     virtual void timeout(boost::chrono::duration<double>) override;
 protected:
-    virtual void outputBvxorFunctions(std::ostream&, const std::vector<SymbolicExpr::Ptr>&) override;
-    virtual void outputComparisonFunctions(std::ostream&, const std::vector<SymbolicExpr::Ptr>&) override;
-    virtual SExprTypePair outputExpression(const SymbolicExpr::Ptr&) override;
-    virtual SExprTypePair outputArithmeticShiftRight(const SymbolicExpr::InteriorPtr&) override;
+    virtual void outputBvxorFunctions(std::ostream&, const std::vector<SymbolicExpression::Ptr>&) override;
+    virtual void outputComparisonFunctions(std::ostream&, const std::vector<SymbolicExpression::Ptr>&) override;
+    virtual SExprTypePair outputExpression(const SymbolicExpression::Ptr&) override;
+    virtual SExprTypePair outputArithmeticShiftRight(const SymbolicExpression::InteriorPtr&) override;
 
 #ifdef ROSE_HAVE_Z3
 protected:
@@ -184,28 +184,28 @@ protected:
     using SmtlibSolver::mostType;
     Z3ExprTypePair ctxCast(const Z3ExprTypePair&, Type toType);
     std::vector<Z3Solver::Z3ExprTypePair> ctxCast(const std::vector<Z3ExprTypePair>&, Type toType);
-    Z3ExprTypePair ctxLeaf(const SymbolicExpr::Leaf*);
-    Z3ExprTypePair ctxExpression(SymbolicExpr::Node*);
-    std::vector<Z3Solver::Z3ExprTypePair> ctxExpressions(const std::vector<SymbolicExpr::Ptr>&);
+    Z3ExprTypePair ctxLeaf(const SymbolicExpression::Leaf*);
+    Z3ExprTypePair ctxExpression(SymbolicExpression::Node*);
+    std::vector<Z3Solver::Z3ExprTypePair> ctxExpressions(const std::vector<SymbolicExpression::Ptr>&);
     void ctxVariableDeclarations(const VariableSet&);
-    void ctxCommonSubexpressions(const SymbolicExpr::Ptr&);
-    Z3ExprTypePair ctxArithmeticShiftRight(SymbolicExpr::Interior*);
-    Z3ExprTypePair ctxExtract(SymbolicExpr::Interior*);
-    Z3ExprTypePair ctxRead(SymbolicExpr::Interior*);
-    Z3ExprTypePair ctxRotateLeft(SymbolicExpr::Interior*);
-    Z3ExprTypePair ctxRotateRight(SymbolicExpr::Interior*);
-    Z3ExprTypePair ctxSet(SymbolicExpr::Interior*);
-    Z3ExprTypePair ctxSignExtend(SymbolicExpr::Interior*);
-    Z3ExprTypePair ctxShiftLeft(SymbolicExpr::Interior*);
-    Z3ExprTypePair ctxShiftRight(SymbolicExpr::Interior*);
-    Z3ExprTypePair ctxMultiply(SymbolicExpr::Interior*);
-    Z3ExprTypePair ctxUnsignedDivide(SymbolicExpr::Interior*);
-    Z3ExprTypePair ctxSignedDivide(SymbolicExpr::Interior*);
-    Z3ExprTypePair ctxUnsignedExtend(SymbolicExpr::Interior*);
-    Z3ExprTypePair ctxUnsignedModulo(SymbolicExpr::Interior*);
-    Z3ExprTypePair ctxSignedModulo(SymbolicExpr::Interior*);
-    Z3ExprTypePair ctxWrite(SymbolicExpr::Interior*);
-    Z3ExprTypePair ctxZerop(SymbolicExpr::Interior*);
+    void ctxCommonSubexpressions(const SymbolicExpression::Ptr&);
+    Z3ExprTypePair ctxArithmeticShiftRight(SymbolicExpression::Interior*);
+    Z3ExprTypePair ctxExtract(SymbolicExpression::Interior*);
+    Z3ExprTypePair ctxRead(SymbolicExpression::Interior*);
+    Z3ExprTypePair ctxRotateLeft(SymbolicExpression::Interior*);
+    Z3ExprTypePair ctxRotateRight(SymbolicExpression::Interior*);
+    Z3ExprTypePair ctxSet(SymbolicExpression::Interior*);
+    Z3ExprTypePair ctxSignExtend(SymbolicExpression::Interior*);
+    Z3ExprTypePair ctxShiftLeft(SymbolicExpression::Interior*);
+    Z3ExprTypePair ctxShiftRight(SymbolicExpression::Interior*);
+    Z3ExprTypePair ctxMultiply(SymbolicExpression::Interior*);
+    Z3ExprTypePair ctxUnsignedDivide(SymbolicExpression::Interior*);
+    Z3ExprTypePair ctxSignedDivide(SymbolicExpression::Interior*);
+    Z3ExprTypePair ctxUnsignedExtend(SymbolicExpression::Interior*);
+    Z3ExprTypePair ctxUnsignedModulo(SymbolicExpression::Interior*);
+    Z3ExprTypePair ctxSignedModulo(SymbolicExpression::Interior*);
+    Z3ExprTypePair ctxWrite(SymbolicExpression::Interior*);
+    Z3ExprTypePair ctxZerop(SymbolicExpression::Interior*);
 #endif
 };
 

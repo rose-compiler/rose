@@ -8,7 +8,6 @@
 #include "rose_config.h"
 #include "sageGeneric.h"
 #include "sageBuilder.h"
-#include "Ada_to_ROSE_translation.h"
 #include "Ada_to_ROSE.h"
 #include "AdaMaker.h"
 #include "AdaExpression.h"
@@ -41,6 +40,8 @@ static bool fail_on_error = false;
 
 namespace
 {
+  using FunctionVector = std::vector<SgFunctionDeclaration*>;
+
   /// stores a mapping from Unit_ID to constructed root node in AST
   //~ map_t<int, SgDeclarationStatement*> asisUnitsMap;
 
@@ -68,41 +69,30 @@ namespace
   map_t<AdaIdentifier, SgAdaPackageSpecDecl*> adaPkgsMap;
 
   /// stores a mapping from string to builtin function declaration nodes
-  map_t<AdaIdentifier, std::vector<SgFunctionDeclaration*> > adaFuncsMap;
+  map_t<AdaIdentifier, FunctionVector> adaFuncsMap;
 
   /// stores variables defined in Standard or Ascii
   map_t<AdaIdentifier, SgInitializedName*> adaVarsMap;
 
   /// map of inherited symbols
-  map_t<std::pair<const SgFunctionDeclaration*, const SgTypedefType*>, SgAdaInheritedFunctionSymbol*> inheritedSymbolMap;
+  map_t<InheritedSymbolKey, SgAdaInheritedFunctionSymbol*> inheritedSymbolMap;
+
+  //~ map_t<OperatorKey, std::vector<OperatorDesc> > operatorSupportMap;
 } // anonymous namespace
 
 //~ map_t<int, SgDeclarationStatement*>&        asisUnits() { return asisUnitsMap; }
-map_t<int, SgInitializedName*>&              asisVars()   { return asisVarsMap;   }
-map_t<int, SgInitializedName*>&              asisExcps()  { return asisExcpsMap;  }
-map_t<int, SgDeclarationStatement*>&         asisDecls()  { return asisDeclsMap;  }
-map_t<int, SgDeclarationStatement*>&         asisTypes()  { return asisTypesMap;  }
-map_t<int, SgBasicBlock*>&                   asisBlocks() { return asisBlocksMap; }
-map_t<AdaIdentifier, SgType*>&               adaTypes()   { return adaTypesMap;   }
-map_t<AdaIdentifier, SgInitializedName*>&    adaExcps()   { return adaExcpsMap;   }
-map_t<AdaIdentifier, SgAdaPackageSpecDecl*>& adaPkgs()    { return adaPkgsMap;    }
-map_t<AdaIdentifier, SgInitializedName*>&    adaVars()    { return adaVarsMap;    }
-
-map_t<AdaIdentifier, std::vector<SgFunctionDeclaration*> >&
-adaFuncs()
-{
-  return adaFuncsMap;
-}
-
-map_t<std::pair<const SgFunctionDeclaration*, const SgTypedefType*>, SgAdaInheritedFunctionSymbol*>&
-inheritedSymbols()
-{
-  return inheritedSymbolMap;
-}
-
-ASIS_element_id_to_ASIS_MapType&     elemMap()   { return asisMap;      }
-//~ ASIS_element_id_to_ASIS_MapType&     unitMap()   { return asisMap;      }
-
+map_t<int, SgInitializedName*>&                           asisVars()         { return asisVarsMap;        }
+map_t<int, SgInitializedName*>&                           asisExcps()        { return asisExcpsMap;       }
+map_t<int, SgDeclarationStatement*>&                      asisDecls()        { return asisDeclsMap;       }
+map_t<int, SgDeclarationStatement*>&                      asisTypes()        { return asisTypesMap;       }
+map_t<int, SgBasicBlock*>&                                asisBlocks()       { return asisBlocksMap;      }
+map_t<AdaIdentifier, SgType*>&                            adaTypes()         { return adaTypesMap;        }
+map_t<AdaIdentifier, SgInitializedName*>&                 adaExcps()         { return adaExcpsMap;        }
+map_t<AdaIdentifier, SgAdaPackageSpecDecl*>&              adaPkgs()          { return adaPkgsMap;         }
+map_t<AdaIdentifier, SgInitializedName*>&                 adaVars()          { return adaVarsMap;         }
+map_t<AdaIdentifier, FunctionVector>&                     adaFuncs()         { return adaFuncsMap;        }
+map_t<InheritedSymbolKey, SgAdaInheritedFunctionSymbol*>& inheritedSymbols() { return inheritedSymbolMap; }
+//~ map_t<OperatorKey, std::vector<OperatorDesc> >&           operatorSupport()  { return operatorSupportMap; }
 
 //
 // auxiliary classes and functions
@@ -309,7 +299,7 @@ namespace
   /// clears all mappings created during translation
   void clearMappings()
   {
-    elemMap().clear();
+    elemMap_update().clear();
 
     asisVars().clear();
     asisExcps().clear();
@@ -323,6 +313,7 @@ namespace
     adaFuncs().clear();
 
     inheritedSymbols().clear();
+    //~ operatorSupport().clear();
   }
 
   //

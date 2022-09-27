@@ -18,8 +18,18 @@
 #pragma GCC diagnostic warning "-Wextra"
 
 
+// workaround
+namespace SageInterface
+{
+namespace ada
+{
+extern SgAdaPackageSpecDecl* stdpkg;
+}
+}
+
 namespace sb = SageBuilder;
 namespace si = SageInterface;
+
 
 
 namespace Ada_ROSE_Translation
@@ -1385,21 +1395,30 @@ namespace
   // declares binary and unary operator declarations
   //   (all arguments are called left, right and right respectively)
   // see https://www.adaic.org/resources/add_content/standards/05rm/html/RM-A-1.html
-  template <class MapT>
-  void declareOp(MapT& fns, const std::string& name, SgType& retty, std::vector<SgType*> params, SgScopeStatement& scope)
+  void declareOp(
+                  //~ map_t<OperatorKey, std::vector<OperatorDesc> >& fns,
+                  map_t<AdaIdentifier, std::vector<SgFunctionDeclaration*> >& fns,
+                  const std::string& name,
+                  SgType& retty,
+                  std::vector<SgType*> params,
+                  SgScopeStatement& scope
+                )
   {
+    ASSERT_require(params.size() > 0);
+
     std::string            fnname = si::ada::roseOperatorPrefix + name;
     auto                   complete =
        [&params](SgFunctionParameterList& fnParmList, SgScopeStatement& scope)->void
        {
          static constexpr int MAX_PARAMS = 2;
-         static const string parmNames[MAX_PARAMS] = { "Left", "Right" };
+         static const std::string parmNames[MAX_PARAMS] = { "Left", "Right" };
 
          int            parmNameIdx = MAX_PARAMS - params.size() - 1;
          SgTypeModifier defaultInMode;
 
          defaultInMode.setDefault();
 
+         ADA_ASSERT(params.size() <= MAX_PARAMS);
          for (SgType* parmType : params)
          {
            const std::string&       parmName = parmNames[++parmNameIdx];
@@ -1413,8 +1432,11 @@ namespace
        };
 
     SgFunctionDeclaration& fndcl  = mkProcedureDecl_nondef(fnname, scope, retty, complete);
+    //~ SgType*                principalType = params.front();
 
-    fns[AdaIdentifier{name}].push_back(&fndcl);
+    //~ fns[OperatorKey{principalType, name}].emplace_back(&fndcl, OperatorDesc::DEFINED_IN_STANDARD);
+
+    fns[name].emplace_back(&fndcl);
   }
 
   template <class MapT>
@@ -1603,106 +1625,112 @@ void initializePkgStandard(SgGlobal& global)
 
   //
   // build standard functions
+  //~ map_t<OperatorKey, std::vector<OperatorDesc> >& opsMap = operatorSupport();
+  auto& opsMap = adaFuncs();
 
   // bool
-  declareOp(adaFuncs(), "=",   adaBoolType, { &adaBoolType, &adaBoolType },    stdspec);
-  declareOp(adaFuncs(), "/=",  adaBoolType, { &adaBoolType, &adaBoolType },    stdspec);
-  declareOp(adaFuncs(), "<",   adaBoolType, { &adaBoolType, &adaBoolType },    stdspec);
-  declareOp(adaFuncs(), "<=",  adaBoolType, { &adaBoolType, &adaBoolType },    stdspec);
-  declareOp(adaFuncs(), ">",   adaBoolType, { &adaBoolType, &adaBoolType },    stdspec);
-  declareOp(adaFuncs(), ">=",  adaBoolType, { &adaBoolType, &adaBoolType },    stdspec);
-  declareOp(adaFuncs(), "and", adaBoolType, { &adaBoolType, &adaBoolType },    stdspec);
-  declareOp(adaFuncs(), "or",  adaBoolType, { &adaBoolType, &adaBoolType },    stdspec);
-  declareOp(adaFuncs(), "xor", adaBoolType, { &adaBoolType, &adaBoolType },    stdspec);
-  declareOp(adaFuncs(), "not", adaBoolType, { &adaBoolType }, /* unary */      stdspec);
+  declareOp(opsMap, "=",   adaBoolType, { &adaBoolType, &adaBoolType },    stdspec);
+  declareOp(opsMap, "/=",  adaBoolType, { &adaBoolType, &adaBoolType },    stdspec);
+  declareOp(opsMap, "<",   adaBoolType, { &adaBoolType, &adaBoolType },    stdspec);
+  declareOp(opsMap, "<=",  adaBoolType, { &adaBoolType, &adaBoolType },    stdspec);
+  declareOp(opsMap, ">",   adaBoolType, { &adaBoolType, &adaBoolType },    stdspec);
+  declareOp(opsMap, ">=",  adaBoolType, { &adaBoolType, &adaBoolType },    stdspec);
+  declareOp(opsMap, "and", adaBoolType, { &adaBoolType, &adaBoolType },    stdspec);
+  declareOp(opsMap, "or",  adaBoolType, { &adaBoolType, &adaBoolType },    stdspec);
+  declareOp(opsMap, "xor", adaBoolType, { &adaBoolType, &adaBoolType },    stdspec);
+  declareOp(opsMap, "not", adaBoolType, { &adaBoolType }, /* unary */      stdspec);
 
   // integer
-  declareOp(adaFuncs(), "=",   adaBoolType, { &adaIntType,  &adaIntType },     stdspec);
-  declareOp(adaFuncs(), "/=",  adaBoolType, { &adaIntType,  &adaIntType },     stdspec);
-  declareOp(adaFuncs(), "<",   adaBoolType, { &adaIntType,  &adaIntType },     stdspec);
-  declareOp(adaFuncs(), "<=",  adaBoolType, { &adaIntType,  &adaIntType },     stdspec);
-  declareOp(adaFuncs(), ">",   adaBoolType, { &adaIntType,  &adaIntType },     stdspec);
-  declareOp(adaFuncs(), ">=",  adaBoolType, { &adaIntType,  &adaIntType },     stdspec);
+  declareOp(opsMap, "=",   adaBoolType, { &adaIntType,  &adaIntType },     stdspec);
+  declareOp(opsMap, "/=",  adaBoolType, { &adaIntType,  &adaIntType },     stdspec);
+  declareOp(opsMap, "<",   adaBoolType, { &adaIntType,  &adaIntType },     stdspec);
+  declareOp(opsMap, "<=",  adaBoolType, { &adaIntType,  &adaIntType },     stdspec);
+  declareOp(opsMap, ">",   adaBoolType, { &adaIntType,  &adaIntType },     stdspec);
+  declareOp(opsMap, ">=",  adaBoolType, { &adaIntType,  &adaIntType },     stdspec);
 
-  declareOp(adaFuncs(), "+",   adaIntType,  { &adaIntType,  &adaIntType },     stdspec);
-  declareOp(adaFuncs(), "-",   adaIntType,  { &adaIntType,  &adaIntType },     stdspec);
-  declareOp(adaFuncs(), "*",   adaIntType,  { &adaIntType,  &adaIntType },     stdspec);
-  declareOp(adaFuncs(), "/",   adaIntType,  { &adaIntType,  &adaIntType },     stdspec);
-  declareOp(adaFuncs(), "rem", adaIntType,  { &adaIntType,  &adaIntType },     stdspec);
-  declareOp(adaFuncs(), "mod", adaIntType,  { &adaIntType,  &adaIntType },     stdspec);
-  declareOp(adaFuncs(), "**",  adaIntType,  { &adaIntType,  &adaNaturalType }, stdspec);
+  declareOp(opsMap, "+",   adaIntType,  { &adaIntType,  &adaIntType },     stdspec);
+  declareOp(opsMap, "-",   adaIntType,  { &adaIntType,  &adaIntType },     stdspec);
+  declareOp(opsMap, "*",   adaIntType,  { &adaIntType,  &adaIntType },     stdspec);
+  declareOp(opsMap, "/",   adaIntType,  { &adaIntType,  &adaIntType },     stdspec);
+  declareOp(opsMap, "rem", adaIntType,  { &adaIntType,  &adaIntType },     stdspec);
+  declareOp(opsMap, "mod", adaIntType,  { &adaIntType,  &adaIntType },     stdspec);
+  declareOp(opsMap, "**",  adaIntType,  { &adaIntType,  &adaNaturalType }, stdspec);
 
-  declareOp(adaFuncs(), "+",   adaIntType,  { &adaIntType }, /* unary */       stdspec);
-  declareOp(adaFuncs(), "-",   adaIntType,  { &adaIntType }, /* unary */       stdspec);
-  declareOp(adaFuncs(), "abs", adaIntType,  { &adaIntType }, /* unary */       stdspec);
+  declareOp(opsMap, "+",   adaIntType,  { &adaIntType }, /* unary */       stdspec);
+  declareOp(opsMap, "-",   adaIntType,  { &adaIntType }, /* unary */       stdspec);
+  declareOp(opsMap, "abs", adaIntType,  { &adaIntType }, /* unary */       stdspec);
 
   // float
-  declareOp(adaFuncs(), "=",   adaBoolType, { &adaRealType, &adaRealType },    stdspec);
-  declareOp(adaFuncs(), "/=",  adaBoolType, { &adaRealType, &adaRealType },    stdspec);
-  declareOp(adaFuncs(), "<",   adaBoolType, { &adaRealType, &adaRealType },    stdspec);
-  declareOp(adaFuncs(), "<=",  adaBoolType, { &adaRealType, &adaRealType },    stdspec);
-  declareOp(adaFuncs(), ">",   adaBoolType, { &adaRealType, &adaRealType },    stdspec);
-  declareOp(adaFuncs(), ">=",  adaBoolType, { &adaRealType, &adaRealType },    stdspec);
+  declareOp(opsMap, "=",   adaBoolType, { &adaRealType, &adaRealType },    stdspec);
+  declareOp(opsMap, "/=",  adaBoolType, { &adaRealType, &adaRealType },    stdspec);
+  declareOp(opsMap, "<",   adaBoolType, { &adaRealType, &adaRealType },    stdspec);
+  declareOp(opsMap, "<=",  adaBoolType, { &adaRealType, &adaRealType },    stdspec);
+  declareOp(opsMap, ">",   adaBoolType, { &adaRealType, &adaRealType },    stdspec);
+  declareOp(opsMap, ">=",  adaBoolType, { &adaRealType, &adaRealType },    stdspec);
 
-  declareOp(adaFuncs(), "+",   adaRealType, { &adaRealType, &adaRealType },    stdspec);
-  declareOp(adaFuncs(), "-",   adaRealType, { &adaRealType, &adaRealType },    stdspec);
-  declareOp(adaFuncs(), "*",   adaRealType, { &adaRealType, &adaRealType },    stdspec);
-  declareOp(adaFuncs(), "/",   adaRealType, { &adaRealType, &adaRealType },    stdspec);
-  declareOp(adaFuncs(), "**",  adaRealType, { &adaRealType, &adaIntType },     stdspec);
+  declareOp(opsMap, "+",   adaRealType, { &adaRealType, &adaRealType },    stdspec);
+  declareOp(opsMap, "-",   adaRealType, { &adaRealType, &adaRealType },    stdspec);
+  declareOp(opsMap, "*",   adaRealType, { &adaRealType, &adaRealType },    stdspec);
+  declareOp(opsMap, "/",   adaRealType, { &adaRealType, &adaRealType },    stdspec);
+  declareOp(opsMap, "**",  adaRealType, { &adaRealType, &adaIntType },     stdspec);
 
-  declareOp(adaFuncs(), "+",   adaRealType, { &adaRealType }, /* unary */      stdspec);
-  declareOp(adaFuncs(), "-",   adaRealType, { &adaRealType }, /* unary */      stdspec);
-  declareOp(adaFuncs(), "abs", adaRealType, { &adaRealType }, /* unary */      stdspec);
+  declareOp(opsMap, "+",   adaRealType, { &adaRealType }, /* unary */      stdspec);
+  declareOp(opsMap, "-",   adaRealType, { &adaRealType }, /* unary */      stdspec);
+  declareOp(opsMap, "abs", adaRealType, { &adaRealType }, /* unary */      stdspec);
 
   // mixed float and int
-  declareOp(adaFuncs(), "*",   adaRealType, { &adaIntType,  &adaRealType },    stdspec);
-  declareOp(adaFuncs(), "*",   adaRealType, { &adaRealType, &adaIntType },     stdspec);
-  declareOp(adaFuncs(), "/",   adaRealType, { &adaRealType, &adaIntType },     stdspec);
+  declareOp(opsMap, "*",   adaRealType, { &adaIntType,  &adaRealType },    stdspec);
+  declareOp(opsMap, "*",   adaRealType, { &adaRealType, &adaIntType },     stdspec);
+  declareOp(opsMap, "/",   adaRealType, { &adaRealType, &adaIntType },     stdspec);
 
   // \todo what are built in fixed type operations??
 
 
   // operations on strings
-  declareOp(adaFuncs(), "=",   adaBoolType,           { &adaStringType,         &adaStringType },         stdspec);
-  declareOp(adaFuncs(), "/=",  adaBoolType,           { &adaStringType,         &adaStringType },         stdspec);
-  declareOp(adaFuncs(), "<",   adaBoolType,           { &adaStringType,         &adaStringType },         stdspec);
-  declareOp(adaFuncs(), "<=",  adaBoolType,           { &adaStringType,         &adaStringType },         stdspec);
-  declareOp(adaFuncs(), ">",   adaBoolType,           { &adaStringType,         &adaStringType },         stdspec);
-  declareOp(adaFuncs(), ">=",  adaBoolType,           { &adaStringType,         &adaStringType },         stdspec);
-  declareOp(adaFuncs(), "&",   adaStringType,         { &adaStringType,         &adaStringType },         stdspec);
-  declareOp(adaFuncs(), "&",   adaStringType,         { &adaCharType,           &adaStringType },         stdspec);
-  declareOp(adaFuncs(), "&",   adaStringType,         { &adaStringType,         &adaCharType   },         stdspec);
-  declareOp(adaFuncs(), "&",   adaStringType,         { &adaCharType,           &adaCharType   },         stdspec);
+  declareOp(opsMap, "=",   adaBoolType,           { &adaStringType,         &adaStringType },         stdspec);
+  declareOp(opsMap, "/=",  adaBoolType,           { &adaStringType,         &adaStringType },         stdspec);
+  declareOp(opsMap, "<",   adaBoolType,           { &adaStringType,         &adaStringType },         stdspec);
+  declareOp(opsMap, "<=",  adaBoolType,           { &adaStringType,         &adaStringType },         stdspec);
+  declareOp(opsMap, ">",   adaBoolType,           { &adaStringType,         &adaStringType },         stdspec);
+  declareOp(opsMap, ">=",  adaBoolType,           { &adaStringType,         &adaStringType },         stdspec);
+  declareOp(opsMap, "&",   adaStringType,         { &adaStringType,         &adaStringType },         stdspec);
+  declareOp(opsMap, "&",   adaStringType,         { &adaCharType,           &adaStringType },         stdspec);
+  declareOp(opsMap, "&",   adaStringType,         { &adaStringType,         &adaCharType   },         stdspec);
+  declareOp(opsMap, "&",   adaStringType,         { &adaCharType,           &adaCharType   },         stdspec);
 
-  declareOp(adaFuncs(), "=",   adaBoolType,           { &adaWideStringType,     &adaWideStringType },     stdspec);
-  declareOp(adaFuncs(), "/=",  adaBoolType,           { &adaWideStringType,     &adaWideStringType },     stdspec);
-  declareOp(adaFuncs(), "<",   adaBoolType,           { &adaWideStringType,     &adaWideStringType },     stdspec);
-  declareOp(adaFuncs(), "<=",  adaBoolType,           { &adaWideStringType,     &adaWideStringType },     stdspec);
-  declareOp(adaFuncs(), ">",   adaBoolType,           { &adaWideStringType,     &adaWideStringType },     stdspec);
-  declareOp(adaFuncs(), ">=",  adaBoolType,           { &adaWideStringType,     &adaWideStringType },     stdspec);
-  declareOp(adaFuncs(), "&",   adaWideStringType,     { &adaWideStringType,     &adaWideStringType },     stdspec);
-  declareOp(adaFuncs(), "&",   adaWideStringType,     { &adaWideCharType,       &adaWideStringType },     stdspec);
-  declareOp(adaFuncs(), "&",   adaWideStringType,     { &adaWideStringType,     &adaWideCharType   },     stdspec);
-  declareOp(adaFuncs(), "&",   adaWideStringType,     { &adaWideCharType,       &adaWideCharType   },     stdspec);
+  declareOp(opsMap, "=",   adaBoolType,           { &adaWideStringType,     &adaWideStringType },     stdspec);
+  declareOp(opsMap, "/=",  adaBoolType,           { &adaWideStringType,     &adaWideStringType },     stdspec);
+  declareOp(opsMap, "<",   adaBoolType,           { &adaWideStringType,     &adaWideStringType },     stdspec);
+  declareOp(opsMap, "<=",  adaBoolType,           { &adaWideStringType,     &adaWideStringType },     stdspec);
+  declareOp(opsMap, ">",   adaBoolType,           { &adaWideStringType,     &adaWideStringType },     stdspec);
+  declareOp(opsMap, ">=",  adaBoolType,           { &adaWideStringType,     &adaWideStringType },     stdspec);
+  declareOp(opsMap, "&",   adaWideStringType,     { &adaWideStringType,     &adaWideStringType },     stdspec);
+  declareOp(opsMap, "&",   adaWideStringType,     { &adaWideCharType,       &adaWideStringType },     stdspec);
+  declareOp(opsMap, "&",   adaWideStringType,     { &adaWideStringType,     &adaWideCharType   },     stdspec);
+  declareOp(opsMap, "&",   adaWideStringType,     { &adaWideCharType,       &adaWideCharType   },     stdspec);
 
-  declareOp(adaFuncs(), "=",   adaBoolType,           { &adaWideWideStringType, &adaWideWideStringType }, stdspec);
-  declareOp(adaFuncs(), "/=",  adaBoolType,           { &adaWideWideStringType, &adaWideWideStringType }, stdspec);
-  declareOp(adaFuncs(), "<",   adaBoolType,           { &adaWideWideStringType, &adaWideWideStringType }, stdspec);
-  declareOp(adaFuncs(), "<=",  adaBoolType,           { &adaWideWideStringType, &adaWideWideStringType }, stdspec);
-  declareOp(adaFuncs(), ">",   adaBoolType,           { &adaWideWideStringType, &adaWideWideStringType }, stdspec);
-  declareOp(adaFuncs(), ">=",  adaBoolType,           { &adaWideWideStringType, &adaWideWideStringType }, stdspec);
-  declareOp(adaFuncs(), "&",   adaWideWideStringType, { &adaWideWideStringType, &adaWideWideStringType }, stdspec);
-  declareOp(adaFuncs(), "&",   adaWideWideStringType, { &adaWideWideCharType,   &adaWideWideStringType }, stdspec);
-  declareOp(adaFuncs(), "&",   adaWideWideStringType, { &adaWideWideStringType, &adaWideWideCharType   }, stdspec);
-  declareOp(adaFuncs(), "&",   adaWideWideStringType, { &adaWideWideCharType,   &adaWideWideCharType   }, stdspec);
+  declareOp(opsMap, "=",   adaBoolType,           { &adaWideWideStringType, &adaWideWideStringType }, stdspec);
+  declareOp(opsMap, "/=",  adaBoolType,           { &adaWideWideStringType, &adaWideWideStringType }, stdspec);
+  declareOp(opsMap, "<",   adaBoolType,           { &adaWideWideStringType, &adaWideWideStringType }, stdspec);
+  declareOp(opsMap, "<=",  adaBoolType,           { &adaWideWideStringType, &adaWideWideStringType }, stdspec);
+  declareOp(opsMap, ">",   adaBoolType,           { &adaWideWideStringType, &adaWideWideStringType }, stdspec);
+  declareOp(opsMap, ">=",  adaBoolType,           { &adaWideWideStringType, &adaWideWideStringType }, stdspec);
+  declareOp(opsMap, "&",   adaWideWideStringType, { &adaWideWideStringType, &adaWideWideStringType }, stdspec);
+  declareOp(opsMap, "&",   adaWideWideStringType, { &adaWideWideCharType,   &adaWideWideStringType }, stdspec);
+  declareOp(opsMap, "&",   adaWideWideStringType, { &adaWideWideStringType, &adaWideWideCharType   }, stdspec);
+  declareOp(opsMap, "&",   adaWideWideStringType, { &adaWideWideCharType,   &adaWideWideCharType   }, stdspec);
 
   // \todo operations on Duration
 
   // access types
   SgType& adaAccessType = SG_DEREF(sb::buildNullptrType());
 
-  declareOp(adaFuncs(), "=",   adaBoolType, { &adaAccessType, &adaAccessType   }, stdspec);
-  declareOp(adaFuncs(), "/=",  adaBoolType, { &adaAccessType, &adaAccessType   }, stdspec);
+  declareOp(opsMap, "=",   adaBoolType, { &adaAccessType, &adaAccessType   }, stdspec);
+  declareOp(opsMap, "/=",  adaBoolType, { &adaAccessType, &adaAccessType   }, stdspec);
+
+  // set the standard package in the SageInterface::ada namespace
+  // \todo this should go away for a cleaner interface
+  si::ada::stdpkg = &stdpkg;
 }
 
 

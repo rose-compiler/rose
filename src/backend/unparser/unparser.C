@@ -1319,13 +1319,6 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
                break;
              }
 
-          case SgFile::e_Cobol_language:
-             {
-               printf ("Error: SgFile::e_Cobol_language detected in unparser (unparser not implemented, unparsing ignored) \n");
-            // ROSE_ASSERT(false);
-               break;
-             }
-
           case SgFile::e_last_language:
              {
                printf ("Error: SgFile::e_last_language detected in unparser \n");
@@ -3800,13 +3793,6 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
                case SgFile::e_Jovial_language:
                   {
                     outputFilename = "rose_" + file->get_sourceFileNameWithoutPath();
-                    break;
-                  }
-
-               case SgFile::e_Cobol_language:
-                  {
-                    printf ("Error: SgFile::e_Cobol_language detected in unparser (unparser not implemented, unparsing ignored) \n");
-                 // ROSE_ASSERT(false);
                     break;
                   }
 

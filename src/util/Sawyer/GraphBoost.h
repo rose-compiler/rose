@@ -108,7 +108,15 @@ BoostGraph sawyerGraphToBoostGraph(const SawyerGraph &sg) {
 // able to use Sawyer "end" iterators since the end of one list is not equal to the end of another list.
 
 template<class V, class E, class VKey, class EKey, class Alloc>
-class VertexOuterIterator: public std::iterator<std::bidirectional_iterator_tag, const size_t> {
+class VertexOuterIterator {
+public:
+    // Five standard iterator types
+    using iterator_category = std::bidirectional_iterator_tag;
+    using value_type = const size_t;
+    using difference_type = std::ptrdiff_t;
+    using pointer = const size_t*;
+    using reference = const size_t&;
+
 private:
     typedef typename Sawyer::Container::Graph<V, E, VKey, EKey, Alloc>::VertexIterator BaseIter;
     BaseIter base_;
@@ -128,7 +136,15 @@ public:
 };
 
 template<class V, class E, class VKey, class EKey, class Alloc>
-class ConstVertexOuterIterator: public std::iterator<std::bidirectional_iterator_tag, const size_t> {
+class ConstVertexOuterIterator {
+public:
+    // Five standard iterator types
+    using iterator_category = std::bidirectional_iterator_tag;
+    using value_type = const size_t;
+    using difference_type = std::ptrdiff_t;
+    using pointer = const size_t*;
+    using reference = const size_t&;
+
 private:
     typedef typename Sawyer::Container::Graph<V, E, VKey, EKey, Alloc>::ConstVertexIterator BaseIter;
     BaseIter base_;
@@ -149,7 +165,15 @@ public:
 };
 
 template<class V, class E, class VKey, class EKey, class Alloc>
-class EdgeOuterIterator: public std::iterator<std::bidirectional_iterator_tag, const size_t> {
+class EdgeOuterIterator {
+public:
+    // Five standard iterator types
+    using iterator_category = std::bidirectional_iterator_tag;
+    using value_type = const size_t;
+    using difference_type = std::ptrdiff_t;
+    using pointer = const size_t*;
+    using reference = const size_t&;
+
 private:
     typedef typename Sawyer::Container::Graph<V, E, VKey, EKey, Alloc>::EdgeIterator BaseIter;
     BaseIter base_;
@@ -169,7 +193,15 @@ public:
 };
 
 template<class V, class E, class VKey, class EKey, class Alloc>
-class ConstEdgeOuterIterator: public std::iterator<std::bidirectional_iterator_tag, const size_t> {
+class ConstEdgeOuterIterator {
+public:
+    // Five standard iterator types
+    using iterator_category = std::bidirectional_iterator_tag;
+    using value_type = const size_t;
+    using difference_type = std::ptrdiff_t;
+    using pointer = const size_t*;
+    using reference = const size_t&;
+
 private:
     typedef typename Sawyer::Container::Graph<V, E, VKey, EKey, Alloc>::ConstEdgeIterator BaseIter;
     BaseIter base_;

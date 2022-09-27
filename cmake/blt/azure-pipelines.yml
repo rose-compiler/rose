@@ -1,0 +1,105 @@
+# Copyright (c) 2017-2022, Lawrence Livermore National Security, LLC and
+# other BLT Project Developers. See the top-level LICENSE file for details
+#
+# SPDX-License-Identifier: (BSD-3-Clause)
+
+variables:
+  DOCKER_FLAGS: "--user='root' -v `pwd`:/blt -w /blt/build $(Compiler_ImageName)"
+  C_COMPILERS: "-DCMAKE_C_COMPILER=$(C_COMPILER) -DCMAKE_CXX_COMPILER=$(CXX_COMPILER)"
+  MPI_FLAGS: '-DENABLE_MPI=ON -DMPI_C_COMPILER=$(MPI_DIR)/bin/mpicc -DMPI_CXX_COMPILER=$(MPI_DIR)/bin/mpicxx -DMPIEXEC=$(MPI_DIR)/bin/mpiexec -DMPIEXEC_NUMPROC_FLAG=-n'
+
+strategy:
+  matrix:
+    linux_gcc8:
+      VM_ImageName: 'ubuntu-20.04'
+      Compiler_ImageName: 'axom/tpls:gcc-8_10-21-21_21h-28m'
+      C_COMPILER: '/usr/bin/gcc'
+      CXX_COMPILER: '/usr/bin/g++'
+      CMAKE_BIN_DIR: '/usr/bin'
+      MPI_DIR: '/usr'
+      CMAKE_FLAGS: '$(C_COMPILERS) $(MPI_FLAGS) -DENABLE_GTEST_DEATH_TESTS=OFF -DENABLE_OPENMP=ON'
+    linux_gcc11:
+      VM_ImageName: 'ubuntu-20.04'
+      Compiler_ImageName: 'axom/tpls:gcc-11_01-27-22_05h-56m'
+      C_COMPILER: '/usr/bin/gcc'
+      CXX_COMPILER: '/usr/bin/g++'
+      CMAKE_BIN_DIR: '/usr/bin'
+      MPI_DIR: '/usr'
+      CMAKE_FLAGS: '$(C_COMPILERS) $(MPI_FLAGS) -DENABLE_GTEST_DEATH_TESTS=OFF -DENABLE_OPENMP=ON'
+    linux_gcc11_benchmarks:
+      VM_ImageName: 'ubuntu-20.04'
+      Compiler_ImageName: 'axom/tpls:gcc-11_01-27-22_05h-56m'
+      C_COMPILER: '/usr/bin/gcc'
+      CXX_COMPILER: '/usr/bin/g++'
+      CMAKE_BIN_DIR: '/usr/bin'
+      MPI_DIR: '/usr'
+      CMAKE_FLAGS: '$(C_COMPILERS) $(MPI_FLAGS) -DENABLE_GTEST_DEATH_TESTS=OFF -DENABLE_OPENMP=ON -DENABLE_BENCHMARKS=ON'
+    linux_gcc11_gmock:
+      VM_ImageName: 'ubuntu-20.04'
+      Compiler_ImageName: 'axom/tpls:gcc-11_01-27-22_05h-56m'
+      C_COMPILER: '/usr/bin/gcc'
+      CXX_COMPILER: '/usr/bin/g++'
+      CMAKE_BIN_DIR: '/usr/bin'
+      MPI_DIR: '/usr'
+      CMAKE_FLAGS: '$(C_COMPILERS) $(MPI_FLAGS) -DENABLE_GTEST_DEATH_TESTS=OFF -DENABLE_OPENMP=ON -DENABLE_GMOCK=ON'
+    linux_clang10:
+      VM_ImageName: 'ubuntu-18.04'
+      Compiler_ImageName: 'axom/tpls:clang-10_10-21-21_21h-28m'
+      C_COMPILER: '/usr/bin/clang'
+      CXX_COMPILER: '/usr/bin/clang++'
+      CMAKE_BIN_DIR: '/usr/bin'
+      MPI_DIR: '/usr'
+      CMAKE_FLAGS: '$(C_COMPILERS) $(MPI_FLAGS) -DENABLE_GTEST_DEATH_TESTS=OFF -DENABLE_OPENMP=ON'
+    osx_gcc:
+      VM_ImageName: 'macos-1015'
+      CMAKE_FLAGS: ''
+    windows:
+      VM_ImageName: 'windows-2019'
+      CMAKE_FLAGS: ''
+
+pool:
+  vmImage: $(VM_ImageName)
+
+steps:
+# All
+- checkout: self
+  clean: true
+
+# OSX and Windows
+- script: |
+    mkdir build
+    cd build
+    cmake $(CMAKE_FLAGS) ../tests/internal
+  displayName: 'OSX/Windows CMake'
+  condition: or( eq( variables['Agent.OS'], 'Windows_NT'), eq( variables['Agent.OS'], 'Darwin'))
+- script: |
+    cmake --build build --config Release
+  displayName: 'OSX/Windows Build'
+  condition: or( eq( variables['Agent.OS'], 'Windows_NT'), eq( variables['Agent.OS'], 'Darwin'))
+- script: |
+    cd build
+    ctest -C Release -T Test --output-on-failure -V
+  displayName: 'OSX/Windows Test'
+  condition: or( eq( variables['Agent.OS'], 'Windows_NT'), eq( variables['Agent.OS'], 'Darwin'))
+
+# Linux
+- script:  |
+    docker run $(DOCKER_FLAGS) $(CMAKE_BIN_DIR)/cmake $(CMAKE_FLAGS) ../tests/internal
+  condition: eq( variables['Agent.OS'], 'Linux')
+  displayName: 'Linux CMake'
+- script:  |
+    docker run $(DOCKER_FLAGS) make -j2
+  condition: eq( variables['Agent.OS'], 'Linux')
+  displayName: 'Linux Build'
+- script:  |
+    docker run $(DOCKER_FLAGS) $(CMAKE_BIN_DIR)/ctest -T Test --output-on-failure -V
+  condition: eq( variables['Agent.OS'], 'Linux')
+  displayName: 'Linux Test'
+
+# All
+- task: PublishTestResults@2
+  inputs:
+    testResultsFormat: 'cTest'
+    testResultsFiles: 'build/Testing/*/Test.xml'
+    testRunTitle: '$(Agent.JobName) Tests'
+    failTaskOnFailedTests: true

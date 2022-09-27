@@ -116,9 +116,6 @@ namespace PredefinedSemanticFunctions {
   SingleEvalResult evalFunctionCallStrLen(EStateTransferFunctions* exprAnalyzer, SgFunctionCallExp* funCall, EStatePtr estate) {
     SingleEvalResult res;
     res.init(estate,AbstractValue(CodeThorn::Top()));
-    //return res;
-
-    // DEACTIVATED (use reference implementation)
     //cout<<"DEBUG:evalFunctionCallStrLen:"<<funCall->unparseToString()<<endl;
     res.init(estate,AbstractValue(CodeThorn::Top()));
     SgExpressionPtrList& argsList=SgNodeHelper::getFunctionCallActualParameterList(funCall);
@@ -139,21 +136,32 @@ namespace PredefinedSemanticFunctions {
       AbstractValue stringPtr=functionArgs[0];
       int pos=0;
       while(1) {
-        AbstractValue AbstractPos=AbstractValue(pos);
-        AbstractValue currentPos=AbstractValue::operatorAdd(stringPtr,AbstractPos);
+        AbstractValue abstractPos=AbstractValue(pos);
+        AbstractValue currentPos=AbstractValue::operatorAdd(stringPtr,abstractPos);
         //cout<<"DEBUG: evalFunctionCallStrLen: currentPos:"<<currentPos.toString()<<endl;
         if(currentPos.isTop()) {
           exprAnalyzer->recordPotentialOutOfBoundsAccessLocation(estate->label());
           break;
         }
-#if 0
-        // TODO: enable this check when strings are registered with size in all modes
+
         // check bounds of string's memory region
-        if(!accessIsWithinArrayBounds(stringPtr.getVariableId(),pos)) {
-          exprAnalyzer->recordDefinitiveOutOfBoundsAccessLocation(estate->label());
-          break;
+        if(stringPtr.isPtr()) {
+          CodeThorn::TypeSize numElements=exprAnalyzer->getVariableIdMapping()->getNumberOfElements(stringPtr.getVariableId());
+          if(VariableIdMapping::isUnknownSizeValue(numElements)) {
+            // unknown size of string memmory, return top
+            return res;
+          }
+          AbstractValue numElementsAV(numElements);
+          AbstractValue cmpResult=AbstractValue::operatorMoreOrEq(abstractPos,numElementsAV);
+          if(!cmpResult.isTop()&&cmpResult.isTrue()) {
+            exprAnalyzer->recordDefinitiveOutOfBoundsAccessLocation(estate->label());
+            break;
+          }
+        } else {
+          // abstraction is too coarse to reason on pointer values, return top
+          return res;
         }
-#endif
+
         AbstractValue currentPosValue=exprAnalyzer->readFromMemoryLocation(estate->label(),estate->pstate(),currentPos);
         //cout<<"DEBUG: currentPosValue:"<<currentPosValue.toString()<<endl;
         // if the memory location that is read, does not exist, it is an out-of-bounds access

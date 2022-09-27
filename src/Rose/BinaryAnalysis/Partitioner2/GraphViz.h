@@ -3,13 +3,14 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <ostream>
 #include <Rose/BinaryAnalysis/NoOperation.h>
-#include <Rose/BinaryAnalysis/SourceLocations.h>
-#include <boost/regex.hpp>
-#include <Rose/Color.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ControlFlowGraph.h>
 #include <Rose/BinaryAnalysis/Partitioner2/FunctionCallGraph.h>
+#include <Rose/BinaryAnalysis/SourceLocations.h>
+#include <Rose/Color.h>
+
+#include <boost/regex.hpp>
+#include <ostream>
 
 namespace Rose {
 namespace BinaryAnalysis {

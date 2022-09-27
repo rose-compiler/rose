@@ -3,7 +3,7 @@
 #define ROSE_BinaryAnalysis_DisassemblerCil_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include <Rose/BinaryAnalysis/Disassembler.h>
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
 
 #include <Rose/BinaryAnalysis/InstructionEnumsCil.h>
 #include "BitPattern.h"
@@ -17,8 +17,11 @@ namespace Rose {
 namespace BinaryAnalysis {
 
 /** Disassembler for CIL instruction set architectures. */
-class DisassemblerCil: public Disassembler {
+class DisassemblerCil: public Disassembler::Base {
 public:
+    /** Reference counting pointer. */
+    using Ptr = Sawyer::SharedPointer<DisassemblerCil>;
+
     // State mutated during the call to disassembleOne. Used internally.
     struct State: boost::noncopyable { // noncopyable is so we don't accidentally pass it by value
         MemoryMap::Ptr map;                         /**< Map from which to read instruction words. */
@@ -70,7 +73,7 @@ private:
 
     template<class S>
     void serialize_common(S &s, const unsigned /*version*/) {
-        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Disassembler);
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Disassembler::Base);
         s & BOOST_SERIALIZATION_NVP(family);
         //s & idis_table; -- not saved
     }
@@ -89,13 +92,11 @@ private:
     BOOST_SERIALIZATION_SPLIT_MEMBER();
 #endif
 
-public:
-// protected:
+protected:
     // undocumented constructor for serialization. The init() will be called by the serialization.
     DisassemblerCil()
         : family(Cil_family) {}
         
-public:
 #if 0
     /** Constructor for a specific family.
      *
@@ -111,7 +112,11 @@ public:
     }
 #endif
 
-    virtual DisassemblerCil *clone() const override { return new DisassemblerCil(*this); }
+public:
+    /** Allocating constructor. */
+    static Ptr instance();
+
+    virtual Disassembler::BasePtr clone() const override;
     virtual bool canDisassemble(SgAsmGenericHeader*) const override;
     virtual SgAsmInstruction *disassembleOne(const MemoryMap::Ptr&, rose_addr_t start_va,
                                              AddressSet *successors=NULL) override;

@@ -21540,6 +21540,15 @@ SgStatement* SageBuilder::buildStatementFromString(const std::string& s, SgScope
   return result;
 }
 
+SgUsingDirectiveStatement* SageBuilder::buildUsingDirectiveStatement(SgNamespaceDeclarationStatement * ns_decl)
+{
+  SgUsingDirectiveStatement* res = new SgUsingDirectiveStatement(ns_decl);
+  res->set_definingDeclaration(res);
+  res->set_firstNondefiningDeclaration(res);
+
+  setOneSourcePositionForTransformation(res);
+  return res; 
+}
 
 //
 // pp (07/16/16)

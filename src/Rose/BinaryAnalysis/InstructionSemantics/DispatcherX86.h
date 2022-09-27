@@ -3,8 +3,8 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
-#include <Rose/BinaryAnalysis/Registers.h>
 
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
@@ -90,26 +90,17 @@ private:
     
 protected:
     // Prototypical constructor
-    DispatcherX86()
-        : BaseSemantics::Dispatcher(32, SgAsmX86Instruction::registersForInstructionSize(x86_insnsize_32)),
-          processorMode_(x86_insnsize_32) {}
+    DispatcherX86();
 
     // Prototypical constructor
-    DispatcherX86(size_t addrWidth, const RegisterDictionary *regs/*=NULL*/)
-        : BaseSemantics::Dispatcher(addrWidth, regs ? regs : SgAsmX86Instruction::registersForWidth(addrWidth)),
-          processorMode_(SgAsmX86Instruction::instructionSizeForWidth(addrWidth)) {}
+    DispatcherX86(size_t addrWidth, const RegisterDictionaryPtr &regs);
 
     // Normal constructor
-    DispatcherX86(const BaseSemantics::RiscOperatorsPtr &ops, size_t addrWidth, const RegisterDictionary *regs)
-        : BaseSemantics::Dispatcher(ops, addrWidth, regs ? regs : SgAsmX86Instruction::registersForWidth(addrWidth)),
-          processorMode_(SgAsmX86Instruction::instructionSizeForWidth(addrWidth)) {
-        regcache_init();
-        iproc_init();
-        memory_init();
-        initializeState(ops->currentState());
-    }
+    DispatcherX86(const BaseSemantics::RiscOperatorsPtr&, size_t addrWidth, const RegisterDictionaryPtr&);
 
 public:
+    ~DispatcherX86();
+
     /** Loads the iproc table with instruction processing functors. This normally happens from the constructor. */
     void iproc_init();
 
@@ -124,38 +115,22 @@ public:
 public:
     /** Construct a prototypical dispatcher.  The only thing this dispatcher can be used for is to create another dispatcher
      *  with the virtual @ref create method. */
-    static DispatcherX86Ptr instance() {
-        return DispatcherX86Ptr(new DispatcherX86);
-    }
+    static DispatcherX86Ptr instance();
 
     /** Construct a prototyipcal dispatcher. Construct a prototypical dispatcher with a specified address size. The only thing
      * this dispatcher can be used for is to create another dispatcher with the virtual @ref create method. */
-    static DispatcherX86Ptr instance(size_t addrWidth, const RegisterDictionary *regs=NULL) {
-        return DispatcherX86Ptr(new DispatcherX86(addrWidth, regs));
-    }
+    static DispatcherX86Ptr instance(size_t addrWidth, const RegisterDictionaryPtr&);
 
     /** Constructor. */
     static DispatcherX86Ptr instance(const BaseSemantics::RiscOperatorsPtr &ops, size_t addrWidth,
-                                     const RegisterDictionary *regs=NULL) {
-        return DispatcherX86Ptr(new DispatcherX86(ops, addrWidth, regs));
-    }
+                                     const RegisterDictionaryPtr&);
 
     /** Virtual constructor. */
-    virtual BaseSemantics::DispatcherPtr create(const BaseSemantics::RiscOperatorsPtr &ops, size_t addrWidth=0,
-                                                const RegisterDictionary *regs=NULL) const override {
-        if (0==addrWidth)
-            addrWidth = addressWidth();
-        if (NULL==regs)
-            regs = registerDictionary();
-        return instance(ops, addrWidth, regs);
-    }
+    virtual BaseSemantics::DispatcherPtr create(const BaseSemantics::RiscOperatorsPtr&, size_t addrWidth,
+                                                const RegisterDictionaryPtr&) const override;
 
     /** Dynamic cast to a DispatcherX86Ptr with assertion. */
-    static DispatcherX86Ptr promote(const BaseSemantics::DispatcherPtr &d) {
-        DispatcherX86Ptr retval = boost::dynamic_pointer_cast<DispatcherX86>(d);
-        assert(retval!=NULL);
-        return retval;
-    }
+    static DispatcherX86Ptr promote(const BaseSemantics::DispatcherPtr&);
 
     /** CPU mode of operation.
      *
@@ -164,7 +139,7 @@ public:
     void processorMode(X86InstructionSize m) { processorMode_ = m; }
     /** @} */
 
-    virtual void set_register_dictionary(const RegisterDictionary *regdict) override;
+    virtual void set_register_dictionary(const RegisterDictionaryPtr &regdict) override;
 
     /** Get list of common registers. Returns a list of non-overlapping registers composed of the largest registers except
      *  using individual flags for the fields of the FLAGS/EFLAGS register. */

@@ -18,26 +18,16 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # "make" commands.  To disable your project, just rename its rose.config file and rerun "build" and "configure".
 
 SUBDIRS = \
-	ArithmeticMeasureTool \
         POET_ROSE \
-	BinaryCloneDetection \
 	CertSecureCodeProject \
 	CloneDetection \
-	EditDistanceMetric \
 	fuse \
 	HeaderFilesInclusion \
-	MPI_Tools \
 	MapleDSL \
 	arrayOptimization \
-	UpcTranslation \
-	autoParallelization \
-	pragmaParsing \
 	ManyCoreRuntime \
 	Fortran_to_C \
-	extractMPISkeleton \
 	RoseBlockLevelTracing \
-	xgenTranslator \
-        TemplateAnalysis \
 	$(OPTIONAL_PROJECTS)
 
 #QY (6/11/2018): this directory is no longer used; moved code to POET-ROSE/manycore-stencil
@@ -61,20 +51,6 @@ endif
 #   BinaryDataStructureRecognition 
 
 # DQ (9/26/2011): Directory removed for failing new AST consistancy test for references to deleted IR nodes.
-# UpcTranslation (fails only a single test code shared_2.upc)
-
-# TOO (2/16/2011): Errors with Tensilica's Xtensa compilers as alternative backend compilers. We can
-# gradually enable these tests at a later stage if necessary.
-if !USING_XTENSA_BACKEND_COMPILER
-   SUBDIRS += autoTuning
-endif
-
-# DQ (7/21/2010): Removed RTED since it is a problem to compile with ROSE (projects/RTED/CppRuntimeSystem/test.cpp).
-if !ROSE_USING_ROSE_ANALYSIS
-   SUBDIRS += RTED
-endif
-
-SUBDIRS += simulator2
 
 # DQ (2/12/2010): compass appears to be a problem for the code generation support
 # in ROSE, so lets' move on and return to compass later for this level of support
@@ -126,16 +102,12 @@ if ROSE_WITH_POCC
    SUBDIRS += PolyOpt2
 endif
 
-SUBDIRS += TileK
-SUBDIRS += RaaS
-SUBDIRS += CompilationDB
-
 ########################################################################################################################
 # Associate projects with developers
 ########################################################################################################################
 
 # The developer-specific project lists used for portability testing have been moved to
-# project/MatrixTesting/lib/matrix/docker-scripts/steps so they can be used by all
+# tools/PortabilityTesting/lib/matrix/docker-scripts/steps so they can be used by all
 # supported build systems. [Matzke, 2019-04-24]
 
 ########################################################################################################################

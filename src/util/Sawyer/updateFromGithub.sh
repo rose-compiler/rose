@@ -38,7 +38,7 @@ for f in                                                                        
     Callbacks Clexer CommandLine CommandLineBoost Database DatabasePostgresql DatabaseSqlite DefaultAllocator DenseIntegerSet           \
     DistinctList DocumentBaseMarkup DocumentMarkup DocumentPodMarkup DocumentTextMarkup Exception FileSystem Graph GraphAlgorithm       \
     GraphBoost GraphIteratorBiMap GraphIteratorMap GraphIteratorSet GraphTraversal IndexedList Interval IntervalMap IntervalSet         \
-    IntervalSetMap HashMap Lexer LineVector Map MappedBuffer Message NullBuffer Optional PoolAllocator ProgressBar Sawyer Set           \
+    IntervalSetMap HashMap Lexer LineVector Map MappedBuffer Message NullBuffer Optional PoolAllocator ProgressBar Result Sawyer Set    \
     SharedObject SharedPointer SmallObject Stack StackAllocator StaticBuffer Stopwatch Synchronization ThreadWorkers Trace Tracker      \
     Tree Type WarningsOff WarningsRestore WorkList;                                                                                     \
 do
@@ -73,6 +73,7 @@ for f in                                        \
     Container/listUnitTests.C                   \
     Container/mapUnitTests.C                    \
     Container/optionalUnitTests.C               \
+    Container/resultUnitTests.C                 \
     Container/setUnitTests.C                    \
     Container/traceUnitTests.C                  \
     Database/databaseUnitTests.C                \

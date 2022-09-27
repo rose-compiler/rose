@@ -3,6 +3,9 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/ConcreteLocation.h>
 
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
+#include <Rose/BinaryAnalysis/RegisterNames.h>
+
 #include <sstream>
 
 namespace Rose {
@@ -23,7 +26,10 @@ ConcreteLocation::operator=(const ConcreteLocation &other) {
     return *this;
 }
 
-ConcreteLocation::ConcreteLocation(RegisterDescriptor reg, const Sawyer::Nothing&, const RegisterDictionary *regdict)
+ConcreteLocation::ConcreteLocation(RegisterDescriptor reg)
+    : reg_(reg) {}
+
+ConcreteLocation::ConcreteLocation(RegisterDescriptor reg, const RegisterDictionary::Ptr &regdict)
     : reg_(reg), regdict_(regdict) {}
 
 ConcreteLocation::ConcreteLocation(rose_addr_t va)
@@ -60,7 +66,7 @@ ConcreteLocation::print(std::ostream &out) const {
 }
 
 void
-ConcreteLocation::print(std::ostream &out, const RegisterDictionary *regdict) const {
+ConcreteLocation::print(std::ostream &out, const RegisterDictionary::Ptr &regdict) const {
     RegisterNames regnames(regdict);
     switch (type()) {
         case NO_LOCATION:
@@ -149,13 +155,13 @@ ConcreteLocation::compare(const ConcreteLocation &other) const {
     }
 }
 
-const RegisterDictionary*
+RegisterDictionary::Ptr
 ConcreteLocation::registerDictionary() const {
     return regdict_;
 }
 
 void
-ConcreteLocation::registerDictionary(const RegisterDictionary *regdict) {
+ConcreteLocation::registerDictionary(const RegisterDictionary::Ptr &regdict) {
     regdict_ = regdict;
 }
 

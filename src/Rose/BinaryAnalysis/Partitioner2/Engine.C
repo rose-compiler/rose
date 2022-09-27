@@ -14,10 +14,10 @@
 #include <boost/regex.hpp>
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
-#include <Rose/BinaryAnalysis/DisassemblerM68k.h>
-#include <Rose/BinaryAnalysis/DisassemblerMips.h>
-#include <Rose/BinaryAnalysis/DisassemblerPowerpc.h>
-#include <Rose/BinaryAnalysis/DisassemblerX86.h>
+#include <Rose/BinaryAnalysis/Disassembler/M68k.h>
+#include <Rose/BinaryAnalysis/Disassembler/Mips.h>
+#include <Rose/BinaryAnalysis/Disassembler/Powerpc.h>
+#include <Rose/BinaryAnalysis/Disassembler/X86.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Modules.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesElf.h>
@@ -29,6 +29,7 @@
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesX86.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Semantics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Utility.h>
+#include <Rose/BinaryAnalysis/SymbolicExpression.h>
 #include <rose_getline.h>
 #include <rose_strtoull.h>
 #include <Sawyer/FileSystem.h>
@@ -51,6 +52,21 @@ namespace Partitioner2 {
 //                                      Utility functions
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+Engine::Engine()
+    : interp_(NULL), basicBlockWorkList_(BasicBlockWorkList::instance(this, settings_.partitioner.functionReturnAnalysisMaxSorts)),
+      progress_(Progress::instance()) {
+    init();
+}
+
+Engine::Engine(const Settings &settings)
+    : settings_(settings), interp_(NULL),
+      basicBlockWorkList_(BasicBlockWorkList::instance(this, settings_.partitioner.functionReturnAnalysisMaxSorts)),
+      progress_(Progress::instance()) {
+    init();
+}
+
+Engine::~Engine() {}
+
 void
 Engine::init() {
     ASSERT_require(map_ == NULL);
@@ -70,7 +86,7 @@ void
 Engine::reset() {
     interp_ = NULL;
     binaryLoader_ = BinaryLoader::Ptr();
-    disassembler_ = NULL;
+    disassembler_ = Disassembler::Base::Ptr();
     map_ = MemoryMap::Ptr();
     basicBlockWorkList_ = BasicBlockWorkList::instance(this, settings_.partitioner.functionReturnAnalysisMaxSorts);
 }
@@ -1469,15 +1485,18 @@ Engine::loadSpecimens(const std::vector<std::string> &fileNames) {
 //                                      Disassembler creation
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Disassembler*
-Engine::obtainDisassembler(Disassembler *hint) {
-    if (!disassembler_ && !settings_.disassembler.isaName.empty() &&
-        (disassembler_ = Disassembler::lookup(settings_.disassembler.isaName)))
-        disassembler_ = disassembler_->clone();
+Disassembler::Base::Ptr
+Engine::obtainDisassembler() {
+    return obtainDisassembler(Disassembler::Base::Ptr());
+}
 
-    if (!disassembler_ && interp_ &&
-        (disassembler_ = Disassembler::lookup(interp_)))
-        disassembler_ = disassembler_->clone();
+Disassembler::Base::Ptr
+Engine::obtainDisassembler(const Disassembler::Base::Ptr &hint) {
+    if (!disassembler_ && !settings_.disassembler.isaName.empty())
+        disassembler_ = Disassembler::lookup(settings_.disassembler.isaName);
+
+    if (!disassembler_ && interp_)
+        disassembler_ = Disassembler::lookup(interp_);
 
     if (!disassembler_ && hint)
         disassembler_ = hint;
@@ -1607,7 +1626,7 @@ Partitioner
 Engine::createTunedPartitioner() {
     obtainDisassembler();
 
-    if (dynamic_cast<DisassemblerM68k*>(disassembler_)) {
+    if (disassembler_.dynamicCast<Disassembler::M68k>()) {
         checkCreatePartitionerPrerequisites();
         Partitioner p = createBarePartitioner();
         p.functionPrologueMatchers().push_back(ModulesM68k::MatchLink::instance());
@@ -1616,7 +1635,7 @@ Engine::createTunedPartitioner() {
         return boost::move(p);
     }
 
-    if (dynamic_cast<DisassemblerX86*>(disassembler_)) {
+    if (disassembler_.dynamicCast<Disassembler::X86>()) {
         checkCreatePartitionerPrerequisites();
         Partitioner p = createBarePartitioner();
         p.functionPrologueMatchers().push_back(ModulesX86::MatchHotPatchPrologue::instance());
@@ -1632,14 +1651,14 @@ Engine::createTunedPartitioner() {
         return boost::move(p);
     }
 
-    if (dynamic_cast<DisassemblerPowerpc*>(disassembler_)) {
+    if (disassembler_.dynamicCast<Disassembler::Powerpc>()) {
         checkCreatePartitionerPrerequisites();
         Partitioner p = createBarePartitioner();
         p.functionPrologueMatchers().push_back(ModulesPowerpc::MatchStwuPrologue::instance());
         return boost::move(p);
     }
 
-    if (dynamic_cast<DisassemblerMips*>(disassembler_)) {
+    if (disassembler_.dynamicCast<Disassembler::Mips>()) {
         checkCreatePartitionerPrerequisites();
         Partitioner p = createBarePartitioner();
         p.functionPrologueMatchers().push_back(ModulesMips::MatchRetAddiu::instance());
@@ -1935,7 +1954,7 @@ void
 Engine::labelAddresses(Partitioner &partitioner, const Configuration &configuration) {
     Modules::labelSymbolAddresses(partitioner, interp_);
 
-    for (const AddressConfig &c: configuration.addresses().values()) {
+    for (const AddressConfiguration &c: configuration.addresses().values()) {
         if (!c.name().empty())
             partitioner.addressName(c.address(), c.name());
     }
@@ -1944,7 +1963,7 @@ Engine::labelAddresses(Partitioner &partitioner, const Configuration &configurat
 std::vector<DataBlock::Ptr>
 Engine::makeConfiguredDataBlocks(Partitioner &partitioner, const Configuration &configuration) {
     // FIXME[Robb P. Matzke 2015-05-12]: This just adds labels to addresses right now.
-    for (const DataBlockConfig &dconfig: configuration.dataBlocks().values()) {
+    for (const DataBlockConfiguration &dconfig: configuration.dataBlocks().values()) {
         if (!dconfig.name().empty())
             partitioner.addressName(dconfig.address(), dconfig.name());
     }
@@ -1954,7 +1973,7 @@ Engine::makeConfiguredDataBlocks(Partitioner &partitioner, const Configuration &
 std::vector<Function::Ptr>
 Engine::makeConfiguredFunctions(Partitioner &partitioner, const Configuration &configuration) {
     std::vector<Function::Ptr> retval;
-    for (const FunctionConfig &fconfig: configuration.functionConfigsByAddress().values()) {
+    for (const FunctionConfiguration &fconfig: configuration.functionConfigurationsByAddress().values()) {
         rose_addr_t entryVa = 0;
         if (fconfig.address().assignTo(entryVa)) {
             Function::Ptr function = Function::instance(entryVa, fconfig.name(), SgAsmFunction::FUNC_CONFIGURED);
@@ -2078,10 +2097,10 @@ Engine::makeInterruptVectorFunctions(Partitioner &partitioner, const AddressInte
     std::vector<Function::Ptr> functions;
     if (interruptVector.isEmpty())
         return functions;
-    Disassembler *disassembler = disassembler_ ? disassembler_ : partitioner.instructionProvider().disassembler();
+    Disassembler::Base::Ptr disassembler = disassembler_ ? disassembler_ : partitioner.instructionProvider().disassembler();
     if (!disassembler) {
         throw std::runtime_error("cannot decode interrupt vector without architecture information");
-    } else if (dynamic_cast<DisassemblerM68k*>(disassembler)) {
+    } else if (disassembler.dynamicCast<Disassembler::M68k>()) {
         for (const Function::Ptr &f: ModulesM68k::findInterruptFunctions(partitioner, interruptVector.least()))
             insertUnique(functions, partitioner.attachOrMergeFunction(f), sortFunctionsByAddress);
     } else if (1 == interruptVector.size()) {
@@ -2712,7 +2731,7 @@ Engine::BasicBlockFinalizer::fixFunctionReturnEdge(const Args &args) {
         BasicBlock::Successors successors = args.partitioner.basicBlockSuccessors(args.bblock);
         for (size_t i = 0; i < successors.size(); ++i) {
             if (!successors[i].expr()->isConcrete() ||
-                (successors[i].expr()->get_expression()->flags() & SymbolicExpr::Node::INDETERMINATE) != 0) {
+                (successors[i].expr()->get_expression()->flags() & SymbolicExpression::Node::INDETERMINATE) != 0) {
                 if (successors[i].type() == E_FUNCTION_RETURN) {
                     hadCorrectEdge = true;
                     break;
@@ -2756,8 +2775,8 @@ Engine::BasicBlockFinalizer::fixFunctionCallEdges(const Args &args) {
 // RiscOperators::peekMemory would have returned a free variable to indicate an indeterminate value, or ADDR is writable but
 // its MemoryMap::INITIALIZED bit is set to indicate it has a valid value already, in which case RiscOperators::peekMemory
 // would have returned the value stored there but also marked the value as being INDETERMINATE.  The
-// SymbolicExpr::TreeNode::INDETERMINATE bit in the expression should have been carried along so that things like "MOV EAX,
-// [ADDR]; JMP EAX" will behave the same as "JMP [ADDR]".
+// SymbolicExpression::TreeNode::INDETERMINATE bit in the expression should have been carried along so that things like "MOV
+// EAX, [ADDR]; JMP EAX" will behave the same as "JMP [ADDR]".
 void
 Engine::BasicBlockFinalizer::addPossibleIndeterminateEdge(const Args &args) {
     BasicBlockSemantics sem = args.bblock->semantics();
@@ -2772,7 +2791,7 @@ Engine::BasicBlockFinalizer::addPossibleIndeterminateEdge(const Args &args) {
             addIndeterminateEdge = false;
             break;
         } else if (!addIndeterminateEdge &&
-                   (successor.expr()->get_expression()->flags() & SymbolicExpr::Node::INDETERMINATE) != 0) {
+                   (successor.expr()->get_expression()->flags() & SymbolicExpression::Node::INDETERMINATE) != 0) {
             addIndeterminateEdge = true;
             addrWidth = successor.expr()->nBits();
         }
@@ -2781,7 +2800,7 @@ Engine::BasicBlockFinalizer::addPossibleIndeterminateEdge(const Args &args) {
     // Add an edge
     if (addIndeterminateEdge) {
         ASSERT_require(addrWidth != 0);
-        BaseSemantics::SValuePtr addr = sem.operators->undefined_(addrWidth);
+        BaseSemantics::SValue::Ptr addr = sem.operators->undefined_(addrWidth);
         EdgeType type = args.partitioner.basicBlockIsFunctionReturn(args.bblock) ? E_FUNCTION_RETURN : E_NORMAL;
         args.bblock->insertSuccessor(addr, type);
         SAWYER_MESG(mlog[DEBUG]) <<args.bblock->printableName()
@@ -3142,6 +3161,20 @@ Engine::buildAst(const std::vector<std::string> &fileNames) {
 SgAsmBlock*
 Engine::buildAst(const std::string &fileName) {
     return buildAst(std::vector<std::string>(1, fileName));
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Settings and Properties
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Disassembler::Base::Ptr
+Engine::disassembler() const {
+    return disassembler_;
+}
+
+void
+Engine::disassembler(const Disassembler::Base::Ptr &d) {
+    disassembler_ = d;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

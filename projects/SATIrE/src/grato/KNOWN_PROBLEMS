@@ -1,4 +1,0 @@
-* synparser.C: with flex 2.5.31 we get a warning:
-  synscanner.C:1174: warning: `void yyunput(int, char*)' defined but not used
-  This is a known flex issue.
-

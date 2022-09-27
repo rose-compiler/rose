@@ -94,7 +94,7 @@ using namespace Sawyer::Message;
 
 using namespace Sawyer::Message;
 
-static std::string CodeThornLibraryVersion="1.13.70";
+static std::string CodeThornLibraryVersion="1.13.71";
 
 // handler for generating backtrace
 void codethornBackTraceHandler(int sig) {
@@ -661,8 +661,12 @@ namespace CodeThorn {
     }
 
     SgProject* runRoseFrontEnd(int argc, char * argv[], CodeThornOptions& ctOpt, TimingCollector& timingCollector) {
-      timingCollector.startTimer();
       vector<string> argvList(argv,argv+argc);
+      return runRoseFrontEnd(argvList, ctOpt, timingCollector);
+    }
+
+    SgProject* runRoseFrontEnd(vector<string>& argvList, CodeThornOptions& ctOpt, TimingCollector& timingCollector) {
+      timingCollector.startTimer();
       if(ctOpt.ompAst||ctOpt.dr.detection) {
         SAWYER_MESG(logger[TRACE])<<"selected OpenMP AST."<<endl;
         argvList.push_back("-rose:OpenMP:ast_only");

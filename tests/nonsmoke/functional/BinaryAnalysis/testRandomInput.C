@@ -6,17 +6,20 @@ static const char *description =
 
 #include <rose.h>
 
-#include <Rose/BinaryAnalysis/Unparser/Base.h>
-#include <Rose/CommandLine.h>
-#include <Rose/Diagnostics.h>
-#include <Rose/BinaryAnalysis/Disassembler.h>
-#include <LinearCongruentialGenerator.h>
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
+#include <Rose/BinaryAnalysis/Unparser/Base.h>
+#include <Rose/CommandLine.h>
+#include <Rose/Diagnostics.h>
+
+#include <LinearCongruentialGenerator.h>
+
 #include <Sawyer/AllocatingBuffer.h>
 #include <Sawyer/CommandLine.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 
 using namespace Rose;
 using namespace Rose::BinaryAnalysis;
@@ -105,7 +108,7 @@ main(int argc, char *argv[]) {
     P2::Engine engine;
     engine.settings().disassembler.isaName = settings.isa;
     P2::Partitioner partitioner = engine.createPartitioner();
-    Disassembler *disassembler = partitioner.instructionProvider().disassembler();
+    Disassembler::Base::Ptr disassembler = partitioner.instructionProvider().disassembler();
     ASSERT_not_null(disassembler);
 
     // Configure unparser
@@ -116,11 +119,11 @@ main(int argc, char *argv[]) {
 #endif
 
     // Obtain an instruction semantics dispatcher if possible.
-    S2::BaseSemantics::DispatcherPtr cpu = disassembler->dispatcher();
+    S2::BaseSemantics::Dispatcher::Ptr cpu = disassembler->dispatcher();
     if (cpu) {
-        S2::BaseSemantics::RiscOperatorsPtr ops =
-            S2::SymbolicSemantics::RiscOperators::instance(disassembler->registerDictionary());
-        cpu = cpu->create(ops);
+        S2::BaseSemantics::RiscOperators::Ptr ops =
+            S2::SymbolicSemantics::RiscOperators::instanceFromRegisters(disassembler->registerDictionary());
+        cpu = cpu->create(ops, 0, RegisterDictionary::Ptr());
         mlog[INFO] <<"using symbolic semantics\n";
     } else {
         mlog[WARN] <<"instruction semantics aren't implemented for " <<disassembler->name() <<"\n";

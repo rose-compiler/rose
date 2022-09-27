@@ -1170,7 +1170,6 @@ namespace
                      )
   {
     SgFunctionParameterList& lst       = mkFunctionParameterList();
-    //~ SgScopeStatement&        parmScope = scopeMaker(sgnode);
     SgScopeStatement&        parmScope = scopeMaker();
 
     complete(lst, parmScope);

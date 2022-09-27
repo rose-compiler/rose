@@ -9,12 +9,14 @@ static const char *gDescription =
     "is copied from the source database to the destination database. In either case, only functions that satisfy the "
     "function selection criteria are inserted.";
 
+#include <batSupport.h>
+
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/LibraryIdentification.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
 
-#include <batSupport.h>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/filesystem.hpp>
 

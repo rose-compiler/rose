@@ -480,7 +480,7 @@ Leave(SgFunctionParameterList* param_list, SgScopeStatement* param_scope, const 
        SgVariableSymbol* symbol = SageInterface::lookupVariableSymbolInParentScopes(param.name, param_scope);
 
        if (symbol == nullptr) {
-         std::cerr << "SageTreeBuilder::Enter(SgFunctionDeclaration*) - symbol lookup failed for name "
+         std::cerr << "SageTreeBuilder::Leave(SgFunctionParameterList*) - symbol lookup failed for name "
                    << param.name << "\n";
          ROSE_ASSERT(symbol);
        }

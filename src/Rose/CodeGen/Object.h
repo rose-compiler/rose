@@ -1,5 +1,5 @@
-#ifndef Rose_CodeGen_Object_h
-#define Rose_CodeGen_Object_h
+#ifndef ROSE_CodeGen_Object_H
+#define ROSE_CodeGen_Object_H
 
 // FIXME it is a problem with MSVC ("cannot access protected member")
 //#include "Rose/Traits/Describe.h"
@@ -100,4 +100,4 @@ struct object_helper<Object::a_function> {
 
 } }
 
-#endif /* Rose_CodeGen_Object_h */
+#endif

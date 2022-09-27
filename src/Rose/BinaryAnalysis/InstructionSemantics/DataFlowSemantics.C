@@ -18,9 +18,13 @@ namespace DataFlowSemantics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-typedef Sawyer::SharedPointer<class SValue> SValuePtr;
+using SValuePtr = Sawyer::SharedPointer<class SValue>;
 
 class SValue: public BaseSemantics::SValue {
+public:
+    using Ptr = SValuePtr;
+
+private:
     std::vector<AbstractLocation> sources_;             // the locations that defined this value
 
     // The normal C++ constructors; same arguments as the base class
@@ -30,36 +34,36 @@ protected:
 
 public:
     /** Instantiate a new prototypical value. Prototypical values are only used for their virtual constructors. */
-    static SValuePtr instance() {
-        return SValuePtr(new SValue(1));
+    static SValue::Ptr instance() {
+        return SValue::Ptr(new SValue(1));
     }
     
     /** Instantiate a new undefined value of specified width. */
-    static SValuePtr instance(size_t nbits) {
-        return SValuePtr(new SValue(nbits));
+    static SValue::Ptr instance(size_t nbits) {
+        return SValue::Ptr(new SValue(nbits));
     }
 
     /** Instantiate a new concrete value. */
-    static SValuePtr instance(size_t nbits, uint64_t value) {
-        return SValuePtr(new SValue(nbits, value));
+    static SValue::Ptr instance(size_t nbits, uint64_t value) {
+        return SValue::Ptr(new SValue(nbits, value));
     }
 
     // Virtual allocating constructors
 public:
-    virtual BaseSemantics::SValuePtr bottom_(size_t nbits) const override {
+    virtual BaseSemantics::SValue::Ptr bottom_(size_t nbits) const override {
         return instance(nbits);
     }
-    virtual BaseSemantics::SValuePtr undefined_(size_t nbits) const override {
+    virtual BaseSemantics::SValue::Ptr undefined_(size_t nbits) const override {
         return instance(nbits);
     }
-    virtual BaseSemantics::SValuePtr unspecified_(size_t nbits) const override {
+    virtual BaseSemantics::SValue::Ptr unspecified_(size_t nbits) const override {
         return instance(nbits);
     }
-    virtual BaseSemantics::SValuePtr number_(size_t nbits, uint64_t value) const override {
+    virtual BaseSemantics::SValue::Ptr number_(size_t nbits, uint64_t value) const override {
         return instance(nbits, value);
     }
-    virtual BaseSemantics::SValuePtr copy(size_t new_width=0) const override {
-        SValuePtr retval(new SValue(*this));
+    virtual BaseSemantics::SValue::Ptr copy(size_t new_width=0) const override {
+        SValue::Ptr retval(new SValue(*this));
         if (new_width!=0 && new_width!=retval->nBits())
             retval->set_width(new_width);
         retval->sources_ = sources_;
@@ -68,26 +72,26 @@ public:
 
 public:
     /** Promote a base value to a value of this type.  The value @p v must have an appropriate dynamic type. */
-    static SValuePtr promote(const BaseSemantics::SValuePtr &v) { // hot
-        SValuePtr retval = v.dynamicCast<SValue>();
+    static SValue::Ptr promote(const BaseSemantics::SValue::Ptr &v) { // hot
+        SValue::Ptr retval = v.dynamicCast<SValue>();
         ASSERT_not_null(retval);
         return retval;
     }
 
     // Override virtual methods...
 public:
-    virtual Sawyer::Optional<BaseSemantics::SValuePtr>
-    createOptionalMerge(const BaseSemantics::SValuePtr &other, const BaseSemantics::MergerPtr&,
+    virtual Sawyer::Optional<BaseSemantics::SValue::Ptr>
+    createOptionalMerge(const BaseSemantics::SValue::Ptr &other, const BaseSemantics::Merger::Ptr&,
                         const SmtSolverPtr&) const override {
         TODO("[Robb P. Matzke 2015-08-10]");
     }
 
-    virtual bool may_equal(const BaseSemantics::SValuePtr &other,
+    virtual bool may_equal(const BaseSemantics::SValue::Ptr &other,
                            const SmtSolverPtr &solver = SmtSolverPtr()) const override {
         return true;
     }
 
-    virtual bool must_equal(const BaseSemantics::SValuePtr &other,
+    virtual bool must_equal(const BaseSemantics::SValue::Ptr &other,
                             const SmtSolverPtr &solver = SmtSolverPtr()) const override {
         return false;
     }
@@ -136,7 +140,7 @@ public:
         for (size_t i=0; i<alocs.size(); ++i)
             insert(alocs[i]);
     }
-    void insert(const SValuePtr &other) {
+    void insert(const SValue::Ptr &other) {
         insert(other->sources_);
     }
     /** @} */
@@ -159,35 +163,37 @@ public:
 typedef boost::shared_ptr<class InnerRiscOperators> InnerRiscOperatorsPtr;
 
 class InnerRiscOperators: public BaseSemantics::RiscOperators {
+public:
+    using Ptr = InnerRiscOperatorsPtr;
 
     // The normal C++ constructors; protected because this object is reference counted
 protected:
-    explicit InnerRiscOperators(const SValuePtr &protoval, const SmtSolverPtr &solver = SmtSolverPtr())
+    explicit InnerRiscOperators(const SValue::Ptr &protoval, const SmtSolverPtr &solver = SmtSolverPtr())
         : BaseSemantics::RiscOperators(protoval, solver) {
         name("DataFlow(Inner)");
     }
 
     // Static allocating constructor; no state since register and memory I/O methods are no-ops
 public:
-    static InnerRiscOperatorsPtr instance(const SmtSolverPtr &solver = SmtSolverPtr()) {
-        return InnerRiscOperatorsPtr(new InnerRiscOperators(SValue::instance(), solver));
+    static InnerRiscOperators::Ptr instance(const SmtSolverPtr &solver = SmtSolverPtr()) {
+        return InnerRiscOperators::Ptr(new InnerRiscOperators(SValue::instance(), solver));
     }
 
     // Virtual constructors
 private:
-    virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::SValuePtr &protoval,
+    virtual BaseSemantics::RiscOperators::Ptr create(const BaseSemantics::SValue::Ptr &protoval,
                                                    const SmtSolverPtr &solver = SmtSolverPtr()) const override {
         ASSERT_not_reachable("should not be called by user code");
 #ifdef _MSC_VER
-        return BaseSemantics::RiscOperatorsPtr();
+        return BaseSemantics::RiscOperators::Ptr();
 #endif
     }
 
-    virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::StatePtr &state,
+    virtual BaseSemantics::RiscOperators::Ptr create(const BaseSemantics::State::Ptr &state,
                                                    const SmtSolverPtr &solver = SmtSolverPtr()) const override {
         ASSERT_not_reachable("should not be called by user code");
 #ifdef _MSC_VER
-        return BaseSemantics::RiscOperatorsPtr();
+        return BaseSemantics::RiscOperators::Ptr();
 #endif
     }
 
@@ -195,25 +201,25 @@ private:
 public:
     /** Run-time promotion of a base RiscOperators pointer to operators for this domain. This is a checked conversion--it
      *  will fail if @p x does not point to an object with appropriate dynamic type. */
-    static InnerRiscOperatorsPtr promote(const BaseSemantics::RiscOperatorsPtr &x) {
-        InnerRiscOperatorsPtr retval = boost::dynamic_pointer_cast<InnerRiscOperators>(x);
+    static InnerRiscOperators::Ptr promote(const BaseSemantics::RiscOperators::Ptr &x) {
+        InnerRiscOperators::Ptr retval = boost::dynamic_pointer_cast<InnerRiscOperators>(x);
         ASSERT_not_null(retval);
         return retval;
     }
 
     // Create a new SValue whose source abstract locations are the union of the source abstract locations of the arguments.
 protected:
-    SValuePtr mergeSources(size_t nbits, const BaseSemantics::SValuePtr &a) {
+    SValue::Ptr mergeSources(size_t nbits, const BaseSemantics::SValue::Ptr &a) {
         return SValue::promote(a->copy(nbits));
     }
-    SValuePtr mergeSources(size_t nbits, const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
-        SValuePtr result = SValue::promote(a->copy(nbits));
+    SValue::Ptr mergeSources(size_t nbits, const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b) {
+        SValue::Ptr result = SValue::promote(a->copy(nbits));
         result->insert(SValue::promote(b)->sources());
         return result;
     }
-    SValuePtr mergeSources(size_t nbits, const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b,
-                           const BaseSemantics::SValuePtr &c) {
-        SValuePtr result = SValue::promote(a->copy(nbits));
+    SValue::Ptr mergeSources(size_t nbits, const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b,
+                           const BaseSemantics::SValue::Ptr &c) {
+        SValue::Ptr result = SValue::promote(a->copy(nbits));
         result->insert(SValue::promote(b)->sources());
         result->insert(SValue::promote(c)->sources());
         return result;
@@ -225,162 +231,162 @@ public:
         ASSERT_not_implemented("[Robb P. Matzke 2014-05-19]");
     }
 
-    virtual BaseSemantics::SValuePtr and_(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) override {
+    virtual BaseSemantics::SValue::Ptr and_(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b) override {
         return mergeSources(a->nBits(), a, b);
     }
 
-    virtual BaseSemantics::SValuePtr or_(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) override {
+    virtual BaseSemantics::SValue::Ptr or_(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b) override {
         return mergeSources(a->nBits(), a, b);
     }
 
-    virtual BaseSemantics::SValuePtr xor_(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) override {
+    virtual BaseSemantics::SValue::Ptr xor_(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b) override {
         return mergeSources(a->nBits(), a, b);
     }
 
-    virtual BaseSemantics::SValuePtr invert(const BaseSemantics::SValuePtr &a) override {
+    virtual BaseSemantics::SValue::Ptr invert(const BaseSemantics::SValue::Ptr &a) override {
         return mergeSources(a->nBits(), a);
     }
 
-    virtual BaseSemantics::SValuePtr extract(const BaseSemantics::SValuePtr &a,
+    virtual BaseSemantics::SValue::Ptr extract(const BaseSemantics::SValue::Ptr &a,
                                              size_t begin_bit, size_t end_bit) override {
         return mergeSources(end_bit-begin_bit, a);
     }
 
-    virtual BaseSemantics::SValuePtr concat(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) override {
+    virtual BaseSemantics::SValue::Ptr concat(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b) override {
         return mergeSources(a->nBits() + b->nBits(), a, b);
     }
 
-    virtual BaseSemantics::SValuePtr leastSignificantSetBit(const BaseSemantics::SValuePtr &a) override {
+    virtual BaseSemantics::SValue::Ptr leastSignificantSetBit(const BaseSemantics::SValue::Ptr &a) override {
         return mergeSources(a->nBits(), a);
     }
 
-    virtual BaseSemantics::SValuePtr mostSignificantSetBit(const BaseSemantics::SValuePtr &a) override {
+    virtual BaseSemantics::SValue::Ptr mostSignificantSetBit(const BaseSemantics::SValue::Ptr &a) override {
         return mergeSources(a->nBits(), a);
     }
 
-    virtual BaseSemantics::SValuePtr rotateLeft(const BaseSemantics::SValuePtr &a,
-                                                const BaseSemantics::SValuePtr &sa) override {
+    virtual BaseSemantics::SValue::Ptr rotateLeft(const BaseSemantics::SValue::Ptr &a,
+                                                const BaseSemantics::SValue::Ptr &sa) override {
         return mergeSources(a->nBits(), a, sa);
     }
 
-    virtual BaseSemantics::SValuePtr rotateRight(const BaseSemantics::SValuePtr &a,
-                                                 const BaseSemantics::SValuePtr &sa) override {
+    virtual BaseSemantics::SValue::Ptr rotateRight(const BaseSemantics::SValue::Ptr &a,
+                                                 const BaseSemantics::SValue::Ptr &sa) override {
         return mergeSources(a->nBits(), a, sa);
     }
 
-    virtual BaseSemantics::SValuePtr shiftLeft(const BaseSemantics::SValuePtr &a,
-                                               const BaseSemantics::SValuePtr &sa) override {
+    virtual BaseSemantics::SValue::Ptr shiftLeft(const BaseSemantics::SValue::Ptr &a,
+                                               const BaseSemantics::SValue::Ptr &sa) override {
         return mergeSources(a->nBits(), a, sa);
     }
 
-    virtual BaseSemantics::SValuePtr shiftRight(const BaseSemantics::SValuePtr &a,
-                                                const BaseSemantics::SValuePtr &sa) override {
+    virtual BaseSemantics::SValue::Ptr shiftRight(const BaseSemantics::SValue::Ptr &a,
+                                                const BaseSemantics::SValue::Ptr &sa) override {
         return mergeSources(a->nBits(), a, sa);
     }
 
-    virtual BaseSemantics::SValuePtr shiftRightArithmetic(const BaseSemantics::SValuePtr &a,
-                                                          const BaseSemantics::SValuePtr &sa) override {
+    virtual BaseSemantics::SValue::Ptr shiftRightArithmetic(const BaseSemantics::SValue::Ptr &a,
+                                                          const BaseSemantics::SValue::Ptr &sa) override {
         return mergeSources(a->nBits(), a, sa);
     }
 
-    virtual BaseSemantics::SValuePtr equalToZero(const BaseSemantics::SValuePtr &a) override {
+    virtual BaseSemantics::SValue::Ptr equalToZero(const BaseSemantics::SValue::Ptr &a) override {
         return mergeSources(1, a);
     }
 
-    virtual BaseSemantics::SValuePtr iteWithStatus(const BaseSemantics::SValuePtr &sel, const BaseSemantics::SValuePtr &a,
-                                                   const BaseSemantics::SValuePtr &b, IteStatus &status) override {
+    virtual BaseSemantics::SValue::Ptr iteWithStatus(const BaseSemantics::SValue::Ptr &sel, const BaseSemantics::SValue::Ptr &a,
+                                                   const BaseSemantics::SValue::Ptr &b, IteStatus &status) override {
         status = IteStatus::BOTH;
         return mergeSources(a->nBits(), sel, a, b);
     }
 
-    virtual BaseSemantics::SValuePtr unsignedExtend(const BaseSemantics::SValuePtr &a, size_t new_width) override {
+    virtual BaseSemantics::SValue::Ptr unsignedExtend(const BaseSemantics::SValue::Ptr &a, size_t new_width) override {
         return mergeSources(new_width, a);
     }
 
-    virtual BaseSemantics::SValuePtr signExtend(const BaseSemantics::SValuePtr &a, size_t new_width) override {
+    virtual BaseSemantics::SValue::Ptr signExtend(const BaseSemantics::SValue::Ptr &a, size_t new_width) override {
         return mergeSources(new_width, a);
     }
 
-    virtual BaseSemantics::SValuePtr add(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) override {
+    virtual BaseSemantics::SValue::Ptr add(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b) override {
         return mergeSources(a->nBits(), a, b);
     }
 
-    virtual BaseSemantics::SValuePtr addWithCarries(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b,
-                                                    const BaseSemantics::SValuePtr &c,
-                                                    BaseSemantics::SValuePtr &carry_out/*out*/) override {
+    virtual BaseSemantics::SValue::Ptr addWithCarries(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b,
+                                                    const BaseSemantics::SValue::Ptr &c,
+                                                    BaseSemantics::SValue::Ptr &carry_out/*out*/) override {
         carry_out = mergeSources(a->nBits(), a, b, c);
         return mergeSources(a->nBits(), a, b, c);
     }
 
-    virtual BaseSemantics::SValuePtr negate(const BaseSemantics::SValuePtr &a) override {
+    virtual BaseSemantics::SValue::Ptr negate(const BaseSemantics::SValue::Ptr &a) override {
         return mergeSources(a->nBits(), a);
     }
     
-    virtual BaseSemantics::SValuePtr signedDivide(const BaseSemantics::SValuePtr &a,
-                                                  const BaseSemantics::SValuePtr &b) override {
+    virtual BaseSemantics::SValue::Ptr signedDivide(const BaseSemantics::SValue::Ptr &a,
+                                                  const BaseSemantics::SValue::Ptr &b) override {
         return mergeSources(a->nBits(), a, b);
     }
 
-    virtual BaseSemantics::SValuePtr signedModulo(const BaseSemantics::SValuePtr &a,
-                                                  const BaseSemantics::SValuePtr &b) override {
+    virtual BaseSemantics::SValue::Ptr signedModulo(const BaseSemantics::SValue::Ptr &a,
+                                                  const BaseSemantics::SValue::Ptr &b) override {
         return mergeSources(b->nBits(), a, b);
     }
 
-    virtual BaseSemantics::SValuePtr signedMultiply(const BaseSemantics::SValuePtr &a,
-                                                    const BaseSemantics::SValuePtr &b) override {
+    virtual BaseSemantics::SValue::Ptr signedMultiply(const BaseSemantics::SValue::Ptr &a,
+                                                    const BaseSemantics::SValue::Ptr &b) override {
         return mergeSources(a->nBits() + b->nBits(), a, b);
     }
 
-    virtual BaseSemantics::SValuePtr unsignedDivide(const BaseSemantics::SValuePtr &a,
-                                                    const BaseSemantics::SValuePtr &b) override {
+    virtual BaseSemantics::SValue::Ptr unsignedDivide(const BaseSemantics::SValue::Ptr &a,
+                                                    const BaseSemantics::SValue::Ptr &b) override {
         return mergeSources(a->nBits(), a, b);
     }
 
-    virtual BaseSemantics::SValuePtr unsignedModulo(const BaseSemantics::SValuePtr &a,
-                                                    const BaseSemantics::SValuePtr &b) override {
+    virtual BaseSemantics::SValue::Ptr unsignedModulo(const BaseSemantics::SValue::Ptr &a,
+                                                    const BaseSemantics::SValue::Ptr &b) override {
         return mergeSources(b->nBits(), a, b);
     }
 
-    virtual BaseSemantics::SValuePtr unsignedMultiply(const BaseSemantics::SValuePtr &a,
-                                                      const BaseSemantics::SValuePtr &b) override {
+    virtual BaseSemantics::SValue::Ptr unsignedMultiply(const BaseSemantics::SValue::Ptr &a,
+                                                      const BaseSemantics::SValue::Ptr &b) override {
         return mergeSources(a->nBits() + b->nBits(), a, b);
     }
 
-    virtual BaseSemantics::SValuePtr readRegister(RegisterDescriptor reg,
-                                                  const BaseSemantics::SValuePtr &dflt) override {
+    virtual BaseSemantics::SValue::Ptr readRegister(RegisterDescriptor reg,
+                                                  const BaseSemantics::SValue::Ptr &dflt) override {
         ASSERT_not_reachable("readRegister is not possible for this semantic domain");
 #ifdef _MSC_VER
-        return BaseSemantics::SValuePtr();
+        return BaseSemantics::SValue::Ptr();
 #endif
     }
 
-    virtual void writeRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &a) override {
+    virtual void writeRegister(RegisterDescriptor reg, const BaseSemantics::SValue::Ptr &a) override {
         ASSERT_not_reachable("writeRegister is not possible for this semantic domain");
     }
 
-    virtual BaseSemantics::SValuePtr readMemory(RegisterDescriptor segreg,
-                                                const BaseSemantics::SValuePtr &addr,
-                                                const BaseSemantics::SValuePtr &dflt,
-                                                const BaseSemantics::SValuePtr &cond) override {
+    virtual BaseSemantics::SValue::Ptr readMemory(RegisterDescriptor segreg,
+                                                const BaseSemantics::SValue::Ptr &addr,
+                                                const BaseSemantics::SValue::Ptr &dflt,
+                                                const BaseSemantics::SValue::Ptr &cond) override {
         ASSERT_not_reachable("readMemory is not possible for this semantic domain");
 #ifdef _MSC_VER
-        return BaseSemantics::SValuePtr();
+        return BaseSemantics::SValue::Ptr();
 #endif
     }
     
-    virtual BaseSemantics::SValuePtr peekMemory(RegisterDescriptor segreg,
-                                                const BaseSemantics::SValuePtr &addr,
-                                                const BaseSemantics::SValuePtr &dflt) override {
+    virtual BaseSemantics::SValue::Ptr peekMemory(RegisterDescriptor segreg,
+                                                const BaseSemantics::SValue::Ptr &addr,
+                                                const BaseSemantics::SValue::Ptr &dflt) override {
         ASSERT_not_reachable("peekMemory is not possible for this semantic domain");
 #ifdef _MSC_VER
-        return BaseSemantics::SValuePtr();
+        return BaseSemantics::SValue::Ptr();
 #endif
     }
     
     virtual void writeMemory(RegisterDescriptor segreg,
-                             const BaseSemantics::SValuePtr &addr,
-                             const BaseSemantics::SValuePtr &data,
-                             const BaseSemantics::SValuePtr &cond) override {
+                             const BaseSemantics::SValue::Ptr &addr,
+                             const BaseSemantics::SValue::Ptr &data,
+                             const BaseSemantics::SValue::Ptr &cond) override {
         ASSERT_not_reachable("writeMemory is not possible for this semantic domain");
     }
 };
@@ -396,10 +402,10 @@ public:
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void
-RiscOperators::init(const BaseSemantics::RiscOperatorsPtr &userDomain) {
+RiscOperators::init(const BaseSemantics::RiscOperators::Ptr &userDomain) {
     name("DataFlow(Outer)");
     regdict_ = userDomain->currentState()->registerState()->registerDictionary();
-    InnerRiscOperatorsPtr innerDomain = InnerRiscOperators::instance(userDomain->solver());
+    InnerRiscOperators::Ptr innerDomain = InnerRiscOperators::instance(userDomain->solver());
     innerDomainId_ = add_subdomain(innerDomain, "DataFlow(Inner)");
     userDomainId_ = add_subdomain(userDomain, userDomain->name());
 }
@@ -436,8 +442,8 @@ RiscOperators::insertDataFlowEdge(const AbstractLocation &source, const Abstract
 }
 
 void
-RiscOperators::insertDataFlowEdges(const BaseSemantics::SValuePtr &svalue_, const AbstractLocation &target) {
-    SValuePtr svalue = SValue::promote(svalue_);
+RiscOperators::insertDataFlowEdges(const BaseSemantics::SValue::Ptr &svalue_, const AbstractLocation &target) {
+    SValue::Ptr svalue = SValue::promote(svalue_);
     DataFlowEdge::EdgeType edgeType = DataFlowEdge::CLOBBER;
     if (svalue->sources().empty()) {
         insertDataFlowEdge(AbstractLocation(), target, edgeType);
@@ -449,45 +455,45 @@ RiscOperators::insertDataFlowEdges(const BaseSemantics::SValuePtr &svalue_, cons
     }
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::readRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &dflt) {
+BaseSemantics::SValue::Ptr
+RiscOperators::readRegister(RegisterDescriptor reg, const BaseSemantics::SValue::Ptr &dflt) {
     TemporarilyDeactivate deactivate(this, innerDomainId_);
-    MultiSemantics::SValuePtr result = MultiSemantics::SValue::promote(Super::readRegister(reg, dflt));
-    BaseSemantics::RiscOperatorsPtr innerDomain = get_subdomain(innerDomainId_);
-    SValuePtr value = SValue::promote(innerDomain->protoval()->undefined_(reg.nBits()));
+    MultiSemantics::SValue::Ptr result = MultiSemantics::SValue::promote(Super::readRegister(reg, dflt));
+    BaseSemantics::RiscOperators::Ptr innerDomain = get_subdomain(innerDomainId_);
+    SValue::Ptr value = SValue::promote(innerDomain->protoval()->undefined_(reg.nBits()));
     value->insert(AbstractLocation(reg, regdict_));
     result->set_subvalue(innerDomainId_, value);
     return result;
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::peekRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &dflt) {
+BaseSemantics::SValue::Ptr
+RiscOperators::peekRegister(RegisterDescriptor reg, const BaseSemantics::SValue::Ptr &dflt) {
     TemporarilyDeactivate deactivate(this, innerDomainId_);
-    MultiSemantics::SValuePtr result = MultiSemantics::SValue::promote(Super::peekRegister(reg, dflt));
-    BaseSemantics::RiscOperatorsPtr innerDomain = get_subdomain(innerDomainId_);
-    SValuePtr value = SValue::promote(innerDomain->protoval()->undefined_(reg.nBits()));
+    MultiSemantics::SValue::Ptr result = MultiSemantics::SValue::promote(Super::peekRegister(reg, dflt));
+    BaseSemantics::RiscOperators::Ptr innerDomain = get_subdomain(innerDomainId_);
+    SValue::Ptr value = SValue::promote(innerDomain->protoval()->undefined_(reg.nBits()));
     value->insert(AbstractLocation(reg, regdict_));
     result->set_subvalue(innerDomainId_, value);
     return result;
 }
 
 void
-RiscOperators::writeRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &a_) {
+RiscOperators::writeRegister(RegisterDescriptor reg, const BaseSemantics::SValue::Ptr &a_) {
     TemporarilyDeactivate deactivate(this, innerDomainId_);
-    MultiSemantics::SValuePtr a = MultiSemantics::SValue::promote(a_);
+    MultiSemantics::SValue::Ptr a = MultiSemantics::SValue::promote(a_);
     Super::writeRegister(reg, a);
-    SValuePtr innerVal = SValue::promote(a->get_subvalue(innerDomainId_));
+    SValue::Ptr innerVal = SValue::promote(a->get_subvalue(innerDomainId_));
     insertDataFlowEdges(innerVal, AbstractLocation(reg, regdict_));
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::readOrPeekMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr_,
-                                const BaseSemantics::SValuePtr &dflt_, const BaseSemantics::SValuePtr &cond,
+BaseSemantics::SValue::Ptr
+RiscOperators::readOrPeekMemory(RegisterDescriptor segreg, const BaseSemantics::SValue::Ptr &addr_,
+                                const BaseSemantics::SValue::Ptr &dflt_, const BaseSemantics::SValue::Ptr &cond,
                                 bool allowSideEffects) {
     TemporarilyDeactivate deactivate(this, innerDomainId_);
-    MultiSemantics::SValuePtr addr = MultiSemantics::SValue::promote(addr_);
-    MultiSemantics::SValuePtr dflt = MultiSemantics::SValue::promote(dflt_);
-    MultiSemantics::SValuePtr result;
+    MultiSemantics::SValue::Ptr addr = MultiSemantics::SValue::promote(addr_);
+    MultiSemantics::SValue::Ptr dflt = MultiSemantics::SValue::promote(dflt_);
+    MultiSemantics::SValue::Ptr result;
     if (allowSideEffects) {
         result = MultiSemantics::SValue::promote(Super::readMemory(segreg, addr, dflt, cond));
     } else {
@@ -498,12 +504,12 @@ RiscOperators::readOrPeekMemory(RegisterDescriptor segreg, const BaseSemantics::
     size_t valueWidth = dflt->nBits();
     ASSERT_require(0 == valueWidth % 8);
 
-    BaseSemantics::RiscOperatorsPtr userOps = get_subdomain(userDomainId_);
-    BaseSemantics::RiscOperatorsPtr innerOps = get_subdomain(innerDomainId_);
+    BaseSemantics::RiscOperators::Ptr userOps = get_subdomain(userDomainId_);
+    BaseSemantics::RiscOperators::Ptr innerOps = get_subdomain(innerDomainId_);
 
-    SValuePtr definers = SValue::promote(dflt->get_subvalue(innerDomainId_)->copy());
+    SValue::Ptr definers = SValue::promote(dflt->get_subvalue(innerDomainId_)->copy());
     for (size_t bytenum=0; bytenum<valueWidth/8; ++bytenum) {
-        BaseSemantics::SValuePtr byteAddr = userOps->add(addr->get_subvalue(userDomainId_),
+        BaseSemantics::SValue::Ptr byteAddr = userOps->add(addr->get_subvalue(userDomainId_),
                                                          userOps->number_(addrWidth, bytenum));
         definers->insert(AbstractLocation(byteAddr));
     }
@@ -511,41 +517,41 @@ RiscOperators::readOrPeekMemory(RegisterDescriptor segreg, const BaseSemantics::
     return result;
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr,
-                          const BaseSemantics::SValuePtr &dflt, const BaseSemantics::SValuePtr &cond) {
+BaseSemantics::SValue::Ptr
+RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValue::Ptr &addr,
+                          const BaseSemantics::SValue::Ptr &dflt, const BaseSemantics::SValue::Ptr &cond) {
     if (cond->isFalse())
         return dflt;
     return readOrPeekMemory(segreg, addr, dflt, cond, true /*allow side effects*/);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::peekMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr,
-                          const BaseSemantics::SValuePtr &dflt) {
+BaseSemantics::SValue::Ptr
+RiscOperators::peekMemory(RegisterDescriptor segreg, const BaseSemantics::SValue::Ptr &addr,
+                          const BaseSemantics::SValue::Ptr &dflt) {
     return readOrPeekMemory(segreg, addr, dflt, undefined_(1), false /*noside effects allowed*/);
 }
 
 void
-RiscOperators::writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr_,
-                           const BaseSemantics::SValuePtr &data_, const BaseSemantics::SValuePtr &cond) {
+RiscOperators::writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValue::Ptr &addr_,
+                           const BaseSemantics::SValue::Ptr &data_, const BaseSemantics::SValue::Ptr &cond) {
     if (cond->isFalse())
         return;
     TemporarilyDeactivate deactivate(this, innerDomainId_);
-    MultiSemantics::SValuePtr addr = MultiSemantics::SValue::promote(addr_);
-    MultiSemantics::SValuePtr data = MultiSemantics::SValue::promote(data_);
+    MultiSemantics::SValue::Ptr addr = MultiSemantics::SValue::promote(addr_);
+    MultiSemantics::SValue::Ptr data = MultiSemantics::SValue::promote(data_);
     Super::writeMemory(segreg, addr, data, cond);
 
     size_t addrWidth = addr->nBits();
     size_t valueWidth = data->nBits();
     ASSERT_require(0 == valueWidth % 8);
 
-    BaseSemantics::RiscOperatorsPtr userOps = get_subdomain(userDomainId_);
-    BaseSemantics::RiscOperatorsPtr innerOps = get_subdomain(innerDomainId_);
+    BaseSemantics::RiscOperators::Ptr userOps = get_subdomain(userDomainId_);
+    BaseSemantics::RiscOperators::Ptr innerOps = get_subdomain(innerDomainId_);
 
     for (size_t bytenum=0; bytenum<valueWidth/8; ++bytenum) {
-        BaseSemantics::SValuePtr byteAddr = userOps->add(addr->get_subvalue(userDomainId_),
+        BaseSemantics::SValue::Ptr byteAddr = userOps->add(addr->get_subvalue(userDomainId_),
                                                          userOps->number_(addrWidth, bytenum));
-        SValuePtr byte = SValue::promote(innerOps->extract(data->get_subvalue(innerDomainId_), 8*bytenum, 8*bytenum+8));
+        SValue::Ptr byte = SValue::promote(innerOps->extract(data->get_subvalue(innerDomainId_), 8*bytenum, 8*bytenum+8));
         insertDataFlowEdges(byte, AbstractLocation(byteAddr));
     }
 }

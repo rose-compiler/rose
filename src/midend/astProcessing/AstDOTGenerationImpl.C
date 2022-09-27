@@ -18,6 +18,8 @@
 #  include "AsmUnparser_compat.h"
 #endif
 
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
+
 template <typename ExtraNodeInfo_t, typename ExtraNodeOptions_t, typename ExtraEdgeInfo_t, typename ExtraEdgeOptions_t>
 DOTSynthesizedAttribute
 AstDOTGenerationExtended<ExtraNodeInfo_t, ExtraNodeOptions_t, ExtraEdgeInfo_t, ExtraEdgeOptions_t>::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribute ia, SubTreeSynthesizedAttributes l)
@@ -71,7 +73,7 @@ AstDOTGenerationExtended<ExtraNodeInfo_t, ExtraNodeOptions_t, ExtraEdgeInfo_t, E
         SgAsmExpression* genericExpression = isSgAsmExpression(node);
         if (genericExpression != NULL)
         {
-          string name = unparseExpression(genericExpression, NULL, NULL);
+          string name = unparseExpression(genericExpression, NULL, Rose::BinaryAnalysis::RegisterDictionary::Ptr());
           ROSE_ASSERT(name.empty() == false);
           nodelabel += string("\\n") + name;
         }

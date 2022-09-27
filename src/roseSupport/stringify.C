@@ -20414,8 +20414,8 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/Rose/BinaryAnalysis/SymbolicExpr.h line 65
-namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace SymbolicExpr { namespace TypeStyle {
+// /src/Rose/BinaryAnalysis/SymbolicExpression.h line 65
+namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace SymbolicExpression { namespace TypeStyle {
     const char* Flag(int64_t i) {
         switch (i) {
             case 0L: return "FULL";
@@ -20427,7 +20427,7 @@ namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Symb
     std::string Flag(int64_t i, const std::string &strip) {
         std::string s = Flag(i);
         if (s.empty())
-            s = "(Rose::BinaryAnalysis::SymbolicExpr::TypeStyle::Flag)" + boost::lexical_cast<std::string>(i);
+            s = "(Rose::BinaryAnalysis::SymbolicExpression::TypeStyle::Flag)" + boost::lexical_cast<std::string>(i);
         if (boost::starts_with(s, strip))
             s = s.substr(strip.size());
         return s;
@@ -20445,27 +20445,27 @@ namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Symb
 }}}}}
 
 namespace Rose {
-    std::string stringifyBinaryAnalysisSymbolicExprTypeStyleFlag(int64_t i, const char *strip, bool canonic) {
-        std::string retval = stringify::Rose::BinaryAnalysis::SymbolicExpr::TypeStyle::Flag(i);
+    std::string stringifyBinaryAnalysisSymbolicExpressionTypeStyleFlag(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::Rose::BinaryAnalysis::SymbolicExpression::TypeStyle::Flag(i);
         if (retval.empty()) {
-            retval = "(Rose::BinaryAnalysis::SymbolicExpr::TypeStyle::Flag)" + boost::lexical_cast<std::string>(i);
+            retval = "(Rose::BinaryAnalysis::SymbolicExpression::TypeStyle::Flag)" + boost::lexical_cast<std::string>(i);
         } else {
             if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
                 retval = retval.substr(strlen(strip));
             if (canonic)
-                retval = "Rose::BinaryAnalysis::SymbolicExpr::TypeStyle::Flag::" + retval;
+                retval = "Rose::BinaryAnalysis::SymbolicExpression::TypeStyle::Flag::" + retval;
         }
         return retval;
     }
 
-    const std::vector<int64_t>& stringifyBinaryAnalysisSymbolicExprTypeStyleFlag() {
-        return stringify::Rose::BinaryAnalysis::SymbolicExpr::TypeStyle::Flag();
+    const std::vector<int64_t>& stringifyBinaryAnalysisSymbolicExpressionTypeStyleFlag() {
+        return stringify::Rose::BinaryAnalysis::SymbolicExpression::TypeStyle::Flag();
     }
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/Rose/BinaryAnalysis/SymbolicExpr.h line 83
-namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace SymbolicExpr {
+// /src/Rose/BinaryAnalysis/SymbolicExpression.h line 83
+namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace SymbolicExpression {
     const char* Operator(int64_t i) {
         switch (i) {
             case 0L: return "OP_ADD";
@@ -20543,7 +20543,7 @@ namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Symb
     std::string Operator(int64_t i, const std::string &strip) {
         std::string s = Operator(i);
         if (s.empty())
-            s = "(Rose::BinaryAnalysis::SymbolicExpr::Operator)" + boost::lexical_cast<std::string>(i);
+            s = "(Rose::BinaryAnalysis::SymbolicExpression::Operator)" + boost::lexical_cast<std::string>(i);
         if (boost::starts_with(s, strip))
             s = s.substr(strip.size());
         return s;
@@ -20627,27 +20627,27 @@ namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Symb
 }}}}
 
 namespace Rose {
-    std::string stringifyBinaryAnalysisSymbolicExprOperator(int64_t i, const char *strip, bool canonic) {
-        std::string retval = stringify::Rose::BinaryAnalysis::SymbolicExpr::Operator(i);
+    std::string stringifyBinaryAnalysisSymbolicExpressionOperator(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::Rose::BinaryAnalysis::SymbolicExpression::Operator(i);
         if (retval.empty()) {
-            retval = "(Rose::BinaryAnalysis::SymbolicExpr::Operator)" + boost::lexical_cast<std::string>(i);
+            retval = "(Rose::BinaryAnalysis::SymbolicExpression::Operator)" + boost::lexical_cast<std::string>(i);
         } else {
             if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
                 retval = retval.substr(strlen(strip));
             if (canonic)
-                retval = "Rose::BinaryAnalysis::SymbolicExpr::Operator::" + retval;
+                retval = "Rose::BinaryAnalysis::SymbolicExpression::Operator::" + retval;
         }
         return retval;
     }
 
-    const std::vector<int64_t>& stringifyBinaryAnalysisSymbolicExprOperator() {
-        return stringify::Rose::BinaryAnalysis::SymbolicExpr::Operator();
+    const std::vector<int64_t>& stringifyBinaryAnalysisSymbolicExpressionOperator() {
+        return stringify::Rose::BinaryAnalysis::SymbolicExpression::Operator();
     }
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/Rose/BinaryAnalysis/SymbolicExpr.h line 181
-namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace SymbolicExpr { namespace Formatter {
+// /src/Rose/BinaryAnalysis/SymbolicExpression.h line 181
+namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace SymbolicExpression { namespace Formatter {
     const char* ShowComments(int64_t i) {
         switch (i) {
             case 0L: return "CMT_SILENT";
@@ -20660,7 +20660,7 @@ namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Symb
     std::string ShowComments(int64_t i, const std::string &strip) {
         std::string s = ShowComments(i);
         if (s.empty())
-            s = "(Rose::BinaryAnalysis::SymbolicExpr::Formatter::ShowComments)" + boost::lexical_cast<std::string>(i);
+            s = "(Rose::BinaryAnalysis::SymbolicExpression::Formatter::ShowComments)" + boost::lexical_cast<std::string>(i);
         if (boost::starts_with(s, strip))
             s = s.substr(strip.size());
         return s;
@@ -20679,27 +20679,27 @@ namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Symb
 }}}}}
 
 namespace Rose {
-    std::string stringifyBinaryAnalysisSymbolicExprFormatterShowComments(int64_t i, const char *strip, bool canonic) {
-        std::string retval = stringify::Rose::BinaryAnalysis::SymbolicExpr::Formatter::ShowComments(i);
+    std::string stringifyBinaryAnalysisSymbolicExpressionFormatterShowComments(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::Rose::BinaryAnalysis::SymbolicExpression::Formatter::ShowComments(i);
         if (retval.empty()) {
-            retval = "(Rose::BinaryAnalysis::SymbolicExpr::Formatter::ShowComments)" + boost::lexical_cast<std::string>(i);
+            retval = "(Rose::BinaryAnalysis::SymbolicExpression::Formatter::ShowComments)" + boost::lexical_cast<std::string>(i);
         } else {
             if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
                 retval = retval.substr(strlen(strip));
             if (canonic)
-                retval = "Rose::BinaryAnalysis::SymbolicExpr::Formatter::ShowComments::" + retval;
+                retval = "Rose::BinaryAnalysis::SymbolicExpression::Formatter::ShowComments::" + retval;
         }
         return retval;
     }
 
-    const std::vector<int64_t>& stringifyBinaryAnalysisSymbolicExprFormatterShowComments() {
-        return stringify::Rose::BinaryAnalysis::SymbolicExpr::Formatter::ShowComments();
+    const std::vector<int64_t>& stringifyBinaryAnalysisSymbolicExpressionFormatterShowComments() {
+        return stringify::Rose::BinaryAnalysis::SymbolicExpression::Formatter::ShowComments();
     }
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/Rose/BinaryAnalysis/SymbolicExpr.h line 201
-namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace SymbolicExpr {
+// /src/Rose/BinaryAnalysis/SymbolicExpression.h line 201
+namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace SymbolicExpression {
     const char* VisitAction(int64_t i) {
         switch (i) {
             case 0L: return "CONTINUE";
@@ -20712,7 +20712,7 @@ namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Symb
     std::string VisitAction(int64_t i, const std::string &strip) {
         std::string s = VisitAction(i);
         if (s.empty())
-            s = "(Rose::BinaryAnalysis::SymbolicExpr::VisitAction)" + boost::lexical_cast<std::string>(i);
+            s = "(Rose::BinaryAnalysis::SymbolicExpression::VisitAction)" + boost::lexical_cast<std::string>(i);
         if (boost::starts_with(s, strip))
             s = s.substr(strip.size());
         return s;
@@ -20731,27 +20731,27 @@ namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Symb
 }}}}
 
 namespace Rose {
-    std::string stringifyBinaryAnalysisSymbolicExprVisitAction(int64_t i, const char *strip, bool canonic) {
-        std::string retval = stringify::Rose::BinaryAnalysis::SymbolicExpr::VisitAction(i);
+    std::string stringifyBinaryAnalysisSymbolicExpressionVisitAction(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::Rose::BinaryAnalysis::SymbolicExpression::VisitAction(i);
         if (retval.empty()) {
-            retval = "(Rose::BinaryAnalysis::SymbolicExpr::VisitAction)" + boost::lexical_cast<std::string>(i);
+            retval = "(Rose::BinaryAnalysis::SymbolicExpression::VisitAction)" + boost::lexical_cast<std::string>(i);
         } else {
             if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
                 retval = retval.substr(strlen(strip));
             if (canonic)
-                retval = "Rose::BinaryAnalysis::SymbolicExpr::VisitAction::" + retval;
+                retval = "Rose::BinaryAnalysis::SymbolicExpression::VisitAction::" + retval;
         }
         return retval;
     }
 
-    const std::vector<int64_t>& stringifyBinaryAnalysisSymbolicExprVisitAction() {
-        return stringify::Rose::BinaryAnalysis::SymbolicExpr::VisitAction();
+    const std::vector<int64_t>& stringifyBinaryAnalysisSymbolicExpressionVisitAction() {
+        return stringify::Rose::BinaryAnalysis::SymbolicExpression::VisitAction();
     }
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/Rose/BinaryAnalysis/SymbolicExpr.h line 243
-namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace SymbolicExpr { namespace Type {
+// /src/Rose/BinaryAnalysis/SymbolicExpression.h line 243
+namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace SymbolicExpression { namespace Type {
     const char* TypeClass(int64_t i) {
         switch (i) {
             case 0L: return "INTEGER";
@@ -20765,7 +20765,7 @@ namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Symb
     std::string TypeClass(int64_t i, const std::string &strip) {
         std::string s = TypeClass(i);
         if (s.empty())
-            s = "(Rose::BinaryAnalysis::SymbolicExpr::Type::TypeClass)" + boost::lexical_cast<std::string>(i);
+            s = "(Rose::BinaryAnalysis::SymbolicExpression::Type::TypeClass)" + boost::lexical_cast<std::string>(i);
         if (boost::starts_with(s, strip))
             s = s.substr(strip.size());
         return s;
@@ -20785,21 +20785,21 @@ namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Symb
 }}}}}
 
 namespace Rose {
-    std::string stringifyBinaryAnalysisSymbolicExprTypeTypeClass(int64_t i, const char *strip, bool canonic) {
-        std::string retval = stringify::Rose::BinaryAnalysis::SymbolicExpr::Type::TypeClass(i);
+    std::string stringifyBinaryAnalysisSymbolicExpressionTypeTypeClass(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::Rose::BinaryAnalysis::SymbolicExpression::Type::TypeClass(i);
         if (retval.empty()) {
-            retval = "(Rose::BinaryAnalysis::SymbolicExpr::Type::TypeClass)" + boost::lexical_cast<std::string>(i);
+            retval = "(Rose::BinaryAnalysis::SymbolicExpression::Type::TypeClass)" + boost::lexical_cast<std::string>(i);
         } else {
             if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
                 retval = retval.substr(strlen(strip));
             if (canonic)
-                retval = "Rose::BinaryAnalysis::SymbolicExpr::Type::TypeClass::" + retval;
+                retval = "Rose::BinaryAnalysis::SymbolicExpression::Type::TypeClass::" + retval;
         }
         return retval;
     }
 
-    const std::vector<int64_t>& stringifyBinaryAnalysisSymbolicExprTypeTypeClass() {
-        return stringify::Rose::BinaryAnalysis::SymbolicExpr::Type::TypeClass();
+    const std::vector<int64_t>& stringifyBinaryAnalysisSymbolicExpressionTypeTypeClass() {
+        return stringify::Rose::BinaryAnalysis::SymbolicExpression::Type::TypeClass();
     }
 }
 
@@ -22214,8 +22214,8 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/Rose/BinaryAnalysis/SymbolicExprParser.h line 58
-namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace SymbolicExprParser { namespace Token {
+// /src/Rose/BinaryAnalysis/SymbolicExpressionParser.h line 58
+namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace SymbolicExpressionParser { namespace Token {
     const char* Type(int64_t i) {
         switch (i) {
             case 0L: return "NONE";
@@ -22230,7 +22230,7 @@ namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Symb
     std::string Type(int64_t i, const std::string &strip) {
         std::string s = Type(i);
         if (s.empty())
-            s = "(Rose::BinaryAnalysis::SymbolicExprParser::Token::Type)" + boost::lexical_cast<std::string>(i);
+            s = "(Rose::BinaryAnalysis::SymbolicExpressionParser::Token::Type)" + boost::lexical_cast<std::string>(i);
         if (boost::starts_with(s, strip))
             s = s.substr(strip.size());
         return s;
@@ -22251,21 +22251,21 @@ namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Symb
 }}}}}
 
 namespace Rose {
-    std::string stringifyBinaryAnalysisSymbolicExprParserTokenType(int64_t i, const char *strip, bool canonic) {
-        std::string retval = stringify::Rose::BinaryAnalysis::SymbolicExprParser::Token::Type(i);
+    std::string stringifyBinaryAnalysisSymbolicExpressionParserTokenType(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::Rose::BinaryAnalysis::SymbolicExpressionParser::Token::Type(i);
         if (retval.empty()) {
-            retval = "(Rose::BinaryAnalysis::SymbolicExprParser::Token::Type)" + boost::lexical_cast<std::string>(i);
+            retval = "(Rose::BinaryAnalysis::SymbolicExpressionParser::Token::Type)" + boost::lexical_cast<std::string>(i);
         } else {
             if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
                 retval = retval.substr(strlen(strip));
             if (canonic)
-                retval = "Rose::BinaryAnalysis::SymbolicExprParser::Token::Type::" + retval;
+                retval = "Rose::BinaryAnalysis::SymbolicExpressionParser::Token::Type::" + retval;
         }
         return retval;
     }
 
-    const std::vector<int64_t>& stringifyBinaryAnalysisSymbolicExprParserTokenType() {
-        return stringify::Rose::BinaryAnalysis::SymbolicExprParser::Token::Type();
+    const std::vector<int64_t>& stringifyBinaryAnalysisSymbolicExpressionParserTokenType() {
+        return stringify::Rose::BinaryAnalysis::SymbolicExpressionParser::Token::Type();
     }
 }
 
@@ -28398,156 +28398,6 @@ namespace Rose {
 
     const std::vector<int64_t>& stringify_builderSageTreeBuilderLanguageEnum() {
         return stringify::Rose::builder::SageTreeBuilder::LanguageEnum();
-    }
-}
-
-// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Experimental_Cobol_ROSE_Connection/Cobol_to_ROSE_translation.h line 8
-namespace stringify { namespace Cobol_ROSE_Translation {
-    const char* ProgramSpec(int64_t i) {
-        switch (i) {
-            case 0L: return "e_unknown";
-            case 1L: return "e_recursive";
-            case 2L: return "e_initial";
-            case 3L: return "e_last";
-            default: return "";
-        }
-    }
-
-    std::string ProgramSpec(int64_t i, const std::string &strip) {
-        std::string s = ProgramSpec(i);
-        if (s.empty())
-            s = "(Cobol_ROSE_Translation::ProgramSpec)" + boost::lexical_cast<std::string>(i);
-        if (boost::starts_with(s, strip))
-            s = s.substr(strip.size());
-        return s;
-    }
-
-    const std::vector<int64_t>& ProgramSpec() {
-        static const int64_t values[] = {
-            0L,
-            1L,
-            2L,
-            3L
-        };
-        static const std::vector<int64_t> retval(values, values + 4);
-        return retval;
-    }
-
-}}
-
-namespace Rose {
-    std::string stringifyCobol_ROSE_TranslationProgramSpec(int64_t i, const char *strip, bool canonic) {
-        std::string retval = stringify::Cobol_ROSE_Translation::ProgramSpec(i);
-        if (retval.empty()) {
-            retval = "(Cobol_ROSE_Translation::ProgramSpec)" + boost::lexical_cast<std::string>(i);
-        } else {
-            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
-                retval = retval.substr(strlen(strip));
-            if (canonic)
-                retval = "Cobol_ROSE_Translation::ProgramSpec::" + retval;
-        }
-        return retval;
-    }
-
-    const std::vector<int64_t>& stringifyCobol_ROSE_TranslationProgramSpec() {
-        return stringify::Cobol_ROSE_Translation::ProgramSpec();
-    }
-}
-
-// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Experimental_Cobol_ROSE_Connection/Cobol_to_ROSE_translation.h line 21
-namespace stringify { namespace Cobol_ROSE_Translation {
-    const char* ExpressionKind(int64_t i) {
-        switch (i) {
-            case 0L: return "e_unknown";
-            case 1L: return "e_exponentiateOperator";
-            case 2L: return "e_plusOperator";
-            case 3L: return "e_minusOperator";
-            case 4L: return "e_modOperator";
-            case 5L: return "e_multiplyOperator";
-            case 6L: return "e_divideOperator";
-            case 7L: return "e_notOperator";
-            case 8L: return "e_andOperator";
-            case 9L: return "e_orOperator";
-            case 10L: return "e_xorOperator";
-            case 11L: return "e_equivOperator";
-            case 12L: return "e_lessThanOperator";
-            case 13L: return "e_greaterThanOperator";
-            case 14L: return "e_lessThanOrEqualOperator";
-            case 15L: return "e_greaterThanOrEqualOperator";
-            case 16L: return "e_equalOperator";
-            case 17L: return "e_notEqualOperator";
-            case 18L: return "e_derefOperator";
-            case 19L: return "e_assignOperator";
-            case 20L: return "e_unaryPlusOperator";
-            case 21L: return "e_unaryMinusOperator";
-            case 22L: return "e_notAnOperator";
-            case 23L: return "e_referenceExpression";
-            case 24L: return "e_last";
-            default: return "";
-        }
-    }
-
-    std::string ExpressionKind(int64_t i, const std::string &strip) {
-        std::string s = ExpressionKind(i);
-        if (s.empty())
-            s = "(Cobol_ROSE_Translation::ExpressionKind)" + boost::lexical_cast<std::string>(i);
-        if (boost::starts_with(s, strip))
-            s = s.substr(strip.size());
-        return s;
-    }
-
-    const std::vector<int64_t>& ExpressionKind() {
-        static const int64_t values[] = {
-            0L,
-            1L,
-            2L,
-            3L,
-            4L,
-            5L,
-            6L,
-            7L,
-            8L,
-            9L,
-            10L,
-            11L,
-            12L,
-            13L,
-            14L,
-            15L,
-            16L,
-            17L,
-            18L,
-            19L,
-            20L,
-            21L,
-            22L,
-            23L,
-            24L
-        };
-        static const std::vector<int64_t> retval(values, values + 25);
-        return retval;
-    }
-
-}}
-
-namespace Rose {
-    std::string stringifyCobol_ROSE_TranslationExpressionKind(int64_t i, const char *strip, bool canonic) {
-        std::string retval = stringify::Cobol_ROSE_Translation::ExpressionKind(i);
-        if (retval.empty()) {
-            retval = "(Cobol_ROSE_Translation::ExpressionKind)" + boost::lexical_cast<std::string>(i);
-        } else {
-            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
-                retval = retval.substr(strlen(strip));
-            if (canonic)
-                retval = "Cobol_ROSE_Translation::ExpressionKind::" + retval;
-        }
-        return retval;
-    }
-
-    const std::vector<int64_t>& stringifyCobol_ROSE_TranslationExpressionKind() {
-        return stringify::Cobol_ROSE_Translation::ExpressionKind();
     }
 }
 
@@ -57526,452 +57376,6 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Experimental_OpenFortranParser_ROSE_Connection/FASTNodes.h line 88
-namespace stringify { namespace FAST { namespace TypeSpec {
-    const char* TypeEnum(int64_t i) {
-        switch (i) {
-            case 0L: return "Unknown";
-            case 1L: return "Void";
-            case 2L: return "Integer";
-            case 3L: return "Real";
-            case 4L: return "Double";
-            case 5L: return "Complex";
-            case 6L: return "DoubleComplex";
-            case 7L: return "Boolean";
-            case 8L: return "Character";
-            case 9L: return "Derived";
-            default: return "";
-        }
-    }
-
-    std::string TypeEnum(int64_t i, const std::string &strip) {
-        std::string s = TypeEnum(i);
-        if (s.empty())
-            s = "(FAST::TypeSpec::TypeEnum)" + boost::lexical_cast<std::string>(i);
-        if (boost::starts_with(s, strip))
-            s = s.substr(strip.size());
-        return s;
-    }
-
-    const std::vector<int64_t>& TypeEnum() {
-        static const int64_t values[] = {
-            0L,
-            1L,
-            2L,
-            3L,
-            4L,
-            5L,
-            6L,
-            7L,
-            8L,
-            9L
-        };
-        static const std::vector<int64_t> retval(values, values + 10);
-        return retval;
-    }
-
-}}}
-
-namespace Rose {
-    std::string stringifyFAST_TypeSpecTypeEnum(int64_t i, const char *strip, bool canonic) {
-        std::string retval = stringify::FAST::TypeSpec::TypeEnum(i);
-        if (retval.empty()) {
-            retval = "(FAST::TypeSpec::TypeEnum)" + boost::lexical_cast<std::string>(i);
-        } else {
-            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
-                retval = retval.substr(strlen(strip));
-            if (canonic)
-                retval = "FAST::TypeSpec::TypeEnum::" + retval;
-        }
-        return retval;
-    }
-
-    const std::vector<int64_t>& stringifyFAST_TypeSpecTypeEnum() {
-        return stringify::FAST::TypeSpec::TypeEnum();
-    }
-}
-
-// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Experimental_OpenFortranParser_ROSE_Connection/FASTNodes.h line 136
-namespace stringify { namespace FAST { namespace AttrSpec {
-    const char* AttrEnum(int64_t i) {
-        switch (i) {
-            case 0L: return "Unknown";
-            case 1L: return "Public";
-            case 2L: return "Private";
-            case 3L: return "Allocatable";
-            case 4L: return "Asynchronous";
-            case 5L: return "Codimension";
-            case 6L: return "Contiguous";
-            case 7L: return "Dimension";
-            case 8L: return "External";
-            case 9L: return "IntentIn";
-            case 10L: return "IntentOut";
-            case 11L: return "IntentInOut";
-            case 12L: return "Intent";
-            case 13L: return "Intrinsic";
-            case 14L: return "Bind";
-            case 15L: return "Optional";
-            case 16L: return "Parameter";
-            case 17L: return "Pointer";
-            case 18L: return "Protected";
-            case 19L: return "Save";
-            case 20L: return "Target";
-            case 21L: return "Value";
-            case 22L: return "Volatile";
-            default: return "";
-        }
-    }
-
-    std::string AttrEnum(int64_t i, const std::string &strip) {
-        std::string s = AttrEnum(i);
-        if (s.empty())
-            s = "(FAST::AttrSpec::AttrEnum)" + boost::lexical_cast<std::string>(i);
-        if (boost::starts_with(s, strip))
-            s = s.substr(strip.size());
-        return s;
-    }
-
-    const std::vector<int64_t>& AttrEnum() {
-        static const int64_t values[] = {
-            0L,
-            1L,
-            2L,
-            3L,
-            4L,
-            5L,
-            6L,
-            7L,
-            8L,
-            9L,
-            10L,
-            11L,
-            12L,
-            13L,
-            14L,
-            15L,
-            16L,
-            17L,
-            18L,
-            19L,
-            20L,
-            21L,
-            22L
-        };
-        static const std::vector<int64_t> retval(values, values + 23);
-        return retval;
-    }
-
-}}}
-
-namespace Rose {
-    std::string stringifyFAST_AttrSpecAttrEnum(int64_t i, const char *strip, bool canonic) {
-        std::string retval = stringify::FAST::AttrSpec::AttrEnum(i);
-        if (retval.empty()) {
-            retval = "(FAST::AttrSpec::AttrEnum)" + boost::lexical_cast<std::string>(i);
-        } else {
-            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
-                retval = retval.substr(strlen(strip));
-            if (canonic)
-                retval = "FAST::AttrSpec::AttrEnum::" + retval;
-        }
-        return retval;
-    }
-
-    const std::vector<int64_t>& stringifyFAST_AttrSpecAttrEnum() {
-        return stringify::FAST::AttrSpec::AttrEnum();
-    }
-}
-
-// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Experimental_OpenFortranParser_ROSE_Connection/FASTNodes.h line 265
-namespace stringify { namespace FAST { namespace UseStmt {
-    const char* ModuleNature(int64_t i) {
-        switch (i) {
-            case 0L: return "None";
-            case 1L: return "Intrinsic";
-            case 2L: return "NonIntrinsic";
-            default: return "";
-        }
-    }
-
-    std::string ModuleNature(int64_t i, const std::string &strip) {
-        std::string s = ModuleNature(i);
-        if (s.empty())
-            s = "(FAST::UseStmt::ModuleNature)" + boost::lexical_cast<std::string>(i);
-        if (boost::starts_with(s, strip))
-            s = s.substr(strip.size());
-        return s;
-    }
-
-    const std::vector<int64_t>& ModuleNature() {
-        static const int64_t values[] = {
-            0L,
-            1L,
-            2L
-        };
-        static const std::vector<int64_t> retval(values, values + 3);
-        return retval;
-    }
-
-}}}
-
-namespace Rose {
-    std::string stringifyFAST_UseStmtModuleNature(int64_t i, const char *strip, bool canonic) {
-        std::string retval = stringify::FAST::UseStmt::ModuleNature(i);
-        if (retval.empty()) {
-            retval = "(FAST::UseStmt::ModuleNature)" + boost::lexical_cast<std::string>(i);
-        } else {
-            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
-                retval = retval.substr(strlen(strip));
-            if (canonic)
-                retval = "FAST::UseStmt::ModuleNature::" + retval;
-        }
-        return retval;
-    }
-
-    const std::vector<int64_t>& stringifyFAST_UseStmtModuleNature() {
-        return stringify::FAST::UseStmt::ModuleNature();
-    }
-}
-
-// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Experimental_OpenFortranParser_ROSE_Connection/FASTNodes.h line 444
-namespace stringify { namespace FAST { namespace PrefixSpec {
-    const char* PrefixEnum(int64_t i) {
-        switch (i) {
-            case 0L: return "None";
-            case 1L: return "Elemental";
-            case 2L: return "Impure";
-            case 3L: return "Module";
-            case 4L: return "Pure";
-            case 5L: return "Recursive";
-            default: return "";
-        }
-    }
-
-    std::string PrefixEnum(int64_t i, const std::string &strip) {
-        std::string s = PrefixEnum(i);
-        if (s.empty())
-            s = "(FAST::PrefixSpec::PrefixEnum)" + boost::lexical_cast<std::string>(i);
-        if (boost::starts_with(s, strip))
-            s = s.substr(strip.size());
-        return s;
-    }
-
-    const std::vector<int64_t>& PrefixEnum() {
-        static const int64_t values[] = {
-            0L,
-            1L,
-            2L,
-            3L,
-            4L,
-            5L
-        };
-        static const std::vector<int64_t> retval(values, values + 6);
-        return retval;
-    }
-
-}}}
-
-namespace Rose {
-    std::string stringifyFAST_PrefixSpecPrefixEnum(int64_t i, const char *strip, bool canonic) {
-        std::string retval = stringify::FAST::PrefixSpec::PrefixEnum(i);
-        if (retval.empty()) {
-            retval = "(FAST::PrefixSpec::PrefixEnum)" + boost::lexical_cast<std::string>(i);
-        } else {
-            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
-                retval = retval.substr(strlen(strip));
-            if (canonic)
-                retval = "FAST::PrefixSpec::PrefixEnum::" + retval;
-        }
-        return retval;
-    }
-
-    const std::vector<int64_t>& stringifyFAST_PrefixSpecPrefixEnum() {
-        return stringify::FAST::PrefixSpec::PrefixEnum();
-    }
-}
-
-// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/frontend/Experimental_OpenFortranParser_ROSE_Connection/Fortran_to_ROSE_translation.h line 8
-namespace stringify { namespace Fortran_ROSE_Translation {
-    const char* ExpressionKind(int64_t i) {
-        switch (i) {
-            case 5000L: return "e_fortran_first";
-            case 5001L: return "e_public";
-            case 5002L: return "e_private";
-            case 5003L: return "e_allocatable";
-            case 5004L: return "e_asynchronous";
-            case 5005L: return "e_contiguous";
-            case 5006L: return "e_external";
-            case 5007L: return "e_intent_in";
-            case 5008L: return "e_intent_out";
-            case 5009L: return "e_intent_inout";
-            case 5010L: return "e_intrinsic";
-            case 5011L: return "e_optional";
-            case 5012L: return "e_parameter";
-            case 5013L: return "e_pointer";
-            case 5014L: return "e_protected";
-            case 5015L: return "e_save";
-            case 5016L: return "e_target";
-            case 5017L: return "e_value";
-            case 5018L: return "e_volatile";
-            case 5019L: return "e_elemental";
-            case 5020L: return "e_impure";
-            case 5021L: return "e_module";
-            case 5022L: return "e_pure";
-            case 5023L: return "e_recursive";
-            case 5024L: return "e_exponentiateOperator";
-            case 5025L: return "e_plusOperator";
-            case 5026L: return "e_minusOperator";
-            case 5027L: return "e_modOperator";
-            case 5028L: return "e_multiplyOperator";
-            case 5029L: return "e_divideOperator";
-            case 5030L: return "e_andOperator";
-            case 5031L: return "e_orOperator";
-            case 5032L: return "e_xorOperator";
-            case 5033L: return "e_equivOperator";
-            case 5034L: return "e_lessThanOperator";
-            case 5035L: return "e_greaterThanOperator";
-            case 5036L: return "e_lessThanOrEqualOperator";
-            case 5037L: return "e_greaterThanOrEqualOperator";
-            case 5038L: return "e_equalOperator";
-            case 5039L: return "e_notEqualOperator";
-            case 5040L: return "e_unaryPlusOperator";
-            case 5041L: return "e_unaryMinusOperator";
-            case 5042L: return "e_notAnOperator";
-            case 5043L: return "e_literalExpression";
-            case 5044L: return "e_referenceExpression";
-            case 5045L: return "e_array_shape";
-            case 5046L: return "e_explicit_shape";
-            case 5047L: return "e_assumed_or_implied_shape";
-            case 5048L: return "e_assumed_shape";
-            case 5049L: return "e_assumed_size";
-            case 5050L: return "e_program_stmt";
-            case 5051L: return "e_end_program_stmt";
-            case 5052L: return "e_block_stmt";
-            case 5053L: return "e_end_block_stmt";
-            case 5054L: return "e_do_stmt";
-            case 5055L: return "e_cuda_device";
-            case 5056L: return "e_cuda_host";
-            case 5057L: return "e_cuda_kernel";
-            case 5058L: return "e_cuda_global";
-            case 5059L: return "e_cuda_grid_global";
-            case 5060L: return "e_cuda_managed";
-            case 5061L: return "e_cuda_constant";
-            case 5062L: return "e_cuda_shared";
-            case 5063L: return "e_cuda_pinned";
-            case 5064L: return "e_cuda_texture";
-            case 5065L: return "e_fortran_last";
-            default: return "";
-        }
-    }
-
-    std::string ExpressionKind(int64_t i, const std::string &strip) {
-        std::string s = ExpressionKind(i);
-        if (s.empty())
-            s = "(Fortran_ROSE_Translation::ExpressionKind)" + boost::lexical_cast<std::string>(i);
-        if (boost::starts_with(s, strip))
-            s = s.substr(strip.size());
-        return s;
-    }
-
-    const std::vector<int64_t>& ExpressionKind() {
-        static const int64_t values[] = {
-            5000L,
-            5001L,
-            5002L,
-            5003L,
-            5004L,
-            5005L,
-            5006L,
-            5007L,
-            5008L,
-            5009L,
-            5010L,
-            5011L,
-            5012L,
-            5013L,
-            5014L,
-            5015L,
-            5016L,
-            5017L,
-            5018L,
-            5019L,
-            5020L,
-            5021L,
-            5022L,
-            5023L,
-            5024L,
-            5025L,
-            5026L,
-            5027L,
-            5028L,
-            5029L,
-            5030L,
-            5031L,
-            5032L,
-            5033L,
-            5034L,
-            5035L,
-            5036L,
-            5037L,
-            5038L,
-            5039L,
-            5040L,
-            5041L,
-            5042L,
-            5043L,
-            5044L,
-            5045L,
-            5046L,
-            5047L,
-            5048L,
-            5049L,
-            5050L,
-            5051L,
-            5052L,
-            5053L,
-            5054L,
-            5055L,
-            5056L,
-            5057L,
-            5058L,
-            5059L,
-            5060L,
-            5061L,
-            5062L,
-            5063L,
-            5064L,
-            5065L
-        };
-        static const std::vector<int64_t> retval(values, values + 66);
-        return retval;
-    }
-
-}}
-
-namespace Rose {
-    std::string stringifyFortran_ROSE_TranslationExpressionKind(int64_t i, const char *strip, bool canonic) {
-        std::string retval = stringify::Fortran_ROSE_Translation::ExpressionKind(i);
-        if (retval.empty()) {
-            retval = "(Fortran_ROSE_Translation::ExpressionKind)" + boost::lexical_cast<std::string>(i);
-        } else {
-            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
-                retval = retval.substr(strlen(strip));
-            if (canonic)
-                retval = "Fortran_ROSE_Translation::ExpressionKind::" + retval;
-        }
-        return retval;
-    }
-
-    const std::vector<int64_t>& stringifyFortran_ROSE_TranslationExpressionKind() {
-        return stringify::Fortran_ROSE_Translation::ExpressionKind();
-    }
-}
-
-// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
 // /src/frontend/Disassemblers/AssemblerX86.h line 144
 namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace AssemblerX86 {
     const char* OperandDefn(int64_t i) {
@@ -67184,54 +66588,6 @@ namespace Rose {
 
     const std::vector<int64_t>& stringifyE_SgOmpScheduleClause() {
         return stringify::E_SgOmpScheduleClause();
-    }
-}
-
-// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /buildTree/src/frontend/SageIII/Cxx_GrammarTreeTraversalAccessEnums.h line 372
-namespace stringify {
-    const char* E_SgUntypedUnaryOperator(int64_t i) {
-        switch (i) {
-            case 0L: return "SgUntypedUnaryOperator_operand";
-            default: return "";
-        }
-    }
-
-    std::string E_SgUntypedUnaryOperator(int64_t i, const std::string &strip) {
-        std::string s = E_SgUntypedUnaryOperator(i);
-        if (s.empty())
-            s = "(E_SgUntypedUnaryOperator)" + boost::lexical_cast<std::string>(i);
-        if (boost::starts_with(s, strip))
-            s = s.substr(strip.size());
-        return s;
-    }
-
-    const std::vector<int64_t>& E_SgUntypedUnaryOperator() {
-        static const int64_t values[] = {
-            0L
-        };
-        static const std::vector<int64_t> retval(values, values + 1);
-        return retval;
-    }
-
-}
-
-namespace Rose {
-    std::string stringifyE_SgUntypedUnaryOperator(int64_t i, const char *strip, bool canonic) {
-        std::string retval = stringify::E_SgUntypedUnaryOperator(i);
-        if (retval.empty()) {
-            retval = "(E_SgUntypedUnaryOperator)" + boost::lexical_cast<std::string>(i);
-        } else {
-            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
-                retval = retval.substr(strlen(strip));
-            if (canonic)
-                retval = "E_SgUntypedUnaryOperator::" + retval;
-        }
-        return retval;
-    }
-
-    const std::vector<int64_t>& stringifyE_SgUntypedUnaryOperator() {
-        return stringify::E_SgUntypedUnaryOperator();
     }
 }
 

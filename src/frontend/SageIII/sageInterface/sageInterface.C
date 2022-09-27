@@ -5512,29 +5512,6 @@ SageInterface::is_C_language()
 #endif
    }
 
-// Rasmussen (4/8/2018): Added Cobol
-bool
-SageInterface::is_Cobol_language()
-   {
-#if OPTIMIZE_IS_LANGUAGE_KIND_FUNCTIONS
-  // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
-     return Rose::is_Cobol_language;
-#else
-     bool returnValue = false;
-
-     vector<SgFile*> fileList = generateFileList();
-
-     int size = (int)fileList.size();
-     for (int i = 0; i < size; i++)
-        {
-          if (fileList[i]->get_Cobol_only() == true)
-               returnValue = true;
-        }
-
-     return returnValue;
-#endif
-   }
-
 bool
 SageInterface::is_OpenMP_language()
    {
@@ -25926,6 +25903,9 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
 
   if (SgAdaAttributeExp* v= isSgAdaAttributeExp(node))
     out<<" attribute@"<< v->get_attribute();
+
+  if (SgUsingDirectiveStatement* v= isSgUsingDirectiveStatement(node))
+    out<<" namespaceDeclaration="<< v->get_namespaceDeclaration();
 
   out<<endl;
 

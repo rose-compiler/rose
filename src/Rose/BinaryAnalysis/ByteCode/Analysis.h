@@ -1,9 +1,9 @@
-#ifndef ROSE_BinaryAnalysis_ByteCode_H
-#define ROSE_BinaryAnalysis_ByteCode_H
+#ifndef ROSE_BinaryAnalysis_ByteCode_Analysis_H
+#define ROSE_BinaryAnalysis_ByteCode_Analysis_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <Rose/BinaryAnalysis/DisassemblerJvm.h>
+#include <Rose/BinaryAnalysis/Disassembler/Jvm.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 
 namespace Rose {
@@ -31,7 +31,7 @@ class Method {
 public:
   virtual const std::string name() const = 0;
   virtual const Code & code() const = 0;
-  virtual const void decode(Disassembler*) const = 0;
+  virtual const void decode(const Disassembler::BasePtr&) const = 0;
   virtual const SgAsmInstructionList* instructions() const = 0;
 
   /* Set of instruction branch targets */

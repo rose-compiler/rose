@@ -4,7 +4,7 @@ run $(librose_compile)				\
     AddressUsageMap.C				\
     BasicBlock.C				\
     CfgPath.C					\
-    Config.C					\
+    Configuration.C				\
     ControlFlowGraph.C				\
     DataBlock.C					\
     DataFlow.C					\
@@ -38,7 +38,7 @@ run $(public_header) -o include/rose/Rose/BinaryAnalysis/Partitioner2	\
     BasicBlock.h							\
     BasicTypes.h							\
     CfgPath.h								\
-    Config.h								\
+    Configuration.h							\
     ControlFlowGraph.h							\
     DataBlock.h								\
     DataFlow.h								\

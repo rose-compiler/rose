@@ -10,6 +10,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 
 #include <boost/serialization/access.hpp>
@@ -64,21 +65,17 @@ private:
 
 protected:
     // Prototypical constructor
-    DispatcherPowerpc(): BaseSemantics::Dispatcher(32, RegisterDictionary::dictionary_powerpc32()) {}
+    DispatcherPowerpc();
 
     // Prototypical constructor
-    DispatcherPowerpc(size_t addrWidth, const RegisterDictionary *regs/*=NULL*/)
-        : BaseSemantics::Dispatcher(addrWidth, regs ? regs : SgAsmPowerpcInstruction::registersForWidth(addrWidth)) {}
-    
-    DispatcherPowerpc(const BaseSemantics::RiscOperatorsPtr &ops, size_t addrWidth, const RegisterDictionary *regs)
-        : BaseSemantics::Dispatcher(ops, addrWidth, regs ? regs : SgAsmPowerpcInstruction::registersForWidth(addrWidth)) {
-        ASSERT_require(32==addrWidth || 64==addrWidth);
-        regcache_init();
-        iproc_init();
-        memory_init();
-        initializeState(ops->currentState());
-    }
+    DispatcherPowerpc(size_t addrWidth, const RegisterDictionaryPtr &regs/*=NULL*/);
 
+    DispatcherPowerpc(const BaseSemantics::RiscOperatorsPtr &ops, size_t addrWidth, const RegisterDictionaryPtr &regs);
+
+public:
+    ~DispatcherPowerpc();
+
+private:
     /** Loads the iproc table with instruction processing functors. This normally happens from the constructor. */
     void iproc_init();
 
@@ -93,39 +90,23 @@ protected:
 public:
     /** Construct a prototypical dispatcher.  The only thing this dispatcher can be used for is to create another dispatcher
      *  with the virtual @ref create method. */
-    static DispatcherPowerpcPtr instance() {
-        return DispatcherPowerpcPtr(new DispatcherPowerpc);
-    }
+    static DispatcherPowerpcPtr instance();
 
     /** Constructor. */
-    static DispatcherPowerpcPtr instance(size_t addrWidth, const RegisterDictionary *regs = NULL) {
-        return DispatcherPowerpcPtr(new DispatcherPowerpc(addrWidth, regs));
-    }
-            
+    static DispatcherPowerpcPtr instance(size_t addrWidth, const RegisterDictionaryPtr&);
+
     /** Constructor. */
-    static DispatcherPowerpcPtr instance(const BaseSemantics::RiscOperatorsPtr &ops, size_t addrWidth,
-                                         const RegisterDictionary *regs=NULL) {
-        return DispatcherPowerpcPtr(new DispatcherPowerpc(ops, addrWidth, regs));
-    }
+    static DispatcherPowerpcPtr instance(const BaseSemantics::RiscOperatorsPtr&, size_t addrWidth,
+                                         const RegisterDictionaryPtr&);
 
     /** Virtual constructor. */
-    virtual BaseSemantics::DispatcherPtr create(const BaseSemantics::RiscOperatorsPtr &ops, size_t addrWidth=0,
-                                                const RegisterDictionary *regs=NULL) const override {
-        if (0==addrWidth)
-            addrWidth = addressWidth();
-        if (!regs)
-            regs = registerDictionary();
-        return instance(ops, addrWidth, regs);
-    }
+    virtual BaseSemantics::DispatcherPtr create(const BaseSemantics::RiscOperatorsPtr &, size_t addrWidth,
+                                                const RegisterDictionaryPtr&) const override;
 
     /** Dynamic cast to a DispatcherPowerpcPtr with assertion. */
-    static DispatcherPowerpcPtr promote(const BaseSemantics::DispatcherPtr &d) {
-        DispatcherPowerpcPtr retval = boost::dynamic_pointer_cast<DispatcherPowerpc>(d);
-        assert(retval!=NULL);
-        return retval;
-    }
+    static DispatcherPowerpcPtr promote(const BaseSemantics::DispatcherPtr&);
 
-    virtual void set_register_dictionary(const RegisterDictionary *regdict) override;
+    virtual void set_register_dictionary(const RegisterDictionaryPtr&) override;
 
     virtual RegisterDescriptor instructionPointerRegister() const override;
     virtual RegisterDescriptor stackPointerRegister() const override;

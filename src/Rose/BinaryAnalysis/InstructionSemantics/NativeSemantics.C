@@ -3,6 +3,9 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/NativeSemantics.h>
 
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
+
 namespace Rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics {
@@ -17,15 +20,58 @@ namespace NativeSemantics {
 // Register state
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-BaseSemantics::SValuePtr
-RegisterState::peekRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &dflt, BaseSemantics::RiscOperators *ops) {
+RegisterState::RegisterState() {}
+
+RegisterState::RegisterState(const BaseSemantics::SValue::Ptr &protoval, const Debugger::Ptr &process)
+    : BaseSemantics::RegisterState(protoval, process->registerDictionary()), process_(process) {
+    ASSERT_not_null(process);
+}
+
+RegisterState::~RegisterState() {}
+
+RegisterState::Ptr
+RegisterState::instance() {
+    return Ptr(new RegisterState);
+}
+
+RegisterState::Ptr
+RegisterState::instance(const BaseSemantics::SValue::Ptr &protoval, const Debugger::Ptr &process) {
+    ASSERT_not_null(protoval);
+    (void) SValue::promote(protoval);
+    return Ptr(new RegisterState(protoval, process));
+}
+
+BaseSemantics::RegisterState::Ptr
+RegisterState::create(const BaseSemantics::SValue::Ptr &protoval, const RegisterDictionary::Ptr&) const {
+    ASSERT_not_implemented("not applicable for this class");
+}
+
+BaseSemantics::RegisterState::Ptr
+RegisterState::clone() const {
+    ASSERT_not_implemented("not applicable for this class");
+}
+
+RegisterState::Ptr
+RegisterState::promote(const BaseSemantics::RegisterState::Ptr &x) {
+    Ptr retval = boost::dynamic_pointer_cast<RegisterState>(x);
+    ASSERT_not_null(retval);
+    return retval;
+}
+
+Debugger::Ptr
+RegisterState::process() const {
+    return process_;
+}
+
+BaseSemantics::SValue::Ptr
+RegisterState::peekRegister(RegisterDescriptor reg, const BaseSemantics::SValue::Ptr &dflt, BaseSemantics::RiscOperators *ops) {
     ASSERT_not_null(process_);
     Sawyer::Container::BitVector value = process_->readRegister(reg);
     return protoval()->number_(value.size(), value.toInteger());
 }
 
 void
-RegisterState::writeRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &value, BaseSemantics::RiscOperators *ops) {
+RegisterState::writeRegister(RegisterDescriptor reg, const BaseSemantics::SValue::Ptr &value, BaseSemantics::RiscOperators *ops) {
     ASSERT_not_null(process_);
     ASSERT_not_implemented("[Robb Matzke 2019-09-05]: Debugger has no writeRegister method");
 }
@@ -44,8 +90,51 @@ RegisterState::print(std::ostream&, Formatter&) const {
 // Memory state
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-BaseSemantics::SValuePtr
-MemoryState::peekMemory(const BaseSemantics::SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
+MemoryState::MemoryState() {}
+
+MemoryState::~MemoryState() {}
+
+MemoryState::MemoryState(const BaseSemantics::SValue::Ptr &addrProtoval, const BaseSemantics::SValue::Ptr &valProtoval,
+                         const Debugger::Ptr &process)
+    : BaseSemantics::MemoryState(addrProtoval, valProtoval), process_(process) {
+    ASSERT_not_null(process);
+}
+
+MemoryState::Ptr
+MemoryState::instance() {
+    return Ptr(new MemoryState);
+}
+
+MemoryState::Ptr
+MemoryState::instance(const BaseSemantics::SValue::Ptr &addrProtoval, const BaseSemantics::SValue::Ptr &valProtoval,
+                      const Debugger::Ptr &process) {
+    return Ptr(new MemoryState(addrProtoval, valProtoval, process));
+}
+
+BaseSemantics::MemoryState::Ptr
+MemoryState::create(const BaseSemantics::SValue::Ptr &addrProtoval, const BaseSemantics::SValue::Ptr &valProtoval) const {
+    ASSERT_not_implemented("not applicable for this class");
+}
+
+BaseSemantics::MemoryState::Ptr
+MemoryState::clone() const {
+    ASSERT_not_implemented("not applicable for this class");
+}
+
+MemoryState::Ptr
+MemoryState::promote(const BaseSemantics::MemoryState::Ptr &x) {
+    Ptr retval = boost::dynamic_pointer_cast<MemoryState>(x);
+    ASSERT_not_null(retval);
+    return retval;
+}
+
+Debugger::Ptr
+MemoryState::process() const {
+    return process_;
+}
+
+BaseSemantics::SValue::Ptr
+MemoryState::peekMemory(const BaseSemantics::SValue::Ptr &address, const BaseSemantics::SValue::Ptr &dflt,
                         BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps) {
     ASSERT_not_null(process_);
     std::vector<uint8_t> buffer((dflt->nBits() + 7) / 8);
@@ -80,9 +169,80 @@ MemoryState::peekMemory(const BaseSemantics::SValuePtr &address, const BaseSeman
 // RISC operators
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+RiscOperators::RiscOperators(const BaseSemantics::State::Ptr &state)
+    : ConcreteSemantics::RiscOperators(state, SmtSolverPtr()) {
+    name("Native");
+}
+
+RiscOperators::~RiscOperators() {}
+
+RiscOperators::Ptr
+RiscOperators::instanceFromProtoval(const BaseSemantics::SValue::Ptr &protoval, const Debugger::Ptr &process) {
+    RegisterState::Ptr registers = RegisterState::instance(protoval, process);
+    MemoryState::Ptr memory = MemoryState::instance(protoval, protoval, process);
+    State::Ptr state = State::instance(registers, memory);
+    return Ptr(new RiscOperators(state));
+}
+
+RiscOperators::Ptr
+RiscOperators::instanceFromState(const BaseSemantics::State::Ptr &state) {
+    (void) State::promote(state);                   // check that it's the correct type
+    return Ptr(new RiscOperators(state));
+}
+
+BaseSemantics::RiscOperators::Ptr
+RiscOperators::create(const BaseSemantics::SValue::Ptr &protoval, const SmtSolver::Ptr &solver) const {
+    TODO("[Robb Matzke 2019-09-05]");
+}
+
+RiscOperators::Ptr
+RiscOperators::promote(const BaseSemantics::RiscOperators::Ptr &x) {
+    Ptr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
+    ASSERT_not_null(retval);
+    return retval;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Dispatcher
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Dispatcher::Dispatcher(const Debugger::Ptr &process, const BaseSemantics::SValue::Ptr &protoval)
+    : process_(process) {
+    registerDictionary(process_->registerDictionary());
+    addressWidth(process_->kernelWordSize());
+    operators(RiscOperators::instanceFromProtoval(protoval, process_));
+}
+
+Dispatcher::Dispatcher(const BaseSemantics::RiscOperators::Ptr &ops)
+    : process_(RiscOperators::promote(ops)->process()) {
+    registerDictionary(process_->registerDictionary());
+    addressWidth(process_->kernelWordSize());
+    operators(ops);
+}
+
+Dispatcher::~Dispatcher() {}
+
+Dispatcher::Ptr
+Dispatcher::instance(const Debugger::Ptr &process, const BaseSemantics::SValue::Ptr &protoval) {
+    return Ptr(new Dispatcher(process, protoval));
+}
+
+Dispatcher::Ptr
+Dispatcher::instance(const Debugger::Specimen &specimen, const BaseSemantics::SValue::Ptr &protoval) {
+    Debugger::Ptr process = Debugger::instance(specimen);
+    return Ptr(new Dispatcher(process, protoval));
+}
+
+Dispatcher::Ptr
+Dispatcher::instance(const BaseSemantics::RiscOperators::Ptr &ops) {
+    (void) RiscOperators::promote(ops);             // check type
+    return Ptr(new Dispatcher(ops));
+}
+
+BaseSemantics::Dispatcher::Ptr
+Dispatcher::create(const BaseSemantics::RiscOperators::Ptr &ops, size_t addrWidth, const RegisterDictionary::Ptr &regs) const {
+    notApplicable("create");
+}
 
 void
 Dispatcher::processInstruction(SgAsmInstruction *insn) {

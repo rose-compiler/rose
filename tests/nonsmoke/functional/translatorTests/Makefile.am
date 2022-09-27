@@ -93,7 +93,7 @@ input_moveStatementsBetweenBlocks.o:moveStatementsBetweenBlocks
 	./moveStatementsBetweenBlocks -c $(srcdir)/input_moveStatementsBetweenBlocks.C  && touch $@
 
 jacobi.o: qualifiedName
-	./qualifiedName -c $(top_srcdir)/projects/autoTuning/tests/jacobi.c
+	./qualifiedName -c $(top_srcdir)/tests/nonsmoke/functional/CompileTests/OpenMP_tests/jacobi.c
 
 dataMemberOfConst.o: testDataMemberOfConst
 	./testDataMemberOfConst $(srcdir)/../CompileTests/Cxx_tests/dataMemberOfConst.C -o /dev/null && touch $@

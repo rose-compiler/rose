@@ -1,9 +1,11 @@
 //! [headers]
 #include <rose.h>
 
-#include <boost/foreach.hpp>
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/String.h>
+
+#include <boost/foreach.hpp>
 
 using namespace Rose;
 using namespace Rose::BinaryAnalysis;

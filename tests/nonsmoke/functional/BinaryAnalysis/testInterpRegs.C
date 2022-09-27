@@ -5,6 +5,7 @@ static const char *description =
 
 #include <rose.h>                                       // must be first
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 
 int main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
@@ -15,6 +16,7 @@ int main(int argc, char *argv[]) {
     SgAsmInterpretation *interp = SageInterface::getEnclosingNode<SgAsmInterpretation>(gblock);
     ASSERT_always_not_null2(interp, "The gblock doesn't have SgAsmInterpretation as an ancestor");
 
-    const Rose::BinaryAnalysis::RegisterDictionary *registerDictionary = interp->get_registers();
+    Rose::BinaryAnalysis::RegisterDictionary::Ptr registerDictionary =
+        Rose::BinaryAnalysis::RegisterDictionary::instanceForIsa(interp);
     ASSERT_always_not_null2(registerDictionary, "The SgAsmInterpretation::registers property should not be null");
 }
