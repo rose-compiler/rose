@@ -24,7 +24,6 @@ BinaryLoaderPe::rebase(const MemoryMap::Ptr &map, SgAsmGenericHeader *header, co
     SgAsmPEFileHeader* pe_header = isSgAsmPEFileHeader(header);
     ROSE_ASSERT(pe_header != NULL);
     const size_t maximum_alignment = pe_header->get_e_section_align();
-    AddressInterval mappableArea = AddressInterval::whole();
 
     // Find the minimum address desired by the sections to be mapped.
     rose_addr_t min_preferred_rva = (uint64_t)(-1);
@@ -330,13 +329,10 @@ BinaryLoaderPe::fixup(SgAsmInterpretation *interp, FixupErrors *errors) {
         SgAsmGenericSectionPtrList& sections = (*h)->get_sections()->get_sections();
         for(auto s = sections.begin(); s != sections.end(); ++s){
             if(SgAsmPEImportSection* importSection = isSgAsmPEImportSection(*s)){
-                //cout<<hex<<"Import VA: 0x"<<importSection->get_mapped_actual_va()<<dec<<endl;
                 SgAsmPEImportDirectoryPtrList& directories = (importSection)->get_import_directories()->get_vector();
                 for(auto d = directories.begin(); d != directories.end(); ++d){
                     SgAsmPEImportItemPtrList& imports = (*d)->get_imports()->get_vector();
                     string dirName = (*d)->get_dll_name()->get_string();
-                    auto x = ((*d)->get_iat_rva().get_va());
-                    //cout<<hex<<"Dir "<<dirName<<"Va: 0x"<<hex<<x<<dec<<endl;
                     for(auto i = imports.begin(); i != imports.end(); ++i){
                         SgAsmPEImportItem* importEntry = *i;
                         string importName = importEntry->get_name()->get_string();
