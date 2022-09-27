@@ -409,6 +409,16 @@ public:
      *  Thread safety: This method is not thread safe. */
     Sawyer::Optional<size_t> instructionExists(SgAsmInstruction*) const;
 
+    /** Position of an instruction.
+     *
+     *  Returns the position (index) of the specified instruction within this basic block. If the instruction doesn't exist
+     *  then returns nothing.
+     *
+     * @{ */
+    Sawyer::Optional<size_t> instructionIndex(rose_addr_t) const;
+    Sawyer::Optional<size_t> instructionIndex(SgAsmInstruction*) const;
+    /** @} */
+
     /** Get the instructions for this block.
      *
      *  Instructions are returned in the order they would be executed (i.e., the order they were added to the block).
