@@ -3016,6 +3016,7 @@ X86::decodeOpcode0F(State &state) const
                     getModRegRM(state, rmXMM, rmXMM, DOUBLET);
                     return makeInstruction(state, x86_movsd_sse, "movsd", state.reg, state.modrm);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x11: {
             switch (mmPrefix(state)) {
@@ -3032,6 +3033,7 @@ X86::decodeOpcode0F(State &state) const
                     getModRegRM(state, rmXMM, rmXMM, DOUBLET);
                     return makeInstruction(state, x86_movsd_sse, "movsd", state.modrm, state.reg);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x12: {
             switch (mmPrefix(state)) {
@@ -3053,6 +3055,7 @@ X86::decodeOpcode0F(State &state) const
                     getModRegRM(state, rmXMM, rmXMM, DOUBLET);
                     return makeInstruction(state, x86_movddup, "movddup", state.reg, state.modrm);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x13: {
             switch (mmPrefix(state)) {
@@ -3069,6 +3072,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0f13", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x14: {
             switch (mmPrefix(state)) {
@@ -3083,6 +3087,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0f14", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x15: {
             switch (mmPrefix(state)) {
@@ -3097,6 +3102,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0f15", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x16: {
             switch (mmPrefix(state)) {
@@ -3117,6 +3123,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0f16", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x17: {
             switch (mmPrefix(state)) {
@@ -3133,6 +3140,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0f17", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x18:
             getModRegRM(state, rmLegacyByte, rmLegacyByte, BYTET);
@@ -3207,6 +3215,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0f18", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x29: {
             switch (mmPrefix(state)) {
@@ -3221,6 +3230,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0f19", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x2A: {
             switch (mmPrefix(state)) {
@@ -3237,6 +3247,7 @@ X86::decodeOpcode0F(State &state) const
                     getModRegRM(state, rmXMM, effectiveOperandMode(state), effectiveOperandType(state), V2DOUBLET);
                     return makeInstruction(state, x86_cvtsi2sd, "cvtsi2sd", state.reg, state.modrm);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x2B: {
             requireMemory(state);
@@ -3254,6 +3265,7 @@ X86::decodeOpcode0F(State &state) const
                     getModRegRM(state, rmXMM, rmXMM, DOUBLET);
                     return makeInstruction(state, x86_movntsd, "movntsd", state.modrm, state.reg);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x2C: {
             switch (mmPrefix(state)) {
@@ -3270,6 +3282,7 @@ X86::decodeOpcode0F(State &state) const
                     getModRegRM(state, effectiveOperandMode(state), rmXMM, DOUBLET, effectiveOperandType(state));
                     return makeInstruction(state, x86_cvttsd2si, "cvttsd2si", state.reg, state.modrm);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x2D: {
             switch (mmPrefix(state)) {
@@ -3286,6 +3299,7 @@ X86::decodeOpcode0F(State &state) const
                     getModRegRM(state, effectiveOperandMode(state), rmXMM, V2DOUBLET, effectiveOperandType(state));
                     return makeInstruction(state, x86_cvtsd2si, "cvtsd2si", state.reg, state.modrm);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x2E: {
             switch (mmPrefix(state)) {
@@ -3300,6 +3314,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0f2e", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x2F: {
             switch (mmPrefix(state)) {
@@ -3314,6 +3329,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0f2f", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x30:
             return makeInstruction(state, x86_wrmsr, "wrmsr");
@@ -3446,6 +3462,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0f50", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x51: {
             switch (mmPrefix(state)) {
@@ -3462,6 +3479,7 @@ X86::decodeOpcode0F(State &state) const
                     getModRegRM(state, rmXMM, rmXMM, DOUBLET);
                     return makeInstruction(state, x86_sqrtsd, "sqrtsd", state.reg, state.modrm);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x52: {
             switch (mmPrefix(state)) {
@@ -3476,6 +3494,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0f52", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x53: {
             switch (mmPrefix(state)) {
@@ -3490,6 +3509,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0f53", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x54: {
             switch (mmPrefix(state)) {
@@ -3504,6 +3524,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0f54", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x55: {
             switch (mmPrefix(state)) {
@@ -3518,6 +3539,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0f55", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x56: {
             switch (mmPrefix(state)) {
@@ -3532,6 +3554,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0f56", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x57: {
             switch (mmPrefix(state)) {
@@ -3546,6 +3569,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0f57", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x58: {
             switch (mmPrefix(state)) {
@@ -3562,6 +3586,7 @@ X86::decodeOpcode0F(State &state) const
                     getModRegRM(state, rmXMM, rmXMM, DOUBLET);
                     return makeInstruction(state, x86_addsd, "addsd", state.reg, state.modrm);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x59: {
             switch (mmPrefix(state)) {
@@ -3578,6 +3603,7 @@ X86::decodeOpcode0F(State &state) const
                     getModRegRM(state, rmXMM, rmXMM, DOUBLET);
                     return makeInstruction(state, x86_mulsd, "mulsd", state.reg, state.modrm);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x5A: {
             switch (mmPrefix(state)) {
@@ -3594,6 +3620,7 @@ X86::decodeOpcode0F(State &state) const
                     getModRegRM(state, rmXMM, rmXMM, DOUBLET, V4FLOATT);
                     return makeInstruction(state, x86_cvtsd2ss, "cvtsd2ss", state.reg, state.modrm);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x5B: {
             switch (mmPrefix(state)) {
@@ -3609,6 +3636,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0f5b", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x5C: {
             switch (mmPrefix(state)) {
@@ -3625,6 +3653,7 @@ X86::decodeOpcode0F(State &state) const
                     getModRegRM(state, rmXMM, rmXMM, DOUBLET);
                     return makeInstruction(state, x86_subsd, "subsd", state.reg, state.modrm);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x5D: {
             switch (mmPrefix(state)) {
@@ -3641,6 +3670,7 @@ X86::decodeOpcode0F(State &state) const
                     getModRegRM(state, rmXMM, rmXMM, DOUBLET);
                     return makeInstruction(state, x86_minsd, "minsd", state.reg, state.modrm);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x5E: {
             switch (mmPrefix(state)) {
@@ -3657,6 +3687,7 @@ X86::decodeOpcode0F(State &state) const
                     getModRegRM(state, rmXMM, rmXMM, DOUBLET);
                     return makeInstruction(state, x86_divsd, "divsd", state.reg, state.modrm);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x5F: {
             switch (mmPrefix(state)) {
@@ -3673,6 +3704,7 @@ X86::decodeOpcode0F(State &state) const
                     getModRegRM(state, rmXMM, rmXMM, DOUBLET);
                     return makeInstruction(state, x86_maxsd, "maxsd", state.reg, state.modrm);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x60: {
             switch (mmPrefix(state)) {
@@ -3687,6 +3719,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0f60", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x61: {
             switch (mmPrefix(state)) {
@@ -3701,6 +3734,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0f61", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x62: {
             switch (mmPrefix(state)) {
@@ -3715,6 +3749,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0f62", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x63: {
             switch (mmPrefix(state)) {
@@ -3729,6 +3764,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0f63", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x64: {
             switch (mmPrefix(state)) {
@@ -3743,6 +3779,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0f64", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x65: {
             switch (mmPrefix(state)) {
@@ -3757,6 +3794,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0f65", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x66: {
             switch (mmPrefix(state)) {
@@ -3771,6 +3809,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0f66", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x67: {
             switch (mmPrefix(state)) {
@@ -3785,6 +3824,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0f67", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x68: {
             switch (mmPrefix(state)) {
@@ -3799,6 +3839,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0f68", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x69: {
             switch (mmPrefix(state)) {
@@ -3813,6 +3854,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0f69", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x6A: {
             switch (mmPrefix(state)) {
@@ -3827,6 +3869,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0f6a", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x6B: {
             switch (mmPrefix(state)) {
@@ -3841,6 +3884,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0f6b", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x6C: {
             switch (mmPrefix(state)) {
@@ -3854,6 +3898,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0f6c", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x6D: {
             switch (mmPrefix(state)) {
@@ -3867,6 +3912,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0f6d", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x6E: {
             switch (mmPrefix(state)) {
@@ -3894,6 +3940,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0f6e", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x6F: {
             switch (mmPrefix(state)) {
@@ -3909,6 +3956,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0f6f", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x70: {
             switch (mmPrefix(state)) {
@@ -3933,6 +3981,7 @@ X86::decodeOpcode0F(State &state) const
                     return makeInstruction(state, x86_pshuflw, "pshuflw", state.reg, state.modrm, shufConstant);
                 }
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x71: {
             /* Group 12 */
@@ -3976,6 +4025,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0f71", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x72: {
             /* Group 13 */
@@ -4019,6 +4069,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0f72", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x73: {
             /* Group 14 */
@@ -4073,6 +4124,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0f73", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x74: {
             switch (mmPrefix(state)) {
@@ -4087,6 +4139,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0f74", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x75: {
             switch (mmPrefix(state)) {
@@ -4101,6 +4154,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0f75", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x76: {
             switch (mmPrefix(state)) {
@@ -4115,6 +4169,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0f76", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x77: {
             switch (mmPrefix(state)) {
@@ -4127,6 +4182,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0f77", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x78: {
             switch (mmPrefix(state)) {
@@ -4161,6 +4217,7 @@ X86::decodeOpcode0F(State &state) const
                     }
                 }
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x79: {
             switch (mmPrefix(state)) {
@@ -4183,6 +4240,7 @@ X86::decodeOpcode0F(State &state) const
                         throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0f79", state);
                     }
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x7A:
             throw ExceptionX86("bad opcode 0x0f7a", state);
@@ -4201,6 +4259,7 @@ X86::decodeOpcode0F(State &state) const
                     getModRegRM(state, rmXMM, rmXMM, V4FLOATT);
                     return makeInstruction(state, x86_haddps, "haddps", state.reg, state.modrm);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x7D: {
             switch (mmPrefix(state)) {
@@ -4215,6 +4274,7 @@ X86::decodeOpcode0F(State &state) const
                     getModRegRM(state, rmXMM, rmXMM, V4FLOATT);
                     return makeInstruction(state, x86_hsubps, "hsubps", state.reg, state.modrm);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x7E: {
             switch (mmPrefix(state)) {
@@ -4244,6 +4304,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0f7e", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x7F: {
             switch (mmPrefix(state)) {
@@ -4259,6 +4320,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0f7f", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0x80: {
             SgAsmExpression* imm = getImmJz(state);
@@ -4509,6 +4571,7 @@ X86::decodeOpcode0F(State &state) const
                     getModRegRM(state, rmXMM, rmXMM, DOUBLET);
                     return makeInstruction(state, x86_cmpsd, "cmpsd", state.reg, state.modrm, getImmByte(state));
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0xC3: {
             switch (mmPrefix(state)) {
@@ -4523,6 +4586,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0fc3", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0xC4: {
             switch (mmPrefix(state)) {
@@ -4541,6 +4605,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0fc4", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0xC5: {
             switch (mmPrefix(state)) {
@@ -4567,6 +4632,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0fc5", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0xC6: {
             switch (mmPrefix(state)) {
@@ -4585,6 +4651,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0fc6", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0xC7: {
             /* Group 9 */
@@ -4646,6 +4713,7 @@ X86::decodeOpcode0F(State &state) const
                     getModRegRM(state, rmXMM, rmXMM, V4FLOATT);
                     return makeInstruction(state, x86_addsubps, "addsubps", state.reg, state.modrm);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0xD1: {
             switch (mmPrefix(state)) {
@@ -4660,6 +4728,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0fd1", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0xD2: {
             switch (mmPrefix(state)) {
@@ -4674,6 +4743,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0fd2", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0xD3: {
             switch (mmPrefix(state)) {
@@ -4688,6 +4758,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0fd3", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0xD4: {
             switch (mmPrefix(state)) {
@@ -4702,6 +4773,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0fd4", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0xD5: {
             switch (mmPrefix(state)) {
@@ -4716,6 +4788,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0fd5", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0xD6: {
             switch (mmPrefix(state)) {
@@ -4739,6 +4812,7 @@ X86::decodeOpcode0F(State &state) const
                         throw ExceptionX86("bad combination of mm prefix and ModR/M for opcode 0x0fd6", state);
                     }
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0xD7: {
             switch (mmPrefix(state)) {
@@ -4761,6 +4835,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0fd7", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0xD8: {
             switch (mmPrefix(state)) {
@@ -4775,6 +4850,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0fd8", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0xD9: {
             switch (mmPrefix(state)) {
@@ -4789,6 +4865,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0fd9", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0xDA: {
             switch (mmPrefix(state)) {
@@ -4803,6 +4880,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0fda", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0xDB: {
             switch (mmPrefix(state)) {
@@ -4817,6 +4895,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0fdb", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0xDC: {
             switch (mmPrefix(state)) {
@@ -4831,6 +4910,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0fdc", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0xDD: {
             switch (mmPrefix(state)) {
@@ -4845,6 +4925,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0fdd", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0xDE: {
             switch (mmPrefix(state)) {
@@ -4859,6 +4940,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0fde", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0xDF: {
             switch (mmPrefix(state)) {
@@ -4873,6 +4955,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0fdf", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0xE0: {
             switch (mmPrefix(state)) {
@@ -4887,6 +4970,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0fe0", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0xE1: {
             switch (mmPrefix(state)) {
@@ -4901,6 +4985,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0fe1", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0xE2: {
             switch (mmPrefix(state)) {
@@ -4915,6 +5000,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0fe2", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0xE3: {
             switch (mmPrefix(state)) {
@@ -4929,6 +5015,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0fe3", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0xE4: {
             switch (mmPrefix(state)) {
@@ -4943,6 +5030,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0fe4", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0xE5: {
             switch (mmPrefix(state)) {
@@ -4957,6 +5045,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0fe5", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0xE6: {
             switch (mmPrefix(state)) {
@@ -4972,6 +5061,7 @@ X86::decodeOpcode0F(State &state) const
                     getModRegRM(state, rmXMM, rmXMM, V2DOUBLET, V2QWORDT);
                     return makeInstruction(state, x86_cvtpd2dq, "cvtpd2dq", state.reg, state.modrm);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0xE7: {
             switch (mmPrefix(state)) {
@@ -4988,6 +5078,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0fe7", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0xE8: {
             switch (mmPrefix(state)) {
@@ -5002,6 +5093,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0fe8", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0xE9: {
             switch (mmPrefix(state)) {
@@ -5016,6 +5108,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0fe9", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0xEA: {
             switch (mmPrefix(state)) {
@@ -5030,6 +5123,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0fea", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0xEB: {
             switch (mmPrefix(state)) {
@@ -5044,6 +5138,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0feb", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0xEC: {
             switch (mmPrefix(state)) {
@@ -5058,6 +5153,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0fec", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0xED: {
             switch (mmPrefix(state)) {
@@ -5072,6 +5168,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0fed", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0xEE: {
             switch (mmPrefix(state)) {
@@ -5086,6 +5183,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0fee", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0xEF: {
             switch (mmPrefix(state)) {
@@ -5100,6 +5198,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0fef", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0xF0: {
             switch (mmPrefix(state)) {
@@ -5114,6 +5213,7 @@ X86::decodeOpcode0F(State &state) const
                     requireMemory(state);
                     return makeInstruction(state, x86_lddqu, "lddqu", state.reg, state.modrm);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0xF1: {
             switch (mmPrefix(state)) {
@@ -5128,6 +5228,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0ff1", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0xF2: {
             switch (mmPrefix(state)) {
@@ -5142,6 +5243,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0ff2", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0xF3: {
             switch (mmPrefix(state)) {
@@ -5156,6 +5258,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0ff3", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0xF4: {
             switch (mmPrefix(state)) {
@@ -5170,6 +5273,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0ff4", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0xF5: {
             switch (mmPrefix(state)) {
@@ -5184,6 +5288,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0ff5", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0xF6: {
             switch (mmPrefix(state)) {
@@ -5198,6 +5303,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0ff6", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0xF7: {
             /* FIXME: The MOVNTQ and MOVNTDQ are at 0F E7 instead. This should be MASKMOVDQU. See Intel documentation.
@@ -5222,6 +5328,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0ff7", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0xF8: {
             switch (mmPrefix(state)) {
@@ -5236,6 +5343,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0ff8", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0xF9: {
             switch (mmPrefix(state)) {
@@ -5250,6 +5358,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0ff9", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0xFA: {
             switch (mmPrefix(state)) {
@@ -5264,6 +5373,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0ffa", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0xFB: {
             switch (mmPrefix(state)) {
@@ -5278,6 +5388,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0ffb", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0xFC: {
             switch (mmPrefix(state)) {
@@ -5292,6 +5403,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0ffc", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0xFD: {
             switch (mmPrefix(state)) {
@@ -5306,6 +5418,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0ffd", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0xFE: {
             switch (mmPrefix(state)) {
@@ -5320,6 +5433,7 @@ X86::decodeOpcode0F(State &state) const
                 case mmF2:
                     throw ExceptionX86("bad mm prefix F2 for opcode 0x0ffe", state);
             }
+            ASSERT_not_reachable("mmPrefix");
         }
         case 0xFF:
             throw ExceptionX86("bad opcode 0x0fff", state);
