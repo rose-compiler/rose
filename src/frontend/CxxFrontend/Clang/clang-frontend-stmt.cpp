@@ -1108,6 +1108,8 @@ bool ClangToSageTranslator::VisitDoStmt(clang::DoStmt * do_stmt, SgNode ** node)
 
     SgDoWhileStmt * sg_do_stmt = SageBuilder::buildDoWhileStmt_nfi(expr_stmt, NULL);
 
+    sg_do_stmt->set_parent(SageBuilder::topScopeStack());
+
     sg_do_stmt->set_condition(expr_stmt);
 
     cond->set_parent(expr_stmt);
@@ -1819,15 +1821,22 @@ bool ClangToSageTranslator::VisitCaseStmt(clang::CaseStmt * case_stmt, SgNode **
     SgExpression * lhs = isSgExpression(tmp_lhs);
     ROSE_ASSERT(lhs != NULL);
 
-/*  FIXME GNU extension not-handled by ROSE
-    SgNode * tmp_rhs = Traverse(case_stmt->getRHS());
-    SgExpression * rhs = isSgExpression(tmp_rhs);
-    ROSE_ASSERT(rhs != NULL);
-*/
-    ROSE_ASSERT(case_stmt->getRHS() == NULL);
+    SgExpression* rhs = NULL; 
+    if(case_stmt->getRHS() != nullptr)
+    {
+      SgNode * tmp_rhs = Traverse(case_stmt->getRHS());
+      rhs = isSgExpression(tmp_rhs);
+      ROSE_ASSERT(rhs != NULL);
+    }
 
-    *node = SageBuilder::buildCaseOptionStmt_nfi(lhs, stmt);
+    SgCaseOptionStmt* caseOptionStmt = SageBuilder::buildCaseOptionStmt_nfi(lhs, stmt);
 
+    if(rhs != NULL)
+    {
+      caseOptionStmt->set_key_range_end(rhs);
+    }
+
+    *node = caseOptionStmt;
     return VisitSwitchCase(case_stmt, node);
 }
 
@@ -3967,6 +3976,8 @@ bool ClangToSageTranslator::VisitWhileStmt(clang::WhileStmt * while_stmt, SgNode
     SgStatement * expr_stmt = SageBuilder::buildExprStatement(cond);
 
     SgWhileStmt * sg_while_stmt = SageBuilder::buildWhileStmt_nfi(expr_stmt, NULL);
+
+    sg_while_stmt->set_parent(SageBuilder::topScopeStack());
 
     cond->set_parent(expr_stmt);
     expr_stmt->set_parent(sg_while_stmt);
