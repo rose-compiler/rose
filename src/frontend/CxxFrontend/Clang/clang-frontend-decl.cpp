@@ -887,7 +887,7 @@ bool ClangToSageTranslator::VisitRecordDecl(clang::RecordDecl * record_decl, SgN
     ROSE_ASSERT(type != NULL);
     sg_class_decl->set_type(type);
 
-    if (isAnonymousStructOrUnion) sg_class_decl->set_isUnNamed(true);
+    if (!hasNameForLinkage) sg_class_decl->set_isUnNamed(true);
 
     if (!had_prev_decl) {
         sg_first_class_decl = sg_class_decl;
@@ -905,7 +905,7 @@ bool ClangToSageTranslator::VisitRecordDecl(clang::RecordDecl * record_decl, SgN
     if (isDefined) {
         sg_def_class_decl = new SgClassDeclaration(name, type_of_class, type, NULL);
         sg_def_class_decl->set_scope(SageBuilder::topScopeStack());
-        if (isAnonymousStructOrUnion) sg_def_class_decl->set_isUnNamed(true);
+        if (!hasNameForLinkage) sg_def_class_decl->set_isUnNamed(true);
         sg_def_class_decl->set_parent(SageBuilder::topScopeStack());
 
         sg_class_decl = sg_def_class_decl; // we return thew defining decl
@@ -1481,7 +1481,12 @@ bool ClangToSageTranslator::VisitFieldDecl(clang::FieldDecl * field_decl, SgNode
         // *node = SageBuilder::buildVariableDeclaration(name, type, init, SageBuilder::topScopeStack());
       // Build it by hand...
         SgVariableDeclaration * var_decl = new SgVariableDeclaration(name, type, init);
-     
+       
+     // Pei-Hung (09/27/2022) isAssociatedWithDeclarationList should be set to handle multiple variables in
+     // a single declaration list.
+     // As Clang does not have concept such as declaration list, we might need revision to handle this in future.
+        var_decl->set_isAssociatedWithDeclarationList(true);    
+ 
         // finding the bottom base type and check
         while(type->findBaseType() != type)
         {
@@ -1491,8 +1496,10 @@ bool ClangToSageTranslator::VisitFieldDecl(clang::FieldDecl * field_decl, SgNode
         }
      
         if (isSgClassType(type) && isDefinitionaRequired) {
-//            SgClassDeclaration* classDecl = isSgClassDeclaration(isSgClassType(type)->get_declaration());
-            SgClassDeclaration* classDefDecl = isSgClassDeclaration(isSgClassType(type)->get_declaration()->get_definingDeclaration());
+            SgClassDeclaration* classDecl = isSgClassDeclaration(isSgClassType(type)->get_declaration());
+            SgClassDeclaration* classDefDecl = isSgClassDeclaration(classDecl->get_definingDeclaration());
+            classDecl->set_isAutonomousDeclaration(false);
+            classDefDecl->set_isAutonomousDeclaration(false);
             if(isembedded && classDefDecl != nullptr && !isSgDeclarationStatement(classDefDecl->get_parent()))
             {
               classDefDecl->set_parent(var_decl);
@@ -1995,6 +2002,11 @@ bool ClangToSageTranslator::VisitVarDecl(clang::VarDecl * var_decl, SgNode ** no
    // Pei-Hung (09/01/2022) In test2022_3.c, the variable symbol needs to be avaiable before processing the RHS.
    // calling buildVariableDeclaration_nfi to get the symbol in place.
    SgVariableDeclaration * sg_var_decl = SageBuilder::buildVariableDeclaration_nfi(name,type, NULL ,SageBuilder::topScopeStack());
+
+   // Pei-Hung (09/27/2022) isAssociatedWithDeclarationList should be set to handle multiple variables in
+   // a single declaration list.
+   // As Clang does not have concept such as declaration list, we might need revision to handle this in future.
+   sg_var_decl->set_isAssociatedWithDeclarationList(true);    
  
    clang::Expr * init_expr = var_decl->getInit();
     SgNode * tmp_init = Traverse(init_expr);
