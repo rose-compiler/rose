@@ -6,7 +6,7 @@
 #include <Rose/BinaryAnalysis/Partitioner2/AddressUsageMap.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Config.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Configuration.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ControlFlowGraph.h>
 #include <Rose/BinaryAnalysis/Partitioner2/DataBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
@@ -378,8 +378,8 @@ private:
         s.template register_type<InstructionSemantics::DispatcherX86>();
         s.template register_type<InstructionSemantics::DispatcherM68k>();
         s.template register_type<InstructionSemantics::DispatcherPowerpc>();
-        s.template register_type<SymbolicExpr::Interior>();
-        s.template register_type<SymbolicExpr::Leaf>();
+        s.template register_type<SymbolicExpression::Interior>();
+        s.template register_type<SymbolicExpression::Leaf>();
         s.template register_type<Z3Solver>();
         s.template register_type<Semantics::SValue>();
         s.template register_type<Semantics::MemoryListState>();
@@ -451,7 +451,7 @@ public:
      *
      *  The partitioner must be provided with a disassembler, which also determines the specimen's target architecture, and a
      *  memory map that represents a (partially) loaded instance of the specimen (i.e., a process). */
-    Partitioner(Disassembler *disassembler, const MemoryMap::Ptr &map);
+    Partitioner(const Disassembler::BasePtr &disassembler, const MemoryMap::Ptr &map);
 
 #ifdef ROSE_PARTITIONER_MOVE
     /** Move constructor. */
@@ -2544,7 +2544,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private:
-    void init(Disassembler*, const MemoryMap::Ptr&);
+    void init(const Disassembler::BasePtr&, const MemoryMap::Ptr&);
     void init(const Partitioner&);
     void updateCfgProgress();
 

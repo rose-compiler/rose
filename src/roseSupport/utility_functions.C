@@ -227,7 +227,6 @@ std::map<std::string, SgIncludeFile*> Rose::includeFileMapForUnparsing;
 // the header file.
 bool Rose::is_Ada_language        = false;
 bool Rose::is_C_language          = false;
-bool Rose::is_Cobol_language      = false;
 bool Rose::is_OpenMP_language     = false;
 bool Rose::is_UPC_language        = false;
 bool Rose::is_UPC_dynamic_threads = false;
@@ -410,7 +409,6 @@ std::string version_message() {
 #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
     ss <<"  --- Fortran analysis:           enabled\n";
 
-    // How is this different than ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION below?
     extern string ofpVersionString();
     ss <<"  ---   OFP Fortran parser:       " <<ofpVersionString() <<"\n";
 
@@ -540,12 +538,6 @@ std::string version_message() {
     ss <<"  --- C# analysis:                disabled\n";
 #endif
 
-#ifdef ROSE_EXPERIMENTAL_COBAL_ROSE_CONNECTION
-    ss <<"  --- COBOL analysis:             enabled\n";
-#else
-    ss <<"  --- COBOL analysis:             disabled\n";
-#endif
-
 #ifdef ROSE_BUILD_CUDA_LANGUAGE_SUPPORT
     ss <<"  --- CUDA analysis:              enabled\n";
 #else
@@ -568,12 +560,6 @@ std::string version_message() {
     ss <<"  --- Matlab analysis:            enabled\n";
 #else
     ss <<"  --- Matlab analysis:            disabled\n";
-#endif
-
-#ifdef ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
-    ss <<"  --- OFP analysis:               enabled\n";
-#else
-    ss <<"  --- OFP analysis:               disabled\n";
 #endif
 
 #ifdef ROSE_BUILD_OPENCL_LANGUAGE_SUPPORT

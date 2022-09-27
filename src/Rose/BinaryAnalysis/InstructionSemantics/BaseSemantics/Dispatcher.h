@@ -3,8 +3,8 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Types.h>
-#include <Rose/BinaryAnalysis/Registers.h>
 
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/serialization/access.hpp>
@@ -50,7 +50,7 @@ private:
     RiscOperatorsPtr operators_;
 
 protected:
-    const RegisterDictionary *regdict;                  /**< See @ref registerDictionary property. */
+    RegisterDictionaryPtr regdict;                      /**< See @ref registerDictionary property. */
     size_t addrWidth_;                                  /**< Width of memory addresses in bits. */
     bool autoResetInstructionPointer_;                  /**< Reset instruction pointer register for each instruction. */
 
@@ -77,23 +77,15 @@ private:
     // Real constructors
 protected:
     // Prototypical constructor
-    Dispatcher(): regdict(NULL), addrWidth_(0), autoResetInstructionPointer_(true) {}
+    Dispatcher();
 
     // Prototypical constructor
-    Dispatcher(size_t addrWidth, const RegisterDictionary *regs)
-        : regdict(regs), addrWidth_(addrWidth), autoResetInstructionPointer_(true) {}
+    Dispatcher(size_t addrWidth, const RegisterDictionaryPtr&);
 
-    Dispatcher(const RiscOperatorsPtr &ops, size_t addrWidth, const RegisterDictionary *regs)
-        : operators_(ops), regdict(regs), addrWidth_(addrWidth), autoResetInstructionPointer_(true) {
-        ASSERT_not_null(operators_);
-        ASSERT_not_null(regs);
-    }
+    Dispatcher(const RiscOperatorsPtr&, size_t addrWidth, const RegisterDictionaryPtr&);
 
 public:
-    virtual ~Dispatcher() {
-        for (InsnProcessors::iterator iter=iproc_table.begin(); iter!=iproc_table.end(); ++iter)
-            delete *iter;
-    }
+    virtual ~Dispatcher();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Static allocating constructors. None since this is an abstract class
@@ -103,7 +95,7 @@ public:
     // Virtual constructors
 public:
     /** Virtual constructor. */
-    virtual DispatcherPtr create(const RiscOperatorsPtr &ops, size_t addrWidth=0, const RegisterDictionary *regs=NULL) const = 0;
+    virtual DispatcherPtr create(const RiscOperatorsPtr &ops, size_t addrWidth, const RegisterDictionaryPtr&) const = 0;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods to process instructions
@@ -192,23 +184,14 @@ public:
      *  set_register_dictionary.
      *
      * @{ */
-    const RegisterDictionary* registerDictionary() const /*final*/ {
-        return get_register_dictionary();
-    }
-    void registerDictionary(const RegisterDictionary *rd) /*final*/ {
-        set_register_dictionary(rd);
-    }
+    RegisterDictionaryPtr registerDictionary() const /*final*/;
+    void registerDictionary(const RegisterDictionaryPtr &rd) /*final*/;
     /** @} */
-
 
     // Old names, the ones which are overridden in subclasses if necessary. These are deprecated and might go away someday, so
     // it's in your best interrest to use C++11 "override" in your declarations.
-    virtual const RegisterDictionary *get_register_dictionary() const {
-        return regdict;
-    }
-    virtual void set_register_dictionary(const RegisterDictionary *regdict) {
-        this->regdict = regdict;
-    }
+    virtual RegisterDictionaryPtr get_register_dictionary() const;
+    virtual void set_register_dictionary(const RegisterDictionaryPtr &regdict);
 
     /** Lookup a register by name.  This dispatcher's register dictionary is consulted and the specified register is located by
      *  name.  If a bit width is specified (@p nbits) then it must match the size of register that was found.  If a valid

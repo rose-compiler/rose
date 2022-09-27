@@ -4,7 +4,14 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
+
 using namespace Rose::BinaryAnalysis;
+
+SgAsmInterpretation::SgAsmInterpretation()
+    : coverageComputed(false), percentageCoverage(0.0), p_headers(nullptr), p_global_block(nullptr) {
+    ctor();
+}
 
 /* Finish constructing. */
 void SgAsmInterpretation::ctor() {
@@ -26,18 +33,6 @@ SgAsmInterpretation::get_files() const
     }
 
     return SgAsmGenericFilePtrList(files.begin(), files.end());
-}
-
-const RegisterDictionary *
-SgAsmInterpretation::get_registers() const
-{
-    return p_registers;
-}
-
-void
-SgAsmInterpretation::set_registers(const RegisterDictionary *regs)
-{
-    p_registers = regs;
 }
 
 void

@@ -2167,12 +2167,15 @@ namespace
     // and immediately return.
     if (SgAdaFunctionRenamingDecl* renaming = isSgAdaFunctionRenamingDecl(&n))
     {
-      if (SgFunctionDeclaration* renamed = renaming->get_renamed_function())
+      // PP 9/2/22 : updated renamed_function from SgFunctionDeclaration to SgExpression
+      if (SgExpression* renamed = renaming->get_renamed_function())
       {
         // a true renaming
         prn(" renames ");
-        prnNameQual(n, *renamed, renamed->get_scope());
-        prn(si::ada::convertRoseOperatorNameToAdaName(renamed->get_name()));
+        expr(renamed);
+
+        //~ prnNameQual(n, *renamed, renamed->get_scope());
+        //~ prn(si::ada::convertRoseOperatorNameToAdaName(renamed->get_name()));
       }
       // else this is a procedure declaration defined using renaming-as-body
 

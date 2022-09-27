@@ -135,6 +135,27 @@ public:
     }
 };
 
+// Verbatim paragraph
+class Verbatim: public Markup::Function {
+protected:
+    Verbatim(const std::string &name)
+        : Markup::Function(name) {}
+
+public:
+    static Ptr instance(const std::string &name) {
+        return Ptr(new Verbatim(name))->arg("content");
+    }
+    std::string eval(const Markup::Grammar&, const std::vector<std::string> &args) {
+        ASSERT_require(args.size() == 1);
+        std::string retval = "\n";
+        std::vector<std::string> lines;
+        boost::split(lines, args[0], boost::is_any_of("\n"));
+        for (const std::string &line: lines)
+            retval += "    " + line + "\n";             // no podEscape necessary
+        return retval;
+    }
+};
+
 } // namespace
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -149,6 +170,7 @@ PodMarkup::init() {
     with(NumberedItem::instance("numbered", "1"));
     with(Section::instance("section"));
     with(InlineFormat::instance("v", "I"));;            // variable
+    with(Verbatim::instance("quote"));
 }
 
 SAWYER_EXPORT bool

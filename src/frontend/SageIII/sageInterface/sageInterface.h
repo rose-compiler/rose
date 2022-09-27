@@ -670,7 +670,6 @@ ROSE_DLL_API void markSubtreeToBeUnparsedTreeTraversal(SgNode* root, int physica
 #if INLINE_OPTIMIZED_IS_LANGUAGE_KIND_FUNCTIONS
   ROSE_DLL_API inline bool is_Ada_language ()       { return Rose::is_Ada_language; }
   ROSE_DLL_API inline bool is_C_language ()         { return Rose::is_C_language; }
-  ROSE_DLL_API inline bool is_Cobol_language ()     { return Rose::is_Cobol_language; }
   ROSE_DLL_API inline bool is_OpenMP_language ()    { return Rose::is_OpenMP_language; }
   ROSE_DLL_API inline bool is_UPC_language ()       { return Rose::is_UPC_language; }
   ROSE_DLL_API inline bool is_UPC_dynamic_threads() { return Rose::is_UPC_dynamic_threads; }
@@ -689,7 +688,6 @@ ROSE_DLL_API void markSubtreeToBeUnparsedTreeTraversal(SgNode* root, int physica
 #else
   ROSE_DLL_API bool is_Ada_language ();
   ROSE_DLL_API bool is_C_language ();
-  ROSE_DLL_API bool is_Cobol_language ();
   ROSE_DLL_API bool is_OpenMP_language ();
   ROSE_DLL_API bool is_UPC_language ();
   //! Check if dynamic threads compilation is used for UPC programs

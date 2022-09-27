@@ -1,9 +1,8 @@
+#ifndef ROSE_CodeGen_API_H
+#define ROSE_CodeGen_API_H
 
-#ifndef Rose_CodeGen_API_h
-#define Rose_CodeGen_API_h
-
-#include "Rose/CodeGen/Driver.h"
-#include "Rose/CodeGen/Object.h"
+#include <Rose/CodeGen/Driver.h>
+#include <Rose/CodeGen/Object.h>
 
 #include <vector>
 #include <map>
@@ -59,5 +58,4 @@ class API {
 
 #include "Rose/CodeGen/API.txx"
 
-#endif /* Rose_CodeGen_API_h */
-
+#endif

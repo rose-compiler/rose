@@ -3,6 +3,9 @@
 #include <boost/optional.hpp>
 #include <iostream>
 
+// Controls debugging information output
+#define PRINT_FLANG_TRAVERSAL 0
+
 // Helps with find source position information
 enum class Order { begin, end };
 
@@ -293,6 +296,7 @@ void Build(const parser::FunctionSubprogram &x, T* scope)
    SgType* return_type{nullptr};
    LanguageTranslation::FunctionModifierList function_modifiers;
    std::list<std::string> dummy_arg_name_list;
+   std::vector<Rose::builder::Token> comments{};
    std::string name, result_name;
    bool is_defining_decl = true;
 
@@ -327,8 +331,13 @@ void Build(const parser::FunctionSubprogram &x, T* scope)
    // Leave SageTreeBuilder for SgFunctionParameterList
    builder.Leave(param_list, param_scope, dummy_arg_name_list);
 
+   Rose::builder::SourcePosition heading_start; // start of ProcedureHeading
+   Rose::builder::SourcePosition decl_start, decl_end; // start and end of Declaration
+   Rose::builder::SourcePositions sources(heading_start, decl_start, decl_end);
+
    // Begin SageTreeBuilder for SgFunctionDeclaration
-   builder.Enter(function_decl, name, return_type, param_list, function_modifiers, is_defining_decl);
+   builder.Enter(function_decl, name, return_type, param_list, function_modifiers,
+                 is_defining_decl, sources, comments);
 
    // EndFunctionStmt - std::optional<Name> v;
    bool have_end_stmt = false;
@@ -359,6 +368,7 @@ void Build(const parser::SubroutineSubprogram &x, T* scope)
    SgFunctionDeclaration* function_decl{nullptr};
    LanguageTranslation::FunctionModifierList function_modifiers;
    std::list<std::string> dummy_arg_name_list;
+   std::vector<Rose::builder::Token> comments{};
    std::string name;
    bool is_defining_decl = true;
 
@@ -375,8 +385,13 @@ void Build(const parser::SubroutineSubprogram &x, T* scope)
    // Leave SageTreeBuilder for SgFunctionParameterList
    builder.Leave(param_list, param_scope, dummy_arg_name_list);
 
+   Rose::builder::SourcePosition heading_start; // start of ProcedureHeading
+   Rose::builder::SourcePosition decl_start, decl_end; // start and end of Declaration
+   Rose::builder::SourcePositions sources(heading_start, decl_start, decl_end);
+
    // Begin SageTreeBuilder for SgFunctionDeclaration
-   builder.Enter(function_decl, name, nullptr /* return_type */, param_list, function_modifiers, is_defining_decl);
+   builder.Enter(function_decl, name, nullptr /* return_type */, param_list,
+                 function_modifiers, is_defining_decl, sources, comments);
 
    // EndSubroutineStmt - std::optional<Name> v;
    bool have_end_stmt = false;
@@ -831,6 +846,7 @@ void Build(const parser::Expr &x, SgExpression* &expr)
    std::cout << "Rose::builder::Build(Expr)\n";
 #endif
 
+#if TODO_BUILD_WITH_FLANG
    std::visit(
       common::visitors{
          [&](const Fortran::common::Indirection<parser::CharLiteralConstantSubstring> &y)
@@ -842,9 +858,11 @@ void Build(const parser::Expr &x, SgExpression* &expr)
          // LiteralConstant, ArrayConstructor, StructureConstructor, Parentheses, UnaryPlus,
          // Negate, NOT, PercentLoc, DefinedUnary, Power, Multiply, Divide, Add, Subtract, Concat
          // LT, LE, EQ, NE, GE, GT, AND, OR, EQV, NEQV, XOR, DefinedBinary, ComplexConstructor
+    // SubstringInquiry (NEW?)
          [&](const auto &y) { Build(y, expr); },
       },
       x.u);
+#endif
 }
 
 void Build(const parser::Expr::IntrinsicBinary &x, SgExpression* &expr)
@@ -3245,12 +3263,14 @@ void Build(const parser::DataComponentDefStmt&x, SgStatement* &stmt)
    std::list<LanguageTranslation::ExpressionKind> modifier_enum_list;
    std::list<EntityDeclTuple> init_info;
 
+#if TODO_BUILD_WITH_FLANG
    Build(std::get<0>(x.t), base_type);                    // DeclarationTypeSpec
    Build(std::get<1>(x.t), modifier_enum_list);           // std::list<ComponentAttrSpec>
    Build(std::get<2>(x.t), init_info, base_type);         // std::list<ComponentDecl>
 
    builder.Enter(var_decl, base_type, init_info);
    builder.Leave(var_decl, modifier_enum_list);
+#endif
 }
 
 void Build(const parser::TypeAttrSpec &x, LanguageTranslation::ExpressionKind &modifier_enum)

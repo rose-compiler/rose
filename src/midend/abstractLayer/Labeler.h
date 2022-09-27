@@ -211,7 +211,7 @@ class CLabeler : public Labeler {
      this can only be the case if label is erroneously higher than the number of labeled nodes or NO_LABEL.
   */
   SgNode* getNode(Label label) override;
-  std::string sourceLocationToString(Label lab, size_t maxFileNameLength, size_t maxSourceLength);
+  std::string sourceLocationToString(Label lab, size_t maxFileNameLength, size_t maxSourceLength) override;
   size_t numberOfLabels() override;
   std::string toString() override;
   Label functionCallLabel(SgNode* node) override;

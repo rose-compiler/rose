@@ -4,6 +4,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Types.h>
+#include <Rose/BinaryAnalysis/BasicTypes.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -15,21 +16,16 @@ namespace BaseSemantics {
  *  methods for semantic objects. */
 class Formatter {
 public:
-    Formatter(): regdict(NULL), suppress_initial_values(false), indentation_suffix("  "), show_latest_writers(true),
-                 show_properties(true) {}
-    virtual ~Formatter() {}
+    Formatter();
+    virtual ~Formatter();
 
     /** Property: Register dictionary.
      *
      *  The register dictionary which is used for printing register names.
      *
      * @{ */
-    const RegisterDictionary* registerDictionary() const {
-        return regdict;
-    }
-    void registerDictionary(const RegisterDictionary *rd) {
-        regdict = rd;
-    }
+    RegisterDictionaryPtr registerDictionary() const;
+    void registerDictionary(const RegisterDictionaryPtr&);
     /** @} */
 
     /** Whether register initial values should be suppressed.  If a register's value has a comment that is equal to the
@@ -67,7 +63,7 @@ public:
     /** @} */
 
 protected:
-    const RegisterDictionary *regdict;
+    RegisterDictionaryPtr regdict;
     bool suppress_initial_values;
     std::string line_prefix;
     std::string indentation_suffix;

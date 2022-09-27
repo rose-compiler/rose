@@ -1,0 +1,10 @@
+diff --git a/thirdparty_builtin/benchmark-1.5.0/CMakeLists.txt b/thirdparty_builtin/benchmark-1.5.0/CMakeLists.txt
+index 9db1361..d115ede 100644
+--- a/thirdparty_builtin/benchmark-1.5.0/CMakeLists.txt
++++ b/thirdparty_builtin/benchmark-1.5.0/CMakeLists.txt
+@@ -1,5 +1,3 @@
+-cmake_minimum_required (VERSION 3.5.1)
+-
+ foreach(p
+     CMP0048 # OK to clear PROJECT_VERSION on project()
+     CMP0054 # CMake 3.1

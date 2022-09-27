@@ -238,10 +238,10 @@ void postProcessingSupport (SgNode* node)
 #endif
 
   // Only do AST post-processing for C/C++
-  // Rasmussen (4/8/2018): Added Ada, Cobol, and Jovial. The logic should probably
+  // Rasmussen (9/18/2020): Removed --experimental_cobol_frontend option and associated code
+  // Rasmussen (4/8/2018): Added Ada and Jovial. The logic should probably
   // be inverted to only process C and C++ but I don't understand interactions like OpenMP langauges.
      bool noPostprocessing = (SageInterface::is_Ada_language()     == true) ||
-                             (SageInterface::is_Cobol_language()   == true) ||
                              (SageInterface::is_Fortran_language() == true) ||
                              (SageInterface::is_Jovial_language()  == true) ||
                              (SageInterface::is_PHP_language()     == true) ||

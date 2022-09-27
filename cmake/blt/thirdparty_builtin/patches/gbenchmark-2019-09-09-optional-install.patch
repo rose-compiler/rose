@@ -1,0 +1,58 @@
+diff --git a/thirdparty_builtin/gbenchmark-master-2017-05-19/CMakeLists.txt b/thirdparty_builtin/gbenchmark-master-2017-05-19/CMakeLists.txt
+index 1b6cfa4..4c3ca15 100644
+--- a/thirdparty_builtin/gbenchmark-master-2017-05-19/CMakeLists.txt
++++ b/thirdparty_builtin/gbenchmark-master-2017-05-19/CMakeLists.txt
+@@ -25,6 +25,7 @@ option(BENCHMARK_ENABLE_EXCEPTIONS "Enable the use of exceptions in the benchmar
+ option(BENCHMARK_ENABLE_LTO "Enable link time optimisation of the benchmark library." OFF)
+ option(BENCHMARK_USE_LIBCXX "Build and test using libc++ as the standard library." OFF)
+ option(BENCHMARK_BUILD_32_BITS "Build a 32 bit version of the library" OFF)
++option(BENCHMARK_ENABLE_INSTALL "Enable installation of benchmark. (Projects embedding benchmark may want to turn this OFF.)" ON)
+ 
+ # Make sure we can import out CMake functions
+ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+diff --git a/thirdparty_builtin/gbenchmark-master-2017-05-19/src/CMakeLists.txt b/thirdparty_builtin/gbenchmark-master-2017-05-19/src/CMakeLists.txt
+index 7707773..8236ed9 100644
+--- a/thirdparty_builtin/gbenchmark-master-2017-05-19/src/CMakeLists.txt
++++ b/thirdparty_builtin/gbenchmark-master-2017-05-19/src/CMakeLists.txt
+@@ -51,25 +51,27 @@ write_basic_package_version_file(
+ 
+ configure_file("${PROJECT_SOURCE_DIR}/cmake/Config.cmake.in" "${project_config}" @ONLY)
+ 
+-# Install target (will install the library to specified CMAKE_INSTALL_PREFIX variable)
+-install(
+-  TARGETS benchmark
+-  EXPORT ${targets_export_name}
+-  ARCHIVE DESTINATION ${lib_install_dir}
+-  LIBRARY DESTINATION ${lib_install_dir}
+-  RUNTIME DESTINATION ${bin_install_dir}
+-  INCLUDES DESTINATION ${include_install_dir})
++if (BENCHMARK_ENABLE_INSTALL)
++  # Install target (will install the library to specified CMAKE_INSTALL_PREFIX variable)
++  install(
++    TARGETS benchmark
++    EXPORT ${targets_export_name}
++    ARCHIVE DESTINATION ${lib_install_dir}
++    LIBRARY DESTINATION ${lib_install_dir}
++    RUNTIME DESTINATION ${bin_install_dir}
++    INCLUDES DESTINATION ${include_install_dir})
+ 
+-install(
+-  DIRECTORY "${PROJECT_SOURCE_DIR}/include/benchmark"
+-  DESTINATION ${include_install_dir}
+-  FILES_MATCHING PATTERN "*.*h")
++  install(
++    DIRECTORY "${PROJECT_SOURCE_DIR}/include/benchmark"
++    DESTINATION ${include_install_dir}
++    FILES_MATCHING PATTERN "*.*h")
+ 
+-install(
++  install(
+     FILES "${project_config}" "${version_config}"
+     DESTINATION "${config_install_dir}")
+ 
+-install(
++  install(
+     EXPORT "${targets_export_name}"
+     NAMESPACE "${namespace}"
+     DESTINATION "${config_install_dir}")
++endif ()

@@ -372,7 +372,7 @@ bool NodeState::eqLattices(const vector<Lattice*>& latticesA,
         
         vector<Lattice*>::const_iterator itA, itB;
         for(itA = latticesA.begin(), itB = latticesB.begin();
-            itA != latticesA.end(), itB != latticesB.end();
+            itA != latticesA.end() && itB != latticesB.end();
             itA++, itB++)
         {
                 Lattice *lA = *itA;

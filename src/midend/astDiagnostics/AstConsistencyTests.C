@@ -4897,16 +4897,6 @@ TestParentPointersInMemoryPool::visit(SgNode* node)
             printf("Error: symbol named %s has no parent set\n",symbol->get_name().getString().c_str());
           ROSE_ASSERT(symbol->get_parent() != NULL);
         }
-
-  // DQ (10/16/2017): Skip parent pointer checking for the untyped IR nodes.
-  // Rasmussen (3/7/2018): Added class name and node pointer address to output.
-     if (isSgUntypedNode(locatedNode) != NULL)
-        {
-           std::cerr << "TestParentPointersInMemoryPool::visit(): Skipping SgUntypedNode IR Node "
-                     << node->sage_class_name() << ": " << node << std::endl;
-          return;
-        }
-
 #if 0
      if (isSgExpression(locatedNode) != NULL)
         {

@@ -11,6 +11,8 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
+#include <Rose/BinaryAnalysis/SymbolicExpression.h>
 #include <Rose/BitOps.h>
 
 #include <boost/format.hpp>
@@ -137,18 +139,18 @@ ConcolicExecutor::startProcess() {
     }
 }
 
-Emulation::DispatcherPtr
+Emulation::Dispatcher::Ptr
 ConcolicExecutor::makeDispatcher(const Architecture::Ptr &process) {
     ASSERT_not_null(process);
     ASSERT_not_null(solver());
 
-    Emulation::RiscOperatorsPtr ops =
+    Emulation::RiscOperators::Ptr ops =
         Emulation::RiscOperators::instance(settings_.emulationSettings, database(), testCase(), partitioner(), process,
                                            Emulation::SValue::instance(), solver());
 
-    Emulation::DispatcherPtr cpu;
+    Emulation::Dispatcher::Ptr cpu;
     if (settings_.traceSemantics) {
-        BS::RiscOperatorsPtr trace = IS::TraceSemantics::RiscOperators::instance(ops);
+        BS::RiscOperators::Ptr trace = IS::TraceSemantics::RiscOperators::instance(ops);
         cpu = Emulation::Dispatcher::instance(trace);
     } else {
         cpu = Emulation::Dispatcher::instance(ops);
@@ -165,7 +167,7 @@ ConcolicExecutor::startDispatcher() {
 
     if (testCase()->parent()) {
         ASSERT_require(database()->symbolicStateExists(testCaseId()));
-        BS::StatePtr state = database()->extractSymbolicState(testCaseId());
+        BS::State::Ptr state = database()->extractSymbolicState(testCaseId());
         ASSERT_not_null(state);
         ops->currentState(state);
         solver()->insert(testCase()->assertions());
@@ -292,7 +294,7 @@ ConcolicExecutor::updateCallStack(SgAsmInstruction *insn) {
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     bool wasChanged = false;
 
-    Emulation::RiscOperatorsPtr ops = cpu()->emulationOperators();
+    Emulation::RiscOperators::Ptr ops = cpu()->emulationOperators();
     P2::BasicBlock::Ptr bb = partitioner().basicBlockContainingInstruction(insn->get_address());
     if (!bb || bb->nInstructions() == 0) {
         SAWYER_MESG(debug) <<"no basic block at " <<StringUtility::addrToString(insn->get_address()) <<"\n";
@@ -303,7 +305,8 @@ ConcolicExecutor::updateCallStack(SgAsmInstruction *insn) {
     const RegisterDescriptor SP = partitioner().instructionProvider().stackPointerRegister();
     if (SP.isEmpty())
         return wasChanged;                              // no stack pointer for this architecture?!
-    SymbolicExpr::Ptr sp = Emulation::SValue::promote(ops->peekRegister(SP, ops->undefined_(SP.nBits())))->get_expression();
+    SymbolicExpression::Ptr sp =
+        Emulation::SValue::promote(ops->peekRegister(SP, ops->undefined_(SP.nBits())))->get_expression();
     Sawyer::Optional<uint64_t> stackVa = sp->toUnsigned();
     if (!stackVa) {
         SAWYER_MESG(debug) <<"no concrete SP after function call at " <<StringUtility::addrToString(insn->get_address());
@@ -323,7 +326,8 @@ ConcolicExecutor::updateCallStack(SgAsmInstruction *insn) {
     if (partitioner().basicBlockIsFunctionCall(bb) && insn->get_address() == bb->instructions().back()->get_address()) {
         // Get a name for the function we just called, if possible.
         const RegisterDescriptor IP = partitioner().instructionProvider().instructionPointerRegister();
-        SymbolicExpr::Ptr ip = Emulation::SValue::promote(ops->peekRegister(IP, ops->undefined_(IP.nBits())))->get_expression();
+        SymbolicExpression::Ptr ip =
+            Emulation::SValue::promote(ops->peekRegister(IP, ops->undefined_(IP.nBits())))->get_expression();
         Sawyer::Optional<uint64_t> calleeVa = ip->toUnsigned();
         std::string calleeName;
         if (calleeVa) {
@@ -360,20 +364,21 @@ ConcolicExecutor::handleBranch(SgAsmInstruction *insn) {
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     Sawyer::Message::Stream error(mlog[ERROR]);
 
-    Emulation::RiscOperatorsPtr ops = cpu()->emulationOperators();
+    Emulation::RiscOperators::Ptr ops = cpu()->emulationOperators();
     const RegisterDescriptor IP = partitioner().instructionProvider().instructionPointerRegister();
 
     // If we processed a branch instruction whose condition depended on input variables, then the instruction pointer register
     // in the symbolic state will be non-constant. It should be an if-then-else expression that evaluates to two constants, the
     // true and false execution addresses, one of which should match the concrete execution address.
-    SymbolicExpr::Ptr ip = Emulation::SValue::promote(ops->peekRegister(IP, ops->undefined_(IP.nBits())))->get_expression();
-    SymbolicExpr::InteriorPtr inode = ip->isInteriorNode();
-    if (inode && inode->getOperator() == SymbolicExpr::OP_ITE) {
-        SymbolicExpr::Ptr actualTarget = SymbolicExpr::makeIntegerConstant(IP.nBits(), cpu()->concreteInstructionPointer());
-        SymbolicExpr::Ptr trueTarget = inode->child(1);  // true branch next va
-        SymbolicExpr::Ptr falseTarget = inode->child(2); // false branch next va
-        SymbolicExpr::Ptr followedCond;                  // condition for the branch that is followed
-        SymbolicExpr::Ptr notFollowedTarget;             // address that wasn't branched to
+    SymbolicExpression::Ptr ip = Emulation::SValue::promote(ops->peekRegister(IP, ops->undefined_(IP.nBits())))->get_expression();
+    SymbolicExpression::InteriorPtr inode = ip->isInteriorNode();
+    if (inode && inode->getOperator() == SymbolicExpression::OP_ITE) {
+        SymbolicExpression::Ptr actualTarget = SymbolicExpression::makeIntegerConstant(IP.nBits(),
+                                                                                       cpu()->concreteInstructionPointer());
+        SymbolicExpression::Ptr trueTarget = inode->child(1);  // true branch next va
+        SymbolicExpression::Ptr falseTarget = inode->child(2); // false branch next va
+        SymbolicExpression::Ptr followedCond;                  // condition for the branch that is followed
+        SymbolicExpression::Ptr notFollowedTarget;             // address that wasn't branched to
         if (!trueTarget->isIntegerConstant()) {
             error <<"expected constant value for true branch target at " <<partitioner().unparse(insn) <<"\n";
         } else if (!falseTarget->isIntegerConstant()) {
@@ -382,14 +387,14 @@ ConcolicExecutor::handleBranch(SgAsmInstruction *insn) {
             followedCond = inode->child(0);             // taking the true branch
             notFollowedTarget = inode->child(2);        // the false target address
         } else if (actualTarget->mustEqual(falseTarget)) {
-            followedCond = SymbolicExpr::makeInvert(inode->child(0)); // taking false branch
+            followedCond = SymbolicExpression::makeInvert(inode->child(0)); // taking false branch
             notFollowedTarget = inode->child(1);        // the true target address
         } else {
             error <<"unrecognized symbolic execution address after " <<partitioner().unparse(insn) <<"\n"
                   <<"  concrete = " <<*actualTarget <<"\n"
                   <<"  symbolic = " <<*ip <<"\n";
         }
-        SymbolicExpr::Ptr otherCond = SymbolicExpr::makeInvert(followedCond); // condition for branch not taken
+        SymbolicExpression::Ptr otherCond = SymbolicExpression::makeInvert(followedCond); // condition for branch not taken
 
         // Solve for branch not taken in terms of input values.
         if (otherCond) {
@@ -407,7 +412,7 @@ ConcolicExecutor::handleBranch(SgAsmInstruction *insn) {
                             } else {
                                 debug <<"  " <<varName <<" (no input event) = ";
                             }
-                            if (SymbolicExpr::Ptr val = solver()->evidenceForName(varName)) {
+                            if (SymbolicExpression::Ptr val = solver()->evidenceForName(varName)) {
                                 debug <<*val <<"\n";
                             } else {
                                 debug <<" = ???\n";
@@ -440,7 +445,7 @@ ConcolicExecutor::run() {
     Sawyer::Message::Stream where(mlog[WHERE]);
     Sawyer::Message::Stream error(mlog[ERROR]);
 
-    Emulation::RiscOperatorsPtr ops = cpu()->emulationOperators();
+    Emulation::RiscOperators::Ptr ops = cpu()->emulationOperators();
     ops->printInputVariables(debug);
     ops->printAssertions(debug);
     if (debug) {
@@ -533,7 +538,7 @@ ConcolicExecutor::run() {
 }
 
 void
-ConcolicExecutor::generateTestCase(const BS::RiscOperatorsPtr &ops_, const SymbolicExpr::Ptr &childIp) {
+ConcolicExecutor::generateTestCase(const BS::RiscOperators::Ptr &ops_, const SymbolicExpression::Ptr &childIp) {
     ASSERT_not_null(ops_);
 
     TestCase::Ptr oldTestCase = testCase();
@@ -549,8 +554,8 @@ ConcolicExecutor::generateTestCase(const BS::RiscOperatorsPtr &ops_, const Symbo
     // During this function, set the RiscOperators state to be that of the child. This will allow us to easily update the child
     // state before saving it, without affecting the parent.
     auto ops = Emulation::RiscOperators::promote(ops_);
-    BS::StatePtr parentState = ops->currentState();
-    BS::StatePtr childState = parentState->clone();
+    BS::State::Ptr parentState = ops->currentState();
+    BS::State::Ptr childState = parentState->clone();
     ops->currentState(childState);
     BOOST_SCOPE_EXIT(ops, parentState) {
         ops->currentState(parentState);
@@ -581,7 +586,7 @@ ConcolicExecutor::generateTestCase(const BS::RiscOperatorsPtr &ops_, const Symbo
     std::vector<std::string> argv = oldTestCase->args();
     for (std::string &arg: argv)
         arg += '\0';
-    SymbolicExpr::Ptr argc = SymbolicExpr::makeIntegerConstant(32, argv.size());
+    SymbolicExpression::Ptr argc = SymbolicExpression::makeIntegerConstant(32, argv.size());
     std::vector<std::string> env;
     for (const EnvValue &pair: oldTestCase->env())
         env.push_back(pair.first + "=" + pair.second);
@@ -592,7 +597,7 @@ ConcolicExecutor::generateTestCase(const BS::RiscOperatorsPtr &ops_, const Symbo
     std::vector<ExecutionEvent::Ptr> modifiedEvents;
     bool hadError = false;
     for (const std::string &solverVar: solver()->evidenceNames()) {
-        SymbolicExpr::Ptr newValue = solver()->evidenceForName(solverVar);
+        SymbolicExpression::Ptr newValue = solver()->evidenceForName(solverVar);
         ASSERT_not_null(newValue);
         ExecutionEvent::Ptr parentEvent = ops->inputVariables()->event(solverVar);
         if (!parentEvent) {
@@ -671,7 +676,7 @@ ConcolicExecutor::generateTestCase(const BS::RiscOperatorsPtr &ops_, const Symbo
 
             case InputType::SYSCALL_RET: {
                 ASSERT_require(childEvent->action() == ExecutionEvent::Action::REGISTER_WRITE);
-                SymbolicExpr::Ptr oldValue = childEvent->value();
+                SymbolicExpression::Ptr oldValue = childEvent->value();
                 if (!newValue->isEquivalentTo(oldValue)) {
                     childEvent->value(newValue);
                     modifiedEvents.push_back(childEvent);
@@ -684,7 +689,7 @@ ConcolicExecutor::generateTestCase(const BS::RiscOperatorsPtr &ops_, const Symbo
 
             case InputType::SHMEM_READ: {
                 ASSERT_require(childEvent->action() == ExecutionEvent::Action::OS_SHARED_MEMORY);
-                SymbolicExpr::Ptr oldValue = childEvent->value();
+                SymbolicExpression::Ptr oldValue = childEvent->value();
                 if (!oldValue) {
                     childEvent->value(newValue);
                     modifiedEvents.push_back(childEvent);
@@ -784,7 +789,7 @@ ConcolicExecutor::generateTestCase(const BS::RiscOperatorsPtr &ops_, const Symbo
 }
 
 void
-ConcolicExecutor::saveSymbolicState(const Emulation::RiscOperatorsPtr &ops, const TestCaseId &dstId) {
+ConcolicExecutor::saveSymbolicState(const Emulation::RiscOperators::Ptr &ops, const TestCaseId &dstId) {
     ASSERT_require(dstId);
 
     database()->saveSymbolicState(dstId, ops->currentState());
@@ -833,7 +838,7 @@ namespace Emulation {
 
 RiscOperators::RiscOperators(const Settings &settings, const DatabasePtr &db, const TestCasePtr &testCase,
                              const Partitioner2::Partitioner &partitioner, const ArchitecturePtr &process,
-                             const InstructionSemantics::BaseSemantics::StatePtr &state, const SmtSolverPtr &solver)
+                             const InstructionSemantics::BaseSemantics::State::Ptr &state, const SmtSolverPtr &solver)
     : Super(state, solver), REG_PATH(state->registerState()->registerDictionary()->findOrThrow("path")),
       settings_(settings), db_(db), testCase_(testCase), partitioner_(partitioner), process_(process),
       hadSystemCall_(false) {
@@ -846,31 +851,31 @@ RiscOperators::RiscOperators(const Settings &settings, const DatabasePtr &db, co
     (void) SValue::promote(state->protoval());
 }
 
-RiscOperatorsPtr
+RiscOperators::Ptr
 RiscOperators::instance(const Settings &settings, const Database::Ptr &db, const TestCase::Ptr &testCase,
                         const P2::Partitioner &partitioner, const Architecture::Ptr &process,
-                        const BS::SValuePtr &protoval, const SmtSolver::Ptr &solver) {
+                        const BS::SValue::Ptr &protoval, const SmtSolver::Ptr &solver) {
     // Extend the register set with an additional Boolean register named "path"
-    RegisterDictionary *regdict = new RegisterDictionary("Rose::BinaryAnalysis::Concolic");
+    RegisterDictionary::Ptr regdict = RegisterDictionary::instance("Rose::BinaryAnalysis::Concolic");
     regdict->insert(partitioner.instructionProvider().registerDictionary());
     const RegisterDescriptor path(partitioner.instructionProvider().registerDictionary()->firstUnusedMajor(), 0, 0, 1);
     regdict->insert("path", path);
 
     // Initialize machine state
-    RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
-    MemoryStatePtr memory = MemoryState::instance(protoval, protoval);
+    RegisterState::Ptr registers = RegisterState::instance(protoval, regdict);
+    MemoryState::Ptr memory = MemoryState::instance(protoval, protoval);
     memory->set_byteOrder(ByteOrder::ORDER_LSB);
     memory->cellCompressor(IS::SymbolicSemantics::MemoryListState::CellCompressorSimple::instance());
-    StatePtr state = State::instance(registers, memory);
-    RiscOperatorsPtr ops(new RiscOperators(settings, db, testCase, partitioner, process, state, solver));
+    State::Ptr state = State::instance(registers, memory);
+    RiscOperators::Ptr ops(new RiscOperators(settings, db, testCase, partitioner, process, state, solver));
     ASSERT_require(ops->REG_PATH == path);
     ops->writeRegister(path, ops->boolean_(true));
     return ops;
 }
 
-RiscOperatorsPtr
-RiscOperators::promote(const BS::RiscOperatorsPtr &x) {
-    RiscOperatorsPtr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
+RiscOperators::Ptr
+RiscOperators::promote(const BS::RiscOperators::Ptr &x) {
+    RiscOperators::Ptr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
     ASSERT_not_null(retval);
     return retval;
 }
@@ -896,7 +901,7 @@ RiscOperators::inputVariables() const {
     return process_->inputVariables();
 }
 
-const RegisterDictionary*
+RegisterDictionary::Ptr
 RiscOperators::registerDictionary() const {
     return partitioner_.instructionProvider().registerDictionary();
 }
@@ -924,21 +929,21 @@ RiscOperators::doExit(uint64_t status) {
     throw Exit(status);
 }
 
-BS::SValuePtr
-RiscOperators::readRegister(RegisterDescriptor reg, const BS::SValuePtr &dfltUnused) {
+BS::SValue::Ptr
+RiscOperators::readRegister(RegisterDescriptor reg, const BS::SValue::Ptr &dfltUnused) {
     // Read the register's value symbolically, and if we don't have a value then read it concretely and use the concrete value
     // to update the symbolic state.
-    SValuePtr dflt = SValue::promote(undefined_(dfltUnused->nBits()));
-    SymbolicExpr::Ptr concrete = SymbolicExpr::makeIntegerConstant(process_->readRegister(reg));
+    SValue::Ptr dflt = SValue::promote(undefined_(dfltUnused->nBits()));
+    SymbolicExpression::Ptr concrete = SymbolicExpression::makeIntegerConstant(process_->readRegister(reg));
     dflt->set_expression(concrete);
     return Super::readRegister(reg, dflt);
 }
 
-BS::SValuePtr
-RiscOperators::peekRegister(RegisterDescriptor reg, const BS::SValuePtr &dfltUnused) {
+BS::SValue::Ptr
+RiscOperators::peekRegister(RegisterDescriptor reg, const BS::SValue::Ptr &dfltUnused) {
     // Return the register's symbolic value if it exists, else the concrete value.
-    SValuePtr dflt = SValue::promote(undefined_(dfltUnused->nBits()));
-    SymbolicExpr::Ptr concrete = SymbolicExpr::makeIntegerConstant(process_->readRegister(reg));
+    SValue::Ptr dflt = SValue::promote(undefined_(dfltUnused->nBits()));
+    SymbolicExpression::Ptr concrete = SymbolicExpression::makeIntegerConstant(process_->readRegister(reg));
     dflt->set_expression(concrete);
     return Super::peekRegister(reg, dflt);
 }
@@ -956,11 +961,11 @@ RiscOperators::writeRegister(RegisterDescriptor reg, const BS::SValue::Ptr &valu
         // In cany case, since we can't directly adjust the byte read from concrete memory (not even by pre-writing to that
         // address since it might be read-only or it might not follow normal memory semantics), we do the next best thing: we
         // adjust all the side effects of the instruction that read the byte from memory.
-        SymbolicExpr::Ptr valueExpr = Emulation::SValue::promote(value)->get_expression();
+        SymbolicExpression::Ptr valueExpr = Emulation::SValue::promote(value)->get_expression();
         SAWYER_MESG(debug) <<"  register update for shared memory read: value = " <<*valueExpr <<"\n";
         auto event = ExecutionEvent::registerWrite(process()->testCase(), process()->nextEventLocation(When::POST),
-                                                   currentInstruction()->get_address(), reg, SymbolicExpr::Ptr(),
-                                                   SymbolicExpr::Ptr(), valueExpr);
+                                                   currentInstruction()->get_address(), reg, SymbolicExpression::Ptr(),
+                                                   SymbolicExpression::Ptr(), valueExpr);
         event->name(hadSharedMemoryAccess()->name() + "_toreg");
         database()->save(event);
         SAWYER_MESG(debug) <<"    created " <<event->printableName(database()) <<"\n";
@@ -968,9 +973,9 @@ RiscOperators::writeRegister(RegisterDescriptor reg, const BS::SValue::Ptr &valu
     Super::writeRegister(reg, value);
 }
 
-BS::SValuePtr
-RiscOperators::readMemory(RegisterDescriptor segreg, const BS::SValuePtr &addr,
-                          const BS::SValuePtr &dfltUnused, const BS::SValuePtr &cond) {
+BS::SValue::Ptr
+RiscOperators::readMemory(RegisterDescriptor segreg, const BS::SValue::Ptr &addr,
+                          const BS::SValue::Ptr &dfltUnused, const BS::SValue::Ptr &cond) {
     if (isRecursive()) {
         // Don't do anything special because we're being called from inside a user callback.
         return Super::readMemory(segreg, addr, dfltUnused, cond);
@@ -979,8 +984,8 @@ RiscOperators::readMemory(RegisterDescriptor segreg, const BS::SValuePtr &addr,
         // Read the memory's value symbolically, and if we don't have a value then read it concretely and use the concrete value to
         // update the symbolic state. However, we can only read it concretely if the address is a constant.
         size_t nBytes = dfltUnused->nBits() / 8;
-        SymbolicExpr::Ptr concrete = SymbolicExpr::makeIntegerConstant(dfltUnused->nBits(),
-                                                                       process_->readMemoryUnsigned(*va, nBytes));
+        SymbolicExpression::Ptr concrete = SymbolicExpression::makeIntegerConstant(dfltUnused->nBits(),
+                                                                                   process_->readMemoryUnsigned(*va, nBytes));
 
         // Handle shared memory by invoking user-defined callbacks
         SharedMemoryCallbacks callbacks = process()->sharedMemory().getOrDefault(*va);
@@ -994,7 +999,7 @@ RiscOperators::readMemory(RegisterDescriptor segreg, const BS::SValuePtr &addr,
             auto x = process()->sharedMemoryAccess(callbacks, partitioner(), RiscOperators::promote(shared_from_this()),
                                                    *va, nBytes);
             ExecutionEvent::Ptr sharedMemoryEvent = x.first;
-            SymbolicExpr::Ptr result = x.second;
+            SymbolicExpression::Ptr result = x.second;
 
             if (result) {
                 hadSharedMemoryAccess(sharedMemoryEvent);
@@ -1002,7 +1007,7 @@ RiscOperators::readMemory(RegisterDescriptor segreg, const BS::SValuePtr &addr,
             }
         }
 
-        SValuePtr dflt = SValue::promote(undefined_(dfltUnused->nBits()));
+        SValue::Ptr dflt = SValue::promote(undefined_(dfltUnused->nBits()));
         dflt->set_expression(concrete);
         return Super::readMemory(segreg, addr, dflt, cond);
 
@@ -1012,16 +1017,16 @@ RiscOperators::readMemory(RegisterDescriptor segreg, const BS::SValuePtr &addr,
     }
 }
 
-BS::SValuePtr
-RiscOperators::peekMemory(RegisterDescriptor segreg, const BS::SValuePtr &addr,
-                          const BS::SValuePtr &dfltUnused) {
+BS::SValue::Ptr
+RiscOperators::peekMemory(RegisterDescriptor segreg, const BS::SValue::Ptr &addr,
+                          const BS::SValue::Ptr &dfltUnused) {
     // Read the memory's symbolic value if it exists, else read the concrete value. We can't read concretely if the address is
     // symbolic.
     if (auto va = addr->toUnsigned()) {
         size_t nBytes = dfltUnused->nBits() / 8;
-        SymbolicExpr::Ptr concrete = SymbolicExpr::makeIntegerConstant(dfltUnused->nBits(),
-                                                                       process_->readMemoryUnsigned(*va, nBytes));
-        SValuePtr dflt = SValue::promote(undefined_(dfltUnused->nBits()));
+        SymbolicExpression::Ptr concrete = SymbolicExpression::makeIntegerConstant(dfltUnused->nBits(),
+                                                                                   process_->readMemoryUnsigned(*va, nBytes));
+        SValue::Ptr dflt = SValue::promote(undefined_(dfltUnused->nBits()));
         dflt->set_expression(concrete);
         return Super::peekMemory(segreg, addr, dflt);
     } else {
@@ -1048,7 +1053,7 @@ RiscOperators::printInputVariables(std::ostream &out) const {
 void
 RiscOperators::printAssertions(std::ostream &out) const {
     out <<"SMT solver assertions:\n";
-    for (SymbolicExpr::Ptr assertion: solver()->assertions())
+    for (SymbolicExpression::Ptr assertion: solver()->assertions())
         out <<"  " <<*assertion <<"\n";
 }
 
@@ -1058,14 +1063,14 @@ RiscOperators::printAssertions(std::ostream &out) const {
 
 
 // class method
-RiscOperatorsPtr
-Dispatcher::unwrapEmulationOperators(const BS::RiscOperatorsPtr &ops) {
-    if (IS::TraceSemantics::RiscOperatorsPtr trace = boost::dynamic_pointer_cast<IS::TraceSemantics::RiscOperators>(ops))
+RiscOperators::Ptr
+Dispatcher::unwrapEmulationOperators(const BS::RiscOperators::Ptr &ops) {
+    if (IS::TraceSemantics::RiscOperators::Ptr trace = boost::dynamic_pointer_cast<IS::TraceSemantics::RiscOperators>(ops))
         return RiscOperators::promote(trace->subdomain());
     return RiscOperators::promote(ops);
 }
 
-RiscOperatorsPtr
+RiscOperators::Ptr
 Dispatcher::emulationOperators() const {
     return unwrapEmulationOperators(operators());
 }
@@ -1091,7 +1096,7 @@ Dispatcher::processInstruction(SgAsmInstruction *insn) {
     } BOOST_SCOPE_EXIT_END;
 
     // Symbolic execution happens before the concrete execution (code above), but may throw an exception.
-    Emulation::RiscOperatorsPtr ops = emulationOperators();
+    Emulation::RiscOperators::Ptr ops = emulationOperators();
     SAWYER_MESG_OR(mlog[TRACE], mlog[DEBUG]) <<"executing insn #" <<ops->process()->currentLocation().primary()
                                              <<" " <<ops->partitioner().unparse(insn) <<"\n";
     Super::processInstruction(insn);

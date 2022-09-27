@@ -12,13 +12,13 @@ namespace TaintSemantics {
 //                                      SValue
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Sawyer::Optional<BaseSemantics::SValuePtr>
-SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, const BaseSemantics::MergerPtr &merger_,
+Sawyer::Optional<BaseSemantics::SValue::Ptr>
+SValue::createOptionalMerge(const BaseSemantics::SValue::Ptr &other_, const BaseSemantics::Merger::Ptr &merger_,
                             const SmtSolverPtr &solver) const {
 
     auto retval = Super::createOptionalMerge(other_, merger_, solver);
 
-    SValuePtr other = promote(other_);
+    SValue::Ptr other = promote(other_);
     const Taintedness taintedness = mergeTaintedness(this->taintedness(), other->taintedness());
 
     if (this->taintedness() != taintedness) {
@@ -119,6 +119,66 @@ SValue::mergeTaintedness(Taintedness a, Taintedness b) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      RISC operators
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+RiscOperators::RiscOperators() {}
+
+RiscOperators::RiscOperators(const BaseSemantics::SValue::Ptr &protoval, const SmtSolver::Ptr &solver)
+    : Super(protoval, solver) {
+    name("Taint");
+    ASSERT_always_not_null(protoval);
+    ASSERT_always_not_null2(protoval.dynamicCast<SValue>(),
+                            "TaintSemantics supports only TaintSemantics::SValue types or derivatives thereof");
+}
+
+RiscOperators::RiscOperators(const BaseSemantics::State::Ptr &state, const SmtSolver::Ptr &solver)
+    : Super(state, solver) {
+    name("Taint");
+    ASSERT_always_not_null(state);
+    ASSERT_always_not_null(state->registerState());
+    ASSERT_always_not_null2(boost::dynamic_pointer_cast<RegisterState>(state->registerState()),
+                            "TaintSemantics supports only RegisterStateGeneric or derivatives thereof");
+    ASSERT_always_not_null(state->protoval());
+    ASSERT_always_not_null2(state->protoval().dynamicCast<SValue>(),
+                            "TaintSemantics supports only TaintSemantics::SValue types or derivatives thereof");
+}
+
+RiscOperators::~RiscOperators() {}
+
+RiscOperators::Ptr
+RiscOperators::instanceFromRegisters(const RegisterDictionary::Ptr &regdict, const SmtSolver::Ptr &solver) {
+    BaseSemantics::SValue::Ptr protoval = SValue::instance();
+    BaseSemantics::RegisterState::Ptr registers = RegisterState::instance(protoval, regdict);
+    BaseSemantics::MemoryState::Ptr memory = MemoryListState::instance(protoval, protoval);
+    BaseSemantics::State::Ptr state = State::instance(registers, memory);
+    return Ptr(new RiscOperators(state, solver));
+}
+
+RiscOperators::Ptr
+RiscOperators::instanceFromProtoval(const BaseSemantics::SValue::Ptr &protoval, const SmtSolver::Ptr &solver) {
+    return Ptr(new RiscOperators(protoval, solver));
+}
+
+RiscOperators::Ptr
+RiscOperators::instanceFromState(const BaseSemantics::State::Ptr &state, const SmtSolver::Ptr &solver) {
+    return Ptr(new RiscOperators(state, solver));
+}
+
+BaseSemantics::RiscOperators::Ptr
+RiscOperators::create(const BaseSemantics::SValue::Ptr &protoval, const SmtSolver::Ptr &solver) const {
+    return instanceFromProtoval(protoval, solver);
+}
+
+BaseSemantics::RiscOperators::Ptr
+RiscOperators::create(const BaseSemantics::State::Ptr &state, const SmtSolver::Ptr &solver) const {
+    return instanceFromState(state, solver);
+}
+
+RiscOperators::Ptr
+RiscOperators::promote(const BaseSemantics::RiscOperators::Ptr &x) {
+    Ptr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
+    ASSERT_not_null(retval);
+    return retval;
+}
 
 Taintedness
 RiscOperators::mergeTaintedness(const BaseSemantics::SValue::Ptr &a_, const BaseSemantics::SValue::Ptr &b_) {
@@ -274,7 +334,7 @@ RiscOperators::shiftRight(const BaseSemantics::SValue::Ptr &a, const BaseSemanti
 }
 
 BaseSemantics::SValue::Ptr
-RiscOperators::shiftRightArithmetic(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValuePtr &sa) {
+RiscOperators::shiftRightArithmetic(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &sa) {
     SValue::Ptr retval = SValue::promote(Super::shiftRightArithmetic(a, sa));
     retval->taintedness(mergeTaintedness(a, sa));
     return retval;

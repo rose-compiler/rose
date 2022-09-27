@@ -3,6 +3,7 @@
 #include "sage3basic.h"
 #include <Rose/BinaryAnalysis/InstructionSemantics/IntervalSemantics.h>
 
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <boost/lexical_cast.hpp>
 #include <Sawyer/BitVector.h>
 
@@ -18,12 +19,12 @@ static const size_t maxComplexity = 50;                 // arbitrary max interva
  *                                      Semantic value
  *******************************************************************************************************************************/
 
-Sawyer::Optional<BaseSemantics::SValuePtr>
-SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, const BaseSemantics::MergerPtr&,
+Sawyer::Optional<BaseSemantics::SValue::Ptr>
+SValue::createOptionalMerge(const BaseSemantics::SValue::Ptr &other_, const BaseSemantics::Merger::Ptr&,
                             const SmtSolverPtr&) const {
-    SValuePtr other = SValue::promote(other_);
+    SValue::Ptr other = SValue::promote(other_);
     ASSERT_require(nBits() == other->nBits());
-    BaseSemantics::SValuePtr retval;
+    BaseSemantics::SValue::Ptr retval;
 
     if (isBottom())
         return Sawyer::Nothing();                       // no change
@@ -47,7 +48,7 @@ SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, const BaseSe
 }
 
 // class method
-SValuePtr
+SValue::Ptr
 SValue::instance_from_bits(size_t nbits, uint64_t possible_bits)
 {
     Intervals retval;
@@ -89,9 +90,9 @@ SValue::instance_from_bits(size_t nbits, uint64_t possible_bits)
 }
 
 bool
-SValue::may_equal(const BaseSemantics::SValuePtr &other_, const SmtSolverPtr &solver) const
+SValue::may_equal(const BaseSemantics::SValue::Ptr &other_, const SmtSolverPtr &solver) const
 {
-    SValuePtr other = SValue::promote(other_);
+    SValue::Ptr other = SValue::promote(other_);
     if (nBits() != other->nBits())
         return false;
     if (isBottom() || other->isBottom())
@@ -102,9 +103,9 @@ SValue::may_equal(const BaseSemantics::SValuePtr &other_, const SmtSolverPtr &so
 }
 
 bool
-SValue::must_equal(const BaseSemantics::SValuePtr &other_, const SmtSolverPtr &solver) const
+SValue::must_equal(const BaseSemantics::SValue::Ptr &other_, const SmtSolverPtr &solver) const
 {
-    SValuePtr other = SValue::promote(other_);
+    SValue::Ptr other = SValue::promote(other_);
     if (nBits() != other->nBits())
         return false;
     if (isBottom() || other->isBottom())
@@ -166,9 +167,9 @@ SValue::print(std::ostream &output, BaseSemantics::Formatter&) const {
         for (const Interval &interval: intervals_.intervals()) {
             if (interval.least() != intervals_.hull().least())
                 output <<", ";
-            output <<toString(interval.least(), nBits());
+            output <<IntervalSemantics::toString(interval.least(), nBits());
             if (!interval.isSingleton())
-                output <<".." <<toString(interval.greatest(), nBits());
+                output <<".." <<IntervalSemantics::toString(interval.greatest(), nBits());
         }
         output <<"}";
     }
@@ -179,26 +180,26 @@ SValue::print(std::ostream &output, BaseSemantics::Formatter&) const {
  *                                      Memory state
  *******************************************************************************************************************************/
 
-BaseSemantics::SValuePtr
-MemoryState::readMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &dflt,
+BaseSemantics::SValue::Ptr
+MemoryState::readMemory(const BaseSemantics::SValue::Ptr &addr, const BaseSemantics::SValue::Ptr &dflt,
                         BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps)
 {
     ASSERT_not_implemented("[Robb Matzke 2013-03-14]");
-    BaseSemantics::SValuePtr retval;
+    BaseSemantics::SValue::Ptr retval;
     return retval;
 }
 
-BaseSemantics::SValuePtr
-MemoryState::peekMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &dflt,
+BaseSemantics::SValue::Ptr
+MemoryState::peekMemory(const BaseSemantics::SValue::Ptr &addr, const BaseSemantics::SValue::Ptr &dflt,
                         BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps)
 {
     ASSERT_not_implemented("[Robb Matzke 2018-01-17]");
-    BaseSemantics::SValuePtr retval;
+    BaseSemantics::SValue::Ptr retval;
     return retval;
 }
 
 void
-MemoryState::writeMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &value,
+MemoryState::writeMemory(const BaseSemantics::SValue::Ptr &addr, const BaseSemantics::SValue::Ptr &value,
                          BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps)
 {
     ASSERT_not_implemented("[Robb Matzke 2013-03-14]");
@@ -208,11 +209,59 @@ MemoryState::writeMemory(const BaseSemantics::SValuePtr &addr, const BaseSemanti
  *                                      RISC operators
  *******************************************************************************************************************************/
 
-BaseSemantics::SValuePtr
-RiscOperators::and_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &b_)
+RiscOperators::RiscOperators(const BaseSemantics::SValue::Ptr &protoval, const SmtSolverPtr &solver)
+    : BaseSemantics::RiscOperators(protoval, solver) {
+    name("Interval");
+    (void) SValue::promote(protoval); // make sure its dynamic type is an IntervalSemantics::SValue or subclass thereof
+}
+
+RiscOperators::RiscOperators(const BaseSemantics::State::Ptr &state, const SmtSolver::Ptr &solver)
+    : BaseSemantics::RiscOperators(state, solver) {
+    name("Interval");
+    (void) SValue::promote(state->protoval());      // dynamic type must be IntervalSemantics::SValue or subclass thereof
+}
+
+RiscOperators::Ptr
+RiscOperators::instanceFromRegisters(const RegisterDictionary::Ptr &regdict, const SmtSolver::Ptr &solver) {
+    BaseSemantics::SValue::Ptr protoval = SValue::instance();
+    BaseSemantics::RegisterState::Ptr registers = RegisterState::instance(protoval, regdict);
+    BaseSemantics::MemoryState::Ptr memory = MemoryState::instance(protoval, protoval);
+    BaseSemantics::State::Ptr state = State::instance(registers, memory);
+    return Ptr(new RiscOperators(state, solver));
+}
+
+RiscOperators::Ptr
+RiscOperators::instanceFromProtoval(const BaseSemantics::SValue::Ptr &protoval, const SmtSolver::Ptr &solver) {
+    return Ptr(new RiscOperators(protoval, solver));
+}
+
+RiscOperators::Ptr
+RiscOperators::instanceFromState(const BaseSemantics::State::Ptr &state, const SmtSolver::Ptr &solver) {
+    return Ptr(new RiscOperators(state, solver));
+}
+
+BaseSemantics::RiscOperators::Ptr
+RiscOperators::create(const BaseSemantics::SValue::Ptr &protoval, const SmtSolver::Ptr &solver) const {
+    return instanceFromProtoval(protoval, solver);
+}
+
+BaseSemantics::RiscOperators::Ptr
+RiscOperators::create(const BaseSemantics::State::Ptr &state, const SmtSolver::Ptr &solver) const {
+    return instanceFromState(state, solver);
+}
+
+RiscOperators::Ptr
+RiscOperators::promote(const BaseSemantics::RiscOperators::Ptr &x) {
+    Ptr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
+    ASSERT_not_null(retval);
+    return retval;
+}
+
+BaseSemantics::SValue::Ptr
+RiscOperators::and_(const BaseSemantics::SValue::Ptr &a_, const BaseSemantics::SValue::Ptr &b_)
 {
-    SValuePtr a = SValue::promote(a_);
-    SValuePtr b = SValue::promote(b_);
+    SValue::Ptr a = SValue::promote(a_);
+    SValue::Ptr b = SValue::promote(b_);
     ASSERT_require(a->nBits()==b->nBits());
     if (a->isBottom() || b->isBottom())
         return bottom_(a->nBits());
@@ -226,11 +275,11 @@ RiscOperators::and_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVa
     return number_(a->nBits(), r);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::or_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &b_)
+BaseSemantics::SValue::Ptr
+RiscOperators::or_(const BaseSemantics::SValue::Ptr &a_, const BaseSemantics::SValue::Ptr &b_)
 {
-    SValuePtr a = SValue::promote(a_);
-    SValuePtr b = SValue::promote(b_);
+    SValue::Ptr a = SValue::promote(a_);
+    SValue::Ptr b = SValue::promote(b_);
     ASSERT_require(a->nBits()==b->nBits());
     if (a->isBottom() || b->isBottom())
         return bottom_(a->nBits());
@@ -245,11 +294,11 @@ RiscOperators::or_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVal
     return svalue_from_bits(a->nBits(), rbits);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::xor_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &b_)
+BaseSemantics::SValue::Ptr
+RiscOperators::xor_(const BaseSemantics::SValue::Ptr &a_, const BaseSemantics::SValue::Ptr &b_)
 {
-    SValuePtr a = SValue::promote(a_);
-    SValuePtr b = SValue::promote(b_);
+    SValue::Ptr a = SValue::promote(a_);
+    SValue::Ptr b = SValue::promote(b_);
     ASSERT_require(a->nBits()==b->nBits());
     if (a->isBottom() || b->isBottom())
         return bottom_(a->nBits());
@@ -262,10 +311,10 @@ RiscOperators::xor_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVa
     return svalue_from_bits(a->nBits(), rbits);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::invert(const BaseSemantics::SValuePtr &a_)
+BaseSemantics::SValue::Ptr
+RiscOperators::invert(const BaseSemantics::SValue::Ptr &a_)
 {
-    SValuePtr a = SValue::promote(a_);
+    SValue::Ptr a = SValue::promote(a_);
     if (a->isBottom())
         return bottom_(a->nBits());
     Intervals result;
@@ -278,11 +327,11 @@ RiscOperators::invert(const BaseSemantics::SValuePtr &a_)
     return svalue_from_intervals(a->nBits(), result);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::extract(const BaseSemantics::SValuePtr &a_, size_t begin_bit, size_t end_bit)
+BaseSemantics::SValue::Ptr
+RiscOperators::extract(const BaseSemantics::SValue::Ptr &a_, size_t begin_bit, size_t end_bit)
 {
     using namespace IntegerOps;
-    SValuePtr a = SValue::promote(a_);
+    SValue::Ptr a = SValue::promote(a_);
     ASSERT_require(end_bit<=a->nBits());
     ASSERT_require(begin_bit<end_bit);
     if (a->isBottom())
@@ -310,11 +359,11 @@ RiscOperators::extract(const BaseSemantics::SValuePtr &a_, size_t begin_bit, siz
     return svalue_from_intervals(end_bit-begin_bit, result);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::concat(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &b_)
+BaseSemantics::SValue::Ptr
+RiscOperators::concat(const BaseSemantics::SValue::Ptr &a_, const BaseSemantics::SValue::Ptr &b_)
 {
-    SValuePtr a = SValue::promote(a_);
-    SValuePtr b = SValue::promote(b_);
+    SValue::Ptr a = SValue::promote(a_);
+    SValue::Ptr b = SValue::promote(b_);
     size_t retsize = a->nBits() + b->nBits();
     if (a->isBottom() || b->isBottom())
         return bottom_(a->nBits() + b->nBits());
@@ -333,10 +382,10 @@ RiscOperators::concat(const BaseSemantics::SValuePtr &a_, const BaseSemantics::S
     return svalue_from_intervals(retsize, result);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::leastSignificantSetBit(const BaseSemantics::SValuePtr &a_)
+BaseSemantics::SValue::Ptr
+RiscOperators::leastSignificantSetBit(const BaseSemantics::SValue::Ptr &a_)
 {
-    SValuePtr a = SValue::promote(a_);
+    SValue::Ptr a = SValue::promote(a_);
     size_t nbits = a->nBits();
     if (a->isBottom())
         return bottom_(nbits);
@@ -365,10 +414,10 @@ RiscOperators::leastSignificantSetBit(const BaseSemantics::SValuePtr &a_)
     return svalue_from_intervals(nbits, result);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::mostSignificantSetBit(const BaseSemantics::SValuePtr &a_)
+BaseSemantics::SValue::Ptr
+RiscOperators::mostSignificantSetBit(const BaseSemantics::SValue::Ptr &a_)
 {
-    SValuePtr a = SValue::promote(a_);
+    SValue::Ptr a = SValue::promote(a_);
     size_t nbits = a->nBits();
     if (a->isBottom())
         return bottom_(nbits);
@@ -397,11 +446,11 @@ RiscOperators::mostSignificantSetBit(const BaseSemantics::SValuePtr &a_)
     return svalue_from_intervals(nbits, result);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::rotateLeft(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &b_)
+BaseSemantics::SValue::Ptr
+RiscOperators::rotateLeft(const BaseSemantics::SValue::Ptr &a_, const BaseSemantics::SValue::Ptr &b_)
 {
-    SValuePtr a = SValue::promote(a_);
-    SValuePtr b = SValue::promote(b_);
+    SValue::Ptr a = SValue::promote(a_);
+    SValue::Ptr b = SValue::promote(b_);
     size_t nbitsa = a->nBits();
     if (a->isBottom() || b->isBottom())
         return bottom_(nbitsa);
@@ -423,11 +472,11 @@ RiscOperators::rotateLeft(const BaseSemantics::SValuePtr &a_, const BaseSemantic
     return svalue_from_bits(nbitsa, rbits);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::rotateRight(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &b_)
+BaseSemantics::SValue::Ptr
+RiscOperators::rotateRight(const BaseSemantics::SValue::Ptr &a_, const BaseSemantics::SValue::Ptr &b_)
 {
-    SValuePtr a = SValue::promote(a_);
-    SValuePtr b = SValue::promote(b_);
+    SValue::Ptr a = SValue::promote(a_);
+    SValue::Ptr b = SValue::promote(b_);
     size_t nbitsa = a->nBits();
     if (a->isBottom() || b->isBottom())
         return bottom_(nbitsa);
@@ -450,11 +499,11 @@ RiscOperators::rotateRight(const BaseSemantics::SValuePtr &a_, const BaseSemanti
 
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::shiftLeft(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &b_)
+BaseSemantics::SValue::Ptr
+RiscOperators::shiftLeft(const BaseSemantics::SValue::Ptr &a_, const BaseSemantics::SValue::Ptr &b_)
 {
-    SValuePtr a = SValue::promote(a_);
-    SValuePtr b = SValue::promote(b_);
+    SValue::Ptr a = SValue::promote(a_);
+    SValue::Ptr b = SValue::promote(b_);
     size_t nbitsa = a->nBits();
     if (a->isBottom() || b->isBottom())
         return bottom_(nbitsa);
@@ -473,11 +522,11 @@ RiscOperators::shiftLeft(const BaseSemantics::SValuePtr &a_, const BaseSemantics
     return svalue_from_bits(nbitsa, rbits);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::shiftRight(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &b_)
+BaseSemantics::SValue::Ptr
+RiscOperators::shiftRight(const BaseSemantics::SValue::Ptr &a_, const BaseSemantics::SValue::Ptr &b_)
 {
-    SValuePtr a = SValue::promote(a_);
-    SValuePtr b = SValue::promote(b_);
+    SValue::Ptr a = SValue::promote(a_);
+    SValue::Ptr b = SValue::promote(b_);
     size_t nbitsa = a->nBits();
     if (a->isBottom() || b->isBottom())
         return bottom_(nbitsa);
@@ -507,11 +556,11 @@ RiscOperators::shiftRight(const BaseSemantics::SValuePtr &a_, const BaseSemantic
     return svalue_from_intervals(nbitsa, result);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::shiftRightArithmetic(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &b_)
+BaseSemantics::SValue::Ptr
+RiscOperators::shiftRightArithmetic(const BaseSemantics::SValue::Ptr &a_, const BaseSemantics::SValue::Ptr &b_)
 {
-    SValuePtr a = SValue::promote(a_);
-    SValuePtr b = SValue::promote(b_);
+    SValue::Ptr a = SValue::promote(a_);
+    SValue::Ptr b = SValue::promote(b_);
     size_t nbitsa = a->nBits();
     if (a->isBottom() || b->isBottom())
         return bottom_(nbitsa);
@@ -535,10 +584,10 @@ RiscOperators::shiftRightArithmetic(const BaseSemantics::SValuePtr &a_, const Ba
     return svalue_from_bits(nbitsa, rbits);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::equalToZero(const BaseSemantics::SValuePtr &a_)
+BaseSemantics::SValue::Ptr
+RiscOperators::equalToZero(const BaseSemantics::SValue::Ptr &a_)
 {
-    SValuePtr a = SValue::promote(a_);
+    SValue::Ptr a = SValue::promote(a_);
     if (a->isBottom())
         return bottom_(1);
     if (auto aNum = a->toUnsigned())
@@ -548,13 +597,13 @@ RiscOperators::equalToZero(const BaseSemantics::SValuePtr &a_)
     return undefined_(1);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::iteWithStatus(const BaseSemantics::SValuePtr &cond_, const BaseSemantics::SValuePtr &a_,
-                             const BaseSemantics::SValuePtr &b_, IteStatus &status) {
-    SValuePtr cond = SValue::promote(cond_);
+BaseSemantics::SValue::Ptr
+RiscOperators::iteWithStatus(const BaseSemantics::SValue::Ptr &cond_, const BaseSemantics::SValue::Ptr &a_,
+                             const BaseSemantics::SValue::Ptr &b_, IteStatus &status) {
+    SValue::Ptr cond = SValue::promote(cond_);
     ASSERT_require(1 == cond_->nBits());
-    SValuePtr a = SValue::promote(a_);
-    SValuePtr b = SValue::promote(b_);
+    SValue::Ptr a = SValue::promote(a_);
+    SValue::Ptr b = SValue::promote(b_);
     ASSERT_require(a->nBits() == b->nBits());
     if (cond->isBottom()) {
         if (a->mustEqual(b)) {
@@ -580,10 +629,10 @@ RiscOperators::iteWithStatus(const BaseSemantics::SValuePtr &cond_, const BaseSe
     return svalue_from_intervals(a->nBits(), result);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::unsignedExtend(const BaseSemantics::SValuePtr &a_, size_t new_width)
+BaseSemantics::SValue::Ptr
+RiscOperators::unsignedExtend(const BaseSemantics::SValue::Ptr &a_, size_t new_width)
 {
-    SValuePtr a = SValue::promote(a_);
+    SValue::Ptr a = SValue::promote(a_);
 
     if (a->nBits() == new_width)
         return a->copy();
@@ -602,10 +651,10 @@ RiscOperators::unsignedExtend(const BaseSemantics::SValuePtr &a_, size_t new_wid
     return svalue_from_intervals(new_width, a->get_intervals());
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::signExtend(const BaseSemantics::SValuePtr &a_, size_t new_width)
+BaseSemantics::SValue::Ptr
+RiscOperators::signExtend(const BaseSemantics::SValue::Ptr &a_, size_t new_width)
 {
-    SValuePtr a = SValue::promote(a_);
+    SValue::Ptr a = SValue::promote(a_);
     if (a->nBits() == new_width)
         return a->copy();
     if (a->isBottom())
@@ -627,11 +676,11 @@ RiscOperators::signExtend(const BaseSemantics::SValuePtr &a_, size_t new_width)
     return svalue_from_intervals(new_width, result);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::add(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &b_)
+BaseSemantics::SValue::Ptr
+RiscOperators::add(const BaseSemantics::SValue::Ptr &a_, const BaseSemantics::SValue::Ptr &b_)
 {
-    SValuePtr a = SValue::promote(a_);
-    SValuePtr b = SValue::promote(b_);
+    SValue::Ptr a = SValue::promote(a_);
+    SValue::Ptr b = SValue::promote(b_);
     ASSERT_require(a->nBits()==b->nBits());
     size_t nbits = a->nBits();
     if (a->isBottom() || b->isBottom())
@@ -659,21 +708,21 @@ RiscOperators::add(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVal
     return svalue_from_intervals(nbits, result);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::addWithCarries(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &b_,
-                              const BaseSemantics::SValuePtr &c_, BaseSemantics::SValuePtr &carry_out/*out*/)
+BaseSemantics::SValue::Ptr
+RiscOperators::addWithCarries(const BaseSemantics::SValue::Ptr &a_, const BaseSemantics::SValue::Ptr &b_,
+                              const BaseSemantics::SValue::Ptr &c_, BaseSemantics::SValue::Ptr &carry_out/*out*/)
 {
-    SValuePtr a = SValue::promote(a_);
-    SValuePtr b = SValue::promote(b_);
+    SValue::Ptr a = SValue::promote(a_);
+    SValue::Ptr b = SValue::promote(b_);
     ASSERT_require(a->nBits()==b->nBits());
     size_t nbits = a->nBits();
-    SValuePtr c = SValue::promote(c_);
+    SValue::Ptr c = SValue::promote(c_);
     ASSERT_require(c->nBits()==1);
     if (a->isBottom() || b->isBottom() || c->isBottom())
         return bottom_(nbits);
 
-    SValuePtr wide_carry = SValue::promote(unsignedExtend(c, nbits));
-    SValuePtr retval = SValue::promote(add(add(a, b), wide_carry));
+    SValue::Ptr wide_carry = SValue::promote(unsignedExtend(c, nbits));
+    SValue::Ptr retval = SValue::promote(add(add(a, b), wide_carry));
 
     uint64_t known1 = a->toUnsigned().orElse(0);
     uint64_t known2 = b->toUnsigned().orElse(0);
@@ -703,10 +752,10 @@ RiscOperators::addWithCarries(const BaseSemantics::SValuePtr &a_, const BaseSema
     return retval;
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::negate(const BaseSemantics::SValuePtr &a_)
+BaseSemantics::SValue::Ptr
+RiscOperators::negate(const BaseSemantics::SValue::Ptr &a_)
 {
-    SValuePtr a = SValue::promote(a_);
+    SValue::Ptr a = SValue::promote(a_);
     size_t nbits = a->nBits();
     if (a->isBottom())
         return bottom_(nbits);
@@ -730,11 +779,11 @@ RiscOperators::negate(const BaseSemantics::SValuePtr &a_)
     return svalue_from_intervals(nbits, result);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::signedDivide(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &b_)
+BaseSemantics::SValue::Ptr
+RiscOperators::signedDivide(const BaseSemantics::SValue::Ptr &a_, const BaseSemantics::SValue::Ptr &b_)
 {
-    SValuePtr a = SValue::promote(a_);
-    SValuePtr b = SValue::promote(b_);
+    SValue::Ptr a = SValue::promote(a_);
+    SValue::Ptr b = SValue::promote(b_);
     size_t nbitsa = a->nBits();
     size_t nbitsb = b->nBits();
     if (a->isBottom() || b->isBottom())
@@ -744,11 +793,11 @@ RiscOperators::signedDivide(const BaseSemantics::SValuePtr &a_, const BaseSemant
     return undefined_(nbitsa); // FIXME, we can do better
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::signedModulo(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &b_)
+BaseSemantics::SValue::Ptr
+RiscOperators::signedModulo(const BaseSemantics::SValue::Ptr &a_, const BaseSemantics::SValue::Ptr &b_)
 {
-    SValuePtr a = SValue::promote(a_);
-    SValuePtr b = SValue::promote(b_);
+    SValue::Ptr a = SValue::promote(a_);
+    SValue::Ptr b = SValue::promote(b_);
     size_t nbitsa = a->nBits();
     size_t nbitsb = b->nBits();
     if (a->isBottom() || b->isBottom())
@@ -758,11 +807,11 @@ RiscOperators::signedModulo(const BaseSemantics::SValuePtr &a_, const BaseSemant
     return undefined_(nbitsb); // FIXME, we can do better
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::signedMultiply(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &b_)
+BaseSemantics::SValue::Ptr
+RiscOperators::signedMultiply(const BaseSemantics::SValue::Ptr &a_, const BaseSemantics::SValue::Ptr &b_)
 {
-    SValuePtr a = SValue::promote(a_);
-    SValuePtr b = SValue::promote(b_);
+    SValue::Ptr a = SValue::promote(a_);
+    SValue::Ptr b = SValue::promote(b_);
     size_t nbitsa = a->nBits();
     size_t nbitsb = b->nBits();
     if (a->isBottom() || b->isBottom())
@@ -772,11 +821,11 @@ RiscOperators::signedMultiply(const BaseSemantics::SValuePtr &a_, const BaseSema
     return undefined_(nbitsa+nbitsb); // FIXME, we can do better
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::unsignedDivide(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &b_)
+BaseSemantics::SValue::Ptr
+RiscOperators::unsignedDivide(const BaseSemantics::SValue::Ptr &a_, const BaseSemantics::SValue::Ptr &b_)
 {
-    SValuePtr a = SValue::promote(a_);
-    SValuePtr b = SValue::promote(b_);
+    SValue::Ptr a = SValue::promote(a_);
+    SValue::Ptr b = SValue::promote(b_);
     size_t nbitsa = a->nBits();
     if (a->isBottom() || b->isBottom())
         return bottom_(nbitsa);
@@ -794,11 +843,11 @@ RiscOperators::unsignedDivide(const BaseSemantics::SValuePtr &a_, const BaseSema
     return svalue_from_intervals(nbitsa, result);
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::unsignedModulo(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &b_)
+BaseSemantics::SValue::Ptr
+RiscOperators::unsignedModulo(const BaseSemantics::SValue::Ptr &a_, const BaseSemantics::SValue::Ptr &b_)
 {
-    SValuePtr a = SValue::promote(a_);
-    SValuePtr b = SValue::promote(b_);
+    SValue::Ptr a = SValue::promote(a_);
+    SValue::Ptr b = SValue::promote(b_);
     size_t nbitsa = a->nBits();
     size_t nbitsb = b->nBits();
     if (a->isBottom() || b->isBottom())
@@ -818,11 +867,11 @@ RiscOperators::unsignedModulo(const BaseSemantics::SValuePtr &a_, const BaseSema
     return undefined_(nbitsb); // FIXME: can we do better?
 }
 
-BaseSemantics::SValuePtr
-RiscOperators::unsignedMultiply(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &b_)
+BaseSemantics::SValue::Ptr
+RiscOperators::unsignedMultiply(const BaseSemantics::SValue::Ptr &a_, const BaseSemantics::SValue::Ptr &b_)
 {
-    SValuePtr a = SValue::promote(a_);
-    SValuePtr b = SValue::promote(b_);
+    SValue::Ptr a = SValue::promote(a_);
+    SValue::Ptr b = SValue::promote(b_);
     if (a->isBottom() || b->isBottom())
         return bottom_(a->nBits() + b->nBits());
     Intervals result;
@@ -837,28 +886,28 @@ RiscOperators::unsignedMultiply(const BaseSemantics::SValuePtr &a_, const BaseSe
     return svalue_from_intervals(a->nBits()+b->nBits(), result);
 }
 
-BaseSemantics::SValuePtr
+BaseSemantics::SValue::Ptr
 RiscOperators::readMemory(RegisterDescriptor segreg,
-                          const BaseSemantics::SValuePtr &address,
-                          const BaseSemantics::SValuePtr &dflt,
-                          const BaseSemantics::SValuePtr &condition)
+                          const BaseSemantics::SValue::Ptr &address,
+                          const BaseSemantics::SValue::Ptr &dflt,
+                          const BaseSemantics::SValue::Ptr &condition)
 {
     return dflt->copy(); // FIXME
 }
 
-BaseSemantics::SValuePtr
+BaseSemantics::SValue::Ptr
 RiscOperators::peekMemory(RegisterDescriptor segreg,
-                          const BaseSemantics::SValuePtr &address,
-                          const BaseSemantics::SValuePtr &dflt)
+                          const BaseSemantics::SValue::Ptr &address,
+                          const BaseSemantics::SValue::Ptr &dflt)
 {
     return dflt->copy(); // FIXME[Robb Matzke 2018-01-17]
 }
 
 void
 RiscOperators::writeMemory(RegisterDescriptor segreg,
-                           const BaseSemantics::SValuePtr &address,
-                           const BaseSemantics::SValuePtr &value,
-                           const BaseSemantics::SValuePtr &condition) {
+                           const BaseSemantics::SValue::Ptr &address,
+                           const BaseSemantics::SValue::Ptr &value,
+                           const BaseSemantics::SValue::Ptr &condition) {
     // FIXME
 }
 

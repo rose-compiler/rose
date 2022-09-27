@@ -17,6 +17,7 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
+#include <Rose/BinaryAnalysis/SymbolicExpression.h>
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/filesystem.hpp>
@@ -292,7 +293,7 @@ updateObject(const Database::Ptr &db, TestCaseId id, const TestCase::Ptr &obj) {
     if (auto assertions = iter->get<std::string>(10)) {
         std::istringstream ss(*assertions);
         boost::archive::binary_iarchive archive(ss);
-        std::vector<SymbolicExpr::Ptr> v;
+        std::vector<SymbolicExpression::Ptr> v;
         archive >>v;
         obj->assertions(v);
     } else {
@@ -898,7 +899,7 @@ Database::symbolicStateExists(TestCaseId id) {
 }
 
 void
-Database::saveSymbolicState(TestCaseId id, const BS::StatePtr &state) {
+Database::saveSymbolicState(TestCaseId id, const BS::State::Ptr &state) {
     ASSERT_require(id);
     if (state) {
         Sawyer::FileSystem::TemporaryFile tempFile;
@@ -924,7 +925,7 @@ Database::saveSymbolicState(TestCaseId id, const BS::StatePtr &state) {
     }
 }
 
-BS::StatePtr
+BS::State::Ptr
 Database::extractSymbolicState(TestCaseId id) {
     ASSERT_require(id);
 
@@ -945,7 +946,7 @@ Database::extractSymbolicState(TestCaseId id) {
     std::ifstream in(tempFile.name().string().c_str(), std::ios_base::binary);
     boost::archive::binary_iarchive archive(in);
     registerTypes(archive);
-    BS::StatePtr retval;
+    BS::State::Ptr retval;
     archive >>retval;
     return retval;
 }

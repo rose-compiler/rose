@@ -665,33 +665,8 @@ fixupSourcePositionConstructs()
 void
 FixupSourcePositionConstructs::visit(SgNode* node)
    {
-
-#if 0
-     printf ("##### FixupSourcePositionConstructs::visit(node = %p = %s) \n",node,node->sage_class_name());
-#endif
-
-  // DQ (10/27/2007): Added as a test!
-     SgLocatedNode* locatedNode = isSgLocatedNode(node);
-
-     SgUntypedNode* untypedNode = isSgUntypedNode(node);
-
-  // DQ (9/15/2014): Skip checking of parent pointers here for SgUntypedNode IR nodes (handle this case seperately).
-  // if (locatedNode != NULL)
-     if (locatedNode != NULL && untypedNode == NULL)
-        {
-#if 0
-          if (isSgExprStatement(locatedNode) != NULL)
-               printf ("FixupSourcePositionConstructs::visit(): Testing start and end of construct Sg_File_Info objects for locatedNode = %p = %s \n",locatedNode,locatedNode->class_name().c_str());
-#endif
-          ROSE_ASSERT(locatedNode->get_startOfConstruct() != NULL);
-          if (locatedNode->get_endOfConstruct() == NULL)
-             {
-                 if (SgProject::get_verbose() > 0) {
-                     printf ("FixupSourcePositionConstructs::visit(): Building a matching endOfConstruct to the available startOfConstruct for locatedNode = %p = %s \n",locatedNode,locatedNode->class_name().c_str());
-                 }
-               locatedNode->set_endOfConstruct( new Sg_File_Info (* ( locatedNode->get_startOfConstruct() ) ) );
-             }
-          ROSE_ASSERT(locatedNode->get_endOfConstruct() != NULL);
-        }
+// Rasmussen (08/25/2022): Removed all untyped Sage nodes. Ultimately it proved easier to
+// construct regular IR nodes from the Jovial parser. Using the untyped system just lead an
+// unnecessary step and wasted effort.
    }
 

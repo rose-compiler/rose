@@ -6,17 +6,22 @@ SgSymbol * ClangToSageTranslator::GetSymbolFromSymbolTable(clang::NamedDecl * de
 
     SgScopeStatement * scope = SageBuilder::topScopeStack();
 
-    SgName name(decl->getNameAsString());
-/*
+
+/* Pei-Hung (08/29/2022) fieldDecl can be anonymous.
+ * Following EDG's implementation to apply anonymous name to allow symbol lookup.
+*/
     std::string declName = decl->getNameAsString();
 
-    if(declName.empty())
+    if(llvm::isa<clang::FieldDecl>(decl) && ((clang::FieldDecl*)decl)->isAnonymousStructOrUnion())
     {
       declName = "__anonymous_" +  generate_source_position_string(decl->getBeginLoc());  
+#if DEBUG_SYMBOL_TABLE_LOOKUP
+    std::cerr << "Find anonymous fieldDecl: " << declName << std::endl;
+#endif
     }
 
     SgName name(declName);
-*/
+
 #if DEBUG_SYMBOL_TABLE_LOOKUP
     std::cerr << "Lookup symbol for: " << name << std::endl;
 #endif
@@ -90,7 +95,13 @@ SgSymbol * ClangToSageTranslator::GetSymbolFromSymbolTable(clang::NamedDecl * de
             if (sg_class_decl->get_definingDeclaration() == NULL)
                 std::cerr << "Runtime Error: cannot find the definition of the class/struct associate to the field: " << name << std::endl;
             else {
-                scope = isSgClassDeclaration(sg_class_decl->get_definingDeclaration())->get_definition();
+            /* Pei-Hung (09/20/22) by accessing FieldDecl through here seems to imply the RecordDcl has an associated declarator.
+             * Therefore, the isAutonomousDeclaration hould be set false following the definition from EDG.
+            */
+                SgClassDeclaration* definingClassDecl = isSgClassDeclaration(sg_class_decl->get_definingDeclaration());
+                sg_class_decl->set_isAutonomousDeclaration(false);
+                definingClassDecl->set_isAutonomousDeclaration(false);
+                scope = definingClassDecl->get_definition();
                 // TODO: for C++, if 'scope' is in 'SageBuilder::ScopeStack': problem!!!
                 //       It means that we are currently building the class
                 while (scope != NULL && sym == NULL) {
@@ -767,15 +778,6 @@ bool ClangToSageTranslator::VisitRecordDecl(clang::RecordDecl * record_decl, SgN
     // FIXME May have to check the symbol table first, because of out-of-order traversal of C++ classes (Could be done in CxxRecord class...)
 
     bool res = true;
-/*
-    std::string recordDeclName = record_decl->getNameAsString();
-    if(recordDeclName.empty())
-    {
-      recordDeclName = "__anonymous_" +  generate_source_position_string(record_decl->getBeginLoc());  
-    }
-
-    SgName name(recordDeclName);
-*/
 #if DEBUG_VISIT_DECL
     std::cerr << "ClangToSageTranslator::VisitRecordDecl name:" <<record_decl->getNameAsString() <<  "\n";
     std:: cerr << "isAnonymousStructOrUnion() " << record_decl->isAnonymousStructOrUnion() << "\n";
@@ -805,6 +807,7 @@ bool ClangToSageTranslator::VisitRecordDecl(clang::RecordDecl * record_decl, SgN
     clang::RecordDecl * record_Definition = record_decl->getDefinition();
     bool isDefined = record_decl->isThisDeclarationADefinition();
     bool isAnonymousStructOrUnion = record_decl->isAnonymousStructOrUnion();
+    bool hasNameForLinkage = record_decl->hasNameForLinkage();
 
     SgClassSymbol * sg_prev_class_sym = isSgClassSymbol(GetSymbolFromSymbolTable(prev_record_decl));
     SgClassDeclaration * sg_prev_class_decl = sg_prev_class_sym == NULL ? NULL : isSgClassDeclaration(sg_prev_class_sym->get_declaration());
@@ -822,7 +825,29 @@ bool ClangToSageTranslator::VisitRecordDecl(clang::RecordDecl * record_decl, SgN
 
   // Name
 
-    SgName name(record_decl->getNameAsString());
+
+/* Pei-Hung (08/29/2022) RecordDecl can be anonymous.
+ * Following EDG's implementation to apply anonymous name to allow symbol lookup.
+ *
+ * The following in Clang is anonymous:
+ * struct { int i; float f; };
+ * Whereas the following are not:
+ *   struct X { int i; float f; };
+ *   struct { int i; float f; } obj; 
+ *
+ * For EDG, the following is also considered as anonymous:
+ *   struct { int i; float f; } obj;
+ *
+ * recordDecl with hasNameForLinkage set to false is more close to the definition of anonymous defined by EDG
+*/
+    std::string recordDeclName = record_decl->getNameAsString();
+    if(!hasNameForLinkage)
+    {
+      recordDeclName = "__anonymous_" +  generate_source_position_string(record_decl->getBeginLoc());
+    }
+
+    SgName name(recordDeclName);
+
 
   // Type of class
 
@@ -919,6 +944,11 @@ bool ClangToSageTranslator::VisitRecordDecl(clang::RecordDecl * record_decl, SgN
 
         SageBuilder::popScopeStack();
     }
+ 
+    // By default set class decl to be autonomous   
+    sg_class_decl->set_isAutonomousDeclaration(true);
+    sg_first_class_decl->set_isAutonomousDeclaration(true);
+
 
     ROSE_ASSERT(sg_class_decl->get_definingDeclaration() == NULL || isSgClassDeclaration(sg_class_decl->get_definingDeclaration())->get_definition() != NULL);
     ROSE_ASSERT(sg_first_class_decl->get_definition() == NULL);
@@ -1032,18 +1062,7 @@ bool ClangToSageTranslator::VisitEnumDecl(clang::EnumDecl * enum_decl, SgNode **
       sg_enum_decl->set_definingDeclaration(sg_prev_enum_decl);
       sg_enum_decl->set_firstNondefiningDeclaration(sg_prev_enum_decl->get_firstNondefiningDeclaration());
     }
-/*
-     SgEnumDeclaration* firstNondefEnumDecl = isSgEnumDeclaration(sg_enum_decl->get_firstNondefiningDeclaration());
-     if(enum_decl->isEmbeddedInDeclarator())
-     {
-       firstNondefEnumDecl->set_isAutonomousDeclaration(true);
-     }
 
-     SgSymbol* sym = firstNondefEnumDecl->get_symbol_from_symbol_table();
-#if DEBUG_VISIT_DECL
-     std::cout << "VisitEnumDecl symbol: " << sym << " type:" << firstNondefEnumDecl->get_type() << std::endl;
-#endif
-*/
     return VisitDecl(enum_decl, node) && res;
 }
 
@@ -1074,6 +1093,21 @@ bool ClangToSageTranslator::VisitTypedefDecl(clang::TypedefDecl * typedef_decl, 
     std::cerr << "ClangToSageTranslator::VisitTypedefDecl" << std::endl;
 #endif
     bool res = true;
+    SgTypedefDeclaration * sg_typedef_decl;
+
+    SgSymbol * sym = GetSymbolFromSymbolTable(typedef_decl);
+    SgTypedefSymbol * tdef_sym = isSgTypedefSymbol(sym);
+
+    // Pei-Hung (09/23/2022) if typedefType is referenced before first appearance
+    // of TypedefDecl, tthe TypedefDecl is declared to fulfill the need for symbol
+    // lookup in VisitTypedefType.  Skip declaration here if that's the case.
+    if(tdef_sym != NULL)
+    {
+      sg_typedef_decl = tdef_sym->get_declaration(); 
+      *node = sg_typedef_decl;
+
+      return VisitTypedefNameDecl(typedef_decl, node) && res;
+    }
 
     SgName name(typedef_decl->getNameAsString());
 //    SgType * type = buildTypeFromQualifiedType(typedef_decl->getUnderlyingType());
@@ -1087,14 +1121,31 @@ bool ClangToSageTranslator::VisitTypedefDecl(clang::TypedefDecl * typedef_decl, 
     // Pei-Hung (06/01/2022) check if the declaration is considered embedded in Clang AST.
     // If it is embedded, no explicit SgDeclaration should be placed for ROSE AST.
     bool isembedded = false;
+    // determine if the declaration associated with type (through getDecl()) has complete definition
     bool iscompleteDefined = false;
+    // check if ElaboratedType is part of the type 
+    bool hasElaboratedType = false;
+    // if hasElaboratedType, check if declaration of this type owned by this occurrence of this type is also 
+    // a definition
+    bool isOwnedTagDeclADefinition = false;
+    // checking is definition should be setup in ROSE AST
+    bool isDefinitionaRequired = false; 
 
     // Adding check for EaboratedType and PointerType to retrieve base EnumType
     while((llvm::isa<clang::ElaboratedType>(underlyingType)) || (llvm::isa<clang::PointerType>(underlyingType)) || (llvm::isa<clang::ArrayType>(underlyingType)))
     {
        if(llvm::isa<clang::ElaboratedType>(underlyingType))
        {
+         hasElaboratedType = true;
          underlyingQualType = ((clang::ElaboratedType *)underlyingType)->getNamedType();
+         clang::TagDecl* ownedTagDecl = ((clang::ElaboratedType *)underlyingType)->getOwnedTagDecl();
+         if(ownedTagDecl != nullptr)
+         {
+#if DEBUG_VISIT_DECL
+            std:: cerr << "ClangToSageTranslator::VisitTypedefDecl has ownedTagDecl " << ownedTagDecl->isThisDeclarationADefinition() << "\n";
+#endif
+            isOwnedTagDeclADefinition = ownedTagDecl->isThisDeclarationADefinition();
+         }
        }
        else if(llvm::isa<clang::PointerType>(underlyingType))
        {
@@ -1123,10 +1174,19 @@ bool ClangToSageTranslator::VisitTypedefDecl(clang::TypedefDecl * typedef_decl, 
        iscompleteDefined = recordDeclaration->isCompleteDefinition();
     }
 
+    if(hasElaboratedType)
+    {
+      isDefinitionaRequired = isOwnedTagDeclADefinition;
+    }
+    else
+    {
+      isDefinitionaRequired = iscompleteDefined;
+    }
+
     SgType * sg_underlyingType = buildTypeFromQualifiedType(underlyingQualType);
     SgType * type = buildTypeFromQualifiedType(typedef_decl->getUnderlyingType());
 
-    SgTypedefDeclaration * sg_typedef_decl = SageBuilder::buildTypedefDeclaration_nfi(name, type, SageBuilder::topScopeStack());
+    sg_typedef_decl = SageBuilder::buildTypedefDeclaration_nfi(name, type, SageBuilder::topScopeStack());
 
     // finding the bottom base type and check
     while(type->findBaseType() != type)
@@ -1136,14 +1196,21 @@ bool ClangToSageTranslator::VisitTypedefDecl(clang::TypedefDecl * typedef_decl, 
         break;
     }
 
+#if DEBUG_VISIT_DECL
+    std::cerr << "isDefinitionaRequired = " << isDefinitionaRequired << "\n";
+    std::cerr << "hasElaboratedType = " << hasElaboratedType << "\n";
+    std::cerr << "iscompleteDefined = " << iscompleteDefined << "\n";
+    std::cerr << "isembedded = " << isembedded << "\n";
+    std::cerr << "isOwnedTagDeclADefinition = " << isOwnedTagDeclADefinition << "\n";
+#endif
 // Pei-Hung (05/31/2022) set "bool_it->second = false" to avoid duplicated definition
-    if (isSgClassType(type) && iscompleteDefined) {
+    if (isSgClassType(type) && isDefinitionaRequired) {
         SgClassDeclaration* classDecl = isSgClassDeclaration(isSgClassType(type)->get_declaration());
         SgClassDeclaration* classDefDecl = isSgClassDeclaration(isSgClassType(type)->get_declaration()->get_definingDeclaration());
         if(isembedded && classDefDecl != nullptr && !isSgDeclarationStatement(classDefDecl->get_parent()))
         {
           classDefDecl->set_parent(sg_typedef_decl);
-          classDefDecl->set_isAutonomousDeclaration(false);
+//          classDefDecl->set_isAutonomousDeclaration(false);
           sg_typedef_decl->set_declaration(classDefDecl);
           sg_typedef_decl->set_typedefBaseTypeContainsDefiningDeclaration(true);
         }
@@ -1156,7 +1223,7 @@ bool ClangToSageTranslator::VisitTypedefDecl(clang::TypedefDecl * typedef_decl, 
             bool_it->second = false;
         }
     }
-    else if (isSgEnumType(type) && iscompleteDefined) {
+    else if (isSgEnumType(type) && isDefinitionaRequired) {
 
 // Pei-Hung (06/01/2022) Clang places a EnumDecl before TypedefDecl.  
 // A SgEnumDeclaration for an  embedded EnumDecl is not attached to the scope but its parent node needs to be setup as the SgTypedefDeclaration
@@ -1166,7 +1233,7 @@ bool ClangToSageTranslator::VisitTypedefDecl(clang::TypedefDecl * typedef_decl, 
         if(isembedded && enumDefDecl != nullptr && !isSgDeclarationStatement(enumDefDecl->get_parent()))
         {
           enumDefDecl->set_parent(sg_typedef_decl);
-          enumDefDecl->set_isAutonomousDeclaration(false);
+//          enumDefDecl->set_isAutonomousDeclaration(false);
           sg_typedef_decl->set_declaration(enumDefDecl);
           sg_typedef_decl->set_typedefBaseTypeContainsDefiningDeclaration(true);
         }
@@ -1317,15 +1384,33 @@ bool ClangToSageTranslator::VisitFieldDecl(clang::FieldDecl * field_decl, SgNode
     // If it is embedded, no explicit SgDeclaration should be placed for ROSE AST.
     bool isembedded = false;
     bool iscompleteDefined = false;
+    // check if ElaboratedType is part of the type 
+    bool hasElaboratedType = false;
+    // if hasElaboratedType, check if declaration of this type owned by this occurrence of this type is also 
+    // a definition
+    bool isOwnedTagDeclADefinition = false;
+    // checking is definition should be setup in ROSE AST
+    bool isDefinitionaRequired = false; 
     bool isAnonymousStructOrUnion = false;
 
     // Adding check for EaboratedType and PointerType to retrieve base EnumType
     // Removing PointerType here before finding a better implementation to handle pointer
-    while((llvm::isa<clang::ElaboratedType>(fieldType)) || (llvm::isa<clang::ArrayType>(fieldType)))
+    while((llvm::isa<clang::ElaboratedType>(fieldType)) || (llvm::isa<clang::PointerType>(fieldType)) || (llvm::isa<clang::ArrayType>(fieldType)))
     {
        if(llvm::isa<clang::ElaboratedType>(fieldType))
        {
+         hasElaboratedType = true;
          fieldQualType = ((clang::ElaboratedType *)fieldType)->getNamedType();
+         clang::TagDecl* ownedTagDecl = ((clang::ElaboratedType *)fieldType)->getOwnedTagDecl();
+         if(ownedTagDecl != nullptr)
+         {
+            std:: cerr << "ownedTagDecl " << ownedTagDecl->isThisDeclarationADefinition() << "\n";
+            isOwnedTagDeclADefinition = ownedTagDecl->isThisDeclarationADefinition();
+         }
+       }
+       else if(llvm::isa<clang::PointerType>(fieldType))
+       {
+         fieldQualType = ((clang::PointerType *)fieldType)->getPointeeType();
        }
        else if(llvm::isa<clang::ArrayType>(fieldType))
        {
@@ -1350,6 +1435,16 @@ bool ClangToSageTranslator::VisitFieldDecl(clang::FieldDecl * field_decl, SgNode
        iscompleteDefined = recordDeclaration->isCompleteDefinition();
     }
 
+    if(hasElaboratedType)
+    {
+      isDefinitionaRequired = isOwnedTagDeclADefinition;
+    }
+    else
+    {
+// This might not be the  precise info for set_isAutonomousDeclaration
+      isDefinitionaRequired = iscompleteDefined;
+    }
+
     isAnonymousStructOrUnion = field_decl->isAnonymousStructOrUnion();
 
     SgType * sg_fieldType = buildTypeFromQualifiedType(fieldQualType);
@@ -1369,13 +1464,13 @@ bool ClangToSageTranslator::VisitFieldDecl(clang::FieldDecl * field_decl, SgNode
 
     if(isAnonymousStructOrUnion)
     {
-        if (isSgClassType(type) && iscompleteDefined) {
-            SgClassDeclaration* classDecl = isSgClassDeclaration(isSgClassType(type)->get_declaration());
+        if (isSgClassType(type) && isDefinitionaRequired) {
+//            SgClassDeclaration* classDecl = isSgClassDeclaration(isSgClassType(type)->get_declaration());
             SgClassDeclaration* classDefDecl = isSgClassDeclaration(isSgClassType(type)->get_declaration()->get_definingDeclaration());
             *node = classDefDecl;
         }
-        else if (isSgEnumType(type) && iscompleteDefined) {
-            SgEnumDeclaration* enumDecl = isSgEnumDeclaration(isSgEnumType(type)->get_declaration());
+        else if (isSgEnumType(type) && isDefinitionaRequired) {
+//            SgEnumDeclaration* enumDecl = isSgEnumDeclaration(isSgEnumType(type)->get_declaration());
             SgEnumDeclaration* enumDefDecl = isSgEnumDeclaration(isSgEnumType(type)->get_declaration()->get_definingDeclaration());
             *node = enumDefDecl;
         }
@@ -1395,13 +1490,13 @@ bool ClangToSageTranslator::VisitFieldDecl(clang::FieldDecl * field_decl, SgNode
             break;
         }
      
-        if (isSgClassType(type) && iscompleteDefined) {
-            SgClassDeclaration* classDecl = isSgClassDeclaration(isSgClassType(type)->get_declaration());
+        if (isSgClassType(type) && isDefinitionaRequired) {
+//            SgClassDeclaration* classDecl = isSgClassDeclaration(isSgClassType(type)->get_declaration());
             SgClassDeclaration* classDefDecl = isSgClassDeclaration(isSgClassType(type)->get_declaration()->get_definingDeclaration());
             if(isembedded && classDefDecl != nullptr && !isSgDeclarationStatement(classDefDecl->get_parent()))
             {
               classDefDecl->set_parent(var_decl);
-              classDefDecl->set_isAutonomousDeclaration(false);
+//              classDefDecl->set_isAutonomousDeclaration(false);
               var_decl->set_baseTypeDefiningDeclaration(classDefDecl);
               var_decl->set_variableDeclarationContainsBaseTypeDefiningDeclaration(true);
             }
@@ -1409,18 +1504,18 @@ bool ClangToSageTranslator::VisitFieldDecl(clang::FieldDecl * field_decl, SgNode
             std::map<SgClassType *, bool>::iterator bool_it = p_class_type_decl_first_see_in_type.find(isSgClassType(type));
             ROSE_ASSERT(bool_it != p_class_type_decl_first_see_in_type.end());
             if (bool_it->second) {
-                var_decl->set_baseTypeDefiningDeclaration(isSgNamedType(type)->get_declaration()->get_definingDeclaration());
+//                var_decl->set_baseTypeDefiningDeclaration(isSgNamedType(type)->get_declaration()->get_definingDeclaration());
                 var_decl->set_variableDeclarationContainsBaseTypeDefiningDeclaration(true);
                 bool_it->second = false;
             }
         }
-        else if (isSgEnumType(type) && iscompleteDefined) {
-            SgEnumDeclaration* enumDecl = isSgEnumDeclaration(isSgEnumType(type)->get_declaration());
+        else if (isSgEnumType(type) && isDefinitionaRequired) {
+//            SgEnumDeclaration* enumDecl = isSgEnumDeclaration(isSgEnumType(type)->get_declaration());
             SgEnumDeclaration* enumDefDecl = isSgEnumDeclaration(isSgEnumType(type)->get_declaration()->get_definingDeclaration());
             if(isembedded && enumDefDecl != nullptr && !isSgDeclarationStatement(enumDefDecl->get_parent()))
             {
               enumDefDecl->set_parent(var_decl);
-              enumDefDecl->set_isAutonomousDeclaration(false);
+//              enumDefDecl->set_isAutonomousDeclaration(false);
               var_decl->set_baseTypeDefiningDeclaration(enumDefDecl);
               var_decl->set_variableDeclarationContainsBaseTypeDefiningDeclaration(true);
             }
@@ -1815,6 +1910,29 @@ bool ClangToSageTranslator::VisitVarDecl(clang::VarDecl * var_decl, SgNode ** no
     // If it is embedded, no explicit SgDeclaration should be placed for ROSE AST.
     bool isembedded = false;
     bool iscompleteDefined = false;
+    // check if ElaboratedType is part of the type 
+    bool hasElaboratedType = false;
+    // if hasElaboratedType, check if declaration of this type owned by this occurrence of this type is also 
+    // a definition
+    bool isOwnedTagDeclADefinition = false;
+    // checking is definition should be setup in ROSE AST
+    bool isDefinitionaRequired = false; 
+
+/*  (09/16/2022) Pei-Hung copied Definition from EDG: 
+    TRUE if this type entry represents a class, struct,
+    union, or enum and its primary source sequence
+    entry refers to a declaration that is not part
+    of the declaration of another entity.  For instance,
+      class A { int i; };    // An "autonomous" decl
+      class B { int i; } b;  // Not "autonomous"
+    The flag would be set TRUE for A but not for B
+    since the latter's definition is part of the
+    declaration of variable b.  Also TRUE for
+    anonymous unions.  Also TRUE for all classes
+    produced by a template instantiation, no matter
+    what triggers the instantiation. 
+*/
+    bool isAutonomousDeclaration = true; 
 
     // Adding check for EaboratedType and PointerType to retrieve base EnumType
     //while((varType->getTypeClass() == clang::Type::Elaborated) || (varType->getTypeClass() == clang::Type::Pointer) || (varType->getTypeClass() == clang::Type::Array))
@@ -1822,7 +1940,14 @@ bool ClangToSageTranslator::VisitVarDecl(clang::VarDecl * var_decl, SgNode ** no
     {
        if(llvm::isa<clang::ElaboratedType>(varType))
        {
+         hasElaboratedType = true;
          varQualType = ((clang::ElaboratedType *)varType)->getNamedType();
+         clang::TagDecl* ownedTagDecl = ((clang::ElaboratedType *)varType)->getOwnedTagDecl();
+         if(ownedTagDecl != nullptr)
+         {
+            std:: cerr << "ownedTagDecl " << ownedTagDecl->isThisDeclarationADefinition() << "\n";
+            isOwnedTagDeclADefinition = ownedTagDecl->isThisDeclarationADefinition();
+         }
        }
        else if(llvm::isa<clang::PointerType>(varType))
        {
@@ -1841,6 +1966,7 @@ bool ClangToSageTranslator::VisitVarDecl(clang::VarDecl * var_decl, SgNode ** no
        clang::EnumDecl* enumDeclaration = underlyingEnumType->getDecl();
        isembedded = enumDeclaration->isEmbeddedInDeclarator();
        iscompleteDefined = enumDeclaration->isCompleteDefinition();
+       isAutonomousDeclaration = false;
     }
 
     if(llvm::isa<clang::RecordType>(varType))
@@ -1849,12 +1975,28 @@ bool ClangToSageTranslator::VisitVarDecl(clang::VarDecl * var_decl, SgNode ** no
        clang::RecordDecl* recordDeclaration = underlyingRecordType->getDecl();
        isembedded = recordDeclaration->isEmbeddedInDeclarator();
        iscompleteDefined = recordDeclaration->isCompleteDefinition();
+       isAutonomousDeclaration = false;
+    }
+
+    if(hasElaboratedType)
+    {
+      isDefinitionaRequired = isOwnedTagDeclADefinition;
+    }
+    else
+    {
+// This might not be the  precise info for set_isAutonomousDeclaration
+      isDefinitionaRequired = iscompleteDefined;
     }
 
     SgType * sg_varType = buildTypeFromQualifiedType(varQualType);
     SgType * type = buildTypeFromQualifiedType(var_decl->getType());
 
-    clang::Expr * init_expr = var_decl->getInit();
+//    SgVariableDeclaration * sg_var_decl = new SgVariableDeclaration(name, type, init); // scope: obtain from the scope stack.
+   // Pei-Hung (09/01/2022) In test2022_3.c, the variable symbol needs to be avaiable before processing the RHS.
+   // calling buildVariableDeclaration_nfi to get the symbol in place.
+   SgVariableDeclaration * sg_var_decl = SageBuilder::buildVariableDeclaration_nfi(name,type, NULL ,SageBuilder::topScopeStack());
+ 
+   clang::Expr * init_expr = var_decl->getInit();
     SgNode * tmp_init = Traverse(init_expr);
     SgExpression * expr = isSgExpression(tmp_init);
     if (tmp_init != NULL && expr == NULL) {
@@ -1869,9 +2011,12 @@ bool ClangToSageTranslator::VisitVarDecl(clang::VarDecl * var_decl, SgNode ** no
     else if (expr != NULL)
         init = SageBuilder::buildAssignInitializer_nfi(expr, expr->get_type());
     if (init != NULL)
+    {
+        init->set_parent(sg_var_decl);
         applySourceRange(init, init_expr->getSourceRange());
-
-    SgVariableDeclaration * sg_var_decl = new SgVariableDeclaration(name, type, init); // scope: obtain from the scope stack.
+    }
+    // Pei-Hung (09/01/2022) setup initializer once the RHS is processed.
+    sg_var_decl->reset_initializer(init);
 
     // finding the bottom base type and check
     while(type->findBaseType() != type)
@@ -1881,13 +2026,13 @@ bool ClangToSageTranslator::VisitVarDecl(clang::VarDecl * var_decl, SgNode ** no
         break;
     }
 
-    if (isSgClassType(type) && iscompleteDefined) {
+    if (isSgClassType(type) && isDefinitionaRequired) {
         SgClassDeclaration* classDecl = isSgClassDeclaration(isSgClassType(type)->get_declaration());
         SgClassDeclaration* classDefDecl = isSgClassDeclaration(isSgClassType(type)->get_declaration()->get_definingDeclaration());
         if(isembedded && classDefDecl != nullptr && !isSgDeclarationStatement(classDefDecl->get_parent()))
         {
           classDefDecl->set_parent(sg_var_decl);
-          classDefDecl->set_isAutonomousDeclaration(false);
+          classDefDecl->set_isAutonomousDeclaration(isAutonomousDeclaration);
           sg_var_decl->set_baseTypeDefiningDeclaration(classDefDecl);
           sg_var_decl->set_variableDeclarationContainsBaseTypeDefiningDeclaration(true);
         }
@@ -1900,13 +2045,13 @@ bool ClangToSageTranslator::VisitVarDecl(clang::VarDecl * var_decl, SgNode ** no
             bool_it->second = false;
         }
     }
-    else if (isSgEnumType(type) && iscompleteDefined) {
+    else if (isSgEnumType(type) && isDefinitionaRequired) {
         SgEnumDeclaration* enumDecl = isSgEnumDeclaration(isSgEnumType(type)->get_declaration());
         SgEnumDeclaration* enumDefDecl = isSgEnumDeclaration(isSgEnumType(type)->get_declaration()->get_definingDeclaration());
         if(isembedded && enumDefDecl != nullptr && !isSgDeclarationStatement(enumDefDecl->get_parent()))
         {
           enumDefDecl->set_parent(sg_var_decl);
-          enumDefDecl->set_isAutonomousDeclaration(false);
+          enumDefDecl->set_isAutonomousDeclaration(isAutonomousDeclaration);
           sg_var_decl->set_baseTypeDefiningDeclaration(enumDefDecl);
           sg_var_decl->set_variableDeclarationContainsBaseTypeDefiningDeclaration(true);
         }
