@@ -1108,6 +1108,8 @@ bool ClangToSageTranslator::VisitDoStmt(clang::DoStmt * do_stmt, SgNode ** node)
 
     SgDoWhileStmt * sg_do_stmt = SageBuilder::buildDoWhileStmt_nfi(expr_stmt, NULL);
 
+    sg_do_stmt->set_parent(SageBuilder::topScopeStack());
+
     sg_do_stmt->set_condition(expr_stmt);
 
     cond->set_parent(expr_stmt);
@@ -3967,6 +3969,8 @@ bool ClangToSageTranslator::VisitWhileStmt(clang::WhileStmt * while_stmt, SgNode
     SgStatement * expr_stmt = SageBuilder::buildExprStatement(cond);
 
     SgWhileStmt * sg_while_stmt = SageBuilder::buildWhileStmt_nfi(expr_stmt, NULL);
+
+    sg_while_stmt->set_parent(SageBuilder::topScopeStack());
 
     cond->set_parent(expr_stmt);
     expr_stmt->set_parent(sg_while_stmt);
