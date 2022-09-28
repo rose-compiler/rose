@@ -1,9 +1,0 @@
-BUILDING SATIrE:
-
-* 'make -j' may fail [only 'make' always works]
-parallel build with "make -j" does not always work due to some
-dependencies on generated files which are not properly represented in
-make-files yet. You can use -j, but in case compilation fails,
-run 'make clean', and rerun 'make' (without option -j).
-
-

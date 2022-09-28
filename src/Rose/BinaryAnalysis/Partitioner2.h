@@ -5,7 +5,7 @@
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Partitioner2/CfgPath.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Config.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Configuration.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ControlFlowGraph.h>
 #include <Rose/BinaryAnalysis/Partitioner2/DataBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/DataFlow.h>

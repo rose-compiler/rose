@@ -787,7 +787,7 @@ SageToPast::postOrderVisit(SgNode* node)
     }
 
       //   /**
-      //    * Scop-breaking nodes, seen as past_generic.
+      //    * Scope-breaking nodes, seen as past_generic.
       //    *
       //    *
       //    */
@@ -3531,160 +3531,12 @@ SageToPast::postOrderVisit(SgNode* node)
       //   SgHeaderFileBody* val = isSgHeaderFileBody(node);
       //   break;
       // }
-      // case V_SgUntypedUnaryOperator: {
-      //   SgUntypedUnaryOperator* val = isSgUntypedUnaryOperator(node);
-      //   break;
-      // }
-      // case V_SgUntypedBinaryOperator: {
-      //   SgUntypedBinaryOperator* val = isSgUntypedBinaryOperator(node);
-      //   break;
-      // }
-      // case V_SgUntypedValueExpression: {
-      //   SgUntypedValueExpression* val = isSgUntypedValueExpression(node);
-      //   break;
-      // }
-      // case V_SgUntypedArrayReferenceExpression: {
-      //   SgUntypedArrayReferenceExpression* val = isSgUntypedArrayReferenceExpression(node);
-      //   break;
-      // }
-      // case V_SgUntypedOtherExpression: {
-      //   SgUntypedOtherExpression* val = isSgUntypedOtherExpression(node);
-      //   break;
-      // }
-      // case V_SgUntypedFunctionCallOrArrayReferenceExpression: {
-      //   SgUntypedFunctionCallOrArrayReferenceExpression* val = isSgUntypedFunctionCallOrArrayReferenceExpression(node);
-      //   break;
-      // }
-      // case V_SgUntypedReferenceExpression: {
-      //   SgUntypedReferenceExpression* val = isSgUntypedReferenceExpression(node);
-      //   break;
-      // }
-      // case V_SgUntypedExpression: {
-      //   SgUntypedExpression* val = isSgUntypedExpression(node);
-      //   break;
-      // }
-      // case V_SgUntypedImplicitDeclaration: {
-      //   SgUntypedImplicitDeclaration* val = isSgUntypedImplicitDeclaration(node);
-      //   break;
-      // }
-      // case V_SgUntypedVariableDeclaration: {
-      //   SgUntypedVariableDeclaration* val = isSgUntypedVariableDeclaration(node);
-      //   break;
-      // }
-      // case V_SgUntypedProgramHeaderDeclaration: {
-      //   SgUntypedProgramHeaderDeclaration* val = isSgUntypedProgramHeaderDeclaration(node);
-      //   break;
-      // }
-      // case V_SgUntypedSubroutineDeclaration: {
-      //   SgUntypedSubroutineDeclaration* val = isSgUntypedSubroutineDeclaration(node);
-      //   break;
-      // }
-      // case V_SgUntypedFunctionDeclaration: {
-      //   SgUntypedFunctionDeclaration* val = isSgUntypedFunctionDeclaration(node);
-      //   break;
-      // }
-      // case V_SgUntypedModuleDeclaration: {
-      //   SgUntypedModuleDeclaration* val = isSgUntypedModuleDeclaration(node);
-      //   break;
-      // }
-      // case V_SgUntypedDeclarationStatement: {
-      //   SgUntypedDeclarationStatement* val = isSgUntypedDeclarationStatement(node);
-      //   break;
-      // }
-      // case V_SgUntypedAssignmentStatement: {
-      //   SgUntypedAssignmentStatement* val = isSgUntypedAssignmentStatement(node);
-      //   break;
-      // }
-      // case V_SgUntypedFunctionCallStatement: {
-      //   SgUntypedFunctionCallStatement* val = isSgUntypedFunctionCallStatement(node);
-      //   break;
-      // }
-      // case V_SgUntypedBlockStatement: {
-      //   SgUntypedBlockStatement* val = isSgUntypedBlockStatement(node);
-      //   break;
-      // }
-      // case V_SgUntypedNamedStatement: {
-      //   SgUntypedNamedStatement* val = isSgUntypedNamedStatement(node);
-      //   break;
-      // }
-      // case V_SgUntypedOtherStatement: {
-      //   SgUntypedOtherStatement* val = isSgUntypedOtherStatement(node);
-      //   break;
-      // }
-      // case V_SgUntypedFunctionScope: {
-      //   SgUntypedFunctionScope* val = isSgUntypedFunctionScope(node);
-      //   break;
-      // }
-      // case V_SgUntypedModuleScope: {
-      //   SgUntypedModuleScope* val = isSgUntypedModuleScope(node);
-      //   break;
-      // }
-      // case V_SgUntypedGlobalScope: {
-      //   SgUntypedGlobalScope* val = isSgUntypedGlobalScope(node);
-      //   break;
-      // }
-      // case V_SgUntypedScope: {
-      //   SgUntypedScope* val = isSgUntypedScope(node);
-      //   break;
-      // }
-      // case V_SgUntypedStatement: {
-      //   SgUntypedStatement* val = isSgUntypedStatement(node);
-      //   break;
-      // }
-      // case V_SgUntypedArrayType: {
-      //   SgUntypedArrayType* val = isSgUntypedArrayType(node);
-      //   break;
-      // }
-      // case V_SgUntypedType: {
-      //   SgUntypedType* val = isSgUntypedType(node);
-      //   break;
-      // }
-      // case V_SgUntypedAttribute: {
-      //   SgUntypedAttribute* val = isSgUntypedAttribute(node);
-      //   break;
-      // }
-      // case V_SgUntypedInitializedName: {
-      //   SgUntypedInitializedName* val = isSgUntypedInitializedName(node);
-      //   break;
-      // }
-      // case V_SgUntypedFile: {
-      //   SgUntypedFile* val = isSgUntypedFile(node);
-      //   break;
-      // }
-      // case V_SgUntypedStatementList: {
-      //   SgUntypedStatementList* val = isSgUntypedStatementList(node);
-      //   break;
-      // }
-      // case V_SgUntypedDeclarationList: {
-      //   SgUntypedDeclarationList* val = isSgUntypedDeclarationList(node);
-      //   break;
-      // }
-      // case V_SgUntypedFunctionDeclarationList: {
-      //   SgUntypedFunctionDeclarationList* val = isSgUntypedFunctionDeclarationList(node);
-      //   break;
-      // }
-      // case V_SgUntypedInitializedNameList: {
-      //   SgUntypedInitializedNameList* val = isSgUntypedInitializedNameList(node);
-      //   break;
-      // }
-      // case V_SgUntypedNode: {
-      //   SgUntypedNode* val = isSgUntypedNode(node);
-      //   break;
-      // }
-      // case V_SgLocatedNodeSupport: {
-      //   SgLocatedNodeSupport* val = isSgLocatedNodeSupport(node);
-      //   break;
-      // }
       // case V_SgToken: {
       //   SgToken* val = isSgToken(node);
       //   break;
       // }
       // case V_SgLocatedNode: {
       //   SgLocatedNode* val = isSgLocatedNode(node);
-      //   break;
-      // }
-      // case V_SgAterm: {
-      //   SgAterm* val = isSgAterm(node);
       //   break;
       // }
       // case V_SgNode: {

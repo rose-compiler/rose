@@ -10,10 +10,10 @@ run $(tool_compile_linkexe) isAarch64Disabled.C
 run $(tool_compile_linkexe) isAarch32Disabled.C
 
 ###############################################################################################################################
-# Check parsing of symbolic expressions via Rose::BinaryAnalysis::SymbolicExprParser
+# Check parsing of symbolic expressions via Rose::BinaryAnalysis::SymbolicExpressionParser
 ###############################################################################################################################
-run $(tool_compile_linkexe) testSymbolicExprParser.C
-run $(test) testSymbolicExprParser --answer=testSymbolicExprParser.ans
+run $(tool_compile_linkexe) testSymbolicExpressionParser.C
+run $(test) testSymbolicExpressionParser --answer=testSymbolicExpressionParser.ans
 
 ###############################################################################################################################
 # Parses an executable to produce a dump file (*.dump), an assembly file (rose_*.s), and a new executable created by unparsing

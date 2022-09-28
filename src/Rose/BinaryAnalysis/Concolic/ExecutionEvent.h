@@ -7,7 +7,7 @@
 #include <Rose/BinaryAnalysis/Concolic/Database.h>
 #include <Rose/BinaryAnalysis/Concolic/ExecutionLocation.h>
 #include <Rose/BinaryAnalysis/Debugger.h>
-#include <Rose/BinaryAnalysis/SymbolicExpr.h>
+#include <Rose/BinaryAnalysis/SymbolicExpression.h>
 #include <Combinatorics.h>                              // rose
 
 namespace Rose {
@@ -155,7 +155,7 @@ private:
     AddressInterval memoryVas_;                         // affected memory
     unsigned u_ = 0;                                    // permission bits, register, or syscall function number
     std::vector<uint8_t> bytes_;                        // byte data, hash digest, or syscall arguments
-    SymbolicExprPtr variable_, value_, expression_;     // for computing concrete result from input
+    SymbolicExpressionPtr variable_, value_, expression_; // for computing concrete result from input
     InputType inputType_ = InputType::NONE;             // what kind of input is variable_?
     size_t idx1_ = INVALID_INDEX;                       // indices for the input type, such as argv[i][j]
     size_t idx2_ = INVALID_INDEX;
@@ -202,8 +202,8 @@ public:
 
     /** Allocating constructor for @c MEMORY_WRITE events. */
     static Ptr memoryWrite(const TestCasePtr&, const ExecutionLocation&, rose_addr_t ip,
-                           const AddressInterval &where, const SymbolicExprPtr &variable,
-                           const SymbolicExprPtr &value, const SymbolicExprPtr &expression);
+                           const AddressInterval &where, const SymbolicExpressionPtr &variable,
+                           const SymbolicExpressionPtr &value, const SymbolicExpressionPtr &expression);
 
     /** Allocating constructor for @c BULK_REGISTER_WRITE events. */
     static Ptr bulkRegisterWrite(const TestCasePtr&, const ExecutionLocation&, rose_addr_t ip,
@@ -211,8 +211,8 @@ public:
 
     /** Allocating constructor for @c REGISTER_WRITE events. */
     static Ptr registerWrite(const TestCasePtr&, const ExecutionLocation&, rose_addr_t ip,
-                             RegisterDescriptor where, const SymbolicExprPtr &variable,
-                             const SymbolicExprPtr &value, const SymbolicExprPtr &expression);
+                             RegisterDescriptor where, const SymbolicExpressionPtr &variable,
+                             const SymbolicExpressionPtr &value, const SymbolicExpressionPtr &expression);
 
     /** Allocating constructor for @c OS_SYSCALL events. */
     static Ptr osSyscall(const TestCasePtr&, const ExecutionLocation&, rose_addr_t ip,
@@ -220,8 +220,8 @@ public:
 
     /** Allocating constructor for @c OS_SHARED_MEMORY events. */
     static Ptr osSharedMemory(const TestCasePtr&, const ExecutionLocation&, rose_addr_t ip,
-                              const AddressInterval &where, const SymbolicExprPtr &variable,
-                              const SymbolicExprPtr &value, const SymbolicExprPtr &expression);
+                              const AddressInterval &where, const SymbolicExpressionPtr &variable,
+                              const SymbolicExpressionPtr &value, const SymbolicExpressionPtr &expression);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties that are used by all event types.
@@ -381,8 +381,8 @@ public:
      *  be set, and always return a null pointer.
      *
      * @{ */
-    SymbolicExprPtr variable() const;
-    void variable(const SymbolicExprPtr&);
+    SymbolicExpressionPtr variable() const;
+    void variable(const SymbolicExpressionPtr&);
     /** @} */
 
     /** Property: Value to be bound.
@@ -395,8 +395,8 @@ public:
      *  be set, and always return a null pointer.
      *
      * @{ */
-    SymbolicExprPtr value() const;
-    void value(const SymbolicExprPtr&);
+    SymbolicExpressionPtr value() const;
+    void value(const SymbolicExpressionPtr&);
     /** @} */
 
     /** Property: Expression defining result value.
@@ -412,8 +412,8 @@ public:
      *  be set, and always return a null pointer.
      *
      * @{ */
-    SymbolicExprPtr expression() const;
-    void expression(const SymbolicExprPtr&);
+    SymbolicExpressionPtr expression() const;
+    void expression(const SymbolicExpressionPtr&);
     /** @} */
 
     /** Property: System call function identifier.
@@ -470,7 +470,7 @@ public:
      *  inputType property is not @c NONE.
      *
      *  Valid for all event types. */
-    SymbolicExprPtr inputVariable() const;
+    SymbolicExpressionPtr inputVariable() const;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Actions defined for some event types.
@@ -485,7 +485,7 @@ public:
      *  instead.
      *
      *  Valid for those event types that have @ref variable, @ref value, and @ref expression properties. */
-    SymbolicExprPtr calculateResult(const SymbolicExpr::ExprExprHashMap &bindings) const;
+    SymbolicExpressionPtr calculateResult(const SymbolicExpression::ExprExprHashMap &bindings) const;
 
     /** Returns printable name of execution event for diagnostic output.
      *

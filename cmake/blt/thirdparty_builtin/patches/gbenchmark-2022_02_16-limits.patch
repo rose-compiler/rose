@@ -1,0 +1,15 @@
+diff --git a/thirdparty_builtin/benchmark-1.5.0/include/benchmark/benchmark.h b/thirdparty_builtin/benchmark-1.5.0/include/benchmark/benchmark.h
+index 6cb96f5..0b1f451 100644
+--- a/thirdparty_builtin/benchmark-1.5.0/include/benchmark/benchmark.h
++++ b/thirdparty_builtin/benchmark-1.5.0/include/benchmark/benchmark.h
+@@ -173,6 +173,10 @@ BENCHMARK(BM_test)->Unit(benchmark::kMillisecond);
+ #include <cassert>
+ #include <cstddef>
+ #include <iosfwd>
++// BLT PATCH START
++// gcc@11 requires this for std::numeric_limits
++#include <limits>
++// BLT PATCH END
+ #include <map>
+ #include <set>
+ #include <string>

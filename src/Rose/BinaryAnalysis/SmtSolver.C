@@ -5,6 +5,7 @@
 
 #include "rose_getline.h"
 #include <Rose/BinaryAnalysis/SmtlibSolver.h>
+#include <Rose/BinaryAnalysis/SymbolicExpression.h>
 #include <Rose/BinaryAnalysis/Z3Solver.h>
 
 #include <boost/algorithm/string/predicate.hpp>
@@ -33,7 +34,7 @@ Sawyer::Message::Facility SmtSolver::mlog;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 bool
-CompareLeavesByName::operator()(const SymbolicExpr::LeafPtr &a, const SymbolicExpr::LeafPtr &b) const {
+CompareLeavesByName::operator()(const SymbolicExpression::LeafPtr &a, const SymbolicExpression::LeafPtr &b) const {
     if (!a || !b)
         return !a && b;                                 // null a is less than non-null b; other null combos return false
     ASSERT_require(a->isVariable2() || a->isMemoryExpr());
@@ -44,7 +45,7 @@ CompareLeavesByName::operator()(const SymbolicExpr::LeafPtr &a, const SymbolicEx
 }
 
 bool
-CompareRawLeavesByName::operator()(const SymbolicExpr::Leaf *a, const SymbolicExpr::Leaf *b) const {
+CompareRawLeavesByName::operator()(const SymbolicExpression::Leaf *a, const SymbolicExpression::Leaf *b) const {
     if (!a || !b)
         return !a && b;                                 // null a is less than non-null b; other null combos return false
     ASSERT_require(a->isVariable2() || a->isMemoryExpr());
@@ -76,7 +77,7 @@ SmtSolver::Memoizer::size() const {
 }
 
 SmtSolver::Memoizer::Map::iterator
-SmtSolver::Memoizer::searchNS(SymbolicExpr::Hash h, const ExprList &sortedNormalized) {
+SmtSolver::Memoizer::searchNS(SymbolicExpression::Hash h, const ExprList &sortedNormalized) {
     std::pair<Map::iterator, Map::iterator> range = map_.equal_range(h);
     for (Map::iterator iter = range.first; iter != range.second; ++iter) {
         const Record &record = iter->second;
@@ -105,10 +106,10 @@ SmtSolver::Memoizer::find(const ExprList &assertions) {
 
 #if 1 // full matching
     // First rewrite each assertion individually to normalize the variables. This will allow us to sort them consistently.
-    std::vector<std::pair<SymbolicExpr::Ptr /*original*/, SymbolicExpr::Ptr /*rewritten*/>> sorted;
+    std::vector<std::pair<SymbolicExpression::Ptr /*original*/, SymbolicExpression::Ptr /*rewritten*/>> sorted;
     sorted.reserve(assertions.size());
-    for (const SymbolicExpr::Ptr &assertion: assertions) {
-        SymbolicExpr::ExprExprHashMap index;
+    for (const SymbolicExpression::Ptr &assertion: assertions) {
+        SymbolicExpression::ExprExprHashMap index;
         size_t nextVariableId = 0;
         sorted.push_back(std::make_pair(assertion, assertion->renameVariables(index, nextVariableId)));
     }
@@ -121,13 +122,13 @@ SmtSolver::Memoizer::find(const ExprList &assertions) {
     size_t nextVariableId = 0;
     for (const ExprExpr &p: sorted)
         retval.sortedNormalized.push_back(p.first->renameVariables(retval.rewriteMap, nextVariableId));
-    const SymbolicExpr::Hash h = SymbolicExpr::hash(retval.sortedNormalized);
+    const SymbolicExpression::Hash h = SymbolicExpression::hash(retval.sortedNormalized);
 #else // partial matching (unsorted but normalized)
     retval.sortedNormalized.reserve(assertions.size());
     size_t nextVariableId = 0;
-    for (const SymbolicExpr::Ptr &p: assertions)
+    for (const SymbolicExpression::Ptr &p: assertions)
         retval.sortedNormalized.push_back(p->renameVariables(retval.rewriteMap, nextVariableId));
-    const SymbolicExpr::Hash h = SymbolicExpr::hash(retval.sortedNormalized);
+    const SymbolicExpression::Hash h = SymbolicExpression::hash(retval.sortedNormalized);
 #endif
 
     // Does our map already contain this set of assertions? Hashes can be equal without the set of assertions being equal, so
@@ -148,10 +149,10 @@ SmtSolver::ExprExprMap
 SmtSolver::Memoizer::evidence(const Found &found) const {
     ASSERT_require(found);
     ExprExprMap retval;
-    const SymbolicExpr::ExprExprHashMap denorm = found.rewriteMap.invert();
+    const SymbolicExpression::ExprExprHashMap denorm = found.rewriteMap.invert();
     for (const ExprExprMap::Node &node: found.evidence.nodes()) {
-        const SymbolicExpr::Ptr var = node.key()->substituteMultiple(denorm);
-        const SymbolicExpr::Ptr val = node.value()->substituteMultiple(denorm);
+        const SymbolicExpression::Ptr var = node.key()->substituteMultiple(denorm);
+        const SymbolicExpression::Ptr val = node.value()->substituteMultiple(denorm);
         retval.insert(var, val);
     }
     return retval;
@@ -164,12 +165,12 @@ SmtSolver::Memoizer::insert(const Found &found, Satisfiable sat, const ExprExprM
 
     ExprExprMap normalizedEvidence;
     for (const ExprExprMap::Node &node: evidence.nodes()) {
-        const SymbolicExpr::Ptr var = node.key()->substituteMultiple(found.rewriteMap);
-        const SymbolicExpr::Ptr val = node.value()->substituteMultiple(found.rewriteMap);
+        const SymbolicExpression::Ptr var = node.key()->substituteMultiple(found.rewriteMap);
+        const SymbolicExpression::Ptr val = node.value()->substituteMultiple(found.rewriteMap);
         normalizedEvidence.insert(var, val);
     }
 
-    const SymbolicExpr::Hash h = SymbolicExpr::hash(found.sortedNormalized);
+    const SymbolicExpression::Hash h = SymbolicExpression::hash(found.sortedNormalized);
     {
         // Some other thread may have beaten us here with the same set of assertions. In that case, we should not insert
         // anything since it would result in duplicate records.
@@ -246,7 +247,7 @@ SmtSolver::Stats::print(std::ostream &out, const std::string &prefix) const {
 void
 SmtSolver::init(unsigned linkages) {
     linkage_ = bestLinkage(linkages);
-    stack_.push_back(std::vector<SymbolicExpr::Ptr>());
+    stack_.push_back(std::vector<SymbolicExpression::Ptr>());
 
     if (linkage_ == LM_LIBRARY) {
         name_ = std::string(name_.empty()?"noname":name_) + "-lib";
@@ -307,7 +308,7 @@ SmtSolver::clearEvidence() {
     evidence_.clear();
 }
 
-SymbolicExpr::Ptr
+SymbolicExpression::Ptr
 SmtSolver::evidenceForName(const std::string &varName) const {
     for (const ExprExprMap::Node &node: evidence_.nodes()) {
         ASSERT_not_null(node.key()->isLeafNodeRaw());
@@ -315,14 +316,14 @@ SmtSolver::evidenceForName(const std::string &varName) const {
         if (node.key()->isLeafNodeRaw()->toString() == varName)
             return node.value();
     }
-    return SymbolicExpr::Ptr();
+    return SymbolicExpression::Ptr();
 }
 
 std::vector<std::string>
 SmtSolver::evidenceNames() const {
     std::vector<std::string> retval;
-    for (const SymbolicExpr::Ptr &varExpr: evidence_.keys()) {
-        SymbolicExpr::LeafPtr leaf = varExpr->isLeafNode();
+    for (const SymbolicExpression::Ptr &varExpr: evidence_.keys()) {
+        SymbolicExpression::LeafPtr leaf = varExpr->isLeafNode();
         ASSERT_not_null(leaf);
         ASSERT_require(leaf->isVariable2());
         retval.push_back(leaf->toString());
@@ -444,14 +445,14 @@ SmtSolver::progress(const Progress::Ptr &p) {
 }
 
 SmtSolver::Satisfiable
-SmtSolver::triviallySatisfiable(const std::vector<SymbolicExpr::Ptr> &exprs) {
+SmtSolver::triviallySatisfiable(const std::vector<SymbolicExpression::Ptr> &exprs) {
     reset();
     insert(exprs);
     return checkTrivial();
 }
 
 SmtSolver::Satisfiable
-SmtSolver::satisfiable(const SymbolicExpr::Ptr &expr) {
+SmtSolver::satisfiable(const SymbolicExpression::Ptr &expr) {
     reset();
     insert(expr);
     Satisfiable retval = check();
@@ -459,7 +460,7 @@ SmtSolver::satisfiable(const SymbolicExpr::Ptr &expr) {
 }
 
 SmtSolver::Satisfiable
-SmtSolver::satisfiable(const std::vector<SymbolicExpr::Ptr> &exprs) {
+SmtSolver::satisfiable(const std::vector<SymbolicExpression::Ptr> &exprs) {
     reset();
     insert(exprs);
     Satisfiable retval = check();
@@ -469,7 +470,7 @@ SmtSolver::satisfiable(const std::vector<SymbolicExpr::Ptr> &exprs) {
 void
 SmtSolver::push() {
     clearEvidence();
-    stack_.push_back(std::vector<SymbolicExpr::Ptr>());
+    stack_.push_back(std::vector<SymbolicExpression::Ptr>());
 }
 
 void
@@ -490,20 +491,20 @@ SmtSolver::nAssertions(size_t level) {
 size_t
 SmtSolver::nAssertions() const {
     size_t retval = 0;
-    for (const std::vector<SymbolicExpr::Ptr> &level: stack_)
+    for (const std::vector<SymbolicExpression::Ptr> &level: stack_)
         retval += level.size();
     return retval;
 }
 
-std::vector<SymbolicExpr::Ptr>
+std::vector<SymbolicExpression::Ptr>
 SmtSolver::assertions() const {
-    std::vector<SymbolicExpr::Ptr> retval;
-    for (const std::vector<SymbolicExpr::Ptr> &level: stack_)
+    std::vector<SymbolicExpression::Ptr> retval;
+    for (const std::vector<SymbolicExpression::Ptr> &level: stack_)
         retval.insert(retval.end(), level.begin(), level.end());
     return retval;
 }
 
-const std::vector<SymbolicExpr::Ptr>&
+const std::vector<SymbolicExpression::Ptr>&
 SmtSolver::assertions(size_t level) const {
     ASSERT_require(level < stack_.size());
     return stack_[level];
@@ -511,7 +512,7 @@ SmtSolver::assertions(size_t level) const {
 
 
 void
-SmtSolver::insert(const SymbolicExpr::Ptr &expr) {
+SmtSolver::insert(const SymbolicExpression::Ptr &expr) {
     clearEvidence();
     ASSERT_not_null(expr);
     ASSERT_forbid(stack_.empty());
@@ -519,22 +520,22 @@ SmtSolver::insert(const SymbolicExpr::Ptr &expr) {
 }
 
 void
-SmtSolver::insert(const std::vector<SymbolicExpr::Ptr> &exprs) {
-    for (const SymbolicExpr::Ptr &expr: exprs)
+SmtSolver::insert(const std::vector<SymbolicExpression::Ptr> &exprs) {
+    for (const SymbolicExpression::Ptr &expr: exprs)
         insert(expr);
 }
 
 SmtSolver::Satisfiable
 SmtSolver::checkTrivial() {
     // Empty set of assertions is YES
-    std::vector<SymbolicExpr::Ptr> exprs = assertions();
+    std::vector<SymbolicExpression::Ptr> exprs = assertions();
     if (exprs.empty())
         return SAT_YES;
 
     // If any assertion is a constant zero, then NO
     // If all assertions are non-zero integer constants, then YES
     bool allTrue = true;
-    for (const SymbolicExpr::Ptr &expr: exprs) {
+    for (const SymbolicExpression::Ptr &expr: exprs) {
         if (expr->isIntegerConstant()) {
             ASSERT_require(1 == expr->nBits());
             if (expr->toUnsigned().get() == 0)
@@ -549,23 +550,23 @@ SmtSolver::checkTrivial() {
     return SAT_UNKNOWN;
 }
 
-std::vector<SymbolicExpr::Ptr>
-SmtSolver::normalizeVariables(const std::vector<SymbolicExpr::Ptr> &exprs, SymbolicExpr::ExprExprHashMap &index /*out*/) {
+std::vector<SymbolicExpression::Ptr>
+SmtSolver::normalizeVariables(const std::vector<SymbolicExpression::Ptr> &exprs, SymbolicExpression::ExprExprHashMap &index /*out*/) {
     index.clear();
     size_t varCounter = 0;
-    std::vector<SymbolicExpr::Ptr> retval;
+    std::vector<SymbolicExpression::Ptr> retval;
     retval.reserve(exprs.size());
-    for (const SymbolicExpr::Ptr &expr: exprs)
+    for (const SymbolicExpression::Ptr &expr: exprs)
         retval.push_back(expr->renameVariables(index /*in,out*/, varCounter /*in,out*/));
     return retval;
 }
 
-std::vector<SymbolicExpr::Ptr>
-SmtSolver::undoNormalization(const std::vector<SymbolicExpr::Ptr> &exprs, const SymbolicExpr::ExprExprHashMap &norm) {
-    SymbolicExpr::ExprExprHashMap denorm = norm.invert();
-    std::vector<SymbolicExpr::Ptr> retval;
+std::vector<SymbolicExpression::Ptr>
+SmtSolver::undoNormalization(const std::vector<SymbolicExpression::Ptr> &exprs, const SymbolicExpression::ExprExprHashMap &norm) {
+    SymbolicExpression::ExprExprHashMap denorm = norm.invert();
+    std::vector<SymbolicExpression::Ptr> retval;
     retval.reserve(exprs.size());
-    for (const SymbolicExpr::Ptr &expr: exprs)
+    for (const SymbolicExpression::Ptr &expr: exprs)
         retval.push_back(expr->substituteMultiple(denorm));
     return retval;
 }
@@ -576,7 +577,7 @@ SmtSolver::check() {
 
     if (mlog[DEBUG]) {
         mlog[DEBUG] <<"assertions:\n";
-        for (const SymbolicExpr::Ptr &expr: assertions())
+        for (const SymbolicExpression::Ptr &expr: assertions())
             mlog[DEBUG] <<"  " <<*expr <<"\n";
     }
 
@@ -693,7 +694,7 @@ SmtSolver::checkExe() {
     Sawyer::FileSystem::TemporaryFile tmpfile;
     {
         Sawyer::Stopwatch prepareTimer;
-        std::vector<SymbolicExpr::Ptr> exprs = assertions();
+        std::vector<SymbolicExpression::Ptr> exprs = assertions();
         Definitions defns;
         ProgressTask task(progress_, "smt-prepare");
         generateFile(tmpfile.stream(), exprs, &defns);
@@ -764,7 +765,7 @@ SmtSolver::checkExe() {
 #endif
 }
 
-SymbolicExpr::Ptr
+SymbolicExpression::Ptr
 SmtSolver::evidenceForAddress(uint64_t addr)
 {
     return evidenceForName(StringUtility::addrToString(addr));
@@ -963,8 +964,8 @@ SmtSolver::selfTest() {
     mlog[WHERE] <<"running self-tests\n";
     Sawyer::Message::Stream debug(mlog[DEBUG]);
 
-    using namespace SymbolicExpr;
-    typedef SymbolicExpr::Ptr E;
+    using namespace SymbolicExpression;
+    typedef SymbolicExpression::Ptr E;
 
     // Make sure we can parse the S-Expr output from solvers
     std::vector<SExpr::Ptr> sexprs = parseSExpressions("x () (x) (x y) ((x) (y))");

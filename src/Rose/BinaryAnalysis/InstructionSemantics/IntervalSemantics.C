@@ -3,6 +3,7 @@
 #include "sage3basic.h"
 #include <Rose/BinaryAnalysis/InstructionSemantics/IntervalSemantics.h>
 
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <boost/lexical_cast.hpp>
 #include <Sawyer/BitVector.h>
 

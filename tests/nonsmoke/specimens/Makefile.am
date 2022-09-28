@@ -1,2 +1,2 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
-SUBDIRS = binary c c++ fortran java
+SUBDIRS = binary c c++ fortran java cil

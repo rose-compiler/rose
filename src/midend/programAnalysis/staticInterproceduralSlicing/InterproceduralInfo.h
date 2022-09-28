@@ -70,7 +70,7 @@ class InterproceduralInfo
                                 SgNode* sliceImportantNode;
                                 //! SgNode pointin to the actual SgFunctionCall-node
                                 SgNode* sgFunctionCallExpNode;
-        SgNode* sgCallInterestingNode;
+        SgNode* sgCallInterestingNode = nullptr; /* PP (9/20/22) fix uninitialized use warning */
         // ! the callsite - one per SgFunctionCallExp
         // ! the actual-in nodes - one per argument
                                 std::vector<SgExpression*> actual_in;

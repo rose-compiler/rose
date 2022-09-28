@@ -235,12 +235,12 @@ my @extra_words = qw/
     callbacks			# missing from dictionary
     Concolic			# as in Concolic Testing
     demangler			# missing from dictionary
+    dereference                 # act of obtaining a pointee from a pointer
     enum
     enums
     i386			# Intel 80386
     LLVM			# the compiler technology
     M68k			# Motorola 68000
-    P2				# common abbreviation in ROSE for Partitioner2
     partitioner			# missing from dictionary
     reachability		# missing from dictionary
     RISC			# Reduced Instruction Set Computer
@@ -273,6 +273,14 @@ my %bad_words = (
     );
     
 
+
+
+###############################################################################################################################
+# Returns a warning prefix string if the specified policy is disabled, or an empty string if the policy is enabled.
+sub warning {
+    my($file_name, $policy_name) = @_;
+    return is_disabled_in_dir($file_name, $policy_name) ? "[WARNING] " : "";
+}
 
 ###############################################################################################################################
 # True if the specified header is deprecated using the approved deprecation mechanism.
@@ -410,7 +418,8 @@ sub checkWords {
 	if (exists $bad_words{$_}) {
 	    push @errors, "\"$_\" should be replaced by \"$bad_words{$_}\"";
 	} elsif (!exists $word_list->{$_}) {
-	    push @errors, "\"$_\" is not an English word";
+	    my($noDigits) = /^(.*?)\d+/; # check again after stripping trailing digits
+	    push @errors, "\"$_\" is not an English word" if !exists $word_list->{$noDigits};
 	}
     }
 
@@ -439,22 +448,24 @@ sub indent {
 }
 
 ###############################################################################################################################
-# How many violations were found
+# How many violations were found. Returns the total, and the number of errors.
 sub countViolations {
     my($violations) = @_;
     my $n = 0;
+    my $errors = 0;
     foreach (keys %{$violations}) {
 	die "invalid key $_" unless exists $policies{$_};
 	$n += @{$violations->{$_}};
+	$errors += scalar(grep {!/^\[WARNING\] /} @{$violations->{$_}});
     }
-    return $n;
+    return ($n, $errors);
 }
 
 ###############################################################################################################################
 # Print violations and return true if any are present.
 sub printViolations {
     my($violations) = @_;
-    my $total = countViolations($violations);
+    my($total,$nerrors) = countViolations($violations);
     return 0 if $total == 0;
 
     if (1 == $total) {
@@ -474,7 +485,7 @@ sub printViolations {
 	printf "        (%d) %s\n", ++$i, $_ for @{$violations->{$policy->{name}}};
 	print  "        No violations found for this policy\n" if 0 == @{$violations->{$policy->{name}}};
     }
-    return $total;
+    return $nerrors > 0;
 }
 
 ###############################################################################################################################
@@ -485,7 +496,6 @@ sub printViolations {
 my %violations;
 $violations{$_} = [] for keys %policies;
 
-my %notExists; # list of headers that were found to not exist.
 my $files = FileLister->new(@ARGV);
 my %docdirs = doxygenInputDirectories($files);
 my %words = loadWords;
@@ -495,78 +505,93 @@ while (my $filename = $files->next_file) {
         my @nsParts = split("/", $nsFile);
         my $ns = join("::", @nsParts);
 	my $dir = join("/", @nsParts[0 .. $#nsParts-1]);
+	my $note;
 
         # If this header is deprecated, then none of these rules apply
         next if headerIsDeprecated($filename);
 
-        # All public header files should use ".h" for their file extension
+        # All header files should use ".h" for their file extension
         if ($extension ne "h") {
-	    push @{$violations{h_extension}}, "file \"$filename\" must use \".h\" as its extension";
+	    my $w = warning($filename, 'h_extension');
+	    push @{$violations{h_extension}}, "${w}file \"$filename\" must use \".h\" as its extension";
         }
 
         # The directory must be an input for Doxygen if it contains a header file
         if (!exists $docdirs{$dir}) {
-	    push @{$violations{doxygen_input}}, "directory \"$root/$dir\" must be included in the list of Doxygen inputs";
+	    my $w = warning($filename, 'doxygen_input');
+	    push @{$violations{doxygen_input}}, "${w}directory \"$root/$dir\" must be included in the list of Doxygen inputs";
         }
         $docdirs{$dir} = 2;
 
 	# Namespace symbol must be composed of valid words.
-	push @{$violations{english_words}}, map("in \"$ns\", $_", checkWords($nsParts[-1], \%words));
-
+	if (my @badWords = checkWords($nsParts[-1], \%words)) {
+	    my $w = warning($filename, 'english_words');
+	    push @{$violations{english_words}}, map("${w}in \"$ns\", $_", @badWords);
+	}
+	    
 	# Namespace symbol must be PascalCase
-        my $nsLastCase = $nsParts[-1];
-        $nsLastCase =~ s/[A-Z]/X/g;
-        if (($nsLastCase =~ /XXX|_|-/ || $nsLastCase eq "XX" || $nsLastCase =~ /^[^X]/) && $nsLastCase =~ /[^X]/) {
-	    push @{$violations{namespace_capitalization}}, "in \"$ns\", \"$nsParts[-1]\" must be PascalCase";
-        } else {
-            # Check the the multi-inclusion-protection symbol is correct
-            my($expectedMipSymbol) = join("_", "ROSE", @nsParts[1 .. $#nsParts], "H");
-            my($ifndef,$def) = multiInclusionProtectionSymbols($filename);
-            if ($ifndef eq "") {
-		push @{$violations{include_once}}, "file \"$filename\" must have multi-inclusion protection using #ifndef/#define";
-            } elsif ($ifndef ne $expectedMipSymbol) {
-		push @{$violations{once_symbol}}, "file \"$filename\" multi-inclusion symbol must be \"$expectedMipSymbol\" (not \"$ifndef\")";
-            } elsif ($def eq "") {
-		push @{$violations{once_symbol}}, "file \"$filename\" multi-inclusion lacks #define";
-            }
-        }
-
+	my $nsLastCase = $nsParts[-1];
+	$nsLastCase =~ s/[A-Z]/X/g;
+	if (($nsLastCase =~ /XXX|_|-/ || $nsLastCase eq "XX" || $nsLastCase =~ /^[^X]/) && $nsLastCase =~ /[^X]/) {
+	    my $w = warning($filename, 'namespace_capitalization');
+	    push @{$violations{namespace_capitalization}}, "${w}in \"$ns\", \"$nsParts[-1]\" must be PascalCase";
+	} else {
+	    # Check the the multi-inclusion-protection symbol is correct
+	    my($expectedMipSymbol) = join("_", "ROSE", @nsParts[1 .. $#nsParts], "H");
+	    my($ifndef,$def) = multiInclusionProtectionSymbols($filename);
+	    if ($ifndef eq "") {
+		my $w = warning($filename, 'include_once');
+		push @{$violations{include_once}}, "${w}file \"$filename\" must have multi-inclusion protection using #ifndef/#define";
+	    } elsif ($ifndef ne $expectedMipSymbol) {
+		my $w = warning($filename, 'once_symbol');
+		push @{$violations{once_symbol}}, "${w}file \"$filename\" multi-inclusion symbol must be \"$expectedMipSymbol\" (not \"$ifndef\")";
+	    } elsif ($def eq "") {
+		my $w = warning($filename, 'once_symbol');
+		push @{$violations{once_symbol}}, "${note}file \"$filename\" multi-inclusion lacks #define";
+	    }
+	}
+	
         # The parent header must exist.
+	my $parentHeaderExists;
         my $parentHeader = join("/", $root, @nsParts[0 .. $#nsParts-1]) . ".h";
-        if (! -r $parentHeader) {
-            if ($#nsParts == 1 && $nsParts[0] eq "Rose") {
-                # For the time being, there is no src/Rose.h file because it would be confusing
-                # to have both <rose.h> and <Rose.h>, especially on file systems that don't follow
-                # POSIX specifications (like macOS).
-            } elsif (exists($notExists{$parentHeader})) {
-                # already printed this error
-            } else {
-                $notExists{$parentHeader} = 1;
-		push @{$violations{namespace_header_exists}}, "file \"$parentHeader\" must exist for $ns";
-            }
-            next;
-        }
+	if (! -r $parentHeader) {
+	    if ($#nsParts == 1 && $nsParts[0] eq "Rose") {
+		# For the time being, there is no src/Rose.h file because it would be confusing
+		# to have both <rose.h> and <Rose.h>, especially on file systems that don't follow
+		# POSIX specifications (like macOS).
+	    } else {
+		my $w = warning($filename, 'namespace_header_exists');
+		push @{$violations{namespace_header_exists}}, "${w}file \"$parentHeader\" must exist for $ns";
+	    }
+	} else {
+	    $parentHeaderExists = 1;
+	}
 
         # There must be a "#include <" . $nsFile . ".h>" in the parent
-        my $foundInclude = 0;
-        open PARENT, "<$parentHeader";
-        while (<PARENT>) {
-            if (my($sep, $name) = /^\s*#\s*include\s*([<"])(.*)[">]/) {
-                if ($name eq "$nsFile.h") {
-                    if ($sep ne "<") {
-			push @{$violations{include_by_angle_brackets}},
-			    "in \"$parentHeader\", \"$nsFile\" must be included with <> not \"\"";
-                    }
-                    $foundInclude++;
-                }
-            }
-        }
-        close PARENT;
-        if ($foundInclude == 0) {
-	    push @{$violations{namespace_header_includes_all}}, "file \"$parentHeader\" does not include <$nsFile.h>";
-	} elsif ($foundInclude > 1) {
-	    push @{$violations{namespace_header_includes_all}}, "file \"$parentHeader\" includes <$nsFile> more than once";
-        }
+	if ($parentHeaderExists) {
+	    my $foundInclude = 0;
+	    open PARENT, "<$parentHeader";
+	    while (<PARENT>) {
+		if (my($sep, $name) = /^\s*#\s*include\s*([<"])(.*)[">]/) {
+		    if ($name eq "$nsFile.h") {
+			if ($sep ne "<") {
+			    my $w = warning($filename, 'include_by_angle_brackets');
+			    push @{$violations{include_by_angle_brackets}},
+				"${w}in \"$parentHeader\", \"$nsFile\" must be included with <> not \"\"";
+			}
+			$foundInclude++;
+		    }
+		}
+	    }
+	    close PARENT;
+	    if ($foundInclude == 0) {
+		my $w = warning($filename, 'namespace_header_includes_all');
+		push @{$violations{namespace_header_includes_all}}, "${w}file \"$parentHeader\" does not include <$nsFile.h>";
+	    } elsif ($foundInclude > 1) {
+		my $w = warning($filename, 'namespace_header_includes_all');
+		push @{$violations{namespace_header_includes_all}}, "${w}file \"$parentHeader\" includes <$nsFile> more than once";
+	    }
+	}
     }
 }
 

@@ -6,6 +6,7 @@
 #include <Rose/CommandLine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
+#include <Rose/BinaryAnalysis/SymbolicExpression.h>
 #include <rose_strtoull.h>                              // rose
 #include <stringify.h>                                  // rose
 #include <Rose/StringUtility.h>
@@ -76,7 +77,7 @@ PlainTextFormatter::mayMust(std::ostream &out, FeasiblePath::MayOrMust mayMust, 
 }
 
 void
-PlainTextFormatter::objectAddress(std::ostream &out, const SymbolicExpr::Ptr &address) {
+PlainTextFormatter::objectAddress(std::ostream &out, const SymbolicExpression::Ptr &address) {
     out <<"  for address " <<*address <<"\n";
 }
 
@@ -251,7 +252,7 @@ PlainTextFormatter::solverEvidence(std::ostream &out, const Rose::BinaryAnalysis
             out <<"      none (trivial solution?)\n";
         } else {
             for (const std::string &name: names) {
-                if (SymbolicExpr::Ptr value = solver->evidenceForName(name)) {
+                if (SymbolicExpression::Ptr value = solver->evidenceForName(name)) {
                     out <<"      " <<name <<" = " <<*value <<"\n";
                 } else {
                     out <<"      " <<name <<" = unknown\n";
@@ -310,7 +311,7 @@ YamlFormatter::mayMust(std::ostream &out, FeasiblePath::MayOrMust mayMust, const
 }
 
 void
-YamlFormatter::objectAddress(std::ostream &out, const SymbolicExpr::Ptr &address) {
+YamlFormatter::objectAddress(std::ostream &out, const SymbolicExpression::Ptr &address) {
     writeln(out, "  address:", *address);
 }
 
@@ -497,7 +498,7 @@ YamlFormatter::solverEvidence(std::ostream &out, const Rose::BinaryAnalysis::Smt
             writeln(out, "  evidence:");
             for (const std::string &name: names) {
                 writeln(out, "    - name:", name);
-                if (SymbolicExpr::Ptr value = solver->evidenceForName(name)) {
+                if (SymbolicExpression::Ptr value = solver->evidenceForName(name)) {
                     writeln(out, "      value:", *value);
                 } else {
                     writeln(out, "      value:", "unknown");

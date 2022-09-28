@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-ROSE_FLAGS = -rose:verbose 0 -rose:experimental_fortran_frontend -I$(srcdir)
+ROSE_FLAGS = -rose:verbose 0 -rose:experimental_flang_frontend -I$(srcdir)
 
 AM_CPPFLAGS = $(ROSE_INCLUDES) 
 AM_LDFLAGS = $(ROSE_RPATHS)
@@ -150,32 +150,31 @@ recompile_translator:
 
 $(TEST_F90_Objects): recompile_translator ../../../testTranslator
 #	$(VALGRIND) ../../../testTranslator $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
-if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
-#	../../../testTranslator -rose:experimental_fortran_frontend -c $(srcdir)/$(@:.o=.f90)
-	../../../testTranslator -rose:experimental_fortran_frontend -rose:experimental_fortran_frontend_OFP_test -c $(srcdir)/$(@:.o=.f90)
+if ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION
+	../../../testTranslator -rose:experimental_flang_frontend -c $(srcdir)/$(@:.o=.f90)
 ## make sure output file is not empty
 #
 	@test -n "$$(find rose_$(@:.o=.f90) -size +0c)"
 endif
 
 $(TEST_F2018_Objects): recompile_translator ../../../testFrontEnd
-if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
-	../../../testFrontEnd -rose:experimental_fortran_frontend -rose:skip_syntax_check $(srcdir)/$(@:.o=.f90)
+if ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION
+	../../../testFrontEnd -rose:experimental_flang_frontend	-rose:skip_syntax_check $(srcdir)/$(@:.o=.f90)
 endif
 
 clean-local:
 	rm -f rose_*.* *.aterm *.mod *.o
 
 check-local:
-	@echo "Tests for experimental Fortran frontend."
-if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
+	@echo "Tests for experimental flang frontend."
+if ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION
 	@$(MAKE) $(PASSING_TEST_Objects)
 	@echo "*******************************************************************************************************************************"
 	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/Fortran_tests/experimental_frontend_tests: make check rule complete (terminated normally) ******"
 	@echo "*******************************************************************************************************************************"
 else
 	@echo "*******************************************************************************************"
-	@echo "***** Skipping tests of experimental Fortran frontend (must be configured explicitly) *****"
+	@echo "***** Skipping tests of experimental flang frontend (must be configured explicitly) *****"
 	@echo "*******************************************************************************************"
 endif
 

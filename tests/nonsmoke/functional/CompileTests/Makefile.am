@@ -195,11 +195,6 @@ if ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION
 SUBDIRS += experimental_jovial_tests
 endif
 
-# DQ (8/23/2017): Adding support for testing experimental Cobol support.
-if ROSE_EXPERIMENTAL_COBOL_ROSE_CONNECTION
-SUBDIRS += experimental_cobol_tests
-endif
-
 # Rasmussen (11/4/2017): Adding support for testing experimental Matlab support.
 if ROSE_EXPERIMENTAL_MATLAB_ROSE_CONNECTION
 SUBDIRS += experimental_matlab_tests
@@ -219,7 +214,6 @@ test_new_languages:
 #	cd experimental_csharp_tests; $(MAKE) test
 	cd experimental_ada_tests;    $(MAKE) test
 	cd experimental_jovial_tests; $(MAKE) test
-	cd experimental_cobol_tests;  $(MAKE) test
 
 # TV (08/07/2018): Added `status` target which generate `status.csv`
 status:

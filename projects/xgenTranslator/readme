@@ -1,7 +1,0 @@
-Code generator to generate multiple specializations of template functions
-* support tuning RAJA
-
-* matmulcpp11-gcc-E-v1.cxx: the single file example code using tunable RAJA policies
-
-2016
-Liao

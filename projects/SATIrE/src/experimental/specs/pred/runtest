@@ -1,4 +1,0 @@
-pred --sourceoutput tests/test1.C
-pred --sourceoutput tests/test3.C
-pred --sourceoutput tests/test8.C
-pred --sourceoutput reverse1.C

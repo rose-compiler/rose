@@ -1,1 +1,0 @@
-dot -Gsize="60,60" -Gpage="7,11" -Tps SAGEGEN_r1.dot -Gmargin=0.0 -o TEST.ps

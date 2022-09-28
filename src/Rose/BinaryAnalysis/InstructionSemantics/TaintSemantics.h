@@ -5,6 +5,7 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 
 #include <Rose/BinaryAnalysis/BasicTypes.h>
+#include <Rose/BinaryAnalysis/SymbolicExpression.h>
 
 namespace Rose {
 namespace BinaryAnalysis {              // documented elsewhere
@@ -95,7 +96,7 @@ protected:
 public:
     /** Instantiate a new prototypical value. Prototypical values are only used for their virtual constructors. */
     static SValuePtr instance() {
-        return SValuePtr(new SValue(SymbolicExpr::makeIntegerVariable(1)));
+        return SValuePtr(new SValue(SymbolicExpression::makeIntegerVariable(1)));
     }
 
     /** Instantiate a new data-flow bottom value of specified width.
@@ -104,26 +105,26 @@ public:
      *  allocating constructors. If you need a different taintedness then you need to change it with the @ref taintedness
      *  property. */
     static SValuePtr instance_bottom(size_t nbits) {
-        return SValuePtr(new SValue(SymbolicExpr::makeIntegerVariable(nbits, "", ExprNode::BOTTOM)));
+        return SValuePtr(new SValue(SymbolicExpression::makeIntegerVariable(nbits, "", ExprNode::BOTTOM)));
     }
 
     /** Instantiate a new undefined value of specified width. */
     static SValuePtr instance_undefined(size_t nbits) {
-        return SValuePtr(new SValue(SymbolicExpr::makeIntegerVariable(nbits)));
+        return SValuePtr(new SValue(SymbolicExpression::makeIntegerVariable(nbits)));
     }
 
     /** Instantiate a new unspecified value of specified width. */
     static SValuePtr instance_unspecified(size_t nbits) {
-        return SValuePtr(new SValue(SymbolicExpr::makeIntegerVariable(nbits, "", ExprNode::UNSPECIFIED)));
+        return SValuePtr(new SValue(SymbolicExpression::makeIntegerVariable(nbits, "", ExprNode::UNSPECIFIED)));
     }
 
     /** Instantiate a new concrete value. */
     static SValuePtr instance_integer(size_t nbits, uint64_t value) {
-        return SValuePtr(new SValue(SymbolicExpr::makeIntegerConstant(nbits, value)));
+        return SValuePtr(new SValue(SymbolicExpression::makeIntegerConstant(nbits, value)));
     }
 
     /** Instantiate a new symbolic value. */
-    static SValuePtr instance_symbolic(const SymbolicExpr::Ptr &value) {
+    static SValuePtr instance_symbolic(const SymbolicExpression::Ptr &value) {
         ASSERT_not_null(value);
         return SValuePtr(new SValue(value));
     }
