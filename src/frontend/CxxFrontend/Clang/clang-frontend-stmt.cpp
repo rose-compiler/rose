@@ -1950,9 +1950,19 @@ bool ClangToSageTranslator::VisitBinaryConditionalOperator(clang::BinaryConditio
 #endif
      bool res = true;
 
-     // TODO 
+     SgNode * tmp_cond  = Traverse(binary_conditional_operator->getCond());
+     SgExpression * cond_expr = isSgExpression(tmp_cond);
+     ROSE_ASSERT(cond_expr);
+     SgNode * tmp_true  = Traverse(binary_conditional_operator->getTrueExpr());
+     SgExpression * true_expr = isSgExpression(tmp_true);
+     ROSE_ASSERT(true_expr);
+     SgNode * tmp_false = Traverse(binary_conditional_operator->getFalseExpr());
+     SgExpression * false_expr = isSgExpression(tmp_false);
+     ROSE_ASSERT(false_expr);
+  
+     *node = SageBuilder::buildConditionalExp(cond_expr, true_expr, false_expr);
 
-     return VisitStmt(binary_conditional_operator, node) && res;
+     return VisitAbstractConditionalOperator(binary_conditional_operator, node) && res;
 }
 
 bool ClangToSageTranslator::VisitConditionalOperator(clang::ConditionalOperator * conditional_operator, SgNode ** node) {
@@ -3426,7 +3436,9 @@ bool ClangToSageTranslator::VisitOpaqueValueExpr(clang::OpaqueValueExpr * opaque
 #endif
     bool res = true;
 
-    // TODO
+    SgNode * sourceExpr  = Traverse(opaque_value_expr->getSourceExpr());
+
+    *node = sourceExpr;
 
     return VisitExpr(opaque_value_expr, node) && res;
 }
