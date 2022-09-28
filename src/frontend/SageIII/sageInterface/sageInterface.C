@@ -23401,6 +23401,7 @@ SgExprListExp * SageInterface::loopCollapsing(SgForStatement* loop, size_t colla
     std::vector<SgForStatement* > loops= SageInterface::querySubTree<SgForStatement>(target_loop,V_SgForStatement);
     ROSE_ASSERT(loops.size()>=collapsing_factor);
 
+    SgForStatement* temp_target_loop = NULL;
     SgExpression* temp_range_exp = NULL; //Raw iteration range
     SgExpression* temp_range_d_step_exp = NULL; //temp_range_exp / step[i]
     SgExpression* temp_condition_1 = NULL; //Check whether temp_range_exp % step[i] == 0
@@ -23435,7 +23436,7 @@ SgExprListExp * SageInterface::loopCollapsing(SgForStatement* loop, size_t colla
 
     for(size_t i = 0; i < collapsing_factor; i ++)
     {
-        SgForStatement* temp_target_loop = loops[i];
+        temp_target_loop = loops[i];
 
         // normalize the target loop first  // adjust to numbering starting from 0
         forLoopNormalization(temp_target_loop);
