@@ -1,0 +1,28 @@
+
+$CLASSNAME*  $CLASSNAME::getNodeByNodeIdInternal(size_t poolIdx, size_t itemIdx)
+  {          
+     ROSE_ASSERT(poolIdx < pools.size());
+     $CLASSNAME* poolStart = reinterpret_cast<$CLASSNAME*>(pools[poolIdx]);
+      
+     ROSE_ASSERT(itemIdx < pool_size);
+     return poolStart+itemIdx; 
+  }
+
+
+std::string $CLASSNAME::getNodeIdStringInternal($CLASSNAME* node)
+  {       
+     auto poolIt = std::upper_bound(pools.begin(), pools.end(), (unsigned char*)node);
+     ROSE_ASSERT(poolIt != pools.begin() && poolIt <= pools.end());
+     poolIt--;  //We always want the pool before the "first that compares greater".
+     size_t poolIdx = std::distance(pools.begin(), poolIt);  //Check this to make index from iterator
+  
+     $CLASSNAME* poolstart = reinterpret_cast<$CLASSNAME*>(*poolIt);
+     $CLASSNAME* poolend = poolstart + $CLASSNAME::pool_size;
+     ROSE_ASSERT(node >= poolstart && node < poolend);
+     size_t itemIdx = std::distance(poolstart, node);
+  
+     std::stringstream ss;
+     ss << poolIdx << "_" << itemIdx;
+     return ss.str();
+  }
+

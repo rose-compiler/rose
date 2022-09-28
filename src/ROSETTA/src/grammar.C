@@ -805,6 +805,51 @@ Grammar::buildTraverseMemoryPoolSupport( AstNodeClass & node, StringUtility::Fil
 
 
 StringUtility::FileWithLineNumbers
+Grammar::buildStringForNodeIdSource ( AstNodeClass & node )
+   {
+     string nodeIdFileName   = "../Grammar/grammarNodeId.macro";
+     StringUtility::FileWithLineNumbers returnString = readFileWithPos (nodeIdFileName);
+
+     returnString = GrammarString::copyEdit(returnString,"$CLASSNAME",node.getName());
+
+     return returnString;
+   }
+
+void
+Grammar::buildNodeIdSupport( AstNodeClass & node, StringUtility::FileWithLineNumbers & outputFile )
+   {
+
+     StringUtility::FileWithLineNumbers editString = buildStringForNodeIdSource(node);
+
+#if WRITE_SEPARATE_FILES_FOR_EACH_CLASS
+  // Now write out the file (each class in its own file)!
+     string fileExtension = ".C";
+     string directoryName = target_directory + sourceCodeDirectoryName();
+  // printf ("In buildTraverseMemoryPoolSupport(): directoryName = %s \n",directoryName.c_str());
+
+  // This should append the string to the target file.
+     appendFile ( editString, directoryName, node.getName(), fileExtension );
+#else
+     outputFile += editString;
+#endif
+
+#if 1
+  // Call this function recursively on the children of this node in the tree
+     vector<AstNodeClass *>::iterator treeNodeIterator;
+     for( treeNodeIterator = node.subclasses.begin();
+          treeNodeIterator != node.subclasses.end();
+          treeNodeIterator++ )
+        {
+          ROSE_ASSERT ((*treeNodeIterator) != NULL);
+          ROSE_ASSERT ((*treeNodeIterator)->getBaseClass() != NULL);
+
+          buildNodeIdSupport(**treeNodeIterator,outputFile);
+        }
+#endif
+   }
+
+
+StringUtility::FileWithLineNumbers
 Grammar::buildStringToTestPointerForContainmentInMemoryPoolSource ( AstNodeClass & node )
    {
      string isClassNameFunctionTemplateFileName   = "../Grammar/grammarTestPointerForContainmentInMemoryPool.macro";
@@ -3131,10 +3176,11 @@ Grammar::buildCode ()
      buildNewAndDeleteOperators(*rootNode,ROSE_ArrayGrammarEmptySourceFile);
      buildCopyMemberFunctions(*rootNode,ROSE_ArrayGrammarEmptySourceFile);
      buildTraverseMemoryPoolSupport(*rootNode,ROSE_ArrayGrammarEmptySourceFile);
+     buildNodeIdSupport(*rootNode,ROSE_ArrayGrammarEmptySourceFile);
      buildStringForCheckingIfDataMembersAreInMemoryPoolSupport(*rootNode,ROSE_ArrayGrammarEmptySourceFile);
-#else
+#else //WRITE_SEPARATE_FILES_FOR_EACH_CLASS
      buildSourceFiles(*rootNode,ROSE_ArrayGrammarSourceFile);
-#endif
+#endif //WRITE_SEPARATE_FILES_FOR_EACH_CLASS
      if (verbose)
          cout << "DONE: buildSourceFiles()" << endl;
 
@@ -3146,6 +3192,11 @@ Grammar::buildCode ()
   // of the memory pools for each IR node)
      string memoryPoolTraversalSupport = buildMemoryPoolBasedTraversalSupport();
      ROSE_ArrayGrammarSourceFile.push_back(StringUtility::StringWithLineNumber(memoryPoolTraversalSupport, "", 1));
+
+  // Jim Leek (09/23/2022): Build the NodeId code     
+     string nodeIdSupport = buildMemoryPoolBasedNodeId();
+     ROSE_ArrayGrammarSourceFile.push_back(StringUtility::StringWithLineNumber(nodeIdSupport, "", 1));
+
 
      Grammar::writeFile(ROSE_ArrayGrammarSourceFile, target_directory, getGrammarName(), ".C");
 
@@ -3189,6 +3240,28 @@ Grammar::buildCode ()
          cout << "DONE: buildTraverseMemoryPoolSupport()" << endl;
 
      Grammar::writeFile(ROSE_TraverseMemoryPoolSourceFile, target_directory, getGrammarName() + "TraverseMemoryPool", ".C");
+
+   //--------------------------------------------
+   // generate code for the memory pool traversal
+   //--------------------------------------------
+     StringUtility::FileWithLineNumbers ROSE_NodeIdSourceFile;
+
+     ROSE_NodeIdSourceFile.push_back(StringUtility::StringWithLineNumber(includeHeaderString, "", 1));
+  // Now build the source code for the terminals and non-terminals in the grammar
+     ROSE_ASSERT (rootNode != NULL);
+
+#if WRITE_SEPARATE_FILES_FOR_EACH_CLASS
+     printf ("When generating small files we combine the NodeId support into the source files above. \n");
+#else
+     buildNodeIdSupport(*rootNode,ROSE_NodeIdSourceFile);
+#endif
+     if (verbose)
+         cout << "DONE: buildNodeIdSupport()" << endl;
+
+  // printf ("Exiting after building traverse memory pool functions \n");
+  // ROSE_ASSERT(false);
+     Grammar::writeFile(ROSE_NodeIdSourceFile, target_directory, getGrammarName() + "NodeIdSupport", ".C");
+
 
   // --------------------------------------------
   // generate code for the memory pool traversal

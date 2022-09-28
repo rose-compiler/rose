@@ -75,6 +75,24 @@ std::vector<unsigned char*> $CLASSNAME::pools;
         } while (0);
 #endif
 
+
+#ifndef MEMORY_POOL_SORTED_INSERT
+#define MEMORY_POOL_SORTED_INSERT
+//Jim Leek: Is this really the only way to avoid multiple definitions
+/**
+ * \function sorted_insert
+ *  
+ * Inserts a value in its correct place in a sorted vector.  Used in all_pools
+ **/
+template<typename T>
+inline void sorted_insert(std::vector<T>& vec, T& element) {
+
+  typename std::vector<T>::iterator insertIt;
+  insertIt = std::upper_bound(vec.begin(), vec.end(), element);
+  vec.insert(insertIt, element);
+}
+#endif // MEMORY_POOL_SORTED_INSERT
+
 // DQ (11/1/2016): This is redundant and repeated hundreds to times which is misleading.
 // This macro appears to be set within code within ROSETTA, but only for when _MSC_VER is true.
 #define USE_CPP_NEW_DELETE_OPERATORS FALSE
@@ -136,8 +154,9 @@ void *$CLASSNAME::operator new ( size_t Size )
         }
         alloc[$CLASSNAME::pool_size-1].p_freepointer = nullptr;
 
-        $CLASSNAME::pools.push_back ( (unsigned char *) alloc );
-        SgNode::all_pools.push_back (std::tuple<unsigned char *, unsigned, VariantT>( (unsigned char *) alloc, $CLASSNAME::pool_size * sizeof($CLASSNAME), V_$CLASSNAME ) );
+	unsigned char* ualloc = (unsigned char *) alloc;
+        sorted_insert($CLASSNAME::pools, ualloc );
+        SgNode::all_pools.push_back (std::tuple<unsigned char *, unsigned, VariantT>( ualloc, $CLASSNAME::pool_size * sizeof($CLASSNAME), V_$CLASSNAME ) );
         $CLASSNAME::next_node = alloc;
     }
     ROSE_ASSERT($CLASSNAME::next_node != nullptr);

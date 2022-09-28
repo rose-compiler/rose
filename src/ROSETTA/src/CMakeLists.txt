@@ -31,6 +31,7 @@ set(CxxGrammarMetaProgram_SRCS
   visitorSupport.C
   poolBasedTraversal.C
   node.C
+  nodeIdSupport.C
   buildAstFileIO.C
   buildRoseTraits.C
   buildStorageClasses.C
@@ -68,6 +69,7 @@ set(GRAMMAR_SOURCE_FILES
   ${CMAKE_SOURCE_DIR}/src/ROSETTA/Grammar/grammarMainClassSourceCodeMacros.macro 
   ${CMAKE_SOURCE_DIR}/src/ROSETTA/Grammar/grammarNewDeleteOperatorMacros.macro 
   ${CMAKE_SOURCE_DIR}/src/ROSETTA/Grammar/grammarTraverseMemoryPool.macro 
+  ${CMAKE_SOURCE_DIR}/src/ROSETTA/Grammar/grammarNodeId.macro 
   ${CMAKE_SOURCE_DIR}/src/ROSETTA/Grammar/grammarCheckingIfDataMembersAreInMemoryPool.macro 
   ${CMAKE_SOURCE_DIR}/src/ROSETTA/Grammar/grammarStorageClassDeclatationMacros.macro 
   ${CMAKE_SOURCE_DIR}/src/ROSETTA/Grammar/grammarStorageClassDefinitionMacros.macro 
