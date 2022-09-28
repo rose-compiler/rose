@@ -1,0 +1,605 @@
+#!/usr/bin/perl
+# DO NOT DISABLE without first checking with a ROSE core developer
+BEGIN {push @INC, $1 if $0 =~ /(.*)\//}
+use strict;
+use FileLister;
+use Policies;
+
+my $desc = <<EOF;
+The \$ROSE/src/Rose directory is somewhat more structured than many other
+parts of ROSE. It represents the ::Rose namespace and everything it contains.
+
+Currently, some parts of the ::Rose namespace exist in other source directories,
+and our goal is to gradually move them to a directory hierarchy that mirrors the
+namespace hierarchy. As files are moved into the \$ROSE/src/Rose directory
+hierarchy, they must also be modified to adhere to the policies listed here.
+EOF
+
+# The following is a list of policies that we are enforcing for everything
+# under the new $ROSE/src/Rose directory.
+my @policies = (
+
+    #------------------------------------------------------------------------
+    {
+	name => 'namespace_capitalization',
+	
+	policy =>
+	'A namespace MUST be capitalized as PascalCase, where the first letter
+	of each word is capitalized and the remaining letters are lower-case.
+	Abbreviations and acronyms (when allowed) are treated as words except
+	that the following acronyms MUST be all caps when they stand alone: API,
+	AST, CFG, and IO.',
+
+	reason =>
+	'Consistent capitalization means that the user has to consult
+	documentation less frequently to figure out how to spell things. The
+	reason acronyms are capitalized as if they are words is because things
+	like "AstToPdf" and "CfgCsvIo" are generally easier to read than
+	"ASTToPDF" and "CFGCSVIO". The exception for the few stand alone
+	acronyms is because they\'re usually spelled that way already in ROSE
+	and occur frequently.'
+    },
+
+    #------------------------------------------------------------------------
+    {
+	name => 'english_words',
+	
+	policy =>
+	'The individual words componsing a PascalCase symbol MUST be standard
+	English words, words created consistently from standard English words,
+	or a list of exceptional words. You can find the exceptional words in
+	the script that impliments this policy. The policy also has a list of
+	words that MUST NOT be used. Any changes to these lists should be
+	approved at a ROSE developers\' meeting.',
+
+	reason =>
+	'This policy attempts to avoid a proliferation of mixing of full words
+	and their abbreviations or acronyms since lack of consistent spelling
+	would force users to consult the documentation more often to find out
+	how to spell things. Users and ROSE authors are free to create their own
+	private aliases if they\'re burdened by increased symbol lengths.'
+    },
+
+    #------------------------------------------------------------------------
+    {
+	name => 'namespace_header_exists',
+	
+	policy =>
+	'For every namespace (e.g., Rose::Foo::Bar), there MUST be a header file
+	whose name mirrors the namespace (e.g., <Rose/Foo/Bar.h>. This is called
+	the "namespace header". A temporary exception to this rule is that there
+	is no <Rose.h> since it would be confusing due to already having a
+	<rose.h> that serves a slightly different purpose.',
+
+	reason =>
+	'This is so that users know which file they need to include in order
+	to use that namespace.'
+    },
+
+    #------------------------------------------------------------------------
+    {
+	# FIXME: untested
+	name => 'namespace_directory_exists',
+	
+	policy =>
+	'If a namespace has more than one header file, or more than one
+	compilation unit, or it has sub-namespaces, then it MUST have its own
+	directory (e.g., $ROSE/src/Rose/Foo/Bar) that contains all files related
+	to the namespace (other than the "namespace header" mentioned in another
+	policy). This directory is called the "namespace directory". A namespace
+	that doesn\'t meet this condition MAY either have its own namespace
+	directory or place its one or two source files in the directory of its
+	parent namespace.',
+
+	reason =>
+	'Placing source files in a directory is a form of encapsulation, with
+	all its benefits, and makes the directory hierarchy mirror the namespace
+	hierarchy. It also eliminates the need to prefix its files with a common
+	string to avoid potential clashes with other files.'
+    },
+
+    #------------------------------------------------------------------------
+    {
+	name => 'doxygen_input',
+	
+	policy =>
+	'Every directory that contains a public header file MUST be listed as a
+	Doxygen input, and all directories listed as Doxygen input MUST contain
+	at least one header.',
+
+	reason =>
+	'Namespaces are useless if they\'re not documented, and Doxygen will not
+	pick up the documentation if the directory is not listed as an input. We
+	also want to make sure that our Doxygen configuration stays clean by not
+	listing directories that have been removed (or misspelled).'
+    },
+
+    #------------------------------------------------------------------------
+    {
+	name => 'namespace_header_includes_all',
+	
+	policy =>
+	'If a namespace has a namespace directory, then the namespace header
+	(located in the directory of the parent namespace) MUST #include all
+	other public headers associated with the namespace (e.g.,
+	<Rose/Foo/Bar.h> must #include all the headers with names like
+	<Rose/Foo/Bar/*.h>). A temporary exception to this rule is that there is
+	no <Rose.h> file that #include\'s everything for the ::Rose namespace.',
+
+	reason => 
+	'This permits users to obtain with a single #include all declarations
+	that are necessary in order to use a particular namespace. This
+	addresses the concern that having finer granularity header files will
+	cause a burden to the user by increasing the number of
+	#include directives they need.'
+    },
+
+    #------------------------------------------------------------------------
+    {
+	name => 'h_extension',
+	
+	policy =>
+	'Every public header file MUST use the extension ".h".',
+
+	reason =>
+	'This consistency permits users to spell header files correctly without
+	having to consult the documentation. Also, by avoiding uncommon
+	extensions, it increases the chance that a user\'s editor will properly
+	recognize the file as containing source code.'
+    },
+
+    #------------------------------------------------------------------------
+    {
+	name => 'include_by_angle_brackets',
+	
+	policy =>
+	'All #include directives MUST use angle brackets instead of quotes.',
+
+	reason =>
+	'Although not stated in any C or C++ language standard, many compilers
+	treat the two forms of #include differently, such as adding an implicit
+	search path (e.g., "-I."). Not only would search paths be inconsisently
+	applied for ROSE headers that are included by a combination of angle
+	brackets and quotes, but the quotes may cause the compiler to look for
+	ROSE header files from the user\'s current working directory (in
+	addition to the ROSE installation directory) which is always incorrect
+	and could result in finding a user\'s header file instead of a ROSE
+	header file (although this is mostly of concern when a header file is
+	included using only its base name and the base name is a common name
+	like "version.h", "utility.h", "tree.h", "exception.h", etc.'
+    },
+
+    #------------------------------------------------------------------------
+    {
+	name => 'include_once',
+	
+	policy =>
+	'Every header file MUST be protected from multiple inclusion of the form
+	"#ifndef SYMBOL" followed by "#define SYMBOL".',
+
+	reason =>
+	'This permits the header to be safely and efficiently included multiple
+	times directly and/or indirectly. Do not use "#pragma once" because it
+	is not portable.'
+    },
+
+    #------------------------------------------------------------------------
+    {
+	name => 'once_symbol',
+	
+	policy =>
+	'The C preprocessor symbol used for multiple inclusion protection MUST
+	be of the form "ROSE_x_H" where "x" is formed by taking the fully
+	qualified namespace, removing the leading "Rose" component, and
+	replacing each component separator ("::") with an underscore
+	("_"). Capitalization of the components of "x" must match capitalization
+	of the namespace components.',
+
+	reason =>
+	'This enables users to test whether a certain ROSE capability is present
+	in their installed version of ROSE by testing whether a particular
+	header has been included indirectly. For instance, the user might
+	include <Rose/BinaryAnalysis/Disassembler.h> and then check whether
+	ROSE_BinaryAnalysis_Disassembler_Jvm_H is defined in order to determine
+	if this version of ROSE supports analysis of Java class files. The
+	reason for "ROSE" being allcaps is because we have a separate policy
+	that states that all ROSE-related C preprocessor symbols begin with
+	"ROSE_".'
+    },
+);
+
+# Policies indexed by name
+my %policies;
+$policies{$_->{name}} = $_ for @policies;
+    
+###############################################################################################################################
+# List of ROSE words that don't appear in the dictionary.
+#
+# DO NOT ADD ABBREVIATIONS TO THIS LIST UNLESS THEY ARE ALREADY ROUTINELY USED IN ROSE.
+#
+# Abbreviations are discouraged because we want to avoid having the situation where some ROSE authors use the abbreviation and
+# others don't, resulting in a situation where users never know whether to use the full word or the abbreviation! Don't worry
+# much about having to type long names -- that's why C++ has type aliasing and 'using' statements that allow you and users to
+# use whatever abbreviation you and they want in order to save typing.
+#
+# By the way, be careful what you put in the "comments" because they're not actually comments. The words in the comments will
+# be added to the extra words list. Case is not important in this list (use any combination of upper and lower case)
+my @extra_words = qw/
+    AARCH32			# ARM architecture
+    AARCH64			# ARM architecture
+    Asm				# Assembly
+    AST 			# Abstract Syntax Tree
+    CFG				# Control Flow Graph
+    CIL				# Common Intermediate Language
+    JVM				# Java Virtual Machine
+    callbacks			# missing from dictionary
+    Concolic			# as in Concolic Testing
+    demangler			# missing from dictionary
+    dereference                 # act of obtaining a pointee from a pointer
+    enum
+    enums
+    i386			# Intel 80386
+    LLVM			# the compiler technology
+    M68k			# Motorola 68000
+    partitioner			# missing from dictionary
+    reachability		# missing from dictionary
+    RISC			# Reduced Instruction Set Computer
+    SMT				# symmetric modulo theory
+    SMTLIB			# a language for SMT solvers
+    SRecord			# Motoroal S-Record format
+    SValue			# semantic value
+    traversal			# missing from dictionary
+    unparser			# missing from dictionary
+    X86				# Intel 8086 family
+    YAML			# Yet Another Markup Language
+    Z3				# a particular SMT solver
+    /;
+
+###############################################################################################################################
+# This is a list of abbreviations we want to avoid. The left hand column must be spelled all lower case. The right hand column
+# is the PascalCase replacement that should be used.
+my %bad_words = (
+    # Bad word              Replacement           What already uses the replacement that may cause user confusion
+    #==================     ====================  ================================================================
+    'cmdline'           => 'CommandLine',         # Rose::CommandLine etc.
+    'config'            => 'Configuration',	  # Rose::BinaryAnalysis::Partitioner2::Configuration, ::Configuration, etc.
+    'deref'             => 'Dereference',	  # CodeThorn, RTED, Fuse, C++ backend, etc.
+    'expr'              => 'Expression',	  # SgExpression, SgAsmBinaryExpression, SgAwaitExpression, etc.
+    'oob'               => 'OutOfBounds',         # uncommon abbreviation
+    'uninit'            => 'Uninitialized',	  # CodeThorn, Compass, ROSETTA-generated code, Flang frontend, generic data-flow, etc.
+    'util' 		=> 'Utility',             # StringUtility, etc.
+    'utils'             => 'Utility',             # StringUtility, etc.
+    'utilities'         => 'Utility',             # StringUtility, etc.
+    );
+    
+
+
+
+###############################################################################################################################
+# Returns a warning prefix string if the specified policy is disabled, or an empty string if the policy is enabled.
+sub warning {
+    my($file_name, $policy_name) = @_;
+    return is_disabled_in_dir($file_name, $policy_name) ? "[WARNING] " : "";
+}
+
+###############################################################################################################################
+# True if the specified header is deprecated using the approved deprecation mechanism.
+sub headerIsDeprecated {
+    my($filename) = @_;
+    my($isDeprecated);
+    open HEADER, "<$filename" or return;
+    while (<HEADER>) {
+        if (/ROSE_PRAGMA_MESSAGE\("This header is deprecated/) {
+            $isDeprecated = 1;
+            last;
+        }
+    }
+    close HEADER;
+    return $isDeprecated;
+}
+
+###############################################################################################################################
+# The symbol used to protect this header from mutliple inclusion. The return value is a pair consisting of the #ifndef symbol
+# and the following #define symbol.
+sub multiInclusionProtectionSymbols {
+    my($filename) = @_;
+    open HEADER, "<$filename" or return;
+    while (<HEADER>) {
+        if (/^\s*#\s*ifndef\s+(\w+)/) {
+            my $ifndef = $1;
+            while (<HEADER>) {
+                if (/^\s*#\s*define\s+(\w+)/) {
+                    my $def = $1;
+                    close HEADER;
+                    return ($ifndef, $def);
+                }
+            }
+            close HEADER;
+            return ($ifndef, undef);
+        }
+    }
+    close HEADER;
+    return ();
+}
+
+###############################################################################################################################
+# Read the Doxygen configuration file and get a list of input directories under src/Rose.
+sub doxygenInputDirectories {
+    my($lister) = @_;
+    my $configName = $lister->{gitdir} . "/docs/Rose/rose.cfg.in";
+    my %dirs;
+    open CONFIG, '<', $configName or return;
+    while (<CONFIG>) {
+        if (/^\s*INPUT\s*=/) {
+            $dirs{$1} = 1 if /\@top_srcdir\@\/src\/(Rose\S*)/;
+            while (<CONFIG>) {
+                $dirs{$1} = 1 if /\@top_srcdir\@\/src\/(Rose\S*)/;
+            }
+            close CONFIG;
+            return %dirs;
+        }
+    }
+    close CONFIG;
+    return %dirs;
+}
+
+###############################################################################################################################
+# Load English words
+sub loadWords {
+    my %words;
+    open WORDS, '</usr/share/dict/words' or return;
+    while (<WORDS>) {
+	chomp $_;
+	$_ = lc $_;
+	if (/^[a-z]+$/) {
+	    $words{$_} = 1;
+	    
+	    # Source code often makes words by adding "er" to a verb, like "loader"
+	    if (/e$/) {
+		$words{$_ . "r"} = 2;
+	    } elsif (/[aeiou]([^aeiou])$/) {
+		$words{$_ . $1 . "er"} = 2;
+	    } else {
+		$words{$_ . "er"} = 2;
+	    }
+	}
+    }
+    close WORDS;
+
+    # Add special words, but only if we found any words.
+    if (keys %words) {
+	foreach (@extra_words) {
+	    $_ = lc $_;
+	    $words{lc $_} = 3 if /^[a-z][a-z0-9]*$/;
+	}
+    }
+
+    return %words;
+}
+
+###############################################################################################################################
+# Given a word that looks plural, return a singular spelling
+sub depluralize {
+    my($word, $word_list) = @_;
+
+    my @possibilities;
+    push @possibilities, $1."y" if $word =~ /^(.+)ies$/;
+    push @possibilities, $1 if $word =~ /^(.+)s$/;
+    push @possibilities, $1."ex" if $word =~ /^(.*)ices$/;
+
+    foreach (@possibilities) {
+	return $_ if exists $word_list->{$_};
+    }
+
+    return;
+}
+
+###############################################################################################################################
+# Split a PascalCase, camelCase, or snake_case symbol into individual word components
+sub splitSymbolIntoWords {
+    my($symbol) = @_;
+    my $s = $symbol;
+    my @retval;
+    while ($s ne "" && $s =~ /^_?([A-Z]*[a-z0-9]*)(.*)/) {
+	my ($word, $rest) = (lc $1, $2);
+	push @retval, $word;
+	$s = $rest;
+    }
+    return @retval;
+}
+	
+###############################################################################################################################
+# Check that all parts of a symbol are words
+sub checkWords {
+    my($symbol, $word_list) = @_;
+    my @words = splitSymbolIntoWords($symbol);
+    my @errors;
+    foreach (@words) {
+	if (exists $bad_words{$_}) {
+	    push @errors, "\"$_\" should be replaced by \"$bad_words{$_}\"";
+	} elsif (!exists $word_list->{$_}) {
+	    my($noDigits) = /^(.*?)\d+/; # check again after stripping trailing digits
+	    push @errors, "\"$_\" is not an English word" if !exists $word_list->{$noDigits};
+	}
+    }
+
+    #my $last_word = $words[-1];
+    #if (my($singular) = depluralize($last_word, $word_list)) {
+    #	push @errors, "\"$last_word\" should probably not be plural";
+    #}
+
+    return @errors;
+}
+
+###############################################################################################################################
+# Split the string into lines, replace all indentation with the specified string.
+sub indent {
+    my($indentation, @s) = @_;
+    my @lines;
+    foreach (@s) {
+	chomp;
+	foreach (split /\n/) {
+	    s/^\s+//;
+	    push @lines, $_;
+	}
+    }
+    return "" unless @lines;
+    return $indentation . join("\n" . $indentation, @lines) . "\n";
+}
+
+###############################################################################################################################
+# How many violations were found. Returns the total, and the number of errors.
+sub countViolations {
+    my($violations) = @_;
+    my $n = 0;
+    my $errors = 0;
+    foreach (keys %{$violations}) {
+	die "invalid key $_" unless exists $policies{$_};
+	$n += @{$violations->{$_}};
+	$errors += scalar(grep {!/^\[WARNING\] /} @{$violations->{$_}});
+    }
+    return ($n, $errors);
+}
+
+###############################################################################################################################
+# Print violations and return true if any are present.
+sub printViolations {
+    my($violations) = @_;
+    my($total,$nerrors) = countViolations($violations);
+    return 0 if $total == 0;
+
+    if (1 == $total) {
+	print $desc, "\nThe following violation was found:\n";
+    } else {
+	print $desc, "\nThe following $total violations were found:\n";
+    }
+
+    my $i = 0;
+    my $policy_number = 0;
+    foreach (@policies) {
+	my $policy = $_;
+	print "\n    ", '-' x 90, "\n";
+	print "    Policy #", ++$policy_number, " \"", $policy->{name}, "\"\n\n";
+	print indent("    ", "Requirement: " . $policy->{policy}), "\n";
+	print indent("    ", "Reason: " . $policy->{reason}), "\n";
+	printf "        (%d) %s\n", ++$i, $_ for @{$violations->{$policy->{name}}};
+	print  "        No violations found for this policy\n" if 0 == @{$violations->{$policy->{name}}};
+    }
+    return $nerrors > 0;
+}
+
+###############################################################################################################################
+# Main program
+
+# Policy violations detected. The hash keys are the violation names (same as keys of %policies), and the values are each
+# a list of error messages.
+my %violations;
+$violations{$_} = [] for keys %policies;
+
+my $files = FileLister->new(@ARGV);
+my %docdirs = doxygenInputDirectories($files);
+my %words = loadWords;
+while (my $filename = $files->next_file) {
+    if ($filename =~ /^(.*\/src)\/(Rose\/.*)\.(h|hpp|h\+\+|H)/) {
+        my ($root, $nsFile, $extension) = ($1, $2, $3);
+        my @nsParts = split("/", $nsFile);
+        my $ns = join("::", @nsParts);
+	my $dir = join("/", @nsParts[0 .. $#nsParts-1]);
+	my $note;
+
+        # If this header is deprecated, then none of these rules apply
+        next if headerIsDeprecated($filename);
+
+        # All header files should use ".h" for their file extension
+        if ($extension ne "h") {
+	    my $w = warning($filename, 'h_extension');
+	    push @{$violations{h_extension}}, "${w}file \"$filename\" must use \".h\" as its extension";
+        }
+
+        # The directory must be an input for Doxygen if it contains a header file
+        if (!exists $docdirs{$dir}) {
+	    my $w = warning($filename, 'doxygen_input');
+	    push @{$violations{doxygen_input}}, "${w}directory \"$root/$dir\" must be included in the list of Doxygen inputs";
+        }
+        $docdirs{$dir} = 2;
+
+	# Namespace symbol must be composed of valid words.
+	if (my @badWords = checkWords($nsParts[-1], \%words)) {
+	    my $w = warning($filename, 'english_words');
+	    push @{$violations{english_words}}, map("${w}in \"$ns\", $_", @badWords);
+	}
+	    
+	# Namespace symbol must be PascalCase
+	my $nsLastCase = $nsParts[-1];
+	$nsLastCase =~ s/[A-Z]/X/g;
+	if (($nsLastCase =~ /XXX|_|-/ || $nsLastCase eq "XX" || $nsLastCase =~ /^[^X]/) && $nsLastCase =~ /[^X]/) {
+	    my $w = warning($filename, 'namespace_capitalization');
+	    push @{$violations{namespace_capitalization}}, "${w}in \"$ns\", \"$nsParts[-1]\" must be PascalCase";
+	} else {
+	    # Check the the multi-inclusion-protection symbol is correct
+	    my($expectedMipSymbol) = join("_", "ROSE", @nsParts[1 .. $#nsParts], "H");
+	    my($ifndef,$def) = multiInclusionProtectionSymbols($filename);
+	    if ($ifndef eq "") {
+		my $w = warning($filename, 'include_once');
+		push @{$violations{include_once}}, "${w}file \"$filename\" must have multi-inclusion protection using #ifndef/#define";
+	    } elsif ($ifndef ne $expectedMipSymbol) {
+		my $w = warning($filename, 'once_symbol');
+		push @{$violations{once_symbol}}, "${w}file \"$filename\" multi-inclusion symbol must be \"$expectedMipSymbol\" (not \"$ifndef\")";
+	    } elsif ($def eq "") {
+		my $w = warning($filename, 'once_symbol');
+		push @{$violations{once_symbol}}, "${note}file \"$filename\" multi-inclusion lacks #define";
+	    }
+	}
+	
+        # The parent header must exist.
+	my $parentHeaderExists;
+        my $parentHeader = join("/", $root, @nsParts[0 .. $#nsParts-1]) . ".h";
+	if (! -r $parentHeader) {
+	    if ($#nsParts == 1 && $nsParts[0] eq "Rose") {
+		# For the time being, there is no src/Rose.h file because it would be confusing
+		# to have both <rose.h> and <Rose.h>, especially on file systems that don't follow
+		# POSIX specifications (like macOS).
+	    } else {
+		my $w = warning($filename, 'namespace_header_exists');
+		push @{$violations{namespace_header_exists}}, "${w}file \"$parentHeader\" must exist for $ns";
+	    }
+	} else {
+	    $parentHeaderExists = 1;
+	}
+
+        # There must be a "#include <" . $nsFile . ".h>" in the parent
+	if ($parentHeaderExists) {
+	    my $foundInclude = 0;
+	    open PARENT, "<$parentHeader";
+	    while (<PARENT>) {
+		if (my($sep, $name) = /^\s*#\s*include\s*([<"])(.*)[">]/) {
+		    if ($name eq "$nsFile.h") {
+			if ($sep ne "<") {
+			    my $w = warning($filename, 'include_by_angle_brackets');
+			    push @{$violations{include_by_angle_brackets}},
+				"${w}in \"$parentHeader\", \"$nsFile\" must be included with <> not \"\"";
+			}
+			$foundInclude++;
+		    }
+		}
+	    }
+	    close PARENT;
+	    if ($foundInclude == 0) {
+		my $w = warning($filename, 'namespace_header_includes_all');
+		push @{$violations{namespace_header_includes_all}}, "${w}file \"$parentHeader\" does not include <$nsFile.h>";
+	    } elsif ($foundInclude > 1) {
+		my $w = warning($filename, 'namespace_header_includes_all');
+		push @{$violations{namespace_header_includes_all}}, "${w}file \"$parentHeader\" includes <$nsFile> more than once";
+	    }
+	}
+    }
+}
+
+# Are there any doxygen directories that are not referenced?
+foreach (keys %docdirs) {
+    if ($docdirs{$_} == 1) {
+	push @{$violations{doxygen_input}}, "directory \"src/$_\" is listed as a doxygen input but is not used";
+    }
+}
+
+exit printViolations(\%violations);
