@@ -54,7 +54,7 @@ public:
     using Entries = std::map<std::string/*name*/, RegisterDescriptor>;
 
     /** List of register descriptors in dictionary. */
-    using RegisterDescriptors = std::vector<RegisterDescriptor>;
+    using RegisterDescriptors = Rose::BinaryAnalysis::RegisterDescriptors;
 
 private:
     // a descriptor can have more than one name

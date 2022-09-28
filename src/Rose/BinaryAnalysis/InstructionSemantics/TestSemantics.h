@@ -6,7 +6,6 @@
 
 #include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
-#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/CommandLine.h>
 
 namespace Rose {

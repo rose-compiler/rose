@@ -12,9 +12,9 @@
 #include <Rose/BinaryAnalysis/ModelChecker/ExternalFunctionUnit.h>
 #include <Rose/BinaryAnalysis/ModelChecker/FailureUnit.h>
 #include <Rose/BinaryAnalysis/ModelChecker/InstructionUnit.h>
-#include <Rose/BinaryAnalysis/ModelChecker/NullDerefTag.h>
-#include <Rose/BinaryAnalysis/ModelChecker/OobTag.h>
-#include <Rose/BinaryAnalysis/ModelChecker/P2Model.h>
+#include <Rose/BinaryAnalysis/ModelChecker/NullDereferenceTag.h>
+#include <Rose/BinaryAnalysis/ModelChecker/OutOfBoundsTag.h>
+#include <Rose/BinaryAnalysis/ModelChecker/PartitionerModel.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Path.h>
 #include <Rose/BinaryAnalysis/ModelChecker/PathNode.h>
 #include <Rose/BinaryAnalysis/ModelChecker/PathPredicate.h>
@@ -26,7 +26,7 @@
 #include <Rose/BinaryAnalysis/ModelChecker/SourceLister.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Tag.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Types.h>
-#include <Rose/BinaryAnalysis/ModelChecker/UninitVarTag.h>
+#include <Rose/BinaryAnalysis/ModelChecker/UninitializedVariableTag.h>
 #include <Rose/BinaryAnalysis/ModelChecker/WorkerStatus.h>
 
 #endif

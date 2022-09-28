@@ -7,7 +7,7 @@
 #define __STDC_FORMAT_MACROS
 #endif
 
-#include <Rose/BinaryAnalysis/SymbolicExpr.h>
+#include <Rose/BinaryAnalysis/SymbolicExpression.h>
 #include <Rose/Exception.h>
 #include <Rose/Progress.h>
 
@@ -24,12 +24,12 @@ namespace BinaryAnalysis {
 
 class CompareLeavesByName {
 public:
-    bool operator()(const SymbolicExpr::LeafPtr&, const SymbolicExpr::LeafPtr&) const;
+    bool operator()(const SymbolicExpression::LeafPtr&, const SymbolicExpression::LeafPtr&) const;
 };
 
 class CompareRawLeavesByName {
 public:
-    bool operator()(const SymbolicExpr::Leaf*, const SymbolicExpr::Leaf*) const;
+    bool operator()(const SymbolicExpression::Leaf*, const SymbolicExpression::Leaf*) const;
 };
 
 /** Interface to Satisfiability Modulo Theory (SMT) solvers.
@@ -39,7 +39,7 @@ public:
 class SmtSolver: private boost::noncopyable {
 public:
     /** Ordered list of expressions. */
-    using ExprList = std::vector<SymbolicExpr::Ptr>;
+    using ExprList = std::vector<SymbolicExpression::Ptr>;
 
     /** Reference counting pointer for SMT solvers. */
     using Ptr = SmtSolverPtr;
@@ -64,10 +64,10 @@ public:
 
     /** Maps expression nodes to term names.  This map is populated for common subexpressions. */
     using StringTypePair = std::pair<std::string, Type>;
-    using TermNames = Sawyer::Container::Map<SymbolicExpr::Ptr, StringTypePair>;
+    using TermNames = Sawyer::Container::Map<SymbolicExpression::Ptr, StringTypePair>;
 
     /** Maps one symbolic expression to another. */
-    using ExprExprMap = Sawyer::Container::Map<SymbolicExpr::Ptr, SymbolicExpr::Ptr>;
+    using ExprExprMap = Sawyer::Container::Map<SymbolicExpression::Ptr, SymbolicExpression::Ptr>;
 
     /** Exceptions for all things SMT related. */
     struct Exception: Rose::Exception {
@@ -175,7 +175,7 @@ public:
     };
 
     /** Set of variables. */
-    using VariableSet = Sawyer::Container::Set<SymbolicExpr::LeafPtr, CompareLeavesByName>;
+    using VariableSet = Sawyer::Container::Set<SymbolicExpression::LeafPtr, CompareLeavesByName>;
 
     using Definitions = std::set<uint64_t>;             /**< Free variables that have been defined. */
 
@@ -234,7 +234,7 @@ public:
         struct Found {
             Sawyer::Optional<Satisfiable> satisfiable;      /**< If found, whether satisfiable. */
             ExprList sortedNormalized;                      /**< Sorted and normalized assertions, regardless if found. */
-            SymbolicExpr::ExprExprHashMap rewriteMap;       /**< Mapping from provided to sortedNormalized assertions. */
+            SymbolicExpression::ExprExprHashMap rewriteMap; /**< Mapping from provided to sortedNormalized assertions. */
             ExprExprMap evidence;                           /**< Normalized evidence if found and satisfiable. */
 
             /** True if lookup was a cache hit. */
@@ -244,7 +244,7 @@ public:
         };
 
     private:
-        using ExprExpr = std::pair<SymbolicExpr::Ptr, SymbolicExpr::Ptr>;
+        using ExprExpr = std::pair<SymbolicExpression::Ptr, SymbolicExpression::Ptr>;
 
         // The thing that is memoized
         struct Record {
@@ -254,7 +254,7 @@ public:
         };
 
         // Mapping from hash of sorted-normalized assertions to the memoization record.
-        using Map = std::multimap<SymbolicExpr::Hash, Record>;
+        using Map = std::multimap<SymbolicExpression::Hash, Record>;
 
     private:
         mutable SAWYER_THREAD_TRAITS::Mutex mutex_;     // protects the following data members
@@ -300,7 +300,7 @@ public:
 
     public:
         // Non-synchronized search for the sorted-normalized assertions which have the specified hash.
-        Map::iterator searchNS(SymbolicExpr::Hash, const ExprList &sortedNormalized);
+        Map::iterator searchNS(SymbolicExpression::Hash, const ExprList &sortedNormalized);
     };
 
 private:
@@ -460,7 +460,7 @@ public:
      *  evidence of satisfiability is parsed and stored in this object.
      *
      * @{ */
-    virtual Satisfiable satisfiable(const SymbolicExpr::Ptr&);
+    virtual Satisfiable satisfiable(const SymbolicExpression::Ptr&);
     virtual Satisfiable satisfiable(const ExprList&);
     /** @} */
 
@@ -528,7 +528,7 @@ public:
      *  Inserts assertions into the set of assertions at the top of the backtracking stack.
      *
      * @{ */
-    virtual void insert(const SymbolicExpr::Ptr&);
+    virtual void insert(const SymbolicExpression::Ptr&);
     virtual void insert(const ExprList&);
     /** @} */
 
@@ -563,7 +563,7 @@ public:
 public:
 
     /** Evidence of satisfiability. */
-    using Evidence = Sawyer::Container::Map<std::string /*variable name*/, SymbolicExpr::Ptr /*value*/>;
+    using Evidence = Sawyer::Container::Map<std::string /*variable name*/, SymbolicExpression::Ptr /*value*/>;
 
     /** Names of items for which satisfiability evidence exists.
      *
@@ -579,7 +579,7 @@ public:
      *  If the string starts with the letter 'v' then variable evidence is returned, otherwise the string must be an address.
      *  Valid strings are those returned by the @ref evidenceNames method; other strings result in a null return
      *  value. Subclasses might define additional methods for obtaining evidence of satisfiability. */
-    virtual SymbolicExpr::Ptr evidenceForName(const std::string&) const;
+    virtual SymbolicExpression::Ptr evidenceForName(const std::string&) const;
 
     /** All evidence of satisfiability.
      *
@@ -614,12 +614,12 @@ public:
      *  the expression in conjunction with the other evidence. Not all SMT solvers can return this information.  Returns the
      *  null pointer if no evidence is available for the variable.
      * @{ */
-    virtual SymbolicExpr::Ptr evidenceForVariable(const SymbolicExpr::Ptr &var) {
-        SymbolicExpr::LeafPtr ln = var->isLeafNode();
+    virtual SymbolicExpression::Ptr evidenceForVariable(const SymbolicExpression::Ptr &var) {
+        SymbolicExpression::LeafPtr ln = var->isLeafNode();
         ASSERT_require(ln && ln->isVariable2());
         return evidenceForVariable(ln->nameId());
     }
-    virtual SymbolicExpr::Ptr evidenceForVariable(uint64_t varno) {
+    virtual SymbolicExpression::Ptr evidenceForVariable(uint64_t varno) {
         char buf[64];
         snprintf(buf, sizeof buf, "v%" PRIu64, varno);
         return evidenceForName(buf);
@@ -631,7 +631,7 @@ public:
      *  If an expression is satisfiable, this function will return a value for the specified memory address that satisfies the
      *  expression in conjunction with the other evidence. Not all SMT solvers can return this information. Returns the null
      *  pointer if no evidence is available for the memory address. */
-    virtual SymbolicExpr::Ptr evidenceForAddress(uint64_t addr);
+    virtual SymbolicExpression::Ptr evidenceForAddress(uint64_t addr);
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -700,7 +700,7 @@ protected:
     virtual std::string getErrorMessage(int exitStatus);
 
     /** Return all variables that need declarations. */
-    virtual void findVariables(const SymbolicExpr::Ptr&, VariableSet&) {}
+    virtual void findVariables(const SymbolicExpression::Ptr&, VariableSet&) {}
 
     /** Print an S-Expr for debugging.
      *
@@ -725,7 +725,7 @@ protected:
      *  it encounters. The variables are renumbered starting at zero.  The return value is a vector new new expressions, some
      *  of which may be the unmodified original expressions if there were no variables.  The @p index is also a return value
      *  which indicates how original variables were mapped to new variables. */
-    static ExprList normalizeVariables(const ExprList&, SymbolicExpr::ExprExprHashMap &index /*out*/);
+    static ExprList normalizeVariables(const ExprList&, SymbolicExpression::ExprExprHashMap &index /*out*/);
 
     /** Undo the normalizations that were performed earlier.
      *
@@ -734,7 +734,7 @@ protected:
      *  expressions need not be those same expressions. For each input expression, the expression is rewritten by substituting
      *  the inverse of the index. That is, a depth first search is performed on the expression and if the subexpression matches
      *  a value of the index, then it's replaced by the corresponding key. */
-    static ExprList undoNormalization(const ExprList&, const SymbolicExpr::ExprExprHashMap &index);
+    static ExprList undoNormalization(const ExprList&, const SymbolicExpression::ExprExprHashMap &index);
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

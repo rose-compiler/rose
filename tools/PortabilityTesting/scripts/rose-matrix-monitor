@@ -1,0 +1,51 @@
+#!/bin/bash
+set -e
+arg0="${0##*/}"
+dir0="${0%/*}"
+[ "$dir0" = "${dir0#/}" ] && dir0="$(pwd)/$dir0"
+
+MATRIX_ROOT="$HOME/var/rose-portability-testing"
+
+########################################################################################################################
+help() {
+    echo "usage: $arg0 [SWITCHES]"
+    echo
+    echo "Descriptor"
+    echo "    Monitors the output of tests running on this machine."
+    echo
+    echo "Switches"
+    echo "    --root=DIRECTORY"
+    echo "        Root directory for matrix testing run time files. The default is"
+    echo "        \"$MATRIX_ROOT\"."
+}
+
+########################################################################################################################
+# Die with an error message
+die() {
+    echo "$arg0:" "error:" "$@" >&2
+    exit 1
+}
+
+########################################################################################################################
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+	--help|-h)
+	    help
+	    exit 0
+	    ;;
+	--root=*)
+	    MATRIX_ROOT="${1#--root=}"
+	    shift
+	    ;;
+
+	-*)
+	    die "unrecognized command-line switch \"$1\"; see --help"
+	    ;;
+
+	*)
+	    die "incorrect usage; see --help"
+	    ;;
+    esac
+done
+
+exec watch -c "$dir0/rose-matrix-show-latest" --var="$MATRIX_ROOT"

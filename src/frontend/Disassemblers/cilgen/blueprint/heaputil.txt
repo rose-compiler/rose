@@ -1,0 +1,249 @@
+namespace 
+{
+
+std::vector<int8_t>
+computePositionInRowVector(uint64_t valid)
+{
+  constexpr int NUM_BITS = sizeof(valid) * CHAR_BIT;
+
+  std::vector<int8_t> res;
+  const int           numValidBits = Rose::BitOps::nSet(valid);
+  int                 ctr = -1;
+
+  res.reserve(NUM_BITS);
+  for (int i = 0; i < NUM_BITS; ++i)
+  {
+    int8_t idx = (valid & 1) ? ++ctr : -1;
+
+    valid >>= 1;
+    res.push_back(idx);
+  }
+
+  //~ std::cerr << ctr << " ctr <? " << numValidBits << std::endl;
+  ROSE_ASSERT(ctr < numValidBits);
+  return res;
+}
+
+/// computes number of bits required to store the table identifier
+///   ii.24.2.6
+uint64_t
+calcTableIdentifierSize(const std::vector<SgAsmCilMetadataHeap::TableKind>& tables)
+{
+  const size_t tblsz = tables.size();
+  ROSE_ASSERT(tblsz > 0);
+
+  auto hiBit = Rose::BitOps::highestSetBit(tblsz-1);
+
+  return hiBit ? (*hiBit) + 1 : 0;
+}
+
+uint32_t
+calcMaxTableSize( const std::vector<uint32_t>& numberOfRows,
+                  const std::vector<int8_t>& posInRowVector,
+                  const std::vector<SgAsmCilMetadataHeap::TableKind>& tables
+                )
+{
+  uint32_t max = 0;
+
+  for (SgAsmCilMetadataHeap::TableKind tbl : tables)
+  {
+    if (tbl == SgAsmCilMetadataHeap::e_Unknown_table_kind) continue;
+
+    const int8_t posInRowVec = posInRowVector.at(tbl);
+    if (posInRowVec < 0) continue;
+
+    const uint32_t numEntries = numberOfRows.at(posInRowVec);
+    if (max < numEntries) max = numEntries;
+  }
+
+  return max;
+}
+
+
+const std::unordered_map<std::uint64_t, std::vector<SgAsmCilMetadataHeap::TableKind> >
+REF_TABLES = { // single table
+               { SgAsmCilMetadataHeap::e_ref_assembly_ref,  { SgAsmCilMetadataHeap::e_Assembly } }
+             , { SgAsmCilMetadataHeap::e_ref_type_def,      { SgAsmCilMetadataHeap::e_TypeDef } }
+             , { SgAsmCilMetadataHeap::e_ref_event,         { SgAsmCilMetadataHeap::e_Event } }
+             , { SgAsmCilMetadataHeap::e_ref_field,         { SgAsmCilMetadataHeap::e_Field } }
+             , { SgAsmCilMetadataHeap::e_ref_generic_param, { SgAsmCilMetadataHeap::e_GenericParam } }
+             , { SgAsmCilMetadataHeap::e_ref_method_def,    { SgAsmCilMetadataHeap::e_MethodDef } }
+             , { SgAsmCilMetadataHeap::e_ref_module_ref,    { SgAsmCilMetadataHeap::e_ModuleRef } }
+             , { SgAsmCilMetadataHeap::e_ref_param,         { SgAsmCilMetadataHeap::e_Param } }
+             , { SgAsmCilMetadataHeap::e_ref_property,      { SgAsmCilMetadataHeap::e_Property } }
+               // multi-table
+             , { SgAsmCilMetadataHeap::e_ref_has_constant,  { SgAsmCilMetadataHeap::e_Field, SgAsmCilMetadataHeap::e_Param, SgAsmCilMetadataHeap::e_Property } }
+             , { SgAsmCilMetadataHeap::e_ref_has_custom_attribute,
+                     { SgAsmCilMetadataHeap::e_MethodDef, SgAsmCilMetadataHeap::e_Field, SgAsmCilMetadataHeap::e_TypeRef, SgAsmCilMetadataHeap::e_TypeDef
+                     , SgAsmCilMetadataHeap::e_Param, SgAsmCilMetadataHeap::e_InterfaceImpl, SgAsmCilMetadataHeap::e_MemberRef, SgAsmCilMetadataHeap::e_Module
+                     , SgAsmCilMetadataHeap::e_Unknown_table_kind /* FIXME instead of: e_Permission */
+                     , SgAsmCilMetadataHeap::e_Property, SgAsmCilMetadataHeap::e_Event, SgAsmCilMetadataHeap::e_StandAloneSig
+                     , SgAsmCilMetadataHeap::e_ModuleRef, SgAsmCilMetadataHeap::e_TypeSpec, SgAsmCilMetadataHeap::e_Assembly, SgAsmCilMetadataHeap::e_AssemblyRef
+                     , SgAsmCilMetadataHeap::e_File, SgAsmCilMetadataHeap::e_ExportedType, SgAsmCilMetadataHeap::e_ManifestResource, SgAsmCilMetadataHeap::e_GenericParam
+                     , SgAsmCilMetadataHeap::e_GenericParamConstraint, SgAsmCilMetadataHeap::e_MethodSpec
+                     }
+               }
+             , { SgAsmCilMetadataHeap::e_ref_has_decl_security, { SgAsmCilMetadataHeap::e_TypeDef, SgAsmCilMetadataHeap::e_MethodDef, SgAsmCilMetadataHeap::e_Assembly } }
+             , { SgAsmCilMetadataHeap::e_ref_has_field_marshall, { SgAsmCilMetadataHeap::e_Field, SgAsmCilMetadataHeap::e_Param } }
+             , { SgAsmCilMetadataHeap::e_ref_has_semantics, { SgAsmCilMetadataHeap::e_Event, SgAsmCilMetadataHeap::e_Property } }
+             , { SgAsmCilMetadataHeap::e_ref_method_def_or_ref, { SgAsmCilMetadataHeap::e_MethodDef, SgAsmCilMetadataHeap::e_MemberRef } }
+             , { SgAsmCilMetadataHeap::e_ref_type_def_or_ref, { SgAsmCilMetadataHeap::e_TypeDef, SgAsmCilMetadataHeap::e_TypeRef, SgAsmCilMetadataHeap::e_TypeSpec } }
+             , { SgAsmCilMetadataHeap::e_ref_implementation, { SgAsmCilMetadataHeap::e_File, SgAsmCilMetadataHeap::e_AssemblyRef, SgAsmCilMetadataHeap::e_ExportedType } }
+             , { SgAsmCilMetadataHeap::e_ref_member_forwarded, { SgAsmCilMetadataHeap::e_Field, SgAsmCilMetadataHeap::e_MethodDef } }
+             , { SgAsmCilMetadataHeap::e_ref_member_ref_parent, { SgAsmCilMetadataHeap::e_TypeDef, SgAsmCilMetadataHeap::e_TypeRef, SgAsmCilMetadataHeap::e_ModuleRef, SgAsmCilMetadataHeap::e_MethodDef, SgAsmCilMetadataHeap::e_TypeSpec } }
+             , { SgAsmCilMetadataHeap::e_ref_type_or_method_def, { SgAsmCilMetadataHeap::e_TypeDef, SgAsmCilMetadataHeap::e_MethodDef } }
+               // not used inside the tables
+             , { SgAsmCilMetadataHeap::e_ref_custom_attribute_type,
+                     { SgAsmCilMetadataHeap::e_Unknown_table_kind, SgAsmCilMetadataHeap::e_Unknown_table_kind, SgAsmCilMetadataHeap::e_MethodDef, SgAsmCilMetadataHeap::e_MemberRef
+                     , SgAsmCilMetadataHeap::e_Unknown_table_kind
+                     }
+               }
+             , { SgAsmCilMetadataHeap::e_ref_resolution_scope, { SgAsmCilMetadataHeap::e_Module, SgAsmCilMetadataHeap::e_ModuleRef, SgAsmCilMetadataHeap::e_AssemblyRef, SgAsmCilMetadataHeap::e_TypeRef } }
+             };
+
+
+uint64_t
+uses4byteIndex( const std::vector<uint32_t>& numberOfRows,
+                const std::vector<int8_t>& posInRowVector,
+                const std::vector<SgAsmCilMetadataHeap::TableKind>& tables,
+                uint64_t flag
+              )
+{
+  const size_t   bitsForTableIdentifier = calcTableIdentifierSize(tables);
+
+  if (TRACE_CONSTRUCTION)
+    std::cerr << "|numberOfRows, posInRowVector, tables| = "
+              << numberOfRows.size() << ", "
+              << posInRowVector.size() << ", "
+              << tables.size()
+              << "  flag = " << flag
+              << "  bitsForTableIdentifier = " << bitsForTableIdentifier
+              << std::endl;
+
+  const uint32_t maxTableSize = calcMaxTableSize(numberOfRows, posInRowVector, tables);
+  const uint32_t TWO_BYTE_MAX = (1 << (16-bitsForTableIdentifier))-1;
+
+  return TWO_BYTE_MAX >= maxTableSize ? 0 : flag;
+}
+
+
+inline
+uint64_t
+uses4byteIndex(const std::vector<uint32_t>& numberOfRows, const std::vector<int8_t>& posInRowVector, uint64_t flag)
+{
+  return uses4byteIndex(numberOfRows, posInRowVector, REF_TABLES.at(flag), flag);
+}
+
+
+uint64_t
+computeDataSizeFlags( uint8_t heapSizes,
+                      const std::vector<int8_t>& posInRowVector,
+                      const std::vector<uint32_t>& numberOfRows
+                    )
+{
+  // the lower three flags are taken from the heapSizes field
+  uint64_t            res = heapSizes;
+
+  //   - single table references (constants are arbitrary)
+  res |= uses4byteIndex(numberOfRows, posInRowVector, SgAsmCilMetadataHeap::e_ref_assembly_ref);
+  res |= uses4byteIndex(numberOfRows, posInRowVector, SgAsmCilMetadataHeap::e_ref_type_def);
+  res |= uses4byteIndex(numberOfRows, posInRowVector, SgAsmCilMetadataHeap::e_ref_event);
+  res |= uses4byteIndex(numberOfRows, posInRowVector, SgAsmCilMetadataHeap::e_ref_field);
+  res |= uses4byteIndex(numberOfRows, posInRowVector, SgAsmCilMetadataHeap::e_ref_generic_param);
+  res |= uses4byteIndex(numberOfRows, posInRowVector, SgAsmCilMetadataHeap::e_ref_method_def);
+  res |= uses4byteIndex(numberOfRows, posInRowVector, SgAsmCilMetadataHeap::e_ref_module_ref);
+  res |= uses4byteIndex(numberOfRows, posInRowVector, SgAsmCilMetadataHeap::e_ref_param);
+  res |= uses4byteIndex(numberOfRows, posInRowVector, SgAsmCilMetadataHeap::e_ref_property);
+
+  //   - multi table references (constants are arbitrary)
+  res |= uses4byteIndex(numberOfRows, posInRowVector, SgAsmCilMetadataHeap::e_ref_has_constant);
+  res |= uses4byteIndex(numberOfRows, posInRowVector, SgAsmCilMetadataHeap::e_ref_has_custom_attribute);
+  res |= uses4byteIndex(numberOfRows, posInRowVector, SgAsmCilMetadataHeap::e_ref_has_decl_security);
+  res |= uses4byteIndex(numberOfRows, posInRowVector, SgAsmCilMetadataHeap::e_ref_has_field_marshall);
+  res |= uses4byteIndex(numberOfRows, posInRowVector, SgAsmCilMetadataHeap::e_ref_has_semantics);
+  res |= uses4byteIndex(numberOfRows, posInRowVector, SgAsmCilMetadataHeap::e_ref_method_def_or_ref);
+
+  res |= uses4byteIndex(numberOfRows, posInRowVector, SgAsmCilMetadataHeap::e_ref_type_def_or_ref);
+  res |= uses4byteIndex(numberOfRows, posInRowVector, SgAsmCilMetadataHeap::e_ref_implementation);
+  res |= uses4byteIndex(numberOfRows, posInRowVector, SgAsmCilMetadataHeap::e_ref_member_forwarded);
+  res |= uses4byteIndex(numberOfRows, posInRowVector, SgAsmCilMetadataHeap::e_ref_member_ref_parent);
+  res |= uses4byteIndex(numberOfRows, posInRowVector, SgAsmCilMetadataHeap::e_ref_type_or_method_def);
+
+  //   - not used from inside the metadata tables
+  res |= uses4byteIndex(numberOfRows, posInRowVector, SgAsmCilMetadataHeap::e_ref_custom_attribute_type);
+  res |= uses4byteIndex(numberOfRows, posInRowVector, SgAsmCilMetadataHeap::e_ref_resolution_scope);
+
+  return res;
+}
+
+struct AccessTuple : std::tuple<SgAsmCilMetadataHeap::TableKind, std::uint32_t>
+{
+  using base = std::tuple<SgAsmCilMetadataHeap::TableKind, std::uint32_t>;
+  using base::base;
+
+  SgAsmCilMetadataHeap::TableKind table() const { return std::get<0>(*this); }
+  std::uint32_t                   index() const { return std::get<1>(*this); }
+};
+
+AccessTuple
+computeAccessPair( const std::vector<int8_t>& posInRowVector,
+                   const std::vector<uint32_t>& numberOfRows,
+                   std::uint32_t refcode,
+                   SgAsmCilMetadataHeap::ReferenceKind knd
+                 )
+{
+  const std::vector<SgAsmCilMetadataHeap::TableKind>& tables = REF_TABLES.at(knd);
+
+  if (tables.size() == 1) return AccessTuple{ tables.front(), refcode };
+
+  const bool          uses4Bytes = uses4byteIndex(numberOfRows, posInRowVector, tables, knd) != 0;
+  ROSE_ASSERT(uses4Bytes || (refcode < (1<<16)));
+
+  const std::uint64_t tableIdSize = calcTableIdentifierSize(tables);
+  const std::uint32_t index = refcode >> tableIdSize; 
+  const std::uint8_t  table = refcode ^ (index << tableIdSize);
+  
+  return AccessTuple{ tables.at(table), index };
+}
+
+
+template <class SageAsmCilMetadata>
+std::vector<SageAsmCilMetadata*>
+parseMetadataTable( SgAsmCilMetadataHeap* parent,
+                    std::vector<uint8_t>& buf,
+                    size_t& index,
+                    uint64_t sizeFlags,
+                    size_t rows,
+                    const char* tblName
+                  )
+{
+  std::vector<SageAsmCilMetadata*> res;
+
+  if (TRACE_CONSTRUCTION)
+    std::cerr << "Build the e_" << tblName << " table; rows = " << rows << std::endl;
+
+  for (size_t j=0; j < rows; ++j)
+  {
+    if (TRACE_CONSTRUCTION)
+      std::cerr << " --- processing row j = " << j << std::endl;
+
+    SageAsmCilMetadata* obj = parseAsmCilNode<SageAsmCilMetadata>(parent,buf,index,sizeFlags);
+    res.push_back(obj);
+
+    if (TRACE_CONSTRUCTION)
+      std::cerr << "DONE: processing row j = " << j << std::endl;
+  }
+
+  if (TRACE_CONSTRUCTION)
+    std::cerr << "DONE: Build the e_" << tblName << " table; rows = " << rows << std::endl;
+
+  return res;
+}
+
+template <class T>
+T traceRep(const T& el) { return el; }
+
+template <class T>
+int traceRep(const std::vector<T>& vec) { return vec.size(); }
+
+}

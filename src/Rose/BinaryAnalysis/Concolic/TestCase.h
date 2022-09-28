@@ -4,7 +4,7 @@
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 #include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
 
-#include <Rose/BinaryAnalysis/SymbolicExpr.h>
+#include <Rose/BinaryAnalysis/SymbolicExpression.h>
 
 #include <Sawyer/Optional.h>
 #include <Sawyer/SharedObject.h>
@@ -40,7 +40,7 @@ private:
     Sawyer::Optional<double> concreteRank_;             // rank after testing
     bool concreteIsInteresting_;                        // concrete results present and interesting?
     TestCaseId parent_;                                 // test case from which this one was created, if any
-    std::vector<SymbolicExpr::Ptr> assertions_;         // assertions for the SMT solver
+    std::vector<SymbolicExpression::Ptr> assertions_;   // assertions for the SMT solver
 
 protected:
     TestCase();
@@ -183,13 +183,13 @@ public:
     /** Property: SMT solver assertions.
      *
      *  @{ */
-    const std::vector<SymbolicExpr::Ptr>& assertions() const {
+    const std::vector<SymbolicExpression::Ptr>& assertions() const {
         return assertions_;
     }
-    std::vector<SymbolicExpr::Ptr>& assertions() {
+    std::vector<SymbolicExpression::Ptr>& assertions() {
         return assertions_;
     }
-    void assertions(const std::vector<SymbolicExpr::Ptr> &v) {
+    void assertions(const std::vector<SymbolicExpression::Ptr> &v) {
         assertions_ = v;
     }
     /** @} */

@@ -10,6 +10,7 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Exception.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RiscOperators.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/State.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 
 using namespace Sawyer::Message::Common;
 namespace BS = Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;
@@ -40,7 +41,8 @@ ExecutionUnit::containsUnknownInsn() const {
 }
 
 Tag::Ptr
-ExecutionUnit::executeInstruction(const Settings::Ptr &settings, SgAsmInstruction *insn, const BS::Dispatcher::Ptr &cpu, size_t nodeStep) {
+ExecutionUnit::executeInstruction(const Settings::Ptr &settings, SgAsmInstruction *insn, const BS::Dispatcher::Ptr &cpu,
+                                  size_t nodeStep) {
     ASSERT_not_null(settings);
     ASSERT_not_null(insn);
     ASSERT_not_null(cpu);
