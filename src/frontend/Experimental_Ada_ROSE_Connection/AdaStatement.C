@@ -124,7 +124,7 @@ namespace
     {
       logError() << "Unable to find scope/declaration for " << expr.Name_Image
                  << std::endl;
-      ROSE_ABORT();
+      ADA_ASSERT(false);
     }
 
     SgScopeStatement* res = sg::dispatch(ScopeQuery{}, dcl);
@@ -370,7 +370,7 @@ namespace
 
       case Not_A_Mode: /* break; */
       default:
-        ROSE_ABORT();
+        ADA_ASSERT(false);
     }
 
     return res;
@@ -998,7 +998,7 @@ namespace
             }
 
           default:
-            ROSE_ABORT();
+            ADA_ASSERT(false);
         }
       }
 
@@ -1070,7 +1070,7 @@ namespace
             }
 
           default:
-            ROSE_ABORT();
+            ADA_ASSERT(false);
         }
       }
 
@@ -1254,7 +1254,7 @@ namespace
           }
 
         default:
-          ROSE_ABORT();
+          ADA_ASSERT(false);
         }
     }
 
@@ -1327,7 +1327,7 @@ namespace
           break;
 
         default:
-          ROSE_ABORT();
+          ADA_ASSERT(false);
         }
       return SG_DEREF( sgnode );
     }
@@ -2438,7 +2438,7 @@ namespace
       default:
         logError() << "unexpected def kind [queryDefinitionData]: " << typeDefn.Definition_Kind
                       << std::endl;
-        ROSE_ABORT();
+        ADA_ASSERT(false);
     }
 
     return DefinitionDetails{declname.id(), complDecl.Declaration_Kind, resKind};
@@ -2707,7 +2707,7 @@ namespace
     else if (SgEnumDeclaration* derivedEnumDcl = isSgEnumDeclaration(&dcl))
       processInheritedEnumValues(tydef, *derivedEnumDcl, ctx);
     else
-      ROSE_ABORT();
+      ADA_ASSERT(false);
   }
 
 
@@ -3268,7 +3268,7 @@ void handleDefinition(Element_Struct& elem, AstContext ctx)
 
     case A_Discrete_Subtype_Definition:    // 3.6(6)      -> Discrete_Range_Kinds
       //
-      ROSE_ABORT();
+      ADA_ASSERT(false);
 
     case Not_A_Definition:                 // An unexpected element
     case A_Private_Type_Definition:        // 7.3(2)      -> Trait_Kinds
@@ -4007,7 +4007,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
     case A_Parameter_Specification:                // 6.1(15)  -> Trait_Kinds
       {
         // handled in getParm
-        ROSE_ABORT();
+        ADA_ASSERT(false);
       }
 
     case A_Protected_Type_Declaration:             // 9.4(2)
@@ -4841,25 +4841,25 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
     case An_Entry_Index_Specification:             // 9.5.2(2)
       {
         // handled by EntryIndexCompletion;
-        ROSE_ABORT();
+        ADA_ASSERT(false);
       }
 
     case A_Choice_Parameter_Specification:         // 11.2(4)
       {
         // handled in handleExceptionHandler
-        ROSE_ABORT();
+        ADA_ASSERT(false);
       }
 
     case An_Enumeration_Literal_Specification:     // 3.5.1(3)
       {
         // handled in EnumElementCreator
-        ROSE_ABORT();
+        ADA_ASSERT(false);
       }
 
     case A_Discriminant_Specification:             // 3.7(5)   -> Trait_Kinds
       {
         // handled in getDiscriminant
-        ROSE_ABORT();
+        ADA_ASSERT(false);
       }
 
     case Not_A_Declaration:                        // An unexpected element
