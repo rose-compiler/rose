@@ -24,9 +24,9 @@ public:
     : _nestingLevel(n),_nestingDepth(d) {}
   NestingLevel getNestingLevel() { return _nestingLevel; }
   NestingDepth getNestingDepth() { return _nestingDepth; }
-  string toString() { 
-    ostringstream ss; ss<<_nestingLevel<<","<<_nestingDepth; 
-    return ss.str(); 
+  string toString() {
+    ostringstream ss; ss<<_nestingLevel<<","<<_nestingDepth;
+    return ss.str();
   }
 private:
   NestingLevel _nestingLevel;
@@ -52,7 +52,7 @@ public:
   */
   void attachLoopNestingAnnotaton(SgProject* node) { traverseInputFiles(node,0); }
 
-  /*! Returns the maximum nesting level of the entire AST (of the input file). 
+  /*! Returns the maximum nesting level of the entire AST (of the input file).
       Requires attachLoopNestingAnnotation (to be called before)
   */
   NestingLevel getMaxNestingLevel() { return _maxNestingLevel; }
@@ -91,7 +91,7 @@ LoopLevelProcessing::evaluateInheritedAttribute(SgNode* node, NestingLevel loopN
   }
 }
 
-SynNestingDepth 
+SynNestingDepth
 LoopLevelProcessing::defaultSynthesizedAttribute(InhNestingLevel inh) {
   /*! we do not need the inherited attribute here
       as default value for synthesized attribute we set 0, representing nesting depth 0.
@@ -105,7 +105,7 @@ LoopLevelProcessing::evaluateSynthesizedAttribute(SgNode* node,InhNestingLevel n
      if (nestingLevel>_maxNestingLevel)
           _maxNestingLevel=nestingLevel;
 
-  // compute maximum nesting depth of synthesized attributes 
+  // compute maximum nesting depth of synthesized attributes
      SynNestingDepth nestingDepth=0;
      for(SynthesizedAttributesList::iterator i=l.begin();i!=l.end();i++)
         {
@@ -129,7 +129,7 @@ LoopLevelProcessing::evaluateSynthesizedAttribute(SgNode* node,InhNestingLevel n
              }
         }
 
-  // add loop nesting level as annotation to AST 
+  // add loop nesting level as annotation to AST
      NestingLevelAnnotation* nla = new NestingLevelAnnotation(nestingLevel,nestingDepth);
      ROSE_ASSERT(nla != NULL);
 
@@ -157,7 +157,7 @@ int main ( int argc, char** argv) {
 
    // command line parameters are passed to EDG
    // non-EDG parameters are passed (through) to ROSE (and the vendor compiler)
-   SgProject* root=frontend(argc,argv); 
+   SgProject* root=frontend(argc,argv);
    LoopLevelProcessing t;
 
    // traverse only C++ files specified on command line
@@ -172,12 +172,8 @@ int main ( int argc, char** argv) {
    astdotgen.generateInputFiles(root,AstDOTGeneration::PREORDER);
 
    // Generate a pdf file showing the AST
-#if ROSE_WITH_LIBHARU
-   AstPDFGeneration astpdfgen;
-   astpdfgen.generateInputFiles(root);
-#else
-   cout << "Warning: libharu is not enabled" << endl;
-#endif
-   
+   AstJSONGeneration astjsongen;
+   astjsongen.generateInputFiles(root);
+
    return 0;
-}   
+}

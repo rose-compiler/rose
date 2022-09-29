@@ -465,8 +465,6 @@ ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH = \
      -I$(top_srcdir)/src/roseSupport \
      -I$(top_srcdir)/src/3rdPartyLibraries/MSTL \
      -I$(top_srcdir)/src/3rdPartyLibraries/json \
-     -I$(top_srcdir)/src/3rdPartyLibraries/libharu-2.1.0/include \
-     -I$(top_builddir)/src/3rdPartyLibraries/libharu-2.1.0/include \
      -I$(top_srcdir)/src/3rdPartyLibraries/qrose/Framework \
      -I$(top_srcdir)/src/3rdPartyLibraries/qrose/Widgets  \
      -I$(top_srcdir)/src/util/graphs \
@@ -563,7 +561,7 @@ ROSE_LIBS = $(abspath $(top_builddir)/src/librose.la) -lm $(JAVA_JVM_LINK) \
 
 if ROSE_USE_CLANG_FRONTEND
 # DQ (10/23/2020): Pei-Hung and I think this may not be required (not available on my system).
-# I get the error: 
+# I get the error:
 #    /bin/ld: skipping incompatible /lib/libtinfo.so when searching for -ltinfo
 #    clang-10: error: linker command failed with exit code 1 (use -v to see invocation)
 # ROSE_LIBS += $(CLANG_LDFLAGS) -ltinfo
@@ -571,7 +569,7 @@ ROSE_LIBS += $(CLANG_LDFLAGS)
 endif
 
 #if ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
-#ROSE_LIBS += $(libroseAdalibraries) 
+#ROSE_LIBS += $(libroseAdalibraries)
 #endif
 
 #========================================================================================================================
@@ -639,7 +637,7 @@ ROSE_LINK_RPATHS = $(addprefix -Wl$(comma)-rpath , $(filter-out -R , $(ROSE_RPAT
 endif
 
 if ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
-ROSE_RPATHS += -R $(DOT_ASIS_LIB_DIR_) 
+ROSE_RPATHS += -R $(DOT_ASIS_LIB_DIR_)
 endif
 
 show-rpaths:

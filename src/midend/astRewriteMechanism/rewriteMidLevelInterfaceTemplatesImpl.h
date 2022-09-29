@@ -16,7 +16,7 @@
 #if 0
 template <class ASTNodeCollection>
 SgStatement*
-MidLevelRewrite<ASTNodeCollection>::previousPrefixRelevantStatement ( 
+MidLevelRewrite<ASTNodeCollection>::previousPrefixRelevantStatement (
    SgStatement* currentStatement )
    {
      SgStatement* returnStatement = Rose::getPreviousStatement(currentStatement);
@@ -42,8 +42,8 @@ MidLevelRewrite<ASTNodeCollection>::acceptableTargetForPrefix ( SgNode* astNode 
    {
   // This function limits the locations where a prefix can be generated from.
   //    1) The location must be a statement
-  //    2) Since we start with the previous statement, there must exist a previous 
-  //       statement and this is not defined in the case of a SgGlobal statement 
+  //    2) Since we start with the previous statement, there must exist a previous
+  //       statement and this is not defined in the case of a SgGlobal statement
   //       (global scope).
 
      bool returnValue = false;
@@ -56,16 +56,16 @@ MidLevelRewrite<ASTNodeCollection>::acceptableTargetForPrefix ( SgNode* astNode 
 
 template <class ASTNodeCollection>
 void
-MidLevelRewrite<ASTNodeCollection>::generatePrefixAndSuffix ( 
-     SgNode* astNode, 
-     std::string & prefixString, 
+MidLevelRewrite<ASTNodeCollection>::generatePrefixAndSuffix (
+     SgNode* astNode,
+     std::string & prefixString,
      std::string & suffixString,
      bool generateIncludeDirectives,
      bool prefixIncludesCurrentStatement )
    {
   // This function generates a prefix suitable for use in compiling new code specified
-  // as a string from any location in a program where the string shold compile if edited 
-  // into place manually by the user. The actions involved traversing from the current 
+  // as a string from any location in a program where the string shold compile if edited
+  // into place manually by the user. The actions involved traversing from the current
   // position in the AST (astNode) to the root of the AST (SgProject, or SgFile, or SgGlobal).
   // A few details are observed to make this happen:
   //      1) all declarations are recorded (this is fairly easy)
@@ -104,7 +104,7 @@ MidLevelRewrite<ASTNodeCollection>::generatePrefixAndSuffix (
 
        // printf ("Build prefix starting at MODIFIED input position relative to astNode! \n");
 
-       // Get the current statement (from any astNode, this makes it easy to generalize 
+       // Get the current statement (from any astNode, this makes it easy to generalize
        // this function to expressions later).
           SgStatement* currentStatement = TransformationSupport::getStatement(astNode);
           ROSE_ASSERT (currentStatement != NULL);
@@ -115,7 +115,7 @@ MidLevelRewrite<ASTNodeCollection>::generatePrefixAndSuffix (
           printf ("currentStatement = %s \n",currentStatement->unparseToString().c_str());
 #endif
 
-       // Record the current statment so that we can determine if the previous 
+       // Record the current statment so that we can determine if the previous
        // statement (if it is sought) is in the same scope or not.
        // traversal.previousScope = isSgStatement(currentStatement->get_parent());
           traversal.previousScope = currentStatement->get_scope();
@@ -132,8 +132,8 @@ MidLevelRewrite<ASTNodeCollection>::generatePrefixAndSuffix (
        // having it appear in the prefix. So look for the previous statement.
           if (prefixIncludesCurrentStatement == false)
              {
-            // Avoid building a prefix that should not include the current statement 
-            // (e.g. for test codes that replace the current statement with itself 
+            // Avoid building a prefix that should not include the current statement
+            // (e.g. for test codes that replace the current statement with itself
             // (which can happen in reality as well)).
             // printf ("Looking for previous statement of currentStatement = %s \n",currentStatement->sage_class_name());
                SgStatement* startingLocation = Rose::getPreviousStatement(currentStatement);
@@ -253,9 +253,9 @@ template <>
 void
 MidLevelRewrite<MidLevelInterfaceNodeCollection>::replace ( SgStatement* target, const std::string & transformationString )
    {
-  // Semantics of replace is always insert and remove (but it can't always be implemented that 
+  // Semantics of replace is always insert and remove (but it can't always be implemented that
   // way e.g. for loop initializer statements).  It is simpler to use the replace option within
-  // the insert command, then lower level mechanisms take care of the statement removal and 
+  // the insert command, then lower level mechanisms take care of the statement removal and
   // attached comments/directives are processed properly.
   // insert(target,transformationString);
   // remove(target);
@@ -275,8 +275,8 @@ MidLevelRewrite<ASTNodeCollection>::remove  ( SgStatement* target )
 // We should investigate that after I have more of the mid-level and high-level interface working.
 template <class ASTNodeCollection>
 typename ASTNodeCollection::NodeCollectionType
-MidLevelRewrite<ASTNodeCollection>::fileStringToNodeCollection ( 
-     SgNode* astNode, 
+MidLevelRewrite<ASTNodeCollection>::fileStringToNodeCollection (
+     SgNode* astNode,
      std::string transformationString )
    {
   // This function takes the AST representing the compilation of the transformation strings for a
@@ -285,7 +285,7 @@ MidLevelRewrite<ASTNodeCollection>::fileStringToNodeCollection (
 
      ROSE_ASSERT (astNode!= NULL);
 
-  // The project node is required so that we can recover the original 
+  // The project node is required so that we can recover the original
   // commandline required to compile the intermediate file
   // SgProject* project = ProjectQueryTraversal::getProject(astNode);
      SgProject* project = TransformationSupport::getProject(astNode);
@@ -296,9 +296,9 @@ MidLevelRewrite<ASTNodeCollection>::fileStringToNodeCollection (
   // printf ("Inside of MidLevelRewrite<ASTNodeCollection>::fileStringToNodeCollection \n");
   // printf ("#####\nfinalString = \n%s\n#####\n",finalSourceCodeString.c_str());
 
-  // Get the filename without path or suffix so that the intermediate file can be given 
-  // a name that will make it unique to the compilation/transformation support of the 
-  // input file and with a number so that the independent transformation will not collide 
+  // Get the filename without path or suffix so that the intermediate file can be given
+  // a name that will make it unique to the compilation/transformation support of the
+  // input file and with a number so that the independent transformation will not collide
   // and we can simplify the debugging of the transformations.
   // SgFile* currentFile = TransformationSupport::getFile(astNode);
      SgSourceFile* currentFile = TransformationSupport::getSourceFile(astNode);
@@ -363,12 +363,12 @@ MidLevelRewrite<ASTNodeCollection>::fileStringToNodeCollection (
   // printf ("DONE: Calling SgProject constructor \n");
 
 #if 0
-     std::string pdffilename = std::string("./") + std::string(Rose::utility_stripPathFromFileName(Rose::getFileName(transformationASTPointer)))+".pdf";
+     std::string pdffilename = std::string("./") + std::string(Rose::utility_stripPathFromFileName(Rose::getFileName(transformationASTPointer)))+".pdf.json";
   // printf ("Expected PDF file name = %s \n",pdffilename.c_str());
 
   // Output the source code file (as represented by the SAGE AST) as a PDF file (with bookmarks)
-     AstPDFGeneration pdftest;
-     pdftest.generateWithinFile(transformationASTPointer);
+     AstJSONGeneration jsontest;
+     jsontest.generateWithinFile(transformationASTPointer);
 
   // printf ("Exiting to test PDF file generation \n");
   // ROSE_ABORT();
@@ -385,7 +385,7 @@ MidLevelRewrite<ASTNodeCollection>::fileStringToNodeCollection (
 
   // At this point the transformation has been placed into the global scope and
   // we have to extract it into a form more useful to use (ready to substitute)
-  // Ultimately we require more generality than this. The stripAwayWrapping() 
+  // Ultimately we require more generality than this. The stripAwayWrapping()
   // function is a member function of the base class (TransformationSpecificationType).
 
 #if 0
@@ -439,9 +439,9 @@ MidLevelRewrite<ASTNodeCollection>::fileStringToNodeCollection (
                notAnEmptyContainer = true;
         }
 
-    
+
      std::cout << "AST NODE " << astNode->class_name() << std::endl;
-     
+
      ROSE_ASSERT (notAnEmptyContainer == true || isSgUnknownFile(astNode) != NULL );
 
      return dataCollection;
@@ -456,10 +456,10 @@ template <class ASTNodeCollection>
 std::string
 MidLevelRewrite<ASTNodeCollection>::postponeMacroExpansion ( std::string macroCall )
    {
-  // Generate a declaration that can be compiled in the intermediate code (but not expanded) 
+  // Generate a declaration that can be compiled in the intermediate code (but not expanded)
   // and trapped by the unparser and transformed back to a macro invocation.
 
-  // Use a counter value to allow repeated invocations to be defined uniquely 
+  // Use a counter value to allow repeated invocations to be defined uniquely
   // (macro invocation must be hidden in unique variable declarations)
      static int counter = 0;
 
@@ -488,4 +488,3 @@ MidLevelRewrite<ASTNodeCollection>::postponeMacroExpansion ( std::string macroCa
 
 // endif for AST_REWRITE_MID_LEVEL_INTERFACE_TEMPLATES_C
 #endif
-

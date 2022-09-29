@@ -42,7 +42,7 @@ namespace ELF{
 #include <typeinfo>
 #include "AstProcessing.h"
 #include "AstReverseProcessing.h"
-#include "AstPDFGeneration.h"
+#include "AstJSONGeneration.h"
 #include "AstDOTGeneration.h"
 #include "AstDiagnostics.h"
 // #include "AstStatistics.h"
@@ -159,7 +159,7 @@ namespace ELF{
 /******************************************************************************************************************************
  *                            THIS CHECK SHOULD BE THE LAST THING IN THIS FILE!
  ******************************************************************************************************************************
- * 
+ *
  * Make sure that autoconf macros are not defined in user code.  This test is here because CPP symbols defining the presence or
  * absence of certain features detected by GNU autoconf (or cmake's cmake/ConfigureChecks.cmake) pollute the global name
  * space. This makes it impossible for a user to include both ROSE's configuration results in conjunction with the

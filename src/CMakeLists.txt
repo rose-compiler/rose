@@ -271,13 +271,11 @@ endif()
 if(enable-poet)
   set(LINK_FILES
     poet
-    libhpdf
     ${CMAKE_DL_LIBS}
     libX10Traversal)
   add_dependencies(ROSE_DLL poet)
 else()
   set(LINK_FILES
-    libhpdf
     ${CMAKE_DL_LIBS}
     libX10Traversal)
 endif()
@@ -318,7 +316,7 @@ endif ()
 
 # If the C preprocessor is enabled, ROSE has some additional depenendencies
 if(enable-cpp)
-  add_dependencies(ROSE_DLL OMPPARSER ROSE_PREPROCESSOR libhpdf generate_rosePublicConfig)
+  add_dependencies(ROSE_DLL OMPPARSER ROSE_PREPROCESSOR generate_rosePublicConfig)
 endif()
 
 # SQLite3 has an executable component and a development (library and headers) component that can be installed

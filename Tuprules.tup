@@ -587,7 +587,6 @@ endif
 support_INCDIRS = \
  @(CPP_INCDIR_SWITCH)$(ROSE) \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src \
- @(CPP_INCDIR_SWITCH)$(ROSE)/src/3rdPartyLibraries/libharu-2.1.0/include \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/frontend/SageIII \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/frontend/SageIII/sageInterface \
  @(CPP_INCDIR_SWITCH)$(ROSE)/src/midend/BinaryAnalyses \
@@ -623,8 +622,7 @@ support_LDFLAGS_SHARED += @(SUPPORT_LDFLAGS_SHARED)
 # Generated files used by Phase-1 when compiling
 support_GENHDR = \
   $(ROSE)/rose_config.h \
-  $(ROSE)/rosePublicConfig.h \
-  $(ROSE)/src/3rdPartyLibraries/libharu-2.1.0/include/hpdf_config.h
+  $(ROSE)/rosePublicConfig.h
 
 # If you're creating an executable from a bunch of source files, use "run $(support_compile_linkexe) ..." which will create
 # rules for compiling the specified source files into objects, and then linking the objects. Detailed usage information
