@@ -289,7 +289,7 @@ Edit::print(std::ostream &out) const {
     }
     out <<" cost=" <<cost;
 }
-    
+
 } // namespace
 } // namespace
 } // namespace

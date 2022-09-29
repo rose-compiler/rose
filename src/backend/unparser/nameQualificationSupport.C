@@ -267,22 +267,22 @@ namespace
       using SkipNameQualificationSet = std::set<const SgNode*>;
 
       using base = NameQualificationInheritedAttribute;
-      
+
       NameQualificationInheritedAttributeAda() = default;
       NameQualificationInheritedAttributeAda(const NameQualificationInheritedAttributeAda&) = default;
       NameQualificationInheritedAttributeAda(NameQualificationInheritedAttributeAda&&)      = default;
-      
-      NameQualificationInheritedAttributeAda& 
+
+      NameQualificationInheritedAttributeAda&
       operator=(const NameQualificationInheritedAttributeAda& that)
       {
         static_cast<base&>(*this) = that;
         this->skipNameQualification = that.skipNameQualification;
         this->typeMode              = that.typeMode;
-        
+
         return *this;
       }
-      
-      NameQualificationInheritedAttributeAda& 
+
+      NameQualificationInheritedAttributeAda&
       operator=(NameQualificationInheritedAttributeAda&&) = default;
 
 
@@ -982,7 +982,7 @@ namespace
 
         // parameters are handled by the traversal, so just qualify
         //   the return type, if this is a function.
-        if (SageInterface::ada::isFunction(n.get_type()))
+        if (SageInterface::Ada::isFunction(n.get_type()))
           computeNameQualForShared(n, n.get_orig_return_type());
       }
 
@@ -1137,7 +1137,8 @@ namespace
       {
         // \todo can an enum be elided?
         //       gets the scope of the enumeration declaration, not the initialized name
-        if (!elideNameQualification(n))
+
+        //~ if (!elideNameQualification(n))
           recordNameQualIfNeeded(n, SG_DEREF(n.get_declaration()).get_scope());
       }
 
@@ -1188,6 +1189,7 @@ namespace
 
       void handle(const SgDesignatedInitializer& n)
       {
+        // suppress on fields but not enumval
         suppressNameQualification(n.get_designatorList());
       }
 
@@ -1285,7 +1287,7 @@ namespace
 
       void handle(const SgAdaRenamingDecl& n)
       {
-        if (SageInterface::ada::renamedPackage(n))
+        if (SageInterface::Ada::renamedPackage(n))
           resetAdaContextIfNeeded(n);
       }
 
