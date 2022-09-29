@@ -171,7 +171,7 @@ namespace
   {
     void handle(const SgNode& n)                   { SG_UNEXPECTED_NODE(n); }
     void handle(const SgAdaPackageSpecDecl& n)     { res = n.get_name(); }
-    void handle(const SgAdaGenericInstanceDecl& n) { res = si::ada::convertRoseOperatorNameToAdaName(n.get_name()); }
+    void handle(const SgAdaGenericInstanceDecl& n) { res = si::Ada::convertRoseOperatorNameToAdaName(n.get_name()); }
     void handle(const SgFunctionDeclaration& n)    { res = n.get_name(); }
 
     void handle(const SgAdaGenericDecl& n)         { res = nameOfUnitRef(n.get_declaration()); }
@@ -306,7 +306,7 @@ namespace
       SgExpressionPtrList& lst = args.get_expressions();
       ROSE_ASSERT((lst.size() > 0) && (lst.size() < 3));
 
-      std::string op = si::ada::convertRoseOperatorNameToAdaOperator(fndcl->get_name());
+      std::string op = si::Ada::convertRoseOperatorNameToAdaOperator(fndcl->get_name());
       ROSE_ASSERT(op.size());
 
       if (lst.size() == 2)
@@ -321,7 +321,7 @@ namespace
       expr(lst.back());
     }
 
-    void prnIfBranch(const si::ada::IfExpressionInfo& branch, const std::string& cond)
+    void prnIfBranch(const si::Ada::IfExpressionInfo& branch, const std::string& cond)
     {
       prn(cond);
       expr(branch.condition());
@@ -331,9 +331,9 @@ namespace
 
     void handle(SgConditionalExp& n)
     {
-      using Iterator = std::vector<si::ada::IfExpressionInfo>::iterator;
+      using Iterator = std::vector<si::Ada::IfExpressionInfo>::iterator;
 
-      std::vector<si::ada::IfExpressionInfo> seq = si::ada::flattenIfExpressions(n);
+      std::vector<si::Ada::IfExpressionInfo> seq = si::Ada::flattenIfExpressions(n);
       Iterator                               aa = seq.begin();
       const Iterator                         zz = seq.end();
 
@@ -521,8 +521,8 @@ namespace
         return nullptr;
 
       SgFunctionDeclaration& fundcl = SG_DEREF(n.getAssociatedFunctionDeclaration());
-      auto                   primitiveArgs = si::ada::primitiveParameterPositions(fundcl);
-      SgScopeStatement*      overridingScope = si::ada::overridingScope(args, primitiveArgs);
+      auto                   primitiveArgs = si::Ada::primitiveParameterPositions(fundcl);
+      SgScopeStatement*      overridingScope = si::Ada::overridingScope(args, primitiveArgs);
 
       return overridingScope ? overridingScope : fundcl.get_scope();
     }
@@ -534,7 +534,7 @@ namespace
       else if (SgScopeStatement* dclscope = assumedDeclarativeScope(n))
         prn(scopeQual(dclscope));
 
-      std::string fn = si::ada::convertRoseOperatorNameToAdaName(nameOf(n));
+      std::string fn = si::Ada::convertRoseOperatorNameToAdaName(nameOf(n));
 
       prn(std::move(fn));
     }
@@ -722,7 +722,7 @@ namespace
 
   void AdaExprUnparser::aggregate(SgExprListExp& n)
   {
-    si::ada::AggregateInfo info = si::ada::splitAggregate(n);
+    si::Ada::AggregateInfo info = si::Ada::splitAggregate(n);
 
     if (SgAdaAncestorInitializer* ext = info.ancestor())
     {
