@@ -705,8 +705,10 @@ Grammar::buildStringForPrototypes ( AstNodeClass & node )
    }
 
 
+// DQ (9/28/2022): Fixing compiler warning for argument not used.
+// StringUtility::FileWithLineNumbers Grammar::buildStringForVariantFunctionSource ( AstNodeClass & node )
 StringUtility::FileWithLineNumbers
-Grammar::buildStringForVariantFunctionSource         ( AstNodeClass & node )
+Grammar::buildStringForVariantFunctionSource ()
    {
   // Every node in the grammar has a function that identifies it with a numerical value
   // (e.g. SCOPE_STMT).
@@ -1145,7 +1147,9 @@ Grammar::buildStringForSource ( AstNodeClass & node )
                                        &AstNodeClass::getMemberFunctionSourceList,
                                        &GrammarString::getFunctionPrototypeString );
 
-     StringUtility::FileWithLineNumbers variantFunctionDefinition     = buildStringForVariantFunctionSource      (node);
+  // DQ (9/28/2022): Fixing compiler warning for argument not used.
+  // StringUtility::FileWithLineNumbers variantFunctionDefinition     = buildStringForVariantFunctionSource      (node);
+     StringUtility::FileWithLineNumbers variantFunctionDefinition     = buildStringForVariantFunctionSource      ();
      StringUtility::FileWithLineNumbers isClassnameFunctionDefinition = buildStringForIsClassNameFunctionSource  (node);
 
   // DQ (12/23/2005): Move this generated code to separate source file
@@ -1558,8 +1562,10 @@ Grammar::buildStringForDataAccessFunctionDeclaration ( AstNodeClass & node )
    }
 
 
+// DQ (9/28/2022): Fixing compiler warning for argument not used.
+// bool Grammar::buildConstructorParameterList ( AstNodeClass & node, vector<GrammarString *> & constructorParameterList, ConstructParamEnum config )
 bool
-Grammar::buildConstructorParameterList ( AstNodeClass & node, vector<GrammarString *> & constructorParameterList, ConstructParamEnum config )
+Grammar::buildConstructorParameterList ( AstNodeClass & node, vector<GrammarString *> & constructorParameterList )
    {
   // This function is called by the buildConstructorParameterListString(node) function
   // and builds the list of parameters that are used by a constructor.
@@ -1641,15 +1647,19 @@ Grammar::buildConstructorParameterListStringForEssentialDataMembers(AstNodeClass
   return result;
 }
 
+// DQ (9/28/2022): Fixing compiler warning for argument not used.
+// string Grammar::buildConstructorParameterListString ( AstNodeClass & node, bool withInitializers, bool withTypes, ConstructParamEnum config, bool* complete )
 string
-Grammar::buildConstructorParameterListString ( AstNodeClass & node, bool withInitializers, bool withTypes, ConstructParamEnum config, bool* complete )
+Grammar::buildConstructorParameterListString ( AstNodeClass & node, bool withInitializers, bool withTypes, bool* complete )
    {
   // This function returns the string used to build the parameters within the constructor.
      int i = 0;
      vector<GrammarString *> constructorParameterList;
      vector<GrammarString *>::iterator stringListIterator;
 
-     bool r = buildConstructorParameterList (node,constructorParameterList, config);
+  // DQ (9/28/2022): Fixing compiler warning for argument not used.
+  // bool r = buildConstructorParameterList (node,constructorParameterList, config);
+     bool r = buildConstructorParameterList (node,constructorParameterList);
      if (complete != 0)
           *complete = r;
 
@@ -1786,7 +1796,8 @@ Grammar::buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( AstNodeClas
      if (node.generateConstructor() == true)
         {
           bool complete = false;
-          ConstructParamEnum cur = CONSTRUCTOR_PARAMETER;
+       // DQ (9/28/2022): Fixing compiler warning for variable not used.
+       // ConstructParamEnum cur = CONSTRUCTOR_PARAMETER;
           string constructorPrototype = "\n     public: \n";
 #if 1
           bool withInitializers = true;
@@ -1802,14 +1813,18 @@ Grammar::buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( AstNodeClas
           AstNodeClass* parentNode = getNamedNode ( node, "SgLocatedNode" );
           if (parentNode != NULL)
              {
-               GrammarString* returnValue = getNamedDataMember ( *parentNode, "startOfConstruct" );
+            // DQ (9/28/2022): Fixing compiler warning for argument not used.
+            // GrammarString* returnValue = getNamedDataMember ( *parentNode, "startOfConstruct" );
+               GrammarString* returnValue = getNamedDataMember ( *parentNode );
                ROSE_ASSERT(returnValue != NULL);
 
             // DQ (11/7/2006): Mark it temporarily as NOT a constructor parameter.
                string defaultInitializer = returnValue->getDefaultInitializerString();
                returnValue->defaultInitializerString = "";
 
-               string constructorParameterString_1 = buildConstructorParameterListString(node,withInitializers,withTypes, cur, &complete);
+            // DQ (9/28/2022): Fixing compiler warning for argument not used.
+            // string constructorParameterString_1 = buildConstructorParameterListString(node,withInitializers,withTypes, cur, &complete);
+               string constructorParameterString_1 = buildConstructorParameterListString(node,withInitializers,withTypes, &complete);
                constructorPrototype = constructorPrototype + "         " + string(className) + "(" + constructorParameterString_1 + "); \n";
 
             // Reset "withInitializers" to false and generate a new string for the constructor parameters.
@@ -1818,7 +1833,9 @@ Grammar::buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( AstNodeClas
             // DQ (11/7/2006): Mark it temporarily as NOT a constructor parameter.
                returnValue->setIsInConstructorParameterList(NO_CONSTRUCTOR_PARAMETER);
 
-               string constructorParameterString_2 = buildConstructorParameterListString(node,withInitializers,withTypes, cur, &complete);
+            // DQ (9/28/2022): Fixing compiler warning for argument not used.
+            // string constructorParameterString_2 = buildConstructorParameterListString(node,withInitializers,withTypes, cur, &complete);
+               string constructorParameterString_2 = buildConstructorParameterListString(node,withInitializers,withTypes, &complete);
                constructorPrototype = constructorPrototype + "         " + string(className) + "(" + constructorParameterString_2 + "); \n";
 
                /* ESSENTIAL DATA MEMBERS CONSTRUCTOR: generate prototype for all data members constructor */
@@ -1845,8 +1862,10 @@ Grammar::buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( AstNodeClas
              }
             else
              {
+            // DQ (9/28/2022): Fixing compiler warning for argument not used.
             // If not a SgLocatedNode then output the normal constructor prototype (with all the default arguments).
-               string constructorParameterString = buildConstructorParameterListString(node,withInitializers,withTypes, cur, &complete);
+            // string constructorParameterString = buildConstructorParameterListString(node,withInitializers,withTypes, cur, &complete);
+               string constructorParameterString = buildConstructorParameterListString(node,withInitializers,withTypes, &complete);
                constructorPrototype = constructorPrototype + "         " + string(className) + "(" + constructorParameterString + "); \n";
                withInitializers = false;
              }
@@ -1870,7 +1889,9 @@ Grammar::buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( AstNodeClas
           bool withTypes        = true;
           string constructorPrototype = "\n     public: \n";
 
-          string constructorParameterString = buildConstructorParameterListString(node,withInitializers,withTypes, cur, &complete);
+       // DQ (9/28/2022): Fixing compiler warning for argument not used.
+       // string constructorParameterString = buildConstructorParameterListString(node,withInitializers,withTypes, cur, &complete);
+          string constructorParameterString = buildConstructorParameterListString(node,withInitializers,withTypes, &complete);
 
           constructorPrototype = constructorPrototype + "         static " + string(className) + "* build_node_from_nonlist_children(" + constructorParameterString + "); \n";
 
@@ -1891,7 +1912,9 @@ void Grammar::constructorLoopBody(const ConstructParamEnum& config, bool& comple
     string baseClassParameterString;
     bool withInitializers = false;
     bool withTypes        = false;
-    baseClassParameterString = buildConstructorParameterListString (*node.getBaseClass(),withInitializers,withTypes, config);
+ // DQ (9/28/2022): Fixing compiler warning for argument not used.
+ // baseClassParameterString = buildConstructorParameterListString (*node.getBaseClass(),withInitializers,withTypes, config);
+    baseClassParameterString = buildConstructorParameterListString (*node.getBaseClass(),withInitializers,withTypes);
     string preInitializationString = parentClassName + "($BASECLASS_PARAMETERS)";
     preInitializationString = ": " + preInitializationString;
     preInitializationString = GrammarString::copyEdit (preInitializationString,"$BASECLASS_PARAMETERS",baseClassParameterString);
@@ -1902,14 +1925,18 @@ void Grammar::constructorLoopBody(const ConstructParamEnum& config, bool& comple
 
   bool withInitializers         = false;
   bool withTypes                = true;
-  string constructorParameterString = buildConstructorParameterListString (node,withInitializers,withTypes,config,&complete);
+// DQ (9/28/2022): Fixing compiler warning for argument not used.
+// string constructorParameterString = buildConstructorParameterListString (node,withInitializers,withTypes,config,&complete);
+  string constructorParameterString = buildConstructorParameterListString (node,withInitializers,withTypes,&complete);
   constructorSource = GrammarString::copyEdit (constructorSource,"$CONSTRUCTOR_PARAMETER_LIST",constructorParameterString);
   constructorSource = GrammarString::copyEdit (constructorSource,"$CLASSNAME",node.getName());
 
   if (config == NO_CONSTRUCTOR_PARAMETER) {
     constructorSource = GrammarString::copyEdit (constructorSource,"$CONSTRUCTOR_BODY","");
   } else {
-    string constructorFunctionBody = node.buildConstructorBody(withInitializers, config);
+ // DQ (9/28/2022): Fixing compiler warning for argument not used.
+ // string constructorFunctionBody = node.buildConstructorBody(withInitializers, config);
+    string constructorFunctionBody = node.buildConstructorBody(withInitializers);
     constructorSource = GrammarString::copyEdit (constructorSource,"$CONSTRUCTOR_BODY",constructorFunctionBody);
   }
 
@@ -2863,10 +2890,10 @@ Grammar::buildTransformationSupport()
      return returnString;
    }
 
+// DQ (9/28/2022): Fixing compiler warning for argument not used.
+// StringUtility::FileWithLineNumbers Grammar::extractStringFromFile ( const string& startMarker, const string& endMarker, const string& filename, const string& directory )
 StringUtility::FileWithLineNumbers
-Grammar::extractStringFromFile (
-   const string& startMarker, const string& endMarker,
-   const string& filename, const string& directory )
+Grammar::extractStringFromFile ( const string& startMarker, const string& endMarker, const string& filename )
    {
   // Open file
      StringUtility::FileWithLineNumbers fileString = Grammar::readFileWithPos (filename);
@@ -4234,7 +4261,9 @@ Grammar::GrammarSynthesizedAttribute
 Grammar::generateMemoryPoolSupportImplementation(AstNodeClass* grammarnode, vector<GrammarSynthesizedAttribute> v)
    {
      GrammarSynthesizedAttribute sa;
-     StringUtility::FileWithLineNumbers file = extractStringFromFile("HEADER_MEMORY_POOL_SUPPORT_START", "HEADER_MEMORY_POOL_SUPPORT_END", "../Grammar/grammarMemoryPoolSupport.macro", "");
+  // DQ (9/28/2022): Fixing compiler warning for argument not used.
+  // StringUtility::FileWithLineNumbers file = extractStringFromFile("HEADER_MEMORY_POOL_SUPPORT_START", "HEADER_MEMORY_POOL_SUPPORT_END", "../Grammar/grammarMemoryPoolSupport.macro", "");
+     StringUtility::FileWithLineNumbers file = extractStringFromFile("HEADER_MEMORY_POOL_SUPPORT_START", "HEADER_MEMORY_POOL_SUPPORT_END", "../Grammar/grammarMemoryPoolSupport.macro");
      file = GrammarString::copyEdit (file,"$CLASSNAME",grammarnode->name);
      string s = toString(file);
   // union data of subtree nodes
@@ -4248,7 +4277,9 @@ Grammar::GrammarSynthesizedAttribute
 Grammar::generateMemoryPoolSupportImplementationSource(AstNodeClass* grammarnode, vector<GrammarSynthesizedAttribute> v)
    {
      GrammarSynthesizedAttribute sa;
-     StringUtility::FileWithLineNumbers file = extractStringFromFile("SOURCE_MEMORY_POOL_SUPPORT_START", "SOURCE_MEMORY_POOL_SUPPORT_END", "../Grammar/grammarMemoryPoolSupport.macro", "");
+  // DQ (9/28/2022): Fixing compiler warning for argument not used.
+  // StringUtility::FileWithLineNumbers file = extractStringFromFile("SOURCE_MEMORY_POOL_SUPPORT_START", "SOURCE_MEMORY_POOL_SUPPORT_END", "../Grammar/grammarMemoryPoolSupport.macro", "");
+     StringUtility::FileWithLineNumbers file = extractStringFromFile("SOURCE_MEMORY_POOL_SUPPORT_START", "SOURCE_MEMORY_POOL_SUPPORT_END", "../Grammar/grammarMemoryPoolSupport.macro");
      file = GrammarString::copyEdit (file,"$CLASSNAME",grammarnode->name);
      string s = toString(file);
   // union data of subtree nodes
@@ -4307,7 +4338,9 @@ Grammar::buildTreeTraversalFunctions(AstNodeClass& node, StringUtility::FileWith
           if (traverseDataMemberList.size() > 0)
              {
                outputFile <<"  " <<successorContainerName << ".reserve("
-                          << generateNumberOfSuccessorsComputation(traverseDataMemberList, successorContainerName)
+                       // DQ (9/28/2022): Fixing compiler warning for argument not used.
+                       // << generateNumberOfSuccessorsComputation(traverseDataMemberList, successorContainerName)
+                          << generateNumberOfSuccessorsComputation(traverseDataMemberList)
                           << ");\n";
              }
           for(vector<GrammarString*>::iterator iter=traverseDataMemberList.begin(); iter!=traverseDataMemberList.end(); iter++)
@@ -4377,7 +4410,9 @@ Grammar::buildTreeTraversalFunctions(AstNodeClass& node, StringUtility::FileWith
           if (traverseDataMemberList.size() > 0)
              {
                outputFile << "return "
-                          << generateNumberOfSuccessorsComputation(traverseDataMemberList, successorContainerName)
+                       // DQ (9/28/2022): Fixing compiler warning for argument not used.
+                       // << generateNumberOfSuccessorsComputation(traverseDataMemberList, successorContainerName)
+                          << generateNumberOfSuccessorsComputation(traverseDataMemberList)
                           << ";\n";
              }
           else
@@ -4708,7 +4743,10 @@ string Grammar::generateTraverseSuccessorForLoopSource(string typeString,
 // as it avoids repeated reallocations on push_back. The size of the container
 // is the sum of the number of single members and the size of the optional
 // container member.
-string Grammar::generateNumberOfSuccessorsComputation( vector<GrammarString*>& traverseDataMemberList, string successorContainerName)
+
+// DQ (9/28/2022): Fixing compiler warning for argument not used.
+// string Grammar::generateNumberOfSuccessorsComputation( vector<GrammarString*>& traverseDataMemberList, string successorContainerName)
+string Grammar::generateNumberOfSuccessorsComputation( vector<GrammarString*>& traverseDataMemberList)
 {
     stringstream travSuccSource;
     if (!traverseDataMemberList.empty())
