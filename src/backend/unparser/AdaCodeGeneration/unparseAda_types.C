@@ -228,7 +228,7 @@ namespace
     {
       prn(" array");
       prn("(");
-      arrayDimList(SG_DEREF(n.get_dim_info()), (si::ada::unconstrained(n) ? " range <>" : ""));
+      arrayDimList(SG_DEREF(n.get_dim_info()), (si::Ada::unconstrained(n) ? " range <>" : ""));
       prn(")");
       prn(" of ");
       type(n.get_base_type());
@@ -283,7 +283,7 @@ namespace
 
     void handle(SgFunctionType& n)
     {
-      const bool func = si::ada::isFunction(n);
+      const bool func = si::Ada::isFunction(n);
 
       prn(func ? " function" : " procedure");
 
