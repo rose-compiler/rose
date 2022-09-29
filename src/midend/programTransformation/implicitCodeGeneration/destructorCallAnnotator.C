@@ -1,8 +1,6 @@
 #include <sage3basic.h>
 
-#if ROSE_WITH_LIBHARU
-#include "AstPDFGeneration.h"
-#endif
+#include "AstJSONGeneration.h"
 
 #include "astGraph.h"
 #include <list>
@@ -170,7 +168,7 @@ blockObjectsAllocated(SgStatement *block, SgStatement *stop)
                 {
                   SgBasicBlock *b = isSgBasicBlock(block);
                   ROSE_ASSERT(b);
-                  
+
                   SgNode *parent = block->get_parent();
                   if (SgForStatement *fs = isSgForStatement(parent))
                      {
@@ -226,11 +224,11 @@ blockObjectsAllocated(SgStatement *block, SgStatement *stop)
         }
      return objs;
    }
-     
+
 /*! Returns the list of objects allocated at the given statement, not including
   the given statement if a VariableDeclaration.  List in reverse order,
   i.e. order of destruction.  Does not proceed any further than a node satisfying stopCond.
-  Itf omitInit true, omit objects allocated at the start of a loop which will not be 
+  Itf omitInit true, omit objects allocated at the start of a loop which will not be
  */
 /* implementation technique: startOfCurrent helps ensure items inserted in reverse order for the current block, while blocks, visited from inner to outer are in the correct order  */
 template<class StopCond>
@@ -320,7 +318,7 @@ auxObjectsAllocated(SgStatement *stmt)
         }
      return objs;
    }
-     
+
 class IsFunctionDef : unary_function<SgNode *, bool>
    {
      public:
@@ -466,7 +464,7 @@ class Annotator : public AstSimpleProcessing
                     in_list gotoList = objectsAllocated(gs, IsFunctionDef());
                     in_list labelList = objectsAllocated(gs->get_label(), IsFunctionDef());
                     in_list::iterator gi = gotoList.end(), li = labelList.end();
-                    while (li != labelList.begin()) 
+                    while (li != labelList.begin())
                        {
                          if (gi == gotoList.begin() || *--gi != *--li)
                             {
@@ -531,19 +529,15 @@ SgMemberFunctionRefExp *buildDtorRefExpr(SgClassDeclaration *decl)
         {
           dtorName += decl->get_name();
         }
-          
+
      SgMemberFunctionSymbol *dtor = isSgMemberFunctionSymbol(def->lookup_function_symbol(dtorName));
      cout << "dtorName = " << dtorName << ", dtor = " << (void *)dtor->get_declaration() << endl;
      //ROSE_ASSERT(dtor);
      if (!dtor)
         {
           cout << "Class has no dtor!" << endl;
-#if ROSE_WITH_LIBHARU
-          AstPDFGeneration pdf;
-          pdf.generate("noDtor", decl);
-#else
-          cout << "Warning: libharu support is not enabled" << endl;
-#endif
+          AstJSONGeneration json;
+          json.generate("noDtor", decl);
           ROSE_ABORT();
         }
      SgMemberFunctionRefExp *ref = new SgMemberFunctionRefExp(SgNULL_FILE, dtor, false, dtor->get_declaration()->get_type(), false);
@@ -632,7 +626,7 @@ void destroyTemporariesInFollowingPositions(NodeType *n, SgNode *tempSrc)
                     poss = findFollowingPositions(n);
                   }
              }
-                    
+
           if (poss.empty())
              {
           cout << "WARNING: temporary created in statement after which it is" << endl
@@ -671,7 +665,7 @@ class Transformer : public AstSimpleProcessing
                   {
                     SgStatement *stmt = isSgStatement(node);
                     ROSE_ASSERT(stmt);
-                    
+
                     stmt_pos pos = findPosition(stmt);
                     pos.second++;
 
@@ -878,28 +872,28 @@ void destructorCallAnnotator(SgProject *prj)
           t.traverse(isSgFunctionDefinition(*i)->get_body(), postorder);
         }
    }
-     
+
 #if 0
 int main(int argc, char **argv)
    {
      SgProject *prj = frontend(argc, argv);
 
-     AstPDFGeneration pdf;
-     pdf.generate("annotatorStage0", prj);
+     AstJSONGeneration json;
+     json.generate("annotatorStage0", prj);
 
      DefaultFunctionGenerator dfg;
      //dfg.traverseInputFiles(prj, preorder);
      dfg.traverse(prj, preorder);
 
-     pdf.generate("annotatorStage1", prj);
+     json.generate("annotatorStage1", prj);
 
      AstPostProcessing(prj);
 
-     pdf.generate("annotatorStage2", prj);
+     json.generate("annotatorStage2", prj);
 
      shortCircuitingTransformation(prj);
 
-     pdf.generate("annotatorStage3", prj);
+     json.generate("annotatorStage3", prj);
 
      if (true)
         {
@@ -913,7 +907,7 @@ int main(int argc, char **argv)
              }
         }
 
-     pdf.generate("annotatorStage4", prj);
+     json.generate("annotatorStage4", prj);
 
      list<SgNode *> defs = NodeQuery::querySubTree(prj, V_SgFunctionDefinition);
 
@@ -931,10 +925,7 @@ int main(int argc, char **argv)
 #endif
         }
 
-     pdf.generate("annotatorStage5", prj);
-
-     //AstPDFGeneration pdf;
-     //pdf.generate("foo.pdf", prj);
+     json.generate("annotatorStage5", prj);
 
      //AST_Graph::writeGraphOfAstSubGraphToFile("wholeGraphAST.dot",prj,customFilter());
 

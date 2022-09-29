@@ -1,7 +1,7 @@
 # This should not depend on ROSE in any way so I don't think we need this
 # include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-# SUBDIRS = MSTL libharu-2.1.0 fortran-parser java-parser antlr-jars qrose
+# SUBDIRS = MSTL fortran-parser java-parser antlr-jars qrose
 # checkPointLibrary
 
 SUBDIRS =
@@ -25,13 +25,10 @@ if ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 SUBDIRS += MSTL
 else
 SUBDIRS += MSTL antlr-jars qrose
-if ROSE_WITH_LIBHARU
-SUBDIRS += libharu-2.1.0 
-endif
 endif
 
 # DQ (1/14/2017): Remove POET uniformally until it can be added to provide greater portability (working on Ubuntu systems).
-# # DQ (12/18/2016): Disable use of POET on DEBIAN and UBUNTU systems because 
+# # DQ (12/18/2016): Disable use of POET on DEBIAN and UBUNTU systems because
 # # its built system is not sufficently general to avoid linking issues.
 # # SUBDIRS += POET
 # if !OS_VENDOR_UBUNTU

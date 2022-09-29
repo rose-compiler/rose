@@ -8,7 +8,7 @@ INCLUDES = $(ROSE_INCLUDES)
 CXX_TEMPLATE_REPOSITORY_PATH = .
 
 include_HEADERS = \
-   AstPDFGeneration.h AstNodeVisitMapping.h AstAttributeMechanism.h \
+   AstJSONGeneration.h AstJSONGeneration.h AstNodeVisitMapping.h AstAttributeMechanism.h \
    AstTextAttributesHandling.h AstDOTGeneration.h AstProcessing.h \
    AstSimpleProcessing.h AstTraverseToRoot.h AstNodePtrs.h \
    AstSuccessorsSelectors.h AstReverseProcessing.h \
@@ -22,14 +22,14 @@ include_HEADERS = \
 if ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 libastprocessingSources = \
    AstNodeVisitMapping.C AstTextAttributesHandling.C \
-   AstDOTGeneration.C AstProcessing.C AstSimpleProcessing.C \
+   AstDOTGeneration.C AstJSONGeneration.C AstProcessing.C AstSimpleProcessing.C \
    AstNodePtrs.C AstSuccessorsSelectors.C AstAttributeMechanism.C \
    AstReverseSimpleProcessing.C AstClearVisitFlags.C \
    AstTraversal.C AstCombinedSimpleProcessing.C \
    AstSharedMemoryParallelSimpleProcessing.C plugin.C $(include_HEADERS)
 else
 libastprocessingSources = \
-   AstPDFGeneration.C AstNodeVisitMapping.C AstTextAttributesHandling.C \
+   AstJSONGeneration.C AstJSONGeneration.C AstNodeVisitMapping.C AstTextAttributesHandling.C \
    AstDOTGeneration.C AstProcessing.C AstSimpleProcessing.C \
    AstNodePtrs.C AstSuccessorsSelectors.C AstAttributeMechanism.C \
    AstReverseSimpleProcessing.C AstRestructure.C AstClearVisitFlags.C \
@@ -38,7 +38,7 @@ libastprocessingSources = \
 endif
 
 
-# Removed AstTests.C AstStatistics.C 
+# Removed AstTests.C AstStatistics.C
 
 # lib_LTLIBRARIES = libastprocessing.a
 # libastprocessing_a_SOURCES  = $(libastprocessingSources)
@@ -62,15 +62,10 @@ distclean-local:
 if HAVE_YICES
 include_HEADERS += yicesParserLib.h
 endif
-# Removed AstTests.h AstStatistics.h 
+# Removed AstTests.h AstStatistics.h
 
 EXTRA_DIST = CMakeLists.txt AstProcessing.docs
 
 
 test_code_size:
 	g++ -E -I$(top_builddir) -I. $(ROSE_INCLUDES) $(srcdir)/AstNodeVisitMapping.C | wc -l
-
-
-
-
-

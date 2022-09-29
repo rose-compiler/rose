@@ -691,7 +691,7 @@
 ./midend/astProcessing/AstNodePtrs.h
 ./midend/astProcessing/AstNodeScanner.h
 ./midend/astProcessing/AstNodeVisitMapping.h
-./midend/astProcessing/AstPDFGeneration.h
+./midend/astProcessing/AstJSONGeneration.h
 ./midend/astProcessing/AstProcessing.h
 ./midend/astProcessing/AstRestructure.h
 ./midend/astProcessing/AstReverseProcessing.h
@@ -879,7 +879,7 @@
 ./3rdPartyLibraries/coco/taste/xref.c
 ./3rdPartyLibraries/MSTL/DOTGeneration.h
 ./3rdPartyLibraries/MSTL/AttributeMechanism.h
-./3rdPartyLibraries/MSTL/PDFGeneration.h
+./3rdPartyLibraries/MSTL/JSONGeneration.h
 ./3rdPartyLibraries/MSTL/DOTRepresentation.h
 ./3rdPartyLibraries/MSTL/Translator.h
 ./3rdPartyLibraries/MSTL/DOTGraphInterface.h
@@ -1192,7 +1192,7 @@
 ./midend/astProcessing/AstNodePtrs.C
 ./midend/astProcessing/AstNodeScanner.C
 ./midend/astProcessing/AstNodeVisitMapping.C
-./midend/astProcessing/AstPDFGeneration.C
+./midend/astProcessing/AstJSONGeneration.C
 ./midend/astProcessing/AstProcessing.C
 ./midend/astProcessing/AstRestructure.C
 ./midend/astProcessing/AstReverseProcessing.C
@@ -1313,7 +1313,7 @@
 ./backend/unparser/unparse_stmt.C
 ./3rdPartyLibraries/MSTL/DOTGeneration.C
 ./3rdPartyLibraries/MSTL/AttributeMechanism.C
-./3rdPartyLibraries/MSTL/PDFGeneration.C
+./3rdPartyLibraries/MSTL/JSONGeneration.C
 ./3rdPartyLibraries/MSTL/DOTRepresentation.C
 ./3rdPartyLibraries/MSTL/DOTGraphInterface.C
 ./3rdPartyLibraries/MSTL/DOTSubgraphRepresentation.C

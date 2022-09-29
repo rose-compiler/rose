@@ -1,11 +1,11 @@
-// This avoids requiring the user to use config.h and follows 
+// This avoids requiring the user to use config.h and follows
 // the automake manual request that we use <> instead of ""
 #include "sage3basic.h"
 #ifdef HAVE_INCLUDE_H
 #include <config.h>
 #endif
 #include "helpFunctions.h"
-#include "ControlStructure.h" 
+#include "ControlStructure.h"
 #include "GenGeneration.h"
 
 
@@ -107,7 +107,7 @@ public:
   writeStaticGraphToFile ();
   void
   initialize(SgProject* project, int argc, char* argv []);
-  void 
+  void
   graphGenerateProject(SgProject* project);
 private:
   //The object which does the code-generation for the dynamic
@@ -115,7 +115,7 @@ private:
   GenGeneration * codeGeneration;
   //A mapping between the SgTypedefDeclaration* and the SgType* it
   //refers to.
-  map<SgTypedefDeclaration*, SgType*> typedefTranslationTable; 
+  map<SgTypedefDeclaration*, SgType*> typedefTranslationTable;
   string
     filename;
 };
@@ -141,8 +141,8 @@ MyTraversal::initialize(SgProject* project, int argc, char* argv[]){
 /*
  * The function:
  *    writeCodeToFile()
- * writes the c++ code needed to generate dot code to graph the 
- * dynamic data structure. 
+ * writes the c++ code needed to generate dot code to graph the
+ * dynamic data structure.
  *
  */
 void
@@ -177,7 +177,7 @@ MyTraversal::graphGenerateProject(SgProject* project){
         list<string> fileNamesInProjectList = project->getFileNames();
         //Put the fileNames into a strctures which is more handy
         set<string>  fileNamesInProject;
-        for(list<string>::iterator elm = fileNamesInProjectList.begin(); 
+        for(list<string>::iterator elm = fileNamesInProjectList.begin();
                         elm != fileNamesInProjectList.end(); ++elm){
                 fileNamesInProject.insert(*elm);
         }
@@ -186,14 +186,14 @@ MyTraversal::graphGenerateProject(SgProject* project){
 
         staticDataGraph->beginClass(project, "The Current Project", GenRepresentation::Container);
         staticDataGraph->endClass(GenRepresentation::Container);
-        
+
 
         map<SgTypedefDeclaration*, SgType*> mapSubset;
 
         cout << typedefTranslationTable.size() << endl;
-        
+
         //Iterate over all files to find all class declarations
-        map<string,void*> sageFileReferences; 
+        map<string,void*> sageFileReferences;
         for (unsigned int i = 0;  i < sageFilePtrList.size (); i += 1)
           {
             const SgFile *sageFile = isSgFile (sageFilePtrList[i]);
@@ -220,7 +220,7 @@ MyTraversal::graphGenerateProject(SgProject* project){
                     SgTypedefDeclaration* typedefDeclaration = isSgTypedefDeclaration(*typedefElm);
                     ROSE_ASSERT(typedefDeclaration != NULL);
                     SgClassType* sageClassType = NULL;
-                    
+
                     if(isSgClassType(typedefTranslationTable[typedefDeclaration]) != NULL)
                             sageClassType = isSgClassType( typedefTranslationTable[typedefDeclaration] );
 /*                  if(sageClassType == NULL){
@@ -230,25 +230,25 @@ MyTraversal::graphGenerateProject(SgProject* project){
                             cerr << "A SgTypedefDeclaration was not found in the typedefTranslationTable. Terminating\n";
                             exit(1);
                     }
-*/                          
-                    
+*/
+
                     if(sageClassType != NULL){
                             ROSE_ASSERT( sageClassType->get_declaration() != NULL);
                             string fileName = sageClassType->get_declaration()->getFileName();
                             classDeclarationList.push_back(sageClassType->get_declaration());
-                        
-                            if((fileName.find("/home/saebjorn/")!=string::npos) | 
+
+                            if((fileName.find("/home/saebjorn/")!=string::npos) |
                                             (fileNamesInProject.find(fileName)!=fileNamesInProject.end()))
                             {
                                     if(typedefTranslationTable.find(typedefDeclaration) != typedefTranslationTable.end())
                                             mapSubset[typedefDeclaration] = typedefTranslationTable.find(typedefDeclaration)->second;
-                                    
+
 
                             }
                     }
            }
 
-           //codeGeneration->graphTypedefTranslationTable(mapSubset);   
+           //codeGeneration->graphTypedefTranslationTable(mapSubset);
 
             classDeclarationList.merge (structDeclarationList);
             classDeclarationList.unique();
@@ -275,8 +275,8 @@ MyTraversal::graphGenerateProject(SgProject* project){
 #endif
 
                 string fileName = classDeclaration->getFileName();
-                
-        
+
+
                 if((fileName.find("/home/saebjorn/")!=string::npos)|
                                 (fileNamesInProject.find(fileName)!=fileNamesInProject.end())){
 
@@ -286,16 +286,16 @@ MyTraversal::graphGenerateProject(SgProject* project){
                         //the static data representation for it, create a node.
                         if(sageFileReferences.find(fileName) == sageFileReferences.end()){
                                 sageFileReferences[fileName] =classDeclaration->getFileName();
-        
-                                if( staticDataGraph->checkIfMapKeyExist(sageFileReferences[fileName]) == false) 
+
+                                if( staticDataGraph->checkIfMapKeyExist(sageFileReferences[fileName]) == false)
                                         staticDataGraph->setMapKey(sageFileReferences[fileName]);
                                 staticDataGraph->beginClass(sageFileReferences[fileName], fileName, GenRepresentation::Container);
                                 staticDataGraph->endClass(GenRepresentation::Container);
                                 staticDataGraph->addEdge(project,sageFileReferences[fileName], sageFileReferences[fileName]);
                         }
-                        
-                        
-                        //If the class is to be graphed, graph it. I do not graph a forward-declartion. The first if-test 
+
+
+                        //If the class is to be graphed, graph it. I do not graph a forward-declartion. The first if-test
                         //removes all forward declarations.
                         SgClassDefinition* sageClassDefinition = isSgClassDefinition(classDeclaration->get_definition());
                         ROSE_ASSERT( sageClassDefinition != NULL);
@@ -373,7 +373,7 @@ MySynthesizedAttribute
         //get filename info.
         filename = astNode->get_file_info ()->get_filename ();
         ROSE_ASSERT (filename.length () > 0);
-        
+
         //find all the pragma-statemants which tells what to graph
         //list<SgNode*> pragmaStatements = NodeQuery::querySubTree(astNode, new SgName("GenPrintCode_"),queryNodePragmaDeclarationFromName);
         list < ControlStructureContainer * >controlStatements =
@@ -383,10 +383,10 @@ MySynthesizedAttribute
         list < ControlStructureContainer * >pragmaPrintAllStatements; /*=
           queryFindCommentsInScope ("//pragma", "GenPrintAllVariables",
                                     isSgScopeStatement (astNode));*/
-       
+
         if(pragmaPrintAllStatements.empty() != true){
               cout << "pragmaprint: " << pragmaPrintAllStatements.size() << endl;
-              cout << "All variables will be printed" << endl; 
+              cout << "All variables will be printed" << endl;
               graphAllVariables = true;
         }
 
@@ -413,7 +413,7 @@ MySynthesizedAttribute
 
                 //Create an easier structure which can hold the variable names which should be graphed
                 map<string,ControlStructureContainer*> variableNamesTograph;
-                typedef list <ControlStructureContainer*>::iterator pragmaIterator; 
+                typedef list <ControlStructureContainer*>::iterator pragmaIterator;
                 for ( pragmaIterator pragmaElm = controlStatements.begin (); pragmaElm != controlStatements.end (); ++pragmaElm)
                 {
                      ControlStructureContainer *controlStructure = *pragmaElm;
@@ -429,13 +429,13 @@ MySynthesizedAttribute
 
                      variableNamesTograph[variableName]=controlStructure;
 
-                     cout << variableName << endl;                   
+                     cout << variableName << endl;
 #ifdef DEBUG_CGRAPHPP
                      cout << "*****************" << controlStructure->
                           getPragmaString () << " :: " << variableName << "**************" << endl;
 #endif
                 }
-                //find all parent scopes in namespace, so that it is possible to search for 
+                //find all parent scopes in namespace, so that it is possible to search for
                 //a class declaration corresponding to the typename in the namespace.
                 SgNodePtrVector scopesVector = findScopes (astNode);
                 //find all variable declarations in scope so that it is later possible to graph the parts of it specified by the pragmas.
@@ -460,7 +460,7 @@ MySynthesizedAttribute
                 SgInitializedNameList sageInitializedNameList =
                   sageVariableDeclaration->get_variables ();
 
-                
+
                 for (SgInitializedNameList::iterator k = sageInitializedNameList.begin ();
                      k != sageInitializedNameList.end (); ++k)
                   {
@@ -487,7 +487,7 @@ MySynthesizedAttribute
 
                         SgTypedefDeclaration *typedefDeclaration =
                                 findTypedefFromTypeName (scopesVector, typeName);
-                  
+
                         SgType* sageType = NULL;
                         SgClassType* classType = NULL;
 
@@ -504,7 +504,7 @@ MySynthesizedAttribute
                                         cout << "The typedefDeclaration was found in the table"<< TransformationSupport::getTypeName(sageType)<<endl;
                                 }
                                 classType = isSgClassType(sageType);
-                 
+
                                 if(classType != NULL){
                                         string sageTypeName = TransformationSupport::getTypeName(classType);
                                         cout << "The typename of the corresponding class is:" << sageTypeName << endl;
@@ -516,7 +516,7 @@ MySynthesizedAttribute
                         }else
                                 classDeclarationList = findClassDeclarationsFromTypeName(scopesVector, typeName);
 
-                        
+
                         /*list < SgNode * >classDeclarationList =
                           findClassDeclarationsFromTypeName (scopesVector,
                                                              typeName);*/
@@ -529,7 +529,7 @@ MySynthesizedAttribute
 
                         string graphString;
                         int cnt = 0;
-                
+
                         if (classDeclaration->get_class_type () ==
                             SgClassDeclaration::e_class)
                           graphString =
@@ -593,12 +593,12 @@ MySynthesizedAttribute
                           ": Not graphed since it is not pointer." << endl;
 
                       }
-                    } /* End if( graphVariable ) */ 
+                    } /* End if( graphVariable ) */
                   }             /* End iterator of SgInitializedName */
-              } /* End iterator over variableDeclartions */ 
+              } /* End iterator over variableDeclartions */
         } /* End if( start graphVariable) */
-      } /* End case SgBlock */              
-    } /* End switch-case */      
+      } /* End case SgBlock */
+    } /* End switch-case */
 
 
   return returnAttribute;
@@ -620,12 +620,9 @@ main (int argc, char **argv)
   bool debug = true;
   if (debug == true)
     {
-#if ROSE_WITH_LIBHARU
-      AstPDFGeneration pdfOut;
-      pdfOut.generateInputFiles (project);
-#else
-      cout << "Warning: libharu support is not enabled" << endl;
-#endif
+      AstJSONGeneration jsonOut;
+      jsonOut.generateInputFiles (project);
+
       AstDOTGeneration dotOut;
       dotOut.generateInputFiles (project, AstDOTGeneration::PREORDER);
     }

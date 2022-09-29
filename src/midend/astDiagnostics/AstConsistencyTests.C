@@ -394,8 +394,8 @@ AstTests::runAllTests(SgProject* sageProject)
 
           AstTextAttributesHandling textAttributes(sageProject);
           textAttributes.setAll();
-          AstPDFGeneration pdftest;
-       // pdftest.generateInputFiles(sageProject); MS: deactivated 12/02/03
+          AstJSONGeneration jsontest;
+       // jsontest.generateInputFiles(sageProject); MS: deactivated 12/02/03
           textAttributes.removeAll();
         }
      if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )

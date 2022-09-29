@@ -5,9 +5,7 @@
 #include "FileUtility.h"
 #include <Sawyer/Message.h>
 
-#if ROSE_WITH_LIBHARU
-#include "AstPDFGeneration.h"
-#endif
+#include "AstJSONGeneration.h"
 
 #include "SgNodeHelper.h" //Markus's helper functions
 
@@ -25522,18 +25520,15 @@ void SageInterface::printAST2TextFile(SgNode* node, const char* filename, bool p
 
 void SageInterface:: saveToPDF(SgNode* node)
 {
-  saveToPDF(node, string("temp.pdf") );
+  saveToPDF(node, string("temp.pdf.json") );
 }
-//! Save AST into a pdf file, start from a node to find its enclosing file node. The entire file's AST will be saved into a pdf.
+//! Save AST into a json file to post-process into a pdf file, start from a
+//  node to find its enclosing file node. The entire file's AST will be saved into a pdf.
 void SageInterface:: saveToPDF(SgNode* node, std::string filename)
 {
   ROSE_ASSERT(node != NULL);
-#if ROSE_WITH_LIBHARU
-  AstPDFGeneration pdf;
-  pdf.generateWithinFile(filename, getEnclosingFileNode(node));
-#else
-     printf ("Warning: libharu support is not enabled\n");
-#endif
+  AstJSONGeneration json;
+  json.generateWithinFile(filename, getEnclosingFileNode(node));
 }
 
 bool SageInterface::insideSystemHeader (SgLocatedNode* node)
@@ -27641,4 +27636,3 @@ void SageInterface::clearSharedGlobalScopes(SgProject * project) {
   ROSE_ASSERT(hmm != nullptr);
   hmm->clear();
 }
-

@@ -7,17 +7,15 @@
 //#include <sage3.h>
 #include <AstDOTGeneration.h>
 
-#if ROSE_WITH_LIBHARU
-#include <AstPDFGeneration.h>
-#endif
+#include <AstJSONGeneration.h>
 
 #include <AstConsistencyTests.h>
 
-//! Default Cpp2Cpp Translator. Translates a C++ program by 
+//! Default Cpp2Cpp Translator. Translates a C++ program by
 //! invoking the EDG frontend and the ROSE backend, to a slightly reformatted C++
 //! program. The default midend is the identity transformation.
 //! This Translator can be customized by overriding frontend/midend/backend.
-//! Examples are CppToDotTranslator, CppToPdfTranslator, CppTestTranslator.
+//! Examples are CppToDotTranslator, CppToJsonTranslator, CppTestTranslator.
 class ROSE_DLL_API CppToCppTranslator : public Translator<int> {
 
  public:
@@ -30,7 +28,7 @@ class ROSE_DLL_API CppToCppTranslator : public Translator<int> {
   virtual void backend();
   //! the status code allows to report front/mid/backend warnings and errors.
   virtual int status();
-  //! messages to the user (stdout). 
+  //! messages to the user (stdout).
   //! Handles the impact of command line flags on printing of messages to stdout. For example, it is suppressed in preprocessing mode.
   virtual void printMessage(std::string s);
 
@@ -52,14 +50,13 @@ protected:
   virtual void backend();
 };
 
-class ROSE_DLL_API CppToPdfTranslator : public CppToCppTranslator {
+class ROSE_DLL_API CppToJsonTranslator : public CppToCppTranslator {
  public:
     static bool dumpFullAST; // a flag to indicate if full AST (including parts from headers) should be dumped
  protected:
-  /*! the backend generates a PDF file (instead of a C++ file). */
+  /*! the backend generates a JSON file (instead of a C++ file). */
   virtual void backend();
 };
-
 
 class ROSE_DLL_API CppToDotTranslator : public CppToCppTranslator {
  protected:
@@ -76,15 +73,3 @@ class ROSE_DLL_API RoseTestTranslator : public CppToVendorTranslator {
 };
 
 #endif
-
-
-
-
-
-
-
-
-
-
-
-
