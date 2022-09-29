@@ -225,6 +225,7 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
         new_file = getLibSourceFile(s);
       else
         new_file = generateNewSourceFile(s,func_name_str);
+      ROSE_ASSERT (new_file);
   }
 
   // Save some preprocessing information for later restoration. 

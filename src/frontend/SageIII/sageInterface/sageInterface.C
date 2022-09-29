@@ -13422,6 +13422,8 @@ class AndOpGenerator: public StatementGenerator
 
           virtual SgStatement* generate(SgExpression* lhs)
              {
+               if (lhs==NULL)
+                 return NULL; 
                SgTreeCopy treeCopy;
                SgExpression* lhsCopy = isSgExpression(lhs->copy(treeCopy));
                ROSE_ASSERT (lhsCopy);
@@ -13445,6 +13447,8 @@ class OrOpGenerator: public StatementGenerator
 
           virtual SgStatement* generate(SgExpression* lhs)
              {
+               if (lhs==NULL)
+                 return NULL; 
                SgTreeCopy treeCopy;
                SgExpression* lhsCopy = isSgExpression(lhs->copy(treeCopy));
                ROSE_ASSERT (lhsCopy);
@@ -13468,6 +13472,8 @@ class ConditionalExpGenerator: public StatementGenerator
 
           virtual SgStatement* generate(SgExpression* lhs)
              {
+               if (lhs==NULL)
+                 return NULL; 
                SgTreeCopy treeCopy;
                SgExpression* lhsCopy = isSgExpression(lhs->copy(treeCopy));
                ROSE_ASSERT (lhsCopy);
@@ -16601,13 +16607,13 @@ PreprocessingInfo* SageInterface::insertHeader(SgSourceFile * source_file, const
     content = "#include \"" + filename + "\" \n";
 
 #if 0
-// DQ (4/6/2021): This is a compiler warning, this variable is set but not used since some unreachable code is now commented out below.
+  // DQ (4/6/2021): This is a compiler warning, this variable is set but not used since some unreachable code is now commented out below.
   PreprocessingInfo::RelativePositionType position ;
 
   if (asLastHeader )
-     position = PreprocessingInfo::after;
+    position = PreprocessingInfo::after;
   else
-     position = PreprocessingInfo::before;
+    position = PreprocessingInfo::before;
 #endif
 
   SgDeclarationStatementPtrList & stmtList = globalScope->get_declarations ();
@@ -16648,21 +16654,22 @@ PreprocessingInfo* SageInterface::insertHeader(SgSourceFile * source_file, const
     ROSE_ASSERT(result);
     globalScope->addToAttachedPreprocessingInfo(result,position);
 #endif
-//    successful = true;
+    //    successful = true;
   }
 
 #if 0
-     printf ("In SageInterface::insertHeader(): Marking include file for filename = %s as a transformation \n",filename.c_str());
+  printf ("In SageInterface::insertHeader(): Marking include file for filename = %s as a transformation \n",filename.c_str());
 #endif
 
   // DQ (3/12/2019): We need to mark the added comments and CPP directives as a transformation so that then can be output.
   // This is a result of a fix to support the correct handling of comments and CPP directives for shared IR nodes as happen
   // when multiple files are used on the command line.
-     result->get_file_info()->setTransformation();
+  if (result)
+    result->get_file_info()->setTransformation();
 
 #if 0
-     printf ("Exiting as a test! \n");
-     ROSE_ASSERT(false);
+  printf ("Exiting as a test! \n");
+  ROSE_ASSERT(false);
 #endif
 
   // must be inserted once somehow
@@ -16809,6 +16816,15 @@ SageInterface::movePreprocessingInfo (SgStatement* stmt_src,  SgStatement* stmt_
      ROSE_ASSERT(stmt_src != NULL);
      ROSE_ASSERT(stmt_dst != NULL);
      AttachedPreprocessingInfoType* infoList = stmt_src->getAttachedPreprocessingInfo();
+
+     if (infoList == NULL)
+        {
+#if 0
+          printf ("In SageInterface::movePreprocessingInfo(): infoList == NULL: exiting movePreprocessingInfo() \n");
+#endif
+          return;
+        }
+
      AttachedPreprocessingInfoType* infoToRemoveList = new AttachedPreprocessingInfoType();
 
 #if 0
@@ -16851,13 +16867,6 @@ SageInterface::movePreprocessingInfo (SgStatement* stmt_src,  SgStatement* stmt_
   // and caused this problem. This assertion will prevent this sort of error from happening again.
      ROSE_ASSERT(infoList == NULL || stmt_src->getAttachedPreprocessingInfo() != stmt_dst->getAttachedPreprocessingInfo());
 
-     if (infoList == NULL)
-        {
-#if 0
-          printf ("In SageInterface::movePreprocessingInfo(): infoList == NULL: exiting movePreprocessingInfo() \n");
-#endif
-          return;
-        }
 
 #if 0
      printf ("   --- infoList->size()                = %zu \n",infoList->size());
@@ -18883,7 +18892,7 @@ CollectDependentDeclarationsTraversal::visit(SgNode *astNode)
        }
 
       // handle base type:
-       SgType* strippedType = type;
+       
        // We now can to strip typedefs since they are already handled by collectTypedefDeclarations()
        // this also reach to the defining body of a defining typedef declaration
        // and treat it as an independent declarations,
@@ -18901,7 +18910,7 @@ CollectDependentDeclarationsTraversal::visit(SgNode *astNode)
        // struct hypre_BoxArray_struct will be treated as a strippedType and its declaration
        // will be inserted.
        //
-       strippedType = type->stripType();
+       SgType* strippedType = type->stripType();
        SgNamedType* namedType = isSgNamedType(strippedType);
        if (namedType != NULL)
        {
@@ -21911,7 +21920,6 @@ SgInitializedName* SageInterface::convertRefToInitializedName(SgNode* current, b
     SgExpression* child = NULL;
     if (coarseGrain)
     {
-      child = isSgArrowExp(current)->get_lhs_operand();
       SgExpression* lhs = isSgArrowExp(current)->get_lhs_operand();
       ROSE_ASSERT(lhs);
       // Liao 9/12/2016, special handling for variables inside of C++11 lambda functions
@@ -22010,13 +22018,13 @@ SgNode* SageInterface::getSgNodeFromAbstractHandleString(const std::string& inpu
     if (handle->getNode()!=NULL)
     {
 #ifdef _MSC_VER
-     // DQ (11/28/2009): This is related to the use of covariant return types (I think).
-SgNode* result = NULL; // (SgNode*)(handle->getNode()->getNode());
+      // DQ (11/28/2009): This is related to the use of covariant return types (I think).
+      SgNode* result = NULL; // (SgNode*)(handle->getNode()->getNode());
 #pragma message ("WARNING: covariant return type for get_node() not supported in MSVC.")
-                printf ("ERROR: covariant return type for get_node() not supported in MSVC. \n");
-                ROSE_ABORT();
+      printf ("ERROR: covariant return type for get_node() not supported in MSVC. \n");
+      ROSE_ABORT();
 #else
-                SgNode* result = (SgNode*)(handle->getNode()->getNode());
+      SgNode* result = (SgNode*)(handle->getNode()->getNode());
 #endif
       // deallocate memory, should not do this!!
       // May corrupt the internal std maps used in abstract handle namespace
@@ -22106,7 +22114,8 @@ SageInterface::collectReadWriteRefs(SgStatement* stmt, std::vector<SgNode*>& rea
     {
       cerr<<"In collectReadWriteRefs(): cannot proceed without a function body!"<<endl;
     }
-    stmt = funcDecl->get_definition()->get_body();
+    else
+      stmt = funcDecl->get_definition()->get_body();
   }
 
   // get function level information
@@ -23436,6 +23445,17 @@ SgExprListExp * SageInterface::loopCollapsing(SgForStatement* loop, size_t colla
         {
             cerr<<"Error in SageInterface::loopCollapsing(): target loop is not canonical."<<endl;
             dumpInfo(target_loop);
+
+            // release memory
+            delete[] ivar; 
+            delete[] lb; 
+            delete[] ub; 
+            delete[] step; 
+            delete[] orig_body; 
+            delete[] total_iters; 
+            delete[] interval; 
+            delete[] isPlus; 
+
             return NULL;
         }
 

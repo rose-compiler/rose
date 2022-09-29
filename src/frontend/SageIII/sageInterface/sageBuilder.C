@@ -9286,12 +9286,12 @@ SageBuilder::buildForStatement_nfi(SgForStatement* result, SgForInitStatement * 
           result->setCaseInsensitive(true);
 
      setOneSourcePositionNull(result);
-     if (test)           test->set_parent(result);
+     if (test)      test->set_parent(result);
      if (loop_body) loop_body->set_parent(result);
      if (increment) increment->set_parent(result);
      if (init_stmt) init_stmt->set_parent(result);
+     if (else_body) else_body->set_parent(result);
 
-     if (else_body) init_stmt->set_parent(result);
      result->set_else_body(else_body);
 
      ROSE_ASSERT(result->get_for_init_stmt() != NULL);
@@ -9902,9 +9902,10 @@ SageBuilder::buildPragmaDeclaration(const string& name, SgScopeStatement* scope)
 
   // DQ (7/14/2012): Set the parent so that we can be consistent where possible (class declarations and
   // enum declaration can't have there parent set since they could be non-autonomous declarations).
-     result->set_parent(topScopeStack());
+     //result->set_parent(topScopeStack());
+     result->set_parent(scope);
 
-    if (topScopeStack())
+    if (scope || topScopeStack())
      ROSE_ASSERT(result->get_parent() != NULL);
 
      return result;
