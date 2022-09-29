@@ -657,7 +657,7 @@ namespace
     void handle(SgGlobal& n)
     {
       ScopeUpdateGuard        scopeGuard{unparser, info, n};
-      si::ada::StatementRange pkgRange = si::ada::declsInPackage(n, unparser.getFileName());
+      si::Ada::StatementRange pkgRange = si::Ada::declsInPackage(n, unparser.getFileName());
 
       list(pkgRange.first, pkgRange.second);
     }
@@ -753,7 +753,7 @@ namespace
         prn("type ");
         prn(n.get_name());
 
-        const bool requiresPrivate = si::ada::withPrivateDefinition(&n);
+        const bool requiresPrivate = si::Ada::withPrivateDefinition(&n);
         const bool requiresIs      = requiresPrivate || hasModifiers(n);
 
         if (requiresIs)
@@ -788,7 +788,7 @@ namespace
         prn("type ");
         prn(n.get_name());
 
-        const bool requiresPrivate = si::ada::withPrivateDefinition(&n);
+        const bool requiresPrivate = si::Ada::withPrivateDefinition(&n);
         const bool requiresIs      = requiresPrivate || hasModifiers(n);
 
         if (requiresIs)
@@ -811,7 +811,7 @@ namespace
       prn(prefix);
       prn(n.get_name());
 
-      if (si::ada::hasSeparatedBody(n))
+      if (si::Ada::hasSeparatedBody(n))
       {
         // separate declarations are nondefining
         prn(" is separate");
@@ -894,7 +894,7 @@ namespace
       SgStatementPtrList&          stmts    = n.get_statements();
       SgStatementPtrList::iterator aa       = stmts.begin();
       SgStatementPtrList::iterator zz       = stmts.end();
-      SgStatementPtrList::iterator dcllimit = si::ada::declarationLimit(stmts);
+      SgStatementPtrList::iterator dcllimit = si::Ada::declarationLimit(stmts);
 
       list(aa, dcllimit);
 
@@ -930,7 +930,7 @@ namespace
 
     void handle(SgAdaPackageBodyDecl& n)
     {
-      const bool         separated = si::ada::isSeparatedBody(n);
+      const bool         separated = si::Ada::isSeparatedBody(n);
       const std::string& pkgqual   = getQualification(n, n.get_scope());
 
       if (separated) prnSeparateQual(pkgqual);
@@ -938,7 +938,7 @@ namespace
       if (!separated) prn(pkgqual);
       prn(n.get_name());
 
-      if (si::ada::hasSeparatedBody(n))
+      if (si::Ada::hasSeparatedBody(n))
       {
         // separate declarations are nondefining
         prn(" is separate");
@@ -1024,9 +1024,9 @@ namespace
         prn(ren->get_name().getString());
       } else if (SgFunctionDeclaration* fn = isSgFunctionDeclaration(basedcl)) {
         // function/procedure
-        prn(si::ada::isFunction(fn->get_type()) ? "function " : "procedure ");
+        prn(si::Ada::isFunction(fn->get_type()) ? "function " : "procedure ");
         prn(pkgqual);
-        prn(si::ada::convertRoseOperatorNameToAdaName(name));
+        prn(si::Ada::convertRoseOperatorNameToAdaName(name));
         prn(" is new ");
         prnNameQual(n, *fn, fn->get_scope());
         prn(fn->get_name().getString());
@@ -1086,7 +1086,7 @@ namespace
       printPendingDiscriminants();
 
       const bool isDefinition    = &n == n.get_definingDeclaration();
-      const bool requiresPrivate = (!isDefinition) && si::ada::withPrivateDefinition(&n);
+      const bool requiresPrivate = (!isDefinition) && si::Ada::withPrivateDefinition(&n);
       const bool requiresIs      = (  requiresPrivate
                                    || hasModifiers(n)
                                    //~ || declwords.second.size() != 0
@@ -1200,17 +1200,17 @@ namespace
 
       // \todo what types need to be printed?
       //       print all non-null ty->get_formal_type() ?
-      if (si::ada::isModularType(formalBase))
+      if (si::Ada::isModularType(formalBase))
         prn("mod <>");
-      else if (si::ada::isIntegerType(formalBase))
+      else if (si::Ada::isIntegerType(formalBase))
         prn("range <>");
-      else if (si::ada::isFloatingPointType(formalBase))
+      else if (si::Ada::isFloatingPointType(formalBase))
         prn("digits <>");
-      else if (si::ada::isDiscreteType(formalBase))
+      else if (si::Ada::isDiscreteType(formalBase))
         prn("(<>)");
-      else if (si::ada::isDecimalFixedType(formalBase))
+      else if (si::Ada::isDecimalFixedType(formalBase))
         prn(" delta<> digits<> ");
-      else if (si::ada::isFixedType(formalBase))
+      else if (si::Ada::isFixedType(formalBase))
         prn(" delta<> ");
       else if (!isSgTypeDefault(formalBase))
       {
@@ -1269,7 +1269,7 @@ namespace
       stmt(dcl);
     }
 
-    void prnIfBranch(const si::ada::IfStatementInfo& branch, const std::string& cond)
+    void prnIfBranch(const si::Ada::IfStatementInfo& branch, const std::string& cond)
     {
       prn(cond);
       expr(branch.condition());
@@ -1280,9 +1280,9 @@ namespace
 
     void handle(SgIfStmt& n)
     {
-      using Iterator = std::vector<si::ada::IfStatementInfo>::iterator;
+      using Iterator = std::vector<si::Ada::IfStatementInfo>::iterator;
 
-      std::vector<si::ada::IfStatementInfo> seq = si::ada::flattenIfStatements(n);
+      std::vector<si::Ada::IfStatementInfo> seq = si::Ada::flattenIfStatements(n);
       Iterator                              aa = seq.begin();
       const Iterator                        zz = seq.end();
 
@@ -1318,7 +1318,7 @@ namespace
     void handle(SgWhileStmt& n)
     {
       prn("while ");
-      expr(si::ada::underlyingExpr(n.get_condition()));
+      expr(si::Ada::underlyingExpr(n.get_condition()));
       prn(" loop\n");
       stmt(n.get_body());
       prn("end loop");
@@ -1483,7 +1483,7 @@ namespace
     void handle(SgSwitchStatement& n)
     {
       prn("case ");
-      expr(si::ada::underlyingExpr(n.get_item_selector()));
+      expr(si::Ada::underlyingExpr(n.get_item_selector()));
       prn(" is\n");
       stmt(n.get_body());
       prn("end case;\n");
@@ -1683,7 +1683,7 @@ namespace
       // consume discriminants (actually, not necessary)
       pendingDiscriminants = nullptr;
 
-      if (si::ada::hasUnknownDiscriminants(dcl))
+      if (si::Ada::hasUnknownDiscriminants(dcl))
       {
         prn("(<>)");
         return;
@@ -1701,7 +1701,7 @@ namespace
 
       if (SgClassDefinition* def = n.get_definition())
       {
-        const bool explicitNullrec = si::ada::explicitNullRecord(*def);
+        const bool explicitNullrec = si::Ada::explicitNullRecord(*def);
 
         prn(" is");
         parentRecord_opt(*def);
@@ -1718,7 +1718,7 @@ namespace
       }
       else
       {
-        const bool requiresPrivate = si::ada::withPrivateDefinition(&n);
+        const bool requiresPrivate = si::Ada::withPrivateDefinition(&n);
         const bool requiresIs = requiresPrivate || hasModifiers(n);
 
         if (requiresIs)
@@ -1747,7 +1747,7 @@ namespace
       if (!isDefinition)
       {
         // unparse as forward declaration
-        const bool requiresPrivate = si::ada::withPrivateDefinition(&n);
+        const bool requiresPrivate = si::Ada::withPrivateDefinition(&n);
         const bool requiresIs      = requiresPrivate || hasModifiers(n);
 
         if (requiresIs)
@@ -1794,7 +1794,7 @@ namespace
     void handle(SgTryStmt& n)
     {
       // skip the block, just print the statements
-      const bool    requiresBeginEnd = !(si::ada::isFunctionTryBlock(n) || si::ada::isPackageTryBlock(n));
+      const bool    requiresBeginEnd = !(si::Ada::isFunctionTryBlock(n) || si::Ada::isPackageTryBlock(n));
       SgBasicBlock& blk = SG_DEREF(isSgBasicBlock(n.get_body()));
 
       if (requiresBeginEnd) prn("begin\n");
@@ -1844,7 +1844,7 @@ namespace
     {
       prnSeparateQual(n, n.get_scope());
 
-      const bool      isFunc  = si::ada::isFunction(n.get_type());
+      const bool      isFunc  = si::Ada::isFunction(n.get_type());
       std::string     keyword = isFunc ? "function" : "procedure";
 
       if (n.get_ada_formal_subprogram_decl())
@@ -2014,7 +2014,7 @@ namespace
     SgStatementPtrList&          stmts    = n.get_statements();
     SgStatementPtrList::iterator aa       = stmts.begin();
     SgStatementPtrList::iterator zz       = stmts.end();
-    SgStatementPtrList::iterator dcllimit = si::ada::declarationLimit(stmts);
+    SgStatementPtrList::iterator dcllimit = si::Ada::declarationLimit(stmts);
     const std::string            label    = n.get_string_label();
     const bool                   requiresBeginEnd = !adaStmtSequence(n);
     //~ ROSE_ASSERT(aa == dcllimit || requiresBeginEnd);
@@ -2115,7 +2115,7 @@ namespace
   void
   AdaStatementUnparser::handleFunctionEntryDecl(SgFunctionDeclaration& n, std::string keyword, bool hasReturn)
   {
-    std::string name = si::ada::convertRoseOperatorNameToAdaName(n.get_name());
+    std::string name = si::Ada::convertRoseOperatorNameToAdaName(n.get_name());
 
     prn(keyword);
     prn(" ");
@@ -2175,7 +2175,7 @@ namespace
         expr(renamed);
 
         //~ prnNameQual(n, *renamed, renamed->get_scope());
-        //~ prn(si::ada::convertRoseOperatorNameToAdaName(renamed->get_name()));
+        //~ prn(si::Ada::convertRoseOperatorNameToAdaName(renamed->get_name()));
       }
       // else this is a procedure declaration defined using renaming-as-body
 
@@ -2194,7 +2194,7 @@ namespace
       return;
     }
 
-    if (si::ada::explicitNullProcedure(*def))
+    if (si::Ada::explicitNullProcedure(*def))
     {
       prn(" is null");
       prn(STMT_SEP);
@@ -2318,7 +2318,7 @@ namespace
       {
         std::string prefix = genericPrefix(n);
 
-        prefix += si::ada::isFunction(n.get_type()) ? "function " : "procedure ";
+        prefix += si::Ada::isFunction(n.get_type()) ? "function " : "procedure ";
 
         res = ReturnType{prefix, false, nullptr};
         //~ res = ReturnType{prefix, false, n.get_name(), nullptr};
@@ -2378,7 +2378,7 @@ namespace
   std::string
   RenamingSyntax::genericPrefix(const SgDeclarationStatement& n)
   {
-    if (forceNonGeneric || !si::ada::isGenericDecl(n))
+    if (forceNonGeneric || !si::Ada::isGenericDecl(n))
       return "";
 
     return "generic ";

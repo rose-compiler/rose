@@ -19,7 +19,7 @@ namespace sb = SageBuilder;
 
 namespace SageInterface
 {
-namespace ada
+namespace Ada
 {
   // workaround to get the scope of package standard more easily
   //   set in AdaType.C:initializePkgStandard
@@ -278,7 +278,7 @@ namespace
       //       this would need to be fixed in the AST (if this is an issue).
       void handle(SgExpression& n)         { res = recurse(n.get_type()); }
 
-      void handle(SgAdaAttributeExp& n)    { res = ::si::ada::range(n); }
+      void handle(SgAdaAttributeExp& n)    { res = ::si::Ada::range(n); }
 
       void handle(SgAdaRangeConstraint& n) { res = recurse(n.get_range()); }
 
@@ -296,7 +296,7 @@ namespace
 
       void handle(SgArrayType& n)
       {
-        if (::si::ada::unconstrained(n))
+        if (::si::Ada::unconstrained(n))
           return notFound();
 
         SgExprListExp& exprlst = SG_DEREF(n.get_dim_info());
@@ -416,7 +416,7 @@ namespace
 
 namespace SageInterface
 {
-namespace ada
+namespace Ada
 {
   const std::string roseOperatorPrefix  = "operator";
   const std::string packageStandardName = "Standard";
@@ -536,7 +536,7 @@ namespace ada
     if (boost::to_upper_copy(n.get_attribute().getString()) != "RANGE")
       return nullptr;
 
-    const int dim = si::ada::firstLastDimension(SG_DEREF(n.get_args()));
+    const int dim = si::Ada::firstLastDimension(SG_DEREF(n.get_args()));
 
     return RangeExp::find(n.get_object(), dim);
   }
@@ -1149,11 +1149,6 @@ namespace ada
       SgType& find(SgType* ty);
     };
 
-    SgScopeStatement* pkgStandardScope()
-    {
-      return SG_DEREF(stdpkg).get_definition();
-    }
-
     SgType&
     RootTypeFinder::find(SgType* ty)
     {
@@ -1241,6 +1236,12 @@ namespace ada
 
   } // end anonymous namespace
 
+  SgScopeStatement* pkgStandardScope()
+  {
+    return SG_DEREF(stdpkg).get_definition();
+  }
+
+
   SgType* typeRoot(SgType& ty)
   {
     return &RootTypeFinder::find(&ty);
@@ -1300,10 +1301,10 @@ namespace ada
 
   std::string convertRoseOperatorNameToAdaOperator(const std::string& name)
   {
-    if (name.rfind(si::ada::roseOperatorPrefix, 0) != 0)
+    if (name.rfind(si::Ada::roseOperatorPrefix, 0) != 0)
       return "";
 
-    const std::string op = name.substr(si::ada::roseOperatorPrefix.size());
+    const std::string op = name.substr(si::Ada::roseOperatorPrefix.size());
 
     if (!isOperatorName(op))
       return "";
@@ -1315,10 +1316,10 @@ namespace ada
   {
     static const std::string quotes    = "\"";
 
-    if (name.rfind(si::ada::roseOperatorPrefix, 0) != 0)
+    if (name.rfind(si::Ada::roseOperatorPrefix, 0) != 0)
       return name;
 
-    const std::string op = name.substr(si::ada::roseOperatorPrefix.size());
+    const std::string op = name.substr(si::Ada::roseOperatorPrefix.size());
 
     if (!isOperatorName(op))
       return name;
