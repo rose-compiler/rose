@@ -3676,10 +3676,15 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
                                                  : mkTypeVoid();
 
         SgDeclarationStatement* ndef    = findFirst(asisDecls(), decl.Corresponding_Declaration, decl.Corresponding_Body_Stub);
-        SgFunctionDeclaration*  nondef  = getFunctionDeclaration(ndef);
+        SgFunctionDeclaration*  nondef  = getFunctionDeclaration(ndef ? ndef->get_firstNondefiningDeclaration() : nullptr);
         ADA_ASSERT(!ndef || nondef); // ndef => nondef
 
         SgScopeStatement&       logicalScope = adaname.parent_scope();
+        //~ logWarn() << decl.Corresponding_Declaration << " / " << decl.Corresponding_Body_Stub
+                  //~ << "   : " << nondef << "  "
+                  //~ << &logicalScope << " <ls  nds> " << (ndef ? ndef->get_scope() : nullptr)
+                  //~ << std::endl;
+
         SgFunctionDeclaration&  sgnode  = createFunDef(nondef, adaname.ident, logicalScope, rettype, ParameterCompletion{params, ctx});
         SgBasicBlock&           declblk = getFunctionBody(sgnode);
 

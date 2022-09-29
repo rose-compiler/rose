@@ -1999,7 +1999,7 @@ SageBuilder::buildVariableDefinition_nfi (SgVariableDeclaration* decl, SgInitial
 
       // Note that the SgVariableDefinition will connect the new IR node into the AST.
       defn_stmt = new SgVariableDefinition(copyOfFileInfo, init_name, init);
-      assert (defn_stmt != NULL);
+      ROSE_ASSERT (defn_stmt != NULL);
 
       copyOfFileInfo->set_parent(defn_stmt);
 
@@ -3581,12 +3581,12 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (
        // DQ (8/7/2013): We need to use the template arguments in the symbol table lookup for template functions to permit template function overloading on template perameters.
           func_symbol = scope->find_symbol_by_type_of_function<actualFunction>(nameWithTemplateArguments,func_type,templateParameterList,templateArgumentsList);
 
-#if 0
+#if 0 // DBG1
           printf ("In buildNondefiningFunctionDeclaration_T(): func_symbol from scope->find_symbol_by_type_of_function<actualFunction>(name = %s) = %p \n",nameWithTemplateArguments.str(),func_symbol);
           if (func_symbol != NULL) {
             printf ("In buildNondefiningFunctionDeclaration_T(): func_symbol->get_declaration() = %p \n", func_symbol->get_declaration());
           }
-#endif
+#endif /* DBG1 */
 #if 0
           if (nameWithoutTemplateArguments == "getline")
              {
@@ -4015,32 +4015,9 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (
        // DQ (3/8/2012): Added assertion.
           ROSE_ASSERT(func->get_symbol_from_symbol_table() == NULL);
 
-#if 1
        // DQ (12/15/2011): Added test.
           checkThatNoTemplateInstantiationIsDeclaredInTemplateDefinitionScope(func,scope);
-#else
-       // DQ (12/14/2011): We need the parent to be set so that we can call some of the test functions
-       // (e.g assert that get_class_scope() for member functions).  So we set the parent to the scope
-       // by default and see if this will work, else we could disable to assertion that the parent is
-       // non-null in the get_class_scope() member function.
-          if (isSgMemberFunctionDeclaration(func) != NULL)
-             {
-               printf ("WARNING: setting parent of function to match scope by default \n");
-               func->set_parent(scope);
 
-#error "DEAD CODE!"
-
-               ROSE_ASSERT(scope != NULL);
-               ROSE_ASSERT(isSgTemplateClassDefinition(scope) == NULL);
-             }
-            else
-             {
-               if (isSgTemplateMemberFunctionDeclaration(func) != NULL)
-                  {
-                    ROSE_ASSERT(isSgTemplateClassDefinition(scope) != NULL);
-                  }
-             }
-#endif
        // we don't care if it is member function or function here for a pointer
        // SgFunctionDeclaration* prevDecl = NULL;
           SgDeclarationStatement* prevDecl = NULL;
@@ -4067,23 +4044,6 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (
 #if 0
           printf ("In SageBuilder::buildNondefiningFunctionDeclaration_T(): prevDecl = %p = %s \n",prevDecl,prevDecl->class_name().c_str());
 #endif
-#if 0
-          if (prevDecl == prevDecl->get_definingDeclaration())
-             {
-            // The symbol points to a defining declaration and now that we have added a non-defining
-            // declaration we should have the symbol point to the new non-defining declaration.
-            // printf ("Switching declaration in functionSymbol to point to the non-defining declaration \n");
-
-#error "DEAD CODE!"
-
-            // DQ (11/23/2011): This change allows this to compile for where SgTemplateFunctionDeclarations are used.
-            // func_symbol->set_declaration(func);
-               func_symbol->set_declaration(isSgFunctionDeclaration(func));
-
-            // DQ (11/23/2011): Added this test to support debugging the case where SgTemplateFunctionDeclarations is used.
-               ROSE_ASSERT(func_symbol->get_declaration() != NULL);
-             }
-#else
           SgFunctionSymbol *function_symbol = isSgFunctionSymbol(func_symbol);
           if (prevDecl == prevDecl->get_definingDeclaration())
              {
@@ -4093,7 +4053,6 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (
                function_symbol->set_declaration(isSgFunctionDeclaration(func));
                ROSE_ASSERT(function_symbol->get_declaration() != NULL);
              }
-#endif
 
        // If this is the first non-defining declaration then set the associated data member.
           SgDeclarationStatement* nondefiningDeclaration = prevDecl->get_firstNondefiningDeclaration();
@@ -4120,7 +4079,7 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (
 #endif
        // DQ (3/8/2012): Added assertion.
           ROSE_ASSERT(nondefiningDeclaration->get_symbol_from_symbol_table() != NULL);
-          assert(func->get_firstNondefiningDeclaration()->get_symbol_from_symbol_table() != NULL);
+          ROSE_ASSERT(func->get_firstNondefiningDeclaration()->get_symbol_from_symbol_table() != NULL);
 
        // DQ (3/8/2012): If this is the redundant function prototype then we have to look
        // at the first defining declaration since only it will have an associated symbol.
@@ -4173,8 +4132,8 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (
 
   // DQ (3/8/2012): Added assertion.
      ROSE_ASSERT(func->get_firstNondefiningDeclaration() != NULL);
-     assert(func_symbol != NULL);
-     assert(func_symbol->get_symbol_basis() == func->get_firstNondefiningDeclaration());
+     ROSE_ASSERT(func_symbol != NULL);
+     ROSE_ASSERT(func_symbol->get_symbol_basis() == func->get_firstNondefiningDeclaration());
      ROSE_ASSERT(func->get_symbol_from_symbol_table() != NULL || func->get_firstNondefiningDeclaration()->get_symbol_from_symbol_table() != NULL);
 
   // DQ (2/24/2009): Delete the old parameter list build by the actualFunction (template argument) constructor.
@@ -4622,7 +4581,7 @@ SageBuilder::buildDefiningTemplateMemberFunctionDeclaration (const SgName & name
    {
   // DQ (12/1/2011): Adding support for template declarations in the AST.
 
-     assert(first_nondefining_declaration->get_firstNondefiningDeclaration() == first_nondefining_declaration);
+     ROSE_ASSERT(first_nondefining_declaration->get_firstNondefiningDeclaration() == first_nondefining_declaration);
 
      SgTemplateMemberFunctionDeclaration* result = buildDefiningFunctionDeclaration_T <SgTemplateMemberFunctionDeclaration> (name,return_type,paralist, /* isMemberFunction = */ true, scope, decoratorList, functionConstVolatileFlags, first_nondefining_declaration, NULL);
      ROSE_ASSERT(result != NULL);
@@ -5276,9 +5235,9 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & XXX_name, SgType*
      printf ("WARNING: This function for building defining function declarations has different semantics from that of the function to build defining class declarations. \n");
 #endif
 
-     assert(first_nondefining_declaration != NULL);
-     assert(first_nondefining_declaration->get_firstNondefiningDeclaration() != NULL);
-     assert(first_nondefining_declaration->get_firstNondefiningDeclaration() == first_nondefining_declaration);
+     ROSE_ASSERT(first_nondefining_declaration != NULL);
+     ROSE_ASSERT(first_nondefining_declaration->get_firstNondefiningDeclaration() != NULL);
+     ROSE_ASSERT(first_nondefining_declaration->get_firstNondefiningDeclaration() == first_nondefining_declaration);
 
      if (scope == NULL)
         {
@@ -6142,9 +6101,9 @@ SageBuilder::buildDefiningFunctionDeclaration(const SgName& name, SgType* return
         }
 
   // DQ (8/23/2013): Added assertions.
-     assert(nondefiningDeclaration != NULL);
-     assert(nondefiningDeclaration->get_firstNondefiningDeclaration() != NULL);
-     assert(nondefiningDeclaration->get_firstNondefiningDeclaration() == nondefiningDeclaration);
+     ROSE_ASSERT(nondefiningDeclaration != NULL);
+     ROSE_ASSERT(nondefiningDeclaration->get_firstNondefiningDeclaration() != NULL);
+     ROSE_ASSERT(nondefiningDeclaration->get_firstNondefiningDeclaration() == nondefiningDeclaration);
 
      return buildDefiningFunctionDeclaration (name,return_type,parameter_list,scope,NULL,false,nondefiningDeclaration,NULL);
    }
@@ -6209,9 +6168,9 @@ buildProcedureHeaderStatement(const SgName& name, SgType* return_type, SgFunctio
           nondef_decl = func_symbol->get_declaration();
         }
 
-     assert(nondef_decl != NULL);
-     assert(nondef_decl->get_firstNondefiningDeclaration() != NULL);
-     assert(nondef_decl->get_firstNondefiningDeclaration() == nondef_decl);
+     ROSE_ASSERT(nondef_decl != NULL);
+     ROSE_ASSERT(nondef_decl->get_firstNondefiningDeclaration() != NULL);
+     ROSE_ASSERT(nondef_decl->get_firstNondefiningDeclaration() == nondef_decl);
 
      SgProcedureHeaderStatement* proc_header_stmt = isSgProcedureHeaderStatement(nondef_decl);
      ROSE_ASSERT(proc_header_stmt);
@@ -6659,11 +6618,11 @@ SgEnumVal* SageBuilder::buildEnumVal_nfi(long long int value, SgEnumDeclaration*
 
 SgEnumVal* SageBuilder::buildEnumVal(SgEnumFieldSymbol * sym) {
   SgInitializedName * init_name = sym->get_declaration();
-  assert(init_name != NULL);
+  ROSE_ASSERT(init_name != NULL);
   SgAssignInitializer * assign_init = isSgAssignInitializer(init_name->get_initptr());
-  assert(assign_init != NULL);
+  ROSE_ASSERT(assign_init != NULL);
   SgEnumVal * enum_val = isSgEnumVal(assign_init->get_operand_i());
-  assert(enum_val != NULL);
+  ROSE_ASSERT(enum_val != NULL);
   enum_val = isSgEnumVal(SageInterface::copyExpression(enum_val));
   return enum_val;
 }
@@ -8336,7 +8295,7 @@ SageBuilder::buildFunctionRefExp(const SgFunctionDeclaration* func_decl)
   }
   else
   {
-    cerr<<"Fatal error: SageBuilder::buildFunctionRefExp():defining and nondefining declarations for a function cannot be both NULL"<<endl;
+    std::cerr<<"Fatal error: SageBuilder::buildFunctionRefExp():defining and nondefining declarations for a function cannot be both NULL"<<std::endl;
     ROSE_ABORT ();
   }
   ROSE_ASSERT( symbol != NULL);
@@ -20905,14 +20864,14 @@ SgStatement* SageBuilder::buildStatementFromString(const std::string& s, SgScope
   ROSE_ASSERT (scope != NULL);
   // set input and context for the parser
   AstFromString::c_char = s.c_str();
-  assert (AstFromString::c_char== s.c_str());
+  ROSE_ASSERT(AstFromString::c_char== s.c_str());
   AstFromString::c_sgnode = scope;
   AstFromString::c_parsed_node = NULL;
 
   if (AstFromString::afs_match_statement())
   {
     result = isSgStatement(AstFromString::c_parsed_node); // grab the result
-    assert (result != NULL);
+    ROSE_ASSERT(result != NULL);
   }
   else
   {
@@ -20930,7 +20889,7 @@ SgUsingDirectiveStatement* SageBuilder::buildUsingDirectiveStatement(SgNamespace
   res->set_firstNondefiningDeclaration(res);
 
   setOneSourcePositionForTransformation(res);
-  return res; 
+  return res;
 }
 
 //
