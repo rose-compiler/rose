@@ -1004,17 +1004,17 @@ namespace AstFromString
       const char* old_char= c_char;
       match_qualifier = afs_match_type_qualifier();
       if (!match_qualifier)
-	match_specifier = afs_match_type_specifier ();
+        match_specifier = afs_match_type_specifier ();
       if (match_qualifier  || match_specifier)
       {
-	cur_result = true;
-	result = true; // one occurrence is sufficient for a successful match
-	sq_list.push_back(c_parsed_node);
+        cur_result = true;
+        result = true; // one occurrence is sufficient for a successful match
+        sq_list.push_back(c_parsed_node);
       }
       else
       {
-	cur_result = false;
-	c_char = old_char;
+        cur_result = false;
+        c_char = old_char;
       }
     } while (cur_result);
 

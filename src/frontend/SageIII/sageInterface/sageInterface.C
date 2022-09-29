@@ -13422,8 +13422,8 @@ class AndOpGenerator: public StatementGenerator
 
           virtual SgStatement* generate(SgExpression* lhs)
              {
-	       if (lhs==NULL)
-		 return NULL; 
+               if (lhs==NULL)
+                 return NULL; 
                SgTreeCopy treeCopy;
                SgExpression* lhsCopy = isSgExpression(lhs->copy(treeCopy));
                ROSE_ASSERT (lhsCopy);
@@ -13447,8 +13447,8 @@ class OrOpGenerator: public StatementGenerator
 
           virtual SgStatement* generate(SgExpression* lhs)
              {
-	       if (lhs==NULL)
-		 return NULL; 
+               if (lhs==NULL)
+                 return NULL; 
                SgTreeCopy treeCopy;
                SgExpression* lhsCopy = isSgExpression(lhs->copy(treeCopy));
                ROSE_ASSERT (lhsCopy);
@@ -13472,8 +13472,8 @@ class ConditionalExpGenerator: public StatementGenerator
 
           virtual SgStatement* generate(SgExpression* lhs)
              {
-	       if (lhs==NULL)
-		 return NULL; 
+               if (lhs==NULL)
+                 return NULL; 
                SgTreeCopy treeCopy;
                SgExpression* lhsCopy = isSgExpression(lhs->copy(treeCopy));
                ROSE_ASSERT (lhsCopy);
@@ -16627,18 +16627,18 @@ PreprocessingInfo* SageInterface::insertHeader(SgSourceFile * source_file, const
       if ( (*j)->get_file_info()->isSameFile(globalScope->get_file_info()) || (*j)->get_file_info()->isTransformation() )
       {
 #if 0
-	printf ("In SageInterface::insertHeader(): Found statement to attached #include: *j = %p = %s \n",*j,(*j)->class_name().c_str());
-	printf (" --- unparseToString() = %s \n",(*j)->unparseToString().c_str());
+        printf ("In SageInterface::insertHeader(): Found statement to attached #include: *j = %p = %s \n",*j,(*j)->class_name().c_str());
+        printf (" --- unparseToString() = %s \n",(*j)->unparseToString().c_str());
 #endif
-	result = new PreprocessingInfo(PreprocessingInfo::CpreprocessorIncludeDeclaration, content, "Transformation generated",0, 0, 0, PreprocessingInfo::before);
-	ROSE_ASSERT(result);
-	insertHeader (*j, result, asLastHeader);
-	//successful = true;
+        result = new PreprocessingInfo(PreprocessingInfo::CpreprocessorIncludeDeclaration, content, "Transformation generated",0, 0, 0, PreprocessingInfo::before);
+        ROSE_ASSERT(result);
+        insertHeader (*j, result, asLastHeader);
+        //successful = true;
 #if 0
-	printf ("Exiting as a test! \n");
-	ROSE_ABORT();
+        printf ("Exiting as a test! \n");
+        ROSE_ABORT();
 #endif
-	break;
+        break;
       }
     } // end for
   }
@@ -16650,7 +16650,7 @@ PreprocessingInfo* SageInterface::insertHeader(SgSourceFile * source_file, const
     ROSE_ABORT();
 #if 0 // [Robb Matzke 2021-03-24]: unreachable
     result = new PreprocessingInfo(PreprocessingInfo::CpreprocessorIncludeDeclaration,
-	content, "Transformation generated",0, 0, 0, PreprocessingInfo::after);
+        content, "Transformation generated",0, 0, 0, PreprocessingInfo::after);
     ROSE_ASSERT(result);
     globalScope->addToAttachedPreprocessingInfo(result,position);
 #endif
@@ -23446,15 +23446,15 @@ SgExprListExp * SageInterface::loopCollapsing(SgForStatement* loop, size_t colla
             cerr<<"Error in SageInterface::loopCollapsing(): target loop is not canonical."<<endl;
             dumpInfo(target_loop);
 
-	    // release memory
-	    delete[] ivar; 
-	    delete[] lb; 
-	    delete[] ub; 
-	    delete[] step; 
-	    delete[] orig_body; 
-	    delete[] total_iters; 
-	    delete[] interval; 
-	    delete[] isPlus; 
+            // release memory
+            delete[] ivar; 
+            delete[] lb; 
+            delete[] ub; 
+            delete[] step; 
+            delete[] orig_body; 
+            delete[] total_iters; 
+            delete[] interval; 
+            delete[] isPlus; 
 
             return NULL;
         }
