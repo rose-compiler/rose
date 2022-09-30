@@ -217,21 +217,19 @@ X86::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va, AddressSet 
                 if (auto add2 = isSgAsmBinaryAdd(add1->get_lhs())) {
                     if (auto fp = isSgAsmDirectRegisterExpression(add2->get_lhs())) {
                         if (auto mul = isSgAsmBinaryMultiply(add2->get_rhs())) {
-                            if (auto r = isSgAsmDirectRegisterExpression(mul->get_lhs())) {
-                                if (auto c1 = isSgAsmIntegerValueExpression(mul->get_rhs())) {
-                                    if (auto c2 = isSgAsmIntegerValueExpression(add1->get_rhs())) {
-                                        const RegisterDescriptor REG_FP =
-                                            registerDictionary()->findLargestRegister(x86_regclass_gpr, x86_gpr_bp);
-                                        ASSERT_require(REG_FP);
-                                        ASSERT_require(REG_SP);
-                                        if (fp->get_descriptor() == REG_FP || fp->get_descriptor() == REG_SP) {
-                                            // Pattern found. Swap some arguments
-                                            add1->set_rhs(mul);
-                                            mul->set_parent(add1);
+                            if (isSgAsmDirectRegisterExpression(mul->get_lhs()) && isSgAsmIntegerValueExpression(mul->get_rhs())) {
+                                if (auto c2 = isSgAsmIntegerValueExpression(add1->get_rhs())) {
+                                    const RegisterDescriptor REG_FP =
+                                        registerDictionary()->findLargestRegister(x86_regclass_gpr, x86_gpr_bp);
+                                    ASSERT_require(REG_FP);
+                                    ASSERT_require(REG_SP);
+                                    if (fp->get_descriptor() == REG_FP || fp->get_descriptor() == REG_SP) {
+                                        // Pattern found. Swap some arguments
+                                        add1->set_rhs(mul);
+                                        mul->set_parent(add1);
 
-                                            add2->set_rhs(c2);
-                                            c2->set_parent(add2);
-                                        }
+                                        add2->set_rhs(c2);
+                                        c2->set_parent(add2);
                                     }
                                 }
                             }
