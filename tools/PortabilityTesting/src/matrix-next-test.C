@@ -76,7 +76,7 @@ using FailuresPerLanguageSet = Sawyer::Container::Map<std::string /*langset*/, s
 
 // Number of failures per language set
 static FailuresPerLanguageSet
-loadLanguageFailureCounts(const Settings &settings, DB::Connection db) {
+loadLanguageFailureCounts(const Settings&, DB::Connection db) {
     FailuresPerLanguageSet retval;
     auto stmt = db.stmt("select rmc_languages, count(*) as nfailures"
                         " from test_results"
@@ -183,7 +183,7 @@ struct HasValue {
 
 // Adjust dependencies by eliminating all language sets but the specified one.
 static void
-restrictLanguages(const Settings &settings, DependencyMap &dependencies /*in,out*/, const std::string &languages) {
+restrictLanguages(const Settings&, DependencyMap &dependencies /*in,out*/, const std::string &languages) {
     ASSERT_require(dependencies.exists("languages"));
     DependencyList &deps = dependencies["languages"];
     deps.erase(std::remove_if(deps.begin(), deps.end(), HasValue(languages)), deps.end());
@@ -277,7 +277,7 @@ struct TestRestrictions {
 
 // From all available choices, choose one set of dependencies.
 static void
-chooseOneSet(const Settings &settings, DB::Connection db, DependencyMap &dependencies /*in,out*/) {
+chooseOneSet(const Settings&, DB::Connection db, DependencyMap &dependencies /*in,out*/) {
     Sawyer::Message::Stream debug(mlog[DEBUG]);
 
     // We need to process the dependencies in a particular order defined in the database

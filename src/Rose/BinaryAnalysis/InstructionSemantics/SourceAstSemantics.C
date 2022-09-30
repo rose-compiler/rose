@@ -84,7 +84,7 @@ SValue::hash(Combinatorics::Hasher &hasher) const {
 }
 
 void
-SValue::print(std::ostream &out, BaseSemantics::Formatter &fmt) const {
+SValue::print(std::ostream &out, BaseSemantics::Formatter&) const {
     out <<ctext_;
 }
 
@@ -162,7 +162,7 @@ RiscOperators::resetState() {
 }
 
 BaseSemantics::SValue::Ptr
-RiscOperators::makeSValue(size_t nbits, SgNode *ast, const std::string &ctext) {
+RiscOperators::makeSValue(size_t nbits, SgNode */*ast*/, const std::string &ctext) {
     ASSERT_require(nbits > 0);
     SValue::Ptr v = SValue::promote(protoval()->undefined_(nbits));
     v->ctext(ctext);
@@ -496,7 +496,7 @@ RiscOperators::signedDivide(const BaseSemantics::SValue::Ptr &a, const BaseSeman
 }
 
 BaseSemantics::SValue::Ptr
-RiscOperators::signedModulo(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b) {
+RiscOperators::signedModulo(const BaseSemantics::SValue::Ptr&, const BaseSemantics::SValue::Ptr&) {
     TODO("[Robb P. Matzke 2015-09-23]: generate signed '%' expression");
 }
 
@@ -517,12 +517,12 @@ RiscOperators::signedMultiply(const BaseSemantics::SValue::Ptr &a, const BaseSem
 }
 
 BaseSemantics::SValue::Ptr
-RiscOperators::unsignedDivide(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b) {
+RiscOperators::unsignedDivide(const BaseSemantics::SValue::Ptr&, const BaseSemantics::SValue::Ptr&) {
     TODO("[Robb P. Matzke 2015-09-23]: generate unsigned '/' expression");
 }
 
 BaseSemantics::SValue::Ptr
-RiscOperators::unsignedModulo(const BaseSemantics::SValue::Ptr &a, const BaseSemantics::SValue::Ptr &b) {
+RiscOperators::unsignedModulo(const BaseSemantics::SValue::Ptr&, const BaseSemantics::SValue::Ptr&) {
     TODO("[Robb P. Matzke 2015-09-23]: generate unsigned '%' expression");
 }
 
@@ -594,7 +594,7 @@ RiscOperators::writeRegister(RegisterDescriptor reg, const BaseSemantics::SValue
 
 BaseSemantics::SValue::Ptr
 RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValue::Ptr &address,
-                          const BaseSemantics::SValue::Ptr &dflt, const BaseSemantics::SValue::Ptr &cond) {
+                          const BaseSemantics::SValue::Ptr &dflt, const BaseSemantics::SValue::Ptr &/*cond*/) {
     ASSERT_require2(dflt->nBits() % 8 == 0, "readMemory size must be a multiple of a byte");
     size_t nBytes = dflt->nBits() >> 3;
     BaseSemantics::SValue::Ptr retval;
@@ -630,14 +630,14 @@ RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValue
 }
 
 BaseSemantics::SValue::Ptr
-RiscOperators::peekMemory(RegisterDescriptor segreg, const BaseSemantics::SValue::Ptr &address,
-                          const BaseSemantics::SValue::Ptr &dflt) {
+RiscOperators::peekMemory(RegisterDescriptor /*segreg*/, const BaseSemantics::SValue::Ptr &/*address*/,
+                          const BaseSemantics::SValue::Ptr &/*dflt*/) {
     ASSERT_not_reachable("operation doesn't make sense in this domain");
 }
 
 void
 RiscOperators::writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValue::Ptr &address,
-                           const BaseSemantics::SValue::Ptr &value, const BaseSemantics::SValue::Ptr &cond) {
+                           const BaseSemantics::SValue::Ptr &value, const BaseSemantics::SValue::Ptr &/*cond*/) {
     ASSERT_require2(value->nBits() % 8 == 0, "writeMemory size must be a multiple of a byte");
     size_t nBytes = value->nBits() >> 3;
     BaseSemantics::MemoryState::Ptr mem = currentState()->memoryState();

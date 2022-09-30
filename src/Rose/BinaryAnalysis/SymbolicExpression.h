@@ -1295,7 +1295,7 @@ public:
 public:
     virtual size_t nChildren() const override { return 0; }
     virtual const Ptr& child(size_t idx) const override;
-    virtual const Node* childRaw(size_t idx) const override { return nullptr; }
+    virtual const Node* childRaw(size_t) const override { return nullptr; }
     virtual const Nodes& children() const override;
     virtual Operator getOperator() const override { return OP_NONE; }
     virtual bool mustEqual(const Ptr &other, const SmtSolverPtr &solver = SmtSolverPtr()) override;

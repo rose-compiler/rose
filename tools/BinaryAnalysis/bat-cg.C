@@ -136,7 +136,7 @@ emitGraphViz(const P2::Partitioner &partitioner, const Settings &settings) {
 }
 
 void
-emitText(const P2::Partitioner &partitioner, std::vector<P2::Function::Ptr> &functions, const Settings &settings) {
+emitText(const P2::Partitioner &partitioner, std::vector<P2::Function::Ptr> &functions, const Settings&) {
     P2::FunctionCallGraph cg = partitioner.functionCallGraph(P2::AllowParallelEdges::YES);
     for (P2::Function::Ptr function: functions) {
         std::cout <<function->printableName() <<"\n";
@@ -156,7 +156,7 @@ emitText(const P2::Partitioner &partitioner, std::vector<P2::Function::Ptr> &fun
 }
 
 void
-emitGexf(const P2::Partitioner &partitioner, const Settings &settings) {
+emitGexf(const P2::Partitioner &partitioner, const Settings&) {
     P2::FunctionCallGraph functionCalls = partitioner.functionCallGraph(P2::AllowParallelEdges::NO);
     const P2::FunctionCallGraph::Graph &cg = functionCalls.graph();
     Sawyer::ProgressBar<size_t> progress(cg.nVertices() + cg.nEdges(), mlog[MARCH], "GEXF output");

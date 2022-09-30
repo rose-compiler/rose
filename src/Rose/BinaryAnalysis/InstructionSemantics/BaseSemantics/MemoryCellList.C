@@ -328,7 +328,7 @@ MemoryCellList::mergeNoAliasing(const MemoryState::Ptr &other_, RiscOperators *a
 }
 
 SValue::Ptr
-MemoryCellList::mergeCellValues(const CellList &cells, const SValue::Ptr &dflt, RiscOperators *addrOps, RiscOperators *valOps) {
+MemoryCellList::mergeCellValues(const CellList &cells, const SValue::Ptr &dflt, RiscOperators */*addrOps*/, RiscOperators *valOps) {
     SValue::Ptr retval;
     for (const MemoryCell::Ptr &cell: cells) {
         // Get the cell's value. If the cell value is not the same width as the desired return value then we've go more work to

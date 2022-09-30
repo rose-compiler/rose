@@ -1801,7 +1801,7 @@ Rose::containsString ( const std::string& masterString, const std::string& targe
    }
 
 void
-Rose::filterInputFile ( const string inputFileName, const string outputFileName )
+Rose::filterInputFile ( const string inputFileName, const string outputFileName ) // blame quinlan1
    {
   // This function filters the input file to remove ^M characters and expand tabs etc.
   // Any possible processing of the input file, before being compiled, should be done

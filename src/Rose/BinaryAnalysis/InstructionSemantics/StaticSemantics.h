@@ -176,17 +176,17 @@ public:
 
 public:
     // These are not needed since this domain never tries to compare semantic values.
-    virtual bool may_equal(const BaseSemantics::SValuePtr &other,
-                           const SmtSolverPtr &solver = SmtSolverPtr()) const override {
+    virtual bool may_equal(const BaseSemantics::SValuePtr &/*other*/,
+                           const SmtSolverPtr& = SmtSolverPtr()) const override {
         ASSERT_not_reachable("no implementation necessary");
     }
 
-    virtual bool must_equal(const BaseSemantics::SValuePtr &other,
-                            const SmtSolverPtr &solver = SmtSolverPtr()) const override {
+    virtual bool must_equal(const BaseSemantics::SValuePtr &/*other*/,
+                            const SmtSolverPtr& = SmtSolverPtr()) const override {
         ASSERT_not_reachable("no implementation necessary");
     }
     
-    virtual void set_width(size_t nbits) override {
+    virtual void set_width(size_t /*nbits*/) override {
         ASSERT_not_reachable("no implementation necessary");
     }
 

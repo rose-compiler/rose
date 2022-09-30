@@ -282,7 +282,7 @@ FormattedTable::cellPropertiesBegin(const CellProperties &props) const {
 }
 
 std::string
-FormattedTable::cellPropertiesEnd(const CellProperties &props) const {
+FormattedTable::cellPropertiesEnd(const CellProperties&) const {
     std::string retval;
     switch (format_) {
         case Format::PLAIN:

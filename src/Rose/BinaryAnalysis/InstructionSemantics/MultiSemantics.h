@@ -146,7 +146,7 @@ public:
         return SValuePtr(new SValue(nbits));
     }
     
-    virtual BaseSemantics::SValuePtr copy(size_t new_width=0) const override {
+    virtual BaseSemantics::SValuePtr copy(size_t /*new_width*/=0) const override {
         return BaseSemantics::SValuePtr(new SValue(*this));
     }
     
@@ -349,11 +349,11 @@ public:
 
     /** Called before each subdomain RISC operation.  The default implementation does nothing, but subclasses can override this
      *  to do interesting things. The @p idx is the index of the subdomain that's about to be called. */
-    virtual void before(size_t idx) {}
+    virtual void before(size_t /*idx*/) {}
 
     /** Called after each subdomain RISC operation.  The default implementation does nothing, but subclasses can override this
      *  to do interesting things. The @p idx is the index of the subdomain that was just called. */
-    virtual void after(size_t idx) {}
+    virtual void after(size_t /*idx*/) {}
 
     /** Convenience function for SValue::create_empty(). */
     virtual SValuePtr svalue_empty(size_t nbits) {

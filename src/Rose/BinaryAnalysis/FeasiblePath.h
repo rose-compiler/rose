@@ -202,9 +202,7 @@ public:
          *  Action::BREAK means no more paths will be tested. */
         virtual Action found(const FeasiblePath &analyzer, const Partitioner2::CfgPath &path,
                              const InstructionSemantics::BaseSemantics::DispatcherPtr &cpu,
-                             const SmtSolverPtr &solver) {
-            return CONTINUE;
-        }
+                             const SmtSolverPtr &solver);
 
         /** Function invoked whenever a null pointer dereference is detected.
          *
@@ -241,9 +239,7 @@ public:
          *  the current path vertex but will not call any more more path processing functions until the backtrack occurs. */
         virtual Action nullDeref(const FeasiblePath &analyzer, const Partitioner2::CfgPath &path, SgAsmInstruction *insn,
                                  const InstructionSemantics::BaseSemantics::RiscOperatorsPtr &cpu, const SmtSolverPtr &solver,
-                                 IoMode ioMode, const InstructionSemantics::BaseSemantics::SValuePtr &addr) {
-            return CONTINUE;
-        }
+                                 IoMode ioMode, const InstructionSemantics::BaseSemantics::SValuePtr &addr);
 
         /** Function invoked every time a memory reference occurs.
          *
@@ -287,9 +283,7 @@ public:
         virtual Action memoryIo(const FeasiblePath &analyzer, const Partitioner2::CfgPath &path, SgAsmInstruction *insn,
                                 const InstructionSemantics::BaseSemantics::RiscOperatorsPtr &cpu, const SmtSolverPtr &solver,
                                 IoMode ioMode, const InstructionSemantics::BaseSemantics::SValuePtr &addr,
-                                const InstructionSemantics::BaseSemantics::SValuePtr &value) {
-            return CONTINUE;
-        }
+                                const InstructionSemantics::BaseSemantics::SValuePtr &value);
     };
 
     /** Information stored per V_USER_DEFINED path vertex.

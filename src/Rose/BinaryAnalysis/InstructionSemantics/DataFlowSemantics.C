@@ -30,7 +30,7 @@ private:
     // The normal C++ constructors; same arguments as the base class
 protected:
     explicit SValue(size_t nbits): BaseSemantics::SValue(nbits) {}
-    SValue(size_t nbits, uint64_t number): BaseSemantics::SValue(nbits) {}
+    SValue(size_t nbits, uint64_t /*number*/): BaseSemantics::SValue(nbits) {}
 
 public:
     /** Instantiate a new prototypical value. Prototypical values are only used for their virtual constructors. */
@@ -81,18 +81,18 @@ public:
     // Override virtual methods...
 public:
     virtual Sawyer::Optional<BaseSemantics::SValue::Ptr>
-    createOptionalMerge(const BaseSemantics::SValue::Ptr &other, const BaseSemantics::Merger::Ptr&,
+    createOptionalMerge(const BaseSemantics::SValue::Ptr &/*other*/, const BaseSemantics::Merger::Ptr&,
                         const SmtSolverPtr&) const override {
         TODO("[Robb P. Matzke 2015-08-10]");
     }
 
-    virtual bool may_equal(const BaseSemantics::SValue::Ptr &other,
-                           const SmtSolverPtr &solver = SmtSolverPtr()) const override {
+    virtual bool may_equal(const BaseSemantics::SValue::Ptr &/*other*/,
+                           const SmtSolverPtr& = SmtSolverPtr()) const override {
         return true;
     }
 
-    virtual bool must_equal(const BaseSemantics::SValue::Ptr &other,
-                            const SmtSolverPtr &solver = SmtSolverPtr()) const override {
+    virtual bool must_equal(const BaseSemantics::SValue::Ptr &/*other*/,
+                            const SmtSolverPtr& = SmtSolverPtr()) const override {
         return false;
     }
 
@@ -111,11 +111,11 @@ public:
 #endif
     }
 
-    virtual void hash(Combinatorics::Hasher &hasher) const override {
+    virtual void hash(Combinatorics::Hasher&) const override {
         ASSERT_not_implemented("[Robb Matzke 2021-03-26]");
     }
 
-    virtual void print(std::ostream &out, BaseSemantics::Formatter &fmt) const override {
+    virtual void print(std::ostream &out, BaseSemantics::Formatter&) const override {
         out <<"{";
         for (size_t i=0; i<sources_.size(); ++i)
             out <<" " <<sources_[i];
@@ -181,16 +181,16 @@ public:
 
     // Virtual constructors
 private:
-    virtual BaseSemantics::RiscOperators::Ptr create(const BaseSemantics::SValue::Ptr &protoval,
-                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const override {
+    virtual BaseSemantics::RiscOperators::Ptr create(const BaseSemantics::SValue::Ptr &/*protoval*/,
+                                                   const SmtSolverPtr& = SmtSolverPtr()) const override {
         ASSERT_not_reachable("should not be called by user code");
 #ifdef _MSC_VER
         return BaseSemantics::RiscOperators::Ptr();
 #endif
     }
 
-    virtual BaseSemantics::RiscOperators::Ptr create(const BaseSemantics::State::Ptr &state,
-                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const override {
+    virtual BaseSemantics::RiscOperators::Ptr create(const BaseSemantics::State::Ptr&,
+                                                   const SmtSolverPtr& = SmtSolverPtr()) const override {
         ASSERT_not_reachable("should not be called by user code");
 #ifdef _MSC_VER
         return BaseSemantics::RiscOperators::Ptr();
@@ -227,7 +227,7 @@ protected:
 
     // Inherited RISC operations
 public:
-    virtual void interrupt(int majr, int minr) override {
+    virtual void interrupt(int /*major*/, int /*minor*/) override {
         ASSERT_not_implemented("[Robb P. Matzke 2014-05-19]");
     }
 
@@ -352,41 +352,41 @@ public:
         return mergeSources(a->nBits() + b->nBits(), a, b);
     }
 
-    virtual BaseSemantics::SValue::Ptr readRegister(RegisterDescriptor reg,
-                                                  const BaseSemantics::SValue::Ptr &dflt) override {
+    virtual BaseSemantics::SValue::Ptr readRegister(RegisterDescriptor,
+                                                    const BaseSemantics::SValue::Ptr &/*dflt*/) override {
         ASSERT_not_reachable("readRegister is not possible for this semantic domain");
 #ifdef _MSC_VER
         return BaseSemantics::SValue::Ptr();
 #endif
     }
 
-    virtual void writeRegister(RegisterDescriptor reg, const BaseSemantics::SValue::Ptr &a) override {
+    virtual void writeRegister(RegisterDescriptor, const BaseSemantics::SValue::Ptr&) override {
         ASSERT_not_reachable("writeRegister is not possible for this semantic domain");
     }
 
-    virtual BaseSemantics::SValue::Ptr readMemory(RegisterDescriptor segreg,
-                                                const BaseSemantics::SValue::Ptr &addr,
-                                                const BaseSemantics::SValue::Ptr &dflt,
-                                                const BaseSemantics::SValue::Ptr &cond) override {
+    virtual BaseSemantics::SValue::Ptr readMemory(RegisterDescriptor /*segreg*/,
+                                                  const BaseSemantics::SValue::Ptr &/*addr*/,
+                                                  const BaseSemantics::SValue::Ptr &/*dflt*/,
+                                                  const BaseSemantics::SValue::Ptr &/*cond*/) override {
         ASSERT_not_reachable("readMemory is not possible for this semantic domain");
 #ifdef _MSC_VER
         return BaseSemantics::SValue::Ptr();
 #endif
     }
     
-    virtual BaseSemantics::SValue::Ptr peekMemory(RegisterDescriptor segreg,
-                                                const BaseSemantics::SValue::Ptr &addr,
-                                                const BaseSemantics::SValue::Ptr &dflt) override {
+    virtual BaseSemantics::SValue::Ptr peekMemory(RegisterDescriptor /*segreg*/,
+                                                  const BaseSemantics::SValue::Ptr &/*addr*/,
+                                                  const BaseSemantics::SValue::Ptr &/*dflt*/) override {
         ASSERT_not_reachable("peekMemory is not possible for this semantic domain");
 #ifdef _MSC_VER
         return BaseSemantics::SValue::Ptr();
 #endif
     }
     
-    virtual void writeMemory(RegisterDescriptor segreg,
-                             const BaseSemantics::SValue::Ptr &addr,
-                             const BaseSemantics::SValue::Ptr &data,
-                             const BaseSemantics::SValue::Ptr &cond) override {
+    virtual void writeMemory(RegisterDescriptor /*segreg*/,
+                             const BaseSemantics::SValue::Ptr &/*addr*/,
+                             const BaseSemantics::SValue::Ptr &/*data*/,
+                             const BaseSemantics::SValue::Ptr &/*cond*/) override {
         ASSERT_not_reachable("writeMemory is not possible for this semantic domain");
     }
 };

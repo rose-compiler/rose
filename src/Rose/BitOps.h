@@ -14,7 +14,7 @@ namespace BitOps {
 
 /** Number of bits in a type or value. */
 template<typename Unsigned>
-inline size_t nBits(Unsigned x = Unsigned(0)) {
+inline size_t nBits(Unsigned = Unsigned(0)) {
     return 8*sizeof(Unsigned);
 }
 

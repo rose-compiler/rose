@@ -86,7 +86,7 @@ SyscallSuccessors::operator()(bool chain, const Args &args) {
 }
 
 void
-nameSystemCalls(const Partitioner &partitioner, const boost::filesystem::path &syscallHeader) {
+nameSystemCalls(const Partitioner &partitioner, const boost::filesystem::path &/*syscallHeader*/) {
     SystemCall analyzer = systemCallAnalyzer(partitioner);
     for (const BasicBlock::Ptr &bb: partitioner.basicBlocks()) {
         if (SgAsmInstruction *insn = analyzer.hasSystemCall(bb)) {

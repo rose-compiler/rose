@@ -228,7 +228,7 @@ Analysis::findCallees(const P2::Partitioner &partitioner, const P2::ControlFlowG
 }
 
 std::vector<P2::ControlFlowGraph::ConstVertexIterator>
-Analysis::findReturnTargets(const P2::Partitioner &partitioner, const P2::ControlFlowGraph::ConstVertexIterator &callSite) {
+Analysis::findReturnTargets(const P2::Partitioner&, const P2::ControlFlowGraph::ConstVertexIterator &callSite) {
     std::vector<P2::ControlFlowGraph::ConstVertexIterator> returnVertices;
     for (const P2::ControlFlowGraph::Edge &edge: callSite->outEdges()) {
         if (edge.value().type() == P2::E_CALL_RETURN)

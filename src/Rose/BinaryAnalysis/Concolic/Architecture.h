@@ -254,12 +254,12 @@ public:
      *
      *  For architectures that support it, memory is mapped at the specified addresses with the specified permissions. The
      *  @p permissions argument are the bits defined in the @ref MemoryMap class. */
-    virtual void mapMemory(const AddressInterval &where, unsigned permissions) {}
+    virtual void mapMemory(const AddressInterval &where, unsigned permissions);
 
     /** Unmap a memory region.
      *
      *  For architectures that support it, the specified region of memory is unmapped. */
-    virtual void unmapMemory(const AddressInterval &where) {}
+    virtual void unmapMemory(const AddressInterval &where);
 
     /** Write bytes to memory.
      *

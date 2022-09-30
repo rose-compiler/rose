@@ -210,7 +210,7 @@ public:
 // Parses the command-line and returns the positional arguments, the first of which is always present and is the name of the
 // RBA file.
 std::vector<std::string>
-parseCommandLine(int argc, char *argv[], P2::Engine &engine, const Properties &properties) {
+parseCommandLine(int argc, char *argv[], P2::Engine&, const Properties &properties) {
     using namespace Sawyer::CommandLine;
 
     //---------- Generic Switches ----------

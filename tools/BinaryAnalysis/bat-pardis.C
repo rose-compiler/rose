@@ -79,7 +79,7 @@ void
 initailizeParallelPartitioner(PP::Partitioner &pp, std::istream &in) {
     initializeParallelPartitioner(pp);
     std::string line;
-    while (std::getline(std::cin, line)) {
+    while (std::getline(in, line)) {
         rose_addr_t va = rose_strtoull(line.c_str(), nullptr, 0);
         pp.makeInstruction(va);
         pp.scheduleDecodeInstruction(va);
@@ -266,7 +266,7 @@ void
 asyncProgressReporting(Progress::Ptr &progress, Sawyer::ProgressBar<double> *bar) {
     ASSERT_not_null(bar);
     progress->reportRegularly(boost::chrono::seconds(1),
-                              [&bar](const Progress::Report &rpt, double age) -> bool {
+                              [&bar](const Progress::Report &rpt, double /*age*/) -> bool {
                                   bar->value(100.0 * rpt.completion);
                                   return true; // keep listening until task is finished
                               });

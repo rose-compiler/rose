@@ -636,7 +636,7 @@ public:
      *  the minor number is the interrupt number (e.g., 0x80 for Linux system calls), while an x86 SYSENTER instruction uses
      *  major number one. The minr operand for INT3 is -3 to distinguish it from the one-argument "INT 3" instruction which has
      *  slightly different semantics. */
-    virtual void interrupt(int majr, int minr) {}
+    virtual void interrupt(int /*majr*/, int /*minr*/) {}
 
     /** Invoked for instructions that cause an interrupt.
      *

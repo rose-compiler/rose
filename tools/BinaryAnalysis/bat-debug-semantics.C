@@ -168,7 +168,7 @@ parseBytes(StringIterator string, StringIterator end) {
 }
 
 static SmtSolver::Ptr
-makeSolver(const Settings &settings) {
+makeSolver(const Settings&) {
     return SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
 }
 

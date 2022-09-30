@@ -49,8 +49,8 @@ ExternalFunctionUnit::printableName() const {
 }
 
 void
-ExternalFunctionUnit::printSteps(const Settings::Ptr &settings, std::ostream &out, const std::string &prefix,
-                                 size_t stepOrigin, size_t maxSteps) const {
+ExternalFunctionUnit::printSteps(const Settings::Ptr&, std::ostream &out, const std::string &prefix, size_t stepOrigin,
+                                 size_t maxSteps) const {
     if (maxSteps > 0) {
         if (sourceLocation())
             out <<prefix <<"from " <<sourceLocation() <<"\n";
@@ -62,7 +62,7 @@ ExternalFunctionUnit::printSteps(const Settings::Ptr &settings, std::ostream &ou
 }
 
 void
-ExternalFunctionUnit::toYamlHeader(const Settings::Ptr &settings, std::ostream &out, const std::string &prefix1) const {
+ExternalFunctionUnit::toYamlHeader(const Settings::Ptr&, std::ostream &out, const std::string &prefix1) const {
     out <<prefix1 <<"vertex-type: extern-function\n";
     if (auto va = address()) {
         std::string prefix(prefix1.size(), ' ');
@@ -71,8 +71,8 @@ ExternalFunctionUnit::toYamlHeader(const Settings::Ptr &settings, std::ostream &
 }
 
 void
-ExternalFunctionUnit::toYamlSteps(const Settings::Ptr &settings, std::ostream &out, const std::string &prefix1,
-                                  size_t stepOrigin, size_t maxSteps) const {
+ExternalFunctionUnit::toYamlSteps(const Settings::Ptr&, std::ostream &out, const std::string &prefix1,
+                                  size_t /*stepOrigin*/, size_t maxSteps) const {
     if (maxSteps > 0) {
         out <<prefix1 <<"definition: none available\n";
 

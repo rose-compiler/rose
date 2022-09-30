@@ -955,7 +955,7 @@ SymbolicExpressionParser::RegisterSubstituter::immediateExpansion(const Token &t
 SymbolicExpression::Ptr
 SymbolicExpressionParser::RegisterSubstituter::delayedExpansion(const SymbolicExpression::Ptr &src, const SymbolicExpressionParser *parser) {
     ASSERT_not_null(src);
-    ASSERT_not_null(parser);
+    ASSERT_always_not_null(parser);
     ASSERT_not_null(ops_);
 
     namespace SS = Rose::BinaryAnalysis::InstructionSemantics::SymbolicSemantics;
@@ -1094,7 +1094,8 @@ public:
     static Ptr instance(const SmtSolverPtr &solver) {
         return Ptr(new AbbreviatedOperator(solver));            // undocumented
     }
-    SymbolicExpression::Ptr immediateExpansion(const SymbolicExpressionParser::Token &op, const SymbolicExpression::Nodes &args) {
+    SymbolicExpression::Ptr immediateExpansion(const SymbolicExpressionParser::Token &op,
+                                               const SymbolicExpression::Nodes &/*args*/) {
         if (op.lexeme() == "...")
             throw op.syntaxError("input is an abbreviated expression; parts are missing");
         return SymbolicExpression::Ptr();
@@ -1277,7 +1278,7 @@ struct DelayedSubber {
     explicit DelayedSubber(const SymbolicExpressionParser *parser)
         : parser(parser) {}
 
-    SymbolicExpression::Ptr operator()(SymbolicExpression::Ptr expr, const SmtSolver::Ptr &solver/*=NULL*/) {
+    SymbolicExpression::Ptr operator()(SymbolicExpression::Ptr expr, const SmtSolver::Ptr &/*solver=NULL*/) {
         for (SymbolicExpressionParser::AtomExpansion::Ptr expander: parser->atomTable()) {
             expr = expander->delayedExpansion(expr, parser);
             ASSERT_not_null(expr);
