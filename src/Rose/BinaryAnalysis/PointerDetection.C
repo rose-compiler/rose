@@ -299,7 +299,9 @@ public:
 BaseSemantics::RiscOperators::Ptr
 Analysis::makeRiscOperators(const P2::Partitioner &partitioner) const {
     RegisterDictionary::Ptr regdict = partitioner.instructionProvider().registerDictionary();
-    return RiscOperators::instance(regdict, partitioner.smtSolver());
+    auto retval = RiscOperators::instance(regdict, partitioner.smtSolver());
+    retval->trimThreshold(settings_.symbolicTrimThreshold);
+    return retval;
 }
 
 void
@@ -423,6 +425,31 @@ discoverDereferences(PointerDescriptors &pointers, const MemoryTransferMap &tran
 }
 
 void
+Analysis::pruneResults(PointerDescriptors &descriptors) {
+    // Discard things we don't want to save.
+    for (PointerDescriptor &desc: descriptors) {
+        if (!settings_.savePointerVas)
+            desc.pointerVa = SymbolicExpression::Ptr();
+        if (!settings_.savePointerAccesses) {
+            desc.pointerAccesses.clear();
+        } else if (!settings_.savePointerAccessValues) {
+            std::set<PointerDescriptor::Access> set;
+            for (const PointerDescriptor::Access &access: desc.pointerAccesses)
+                set.insert(PointerDescriptor::Access(access.insnVa, access.direction, SymbolicExpression::Ptr()));
+            desc.pointerAccesses = set;
+        }
+        if (!settings_.savePointerDereferences) {
+            desc.dereferences.clear();
+        } else if (!settings_.savePointerDereferenceValues) {
+            std::set<PointerDescriptor::Access> set;
+            for (const PointerDescriptor::Access &access: desc.dereferences)
+                set.insert(PointerDescriptor::Access(access.insnVa, access.direction, SymbolicExpression::Ptr()));
+            desc.dereferences = set;
+        }
+    }
+}
+
+void
 Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
     mlog[DEBUG] <<"analyzeFunction(" <<function->printableName() <<")\n";
     printInstructionsForDebugging(partitioner, function);
@@ -457,7 +484,7 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     P2::DataFlow::TransferFunction xfer(cpu);
     DfEngine dfEngine(dfCfg, xfer, merge);
     dfEngine.name("pointer-detection");
-    dfEngine.maxIterations(dfCfg.nVertices() * 5);      // arbitrary
+    dfEngine.maxIterations(dfCfg.nVertices() * settings_.maximumDataFlowIterationFactor);
 
     // Build the initial state
     initialState_ = xfer.initialState();
@@ -508,40 +535,46 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     }
 
     // Find data pointers
-    SAWYER_MESG(mlog[DEBUG]) <<"  potential data pointers:\n";
-    Sawyer::Container::Set<SymbolicExpression::Hash> addrSeen;
-    for (size_t vertexId = 0; vertexId < dfCfg.nVertices(); ++vertexId) {
-        if (BaseSemantics::State::Ptr state = dfEngine.getFinalState(vertexId)) {
-            auto memState = BaseSemantics::MemoryCellState::promote(state->memoryState());
-            for (const BaseSemantics::MemoryCell::Ptr &cell: memState->allCells())
-                conditionallySavePointer(cell->address(), addrSeen, dataPointers_);
-        }
-    }
-    discoverDereferences(dataPointers_, finalState->memoryTransfers());
-
-    // Find code pointers
-    SAWYER_MESG(mlog[DEBUG]) <<"  potential code pointers:\n";
-    addrSeen.clear();
-    const RegisterDescriptor IP = partitioner.instructionProvider().instructionPointerRegister();
-    for (size_t vertexId = 0; vertexId < dfCfg.nVertices(); ++vertexId) {
-        if (BaseSemantics::State::Ptr state = dfEngine.getFinalState(vertexId)) {
-            SymbolicSemantics::SValue::Ptr ip =
-                SymbolicSemantics::SValue::promote(state->peekRegister(IP, ops->undefined_(IP.nBits()), ops.get()));
-            SymbolicExpression::Ptr ipExpr = ip->get_expression();
-            if (!addrSeen.exists(ipExpr->hash())) {
-                bool isSignificant = false;
-                if (!settings_.ignoreConstIp) {
-                    isSignificant = true;
-                } else if (ipExpr->isInteriorNode() && ipExpr->isInteriorNode()->getOperator() == SymbolicExpression::OP_ITE) {
-                    isSignificant = !ipExpr->isInteriorNode()->child(1)->isIntegerConstant() ||
-                                    !ipExpr->isInteriorNode()->child(2)->isIntegerConstant();
-                } else if (!ipExpr->isIntegerConstant()) {
-                    isSignificant = true;
-                }
-                if (isSignificant)
-                    conditionallySavePointer(ip, addrSeen, codePointers_);
+    if (settings_.saveDataPointers) {
+        SAWYER_MESG(mlog[DEBUG]) <<"  potential data pointers:\n";
+        Sawyer::Container::Set<SymbolicExpression::Hash> addrSeen;
+        for (size_t vertexId = 0; vertexId < dfCfg.nVertices(); ++vertexId) {
+            if (BaseSemantics::State::Ptr state = dfEngine.getFinalState(vertexId)) {
+                auto memState = BaseSemantics::MemoryCellState::promote(state->memoryState());
+                for (const BaseSemantics::MemoryCell::Ptr &cell: memState->allCells())
+                    conditionallySavePointer(cell->address(), addrSeen, dataPointers_);
             }
         }
+        discoverDereferences(dataPointers_, finalState->memoryTransfers());
+        pruneResults(dataPointers_);
+    }
+
+    // Find code pointers
+    if (settings_.saveCodePointers) {
+        SAWYER_MESG(mlog[DEBUG]) <<"  potential code pointers:\n";
+        Sawyer::Container::Set<SymbolicExpression::Hash> addrSeen;
+        const RegisterDescriptor IP = partitioner.instructionProvider().instructionPointerRegister();
+        for (size_t vertexId = 0; vertexId < dfCfg.nVertices(); ++vertexId) {
+            if (BaseSemantics::State::Ptr state = dfEngine.getFinalState(vertexId)) {
+                SymbolicSemantics::SValue::Ptr ip =
+                    SymbolicSemantics::SValue::promote(state->peekRegister(IP, ops->undefined_(IP.nBits()), ops.get()));
+                SymbolicExpression::Ptr ipExpr = ip->get_expression();
+                if (!addrSeen.exists(ipExpr->hash())) {
+                    bool isSignificant = false;
+                    if (!settings_.ignoreConstIp) {
+                        isSignificant = true;
+                    } else if (ipExpr->isInteriorNode() && ipExpr->isInteriorNode()->getOperator() == SymbolicExpression::OP_ITE) {
+                        isSignificant = !ipExpr->isInteriorNode()->child(1)->isIntegerConstant() ||
+                                        !ipExpr->isInteriorNode()->child(2)->isIntegerConstant();
+                    } else if (!ipExpr->isIntegerConstant()) {
+                        isSignificant = true;
+                    }
+                    if (isSignificant)
+                        conditionallySavePointer(ip, addrSeen, codePointers_);
+                }
+            }
+        }
+        pruneResults(codePointers_);
     }
 
     hasResults_ = true;

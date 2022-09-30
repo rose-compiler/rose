@@ -131,17 +131,43 @@ struct Settings {
      *  If set, then conditional branches to concrete addresses are ignored, not treated as code pointers.  For instance, the
      *  x86 "je 0x08048504" instruction would not be considered significant for modifying the instruction pointer since both
      *  target addresses are constants. */
-    bool ignoreConstIp;
+    bool ignoreConstIp = true;
 
     /** Whether to ignore strange-sized pointers.
      *
      *  If set, then ignore pointer addresses that are not the same width as the stack pointer (data) or instruction pointer
      *  (code). */
-    bool ignoreStrangeSizes;
+    bool ignoreStrangeSizes = true;
 
-    /** Default settings. */
-    Settings()
-        : ignoreConstIp(true), ignoreStrangeSizes(true) {}
+    /** Save information about data pointers. */
+    bool saveDataPointers = true;
+
+    /** Save information about code pointers. */
+    bool saveCodePointers = true;
+
+    /** Save the pointer variable addresses in the results. */
+    bool savePointerVas = true;
+
+    /** Save information about where pointer variables are accessed. */
+    bool savePointerAccesses = true;
+
+    /** Save pointer accessed values if pointer accesses are saved. */
+    bool savePointerAccessValues = true;
+
+    /** Save information about where pointer values are dereferenced. */
+    bool savePointerDereferences = true;
+
+    /** Save pointer dereferenced values if dereferences are saved. */
+    bool savePointerDereferenceValues = true;
+
+    /** Threshold for replacing large symbolic expressions with new variables. */
+    uint64_t symbolicTrimThreshold = std::numeric_limits<uint64_t>::max();
+
+    /** Maximum data-flow iteration factor.
+     *
+     *  The iteration factor is multiplied by the number of vertices in the function control flow graph to determine
+     *  how many data flow iterations occur before giving up. */
+    size_t maximumDataFlowIterationFactor = 5;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -323,6 +349,9 @@ private:
     void
     conditionallySavePointer(const InstructionSemantics::BaseSemantics::SValuePtr &ptrValue,
                              Sawyer::Container::Set<uint64_t> &ptrValueSeen, PointerDescriptors &result);
+
+    // Prune results based on settings
+    void pruneResults(PointerDescriptors&);
 };
 
 } // namespace
