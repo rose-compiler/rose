@@ -201,11 +201,9 @@ BinaryLoaderPe::findSoFile(const std::string &libname) const {
 #ifndef _MSC_VER
         if (stat(libpath.c_str(), &sb)>=0 && S_ISREG(sb.st_mode) && access(libpath.c_str(), R_OK)>=0) {
             mlog[TRACE] <<"    found.\n";
-            mlog[INFO] <<"found library "<<libpath<<std::endl;
             return libpath;
         }else if(stat(lowerlibpath.c_str(), &sb)>=0 ){
             mlog[TRACE] <<"    found.\n";
-            mlog[INFO] <<"found library "<<lowerlibpath<<std::endl;
             return lowerlibpath;
         }
 #endif
@@ -266,6 +264,7 @@ BinaryLoaderPe::link(SgAsmInterpretation* interp) {
                 ASSERT_not_null2(new_file, "createAsmAST failed");
                 SgAsmGenericHeaderPtrList new_hdrs = findSimilarHeaders(header, new_file->get_headers()->get_headers());
                 unresolved_hdrs.insert(unresolved_hdrs.end(), new_hdrs.begin(), new_hdrs.end());
+                mlog[INFO] <<"found library "<<filename<<std::endl;
             }
         }
     }
@@ -291,9 +290,7 @@ BinaryLoaderPe::fixup(SgAsmInterpretation *interp, FixupErrors *errors) {
         rose_addr_t headerOffset = (*h)->get_mapped_actual_va() - (*h)->get_base_va();
         for(auto s = sections.begin(); s != sections.end(); ++s){
             SgAsmGenericSection* section = *s;
-            //cout<<hex<<"Offset 0x"<<headerOffset<<"    Mapped 0x"<<section->get_mapped_actual_va()<<"    Base 0x"<<section->get_base_va()<<dec<<endl;
             if((headerOffset + section->get_base_va()) > section->get_mapped_actual_va()){
-                //cout<<"Adding offset 0x"<<hex<<headerOffset<<dec<<endl;
                 section->set_mapped_actual_va(section->get_mapped_actual_va() + headerOffset);
             }
         }
@@ -343,7 +340,16 @@ BinaryLoaderPe::fixup(SgAsmInterpretation *interp, FixupErrors *errors) {
                             
                             //The entry could be forwarded to another dll.
                             //Recurse down forwards till the final entry is found
+                            set<SgAsmGenericString*> forwardList; 
                             while(SgAsmGenericString* forward = exportEntry->get_forwarder()){
+                                //This could be a circular depedency. The windows loader has special behavior
+                                //for some functions that are OS functions and do not exist in dll
+                                //in these cases no source code is loaded
+                                if(forwardList.count(forward) == 0) forwardList.insert(forward);
+                                else{
+                                    exportEntry = nullptr;
+                                    break;
+                                }
                                 string forwardString = forward->get_string();
                                 size_t splitPos = forwardString.find(".");
                                 dirName = forwardString.substr(0,splitPos+1) + "dll";
