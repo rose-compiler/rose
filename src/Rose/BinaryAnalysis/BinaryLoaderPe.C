@@ -24,6 +24,7 @@ BinaryLoaderPe::rebase(const MemoryMap::Ptr &map, SgAsmGenericHeader *header, co
     SgAsmPEFileHeader* pe_header = isSgAsmPEFileHeader(header);
     ROSE_ASSERT(pe_header != NULL);
     const size_t maximum_alignment = pe_header->get_e_section_align();
+    rose_addr_t original = pe_header->get_base_va();
 
     // Find the minimum address desired by the sections to be mapped.
     rose_addr_t min_preferred_rva = (uint64_t)(-1);
@@ -37,6 +38,10 @@ BinaryLoaderPe::rebase(const MemoryMap::Ptr &map, SgAsmGenericHeader *header, co
     ROSE_ASSERT(!valid_range.isEmpty());
     rose_addr_t map_base_va = map->findFreeSpace(pe_header->get_e_image_size(), maximum_alignment, valid_range).get();
     map_base_va = alignUp(map_base_va, (rose_addr_t)maximum_alignment);
+    
+    if(map_base_va != original){
+        mlog[INFO]<<"Rebasing File "<<pe_header->get_file()->get_name()<<", From:0x"<<hex<<original<<" To:0x"<<map_base_va<<dec<<endl;
+    }
 
     // If the minimum preferred virtual address is less than the floor of the page-aligned mapping area, then
     // return a base address which moves the min_preferred_va to somewhere in the page pointed to by map_base_va.
