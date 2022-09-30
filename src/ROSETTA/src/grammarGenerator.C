@@ -42,9 +42,15 @@ Grammar::isNonTerminal ( const string& nonTerminalName ) const {
 
 using namespace std;
 
-Grammar::GrammarSynthesizedAttribute 
-Grammar::CreateGrammarDotString(AstNodeClass* grammarnode,
-                  vector<GrammarSynthesizedAttribute> v) {
+// DQ (9/28/2022): Fixing compiler warning for argument not used.
+#if 1
+Grammar::GrammarSynthesizedAttribute
+Grammar::CreateGrammarDotString(AstNodeClass* grammarnode, vector<GrammarSynthesizedAttribute> v)
+#else
+Grammar::GrammarSynthesizedAttribute
+Grammar::CreateGrammarDotString(AstNodeClass* grammarnode)
+#endif
+{
   GrammarSynthesizedAttribute saDot;
   string s;
 
@@ -127,9 +133,15 @@ Grammar::isAbstractTreeGrammarSymbol(string s) {
 
 // MS: 2003
 // MS: We compute the set of traversed terminals to restrict the abstract grammar to traversed nodes only.
+
+// DQ (9/28/2022): Fixing compiler warning for argument not used.
+#if 1
+Grammar::GrammarSynthesizedAttribute Grammar::CreateMinimalTraversedGrammarSymbolsSet(AstNodeClass* grammarnode, vector<Grammar::GrammarSynthesizedAttribute> v)
+#else
 Grammar::GrammarSynthesizedAttribute
-Grammar::CreateMinimalTraversedGrammarSymbolsSet(AstNodeClass* grammarnode,
-                                                 vector<Grammar::GrammarSynthesizedAttribute> v) {
+Grammar::CreateMinimalTraversedGrammarSymbolsSet(AstNodeClass* grammarnode )
+#endif
+{
   if(grammarnode->isLeafNode()) {
     vector<GrammarString*> includeList=classMemberIncludeList(*grammarnode);
     for(vector<GrammarString*>::iterator stringListIterator = includeList.begin();
@@ -140,6 +152,12 @@ Grammar::CreateMinimalTraversedGrammarSymbolsSet(AstNodeClass* grammarnode,
       }
     }  
   }
+
+// DQ (9/28/2022): Fixing compiler warning for argument not used.
+// We cannot remove it since that causes other errors and ultimately it is used in others of these functions.
+// So provide a use to avoid error.
+  v.size();
+
   GrammarSynthesizedAttribute dummy;
   return dummy;
 }
@@ -228,9 +246,13 @@ bool Grammar::isFilteredMemberVariable(string varName) {
 }
 
 // MS: 2002, 2003, 2014
-Grammar::GrammarSynthesizedAttribute 
-Grammar::CreateAbstractTreeGrammarString(AstNodeClass* grammarnode,
-                                         vector<GrammarSynthesizedAttribute> v) {
+#if 1
+Grammar::GrammarSynthesizedAttribute Grammar::CreateAbstractTreeGrammarString(AstNodeClass* grammarnode, vector<GrammarSynthesizedAttribute> v)
+#else
+Grammar::GrammarSynthesizedAttribute
+Grammar::CreateAbstractTreeGrammarString(AstNodeClass* grammarnode)
+#endif
+{
   GrammarSynthesizedAttribute synAttr;
 
   // EBNF generated Grammar symbols (this can be parameterized in future)
@@ -359,7 +381,9 @@ void Grammar::buildGrammarDotFile(AstNodeClass* rootNode, ostream& GrammarDotFil
 // MS:2002,2014
 void Grammar::buildAbstractTreeGrammarFile(AstNodeClass* rootNode, ostream& AbstractTreeGrammarFile) {
   generateSDFTreeGrammar=false;
+// DQ (9/28/2022): Fixing compiler warning for argument not used.
   GrammarSynthesizedAttribute dummy=BottomUpProcessing(rootNode, &Grammar::CreateMinimalTraversedGrammarSymbolsSet);
+
   GrammarSynthesizedAttribute a=BottomUpProcessing(rootNode, &Grammar::CreateAbstractTreeGrammarString);
   AbstractTreeGrammarFile << "//  Abstract Tree Grammar"<<endl<<endl;
   //AbstractTreeGrammarFile << "Grammar G=<NonTerminals, Terminals, Rules, SgNode>\n\n";
