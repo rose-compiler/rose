@@ -1,6 +1,6 @@
 
-#ifndef ROSE_AST_NODEID_H
-#define ROSE_AST_NODEID_H
+#ifndef ROSE_AST_NodeId_H
+#define ROSE_AST_NodeId_H
 
 #include <string>
 #include <limits>
@@ -113,5 +113,5 @@ public:
     
 } }
 
-#endif /* ROSE_AST_NODEID_H */
+#endif /* ROSE_AST_NodeId_H */
 
