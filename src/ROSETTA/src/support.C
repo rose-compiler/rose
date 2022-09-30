@@ -942,8 +942,14 @@ Grammar::setUpSupport ()
 
   // DQ (10/16/2005): Added to support C++ style argument handling in SgFile
   // File.setDataPrototype("std::list<std::string>","originalCommandLineArgumentList", "",
+  // DQ (9/28/2022): Modified to use the BUILD_LIST_ACCESS_FUNCTIONS macro.
+#if 1
      File.setDataPrototype("SgStringList","originalCommandLineArgumentList", "",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#else
+     File.setDataPrototype("SgStringList","originalCommandLineArgumentList", "",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
 
 #if !ROSE_MICROSOFT_OS
 // DQ (4/25/2009): Must fix code in sageInterface/sageBuilder.C before we can use the proper BUILD_LIST_ACCESS_FUNCTIONS macro above.
@@ -1527,7 +1533,8 @@ Grammar::setUpSupport ()
 // the warning macro is causing problems in Windows
 #if !_MSC_VER
 #ifndef ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY
-#warning "ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY not set"
+// DQ (9/28/2022): Commented out this warning, I don't think we need this anymore.
+// #warning "ROSE_USING_GRAPH_IR_NODES_FOR_BACKWARD_COMPATABILITY not set"
 #endif
 #endif
   // ******************************************************************************
@@ -1743,8 +1750,15 @@ Grammar::setUpSupport ()
                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 #endif
 
+  // DQ (9/28/2022): Modified to use the BUILD_LIST_ACCESS_FUNCTIONS macro.
+#if 1
      Project.setDataPrototype("SgStringList","originalCommandLineArgumentList", "",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#else
+  // DQ (9/28/2022): This version of the code fails in src/roseSupport/utility_functions.C
+     Project.setDataPrototype("SgStringList","originalCommandLineArgumentList", "",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
 
 #if !ROSE_MICROSOFT_OS
 // DQ (4/25/2009): Must fix code in sageInterface/sageBuilder.C before we can use the proper BUILD_LIST_ACCESS_FUNCTIONS macro above.
@@ -1869,6 +1883,9 @@ Grammar::setUpSupport ()
      Project.setFunctionSource         ( "SOURCE_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
 
   // DQ (10/28/2020): Adding option to output compilation performance.  Relocated to be a
+  // static data member of AstPerformance class.
+  // Project.setDataPrototype         ( "bool", "compilationPerformance", "= false",
+  //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (8/29/2006): Support for CSV data file reporting performance of compilation.
   // This file accumulates information (if specified) and permits plots of performance
