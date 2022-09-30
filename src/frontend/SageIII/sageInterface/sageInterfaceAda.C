@@ -2197,11 +2197,11 @@ namespace sg
     {
       using namespace Rose::Diagnostics;
 
-      mlog[FATAL] << "[abort] " << desc << std::endl;
-      ROSE_ABORT();
+      //~ mlog[FATAL] << "[abort] " << desc << std::endl;
+      //~ ROSE_ABORT();
 
-      //~ mlog[FATAL] << "[throw] " << desc << std::endl;
-      //~ throw std::runtime_error(desc);
+      mlog[FATAL] << "[throw] " << desc << std::endl;
+      throw std::runtime_error(desc);
 
     //~ std::cerr << "[exit] [FATAL] " << desc << std::endl;
     //~ std::exit(1);
