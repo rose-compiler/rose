@@ -715,7 +715,7 @@ struct IP_cmpxchg2: P {
 
 // CPU identification
 struct IP_cpuid: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
@@ -885,7 +885,7 @@ struct IP_fldcw: P {
 
 // Floating-point no-operation
 struct IP_fnop: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
         if (insn->get_lockPrefix())
             ops->interrupt(x86_exception_ud, 0);
@@ -1042,7 +1042,7 @@ struct IP_inc: P {
 
 // Call to interrupt procedure
 struct IP_int: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
@@ -1058,7 +1058,7 @@ struct IP_int: P {
 // Call to the interrupt 3 procedure (for debugging), but slightly different semantics than the one-argument "INT 3"
 // instruction.
 struct IP_int3: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
@@ -1666,7 +1666,7 @@ struct IP_neg: P {
 
 // No operation
 struct IP_nop: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops ops, I insn, A) {
         if (insn->get_lockPrefix())
             ops->interrupt(x86_exception_ud, 0);
     }
@@ -3905,7 +3905,7 @@ struct IP_sub: P {
 
 // Fast system call
 struct IP_syscall: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
@@ -3917,7 +3917,7 @@ struct IP_syscall: P {
 
 // Fast system call
 struct IP_sysenter: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
@@ -3950,14 +3950,14 @@ struct IP_test: P {
 
 // Undefined instruction: UD2
 struct IP_ud2: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops ops, I, A) {
         ops->interrupt(x86_exception_ud, 0);
     }
 };
 
 // Wait (check for and handle unmasked floating-point exceptions)
 struct IP_wait: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         // FIXME[Robb P. Matzke 2014-05-12]: currenty a no-op
         assert_args(insn, args, 0);
     }
@@ -5201,7 +5201,7 @@ DispatcherX86::pushFloatingPoint(const BaseSemantics::SValue::Ptr &value)
 }
 
 BaseSemantics::SValue::Ptr
-DispatcherX86::readFloatingPointStack(size_t position)
+DispatcherX86::readFloatingPointStack(size_t /*position*/)
 {
     BaseSemantics::SValue::Ptr topOfStack = readRegister(REG_FPSTATUS_TOP);
     if (!topOfStack->isConcrete())

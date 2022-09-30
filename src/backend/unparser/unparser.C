@@ -1696,7 +1696,7 @@ Unparser::unparseFileUsingTokenStream ( SgSourceFile* file )
  *  The name of the new file is created by appending ".new" to the original file name. Leading path components are stripped so
  *  that the file is created in the current working directory. */
 void
-Unparser::unparseAsmFile(SgAsmGenericFile *file, SgUnparse_Info &info)
+Unparser::unparseAsmFile(SgAsmGenericFile *file, SgUnparse_Info &info) // blame quinlan1
 {
      if ( SgProject::get_verbose() > 0 )
           printf ("In Unparser::unparseAsmFile... file = %p = %s \n",file,file->class_name().c_str());

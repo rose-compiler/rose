@@ -1224,7 +1224,7 @@ SmtlibSolver::outputDivide(const SymbolicExpression::InteriorPtr &inode, const s
 //
 // where a_extended and b_extended are zero extended to have the width max(a.size,b.size).
 SmtSolver::SExprTypePair
-SmtlibSolver::outputModulo(const SymbolicExpression::InteriorPtr &inode, const std::string &operation) {
+SmtlibSolver::outputModulo(const SymbolicExpression::InteriorPtr &inode, const std::string &/*operation*/) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() == 2);
     size_t w = std::max(inode->child(0)->nBits(), inode->child(1)->nBits());

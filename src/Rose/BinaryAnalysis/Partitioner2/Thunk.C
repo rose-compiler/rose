@@ -45,7 +45,7 @@ isX86LeaJmpThunk(const Partitioner &partitioner, const std::vector<SgAsmInstruct
 }
 
 ThunkDetection
-isX86MovJmpThunk(const Partitioner &partitioner, const std::vector<SgAsmInstruction*> &insns) {
+isX86MovJmpThunk(const Partitioner&, const std::vector<SgAsmInstruction*> &insns) {
     if (insns.size() < 2)
         return ThunkDetection();
 
@@ -99,7 +99,7 @@ isX86JmpImmThunk(const Partitioner &partitioner, const std::vector<SgAsmInstruct
 }
 
 ThunkDetection
-isX86AddJmpThunk(const Partitioner &partitioner, const std::vector<SgAsmInstruction*> &insns) {
+isX86AddJmpThunk(const Partitioner&, const std::vector<SgAsmInstruction*> &insns) {
     if (insns.size() < 2)
         return ThunkDetection();
     SgAsmX86Instruction *add = isSgAsmX86Instruction(insns[0]);

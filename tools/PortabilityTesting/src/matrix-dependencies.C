@@ -225,7 +225,7 @@ list(const Settings &settings, DB::Connection db, const std::string &name, const
 
 // Enable or disable the dependency with the specified name and value
 static void
-enable(const Settings &settings, DB::Connection db, const std::string &name, const std::string &value, bool b) {
+enable(const Settings&, DB::Connection db, const std::string &name, const std::string &value, bool b) {
     if (0 == db.stmt("select count(*) from dependencies where name = ?name and value = ?value")
         .bind("name", name).bind("value", value).get<int>().orElse(0)) {
         mlog[WARN] <<"nothing affected\n";
@@ -240,7 +240,7 @@ enable(const Settings &settings, DB::Connection db, const std::string &name, con
 
 // Add or remove restrictions from a dependency.
 static void
-enable(const Settings &settings, DB::Connection db, const std::string &name, const std::string &value, bool insert,
+enable(const Settings&, DB::Connection db, const std::string &name, const std::string &value, bool insert,
        std::vector<std::string>::const_iterator begin, std::vector<std::string>::const_iterator end) {
     auto stmt = db.stmt("select " + dependencyColumns() +
                         " from dependencies"
@@ -325,7 +325,7 @@ enable(const Settings &settings, DB::Connection db, const std::string &name, con
 
 // Mark a specific dependency as supported or unsupported
 static void
-support(const Settings &settings, DB::Connection db, const std::string &name, const std::string &value, bool b) {
+support(const Settings&, DB::Connection db, const std::string &name, const std::string &value, bool b) {
     if (0 == db.stmt("select count(*) from dependencies where name = ?name and value = ?value")
         .bind("name", name).bind("value", value).get<int>().orElse(0)) {
         mlog[WARN] <<"nothing affected\n";
@@ -340,7 +340,7 @@ support(const Settings &settings, DB::Connection db, const std::string &name, co
 
 // Change the comment for a particular dependency
 static void
-comment(const Settings &settings, DB::Connection db, const std::string &name, const std::string &value,
+comment(const Settings&, DB::Connection db, const std::string &name, const std::string &value,
         const std::string &s) {
     if (0 == db.stmt("select count(*) from dependencies where name = ?name and value = ?value")
         .bind("name", name).bind("value", value).get<int>().orElse(0)) {
@@ -356,7 +356,7 @@ comment(const Settings &settings, DB::Connection db, const std::string &name, co
 
 // Insert a new dependency
 static void
-insert(const Settings &settings, DB::Connection db, const std::string &name, const std::string &value) {
+insert(const Settings&, DB::Connection db, const std::string &name, const std::string &value) {
     if (0 != db.stmt("select count(*) from dependencies where name = ?name and value = ?value")
         .bind("name", name).bind("value", value).get<int>().orElse(0)) {
         mlog[ERROR] <<"dependency already exists\n";
@@ -372,7 +372,7 @@ insert(const Settings &settings, DB::Connection db, const std::string &name, con
 
 // Erase a dependency
 static void
-erase(const Settings &settings, DB::Connection db, const std::string &name, const std::string &value) {
+erase(const Settings&, DB::Connection db, const std::string &name, const std::string &value) {
     if (0 == db.stmt("select count(*) from dependencies where name = ?name and value = ?value")
         .bind("name", name).bind("value", value).get<int>().orElse(0)) {
         mlog[WARN] <<"nothing affected\n";

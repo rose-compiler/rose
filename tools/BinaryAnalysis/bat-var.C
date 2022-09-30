@@ -33,7 +33,7 @@ struct Settings {
 
 // Parses the command-line and returns the name of the input file, if any.
 boost::filesystem::path
-parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings) {
+parseCommandLine(int argc, char *argv[], P2::Engine&, Settings &settings) {
     using namespace Sawyer::CommandLine;
 
     SwitchGroup generic = Rose::CommandLine::genericSwitches();

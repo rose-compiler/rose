@@ -90,7 +90,7 @@ sqlIdLimitation(const std::string &columnName, const std::vector<int> &testIds) 
 
 // Clear all cached error information from the database.
 static void
-clearErrors(DB::Connection db, const Settings &settings, const std::vector<int> &testIds) {
+clearErrors(DB::Connection db, const std::vector<int> &testIds) {
     db.stmt("update test_results set first_error = null, blacklisted = null"
             " where " + sqlIdLimitation("test_results.id", testIds))
         .run();
@@ -99,7 +99,7 @@ clearErrors(DB::Connection db, const Settings &settings, const std::vector<int> 
 // Update the database by filling in test_results.first_error information for those tests that don't have a cached first error
 // but which failed and have output.
 static void
-updateDatabase(DB::Connection db, const Settings &settings, const std::vector<int> &testIds) {
+updateDatabase(DB::Connection db, const std::vector<int> &testIds) {
     std::vector<std::string> args;
 
     std::string outputSeparatorLine = "=================-================="; // important! '=' * 17 + '-' + '=' * 17
@@ -295,10 +295,10 @@ main(int argc, char *argv[]) {
 
     if ("clear" == args[0]) {
         std::vector<int> ids = parseIds(args, 1);
-        clearErrors(db, settings, ids);
+        clearErrors(db, ids);
     } else {
         ASSERT_require("update" == args[0]);
         std::vector<int> ids = parseIds(args, 1);
-        updateDatabase(db, settings, ids);
+        updateDatabase(db, ids);
     }
 }

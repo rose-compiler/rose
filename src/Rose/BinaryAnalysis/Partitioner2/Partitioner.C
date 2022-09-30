@@ -2035,7 +2035,7 @@ struct CallingConventionWorker {
                             const CallingConvention::Definition::Ptr dfltCc)
         : partitioner(partitioner), progress(progress), dfltCc(dfltCc) {}
 
-    void operator()(size_t workId, const Function::Ptr &function) {
+    void operator()(size_t /*workId*/, const Function::Ptr &function) {
         Sawyer::Stopwatch t;
         partitioner.functionCallingConvention(function, dfltCc);
 

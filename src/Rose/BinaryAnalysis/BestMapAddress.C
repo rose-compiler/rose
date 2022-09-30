@@ -100,7 +100,7 @@ struct Worker {
     Worker(BestMapAddress *self, const Progress::Ptr &progress, Sawyer::ProgressBar<size_t> &progressBar)
         : self(self), progress(progress), progressBar(progressBar) {}
 
-    void operator()(size_t taskId, const Task &task) {
+    void operator()(size_t /*taskId*/, const Task &task) {
         const rose_addr_t mask = IntegerOps::genMask<rose_addr_t>(self->nBits());
         size_t nMatches = 0;
         for (rose_addr_t a: self->entryAddresses().values()) {

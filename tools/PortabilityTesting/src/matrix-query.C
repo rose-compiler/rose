@@ -578,7 +578,7 @@ constrainColumn(const Settings &settings, Column &c, const std::string &key, con
                 }
             }
         }
-            // fall through to string comparison
+        // fall through
         case ColumnType::STRING:
             if ("=" == comparison || "/" == comparison || "-" == comparison || "+" == comparison) {
                 const std::string sqlOp = sqlComparison(comparison);

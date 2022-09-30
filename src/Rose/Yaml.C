@@ -142,7 +142,7 @@ public:
         return g_EmptyString;
     }
 
-    virtual bool SetData(const std::string &data) {
+    virtual bool SetData(const std::string &/*data*/) {
         return false;
     }
 
@@ -227,7 +227,7 @@ public:
         m_Sequence.erase(index);
     }
 
-    virtual void Erase(const std::string &key) {}
+    virtual void Erase(const std::string &/*key*/) {}
 };
 
 class MapImp: public TypeImp {
@@ -244,7 +244,7 @@ public:
         return g_EmptyString;
     }
 
-    virtual bool SetData(const std::string &data) {
+    virtual bool SetData(const std::string &/*data*/) {
         return false;
     }
 
@@ -275,7 +275,7 @@ public:
         return it != m_Map.end() ? it->second : nullptr;
     }
 
-    virtual Node* Insert(const size_t index) {
+    virtual Node* Insert(const size_t /*index*/) {
         return nullptr;
     }
 
@@ -287,7 +287,7 @@ public:
         return nullptr;
     }
 
-    virtual void Erase(const size_t index) {}
+    virtual void Erase(const size_t /*index*/) {}
 
     virtual void Erase(const std::string &key) {
         auto it = m_Map.find(key);
@@ -334,7 +334,7 @@ public:
         return nullptr;
     }
 
-    virtual Node* Insert(const size_t index) {
+    virtual Node* Insert(const size_t /*index*/) {
         return nullptr;
     }
 
@@ -346,9 +346,9 @@ public:
         return nullptr;
     }
 
-    virtual void Erase(const size_t index) {}
+    virtual void Erase(const size_t /*index*/) {}
 
-    virtual void Erase(const std::string &key) {}
+    virtual void Erase(const std::string &/*key*/) {}
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -436,9 +436,9 @@ public:
         m_Iterator = pSequenceImp->m_Sequence.end();
     }
 
-    virtual void InitBegin(MapImp *pMapImp) {}
+    virtual void InitBegin(MapImp */*pMapImp*/) {}
 
-    virtual void InitEnd(MapImp *pMapImp) {}
+    virtual void InitEnd(MapImp */*pMapImp*/) {}
 
     void Copy(const SequenceIteratorImp &it) {
         m_Iterator = it.m_Iterator;
@@ -454,9 +454,9 @@ public:
         return Node::MapType;
     }
 
-    virtual void InitBegin(SequenceImp *pSequenceImp) {}
+    virtual void InitBegin(SequenceImp */*pSequenceImp*/) {}
 
-    virtual void InitEnd(SequenceImp *pSequenceImp) {}
+    virtual void InitEnd(SequenceImp */*pSequenceImp*/) {}
 
     virtual void InitBegin(MapImp *pMapImp) {
         m_Iterator = pMapImp->m_Map.begin();
@@ -488,9 +488,9 @@ public:
         m_Iterator = pSequenceImp->m_Sequence.end();
     }
 
-    virtual void InitBegin(MapImp *pMapImp) {}
+    virtual void InitBegin(MapImp */*pMapImp*/) {}
 
-    virtual void InitEnd(MapImp *pMapImp) {}
+    virtual void InitEnd(MapImp */*pMapImp*/) {}
 
     void Copy(const SequenceConstIteratorImp &it) {
         m_Iterator = it.m_Iterator;
@@ -506,9 +506,9 @@ public:
         return Node::MapType;
     }
 
-    virtual void InitBegin(SequenceImp *pSequenceImp) {}
+    virtual void InitBegin(SequenceImp */*pSequenceImp*/) {}
 
-    virtual void InitEnd(SequenceImp *pSequenceImp) {}
+    virtual void InitEnd(SequenceImp */*pSequenceImp*/) {}
 
     virtual void InitBegin(MapImp *pMapImp) {
         m_Iterator = pMapImp->m_Map.begin();
@@ -1276,7 +1276,7 @@ public:
     }
 
 private:
-    ParseImp(const ParseImp &copy) {}
+    ParseImp(const ParseImp &/*copy*/) {}
 
     // Read all lines, ignoring: empty lines, comments, and document start/end.
     void ReadLines(std::iostream &stream) {

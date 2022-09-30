@@ -17,7 +17,7 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 
 #ifndef ROSE_USE_ETHER
 #include <stdio.h>
-int main(int argc, char *argv[]) {
+int main(int /*argc*/, char *argv[]) {
     printf("%s: Ether is not available. Test is skipped.\n", argv[0]);
     return 0;
 }

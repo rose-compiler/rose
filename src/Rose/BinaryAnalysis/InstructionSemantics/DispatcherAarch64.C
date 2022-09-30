@@ -115,7 +115,7 @@ struct IP_addp: P {
 };
 
 struct IP_adr: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D d, Ops, I insn, A args) {
         assert_args(insn, args, 2);
         SValue::Ptr targetVa = d->read(args[1]);
         d->write(args[0], targetVa);
@@ -123,7 +123,7 @@ struct IP_adr: P {
 };
 
 struct IP_adrp: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D d, Ops, I insn, A args) {
         assert_args(insn, args, 2);
         SValue::Ptr targetVa = d->read(args[1]);
         d->write(args[0], targetVa);
@@ -648,7 +648,7 @@ struct IP_csneg: P {
 };
 
 struct IP_dmb: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 1);
         // no operation required for semantics
     }
@@ -701,7 +701,7 @@ struct IP_extr: P {
 };
 
 struct IP_hint: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 1);
     }
 };
@@ -716,7 +716,7 @@ struct IP_ins: P {
 };
 
 struct IP_ldar: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D d, Ops, I insn, A args) {
         assert_args(insn, args, 2);
         SValue::Ptr result = d->read(args[1]);
         d->write(args[0], result);
@@ -740,7 +740,7 @@ struct IP_ldarh: P {
 };
 
 struct IP_ldaxr: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D d, Ops, I insn, A args) {
         assert_args(insn, args, 2);
         SValue::Ptr result = d->read(args[1]);
         d->write(args[0], result);
@@ -888,7 +888,7 @@ struct IP_ldursw: P {
 };
 
 struct IP_ldxr: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D d, Ops, I insn, A args) {
         assert_args(insn, args, 2);
         SValue::Ptr result = d->read(args[1]);
         d->write(args[0], result);
@@ -1138,7 +1138,7 @@ struct IP_ngcs: P {
 };
 
 struct IP_nop: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I, A) {
     }
 };
 
@@ -1345,7 +1345,7 @@ struct IP_smull: P {
 };
 
 struct IP_stlr: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D d, Ops, I insn, A args) {
         assert_args(insn, args, 2);
         SValue::Ptr value = d->read(args[0]);
         d->write(args[1], value);
@@ -1442,7 +1442,7 @@ struct IP_stp: P {
 };
 
 struct IP_str: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D d, Ops, I insn, A args) {
         assert_args(insn, args, 2);
         SValue::Ptr src = d->read(args[0]);
         d->write(args[1], src);
@@ -1468,7 +1468,7 @@ struct IP_strh: P {
 };
 
 struct IP_stur: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D d, Ops, I insn, A args) {
         assert_args(insn, args, 2);
         SValue::Ptr value = d->read(args[0]);
         d->write(args[1], value);
@@ -1476,7 +1476,7 @@ struct IP_stur: P {
 };
 
 struct IP_sturb: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D d, Ops, I insn, A args) {
         assert_args(insn, args, 2);
         SValue::Ptr value = d->read(args[0]);
         d->write(args[1], value);
@@ -1484,7 +1484,7 @@ struct IP_sturb: P {
 };
 
 struct IP_sturh: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D d, Ops, I insn, A args) {
         assert_args(insn, args, 2);
         SValue::Ptr value = d->read(args[0]);
         d->write(args[1], value);
@@ -1789,7 +1789,7 @@ struct IP_xtn2: P {
 };
 
 struct IP_yield: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 0);
     }
 };
@@ -1824,7 +1824,7 @@ DispatcherAarch64::instance(const BaseSemantics::RiscOperators::Ptr &ops, const 
 BaseSemantics::Dispatcher::Ptr
 DispatcherAarch64::create(const BaseSemantics::RiscOperators::Ptr &ops, size_t addrWidth,
                           const RegisterDictionary::Ptr &regs) const {
-    ASSERT_require(0 == addrWidth || 64 == addrWidth);
+    ASSERT_always_require(0 == addrWidth || 64 == addrWidth);
     return instance(ops, regs);
 }
 
@@ -2199,7 +2199,7 @@ DispatcherAarch64::decodeBitMasks(size_t m, bool immN, uint64_t immS/*6 bits*/, 
 #endif
     // This code comes from the ARM documentation.  C++ doesn't have arbitrary size integers, so we use the largest we'll ever
     // need (uint64_t) and make sure all our arithmetic uses only the least significant M bits.
-    ASSERT_require(m <= 64);
+    ASSERT_always_require(m <= 64);
     immN &= 0x3f;
     immR &= 0x3f;
 
@@ -2213,7 +2213,7 @@ DispatcherAarch64::decodeBitMasks(size_t m, bool immN, uint64_t immS/*6 bits*/, 
 
     // "For logical immediates an all-ones value of S is reserved since it would generate a useless all-cones result (many
     // times)"
-    ASSERT_forbid(immediate && (immS & levels) == levels); // if immediate && (imms AND levels) == levels then UNDEFINED;
+    ASSERT_always_forbid(immediate && (immS & levels) == levels); // if immediate && (imms AND levels) == levels then UNDEFINED;
 
     uint64_t s = immS & levels;                         // S = UInt(imms AND levels);
     uint64_t r = immR & levels;                         // R = Uint(immr AND levels);

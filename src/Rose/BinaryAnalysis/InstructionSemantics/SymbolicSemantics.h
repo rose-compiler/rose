@@ -328,7 +328,7 @@ protected: // when implementing use these names; but when calling, use the camel
     // It's not possible to change the size of a symbolic expression in place. That would require that we recursively change
     // the size of the SymbolicExpression, which might be shared with many unrelated values whose size we don't want to affect.
     virtual void set_width(size_t nbits) override {
-        ASSERT_require(nbits==nBits());
+        ASSERT_always_require(nbits==nBits());
     }
 
     virtual bool is_number() const override {

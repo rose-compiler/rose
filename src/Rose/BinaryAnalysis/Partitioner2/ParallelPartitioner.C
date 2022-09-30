@@ -1065,7 +1065,7 @@ struct FaState {
 };
 
 struct FaTransfer {
-    FaState operator()(const InsnCfg&, size_t vertexId, const FaState &state) const {
+    FaState operator()(const InsnCfg&, size_t /*vertexId*/, const FaState &state) const {
         FaState next = state;
         for (auto &node: next.reachableFrom)
             ++node.second;

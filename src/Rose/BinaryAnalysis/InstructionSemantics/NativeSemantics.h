@@ -103,7 +103,7 @@ public:
         TODO("[Robb Matzke 2019-09-05]");               // set all registers to zero
     }
 
-    virtual bool merge(const BaseSemantics::RegisterStatePtr &other, BaseSemantics::RiscOperators *ops) override {
+    virtual bool merge(const BaseSemantics::RegisterStatePtr &/*other*/, BaseSemantics::RiscOperators*) override {
         ASSERT_not_implemented("[Robb Matzke 2019-09-05]");
     }
 
@@ -194,8 +194,8 @@ public:
 public:
     virtual void clear() override {}
 
-    virtual bool merge(const BaseSemantics::MemoryStatePtr &other, BaseSemantics::RiscOperators *addrOps,
-                       BaseSemantics::RiscOperators *valOps) override {
+    virtual bool merge(const BaseSemantics::MemoryStatePtr &/*other*/, BaseSemantics::RiscOperators */*addrOps*/,
+                       BaseSemantics::RiscOperators */*valOps*/) override {
         ASSERT_not_implemented("not applicable for this class");
     }
 
@@ -209,13 +209,13 @@ public:
                                                 BaseSemantics::RiscOperators *addrOps,
                                                 BaseSemantics::RiscOperators *valOps) override;
 
-    virtual void writeMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &value,
-                             BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps) override {
+    virtual void writeMemory(const BaseSemantics::SValuePtr &/*addr*/, const BaseSemantics::SValuePtr &/*value*/,
+                             BaseSemantics::RiscOperators */*addrOps*/, BaseSemantics::RiscOperators */*valOps*/) override {
         ASSERT_not_implemented("[Robb Matzke 2019-09-05]");
     }
 
-    virtual void hash(Combinatorics::Hasher&, BaseSemantics::RiscOperators *addrOps,
-                      BaseSemantics::RiscOperators *valOps) const override {
+    virtual void hash(Combinatorics::Hasher&, BaseSemantics::RiscOperators */*addrOps*/,
+                      BaseSemantics::RiscOperators */*valOps*/) const override {
         ASSERT_not_implemented("[Robb Matzke 2021-03-26]");
     }
 
@@ -411,7 +411,7 @@ public:
     virtual void iprocReplace(SgAsmInstruction*, BaseSemantics::InsnProcessor*) override {
         notApplicable("iprocReplace");
     }
-    virtual void iprocSet(int key, BaseSemantics::InsnProcessor*) override {
+    virtual void iprocSet(int /*key*/, BaseSemantics::InsnProcessor*) override {
         notApplicable("iprocSet");
     }
     virtual int iprocKey(SgAsmInstruction*) const override {

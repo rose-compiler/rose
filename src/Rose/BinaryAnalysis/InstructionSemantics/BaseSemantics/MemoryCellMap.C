@@ -43,7 +43,8 @@ MemoryCellMap::clear() {
 }
 
 SValue::Ptr
-MemoryCellMap::readMemory(const SValue::Ptr &address, const SValue::Ptr &dflt, RiscOperators *addrOps, RiscOperators *valOps) {
+MemoryCellMap::readMemory(const SValue::Ptr &address, const SValue::Ptr &dflt,
+                          RiscOperators */*addrOps*/, RiscOperators */*valOps*/) {
     SValue::Ptr retval;
     CellKey key = generateCellKey(address);
     if (MemoryCell::Ptr cell = cells.getOrDefault(key)) {
@@ -62,7 +63,8 @@ MemoryCellMap::readMemory(const SValue::Ptr &address, const SValue::Ptr &dflt, R
 }
 
 SValue::Ptr
-MemoryCellMap::peekMemory(const SValue::Ptr &address, const SValue::Ptr &dflt, RiscOperators *addrOps, RiscOperators *valOps) {
+MemoryCellMap::peekMemory(const SValue::Ptr &address, const SValue::Ptr &dflt,
+                          RiscOperators */*addrOps*/, RiscOperators */*valOps*/) {
     // Just like readMemory except no side effects
     SValue::Ptr retval;
     CellKey key = generateCellKey(address);
@@ -234,7 +236,7 @@ MemoryCellMap::findCell(const SValue::Ptr &addr) const {
 }
 
 AddressSet
-MemoryCellMap::getWritersUnion(const SValue::Ptr &addr, size_t nBits, RiscOperators *addrOps, RiscOperators *valOps) {
+MemoryCellMap::getWritersUnion(const SValue::Ptr &addr, size_t /*nBits*/, RiscOperators */*addrOps*/, RiscOperators */*valOps*/) {
     AddressSet retval;
     CellKey key = generateCellKey(addr);
     if (MemoryCell::Ptr cell = cells.getOrDefault(key))
@@ -243,7 +245,8 @@ MemoryCellMap::getWritersUnion(const SValue::Ptr &addr, size_t nBits, RiscOperat
 }
 
 AddressSet
-MemoryCellMap::getWritersIntersection(const SValue::Ptr &addr, size_t nBits, RiscOperators *addrOps, RiscOperators *valOps) {
+MemoryCellMap::getWritersIntersection(const SValue::Ptr &addr, size_t /*nBits*/,
+                                      RiscOperators */*addrOps*/, RiscOperators */*valOps*/) {
     AddressSet retval;
     CellKey key = generateCellKey(addr);
     if (MemoryCell::Ptr cell = cells.getOrDefault(key))

@@ -69,7 +69,7 @@ PlainTextFormatter::ioMode(std::ostream &out, FeasiblePath::IoMode m, const std:
 
 void
 PlainTextFormatter::mayMust(std::ostream &out, FeasiblePath::MayOrMust mayMust, const std::string &what) {
-    std::string s = FeasiblePath::MUST ? "must" : "may";
+    std::string s = FeasiblePath::MUST == mayMust ? "must" : "may";
     out <<" " <<s;
     if (!what.empty())
         out <<" " <<what;
@@ -186,7 +186,7 @@ PlainTextFormatter::bbSrcLoc(std::ostream &out, const Rose::SourceLocation &loc)
 }
 
 void
-PlainTextFormatter::insnListIntro(std::ostream &out) {}
+PlainTextFormatter::insnListIntro(std::ostream&) {}
 
 void
 PlainTextFormatter::insnStep(std::ostream &out, size_t idx, const P2::Partitioner &partitioner, SgAsmInstruction *insn) {
@@ -303,7 +303,7 @@ YamlFormatter::ioMode(std::ostream &out, FeasiblePath::IoMode m, const std::stri
 
 void
 YamlFormatter::mayMust(std::ostream &out, FeasiblePath::MayOrMust mayMust, const std::string &what) {
-    std::string s = FeasiblePath::MUST ? "must" : "may";
+    std::string s = FeasiblePath::MUST == mayMust ? "must" : "may";
     out <<" " <<s;
     if (!what.empty())
         out <<" " <<what;
@@ -475,8 +475,8 @@ YamlFormatter::edge(std::ostream &out, const std::string &name) {
 }
 
 void
-YamlFormatter::state(std::ostream &out, size_t vertexIdx, const std::string &title,
-                          const Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::State::Ptr &state,
+YamlFormatter::state(std::ostream &out, size_t /*vertexIdx*/, const std::string &title,
+                     const Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::State::Ptr &state,
                      const Rose::BinaryAnalysis::RegisterDictionary::Ptr &regdict) {
     if (state) {
         writeln(out, "      semantics:", title);
@@ -837,6 +837,15 @@ assignCallingConventions(const P2::Partitioner &partitioner) {
         defaultCc = ccDict[0];
     partitioner.allFunctionCallingConventionDefinition(defaultCc);
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Path selector base class
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+PathSelector::Predicate::wasRejected(bool /*disposition*/, const Rose::BinaryAnalysis::FeasiblePath&,
+                                     const Rose::BinaryAnalysis::Partitioner2::CfgPath&,
+                                     SgAsmInstruction */*offendingInstruction*/) {}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Path selector for pruning path outputs.

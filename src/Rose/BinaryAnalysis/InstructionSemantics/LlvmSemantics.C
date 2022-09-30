@@ -1520,8 +1520,7 @@ Transcoder::emitFunctionDeclarations(SgNode *ast)
 }
 
 void
-Transcoder::transcodeInstruction(SgAsmInstruction *insn, std::ostream &o)
-{
+Transcoder::transcodeInstruction(SgAsmInstruction*, std::ostream&) {
     abort();
 }
 

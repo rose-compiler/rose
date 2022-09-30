@@ -249,7 +249,7 @@ public:
      *
      *  This constructor chooses a symbolic domain and a dispatcher appropriate for the disassembler's architecture. */
     explicit Analysis(const Disassembler::BasePtr &d, const Settings &settings = Settings())
-        : hasResults_(false), didConverge_(false) {
+        : settings_(settings), hasResults_(false), didConverge_(false) {
         init(d);
     }
 
@@ -261,7 +261,7 @@ public:
      *  defaults used by @ref InstructionSemantics::SymbolicSemantics. */
     explicit Analysis(const InstructionSemantics::BaseSemantics::DispatcherPtr &cpu,
                       const Settings &settings = Settings())
-        : cpu_(cpu), hasResults_(false), didConverge_(false) {}
+        : settings_(settings), cpu_(cpu), hasResults_(false), didConverge_(false) {}
 
     /** Property: Analysis settings.
      *

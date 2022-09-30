@@ -88,7 +88,7 @@ public:
         return depth+1;
     }
 
-    Sawyer::Nothing evaluateSynthesizedAttribute(SgNode*, size_t depth, SubTreeSynthesizedAttributes) override {
+    Sawyer::Nothing evaluateSynthesizedAttribute(SgNode*, size_t /*depth*/, SubTreeSynthesizedAttributes) override {
         return Sawyer::Nothing();
     }
 };

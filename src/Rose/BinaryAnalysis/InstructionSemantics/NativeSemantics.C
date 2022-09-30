@@ -42,7 +42,7 @@ RegisterState::instance(const BaseSemantics::SValue::Ptr &protoval, const Debugg
 }
 
 BaseSemantics::RegisterState::Ptr
-RegisterState::create(const BaseSemantics::SValue::Ptr &protoval, const RegisterDictionary::Ptr&) const {
+RegisterState::create(const BaseSemantics::SValue::Ptr &/*protoval*/, const RegisterDictionary::Ptr&) const {
     ASSERT_not_implemented("not applicable for this class");
 }
 
@@ -64,14 +64,14 @@ RegisterState::process() const {
 }
 
 BaseSemantics::SValue::Ptr
-RegisterState::peekRegister(RegisterDescriptor reg, const BaseSemantics::SValue::Ptr &dflt, BaseSemantics::RiscOperators *ops) {
+RegisterState::peekRegister(RegisterDescriptor reg, const BaseSemantics::SValue::Ptr &/*dflt*/, BaseSemantics::RiscOperators*) {
     ASSERT_not_null(process_);
     Sawyer::Container::BitVector value = process_->readRegister(reg);
     return protoval()->number_(value.size(), value.toInteger());
 }
 
 void
-RegisterState::writeRegister(RegisterDescriptor reg, const BaseSemantics::SValue::Ptr &value, BaseSemantics::RiscOperators *ops) {
+RegisterState::writeRegister(RegisterDescriptor, const BaseSemantics::SValue::Ptr&, BaseSemantics::RiscOperators*) {
     ASSERT_not_null(process_);
     ASSERT_not_implemented("[Robb Matzke 2019-09-05]: Debugger has no writeRegister method");
 }
@@ -112,7 +112,7 @@ MemoryState::instance(const BaseSemantics::SValue::Ptr &addrProtoval, const Base
 }
 
 BaseSemantics::MemoryState::Ptr
-MemoryState::create(const BaseSemantics::SValue::Ptr &addrProtoval, const BaseSemantics::SValue::Ptr &valProtoval) const {
+MemoryState::create(const BaseSemantics::SValue::Ptr &/*addrProtoval*/, const BaseSemantics::SValue::Ptr &/*valProtoval*/) const {
     ASSERT_not_implemented("not applicable for this class");
 }
 
@@ -135,7 +135,7 @@ MemoryState::process() const {
 
 BaseSemantics::SValue::Ptr
 MemoryState::peekMemory(const BaseSemantics::SValue::Ptr &address, const BaseSemantics::SValue::Ptr &dflt,
-                        BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps) {
+                        BaseSemantics::RiscOperators */*addrOps*/, BaseSemantics::RiscOperators */*valOps*/) {
     ASSERT_not_null(process_);
     std::vector<uint8_t> buffer((dflt->nBits() + 7) / 8);
     ASSERT_require(buffer.size() <= 8);
@@ -191,7 +191,7 @@ RiscOperators::instanceFromState(const BaseSemantics::State::Ptr &state) {
 }
 
 BaseSemantics::RiscOperators::Ptr
-RiscOperators::create(const BaseSemantics::SValue::Ptr &protoval, const SmtSolver::Ptr &solver) const {
+RiscOperators::create(const BaseSemantics::SValue::Ptr &/*protoval*/, const SmtSolver::Ptr&) const {
     TODO("[Robb Matzke 2019-09-05]");
 }
 
@@ -240,7 +240,7 @@ Dispatcher::instance(const BaseSemantics::RiscOperators::Ptr &ops) {
 }
 
 BaseSemantics::Dispatcher::Ptr
-Dispatcher::create(const BaseSemantics::RiscOperators::Ptr &ops, size_t addrWidth, const RegisterDictionary::Ptr &regs) const {
+Dispatcher::create(const BaseSemantics::RiscOperators::Ptr&, size_t /*addrWidth*/, const RegisterDictionary::Ptr&) const {
     notApplicable("create");
 }
 

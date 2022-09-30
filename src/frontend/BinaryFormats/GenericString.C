@@ -6,7 +6,7 @@
 using namespace Rose;
 
 std::string
-SgAsmGenericString::get_string(bool escape) const
+SgAsmGenericString::get_string(bool /*escape*/) const
 {
     ROSE_ASSERT(!"should have been pure virtual if ROSETTA supported that.");
     abort();
@@ -16,21 +16,21 @@ SgAsmGenericString::get_string(bool escape) const
 }
 
 void
-SgAsmGenericString::set_string(const std::string &s)
+SgAsmGenericString::set_string(const std::string&)
 {
     ROSE_ASSERT(!"should have been pure virtual if ROSETTA supported that.");
     abort();
 }
 
 void
-SgAsmGenericString::set_string(rose_addr_t offset)
+SgAsmGenericString::set_string(rose_addr_t /*offset*/)
 {
     ROSE_ASSERT(!"should have been pure virtual if ROSETTA supported that.");
     abort();
 }
 
 void
-SgAsmGenericString::dump(FILE*, const char *prefix, ssize_t idx) const
+SgAsmGenericString::dump(FILE*, const char */*prefix*/, ssize_t /*idx*/) const
 {
     ROSE_ASSERT(!"should have been pure virtual if ROSETTA supported that.");
     abort();

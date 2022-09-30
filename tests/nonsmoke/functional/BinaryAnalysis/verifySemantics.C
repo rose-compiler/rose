@@ -137,10 +137,10 @@ public:
 
 public:
     // Reads memory from the subordinate process.
-    virtual BaseSemantics::SValue::Ptr readMemory(RegisterDescriptor segreg,
+    virtual BaseSemantics::SValue::Ptr readMemory(RegisterDescriptor /*segreg*/,
                                                 const BaseSemantics::SValue::Ptr &addr,
                                                 const BaseSemantics::SValue::Ptr &dflt,
-                                                const BaseSemantics::SValue::Ptr &cond) override {
+                                                  const BaseSemantics::SValue::Ptr &/*cond*/) override {
         using namespace Sawyer::Container;
 
         uint8_t buf[16];
@@ -238,6 +238,7 @@ public:
                             // ZF and CF seem to have correct values only at the end of the native loop.
                             dontCare = cell.desc == RegisterDescriptor(x86_regclass_flags, x86_flags_status, x86_flag_zf, 1) ||
                                        cell.desc == RegisterDescriptor(x86_regclass_flags, x86_flags_status, x86_flag_cf, 1);
+                            break;
                         case x86_repne_scasb:
                             // PF, SF, ZF, AF, CF seem to have correct values only at the end of the native loop.
                             dontCare = cell.desc == RegisterDescriptor(x86_regclass_flags, x86_flags_status, x86_flag_pf, 1) ||

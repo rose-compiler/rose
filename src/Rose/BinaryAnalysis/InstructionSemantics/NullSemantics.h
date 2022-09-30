@@ -52,7 +52,7 @@ public:
     }
 
     /** Instantiate a new concrete value. */
-    static SValuePtr instance(size_t nbits, uint64_t number) {
+    static SValuePtr instance(size_t nbits, uint64_t /*number*/) {
         return SValuePtr(new SValue(nbits)); // the number is not important in this domain
     }
 
@@ -83,8 +83,7 @@ public:
         return retval;
     }
     virtual Sawyer::Optional<BaseSemantics::SValuePtr>
-    createOptionalMerge(const BaseSemantics::SValuePtr &other, const BaseSemantics::MergerPtr&,
-                        const SmtSolverPtr&) const override {
+    createOptionalMerge(const BaseSemantics::SValuePtr&, const BaseSemantics::MergerPtr&, const SmtSolverPtr&) const override {
         return Sawyer::Nothing();
     }
 
@@ -131,14 +130,12 @@ public:
     }
 
     // See mayEqual
-    virtual bool may_equal(const BaseSemantics::SValuePtr &other,
-                           const SmtSolverPtr &solver = SmtSolverPtr()) const override {
+    virtual bool may_equal(const BaseSemantics::SValuePtr&, const SmtSolverPtr& = SmtSolverPtr()) const override {
         return true;
     }
 
     // See mustEqual
-    virtual bool must_equal(const BaseSemantics::SValuePtr &other,
-                            const SmtSolverPtr &solver = SmtSolverPtr()) const override {
+    virtual bool must_equal(const BaseSemantics::SValuePtr &other, const SmtSolverPtr& = SmtSolverPtr()) const override {
         return this == getRawPointer(other); // must be equal if they're both the same object
     }
 
@@ -190,7 +187,7 @@ public:
         return retval;
     }
 
-    virtual bool merge(const BaseSemantics::RegisterStatePtr &other_, BaseSemantics::RiscOperators*) override {
+    virtual bool merge(const BaseSemantics::RegisterStatePtr&, BaseSemantics::RiscOperators*) override {
         return false;
     }
 
@@ -198,19 +195,16 @@ public:
     virtual void zero() override {}
 
     virtual BaseSemantics::SValuePtr
-    readRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &dflt,
-                 BaseSemantics::RiscOperators *ops) override {
+    readRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &/*dflt*/, BaseSemantics::RiscOperators*) override {
         return protoval()->undefined_(reg.nBits());
     }
 
     virtual BaseSemantics::SValuePtr
-    peekRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &dflt,
-                 BaseSemantics::RiscOperators *ops) override {
+    peekRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &/*dflt*/, BaseSemantics::RiscOperators*) override {
         return protoval()->undefined_(reg.nBits());
     }
     
-    virtual void writeRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &value,
-                               BaseSemantics::RiscOperators *ops) override {}
+    virtual void writeRegister(RegisterDescriptor, const BaseSemantics::SValuePtr&, BaseSemantics::RiscOperators*) override {}
 
     virtual void hash(Combinatorics::Hasher&, BaseSemantics::RiscOperators*) const override {}
 
@@ -268,28 +262,29 @@ public:
 public:
     virtual void clear() override {}
 
-    virtual BaseSemantics::SValuePtr readMemory(const BaseSemantics::SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
-                                                BaseSemantics::RiscOperators *addrOps,
-                                                BaseSemantics::RiscOperators *valOps) override {
+    virtual BaseSemantics::SValuePtr readMemory(const BaseSemantics::SValuePtr &/*address*/,
+                                                const BaseSemantics::SValuePtr &dflt,
+                                                BaseSemantics::RiscOperators */*addrOps*/,
+                                                BaseSemantics::RiscOperators */*valOps*/) override {
         return dflt->copy();
     }
 
-    virtual void writeMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &value,
-                             BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps) override {}
+    virtual void writeMemory(const BaseSemantics::SValuePtr &/*addr*/, const BaseSemantics::SValuePtr &/*value*/,
+                             BaseSemantics::RiscOperators */*addrOps*/, BaseSemantics::RiscOperators */*valOps*/) override {}
 
-    virtual BaseSemantics::SValuePtr peekMemory(const BaseSemantics::SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
-                                                BaseSemantics::RiscOperators *addrOps,
-                                                BaseSemantics::RiscOperators *valOps) override {
+    virtual BaseSemantics::SValuePtr peekMemory(const BaseSemantics::SValuePtr &/*address*/, const BaseSemantics::SValuePtr &dflt,
+                                                BaseSemantics::RiscOperators */*addrOps*/,
+                                                BaseSemantics::RiscOperators */*valOps*/) override {
         return dflt->copy();
     }
 
-    virtual void hash(Combinatorics::Hasher&, BaseSemantics::RiscOperators *addrOps,
-                      BaseSemantics::RiscOperators *valOps) const override {}
+    virtual void hash(Combinatorics::Hasher&, BaseSemantics::RiscOperators */*addrOps*/,
+                      BaseSemantics::RiscOperators */*valOps*/) const override {}
 
     virtual void print(std::ostream&, BaseSemantics::Formatter&) const override {}
 
-    virtual bool merge(const BaseSemantics::MemoryStatePtr &other, BaseSemantics::RiscOperators *addrOps,
-                       BaseSemantics::RiscOperators *valOps) override {
+    virtual bool merge(const BaseSemantics::MemoryStatePtr &/*other*/, BaseSemantics::RiscOperators */*addrOps*/,
+                       BaseSemantics::RiscOperators */*valOps*/) override {
         return false;
     }
 };

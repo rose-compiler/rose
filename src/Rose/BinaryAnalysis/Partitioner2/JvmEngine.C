@@ -698,7 +698,7 @@ JvmEngine::parseContainers(const std::string &fileName) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Disassembler::Base::Ptr
-JvmEngine::obtainDisassembler(const Disassembler::Base::Ptr &hint) {
+JvmEngine::obtainDisassembler(const Disassembler::Base::Ptr &hint) { // blame rasmussen17
   if (disassembler_ == nullptr) {
     disassembler_ = Disassembler::Jvm::instance();
   }

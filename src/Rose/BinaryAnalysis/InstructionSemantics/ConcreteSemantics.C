@@ -21,7 +21,7 @@ namespace ConcreteSemantics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Sawyer::Optional<BaseSemantics::SValue::Ptr>
-SValue::createOptionalMerge(const BaseSemantics::SValue::Ptr &other_, const BaseSemantics::Merger::Ptr&,
+SValue::createOptionalMerge(const BaseSemantics::SValue::Ptr &/*other*/, const BaseSemantics::Merger::Ptr&,
                             const SmtSolverPtr&) const {
     // There's no official way to represent BOTTOM
     throw BaseSemantics::NotImplemented("SValue merging for ConcreteSemantics is not supported", NULL);
@@ -136,7 +136,7 @@ MemoryState::memoryMap(const MemoryMap::Ptr &map, Sawyer::Optional<unsigned> pad
 
 BaseSemantics::SValue::Ptr
 MemoryState::readOrPeekMemory(const BaseSemantics::SValue::Ptr &addr_, const BaseSemantics::SValue::Ptr &dflt_,
-                              BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps,
+                              BaseSemantics::RiscOperators */*addrOps*/, BaseSemantics::RiscOperators */*valOps*/,
                               bool allowSideEffects) {
     ASSERT_require2(8==dflt_->nBits(), "ConcreteSemantics::MemoryState requires memory cells contain 8-bit data");
     rose_addr_t addr = addr_->toUnsigned().get();
@@ -166,7 +166,7 @@ MemoryState::peekMemory(const BaseSemantics::SValue::Ptr &addr, const BaseSemant
 
 void
 MemoryState::writeMemory(const BaseSemantics::SValue::Ptr &addr_, const BaseSemantics::SValue::Ptr &value_,
-                         BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps) {
+                         BaseSemantics::RiscOperators */*addrOps*/, BaseSemantics::RiscOperators */*valOps*/) {
     ASSERT_require2(8==value_->nBits(), "ConcreteSemantics::MemoryState requires memory cells contain 8-bit data");
     rose_addr_t addr = addr_->toUnsigned().get();
     uint8_t value = value_->toUnsigned().get();
@@ -176,8 +176,8 @@ MemoryState::writeMemory(const BaseSemantics::SValue::Ptr &addr_, const BaseSema
 }
 
 bool
-MemoryState::merge(const BaseSemantics::MemoryState::Ptr &other, BaseSemantics::RiscOperators *addrOps,
-                   BaseSemantics::RiscOperators *valOps) {
+MemoryState::merge(const BaseSemantics::MemoryState::Ptr &/*other*/, BaseSemantics::RiscOperators */*addrOps*/,
+                   BaseSemantics::RiscOperators */*valOps*/) {
     throw BaseSemantics::NotImplemented("MemoryState merging for ConcreteSemantics is not supported", NULL);
 }
 
@@ -274,7 +274,7 @@ RiscOperators::promote(const BaseSemantics::RiscOperators::Ptr &x) {
 }
 
 void
-RiscOperators::interrupt(int majr, int minr) {
+RiscOperators::interrupt(int /*major*/, int /*minor*/) {
     currentState()->clear();
 }
 
