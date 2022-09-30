@@ -339,7 +339,7 @@ public:
     bool isOk() const {
         return result_.which() == 0;
     }
-    operator bool() const {
+    explicit operator bool() const {
         return isOk();
     }
     /** @} */
