@@ -147,8 +147,7 @@ BinaryLoaderPe::isLinked(SgAsmInterpretation *interp, const std::string &filenam
     boost::to_lower(lowerFileName);
     const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
     for (SgAsmGenericHeaderPtrList::const_iterator hi=headers.begin(); hi!=headers.end(); ++hi) {
-        SgAsmGenericFile *file = (*hi)->get_file();
-        ASSERT_not_null(file);
+        ASSERT_not_null((*hi)->get_file());
         std::string headerName = (*hi)->get_name()->get_string();
         headerName = headerName.substr(headerName.find_last_of("/") + 1);
         boost::to_lower(headerName);
