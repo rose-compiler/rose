@@ -25,7 +25,7 @@ set(NODEID_SPECIMENS ${CMAKE_CURRENT_SOURCE_DIR}/../astInliningTests/specimen01_
 	${CMAKE_CURRENT_SOURCE_DIR}/../astInliningTests/specimen14_1.C
 	${CMAKE_CURRENT_SOURCE_DIR}/../astInliningTests/specimen15_1.C
 	${CMAKE_CURRENT_SOURCE_DIR}/../astInliningTests/specimen16_4.C
-	${CMAKE_CURRENT_SOURCE_DIR}/../astInliningTests/specimen17_10.
+	${CMAKE_CURRENT_SOURCE_DIR}/../astInliningTests/specimen17_10.C
 	${CMAKE_CURRENT_SOURCE_DIR}/../astInliningTests/specimen18_1.C
 	${CMAKE_CURRENT_SOURCE_DIR}/../astInliningTests/specimen19_1.C
 	${CMAKE_CURRENT_SOURCE_DIR}/../astInliningTests/specimen20_1.C

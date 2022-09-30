@@ -1,4 +1,4 @@
-#! /bin/sh
+#! /bin/bash
 executable="$1"
 specimen="$2"
 build_dir="$3"
@@ -22,8 +22,7 @@ exec_and_log () {
 rm -f "${result1}" "${result2}" "${log_file}"
 log `date`
 
-log "exec_and_log ${executable} -c ${specimen} ${result1}"
-"${executable}" -c "${specimen}" > "${result1}"
+exec_and_log "${executable}" -c "${specimen}" > "${result1}"
 status=$?
 if [ $status -ne 0 ]; then
     echo "first run failed with return code $status" >> $log_file
@@ -31,7 +30,7 @@ if [ $status -ne 0 ]; then
 fi
 
 #log "$executable -c $specimen $result2"
-$executable -c "${specimen}" >& "${result2}"
+exec_and_log $executable -c "${specimen}" >& "${result2}"
 status=$?
 if [ $status -ne 0 ]; then
     echo "second run failed with return code $status" >> $log_file
