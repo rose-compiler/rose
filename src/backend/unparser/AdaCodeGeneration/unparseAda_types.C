@@ -13,8 +13,6 @@ namespace si = SageInterface;
 
 namespace
 {
-  constexpr bool USE_COMPUTED_NAME_QUALIFICATION_TYPE = true;
-
   /// returns m[key] iff \ref key is in \ref m
   ///                otherwise \ref defaultVal
   template <class Map>
@@ -53,13 +51,6 @@ namespace
     {
       unparser.curprint(s);
       //~ os << s;
-    }
-
-    std::string scopeQual(const SgDeclarationStatement& remote);
-
-    std::string scopeQual(const SgDeclarationStatement* remote)
-    {
-      return scopeQual(SG_DEREF(remote));
     }
 
     void handle(SgNode& n)    { SG_UNEXPECTED_NODE(n); }
@@ -191,17 +182,7 @@ namespace
     void handle(SgNamedType& n)
     {
       prn(" ");
-
-      if (USE_COMPUTED_NAME_QUALIFICATION_TYPE)
-      {
-        //~ std::cerr << "unp named type: " << n.get_declaration()
-                  //~ << " / " << &unparser.nameQualificationMap()
-                  //~ << std::endl;
-        prnNameQual(SG_DEREF(n.get_declaration()));
-      }
-      else
-        prn(scopeQual(n.get_declaration()));
-
+      prnNameQual(SG_DEREF(n.get_declaration()));
       prn(n.get_name());
     }
 
@@ -241,12 +222,7 @@ namespace
       SgAdaTaskTypeDecl&      tyDcl  = SG_DEREF( isSgAdaTaskTypeDecl(n.get_declaration()) );
 
       prn(" ");
-
-      if (USE_COMPUTED_NAME_QUALIFICATION_TYPE)
-        prnNameQual(tyDcl);
-      else
-        prn(scopeQual(tyDcl));
-
+      prnNameQual(tyDcl);
       prn(tyDcl.get_name());
     }
 
@@ -257,11 +233,7 @@ namespace
 
       prn(" ");
 
-      if (USE_COMPUTED_NAME_QUALIFICATION_TYPE)
-        prnNameQual(tyDcl);
-      else
-        prn(scopeQual(tyDcl));
-
+      prnNameQual(tyDcl);
       prn(tyDcl.get_name());
     }
 
@@ -372,15 +344,6 @@ namespace
       prn(", ");
       expr(lst[i]);
     }
-  }
-
-  std::string
-  AdaTypeUnparser::scopeQual(const SgDeclarationStatement& remote)
-  {
-    const SgScopeStatement* current = info.get_current_scope();
-
-    return current ? unparser.computeScopeQual(*current, SG_DEREF(remote.get_scope()))
-                   : std::string{"<missing-scope>"};
   }
 }
 

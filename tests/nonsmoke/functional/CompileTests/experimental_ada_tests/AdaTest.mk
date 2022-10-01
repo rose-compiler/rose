@@ -221,12 +221,13 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   renaming_as_body.adb                 \
   requeue_statement_2.adb              \
   requeue_statements.adb               \
+  rep_database.ads                     \
   select_accept.adb                    \
   simple_select_accept.adb             \
   simple_select_accept_guarded.adb     \
   simple_use_type.ads                  \
   single_protected_declaration.ads     \
-  subobj_renaming_declaration.adb                   \
+  subobj_renaming_declaration.adb      \
   std_ascii_user.adb                   \
   taskarray.adb                        \
   task_type_declaration.ads            \
