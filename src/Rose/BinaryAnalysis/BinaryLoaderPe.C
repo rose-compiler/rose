@@ -24,6 +24,7 @@ BinaryLoaderPe::rebase(const MemoryMap::Ptr &map, SgAsmGenericHeader *header, co
     SgAsmPEFileHeader* pe_header = isSgAsmPEFileHeader(header);
     ROSE_ASSERT(pe_header != NULL);
     const size_t maximum_alignment = pe_header->get_e_section_align();
+    rose_addr_t original = pe_header->get_base_va();
 
     // Find the minimum address desired by the sections to be mapped.
     rose_addr_t min_preferred_rva = (uint64_t)(-1);
@@ -37,6 +38,10 @@ BinaryLoaderPe::rebase(const MemoryMap::Ptr &map, SgAsmGenericHeader *header, co
     ROSE_ASSERT(!valid_range.isEmpty());
     rose_addr_t map_base_va = map->findFreeSpace(pe_header->get_e_image_size(), maximum_alignment, valid_range).get();
     map_base_va = alignUp(map_base_va, (rose_addr_t)maximum_alignment);
+    
+    if(map_base_va != original){
+        mlog[INFO]<<"Rebasing File "<<pe_header->get_file()->get_name()<<", From:0x"<<hex<<original<<" To:0x"<<map_base_va<<dec<<endl;
+    }
 
     // If the minimum preferred virtual address is less than the floor of the page-aligned mapping area, then
     // return a base address which moves the min_preferred_va to somewhere in the page pointed to by map_base_va.
@@ -201,11 +206,9 @@ BinaryLoaderPe::findSoFile(const std::string &libname) const {
 #ifndef _MSC_VER
         if (stat(libpath.c_str(), &sb)>=0 && S_ISREG(sb.st_mode) && access(libpath.c_str(), R_OK)>=0) {
             mlog[TRACE] <<"    found.\n";
-            mlog[INFO] <<"found library "<<libpath<<std::endl;
             return libpath;
         }else if(stat(lowerlibpath.c_str(), &sb)>=0 ){
             mlog[TRACE] <<"    found.\n";
-            mlog[INFO] <<"found library "<<lowerlibpath<<std::endl;
             return lowerlibpath;
         }
 #endif
@@ -266,34 +269,28 @@ BinaryLoaderPe::link(SgAsmInterpretation* interp) {
                 ASSERT_not_null2(new_file, "createAsmAST failed");
                 SgAsmGenericHeaderPtrList new_hdrs = findSimilarHeaders(header, new_file->get_headers()->get_headers());
                 unresolved_hdrs.insert(unresolved_hdrs.end(), new_hdrs.begin(), new_hdrs.end());
+                mlog[INFO] <<"found library "<<filename<<std::endl;
             }
         }
     }
 }
 
-#define REPORT_MISSING_DLL_IMPORTS 0
 void
 BinaryLoaderPe::fixup(SgAsmInterpretation *interp, FixupErrors *errors) {
     SgAsmGenericHeaderPtrList& headers = interp->get_headers()->get_headers();
     map<pair<string,string>,SgAsmPEExportEntry*> exportEntryMap;
+    map<pair<string,unsigned>,SgAsmPEExportEntry*> exportEntryOrdinalMap;
     
     MemoryMap::Ptr memoryMap = interp->get_map();
     if(memoryMap == nullptr) interp->set_map(memoryMap = MemoryMap::instance());
     
-#if REPORT_MISSING_DLL_IMPORTS
-    map<string,SgAsmPEExportDirectory*> exportDirMap;
-    vector<pair<string,string>> missingImports;
-#endif
-
     //Traverse sections to ensure mapped address and sections are properly set.
     for(auto h = headers.begin(); h != headers.end(); ++h) {
         SgAsmGenericSectionPtrList& sections = (*h)->get_sections()->get_sections();
         rose_addr_t headerOffset = (*h)->get_mapped_actual_va() - (*h)->get_base_va();
         for(auto s = sections.begin(); s != sections.end(); ++s){
             SgAsmGenericSection* section = *s;
-            //cout<<hex<<"Offset 0x"<<headerOffset<<"    Mapped 0x"<<section->get_mapped_actual_va()<<"    Base 0x"<<section->get_base_va()<<dec<<endl;
             if((headerOffset + section->get_base_va()) > section->get_mapped_actual_va()){
-                //cout<<"Adding offset 0x"<<hex<<headerOffset<<dec<<endl;
                 section->set_mapped_actual_va(section->get_mapped_actual_va() + headerOffset);
             }
         }
@@ -309,15 +306,13 @@ BinaryLoaderPe::fixup(SgAsmInterpretation *interp, FixupErrors *errors) {
                 SgAsmPEExportEntryPtrList& exports = exportSection->get_exports()->get_exports();
                 string dirName = exportDir->get_name()->get_string();
                 boost::to_lower(dirName);
-                                
-            #if REPORT_MISSING_DLL_IMPORTS
-                exportDirMap[dirName] = exportDir;
-            #endif
 
                 for(auto e = exports.begin(); e != exports.end(); ++e){
                     string entryName = (*e)->get_name()->get_string();
                     boost::to_lower(entryName);
-                    exportEntryMap[make_pair(dirName,entryName)] = (*e);
+                    unsigned entryOrdinal = (*e)->get_ordinal();
+                    exportEntryOrdinalMap[make_pair(dirName,entryOrdinal)] = (*e);
+                    if(entryName != "") exportEntryMap[make_pair(dirName,entryName)] = (*e);
                 }
             }
         }
@@ -332,77 +327,71 @@ BinaryLoaderPe::fixup(SgAsmInterpretation *interp, FixupErrors *errors) {
                 for(auto d = directories.begin(); d != directories.end(); ++d){
                     SgAsmPEImportItemPtrList& imports = (*d)->get_imports()->get_vector();
                     string dirName = (*d)->get_dll_name()->get_string();
+                    boost::to_lower(dirName);
                     for(auto i = imports.begin(); i != imports.end(); ++i){
                         SgAsmPEImportItem* importEntry = *i;
-                        string importName = importEntry->get_name()->get_string();
-                        boost::to_lower(dirName);
-                        boost::to_lower(importName);
-                        auto found = exportEntryMap.find(make_pair(dirName,importName));
-                        if (found != exportEntryMap.end()){
-                            SgAsmPEExportEntry* exportEntry = found->second;
-                            
+                        SgAsmPEExportEntry* exportEntry = nullptr;
+                        string importName = "";
+                        unsigned entryOrdinal = 0;
+                        if(importEntry->get_by_ordinal()){
+                            entryOrdinal = importEntry->get_ordinal();
+                            auto found = exportEntryOrdinalMap.find(make_pair(dirName,entryOrdinal));
+                            if (found != exportEntryOrdinalMap.end()) exportEntry = found->second;
+                        }else{
+                            importName = importEntry->get_name()->get_string();
+                            boost::to_lower(importName);
+                            auto found = exportEntryMap.find(make_pair(dirName,importName));
+                            if (found != exportEntryMap.end()) exportEntry = found->second;
+                        }
+                        if(exportEntry != nullptr){
                             //The entry could be forwarded to another dll.
                             //Recurse down forwards till the final entry is found
+                            set<SgAsmGenericString*> forwardList; 
                             while(SgAsmGenericString* forward = exportEntry->get_forwarder()){
-                                string forwardString = forward->get_string();
-                                size_t splitPos = forwardString.find(".");
-                                dirName = forwardString.substr(0,splitPos+1) + "dll";
-                                importName = forwardString.substr(splitPos+1);
-                                boost::to_lower(dirName);
-                                boost::to_lower(importName);
-                                found = exportEntryMap.find(make_pair(dirName,importName));
-                                if (found != exportEntryMap.end()){
-                                    exportEntry = found->second;
-                                }
+                                //This could be a circular depedency. The windows loader has special behavior
+                                //for some functions that are OS functions and do not exist in dll
+                                //in these cases no source code is loaded
+                                if(forwardList.count(forward) == 0) forwardList.insert(forward);
                                 else{
-                                    //Forwards to an unloaded dll
                                     exportEntry = nullptr;
                                     break;
                                 }
-                            }
-                            //Export entry found. Set address in the IAT
-                            if(exportEntry != nullptr){
-                                rose_addr_t exportAddr   = exportEntry->get_export_rva().get_va();
-                                rose_addr_t iatEntryAddr = importEntry->get_iat_entry_va();
-                                size_t written = memoryMap->writeUnsigned(exportAddr,iatEntryAddr);
-                                if(written > 0) importEntry->set_iat_written(true);
-                                mlog[TRACE]<<"Setting value in IAT: "<<dirName<<importName<<": IAT 0x"<<hex<<iatEntryAddr<<" Export: 0x"<<exportAddr<<dec<<endl;
+                                string forwardString = forward->get_string();
+                                size_t splitPos = forwardString.find(".");
+                                string forwardDirName = forwardString.substr(0,splitPos+1) + "dll";
+                                string forwardImportName = forwardString.substr(splitPos+1);
+                                boost::to_lower(forwardDirName);
+                                boost::to_lower(forwardImportName);
+                                exportEntry = nullptr;
+                                if(forwardImportName[0] == '#'){
+                                    //Forward based upon ordinal
+                                    string ordinalString = forwardImportName.substr(1);
+                                    unsigned forwardOrdinal = strtoul(ordinalString.c_str(),nullptr,0);
+                                    auto found = exportEntryOrdinalMap.find(make_pair(forwardDirName,forwardOrdinal));
+                                    if (found != exportEntryOrdinalMap.end()) exportEntry = found->second;
+                                }else{
+                                    auto found = exportEntryMap.find(make_pair(forwardDirName,forwardImportName));
+                                    if (found != exportEntryMap.end()) exportEntry = found->second;
+                                }
+                                if(exportEntry == nullptr){
+                                    //Forwards to an unloaded dll
+                                    break;
+                                }
                             }
                         }
-                    #if REPORT_MISSING_DLL_IMPORTS
-                        if(found == exportEntryMap.end()){
-                            missingImports.push_back(make_pair(dirName,importName));
+                        //Export entry found. Set address in the IAT
+                        if(exportEntry != nullptr){
+                            rose_addr_t exportAddr   = exportEntry->get_export_rva().get_va();
+                            rose_addr_t iatEntryAddr = importEntry->get_iat_entry_va();
+                            size_t written = memoryMap->writeUnsigned(exportAddr,iatEntryAddr);
+                            if(written > 0) importEntry->set_iat_written(true);
+                            mlog[TRACE]<<"Setting value in IAT: "<<dirName<<"."<<importName<<"-"<<entryOrdinal<<": IAT 0x"<<hex<<iatEntryAddr<<" Export: 0x"<<exportAddr<<dec<<endl;
                         }
-                    #endif
                     }//End import list iterator
                 }//End import directory iterator
             }//End is import section
         }//End section iterator
     }//End Header iterator
-    
-#if REPORT_MISSING_DLL_IMPORTS
-    set<string> missingDLL;
-    set<string> missingEntry;
-    
-    for(auto x = missingImports.begin(); x != missingImports.end(); ++x){
-        string dirName = (*x).first;
-        string impName = (*x).second;
-        
-        if(exportDirMap.find(dirName) == exportDirMap.end()){
-            if(dirName.substr(0,10) != "api-ms-win") missingDLL.insert(dirName);
-        }else{
-            missingEntry.insert(dirName + ":" + impName);
-        }
-    }
-    
-    for(auto x = missingDLL.begin(); x != missingDLL.end(); ++x){
-        mlog[ERROR]<<"Missing DLL:"<<(*x)<<endl;
-    }
-    for(auto x = missingEntry.begin(); x != missingEntry.end(); ++x){
-        mlog[ERROR]<<"Missing DLL Entry:"<<(*x)<<endl;
-    }
-#endif
-    
 }
 
 } // namespace
