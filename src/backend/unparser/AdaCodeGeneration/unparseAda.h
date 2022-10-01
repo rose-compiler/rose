@@ -53,8 +53,10 @@ struct Unparse_Ada : UnparseLanguageIndependentConstructs
           void unparseAdaFile(SgSourceFile *file, SgUnparse_Info &info);
           void unparseStatement(SgStatement* stmt, SgUnparse_Info& info) override;
           void unparseLanguageSpecificStatement  (SgStatement* stmt,  SgUnparse_Info& info) override;
-          std::string computeScopeQual(const SgScopeStatement& local, const SgScopeStatement& remote);
           void setInitialScope(SgUnparse_Info& info, SgExpression*);
+          //~ std::string computeScopeQual(const SgScopeStatement& local, const SgScopeStatement& remote);
+
+          Unparser* unparser() { return base::unp; }
 
           //
           // in unparseAda_expressions.C
@@ -82,36 +84,21 @@ struct Unparse_Ada : UnparseLanguageIndependentConstructs
           // impl. in unparseAda_statements.C
           void unparseParameterList(const SgInitializedNamePtrList& params, SgUnparse_Info& info);
 
-          /// obsolete
-          /// @{
-          void addVisibleScope(const SgScopeStatement*);
-          bool isVisibleScope(const SgScopeStatement*) const;
-
-          void addUsedScope(const SgScopeStatement*);
-          bool isUsedScope(const SgScopeStatement*) const;
-
-          void addRenamedScope(ScopeRenamingContainer::key_type, ScopeRenamingContainer::mapped_type);
-          ScopeRenamingContainer::mapped_type renamedScope(ScopeRenamingContainer::key_type) const;
-
-          void openScope(SgUnparse_Info& info, SgScopeStatement& scope);
-          void closeScope();
-          /// @}
-
           const NameQualMap& nameQualificationMap() const;
           void withNameQualificationMap(const NameQualMap&);
 
      private:
           /// fully-qualified names of visible scopes
-          VisibleScopeContainer  visible_scopes;
+          //~ VisibleScopeContainer  visible_scopes;
 
           /// fully-qualified names of used scopes (i.e., use the.used.package;)
-          UsePkgContainer        use_scopes;
+          //~ UsePkgContainer        use_scopes;
 
           /// renamed scopes
-          ScopeRenamingContainer renamed_scopes;
+          //~ ScopeRenamingContainer renamed_scopes;
 
           /// stores info about scope state
-          std::vector<ScopeStackEntry> scope_state;
+          //~ std::vector<ScopeStackEntry> scope_state;
 
           ///
           const NameQualMap* currentNameQualificationMap;
