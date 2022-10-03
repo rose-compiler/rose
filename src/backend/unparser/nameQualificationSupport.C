@@ -159,6 +159,8 @@ namespace
       using base::reference;
       using base::size;
 
+      using base::end;
+      using base::begin;
       //~ size_t size() const
       //~ {
         //~ std::cerr << "sz = " << base::size() << std::endl;
@@ -431,8 +433,8 @@ namespace
       ScopePath pathToGlobal(const SgScopeStatement& n) const;
 
       /// computes the name qualification for a reference in scope \ref local
-      ///   to a declaration in scope \ref remote.
-      std::string computeNameQual(const SgScopeStatement& local, const SgScopeStatement& remote) const;
+      ///   to a declaration \ref node in scope \ref remote.
+      std::string computeNameQual(const SgNode& node, const SgScopeStatement& local, const SgScopeStatement& remote) const;
 
       /// creates a type mapping that is used for the type-subtree with reference node \ref n.
       /// Note, the subtree is NOT created iff already in type traversal mode. In this case,
@@ -575,8 +577,49 @@ namespace
     return res;
   }
 
+#if WORK_IN_PROGRESS
+  struct RequiredScopes : sg::DispatchHandler<std::size_t>
+  {
+    using base = sg::DispatchHandler<std::size_t>;
+
+    explicit
+    RequiredScopes(const ScopePath& p)
+    : base(0), path(p)
+    {}
+
+    void handle(const SgNode&) { /* returns default value = 0 */ }
+
+    void handle(const SgFunctionRefExp& n)
+    {
+      const SgFunctionSymbol& sym    = SG_DEREF(n.get_symbol());
+      std::string             fnname = sym.get_name();
+
+      for (const SgStatement* stmt : path)
+      {
+        if (const SgScopeStatement* sc = isSgScopeStatement(stmt))
+        {
+          const SgSymbolTable& sytbl = SG_DEREF(sc->get_symbol_table());
+
+          std::cerr << fnname << ": " << sytbl.exists(fnname) << std::endl;
+        }
+      }
+    }
+
+    private:
+      const ScopePath& path;
+  };
+#endif /* WORK_IN_PROGRESS */
+
+  std::size_t
+  numberOfRequiredScopes(const SgNode& node, const ScopePath& path)
+  {
+    return 0;
+    // return sg::dispatch(RequiredScopes{ path }, &node);
+  }
+
   std::string
-  NameQualificationTraversalAda::computeNameQual( const SgScopeStatement& local,
+  NameQualificationTraversalAda::computeNameQual( const SgNode& decl,
+                                                  const SgScopeStatement& local,
                                                   const SgScopeStatement& remote
                                                 ) const
   {
@@ -588,11 +631,13 @@ namespace
       return "";
 
     const ScopePath localPath  = pathToGlobal(local);
-    size_t          pathlen    = std::min(localPath.size(), remotePath.size());
-    PathIterator    localstart = localPath.rbegin();
-    PathIterator    remotePos  = std::mismatch( localstart, localstart + pathlen,
-                                                remotePath.rbegin()
-                                              ).second;
+
+    std::size_t     numReqScopes = numberOfRequiredScopes(decl, localPath);
+    std::size_t     pathlen      = std::min(localPath.size() - numReqScopes, remotePath.size());
+    PathIterator    localstart   = localPath.rbegin();
+    PathIterator    remotePos    = std::mismatch( localstart, localstart + pathlen - numReqScopes,
+                                                  remotePath.rbegin()
+                                                ).second;
 
     //~ std::cerr << remotePath.path() << " <> " << localPath.path()
               //~ << std::endl;
@@ -845,8 +890,8 @@ namespace
       /// produce name qualification required for \ref remote with respect
       /// to the current scope.
       /// \{
-      std::string nameQual(const SgScopeStatement& remote);
-      std::string nameQual(const SgScopeStatement* remote);
+      std::string nameQual(const SgNode& n, const SgScopeStatement& remote);
+      std::string nameQual(const SgNode& n, const SgScopeStatement* remote);
       /// \}
 
 
@@ -1320,19 +1365,19 @@ namespace
 
 
   std::string
-  AdaPreNameQualifier::nameQual(const SgScopeStatement& remote)
+  AdaPreNameQualifier::nameQual(const SgNode& n, const SgScopeStatement& remote)
   {
     const SgScopeStatement* current = res.get_currentScope();
 
-    return current ? traversal.computeNameQual(*current, remote)
+    return current ? traversal.computeNameQual(n, *current, remote)
                    : "<missing-scope>"; // <-- this may be used iff invoked
                                         //     from unparseToString..
   }
 
   std::string
-  AdaPreNameQualifier::nameQual(const SgScopeStatement* remote)
+  AdaPreNameQualifier::nameQual(const SgNode& node, const SgScopeStatement* remote)
   {
-    return nameQual(SG_DEREF(remote));
+    return nameQual(node, SG_DEREF(remote));
   }
 
   void
@@ -1389,6 +1434,9 @@ namespace
       return;
 
     if (/*const SgPointerDerefExp* ptrref =*/ isSgPointerDerefExp(e))
+      return;
+
+    if (/*const SgCastExp* castexp =*/ isSgCastExp(e))
       return;
 
     SG_UNEXPECTED_NODE(SG_DEREF(e));
@@ -1463,7 +1511,7 @@ namespace
   {
     ROSE_ASSERT((isSgType(&n) == nullptr) || res.is_typeMode());
 
-    std::string qual = nameQual(scope);
+    std::string qual = nameQual(n, scope);
 
     if (qual.size() > 0)
       traversal.recordNameQual(n, std::move(qual));
@@ -1477,7 +1525,7 @@ namespace
   {
     ROSE_ASSERT((isSgType(&n) == nullptr) || res.is_typeMode());
 
-    std::string qual = nameQual(scope);
+    std::string qual = nameQual(n, scope);
 
     if (qual.size() > 0)
       traversal.recordNameQual(m, n, std::move(qual));

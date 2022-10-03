@@ -227,7 +227,9 @@ class AstNodeClass
 
   std::string   buildDataAccessFunctions ( const GrammarString & inputMemberData);
 
-  std::string buildConstructorBody( bool withInitializers, ConstructParamEnum config );
+// DQ (9/28/2022): Fixing compiler warning for argument not used.
+// std::string buildConstructorBody( bool withInitializers, ConstructParamEnum config );
+  std::string buildConstructorBody( bool withInitializers );
 
   // builds a constructor body for passing all data members as parameters
   std::string buildConstructorBodyForEssentialDataMembers();
@@ -236,7 +238,9 @@ class AstNodeClass
   // Builds the destructor body
   std::string buildDestructorBody();
 
-  void displayName ( int indent = 0 ) const;
+ // DQ (9/28/2022): Fixing compiler warning for argument not used.
+ // void displayName ( int indent = 0 ) const;
+  void displayName () const;
 
                  // this stores the old and new string used for the substitution and applies
                  // it before final copying out of a node of the grammar to a file!
@@ -289,11 +293,17 @@ class AstNodeClass
 // DQ (4/30/2006): Added similar function to buildReturnDataMemberPointers() so that we could 
 // return references to the pointers to IR nodes (required low level support for AST Merge).
   std::string buildProcessDataMemberReferenceToPointers ();
-  std::string buildListIteratorStringForReferenceToPointers(std::string typeName, std::string variableName, std::string classNameString, bool traverse);
+
+// DQ (9/28/2022): Fixing compiler warning for argument not used.
+// std::string buildListIteratorStringForReferenceToPointers(std::string typeName, std::string variableName, std::string classNameString, bool traverse);
+  std::string buildListIteratorStringForReferenceToPointers(std::string typeName, std::string variableName, bool traverse);
 
 // DQ (3/7/2007): Building support for "long getChildIndex();" to be use for "bool isChild();" and other purposes.
   std::string buildChildIndex ();
-  std::string buildListIteratorStringForChildIndex(std::string typeName, std::string variableName, std::string classNameString);
+
+// DQ (9/28/2022): Fixing compiler warning for argument not used.
+// std::string buildListIteratorStringForChildIndex(std::string typeName, std::string variableName, std::string classNameString);
+  std::string buildListIteratorStringForChildIndex(std::string typeName, std::string variableName );
 
   virtual void show(size_t indent = 0) const;
 

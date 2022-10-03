@@ -92,6 +92,12 @@ void findAndCallFunctionUsingDlopen (int num, ... )
   int param_count=num-2; // how many parameters we have. it should not exceed 1024
   void** out_argv = (void**) malloc(sizeof(void*)* param_count);
 
+  if (out_argv == NULL)
+  {
+    fprintf(stderr, "out of memory\n");
+    abort();
+  }
+
   va_start (arguments, num);
 
   // Extract the function name
@@ -116,4 +122,6 @@ void findAndCallFunctionUsingDlopen (int num, ... )
     func_p= findFunctionUsingDlopen(func_name, lib_name);
     ( *func_p)(out_argv);
   }
+
+  free (out_argv);
 }

@@ -37,7 +37,7 @@ void Grammar::generateRoseTraits() {
 
       ofile << "// Class: " << term->baseName << std::endl;
 
-      for (auto i = 0; i < fields.size(); i++) {
+      for (auto i = 0UL; i < fields.size(); i++) {
         auto gsp = fields[i];
         auto type_str = gsp->typeNameString;
 
@@ -70,7 +70,7 @@ void Grammar::generateRoseTraits() {
       ofile << "  static constexpr bool concrete{" << ( term->canHaveInstances ? "true" : "false") << "};" << std::endl;
 
       ofile << "  using subclasses_t = mp::List<";
-      for (auto i = 0; i < term->subclasses.size(); ++i) {
+      for (auto i = 0UL; i < term->subclasses.size(); ++i) {
         ofile << "Sg" << term->subclasses[i]->baseName;
         if (i < term->subclasses.size() - 1) {
           ofile << ", ";
@@ -79,7 +79,7 @@ void Grammar::generateRoseTraits() {
       ofile << ">;" << std::endl;
 
       ofile << "  using fields_t = mp::List<";
-      for (auto i = 0; i < fields.size(); i++) {
+      for (auto i = 0UL; i < fields.size(); i++) {
         auto gsp = fields[i];
         auto type_str = gsp->typeNameString;
 

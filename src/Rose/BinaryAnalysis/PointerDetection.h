@@ -120,6 +120,10 @@ void initDiagnostics();
  *  The facility can be controlled directly or via ROSE's command-line. */
 extern Sawyer::Message::Facility mlog;
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Settings
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /** Settings to control the pointer analysis. */
 struct Settings {
     /** Whether to ignore branches to concrete addresses.
@@ -127,37 +131,94 @@ struct Settings {
      *  If set, then conditional branches to concrete addresses are ignored, not treated as code pointers.  For instance, the
      *  x86 "je 0x08048504" instruction would not be considered significant for modifying the instruction pointer since both
      *  target addresses are constants. */
-    bool ignoreConstIp;
+    bool ignoreConstIp = true;
 
     /** Whether to ignore strange-sized pointers.
      *
      *  If set, then ignore pointer addresses that are not the same width as the stack pointer (data) or instruction pointer
      *  (code). */
-    bool ignoreStrangeSizes;
+    bool ignoreStrangeSizes = true;
 
-    /** Default settings. */
-    Settings()
-        : ignoreConstIp(true), ignoreStrangeSizes(true) {}
+    /** Save information about data pointers. */
+    bool saveDataPointers = true;
+
+    /** Save information about code pointers. */
+    bool saveCodePointers = true;
+
+    /** Save the pointer variable addresses in the results. */
+    bool savePointerVas = true;
+
+    /** Save information about where pointer variables are accessed. */
+    bool savePointerAccesses = true;
+
+    /** Save pointer accessed values if pointer accesses are saved. */
+    bool savePointerAccessValues = true;
+
+    /** Save information about where pointer values are dereferenced. */
+    bool savePointerDereferences = true;
+
+    /** Save pointer dereferenced values if dereferences are saved. */
+    bool savePointerDereferenceValues = true;
+
+    /** Threshold for replacing large symbolic expressions with new variables. */
+    uint64_t symbolicTrimThreshold = std::numeric_limits<uint64_t>::max();
+
+    /** Maximum data-flow iteration factor.
+     *
+     *  The iteration factor is multiplied by the number of vertices in the function control flow graph to determine
+     *  how many data flow iterations occur before giving up. */
+    size_t maximumDataFlowIterationFactor = 5;
 };
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// PointerDescriptor
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Description of one pointer. */
 struct PointerDescriptor {
-    SymbolicExpression::Ptr lvalue;                     /**< Symbolic address of pointer. */
+    /** Information about how a pointer is dereferenced. */
+    enum Direction {
+        READ,                                           /**< Pointer is used to read from memory. */
+        WRITE                                           /**< Pointer is used to write to memory. */
+    };
+
+    /** Description of accessing memory. */
+    struct Access {
+        rose_addr_t insnVa;                             /**< Instruction location where memory is accessed. */
+        Direction direction;                            /**< Whether memory is read or written. */
+        SymbolicExpression::Ptr value;                  /**< Value read or written. */
+
+        Access(rose_addr_t insnVa, Direction direction, const SymbolicExpression::Ptr &value)
+            : insnVa(insnVa), direction(direction), value(value) {}
+
+        bool operator<(const Access &other) const {
+            if (insnVa != other.insnVa)
+                return insnVa < other.insnVa;
+            if (direction != other.direction)
+                return direction < other.direction;
+            return value->hash() < other.value->hash();
+        }
+    };
+
+    SymbolicExpression::Ptr pointerVa;                  /**< Symbolic address where pointer variable is stored. */
     size_t nBits;                                       /**< Width of pointer in bits. */
+    std::set<Access> pointerAccesses;                   /**< Where pointer variable's value was accessed. */
+    std::set<Access> dereferences;                      /**< Where pointer was dereferenced. */
 
-    PointerDescriptor(const SymbolicExpression::Ptr &lvalue, size_t nBits)
-        : lvalue(lvalue), nBits(nBits) {}
-};
-
-/** Functor to compare two PointerLocation objects. */
-class PointerDescriptorLessp {
-public:
-    bool operator()(const PointerDescriptor &a, const PointerDescriptor &b) const;
+    PointerDescriptor(const SymbolicExpression::Ptr &pointerVa, size_t nBits, rose_addr_t insnVa, Direction dir,
+                      const SymbolicExpression::Ptr &pointerValue)
+        : pointerVa(pointerVa), nBits(nBits) {
+        pointerAccesses.insert(Access(insnVa, dir, pointerValue));
+    }
 };
 
 /** Set of pointers. */
-typedef std::set<PointerDescriptor, PointerDescriptorLessp> PointerDescriptors;
-    
+using PointerDescriptors = std::list<PointerDescriptor>;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Pointer analysis
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /** Pointer analysis.
  *
  *  This class is the main analysis class for pointer detection.  See the @ref Rose::BinaryAnalysis::PointerDetection namespace
@@ -287,8 +348,10 @@ private:
     // values and instructions that have already been processed.
     void
     conditionallySavePointer(const InstructionSemantics::BaseSemantics::SValuePtr &ptrValue,
-                             Sawyer::Container::Set<uint64_t> &ptrValueSeen,
-                             size_t wordSize, PointerDescriptors &result);
+                             Sawyer::Container::Set<uint64_t> &ptrValueSeen, PointerDescriptors &result);
+
+    // Prune results based on settings
+    void pruneResults(PointerDescriptors&);
 };
 
 } // namespace
