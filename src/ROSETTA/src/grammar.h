@@ -351,6 +351,9 @@ class Grammar
        // DQ (12/24/2005): Support for memory pool traversal
           Rose::StringUtility::FileWithLineNumbers buildStringForTraverseMemoryPoolSource            ( AstNodeClass & node );
 
+       // Jim Leek (09/24/2022): Support for NodeId
+          Rose::StringUtility::FileWithLineNumbers buildStringForNodeIdSource            ( AstNodeClass & node );
+
        // DQ & JH (1/17/2006): Added support for building code to check pointers to IR nodes
           Rose::StringUtility::FileWithLineNumbers buildStringForCheckingIfDataMembersAreInMemoryPoolSource ( AstNodeClass & node );
           Rose::StringUtility::FileWithLineNumbers buildStringToTestPointerForContainmentInMemoryPoolSource ( AstNodeClass & node );
@@ -411,6 +414,9 @@ class Grammar
 
        // DQ (12/24/2005): Support for memory pool traversal
           void buildTraverseMemoryPoolSupport( AstNodeClass & node, Rose::StringUtility::FileWithLineNumbers & outputFile );
+
+       // Jim Leek (10/24/2022): Support for Node Id
+          void buildNodeIdSupport( AstNodeClass & node, Rose::StringUtility::FileWithLineNumbers & outputFile );
 
        // DQ & JH (1/17/2006): Added support for building code to check pointers to IR nodes
           void buildStringForCheckingIfDataMembersAreInMemoryPoolSupport( AstNodeClass & node, Rose::StringUtility::FileWithLineNumbers & outputFile );
@@ -640,6 +646,10 @@ class Grammar
        // DQ (12/23/2005): Support for building the code to use the visitor 
        // pattern on the IR nodes in memory pools.
           std::string buildMemoryPoolBasedTraversalSupport();
+
+       // Jim Leek (09/23/2022): Support for each AST node being
+       // identified by a NodeId (based on memory pool location)
+          std::string buildMemoryPoolBasedNodeId();
 
      private:
        // file cache for reading files

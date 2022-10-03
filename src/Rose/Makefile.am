@@ -29,6 +29,7 @@ librose_partial_la_SOURCES =								\
 	AST/checker/integrity_symbols.C							\
 	AST/checker/integrity_types.C							\
 	AST/graphviz.C									\
+	AST/NodeId.C									\
 	AST/io/delete.C									\
 	AST/io/link.C									\
 	AST/io/load.C									\
