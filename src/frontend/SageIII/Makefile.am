@@ -114,6 +114,7 @@ GENERATED_SOURCE = \
 	Cxx_GrammarSerialization.h \
 	Cxx_GrammarNewAndDeleteOperators.C \
 	Cxx_GrammarCopyMemberFunctions.C \
+	Cxx_GrammarNodeIdSupport.C \
 	Cxx_GrammarTraverseMemoryPool.C \
 	Cxx_GrammarCheckingIfDataMembersAreInMemoryPool.C \
 	Cxx_GrammarMemoryPoolSupport.h \
@@ -136,6 +137,7 @@ GENERATED_SOURCE = \
 	Cxx_GrammarSerialization.h \
 	Cxx_GrammarNewAndDeleteOperators.C \
 	Cxx_GrammarCopyMemberFunctions.C \
+	Cxx_GrammarNodeIdSupport.C \
 	Cxx_GrammarTraverseMemoryPool.C \
 	Cxx_GrammarCheckingIfDataMembersAreInMemoryPool.C \
 	Cxx_GrammarMemoryPoolSupport.h \

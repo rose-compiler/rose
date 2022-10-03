@@ -62,6 +62,7 @@ set(ROSETTA_SRC
   ${CMAKE_BINARY_DIR}/src/frontend/SageIII/Cxx_GrammarReturnClassHierarchySubTree.C
   ${CMAKE_BINARY_DIR}/src/frontend/SageIII/Cxx_GrammarReturnDataMemberPointers.C
   ${CMAKE_BINARY_DIR}/src/frontend/SageIII/Cxx_GrammarRTI.C
+  ${CMAKE_BINARY_DIR}/src/frontend/SageIII/Cxx_GrammarNodeIdSupport.C
   ${CMAKE_BINARY_DIR}/src/frontend/SageIII/Cxx_GrammarTraverseMemoryPool.C
   ${CMAKE_BINARY_DIR}/src/frontend/SageIII/Cxx_GrammarTreeTraversalSuccessorContainer.C
   ${CMAKE_BINARY_DIR}/src/frontend/SageIII/Cxx_GrammarVariantEnumNames.C
