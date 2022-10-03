@@ -73,21 +73,19 @@ toString<unsigned char>(const unsigned char& n, size_t radix, size_t nBits) {
 template<class T>
 static void
 assert_equal(const std::string &s, T y, const char *file, const int line) {
-    try {
-        T x = Rose::StringUtility::toNumber<T>(s);
-        if (x != y) {
-            std::cerr <<"test failed at " <<file <<":" <<line <<"\n"
-                      <<"  for type " <<typeName<T>() <<"\n"
-                      <<"  input string \"" <<Rose::StringUtility::cEscape(s) <<"\"\n"
-                      <<"  parsed as " <<toString(x) <<"\n"
-                      <<"  expected " <<toString(y) <<"\n";
-            exit(1);
-        }
-    } catch (const Rose::Exception &e) {
+    auto parsed = Rose::StringUtility::toNumber<T>(s);
+    if (!parsed) {
         std::cerr <<"test failed at " <<file <<":" <<line <<"\n"
                   <<"  for type " <<typeName<T>() <<"\n"
                   <<"  input string \"" <<Rose::StringUtility::cEscape(s) <<"\"\n"
-                  <<"  " <<e.what() <<"\n"
+                  <<"  " <<*parsed.error() <<"\n"
+                  <<"  expected " <<toString(y) <<"\n";
+        exit(1);
+    } else if (*parsed != y) {
+        std::cerr <<"test failed at " <<file <<":" <<line <<"\n"
+                  <<"  for type " <<typeName<T>() <<"\n"
+                  <<"  input string \"" <<Rose::StringUtility::cEscape(s) <<"\"\n"
+                  <<"  parsed as " <<toString(*parsed) <<"\n"
                   <<"  expected " <<toString(y) <<"\n";
         exit(1);
     }
@@ -96,22 +94,22 @@ assert_equal(const std::string &s, T y, const char *file, const int line) {
 template<class T>
 static void
 assert_exception(const std::string &s, const std::string &reStr, const char *file, const int line) {
-    try {
-        T x = Rose::StringUtility::toNumber<T>(s);
+    auto parsed = Rose::StringUtility::toNumber<T>(s);
+    if (parsed) {
         std::cerr <<"test failed at " <<file <<":" <<line <<"\n"
                   <<"  for type " <<typeName<T>() <<"\n"
                   <<"  input string \"" <<Rose::StringUtility::cEscape(s) <<"\"\n"
-                  <<"  parsed as " <<toString(x) <<"\n"
+                  <<"  parsed as " <<toString(*parsed) <<"\n"
                   <<"  expected exception matching /" <<Rose::StringUtility::cEscape(reStr) <<"/\n";
         exit(1);
-    } catch (const Rose::Exception &e) {
+    } else {
         std::regex re(reStr);
-        if (!std::regex_search(e.what(), re)) {
+        if (!std::regex_search(*parsed.error(), re)) {
             std::cerr <<"test failed at " <<file <<":" <<line <<"\n"
                       <<"  for type " <<typeName<T>() <<"\n"
                       <<"  input string \"" <<Rose::StringUtility::cEscape(s) <<"\"\n"
                       <<"  expected exception matching /" <<Rose::StringUtility::cEscape(reStr) <<"/\n"
-                      <<"  got exception \"" <<Rose::StringUtility::cEscape(e.what()) <<"\"\n";
+                      <<"  got exception \"" <<Rose::StringUtility::cEscape(*parsed.error()) <<"\"\n";
             exit(1);
         }
     }

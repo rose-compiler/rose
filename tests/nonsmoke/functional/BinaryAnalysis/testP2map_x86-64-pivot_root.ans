@@ -315,7 +315,7 @@
 0x0040066f: Successor blocks: 0x00400678
 
 0x00400671: Basic block reasons: 
-0x00400671: ff 54 dd 00             |.T..    |<sp-24>   call   qword ds:[rbp + rbx*0x08 + 0x00]
+0x00400671: ff 54 dd 00             |.T..    |<sp-24>   call   qword ds:[rbp + 0x00 + rbx*0x08]
 0x00400671: Outgoing stack delta: -32
 0x00400671: Successor blocks: 0x00400675, unknown
 

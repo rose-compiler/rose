@@ -32,6 +32,8 @@ public:
   bool roseAstWrite=false;
   bool roseAstMerge=false;
 
+  bool checkCLanguage=true; // check for CLanguage subset (C++ tools need to set this to 'false')
+
   // visualization
   struct Visualization {
     bool rwClusters=false;
@@ -194,6 +196,10 @@ public:
     std::string csvResultsFile;
     bool failOnError=false;
   } dr;
+
+  struct MultiSelectors {
+    std::string analysisMode="none"; // values: {"none", "abstract", "concrete"} used to set multiple options in processMultiSelectors
+  } multiSelectors;
 
   // visible options
   std::string configFileName;

@@ -3,6 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_ASM_AARCH64
 
+#include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 
 #include <boost/serialization/access.hpp>
@@ -58,43 +59,27 @@ private:
 
 protected:
     // prototypical constructor
-    DispatcherAarch64()
-        : BaseSemantics::Dispatcher(64, RegisterDictionary::dictionary_aarch64()) {}
+    DispatcherAarch64();
 
-    DispatcherAarch64(const BaseSemantics::RiscOperatorsPtr &ops, const RegisterDictionary *regs)
-        : BaseSemantics::Dispatcher(ops, 64, regs ? regs : RegisterDictionary::dictionary_aarch64()) {
-        initializeRegisterDescriptors();
-        initializeInsnDispatchTable();
-        initializeMemory();
-        initializeState(ops->currentState());
-    }
+    DispatcherAarch64(const BaseSemantics::RiscOperatorsPtr&, const RegisterDictionaryPtr&);
 
 public:
+    ~DispatcherAarch64();
+
     /** Construct a prototypical dispatcher.
      *
      *  The only thing this dispatcher can be used for is to create another dispatcher with the virtual @ref create method. */
-    static DispatcherAarch64Ptr instance() {
-        return DispatcherAarch64Ptr(new DispatcherAarch64);
-    }
+    static DispatcherAarch64Ptr instance();
 
     /** Allocating constructor. */
-    static DispatcherAarch64Ptr instance(const BaseSemantics::RiscOperatorsPtr &ops, const RegisterDictionary *regs = nullptr) {
-        return DispatcherAarch64Ptr(new DispatcherAarch64(ops, regs));
-    }
+    static DispatcherAarch64Ptr instance(const BaseSemantics::RiscOperatorsPtr&, const RegisterDictionaryPtr&);
 
     /** Virtual constructor. */
-    virtual BaseSemantics::DispatcherPtr create(const BaseSemantics::RiscOperatorsPtr &ops, size_t addrWidth = 0,
-                                                const RegisterDictionary *regs = nullptr) const override {
-        ASSERT_require(0 == addrWidth || 64 == addrWidth);
-        return instance(ops, regs);
-    }
+    virtual BaseSemantics::DispatcherPtr create(const BaseSemantics::RiscOperatorsPtr&, size_t addrWidth,
+                                                const RegisterDictionaryPtr&) const override;
 
     /** Dynamic cast to DispatcherAarch64 with assertion. */
-    static DispatcherAarch64Ptr promote(const BaseSemantics::DispatcherPtr &d) {
-        DispatcherAarch64Ptr retval = boost::dynamic_pointer_cast<DispatcherAarch64>(d);
-        ASSERT_not_null(retval);
-        return retval;
-    }
+    static DispatcherAarch64Ptr promote(const BaseSemantics::DispatcherPtr&);
 
 protected:
     /** Initialized cached register descriptors from the register dictionary. */
@@ -158,7 +143,7 @@ protected:
     RegisterDescriptor stackPointerRegister() const override;
     RegisterDescriptor stackFrameRegister() const override;
     RegisterDescriptor callReturnRegister() const override;
-    void set_register_dictionary(const RegisterDictionary*) override;
+    void set_register_dictionary(const RegisterDictionaryPtr&) override;
 };
 
 } // namespace

@@ -1,9 +1,0 @@
-ANALYSIS
-
-RESULT 
-NAME JustANumber
-TYPE int(32)
-DATA program noflow 100;
-END
-
-END

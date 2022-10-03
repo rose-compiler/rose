@@ -328,9 +328,9 @@ collectAbstractHandles(SgProject* proj,  TargetList_t& targets)
               cout<<"Cannot find a matching target from a handle:"<<cur_handle<<endl;
           }
         }
-
       }
       // TODO do we care about the memory leak here?
+      delete fhandle;
     } //end if sfile
   } // end for 
 #ifdef _MSC_VER

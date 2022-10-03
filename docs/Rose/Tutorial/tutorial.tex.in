@@ -309,7 +309,8 @@ transformations and optimizations.}
 %\input{globalVariableHandling}
 %-------end of chapter for AST construction
 
-\input{parserBuildingBlocks}
+%\input{parserBuildingBlocks}
+% This project has been removed.
 
 \input{addingComments}  % handling preprocessing information
 \input{partialRedundancyElimination}

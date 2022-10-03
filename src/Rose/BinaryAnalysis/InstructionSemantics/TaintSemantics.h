@@ -2,8 +2,10 @@
 #define ROSE_BinaryAnalysis_InstructionSemantics_TaintSemantics_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
+
+#include <Rose/BinaryAnalysis/BasicTypes.h>
+#include <Rose/BinaryAnalysis/SymbolicExpression.h>
 
 namespace Rose {
 namespace BinaryAnalysis {              // documented elsewhere
@@ -94,7 +96,7 @@ protected:
 public:
     /** Instantiate a new prototypical value. Prototypical values are only used for their virtual constructors. */
     static SValuePtr instance() {
-        return SValuePtr(new SValue(SymbolicExpr::makeIntegerVariable(1)));
+        return SValuePtr(new SValue(SymbolicExpression::makeIntegerVariable(1)));
     }
 
     /** Instantiate a new data-flow bottom value of specified width.
@@ -103,26 +105,26 @@ public:
      *  allocating constructors. If you need a different taintedness then you need to change it with the @ref taintedness
      *  property. */
     static SValuePtr instance_bottom(size_t nbits) {
-        return SValuePtr(new SValue(SymbolicExpr::makeIntegerVariable(nbits, "", ExprNode::BOTTOM)));
+        return SValuePtr(new SValue(SymbolicExpression::makeIntegerVariable(nbits, "", ExprNode::BOTTOM)));
     }
 
     /** Instantiate a new undefined value of specified width. */
     static SValuePtr instance_undefined(size_t nbits) {
-        return SValuePtr(new SValue(SymbolicExpr::makeIntegerVariable(nbits)));
+        return SValuePtr(new SValue(SymbolicExpression::makeIntegerVariable(nbits)));
     }
 
     /** Instantiate a new unspecified value of specified width. */
     static SValuePtr instance_unspecified(size_t nbits) {
-        return SValuePtr(new SValue(SymbolicExpr::makeIntegerVariable(nbits, "", ExprNode::UNSPECIFIED)));
+        return SValuePtr(new SValue(SymbolicExpression::makeIntegerVariable(nbits, "", ExprNode::UNSPECIFIED)));
     }
 
     /** Instantiate a new concrete value. */
     static SValuePtr instance_integer(size_t nbits, uint64_t value) {
-        return SValuePtr(new SValue(SymbolicExpr::makeIntegerConstant(nbits, value)));
+        return SValuePtr(new SValue(SymbolicExpression::makeIntegerConstant(nbits, value)));
     }
 
     /** Instantiate a new symbolic value. */
-    static SValuePtr instance_symbolic(const SymbolicExpr::Ptr &value) {
+    static SValuePtr instance_symbolic(const SymbolicExpression::Ptr &value) {
         ASSERT_not_null(value);
         return SValuePtr(new SValue(value));
     }
@@ -284,77 +286,46 @@ private:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
-    RiscOperators() {}                                  // for serialization
+    RiscOperators();                                    // for serialization
 
-    explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, const SmtSolverPtr &solver = SmtSolverPtr())
-        : Super(protoval, solver) {
-        name("Taint");
-        ASSERT_always_not_null(protoval);
-        ASSERT_always_not_null2(protoval.dynamicCast<SValue>(),
-                                "TaintSemantics supports only TaintSemantics::SValue types or derivatives thereof");
-    }
+    explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, const SmtSolverPtr&);
 
-    explicit RiscOperators(const BaseSemantics::StatePtr &state, const SmtSolverPtr &solver = SmtSolverPtr())
-        : Super(state, solver) {
-        name("Taint");
-        ASSERT_always_not_null(state);
-        ASSERT_always_not_null(state->registerState());
-        ASSERT_always_not_null2(boost::dynamic_pointer_cast<RegisterState>(state->registerState()),
-                                "TaintSemantics supports only RegisterStateGeneric or derivatives thereof");
-        ASSERT_always_not_null(state->protoval());
-        ASSERT_always_not_null2(state->protoval().dynamicCast<SValue>(),
-                                "TaintSemantics supports only TaintSemantics::SValue types or derivatives thereof");
-    }
+    explicit RiscOperators(const BaseSemantics::StatePtr&, const SmtSolverPtr&);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Static allocating constructors
 public:
+    ~RiscOperators();
+
     /** Instantiates a new RiscOperators object and configures it to use semantic values and states that are defaults for
      *  TaintSemantics. */
-    static RiscOperatorsPtr instance(const RegisterDictionary *regdict, const SmtSolverPtr &solver = SmtSolverPtr()) {
-        BaseSemantics::SValuePtr protoval = SValue::instance();
-        BaseSemantics::RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
-        BaseSemantics::MemoryStatePtr memory = MemoryListState::instance(protoval, protoval);
-        BaseSemantics::StatePtr state = State::instance(registers, memory);
-        return RiscOperatorsPtr(new RiscOperators(state, solver));
-    }
+    static RiscOperatorsPtr instanceFromRegisters(const RegisterDictionaryPtr&, const SmtSolverPtr &solver = SmtSolverPtr());
 
     /** Instantiates a new RiscOperators object with specified prototypical values.
      *
      *  An SMT solver may be specified as the second argument for convenience. See @ref solver for details. */
-    static RiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval, const SmtSolverPtr &solver = SmtSolverPtr()) {
-        return RiscOperatorsPtr(new RiscOperators(protoval, solver));
-    }
+    static RiscOperatorsPtr instanceFromProtoval(const BaseSemantics::SValuePtr &protoval,
+                                                 const SmtSolverPtr &solver = SmtSolverPtr());
 
     /** Instantiates a new RiscOperators object with specified state.  An SMT solver may be specified as the second argument
      *  for convenience. See @ref solver for details. */
-    static RiscOperatorsPtr instance(const BaseSemantics::StatePtr &state, const SmtSolverPtr &solver = SmtSolverPtr()) {
-        return RiscOperatorsPtr(new RiscOperators(state, solver));
-    }
+    static RiscOperatorsPtr instanceFromState(const BaseSemantics::StatePtr&, const SmtSolverPtr &solver = SmtSolverPtr());
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Virtual constructors
 public:
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::SValuePtr &protoval,
-                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const override {
-        return instance(protoval, solver);
-    }
+                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const override;
 
-    virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::StatePtr &state,
-                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const override {
-        return instance(state, solver);
-    }
+    virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::StatePtr&,
+                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const override;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Dynamic pointer casts
 public:
     /** Run-time promotion of a base RiscOperators pointer to symbolic operators. This is a checked conversion--it
      *  will fail if @p x does not point to a SymbolicSemantics::RiscOperators object. */
-    static RiscOperatorsPtr promote(const BaseSemantics::RiscOperatorsPtr &x) {
-        RiscOperatorsPtr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
-        ASSERT_not_null(retval);
-        return retval;
-    }
+    static RiscOperatorsPtr promote(const BaseSemantics::RiscOperatorsPtr&);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Override methods from base class.  These are the RISC operators that are invoked by a Dispatcher.

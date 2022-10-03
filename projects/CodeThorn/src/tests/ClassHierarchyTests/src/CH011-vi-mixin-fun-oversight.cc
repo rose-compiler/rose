@@ -8,6 +8,8 @@ struct Mixin
 struct MixinImpl : Mixin
 {
   void f() override {}
+
+  void test(MixinImpl) {}
 };
 
 struct A : virtual Mixin

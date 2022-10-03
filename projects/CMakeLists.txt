@@ -7,14 +7,7 @@ if(enable-projects-directory)
   # test your project and re-enable it.
   ###################################################################################################################
 
-  add_subdirectory(BinaryAnalysisTools)
-  add_subdirectory(BinaryCloneDetection)
   add_subdirectory(CloneDetection)
-  add_subdirectory(extractMPISkeleton)
-  add_subdirectory(Fortran_to_C)
   add_subdirectory(ManyCoreRuntime)
-  add_subdirectory(MatrixTestingProject)
   add_subdirectory(MPI_Tools)
-  add_subdirectory(pragmaParsing)
-  add_subdirectory(UpcTranslation)
 endif()

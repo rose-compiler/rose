@@ -6,13 +6,17 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #else
 
 #include <rose.h>
-
 #include <Rose/BinaryAnalysis/PointerDetection.h>
-#include <boost/foreach.hpp>
+
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+#include <Rose/BinaryAnalysis/SymbolicExpression.h>
+
 #include <rose_strtoull.h>
+
 #include <Sawyer/CommandLine.h>
+#include <boost/foreach.hpp>
 #include <string>
 #include <vector>
 
@@ -64,7 +68,7 @@ shouldAnalyze(const Settings &settings, const P2::Function::Ptr &function) {
 int
 main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
-    SymbolicExpr::serializeVariableIds = true;
+    SymbolicExpression::serializeVariableIds = true;
     Settings settings;
     P2::Engine engine;
     std::vector<std::string> specimen = parseCommandLine(argc, argv, engine, settings);
@@ -101,10 +105,10 @@ main(int argc, char *argv[]) {
                     std::cout <<"  WARNING: Analysis did not converge; following info may be incomplete\n";
                 std::cout <<"  Code pointers:\n";
                 BOOST_FOREACH (const PointerDetection::PointerDescriptor &desc, pda.codePointers())
-                    std::cout <<"    " <<desc.nBits <<"-bit pointer at " <<*desc.lvalue <<"\n";
+                    std::cout <<"    " <<desc.nBits <<"-bit pointer at " <<*desc.pointerVa <<"\n";
                 std::cout <<"  Data pointers:\n";
                 BOOST_FOREACH (const PointerDetection::PointerDescriptor &desc, pda.dataPointers())
-                    std::cout <<"    " <<desc.nBits <<"-bit pointer at " <<*desc.lvalue <<"\n";
+                    std::cout <<"    " <<desc.nBits <<"-bit pointer at " <<*desc.pointerVa <<"\n";
             }
             //! [documentation guts]
         }

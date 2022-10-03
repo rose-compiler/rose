@@ -6,7 +6,8 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 #include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherM68k.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/Util.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/Utility.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include "integerOps.h"
 #include "stringify.h"
 
@@ -33,9 +34,9 @@ public:
     typedef const SgAsmExpressionPtrList &A;
     virtual void p(D, Ops, I, A) = 0;
 
-    virtual void process(const BaseSemantics::DispatcherPtr &dispatcher_, SgAsmInstruction *insn_) override {
+    virtual void process(const BaseSemantics::Dispatcher::Ptr &dispatcher_, SgAsmInstruction *insn_) override {
         DispatcherM68kPtr dispatcher = DispatcherM68k::promote(dispatcher_);
-        BaseSemantics::RiscOperatorsPtr operators = dispatcher->operators();
+        BaseSemantics::RiscOperators::Ptr operators = dispatcher->operators();
         SgAsmM68kInstruction *insn = isSgAsmM68kInstruction(insn_);
         ASSERT_not_null(insn);
         ASSERT_require(insn == operators->currentInstruction());
@@ -73,24 +74,24 @@ struct IP_add: P {
         size_t nBits = args[0]->get_nBits();
         d->decrementRegisters(args[0]);
         d->decrementRegisters(args[1]);
-        SValuePtr a0 = d->read(args[0], nBits);
-        SValuePtr a1 = d->read(args[1], nBits);
-        SValuePtr result = ops->add(a0, a1);
+        SValue::Ptr a0 = d->read(args[0], nBits);
+        SValue::Ptr a1 = d->read(args[1], nBits);
+        SValue::Ptr result = ops->add(a0, a1);
         d->write(args[1], result);
         d->incrementRegisters(args[0]);
         d->incrementRegisters(args[1]);
 
-        SValuePtr sm = ops->extract(a0, nBits-1, nBits);
-        SValuePtr dm = ops->extract(a1, nBits-1, nBits);
-        SValuePtr rm = ops->extract(result, nBits-1, nBits);
-        SValuePtr isNegative = rm;
-        SValuePtr isZero = ops->equalToZero(result);
-        SValuePtr v1 = ops->and_(ops->invert(dm), rm);
-        SValuePtr v2 = ops->and_(ops->invert(sm), v1);
-        SValuePtr isOverflow = ops->or_(ops->and_(sm, ops->and_(dm, ops->invert(rm))), v2);
-        SValuePtr v3 = ops->and_(sm, ops->invert(rm));
-        SValuePtr v4 = ops->or_(ops->and_(ops->invert(rm), dm), v3);
-        SValuePtr isCarry = ops->or_(ops->and_(sm, dm), v4);
+        SValue::Ptr sm = ops->extract(a0, nBits-1, nBits);
+        SValue::Ptr dm = ops->extract(a1, nBits-1, nBits);
+        SValue::Ptr rm = ops->extract(result, nBits-1, nBits);
+        SValue::Ptr isNegative = rm;
+        SValue::Ptr isZero = ops->equalToZero(result);
+        SValue::Ptr v1 = ops->and_(ops->invert(dm), rm);
+        SValue::Ptr v2 = ops->and_(ops->invert(sm), v1);
+        SValue::Ptr isOverflow = ops->or_(ops->and_(sm, ops->and_(dm, ops->invert(rm))), v2);
+        SValue::Ptr v3 = ops->and_(sm, ops->invert(rm));
+        SValue::Ptr v4 = ops->or_(ops->and_(ops->invert(rm), dm), v3);
+        SValue::Ptr isCarry = ops->or_(ops->and_(sm, dm), v4);
 
 
         ops->writeRegister(d->REG_CCR_C, isCarry);
@@ -108,7 +109,7 @@ struct IP_adda: P {
         ASSERT_require(args[0]->get_nBits() <= 32);
         ASSERT_require(args[1]->get_nBits() == 32);
         d->decrementRegisters(args[0]);
-        SValuePtr a0 = ops->signExtend(d->read(args[0], args[0]->get_nBits()), 32);
+        SValue::Ptr a0 = ops->signExtend(d->read(args[0], args[0]->get_nBits()), 32);
         d->incrementRegisters(args[0]);
         d->write(args[1], ops->add(a0, d->read(args[1], 32)));
     }
@@ -120,23 +121,23 @@ struct IP_addi: P {
         ASSERT_require(args[0]->get_nBits() == args[1]->get_nBits());
         size_t nBits = args[0]->get_nBits();
         d->decrementRegisters(args[1]);
-        SValuePtr a0 = d->read(args[0], nBits);
-        SValuePtr a1 = d->read(args[1], nBits);
-        SValuePtr result = ops->add(a0, a1);
+        SValue::Ptr a0 = d->read(args[0], nBits);
+        SValue::Ptr a1 = d->read(args[1], nBits);
+        SValue::Ptr result = ops->add(a0, a1);
         d->write(args[1], result);
         d->incrementRegisters(args[1]);
 
-        SValuePtr sm = ops->extract(a0, nBits-1, nBits);
-        SValuePtr dm = ops->extract(a1, nBits-1, nBits);
-        SValuePtr rm = ops->extract(result, nBits-1, nBits);
-        SValuePtr isNegative = rm;
-        SValuePtr isZero = ops->equalToZero(result);
-        SValuePtr v1 = ops->and_(ops->invert(dm), rm);
-        SValuePtr v2 = ops->and_(ops->invert(sm), v1);
-        SValuePtr isOverflow = ops->or_(ops->and_(sm, ops->and_(dm, ops->invert(rm))), v2);
-        SValuePtr v3 = ops->and_(sm, ops->invert(rm));
-        SValuePtr v4 = ops->or_(ops->and_(ops->invert(rm), dm), v3);
-        SValuePtr isCarry = ops->or_(ops->and_(sm, dm), v4);
+        SValue::Ptr sm = ops->extract(a0, nBits-1, nBits);
+        SValue::Ptr dm = ops->extract(a1, nBits-1, nBits);
+        SValue::Ptr rm = ops->extract(result, nBits-1, nBits);
+        SValue::Ptr isNegative = rm;
+        SValue::Ptr isZero = ops->equalToZero(result);
+        SValue::Ptr v1 = ops->and_(ops->invert(dm), rm);
+        SValue::Ptr v2 = ops->and_(ops->invert(sm), v1);
+        SValue::Ptr isOverflow = ops->or_(ops->and_(sm, ops->and_(dm, ops->invert(rm))), v2);
+        SValue::Ptr v3 = ops->and_(sm, ops->invert(rm));
+        SValue::Ptr v4 = ops->or_(ops->and_(ops->invert(rm), dm), v3);
+        SValue::Ptr isCarry = ops->or_(ops->and_(sm, dm), v4);
 
         ops->writeRegister(d->REG_CCR_C, isCarry);
         ops->writeRegister(d->REG_CCR_V, isOverflow);
@@ -151,24 +152,24 @@ struct IP_addq: P {
         assert_args(insn, args, 2);
         ASSERT_require(args[0]->get_nBits() == args[1]->get_nBits());
         size_t nBits = args[0]->get_nBits();
-        SValuePtr a0 = d->read(args[0], nBits);
+        SValue::Ptr a0 = d->read(args[0], nBits);
         d->decrementRegisters(args[1]);
-        SValuePtr a1 = d->read(args[1], nBits);
-        SValuePtr result = ops->add(a0, a1);
+        SValue::Ptr a1 = d->read(args[1], nBits);
+        SValue::Ptr result = ops->add(a0, a1);
         d->write(args[1], result);
         d->incrementRegisters(args[1]);
 
-        SValuePtr sm = ops->extract(a0, nBits-1, nBits);
-        SValuePtr dm = ops->extract(a1, nBits-1, nBits);
-        SValuePtr rm = ops->extract(result, nBits-1, nBits);
-        SValuePtr isNegative = rm;
-        SValuePtr isZero = ops->equalToZero(result);
-        SValuePtr v1 = ops->and_(ops->invert(dm), rm);
-        SValuePtr v2 = ops->and_(ops->invert(sm), v1);
-        SValuePtr isOverflow = ops->or_(ops->and_(sm, ops->and_(dm, ops->invert(rm))), v2);
-        SValuePtr v3 = ops->and_(sm, ops->invert(rm));
-        SValuePtr v4 = ops->or_(ops->and_(ops->invert(rm), dm), v3);
-        SValuePtr isCarry = ops->or_(ops->and_(sm, dm), v4);
+        SValue::Ptr sm = ops->extract(a0, nBits-1, nBits);
+        SValue::Ptr dm = ops->extract(a1, nBits-1, nBits);
+        SValue::Ptr rm = ops->extract(result, nBits-1, nBits);
+        SValue::Ptr isNegative = rm;
+        SValue::Ptr isZero = ops->equalToZero(result);
+        SValue::Ptr v1 = ops->and_(ops->invert(dm), rm);
+        SValue::Ptr v2 = ops->and_(ops->invert(sm), v1);
+        SValue::Ptr isOverflow = ops->or_(ops->and_(sm, ops->and_(dm, ops->invert(rm))), v2);
+        SValue::Ptr v3 = ops->and_(sm, ops->invert(rm));
+        SValue::Ptr v4 = ops->or_(ops->and_(ops->invert(rm), dm), v3);
+        SValue::Ptr isCarry = ops->or_(ops->and_(sm, dm), v4);
 
         ops->writeRegister(d->REG_CCR_C, isCarry);
         ops->writeRegister(d->REG_CCR_V, isOverflow);
@@ -185,30 +186,30 @@ struct IP_addx: P {
         size_t nBits = args[0]->get_nBits();
         d->decrementRegisters(args[0]);
         d->decrementRegisters(args[1]);
-        SValuePtr a0 = d->read(args[0], nBits);
-        SValuePtr a1 = d->read(args[1], nBits);
-        SValuePtr x = ops->readRegister(d->REG_CCR_X);
-        SValuePtr result = ops->add(a0, ops->add(a1, ops->unsignedExtend(x, nBits)));
+        SValue::Ptr a0 = d->read(args[0], nBits);
+        SValue::Ptr a1 = d->read(args[1], nBits);
+        SValue::Ptr x = ops->readRegister(d->REG_CCR_X);
+        SValue::Ptr result = ops->add(a0, ops->add(a1, ops->unsignedExtend(x, nBits)));
         d->write(args[1], result);
         d->incrementRegisters(args[0]);
         d->incrementRegisters(args[1]);
 
-        SValuePtr sm = ops->extract(a0, nBits-1, nBits);
-        SValuePtr dm = ops->extract(a1, nBits-1, nBits);
-        SValuePtr rm = ops->extract(result, nBits-1, nBits);
-        SValuePtr isNegative = rm;
-        SValuePtr v1 = ops->and_(ops->invert(dm), rm);
-        SValuePtr v2 = ops->and_(ops->invert(sm), v1);
-        SValuePtr isOverflow = ops->or_(ops->and_(sm, ops->and_(dm, ops->invert(rm))), v2);
-        SValuePtr v3 = ops->and_(sm, ops->invert(rm));
-        SValuePtr v4 = ops->or_(ops->and_(ops->invert(rm), dm), v3);
-        SValuePtr isCarry = ops->or_(ops->and_(sm, dm), v4);
+        SValue::Ptr sm = ops->extract(a0, nBits-1, nBits);
+        SValue::Ptr dm = ops->extract(a1, nBits-1, nBits);
+        SValue::Ptr rm = ops->extract(result, nBits-1, nBits);
+        SValue::Ptr isNegative = rm;
+        SValue::Ptr v1 = ops->and_(ops->invert(dm), rm);
+        SValue::Ptr v2 = ops->and_(ops->invert(sm), v1);
+        SValue::Ptr isOverflow = ops->or_(ops->and_(sm, ops->and_(dm, ops->invert(rm))), v2);
+        SValue::Ptr v3 = ops->and_(sm, ops->invert(rm));
+        SValue::Ptr v4 = ops->or_(ops->and_(ops->invert(rm), dm), v3);
+        SValue::Ptr isCarry = ops->or_(ops->and_(sm, dm), v4);
 
         // Note that the Z bit behaves differently for this instruction than normal.  If the result is non-zero then the Z bit
         // is cleared, otherwise it is unchanged.
-        SValuePtr no = ops->boolean_(false);
-        SValuePtr ccr_z = ops->readRegister(d->REG_CCR_Z);
-        SValuePtr isZero = ops->ite(ops->equalToZero(result), ccr_z, no);
+        SValue::Ptr no = ops->boolean_(false);
+        SValue::Ptr ccr_z = ops->readRegister(d->REG_CCR_Z);
+        SValue::Ptr isZero = ops->ite(ops->equalToZero(result), ccr_z, no);
 
         ops->writeRegister(d->REG_CCR_C, isCarry);
         ops->writeRegister(d->REG_CCR_V, isOverflow);
@@ -225,8 +226,8 @@ struct IP_and: P {
         size_t nBits = args[0]->get_nBits();
         d->decrementRegisters(args[0]);
         d->decrementRegisters(args[1]);
-        SValuePtr arg1 = d->read(args[1], nBits);
-        SValuePtr result = ops->and_(d->read(args[0], nBits), arg1);
+        SValue::Ptr arg1 = d->read(args[1], nBits);
+        SValue::Ptr result = ops->and_(d->read(args[0], nBits), arg1);
         d->write(args[1], result);
         d->incrementRegisters(args[0]);
         d->incrementRegisters(args[1]);
@@ -246,8 +247,8 @@ struct IP_andi: P {
         size_t nBits = args[0]->get_nBits();
         d->decrementRegisters(args[0]);
         d->decrementRegisters(args[1]);
-        SValuePtr arg1 = d->read(args[1], nBits);
-        SValuePtr result = ops->and_(d->read(args[0], nBits), arg1);
+        SValue::Ptr arg1 = d->read(args[1], nBits);
+        SValue::Ptr result = ops->and_(d->read(args[0], nBits), arg1);
         d->write(args[1], result);
         d->incrementRegisters(args[0]);
         d->incrementRegisters(args[1]);
@@ -262,7 +263,7 @@ struct IP_andi: P {
 struct IP_asl: P {
     void p(D d, Ops ops, I insn, A args) {
         SgAsmExpression *dst = NULL;
-        SValuePtr count;
+        SValue::Ptr count;
         if (1==args.size()) {
             assert_args(insn, args, 1);
             ASSERT_require(args[0]->get_nBits()==16);
@@ -276,21 +277,21 @@ struct IP_asl: P {
 
         size_t nBits = dst->get_nBits();
         d->decrementRegisters(args[0]);
-        SValuePtr value = d->read(dst, nBits);
-        SValuePtr result = ops->shiftLeft(value, count);
+        SValue::Ptr value = d->read(dst, nBits);
+        SValue::Ptr result = ops->shiftLeft(value, count);
         d->write(dst, result);
         d->incrementRegisters(args[0]);
 
         // CCR_C bit is the final bit shifted off the left (or zero if the shift count is zero).
-        SValuePtr isCarry = ops->extract(ops->shiftLeft(ops->concat(value, ops->number_(1, 0)), count), nBits, nBits+1);
+        SValue::Ptr isCarry = ops->extract(ops->shiftLeft(ops->concat(value, ops->number_(1, 0)), count), nBits, nBits+1);
 
         // CCR_X bit is like CCR_C except unmodified if the shift count is zero.
-        SValuePtr ccr_x = ops->readRegister(d->REG_CCR_X);
-        SValuePtr xBit = ops->ite(ops->equalToZero(count), ccr_x, isCarry);
+        SValue::Ptr ccr_x = ops->readRegister(d->REG_CCR_X);
+        SValue::Ptr xBit = ops->ite(ops->equalToZero(count), ccr_x, isCarry);
 
         // CCR_V bit is set if the if the most significant bit is changed at any time during the shift operation.
         // The CCR_V bit is always clear for a coldfire processor
-        SValuePtr isOverflow = ops->undefined_(1);      // FIXME[Robb P. Matzke 2014-07-28]: not implemented
+        SValue::Ptr isOverflow = ops->undefined_(1);      // FIXME[Robb P. Matzke 2014-07-28]: not implemented
 
         ops->writeRegister(d->REG_CCR_C, isCarry);
         ops->writeRegister(d->REG_CCR_V, isOverflow);
@@ -303,7 +304,7 @@ struct IP_asl: P {
 struct IP_asr: P {
     void p(D d, Ops ops, I insn, A args) {
         SgAsmExpression *dst = NULL;
-        SValuePtr count;
+        SValue::Ptr count;
         if (1==args.size()) {
             assert_args(insn, args, 1);
             ASSERT_require(args[0]->get_nBits()==16);
@@ -317,17 +318,17 @@ struct IP_asr: P {
 
         size_t nBits = dst->get_nBits();
         d->decrementRegisters(args[0]);
-        SValuePtr value = d->read(dst, nBits);
-        SValuePtr result = ops->shiftRightArithmetic(value, count);
+        SValue::Ptr value = d->read(dst, nBits);
+        SValue::Ptr result = ops->shiftRightArithmetic(value, count);
         d->write(dst, result);
         d->incrementRegisters(args[0]);
 
         // CCR_C bit is the final bit shifted off the right (or zero if the shift count is zero).
-        SValuePtr isCarry = ops->extract(ops->shiftRightArithmetic(ops->concat(ops->number_(1, 0), value), count), 0, 1);
+        SValue::Ptr isCarry = ops->extract(ops->shiftRightArithmetic(ops->concat(ops->number_(1, 0), value), count), 0, 1);
 
         // CCR_X bit is like CCR_C except unmodified if the shift count is zero.
-        SValuePtr ccr_x = ops->readRegister(d->REG_CCR_X);
-        SValuePtr xBit = ops->ite(ops->equalToZero(count), ccr_x, isCarry);
+        SValue::Ptr ccr_x = ops->readRegister(d->REG_CCR_X);
+        SValue::Ptr xBit = ops->ite(ops->equalToZero(count), ccr_x, isCarry);
 
         ops->writeRegister(d->REG_CCR_C, isCarry);
         ops->writeRegister(d->REG_CCR_V, ops->boolean_(false));
@@ -349,11 +350,11 @@ struct IP_bsr: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
         ASSERT_require(args[0]->get_nBits()==32);
-        SValuePtr negFour = ops->number_(32, -4);
-        SValuePtr newSp = ops->add(ops->readRegister(d->REG_A[7]), negFour);
+        SValue::Ptr negFour = ops->number_(32, -4);
+        SValue::Ptr newSp = ops->add(ops->readRegister(d->REG_A[7]), negFour);
         ops->writeRegister(d->REG_A[7], newSp);
         ops->writeRegister(d->REG_PC, d->read(args[0], 32));
-        SValuePtr dstAddr = ops->number_(32, insn->get_address() + insn->get_size());
+        SValue::Ptr dstAddr = ops->number_(32, insn->get_address() + insn->get_size());
         ops->writeMemory(RegisterDescriptor(), newSp, dstAddr, ops->boolean_(true));
     }
 };
@@ -362,9 +363,9 @@ struct IP_bhi: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
         ASSERT_require(args[0]->get_nBits()==32);
-        SValuePtr pc = ops->readRegister(d->REG_PC);
-        SValuePtr arg0 = d->read(args[0], 32);
-        SValuePtr newPc = ops->ite(d->condition(insn->get_kind(), ops), arg0, pc);
+        SValue::Ptr pc = ops->readRegister(d->REG_PC);
+        SValue::Ptr arg0 = d->read(args[0], 32);
+        SValue::Ptr newPc = ops->ite(d->condition(insn->get_kind(), ops), arg0, pc);
         ops->writeRegister(d->REG_PC, newPc);
     }
 };
@@ -373,9 +374,9 @@ struct IP_bls: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
         ASSERT_require(args[0]->get_nBits()==32);
-        SValuePtr pc = ops->readRegister(d->REG_PC);
-        SValuePtr arg0 = d->read(args[0], 32);
-        SValuePtr newPc = ops->ite(d->condition(insn->get_kind(), ops), arg0, pc);
+        SValue::Ptr pc = ops->readRegister(d->REG_PC);
+        SValue::Ptr arg0 = d->read(args[0], 32);
+        SValue::Ptr newPc = ops->ite(d->condition(insn->get_kind(), ops), arg0, pc);
         ops->writeRegister(d->REG_PC, newPc);
     }
 };
@@ -384,9 +385,9 @@ struct IP_bcc: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
         ASSERT_require(args[0]->get_nBits()==32);
-        SValuePtr pc = ops->readRegister(d->REG_PC);
-        SValuePtr arg0 = d->read(args[0], 32);
-        SValuePtr newPc = ops->ite(d->condition(insn->get_kind(), ops), arg0, pc);
+        SValue::Ptr pc = ops->readRegister(d->REG_PC);
+        SValue::Ptr arg0 = d->read(args[0], 32);
+        SValue::Ptr newPc = ops->ite(d->condition(insn->get_kind(), ops), arg0, pc);
         ops->writeRegister(d->REG_PC, newPc);
     }
 };
@@ -395,9 +396,9 @@ struct IP_bcs: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
         ASSERT_require(args[0]->get_nBits()==32);
-        SValuePtr pc = ops->readRegister(d->REG_PC);
-        SValuePtr arg0 = d->read(args[0], 32);
-        SValuePtr newPc = ops->ite(d->condition(insn->get_kind(), ops), arg0, pc);
+        SValue::Ptr pc = ops->readRegister(d->REG_PC);
+        SValue::Ptr arg0 = d->read(args[0], 32);
+        SValue::Ptr newPc = ops->ite(d->condition(insn->get_kind(), ops), arg0, pc);
         ops->writeRegister(d->REG_PC, newPc);
     }
 };
@@ -406,9 +407,9 @@ struct IP_bne: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
         ASSERT_require(args[0]->get_nBits()==32);
-        SValuePtr pc = ops->readRegister(d->REG_PC);
-        SValuePtr arg0 = d->read(args[0], 32);
-        SValuePtr newPc = ops->ite(d->condition(insn->get_kind(), ops), arg0, pc);
+        SValue::Ptr pc = ops->readRegister(d->REG_PC);
+        SValue::Ptr arg0 = d->read(args[0], 32);
+        SValue::Ptr newPc = ops->ite(d->condition(insn->get_kind(), ops), arg0, pc);
         ops->writeRegister(d->REG_PC, newPc);
     }
 };
@@ -417,9 +418,9 @@ struct IP_beq: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
         ASSERT_require(args[0]->get_nBits()==32);
-        SValuePtr pc = ops->readRegister(d->REG_PC);
-        SValuePtr arg0 = d->read(args[0], 32);
-        SValuePtr newPc = ops->ite(d->condition(insn->get_kind(), ops), arg0, pc);
+        SValue::Ptr pc = ops->readRegister(d->REG_PC);
+        SValue::Ptr arg0 = d->read(args[0], 32);
+        SValue::Ptr newPc = ops->ite(d->condition(insn->get_kind(), ops), arg0, pc);
         ops->writeRegister(d->REG_PC, newPc);
     }
 };
@@ -428,9 +429,9 @@ struct IP_bvc: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
         ASSERT_require(args[0]->get_nBits()==32);
-        SValuePtr pc = ops->readRegister(d->REG_PC);
-        SValuePtr arg0 = d->read(args[0], 32);
-        SValuePtr newPc = ops->ite(d->condition(insn->get_kind(), ops), arg0, pc);
+        SValue::Ptr pc = ops->readRegister(d->REG_PC);
+        SValue::Ptr arg0 = d->read(args[0], 32);
+        SValue::Ptr newPc = ops->ite(d->condition(insn->get_kind(), ops), arg0, pc);
         ops->writeRegister(d->REG_PC, newPc);
     }
 };
@@ -439,9 +440,9 @@ struct IP_bvs: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
         ASSERT_require(args[0]->get_nBits()==32);
-        SValuePtr pc = ops->readRegister(d->REG_PC);
-        SValuePtr arg0 = d->read(args[0], 32);
-        SValuePtr newPc = ops->ite(d->condition(insn->get_kind(), ops), arg0, pc);
+        SValue::Ptr pc = ops->readRegister(d->REG_PC);
+        SValue::Ptr arg0 = d->read(args[0], 32);
+        SValue::Ptr newPc = ops->ite(d->condition(insn->get_kind(), ops), arg0, pc);
         ops->writeRegister(d->REG_PC, newPc);
     }
 };
@@ -450,9 +451,9 @@ struct IP_bpl: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
         ASSERT_require(args[0]->get_nBits()==32);
-        SValuePtr pc = ops->readRegister(d->REG_PC);
-        SValuePtr arg0 = d->read(args[0], 32);
-        SValuePtr newPc = ops->ite(d->condition(insn->get_kind(), ops), arg0, pc);
+        SValue::Ptr pc = ops->readRegister(d->REG_PC);
+        SValue::Ptr arg0 = d->read(args[0], 32);
+        SValue::Ptr newPc = ops->ite(d->condition(insn->get_kind(), ops), arg0, pc);
         ops->writeRegister(d->REG_PC, newPc);
     }
 };
@@ -461,9 +462,9 @@ struct IP_bmi: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
         ASSERT_require(args[0]->get_nBits()==32);
-        SValuePtr pc = ops->readRegister(d->REG_PC);
-        SValuePtr arg0 = d->read(args[0], 32);
-        SValuePtr newPc = ops->ite(d->condition(insn->get_kind(), ops), arg0, pc);
+        SValue::Ptr pc = ops->readRegister(d->REG_PC);
+        SValue::Ptr arg0 = d->read(args[0], 32);
+        SValue::Ptr newPc = ops->ite(d->condition(insn->get_kind(), ops), arg0, pc);
         ops->writeRegister(d->REG_PC, newPc);
     }
 };
@@ -472,9 +473,9 @@ struct IP_bge: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
         ASSERT_require(args[0]->get_nBits()==32);
-        SValuePtr pc = ops->readRegister(d->REG_PC);
-        SValuePtr arg0 = d->read(args[0], 32);
-        SValuePtr newPc = ops->ite(d->condition(insn->get_kind(), ops), arg0, pc);
+        SValue::Ptr pc = ops->readRegister(d->REG_PC);
+        SValue::Ptr arg0 = d->read(args[0], 32);
+        SValue::Ptr newPc = ops->ite(d->condition(insn->get_kind(), ops), arg0, pc);
         ops->writeRegister(d->REG_PC, newPc);
     }
 };
@@ -483,9 +484,9 @@ struct IP_blt: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
         ASSERT_require(args[0]->get_nBits()==32);
-        SValuePtr pc = ops->readRegister(d->REG_PC);
-        SValuePtr arg0 = d->read(args[0], 32);
-        SValuePtr newPc = ops->ite(d->condition(insn->get_kind(), ops), arg0, pc);
+        SValue::Ptr pc = ops->readRegister(d->REG_PC);
+        SValue::Ptr arg0 = d->read(args[0], 32);
+        SValue::Ptr newPc = ops->ite(d->condition(insn->get_kind(), ops), arg0, pc);
         ops->writeRegister(d->REG_PC, newPc);
     }
 };
@@ -494,9 +495,9 @@ struct IP_bgt: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
         ASSERT_require(args[0]->get_nBits()==32);
-        SValuePtr pc = ops->readRegister(d->REG_PC);
-        SValuePtr arg0 = d->read(args[0], 32);
-        SValuePtr newPc = ops->ite(d->condition(insn->get_kind(), ops), arg0, pc);
+        SValue::Ptr pc = ops->readRegister(d->REG_PC);
+        SValue::Ptr arg0 = d->read(args[0], 32);
+        SValue::Ptr newPc = ops->ite(d->condition(insn->get_kind(), ops), arg0, pc);
         ops->writeRegister(d->REG_PC, newPc);
     }
 };
@@ -505,9 +506,9 @@ struct IP_ble: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
         ASSERT_require(args[0]->get_nBits()==32);
-        SValuePtr pc = ops->readRegister(d->REG_PC);
-        SValuePtr arg0 = d->read(args[0], 32);
-        SValuePtr newPc = ops->ite(d->condition(insn->get_kind(), ops), arg0, pc);
+        SValue::Ptr pc = ops->readRegister(d->REG_PC);
+        SValue::Ptr arg0 = d->read(args[0], 32);
+        SValue::Ptr newPc = ops->ite(d->condition(insn->get_kind(), ops), arg0, pc);
         ops->writeRegister(d->REG_PC, newPc);
     }
 };
@@ -519,15 +520,15 @@ struct IP_bchg: P {
         size_t nBits = args[1]->get_nBits();
         size_t logNBits = nBits==8 ? 3 : 5;
         d->decrementRegisters(args[1]);
-        SValuePtr a0 = d->read(args[0], args[0]->get_nBits());
-        SValuePtr a1 = d->read(args[1], nBits);
-        SValuePtr bitNumber = ops->unsignedExtend(a0, logNBits); // bit number modulo destination size
-        SValuePtr mask = ops->shiftLeft(ops->number_(nBits, 1), bitNumber);
-        SValuePtr result = ops->xor_(mask, a1);
+        SValue::Ptr a0 = d->read(args[0], args[0]->get_nBits());
+        SValue::Ptr a1 = d->read(args[1], nBits);
+        SValue::Ptr bitNumber = ops->unsignedExtend(a0, logNBits); // bit number modulo destination size
+        SValue::Ptr mask = ops->shiftLeft(ops->number_(nBits, 1), bitNumber);
+        SValue::Ptr result = ops->xor_(mask, a1);
         d->write(args[1], result);
         d->incrementRegisters(args[1]);
 
-        SValuePtr bit = ops->extract(ops->shiftRight(ops->and_(mask, a1), bitNumber), 0, 1);
+        SValue::Ptr bit = ops->extract(ops->shiftRight(ops->and_(mask, a1), bitNumber), 0, 1);
         ops->writeRegister(d->REG_CCR_Z, ops->invert(bit)); // set if bit was originally clear
     }
 };
@@ -539,15 +540,15 @@ struct IP_bclr: P {
         size_t nBits = args[1]->get_nBits();
         size_t logNBits = nBits==8 ? 3 : 5;
         d->decrementRegisters(args[1]);
-        SValuePtr a0 = d->read(args[0], args[0]->get_nBits());
-        SValuePtr a1 = d->read(args[1], nBits);
-        SValuePtr bitNumber = ops->unsignedExtend(a0, logNBits); // bit number modulo destination size
-        SValuePtr mask = ops->shiftLeft(ops->number_(nBits, 1), bitNumber);
-        SValuePtr result = ops->and_(ops->invert(mask), a1);
+        SValue::Ptr a0 = d->read(args[0], args[0]->get_nBits());
+        SValue::Ptr a1 = d->read(args[1], nBits);
+        SValue::Ptr bitNumber = ops->unsignedExtend(a0, logNBits); // bit number modulo destination size
+        SValue::Ptr mask = ops->shiftLeft(ops->number_(nBits, 1), bitNumber);
+        SValue::Ptr result = ops->and_(ops->invert(mask), a1);
         d->write(args[1], result);
         d->incrementRegisters(args[1]);
 
-        SValuePtr bit = ops->extract(ops->shiftRight(ops->and_(mask, a1), bitNumber), 0, 1);
+        SValue::Ptr bit = ops->extract(ops->shiftRight(ops->and_(mask, a1), bitNumber), 0, 1);
         ops->writeRegister(d->REG_CCR_Z, ops->invert(bit)); // set if bit was originally clear
     }
 };
@@ -615,15 +616,15 @@ struct IP_bset: P {
         size_t nBits = args[1]->get_nBits();
         size_t logNBits = nBits==8 ? 3 : 5;
         d->decrementRegisters(args[1]);
-        SValuePtr a0 = d->read(args[0], args[0]->get_nBits());
-        SValuePtr a1 = d->read(args[1], nBits);
-        SValuePtr bitNumber = ops->unsignedExtend(a0, logNBits); // bit number modulo destination size
-        SValuePtr mask = ops->shiftLeft(ops->number_(nBits, 1), bitNumber);
-        SValuePtr result = ops->or_(mask, a1);
+        SValue::Ptr a0 = d->read(args[0], args[0]->get_nBits());
+        SValue::Ptr a1 = d->read(args[1], nBits);
+        SValue::Ptr bitNumber = ops->unsignedExtend(a0, logNBits); // bit number modulo destination size
+        SValue::Ptr mask = ops->shiftLeft(ops->number_(nBits, 1), bitNumber);
+        SValue::Ptr result = ops->or_(mask, a1);
         d->write(args[1], result);
         d->incrementRegisters(args[1]);
 
-        SValuePtr bit = ops->extract(ops->shiftRight(ops->and_(mask, a1), bitNumber), 0, 1);
+        SValue::Ptr bit = ops->extract(ops->shiftRight(ops->and_(mask, a1), bitNumber), 0, 1);
         ops->writeRegister(d->REG_CCR_Z, ops->invert(bit)); // set if bit was originally clear
     }
 };
@@ -635,11 +636,11 @@ struct IP_btst: P {
         size_t nBits = args[1]->get_nBits();
         size_t logNBits = nBits==8 ? 3 : 5;
         d->decrementRegisters(args[1]);
-        SValuePtr a0 = d->read(args[0], args[0]->get_nBits());
-        SValuePtr a1 = d->read(args[1], nBits);
-        SValuePtr bitNumber = ops->unsignedExtend(a0, logNBits); // bit number modulo destination size
-        SValuePtr mask = ops->shiftLeft(ops->number_(nBits, 1), bitNumber);
-        SValuePtr bit = ops->extract(ops->shiftRight(ops->and_(mask, a1), bitNumber), 0, 1);
+        SValue::Ptr a0 = d->read(args[0], args[0]->get_nBits());
+        SValue::Ptr a1 = d->read(args[1], nBits);
+        SValue::Ptr bitNumber = ops->unsignedExtend(a0, logNBits); // bit number modulo destination size
+        SValue::Ptr mask = ops->shiftLeft(ops->number_(nBits, 1), bitNumber);
+        SValue::Ptr bit = ops->extract(ops->shiftRight(ops->and_(mask, a1), bitNumber), 0, 1);
         ops->writeRegister(d->REG_CCR_Z, ops->invert(bit)); // set if bit was originally clear
         d->incrementRegisters(args[1]);
     }
@@ -659,26 +660,26 @@ struct IP_cas: P {
         ASSERT_require(args[0]->get_nBits() == args[2]->get_nBits());
         size_t nBits = args[0]->get_nBits();
         d->decrementRegisters(args[2]);
-        SValuePtr dc = d->read(args[0], nBits);         // "compare" operand
-        SValuePtr du = d->read(args[1], nBits);         // "update" operand
-        SValuePtr ea = d->read(args[2], nBits);         // "address" operand
-        SValuePtr isEqual = ops->equalToZero(ops->xor_(dc, ea));
+        SValue::Ptr dc = d->read(args[0], nBits);         // "compare" operand
+        SValue::Ptr du = d->read(args[1], nBits);         // "update" operand
+        SValue::Ptr ea = d->read(args[2], nBits);         // "address" operand
+        SValue::Ptr isEqual = ops->equalToZero(ops->xor_(dc, ea));
         dc = ops->ite(isEqual, dc, ea);
         ea = ops->ite(isEqual, du, ea);
-        SValuePtr result = ops->ite(isEqual, du, ea);   // not sure if this is what is meant by "result" in the documentation
+        SValue::Ptr result = ops->ite(isEqual, du, ea);   // not sure if this is what is meant by "result" in the documentation
         d->write(args[0], dc);
         d->write(args[2], ea);
         d->incrementRegisters(args[2]);
 
-        SValuePtr sm = ops->extract(du, nBits-1, nBits);// documentation is not clear which operand is the "source"
-        SValuePtr dm = ops->extract(ea, nBits-1, nBits);// documentation is not clear which operand is the "destination"
-        SValuePtr rm = ops->extract(result, nBits-1, nBits);
-        SValuePtr v1 = ops->and_(sm, rm);
-        SValuePtr v2 = ops->or_(ops->and_(rm, ops->invert(dm)), v1);
-        SValuePtr isCarry = ops->or_(ops->and_(sm, ops->invert(dm)), v2);
-        SValuePtr v3 = ops->and_(sm, ops->and_(ops->invert(dm), rm));
-        SValuePtr v4 = ops->and_(dm, ops->invert(rm));
-        SValuePtr isOverflow = ops->or_(ops->and_(ops->invert(sm), v4), v3);
+        SValue::Ptr sm = ops->extract(du, nBits-1, nBits);// documentation is not clear which operand is the "source"
+        SValue::Ptr dm = ops->extract(ea, nBits-1, nBits);// documentation is not clear which operand is the "destination"
+        SValue::Ptr rm = ops->extract(result, nBits-1, nBits);
+        SValue::Ptr v1 = ops->and_(sm, rm);
+        SValue::Ptr v2 = ops->or_(ops->and_(rm, ops->invert(dm)), v1);
+        SValue::Ptr isCarry = ops->or_(ops->and_(sm, ops->invert(dm)), v2);
+        SValue::Ptr v3 = ops->and_(sm, ops->and_(ops->invert(dm), rm));
+        SValue::Ptr v4 = ops->and_(dm, ops->invert(rm));
+        SValue::Ptr isOverflow = ops->or_(ops->and_(ops->invert(sm), v4), v3);
         
         ops->writeRegister(d->REG_CCR_C, isCarry);
         ops->writeRegister(d->REG_CCR_V, isOverflow);
@@ -729,23 +730,23 @@ struct IP_cmp: P {
         ASSERT_require(args[0]->get_nBits()==args[1]->get_nBits());
         size_t nBits = args[0]->get_nBits();
         d->decrementRegisters(args[0]);
-        SValuePtr a0 = d->read(args[0], nBits);
-        SValuePtr a1 = d->read(args[1], nBits);
+        SValue::Ptr a0 = d->read(args[0], nBits);
+        SValue::Ptr a1 = d->read(args[1], nBits);
         d->incrementRegisters(args[0]);
-        SValuePtr diff = ops->add(a1, ops->negate(a0));
+        SValue::Ptr diff = ops->add(a1, ops->negate(a0));
 
-        SValuePtr sm = ops->extract(a0, a0->nBits()-1, a0->nBits());
-        SValuePtr dm = ops->extract(a1, a1->nBits()-1, a1->nBits());
-        SValuePtr rm = ops->extract(diff, diff->nBits()-1, diff->nBits());
+        SValue::Ptr sm = ops->extract(a0, a0->nBits()-1, a0->nBits());
+        SValue::Ptr dm = ops->extract(a1, a1->nBits()-1, a1->nBits());
+        SValue::Ptr rm = ops->extract(diff, diff->nBits()-1, diff->nBits());
 
-        SValuePtr isNegative = rm;
-        SValuePtr isZero = ops->equalToZero(diff);
-        SValuePtr v1 = ops->and_(sm, ops->and_(ops->invert(dm), rm));
-        SValuePtr v2 = ops->and_(dm, ops->invert(rm));
-        SValuePtr isOverflow = ops->or_(ops->and_(ops->invert(sm), v2), v1);
-        SValuePtr v3 = ops->and_(sm, rm);
-        SValuePtr v4 = ops->or_(ops->and_(rm, ops->invert(dm)), v3);
-        SValuePtr isCarry = ops->or_(ops->and_(sm, ops->invert(dm)), v4);
+        SValue::Ptr isNegative = rm;
+        SValue::Ptr isZero = ops->equalToZero(diff);
+        SValue::Ptr v1 = ops->and_(sm, ops->and_(ops->invert(dm), rm));
+        SValue::Ptr v2 = ops->and_(dm, ops->invert(rm));
+        SValue::Ptr isOverflow = ops->or_(ops->and_(ops->invert(sm), v2), v1);
+        SValue::Ptr v3 = ops->and_(sm, rm);
+        SValue::Ptr v4 = ops->or_(ops->and_(rm, ops->invert(dm)), v3);
+        SValue::Ptr isCarry = ops->or_(ops->and_(sm, ops->invert(dm)), v4);
 
         ops->writeRegister(d->REG_CCR_N, isNegative);
         ops->writeRegister(d->REG_CCR_Z, isZero);
@@ -761,23 +762,23 @@ struct IP_cmpa: P {
         ASSERT_require(args[1]->get_nBits() == 32);
         size_t nBits = args[0]->get_nBits();
         d->decrementRegisters(args[0]);
-        SValuePtr a0 = ops->signExtend(d->read(args[0], nBits), 32);
-        SValuePtr a1 = d->read(args[1], 32);
+        SValue::Ptr a0 = ops->signExtend(d->read(args[0], nBits), 32);
+        SValue::Ptr a1 = d->read(args[1], 32);
         d->incrementRegisters(args[0]);
-        SValuePtr diff = ops->add(a1, ops->negate(a0));
+        SValue::Ptr diff = ops->add(a1, ops->negate(a0));
 
-        SValuePtr sm = ops->extract(a0, a0->nBits()-1, a0->nBits());
-        SValuePtr dm = ops->extract(a1, a1->nBits()-1, a1->nBits());
-        SValuePtr rm = ops->extract(diff, diff->nBits()-1, diff->nBits());
+        SValue::Ptr sm = ops->extract(a0, a0->nBits()-1, a0->nBits());
+        SValue::Ptr dm = ops->extract(a1, a1->nBits()-1, a1->nBits());
+        SValue::Ptr rm = ops->extract(diff, diff->nBits()-1, diff->nBits());
 
-        SValuePtr isNegative = rm;
-        SValuePtr isZero = ops->equalToZero(diff);
-        SValuePtr v1 = ops->and_(sm, ops->and_(ops->invert(dm), rm));
-        SValuePtr v2 = ops->and_(dm, ops->invert(rm));
-        SValuePtr isOverflow = ops->or_(ops->and_(ops->invert(sm), v2), v1);
-        SValuePtr v3 = ops->and_(sm, rm);
-        SValuePtr v4 = ops->or_(ops->and_(rm, ops->invert(dm)), v3);
-        SValuePtr isCarry = ops->or_(ops->and_(sm, ops->invert(dm)), v4);
+        SValue::Ptr isNegative = rm;
+        SValue::Ptr isZero = ops->equalToZero(diff);
+        SValue::Ptr v1 = ops->and_(sm, ops->and_(ops->invert(dm), rm));
+        SValue::Ptr v2 = ops->and_(dm, ops->invert(rm));
+        SValue::Ptr isOverflow = ops->or_(ops->and_(ops->invert(sm), v2), v1);
+        SValue::Ptr v3 = ops->and_(sm, rm);
+        SValue::Ptr v4 = ops->or_(ops->and_(rm, ops->invert(dm)), v3);
+        SValue::Ptr isCarry = ops->or_(ops->and_(sm, ops->invert(dm)), v4);
 
         ops->writeRegister(d->REG_CCR_N, isNegative);
         ops->writeRegister(d->REG_CCR_Z, isZero);
@@ -793,23 +794,23 @@ struct IP_cmpi: P {
         ASSERT_require(args[0]->get_nBits()==args[1]->get_nBits());
         size_t nBits = args[0]->get_nBits();
         d->decrementRegisters(args[0]);
-        SValuePtr a0 = d->read(args[0], nBits);
-        SValuePtr a1 = d->read(args[1], nBits);
+        SValue::Ptr a0 = d->read(args[0], nBits);
+        SValue::Ptr a1 = d->read(args[1], nBits);
         d->incrementRegisters(args[0]);
-        SValuePtr diff = ops->add(a1, ops->negate(a0));
+        SValue::Ptr diff = ops->add(a1, ops->negate(a0));
 
-        SValuePtr sm = ops->extract(a0, a0->nBits()-1, a0->nBits());
-        SValuePtr dm = ops->extract(a1, a1->nBits()-1, a1->nBits());
-        SValuePtr rm = ops->extract(diff, diff->nBits()-1, diff->nBits());
+        SValue::Ptr sm = ops->extract(a0, a0->nBits()-1, a0->nBits());
+        SValue::Ptr dm = ops->extract(a1, a1->nBits()-1, a1->nBits());
+        SValue::Ptr rm = ops->extract(diff, diff->nBits()-1, diff->nBits());
 
-        SValuePtr isNegative = rm;
-        SValuePtr isZero = ops->equalToZero(diff);
-        SValuePtr v1 = ops->and_(sm, ops->and_(ops->invert(dm), rm));
-        SValuePtr v2 = ops->and_(dm, ops->invert(rm));
-        SValuePtr isOverflow = ops->or_(ops->and_(ops->invert(sm), v2), v1);
-        SValuePtr v3 = ops->and_(sm, rm);
-        SValuePtr v4 = ops->or_(ops->and_(rm, ops->invert(dm)), v3);
-        SValuePtr isCarry = ops->or_(ops->and_(sm, ops->invert(dm)), v4);
+        SValue::Ptr isNegative = rm;
+        SValue::Ptr isZero = ops->equalToZero(diff);
+        SValue::Ptr v1 = ops->and_(sm, ops->and_(ops->invert(dm), rm));
+        SValue::Ptr v2 = ops->and_(dm, ops->invert(rm));
+        SValue::Ptr isOverflow = ops->or_(ops->and_(ops->invert(sm), v2), v1);
+        SValue::Ptr v3 = ops->and_(sm, rm);
+        SValue::Ptr v4 = ops->or_(ops->and_(rm, ops->invert(dm)), v3);
+        SValue::Ptr isCarry = ops->or_(ops->and_(sm, ops->invert(dm)), v4);
 
         ops->writeRegister(d->REG_CCR_N, isNegative);
         ops->writeRegister(d->REG_CCR_Z, isZero);
@@ -824,23 +825,23 @@ struct IP_cmpm: P {
         ASSERT_require(args[0]->get_nBits()==args[1]->get_nBits());
         size_t nBits = args[0]->get_nBits();
         d->decrementRegisters(args[0]);
-        SValuePtr a0 = d->read(args[0], nBits);
-        SValuePtr a1 = d->read(args[1], nBits);
+        SValue::Ptr a0 = d->read(args[0], nBits);
+        SValue::Ptr a1 = d->read(args[1], nBits);
         d->incrementRegisters(args[0]);
-        SValuePtr diff = ops->add(a1, ops->negate(a0));
+        SValue::Ptr diff = ops->add(a1, ops->negate(a0));
 
-        SValuePtr sm = ops->extract(a0, a0->nBits()-1, a0->nBits());
-        SValuePtr dm = ops->extract(a1, a1->nBits()-1, a1->nBits());
-        SValuePtr rm = ops->extract(diff, diff->nBits()-1, diff->nBits());
+        SValue::Ptr sm = ops->extract(a0, a0->nBits()-1, a0->nBits());
+        SValue::Ptr dm = ops->extract(a1, a1->nBits()-1, a1->nBits());
+        SValue::Ptr rm = ops->extract(diff, diff->nBits()-1, diff->nBits());
 
-        SValuePtr isNegative = rm;
-        SValuePtr isZero = ops->equalToZero(diff);
-        SValuePtr v1 = ops->and_(sm, ops->and_(ops->invert(dm), rm));
-        SValuePtr v2 = ops->and_(dm, ops->invert(rm));
-        SValuePtr isOverflow = ops->or_(ops->and_(ops->invert(sm), v2), v1);
-        SValuePtr v3 = ops->and_(sm, rm);
-        SValuePtr v4 = ops->or_(ops->and_(rm, ops->invert(dm)), v3);
-        SValuePtr isCarry = ops->or_(ops->and_(sm, ops->invert(dm)), v4);
+        SValue::Ptr isNegative = rm;
+        SValue::Ptr isZero = ops->equalToZero(diff);
+        SValue::Ptr v1 = ops->and_(sm, ops->and_(ops->invert(dm), rm));
+        SValue::Ptr v2 = ops->and_(dm, ops->invert(rm));
+        SValue::Ptr isOverflow = ops->or_(ops->and_(ops->invert(sm), v2), v1);
+        SValue::Ptr v3 = ops->and_(sm, rm);
+        SValue::Ptr v4 = ops->or_(ops->and_(rm, ops->invert(dm)), v3);
+        SValue::Ptr isCarry = ops->or_(ops->and_(sm, ops->invert(dm)), v4);
 
         ops->writeRegister(d->REG_CCR_N, isNegative);
         ops->writeRegister(d->REG_CCR_Z, isZero);
@@ -991,7 +992,7 @@ struct IP_dble: P {
 
 struct IP_divs: P {
     void p(D d, Ops ops, I insn, A args) {
-        SValuePtr quotient;
+        SValue::Ptr quotient;
         if (2==args.size()) {
             assert_args(insn, args, 2);
             if (args[0]->get_nBits() == 16) {
@@ -1001,10 +1002,10 @@ struct IP_divs: P {
                 // remainder is stored in the higher 16 bits.
                 ASSERT_require(args[1]->get_nBits()==32);
                 d->decrementRegisters(args[0]);
-                SValuePtr divisor = d->read(args[0], 16);
-                SValuePtr dividend = d->read(args[1], 32);
+                SValue::Ptr divisor = d->read(args[0], 16);
+                SValue::Ptr dividend = d->read(args[1], 32);
                 quotient = ops->extract(ops->signedDivide(dividend, divisor), 0, 16);
-                SValuePtr remainder = ops->signedModulo(dividend, divisor);
+                SValue::Ptr remainder = ops->signedModulo(dividend, divisor);
                 d->write(args[1], ops->concat(quotient, remainder));
                 d->incrementRegisters(args[0]);
             } else if (args[0]->get_nBits() == 32) {
@@ -1013,8 +1014,8 @@ struct IP_divs: P {
                 // quotient which is stored in the destination (args[1]). The remainder is discarded.
                 ASSERT_require(args[1]->get_nBits()==32);
                 d->decrementRegisters(args[0]);
-                SValuePtr divisor = d->read(args[0], 32);
-                SValuePtr dividend = d->read(args[1], 32);
+                SValue::Ptr divisor = d->read(args[0], 32);
+                SValue::Ptr dividend = d->read(args[1], 32);
                 quotient = ops->signedDivide(dividend, divisor);
                 d->write(args[1], quotient);
                 d->incrementRegisters(args[0]);
@@ -1027,18 +1028,18 @@ struct IP_divs: P {
             ASSERT_require(args[1]->get_nBits()==32);
             ASSERT_require(args[2]->get_nBits()==32);
             d->decrementRegisters(args[0]);
-            SValuePtr divisor = d->read(args[0], 32);
-            SValuePtr arg1 = d->read(args[1], 32);
-            SValuePtr dividend = ops->concat(d->read(args[2], 32), arg1);
+            SValue::Ptr divisor = d->read(args[0], 32);
+            SValue::Ptr arg1 = d->read(args[1], 32);
+            SValue::Ptr dividend = ops->concat(d->read(args[2], 32), arg1);
             quotient = ops->extract(ops->signedDivide(dividend, divisor), 0, 32);
-            SValuePtr remainder = ops->signedModulo(dividend, divisor);
+            SValue::Ptr remainder = ops->signedModulo(dividend, divisor);
             d->write(args[1], remainder);
             d->write(args[2], quotient);
             d->incrementRegisters(args[0]);
         }
 
         // FIXME[Robb P. Matzke 2014-07-28]: documentation says set on "division overflow" but apparently doesn't define it.
-        SValuePtr isOverflow = ops->undefined_(1);
+        SValue::Ptr isOverflow = ops->undefined_(1);
 
         ops->writeRegister(d->REG_CCR_C, ops->boolean_(false));
         ops->writeRegister(d->REG_CCR_V, isOverflow);
@@ -1054,16 +1055,16 @@ struct IP_divsl: P {
         ASSERT_require(args[1]->get_nBits()==32);       // remainder (out)
         ASSERT_require(args[2]->get_nBits()==32);       // dividend (in); quotient (out)
         d->decrementRegisters(args[0]);
-        SValuePtr divisor = d->read(args[0], 32);
-        SValuePtr dividend = d->read(args[2], 32);
-        SValuePtr quotient = ops->signedDivide(dividend, divisor);
-        SValuePtr remainder = ops->signedModulo(dividend, divisor);
+        SValue::Ptr divisor = d->read(args[0], 32);
+        SValue::Ptr dividend = d->read(args[2], 32);
+        SValue::Ptr quotient = ops->signedDivide(dividend, divisor);
+        SValue::Ptr remainder = ops->signedModulo(dividend, divisor);
         d->write(args[2], quotient);
         d->write(args[1], remainder);
         d->incrementRegisters(args[0]);
 
         // FIXME[Robb P. Matzke 2014-07-28]: documentation says set on "division overflow" but apparently doesn't define it.
-        SValuePtr isOverflow = ops->undefined_(1);
+        SValue::Ptr isOverflow = ops->undefined_(1);
 
         ops->writeRegister(d->REG_CCR_C, ops->boolean_(false));
         ops->writeRegister(d->REG_CCR_V, isOverflow);
@@ -1074,7 +1075,7 @@ struct IP_divsl: P {
 
 struct IP_divu: P {
     void p(D d, Ops ops, I insn, A args) {
-        SValuePtr quotient;
+        SValue::Ptr quotient;
         if (2==args.size()) {
             assert_args(insn, args, 2);
             if (args[0]->get_nBits() == 16) {
@@ -1084,10 +1085,10 @@ struct IP_divu: P {
                 // stored in the higher 16 bits.
                 ASSERT_require(args[1]->get_nBits()==32);
                 d->decrementRegisters(args[0]);
-                SValuePtr divisor = d->read(args[0], 16);
-                SValuePtr dividend = d->read(args[1], 32);
+                SValue::Ptr divisor = d->read(args[0], 16);
+                SValue::Ptr dividend = d->read(args[1], 32);
                 quotient = ops->extract(ops->unsignedDivide(dividend, divisor), 0, 16);
-                SValuePtr remainder = ops->unsignedModulo(dividend, divisor);
+                SValue::Ptr remainder = ops->unsignedModulo(dividend, divisor);
                 d->write(args[1], ops->concat(quotient, remainder));
                 d->incrementRegisters(args[0]);
             } else if (args[0]->get_nBits() == 32) {
@@ -1096,8 +1097,8 @@ struct IP_divu: P {
                 // quotient which is stored in the destination (args[1]). The remainder is discarded.
                 ASSERT_require(args[1]->get_nBits()==32);
                 d->decrementRegisters(args[0]);
-                SValuePtr divisor = d->read(args[0], 32);
-                SValuePtr dividend = d->read(args[1], 32);
+                SValue::Ptr divisor = d->read(args[0], 32);
+                SValue::Ptr dividend = d->read(args[1], 32);
                 quotient = ops->unsignedDivide(dividend, divisor);
                 d->write(args[1], quotient);
                 d->incrementRegisters(args[0]);
@@ -1110,18 +1111,18 @@ struct IP_divu: P {
             ASSERT_require(args[1]->get_nBits()==32);
             ASSERT_require(args[2]->get_nBits()==32);
             d->decrementRegisters(args[0]);
-            SValuePtr divisor = d->read(args[0], 32);
-            SValuePtr arg1 = d->read(args[1], 32);
-            SValuePtr dividend = ops->concat(d->read(args[2], 32), arg1);
+            SValue::Ptr divisor = d->read(args[0], 32);
+            SValue::Ptr arg1 = d->read(args[1], 32);
+            SValue::Ptr dividend = ops->concat(d->read(args[2], 32), arg1);
             quotient = ops->extract(ops->unsignedDivide(dividend, divisor), 0, 32);
-            SValuePtr remainder = ops->unsignedModulo(dividend, divisor);
+            SValue::Ptr remainder = ops->unsignedModulo(dividend, divisor);
             d->write(args[1], remainder);
             d->write(args[2], quotient);
             d->incrementRegisters(args[0]);
         }
 
         // FIXME[Robb P. Matzke 2014-07-28]: documentation says set on "division overflow" but apparently doesn't define it.
-        SValuePtr isOverflow = ops->undefined_(1);
+        SValue::Ptr isOverflow = ops->undefined_(1);
 
         ops->writeRegister(d->REG_CCR_C, ops->boolean_(false));
         ops->writeRegister(d->REG_CCR_V, isOverflow);
@@ -1137,16 +1138,16 @@ struct IP_divul: P {
         ASSERT_require(args[1]->get_nBits()==32);       // remainder (out)
         ASSERT_require(args[2]->get_nBits()==32);       // dividend (in); quotient (out)
         d->decrementRegisters(args[0]);
-        SValuePtr divisor = d->read(args[0], 32);
-        SValuePtr dividend = d->read(args[2], 32);
-        SValuePtr quotient = ops->unsignedDivide(dividend, divisor);
-        SValuePtr remainder = ops->unsignedModulo(dividend, divisor);
+        SValue::Ptr divisor = d->read(args[0], 32);
+        SValue::Ptr dividend = d->read(args[2], 32);
+        SValue::Ptr quotient = ops->unsignedDivide(dividend, divisor);
+        SValue::Ptr remainder = ops->unsignedModulo(dividend, divisor);
         d->write(args[2], quotient);
         d->write(args[1], remainder);
         d->incrementRegisters(args[0]);
 
         // FIXME[Robb P. Matzke 2014-07-28]: documentation says set on "division overflow" but apparently doesn't define it.
-        SValuePtr isOverflow = ops->undefined_(1);
+        SValue::Ptr isOverflow = ops->undefined_(1);
 
         ops->writeRegister(d->REG_CCR_C, ops->boolean_(false));
         ops->writeRegister(d->REG_CCR_V, isOverflow);
@@ -1161,8 +1162,8 @@ struct IP_eor: P {
         ASSERT_require(args[0]->get_nBits() == args[1]->get_nBits());
         size_t nBits = args[0]->get_nBits();
         d->decrementRegisters(args[1]);
-        SValuePtr arg1 = d->read(args[1], nBits);
-        SValuePtr result = ops->xor_(d->read(args[0], nBits), arg1);
+        SValue::Ptr arg1 = d->read(args[1], nBits);
+        SValue::Ptr result = ops->xor_(d->read(args[0], nBits), arg1);
         d->write(args[1], result);
         d->incrementRegisters(args[1]);
 
@@ -1179,8 +1180,8 @@ struct IP_eori: P {
         ASSERT_require(args[0]->get_nBits() == args[1]->get_nBits());
         size_t nBits = args[0]->get_nBits();
         d->decrementRegisters(args[1]);
-        SValuePtr arg1 = d->read(args[1], nBits);
-        SValuePtr result = ops->xor_(d->read(args[0], nBits), arg1);
+        SValue::Ptr arg1 = d->read(args[1], nBits);
+        SValue::Ptr result = ops->xor_(d->read(args[0], nBits), arg1);
         d->write(args[1], result);
         d->incrementRegisters(args[1]);
 
@@ -1203,8 +1204,8 @@ struct IP_ext: P {
         assert_args(insn, args, 1);
         size_t dstNBits = args[0]->get_nBits();
         size_t srcNBits = dstNBits / 2;
-        SValuePtr a0 = ops->unsignedExtend(d->read(args[0], dstNBits), srcNBits);
-        SValuePtr result = ops->signExtend(a0, dstNBits);
+        SValue::Ptr a0 = ops->unsignedExtend(d->read(args[0], dstNBits), srcNBits);
+        SValue::Ptr result = ops->signExtend(a0, dstNBits);
         d->write(args[0], result);
         
         ops->writeRegister(d->REG_CCR_C, ops->boolean_(false));
@@ -1220,8 +1221,8 @@ struct IP_extb: P {
         ASSERT_require(args[0]->get_nBits() >= 8);
         size_t dstNBits = args[0]->get_nBits();
         size_t srcNBits = dstNBits / 2;
-        SValuePtr a0 = ops->unsignedExtend(d->read(args[0], dstNBits), srcNBits);
-        SValuePtr result = ops->signExtend(a0, dstNBits);
+        SValue::Ptr a0 = ops->unsignedExtend(d->read(args[0], dstNBits), srcNBits);
+        SValue::Ptr result = ops->signExtend(a0, dstNBits);
         d->write(args[0], result);
 
         ops->writeRegister(d->REG_CCR_C, ops->boolean_(false));
@@ -1271,9 +1272,9 @@ struct IP_fp_add: P {
         // The actual operation
         SgAsmFloatType *opType = isSgAsmFloatType(args[1]->get_type());
         ASSERT_not_null(opType);
-        SValuePtr a = ops->convert(d->read(args[0], args[0]->get_nBits()), args[0]->get_type(), opType);
-        SValuePtr b = ops->convert(d->read(args[1], args[1]->get_nBits()), args[1]->get_type(), opType);
-        SValuePtr result = ops->fpAdd(b, a, opType);
+        SValue::Ptr a = ops->convert(d->read(args[0], args[0]->get_nBits()), args[0]->get_type(), opType);
+        SValue::Ptr b = ops->convert(d->read(args[1], args[1]->get_nBits()), args[1]->get_type(), opType);
+        SValue::Ptr result = ops->fpAdd(b, a, opType);
 
         // Rounding
         SgAsmFloatType *roundingType = NULL;
@@ -1282,10 +1283,10 @@ struct IP_fp_add: P {
         } else {
             roundingType = opType;
         }
-        SValuePtr rounded = ops->convert(result, opType, roundingType);
+        SValue::Ptr rounded = ops->convert(result, opType, roundingType);
 
         // Save result
-        SValuePtr dst = ops->convert(rounded, roundingType, args[1]->get_type());
+        SValue::Ptr dst = ops->convert(rounded, roundingType, args[1]->get_type());
         if (kind != m68k_fcmp)
             d->write(args[1], dst);
 
@@ -1298,12 +1299,12 @@ struct IP_fp_add: P {
         ops->writeRegister(d->REG_EXC_DZ, ops->boolean_(false));
         d->updateFpsrExcInex();
 
-        SValuePtr aInf = ops->fpIsInfinity(a, opType);
-        SValuePtr bInf = ops->fpIsInfinity(b, opType);
-        SValuePtr aSign = ops->fpSign(a, opType);
-        SValuePtr bSign = ops->fpSign(b, opType);
-        SValuePtr bothInfinite = ops->and_(aInf, bInf);
-        SValuePtr opositeSign = ops->xor_(aSign, bSign);
+        SValue::Ptr aInf = ops->fpIsInfinity(a, opType);
+        SValue::Ptr bInf = ops->fpIsInfinity(b, opType);
+        SValue::Ptr aSign = ops->fpSign(a, opType);
+        SValue::Ptr bSign = ops->fpSign(b, opType);
+        SValue::Ptr bothInfinite = ops->and_(aInf, bInf);
+        SValue::Ptr opositeSign = ops->xor_(aSign, bSign);
         ops->writeRegister(d->REG_EXC_OPERR, ops->and_(bothInfinite, opositeSign));
 
         d->adjustFpConditionCodes(dst, isSgAsmFloatType(args[1]->get_type()));
@@ -1314,9 +1315,9 @@ struct IP_fp_add: P {
 struct IP_fbeq: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        SValuePtr target = d->read(args[0], args[0]->get_nBits());
-        SValuePtr noChange = ops->readRegister(d->REG_PC);
-        SValuePtr newPc = 
+        SValue::Ptr target = d->read(args[0], args[0]->get_nBits());
+        SValue::Ptr noChange = ops->readRegister(d->REG_PC);
+        SValue::Ptr newPc =
             ops->ite(ops->readRegister(d->REG_FPCC_Z),
                      target, noChange);
         ops->writeRegister(d->REG_PC, newPc);
@@ -1326,9 +1327,9 @@ struct IP_fbeq: P {
 struct IP_fbne: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        SValuePtr target = d->read(args[0], args[0]->get_nBits());
-        SValuePtr noChange = ops->readRegister(d->REG_PC);
-        SValuePtr newPc = 
+        SValue::Ptr target = d->read(args[0], args[0]->get_nBits());
+        SValue::Ptr noChange = ops->readRegister(d->REG_PC);
+        SValue::Ptr newPc =
             ops->ite(ops->readRegister(d->REG_FPCC_Z),
                      noChange, target);
         ops->writeRegister(d->REG_PC, newPc);
@@ -1338,11 +1339,11 @@ struct IP_fbne: P {
 struct IP_fbgt: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        SValuePtr target = d->read(args[0], args[0]->get_nBits());
-        SValuePtr noChange = ops->readRegister(d->REG_PC);
-        SValuePtr fpcc_n = ops->readRegister(d->REG_FPCC_N);
-        SValuePtr v1 = ops->or_(ops->readRegister(d->REG_FPCC_Z), fpcc_n);
-        SValuePtr newPc = ops->ite(ops->or_(ops->readRegister(d->REG_FPCC_NAN), v1),
+        SValue::Ptr target = d->read(args[0], args[0]->get_nBits());
+        SValue::Ptr noChange = ops->readRegister(d->REG_PC);
+        SValue::Ptr fpcc_n = ops->readRegister(d->REG_FPCC_N);
+        SValue::Ptr v1 = ops->or_(ops->readRegister(d->REG_FPCC_Z), fpcc_n);
+        SValue::Ptr newPc = ops->ite(ops->or_(ops->readRegister(d->REG_FPCC_NAN), v1),
                                    noChange, target);
         ops->writeRegister(d->REG_PC, newPc);
         ops->writeRegister(d->REG_EXC_BSUN, ops->readRegister(d->REG_FPCC_NAN));
@@ -1353,11 +1354,11 @@ struct IP_fbgt: P {
 struct IP_fbngt: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        SValuePtr target = d->read(args[0], args[0]->get_nBits());
-        SValuePtr noChange = ops->readRegister(d->REG_PC);
-        SValuePtr fpcc_n = ops->readRegister(d->REG_FPCC_N);
-        SValuePtr v1 = ops->or_(ops->readRegister(d->REG_FPCC_Z), fpcc_n);
-        SValuePtr newPc = ops->ite(ops->or_(ops->readRegister(d->REG_FPCC_NAN), v1),
+        SValue::Ptr target = d->read(args[0], args[0]->get_nBits());
+        SValue::Ptr noChange = ops->readRegister(d->REG_PC);
+        SValue::Ptr fpcc_n = ops->readRegister(d->REG_FPCC_N);
+        SValue::Ptr v1 = ops->or_(ops->readRegister(d->REG_FPCC_Z), fpcc_n);
+        SValue::Ptr newPc = ops->ite(ops->or_(ops->readRegister(d->REG_FPCC_NAN), v1),
                                    target, noChange);
         ops->writeRegister(d->REG_PC, newPc);
         ops->writeRegister(d->REG_EXC_BSUN, ops->readRegister(d->REG_FPCC_NAN));
@@ -1368,11 +1369,11 @@ struct IP_fbngt: P {
 struct IP_fbge: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        SValuePtr target = d->read(args[0], args[0]->get_nBits());
-        SValuePtr noChange = ops->readRegister(d->REG_PC);
-        SValuePtr fpcc_n = ops->readRegister(d->REG_FPCC_N);
-        SValuePtr v1 = ops->invert(ops->or_(ops->readRegister(d->REG_FPCC_NAN), fpcc_n));
-        SValuePtr newPc = ops->ite(ops->or_(ops->readRegister(d->REG_FPCC_Z), v1),
+        SValue::Ptr target = d->read(args[0], args[0]->get_nBits());
+        SValue::Ptr noChange = ops->readRegister(d->REG_PC);
+        SValue::Ptr fpcc_n = ops->readRegister(d->REG_FPCC_N);
+        SValue::Ptr v1 = ops->invert(ops->or_(ops->readRegister(d->REG_FPCC_NAN), fpcc_n));
+        SValue::Ptr newPc = ops->ite(ops->or_(ops->readRegister(d->REG_FPCC_Z), v1),
                                    target, noChange);
         ops->writeRegister(d->REG_PC, newPc);
         ops->writeRegister(d->REG_EXC_BSUN, ops->readRegister(d->REG_FPCC_NAN));
@@ -1383,11 +1384,11 @@ struct IP_fbge: P {
 struct IP_fbnge: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        SValuePtr target = d->read(args[0], args[0]->get_nBits());
-        SValuePtr noChange = ops->readRegister(d->REG_PC);
-        SValuePtr not_fpcc_z = ops->invert(ops->readRegister(d->REG_FPCC_Z));
-        SValuePtr v1 = ops->and_(ops->readRegister(d->REG_FPCC_N), not_fpcc_z);
-        SValuePtr newPc = ops->ite(ops->or_(ops->readRegister(d->REG_FPCC_NAN), v1),
+        SValue::Ptr target = d->read(args[0], args[0]->get_nBits());
+        SValue::Ptr noChange = ops->readRegister(d->REG_PC);
+        SValue::Ptr not_fpcc_z = ops->invert(ops->readRegister(d->REG_FPCC_Z));
+        SValue::Ptr v1 = ops->and_(ops->readRegister(d->REG_FPCC_N), not_fpcc_z);
+        SValue::Ptr newPc = ops->ite(ops->or_(ops->readRegister(d->REG_FPCC_NAN), v1),
                                    target, noChange);
         ops->writeRegister(d->REG_PC, newPc);
         ops->writeRegister(d->REG_EXC_BSUN, ops->readRegister(d->REG_FPCC_NAN));
@@ -1398,11 +1399,11 @@ struct IP_fbnge: P {
 struct IP_fblt: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        SValuePtr target = d->read(args[0], args[0]->get_nBits());
-        SValuePtr noChange = ops->readRegister(d->REG_PC);
-        SValuePtr fpcc_z = ops->readRegister(d->REG_FPCC_Z);
-        SValuePtr v1 = ops->invert(ops->or_(ops->readRegister(d->REG_FPCC_NAN), fpcc_z));
-        SValuePtr newPc = ops->ite(ops->and_(ops->readRegister(d->REG_FPCC_N), v1),
+        SValue::Ptr target = d->read(args[0], args[0]->get_nBits());
+        SValue::Ptr noChange = ops->readRegister(d->REG_PC);
+        SValue::Ptr fpcc_z = ops->readRegister(d->REG_FPCC_Z);
+        SValue::Ptr v1 = ops->invert(ops->or_(ops->readRegister(d->REG_FPCC_NAN), fpcc_z));
+        SValue::Ptr newPc = ops->ite(ops->and_(ops->readRegister(d->REG_FPCC_N), v1),
                                    target, noChange);
         ops->writeRegister(d->REG_PC, newPc);
         ops->writeRegister(d->REG_EXC_BSUN, ops->readRegister(d->REG_FPCC_NAN));
@@ -1413,11 +1414,11 @@ struct IP_fblt: P {
 struct IP_fbnlt: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        SValuePtr target = d->read(args[0], args[0]->get_nBits());
-        SValuePtr noChange = ops->readRegister(d->REG_PC);
-        SValuePtr not_fpcc_n = ops->invert(ops->readRegister(d->REG_FPCC_N));
-        SValuePtr v1 = ops->or_(ops->readRegister(d->REG_FPCC_Z), not_fpcc_n);
-        SValuePtr newPc = ops->ite(ops->or_(ops->readRegister(d->REG_FPCC_NAN), v1),
+        SValue::Ptr target = d->read(args[0], args[0]->get_nBits());
+        SValue::Ptr noChange = ops->readRegister(d->REG_PC);
+        SValue::Ptr not_fpcc_n = ops->invert(ops->readRegister(d->REG_FPCC_N));
+        SValue::Ptr v1 = ops->or_(ops->readRegister(d->REG_FPCC_Z), not_fpcc_n);
+        SValue::Ptr newPc = ops->ite(ops->or_(ops->readRegister(d->REG_FPCC_NAN), v1),
                                    target, noChange);
         ops->writeRegister(d->REG_PC, newPc);
         ops->writeRegister(d->REG_EXC_BSUN, ops->readRegister(d->REG_FPCC_NAN));
@@ -1428,11 +1429,11 @@ struct IP_fbnlt: P {
 struct IP_fble: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        SValuePtr target = d->read(args[0], args[0]->get_nBits());
-        SValuePtr noChange = ops->readRegister(d->REG_PC);
-        SValuePtr notNan = ops->invert(ops->readRegister(d->REG_FPCC_NAN));
-        SValuePtr v1 = ops->and_(ops->readRegister(d->REG_FPCC_N), notNan);
-        SValuePtr newPc = ops->ite(ops->or_(ops->readRegister(d->REG_FPCC_Z), v1),
+        SValue::Ptr target = d->read(args[0], args[0]->get_nBits());
+        SValue::Ptr noChange = ops->readRegister(d->REG_PC);
+        SValue::Ptr notNan = ops->invert(ops->readRegister(d->REG_FPCC_NAN));
+        SValue::Ptr v1 = ops->and_(ops->readRegister(d->REG_FPCC_N), notNan);
+        SValue::Ptr newPc = ops->ite(ops->or_(ops->readRegister(d->REG_FPCC_Z), v1),
                                    target, noChange);
         ops->writeRegister(d->REG_PC, newPc);
         ops->writeRegister(d->REG_EXC_BSUN, ops->readRegister(d->REG_FPCC_NAN));
@@ -1443,11 +1444,11 @@ struct IP_fble: P {
 struct IP_fbnle: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        SValuePtr target = d->read(args[0], args[0]->get_nBits());
-        SValuePtr noChange = ops->readRegister(d->REG_PC);
-        SValuePtr fpcc_z = ops->readRegister(d->REG_FPCC_Z);
-        SValuePtr v1 = ops->invert(ops->or_(ops->readRegister(d->REG_FPCC_N), fpcc_z));
-        SValuePtr newPc = ops->ite(ops->or_(ops->readRegister(d->REG_FPCC_NAN), v1),
+        SValue::Ptr target = d->read(args[0], args[0]->get_nBits());
+        SValue::Ptr noChange = ops->readRegister(d->REG_PC);
+        SValue::Ptr fpcc_z = ops->readRegister(d->REG_FPCC_Z);
+        SValue::Ptr v1 = ops->invert(ops->or_(ops->readRegister(d->REG_FPCC_N), fpcc_z));
+        SValue::Ptr newPc = ops->ite(ops->or_(ops->readRegister(d->REG_FPCC_NAN), v1),
                                    target, noChange);
         ops->writeRegister(d->REG_PC, newPc);
         ops->writeRegister(d->REG_EXC_BSUN, ops->readRegister(d->REG_FPCC_NAN));
@@ -1458,10 +1459,10 @@ struct IP_fbnle: P {
 struct IP_fbgl: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        SValuePtr target = d->read(args[0], args[0]->get_nBits());
-        SValuePtr noChange = ops->readRegister(d->REG_PC);
-        SValuePtr fpcc_z = ops->readRegister(d->REG_FPCC_Z);
-        SValuePtr newPc = ops->ite(ops->or_(ops->readRegister(d->REG_FPCC_NAN), fpcc_z),
+        SValue::Ptr target = d->read(args[0], args[0]->get_nBits());
+        SValue::Ptr noChange = ops->readRegister(d->REG_PC);
+        SValue::Ptr fpcc_z = ops->readRegister(d->REG_FPCC_Z);
+        SValue::Ptr newPc = ops->ite(ops->or_(ops->readRegister(d->REG_FPCC_NAN), fpcc_z),
                                    noChange, target);
         ops->writeRegister(d->REG_PC, newPc);
         ops->writeRegister(d->REG_EXC_BSUN, ops->readRegister(d->REG_FPCC_NAN));
@@ -1472,10 +1473,10 @@ struct IP_fbgl: P {
 struct IP_fbngl: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        SValuePtr target = d->read(args[0], args[0]->get_nBits());
-        SValuePtr noChange = ops->readRegister(d->REG_PC);
-        SValuePtr fpcc_z = ops->readRegister(d->REG_FPCC_Z);
-        SValuePtr newPc = ops->ite(ops->or_(ops->readRegister(d->REG_FPCC_NAN), fpcc_z),
+        SValue::Ptr target = d->read(args[0], args[0]->get_nBits());
+        SValue::Ptr noChange = ops->readRegister(d->REG_PC);
+        SValue::Ptr fpcc_z = ops->readRegister(d->REG_FPCC_Z);
+        SValue::Ptr newPc = ops->ite(ops->or_(ops->readRegister(d->REG_FPCC_NAN), fpcc_z),
                                    target, noChange);
         ops->writeRegister(d->REG_PC, newPc);
         ops->writeRegister(d->REG_EXC_BSUN, ops->readRegister(d->REG_FPCC_NAN));
@@ -1486,9 +1487,9 @@ struct IP_fbngl: P {
 struct IP_fbgle: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        SValuePtr target = d->read(args[0], args[0]->get_nBits());
-        SValuePtr noChange = ops->readRegister(d->REG_PC);
-        SValuePtr newPc = ops->ite(ops->readRegister(d->REG_FPCC_NAN),
+        SValue::Ptr target = d->read(args[0], args[0]->get_nBits());
+        SValue::Ptr noChange = ops->readRegister(d->REG_PC);
+        SValue::Ptr newPc = ops->ite(ops->readRegister(d->REG_FPCC_NAN),
                                    noChange, target);
         ops->writeRegister(d->REG_PC, newPc);
         ops->writeRegister(d->REG_EXC_BSUN, ops->readRegister(d->REG_FPCC_NAN));
@@ -1499,9 +1500,9 @@ struct IP_fbgle: P {
 struct IP_fbngle: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        SValuePtr target = d->read(args[0], args[0]->get_nBits());
-        SValuePtr noChange = ops->readRegister(d->REG_PC);
-        SValuePtr newPc = ops->ite(ops->readRegister(d->REG_FPCC_NAN),
+        SValue::Ptr target = d->read(args[0], args[0]->get_nBits());
+        SValue::Ptr noChange = ops->readRegister(d->REG_PC);
+        SValue::Ptr newPc = ops->ite(ops->readRegister(d->REG_FPCC_NAN),
                                    target, noChange);
         ops->writeRegister(d->REG_PC, newPc);
         ops->writeRegister(d->REG_EXC_BSUN, ops->readRegister(d->REG_FPCC_NAN));
@@ -1512,11 +1513,11 @@ struct IP_fbngle: P {
 struct IP_fbogt: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        SValuePtr target = d->read(args[0], args[0]->get_nBits());
-        SValuePtr noChange = ops->readRegister(d->REG_PC);
-        SValuePtr fpcc_n = ops->readRegister(d->REG_FPCC_N);
-        SValuePtr v1 = ops->or_(ops->readRegister(d->REG_FPCC_Z), fpcc_n);
-        SValuePtr newPc = ops->ite(ops->or_(ops->readRegister(d->REG_FPCC_NAN), v1),
+        SValue::Ptr target = d->read(args[0], args[0]->get_nBits());
+        SValue::Ptr noChange = ops->readRegister(d->REG_PC);
+        SValue::Ptr fpcc_n = ops->readRegister(d->REG_FPCC_N);
+        SValue::Ptr v1 = ops->or_(ops->readRegister(d->REG_FPCC_Z), fpcc_n);
+        SValue::Ptr newPc = ops->ite(ops->or_(ops->readRegister(d->REG_FPCC_NAN), v1),
                                    noChange, target);
         ops->writeRegister(d->REG_PC, newPc);
     }
@@ -1525,11 +1526,11 @@ struct IP_fbogt: P {
 struct IP_fbule: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        SValuePtr target = d->read(args[0], args[0]->get_nBits());
-        SValuePtr noChange = ops->readRegister(d->REG_PC);
-        SValuePtr fpcc_n = ops->readRegister(d->REG_FPCC_N);
-        SValuePtr v1 = ops->or_(ops->readRegister(d->REG_FPCC_Z), fpcc_n);
-        SValuePtr newPc = ops->ite(ops->or_(ops->readRegister(d->REG_FPCC_NAN), v1),
+        SValue::Ptr target = d->read(args[0], args[0]->get_nBits());
+        SValue::Ptr noChange = ops->readRegister(d->REG_PC);
+        SValue::Ptr fpcc_n = ops->readRegister(d->REG_FPCC_N);
+        SValue::Ptr v1 = ops->or_(ops->readRegister(d->REG_FPCC_Z), fpcc_n);
+        SValue::Ptr newPc = ops->ite(ops->or_(ops->readRegister(d->REG_FPCC_NAN), v1),
                                    target, noChange);
         ops->writeRegister(d->REG_PC, newPc);
     }
@@ -1538,11 +1539,11 @@ struct IP_fbule: P {
 struct IP_fboge: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        SValuePtr target = d->read(args[0], args[0]->get_nBits());
-        SValuePtr noChange = ops->readRegister(d->REG_PC);
-        SValuePtr fpcc_n = ops->readRegister(d->REG_FPCC_N);
-        SValuePtr v1 = ops->invert(ops->or_(ops->readRegister(d->REG_FPCC_NAN), fpcc_n));
-        SValuePtr newPc = ops->ite(ops->or_(ops->readRegister(d->REG_FPCC_Z), v1),
+        SValue::Ptr target = d->read(args[0], args[0]->get_nBits());
+        SValue::Ptr noChange = ops->readRegister(d->REG_PC);
+        SValue::Ptr fpcc_n = ops->readRegister(d->REG_FPCC_N);
+        SValue::Ptr v1 = ops->invert(ops->or_(ops->readRegister(d->REG_FPCC_NAN), fpcc_n));
+        SValue::Ptr newPc = ops->ite(ops->or_(ops->readRegister(d->REG_FPCC_Z), v1),
                                    target, noChange);
         ops->writeRegister(d->REG_PC, newPc);
     }
@@ -1551,11 +1552,11 @@ struct IP_fboge: P {
 struct IP_fbult: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        SValuePtr target = d->read(args[0], args[0]->get_nBits());
-        SValuePtr noChange = ops->readRegister(d->REG_PC);
-        SValuePtr not_fpcc_z = ops->invert(ops->readRegister(d->REG_FPCC_Z));
-        SValuePtr v1 = ops->and_(ops->readRegister(d->REG_FPCC_N), not_fpcc_z);
-        SValuePtr newPc = ops->ite(ops->or_(ops->readRegister(d->REG_FPCC_NAN), v1),
+        SValue::Ptr target = d->read(args[0], args[0]->get_nBits());
+        SValue::Ptr noChange = ops->readRegister(d->REG_PC);
+        SValue::Ptr not_fpcc_z = ops->invert(ops->readRegister(d->REG_FPCC_Z));
+        SValue::Ptr v1 = ops->and_(ops->readRegister(d->REG_FPCC_N), not_fpcc_z);
+        SValue::Ptr newPc = ops->ite(ops->or_(ops->readRegister(d->REG_FPCC_NAN), v1),
                                    target, noChange);
         ops->writeRegister(d->REG_PC, newPc);
     }
@@ -1564,11 +1565,11 @@ struct IP_fbult: P {
 struct IP_fbolt: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        SValuePtr target = d->read(args[0], args[0]->get_nBits());
-        SValuePtr noChange = ops->readRegister(d->REG_PC);
-        SValuePtr fpcc_z = ops->readRegister(d->REG_FPCC_Z);
-        SValuePtr v1 = ops->invert(ops->or_(ops->readRegister(d->REG_FPCC_NAN), fpcc_z));
-        SValuePtr newPc = ops->ite(ops->and_(ops->readRegister(d->REG_FPCC_N), v1),
+        SValue::Ptr target = d->read(args[0], args[0]->get_nBits());
+        SValue::Ptr noChange = ops->readRegister(d->REG_PC);
+        SValue::Ptr fpcc_z = ops->readRegister(d->REG_FPCC_Z);
+        SValue::Ptr v1 = ops->invert(ops->or_(ops->readRegister(d->REG_FPCC_NAN), fpcc_z));
+        SValue::Ptr newPc = ops->ite(ops->and_(ops->readRegister(d->REG_FPCC_N), v1),
                                    target, noChange);
         ops->writeRegister(d->REG_PC, newPc);
     }
@@ -1577,11 +1578,11 @@ struct IP_fbolt: P {
 struct IP_fbuge: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        SValuePtr target = d->read(args[0], args[0]->get_nBits());
-        SValuePtr noChange = ops->readRegister(d->REG_PC);
-        SValuePtr not_fpcc_n = ops->invert(ops->readRegister(d->REG_FPCC_N));
-        SValuePtr v1 = ops->or_(ops->readRegister(d->REG_FPCC_Z), not_fpcc_n);
-        SValuePtr newPc = ops->ite(ops->or_(ops->readRegister(d->REG_FPCC_NAN), v1),
+        SValue::Ptr target = d->read(args[0], args[0]->get_nBits());
+        SValue::Ptr noChange = ops->readRegister(d->REG_PC);
+        SValue::Ptr not_fpcc_n = ops->invert(ops->readRegister(d->REG_FPCC_N));
+        SValue::Ptr v1 = ops->or_(ops->readRegister(d->REG_FPCC_Z), not_fpcc_n);
+        SValue::Ptr newPc = ops->ite(ops->or_(ops->readRegister(d->REG_FPCC_NAN), v1),
                                    target, noChange);
         ops->writeRegister(d->REG_PC, newPc);
     }
@@ -1590,11 +1591,11 @@ struct IP_fbuge: P {
 struct IP_fbole: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        SValuePtr target = d->read(args[0], args[0]->get_nBits());
-        SValuePtr noChange = ops->readRegister(d->REG_PC);
-        SValuePtr notNan = ops->invert(ops->readRegister(d->REG_FPCC_NAN));
-        SValuePtr v1 = ops->and_(ops->readRegister(d->REG_FPCC_N), notNan);
-        SValuePtr newPc = ops->ite(ops->or_(ops->readRegister(d->REG_FPCC_Z), v1),
+        SValue::Ptr target = d->read(args[0], args[0]->get_nBits());
+        SValue::Ptr noChange = ops->readRegister(d->REG_PC);
+        SValue::Ptr notNan = ops->invert(ops->readRegister(d->REG_FPCC_NAN));
+        SValue::Ptr v1 = ops->and_(ops->readRegister(d->REG_FPCC_N), notNan);
+        SValue::Ptr newPc = ops->ite(ops->or_(ops->readRegister(d->REG_FPCC_Z), v1),
                                    target, noChange);
         ops->writeRegister(d->REG_PC, newPc);
     }
@@ -1603,11 +1604,11 @@ struct IP_fbole: P {
 struct IP_fbugt: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        SValuePtr target = d->read(args[0], args[0]->get_nBits());
-        SValuePtr noChange = ops->readRegister(d->REG_PC);
-        SValuePtr fpcc_z = ops->readRegister(d->REG_FPCC_Z);
-        SValuePtr v1 = ops->invert(ops->or_(ops->readRegister(d->REG_FPCC_N), fpcc_z));
-        SValuePtr newPc = ops->ite(ops->or_(ops->readRegister(d->REG_FPCC_NAN), v1),
+        SValue::Ptr target = d->read(args[0], args[0]->get_nBits());
+        SValue::Ptr noChange = ops->readRegister(d->REG_PC);
+        SValue::Ptr fpcc_z = ops->readRegister(d->REG_FPCC_Z);
+        SValue::Ptr v1 = ops->invert(ops->or_(ops->readRegister(d->REG_FPCC_N), fpcc_z));
+        SValue::Ptr newPc = ops->ite(ops->or_(ops->readRegister(d->REG_FPCC_NAN), v1),
                                    target, noChange);
         ops->writeRegister(d->REG_PC, newPc);
     }
@@ -1616,10 +1617,10 @@ struct IP_fbugt: P {
 struct IP_fbogl: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        SValuePtr target = d->read(args[0], args[0]->get_nBits());
-        SValuePtr noChange = ops->readRegister(d->REG_PC);
-        SValuePtr fpcc_z = ops->readRegister(d->REG_FPCC_Z);
-        SValuePtr newPc = ops->ite(ops->or_(ops->readRegister(d->REG_FPCC_NAN), fpcc_z),
+        SValue::Ptr target = d->read(args[0], args[0]->get_nBits());
+        SValue::Ptr noChange = ops->readRegister(d->REG_PC);
+        SValue::Ptr fpcc_z = ops->readRegister(d->REG_FPCC_Z);
+        SValue::Ptr newPc = ops->ite(ops->or_(ops->readRegister(d->REG_FPCC_NAN), fpcc_z),
                                    noChange, target);
         ops->writeRegister(d->REG_PC, newPc);
     }
@@ -1731,8 +1732,8 @@ struct IP_fintrz: P {
         // The actual operation
         SgAsmFloatType *opType = isSgAsmFloatType(dstArg->get_type());
         ASSERT_not_null(opType);
-        SValuePtr a = ops->convert(d->read(srcArg, srcArg->get_nBits()), srcArg->get_type(), opType);
-        SValuePtr result = ops->fpRoundTowardZero(a, opType);
+        SValue::Ptr a = ops->convert(d->read(srcArg, srcArg->get_nBits()), srcArg->get_type(), opType);
+        SValue::Ptr result = ops->fpRoundTowardZero(a, opType);
 
         // Save result
         d->write(dstArg, result);
@@ -1762,7 +1763,7 @@ struct IP_fp_move: P {
         ASSERT_not_null(args[0]->get_type());
         ASSERT_not_null(args[1]->get_type());
 
-        SValuePtr src = d->read(args[0], args[0]->get_nBits());
+        SValue::Ptr src = d->read(args[0], args[0]->get_nBits());
 
         // The "format" type from the M68k documentation. For register-to-memory or memory-to-register instructions this is
         // the type of the memory operand. For register-to-register instructions this is either the "D" or "S" type.
@@ -1778,10 +1779,10 @@ struct IP_fp_move: P {
         }
 
         // Convert the source type using the format a.k.a., "rounding mode" of the instruction
-        SValuePtr intermediate = ops->convert(src, args[0]->get_type(), format);
+        SValue::Ptr intermediate = ops->convert(src, args[0]->get_type(), format);
 
         // Convert the intermediate value to the destination type and save it
-        SValuePtr dst = ops->convert(intermediate, format, args[1]->get_type());
+        SValue::Ptr dst = ops->convert(intermediate, format, args[1]->get_type());
         d->write(args[1], dst);
 
         // Update status flags
@@ -1832,9 +1833,9 @@ struct IP_fp_mul: P {
         // The actual operation
         SgAsmFloatType *opType = isSgAsmFloatType(args[1]->get_type());
         ASSERT_not_null(opType);
-        SValuePtr a = ops->convert(d->read(args[0], args[0]->get_nBits()), args[0]->get_type(), opType);
-        SValuePtr b = ops->convert(d->read(args[1], args[1]->get_nBits()), args[1]->get_type(), opType);
-        SValuePtr result = ops->fpMultiply(b, a, opType);
+        SValue::Ptr a = ops->convert(d->read(args[0], args[0]->get_nBits()), args[0]->get_type(), opType);
+        SValue::Ptr b = ops->convert(d->read(args[1], args[1]->get_nBits()), args[1]->get_type(), opType);
+        SValue::Ptr result = ops->fpMultiply(b, a, opType);
 
         // Rounding
         SgAsmFloatType *roundingType = NULL;
@@ -1843,10 +1844,10 @@ struct IP_fp_mul: P {
         } else {
             roundingType = opType;
         }
-        SValuePtr rounded = ops->convert(result, opType, roundingType);
+        SValue::Ptr rounded = ops->convert(result, opType, roundingType);
 
         // Save result
-        SValuePtr dst = ops->convert(rounded, roundingType, args[1]->get_type());
+        SValue::Ptr dst = ops->convert(rounded, roundingType, args[1]->get_type());
         d->write(args[1], dst);
 
         // Update status flags
@@ -1860,12 +1861,12 @@ struct IP_fp_mul: P {
 
         // ColdFire documentation says "set for 0 x x; cleared otherwise" but I think they mean "set for zero times infinity or
         // infinity times zero; cleared otherwise". [Robb Matzke 2020-01-03]
-        SValuePtr aIsZero = ops->fpIsZero(a, opType);
-        SValuePtr aIsInf = ops->fpIsInfinity(a, opType);
-        SValuePtr bIsZero = ops->fpIsZero(b, opType);
-        SValuePtr bIsInf = ops->fpIsInfinity(b, opType);
-        SValuePtr zeroInf = ops->and_(aIsZero, bIsInf);
-        SValuePtr infZero = ops->and_(aIsInf, bIsZero);
+        SValue::Ptr aIsZero = ops->fpIsZero(a, opType);
+        SValue::Ptr aIsInf = ops->fpIsInfinity(a, opType);
+        SValue::Ptr bIsZero = ops->fpIsZero(b, opType);
+        SValue::Ptr bIsInf = ops->fpIsInfinity(b, opType);
+        SValue::Ptr zeroInf = ops->and_(aIsZero, bIsInf);
+        SValue::Ptr infZero = ops->and_(aIsInf, bIsZero);
         ops->writeRegister(d->REG_EXC_OPERR, ops->or_(zeroInf, infZero));
 
         d->adjustFpConditionCodes(dst, isSgAsmFloatType(args[1]->get_type()));
@@ -1941,9 +1942,9 @@ struct IP_fp_sub: P {
         // The actual operation
         SgAsmFloatType *opType = isSgAsmFloatType(args[1]->get_type());
         ASSERT_not_null(opType);
-        SValuePtr a = ops->convert(d->read(args[0], args[0]->get_nBits()), args[0]->get_type(), opType);
-        SValuePtr b = ops->convert(d->read(args[1], args[1]->get_nBits()), args[1]->get_type(), opType);
-        SValuePtr result = ops->fpSubtract(b, a, opType);
+        SValue::Ptr a = ops->convert(d->read(args[0], args[0]->get_nBits()), args[0]->get_type(), opType);
+        SValue::Ptr b = ops->convert(d->read(args[1], args[1]->get_nBits()), args[1]->get_type(), opType);
+        SValue::Ptr result = ops->fpSubtract(b, a, opType);
 
         // Rounding
         SgAsmFloatType *roundingType = NULL;
@@ -1952,10 +1953,10 @@ struct IP_fp_sub: P {
         } else {
             roundingType = opType;
         }
-        SValuePtr rounded = ops->convert(result, opType, roundingType);
+        SValue::Ptr rounded = ops->convert(result, opType, roundingType);
 
         // Save result
-        SValuePtr dst = ops->convert(rounded, roundingType, args[1]->get_type());
+        SValue::Ptr dst = ops->convert(rounded, roundingType, args[1]->get_type());
         if (kind != m68k_fcmp)
             d->write(args[1], dst);
 
@@ -1968,12 +1969,12 @@ struct IP_fp_sub: P {
         ops->writeRegister(d->REG_EXC_DZ, ops->boolean_(false));
         d->updateFpsrExcInex();
         
-        SValuePtr aInf = ops->fpIsInfinity(a, opType);
-        SValuePtr bInf = ops->fpIsInfinity(b, opType);
-        SValuePtr aSign = ops->fpSign(a, opType);
-        SValuePtr bSign = ops->fpSign(b, opType);
-        SValuePtr bothInfinite = ops->and_(aInf, bInf);
-        SValuePtr sameSign = ops->invert(ops->xor_(aSign, bSign));
+        SValue::Ptr aInf = ops->fpIsInfinity(a, opType);
+        SValue::Ptr bInf = ops->fpIsInfinity(b, opType);
+        SValue::Ptr aSign = ops->fpSign(a, opType);
+        SValue::Ptr bSign = ops->fpSign(b, opType);
+        SValue::Ptr bothInfinite = ops->and_(aInf, bInf);
+        SValue::Ptr sameSign = ops->invert(ops->xor_(aSign, bSign));
         ops->writeRegister(d->REG_EXC_OPERR, ops->and_(bothInfinite, sameSign));
 
         d->adjustFpConditionCodes(dst, isSgAsmFloatType(args[1]->get_type()));
@@ -1998,7 +1999,7 @@ struct IP_illegal: P {
 struct IP_jmp: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        SValuePtr addr = d->read(args[0], 32);
+        SValue::Ptr addr = d->read(args[0], 32);
         ops->writeRegister(d->REG_PC, addr);
     }
 };
@@ -2007,11 +2008,11 @@ struct IP_jsr: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
         ASSERT_require(args[0]->get_nBits()==32);
-        SValuePtr negFour = ops->number_(32, -4);
-        SValuePtr newSp = ops->add(ops->readRegister(d->REG_A[7]), negFour);
+        SValue::Ptr negFour = ops->number_(32, -4);
+        SValue::Ptr newSp = ops->add(ops->readRegister(d->REG_A[7]), negFour);
         ops->writeRegister(d->REG_A[7], newSp);
         ops->writeRegister(d->REG_PC, d->read(args[0], 32));
-        SValuePtr dstAddr = ops->number_(32, insn->get_address() + insn->get_size());
+        SValue::Ptr dstAddr = ops->number_(32, insn->get_address() + insn->get_size());
         ops->writeMemory(RegisterDescriptor(), newSp, dstAddr, ops->boolean_(true));
     }
 };
@@ -2023,7 +2024,7 @@ struct IP_lea: P {
         ASSERT_require(args[0]->get_nBits()==args[1]->get_nBits());
         ASSERT_require(isSgAsmMemoryReferenceExpression(args[0]));
         d->decrementRegisters(args[0]);
-        SValuePtr addr = d->read(isSgAsmMemoryReferenceExpression(args[0])->get_address(), 32);
+        SValue::Ptr addr = d->read(isSgAsmMemoryReferenceExpression(args[0])->get_address(), 32);
         d->incrementRegisters(args[0]);
         d->write(args[1], addr);
     }
@@ -2034,10 +2035,10 @@ struct IP_link: P {
         assert_args(insn, args, 2);
         ASSERT_require2(args[0]->get_nBits()==32, "arg-0 is always 32 bits regardless of offset width");
         // push 32-bit args[0] onto the stack
-        SValuePtr negFour = ops->number_(32, -4);
-        SValuePtr newSp = ops->add(ops->readRegister(d->REG_A[7]), negFour);
+        SValue::Ptr negFour = ops->number_(32, -4);
+        SValue::Ptr newSp = ops->add(ops->readRegister(d->REG_A[7]), negFour);
         ops->writeRegister(d->REG_A[7], newSp);
-        SValuePtr yes = ops->boolean_(true);
+        SValue::Ptr yes = ops->boolean_(true);
         ops->writeMemory(RegisterDescriptor(), newSp, d->read(args[0], 32), yes);
         // move stack pointer to args[0]
         d->write(args[0], newSp, 32);
@@ -2050,7 +2051,7 @@ struct IP_link: P {
 struct IP_lsl: P {
     void p(D d, Ops ops, I insn, A args) {
         SgAsmExpression *dst = NULL;
-        SValuePtr count;
+        SValue::Ptr count;
         if (1==args.size()) {
             assert_args(insn, args, 1);
             ASSERT_require(args[0]->get_nBits()==16);
@@ -2064,17 +2065,17 @@ struct IP_lsl: P {
 
         size_t nBits = dst->get_nBits();
         d->decrementRegisters(args[0]);
-        SValuePtr value = d->read(dst, nBits);
-        SValuePtr result = ops->shiftLeft(value, count);
+        SValue::Ptr value = d->read(dst, nBits);
+        SValue::Ptr result = ops->shiftLeft(value, count);
         d->write(dst, result);
         d->incrementRegisters(args[0]);
 
         // CCR_C bit is the final bit shifted off the left (or zero if the shift count is zero).
-        SValuePtr isCarry = ops->extract(ops->shiftLeft(ops->concat(value, ops->number_(1, 0)), count), nBits, nBits+1);
+        SValue::Ptr isCarry = ops->extract(ops->shiftLeft(ops->concat(value, ops->number_(1, 0)), count), nBits, nBits+1);
 
         // CCR_X bit is like CCR_C except unmodified if the shift count is zero.
-        SValuePtr ccr_x = ops->readRegister(d->REG_CCR_X);
-        SValuePtr xBit = ops->ite(ops->equalToZero(count), ccr_x, isCarry);
+        SValue::Ptr ccr_x = ops->readRegister(d->REG_CCR_X);
+        SValue::Ptr xBit = ops->ite(ops->equalToZero(count), ccr_x, isCarry);
 
         ops->writeRegister(d->REG_CCR_C, isCarry);
         ops->writeRegister(d->REG_CCR_V, ops->boolean_(false));
@@ -2087,7 +2088,7 @@ struct IP_lsl: P {
 struct IP_lsr: P {
     void p(D d, Ops ops, I insn, A args) {
         SgAsmExpression *dst = NULL;
-        SValuePtr count;
+        SValue::Ptr count;
         if (1==args.size()) {
             assert_args(insn, args, 1);
             ASSERT_require(args[0]->get_nBits()==16);
@@ -2101,17 +2102,17 @@ struct IP_lsr: P {
 
         size_t nBits = dst->get_nBits();
         d->decrementRegisters(args[0]);
-        SValuePtr value = d->read(dst, nBits);
-        SValuePtr result = ops->shiftRight(value, count);
+        SValue::Ptr value = d->read(dst, nBits);
+        SValue::Ptr result = ops->shiftRight(value, count);
         d->write(dst, result);
         d->incrementRegisters(args[0]);
 
         // CCR_C bit is the final bit shifted off the right (or zero if the shift count is zero).
-        SValuePtr isCarry = ops->extract(ops->shiftRight(ops->concat(ops->number_(1, 0), value), count), 0, 1);
+        SValue::Ptr isCarry = ops->extract(ops->shiftRight(ops->concat(ops->number_(1, 0), value), count), 0, 1);
 
         // CCR_X bit is like CCR_C except unmodified if the shift count is zero.
-        SValuePtr ccr_x = ops->readRegister(d->REG_CCR_X);
-        SValuePtr xBit = ops->ite(ops->equalToZero(count), ccr_x, isCarry);
+        SValue::Ptr ccr_x = ops->readRegister(d->REG_CCR_X);
+        SValue::Ptr xBit = ops->ite(ops->equalToZero(count), ccr_x, isCarry);
 
         ops->writeRegister(d->REG_CCR_C, isCarry);
         ops->writeRegister(d->REG_CCR_V, ops->boolean_(false));
@@ -2143,30 +2144,29 @@ struct IP_mac: P {
             d->REG_MACSR_Z.isEmpty()  || d->REG_MACSR_V.isEmpty()  || d->REG_MACSR_C.isEmpty() ||
             d->REG_MAC_MASK.isEmpty() || d->REG_MACEXT0.isEmpty()  || d->REG_MACEXT1.isEmpty() ||
             d->REG_MACEXT2.isEmpty()  || d->REG_MACEXT3.isEmpty()) {
-            throw BaseSemantics::Exception("MAC registers are not available for " +
-                                           d->registerDictionary()->get_architecture_name(),
+            throw BaseSemantics::Exception("MAC registers are not available for " + d->registerDictionary()->name(),
                                            insn);
         }
         
         // Produce the product
-        SValuePtr ry = d->read(args[0], nBits);
-        SValuePtr rx = d->read(args[1], nBits);
-        SValuePtr product = ops->unsignedMultiply(ry, rx);
+        SValue::Ptr ry = d->read(args[0], nBits);
+        SValue::Ptr rx = d->read(args[1], nBits);
+        SValue::Ptr product = ops->unsignedMultiply(ry, rx);
 
         // Shift the product left or right if necessary
         // FIXME[Robb P. Matzke 2014-08-14]: this could be simplified since args[2] is always a constant
         size_t sfNBits = args[2]->get_nBits();
-        SValuePtr sf = d->read(args[2], sfNBits);
-        SValuePtr isSf1 = ops->equalToZero(ops->add(sf, ops->number_(sfNBits, -1)));
-        SValuePtr isSf3 = ops->equalToZero(ops->add(sf, ops->number_(sfNBits, -3)));
-        SValuePtr v1 = ops->ite(isSf3, ops->shiftRight(product, ops->number_(8, 1)), product);
+        SValue::Ptr sf = d->read(args[2], sfNBits);
+        SValue::Ptr isSf1 = ops->equalToZero(ops->add(sf, ops->number_(sfNBits, -1)));
+        SValue::Ptr isSf3 = ops->equalToZero(ops->add(sf, ops->number_(sfNBits, -3)));
+        SValue::Ptr v1 = ops->ite(isSf3, ops->shiftRight(product, ops->number_(8, 1)), product);
         product = ops->ite(isSf1, ops->shiftLeft(product, ops->number_(8, 1)), v1);
         ASSERT_require(product->nBits()==32 || product->nBits()==64);
 
         // MAC operational bits. I cannot find documentation that describes these bits adequately. In particular, does a 1 mean
         // signed or unsigned for the MACSR_SU bit; does a 1 mean fractional or integer mode for the MACSR_FI bit?
-        SValuePtr isSigned = ops->readRegister(d->REG_MACSR_SU);
-        SValuePtr isFrac = ops->readRegister(d->REG_MACSR_FI);
+        SValue::Ptr isSigned = ops->readRegister(d->REG_MACSR_SU);
+        SValue::Ptr isFrac = ops->readRegister(d->REG_MACSR_FI);
         
         // Load the accumulator
         SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(args[3]);
@@ -2184,38 +2184,38 @@ struct IP_mac: P {
                 ASSERT_not_reachable("invalid mac accumulator register: " +
                                      stringifyBinaryAnalysisM68kMacRegister(macAccReg.minorNumber()));
         }
-        SValuePtr macAcc = ops->readRegister(macAccReg);
-        SValuePtr macExt = ops->readRegister(macExtReg);
+        SValue::Ptr macAcc = ops->readRegister(macAccReg);
+        SValue::Ptr macExt = ops->readRegister(macExtReg);
         ASSERT_require(macAcc->nBits()==32);
         ASSERT_require(macExt->nBits()==16);
 
         // When the accumulator is operating in integer mode, the lower 40 bits of the shifted product is added to the
         // low-order 40 bits of the 48-bit (macExt|macAcc) concatenation.  The upper 8 bits of the concatenation are not
         // affected (at least according to the diagram on 1-10 of "ColdFire Family Programmer's Reference Manual, Rev 3").
-        SValuePtr productInt = ops->unsignedExtend(product, 40);
-        SValuePtr accInt = ops->concat(macAcc, macExt);
-        SValuePtr v2 = ops->extract(accInt, 40, 48);
-        SValuePtr newAccInt = ops->concat(ops->add(ops->unsignedExtend(accInt, 40), productInt), v2);
+        SValue::Ptr productInt = ops->unsignedExtend(product, 40);
+        SValue::Ptr accInt = ops->concat(macAcc, macExt);
+        SValue::Ptr v2 = ops->extract(accInt, 40, 48);
+        SValue::Ptr newAccInt = ops->concat(ops->add(ops->unsignedExtend(accInt, 40), productInt), v2);
         ASSERT_require(newAccInt->nBits()==48);
 
         // When the accumulator is operating in fractional mode, the upper 40 bits of the shifted product is extended to 48
         // bits (signed or unsigned depending on the MACSR register), and then added to the 48 bit accumulator. The 48 bit
         // accumulator is composed of (macExtHi|macAcc|macExtLo).
-        SValuePtr v3 = ops->unsignedExtend(ops->extract(ops->unsignedExtend(product, 64), 24, 64), 48);
-        SValuePtr productFrac = ops->ite(isSigned,
+        SValue::Ptr v3 = ops->unsignedExtend(ops->extract(ops->unsignedExtend(product, 64), 24, 64), 48);
+        SValue::Ptr productFrac = ops->ite(isSigned,
                                          ops->signExtend(ops->extract(ops->unsignedExtend(product, 64), 24, 64), 48),
                                          v3);
-        SValuePtr v4 = ops->concat(macAcc, ops->extract(macExt, 8, 16));
-        SValuePtr accFrac = ops->concat(ops->extract(macExt, 0, 8), v4);
-        SValuePtr newAccFrac = ops->add(accFrac, productFrac);
+        SValue::Ptr v4 = ops->concat(macAcc, ops->extract(macExt, 8, 16));
+        SValue::Ptr accFrac = ops->concat(ops->extract(macExt, 0, 8), v4);
+        SValue::Ptr newAccFrac = ops->add(accFrac, productFrac);
         ASSERT_require(newAccFrac->nBits()==48);
 
         // The new macAcc and macExt values
-        SValuePtr v5 = ops->unsignedExtend(newAccInt, 32);
-        SValuePtr newMacAcc = ops->ite(isFrac, ops->extract(newAccFrac, 8, 40), v5);
-        SValuePtr v6 = ops->extract(newAccInt, 32, 48);
-        SValuePtr v7 = ops->extract(newAccFrac, 40, 48);
-        SValuePtr newMacExt = ops->ite(isFrac, ops->concat(ops->unsignedExtend(newAccFrac, 8), v7), v6);
+        SValue::Ptr v5 = ops->unsignedExtend(newAccInt, 32);
+        SValue::Ptr newMacAcc = ops->ite(isFrac, ops->extract(newAccFrac, 8, 40), v5);
+        SValue::Ptr v6 = ops->extract(newAccInt, 32, 48);
+        SValue::Ptr v7 = ops->extract(newAccFrac, 40, 48);
+        SValue::Ptr newMacExt = ops->ite(isFrac, ops->concat(ops->unsignedExtend(newAccFrac, 8), v7), v6);
 
         if (7==args.size()) {
             // In parallel with multiply-accumulate above, load the <ea> argument (args[4]), optionally mask it with the MASK
@@ -2224,10 +2224,10 @@ struct IP_mac: P {
             ASSERT_require(args[4]->get_nBits()==32);
             ASSERT_require(args[6]->get_nBits()==32);
             d->decrementRegisters(args[4]);
-            SValuePtr toMove = d->read(args[4], 32);
+            SValue::Ptr toMove = d->read(args[4], 32);
             d->incrementRegisters(args[4]);
-            SValuePtr v8 = ops->number_(16, 0xffff);
-            SValuePtr v9 = ops->and_(toMove, ops->concat(ops->unsignedExtend(ops->readRegister(d->REG_MAC_MASK), 16), v8));
+            SValue::Ptr v8 = ops->number_(16, 0xffff);
+            SValue::Ptr v9 = ops->and_(toMove, ops->concat(ops->unsignedExtend(ops->readRegister(d->REG_MAC_MASK), 16), v8));
             toMove = ops->ite(ops->equalToZero(d->read(args[5], args[5]->get_nBits())),
                               toMove,                       // don't use the mask
                               v9);
@@ -2240,7 +2240,7 @@ struct IP_mac: P {
         ops->writeRegister(macExtReg, newMacExt);
 
         // Update MACSR indicator flags based on the accumulator's new value.
-        SValuePtr acc48 = ops->ite(isFrac, newAccFrac, newAccInt);
+        SValue::Ptr acc48 = ops->ite(isFrac, newAccFrac, newAccInt);
         ops->writeRegister(d->REG_MACSR_N, ops->extract(acc48, 47, 48));
         ops->writeRegister(d->REG_MACSR_Z, ops->equalToZero(acc48));
         ops->writeRegister(d->REG_MACSR_C, ops->boolean_(false));
@@ -2253,7 +2253,7 @@ struct IP_mov3q: P {
         assert_args(insn, args, 2);
         ASSERT_require2(args[0]->get_nBits()==32, "source should have already been sign extended to 32 bits");
         ASSERT_require(args[1]->get_nBits()==32);
-        SValuePtr result = d->read(args[0], 32);
+        SValue::Ptr result = d->read(args[0], 32);
         d->decrementRegisters(args[1]);
         d->write(args[1], result);
         d->incrementRegisters(args[1]);
@@ -2279,7 +2279,7 @@ struct IP_move: P {
         size_t nBits = args[0]->get_nBits();
         d->decrementRegisters(args[0]);
         d->decrementRegisters(args[1]);
-        SValuePtr result = d->read(args[0], nBits);
+        SValue::Ptr result = d->read(args[0], nBits);
         d->write(args[1], result);
         d->incrementRegisters(args[0]);
         d->incrementRegisters(args[1]);
@@ -2313,14 +2313,14 @@ struct IP_move_ccr: P {
         if (8==srcNBits && 16==dstNBits) {
             // MOVE.W CCR, <ea>
             d->decrementRegisters(args[1]);
-            SValuePtr src = ops->unsignedExtend(d->read(args[0], 8), 16);
+            SValue::Ptr src = ops->unsignedExtend(d->read(args[0], 8), 16);
             d->write(args[1], src);
             d->incrementRegisters(args[1]);
         } else {
             // MOVE.B <ea>, CCR  (truncates <ea> to eight bits)
             ASSERT_require(8==dstNBits);
             d->decrementRegisters(args[0]);
-            SValuePtr src = ops->unsignedExtend(d->read(args[0], srcNBits), 8);
+            SValue::Ptr src = ops->unsignedExtend(d->read(args[0], srcNBits), 8);
             d->write(args[1], src);
             d->incrementRegisters(args[0]);
         }
@@ -2349,7 +2349,7 @@ struct IP_move_no_ccr: P {
         size_t nBits = args[0]->get_nBits();
         d->decrementRegisters(args[0]);
         d->decrementRegisters(args[1]);
-        SValuePtr result = d->read(args[0], nBits);
+        SValue::Ptr result = d->read(args[0], nBits);
         d->write(args[1], result);
         d->incrementRegisters(args[0]);
         d->incrementRegisters(args[1]);
@@ -2400,7 +2400,7 @@ struct IP_movem: P {
         // Get the memory address.  The register-to-memory mode might use a pre-decrementing register, and the
         // memory-to-register mode might use a post-incrementing register.  In either case we need to control when the
         // decrement or increment happens and how often.
-        SValuePtr firstAddr;                                 // first memory address accessed
+        SValue::Ptr firstAddr;                                 // first memory address accessed
         RegisterDescriptor autoAdjust;                  // register that needs to be adjusted
         if (SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(mre->get_address())) {
             firstAddr = ops->readRegister(rre->get_descriptor());
@@ -2423,8 +2423,8 @@ struct IP_movem: P {
                 ops->writeRegister(autoAdjust, ops->subtract(firstAddr, ops->number_(32, nTransfers*bytesPerTransfer)));
                 const SgAsmRegisterReferenceExpressionPtrList &regs = isSgAsmRegisterNames(regList)->get_registers();
                 for (size_t i=0; i<regs.size(); ++i) {
-                    SValuePtr value = ops->unsignedExtend(d->read(regs[regs.size()-(i+1)], 32), nBits);
-                    SValuePtr addr = ops->subtract(firstAddr, ops->number_(32, (i+1)*bytesPerTransfer));
+                    SValue::Ptr value = ops->unsignedExtend(d->read(regs[regs.size()-(i+1)], 32), nBits);
+                    SValue::Ptr addr = ops->subtract(firstAddr, ops->number_(32, (i+1)*bytesPerTransfer));
                     ops->writeMemory(RegisterDescriptor(), addr, value, ops->boolean_(true));
                 }
             } else {
@@ -2432,8 +2432,8 @@ struct IP_movem: P {
                 // copied from D0-D7, A0-A7 so that D0 is at the lowest (starting) address.
                 const SgAsmRegisterReferenceExpressionPtrList &regs = isSgAsmRegisterNames(regList)->get_registers();
                 for (size_t i=0; i<regs.size(); ++i) {
-                    SValuePtr value = ops->unsignedExtend(d->read(regs[i], 32), nBits);
-                    SValuePtr addr = ops->add(firstAddr, ops->number_(32, i*bytesPerTransfer));
+                    SValue::Ptr value = ops->unsignedExtend(d->read(regs[i], 32), nBits);
+                    SValue::Ptr addr = ops->add(firstAddr, ops->number_(32, i*bytesPerTransfer));
                     ops->writeMemory(RegisterDescriptor(), addr, value, ops->boolean_(true));
                 }
             }
@@ -2444,9 +2444,9 @@ struct IP_movem: P {
                 // read from memory.
                 const SgAsmRegisterReferenceExpressionPtrList &regs = isSgAsmRegisterNames(regList)->get_registers();
                 for (size_t i=0; i<regs.size(); ++i) {
-                    SValuePtr addr = ops->add(firstAddr, ops->number_(32, i*bytesPerTransfer));
-                    SValuePtr yes = ops->boolean_(true);
-                    SValuePtr value = ops->signExtend(ops->readMemory(RegisterDescriptor(), addr, ops->undefined_(32), yes),
+                    SValue::Ptr addr = ops->add(firstAddr, ops->number_(32, i*bytesPerTransfer));
+                    SValue::Ptr yes = ops->boolean_(true);
+                    SValue::Ptr value = ops->signExtend(ops->readMemory(RegisterDescriptor(), addr, ops->undefined_(32), yes),
                                                       32);
                     d->write(regs[i], value);
                 }
@@ -2456,9 +2456,9 @@ struct IP_movem: P {
                 // (starting) address. The address register is not auto-incremented.
                 const SgAsmRegisterReferenceExpressionPtrList &regs = isSgAsmRegisterNames(regList)->get_registers();
                 for (size_t i=0; i<regs.size(); ++i) {
-                    SValuePtr addr = ops->add(firstAddr, ops->number_(32, i*bytesPerTransfer));
-                    SValuePtr yes = ops->boolean_(true);
-                    SValuePtr value = ops->signExtend(ops->readMemory(RegisterDescriptor(), addr, ops->undefined_(32), yes),
+                    SValue::Ptr addr = ops->add(firstAddr, ops->number_(32, i*bytesPerTransfer));
+                    SValue::Ptr yes = ops->boolean_(true);
+                    SValue::Ptr value = ops->signExtend(ops->readMemory(RegisterDescriptor(), addr, ops->undefined_(32), yes),
                                                       32);
                     d->write(regs[i], value);
                 }
@@ -2479,7 +2479,7 @@ struct IP_moveq: P {
         assert_args(insn, args, 2);
         ASSERT_require2(args[0]->get_nBits()==32, "should have been sign extended to 32 bits by the disassembler");
         ASSERT_require(args[1]->get_nBits()==32);
-        SValuePtr result = d->read(args[0], 32);
+        SValue::Ptr result = d->read(args[0], 32);
         d->write(args[1], result);
 
         ops->writeRegister(d->REG_CCR_C, ops->boolean_(false));
@@ -2498,24 +2498,24 @@ struct IP_msac: P {
 
 struct IP_muls: P {
     void p(D d, Ops ops, I insn, A args) {
-        SValuePtr result;
-        SValuePtr isOverflow;
+        SValue::Ptr result;
+        SValue::Ptr isOverflow;
         if (2==args.size()) {
             // a0[32] x a1[32] -> a1[32]
             assert_args(insn, args, 2);
             ASSERT_require(args[0]->get_nBits()==32);
             ASSERT_require(args[1]->get_nBits()==32);
             d->decrementRegisters(args[0]);
-            SValuePtr a0 = d->read(args[0], 32);
-            SValuePtr a1 = d->read(args[1], 32);
-            SValuePtr tmp = ops->signedMultiply(a0, a1);
+            SValue::Ptr a0 = d->read(args[0], 32);
+            SValue::Ptr a1 = d->read(args[1], 32);
+            SValue::Ptr tmp = ops->signedMultiply(a0, a1);
             result = ops->unsignedExtend(tmp, 32);
             d->write(args[1], result);
             d->incrementRegisters(args[0]);
 
             // Overflow occurs when the high-order 32 bits of the 64-bit result are not equal to the high-order 32 bits of the
             // sign-extended 32-bit result.
-            SValuePtr v1 = ops->extract(ops->signExtend(result, 64), 32, 64);
+            SValue::Ptr v1 = ops->extract(ops->signExtend(result, 64), 32, 64);
             isOverflow = ops->invert(ops->equalToZero(ops->xor_(ops->extract(tmp, 32, 64), v1)));
         } else if (3==args.size() && 16==args[0]->get_nBits()) {
             // a0[16] x a1[16] -> a2[32]  (a1 and a2 are different parts of the same physical register)
@@ -2524,8 +2524,8 @@ struct IP_muls: P {
             ASSERT_require(args[1]->get_nBits()==16);
             ASSERT_require(args[2]->get_nBits()==32);
             d->decrementRegisters(args[0]);
-            SValuePtr a0 = d->read(args[0], 16);
-            SValuePtr a1 = d->read(args[1], 16);
+            SValue::Ptr a0 = d->read(args[0], 16);
+            SValue::Ptr a1 = d->read(args[1], 16);
             result = ops->signedMultiply(a0, a1);
             d->write(args[2], result);
             d->incrementRegisters(args[0]);
@@ -2537,8 +2537,8 @@ struct IP_muls: P {
             ASSERT_require(args[1]->get_nBits()==32);
             ASSERT_require(args[2]->get_nBits()==32);
             d->decrementRegisters(args[0]);
-            SValuePtr a0 = d->read(args[0], 32);
-            SValuePtr a1 = d->read(args[1], 32);
+            SValue::Ptr a0 = d->read(args[0], 32);
+            SValue::Ptr a1 = d->read(args[1], 32);
             result = ops->signedMultiply(a0, a1);
             d->write(args[1], ops->unsignedExtend(result, 32));
             d->write(args[2], ops->extract(result, 32, 64));
@@ -2556,17 +2556,17 @@ struct IP_muls: P {
 
 struct IP_mulu: P {
     void p(D d, Ops ops, I insn, A args) {
-        SValuePtr result;
-        SValuePtr isOverflow;
+        SValue::Ptr result;
+        SValue::Ptr isOverflow;
         if (2==args.size()) {
             // a0[32] x a1[32] -> a1[32]
             assert_args(insn, args, 2);
             ASSERT_require(args[0]->get_nBits()==32);
             ASSERT_require(args[1]->get_nBits()==32);
             d->decrementRegisters(args[0]);
-            SValuePtr a0 = d->read(args[0], 32);
-            SValuePtr a1 = d->read(args[1], 32);
-            SValuePtr tmp = ops->unsignedMultiply(a0, a1);
+            SValue::Ptr a0 = d->read(args[0], 32);
+            SValue::Ptr a1 = d->read(args[1], 32);
+            SValue::Ptr tmp = ops->unsignedMultiply(a0, a1);
             result = ops->unsignedExtend(tmp, 32);
             d->write(args[1], result);
             d->incrementRegisters(args[0]);
@@ -2578,8 +2578,8 @@ struct IP_mulu: P {
             ASSERT_require(args[1]->get_nBits()==16);
             ASSERT_require(args[2]->get_nBits()==32);
             d->decrementRegisters(args[0]);
-            SValuePtr a0 = d->read(args[0], 16);
-            SValuePtr a1 = d->read(args[1], 16);
+            SValue::Ptr a0 = d->read(args[0], 16);
+            SValue::Ptr a1 = d->read(args[1], 16);
             result = ops->unsignedMultiply(a0, a1);
             d->write(args[2], result);
             d->incrementRegisters(args[0]);
@@ -2591,8 +2591,8 @@ struct IP_mulu: P {
             ASSERT_require(args[1]->get_nBits()==32);
             ASSERT_require(args[2]->get_nBits()==32);
             d->decrementRegisters(args[0]);
-            SValuePtr a0 = d->read(args[0], 32);
-            SValuePtr a1 = d->read(args[1], 32);
+            SValue::Ptr a0 = d->read(args[0], 32);
+            SValue::Ptr a1 = d->read(args[1], 32);
             result = ops->unsignedMultiply(a0, a1);
             d->write(args[1], ops->unsignedExtend(result, 32));
             d->write(args[2], ops->extract(result, 32, 64));
@@ -2615,9 +2615,9 @@ struct IP_mvs: P {
         ASSERT_require(args[1]->get_nBits() == 32);
         size_t nBits = args[0]->get_nBits();
         d->decrementRegisters(args[0]);
-        SValuePtr a0 = d->read(args[0], nBits);
+        SValue::Ptr a0 = d->read(args[0], nBits);
         d->incrementRegisters(args[0]);
-        SValuePtr result = ops->signExtend(a0, 32);
+        SValue::Ptr result = ops->signExtend(a0, 32);
         d->write(args[1], result);
 
         ops->writeRegister(d->REG_CCR_C, ops->boolean_(false));
@@ -2634,9 +2634,9 @@ struct IP_mvz: P {
         ASSERT_require(args[1]->get_nBits() == 32);
         size_t nBits = args[0]->get_nBits();
         d->decrementRegisters(args[0]);
-        SValuePtr a0 = d->read(args[0], nBits);
+        SValue::Ptr a0 = d->read(args[0], nBits);
         d->incrementRegisters(args[0]);
-        SValuePtr result = ops->unsignedExtend(a0, 32);
+        SValue::Ptr result = ops->unsignedExtend(a0, 32);
         d->write(args[1], result);
 
         ops->writeRegister(d->REG_CCR_C, ops->boolean_(false));
@@ -2658,15 +2658,15 @@ struct IP_neg: P {
         assert_args(insn, args, 1);
         size_t nBits = args[0]->get_nBits();
         d->decrementRegisters(args[0]);
-        SValuePtr a0 = d->read(args[0], nBits);
-        SValuePtr result = ops->negate(a0);
+        SValue::Ptr a0 = d->read(args[0], nBits);
+        SValue::Ptr result = ops->negate(a0);
         d->write(args[0], result);
         d->incrementRegisters(args[0]);
 
-        SValuePtr dm = ops->extract(a0, nBits-1, nBits);
-        SValuePtr rm = ops->extract(result, nBits-1, nBits);
-        SValuePtr isOverflow = ops->and_(dm, rm);
-        SValuePtr isCarry = ops->or_(dm, rm);
+        SValue::Ptr dm = ops->extract(a0, nBits-1, nBits);
+        SValue::Ptr rm = ops->extract(result, nBits-1, nBits);
+        SValue::Ptr isOverflow = ops->and_(dm, rm);
+        SValue::Ptr isCarry = ops->or_(dm, rm);
 
         ops->writeRegister(d->REG_CCR_C, isCarry);
         ops->writeRegister(d->REG_CCR_V, isOverflow);
@@ -2681,23 +2681,23 @@ struct IP_negx: P {
         assert_args(insn, args, 1);
         size_t nBits = args[0]->get_nBits();
         d->decrementRegisters(args[0]);
-        SValuePtr a0 = d->read(args[0], nBits);
-        SValuePtr x = ops->readRegister(d->REG_CCR_X);
-        SValuePtr result = ops->negate(ops->add(a0, ops->unsignedExtend(x, nBits)));
+        SValue::Ptr a0 = d->read(args[0], nBits);
+        SValue::Ptr x = ops->readRegister(d->REG_CCR_X);
+        SValue::Ptr result = ops->negate(ops->add(a0, ops->unsignedExtend(x, nBits)));
         d->write(args[0], result);
         d->incrementRegisters(args[0]);
 
-        SValuePtr dm = ops->extract(a0, nBits-1, nBits);
-        SValuePtr rm = ops->extract(result, nBits-1, nBits);
-        SValuePtr isNegative = rm;
-        SValuePtr isOverflow = ops->and_(dm, rm);
-        SValuePtr isCarry = ops->or_(dm, rm);
+        SValue::Ptr dm = ops->extract(a0, nBits-1, nBits);
+        SValue::Ptr rm = ops->extract(result, nBits-1, nBits);
+        SValue::Ptr isNegative = rm;
+        SValue::Ptr isOverflow = ops->and_(dm, rm);
+        SValue::Ptr isCarry = ops->or_(dm, rm);
 
         // Note that the Z bit behaves differently for this instruction than normal.  If the result is non-zero then the Z bit
         // is cleared, otherwise it is unchanged.
-        SValuePtr no = ops->boolean_(false);
-        SValuePtr ccr_z = ops->readRegister(d->REG_CCR_Z);
-        SValuePtr isZero = ops->ite(ops->equalToZero(result), ccr_z, no);
+        SValue::Ptr no = ops->boolean_(false);
+        SValue::Ptr ccr_z = ops->readRegister(d->REG_CCR_Z);
+        SValue::Ptr isZero = ops->ite(ops->equalToZero(result), ccr_z, no);
 
         ops->writeRegister(d->REG_CCR_C, isCarry);
         ops->writeRegister(d->REG_CCR_V, isOverflow);
@@ -2718,8 +2718,8 @@ struct IP_not: P {
         assert_args(insn, args, 1);
         size_t nBits = args[0]->get_nBits();
         d->decrementRegisters(args[0]);
-        SValuePtr a0 = d->read(args[0], nBits);
-        SValuePtr result = ops->invert(a0);
+        SValue::Ptr a0 = d->read(args[0], nBits);
+        SValue::Ptr result = ops->invert(a0);
         d->write(args[0], result);
         d->incrementRegisters(args[0]);
 
@@ -2736,9 +2736,9 @@ struct IP_or: P {
         ASSERT_require(args[0]->get_nBits() == args[1]->get_nBits());
         size_t nBits = args[0]->get_nBits();
         d->decrementRegisters(args[1]);
-        SValuePtr a0 = d->read(args[0], nBits);
-        SValuePtr a1 = d->read(args[1], nBits);
-        SValuePtr result = ops->or_(a0, a1);
+        SValue::Ptr a0 = d->read(args[0], nBits);
+        SValue::Ptr a1 = d->read(args[1], nBits);
+        SValue::Ptr result = ops->or_(a0, a1);
         d->write(args[1], result);
         d->incrementRegisters(args[1]);
 
@@ -2755,9 +2755,9 @@ struct IP_ori: P {
         ASSERT_require(args[0]->get_nBits() == args[1]->get_nBits());
         size_t nBits = args[0]->get_nBits();
         d->decrementRegisters(args[1]);
-        SValuePtr a0 = d->read(args[0], nBits);
-        SValuePtr a1 = d->read(args[1], nBits);
-        SValuePtr result = ops->or_(a0, a1);
+        SValue::Ptr a0 = d->read(args[0], nBits);
+        SValue::Ptr a1 = d->read(args[1], nBits);
+        SValue::Ptr result = ops->or_(a0, a1);
         d->write(args[1], result);
         d->incrementRegisters(args[1]);
 
@@ -2780,11 +2780,11 @@ struct IP_pea: P {
         assert_args(insn, args, 1);
         ASSERT_require(args[0]->get_nBits()==32);
         ASSERT_require(isSgAsmMemoryReferenceExpression(args[0]));
-        SValuePtr negFour = ops->number_(32, -4);
-        SValuePtr newSp = ops->add(ops->readRegister(d->REG_A[7]), negFour);
+        SValue::Ptr negFour = ops->number_(32, -4);
+        SValue::Ptr newSp = ops->add(ops->readRegister(d->REG_A[7]), negFour);
         ops->writeRegister(d->REG_A[7], newSp);
         d->decrementRegisters(args[0]);
-        SValuePtr addr = d->read(isSgAsmMemoryReferenceExpression(args[0])->get_address(), 32);
+        SValue::Ptr addr = d->read(isSgAsmMemoryReferenceExpression(args[0])->get_address(), 32);
         d->incrementRegisters(args[0]);
         ops->writeMemory(RegisterDescriptor(), newSp, addr, ops->boolean_(true));
     }
@@ -2856,9 +2856,9 @@ struct IP_rtr: P {
 struct IP_rts: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
-        SValuePtr sp = ops->readRegister(d->REG_A[7]);
-        SValuePtr yes = ops->boolean_(true);
-        SValuePtr newPc = ops->readMemory(RegisterDescriptor(), sp, ops->undefined_(32), yes);
+        SValue::Ptr sp = ops->readRegister(d->REG_A[7]);
+        SValue::Ptr yes = ops->boolean_(true);
+        SValue::Ptr newPc = ops->readMemory(RegisterDescriptor(), sp, ops->undefined_(32), yes);
         ops->writeRegister(d->REG_PC, newPc);
         ops->writeRegister(d->REG_A[7], ops->add(sp, ops->number_(32, 4)));
     }
@@ -2894,8 +2894,8 @@ struct IP_shi: P {
         assert_args(insn, args, 1);
         size_t nBits = args[0]->get_nBits();
         d->decrementRegisters(args[0]);
-        SValuePtr cond = d->condition(insn->get_kind(), ops);
-        SValuePtr zero = ops->number_(nBits, 0);
+        SValue::Ptr cond = d->condition(insn->get_kind(), ops);
+        SValue::Ptr zero = ops->number_(nBits, 0);
         d->write(args[0], ops->ite(cond, ops->invert(zero), zero));
         d->incrementRegisters(args[0]);
     }
@@ -2906,8 +2906,8 @@ struct IP_sls: P {
         assert_args(insn, args, 1);
         size_t nBits = args[0]->get_nBits();
         d->decrementRegisters(args[0]);
-        SValuePtr cond = d->condition(insn->get_kind(), ops);
-        SValuePtr zero = ops->number_(nBits, 0);
+        SValue::Ptr cond = d->condition(insn->get_kind(), ops);
+        SValue::Ptr zero = ops->number_(nBits, 0);
         d->write(args[0], ops->ite(cond, ops->invert(zero), zero));
         d->incrementRegisters(args[0]);
     }
@@ -2918,8 +2918,8 @@ struct IP_scc: P {
         assert_args(insn, args, 1);
         size_t nBits = args[0]->get_nBits();
         d->decrementRegisters(args[0]);
-        SValuePtr cond = d->condition(insn->get_kind(), ops);
-        SValuePtr zero = ops->number_(nBits, 0);
+        SValue::Ptr cond = d->condition(insn->get_kind(), ops);
+        SValue::Ptr zero = ops->number_(nBits, 0);
         d->write(args[0], ops->ite(cond, ops->invert(zero), zero));
         d->incrementRegisters(args[0]);
     }
@@ -2930,8 +2930,8 @@ struct IP_scs: P {
         assert_args(insn, args, 1);
         size_t nBits = args[0]->get_nBits();
         d->decrementRegisters(args[0]);
-        SValuePtr cond = d->condition(insn->get_kind(), ops);
-        SValuePtr zero = ops->number_(nBits, 0);
+        SValue::Ptr cond = d->condition(insn->get_kind(), ops);
+        SValue::Ptr zero = ops->number_(nBits, 0);
         d->write(args[0], ops->ite(cond, ops->invert(zero), zero));
         d->incrementRegisters(args[0]);
     }
@@ -2942,8 +2942,8 @@ struct IP_sne: P {
         assert_args(insn, args, 1);
         size_t nBits = args[0]->get_nBits();
         d->decrementRegisters(args[0]);
-        SValuePtr cond = d->condition(insn->get_kind(), ops);
-        SValuePtr zero = ops->number_(nBits, 0);
+        SValue::Ptr cond = d->condition(insn->get_kind(), ops);
+        SValue::Ptr zero = ops->number_(nBits, 0);
         d->write(args[0], ops->ite(cond, ops->invert(zero), zero));
         d->incrementRegisters(args[0]);
     }
@@ -2954,8 +2954,8 @@ struct IP_seq: P {
         assert_args(insn, args, 1);
         size_t nBits = args[0]->get_nBits();
         d->decrementRegisters(args[0]);
-        SValuePtr cond = d->condition(insn->get_kind(), ops);
-        SValuePtr zero = ops->number_(nBits, 0);
+        SValue::Ptr cond = d->condition(insn->get_kind(), ops);
+        SValue::Ptr zero = ops->number_(nBits, 0);
         d->write(args[0], ops->ite(cond, ops->invert(zero), zero));
         d->incrementRegisters(args[0]);
     }
@@ -2966,8 +2966,8 @@ struct IP_svc: P {
         assert_args(insn, args, 1);
         size_t nBits = args[0]->get_nBits();
         d->decrementRegisters(args[0]);
-        SValuePtr cond = d->condition(insn->get_kind(), ops);
-        SValuePtr zero = ops->number_(nBits, 0);
+        SValue::Ptr cond = d->condition(insn->get_kind(), ops);
+        SValue::Ptr zero = ops->number_(nBits, 0);
         d->write(args[0], ops->ite(cond, ops->invert(zero), zero));
         d->incrementRegisters(args[0]);
     }
@@ -2978,8 +2978,8 @@ struct IP_svs: P {
         assert_args(insn, args, 1);
         size_t nBits = args[0]->get_nBits();
         d->decrementRegisters(args[0]);
-        SValuePtr cond = d->condition(insn->get_kind(), ops);
-        SValuePtr zero = ops->number_(nBits, 0);
+        SValue::Ptr cond = d->condition(insn->get_kind(), ops);
+        SValue::Ptr zero = ops->number_(nBits, 0);
         d->write(args[0], ops->ite(cond, ops->invert(zero), zero));
         d->incrementRegisters(args[0]);
     }
@@ -2990,8 +2990,8 @@ struct IP_spl: P {
         assert_args(insn, args, 1);
         size_t nBits = args[0]->get_nBits();
         d->decrementRegisters(args[0]);
-        SValuePtr cond = d->condition(insn->get_kind(), ops);
-        SValuePtr zero = ops->number_(nBits, 0);
+        SValue::Ptr cond = d->condition(insn->get_kind(), ops);
+        SValue::Ptr zero = ops->number_(nBits, 0);
         d->write(args[0], ops->ite(cond, ops->invert(zero), zero));
         d->incrementRegisters(args[0]);
     }
@@ -3002,8 +3002,8 @@ struct IP_smi: P {
         assert_args(insn, args, 1);
         size_t nBits = args[0]->get_nBits();
         d->decrementRegisters(args[0]);
-        SValuePtr cond = d->condition(insn->get_kind(), ops);
-        SValuePtr zero = ops->number_(nBits, 0);
+        SValue::Ptr cond = d->condition(insn->get_kind(), ops);
+        SValue::Ptr zero = ops->number_(nBits, 0);
         d->write(args[0], ops->ite(cond, ops->invert(zero), zero));
         d->incrementRegisters(args[0]);
     }
@@ -3014,8 +3014,8 @@ struct IP_sge: P {
         assert_args(insn, args, 1);
         size_t nBits = args[0]->get_nBits();
         d->decrementRegisters(args[0]);
-        SValuePtr cond = d->condition(insn->get_kind(), ops);
-        SValuePtr zero = ops->number_(nBits, 0);
+        SValue::Ptr cond = d->condition(insn->get_kind(), ops);
+        SValue::Ptr zero = ops->number_(nBits, 0);
         d->write(args[0], ops->ite(cond, ops->invert(zero), zero));
         d->incrementRegisters(args[0]);
     }
@@ -3026,8 +3026,8 @@ struct IP_slt: P {
         assert_args(insn, args, 1);
         size_t nBits = args[0]->get_nBits();
         d->decrementRegisters(args[0]);
-        SValuePtr cond = d->condition(insn->get_kind(), ops);
-        SValuePtr zero = ops->number_(nBits, 0);
+        SValue::Ptr cond = d->condition(insn->get_kind(), ops);
+        SValue::Ptr zero = ops->number_(nBits, 0);
         d->write(args[0], ops->ite(cond, ops->invert(zero), zero));
         d->incrementRegisters(args[0]);
     }
@@ -3038,8 +3038,8 @@ struct IP_sgt: P {
         assert_args(insn, args, 1);
         size_t nBits = args[0]->get_nBits();
         d->decrementRegisters(args[0]);
-        SValuePtr cond = d->condition(insn->get_kind(), ops);
-        SValuePtr zero = ops->number_(nBits, 0);
+        SValue::Ptr cond = d->condition(insn->get_kind(), ops);
+        SValue::Ptr zero = ops->number_(nBits, 0);
         d->write(args[0], ops->ite(cond, ops->invert(zero), zero));
         d->incrementRegisters(args[0]);
     }
@@ -3050,8 +3050,8 @@ struct IP_sle: P {
         assert_args(insn, args, 1);
         size_t nBits = args[0]->get_nBits();
         d->decrementRegisters(args[0]);
-        SValuePtr cond = d->condition(insn->get_kind(), ops);
-        SValuePtr zero = ops->number_(nBits, 0);
+        SValue::Ptr cond = d->condition(insn->get_kind(), ops);
+        SValue::Ptr zero = ops->number_(nBits, 0);
         d->write(args[0], ops->ite(cond, ops->invert(zero), zero));
         d->incrementRegisters(args[0]);
     }
@@ -3064,24 +3064,24 @@ struct IP_sub: P {
         size_t nBits = args[0]->get_nBits();
         d->decrementRegisters(args[0]);
         d->decrementRegisters(args[1]);
-        SValuePtr a0 = d->read(args[0], nBits);
-        SValuePtr a1 = d->read(args[1], nBits);
-        SValuePtr result = ops->add(a1, ops->negate(a0));
+        SValue::Ptr a0 = d->read(args[0], nBits);
+        SValue::Ptr a1 = d->read(args[1], nBits);
+        SValue::Ptr result = ops->add(a1, ops->negate(a0));
         d->write(args[1], result);
         d->incrementRegisters(args[0]);
         d->incrementRegisters(args[1]);
 
-        SValuePtr sm = ops->extract(a0, nBits-1, nBits);
-        SValuePtr dm = ops->extract(a1, nBits-1, nBits);
-        SValuePtr rm = ops->extract(result, nBits-1, nBits);
-        SValuePtr isNegative = rm;
-        SValuePtr isZero = ops->equalToZero(result);
-        SValuePtr v1 = ops->and_(sm, ops->and_(ops->invert(dm), rm));
-        SValuePtr v2 = ops->and_(dm, ops->invert(rm));
-        SValuePtr isOverflow = ops->or_(ops->and_(ops->invert(sm), v2), v1);
-        SValuePtr v3 = ops->and_(sm, rm);
-        SValuePtr v4 = ops->or_(ops->and_(rm, ops->invert(dm)), v3);
-        SValuePtr isCarry = ops->or_(ops->and_(sm, ops->invert(dm)), v4);
+        SValue::Ptr sm = ops->extract(a0, nBits-1, nBits);
+        SValue::Ptr dm = ops->extract(a1, nBits-1, nBits);
+        SValue::Ptr rm = ops->extract(result, nBits-1, nBits);
+        SValue::Ptr isNegative = rm;
+        SValue::Ptr isZero = ops->equalToZero(result);
+        SValue::Ptr v1 = ops->and_(sm, ops->and_(ops->invert(dm), rm));
+        SValue::Ptr v2 = ops->and_(dm, ops->invert(rm));
+        SValue::Ptr isOverflow = ops->or_(ops->and_(ops->invert(sm), v2), v1);
+        SValue::Ptr v3 = ops->and_(sm, rm);
+        SValue::Ptr v4 = ops->or_(ops->and_(rm, ops->invert(dm)), v3);
+        SValue::Ptr isCarry = ops->or_(ops->and_(sm, ops->invert(dm)), v4);
         ops->writeRegister(d->REG_CCR_C, isCarry);
         ops->writeRegister(d->REG_CCR_V, isOverflow);
         ops->writeRegister(d->REG_CCR_Z, isZero);
@@ -3096,9 +3096,9 @@ struct IP_suba: P {
         ASSERT_require(args[0]->get_nBits() <= 32);
         ASSERT_require(args[1]->get_nBits() == 32);
         d->decrementRegisters(args[0]);
-        SValuePtr subtrahend = ops->signExtend(d->read(args[0], args[0]->get_nBits()), 32);
-        SValuePtr minuend = d->read(args[1], 32);
-        SValuePtr difference = ops->add(minuend, ops->negate(subtrahend));
+        SValue::Ptr subtrahend = ops->signExtend(d->read(args[0], args[0]->get_nBits()), 32);
+        SValue::Ptr minuend = d->read(args[1], 32);
+        SValue::Ptr difference = ops->add(minuend, ops->negate(subtrahend));
         d->write(args[1], difference);
         d->incrementRegisters(args[0]);
     }
@@ -3110,23 +3110,23 @@ struct IP_subi: P {
         ASSERT_require(args[0]->get_nBits()==args[1]->get_nBits());
         size_t nBits = args[0]->get_nBits();
         d->decrementRegisters(args[1]);
-        SValuePtr a0 = d->read(args[0], nBits);
-        SValuePtr a1 = d->read(args[1], nBits);
-        SValuePtr result = ops->add(a1, ops->negate(a0));
+        SValue::Ptr a0 = d->read(args[0], nBits);
+        SValue::Ptr a1 = d->read(args[1], nBits);
+        SValue::Ptr result = ops->add(a1, ops->negate(a0));
         d->write(args[1], result);
         d->incrementRegisters(args[1]);
 
-        SValuePtr sm = ops->extract(a0, nBits-1, nBits);
-        SValuePtr dm = ops->extract(a1, nBits-1, nBits);
-        SValuePtr rm = ops->extract(result, nBits-1, nBits);
-        SValuePtr isNegative = rm;
-        SValuePtr isZero = ops->equalToZero(result);
-        SValuePtr v1 = ops->and_(sm, ops->and_(ops->invert(dm), rm));
-        SValuePtr v2 = ops->and_(dm, ops->invert(rm));
-        SValuePtr isOverflow = ops->or_(ops->and_(ops->invert(sm), v2), v1);
-        SValuePtr v3 = ops->and_(sm, rm);
-        SValuePtr v4 = ops->or_(ops->and_(rm, ops->invert(dm)), v3);
-        SValuePtr isCarry = ops->or_(ops->and_(sm, ops->invert(dm)), v4);
+        SValue::Ptr sm = ops->extract(a0, nBits-1, nBits);
+        SValue::Ptr dm = ops->extract(a1, nBits-1, nBits);
+        SValue::Ptr rm = ops->extract(result, nBits-1, nBits);
+        SValue::Ptr isNegative = rm;
+        SValue::Ptr isZero = ops->equalToZero(result);
+        SValue::Ptr v1 = ops->and_(sm, ops->and_(ops->invert(dm), rm));
+        SValue::Ptr v2 = ops->and_(dm, ops->invert(rm));
+        SValue::Ptr isOverflow = ops->or_(ops->and_(ops->invert(sm), v2), v1);
+        SValue::Ptr v3 = ops->and_(sm, rm);
+        SValue::Ptr v4 = ops->or_(ops->and_(rm, ops->invert(dm)), v3);
+        SValue::Ptr isCarry = ops->or_(ops->and_(sm, ops->invert(dm)), v4);
         ops->writeRegister(d->REG_CCR_C, isCarry);
         ops->writeRegister(d->REG_CCR_V, isOverflow);
         ops->writeRegister(d->REG_CCR_Z, isZero);
@@ -3141,23 +3141,23 @@ struct IP_subq: P {
         ASSERT_require(args[0]->get_nBits() == args[1]->get_nBits());
         size_t nBits = args[0]->get_nBits();
         d->decrementRegisters(args[1]);
-        SValuePtr a0 = d->read(args[0], nBits);
-        SValuePtr a1 = d->read(args[1], nBits);
-        SValuePtr result = ops->add(a1, ops->negate(a0));
+        SValue::Ptr a0 = d->read(args[0], nBits);
+        SValue::Ptr a1 = d->read(args[1], nBits);
+        SValue::Ptr result = ops->add(a1, ops->negate(a0));
         d->write(args[1], result);
         d->incrementRegisters(args[1]);
 
-        SValuePtr sm = ops->extract(a0, nBits-1, nBits);
-        SValuePtr dm = ops->extract(a1, nBits-1, nBits);
-        SValuePtr rm = ops->extract(result, nBits-1, nBits);
-        SValuePtr isNegative = rm;
-        SValuePtr isZero = ops->equalToZero(result);
-        SValuePtr v1 = ops->and_(sm, ops->and_(ops->invert(dm), rm));
-        SValuePtr v2 = ops->and_(dm, ops->invert(rm));
-        SValuePtr isOverflow = ops->or_(ops->and_(ops->invert(sm), v2), v1);
-        SValuePtr v3 = ops->and_(sm, rm);
-        SValuePtr v4 = ops->or_(ops->and_(rm, ops->invert(dm)), v3);
-        SValuePtr isCarry = ops->or_(ops->and_(sm, ops->invert(dm)), v4);
+        SValue::Ptr sm = ops->extract(a0, nBits-1, nBits);
+        SValue::Ptr dm = ops->extract(a1, nBits-1, nBits);
+        SValue::Ptr rm = ops->extract(result, nBits-1, nBits);
+        SValue::Ptr isNegative = rm;
+        SValue::Ptr isZero = ops->equalToZero(result);
+        SValue::Ptr v1 = ops->and_(sm, ops->and_(ops->invert(dm), rm));
+        SValue::Ptr v2 = ops->and_(dm, ops->invert(rm));
+        SValue::Ptr isOverflow = ops->or_(ops->and_(ops->invert(sm), v2), v1);
+        SValue::Ptr v3 = ops->and_(sm, rm);
+        SValue::Ptr v4 = ops->or_(ops->and_(rm, ops->invert(dm)), v3);
+        SValue::Ptr isCarry = ops->or_(ops->and_(sm, ops->invert(dm)), v4);
         ops->writeRegister(d->REG_CCR_C, isCarry);
         ops->writeRegister(d->REG_CCR_V, isOverflow);
         ops->writeRegister(d->REG_CCR_Z, isZero);
@@ -3173,30 +3173,30 @@ struct IP_subx: P {
         size_t nBits = args[0]->get_nBits();
         d->decrementRegisters(args[0]);
         d->decrementRegisters(args[1]);
-        SValuePtr a0 = d->read(args[0], nBits);
-        SValuePtr a1 = d->read(args[1], nBits);
-        SValuePtr x = ops->readRegister(d->REG_CCR_X);
-        SValuePtr result = ops->add(a1, ops->negate(ops->add(a0, ops->unsignedExtend(x, nBits))));
+        SValue::Ptr a0 = d->read(args[0], nBits);
+        SValue::Ptr a1 = d->read(args[1], nBits);
+        SValue::Ptr x = ops->readRegister(d->REG_CCR_X);
+        SValue::Ptr result = ops->add(a1, ops->negate(ops->add(a0, ops->unsignedExtend(x, nBits))));
         d->write(args[1], result);
         d->incrementRegisters(args[0]);
         d->incrementRegisters(args[1]);
 
-        SValuePtr sm = ops->extract(a0, nBits-1, nBits);
-        SValuePtr dm = ops->extract(a1, nBits-1, nBits);
-        SValuePtr rm = ops->extract(result, nBits-1, nBits);
-        SValuePtr isNegative = rm;
-        SValuePtr v1 = ops->and_(sm, ops->and_(ops->invert(dm), rm));
-        SValuePtr v2 = ops->and_(dm, ops->invert(rm));
-        SValuePtr isOverflow = ops->or_(ops->and_(ops->invert(sm), v2), v1);
-        SValuePtr v3 = ops->and_(sm, rm);
-        SValuePtr v4 = ops->or_(ops->and_(rm, ops->invert(dm)), v3);
-        SValuePtr isCarry = ops->or_(ops->and_(sm, ops->invert(dm)), v4);
+        SValue::Ptr sm = ops->extract(a0, nBits-1, nBits);
+        SValue::Ptr dm = ops->extract(a1, nBits-1, nBits);
+        SValue::Ptr rm = ops->extract(result, nBits-1, nBits);
+        SValue::Ptr isNegative = rm;
+        SValue::Ptr v1 = ops->and_(sm, ops->and_(ops->invert(dm), rm));
+        SValue::Ptr v2 = ops->and_(dm, ops->invert(rm));
+        SValue::Ptr isOverflow = ops->or_(ops->and_(ops->invert(sm), v2), v1);
+        SValue::Ptr v3 = ops->and_(sm, rm);
+        SValue::Ptr v4 = ops->or_(ops->and_(rm, ops->invert(dm)), v3);
+        SValue::Ptr isCarry = ops->or_(ops->and_(sm, ops->invert(dm)), v4);
 
         // Note that the Z bit behaves differently for this instruction than normal.  If the result is non-zero then the Z bit
         // is cleared, otherwise it is unchanged.
-        SValuePtr no = ops->boolean_(false);
-        SValuePtr ccr_z = ops->readRegister(d->REG_CCR_Z);
-        SValuePtr isZero = ops->ite(ops->equalToZero(result), ccr_z, no);
+        SValue::Ptr no = ops->boolean_(false);
+        SValue::Ptr ccr_z = ops->readRegister(d->REG_CCR_Z);
+        SValue::Ptr isZero = ops->ite(ops->equalToZero(result), ccr_z, no);
 
         ops->writeRegister(d->REG_CCR_C, isCarry);
         ops->writeRegister(d->REG_CCR_V, isOverflow);
@@ -3210,9 +3210,9 @@ struct IP_swap: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
         ASSERT_require(args[0]->get_nBits()==32);
-        SValuePtr a0 = d->read(args[0], 32);
-        SValuePtr v1 = ops->unsignedExtend(a0, 16);
-        SValuePtr result = ops->concat(ops->extract(a0, 16, 32), v1);
+        SValue::Ptr a0 = d->read(args[0], 32);
+        SValue::Ptr v1 = ops->unsignedExtend(a0, 16);
+        SValue::Ptr result = ops->concat(ops->extract(a0, 16, 32), v1);
         d->write(args[0], result);
 
         ops->writeRegister(d->REG_CCR_C, ops->boolean_(false));
@@ -3235,24 +3235,24 @@ struct IP_trap: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
         ops->writeRegister(d->REG_SR_S, ops->boolean_(true));
-        SValuePtr origSsp = ops->readRegister(d->REG_SSP);
+        SValue::Ptr origSsp = ops->readRegister(d->REG_SSP);
 
-        SValuePtr ssp = ops->add(origSsp, ops->number_(32, -4));
-        SValuePtr nextInsnAddr = ops->number_(32, insn->get_address() + insn->get_size());
-        SValuePtr yes = ops->boolean_(true);
+        SValue::Ptr ssp = ops->add(origSsp, ops->number_(32, -4));
+        SValue::Ptr nextInsnAddr = ops->number_(32, insn->get_address() + insn->get_size());
+        SValue::Ptr yes = ops->boolean_(true);
         ops->writeMemory(RegisterDescriptor(), ssp, nextInsnAddr, yes);
 
         ssp = ops->add(origSsp, ops->number_(32, -6));
         ops->writeMemory(RegisterDescriptor(), ssp, ops->readRegister(d->REG_SR), yes);
 
         ssp = ops->add(origSsp, ops->number_(32, -8));
-        SValuePtr formatOffset = ops->undefined_(16);   // FIXME[Robb P. Matzke 2014-07-28]: where is this documented?
+        SValue::Ptr formatOffset = ops->undefined_(16);   // FIXME[Robb P. Matzke 2014-07-28]: where is this documented?
         ops->writeMemory(RegisterDescriptor(), ssp, formatOffset, yes);
 
-        SValuePtr vectorNumber = d->read(args[0], args[0]->get_nBits());
-        SValuePtr v1 = ops->unsignedExtend(ops->unsignedMultiply(ops->number_(32, 4), vectorNumber), 32);
-        SValuePtr v2 = ops->add(ops->number_(32, 0x80), v1);
-        SValuePtr vectorAddr = ops->add(ops->readRegister(d->REG_VBR), v2);
+        SValue::Ptr vectorNumber = d->read(args[0], args[0]->get_nBits());
+        SValue::Ptr v1 = ops->unsignedExtend(ops->unsignedMultiply(ops->number_(32, 4), vectorNumber), 32);
+        SValue::Ptr v2 = ops->add(ops->number_(32, 0x80), v1);
+        SValue::Ptr vectorAddr = ops->add(ops->readRegister(d->REG_VBR), v2);
         ops->writeRegister(d->REG_PC, vectorAddr);
 
         ops->writeRegister(d->REG_SSP, ops->add(origSsp, ops->number_(32, -8)));
@@ -3446,7 +3446,7 @@ struct IP_tst: P {
         assert_args(insn, args, 1);
         size_t nBits = args[0]->get_nBits();
         d->decrementRegisters(args[0]);
-        SValuePtr result = d->read(args[0], nBits);
+        SValue::Ptr result = d->read(args[0], nBits);
         d->incrementRegisters(args[0]);
 
         ops->writeRegister(d->REG_CCR_C, ops->boolean_(false));
@@ -3460,9 +3460,9 @@ struct IP_unlk: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
         ASSERT_require(args[0]->get_nBits() == 32);
-        SValuePtr a0 = d->read(args[0], 32);
+        SValue::Ptr a0 = d->read(args[0], 32);
         ops->writeRegister(d->REG_A[7], a0);
-        SValuePtr yes = ops->boolean_(true);
+        SValue::Ptr yes = ops->boolean_(true);
         d->write(args[0], ops->readMemory(RegisterDescriptor(), a0, ops->undefined_(32), yes));
         ops->writeRegister(d->REG_A[7], ops->add(a0, ops->number_(32, 4)));
     }
@@ -3480,6 +3480,46 @@ struct IP_unpk: P {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      DispatcherM68k
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DispatcherM68k::DispatcherM68k()
+    : BaseSemantics::Dispatcher(32, RegisterDictionary::instanceColdfireEmac()) {}
+
+
+DispatcherM68k::~DispatcherM68k() {}
+
+DispatcherM68k::DispatcherM68k(const BaseSemantics::RiscOperators::Ptr &ops, size_t addrWidth, const RegisterDictionary::Ptr &regs)
+    : BaseSemantics::Dispatcher(ops, addrWidth, regs ? regs : RegisterDictionary::instanceColdfireEmac()) {
+    ASSERT_require(32==addrWidth);
+    regcache_init();
+    iproc_init();
+    memory_init();
+    initializeState(ops->currentState());
+}
+
+DispatcherM68k::Ptr
+DispatcherM68k::instance() {
+    return Ptr(new DispatcherM68k);
+}
+
+DispatcherM68k::Ptr
+DispatcherM68k::instance(const BaseSemantics::RiscOperators::Ptr &ops, size_t addrWidth,
+                         const RegisterDictionary::Ptr &regs) {
+    return Ptr(new DispatcherM68k(ops, addrWidth, regs));
+}
+
+BaseSemantics::Dispatcher::Ptr
+DispatcherM68k::create(const BaseSemantics::RiscOperators::Ptr &ops, size_t addrWidth, const RegisterDictionary::Ptr &regs) const {
+    if (0 == addrWidth)
+        addrWidth = addressWidth();
+    return instance(ops, addrWidth, regs ? regs : registerDictionary());
+}
+
+DispatcherM68k::Ptr
+DispatcherM68k::promote(const BaseSemantics::Dispatcher::Ptr &d) {
+    Ptr retval = boost::dynamic_pointer_cast<DispatcherM68k>(d);
+    ASSERT_not_null(retval);
+    return retval;
+}
 
 void
 DispatcherM68k::iproc_init() {
@@ -3778,8 +3818,8 @@ DispatcherM68k::regcache_init() {
 
 void
 DispatcherM68k::memory_init() {
-    if (BaseSemantics::StatePtr state = currentState()) {
-        if (BaseSemantics::MemoryStatePtr memory = state->memoryState()) {
+    if (BaseSemantics::State::Ptr state = currentState()) {
+        if (BaseSemantics::MemoryState::Ptr memory = state->memoryState()) {
             switch (memory->get_byteOrder()) {
                 case ByteOrder::ORDER_LSB:
                     mlog[WARN] <<"m68k memory state is using little-endian byte order\n";
@@ -3815,22 +3855,22 @@ DispatcherM68k::callReturnRegister() const {
 }
 
 void
-DispatcherM68k::set_register_dictionary(const RegisterDictionary *regdict) {
+DispatcherM68k::set_register_dictionary(const RegisterDictionary::Ptr &regdict) {
     BaseSemantics::Dispatcher::set_register_dictionary(regdict);
     regcache_init();
 }
 
-SValuePtr
+SValue::Ptr
 DispatcherM68k::condition(M68kInstructionKind kind, RiscOperators *ops) {
     switch (kind) {
         case m68k_bhi:
         case m68k_shi: {
-            SValuePtr v1 = ops->invert(ops->readRegister(REG_CCR_Z));
+            SValue::Ptr v1 = ops->invert(ops->readRegister(REG_CCR_Z));
             return ops->and_(ops->invert(ops->readRegister(REG_CCR_C)), v1);
         }
         case m68k_bls:
         case m68k_sls: {
-            SValuePtr v1 = ops->readRegister(REG_CCR_Z);
+            SValue::Ptr v1 = ops->readRegister(REG_CCR_Z);
             return ops->or_(ops->readRegister(REG_CCR_C), v1);
         }
         case m68k_bcc:
@@ -3863,34 +3903,34 @@ DispatcherM68k::condition(M68kInstructionKind kind, RiscOperators *ops) {
             return ops->readRegister(REG_CCR_N);
         case m68k_bge:
         case m68k_sge: {
-            SValuePtr n = ops->readRegister(REG_CCR_N);
-            SValuePtr v = ops->readRegister(REG_CCR_V);
-            SValuePtr notV = ops->invert(v);
-            SValuePtr x = ops->and_(ops->invert(n), notV);
+            SValue::Ptr n = ops->readRegister(REG_CCR_N);
+            SValue::Ptr v = ops->readRegister(REG_CCR_V);
+            SValue::Ptr notV = ops->invert(v);
+            SValue::Ptr x = ops->and_(ops->invert(n), notV);
             return ops->or_(ops->and_(n, v), x);
         }
         case m68k_blt:
         case m68k_slt: {
-            SValuePtr n = ops->readRegister(REG_CCR_N);
-            SValuePtr v = ops->readRegister(REG_CCR_V);
-            SValuePtr x = ops->and_(ops->invert(n), v);
+            SValue::Ptr n = ops->readRegister(REG_CCR_N);
+            SValue::Ptr v = ops->readRegister(REG_CCR_V);
+            SValue::Ptr x = ops->and_(ops->invert(n), v);
             return ops->or_(ops->and_(n, ops->invert(v)), x);
         }
         case m68k_bgt:
         case m68k_sgt: {
-            SValuePtr n = ops->readRegister(REG_CCR_N);
-            SValuePtr v = ops->readRegister(REG_CCR_V);
-            SValuePtr nz = ops->invert(ops->readRegister(REG_CCR_Z));
-            SValuePtr notV = ops->invert(v);
-            SValuePtr x = ops->and_(nz, ops->and_(ops->invert(n), notV));
+            SValue::Ptr n = ops->readRegister(REG_CCR_N);
+            SValue::Ptr v = ops->readRegister(REG_CCR_V);
+            SValue::Ptr nz = ops->invert(ops->readRegister(REG_CCR_Z));
+            SValue::Ptr notV = ops->invert(v);
+            SValue::Ptr x = ops->and_(nz, ops->and_(ops->invert(n), notV));
             return ops->or_(ops->and_(nz, ops->and_(n, v)), x);
         }
         case m68k_ble:
         case m68k_sle: {
-            SValuePtr n = ops->readRegister(REG_CCR_N);
-            SValuePtr v = ops->readRegister(REG_CCR_V);
-            SValuePtr z = ops->readRegister(REG_CCR_Z);
-            SValuePtr x = ops->and_(ops->invert(n), v);
+            SValue::Ptr n = ops->readRegister(REG_CCR_N);
+            SValue::Ptr v = ops->readRegister(REG_CCR_V);
+            SValue::Ptr z = ops->readRegister(REG_CCR_Z);
+            SValue::Ptr x = ops->and_(ops->invert(n), v);
             return ops->or_(z, ops->or_(ops->and_(n, ops->invert(v)), x));
         }
         default:
@@ -3901,10 +3941,10 @@ DispatcherM68k::condition(M68kInstructionKind kind, RiscOperators *ops) {
 
 // Override Dispatcher::read so that if we read the PC register we get the address of the current instruction plus 2.  See
 // the note in M68k::P::process()
-BaseSemantics::SValuePtr
+BaseSemantics::SValue::Ptr
 DispatcherM68k::read(SgAsmExpression *e, size_t value_nbits, size_t addr_nbits/*=0*/) {
     ASSERT_not_null(e);
-    SValuePtr retval;
+    SValue::Ptr retval;
     if (SgAsmDirectRegisterExpression *re = isSgAsmDirectRegisterExpression(e)) {
         static const RegisterDescriptor REG_PC(m68k_regclass_spr, m68k_spr_pc, 0, 32);
         if (re->get_descriptor() == REG_PC) {
@@ -3918,7 +3958,7 @@ DispatcherM68k::read(SgAsmExpression *e, size_t value_nbits, size_t addr_nbits/*
 
 
 void
-DispatcherM68k::updateFpsrExcInan(const SValuePtr &a, SgAsmType *aType, const SValuePtr &b, SgAsmType *bType) {
+DispatcherM68k::updateFpsrExcInan(const SValue::Ptr &a, SgAsmType *aType, const SValue::Ptr &b, SgAsmType *bType) {
     // Set FPSR EXC INAN bit if either argument is nan; cleared otherwise.
     ASSERT_not_null(a);
     ASSERT_not_null(aType);
@@ -3928,26 +3968,26 @@ DispatcherM68k::updateFpsrExcInan(const SValuePtr &a, SgAsmType *aType, const SV
     ASSERT_require(b->nBits() == bType->get_nBits());
 
 
-    SValuePtr aIsNan;
+    SValue::Ptr aIsNan;
     if (SgAsmFloatType *aFpType = isSgAsmFloatType(aType)) {
         aIsNan = operators()->fpIsNan(a, aFpType);
     } else {
         aIsNan = operators()->boolean_(false);
     }
 
-    SValuePtr bIsNan;
+    SValue::Ptr bIsNan;
     if (SgAsmFloatType *bFpType = isSgAsmFloatType(bType)) {
         bIsNan = operators()->fpIsNan(b, bFpType);
     } else {
         bIsNan = operators()->boolean_(false);
     }
 
-    SValuePtr isNaN = operators()->or_(aIsNan, bIsNan);
+    SValue::Ptr isNaN = operators()->or_(aIsNan, bIsNan);
     operators()->writeRegister(REG_EXC_INAN, isNaN);
 }
 
 void
-DispatcherM68k::updateFpsrExcIde(const SValuePtr &a, SgAsmType *aType, const SValuePtr &b, SgAsmType *bType) {
+DispatcherM68k::updateFpsrExcIde(const SValue::Ptr &a, SgAsmType *aType, const SValue::Ptr &b, SgAsmType *bType) {
     // Set FPSR EXC IDE bit if either argument is denormalized; cleared otherwise.
     ASSERT_not_null(a);
     ASSERT_not_null(aType);
@@ -3956,26 +3996,26 @@ DispatcherM68k::updateFpsrExcIde(const SValuePtr &a, SgAsmType *aType, const SVa
     ASSERT_not_null(bType);
     ASSERT_require(b->nBits() == bType->get_nBits());
 
-    SValuePtr aIsDenorm;
+    SValue::Ptr aIsDenorm;
     if (SgAsmFloatType *aFpType = isSgAsmFloatType(aType)) {
         aIsDenorm = operators()->fpIsDenormalized(a, aFpType);
     } else {
         aIsDenorm = operators()->boolean_(false);
     }
 
-    SValuePtr bIsDenorm;
+    SValue::Ptr bIsDenorm;
     if (SgAsmFloatType *bFpType = isSgAsmFloatType(bType)) {
         bIsDenorm = operators()->fpIsDenormalized(b, bFpType);
     } else {
         bIsDenorm = operators()->boolean_(false);
     }
 
-    SValuePtr isDenorm = operators()->or_(aIsDenorm, bIsDenorm);
+    SValue::Ptr isDenorm = operators()->or_(aIsDenorm, bIsDenorm);
     operators()->writeRegister(REG_EXC_IDE, isDenorm);
 }
 
 void
-DispatcherM68k::updateFpsrExcOvfl(const SValuePtr &value, SgAsmType *valueType, SgAsmType *rounding, SgAsmType *dstType) {
+DispatcherM68k::updateFpsrExcOvfl(const SValue::Ptr &value, SgAsmType *valueType, SgAsmType *rounding, SgAsmType *dstType) {
     ASSERT_not_null(value);
     ASSERT_require(value->nBits() == valueType->get_nBits());
     ASSERT_not_null(rounding);
@@ -3992,20 +4032,20 @@ DispatcherM68k::updateFpsrExcOvfl(const SValuePtr &value, SgAsmType *valueType, 
 
     size_t nBits = std::max(valueFpType->exponentBits().size(), roundingFpType->exponentBits().size());
 
-    SValuePtr valueBias = operators()->number_(nBits, valueFpType->exponentBias());
-    SValuePtr valueExp = operators()->extract(value, valueFpType->exponentBits().least(), valueFpType->exponentBits().greatest()+1);
+    SValue::Ptr valueBias = operators()->number_(nBits, valueFpType->exponentBias());
+    SValue::Ptr valueExp = operators()->extract(value, valueFpType->exponentBits().least(), valueFpType->exponentBits().greatest()+1);
     valueExp = operators()->subtract(operators()->unsignedExtend(valueExp, nBits), valueBias);
 
-    SValuePtr roundingExp =
+    SValue::Ptr roundingExp =
         operators()->number_(nBits,
                            IntegerOps::genMask<uint64_t>(roundingFpType->exponentBits().size()) - roundingFpType->exponentBias());
 
-    SValuePtr isOverflow = operators()->isUnsignedGreaterThanOrEqual(valueExp, roundingExp);
+    SValue::Ptr isOverflow = operators()->isUnsignedGreaterThanOrEqual(valueExp, roundingExp);
     operators()->writeRegister(REG_EXC_OVFL, isOverflow);
 }
 
 void
-DispatcherM68k::updateFpsrExcUnfl(const SValuePtr &value, SgAsmType *valueType, SgAsmType *rounding, SgAsmType *dstType) {
+DispatcherM68k::updateFpsrExcUnfl(const SValue::Ptr &value, SgAsmType *valueType, SgAsmType *rounding, SgAsmType *dstType) {
     ASSERT_not_null(value);
     ASSERT_require(value->nBits() == valueType->get_nBits());
     ASSERT_not_null(rounding);
@@ -4022,16 +4062,16 @@ DispatcherM68k::updateFpsrExcUnfl(const SValuePtr &value, SgAsmType *valueType, 
 
     size_t nBits = std::max(valueFpType->exponentBits().size(), roundingFpType->exponentBits().size());
 
-    SValuePtr valueBias = operators()->number_(nBits, valueFpType->exponentBias());
-    SValuePtr valueExp = operators()->extract(value, valueFpType->exponentBits().least(), valueFpType->exponentBits().greatest()+1);
+    SValue::Ptr valueBias = operators()->number_(nBits, valueFpType->exponentBias());
+    SValue::Ptr valueExp = operators()->extract(value, valueFpType->exponentBits().least(), valueFpType->exponentBits().greatest()+1);
     valueExp = operators()->subtract(operators()->unsignedExtend(valueExp, nBits), valueBias);
 
     // Minimum exponent field is "1", therefore minimum exponent value is "1 - bias"
-    SValuePtr one = operators()->number_(nBits, 1);
-    SValuePtr roundingBias = operators()->number_(nBits, roundingFpType->exponentBias());
-    SValuePtr roundingExp = operators()->subtract(one, roundingBias);
+    SValue::Ptr one = operators()->number_(nBits, 1);
+    SValue::Ptr roundingBias = operators()->number_(nBits, roundingFpType->exponentBias());
+    SValue::Ptr roundingExp = operators()->subtract(one, roundingBias);
     
-    SValuePtr isUnderflow = operators()->isSignedLessThanOrEqual(valueExp, roundingExp);
+    SValue::Ptr isUnderflow = operators()->isSignedLessThanOrEqual(valueExp, roundingExp);
     operators()->writeRegister(REG_EXC_UNFL, isUnderflow);
 }
 
@@ -4043,22 +4083,22 @@ DispatcherM68k::updateFpsrExcInex() {
 
 void
 DispatcherM68k::accumulateFpExceptions() {
-    SValuePtr exc_ovfl = operators()->readRegister(REG_EXC_OVFL);
+    SValue::Ptr exc_ovfl = operators()->readRegister(REG_EXC_OVFL);
     operators()->writeRegister(REG_AEXC_OVFL, operators()->or_(operators()->readRegister(REG_AEXC_OVFL), exc_ovfl));
-    SValuePtr exc_dz = operators()->readRegister(REG_EXC_DZ);
+    SValue::Ptr exc_dz = operators()->readRegister(REG_EXC_DZ);
     operators()->writeRegister(REG_AEXC_DZ, operators()->or_(operators()->readRegister(REG_AEXC_DZ), exc_dz));
-    SValuePtr exc_inex = operators()->readRegister(REG_EXC_INEX);
+    SValue::Ptr exc_inex = operators()->readRegister(REG_EXC_INEX);
     operators()->writeRegister(REG_AEXC_INEX, operators()->or_(operators()->readRegister(REG_AEXC_INEX), exc_inex));
-    SValuePtr exc_operr = operators()->readRegister(REG_EXC_OPERR);
-    SValuePtr v1 = operators()->or_(operators()->readRegister(REG_EXC_INAN), exc_operr);
-    SValuePtr v2 = operators()->or_(operators()->readRegister(REG_EXC_BSUN), v1);
+    SValue::Ptr exc_operr = operators()->readRegister(REG_EXC_OPERR);
+    SValue::Ptr v1 = operators()->or_(operators()->readRegister(REG_EXC_INAN), exc_operr);
+    SValue::Ptr v2 = operators()->or_(operators()->readRegister(REG_EXC_BSUN), v1);
     operators()->writeRegister(REG_AEXC_IOP, operators()->or_(operators()->readRegister(REG_AEXC_IOP), v2));
-    SValuePtr v3 = operators()->or_(operators()->readRegister(REG_EXC_UNFL), exc_inex);
+    SValue::Ptr v3 = operators()->or_(operators()->readRegister(REG_EXC_UNFL), exc_inex);
     operators()->writeRegister(REG_AEXC_UNFL, operators()->or_(operators()->readRegister(REG_AEXC_UNFL), v3));
 }
 
 void
-DispatcherM68k::adjustFpConditionCodes(const SValuePtr &result, SgAsmFloatType *fpType) {
+DispatcherM68k::adjustFpConditionCodes(const SValue::Ptr &result, SgAsmFloatType *fpType) {
     operators()->writeRegister(REG_FPCC_NAN, operators()->fpIsNan(result, fpType));
     operators()->writeRegister(REG_FPCC_I, operators()->fpIsInfinity(result, fpType));
     operators()->writeRegister(REG_FPCC_Z, operators()->fpIsZero(result, fpType));

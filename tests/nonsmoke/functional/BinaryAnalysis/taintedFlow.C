@@ -76,6 +76,7 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherX86.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include "WorkLists.h"
 
 #include <boost/algorithm/string/regex.hpp>
@@ -114,7 +115,7 @@ static void analyze(SgAsmFunction *specimen, TaintedFlow::Approximation approxim
 
     SgAsmInterpretation *interp = SageInterface::getEnclosingNode<SgAsmInterpretation>(specimen);
     ASSERT_always_not_null(interp);
-    const RegisterDictionary *regdict = interp->get_registers();
+    RegisterDictionary::Ptr regdict = RegisterDictionary::instanceForIsa(interp);
 
     // List the function
     std::cout <<"\n";
@@ -149,14 +150,14 @@ static void analyze(SgAsmFunction *specimen, TaintedFlow::Approximation approxim
     //
     // So we create a symbolic domain and link it into an instruction dispatcher that knows about Intel x86 instructions.  The
     // Rose::BinaryAnalysis::DataFlow object provides the API for discovering intra-function or intra-block data flows.
-    BaseSemantics::RiscOperatorsPtr symbolicOps = SymbolicSemantics::RiscOperators::instance(regdict);
+    BaseSemantics::RiscOperators::Ptr symbolicOps = SymbolicSemantics::RiscOperators::instanceFromRegisters(regdict);
     ASSERT_always_not_null(symbolicOps);
-    DispatcherX86Ptr cpu = DispatcherX86::instance(symbolicOps, 32); // assuming the specimen is x86-based
+    DispatcherX86Ptr cpu = DispatcherX86::instance(symbolicOps, 32, RegisterDictionary::Ptr()); // assuming the specimen is x86-based
 #if 0
     // The initial state can be modified if you like.  Here we use a constant for the stack pointer.
     symbolicOps->writeRegister(cpu->REG_ESP, symbolicOps->number_(32, 0x02800000)); // arbitrary
 #endif
-    BaseSemantics::SValuePtr esp_0 = symbolicOps->readRegister(cpu->REG_ESP); // initial value of stack pointer
+    BaseSemantics::SValue::Ptr esp_0 = symbolicOps->readRegister(cpu->REG_ESP); // initial value of stack pointer
 
     // The Rose::BinaryAnalysis::TaintedFlow class encapsulates all the methods we need to perform tainted flow analysis.
     TaintedFlow taintAnalysis(cpu);
@@ -198,7 +199,7 @@ static void analyze(SgAsmFunction *specimen, TaintedFlow::Approximation approxim
     // Arbitrarily mark variable at address esp_0 + 4 as tainted. This corresponds to the least significant byte of the first
     // function argument. We must use the same initial value for the ESP register as we used when discovering the variables.
     // Mark constants (a variable with no location) as not tainted.
-    TaintedFlow::StatePtr initialState = taintAnalysis.stateInstance(TaintedFlow::BOTTOM); // provide a default taintedness
+    TaintedFlow::State::Ptr initialState = taintAnalysis.stateInstance(TaintedFlow::BOTTOM); // provide a default taintedness
     DataFlow::Variable stack4(symbolicOps->add(esp_0, symbolicOps->number_(esp_0->nBits(), 4)));
     if (initialState->setIfExists(stack4, TaintedFlow::TAINTED)) { // taint source
         ::mlog[TRACE] <<"Taint source: " <<stack4 <<"\n";
@@ -217,7 +218,7 @@ static void analyze(SgAsmFunction *specimen, TaintedFlow::Approximation approxim
         if (vertex.nOutEdges()==0) {
             rose_addr_t lastInsnAddr = SageInterface::querySubTree<SgAsmInstruction>(vertex.value()).back()->get_address();
             std::cout <<"\nTaint for each variable at " <<StringUtility::addrToString(lastInsnAddr) <<":\n";
-            if (TaintedFlow::StatePtr state = taintAnalysis.getFinalState(vertex.id())) {
+            if (TaintedFlow::State::Ptr state = taintAnalysis.getFinalState(vertex.id())) {
                 std::cout <<*state;
             } else {
                 std::cout <<"  block not reached by data flow\n";

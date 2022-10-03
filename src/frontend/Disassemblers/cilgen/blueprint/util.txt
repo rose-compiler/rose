@@ -1,0 +1,274 @@
+namespace // anonymous namespace for auxiliary functions
+{
+  constexpr bool TRACE_CONSTRUCTION = false;
+
+  /// This function abstracts the details of reading a x-byte value from the disk image,
+  /// where x == N / CHAR_BIT;
+  template <class T>
+  T readNBitValue(std::vector<uint8_t>& buf, size_t& index)
+  {
+     static constexpr int NUM_BYTES = sizeof(T);
+
+     ROSE_ASSERT(index+NUM_BYTES <= buf.size());
+     T value = ByteOrder::le_to_host(*reinterpret_cast<T*>(buf.data()+index));
+
+     index += NUM_BYTES;
+     return value;
+  }
+
+  /// This function abstracts the details of reading a 1-byte values from the disk image.
+  uint8_t read8bitValue(std::vector<uint8_t>& buf, size_t& index)
+  {
+     return readNBitValue<uint8_t>(buf, index);
+  }
+
+  /// This function abstracts the details of reading a 2-byte values from the disk image.
+  uint16_t read16bitValue(std::vector<uint8_t>& buf, size_t& index)
+  {
+     return readNBitValue<uint16_t>(buf, index);
+  }
+
+  /// This function abstracts the details of reading a 4-byte values from the disk image.
+  uint32_t read32bitValue(std::vector<uint8_t>& buf, size_t& index)
+  {
+     return readNBitValue<uint32_t>(buf, index);
+  }
+
+  /// This function abstracts the details of reading a 8-byte values from the disk image.
+  uint64_t read64bitValue(std::vector<uint8_t>& buf, size_t& index)
+  {
+     return readNBitValue<uint64_t>(buf, index);
+  }
+
+  /// This function abstracts the details of reading either a 2-byte or 4-byte value.
+  uint32_t readValue (std::vector<uint8_t>& buf, size_t& index, bool uses4byteIndexing)
+  {
+     // This function abstracts the details of reading 2 byte or 4 byte values from the disk image.
+     return uses4byteIndexing ? read32bitValue(buf,index) : read16bitValue(buf,index);
+  }
+
+  /// This function abstracts the details of reading either a 2-byte or 4-byte value.
+  std::string
+  readString(std::vector<uint8_t>& buf, size_t& index, size_t maxLen = std::numeric_limits<size_t>::max())
+  {
+    std::string res;
+    size_t      i = 0;
+
+    while (char charValue = buf.at(index+i))
+    {
+      ROSE_ASSERT(i < maxLen);
+      res += charValue;
+      ++i;
+    }
+
+    ROSE_ASSERT(index + i <= buf.size());
+    index += i;
+    return res;
+  }
+
+  std::string
+  readUtf8String(std::vector<uint8_t>& buf, size_t& index, size_t maxLen = std::numeric_limits<size_t>::max())
+  {
+    // \todo FIXME: read real Utf8 string
+    return readString(buf, index, maxLen);
+  }
+
+  uint32_t
+  readStringPadding(std::vector<uint8_t>& buf, size_t& index, size_t strLen, size_t reservedLen)
+  {
+    ROSE_ASSERT(strLen <= reservedLen);
+
+    uint32_t res = 0;
+
+    printf ("skip string padding of %zu bytes\n", (reservedLen - strLen));
+    while (strLen < reservedLen)
+    {
+      res = (res<<8) + buf.at(index);
+
+      ROSE_ASSERT(index + 1 <= buf.size());
+      ++index; ++strLen;
+    }
+
+    // printf ("padding bytes value = %" PRIu32 "\n", res);
+    return res;
+  }
+
+
+  template <class Reader>
+  auto
+  readExpected(Reader rd, std::vector<uint8_t>& buf, size_t& index, decltype(rd(buf, index)) expected) -> decltype(rd(buf, index))
+  {
+    using elem_type = decltype(rd(buf, index));
+
+    elem_type res = rd(buf, index);
+    ROSE_ASSERT(res == expected);
+    return res;
+  }
+
+  uint8_t read8bitPadding (std::vector<uint8_t>& buf, size_t& index, uint8_t expected)
+  {
+     return readExpected(read8bitValue, buf, index, expected);
+  }
+
+  template <class Reader>
+  auto
+  readVector(Reader rd, uint64_t num, std::vector<uint8_t>& buf, size_t &index) -> std::vector<decltype(rd(buf, index))>
+  {
+    using elem_type = decltype(rd(buf, index));
+
+    std::vector<elem_type> res;
+
+    printf ("Output the number of rows for each table: \n");
+
+    for (uint64_t i = 0; i < num; ++i)
+    {
+      elem_type tmp_rows_value = rd(buf, index);
+      //~ printf ("--- table %2zu: tmp_rows_value = %u \n",i,tmp_rows_value);
+      res.push_back(tmp_rows_value);
+    }
+
+    return res;
+  }
+
+  struct StreamHeader : std::tuple<uint32_t, uint32_t, std::string, uint32_t>
+  {
+    using base = std::tuple<uint32_t, uint32_t, std::string, uint32_t>;
+    using base::base;
+
+    uint32_t           offset()      const { return std::get<0>(*this); }
+    uint32_t           size()        const { return std::get<1>(*this); }
+    const std::string& name()        const { return std::get<2>(*this); }
+    uint32_t           namePadding() const { return std::get<3>(*this); }
+
+    static
+    StreamHeader parse(std::vector<uint8_t>& buf, size_t& index);
+  };
+
+  StreamHeader
+  StreamHeader::parse(std::vector<uint8_t>& buf, size_t& index)
+  {
+    uint32_t offset      = read32bitValue(buf, index);
+    uint32_t size        = read32bitValue(buf, index);
+    std::string name     = readString(buf, index);
+    uint32_t namePadding = readStringPadding(buf, index, name.size(), ((name.size() + 4) / 4) * 4);
+
+    return StreamHeader{offset, size, std::move(name), namePadding};
+  }
+
+
+  std::vector<SgAsmCilDataStream*>
+  parseStreams(SgAsmCilMetadataRoot* parent, std::vector<uint8_t>& buf, size_t& index, size_t start_of_MetadataRoot, uint16_t numberOfStreams)
+  {
+    std::vector<SgAsmCilDataStream*> res;
+
+    for (size_t i = 0; i < numberOfStreams; ++i)
+    {
+      if (TRACE_CONSTRUCTION)
+        std::cerr << "START: stream header " << i << " of " << numberOfStreams << ": index = " << index
+                  << std::endl;
+
+      StreamHeader        streamHeader = StreamHeader::parse(buf,index);
+      SgAsmCilDataStream* dataStream = nullptr;
+
+      if (  (SgAsmCilDataStream::ID_STRING_HEAP == streamHeader.name())
+         || (SgAsmCilDataStream::ID_BLOB_HEAP   == streamHeader.name())
+         )
+        dataStream = new SgAsmCilUint8Heap(streamHeader.offset(), streamHeader.size(), streamHeader.name(), streamHeader.namePadding());
+      else if (SgAsmCilDataStream::ID_US_HEAP == streamHeader.name())
+      {
+        dataStream = new SgAsmCilUint16Heap(streamHeader.offset(), streamHeader.size(), streamHeader.name(), streamHeader.namePadding());
+      } 
+      else if (SgAsmCilDataStream::ID_GUID_HEAP == streamHeader.name())
+        dataStream = new SgAsmCilUint32Heap(streamHeader.offset(), streamHeader.size(), streamHeader.name(), streamHeader.namePadding());
+      else if (SgAsmCilDataStream::ID_METADATA_HEAP == streamHeader.name())
+        dataStream = new SgAsmCilMetadataHeap(streamHeader.offset(), streamHeader.size(), streamHeader.name(), streamHeader.namePadding());
+
+      ASSERT_not_null(dataStream);
+
+      dataStream->set_parent(parent);
+      dataStream->parse(buf, start_of_MetadataRoot);
+      res.push_back(dataStream);
+
+      if (TRACE_CONSTRUCTION)
+        std::cerr << "END: stream header " << i << " of " << numberOfStreams << ": index = " << index
+                  << std::endl;
+    }
+
+    return res;
+  }
+
+  template <class SageAsmCilNode>
+  SageAsmCilNode*
+  parseAsmCilNode(SgAsmCilMetadataHeap* parent, std::vector<uint8_t>& buf, size_t& index, uint64_t dataSizeflags)
+  {
+      SageAsmCilNode* res = new SageAsmCilNode;
+      ASSERT_not_null(res);
+
+      res->set_parent(parent);
+      // ::mlog[INFO] << "Creating " << res->class_name() << " node."
+      //              << std::endl;
+
+      if (TRACE_CONSTRUCTION)
+        std::cerr << "Creating " << res->class_name() << " node at " << index
+                  << std::endl;
+
+      res->parse(buf, index, dataSizeflags);
+      return res;
+  }
+  
+  template <class IntT>
+  std::vector<IntT>
+  parseIntStream(std::vector<uint8_t>& buf, size_t start, size_t ofs, size_t len)
+  {
+    const size_t pos = start + ofs;
+    const IntT*  beg = reinterpret_cast<IntT*>(buf.data() + pos);
+    const IntT*  lim = beg + (len / sizeof(IntT));
+
+    ROSE_ASSERT(len % sizeof(IntT) == 0);
+    return std::vector<IntT>(beg, lim);
+  }
+  
+  inline
+  const SgAsmCilMetadataHeap&
+  getMetadataHeap(const SgAsmCilMetadata* o)
+  {
+    ROSE_ASSERT(o);
+    const SgAsmCilMetadataHeap* res = isSgAsmCilMetadataHeap(o->get_parent());
+
+    ROSE_ASSERT(res);
+    return *res;
+  }
+  
+  inline
+  SgAsmCilMetadataHeap&
+  getMetadataHeap(SgAsmCilMetadata* o)
+  {
+    ROSE_ASSERT(o);
+    SgAsmCilMetadataHeap* res = isSgAsmCilMetadataHeap(o->get_parent());
+
+    ROSE_ASSERT(res);
+    return *res;
+  }
+  
+  inline
+  const SgAsmCilMetadataRoot&
+  getMetadataRoot(const SgAsmCilMetadata* o)
+  {
+    ROSE_ASSERT(o);
+    const SgAsmCilMetadataRoot* res = isSgAsmCilMetadataRoot(getMetadataHeap(o).get_parent());
+    
+    ROSE_ASSERT(res);
+    return *res;
+  }
+  
+  inline
+  SgAsmCilMetadataRoot&
+  getMetadataRoot(SgAsmCilMetadata* o)
+  {
+    ROSE_ASSERT(o);
+    SgAsmCilMetadataRoot* res = isSgAsmCilMetadataRoot(getMetadataHeap(o).get_parent());
+    
+    ROSE_ASSERT(res);
+    return *res;
+  }
+}

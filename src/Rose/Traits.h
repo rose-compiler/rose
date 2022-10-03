@@ -1,5 +1,5 @@
-#ifndef Rose_Traits_h
-#define Rose_Traits_h
+#ifndef ROSE_Traits_H
+#define ROSE_Traits_H
 
 namespace Rose {
 
@@ -8,7 +8,7 @@ namespace Traits {}
 
 }
 
-#include "Rose/Traits/Describe.h"
-#include "Rose/Traits/Traversal.h"
+#include <Rose/Traits/Describe.h>
+#include <Rose/Traits/Traversal.h>
 
-#endif /* Rose_Traits_h */
+#endif

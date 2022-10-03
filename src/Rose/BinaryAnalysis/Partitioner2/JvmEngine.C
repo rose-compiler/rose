@@ -4,7 +4,7 @@
 
 #include <Rose/CommandLine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/JvmEngine.h>
-#include <Rose/BinaryAnalysis/DisassemblerJvm.h>
+#include <Rose/BinaryAnalysis/Disassembler/Jvm.h>
 #include <Rose/BinaryAnalysis/ByteCode/Jvm.h>
 
 using namespace Rose::Diagnostics;
@@ -14,6 +14,18 @@ using std::endl;
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
+
+JvmEngine::JvmEngine()
+    : progress_(Progress::instance()) {
+    init();
+}
+
+JvmEngine::JvmEngine(const Settings &settings)
+    : settings_(settings), progress_(Progress::instance()) {
+    init();
+}
+
+JvmEngine::~JvmEngine() {}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Utility functions
@@ -26,7 +38,7 @@ JvmEngine::init() {
 
 void
 JvmEngine::reset() {
-    disassembler_ = nullptr;
+    disassembler_ = Disassembler::Base::Ptr();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -601,7 +613,7 @@ JvmEngine::parseCommandLine(const std::vector<std::string> &args, const std::str
     cout << "-----------\n";
 #endif
 
-    Disassembler* disassembler = obtainDisassembler();
+    Disassembler::Base::Ptr disassembler = obtainDisassembler();
     ASSERT_not_null(disassembler);
 
     method->decode(disassembler);
@@ -685,10 +697,10 @@ JvmEngine::parseContainers(const std::string &fileName) {
 //                                      Disassembler creation
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Disassembler*
-JvmEngine::obtainDisassembler(Disassembler *hint) {
+Disassembler::Base::Ptr
+JvmEngine::obtainDisassembler(const Disassembler::Base::Ptr &hint) {
   if (disassembler_ == nullptr) {
-    disassembler_ = new DisassemblerJvm();
+    disassembler_ = Disassembler::Jvm::instance();
   }
   return disassembler_;
 }
@@ -772,6 +784,17 @@ SgAsmBlock*
 JvmEngine::buildAst(const std::string &fileName) {
     return buildAst(std::vector<std::string>(1, fileName));
 }
+
+Disassembler::Base::Ptr
+JvmEngine::disassembler() const {
+    return disassembler_;
+}
+
+void
+JvmEngine::disassembler(const Disassembler::Base::Ptr &d) {
+    disassembler_ = d;
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      JVM Module

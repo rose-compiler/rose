@@ -241,8 +241,12 @@ class ClassAnalysis : std::unordered_map<ClassKeyType, ClassData>
 {
   public:
     using base = std::unordered_map<ClassKeyType, ClassData>;
-    using base::base;
-
+    
+    explicit
+    ClassAnalysis(bool fullTranslUnit)
+    : base(), completeTranslationUnit(fullTranslUnit)
+    {}
+  
     using base::value_type;
     using base::mapped_type;
     using base::key_type;
@@ -284,6 +288,11 @@ class ClassAnalysis : std::unordered_map<ClassKeyType, ClassData>
     
     /// convenience function to access the map using a SgClassDefinition&.
     const ClassData& at(const SgClassDefinition& clsdef) const { return this->at(&clsdef); }
+    
+    bool containsAllClasses() const { return completeTranslationUnit; }
+    
+  private:
+    bool completeTranslationUnit;
 };
 
 
@@ -395,6 +404,7 @@ AnalysesTuple analyzeClassesAndCasts(ASTRootType n);
 /// \{
 ClassAnalysis analyzeClasses(const RoseCompatibilityBridge& rcb, ASTRootType n);
 ClassAnalysis analyzeClasses(ASTRootType n);
+ClassAnalysis analyzeClass(ClassKeyType n);
 /// \}
 
 /// functions type that are used for the class hierarchy traversals

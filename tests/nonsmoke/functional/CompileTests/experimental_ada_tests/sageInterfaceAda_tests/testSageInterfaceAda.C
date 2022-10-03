@@ -14,7 +14,7 @@ namespace
   {
     if (!n) return;
 
-    si::ada::FlatArrayType res = si::ada::getArrayTypeInfo(n->get_type());
+    si::Ada::FlatArrayType res = si::Ada::getArrayTypeInfo(n->get_type());
 
     if (!res.first) { return; }
 
@@ -39,7 +39,7 @@ namespace
   {
     if (!n) return;
 
-    SgRangeExp* rangeExpr = si::ada::range(n);
+    SgRangeExp* rangeExpr = si::Ada::range(n);
     const bool  rangeAttr = boost::to_upper_copy(n->get_attribute().getString()) == "RANGE";
 
     std::string out = "<null>";
@@ -133,7 +133,7 @@ namespace
     VariantVector vv{V_SgType};
 
     for (SgNode* el : NodeQuery::queryMemoryPool(vv))
-      SageInterface::ada::convertToOperatorRepresentation(el);
+      si::Ada::convertToOperatorRepresentation(el);
   }
 
 
@@ -169,11 +169,11 @@ int main( int argc, char * argv[] )
     check<SageInterfaceAdaCheck>(project);
 
     // last: check conversion functions
-    si::ada::convertToOperatorRepresentation(project, false /* convert operators that have the syntax flag set */);
-    // std::cerr << "checked si::ada::convertToOperatorRepresentation(project, false)" << std::endl;
+    si::Ada::convertToOperatorRepresentation(project, false /* convert operators that have the syntax flag set */);
+    // std::cerr << "checked si::Ada::convertToOperatorRepresentation(project, false)" << std::endl;
 
-    si::ada::convertToOperatorRepresentation(project, true /* convert all operators */, true /* resolve named args */);
-    si::ada::convertToCaseSensitiveSymbolTables(project);
+    si::Ada::convertToOperatorRepresentation(project, true /* convert all operators */, true /* resolve named args */);
+    si::Ada::convertToCaseSensitiveSymbolTables(project);
 
     checkConvertToOperatorRepOnTypes();
   }

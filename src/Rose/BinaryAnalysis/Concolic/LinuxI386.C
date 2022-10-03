@@ -14,6 +14,7 @@
 #include <Rose/BinaryAnalysis/Debugger.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+#include <Rose/BinaryAnalysis/SymbolicExpression.h>
 #include <Rose/StringUtility.h>
 
 #include <boost/format.hpp>
@@ -498,14 +499,14 @@ LinuxI386SyscallBase::operator()(bool /*handled*/, SyscallContext &ctx) {
 
             // Create the input variable and execution event for this return value.
             if (!ctx.symbolicReturn) {
-                ctx.symbolicReturn = SymbolicExpr::makeIntegerVariable(SYS_RET.nBits(), ctx.syscallEvent->name() + "_return");
+                ctx.symbolicReturn = SymbolicExpression::makeIntegerVariable(SYS_RET.nBits(), ctx.syscallEvent->name() + "_return");
                 SAWYER_MESG(debug) <<"  created input variable " <<*ctx.symbolicReturn <<"\n";
             } else {
                 SAWYER_MESG(debug) <<"  using existing variable " <<*ctx.symbolicReturn <<"\n";
                 ASSERT_require(ctx.symbolicReturn->nBits() == SYS_RET.nBits());
             }
             uint64_t retConcrete = i386->debugger()->readRegister(SYS_RET).toInteger();
-            SymbolicExpr::Ptr retValue = SymbolicExpr::makeIntegerConstant(SYS_RET.nBits(), retConcrete);
+            SymbolicExpression::Ptr retValue = SymbolicExpression::makeIntegerConstant(SYS_RET.nBits(), retConcrete);
             SAWYER_MESG(debug) <<"  concrete return value: " <<*retValue <<"\n";
             ctx.returnEvent = ExecutionEvent::registerWrite(i386->testCase(), i386->nextEventLocation(When::POST),
                                                             ctx.syscallEvent->instructionPointer(), SYS_RET,
@@ -514,7 +515,7 @@ LinuxI386SyscallBase::operator()(bool /*handled*/, SyscallContext &ctx) {
             SAWYER_MESG(debug) <<"  created " <<ctx.returnEvent->printableName(i386->database()) <<"\n";
 
             // Update the symbolic state
-            BS::SValuePtr retSValue = ctx.ops->svalueExpr(ctx.symbolicReturn);
+            BS::SValue::Ptr retSValue = ctx.ops->svalueExpr(ctx.symbolicReturn);
             ctx.ops->writeRegister(SYS_RET, retSValue);
             SAWYER_MESG(debug) <<"  return value saved in symbolic state: " <<*retSValue <<"\n";
         }
@@ -545,11 +546,11 @@ LinuxI386SyscallBase::penultimateReturnEvent() const {
 }
 
 
-SymbolicExpr::Ptr
+SymbolicExpression::Ptr
 LinuxI386SyscallBase::penultimateSymbolicReturn() const {
     if (!penultimateReturnEvent_) {
-        return SymbolicExpr::Ptr();
-    } else if (SymbolicExpr::Ptr variable = penultimateReturnEvent_->inputVariable()) {
+        return SymbolicExpression::Ptr();
+    } else if (SymbolicExpression::Ptr variable = penultimateReturnEvent_->inputVariable()) {
         return variable;
     } else {
         ASSERT_require(penultimateReturnEvent_->action() == ExecutionEvent::Action::REGISTER_WRITE);
@@ -676,8 +677,8 @@ LinuxI386SyscallReturn::handlePostSyscall(SyscallContext &ctx) {
         return;
 
     // Build the SMT solver constraint that the current return value must be equal to the previous return value.
-    std::pair<SymbolicExpr::Ptr, Sawyer::Optional<uint64_t>> x = makeReturnConstraint(ctx);
-    SymbolicExpr::Ptr constraint = x.first;
+    std::pair<SymbolicExpression::Ptr, Sawyer::Optional<uint64_t>> x = makeReturnConstraint(ctx);
+    SymbolicExpression::Ptr constraint = x.first;
     Sawyer::Optional<uint64_t> concreteReturn = x.second;
 
     if (constraint) {
@@ -712,17 +713,17 @@ LinuxI386SyscallConstant::instance() {
 void
 LinuxI386SyscallConstant::playback(SyscallContext &ctx) {}
 
-std::pair<SymbolicExpr::Ptr, Sawyer::Optional<uint64_t>>
+std::pair<SymbolicExpression::Ptr, Sawyer::Optional<uint64_t>>
 LinuxI386SyscallConstant::makeReturnConstraint(SyscallContext &ctx) {
-    SymbolicExpr::Ptr constraint;
+    SymbolicExpression::Ptr constraint;
     Sawyer::Optional<uint64_t> concreteReturn;
 
     if (penultimateReturnEvent()) {
         if (latestReturnEvent()->inputVariable()) {
-            SymbolicExpr::Ptr curRet = latestReturnEvent()->inputVariable();
-            SymbolicExpr::Ptr prevRet = penultimateSymbolicReturn();
+            SymbolicExpression::Ptr curRet = latestReturnEvent()->inputVariable();
+            SymbolicExpression::Ptr prevRet = penultimateSymbolicReturn();
             ASSERT_not_null(prevRet);
-            constraint = SymbolicExpr::makeEq(curRet, prevRet);
+            constraint = SymbolicExpression::makeEq(curRet, prevRet);
         }
 
         concreteReturn = penultimateReturnEvent()->calculateResult(ctx.ops->inputVariables()->bindings())->toUnsigned();
@@ -747,17 +748,17 @@ LinuxI386SyscallNondecreasing::instance() {
 void
 LinuxI386SyscallNondecreasing::playback(SyscallContext &ctx) {}
 
-std::pair<SymbolicExpr::Ptr, Sawyer::Optional<uint64_t>>
+std::pair<SymbolicExpression::Ptr, Sawyer::Optional<uint64_t>>
 LinuxI386SyscallNondecreasing::makeReturnConstraint(SyscallContext &ctx) {
-    SymbolicExpr::Ptr constraint;
+    SymbolicExpression::Ptr constraint;
     Sawyer::Optional<uint64_t> concreteReturn;
 
     if (penultimateReturnEvent()) {
         if (latestReturnEvent()->inputVariable()) {
-            SymbolicExpr::Ptr curRet = latestReturnEvent()->inputVariable();
-            SymbolicExpr::Ptr prevRet = penultimateSymbolicReturn();
+            SymbolicExpression::Ptr curRet = latestReturnEvent()->inputVariable();
+            SymbolicExpression::Ptr prevRet = penultimateSymbolicReturn();
             ASSERT_not_null(prevRet);
-            constraint = SymbolicExpr::makeGe(curRet, prevRet);
+            constraint = SymbolicExpression::makeGe(curRet, prevRet);
         }
 
         concreteReturn = penultimateReturnEvent()->calculateResult(ctx.ops->inputVariables()->bindings())->toUnsigned();
@@ -820,13 +821,13 @@ LinuxI386SyscallBrk::handlePostSyscall(SyscallContext &ctx) {
 
 #if 0 // [Robb Matzke 2021-12-17]
     ASSERT_not_null(ctx.returnEvent);
-    if (SymbolicExpr::Ptr v = ctx.returnEvent->value())
+    if (SymbolicExpression::Ptr v = ctx.returnEvent->value())
         std::cerr <<"ROBB: value      = " <<*v <<"\n";
-    if (SymbolicExpr::Ptr v = ctx.returnEvent->expression())
+    if (SymbolicExpression::Ptr v = ctx.returnEvent->expression())
         std::cerr <<"ROBB: expression = " <<*v <<"\n";
-    if (SymbolicExpr::Ptr v = ctx.returnEvent->inputVariable())
+    if (SymbolicExpression::Ptr v = ctx.returnEvent->inputVariable())
         std::cerr <<"ROBB: input var  = " <<*v <<"\n";
-    if (SymbolicExpr::Ptr v = ctx.returnEvent->calculateResult(ctx.ops->inputVariables()->bindings()))
+    if (SymbolicExpression::Ptr v = ctx.returnEvent->calculateResult(ctx.ops->inputVariables()->bindings()))
         std::cerr <<"ROBB: calc ret   = " <<*v <<"\n";
 #endif
 
@@ -1399,7 +1400,7 @@ LinuxI386::executeInstruction(const P2::Partitioner &partitioner) {
 }
 
 void
-LinuxI386::executeInstruction(const BS::RiscOperatorsPtr &ops_, SgAsmInstruction *insn) {
+LinuxI386::executeInstruction(const BS::RiscOperators::Ptr &ops_, SgAsmInstruction *insn) {
     auto ops = Emulation::RiscOperators::promote(ops_);
     ASSERT_not_null(ops);
     ASSERT_not_null(insn);
@@ -1490,7 +1491,7 @@ LinuxI386::unmapAllMemory() {
 }
 
 void
-LinuxI386::createInputVariables(const P2::Partitioner &partitioner, const Emulation::RiscOperatorsPtr &ops,
+LinuxI386::createInputVariables(const P2::Partitioner &partitioner, const Emulation::RiscOperators::Ptr &ops,
                                 const SmtSolver::Ptr &solver) {
     ASSERT_not_null(ops);
     ASSERT_not_null(solver);
@@ -1515,8 +1516,8 @@ LinuxI386::createInputVariables(const P2::Partitioner &partitioner, const Emulat
     SAWYER_MESG(debug) <<"creating program arguments\n";
     const RegisterDescriptor SP = partitioner.instructionProvider().stackPointerRegister();
     size_t wordSizeBytes = SP.nBits() / 8;
-    SymbolicExpr::Formatter fmt;
-    fmt.show_comments = SymbolicExpr::Formatter::CMT_AFTER;
+    SymbolicExpression::Formatter fmt;
+    fmt.show_comments = SymbolicExpression::Formatter::CMT_AFTER;
 
     //---------------------------------------------------------------------------------------------------------------------------
     // argc
@@ -1527,8 +1528,8 @@ LinuxI386::createInputVariables(const P2::Partitioner &partitioner, const Emulat
     size_t argc = readMemoryUnsigned(argcVa, wordSizeBytes);
 
     // Event and input variable
-    SymbolicExpr::Ptr argcVariable = SymbolicExpr::makeIntegerVariable(SP.nBits(), "argc");
-    SymbolicExpr::Ptr argcValue = SymbolicExpr::makeIntegerConstant(SP.nBits(), argc);
+    SymbolicExpression::Ptr argcVariable = SymbolicExpression::makeIntegerVariable(SP.nBits(), "argc");
+    SymbolicExpression::Ptr argcValue = SymbolicExpression::makeIntegerConstant(SP.nBits(), argc);
     auto argcEvent = ExecutionEvent::memoryWrite(testCase(), nextEventLocation(When::PRE), ip(),
                                                  AddressInterval::baseSize(argcVa, SP.nBits()/8),
                                                  argcVariable, argcValue, argcVariable);
@@ -1542,13 +1543,13 @@ LinuxI386::createInputVariables(const P2::Partitioner &partitioner, const Emulat
                        <<"; event = " <<*argcEventId <<"\n";
 
     // The argc value cannot be less than 1 since it always points to at least the program name.
-    SymbolicExpr::Ptr argcMinConstraint = SymbolicExpr::makeSignedGt(argcVariable,
-                                                                     SymbolicExpr::makeIntegerConstant(SP.nBits(), 0));
+    SymbolicExpression::Ptr argcMinConstraint =
+        SymbolicExpression::makeSignedGt(argcVariable, SymbolicExpression::makeIntegerConstant(SP.nBits(), 0));
     solver->insert(argcMinConstraint);
 
     // The argc value cannot be greater than its current concrete value since making it greater would mean that the address
     // of the environment variable list would need to change, potentially affecting many other things in the program.
-    SymbolicExpr::Ptr argcMaxConstraint = SymbolicExpr::makeSignedLe(argcVariable, argcValue);
+    SymbolicExpression::Ptr argcMaxConstraint = SymbolicExpression::makeSignedLe(argcVariable, argcValue);
     solver->insert(argcMaxConstraint);
 
     //---------------------------------------------------------------------------------------------------------------------------
@@ -1566,14 +1567,14 @@ LinuxI386::createInputVariables(const P2::Partitioner &partitioner, const Emulat
                            <<" \"" <<StringUtility::cEscape(s) <<"\"\n";
 
         if (markingArgvAsInput_) {
-            SymbolicExpr::Ptr anyPreviousCharIsNul;     // is any previous char of this argument an ASCII NUL character?
+            SymbolicExpression::Ptr anyPreviousCharIsNul;     // is any previous char of this argument an ASCII NUL character?
             for (size_t j = 0; j <= s.size(); ++j) {
                 rose_addr_t charVa = strVa + j;
 
                 // Event and input variable
                 std::string name = (boost::format("argv_%d_%d") % i % j).str();
-                SymbolicExpr::Ptr charValue = SymbolicExpr::makeIntegerConstant(8, s[j]);
-                SymbolicExpr::Ptr charVariable = SymbolicExpr::makeIntegerVariable(8, name);
+                SymbolicExpression::Ptr charValue = SymbolicExpression::makeIntegerConstant(8,  s.c_str()[j]);
+                SymbolicExpression::Ptr charVariable = SymbolicExpression::makeIntegerVariable(8, name);
                 auto charEvent = ExecutionEvent::memoryWrite(testCase(), nextEventLocation(When::PRE), ip(),
                                                              charVa, charVariable, charValue, charVariable);
                 inputVariables()->activate(charEvent, InputType::ARGV, i, j);
@@ -1586,7 +1587,8 @@ LinuxI386::createInputVariables(const P2::Partitioner &partitioner, const Emulat
                                    <<"; symbolic = " <<(*charVariable + fmt)
                                    <<"; event = " <<*charEventId <<"\n";
 
-                SymbolicExpr::Ptr currentCharIsNul = SymbolicExpr::makeEq(charVariable, SymbolicExpr::makeIntegerConstant(8, 0));
+                SymbolicExpression::Ptr currentCharIsNul =
+                    SymbolicExpression::makeEq(charVariable, SymbolicExpression::makeIntegerConstant(8, 0));
                 if (s.size() == j) {
                     // Final byte of the argument's buffer must always be NUL
                     solver->insert(currentCharIsNul);
@@ -1601,19 +1603,20 @@ LinuxI386::createInputVariables(const P2::Partitioner &partitioner, const Emulat
                     // impossible inputs (arguments with interior NUL characters) we add solver constraints so that any
                     // character of an argument after a NUL is also a NUL.
                     ASSERT_not_null(anyPreviousCharIsNul);
-                    auto bothNul = SymbolicExpr::makeAnd(anyPreviousCharIsNul, currentCharIsNul);
-                    auto assertion = SymbolicExpr::makeOr(SymbolicExpr::makeInvert(anyPreviousCharIsNul), bothNul);
+                    auto bothNul = SymbolicExpression::makeAnd(anyPreviousCharIsNul, currentCharIsNul);
+                    auto assertion = SymbolicExpression::makeOr(SymbolicExpression::makeInvert(anyPreviousCharIsNul), bothNul);
                     solver->insert(assertion);
                 } else {
                     // argv[i] must be empty (i.e., first byte is NUL character) if argc <= i
-                    auto argcGreaterThanI = SymbolicExpr::makeGt(argcVariable, SymbolicExpr::makeIntegerConstant(SP.nBits(), i));
-                    auto assertion = SymbolicExpr::makeOr(argcGreaterThanI, currentCharIsNul);
+                    auto argcGreaterThanI = SymbolicExpression::makeGt(argcVariable,
+                                                                       SymbolicExpression::makeIntegerConstant(SP.nBits(), i));
+                    auto assertion = SymbolicExpression::makeOr(argcGreaterThanI, currentCharIsNul);
                     solver->insert(assertion);
                 }
 
                 // Extend or create the expression for any previous character being NUL
                 if (anyPreviousCharIsNul) {
-                    anyPreviousCharIsNul = SymbolicExpr::makeOr(anyPreviousCharIsNul, currentCharIsNul);
+                    anyPreviousCharIsNul = SymbolicExpression::makeOr(anyPreviousCharIsNul, currentCharIsNul);
                 } else {
                     anyPreviousCharIsNul = currentCharIsNul;
                 }
@@ -1648,14 +1651,14 @@ LinuxI386::createInputVariables(const P2::Partitioner &partitioner, const Emulat
                            <<" \"" <<StringUtility::cEscape(s) <<"\"\n";
 
         if (markingEnvpAsInput_) {
-            SymbolicExpr::Ptr anyPreviousCharIsNul;     // is any previous char of this env an ASCII NUL character?
+            SymbolicExpression::Ptr anyPreviousCharIsNul;     // is any previous char of this env an ASCII NUL character?
             for (size_t j = 0; j <= s.size(); ++j) {
                 rose_addr_t charVa = strVa + j;
 
                 // Event and input variable
                 std::string name = (boost::format("envp_%d_%d") % i % j).str();
-                SymbolicExpr::Ptr charValue = SymbolicExpr::makeIntegerConstant(8, s[j]);
-                SymbolicExpr::Ptr charVariable = SymbolicExpr::makeIntegerVariable(8, name);
+                SymbolicExpression::Ptr charValue = SymbolicExpression::makeIntegerConstant(8, s.c_str()[j]);
+                SymbolicExpression::Ptr charVariable = SymbolicExpression::makeIntegerVariable(8, name);
                 auto charEvent = ExecutionEvent::memoryWrite(testCase(), nextEventLocation(When::PRE), ip(),
                                                              charVa, charVariable, charValue, charVariable);
                 inputVariables()->activate(charEvent, InputType::ENVP, i, j);
@@ -1668,7 +1671,8 @@ LinuxI386::createInputVariables(const P2::Partitioner &partitioner, const Emulat
                                    <<"; symbolic = " <<(*charVariable + fmt)
                                    <<"; event = " <<charEventId <<"\n";
 
-                SymbolicExpr::Ptr currentCharIsNul = SymbolicExpr::makeEq(charVariable, SymbolicExpr::makeIntegerConstant(8, 0));
+                SymbolicExpression::Ptr currentCharIsNul =
+                    SymbolicExpression::makeEq(charVariable, SymbolicExpression::makeIntegerConstant(8, 0));
                 if (s.size() == j) {
                     // Final byte of the argument's buffer must always be NUL
                     solver->insert(currentCharIsNul);
@@ -1684,19 +1688,20 @@ LinuxI386::createInputVariables(const P2::Partitioner &partitioner, const Emulat
                     // variables with interior NUL characters) we add solver constraints so that any character of an
                     // environment variable after a NUL is also a NUL.
                     ASSERT_not_null(anyPreviousCharIsNul);
-                    auto bothNul = SymbolicExpr::makeAnd(anyPreviousCharIsNul, currentCharIsNul);
-                    auto assertion = SymbolicExpr::makeOr(SymbolicExpr::makeInvert(anyPreviousCharIsNul), bothNul);
+                    auto bothNul = SymbolicExpression::makeAnd(anyPreviousCharIsNul, currentCharIsNul);
+                    auto assertion = SymbolicExpression::makeOr(SymbolicExpression::makeInvert(anyPreviousCharIsNul), bothNul);
                     solver->insert(assertion);
                 } else {
                     // envp[i] must be empty (i.e., first byte is NUL character) if envc <= i
-                    auto argcGreaterThanI = SymbolicExpr::makeGt(argcVariable, SymbolicExpr::makeIntegerConstant(SP.nBits(), i));
-                    auto assertion = SymbolicExpr::makeOr(argcGreaterThanI, currentCharIsNul);
+                    auto argcGreaterThanI = SymbolicExpression::makeGt(argcVariable,
+                                                                       SymbolicExpression::makeIntegerConstant(SP.nBits(), i));
+                    auto assertion = SymbolicExpression::makeOr(argcGreaterThanI, currentCharIsNul);
                     solver->insert(assertion);
                 }
 
                 // Extend or create the expression for any previous character being NUL
                 if (anyPreviousCharIsNul) {
-                    anyPreviousCharIsNul = SymbolicExpr::makeOr(anyPreviousCharIsNul, currentCharIsNul);
+                    anyPreviousCharIsNul = SymbolicExpression::makeOr(anyPreviousCharIsNul, currentCharIsNul);
                 } else {
                     anyPreviousCharIsNul = currentCharIsNul;
                 }
@@ -1727,17 +1732,17 @@ LinuxI386::createInputVariables(const P2::Partitioner &partitioner, const Emulat
 }
 
 uint64_t
-LinuxI386::systemCallFunctionNumber(const P2::Partitioner &partitioner, const BS::RiscOperatorsPtr &ops) {
+LinuxI386::systemCallFunctionNumber(const P2::Partitioner &partitioner, const BS::RiscOperators::Ptr &ops) {
     ASSERT_not_null(ops);
 
     const RegisterDescriptor AX = partitioner.instructionProvider().registerDictionary()->findOrThrow("eax");
-    BS::SValuePtr retvalSValue = ops->readRegister(AX);
+    BS::SValue::Ptr retvalSValue = ops->readRegister(AX);
     ASSERT_require2(retvalSValue->isConcrete(), "non-concrete system call numbers not handled yet");
     return retvalSValue->toUnsigned().get();
 }
 
-BS::SValuePtr
-LinuxI386::systemCallArgument(const P2::Partitioner &partitioner, const BS::RiscOperatorsPtr &ops, size_t idx) {
+BS::SValue::Ptr
+LinuxI386::systemCallArgument(const P2::Partitioner &partitioner, const BS::RiscOperators::Ptr &ops, size_t idx) {
     switch (idx) {
         case 0: {
             const RegisterDescriptor r = partitioner.instructionProvider().registerDictionary()->findOrThrow("ebx");
@@ -1774,16 +1779,16 @@ LinuxI386::systemCallReturnRegister() {
     return RegisterDescriptor(x86_regclass_gpr, x86_gpr_ax, 0, 32);
 }
 
-BS::SValuePtr
-LinuxI386::systemCallReturnValue(const P2::Partitioner &partitioner, const BS::RiscOperatorsPtr &ops) {
+BS::SValue::Ptr
+LinuxI386::systemCallReturnValue(const P2::Partitioner &partitioner, const BS::RiscOperators::Ptr &ops) {
     ASSERT_not_null(ops);
     const RegisterDescriptor reg = systemCallReturnRegister();
     return ops->readRegister(reg);
 }
 
-BS::SValuePtr
-LinuxI386::systemCallReturnValue(const P2::Partitioner &partitioner, const BS::RiscOperatorsPtr &ops,
-                                 const BS::SValuePtr &retval) {
+BS::SValue::Ptr
+LinuxI386::systemCallReturnValue(const P2::Partitioner &partitioner, const BS::RiscOperators::Ptr &ops,
+                                 const BS::SValue::Ptr &retval) {
     ASSERT_not_null(ops);
     const RegisterDescriptor reg = systemCallReturnRegister();
     ops->writeRegister(reg, retval);
@@ -1791,7 +1796,7 @@ LinuxI386::systemCallReturnValue(const P2::Partitioner &partitioner, const BS::R
 }
 
 void
-LinuxI386::systemCall(const P2::Partitioner &partitioner, const BS::RiscOperatorsPtr &ops_) {
+LinuxI386::systemCall(const P2::Partitioner &partitioner, const BS::RiscOperators::Ptr &ops_) {
     // A system call has been encountered. The INT instruction has been processed symbolically (basically a no-op other than
     // to adjust the instruction pointer), and the concrete execution has stepped into the system call but has not yet executed
     // it (i.e., the subordinate process is in the syscall-enter-stop state).
@@ -1811,7 +1816,7 @@ LinuxI386::systemCall(const P2::Partitioner &partitioner, const BS::RiscOperator
     std::vector<uint64_t> argsConcrete;
     uint64_t functionNumber = systemCallFunctionNumber(partitioner, ops);
     for (size_t i = 0; i < 6; ++i) {
-        BS::SValuePtr argSymbolic = systemCallArgument(partitioner, ops, i);
+        BS::SValue::Ptr argSymbolic = systemCallArgument(partitioner, ops, i);
         if (auto argConcrete = argSymbolic->toUnsigned()) {
             argsConcrete.push_back(*argConcrete);
         } else {

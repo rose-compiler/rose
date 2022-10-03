@@ -51,6 +51,7 @@ int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
 
   // 0 - Analyse Cmd Line
 
+    std::vector<std::string> sys_dirs_list;
     std::vector<std::string> inc_dirs_list;
     std::vector<std::string> define_list;
     std::vector<std::string> inc_list;
@@ -150,31 +151,27 @@ int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
         if (it->length() > 0 && (*it)[0] != '/')
             *it = rose_include_path + *it;
 
-    inc_dirs_list.push_back(rose_include_path + "clang/");
+    sys_dirs_list.push_back(rose_include_path + "clang/");
 
-
- // FIXME add ROSE path to gcc headers...
     switch (language) {
         case ClangToSageTranslator::C:
-            inc_dirs_list.insert(inc_dirs_list.begin(), c_config_include_dirs.begin(), c_config_include_dirs.end());
-//            inc_list.push_back("clang-builtin-c.h");
+            sys_dirs_list.insert(sys_dirs_list.begin(), c_config_include_dirs.begin(), c_config_include_dirs.end());
+            inc_list.push_back("clang-builtin-c.h");
             break;
         case ClangToSageTranslator::CPLUSPLUS:
-            inc_dirs_list.insert(inc_dirs_list.begin(), cxx_config_include_dirs.begin(), cxx_config_include_dirs.end());
-//            inc_list.push_back("clang-builtin-cpp.hpp");
+            sys_dirs_list.insert(sys_dirs_list.begin(), cxx_config_include_dirs.begin(), cxx_config_include_dirs.end());
+            inc_list.push_back("clang-builtin-cpp.hpp");
             break;
         case ClangToSageTranslator::CUDA:
-            inc_dirs_list.insert(inc_dirs_list.begin(), cxx_config_include_dirs.begin(), cxx_config_include_dirs.end());
-//            inc_list.push_back("clang-builtin-cuda.hpp");
+            sys_dirs_list.insert(sys_dirs_list.begin(), cxx_config_include_dirs.begin(), cxx_config_include_dirs.end());
+            inc_list.push_back("clang-builtin-cuda.hpp");
             break;
         case ClangToSageTranslator::OPENCL:
-         // inc_dirs_list.insert(inc_dirs_list.begin(), c_config_include_dirs.begin(), c_config_include_dirs.end());
-         // FIXME get the path right
-//            inc_list.push_back("clang-builtin-opencl.h");
+            sys_dirs_list.insert(sys_dirs_list.begin(), c_config_include_dirs.begin(), c_config_include_dirs.end());
+            inc_list.push_back("clang-builtin-opencl.h");
             break;
         case ClangToSageTranslator::OBJC:
           {
-         // DQ (10/23/2020): Added error message for Objective C language not supported in ROSE.
             printf ("Objective C langauge support is not available in ROSE \n");
             ROSE_ABORT();
           }
@@ -188,7 +185,7 @@ int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
  // FIXME should be handle by Clang ?
     define_list.push_back("__I__=_Complex_I");
 
-    unsigned cnt = define_list.size() + inc_dirs_list.size() + inc_list.size();
+    unsigned cnt = define_list.size() + inc_dirs_list.size() + sys_dirs_list.size() + inc_list.size();
     char ** args = new char*[cnt];
     std::vector<std::string>::iterator it_str;
     unsigned i = 0;
@@ -207,6 +204,16 @@ int clang_main(int argc, char ** argv, SgSourceFile& sageFile) {
         args[i][0] = '-';
         args[i][1] = 'I';
         strcpy(&(args[i][2]), it_str->c_str());
+#if DEBUG_ARGS
+        std::cerr << "args[" << i << "] = " << args[i] << std::endl;
+#endif
+        i++;
+    }
+    for (it_str = sys_dirs_list.begin(); it_str != sys_dirs_list.end(); it_str++) {
+        args[i] = new char[it_str->size() + 9];
+        args[i][0] = '-'; args[i][1] = 'i'; args[i][2] = 's'; args[i][3] = 'y';
+        args[i][4] = 's'; args[i][5] = 't'; args[i][6] = 'e'; args[i][7] = 'm';
+        strcpy(&(args[i][8]), it_str->c_str());
 #if DEBUG_ARGS
         std::cerr << "args[" << i << "] = " << args[i] << std::endl;
 #endif
@@ -534,6 +541,12 @@ void ClangToSageTranslator::applySourceRange(SgNode * node, clang::SourceRange s
      if (located_node != NULL)
         {
           located_node->set_startOfConstruct(start_fi);
+          // Pei-Hung (09/29/2022) SgExpression::get_file_info() checks and returns get_operatorPosition()
+          // therefore, call set_operatorPosition() to make sure the Sg_File_Info is properly set.
+          if(isSgExpression(located_node))
+          {
+             isSgExpression(located_node)->set_operatorPosition(start_fi);
+          }
           located_node->set_endOfConstruct(end_fi);
         }
        else

@@ -1,6 +1,8 @@
 struct A
 {
   virtual void f() {}
+
+  void test(A) {}
 };
 
 
@@ -12,4 +14,6 @@ struct B
 struct C : A, B
 {
   void f() override {}
+
+  void test(C) {}
 };

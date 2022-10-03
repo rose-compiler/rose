@@ -33,16 +33,17 @@ if ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT
    SUBDIRS += projects
 endif
 
-# The MatrixTestingProject is not compiled as part of ROSE but serves as a simple example of an external project.
-# Matrix testing will need to access this project and compile it after installing ROSE and deleting the ROSE source
+# The Portability Test Project is not compiled as part of ROSE but serves as a simple example of an external project.
+# Portability testing will need to access this project and compile it after installing ROSE and deleting the ROSE source
 # and build trees. Therefore, this project's source code should be installed as part of the ROSE installation. These
-# rules are at this high level of the source code because this project must be installed even if the "projects'
-# subdirectory doesn't participate in the $(SUBDIRS).
+# rules are at this high level of the source code because otherwise they would interfere with the Makefile that's
+# distributed as part of the test project, and because it needs to be part of the binary release even if the rest
+# of the ROSE tools are excluded.
 testprojdir = ${datarootdir}/test-project
-testproj_DATA =						\
-	projects/MatrixTestingProject/Makefile		\
-	projects/MatrixTestingProject/README		\
-	projects/MatrixTestingProject/test-rose.C
+testproj_DATA =								\
+	tools/PortabilityTesting/lib/matrix/test-project/Makefile	\
+	tools/PortabilityTesting/lib/matrix/test-project/README		\
+	tools/PortabilityTesting/lib/matrix/test-project/test-rose.C
 EXTRA_DIST += $(testproj_DATA)
 
 # DQ (2/6/2017): Added test to detect if the default mode of the C++ frontend compiler for rOSE is C++11 or not.
@@ -88,13 +89,7 @@ tools:
 	$(MAKE) -C $(top_builddir)/tools
 	$(MAKE) -C $(top_builddir)/exampleTranslators
 	$(MAKE) -C $(top_builddir)/projects/compass
-	$(MAKE) -C $(top_builddir)/projects/autoParallelization
 	$(MAKE) -C $(top_builddir)/projects/arrayOptimization
-	$(MAKE) -C $(top_builddir)/projects/autoTuning
-	$(MAKE) -C $(top_builddir)/projects/extractMPISkeleton
-	$(MAKE) -C $(top_builddir)/projects/pragmaParsing
-	$(MAKE) -C $(top_builddir)/projects/UpcTranslation
-	$(MAKE) -C $(top_builddir)/projects/ArithmeticMeasureTool
 if ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT
 	$(MAKE) -C $(top_builddir)/tutorial
 endif
@@ -108,13 +103,7 @@ install-tools: install-core tools
 	$(MAKE) install -C $(top_builddir)/tools
 	$(MAKE) install -C $(top_builddir)/exampleTranslators
 	$(MAKE) install -C $(top_builddir)/projects/compass
-	$(MAKE) install -C $(top_builddir)/projects/autoParallelization
 	$(MAKE) install -C $(top_builddir)/projects/arrayOptimization
-	$(MAKE) install -C $(top_builddir)/projects/autoTuning
-	$(MAKE) install -C $(top_builddir)/projects/extractMPISkeleton
-	$(MAKE) install -C $(top_builddir)/projects/pragmaParsing
-	$(MAKE) install -C $(top_builddir)/projects/UpcTranslation
-	$(MAKE) install -C $(top_builddir)/projects/ArithmeticMeasureTool
 	$(MAKE) install -C $(top_builddir)/tests/nonsmoke/functional/roseTests/astInliningTests
 	$(MAKE) install -C $(top_builddir)/tests/nonsmoke/functional/roseTests/astOutliningTests
 if ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT
@@ -163,13 +152,7 @@ check-tools: tools
 	$(MAKE) check -C $(top_builddir)/tools
 	$(MAKE) check -C $(top_builddir)/exampleTranslators
 	$(MAKE) check -C $(top_builddir)/projects/compass
-	$(MAKE) check -C $(top_builddir)/projects/autoParallelization
 	$(MAKE) check -C $(top_builddir)/projects/arrayOptimization
-	$(MAKE) check -C $(top_builddir)/projects/autoTuning
-	$(MAKE) check -C $(top_builddir)/projects/extractMPISkeleton
-	$(MAKE) check -C $(top_builddir)/projects/pragmaParsing
-	$(MAKE) check -C $(top_builddir)/projects/UpcTranslation
-	$(MAKE) check -C $(top_builddir)/projects/ArithmeticMeasureTool
 if ROSE_BUILD_PROJECTS_DIRECTORY_SUPPORT
 	$(MAKE) check -C $(top_builddir)/tutorial
 endif
@@ -212,7 +195,7 @@ rose-installer-rmc2: install-rose-library
 		--contact="http://rosecompiler.org"									\
 		--prjnam=ROSE												\
 		--prjver=$(PACKAGE_VERSION)										\
-		--postinstall-bin=$(top_srcdir)/projects/MatrixTesting/lib/matrix/container-scripts/post-install-script	\
+		--postinstall-bin=$(top_srcdir)/tools/PortabilityTesting/lib/matrix/container-scripts/post-install-script	\
 		$(prefix)/*												\
 		$(addsuffix /*, $(filter-out / /usr /usr/local,								\
 		    $(BOOST_ROOT)											\
@@ -339,8 +322,8 @@ install-exec-local:
 install-data-local: uninstall-local
 	-mkdir -p $(DESTDIR)$(includedir)
 if ROSE_USE_CLANG_FRONTEND
-	mkdir -p "$(DESTDIR)$(includedir)/clang"
-	cp -R $(top_builddir)/include-staging/* "$(DESTDIR)$(includedir)/clang"
+	mkdir -p "$(DESTDIR)$(includedir)"
+	cp -R $(top_builddir)/include-staging/* "$(DESTDIR)$(includedir)"
 else
 #	DQ (11/1/2011): The EDG 4.x support does not require a separate include-staging directory.
 	mkdir -p "$(DESTDIR)$(includedir)/edg"
@@ -480,8 +463,6 @@ docs: FORCE_DOCS_TO_BE_MADE
 	   $(MAKE) -Ctests/nonsmoke/functional/roseTests/astInterfaceTests check && \
 	   $(MAKE) -Ctests/nonsmoke/functional/roseTests/ompLoweringTests check && \
 	   $(MAKE) -Ctests/nonsmoke/functional/CompileTests/UPC_tests check && \
-	   $(MAKE) -Cprojects/UpcTranslation/tests check && \
-	   $(MAKE) -Cprojects/autoParallelization/tests check && \
 	   $(MAKE) -Cdocs docs && \
 	   $(MAKE) -C$(compass_build_tooldir)/compass docs; \
 	else \

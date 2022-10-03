@@ -3,6 +3,9 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Unparser/Cil.h>
 
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
+#include <Rose/BinaryAnalysis/RegisterNames.h>
+
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Unparser {
@@ -18,9 +21,9 @@ unparseCilMnemonic(SgAsmCilInstruction *insn) {
 }
 
 std::string
-unparseCilExpression(SgAsmExpression *expr, const LabelMap *labels, const RegisterDictionary *registers) {
+unparseCilExpression(SgAsmExpression *expr, const LabelMap *labels, RegisterDictionary::Ptr registers) {
     if (!registers)
-        registers = RegisterDictionary::dictionary_coldfire_emac();
+        registers = RegisterDictionary::instanceColdfireEmac();
     RegisterNames name_of(registers);
     std::string result = "";
     if (expr==NULL)

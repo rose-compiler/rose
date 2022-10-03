@@ -4,7 +4,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <Rose/BinaryAnalysis/Disassembler.h>
+#include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RegisterStateGeneric.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/NullSemantics.h>
 
@@ -269,67 +269,40 @@ private:
     bool executionHalted_;                              // Stop adding inputs and outputs?
 
 protected:
-    RiscOperators(const BaseSemantics::SValuePtr &protoval, const SmtSolverPtr &solver)
-        : BaseSemantics::RiscOperators(protoval, solver), executionHalted_(false) {
-        name("SourceAstSemantics");
-        (void) SValue::promote(protoval); // make sure its dynamic type is a SourceAstSemantics::SValue
-    }
+    RiscOperators(const BaseSemantics::SValuePtr &protoval, const SmtSolverPtr&);
 
-    RiscOperators(const BaseSemantics::StatePtr &state, const SmtSolverPtr &solver)
-        : BaseSemantics::RiscOperators(state, solver), executionHalted_(false) {
-        name("SourceAstSemantics");
-        (void) SValue::promote(state->protoval());      // values must have SourceAstSemantics::SValue dynamic type
-    }
+    RiscOperators(const BaseSemantics::StatePtr&, const SmtSolverPtr&);
 
 public:
     /** Instantiates a new RiscOperators object and configures it to use semantic values and states that are defaults for
      *  SourceAstSemantics. */
-    static RiscOperatorsPtr instance(const RegisterDictionary *regdict, const SmtSolverPtr &solver = SmtSolverPtr()) {
-        BaseSemantics::SValuePtr protoval = SValue::instance();
-        RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
-        BaseSemantics::MemoryStatePtr memory = MemoryState::instance(protoval, protoval);
-        BaseSemantics::StatePtr state = State::instance(registers, memory);
-        RiscOperatorsPtr ops = RiscOperatorsPtr(new RiscOperators(state, solver));
-        ops->resetState();
-        return ops;
-    }
+    static RiscOperatorsPtr instanceFromRegisters(const RegisterDictionaryPtr&, const SmtSolverPtr &solver = SmtSolverPtr());
 
     /** Instantiates a new RiscOperators object with specified prototypical values.  An SMT solver may be specified as the
      *  second argument because the base class expects one, but it is not used for this semantic domain. See @ref solver for
      *  details. */
-    static RiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval, const SmtSolverPtr &solver = SmtSolverPtr()) {
-        return RiscOperatorsPtr(new RiscOperators(protoval, solver));
-    }
+    static RiscOperatorsPtr instanceFromProtoval(const BaseSemantics::SValuePtr &protoval,
+                                                 const SmtSolverPtr &solver = SmtSolverPtr());
 
     /** Instantiates a new RiscOperators object with specified state.  An SMT solver may be specified as the second argument
      *  because the base class expects one, but it is not used for this semantic domain. See @ref solver for details. */
-    static RiscOperatorsPtr instance(const BaseSemantics::StatePtr &state, const SmtSolverPtr &solver = SmtSolverPtr()) {
-        return RiscOperatorsPtr(new RiscOperators(state, solver));
-    }
+    static RiscOperatorsPtr instanceFromState(const BaseSemantics::StatePtr&, const SmtSolverPtr&);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Virtual constructors
 public:
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::SValuePtr &protoval,
-                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const override {
-        return instance(protoval, solver);
-    }
+                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const override;
 
-    virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::StatePtr &state,
-                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const override {
-        return instance(state, solver);
-    }
+    virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::StatePtr&,
+                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const override;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Dynamic pointer casts
 public:
     /** Run-time promotion of a base RiscOperators instance to an instance of this semantic domain's operators. This is a
      *  checked conversion--it will fail if @p x does not point to a SourceAstSemantics::RiscOperators object. */
-    static RiscOperatorsPtr promote(const BaseSemantics::RiscOperatorsPtr &x) {
-        RiscOperatorsPtr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
-        ASSERT_not_null(retval);
-        return retval;
-    }
+    static RiscOperatorsPtr promote(const BaseSemantics::RiscOperatorsPtr&);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Supporting functions

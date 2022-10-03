@@ -1843,7 +1843,7 @@ bool CFAnalysis::forkJoinConsistencyChecks(Flow &flow) const {
   const auto flowLabels = flow.nodeLabels();
   int forks, joins, workshares, barriers;
   forks = joins = workshares = barriers = 0;
-  for (const auto l : flowLabels) {
+  for (const auto& l : flowLabels) {
     if (labeler->isForkLabel(l)) {
       auto node = isSgOmpParallelStatement(labeler->getNode(l));
       assert(node && "Node for fork label is SgOmpParallelNode");

@@ -3,6 +3,8 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <AssemblerX86Init.h>                           // for X86InstructionKind
+
 namespace Rose {
 
 /** Functions to build binary analysis ASTs. */

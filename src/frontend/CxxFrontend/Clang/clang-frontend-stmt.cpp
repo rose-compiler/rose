@@ -1108,6 +1108,8 @@ bool ClangToSageTranslator::VisitDoStmt(clang::DoStmt * do_stmt, SgNode ** node)
 
     SgDoWhileStmt * sg_do_stmt = SageBuilder::buildDoWhileStmt_nfi(expr_stmt, NULL);
 
+    sg_do_stmt->set_parent(SageBuilder::topScopeStack());
+
     sg_do_stmt->set_condition(expr_stmt);
 
     cond->set_parent(expr_stmt);
@@ -1299,18 +1301,26 @@ bool ClangToSageTranslator::VisitGotoStmt(clang::GotoStmt * goto_stmt, SgNode **
 #endif
 
     bool res = true;
-/*
+
     SgSymbol * tmp_sym = GetSymbolFromSymbolTable(goto_stmt->getLabel());
     SgLabelSymbol * sym = isSgLabelSymbol(tmp_sym);
     if (sym == NULL) {
-        std::cerr << "Runtime error: Cannot find the symbol for the label: \"" << goto_stmt->getLabel()->getStmt()->getName() << "\"." << std::endl;
-        res = false;
+        SgNode * tmp_label = Traverse(goto_stmt->getLabel()->getStmt());
+        SgLabelStatement * label_stmt = isSgLabelStatement(tmp_label);
+        if (label_stmt == NULL) {
+            std::cerr << "Runtime error: Cannot find the symbol for the label: \"" << goto_stmt->getLabel()->getStmt()->getName() << "\"." << std::endl;
+            std::cerr << "Runtime Error: Cannot find the label: \"" << goto_stmt->getLabel()->getStmt()->getName() << "\"." << std::endl;
+            res = false;
+        }
+        else {
+            *node = SageBuilder::buildGotoStatement(label_stmt);
+        }
     }
     else {
         *node = SageBuilder::buildGotoStatement(sym->get_declaration());
     }
-*/
 
+/*
     SgNode * tmp_label = Traverse(goto_stmt->getLabel()->getStmt());
     SgLabelStatement * label_stmt = isSgLabelStatement(tmp_label);
     if (label_stmt == NULL) {
@@ -1320,7 +1330,7 @@ bool ClangToSageTranslator::VisitGotoStmt(clang::GotoStmt * goto_stmt, SgNode **
     else {
         *node = SageBuilder::buildGotoStatement(label_stmt);
     }
-
+*/
     return VisitStmt(goto_stmt, node) && res;
 }
 
@@ -1811,15 +1821,22 @@ bool ClangToSageTranslator::VisitCaseStmt(clang::CaseStmt * case_stmt, SgNode **
     SgExpression * lhs = isSgExpression(tmp_lhs);
     ROSE_ASSERT(lhs != NULL);
 
-/*  FIXME GNU extension not-handled by ROSE
-    SgNode * tmp_rhs = Traverse(case_stmt->getRHS());
-    SgExpression * rhs = isSgExpression(tmp_rhs);
-    ROSE_ASSERT(rhs != NULL);
-*/
-    ROSE_ASSERT(case_stmt->getRHS() == NULL);
+    SgExpression* rhs = NULL; 
+    if(case_stmt->getRHS() != nullptr)
+    {
+      SgNode * tmp_rhs = Traverse(case_stmt->getRHS());
+      rhs = isSgExpression(tmp_rhs);
+      ROSE_ASSERT(rhs != NULL);
+    }
 
-    *node = SageBuilder::buildCaseOptionStmt_nfi(lhs, stmt);
+    SgCaseOptionStmt* caseOptionStmt = SageBuilder::buildCaseOptionStmt_nfi(lhs, stmt);
 
+    if(rhs != NULL)
+    {
+      caseOptionStmt->set_key_range_end(rhs);
+    }
+
+    *node = caseOptionStmt;
     return VisitSwitchCase(case_stmt, node);
 }
 
@@ -1933,9 +1950,19 @@ bool ClangToSageTranslator::VisitBinaryConditionalOperator(clang::BinaryConditio
 #endif
      bool res = true;
 
-     // TODO 
+     SgNode * tmp_cond  = Traverse(binary_conditional_operator->getCond());
+     SgExpression * cond_expr = isSgExpression(tmp_cond);
+     ROSE_ASSERT(cond_expr);
+     SgNode * tmp_true  = Traverse(binary_conditional_operator->getTrueExpr());
+     SgExpression * true_expr = isSgExpression(tmp_true);
+     ROSE_ASSERT(true_expr);
+     SgNode * tmp_false = Traverse(binary_conditional_operator->getFalseExpr());
+     SgExpression * false_expr = isSgExpression(tmp_false);
+     ROSE_ASSERT(false_expr);
+  
+     *node = SageBuilder::buildConditionalExp(cond_expr, true_expr, false_expr);
 
-     return VisitStmt(binary_conditional_operator, node) && res;
+     return VisitAbstractConditionalOperator(binary_conditional_operator, node) && res;
 }
 
 bool ClangToSageTranslator::VisitConditionalOperator(clang::ConditionalOperator * conditional_operator, SgNode ** node) {
@@ -3339,7 +3366,7 @@ bool ClangToSageTranslator::VisitOffsetOfExpr(clang::OffsetOfExpr * offset_of_ex
     bool res = true;
 
     SgNodePtrList nodePtrList;
-  
+
     SgType* type = buildTypeFromQualifiedType(offset_of_expr->getTypeSourceInfo()->getType());
 
     nodePtrList.push_back(type);
@@ -3409,7 +3436,9 @@ bool ClangToSageTranslator::VisitOpaqueValueExpr(clang::OpaqueValueExpr * opaque
 #endif
     bool res = true;
 
-    // TODO
+    SgNode * sourceExpr  = Traverse(opaque_value_expr->getSourceExpr());
+
+    *node = sourceExpr;
 
     return VisitExpr(opaque_value_expr, node) && res;
 }
@@ -3896,7 +3925,10 @@ bool ClangToSageTranslator::VisitVAArgExpr(clang::VAArgExpr * va_arg_expr, SgNod
     SgExpression * expr = isSgExpression(tmp_expr);
     ROSE_ASSERT(expr != NULL);
 
-    *node = SageBuilder::buildVarArgOp_nfi(expr, expr->get_type());
+    SgType* type = buildTypeFromQualifiedType(va_arg_expr->getWrittenTypeInfo()->getType());
+    ROSE_ASSERT(type != NULL);
+
+    *node = SageBuilder::buildVarArgOp_nfi(expr, type);
 
     return VisitExpr(va_arg_expr, node);
 }
@@ -3909,19 +3941,9 @@ bool ClangToSageTranslator::VisitLabelStmt(clang::LabelStmt * label_stmt, SgNode
 
     SgName name(label_stmt->getName());
 
-    SgNode * tmp_sub_stmt = Traverse(label_stmt->getSubStmt());
-    SgStatement * sg_sub_stmt = isSgStatement(tmp_sub_stmt);
-    if (sg_sub_stmt == NULL) {
-        SgExpression * sg_sub_expr = isSgExpression(tmp_sub_stmt);
-        ROSE_ASSERT(sg_sub_expr != NULL);
-        sg_sub_stmt = SageBuilder::buildExprStatement(sg_sub_expr);
-    }
-
-    ROSE_ASSERT(sg_sub_stmt != NULL);
-
-    *node = SageBuilder::buildLabelStatement_nfi(name, sg_sub_stmt, SageBuilder::topScopeStack());
-
+    *node = SageBuilder::buildLabelStatement_nfi(name, NULL, SageBuilder::topScopeStack());
     SgLabelStatement * sg_label_stmt = isSgLabelStatement(*node);
+
     SgFunctionDefinition * label_scope = NULL;
     std::list<SgScopeStatement *>::reverse_iterator it = SageBuilder::ScopeStack.rbegin();
     while (it != SageBuilder::ScopeStack.rend() && label_scope == NULL) {
@@ -3938,6 +3960,19 @@ bool ClangToSageTranslator::VisitLabelStmt(clang::LabelStmt * label_stmt, SgNode
         label_scope->insert_symbol(label_sym->get_name(), label_sym);
     }
 
+    SgNode * tmp_sub_stmt = Traverse(label_stmt->getSubStmt());
+    SgStatement * sg_sub_stmt = isSgStatement(tmp_sub_stmt);
+    if (sg_sub_stmt == NULL) {
+        SgExpression * sg_sub_expr = isSgExpression(tmp_sub_stmt);
+        ROSE_ASSERT(sg_sub_expr != NULL);
+        sg_sub_stmt = SageBuilder::buildExprStatement(sg_sub_expr);
+    }
+
+    ROSE_ASSERT(sg_sub_stmt != NULL);
+
+    sg_sub_stmt->set_parent(sg_label_stmt);
+    sg_label_stmt->set_statement(sg_sub_stmt);
+
     return VisitStmt(label_stmt, node) && res;
 }
 
@@ -3953,6 +3988,8 @@ bool ClangToSageTranslator::VisitWhileStmt(clang::WhileStmt * while_stmt, SgNode
     SgStatement * expr_stmt = SageBuilder::buildExprStatement(cond);
 
     SgWhileStmt * sg_while_stmt = SageBuilder::buildWhileStmt_nfi(expr_stmt, NULL);
+
+    sg_while_stmt->set_parent(SageBuilder::topScopeStack());
 
     cond->set_parent(expr_stmt);
     expr_stmt->set_parent(sg_while_stmt);

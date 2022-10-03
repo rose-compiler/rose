@@ -1,14 +1,16 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
-
-#include <AsmUnparser_compat.h>
 #include <Rose/BinaryAnalysis/NoOperation.h>
-#include <Rose/CommandLine.h>
-#include <Rose/Diagnostics.h>
-#include <Rose/BinaryAnalysis/Disassembler.h>
+
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCellList.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
+#include <Rose/CommandLine.h>
+#include <Rose/Diagnostics.h>
+
+#include <AsmUnparser_compat.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -32,14 +34,14 @@ NoOperation::initDiagnostics() {
 //                                      StateNormalizer
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-BaseSemantics::StatePtr
-NoOperation::StateNormalizer::initialState(const BaseSemantics::DispatcherPtr &cpu, SgAsmInstruction *insn) {
+BaseSemantics::State::Ptr
+NoOperation::StateNormalizer::initialState(const BaseSemantics::Dispatcher::Ptr &cpu, SgAsmInstruction *insn) {
     ASSERT_not_null(cpu);
 
-    BaseSemantics::StatePtr state = cpu->currentState()->clone();
+    BaseSemantics::State::Ptr state = cpu->currentState()->clone();
     state->clear();
 
-    BaseSemantics::RegisterStateGenericPtr rstate = BaseSemantics::RegisterStateGeneric::promote(state->registerState());
+    BaseSemantics::RegisterStateGeneric::Ptr rstate = BaseSemantics::RegisterStateGeneric::promote(state->registerState());
     if (rstate)
         rstate->initialize_large();
 
@@ -53,24 +55,24 @@ NoOperation::StateNormalizer::initialState(const BaseSemantics::DispatcherPtr &c
 
 class CellErasurePredicate: public BaseSemantics::MemoryCell::Predicate {
     bool ignorePoppedMemory;
-    BaseSemantics::RiscOperatorsPtr ops;
-    BaseSemantics::SValuePtr stackCurVa;
-    BaseSemantics::SValuePtr stackMinVa;
+    BaseSemantics::RiscOperators::Ptr ops;
+    BaseSemantics::SValue::Ptr stackCurVa;
+    BaseSemantics::SValue::Ptr stackMinVa;
     
 public:
-    CellErasurePredicate(const BaseSemantics::RiscOperatorsPtr &ops, const BaseSemantics::SValuePtr &stackCurVa,
+    CellErasurePredicate(const BaseSemantics::RiscOperators::Ptr &ops, const BaseSemantics::SValue::Ptr &stackCurVa,
                          rose_addr_t closeness)
         : ignorePoppedMemory(closeness!=0), ops(ops), stackCurVa(stackCurVa) {
         stackMinVa = ops->subtract(stackCurVa, ops->number_(stackCurVa->nBits(), closeness));
     }
 
-    virtual bool operator()(const BaseSemantics::MemoryCellPtr &cell) override {
+    virtual bool operator()(const BaseSemantics::MemoryCell::Ptr &cell) override {
         if (cell->getWriters().isEmpty())
             return true;
         
         // Erase memory that is above (lower address) and near the current stack pointer.
         if (ignorePoppedMemory) {
-            BaseSemantics::SValuePtr isPopped =     // assume downward-growing stack
+            BaseSemantics::SValue::Ptr isPopped =     // assume downward-growing stack
                 ops->and_(ops->isUnsignedLessThan(cell->address(), stackCurVa),
                           ops->isUnsignedGreaterThanOrEqual(cell->address(), stackMinVa));
             return isPopped->isTrue();
@@ -81,18 +83,18 @@ public:
 };
 
 std::string
-NoOperation::StateNormalizer::toString(const BaseSemantics::DispatcherPtr &cpu, const BaseSemantics::StatePtr &state_) {
-    BaseSemantics::StatePtr state = state_;
-    BaseSemantics::RiscOperatorsPtr ops = cpu->operators();
+NoOperation::StateNormalizer::toString(const BaseSemantics::Dispatcher::Ptr &cpu, const BaseSemantics::State::Ptr &state_) {
+    BaseSemantics::State::Ptr state = state_;
+    BaseSemantics::RiscOperators::Ptr ops = cpu->operators();
     if (!state)
         return "";
     bool isCloned = false;                              // do we have our own copy of the state?
 
     // If possible and appropriate, remove the instruction pointer register
     const RegisterDescriptor regIp = cpu->instructionPointerRegister();
-    BaseSemantics::RegisterStateGenericPtr rstate = BaseSemantics::RegisterStateGeneric::promote(state->registerState());
+    BaseSemantics::RegisterStateGeneric::Ptr rstate = BaseSemantics::RegisterStateGeneric::promote(state->registerState());
     if (rstate && rstate->is_partly_stored(regIp)) {
-        BaseSemantics::SValuePtr ip = ops->peekRegister(cpu->instructionPointerRegister());
+        BaseSemantics::SValue::Ptr ip = ops->peekRegister(cpu->instructionPointerRegister());
         if (ip->isConcrete()) {
             state = state->clone();
             isCloned = true;
@@ -102,7 +104,7 @@ NoOperation::StateNormalizer::toString(const BaseSemantics::DispatcherPtr &cpu, 
     }
 
     // Get the memory state, cloning the state if not done so above.
-    BaseSemantics::MemoryCellStatePtr mem =
+    BaseSemantics::MemoryCellState::Ptr mem =
         boost::dynamic_pointer_cast<BaseSemantics::MemoryCellState>(state->memoryState());
     if (mem && !isCloned) {
         state = state->clone();
@@ -131,20 +133,20 @@ NoOperation::StateNormalizer::toString(const BaseSemantics::DispatcherPtr &cpu, 
 
 NoOperation::NoOperation() {}
 
-NoOperation::NoOperation(Disassembler *disassembler) {
+NoOperation::NoOperation(const Disassembler::Base::Ptr &disassembler) {
     normalizer_ = StateNormalizer::instance();
 
     if (disassembler) {
-        const RegisterDictionary *registerDictionary = disassembler->registerDictionary();
+        RegisterDictionary::Ptr registerDictionary = disassembler->registerDictionary();
         ASSERT_not_null(registerDictionary);
         size_t addrWidth = disassembler->instructionPointerRegister().nBits();
 
         SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
-        SymbolicSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(registerDictionary, solver);
+        SymbolicSemantics::RiscOperators::Ptr ops = SymbolicSemantics::RiscOperators::instanceFromRegisters(registerDictionary, solver);
         ops->computingDefiners(SymbolicSemantics::TRACK_NO_DEFINERS);
         ops->computingMemoryWriters(SymbolicSemantics::TRACK_LATEST_WRITER); // necessary to erase non-written memory
 
-        BaseSemantics::MemoryCellListPtr mstate = BaseSemantics::MemoryCellList::promote(ops->currentState()->memoryState());
+        BaseSemantics::MemoryCellList::Ptr mstate = BaseSemantics::MemoryCellList::promote(ops->currentState()->memoryState());
         ASSERT_not_null(mstate);
         mstate->occlusionsErased(true);
 
@@ -153,18 +155,18 @@ NoOperation::NoOperation(Disassembler *disassembler) {
 }
 
 std::string
-NoOperation::normalizeState(const BaseSemantics::StatePtr &state) const {
+NoOperation::normalizeState(const BaseSemantics::State::Ptr &state) const {
     static size_t ncalls = 0;
     if (!normalizer_)
         return StringUtility::numberToString(++ncalls);
     return normalizer_->toString(cpu_, state);
 }
 
-BaseSemantics::StatePtr
+BaseSemantics::State::Ptr
 NoOperation::initialState(SgAsmInstruction *insn) const {
     ASSERT_not_null(insn);
     ASSERT_not_null(cpu_);
-    BaseSemantics::StatePtr state;
+    BaseSemantics::State::Ptr state;
     if (normalizer_) {
         state = normalizer_->initialState(cpu_, insn);
     } else {
@@ -177,7 +179,7 @@ NoOperation::initialState(SgAsmInstruction *insn) const {
     // Set the stack pointer to a concrete value
     if (initialSp_) {
         const RegisterDescriptor regSp = cpu_->stackPointerRegister();
-        BaseSemantics::RiscOperatorsPtr ops = cpu_->operators();
+        BaseSemantics::RiscOperators::Ptr ops = cpu_->operators();
         state->writeRegister(regSp, ops->number_(regSp.nBits(), *initialSp_), ops.get());
     }
 

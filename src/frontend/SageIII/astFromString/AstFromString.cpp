@@ -996,13 +996,12 @@ namespace AstFromString
   {
     bool result = false;  // result of the entire function
     bool cur_result = false; // result of match one occurence
-    const char* old_char = c_char;
 
     bool match_qualifier = false;
     bool match_specifier = false;
 
     do {
-      old_char= c_char;
+      const char* old_char= c_char;
       match_qualifier = afs_match_type_qualifier();
       if (!match_qualifier)
         match_specifier = afs_match_type_specifier ();
@@ -2430,7 +2429,7 @@ postfix_operator
       }
       //TODO handle type_qualifier_list  const, volatile
 
-      return true; 
+      return result; 
     }
     else
       c_char = old_char; // need to restore context

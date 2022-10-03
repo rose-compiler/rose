@@ -9,5 +9,7 @@ struct A
 struct B : A
 {
   void f() & override {}
+
+  void test(B) {}
 };
 

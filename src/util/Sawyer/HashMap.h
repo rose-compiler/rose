@@ -106,7 +106,15 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private:
     template<class Derived, class Value, class BaseIterator>
-    class ForwardIterator: public std::iterator<std::forward_iterator_tag, Value> {
+    class ForwardIterator {
+    public:
+        // Five standard iterator types
+        using iterator_category = std::forward_iterator_tag;
+        using value_type = Value;
+        using difference_type = std::ptrdiff_t;
+        using pointer = Value*;
+        using reference = Value&;
+
     protected:
         BaseIterator base_;
         ForwardIterator() {}

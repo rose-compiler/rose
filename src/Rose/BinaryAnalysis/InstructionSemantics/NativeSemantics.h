@@ -3,6 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Debugger.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/ConcreteSemantics.h>
 
@@ -54,60 +55,43 @@ private:
     // Real constructors
     //----------------------------------------
 protected:
-    RegisterState() {}
+    RegisterState();
 
-    RegisterState(const BaseSemantics::SValuePtr &protoval, const Debugger::Ptr &process)
-        : BaseSemantics::RegisterState(protoval, process->registerDictionary()), process_(process) {
-        ASSERT_not_null(process);
-    }
-    
+    RegisterState(const BaseSemantics::SValuePtr &protoval, const Debugger::Ptr &process);
+
     //----------------------------------------
     // Static allocating constructors
     //----------------------------------------
 public:
+    ~RegisterState();
+
     /** Construct a state not attached to any subordinate process. */
-    static RegisterStatePtr instance() {
-        return RegisterStatePtr(new RegisterState);
-    }
+    static RegisterStatePtr instance();
 
     /** Construct a state attached to the specified process. */
-    static RegisterStatePtr instance(const BaseSemantics::SValuePtr &protoval, const Debugger::Ptr &process) {
-        ASSERT_not_null(protoval);
-        (void) SValue::promote(protoval);
-        return RegisterStatePtr(new RegisterState(protoval, process));
-    }
-    
+    static RegisterStatePtr instance(const BaseSemantics::SValuePtr &protoval, const Debugger::Ptr &process);
+
     //----------------------------------------
     // Virtual constructors
     //----------------------------------------
 public:
     virtual BaseSemantics::RegisterStatePtr create(const BaseSemantics::SValuePtr &protoval,
-                                                   const RegisterDictionary *regdict) const override {
-        ASSERT_not_implemented("not applicable for this class");
-    }
+                                                   const RegisterDictionaryPtr&) const override;
 
-    virtual BaseSemantics::RegisterStatePtr clone() const override {
-        ASSERT_not_implemented("not applicable for this class");
-    }
-    
+    virtual BaseSemantics::RegisterStatePtr clone() const override;
+
     //----------------------------------------
     // Dynamic pointer casts
     //----------------------------------------
 public:
-    static RegisterStatePtr promote(const BaseSemantics::RegisterStatePtr &x) {
-        RegisterStatePtr retval = boost::dynamic_pointer_cast<RegisterState>(x);
-        ASSERT_not_null(retval);
-        return retval;
-    }
+    static RegisterStatePtr promote(const BaseSemantics::RegisterStatePtr&);
 
     //----------------------------------------
     // Additional properties
     //----------------------------------------
 public:
     /** Property: Subordinate process storing the registers. */
-    Debugger::Ptr process() const {
-        return process_;
-    }
+    Debugger::Ptr process() const;
 
     //----------------------------------------
     // Virtual function implementations
@@ -164,60 +148,45 @@ private:
     // Real constructors
     //----------------------------------------
 protected:
-    MemoryState() {}
+    MemoryState();
 
     MemoryState(const BaseSemantics::SValuePtr &addrProtoval, const BaseSemantics::SValuePtr &valProtoval,
-                const Debugger::Ptr &process)
-        : BaseSemantics::MemoryState(addrProtoval, valProtoval), process_(process) {
-        ASSERT_not_null(process);
-    }
+                const Debugger::Ptr &process);
 
     //----------------------------------------
     // Static allocating constructors
     //----------------------------------------
 public:
+    ~MemoryState();
+
     /** Construct a state not attached to any subordinate process. */
-    static MemoryStatePtr instance() {
-        return MemoryStatePtr(new MemoryState);
-    }
+    static MemoryStatePtr instance();
 
     /** Construct a state attached to the specified process. */
     static MemoryStatePtr instance(const BaseSemantics::SValuePtr &addrProtoval, const BaseSemantics::SValuePtr &valProtoval,
-                                   const Debugger::Ptr &process) {
-        return MemoryStatePtr(new MemoryState(addrProtoval, valProtoval, process));
-    }
+                                   const Debugger::Ptr &process);
 
     //----------------------------------------
     // Virtual constructors
     //----------------------------------------
 public:
     virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::SValuePtr &addrProtoval,
-                                                 const BaseSemantics::SValuePtr &valProtoval) const override {
-        ASSERT_not_implemented("not applicable for this class");
-    }
+                                                 const BaseSemantics::SValuePtr &valProtoval) const override;
 
-    virtual BaseSemantics::MemoryStatePtr clone() const override {
-        ASSERT_not_implemented("not applicable for this class");
-    }
+    virtual BaseSemantics::MemoryStatePtr clone() const override;
 
     //----------------------------------------
     // Dynamic pointer casts
     //----------------------------------------
 public:
-    static MemoryStatePtr promote(const BaseSemantics::MemoryStatePtr &x) {
-        MemoryStatePtr retval = boost::dynamic_pointer_cast<MemoryState>(x);
-        ASSERT_not_null(retval);
-        return retval;
-    }
+    static MemoryStatePtr promote(const BaseSemantics::MemoryStatePtr&);
 
     //----------------------------------------
     // Additional properties
     //----------------------------------------
 public:
     /** Property: Subordinate process storing the registers. */
-    Debugger::Ptr process() const {
-        return process_;
-    }
+    Debugger::Ptr process() const;
 
     //----------------------------------------
     // Virtual function implementations
@@ -312,44 +281,33 @@ public:
     // Real constructors
     //----------------------------------------
 protected:
-    explicit RiscOperators(const BaseSemantics::StatePtr &state)
-        : ConcreteSemantics::RiscOperators(state, SmtSolverPtr()) {
-        name("Native");
-    }
+    explicit RiscOperators(const BaseSemantics::StatePtr&);
 
     //----------------------------------------
     // Static allocating constructors
     //----------------------------------------
 public:
+    ~RiscOperators();
+
     /** Instantiate a new @ref RiscOperators object.
      *
      *  The register state, memory state, and combined state are instantiations of @ref NativeSemantics @ref RegisterState,
      *  @ref MemoryState, and @ref State, which point to the subordinate process and which are not copyable. */
-    static RiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval, const Debugger::Ptr &process) {
-        RegisterStatePtr registers = RegisterState::instance(protoval, process);
-        MemoryStatePtr memory = MemoryState::instance(protoval, protoval, process);
-        StatePtr state = State::instance(registers, memory);
-        return RiscOperatorsPtr(new RiscOperators(state));
-    }
+    static RiscOperatorsPtr instanceFromProtoval(const BaseSemantics::SValuePtr &protoval, const Debugger::Ptr &process);
 
     /** Instantiate a new @ref RiscOperators object.
      *
      *  The @ref state (registers and memory) for this object is provided by the caller and must be an instance of the
      *  @ref NativeSemantics @ref State that points to @ref NativeSemantics @ref RegisterState and @ref MemoryState.
      *  User-defined subclasses can also be used. */
-    static RiscOperatorsPtr instance(const BaseSemantics::StatePtr &state) {
-        (void) State::promote(state);                   // check that it's the correct type
-        return RiscOperatorsPtr(new RiscOperators(state));
-    }
-    
+    static RiscOperatorsPtr instanceFromState(const BaseSemantics::StatePtr&);
+
     //----------------------------------------
     // Virtual constructors
     //----------------------------------------
 public:
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::SValuePtr &protoval,
-                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const override {
-        TODO("[Robb Matzke 2019-09-05]");
-    }
+                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const override;
 
     //----------------------------------------
     // Dynamic pointer casts
@@ -357,11 +315,7 @@ public:
 public:
     /** Run-time promotion of a base object to a @ref NativeSemantics @ref RiscOperators. This is a checked conversion--it
      *  will fail if @p x does not point to a @ref NativeSemantics::RiscOperators object. */
-    static RiscOperatorsPtr promote(const BaseSemantics::RiscOperatorsPtr &x) {
-        RiscOperatorsPtr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
-        ASSERT_not_null(retval);
-        return retval;
-    }
+    static RiscOperatorsPtr promote(const BaseSemantics::RiscOperatorsPtr&);
 
     //----------------------------------------
     // Additional properties
@@ -397,55 +351,34 @@ private:
     // Real constructors
     //----------------------------------------
 protected:
-    Dispatcher(const Debugger::Ptr &process, const BaseSemantics::SValuePtr &protoval)
-        : process_(process) {
-        registerDictionary(process_->registerDictionary());
-        addressWidth(process_->kernelWordSize());
-        operators(RiscOperators::instance(protoval, process_));
-    }
+    Dispatcher(const Debugger::Ptr &process, const BaseSemantics::SValuePtr &protoval);
 
-    Dispatcher(const BaseSemantics::RiscOperatorsPtr &ops)
-        : process_(RiscOperators::promote(ops)->process()) {
-        registerDictionary(process_->registerDictionary());
-        addressWidth(process_->kernelWordSize());
-        operators(ops);
-    }
-    
+    Dispatcher(const BaseSemantics::RiscOperatorsPtr&);
+
     //----------------------------------------
     // Static allocating constructors
     //----------------------------------------
 public:
+    ~Dispatcher();
+
     /** Create a new dispatcher using the specified process. */
-    static DispatcherPtr instance(const Debugger::Ptr &process,
-                                  const BaseSemantics::SValuePtr &protoval = SValue::instance()) {
-        return DispatcherPtr(new Dispatcher(process, protoval));
-    }
-    
+    static DispatcherPtr instance(const Debugger::Ptr &process, const BaseSemantics::SValuePtr &protoval = SValue::instance());
+
     /** Create a new dispatcher using the specified executable specimen. */
-    static DispatcherPtr instance(const Debugger::Specimen &specimen,
-                                  const BaseSemantics::SValuePtr &protoval = SValue::instance()) {
-        Debugger::Ptr process = Debugger::instance(specimen);
-        return DispatcherPtr(new Dispatcher(process, protoval));
-    }
+    static DispatcherPtr instance(const Debugger::Specimen&, const BaseSemantics::SValuePtr &protoval = SValue::instance());
 
     /** Create a new dispatcher using the specified operators.
      *
      *  The operators must derive from @ref NativeSemantics::RiscOperators. */
-    static DispatcherPtr instance(const BaseSemantics::RiscOperatorsPtr &ops) {
-        (void) RiscOperators::promote(ops);             // check type
-        return DispatcherPtr(new Dispatcher(ops));
-    }
-    
+    static DispatcherPtr instance(const BaseSemantics::RiscOperatorsPtr&);
+
     //----------------------------------------
     // Virtual constructors
     //----------------------------------------
 public:
     virtual BaseSemantics::DispatcherPtr
-    create(const BaseSemantics::RiscOperatorsPtr &ops, size_t addrWidth=0,
-           const RegisterDictionary *regs=NULL) const override {
-        notApplicable("create");
-    }
-    
+    create(const BaseSemantics::RiscOperatorsPtr&, size_t addrWidth, const RegisterDictionaryPtr&) const override;
+
     //----------------------------------------
     // Operations
     //----------------------------------------

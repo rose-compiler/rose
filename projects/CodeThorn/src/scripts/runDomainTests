@@ -52,7 +52,7 @@ function runDomainTestsLevel3 {
             benchmarkname=$(basename $benchmark)
             extension="${benchmarkname##*.}"
             printf "Testing %-38s: " $benchmarkname
-            CT_OUTPUT_FILE=$benchmarkname.imout
+            CT_OUTPUT_FILE=$benchmarkname.imoutl3
             COMMAND="./codethorn $benchmark $CT_MODE_OPTIONS --interpreter-mode-file=$CT_OUTPUT_FILE -I $TESTDIR"
             eval $COMMAND > /dev/null
             if [ ! $? -eq 0 ]
@@ -116,7 +116,7 @@ function runDomainTestsLevel2 {
         for benchmark in ${benchmarkprefix}*.[Cc]; do
             benchmarkname=$(basename $benchmark)
             printf "Testing %-38s: " $benchmarkname
-            CT_OUTPUT_FILE=$benchmarkname.imout
+            CT_OUTPUT_FILE=$benchmarkname.imoutl2
 	    if [[ $SHOW_OUTPUT == "yes" ]]; then
 		./codethorn $benchmark $CT_MODE_OPTIONS --interpreter-mode-file=$CT_OUTPUT_FILE -I $TESTDIR
 	    fi
@@ -199,7 +199,7 @@ function regressionTests {
             benchmarkname=$(basename $benchmark)
             printf "Testing %-38s: " $benchmarkname
             CT_REFERENCE_FILE=${benchmark}.txt # with path
-            CT_OUTPUT_FILE=${benchmarkname}.imout # without path
+            CT_OUTPUT_FILE=${benchmarkname}.imoutregression # without path
             if ( ./codethorn $benchmark $CT_MODE_OPTIONS --interpreter-mode-file=$CT_OUTPUT_FILE -I $TESTDIR ); then
 	        if ( ! diff $CT_REFERENCE_FILE $CT_OUTPUT_FILE ); then
 	            echo "$COLORED_FAIL (output)"

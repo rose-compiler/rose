@@ -1,7 +1,7 @@
-#ifndef Rose_CodeGen_Factory_h
-#define Rose_CodeGen_Factory_h
+#ifndef ROSE_CodeGen_Factory_H
+#define ROSE_CodeGen_Factory_H
 
-#include "Rose/CodeGen/API.h"
+#include <Rose/CodeGen/API.h>
 
 namespace Rose { namespace CodeGen {
 
@@ -177,4 +177,4 @@ reference_t<Object::a_variable> * Factory<CRT,apiT>::reference<Object::a_variabl
 #include "Rose/CodeGen/factory/variables.txx"
 #include "Rose/CodeGen/factory/functions.txx"
 
-#endif /* Rose_CodeGen_Factory_h */
+#endif

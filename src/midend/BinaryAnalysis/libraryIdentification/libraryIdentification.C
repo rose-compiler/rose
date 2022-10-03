@@ -4,6 +4,7 @@
 #include <sage3basic.h>
 #include "libraryIdentification.h"
 
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/LibraryIdentification.h>
 
 using namespace Rose::BinaryAnalysis;

@@ -4,10 +4,11 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Dispatcher.h>
 #include <Rose/BinaryAnalysis/NoOperation.h>
 #include <Rose/Diagnostics.h>
-#include <Rose/BinaryAnalysis/Disassembler.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Dispatcher.h>
+
 #include "AsmUnparser_compat.h"
 
 using namespace Rose;
@@ -144,10 +145,10 @@ buildNopAnalyzer(SgAsmInterpretation *interp) {
             InstructionSemantics::mlog[WARN] <<"SgAsmInstruction::buildDispatcher: no binary interpretation\n";
             emitted = true;
         }
-        return NoOperation(BaseSemantics::DispatcherPtr());
+        return NoOperation(BaseSemantics::Dispatcher::Ptr());
     }
 
-    Disassembler *disassembler = Disassembler::lookup(interp);
+    Disassembler::Base::Ptr disassembler = Disassembler::lookup(interp);
     return NoOperation(disassembler);
 }
 
@@ -212,7 +213,7 @@ SgAsmInstruction::toString() const {
         const SgAsmExpressionPtrList &operands = opList->get_operands();
         for (size_t i = 0; i < operands.size(); ++i) {
             retval += i == 0 ? " " : ", ";
-            retval += StringUtility::trim(unparseExpression(operands[i], NULL, NULL));
+            retval += StringUtility::trim(unparseExpression(operands[i], NULL, RegisterDictionary::Ptr()));
         }
     }
     return retval;

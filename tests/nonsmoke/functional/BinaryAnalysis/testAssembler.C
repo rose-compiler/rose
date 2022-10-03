@@ -11,7 +11,7 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 
 #include "rose.h"
 #include "Assembler.h"
-#include <Rose/BinaryAnalysis/Disassembler.h>
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
 
 using namespace Rose;
 using namespace Rose::BinaryAnalysis;

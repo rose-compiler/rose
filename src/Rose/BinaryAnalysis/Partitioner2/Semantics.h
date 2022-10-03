@@ -5,6 +5,7 @@
 
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/SymbolicExpression.h>
 
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
@@ -218,7 +219,8 @@ typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
  *  if the expression grows beyond a certain complexity. */
 class RiscOperators: public InstructionSemantics::SymbolicSemantics::RiscOperators {
 public:
-    typedef InstructionSemantics::SymbolicSemantics::RiscOperators Super;
+    using Super = InstructionSemantics::SymbolicSemantics::RiscOperators;
+    using Ptr = RiscOperatorsPtr;
 
 private:
     static const size_t TRIM_THRESHOLD_DFLT = 100;
@@ -238,29 +240,22 @@ private:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
-    RiscOperators() {}                                  // for serialization
+    RiscOperators();                                    // for serialization
 
     explicit RiscOperators(const InstructionSemantics::BaseSemantics::SValuePtr &protoval,
-                           const SmtSolverPtr &solver = SmtSolverPtr())
-        : InstructionSemantics::SymbolicSemantics::RiscOperators(protoval, solver) {
-        name("PartitionerSemantics");
-        (void)SValue::promote(protoval);                // make sure its dynamic type is appropriate
-        trimThreshold(TRIM_THRESHOLD_DFLT);
-    }
+                           const SmtSolverPtr &solver = SmtSolverPtr());
 
     explicit RiscOperators(const InstructionSemantics::BaseSemantics::StatePtr &state,
-                           const SmtSolverPtr &solver = SmtSolverPtr())
-        : InstructionSemantics::SymbolicSemantics::RiscOperators(state, solver) {
-        name("PartitionerSemantics");
-        (void)SValue::promote(state->protoval());
-        trimThreshold(TRIM_THRESHOLD_DFLT);
-    }
+                           const SmtSolverPtr &solver = SmtSolverPtr());
+
+public:
+    ~RiscOperators();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Static allocating constructors
 public:
     /** Instantiate a new RiscOperators object and configure it using default values. */
-    static RiscOperatorsPtr instance(const RegisterDictionary *regdict, const SmtSolverPtr &solver = SmtSolverPtr(),
+    static RiscOperatorsPtr instance(const RegisterDictionaryPtr &regdict, const SmtSolverPtr &solver = SmtSolverPtr(),
                                      SemanticMemoryParadigm memoryParadigm = LIST_BASED_MEMORY) {
         InstructionSemantics::BaseSemantics::SValuePtr protoval = SValue::instance();
         InstructionSemantics::BaseSemantics::RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
@@ -365,10 +360,10 @@ MemoryState<Super>::readOrPeekMemory(const InstructionSemantics::BaseSemantics::
         if (!isModifiable || isInitialized) {
             uint8_t byte;
             if (1 == map_->at(va).limit(1).read(&byte).size()) {
-                SymbolicExpr::Ptr expr = SymbolicExpr::makeIntegerConstant(8, byte);
+                SymbolicExpression::Ptr expr = SymbolicExpression::makeIntegerConstant(8, byte);
                 if (isModifiable) {
-                    SymbolicExpr::Ptr indet = SymbolicExpr::makeIntegerVariable(8);
-                    expr = SymbolicExpr::makeSet(expr, indet, valOps->solver());
+                    SymbolicExpression::Ptr indet = SymbolicExpression::makeIntegerVariable(8);
+                    expr = SymbolicExpression::makeSet(expr, indet, valOps->solver());
                 }
                 SymbolicSemantics::SValuePtr val = SymbolicSemantics::SValue::promote(valOps->undefined_(8));
                 val->set_expression(expr);

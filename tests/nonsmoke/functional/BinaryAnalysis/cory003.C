@@ -6,7 +6,7 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 
 #include <rose.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
-#include <Rose/BinaryAnalysis/Registers.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 
 using namespace Rose;
 using namespace Rose::BinaryAnalysis;
@@ -15,10 +15,10 @@ using namespace Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;
 
 int
 main() {
-    const RegisterDictionary *regdict = RegisterDictionary::dictionary_i386();
-    SymbolicSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(regdict);
-    RegisterStateGenericPtr rstate = RegisterStateGeneric::promote(ops->currentState()->registerState());
-    SValuePtr x;
+    RegisterDictionary::Ptr regdict = RegisterDictionary::instanceI386();
+    SymbolicSemantics::RiscOperators::Ptr ops = SymbolicSemantics::RiscOperators::instanceFromRegisters(regdict);
+    RegisterStateGeneric::Ptr rstate = RegisterStateGeneric::promote(ops->currentState()->registerState());
+    SValue::Ptr x;
     Formatter fmt;
     fmt.set_line_prefix("    ");
 

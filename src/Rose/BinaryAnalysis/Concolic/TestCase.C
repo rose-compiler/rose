@@ -6,6 +6,8 @@
 #include <Rose/BinaryAnalysis/Concolic/Database.h>
 #include <Rose/BinaryAnalysis/Concolic/ExecutionEvent.h>
 #include <Rose/BinaryAnalysis/Concolic/Specimen.h>
+#include <Rose/BinaryAnalysis/SymbolicExpression.h>
+
 #include <boost/lexical_cast.hpp>
 
 namespace Rose {
@@ -113,7 +115,7 @@ TestCase::toYaml(std::ostream &out, const Database::Ptr &db, std::string prefix,
 
     if (ShowAssertions::YES == showAssertions) {
         out <<prefix <<"  assertions:\n";
-        for (SymbolicExpr::Ptr assertion: assertions())
+        for (SymbolicExpression::Ptr assertion: assertions())
             out <<prefix <<"    - " <<*assertion <<"\n";
     } else {
         out <<prefix <<"  assertions: " <<assertions().size() <<"\n";

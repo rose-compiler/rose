@@ -3,6 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Types.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RegisterState.h>
 #include <Rose/Exception.h>
@@ -206,7 +207,7 @@ protected:
     RegisterStateGeneric()                              // for serialization
         : accessModifiesExistingLocations_(true), accessCreatesLocations_(true) {}
 
-    explicit RegisterStateGeneric(const SValuePtr &protoval, const RegisterDictionary *regdict)
+    explicit RegisterStateGeneric(const SValuePtr &protoval, const RegisterDictionaryPtr &regdict)
         : RegisterState(protoval, regdict), accessModifiesExistingLocations_(true), accessCreatesLocations_(true) {
         clear();
     }
@@ -229,7 +230,7 @@ public:
      *
      *  The register dictionary, @p regdict, describes the registers that can be stored by this register state, and should be
      *  compatible with the register dictionary used for other parts of binary analysis. */
-    static RegisterStateGenericPtr instance(const SValuePtr &protoval, const RegisterDictionary *regdict) {
+    static RegisterStateGenericPtr instance(const SValuePtr &protoval, const RegisterDictionaryPtr &regdict) {
         return RegisterStateGenericPtr(new RegisterStateGeneric(protoval, regdict));
     }
 
@@ -243,7 +244,7 @@ public:
     //                                  Virtual constructors
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    virtual RegisterStatePtr create(const SValuePtr &protoval, const RegisterDictionary *regdict) const override {
+    virtual RegisterStatePtr create(const SValuePtr &protoval, const RegisterDictionaryPtr &regdict) const override {
         return instance(protoval, regdict);
     }
 

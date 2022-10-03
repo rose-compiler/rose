@@ -7,6 +7,9 @@
 #include <Rose/BinaryAnalysis/Partitioner2/DataFlow.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Semantics.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
+#include <Rose/BinaryAnalysis/RegisterNames.h>
+
 #if 1 // DEBUGGING [Robb P Matzke 2017-03-04]
 #include <AsmUnparser_compat.h>
 #endif
@@ -32,7 +35,7 @@ initDiagnostics() {
 }
 
 static std::string
-locationNames(const RegisterParts &parts, const RegisterDictionary *regdict) {
+locationNames(const RegisterParts &parts, const RegisterDictionary::Ptr &regdict) {
     std::vector<std::string> retval;
     RegisterNames regNames(regdict);
     for (RegisterDescriptor reg: parts.listAll(regdict))
@@ -48,13 +51,9 @@ locationNames(const RegisterParts &parts, const RegisterDictionary *regdict) {
 // prevent expressions from becoming too big and are therefore fast but less precise, (3) the memory state knows about the
 // concrete values of initialized memory, (4) it can use list- or map-based memory states.
 typedef P2::Semantics::SValue SValue;
-typedef P2::Semantics::SValuePtr SValuePtr;
 typedef P2::Semantics::RegisterState RegisterState;
-typedef P2::Semantics::RegisterStatePtr RegisterStatePtr;
 typedef P2::Semantics::MemoryMapState MemoryState;
-typedef P2::Semantics::MemoryMapStatePtr MemoryStatePtr;
 typedef P2::Semantics::State State;
-typedef P2::Semantics::StatePtr StatePtr;
 
 typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
@@ -64,10 +63,11 @@ class RiscOperators: public P2::Semantics::RiscOperators {
     RegisterParts calleeOutputRegisters_;
     Variables::StackVariables calleeOutputParameters_;
     CallSiteResults *results_;
-    const RegisterDictionary *registerDictionary_;
+    RegisterDictionary::Ptr registerDictionary_;
 
 public:
-    typedef P2::Semantics::RiscOperators Super;
+    using Super = P2::Semantics::RiscOperators;
+    using Ptr = RiscOperatorsPtr;
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
@@ -84,44 +84,44 @@ private:
 #endif
 
 protected:
-    explicit RiscOperators(const S2::BaseSemantics::SValuePtr &protoval, const SmtSolverPtr &solver = SmtSolverPtr())
-        : Super(protoval, solver), results_(NULL), registerDictionary_(NULL) {}
+    explicit RiscOperators(const S2::BaseSemantics::SValue::Ptr &protoval, const SmtSolverPtr &solver = SmtSolverPtr())
+        : Super(protoval, solver), results_(NULL) {}
 
-    explicit RiscOperators(const S2::BaseSemantics::StatePtr &state, const SmtSolverPtr &solver = SmtSolverPtr())
-        : Super(state, solver), results_(NULL), registerDictionary_(NULL) {}
+    explicit RiscOperators(const S2::BaseSemantics::State::Ptr &state, const SmtSolverPtr &solver = SmtSolverPtr())
+        : Super(state, solver), results_(NULL) {}
 
 public:
-    static RiscOperatorsPtr instance(const RegisterDictionary *regdict, const SmtSolverPtr &solver = SmtSolverPtr()) {
-        SValuePtr protoval = SValue::instance();
-        RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
-        MemoryStatePtr memory = MemoryState::instance(protoval, protoval);
-        StatePtr state = State::instance(registers, memory);
-        return RiscOperatorsPtr(new RiscOperators(state, solver));
+    static RiscOperators::Ptr instance(const RegisterDictionary::Ptr &regdict, const SmtSolverPtr &solver = SmtSolverPtr()) {
+        SValue::Ptr protoval = SValue::instance();
+        RegisterState::Ptr registers = RegisterState::instance(protoval, regdict);
+        MemoryState::Ptr memory = MemoryState::instance(protoval, protoval);
+        State::Ptr state = State::instance(registers, memory);
+        return RiscOperators::Ptr(new RiscOperators(state, solver));
     }
 
-    static RiscOperatorsPtr instance(const S2::BaseSemantics::SValuePtr &protoval,
+    static RiscOperators::Ptr instance(const S2::BaseSemantics::SValue::Ptr &protoval,
                                      const SmtSolverPtr &solver = SmtSolverPtr()) {
-        return RiscOperatorsPtr(new RiscOperators(protoval, solver));
+        return RiscOperators::Ptr(new RiscOperators(protoval, solver));
     }
     
-    static RiscOperatorsPtr instance(const S2::BaseSemantics::StatePtr &state, const SmtSolverPtr &solver = SmtSolverPtr()) {
-        return RiscOperatorsPtr(new RiscOperators(state, solver));
+    static RiscOperators::Ptr instance(const S2::BaseSemantics::State::Ptr &state, const SmtSolverPtr &solver = SmtSolverPtr()) {
+        return RiscOperators::Ptr(new RiscOperators(state, solver));
     }
     
 public:
-    virtual S2::BaseSemantics::RiscOperatorsPtr
-    create(const S2::BaseSemantics::SValuePtr &protoval, const SmtSolverPtr &solver = SmtSolverPtr()) const override {
+    virtual S2::BaseSemantics::RiscOperators::Ptr
+    create(const S2::BaseSemantics::SValue::Ptr &protoval, const SmtSolverPtr &solver = SmtSolverPtr()) const override {
         return instance(protoval, solver);
     }
 
-    virtual S2::BaseSemantics::RiscOperatorsPtr
-    create(const S2::BaseSemantics::StatePtr &state, const SmtSolverPtr &solver = SmtSolverPtr()) const override {
+    virtual S2::BaseSemantics::RiscOperators::Ptr
+    create(const S2::BaseSemantics::State::Ptr &state, const SmtSolverPtr &solver = SmtSolverPtr()) const override {
         return instance(state, solver);
     }
 
 public:
-    static RiscOperatorsPtr promote(const S2::BaseSemantics::RiscOperatorsPtr &x) {
-        RiscOperatorsPtr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
+    static RiscOperators::Ptr promote(const S2::BaseSemantics::RiscOperators::Ptr &x) {
+        RiscOperators::Ptr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
         ASSERT_not_null(retval);
         return retval;
     }
@@ -160,13 +160,13 @@ public:
      *  output.
      *
      * @{ */
-    const RegisterDictionary* registerDictionary() const { return registerDictionary_; }
-    void registerDictionary(const RegisterDictionary *rd) { registerDictionary_ = rd; }
+    RegisterDictionary::Ptr registerDictionary() const { return registerDictionary_; }
+    void registerDictionary(const RegisterDictionary::Ptr &rd) { registerDictionary_ = rd; }
     /** @} */
 
 public:
-    virtual S2::BaseSemantics::SValuePtr readRegister(RegisterDescriptor reg,
-                                                      const S2::BaseSemantics::SValuePtr &dflt) override {
+    virtual S2::BaseSemantics::SValue::Ptr readRegister(RegisterDescriptor reg,
+                                                      const S2::BaseSemantics::SValue::Ptr &dflt) override {
         // Reading from a register that's still listed as an output means that it's definitely a used return value.
         RegisterParts found = calleeOutputRegisters_ & RegisterParts(reg);
         if (!found.isEmpty()) {
@@ -179,7 +179,7 @@ public:
         return Super::readRegister(reg, dflt);
     }
 
-    virtual void writeRegister(RegisterDescriptor reg, const S2::BaseSemantics::SValuePtr &value) override {
+    virtual void writeRegister(RegisterDescriptor reg, const S2::BaseSemantics::SValue::Ptr &value) override {
         // Writing to a register means that the callee's return value is definitely not used.
         RegisterParts found = calleeOutputRegisters_ & RegisterParts(reg);
         if (!found.isEmpty()) {
@@ -192,15 +192,15 @@ public:
         Super::writeRegister(reg, value);
     }
 
-    virtual S2::BaseSemantics::SValuePtr readMemory(RegisterDescriptor segreg, const S2::BaseSemantics::SValuePtr &addr,
-                                                    const S2::BaseSemantics::SValuePtr &dflt,
-                                                    const S2::BaseSemantics::SValuePtr &cond) override {
+    virtual S2::BaseSemantics::SValue::Ptr readMemory(RegisterDescriptor segreg, const S2::BaseSemantics::SValue::Ptr &addr,
+                                                    const S2::BaseSemantics::SValue::Ptr &dflt,
+                                                    const S2::BaseSemantics::SValue::Ptr &cond) override {
         // TODO
         return Super::readMemory(segreg, addr, dflt, cond);
     }
 
-    virtual void writeMemory(RegisterDescriptor segreg, const S2::BaseSemantics::SValuePtr &addr,
-                             const S2::BaseSemantics::SValuePtr &value, const S2::BaseSemantics::SValuePtr &cond) override {
+    virtual void writeMemory(RegisterDescriptor segreg, const S2::BaseSemantics::SValue::Ptr &addr,
+                             const S2::BaseSemantics::SValue::Ptr &value, const S2::BaseSemantics::SValue::Ptr &cond) override {
         // TODO
         Super::writeMemory(segreg, addr, value, cond);
     }
@@ -316,15 +316,15 @@ Analysis::analyzeCallSite(const P2::Partitioner &partitioner, const P2::ControlF
     // means (1) the caller reads the callee output location without first writing to it, or (2) the caller calls a second
     // function whose input is one of the original callee outputs with no intervening write, or (3) one of the caller's own
     // return values is one of the calle's return values with no intervening write.
-    const RegisterDictionary *regdict = partitioner.instructionProvider().registerDictionary();
+    RegisterDictionary::Ptr regdict = partitioner.instructionProvider().registerDictionary();
     ASSERT_not_null(regdict);
     SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
-    RiscOperatorsPtr ops = RiscOperators::instance(regdict, solver);
+    RiscOperators::Ptr ops = RiscOperators::instance(regdict, solver);
     ops->registerDictionary(regdict);
     ops->insertOutputs(calleeReturnRegs, calleeReturnMem);
     if (!ops->hasOutputs())
         return retval;
-    S2::BaseSemantics::DispatcherPtr cpu = partitioner.newDispatcher(ops);
+    S2::BaseSemantics::Dispatcher::Ptr cpu = partitioner.newDispatcher(ops);
     if (!cpu) {
         mlog[ERROR] <<"no instruction semantics for this architecture\n";
         return retval;
@@ -349,14 +349,14 @@ Analysis::analyzeCallSite(const P2::Partitioner &partitioner, const P2::ControlF
 
     // Build the input state for the call return vertex and allocate space for the rest. The rest are filled in during the
     // traversal.
-    std::vector<StatePtr> inputStates(dfCfg.nVertices());
+    std::vector<State::Ptr> inputStates(dfCfg.nVertices());
     inputStates[0] = xfer.initialState();
     
     // Do a depth first-traversal of the CFG to visit all vertices reachable from the return target exactly one time each.
     ops->callSiteResults(&retval);
     typedef Sawyer::Container::Algorithm::DepthFirstForwardVertexTraversal<const P2::DataFlow::DfCfg> Traversal;
     for (Traversal t(dfCfg, dfCfg.findVertex(0)); t; ++t) {
-        StatePtr inputState = inputStates[t.vertex()->id()];
+        State::Ptr inputState = inputStates[t.vertex()->id()];
         ASSERT_not_null(inputState);
         if (mlog[DEBUG]) {
             std::ostringstream ss;
@@ -368,7 +368,7 @@ Analysis::analyzeCallSite(const P2::Partitioner &partitioner, const P2::ControlF
                         <<StringUtility::prefixLines(ss.str(), "    ");
         }
 
-        StatePtr outputState;
+        State::Ptr outputState;
         try {
             outputState = State::promote(xfer(dfCfg, t.vertex()->id(), inputState));
         } catch (const S2::BaseSemantics::Exception &e) {
@@ -413,7 +413,7 @@ Analysis::analyzeCallSite(const P2::Partitioner &partitioner, const P2::ControlF
         mlog[DEBUG] <<"  marking (reading) callee returns implicitly returned by caller\n";
         P2::DataFlow::DfCfg::ConstVertexIterator returnVertex = P2::DataFlow::findReturnVertex(dfCfg);
         if (dfCfg.isValidVertex(returnVertex)) {
-            StatePtr returnState = inputStates[returnVertex->id()];
+            State::Ptr returnState = inputStates[returnVertex->id()];
             ASSERT_always_not_null(returnState);
             ops->currentState(returnState);
             for (const P2::Function::Ptr &caller: callers) {

@@ -7,7 +7,9 @@
 #include <ostream>
 
 #include "callbacks.h"                                  // Needed for Rose::Callbacks::List<>
+#include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/ControlFlow.h>
+#include <Rose/BinaryAnalysis/Disassembler/BasicTypes.h>
 #include <Rose/BinaryAnalysis/FunctionCall.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 
@@ -19,7 +21,9 @@ class SgAsmInterpretation;
 namespace Rose {
 namespace BinaryAnalysis {
 
-class Disassembler;
+namespace Disassembler {
+class Base;
+} // namespace
 
 /** Unparses binary AST into text.
  *
@@ -145,7 +149,7 @@ class Disassembler;
  *
  *  @code
  *  SgAsmInterpretation *interp = ...;
- *  Disassembler *disassembler = Disassembler::lookup(interp)->clone();
+ *  Disassembler::BasePtr disassembler = Disassembler::lookup(interp);
  *  disassembler->set_search(Disassembler::SEARCH_DEFAULT | Disassembler::SEARCH_DEADEND |
  *                           Disassembler::SEARCH_UNKNOWN | Disassembler::SEARCH_UNUSED);
  *  AsmUnparser unparser;
@@ -175,12 +179,12 @@ class Disassembler;
  *  creating a new register dictionary, adding the definition for "lr", and using that dictionary for unparsing:
  *
  *  @code
- *  RegisterDictionary myRegisters("My Mips32 Release 1");
- *  myRegisters.insert(RegisterDictionary::dictionary_mips32()); // incorporate MIPS32 defns
- *  RegisterDescriptor *r31 = myRegisters.lookup("r31"); // definition for r31
- *  myRegisters.insert("lr", *r31); // new name, same old definition
+ *  RegisterDictionary::Ptr myRegisters = RegisterDictionary::instance("My Mips32 Release 1");
+ *  myRegisters->insert(RegisterDictionary::instanceMips32()); // incorporate MIPS32 defns
+ *  RegisterDescriptor *r31 = myRegisters->lookup("r31"); // definition for r31
+ *  myRegisters->insert("lr", *r31); // new name, same old definition
  *  AsmUnparser unparser;
- *  unparser.set_registers(&myRegisters);
+ *  unparser.set_registers(myRegisters);
  *  SgAsmInterpretation interp = ...; // the stuff to unparse
  *  unparser.unparse(std::cout, interp);
  *  @endcode
@@ -608,13 +612,13 @@ public:
         };
 
         DataNote data_note;
-        Disassembler *disassembler;
-        AsmUnparser *unparser;
-        bool unparser_allocated_here;
-        StaticDataDisassembler(): disassembler(NULL), unparser(NULL), unparser_allocated_here(false) {}
-        ~StaticDataDisassembler() { reset(); }
+        Disassembler::BasePtr disassembler;
+        AsmUnparser *unparser = nullptr;
+        bool unparser_allocated_here = false;
+        StaticDataDisassembler();
+        ~StaticDataDisassembler();
         virtual void reset();
-        virtual void init(Disassembler *disassembler, AsmUnparser *unparser=NULL);
+        virtual void init(const Disassembler::BasePtr &disassembler, AsmUnparser *unparser=NULL);
         virtual bool operator()(bool enabled, const StaticDataArgs &args);
     };
 
@@ -801,11 +805,8 @@ public:
      **************************************************************************************************************************/
 
     /** Constructor that intializes the "unparser" callback lists with some useful functors. */
-    AsmUnparser(): user_registers(NULL), interp_registers(NULL) {
-        init();
-    }
-
-    virtual ~AsmUnparser() {}
+    AsmUnparser();
+    virtual ~AsmUnparser();
 
     /** Get/set how output is organized.
      *
@@ -846,8 +847,8 @@ public:
      *  the set_registers() method.  The get_registers() returns either the user-specified or SgAsmInterpretation dictionary.
      *
      * @{ */
-    virtual const RegisterDictionary *get_registers() const;
-    virtual void set_registers(const RegisterDictionary *registers) { user_registers = registers; }
+    virtual RegisterDictionaryPtr get_registers() const;
+    virtual void set_registers(const RegisterDictionaryPtr &registers);
     /** @}*/
     
     /** Optional information about no-op sequences.
@@ -996,8 +997,8 @@ protected:
     Organization organization;
 
     /** Dictionaries used to convert register descriptors to register names. */
-    const RegisterDictionary *user_registers;           // registers set by set_registers()
-    const RegisterDictionary *interp_registers;         // registers obtained from the SgAsmInterpretation
+    RegisterDictionaryPtr user_registers;               // registers set by set_registers()
+    RegisterDictionaryPtr interp_registers;             // registers obtained from the SgAsmInterpretation
 
     /** Initializes the callback lists.  This is invoked by the default constructor. */
     virtual void init();

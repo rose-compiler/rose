@@ -3398,7 +3398,6 @@ ASTtools::VarSymSet_t transOmpMapVariables(SgStatement* target_data_or_target_pa
             irsize++;  
           }
           replaceExpression(subscript,newsubscript,true); 
-          pntrArrRef = isSgPntrArrRefExp(pntrArrRef->get_parent()); 
         }
       }
     }

@@ -13,8 +13,6 @@ namespace si = SageInterface;
 
 namespace
 {
-  constexpr bool USE_COMPUTED_NAME_QUALIFICATION_EXPR = true;
-
   inline
   SgVariableSymbol& symOf(const SgVarRefExp& n)
   {
@@ -171,7 +169,7 @@ namespace
   {
     void handle(const SgNode& n)                   { SG_UNEXPECTED_NODE(n); }
     void handle(const SgAdaPackageSpecDecl& n)     { res = n.get_name(); }
-    void handle(const SgAdaGenericInstanceDecl& n) { res = si::ada::convertRoseOperatorNameToAdaName(n.get_name()); }
+    void handle(const SgAdaGenericInstanceDecl& n) { res = si::Ada::convertRoseOperatorNameToAdaName(n.get_name()); }
     void handle(const SgFunctionDeclaration& n)    { res = n.get_name(); }
 
     void handle(const SgAdaGenericDecl& n)         { res = nameOfUnitRef(n.get_declaration()); }
@@ -189,7 +187,7 @@ namespace
     AdaExprUnparser(Unparse_Ada& unp, SgUnparse_Info& inf, std::ostream& outp, bool requiresScopeQual)
     : unparser(unp), info(inf), os(outp), ctxRequiresScopeQualification(requiresScopeQual)
     {}
-
+/*
     std::string
     scopeQual(SgScopeStatement& remote);
 
@@ -198,7 +196,7 @@ namespace
     {
       return scopeQual(SG_DEREF(remote));
     }
-
+*/
     void prn(const std::string& s)
     {
       unparser.curprint(s);
@@ -306,7 +304,7 @@ namespace
       SgExpressionPtrList& lst = args.get_expressions();
       ROSE_ASSERT((lst.size() > 0) && (lst.size() < 3));
 
-      std::string op = si::ada::convertRoseOperatorNameToAdaOperator(fndcl->get_name());
+      std::string op = si::Ada::convertRoseOperatorNameToAdaOperator(fndcl->get_name());
       ROSE_ASSERT(op.size());
 
       if (lst.size() == 2)
@@ -321,7 +319,7 @@ namespace
       expr(lst.back());
     }
 
-    void prnIfBranch(const si::ada::IfExpressionInfo& branch, const std::string& cond)
+    void prnIfBranch(const si::Ada::IfExpressionInfo& branch, const std::string& cond)
     {
       prn(cond);
       expr(branch.condition());
@@ -331,9 +329,9 @@ namespace
 
     void handle(SgConditionalExp& n)
     {
-      using Iterator = std::vector<si::ada::IfExpressionInfo>::iterator;
+      using Iterator = std::vector<si::Ada::IfExpressionInfo>::iterator;
 
-      std::vector<si::ada::IfExpressionInfo> seq = si::ada::flattenIfExpressions(n);
+      std::vector<si::Ada::IfExpressionInfo> seq = si::Ada::flattenIfExpressions(n);
       Iterator                               aa = seq.begin();
       const Iterator                         zz = seq.end();
 
@@ -425,26 +423,13 @@ namespace
 
     void handle(SgVarRefExp& n)
     {
-      if (USE_COMPUTED_NAME_QUALIFICATION_EXPR)
-        prnNameQual(n);
-      else if (ctxRequiresScopeQualification)
-      {
-        SgInitializedName& init = declOf(n);
-
-        prn(scopeQual(init.get_scope()));
-      }
-
+      prnNameQual(n);
       prn(nameOf(n));
     }
 
     void handle(SgEnumVal& n)
     {
-      if (USE_COMPUTED_NAME_QUALIFICATION_EXPR)
-        prnNameQual(n);
-      else if (ctxRequiresScopeQualification)
-        prn(scopeQual(SG_DEREF(n.get_declaration()).get_scope()));
-
-      //~ std::cerr << "enumval: " << nameOf(n) << std::endl;
+      prnNameQual(n);
       prn(nameOf(n));
     }
 
@@ -453,11 +438,7 @@ namespace
     {
       SgAdaRenamingDecl& dcl = SG_DEREF(n.get_decl());
 
-      if (USE_COMPUTED_NAME_QUALIFICATION_EXPR)
-        prnNameQual(n);
-      else
-        prn(scopeQual(dcl.get_scope()));
-
+      prnNameQual(n);
       prn(dcl.get_name());
     }
 
@@ -521,22 +502,16 @@ namespace
         return nullptr;
 
       SgFunctionDeclaration& fundcl = SG_DEREF(n.getAssociatedFunctionDeclaration());
-      auto                   primitiveArgs = si::ada::primitiveParameterPositions(fundcl);
-      SgScopeStatement*      overridingScope = si::ada::overridingScope(args, primitiveArgs);
+      auto                   primitiveArgs = si::Ada::primitiveParameterPositions(fundcl);
+      SgScopeStatement*      overridingScope = si::Ada::overridingScope(args, primitiveArgs);
 
       return overridingScope ? overridingScope : fundcl.get_scope();
     }
 
     void handle(SgFunctionRefExp& n)
     {
-      if (USE_COMPUTED_NAME_QUALIFICATION_EXPR)
-        prnNameQual(n);
-      else if (SgScopeStatement* dclscope = assumedDeclarativeScope(n))
-        prn(scopeQual(dclscope));
-
-      std::string fn = si::ada::convertRoseOperatorNameToAdaName(nameOf(n));
-
-      prn(std::move(fn));
+      prnNameQual(n);
+      prn(si::Ada::convertRoseOperatorNameToAdaName(nameOf(n)));
     }
 
     template <class SageAdaRefExp>
@@ -544,11 +519,7 @@ namespace
     {
       auto& dcl = SG_DEREF(n.get_decl());
 
-      if (USE_COMPUTED_NAME_QUALIFICATION_EXPR)
-        prnNameQual(n);
-      else
-        prn(scopeQual(dcl.get_scope()));
-
+      prnNameQual(n);
       prn(dcl.get_name());
     }
 
@@ -558,12 +529,7 @@ namespace
 
     void handle(SgAdaUnitRefExp& n)
     {
-      if (USE_COMPUTED_NAME_QUALIFICATION_EXPR)
-        prnNameQual(n);
-      else
-        prn(scopeQual(SG_DEREF(n.get_decl()).get_scope()));
-
-      // really needed?
+      prnNameQual(n);
       prn(nameOfUnitRef(n.get_decl()));
     }
 
@@ -722,7 +688,7 @@ namespace
 
   void AdaExprUnparser::aggregate(SgExprListExp& n)
   {
-    si::ada::AggregateInfo info = si::ada::splitAggregate(n);
+    si::Ada::AggregateInfo info = si::Ada::splitAggregate(n);
 
     if (SgAdaAncestorInitializer* ext = info.ancestor())
     {
@@ -746,6 +712,7 @@ namespace
     prn(")");
   }
 
+/*
   std::string
   AdaExprUnparser::scopeQual(SgScopeStatement& remote)
   {
@@ -754,7 +721,7 @@ namespace
     return current ? unparser.computeScopeQual(*current, remote)
                    : "<missing-scope>"; // <-- this used iff invoked from unparseToString..
   }
-
+*/
 }
 
 bool Unparse_Ada::requiresParentheses(SgExpression* expr, SgUnparse_Info& info)

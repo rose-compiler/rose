@@ -29,6 +29,7 @@ UnparseFormat::UnparseFormat( ostream* nos, UnparseFormatHelp *inputFormatHelp)
      currentIndent = 0;
      currentLine   = 1;
      linewrap      = MAXCHARSONLINE;
+     userDefinedLinewrap = linewrap;
 
   // indentstop    = MAXINDENT;
      indentstop    = (formatHelpInfo != NULL) ? formatHelpInfo->maxLineLength() : MAXINDENT;
@@ -58,7 +59,7 @@ UnparseFormat::~UnparseFormat()
 UnparseFormat::UnparseFormat(const UnparseFormat & X)
    {
   // DQ (9/11/2011): Added explicit copy constructor to avoid possible double free of formatHelpInfo (reported by static analysis).
-  // DQ (9/11/2011): This function is provided to make this code better so that can be analyized using static analysis 
+  // DQ (9/11/2011): This function is provided to make this code better so that can be analyized using static analysis
   // (static analysis tools don't understand access functions).
 
 #if 0
@@ -85,7 +86,7 @@ UnparseFormat::UnparseFormat(const UnparseFormat & X)
 UnparseFormat & UnparseFormat::operator=(const UnparseFormat & X)
    {
   // DQ (9/11/2011): Added explicit operator=() to avoid possible double free of formatHelpInfo (reported by static analysis).
-  // DQ (9/11/2011): This function is provided to make this code better so that can be analyized using static analysis 
+  // DQ (9/11/2011): This function is provided to make this code better so that can be analyized using static analysis
   // (static analysis tools don't understand access functions).
 
   // DQ (9/12/2011): This avoids the memory leak that could happend with self assignment.
@@ -93,7 +94,7 @@ UnparseFormat & UnparseFormat::operator=(const UnparseFormat & X)
         {
           return *this;
         }
-      
+
      currentLine    = 0;            //! stores current line number being unparsed
      currentIndent  = 0;            //! indent of the current line
      chars_on_line  = 0;            //! the number of characters printed on the line
@@ -111,7 +112,7 @@ UnparseFormat & UnparseFormat::operator=(const UnparseFormat & X)
    }
 
 
-// DQ (12/10/2014): Reset the chars_on_line to zero, used in token based unparsing to reset the 
+// DQ (12/10/2014): Reset the chars_on_line to zero, used in token based unparsing to reset the
 // formatting for AST subtrees unparsed using the AST in conjunction with the token based unparsing.
 void
 UnparseFormat::reset_chars_on_line()
@@ -127,15 +128,15 @@ UnparseFormat::reset_chars_on_line()
 //
 // Liao, 5/16/2009: some comments:
 //   the resetting of chars_on_line can help remove redundant insertion of two consecutive empty lines.
-//   In most cases, this is a desired behavior. 
+//   In most cases, this is a desired behavior.
 //    But sometimes , an extra empty line (line 2)
 //    must be preserved after an empty line (line 1) ending with '\' preceeding it.
 //    e.g.
-// #define BZ_ITER(nn) 
+// #define BZ_ITER(nn)
 //    int nn;
 //
 //    BZ_ITER(i);
-//    For the example above, caller to this function has to pass num>1 to ensure an insertion 
+//    For the example above, caller to this function has to pass num>1 to ensure an insertion
 //    always happen for the second '\n' character.
 //-----------------------------------------------------------------------------------
 void
@@ -151,7 +152,7 @@ UnparseFormat::insert_newline(int num, int indent)
 #if 1
           (*os) << endl;
 #else
-       // DQ (5/7/2010): Test the line number value as a prelude to an option that would rest 
+       // DQ (5/7/2010): Test the line number value as a prelude to an option that would rest
        // the Sg_File_Info objects in AST to match that of the unparsed code.
           (*os) << "// (line=" << currentLine << ")" << endl;
 #endif
@@ -224,7 +225,7 @@ UnparseFormat& UnparseFormat::operator << ( string out)
           tabIndentSize = formatHelpInfo->tabIndent();
 
 #if 0
-  // DQ (7/20/2008): I have always wanted to turn this off...I can't figure 
+  // DQ (7/20/2008): I have always wanted to turn this off...I can't figure
   // out why it is a great idea to eat explicit trailing CRs.
 
   // DQ (3/18/2006): I think that this is the cause of the famous "\n" eating
@@ -239,7 +240,7 @@ UnparseFormat& UnparseFormat::operator << ( string out)
 #endif
 
   // DQ: Better code might use "strlen(p)" instead of "(p2 - p)"
-     if (linewrap > 0 && chars_on_line + (p2 - p) >= linewrap) 
+     if (linewrap > 0 && chars_on_line + (p2 - p) >= linewrap)
         {
 #if 0
           printf ("UnparseFormat::operator << (): CALLING insert_newline: chars_on_line = %d \n",chars_on_line);
@@ -257,22 +258,22 @@ UnparseFormat& UnparseFormat::operator << ( string out)
        // printf ("p = %p p2 = %p *p = %c \n",p,p2,*p);
 
      // Liao, 5/16/2009
-     // insert_newline() has a semantic to skip the second and after new line for a sequence of 
+     // insert_newline() has a semantic to skip the second and after new line for a sequence of
      // '\n'. It is very useful to remove excessive newlines in the unparased file.
      //
-     // BUT:      
+     // BUT:
      // two consecutive '\n' might be essential for the correctness of a program
-     // e.g. 
-     //       # define BZ_ITER(nn) 
-     //         int nn; 
+     // e.g.
+     //       # define BZ_ITER(nn)
+     //         int nn;
      //
      //      BZ_ITER(I);
      // In the example above, the extra new line after "int nn; \" must be preserved!
      // Otherwise, the following statement will be treated as a continuation line of "int nn;\"
-     // 
+     //
      // So the code below is changed to lookback two characters to decide if the line continuation
-     // case is encountered and call a special version of insert_newline() to always insert a line.       
-          if ( *p == '\n') 
+     // case is encountered and call a special version of insert_newline() to always insert a line.
+          if ( *p == '\n')
              {
                bool mustInsert=false;
                if ((p-head)>1)
@@ -336,7 +337,7 @@ UnparseFormat& UnparseFormat:: operator << (unsigned short num)
   //
   // sprintf(buffer, "%su", num);
 
-     sprintf(buffer, "%hu", num); 
+     sprintf(buffer, "%hu", num);
      assert (strlen(buffer) < MAX_DIGITS);
      (*this) << buffer;
      return *this;
@@ -374,7 +375,7 @@ UnparseFormat& UnparseFormat:: operator << (long long num)
      char buffer[MAX_DIGITS];
      sprintf(buffer, "%ld", (long)num);
      assert (strlen(buffer) < MAX_DIGITS);
-     (*this) << buffer; 
+     (*this) << buffer;
      return *this;
    }
 
@@ -396,7 +397,7 @@ UnparseFormat::removeTrailingZeros ( char* inputString )
      while ( (i > 0) && (inputString[i] == '0') )
         {
        // Leave the trailing zero after the '.' (generate "2.0" rather than "2.")
-       // this makes the output easier to read and more clear that it is a floating 
+       // this makes the output easier to read and more clear that it is a floating
        // point number.
           if (inputString[i-1] != '.')
                inputString [i] = '\0';
@@ -510,7 +511,7 @@ UnparseFormat& UnparseFormat:: operator << (void* pointer)
 #endif
 
 
-void UnparseFormat::set_linewrap( int w) { linewrap = w; } // no wrapping if linewrap <= 0
+void UnparseFormat::set_linewrap( int w) { userDefinedLinewrap = linewrap = w; } // no wrapping if linewrap <= 0
 int UnparseFormat::get_linewrap() const { return linewrap; }
 
 void
@@ -680,24 +681,32 @@ UnparseFormat::format(SgLocatedNode* node, SgUnparse_Info& info, FormatOpt opt)
                                       {
                                         insert_newline(1,stmtIndent);
                                       }
+
+                                   linewrap = userDefinedLinewrap;
                                  }
                             }
                        }
                     break;
                   }
                case FORMAT_BEFORE_DIRECTIVE:
-                    linewrap = -1;
-                    insert_newline(1,0); 
+                    {
+                      linewrap = -1;
+                      insert_newline(1,0);
+                    }
                     break;
                case FORMAT_AFTER_DIRECTIVE:
-                    linewrap = MAXCHARSONLINE;
-                    insert_newline();
+                    {
+                      linewrap = MAXCHARSONLINE;
+                      insert_newline();
+                      linewrap = userDefinedLinewrap;
+                    }
                     break;
+
                case FORMAT_BEFORE_BASIC_BLOCK1:
-                    if ( v1 != V_SgCatchOptionStmt && v1 != V_SgDoWhileStmt  && 
-                         v1 != V_SgForStatement && v1 != V_SgIfStmt && 
-                         v1 != V_SgSwitchStatement && v1 != V_SgWhileStmt ) 
-                       insert_newline(); 
+                    if ( v1 != V_SgCatchOptionStmt && v1 != V_SgDoWhileStmt  &&
+                         v1 != V_SgForStatement && v1 != V_SgIfStmt &&
+                         v1 != V_SgSwitchStatement && v1 != V_SgWhileStmt )
+                       insert_newline();
                     break;
                case FORMAT_AFTER_BASIC_BLOCK1:
                     stmtIndent += tabIndentSize;
@@ -746,7 +755,7 @@ UnparseFormat::format(SgLocatedNode* node, SgUnparse_Info& info, FormatOpt opt)
 
 //-----------------------------------------------------------------------------------
 //  int UnparseOrigFormat::get_type_len
-//  
+//
 //  Auxiliary function used by special_cases to determine the length of
 //  the given type. This length is then subtracted from the amount to indent.
 //-----------------------------------------------------------------------------------
@@ -754,32 +763,32 @@ int
 UnparseOrigFormat::get_type_len(SgType* type)
    {
      assert(type != NULL);
-  
+
      switch(type->variant())
         {
           case T_UNKNOWN: return 0;
-          case T_CHAR: return 4;        
-          case T_SIGNED_CHAR: return 11;        
-          case T_UNSIGNED_CHAR: return 13;      
-          case T_SHORT: return 5;       
-          case T_SIGNED_SHORT: return 12;       
-          case T_UNSIGNED_SHORT: return 14;     
-          case T_INT: return 3; 
-          case T_SIGNED_INT: return 10; 
-          case T_UNSIGNED_INT: return 12;       
-          case T_LONG: return 4;        
-          case T_SIGNED_LONG: return 11;        
-          case T_UNSIGNED_LONG: return 13;      
-          case T_VOID: return 4;        
-          case T_GLOBAL_VOID: return 11;        
-          case T_WCHAR: return 5;       
-          case T_FLOAT: return 5;       
-          case T_DOUBLE: return 6;      
+          case T_CHAR: return 4;
+          case T_SIGNED_CHAR: return 11;
+          case T_UNSIGNED_CHAR: return 13;
+          case T_SHORT: return 5;
+          case T_SIGNED_SHORT: return 12;
+          case T_UNSIGNED_SHORT: return 14;
+          case T_INT: return 3;
+          case T_SIGNED_INT: return 10;
+          case T_UNSIGNED_INT: return 12;
+          case T_LONG: return 4;
+          case T_SIGNED_LONG: return 11;
+          case T_UNSIGNED_LONG: return 13;
+          case T_VOID: return 4;
+          case T_GLOBAL_VOID: return 11;
+          case T_WCHAR: return 5;
+          case T_FLOAT: return 5;
+          case T_DOUBLE: return 6;
           case T_LONG_LONG: return 9;
-          case T_UNSIGNED_LONG_LONG: return 18; 
-          case T_LONG_DOUBLE: return 11;        
+          case T_UNSIGNED_LONG_LONG: return 18;
+          case T_LONG_DOUBLE: return 11;
           case T_STRING: return 6;
-          case T_BOOL: return 4;        
+          case T_BOOL: return 4;
           case T_COMPLEX: return 7;
 
           case T_DEFAULT:
@@ -812,17 +821,17 @@ UnparseOrigFormat::get_type_len(SgType* type)
     assert(ref_type != NULL);
     return 1 + get_type_len(ref_type->get_base_type());
   }
-  
+
   case T_NAME: {
     cerr << "T_NAME not implemented" << endl;
     break;
-  }     
-  
+  }
+
   case T_CLASS: {
     int length = 0;
     SgClassType* class_type = isSgClassType(type);
     assert (class_type != NULL);
-    
+
     SgName qn = class_type->get_name();
 
  // We can't force all SgName objects to have a valid string!
@@ -856,24 +865,24 @@ UnparseOrigFormat::get_type_len(SgType* type)
  // if (mod_type->isSync()) length += 0;
  // if (mod_type->isGlobal()) length += 0;
     if (mod_type->get_typeModifier().isRestrict()) length += 8;
-    
-    if (mod_type->get_typeModifier().get_constVolatileModifier().isConst() && 
+
+    if (mod_type->get_typeModifier().get_constVolatileModifier().isConst() &&
         mod_type->get_typeModifier().get_constVolatileModifier().isVolatile())
          length += 1;
 
     return length + get_type_len(mod_type->get_base_type()) + 1;
   }
-  
+
   case T_FUNCTION: {
     SgFunctionType* func_type = isSgFunctionType(type);
     assert(func_type != NULL);
     SgType* ret_type = func_type->get_return_type();
     assert(ret_type != NULL);
-    
+
     return get_type_len(ret_type);
 
   }
-  
+
   case T_MEMBERFUNCTION: {
     SgMemberFunctionType* mfunc_type = isSgMemberFunctionType(type);
     assert(mfunc_type != NULL);
@@ -887,7 +896,7 @@ UnparseOrigFormat::get_type_len(SgType* type)
     assert(ret_type != NULL);
 
     length += 2;                  //space for "::"
-    
+
     return length + get_type_len(ret_type);
 
   }
@@ -899,7 +908,7 @@ UnparseOrigFormat::get_type_len(SgType* type)
   case T_ARRAY: {
     SgArrayType* array_type = isSgArrayType(type);
     assert(array_type != NULL);
-    
+
     SgType* base_type = array_type->get_base_type();
 
     return get_type_len(base_type);
@@ -907,10 +916,10 @@ UnparseOrigFormat::get_type_len(SgType* type)
   case T_ELLIPSE:{
     cerr << "T_ELLIPSE not implemented" << endl;
     break;
-  } 
+  }
 
   default: return 0;
-  
+
   }
   return 0;
 }
@@ -922,16 +931,16 @@ UnparseOrigFormat::get_type_len(SgType* type)
 //-----------------------------------------------------------------------------------
 //  int UnparseOrigFormat::cases_of_printSpecifier
 //
-//  Calculates the length of any keywords to subtract from the total number of 
-//  spaces to indent. Unparser::printSpecifier prints out any keywords 
+//  Calculates the length of any keywords to subtract from the total number of
+//  spaces to indent. Unparser::printSpecifier prints out any keywords
 //  necessary for the declaration and this function subtracts the length of keywords
 //  printed.  Read the comments for the function special_cases to find out why this
 //  is needed. However, the keywords are sometimes generated automatically by Sage,
 //  such as "auto." If the original file did not contain "auto," but the option to
 //  print "auto" is true, then this function will erroneously add to subcol. Yet if
 //  the original file did include "auto" and the option is true, then we would be
-//  correctly adding to subcol. This discrepancy is impossible for the unparser to 
-//  distinguish. 
+//  correctly adding to subcol. This discrepancy is impossible for the unparser to
+//  distinguish.
 //-----------------------------------------------------------------------------------
 int
 UnparseOrigFormat::cases_of_printSpecifier(SgLocatedNode* node, SgUnparse_Info& info)
@@ -954,7 +963,7 @@ UnparseOrigFormat::cases_of_printSpecifier(SgLocatedNode* node, SgUnparse_Info& 
        // if (decl_stmt->.isAtomic() && !info.SkipAtomic()) subcol += 7;
           if (decl_stmt->get_declarationModifier().get_storageModifier().isStatic())
                subcol += 7;
-          if ( decl_stmt->get_declarationModifier().get_storageModifier().isExtern() && 
+          if ( decl_stmt->get_declarationModifier().get_storageModifier().isExtern() &&
               !decl_stmt->get_linkage() )
                subcol += 7;
        // DQ (4/25/2004): Removed CC++ support
@@ -987,8 +996,8 @@ UnparseOrigFormat::cases_of_printSpecifier(SgLocatedNode* node, SgUnparse_Info& 
 //
 //  Handles and calculates the length to subtract from the total number of spaces
 //  to indent. The column information returned from a declaration is designated
-//  at the name. Thus, the length of the type must be found to subtract from the 
-//  column number of the name. 
+//  at the name. Thus, the length of the type must be found to subtract from the
+//  column number of the name.
 //-----------------------------------------------------------------------------------
 int
 UnparseOrigFormat::special_cases(SgLocatedNode* node)
@@ -1010,7 +1019,7 @@ UnparseOrigFormat::special_cases(SgLocatedNode* node)
                assert(tmp_type != NULL);
 
             // adding one since there's a space in between the type and name
-               subcol += get_type_len(tmp_type) + 1; 
+               subcol += get_type_len(tmp_type) + 1;
              }
         }
        else
@@ -1020,7 +1029,7 @@ UnparseOrigFormat::special_cases(SgLocatedNode* node)
                SgMemberFunctionDeclaration* mfuncdecl_stmt = isSgMemberFunctionDeclaration(node);
                assert(mfuncdecl_stmt != NULL);
                SgType* rtype = NULL;
-               if ( !( mfuncdecl_stmt->get_specialFunctionModifier().isConstructor() || 
+               if ( !( mfuncdecl_stmt->get_specialFunctionModifier().isConstructor() ||
                        mfuncdecl_stmt->get_specialFunctionModifier().isDestructor()  ||
                        mfuncdecl_stmt->get_specialFunctionModifier().isConversion() ) )
                   {
@@ -1075,7 +1084,7 @@ UnparseOrigFormat::special_cases(SgLocatedNode* node)
                             {
                               if (isSgLabelStatement(node))
                                  {
-                                   SgLabelStatement* label_stmt = isSgLabelStatement(node);  
+                                   SgLabelStatement* label_stmt = isSgLabelStatement(node);
                                    assert(label_stmt != NULL);
                                    // assert(label_stmt->get_label().str() != NULL);
                                    subcol += strlen(label_stmt->get_label().str());
@@ -1098,7 +1107,7 @@ UnparseOrigFormat::special_cases(SgLocatedNode* node)
         }
 
   // may need to take care of more special cases here
-  
+
      return subcol;
    }
 #endif
@@ -1123,7 +1132,7 @@ int UnparseOrigFormat::getCol(SgLocatedNode *node, SgUnparse_Info& info, FormatO
 // DQ (3/18/2006): This appears to be old code, I think we can remove it at some point.
 
 //-----------------------------------------------------------------------------------
-//  int UnparseOrigFormat::getLine(SgLocatedNode *node) 
+//  int UnparseOrigFormat::getLine(SgLocatedNode *node)
 //
 //  Get the line number from the Sage LocatedNode Object
 //-----------------------------------------------------------------------------------

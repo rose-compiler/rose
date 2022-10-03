@@ -7,10 +7,12 @@ static const char *description =
     "whose standard input is opened in binary mode, such as Unix-like systems.";
 
 #include <rose.h>
-#include <Rose/CommandLine.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
-
 #include <batSupport.h>
+
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/CommandLine.h>
+
 
 using namespace Rose;
 using namespace Rose::BinaryAnalysis;
@@ -45,7 +47,7 @@ public:
     }
 
     void eval(const P2::Partitioner &partitioner) const {
-        if (Disassembler *d = partitioner.instructionProvider().disassembler()) {
+        if (Disassembler::Base::Ptr d = partitioner.instructionProvider().disassembler()) {
             std::cout <<d->name() <<"\n";
         } else {
             std::cout <<"none\n";

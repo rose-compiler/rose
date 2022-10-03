@@ -606,7 +606,7 @@ template <class ContextString>
 void
 CtxLabeler<ContextString>::expandLabels(Label orig, const CtxLattice<ContextString>& lat)
 {
-  for (const std::pair<ContextString, Lattice*>& el : lat)
+  for (const typename CtxLattice<ContextString>::context_map::value_type& el : lat)
     copyProperty(orig, el.first);
 }
 

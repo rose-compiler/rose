@@ -5,6 +5,8 @@
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
 #include <Rose/CommandLine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
+#include <Rose/BinaryAnalysis/SymbolicExpression.h>
 #include <rose_strtoull.h>                              // rose
 #include <stringify.h>                                  // rose
 #include <Rose/StringUtility.h>
@@ -75,7 +77,7 @@ PlainTextFormatter::mayMust(std::ostream &out, FeasiblePath::MayOrMust mayMust, 
 }
 
 void
-PlainTextFormatter::objectAddress(std::ostream &out, const SymbolicExpr::Ptr &address) {
+PlainTextFormatter::objectAddress(std::ostream &out, const SymbolicExpression::Ptr &address) {
     out <<"  for address " <<*address <<"\n";
 }
 
@@ -228,8 +230,8 @@ PlainTextFormatter::edge(std::ostream &out, const std::string &name) {
 
 void
 PlainTextFormatter::state(std::ostream &out, size_t vertexIdx, const std::string &title,
-                          const Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::StatePtr &state,
-                          const Rose::BinaryAnalysis::RegisterDictionary *regdict) {
+                          const Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::State::Ptr &state,
+                          const Rose::BinaryAnalysis::RegisterDictionary::Ptr &regdict) {
     out <<"      " <<title <<"\n";
     if (state) {
         BS::Formatter fmt;
@@ -250,7 +252,7 @@ PlainTextFormatter::solverEvidence(std::ostream &out, const Rose::BinaryAnalysis
             out <<"      none (trivial solution?)\n";
         } else {
             for (const std::string &name: names) {
-                if (SymbolicExpr::Ptr value = solver->evidenceForName(name)) {
+                if (SymbolicExpression::Ptr value = solver->evidenceForName(name)) {
                     out <<"      " <<name <<" = " <<*value <<"\n";
                 } else {
                     out <<"      " <<name <<" = unknown\n";
@@ -309,7 +311,7 @@ YamlFormatter::mayMust(std::ostream &out, FeasiblePath::MayOrMust mayMust, const
 }
 
 void
-YamlFormatter::objectAddress(std::ostream &out, const SymbolicExpr::Ptr &address) {
+YamlFormatter::objectAddress(std::ostream &out, const SymbolicExpression::Ptr &address) {
     writeln(out, "  address:", *address);
 }
 
@@ -474,8 +476,8 @@ YamlFormatter::edge(std::ostream &out, const std::string &name) {
 
 void
 YamlFormatter::state(std::ostream &out, size_t vertexIdx, const std::string &title,
-                          const Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::StatePtr &state,
-                          const Rose::BinaryAnalysis::RegisterDictionary *regdict) {
+                          const Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::State::Ptr &state,
+                     const Rose::BinaryAnalysis::RegisterDictionary::Ptr &regdict) {
     if (state) {
         writeln(out, "      semantics:", title);
         writeln(out, "      state:");
@@ -496,7 +498,7 @@ YamlFormatter::solverEvidence(std::ostream &out, const Rose::BinaryAnalysis::Smt
             writeln(out, "  evidence:");
             for (const std::string &name: names) {
                 writeln(out, "    - name:", name);
-                if (SymbolicExpr::Ptr value = solver->evidenceForName(name)) {
+                if (SymbolicExpression::Ptr value = solver->evidenceForName(name)) {
                     writeln(out, "      value:", *value);
                 } else {
                     writeln(out, "      value:", "unknown");
@@ -706,7 +708,7 @@ pathEndpointFunctionNames(const FeasiblePath &fpAnalysis, const P2::CfgPath &pat
 
 void
 printPath(std::ostream &out, const FeasiblePath &fpAnalysis, const P2::CfgPath &path, const SmtSolver::Ptr &solver,
-          const BS::RiscOperatorsPtr &cpu, SgAsmInstruction *lastInsn, ShowStates::Flag showStates,
+          const BS::RiscOperators::Ptr &cpu, SgAsmInstruction *lastInsn, ShowStates::Flag showStates,
           const OutputFormatter::Ptr &formatter) {
     ASSERT_not_null(formatter);
     const P2::Partitioner &partitioner = fpAnalysis.partitioner();
@@ -768,10 +770,10 @@ printPath(std::ostream &out, const FeasiblePath &fpAnalysis, const P2::CfgPath &
 
         // Show virtual machine state after each vertex
         if (ShowStates::YES == showStates) {
-            const RegisterDictionary *regdict = fpAnalysis.partitioner().instructionProvider().registerDictionary();
+            RegisterDictionary::Ptr regdict = fpAnalysis.partitioner().instructionProvider().registerDictionary();
             if (vertexIdx == lastVertexIdx) {
                 formatter->state(out, vertexIdx, "state at detected operation:", cpu->currentState(), regdict);
-            } else if (BS::StatePtr state = fpAnalysis.pathPostState(path, vertexIdx)) {
+            } else if (BS::State::Ptr state = fpAnalysis.pathPostState(path, vertexIdx)) {
                 formatter->state(out, vertexIdx, "state after vertex #" + boost::lexical_cast<std::string>(vertexIdx),
                                  state, regdict);
             }

@@ -1622,6 +1622,8 @@ ROSE_DLL_API SgMicrosoftAttributeDeclaration* buildMicrosoftAttributeDeclaration
 //! Liao (9/18/2015): experimental support of building a statement from a string
 ROSE_DLL_API SgStatement* buildStatementFromString(const std::string & stmt_str, SgScopeStatement* scope);
 
+//! Build a using directive statement
+ROSE_DLL_API SgUsingDirectiveStatement* buildUsingDirectiveStatement(SgNamespaceDeclarationStatement * ns_decl);
 //@}
 
 //--------------------------------------------------------------
@@ -1736,31 +1738,11 @@ address the interface from an external language parser and the construction of t
 Later iterations on the ROSE Untyped AST can be used to translate (or construct) a proper ROSE AST in
 terms of non-untyped IR nodes.
 
- \todo define translation passes to construct non-untype IR nodes.
+All untyped IR nodes have been removed and this interface removed. Ultimately it proved easier to
+construct regular IR nodes from the Jovial parser. Using the untyped system just led to an
+unnecessary step and wasted effort.
+
 */
-
-/*! \brief build a concept of scope in the untyped AST.
-*/
-ROSE_DLL_API SgUntypedScope* buildUntypedScope();
-ROSE_DLL_API SgUntypedScope* buildUntypedScope(SgUntypedDeclarationStatementList* declaration_list, SgUntypedStatementList* statement_list, SgUntypedFunctionDeclarationList* function_list);
-
-ROSE_DLL_API SgUntypedGlobalScope*   buildUntypedGlobalScope  (SgUntypedDeclarationStatementList* declaration_list, SgUntypedStatementList* statement_list, SgUntypedFunctionDeclarationList* function_list);
-ROSE_DLL_API SgUntypedFunctionScope* buildUntypedFunctionScope(SgUntypedDeclarationStatementList* declaration_list, SgUntypedStatementList* statement_list, SgUntypedFunctionDeclarationList* function_list);
-ROSE_DLL_API SgUntypedModuleScope*   buildUntypedModuleScope  (SgUntypedDeclarationStatementList* declaration_list, SgUntypedStatementList* statement_list, SgUntypedFunctionDeclarationList* function_list);
-
-ROSE_DLL_API SgUntypedBlockStatement* buildUntypedBlockStatement(std::string label_string, SgUntypedScope* scope=NULL);
-
-ROSE_DLL_API SgUntypedFunctionDeclaration*      buildUntypedFunctionDeclaration(std::string name, SgUntypedInitializedNameList* parameters, SgUntypedType* type, SgUntypedFunctionScope* scope, SgUntypedNamedStatement* end_statement);
-ROSE_DLL_API SgUntypedProgramHeaderDeclaration* buildUntypedProgramHeaderDeclaration(std::string name, SgUntypedInitializedNameList* parameters, SgUntypedType* type, SgUntypedFunctionScope* scope, SgUntypedNamedStatement* end_statement);
-ROSE_DLL_API SgUntypedSubroutineDeclaration*    buildUntypedSubroutineDeclaration(std::string name, SgUntypedInitializedNameList* parameters, SgUntypedType* type, SgUntypedFunctionScope* scope, SgUntypedNamedStatement* end_statement);
-
-ROSE_DLL_API SgUntypedFile* buildUntypedFile(SgUntypedGlobalScope* scope);
-
-
-ROSE_DLL_API SgUntypedIfStatement* buildUntypedIfStatement(std::string label, SgUntypedExpression* conditional,
-                                                           SgUntypedStatement* true_body, SgUntypedStatement* false_body);
-
-
 //@}
 
 

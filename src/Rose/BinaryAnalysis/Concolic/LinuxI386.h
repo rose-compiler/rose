@@ -204,7 +204,7 @@ public:
      *  If the penultimate return event is associated with an input variable, then that input variable is returned. Otherwise
      *  the concrete return value is returned as a symbolic expression. If there is not a penultimate return event at all, then
      *  null is returned. */
-    SymbolicExprPtr penultimateSymbolicReturn() const;
+    SymbolicExpressionPtr penultimateSymbolicReturn() const;
 
 public:
     // Subclasses need not provide a function operator.
@@ -279,7 +279,7 @@ protected:
      *  must satisfy the symbolic constraint. Either or both of the return values may be missing.  If no symbolic constraint is
      *  returned, then none will be added to the solver. If no concrete value is returned, then the conrete state of the
      *  test case will not be updated (it will use whatever concrete value the syscall actually returned). */
-    virtual std::pair<SymbolicExprPtr, Sawyer::Optional<uint64_t>> makeReturnConstraint(SyscallContext&) = 0;
+    virtual std::pair<SymbolicExpressionPtr, Sawyer::Optional<uint64_t>> makeReturnConstraint(SyscallContext&) = 0;
 
 public:
     void handlePostSyscall(SyscallContext&) override final;
@@ -301,7 +301,7 @@ public:
     static Ptr instance();
 
     void playback(SyscallContext&) override;
-    std::pair<SymbolicExprPtr, Sawyer::Optional<uint64_t>> makeReturnConstraint(SyscallContext&) override;
+    std::pair<SymbolicExpressionPtr, Sawyer::Optional<uint64_t>> makeReturnConstraint(SyscallContext&) override;
 };
 
 /** Callback for system calls that return non-decreasing values.
@@ -318,7 +318,7 @@ public:
     static Ptr instance();
 
     void playback(SyscallContext&) override;
-    std::pair<SymbolicExprPtr, Sawyer::Optional<uint64_t>> makeReturnConstraint(SyscallContext&) override;
+    std::pair<SymbolicExpressionPtr, Sawyer::Optional<uint64_t>> makeReturnConstraint(SyscallContext&) override;
 };
 
 /** Callback for access system call. */

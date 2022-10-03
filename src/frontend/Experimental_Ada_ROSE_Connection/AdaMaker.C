@@ -387,14 +387,14 @@ SgArrayType& mkArrayType(SgType& comptype, SgExprListExp& dimInfo, bool variable
 
 SgType& mkIntegralType()
 {
-  // if this type is changed, the type comparison in si::ada::isIntegerType
+  // if this type is changed, the type comparison in si::Ada::isIntegerType
   // needs to be updated.
   return SG_DEREF(sb::buildLongLongType());
 }
 
 SgType& mkRealType()
 {
-  // if this type is changed, the type comparison in si::ada::isFloatingPointType
+  // if this type is changed, the type comparison in si::Ada::isFloatingPointType
   // needs to be updated.
   return SG_DEREF(sb::buildLongDoubleType());
 }
@@ -995,11 +995,11 @@ SgAdaTaskBodyDecl&
 mkAdaTaskBodyDecl_nondef(SgDeclarationStatement& tskdecl, SgScopeStatement& scope)
 {
   TaskDeclInfoResult specinfo = sg::dispatch(TaskDeclInfo{}, &tskdecl);
-  SgAdaTaskBodyDecl& sgnode   = mkLocatedNode<SgAdaTaskBodyDecl>(specinfo.name, nullptr);
+  SgAdaTaskBodyDecl& sgnode   = mkLocatedNode<SgAdaTaskBodyDecl>(specinfo.name, &tskdecl, nullptr);
 
   sgnode.set_parent(&scope); // needed?
 
-  insertBodySymbol_opt<SgAdaProtectedSymbol>(sgnode, scope);
+  insertBodySymbol_opt<SgAdaTaskSymbol>(sgnode, scope);
   return sgnode;
 }
 
@@ -1014,7 +1014,7 @@ mkAdaTaskBodyDecl( SgDeclarationStatement& tskdecl,
   // ROSE_ASSERT((nondef != nullptr) == (tskbody_opt != nullptr)) ;
 
   TaskDeclInfoResult specinfo = sg::dispatch(TaskDeclInfo{}, &tskdecl);
-  SgAdaTaskBodyDecl& sgnode   = mkLocatedNode<SgAdaTaskBodyDecl>(specinfo.name, &tskbody);
+  SgAdaTaskBodyDecl& sgnode   = mkLocatedNode<SgAdaTaskBodyDecl>(specinfo.name, &tskdecl, &tskbody);
   SgAdaTaskSpec&     tskspec = SG_DEREF( specinfo.spec );
 
   sgnode.set_parent(&scope); // \needed
@@ -1123,6 +1123,7 @@ namespace
 
   void linkParameterScope(SgFunctionDeclaration& decl, SgFunctionParameterList& lst, SgScopeStatement& parmScope)
   {
+    parmScope.set_parent(&decl);
     linkParametersToScope(lst, parmScope);
 
     if (SgFunctionParameterScope* fps = isSgFunctionParameterScope(&parmScope))
@@ -1170,9 +1171,11 @@ namespace
                      )
   {
     SgFunctionParameterList& lst       = mkFunctionParameterList();
-    //~ SgScopeStatement&        parmScope = scopeMaker(sgnode);
     SgScopeStatement&        parmScope = scopeMaker();
 
+    // NOTE: the true parent is set in linkParameterScope; the parameter completion needs
+    //       to be able to traverse the scope chain until global scope.
+    parmScope.set_parent(&scope);
     complete(lst, parmScope);
 
     SgFunctionDeclaration&   sgnode    = SG_DEREF(sb::buildNondefiningFunctionDeclaration(nm, &retty, &lst, &scope, nullptr));
@@ -1197,6 +1200,9 @@ mkAdaSubroutineType( SgType& retty,
   SgFunctionParameterList&  lst       = mkFunctionParameterList();
   SgFunctionParameterScope& parmScope = mkProcDecl_nondef();
 
+  // NOTE: the true parent is set underneath; the parameter completion needs
+  //       to be able to traverse the scope chain until global scope.
+  parmScope.set_parent(&scope);
   complete(lst, parmScope);
 
   // \todo can we make this a shared type?
@@ -1288,6 +1294,10 @@ mkAdaFunctionRenamingDecl( const std::string& name,
   ADA_ASSERT(sgnode.get_functionParameterScope() == nullptr);
 
   sg::linkParentChild<SgFunctionDeclaration>(sgnode, psc, &SgFunctionDeclaration::set_functionParameterScope);
+
+  // NOTE: the true parent is set in linkParameterScope; the parameter completion needs
+  //       to be able to traverse the scope chain until global scope.
+  sgnode.set_parent(&scope);
   complete(lst, psc);
 
   SgFunctionType& funty = mkAdaFunctionRenamingDeclType(retty, lst);
@@ -1346,6 +1356,8 @@ namespace
     SgInitializedName&        entryIndexVar  = genIndex(psc);
 
     sgnode.set_entryIndex(&entryIndexVar);
+    sgnode.set_scope(&scope);
+    sgnode.set_parent(&scope); // NOTE: needs to be set to enable scope chain traversal
     completeParams(lst, psc);
 
     SgType&                   entryIndexType = SG_DEREF(entryIndexVar.get_type());
@@ -1362,8 +1374,6 @@ namespace
     funsy = &mkBareNode<SgFunctionSymbol>(&sgnode);
 
     scope.insert_symbol(name, funsy);
-    sgnode.set_scope(&scope);
-
     markCompilerGenerated(lst);
     return sgnode;
   }
@@ -1933,7 +1943,7 @@ namespace
   {
     SgAssignInitializer& ini = SG_DEREF( isSgAssignInitializer(enumitem.get_initializer()) );
 
-    return si::ada::staticIntegralValue(ini.get_operand());
+    return si::Ada::staticIntegralValue(ini.get_operand());
   }
 };
 
@@ -2020,7 +2030,7 @@ namespace
     else
       basety = obj.get_type();
 
-    si::ada::FlatArrayType flatty = si::ada::getArrayTypeInfo(basety);
+    si::Ada::FlatArrayType flatty = si::Ada::getArrayTypeInfo(basety);
 
     if (flatty.first == nullptr)
       return SG_DEREF(basety);
@@ -2029,7 +2039,7 @@ namespace
 
     try
     {
-      const int dim = si::ada::firstLastDimension(args);
+      const int dim = si::Ada::firstLastDimension(args);
 
       resty = SG_DEREF(flatty.second.at(dim-1)).get_type();
     }
@@ -2221,7 +2231,7 @@ namespace
   SgFunctionType&
   convertToDerivedType(SgFunctionType& funcTy, SgTypedefType& declaredDerivedType)
   {
-    SgDeclarationStatement* baseTypeDecl = si::ada::baseDeclaration(declaredDerivedType.get_base_type());
+    SgDeclarationStatement* baseTypeDecl = si::Ada::baseDeclaration(declaredDerivedType.get_base_type());
 
     if (baseTypeDecl == nullptr)
       return funcTy;
@@ -2289,7 +2299,7 @@ SgStringVal& mkValue<SgStringVal>(const char* textrep)
   const char delimiter = *textrep;
   ADA_ASSERT(delimiter == '"' || delimiter == '%');
 
-  SgStringVal& sgnode = mkLocatedNode<SgStringVal>(si::ada::convertStringLiteral(textrep));
+  SgStringVal& sgnode = mkLocatedNode<SgStringVal>(si::Ada::convertStringLiteral(textrep));
 
   sgnode.set_stringDelimiter(delimiter);
   return sgnode;
@@ -2299,14 +2309,14 @@ SgStringVal& mkValue<SgStringVal>(const char* textrep)
 template <>
 long double convAdaLiteral<long double>(const char* img)
 {
-  return si::ada::convertRealLiteral(img);
+  return si::Ada::convertRealLiteral(img);
 }
 
 
 template <>
 char convAdaLiteral<char>(const char* img)
 {
-  return si::ada::convertCharLiteral(img);
+  return si::Ada::convertCharLiteral(img);
 }
 
 namespace
@@ -2334,7 +2344,7 @@ mkAdaIntegerLiteral(const char* textrep)
 
   ADA_ASSERT(textrep);
 
-  long long int val = si::ada::convertIntegerLiteral(textrep);
+  long long int val = si::Ada::convertIntegerLiteral(textrep);
   SgValueExp*   res = nullptr;
 
   MakeSmallest
@@ -2348,7 +2358,7 @@ mkAdaIntegerLiteral(const char* textrep)
   {
     logError() << "Unable to represent " << textrep << " within the bounds of long long int"
                << std::endl;
-    ROSE_ABORT();
+    ADA_ASSERT(false);
   }
 
   return *res;

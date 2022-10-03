@@ -34,8 +34,11 @@ sawyer_checkers =				\
 	traceUnitTests				\
 	mesgUnitTests				\
 	markupUnitTests				\
+	resultUnitTests				\
 	workListTests				\
-	cmdUnitTests
+	cmdUnitTests                            \
+	parseUnitTests				\
+	timeUnitTests
 
 if ROSE_HAVE_BOOST_SERIALIZATION_LIB
 sawyer_checkers += serializationUnitTests
@@ -66,8 +69,11 @@ noinst_PROGRAMS +=				\
 	traceUnitTests				\
 	mesgUnitTests				\
 	markupUnitTests				\
+	resultUnitTests     			\
 	workListTests				\
-	cmdUnitTests
+	cmdUnitTests				\
+	parseUnitTests				\
+	timeUnitTests
 
 if ROSE_HAVE_BOOST_SERIALIZATION_LIB
 noinst_PROGRAMS += serializationUnitTests
@@ -100,7 +106,9 @@ markupUnitTests_SOURCES		 = markupUnitTests.C
 cmdUnitTests_SOURCES		 = cmdUnitTests.C
 serializationUnitTests_SOURCES	 = serializationUnitTests.C
 databaseUnitTests_SOURCES	 = databaseUnitTests.C
-workListTests_SOURCES		 = workListTests.C 
+workListTests_SOURCES		 = workListTests.C
+resultUnitTests_SOURCES          = resultUnitTests.C
+parseUnitTests_SOURCES		 = parseUnitTests.C
 
 # Test targets
 sawyer_targets = $(addsuffix .passed, $(sawyer_checkers))

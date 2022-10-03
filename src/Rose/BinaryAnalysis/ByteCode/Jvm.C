@@ -49,11 +49,11 @@ const std::string JvmMethod::name() const
   return std::string{""};
 }
 
-void const JvmMethod::decode(Disassembler* disassembler) const {
+void const JvmMethod::decode(const Disassembler::Base::Ptr &disassembler) const {
   rose_addr_t va{code_.offset()};
   rose_addr_t endVa{code_.offset() + code_.size()};
 
-  auto disassemblerJvm{dynamic_cast<DisassemblerJvm*>(disassembler)};
+  auto disassemblerJvm{disassembler.dynamicCast<Disassembler::Jvm>()};
   disassemblerJvm->code_offset(va);
 
   MemoryMap::Ptr map = MemoryMap::instance();

@@ -27,6 +27,6 @@ private
        end record;
 
   i : constant Complex := (0.0, 1.0);
-  zero: constant Complex := (0.0, 0.0);
+  zero: constant Complex := (Re => 0.0, Im => 0.0);
 
 end Complex;

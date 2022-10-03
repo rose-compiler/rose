@@ -10,7 +10,7 @@ namespace CodeThorn
 
   /// first normalization phase (runs before C normalization)
   /// \details
-  ///   normalizes some C++ concepts by updating the Ast
+  ///   normalizes some C++ concepts by updating the AST
   ///   - generates constructors and destructors if needed
   ///   - moves member construction and initialization into ctor body
   ///   - moves member destruction into dtor body

@@ -1,9 +1,9 @@
-#ifndef Rose_Traits_Traversal_h
-#define Rose_Traits_Traversal_h
+#ifndef ROSE_Traits_Traversal_H
+#define ROSE_Traits_Traversal_H
 
-#include "Rose/Traits/describe/fields.h"
-#include "Rose/Traits/grammar/lists.h"
-#include "Rose/Traits/grammar/predicates.h"
+#include <Rose/Traits/describe/fields.h>
+#include <Rose/Traits/grammar/lists.h>
+#include <Rose/Traits/grammar/predicates.h>
 
 namespace Rose {
 namespace Traits {
@@ -134,4 +134,4 @@ void traverse( NodeT * node_, PreFuncT & pre = traversal_details::nop_noargs_f, 
 
 } }
 
-#endif /* Rose_Traits_Traversal_h */
+#endif

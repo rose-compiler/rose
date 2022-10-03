@@ -2,17 +2,14 @@
 #define ROSE_BinaryAnalysis_InstructionCache_H
 #include <featureTests.h>
 #if defined(ROSE_ENABLE_BINARY_ANALYSIS) && __cplusplus >= 201103L
+
+#include <Rose/BinaryAnalysis/Disassembler/BasicTypes.h>
+
 #include <memory>
 #include <unordered_map>
 
 namespace Rose {
 namespace BinaryAnalysis {
-
-class Disassembler; // from Disassembler.h, but we only need the forward here.
-class InstructionCache;
-class InstructionPtr;
-class LockedInstruction;
-class ManagedInstruction;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ManagedInstruction
@@ -366,10 +363,10 @@ public:
     };
 
 private:
-    MemoryMap::Ptr memory_; // not null, constant for life of object
-    Disassembler *decoder_; // not null, constant for life of object
+    MemoryMap::Ptr memory_;                             // not null, constant for life of object
+    Disassembler::BasePtr decoder_;                     // not null, constant for life of object
 
-    mutable SAWYER_THREAD_TRAITS::Mutex mutex_; // protects all following data members
+    mutable SAWYER_THREAD_TRAITS::Mutex mutex_;         // protects all following data members
     std::unordered_map<rose_addr_t, InstructionPtr> insns_;
 
     InstructionCache(const InstructionCache&) = delete;
@@ -381,7 +378,7 @@ public:
      *  Each instruction cache is for a specific virtual memory and instruction decoder.  The memory mapping and content should
      *  not change under the cache since doing so could cause reconstructed evicted instructions to be different than the
      *  original instruction. */
-    InstructionCache(const MemoryMap::Ptr &memory, Disassembler *decoder)
+    InstructionCache(const MemoryMap::Ptr &memory, const Disassembler::BasePtr &decoder)
         : memory_(memory), decoder_(decoder) {
         ASSERT_not_null(memory);
         ASSERT_not_null(decoder);
@@ -399,7 +396,7 @@ public:
     /** Property: the decoder used to construct the instruction ASTs from data in memory.
      *
      *  Thread safety: This function is thread safe. */
-    Disassembler* decoder() const {
+    Disassembler::BasePtr decoder() const {
         return decoder_; // no lock necessary since decoder_ can never change.
     }
     

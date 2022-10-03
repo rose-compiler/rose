@@ -4,12 +4,14 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
 
+#include <Rose/BinaryAnalysis/BasicTypes.h>
+
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Unparser {
 
 std::string unparseCilMnemonic(SgAsmCilInstruction*);
-std::string unparseCilExpression(SgAsmExpression*, const LabelMap*, const RegisterDictionary*);
+std::string unparseCilExpression(SgAsmExpression*, const LabelMap*, RegisterDictionaryPtr);
 
 struct CilSettings: public Settings {};
 

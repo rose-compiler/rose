@@ -1,8 +1,0 @@
-User vs. AutoPar @10
-< #pragma omp parallel
----
-> 
-User vs. AutoPar @11
-< #pragma omp master
----
-> 

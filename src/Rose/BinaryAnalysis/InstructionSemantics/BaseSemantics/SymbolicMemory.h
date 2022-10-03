@@ -6,7 +6,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryState.h>
-#include <Rose/BinaryAnalysis/SymbolicExpr.h>
+#include <Rose/BinaryAnalysis/SymbolicExpression.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -30,14 +30,14 @@ public:
     using Ptr = SymbolicMemoryPtr;
 
 private:
-    SymbolicExpr::Ptr mem_;
+    SymbolicExpression::Ptr mem_;
 
 protected:
     // All memory states should be heap allocated; use instance(), create(), or clone() instead.
     explicit SymbolicMemory(const SValuePtr &addrProtoval, const SValuePtr &valProtoval)
         : MemoryState(addrProtoval, valProtoval) {
         // Initially assume that addresses are 32 bits wide and values are 8 bits wide. We can change this on the first access.
-        mem_ = SymbolicExpr::makeMemoryVariable(32, 8);
+        mem_ = SymbolicExpression::makeMemoryVariable(32, 8);
     }
 
 public:
@@ -70,8 +70,8 @@ public:
     /** Property: the symbolic expression for the memory.
      *
      * @{ */
-    SymbolicExpr::Ptr expression() const { return mem_; }
-    void expression(const SymbolicExpr::Ptr &mem);
+    SymbolicExpression::Ptr expression() const { return mem_; }
+    void expression(const SymbolicExpression::Ptr &mem);
     /** @} */
 
 public:

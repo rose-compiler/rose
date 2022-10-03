@@ -3,13 +3,18 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Variables.h>
 
+#include <Rose/BinaryAnalysis/Partitioner2/Function.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
+
+#include <integerOps.h>
+#include <stringify.h>
+
+#include <Sawyer/Attribute.h>
+
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/integer_traits.hpp>
-#include <Rose/BinaryAnalysis/Partitioner2/Function.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
-#include <Sawyer/Attribute.h>
-#include <stringify.h>
 
 using namespace Sawyer::Message::Common;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
@@ -405,74 +410,71 @@ operator<<(std::ostream &out, const Rose::BinaryAnalysis::Variables::GlobalVaria
 namespace VarSearchSemantics {
 
 typedef P2::Semantics::SValue SValue;
-typedef P2::Semantics::SValuePtr SValuePtr;
 typedef P2::Semantics::RegisterState RegisterState;
-typedef P2::Semantics::RegisterStatePtr RegisterStatePtr;
 typedef P2::Semantics::MemoryMapState MemoryState;
-typedef P2::Semantics::MemoryMapStatePtr MemoryStatePtr;
 typedef P2::Semantics::State State;
-typedef P2::Semantics::StatePtr StatePtr;
 
 typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
 class RiscOperators: public P2::Semantics::RiscOperators {
-    SymbolicExpr::Ptr base_;                            // value to subtract from each address to find stack variable offsets
+    SymbolicExpression::Ptr base_;                      // value to subtract from each address to find stack variable offsets
     StackVariable::Boundaries &boundaries_;             // variable boundaries in the stack frame
 
 public:
-    typedef P2::Semantics::RiscOperators Super;
+    using Super = P2::Semantics::RiscOperators;
+    using Ptr = RiscOperatorsPtr;
 
 protected:
-    explicit RiscOperators(const S2::BaseSemantics::SValuePtr &protoval, StackVariable::Boundaries &boundaries /*in,out*/)
+    explicit RiscOperators(const S2::BaseSemantics::SValue::Ptr &protoval, StackVariable::Boundaries &boundaries /*in,out*/)
         : Super(protoval, SmtSolverPtr()), boundaries_(boundaries) {
         name("VarSearchSemantics");
         (void) SValue::promote(protoval);
     }
 
-    explicit RiscOperators(const S2::BaseSemantics::StatePtr &state, StackVariable::Boundaries &boundaries /*in,out*/)
+    explicit RiscOperators(const S2::BaseSemantics::State::Ptr &state, StackVariable::Boundaries &boundaries /*in,out*/)
         : Super(state, SmtSolverPtr()), boundaries_(boundaries) {
         name("VarSearchSemantics");
         (void) SValue::promote(state->protoval());
     }
 
 public:
-    static RiscOperatorsPtr instance(const StackFrame &frame, const P2::Partitioner &partitioner,
+    static RiscOperators::Ptr instance(const StackFrame &frame, const P2::Partitioner &partitioner,
                                      StackVariable::Boundaries &boundaries /*in,out*/) {
-        const RegisterDictionary *regdict = partitioner.instructionProvider().registerDictionary();
-        S2::BaseSemantics::SValuePtr protoval = SValue::instance();
-        S2::BaseSemantics::RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
-        S2::BaseSemantics::MemoryStatePtr memory = P2::Semantics::MemoryMapState::instance(protoval, protoval);
-        S2::BaseSemantics::StatePtr state = State::instance(registers, memory);
-        RiscOperatorsPtr retval = RiscOperatorsPtr(new RiscOperators(state, boundaries));
+        RegisterDictionary::Ptr regdict = partitioner.instructionProvider().registerDictionary();
+        S2::BaseSemantics::SValue::Ptr protoval = SValue::instance();
+        S2::BaseSemantics::RegisterState::Ptr registers = RegisterState::instance(protoval, regdict);
+        S2::BaseSemantics::MemoryState::Ptr memory = P2::Semantics::MemoryMapState::instance(protoval, protoval);
+        S2::BaseSemantics::State::Ptr state = State::instance(registers, memory);
+        RiscOperators::Ptr retval = RiscOperators::Ptr(new RiscOperators(state, boundaries));
 
-        S2::BaseSemantics::SValuePtr dflt = protoval->undefined_(frame.framePointerRegister.nBits());
+        S2::BaseSemantics::SValue::Ptr dflt = protoval->undefined_(frame.framePointerRegister.nBits());
         retval->base_ = SValue::promote(state->readRegister(frame.framePointerRegister, dflt, retval.get()))->get_expression();
         return retval;
     }
 
 public:
-    virtual S2::BaseSemantics::RiscOperatorsPtr
-    create(const S2::BaseSemantics::SValuePtr &protoval, const SmtSolverPtr &solver = SmtSolverPtr()) const override {
+    virtual S2::BaseSemantics::RiscOperators::Ptr
+    create(const S2::BaseSemantics::SValue::Ptr &protoval, const SmtSolverPtr &solver = SmtSolverPtr()) const override {
         ASSERT_not_implemented("[Robb Matzke 2019-09-16]");
     }
 
-    virtual S2::BaseSemantics::RiscOperatorsPtr
-    create(const S2::BaseSemantics::StatePtr &state, const SmtSolverPtr &solver = SmtSolverPtr()) const override {
+    virtual S2::BaseSemantics::RiscOperators::Ptr
+    create(const S2::BaseSemantics::State::Ptr &state, const SmtSolverPtr &solver = SmtSolverPtr()) const override {
         ASSERT_not_implemented("[Robb Matzke 2019-09-16]");
     }
 
 public:
-    static RiscOperatorsPtr
-    promote(const S2::BaseSemantics::RiscOperatorsPtr &x) {
-        RiscOperatorsPtr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
+    static RiscOperators::Ptr
+    promote(const S2::BaseSemantics::RiscOperators::Ptr &x) {
+        RiscOperators::Ptr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
         ASSERT_not_null(retval);
         return retval;
     }
 
 public:
-    virtual S2::BaseSemantics::SValuePtr
-    readMemory(RegisterDescriptor segreg, const S2::BaseSemantics::SValuePtr &addr, const S2::BaseSemantics::SValuePtr &dflt,
-               const S2::BaseSemantics::SValuePtr &cond) override {
+    virtual S2::BaseSemantics::SValue::Ptr
+    readMemory(RegisterDescriptor segreg, const S2::BaseSemantics::SValue::Ptr &addr, const S2::BaseSemantics::SValue::Ptr &dflt,
+               const S2::BaseSemantics::SValue::Ptr &cond) override {
         if (SgAsmInstruction *insn = currentInstruction()) {
             SAWYER_MESG(mlog[DEBUG]) <<"    insn " <<StringUtility::addrToString(insn->get_address())
                                      <<" reads from address: " <<*addr <<"\n";
@@ -483,8 +485,8 @@ public:
     }
 
     virtual void
-    writeMemory(RegisterDescriptor segreg, const S2::BaseSemantics::SValuePtr &addr, const S2::BaseSemantics::SValuePtr &data,
-                const S2::BaseSemantics::SValuePtr &cond) override {
+    writeMemory(RegisterDescriptor segreg, const S2::BaseSemantics::SValue::Ptr &addr, const S2::BaseSemantics::SValue::Ptr &data,
+                const S2::BaseSemantics::SValue::Ptr &cond) override {
         if (SgAsmInstruction *insn = currentInstruction()) {
             SAWYER_MESG(mlog[DEBUG]) <<"    insn " <<StringUtility::addrToString(insn->get_address())
                                      <<" writes to address: " <<*addr <<"\n";
@@ -494,31 +496,31 @@ public:
     }
 
 private:
-    void lookForVariable(const S2::BaseSemantics::SValuePtr &addrSVal) {
+    void lookForVariable(const S2::BaseSemantics::SValue::Ptr &addrSVal) {
         ASSERT_not_null(base_);
-        SymbolicExpr::Ptr addr = SValue::promote(addrSVal)->get_expression();
+        SymbolicExpression::Ptr addr = SValue::promote(addrSVal)->get_expression();
         Sawyer::Message::Stream debug(mlog[DEBUG]);
 
         // The address must reference the stack or frame pointer
-        struct Finder: SymbolicExpr::Visitor {
-            SymbolicExpr::Ptr needle;                   // thing to find
-            SymbolicExpr::Ptr found;                    // first matching expression in haystack
-            std::set<SymbolicExpr::Hash> seen;          // subexpressions we've already checked
+        struct Finder: SymbolicExpression::Visitor {
+            SymbolicExpression::Ptr needle;                   // thing to find
+            SymbolicExpression::Ptr found;                    // first matching expression in haystack
+            std::set<SymbolicExpression::Hash> seen;          // subexpressions we've already checked
 
-            Finder(const SymbolicExpr::Ptr needle)
+            Finder(const SymbolicExpression::Ptr needle)
                 : needle(needle) {}
 
-            SymbolicExpr::VisitAction preVisit(const SymbolicExpr::Ptr &node) override {
+            SymbolicExpression::VisitAction preVisit(const SymbolicExpression::Ptr &node) override {
                 if (seen.insert(node->hash()).second && node->isEquivalentTo(needle)) {
                     found = node;
-                    return SymbolicExpr::TERMINATE;
+                    return SymbolicExpression::TERMINATE;
                 } else {
-                    return SymbolicExpr::CONTINUE;
+                    return SymbolicExpression::CONTINUE;
                 }
             }
 
-            SymbolicExpr::VisitAction postVisit(const SymbolicExpr::Ptr&) override {
-                return SymbolicExpr::CONTINUE;
+            SymbolicExpression::VisitAction postVisit(const SymbolicExpression::Ptr&) override {
+                return SymbolicExpression::CONTINUE;
             }
         } finder(base_);
         addr->depthFirstTraversal(finder);
@@ -527,8 +529,8 @@ private:
 
         // Address must be an offset from some base address. The constant is the offet since the base address is probably a
         // symbolic stack or frame pointer. There might be more than one constant.
-        if (SymbolicExpr::OP_ADD == addr->getOperator()) {
-            for (SymbolicExpr::Ptr operand: addr->children()) {
+        if (SymbolicExpression::OP_ADD == addr->getOperator()) {
+            for (SymbolicExpression::Ptr operand: addr->children()) {
                 int64_t offset = 0;
                 if (operand->toSigned().assignTo(offset)) {
                     SAWYER_MESG(debug) <<"    found offset " <<offsetStr(offset)
@@ -830,8 +832,8 @@ VariableFinder::initializeFrameBoundaries(const StackFrame &frame, const P2::Par
 
 #if 0 // [Robb Matzke 2021-10-27]
 OffsetInterval
-VariableFinder::referencedFrameArea(const Partitioner2::Partitioner &partitioner, const S2::BaseSemantics::RiscOperatorsPtr &ops,
-                                    const SymbolicExpr::Ptr &address, size_t nBytes) {
+VariableFinder::referencedFrameArea(const Partitioner2::Partitioner &partitioner, const S2::BaseSemantics::RiscOperators::Ptr &ops,
+                                    const SymbolicExpression::Ptr &address, size_t nBytes) {
     // Return an empty interval if any information is missing
     ASSERT_not_null(ops);
     ASSERT_not_null(address);
@@ -843,16 +845,16 @@ VariableFinder::referencedFrameArea(const Partitioner2::Partitioner &partitioner
         return nothing;
 
     // Calculate the address as an offset from the frame pointer.
-    S2::BaseSemantics::SValuePtr framePtrSval = ops->peekRegister(FRAME_PTR, ops->undefined_(FRAME_PTR.nBits()));
-    SymbolicExpr::Ptr framePtr = S2::SymbolicSemantics::SValue::promote(framePtrSval)->get_expression();
-    SymbolicExpr::Ptr diff = SymbolicExpr::makeAdd(SymbolicExpr::makeNegate(framePtr), address);
+    S2::BaseSemantics::SValue::Ptr framePtrSval = ops->peekRegister(FRAME_PTR, ops->undefined_(FRAME_PTR.nBits()));
+    SymbolicExpression::Ptr framePtr = S2::SymbolicSemantics::SValue::promote(framePtrSval)->get_expression();
+    SymbolicExpression::Ptr diff = SymbolicExpression::makeAdd(SymbolicExpression::makeNegate(framePtr), address);
 
     // The returned interval is in terms of the frame pointer offset and the size of the I/O operation.
     Variables::OffsetInterval where;
     if (Sawyer::Optional<int64_t> offset = diff->toSigned()) {
         where = Variables::OffsetInterval::baseSize(*offset, nBytes);
-    } else if (diff->getOperator() == SymbolicExpr::OP_ADD) {
-        for (SymbolicExpr::Ptr child: diff->children()) {
+    } else if (diff->getOperator() == SymbolicExpression::OP_ADD) {
+        for (SymbolicExpression::Ptr child: diff->children()) {
             if ((offset = child->toSigned())) {
                 where = Variables::OffsetInterval::baseSize(*offset, nBytes);
                 break;
@@ -1020,9 +1022,9 @@ VariableFinder::findStackVariables(const P2::Partitioner &partitioner, const P2:
     for (rose_addr_t bblockVa: function->basicBlockAddresses()) {
         P2::BasicBlock::Ptr bb = partitioner.basicBlockExists(bblockVa);
         ASSERT_not_null(bb);
-        VarSearchSemantics::RiscOperatorsPtr ops =
+        VarSearchSemantics::RiscOperators::Ptr ops =
             VarSearchSemantics::RiscOperators::instance(frame, partitioner, boundaries /*in,out*/);
-        S2::BaseSemantics::DispatcherPtr cpu = partitioner.newDispatcher(ops);
+        S2::BaseSemantics::Dispatcher::Ptr cpu = partitioner.newDispatcher(ops);
         for (SgAsmInstruction *insn: bb->instructions()) {
             try {
                 cpu->processInstruction(insn);
@@ -1081,14 +1083,14 @@ VariableFinder::findStackVariables(const P2::Partitioner &partitioner, const P2:
 }
 
 #if 0 // [Robb Matzke 2021-10-27]
-S2::BaseSemantics::SValuePtr
+S2::BaseSemantics::SValue::Ptr
 VariableFinder::symbolicAddress(const P2::Partitioner &partitioner, const StackVariable &var,
-                                const S2::BaseSemantics::RiscOperatorsPtr &ops) {
+                                const S2::BaseSemantics::RiscOperators::Ptr &ops) {
     ASSERT_not_null(ops);
     RegisterDescriptor baseReg = frameOrStackPointer(partitioner);
-    S2::BaseSemantics::SValuePtr base = ops->peekRegister(baseReg, ops->undefined_(baseReg.nBits()));
+    S2::BaseSemantics::SValue::Ptr base = ops->peekRegister(baseReg, ops->undefined_(baseReg.nBits()));
     ASSERT_require(sizeof(var.frameOffset()) == sizeof(uint64_t));
-    S2::BaseSemantics::SValuePtr offset = ops->number_(baseReg.nBits(), var.frameOffset());
+    S2::BaseSemantics::SValue::Ptr offset = ops->number_(baseReg.nBits(), var.frameOffset());
     return ops->add(base, offset);
 }
 #endif
@@ -1134,13 +1136,13 @@ VariableFinder::isCached(const P2::Function::Ptr &function) {
     return function->attributeExists(ATTR_LOCAL_VARS);
 }
 
-std::set<SymbolicExpr::Ptr>
-VariableFinder::getMemoryAddresses(const S2::BaseSemantics::MemoryCellStatePtr &mem) {
+std::set<SymbolicExpression::Ptr>
+VariableFinder::getMemoryAddresses(const S2::BaseSemantics::MemoryCellState::Ptr &mem) {
     struct: S2::BaseSemantics::MemoryCell::Visitor {
-        std::set<SymbolicExpr::Ptr> addresses;
+        std::set<SymbolicExpression::Ptr> addresses;
 
-        void operator()(S2::BaseSemantics::MemoryCellPtr &cell) {
-            SymbolicExpr::Ptr addr = S2::SymbolicSemantics::SValue::promote(cell->address())->get_expression();
+        void operator()(S2::BaseSemantics::MemoryCell::Ptr &cell) {
+            SymbolicExpression::Ptr addr = S2::SymbolicSemantics::SValue::promote(cell->address())->get_expression();
             addresses.insert(addr);
         }
     } visitor;
@@ -1151,13 +1153,13 @@ VariableFinder::getMemoryAddresses(const S2::BaseSemantics::MemoryCellStatePtr &
 }
 
 std::set<rose_addr_t>
-VariableFinder::findConstants(const SymbolicExpr::Ptr &expr) {
-    struct: SymbolicExpr::Visitor {
+VariableFinder::findConstants(const SymbolicExpression::Ptr &expr) {
+    struct: SymbolicExpression::Visitor {
         std::set<rose_addr_t> constants;
-        std::vector<SymbolicExpr::Ptr> path;
+        std::vector<SymbolicExpression::Ptr> path;
 
-        SymbolicExpr::VisitAction preVisit(const SymbolicExpr::Ptr &node) {
-            const SymbolicExpr::Interior *parent = nullptr;
+        SymbolicExpression::VisitAction preVisit(const SymbolicExpression::Ptr &node) {
+            const SymbolicExpression::Interior *parent = nullptr;
             if (!path.empty()) {
                 parent = path.back()->isInteriorNodeRaw();
                 ASSERT_not_null(parent);
@@ -1165,21 +1167,21 @@ VariableFinder::findConstants(const SymbolicExpr::Ptr &expr) {
             path.push_back(node);
 
             // Some constants are never addresses
-            if (parent && parent->getOperator() == SymbolicExpr::OP_EXTRACT &&
+            if (parent && parent->getOperator() == SymbolicExpression::OP_EXTRACT &&
                 (parent->child(0) == node || parent->child(1) == node))
-                return SymbolicExpr::CONTINUE;          // first two args of extract are never addresses
+                return SymbolicExpression::CONTINUE;          // first two args of extract are never addresses
 
             // If we found a constant, perhaps treat it like an address
             if (Sawyer::Optional<uint64_t> n = node->toUnsigned())
                 constants.insert(*n);
 
-            return SymbolicExpr::CONTINUE;
+            return SymbolicExpression::CONTINUE;
         }
 
-        SymbolicExpr::VisitAction postVisit(const SymbolicExpr::Ptr&) {
+        SymbolicExpression::VisitAction postVisit(const SymbolicExpression::Ptr&) {
             ASSERT_forbid(path.empty());
             path.pop_back();
-            return SymbolicExpr::CONTINUE;
+            return SymbolicExpression::CONTINUE;
         }
     } visitor;
 
@@ -1205,10 +1207,10 @@ VariableFinder::findConstants(SgAsmInstruction *insn) {
 }
 
 std::set<rose_addr_t>
-VariableFinder::findAddressConstants(const S2::BaseSemantics::MemoryCellStatePtr &mem) {
-    std::set<SymbolicExpr::Ptr> addresses = getMemoryAddresses(mem);
+VariableFinder::findAddressConstants(const S2::BaseSemantics::MemoryCellState::Ptr &mem) {
+    std::set<SymbolicExpression::Ptr> addresses = getMemoryAddresses(mem);
     std::set<rose_addr_t> retval;
-    for (const SymbolicExpr::Ptr &address: addresses) {
+    for (const SymbolicExpression::Ptr &address: addresses) {
         std::set<rose_addr_t> constants = findConstants(address);
         retval.insert(constants.begin(), constants.end());
     }
@@ -1222,9 +1224,9 @@ VariableFinder::findGlobalVariableVas(const P2::Partitioner &partitioner) {
     info <<"Finding global variable addresses";
     Sawyer::Stopwatch timer;
 
-    S2::SymbolicSemantics::RiscOperatorsPtr ops =
-        S2::SymbolicSemantics::RiscOperators::instance(partitioner.instructionProvider().registerDictionary());
-    S2::BaseSemantics::DispatcherPtr cpu = partitioner.newDispatcher(ops);
+    S2::SymbolicSemantics::RiscOperators::Ptr ops =
+        S2::SymbolicSemantics::RiscOperators::instanceFromRegisters(partitioner.instructionProvider().registerDictionary());
+    S2::BaseSemantics::Dispatcher::Ptr cpu = partitioner.newDispatcher(ops);
     ASSERT_not_null(cpu);
     AddressToAddresses retval;
 
@@ -1242,7 +1244,7 @@ VariableFinder::findGlobalVariableVas(const P2::Partitioner &partitioner) {
                 }
 
                 // Find all constants that appear in memory address expressions.
-                S2::BaseSemantics::MemoryCellStatePtr mem =
+                S2::BaseSemantics::MemoryCellState::Ptr mem =
                     S2::BaseSemantics::MemoryCellState::promote(cpu->currentState()->memoryState());
                 std::set<rose_addr_t> constants = findAddressConstants(mem);
 #else // This method just looks for constants within the instructions themselves (i.e., immediates)

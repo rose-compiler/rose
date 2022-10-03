@@ -3,9 +3,9 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Debugger.h>
 
-#include <Rose/BinaryAnalysis/DisassemblerX86.h>
+#include <Rose/BinaryAnalysis/Disassembler/X86.h>
 #include <integerOps.h>
-#include <Rose/BinaryAnalysis/Registers.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <rose_pragma_message.h>
 
 #include <boost/algorithm/string/case_conv.hpp>
@@ -324,10 +324,28 @@ Debugger::initDiagnostics() {
     }
 }
 
-const RegisterDictionary*
+Debugger::Debugger() {
+    init();
+}
+
+Debugger::Debugger(const Specimen &specimen) {
+    init();
+    attach(specimen);
+}
+
+Debugger::~Debugger() {
+    detach(autoDetach_);
+}
+
+RegisterDictionary::Ptr
 Debugger::registerDictionary() const {
     ASSERT_not_null(disassembler_);
     return disassembler_->registerDictionary();
+}
+
+Disassembler::Base::Ptr
+Debugger::disassembler() const {
+    return disassembler_;
 }
 
 void
@@ -345,7 +363,7 @@ Debugger::init() {
     // descriptors in this table have sizes that correspond to the data member in the user_regs_struct, not necessarily the
     // natural size of the register (e.g., The 16-bit segment registers are listed as 32 or 64 bits).
 #if defined(__linux) && defined(__x86_64) && __WORDSIZE==64
-    disassembler_ = new DisassemblerX86(8 /*bytes*/);
+    disassembler_ = Disassembler::X86::instance(8 /*bytes*/);
 
     //------------------------------------                                                 struct  struct
     // Entries for 64-bit user_regs_struct                                                 offset  size
@@ -416,7 +434,7 @@ Debugger::init() {
     //                                                                                       0x01a0
 
 #elif defined(__linux) && defined(__x86) && __WORDSIZE==32
-    disassembler_ = new DisassemblerX86(4 /*bytes*/);
+    disassembler_ = new Disassembler::X86(4 /*bytes*/);
 
     //------------------------------------                                                 struct  struct
     // Entries for 32-bit user_regs_struct                                                 offset  size
@@ -1123,20 +1141,20 @@ Debugger::remoteSystemCall(int syscallNumber, std::vector<uint64_t> args) {
     std::vector<RegisterDescriptor> regs;
 #if 1 // i386
     switch (args.size()) {
-        case 6: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_bp, 0, 32));
-        case 5: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_di, 0, 32));
-        case 4: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_si, 0, 32));
-        case 3: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_dx, 0, 32));
-        case 2: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_cx, 0, 32));
+        case 6: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_bp, 0, 32)); // falls through
+        case 5: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_di, 0, 32)); // falls through
+        case 4: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_si, 0, 32)); // falls through
+        case 3: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_dx, 0, 32)); // falls through
+        case 2: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_cx, 0, 32)); // falls through
         case 1: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_bx, 0, 32));
     }
 #else // x86-64
     switch (args.size()) {
-        case 6: regs.push_back(RegisterDescriptor(x86_regclass_gpr, 9,          0, 32));
-        case 5: regs.push_back(RegisterDescriptor(x86_regclass_gpr, 8,          0, 32));
-        case 4: regs.push_back(RegisterDescriptor(x86_regclass_gpr, 10,         0, 32));
-        case 3: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_dx, 0, 32));
-        case 2: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_si, 0, 32));
+        case 6: regs.push_back(RegisterDescriptor(x86_regclass_gpr, 9,          0, 32)); // falls through
+        case 5: regs.push_back(RegisterDescriptor(x86_regclass_gpr, 8,          0, 32)); // falls through
+        case 4: regs.push_back(RegisterDescriptor(x86_regclass_gpr, 10,         0, 32)); // falls through
+        case 3: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_dx, 0, 32)); // falls through
+        case 2: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_si, 0, 32)); // falls through
         case 1: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_di, 0, 32));
     }
 #endif

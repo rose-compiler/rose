@@ -53,14 +53,14 @@ struct InterproceduralPredicate: P2::DataFlow::InterproceduralPredicate {
     }
 };
 
-BaseSemantics::SValuePtr
+BaseSemantics::SValue::Ptr
 Partitioner::functionStackDelta(const Function::Ptr &function) const {
     ASSERT_not_null(function);
-    BaseSemantics::SValuePtr retval;
+    BaseSemantics::SValue::Ptr retval;
     size_t bitsPerWord = instructionProvider().stackPointerRegister().nBits();
 
     // If a stack delta is defined for this function then use it
-    BaseSemantics::RiscOperatorsPtr ops = newOperators();
+    BaseSemantics::RiscOperators::Ptr ops = newOperators();
     if (Sawyer::Optional<int64_t> delta = config_.functionStackDelta(function))
         return ops->number_(bitsPerWord, *delta);
 
@@ -81,15 +81,15 @@ Partitioner::functionStackDelta(const Function::Ptr &function) const {
     }
 
     // Run the analysis.
-    BaseSemantics::DispatcherPtr cpu = newDispatcher(newOperators());
+    BaseSemantics::Dispatcher::Ptr cpu = newDispatcher(newOperators());
     if (cpu == NULL) {
         SAWYER_MESG(mlog[DEBUG]) <<"  no instruction semantics for this architecture\n";
         return retval;
     }
-    BaseSemantics::MemoryStatePtr mem = cpu->operators()->currentState()->memoryState();
-    if (Semantics::MemoryListStatePtr ml = boost::dynamic_pointer_cast<Semantics::MemoryListState>(mem)) {
+    BaseSemantics::MemoryState::Ptr mem = cpu->operators()->currentState()->memoryState();
+    if (Semantics::MemoryListState::Ptr ml = boost::dynamic_pointer_cast<Semantics::MemoryListState>(mem)) {
         ml->enabled(false);
-    } else if (Semantics::MemoryMapStatePtr mm = boost::dynamic_pointer_cast<Semantics::MemoryMapState>(mem)) {
+    } else if (Semantics::MemoryMapState::Ptr mm = boost::dynamic_pointer_cast<Semantics::MemoryMapState>(mem)) {
         mm->enabled(false);
     }
     StackDelta::Analysis &sdAnalysis = function->stackDeltaAnalysis() = StackDelta::Analysis(cpu);

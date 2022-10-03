@@ -7,14 +7,11 @@
 namespace Rose {
 namespace BinaryAnalysis {
 
-/** Reference counting pointer to @ref BinaryLoaderPe. */
-typedef Sawyer::SharedPointer<class BinaryLoaderPe> BinaryLoaderPePtr;
-
 /** Loader for Windows PE files. */
 class BinaryLoaderPe: public BinaryLoader {
 public:
     /** Reference counting pointer to @ref BinaryLoaderPe. */
-    typedef Sawyer::SharedPointer<BinaryLoaderPe> Ptr;
+    using Ptr = BinaryLoaderPePtr;
 
 protected:
     BinaryLoaderPe() {

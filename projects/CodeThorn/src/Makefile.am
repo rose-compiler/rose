@@ -571,6 +571,10 @@ thorn3_SOURCES = \
 # TOOL: THORN4 create graph visualizations of state transition systems
 ###################################################################
 
+# only informative
+thorn4_xHEADERS = \
+  Thorn4CommandLineParser.h
+
 # thorn4 uses libcodethorn
 thorn4_DEPENDENCIES=libcodethorn.la
 
@@ -581,6 +585,7 @@ thorn4_CXXFLAGS = -fopenmp -Wall -O3
 
 # codethorn sources in addition to libcodethorn
 thorn4_SOURCES = \
+  Thorn4CommandLineParser.C \
   thorn4.C
 
 
@@ -1005,7 +1010,7 @@ clean-local: clean-thorn4
 	rm -f *.cfg.dot # runParCfgTests
 	rm -f a.out
 	rm -rf ../docs/doxygen
-	rm -f *.imout
+	rm -f *.imout*
 	rm -f *.exe
 	rm -f *.imout.check
 	rm -Rf make_check_log_*
