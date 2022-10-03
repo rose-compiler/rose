@@ -84,10 +84,10 @@ public:
   }
   
   //! \brief Get the Node ID for a particular SgNode*
-    static const NodeId getId(SgNode *node);
+    static NodeId getId(SgNode *node);
 
   //! \brief Get the Node ID from a string (e.g. from json)
-    static const NodeId getId(const std::string& nodeIdString); 
+    static NodeId getId(const std::string& nodeIdString); 
 
   //! \brief Get the SgNode from a string (convinience function)
   static SgNode *getNode(const std::string& nodeIdString) {

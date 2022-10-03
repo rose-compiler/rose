@@ -9,7 +9,7 @@ namespace Rose {
 namespace AST 
 {
   //! \brief Get the Node ID for a particular SgNode*
-    const NodeId NodeId::getId(SgNode *node) {
+    NodeId NodeId::getId(SgNode *node) {
         //ROSETTA code required to generate this for every AST
         //subclass...
       std::string stringId = SgNode::getNodeIdString(node);
@@ -32,7 +32,7 @@ namespace AST
  * The string returned from ROSE core isn't always exactly the same as what we want
  * We optionally stick on the ROSE VERSION as a safety check.
  **/
-    const NodeId NodeId::getId(const std::string& nodeIdString) {
+    NodeId NodeId::getId(const std::string& nodeIdString) {
         boost::char_separator<char> sep("_");
         boost::tokenizer<boost::char_separator<char>> tok(nodeIdString, sep);
         boost::tokenizer<boost::char_separator<char>>::iterator token = tok.begin();
