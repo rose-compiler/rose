@@ -1207,7 +1207,7 @@ AssemblerX86::fixup_prefix_bytes(SgAsmX86Instruction *insn, SgUnsignedCharList s
                 /* Group 2 branch hints. These are apparently(?) ignored in 64-bit unless the instruction is a conditional
                  * branch (Jcc), in which case they are branch taken/not-taken hints. Therefore we'll allow them as prefixes
                  * for non-jump instructions even if they aren't present in the source. See
-                 * DisassemblerX86::makeSegmentRegister(). */
+                 * Disassembler::X86::makeSegmentRegister(). */
                 if (insn->get_baseSize()!=x86_insnsize_64 ||
                     (insn->get_baseSize()==x86_insnsize_64 && x86InstructionIsConditionalBranch(insn))) {
                     if (present.find(target[i])!=present.end()) {

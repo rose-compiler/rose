@@ -3,6 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 
 #include <boost/serialization/access.hpp>
@@ -66,16 +67,9 @@ private:
     
 protected:
     // prototypical constructor
-    DispatcherM68k(): BaseSemantics::Dispatcher(32, RegisterDictionary::dictionary_coldfire_emac()) {}
+    DispatcherM68k();
 
-    DispatcherM68k(const BaseSemantics::RiscOperatorsPtr &ops, size_t addrWidth, const RegisterDictionary *regs)
-        : BaseSemantics::Dispatcher(ops, addrWidth, regs ? regs : RegisterDictionary::dictionary_coldfire_emac()) {
-        ASSERT_require(32==addrWidth);
-        regcache_init();
-        iproc_init();
-        memory_init();
-        initializeState(ops->currentState());
-    }
+    DispatcherM68k(const BaseSemantics::RiscOperatorsPtr&, size_t addrWidth, const RegisterDictionaryPtr&);
 
     /** Loads the iproc table with instruction processing functors. This normally happens from the constructor. */
     void iproc_init();
@@ -89,36 +83,23 @@ protected:
     void memory_init();
 
 public:
+    ~DispatcherM68k();
+
     /** Construct a prototypical dispatcher.  The only thing this dispatcher can be used for is to create another dispatcher
      *  with the virtual @ref create method. */
-    static DispatcherM68kPtr instance() {
-        return DispatcherM68kPtr(new DispatcherM68k);
-    }
+    static DispatcherM68kPtr instance();
 
     /** Constructor. */
-    static DispatcherM68kPtr instance(const BaseSemantics::RiscOperatorsPtr &ops, size_t addrWidth,
-                                      const RegisterDictionary *regs=NULL) {
-        return DispatcherM68kPtr(new DispatcherM68k(ops, addrWidth, regs));
-    }
+    static DispatcherM68kPtr instance(const BaseSemantics::RiscOperatorsPtr&, size_t addrWidth, const RegisterDictionaryPtr&);
 
     /** Virtual constructor. */
-    virtual BaseSemantics::DispatcherPtr create(const BaseSemantics::RiscOperatorsPtr &ops, size_t addrWidth=0,
-                                                const RegisterDictionary *regs=NULL) const override {
-        if (0==addrWidth)
-            addrWidth = addressWidth();
-        if (!regs)
-            regs = registerDictionary();
-        return instance(ops, addrWidth, regs);
-    }
+    virtual BaseSemantics::DispatcherPtr create(const BaseSemantics::RiscOperatorsPtr&, size_t addrWidth,
+                                                const RegisterDictionaryPtr&) const override;
 
     /** Dynamic cast to DispatcherM68kPtr with assertion. */
-    static DispatcherM68kPtr promote(const BaseSemantics::DispatcherPtr &d) {
-        DispatcherM68kPtr retval = boost::dynamic_pointer_cast<DispatcherM68k>(d);
-        ASSERT_not_null(retval);
-        return retval;
-    }
+    static DispatcherM68kPtr promote(const BaseSemantics::DispatcherPtr&);
 
-    virtual void set_register_dictionary(const RegisterDictionary *regdict) override;
+    virtual void set_register_dictionary(const RegisterDictionaryPtr &regdict) override;
 
     virtual RegisterDescriptor instructionPointerRegister() const override;
     virtual RegisterDescriptor stackPointerRegister() const override;

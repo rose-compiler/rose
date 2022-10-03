@@ -1,5 +1,6 @@
 add_subdirectory(ByteCode)
 add_subdirectory(Concolic)
+add_subdirectory(Disassembler)
 add_subdirectory(InstructionSemantics)
 add_subdirectory(InstructionSemantics2)
 add_subdirectory(ModelChecker)
@@ -22,16 +23,7 @@ add_library(roseBinaryAnalysis OBJECT
   DataFlow.C
   Debugger.C
   Demangler.C
-  Disassembler.C
-  DisassemblerAarch32.C
-  DisassemblerAarch64.C
   DisassemblerCil.C
-  DisassemblerJvm.C
-  DisassemblerM68k.C
-  DisassemblerMips.C
-  DisassemblerNull.C
-  DisassemblerPowerpc.C
-  DisassemblerX86.C
   FeasiblePath.C
   FunctionCall.C
   FunctionSimilarity.C
@@ -45,7 +37,8 @@ add_library(roseBinaryAnalysis OBJECT
   Reachability.C
   RegisterDescriptor.C
   RegisterParts.C
-  Registers.C
+  RegisterDictionary.C
+  RegisterNames.C
   ReturnValueUsed.C
   SerialIo.C
   SmtCommandLine.C
@@ -55,14 +48,13 @@ add_library(roseBinaryAnalysis OBJECT
   SRecord.C
   StackDelta.C
   String.C
-  SymbolicExpr.C
-  SymbolicExprParser.C
+  SymbolicExpression.C
+  SymbolicExpressionParser.C
   SystemCall.C
   TaintedFlow.C
   ToSource.C
   Variables.C
-  Z3Solver.C
-  )
+  Z3Solver.C)
 
 add_dependencies(roseBinaryAnalysis rosetta_generated)
 
@@ -70,11 +62,13 @@ install(FILES
   AbstractLocation.h
   AsmFunctionIndex.h
   AstHash.h
+  BasicTypes.h
   BestMapAddress.h
   BinaryLoader.h
   BinaryLoaderElf.h
   BinaryLoaderElfObj.h
   BinaryLoaderPe.h
+  ByteCode.h
   CallingConvention.h
   CodeInserter.h
   Concolic.h
@@ -84,15 +78,7 @@ install(FILES
   Debugger.h
   Demangler.h
   Disassembler.h
-  DisassemblerAarch32.h
-  DisassemblerAarch64.h
   DisassemblerCil.h
-  DisassemblerJvm.h
-  DisassemblerM68k.h
-  DisassemblerMips.h
-  DisassemblerNull.h
-  DisassemblerPowerpc.h
-  DisassemblerX86.h
   FeasiblePath.h
   FunctionCall.h
   FunctionSimilarity.h
@@ -118,8 +104,9 @@ install(FILES
   PointerDetection.h
   Reachability.h
   RegisterDescriptor.h
+  RegisterDictionary.h
+  RegisterNames.h
   RegisterParts.h
-  Registers.h
   ReturnValueUsed.h
   SerialIo.h
   SmtCommandLine.h
@@ -130,12 +117,14 @@ install(FILES
   StackDelta.h
   String.h
   SymbolicExpr.h
+  SymbolicExpression.h
   SymbolicExprParser.h
+  SymbolicExpressionParser.h
   SystemCall.h
   TaintedFlow.h
   ToSource.h
   Unparser.h
-  Utils.h
+  Utility.h
   Variables.h
   Z3Solver.h
 

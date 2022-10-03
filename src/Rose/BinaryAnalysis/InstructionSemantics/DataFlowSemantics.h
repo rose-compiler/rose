@@ -4,6 +4,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <Rose/BinaryAnalysis/AbstractLocation.h>
+#include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/MultiSemantics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/NullSemantics.h>
@@ -70,7 +71,7 @@ public:
     using Ptr = RiscOperatorsPtr;
 
 private:
-    const RegisterDictionary *regdict_;                 // register dictionary used to print abstract locations
+    RegisterDictionaryPtr regdict_;                     // register dictionary used to print abstract locations
     size_t innerDomainId_;                              // subdomain identifier for the dataflow's inner domain
     size_t userDomainId_;                               // subdomain identifier for the user-supplied domain (memory addrs)
     DataFlowGraph dflow_;                               // dataflow graph accumulated over processInstruction() calls.

@@ -4,6 +4,9 @@
 #include <Rose/BinaryAnalysis/Concolic/InputVariables.h>
 
 #include <Rose/BinaryAnalysis/Concolic/ExecutionEvent.h>
+#include <Rose/BinaryAnalysis/SmtSolver.h>
+#include <Rose/BinaryAnalysis/SymbolicExpression.h>
+
 #include <boost/lexical_cast.hpp>
 
 namespace Rose {
@@ -23,7 +26,7 @@ InputVariables::instance() {
     return Ptr(new InputVariables);
 }
 
-const SymbolicExpr::ExprExprHashMap&
+const SymbolicExpression::ExprExprHashMap&
 InputVariables::bindings() const {
     return bindings_;
 }
@@ -110,14 +113,14 @@ InputVariables::unbind(const ExecutionEvent::Ptr &event) {
 }
 
 void
-InputVariables::bindVariableValue(const SymbolicExpr::Ptr &variable, const SymbolicExpr::Ptr &value) {
+InputVariables::bindVariableValue(const SymbolicExpression::Ptr &variable, const SymbolicExpression::Ptr &value) {
     ASSERT_not_null(variable);
     ASSERT_not_null(value);
     bindings_.insert(std::make_pair(variable, value));
 }
 
 void
-InputVariables::unbindVariableValue(const SymbolicExpr::Ptr &variable) {
+InputVariables::unbindVariableValue(const SymbolicExpression::Ptr &variable) {
     if (variable)
         bindings_.erase(variable);
 }
@@ -131,7 +134,7 @@ InputVariables::event(const std::string &variableName) const {
 }
 
 ExecutionEvent::Ptr
-InputVariables::event(const SymbolicExpr::Ptr &variable) const {
+InputVariables::event(const SymbolicExpression::Ptr &variable) const {
     ASSERT_not_null(variable);
     ASSERT_require(variable->isScalarVariable());
     uint64_t varId = *variable->variableId();
@@ -142,7 +145,7 @@ void
 InputVariables::addBindingsToSolver(const SmtSolver::Ptr &solver) const {
     ASSERT_not_null(solver);
     for (const auto &node: bindings_) {
-        SymbolicExpr::Ptr eq = SymbolicExpr::makeEq(node.first, node.second);
+        SymbolicExpression::Ptr eq = SymbolicExpression::makeEq(node.first, node.second);
         solver->insert(eq);
     }
 }

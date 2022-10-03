@@ -8,6 +8,8 @@
 #include <Rose/BinaryAnalysis/ModelChecker/SemanticCallbacks.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Settings.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Tag.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
+#include <Rose/BinaryAnalysis/RegisterNames.h>
 
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
@@ -162,7 +164,7 @@ void
 ExternalFunctionUnit::clearReturnValues(const BS::Dispatcher::Ptr &cpu) {
     ASSERT_not_null(cpu);
     BS::RiscOperators::Ptr ops = cpu->operators();
-    const RegisterDictionary *regDict = cpu->registerDictionary();
+    RegisterDictionary::Ptr regDict = cpu->registerDictionary();
 
     // Set return value locations to unknown values. Using calling convention analysis is the right way,
     // but if that's not available fall back to the stupid closed list of dynamic casts.

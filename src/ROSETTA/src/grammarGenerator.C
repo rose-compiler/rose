@@ -44,11 +44,19 @@ using namespace std;
 
 // DQ (9/28/2022): Fixing compiler warning for argument not used.
 #if 1
+<<<<<<< HEAD
 Grammar::GrammarSynthesizedAttribute 
 Grammar::CreateGrammarDotString(AstNodeClass* grammarnode, vector<GrammarSynthesizedAttribute> v) 
 #else
 Grammar::GrammarSynthesizedAttribute 
 Grammar::CreateGrammarDotString(AstNodeClass* grammarnode) 
+=======
+Grammar::GrammarSynthesizedAttribute
+Grammar::CreateGrammarDotString(AstNodeClass* grammarnode, vector<GrammarSynthesizedAttribute> v)
+#else
+Grammar::GrammarSynthesizedAttribute
+Grammar::CreateGrammarDotString(AstNodeClass* grammarnode)
+>>>>>>> origin/master
 #endif
 {
   GrammarSynthesizedAttribute saDot;
@@ -136,7 +144,11 @@ Grammar::isAbstractTreeGrammarSymbol(string s) {
 
 // DQ (9/28/2022): Fixing compiler warning for argument not used.
 #if 1
+<<<<<<< HEAD
 Grammar::GrammarSynthesizedAttribute Grammar::CreateMinimalTraversedGrammarSymbolsSet(AstNodeClass* grammarnode, vector<Grammar::GrammarSynthesizedAttribute> v) 
+=======
+Grammar::GrammarSynthesizedAttribute Grammar::CreateMinimalTraversedGrammarSymbolsSet(AstNodeClass* grammarnode, vector<Grammar::GrammarSynthesizedAttribute> v)
+>>>>>>> origin/master
 #else
 Grammar::GrammarSynthesizedAttribute
 Grammar::CreateMinimalTraversedGrammarSymbolsSet(AstNodeClass* grammarnode )
@@ -247,10 +259,17 @@ bool Grammar::isFilteredMemberVariable(string varName) {
 
 // MS: 2002, 2003, 2014
 #if 1
+<<<<<<< HEAD
 Grammar::GrammarSynthesizedAttribute Grammar::CreateAbstractTreeGrammarString(AstNodeClass* grammarnode, vector<GrammarSynthesizedAttribute> v) 
 #else
 Grammar::GrammarSynthesizedAttribute 
 Grammar::CreateAbstractTreeGrammarString(AstNodeClass* grammarnode) 
+=======
+Grammar::GrammarSynthesizedAttribute Grammar::CreateAbstractTreeGrammarString(AstNodeClass* grammarnode, vector<GrammarSynthesizedAttribute> v)
+#else
+Grammar::GrammarSynthesizedAttribute
+Grammar::CreateAbstractTreeGrammarString(AstNodeClass* grammarnode)
+>>>>>>> origin/master
 #endif
 {
   GrammarSynthesizedAttribute synAttr;

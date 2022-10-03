@@ -477,7 +477,6 @@ Grammar::build_source_AST_FILE_IO_CLASS()
           if ( find (abstractClassesListStart,abstractClassesListEnd,nodeNameString) == abstractClassesListEnd )
              {
                writeASTToFile += "     sizeOfActualPool = getSizeOfMemoryPool(V_" + nodeNameString + " ); \n" ;
-               writeASTToFile += "     storageClassIndex = 0 ;\n" ;
                writeASTToFile += "     if ( 0 < sizeOfActualPool ) \n" ;
                writeASTToFile += "        {  \n" ;
             // Initializing the StorageClasses 

@@ -20,7 +20,7 @@ add_library(roseBinaryAnalysisInstructionSemantics OBJECT
   SymbolicSemantics.C
   TaintSemantics.C
   TraceSemantics.C
-  Util.C)
+  Utility.C)
 
 add_dependencies(roseBinaryAnalysisInstructionSemantics rosetta_generated)
 
@@ -45,6 +45,6 @@ install(FILES
   TestSemantics.h
   TaintSemantics.h
   TraceSemantics.h
-  Util.h
+  Utility.h
 
   DESTINATION ${INCLUDE_INSTALL_DIR}/Rose/BinaryAnalysis/InstructionSemantics)

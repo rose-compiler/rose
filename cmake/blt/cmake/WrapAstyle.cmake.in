@@ -1,0 +1,61 @@
+# Copyright (c) 2017-2022, Lawrence Livermore National Security, LLC and
+# other BLT Project Developers. See the top-level LICENSE file for details
+# 
+# SPDX-License-Identifier: (BSD-3-Clause)
+
+###############################################################################
+# Wrapper script to attach return codes to AStyle runs for @arg_NAME@ target
+#
+# BLT code formatting targets are expected to fail when one or more source files
+# are improperly formatted. This script runs AStyle and parses the output 
+# to return an appropriate return code.
+#
+# All required variables are set up in the 'blt_add_astyle_target' macro.
+###############################################################################
+
+# Set up required variables
+set(ASTYLE_TARGET             @arg_NAME@)
+set(ASTYLE_EXECUTABLE         @ASTYLE_EXECUTABLE@)
+set(ASTYLE_PREPEND_FLAGS      @arg_PREPEND_FLAGS@)
+set(ASTYLE_CFG_FILE           @arg_CFG_FILE@)
+set(ASTYLE_MODIFY_FILES_FLAGS @MODIFY_FILES_FLAG@)
+set(ASTYLE_SOURCE_FILES       @arg_SRC_FILES@)
+set(ASTYLE_APPEND_FLAGS       @arg_APPEND_FLAGS@)
+set(ASTYLE_WORKING_DIRECTORY  @_wd@)
+
+# Invoke AStyle
+execute_process(
+    COMMAND ${ASTYLE_EXECUTABLE} 
+            ${ASTYLE_PREPEND_FLAGS}
+            --options=${ASTYLE_CFG_FILE} --formatted
+            ${ASTYLE_MODIFY_FILES_FLAGS} 
+            ${ASTYLE_SOURCE_FILES} 
+            ${ASTYLE_APPEND_FLAGS}
+    WORKING_DIRECTORY ${ASTYLE_WORKING_DIRECTORY}
+    OUTPUT_VARIABLE   _astyle_output_var
+    ERROR_VARIABLE    _astyle_error_var
+    RESULT_VARIABLE   _astyle_result
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+    ERROR_STRIP_TRAILING_WHITESPACE )
+
+# Early return if unsuccessful
+if(NOT ${_astyle_result} EQUAL  0) 
+    message(FATAL_ERROR ${_astyle_error_var})
+endif()
+
+# Otherwise, parse the output.
+# Script fails where there are lines beginning with "Formatted ..."
+if(NOT ${_astyle_output_var} STREQUAL "")
+    # Display output of AStyle command
+    message(STATUS "AStyle output for '${ASTYLE_TARGET}' target\n" ${_astyle_output_var})
+
+    # Convert output to list
+    string(REGEX REPLACE "\n" ";"   _astyle_output_var "${_astyle_output_var}")
+
+    # Apply regex and check for matches
+    string(REGEX MATCHALL "(;)?Formatted" _matches ${_astyle_output_var}) 
+    list(LENGTH _matches len)
+    if(NOT ${len} EQUAL  0)
+        message(FATAL_ERROR "AStyle found ${len} improperly formatted files.")
+    endif()
+endif()

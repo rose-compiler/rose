@@ -8,6 +8,8 @@ run $(librose_compile)				\
     Yaml.C
 
 run $(public_header) -o include/rose/Rose	\
+    AST.h					\
+    BasicTypes.h     				\
     BinaryAnalysis.h				\
     BitFlags.h					\
     BitOps.h					\
@@ -27,4 +29,5 @@ run $(public_header) -o include/rose/Rose	\
     RecursionCounter.h				\
     SourceLocation.h				\
     StringUtility.h				\
+    Traits.h					\
     Yaml.h

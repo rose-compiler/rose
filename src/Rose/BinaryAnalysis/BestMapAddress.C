@@ -3,8 +3,11 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/BestMapAddress.h>
 
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/CommandLine.h>
+
 #include <integerOps.h>
+
 #include <Sawyer/Graph.h>
 #include <Sawyer/ProgressBar.h>
 #include <Sawyer/ThreadWorkers.h>
@@ -45,7 +48,7 @@ BestMapAddress::mask() const {
 
 void
 BestMapAddress::gatherAddresses(P2::Engine &engine) {
-    Disassembler *dis = engine.obtainDisassembler();
+    Disassembler::Base::Ptr dis = engine.obtainDisassembler();
     if (0 == nBits_) {
         if (!dis)
             throw Exception("no disassembler");

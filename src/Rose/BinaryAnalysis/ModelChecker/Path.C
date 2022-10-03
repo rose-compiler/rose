@@ -7,6 +7,7 @@
 #include <Rose/BinaryAnalysis/ModelChecker/ExecutionUnit.h>
 #include <Rose/BinaryAnalysis/ModelChecker/PathNode.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Settings.h>
+#include <Rose/BinaryAnalysis/SymbolicExpression.h>
 
 #include <rose_isnan.h>
 
@@ -30,7 +31,7 @@ Path::instance(const ExecutionUnit::Ptr &unit) {
 }
 
 Path::Ptr
-Path::instance(const Path::Ptr &prefix, const ExecutionUnit::Ptr &unit, const SymbolicExpr::Ptr &assertion,
+Path::instance(const Path::Ptr &prefix, const ExecutionUnit::Ptr &unit, const SymbolicExpression::Ptr &assertion,
                const SmtSolver::Evidence &evidence, const BS::State::Ptr &parentOutgoingState) {
     ASSERT_not_null(prefix);
     ASSERT_not_null(unit);
@@ -109,13 +110,13 @@ Path::executionFailed() const {
     return end_ ? end_->executionFailed() : false;
 }
 
-std::vector<SymbolicExpr::Ptr>
+std::vector<SymbolicExpression::Ptr>
 Path::assertions() const {
     // No lock necessary since the end_ pointer cannot change after the path is constructed, and the node parent pointers
     // cannot change once the nodes are created.
-    std::vector<SymbolicExpr::Ptr> retval;
+    std::vector<SymbolicExpression::Ptr> retval;
     for (PathNode::Ptr node = end_; node; node = node->parent()) {
-        std::vector<SymbolicExpr::Ptr> nodeAssertions = node->assertions();
+        std::vector<SymbolicExpression::Ptr> nodeAssertions = node->assertions();
         retval.insert(retval.end(), nodeAssertions.begin(), nodeAssertions.end());
     }
     return retval;

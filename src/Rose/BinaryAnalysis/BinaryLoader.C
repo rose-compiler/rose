@@ -6,8 +6,9 @@
 #include <Rose/BinaryAnalysis/BinaryLoaderElf.h>
 #include <Rose/BinaryAnalysis/BinaryLoaderElfObj.h>
 #include <Rose/BinaryAnalysis/BinaryLoaderPe.h>
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/Diagnostics.h>
-#include <Rose/BinaryAnalysis/Disassembler.h>
 #include "dwarfSupport.h"
 
 using namespace Rose::Diagnostics;
@@ -235,14 +236,14 @@ BinaryLoader::link(SgAsmInterpretation* interp) {
 SgAsmGenericHeaderPtrList
 BinaryLoader::findSimilarHeaders(SgAsmGenericHeader *match, SgAsmGenericHeaderPtrList &candidates) {
     SgAsmGenericHeaderPtrList retval;
-    Disassembler *d1 = Disassembler::lookup(match);
+    Disassembler::Base::Ptr d1 = Disassembler::lookup(match);
 
     for (SgAsmGenericHeaderPtrList::iterator ci=candidates.begin(); ci!=candidates.end(); ++ci) {
-        Disassembler *d2 = d1 ? Disassembler::lookup(*ci) : NULL;
+        Disassembler::Base::Ptr d2 = d1 ? Disassembler::lookup(*ci) : Disassembler::Base::Ptr();
         if (!d1 && !d2) {
             if (match->variantT() == (*ci)->variantT())
                 retval.push_back(*ci);
-        } else if (d1==d2) {
+        } else if (d1->name() == d2->name()) {
             retval.push_back(*ci);
         }
     }
@@ -291,8 +292,6 @@ BinaryLoader::createAsmAST(SgBinaryComposite* binaryFile, std::string filePath) 
             interp = new SgAsmInterpretation();
             interps.push_back(interp);
             interp->set_parent(binaryFile->get_interpretations());
-            if (const RegisterDictionary *registers = RegisterDictionary::dictionary_for_isa(header->get_isa()))
-                interp->set_registers(registers);
         }
         interp->get_headers()->get_headers().push_back(header);
     }

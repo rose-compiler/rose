@@ -218,7 +218,7 @@ public:
     /** Return value for @ref nextUnits. */
     struct NextUnit {
         ExecutionUnitPtr unit;                          /**< Unit to be executed. */
-        SymbolicExpr::Ptr assertion;                    /**< Path assertion for this unit. */
+        SymbolicExpression::Ptr assertion;              /**< Path assertion for this unit. */
         SmtSolver::Evidence evidence;                   /**< SMT solver evidence that this is a feasible path. */
     };
 

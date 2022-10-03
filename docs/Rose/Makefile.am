@@ -192,11 +192,6 @@ COMPASS_MANUAL = $(compass_build_tooldir)/compass/doc/compass.pdf
 $(COMPASS_MANUAL):
 	cd $(compass_build_tooldir)/compass/doc && $(MAKE) docs
 
-# Liao, 8/6/2009. tutorial for autotuning	
-AUTOTUNING_MANUAL = $(top_builddir)/projects/autoTuning/doc/autoTuning.pdf
-$(AUTOTUNING_MANUAL):
-	cd $(top_builddir)/projects/autoTuning/doc && $(MAKE) docs
-
 # Liao, 8/11/2009. QROSE Manual
 QROSE_MANUAL = $(top_srcdir)/src/3rdPartyLibraries/qrose/docs/QROSE.pdf
 
@@ -211,7 +206,7 @@ if !OS_MACOSX
 #	$(DOXYGEN) roseQtWidgets.doxygen
 endif
 # Liao, 2014/1/10, comment out $(HASKELLPORT_APIDOCS) to migrate to EDG 4.7 based rose
-make-web-pages: $(RoseDoxygenDocumentation) $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf ROSE_InstallationInstructions.pdf ROSE_Exam.pdf ROSE_DeveloperInstructions.pdf ROSE_DemoGuide.pdf footer.html leftmenu.html $(COMPASS_MANUAL) $(AUTOTUNING_MANUAL) RoseQtDoc
+make-web-pages: $(RoseDoxygenDocumentation) $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf ROSE_InstallationInstructions.pdf ROSE_Exam.pdf ROSE_DeveloperInstructions.pdf ROSE_DemoGuide.pdf footer.html leftmenu.html $(COMPASS_MANUAL) RoseQtDoc
 	cd Tutorial; $(MAKE) make-web-pages
 	mkdir -p ROSE_WebPages
 	mkdir -p ROSE_WebPages/ROSE_HTML_Reference;
@@ -228,7 +223,6 @@ make-web-pages: $(RoseDoxygenDocumentation) $(PACKAGE_NAME)-$(PACKAGE_VERSION)-U
 	cp -f $(srcdir)/news.html ROSE_WebPages/news.html
 	cp -f $(srcdir)/regressionTest.html ROSE_WebPages/regressionTest.html
 	cp -f $(COMPASS_MANUAL) ROSE_WebPages/
-	cp -f $(AUTOTUNING_MANUAL) ROSE_WebPages/
 	cp -f $(QROSE_MANUAL) ROSE_WebPages/
 #	mkdir -p ROSE_WebPages/ROSE_HaskellAPI
 #	cp -fr $(HASKELLPORT_APIDOCS)/* ROSE_WebPages/ROSE_HaskellAPI/
@@ -345,14 +339,6 @@ generated_ompLowering_files_for_manual = \
        $(top_builddir)/tests/nonsmoke/functional/roseTests/ompLoweringTests/fortran/rose_ompdo-multiple.f \
        $(top_builddir)/tests/nonsmoke/functional/roseTests/ompLoweringTests/fortran/rose_task_largenumber.f
 
-generated_autoPar_files_for_manual = \
-       $(top_builddir)/projects/autoParallelization/tests/rose_doall_2.c \
-       $(top_builddir)/projects/autoParallelization/tests/rose_doall_2.out \
-       $(top_builddir)/projects/autoParallelization/tests/rose_inner_only.c \
-       $(top_builddir)/projects/autoParallelization/tests/rose_inner_only.out \
-       $(top_builddir)/projects/autoParallelization/tests/rose_reduction.c \
-       $(top_builddir)/projects/autoParallelization/tests/rose_vector2.C
-
 generated_upcCompile_files_for_manual = \
        $(top_builddir)/tests/nonsmoke/functional/CompileTests/UPC_tests/rose_hello.upc \
        $(top_builddir)/tests/nonsmoke/functional/CompileTests/UPC_tests/rose_consistency.upc \
@@ -362,30 +348,15 @@ generated_upcCompile_files_for_manual = \
        $(top_builddir)/tests/nonsmoke/functional/CompileTests/UPC_tests/rose_shared.upc.ab \
        $(top_builddir)/tests/nonsmoke/functional/CompileTests/UPC_tests/rose_lock.upc
 
-generated_upcTrans_files_for_manual = \
-       $(top_builddir)/projects/UpcTranslation/tests/rose_hello.c \
-       $(top_builddir)/projects/UpcTranslation/tests/rose_shared_1.c.aaf \
-       $(top_builddir)/projects/UpcTranslation/tests/rose_shared_1.c.abf \
-       $(top_builddir)/projects/UpcTranslation/tests/rose_unshared_1.c.aaf \
-       $(top_builddir)/projects/UpcTranslation/tests/rose_unshared_1.c.abf
-
 $(generated_ompLowering_files_for_manual):
 	$(MAKE) -C$(top_builddir)/tests/nonsmoke/functional/roseTests/ompLoweringTests check
-
-$(generated_autoPar_files_for_manual):
-	$(MAKE) -C$(top_builddir)/projects/autoParallelization check
 
 $(generated_upcCompile_files_for_manual):
 	$(MAKE) -C$(top_builddir)/tests/nonsmoke/functional/CompileTests/UPC_tests check
 
-$(generated_upcTrans_files_for_manual):
-	$(MAKE) -C$(top_builddir)/projects/UpcTranslation check
-
 generated_files_for_manual = \
 	$(generated_ompLowering_files_for_manual) \
-	$(generated_autoPar_files_for_manual) \
-	$(generated_upcCompile_files_for_manual) \
-	$(generated_upcTrans_files_for_manual)
+	$(generated_upcCompile_files_for_manual)
 
 # DQ (7/25/2004): Need to include manual.tex and reference.tex since they are build from 
 # manual.tex.in and reference.tex.in

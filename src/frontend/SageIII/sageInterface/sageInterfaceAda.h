@@ -11,7 +11,7 @@ namespace SageInterface
 {
 
 /// Contains Ada-specific functionality
-namespace ada
+namespace Ada
 {
   extern const std::string roseOperatorPrefix;
   extern const std::string packageStandardName;
@@ -247,10 +247,24 @@ namespace ada
   /// @{
   SgType* typeRoot(SgType&);
   SgType* typeRoot(SgType*);
-  SgType* typeRoot(SgExpression&);
-  SgType* typeRoot(SgExpression*);
   /// @}
 
+  /// returns the type of an expression
+  ///   corrects for some peculiarities in the AST
+  /// \todo could be integrated into SgExpression::get_type ...
+  /// @{
+  SgType* typeOfExpr(SgExpression&);
+  SgType* typeOfExpr(SgExpression*);
+  /// @}
+
+  /// returns the scope where \ref ty was defined
+  /// \{
+  SgScopeStatement* scopeOfTypedecl(const SgType& ty);
+  SgScopeStatement* scopeOfTypedecl(const SgType* ty);
+  /// \}
+
+  /// do not use, this is temporary
+  SgScopeStatement* pkgStandardScope();
 
   /// takes a function name as used in ROSE and converts it to a name in Ada
   ///   (i.e., '"' + operator_text + '"').
@@ -438,7 +452,7 @@ namespace ada
   /// \param root                  the subtree is traversed to find operator calls (using the traversal mechanism)
   /// \param convertCallSyntax     false, only convert those calls where get_uses_operator_syntax() returns false
   ///                              true,  convert all calls (may result in invalid Ada)
-  /// \param convertNamedArguments not relevant, when withPrefixCalls == false
+  /// \param convertNamedArguments not relevant, when \ref convertCallSyntax == false
   ///                              true, named arguments are resolved
   ///                              false, named arguments are preserved
   // \todo mv into Ada to C++ converter

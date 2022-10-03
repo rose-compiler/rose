@@ -100,80 +100,12 @@ support wide ranges of portability.
 *Note: The actually file used is in these figures is: {\tt ROSE/docs/Rose/asm\_code\_samples\_gcc.pdf}.
 
 \subsection{Instruction Disassembly}
-% NOTE: This subsection comes almost verbatim from the doxygen documentation in Disassembler.h
 
-ROSE has its own disassembler (for x86, ARM, and PowerPC); a recursive disassembler that is well suited to details of variable
-length instruction set handling and data stored in the instruction stream.  All details of the instructions, and the operands
-and operator expression trees, etc. are stored in the binary AST as separate IR nodes.  The SgAsmInstruction class and its
-architecture-specific subclasses represent individual instructions. The arguments for those instructions are represented by the
-SgAsmExpression class and subclasses thereof.
-\fixme{We need an example of the AST for a few instructions.}
-
-Disassembly normally happens automatically unless the {\tt -rose:read\_executable\_file\_format\_only} switch is specified.
-Alternatively, this Disassembler class can be used to explicitly disassemble parts of a file. The Disassembler class
-handles all non-architecture-specific details of disassembly, such as where to search for instructions in the address
-space and how instructions are concatenated into basic blocks.  The Disassembler has a pure virtual method,
-disassembleOne, that is implemented by architecture-specific subclasses and whose purpose is to disassemble one
-instruction.
-
-New architectures can be added to ROSE without modifying any ROSE source code. One does this by subclassing an existing
-disassembler, overriding any necessary virtual methods, and registering an instance of this subclass with the
-{\tt Disassembler::register\_subclass} method.  If the new subclass can handle multiple architectures then a disassembler is
-registered for each of those architectures.
-
-When ROSE needs to disassemble something, it calls {\tt Disassembler::lookup}, which in turn calls the {\tt can\_disassemble}
-method for all registered disassemblers.  The first disassembler whose {\tt can\_disassemble} returns true is used for the
-disassemby.
-
-If an error occurs during the disassembly of a single instruction, the disassembler will throw an exception. When
-disassembling multiple instructions the exceptions are saved in a map, by virtual address, and the map is returned to the
-caller along with the instructions that were successfully disassembled.
-
-The main interface to the disassembler is the {\tt disassembleBuffer} method. It searches for instructions based on the
-heuristics specified in the {\tt set\_search} method, reading instruction bytes from a supplied buffer.  A MemoryMap object is
-supplied in order to specify a mapping from virtual address space to offsets in the supplied buffer. The
-{\tt disassembleBuffer} method is used by methods that disassemble whole sections, whole interpretations, or whole files; in
-turn, it calls {\tt disassembleBlock} which disassembles sequential instructions until a control flow branch is encountered.
-
-A MemoryMap object can be built that describes the entire virtual address space and how it relates to offsets in the
-executable file.  This object, together with the entire contents of the file, can be passed to the {\tt disassembleBuffer}
-method in order to disassemble the entire executable in one call.  However, if the executable contains multiple
-independent interpretations (like a PE file that contains a Windows executable and a DOS executable) then the best
-practice is to disassemble each interpretation individually.  The {\tt disassemble} method is convenient for this.
-
-While the main purpose of the Disassembler class is to disassemble instructions, it also needs to be able to group those
-instructions into basic blocks (SgAsmBlock) and functions (SgAsmFunction). It uses an instance of the
-Partitioner class to do so.  The user can supply a partitioner to the disassembler or have the disassembler create a
-default partitioner on the fly.  The user is also free to call the partitioner directly on the InstructionMap object
-returned by most of the disassembler methods.
+See API documentation for Rose::BinaryAnalysis::Disassemble.
 
 \subsection{Instruction Partitioning}
-% NOTE: This subsection comes almost verbatim from the doxygen documentation in Partitioner.h
 
-While the main purpose of the Disassembler class is to disassemble instructions, it also
-needs to be able to group those instructions into basic blocks (SgAsmBlock) and functions
-(SgAsmFunction). It uses an instance of the Partitioner class to do so.  The
-user can supply a partitioner to the disassembler or have the disassembler create a
-default partitioner on the fly.  The user is also free to call the partitioner directly
-on the InstructionMap object returned by most of the disassembler methods.
-
-When grouping instructions into basic blocks, the partitioner looks at the instruction
-type and known successor addresses. A known successor address is a virtual address where
-the processor will disassemble and execute the next instruction. Unconditional branch
-instructions typically have a single known successor (the branch target); conditional
-branches usually have two successors (the following, or fall-through, address and the
-branch target); data processing and testing instructions have one successor (the
-following address); and interrupt-causing instructions have no known successors. A branch
-to a calculated (non-immediate) address does not qualify as a known successor. The
-SgAsmInstruction's terminatesBasicBlock virtual method is used to make this
-determination.
-
-Once instructions are assigned to basic blocks, the partitioner assigns the basic blocks
-to functions using a variety of heuristics, the set of which is determined by the values
-specified in the Partioner's {\tt set\_heuristics} method. These are documented in the
-SgAsmFunction class (see the FunctionReason enumeration).  When a function is
-created, its {\tt reason} attribute will contain a bit vector describing which heuristics
-detected this function.
+See API documentation for Rose::BinaryAnalysis::Partitioner2.
 
 \subsection{Dwarf Debug Support}
 % NOTE:
@@ -193,12 +125,7 @@ Dwarf debug information.
 
 \section{Binary Analysis}
 
-   A number of binary analysis passes are provided, most are a part of the Compass
-framework for software analysis.  See the {\em Compass User Manual} for more details on
-supported binary analysis.
-
-   The ROSE tutorial shows a number of binary analysis passes over both the binary
-instructions and the executable file format.
+See API documentation for Rose::BinaryAnalysis.
 
 \section{Compass as a Binary Analysis Tool}
 

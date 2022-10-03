@@ -3,8 +3,9 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Rose/BinaryAnalysis/Disassembler/BasicTypes.h>
+#include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
-#include <Rose/BinaryAnalysis/Disassembler.h>
 #include <Sawyer/Map.h>
 
 #include <boost/serialization/access.hpp>
@@ -105,7 +106,7 @@ public:
     /** Construct an analyzer using a specified disassembler.
      *
      *  This constructor chooses a symbolic domain and a dispatcher appropriate for the disassembler's architecture. */
-    explicit Analysis(Disassembler *d)
+    explicit Analysis(const Disassembler::BasePtr &d)
         : hasResults_(false), didConverge_(false) {
         init(d);
     }
@@ -137,7 +138,7 @@ public:
      *  specified function need not be attached to the partitioner. Results of the analysis are stored in this analysis object
      *  to be queried after the analysis completes. */
     void
-    analyzeFunction(const Partitioner2::Partitioner&, const Sawyer::SharedPointer<Partitioner2::Function>&,
+    analyzeFunction(const Partitioner2::Partitioner&, const Partitioner2::FunctionPtr&,
                     Partitioner2::DataFlow::InterproceduralPredicate&);
 
     /** Whether a function has been analyzed.
@@ -284,7 +285,7 @@ public:
                            const InstructionSemantics::BaseSemantics::SValuePtr &delta);
 
 private:
-    void init(Disassembler*);
+    void init(const Disassembler::BasePtr&);
 };
 
 std::ostream& operator<<(std::ostream&, const Analysis&);

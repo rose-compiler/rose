@@ -979,7 +979,7 @@ isProtPrivType (SgType* t)
           if (decl)
             if (decl->get_definingDeclaration ())
               decl = decl->get_definingDeclaration ();
-          if (isProtPriv (decl))
+          if (decl && isProtPriv (decl))
           {
             //if any type in the type chain is private, we return immediately.
             if (SgClassDefinition* c_d= isSgClassDefinition (decl->get_parent ()))

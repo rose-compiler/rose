@@ -4,6 +4,7 @@
 #include <Rose/BinaryAnalysis/Unparser/Aarch32.h>
 
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <boost/lexical_cast.hpp>
 
 namespace Rose {
@@ -21,10 +22,9 @@ unparseAarch32Mnemonic(SgAsmAarch32Instruction *insn) {
 }
 
 std::string
-unparseAarch32Expression(SgAsmExpression *expr, const LabelMap *labels,
-                         const RegisterDictionary *registers) {
+unparseAarch32Expression(SgAsmExpression *expr, const LabelMap *labels, RegisterDictionary::Ptr registers) {
     if (!registers)
-        registers = RegisterDictionary::dictionary_aarch32();
+        registers = RegisterDictionary::instanceAarch32();
     auto unparser = Aarch32::instance(Aarch32Settings());
     std::ostringstream ss;
     Partitioner2::Partitioner p;

@@ -139,11 +139,6 @@ AC_MSG_NOTICE([GFORTRAN_PATH = "$GFORTRAN_PATH"])
 #########################################################################################
 
 
-## Rasmussen (10/24/2017): Support for linking with the GnuCOBOL parse-tree library.
-#
-ROSE_SUPPORT_COBOL
-#########################################################################################
-
 ## Rasmussen (11/19/2017): Support for using the modified GNU Octave parser.
 #
 ROSE_SUPPORT_OCTAVE
@@ -299,24 +294,6 @@ if test "x$enable_debug_output_for_new_edg_interface" = "xyes"; then
   AC_DEFINE([ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION], [], [Controls large volumes of output spew useful for debugging new EDG/ROSE connection code])
 fi
 
-# DQ (6/7/2013): Added support for new Fortran front-end development.
-AC_ARG_ENABLE(experimental_fortran_frontend,
-    AS_HELP_STRING([--enable-experimental_fortran_frontend], [Enable experimental fortran frontend development]))
-AM_CONDITIONAL(ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION, [test "x$enable_experimental_fortran_frontend" = xyes])
-if test "x$enable_experimental_fortran_frontend" = "xyes"; then
-  AC_MSG_WARN([using this mode enables experimental fortran front-end (internal development only)!])
-  AC_DEFINE([ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION], [], [Enables development of experimental fortran frontend])
-fi
-
-# DQ (6/7/2013): Added support for debugging new Fortran front-end development.
-AC_ARG_ENABLE(debug_output_for_experimental_fortran_frontend,
-    AS_HELP_STRING([--enable-debug_output_for_experimental_fortran_frontend], [Enable debugging output (spew) of new OFP/ROSE connection]))
-AM_CONDITIONAL(ROSE_DEBUG_EXPERIMENTAL_OFP_ROSE_CONNECTION, [test "x$enable_debug_output_for_experimental_fortran_frontend" = xyes])
-if test "x$enable_debug_output_for_experimental_fortran_frontend" = "xyes"; then
-  AC_MSG_WARN([using this mode causes large volumes of output spew (internal debugging only)!])
-  AC_DEFINE([ROSE_DEBUG_EXPERIMENTAL_OFP_ROSE_CONNECTION], [], [Controls large volumes of output spew useful for debugging new OFP/ROSE connection code])
-fi
-
 # Added support for Fortran front-end development using the flang (F18) compiler [Rasmussen 8/12/2019]
 AC_ARG_ENABLE(experimental_flang_frontend,
     AS_HELP_STRING([--enable-experimental_flang_frontend], [Enable experimental fortran frontend development using flang]))
@@ -409,23 +386,8 @@ if test "x$enable_debug_output_for_experimental_jovial_frontend" = "xyes"; then
   AC_DEFINE([ROSE_DEBUG_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION], [], [Controls large volumes of output spew useful for debugging new JOVIAL/ROSE connection code])
 fi
 
-# DQ (8/23/2017): Added support for new Cobol front-end development.
-AC_ARG_ENABLE(experimental_cobol_frontend,
-    AS_HELP_STRING([--enable-experimental_cobol_frontend], [Enable experimental cobol frontend development]))
-AM_CONDITIONAL(ROSE_EXPERIMENTAL_COBOL_ROSE_CONNECTION, [test "x$enable_experimental_cobol_frontend" = xyes])
-if test "x$enable_experimental_cobol_frontend" = "xyes"; then
-  AC_MSG_WARN([using this mode enables experimental cobol front-end (internal development only)!])
-  AC_DEFINE([ROSE_EXPERIMENTAL_COBOL_ROSE_CONNECTION], [], [Enables development of experimental cobol frontend])
-fi
-
-# DQ (8/23/2017): Added support for debugging new Cobol front-end development.
-AC_ARG_ENABLE(debug_output_for_experimental_cobol_frontend,
-    AS_HELP_STRING([--enable-debug_output_for_experimental_cobol_frontend], [Enable debugging output (spew) of new COBOL/ROSE connection]))
-AM_CONDITIONAL(ROSE_DEBUG_EXPERIMENTAL_COBOL_ROSE_CONNECTION, [test "x$enable_debug_output_for_experimental_cobol_frontend" = xyes])
-if test "x$enable_debug_output_for_experimental_cobol_frontend" = "xyes"; then
-  AC_MSG_WARN([using this mode causes large volumes of output spew (internal debugging only)!])
-  AC_DEFINE([ROSE_DEBUG_EXPERIMENTAL_COBOL_ROSE_CONNECTION], [], [Controls large volumes of output spew useful for debugging new COBOL/ROSE connection code])
-fi
+# Rasmussen (9/18/2020): Removed --experimental_cobol_frontend option and associated code
+# This was required because the Cobol frontend depended on SgUntyped nodes which have been deleted.
 
 # Rasmussen (10/30/2017): Added support for new Octave/Matlab front-end development.
 AC_ARG_ENABLE([experimental_matlab_frontend],
@@ -1059,13 +1021,6 @@ if test "x$enable_experimental_jovial_frontend" = "xyes"; then
    fi
 fi
 
-# Rasmussen (10/24/2017): GnuCobol parse-tree library installation required for Cobol support.
-if test "x$enable_experimental_cobol_frontend" = "xyes"; then
-   if test "x$COBPT_LIBRARY_PATH" = "x"; then
-      AC_MSG_ERROR([support for experimental_cobol_frontend requires GnuCobol parse-tree library support, --with-cobpt=PATH must be specified!])
-   fi
-fi
-
 # Rasmussen (11/19/2017): Octave/Matlab parser installation required for Matlab support.
 if test "x$enable_experimental_matlab_frontend" = "xyes"; then
    if test "x$OCTAVE_PARSER_INSTALL_TARFILE" = "x"; then
@@ -1147,10 +1102,6 @@ fi
 
 
 
-# TP (2-27-2009) -- support for RTED
-ROSE_SUPPORT_RTED
-
-AM_CONDITIONAL(ROSE_USE_RTED,test ! "$with_rted" = no)
 
 # TP SUPPORT FOR OPENGL
 #AC_DEFINE([openGL],1,[By default OpenGL is disabled.])
@@ -2039,96 +1990,22 @@ exampleTranslators/documentedExamples/dataBaseExamples/Makefile
 exampleTranslators/documentedExamples/simpleTranslatorExamples/Makefile
 exampleTranslators/documentedExamples/simpleTranslatorExamples/exampleMakefile
 LicenseInformation/Makefile
-projects/ArithmeticMeasureTool/Makefile
-projects/BinaryCloneDetection/Makefile
-projects/BinaryCloneDetection/compression/Makefile
-projects/BinaryCloneDetection/semantic/Makefile
-projects/BinaryCloneDetection/syntactic/Makefile
-projects/BinaryCloneDetection/syntactic/gui/Makefile
 projects/CertSecureCodeProject/Makefile
 projects/CloneDetection/Makefile
-projects/RaaS/Makefile
-projects/RaaS/src/Makefile
-projects/RaaS/examples/demo/Makefile
-projects/RaaS/examples/demo/compile_commands.json
-projects/CompilationDB/Makefile
-projects/CompilationDB/scripts/Makefile
-projects/CompilationDB/examples/demo/Makefile
-projects/CompilationDB/examples/demo/compile_commands.json
-projects/CompilationDB/examples/kripke/Makefile
-projects/CompilationDB/examples/doxygen/Makefile
-projects/CompilationDB/static/js/Makefile
-projects/CompilationDB/static/css/Makefile
-projects/EditDistanceMetric/Makefile
-projects/Fortran_to_C/Makefile
-projects/Fortran_to_C/src/Makefile
-projects/Fortran_to_C/tests/Makefile
 projects/HeaderFilesInclusion/HeaderFilesGraphGenerator/Makefile
 projects/HeaderFilesInclusion/HeaderFilesNotIncludedList/Makefile
 projects/HeaderFilesInclusion/Makefile
-projects/MPI_Tools/MPICodeMotion/Makefile
-projects/MPI_Tools/MPIDeterminismAnalysis/Makefile
-projects/MPI_Tools/Makefile
 projects/Makefile
 projects/ManyCoreRuntime/Makefile
 projects/ManyCoreRuntime/docs/Makefile
 projects/MapleDSL/Makefile
 projects/QtDesignerPlugins/Makefile
-projects/RTED/CppRuntimeSystem/DebuggerQt/Makefile
-projects/RTED/CppRuntimeSystem/Makefile
-projects/RTED/Makefile
 projects/RoseBlockLevelTracing/Makefile
 projects/RoseBlockLevelTracing/src/Makefile
 projects/RoseQt/AstViewer/Makefile
 projects/RoseQt/Makefile
 projects/SMTPathFeasibility/Makefile
 projects/ShiftCalculus4/Makefile
-projects/TemplateAnalysis/Makefile
-projects/TemplateAnalysis/include/ROSE/Analysis/Template/Makefile
-projects/TemplateAnalysis/include/ROSE/proposed/Makefile
-projects/TemplateAnalysis/lib/ROSE/Analysis/Template/Makefile
-projects/TemplateAnalysis/lib/ROSE/proposed/Makefile
-projects/TemplateAnalysis/src/Makefile
-projects/TemplateAnalysis/examples/Makefile
-projects/TemplateAnalysis/examples/inspect-autovar/Makefile
-projects/TileK/Makefile
-projects/TileK/doc/Makefile
-projects/TileK/doc/dlx.doxy
-projects/TileK/doc/index.html
-projects/TileK/doc/klt-rtl.doxy
-projects/TileK/doc/klt.doxy
-projects/TileK/doc/mdcg.doxy
-projects/TileK/doc/mfb.doxy
-projects/TileK/doc/tilek-basic.doxy
-projects/TileK/doc/tilek-cuda.doxy
-projects/TileK/doc/tilek-opencl.doxy
-projects/TileK/doc/tilek-rtl-basic.doxy
-projects/TileK/doc/tilek-rtl-cuda.doxy
-projects/TileK/doc/tilek-rtl-opencl.doxy
-projects/TileK/doc/tilek-rtl-threads.doxy
-projects/TileK/doc/tilek-threads.doxy
-projects/TileK/include/DLX/TileK/Makefile
-projects/TileK/include/RTL/Host/Makefile
-projects/TileK/include/RTL/Kernel/CUDA/Makefile
-projects/TileK/include/RTL/Kernel/OpenCL/Makefile
-projects/TileK/lib/Makefile
-projects/TileK/src/Makefile
-projects/TileK/tests/accelerator/CUDA/Makefile
-projects/TileK/tests/accelerator/Makefile
-projects/TileK/tests/accelerator/OpenCL/Makefile
-projects/TileK/tests/basic/Makefile
-projects/TileK/tests/rtl/Makefile
-projects/TileK/tests/threads/Makefile
-projects/UpcTranslation/Makefile
-projects/UpcTranslation/tests/Makefile
-projects/Viz/Makefile
-projects/Viz/examples/Makefile
-projects/Viz/include/Makefile
-projects/Viz/include/Viz/Makefile
-projects/Viz/include/Viz/Traversals/Makefile
-projects/Viz/lib/Makefile
-projects/Viz/src/Makefile
-projects/Viz/tools/Makefile
 projects/amrShiftDSLcompiler/AMRShift/Makefile
 projects/amrShiftDSLcompiler/Makefile
 projects/arrayDSLcompiler/Makefile
@@ -2139,12 +2016,6 @@ projects/POET_ROSE/manycore-stencil/include/Makefile
 projects/POET_ROSE/manycore-stencil/benchmarks/Makefile
 projects/arrayOptimization/Makefile
 projects/arrayOptimization/test/Makefile
-projects/autoParallelization/Makefile
-projects/autoParallelization/tests/Makefile
-projects/autoParallelization/difftests/Makefile
-projects/autoTuning/Makefile
-projects/autoTuning/doc/Makefile
-projects/autoTuning/tests/Makefile
 projects/compass/Makefile
 projects/compass/src/Makefile
 projects/compass/src/compassSupport/Makefile
@@ -2169,16 +2040,11 @@ projects/compass/tools/compass/tests/Makefile
 projects/compass/tools/compassVerifier/Makefile
 projects/compass/tools/sampleCompassSubset/Makefile
 projects/dsl_infrastructure/Makefile
-projects/extractMPISkeleton/Makefile
-projects/extractMPISkeleton/src/Makefile
-projects/extractMPISkeleton/tests/Makefile
 projects/fuse/Makefile
 projects/fuse/src/Makefile
 projects/fuse/tests/Makefile
 projects/interpreter/Makefile
 projects/palette/Makefile
-projects/pragmaParsing/Makefile
-projects/xgenTranslator/Makefile
 python/Makefile
 python/Rose/Makefile
 python/Rose/BinaryAnalysis/Makefile
@@ -2205,9 +2071,6 @@ src/3rdPartyLibraries/qrose/QRoseLib/Makefile
 src/3rdPartyLibraries/qrose/Widgets/Makefile
 src/Makefile
 src/Rose/Makefile
-src/Rose/AST/Makefile
-src/Rose/CodeGen/Makefile
-src/Rose/Traits/Makefile
 src/ROSETTA/Makefile
 src/ROSETTA/src/Makefile
 src/backend/Makefile
@@ -2221,7 +2084,6 @@ src/frontend/Disassemblers/Makefile
 src/frontend/ECJ_ROSE_Connection/Makefile
 src/frontend/Experimental_General_Language_Support/Makefile
 src/frontend/Experimental_General_Language_Support/ATerm/Makefile
-src/frontend/Experimental_OpenFortranParser_ROSE_Connection/Makefile
 src/frontend/Experimental_Flang_ROSE_Connection/Makefile
 src/frontend/Experimental_Csharp_ROSE_Connection/Makefile
 src/frontend/Experimental_Ada_ROSE_Connection/Makefile
@@ -2229,7 +2091,6 @@ src/frontend/Experimental_Ada_ROSE_Connection/parser/Makefile
 src/frontend/Experimental_Ada_ROSE_Connection/parser/asis_adapter/Makefile
 src/frontend/Experimental_Ada_ROSE_Connection/parser/ada_main/Makefile
 src/frontend/Experimental_Jovial_ROSE_Connection/Makefile
-src/frontend/Experimental_Cobol_ROSE_Connection/Makefile
 src/frontend/Experimental_Matlab_ROSE_Connection/Makefile
 src/frontend/Makefile
 src/frontend/OpenFortranParser_SAGE_Connection/Makefile
@@ -2394,7 +2255,6 @@ tests/nonsmoke/functional/CompileTests/experimental_ada_tests/ROSEGprIntegration
 tests/nonsmoke/functional/CompileTests/experimental_ada_tests/ROSEGprIntegration_tests/MultiSource/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_fortran_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_jovial_tests/Makefile
-tests/nonsmoke/functional/CompileTests/experimental_cobol_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_matlab_tests/Makefile
 tests/nonsmoke/functional/CompileTests/Makefile
 tests/nonsmoke/functional/CompileTests/MicrosoftWindows_C_tests/Makefile
@@ -2550,10 +2410,13 @@ tests/smoke/unit/Sawyer/Makefile
 tests/smoke/unit/Utility/Makefile
 tools/Makefile
 tools/BinaryAnalysis/Makefile
-tools/globalVariablesInLambdas/Makefile
-tools/classMemberVariablesInLambdas/Makefile
 tools/checkFortranInterfaces/Makefile
+tools/classMemberVariablesInLambdas/Makefile
 tools/featureVector/Makefile
+tools/globalVariablesInLambdas/Makefile
+tools/PortabilityTesting/Makefile
+tools/PortabilityTesting/scripts/Makefile
+tools/PortabilityTesting/src/Makefile
 tutorial/Makefile
 tutorial/binaryAnalysis/Makefile
 tutorial/exampleMakefile

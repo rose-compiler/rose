@@ -4,7 +4,9 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics/LlvmSemantics.h>
 
 #include <Rose/Diagnostics.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/Util.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/Utility.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
+#include <Rose/BinaryAnalysis/SymbolicExpression.h>
 #include "AsmUnparser_compat.h"
 #include "integerOps.h"
 #include "stringify.h"
@@ -18,62 +20,110 @@ using namespace Rose::Diagnostics;
 
 static unsigned nVersionWarnings = 0;
 
-BaseSemantics::SValuePtr
-RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr_,
-                          const BaseSemantics::SValuePtr &dflt, const BaseSemantics::SValuePtr &cond)
+RiscOperators::RiscOperators(const BaseSemantics::SValue::Ptr &protoval, const SmtSolver::Ptr &solver)
+    : SymbolicSemantics::RiscOperators(protoval, solver), indent_level(0), indent_string("    "), llvmVersion_(0) {
+    name("Llvm");
+}
+
+RiscOperators::RiscOperators(const BaseSemantics::State::Ptr &state, const SmtSolver::Ptr &solver)
+    : SymbolicSemantics::RiscOperators(state, solver), indent_level(0), indent_string("    "), llvmVersion_(0) {
+    name("Llvm");
+}
+
+RiscOperators::~RiscOperators() {}
+
+RiscOperators::Ptr
+RiscOperators::instanceFromRegisters(const RegisterDictionary::Ptr &regdict, const SmtSolver::Ptr &solver) {
+    BaseSemantics::SValue::Ptr protoval = SValue::instance();
+    BaseSemantics::RegisterState::Ptr registers = RegisterState::instance(protoval, regdict);
+    BaseSemantics::MemoryState::Ptr memory = MemoryState::instance(protoval, protoval);
+    BaseSemantics::State::Ptr state = State::instance(registers, memory);
+    return Ptr(new RiscOperators(state, solver));
+}
+
+RiscOperators::Ptr
+RiscOperators::instanceFromProtoval(const BaseSemantics::SValue::Ptr &protoval, const SmtSolver::Ptr &solver) {
+    return Ptr(new RiscOperators(protoval, solver));
+}
+
+RiscOperators::Ptr
+RiscOperators::instanceFromState(const BaseSemantics::State::Ptr &state, const SmtSolver::Ptr &solver) {
+    return Ptr(new RiscOperators(state, solver));
+}
+
+BaseSemantics::RiscOperators::Ptr
+RiscOperators::create(const BaseSemantics::SValue::Ptr &protoval, const SmtSolver::Ptr &solver) const {
+    return instanceFromProtoval(protoval, solver);
+}
+
+BaseSemantics::RiscOperators::Ptr
+RiscOperators::create(const BaseSemantics::State::Ptr &state, const SmtSolver::Ptr &solver) const {
+    return instanceFromState(state, solver);
+}
+
+RiscOperators::Ptr
+RiscOperators::promote(const BaseSemantics::RiscOperators::Ptr &x) {
+    Ptr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
+    ASSERT_not_null(retval);
+    return retval;
+}
+
+BaseSemantics::SValue::Ptr
+RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValue::Ptr &addr_,
+                          const BaseSemantics::SValue::Ptr &dflt, const BaseSemantics::SValue::Ptr &cond)
 {
     if (cond->isFalse())
         return dflt;
     size_t nbits = dflt->nBits();
 
     // Offset the address by the value of the segment register.
-    BaseSemantics::SValuePtr adjustedVa;
+    BaseSemantics::SValue::Ptr adjustedVa;
     if (segreg.isEmpty()) {
         adjustedVa = addr_;
     } else {
-        BaseSemantics::SValuePtr segregValue = readRegister(segreg, undefined_(segreg.nBits()));
+        BaseSemantics::SValue::Ptr segregValue = readRegister(segreg, undefined_(segreg.nBits()));
         adjustedVa = add(addr_, signExtend(segregValue, addr_->nBits()));
     }
 
 
-    SValuePtr addr = SValue::promote(adjustedVa);
-    return svalueExpr(SymbolicExpr::makeRead(SymbolicExpr::makeMemoryVariable(addr->nBits(), nbits), addr->get_expression(),
-                                             solver()));
+    SValue::Ptr addr = SValue::promote(adjustedVa);
+    return svalueExpr(SymbolicExpression::makeRead(SymbolicExpression::makeMemoryVariable(addr->nBits(), nbits), addr->get_expression(),
+                                                   solver()));
 }
 
 void
-RiscOperators::writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr_,
-                           const BaseSemantics::SValuePtr &data_, const BaseSemantics::SValuePtr &cond)
+RiscOperators::writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValue::Ptr &addr_,
+                           const BaseSemantics::SValue::Ptr &data_, const BaseSemantics::SValue::Ptr &cond)
 {
     if (cond->isFalse())
         return;
 
     // Offset the address by the value of the segment register.
-    BaseSemantics::SValuePtr adjustedVa;
+    BaseSemantics::SValue::Ptr adjustedVa;
     if (segreg.isEmpty()) {
         adjustedVa = addr_;
     } else {
-        BaseSemantics::SValuePtr segregValue = readRegister(segreg, undefined_(segreg.nBits()));
+        BaseSemantics::SValue::Ptr segregValue = readRegister(segreg, undefined_(segreg.nBits()));
         adjustedVa = add(addr_, signExtend(segregValue, addr_->nBits()));
     }
 
-    SValuePtr addr = SValue::promote(adjustedVa);
-    SValuePtr data = SValue::promote(data_);
-    mem_writes.push_back(SymbolicExpr::makeWrite(SymbolicExpr::makeMemoryVariable(addr->nBits(), data->nBits()),
-                                                 addr->get_expression(), data->get_expression(), solver())
+    SValue::Ptr addr = SValue::promote(adjustedVa);
+    SValue::Ptr data = SValue::promote(data_);
+    mem_writes.push_back(SymbolicExpression::makeWrite(SymbolicExpression::makeMemoryVariable(addr->nBits(), data->nBits()),
+                                                       addr->get_expression(), data->get_expression(), solver())
                          ->isInteriorNode());
 }
 
 void
 RiscOperators::reset()
 {
-    BaseSemantics::StatePtr state = currentState();
-    BaseSemantics::RegisterStatePtr regs = state->registerState();
-    BaseSemantics::MemoryStatePtr mem = state->memoryState();
+    BaseSemantics::State::Ptr state = currentState();
+    BaseSemantics::RegisterState::Ptr regs = state->registerState();
+    BaseSemantics::MemoryState::Ptr mem = state->memoryState();
 
-    RegisterStatePtr new_regs = RegisterState::promote(regs->create(protoval(), regs->registerDictionary()));
-    BaseSemantics::MemoryStatePtr new_mem = mem->create(mem->get_addr_protoval(), mem->get_val_protoval());
-    BaseSemantics::StatePtr new_state = state->create(new_regs, new_mem);
+    RegisterState::Ptr new_regs = RegisterState::promote(regs->create(protoval(), regs->registerDictionary()));
+    BaseSemantics::MemoryState::Ptr new_mem = mem->create(mem->get_addr_protoval(), mem->get_val_protoval());
+    BaseSemantics::State::Ptr new_state = state->create(new_regs, new_mem);
 
     new_regs->initialize_nonoverlapping(get_important_registers(), false);
 
@@ -87,7 +137,7 @@ RiscOperators::reset()
 void
 RiscOperators::emit_changed_state(std::ostream &o)
 {
-    const RegisterDictionary *dictionary = currentState()->registerState()->registerDictionary();
+    RegisterDictionary::Ptr dictionary = currentState()->registerState()->registerDictionary();
     RegisterDescriptors modified_registers = get_modified_registers();
     emit_prerequisites(o, modified_registers, dictionary);
     emit_register_definitions(o, modified_registers);
@@ -110,7 +160,7 @@ RiscOperators::get_important_registers()
 {
     if (important_registers.empty()) {
         ASSERT_not_null(currentState());
-        const RegisterDictionary *dictionary = currentState()->registerState()->registerDictionary();
+        RegisterDictionary::Ptr dictionary = currentState()->registerState()->registerDictionary();
 
         // General-purpose registers
         important_registers.push_back(dictionary->findOrThrow("eax"));
@@ -178,15 +228,15 @@ RegisterDescriptors
 RiscOperators::get_stored_registers()
 {
     RegisterDescriptors retval;
-    RegisterStatePtr regstate = RegisterState::promote(currentState()->registerState());
-    const RegisterDictionary *dictionary = regstate->registerDictionary();
+    RegisterState::Ptr regstate = RegisterState::promote(currentState()->registerState());
+    RegisterDictionary::Ptr dictionary = regstate->registerDictionary();
     const std::vector<RegisterDescriptor> &regs = get_important_registers();
     for (size_t i=0; i<regs.size(); ++i) {
         if (regstate->is_partly_stored(regs[i])) {
             const std::string &name = dictionary->lookup(regs[i]);
             ASSERT_require(!name.empty());
-            BaseSemantics::SValuePtr dflt = undefined_(regs[i].nBits());
-            SValuePtr value = SValue::promote(regstate->readRegister(regs[i], dflt, this));
+            BaseSemantics::SValue::Ptr dflt = undefined_(regs[i].nBits());
+            SValue::Ptr value = SValue::promote(regstate->readRegister(regs[i], dflt, this));
 
             // Sometimes registers only have a value because they've been read.  There is no need to emit a definition for
             // these variables.  By convention, the RegisterStateGeneric will add the register name + "_0" to all registers
@@ -204,21 +254,21 @@ RegisterDescriptors
 RiscOperators::get_modified_registers()
 {
     RegisterDescriptors retval;
-    RegisterStatePtr cur_regstate = RegisterState::promote(currentState()->registerState());
-    const RegisterDictionary *dictionary = cur_regstate->registerDictionary();
+    RegisterState::Ptr cur_regstate = RegisterState::promote(currentState()->registerState());
+    RegisterDictionary::Ptr dictionary = cur_regstate->registerDictionary();
     const std::vector<RegisterDescriptor> &regs = get_important_registers();
     for (size_t i=0; i<regs.size(); ++i) {
         if (cur_regstate->is_partly_stored(regs[i])) {
             const std::string &name = dictionary->lookup(regs[i]);
             ASSERT_require(!name.empty());
-            BaseSemantics::SValuePtr dflt = undefined_(regs[i].nBits());
-            SValuePtr cur_value = SValue::promote(cur_regstate->readRegister(regs[i], dflt, this));
+            BaseSemantics::SValue::Ptr dflt = undefined_(regs[i].nBits());
+            SValue::Ptr cur_value = SValue::promote(cur_regstate->readRegister(regs[i], dflt, this));
             if (0==cur_value->comment().compare(name + "_0")) {
                 // This register has it's initial value, probably because it was read (registers that have never been read or
                 // written won't even get this far in the loop due to the is_partly_stored() check above.
                 continue;
             } else if (prev_regstate!=NULL && prev_regstate->is_partly_stored(regs[i])) {
-                SValuePtr prev_value = SValue::promote(prev_regstate->readRegister(regs[i], dflt, this));
+                SValue::Ptr prev_value = SValue::promote(prev_regstate->readRegister(regs[i], dflt, this));
                 if (cur_value->mustEqual(prev_value))
                     continue;
             }
@@ -232,36 +282,36 @@ RiscOperators::get_modified_registers()
 RegisterDescriptor
 RiscOperators::get_insn_pointer_register()
 {
-    const RegisterDictionary *dictionary = currentState()->registerState()->registerDictionary();
+    RegisterDictionary::Ptr dictionary = currentState()->registerState()->registerDictionary();
     return dictionary->findOrThrow("eip");
 }
 
-SValuePtr
+SValue::Ptr
 RiscOperators::get_instruction_pointer()
 {
     RegisterDescriptor EIP = get_insn_pointer_register();
-    BaseSemantics::SValuePtr dflt = undefined_(EIP.nBits());
+    BaseSemantics::SValue::Ptr dflt = undefined_(EIP.nBits());
     return SValue::promote(currentState()->registerState()->readRegister(EIP, dflt, this));
 }
 
 // Create temporary LLVM variables for all definers of the specified registers.
 void
-RiscOperators::emit_prerequisites(std::ostream &o, const RegisterDescriptors &regs, const RegisterDictionary *dictionary)
+RiscOperators::emit_prerequisites(std::ostream &o, const RegisterDescriptors &regs, const RegisterDictionary::Ptr& dictionary)
 {
-    struct T1: SymbolicExpr::Visitor {
+    struct T1: SymbolicExpression::Visitor {
         RiscOperators *ops;
         std::ostream &o;
         const RegisterDescriptors &regs;
-        const RegisterDictionary *dictionary;
-        std::set<SymbolicExpr::Hash> seen;
-        T1(RiscOperators *ops, std::ostream &o, const RegisterDescriptors &regs, const RegisterDictionary *dictionary)
+        RegisterDictionary::Ptr dictionary;
+        std::set<SymbolicExpression::Hash> seen;
+        T1(RiscOperators *ops, std::ostream &o, const RegisterDescriptors &regs, const RegisterDictionary::Ptr &dictionary)
             : ops(ops), o(o), regs(regs), dictionary(dictionary) {}
-        virtual SymbolicExpr::VisitAction preVisit(const ExpressionPtr &node) override {
+        virtual SymbolicExpression::VisitAction preVisit(const ExpressionPtr &node) override {
             if (!seen.insert(node->hash()).second)
-                return SymbolicExpr::TRUNCATE; // already processed this same expression
+                return SymbolicExpression::TRUNCATE; // already processed this same expression
             size_t width = node->nBits();
             if (InteriorPtr inode = node->isInteriorNode()) {
-                if (SymbolicExpr::OP_READ==inode->getOperator()) {
+                if (SymbolicExpression::OP_READ==inode->getOperator()) {
                     ASSERT_require(2==inode->nChildren());
                     ops->emit_assignment(o, ops->emit_memory_read(o, inode->child(1), width));
                 }
@@ -275,18 +325,18 @@ RiscOperators::emit_prerequisites(std::ostream &o, const RegisterDescriptors &re
                     LeafPtr t1 = ops->emit_expression(o, leaf);// handles local vars, global vars, and undefs
                 }
             }
-            return SymbolicExpr::CONTINUE;
+            return SymbolicExpression::CONTINUE;
         }
-        virtual SymbolicExpr::VisitAction postVisit(const ExpressionPtr&) override {
-            return SymbolicExpr::CONTINUE;
+        virtual SymbolicExpression::VisitAction postVisit(const ExpressionPtr&) override {
+            return SymbolicExpression::CONTINUE;
         }
     } t1(this, o, regs, dictionary);
 
     // Prerequisites for the registers
-    RegisterStatePtr regstate = RegisterState::promote(currentState()->registerState());
+    RegisterState::Ptr regstate = RegisterState::promote(currentState()->registerState());
     for (size_t i=0; i<regs.size(); ++i) {
-        BaseSemantics::SValuePtr dflt = undefined_(regs[i].nBits());
-        SValuePtr value = SValue::promote(regstate->readRegister(regs[i], dflt, this));
+        BaseSemantics::SValue::Ptr dflt = undefined_(regs[i].nBits());
+        SValue::Ptr value = SValue::promote(regstate->readRegister(regs[i], dflt, this));
         value->get_expression()->depthFirstTraversal(t1);
     }
 
@@ -303,7 +353,7 @@ RiscOperators::emit_prerequisites(std::ostream &o, const RegisterDescriptors &re
 void
 RiscOperators::emit_register_declarations(std::ostream &o, const RegisterDescriptors &regs)
 {
-    const RegisterDictionary *dictionary = currentState()->registerState()->registerDictionary();
+    RegisterDictionary::Ptr dictionary = currentState()->registerState()->registerDictionary();
     for (size_t i=0; i<regs.size(); ++i) {
         const std::string &name = dictionary->lookup(regs[i]);
         ASSERT_require(!name.empty());
@@ -314,13 +364,13 @@ RiscOperators::emit_register_declarations(std::ostream &o, const RegisterDescrip
 void
 RiscOperators::emit_register_definitions(std::ostream &o, const RegisterDescriptors &regs)
 {
-    RegisterStatePtr regstate = RegisterState::promote(currentState()->registerState());
-    const RegisterDictionary *dictionary = regstate->registerDictionary();
+    RegisterState::Ptr regstate = RegisterState::promote(currentState()->registerState());
+    RegisterDictionary::Ptr dictionary = regstate->registerDictionary();
     for (size_t i=0; i<regs.size(); ++i) {
         const std::string &name = dictionary->lookup(regs[i]);
         ASSERT_require(!name.empty());
-        BaseSemantics::SValuePtr dflt = undefined_(regs[i].nBits());
-        SValuePtr value = SValue::promote(regstate->readRegister(regs[i], dflt, this));
+        BaseSemantics::SValue::Ptr dflt = undefined_(regs[i].nBits());
+        SValue::Ptr value = SValue::promote(regstate->readRegister(regs[i], dflt, this));
         o <<prefix() <<"; register " <<name <<" = " <<*value <<"\n";
         ExpressionPtr t1 = emit_expression(o, value);
         o <<prefix() <<"store " <<llvm_integer_type(t1->nBits()) <<" " <<llvm_term(t1)
@@ -338,7 +388,7 @@ RiscOperators::emit_next_eip(std::ostream &o, SgAsmInstruction *latest_insn)
     SgAsmInterpretation *interp = getEnclosingNode<SgAsmInterpretation>(func);
     ASSERT_not_null(interp);                            // instructions must be part of the global AST
     const InstructionMap &insns = interp->get_instruction_map();
-    SValuePtr eip = get_instruction_pointer();
+    SValue::Ptr eip = get_instruction_pointer();
     rose_addr_t fallthrough_va = latest_insn->get_address() + latest_insn->get_size();
 
     // If EIP is a constant then it is one of the following cases:
@@ -378,7 +428,7 @@ RiscOperators::emit_next_eip(std::ostream &o, SgAsmInstruction *latest_insn)
     // addresses isn't valid.  This can happen because the ROSE disassembler might be using a more advanced analysis than we
     // use here.
     InteriorPtr inode = eip->get_expression()->isInteriorNode();
-    if (inode && SymbolicExpr::OP_ITE==inode->getOperator()) {
+    if (inode && SymbolicExpression::OP_ITE==inode->getOperator()) {
         LeafPtr leaf1 = inode->child(1)->isLeafNode();
         LeafPtr leaf2 = inode->child(2)->isLeafNode();
         if (leaf1!=NULL && leaf1->isIntegerConstant() && leaf2!=NULL && leaf2->isIntegerConstant()) {
@@ -485,7 +535,7 @@ RiscOperators::emit_memory_writes(std::ostream &o)
     for (size_t i=0; i<mem_writes.size(); ++i) {
         InteriorPtr inode = mem_writes[i]->isInteriorNode();
         ASSERT_not_null(inode);
-        ASSERT_require(inode->getOperator() == SymbolicExpr::OP_WRITE);
+        ASSERT_require(inode->getOperator() == SymbolicExpression::OP_WRITE);
         ASSERT_require(inode->nChildren()==3);
         ExpressionPtr addr = inode->child(1);
         ExpressionPtr value = inode->child(2);
@@ -502,7 +552,7 @@ RiscOperators::make_current()
 }
 
 LeafPtr
-RiscOperators::emit_expression(std::ostream &o, const SValuePtr &value)
+RiscOperators::emit_expression(std::ostream &o, const SValue::Ptr &value)
 {
     ASSERT_not_null(value);
     LeafPtr result = emit_expression(o, value->get_expression());
@@ -545,7 +595,7 @@ RiscOperators::llvm_term(const ExpressionPtr &expr)
 LeafPtr
 RiscOperators::next_temporary(size_t nbits)
 {
-    return SymbolicExpr::makeIntegerVariable(nbits);
+    return SymbolicExpression::makeIntegerVariable(nbits);
 }
 
 std::string
@@ -701,7 +751,7 @@ RiscOperators::emit_logical_right_shift(std::ostream &o, const ExpressionPtr &va
             if (amount_leaf->toUnsigned().get() == 0)
                 return value;
             if (amount_leaf->toUnsigned().get() >= value->nBits())
-                return SymbolicExpr::makeIntegerConstant(value->nBits(), 0);
+                return SymbolicExpression::makeIntegerConstant(value->nBits(), 0);
         }
     }
     return emit_binary(o, "lshr", value, emit_unsigned_resize(o, amount, value->nBits()));
@@ -714,11 +764,11 @@ RiscOperators::emit_logical_right_shift_ones(std::ostream &o, const ExpressionPt
 {
     ExpressionPtr t1 = emit_logical_right_shift(o, value, amount);
     size_t width = std::max(value->nBits(), amount->nBits());
-    ExpressionPtr ones = SymbolicExpr::makeAdd(SymbolicExpr::makeIntegerConstant(width, value->nBits()),
-                                               SymbolicExpr::makeNegate(SymbolicExpr::makeExtend(SymbolicExpr::makeIntegerConstant(8, width),
-                                                                                                 amount, solver()),
-                                                                        solver()),
-                                               solver());
+    ExpressionPtr ones = SymbolicExpression::makeAdd(SymbolicExpression::makeIntegerConstant(width, value->nBits()),
+                                                     SymbolicExpression::makeNegate(SymbolicExpression::makeExtend(SymbolicExpression::makeIntegerConstant(8, width),
+                                                                                                                   amount, solver()),
+                                                                                    solver()),
+                                                     solver());
     return emit_binary(o, "or", t1, ones);
 }
 
@@ -732,7 +782,7 @@ RiscOperators::emit_arithmetic_right_shift(std::ostream &o, const ExpressionPtr 
             if (amount_leaf->toUnsigned().get() == 0)
                 return value;
             if (amount_leaf->toUnsigned().get() >= value->nBits())
-                return SymbolicExpr::makeIntegerConstant(value->nBits(), 0);
+                return SymbolicExpression::makeIntegerConstant(value->nBits(), 0);
         }
     }
     return emit_binary(o, "ashr", value, emit_unsigned_resize(o, amount, value->nBits()));
@@ -748,7 +798,7 @@ RiscOperators::emit_left_shift(std::ostream &o, const ExpressionPtr &value, cons
             if (amount_leaf->toUnsigned().get() == 0)
                 return value;
             if (amount_leaf->toUnsigned().get() >= value->nBits())
-                return SymbolicExpr::makeIntegerConstant(value->nBits(), 0);
+                return SymbolicExpression::makeIntegerConstant(value->nBits(), 0);
         }
     }
     return emit_binary(o, "shl", value, emit_unsigned_resize(o, amount, value->nBits()));
@@ -762,7 +812,7 @@ RiscOperators::emit_left_shift_ones(std::ostream &o, const ExpressionPtr &value,
 {
     size_t width = value->nBits();
     ExpressionPtr t1 = emit_left_shift(o, value, amount);
-    ExpressionPtr ones = emit_invert(o, emit_left_shift(o, SymbolicExpr::makeIntegerConstant(width, -1), amount));
+    ExpressionPtr ones = emit_invert(o, emit_left_shift(o, SymbolicExpression::makeIntegerConstant(width, -1), amount));
     return emit_binary(o, "or", t1, ones);
 }
 
@@ -777,7 +827,7 @@ ExpressionPtr
 RiscOperators::emit_lssb(std::ostream &o, const ExpressionPtr &value)
 {
     size_t width = value->nBits();
-    LeafPtr zero = SymbolicExpr::makeIntegerConstant(width, 0);
+    LeafPtr zero = SymbolicExpression::makeIntegerConstant(width, 0);
     LeafPtr t1 = emit_expression(o, value);
     ExpressionPtr t2 = emit_compare(o, "icmp eq", t1, zero);
     LeafPtr t3 = next_temporary(width);
@@ -799,13 +849,13 @@ ExpressionPtr
 RiscOperators::emit_mssb(std::ostream &o, const ExpressionPtr &value)
 {
     size_t width = value->nBits();
-    LeafPtr zero = SymbolicExpr::makeIntegerConstant(width, 0);
+    LeafPtr zero = SymbolicExpression::makeIntegerConstant(width, 0);
     LeafPtr t1 = emit_expression(o, value);
     ExpressionPtr t2 = emit_compare(o, "icmp eq", t1, zero);
     LeafPtr t3 = next_temporary(width);
     o <<prefix() <<llvm_lvalue(t3) <<" = call " <<llvm_integer_type(width)
       <<" @llvm.ctlz.i" <<StringUtility::numberToString(width) <<"(" <<llvm_integer_type(width) <<" " <<llvm_term(t1) <<")\n";
-    ExpressionPtr t4 = emit_binary(o, "sub", SymbolicExpr::makeIntegerConstant(width, width-1), t3);
+    ExpressionPtr t4 = emit_binary(o, "sub", SymbolicExpression::makeIntegerConstant(width, width-1), t3);
     ExpressionPtr t5 = emit_ite(o, t2, zero, t4);
     return t5;
 }
@@ -822,7 +872,7 @@ RiscOperators::emit_extract(std::ostream &o, const ExpressionPtr &value, const E
 ExpressionPtr
 RiscOperators::emit_invert(std::ostream &o, const ExpressionPtr &value)
 {
-    return emit_binary(o, "xor", value, SymbolicExpr::makeIntegerConstant(value->nBits(), -1));
+    return emit_binary(o, "xor", value, SymbolicExpression::makeIntegerConstant(value->nBits(), -1));
 }
 
 // Emit LLVM instructions for a left-associative binary operator. If only one operand is given, then simply return that operand
@@ -861,7 +911,7 @@ RiscOperators::emit_concat(std::ostream &o, TreeNodes operands)
     for (size_t i=1; i<operands.size(); ++i) {
         ExpressionPtr t1 = emit_zero_extend(o, result, result_width);
         ExpressionPtr t2 = emit_zero_extend(o, operands[i], result_width);
-        ExpressionPtr t3 = emit_left_shift(o, t2, SymbolicExpr::makeIntegerConstant(result_width, shift));
+        ExpressionPtr t3 = emit_left_shift(o, t2, SymbolicExpression::makeIntegerConstant(result_width, shift));
         result = emit_binary(o, "or", t1, t3);
         shift += operands[i]->nBits();
     }
@@ -971,7 +1021,7 @@ RiscOperators::emit_rotate_left(std::ostream &o, const ExpressionPtr &value, con
 {
     ExpressionPtr t3 = emit_left_shift(o, value, amount);
     ExpressionPtr t4 = emit_unsigned_binary(o, "sub",
-                                            SymbolicExpr::makeIntegerConstant(amount->nBits(), 32),
+                                            SymbolicExpression::makeIntegerConstant(amount->nBits(), 32),
                                             amount);
     ExpressionPtr t5 = emit_arithmetic_right_shift(o, value, t4);
     ExpressionPtr t6 = emit_unsigned_binary(o, "or", t3, t5);
@@ -989,7 +1039,7 @@ RiscOperators::emit_rotate_right(std::ostream &o, const ExpressionPtr &value, co
 {
     ExpressionPtr t3 = emit_arithmetic_right_shift(o, value, amount);
     ExpressionPtr t4 = emit_unsigned_binary(o, "sub",
-                                            SymbolicExpr::makeIntegerConstant(amount->nBits(), 32),
+                                            SymbolicExpression::makeIntegerConstant(amount->nBits(), 32),
                                             amount);
     ExpressionPtr t5 = emit_left_shift(o, value, t4);
     ExpressionPtr t6 = emit_unsigned_binary(o, "or", t3, t5);
@@ -1133,186 +1183,186 @@ RiscOperators::emit_expression(std::ostream &o, const ExpressionPtr &orig_expr)
         ExpressionPtr operator_result;
         TreeNodes operands = inode->children();
         switch (inode->getOperator()) {
-            case SymbolicExpr::OP_NONE:
+            case SymbolicExpression::OP_NONE:
                 ASSERT_not_reachable("cannot happen for an interior node");
-            case SymbolicExpr::OP_ADD:
+            case SymbolicExpression::OP_ADD:
                 operator_result = emit_left_associative(o, "add", operands);
                 break;
-            case SymbolicExpr::OP_AND:
+            case SymbolicExpression::OP_AND:
                 operator_result = emit_left_associative(o, "and", operands);
                 break;
-            case SymbolicExpr::OP_ASR:
+            case SymbolicExpression::OP_ASR:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_arithmetic_right_shift(o, operands[1], operands[0]);
                 break;
-            case SymbolicExpr::OP_XOR:
+            case SymbolicExpression::OP_XOR:
                 operator_result = emit_left_associative(o, "xor", operands);
                 break;
-            case SymbolicExpr::OP_CONCAT:
+            case SymbolicExpression::OP_CONCAT:
                 operator_result = emit_concat(o, operands);
                 break;
-            case SymbolicExpr::OP_EQ:
+            case SymbolicExpression::OP_EQ:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_compare(o, "icmp eq", operands[0], operands[1]);
                 break;
-            case SymbolicExpr::OP_EXTRACT:
+            case SymbolicExpression::OP_EXTRACT:
                 ASSERT_require(3==operands.size());
                 operator_result = emit_extract(o, operands[2], operands[0], inode->nBits());
                 break;
-            case SymbolicExpr::OP_INVERT:
+            case SymbolicExpression::OP_INVERT:
                 ASSERT_require(1==operands.size());
                 operator_result = emit_invert(o, operands[0]);
                 break;
-            case SymbolicExpr::OP_ITE:
+            case SymbolicExpression::OP_ITE:
                 ASSERT_require(3==operands.size());
                 operator_result = emit_ite(o, operands[0], operands[1], operands[2]);
                 break;
-            case SymbolicExpr::OP_LSSB:
+            case SymbolicExpression::OP_LSSB:
                 ASSERT_require(1==operands.size());
                 operator_result = emit_lssb(o, operands[0]);
                 break;
-            case SymbolicExpr::OP_MSSB:
+            case SymbolicExpression::OP_MSSB:
                 ASSERT_require(1==operands.size());
                 operator_result = emit_mssb(o, operands[0]);
                 break;
-            case SymbolicExpr::OP_NE:
+            case SymbolicExpression::OP_NE:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_compare(o, "icmp ne", operands[0], operands[1]);
                 break;
-            case SymbolicExpr::OP_NEGATE:
+            case SymbolicExpression::OP_NEGATE:
                 ASSERT_require(1==operands.size());
-                operator_result = emit_binary(o, "sub", SymbolicExpr::makeIntegerConstant(operands[0]->nBits(), 0), operands[0]);
+                operator_result = emit_binary(o, "sub", SymbolicExpression::makeIntegerConstant(operands[0]->nBits(), 0), operands[0]);
                 break;
-            case SymbolicExpr::OP_OR:
+            case SymbolicExpression::OP_OR:
                 operator_result = emit_left_associative(o, "or", operands);
                 break;
-            case SymbolicExpr::OP_READ:
+            case SymbolicExpression::OP_READ:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_memory_read(o, operands[1], inode->nBits());
                 break;
-            case SymbolicExpr::OP_ROL:
+            case SymbolicExpression::OP_ROL:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_rotate_left(o, operands[1], operands[0]);
                 break;
-            case SymbolicExpr::OP_ROR:
+            case SymbolicExpression::OP_ROR:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_rotate_right(o, operands[1], operands[0]);
                 break;
-            case SymbolicExpr::OP_SDIV:
+            case SymbolicExpression::OP_SDIV:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_signed_divide(o, operands[0], operands[1]);
                 break;
-            case SymbolicExpr::OP_SEXTEND:
+            case SymbolicExpression::OP_SEXTEND:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_sign_extend(o, operands[1], inode->nBits());
                 break;
-            case SymbolicExpr::OP_SGE:
+            case SymbolicExpression::OP_SGE:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_compare(o, "icmp sge", operands[0], operands[1]);
                 break;
-            case SymbolicExpr::OP_SGT:
+            case SymbolicExpression::OP_SGT:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_compare(o, "icmp sgt", operands[0], operands[1]);
                 break;
-            case SymbolicExpr::OP_SHL0:
+            case SymbolicExpression::OP_SHL0:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_left_shift(o, operands[1], operands[0]);
                 break;
-            case SymbolicExpr::OP_SHL1:
+            case SymbolicExpression::OP_SHL1:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_left_shift_ones(o, operands[1], operands[0]);
                 break;
-            case SymbolicExpr::OP_SHR0:
+            case SymbolicExpression::OP_SHR0:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_logical_right_shift(o, operands[1], operands[0]);
                 break;
-            case SymbolicExpr::OP_SHR1:
+            case SymbolicExpression::OP_SHR1:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_logical_right_shift_ones(o, operands[1], operands[0]);
                 break;
-            case SymbolicExpr::OP_SLE:
+            case SymbolicExpression::OP_SLE:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_compare(o, "icmp sle", operands[0], operands[1]);
                 break;
-            case SymbolicExpr::OP_SLT:
+            case SymbolicExpression::OP_SLT:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_compare(o, "icmp slt", operands[0], operands[1]);
                 break;
-            case SymbolicExpr::OP_SMOD:
+            case SymbolicExpression::OP_SMOD:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_signed_modulo(o, operands[0], operands[1]);
                 break;
-            case SymbolicExpr::OP_SMUL:
+            case SymbolicExpression::OP_SMUL:
                 operator_result = emit_signed_multiply(o, operands);
                 break;
-            case SymbolicExpr::OP_UDIV:
+            case SymbolicExpression::OP_UDIV:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_unsigned_divide(o, operands[0], operands[1]);
                 break;
-            case SymbolicExpr::OP_UEXTEND:
+            case SymbolicExpression::OP_UEXTEND:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_zero_extend(o, operands[1], inode->nBits());
                 break;
-            case SymbolicExpr::OP_UGE:
+            case SymbolicExpression::OP_UGE:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_compare(o, "icmp uge", operands[0], operands[1]);
                 break;
-            case SymbolicExpr::OP_UGT:
+            case SymbolicExpression::OP_UGT:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_compare(o, "icmp ugt", operands[0], operands[1]);
                 break;
-            case SymbolicExpr::OP_ULE:
+            case SymbolicExpression::OP_ULE:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_compare(o, "icmp ule", operands[0], operands[1]);
                 break;
-            case SymbolicExpr::OP_ULT:
+            case SymbolicExpression::OP_ULT:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_compare(o, "icmp ult", operands[0], operands[1]);
                 break;
-            case SymbolicExpr::OP_UMOD:
+            case SymbolicExpression::OP_UMOD:
                 ASSERT_require(2==operands.size());
                 operator_result = emit_unsigned_modulo(o, operands[0], operands[1]);
                 break;
-            case SymbolicExpr::OP_UMUL:
+            case SymbolicExpression::OP_UMUL:
                 operator_result = emit_unsigned_multiply(o, operands);
                 break;
-            case SymbolicExpr::OP_ZEROP:
+            case SymbolicExpression::OP_ZEROP:
                 ASSERT_require(1==operands.size());
                 operator_result = emit_compare(o, "icmp eq", operands[0],
-                                               SymbolicExpr::makeIntegerConstant(operands[0]->nBits(), 0));
+                                               SymbolicExpression::makeIntegerConstant(operands[0]->nBits(), 0));
                 break;
 
-            case SymbolicExpr::OP_LET:
-            case SymbolicExpr::OP_NOOP:
-            case SymbolicExpr::OP_WRITE:
-            case SymbolicExpr::OP_SET:
-            case SymbolicExpr::OP_FP_ABS:
-            case SymbolicExpr::OP_FP_NEGATE:
-            case SymbolicExpr::OP_FP_ADD:
-            case SymbolicExpr::OP_FP_MUL:
-            case SymbolicExpr::OP_FP_DIV:
-            case SymbolicExpr::OP_FP_MULADD:
-            case SymbolicExpr::OP_FP_SQRT:
-            case SymbolicExpr::OP_FP_MOD:
-            case SymbolicExpr::OP_FP_ROUND:
-            case SymbolicExpr::OP_FP_MIN:
-            case SymbolicExpr::OP_FP_MAX:
-            case SymbolicExpr::OP_FP_LE:
-            case SymbolicExpr::OP_FP_LT:
-            case SymbolicExpr::OP_FP_GE:
-            case SymbolicExpr::OP_FP_GT:
-            case SymbolicExpr::OP_FP_EQ:
-            case SymbolicExpr::OP_FP_ISNORM:
-            case SymbolicExpr::OP_FP_ISSUBNORM:
-            case SymbolicExpr::OP_FP_ISZERO:
-            case SymbolicExpr::OP_FP_ISINFINITE:
-            case SymbolicExpr::OP_FP_ISNAN:
-            case SymbolicExpr::OP_FP_ISNEG:
-            case SymbolicExpr::OP_FP_ISPOS:
-            case SymbolicExpr::OP_CONVERT:
-            case SymbolicExpr::OP_REINTERPRET:
+            case SymbolicExpression::OP_LET:
+            case SymbolicExpression::OP_NOOP:
+            case SymbolicExpression::OP_WRITE:
+            case SymbolicExpression::OP_SET:
+            case SymbolicExpression::OP_FP_ABS:
+            case SymbolicExpression::OP_FP_NEGATE:
+            case SymbolicExpression::OP_FP_ADD:
+            case SymbolicExpression::OP_FP_MUL:
+            case SymbolicExpression::OP_FP_DIV:
+            case SymbolicExpression::OP_FP_MULADD:
+            case SymbolicExpression::OP_FP_SQRT:
+            case SymbolicExpression::OP_FP_MOD:
+            case SymbolicExpression::OP_FP_ROUND:
+            case SymbolicExpression::OP_FP_MIN:
+            case SymbolicExpression::OP_FP_MAX:
+            case SymbolicExpression::OP_FP_LE:
+            case SymbolicExpression::OP_FP_LT:
+            case SymbolicExpression::OP_FP_GE:
+            case SymbolicExpression::OP_FP_GT:
+            case SymbolicExpression::OP_FP_EQ:
+            case SymbolicExpression::OP_FP_ISNORM:
+            case SymbolicExpression::OP_FP_ISSUBNORM:
+            case SymbolicExpression::OP_FP_ISZERO:
+            case SymbolicExpression::OP_FP_ISINFINITE:
+            case SymbolicExpression::OP_FP_ISNAN:
+            case SymbolicExpression::OP_FP_ISNEG:
+            case SymbolicExpression::OP_FP_ISPOS:
+            case SymbolicExpression::OP_CONVERT:
+            case SymbolicExpression::OP_REINTERPRET:
                 throw BaseSemantics::Exception("LLVM translation for " +
-                                               stringifyBinaryAnalysisSymbolicExprOperator(inode->getOperator()) +
+                                               stringifyBinaryAnalysisSymbolicExpressionOperator(inode->getOperator()) +
                                                " is not implemented yet", NULL);
 
             // no default because we want warnings when a new operator is added
@@ -1390,6 +1440,27 @@ RiscOperators::emit_assignment(std::ostream &o, const ExpressionPtr &rhs)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Transcoder
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Transcoder::Transcoder(const BaseSemantics::Dispatcher::Ptr &dispatcher)
+    : dispatcher(dispatcher), emit_funcfrags(false), quiet_errors(false) {
+    operators = RiscOperators::promote(dispatcher->operators());
+}
+
+Transcoder::~Transcoder() {}
+
+Transcoder::Ptr
+Transcoder::instance(const BaseSemantics::Dispatcher::Ptr &dispatcher) {
+    return Ptr(new Transcoder(dispatcher));
+}
+
+Transcoder::Ptr
+Transcoder::instanceX86() {
+    RegisterDictionary::Ptr regdict = RegisterDictionary::instancePentium4();
+    SmtSolver::Ptr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
+    RiscOperators::Ptr ops = RiscOperators::instanceFromRegisters(regdict, solver);
+    BaseSemantics::Dispatcher::Ptr dispatcher = DispatcherX86::instance(ops, 32, RegisterDictionary::Ptr());
+    return instance(dispatcher);
+}
 
 int
 Transcoder::llvmVersion() const {
@@ -1487,7 +1558,7 @@ Transcoder::transcodeBasicBlock(SgAsmBlock *bb, std::ostream &o)
                 // guaranteed.
                 o <<operators->prefix() <<";;ERROR: " <<e <<"\n";
                 RegisterDescriptor IP_REG = operators->get_insn_pointer_register();
-                BaseSemantics::SValuePtr fallthrough_va = operators->number_(IP_REG.nBits(),
+                BaseSemantics::SValue::Ptr fallthrough_va = operators->number_(IP_REG.nBits(),
                                                                              insn->get_address() + insn->get_size());
                 operators->currentState()->registerState()->writeRegister(IP_REG, fallthrough_va, operators.get());
             } else {
@@ -1542,7 +1613,7 @@ Transcoder::transcodeBasicBlock(SgAsmBlock *bb, std::ostream &o)
         }
         {
             RiscOperators::Indent indent2(operators);
-            ExpressionPtr t1 = SymbolicExpr::makeIntegerConstant(32, insn->get_address());
+            ExpressionPtr t1 = SymbolicExpression::makeIntegerConstant(32, insn->get_address());
             o <<operators->prefix() <<"store " <<operators->llvm_integer_type(32) <<" " <<operators->llvm_term(t1)
               <<", " <<operators->llvm_integer_type(32) <<"* @eip\n";
             operators->emit_changed_state(o);

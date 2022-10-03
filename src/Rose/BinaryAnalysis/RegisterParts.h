@@ -3,6 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Sawyer/IntervalSet.h>
 #include <Sawyer/Map.h>
 #include <boost/serialization/access.hpp>
@@ -180,7 +181,7 @@ public:
      *
      *  If @p extractAll is true (or no register dictionary is specified) then all leftover parts from the prior step are
      *  appended to the return value and this container is cleared. */
-    std::vector<RegisterDescriptor> extract(const RegisterDictionary *regDict = NULL, bool extractAll = false);
+    std::vector<RegisterDescriptor> extract(const RegisterDictionaryPtr &regDict, bool extractAll = false);
 
     /** List registers present.
      *
@@ -192,8 +193,8 @@ public:
      *  smaller parts that would have had names.
      *
      * @{ */
-    std::vector<RegisterDescriptor> listAll(const RegisterDictionary*) const;
-    std::vector<RegisterDescriptor> listNamed(const RegisterDictionary*) const;
+    std::vector<RegisterDescriptor> listAll(const RegisterDictionaryPtr&) const;
+    std::vector<RegisterDescriptor> listNamed(const RegisterDictionaryPtr&) const;
     /** @} */
 
 

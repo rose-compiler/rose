@@ -28,7 +28,7 @@ operator<<(std::ostream &o, const State::WithFormatter &x) {
 
 State::State() {}
 
-State::State(const RegisterStatePtr &registers, const MemoryStatePtr &memory)
+State::State(const RegisterState::Ptr &registers, const MemoryState::Ptr &memory)
     : registers_(registers), memory_(memory) {
     ASSERT_not_null(registers);
     ASSERT_not_null(memory);
@@ -44,7 +44,7 @@ State::State(const State &other)
 
 State::~State() {}
 
-SValuePtr
+SValue::Ptr
 State::protoval() const {
     return protoval_;
 }
@@ -65,16 +65,16 @@ State::clearMemory() {
     memory_->clear();
 }
 
-SValuePtr
-State::readRegister(RegisterDescriptor desc, const SValuePtr &dflt, RiscOperators *ops) {
+SValue::Ptr
+State::readRegister(RegisterDescriptor desc, const SValue::Ptr &dflt, RiscOperators *ops) {
     ASSERT_forbid(desc.isEmpty());
     ASSERT_not_null(dflt);
     ASSERT_not_null(ops);
     return registers_->readRegister(desc, dflt, ops);
 }
 
-SValuePtr
-State::peekRegister(RegisterDescriptor desc, const SValuePtr &dflt, RiscOperators *ops) {
+SValue::Ptr
+State::peekRegister(RegisterDescriptor desc, const SValue::Ptr &dflt, RiscOperators *ops) {
     ASSERT_forbid(desc.isEmpty());
     ASSERT_not_null(dflt);
     ASSERT_not_null(ops);
@@ -82,15 +82,15 @@ State::peekRegister(RegisterDescriptor desc, const SValuePtr &dflt, RiscOperator
 }
 
 void
-State::writeRegister(RegisterDescriptor desc, const SValuePtr &value, RiscOperators *ops) {
+State::writeRegister(RegisterDescriptor desc, const SValue::Ptr &value, RiscOperators *ops) {
     ASSERT_forbid(desc.isEmpty());
     ASSERT_not_null(value);
     ASSERT_not_null(ops);
     registers_->writeRegister(desc, value, ops);
 }
 
-SValuePtr
-State::readMemory(const SValuePtr &address, const SValuePtr &dflt, RiscOperators *addrOps, RiscOperators *valOps) {
+SValue::Ptr
+State::readMemory(const SValue::Ptr &address, const SValue::Ptr &dflt, RiscOperators *addrOps, RiscOperators *valOps) {
     ASSERT_not_null(address);
     ASSERT_not_null(dflt);
     ASSERT_not_null(addrOps);
@@ -98,8 +98,8 @@ State::readMemory(const SValuePtr &address, const SValuePtr &dflt, RiscOperators
     return memory_->readMemory(address, dflt, addrOps, valOps);
 }
 
-SValuePtr
-State::peekMemory(const SValuePtr &address, const SValuePtr &dflt, RiscOperators *addrOps, RiscOperators *valOps) {
+SValue::Ptr
+State::peekMemory(const SValue::Ptr &address, const SValue::Ptr &dflt, RiscOperators *addrOps, RiscOperators *valOps) {
     ASSERT_not_null(address);
     ASSERT_not_null(dflt);
     ASSERT_not_null(addrOps);
@@ -108,7 +108,7 @@ State::peekMemory(const SValuePtr &address, const SValuePtr &dflt, RiscOperators
 }
 
 void
-State::writeMemory(const SValuePtr &addr, const SValuePtr &value, RiscOperators *addrOps, RiscOperators *valOps) {
+State::writeMemory(const SValue::Ptr &addr, const SValue::Ptr &value, RiscOperators *addrOps, RiscOperators *valOps) {
     ASSERT_not_null(addr);
     ASSERT_not_null(value);
     ASSERT_not_null(addrOps);
@@ -141,7 +141,7 @@ State::printMemory(std::ostream &stream, Formatter &fmt) const {
 }
 
 bool
-State::merge(const StatePtr &other, RiscOperators *ops) {
+State::merge(const State::Ptr &other, RiscOperators *ops) {
     bool memoryChanged = memoryState()->merge(other->memoryState(), ops, ops);
     bool registersChanged = registerState()->merge(other->registerState(), ops);
     return memoryChanged || registersChanged;

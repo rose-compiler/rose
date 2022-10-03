@@ -25,7 +25,7 @@ git clone "$SAWYER_REPO" "$SAWYER_ROOT"
 # reported by Address Sanitizer.
 for patch in *.patch; do
     if [ -e "$patch" ]; then
-	(cd "$SAWYER_ROOT" && patch -p1) <"$patch"
+        (cd "$SAWYER_ROOT" && patch -p1) <"$patch"
     fi
 done
 
@@ -38,9 +38,9 @@ for f in                                                                        
     Callbacks Clexer CommandLine CommandLineBoost Database DatabasePostgresql DatabaseSqlite DefaultAllocator DenseIntegerSet           \
     DistinctList DocumentBaseMarkup DocumentMarkup DocumentPodMarkup DocumentTextMarkup Exception FileSystem Graph GraphAlgorithm       \
     GraphBoost GraphIteratorBiMap GraphIteratorMap GraphIteratorSet GraphTraversal IndexedList Interval IntervalMap IntervalSet         \
-    IntervalSetMap HashMap Lexer LineVector Map MappedBuffer Message NullBuffer Optional PoolAllocator ProgressBar Sawyer Set           \
-    SharedObject SharedPointer SmallObject Stack StackAllocator StaticBuffer Stopwatch Synchronization ThreadWorkers Trace Tracker      \
-    Tree Type WarningsOff WarningsRestore WorkList;                                                                                     \
+    IntervalSetMap HashMap Lexer LineVector Map MappedBuffer Message NullBuffer Optional Parse PoolAllocator ProgressBar Result Sawyer  \
+    Set SharedObject SharedPointer SmallObject Stack StackAllocator StaticBuffer Stopwatch Synchronization ThreadWorkers Time Trace     \
+    Tracker Tree Type WarningsOff WarningsRestore WorkList;                                                                             \
 do
     srcbase="$SAWYER_ROOT/Sawyer/$f";
     ( emit_cpp_warning; cat "$srcbase.h" ) > ./$f.h
@@ -57,6 +57,8 @@ done
 
 # Copy some of Sawyer's unit tests into the ROSE source tree.
 for f in                                        \
+    Basic/parseUnitTests.C                      \
+    Basic/timeUnitTests.C                       \
     CommandLine/cmdUnitTests.C                  \
     Container/addressMapUnitTests.C             \
     Container/attributeUnitTests.C              \
@@ -73,6 +75,7 @@ for f in                                        \
     Container/listUnitTests.C                   \
     Container/mapUnitTests.C                    \
     Container/optionalUnitTests.C               \
+    Container/resultUnitTests.C                 \
     Container/setUnitTests.C                    \
     Container/traceUnitTests.C                  \
     Database/databaseUnitTests.C                \
