@@ -1,33 +1,12 @@
 HEADER_START
      public:
 
-#if 0
-      //! This enum type is used to hold values controling if new comments/directives are added
-      //! to the front of back of the AttachedPreprocessingInfoType (typedef to a list of
-      //! PreprocessorInfo objects).
-          enum PositionOfPreprocessingInfoInListType
-             {
-               defaultValue                   = 0, // let the zero value be an error value
-               prependPreprocessingInfoToList = 1, // Prepend the new PreprocessingInfo object to the list
-               appendPreprocessingInfoToList  = 2  // Append the new PreprocessingInfo object to the list
-             };
-#endif
-
-       // ~SgLocatedNode();
-
-       // void setlineNumber(unsigned long new_line);
-
-       // virtual bool _print(int depth) const; /* prints file info */
-
        // DQ (8/20/2004): Make this depricated since we should remove this (or should we?)
        // If we want to preserve it we should make it a member function of SgNode?
        // Function added by DQ (7/22/2001)
-       // const char* getFileName() ROSE_DEPRECATED_FUNCTION;
           const std::string & getFilenameString() const;
 
      protected:
-     // void delete_file_info();
-     // void directives(ostream& os);
         void post_construction_initialization() override;
 
      private:
@@ -36,7 +15,6 @@ HEADER_START
      public:
        // [MK] Member function to
        // ! attach PreprocessingInfo object to the node. It can only prepend or append the info. to the existing list of preprocessing info.
-       // void addToAttachedPreprocessingInfo(PreprocessingInfo *prepInfoPtr);
           void addToAttachedPreprocessingInfo( PreprocessingInfo *prepInfoPtr, PreprocessingInfo::RelativePositionType locationInList = PreprocessingInfo::after );
 
         // Liao 1/27/2015
@@ -698,44 +676,6 @@ HEADER_ADA_DISCRIMINANT_CONSTRAINT_END
 
 SOURCE_START
 
-#if 0
-// DQ (4/10/2006): This is replaced by a better interface for attributes.
-AstAttributeMechanism &
-SgLocatedNode::attribute()
-   {
-  // DQ (1/2/2006): This function preserves as much of
-  // the syntax of attribute being a public data member.
-     if (p_attribute == NULL)
-        {
-          printf ("Error: p_attribute == NULL  (node = %s) \n",class_name().c_str());
-          ROSE_ASSERT(false);
-        }
-
-     return *p_attribute;
-   }
-#endif
-
-#if 0
-const char*
-SgLocatedNode::getFileName ()
-   {
-  // Function added by DQ (7/22/2001)
-
-     const char* fileName = "NO NAME FILE";
-  // Sometimes the locatedNode doesn't have a SgFile object
-  // (likely because it is part of a parent statement object)
-     if (get_file_info() != NULL)
-        {
-          Sg_File_Info* fileInfo = get_file_info();
-          ROSE_ASSERT (fileInfo != NULL);
-          fileName = fileInfo->get_filename();
-          ROSE_ASSERT (fileName != NULL);
-        }
-
-     return fileName;
-   }
-#endif
-
 const std::string &
 SgLocatedNode::getFilenameString() const
    {
@@ -1197,99 +1137,6 @@ SgLocatedNode::get_physical_file_id()
      return get_startOfConstruct()->get_physical_file_id();
    }
 
-
-#if 0
-SgLocatedNode::~SgLocatedNode()
-   {
-  // Some expressions are initialized with NULL_FILE (which is a null Sg_File_Info pointer)
-  // so we can't assert that p_file_info != NULL.
-  // ROSE_ASSERT(p_file_info != NULL);
-
-#if 0
-  // At the moment uncommenting this will cause SAGE 3 to crash
-  // (SAGE 2 never tried to cleanup memory leaks and is it not
-  // done well in SAGE 3 yet either, though it is started).
-     ROSE_ASSERT(get_file_info()->getReferenceCount() > 0);
-     get_file_info()->decrementReferenceCount();
-     if (get_file_info()->getReferenceCount() == 0)
-        {
-       // We need to add reference counting to Sg_File_Info objects
-       // before we can properly cleanup the meory that they allocate
-          delete p _ file _ info;
-        }
-#endif
-
-  // p_file_info = NULL;
-     set_startOfConstruct(NULL);
-     set_endOfConstruct(NULL);
-   }
-#endif
-
-#if 0
-void SgLocatedNode::directives(ostream& os)
-   {
-#if 0
-     if (p_file_info)
-        {
-          p_file_info->output(os);
-        }
-     output_pragma(os);
-
-#if MEIDEBUG
-     SgExpression *e=isSgExpression(this);
-     if(e && e->get_is_lvalue())
-        {
-          os << "<a_LVAL>";
-        }
-#endif
-#else
-     printf ("ERROR: not yet implemented within SAGE3! \n");
-     abort();
-#endif
-   }
-#endif
-
-#if 0
-void
-SgLocatedNode::setlineNumber(unsigned long new_line)
-   {
-     if (p_file_info == 0)
-        {
-          p_file_info = new Sg_File_Info(0, new_line, 0);
-        }
-       else
-        {
-          p_file_info->set_line(new_line);
-        }
-   }
-#endif
-
-#if 0
-void
-SgLocatedNode::delete_file_info()
-   {
-     if (p_file_info != 0)
-        {
-          p_file_info->deregister_node(this);
-          p_file_info = 0;
-        }
-   }
-#endif
-
-#if 0
-bool
-SgLocatedNode::_print(int depth) const
-   {
-     if (SgNode::_print(depth))
-        {
-          Sg_print_info().output_field(get_file_info(),depth+1);
-          return true;
-        }
-
-     return false;
-   }
-#endif
-
 // [MK] Member function to attach PreprocessingInfo object to the node
 void
 SgLocatedNode::addToAttachedPreprocessingInfo(
@@ -1309,35 +1156,24 @@ SgLocatedNode::addToAttachedPreprocessingInfo(
   // change the value of the PreprocessingInfo::RelativePositionType field in the
   // PreprocessingInfo object that it takes for the other parameter (nor should it).
   // This function was poorly desinged in the first place and needs to be fixed!!!
-  // printf ("In LocatedNode::addToAttachedPreprocessingInfo(PreprocessingInfo,PreprocessingInfo::RelativePositionType): FIX INTERFACE!!!! \n");
 
      ROSE_ASSERT(prepInfoPtr != NULL);
-
-#if 0
-     printf ("In SgLocatedNode::addToAttachedPreprocessingInfo(): Current node %p is a %s: prepInfoPtr->getString() = %s \n",this,class_name().c_str(),prepInfoPtr->getString().c_str());
-#endif
 
   // Nodes that should not have comments attached (since they are not unparsed)
 
   // DQ (1/28/2013): Now that we correctly handle the source position for SgForInitStatement,
   // I think we can allow CPP directives and comments to be attached to this IR node (failed
   // for Zsh: params.c).  Now tested using test2013_48.C, though comments not output precisely.
-  // ROSE_ASSERT (dynamic_cast<SgForInitStatement*>(this) == NULL);
 
      ROSE_ASSERT (dynamic_cast<SgTypedefSeq*>(this) == NULL);
      ROSE_ASSERT (dynamic_cast<SgCatchStatementSeq*>(this) == NULL);
 
   // These should not be used but are are least handled in the unparser (if not debugged)
-  // ROSE_ASSERT (dynamic_cast<SgFunctionParameterList*>(this) == NULL);
      ROSE_ASSERT (dynamic_cast<SgCtorInitializerList*>(this) == NULL);
 
      SgFunctionParameterList* functionParameterList = isSgFunctionParameterList(this);
      if (functionParameterList != NULL)
         {
-#if 0
-       // DQ (10/8/2012): Commented out to provide less output spew.
-          printf ("SgFunctionParameterList are not typically associated with comments or CPP directives \n");
-#endif
           ROSE_ASSERT(get_startOfConstruct() != NULL);
           ROSE_ASSERT(get_endOfConstruct() != NULL);
         }
@@ -1348,61 +1184,6 @@ SgLocatedNode::addToAttachedPreprocessingInfo(
           p_attachedPreprocessingInfoPtr = new AttachedPreprocessingInfoType;
           ROSE_ASSERT(p_attachedPreprocessingInfoPtr != NULL);
         }
-
-#if 0
-     printf ("In SgLocatedNode::addToAttachedPreprocessingInfo(): locationInList = %s \n",PreprocessingInfo::relativePositionName(locationInList).c_str());
-#endif
-
-#if 0
-       // DQ (4/22/2020): Check to see if we are adding a comment of CPP directive redundantly.
-
-          printf ("Output the associated comments and CPP directives for this IR node: \n");
-
-          AttachedPreprocessingInfoType *tmp_prepInfoPtr = this->getAttachedPreprocessingInfo();
-          AttachedPreprocessingInfoType::iterator i;
-          for (i = tmp_prepInfoPtr->begin(); i != tmp_prepInfoPtr->end(); ++i)
-             {
-            // i is a pointer to the current prepInfo object, print current preprocessing info
-            // Assert that i points to a valid preprocssingInfo object
-               ROSE_ASSERT ((*i) != NULL);
-               ROSE_ASSERT ((*i)->getTypeOfDirective()  != PreprocessingInfo::CpreprocessorUnknownDeclaration);
-               ROSE_ASSERT ((*i)->getRelativePosition() == PreprocessingInfo::before ||
-                            (*i)->getRelativePosition() == PreprocessingInfo::after  ||
-                            (*i)->getRelativePosition() == PreprocessingInfo::inside);
-
-            // DQ (1/28/2013): Fixed to use output of PreprocessingInfo::relativePositionName() and thus provide more accurate debug information.
-               printf (" --- Stored comment: (*i)->getRelativePosition() = %s (*i)->getString() = %s \n",
-                 // ((*i)->getRelativePosition() == PreprocessingInfo::before) ? "before" : "after",
-                    PreprocessingInfo::relativePositionName((*i)->getRelativePosition()).c_str(),
-                    (*i)->getString().c_str());
-
-            // DQ (2/27/2019): Adding support for multi-file handling.
-            // printf (" ---  --- SgUnparse_Info: filename = %s \n",info.get_current_source_file()->getFileName().c_str());
-            // printf (" ---  --- file_id = %d line = %d filename = %s \n",(*i)->getFileId(),(*i)->getLineNumber(),(*i)->getFilename().c_str());
-#if 0
-            // if (prepInfoPtr->getString() ==  "// The use of \"\" instead of <> forces the current directory (where Simple2.h is located) to be used.")
-            // if (prepInfoPtr->getString() ==  "// Test comment")
-            // const size_t found = prepInfoPtr->getString().substr("// Test comment");
-               size_t found = prepInfoPtr->getString().find("// Test comment");
-               if (found != string::npos)
-                  {
-                    printf ("ERROR: found specific comment or CPP directive being added: prepInfoPtr->getString() = %s \n",prepInfoPtr->getString().c_str());
-
-                    printf ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
-                  }
-#endif
-#if 0
-               if (prepInfoPtr->getString() == (*i)->getString())
-                  {
-                    printf ("ERROR: redundant comment or CPP directive being added: prepInfoPtr->getString() = %s \n",prepInfoPtr->getString().c_str());
-
-                    printf ("Exiting as a test! \n");
-                    ROSE_ASSERT(false);
-                  }
-#endif
-             }
-#endif
 
   // Add the current PreprocessingInfo object
      switch (locationInList)
@@ -1415,18 +1196,12 @@ SgLocatedNode::addToAttachedPreprocessingInfo(
 
           case PreprocessingInfo::before:
              {
-#if 0
-               printf ("p_attachedPreprocessingInfoPtr = %p insert before \n",p_attachedPreprocessingInfoPtr);
-#endif
                p_attachedPreprocessingInfoPtr->insert(p_attachedPreprocessingInfoPtr->begin(),prepInfoPtr);
                break;
              }
 
           case PreprocessingInfo::after:
              {
-#if 0
-               printf ("p_attachedPreprocessingInfoPtr = %p insert after \n",p_attachedPreprocessingInfoPtr);
-#endif
             // (9/10/2003) DQ: Force new comments to be attached closest to the target statement
                p_attachedPreprocessingInfoPtr->push_back(prepInfoPtr);
                break;
@@ -1478,33 +1253,10 @@ SgLocatedNode::generateMatchingFileInfo()
 
   // DQ (11/20/2004): Modified to provide more accurate information, use the
   // copy constructor instead of the constructor that takes a file name.
-  // return new Sg_File_Info( p->get_file_info()->get_filename());
 
-#if 0
-  // DQ (1/27/2019): Skipping the generation of a proper symbol when get_startOfConstruct() == NULL
-  // so that we can debug the dot graph for a symbol withouth proper basis.
-
-  // DQ (11/6/2006): startOfConstruct is the one Sg_File_Info that will always exist and must exist.
-  // ROSE_ASSERT(get_startOfConstruct() != NULL);
-     Sg_File_Info* returnFileInfo = NULL;
-     if (get_startOfConstruct() != NULL)
-        {
-          returnFileInfo = new Sg_File_Info(*(get_startOfConstruct()));
-        }
-       else
-        {
-          printf ("In SgLocatedNode::generateMatchingFileInfo(): Skipping the generation of a proper symbol when get_startOfConstruct() == NULL \n");
-       // returnFileInfo = new Sg_File_Info();
-          returnFileInfo = Sg_File_Info::generateDefaultFileInfoForTransformationNode();
-        }
-     ROSE_ASSERT(returnFileInfo != NULL);
-#else
      ROSE_ASSERT(get_startOfConstruct() != NULL);
      Sg_File_Info* returnFileInfo = new Sg_File_Info(*(get_startOfConstruct()));
      ROSE_ASSERT(returnFileInfo != NULL);
-#endif
-
-  // printf ("In New_File_Info: returnFileInfo = %p \n",returnFileInfo);
 
      return returnFileInfo;
    }

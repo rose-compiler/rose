@@ -304,9 +304,11 @@ class Grammar
                                                         std::string memberVariableName, 
                                                         std::string successorContainerName,
                                                         std::string successorContainerAccessOperator);
-      // GB (8/1/2007)
-          std::string generateNumberOfSuccessorsComputation(std::vector<GrammarString*>& traverseDataMemberList,
-                               std::string successorContainerName);
+       // GB (8/1/2007)
+       // DQ (9/28/2022): Fixing compiler warning for argument not used.
+       // std::string generateNumberOfSuccessorsComputation(std::vector<GrammarString*>& traverseDataMemberList, std::string successorContainerName);
+          std::string generateNumberOfSuccessorsComputation(std::vector<GrammarString*>& traverseDataMemberList);
+
           std::string generateTraverseSuccessor(GrammarString* gs, std::string successorContainerName);
           std::string generateTraverseSuccessorNamesForLoopSource(std::string typeString, 
                                                        std::string memberVariableName, 
@@ -335,7 +337,9 @@ class Grammar
           Rose::StringUtility::FileWithLineNumbers buildStringForSource                              ( AstNodeClass & node );
 
        // Builds the "CLASSNAME::variant()" member function
-          Rose::StringUtility::FileWithLineNumbers buildStringForVariantFunctionSource               ( AstNodeClass & node );
+       // DQ (9/28/2022): Fixing compiler warning for argument not used.
+       // Rose::StringUtility::FileWithLineNumbers buildStringForVariantFunctionSource               ( AstNodeClass & node );
+          Rose::StringUtility::FileWithLineNumbers buildStringForVariantFunctionSource               ();
 
        // Builds the "CLASSNAME::isCLASSNAME()" friend function
           Rose::StringUtility::FileWithLineNumbers supportForBuildStringForIsClassNameFunctionSource ( AstNodeClass & node, const Rose::StringUtility::FileWithLineNumbers& accumulationString );
@@ -359,10 +363,17 @@ class Grammar
        // DQ (3/7/2007): support for getChildIndex member function
           Rose::StringUtility::FileWithLineNumbers buildStringForGetChildIndexSource ( AstNodeClass & node );
 
-          bool buildConstructorParameterList ( AstNodeClass & node, 
-                                               std::vector<GrammarString *> & constructorParameterList,
-                                               ConstructParamEnum config );
-          std::string buildConstructorParameterListString ( AstNodeClass & node, bool withInitializers, bool withTypes, ConstructParamEnum config, bool *complete = 0 );
+       // DQ (9/28/2022): Fixing compiler warning for argument not used.
+       // bool buildConstructorParameterList ( AstNodeClass & node,
+       //                                      std::vector<GrammarString *> & constructorParameterList,
+       //                                      ConstructParamEnum config );
+          bool buildConstructorParameterList ( AstNodeClass & node,
+                                               std::vector<GrammarString *> & constructorParameterList );
+
+       // DQ (9/28/2022): Fixing compiler warning for argument not used.
+       // std::string buildConstructorParameterListString ( AstNodeClass & node, bool withInitializers, bool withTypes, ConstructParamEnum config, bool *complete = 0 );
+          std::string buildConstructorParameterListString ( AstNodeClass & node, bool withInitializers, bool withTypes, bool *complete = 0 );
+
           std::string buildConstructorParameterListStringForEssentialDataMembers(AstNodeClass& node, bool withInitializers);
 
        // DQ 11/6/2006): Support for building newer from of constructors (withouth source position information).
@@ -374,7 +385,9 @@ class Grammar
 
        // DQ (11/7/2006): Get a specific node from the tree.
           AstNodeClass* getNamedNode ( AstNodeClass & node, const std::string & name );
-          GrammarString* getNamedDataMember ( AstNodeClass & node, const std::string & name );
+       // DQ (9/28/2022): Fixing compiler warning for argument not used.
+       // GrammarString* getNamedDataMember ( AstNodeClass & node, const std::string & name );
+          GrammarString* getNamedDataMember ( AstNodeClass & node );
 
        // DQ (3/24/2006): Separated these functions so that we could position the data member 
        // variable declaration at the base of the class and the generated access functions at 
@@ -421,8 +434,10 @@ class Grammar
        // This calls the functions to build the parsers (one for each child of the root node)
           void buildGrammarClassSourceCode ( Rose::StringUtility::FileWithLineNumbers & outputFile );
 
-          static Rose::StringUtility::FileWithLineNumbers extractStringFromFile ( const std::string& startMarker, const std::string& endMarker,
-                                                     const std::string& filename, const std::string& directory );
+       // DQ (9/28/2022): Fixing compiler warning for argument not used.
+       // static Rose::StringUtility::FileWithLineNumbers extractStringFromFile ( const std::string& startMarker, const std::string& endMarker,
+       //                                            const std::string& filename, const std::string& directory );
+          static Rose::StringUtility::FileWithLineNumbers extractStringFromFile ( const std::string& startMarker, const std::string& endMarker, const std::string& filename );
 
           void printTreeNodeNames ( const AstNodeClass & node ) const;
        // void setUpParentNames ();
@@ -479,18 +494,34 @@ class Grammar
 
           typedef std::string (Grammar::*evaluateStringAttributeFunctionType)(AstNodeClass&, std::string);
           std::string naiveTraverseGrammar(AstNodeClass&, evaluateStringAttributeFunctionType);
-          typedef GrammarSynthesizedAttribute (Grammar::*evaluateGAttributeFunctionType)(AstNodeClass*, 
-                                                                                         std::vector<GrammarSynthesizedAttribute>);
+
+       // DQ (9/28/2022): Fixing compiler warning for argument not used.
+#if 1
+          typedef GrammarSynthesizedAttribute (Grammar::*evaluateGAttributeFunctionType)(AstNodeClass*, std::vector<GrammarSynthesizedAttribute>);
+#else
+          typedef GrammarSynthesizedAttribute (Grammar::*evaluateGAttributeFunctionType)(AstNodeClass*);
+#endif
           // filtered member variables are all those that are not required to create a vailid AST (or can computed by other means)
           // this function is used by the ATerm grammar generation and when generating constructors for all data members (excluding filtered vars)
           bool isFilteredMemberVariable(std::string varName);
           // MS: type hierarchy traversal
           GrammarSynthesizedAttribute BottomUpProcessing(AstNodeClass* node, evaluateGAttributeFunctionType evaluateGAttributeFunction);
-          // MS: build a Latex output that shows the abstract Cpp grammar
+
+       // MS: build a Latex output that shows the abstract Cpp grammar
+       // DQ (9/28/2022): Fixing compiler warning for argument not used.
+#if 1
           GrammarSynthesizedAttribute CreateGrammarDotString(AstNodeClass* grammarnode,
-                                                               std::vector<GrammarSynthesizedAttribute> v);
+                                                             std::vector<GrammarSynthesizedAttribute> v);
+#else
+          GrammarSynthesizedAttribute CreateGrammarDotString(AstNodeClass* grammarnode);
+#endif
+       // DQ (9/28/2022): Fixing compiler warning for argument not used.
+#if 1
           GrammarSynthesizedAttribute CreateAbstractTreeGrammarString(AstNodeClass* grammarnode,
                                                                std::vector<GrammarSynthesizedAttribute> v);
+#else
+          GrammarSynthesizedAttribute CreateAbstractTreeGrammarString(AstNodeClass* grammarnode);
+#endif
           void buildGrammarDotFile(AstNodeClass* rootNode, std::ostream& GrammarDotFile);
           void buildAbstractTreeGrammarFile(AstNodeClass* rootNode, std::ostream& AbstractTreeGrammarFile);
           void buildSDFTreeGrammarFile(AstNodeClass* rootNode, std::ostream& RoseTreeGrammarFile);
@@ -615,7 +646,12 @@ class Grammar
           static std::vector<GrammarFile*> fileList;
           std::string restrictedTypeStringOfGrammarString(GrammarString* gs, AstNodeClass* grammarnode, std::string grammarSymListOpPrefix, std::string grammarSymListOpPostfix);
           std::set<std::string> traversedTerminals;
+       // DQ (9/28/2022): Fixing compiler warning for argument not used.
+#if 1
           GrammarSynthesizedAttribute CreateMinimalTraversedGrammarSymbolsSet(AstNodeClass* grammarnode, std::vector<GrammarSynthesizedAttribute> v);
+#else
+          GrammarSynthesizedAttribute CreateMinimalTraversedGrammarSymbolsSet(AstNodeClass* grammarnode );
+#endif
           bool isAbstractTreeGrammarSymbol(AstNodeClass*);
           bool isAbstractTreeGrammarSymbol(std::string);
    private:

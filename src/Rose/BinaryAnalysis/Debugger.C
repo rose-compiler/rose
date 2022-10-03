@@ -1141,20 +1141,20 @@ Debugger::remoteSystemCall(int syscallNumber, std::vector<uint64_t> args) {
     std::vector<RegisterDescriptor> regs;
 #if 1 // i386
     switch (args.size()) {
-        case 6: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_bp, 0, 32));
-        case 5: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_di, 0, 32));
-        case 4: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_si, 0, 32));
-        case 3: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_dx, 0, 32));
-        case 2: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_cx, 0, 32));
+        case 6: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_bp, 0, 32)); // falls through
+        case 5: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_di, 0, 32)); // falls through
+        case 4: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_si, 0, 32)); // falls through
+        case 3: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_dx, 0, 32)); // falls through
+        case 2: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_cx, 0, 32)); // falls through
         case 1: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_bx, 0, 32));
     }
 #else // x86-64
     switch (args.size()) {
-        case 6: regs.push_back(RegisterDescriptor(x86_regclass_gpr, 9,          0, 32));
-        case 5: regs.push_back(RegisterDescriptor(x86_regclass_gpr, 8,          0, 32));
-        case 4: regs.push_back(RegisterDescriptor(x86_regclass_gpr, 10,         0, 32));
-        case 3: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_dx, 0, 32));
-        case 2: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_si, 0, 32));
+        case 6: regs.push_back(RegisterDescriptor(x86_regclass_gpr, 9,          0, 32)); // falls through
+        case 5: regs.push_back(RegisterDescriptor(x86_regclass_gpr, 8,          0, 32)); // falls through
+        case 4: regs.push_back(RegisterDescriptor(x86_regclass_gpr, 10,         0, 32)); // falls through
+        case 3: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_dx, 0, 32)); // falls through
+        case 2: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_si, 0, 32)); // falls through
         case 1: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_di, 0, 32));
     }
 #endif

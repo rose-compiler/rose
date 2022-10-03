@@ -54,7 +54,7 @@ namespace
       logKind("A_Generic_Association");
       break;
     default:
-      ROSE_ABORT();
+      ADA_ASSERT(false);
     }
 
     SgExpression&       arg        = getExprID(assoc.Actual_Parameter, ctx);
@@ -1078,7 +1078,7 @@ namespace
             }
 
           default:
-            ROSE_ABORT();
+            ADA_ASSERT(false);
         }
       }
 

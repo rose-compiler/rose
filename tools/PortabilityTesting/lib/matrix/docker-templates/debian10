@@ -33,7 +33,7 @@ run apt-get -y install apt-utils
 run apt-get -y install \
     git wget build-essential g++ gfortran libtool automake flex bison graphviz-dev cmake \
     libpqxx-dev ghostscript perl-doc groff libgcrypt20-dev libfcgi-dev libfuse-dev gcc-multilib \
-    g++-multilib gfortran-multilib fuse bsdmainutils locales jq patchelf rsync
+    g++-multilib gfortran-multilib fuse bsdmainutils locales jq patchelf rsync tclsh
 
 run apt-get -y install \
     qt5-default '^libxcb.*-dev' libx11-xcb-dev libglu1-mesa-dev libxrender-dev libxi-dev libfontconfig1-dev \

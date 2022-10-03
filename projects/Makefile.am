@@ -26,7 +26,6 @@ SUBDIRS = \
 	MapleDSL \
 	arrayOptimization \
 	ManyCoreRuntime \
-	Fortran_to_C \
 	RoseBlockLevelTracing \
 	$(OPTIONAL_PROJECTS)
 

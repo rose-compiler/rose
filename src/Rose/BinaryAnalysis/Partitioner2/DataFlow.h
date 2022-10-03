@@ -84,6 +84,11 @@ public:
      *  body. Each time this inlining happens, a counter is incremented and all new vertices are created using this
      *  counter. The counter starts at zero. */
     size_t inliningId() const { return inliningId_; }
+
+    /** Virtual address of vertex.
+     *
+     *  Returns the virtual address if known, otherwise nothing. */
+    Sawyer::Optional<rose_addr_t> address() const;
 };
 
 /** Control flow graph used by data-flow analysis.

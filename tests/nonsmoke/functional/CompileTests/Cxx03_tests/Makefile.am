@@ -6,15 +6,16 @@ LDADD    = $(ROSE_LIBS)
 
 
 TESTCODES_REQUIRED_TO_PASS = \
-   test2020_03.C 
+   test2020_03.C \
+   test2022_super_long_line.C
 
 TESTCODE_CURRENTLY_FAILING = \
    test2020_01.C \
-   test2020_02.C 
+   test2020_02.C
 
 # Automake's testing mechanism (which defines the "make check" rule) requires passing tests.
 TESTCODES = \
-   $(TESTCODES_REQUIRED_TO_PASS) 
+   $(TESTCODES_REQUIRED_TO_PASS)
 
 # QMTest allows both passing and failing tests.
 ALL_TESTCODES = \
@@ -28,8 +29,8 @@ VALGRIND_OPTIONS = --tool=memcheck -v --num-callers=30 --leak-check=no --error-l
 # VALGRIND = valgrind $(VALGRIND_OPTIONS)
 # VALGRIND =
 
-# DQ (11/5/2016): Adding support for address sanitizer (borrowing the VALGRIND variable to support 
-# this, this implementation needs review).  It might be better to prepend the information to the 
+# DQ (11/5/2016): Adding support for address sanitizer (borrowing the VALGRIND variable to support
+# this, this implementation needs review).  It might be better to prepend the information to the
 # CC and CXX variables. I think that the purify support uses this approach.
 if ROSE_USE_SANITIZER
 VALGRIND = $(NON_RTH_ADDRESS_SANITIZER_OPTIONS)

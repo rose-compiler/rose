@@ -40,7 +40,8 @@ libroseSawyer_la_SOURCES =			\
 	Sawyer.C				\
 	SmallObject.C				\
 	Stopwatch.C				\
-	Synchronization.C
+	Synchronization.C			\
+	Time.C
 
 sawyerincludedir = $(includedir)/rose/Sawyer
 sawyerinclude_HEADERS =				\
@@ -92,6 +93,7 @@ sawyerinclude_HEADERS =				\
 	Message.h				\
 	NullBuffer.h				\
 	Optional.h				\
+	Parse.h					\
 	PoolAllocator.h				\
 	ProgressBar.h				\
 	Result.h				\
@@ -106,6 +108,7 @@ sawyerinclude_HEADERS =				\
 	Stopwatch.h				\
 	Synchronization.h			\
 	ThreadWorkers.h				\
+	Time.h					\
 	Trace.h					\
 	Tracker.h				\
 	Tree.h					\

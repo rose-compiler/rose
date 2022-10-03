@@ -11985,23 +11985,27 @@ SgFunctionDeclaration::get_mangled_name() const
 #if 0
           printf ("Inside of SgFunctionDeclaration::get_mangled_name(): mangledName = %s \n",mangledName.str());
 #endif
-#if 1
+
+// DQ (6/22/2022): Leave this call to SageInterface::addMangledNameToCache(), but remove
+// the addition of the parameter list's mangled name as a suffix since it is redundant,
+// and the resetting of the updated mangled name in the globalMangledNameMap.
+// #if 1
        // printf ("TEMP: Inside of SgFunctionDeclaration::get_mangled_name(): mangledName = %s \n",mangledName.str());
           mangledName = SageInterface::addMangledNameToCache(const_cast<SgFunctionDeclaration*>(this),mangledName);
        // printf ("TEMP RETURN: Inside of SgFunctionDeclaration::get_mangled_name(): mangledName = %s \n",mangledName.str());
-
+#if 0
        // This results in infinite recursion in the evaluation.
           SgFunctionParameterList* parameterList = this->get_parameterList();
           ROSE_ASSERT(parameterList != NULL);
           SgName mangledParameterList = parameterList->get_mangled_name();
           mangledName += "__" + mangledParameterList;
        // printf ("Inside of SgFunctionDeclaration::get_mangled_name(): after adding parameter list mangledName = %s \n",mangledName.str());
-#endif
+// #endif
 
        // Reset the mangled name in the map.
        // p_globalMangledNameMap[function] = mangledName;
           SgNode::get_globalMangledNameMap()[const_cast<SgFunctionDeclaration*>(this)] = mangledName;
-
+#endif
        // DQ (7/24/2012): Added test for template brackets that are caught later in AstConsistencyTests.
        // Make sure that there is no template specific syntax included in the mangled name
           string mangled_name = mangledName;

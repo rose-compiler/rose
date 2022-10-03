@@ -2358,7 +2358,7 @@ mkAdaIntegerLiteral(const char* textrep)
   {
     logError() << "Unable to represent " << textrep << " within the bounds of long long int"
                << std::endl;
-    ROSE_ABORT();
+    ADA_ASSERT(false);
   }
 
   return *res;

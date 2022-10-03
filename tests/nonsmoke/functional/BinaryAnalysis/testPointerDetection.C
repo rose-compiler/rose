@@ -105,10 +105,10 @@ main(int argc, char *argv[]) {
                     std::cout <<"  WARNING: Analysis did not converge; following info may be incomplete\n";
                 std::cout <<"  Code pointers:\n";
                 BOOST_FOREACH (const PointerDetection::PointerDescriptor &desc, pda.codePointers())
-                    std::cout <<"    " <<desc.nBits <<"-bit pointer at " <<*desc.lvalue <<"\n";
+                    std::cout <<"    " <<desc.nBits <<"-bit pointer at " <<*desc.pointerVa <<"\n";
                 std::cout <<"  Data pointers:\n";
                 BOOST_FOREACH (const PointerDetection::PointerDescriptor &desc, pda.dataPointers())
-                    std::cout <<"    " <<desc.nBits <<"-bit pointer at " <<*desc.lvalue <<"\n";
+                    std::cout <<"    " <<desc.nBits <<"-bit pointer at " <<*desc.pointerVa <<"\n";
             }
             //! [documentation guts]
         }
