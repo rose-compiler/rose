@@ -364,17 +364,10 @@ class Grammar
           Rose::StringUtility::FileWithLineNumbers buildStringForGetChildIndexSource ( AstNodeClass & node );
 
        // DQ (9/28/2022): Fixing compiler warning for argument not used.
-<<<<<<< HEAD
-       // bool buildConstructorParameterList ( AstNodeClass & node, 
-       //                                      std::vector<GrammarString *> & constructorParameterList,
-       //                                      ConstructParamEnum config );
-          bool buildConstructorParameterList ( AstNodeClass & node, 
-=======
        // bool buildConstructorParameterList ( AstNodeClass & node,
        //                                      std::vector<GrammarString *> & constructorParameterList,
        //                                      ConstructParamEnum config );
           bool buildConstructorParameterList ( AstNodeClass & node,
->>>>>>> origin/master
                                                std::vector<GrammarString *> & constructorParameterList );
 
        // DQ (9/28/2022): Fixing compiler warning for argument not used.
@@ -513,11 +506,7 @@ class Grammar
           bool isFilteredMemberVariable(std::string varName);
           // MS: type hierarchy traversal
           GrammarSynthesizedAttribute BottomUpProcessing(AstNodeClass* node, evaluateGAttributeFunctionType evaluateGAttributeFunction);
-<<<<<<< HEAD
- 
-=======
 
->>>>>>> origin/master
        // MS: build a Latex output that shows the abstract Cpp grammar
        // DQ (9/28/2022): Fixing compiler warning for argument not used.
 #if 1

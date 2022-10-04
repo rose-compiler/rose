@@ -1750,26 +1750,6 @@ Grammar::setUpSupport ()
                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 #endif
 
-<<<<<<< HEAD
-#if 0
-  // DQ (10/16/2005): Removed because they are not needed except as a local variable in the
-  // command line processing function.
-     // MK: store the command line data associated with the file (or is it the argv for the whole project?)
-     Project.setDataPrototype("int","numberOfCommandLineArguments", "= 0",
-                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     // MK: store the command line data associated with the file (or is it the argv for the whole project?)
-     Project.setDataPrototype("char**","commandLineArgumentList", "= NULL",
-                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // Project.setDataPrototype("int","defaultNumberOfCommandLineArguments", "= 0",
-  //        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // Project.setDataPrototype("char**","defaultCommandLineArgumentList", "= NULL",
-  //        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
-
-  // Project.setDataPrototype("std::list<std::string>","originalCommandLineArgumentList", "",
-=======
->>>>>>> origin/master
   // DQ (9/28/2022): Modified to use the BUILD_LIST_ACCESS_FUNCTIONS macro.
 #if 1
      Project.setDataPrototype("SgStringList","originalCommandLineArgumentList", "",
