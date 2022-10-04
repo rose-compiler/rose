@@ -109,6 +109,7 @@ databaseUnitTests_SOURCES	 = databaseUnitTests.C
 workListTests_SOURCES		 = workListTests.C
 resultUnitTests_SOURCES          = resultUnitTests.C
 parseUnitTests_SOURCES		 = parseUnitTests.C
+timeUnitTests_SOURCES		 = timeUnitTests.C
 
 # Test targets
 sawyer_targets = $(addsuffix .passed, $(sawyer_checkers))
