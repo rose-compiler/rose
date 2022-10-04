@@ -110,10 +110,10 @@ parseCommandLine(int argc, char *argv[], P2::Engine&, Settings &settings) {
         mlog[FATAL] <<"incorrect usage; see --help\n";
         exit(1);
     }
-    if (settings.where.empty())
-        settings.where.push_back(AddressInterval::whole());
     if (OutputFormat::UNSPECIFIED == settings.outputFormat)
         settings.outputFormat = settings.where.empty() ? OutputFormat::NONE : OutputFormat::HEXDUMP;
+    if (settings.where.empty())
+        settings.where.push_back(AddressInterval::whole());
 
     return input.empty() ? boost::filesystem::path("-") : input[0];
 }
