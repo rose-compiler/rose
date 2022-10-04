@@ -48,7 +48,7 @@ namespace Rose { namespace AST {
  * will have to use linear search.  I haven't seen this in testing. -Jim Leek
  * 
  */
-class NodeId {
+class ROSE_DLL_API NodeId {
 
 private:  
 
@@ -84,10 +84,10 @@ public:
   }
   
   //! \brief Get the Node ID for a particular SgNode*
-    static NodeId getId(SgNode *node);
+  static NodeId getId(SgNode *node);
 
   //! \brief Get the Node ID from a string (e.g. from json)
-    static NodeId getId(const std::string& nodeIdString); 
+  static NodeId getId(const std::string& nodeIdString); 
 
   //! \brief Get the SgNode from a string (convinience function)
   static SgNode *getNode(const std::string& nodeIdString) {
@@ -98,7 +98,7 @@ public:
   SgNode* getNode() const { return node;};
   
   //! \brief Get this node ID as a string
-    std::string toString() const;
+  std::string toString() const;
 
   bool operator==(const NodeId& rhs) const {
     if(poolIndex == rhs.poolIndex &&
