@@ -11986,11 +11986,7 @@ SgFunctionDeclaration::get_mangled_name() const
           printf ("Inside of SgFunctionDeclaration::get_mangled_name(): mangledName = %s \n",mangledName.str());
 #endif
 
-<<<<<<< HEAD
-// DQ (6/22/2022): Leave this call to SageInterface::addMangledNameToCache(), but remove 
-=======
 // DQ (6/22/2022): Leave this call to SageInterface::addMangledNameToCache(), but remove
->>>>>>> origin/master
 // the addition of the parameter list's mangled name as a suffix since it is redundant,
 // and the resetting of the updated mangled name in the globalMangledNameMap.
 // #if 1
