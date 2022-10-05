@@ -196,7 +196,11 @@ struct PointerDescriptor {
                 return insnVa < other.insnVa;
             if (direction != other.direction)
                 return direction < other.direction;
-            return value->hash() < other.value->hash();
+            if (value && other.value) {
+                return value->hash() < other.value->hash();
+            } else {
+                return !value && other.value;
+            }
         }
     };
 
