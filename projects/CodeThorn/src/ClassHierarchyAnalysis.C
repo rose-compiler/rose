@@ -10,7 +10,7 @@ namespace ct = CodeThorn;
 
 namespace
 {
-    /// pseudo type to indicate that an element is not in a sequence
+  /// pseudo type to indicate that an element is not in a sequence
   struct unavailable_t {};
 
   template <class First, class Second>
@@ -538,7 +538,7 @@ void computeOverriders( const RoseCompatibilityBridge& rcb,
                         const ClassAnalysis& classes,
                         VirtualFunctionAnalysis& vfunAnalysis,
                         const ClassAnalysis::value_type& entry,
-                        bool normalizedSignature,
+                        bool /*normalizedSignature*/,
                         SortedVirtualMemberFunctions& sortedVFunMap
                       )
 {
