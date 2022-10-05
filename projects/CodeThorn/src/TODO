@@ -3,4 +3,48 @@
   #define NO_ESTATE -4
   from file Labeler.h to CodeThorn.h header file (to be created).
 
-CONTINUE UNRESOLVED CALLS
+11)
+remove 
+IntervalAnalysis.C
+IntervalAnalysis.h
+IntervalAstAttribute.C
+IntervalAstAttribute.h
+IntervalAstAttributeInterface.C
+IntervalAstAttributeInterface.h
+IntervalPropertyState.C
+IntervalPropertyStateFactory.C
+IntervalPropertyStateFactory.h
+IntervalPropertyState.h
+IntervalTransferFunctions.C
+IntervalTransferFunctions.h
+
+RDAnalysis.C
+RDAnalysis.h
+RDAstAttribute.C
+RDAstAttribute.h
+RDLattice.C
+RDLattice.h
+RDTransferFunctions.C
+RDTransferFunctions.h
+
+LVAnalysis.C
+LVAnalysis.h
+
+AstTermRepresentation.C
+AstTermRepresentation.h
+
+DataRaceDetection.C
+DataRaceDetection.h
+
+ConstraintRepresentation.C
+ConstraintRepresentation.h
+
+EStateAnalysis.C
+EStateAnalysis.h
+
+PointerAnalysisInterface.h
+PointerAnalysisInterface.C
+
+rers_latex_bin_assert_only
+rers_latex_ltl
+
