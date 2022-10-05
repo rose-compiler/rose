@@ -2957,7 +2957,7 @@ SageBuilder::buildFunctionType(SgType* return_type, SgFunctionParameterTypeList*
 
 
 SgMemberFunctionType*
-SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTypeList* typeList, SgType *classType, unsigned int mfunc_specifier, unsigned int ref_qualifiers)
+SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTypeList* typeList, SgType *classType, unsigned int mfunc_specifier)
    {
   // DQ (8/19/2012): This is a refactored version of the buildMemberFunctionType() below so that we can
   // isolate out the part that uses a SgClassType from the version that uses the SgClassDefinition.
@@ -2981,7 +2981,7 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
      printf (" --- mfunc_specifier = %d ref_qualifiers = %d \n",mfunc_specifier,ref_qualifiers);
 #endif
 
-#if 1
+#if 0
   // DQ (1/10/2020): I think that these qualifiers are contained in the mfunc_specifier.
      if (ref_qualifiers > 0)
         {
@@ -2994,7 +2994,9 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
      if (typeInTable == NULL)
         {
           bool has_ellipses = false;
-          SgPartialFunctionType* partialFunctionType = new SgPartialFunctionType(return_type, has_ellipses, classType, mfunc_specifier, ref_qualifiers);
+          //~ SgPartialFunctionType* partialFunctionType = new SgPartialFunctionType(return_type, has_ellipses, classType, mfunc_specifier, ref_qualifiers);
+          // PP (10/4/22): removing ref_qualifiers
+          SgPartialFunctionType* partialFunctionType = new SgPartialFunctionType(return_type, has_ellipses, classType, mfunc_specifier);
           ROSE_ASSERT(partialFunctionType != NULL);
 #if 0
           printf ("Building a SgPartialFunctionType: partialFunctionType = %p \n",partialFunctionType);
@@ -3054,7 +3056,7 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
        // DQ (12/3/2011): Added this case to support reuse of function types (not handled by the createType functions).
        // Delete the one generated so that we could form the mangled name.
 
-       // printf ("Deleting funcType = %p = %s \n",funcType,funcType->class_name().c_str());
+          //~ printf ("Deleting funcType = %p = %s \n",funcType,funcType->class_name().c_str());
 
        // DQ (3/22/2012): Added assertion.
           ROSE_ASSERT(typeInTable != funcType);
@@ -3068,7 +3070,11 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
 
 #if 0
      fTable->get_function_type_table()->print("In buildMemberFunctionType(): globalFunctionTypeTable AFTER");
+
+     if (static_cast<const void*>(funcType) == reinterpret_cast<const void*>(0x66329df0))
+       std::cerr << "*** Found in buildMemberFunctionType " << funcType->get_ref_qualifiers() << std::endl;
 #endif
+
 
      return funcType;
    }
@@ -3080,7 +3086,7 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
 //
 // insert into symbol table when not duplicated
 SgMemberFunctionType*
-SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTypeList* typeList, SgScopeStatement * struct_name, unsigned int mfunc_specifier, unsigned int ref_qualifiers)
+SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTypeList* typeList, SgScopeStatement * struct_name, unsigned int mfunc_specifier)
    {
   // This function has to first build a version of the SgMemberFunctionType so that it can generate a mangled name.
   // If the mangled name can be use to lookup a SgMemberFunctionType then the "just built" SgMemberFunctionType
@@ -3103,14 +3109,6 @@ SageBuilder::buildMemberFunctionType(SgType* return_type, SgFunctionParameterTyp
   // DQ (1/9/2020): Unclear why this function is not using the ref_qualifiers.
      printf ("SageBuilder::buildMemberFunctionType(SgType*,SgFunctionParameterTypeList*,SgScopeStatement*,int,int): This function does not use the input ref_qualifiers = %x \n",ref_qualifiers);
      printf (" --- mfunc_specifier = %d ref_qualifiers = %d \n",mfunc_specifier,ref_qualifiers);
-#endif
-
-#if 1
-     if (ref_qualifiers > 0)
-       {
-          printf ("Exiting as a test! \n");
-          ROSE_ABORT();
-       }
 #endif
 
 #if 0
@@ -3493,11 +3491,7 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (
 #endif
           SgFunctionParameterTypeList * typeList = buildFunctionParameterTypeList(paralist);
 
-       // DQ (1/10/2020): This was a default argument that was initialized to zero, I would like to remove the
-       // use of the default argument to better support debugging new regerence qualifiers for member functions.
-       // func_type = buildMemberFunctionType(return_type,typeList,scope, functionConstVolatileFlags);
-          unsigned int reference_modifiers = 0;
-          func_type = buildMemberFunctionType(return_type,typeList,scope, functionConstVolatileFlags,reference_modifiers);
+          func_type = buildMemberFunctionType(return_type,typeList,scope, functionConstVolatileFlags);
 #if 0
           printf ("Using zero as value for reference_modifiers for member function type = %p = %s \n",func_type,func_type->class_name().c_str());
 #endif
