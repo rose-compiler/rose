@@ -45,7 +45,7 @@ Sawyer::SharedPointer<To> dynamic_pointer_cast(const Sawyer::SharedPointer<From>
  *  fit together.*/
 class SValue: public Sawyer::SharedObject, public Sawyer::SharedFromThis<SValue>, public Sawyer::SmallObject {
 public:
-    /** Shared-ownership pointer for an @ref SValue object. See @ref heap_object_shared_ownership. */
+    /** Shared-ownership pointer. */
     using Ptr = SValuePtr;
 
 protected:

@@ -69,7 +69,7 @@ namespace AllowSideEffects {
 //                                      Merging symbolic values
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Shared-ownership pointer for a merge control object. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer for a merge control object. */
 using MergerPtr = Sawyer::SharedPointer<class Merger>;
 
 /** Controls merging of symbolic values. */
@@ -79,7 +79,7 @@ protected:
     Merger(): BaseSemantics::Merger(), setSizeLimit_(1) {}
 
 public:
-    /** Shared-ownership pointer for a @ref Merger object. See @ref heap_object_shared_ownership. */
+    /** Shared-ownership pointer for a @ref Merger object. */
     typedef MergerPtr Ptr;
 
     /** Allocating constructor. */
@@ -116,7 +116,7 @@ public:
 //                                      Semantic values
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Shared-ownership pointer for symbolic semantic value. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer for symbolic semantic value. */
 typedef Sawyer::SharedPointer<class SValue> SValuePtr;
 
 /** Formatter for symbolic values. */
@@ -452,7 +452,7 @@ typedef BaseSemantics::RegisterStateGenericPtr RegisterStatePtr;
 //                                      List-based Memory state
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Shared-ownership pointer for symbolic list-based memory state. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer for symbolic list-based memory state. */
 typedef boost::shared_ptr<class MemoryListState> MemoryListStatePtr;
 
 /** Byte-addressable memory.
@@ -684,7 +684,7 @@ public:
 //                                      Map-based Memory state
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Shared-ownership pointer to symbolic memory state. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer to symbolic memory state. */
 typedef boost::shared_ptr<class MemoryMapState> MemoryMapStatePtr;
 
 /** Byte-addressable memory.
@@ -830,7 +830,7 @@ enum DefinersMode {
     TRACK_ALL_DEFINERS                                  /**< Save all definers. */
 };
 
-/** Shared-ownership pointer to symbolic RISC operations. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer to symbolic RISC operations. */
 typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
 /** Defines RISC operators for the SymbolicSemantics domain.
@@ -985,8 +985,8 @@ public:
 
     /** Property: Track which instructions define a semantic value.
      *
-     *  Each semantic value (@ref SValue) is capable of storing a set of instruction addresses. This property controls how
-     *  operations that produce new semantic values adjust those definers-sets in the new value.
+     *  Each semantic value (@ref SymbolicSemantics::SValue) is capable of storing a set of instruction addresses. This
+     *  property controls how operations that produce new semantic values adjust those definers-sets in the new value.
      *
      *  @li @c TRACK_NO_DEFINERS: Each new semantic value will have a default-constructed definers-set (probably empty). Using
      *      this setting makes the definers-set available for other uses.

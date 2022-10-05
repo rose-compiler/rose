@@ -53,7 +53,7 @@ namespace SourceAstSemantics {
 //                                      Value type
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Shared-ownership pointer for a binary-to-source semantic value. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer for a binary-to-source semantic value. */
 typedef Sawyer::SharedPointer<class SValue> SValuePtr;
 
 /** Semantic values for generating C source code ASTs.
@@ -217,7 +217,7 @@ typedef BaseSemantics::StatePtr StatePtr;               /**< Pointer to states u
 //                                      RiscOperators
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Shared-ownership pointer for basic semantic operations. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer for basic semantic operations. */
 typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
 /** Basic semantic operations.
@@ -225,8 +225,8 @@ typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
  *  These are the implementations of the RISC operators inherited from the base class, plus some additional functionality
  *  specific to this domain.
  *
- *  The semantic state is split between the @ref State object normally attached to semantic domains, and the side effect list
- *  stored in this RiscOperators object.  Neither is complete by itself. */
+ *  The semantic state is split between the @ref BaseSemantics::State object normally attached to semantic domains, and the
+ *  side effect list stored in this RiscOperators object.  Neither is complete by itself. */
 class RiscOperators: public BaseSemantics::RiscOperators {
 public:
     /** Base type. */

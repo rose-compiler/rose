@@ -32,7 +32,7 @@ using ExprNode = SymbolicSemantics::ExprNode;
 /** Controls merging of tainted values. */
 using Merger = SymbolicSemantics::Merger;
 
-/** Shared-ownership pointer for a merge control object. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer for a merge control object. */
 using MergerPtr = Sawyer::SharedPointer<Merger>;
 
 
@@ -40,7 +40,7 @@ using MergerPtr = Sawyer::SharedPointer<Merger>;
 //                                      Semantic values
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Shared-ownership pointer for symbolic semantic value. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer for symbolic semantic value. */
 using SValuePtr = Sawyer::SharedPointer<class SValue>;
 
 /** Formatter for taint values. */
@@ -244,7 +244,7 @@ using StatePtr = SymbolicSemantics::StatePtr;
 //                                      RISC operators
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Shared-ownership pointer to symbolic RISC operations. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer to symbolic RISC operations. */
 using RiscOperatorsPtr = boost::shared_ptr<class RiscOperators>;
 
 /** Defines RISC operators for the TaintSemantics domain.

@@ -69,7 +69,7 @@ public:
 //                                      Semantic values
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Shared-ownership pointer to a multi-semantic value. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer to a multi-semantic value. */
 typedef Sawyer::SharedPointer<class SValue> SValuePtr;
 
 /** Type of values manipulated by the MultiSemantics domain.
@@ -224,7 +224,7 @@ public:
 
 typedef void RegisterState;
 
-/** Shared-ownership pointer to a multi-semantics register state. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer to a multi-semantics register state. */
 typedef boost::shared_ptr<void> RegisterStatePtr;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -233,7 +233,7 @@ typedef boost::shared_ptr<void> RegisterStatePtr;
 
 typedef void MemoryState;
 
-/** Shared-ownership pointer to a multi-semantics memory state. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer to a multi-semantics memory state. */
 typedef boost::shared_ptr<void> MemoryStatePtr;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -242,14 +242,14 @@ typedef boost::shared_ptr<void> MemoryStatePtr;
 
 typedef void State;
 
-/** Shared-ownership pointer to a multi-semantics state. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer to a multi-semantics state. */
 typedef boost::shared_ptr<void> StatePtr;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      RISC operators
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Shared-ownership pointer to multi-semantics RISC operators. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer to multi-semantics RISC operators. */
 typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
 /** Defines RISC operators for the MultiSemantics domain.

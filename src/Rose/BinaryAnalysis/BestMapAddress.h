@@ -167,7 +167,7 @@ public:
      *  intervals are used.
      *
      *  This method operates in parallel according to the global setting for the number of threads. That property is normally
-     *  configured with the --threads command-line switch and stored in @ref CommandlineProcessing::GenericSwitchArgs::threads.
+     *  configured with the --threads command-line switch and stored in @ref CommandLine::GenericSwitchArgs::threads.
      *
      *  If a progress reporting object has been configured for this analysis, then this method periodically updates it with
      *  progress reports.
