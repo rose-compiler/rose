@@ -226,7 +226,7 @@ public:
      *  points) before calling this function, otherwise all the workers will just immediately exit without doing anything.
      *
      *  Although it's usually called once per round of work, this function can be called more than once to increase the
-     *  number of workers by @ref n each time. If @p n is zero, then workers will be increased only up to the hardware
+     *  number of workers by @p n each time. If @p n is zero, then workers will be increased only up to the hardware
      *  parallelism. No workers are ever killed by this function.
      *
      *  See also, @ref workCapacity.

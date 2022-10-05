@@ -36,7 +36,7 @@ typedef SymbolicSemantics::MemoryState MemoryState;
 typedef BaseSemantics::StatePtr StatePtr;
 typedef BaseSemantics::State State;
 
-/** Shared-ownership pointer to LLVM RISC operations. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer to LLVM RISC operations. */
 typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
 class RiscOperators: public SymbolicSemantics::RiscOperators {
@@ -335,7 +335,7 @@ protected:
     /** @} */
 };
 
-/** Shared-ownership pointer to an LLVM transcoder. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer to an LLVM transcoder. */
 typedef boost::shared_ptr<class Transcoder> TranscoderPtr;
 
 /** Translates machine instructions to LLVM. */

@@ -130,7 +130,7 @@ public:
  *  See also, @ref SgAsmBlock which is how a basic block (and some other things) are represented in the AST. */
 class BasicBlock: public Sawyer::SharedObject, public Sawyer::Attribute::Storage<> {
 public:
-    /** Shared pointer to a basic block. See @ref heap_object_shared_ownership. */
+    /** Shared pointer to a basic block. */
     typedef Sawyer::SharedPointer<BasicBlock> Ptr;
 
     /** Basic block successor. */

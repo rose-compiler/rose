@@ -30,7 +30,7 @@ namespace Partitioner2 {
  *  equivalent data block. */
 class DataBlock: public Sawyer::SharedObject, public Sawyer::Attribute::Storage<> {
 public:
-    /** Shared pointer to a data block. See @ref heap_object_shared_ownership. */
+    /** Shared pointer to a data block. */
     typedef Sawyer::SharedPointer<DataBlock> Ptr;
 
 private:

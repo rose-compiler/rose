@@ -21,7 +21,7 @@ namespace NullSemantics {
 //                                      Semantic values
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Shared-ownership pointer to a null semantic value. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer. */
 typedef Sawyer::SharedPointer<class SValue> SValuePtr;
 
 /** Values in the NullSemantics domain.  Values are essentially void. */
@@ -146,7 +146,7 @@ public:
 //                                      Register state
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Shared-ownership pointer to null register state. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer. */
 typedef boost::shared_ptr<class RegisterState> RegisterStatePtr;
 
 /** Null register state.
@@ -216,7 +216,7 @@ public:
 //                                      Memory state
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Shared-ownership pointer to null register state. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer. */
 typedef boost::shared_ptr<class MemoryState> MemoryStatePtr;
 
 /** Null memory.
@@ -302,7 +302,7 @@ typedef BaseSemantics::StatePtr StatePtr;
 //                                      RISC operators
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Shared-ownership pointer to null RISC operations. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer. */
 typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
 /** NullSemantics operators always return a new undefined value.  They do, however, check certain preconditions. */

@@ -38,7 +38,7 @@ namespace BaseSemantics {
  *  together.  */
 class State: public boost::enable_shared_from_this<State> {
 public:
-    /** Shared-ownership pointer for a @ref State. See @ref heap_object_shared_ownership. */
+    /** Shared-ownership pointer. */
     using Ptr = StatePtr;
 
 private:
@@ -146,20 +146,20 @@ public:
 
     /** Read a value from a register.
      *
-     *  The @ref BaseSemantics::readRegister implementation simply delegates to the register state member of this state.  See
-     *  @ref BaseSemantics::RiscOperators::readRegister for details. */
+     *  The @ref BaseSemantics::State::readRegister implementation simply delegates to the register state member of this state.
+     *  See @ref BaseSemantics::RiscOperators::readRegister for details. */
     virtual SValuePtr readRegister(RegisterDescriptor desc, const SValuePtr &dflt, RiscOperators *ops);
 
     /** Read register without side effects.
      *
-     *  The @ref BaseSemantics::peekRegister implementation simply delegates to the register state member of this state.  See
-     *  @ref BaseSemantics::RiscOperators::peekRegister for details. */
+     *  The @ref BaseSemantics::State::peekRegister implementation simply delegates to the register state member of this state.
+     *  See @ref BaseSemantics::RiscOperators::peekRegister for details. */
     virtual SValuePtr peekRegister(RegisterDescriptor desc, const SValuePtr &dflt, RiscOperators *ops);
 
     /** Write a value to a register.
      *
-     *  The @ref BaseSemantics::writeRegister implementation simply delegates to the register state member of this state.  See
-     *  @ref BaseSemantics::RiscOperators::writeRegister for details. */
+     *  The @ref BaseSemantics::State::writeRegister implementation simply delegates to the register state member of this
+     *  state.  See @ref BaseSemantics::RiscOperators::writeRegister for details. */
     virtual void writeRegister(RegisterDescriptor desc, const SValuePtr &value, RiscOperators *ops);
 
     /** Read a value from memory.

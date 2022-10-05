@@ -29,9 +29,18 @@ private:
 
 public:
     virtual ~Periodic();
+
+    /** Creates a new thread to run periodically. */
     void start(const EnginePtr&, std::chrono::duration<double> period);
+
+    /** Stop running periodically. */
     void stop();
+
+    /** The work to be done.
+     *
+     *  This function is called periodically from the thread created by @ref start. */
     virtual void step(const EnginePtr&) = 0;
+
 private:
     void run(const EnginePtr&, std::chrono::duration<double> period);
 };

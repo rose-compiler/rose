@@ -37,7 +37,7 @@ protected:
         : Sawyer::CommandLine::ValueParser(valueSaver) {}
 
 public:
-    /** Shared-ownership pointer to an @ref IntervalParser.
+    /** Shared-ownership pointer.
      *
      *  See @ref heap_object_shared_ownership. */
     using Ptr = Sawyer::SharedPointer<IntervalParser>;

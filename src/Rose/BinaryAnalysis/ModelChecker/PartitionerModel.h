@@ -573,9 +573,9 @@ public:
      *  this mode of operation, the model checker is single threaded and will follow only this specified path until it reaches
      *  the end or some other condition causes the model checker to abandon the path earlier.
      *
-     *  When the model checker runs, the @ref nextCodeAddress method is overridden to return only the address of the next
-     *  execution unit on this list, and the internal @ref findUnit function returns the next unit, removing it from the
-     *  list. When the list becomes empty, then no more code addresses or units are returned.
+     *  When the model checker runs, the @ref ModelChecker::SemanticCallbacks::nextCodeAddresses method is overridden to return
+     *  only the address of the next execution unit on this list, and the internal @c findUnit function returns the next unit,
+     *  removing it from the list. When the list becomes empty, then no more code addresses or units are returned.
      *
      *  If this function is called when the model checker is already in @ref followingOnePath mode, the behavior is as if
      *  @ref followingOnePath was cleared first.

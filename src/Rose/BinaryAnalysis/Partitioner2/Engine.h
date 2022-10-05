@@ -338,7 +338,7 @@ public:
      *
      *  Parses the ELF and PE binary containers to create an abstract syntax tree (AST).  If @p fileNames contains names that
      *  are recognized as raw data or other non-containers then they are skipped over at this stage but processed during the
-     *  @ref load stage.
+     *  @ref loadSpecimens stage.
      *
      *  This method tries to allocate a disassember if none is set and an ISA name is specified in the settings, otherwise the
      *  disassembler is chosen later.  It also resets the interpretation to be the return value (see below), and clears the
@@ -408,9 +408,9 @@ public:
      *
      *  Constructs a new abstract syntax tree (AST) from partitioner information with these steps:
      *
-     *  @li If the partitioner has not been run yet (according to @ref isPartitioned), then do that now with the same
-     *      arguments.  The zero-argument version invokes the zero-argument @ref partition, which requires that the specimen
-     *      has already been loaded by @ref loadSpecimens.
+     *  @li If the partitioner has not been run yet, then do that now with the same arguments.  The zero-argument version
+     *      invokes the zero-argument @ref partition, which requires that the specimen has already been loaded by @ref
+     *      loadSpecimens.
      *
      *  @li Call Modules::buildAst to build the AST.
      *
@@ -509,7 +509,7 @@ public:
     /** Determine whether a specimen is an RBA file.
      *
      *  Returns true if the name looks like a ROSE Binary Analysis file. Such files are not intended to be passed to ROSE's
-     *  global @c ::frontend function but may be passed to this Engine's @ref frontent method. */
+     *  global @c ::frontend function but may be passed to this Engine's @ref Engine::frontend method. */
     virtual bool isRbaFile(const std::string&);
 
     /** Determine whether a specimen name is a non-container.
@@ -792,7 +792,7 @@ public:
      *  Returns a pointer to a newly-allocated function that has not yet been attached to the CFG/AUM, or a null pointer if no
      *  function was found.  In any case, the startVa is updated so it points to the next read-only address to check.
      *
-     *  Functions created in this manner have the @ref SgAsmFunction::FUNC_SCAN_RO_DATA reason. */
+     *  Functions created in this manner have the @c SgAsmFunction::FUNC_SCAN_RO_DATA reason. */
     virtual Function::Ptr makeNextDataReferencedFunction(const Partitioner&, rose_addr_t &startVa /*in,out*/);
 
     /** Scan instruction ASTs to function pointers.
@@ -807,7 +807,7 @@ public:
      *  Returns a pointer to a newly-allocated function that has not yet been attached to the CFG/AUM, or a null pointer if no
      *  function was found.
      *
-     *  Functions created in this manner have the @ref SgAsmFunction::FUNC_INSN_RO_DATA reason. */
+     *  Functions created in this manner have the @c SgAsmFunction::FUNC_INSN_RO_DATA reason. */
     virtual Function::Ptr makeNextCodeReferencedFunction(const Partitioner&);
 
     /** Make functions for function call edges.
@@ -904,7 +904,7 @@ public:
      *  possible, creates more functions by looking for function calls, and attaches additional basic blocks to functions by
      *  following the CFG for each function.
      *
-     *  This method is called automatically by @ref runPartitioner if the @ref intraFunctionCodeSearch property is set.
+     *  This method is called automatically by @ref Engine::runPartitioner if the @ref findingIntraFunctionCode property is set.
      *
      *  Returns the sum from all the calls to @ref attachSurroundedCodeToFunctions. */
     virtual size_t attachAllSurroundedCodeToFunctions(Partitioner&);
@@ -982,7 +982,7 @@ public:
      *  Discovers another basic block if possible.  A variety of methods will be used to determine where to discover the next
      *  basic block:
      *
-     *  @li Discover a block at a placeholder by calling @ref makeNextBasicBlockAtPlaceholder
+     *  @li Discover a block at a placeholder by calling @ref makeNextBasicBlockFromPlaceholder
      *
      *  @li Insert a new call-return (@ref E_CALL_RETURN) edge for a function call that may return.  Insertion of such an
      *      edge may result in a new placeholder for which this method then discovers a basic block.  The call-return insertion
@@ -1096,7 +1096,7 @@ public:
      *
      *  If this property is set, then the engine will remap all memory to be executable.  Executability determines whether the
      *  partitioner is able to make instructions at that address. The default, false, means that the engine will not globally
-     *  modify the execute bits in the memory map.  This action happens before the @ref deExecuteZeros is processed.
+     *  modify the execute bits in the memory map.  This action happens before the various de-execute-zeros stuff is processed.
      *
      * @{ */
     bool memoryIsExecutable() const /*final*/ { return settings_.loader.memoryIsExecutable; }
@@ -1109,7 +1109,7 @@ public:
      *  thus machine instructions are not found. Turning on linking causes all the object files (and possibly library archives)
      *  to be linked into an output file and the output file is analyzed instead.
      *
-     *  See also, @ref linkArchives, @ref linkerCommand.
+     *  See also, @ref linkStaticArchives, @ref linkerCommand.
      *
      * @{ */
     bool linkObjectFiles() const /*final*/ { return settings_.loader.linkObjectFiles; }
