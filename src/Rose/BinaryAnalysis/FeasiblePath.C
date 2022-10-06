@@ -1108,6 +1108,13 @@ FeasiblePath::processBasicBlock(const P2::BasicBlock::Ptr &bblock, const BaseSem
                 BaseSemantics::SValue::Ptr sp = ops->readRegister(SP, ops->undefined_(SP.nBits()));
                 debug <<"          sp = " <<*sp <<"\n";
             }
+        } catch (const BaseSemantics::NotImplemented &e) {
+            if (settings_.ignoreSemanticFailure) {
+                SAWYER_MESG(mlog[WHERE]) <<"semantics failed (instruction ignored): " <<e <<"\n";
+            } else {
+                SAWYER_MESG(mlog[WHERE]) <<"semantics failed: " <<e <<"\n";
+                throw;
+            }
         } catch (const BaseSemantics::Exception &e) {
             if (settings_.ignoreSemanticFailure) {
                 SAWYER_MESG(mlog[WARN]) <<"semantics failed (instruction ignored): " <<e <<"\n";

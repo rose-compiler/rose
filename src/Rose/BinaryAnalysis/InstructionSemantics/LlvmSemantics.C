@@ -1361,9 +1361,9 @@ RiscOperators::emit_expression(std::ostream &o, const ExpressionPtr &orig_expr)
             case SymbolicExpression::OP_FP_ISPOS:
             case SymbolicExpression::OP_CONVERT:
             case SymbolicExpression::OP_REINTERPRET:
-                throw BaseSemantics::Exception("LLVM translation for " +
-                                               stringifyBinaryAnalysisSymbolicExpressionOperator(inode->getOperator()) +
-                                               " is not implemented yet", NULL);
+                throw BaseSemantics::NotImplemented("LLVM translation for " +
+                                                    stringifyBinaryAnalysisSymbolicExpressionOperator(inode->getOperator()) +
+                                                    " is not implemented yet", NULL);
 
             // no default because we want warnings when a new operator is added
         }

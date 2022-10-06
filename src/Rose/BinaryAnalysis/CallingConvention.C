@@ -1084,6 +1084,9 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     } catch (const DataFlow::NotConverging &e) {
         mlog[WARN] <<e.what() <<" for " <<function->printableName() <<"\n";
         converged = false;                              // didn't converge, so just use what we have
+    } catch (const BaseSemantics::NotImplemented &e) {
+        mlog[WHERE] <<e.what() <<" for " <<function->printableName() <<"\n";
+        converged = false;
     } catch (const BaseSemantics::Exception &e) {
         mlog[WARN] <<e.what() <<" for " <<function->printableName() <<"\n";
         converged = false;
