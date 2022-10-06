@@ -508,6 +508,9 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
         dfEngine.insertStartingVertex(startVertexId, initialState_);
         while (dfEngine.runOneIteration())
             ++progress;
+    } catch (const InstructionSemantics::BaseSemantics::NotImplemented &e) {
+        mlog[WHERE] <<e.what() <<"\n";
+        converged = false;
     } catch (const InstructionSemantics::BaseSemantics::Exception &e) {
         mlog[WARN] <<e.what() <<"\n";
         converged = false;

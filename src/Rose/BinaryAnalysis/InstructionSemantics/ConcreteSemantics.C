@@ -450,9 +450,9 @@ BaseSemantics::SValue::Ptr
 RiscOperators::signedDivide(const BaseSemantics::SValue::Ptr &a_, const BaseSemantics::SValue::Ptr &b_) {
     // FIXME[Robb P. Matzke 2015-03-31]: BitVector doesn't have a divide method
     if (a_->nBits() > 64 || b_->nBits() > 64) {
-        throw BaseSemantics::Exception("signedDivide x[" + StringUtility::addrToString(a_->nBits()) +
-                                       "] / y[" + StringUtility::addrToString(b_->nBits()) +
-                                       "] is not implemented", currentInstruction());
+        throw BaseSemantics::NotImplemented("signedDivide x[" + StringUtility::addrToString(a_->nBits()) +
+                                            "] / y[" + StringUtility::addrToString(b_->nBits()) +
+                                            "] is not implemented", currentInstruction());
     }
     int64_t a = IntegerOps::signExtend2(a_->toUnsigned().get(), a_->nBits(), 64);
     int64_t b = IntegerOps::signExtend2(b_->toUnsigned().get(), b_->nBits(), 64);
@@ -465,9 +465,9 @@ BaseSemantics::SValue::Ptr
 RiscOperators::signedModulo(const BaseSemantics::SValue::Ptr &a_, const BaseSemantics::SValue::Ptr &b_) {
     // FIXME[Robb P. Matzke 2015-03-31]: BitVector doesn't have a modulo method
     if (a_->nBits() > 64 || b_->nBits() > 64) {
-        throw BaseSemantics::Exception("signedModulo x[" + StringUtility::addrToString(a_->nBits()) +
-                                       "] % y[" + StringUtility::addrToString(b_->nBits()) +
-                                       "] is not implemented", currentInstruction());
+        throw BaseSemantics::NotImplemented("signedModulo x[" + StringUtility::addrToString(a_->nBits()) +
+                                            "] % y[" + StringUtility::addrToString(b_->nBits()) +
+                                            "] is not implemented", currentInstruction());
     }
     int64_t a = IntegerOps::signExtend2(a_->toUnsigned().get(), a_->nBits(), 64);
     int64_t b = IntegerOps::signExtend2(b_->toUnsigned().get(), b_->nBits(), 64);
@@ -501,9 +501,9 @@ RiscOperators::signedMultiply(const BaseSemantics::SValue::Ptr &a_, const BaseSe
         product.fromInteger(BitRange::baseSize(64, 64), c2);
         return svalueNumber(product);
     } else if (a_->nBits() + b_->nBits() > 64) {
-        throw BaseSemantics::Exception("signedMultiply x[" + StringUtility::addrToString(a_->nBits()) +
-                                       "] * y[" + StringUtility::addrToString(b_->nBits()) +
-                                       "] is not implemented", currentInstruction());
+        throw BaseSemantics::NotImplemented("signedMultiply x[" + StringUtility::addrToString(a_->nBits()) +
+                                            "] * y[" + StringUtility::addrToString(b_->nBits()) +
+                                            "] is not implemented", currentInstruction());
     } else {
         ASSERT_require2(a_->nBits() + b_->nBits() <= 64, "not implemented yet");
         int64_t a = IntegerOps::signExtend2(a_->toUnsigned().get(), a_->nBits(), 64);
@@ -540,9 +540,9 @@ RiscOperators::unsignedDivide(const BaseSemantics::SValue::Ptr &a_, const BaseSe
 
     // FIXME[Robb P. Matzke 2015-03-31]: BitVector doesn't have a divide method
     if (a->nBits() > 64 || b->nBits() > 64) {
-        throw BaseSemantics::Exception("unsignedDivide x[" + StringUtility::addrToString(a->nBits()) +
-                                       "] / y[" + StringUtility::addrToString(b->nBits()) +
-                                       "] is not implemented", currentInstruction());
+        throw BaseSemantics::NotImplemented("unsignedDivide x[" + StringUtility::addrToString(a->nBits()) +
+                                            "] / y[" + StringUtility::addrToString(b->nBits()) +
+                                            "] is not implemented", currentInstruction());
     }
 
     uint64_t an = a->toUnsigned().get();
@@ -575,9 +575,9 @@ RiscOperators::unsignedModulo(const BaseSemantics::SValue::Ptr &a_, const BaseSe
 
     // FIXME[Robb P. Matzke 2015-03-31]: BitVector doesn't have a modulo method
     if (a->nBits() > 64 || b->nBits() > 64) {
-        throw BaseSemantics::Exception("unsignedModulo x[" + StringUtility::addrToString(a->nBits()) +
-                                       "] % y[" + StringUtility::addrToString(b->nBits()) +
-                                       "] is not implemented", currentInstruction());
+        throw BaseSemantics::NotImplemented("unsignedModulo x[" + StringUtility::addrToString(a->nBits()) +
+                                            "] % y[" + StringUtility::addrToString(b->nBits()) +
+                                            "] is not implemented", currentInstruction());
     }
     uint64_t an = a->toUnsigned().get();
     uint64_t bn = b->toUnsigned().get();
@@ -611,9 +611,9 @@ RiscOperators::unsignedMultiply(const BaseSemantics::SValue::Ptr &a_, const Base
         product.fromInteger(BitRange::baseSize(64, 64), c2);
         return svalueNumber(product);
     } else if (a_->nBits() + b_->nBits() > 64) {
-        throw BaseSemantics::Exception("unsignedMultiply x[" + StringUtility::addrToString(a_->nBits()) +
-                                       "] * y[" + StringUtility::addrToString(b_->nBits()) +
-                                       "] is not implemented", currentInstruction());
+        throw BaseSemantics::NotImplemented("unsignedMultiply x[" + StringUtility::addrToString(a_->nBits()) +
+                                            "] * y[" + StringUtility::addrToString(b_->nBits()) +
+                                            "] is not implemented", currentInstruction());
     } else {
         ASSERT_require2(a_->nBits() + b_->nBits() <= 64, "not implemented yet");
         uint64_t a = a_->toUnsigned().get();

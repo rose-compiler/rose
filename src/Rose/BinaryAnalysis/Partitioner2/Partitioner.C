@@ -2317,8 +2317,11 @@ Partitioner::functionDataFlowConstants(const Function::Ptr &function) const {
     // Run the data flow
     try {
         dfEngine.runToFixedPoint(dfCfgStartVertexId, initialState);
+    } catch (const BaseSemantics::NotImplemented &e) {
+        mlog[WHERE] <<function->printableName() <<": " <<e <<"\n";
+        return retval;
     } catch (const BaseSemantics::Exception &e) {
-        mlog[ERROR] <<function->printableName() <<": " <<e <<"\n"; // probably missing semantics capability for an instruction
+        mlog[ERROR] <<function->printableName() <<": " <<e <<"\n";
         return retval;
     } catch (const BinaryAnalysis::DataFlow::NotConverging &e) {
         mlog[WARN] <<function->printableName() <<": " <<e.what() <<"\n";
