@@ -552,38 +552,40 @@ Iterator::Iterator(const Iterator &it)
 
 Iterator&
 Iterator::operator=(const Iterator &it) {
-    if (m_pImp) {
-        switch (m_Type) {
+    if (&it != this) {
+        if (m_pImp) {
+            switch (m_Type) {
+                case SequenceType:
+                    delete static_cast<SequenceIteratorImp*>(m_pImp);
+                    break;
+                case MapType:
+                    delete static_cast<MapIteratorImp*>(m_pImp);
+                    break;
+                default:
+                    break;
+            }
+            m_pImp = nullptr;
+            m_Type = None;
+        }
+
+        IteratorImp *pNewImp = nullptr;
+        switch (it.m_Type) {
             case SequenceType:
-                delete static_cast<SequenceIteratorImp*>(m_pImp);
+                m_Type = SequenceType;
+                pNewImp = new SequenceIteratorImp;
+                static_cast<SequenceIteratorImp*>(pNewImp)->m_Iterator = static_cast<SequenceIteratorImp*>(it.m_pImp)->m_Iterator;
                 break;
             case MapType:
-                delete static_cast<MapIteratorImp*>(m_pImp);
+                m_Type = MapType;
+                pNewImp = new MapIteratorImp;
+                static_cast<MapIteratorImp*>(pNewImp)->m_Iterator = static_cast<MapIteratorImp*>(it.m_pImp)->m_Iterator;
                 break;
             default:
                 break;
         }
-        m_pImp = nullptr;
-        m_Type = None;
-    }
 
-    IteratorImp *pNewImp = nullptr;
-    switch (it.m_Type) {
-        case SequenceType:
-            m_Type = SequenceType;
-            pNewImp = new SequenceIteratorImp;
-            static_cast<SequenceIteratorImp*>(pNewImp)->m_Iterator = static_cast<SequenceIteratorImp*>(it.m_pImp)->m_Iterator;
-            break;
-        case MapType:
-            m_Type = MapType;
-            pNewImp = new MapIteratorImp;
-            static_cast<MapIteratorImp*>(pNewImp)->m_Iterator = static_cast<MapIteratorImp*>(it.m_pImp)->m_Iterator;
-            break;
-        default:
-            break;
+        m_pImp = pNewImp;
     }
-
-    m_pImp = pNewImp;
     return *this;
 }
 
@@ -755,38 +757,40 @@ ConstIterator::ConstIterator(const ConstIterator &it)
 
 ConstIterator&
 ConstIterator::operator=(const ConstIterator &it) {
-    if (m_pImp) {
-        switch (m_Type) {
+    if (&it != this) {
+        if (m_pImp) {
+            switch (m_Type) {
+                case SequenceType:
+                    delete static_cast<SequenceConstIteratorImp*>(m_pImp);
+                    break;
+                case MapType:
+                    delete static_cast<MapConstIteratorImp*>(m_pImp);
+                    break;
+                default:
+                    break;
+            }
+            m_pImp = nullptr;
+            m_Type = None;
+        }
+
+        IteratorImp *pNewImp = nullptr;
+        switch (it.m_Type) {
             case SequenceType:
-                delete static_cast<SequenceConstIteratorImp*>(m_pImp);
+                m_Type = SequenceType;
+                pNewImp = new SequenceConstIteratorImp;
+                static_cast<SequenceConstIteratorImp*>(pNewImp)->m_Iterator = static_cast<SequenceConstIteratorImp*>(it.m_pImp)->m_Iterator;
                 break;
             case MapType:
-                delete static_cast<MapConstIteratorImp*>(m_pImp);
+                m_Type = MapType;
+                pNewImp = new MapConstIteratorImp;
+                static_cast<MapConstIteratorImp*>(pNewImp)->m_Iterator = static_cast<MapConstIteratorImp*>(it.m_pImp)->m_Iterator;
                 break;
             default:
                 break;
         }
-        m_pImp = nullptr;
-        m_Type = None;
-    }
 
-    IteratorImp *pNewImp = nullptr;
-    switch (it.m_Type) {
-        case SequenceType:
-            m_Type = SequenceType;
-            pNewImp = new SequenceConstIteratorImp;
-            static_cast<SequenceConstIteratorImp*>(pNewImp)->m_Iterator = static_cast<SequenceConstIteratorImp*>(it.m_pImp)->m_Iterator;
-            break;
-        case MapType:
-            m_Type = MapType;
-            pNewImp = new MapConstIteratorImp;
-            static_cast<MapConstIteratorImp*>(pNewImp)->m_Iterator = static_cast<MapConstIteratorImp*>(it.m_pImp)->m_Iterator;
-            break;
-        default:
-            break;
+        m_pImp = pNewImp;
     }
-
-    m_pImp = pNewImp;
     return *this;
 }
 
@@ -1065,8 +1069,10 @@ Node::Erase(const std::string &key) {
 
 Node&
 Node::operator=(const Node &node) {
-    NODE_IMP->Clear();
-    CopyNode(node, *this);
+    if (&node != this) {
+        NODE_IMP->Clear();
+        CopyNode(node, *this);
+    }
     return *this;
 }
 
