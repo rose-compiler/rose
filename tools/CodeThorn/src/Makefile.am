@@ -27,10 +27,10 @@ endif
 
 if ROSE_WITH_SPOT
 AM_LDFLAGS = $(ROSE_LIBS) $(LIBS_WITH_RPATH) -fopenmp -L$(SPOT_LIBRARY_PATH)
-AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/Codethorn/src -I$(SPOT_INCLUDE_PATH)/spot -I$(SPOT_INCLUDE_PATH) $(Z3_INCLUDES) -g -rdynamic
+AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/tools/Codethorn/src -I$(SPOT_INCLUDE_PATH)/spot -I$(SPOT_INCLUDE_PATH) $(Z3_INCLUDES) -g -rdynamic
 else
 AM_LDFLAGS = $(ROSE_LIBS) $(LIBS_WITH_RPATH) -fopenmp $(Z3_LIB_INCLUDES)
-AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/Codethorn/src $(Z3_INCLUDES) -g -rdynamic
+AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/tools/Codethorn/src $(Z3_INCLUDES) -g -rdynamic
 endif
 
 MYDATE = $(shell date +%Y_%m_%d)
@@ -764,44 +764,44 @@ check-ltl-start:
 
 #run RERS Problem1 from 2012 in several versions and compare to previous results
 check-ltl-rers-different-versions:
-	@$(srcdir)/scripts/runRersTestsDifferentVersion $(srcdir) $(top_builddir)/projects/CodeThorn/src
+	@$(srcdir)/scripts/runRersTestsDifferentVersion $(srcdir) $(top_builddir)/tools/CodeThorn/src
 
 #test the parallel analysis of RERS Problem1402 (4 threads, problem features arithmetic)
 check-ltl-rers-arithmetic-seq:
-	@$(srcdir)/scripts/runRersArithmeticProblemTest $(srcdir) $(top_builddir)/projects/CodeThorn/src 1
+	@$(srcdir)/scripts/runRersArithmeticProblemTest $(srcdir) $(top_builddir)/tools/CodeThorn/src 1
 
 #test the parallel analysis of RERS Problem1402 (4 threads, problem features arithmetic) - creates 140K+ states (works, but takes ~10 min to reduce)
 check-ltl-rers-arithmetic-par:
-	@$(srcdir)/scripts/runRersArithmeticProblemTest $(srcdir) $(top_builddir)/projects/CodeThorn/src 4
+	@$(srcdir)/scripts/runRersArithmeticProblemTest $(srcdir) $(top_builddir)/tools/CodeThorn/src 4
 
 #test the analysis of RERS Problem1403 (which features arrays)
 check-ltl-rers-array:
-	@$(srcdir)/scripts/runRersArrayProblemTest $(srcdir) $(top_builddir)/projects/CodeThorn/src
+	@$(srcdir)/scripts/runRersArrayProblemTest $(srcdir) $(top_builddir)/tools/CodeThorn/src
 
 #test the analysis of RERS Problem1403, abstracting from global variables after 10,000 transitions
 check-ltl-rers-topify-seq:
-	@$(srcdir)/scripts/runRersTopifyTest $(srcdir) $(top_builddir)/projects/CodeThorn/src
+	@$(srcdir)/scripts/runRersTopifyTest $(srcdir) $(top_builddir)/tools/CodeThorn/src
 
 # SKIPPED
 #test the analysis of RERS Problem1603 while using up to 1GB of RAM up to and including the STG computation (4 threads)
 check-ltl-rers-memory-bound:
-	@$(srcdir)/scripts/runRersMemoryBoundTest $(srcdir) $(top_builddir)/projects/CodeThorn/src
+	@$(srcdir)/scripts/runRersMemoryBoundTest $(srcdir) $(top_builddir)/tools/CodeThorn/src
 
 #test the analysis of RERS Problem1402 and terminate after 10 seconds, 1 threads
 check-ltl-rers-timeout-seq:
-	@$(srcdir)/scripts/runRersTimeoutTest $(srcdir) $(top_builddir)/projects/CodeThorn/src 10 1
+	@$(srcdir)/scripts/runRersTimeoutTest $(srcdir) $(top_builddir)/tools/CodeThorn/src 10 1
 
 #test the analysis of RERS Problem1402 and terminate after 3 seconds, 4 threads
 check-ltl-rers-timeout-par:
-	@$(srcdir)/scripts/runRersTimeoutTest $(srcdir) $(top_builddir)/projects/CodeThorn/src 0 2
+	@$(srcdir)/scripts/runRersTimeoutTest $(srcdir) $(top_builddir)/tools/CodeThorn/src 0 2
 
 #one test for the loop-aware-sync analysis (solver 12, ISoLA'16 paper)
 check-ltl-rers-loop-aware-sync:
-	@$(srcdir)/scripts/runRersLoopAwareSyncTest $(srcdir) $(top_builddir)/projects/CodeThorn/src
+	@$(srcdir)/scripts/runRersLoopAwareSyncTest $(srcdir) $(top_builddir)/tools/CodeThorn/src
 
 #run CEGPRA tests
 check-ltl-cegpra-seq:
-	@$(srcdir)/scripts/runCegpraTest $(srcdir) $(top_builddir)/projects/CodeThorn/src
+	@$(srcdir)/scripts/runCegpraTest $(srcdir) $(top_builddir)/tools/CodeThorn/src
 
 #run Cpp98Tests
 check-cpp98tests: ./codethorn
@@ -950,4 +950,4 @@ codethorn-dist:
 	tar cvzf codethorn_$(MYDATE).tgz *.C *cpp *.h *.lxx *.yxx tests/*.C tests/*.c Makefile*
 
 demo:
-	$(srcdir)/demodir/rundemo.sh $(srcdir)/demodir $(top_builddir)/projects/CodeThorn
+	$(srcdir)/demodir/rundemo.sh $(srcdir)/demodir $(top_builddir)/tools/CodeThorn
