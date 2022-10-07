@@ -7,7 +7,7 @@ COUNTEREXAMPLES = counterexamples/ltl2haskell.sh counterexamples/Makefile counte
 EXTRA_DIST = Doxyfile $(TESTS) $(COUNTEREXAMPLES)
 
 #
-bin_PROGRAMS = codethorn thorn1 thorn2 thorn3 thorn4 ltlthorn woodpecker analyterix addressTakenAnalysis cldemo
+bin_PROGRAMS = codethorn thorn1 thorn2 thorn3 thorn4 ltlthorn woodpecker addressTakenAnalysis cldemo
 
 # matcher_demo matcher astinfo cldemo
 noinst_PROGRAMS = addressTakenAnalysis cldemo matcher_demo
@@ -82,7 +82,6 @@ CODETHORN_HEADER_FILES=\
   ContNodeAttribute.h \
   CounterexampleGenerator.h \
   CPAstAttribute.h \
-  CppExprEvaluator.h \
   CppLabeler.h \
   CppStdUtilities.h \
   CTIOLabeler.h \
@@ -121,12 +120,6 @@ CODETHORN_HEADER_FILES=\
   GeneralPriorityWorkList.C \
   InputOutput.h \
   InternalChecks.h \
-  IntervalAnalysis.h \
-  IntervalAstAttribute.h \
-  IntervalAstAttributeInterface.h \
-  IntervalPropertyStateFactory.h \
-  IntervalPropertyState.h \
-  IntervalTransferFunctions.h \
   IOAnalyzer.h \
   IOSequenceGenerator.h \
   IOSolver.h \
@@ -224,7 +217,6 @@ CODETHORN_SOURCE_FILES=\
   ContNodeAttribute.C \
   CounterexampleGenerator.C \
   CPAstAttribute.C \
-  CppExprEvaluator.C \
   CppLabeler.C \
   CppStdUtilities.C \
   CTIOLabeler.C \
@@ -257,12 +249,6 @@ CODETHORN_SOURCE_FILES=\
   FunctionIdMapping.C \
   InputOutput.C \
   InternalChecks.C \
-  IntervalAnalysis.C \
-  IntervalAstAttribute.C \
-  IntervalAstAttributeInterface.C \
-  IntervalPropertyStateFactory.C \
-  IntervalPropertyState.C \
-  IntervalTransferFunctions.C \
   IOAnalyzer.C \
   IOSequenceGenerator.C \
   IOSolver.C \
@@ -614,35 +600,7 @@ woodpecker_SOURCES = \
   woodpecker-src/ConversionFunctionsGenerator.C \
   woodpecker-src/woodpecker.C
 
-
-##############################################################
-# TOOL: ANALYTERIX
-##############################################################
-
-analyterix_DEPENDENCIES=libcodethorn.la
-if ROSE_WITH_SPOT
-analyterix_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorn
-analyterix_LDFLAGS = -L$(SPOT_LIBRARY_PATH)
-else
-analyterix_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorn
-endif
-analyterix_CXXFLAGS = -fopenmp -Wall -O3
-analyterix_SOURCES = \
-  shared-src/ProgramStats.C \
-  shared-src/ProgramStats.h \
-  analyterix-src/DFAstAttributeConversion.h \
-  analyterix-src/DFAstAttributeConversion.C \
-  analyterix-src/DeadCodeAnalysis.C \
-  analyterix-src/DeadCodeAnalysis.h \
-  analyterix-src/FIPointerAnalysis.C \
-  analyterix-src/FIPointerAnalysis.h \
-  analyterix-src/RoseRDAnalysis.C \
-  analyterix-src/RoseRDAnalysis.h \
-  analyterix-src/TransformationOperators.h \
-  analyterix-src/TransformationOperators.C \
-  analyterix-src/analyterix.C
-
-roseonlytools: woodpecker analyterix
+roseonlytools: woodpecker
 
 check-roseonlytools: check-flow-insensitive
 
@@ -802,14 +760,8 @@ check-data-races:
 	@./codethorn --data-race=yes  $(srcdir)/tests/datarace/inner_only_1.no.c --max-time=5 --solver=12
 
 
-#check-flow-insensitive: check-analyterix check-const-analysis
+#check-flow-insensitive: check-const-analysis
 check-flow-insensitive: check-const-analysis
-
-check-analyterix:
-	@echo ================================================================
-	@echo RUNNING STATIC PROGRAM ANALYSIS TESTS
-	@echo ================================================================
-	@$(srcdir)/scripts/runAnalyterixTests.sh "$(srcdir)" "$(top_builddir)/projects/CodeThorn/src" "$(clean-only)" "$(skip-analyterix)" # Run analyterix tests
 
 check-const-analysis:
 	@echo ================================================================

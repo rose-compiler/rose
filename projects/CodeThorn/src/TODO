@@ -18,6 +18,22 @@ IntervalPropertyState.h
 IntervalTransferFunctions.C
 IntervalTransferFunctions.h
 
+CppExprEvaluator.h
+CppExprEvaluator.C
+analyterix-src/analyterix.C
+analyterix-src/DeadCodeAnalysis.C
+analyterix-src/DeadCodeAnalysis.h
+analyterix-src/DFAstAttributeConversion.C
+analyterix-src/DFAstAttributeConversion.h
+analyterix-src/FIPointerAnalysis.C
+analyterix-src/FIPointerAnalysis.h
+analyterix-src/rd-analysis-standalone-example.C
+analyterix-src/RoseRDAnalysis.C
+analyterix-src/RoseRDAnalysis.h
+analyterix-src/TransformationOperators.C
+analyterix-src/TransformationOperators.h
+
+
 RDAnalysis.C
 RDAnalysis.h
 RDAstAttribute.C
