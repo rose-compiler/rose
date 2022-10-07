@@ -3033,11 +3033,15 @@ Grammar::setUpStatements ()
                                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      AdaGenericDecl.setFunctionPrototype ( "HEADER_ADA_GENERIC_DECL", "../Grammar/Statement.code" );
+     // PP(10/14/22) added name to generic decl, b/c the name mangler may get invoked when the
+     //              formal parameter list is processed, and at that time the generified declaration
+     //              has not been processed.
+     AdaGenericDecl.setDataPrototype     ( "SgName", "name", "= \"\"",
+                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AdaGenericDecl.setDataPrototype     ( "SgAdaGenericDefn*", "definition", "= NULL",
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      AdaGenericDecl.setDataPrototype     ( "SgDeclarationStatement*", "declaration", "= NULL",
                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-
      AdaFormalTypeDecl.setFunctionPrototype ( "HEADER_ADA_FORMAL_TYPE_DECL_STATEMENT", "../Grammar/Statement.code" );
      AdaFormalTypeDecl.setDataPrototype ( "SgName", "name", "=\"\"",
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);

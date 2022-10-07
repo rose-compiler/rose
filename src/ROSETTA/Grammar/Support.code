@@ -7693,6 +7693,11 @@ SgSymbolTable::get_name( const SgNode* node) const
              {
                const SgAdaGenericDecl* dcl = isSgAdaGenericDecl(node);
 
+               name = dcl->get_name();
+               break;
+#if OBSOLETE_CODE
+               // PP(10/14/22): SgAdaGenericDecl received name field to support name mangling
+               //               during construction.
                ROSE_ASSERT(dcl->get_declaration() != NULL);
 
                if (isSgAdaPackageSpecDecl(dcl->get_declaration())) {
@@ -7708,6 +7713,7 @@ SgSymbolTable::get_name( const SgNode* node) const
                mprintf ("Malformed input: SgAdaGenericDecl expected PackageSpecDecl or FunctionDeclaration\n");
                ROSE_ASSERT(false);
                break;
+#endif /* OBSOLETE_CODE */
              }
 
           case V_SgAdaGenericInstanceDecl:

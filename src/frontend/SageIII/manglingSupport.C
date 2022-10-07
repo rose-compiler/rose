@@ -394,11 +394,13 @@ mangleQualifiersToString (const SgScopeStatement* scope)
                     ROSE_ASSERT(parent);
 
                     const SgAdaPackageSpecDecl* dcl    = isSgAdaPackageSpecDecl(parent);
-                    // ROSE_ASSERT(dcl);
+                    ROSE_ASSERT(dcl);
 
                     // \todo \revise dcl may not exist for a special, hidden scope
-                    mangled_name = dcl ? dcl->get_name().getString() // or get_mangled_name ??
-                                       : spec->get_mangled_name().getString();
+                    std::string par_scope_name = mangleQualifiersToString(dcl->get_scope());
+                    std::string dcl_name       = dcl->get_name();
+
+                    mangled_name = joinMangledQualifiersToString (par_scope_name,dcl_name);
                     break;
                   }
 
@@ -411,7 +413,10 @@ mangleQualifiersToString (const SgScopeStatement* scope)
                    const SgAdaPackageBodyDecl* dcl    = isSgAdaPackageBodyDecl(parent);
                    ROSE_ASSERT(dcl);
 
-                   mangled_name = dcl->get_name().getString();
+                   std::string par_scope_name = mangleQualifiersToString(dcl->get_scope());
+                   std::string dcl_name       = dcl->get_name();
+
+                   mangled_name = joinMangledQualifiersToString (par_scope_name,dcl_name);
                    break;
                  }
 
@@ -421,14 +426,24 @@ mangleQualifiersToString (const SgScopeStatement* scope)
                     const SgNode*            parent = spec->get_parent();
                     ROSE_ASSERT(parent);
 
+                    std::string dcl_name;
+                    std::string par_scope_name;
+
                     // or get_mangled_name ??
-                    if (const SgAdaTaskSpecDecl* taskspec = isSgAdaTaskSpecDecl(parent))
-                      mangled_name = taskspec->get_name().getString();
+                    if (const SgAdaTaskSpecDecl* taskdcl = isSgAdaTaskSpecDecl(parent))
+                    {
+                      dcl_name = taskdcl->get_name().getString();
+                      par_scope_name = mangleQualifiersToString(taskdcl->get_scope());
+                    }
                     else if (const SgAdaTaskTypeDecl* tasktype = isSgAdaTaskTypeDecl(parent))
-                      mangled_name = tasktype->get_name().getString();
+                    {
+                      dcl_name = tasktype->get_name().getString();
+                      par_scope_name = mangleQualifiersToString(tasktype->get_scope());
+                    }
                     else
                       ROSE_ABORT();
 
+                    mangled_name = joinMangledQualifiersToString (par_scope_name,dcl_name);
                     break;
                   }
 
@@ -439,10 +454,13 @@ mangleQualifiersToString (const SgScopeStatement* scope)
                     ROSE_ASSERT(parent);
 
                     // or get_mangled_name ??
-                    const SgAdaTaskBodyDecl* bodydecl = isSgAdaTaskBodyDecl(parent);
-                    ROSE_ASSERT(bodydecl);
+                    const SgAdaTaskBodyDecl* dcl = isSgAdaTaskBodyDecl(parent);
+                    ROSE_ASSERT(dcl);
 
-                    mangled_name = bodydecl->get_name().getString();
+                    std::string par_scope_name = mangleQualifiersToString(dcl->get_scope());
+                    std::string dcl_name       = dcl->get_name();
+
+                    mangled_name = joinMangledQualifiersToString (par_scope_name,dcl_name);
                     break;
                   }
 
@@ -452,14 +470,24 @@ mangleQualifiersToString (const SgScopeStatement* scope)
                     const SgNode*             parent = spec->get_parent();
                     ROSE_ASSERT(parent);
 
+                    std::string dcl_name;
+                    std::string par_scope_name;
+
                     // or get_mangled_name ??
-                    if (const SgAdaProtectedSpecDecl* pospec = isSgAdaProtectedSpecDecl(parent))
-                      mangled_name = pospec->get_name().getString();
+                    if (const SgAdaProtectedSpecDecl* podcl = isSgAdaProtectedSpecDecl(parent))
+                    {
+                      dcl_name = podcl->get_name().getString();
+                      par_scope_name = mangleQualifiersToString(podcl->get_scope());
+                    }
                     else if (const SgAdaProtectedTypeDecl* potype = isSgAdaProtectedTypeDecl(parent))
-                      mangled_name = potype->get_name().getString();
+                    {
+                      dcl_name = potype->get_name().getString();
+                      par_scope_name = mangleQualifiersToString(potype->get_scope());
+                    }
                     else
                       ROSE_ABORT();
 
+                    mangled_name = joinMangledQualifiersToString (par_scope_name,dcl_name);
                     break;
                   }
 
@@ -470,10 +498,13 @@ mangleQualifiersToString (const SgScopeStatement* scope)
                     ROSE_ASSERT(parent);
 
                     // or get_mangled_name ??
-                    const SgAdaProtectedBodyDecl* bodydecl = isSgAdaProtectedBodyDecl(parent);
-                    ROSE_ASSERT(bodydecl);
+                    const SgAdaProtectedBodyDecl* dcl = isSgAdaProtectedBodyDecl(parent);
+                    ROSE_ASSERT(dcl);
 
-                    mangled_name = bodydecl->get_name().getString();
+                    std::string par_scope_name = mangleQualifiersToString(dcl->get_scope());
+                    std::string dcl_name       = dcl->get_name();
+
+                    mangled_name = joinMangledQualifiersToString (par_scope_name,dcl_name);
                     break;
                   }
 
@@ -483,13 +514,30 @@ mangleQualifiersToString (const SgScopeStatement* scope)
                     const SgAdaGenericDecl*   parent = isSgAdaGenericDecl(defn->get_parent());
                     ROSE_ASSERT(parent);
 
-                    if (const SgFunctionDeclaration* fundec = isSgFunctionDeclaration(parent->get_declaration()))
-                      mangled_name = fundec->get_name().getString();
-                    else if (const SgAdaPackageSpecDecl* pkgdec = isSgAdaPackageSpecDecl(parent->get_declaration()))
-                      mangled_name = pkgdec->get_name().getString();
-                    else
-                      ROSE_ABORT();
+                    mangled_name = parent->get_name();
 
+#if OBSOLETE_CODE
+                    // PP (10/14/22) SgAdaGenericDecl::p_name was added
+                    if (const SgFunctionDeclaration* fundec = isSgFunctionDeclaration(parent->get_declaration()))
+                      mangled_name = fundec->get_name();
+                    else if (const SgAdaPackageSpecDecl* pkgdec = isSgAdaPackageSpecDecl(parent->get_declaration()))
+                      mangled_name = pkgdec->get_name();
+                    else if (parent->get_declaration() == nullptr)
+                    {
+                      // \todo could this replace the two branches before?
+                      SgSymbol* sy = parent->search_for_symbol_from_symbol_table();
+
+                      ASSERT_not_null(sy);
+                      mangled_name = sy->get_name();
+                    }
+                    else
+                    {
+                      std::cerr << typeid(*parent->get_declaration()).name() << std::endl;
+                      ROSE_ABORT();
+                    }
+#endif /* OBSOLETE_CODE */
+
+                    // \todo PP (10/10/22) include parent scopes?
                     break;
                   }
 
