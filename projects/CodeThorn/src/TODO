@@ -62,19 +62,19 @@ remove dead code
 AstTermRepresentation.C
 AstTermRepresentation.h
 
-15)
+15) DONE
 remove dead code
 DataRaceDetection.C
 DataRaceDetection.h
 
+16) DONE
+remove dead code
 ConstraintRepresentation.C
 ConstraintRepresentation.h
-
 EStateAnalysis.C
 EStateAnalysis.h
-
-PointerAnalysisInterface.h
-PointerAnalysisInterface.C
+EStateFactory.h
+EStateFactory.C
 
 rers_latex_bin_assert_only
 rers_latex_ltl

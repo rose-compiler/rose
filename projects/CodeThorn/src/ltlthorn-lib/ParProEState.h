@@ -3,7 +3,9 @@
 
 #include <vector>
 #include <string>
-#include "ConstraintRepresentation.h"
+#include <unordered_map>
+#include "HSetMaintainer.h"
+#include "Label.h"
 
 namespace CodeThorn {
 
@@ -74,13 +76,12 @@ class ParProEStateEqualToPred {
  */
 class ParProEStateSet : public HSetMaintainer<ParProEState,ParProEStateHashFun,ParProEStateEqualToPred> {
   public:
-  ParProEStateSet():HSetMaintainer<ParProEState,ParProEStateHashFun,ParProEStateEqualToPred>(),_constraintSetMaintainer(0){}
-  ParProEStateSet(bool keepStates):HSetMaintainer<ParProEState,ParProEStateHashFun,ParProEStateEqualToPred>(keepStates),
-                                   _constraintSetMaintainer(0){}
+  ParProEStateSet():HSetMaintainer<ParProEState,ParProEStateHashFun,ParProEStateEqualToPred>() {}
+  ParProEStateSet(bool keepStates):HSetMaintainer<ParProEState,ParProEStateHashFun,ParProEStateEqualToPred>(keepStates) {}
   public:
    typedef HSetMaintainer<ParProEState,ParProEStateHashFun,ParProEStateEqualToPred>::ProcessingResult ProcessingResult;
   private:
-   CodeThorn::ConstraintSetMaintainer* _constraintSetMaintainer; 
+
 };
 
 } // namespace CodeThorn

@@ -77,7 +77,6 @@ CODETHORN_HEADER_FILES=\
   CodeThornLib.h \
   CodeThornPasses.h \
   CommandLineOptions.h \
-  ConstraintRepresentation.h \
   ContNodeAttribute.h \
   CounterexampleGenerator.h \
   CPAstAttribute.h \
@@ -100,8 +99,6 @@ CODETHORN_HEADER_FILES=\
   DFTransferFunctions.h \
   DotGraphCfgFrontend.h \
   EState.h \
-  EStateAnalysis.h \
-  EStateFactory.h \
   EStateTransferFunctions.h \
   EStateWorkList.h \
   EStatePriorityWorkList.h \
@@ -200,7 +197,6 @@ CODETHORN_SOURCE_FILES=\
   CodeThornLib.C \
   CodeThornPasses.C \
   CommandLineOptions.C \
-  ConstraintRepresentation.C \
   ContNodeAttribute.C \
   CounterexampleGenerator.C \
   CPAstAttribute.C \
@@ -221,8 +217,6 @@ CODETHORN_SOURCE_FILES=\
   DFTransferFunctions.C \
   DotGraphCfgFrontend.C \
   EState.C \
-  EStateAnalysis.C \
-  EStateFactory.C \
   EStateTransferFunctions.C \
   EStateWorkList.C \
   EStatePriorityWorkList.C \
