@@ -35,8 +35,6 @@
 #include "boost/algorithm/string/regex.hpp"
 #include "boost/regex.hpp"
 
-using namespace std;
-
 struct FormulaPlusResult {
   std::string ltlString;
   bool expectedRes;

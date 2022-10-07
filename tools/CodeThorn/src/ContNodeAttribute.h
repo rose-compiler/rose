@@ -6,22 +6,14 @@
 #include"CTAnalysis.h"
 #include"Flow.h"
 
-using namespace std;
-
 enum BranchReturns {NO, MAYBE, YES};
 
-class ContNodeAttribute: public AstAttribute
-{
-	public: 
-	Label contLabel;		 
-	BranchReturns trueBranchReturns, falseBranchReturns;
-	ContNodeAttribute(Label contLabel, BranchReturns trueBranchReturns, BranchReturns falseBranchReturns): contLabel(contLabel), trueBranchReturns(trueBranchReturns), falseBranchReturns(falseBranchReturns){} 
-	virtual string toString();
-	
-
+class ContNodeAttribute: public AstAttribute {
+public: 
+  CodeThorn::Label contLabel;		 
+  BranchReturns trueBranchReturns, falseBranchReturns;
+  ContNodeAttribute(CodeThorn::Label contLabel, BranchReturns trueBranchReturns, BranchReturns falseBranchReturns): contLabel(contLabel), trueBranchReturns(trueBranchReturns), falseBranchReturns(falseBranchReturns){} 
+  virtual std::string toString();
 };
-
-
-
 
 #endif

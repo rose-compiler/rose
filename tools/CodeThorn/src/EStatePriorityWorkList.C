@@ -4,12 +4,14 @@
 #include "TopologicalSort.h"
 #include <iostream>
 
+using namespace CodeThorn;
+
 namespace CodeThorn {
 bool operator<(const PriorityElement<EStatePtr>& e1, const PriorityElement<EStatePtr>& e2) { return e1.priority<e2.priority; }
 bool operator==(const PriorityElement<EStatePtr>& e1, const PriorityElement<EStatePtr>& e2) { return e1.priority==e2.priority; }
 bool operator!=(const PriorityElement<EStatePtr>& c1, const PriorityElement<EStatePtr>& c2) { return !(c1==c2); }
 }
-  
+
 CodeThorn::EStatePriorityWorkList::EStatePriorityWorkList(TopologicalSort::LabelToPriorityMap map) {
   _labelToPriorityMap=map;
 }

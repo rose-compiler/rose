@@ -17,9 +17,6 @@
 using CodeThorn::CTAnalysis;
 using CodeThorn::PStateSet;
 using CodeThorn::EStateSet;
-using namespace std;
-using namespace CodeThorn;
-using namespace CodeThorn;
 
 class AssertionExtractor {
  public:
@@ -34,7 +31,7 @@ class AssertionExtractor {
   CodeThorn::Labeler* labeler;
   CodeThorn::VariableIdMapping* variableIdMapping;
   CodeThorn::EStateSet* estateSet;
-  vector<std::string> assertions;
+  std::vector<std::string> assertions;
 };
 
 namespace spot {
@@ -61,8 +58,8 @@ class Visualizer {
   void setOptionTransitionGraphDotHtmlNode(bool);
   void setOptionMemorySubGraphs(bool flag);
   bool getOptionMemorySubGraphs();
-  std::string estateToString(EStatePtr estate);
-  std::string estateToDotString(EStatePtr estate);
+  std::string estateToString(CodeThorn::EStatePtr estate);
+  std::string estateToDotString(CodeThorn::EStatePtr estate);
   std::string transitionGraphDotHtmlNode(CodeThorn::Label lab);
   std::string transitionGraphToDot();
   std::string transitionGraphWithIOToDot();
@@ -72,14 +69,14 @@ class Visualizer {
                                     bool uniteOutputFromAbstractStates, bool includeErrorStates, bool allignAbstractStates);
   std::string abstractTransitionGraphToDot(); // groups abstract states into a cluster (currently specific to Rers).
   std::string foldedTransitionGraphToDot();
-  std::string estateIdStringWithTemporaries(EStatePtr estate);
-  std::string visualizeReadWriteAccesses(IndexToReadWriteDataMap& indexToReadWriteDataMap, VariableIdMapping* variableIdMapping, 
+  std::string estateIdStringWithTemporaries(CodeThorn::EStatePtr estate);
+  std::string visualizeReadWriteAccesses(IndexToReadWriteDataMap& indexToReadWriteDataMap, CodeThorn::VariableIdMapping* variableIdMapping, 
 					 ArrayElementAccessDataSet& readWriteRaces, ArrayElementAccessDataSet& writeWriteRaces, 
 					 bool arrayElementsAsPoints, bool useClusters, bool prominentRaceWarnings);
-  std::string dotEStateAddressString(EStatePtr estate);
-  std::string dotEStateMemoryString(EStatePtr estate);
+  std::string dotEStateAddressString(CodeThorn::EStatePtr estate);
+  std::string dotEStateMemoryString(CodeThorn::EStatePtr estate);
   void setMemorySubGraphsOption(bool flag);
-  std::string dotClusterName(EStatePtr estate);
+  std::string dotClusterName(CodeThorn::EStatePtr estate);
  private:
   CodeThorn::Labeler* labeler;
   CodeThorn::VariableIdMapping* variableIdMapping;

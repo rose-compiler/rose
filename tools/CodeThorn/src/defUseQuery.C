@@ -8,9 +8,8 @@
 #include <iterator>
 #include <set>
 
-using namespace CodeThorn;
-using namespace CodeThorn;
 using namespace std;
+using namespace CodeThorn;
 
 /*********************
  * utility functions *

@@ -16,6 +16,7 @@
 #include "CtxAnalysis.h"
 #include "CtxReachabilityLattice.h"
 
+using namespace CodeThorn;
 
 namespace
 {

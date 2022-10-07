@@ -10,24 +10,24 @@ namespace RERS_Problem {
   int* output;
   int* input; //added because the input variable is now transformed into a global variable
   void __empty_rersGlobalVarsCallInit(CodeThorn::CTAnalysis* analyzer, CodeThorn::PState& pstate, int thread_id) {
-    std::cerr<<"Error: rers-binary mode active but empty default implementation selected."<<endl;
+    std::cerr<<"Error: rers-binary mode active but empty default implementation selected."<<std::endl;
     exit(1);
   }
   void __empty_rersGlobalVarsCallReturnInit(CodeThorn::CTAnalysis* analyzer, CodeThorn::PState& pstate, int thread_id) {
-    std::cerr<<"Error: rers-binary mode active but empty default implementation selected."<<endl;
+    std::cerr<<"Error: rers-binary mode active but empty default implementation selected."<<std::endl;
     exit(1);
   }
   void __empty_rersGlobalVarsArrayInit(int numberOfThreads) {
-    std::cerr<<"Error: rers-binary mode active but empty default implementation selected."<<endl;
+    std::cerr<<"Error: rers-binary mode active but empty default implementation selected."<<std::endl;
     exit(1);
   }
 
   void __empty_createGlobalVarAddressMaps(CodeThorn::CTAnalysis* analyzer) {
-    std::cerr<<"Error: rers-binary mode active but empty default implementation selected."<<endl;
+    std::cerr<<"Error: rers-binary mode active but empty default implementation selected."<<std::endl;
     exit(1);
   }
   void __empty_calculate_output(int numberOfThreads) { 
-    std::cerr<<"Error: rers-binary mode active but empty default implementation selected."<<endl;
+    std::cerr<<"Error: rers-binary mode active but empty default implementation selected."<<std::endl;
     exit(1);
   }
 

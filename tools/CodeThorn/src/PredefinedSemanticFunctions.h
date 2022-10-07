@@ -5,8 +5,8 @@
 
 namespace PredefinedSemanticFunctions {
 
-  SingleEvalResult evalFunctionCallMemCpy(EStateTransferFunctions* estf, SgFunctionCallExp* funCall, EStatePtr estate);
-  SingleEvalResult evalFunctionCallStrLen(EStateTransferFunctions* estf, SgFunctionCallExp* funCall, EStatePtr estate);
+  CodeThorn::SingleEvalResult evalFunctionCallMemCpy(CodeThorn::EStateTransferFunctions* estf, SgFunctionCallExp* funCall, CodeThorn::EStatePtr estate);
+  CodeThorn::SingleEvalResult evalFunctionCallStrLen(CodeThorn::EStateTransferFunctions* estf, SgFunctionCallExp* funCall, CodeThorn::EStatePtr estate);
 } // end of namespace PredefinedSemanticFunctions
 
 #endif

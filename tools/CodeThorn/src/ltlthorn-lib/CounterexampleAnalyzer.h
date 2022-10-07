@@ -15,6 +15,7 @@
 
 #include <unordered_set>
 #include <unordered_map>
+#include <list>
 
 //BOOST includes
 #include "boost/lexical_cast.hpp"

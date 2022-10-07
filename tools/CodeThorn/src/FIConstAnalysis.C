@@ -6,6 +6,7 @@
 #include "AstUtility.h"
 #include "AstTerm.h"
 
+using namespace std;
 using namespace CodeThorn;
 
 FIConstAnalysis::FIConstAnalysis(VariableIdMapping* variableIdMapping):
@@ -24,9 +25,9 @@ void FIConstAnalysis::runAnalysis(SgProject* root) {
 void FIConstAnalysis::runAnalysis(SgProject* root, SgFunctionDefinition* mainFunctionRoot) {
   _varConstSetMap=computeVarConstValues(root, mainFunctionRoot, *global_variableIdMapping);
   cout<<"INFO: varConstSetMap: size: "<<_varConstSetMap.size()<<endl;
-  global_variableConstInfo=new VariableConstInfo(global_variableIdMapping,&_varConstSetMap);
+  global_variableConstInfo=new CodeThorn::VariableConstInfo(global_variableIdMapping,&_varConstSetMap);
 }
-VariableConstInfo* FIConstAnalysis::getVariableConstInfo() {
+CodeThorn::VariableConstInfo* FIConstAnalysis::getVariableConstInfo() {
   return global_variableConstInfo;
 }
 
@@ -217,7 +218,7 @@ VariableValueRangeInfo::VariableValueRangeInfo(AbstractValue value) {
   _width=1;
 }
 
-VariableValueRangeInfo VariableConstInfo::createVariableValueRangeInfo(VariableId varId, VarConstSetMap& map) {
+VariableValueRangeInfo CodeThorn::VariableConstInfo::createVariableValueRangeInfo(VariableId varId, VarConstSetMap& map) {
   ROSE_ASSERT(map.size()>0);
   ROSE_ASSERT(varId.isValid());
   set<AbstractValue> intSet=map[varId];
@@ -246,7 +247,7 @@ VariableValueRangeInfo VariableConstInfo::createVariableValueRangeInfo(VariableI
 // returns true if is in set
 // returns false if not in set
 // returns top if set contains top
-AbstractValue VariableConstInfo::isConstInSet(AbstractValue val, set<AbstractValue> valSet) {
+AbstractValue CodeThorn::VariableConstInfo::isConstInSet(AbstractValue val, set<AbstractValue> valSet) {
   if(valSet.find(AbstractValue(AbstractValue(CodeThorn::Top())))!=valSet.end()) {
     return AbstractValue(CodeThorn::Top());
   }
@@ -256,15 +257,15 @@ AbstractValue VariableConstInfo::isConstInSet(AbstractValue val, set<AbstractVal
   return AbstractValue(false);
 }
 
-VariableConstInfo::VariableConstInfo(VariableIdMapping* variableIdMapping, VarConstSetMap* map):_variableIdMapping(variableIdMapping),_map(map) {
+CodeThorn::VariableConstInfo::VariableConstInfo(VariableIdMapping* variableIdMapping, VarConstSetMap* map):_variableIdMapping(variableIdMapping),_map(map) {
 }
 
-int VariableConstInfo::arraySize(VariableId varId) {
+int CodeThorn::VariableConstInfo::arraySize(VariableId varId) {
   VariableValueRangeInfo vri=createVariableValueRangeInfo(varId,*_map);
   return vri.arraySize();
 }
 
-bool VariableConstInfo::haveEmptyIntersection(VariableId varId1,VariableId varId2) {
+bool CodeThorn::VariableConstInfo::haveEmptyIntersection(VariableId varId1,VariableId varId2) {
   set<AbstractValue> var1Set=(*_map)[varId1];
   set<AbstractValue> var2Set=(*_map)[varId2];
   for(set<AbstractValue>::iterator i=var1Set.begin();
@@ -277,40 +278,40 @@ bool VariableConstInfo::haveEmptyIntersection(VariableId varId1,VariableId varId
   return true;
 }
 
-bool VariableConstInfo::isAny(VariableId varId) {
+bool CodeThorn::VariableConstInfo::isAny(VariableId varId) {
   return createVariableValueRangeInfo(varId,*_map).isTop();
 }
-bool VariableConstInfo::isUniqueConst(VariableId varId) {
+bool CodeThorn::VariableConstInfo::isUniqueConst(VariableId varId) {
   ROSE_ASSERT(_map);
   VariableValueRangeInfo vri=createVariableValueRangeInfo(varId,*_map);
   return !vri.isTop() && !vri.width().isBot() && !vri.width().isTop() && (vri.width().operatorEq(AbstractValue(1))).isTrue();
 }
-bool VariableConstInfo::isMultiConst(VariableId varId) {
+bool CodeThorn::VariableConstInfo::isMultiConst(VariableId varId) {
   VariableValueRangeInfo vri=createVariableValueRangeInfo(varId,*_map);
   return !vri.isTop() && !vri.width().isBot() && !vri.width().isTop() && (vri.width().operatorMore(AbstractValue(1))).isTrue();
 }
-size_t VariableConstInfo::width(VariableId varId) {
+size_t CodeThorn::VariableConstInfo::width(VariableId varId) {
   AbstractValue width=createVariableValueRangeInfo(varId,*_map).width();
   if(!width.isConstInt())
     return ((size_t)INT_MAX)-INT_MIN;
   else
     return width.getIntValue();
 }
-int VariableConstInfo::minConst(VariableId varId) {
+int CodeThorn::VariableConstInfo::minConst(VariableId varId) {
   VariableValueRangeInfo vri=createVariableValueRangeInfo(varId,*_map);
   assert(!(vri.isTop()||vri.isBot()));
   return vri.minIntValue();
 }
-int VariableConstInfo::maxConst(VariableId varId) {
+int CodeThorn::VariableConstInfo::maxConst(VariableId varId) {
   VariableValueRangeInfo vri=createVariableValueRangeInfo(varId,*_map);
   assert(!(vri.isTop()||vri.isBot()));
   return vri.maxIntValue();
 }
-bool VariableConstInfo::isInConstSet(VariableId varId, int varVal) {
+bool CodeThorn::VariableConstInfo::isInConstSet(VariableId varId, int varVal) {
   //VariableValueRangeInfo vri=createVariableValueRangeInfo(varId,*_map);
   return isConstInSet(AbstractValue(varVal),(*_map)[varId]).isTrue();
 }
-int VariableConstInfo::uniqueConst(VariableId varId) {
+int CodeThorn::VariableConstInfo::uniqueConst(VariableId varId) {
   VariableValueRangeInfo vri=createVariableValueRangeInfo(varId,*_map);
   assert(!vri.isTop() && !vri.isBot() && vri.minIntValue()==vri.maxIntValue());
   return vri.minIntValue();
@@ -667,7 +668,7 @@ void FIConstAnalysis::attachAstAttributes(Labeler* labeler, string attributeName
   for(Labeler::iterator i=labeler->begin();i!=labeler->end();++i) {
     SgNode* node=labeler->getNode(*i);
     ROSE_ASSERT(node);
-    node->setAttribute(attributeName, new CPAstAttribute(global_variableConstInfo,node,global_variableIdMapping));
+    node->setAttribute(attributeName, new CodeThorn::CPAstAttribute(global_variableConstInfo,node,global_variableIdMapping));
   }
 }
 
@@ -839,9 +840,9 @@ void FIConstAnalysis::printResult(VariableIdMapping& variableIdMapping, VarConst
     }
     setstr<<"}";
     cout<<variableName<<"="<<setstr.str()<<";";
-    cout<<"Range:"<<VariableConstInfo::createVariableValueRangeInfo(varId,map).toString();
-    cout<<" width: "<<VariableConstInfo::createVariableValueRangeInfo(varId,map).width().toString();
-    cout<<" top: "<<VariableConstInfo::createVariableValueRangeInfo(varId,map).isTop();
+    cout<<"Range:"<<CodeThorn::VariableConstInfo::createVariableValueRangeInfo(varId,map).toString();
+    cout<<" width: "<<CodeThorn::VariableConstInfo::createVariableValueRangeInfo(varId,map).width().toString();
+    cout<<" top: "<<CodeThorn::VariableConstInfo::createVariableValueRangeInfo(varId,map).isTop();
     cout<<endl;
     cout<<" isAny:"<<vci.isAny(varId)
         <<" isUniqueConst:"<<vci.isUniqueConst(varId)

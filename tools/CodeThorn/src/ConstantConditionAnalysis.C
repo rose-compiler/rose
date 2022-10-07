@@ -2,6 +2,8 @@
 #include "sage3basic.h"
 #include "ConstantConditionAnalysis.h"
 
+using namespace CodeThorn;
+
 void ConstantConditionAnalysis::trueFalseEdgeEvaluation(Edge edge, SingleEvalResult& evalResult , EStatePtr estate) {
   BoolLattice newVal;
   if(evalResult.isTrue())

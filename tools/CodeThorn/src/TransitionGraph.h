@@ -44,10 +44,6 @@ namespace CodeThorn {
   typedef std::set<const Transition*> TransitionPtrSet;
   typedef std::set<EStatePtr> EStatePtrSet;
   
-  /*! 
-   * \author Markus Schordan
-   * \date 2012.
-   */
   class CTAnalysis;
   class TransitionGraph : public HSetMaintainer<Transition,TransitionHashFun,TransitionEqualToPred> {
   public:

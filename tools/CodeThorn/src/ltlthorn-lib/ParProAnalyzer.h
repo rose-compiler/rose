@@ -22,9 +22,6 @@
 #include "boost/algorithm/string/trim.hpp"
 #include "boost/algorithm/string/regex.hpp"
 
-using namespace CodeThorn;
-using namespace CodeThorn;
-
 namespace CodeThorn {
 
   typedef std::list<const ParProEState*> ParProWorklist;

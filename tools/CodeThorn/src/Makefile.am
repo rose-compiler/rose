@@ -15,22 +15,12 @@ noinst_PROGRAMS = addressTakenAnalysis cldemo matcher_demo
 
 CLEANFILES =
 
-if USE_Z3
-Z3_INCLUDES = -I$(Z3_INCLUDE_PATH)
-Z3_LIB_INCLUDES = -L$(Z3_LIBRARY_PATH)
-Z3_LINK = -lz3
-else
-Z3_INCLUDES =
-Z3_LIB_INCLUDES =
-Z3_LINK =
-endif
-
 if ROSE_WITH_SPOT
 AM_LDFLAGS = $(ROSE_LIBS) $(LIBS_WITH_RPATH) -fopenmp -L$(SPOT_LIBRARY_PATH)
-AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/tools/Codethorn/src -I$(SPOT_INCLUDE_PATH)/spot -I$(SPOT_INCLUDE_PATH) $(Z3_INCLUDES) -g -rdynamic
+AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/tools/Codethorn/src -I$(SPOT_INCLUDE_PATH)/spot -I$(SPOT_INCLUDE_PATH) -g -rdynamic
 else
-AM_LDFLAGS = $(ROSE_LIBS) $(LIBS_WITH_RPATH) -fopenmp $(Z3_LIB_INCLUDES)
-AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/tools/Codethorn/src $(Z3_INCLUDES) -g -rdynamic
+AM_LDFLAGS = $(ROSE_LIBS) $(LIBS_WITH_RPATH) -fopenmp
+AM_CPPFLAGS = $(ROSE_INCLUDES) -I$(top_srcdir)/tools/Codethorn/src -g -rdynamic
 endif
 
 MYDATE = $(shell date +%Y_%m_%d)
@@ -313,10 +303,6 @@ libltlthorn_la_CXXFLAGS = -fopenmp -Wall -O3
 
 LTLTHORN_SOLO_HEADER_FILES=
 LTLTHORN_HEADER_FILES=\
-  z3-prover-connection/ReachabilityAnalyzerZ3.h \
-  z3-prover-connection/SSAGenerator.h \
-  z3-prover-connection/PhiAttribute.h \
-  z3-prover-connection/PhiStatement.h \
   ltlthorn-lib/CounterexampleAnalyzer.h \
   ltlthorn-lib/LtsminConnection.h \
   ltlthorn-lib/ParProAutomataGenerator.h \
@@ -341,10 +327,6 @@ LTLTHORN_HEADER_FILES=\
   ltlthorn-lib/SpotTgba.h
 
 LTLTHORN_SOURCE_FILES=\
-  z3-prover-connection/ReachabilityAnalyzerZ3.C \
-  z3-prover-connection/SSAGenerator.C \
-  z3-prover-connection/PhiAttribute.C \
-  z3-prover-connection/PhiStatement.C \
   ltlthorn-lib/CounterexampleAnalyzer.C \
   ltlthorn-lib/LtsminConnection.C \
   ltlthorn-lib/ParProAutomataGenerator.C \
@@ -395,8 +377,8 @@ codethorn_DEPENDENCIES=libcodethorn.la libltlthorn.la
 
 if ROSE_WITH_SPOT
 #spot and bdd need to be linked last with gcc 5.4
-codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lltlthorn $(Z3_LINK) -lspot -lbdd
-codethorn_LDFLAGS = -L$(SPOT_LIBRARY_PATH) $(Z3_LIB_INCLUDES)
+codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lltlthorn -lspot -lbdd
+codethorn_LDFLAGS = -L$(SPOT_LIBRARY_PATH)
 else
 codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lltlthorn
 endif
@@ -431,8 +413,8 @@ ltlthorn_DEPENDENCIES=libcodethorn.la libltlthorn.la
 
 if ROSE_WITH_SPOT
 #spot and bdd need to be linked last with gcc 5.4
-ltlthorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lltlthorn $(Z3_LINK) -lspot -lbdd
-ltlthorn_LDFLAGS = -L$(SPOT_LIBRARY_PATH) $(Z3_LIB_INCLUDES)
+ltlthorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lltlthorn -lspot -lbdd
+ltlthorn_LDFLAGS = -L$(SPOT_LIBRARY_PATH)
 else
 ltlthorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lltlthorn
 endif
@@ -468,8 +450,8 @@ thorn1_DEPENDENCIES=libcodethorn.la libltlthorn.la
 
 if ROSE_WITH_SPOT
 #spot and bdd need to be linked last with gcc 5.4
-thorn1_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lltlthorn $(Z3_LINK) -lspot -lbdd
-thorn1_LDFLAGS = -L$(SPOT_LIBRARY_PATH) $(Z3_LIB_INCLUDES)
+thorn1_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lltlthorn -lspot -lbdd
+thorn1_LDFLAGS = -L$(SPOT_LIBRARY_PATH)
 else
 thorn1_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lltlthorn
 endif

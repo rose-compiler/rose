@@ -28,6 +28,9 @@
 namespace si  = SageInterface;
 namespace scl = Sawyer::CommandLine;
 
+using namespace std;
+using namespace CodeThorn;
+
 const std::string thorn4version = "0.9.0";
 
 // required for some options in codethorn library (until removed)

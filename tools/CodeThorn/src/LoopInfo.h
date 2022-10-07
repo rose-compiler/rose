@@ -15,13 +15,13 @@ struct LoopInfo {
   SgExpression* condExpr;
   bool isOmpCanonical;
   IterVarType iterationVarType;
-  static CodeThorn::VariableId iterationVariableId(SgForStatement* forStmt, VariableIdMapping* variableIdMapping);
+  static CodeThorn::VariableId iterationVariableId(SgForStatement* forStmt, CodeThorn::VariableIdMapping* variableIdMapping);
   CodeThorn::VariableId iterationVarId;
   CodeThorn::VariableIdSet outerLoopsVarIds;
   CodeThorn::LabelSet loopLabelSet;
   void computeOuterLoopsVarIds(CodeThorn::VariableIdMapping* variableIdMapping);
   void computeLoopLabelSet(CodeThorn::Labeler* labeler);
-  bool isInAssociatedLoop(EStatePtr estate);
+  bool isInAssociatedLoop(CodeThorn::EStatePtr estate);
   std::string toString();
 };
 

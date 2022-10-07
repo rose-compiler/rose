@@ -23,9 +23,6 @@
 #include "boost/algorithm/string/trim.hpp"
 #include "boost/algorithm/string/regex.hpp"
 
-using namespace CodeThorn;
-using namespace CodeThorn;
-
 namespace CodeThorn {
 
   typedef std::pair<std::vector<Flow*>, std::unordered_map<int, int> > SelectedCfgsAndIdMap;
@@ -82,7 +79,7 @@ namespace CodeThorn {
     PropertyValueTable* ltlAnalysis(ParallelSystem system);
     std::set<int> randomSetNonNegativeInts(int size, int maxInt);
     void recalculateNumVerifiedFalsified();
-    void addToVisOutput(ParallelSystem& system, vector<Flow*>& dotGraphs, NumberGenerator& numGen);
+    void addToVisOutput(ParallelSystem& system, std::vector<Flow*>& dotGraphs, NumberGenerator& numGen);
 
     ParProLtlMiner _parProLtlMiner;
 

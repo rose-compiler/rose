@@ -1,4 +1,3 @@
-#include "rose_config.h"
 #ifdef HAVE_SPOT
 
 #ifndef PAR_PRO_SPOT_TGBA_HH
@@ -19,8 +18,6 @@
 #include "bdd.h"
 #include "tgba/state.hh"
 #include "ltlast/atomic_prop.hh"
-
-using namespace std;
 
 namespace CodeThorn {
   /*! 

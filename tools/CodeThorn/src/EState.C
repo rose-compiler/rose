@@ -1,4 +1,3 @@
-
 #include "sage3basic.h"
 #include "EState.h"
 

@@ -1,5 +1,6 @@
 
 #include "spotdriver.h"
+using namespace std;
 
 int main(int argc, char* argv[]) {
   std::string stg_filename;

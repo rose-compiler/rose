@@ -27,9 +27,6 @@
 #include "boost/regex.hpp"
 #include "boost/lexical_cast.hpp"
 
-using namespace CodeThorn;
-using namespace std;
-
 namespace CodeThorn {
 
   /*! 
@@ -42,37 +39,37 @@ namespace CodeThorn {
     public:
       LtsminConnection(): _startTransitionAnnotation("") {};
       //constructors with automatic initialization
-      LtsminConnection(string ltlFormulasFile):
+      LtsminConnection(std::string ltlFormulasFile):
         _startTransitionAnnotation("") { 
 	init(ltlFormulasFile);
       };
       LtsminConnection(EdgeAnnotationMap& annotationMap): 
         _annotationMap(annotationMap),
         _startTransitionAnnotation("") {};
-      LtsminConnection(EdgeAnnotationMap& annotationMap, string ltlFormulasFile): 
+      LtsminConnection(EdgeAnnotationMap& annotationMap, std::string ltlFormulasFile): 
         _annotationMap(annotationMap),
         _startTransitionAnnotation("") {
 	init(ltlFormulasFile);
       };
-      void init(string ltlFormulasFile);
-      string ltlFormula2LtsminSyntax(string formula);
+      void init(std::string ltlFormulasFile);
+      std::string ltlFormula2LtsminSyntax(std::string formula);
       // model checking all LTL properties in "_ltlResults" on "processes"
-      PropertyValueTable* checkLtlPropertiesParPro(map<int, Flow*> processes);
+    PropertyValueTable* checkLtlPropertiesParPro(std::map<int, CodeThorn::Flow*> processes);
       // model checking of "ltlProperty" on "processes"
-      PropertyValue checkPropertyParPro(string ltlProperty, std::map<int, Flow*> processes);
+    PropertyValue checkPropertyParPro(std::string ltlProperty, std::map<int, CodeThorn::Flow*> processes);
 
     private:
-      bool isMustTransition(Edge e, map<int, Flow*>& processes, set<string> mayOnlyCommunication);
-      bool isMustTransition(Edge e, map<int, Flow*>& processes);
-      void loadFormulae(istream& input);
-      string& parseWeakUntil(std::string& ltl_string);
-      pair<string, string> generateDotGraphs(map<int, Flow*> processes);
-      map<int, Flow*> componentAbstraction(map<int, Flow*> processes, ComponentApproximation compAbstraction);
+      bool isMustTransition(Edge e, std::map<int, CodeThorn::Flow*>& processes, std::set<std::string> mayOnlyCommunication);
+      bool isMustTransition(Edge e, std::map<int, CodeThorn::Flow*>& processes);
+      void loadFormulae(std::istream& input);
+      std::string& parseWeakUntil(std::string& ltl_string);
+      std::pair<std::string, std::string> generateDotGraphs(std::map<int, CodeThorn::Flow*> processes);
+      std::map<int, CodeThorn::Flow*> componentAbstraction(std::map<int, CodeThorn::Flow*> processes, ComponentApproximation compAbstraction);
 
       EdgeAnnotationMap _annotationMap;
-      string _startTransitionAnnotation;
+      std::string _startTransitionAnnotation;
       PropertyValueTable* _ltlResults;
-    std::unordered_map<std::set<int> , pair<std::string, std::string>, boost::hash<std::set<int>> > _generatedDotFiles;
+    std::unordered_map<std::set<int> , std::pair<std::string, std::string>, boost::hash<std::set<int>> > _generatedDotFiles;
   };
 };
 #endif

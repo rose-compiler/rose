@@ -2,6 +2,9 @@
 #include "sage3basic.h"
 #include "CodeThornPasses.h"
 #include <iostream>
+
+using namespace std;
+using namespace CodeThorn;
 using namespace CodeThorn::CodeThornLib;
 
 namespace CodeThorn {

@@ -8,7 +8,6 @@
 #include <stdlib.h>
 
 using namespace CodeThorn;
-using namespace CodeThorn;
 using namespace std;
 
 void LtsminConnection::init(string ltlFormulasFile) {

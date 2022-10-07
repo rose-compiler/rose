@@ -10,7 +10,6 @@
 // required for Parse::* functions
 #include "Miscellaneous2.h"
 
-#include "rose_config.h"
 #ifdef HAVE_SPOT
 #include "SpotMiscellaneous.h"
 #endif

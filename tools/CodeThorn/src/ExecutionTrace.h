@@ -1,18 +1,12 @@
 #ifndef EXECUTION_TRACE_H
 #define EXECUTION_TRACE_H
 
+#include "sage3basic.h"
 #include "EState.h"
 
 namespace CodeThorn {
 
   class EState;
-
-/**
- * @brief An ordered list of EStates.
- * 
- * \author Joshua Asplund
- * \date June 2017
- */
   class ExecutionTrace:
     public std::list<EStatePtr> {
   public:
@@ -25,23 +19,12 @@ namespace CodeThorn {
 }
 
 // implementation of template function
-#include "sage3basic.h"
-#include "ExecutionTrace.h"
-#include "EState.h"
-
-using namespace CodeThorn;
-using namespace std;
-
-/*! 
- * \author Marc Jasper
- * \date 2017.
- */
 template <class T>
-T ExecutionTrace::onlyStatesSatisfyingTemplate(std::function<bool(EStatePtr)> predicate) const {
+T CodeThorn::ExecutionTrace::onlyStatesSatisfyingTemplate(std::function<bool(EStatePtr)> predicate) const {
   T newTrace;
-  ExecutionTrace::const_iterator begin = this->begin();
-  ExecutionTrace::const_iterator end = this->end();
-  for (ExecutionTrace::const_iterator i = begin; i != end; i++ ) {
+  CodeThorn::ExecutionTrace::const_iterator begin = this->begin();
+  CodeThorn::ExecutionTrace::const_iterator end = this->end();
+  for (CodeThorn::ExecutionTrace::const_iterator i = begin; i != end; i++ ) {
     if (predicate(*i)) {
       newTrace.push_back(*i);
     }

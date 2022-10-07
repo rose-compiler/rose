@@ -1,10 +1,6 @@
 #ifndef ANALYZER_H
 #define ANALYZER_H
 
-/*************************************************************
- * Author   : Markus Schordan                                *
- *************************************************************/
-
 #include <iostream>
 #include <fstream>
 #include <set>
@@ -15,7 +11,6 @@
 #include <utility>
 
 #include <omp.h>
-
 #include <unordered_set>
 #include <unordered_map>
 
@@ -69,19 +64,12 @@ namespace CodeThorn {
 
   struct hash_pair {
     template <class T1, class T2>
-      size_t operator()(const pair<T1, T2>& p) const
-    {
-      auto hash1 = hash<T1>{}(p.first);
-      auto hash2 = hash<T2>{}(p.second);
+    size_t operator()(const std::pair<T1, T2>& p) const {
+      auto hash1 = std::hash<T1>{}(p.first);
+      auto hash2 = std::hash<T2>{}(p.second);
       return hash1 ^ hash2;
     }
   };
-
-  /*!
-   * \author Markus Schordan
-   * \date 2012.
-   */
-
 
   class CTAnalysis {
     friend class Solver12;
@@ -133,8 +121,8 @@ namespace CodeThorn {
 
     // thread save; only prints if option status messages is enabled.
     void printStatusMessage(bool);
-    void printStatusMessage(string s);
-    void printStatusMessageLine(string s);
+    void printStatusMessage(std::string s);
+    void printStatusMessageLine(std::string s);
 
     // adds attributes for dot generation of AST with labels
     void generateAstNodeInfo(SgNode* node);
@@ -208,8 +196,8 @@ namespace CodeThorn {
     int getAbstractionMode() { return _abstractionMode; }
     void setInterpreterMode(CodeThorn::InterpreterMode mode);
     CodeThorn::InterpreterMode getInterpreterMode();
-    void setInterpreterModeOutputFileName(string);
-    string getInterpreterModeOutputFileName();
+    void setInterpreterModeOutputFileName(std::string);
+    std::string getInterpreterModeOutputFileName();
 
     bool getPrintDetectedViolations();
     void setPrintDetectedViolations(bool flag);
@@ -228,9 +216,9 @@ namespace CodeThorn {
     void setNumberOfThreadsToUse(int n) { _numberOfThreadsToUse=n; }
     int getNumberOfThreadsToUse() { return _numberOfThreadsToUse; }
     void setTreatStdErrLikeFailedAssert(bool x) { _treatStdErrLikeFailedAssert=x; }
-    void setCompoundIncVarsSet(set<AbstractValue> ciVars);
-    void setSmallActivityVarsSet(set<AbstractValue> ciVars);
-    void setAssertCondVarsSet(set<AbstractValue> acVars);
+    void setCompoundIncVarsSet(std::set<AbstractValue> ciVars);
+    void setSmallActivityVarsSet(std::set<AbstractValue> ciVars);
+    void setAssertCondVarsSet(std::set<AbstractValue> acVars);
     /** allows to enable context sensitive analysis. Currently only
         call strings of arbitrary length are supported (recursion is
         not supported yet) */
@@ -255,8 +243,8 @@ namespace CodeThorn {
     /* command line options provided to analyzed application
        if set they are used to initialize the initial state with argv and argc domain abstractions
     */
-    void setCommandLineOptions(vector<string> clOptions);
-    vector<string> getCommandLineOptions();
+    void setCommandLineOptions(std::vector<std::string> clOptions);
+    std::vector<std::string> getCommandLineOptions();
     SgNode* getStartFunRoot();
     // exists with error message if any violation is detected
     void ensureToplogicSortFlowConsistency();
@@ -285,7 +273,7 @@ namespace CodeThorn {
     bool isIncompleteSTGReady();
     bool isPrecise();
 
-    void reduceStg(function<bool(EStatePtr)> predicate);
+    void reduceStg(std::function<bool(EStatePtr)> predicate);
 
     void initializeAbstractStates(PStatePtr initialPStateStored);
     EStatePtr getAbstractState(CodeThorn::Label lab, CallString cs);
@@ -297,7 +285,7 @@ namespace CodeThorn {
     bool getOptionOutputWarnings();
 
     // first: list of new states (worklist), second: set of found existing states
-    typedef pair<EStateWorkList,std::set<EStatePtr> > SubSolverResultType;
+    typedef std::pair<EStateWorkList,std::set<EStatePtr> > SubSolverResultType;
     SubSolverResultType subSolver(EStatePtr currentEStatePtr);
     std::string typeSizeMappingToString();
     void setModeLTLDriven(bool ltlDriven) { transitionGraph.setModeLTLDriven(ltlDriven); }
@@ -400,10 +388,10 @@ namespace CodeThorn {
     // to be moved to IOAnalyzer
     std::list<std::pair<SgLabelStatement*,SgNode*> > _assertNodes;
     GlobalTopifyMode _globalTopifyMode;
-    set<AbstractValue> _compoundIncVarsSet;
-    set<AbstractValue> _smallActivityVarsSet;
-    set<AbstractValue> _assertCondVarsSet;
-    set<int> _inputVarValues;
+    std::set<AbstractValue> _compoundIncVarsSet;
+    std::set<AbstractValue> _smallActivityVarsSet;
+    std::set<AbstractValue> _assertCondVarsSet;
+    std::set<int> _inputVarValues;
     LtlRersMapping _ltlRersMapping; // only used for LTL verification
     std::list<int> _inputSequence;
     std::list<int>::iterator _inputSequenceIterator;
@@ -461,15 +449,15 @@ namespace CodeThorn {
     bool _stdFunctionSemantics=true;
 
     bool _svCompFunctionSemantics;
-    string _externalErrorFunctionName; // the call of this function causes termination of analysis
-    string _externalNonDetIntFunctionName;
-    string _externalNonDetLongFunctionName;
-    string _externalExitFunctionName;
+    std::string _externalErrorFunctionName; // the call of this function causes termination of analysis
+    std::string _externalNonDetIntFunctionName;
+    std::string _externalNonDetLongFunctionName;
+    std::string _externalExitFunctionName;
 
     TimeMeasurement _analysisTimer;
     bool _timerRunning = false;
 
-    std::vector<string> _commandLineOptions;
+    std::vector<std::string> _commandLineOptions;
     bool _contextSensitiveAnalysis;
     // this is used in abstract mode to hold a pointer to the
     // *current* summary state (more than one may be created to allow

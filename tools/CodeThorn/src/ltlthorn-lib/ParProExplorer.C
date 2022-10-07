@@ -1,6 +1,5 @@
 // Author: Marc Jasper, 2016.
 
-#include "rose_config.h"
 #include "ParProExplorer.h"
 #include "LtsminConnection.h"
 #include "ParProAutomataGenerator.h"
