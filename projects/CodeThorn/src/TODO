@@ -33,7 +33,8 @@ analyterix-src/RoseRDAnalysis.h
 analyterix-src/TransformationOperators.C
 analyterix-src/TransformationOperators.h
 
-12) remove dead code
+12) DONE
+remove dead code
 RDAnalysis.C
 RDAnalysis.h
 RDAstAttribute.C
@@ -45,9 +46,17 @@ RDTransferFunctions.h
 UDAstAttribute.C
 UDAstAttribute.h
 
-
+13)
+remove dead code
 LVAnalysis.C
 LVAnalysis.h
+LVAstAttribute.C
+LVAstAttribute.h
+LVAstAttributeInterface.C
+LVAstAttributeInterface.h
+LVLattice.C
+LVLattice.h
+
 
 AstTermRepresentation.C
 AstTermRepresentation.h

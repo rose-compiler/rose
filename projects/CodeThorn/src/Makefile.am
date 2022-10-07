@@ -127,11 +127,6 @@ CODETHORN_HEADER_FILES=\
   LanguageRestrictor.h \
   Lattice.h \
   LoopInfo.h \
-  LVAnalysis.h \
-  LVAstAttribute.h \
-  LVAstAttributeInterface.h \
-  LVLattice.h \
-  LVTransferFunctions.h \
   Miscellaneous2.h \
   Miscellaneous.h \
   Normalization.h \
@@ -255,11 +250,6 @@ CODETHORN_SOURCE_FILES=\
   LTLOptions.C \
   ParProOptions.C \
   LTLRersMapping.C \
-  LVAnalysis.C \
-  LVAstAttribute.C \
-  LVAstAttributeInterface.C \
-  LVLattice.C \
-  LVTransferFunctions.C \
   Miscellaneous2.C \
   Miscellaneous.C \
   Normalization.C \
