@@ -3085,10 +3085,21 @@ bool ClangToSageTranslator::VisitFloatingLiteral(clang::FloatingLiteral * floati
 #endif
 
     unsigned int precision =  llvm::APFloat::semanticsPrecision(floating_literal->getValue().getSemantics());
+    llvm::APFloat llvmFloat = floating_literal->getValue();
+    std::string str;
+    llvm::raw_string_ostream os(str);
+    llvmFloat.print(os);
+#if DEBUG_VISIT_STMT
+    std::cerr << "ClangToSageTranslator::VisitFloatingLiteral precision = " << precision  << std::endl;
+    std::cerr << "ClangToSageTranslator::VisitFloatingLiteral value in string = " << os.str()  << std::endl;
+#endif
+
     if (precision == 24)
         *node = SageBuilder::buildFloatVal(floating_literal->getValue().convertToFloat());
     else if (precision == 53)
         *node = SageBuilder::buildDoubleVal(floating_literal->getValue().convertToDouble());
+    else if (precision == 64) 
+        *node = SageBuilder::buildLongDoubleVal(std::stold(os.str()));
     else
         ROSE_ASSERT(!"In VisitFloatingLiteral: Unsupported float size");
 
