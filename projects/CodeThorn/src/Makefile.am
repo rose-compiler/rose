@@ -7,7 +7,7 @@ COUNTEREXAMPLES = counterexamples/ltl2haskell.sh counterexamples/Makefile counte
 EXTRA_DIST = Doxyfile $(TESTS) $(COUNTEREXAMPLES)
 
 #
-bin_PROGRAMS = codethorn thorn1 thorn2 thorn3 thorn4 ltlthorn woodpecker analyterix addressTakenAnalysis cldemo
+bin_PROGRAMS = codethorn thorn1 thorn2 thorn3 thorn4 ltlthorn woodpecker addressTakenAnalysis cldemo
 
 # matcher_demo matcher astinfo cldemo
 noinst_PROGRAMS = addressTakenAnalysis cldemo matcher_demo
@@ -69,7 +69,6 @@ CODETHORN_HEADER_FILES=\
   CTAnalysis.h \
   ArrayElementAccessData.h \
   AstNodeInfo.h \
-  AstTermRepresentation.h \
   BoolLattice.h \
   CallString.h \
   CFAnalysis.h \
@@ -78,11 +77,9 @@ CODETHORN_HEADER_FILES=\
   CodeThornLib.h \
   CodeThornPasses.h \
   CommandLineOptions.h \
-  ConstraintRepresentation.h \
   ContNodeAttribute.h \
   CounterexampleGenerator.h \
   CPAstAttribute.h \
-  CppExprEvaluator.h \
   CppLabeler.h \
   CppStdUtilities.h \
   CTIOLabeler.h \
@@ -92,7 +89,6 @@ CODETHORN_HEADER_FILES=\
   CtxSolver0.h \
   CtxUnfoldedAnalysis.h \
   DataDependenceVisualizer.h \
-  DataRaceDetection.h \
   defUseQuery.h \
   DFAbstractSolver.h \
   DFAnalysisBaseWithoutData.h \
@@ -103,8 +99,6 @@ CODETHORN_HEADER_FILES=\
   DFTransferFunctions.h \
   DotGraphCfgFrontend.h \
   EState.h \
-  EStateAnalysis.h \
-  EStateFactory.h \
   EStateTransferFunctions.h \
   EStateWorkList.h \
   EStatePriorityWorkList.h \
@@ -121,12 +115,6 @@ CODETHORN_HEADER_FILES=\
   GeneralPriorityWorkList.C \
   InputOutput.h \
   InternalChecks.h \
-  IntervalAnalysis.h \
-  IntervalAstAttribute.h \
-  IntervalAstAttributeInterface.h \
-  IntervalPropertyStateFactory.h \
-  IntervalPropertyState.h \
-  IntervalTransferFunctions.h \
   IOAnalyzer.h \
   IOSequenceGenerator.h \
   IOSolver.h \
@@ -134,11 +122,6 @@ CODETHORN_HEADER_FILES=\
   LanguageRestrictor.h \
   Lattice.h \
   LoopInfo.h \
-  LVAnalysis.h \
-  LVAstAttribute.h \
-  LVAstAttributeInterface.h \
-  LVLattice.h \
-  LVTransferFunctions.h \
   Miscellaneous2.h \
   Miscellaneous.h \
   Normalization.h \
@@ -166,10 +149,6 @@ CODETHORN_HEADER_FILES=\
   PropertyStateFactory.h \
   PropertyValueTable.h \
   PState.h \
-  RDAnalysis.h \
-  RDAstAttribute.h \
-  RDLattice.h \
-  RDTransferFunctions.h \
   ReachabilityAnalysis.h \
   ReadWriteListener.h \
   ReadWriteTraceAnalysis.h \
@@ -194,7 +173,6 @@ CODETHORN_HEADER_FILES=\
   TransitionGraph.h \
   TransitionGraphReducer.h \
   TypeSizeMapping.h \
-  UDAstAttribute.h \
   VariableIdUtils.h \
   VariableIdMappingExtended.h \
   VariableValueMonitor.h \
@@ -211,7 +189,6 @@ CODETHORN_SOURCE_FILES=\
   CTAnalysis.C \
   ArrayElementAccessData.C \
   AstNodeInfo.C \
-  AstTermRepresentation.C \
   BoolLattice.C \
   CallString.C \
   CFAnalysis.C \
@@ -220,11 +197,9 @@ CODETHORN_SOURCE_FILES=\
   CodeThornLib.C \
   CodeThornPasses.C \
   CommandLineOptions.C \
-  ConstraintRepresentation.C \
   ContNodeAttribute.C \
   CounterexampleGenerator.C \
   CPAstAttribute.C \
-  CppExprEvaluator.C \
   CppLabeler.C \
   CppStdUtilities.C \
   CTIOLabeler.C \
@@ -235,7 +210,6 @@ CODETHORN_SOURCE_FILES=\
   CtxUnfoldedAnalysis.C \
   DataDependenceVisualizer.C \
   defUseQuery.C \
-  DataRaceDetection.C \
   DFAnalysisBaseWithoutData.C \
   DFAnalysisBase.C \
   CSDFAnalysisBase.C \
@@ -243,8 +217,6 @@ CODETHORN_SOURCE_FILES=\
   DFTransferFunctions.C \
   DotGraphCfgFrontend.C \
   EState.C \
-  EStateAnalysis.C \
-  EStateFactory.C \
   EStateTransferFunctions.C \
   EStateWorkList.C \
   EStatePriorityWorkList.C \
@@ -257,12 +229,6 @@ CODETHORN_SOURCE_FILES=\
   FunctionIdMapping.C \
   InputOutput.C \
   InternalChecks.C \
-  IntervalAnalysis.C \
-  IntervalAstAttribute.C \
-  IntervalAstAttributeInterface.C \
-  IntervalPropertyStateFactory.C \
-  IntervalPropertyState.C \
-  IntervalTransferFunctions.C \
   IOAnalyzer.C \
   IOSequenceGenerator.C \
   IOSolver.C \
@@ -274,11 +240,6 @@ CODETHORN_SOURCE_FILES=\
   LTLOptions.C \
   ParProOptions.C \
   LTLRersMapping.C \
-  LVAnalysis.C \
-  LVAstAttribute.C \
-  LVAstAttributeInterface.C \
-  LVLattice.C \
-  LVTransferFunctions.C \
   Miscellaneous2.C \
   Miscellaneous.C \
   Normalization.C \
@@ -301,10 +262,6 @@ CODETHORN_SOURCE_FILES=\
   PropertyStateFactory.C \
   PropertyValueTable.C \
   PState.C \
-  RDAnalysis.C \
-  RDAstAttribute.C \
-  RDLattice.C \
-  RDTransferFunctions.C \
   ReachabilityAnalysis.C \
   ReadWriteListener.C \
   ReadWriteTraceAnalysis.C \
@@ -328,7 +285,6 @@ CODETHORN_SOURCE_FILES=\
   TransitionGraph.C \
   TransitionGraphReducer.C \
   TypeSizeMapping.C \
-  UDAstAttribute.C \
   VariableIdUtils.C \
   VariableIdMappingExtended.C \
   VariableValueMonitor.C \
@@ -614,35 +570,7 @@ woodpecker_SOURCES = \
   woodpecker-src/ConversionFunctionsGenerator.C \
   woodpecker-src/woodpecker.C
 
-
-##############################################################
-# TOOL: ANALYTERIX
-##############################################################
-
-analyterix_DEPENDENCIES=libcodethorn.la
-if ROSE_WITH_SPOT
-analyterix_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorn
-analyterix_LDFLAGS = -L$(SPOT_LIBRARY_PATH)
-else
-analyterix_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)  -lcodethorn
-endif
-analyterix_CXXFLAGS = -fopenmp -Wall -O3
-analyterix_SOURCES = \
-  shared-src/ProgramStats.C \
-  shared-src/ProgramStats.h \
-  analyterix-src/DFAstAttributeConversion.h \
-  analyterix-src/DFAstAttributeConversion.C \
-  analyterix-src/DeadCodeAnalysis.C \
-  analyterix-src/DeadCodeAnalysis.h \
-  analyterix-src/FIPointerAnalysis.C \
-  analyterix-src/FIPointerAnalysis.h \
-  analyterix-src/RoseRDAnalysis.C \
-  analyterix-src/RoseRDAnalysis.h \
-  analyterix-src/TransformationOperators.h \
-  analyterix-src/TransformationOperators.C \
-  analyterix-src/analyterix.C
-
-roseonlytools: woodpecker analyterix
+roseonlytools: woodpecker
 
 check-roseonlytools: check-flow-insensitive
 
@@ -802,14 +730,8 @@ check-data-races:
 	@./codethorn --data-race=yes  $(srcdir)/tests/datarace/inner_only_1.no.c --max-time=5 --solver=12
 
 
-#check-flow-insensitive: check-analyterix check-const-analysis
+#check-flow-insensitive: check-const-analysis
 check-flow-insensitive: check-const-analysis
-
-check-analyterix:
-	@echo ================================================================
-	@echo RUNNING STATIC PROGRAM ANALYSIS TESTS
-	@echo ================================================================
-	@$(srcdir)/scripts/runAnalyterixTests.sh "$(srcdir)" "$(top_builddir)/projects/CodeThorn/src" "$(clean-only)" "$(skip-analyterix)" # Run analyterix tests
 
 check-const-analysis:
 	@echo ================================================================

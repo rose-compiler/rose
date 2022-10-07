@@ -8,10 +8,6 @@
 
 #include "DFAnalysisBase.h"
 
-// for debugging
-#include "RDLattice.h"
-
-
 namespace CodeThorn
 {
 
@@ -32,9 +28,11 @@ namespace
   static inline
   void dbg_rd(std::ostream& os, char sep, Lattice* lat)
   {
-    RDLattice& rdlat = dynamic_cast<RDLattice&>(sg::deref(lat));
-
-    os << lat << sep << rdlat.size() << std::endl;
+    //RDLattice has been removed
+    //RDLattice& rdlat = dynamic_cast<RDLattice&>(sg::deref(lat));
+    //os << lat << sep << rdlat.size() << std::endl;
+    std::cerr<<"Error: dbg_rd: RDLattice has been removed. bailing out."<<std::endl;
+    exit(1);
   }
 
 

@@ -31,8 +31,6 @@
 #include "FunctionCallMapping.h"
 #include "AstStatistics.h"
 
-#include "DataRaceDetection.h"
-#include "AstTermRepresentation.h"
 #include "Normalization.h"
 #include "DataDependenceVisualizer.h" // also used for clustered ICFG
 #include "Evaluator.h" // CppConstExprEvaluator
@@ -457,7 +455,7 @@ namespace CodeThorn {
 	//write_file(icfgNonClusteredFileName, analyzer->getFlow()->toDot(analyzer->getCFAnalyzer()->getLabeler(),analyzer->getTopologicalSort()));
         string icfgFileName=ctOpt.reportFilePath+"/"+"icfg.dot";
 	DataDependenceVisualizer ddvis(analyzer->getLabeler(),analyzer->getVariableIdMapping(),"none");
-	ddvis.generateDotFunctionClusters(root,analyzer->getCFAnalyzer(),icfgFileName,analyzer->getTopologicalSort(),false);
+	ddvis.generateDotFunctionClusters(root,analyzer->getCFAnalyzer(),icfgFileName,analyzer->getTopologicalSort());
         cout<<"Generated ICFG dot file "<<icfgFileName<<endl;
         
 	cout << "=============================================================="<<endl;
@@ -630,33 +628,6 @@ namespace CodeThorn {
           logger[ERROR] <<"input sequence length specified without also providing a file name (use option --iseq-file)."<<endl;
           exit(1);
         }
-      }
-    }
-
-    void optionallyAnnotateTermsAndUnparse(CodeThornOptions& ctOpt, SgProject* sageProject, CTAnalysis* analyzer) {
-      if (ctOpt.annotateTerms) {
-        // TODO: it might be useful to be able to select certain analysis results to be annotated only
-        SAWYER_MESG(logger[INFO]) << "Annotating term representations."<<endl;
-        AstTermRepresentationAttribute::attachAstTermRepresentationAttributes(sageProject);
-        AstAnnotator ara(analyzer->getLabeler());
-        ara.annotateAstAttributesAsCommentsBeforeStatements(sageProject,"codethorn-term-representation");
-      }
-
-      if (ctOpt.annotateTerms||ctOpt.generateAssertions) {
-        SAWYER_MESG(logger[INFO]) << "Generating annotated program."<<endl;
-        //backend(sageProject);
-        sageProject->unparse(0,0);
-      }
-    }
-
-    void optionallyRunDataRaceDetection(CodeThornOptions& ctOpt, CTAnalysis* analyzer) {
-      // parse command line options for data race detection
-      DataRaceDetection dataRaceDetection;
-      dataRaceDetection.setOptions(ctOpt);
-      dataRaceDetection.handleCommandLineOptions(*analyzer);
-      dataRaceDetection.setVisualizeReadWriteAccesses(ctOpt.visualization.visualizeRWSets);
-      if(dataRaceDetection.run(*analyzer)) {
-        exit(0);
       }
     }
 

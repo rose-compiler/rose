@@ -5,8 +5,6 @@
 #include "VariableIdMapping.h"
 #include "Labeler.h"
 #include "CFAnalysis.h"
-#include "RDLattice.h"
-#include "RDAstAttribute.h"
 #include "Miscellaneous.h"
 #include "AstUtility.h"
 

@@ -1,8 +1,6 @@
 
 #include "rose.h"
 
-//#include "rose_config.h"
-
 #include "codethorn.h"
 #include "SgNodeHelper.h"
 #include "Labeler.h"
@@ -27,7 +25,6 @@
 #include "Miscellaneous2.h"
 #include "FIConstAnalysis.h"
 #include "ReachabilityAnalysis.h"
-//#include "EquivalenceChecking.h"
 #include "Solver5.h"
 #include "Solver16.h"
 #include "Solver8.h"
@@ -40,8 +37,6 @@
 #include "FunctionCallMapping.h"
 #include "AstStatistics.h"
 
-#include "DataRaceDetection.h"
-#include "AstTermRepresentation.h"
 #include "Normalization.h"
 #include "DataDependenceVisualizer.h" // also used for clustered ICFG
 #include "Evaluator.h" // CppConstExprEvaluator

@@ -35,8 +35,6 @@
 #include "FunctionCallMapping.h"
 #include "AstStatistics.h"
 
-#include "DataRaceDetection.h"
-#include "AstTermRepresentation.h"
 #include "Normalization.h"
 #include "DataDependenceVisualizer.h" // also used for clustered ICFG
 #include "Evaluator.h" // CppConstExprEvaluator
@@ -304,7 +302,6 @@ int main( int argc, char * argv[] ) {
     tc.stopTimer(TimingCollector::visualization);
 
     optionallyRunIOSequenceGenerator(ctOpt, analyzer);
-    optionallyAnnotateTermsAndUnparse(ctOpt, project, analyzer);
 
     delete analyzer;
 
