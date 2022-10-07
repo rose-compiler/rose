@@ -41,7 +41,6 @@ namespace CodeThorn {
     void optionallyRunRoseAstChecks(CodeThornOptions& ctOpt, SgProject* sageProject);
     void optionallyRunRoseAstChecksAndExit(CodeThornOptions& ctOpt, SgProject* sageProject);
     void optionallyRunIOSequenceGenerator(CodeThornOptions& ctOpt, IOAnalyzer* analyzer);
-    void optionallyAnnotateTermsAndUnparse(CodeThornOptions& ctOpt, SgProject* sageProject, CTAnalysis* analyzer);
     void optionallyRunDataRaceDetection(CodeThornOptions& ctOpt, CTAnalysis* analyzer);
     void optionallyPrintProgramInfos(CodeThornOptions& ctOpt, CTAnalysis* analyzer);
     void optionallyRunNormalization(CodeThornOptions& ctOpt,SgProject* sageProject, TimingCollector& timingCollector);

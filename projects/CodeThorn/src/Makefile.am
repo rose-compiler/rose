@@ -69,7 +69,6 @@ CODETHORN_HEADER_FILES=\
   CTAnalysis.h \
   ArrayElementAccessData.h \
   AstNodeInfo.h \
-  AstTermRepresentation.h \
   BoolLattice.h \
   CallString.h \
   CFAnalysis.h \
@@ -194,7 +193,6 @@ CODETHORN_SOURCE_FILES=\
   CTAnalysis.C \
   ArrayElementAccessData.C \
   AstNodeInfo.C \
-  AstTermRepresentation.C \
   BoolLattice.C \
   CallString.C \
   CFAnalysis.C \

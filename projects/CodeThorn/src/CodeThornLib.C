@@ -32,7 +32,6 @@
 #include "AstStatistics.h"
 
 #include "DataRaceDetection.h"
-#include "AstTermRepresentation.h"
 #include "Normalization.h"
 #include "DataDependenceVisualizer.h" // also used for clustered ICFG
 #include "Evaluator.h" // CppConstExprEvaluator
@@ -630,22 +629,6 @@ namespace CodeThorn {
           logger[ERROR] <<"input sequence length specified without also providing a file name (use option --iseq-file)."<<endl;
           exit(1);
         }
-      }
-    }
-
-    void optionallyAnnotateTermsAndUnparse(CodeThornOptions& ctOpt, SgProject* sageProject, CTAnalysis* analyzer) {
-      if (ctOpt.annotateTerms) {
-        // TODO: it might be useful to be able to select certain analysis results to be annotated only
-        SAWYER_MESG(logger[INFO]) << "Annotating term representations."<<endl;
-        AstTermRepresentationAttribute::attachAstTermRepresentationAttributes(sageProject);
-        AstAnnotator ara(analyzer->getLabeler());
-        ara.annotateAstAttributesAsCommentsBeforeStatements(sageProject,"codethorn-term-representation");
-      }
-
-      if (ctOpt.annotateTerms||ctOpt.generateAssertions) {
-        SAWYER_MESG(logger[INFO]) << "Generating annotated program."<<endl;
-        //backend(sageProject);
-        sageProject->unparse(0,0);
       }
     }
 
