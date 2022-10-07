@@ -21,7 +21,7 @@ PathPrioritizer::~PathPrioritizer() {}
 // This is not pure virtual because we need to use it in std::make_heap et al, which
 // apparently needs to be able to instantiate these for its concept checks.
 bool
-PathPrioritizer::operator()(const Path::Ptr &worse, const Path::Ptr &better) const {
+PathPrioritizer::operator()(const Path::Ptr &/*worse*/, const Path::Ptr &/*better*/) const {
     ASSERT_not_reachable("you need to use a PathPrioritizer subclass");
 }
 

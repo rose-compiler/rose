@@ -1171,13 +1171,6 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
                break;
              }
 
-          case SgFile::e_Cobol_language:
-             {
-               printf ("Error: SgFile::e_Cobol_language detected in unparser (unparser not implemented, unparsing ignored) \n");
-            // ROSE_ASSERT(false);
-               break;
-             }
-
           case SgFile::e_last_language:
              {
                printf ("Error: SgFile::e_last_language detected in unparser \n");
@@ -1703,7 +1696,7 @@ Unparser::unparseFileUsingTokenStream ( SgSourceFile* file )
  *  The name of the new file is created by appending ".new" to the original file name. Leading path components are stripped so
  *  that the file is created in the current working directory. */
 void
-Unparser::unparseAsmFile(SgAsmGenericFile *file, SgUnparse_Info &info)
+Unparser::unparseAsmFile(SgAsmGenericFile *file, SgUnparse_Info &info) // blame quinlan1
 {
      if ( SgProject::get_verbose() > 0 )
           printf ("In Unparser::unparseAsmFile... file = %p = %s \n",file,file->class_name().c_str());
@@ -3611,13 +3604,6 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
                case SgFile::e_Jovial_language:
                   {
                     outputFilename = "rose_" + file->get_sourceFileNameWithoutPath();
-                    break;
-                  }
-
-               case SgFile::e_Cobol_language:
-                  {
-                    printf ("Error: SgFile::e_Cobol_language detected in unparser (unparser not implemented, unparsing ignored) \n");
-                 // ROSE_ASSERT(false);
                     break;
                   }
 

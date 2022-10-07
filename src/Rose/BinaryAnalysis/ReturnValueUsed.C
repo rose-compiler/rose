@@ -228,7 +228,7 @@ Analysis::findCallees(const P2::Partitioner &partitioner, const P2::ControlFlowG
 }
 
 std::vector<P2::ControlFlowGraph::ConstVertexIterator>
-Analysis::findReturnTargets(const P2::Partitioner &partitioner, const P2::ControlFlowGraph::ConstVertexIterator &callSite) {
+Analysis::findReturnTargets(const P2::Partitioner&, const P2::ControlFlowGraph::ConstVertexIterator &callSite) {
     std::vector<P2::ControlFlowGraph::ConstVertexIterator> returnVertices;
     for (const P2::ControlFlowGraph::Edge &edge: callSite->outEdges()) {
         if (edge.value().type() == P2::E_CALL_RETURN)
@@ -371,6 +371,10 @@ Analysis::analyzeCallSite(const P2::Partitioner &partitioner, const P2::ControlF
         State::Ptr outputState;
         try {
             outputState = State::promote(xfer(dfCfg, t.vertex()->id(), inputState));
+        } catch (const S2::BaseSemantics::Exception &e) {
+            mlog[WHERE] <<e.what() <<" at call site vertex " <<partitioner.vertexName(callSite) <<"\n";
+            retval.didConverge(false);
+            return retval;
         } catch (const S2::BaseSemantics::Exception &e) {
             mlog[WARN] <<e.what() <<" at call site vertex " <<partitioner.vertexName(callSite) <<"\n";
             retval.didConverge(false);

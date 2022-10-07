@@ -14,8 +14,8 @@ namespace Disassembler {
  *  This is the decoder for the A64 instruction set of the AArch64 architecture. At the time of this writing, A64 is the only
  *  instruction set for this architecture.
  *
- *  Most of the useful disassembly methods can be found in the @ref Base superclass.  Some of the constants have the
- *  same ill-defined meanings as they do in the Capstone library. */
+ *  Most of the useful disassembly methods can be found in the @ref Rose::BinaryAnalysis::Disassembler::Base "Base" superclass.
+ *  Some of the constants have the same ill-defined meanings as they do in the Capstone library. */
 class Aarch64: public Base {
 public:
     // <rant>

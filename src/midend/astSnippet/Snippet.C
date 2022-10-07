@@ -858,7 +858,7 @@ Snippet::insert(SgStatement *insertionPoint, const std::vector<SgNode*> &actuals
 }
 
 void
-Snippet::causeUnparsing(SgNode *ast, Sg_File_Info *target)
+Snippet::causeUnparsing(SgNode *ast, Sg_File_Info */*target*/)
 {
     // Mark the things we insert as being transformations so they get inserted into the output by backend()
     struct T1: SnippetAstTraversal {
@@ -929,7 +929,7 @@ Snippet::replaceVariable(SgVarRefExp *vref, SgExpression *replacement)
         size_t replaced;
         Replacer(SgNode *nodeToReplace, SgNode *replacement)
             : nodeToReplace(nodeToReplace), replacement(replacement), replaced(0) {}
-        void operator()(SgNode *&node, const SgName &debugStringName, bool/*traverse*/) {
+        void operator()(SgNode *&node, const SgName &/*debugStringName*/, bool/*traverse*/) {
             if (node==nodeToReplace) {
                 node = replacement;
                 ++replaced;

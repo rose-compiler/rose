@@ -774,8 +774,8 @@ Inliner::HowInline
 Inliner::ShouldInline::operator()(const Partitioner &partitioner, const ControlFlowGraph::ConstEdgeIterator cfgCallEdge,
                                   const ControlFlowGraph &paths, const ControlFlowGraph::ConstVertexIterator &pathsCallSite,
                                   size_t callDepth) {
-    ASSERT_require(partitioner.cfg().isValidEdge(cfgCallEdge));
-    ASSERT_require(paths.isValidVertex(pathsCallSite));
+    ASSERT_always_require(partitioner.cfg().isValidEdge(cfgCallEdge));
+    ASSERT_always_require(paths.isValidVertex(pathsCallSite));
     return callDepth <= maxCallDepth_ ? INLINE_NORMAL : INLINE_NONE;
 }
 

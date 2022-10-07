@@ -11,7 +11,7 @@
 #include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 #include <Rose/BinaryAnalysis/SmtSolver.h>
-#include <Rose/BinaryAnalysis/SymbolicExpr.h>
+#include <Rose/BinaryAnalysis/SymbolicExpression.h>
 
 #include "Cxx_GrammarSerialization.h"
 
@@ -47,13 +47,13 @@ namespace InstructionSemantics {        // documented elsewhere
 *  naive comparison of the expression trees. */
 namespace SymbolicSemantics {
 
-typedef SymbolicExpr::Leaf LeafNode;
-typedef SymbolicExpr::LeafPtr LeafPtr;
-typedef SymbolicExpr::Interior InteriorNode;
-typedef SymbolicExpr::InteriorPtr InteriorPtr;
-typedef SymbolicExpr::Node ExprNode;
-typedef SymbolicExpr::Ptr ExprPtr;
-typedef std::set<SgAsmInstruction*> InsnSet;
+using LeafNode = SymbolicExpression::Leaf;
+using LeafPtr = SymbolicExpression::LeafPtr;
+using InteriorNode = SymbolicExpression::Interior;
+using InteriorPtr = SymbolicExpression::InteriorPtr;
+using ExprNode = SymbolicExpression::Node;
+using ExprPtr = SymbolicExpression::Ptr;
+using InsnSet = std::set<SgAsmInstruction*>;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Boolean flags
@@ -69,8 +69,8 @@ namespace AllowSideEffects {
 //                                      Merging symbolic values
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Shared-ownership pointer for a merge control object. See @ref heap_object_shared_ownership. */
-typedef Sawyer::SharedPointer<class Merger> MergerPtr;
+/** Shared-ownership pointer for a merge control object. */
+using MergerPtr = Sawyer::SharedPointer<class Merger>;
 
 /** Controls merging of symbolic values. */
 class Merger: public BaseSemantics::Merger {
@@ -79,7 +79,7 @@ protected:
     Merger(): BaseSemantics::Merger(), setSizeLimit_(1) {}
 
 public:
-    /** Shared-ownership pointer for a @ref Merger object. See @ref heap_object_shared_ownership. */
+    /** Shared-ownership pointer for a @ref Merger object. */
     typedef MergerPtr Ptr;
 
     /** Allocating constructor. */
@@ -116,13 +116,13 @@ public:
 //                                      Semantic values
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Shared-ownership pointer for symbolic semantic value. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer for symbolic semantic value. */
 typedef Sawyer::SharedPointer<class SValue> SValuePtr;
 
 /** Formatter for symbolic values. */
 class Formatter: public BaseSemantics::Formatter {
 public:
-    SymbolicExpr::Formatter expr_formatter;
+    SymbolicExpression::Formatter expr_formatter;
 };
 
 /** Type of values manipulated by the SymbolicSemantics domain.
@@ -130,8 +130,8 @@ public:
  *  Values of type type are used whenever a value needs to be stored, such as memory addresses, the values stored at those
  *  addresses, the values stored in registers, the operands for RISC operations, and the results of those operations.
  *
- *  An SValue points to an expression composed of the ExprNode types defined in Rose/BinaryAnalysis/SymbolicExpr.h, and also
- *  stores the set of instructions that were used to define the value.  This provides a framework for some simple forms of
+ *  An SValue points to an expression composed of the ExprNode types defined in Rose/BinaryAnalysis/SymbolicExpression.h, and
+ *  also stores the set of instructions that were used to define the value.  This provides a framework for some simple forms of
  *  value-based def-use analysis. See get_defining_instructions() for details.
  *
  *  @section symbolic_semantics_unknown Unknown versus Uninitialized Values
@@ -229,10 +229,10 @@ private:
 protected:
     SValue() {}                                         // needed for serialization
     explicit SValue(size_t nbits): BaseSemantics::SValue(nbits) {
-        expr = SymbolicExpr::makeIntegerVariable(nbits);
+        expr = SymbolicExpression::makeIntegerVariable(nbits);
     }
     SValue(size_t nbits, uint64_t number): BaseSemantics::SValue(nbits) {
-        expr = SymbolicExpr::makeIntegerConstant(nbits, number);
+        expr = SymbolicExpression::makeIntegerConstant(nbits, number);
     }
     SValue(ExprPtr expr): BaseSemantics::SValue(expr->nBits()) {
         this->expr = expr;
@@ -243,31 +243,31 @@ protected:
 public:
     /** Instantiate a new prototypical value. Prototypical values are only used for their virtual constructors. */
     static SValuePtr instance() {
-        return SValuePtr(new SValue(SymbolicExpr::makeIntegerVariable(1)));
+        return SValuePtr(new SValue(SymbolicExpression::makeIntegerVariable(1)));
     }
 
     /** Instantiate a new data-flow bottom value of specified width. */
     static SValuePtr instance_bottom(size_t nbits) {
-        return SValuePtr(new SValue(SymbolicExpr::makeIntegerVariable(nbits, "", ExprNode::BOTTOM)));
+        return SValuePtr(new SValue(SymbolicExpression::makeIntegerVariable(nbits, "", ExprNode::BOTTOM)));
     }
 
     /** Instantiate a new undefined value of specified width. */
     static SValuePtr instance_undefined(size_t nbits) {
-        return SValuePtr(new SValue(SymbolicExpr::makeIntegerVariable(nbits)));
+        return SValuePtr(new SValue(SymbolicExpression::makeIntegerVariable(nbits)));
     }
 
     /** Instantiate a new unspecified value of specified width. */
     static SValuePtr instance_unspecified(size_t nbits) {
-        return SValuePtr(new SValue(SymbolicExpr::makeIntegerVariable(nbits, "", ExprNode::UNSPECIFIED)));
+        return SValuePtr(new SValue(SymbolicExpression::makeIntegerVariable(nbits, "", ExprNode::UNSPECIFIED)));
     }
 
     /** Instantiate a new concrete value. */
     static SValuePtr instance_integer(size_t nbits, uint64_t value) {
-        return SValuePtr(new SValue(SymbolicExpr::makeIntegerConstant(nbits, value)));
+        return SValuePtr(new SValue(SymbolicExpression::makeIntegerConstant(nbits, value)));
     }
 
     /** Instantiate a new symbolic value. */
-    static SValuePtr instance_symbolic(const SymbolicExpr::Ptr &value) {
+    static SValuePtr instance_symbolic(const SymbolicExpression::Ptr &value) {
         ASSERT_not_null(value);
         return SValuePtr(new SValue(value));
     }
@@ -326,9 +326,9 @@ protected: // when implementing use these names; but when calling, use the camel
                             const SmtSolverPtr &solver = SmtSolverPtr()) const override;
 
     // It's not possible to change the size of a symbolic expression in place. That would require that we recursively change
-    // the size of the SymbolicExpr, which might be shared with many unrelated values whose size we don't want to affect.
+    // the size of the SymbolicExpression, which might be shared with many unrelated values whose size we don't want to affect.
     virtual void set_width(size_t nbits) override {
-        ASSERT_require(nbits==nBits());
+        ASSERT_always_require(nbits==nBits());
     }
 
     virtual bool is_number() const override {
@@ -452,7 +452,7 @@ typedef BaseSemantics::RegisterStateGenericPtr RegisterStatePtr;
 //                                      List-based Memory state
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Shared-ownership pointer for symbolic list-based memory state. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer for symbolic list-based memory state. */
 typedef boost::shared_ptr<class MemoryListState> MemoryListStatePtr;
 
 /** Byte-addressable memory.
@@ -684,7 +684,7 @@ public:
 //                                      Map-based Memory state
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Shared-ownership pointer to symbolic memory state. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer to symbolic memory state. */
 typedef boost::shared_ptr<class MemoryMapState> MemoryMapStatePtr;
 
 /** Byte-addressable memory.
@@ -830,7 +830,7 @@ enum DefinersMode {
     TRACK_ALL_DEFINERS                                  /**< Save all definers. */
 };
 
-/** Shared-ownership pointer to symbolic RISC operations. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer to symbolic RISC operations. */
 typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
 /** Defines RISC operators for the SymbolicSemantics domain.
@@ -985,8 +985,8 @@ public:
 
     /** Property: Track which instructions define a semantic value.
      *
-     *  Each semantic value (@ref SValue) is capable of storing a set of instruction addresses. This property controls how
-     *  operations that produce new semantic values adjust those definers-sets in the new value.
+     *  Each semantic value (@ref SymbolicSemantics::SValue) is capable of storing a set of instruction addresses. This
+     *  property controls how operations that produce new semantic values adjust those definers-sets in the new value.
      *
      *  @li @c TRACK_NO_DEFINERS: Each new semantic value will have a default-constructed definers-set (probably empty). Using
      *      this setting makes the definers-set available for other uses.
@@ -1167,8 +1167,8 @@ public:
 
     /** Convert a SgAsmType to a symbolic type.
      *
-     *  If the @ref SgAsmType cannot be converted to a @ref SymbolicExpr::Type then throws @ref Exception. */
-    virtual SymbolicExpr::Type sgTypeToSymbolicType(SgAsmType*);
+     *  If the @ref SgAsmType cannot be converted to a @ref SymbolicExpression::Type then throws @ref Exception. */
+    virtual SymbolicExpression::Type sgTypeToSymbolicType(SgAsmType*);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Override methods from base class.  These are the RISC operators that are invoked by a Dispatcher.

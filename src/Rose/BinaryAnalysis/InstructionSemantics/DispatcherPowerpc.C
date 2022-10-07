@@ -2,11 +2,11 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
 
-#include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
-#include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherPowerpc.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/Util.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/Utility.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
+#include <Rose/Diagnostics.h>
 #include <integerOps.h>
 #include <SageBuilderAsm.h>
 
@@ -880,7 +880,7 @@ struct IP_divwuo: P {
 
 // Enforce in-order execution of I/O
 struct IP_eieio: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I, A) {
         // no semantics necessary
     }
 };
@@ -960,7 +960,7 @@ struct IP_lbzu: P {
 
 // Load doubleword
 struct IP_ld: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D d, Ops, I insn, A args) {
         assert_args(insn, args, 2);
         d->write(args[0], d->read(args[1], 64));
     }
@@ -984,7 +984,7 @@ struct IP_ldux: P {
 
 // Load doubleword indexed
 struct IP_ldx: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D d, Ops, I insn, A args) {
         assert_args(insn, args, 2);
         d->write(args[0], d->read(args[1], 64));
     }
@@ -1208,7 +1208,7 @@ struct IP_lwzu: P {
 
 // Move condition register field
 struct IP_mcrf: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D d, Ops, I insn, A args) {
         assert_args(insn, args, 2);
         BaseSemantics::SValue::Ptr value = d->read(args[1], 4);
         d->write(args[0], value);
@@ -1234,7 +1234,7 @@ struct IP_mfspr: P {
 // Copies the value from the second argument to the first argument.  This is used for a variety of instructions.
 // FIXME[Robb Matzke 2019-08-08]: replace this with instruction-specific versions.
 struct IP_move: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D d, Ops, I insn, A args) {
         assert_args(insn, args, 2);
         d->write(args[0], d->read(args[1]));
     }
@@ -1242,7 +1242,7 @@ struct IP_move: P {
 
 // Move to special purpose register
 struct IP_mtspr: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D d, Ops, I insn, A args) {
         assert_args(insn, args, 2);
         BaseSemantics::SValue::Ptr src = d->read(args[1], args[0]->get_type()->get_nBits()); // truncate GPR to width of SPR
         d->write(args[0], src);
@@ -1727,7 +1727,7 @@ struct IP_rlwnm: P {
 
 // System call
 struct IP_sc: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
         SgAsmIntegerValueExpression *bv = isSgAsmIntegerValueExpression(args[0]);
         ASSERT_not_null(bv);
@@ -1931,7 +1931,7 @@ struct IP_srw: P {
 
 // Store byte
 struct IP_stb: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D d, Ops, I insn, A args) {
         assert_args(insn, args, 2);
         d->write(args[1], d->read(args[0], 8));
     }
@@ -1955,7 +1955,7 @@ struct IP_stbux: P {
 
 // Store doubleword
 struct IP_std: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D d, Ops, I insn, A args) {
         assert_args(insn, args, 2);
         d->write(args[1], d->read(args[0], 64));
     }
@@ -1971,7 +1971,7 @@ struct IP_stdu: P {
 
 // Store doubleword indexed
 struct IP_stdx: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D d, Ops, I insn, A args) {
         assert_args(insn, args, 2);
         d->write(args[1], d->read(args[0], 64));
     }
@@ -2006,7 +2006,7 @@ struct IP_stfs: P {
 
 // Store halfword
 struct IP_sth: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D d, Ops, I insn, A args) {
         assert_args(insn, args, 2);
         d->write(args[1], d->read(args[0], 16));
     }
@@ -2040,7 +2040,7 @@ struct IP_sthux: P {
 
 // Store halfword indexed
 struct IP_sthx: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D d, Ops, I insn, A args) {
         assert_args(insn, args, 2);
         d->write(args[1], d->read(args[0], 16));
     }
@@ -2135,7 +2135,7 @@ struct IP_stswx: P {
 struct IP_stw: P {
     UpdateCr::Flag updateCr;
     explicit IP_stw(UpdateCr::Flag updateCr): updateCr(updateCr) {}
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D d, Ops, I insn, A args) {
         assert_args(insn, args, 2);
         BaseSemantics::SValue::Ptr result = d->read(args[0], 32);
         d->write(args[1], result);

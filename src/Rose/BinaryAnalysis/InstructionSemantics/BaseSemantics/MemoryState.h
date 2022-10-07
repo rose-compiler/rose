@@ -24,7 +24,7 @@ namespace BaseSemantics {
  *  Rose::BinaryAnalysis::InstructionSemantics namespace for an overview of how the parts fit together.*/
 class MemoryState: public boost::enable_shared_from_this<MemoryState> {
 public:
-    /** Shared-ownership pointer for a @ref MemoryState. See @ref heap_object_shared_ownership. */
+    /** Shared-ownership pointer. */
     typedef MemoryStatePtr Ptr;
 
 private:

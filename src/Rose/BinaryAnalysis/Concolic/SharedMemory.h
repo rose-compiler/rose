@@ -5,7 +5,7 @@
 
 #include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Types.h>
-#include <Rose/BinaryAnalysis/SymbolicExpr.h>
+#include <Rose/BinaryAnalysis/SymbolicExpression.h>
 
 #include <Sawyer/Optional.h>
 #include <Sawyer/SharedObject.h>
@@ -75,7 +75,7 @@ public:
      *  During the playback phase, is the concrete value (as a symbolic expression) to be substituted as the result of the
      *  shared memory read. However, if the read was originally treated as non-shared (implying also that there is no input
      *  variable) then this data member is a null pointer. */
-    SymbolicExpr::Ptr valueRead;
+    SymbolicExpression::Ptr valueRead;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -157,7 +157,7 @@ public:
      *  to calling @ref notAnInput).
      *
      * @{ */
-    void returns(SharedMemoryContext&, const SymbolicExpr::Ptr&) const;
+    void returns(SharedMemoryContext&, const SymbolicExpression::Ptr&) const;
     void returns(SharedMemoryContext&, const InstructionSemantics::BaseSemantics::SValuePtr&) const;
     /** @} */
 
@@ -166,7 +166,7 @@ public:
      *  Returns the input variable used to adjust future test cases. This is probably the variable you want to constrain in
      *  various ways according to the semantics of the shared memory.  Returns null if this read is not being treated as adjustable
      *  input in future test cases (see @ref notAnInput). */
-    SymbolicExprPtr inputVariable(const SharedMemoryContext&) const;
+    SymbolicExpressionPtr inputVariable(const SharedMemoryContext&) const;
 
 
     virtual bool operator()(bool handled, SharedMemoryContext&) final;

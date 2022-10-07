@@ -18,7 +18,7 @@ void
 generateLibraryIdentificationDataBase(const std::string &databaseName, const std::string &libraryName,
                                       const std::string &libraryVersion, const std::string &libraryHash,
                                       const P2::Partitioner &partitioner, enum DUPLICATE_OPTION dupOption) {
-    ASSERT_require(COMBINE == dupOption);
+    ASSERT_always_require(COMBINE == dupOption);
 
     Flir flir;
     try {

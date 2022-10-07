@@ -1,5 +1,5 @@
 add_library(roseBinaryAnalysisPartitioner2 OBJECT
-  AddressUsageMap.C BasicBlock.C CfgPath.C Config.C
+  AddressUsageMap.C BasicBlock.C CfgPath.C Configuration.C
   ControlFlowGraph.C DataBlock.C DataFlow.C Engine.C Exception.C
   Function.C FunctionCallGraph.C FunctionNoop.C GraphViz.C InstructionProvider.C
   JvmEngine.C MayReturnAnalysis.C Modules.C ModulesElf.C ModulesLinux.C ModulesM68k.C
@@ -10,7 +10,7 @@ add_dependencies(roseBinaryAnalysisPartitioner2 rosetta_generated)
 
 install(FILES
   AddressUsageMap.h BasicBlock.h BasicTypes.h CfgPath.h
-  Config.h ControlFlowGraph.h DataBlock.h DataFlow.h Engine.h
+  Configuration.h ControlFlowGraph.h DataBlock.h DataFlow.h Engine.h
   Exception.h Function.h FunctionCallGraph.h GraphViz.h
   InstructionProvider.h JvmEngine.h Modules.h ModulesElf.h ModulesLinux.h ModulesM68k.h
   ModulesMips.h ModulesPe.h ModulesPowerpc.h ModulesX86.h Partitioner.h Reference.h

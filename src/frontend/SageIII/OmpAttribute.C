@@ -1520,12 +1520,12 @@ namespace OmpSupport
   std::vector<std::pair<std::string,SgNode* > > 
     OmpAttribute::getVariableList(omp_construct_enum targetConstruct)
     {
-      std::vector<std::pair<std::string,SgNode* > > * result = new std::vector<std::pair<std::string,SgNode* > >; 
       // e_reduction is a collective concept, 
       // There may have multiple reduction clauses for different operations.
       // return all of them. Return special one if e_reduction_operatorX is used
       if (targetConstruct==e_reduction)
       {
+        std::vector<std::pair<std::string,SgNode* > > * result = new std::vector<std::pair<std::string,SgNode* > >; 
         std::vector<omp_construct_enum> ops = getReductionOperators();
         std::vector<omp_construct_enum>::iterator iter = ops.begin();
         for (;iter!=ops.end(); iter++) // for each reduction operator

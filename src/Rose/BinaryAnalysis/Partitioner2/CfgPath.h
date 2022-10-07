@@ -265,7 +265,7 @@ public:
  *  Returns a Boolean vector indicating whether an edge is significant.  An edge is significant if it appears on some path that
  *  originates from some vertex in @p beginVertices and reaches some vertex in @p endVertices (if @p endVertices is supplied)
  *  but is not a member of @p avoidEdges and is not incident to any vertex in @p avoidVertices. An edge is not significant if
- *  it is a function call or function return and @ref avoidCallsAndReturns is true.
+ *  it is a function call or function return and @p avoidCallsAndReturns is true.
  *
  *  @{ */
 std::vector<bool>
@@ -411,7 +411,7 @@ findInterFunctionPaths(const ControlFlowGraph &srcCfg, ControlFlowGraph &paths /
  *  by this operation.
  *
  *  The vertices and edges in the inlined version that correspond to the @p cfgAvoidEVertices and @p cfgAvoidEdges are not
- *  copied into the @ref paths graph. If this results in the called function having no paths that can return, then that
+ *  copied into the @p paths graph. If this results in the called function having no paths that can return, then that
  *  function is not inserted into @p paths.
  *
  *  The @ref E_CALL_RETURN edges in @p paths are not erased by this operation, but are usually subsequently erased by the
@@ -469,7 +469,7 @@ public:
     public:
         virtual ~ShouldInline() {}
 
-        /**  Shared ownership pointer to a predicate object. See @ref heap_object_shared_ownership. */
+        /**  Shared ownership pointer to a predicate object. */
         typedef Sawyer::SharedPointer<ShouldInline> Ptr;
 
         /** Factory class method. */
@@ -524,9 +524,8 @@ public:
      *
      *  Computes paths in the partitioner's global CFG from @p cfgBeginVertices to @p cfgEndVertices that do not pass through
      *  @p cfgAvoidVertices or @p cfgAvoidEdges. Any function calls along these paths are then inlined, but only those paths
-     *  through the function that don't pass through the @p cfgAvoidVertices or @p cfgAvoidEdges.  If a call satisfies the @ref
-     *  shouldSummarizeCall predicate or if the call depth becomes too deep then instead of inlining, the a special summary
-     *  vertex is inserted.
+     *  through the function that don't pass through the @p cfgAvoidVertices or @p cfgAvoidEdges. The return value of the @ref shouldInline property
+     *  callback determines whether a function is inlined or summarized.
      *
      *  Returns the resulting control flow graph, a.k.a., the paths graph. */
     void inlinePaths(const Partitioner &partitioner, const CfgConstVertexSet &cfgBeginVertices,

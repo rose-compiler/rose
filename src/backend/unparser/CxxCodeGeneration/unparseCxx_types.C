@@ -47,6 +47,53 @@ Unparse_Type::generateElaboratedType(SgDeclarationStatement* declarationStatemen
      return useElaboratedType;
    }
 
+namespace
+{
+  std::vector<const char*>
+  memberFunctionQualifiers(const SgMemberFunctionType* mfnFype, bool trailingSpace = false)
+  {
+    static const char* TEXT_CONST      = " const";
+    static const char* TEXT_VOLATILE   = " volatile";
+    static const char* TEXT_LVALUE_REF = " &";
+    static const char* TEXT_RVALUE_REF = " &&";
+    static const char* TEXT_SPACE      = " ";
+
+    ASSERT_not_null(mfnFype);
+
+    std::vector<const char*> res;
+    bool                     addSpace = false;
+
+    if (mfnFype->isConstFunc())
+    {
+      res.push_back(TEXT_CONST);
+      addSpace = trailingSpace;
+    }
+
+    if (mfnFype->isVolatileFunc())
+    {
+      res.push_back(TEXT_VOLATILE);
+      addSpace = trailingSpace;
+    }
+
+    if (mfnFype->isLvalueReferenceFunc())
+    {
+      res.push_back(TEXT_LVALUE_REF);
+      addSpace = false;
+    }
+
+    if (mfnFype->isRvalueReferenceFunc())
+    {
+      res.push_back(TEXT_RVALUE_REF);
+      addSpace = false;
+    }
+
+    if (addSpace)
+      res.push_back(TEXT_SPACE);
+
+    return res;
+  }
+}
+
 
 string get_type_name(SgType* t)
    {
@@ -262,17 +309,8 @@ string get_type_name(SgType* t)
 #if 0
                     printf ("In get_type_name(): ftype != NULL: after unparsing function arguments: unparse modifiers \n");
 #endif
-
-                    if (ftype->isConstFunc()) {
-                         res = res + " const";
-                       }
-
-                    if (ftype->get_ref_qualifiers() == 1) {
-                         res = res + " &";
-                       } else if (ftype->get_ref_qualifiers() == 2) {
-                         res = res + " &&";
-                       }
-
+                    // add member function type qualifiers (&, &&, const, volatile)
+                    for (auto qual : memberFunctionQualifiers(ftype)) res = res + qual;
                     return res;
                   }
                  else
@@ -535,16 +573,9 @@ string get_type_name(SgType* t)
 #endif
                   }
                res = res + ")";
-
-               if (mfunc_type->isConstFunc()) {
-                 res = res + " const";
-               }
-
-               if (mfunc_type->get_ref_qualifiers() == 1) {
-                 res = res + " &";
-               } else if (mfunc_type->get_ref_qualifiers() == 2) {
-                 res = res + " &&";
-               }
+               // add member function type qualifiers (&, &&, const, volatile)
+               for (auto qual : memberFunctionQualifiers(mfunc_type))
+                 res = res + qual;
 
                return res;
              }
@@ -1631,7 +1662,7 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
   // type with name:  int P::* pmi = &X::a;
   // use: obj.*pmi=7;
      SgType *btype = mpointer_type->get_base_type();
-     SgMemberFunctionType *ftype = NULL;
+     SgMemberFunctionType* mfnType = nullptr;
 
 #if DEBUG_MEMBER_POINTER_TYPE
      printf ("In unparseMemberPointerType(): btype = %p = %s \n",btype,(btype != NULL) ? btype->class_name().c_str() : "NULL" );
@@ -1640,12 +1671,12 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
      curprint("\n/* In unparseMemberPointerType() */ \n");
 #endif
 
-  // if ( (ftype = isSgMemberFunctionType(btype)) != NULL)
-     ftype = isSgMemberFunctionType(btype);
+  // if ( (mfnType = isSgMemberFunctionType(btype)) != NULL)
+     mfnType = isSgMemberFunctionType(btype);
 #if 0
-     printf ("In unparseMemberPointerType(): ftype = %p \n",ftype);
+     printf ("In unparseMemberPointerType(): mfnType = %p \n",mfnType);
 #endif
-     if (ftype != NULL)
+     if (mfnType != NULL)
         {
        // pointer to member function data
 #if DEBUG_MEMBER_POINTER_TYPE
@@ -1677,7 +1708,7 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
                curprint(nameQualifierForBaseType);
 
             // DQ (1/20/2019): Suppress the definition (for enum, function, and class types).
-            // unparseType(ftype->get_return_type(), info); // first part
+            // unparseType(mfnType->get_return_type(), info); // first part
                SgUnparse_Info ninfo(info);
                ninfo.set_SkipDefinition();
 
@@ -1693,7 +1724,7 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
 #endif
                   }
 
-               unparseType(ftype->get_return_type(), ninfo); // first part
+               unparseType(mfnType->get_return_type(), ninfo); // first part
 
 #if DEBUG_MEMBER_POINTER_TYPE && CURPRINT_MEMBER_POINTER_TYPE
                curprint("\n/* In unparseMemberPointerType(): pointer to member function: DONE unparse return type */ \n");
@@ -1976,8 +2007,8 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
 #endif
                     curprint("(");
 
-                    SgTypePtrList::iterator p = ftype->get_arguments().begin();
-                    while ( p != ftype->get_arguments().end() )
+                    SgTypePtrList::iterator p = mfnType->get_arguments().begin();
+                    while ( p != mfnType->get_arguments().end() )
                        {
 #if DEBUG_MEMBER_POINTER_TYPE
                          printf ("In unparseMemberPointerType: output the arguments *p = %p = %s \n",*p,(*p)->class_name().c_str());
@@ -1995,46 +2026,44 @@ void Unparse_Type::unparseMemberPointerType(SgType* type, SgUnparse_Info& info)
                          curprint("\n/* In unparseMemberPointerType(): DONE: output function argument type */ \n");
 #endif
                          p++;
-                         if (p != ftype->get_arguments().end()) { curprint ( ", "); }
+                         if (p != mfnType->get_arguments().end()) { curprint ( ", "); }
                        }
                     curprint(")");
                  // curprint("\n/* In unparseMemberPointerType(): end of argument list */ \n";
 
-                    unparseType(ftype->get_return_type(), info); // second part
+                    unparseType(mfnType->get_return_type(), info); // second part
 #if 0
                     printf ("In unparseMemberPointerType(): after unparseType() second part: unparse modifiers \n");
 #endif
-#if 0
-                  // DQ (1/11/2020): This is the old code!
-                     if (ftype->get_ref_qualifiers() == 1) {
-                       curprint(" &");
-                     } else if (ftype->get_ref_qualifiers() == 2) {
-                       curprint(" &&");
-                     }
-#endif
+                 // add member function type qualifiers (&, &&, const, volatile)
+                    for (auto qual : memberFunctionQualifiers(mfnType, true /* trailing space after keyword */))
+                      curprint(qual);
+
+#if 0 /* WITH_UNPARSE_REF_QUALIFIER */
                  // Liao, 2/27/2009, add "const" specifier to fix bug 327
-                    if (ftype->isConstFunc())
+                    if (mfnType->isConstFunc())
                        {
                          curprint(" const ");
                        }
 
                  // DQ (1/11/2020): Adding support for volatile.
-                    if (ftype->isVolatileFunc())
+                    if (mfnType->isVolatileFunc())
                        {
                          curprint(" volatile ");
                        }
 
                  // DQ (1/11/2020): Adding support for lvalue reference member function modifiers.
-                    if (ftype->isLvalueReferenceFunc())
+                    if (mfnType->isLvalueReferenceFunc())
                        {
                          curprint(" &");
                        }
 
                  // DQ (1/11/2020): Adding support for rvalue reference member function modifiers.
-                    if (ftype->isRvalueReferenceFunc())
+                    if (mfnType->isRvalueReferenceFunc())
                        {
                          curprint(" &&");
                        }
+#endif /* WITH_UNPARSE_REF_QUALIFIER */
                   }
                  else
                   {
@@ -4367,36 +4396,9 @@ Unparse_Type::unparseMemberFunctionType(SgType* type, SgUnparse_Info& info)
 #if 0
                printf ("In unparseMemberFunctionType(): after unparseType() second part: unparse modifiers \n");
 #endif
-
-               if (mfunc_type->isConstFunc()) {
-                 curprint (" const");
-               }
-
-            // DQ (1/11/2020): Adding missing support for volatile and const-volatile.
-               if (mfunc_type->isVolatileFunc())
-                  {
-                 // curprint (" /* adding volatile */ ");
-                    curprint (" volatile");
-                  }
-
-            // DQ (1/11/2020): Adding support for lvalue reference member function modifiers.
-               if (mfunc_type->isLvalueReferenceFunc())
-                  {
-                    curprint(" &");
-                  }
-
-            // DQ (1/11/2020): Adding support for rvalue reference member function modifiers.
-               if (mfunc_type->isRvalueReferenceFunc())
-                  {
-                    curprint(" &&");
-                  }
-#if 0
-               if (mfunc_type->get_ref_qualifiers() == 1) {
-                 curprint (" &");
-               } else if (mfunc_type->get_ref_qualifiers() == 2) {
-                 curprint (" &&");
-               }
-#endif
+               // add member function type qualifiers (&, &&, const, volatile)
+               for (auto qual : memberFunctionQualifiers(mfunc_type))
+                 curprint(qual);
              }
             else
              {

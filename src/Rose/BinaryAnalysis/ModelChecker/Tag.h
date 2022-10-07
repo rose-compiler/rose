@@ -21,6 +21,7 @@ namespace ModelChecker {
  *  special things. */
 class Tag: public std::enable_shared_from_this<Tag> {
 public:
+    /** Shared ownership pointer. */
     using Ptr = TagPtr;
 
 private:
@@ -43,7 +44,7 @@ public:
     /** Property: Generic name of tag.
      *
      *  For instance, the name of a null pointer dereference tag might be the words "null pointer dereference" (see @ref
-     *  NullDerefTag for the actual value).
+     *  NullDereferenceTag for the actual value).
      *
      *  Thread safety: The implementation must be thread safe. */
     virtual std::string name() const = 0;

@@ -46,7 +46,7 @@ checkIsFrontendSpecificFlag(SgNode *ast)
         }
 
         // Mark node as frontend-specific and emit a warning if it wasn't already so marked.
-        void fix(SgNode *node, Sg_File_Info *finfo) {
+        void fix(SgNode */*node*/, Sg_File_Info *finfo) {
             if (finfo && !finfo->isFrontendSpecific()) {
 #if 0
 #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION

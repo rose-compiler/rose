@@ -78,35 +78,36 @@ struct InheritedSymbolKey : std::tuple<const SgFunctionDeclaration*, const SgTyp
   std::tuple_element<1, base>::type associatedType()  const { return std::get<1>(*this); }
 };
 
-/*
-struct OperatorKey : std::tuple<const SgType*, AdaIdentifier>
+
+struct OperatorKey : std::tuple<const SgScopeStatement*, AdaIdentifier>
 {
-  using base = std::tuple<const SgType*, AdaIdentifier>;
+  using base = std::tuple<const SgScopeStatement*, AdaIdentifier>;
   using base::base;
 
-        std::tuple_element<0, base>::type  principalType() const { return std::get<0>(*this); }
-  const std::tuple_element<1, base>::type& operatorName()  const { return std::get<1>(*this); }
+        std::tuple_element<0, base>::type  scope() const { return std::get<0>(*this); }
+  const std::tuple_element<1, base>::type& name()  const { return std::get<1>(*this); }
 };
 
-struct OperatorDesc : std::tuple<const SgFunctionDeclaration*, std::uint8_t>
+struct OperatorDesc : std::tuple<SgFunctionDeclaration*, std::uint8_t>
 {
-  enum { COMPILER_GENERATED = 1, DEFINED_IN_STANDARD = 2, USER_DEFINED = 3 };
+  enum { COMPILER_GENERATED = 1, DECLARED_IN_STANDARD = 2, USER_DEFINED = 3 };
 
-  using base = std::tuple<const SgFunctionDeclaration*, std::uint8_t>;
+  using base = std::tuple<SgFunctionDeclaration*, std::uint8_t>;
   using base::base;
 
   std::tuple_element<0, base>::type function() const { return std::get<0>(*this); }
 
   std::tuple_element<1, base>::type flags()    const { return std::get<1>(*this); }
-  bool isCompilerGenerated() const { return flags() == COMPILER_GENERATED; }
-  bool isDefinedInStandard() const { return flags() == DEFINED_IN_STANDARD; }
-  bool isUserDefined()       const { return flags() == USER_DEFINED; }
+  bool isCompilerGenerated()  const { return flags() == COMPILER_GENERATED; }
+  bool isDeclaredInStandard() const { return flags() == DECLARED_IN_STANDARD; }
+  bool isUserDefined()        const { return flags() == USER_DEFINED; }
 };
-*/
+
 }
 
 // define specializations of std::hash for user defined types
 //   as recommended by the C++11 standard.
+// needed if std::unordered_map is used instead of std::map to define map_t.
 namespace std
 {
   template <>
@@ -134,7 +135,6 @@ namespace std
     }
   };
 
-/*
   template <>
   struct hash<::Ada_ROSE_Translation::OperatorKey>
   {
@@ -143,14 +143,13 @@ namespace std
       static constexpr std::uint8_t lshift = 7;
       static constexpr std::uint8_t rshift = (sizeof(std::size_t) * CHAR_BIT) - lshift;
 
-      std::size_t val = std::hash<const void*>()(el.principalType());
+      std::size_t val = std::hash<const void*>()(el.scope());
 
       return ( ((val << lshift) + (val >> rshift))
-             ^ std::hash<::Ada_ROSE_Translation::AdaIdentifier>()(el.operatorName())
+             ^ std::hash<::Ada_ROSE_Translation::AdaIdentifier>()(el.name())
              );
     }
   };
-*/
 }
 
 
@@ -193,7 +192,7 @@ map_t<AdaIdentifier, SgInitializedName*>& adaExcps();
 map_t<AdaIdentifier, SgAdaPackageSpecDecl*>& adaPkgs();
 
 /// returns a mapping from string to builtin function declarations
-map_t<AdaIdentifier, std::vector<SgFunctionDeclaration*> >& adaFuncs();
+// map_t<AdaIdentifier, std::vector<SgFunctionDeclaration*> >& adaFuncs();
 
 /// returns a mapping from string to variables
 /// \note currently used to support the obsolescent ASCII package,
@@ -206,7 +205,7 @@ map_t<InheritedSymbolKey, SgAdaInheritedFunctionSymbol*>& inheritedSymbols();
 /// \details
 ///   maps stores information about explicitly or implicitly defined operators on a principal type.
 ///     a type may have multiple operators with the same name (e.g., "&"(string, char), "&"(string, string))
-// map_t<OperatorKey, std::vector<OperatorDesc> >& operatorSupport();
+map_t<OperatorKey, std::vector<OperatorDesc> >& operatorSupport();
 
 
 //

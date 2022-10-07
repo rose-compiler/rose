@@ -282,10 +282,10 @@ typedef Sawyer::Container::GraphIteratorBiMap<ControlFlowGraph::ConstVertexItera
  *  Users may create subclass objects from this class and pass their shared-ownership pointers to the partitioner, in which
  *  case the partitioner will invoke one of the callback's virtual function operators every time the control flow graph
  *  changes (the call occurs after the CFG has been adjusted).  Multiple callbacks are allowed; the list is obtained with
- *  the @ref cfgAdjustmentCallbacks method. */
+ *  the @ref Partitioner::cfgAdjustmentCallbacks method. */
 class CfgAdjustmentCallback: public Sawyer::SharedObject {
 public:
-    /** Shared ownership pointer to @ref CfgAdjustmentCallback. See @ref heap_object_shared_ownership. */
+    /** Shared ownership pointer. */
     typedef Sawyer::SharedPointer<CfgAdjustmentCallback> Ptr;
 
     /** Arguments for attaching a basic block.

@@ -312,26 +312,31 @@ EdgeArrows::arrowStyle(ArrowStylePreset preset, ArrowSide side) {
                 case LEFT: return arrowStyle(unicodeL1());
                 case RIGHT: return arrowStyle(unicodeR1());
             }
+            break;
         case UNICODE_2:
             switch (side) {
                 case LEFT: return arrowStyle(unicodeL2());
                 case RIGHT: return arrowStyle(unicodeR2());
             }
+            break;
         case ASCII_1:
             switch (side) {
                 case LEFT: return arrowStyle(asciiL1());
                 case RIGHT: return arrowStyle(asciiR1());
             }
+            break;
         case ASCII_2:
             switch (side) {
                 case LEFT: return arrowStyle(asciiL2());
                 case RIGHT: return arrowStyle(asciiR2());
             }
+            break;
         case ASCII_3:
             switch (side) {
                 case LEFT: return arrowStyle(asciiL3());
                 case RIGHT: return arrowStyle(asciiR3());
             }
+            break;
     }
     ASSERT_not_reachable("invalid arrow preset or side");
 }

@@ -268,8 +268,8 @@ public:
 
     /** Replace instructions at front of basic block.
      *
-     *  This is just a convenience for @ref replaceBlockInstructions that replaces @p nInsns instructions at the beginning of
-     *  the specified basic block. If @p nInsns is zero, then the @p replacement is inserted at the front of the basic block
+     *  This is just a convenience for @ref replaceBlockInsns that replaces @p nInsns instructions at the beginning of the
+     *  specified basic block. If @p nInsns is zero, then the @p replacement is inserted at the front of the basic block
      *  without removing any instructions. */
     bool replaceInsnsAtFront(const Rose::BinaryAnalysis::Partitioner2::BasicBlock::Ptr &bb, size_t nInsns,
                              const std::vector<uint8_t> &replacement,
@@ -279,9 +279,9 @@ public:
 
     /** Replace instructions at back of basic block.
      *
-     *  This is just a convenience for @ref replaceBlockInstructions that replaces @p nInsns instructions at the end of the
-     *  specified basic block. If @p nInsns is zero, then the @p replacement is appended to the end of the basic block without
-     *  removing any instructions. */
+     *  This is just a convenience for @ref replaceBlockInsns that replaces @p nInsns instructions at the end of the specified
+     *  basic block. If @p nInsns is zero, then the @p replacement is appended to the end of the basic block without removing
+     *  any instructions. */
     virtual bool replaceInsnsAtBack(const Rose::BinaryAnalysis::Partitioner2::BasicBlock::Ptr &bb, size_t nInsns,
                                     const std::vector<uint8_t> &replacement,
                                     const std::vector<Relocation> &relocations = std::vector<Relocation>()) {
@@ -291,7 +291,7 @@ public:
 
     /** Prepend code to a basic block.
      *
-     *  This is a convenience for @ref replaceIsnsnAtFront. It inserts the @p replacement at the front of the basic block by
+     *  This is a convenience for @ref replaceInsnsAtFront. It inserts the @p replacement at the front of the basic block by
      *  writing the @p replacement followed by the first instruction(s) of the block to some other area of memory, overwriting
      *  the first part of the basic block with an unconditional branch to the replacement, and following the replacement with
      *  an unconditional branch back to the rest of the basic block. */
@@ -313,7 +313,7 @@ public:
         return replaceInsnsAtBack(bb, 0, replacement, relocations);
     }
 
-    /** Replace exactly the specified instructions with some other encoding..
+    /** Replace exactly the specified instructions with some other encoding.
      *
      *  The @p replacement instructions either overwrite the @p toReplace instructions or the @p replacement is written to a
      *  newly allocated area and unconditional branches connect it to the main control flow. The assumption is that control

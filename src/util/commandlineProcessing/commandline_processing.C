@@ -1043,27 +1043,6 @@ CommandlineProcessing::isJovialFileNameSuffix ( const std::string & suffix )
      return returnValue;
    }
 
-// DQ (28/8/2017): Adding language support.
-bool
-CommandlineProcessing::isCobolFileNameSuffix ( const std::string & suffix )
-   {
-     bool returnValue = false;
-
-  // For now define CASE_SENSITIVE_SYSTEM to be true, as we are currently a UNIXish project.
-
-  // Rasmussen (11/08/2017): Changed Cobol file extension to reflect usage found on web
-#if(CASE_SENSITIVE_SYSTEM == 1)
-     if ( suffix == "cob"  || suffix == "cbl" || suffix == "cobol")
-#else //It is a case insensitive system
-     if ( suffix == "cob"  || suffix == "cbl" || suffix == "cobol")
-#endif
-        {
-          returnValue = true;
-        }
-
-     return returnValue;
-   }
-
 // TV (05/17/2010) Support for CUDA
 bool
 CommandlineProcessing::isCudaFileNameSuffix ( const std::string & suffix )

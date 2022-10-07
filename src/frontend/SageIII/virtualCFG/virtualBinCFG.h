@@ -66,7 +66,7 @@ namespace VirtualBinCFG {
         const AuxiliaryInformation *info;
 #endif
     public:
-        explicit CFGNode(SgAsmInstruction *node, const AuxiliaryInformation *info = NULL)
+        explicit CFGNode(SgAsmInstruction *node, const AuxiliaryInformation* /*info*/ = NULL)
             : node(node)
 #if 0 // [Robb Matzke 2021-03-17]: unused
               , info(info)
@@ -106,7 +106,7 @@ namespace VirtualBinCFG {
         const AuxiliaryInformation *info;
 #endif
     public:
-        CFGEdge(CFGNode src, CFGNode tgt, const AuxiliaryInformation *info = NULL)
+        CFGEdge(CFGNode src, CFGNode tgt, const AuxiliaryInformation* /*info*/ = NULL)
             : src(src), tgt(tgt)
 #if 0 // [Robb Matzke 2021-03-17]: unused
               , info(info)

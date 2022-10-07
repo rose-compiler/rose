@@ -230,8 +230,10 @@ AstNodeClass::buildDestructorBody ()
      return returnString;
    }
 
+// DQ (9/28/2022): Fixing compiler warning for argument not used.
+// string AstNodeClass::buildConstructorBody ( bool withInitializers, ConstructParamEnum config )
 string
-AstNodeClass::buildConstructorBody ( bool withInitializers, ConstructParamEnum config )
+AstNodeClass::buildConstructorBody ( bool withInitializers )
    {
   // This function builds a string that represents the initialization of member data
   // if the default initializers are used (for default constructors) then all member 
@@ -410,7 +412,9 @@ StringUtility::FileWithLineNumbers AstNodeClass::buildCopyMemberFunctionSource (
 
                          constructArgList1 += ", " + varNameString;
 
-                         string setParentString = data->buildCopyMemberFunctionSetParentSource(varNameString);
+                      // DQ (9/28/2022): Fixing compiler warning for argument not used.
+                      // string setParentString = data->buildCopyMemberFunctionSetParentSource(varNameString);
+                         string setParentString = data->buildCopyMemberFunctionSetParentSource();
                          postConstructCopy += setParentString;
                        }
                       else
@@ -435,7 +439,9 @@ StringUtility::FileWithLineNumbers AstNodeClass::buildCopyMemberFunctionSource (
                                    postConstructCopy1 += data->buildCopyMemberFunctionSource(buildConstructorArgument);
 #if 1
                                 // string setParentString = "     " + string(data->getVariableNameString()) + "_copy->set_parent(result);\n";
-                                   string setParentString = data->buildCopyMemberFunctionSetParentSource(localVarNameString);
+                                // DQ (9/28/2022): Fixing compiler warning for argument not used.
+                                // string setParentString = data->buildCopyMemberFunctionSetParentSource(localVarNameString);
+                                   string setParentString = data->buildCopyMemberFunctionSetParentSource();
                                    postConstructCopy1 += setParentString;
 #endif
                                    break;
@@ -453,7 +459,9 @@ StringUtility::FileWithLineNumbers AstNodeClass::buildCopyMemberFunctionSource (
                                    postConstructCopy1 += data->buildCopyMemberFunctionSource(buildConstructorArgument);
 #if 1
                                 // string setParentString = "     " + string(data->getVariableNameString()) + "_copy.set_parent(result);\n";
-                                   string setParentString = data->buildCopyMemberFunctionSetParentSource(localVarNameString);
+                                // DQ (9/28/2022): Fixing compiler warning for argument not used.
+                                // string setParentString = data->buildCopyMemberFunctionSetParentSource(localVarNameString);
+                                   string setParentString = data->buildCopyMemberFunctionSetParentSource();
                                    postConstructCopy1 += setParentString;
 #endif
                                    break;
@@ -471,7 +479,9 @@ StringUtility::FileWithLineNumbers AstNodeClass::buildCopyMemberFunctionSource (
                                 // DQ (10/22/2005): Simpler code
                                    postConstructCopy1 += data->buildCopyMemberFunctionSource(buildConstructorArgument);
                                 // string setParentString = "     " + string(data->getVariableNameString()) + "_copy.set_parent(result);\n";
-                                   string setParentString = data->buildCopyMemberFunctionSetParentSource(varNameString);
+                                // DQ (9/28/2022): Fixing compiler warning for argument not used.
+                                // string setParentString = data->buildCopyMemberFunctionSetParentSource(varNameString);
+                                   string setParentString = data->buildCopyMemberFunctionSetParentSource();
                                 // postConstructCopy = setParentString + postConstructCopy;
                                    postConstructCopy1 += setParentString;
                                    break;
@@ -540,7 +550,9 @@ AstNodeClass::show(size_t indent) const
            terminalIterator != subclasses.end(); 
            terminalIterator++) {
          ROSE_ASSERT((*terminalIterator)!=NULL);
-         displayName(indent); cout << " -> "; (*terminalIterator)->AstNodeClass::show(); cout << ";" << endl; //MS edge
+      // DQ (9/28/2022): Fixing compiler warning for argument not used.
+      // displayName(indent); cout << " -> "; (*terminalIterator)->AstNodeClass::show(); cout << ";" << endl; //MS edge
+         displayName(); cout << " -> "; (*terminalIterator)->AstNodeClass::show(); cout << ";" << endl; //MS edge
          if ((*terminalIterator)->getCanHaveInstances()) {
            (*terminalIterator)->show();
            cout << "[style=bold];" << endl; // Terminals are bold! MS node
@@ -549,8 +561,10 @@ AstNodeClass::show(size_t indent) const
      }
    }
 
+// DQ (9/28/2022): Fixing compiler warning for argument not used.
+// void AstNodeClass::displayName ( int indent ) const
 void
-AstNodeClass::displayName ( int indent ) const
+AstNodeClass::displayName() const
    {
      ROSE_ASSERT (this != NULL);
      printf ("%s ",name.c_str());
@@ -716,7 +730,7 @@ AstNodeClass::setFunctionPrototype ( const GrammarString & inputMemberFunction )
         string endMarkerString = "#endif // " + markerString;                                                                  \
         string directory;                                                                                                      \
         functionString = StringUtility::toString(Grammar::extractStringFromFile(startMarkerString, endMarkerString,            \
-                                                                                filename, directory));                         \
+                                                                                filename));                                    \
     } catch (const std::runtime_error &e) {                                                                                    \
         if (strstr(e.what(), "could not locate startMarker") == NULL) {                                                        \
             errorMessage = e.what();                                                                                           \
@@ -731,7 +745,7 @@ AstNodeClass::setFunctionPrototype ( const GrammarString & inputMemberFunction )
         string directory;                                                                                                      \
         try {                                                                                                                  \
             functionString = StringUtility::toString(Grammar::extractStringFromFile(startMarkerString, endMarkerString,        \
-                                                                                        filename, directory));                 \
+                                                                                        filename));                            \
         } catch (const std::runtime_error &e) {                                                                                \
             errorMessage = e.what();                                                                                           \
         }                                                                                                                      \
@@ -1865,7 +1879,9 @@ AstNodeClass::buildReturnDataMemberPointers ()
 *  The traverse parameter indicates whether the property is normally traversed.  This parameter is
 *  propagated through to the ReferenceToPointerHandler.
 *************************************************************************************************/
-string AstNodeClass::buildListIteratorStringForReferenceToPointers(string typeName, string variableName, string classNameString, bool traverse)
+// DQ (9/28/2022): Fixing compiler warning for argument not used.
+// string AstNodeClass::buildListIteratorStringForReferenceToPointers(string typeName, string variableName, string classNameString, bool traverse)
+string AstNodeClass::buildListIteratorStringForReferenceToPointers(string typeName, string variableName, bool traverse)
    {
   // AS(2/14/2006) Builds the strings for the list of data member pointers.
      string returnString;
@@ -2042,7 +2058,10 @@ AstNodeClass::buildProcessDataMemberReferenceToPointers ()
                  // is a ir-node pointer which is *not* yet replaced. $CLASSNAME is inside the string and will later be replaced with 
                  // e.g SgTypeInt etc. 'varTypeString.substr(0,15) == "$GRAMMAR_PREFIX"' checks to see if it is part of the grammar.
                  // 'varTypeString.substr(0,2) == "Sg" ' and to see if it is a Sg node of some type.
-                    s += buildListIteratorStringForReferenceToPointers(varTypeString, varNameString,classNameString, traverse);
+
+                 // DQ (9/28/2022): Fixing compiler warning for argument not used.
+                 // s += buildListIteratorStringForReferenceToPointers(varTypeString, varNameString,classNameString, traverse);
+                    s += buildListIteratorStringForReferenceToPointers(varTypeString, varNameString, traverse);
 
                     if ( (varTypeString == "$CLASSNAME *" ) || ( ( ( varTypeString.substr(0,15) == "$GRAMMAR_PREFIX" ) || ( varTypeString.substr(0,2) == "Sg" ) ) && typeIsStarPointer ) )
                        {
@@ -2091,7 +2110,9 @@ AstNodeClass::buildProcessDataMemberReferenceToPointers ()
 *  necessary to count the index of all data member pointers to IR nodes 
 *  contained in STL lists.
 *************************************************************************************************/
-std::string AstNodeClass::buildListIteratorStringForChildIndex(string typeName, string variableName, string classNameString)
+// DQ (9/28/2022): Fixing compiler warning for argument not used.
+// std::string AstNodeClass::buildListIteratorStringForChildIndex(string typeName, string variableName, string classNameString)
+std::string AstNodeClass::buildListIteratorStringForChildIndex(string typeName, string variableName)
    {
   // AS(2/14/2006) Builds the strings for the list of data member pointers.
      string returnString;
@@ -2267,7 +2288,10 @@ AstNodeClass::buildChildIndex()
                  // is a ir-node pointer which is *not* yet replaced. $CLASSNAME is inside the string and will later be replaced with 
                  // e.g SgTypeInt etc. 'varTypeString.substr(0,15) == "$GRAMMAR_PREFIX"' checks to see if it is part of the grammar.
                  // 'varTypeString.substr(0,2) == "Sg" ' and to see if it is a Sg node of some type.
-                    s += buildListIteratorStringForChildIndex(varTypeString, varNameString,classNameString);
+
+                 // DQ (9/28/2022): Fixing compiler warning for argument not used.
+                 // s += buildListIteratorStringForChildIndex(varTypeString, varNameString,classNameString);
+                    s += buildListIteratorStringForChildIndex(varTypeString, varNameString);
 
                     if ( (varTypeString == "$CLASSNAME *" ) || ( ( ( varTypeString.substr(0,15) == "$GRAMMAR_PREFIX" ) || ( varTypeString.substr(0,2) == "Sg" ) ) && typeIsStarPointer ) )
                        {

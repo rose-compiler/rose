@@ -10,5 +10,6 @@ namespace AST {}
 #include <Rose/AST/Defect.h>
 #include <Rose/AST/Checker.h>
 #include <Rose/AST/Utils.h>
+#include <Rose/AST/NodeId.h>
 
-#endif
+#endif /* Rose_AST_h */

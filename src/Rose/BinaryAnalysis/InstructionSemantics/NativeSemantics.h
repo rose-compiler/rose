@@ -24,7 +24,7 @@ namespace NativeSemantics {
 /** Concrete values from the specimen. */
 typedef ConcreteSemantics::SValue SValue;
 
-/** Shared-ownership pointer to @ref SValue. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer to @ref ConcreteSemantics::SValue. */
 typedef ConcreteSemantics::SValuePtr SValuePtr;
 
 /** Formatter for printing values. */
@@ -34,12 +34,12 @@ typedef ConcreteSemantics::Formatter Formatter;
 //                                      Register state
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Shared-ownership pointer to @ref RegisterState. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer. */
 typedef boost::shared_ptr<class RegisterState> RegisterStatePtr;
 
 /** Collection of registers.
  *
- *  Since the running specimen is the machine state, @ref RegisterState objects in this semantic domain are not copyable. */
+ *  Since the running specimen is the machine state, RegisterState objects in this semantic domain are not copyable. */
 class RegisterState: public BaseSemantics::RegisterState, boost::noncopyable {
 public:
     /** Base type. */
@@ -103,7 +103,7 @@ public:
         TODO("[Robb Matzke 2019-09-05]");               // set all registers to zero
     }
 
-    virtual bool merge(const BaseSemantics::RegisterStatePtr &other, BaseSemantics::RiscOperators *ops) override {
+    virtual bool merge(const BaseSemantics::RegisterStatePtr &/*other*/, BaseSemantics::RiscOperators*) override {
         ASSERT_not_implemented("[Robb Matzke 2019-09-05]");
     }
 
@@ -127,12 +127,12 @@ public:
 //                                      Memory state
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Shared-ownership pointer to @ref MemoryState. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer. */
 typedef boost::shared_ptr<class MemoryState> MemoryStatePtr;
 
 /** Collection of memory address/value pairs.
  *
- *  Since the running specimen is the machine state, @ref MemoryState objects in this semantic domain are not copyable. */
+ *  Since the running specimen is the machine state, MemoryState objects in this semantic domain are not copyable. */
 class MemoryState: public BaseSemantics::MemoryState, boost::noncopyable {
 public:
     /** Base type. */
@@ -194,8 +194,8 @@ public:
 public:
     virtual void clear() override {}
 
-    virtual bool merge(const BaseSemantics::MemoryStatePtr &other, BaseSemantics::RiscOperators *addrOps,
-                       BaseSemantics::RiscOperators *valOps) override {
+    virtual bool merge(const BaseSemantics::MemoryStatePtr &/*other*/, BaseSemantics::RiscOperators */*addrOps*/,
+                       BaseSemantics::RiscOperators */*valOps*/) override {
         ASSERT_not_implemented("not applicable for this class");
     }
 
@@ -209,13 +209,13 @@ public:
                                                 BaseSemantics::RiscOperators *addrOps,
                                                 BaseSemantics::RiscOperators *valOps) override;
 
-    virtual void writeMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &value,
-                             BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps) override {
+    virtual void writeMemory(const BaseSemantics::SValuePtr &/*addr*/, const BaseSemantics::SValuePtr &/*value*/,
+                             BaseSemantics::RiscOperators */*addrOps*/, BaseSemantics::RiscOperators */*valOps*/) override {
         ASSERT_not_implemented("[Robb Matzke 2019-09-05]");
     }
 
-    virtual void hash(Combinatorics::Hasher&, BaseSemantics::RiscOperators *addrOps,
-                      BaseSemantics::RiscOperators *valOps) const override {
+    virtual void hash(Combinatorics::Hasher&, BaseSemantics::RiscOperators */*addrOps*/,
+                      BaseSemantics::RiscOperators */*valOps*/) const override {
         ASSERT_not_implemented("[Robb Matzke 2021-03-26]");
     }
 
@@ -228,7 +228,7 @@ public:
 //                                      Complete semantic state
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Shared-ownership pointer to @ref State. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer. */
 typedef boost::shared_ptr<class State> StatePtr;
 
 /** Machine state.
@@ -266,7 +266,7 @@ public:
 //                                      RISC operators
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Shared-ownership pointer to @ref RiscOperators. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer. */
 typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
 class RiscOperators: public ConcreteSemantics::RiscOperators {
@@ -289,18 +289,19 @@ protected:
 public:
     ~RiscOperators();
 
-    /** Instantiate a new @ref RiscOperators object.
+    /** Allocating constructor.
      *
-     *  The register state, memory state, and combined state are instantiations of @ref NativeSemantics @ref RegisterState,
-     *  @ref MemoryState, and @ref State, which point to the subordinate process and which are not copyable. */
+     *  The register state, memory state, and combined state are instantiations of @ref NativeSemantics::RegisterState, @ref
+     *  NativeSemantics::MemoryState, and @ref NativeSemantics::State, which point to the subordinate process and which are not
+     *  copyable. */
     static RiscOperatorsPtr instanceFromProtoval(const BaseSemantics::SValuePtr &protoval, const Debugger::Ptr &process);
 
-    /** Instantiate a new @ref RiscOperators object.
+    /** Allocating constructor.
      *
-     *  The @ref state (registers and memory) for this object is provided by the caller and must be an instance of the
-     *  @ref NativeSemantics @ref State that points to @ref NativeSemantics @ref RegisterState and @ref MemoryState.
+     *  The @p state (registers and memory) for this object is provided by the caller and must be an instance of the @ref
+     *  NativeSemantics::State that points to @ref NativeSemantics::RegisterState and @ref NativeSemantics::MemoryState.
      *  User-defined subclasses can also be used. */
-    static RiscOperatorsPtr instanceFromState(const BaseSemantics::StatePtr&);
+    static RiscOperatorsPtr instanceFromState(const BaseSemantics::StatePtr &state);
 
     //----------------------------------------
     // Virtual constructors
@@ -313,8 +314,9 @@ public:
     // Dynamic pointer casts
     //----------------------------------------
 public:
-    /** Run-time promotion of a base object to a @ref NativeSemantics @ref RiscOperators. This is a checked conversion--it
-     *  will fail if @p x does not point to a @ref NativeSemantics::RiscOperators object. */
+    /** Run-time promotion of a base object to a @ref NativeSemantics::RiscOperators.
+     *
+     *  This is a checked conversion--it will fail if @p x does not point to a @ref NativeSemantics::RiscOperators object. */
     static RiscOperatorsPtr promote(const BaseSemantics::RiscOperatorsPtr&);
 
     //----------------------------------------
@@ -333,7 +335,7 @@ public:
 //                                      Dispatcher
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Shared-ownership pointer to @ref Dispatcher. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer. */
 typedef boost::shared_ptr<class Dispatcher> DispatcherPtr;
 
 class Dispatcher: public BaseSemantics::Dispatcher {
@@ -411,7 +413,7 @@ public:
     virtual void iprocReplace(SgAsmInstruction*, BaseSemantics::InsnProcessor*) override {
         notApplicable("iprocReplace");
     }
-    virtual void iprocSet(int key, BaseSemantics::InsnProcessor*) override {
+    virtual void iprocSet(int /*key*/, BaseSemantics::InsnProcessor*) override {
         notApplicable("iprocSet");
     }
     virtual int iprocKey(SgAsmInstruction*) const override {

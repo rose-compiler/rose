@@ -926,8 +926,8 @@ public:
      *  Thread safety: This function is thread safe.
      *
      *  @{ */
-    std::vector<SymbolicExpr::Ptr> computeSuccessors(const InsnInfo::List&, Accuracy accuracy);
-    std::vector<SymbolicExpr::Ptr> computeSuccessors(rose_addr_t insnVa, Accuracy accuracy);
+    std::vector<SymbolicExpression::Ptr> computeSuccessors(const InsnInfo::List&, Accuracy accuracy);
+    std::vector<SymbolicExpression::Ptr> computeSuccessors(rose_addr_t insnVa, Accuracy accuracy);
     /** @} */
 
     /** Return the computed concrete successors for an instruction.
@@ -958,7 +958,7 @@ private:
     // concrete addresses from a conditional branch instruction. Another common case is that one of the successors will be a
     // free variable to represent that we don't know the successors (as usually happens with x86 RET and other computed
     // branches).
-    std::vector<SymbolicExpr::Ptr> splitSuccessors(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr &ops);
+    std::vector<SymbolicExpression::Ptr> splitSuccessors(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr &ops);
 
     //--------------------------------------------------------------------------------------------------------------------
     // Functions to run things.

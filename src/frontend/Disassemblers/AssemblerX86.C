@@ -397,14 +397,15 @@ AssemblerX86::InsnDefn::to_str() const
 }
 
 bool
-AssemblerX86::matches_rel(SgAsmInstruction *insn, int64_t val, size_t nbytes)
-{
-    if (nbytes>=8) return true;
-    int64_t minval = (int64_t)-1 << (8*nbytes-1);
-    int64_t maxval = (int64_t)~(uint64_t)minval;
+AssemblerX86::matches_rel(SgAsmInstruction *insn, int64_t val, size_t nbytes) {
+    if (nbytes>=8)
+        return true;
+
+    const int64_t minval = (int64_t)((uint64_t)(int64_t)-1 << (8*nbytes-1));
+    const int64_t maxval = (int64_t)~(uint64_t)minval;
     const int64_t leeway = 16; /*we don't know the assembled size yet, so allow some leeway.*/
     val -= (int64_t)insn->get_address();
-    return val>= minval && val<=maxval+leeway;
+    return val >= minval && val <= maxval+leeway;
 }
 
 bool

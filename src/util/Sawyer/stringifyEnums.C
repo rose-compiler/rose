@@ -967,9 +967,9 @@ generateCompatibleImplementation(const Scopes &scopes) {
 static Flags
 readFlags(TokenStream &tokens, const Token &token) {
     Flags flags;
-    if (boost::contains(tokens.line(tokens[0]), "NO_STRINGIFY"))
+    if (boost::contains(tokens.line(token), "NO_STRINGIFY"))
         flags.set(NO_STRINGIFY);
-    if (boost::contains(tokens.line(tokens[0]), "NO_CHECK"))
+    if (boost::contains(tokens.line(token), "NO_CHECK"))
         flags.set(NO_CHECK);
     return flags;
 }

@@ -118,7 +118,7 @@ namespace
 
         descend(n);
       }
-      
+
       // \todo consider providing a handler for SgClassDeclaration
       //       that only descends if the traversal is in allClass mode
       //       i.e., classes->containsAllClasses()
@@ -294,8 +294,9 @@ namespace
       void handle2(const SgMemberFunctionType& lhs, const SgMemberFunctionType& rhs)
       {
         firstDecisiveComparison
-        || (res = cmpValue(lhs.get_ref_qualifiers(),  rhs.get_ref_qualifiers()))
+        //~ || (res = cmpValue(lhs.get_ref_qualifiers(),  rhs.get_ref_qualifiers())) // PP (10/4/22): does not seem to be used
         || (res = cmpValue(lhs.get_mfunc_specifier(), rhs.get_mfunc_specifier()))
+        || (res = cmpValue(lhs.get_has_ellipses(),    rhs.get_has_ellipses()))
         || (res = cmpFunctionTypes(lhs, rhs, ignoreFunctionReturnType))
         ;
       }
@@ -484,16 +485,16 @@ namespace
 
     return cmpres;
   }
-  
-  std::vector<const SgClassDefinition*> 
+
+  std::vector<const SgClassDefinition*>
   collectAncestors(const SgClassDefinition* cls, std::vector<const SgClassDefinition*>&& res = {})
   {
     ASSERT_not_null(cls);
-    
+
     for (const SgBaseClass* bscls : cls->get_inheritances())
     {
       ASSERT_not_null(bscls);
-      
+
       if (!bscls->get_isDirectBaseClass()) continue;
 
       const SgClassDeclaration* bsdcl = bscls->get_base_class();
@@ -510,12 +511,12 @@ namespace
       const SgDeclarationStatement* defdcl = bsdcl->get_definingDeclaration();
       const SgClassDeclaration*     bsdefn = isSgClassDeclaration(defdcl);
       ASSERT_not_null(bsdefn);
-      
+
       res = collectAncestors(bsdefn->get_definition(), std::move(res));
     }
-      
-    res.push_back(cls);  
-    return res;  
+
+    res.push_back(cls);
+    return res;
   }
 }
 
@@ -564,7 +565,7 @@ void inheritanceEdges( const SgClassDefinition* def,
 
 
 namespace
-{  
+{
   ClassKeyType classDefinition_opt(SgDeclarationStatement& n)
   {
     SgDeclarationStatement* defdcl = n.get_definingDeclaration();
@@ -599,7 +600,7 @@ namespace
 
       static
       ReturnType get(TypeKeyType n);
-  };  
+  };
 }
 
 
@@ -630,7 +631,6 @@ RoseCompatibilityBridge::compareNames(FunctionKeyType lhs, FunctionKeyType rhs) 
   const bool        rhsIsDtor = rhsname.front() == '~';
   const int         cmpres = (lhsIsDtor && rhsIsDtor) ? 0 : lhsname.compare(rhsname);
 
-  //~ std::cerr << lhsname << " == " << rhsname << " " << cmpres << std::endl;
   return cmpres;
 }
 
@@ -655,7 +655,9 @@ RoseCompatibilityBridge::compareTypes(FunctionKeyType lhs, FunctionKeyType rhs, 
   const SgFunctionType& lhsty = functionType(lhs);
   const SgFunctionType& rhsty = functionType(rhs);
 
-  return compareFunctionTypes(&lhsty, &rhsty, exclReturn);
+  const int res = compareFunctionTypes(&lhsty, &rhsty, exclReturn);
+
+  return res;
 }
 
 VariableKeyType
@@ -740,27 +742,27 @@ namespace
 
         if (drvDef == basDef)
           return RoseCompatibilityBridge::sametype;
-          
+
         bool isCovariant = false;
-        
+
         try
         {
           isCovariant = classes.isBaseOf(basDef, drvDef);
         }
         catch (const std::out_of_range&)
         {
-          static int prnNumWarn = 3;  
-          
+          static int prnNumWarn = 3;
+
           if (classes.containsAllClasses()) throw;
-          
+
           if (prnNumWarn > 0)
           {
             --prnNumWarn;
-            logWarn() << "assuming covariant return [requires full translation unit analysis]" 
+            logWarn() << "assuming covariant return [requires full translation unit analysis]"
                       << (prnNumWarn ? "" : "...")
                       << std::endl;
-          }  
-            
+          }
+
           isCovariant = true;
         }
 
@@ -916,7 +918,7 @@ RoseCompatibilityBridge::destructor(ClassKeyType cls) const
                              return fn && fn->get_specialFunctionModifier().isDestructor();
                            }
                          );
-                         
+
   return (pos != lim) ? isSgMemberFunctionDeclaration(*pos) : nullptr;
 }
 
@@ -971,7 +973,7 @@ RoseCompatibilityBridge::extractClassAndBaseClasses(ClassAnalysis& classes, Clas
   std::vector<ClassKeyType>  ancestors = collectAncestors(n);
   CastAnalysis               tmpCasts;
   NodeCollector::NodeTracker visited;
-  
+
   for (ClassKeyType cls : ancestors)
   {
     if (classes.find(cls) == classes.end())
@@ -1013,14 +1015,14 @@ namespace
 {
   // \todo complete these functions
   // https://stackoverflow.com/questions/15590832/conditions-under-which-compiler-will-not-define-implicits-constructor-destruct
-  
-  /// returns iff the function signature would be a legal copy-assignment operator 
+
+  /// returns iff the function signature would be a legal copy-assignment operator
   ///   in the class.
   bool isCopyAssignIn(const SgMemberFunctionDeclaration*, const SgClassDefinition*)
   {
     return false;
   }
-  
+
   /// returns all existing functions that would prevent the compiler from
   ///   creating a copy-assignment operator.
   std::vector<FunctionKeyType>
@@ -1029,7 +1031,7 @@ namespace
     return std::vector<FunctionKeyType>{};
   }
 
-  /// returns iff the function signature would be a legal move-assignment operator 
+  /// returns iff the function signature would be a legal move-assignment operator
   ///   in the class.
   bool isMoveAssignIn(const SgMemberFunctionDeclaration*, const SgClassDefinition*)
   {
@@ -1037,7 +1039,7 @@ namespace
   }
 
   /// returns all existing functions that would prevent the compiler from
-  ///   creating a move-assignment operator.  
+  ///   creating a move-assignment operator.
   std::vector<FunctionKeyType>
   moveAssignConflicts(const SgClassDefinition*)
   {
@@ -1045,15 +1047,15 @@ namespace
   }
 }
 
-bool 
+bool
 RoseCompatibilityBridge::isAutoGeneratable(ClassKeyType clkey, FunctionKeyType fnkey) const
 {
   ASSERT_require(clkey != ClassKeyType{});
   ASSERT_require(fnkey != FunctionKeyType{});
-  
+
   bool                             res = false;
   const SgSpecialFunctionModifier& fnmod = fnkey->get_specialFunctionModifier();
-  
+
   if (fnmod.isDestructor())
   {
     // there can only be one destructor. If it exists, it cannot be generated.
@@ -1061,7 +1063,7 @@ RoseCompatibilityBridge::isAutoGeneratable(ClassKeyType clkey, FunctionKeyType f
   }
   else if (fnmod.isConstructor())
     logError() << "RoseCompatibilityBridge::isAutoGeneratable does not yet support "
-               << "constructors: " << fnkey->get_name() 
+               << "constructors: " << fnkey->get_name()
                << std::endl;
   else if (fnmod.isOperator())
   {
@@ -1072,7 +1074,7 @@ RoseCompatibilityBridge::isAutoGeneratable(ClassKeyType clkey, FunctionKeyType f
     }
     else if (clkey == &getClassDef(*fnkey))
     {
-      // if the function is already in the class, then there is no need 
+      // if the function is already in the class, then there is no need
       // to generate it.
       res = false;
     }
@@ -1084,10 +1086,10 @@ RoseCompatibilityBridge::isAutoGeneratable(ClassKeyType clkey, FunctionKeyType f
       logError() << "RoseCompatibilityBridge::isAutoGeneratable not yet implemented"
                  << std::endl;
   }
-                   
+
   return res;
 }
-  
+
 
 SgClassDefinition& getClassDef(const SgDeclarationStatement& n)
 {

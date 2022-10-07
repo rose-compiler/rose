@@ -12,6 +12,7 @@
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Sawyer/GraphTraversal.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/SymbolicExpression.h>
 
 #include <boost/range/adaptor/reversed.hpp>
 #include <sstream>
@@ -338,26 +339,26 @@ dumpDfCfg(std::ostream &out, const DfCfg &dfCfg) {
 
 // If the expression is an offset from the initial stack register then return the offset, else nothing.
 static Sawyer::Optional<int64_t>
-isStackAddress(const Rose::BinaryAnalysis::SymbolicExpr::Ptr &expr,
+isStackAddress(const Rose::BinaryAnalysis::SymbolicExpression::Ptr &expr,
                const BaseSemantics::SValue::Ptr &initialStackPointer, const SmtSolverPtr &solver) {
     using namespace Rose::BinaryAnalysis::InstructionSemantics;
 
     if (!initialStackPointer)
         return Sawyer::Nothing();
-    SymbolicExpr::Ptr initialStack = SymbolicSemantics::SValue::promote(initialStackPointer)->get_expression();
+    SymbolicExpression::Ptr initialStack = SymbolicSemantics::SValue::promote(initialStackPointer)->get_expression();
 
     // Special case where (add SP0 0) is simplified to SP0
-    SymbolicExpr::LeafPtr variable = expr->isLeafNode();
+    SymbolicExpression::LeafPtr variable = expr->isLeafNode();
     if (variable && variable->mustEqual(initialStack, solver))
         return 0;
 
     // Otherwise the expression must be (add SP0 N) where N != 0
-    SymbolicExpr::InteriorPtr inode = expr->isInteriorNode();
-    if (!inode || inode->getOperator() != SymbolicExpr::OP_ADD || inode->nChildren()!=2)
+    SymbolicExpression::InteriorPtr inode = expr->isInteriorNode();
+    if (!inode || inode->getOperator() != SymbolicExpression::OP_ADD || inode->nChildren()!=2)
         return Sawyer::Nothing();
 
     variable = inode->child(0)->isLeafNode();
-    SymbolicExpr::LeafPtr constant = inode->child(1)->isLeafNode();
+    SymbolicExpression::LeafPtr constant = inode->child(1)->isLeafNode();
     if (!constant || !constant->isIntegerConstant())
         std::swap(variable, constant);
     if (!constant || !constant->isIntegerConstant())
@@ -532,6 +533,32 @@ findGlobalVariables(const BaseSemantics::RiscOperators::Ptr &ops, size_t wordNBy
     }
     return retval;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// DfCfgVertex
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Sawyer::Optional<rose_addr_t>
+DfCfgVertex::address() const {
+    switch (type_) {
+        case BBLOCK:
+            if (bblock_)
+                return bblock_->address();
+            break;
+        case FAKED_CALL:
+            if (callee_)
+                return callee_->address();
+            break;
+        case FUNCRET:
+        case INDET:
+            break;
+    }
+    return Sawyer::Nothing();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// TransferFunction
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Construct a new state from scratch
 BaseSemantics::State::Ptr

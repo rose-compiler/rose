@@ -50,6 +50,7 @@ class MemoryMap;
 using MemoryMapPtr = Sawyer::SharedPointer<MemoryMap>;  /**< Reference counting pointer. */
 class NoOperation;
 class Reachability;
+using RegisterDescriptors = std::vector<RegisterDescriptor>; /**< List of register descriptors in dictionary. */
 class RegisterDictionary;
 using RegisterDictionaryPtr = Sawyer::SharedPointer<RegisterDictionary>; /**< Reference counting pointer. */
 class RegisterNames;
@@ -65,7 +66,7 @@ class SmtSolver;
 using SmtSolverPtr = std::shared_ptr<SmtSolver>;  /**< Reference counting pointer. */
 class SourceLocations;
 class SRecord;
-class SymbolicExprParser;
+class SymbolicExpresssionParser;
 class SystemCall;
 class TaintedFlow;
 class Z3Solver;
@@ -111,7 +112,7 @@ class Utf8CharacterEncodingForm;
 class Utf16CharacterEncodingForm;
 } // namespace
 
-namespace SymbolicExpr {
+namespace SymbolicExpression {
 class Exception;
 class ExprExprHashMap;
 class Formatter;

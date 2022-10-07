@@ -1105,8 +1105,9 @@ Grammar::setUpTypes ()
                                               CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      MemberFunctionType.setDataPrototype     ("unsigned int", "mfunc_specifier","= 0",
                                               CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     MemberFunctionType.setDataPrototype     ("unsigned int", "ref_qualifiers","= 0",
-                                              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     // PP (10/4/22): experimentally commented out.
+     //~ MemberFunctionType.setDataPrototype     ("unsigned int", "ref_qualifiers","= 0",
+                                              //~ CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      PartialFunctionType.setFunctionPrototype ("HEADER_PARTIAL_FUNCTION_TYPE", "../Grammar/Type.code" );
 
