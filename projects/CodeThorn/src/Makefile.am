@@ -159,10 +159,6 @@ CODETHORN_HEADER_FILES=\
   PropertyStateFactory.h \
   PropertyValueTable.h \
   PState.h \
-  RDAnalysis.h \
-  RDAstAttribute.h \
-  RDLattice.h \
-  RDTransferFunctions.h \
   ReachabilityAnalysis.h \
   ReadWriteListener.h \
   ReadWriteTraceAnalysis.h \
@@ -187,7 +183,6 @@ CODETHORN_HEADER_FILES=\
   TransitionGraph.h \
   TransitionGraphReducer.h \
   TypeSizeMapping.h \
-  UDAstAttribute.h \
   VariableIdUtils.h \
   VariableIdMappingExtended.h \
   VariableValueMonitor.h \
@@ -287,10 +282,6 @@ CODETHORN_SOURCE_FILES=\
   PropertyStateFactory.C \
   PropertyValueTable.C \
   PState.C \
-  RDAnalysis.C \
-  RDAstAttribute.C \
-  RDLattice.C \
-  RDTransferFunctions.C \
   ReachabilityAnalysis.C \
   ReadWriteListener.C \
   ReadWriteTraceAnalysis.C \
@@ -314,7 +305,6 @@ CODETHORN_SOURCE_FILES=\
   TransitionGraph.C \
   TransitionGraphReducer.C \
   TypeSizeMapping.C \
-  UDAstAttribute.C \
   VariableIdUtils.C \
   VariableIdMappingExtended.C \
   VariableValueMonitor.C \

@@ -3,8 +3,8 @@
   #define NO_ESTATE -4
   from file Labeler.h to CodeThorn.h header file (to be created).
 
-11)
-remove 
+11) DONE
+remove dead code
 IntervalAnalysis.C
 IntervalAnalysis.h
 IntervalAstAttribute.C
@@ -33,7 +33,7 @@ analyterix-src/RoseRDAnalysis.h
 analyterix-src/TransformationOperators.C
 analyterix-src/TransformationOperators.h
 
-
+12) remove dead code
 RDAnalysis.C
 RDAnalysis.h
 RDAstAttribute.C
@@ -42,6 +42,9 @@ RDLattice.C
 RDLattice.h
 RDTransferFunctions.C
 RDTransferFunctions.h
+UDAstAttribute.C
+UDAstAttribute.h
+
 
 LVAnalysis.C
 LVAnalysis.h

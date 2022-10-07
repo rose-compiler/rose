@@ -457,7 +457,7 @@ namespace CodeThorn {
 	//write_file(icfgNonClusteredFileName, analyzer->getFlow()->toDot(analyzer->getCFAnalyzer()->getLabeler(),analyzer->getTopologicalSort()));
         string icfgFileName=ctOpt.reportFilePath+"/"+"icfg.dot";
 	DataDependenceVisualizer ddvis(analyzer->getLabeler(),analyzer->getVariableIdMapping(),"none");
-	ddvis.generateDotFunctionClusters(root,analyzer->getCFAnalyzer(),icfgFileName,analyzer->getTopologicalSort(),false);
+	ddvis.generateDotFunctionClusters(root,analyzer->getCFAnalyzer(),icfgFileName,analyzer->getTopologicalSort());
         cout<<"Generated ICFG dot file "<<icfgFileName<<endl;
         
 	cout << "=============================================================="<<endl;
