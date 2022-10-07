@@ -129,8 +129,15 @@ testIterator() {
                       "- c\n");
     Rose::Yaml::Iterator iter = root_rw.begin();
     ASSERT_always_require(iter == root_rw.begin());
-    iter = iter;
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wself-assign-overloaded"
+#endif
+    iter = iter;                                        // intentional self-assignment
     ASSERT_always_require(iter == root_rw.begin());
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 }
 
 int
