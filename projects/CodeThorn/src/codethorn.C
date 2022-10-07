@@ -35,7 +35,6 @@
 #include "FunctionCallMapping.h"
 #include "AstStatistics.h"
 
-#include "DataRaceDetection.h"
 #include "Normalization.h"
 #include "DataDependenceVisualizer.h" // also used for clustered ICFG
 #include "Evaluator.h" // CppConstExprEvaluator

@@ -254,9 +254,6 @@ void runLTLAnalysis(CodeThornOptions& ctOpt, LTLOptions& ltlOpt,IOAnalyzer* anal
   int verifyUpdateSequenceRaceConditionsTotalLoopNum=-1;
   int verifyUpdateSequenceRaceConditionsParLoopNum=-1;
 
-  /* Data race detection */
-  CodeThorn::CodeThornLib::optionallyRunDataRaceDetection(ctOpt,analyzer);
-
   double overallTime=totalLtlRunTime; //totalRunTime + tc.totalInputTracesTime + totalLtlRunTime;
   analyzer->printAnalyzerStatistics(/* not used */overallTime, "STG generation and assertion analysis complete");
 

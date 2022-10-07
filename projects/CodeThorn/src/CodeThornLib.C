@@ -31,7 +31,6 @@
 #include "FunctionCallMapping.h"
 #include "AstStatistics.h"
 
-#include "DataRaceDetection.h"
 #include "Normalization.h"
 #include "DataDependenceVisualizer.h" // also used for clustered ICFG
 #include "Evaluator.h" // CppConstExprEvaluator
@@ -629,17 +628,6 @@ namespace CodeThorn {
           logger[ERROR] <<"input sequence length specified without also providing a file name (use option --iseq-file)."<<endl;
           exit(1);
         }
-      }
-    }
-
-    void optionallyRunDataRaceDetection(CodeThornOptions& ctOpt, CTAnalysis* analyzer) {
-      // parse command line options for data race detection
-      DataRaceDetection dataRaceDetection;
-      dataRaceDetection.setOptions(ctOpt);
-      dataRaceDetection.handleCommandLineOptions(*analyzer);
-      dataRaceDetection.setVisualizeReadWriteAccesses(ctOpt.visualization.visualizeRWSets);
-      if(dataRaceDetection.run(*analyzer)) {
-        exit(0);
       }
     }
 

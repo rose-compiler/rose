@@ -46,7 +46,7 @@ RDTransferFunctions.h
 UDAstAttribute.C
 UDAstAttribute.h
 
-13)
+13) DONE
 remove dead code
 LVAnalysis.C
 LVAnalysis.h
@@ -57,10 +57,13 @@ LVAstAttributeInterface.h
 LVLattice.C
 LVLattice.h
 
-
+14) DONE
+remove dead code
 AstTermRepresentation.C
 AstTermRepresentation.h
 
+15)
+remove dead code
 DataRaceDetection.C
 DataRaceDetection.h
 

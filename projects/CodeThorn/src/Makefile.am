@@ -90,7 +90,6 @@ CODETHORN_HEADER_FILES=\
   CtxSolver0.h \
   CtxUnfoldedAnalysis.h \
   DataDependenceVisualizer.h \
-  DataRaceDetection.h \
   defUseQuery.h \
   DFAbstractSolver.h \
   DFAnalysisBaseWithoutData.h \
@@ -215,7 +214,6 @@ CODETHORN_SOURCE_FILES=\
   CtxUnfoldedAnalysis.C \
   DataDependenceVisualizer.C \
   defUseQuery.C \
-  DataRaceDetection.C \
   DFAnalysisBaseWithoutData.C \
   DFAnalysisBase.C \
   CSDFAnalysisBase.C \
