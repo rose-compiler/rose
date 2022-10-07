@@ -9,9 +9,6 @@
 #include "CFAnalysis.h"
 #include <list>
 
-using namespace std;
-using namespace Rose;
-
 namespace CodeThorn {
   class InlinerBase {
   public:

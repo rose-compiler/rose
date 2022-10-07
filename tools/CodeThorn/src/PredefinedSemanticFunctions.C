@@ -7,6 +7,7 @@
 #include "CodeThornLib.h"
 #include "PredefinedSemanticFunctions.h"
 
+using namespace std;
 using namespace CodeThorn;
 using namespace CodeThorn;
 using namespace Sawyer::Message;

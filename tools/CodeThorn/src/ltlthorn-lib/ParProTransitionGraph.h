@@ -19,8 +19,6 @@
 #include "boost/algorithm/string/trim.hpp"
 #include "boost/algorithm/string/regex.hpp"
 
-using namespace CodeThorn;
-
 namespace CodeThorn {
   /*! 
    * \author Marc Jasper

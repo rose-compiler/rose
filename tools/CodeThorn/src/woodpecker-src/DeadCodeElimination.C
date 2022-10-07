@@ -6,15 +6,15 @@
 using namespace std;
 using namespace CodeThorn;
 
-bool DeadCodeElimination::isVariableOfInterest(VariableId varId) {
+bool CodeThorn::DeadCodeElimination::isVariableOfInterest(VariableId varId) {
   return variablesOfInterest.find(varId)!=variablesOfInterest.end();
 }
 
-void DeadCodeElimination::setVariablesOfInterest(VariableIdSet& vidSet) {
+void CodeThorn::DeadCodeElimination::setVariablesOfInterest(VariableIdSet& vidSet) {
   variablesOfInterest=vidSet;
 }
 
-DeadCodeElimination::DeadCodeElimination():
+CodeThorn::DeadCodeElimination::DeadCodeElimination():
   detailedOutput(false),
   elimVar(0),
   elimAssignment(0),
@@ -23,11 +23,11 @@ DeadCodeElimination::DeadCodeElimination():
 {
 }
 
-void DeadCodeElimination::setDetailedOutput(bool verbose) {
+void CodeThorn::DeadCodeElimination::setDetailedOutput(bool verbose) {
   detailedOutput=verbose;
 }
 
-bool DeadCodeElimination::isEmptyBlock(SgNode* node) {
+bool CodeThorn::DeadCodeElimination::isEmptyBlock(SgNode* node) {
   if(node==0)
     return true;
   //cout<<"isEmptyBasicBlock:"<<node->class_name()<<endl;
@@ -39,13 +39,13 @@ bool DeadCodeElimination::isEmptyBlock(SgNode* node) {
 }
 
 // an if-stmt is empty if both branches are empty blocks (or do not exist).
-bool DeadCodeElimination::isEmptyIfStmt(SgIfStmt* ifStmt) {
+bool CodeThorn::DeadCodeElimination::isEmptyIfStmt(SgIfStmt* ifStmt) {
   SgStatement* trueBody=ifStmt->get_true_body();
   SgStatement* falseBody=ifStmt->get_false_body();
   return isEmptyBlock(trueBody) && isEmptyBlock(falseBody);
 }
 
-list<SgIfStmt*> DeadCodeElimination::listOfEmptyIfStmts(SgNode* node) {
+list<SgIfStmt*> CodeThorn::DeadCodeElimination::listOfEmptyIfStmts(SgNode* node) {
   list<SgIfStmt*> ifstmts;
   RoseAst ast(node);
   for(RoseAst::iterator i=ast.begin();i!=ast.end();i++) {
@@ -58,7 +58,7 @@ list<SgIfStmt*> DeadCodeElimination::listOfEmptyIfStmts(SgNode* node) {
   return ifstmts;
 }
 
-size_t DeadCodeElimination::eliminateEmptyIfStmts(SgNode* node) {
+size_t CodeThorn::DeadCodeElimination::eliminateEmptyIfStmts(SgNode* node) {
   size_t numElim=0;
   list<SgIfStmt*> ifstmts=listOfEmptyIfStmts(node);
   for(list<SgIfStmt*>::iterator i=ifstmts.begin();i!=ifstmts.end();i++) {
@@ -68,7 +68,7 @@ size_t DeadCodeElimination::eliminateEmptyIfStmts(SgNode* node) {
   return numElim;
 }
 
-std::set<SgFunctionDefinition*> DeadCodeElimination::calledFunctionDefinitions(std::list<SgFunctionCallExp*> functionCalls) {
+std::set<SgFunctionDefinition*> CodeThorn::DeadCodeElimination::calledFunctionDefinitions(std::list<SgFunctionCallExp*> functionCalls) {
   std::set<SgFunctionDefinition*> calledFunctions;
   for(std::list<SgFunctionCallExp*>::iterator i=functionCalls.begin();i!=functionCalls.end();++i) {
     SgFunctionDefinition* functionDef=isSgFunctionDefinition(SgNodeHelper::determineFunctionDefinition(*i));
@@ -79,7 +79,7 @@ std::set<SgFunctionDefinition*> DeadCodeElimination::calledFunctionDefinitions(s
   return calledFunctions;
 }
 
-std::set<SgFunctionDefinition*> DeadCodeElimination::NonCalledTrivialFunctions(SgNode* root0) {
+std::set<SgFunctionDefinition*> CodeThorn::DeadCodeElimination::NonCalledTrivialFunctions(SgNode* root0) {
   SgProject* root=isSgProject(root0);
   ROSE_ASSERT(root);
   list<SgFunctionDefinition*> funDefs=SgNodeHelper::listOfFunctionDefinitions(root);
@@ -96,7 +96,7 @@ std::set<SgFunctionDefinition*> DeadCodeElimination::NonCalledTrivialFunctions(S
   return nonCalledFunDefs;
 }
 
-void DeadCodeElimination::eliminateFunctions(std::set<SgFunctionDefinition*>& funDefs) {
+void CodeThorn::DeadCodeElimination::eliminateFunctions(std::set<SgFunctionDefinition*>& funDefs) {
   for(std::set<SgFunctionDefinition*>::iterator i=funDefs.begin();i!=funDefs.end();++i) {
     string funName=SgNodeHelper::getFunctionName(*i);
     SgFunctionDeclaration* funDecl=(*i)->get_declaration();
@@ -108,7 +108,7 @@ void DeadCodeElimination::eliminateFunctions(std::set<SgFunctionDefinition*>& fu
   }
 }
 
-size_t DeadCodeElimination::eliminateNonCalledTrivialFunctions(SgNode* root) {
+size_t CodeThorn::DeadCodeElimination::eliminateNonCalledTrivialFunctions(SgNode* root) {
   std::set<SgFunctionDefinition*> nonCalledTrivialFunctions=NonCalledTrivialFunctions(root);
   eliminateFunctions(nonCalledTrivialFunctions);
   elimFunctions=nonCalledTrivialFunctions.size();
@@ -116,7 +116,7 @@ size_t DeadCodeElimination::eliminateNonCalledTrivialFunctions(SgNode* root) {
 }
 
 // returns the number of all eliminated elements (variables+decls+subexpr)
-int DeadCodeElimination::eliminateDeadCodePhase1(SgNode* root,
+int CodeThorn::DeadCodeElimination::eliminateDeadCodePhase1(SgNode* root,
                                                  VariableIdMapping* variableIdMapping,
                                                  VariableConstInfo& vci) {
   RoseAst ast1(root);
@@ -196,7 +196,7 @@ int DeadCodeElimination::eliminateDeadCodePhase1(SgNode* root,
   return elimVar+elimAssignment+elimVarUses;
 }
 
-int DeadCodeElimination::numElimVars() { return elimVar; }
-int DeadCodeElimination::numElimAssignments() { return elimAssignment; }
-int DeadCodeElimination::numElimVarUses() { return elimVarUses; }
-int DeadCodeElimination::numElimFunctions() { return elimFunctions; }
+int CodeThorn::DeadCodeElimination::numElimVars() { return elimVar; }
+int CodeThorn::DeadCodeElimination::numElimAssignments() { return elimAssignment; }
+int CodeThorn::DeadCodeElimination::numElimVarUses() { return elimVarUses; }
+int CodeThorn::DeadCodeElimination::numElimFunctions() { return elimFunctions; }

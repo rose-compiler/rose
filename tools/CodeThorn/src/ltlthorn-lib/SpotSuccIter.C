@@ -1,10 +1,11 @@
 #include "sage3basic.h"
-#include "rose_config.h"
 #ifdef HAVE_SPOT
 
+#include <list>
 #include "SpotSuccIter.h"
 
 using namespace CodeThorn;
+using namespace std;
 
 SpotSuccIter::SpotSuccIter(TransitionGraph& tg, const EState& state, 
    				  const std::map<int, int>& p2d, std::set<int> inVars, std::set<int> outVars) 

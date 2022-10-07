@@ -16,11 +16,8 @@
 #include "InputOutput.h"
 #include "CallString.h"
 
-using namespace CodeThorn;
-
 typedef int EStateId;
 
-//#include "HashFun.h"
 #include "HSetMaintainer.h"
 #include "PropertyState.h"
 
@@ -28,14 +25,7 @@ namespace CodeThorn {
 
   class VariableValueMonitor;
   class CTAnalysis;
-
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
-
   class EState;
-  //typedef const EState* EStatePtr;
   typedef const EState* ConstEStatePtr;
   typedef EState* EStatePtr;
   typedef EState& EStateRef;
@@ -130,70 +120,61 @@ namespace CodeThorn {
   bool operator==(const EState& c1, const EState& c2);
   bool operator!=(const EState& c1, const EState& c2);
 
-#if 1
   bool operator<(const EState& c1, const EState& c2);
   struct EStateLessComp {
     bool operator()(const EState& c1, const EState& c2) {
       return c1<c2;
     }
   };
-#endif
   
-  /*! 
-   * \author Markus Schordan
-   * \date 2012.
-   */
-class EStateHashFun {
- public:
-  EStateHashFun() {}
-  size_t operator()(EState* s) const {
-    size_t hash=1;
-    if(EState::sharedPStates && EState::fastPointerHashing) {
-      hash=(size_t)s->label().getId()*(((size_t)s->pstate())+1);
-    } else {
-      size_t pstateHash=1;
-      PStatePtr pstateptr=s->pstate(); // const
-      if(pstateptr!=nullptr) {
-	PState* pstate=const_cast<PState*>(pstateptr); // non-const
-	PStateHashFun pstateHashFun;
-	pstateHash=pstateHashFun(pstate);
+  class EStateHashFun {
+  public:
+    EStateHashFun() {}
+    size_t operator()(EState* s) const {
+      size_t hash=1;
+      if(EState::sharedPStates && EState::fastPointerHashing) {
+        hash=(size_t)s->label().getId()*(((size_t)s->pstate())+1);
+      } else {
+        size_t pstateHash=1;
+        PStatePtr pstateptr=s->pstate(); // const
+        if(pstateptr!=nullptr) {
+          PState* pstate=const_cast<PState*>(pstateptr); // non-const
+          PStateHashFun pstateHashFun;
+          pstateHash=pstateHashFun(pstate);
+        }
+        hash=(size_t)s->label().getId()*(pstateHash+1);
       }
-      hash=(size_t)s->label().getId()*(pstateHash+1);
+      return hash;
     }
-    return hash;
-  }
- private:
-};
- class EStateEqualToPred {
- public:
-   EStateEqualToPred() {}
-   bool operator()(EState* s1, EState* s2) const {
-     return *s1==*s2;
-   }
- private:
- };
- /*! 
-  * \author Markus Schordan
-  * \date 2012.
-  */
- class EStateSet : public HSetMaintainer<EState,EStateHashFun,EStateEqualToPred> {
- public:
- EStateSet():HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>(){}
- public:
-   typedef HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult ProcessingResult;
-   std::string toString(CodeThorn::VariableIdMapping* variableIdMapping=0) const;
-   EStateId estateId(EStatePtr estate) const;
-   EStateId estateId(const EState estate) const;
-   std::string estateIdString(EStatePtr estate) const;
-   int numberOfIoTypeEStates(CodeThorn::InputOutput::OpType) const;
-   int numberOfConstEStates(CodeThorn::VariableIdMapping* vid) const;
- private:
- };
+  private:
+  };
+  class EStateEqualToPred {
+  public:
+    EStateEqualToPred() {}
+    bool operator()(EState* s1, EState* s2) const {
+      return *s1==*s2;
+    }
+  private:
+  };
+
+  class EStateSet : public HSetMaintainer<EState,EStateHashFun,EStateEqualToPred> {
+  public:
+    EStateSet():HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>(){}
+  public:
+    typedef HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult ProcessingResult;
+    std::string toString(CodeThorn::VariableIdMapping* variableIdMapping=0) const;
+    EStateId estateId(EStatePtr estate) const;
+    EStateId estateId(const EState estate) const;
+    std::string estateIdString(EStatePtr estate) const;
+    int numberOfIoTypeEStates(CodeThorn::InputOutput::OpType) const;
+    int numberOfConstEStates(CodeThorn::VariableIdMapping* vid) const;
+  private:
+  };
  
- class EStateList : public std::list<EState> {
- public:
-   std::string toString();
- };
+  class EStateList : public std::list<EState> {
+  public:
+    std::string toString();
+  };
  
 } // namespace CodeThorn
 

@@ -20,7 +20,7 @@
 // BEGIN OF VISUALIZER
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-using namespace CodeThorn;
+using namespace std;
 using namespace CodeThorn;
 
 class AssertionAttribute : public DFAstAttribute {

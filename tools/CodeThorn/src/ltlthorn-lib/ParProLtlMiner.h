@@ -3,6 +3,7 @@
 #define PAR_PRO_LTL_MINER_H
 
 #include "sage3basic.h"
+#include <list>
 
 // CodeThorn includes
 #include "ParProEState.h"
@@ -75,8 +76,8 @@ namespace CodeThorn {
     ParallelSystemHashFun() {}
     long operator()(ParallelSystem* p) const {
       unsigned int hash=1;
-      map<int, Flow*> components = p->components();
-      for(map<int, Flow*>::iterator i=components.begin();i!=components.end();++i) {
+      std::map<int, Flow*> components = p->components();
+      for(std::map<int, Flow*>::iterator i=components.begin();i!=components.end();++i) {
 	hash=((hash<<8)+((long)((*i).first)))^hash;
       }
       return long(hash);
@@ -94,8 +95,8 @@ namespace CodeThorn {
       if(s1->components().size()!=s2->components().size()) {
 	return false;
       } else {
-	map<int, Flow*> s1Components = s1->components();
-	for(map<int, Flow*>::iterator i1=s1Components.begin(), i2=s2->components().begin();i1!=s1Components.end();(++i1,++i2)) {
+	std::map<int, Flow*> s1Components = s1->components();
+	for(std::map<int, Flow*>::iterator i1=s1Components.begin(), i2=s2->components().begin();i1!=s1Components.end();(++i1,++i2)) {
 	  if((*i1).first!=(*i2).first)
 	    return false;
 	}
@@ -151,7 +152,7 @@ namespace CodeThorn {
     void exploreSubsystemsAndAddToWorklist(ParallelSystem& system, 
 					   ComponentApproximation approxMode, 
 					   std::list<ParallelSystem>& worklist);
-    list<ParallelSystem> initiateSubsystemsOf(ParallelSystem& system);
+    std::list<ParallelSystem> initiateSubsystemsOf(ParallelSystem& system);
     bool passesFilterLtsMin(string ltlProperty, PropertyValue correctValue, ParallelSystem& system, int minNumComponents);
     
     unsigned int _numComponentsForLtlAnnotations;

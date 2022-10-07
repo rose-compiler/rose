@@ -2,7 +2,6 @@
 #include <sage3basic.h>
 #include <sageInterface.h>
 #include <sageGeneric.h>
-//~ #include <VariableIdMapping.h>
 
 #include <tuple>
 #include <numeric>
@@ -18,6 +17,7 @@
 namespace si = SageInterface;
 namespace ct = CodeThorn;
 
+using namespace CodeThorn;
 
 namespace
 {
@@ -53,12 +53,11 @@ namespace
   {
     return dcl.get_functionModifier().isPureVirtual();;
   }
-
   bool isPureVirtual(FunctionKeyType fn)
   {
     return isPureVirtual(SG_DEREF(fn));
   }
-
+  
   std::string functionName(FunctionKeyType fn)
   {
     return SG_DEREF(fn).get_name();
@@ -68,7 +67,6 @@ namespace
   {
     return SG_DEREF(SG_DEREF(fn).get_type());
   }
-
 
   struct NodeCollector : ExcludeTemplates
   {
@@ -182,8 +180,8 @@ namespace
   int cmpArrayLength(const SgArrayType& lhs, const SgArrayType& rhs)
   {
     int               cmpres = 0;
-    ct::AbstractValue lhsval = evaluateExpressionWithEmptyState(lhs.get_index());
-    ct::AbstractValue rhsval = evaluateExpressionWithEmptyState(rhs.get_index());
+    ct::AbstractValue lhsval = ct::evaluateExpressionWithEmptyState(lhs.get_index());
+    ct::AbstractValue rhsval = ct::evaluateExpressionWithEmptyState(rhs.get_index());
 
     // \todo check correctness of array length comparison
     firstDecisiveComparison

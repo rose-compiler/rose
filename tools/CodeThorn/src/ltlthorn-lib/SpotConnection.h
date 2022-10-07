@@ -9,7 +9,6 @@
 
 #include "LTLRersMapping.h"
 
-#include "rose_config.h"
 #ifdef HAVE_SPOT
 
 //CodeThorn includes
@@ -52,8 +51,6 @@
 #include "boost/regex.hpp"
 #include "boost/lexical_cast.hpp"
 
-using namespace std;
-
 namespace CodeThorn {
 
   struct FormulaPlusResult {
@@ -91,12 +88,12 @@ namespace CodeThorn {
       void checkLtlProperties(TransitionGraph& stg,
                               CodeThorn::LtlRersMapping ltlRersMapping, bool withCounterExample, bool spuriousNoAnswers);
       // variant for model checking the state space of parallel automata
-      void checkLtlPropertiesParPro(ParProTransitionGraph& stg, bool withCounterexample, bool spuriousNoAnswers, set<std::string> annotationsOfModeledTransitions);
+      void checkLtlPropertiesParPro(ParProTransitionGraph& stg, bool withCounterexample, bool spuriousNoAnswers, std::set<std::string> annotationsOfModeledTransitions);
       // similar to "checkLtlProperties" above, but only checks a single property (property id specified as a parameter)
       void checkSingleProperty(int propertyNum, TransitionGraph& stg,
                                CodeThorn::LtlRersMapping ltlRersMapping, bool withCounterexample, bool spuriousNoAnswers);
       // model checking of "ltlProperty" on "stg"
-      PropertyValue checkPropertyParPro(string ltlProperty, ParProTransitionGraph& stg, set<std::string> annotationsOfModeledTransitions);
+      PropertyValue checkPropertyParPro(string ltlProperty, ParProTransitionGraph& stg, std::set<std::string> annotationsOfModeledTransitions);
       ParProSpotTgba* toTgba(ParProTransitionGraph& stg);
       // returns a pointer to the LTL results table.
       PropertyValueTable* getLtlResults();
@@ -152,7 +149,7 @@ namespace CodeThorn {
       PropertyValueTable* ltlResults=nullptr;
       bool modeLTLDriven=false;
   };
-};
+}
 #else
 
 #include "TransitionGraph.h"
@@ -172,10 +169,10 @@ namespace CodeThorn {
       void init(std::list<std::string> ltl_formulae);
       void checkLtlProperties(TransitionGraph& stg,
 					CodeThorn::LtlRersMapping ltlRersMapping, bool withCounterExample, bool spuriousNoAnswers);
-      void checkLtlPropertiesParPro(ParProTransitionGraph& stg, bool withCounterexample, bool spuriousNoAnswers, set<std::string> annotationsOfModeledTransitions);
+      void checkLtlPropertiesParPro(ParProTransitionGraph& stg, bool withCounterexample, bool spuriousNoAnswers, std::set<std::string> annotationsOfModeledTransitions);
       void checkSingleProperty(int propertyNum, TransitionGraph& stg,
 						CodeThorn::LtlRersMapping ltlRersMapping, bool withCounterexample, bool spuriousNoAnswers);
-      PropertyValue checkPropertyParPro(string ltlProperty, ParProTransitionGraph& stg, set<std::string> annotationsOfModeledTransitions);
+      PropertyValue checkPropertyParPro(string ltlProperty, ParProTransitionGraph& stg, std::set<std::string> annotationsOfModeledTransitions);
       ParProSpotTgba* toTgba(ParProTransitionGraph& stg);
       PropertyValueTable* getLtlResults();
       void resetLtlResults();

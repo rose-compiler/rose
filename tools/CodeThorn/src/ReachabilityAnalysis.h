@@ -4,13 +4,17 @@
 #include "Labeler.h"
 #include "FIConstAnalysis.h"
 #include "PropertyValueTable.h"
+#include "FIConstAnalysis.h"
 
-class ReachabilityAnalysis {
- public:
-  PropertyValueTable fiReachabilityAnalysis(Labeler& labeler, FIConstAnalysis& fiConstAnalysis);
- public:
-  static int isIfWithLabeledAssert(SgNode* node);
-  static int isConditionOfIfWithLabeledAssert(SgNode* node);
-};
+namespace CodeThorn {
+  class ReachabilityAnalysis {
+  public:
+    PropertyValueTable fiReachabilityAnalysis(CodeThorn::Labeler& labeler, CodeThorn::FIConstAnalysis& fiConstAnalysis);
+  public:
+    static int isIfWithLabeledAssert(SgNode* node);
+    static int isConditionOfIfWithLabeledAssert(SgNode* node);
+  };
+
+}
 
 #endif // REACHABILITYANALYSIS_H

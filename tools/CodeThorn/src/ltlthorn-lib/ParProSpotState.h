@@ -1,4 +1,3 @@
-#include "rose_config.h"
 #ifdef HAVE_SPOT
 
 #ifndef PAR_PRO_SPOT_STATE_H
@@ -20,8 +19,6 @@
 #include "bdd.h"
 #include "tgba/state.hh"
 #include "tgba/succiter.hh"
-
-using namespace std;
 
 namespace CodeThorn {
   /*! 

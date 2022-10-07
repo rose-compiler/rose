@@ -1,4 +1,4 @@
-#include "rose_config.h"
+#include "sage3basic.h"
 #ifdef HAVE_SPOT
 
 #include "SpotRenameVisitor.h"

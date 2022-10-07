@@ -372,8 +372,8 @@ namespace CodeThorn {
     void removeDefaultInliner();
     CodeThorn::InlinerBase* _inliner=0;
     bool _defaultInliner=true;
-    string _uniqueVarPrefix="__";
-    string _uniqueVarPostfix="__";
+    std::string _uniqueVarPrefix="__";
+    std::string _uniqueVarPostfix="__";
     static int32_t uniqueVarCounter;
     int normPhaseNr=1;
     int normPhaseNrLast=1; // set in normalizeAstPhaseByPhase

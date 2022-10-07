@@ -1,6 +1,5 @@
 // Author: Marc Jasper, 2014, 2015.
 
-#include "rose_config.h"
 #ifdef HAVE_SPOT
 
 #include "CounterexampleAnalyzer.h"

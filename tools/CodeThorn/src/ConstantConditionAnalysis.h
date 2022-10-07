@@ -7,10 +7,10 @@
 #include "ReadWriteListener.h"
 #include "BoolLattice.h"
 
-class ConstantConditionAnalysis : public ReadWriteListener {
+class ConstantConditionAnalysis : public CodeThorn::ReadWriteListener {
  public:
-  void trueFalseEdgeEvaluation(Edge edge, SingleEvalResult& evalResult , EStatePtr estate) override;
-  typedef std::map <Label,BoolLattice> ConstConditionsMap;
+  void trueFalseEdgeEvaluation(CodeThorn::Edge edge, CodeThorn::SingleEvalResult& evalResult , CodeThorn::EStatePtr estate) override;
+  typedef std::map <CodeThorn::Label,CodeThorn::BoolLattice> ConstConditionsMap;
   ConstConditionsMap* getResultMapPtr();
  private:
   ConstConditionsMap constConditions;

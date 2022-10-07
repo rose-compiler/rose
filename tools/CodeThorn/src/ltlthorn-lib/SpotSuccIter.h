@@ -1,4 +1,3 @@
-#include "rose_config.h"
 #ifdef HAVE_SPOT
 
 #ifndef SPOT_SUCC_ITERATOR_HH
@@ -17,8 +16,6 @@
 #include "bdd.h"
 #include "tgba/bdddict.hh"
 #include "tgba/state.hh"
-
-using namespace std;
 
 namespace CodeThorn {
   /*! 

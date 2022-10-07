@@ -28,7 +28,7 @@ namespace CodeThorn {
     /* reads and parses LTL rers mapping file into the alphabet
        sets. Returns false if reading fails. Exits with error message if
        format is wrong. */
-    bool readAndParseLTLRersMappingFile(string ltlRersMappingFileName, LtlRersMapping& ltlRersMapping);
+    bool readAndParseLTLRersMappingFile(std::string ltlRersMappingFileName, LtlRersMapping& ltlRersMapping);
     void processCtOptGenerateAssertions(CodeThornOptions& ctOpt, CTAnalysis* analyzer, SgProject* root);
     void optionallyRunInternalChecks(CodeThornOptions& ctOpt, int argc, char * argv[]);
     void optionallyRunInliner(CodeThornOptions& ctOpt, Normalization& normalization, SgProject* sageProject);
@@ -61,7 +61,7 @@ namespace CodeThorn {
     void optionallyGenerateCallGraphDotFile(CodeThornOptions& ctOpt,CTAnalysis* analyzer);
 
     SgProject* runRoseFrontEnd(int argc, char * argv[], CodeThornOptions& ctOpt, TimingCollector& timingCollector);
-    SgProject* runRoseFrontEnd(vector<string>& argvList, CodeThornOptions& ctOpt, TimingCollector& timingCollector);
+    SgProject* runRoseFrontEnd(std::vector<std::string>& argvList, CodeThornOptions& ctOpt, TimingCollector& timingCollector);
     void normalizationPass(CodeThornOptions& ctOpt, SgProject* sageProject);
     Labeler* createLabeler(SgProject* sageProject, VariableIdMappingExtended* variableIdMapping, bool withCplusplus = false);
     VariableIdMappingExtended* createVariableIdMapping(CodeThornOptions& ctOpt, SgProject* sageProject);

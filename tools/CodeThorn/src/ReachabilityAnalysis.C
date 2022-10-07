@@ -1,6 +1,7 @@
 #include "sage3basic.h"
 #include "ReachabilityAnalysis.h"
 
+namespace CodeThorn {
 // returns the error_XX label number or -1
 //  error_0 is a valid label number (therefore -1 is returned if no label is found)
 // this function only matches the RERS pattern of guarded assertions.
@@ -97,3 +98,4 @@ PropertyValueTable ReachabilityAnalysis::fiReachabilityAnalysis(Labeler& labeler
     }
   }
 #endif
+}

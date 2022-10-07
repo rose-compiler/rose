@@ -1,4 +1,3 @@
-
 #include "sage3basic.h"
 #include "Labeler.h"
 #include "ClassHierarchyGraph.h"
@@ -27,6 +26,7 @@
 
 using namespace std;
 using namespace Sawyer::Message;
+using namespace CodeThorn;
 
 Sawyer::Message::Facility CodeThorn::CTAnalysis::logger;
 

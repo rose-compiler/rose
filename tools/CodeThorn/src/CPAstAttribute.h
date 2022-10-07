@@ -5,33 +5,24 @@
 #include "VariableIdMapping.h"
 #include "CPAstAttributeInterface.h"
 #include "AbstractValue.h"
+#include "FIConstAnalysis.h"
 
-using namespace CodeThorn;
-
-class VariableConstInfo;
-
-/*! 
-  * \author Markus Schordan
-  * \date 2013.
- */
 class SgNode;
 
-class CPAstAttribute : public CPAstAttributeInterface {
- public:
-  //virtual VariableIdSet allVariableIds();
-  virtual bool isConstantInteger(VariableId varId);
-  virtual CPAstAttributeInterface::ConstantInteger getConstantInteger(VariableId varId);
-  //virtual iterator begin();
-  //virtual iterator end();
-  //virtual ~CPAstAttribute();
- public:
-  CPAstAttribute(VariableConstInfo* elem, SgNode* node, VariableIdMapping* variableIdMapping);
-  void toStream(ostream& os, VariableIdMapping* vim);
-  string toString();
- private:
-  VariableConstInfo* _elem;
-  SgNode* _node;
-  VariableIdMapping* _variableIdMapping;
-};
+namespace CodeThorn {
+  class CPAstAttribute : public CodeThorn::CPAstAttributeInterface {
+  public:
+    virtual bool isConstantInteger(CodeThorn::VariableId varId);
+    virtual CPAstAttributeInterface::ConstantInteger getConstantInteger(CodeThorn::VariableId varId);
+    //virtual ~CPAstAttribute();
+    CPAstAttribute(CodeThorn::VariableConstInfo* elem, SgNode* node, CodeThorn::VariableIdMapping* variableIdMapping);
+    void toStream(std::ostream& os, CodeThorn::VariableIdMapping* vim);
+    std::string toString();
+  private:
+    CodeThorn::VariableConstInfo* _elem;
+    SgNode* _node;
+    CodeThorn::VariableIdMapping* _variableIdMapping;
+  };
+}
 
 #endif

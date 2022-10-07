@@ -3,7 +3,6 @@
 #include "ParProAnalyzer.h"
 
 using namespace CodeThorn;
-using namespace CodeThorn;
 using namespace std;
 
 ParProAnalyzer::ParProAnalyzer():

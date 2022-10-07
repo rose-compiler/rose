@@ -1,4 +1,3 @@
-#include "rose_config.h"
 #ifdef HAVE_SPOT
 
 #ifndef SPOT_MISCELLANEOUS_H

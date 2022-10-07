@@ -1,5 +1,7 @@
 #include "Thorn4CommandLineParser.h"
 
+using namespace std;
+
 std::vector<std::string> Thorn4Parser::parseArgs(int argc, char** argv) {
   std::vector<std::string> cmdLineArgs{argv+0, argv+argc};
   return parseArgs(cmdLineArgs);

@@ -21,6 +21,7 @@
 #include "Miscellaneous2.h"
 #include "InternalChecks.h"
 
+using namespace std;
 using namespace CodeThorn;
 using CodeThorn::color;
 
