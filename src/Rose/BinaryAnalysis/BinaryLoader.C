@@ -292,8 +292,6 @@ BinaryLoader::createAsmAST(SgBinaryComposite* binaryFile, std::string filePath) 
             interp = new SgAsmInterpretation();
             interps.push_back(interp);
             interp->set_parent(binaryFile->get_interpretations());
-            if (RegisterDictionary::Ptr registers = RegisterDictionary::instanceForIsa(header->get_isa()))
-                interp->set_registers(registers);
         }
         interp->get_headers()->get_headers().push_back(header);
     }
@@ -709,7 +707,7 @@ BinaryLoader::bialign(rose_addr_t val1, rose_addr_t align1, rose_addr_t val2, ro
 }
 
 BinaryLoader::MappingContribution
-BinaryLoader::alignValues(SgAsmGenericSection *section, const MemoryMap::Ptr &map,
+BinaryLoader::alignValues(SgAsmGenericSection *section, const MemoryMap::Ptr&,
                           rose_addr_t *malign_lo_p, rose_addr_t *malign_hi_p,
                           rose_addr_t *va_p, rose_addr_t *mem_size_p,
                           rose_addr_t *offset_p, rose_addr_t *file_size_p, bool *map_private_p,
@@ -789,7 +787,7 @@ BinaryLoader::mappingPermissions(SgAsmGenericSection *section) const {
 
 /* Used to be called relocateAllLibraries */
 void
-BinaryLoader::fixup(SgAsmInterpretation *interp, FixupErrors *errors) {
+BinaryLoader::fixup(SgAsmInterpretation*, FixupErrors*) {
     // 1. Get section map (name -> list<section*>)
     // 2. Create Symbol map from relevant sections (.dynsym)
     // 3. Create Extent sorted list of sections

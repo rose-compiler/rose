@@ -54,7 +54,7 @@ public:
     Ok() = delete;
 
     /** Copy constructor. */
-    explicit Ok(const Ok &other)
+    Ok(const Ok &other)
         : ok_(other.ok_) {}
 
     /** Construct from an value. */
@@ -127,6 +127,23 @@ public:
     }
 };
 
+/** Conventient way to constructo an @ref Ok value before C++17.
+ *
+ *  Template parameter type deduction in constructors first appeared in C++17. The standard library worked around this
+ *  by using factory functions to instantiate these types without having to repeat the full type name. */
+template<class T>
+Ok<T> makeOk(const T &value) {
+    return Ok<T>(value);
+}
+
+// Specialization for string literals, as in makeOk("foo") so they get treated as std::string instead.
+inline Ok<std::string> makeOk(const char *s) {
+    return Ok<std::string>(std::string(s));
+}
+inline Ok<std::string> makeOk(char *s) {
+    return Ok<std::string>(std::string(s));
+}
+
 /** Error value. */
 template<class E>
 class Error {
@@ -148,7 +165,7 @@ public:
     Error() = delete;
 
     /** Copy constructor. */
-    explicit Error(const Error &other)
+    Error(const Error &other)
         : error_(other.error_) {}
 
     /** Construct from a value. */
@@ -230,6 +247,23 @@ public:
         return &error_;
     }
 };
+
+/** Conventient way to constructo an @ref Error value before C++17.
+ *
+ *  Template parameter type deduction in constructors first appeared in C++17. The standard library worked around this
+ *  by using factory functions to instantiate these types without having to repeat the full type name. */
+template<class T>
+Error<T> makeError(const T &value) {
+    return Error<T>(value);
+}
+
+// Specialization for string literals, as in makeError("foo") so they get treated as std::string instead.
+inline Error<std::string> makeError(const char *s) {
+    return Error<std::string>(std::string(s));
+}
+inline Error<std::string> makeError(char *s) {
+    return Error<std::string>(std::string(s));
+}
 
 /** Result containing a value or an error. */
 template<class T, class E>
@@ -339,7 +373,7 @@ public:
     bool isOk() const {
         return result_.which() == 0;
     }
-    operator bool() const {
+    explicit operator bool() const {
         return isOk();
     }
     /** @} */

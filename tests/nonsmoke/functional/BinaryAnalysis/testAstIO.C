@@ -108,7 +108,7 @@ struct TestInterpMap: AstSimpleProcessing {
     void visit(SgNode *node) {
         if (SgAsmInterpretation *interp = isSgAsmInterpretation(node)) {
             std::cout <<"interp map = " <<interp->get_map() <<"\n"
-                      <<"interp registers = " <<interp->get_registers() <<"\n";
+                      <<"interp registers = " <<RegisterDictionary::instanceForIsa(interp) <<"\n";
             if (interp->get_map())
                 interp->get_map()->print(std::cout);
         }

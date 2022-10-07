@@ -128,7 +128,7 @@ protected:
             : index_(index), approximation_(approx), smtSolver_(solver), mlog(mlog) {}
 
         template<class CFG>
-        StatePtr operator()(const CFG &cfg, size_t cfgVertex, const StatePtr &in) {
+        StatePtr operator()(const CFG&, size_t cfgVertex, const StatePtr &in) {
             return (*this)(cfgVertex, in);
         }
 

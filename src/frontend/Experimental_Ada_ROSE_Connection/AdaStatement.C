@@ -124,7 +124,7 @@ namespace
     {
       logError() << "Unable to find scope/declaration for " << expr.Name_Image
                  << std::endl;
-      ROSE_ABORT();
+      ADA_ASSERT(false);
     }
 
     SgScopeStatement* res = sg::dispatch(ScopeQuery{}, dcl);
@@ -370,7 +370,7 @@ namespace
 
       case Not_A_Mode: /* break; */
       default:
-        ROSE_ABORT();
+        ADA_ASSERT(false);
     }
 
     return res;
@@ -500,7 +500,7 @@ namespace
       AstContext               ctx;
   };
 
-  /// converts an Asis parameter declaration to a ROSE paramter (i.e., variable)
+  /// converts an Asis parameter declaration to a ROSE parameter (i.e., variable)
   ///   declaration.
   SgVariableDeclaration&
   getDiscriminant(Element_Struct& elem, AstContext ctx)
@@ -689,7 +689,7 @@ namespace
 
       void handle(SgAdaDerivedType& n)
       {
-        SgEnumDeclaration* enmdcl = si::ada::baseEnumDeclaration(n);
+        SgEnumDeclaration* enmdcl = si::Ada::baseEnumDeclaration(n);
 
         if (enmdcl == nullptr)
           return handle(sg::asBaseType(n));
@@ -998,7 +998,7 @@ namespace
             }
 
           default:
-            ROSE_ABORT();
+            ADA_ASSERT(false);
         }
       }
 
@@ -1070,7 +1070,7 @@ namespace
             }
 
           default:
-            ROSE_ABORT();
+            ADA_ASSERT(false);
         }
       }
 
@@ -1254,7 +1254,7 @@ namespace
           }
 
         default:
-          ROSE_ABORT();
+          ADA_ASSERT(false);
         }
     }
 
@@ -1327,7 +1327,7 @@ namespace
           break;
 
         default:
-          ROSE_ABORT();
+          ADA_ASSERT(false);
         }
       return SG_DEREF( sgnode );
     }
@@ -2438,7 +2438,7 @@ namespace
       default:
         logError() << "unexpected def kind [queryDefinitionData]: " << typeDefn.Definition_Kind
                       << std::endl;
-        ROSE_ABORT();
+        ADA_ASSERT(false);
     }
 
     return DefinitionDetails{declname.id(), complDecl.Declaration_Kind, resKind};
@@ -2651,7 +2651,7 @@ namespace
         constraint = isSgAdaRangeConstraint(subTy->get_constraint());
       }
 
-      basedecl = si::ada::baseEnumDeclaration(ty);
+      basedecl = si::Ada::baseEnumDeclaration(ty);
     }
 
     if (basedecl == nullptr)
@@ -2707,7 +2707,7 @@ namespace
     else if (SgEnumDeclaration* derivedEnumDcl = isSgEnumDeclaration(&dcl))
       processInheritedEnumValues(tydef, *derivedEnumDcl, ctx);
     else
-      ROSE_ABORT();
+      ADA_ASSERT(false);
   }
 
 
@@ -3031,14 +3031,15 @@ queryFunctionDecl(Expression_Struct& expr, SgFunctionParameterList&, AstContext 
     int len = strlen(expr.Name_Image);
     ADA_ASSERT((len > 2) && (expr.Name_Image[0] == '"') && (expr.Name_Image[len-1] == '"'));
 
-    auto pos = adaFuncs().find(AdaIdentifier{expr.Name_Image+1, len-2});
+    const map_t<OperatorKey, std::vector<OperatorDesc> >& opMap = operatorSupport();
+    auto pos = opMap.find({ si::Ada::pkgStandardScope(),  AdaIdentifier{expr.Name_Image+1, len-2}});
 
-    if (pos != adaFuncs().end())
+    if (pos != opMap.end())
     {
       ADA_ASSERT(pos->second.size());
       // \todo this is too simple => use the parameter list to
       //       disambiguate the operator.
-      res = pos->second.front();
+      res = pos->second.front().function();
     }
   }
 
@@ -3267,7 +3268,7 @@ void handleDefinition(Element_Struct& elem, AstContext ctx)
 
     case A_Discrete_Subtype_Definition:    // 3.6(6)      -> Discrete_Range_Kinds
       //
-      ROSE_ABORT();
+      ADA_ASSERT(false);
 
     case Not_A_Definition:                 // An unexpected element
     case A_Private_Type_Definition:        // 7.3(2)      -> Trait_Kinds
@@ -3675,10 +3676,15 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
                                                  : mkTypeVoid();
 
         SgDeclarationStatement* ndef    = findFirst(asisDecls(), decl.Corresponding_Declaration, decl.Corresponding_Body_Stub);
-        SgFunctionDeclaration*  nondef  = getFunctionDeclaration(ndef);
+        SgFunctionDeclaration*  nondef  = getFunctionDeclaration(ndef ? ndef->get_firstNondefiningDeclaration() : nullptr);
         ADA_ASSERT(!ndef || nondef); // ndef => nondef
 
         SgScopeStatement&       logicalScope = adaname.parent_scope();
+        //~ logWarn() << decl.Corresponding_Declaration << " / " << decl.Corresponding_Body_Stub
+                  //~ << "   : " << nondef << "  "
+                  //~ << &logicalScope << " <ls  nds> " << (ndef ? ndef->get_scope() : nullptr)
+                  //~ << std::endl;
+
         SgFunctionDeclaration&  sgnode  = createFunDef(nondef, adaname.ident, logicalScope, rettype, ParameterCompletion{params, ctx});
         SgBasicBlock&           declblk = getFunctionBody(sgnode);
 
@@ -4001,7 +4007,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
     case A_Parameter_Specification:                // 6.1(15)  -> Trait_Kinds
       {
         // handled in getParm
-        ROSE_ABORT();
+        ADA_ASSERT(false);
       }
 
     case A_Protected_Type_Declaration:             // 9.4(2)
@@ -4190,7 +4196,21 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         SgAdaTaskBodyDecl*      nondef  = isSgAdaTaskBodyDecl(ndef);
         ADA_ASSERT(!ndef || nondef); // ndef => nondef
 
-        SgDeclarationStatement& tskdecl = lookupNode(asisDecls(), decl.Corresponding_Declaration);
+        Declaration_ID          declID  = decl.Corresponding_Declaration;
+        if (declID == 0)
+        {
+          ADA_ASSERT(decl.Corresponding_Body_Stub);
+          Element_Struct& stubelem = retrieveAs(elemMap(), decl.Corresponding_Body_Stub);
+
+          ADA_ASSERT (stubelem.Element_Kind == A_Declaration);
+          Declaration_Struct& stubdecl = stubelem.The_Union.Declaration;
+
+          ADA_ASSERT(stubdecl.Declaration_Kind == A_Task_Body_Stub);
+          declID = stubdecl.Corresponding_Declaration;
+        }
+
+        logTrace() << "declID: " << declID << std::endl;
+        SgDeclarationStatement& tskdecl = lookupNode(asisDecls(), declID);
 
         // ADA_ASSERT (adaname.fullName == adaname.ident);
         SgScopeStatement&       logicalScope = adaname.parent_scope();
@@ -4714,19 +4734,20 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         Element_Struct&           baseelem = basename.elem();
         Expression_Struct&        baseexpr = baseelem.The_Union.Expression;
         SgDeclarationStatement*   basedecl = findFirst(asisDecls(), baseexpr.Corresponding_Name_Declaration, baseexpr.Corresponding_Name_Definition);
-#if 0
-        if (basedecl == nullptr)
+
+        if (true && basedecl == nullptr)
         {
+          // Integer_IO: 24138136 and 24551081 not found
           logError() << basename.ident << ": "
                      << baseexpr.Corresponding_Name_Declaration << " and "
                      << baseexpr.Corresponding_Name_Definition << " not found"
                      << std::endl;
 
-          logError() << elemMap()[17172136]->Element_Kind
-                     << " / " << elemMap()[17585081]->Element_Kind
+          logError() << elemMap().at(baseexpr.Corresponding_Name_Declaration)->Element_Kind
+                     << " / " << elemMap().at(baseexpr.Corresponding_Name_Definition)->Element_Kind
                      << std::endl;
         }
-#endif
+
         // PP (2/2/22): the base decl can also be a renamed generic declaration
         SgScopeStatement&         logicalScope = adaname.parent_scope();
         SgAdaGenericInstanceDecl& sgnode   = mkAdaGenericInstanceDecl(adaname.ident, SG_DEREF(basedecl), logicalScope);
@@ -4820,25 +4841,25 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
     case An_Entry_Index_Specification:             // 9.5.2(2)
       {
         // handled by EntryIndexCompletion;
-        ROSE_ABORT();
+        ADA_ASSERT(false);
       }
 
     case A_Choice_Parameter_Specification:         // 11.2(4)
       {
         // handled in handleExceptionHandler
-        ROSE_ABORT();
+        ADA_ASSERT(false);
       }
 
     case An_Enumeration_Literal_Specification:     // 3.5.1(3)
       {
         // handled in EnumElementCreator
-        ROSE_ABORT();
+        ADA_ASSERT(false);
       }
 
     case A_Discriminant_Specification:             // 3.7(5)   -> Trait_Kinds
       {
         // handled in getDiscriminant
-        ROSE_ABORT();
+        ADA_ASSERT(false);
       }
 
     case Not_A_Declaration:                        // An unexpected element
@@ -4855,7 +4876,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
 void ParameterCompletion::operator()(SgFunctionParameterList& lst, SgScopeStatement& parmscope)
 {
-  traverseIDs(range, elemMap(), ParmlistCreator{lst, ctx.scope_npc(parmscope)});
+  traverseIDs(range, elemMap(), ParmlistCreator{lst, ctx.scope(parmscope)});
 }
 
 void StmtCreator::operator()(Element_Struct& elem)
@@ -4924,7 +4945,7 @@ getName(Element_Struct& elem, AstContext ctx)
         logKind("A_Defining_Operator_Symbol");
 
         ADA_ASSERT (ident.size() > 2);
-        name = ident = si::ada::roseOperatorPrefix + ident.substr(1, ident.size() - 2);
+        name = ident = si::Ada::roseOperatorPrefix + ident.substr(1, ident.size() - 2);
 
         // nothing to do, the fields are already set
 

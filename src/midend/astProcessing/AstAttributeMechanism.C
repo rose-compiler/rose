@@ -258,7 +258,7 @@ AstAttribute::packed_data() {
 }
 
 void
-AstAttribute::unpacked_data(int size, char* data) {}
+AstAttribute::unpacked_data(int /*size*/, char*/*data*/) {}
 
 std::string
 AstAttribute::additionalNodeOptions() {
@@ -396,7 +396,7 @@ AstSgNodeListAttribute::setNode(SgNode *node, int signedIndex) {
 SgNode*
 AstSgNodeListAttribute::getNode(int signedIndex) {
     size_t index = boost::numeric_cast<size_t>(signedIndex);
-    return (index >= 0 && index < get().size() ? get()[index] : NULL);
+    return (index < get().size() ? get()[index] : NULL);
 }
 
 

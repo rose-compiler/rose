@@ -31,7 +31,7 @@ class Method {
 public:
   virtual const std::string name() const = 0;
   virtual const Code & code() const = 0;
-  virtual const void decode(const Disassembler::BasePtr&) const = 0;
+  virtual const void decode(const Disassembler::BasePtr&) const = 0; // blame rasmussen17
   virtual const SgAsmInstructionList* instructions() const = 0;
 
   /* Set of instruction branch targets */

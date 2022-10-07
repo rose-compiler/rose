@@ -120,10 +120,24 @@ testConst() {
     ASSERT_always_require(b[2].isNone());
 }
 
+static void
+testIterator() {
+    Rose::Yaml::Node root_rw;
+    Rose::Yaml::parse(root_rw,
+                      "- a\n"
+                      "- b\n"
+                      "- c\n");
+    Rose::Yaml::Iterator iter = root_rw.begin();
+    ASSERT_always_require(iter == root_rw.begin());
+    iter = iter;
+    ASSERT_always_require(iter == root_rw.begin());
+}
+
 int
 main() {
     testSequence();
     testConversion();
     testBoolean();
     testConst();
+    testIterator();
 }

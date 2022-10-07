@@ -25,7 +25,7 @@ namespace BinaryAnalysis {
  *  This class implements a very simple debugger. */
 class Debugger: private boost::noncopyable, public Sawyer::SharedObject {
 public:
-    /** Shared-ownership pointer to @ref Debugger. See @ref heap_object_shared_ownership. */
+    /** Shared-ownership pointer. */
     using Ptr = DebuggerPtr;
 
     /** How to detach from a process when the debugger is destroyed. */

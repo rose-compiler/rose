@@ -6,7 +6,7 @@
 #include <Rose/BinaryAnalysis/Partitioner2/AddressUsageMap.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Config.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Configuration.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ControlFlowGraph.h>
 #include <Rose/BinaryAnalysis/Partitioner2/DataBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
@@ -378,8 +378,8 @@ private:
         s.template register_type<InstructionSemantics::DispatcherX86>();
         s.template register_type<InstructionSemantics::DispatcherM68k>();
         s.template register_type<InstructionSemantics::DispatcherPowerpc>();
-        s.template register_type<SymbolicExpr::Interior>();
-        s.template register_type<SymbolicExpr::Leaf>();
+        s.template register_type<SymbolicExpression::Interior>();
+        s.template register_type<SymbolicExpression::Leaf>();
         s.template register_type<Z3Solver>();
         s.template register_type<Semantics::SValue>();
         s.template register_type<Semantics::MemoryListState>();

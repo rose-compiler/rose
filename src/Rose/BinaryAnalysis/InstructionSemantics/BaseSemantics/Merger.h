@@ -32,7 +32,7 @@ namespace BaseSemantics {
  *  explicitly delete these objects -- they will be deleted automatically. */
 class Merger: public Sawyer::SharedObject {
 public:
-    /** Shared ownership pointer for @ref Merger. See @ref heap_object_shared_ownership. */
+    /** Shared ownership pointer for @ref Merger. */
     typedef MergerPtr Ptr;
 
 private:

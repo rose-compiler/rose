@@ -6,9 +6,9 @@ add_library(roseBinaryAnalysisModelChecker OBJECT
   ExternalFunctionUnit.C
   FailureUnit.C
   InstructionUnit.C
-  NullDerefTag.C
-  OobTag.C
-  P2Model.C
+  NullDereferenceTag.C
+  OutOfBoundsTag.C
+  PartitionerModel.C
   Path.C
   PathNode.C
   PathPredicate.C
@@ -19,7 +19,7 @@ add_library(roseBinaryAnalysisModelChecker OBJECT
   SemanticCallbacks.C
   SourceLister.C
   Tag.C
-  UninitVarTag.C
+  UninitializedVariableTag.C
   WorkerStatus.C)
 
 add_dependencies(roseBinaryAnalysisModelChecker rosetta_generated)
@@ -33,9 +33,9 @@ install(FILES
   ExternalFunctionUnit.h
   FailureUnit.h
   InstructionUnit.h
-  NullDerefTag.h
-  OobTag.h
-  P2Model.h
+  NullDereferenceTag.h
+  OutOfBoundsTag.h
+  PartitionerModel.h
   Path.h
   PathNode.h
   PathPredicate.h
@@ -47,7 +47,7 @@ install(FILES
   SourceLister.h
   Tag.h
   Types.h
-  UninitVarTag.h
+  UninitializedVariableTag.h
   WorkerStatus.h
 
   DESTINATION ${INCLUDE_INSTALL_DIR}/Rose/BinaryAnalysis/ModelChecker)

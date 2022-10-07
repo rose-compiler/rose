@@ -260,17 +260,21 @@ int main(int argc, char** argv)
        Ada_ROSE_Translation::initialize(settings);
        Ada_ROSE_Translation::ada_to_ROSE_translation(head_nodes, file);
      }
-     //~ catch (const std::exception& e)
      catch (const std::runtime_error& e)
      {
-       mprintf ("%s\n", e.what());
+       mlog[Sawyer::Message::FATAL] << "caught runtime_error: " << typeid(e).name() << " " << e.what() << std::endl;
        status = 1;
      }
-     //~ catch (...)
-     //~ {
-       //~ mprintf("Unknown exception terminated the ASIS to ROSE converter\n");
-       //~ status = 1;
-     //~ }
+     catch (const std::logic_error& e)
+     {
+       mlog[Sawyer::Message::FATAL] << "caught logic_error: " << typeid(e).name() << " " << e.what() << std::endl;
+       status = 1;
+     }
+     catch (...)
+     {
+       mlog[Sawyer::Message::FATAL] << "An unexpected exception terminated the ASIS to ROSE converter" << std::endl;
+       status = 1;
+     }
 
      asis_adapterfinal();
 

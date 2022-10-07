@@ -1,9 +1,0 @@
-class std::vector {
-  array { dimension=1; 
-        length(i)=this.size();
-        elem(i:dim:1:dimension)= this(i$dim);
-  };
-  has_value { dimension=1; length=this.size();
-  };
-} 
-

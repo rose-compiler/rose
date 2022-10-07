@@ -8,7 +8,7 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
-#include <Rose/BinaryAnalysis/SymbolicExpr.h>
+#include <Rose/BinaryAnalysis/SymbolicExpression.h>
 #include <Rose/BinaryAnalysis/Z3Solver.h>
 
 using namespace Rose;
@@ -16,19 +16,19 @@ using namespace Rose::BinaryAnalysis;
 
 static void
 test_add_simplifications() {
-    SymbolicExpr::Ptr reg = SymbolicExpr::makeIntegerVariable(32, "esp_0");
-    SymbolicExpr::Ptr nreg = SymbolicExpr::Interior::instance(SymbolicExpr::OP_NEGATE, reg);
-    SymbolicExpr::Ptr number = SymbolicExpr::makeIntegerConstant(32, 0xfffffffc);
-    SymbolicExpr::Ptr t1 = SymbolicExpr::Interior::instance(SymbolicExpr::OP_ADD, reg, nreg, number);
+    SymbolicExpression::Ptr reg = SymbolicExpression::makeIntegerVariable(32, "esp_0");
+    SymbolicExpression::Ptr nreg = SymbolicExpression::Interior::instance(SymbolicExpression::OP_NEGATE, reg);
+    SymbolicExpression::Ptr number = SymbolicExpression::makeIntegerConstant(32, 0xfffffffc);
+    SymbolicExpression::Ptr t1 = SymbolicExpression::Interior::instance(SymbolicExpression::OP_ADD, reg, nreg, number);
     std::cout <<"(add esp_0 (negate esp_0) 0xfffffffc) = " <<*t1 <<"\n";
 
-    SymbolicExpr::Ptr n1 = SymbolicExpr::makeIntegerVariable(32, "esp_0");
-    SymbolicExpr::Ptr n2 = SymbolicExpr::makeIntegerConstant(32, 4);
-    SymbolicExpr::Ptr n3 = SymbolicExpr::makeIntegerConstant(32, 8);
-    SymbolicExpr::Ptr n4 = SymbolicExpr::Interior::instance(SymbolicExpr::OP_ADD, n1, n2);
-    SymbolicExpr::Ptr n5 = SymbolicExpr::Interior::instance(SymbolicExpr::OP_ADD, n4, n3);
-    SymbolicExpr::Ptr n6 = SymbolicExpr::Interior::instance(SymbolicExpr::OP_NEGATE, n1);
-    SymbolicExpr::Ptr n7 = SymbolicExpr::Interior::instance(SymbolicExpr::OP_ADD, n5, n6);
+    SymbolicExpression::Ptr n1 = SymbolicExpression::makeIntegerVariable(32, "esp_0");
+    SymbolicExpression::Ptr n2 = SymbolicExpression::makeIntegerConstant(32, 4);
+    SymbolicExpression::Ptr n3 = SymbolicExpression::makeIntegerConstant(32, 8);
+    SymbolicExpression::Ptr n4 = SymbolicExpression::Interior::instance(SymbolicExpression::OP_ADD, n1, n2);
+    SymbolicExpression::Ptr n5 = SymbolicExpression::Interior::instance(SymbolicExpression::OP_ADD, n4, n3);
+    SymbolicExpression::Ptr n6 = SymbolicExpression::Interior::instance(SymbolicExpression::OP_NEGATE, n1);
+    SymbolicExpression::Ptr n7 = SymbolicExpression::Interior::instance(SymbolicExpression::OP_ADD, n5, n6);
     std::cout <<"(add esp_0 4 8 (negate esp_0)) = " <<*n7 <<"\n";
 }
 

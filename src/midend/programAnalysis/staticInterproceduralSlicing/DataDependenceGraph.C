@@ -31,7 +31,7 @@ DataDependenceGraph::DataDependenceGraph(SgNode * head,
 #ifdef NEWDU
                                          EDefUse * du,
 #endif
-                                         InterproceduralInfo * ii)
+                                         InterproceduralInfo * ii) // blame initial commit
       : _head(isSgFunctionDefinition(head))
 {
 #ifdef NEWDU

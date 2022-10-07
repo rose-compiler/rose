@@ -39,28 +39,28 @@ class Dispatcher;
 // Shared-ownership pointers
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Shared-ownership pointer for @ref Merger classes. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer for @ref Merger classes. */
 typedef Sawyer::SharedPointer<Merger> MergerPtr;
 
-/** Shared-ownership pointer to a semantic value in any domain. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer to a semantic value in any domain. */
 typedef Sawyer::SharedPointer<SValue> SValuePtr;
 
-/** Shared-ownership pointer to a register state. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer to a register state. */
 typedef boost::shared_ptr<RegisterState> RegisterStatePtr;
 
-/** Shared-ownership pointer to a memory state. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer to a memory state. */
 typedef boost::shared_ptr<MemoryState> MemoryStatePtr;
 
-/** Shared-ownership pointer to a memory cell. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer to a memory cell. */
 typedef boost::shared_ptr<MemoryCell> MemoryCellPtr;
 
-/** Shared-ownership pointer to a semantic state. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer to a semantic state. */
 typedef boost::shared_ptr<State> StatePtr;
 
-/** Shared-ownership pointer to a RISC operators object. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer to a RISC operators object. */
 typedef boost::shared_ptr<RiscOperators> RiscOperatorsPtr;
 
-/** Shared-ownership pointer to a semantics instruction dispatcher. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer to a semantics instruction dispatcher. */
 typedef boost::shared_ptr<Dispatcher> DispatcherPtr;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

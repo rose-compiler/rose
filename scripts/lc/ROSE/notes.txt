@@ -54,7 +54,6 @@ Try something like:
 git submodule init
 git config submodule.DbConnector.url PRIVATE_URL
 
-git config submodule."projects/vulnerabilitySeeding".url https://rosecompiler2.llnl.gov/gitlab/rose-compiler/vulnerability-seeding.git
 git config submodule."src/frontend/CxxFrontend/EDG".url https://rosecompiler2.llnl.gov/gitlab/rose-compiler/edg.git
 
 The above is temporary to this workspace, and changes .git/config, not .gitmodules.

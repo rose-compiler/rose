@@ -41,7 +41,7 @@ SmtlibSolver::getCommand(const std::string &configName) {
 }
 
 void
-SmtlibSolver::generateFile(std::ostream &o, const std::vector<SymbolicExpr::Ptr> &exprs, Definitions*) {
+SmtlibSolver::generateFile(std::ostream &o, const std::vector<SymbolicExpression::Ptr> &exprs, Definitions*) {
     requireLinkage(LM_EXECUTABLE);
 
     o <<";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n"
@@ -50,7 +50,7 @@ SmtlibSolver::generateFile(std::ostream &o, const std::vector<SymbolicExpr::Ptr>
       <<"\n"
       <<"; number of expressions: " <<exprs.size() <<"\n"
       <<"; size of each expression: actual / effective:\n";
-    for (const SymbolicExpr::Ptr &e: exprs)
+    for (const SymbolicExpression::Ptr &e: exprs)
         o <<(boost::format(";   %9d / %-9d\n") % e->nNodesUnique() % e->nNodes());
     o <<"\n";
 
@@ -61,10 +61,10 @@ SmtlibSolver::generateFile(std::ostream &o, const std::vector<SymbolicExpr::Ptr>
 
     // Find all variables
     VariableSet vars;
-    for (const SymbolicExpr::Ptr &expr: exprs) {
+    for (const SymbolicExpression::Ptr &expr: exprs) {
         VariableSet tmp;
         findVariables(expr, tmp);
-        for (const SymbolicExpr::LeafPtr &var: tmp.values())
+        for (const SymbolicExpression::LeafPtr &var: tmp.values())
             vars.insert(var);
     }
 
@@ -96,7 +96,7 @@ SmtlibSolver::generateFile(std::ostream &o, const std::vector<SymbolicExpr::Ptr>
       <<"; Assertions\n"
       <<";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n";
 
-    for (const SymbolicExpr::Ptr &expr: exprs) {
+    for (const SymbolicExpression::Ptr &expr: exprs) {
         o <<"\n";
         const std::string &comment = expr->comment();
         if (!comment.empty())
@@ -135,7 +135,7 @@ SmtlibSolver::getErrorMessage(int exitStatus) {
 }
 
 std::string
-SmtlibSolver::typeName(const SymbolicExpr::Ptr &expr) {
+SmtlibSolver::typeName(const SymbolicExpression::Ptr &expr) {
     ASSERT_not_null(expr);
     ASSERT_require(expr->nBits() > 0);
 
@@ -153,7 +153,7 @@ SmtlibSolver::typeName(const SymbolicExpr::Ptr &expr) {
 }
 
 void
-SmtlibSolver::outputAssertion(std::ostream &o, const SymbolicExpr::Ptr &expr) {
+SmtlibSolver::outputAssertion(std::ostream &o, const SymbolicExpression::Ptr &expr) {
     o <<"(assert ";
     if (expr->isIntegerConstant() && 1==expr->nBits()) {
         if (expr->toUnsigned().get()) {
@@ -169,51 +169,51 @@ SmtlibSolver::outputAssertion(std::ostream &o, const SymbolicExpr::Ptr &expr) {
 }
 
 void
-SmtlibSolver::varForSet(const SymbolicExpr::InteriorPtr &set, const SymbolicExpr::LeafPtr &var) {
+SmtlibSolver::varForSet(const SymbolicExpression::InteriorPtr &set, const SymbolicExpression::LeafPtr &var) {
     ASSERT_not_null(set);
     ASSERT_not_null(var);
     varsForSets_.insert(set, var);
 }
 
-SymbolicExpr::LeafPtr
-SmtlibSolver::varForSet(const SymbolicExpr::InteriorPtr &set) {
+SymbolicExpression::LeafPtr
+SmtlibSolver::varForSet(const SymbolicExpression::InteriorPtr &set) {
     ASSERT_not_null(set);
-    SymbolicExpr::Ptr expr = varsForSets_.getOrDefault(set);
+    SymbolicExpression::Ptr expr = varsForSets_.getOrDefault(set);
     ASSERT_not_null(expr);
-    SymbolicExpr::LeafPtr var = expr->isLeafNode();
+    SymbolicExpression::LeafPtr var = expr->isLeafNode();
     ASSERT_not_null(var);
     return var;
 }
 
 // A side effect is that the varsForSets_ map is updated.
 void
-SmtlibSolver::findVariables(const SymbolicExpr::Ptr &expr, VariableSet &variables) {
-    struct T1: SymbolicExpr::Visitor {
+SmtlibSolver::findVariables(const SymbolicExpression::Ptr &expr, VariableSet &variables) {
+    struct T1: SymbolicExpression::Visitor {
         SmtlibSolver *self;
         VariableSet &variables;
-        std::set<const SymbolicExpr::Node*> seen;
+        std::set<const SymbolicExpression::Node*> seen;
 
         T1(SmtlibSolver *self, VariableSet &variables): self(self), variables(variables) {}
 
-        SymbolicExpr::VisitAction preVisit(const SymbolicExpr::Node *node) {
+        SymbolicExpression::VisitAction preVisit(const SymbolicExpression::Node *node) {
             if (!seen.insert(node).second)
-                return SymbolicExpr::TRUNCATE;          // already processed this subexpression
-            if (SymbolicExpr::LeafPtr leaf = node->isLeafNode()) {
+                return SymbolicExpression::TRUNCATE;          // already processed this subexpression
+            if (SymbolicExpression::LeafPtr leaf = node->isLeafNode()) {
                 if (leaf->isVariable2())
                     variables.insert(leaf);
-            } else if (auto inode = dynamic_cast<const SymbolicExpr::Interior*>(node)) {
-                if (inode->getOperator() == SymbolicExpr::OP_SET) {
+            } else if (auto inode = dynamic_cast<const SymbolicExpression::Interior*>(node)) {
+                if (inode->getOperator() == SymbolicExpression::OP_SET) {
                     // Sets are ultimately converted to ITEs and therefore each set needs a free variable.
-                    SymbolicExpr::LeafPtr var = SymbolicExpr::makeIntegerVariable(32, "set")->isLeafNode();
+                    SymbolicExpression::LeafPtr var = SymbolicExpression::makeIntegerVariable(32, "set")->isLeafNode();
                     variables.insert(var);
                     self->varForSet(inode->sharedFromThis()->isInteriorNode(), var);
                 }
             }
-            return SymbolicExpr::CONTINUE;
+            return SymbolicExpression::CONTINUE;
         }
 
-        SymbolicExpr::VisitAction postVisit(const SymbolicExpr::Node*) {
-            return SymbolicExpr::CONTINUE;
+        SymbolicExpression::VisitAction postVisit(const SymbolicExpression::Node*) {
+            return SymbolicExpression::CONTINUE;
         }
     } t1(this, variables);
     expr->depthFirstTraversal(t1);
@@ -221,7 +221,7 @@ SmtlibSolver::findVariables(const SymbolicExpr::Ptr &expr, VariableSet &variable
 
 void
 SmtlibSolver::outputVariableDeclarations(std::ostream &o, const VariableSet &variables) {
-    for (const SymbolicExpr::LeafPtr &var: variables.values()) {
+    for (const SymbolicExpression::LeafPtr &var: variables.values()) {
         ASSERT_require(var->isVariable2());
         o <<"\n";
         if (!var->comment().empty())
@@ -231,9 +231,9 @@ SmtlibSolver::outputVariableDeclarations(std::ostream &o, const VariableSet &var
 }
 
 void
-SmtlibSolver::outputComments(std::ostream &o, const std::vector<SymbolicExpr::Ptr> &exprs) {
-    struct T1: SymbolicExpr::Visitor {
-        typedef std::set<const SymbolicExpr::Node*> SeenNodes;
+SmtlibSolver::outputComments(std::ostream &o, const std::vector<SymbolicExpression::Ptr> &exprs) {
+    struct T1: SymbolicExpression::Visitor {
+        typedef std::set<const SymbolicExpression::Node*> SeenNodes;
         SeenNodes seen;
         std::ostream &o;
         bool commented;
@@ -241,10 +241,10 @@ SmtlibSolver::outputComments(std::ostream &o, const std::vector<SymbolicExpr::Pt
         T1(std::ostream &o)
             : o(o), commented(false) {}
 
-        SymbolicExpr::VisitAction preVisit(const SymbolicExpr::Ptr &node) {
+        SymbolicExpression::VisitAction preVisit(const SymbolicExpression::Ptr &node) {
             if (!seen.insert(getRawPointer(node)).second)
-                return SymbolicExpr::TRUNCATE;          // already processed this subexpression
-            if (const SymbolicExpr::Leaf *leaf = node->isLeafNodeRaw()) {
+                return SymbolicExpression::TRUNCATE;          // already processed this subexpression
+            if (const SymbolicExpression::Leaf *leaf = node->isLeafNodeRaw()) {
                 if (leaf->isVariable2() && !leaf->comment().empty()) {
                     if (!commented) {
                         o <<"\n"
@@ -257,30 +257,30 @@ SmtlibSolver::outputComments(std::ostream &o, const std::vector<SymbolicExpr::Pt
                       <<StringUtility::prefixLines(leaf->comment(), ";    ", false) <<"\n";
                 }
             }
-            return SymbolicExpr::CONTINUE;
+            return SymbolicExpression::CONTINUE;
         }
 
-        SymbolicExpr::VisitAction postVisit(const SymbolicExpr::Ptr&) {
-            return SymbolicExpr::CONTINUE;
+        SymbolicExpression::VisitAction postVisit(const SymbolicExpression::Ptr&) {
+            return SymbolicExpression::CONTINUE;
         }
     } t1(o);
 
-    for (const SymbolicExpr::Ptr &expr: exprs)
+    for (const SymbolicExpression::Ptr &expr: exprs)
         expr->depthFirstTraversal(t1);
 }
 
 void
-SmtlibSolver::outputBvxorFunctions(std::ostream &o, const std::vector<SymbolicExpr::Ptr> &exprs) {
-    struct T1: SymbolicExpr::Visitor {
+SmtlibSolver::outputBvxorFunctions(std::ostream &o, const std::vector<SymbolicExpression::Ptr> &exprs) {
+    struct T1: SymbolicExpression::Visitor {
         std::set<size_t> widths;
         std::ostream &o;
 
         T1(std::ostream &o)
             : o(o) {}
 
-        SymbolicExpr::VisitAction preVisit(const SymbolicExpr::Ptr &node) {
-            if (SymbolicExpr::InteriorPtr inode = node->isInteriorNode()) {
-                if (inode->getOperator() == SymbolicExpr::OP_XOR && widths.insert(inode->nBits()).second) {
+        SymbolicExpression::VisitAction preVisit(const SymbolicExpression::Ptr &node) {
+            if (SymbolicExpression::InteriorPtr inode = node->isInteriorNode()) {
+                if (inode->getOperator() == SymbolicExpression::OP_XOR && widths.insert(inode->nBits()).second) {
                     size_t w = inode->nBits();
                     o <<"(define-fun bvxor" <<w
                       <<" ((a (_ BitVec " <<w <<")) (b (_ BitVec " <<w <<")))"
@@ -288,33 +288,33 @@ SmtlibSolver::outputBvxorFunctions(std::ostream &o, const std::vector<SymbolicEx
                       <<" (bvor (bvand a (bvnot b)) (bvand (bvnot a) b)))\n";
                 }
             }
-            return SymbolicExpr::CONTINUE;
+            return SymbolicExpression::CONTINUE;
         }
 
-        SymbolicExpr::VisitAction postVisit(const SymbolicExpr::Ptr&) {
-            return SymbolicExpr::CONTINUE;
+        SymbolicExpression::VisitAction postVisit(const SymbolicExpression::Ptr&) {
+            return SymbolicExpression::CONTINUE;
         }
     } t1(o);
 
-    for (const SymbolicExpr::Ptr &expr: exprs)
+    for (const SymbolicExpression::Ptr &expr: exprs)
         expr->depthFirstTraversal(t1);
 }
 
 void
-SmtlibSolver::outputComparisonFunctions(std::ostream &o, const std::vector<SymbolicExpr::Ptr> &exprs) {
-    struct T1: SymbolicExpr::Visitor {
-        Sawyer::Container::Map<SymbolicExpr::Operator, std::set<size_t> > widths;
+SmtlibSolver::outputComparisonFunctions(std::ostream &o, const std::vector<SymbolicExpression::Ptr> &exprs) {
+    struct T1: SymbolicExpression::Visitor {
+        Sawyer::Container::Map<SymbolicExpression::Operator, std::set<size_t> > widths;
         std::ostream &o;
 
         T1(std::ostream &o): o(o) {}
 
-        SymbolicExpr::VisitAction preVisit(const SymbolicExpr::Ptr &node) {
-            if (SymbolicExpr::InteriorPtr inode = node->isInteriorNode()) {
+        SymbolicExpression::VisitAction preVisit(const SymbolicExpression::Ptr &node) {
+            if (SymbolicExpression::InteriorPtr inode = node->isInteriorNode()) {
                 size_t w = inode->child(0)->nBits();
                 switch (inode->getOperator()) {
-                    case SymbolicExpr::OP_ULT:
+                    case SymbolicExpression::OP_ULT:
                         break;                          // SMT-LIB 2 defines "bvult" for this
-                    case SymbolicExpr::OP_ULE:
+                    case SymbolicExpression::OP_ULE:
                         if (widths.insertMaybeDefault(inode->getOperator()).insert(w).second) {
                             o <<"(define-fun bvule" <<w
                               <<" ((a (_ BitVec " <<w <<")) (b (_ BitVec " <<w <<")))"
@@ -322,7 +322,7 @@ SmtlibSolver::outputComparisonFunctions(std::ostream &o, const std::vector<Symbo
                               <<" (or (bvult a b) (= a b)))\n";
                         }
                         break;
-                    case SymbolicExpr::OP_UGT:
+                    case SymbolicExpression::OP_UGT:
                         if (widths.insertMaybeDefault(inode->getOperator()).insert(w).second) {
                             o <<"(define-fun bvugt" <<w
                               <<" ((a (_ BitVec " <<w <<")) (b (_ BitVec " <<w <<")))"
@@ -331,7 +331,7 @@ SmtlibSolver::outputComparisonFunctions(std::ostream &o, const std::vector<Symbo
 
                         }
                         break;
-                    case SymbolicExpr::OP_UGE:
+                    case SymbolicExpression::OP_UGE:
                         if (widths.insertMaybeDefault(inode->getOperator()).insert(w).second) {
                             o <<"(define-fun bvuge" <<w
                               <<" ((a (_ BitVec " <<w <<")) (b (_ BitVec " <<w <<")))"
@@ -339,7 +339,7 @@ SmtlibSolver::outputComparisonFunctions(std::ostream &o, const std::vector<Symbo
                               <<" (not (bvult a b)))\n";
                         }
                         break;
-                    case SymbolicExpr::OP_SLT:
+                    case SymbolicExpression::OP_SLT:
                         // signed(a) < signed(b) iff signed(b) - signed(a) > 0 (i.e., sign bit is clear)
                         if (widths.insertMaybeDefault(inode->getOperator()).insert(w).second) {
                             o <<"(define-fun bvslt" <<w
@@ -348,7 +348,7 @@ SmtlibSolver::outputComparisonFunctions(std::ostream &o, const std::vector<Symbo
                               <<" (= #b0 ((_ extract " <<(w-1) <<" " <<(w-1) <<") (bvadd (bvneg a) b))))\n";
                         }
                         break;
-                    case SymbolicExpr::OP_SLE:
+                    case SymbolicExpression::OP_SLE:
                         // signed(a) <= signed(b) iff (signed(b) - signed(a) > 0 or a == b
                         if (widths.insertMaybeDefault(inode->getOperator()).insert(w).second) {
                             o <<"(define-fun bvsle" <<w
@@ -357,7 +357,7 @@ SmtlibSolver::outputComparisonFunctions(std::ostream &o, const std::vector<Symbo
                               <<" (or (= a b) (= #b0 ((_ extract " <<(w-1) <<" " <<(w-1) <<") (bvadd (bvneg a) b)))))\n";
                         }
                         break;
-                    case SymbolicExpr::OP_SGT:
+                    case SymbolicExpression::OP_SGT:
                         // signed(a) > signed(b) iff (signed(a) - signed(b) > 0 (i.e., sign bit is clear)
                         if (widths.insertMaybeDefault(inode->getOperator()).insert(w).second) {
                             o <<"(define-fun bvsgt" <<w
@@ -366,7 +366,7 @@ SmtlibSolver::outputComparisonFunctions(std::ostream &o, const std::vector<Symbo
                               <<" (= #b0 ((_ extract " <<(w-1) <<" " <<(w-1) <<") (bvadd a (bvneg b)))))\n";
                         }
                         break;
-                    case SymbolicExpr::OP_SGE:
+                    case SymbolicExpression::OP_SGE:
                         // signed(a) >= signed(b) iff (signed(a) - signed(b) > 0 || a == b
                         if (widths.insertMaybeDefault(inode->getOperator()).insert(w).second) {
                             o <<"(define-fun bvsge" <<w
@@ -380,23 +380,23 @@ SmtlibSolver::outputComparisonFunctions(std::ostream &o, const std::vector<Symbo
                         break;
                 }
             }
-            return SymbolicExpr::CONTINUE;
+            return SymbolicExpression::CONTINUE;
         }
 
-        SymbolicExpr::VisitAction postVisit(const SymbolicExpr::Ptr&) {
-            return SymbolicExpr::CONTINUE;
+        SymbolicExpression::VisitAction postVisit(const SymbolicExpression::Ptr&) {
+            return SymbolicExpression::CONTINUE;
         }
     } t1(o);
 
-    for (const SymbolicExpr::Ptr &expr: exprs)
+    for (const SymbolicExpression::Ptr &expr: exprs)
         expr->depthFirstTraversal(t1);
 }
 
 void
-SmtlibSolver::outputCommonSubexpressions(std::ostream &o, const std::vector<SymbolicExpr::Ptr> &exprs) {
-    std::vector<SymbolicExpr::Ptr> cses = findCommonSubexpressions(exprs);
+SmtlibSolver::outputCommonSubexpressions(std::ostream &o, const std::vector<SymbolicExpression::Ptr> &exprs) {
+    std::vector<SymbolicExpression::Ptr> cses = findCommonSubexpressions(exprs);
     size_t cseId = 0;
-    for (const SymbolicExpr::Ptr &cse: cses) {
+    for (const SymbolicExpression::Ptr &cse: cses) {
         o <<"\n";
         if (!cse->comment().empty())
             o <<StringUtility::prefixLines(cse->comment(), "; ") <<"\n";
@@ -458,22 +458,22 @@ SmtlibSolver::outputCast(const std::vector<SExprTypePair> &ets, Type toType) {
 }
 
 std::vector<SmtSolver::SExprTypePair>
-SmtlibSolver::outputExpressions(const std::vector<SymbolicExpr::Ptr> &exprs) {
+SmtlibSolver::outputExpressions(const std::vector<SymbolicExpression::Ptr> &exprs) {
     std::vector<SExprTypePair> retval;
     retval.reserve(exprs.size());
-    for (const SymbolicExpr::Ptr &expr: exprs)
+    for (const SymbolicExpression::Ptr &expr: exprs)
         retval.push_back(outputExpression(expr));
     return retval;
 }
 
 SmtSolver::SExprTypePair
-SmtlibSolver::outputExpression(const SymbolicExpr::Ptr &expr) {
+SmtlibSolver::outputExpression(const SymbolicExpression::Ptr &expr) {
     ASSERT_not_null(expr);
     typedef std::vector<SExprTypePair> Etv;
     SExprTypePair retval;
 
-    SymbolicExpr::LeafPtr leaf = expr->isLeafNode();
-    SymbolicExpr::InteriorPtr inode = expr->isInteriorNode();
+    SymbolicExpression::LeafPtr leaf = expr->isLeafNode();
+    SymbolicExpression::InteriorPtr inode = expr->isInteriorNode();
 
     // If we previously found a common subexpression, then use its name rather than re-emitting the same expression again. This
     // can drastically reduce the size of the output file.
@@ -485,12 +485,12 @@ SmtlibSolver::outputExpression(const SymbolicExpr::Ptr &expr) {
     } else {
         ASSERT_not_null(inode);
         switch (inode->getOperator()) {
-            case SymbolicExpr::OP_NONE:
+            case SymbolicExpression::OP_NONE:
                 ASSERT_not_reachable("not possible for an interior node");
-            case SymbolicExpr::OP_ADD:
+            case SymbolicExpression::OP_ADD:
                 retval = outputLeftAssoc("bvadd", inode);
                 break;
-            case SymbolicExpr::OP_AND: {
+            case SymbolicExpression::OP_AND: {
                 Etv children = outputExpressions(inode->children());
                 Type type = mostType(children);
                 children = outputCast(children, type);
@@ -502,77 +502,77 @@ SmtlibSolver::outputExpression(const SymbolicExpr::Ptr &expr) {
                 }
                 break;
             }
-            case SymbolicExpr::OP_ASR:
+            case SymbolicExpression::OP_ASR:
                 retval = outputArithmeticShiftRight(inode);
                 break;
-            case SymbolicExpr::OP_XOR:
+            case SymbolicExpression::OP_XOR:
                 retval = outputXor(inode);
                 break;
-            case SymbolicExpr::OP_EQ:
+            case SymbolicExpression::OP_EQ:
                 retval = outputBinary("=", inode, BOOLEAN);
                 break;
-            case SymbolicExpr::OP_CONCAT: {
+            case SymbolicExpression::OP_CONCAT: {
                 Etv children = outputCast(outputExpressions(inode->children()), BIT_VECTOR);
                 retval = outputLeftAssoc("concat", children);
                 break;
             }
-            case SymbolicExpr::OP_CONVERT:
+            case SymbolicExpression::OP_CONVERT:
                 throw Exception("OP_CONVERT is not implemented yet");
-            case SymbolicExpr::OP_EXTRACT:
+            case SymbolicExpression::OP_EXTRACT:
                 retval = outputExtract(inode);
                 break;
-            case SymbolicExpr::OP_FP_ABS:
-            case SymbolicExpr::OP_FP_NEGATE:
-            case SymbolicExpr::OP_FP_ADD:
-            case SymbolicExpr::OP_FP_MUL:
-            case SymbolicExpr::OP_FP_DIV:
-            case SymbolicExpr::OP_FP_MULADD:
-            case SymbolicExpr::OP_FP_SQRT:
-            case SymbolicExpr::OP_FP_MOD:
-            case SymbolicExpr::OP_FP_ROUND:
-            case SymbolicExpr::OP_FP_MIN:
-            case SymbolicExpr::OP_FP_MAX:
-            case SymbolicExpr::OP_FP_LE:
-            case SymbolicExpr::OP_FP_LT:
-            case SymbolicExpr::OP_FP_GE:
-            case SymbolicExpr::OP_FP_GT:
-            case SymbolicExpr::OP_FP_EQ:
-            case SymbolicExpr::OP_FP_ISNORM:
-            case SymbolicExpr::OP_FP_ISSUBNORM:
-            case SymbolicExpr::OP_FP_ISZERO:
-            case SymbolicExpr::OP_FP_ISINFINITE:
-            case SymbolicExpr::OP_FP_ISNAN:
-            case SymbolicExpr::OP_FP_ISNEG:
-            case SymbolicExpr::OP_FP_ISPOS:
+            case SymbolicExpression::OP_FP_ABS:
+            case SymbolicExpression::OP_FP_NEGATE:
+            case SymbolicExpression::OP_FP_ADD:
+            case SymbolicExpression::OP_FP_MUL:
+            case SymbolicExpression::OP_FP_DIV:
+            case SymbolicExpression::OP_FP_MULADD:
+            case SymbolicExpression::OP_FP_SQRT:
+            case SymbolicExpression::OP_FP_MOD:
+            case SymbolicExpression::OP_FP_ROUND:
+            case SymbolicExpression::OP_FP_MIN:
+            case SymbolicExpression::OP_FP_MAX:
+            case SymbolicExpression::OP_FP_LE:
+            case SymbolicExpression::OP_FP_LT:
+            case SymbolicExpression::OP_FP_GE:
+            case SymbolicExpression::OP_FP_GT:
+            case SymbolicExpression::OP_FP_EQ:
+            case SymbolicExpression::OP_FP_ISNORM:
+            case SymbolicExpression::OP_FP_ISSUBNORM:
+            case SymbolicExpression::OP_FP_ISZERO:
+            case SymbolicExpression::OP_FP_ISINFINITE:
+            case SymbolicExpression::OP_FP_ISNAN:
+            case SymbolicExpression::OP_FP_ISNEG:
+            case SymbolicExpression::OP_FP_ISPOS:
                 throw Exception("floating point operations are not implemented yet");
-            case SymbolicExpr::OP_INVERT: {
+            case SymbolicExpression::OP_INVERT: {
                 ASSERT_require(inode->nChildren() == 1);
                 SExprTypePair child = outputExpression(inode->child(0));
                 retval = outputUnary((BOOLEAN==child.second?"not":"bvnot"), child);
                 break;
             }
-            case SymbolicExpr::OP_ITE:
+            case SymbolicExpression::OP_ITE:
                 retval = outputIte(inode);
                 break;
-            case SymbolicExpr::OP_LET:
+            case SymbolicExpression::OP_LET:
                 throw Exception("OP_LET not implemented");
-            case SymbolicExpr::OP_LSSB:
+            case SymbolicExpression::OP_LSSB:
                 throw Exception("OP_LSSB not implemented");
-            case SymbolicExpr::OP_MSSB:
+            case SymbolicExpression::OP_MSSB:
                 throw Exception("OP_MSSB not implemented");
-            case SymbolicExpr::OP_NE:
+            case SymbolicExpression::OP_NE:
                 retval = outputNotEqual(inode);
                 break;
-            case SymbolicExpr::OP_NEGATE: {
+            case SymbolicExpression::OP_NEGATE: {
                 ASSERT_require(inode->nChildren() == 1);
                 SExprTypePair child = outputCast(outputExpression(inode->child(0)), BIT_VECTOR);
                 retval = outputUnary("bvneg", child);
                 break;
             }
-            case SymbolicExpr::OP_NOOP:
-                retval = outputExpression(SymbolicExpr::makeIntegerConstant(inode->nBits(), 0));
+            case SymbolicExpression::OP_NOOP:
+                retval = outputExpression(SymbolicExpression::makeIntegerConstant(inode->nBits(), 0));
                 break;
-            case SymbolicExpr::OP_OR: {
+            case SymbolicExpression::OP_OR: {
                 Etv children = outputExpressions(inode->children());
                 Type type = mostType(children);
                 children = outputCast(children, type);
@@ -584,84 +584,84 @@ SmtlibSolver::outputExpression(const SymbolicExpr::Ptr &expr) {
                 }
                 break;
             }
-            case SymbolicExpr::OP_READ:
+            case SymbolicExpression::OP_READ:
                 retval = outputRead(inode);
                 break;
-            case SymbolicExpr::OP_REINTERPRET:
+            case SymbolicExpression::OP_REINTERPRET:
                 throw Exception("OP_REINTERPRET is not implemented yet");
-            case SymbolicExpr::OP_ROL:
+            case SymbolicExpression::OP_ROL:
                 retval = outputRotateLeft(inode);
                 break;
-            case SymbolicExpr::OP_ROR:
+            case SymbolicExpression::OP_ROR:
                 retval = outputRotateRight(inode);
                 break;
-            case SymbolicExpr::OP_SDIV:
+            case SymbolicExpression::OP_SDIV:
                 retval = outputDivide(inode, "bvsdiv");
                 break;
-            case SymbolicExpr::OP_SET:
+            case SymbolicExpression::OP_SET:
                 retval = outputSet(inode);
                 break;
-            case SymbolicExpr::OP_SEXTEND:
+            case SymbolicExpression::OP_SEXTEND:
                 retval = outputSignExtend(inode);
                 break;
-            case SymbolicExpr::OP_SLT:
+            case SymbolicExpression::OP_SLT:
                 retval = outputSignedCompare(inode);
                 break;
-            case SymbolicExpr::OP_SLE:
+            case SymbolicExpression::OP_SLE:
                 retval = outputSignedCompare(inode);
                 break;
-            case SymbolicExpr::OP_SHL0:
+            case SymbolicExpression::OP_SHL0:
                 retval = outputShiftLeft0(inode);
                 break;
-            case SymbolicExpr::OP_SHL1:
+            case SymbolicExpression::OP_SHL1:
                 retval = outputShiftLeft1(inode);
                 break;
-            case SymbolicExpr::OP_SHR0:
+            case SymbolicExpression::OP_SHR0:
                 retval = outputLogicalShiftRight0(inode);
                 break;
-            case SymbolicExpr::OP_SHR1:
+            case SymbolicExpression::OP_SHR1:
                 retval = outputLogicalShiftRight1(inode);
                 break;
-            case SymbolicExpr::OP_SGE:
+            case SymbolicExpression::OP_SGE:
                 retval = outputSignedCompare(inode);
                 break;
-            case SymbolicExpr::OP_SGT:
+            case SymbolicExpression::OP_SGT:
                 retval = outputSignedCompare(inode);
                 break;
-            case SymbolicExpr::OP_SMOD:
+            case SymbolicExpression::OP_SMOD:
                 retval = outputModulo(inode, "bvsrem");
                 break;
-            case SymbolicExpr::OP_SMUL:
+            case SymbolicExpression::OP_SMUL:
                 retval = outputMultiply(inode);
                 break;
-            case SymbolicExpr::OP_UDIV:
+            case SymbolicExpression::OP_UDIV:
                 retval = outputDivide(inode, "bvudiv");
                 break;
-            case SymbolicExpr::OP_UEXTEND:
+            case SymbolicExpression::OP_UEXTEND:
                 retval = outputUnsignedExtend(inode);
                 break;
-            case SymbolicExpr::OP_UGE:
+            case SymbolicExpression::OP_UGE:
                 retval = outputUnsignedCompare(inode);
                 break;
-            case SymbolicExpr::OP_UGT:
+            case SymbolicExpression::OP_UGT:
                 retval = outputUnsignedCompare(inode);
                 break;
-            case SymbolicExpr::OP_ULE:
+            case SymbolicExpression::OP_ULE:
                 retval = outputUnsignedCompare(inode);
                 break;
-            case SymbolicExpr::OP_ULT:
+            case SymbolicExpression::OP_ULT:
                 retval = outputUnsignedCompare(inode);
                 break;
-            case SymbolicExpr::OP_UMOD:
+            case SymbolicExpression::OP_UMOD:
                 retval = outputModulo(inode, "bvurem");
                 break;
-            case SymbolicExpr::OP_UMUL:
+            case SymbolicExpression::OP_UMUL:
                 retval = outputMultiply(inode);
                 break;
-            case SymbolicExpr::OP_WRITE:
+            case SymbolicExpression::OP_WRITE:
                 retval = outputWrite(inode);
                 break;
-            case SymbolicExpr::OP_ZEROP:
+            case SymbolicExpression::OP_ZEROP:
                 retval = outputZerop(inode);
                 break;
         }
@@ -672,7 +672,7 @@ SmtlibSolver::outputExpression(const SymbolicExpr::Ptr &expr) {
 }
 
 SmtSolver::SExprTypePair
-SmtlibSolver::outputLeaf(const SymbolicExpr::LeafPtr &leaf) {
+SmtlibSolver::outputLeaf(const SymbolicExpression::LeafPtr &leaf) {
     SExprTypePair retval;
     if (leaf->isIntegerConstant()) {
         retval.second = BIT_VECTOR;
@@ -702,7 +702,7 @@ SmtlibSolver::outputUnary(const std::string &name, const SExprTypePair &child) {
 
 // ROSE (rose-operator a b) => SMT-LIB (smtlib-operator a b)
 SmtSolver::SExprTypePair
-SmtlibSolver::outputBinary(const std::string &name, const SymbolicExpr::InteriorPtr &inode, Type rettype) {
+SmtlibSolver::outputBinary(const std::string &name, const SymbolicExpression::InteriorPtr &inode, Type rettype) {
     ASSERT_require(inode->nChildren() == 2);
     return outputLeftAssoc(name, inode, rettype);
 }
@@ -713,7 +713,7 @@ SmtlibSolver::outputBinary(const std::string &name, const SymbolicExpr::Interior
 // etc.
 // where "identity" is all zeros or all ones and the same width as "a".
 SmtSolver::SExprTypePair
-SmtlibSolver::outputLeftAssoc(const std::string &name, const SymbolicExpr::InteriorPtr &inode, Type rettype) {
+SmtlibSolver::outputLeftAssoc(const std::string &name, const SymbolicExpression::InteriorPtr &inode, Type rettype) {
     ASSERT_require(!name.empty());
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() > 1);
@@ -738,7 +738,7 @@ SmtlibSolver::outputLeftAssoc(const std::string &name, const std::vector<SExprTy
 // SMT-LIB doesn't have a bit-wise XOR function, but we should have by now generated our own "bvxorN" functions where N is the
 // width of the operands.
 SmtSolver::SExprTypePair
-SmtlibSolver::outputXor(const SymbolicExpr::InteriorPtr &inode) {
+SmtlibSolver::outputXor(const SymbolicExpression::InteriorPtr &inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() > 1);
 
@@ -755,7 +755,7 @@ SmtlibSolver::outputXor(const SymbolicExpr::InteriorPtr &inode) {
 
 // ROSE (extract lo hi expr) => SMT-LIB ((_ extract hi lo) expr); lo and hi are inclusive
 SmtSolver::SExprTypePair
-SmtlibSolver::outputExtract(const SymbolicExpr::InteriorPtr &inode) {
+SmtlibSolver::outputExtract(const SymbolicExpression::InteriorPtr &inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() == 3);
     ASSERT_require(inode->child(0)->isIntegerConstant());
@@ -775,9 +775,9 @@ SmtlibSolver::outputExtract(const SymbolicExpr::InteriorPtr &inode) {
 
 // ROSE (ite boolean-expr a b) => SMT-LIB (ite boolean-expr a b); a and b same size, condition is Boolean not bit vector
 SmtSolver::SExprTypePair
-SmtlibSolver::outputIte(const SymbolicExpr::InteriorPtr &inode) {
+SmtlibSolver::outputIte(const SymbolicExpression::InteriorPtr &inode) {
     ASSERT_not_null(inode);
-    ASSERT_require(inode->getOperator() == SymbolicExpr::OP_ITE);
+    ASSERT_require(inode->getOperator() == SymbolicExpression::OP_ITE);
     ASSERT_require(inode->nChildren() == 3);
 
     SExpr::Ptr cond = outputCast(outputExpression(inode->child(0)), BOOLEAN).first;
@@ -792,7 +792,7 @@ SmtlibSolver::outputIte(const SymbolicExpr::InteriorPtr &inode) {
 
 // ROSE (!= a b) => SMT-LIB (not (= a b))
 SmtSolver::SExprTypePair
-SmtlibSolver::outputNotEqual(const SymbolicExpr::InteriorPtr &inode) {
+SmtlibSolver::outputNotEqual(const SymbolicExpression::InteriorPtr &inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() == 2);
     ASSERT_require(inode->child(0)->nBits() == inode->child(1)->nBits());
@@ -810,7 +810,7 @@ SmtlibSolver::outputNotEqual(const SymbolicExpr::InteriorPtr &inode) {
 // Where "zeros" is a bit vector of all clear bits with width size-expr.size. Due to ROSE symbolic simplifications that have
 // already occurred by this point, "size" is guaranteed to be greater than expr.size.
 SmtSolver::SExprTypePair
-SmtlibSolver::outputUnsignedExtend(const SymbolicExpr::InteriorPtr &inode) {
+SmtlibSolver::outputUnsignedExtend(const SymbolicExpression::InteriorPtr &inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() == 2);
     ASSERT_require(inode->child(0)->isIntegerConstant());
@@ -819,7 +819,7 @@ SmtlibSolver::outputUnsignedExtend(const SymbolicExpr::InteriorPtr &inode) {
     size_t needBits = newWidth - inode->child(1)->nBits();
 
     SExpr::Ptr zeros =
-        outputCast(outputExpression(SymbolicExpr::makeIntegerConstant(Sawyer::Container::BitVector(needBits, false))),
+        outputCast(outputExpression(SymbolicExpression::makeIntegerConstant(Sawyer::Container::BitVector(needBits, false))),
                    BIT_VECTOR).first;
 
     SExpr::Ptr retval =
@@ -839,17 +839,17 @@ SmtlibSolver::outputUnsignedExtend(const SymbolicExpr::InteriorPtr &inode) {
 //  where "zeros" is a bit vector of size size-expr.size with all bits clear.
 //  The "size" > expr.size due to sextend simplifications that would have kicked in otherwise.
 SmtSolver::SExprTypePair
-SmtlibSolver::outputSignExtend(const SymbolicExpr::InteriorPtr &inode) {
+SmtlibSolver::outputSignExtend(const SymbolicExpression::InteriorPtr &inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() == 2);
     ASSERT_require(inode->child(0)->isIntegerConstant());
     ASSERT_require(inode->child(0)->toUnsigned().get() > inode->child(1)->nBits());
-    SymbolicExpr::Ptr newSize = inode->child(0);
+    SymbolicExpression::Ptr newSize = inode->child(0);
     size_t signBitIdx = inode->child(1)->nBits() - 1;
     size_t growth = newSize->toUnsigned().get() - inode->child(1)->nBits();
 
     SExpr::Ptr expr = outputCast(outputExpression(inode->child(1)), BIT_VECTOR).first;
-    SExpr::Ptr zeros = outputExpression(SymbolicExpr::makeIntegerConstant(Sawyer::Container::BitVector(growth, false))).first;
+    SExpr::Ptr zeros = outputExpression(SymbolicExpression::makeIntegerConstant(Sawyer::Container::BitVector(growth, false))).first;
     SExpr::Ptr ones = SExpr::instance(SExpr::instance("bvnot"), zeros);
 
     SExpr::Ptr isNegative =
@@ -874,12 +874,12 @@ SmtlibSolver::outputSignExtend(const SymbolicExpr::InteriorPtr &inode) {
 //
 // where v1, v2, ... are new variables
 SmtSolver::SExprTypePair
-SmtlibSolver::outputSet(const SymbolicExpr::InteriorPtr &inode) {
+SmtlibSolver::outputSet(const SymbolicExpression::InteriorPtr &inode) {
     ASSERT_not_null(inode);
-    ASSERT_require(inode->getOperator() == SymbolicExpr::OP_SET);
+    ASSERT_require(inode->getOperator() == SymbolicExpression::OP_SET);
     ASSERT_require(inode->nChildren() >= 2);
-    SymbolicExpr::LeafPtr var = varForSet(inode);
-    SymbolicExpr::Ptr ite = SymbolicExpr::setToIte(inode, SmtSolverPtr(), var);
+    SymbolicExpression::LeafPtr var = varForSet(inode);
+    SymbolicExpression::Ptr ite = SymbolicExpression::setToIte(inode, SmtSolverPtr(), var);
     ite->comment(inode->comment());
     return outputExpression(ite);
 }
@@ -888,13 +888,13 @@ SmtlibSolver::outputSet(const SymbolicExpr::InteriorPtr &inode) {
 // SMT-LIB ((_ extract [expr.size-1] 0) (bvlshr (concat expr expr) extended_amount))
 // where extended_amount is numerically equal to amount but extended to be 2*expr.nbits in width.
 SmtSolver::SExprTypePair
-SmtlibSolver::outputRotateRight(const SymbolicExpr::InteriorPtr &inode) {
+SmtlibSolver::outputRotateRight(const SymbolicExpression::InteriorPtr &inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() == 2);
-    SymbolicExpr::Ptr sa = inode->child(0);
-    SymbolicExpr::Ptr expr = inode->child(1);
+    SymbolicExpression::Ptr sa = inode->child(0);
+    SymbolicExpression::Ptr expr = inode->child(1);
     size_t w = expr->nBits();
-    sa = SymbolicExpr::makeExtend(SymbolicExpr::makeIntegerConstant(32, 2*w), sa);
+    sa = SymbolicExpression::makeExtend(SymbolicExpression::makeIntegerConstant(32, 2*w), sa);
 
     SExpr::Ptr shiftee = outputCast(outputExpression(expr), BIT_VECTOR).first;
 
@@ -913,13 +913,13 @@ SmtlibSolver::outputRotateRight(const SymbolicExpr::InteriorPtr &inode) {
 // SMT-LIB (_ extract [2*expr.size-1] [expr.size] (bvshl (concat expr expr) extended_amount))
 // where extended_amount is numerically equal to amount but extended to be 2*expr.nbits in width.
 SmtSolver::SExprTypePair
-SmtlibSolver::outputRotateLeft(const SymbolicExpr::InteriorPtr &inode) {
+SmtlibSolver::outputRotateLeft(const SymbolicExpression::InteriorPtr &inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() == 2);
-    SymbolicExpr::Ptr sa = inode->child(0);
-    SymbolicExpr::Ptr expr = inode->child(1);
+    SymbolicExpression::Ptr sa = inode->child(0);
+    SymbolicExpression::Ptr expr = inode->child(1);
     size_t w = expr->nBits();
-    sa = SymbolicExpr::makeExtend(SymbolicExpr::makeIntegerConstant(32, 2*w), sa);
+    sa = SymbolicExpression::makeExtend(SymbolicExpression::makeIntegerConstant(32, 2*w), sa);
 
     SExpr::Ptr shiftee = outputCast(outputExpression(expr), BIT_VECTOR).first;
 
@@ -941,18 +941,18 @@ SmtlibSolver::outputRotateLeft(const SymbolicExpr::InteriorPtr &inode) {
 //
 // Where EXTENDED_AMOUNT is AMOUNT zero extended to be the same width as EXPR.
 SmtSolver::SExprTypePair
-SmtlibSolver::outputLogicalShiftRight0(const SymbolicExpr::InteriorPtr &inode) {
+SmtlibSolver::outputLogicalShiftRight0(const SymbolicExpression::InteriorPtr &inode) {
     ASSERT_not_null(inode);
-    ASSERT_require(inode->getOperator() == SymbolicExpr::OP_SHR0);
+    ASSERT_require(inode->getOperator() == SymbolicExpression::OP_SHR0);
     ASSERT_require(inode->nChildren() == 2);
 
     // Original arguments
-    const SymbolicExpr::Ptr sa = inode->child(0);
-    const SymbolicExpr::Ptr expr = inode->child(1);
+    const SymbolicExpression::Ptr sa = inode->child(0);
+    const SymbolicExpression::Ptr expr = inode->child(1);
 
     // The shift amount extended to the same width as the thing to be shifted
     const SExpr::Ptr extended_va =
-        outputCast(outputExpression(SymbolicExpr::makeExtend(SymbolicExpr::makeIntegerConstant(32, expr->nBits()), sa)),
+        outputCast(outputExpression(SymbolicExpression::makeExtend(SymbolicExpression::makeIntegerConstant(32, expr->nBits()), sa)),
                    BIT_VECTOR).first;
 
     // The thing to be shifted
@@ -978,18 +978,18 @@ SmtlibSolver::outputLogicalShiftRight0(const SymbolicExpr::InteriorPtr &inode) {
 // The EXTENDED_AMOUNT is the original AMOUNT zero extended to be twice the width of the original EXPR (and the same width as
 // the value that SMT-LIB is shifting.
 SmtSolver::SExprTypePair
-SmtlibSolver::outputLogicalShiftRight1(const SymbolicExpr::InteriorPtr &inode) {
+SmtlibSolver::outputLogicalShiftRight1(const SymbolicExpression::InteriorPtr &inode) {
     ASSERT_not_null(inode);
-    ASSERT_require(inode->getOperator() == SymbolicExpr::OP_SHR1);
+    ASSERT_require(inode->getOperator() == SymbolicExpression::OP_SHR1);
     ASSERT_require(inode->nChildren() == 2);
 
     // Original arguments
-    const SymbolicExpr::Ptr sa = inode->child(0);
-    const SymbolicExpr::Ptr expr = inode->child(1);
+    const SymbolicExpression::Ptr sa = inode->child(0);
+    const SymbolicExpression::Ptr expr = inode->child(1);
 
     // Upper half of the bits to be shifted (all ones)
     const SExpr::Ptr upper =
-        outputCast(outputExpression(SymbolicExpr::makeIntegerConstant(Sawyer::Container::BitVector(expr->nBits(), true))),
+        outputCast(outputExpression(SymbolicExpression::makeIntegerConstant(Sawyer::Container::BitVector(expr->nBits(), true))),
                    BIT_VECTOR).first;
 
     // Lower half of the bits to be shifted
@@ -1000,7 +1000,7 @@ SmtlibSolver::outputLogicalShiftRight1(const SymbolicExpr::InteriorPtr &inode) {
 
     // The shift amount zero extended to the same width as the shiftee (twice the width of the original expr)
     const SExpr::Ptr extended_sa =
-        outputCast(outputExpression(SymbolicExpr::makeExtend(SymbolicExpr::makeIntegerConstant(32, 2*expr->nBits()), sa)),
+        outputCast(outputExpression(SymbolicExpression::makeExtend(SymbolicExpression::makeIntegerConstant(32, 2*expr->nBits()), sa)),
                    BIT_VECTOR).first;
 
     // Shift the double-wide shiftee to the right using SMT-LIB's bvlshr operator that introduces zeros at the high end.
@@ -1021,17 +1021,17 @@ SmtlibSolver::outputLogicalShiftRight1(const SymbolicExpr::InteriorPtr &inode) {
 //
 // Where EXTENDED_AMOUNT is the AMOUNT zero extended to be the same width as EXPR.
 SmtSolver::SExprTypePair
-SmtlibSolver::outputShiftLeft0(const SymbolicExpr::InteriorPtr &inode) {
+SmtlibSolver::outputShiftLeft0(const SymbolicExpression::InteriorPtr &inode) {
     ASSERT_not_null(inode);
-    ASSERT_require(inode->getOperator() == SymbolicExpr::OP_SHL0);
+    ASSERT_require(inode->getOperator() == SymbolicExpression::OP_SHL0);
 
     // Original arguments
-    const SymbolicExpr::Ptr sa = inode->child(0);
-    const SymbolicExpr::Ptr expr = inode->child(1);
+    const SymbolicExpression::Ptr sa = inode->child(0);
+    const SymbolicExpression::Ptr expr = inode->child(1);
 
     // The shift amount extended to the same width as the thing to be shifted
     const SExpr::Ptr extended_sa =
-        outputCast(outputExpression(SymbolicExpr::makeExtend(SymbolicExpr::makeIntegerConstant(32, expr->nBits()), sa)),
+        outputCast(outputExpression(SymbolicExpression::makeExtend(SymbolicExpression::makeIntegerConstant(32, expr->nBits()), sa)),
                    BIT_VECTOR).first;
 
     // The thing to be shifted
@@ -1057,20 +1057,20 @@ SmtlibSolver::outputShiftLeft0(const SymbolicExpr::InteriorPtr &inode) {
 // high-order half. Then we shift left, introducing zeros (it doesn't matter that they're zeros, but that's all SMT-LIB can
 // do), and then we return the upper half of the bits which are the original EXPR bits and some of the ONES bits.
 SmtSolver::SExprTypePair
-SmtlibSolver::outputShiftLeft1(const SymbolicExpr::InteriorPtr &inode) {
+SmtlibSolver::outputShiftLeft1(const SymbolicExpression::InteriorPtr &inode) {
     ASSERT_not_null(inode);
-    ASSERT_require(inode->getOperator() == SymbolicExpr::OP_SHL1);
+    ASSERT_require(inode->getOperator() == SymbolicExpression::OP_SHL1);
 
     // Original arguments
-    const SymbolicExpr::Ptr sa = inode->child(0);
-    const SymbolicExpr::Ptr expr = inode->child(1);
+    const SymbolicExpression::Ptr sa = inode->child(0);
+    const SymbolicExpression::Ptr expr = inode->child(1);
 
     // Upper half of the bits to be shifted
     const SExpr::Ptr upper = outputCast(outputExpression(expr), BIT_VECTOR).first;
 
     // Lower half of the bits to be shifted are all set
     const SExpr::Ptr lower =
-        outputCast(outputExpression(SymbolicExpr::makeIntegerConstant(Sawyer::Container::BitVector(expr->nBits(), true))),
+        outputCast(outputExpression(SymbolicExpression::makeIntegerConstant(Sawyer::Container::BitVector(expr->nBits(), true))),
                    BIT_VECTOR).first;
 
     // The thing to be shifted, twice as wide as the original ROSE argument, consisting of the original ROSE argument in the
@@ -1080,7 +1080,7 @@ SmtlibSolver::outputShiftLeft1(const SymbolicExpr::InteriorPtr &inode) {
     // The shift amount extended to the same width as the thing to be shifted since SMT-LIB requires that both arguments are
     // the same type.
     const SExpr::Ptr extended_sa =
-        outputCast(outputExpression(SymbolicExpr::makeExtend(SymbolicExpr::makeIntegerConstant(32, 2*expr->nBits()), sa)),
+        outputCast(outputExpression(SymbolicExpression::makeExtend(SymbolicExpression::makeIntegerConstant(32, 2*expr->nBits()), sa)),
                    BIT_VECTOR).first;
 
     // Shift the double-wide value to the left using SMT-LIB's bvshl operator that introduces zeros at the low end.
@@ -1109,13 +1109,13 @@ SmtlibSolver::outputShiftLeft1(const SymbolicExpr::InteriorPtr &inode) {
 // where "extended_amount" is the shift amount signe extended to the same width as 2 * expr.nBits.
 // where zeros is a constant containing all clear bits the same width as expr.
 SmtSolver::SExprTypePair
-SmtlibSolver::outputArithmeticShiftRight(const SymbolicExpr::InteriorPtr &inode) {
+SmtlibSolver::outputArithmeticShiftRight(const SymbolicExpression::InteriorPtr &inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() == 2);
-    SymbolicExpr::Ptr sa = inode->child(0);
-    SymbolicExpr::Ptr expr = inode->child(1);
+    SymbolicExpression::Ptr sa = inode->child(0);
+    SymbolicExpression::Ptr expr = inode->child(1);
     size_t width = expr->nBits();
-    sa = SymbolicExpr::makeExtend(SymbolicExpr::makeIntegerConstant(32, width), sa); //  widen same as expr
+    sa = SymbolicExpression::makeExtend(SymbolicExpression::makeIntegerConstant(32, width), sa); //  widen same as expr
 
     SExprTypePair shiftee = outputExpression(expr);
     ASSERT_require(BIT_VECTOR == shiftee.second);
@@ -1129,7 +1129,7 @@ SmtlibSolver::outputArithmeticShiftRight(const SymbolicExpr::InteriorPtr &inode)
                                         shiftee.first),
                         SExpr::instance("#b1"));
 
-    SExpr::Ptr zeros = outputExpression(SymbolicExpr::makeIntegerConstant(width, 0)).first;
+    SExpr::Ptr zeros = outputExpression(SymbolicExpression::makeIntegerConstant(width, 0)).first;
     SExpr::Ptr ones = SExpr::instance(SExpr::instance("bvnot"), zeros);
 
     SExpr::Ptr retval =
@@ -1150,11 +1150,11 @@ SmtlibSolver::outputArithmeticShiftRight(const SymbolicExpr::InteriorPtr &inode)
 // ROSE (zerop expr) => SMT-LIB (= expr zeros)
 // where "zeros" is a bit vector of all zeros the same size as "expr".
 SmtSolver::SExprTypePair
-SmtlibSolver::outputZerop(const SymbolicExpr::InteriorPtr &inode) {
+SmtlibSolver::outputZerop(const SymbolicExpression::InteriorPtr &inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() == 1);
 
-    SymbolicExpr::Ptr zeros = SymbolicExpr::makeIntegerConstant(inode->child(0)->nBits(), 0);
+    SymbolicExpression::Ptr zeros = SymbolicExpression::makeIntegerConstant(inode->child(0)->nBits(), 0);
 
     SExpr::Ptr retval =
         SExpr::instance(SExpr::instance("="),
@@ -1170,21 +1170,21 @@ SmtlibSolver::outputZerop(const SymbolicExpr::InteriorPtr &inode) {
 // where "a_extended" and "b_extended" are extended (signed or unsigned) to the width a.size+b.size before being
 // multiplied.
 SmtSolver::SExprTypePair
-SmtlibSolver::outputMultiply(const SymbolicExpr::InteriorPtr &inode) {
+SmtlibSolver::outputMultiply(const SymbolicExpression::InteriorPtr &inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() == 2);
-    SymbolicExpr::Ptr a = inode->child(0);
-    SymbolicExpr::Ptr b = inode->child(1);
-    SymbolicExpr::Ptr resultSize = SymbolicExpr::makeIntegerConstant(32, a->nBits() + b->nBits());
+    SymbolicExpression::Ptr a = inode->child(0);
+    SymbolicExpression::Ptr b = inode->child(1);
+    SymbolicExpression::Ptr resultSize = SymbolicExpression::makeIntegerConstant(32, a->nBits() + b->nBits());
 
-    SymbolicExpr::Ptr aExtended, bExtended;
-    if (inode->getOperator() == SymbolicExpr::OP_SMUL) {
-        aExtended = SymbolicExpr::makeSignExtend(resultSize, a);
-        bExtended = SymbolicExpr::makeSignExtend(resultSize, b);
+    SymbolicExpression::Ptr aExtended, bExtended;
+    if (inode->getOperator() == SymbolicExpression::OP_SMUL) {
+        aExtended = SymbolicExpression::makeSignExtend(resultSize, a);
+        bExtended = SymbolicExpression::makeSignExtend(resultSize, b);
     } else {
-        ASSERT_require(inode->getOperator() == SymbolicExpr::OP_UMUL);
-        aExtended = SymbolicExpr::makeExtend(resultSize, a);
-        bExtended = SymbolicExpr::makeExtend(resultSize, b);
+        ASSERT_require(inode->getOperator() == SymbolicExpression::OP_UMUL);
+        aExtended = SymbolicExpression::makeExtend(resultSize, a);
+        bExtended = SymbolicExpression::makeExtend(resultSize, b);
     }
 
     SExpr::Ptr retval =
@@ -1200,12 +1200,12 @@ SmtlibSolver::outputMultiply(const SymbolicExpr::InteriorPtr &inode) {
 //
 // where a_extended and b_extended are zero extended to have the width max(a.size,b.size).
 SmtSolver::SExprTypePair
-SmtlibSolver::outputDivide(const SymbolicExpr::InteriorPtr &inode, const std::string &operation) {
+SmtlibSolver::outputDivide(const SymbolicExpression::InteriorPtr &inode, const std::string &operation) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() == 2);
     size_t w = std::max(inode->child(0)->nBits(), inode->child(1)->nBits());
-    SymbolicExpr::Ptr aExtended = SymbolicExpr::makeExtend(SymbolicExpr::makeIntegerConstant(32, w), inode->child(0));
-    SymbolicExpr::Ptr bExtended = SymbolicExpr::makeExtend(SymbolicExpr::makeIntegerConstant(32, w), inode->child(1));
+    SymbolicExpression::Ptr aExtended = SymbolicExpression::makeExtend(SymbolicExpression::makeIntegerConstant(32, w), inode->child(0));
+    SymbolicExpression::Ptr bExtended = SymbolicExpression::makeExtend(SymbolicExpression::makeIntegerConstant(32, w), inode->child(1));
 
     SExpr::Ptr retval =
         SExpr::instance(SExpr::instance(SExpr::instance("_"),
@@ -1224,12 +1224,12 @@ SmtlibSolver::outputDivide(const SymbolicExpr::InteriorPtr &inode, const std::st
 //
 // where a_extended and b_extended are zero extended to have the width max(a.size,b.size).
 SmtSolver::SExprTypePair
-SmtlibSolver::outputModulo(const SymbolicExpr::InteriorPtr &inode, const std::string &operation) {
+SmtlibSolver::outputModulo(const SymbolicExpression::InteriorPtr &inode, const std::string &/*operation*/) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() == 2);
     size_t w = std::max(inode->child(0)->nBits(), inode->child(1)->nBits());
-    SymbolicExpr::Ptr aExtended = SymbolicExpr::makeExtend(SymbolicExpr::makeIntegerConstant(32, w), inode->child(0));
-    SymbolicExpr::Ptr bExtended = SymbolicExpr::makeExtend(SymbolicExpr::makeIntegerConstant(32, w), inode->child(1));
+    SymbolicExpression::Ptr aExtended = SymbolicExpression::makeExtend(SymbolicExpression::makeIntegerConstant(32, w), inode->child(0));
+    SymbolicExpression::Ptr bExtended = SymbolicExpression::makeExtend(SymbolicExpression::makeIntegerConstant(32, w), inode->child(1));
 
     SExpr::Ptr retval =
         SExpr::instance(SExpr::instance(SExpr::instance("_"),
@@ -1246,17 +1246,17 @@ SmtlibSolver::outputModulo(const SymbolicExpr::InteriorPtr &inode, const std::st
 // ROSE (rose-sign-compare-op a b) =>
 // SMT-LIB (...)
 SmtSolver::SExprTypePair
-SmtlibSolver::outputSignedCompare(const SymbolicExpr::InteriorPtr &inode) {
+SmtlibSolver::outputSignedCompare(const SymbolicExpression::InteriorPtr &inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() == 2);
     ASSERT_require(inode->child(0)->nBits() == inode->child(1)->nBits());
 
     std::string func;
     switch (inode->getOperator()) {
-        case SymbolicExpr::OP_SLT: func = "bvslt"; break;
-        case SymbolicExpr::OP_SLE: func = "bvsle"; break;
-        case SymbolicExpr::OP_SGT: func = "bvsgt"; break;
-        case SymbolicExpr::OP_SGE: func = "bvsge"; break;
+        case SymbolicExpression::OP_SLT: func = "bvslt"; break;
+        case SymbolicExpression::OP_SLE: func = "bvsle"; break;
+        case SymbolicExpression::OP_SGT: func = "bvsgt"; break;
+        case SymbolicExpression::OP_SGE: func = "bvsge"; break;
         default:
             ASSERT_not_reachable("unhandled signed comparison operation");
     }
@@ -1272,23 +1272,23 @@ SmtlibSolver::outputSignedCompare(const SymbolicExpr::InteriorPtr &inode) {
 // ROSE (rose-unsigned-compare-op a b) =>
 // SMT-LIB (...)
 SmtSolver::SExprTypePair
-SmtlibSolver::outputUnsignedCompare(const SymbolicExpr::InteriorPtr &inode) {
+SmtlibSolver::outputUnsignedCompare(const SymbolicExpression::InteriorPtr &inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() == 2);
     ASSERT_require(inode->child(0)->nBits() == inode->child(1)->nBits());
 
     std::string func;
     switch (inode->getOperator()) {
-        case SymbolicExpr::OP_ULT:
+        case SymbolicExpression::OP_ULT:
             func = "bvult";
             break;
-        case SymbolicExpr::OP_ULE:
+        case SymbolicExpression::OP_ULE:
             func = "bvule" + boost::lexical_cast<std::string>(inode->child(0)->nBits());
             break;
-        case SymbolicExpr::OP_UGT:
+        case SymbolicExpression::OP_UGT:
             func = "bvugt" + boost::lexical_cast<std::string>(inode->child(0)->nBits());
             break;
-        case SymbolicExpr::OP_UGE:
+        case SymbolicExpression::OP_UGE:
             func = "bvuge" + boost::lexical_cast<std::string>(inode->child(0)->nBits());
             break;
         default:
@@ -1306,7 +1306,7 @@ SmtlibSolver::outputUnsignedCompare(const SymbolicExpr::InteriorPtr &inode) {
 // ROSE (read mem addr) =>
 // SMT-LIB (select mem addr)
 SmtSolver::SExprTypePair
-SmtlibSolver::outputRead(const SymbolicExpr::InteriorPtr &inode) {
+SmtlibSolver::outputRead(const SymbolicExpression::InteriorPtr &inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() == 2);
     SExpr::Ptr retval =
@@ -1319,7 +1319,7 @@ SmtlibSolver::outputRead(const SymbolicExpr::InteriorPtr &inode) {
 // ROSE (write mem addr value) =>
 // SMT-LIB (store mem addr value)
 SmtSolver::SExprTypePair
-SmtlibSolver::outputWrite(const SymbolicExpr::InteriorPtr &inode) {
+SmtlibSolver::outputWrite(const SymbolicExpression::InteriorPtr &inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() == 3);
 
@@ -1376,7 +1376,7 @@ SmtlibSolver::parseEvidence() {
                     // Variable
                     std::string varName = elmt->children()[1]->name();
                     size_t varId = boost::lexical_cast<size_t>(varName.substr(1));
-                    SymbolicExpr::Ptr var = SymbolicExpr::makeIntegerVariable(nBits, varId);
+                    SymbolicExpression::Ptr var = SymbolicExpression::makeIntegerVariable(nBits, varId);
 
                     // Value
                     std::string valStr = elmt->children()[4]->name();
@@ -1389,7 +1389,7 @@ SmtlibSolver::parseEvidence() {
                     } else {
                         ASSERT_not_reachable("unknown bit vector literal \"" + StringUtility::cEscape(valStr) + "\"");
                     }
-                    SymbolicExpr::Ptr val = SymbolicExpr::makeIntegerConstant(bits);
+                    SymbolicExpression::Ptr val = SymbolicExpression::makeIntegerConstant(bits);
 
                     SAWYER_MESG(mlog[DEBUG]) <<"evidence: " <<*var <<" == " <<*val <<"\n";
                     evidence_.insert(var, val);

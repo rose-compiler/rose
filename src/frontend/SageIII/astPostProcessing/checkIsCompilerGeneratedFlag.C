@@ -23,7 +23,7 @@ checkIsCompilerGeneratedFlag(SgNode *ast)
         }
 
         // Mark node as compiler generated and emit a warning if it wasn't already so marked.
-        void fix(SgNode *node, Sg_File_Info *finfo) {
+        void fix(SgNode */*node*/, Sg_File_Info *finfo) {
             if (finfo && finfo->isFrontendSpecific() && !finfo->isCompilerGenerated()) {
 #if 0
 #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION

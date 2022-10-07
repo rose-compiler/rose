@@ -7,8 +7,7 @@
 #include <iostream>
 
 int
-main(int argc, char *argv[])
-{
+main(int /*argc*/, char *argv[]) {
     size_t nchecked=0, nerrors=0;
     
     // What version of boost headers was I compiled with?

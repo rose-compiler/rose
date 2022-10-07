@@ -1,6 +1,6 @@
 /* unparser.h
  * This header file contains the class declaration for the newest unparser. Six
- * C files include this header file: unparser.C, modified_sage.C, unparse_stmt.C, 
+ * C files include this header file: unparser.C, modified_sage.C, unparse_stmt.C,
  * unparse_expr.C, unparse_type.C, and unparse_sym.C.
  */
 
@@ -35,7 +35,7 @@ class Unparser;
 // default was 10, but that is too small for float, double, and long double
 // (use of 10 also generated a purify error for case of double)
 // Size of buffer used to generation of strings from number values,
-// it is larger than what we need to display because the values can 
+// it is larger than what we need to display because the values can
 // be arbitrarily large (up to the size of MAX_DOUBLE)
 // #define MAX_DIGITS 128
 #define MAX_DIGITS 512
@@ -45,17 +45,17 @@ class Unparser;
 // (if it were to be then it is regenerated in exponential notation).
 #define MAX_DIGITS_DISPLAY 32
 
-// DQ (3/16/2006): Added comments.  
+// DQ (3/16/2006): Added comments.
 // These control how indentation and newlines are added in the
 // pre and post processing of each statement.
 typedef enum Format_Opt
    {
-     FORMAT_BEFORE_DIRECTIVE, 
+     FORMAT_BEFORE_DIRECTIVE,
      FORMAT_AFTER_DIRECTIVE,
-     FORMAT_BEFORE_STMT, 
-     FORMAT_AFTER_STMT, 
+     FORMAT_BEFORE_STMT,
+     FORMAT_AFTER_STMT,
      FORMAT_BEFORE_BASIC_BLOCK1,
-     FORMAT_AFTER_BASIC_BLOCK1, 
+     FORMAT_AFTER_BASIC_BLOCK1,
      FORMAT_BEFORE_BASIC_BLOCK2,
      FORMAT_AFTER_BASIC_BLOCK2,
      FORMAT_BEFORE_NESTED_STATEMENT,
@@ -63,13 +63,14 @@ typedef enum Format_Opt
    } FormatOpt;
 
 #include "unparseFormatHelp.h"
-class UnparseFormat 
+class UnparseFormat
    {
      int currentLine;   //! stores current line number being unparsed
      int currentIndent; //! indent of the current line
      int chars_on_line; //! the number of characters printed on the line
      int stmtIndent;    //! the current indent for statement
      int linewrap;      //! the characters allowed perline before wraping the line
+     int userDefinedLinewrap; //! user defined line wrap; used to restore linewrap when needed.
      int indentstop;    //! the number of spaces allowed for indenting
      SgLocatedNode* prevnode; //! The previous SgLocatedNode unparsed
      std::ostream* os;  //! the directed output for the current file
@@ -81,7 +82,7 @@ class UnparseFormat
  //! make the output nicer
      void removeTrailingZeros ( char* inputString );
 
-     bool formatHelp(SgLocatedNode*, SgUnparse_Info& info, FormatOpt opt = FORMAT_BEFORE_STMT); 
+     bool formatHelp(SgLocatedNode*, SgUnparse_Info& info, FormatOpt opt = FORMAT_BEFORE_STMT);
 
      public:
 
@@ -109,7 +110,7 @@ class UnparseFormat
        // DQ (2/16/2004): Make this part of the public interface (to control old-style K&R C function definitions)
           void insert_newline(int i = 1, int indent = -1);
 
-       // DQ (12/10/2014): Reset the chars_on_line to zero, used in token based unparsing to reset the 
+       // DQ (12/10/2014): Reset the chars_on_line to zero, used in token based unparsing to reset the
        // formatting for AST subtrees unparsed using the AST in conjunction with the token based unparsing.
           void reset_chars_on_line();
 
@@ -134,8 +135,8 @@ class UnparseFormat
           void set_linewrap( int w);// { linewrap = w; } // no wrapping if linewrap <= 0
           int get_linewrap() const;// { return linewrap; }
 
-          void set_indentstop( int s) { indentstop = s; } 
-          int get_indentstop() const { return indentstop; } 
+          void set_indentstop( int s) { indentstop = s; }
+          int get_indentstop() const { return indentstop; }
 
        // DQ (3/18/2006): Added to support presentation and debugging of formatting
           std::string formatOptionToString(FormatOpt opt);

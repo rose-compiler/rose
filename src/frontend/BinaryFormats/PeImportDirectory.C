@@ -8,7 +8,9 @@
 
 // In order to efficiently (in terms of amount of code) parse a file format that's defined for a different architecture, we
 // need to occassionally take addresses of structs that don't follow alignment rules for this architecture.
+#if defined(__GNUC__) && __GNUC__ >= 9
 #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
+#endif
 
 using namespace Rose;
 using namespace Rose::Diagnostics;
@@ -68,7 +70,7 @@ SgAsmPEImportDirectory::hintname_table_extent(AddressIntervalSet &extent/*in,out
 }
 
 SgAsmPEImportDirectory *
-SgAsmPEImportDirectory::parse(rose_addr_t idir_va, bool isLastEntry)
+SgAsmPEImportDirectory::parse(rose_addr_t idir_va, bool /*isLastEntry*/)
 {
     SgAsmPEFileHeader *fhdr = SageInterface::getEnclosingNode<SgAsmPEFileHeader>(this);
     ROSE_ASSERT(fhdr!=nullptr);

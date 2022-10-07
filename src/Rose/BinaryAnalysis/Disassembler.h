@@ -27,7 +27,7 @@ namespace BinaryAnalysis {
  *
  *  A new instruction set architecture (ISA) can be added to ROSE without modifying the ROSE source code. One does this by
  *  deriving a new decoder class from the @ref Disassembler::Base class and registering an instance of the class with @ref
- *  Disassembler::registerSubclass. The new class has a @ref Disassembler::Base::canDisassemble "canDisassemble" predicate that
+ *  Disassembler::registerFactory. The new class has a @ref Disassembler::Base::canDisassemble "canDisassemble" predicate that
  *  examines a file header (such as an ELF Header or PE Header) to see if the decoder is appropriate. Decoders can
  *  also be looked up by their names. Once the correct decoder is found, its @ref Disassembler::Base::clone "clone" method is
  *  called to create a copy that's used for the actual decoding. */

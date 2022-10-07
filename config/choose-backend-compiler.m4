@@ -130,23 +130,6 @@ AC_MSG_NOTICE([testing value of FC = "$FC"])
       AC_MSG_NOTICE([default back-end jovial compiler for generated translators to use: "$BACKEND_JOVIAL_COMPILER"])
     ])
 
-# DQ (29/8/2017): Added option to specify backend Cobol compiler
-  AC_ARG_WITH(alternate_backend_cobol_compiler,
-    [  --with-alternate_backend_cobol_compiler=<compiler name>
-                                Specify an alternative cobol back-end compiler],
-    [
-    # Use a different compiler for the backend than for the compilation of ROSE source code
-      BACKEND_COBOL_COMPILER=$with_alternate_backend_cobol_compiler
-      AC_SUBST(BACKEND_COBOL_COMPILER)
-      AC_MSG_NOTICE([alternative back-end cobol compiler specified for generated translators to use: "$BACKEND_COBOL_COMPILER"])
-    ] ,
-    [ 
-    # Alternatively use the specified GNU Cobol compiler
-    # Rasmussen (10/30/2017): Changed name of GNU Cobol compiler to cobc
-           BACKEND_COBOL_COMPILER="cobc"
-      AC_MSG_NOTICE([default back-end cobol compiler for generated translators to use: "$BACKEND_COBOL_COMPILER"])
-    ])
-
 # Rasmussen (10/30/2017): Added option to specify backend MATLAB compiler
   AC_ARG_WITH(alternate_backend_matlab_compiler,
     [  --with-alternate_backend_matlab_compiler=<compiler name>
@@ -996,10 +979,6 @@ AC_MSG_NOTICE([testing value of FC = "$FC"])
   export BACKEND_JOVIAL_COMPILER
   AC_DEFINE_UNQUOTED([BACKEND_JOVIAL_COMPILER_NAME_WITH_PATH],"$BACKEND_JOVIAL_COMPILER",[Name of backend Jovial compiler including path (may or may not explicit include path; used to call backend).])
 
-# DQ (29/8/2017): Adding more general language support.
-  export BACKEND_COBOL_COMPILER
-  AC_DEFINE_UNQUOTED([BACKEND_COBOL_COMPILER_NAME_WITH_PATH],"$BACKEND_COBOL_COMPILER",[Name of backend Cobol compiler including path (may or may not explicit include path; used to call backend).])
-
 # DQ (30/8/2017): Testing the new language support.
   AC_MSG_NOTICE([BACKEND_CXX_COMPILER     = "$BACKEND_CXX_COMPILER"])
   AC_MSG_NOTICE([BACKEND_C_COMPILER       = "$BACKEND_C_COMPILER"])
@@ -1008,7 +987,6 @@ AC_MSG_NOTICE([testing value of FC = "$FC"])
   AC_MSG_NOTICE([BACKEND_CSHARP_COMPILER  = "$BACKEND_CSHARP_COMPILER"])
   AC_MSG_NOTICE([BACKEND_ADA_COMPILER     = "$BACKEND_ADA_COMPILER"])
   AC_MSG_NOTICE([BACKEND_JOVIAL_COMPILER  = "$BACKEND_JOVIAL_COMPILER"])
-  AC_MSG_NOTICE([BACKEND_COBOL_COMPILER   = "$BACKEND_COBOL_COMPILER"])
 
 # These are useful in handling differences between different versions of the backend compiler
 # we assume that the C and C++ compiler version number match and only record version information 

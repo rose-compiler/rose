@@ -1,0 +1,37 @@
+.toggle .label {
+  display: block;
+  clear: both;
+}
+
+.toggle .label:before {
+  font-family: FontAwesome;
+  content: "\f196  ";
+  color: #b3b3b3;
+}
+
+.toggle .label.expanded:hover:before {
+  color: #d9d9d9;
+}
+
+.toggle .label.expanded:before {
+  font-family: FontAwesome;
+  content: "\f147  ";
+  color: #b3b3b3;
+}
+
+.toggle .label:hover:before {
+  color: #d9d9d9;
+}
+
+.linebreak {
+  opacity: 0.0;
+}
+
+/* Sidebar header (and topbar for mobile) */
+.wy-side-nav-search, .wy-nav-top {
+  background: #343131;
+}
+
+a img.logo {
+  transform: scale(.75)
+}

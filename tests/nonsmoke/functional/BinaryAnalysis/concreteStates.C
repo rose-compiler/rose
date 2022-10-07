@@ -28,7 +28,7 @@ dumpMemory(std::ostream &out, const MemoryMap::Ptr &memory) {
     }
 }
 
-int main(int argc, char *argv[]) {
+int main() {
     ROSE_INITIALIZE;
 
     // Disassemble a small example specimen

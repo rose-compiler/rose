@@ -119,8 +119,13 @@ SgAsmPEExportEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
-    fprintf(f, "%s%-*s = [ord %u] rva=%s \"%s\"", p, w, "info",
-            p_ordinal, p_export_rva.to_string().c_str(), p_name->get_string(true).c_str());
+    fprintf(f, "%s%-*s = [ordinal raw=%u", p, w, "info", p_ordinal);
+    if (auto ordinal = biasedOrdinal()) {
+        fprintf(f, ", index=%u]", *ordinal);
+    } else {
+        fprintf(f, ", biased=%s]", ordinal.unwrapError().c_str());
+    }
+    fprintf(f, " rva=%s \"%s\"", p_export_rva.to_string().c_str(), p_name->get_string(true).c_str());
     if (p_forwarder)
         fprintf(f, " -> \"%s\"", p_forwarder->get_string(true).c_str());
     fputc('\n', f);
@@ -146,9 +151,8 @@ SgAsmPEExportEntry::set_forwarder(SgAsmGenericString *forwarder)
 
 /* Constructor */
 void
-SgAsmPEExportSection::ctor()
-{
-    ROSE_ASSERT(p_exports  == NULL);
+SgAsmPEExportSection::ctor() {
+    ASSERT_forbid(p_exports);
     p_exports = new SgAsmPEExportEntryList();
     p_exports->set_parent(this);
 }
@@ -221,7 +225,7 @@ SgAsmPEExportSection::parse()
         }
         SgAsmGenericString *fname = new SgAsmBasicString(s);
 
-        /* Ordinal (sort of an index into the Export Address Table) */
+        /* Ordinal (an index into the Export Address Table) */
         ExportOrdinal_disk ordinal_disk = 0;
         rose_addr_t ordinal_va = p_export_dir->get_ordinals_rva().get_va() + i*sizeof(ordinal_disk);
         bool badOrdinalVa = false;
@@ -240,7 +244,7 @@ SgAsmPEExportSection::parse()
             }
             ordinal_disk = 0;
         }
-        unsigned ordinal = ByteOrder::le_to_host(ordinal_disk);
+        const unsigned ordinal = ByteOrder::le_to_host(ordinal_disk);
 
         /* If the function name pointer and ordinal pointer are both in unmapped memory then give up. */
         if (badFunctionNameVa && badOrdinalVa) {
@@ -249,33 +253,25 @@ SgAsmPEExportSection::parse()
             break;
         }
 
-        /* Export address. Convert the symbol's Ordinal into an index into the Export Address Table. The spec says to subtract
-         * the ord_base from the Ordinal to get the index, but testing has shown this to be off by one (e.g., Windows-XP file
-         * /WINDOWS/system32/msacm32.dll's Export Table's first symbol has the name "XRegThunkEntry" with an Ordinal of zero
-         * and the ord_base is one. The index according to spec would be -1 rather than the correct value of zero.) */
-        rose_rva_t expaddr = 0;
-        unsigned expaddr_idx = 0;
-        if (ordinal >= (p_export_dir->get_ord_base()-1) &&
-            (expaddr_idx = ordinal - (p_export_dir->get_ord_base()-1)) < p_export_dir->get_expaddr_n()) {
-            ExportAddress_disk expaddr_disk = 0;
-            rose_addr_t expaddr_va = p_export_dir->get_expaddr_rva().get_va() + expaddr_idx*sizeof(expaddr_disk);
-            try {
-                read_content(fhdr->get_loader_map(), expaddr_va, &expaddr_disk, sizeof expaddr_disk);
-            } catch (const MemoryMap::NotMapped &e) {
-                if (mlog[ERROR]) {
-                    mlog[ERROR] <<"SgAsmPEExportSection::parse: export address #" <<i
-                                <<" at va " <<StringUtility::addrToString(expaddr_va)
-                                <<" contains unmapped va " <<StringUtility::addrToString(e.va) <<"\n";
-                    if (e.map) {
-                        mlog[ERROR] <<"Memory map in effect at time of error:\n";
-                        e.map->dump(mlog[ERROR], "    ");
-                    }
-                }
-            }
+        // Read the address from the Export Address Table. This table is indexed by ordinal.
+        rose_rva_t expaddr = 0;                         // export address
+        const rose_addr_t expaddr_va = p_export_dir->get_expaddr_rva().get_va() + ordinal * sizeof(ExportAddress_disk);
+        try {
+            ExportAddress_disk expaddr_disk;
+            read_content(fhdr->get_loader_map(), expaddr_va, &expaddr_disk, sizeof expaddr_disk);
             expaddr = ByteOrder::le_to_host(expaddr_disk);
             expaddr.bind(fhdr);
-        } else {
-            expaddr = 0xffffffff; /*Ordinal out of range!*/
+        } catch (const MemoryMap::NotMapped &e) {
+            if (mlog[ERROR]) {
+                mlog[ERROR] <<"SgAsmPEExportSection::parse: export address #" <<i
+                            <<" at va " <<StringUtility::addrToString(expaddr_va)
+                            <<" contains unmapped va " <<StringUtility::addrToString(e.va) <<"\n";
+                if (e.map) {
+                    mlog[ERROR] <<"Memory map in effect at time of error:\n";
+                    e.map->dump(mlog[ERROR], "    ");
+                }
+            }
+            expaddr = 0xffffffff;                       // ordinal out of range
         }
 
         /* If export address is within this section then it points to a NUL-terminated forwarder name.
@@ -306,11 +302,15 @@ SgAsmPEExportSection::parse()
 }
 
 void
-SgAsmPEExportSection::add_entry(SgAsmPEExportEntry *entry)
-{
-    ROSE_ASSERT(p_exports!=NULL);
+SgAsmPEExportSection::add_entry(SgAsmPEExportEntry *entry) {
+    ASSERT_not_null(entry);
+    ASSERT_forbid2(entry->get_parent(), "already linked into AST; remove it first");
+    ASSERT_not_null(p_exports);
+    ASSERT_require(p_exports->get_parent() == this);
+
     p_exports->set_isModified(true);
     p_exports->get_exports().push_back(entry);
+    entry->set_parent(p_exports);
 }
 
 /* Print debugging info */

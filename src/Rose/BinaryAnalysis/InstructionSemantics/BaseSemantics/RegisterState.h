@@ -29,7 +29,7 @@ namespace BaseSemantics {
  *  Rose::BinaryAnalysis::InstructionSemantics namespace for an overview of how the parts fit together.*/
 class RegisterState: public boost::enable_shared_from_this<RegisterState> {
 public:
-    /** Shared-ownership pointer for a @ref RegisterState object. See @ref heap_object_shared_ownership. */
+    /** Shared-ownership pointer. */
     using Ptr = RegisterStatePtr;
 
 private:
@@ -84,10 +84,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Dynamic pointer casts. No-op since this is the base class.
 public:
-    static RegisterStatePtr promote(const RegisterStatePtr &x) {
-        ASSERT_not_null(x);
-        return x;
-    }
+    static RegisterStatePtr promote(const RegisterStatePtr&);
 
 public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -125,9 +122,9 @@ public:
      *  instance RegisterStateGeneric, which uses variable length arrays to store information about a dynamically changing set
      *  of registers, clears its arrays to zero length.
      *
-     *  Register states can also be initialized by clearing them or by explicitly writing new values into each desired
-     *  register (or both). See @ref RegisterStateGeneric::initialize_nonoverlapping for one way to initialize that register
-     *  state. */
+     *  Register states can also be initialized by clearing them or by explicitly writing new values into each desired register
+     *  (or both). See @ref BaseSemantics::RegisterStateGeneric::initialize_nonoverlapping for one way to initialize that
+     *  register state. */
     virtual void clear() = 0;
 
     /** Set all registers to the zero. */

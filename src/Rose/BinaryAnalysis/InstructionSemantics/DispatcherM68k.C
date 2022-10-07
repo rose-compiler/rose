@@ -6,7 +6,7 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 #include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherM68k.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/Util.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/Utility.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include "integerOps.h"
 #include "stringify.h"
@@ -61,9 +61,9 @@ public:
 };
 
 struct IP_abcd: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
@@ -554,58 +554,58 @@ struct IP_bclr: P {
 };
 
 struct IP_bfchg: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 3);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_bfclr: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 3);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_bfexts: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 4);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_bfextu: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 4);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_bfins: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 4);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_bfset: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 3);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_bftst: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 3);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_bkpt: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
@@ -647,9 +647,9 @@ struct IP_btst: P {
 };
 
 struct IP_callm: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
@@ -689,23 +689,23 @@ struct IP_cas: P {
 };
 
 struct IP_cas2: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 6);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_chk: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_chk2: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
@@ -851,142 +851,142 @@ struct IP_cmpm: P {
 };
 
 struct IP_cmp2: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_cpushl: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_cpushp: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_cpusha: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_dbt: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_dbf: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_dbhi: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_dbls: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_dbcc: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_dbcs: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_dbne: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_dbeq: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_dbvc: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_dbvs: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_dbpl: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_dbmi: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_dbge: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_dblt: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_dbgt: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_dble: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
@@ -1193,9 +1193,9 @@ struct IP_eori: P {
 };
 
 struct IP_exg: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
@@ -1233,30 +1233,30 @@ struct IP_extb: P {
 };
 
 struct IP_fabs: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_fsabs: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_fdabs: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_fadd: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
@@ -1627,93 +1627,93 @@ struct IP_fbogl: P {
 };
 
 struct IP_fbueq: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_fbor: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_fbun: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_fbf: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_fbt: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_fbsf: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_fbst: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_fbseq: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_fbsne: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_fdiv: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_fsdiv: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_fddiv: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_fint: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
@@ -1808,16 +1808,16 @@ struct IP_fp_move: P {
 };
 
 struct IP_fmovem: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_fmul: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
@@ -1875,58 +1875,58 @@ struct IP_fp_mul: P {
 };
 
 struct IP_fneg: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_fsneg: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_fdneg: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_fnop: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_fsqrt: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_fssqrt: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_fdsqrt: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_fsub: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
@@ -1983,16 +1983,16 @@ struct IP_fp_sub: P {
 };
 
 struct IP_ftst: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_illegal: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 0);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
@@ -2018,7 +2018,7 @@ struct IP_jsr: P {
 };
 
 struct IP_lea: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D d, Ops, I insn, A args) {
         assert_args(insn, args, 2);
         ASSERT_require(args[0]->get_nBits()==32);
         ASSERT_require(args[0]->get_nBits()==args[1]->get_nBits());
@@ -2266,9 +2266,9 @@ struct IP_mov3q: P {
 };
 
 struct IP_movclr: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
@@ -2292,16 +2292,16 @@ struct IP_move: P {
 };
 
 struct IP_move_acc: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_move_accext: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
@@ -2328,22 +2328,22 @@ struct IP_move_ccr: P {
 };
 
 struct IP_move_macsr: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_move_mask: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 // same as IP_move, but does not update CCR
 struct IP_move_no_ccr: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D d, Ops, I insn, A args) {
         assert_args(insn, args, 2);
         ASSERT_require(args[0]->get_nBits()==args[1]->get_nBits());
         size_t nBits = args[0]->get_nBits();
@@ -2357,9 +2357,9 @@ struct IP_move_no_ccr: P {
 };
 
 struct IP_move16: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
@@ -2468,9 +2468,9 @@ struct IP_movem: P {
 };
 
 struct IP_movep: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
@@ -2490,9 +2490,9 @@ struct IP_moveq: P {
 };
 
 struct IP_msac: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 4);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
@@ -2647,9 +2647,9 @@ struct IP_mvz: P {
 };
 
 struct IP_nbcd: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
@@ -2708,7 +2708,7 @@ struct IP_negx: P {
 };
 
 struct IP_nop: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 0);
     }
 };
@@ -2769,9 +2769,9 @@ struct IP_ori: P {
 };
 
 struct IP_pack: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 3);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
@@ -2791,65 +2791,65 @@ struct IP_pea: P {
 };
 
 struct IP_rems: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_remu: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_rol: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_ror: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_roxl: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_roxr: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_rtd: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_rtm: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
 struct IP_rtr: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 0);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
@@ -2865,9 +2865,9 @@ struct IP_rts: P {
 };
 
 struct IP_sbcd: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 2);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
@@ -3223,9 +3223,9 @@ struct IP_swap: P {
 };
 
 struct IP_tas: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
@@ -3260,18 +3260,18 @@ struct IP_trap: P {
 };
 
 struct IP_trapt: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         if (args.empty()) {
-            throw BaseSemantics::Exception("semantics not implemented", insn);
+            throw BaseSemantics::NotImplemented("semantics not implemented", insn);
         } else {
             assert_args(insn, args, 1);
-            throw BaseSemantics::Exception("semantics not implemented", insn);
+            throw BaseSemantics::NotImplemented("semantics not implemented", insn);
         }
     }
 };
 
 struct IP_trapf: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         if (args.empty()) {
             assert_args(insn, args, 0);
         } else {
@@ -3281,163 +3281,163 @@ struct IP_trapf: P {
 };
 
 struct IP_traphi: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         if (args.empty()) {
-            throw BaseSemantics::Exception("semantics not implemented", insn);
+            throw BaseSemantics::NotImplemented("semantics not implemented", insn);
         } else {
             assert_args(insn, args, 1);
-            throw BaseSemantics::Exception("semantics not implemented", insn);
+            throw BaseSemantics::NotImplemented("semantics not implemented", insn);
         }
     }
 };
 
 struct IP_trapls: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         if (args.empty()) {
-            throw BaseSemantics::Exception("semantics not implemented", insn);
+            throw BaseSemantics::NotImplemented("semantics not implemented", insn);
         } else {
             assert_args(insn, args, 1);
-            throw BaseSemantics::Exception("semantics not implemented", insn);
+            throw BaseSemantics::NotImplemented("semantics not implemented", insn);
         }
     }
 };
 
 struct IP_trapcc: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         if (args.empty()) {
-            throw BaseSemantics::Exception("semantics not implemented", insn);
+            throw BaseSemantics::NotImplemented("semantics not implemented", insn);
         } else {
             assert_args(insn, args, 1);
-            throw BaseSemantics::Exception("semantics not implemented", insn);
+            throw BaseSemantics::NotImplemented("semantics not implemented", insn);
         }
     }
 };
 
 struct IP_trapcs: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         if (args.empty()) {
-            throw BaseSemantics::Exception("semantics not implemented", insn);
+            throw BaseSemantics::NotImplemented("semantics not implemented", insn);
         } else {
             assert_args(insn, args, 1);
-            throw BaseSemantics::Exception("semantics not implemented", insn);
+            throw BaseSemantics::NotImplemented("semantics not implemented", insn);
         }
     }
 };
 
 struct IP_trapne: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         if (args.empty()) {
-            throw BaseSemantics::Exception("semantics not implemented", insn);
+            throw BaseSemantics::NotImplemented("semantics not implemented", insn);
         } else {
             assert_args(insn, args, 1);
-            throw BaseSemantics::Exception("semantics not implemented", insn);
+            throw BaseSemantics::NotImplemented("semantics not implemented", insn);
         }
     }
 };
 
 struct IP_trapeq: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         if (args.empty()) {
-            throw BaseSemantics::Exception("semantics not implemented", insn);
+            throw BaseSemantics::NotImplemented("semantics not implemented", insn);
         } else {
             assert_args(insn, args, 1);
-            throw BaseSemantics::Exception("semantics not implemented", insn);
+            throw BaseSemantics::NotImplemented("semantics not implemented", insn);
         }
     }
 };
 
 struct IP_trapvc: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         if (args.empty()) {
-            throw BaseSemantics::Exception("semantics not implemented", insn);
+            throw BaseSemantics::NotImplemented("semantics not implemented", insn);
         } else {
             assert_args(insn, args, 1);
-            throw BaseSemantics::Exception("semantics not implemented", insn);
+            throw BaseSemantics::NotImplemented("semantics not implemented", insn);
         }
     }
 };
 
 struct IP_trapvs: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         if (args.empty()) {
-            throw BaseSemantics::Exception("semantics not implemented", insn);
+            throw BaseSemantics::NotImplemented("semantics not implemented", insn);
         } else {
             assert_args(insn, args, 1);
-            throw BaseSemantics::Exception("semantics not implemented", insn);
+            throw BaseSemantics::NotImplemented("semantics not implemented", insn);
         }
     }
 };
 
 struct IP_trappl: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         if (args.empty()) {
-            throw BaseSemantics::Exception("semantics not implemented", insn);
+            throw BaseSemantics::NotImplemented("semantics not implemented", insn);
         } else {
             assert_args(insn, args, 1);
-            throw BaseSemantics::Exception("semantics not implemented", insn);
+            throw BaseSemantics::NotImplemented("semantics not implemented", insn);
         }
     }
 };
 
 struct IP_trapmi: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         if (args.empty()) {
-            throw BaseSemantics::Exception("semantics not implemented", insn);
+            throw BaseSemantics::NotImplemented("semantics not implemented", insn);
         } else {
             assert_args(insn, args, 1);
-            throw BaseSemantics::Exception("semantics not implemented", insn);
+            throw BaseSemantics::NotImplemented("semantics not implemented", insn);
         }
     }
 };
 
 struct IP_trapge: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         if (args.empty()) {
-            throw BaseSemantics::Exception("semantics not implemented", insn);
+            throw BaseSemantics::NotImplemented("semantics not implemented", insn);
         } else {
             assert_args(insn, args, 1);
-            throw BaseSemantics::Exception("semantics not implemented", insn);
+            throw BaseSemantics::NotImplemented("semantics not implemented", insn);
         }
     }
 };
 
 struct IP_traplt: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         if (args.empty()) {
-            throw BaseSemantics::Exception("semantics not implemented", insn);
+            throw BaseSemantics::NotImplemented("semantics not implemented", insn);
         } else {
             assert_args(insn, args, 1);
-            throw BaseSemantics::Exception("semantics not implemented", insn);
+            throw BaseSemantics::NotImplemented("semantics not implemented", insn);
         }
     }
 };
 
 struct IP_trapgt: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         if (args.empty()) {
-            throw BaseSemantics::Exception("semantics not implemented", insn);
+            throw BaseSemantics::NotImplemented("semantics not implemented", insn);
         } else {
             assert_args(insn, args, 1);
-            throw BaseSemantics::Exception("semantics not implemented", insn);
+            throw BaseSemantics::NotImplemented("semantics not implemented", insn);
         }
     }
 };
 
 struct IP_traple: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         if (args.empty()) {
-            throw BaseSemantics::Exception("semantics not implemented", insn);
+            throw BaseSemantics::NotImplemented("semantics not implemented", insn);
         } else {
             assert_args(insn, args, 1);
-            throw BaseSemantics::Exception("semantics not implemented", insn);
+            throw BaseSemantics::NotImplemented("semantics not implemented", insn);
         }
     }
 };
 
 struct IP_trapv: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 0);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 
@@ -3469,9 +3469,9 @@ struct IP_unlk: P {
 };
 
 struct IP_unpk: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         assert_args(insn, args, 3);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        throw BaseSemantics::NotImplemented("semantics not implemented", insn);
     }
 };
 

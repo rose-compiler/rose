@@ -417,7 +417,7 @@ typedef P2::Semantics::State State;
 typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
 class RiscOperators: public P2::Semantics::RiscOperators {
-    SymbolicExpr::Ptr base_;                            // value to subtract from each address to find stack variable offsets
+    SymbolicExpression::Ptr base_;                      // value to subtract from each address to find stack variable offsets
     StackVariable::Boundaries &boundaries_;             // variable boundaries in the stack frame
 
 public:
@@ -454,12 +454,12 @@ public:
 
 public:
     virtual S2::BaseSemantics::RiscOperators::Ptr
-    create(const S2::BaseSemantics::SValue::Ptr &protoval, const SmtSolverPtr &solver = SmtSolverPtr()) const override {
+    create(const S2::BaseSemantics::SValue::Ptr &/*protoval*/, const SmtSolverPtr& = SmtSolverPtr()) const override {
         ASSERT_not_implemented("[Robb Matzke 2019-09-16]");
     }
 
     virtual S2::BaseSemantics::RiscOperators::Ptr
-    create(const S2::BaseSemantics::State::Ptr &state, const SmtSolverPtr &solver = SmtSolverPtr()) const override {
+    create(const S2::BaseSemantics::State::Ptr&, const SmtSolverPtr& = SmtSolverPtr()) const override {
         ASSERT_not_implemented("[Robb Matzke 2019-09-16]");
     }
 
@@ -498,29 +498,29 @@ public:
 private:
     void lookForVariable(const S2::BaseSemantics::SValue::Ptr &addrSVal) {
         ASSERT_not_null(base_);
-        SymbolicExpr::Ptr addr = SValue::promote(addrSVal)->get_expression();
+        SymbolicExpression::Ptr addr = SValue::promote(addrSVal)->get_expression();
         Sawyer::Message::Stream debug(mlog[DEBUG]);
 
         // The address must reference the stack or frame pointer
-        struct Finder: SymbolicExpr::Visitor {
-            SymbolicExpr::Ptr needle;                   // thing to find
-            SymbolicExpr::Ptr found;                    // first matching expression in haystack
-            std::set<SymbolicExpr::Hash> seen;          // subexpressions we've already checked
+        struct Finder: SymbolicExpression::Visitor {
+            SymbolicExpression::Ptr needle;                   // thing to find
+            SymbolicExpression::Ptr found;                    // first matching expression in haystack
+            std::set<SymbolicExpression::Hash> seen;          // subexpressions we've already checked
 
-            Finder(const SymbolicExpr::Ptr needle)
+            Finder(const SymbolicExpression::Ptr needle)
                 : needle(needle) {}
 
-            SymbolicExpr::VisitAction preVisit(const SymbolicExpr::Ptr &node) override {
+            SymbolicExpression::VisitAction preVisit(const SymbolicExpression::Ptr &node) override {
                 if (seen.insert(node->hash()).second && node->isEquivalentTo(needle)) {
                     found = node;
-                    return SymbolicExpr::TERMINATE;
+                    return SymbolicExpression::TERMINATE;
                 } else {
-                    return SymbolicExpr::CONTINUE;
+                    return SymbolicExpression::CONTINUE;
                 }
             }
 
-            SymbolicExpr::VisitAction postVisit(const SymbolicExpr::Ptr&) override {
-                return SymbolicExpr::CONTINUE;
+            SymbolicExpression::VisitAction postVisit(const SymbolicExpression::Ptr&) override {
+                return SymbolicExpression::CONTINUE;
             }
         } finder(base_);
         addr->depthFirstTraversal(finder);
@@ -529,8 +529,8 @@ private:
 
         // Address must be an offset from some base address. The constant is the offet since the base address is probably a
         // symbolic stack or frame pointer. There might be more than one constant.
-        if (SymbolicExpr::OP_ADD == addr->getOperator()) {
-            for (SymbolicExpr::Ptr operand: addr->children()) {
+        if (SymbolicExpression::OP_ADD == addr->getOperator()) {
+            for (SymbolicExpression::Ptr operand: addr->children()) {
                 int64_t offset = 0;
                 if (operand->toSigned().assignTo(offset)) {
                     SAWYER_MESG(debug) <<"    found offset " <<offsetStr(offset)
@@ -833,7 +833,7 @@ VariableFinder::initializeFrameBoundaries(const StackFrame &frame, const P2::Par
 #if 0 // [Robb Matzke 2021-10-27]
 OffsetInterval
 VariableFinder::referencedFrameArea(const Partitioner2::Partitioner &partitioner, const S2::BaseSemantics::RiscOperators::Ptr &ops,
-                                    const SymbolicExpr::Ptr &address, size_t nBytes) {
+                                    const SymbolicExpression::Ptr &address, size_t nBytes) {
     // Return an empty interval if any information is missing
     ASSERT_not_null(ops);
     ASSERT_not_null(address);
@@ -846,15 +846,15 @@ VariableFinder::referencedFrameArea(const Partitioner2::Partitioner &partitioner
 
     // Calculate the address as an offset from the frame pointer.
     S2::BaseSemantics::SValue::Ptr framePtrSval = ops->peekRegister(FRAME_PTR, ops->undefined_(FRAME_PTR.nBits()));
-    SymbolicExpr::Ptr framePtr = S2::SymbolicSemantics::SValue::promote(framePtrSval)->get_expression();
-    SymbolicExpr::Ptr diff = SymbolicExpr::makeAdd(SymbolicExpr::makeNegate(framePtr), address);
+    SymbolicExpression::Ptr framePtr = S2::SymbolicSemantics::SValue::promote(framePtrSval)->get_expression();
+    SymbolicExpression::Ptr diff = SymbolicExpression::makeAdd(SymbolicExpression::makeNegate(framePtr), address);
 
     // The returned interval is in terms of the frame pointer offset and the size of the I/O operation.
     Variables::OffsetInterval where;
     if (Sawyer::Optional<int64_t> offset = diff->toSigned()) {
         where = Variables::OffsetInterval::baseSize(*offset, nBytes);
-    } else if (diff->getOperator() == SymbolicExpr::OP_ADD) {
-        for (SymbolicExpr::Ptr child: diff->children()) {
+    } else if (diff->getOperator() == SymbolicExpression::OP_ADD) {
+        for (SymbolicExpression::Ptr child: diff->children()) {
             if ((offset = child->toSigned())) {
                 where = Variables::OffsetInterval::baseSize(*offset, nBytes);
                 break;
@@ -931,7 +931,7 @@ isSortedByOffset(const StackVariable::Boundary &a, const StackVariable::Boundary
 }
 
 void
-VariableFinder::removeOutliers(const StackFrame &frame, const P2::Partitioner &partitioner, const P2::Function::Ptr &function,
+VariableFinder::removeOutliers(const StackFrame &frame, const P2::Partitioner&, const P2::Function::Ptr&,
                                StackVariable::Boundaries &boundaries /*in,out,sorted*/) {
 
 #ifndef NDEBUG
@@ -1136,13 +1136,13 @@ VariableFinder::isCached(const P2::Function::Ptr &function) {
     return function->attributeExists(ATTR_LOCAL_VARS);
 }
 
-std::set<SymbolicExpr::Ptr>
+std::set<SymbolicExpression::Ptr>
 VariableFinder::getMemoryAddresses(const S2::BaseSemantics::MemoryCellState::Ptr &mem) {
     struct: S2::BaseSemantics::MemoryCell::Visitor {
-        std::set<SymbolicExpr::Ptr> addresses;
+        std::set<SymbolicExpression::Ptr> addresses;
 
         void operator()(S2::BaseSemantics::MemoryCell::Ptr &cell) {
-            SymbolicExpr::Ptr addr = S2::SymbolicSemantics::SValue::promote(cell->address())->get_expression();
+            SymbolicExpression::Ptr addr = S2::SymbolicSemantics::SValue::promote(cell->address())->get_expression();
             addresses.insert(addr);
         }
     } visitor;
@@ -1153,13 +1153,13 @@ VariableFinder::getMemoryAddresses(const S2::BaseSemantics::MemoryCellState::Ptr
 }
 
 std::set<rose_addr_t>
-VariableFinder::findConstants(const SymbolicExpr::Ptr &expr) {
-    struct: SymbolicExpr::Visitor {
+VariableFinder::findConstants(const SymbolicExpression::Ptr &expr) {
+    struct: SymbolicExpression::Visitor {
         std::set<rose_addr_t> constants;
-        std::vector<SymbolicExpr::Ptr> path;
+        std::vector<SymbolicExpression::Ptr> path;
 
-        SymbolicExpr::VisitAction preVisit(const SymbolicExpr::Ptr &node) {
-            const SymbolicExpr::Interior *parent = nullptr;
+        SymbolicExpression::VisitAction preVisit(const SymbolicExpression::Ptr &node) {
+            const SymbolicExpression::Interior *parent = nullptr;
             if (!path.empty()) {
                 parent = path.back()->isInteriorNodeRaw();
                 ASSERT_not_null(parent);
@@ -1167,21 +1167,21 @@ VariableFinder::findConstants(const SymbolicExpr::Ptr &expr) {
             path.push_back(node);
 
             // Some constants are never addresses
-            if (parent && parent->getOperator() == SymbolicExpr::OP_EXTRACT &&
+            if (parent && parent->getOperator() == SymbolicExpression::OP_EXTRACT &&
                 (parent->child(0) == node || parent->child(1) == node))
-                return SymbolicExpr::CONTINUE;          // first two args of extract are never addresses
+                return SymbolicExpression::CONTINUE;          // first two args of extract are never addresses
 
             // If we found a constant, perhaps treat it like an address
             if (Sawyer::Optional<uint64_t> n = node->toUnsigned())
                 constants.insert(*n);
 
-            return SymbolicExpr::CONTINUE;
+            return SymbolicExpression::CONTINUE;
         }
 
-        SymbolicExpr::VisitAction postVisit(const SymbolicExpr::Ptr&) {
+        SymbolicExpression::VisitAction postVisit(const SymbolicExpression::Ptr&) {
             ASSERT_forbid(path.empty());
             path.pop_back();
-            return SymbolicExpr::CONTINUE;
+            return SymbolicExpression::CONTINUE;
         }
     } visitor;
 
@@ -1208,9 +1208,9 @@ VariableFinder::findConstants(SgAsmInstruction *insn) {
 
 std::set<rose_addr_t>
 VariableFinder::findAddressConstants(const S2::BaseSemantics::MemoryCellState::Ptr &mem) {
-    std::set<SymbolicExpr::Ptr> addresses = getMemoryAddresses(mem);
+    std::set<SymbolicExpression::Ptr> addresses = getMemoryAddresses(mem);
     std::set<rose_addr_t> retval;
-    for (const SymbolicExpr::Ptr &address: addresses) {
+    for (const SymbolicExpression::Ptr &address: addresses) {
         std::set<rose_addr_t> constants = findConstants(address);
         retval.insert(constants.begin(), constants.end());
     }

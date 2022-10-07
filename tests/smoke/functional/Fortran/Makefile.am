@@ -1,8 +1,11 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
-SUBDIRS =
+
+if ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION
 
 noinst_PROGRAMS =
 TEST_TARGETS =
+EXTRA_DIST =
+PHONIES =
 
 AM_CPPFLAGS = $(ROSE_INCLUDES)
 AM_LDFLAGS = $(ROSE_RPATHS)
@@ -11,22 +14,13 @@ LDADD = $(ROSE_LIBS)
 ########################################################################################################################
 ## Fortran Parser Tests
 #
-# These tests quickly check whether the ATerm and Open Fortran Parser files are installed correctly
+# These tests should quickly check whether the flang parser is installed correctly
 #
+
+noinst_PROGRAMS += fmain.f90
+fmain_SOURCES = fmain.f90
 
 fortran_parser_tests =
-
-# Rasmussen (11.17.2017): This test only checks if the Fortran parse table, Fortran.tbl, is installed.
-# It should actually check for stratego and ATerm libraries as well.  But this should be done in
-# the configure scripts so doesn't need to be here. And, in any case, the macro variable OFP_BIN_PATH
-# is no longer used.
-#if ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
-#fortran_parser_tests += testBafio
-#noinst_PROGRAMS      += testBafio
-#endif
-#
-#testBafio_SOURCES = testBafio.C
-testBafio_SOURCES =
 
 ## Test targets
 #
@@ -48,5 +42,7 @@ check-fortran: $(FORTRAN_TEST_TARGETS)
 ###############################################################################################################################
 # Boilerplate
 ###############################################################################################################################
+
+endif
 
 check-local: $(TEST_TARGETS)

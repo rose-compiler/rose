@@ -7098,7 +7098,7 @@
 0x0804a950: Successor blocks: 0x0804a952, 0x0804a977
 
 0x0804a952: Basic block reasons: 
-0x0804a952: 8d 6c b5 00             |.l..    |<sp-32>   lea    ebp, [ebp + esi*0x04 + 0x00]
+0x0804a952: 8d 6c b5 00             |.l..    |<sp-32>   lea    ebp, [ebp + 0x00 + esi*0x04]
 0x0804a956: 89 e9                   |..      |<sp-32>   mov    ecx, ebp
 0x0804a958: 89 6c 24 0c             |.l$.    |<sp-32>   mov    dword ss:[esp + 0x0c], ebp
 0x0804a95c: 01 f1                   |..      |<sp-32>   add    ecx, esi
@@ -7147,7 +7147,7 @@
 0x0804a992: Successor blocks: 0x0804aa22
 
 0x0804a997: Basic block reasons: 
-0x0804a997: 8d 54 b5 00             |.T..    |<sp-32>   lea    edx, [ebp + esi*0x04 + 0x00]
+0x0804a997: 8d 54 b5 00             |.T..    |<sp-32>   lea    edx, [ebp + 0x00 + esi*0x04]
 0x0804a99b: 8b 4c 24 28             |.L$(    |<sp-32>   mov    ecx, dword ss:[esp + 0x28]
 0x0804a99f: 8d 04 32                |..2     |<sp-32>   lea    eax, [edx + esi]
 0x0804a9a2: 0f b6 54 3a ff          |..T:.   |<sp-32>   movzx  edx, byte ds:[edx + edi + 0xff<-1>]

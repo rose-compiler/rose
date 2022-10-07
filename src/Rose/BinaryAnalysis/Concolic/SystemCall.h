@@ -5,7 +5,7 @@
 
 #include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Types.h>
-#include <Rose/BinaryAnalysis/SymbolicExpr.h>
+#include <Rose/BinaryAnalysis/SymbolicExpression.h>
 
 #include <Sawyer/Optional.h>
 #include <Sawyer/SharedObject.h>
@@ -109,7 +109,7 @@ public:
      *  If the system call return value should be a program input, then a variable should be created to represent that input. The
      *  variable should be saved in this data member.  Any constraints for this variable should be added to the SMT solver
      *  that can be found from the @c ops data member of this context object. */
-    SymbolicExpr::Ptr symbolicReturn;
+    SymbolicExpression::Ptr symbolicReturn;
 };
 
 

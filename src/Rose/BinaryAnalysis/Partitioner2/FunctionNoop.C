@@ -116,7 +116,7 @@ struct FunctionNoopWorker {
     FunctionNoopWorker(const Partitioner &partitioner, Sawyer::ProgressBar<size_t> &progress)
         : partitioner(partitioner), progress(progress) {}
 
-    void operator()(size_t workId, const Function::Ptr &function) {
+    void operator()(size_t /*workId*/, const Function::Ptr &function) {
 #if 0 // DEBUGGING [Robb Matzke 2016-02-26]
         std::cerr <<"ROBB: starting " <<function->printableName() <<"\n";
 #endif

@@ -57,20 +57,20 @@ isAarch32Disabled_SOURCES = isAarch32Disabled.C
 isAarch32Disabled_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
 
 ###############################################################################################################################
-# Check parsing of symbolic expressions via Rose::BinaryAnalysis::SymbolicExprParser
+# Check parsing of symbolic expressions via Rose::BinaryAnalysis::SymbolicExpressionParser
 ###############################################################################################################################
-noinst_PROGRAMS += testSymbolicExprParser
-testSymbolicExprParser_SOURCES = testSymbolicExprParser.C
-testSymbolicExprParser_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
+noinst_PROGRAMS += testSymbolicExpressionParser
+testSymbolicExpressionParser_SOURCES = testSymbolicExpressionParser.C
+testSymbolicExpressionParser_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
 
-TEST_TARGETS += testSymbolicExprParser.passed
+TEST_TARGETS += testSymbolicExpressionParser.passed
 
-testSymbolicExprParser.passed: $(TEST_WITH_ANSWER) testSymbolicExprParser testSymbolicExprParser.ans conditionalDisable
-	@$(RTH_RUN)						\
-		TITLE="parsing of symbolic expressions [$@]"	\
-		DISABLED="$$(./conditionalDisable)"		\
-		CMD="./testSymbolicExprParser"			\
-		ANS="$(srcdir)/testSymbolicExprParser.ans"	\
+testSymbolicExpressionParser.passed: $(TEST_WITH_ANSWER) testSymbolicExpressionParser testSymbolicExpressionParser.ans conditionalDisable
+	@$(RTH_RUN)							\
+		TITLE="parsing of symbolic expressions [$@]"		\
+		DISABLED="$$(./conditionalDisable)"			\
+		CMD="./testSymbolicExpressionParser"			\
+		ANS="$(srcdir)/testSymbolicExpressionParser.ans"	\
 		$< $@
 
 

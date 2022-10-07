@@ -4,20 +4,15 @@ TESTCODE_INCLUDES =
 
 F2C_FLAGS = -rose:C_output_language 
 
-TESTCODES_REQUIRED_TO_PASS = \
-							   doloop1.F \
-							   doloop2.F \
-							   doloop3.F \
-							   implicitVariable1.F \
-							   implicitVariable2.F \
-							   array1.F \
-							   array2.F \
-							   array3.F \
-							   array4.F \
-							   program1.F \
-							   subroutine1.F \
-							   function1.F
-
+#####
+# The source files used for testing were all Fortran *.F sources
+# and had been removed previously by someone. It appeared that these
+# files were translanted to C and then the tools in this project run
+# on them. Since the Fortran_to_C translator is not maintained
+# and has been removed from the ROSE distribution project files,
+# the test files have been removed [Rasmussen, 2022.10.1].
+#
+TESTCODES_REQUIRED_TO_PASS =
 
 ALL_TESTCODES = \
 $(TESTCODES_REQUIRED_TO_PASS) 
@@ -29,7 +24,6 @@ if ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
 
 Fortran_to_C:
 	$(MAKE) -C ../src Fortran_to_C
-	
 
 $(PASSING_FORTRAN_TEST_OBJECTS): %.o: $(srcdir)/%.F Fortran_to_C 
 	../src/Fortran_to_C $(F2C_FLAGS) -c $<

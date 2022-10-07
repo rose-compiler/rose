@@ -9,7 +9,7 @@ add_library(roseDisassemblers OBJECT Assembler.C AssemblerX86.C
   SgAsmInstruction.C SgAsmAarch32Instruction.C
   SgAsmIntegerValueExpression.C SgAsmInterpretation.C SgAsmType.C
   SgAsmM68kInstruction.C SgAsmCilInstruction.C SgAsmJvmInstruction.C
-  SgAsmMipsInstruction.C SgAsmNullInstruction.C
+  SgAsmMipsInstruction.C SgAsmNullInstruction.C SgAsmPEExportEntry.C
   SgAsmPowerpcInstruction.C SgAsmX86Instruction.C
   x86InstructionProperties.C)
 

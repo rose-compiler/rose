@@ -33,6 +33,12 @@ RegisterState::RegisterState(const SValue::Ptr &protoval, const RegisterDictiona
 
 RegisterState::~RegisterState() {}
 
+RegisterState::Ptr
+RegisterState::promote(const RegisterState::Ptr &x) {
+    ASSERT_not_null(x);
+    return x;
+}
+
 RegisterDictionary::Ptr
 RegisterState::registerDictionary() const {
     return regdict;

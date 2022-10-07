@@ -157,7 +157,7 @@ addrToString(const Sawyer::Container::IntervalSet<Sawyer::Container::Interval<ui
         for (const Sawyer::Container::Interval<uint64_t> &interval: iset.intervals()) {
             if (++i > 1)
                 retval += ", ";
-            retval += addrToString(interval);
+            retval += addrToString(interval, nbits);
         }
         retval += "}";
         return retval;

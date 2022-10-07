@@ -6,6 +6,7 @@
 #include <Rose/CommandLine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
+#include <Rose/BinaryAnalysis/SymbolicExpression.h>
 #include <rose_strtoull.h>                              // rose
 #include <stringify.h>                                  // rose
 #include <Rose/StringUtility.h>
@@ -68,7 +69,7 @@ PlainTextFormatter::ioMode(std::ostream &out, FeasiblePath::IoMode m, const std:
 
 void
 PlainTextFormatter::mayMust(std::ostream &out, FeasiblePath::MayOrMust mayMust, const std::string &what) {
-    std::string s = FeasiblePath::MUST ? "must" : "may";
+    std::string s = FeasiblePath::MUST == mayMust ? "must" : "may";
     out <<" " <<s;
     if (!what.empty())
         out <<" " <<what;
@@ -76,7 +77,7 @@ PlainTextFormatter::mayMust(std::ostream &out, FeasiblePath::MayOrMust mayMust, 
 }
 
 void
-PlainTextFormatter::objectAddress(std::ostream &out, const SymbolicExpr::Ptr &address) {
+PlainTextFormatter::objectAddress(std::ostream &out, const SymbolicExpression::Ptr &address) {
     out <<"  for address " <<*address <<"\n";
 }
 
@@ -185,7 +186,7 @@ PlainTextFormatter::bbSrcLoc(std::ostream &out, const Rose::SourceLocation &loc)
 }
 
 void
-PlainTextFormatter::insnListIntro(std::ostream &out) {}
+PlainTextFormatter::insnListIntro(std::ostream&) {}
 
 void
 PlainTextFormatter::insnStep(std::ostream &out, size_t idx, const P2::Partitioner &partitioner, SgAsmInstruction *insn) {
@@ -251,7 +252,7 @@ PlainTextFormatter::solverEvidence(std::ostream &out, const Rose::BinaryAnalysis
             out <<"      none (trivial solution?)\n";
         } else {
             for (const std::string &name: names) {
-                if (SymbolicExpr::Ptr value = solver->evidenceForName(name)) {
+                if (SymbolicExpression::Ptr value = solver->evidenceForName(name)) {
                     out <<"      " <<name <<" = " <<*value <<"\n";
                 } else {
                     out <<"      " <<name <<" = unknown\n";
@@ -302,7 +303,7 @@ YamlFormatter::ioMode(std::ostream &out, FeasiblePath::IoMode m, const std::stri
 
 void
 YamlFormatter::mayMust(std::ostream &out, FeasiblePath::MayOrMust mayMust, const std::string &what) {
-    std::string s = FeasiblePath::MUST ? "must" : "may";
+    std::string s = FeasiblePath::MUST == mayMust ? "must" : "may";
     out <<" " <<s;
     if (!what.empty())
         out <<" " <<what;
@@ -310,7 +311,7 @@ YamlFormatter::mayMust(std::ostream &out, FeasiblePath::MayOrMust mayMust, const
 }
 
 void
-YamlFormatter::objectAddress(std::ostream &out, const SymbolicExpr::Ptr &address) {
+YamlFormatter::objectAddress(std::ostream &out, const SymbolicExpression::Ptr &address) {
     writeln(out, "  address:", *address);
 }
 
@@ -474,8 +475,8 @@ YamlFormatter::edge(std::ostream &out, const std::string &name) {
 }
 
 void
-YamlFormatter::state(std::ostream &out, size_t vertexIdx, const std::string &title,
-                          const Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::State::Ptr &state,
+YamlFormatter::state(std::ostream &out, size_t /*vertexIdx*/, const std::string &title,
+                     const Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics::State::Ptr &state,
                      const Rose::BinaryAnalysis::RegisterDictionary::Ptr &regdict) {
     if (state) {
         writeln(out, "      semantics:", title);
@@ -497,7 +498,7 @@ YamlFormatter::solverEvidence(std::ostream &out, const Rose::BinaryAnalysis::Smt
             writeln(out, "  evidence:");
             for (const std::string &name: names) {
                 writeln(out, "    - name:", name);
-                if (SymbolicExpr::Ptr value = solver->evidenceForName(name)) {
+                if (SymbolicExpression::Ptr value = solver->evidenceForName(name)) {
                     writeln(out, "      value:", *value);
                 } else {
                     writeln(out, "      value:", "unknown");
@@ -836,6 +837,15 @@ assignCallingConventions(const P2::Partitioner &partitioner) {
         defaultCc = ccDict[0];
     partitioner.allFunctionCallingConventionDefinition(defaultCc);
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Path selector base class
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+PathSelector::Predicate::wasRejected(bool /*disposition*/, const Rose::BinaryAnalysis::FeasiblePath&,
+                                     const Rose::BinaryAnalysis::Partitioner2::CfgPath&,
+                                     SgAsmInstruction */*offendingInstruction*/) {}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Path selector for pruning path outputs.

@@ -97,16 +97,16 @@ public:
     // Virtual constructors inherited from the super class.  These are disabled because users are expected to create this
     // dataflow semantics framework only through the "instance" method. (But we still must override them.)
 private:
-    virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::SValuePtr &protoval,
-                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const override {
+    virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::SValuePtr &/*protoval*/,
+                                                   const SmtSolverPtr& = SmtSolverPtr()) const override {
         ASSERT_not_reachable("should not be called by user code");
 #ifdef _MSC_VER
         return BaseSemantics::RiscOperatorsPtr();
 #endif
     }
 
-    virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::StatePtr &state,
-                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const override {
+    virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::StatePtr&,
+                                                   const SmtSolverPtr& = SmtSolverPtr()) const override {
         ASSERT_not_reachable("should not be called by user code");
 #ifdef _MSC_VER
         return BaseSemantics::RiscOperatorsPtr();

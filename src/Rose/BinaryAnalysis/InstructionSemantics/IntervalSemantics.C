@@ -3,6 +3,7 @@
 #include "sage3basic.h"
 #include <Rose/BinaryAnalysis/InstructionSemantics/IntervalSemantics.h>
 
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <boost/lexical_cast.hpp>
 #include <Sawyer/BitVector.h>
 
@@ -89,7 +90,7 @@ SValue::instance_from_bits(size_t nbits, uint64_t possible_bits)
 }
 
 bool
-SValue::may_equal(const BaseSemantics::SValue::Ptr &other_, const SmtSolverPtr &solver) const
+SValue::may_equal(const BaseSemantics::SValue::Ptr &other_, const SmtSolverPtr&) const
 {
     SValue::Ptr other = SValue::promote(other_);
     if (nBits() != other->nBits())
@@ -102,7 +103,7 @@ SValue::may_equal(const BaseSemantics::SValue::Ptr &other_, const SmtSolverPtr &
 }
 
 bool
-SValue::must_equal(const BaseSemantics::SValue::Ptr &other_, const SmtSolverPtr &solver) const
+SValue::must_equal(const BaseSemantics::SValue::Ptr &other_, const SmtSolverPtr&) const
 {
     SValue::Ptr other = SValue::promote(other_);
     if (nBits() != other->nBits())
@@ -180,8 +181,8 @@ SValue::print(std::ostream &output, BaseSemantics::Formatter&) const {
  *******************************************************************************************************************************/
 
 BaseSemantics::SValue::Ptr
-MemoryState::readMemory(const BaseSemantics::SValue::Ptr &addr, const BaseSemantics::SValue::Ptr &dflt,
-                        BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps)
+MemoryState::readMemory(const BaseSemantics::SValue::Ptr &/*addr*/, const BaseSemantics::SValue::Ptr &/*dflt*/,
+                        BaseSemantics::RiscOperators */*addrOps*/, BaseSemantics::RiscOperators */*valOps*/)
 {
     ASSERT_not_implemented("[Robb Matzke 2013-03-14]");
     BaseSemantics::SValue::Ptr retval;
@@ -189,8 +190,8 @@ MemoryState::readMemory(const BaseSemantics::SValue::Ptr &addr, const BaseSemant
 }
 
 BaseSemantics::SValue::Ptr
-MemoryState::peekMemory(const BaseSemantics::SValue::Ptr &addr, const BaseSemantics::SValue::Ptr &dflt,
-                        BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps)
+MemoryState::peekMemory(const BaseSemantics::SValue::Ptr &/*addr*/, const BaseSemantics::SValue::Ptr &/*dflt*/,
+                        BaseSemantics::RiscOperators */*addrOps*/, BaseSemantics::RiscOperators */*valOps*/)
 {
     ASSERT_not_implemented("[Robb Matzke 2018-01-17]");
     BaseSemantics::SValue::Ptr retval;
@@ -198,8 +199,8 @@ MemoryState::peekMemory(const BaseSemantics::SValue::Ptr &addr, const BaseSemant
 }
 
 void
-MemoryState::writeMemory(const BaseSemantics::SValue::Ptr &addr, const BaseSemantics::SValue::Ptr &value,
-                         BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps)
+MemoryState::writeMemory(const BaseSemantics::SValue::Ptr &/*addr*/, const BaseSemantics::SValue::Ptr &/*value*/,
+                         BaseSemantics::RiscOperators */*addrOps*/, BaseSemantics::RiscOperators */*valOps*/)
 {
     ASSERT_not_implemented("[Robb Matzke 2013-03-14]");
 }
@@ -886,27 +887,27 @@ RiscOperators::unsignedMultiply(const BaseSemantics::SValue::Ptr &a_, const Base
 }
 
 BaseSemantics::SValue::Ptr
-RiscOperators::readMemory(RegisterDescriptor segreg,
-                          const BaseSemantics::SValue::Ptr &address,
+RiscOperators::readMemory(RegisterDescriptor /*segreg*/,
+                          const BaseSemantics::SValue::Ptr &/*address*/,
                           const BaseSemantics::SValue::Ptr &dflt,
-                          const BaseSemantics::SValue::Ptr &condition)
+                          const BaseSemantics::SValue::Ptr &/*condition*/)
 {
     return dflt->copy(); // FIXME
 }
 
 BaseSemantics::SValue::Ptr
-RiscOperators::peekMemory(RegisterDescriptor segreg,
-                          const BaseSemantics::SValue::Ptr &address,
+RiscOperators::peekMemory(RegisterDescriptor /*segreg*/,
+                          const BaseSemantics::SValue::Ptr &/*address*/,
                           const BaseSemantics::SValue::Ptr &dflt)
 {
     return dflt->copy(); // FIXME[Robb Matzke 2018-01-17]
 }
 
 void
-RiscOperators::writeMemory(RegisterDescriptor segreg,
-                           const BaseSemantics::SValue::Ptr &address,
-                           const BaseSemantics::SValue::Ptr &value,
-                           const BaseSemantics::SValue::Ptr &condition) {
+RiscOperators::writeMemory(RegisterDescriptor /*segreg*/,
+                           const BaseSemantics::SValue::Ptr &/*address*/,
+                           const BaseSemantics::SValue::Ptr &/*value*/,
+                           const BaseSemantics::SValue::Ptr &/*condition*/) {
     // FIXME
 }
 

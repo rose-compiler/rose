@@ -408,6 +408,32 @@ static void test05() {
 #endif
 }
 
+static void test06() {
+    const Ok<std::string> r1 = makeOk("r1");
+    ASSERT_always_require(*r1 == "r1");
+
+    const Ok<std::string> r2 = makeOk((const char*)"r2");
+    ASSERT_always_require(*r2 == "r2");
+
+    const Ok<std::string> r3 = makeOk((char*)"r3");
+    ASSERT_always_require(*r3 == "r3");
+
+    const Ok<int> r4 = makeOk(4);
+    ASSERT_always_require(*r4 == 4);
+
+    const Error<std::string> e1 = makeError("e1");
+    ASSERT_always_require(*e1 == "e1");
+
+    const Error<std::string> e2 = makeError((const char*)"e2");
+    ASSERT_always_require(*e2 == "e2");
+
+    const Error<std::string> e3 = makeError((char*)"e3");
+    ASSERT_always_require(*e3 == "e3");
+
+    const Error<int> e4 = makeError(4);
+    ASSERT_always_require(*e4 == 4);
+}
+
 int main() {
 #if __cplusplus >= 201703L
     Result<int, std::string> result = Ok(5);
@@ -442,4 +468,5 @@ int main() {
     test04(result2, locErr);
 
     test05();
+    test06();
 }

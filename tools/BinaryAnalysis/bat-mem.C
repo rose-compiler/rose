@@ -36,7 +36,7 @@ struct Settings {
 
 // Parses the command-line and returns the name of the input file if any (the ROSE binary state).
 boost::filesystem::path
-parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings) {
+parseCommandLine(int argc, char *argv[], P2::Engine&, Settings &settings) {
     using namespace Sawyer::CommandLine;
 
     //---------- Generic Switches ----------
@@ -110,17 +110,17 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
         mlog[FATAL] <<"incorrect usage; see --help\n";
         exit(1);
     }
-    if (settings.where.empty())
-        settings.where.push_back(AddressInterval::whole());
     if (OutputFormat::UNSPECIFIED == settings.outputFormat)
         settings.outputFormat = settings.where.empty() ? OutputFormat::NONE : OutputFormat::HEXDUMP;
+    if (settings.where.empty())
+        settings.where.push_back(AddressInterval::whole());
 
     return input.empty() ? boost::filesystem::path("-") : input[0];
 }
 
 class Dumper {
 public:
-    void operator()(const Settings &settings, const MemoryMap::Ptr &map, const AddressInterval &dataInterval,
+    void operator()(const Settings&, const MemoryMap::Ptr &map, const AddressInterval &dataInterval,
                     std::ostream &stream) {
         MemoryMap::ConstNodeIterator inode = map->at(dataInterval.least()).nodes().begin();
         ASSERT_forbid(inode == map->nodes().end());
@@ -179,7 +179,7 @@ public:
     explicit SRecordDumper(SRecord::Syntax syntax)
         : syntax_(syntax) {}
 
-    virtual void formatData(std::ostream &stream, const AddressInterval &segmentInterval, const MemoryMap::Segment &segment,
+    virtual void formatData(std::ostream &stream, const AddressInterval &/*segmentInterval*/, const MemoryMap::Segment &/*segment*/,
                             const AddressInterval &dataInterval, const uint8_t *data) override {
         MemoryMap::Ptr map = MemoryMap::instance();
         map->insert(dataInterval, MemoryMap::Segment::staticInstance(data, dataInterval.size(), MemoryMap::READABLE));

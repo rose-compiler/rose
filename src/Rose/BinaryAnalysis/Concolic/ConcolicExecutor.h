@@ -92,13 +92,13 @@ public:
 
     // Overrides documented in base class
     virtual InstructionSemantics::BaseSemantics::RiscOperatorsPtr
-    create(const InstructionSemantics::BaseSemantics::SValuePtr &protoval,
-           const SmtSolverPtr &solver = SmtSolverPtr()) const override {
+    create(const InstructionSemantics::BaseSemantics::SValuePtr &/*protoval*/,
+           const SmtSolverPtr& = SmtSolverPtr()) const override {
         ASSERT_not_implemented("[Robb Matzke 2019-09-24]");
     }
     virtual InstructionSemantics::BaseSemantics::RiscOperatorsPtr
-    create(const InstructionSemantics::BaseSemantics::StatePtr &state,
-           const SmtSolverPtr &solver = SmtSolverPtr()) const override {
+    create(const InstructionSemantics::BaseSemantics::StatePtr &/*state*/,
+           const SmtSolverPtr& = SmtSolverPtr()) const override {
         ASSERT_not_implemented("[Robb Matzke 2019-09-24]");
     }
 
@@ -477,7 +477,7 @@ private:
 
     // Generae a new test case. This must be called only after the SMT solver's assertions have been checked and found
     // to be satisfiable.
-    void generateTestCase(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&, const SymbolicExpr::Ptr &childIp);
+    void generateTestCase(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&, const SymbolicExpression::Ptr &childIp);
 
     // Save the specified symbolic state to the specified test case.
     void saveSymbolicState(const Emulation::RiscOperatorsPtr&, const TestCaseId&);

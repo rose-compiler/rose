@@ -7,6 +7,10 @@ AM_LDFLAGS = $(ROSE_RPATHS)
 LDADD    = $(ROSE_LIBS)
 
 FORTRAN_TESTCODES =               \
+  tiny.f90
+
+
+FORTRAN_TESTCODES_TODO =          \
   binary_expressions.f90          \
   case_1.f90                      \
   common_1.f90                    \
@@ -27,7 +31,6 @@ FORTRAN_TESTCODES =               \
   negative_values.f90             \
   print1.f90                      \
   subroutine_1.f90                \
-  tiny.f90                        \
   type_decls_1.f90                \
   type_decls_2.f90                \
   type_decls_3.f90                \
@@ -48,8 +51,8 @@ $(TEST_FORTRAN_Objects): ../../testTranslator
 	@test -n "$$(find rose_$(@:.o=.f90) -size +0c)"
 
 check-fortran:
-	@echo "TEST_FORTRAN_Objects:"
-	@echo $(TEST_FORTRAN_Objects)
+	@echo "TEST_FORTRAN_Sources:"
+	@echo $(TEST_FORTRAN_Sources)
 	@echo "PASSING_FORTRAN_Objects:"
 	@echo $(PASSING_TEST_Objects)
 

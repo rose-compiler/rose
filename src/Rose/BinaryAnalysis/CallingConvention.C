@@ -11,6 +11,7 @@
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>    // Fast function data structures
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BinaryAnalysis/RegisterNames.h>
+#include <Rose/BinaryAnalysis/SymbolicExpression.h>
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
@@ -1083,6 +1084,9 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     } catch (const DataFlow::NotConverging &e) {
         mlog[WARN] <<e.what() <<" for " <<function->printableName() <<"\n";
         converged = false;                              // didn't converge, so just use what we have
+    } catch (const BaseSemantics::NotImplemented &e) {
+        mlog[WHERE] <<e.what() <<" for " <<function->printableName() <<"\n";
+        converged = false;
     } catch (const BaseSemantics::Exception &e) {
         mlog[WARN] <<e.what() <<" for " <<function->printableName() <<"\n";
         converged = false;
@@ -1133,8 +1137,8 @@ Analysis::updateRestoredRegisters(const State::Ptr &initialState, const State::P
     for (RegisterDescriptor reg: finalRegs->findProperties(props)) {
         SValue::Ptr initialValue = initialRegs->peekRegister(reg, ops->undefined_(reg.nBits()), ops.get());
         SValue::Ptr finalValue = finalRegs->peekRegister(reg, ops->undefined_(reg.nBits()), ops.get());
-        SymbolicExpr::Ptr initialExpr = SymbolicSemantics::SValue::promote(initialValue)->get_expression();
-        SymbolicExpr::Ptr finalExpr = SymbolicSemantics::SValue::promote(finalValue)->get_expression();
+        SymbolicExpression::Ptr initialExpr = SymbolicSemantics::SValue::promote(initialValue)->get_expression();
+        SymbolicExpression::Ptr finalExpr = SymbolicSemantics::SValue::promote(finalValue)->get_expression();
         if (finalExpr->flags() == initialExpr->flags() && finalExpr->mustEqual(initialExpr, ops->solver()))
             restoredRegisters_.insert(reg);
     }
@@ -1519,8 +1523,8 @@ writeArgument(const RiscOperators::Ptr &ops, const Definition::Ptr &ccDef, size_
 
     } else {
         // Argument is at an implied stack location
+        ASSERT_require(argNumber >= ccDef->inputParameters().size());
         argNumber = argNumber - ccDef->inputParameters().size();
-        ASSERT_require(argNumber >= 0);
         switch (ccDef->stackParameterOrder()) {
             case StackParameterOrder::RIGHT_TO_LEFT:
                 break;

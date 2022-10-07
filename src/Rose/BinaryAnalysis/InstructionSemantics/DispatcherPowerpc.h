@@ -22,7 +22,7 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics {
 
-/** Shared-ownership pointer to a PowerPC instruction dispatcher. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer to a PowerPC instruction dispatcher. */
 typedef boost::shared_ptr<class DispatcherPowerpc> DispatcherPowerpcPtr;
 
 class DispatcherPowerpc: public BaseSemantics::Dispatcher {

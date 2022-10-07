@@ -4,7 +4,6 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <Rose/BinaryAnalysis/BasicTypes.h>
-#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 
 #include <boost/serialization/access.hpp>
@@ -16,7 +15,7 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics {
 
-/** Shared-ownership pointer to an CIL instruction dispatcher. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer to an CIL instruction dispatcher. */
 typedef boost::shared_ptr<class DispatcherCil> DispatcherCilPtr;
 
 class DispatcherCil: public BaseSemantics::Dispatcher {
