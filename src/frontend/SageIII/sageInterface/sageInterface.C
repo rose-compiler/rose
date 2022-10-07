@@ -1904,7 +1904,10 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
           case V_SgAdaGenericDecl:
             {
               // need to look inside the declaration wrapped by the generic.
-              const SgAdaGenericDecl* dcl = isSgAdaGenericDecl(declaration);
+              const SgAdaGenericDecl* gendcl = isSgAdaGenericDecl(declaration);
+              name = get_name(gendcl->get_declaration());
+              break;
+#if OBSOLETE_CODE
               if (isSgFunctionDeclaration(dcl->get_declaration())) {
                 name = "_ada_generic_decl_" + genericGetName(isSgFunctionDeclaration(dcl->get_declaration()));
                 break;
@@ -1917,6 +1920,7 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
               // something malformed in the tree if we get here
               ROSE_ABORT();
               break;
+#endif /* OBSOLETE_CODE */
             }
 
             case V_SgAdaDiscriminatedTypeDecl:
@@ -2011,6 +2015,12 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
             case V_SgAdaGenericInstanceDecl:
             {
               name = genericGetName(isSgAdaGenericInstanceDecl(declaration));
+              break;
+            }
+
+            case V_SgAdaFormalPackageDecl:
+            {
+              name = genericGetName(isSgAdaFormalPackageDecl(declaration));
               break;
             }
 
@@ -5860,13 +5870,13 @@ SageInterface::getMangledNameFromCache( SgNode* astNode )
      if (i != mangledNameCache.end())
         {
        // get the precomputed mangled name!
-       // printf ("Mangled name IS found in cache (node = %p = %s) \n",astNode,astNode->class_name().c_str());
+          //~ printf ("Mangled name IS found in cache (node = %p = %s) \n",astNode,astNode->class_name().c_str());
           mangledName = i->second;
         }
        else
         {
        // mangled name not found in cache!
-       // printf ("Mangled name NOT found in cache (node = %p = %s) \n",astNode,astNode->class_name().c_str());
+          //~ printf ("Mangled name NOT found in cache (node = %p = %s) \n",astNode,astNode->class_name().c_str());
         }
 
      return mangledName;

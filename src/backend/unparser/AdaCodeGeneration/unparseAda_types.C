@@ -41,7 +41,10 @@ namespace
       const NodeQualMap& nameQualMap = unparser.nameQualificationMap();
       const Iterator     pos = nameQualMap.find(const_cast<SgNode*>(&n));
 
-      //~ std::cerr << "retr " << &n << " from " << &nameQualMap << std::endl;
+      //~ std::cerr << "retr " << &n << " " << typeid(n).name()
+                //~ << " from " << &nameQualMap
+                //~ << (pos != nameQualMap.end() ? pos->second : "<:|=-=|:>")
+                //~ << std::endl;
 
       if (pos != nameQualMap.end())
         prn(pos->second);

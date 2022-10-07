@@ -1181,6 +1181,7 @@ generate_override_keyword( AstNodeClass & node, GrammarString & data )
           (nodeName == "AdaProtectedTypeDecl"       && variableNameString == "name")  ||
           (nodeName == "AdaRenamingDecl"            && variableNameString == "name")  ||
           (nodeName == "AdaDiscriminatedTypeDecl"   && variableNameString == "name")  ||
+          (nodeName == "AdaGenericDecl"             && variableNameString == "name")  ||
           (nodeName == "AdaGenericInstanceDecl"     && variableNameString == "name")  ||
           (nodeName == "AsmFunction"                && variableNameString == "name")  ||
           (nodeName == "AsmSynthesizedFieldDeclaration" && variableNameString == "name")  ||
@@ -1297,6 +1298,7 @@ generate_override_keyword_for_set_functions( AstNodeClass & node, GrammarString 
           (nodeName == "AdaProtectedTypeDecl"       && variableNameString == "name")  ||
           (nodeName == "AdaRenamingDecl"            && variableNameString == "name")  ||
           (nodeName == "AdaDiscriminatedTypeDecl"   && variableNameString == "name")  ||
+          (nodeName == "AdaGenericDecl"             && variableNameString == "name")  ||
           (nodeName == "AdaGenericInstanceDecl"     && variableNameString == "name")  ||
           (nodeName == "AsmFunction"                && variableNameString == "name")  ||
           (nodeName == "AsmSynthesizedFieldDeclaration" && variableNameString == "name")  ||
@@ -3220,7 +3222,7 @@ Grammar::buildCode ()
      string memoryPoolTraversalSupport = buildMemoryPoolBasedTraversalSupport();
      ROSE_ArrayGrammarSourceFile.push_back(StringUtility::StringWithLineNumber(memoryPoolTraversalSupport, "", 1));
 
-  // Jim Leek (09/23/2022): Build the NodeId code     
+  // Jim Leek (09/23/2022): Build the NodeId code
      string nodeIdSupport = buildMemoryPoolBasedNodeId();
      ROSE_ArrayGrammarSourceFile.push_back(StringUtility::StringWithLineNumber(nodeIdSupport, "", 1));
 

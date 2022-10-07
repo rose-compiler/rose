@@ -363,8 +363,8 @@ void attachSourceLocation(SgPragma& n, Element_Struct& elem, AstContext ctx);
 
 /// logs that an asis element kind \ref kind has been explored
 /// \param kind a C-string naming the Asis kind
-/// \param primaryHandler true if this is the primary handler
-void logKind(const char* kind, bool primaryHandler = true);
+/// \param elemID the Asis ID associated with this element
+void logKind(const char* kind, int elemID = -1);
 
 
 /// A range abstraction for a contiguous sequence

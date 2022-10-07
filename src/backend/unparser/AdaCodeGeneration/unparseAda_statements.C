@@ -110,122 +110,6 @@ namespace
     return SG_DEREF(lst[0]);
   }
 
-  SgVariableSymbol& symOf(const SgVarRefExp& n)
-  {
-    return SG_DEREF(n.get_symbol());
-  }
-
-  SgFunctionSymbol& symOf(const SgFunctionRefExp& n)
-  {
-    return SG_DEREF(n.get_symbol());
-  }
-
-  inline
-  SgFunctionDeclaration& declOf(const SgFunctionSymbol& n)
-  {
-    return SG_DEREF(n.get_declaration());
-  }
-
-  inline
-  SgFunctionDeclaration& declOf(const SgFunctionRefExp& n)
-  {
-    return declOf(symOf(n));
-  }
-
-/*
-  inline
-  SgVariableDeclaration& declOf(const SgVariableSymbol& n)
-  {
-    SgNode* varnode = SG_DEREF(n.get_declaration()).get_parent();
-
-    return SG_DEREF(isSgVariableDeclaration(varnode));
-  }
-
-  inline
-  SgVariableDeclaration& declOf(const SgVarRefExp& n)
-  {
-    return declOf(symOf(n));
-  }
-*/
-
-  inline
-  SgAdaRenamingDecl& declOf(const SgAdaRenamingRefExp& n)
-  {
-    return SG_DEREF(n.get_decl());
-  }
-
-
-  inline
-  SgDeclarationStatement& declOf(const SgAdaUnitRefExp& n)
-  {
-    return SG_DEREF(n.get_decl());
-  }
-
-  inline
-  SgName nameOf(const SgSymbol& sy)
-  {
-    return sy.get_name();
-  }
-
-  inline
-  SgName nameOf(const SgVarRefExp& n)
-  {
-    return nameOf(symOf(n));
-  }
-
-  inline
-  SgName nameOf(const SgFunctionRefExp& n)
-  {
-    return nameOf(symOf(n));
-  }
-
-  inline
-  SgName nameOf(const SgAdaRenamingDecl& n)
-  {
-    return n.get_name();
-  }
-
-  inline
-  SgName nameOf(const SgAdaRenamingRefExp& n)
-  {
-    return nameOf(declOf(n));
-  }
-
-  SgName unitRefName(const SgDeclarationStatement& n)
-  {
-    if (const SgAdaPackageSpecDecl* pkgdcl = isSgAdaPackageSpecDecl(&n))
-      return pkgdcl->get_name();
-
-    if (const SgAdaGenericInstanceDecl* instdcl = isSgAdaGenericInstanceDecl(&n))
-      return instdcl->get_name();
-
-    if (const SgFunctionDeclaration* fundcl = isSgFunctionDeclaration(&n))
-      return fundcl->get_name();
-
-    if (const SgAdaGenericDecl* gendcl = isSgAdaGenericDecl(&n))
-      return unitRefName(SG_DEREF(gendcl->get_declaration()));
-
-    SG_UNEXPECTED_NODE(n);
-  }
-
-  inline
-  SgName nameOf(const SgAdaUnitRefExp& n)
-  {
-    return unitRefName(declOf(n));
-  }
-
-
-/*
-  inline
-  SgName nameOf(const SgImportStatement& import)
-  {
-    const SgExpressionPtrList& lst = import.get_import_list();
-    ROSE_ASSERT(lst.size() == 1);
-
-    return nameOf(SG_DEREF(isSgVarRefExp(lst.back())));
-  }
-*/
-
   const std::string NO_SEP = "";
   const std::string COMMA_SEP = ", ";
   const std::string STMT_SEP = ";\n";
@@ -401,66 +285,6 @@ namespace
       //~ std::string& renamedName() { return std::get<3>(*this); }
   };
 
-  struct ImportedUnitResult : std::tuple<std::string, const SgDeclarationStatement*, const SgAdaRenamingDecl*>
-  {
-    using base = std::tuple<std::string, const SgDeclarationStatement*, const SgAdaRenamingDecl*>;
-    using base::base;
-
-    const std::string&            name()         const { return std::get<0>(*this); }
-    const SgDeclarationStatement& decl()         const { return SG_DEREF(std::get<1>(*this)); }
-    const SgAdaRenamingDecl*      renamingDecl() const { return std::get<2>(*this); }
-  };
-
-  struct ImportedUnit : sg::DispatchHandler<ImportedUnitResult>
-  {
-      using base = sg::DispatchHandler<ImportedUnitResult>;
-
-      explicit
-      ImportedUnit(const SgImportStatement& import)
-      : base(), impdcl(import)
-      {}
-
-      void handle(const SgNode& n) { SG_UNEXPECTED_NODE(n); }
-
-      void handle(const SgFunctionRefExp& n)
-      {
-        res = ReturnType{ nameOf(n), &declOf(n), nullptr };
-      }
-
-      void handle(const SgAdaUnitRefExp& n)
-      {
-        res = ReturnType{ nameOf(n), &declOf(n), nullptr };
-      }
-
-      void handle(const SgAdaRenamingRefExp& n)
-      {
-        res = ReturnType{ nameOf(n), n.get_decl(), n.get_decl() };
-      }
-
-      void handle(const SgVarRefExp& n)
-      {
-        res = ReturnType{ nameOf(n), &impdcl, nullptr };
-      }
-
-    private:
-      const SgImportStatement& impdcl; // fallback package when unit is not avail
-  };
-
-  ImportedUnitResult
-  importedUnit(const SgExpression& n, const SgImportStatement& impdcl)
-  {
-    return sg::dispatch(ImportedUnit{ impdcl }, &n);
-  }
-
-  const SgExpression&
-  importedElement(const SgImportStatement& n)
-  {
-    const SgExpressionPtrList& lst = n.get_import_list();
-    ROSE_ASSERT(lst.size() == 1);
-
-    return SG_DEREF(lst.back());
-  }
-
   const SgScopeStatement*
   unitDefinition(const SgDeclarationStatement& n);
 
@@ -534,6 +358,7 @@ namespace
     void handle(const SgAdaPackageBodyDecl& n)     { usepkg(n.get_name(), n); }
     void handle(const SgAdaRenamingDecl& n)        { usepkg(n.get_name(), n); }
     void handle(const SgAdaGenericInstanceDecl& n) { usepkg(n.get_name(), n); }
+    void handle(const SgAdaFormalPackageDecl& n)   { usepkg(n.get_name(), n); }
     void handle(const SgTypedefDeclaration& n)     { usetype(n.get_name(), n); }
     void handle(const SgAdaTaskTypeDecl& n)        { usetype(n.get_name(), n); }
     void handle(const SgAdaProtectedTypeDecl& n)   { usetype(n.get_name(), n); }
@@ -542,7 +367,7 @@ namespace
 
     void handle(const SgImportStatement& n)
     {
-      ImportedUnitResult imported = importedUnit(importedElement(n), n);
+      si::Ada::ImportedUnitResult imported = si::Ada::importedUnit(n);
 
       usepkg(imported.name(), imported.decl());
     }
@@ -1406,15 +1231,16 @@ namespace
 
     void handle(SgImportStatement& n)
     {
-      const SgExpression& elem     = importedElement(n);
-      ImportedUnitResult  imported = importedUnit(elem, n);
-      SgScopeStatement*   scope    = imported.decl().get_scope();
+      const SgExpression&         elem     = si::Ada::importedElement(n);
+      si::Ada::ImportedUnitResult imported = si::Ada::importedUnit(n);
+      SgScopeStatement*           scope    = imported.decl().get_scope();
 
       prn("with ");
       prnNameQual(elem, scope);
       prn(imported.name());
       prn(STMT_SEP);
 
+#if OBSOLETE_CODE
       if (const SgAdaRenamingDecl* rendcl = imported.renamingDecl())
       {
         SgExpression*        orig     = rendcl->get_renamed();
@@ -1423,12 +1249,13 @@ namespace
         //~ if (const SgScopeStatement* renscope = renamed.body())
           //~ unparser.addRenamedScope(renscope, rendcl);
       }
-      else if (const SgScopeStatement* unitDef = unitDefinition(imported.decl()))
+      else if (/*const SgScopeStatement* unitDef =*/ unitDefinition(imported.decl()))
       {
         // renamed units are not visible (unless also imported).
         //   therefore their scope is not added as visible scopes.
         //~ unparser.addVisibleScope(unitDef);
       }
+#endif /* OBSOLETE_CODE */
     }
 
     void handle(SgProcessControlStatement& n)
@@ -1873,6 +1700,7 @@ namespace
 
     void type(const SgLocatedNode& ref, SgType* t)
     {
+      //~ std::cerr << "*** ref* " << typeid(ref).name() << std::endl;
       unparser.unparseType(ref, t, info);
     }
 
@@ -2472,11 +2300,13 @@ namespace
       void handle(const SgAdaPackageSpec& n) { res = isNormalPkg(n); }
   };
 
+#if OBSOLETE_CODE
   /// returns true iff \ref n requires scope qualification
   bool requiresScopeQual(const SgScopeStatement* n)
   {
     return sg::dispatch(RequiresScopeQual{}, n);
   }
+#endif /* OBSOLETE_CODE */
 
   /// \brief stores a path from an innermost scope to the global scope (not part of the path)
   ///        in form of a sequence of Sage nodes that represent scopes

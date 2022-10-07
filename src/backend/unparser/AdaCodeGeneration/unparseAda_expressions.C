@@ -13,62 +13,6 @@ namespace si = SageInterface;
 
 namespace
 {
-  inline
-  SgVariableSymbol& symOf(const SgVarRefExp& n)
-  {
-    return SG_DEREF(n.get_symbol());
-  }
-
-  inline
-  SgFunctionSymbol& symOf(const SgFunctionRefExp& n)
-  {
-    return SG_DEREF(n.get_symbol());
-  }
-
-  inline
-  SgInitializedName& declOf(const SgVarRefExp& n)
-  {
-    SgVariableSymbol& sy = symOf(n);
-
-    return SG_DEREF(sy.get_declaration());
-  }
-
-  inline
-  SgAdaPackageSpecDecl& declOf(const SgAdaUnitRefExp& n)
-  {
-    return SG_DEREF(isSgAdaPackageSpecDecl(n.get_decl()));
-  }
-
-  inline
-  SgName nameOf(const SgSymbol& sy)
-  {
-    return sy.get_name();
-  }
-
-  inline
-  SgName nameOf(const SgVarRefExp& n)
-  {
-    return nameOf(symOf(n));
-  }
-
-  inline
-  SgName nameOf(const SgEnumVal& n)
-  {
-    return n.get_name();
-  }
-
-  inline
-  SgName nameOf(const SgFunctionRefExp& n)
-  {
-    return nameOf(symOf(n));
-  }
-
-  inline
-  SgName nameOf(const SgAdaUnitRefExp& n)
-  {
-    return declOf(n).get_name();
-  }
-
   const SgExprListExp* callArguments(const SgFunctionRefExp& n)
   {
     if (const SgCallExpression* callexp = isSgCallExpression(n.get_parent()))
@@ -424,13 +368,13 @@ namespace
     void handle(SgVarRefExp& n)
     {
       prnNameQual(n);
-      prn(nameOf(n));
+      prn(si::Ada::nameOf(n));
     }
 
     void handle(SgEnumVal& n)
     {
       prnNameQual(n);
-      prn(nameOf(n));
+      prn(si::Ada::nameOf(n));
     }
 
 
@@ -511,7 +455,7 @@ namespace
     void handle(SgFunctionRefExp& n)
     {
       prnNameQual(n);
-      prn(si::Ada::convertRoseOperatorNameToAdaName(nameOf(n)));
+      prn(si::Ada::convertRoseOperatorNameToAdaName(si::Ada::nameOf(n)));
     }
 
     template <class SageAdaRefExp>
