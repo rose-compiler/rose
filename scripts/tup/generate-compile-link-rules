@@ -39,6 +39,13 @@ The specification can be found in the LLVM "JSON Compilation Database Format Spe
 the name of the Tup group for the JSON files, which will ultimately be used to merge all such JSON files into a single
 database.
 
+=item --translate-database
+
+If specified, an attempt will be made to rewrite the commands and file names in the compilation database, which are
+assumed to be in the build directory, so they also also explicitly refer to the source directory. This isn't
+foolproof. A better approach is to not translate the commands and then unionfs the source and build directories together
+when running the commands later.
+
 =item --depend=I<INPUT> | --begin-deps I<INPUTS> --end-deps
 
 Specifies order-only inputs for this rule.  The order-only inputs are those things on which the compile commands depend
@@ -275,6 +282,7 @@ my $ncompiled = 0;	    # number of sources compiled
 my @mapped_dirs;	    # empty, or the arguments of --map switch (absolute source dir and relative build dir)
 my $command_flags = "";     # content of the ^-flags in tup commands
 my $emit_compilation_db;    # emit rules to generate LLVM compilation database files; value is Tup group name
+my $translate_database;	    # if true, translate compilation database commands
 my $rpath;
 
 ########################################################################################################################
@@ -457,6 +465,12 @@ sub parse_command_line {
 	}
 	if ($arg =~ /^--rpath=(.*)/) {
 	    $rpath = $1;
+	    next;
+	}
+
+	# --translate-database | --no-translate-database
+	if ($arg =~ /^--(no-)?translate-database$/) {
+	    $translate_database = $1 eq "";
 	    next;
 	}
 
@@ -735,7 +749,9 @@ sub generate_compile_rules {
 	    print(": ", $inputs_str,
 	          " |> ^${command_flags} compilation database \%f^",
 		  " \$(compilation_database_record)",
-		  " command=", TupScripts::shell_escape($command_str), " file=\%f >%o",
+		  " command=", TupScripts::shell_escape($command_str),
+		  ($translate_database ? " top=\$(ROOT)" : ""),
+		  " file=\%f >%o",
 		  " |> ", join(" ", map {"$_.json"} @rule_outputs), " ", $emit_compilation_db, "\n");
 	}
 
