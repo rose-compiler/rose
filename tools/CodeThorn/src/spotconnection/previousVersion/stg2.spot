@@ -1,0 +1,5 @@
+s0,s1,"  iA & ! iB & ! oX & ! oY & ! oZ",;
+s1,s2,"! iA & ! iB &   oX & ! oY & ! oZ",;
+s2,s3,"! iA &   iB & ! oX & ! oY & ! oZ",;
+s3,s4,"! iA & ! iB & ! oX &   oY & ! oZ",;
+s4,s3,"! iA &   iB & ! oX & ! oY & ! oZ",;

@@ -1,0 +1,6 @@
+dot -T$1 icfg.dot -oicfg.$1
+dot -T$1 datadependencegraph.dot -odatadependencegraph.$1
+dot -T$1 icfgdatadependencegraph.dot -oicfgdatadependencegraph.$1
+dot -T$1 icfgdatadependencegraph_clustered.dot -oicfgdatadependencegraph_clustered.$1
+dot -T$1 icfg_clustered.dot -oicfg_clustered.$1
+dot -T$1 -Gsize=44,68 resourceusageicfg.dot -oresourceusageicfg.$1

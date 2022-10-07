@@ -1,0 +1,189 @@
+-------------------------------
+V1.0 2012-08-27 Markus Schordan
+-------------------------------
+
+* Construction of inter-procedural control flow graph
+* General framework
+* Interprocedural const-int analysis
+* Computation of transition graph
+* Language Restrictor
+* State Maintainer(s)
+* Visualization of
+  - abstract syntax tree (AST) with computed cfg labels
+  - control flow graph
+  - transition graph 
+  - folded transition graph (more compact)
+
+-------------------------------------------------
+V1.1 2012-09-30 Markus Schordan and Adrian Prantl
+-------------------------------------------------
+
+* Linear Time Logic Formulae verification: (Adrian Prantl)
+  - the algorithm verifies LTL formulae on the approximated cyclic
+    transition graphs
+* Black-box verification of LTLs: (Adrian Prantl)
+  - input/output sequence generator (Haskell prototype)
+  - input/output verifyer (providing counter examples)
+* Visualization of LTL verification (Adrian Prantl)
+* Interprocedural propagation of constraints: (Markus Schordan)
+* Extended const-int analysis to const-int-io analysis: (Markus Schordan)
+  - added input/output property (none,input,stdcout,stderr,failed-assert)
+    to system state.
+* Refinement of Maintainer class(es): (Markus Schordan)
+* Introduction of unique variable-ids (Markus Schordan)
+* Visualization: (Markus Schordan)
+  - Command line options allow to select arbitrary combinations of
+    visualized data.  - extended visualizations with IO operations and
+    failed-asserts
+* Several new command line options (all authors)
+
+-------------------------------------------------
+V1.2 2012-10-12 Markus Schordan and Adrian Prantl
+-------------------------------------------------
+
+* Normalized Minimal Constraint sets (Markus Schordan)
+  - constraints sets are now normalized
+* Parallel analyzer (Markus Schordan)
+  - the analyzer can be run in parallel now, supporting multi-core
+  systems using OpenMP threads. The number of threads can be specified
+  as command line option --threads=<NUM> where NUM is the number of
+  threads.
+* Several new command line options (all authors)
+
+-------------------------------------------------
+V1.3 2013-11-18 Markus Schordan and Adrian Prantl
+-------------------------------------------------
+ * support for binary mode (RERS-specific, calls the linked original program)
+
+-----------------------------------------------------------
+V1.4 2014-11-18 Markus Schordan, Adrian Prantl, Marc Jasper
+-----------------------------------------------------------
+  * integration of SPOT library for LTL verification (Marc Jasper)
+  * counter example generation (Marc Jasper)
+  * support of new command line options for LTL verification (Marc Jasper)
+  * support for different search strategies in state space (Markus Schordan)
+
+-----------------------------------------------------------
+V1.5 2014-02-26 Markus Schordan, Adrian Prantl, Marc Jasper
+-----------------------------------------------------------
+  * extraction of floating point variable update-sequence (Markus Schordan)
+  * new command line options for specialization of function parameters (Markus Schordan)
+
+-----------------------------------------------------------
+V1.6 2015-09-14 Markus Schordan, Adrian Prantl, Marc Jasper
+-----------------------------------------------------------
+  * pattern-based input-sequence generation (Marc Jasper)
+  * reachability checking of input-sequences (Marc Jasper)
+  * data race detection in OpenMP for loops (Markus Schordan)
+  * normalization of internal program representation (Markus Schordan)
+
+-----------------------------------------------------------
+V1.7 2016-05-09 Markus Schordan, Adrian Prantl, Marc Jasper
+-----------------------------------------------------------
+  * added verification error feature command line option (as required
+    for SV-COMP) [in preparation]
+  * command line option changes:
+    - removed command line options and all code associated with it:
+      --ltl-verifier
+      --verify
+      --debug-mode
+      --report-failed-assert
+      --report-stdout
+      --report-stderr
+      --abstract-interpreter
+      --update-input-var
+      --post-collapse-stg
+      --attach-pointer-expr-lists
+      --annotate results
+      --minimize-states
+      --ltl-verbose
+      --ltl-output-dot
+      --ltl-show-derivation
+      --ltl-show-node-detail
+      --ltl-collapsed-graph
+      --semantic-explosion
+      --semantic-elimination
+      --rersformat
+      --rose-help
+
+  * removed solvers 1,2,3,6,7 (remaining: 4,5,8,9,10)
+  * removed Analyzer functions:
+    void Analyzer::semanticEliminationOfTransitions()
+    int Analyzer::semanticEliminationOfSelfInInTransitions();
+    int Analyzer::semanticEliminationOfDeadStates();
+    int Analyzer::semanticFusionOfInInTransitions();
+  * improved openmp support for parallel solvers
+  * added support for LTL-driven verification mode
+
+---------------------------------------------------------------------------
+V1.8 2017-04-27 Markus Schordan, Marc Jasper, Joshua Asplund, Adrian Prantl
+---------------------------------------------------------------------------
+  * changed state representation to use map of AbstractValue->AbstractValue
+  * extended state representation with abstract pointer/struct representation
+  * extended domain with pointer arithmetic
+  * changed Makefile to separate out different kinds of tests.
+  * added test for concrete->abstract analysis mode change.
+  * added initial support for semantics of C memory alloc/copy functions
+  * separated StateRepresentations.h/C into PState,EState,InputOutput,ParProEState files and minimzed dependencies.
+  * removed namespace AType
+  * renamed class ConstIntLattice to AbstractValue.
+  * added support for bitshift operators
+  * add support for write operations in pointer domain
+  * adapted toString functions of PState and VariableIdMapping to pointer domain
+  * added array bounds check (arrays fixed size, read/write)
+  * added logger functionality
+  * deactivated option --limit-to-fragment
+  * bugfix: equivalence checking of a selected function with external function calls.
+  * added data race check (--help-data-race)
+  * revised bit operator semantics support
+  * added ssa-rewrite for equivalence checking
+  * enumerated error-path pruning status messages
+  * added time as optional resource constraint (options "--max-time[-forced-top]"). 
+  * Added a test for the synchronized loop-aware mode (solver 12).
+  * Parallel systems are now discarded unless option "--keep-systems=yes" is used. Also improved the generation of random LTL properties.
+  * improved how the memory consumption is reported, added a parameter to the LTL specification mining.
+  * the Promela code generator now supports systems of parallel automata with more than 256 transitions.
+  * the reported total memory consumption now reflects the physical memory usage (resident set size, only works on Linux).
+  * The HSetMaintainer now deletes elements during its destruction. Also improved memory size counters.
+  * added an option to set the seed value for randomly generated parallel automata and specification mining.
+  * mined LTL properties are now shuffled, synchronized transitions now contain the names of original transitions (parallel automata).
+  * defined initial state of generated promela code, deactivated relabeling of initial transitions in generated parallel automata.
+  * random parallel automata can now be generated automatically.
+  * bugfix: reduceNode (reduce cfg node); enabled reduce-cfg by default.
+  * the CFG now uses the Sawyer graph implementation (default index for vertices).
+  * added visualization of read and write sets (data race check).
+  * added a PROMELA code generator for parallel automata.
+  * CFG dot graph frontend: multiple subgraphs can now be parsed as inidividual CFGs.
+
+------------------------------------------------------------------------------------------------------------
+V1.9 2018-12-12 Markus Schordan, Marc Jasper, Simon Schroder, Maximilan Fecke, Joshua Asplund, Adrian Prantl
+------------------------------------------------------------------------------------------------------------
+
+  * added support for context-sensitive analysis using call strings.
+  * extended handling of pointer semantics
+  * added initial support for structs
+  * added null pointer dereference detection and representation of error states in state transition systems
+  * Refined program normalization (required for inter-procedural analysis).
+  * removed constraint system
+  * added new handling of parameter passing (substituting the use of the removed constraints)
+  * improved support of array initializers
+  * added support for pointers to C-strings (char literals)
+  * added mapping for built-in type sizes (used in analysis and configurable)
+
+------------------------------------------------------------------------------------------------------------
+Author: Markus Schordan <schordan1@llnl.gov>
+Date:   Wed Oct 28 09:25:24 2020 -0700
+
+    (codethorn) version 1.12.16
+    
+    * fixed topological sort
+    * added support for fork semantics in analysis
+    * added support for GNU ranges in switch case statements (e.g. case 1...3:)
+    * fixed unreachability analysis of default case (improves precision)
+    * added test case DOM033.
+    * added progress reporting during analysis of time/memory consumption
+    * added resource limit reporting
+    * fixed array expression evaluation
+    * fixed normaliization in case of address operator inside ?-operator
+    * added support for SgAsmStmt in analysis
+    * improved support for function pointer normalization (RC-145)

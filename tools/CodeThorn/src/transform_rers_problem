@@ -1,0 +1,15 @@
+# $1: name of problem (e.g. "Problem1")
+
+# error_xxx: assert(0) is replaced with return(-xxx-100) (hence errors start with -100)
+# globalError: assert(0) is replaced with return(-1000)
+
+sed "s/error_\([0-9]*\): assert(0)/return(-\1-100)/g" tests/rers/$1.c > tmp1
+sed "s/globalError: assert(0)/return(-1000)/g" tmp1 > tmp2
+sed "s/main/$1_main/g" tmp2 > tmp3
+echo "namespace RERS_Problem {" > RERS_$1_mod.C
+echo "#include \"rers_cpp_forward_decls.C\"" >> RERS_$1_mod.C
+cat tmp3 >> RERS_$1_mod.C
+echo "}" >> RERS_$1_mod.C
+rm -f tmp1
+rm -f tmp2
+rm -f tmp3

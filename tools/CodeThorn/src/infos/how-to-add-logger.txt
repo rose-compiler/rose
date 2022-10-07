@@ -1,0 +1,73 @@
+-------------------------------------------------
+How to add a logger to class MyClass:
+-------------------------------------------------
+
+Code needs to be added to 
+(1) header file
+(2) source file
+(3) the main program (initialization call)
+
+-------------------------------------------------
+(1) HEADER FILE:
+-------------------------------------------------
+
+Add logger to class MyClass
+class MyClass {
+  ...
+  public:
+    static void initDiagnostics();
+  protected:
+    static Sawyer::Message::Facility logger;
+  ...
+};
+
+-------------------------------------------------
+(2) SOURCE FILE:
+-------------------------------------------------
+
+#include "Diagnostics.h"
+using namespace Sawyer::Message;
+
+Sawyer::Message::Facility MyClass::logger;
+
+void A::initDiagnostics() {
+  static bool initialized = false;
+  if (!initialized) {
+    initialized = true;
+    logger = Sawyer::Message::Facility("CodeThorn::MyClass", Rose::Diagnostics::destination);
+    Rose::Diagnostics::mfacilities.insertAndAdjust(logger);
+  }
+}
+
+-------------------------------------------------
+(3) main file (initialization):
+-------------------------------------------------
+
+MyTool::initDiagnostics() {
+  MyClass::initDiagnostics();
+}
+
+-------------------------------------------------
+USAGE IN CODE:
+-------------------------------------------------
+
+usage in methods of class A:
+logger[TRACE|DEBUG|...]<<...;
+
+SAWYER_MESG(logger[TRACE])<< ....
+
+if(logger[TRACE]) {
+    cout<<"I am tracing!"<<endl;
+}
+
+identityTranslator test.C -rose:log help
+identityTranslator test.C -rose:log list
+
+Progress Bar:
+http://rosecompiler.org/ROSE_HTML_Reference/classSawyer_1_1ProgressBar.html
+void f() {
+    int total = 200;
+    ProgressBar<int> progress(total, mlog[INFO], "test");
+    for (int i=0; i<total; ++i, ++progress)
+        do_some_work();
+}
