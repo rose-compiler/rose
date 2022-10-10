@@ -4,7 +4,7 @@
 #include <iostream>
 
 int
-main(int argc, char *argv[]) {
+main(int argc, char */*argv*/[]) {
 
     // Pretend to parse the specimen and do some analysis on it. In actuality we just check that we were given some argument.
     if (argc != 2) {

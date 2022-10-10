@@ -28,7 +28,7 @@ systemFunctionName(const std::string &name) {
 
 // Scan PE import sections to build an index
 size_t
-getImportIndex(const Partitioner &partitioner, SgAsmPEFileHeader *peHeader, ImportIndex &index /*in,out*/) {
+getImportIndex(const Partitioner&, SgAsmPEFileHeader *peHeader, ImportIndex &index /*in,out*/) {
     size_t nInserted = 0;
     if (peHeader!=NULL) {
         for (SgAsmGenericSection *section: peHeader->get_sections()->get_sections()) {
@@ -102,7 +102,7 @@ findExportFunctions(const Partitioner &partitioner, SgAsmInterpretation *interp)
 }
 
 size_t
-findImportFunctions(const Partitioner &partitioner, SgAsmPEFileHeader *peHeader, const ImportIndex &imports,
+findImportFunctions(const Partitioner&, SgAsmPEFileHeader *peHeader, const ImportIndex &imports,
                     std::vector<Function::Ptr> &functions) {
     size_t nInserted = 0;
     if (peHeader) {

@@ -933,7 +933,7 @@ buildBasicBlockAst(const Partitioner &partitioner, const BasicBlock::Ptr &bb, co
 }
 
 SgAsmBlock*
-buildDataBlockAst(const Partitioner &partitioner, const DataBlock::Ptr &dblock, const AstConstructionSettings &settings) {
+buildDataBlockAst(const Partitioner &partitioner, const DataBlock::Ptr &dblock, const AstConstructionSettings&) {
     // Build the static data item
     SgUnsignedCharList rawBytes(dblock->size(), 0);
     size_t nRead = partitioner.memoryMap()->at(dblock->address()).read(rawBytes).size();

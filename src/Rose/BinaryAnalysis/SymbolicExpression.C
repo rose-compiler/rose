@@ -141,7 +141,7 @@ ExpressionLessp::operator()(const Ptr &a, const Ptr &b) const {
 }
 
 Ptr
-setToIte(const Ptr &set, const SmtSolverPtr &solver, const LeafPtr &var) {
+setToIte(const Ptr &set, const SmtSolver::Ptr &solver, const LeafPtr &var) {
     ASSERT_not_null(set);
     const Interior *iset = set->isInteriorNodeRaw();
     if (!iset || iset->getOperator() != OP_SET)
@@ -172,10 +172,10 @@ hash(const std::vector<Ptr> &exprs) {
 struct VariableRenamer {
     ExprExprHashMap &index;
     size_t &nextVariableId;
-    SmtSolverPtr solver;                                // may be null
+    SmtSolver::Ptr solver;                                // may be null
     ExprExprHashMap seen;
 
-    VariableRenamer(ExprExprHashMap &index, size_t &nextVariableId, const SmtSolverPtr &solver)
+    VariableRenamer(ExprExprHashMap &index, size_t &nextVariableId, const SmtSolver::Ptr &solver)
         : index(index), nextVariableId(nextVariableId), solver(solver) {}
 
     Ptr rename(const Ptr &input) {
@@ -228,10 +228,10 @@ struct VariableRenamer {
 struct SingleSubstituter {
     Ptr from;                                           // replace this
     Ptr to;                                             // with this
-    SmtSolverPtr solver;                                // for simplifications (optional)
+    SmtSolver::Ptr solver;                              // for simplifications (optional)
     ExprExprHashMap seen;                               // things we've already seen
 
-    SingleSubstituter(const Ptr &from, const Ptr &to, const SmtSolverPtr &solver)
+    SingleSubstituter(const Ptr &from, const Ptr &to, const SmtSolver::Ptr &solver)
         : from(from), to(to), solver(solver) {}
 
     Ptr substitute(const Ptr &input) {
@@ -272,10 +272,10 @@ struct SingleSubstituter {
 
 struct MultiSubstituter {
     const ExprExprHashMap &substitutions;
-    SmtSolverPtr solver;
+    SmtSolver::Ptr solver;
     ExprExprHashMap seen;
 
-    MultiSubstituter(const ExprExprHashMap &substitutions, const SmtSolverPtr &solver)
+    MultiSubstituter(const ExprExprHashMap &substitutions, const SmtSolver::Ptr &solver)
         : substitutions(substitutions), solver(solver) {}
 
     Ptr substitute(const Ptr &input) {
@@ -433,7 +433,7 @@ Node::newFlags(unsigned newFlags) const {
     if (const Interior *inode = isInteriorNodeRaw()) {
         // No SMT solver is necessary since changing the flags won't cause the new expression to simplify any differently than
         // it already is. In fact, it there might be a faster way to create the new expression given this fact.
-        SmtSolverPtr solver;
+        SmtSolver::Ptr solver;
         return Interior::instance(inode->type(), inode->getOperator(), inode->children(), solver, comment(), newFlags);
     }
     const Leaf *lnode = isLeafNodeRaw();
@@ -474,13 +474,13 @@ Node::getVariables() const {
 }
 
 Ptr
-Node::renameVariables(ExprExprHashMap &index /*in,out*/, size_t &nextVariableId, const SmtSolverPtr &solver) {
+Node::renameVariables(ExprExprHashMap &index /*in,out*/, size_t &nextVariableId, const SmtSolver::Ptr &solver) {
     VariableRenamer renamer(index, nextVariableId, solver);
     return renamer.rename(this->sharedFromThis());
 }
 
 Ptr
-Node::substituteMultiple(const ExprExprHashMap &substitutions, const SmtSolverPtr &solver) {
+Node::substituteMultiple(const ExprExprHashMap &substitutions, const SmtSolver::Ptr &solver) {
     MultiSubstituter substituter(substitutions, solver);
     return substituter.substitute(this->sharedFromThis());
 }
@@ -675,13 +675,13 @@ Interior::Interior(const Type &type, Operator op, const Nodes &children, const s
 
 Ptr
 Interior::instance(Operator op, const Ptr &a,
-                   const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+                   const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     return instance(Type(), op, a, solver, comment, flags);
 }
 
 Ptr
 Interior::instance(const Type &type, Operator op, const Ptr &a,
-                   const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+                   const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     Nodes args;
     args.push_back(a);
     return instance(type, op, args, solver, comment, flags);
@@ -689,13 +689,13 @@ Interior::instance(const Type &type, Operator op, const Ptr &a,
 
 Ptr
 Interior::instance(Operator op, const Ptr &a, const Ptr &b,
-                   const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+                   const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     return instance(Type(), op, a, b, solver, comment, flags);
 }
 
 Ptr
 Interior::instance(const Type &type, Operator op, const Ptr &a, const Ptr &b,
-                   const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+                   const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     Nodes args;
     args.push_back(a);
     args.push_back(b);
@@ -704,13 +704,13 @@ Interior::instance(const Type &type, Operator op, const Ptr &a, const Ptr &b,
 
 Ptr
 Interior::instance(Operator op, const Ptr &a, const Ptr &b, const Ptr &c,
-                   const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+                   const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     return instance(Type(), op, a, b, c, solver, comment, flags);
 }
 
 Ptr
 Interior::instance(const Type &type, Operator op, const Ptr &a, const Ptr &b, const Ptr &c,
-                   const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+                   const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     Nodes args;
     args.push_back(a);
     args.push_back(b);
@@ -720,13 +720,13 @@ Interior::instance(const Type &type, Operator op, const Ptr &a, const Ptr &b, co
 
 Ptr
 Interior::instance(Operator op, const Nodes &arguments,
-                   const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+                   const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     return instance(Type(), op, arguments, solver, comment, flags);
 }
 
 Ptr
 Interior::instance(const Type &type, Operator op, const Nodes &arguments,
-                   const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+                   const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     InteriorPtr retval(new Interior(type, op, arguments, comment, flags));
     return retval->simplifyTop(solver);
 }
@@ -1120,7 +1120,7 @@ Interior::print(std::ostream &o, Formatter &fmt) const {
 }
 
 bool
-Interior::mustEqual(const Ptr &other_, const SmtSolverPtr &solver/*NULL*/) {
+Interior::mustEqual(const Ptr &other_, const SmtSolver::Ptr &solver/*NULL*/) {
     bool retval = false;
     if (this == getRawPointer(other_)) {
         retval = true;
@@ -1138,7 +1138,7 @@ Interior::mustEqual(const Ptr &other_, const SmtSolverPtr &solver/*NULL*/) {
 }
 
 bool
-Interior::mayEqual(const Ptr &other, const SmtSolverPtr &solver/*NULL*/) {
+Interior::mayEqual(const Ptr &other, const SmtSolver::Ptr &solver/*NULL*/) {
     // Fast comparison of literally the same expression pointer
     if (this == getRawPointer(other))
         return true;
@@ -1276,7 +1276,7 @@ Interior::isEquivalentHelper(Node *other_, EquivPairs &matched) {
 }
 
 Ptr
-Interior::substitute(const Ptr &from, const Ptr &to, const SmtSolverPtr &solver) {
+Interior::substitute(const Ptr &from, const Ptr &to, const SmtSolver::Ptr &solver) {
     ASSERT_require(from!=NULL && to!=NULL && from->nBits()==to->nBits());
     if (isEquivalentTo(from))
         return to;
@@ -1441,7 +1441,7 @@ Interior::commutative() {
 }
 
 InteriorPtr
-Interior::idempotent(const SmtSolverPtr &solver) {
+Interior::idempotent(const SmtSolver::Ptr &solver) {
     Nodes newArgs;
     bool isSimplified = false;
     for (const Ptr &arg: children()) {
@@ -1479,7 +1479,7 @@ Interior::involutary() {
 //   (shift a (shift b x)) ==> (shift (add a b) x)
 // making sure a and b are extended to the same width
 Ptr
-Interior::additiveNesting(const SmtSolverPtr &solver) {
+Interior::additiveNesting(const SmtSolver::Ptr &solver) {
     const Interior *nested = childRaw(1)->isInteriorNodeRaw();
     if (nested != nullptr && nested->getOperator() == getOperator()) {
         ASSERT_require(nested->nChildren() == nChildren());
@@ -1504,7 +1504,7 @@ Interior::additiveNesting(const SmtSolverPtr &solver) {
 }
 
 Ptr
-Interior::identity(uint64_t ident, const SmtSolverPtr &solver) {
+Interior::identity(uint64_t ident, const SmtSolver::Ptr &solver) {
     Nodes args;
     bool modified = false;
     for (Nodes::const_iterator ci=children_.begin(); ci!=children_.end(); ++ci) {
@@ -1541,7 +1541,7 @@ Interior::identity(uint64_t ident, const SmtSolverPtr &solver) {
 }
 
 Ptr
-Interior::poisonNan(const SmtSolverPtr &solver) {
+Interior::poisonNan(const SmtSolver::Ptr&) {
     for (Ptr child: children()) {
         const Leaf *leaf = child->isLeafNodeRaw();
         if (leaf && leaf->isFloatingPointNan())
@@ -1556,7 +1556,7 @@ Interior::unaryNoOp() {
 }
 
 Ptr
-Interior::rewrite(const Simplifier &simplifier, const SmtSolverPtr &solver) {
+Interior::rewrite(const Simplifier &simplifier, const SmtSolver::Ptr &solver) {
     if (Ptr simplified = simplifier.rewrite(this, solver))
         return simplified;
     return sharedFromThis();
@@ -1605,7 +1605,7 @@ AddSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) cons
 }
 
 Ptr
-AddSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
+AddSimplifier::rewrite(Interior *inode, const SmtSolver::Ptr &solver) const {
     // Simplify these expressions by hoisting the ite (SEI):
     //   (add (ite C X Y) Z)
     //   (add Z (ite C X Y)
@@ -1679,7 +1679,7 @@ AddSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 
     // Rewrite (add ... (negate (add a b)) ...) => (add ... (negate a) (negate b) ...)
     struct distributeNegations {
-        Ptr operator()(Interior *add, const SmtSolverPtr &solver) {
+        Ptr operator()(Interior *add, const SmtSolver::Ptr &solver) {
             Nodes children;
             bool distributed = false;
             for (size_t i=0; i<add->nChildren(); ++i) {
@@ -1751,7 +1751,7 @@ AndSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) cons
 }
 
 Ptr
-AndSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
+AndSimplifier::rewrite(Interior *inode, const SmtSolver::Ptr&) const {
     // Result is zero if any argument is zero
     for (size_t i=0; i<inode->nChildren(); ++i) {
         const Leaf *child = inode->childRaw(i)->isLeafNodeRaw();
@@ -1783,7 +1783,7 @@ OrSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) const
 }
 
 Ptr
-OrSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
+OrSimplifier::rewrite(Interior *inode, const SmtSolver::Ptr &solver) const {
     // Result has all bits set if any argument has all bits set.
     // Zeros have no effect on the result
     std::vector<bool> removed(inode->nChildren(), false);
@@ -1830,7 +1830,7 @@ XorSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) cons
 }
 
 Ptr
-XorSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
+XorSimplifier::rewrite(Interior *inode, const SmtSolver::Ptr &solver) const {
     // If any pairs of arguments are equal, then they don't contribute to the final answer.
     // If any argument is zero, then it doesn't contribute to the final answer.
     std::vector<bool> removed(inode->nChildren(), false);
@@ -1913,7 +1913,7 @@ ConcatSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) c
 }
 
 Ptr
-ConcatSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
+ConcatSimplifier::rewrite(Interior *inode, const SmtSolver::Ptr &solver) const {
     // Hoist "ite" if possible. In other words, simplify this:
     //   (concat (ite C X1 Y1) ... (ite C Xn Yn))
     // to this:
@@ -2007,7 +2007,7 @@ ConcatSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 }
 
 Ptr
-ConvertSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
+ConvertSimplifier::rewrite(Interior *inode, const SmtSolver::Ptr &solver) const {
     // (convert[X] Y[X]) => Y[X]
     if (inode->type() == inode->childRaw(0)->type())
         return inode->child(0);
@@ -2027,7 +2027,7 @@ ConvertSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 }
 
 Ptr
-ExtractSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
+ExtractSimplifier::rewrite(Interior *inode, const SmtSolver::Ptr &solver) const {
     const Leaf *from_node = inode->childRaw(0)->isLeafNodeRaw();
     const Leaf *to_node   = inode->childRaw(1)->isLeafNodeRaw();
     Ptr operand   = inode->child(2);
@@ -2132,7 +2132,7 @@ ExtractSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 }
 
 Ptr
-AsrSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
+AsrSimplifier::rewrite(Interior *inode, const SmtSolver::Ptr&) const {
     ASSERT_require(2==inode->nChildren());
 
     // Constant folding
@@ -2148,7 +2148,7 @@ AsrSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 }
 
 Ptr
-InvertSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
+InvertSimplifier::rewrite(Interior *inode, const SmtSolver::Ptr&) const {
     // Constant folding
     const Leaf *operand_node = inode->childRaw(0)->isLeafNodeRaw();
     if (operand_node==NULL || !operand_node->isIntegerConstant())
@@ -2159,7 +2159,7 @@ InvertSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 }
 
 Ptr
-NegateSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
+NegateSimplifier::rewrite(Interior *inode, const SmtSolver::Ptr&) const {
     // Constant folding
     const Leaf *operand_node = inode->childRaw(0)->isLeafNodeRaw();
     if (operand_node==NULL || !operand_node->isIntegerConstant())
@@ -2170,7 +2170,7 @@ NegateSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 }
 
 Ptr
-IteSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
+IteSimplifier::rewrite(Interior *inode, const SmtSolver::Ptr &solver) const {
     // Is the condition known?
     const Leaf *cond_node = inode->childRaw(0)->isLeafNodeRaw();
     if (cond_node!=NULL && cond_node->isIntegerConstant()) {
@@ -2210,7 +2210,7 @@ IteSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 }
 
 Ptr
-NoopSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
+NoopSimplifier::rewrite(Interior *inode, const SmtSolver::Ptr&) const {
     if (1==inode->nChildren())
         return inode->child(0);
     return Ptr();
@@ -2227,7 +2227,7 @@ isPowerOfTwo(T n) {
 }
 
 Ptr
-RolSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
+RolSimplifier::rewrite(Interior *inode, const SmtSolver::Ptr &solver) const {
     const Leaf *sa_leaf = inode->childRaw(0)->isLeafNodeRaw();
     const Leaf *val_leaf = inode->childRaw(1)->isLeafNodeRaw();
 
@@ -2274,7 +2274,7 @@ RolSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     return Ptr();
 }
 Ptr
-RorSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
+RorSimplifier::rewrite(Interior *inode, const SmtSolver::Ptr &solver) const {
     const Leaf *sa_leaf = inode->childRaw(0)->isLeafNodeRaw();
     const Leaf *val_leaf = inode->childRaw(1)->isLeafNodeRaw();
 
@@ -2322,7 +2322,7 @@ RorSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 }
 
 Ptr
-UextendSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
+UextendSimplifier::rewrite(Interior *inode, const SmtSolver::Ptr &solver) const {
     // Noop case
     size_t oldsize = inode->childRaw(1)->nBits();
     size_t newsize = inode->nBits();
@@ -2369,7 +2369,7 @@ UextendSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 }
 
 Ptr
-SextendSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
+SextendSimplifier::rewrite(Interior *inode, const SmtSolver::Ptr &solver) const {
     // Noop case
     size_t oldsize = inode->childRaw(1)->nBits();
     size_t newsize = inode->nBits();
@@ -2393,7 +2393,7 @@ SextendSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 }
 
 Ptr
-EqSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
+EqSimplifier::rewrite(Interior *inode, const SmtSolver::Ptr&) const {
     // Constant folding
     const Leaf *a_leaf = inode->childRaw(0)->isLeafNodeRaw();
     const Leaf *b_leaf = inode->childRaw(1)->isLeafNodeRaw();
@@ -2403,14 +2403,14 @@ EqSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     }
 
     // (eq x x) => 1
-    if (inode->childRaw(0)->mustEqual(inode->child(1), SmtSolverPtr()))
+    if (inode->childRaw(0)->mustEqual(inode->child(1), SmtSolver::Ptr()))
         return makeBooleanConstant(true, inode->comment(), inode->flags());
 
     return Ptr();
 }
 
 Ptr
-SgeSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
+SgeSimplifier::rewrite(Interior *inode, const SmtSolver::Ptr&) const {
     // Constant folding
     const Leaf *a_leaf = inode->childRaw(0)->isLeafNodeRaw();
     const Leaf *b_leaf = inode->childRaw(1)->isLeafNodeRaw();
@@ -2420,14 +2420,14 @@ SgeSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     }
 
     // (sge x x) => 1
-    if (inode->childRaw(0)->mustEqual(inode->child(1), SmtSolverPtr()))
+    if (inode->childRaw(0)->mustEqual(inode->child(1), SmtSolver::Ptr()))
         return makeBooleanConstant(true, inode->comment(), inode->flags());
 
     return Ptr();
 }
 
 Ptr
-SgtSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
+SgtSimplifier::rewrite(Interior *inode, const SmtSolver::Ptr&) const {
     // Constant folding
     const Leaf *a_leaf = inode->childRaw(0)->isLeafNodeRaw();
     const Leaf *b_leaf = inode->childRaw(1)->isLeafNodeRaw();
@@ -2440,7 +2440,7 @@ SgtSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 }
 
 Ptr
-SleSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
+SleSimplifier::rewrite(Interior *inode, const SmtSolver::Ptr&) const {
     // Constant folding
     const Leaf *a_leaf = inode->childRaw(0)->isLeafNodeRaw();
     const Leaf *b_leaf = inode->childRaw(1)->isLeafNodeRaw();
@@ -2450,14 +2450,14 @@ SleSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     }
 
     // (sle x x) => 1
-    if (inode->childRaw(0)->mustEqual(inode->child(1), SmtSolverPtr()))
+    if (inode->childRaw(0)->mustEqual(inode->child(1), SmtSolver::Ptr()))
         return makeBooleanConstant(true, inode->comment(), inode->flags());
 
     return Ptr();
 }
 
 Ptr
-SltSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
+SltSimplifier::rewrite(Interior *inode, const SmtSolver::Ptr&) const {
     // Constant folding
     const Leaf *a_leaf = inode->childRaw(0)->isLeafNodeRaw();
     const Leaf *b_leaf = inode->childRaw(1)->isLeafNodeRaw();
@@ -2470,7 +2470,7 @@ SltSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 }
 
 Ptr
-UgeSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
+UgeSimplifier::rewrite(Interior *inode, const SmtSolver::Ptr&) const {
     // Constant folding
     const Leaf *a_leaf = inode->childRaw(0)->isLeafNodeRaw();
     const Leaf *b_leaf = inode->childRaw(1)->isLeafNodeRaw();
@@ -2480,14 +2480,14 @@ UgeSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     }
 
     // (uge x x) => 1
-    if (inode->childRaw(0)->mustEqual(inode->child(1), SmtSolverPtr()))
+    if (inode->childRaw(0)->mustEqual(inode->child(1), SmtSolver::Ptr()))
         return makeBooleanConstant(true, inode->comment(), inode->flags());
 
    return Ptr();
 }
 
 Ptr
-UgtSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
+UgtSimplifier::rewrite(Interior *inode, const SmtSolver::Ptr&) const {
     // Constant folding
     const Leaf *a_leaf = inode->childRaw(0)->isLeafNodeRaw();
     const Leaf *b_leaf = inode->childRaw(1)->isLeafNodeRaw();
@@ -2500,7 +2500,7 @@ UgtSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 }
 
 Ptr
-UleSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
+UleSimplifier::rewrite(Interior *inode, const SmtSolver::Ptr&) const {
     // Constant folding
     const Leaf *a_leaf = inode->childRaw(0)->isLeafNodeRaw();
     const Leaf *b_leaf = inode->childRaw(1)->isLeafNodeRaw();
@@ -2510,14 +2510,14 @@ UleSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     }
 
     // (ule x x) => 1
-    if (inode->childRaw(0)->mustEqual(inode->child(1), SmtSolverPtr()))
+    if (inode->childRaw(0)->mustEqual(inode->child(1), SmtSolver::Ptr()))
         return makeBooleanConstant(true, inode->comment(), inode->flags());
 
     return Ptr();
 }
 
 Ptr
-UltSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
+UltSimplifier::rewrite(Interior *inode, const SmtSolver::Ptr&) const {
     // Constant folding
     const Leaf *a_leaf = inode->childRaw(0)->isLeafNodeRaw();
     const Leaf *b_leaf = inode->childRaw(1)->isLeafNodeRaw();
@@ -2530,7 +2530,7 @@ UltSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 }
 
 Ptr
-ZeropSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
+ZeropSimplifier::rewrite(Interior *inode, const SmtSolver::Ptr&) const {
     // Constant folding
     const Leaf *a_leaf = inode->childRaw(0)->isLeafNodeRaw();
     if (a_leaf && a_leaf->isIntegerConstant())
@@ -2540,7 +2540,7 @@ ZeropSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 }
 
 Ptr
-SdivSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
+SdivSimplifier::rewrite(Interior *inode, const SmtSolver::Ptr&) const {
     // Constant folding
     const Leaf *a_leaf = inode->childRaw(0)->isLeafNodeRaw();
     const Leaf *b_leaf = inode->childRaw(1)->isLeafNodeRaw();
@@ -2558,7 +2558,7 @@ SdivSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 }
 
 Ptr
-SmodSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
+SmodSimplifier::rewrite(Interior *inode, const SmtSolver::Ptr&) const {
     // Constant folding
     const Leaf *a_leaf = inode->childRaw(0)->isLeafNodeRaw();
     const Leaf *b_leaf = inode->childRaw(1)->isLeafNodeRaw();
@@ -2577,7 +2577,7 @@ SmodSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 }
 
 Ptr
-UdivSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
+UdivSimplifier::rewrite(Interior *inode, const SmtSolver::Ptr&) const {
     // Constant folding
     const Leaf *a_leaf = inode->childRaw(0)->isLeafNodeRaw();
     const Leaf *b_leaf = inode->childRaw(1)->isLeafNodeRaw();
@@ -2596,7 +2596,7 @@ UdivSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 }
 
 Ptr
-UmodSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
+UmodSimplifier::rewrite(Interior *inode, const SmtSolver::Ptr&) const {
     // Constant folding
     const Leaf *a_leaf = inode->childRaw(0)->isLeafNodeRaw();
     const Leaf *b_leaf = inode->childRaw(1)->isLeafNodeRaw();
@@ -2615,7 +2615,7 @@ UmodSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 }
 
 Ptr
-ShiftSimplifier::combine_strengths(Ptr strength1, Ptr strength2, size_t value_width, const SmtSolverPtr &solver) const {
+ShiftSimplifier::combine_strengths(Ptr strength1, Ptr strength2, size_t value_width, const SmtSolver::Ptr &solver) const {
     if (!strength1 || !strength2)
         return Ptr();
 
@@ -2644,7 +2644,7 @@ ShiftSimplifier::combine_strengths(Ptr strength1, Ptr strength2, size_t value_wi
 }
 
 Ptr
-ShlSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
+ShlSimplifier::rewrite(Interior *inode, const SmtSolver::Ptr &solver) const {
     const Leaf *sa_leaf = inode->childRaw(0)->isLeafNodeRaw();
     const Leaf *val_leaf = inode->childRaw(1)->isLeafNodeRaw();
 
@@ -2708,7 +2708,7 @@ ShlSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 }
 
 Ptr
-ShrSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
+ShrSimplifier::rewrite(Interior *inode, const SmtSolver::Ptr &solver) const {
     const Leaf *sa_leaf = inode->childRaw(0)->isLeafNodeRaw();
     const Leaf *val_leaf = inode->childRaw(1)->isLeafNodeRaw();
 
@@ -2771,7 +2771,7 @@ ShrSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 }
 
 Ptr
-LssbSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
+LssbSimplifier::rewrite(Interior *inode, const SmtSolver::Ptr&) const {
     // Constant folding
     const Leaf *a_leaf = inode->childRaw(0)->isLeafNodeRaw();
     if (a_leaf && a_leaf->isIntegerConstant()) {
@@ -2784,7 +2784,7 @@ LssbSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 }
 
 Ptr
-MssbSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
+MssbSimplifier::rewrite(Interior *inode, const SmtSolver::Ptr&) const {
     // Constant folding
     const Leaf *a_leaf = inode->childRaw(0)->isLeafNodeRaw();
     if (a_leaf && a_leaf->isIntegerConstant()) {
@@ -2797,7 +2797,7 @@ MssbSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 }
 
 Ptr
-ReinterpretSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
+ReinterpretSimplifier::rewrite(Interior *inode, const SmtSolver::Ptr&) const {
     // (reinterpret[X] Y[X]) => Y[X]
     if (inode->type() == inode->childRaw(0)->type())
         return inode->child(0);
@@ -2806,7 +2806,7 @@ ReinterpretSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) cons
 }
 
 Ptr
-SetSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
+SetSimplifier::rewrite(Interior *inode, const SmtSolver::Ptr &solver) const {
     // (set x) => x
     if (1 == inode->nChildren())
         return inode->child(0);
@@ -2843,7 +2843,7 @@ SetSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 }
 
 Ptr
-Interior::simplifyTop(const SmtSolverPtr &solver) {
+Interior::simplifyTop(const SmtSolver::Ptr &solver) {
     Ptr node = sharedFromThis();
     while (InteriorPtr inode = node->isInteriorNode()) {
         Ptr newnode = node;
@@ -3325,7 +3325,7 @@ Leaf::printAsSigned(std::ostream &o, Formatter &formatter, bool as_signed) const
 }
 
 bool
-Leaf::mustEqual(const Ptr &other_, const SmtSolverPtr &solver) {
+Leaf::mustEqual(const Ptr &other_, const SmtSolver::Ptr &solver) {
     bool retval = false;
     const Leaf *other = other_->isLeafNodeRaw();
     if (this == other) {
@@ -3371,7 +3371,7 @@ Leaf::mustEqual(const Ptr &other_, const SmtSolverPtr &solver) {
 }
 
 bool
-Leaf::mayEqual(const Ptr &other, const SmtSolverPtr &solver) {
+Leaf::mayEqual(const Ptr &other, const SmtSolver::Ptr &solver) {
     const Leaf *otherLeaf = other->isLeafNodeRaw();
 
     // Fast comparison of literally the same expression pointer
@@ -3462,7 +3462,7 @@ Leaf::isEquivalentTo(const Ptr &other) {
 }
 
 bool
-Leaf::isEquivalentHelper(Node *other_, EquivPairs &matched) {
+Leaf::isEquivalentHelper(Node *other_, EquivPairs&/*matched*/) {
     const Leaf *other = other_->isLeafNodeRaw();
     if (this == other) {
         return true;
@@ -3478,7 +3478,7 @@ Leaf::isEquivalentHelper(Node *other_, EquivPairs &matched) {
 }
 
 Ptr
-Leaf::substitute(const Ptr &from, const Ptr &to, const SmtSolverPtr &solver) {
+Leaf::substitute(const Ptr &from, const Ptr &to, const SmtSolver::Ptr&) {
     ASSERT_require(from!=NULL && to!=NULL && from->nBits()==to->nBits());
     if (isEquivalentTo(from))
         return to;
@@ -3735,7 +3735,7 @@ makeExistingMemory(size_t addressWidth, size_t valueWidth, uint64_t id, const st
 }
 
 Ptr
-makeAdd(const Ptr&a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+makeAdd(const Ptr&a, const Ptr &b, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     if (a->isFloatingPointExpr() && b->isFloatingPointExpr()) {
         return Interior::instance(OP_FP_ADD, a, b, solver, comment, flags);
     } else {
@@ -3744,42 +3744,42 @@ makeAdd(const Ptr&a, const Ptr &b, const SmtSolverPtr &solver, const std::string
 }
 
 Ptr
-makeBooleanAnd(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+makeBooleanAnd(const Ptr &a, const Ptr &b, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     return Interior::instance(OP_AND, a, b, solver, comment, flags);
 }
 
 Ptr
-makeAsr(const Ptr &sa, const Ptr &a, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+makeAsr(const Ptr &sa, const Ptr &a, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     return Interior::instance(OP_ASR, sa, a, solver, comment, flags);
 }
 
 Ptr
-makeAnd(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+makeAnd(const Ptr &a, const Ptr &b, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     return Interior::instance(OP_AND, a, b, solver, comment, flags);
 }
 
 Ptr
-makeOr(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+makeOr(const Ptr &a, const Ptr &b, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     return Interior::instance(OP_OR, a, b, solver, comment, flags);
 }
 
 Ptr
-makeXor(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+makeXor(const Ptr &a, const Ptr &b, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     return Interior::instance(OP_XOR, a, b, solver, comment, flags);
 }
 
 Ptr
-makeConcat(const Ptr &hi, const Ptr &lo, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+makeConcat(const Ptr &hi, const Ptr &lo, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     return Interior::instance(OP_CONCAT, hi, lo, solver, comment, flags);
 }
 
 Ptr
-makeConvert(const Ptr &a, const Type &dstType, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+makeConvert(const Ptr &a, const Type &dstType, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     return Interior::instance(dstType, OP_CONVERT, a, solver, comment, flags);
 }
 
 Ptr
-makeEq(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+makeEq(const Ptr &a, const Ptr &b, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     if (a->isFloatingPointExpr() && b->isFloatingPointExpr()) {
         return Interior::instance(OP_FP_EQ, a, b, solver, comment, flags);
     } else {
@@ -3788,28 +3788,28 @@ makeEq(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string
 }
 
 Ptr
-makeExtract(const Ptr &begin, const Ptr &end, const Ptr &a, const SmtSolverPtr &solver, const std::string &comment,
+makeExtract(const Ptr &begin, const Ptr &end, const Ptr &a, const SmtSolver::Ptr &solver, const std::string &comment,
             unsigned flags) {
     return Interior::instance(OP_EXTRACT, begin, end, a, solver, comment, flags);
 }
 
 Ptr
-makeInvert(const Ptr &a, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+makeInvert(const Ptr &a, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     return Interior::instance(OP_INVERT, a, solver, comment, flags);
 }
 
 Ptr
-makeIsInfinite(const Ptr &a, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+makeIsInfinite(const Ptr &a, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     return Interior::instance(OP_FP_ISINFINITE, a, solver, comment, flags);
 }
 
 Ptr
-makeIsNan(const Ptr &a, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+makeIsNan(const Ptr &a, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     return Interior::instance(OP_FP_ISNAN, a, solver, comment, flags);
 }
 
 Ptr
-makeIsNeg(const Ptr &a, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+makeIsNeg(const Ptr &a, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     if (a->isFloatingPointExpr()) {
         return Interior::instance(OP_FP_ISNEG, a, solver, comment, flags);
     } else {
@@ -3818,12 +3818,12 @@ makeIsNeg(const Ptr &a, const SmtSolverPtr &solver, const std::string &comment, 
 }
 
 Ptr
-makeIsNorm(const Ptr &a, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+makeIsNorm(const Ptr &a, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     return Interior::instance(OP_FP_ISNORM, a, solver, comment, flags);
 }
 
 Ptr
-makeIsPos(const Ptr &a, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+makeIsPos(const Ptr &a, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     if (a->isFloatingPointExpr()) {
         return Interior::instance(OP_FP_ISPOS, a, solver, comment, flags);
     } else {
@@ -3832,29 +3832,29 @@ makeIsPos(const Ptr &a, const SmtSolverPtr &solver, const std::string &comment, 
 }
 
 Ptr
-makeIsSubnorm(const Ptr &a, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+makeIsSubnorm(const Ptr &a, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     return Interior::instance(OP_FP_ISSUBNORM, a, solver, comment, flags);
 }
 
 Ptr
-makeIte(const Ptr &cond, const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment,
+makeIte(const Ptr &cond, const Ptr &a, const Ptr &b, const SmtSolver::Ptr &solver, const std::string &comment,
         unsigned flags) {
     return Interior::instance(OP_ITE, cond, a, b, solver, comment, flags);
 }
 
 Ptr
-makeLet(const Ptr &a, const Ptr &b, const Ptr &c, const SmtSolverPtr &solver, const std::string &comment,
+makeLet(const Ptr &a, const Ptr &b, const Ptr &c, const SmtSolver::Ptr &solver, const std::string &comment,
         unsigned flags) {
     return Interior::instance(OP_LET, a, b, c, solver, comment, flags);
 }
 
 Ptr
-makeLssb(const Ptr &a, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+makeLssb(const Ptr &a, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     return Interior::instance(OP_LSSB, a, solver, comment, flags);
 }
 
 Ptr
-makeMax(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+makeMax(const Ptr &a, const Ptr &b, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     if (a->isFloatingPointExpr() && b->isFloatingPointExpr()) {
         return Interior::instance(OP_FP_MAX, a, b, solver, comment, flags);
     } else {
@@ -3863,7 +3863,7 @@ makeMax(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::strin
 }
 
 Ptr
-makeMin(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+makeMin(const Ptr &a, const Ptr &b, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     if (a->isFloatingPointExpr() && b->isFloatingPointExpr()) {
         return Interior::instance(OP_FP_MIN, a, b, solver, comment, flags);
     } else {
@@ -3872,12 +3872,12 @@ makeMin(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::strin
 }
 
 Ptr
-makeMssb(const Ptr &a, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+makeMssb(const Ptr &a, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     return Interior::instance(OP_MSSB, a, solver, comment, flags);
 }
 
 Ptr
-makeMultiplyAdd(const Ptr &a, const Ptr &b, const Ptr &c, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+makeMultiplyAdd(const Ptr &a, const Ptr &b, const Ptr &c, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     if (a->isFloatingPointExpr() && b->isFloatingPointExpr() && c->isFloatingPointExpr()) {
         return Interior::instance(OP_FP_MULADD, a, b, c, solver, comment, flags);
     } else {
@@ -3886,7 +3886,7 @@ makeMultiplyAdd(const Ptr &a, const Ptr &b, const Ptr &c, const SmtSolverPtr &so
 }
 
 Ptr
-makeNe(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+makeNe(const Ptr &a, const Ptr &b, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     if (a->isFloatingPointExpr() && b->isFloatingPointExpr()) {
         return makeInvert(Interior::instance(OP_FP_EQ, a, b, solver), solver, comment, flags);
     } else {
@@ -3895,7 +3895,7 @@ makeNe(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string
 }
 
 Ptr
-makeNegate(const Ptr &a, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+makeNegate(const Ptr &a, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     if (a->isFloatingPointExpr()) {
         return Interior::instance(OP_FP_NEGATE, a, solver, comment, flags);
     } else {
@@ -3904,47 +3904,47 @@ makeNegate(const Ptr &a, const SmtSolverPtr &solver, const std::string &comment,
 }
 
 Ptr
-makeBooleanOr(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+makeBooleanOr(const Ptr &a, const Ptr &b, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     return Interior::instance(OP_OR, a, b, solver, comment, flags);
 }
 
 Ptr
-makeRead(const Ptr &mem, const Ptr &addr, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+makeRead(const Ptr &mem, const Ptr &addr, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     return Interior::instance(OP_READ, mem, addr, solver, comment, flags);
 }
 
 Ptr
-makeReinterpret(const Ptr &a, const Type &dstType, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+makeReinterpret(const Ptr &a, const Type &dstType, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     return Interior::instance(dstType, OP_REINTERPRET, a, solver, comment, flags);
 }
 
 Ptr
-makeRol(const Ptr &sa, const Ptr &a, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+makeRol(const Ptr &sa, const Ptr &a, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     return Interior::instance(OP_ROL, sa, a, solver, comment, flags);
 }
 
 Ptr
-makeRor(const Ptr &sa, const Ptr &a, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+makeRor(const Ptr &sa, const Ptr &a, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     return Interior::instance(OP_ROR, sa, a, solver, comment, flags);
 }
 
 Ptr
-makeRound(const Ptr &a, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+makeRound(const Ptr &a, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     return Interior::instance(OP_FP_ROUND, a, solver, comment, flags);
 }
 
 Ptr
-makeSet(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+makeSet(const Ptr &a, const Ptr &b, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     return Interior::instance(OP_SET, a, b, solver, comment, flags);
 }
 
 Ptr
-makeSet(const Ptr &a, const Ptr &b, const Ptr &c, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+makeSet(const Ptr &a, const Ptr &b, const Ptr &c, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     return Interior::instance(OP_SET, a, b, c, solver, comment, flags);
 }
 
 Ptr
-makeSignedDiv(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+makeSignedDiv(const Ptr &a, const Ptr &b, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     if (a->isFloatingPointExpr() && b->isFloatingPointExpr()) {
         return Interior::instance(OP_FP_DIV, a, b, solver, comment, flags);
     } else {
@@ -3953,12 +3953,12 @@ makeSignedDiv(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std:
 }
 
 Ptr
-makeSignExtend(const Ptr &newSize, const Ptr &a, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+makeSignExtend(const Ptr &newSize, const Ptr &a, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     return Interior::instance(OP_SEXTEND, newSize, a, solver, comment, flags);
 }
 
 Ptr
-makeSignedGe(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+makeSignedGe(const Ptr &a, const Ptr &b, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     if (a->isFloatingPointExpr() && b->isFloatingPointExpr()) {
         return Interior::instance(OP_FP_GE, a, b, solver, comment, flags);
     } else {
@@ -3967,7 +3967,7 @@ makeSignedGe(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::
 }
 
 Ptr
-makeSignedGt(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+makeSignedGt(const Ptr &a, const Ptr &b, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     if (a->isFloatingPointExpr() && b->isFloatingPointExpr()) {
         return Interior::instance(OP_FP_GT, a, b, solver, comment, flags);
     } else {
@@ -3976,27 +3976,27 @@ makeSignedGt(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::
 }
 
 Ptr
-makeShl0(const Ptr &sa, const Ptr &a, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+makeShl0(const Ptr &sa, const Ptr &a, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     return Interior::instance(OP_SHL0, sa, a, solver, comment, flags);
 }
 
 Ptr
-makeShl1(const Ptr &sa, const Ptr &a, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+makeShl1(const Ptr &sa, const Ptr &a, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     return Interior::instance(OP_SHL1, sa, a, solver, comment, flags);
 }
 
 Ptr
-makeShr0(const Ptr &sa, const Ptr &a, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+makeShr0(const Ptr &sa, const Ptr &a, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     return Interior::instance(OP_SHR0, sa, a, solver, comment, flags);
 }
 
 Ptr
-makeShr1(const Ptr &sa, const Ptr &a, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+makeShr1(const Ptr &sa, const Ptr &a, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     return Interior::instance(OP_SHR1, sa, a, solver, comment, flags);
 }
 
 Ptr
-makeSignedIsPos(const Ptr &a, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+makeSignedIsPos(const Ptr &a, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     if (a->isFloatingPointExpr()) {
         return Interior::instance(OP_FP_ISPOS, a, solver, comment, flags);
     } else {
@@ -4005,7 +4005,7 @@ makeSignedIsPos(const Ptr &a, const SmtSolverPtr &solver, const std::string &com
 }
 
 Ptr
-makeSignedLe(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+makeSignedLe(const Ptr &a, const Ptr &b, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     if (a->isFloatingPointExpr() && b->isFloatingPointExpr()) {
         return Interior::instance(OP_FP_LE, a, b, solver, comment, flags);
     } else {
@@ -4014,7 +4014,7 @@ makeSignedLe(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::
 }
 
 Ptr
-makeSignedLt(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+makeSignedLt(const Ptr &a, const Ptr &b, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     if (a->isFloatingPointExpr() && b->isFloatingPointExpr()) {
         return Interior::instance(OP_FP_LT, a, b, solver, comment, flags);
     } else {
@@ -4023,7 +4023,7 @@ makeSignedLt(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::
 }
 
 Ptr
-makeSignedMax(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+makeSignedMax(const Ptr &a, const Ptr &b, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     if (a->isFloatingPointExpr() && b->isFloatingPointExpr()) {
         return Interior::instance(OP_FP_MAX, a, b, solver, comment, flags);
     } else {
@@ -4032,7 +4032,7 @@ makeSignedMax(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std:
 }
 
 Ptr
-makeSignedMin(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+makeSignedMin(const Ptr &a, const Ptr &b, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     if (a->isFloatingPointExpr() && b->isFloatingPointExpr()) {
         return Interior::instance(OP_FP_MIN, a, b, solver, comment, flags);
     } else {
@@ -4041,7 +4041,7 @@ makeSignedMin(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std:
 }
 
 Ptr
-makeSignedMod(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+makeSignedMod(const Ptr &a, const Ptr &b, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     if (a->isFloatingPointExpr() && b->isFloatingPointExpr()) {
         return Interior::instance(OP_FP_MOD, a, b, solver, comment, flags);
     } else {
@@ -4050,7 +4050,7 @@ makeSignedMod(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std:
 }
 
 Ptr
-makeSignedMul(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+makeSignedMul(const Ptr &a, const Ptr &b, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     if (a->isFloatingPointExpr() && b->isFloatingPointExpr()) {
         return Interior::instance(OP_FP_MUL, a, b, solver, comment, flags);
     } else {
@@ -4059,12 +4059,12 @@ makeSignedMul(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std:
 }
 
 Ptr
-makeSqrt(const Ptr &a, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+makeSqrt(const Ptr &a, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     return Interior::instance(OP_FP_SQRT, a, solver, comment, flags);
 }
 
 Ptr
-makeDiv(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+makeDiv(const Ptr &a, const Ptr &b, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     if (a->isFloatingPointExpr() && b->isFloatingPointExpr()) {
         return Interior::instance(OP_FP_DIV, a, b, solver, comment, flags);
     } else {
@@ -4073,12 +4073,12 @@ makeDiv(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::strin
 }
 
 Ptr
-makeExtend(const Ptr &newSize, const Ptr &a, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+makeExtend(const Ptr &newSize, const Ptr &a, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     return Interior::instance(OP_UEXTEND, newSize, a, solver, comment, flags);
 }
 
 Ptr
-makeGe(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+makeGe(const Ptr &a, const Ptr &b, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     if (a->isFloatingPointExpr() && b->isFloatingPointExpr()) {
         return Interior::instance(OP_FP_GE, a, b, solver, comment, flags);
     } else {
@@ -4087,7 +4087,7 @@ makeGe(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string
 }
 
 Ptr
-makeGt(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+makeGt(const Ptr &a, const Ptr &b, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     if (a->isFloatingPointExpr() && b->isFloatingPointExpr()) {
         return Interior::instance(OP_FP_GT, a, b, solver, comment, flags);
     } else {
@@ -4096,7 +4096,7 @@ makeGt(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string
 }
 
 Ptr
-makeLe(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+makeLe(const Ptr &a, const Ptr &b, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     if (a->isFloatingPointExpr() && b->isFloatingPointExpr()) {
         return Interior::instance(OP_FP_LE, a, b, solver, comment, flags);
     } else {
@@ -4105,7 +4105,7 @@ makeLe(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string
 }
 
 Ptr
-makeLt(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+makeLt(const Ptr &a, const Ptr &b, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     if (a->isFloatingPointExpr() && b->isFloatingPointExpr()) {
         return Interior::instance(OP_FP_LT, a, b, solver, comment, flags);
     } else {
@@ -4114,7 +4114,7 @@ makeLt(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string
 }
 
 Ptr
-makeMod(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+makeMod(const Ptr &a, const Ptr &b, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     if (a->isFloatingPointExpr() && b->isFloatingPointExpr()) {
         return Interior::instance(OP_FP_MOD, a, b, solver, comment, flags);
     } else {
@@ -4123,7 +4123,7 @@ makeMod(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::strin
 }
 
 Ptr
-makeMul(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+makeMul(const Ptr &a, const Ptr &b, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     if (a->isFloatingPointExpr() && b->isFloatingPointExpr()) {
         return Interior::instance(OP_FP_MUL, a, b, solver, comment, flags);
     } else {
@@ -4132,13 +4132,13 @@ makeMul(const Ptr &a, const Ptr &b, const SmtSolverPtr &solver, const std::strin
 }
 
 Ptr
-makeWrite(const Ptr &mem, const Ptr &addr, const Ptr &a, const SmtSolverPtr &solver, const std::string &comment,
+makeWrite(const Ptr &mem, const Ptr &addr, const Ptr &a, const SmtSolver::Ptr &solver, const std::string &comment,
           unsigned flags) {
     return Interior::instance(OP_WRITE, mem, addr, a, solver, comment, flags);
 }
 
 Ptr
-makeZerop(const Ptr &a, const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
+makeZerop(const Ptr &a, const SmtSolver::Ptr &solver, const std::string &comment, unsigned flags) {
     if (a->isFloatingPointExpr()) {
         return Interior::instance(OP_FP_ISZERO, a, solver, comment, flags);
     } else {

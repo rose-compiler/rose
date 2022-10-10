@@ -99,8 +99,9 @@ std::vector<std::string> isaNames();
  *
  *  This stores a reference to the specified disassembler factory. A factory is simply a disassembler that will never be used
  *  to decode any instructions. It's only purpose is to hold settings, to test whether it matches any of the @ref lookup
- *  functions, and to produce by its @ref clone method a new disassembler that's able to decode instructions.  The various @ref
- *  lookup functions will always call the factory's @ref clone method when returning a disassembler.
+ *  functions, and to produce by its @ref Base::clone "clone" method a new disassembler that's able to decode instructions.
+ *  The various @ref lookup functions will always call the factory's @ref Base::clone "clone" method when returning a
+ *  disassembler.
  *
  *  More specific disassembler instances should be registered after more general disassemblers since the lookup() method will
  *  inspect disassemblers in reverse order of their registration.  The ROSE library always initializes the front of the list

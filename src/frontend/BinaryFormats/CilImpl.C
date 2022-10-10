@@ -2064,7 +2064,7 @@ parseTinyHeader(std::uint8_t header)
 }
 
 SgAsmBlock*
-disassemble(SgAsmCilMethodDef* m, MethodHeader mh, std::vector<std::uint8_t>& buf, const Rose::BinaryAnalysis::Disassembler::Base::Ptr& disasm)
+disassemble(SgAsmCilMethodDef* m, MethodHeader mh, std::vector<std::uint8_t>& buf, const Rose::BinaryAnalysis::Disassembler::Base::Ptr& disasm) // blame pirkelbauer
 {
   const std::size_t              sz = buf.size();
   rose_addr_t                    addr = 0;

@@ -158,7 +158,7 @@ class LoopTreeCopyArray : public LoopTreeNode,
       { return new LoopTreeCopyArray( config); }
  private:
   CopyArrayConfig config;
-  void UpdateSwapNode( const SwapNodeInfo &info) { ROSE_ABORT(); }
+  void UpdateSwapNode( const SwapNodeInfo &) { ROSE_ABORT(); }
 };
 
 #endif

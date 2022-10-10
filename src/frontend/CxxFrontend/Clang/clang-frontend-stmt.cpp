@@ -3085,10 +3085,21 @@ bool ClangToSageTranslator::VisitFloatingLiteral(clang::FloatingLiteral * floati
 #endif
 
     unsigned int precision =  llvm::APFloat::semanticsPrecision(floating_literal->getValue().getSemantics());
+    llvm::APFloat llvmFloat = floating_literal->getValue();
+    std::string str;
+    llvm::raw_string_ostream os(str);
+    llvmFloat.print(os);
+#if DEBUG_VISIT_STMT
+    std::cerr << "ClangToSageTranslator::VisitFloatingLiteral precision = " << precision  << std::endl;
+    std::cerr << "ClangToSageTranslator::VisitFloatingLiteral value in string = " << os.str()  << std::endl;
+#endif
+
     if (precision == 24)
         *node = SageBuilder::buildFloatVal(floating_literal->getValue().convertToFloat());
     else if (precision == 53)
         *node = SageBuilder::buildDoubleVal(floating_literal->getValue().convertToDouble());
+    else if (precision == 64) 
+        *node = SageBuilder::buildLongDoubleVal(std::stold(os.str()));
     else
         ROSE_ASSERT(!"In VisitFloatingLiteral: Unsupported float size");
 
@@ -3655,60 +3666,97 @@ bool ClangToSageTranslator::VisitStringLiteral(clang::StringLiteral * string_lit
 #if DEBUG_VISIT_STMT
     std::cerr << "ClangToSageTranslator::VisitStringLiteral" << std::endl;
 #endif
+    bool res = true;
 
-    std::string tmp = string_literal->getString().str();
-    const char * raw_str = tmp.c_str();
+    std::string rawstr = string_literal->getBytes().str();
+    const char * rawdata = string_literal->getBytes().data();
+    std::string newstr;
+#if DEBUG_VISIT_STMT
+    std::cerr << "In ClangToSageTranslator string_literal length: " << string_literal->getLength() << " byteLength:" << string_literal->getByteLength() << std::endl;
+#endif
 
-    unsigned i = 0;
-    unsigned l = 0;
-    while (raw_str[i] != '\0') {
-        if (
-            raw_str[i] == '\\' ||
-            raw_str[i] == '\n' ||
-            raw_str[i] == '\r' ||
-            raw_str[i] == '"')
+// Pei-Hung (09/30/2022) handled wchar_t support.  
+// Supports for UTF-8, UTF-16, UTF-32 might just follow this, but need more examples.
+    if(string_literal->isWide())
+    {
+      void *memadrs = (void*)rawdata;
+      wchar_t const *newText = (wchar_t const *)memadrs;
+      for(int ii = 0; ii <  string_literal->getLength(); ++ii)
+      {
+        unsigned contentVal = static_cast<unsigned>(newText[ii]);
+        std::stringstream ss;
+/*
+C99 6.4.3p2: A universal character name shall not specify a character whose short identifier 
+is less than 00A0 other than 0024 ($), 0040 (@), or 0060 (`), nor one in the range D800 through DFFF inclusive.)
+*/
+        bool passUCharRule = false;
+        passUCharRule = !((contentVal < 0xA0 && (contentVal != 0x24 || contentVal != 0x40 || contentVal != 0x60)) || (contentVal >= 0xD800 && contentVal <= 0xDFFF)); 
+        if(passUCharRule)
         {
-            l++;
+          ss << std::setfill('0') << std::setw(4)  << std::uppercase  << std::hex <<  (contentVal & 0xFF);
+          newstr.append("\\u"+ss.str());
         }
-        l++;
-        i++;
+        else
+        {
+          switch (char(contentVal)) {
+              case '\\':
+                  newstr.append("\\\\");
+                  break;
+              case '\n':
+                  newstr.append("\\n");
+                  break;
+              case '\r':
+                  newstr.append("\\r");
+                  break;
+              case '"':
+                  newstr.append("\\r");
+                  break;
+              case '\0':
+                  newstr.append("\0");
+                  break;
+              default:
+                  newstr.push_back(char(contentVal));
+          }
+        }
+      }
     }
-    l++;
-
-    char * str = (char *)malloc(l * sizeof(char));
-    i = 0;
-    unsigned cnt = 0;
-
-    while (raw_str[i] != '\0') {
-        switch (raw_str[i]) {
+    else if(string_literal->isUTF8() || string_literal->isUTF16() || string_literal->isUTF32())
+    {
+       ROSE_ASSERT(FAIL_TODO == 0); // TODO
+       res = false;
+    }
+    else // ordinary
+    {
+      for(auto aa:rawstr)
+      {
+        switch (aa) {
             case '\\':
-                str[cnt++] = '\\';
-                str[cnt++] = '\\';
+                newstr.append("\\\\");
                 break;
             case '\n':
-                str[cnt++] = '\\';
-                str[cnt++] = 'n';
+                newstr.append("\\n");
                 break;
             case '\r':
-                str[cnt++] = '\\';
-                str[cnt++] = 'r';
+                newstr.append("\\r");
                 break;
             case '"':
-                str[cnt++] = '\\';
-                str[cnt++] = '"';
+                newstr.append("\\r");
+                break;
+            case '\0':
+                newstr.append("\0");
                 break;
             default:
-                str[cnt++] = raw_str[i];
+                newstr.push_back(aa);
         }
-        i++;
+      }
     }
-    str[cnt] = '\0';
+    SgStringVal* sgStrVal = SageBuilder::buildStringVal(newstr);
 
-    ROSE_ASSERT(l==cnt+1);
+    if(string_literal->isWide())
+      sgStrVal->set_wcharString(true);
+    *node = sgStrVal;
 
-    *node = SageBuilder::buildStringVal(str);
-
-    return VisitExpr(string_literal, node);
+    return VisitExpr(string_literal, node) && res;
 }
 
 bool ClangToSageTranslator::VisitSubstNonTypeTemplateParmExpr(clang::SubstNonTypeTemplateParmExpr * subst_non_type_template_parm_expr, SgNode ** node) {

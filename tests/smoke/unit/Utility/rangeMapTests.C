@@ -35,7 +35,7 @@ public:
     ValueContainer(const ValueSet &value): RangeMapValue<KeyRange, ValueSet>(value) {}
 
     ValueContainer split(const Range &my_range, const Key &new_end) {
-        assert(my_range.contains(Range(new_end)));
+        ASSERT_always_require(my_range.contains(Range(new_end)));
         return *this;
     }
 };

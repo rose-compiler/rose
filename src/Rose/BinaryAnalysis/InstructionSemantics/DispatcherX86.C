@@ -100,7 +100,7 @@ struct IP_aaa: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
         if (d->processorMode() == x86_insnsize_16) {
-            throw BaseSemantics::Exception("16-bit processor not implemented", insn);
+            throw BaseSemantics::NotImplemented("16-bit processor not implemented", insn);
         } else if (d->processorMode() == x86_insnsize_32) {
             if (insn->get_lockPrefix()) {
                 ops->interrupt(x86_exception_ud, 0);
@@ -132,7 +132,7 @@ struct IP_aad: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
         if (d->processorMode() == x86_insnsize_16) {
-            throw BaseSemantics::Exception("16-bit processor not implemented", insn);
+            throw BaseSemantics::NotImplemented("16-bit processor not implemented", insn);
         } else if (d->processorMode() == x86_insnsize_32) {
             if (insn->get_lockPrefix()) {
                 ops->interrupt(x86_exception_ud, 0);
@@ -161,7 +161,7 @@ struct IP_aam: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
         if (d->processorMode() == x86_insnsize_16) {
-            throw BaseSemantics::Exception("16-bit processor not implemented", insn);
+            throw BaseSemantics::NotImplemented("16-bit processor not implemented", insn);
         } else if (d->processorMode() == x86_insnsize_32) {
             BaseSemantics::SValue::Ptr divisor = d->read(args[0], 8);
             if (insn->get_lockPrefix()) {
@@ -190,7 +190,7 @@ struct IP_aas: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
         if (d->processorMode() == x86_insnsize_16) {
-            throw BaseSemantics::Exception("16-bit processor not implemented", insn);
+            throw BaseSemantics::NotImplemented("16-bit processor not implemented", insn);
         } else if (d->processorMode() == x86_insnsize_32) {
             if (insn->get_lockPrefix()) {
                 ops->interrupt(x86_exception_ud, 0);
@@ -591,7 +591,7 @@ struct IP_cmpstrings: P {
     void p(D d, Ops ops, I insn, A args) {
         if (insn->get_kind()==x86_cmpsd && args.size() == 2) {
             // This is a floating point instruction: compare scalar double-precision floating-point values
-            throw BaseSemantics::Exception("no dispatch ability for \"" + insn->get_mnemonic() + "\" instruction", insn);
+            throw BaseSemantics::NotImplemented("no dispatch ability for \"" + insn->get_mnemonic() + "\" instruction", insn);
         }
 
         assert_args(insn, args, 0);
@@ -715,7 +715,7 @@ struct IP_cmpxchg2: P {
 
 // CPU identification
 struct IP_cpuid: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
@@ -864,7 +864,7 @@ struct IP_fld: P {
         } else {
             size_t nbits = asm_type_width(args[0]->get_type());
             if (80!=nbits)
-                throw BaseSemantics::Exception(StringUtility::numberToString(nbits)+"-bit FP values not supported yet", insn);
+                throw BaseSemantics::NotImplemented(StringUtility::numberToString(nbits)+"-bit FP values not supported yet", insn);
             BaseSemantics::SValue::Ptr fp = d->read(args[0], nbits);
             d->pushFloatingPoint(fp);
         }
@@ -885,7 +885,7 @@ struct IP_fldcw: P {
 
 // Floating-point no-operation
 struct IP_fnop: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
         if (insn->get_lockPrefix())
             ops->interrupt(x86_exception_ud, 0);
@@ -925,7 +925,7 @@ struct IP_fst: P {
         } else {
             size_t nbits = asm_type_width(args[0]->get_type());
             if (80!=nbits)
-                throw BaseSemantics::Exception(StringUtility::numberToString(nbits)+"-bit FP values not supported yet", insn);
+                throw BaseSemantics::NotImplemented(StringUtility::numberToString(nbits)+"-bit FP values not supported yet", insn);
             d->write(args[0], d->readFloatingPointStack(0));
         }
     }
@@ -940,7 +940,7 @@ struct IP_fstp: P {
         } else {
             size_t nbits = asm_type_width(args[0]->get_type());
             if (80!=nbits)
-                throw BaseSemantics::Exception(StringUtility::numberToString(nbits)+"-bit FP values not supported yet", insn);
+                throw BaseSemantics::NotImplemented(StringUtility::numberToString(nbits)+"-bit FP values not supported yet", insn);
             d->write(args[0], d->readFloatingPointStack(0));
             d->popFloatingPoint();
         }
@@ -1042,7 +1042,7 @@ struct IP_inc: P {
 
 // Call to interrupt procedure
 struct IP_int: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
@@ -1058,7 +1058,7 @@ struct IP_int: P {
 // Call to the interrupt 3 procedure (for debugging), but slightly different semantics than the one-argument "INT 3"
 // instruction.
 struct IP_int3: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
@@ -1666,7 +1666,7 @@ struct IP_neg: P {
 
 // No operation
 struct IP_nop: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops ops, I insn, A) {
         if (insn->get_lockPrefix())
             ops->interrupt(x86_exception_ud, 0);
     }
@@ -3905,7 +3905,7 @@ struct IP_sub: P {
 
 // Fast system call
 struct IP_syscall: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
@@ -3917,7 +3917,7 @@ struct IP_syscall: P {
 
 // Fast system call
 struct IP_sysenter: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
@@ -3950,14 +3950,14 @@ struct IP_test: P {
 
 // Undefined instruction: UD2
 struct IP_ud2: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops ops, I, A) {
         ops->interrupt(x86_exception_ud, 0);
     }
 };
 
 // Wait (check for and handle unmasked floating-point exceptions)
 struct IP_wait: P {
-    void p(D d, Ops ops, I insn, A args) {
+    void p(D, Ops, I insn, A args) {
         // FIXME[Robb P. Matzke 2014-05-12]: currenty a no-op
         assert_args(insn, args, 0);
     }
@@ -5190,7 +5190,7 @@ DispatcherX86::pushFloatingPoint(const BaseSemantics::SValue::Ptr &value)
 {
     BaseSemantics::SValue::Ptr topOfStack = readRegister(REG_FPSTATUS_TOP);
     if (!topOfStack->isConcrete())
-        throw BaseSemantics::Exception("FP-stack top is not concrete", NULL);
+        throw BaseSemantics::NotImplemented("FP-stack top is not concrete", NULL);
     BaseSemantics::SValue::Ptr newTopOfStack = operators()->add(topOfStack, operators()->number_(topOfStack->nBits(), -1));
     ASSERT_require2(newTopOfStack->isConcrete(), "constant folding is required for FP-stack");
 
@@ -5201,11 +5201,11 @@ DispatcherX86::pushFloatingPoint(const BaseSemantics::SValue::Ptr &value)
 }
 
 BaseSemantics::SValue::Ptr
-DispatcherX86::readFloatingPointStack(size_t position)
+DispatcherX86::readFloatingPointStack(size_t /*position*/)
 {
     BaseSemantics::SValue::Ptr topOfStack = readRegister(REG_FPSTATUS_TOP);
     if (!topOfStack->isConcrete())
-        throw BaseSemantics::Exception("FP-stack top is not concrete", NULL);
+        throw BaseSemantics::NotImplemented("FP-stack top is not concrete", NULL);
     RegisterDescriptor reg(REG_ST0.majorNumber(), (REG_ST0.minorNumber() + topOfStack->toUnsigned().get()) % 8,
                            REG_ST0.offset(), REG_ST0.nBits());
     return readRegister(reg);
@@ -5216,7 +5216,7 @@ DispatcherX86::popFloatingPoint()
 {
     BaseSemantics::SValue::Ptr topOfStack = readRegister(REG_FPSTATUS_TOP);
     if (!topOfStack->isConcrete())
-        throw BaseSemantics::Exception("FP-stack top is not concrete", NULL);
+        throw BaseSemantics::NotImplemented("FP-stack top is not concrete", NULL);
     BaseSemantics::SValue::Ptr newTopOfStack = operators()->add(topOfStack, operators()->number_(topOfStack->nBits(), 1));
     ASSERT_require2(newTopOfStack->isConcrete(), "constant folding is required for FP-stack");
     writeRegister(REG_FPSTATUS_TOP, newTopOfStack);

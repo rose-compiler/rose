@@ -27,7 +27,7 @@ Assembler::Exception::print(std::ostream &o) const
 
 /* class method */
 Assembler *
-Assembler::create(SgAsmGenericHeader *hdr)
+Assembler::create(SgAsmGenericHeader*)
 {
     /* FIXME: This should eventually use a process similar to Disassembler [RPM 2009-07-23] */
     return new AssemblerX86();

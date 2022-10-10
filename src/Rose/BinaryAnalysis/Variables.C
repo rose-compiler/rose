@@ -454,12 +454,12 @@ public:
 
 public:
     virtual S2::BaseSemantics::RiscOperators::Ptr
-    create(const S2::BaseSemantics::SValue::Ptr &protoval, const SmtSolverPtr &solver = SmtSolverPtr()) const override {
+    create(const S2::BaseSemantics::SValue::Ptr &/*protoval*/, const SmtSolverPtr& = SmtSolverPtr()) const override {
         ASSERT_not_implemented("[Robb Matzke 2019-09-16]");
     }
 
     virtual S2::BaseSemantics::RiscOperators::Ptr
-    create(const S2::BaseSemantics::State::Ptr &state, const SmtSolverPtr &solver = SmtSolverPtr()) const override {
+    create(const S2::BaseSemantics::State::Ptr&, const SmtSolverPtr& = SmtSolverPtr()) const override {
         ASSERT_not_implemented("[Robb Matzke 2019-09-16]");
     }
 
@@ -931,7 +931,7 @@ isSortedByOffset(const StackVariable::Boundary &a, const StackVariable::Boundary
 }
 
 void
-VariableFinder::removeOutliers(const StackFrame &frame, const P2::Partitioner &partitioner, const P2::Function::Ptr &function,
+VariableFinder::removeOutliers(const StackFrame &frame, const P2::Partitioner&, const P2::Function::Ptr&,
                                StackVariable::Boundaries &boundaries /*in,out,sorted*/) {
 
 #ifndef NDEBUG

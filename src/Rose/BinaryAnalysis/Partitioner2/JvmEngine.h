@@ -35,7 +35,7 @@ namespace Partitioner2 {
  *  users can pick and choose to use only those steps they need, or perhaps to call the main actions one step at a time with
  *  the user making adjustments between steps.
  *
- *  @section extensibility Custimization
+ *  @section JvmEngine_extensibility Custimization
  *
  *  The actions taken by an engine can be customized in a number of ways:
  *
@@ -51,7 +51,7 @@ namespace Partitioner2 {
  *  @li The behavior of the @ref Partitioner itself can be modified by attaching callbacks to it. In fact, if the engine is
  *      used to create a partitioner then certain engine-defined callbacks are added to the partitioner.
  *
- *  @section basic Basic usage
+ *  @section JvmEngine_basic Basic usage
  *
  *  The most basic use case for the engine is to pass it the command-line arguments and have it do everything, eventually
  *  returning an abstract syntax tree.
@@ -71,7 +71,7 @@ namespace Partitioner2 {
  *       SgAsmBlock *gblock = P2::JvmEngine().frontend(argc, argv, purpose, description);
  *  @endcode
  *
- *  @section topsteps High level operations
+ *  @section JvmEngine_topsteps High level operations
  *
  *  While @ref frontend does everything, it's often useful to break it down to individual steps so that adjustments can be made
  *  along the way. This next level of steps are:

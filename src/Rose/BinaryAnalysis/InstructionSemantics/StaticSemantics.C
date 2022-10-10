@@ -187,8 +187,8 @@ RiscOperators::saveSemanticEffect(const BaseSemantics::SValue::Ptr &a_) {
                 path.push_back(node);
             }
             void postOrderVisit(SgNode *node) override {
-                ASSERT_require(!path.empty());
-                ASSERT_require(path.back() == node);
+                ASSERT_always_require(!path.empty());
+                ASSERT_always_require(path.back() == node);
                 path.pop_back();
             }
         } t1;
@@ -208,7 +208,7 @@ RiscOperators::saveSemanticEffect(const BaseSemantics::SValue::Ptr &a_) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void
-SValue::print(std::ostream &out, BaseSemantics::Formatter &fmt) const {
+SValue::print(std::ostream &out, BaseSemantics::Formatter&) const {
     if (ast_) {
         struct T1: AstPrePostProcessing {
             std::ostream &out;
@@ -224,7 +224,7 @@ SValue::print(std::ostream &out, BaseSemantics::Formatter &fmt) const {
                 }
             }
 
-            void postOrderVisit(SgNode *node) {
+            void postOrderVisit(SgNode*) {
                 out <<")";
             }
         } t1(out);
@@ -486,13 +486,13 @@ RiscOperators::interrupt(int majr, int minr) {
 }
 
 BaseSemantics::SValue::Ptr
-RiscOperators::readRegister(RegisterDescriptor reg, const BaseSemantics::SValue::Ptr &dflt) {
+RiscOperators::readRegister(RegisterDescriptor reg, const BaseSemantics::SValue::Ptr &/*dflt*/) {
     BaseSemantics::SValue::Ptr regExpr = makeSValue(reg.nBits(), new SgAsmDirectRegisterExpression(reg));
     return makeSValue(reg.nBits(), SgAsmRiscOperation::OP_readRegister, regExpr);
 }
 
 BaseSemantics::SValue::Ptr
-RiscOperators::peekRegister(RegisterDescriptor reg, const BaseSemantics::SValue::Ptr &dflt) {
+RiscOperators::peekRegister(RegisterDescriptor reg, const BaseSemantics::SValue::Ptr &/*dflt*/) {
     BaseSemantics::SValue::Ptr regExpr = makeSValue(reg.nBits(), new SgAsmDirectRegisterExpression(reg));
     return makeSValue(reg.nBits(), SgAsmRiscOperation::OP_peekRegister, regExpr);
 }

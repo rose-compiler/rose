@@ -14,7 +14,7 @@ public:
         ++nAllocated;
         return ::operator new(size);
     }
-    static void operator delete(void *ptr, size_t size) {
+    static void operator delete(void *ptr, size_t /*size*/) {
         if (ptr)
             --nAllocated;
         ::operator delete (ptr);

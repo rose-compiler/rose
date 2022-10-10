@@ -15,7 +15,14 @@ class MagicNumberDetails;
 
 class MagicNumber {
 public:
-    enum Mechanism { FAST, SLOW, NONE };
+    /** How to search for magic numbers.
+     *
+     *  See @ref MagicNumber::mechanism property. */
+    enum Mechanism {
+        FAST,
+        SLOW,
+        NONE
+    };
 
 private:
     MagicNumberDetails *details_;
@@ -34,10 +41,10 @@ public:
      *
      *  Multiple machanisms are available:
      *
-     *  @li If the libmagic library is available then that mechanism is used the the return value is @ref FAST.
+     *  @li If the libmagic library is available then that mechanism is used the the return value is @c FAST.
      *
      *  @li If libmagic is not available and this is a Unix machine, then the file(1) command is invoked on a temporary
-     *  file. The return value in this case is @ref SLOW.
+     *  file. The return value in this case is @c SLOW.
      *
      *  @li If this is Windows and the libmagic library is not available then the return value is NONE. In this case, all calls
      *  to identify will throw a <code>std::runtime_error</code>.

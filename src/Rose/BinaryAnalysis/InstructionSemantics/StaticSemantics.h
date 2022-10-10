@@ -32,7 +32,7 @@ namespace InstructionSemantics {        // documented elsewhere
  *
  *  By default, ROSE does not generate the static semantics, and each instruction's @ref SgAsmInstruction::get_semantics
  *  "semantics" property will be null.  Semantics can be added to any instruction by @ref
- *  BaseSemantics::RiscOperators::processInstruction "executing" the instruction in this StaticSemantics domain.  Each time the
+ *  BaseSemantics::Dispatcher::processInstruction "executing" the instruction in this StaticSemantics domain.  Each time the
  *  instruction is executed in this domain its previous semantics are thrown away and recalculated, so you should generally
  *  only do this once; that's the nature that makes these semantics "static".  If you want to calculate static semantics for
  *  lots of instructions, which is often the case, the @ref attachInstructionSemantics functions can do that: they process an
@@ -62,7 +62,7 @@ void attachInstructionSemantics(SgNode *ast, const BaseSemantics::DispatcherPtr&
 //                                      Value type
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Shared-ownership pointer for a static-semantics value. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer for a static-semantics value. */
 typedef Sawyer::SharedPointer<class SValue> SValuePtr;
 
 /** Semantic values for generating static semantic ASTs.
@@ -176,17 +176,17 @@ public:
 
 public:
     // These are not needed since this domain never tries to compare semantic values.
-    virtual bool may_equal(const BaseSemantics::SValuePtr &other,
-                           const SmtSolverPtr &solver = SmtSolverPtr()) const override {
+    virtual bool may_equal(const BaseSemantics::SValuePtr &/*other*/,
+                           const SmtSolverPtr& = SmtSolverPtr()) const override {
         ASSERT_not_reachable("no implementation necessary");
     }
 
-    virtual bool must_equal(const BaseSemantics::SValuePtr &other,
-                            const SmtSolverPtr &solver = SmtSolverPtr()) const override {
+    virtual bool must_equal(const BaseSemantics::SValuePtr &/*other*/,
+                            const SmtSolverPtr& = SmtSolverPtr()) const override {
         ASSERT_not_reachable("no implementation necessary");
     }
     
-    virtual void set_width(size_t nbits) override {
+    virtual void set_width(size_t /*nbits*/) override {
         ASSERT_not_reachable("no implementation necessary");
     }
 
@@ -244,13 +244,14 @@ typedef NullSemantics::StatePtr StatePtr;
 //                                      RiscOperators
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Shared-ownership pointer for basic semantic operations. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer for basic semantic operations. */
 typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
 /** Basic semantic operations.
  *
  *  Each operation builds a new AST by creating a new node and attaching existing children to that node.  The parent pointers
- *  of the children are not updated, and as described in @ref SValue, therefore do not form proper ROSE abstract syntax trees.
+ *  of the children are not updated, and as described in @ref StaticSemantics::SValue, therefore do not form proper ROSE
+ *  abstract syntax trees.
  *
  *  The @ref writeRegister, @ref writeMemory, and a handful of other operators that represent instruction side effects are
  *  inserted into the instruction's list of static sematics.  This is the point at which this semantic domain takes an

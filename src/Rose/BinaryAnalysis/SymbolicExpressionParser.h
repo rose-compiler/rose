@@ -237,8 +237,7 @@ public:
          *
          *  If the input expression does not need to be substituted, then this function should return the original
          *  expression. */
-        virtual SymbolicExpression::Ptr delayedExpansion(const SymbolicExpression::Ptr &src,
-                                                         const SymbolicExpressionParser *parser) {
+        virtual SymbolicExpression::Ptr delayedExpansion(const SymbolicExpression::Ptr &src, const SymbolicExpressionParser*) {
             return src;
         }
     };

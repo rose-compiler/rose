@@ -458,7 +458,7 @@ public:
         TypedSaver(CONTAINER_TEMPLATE<Interval> &storage): storage_(storage) {}                                                \
     public:                                                                                                                    \
         static Ptr instance(CONTAINER_TEMPLATE<Interval> &storage) { return Ptr(new TypedSaver(storage)); }                    \
-        virtual void save(const boost::any &value, const std::string &switchKey) /*override*/ {                                \
+        virtual void save(const boost::any &value, const std::string &/*switchKey*/) /*override*/ {                            \
             Interval typed = boost::any_cast<Interval>(value);                                                                        \
             storage_.INSERT_METHOD(typed);                                                                                     \
         }                                                                                                                      \

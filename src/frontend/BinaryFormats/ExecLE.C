@@ -5,7 +5,9 @@
 
 // In order to efficiently (in terms of amount of code) parse a file format that's defined for a different architecture, we
 // need to occassionally take addresses of structs that don't follow alignment rules for this architecture.
+#if defined(__GNUC__) && __GNUC__ >= 9
 #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
+#endif
 
 // DQ (8/21/2008): Now we want to move away from using the older header files (from before we used the IR nodes).
 // #include "ExecLE.h"

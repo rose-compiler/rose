@@ -747,8 +747,8 @@ public:
     // the root. Updates the action accumulator for those paths that completely matched at the root.
     bool insertMatchingPaths(PathElement &elmt /*out*/, const PathSpecs &pathsToMatch, ActionAccumulator &actions /*out*/) {
         bool retval = false;
-        elmt.nextMatch.reserve(pathsToMatch_.size());
-        for (const PathSpec &pathSpec: pathsToMatch_) {
+        elmt.nextMatch.reserve(pathsToMatch.size());
+        for (const PathSpec &pathSpec: pathsToMatch) {
             ASSERT_forbid(pathSpec.empty());
             PathSpec::const_iterator component = pathSpec.begin();
             ASSERT_require(BEGIN == component->first);  // all paths start with a BEGIN
@@ -880,8 +880,8 @@ public:
     }
 
     void tagEndCallback(const XmlLexer::Token &tag) {
-        ASSERT_require(!path_.empty());
-        ASSERT_require(tokens_.lexeme(path_.back().tag) == tokens_.lexeme(tag));
+        ASSERT_always_require(!path_.empty());
+        ASSERT_always_require(tokens_.lexeme(path_.back().tag) == tokens_.lexeme(tag));
 
         // Finish this path element and pop it from the path
         if (!path_.back().suppressOutput) {
@@ -903,7 +903,7 @@ public:
     // Find path patterns that match completely at the specified XML property
     bool matchProperty(char firstChar, const XmlLexer::Token &name, ActionAccumulator &actions /*out*/) {
         for (PathSpec::const_iterator component: path_.back().nextMatch) {
-            if (matchPathPattern('@', name, component)) {
+            if (matchPathPattern(firstChar, name, component)) {
                 ++component;
                 actions.merge(component);
             }

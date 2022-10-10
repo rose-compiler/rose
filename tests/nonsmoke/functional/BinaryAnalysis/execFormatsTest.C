@@ -50,8 +50,8 @@ struct AstChecker: public AstPrePostProcessing {
     }
 
     void postOrderVisit(SgNode *node) {
-        assert(!stack.empty());
-        assert(node==stack.back());
+        ASSERT_always_require(!stack.empty());
+        ASSERT_always_require(node==stack.back());
         stack.pop_back();
     }
 
@@ -95,6 +95,8 @@ setUnparseFileName(SgProject *project, const std::string &unparseFileName) {
 int
 main(int argc, char *argv[])
 {
+    ROSE_INITIALIZE;
+
     std::string unparseFileName;
     for (int i=1; i<argc; ++i) {
         if (strcmp(argv[i], "-o") == 0 && i+1 < argc) {

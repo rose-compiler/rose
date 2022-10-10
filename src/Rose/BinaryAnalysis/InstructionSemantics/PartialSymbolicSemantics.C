@@ -39,7 +39,7 @@ SValue::nextName() {
 }
 
 Sawyer::Optional<BaseSemantics::SValue::Ptr>
-SValue::createOptionalMerge(const BaseSemantics::SValue::Ptr &other_, const BaseSemantics::Merger::Ptr &merger,
+SValue::createOptionalMerge(const BaseSemantics::SValue::Ptr &other_, const BaseSemantics::Merger::Ptr&,
                             const SmtSolverPtr &solver) const {
     if (mustEqual(other_, solver))
         return Sawyer::Nothing();
@@ -56,7 +56,7 @@ SValue::may_equal(const BaseSemantics::SValue::Ptr &other_, const SmtSolverPtr &
 }
 
 bool
-SValue::must_equal(const BaseSemantics::SValue::Ptr &other_, const SmtSolverPtr &solver) const
+SValue::must_equal(const BaseSemantics::SValue::Ptr &other_, const SmtSolverPtr&) const
 {
     SValue::Ptr other = promote(other_);
     return (this->name==other->name &&
@@ -109,13 +109,13 @@ SValue::print(std::ostream &stream, BaseSemantics::Formatter &formatter_) const
  *******************************************************************************************************************************/
 
 void
-State::print_diff_registers(std::ostream &o, const State::Ptr &other_state, Formatter &fmt) const
+State::print_diff_registers(std::ostream&, const State::Ptr &/*other_state*/, Formatter&) const
 {
     ASSERT_not_implemented("[Robb P. Matzke 2014-10-07]");
 }
 
 bool
-State::equal_registers(const State::Ptr &other) const
+State::equal_registers(const State::Ptr &/*other*/) const
 {
     ASSERT_not_implemented("[Robb P. Matzke 2014-10-07]");
     return false;
@@ -183,8 +183,7 @@ RiscOperators::promote(const BaseSemantics::RiscOperators::Ptr &x) {
 }
 
 void
-RiscOperators::interrupt(int majr, int minr)
-{
+RiscOperators::interrupt(int /*major*/, int /*minor*/) {
     currentState()->clear();
 }
 

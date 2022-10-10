@@ -8,7 +8,7 @@ noinst_LTLIBRARIES = libroseDisassemblers.la
 libroseDisassemblers_la_DEPENDENCIES =
 
 libroseDisassemblers_la_SOURCES = SgAsmBlock.C SgAsmFunction.C					\
-	SgAsmInstruction.C SgAsmAarch32Instruction.C						\
+	SgAsmInstruction.C SgAsmAarch32Instruction.C SgAsmPEExportEntry.C			\
 	SgAsmAarch64Instruction.C SgAsmPowerpcInstruction.C					\
 	SgAsmX86Instruction.C SgAsmCilInstruction.C SgAsmJvmInstruction.C			\
 	SgAsmMipsInstruction.C SgAsmM68kInstruction.C SgAsmNullInstruction.C			\

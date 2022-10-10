@@ -13423,7 +13423,7 @@ class AndOpGenerator: public StatementGenerator
           virtual SgStatement* generate(SgExpression* lhs)
              {
                if (lhs==NULL)
-                 return NULL; 
+                 return NULL;
                SgTreeCopy treeCopy;
                SgExpression* lhsCopy = isSgExpression(lhs->copy(treeCopy));
                ROSE_ASSERT (lhsCopy);
@@ -13448,7 +13448,7 @@ class OrOpGenerator: public StatementGenerator
           virtual SgStatement* generate(SgExpression* lhs)
              {
                if (lhs==NULL)
-                 return NULL; 
+                 return NULL;
                SgTreeCopy treeCopy;
                SgExpression* lhsCopy = isSgExpression(lhs->copy(treeCopy));
                ROSE_ASSERT (lhsCopy);
@@ -13473,7 +13473,7 @@ class ConditionalExpGenerator: public StatementGenerator
           virtual SgStatement* generate(SgExpression* lhs)
              {
                if (lhs==NULL)
-                 return NULL; 
+                 return NULL;
                SgTreeCopy treeCopy;
                SgExpression* lhsCopy = isSgExpression(lhs->copy(treeCopy));
                ROSE_ASSERT (lhsCopy);
@@ -18892,7 +18892,7 @@ CollectDependentDeclarationsTraversal::visit(SgNode *astNode)
        }
 
       // handle base type:
-       
+
        // We now can to strip typedefs since they are already handled by collectTypedefDeclarations()
        // this also reach to the defining body of a defining typedef declaration
        // and treat it as an independent declarations,
@@ -23447,14 +23447,14 @@ SgExprListExp * SageInterface::loopCollapsing(SgForStatement* loop, size_t colla
             dumpInfo(target_loop);
 
             // release memory
-            delete[] ivar; 
-            delete[] lb; 
-            delete[] ub; 
-            delete[] step; 
-            delete[] orig_body; 
-            delete[] total_iters; 
-            delete[] interval; 
-            delete[] isPlus; 
+            delete[] ivar;
+            delete[] lb;
+            delete[] ub;
+            delete[] step;
+            delete[] orig_body;
+            delete[] total_iters;
+            delete[] interval;
+            delete[] isPlus;
 
             return NULL;
         }
@@ -24086,9 +24086,8 @@ SgMemberFunctionDeclaration *SageInterface::findJavaMain(SgClassDefinition *clas
     type_list -> append_argument(string_array_type);
 
  // DQ (1/11/2020): Fixing support for C++11 l-value and r-value reference modifiers for member functions.
- // SgFunctionType *member_function_type = SageBuilder::buildMemberFunctionType(SgTypeVoid::createType(), type_list, class_definition, 0); // mfunc_specifier);
-    unsigned int ref_modifiers = 0;
-    SgFunctionType *member_function_type = SageBuilder::buildMemberFunctionType(SgTypeVoid::createType(), type_list, class_definition, /* mfunc_specifier */ 0 , ref_modifiers);
+ // SgFunctionType *member_function_type = SageBuilder::buildMemberFunctionType(SgTypeVoid::createType(), type_list, class_definition, 0);
+    SgFunctionType *member_function_type = SageBuilder::buildMemberFunctionType(SgTypeVoid::createType(), type_list, class_definition, /* mfunc_specifier */ 0);
 
     SgFunctionSymbol *method_symbol = class_definition -> lookup_function_symbol("main", member_function_type);
     delete type_list;

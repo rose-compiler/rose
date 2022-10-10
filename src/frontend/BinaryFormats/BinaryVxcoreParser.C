@@ -194,7 +194,7 @@ VxcoreParser::parseRegisters(const std::string &header, std::istream &input, con
                             "\"" + StringUtility::cEscape(line.substr(0, 30)) + "\"" +
                             (line.size() > 30 ? "..." : ""));
         } else if (registers != NULL) {
-            ASSERT_not_null(ops);
+            ASSERT_always_not_null(ops);
             // FIXME[Robb Matzke 2020-02-12]: check register name, parse value, and save value in register state.
             mlog[ERROR] <<"saving of register values is not implemented: " <<line <<"\n";
         }

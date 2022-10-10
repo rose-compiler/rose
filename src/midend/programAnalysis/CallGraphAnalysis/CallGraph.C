@@ -473,7 +473,7 @@ isOverridingType( SgMemberFunctionType* derived,
   if (derived == base) return true;
 
   if (  derived->get_mfunc_specifier() != base->get_mfunc_specifier()
-     || derived->get_ref_qualifiers()  != base->get_ref_qualifiers()
+     //~ || derived->get_ref_qualifiers()  != base->get_ref_qualifiers()
      || derived->get_has_ellipses()    != base->get_has_ellipses()
      )
   {
@@ -1039,8 +1039,8 @@ CallTargetSet::solveConstructorInitializer(SgConstructorInitializer* sgCtorInit)
     SgMemberFunctionDeclaration* memFunDecl = sgCtorInit->get_declaration();
 
     //It's possible to have a null constructor declaration, in case of compiler-generated
-    //default constructors.  Since the below special handling is for 
-    //     (memFunDecl->get_file_info()->isCompilerGenerated() && 
+    //default constructors.  Since the below special handling is for
+    //     (memFunDecl->get_file_info()->isCompilerGenerated() &&
     //     !isSgTemplateInstantiationMemberFunctionDecl(memFunDecl) &&
     //     !isSgTemplateMemberFunctionDecl(memFunDecl))
     if (memFunDecl != NULL)
@@ -1051,21 +1051,21 @@ CallTargetSet::solveConstructorInitializer(SgConstructorInitializer* sgCtorInit)
         ROSE_ASSERT(decl != NULL);
         props.push_back(decl);
     }
-    
+
     //If there are superclasses, the constructors for those classes may have been called. We need to return them
-    
+
     //Sometimes constructor initializers appear for primitive types. (e.g. x() in a constructor initializer list)
     if (sgCtorInit->get_class_decl() != NULL)
     {
         //The worklist contains classes that are initialized through compiler-generated default constructors
         vector<SgClassDeclaration*> worklist;
         worklist.push_back(sgCtorInit->get_class_decl());
-        
+
         while (!worklist.empty())
         {
             SgClassDeclaration* currClassDecl = worklist.back();
             worklist.pop_back();
-            
+
             SgClassDeclaration* defClassDecl = isSgClassDeclaration(currClassDecl->get_definingDeclaration());
             if(defClassDecl == NULL) { // Can get a NULL here if a primative type is being constructed.
                 continue;                // For example, a pointer
@@ -1074,7 +1074,7 @@ CallTargetSet::solveConstructorInitializer(SgConstructorInitializer* sgCtorInit)
             if(currClass == NULL) { // Can get a NULL here if class is an anonymous compiler generated BaseClass
                 continue;
             }
-            
+
             foreach(SgBaseClass* baseClass, currClass->get_inheritances())
             {
                 ROSE_ASSERT(baseClass->get_base_class() != NULL);

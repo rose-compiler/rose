@@ -13,7 +13,7 @@ namespace BinaryAnalysis {
 namespace InstructionSemantics {
 namespace BaseSemantics {
 
-/** Shared-ownership pointer for symbolic memory state. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer for symbolic memory state. */
 typedef boost::shared_ptr<class SymbolicMemory> SymbolicMemoryPtr;
 
 /** Purely symbolic memory state.

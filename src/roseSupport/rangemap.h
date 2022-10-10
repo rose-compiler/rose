@@ -556,15 +556,12 @@ public:
 
     /** Remove a value from a RangeMap.  This method is invoked by RangeMap when it is removing a value from the map, such as
      *  during an erase() or clear() operation.  It is not called for the merge() argument after a successful merge. */
-    void removing(const Range &my_range) {
-        assert(!my_range.empty());
-    }
+    void removing(const Range&) {}
 
     /** Truncate the RangeMap value.  This is similar to the removing() method, but only discards part of the value.  The @p
      *  new_end argument is the first value past the end of this range and must be such that the range would not become
      *  larger. */
-    void truncate(const Range &my_range, const typename Range::Value &new_end) {
-        assert(new_end>my_range.first() && new_end<=my_range.last());
+    void truncate(const Range&, const typename Range::Value&) {
     }
 
     /** Attempts to merge the specified range into this range.  The specified range must adjoin this range (on the left or
@@ -589,12 +586,11 @@ public:
      *  ends at @p new_end (exclusive), but rather than discarding the right part, it returns it as a new value.  The @p
      *  new_end must be inside @p my_range so that neither the modified nor returned ranges are empty.  The @p my_range
      *  argument is the value's range before it is split. */
-    RangeMapVoid split(const Range &my_range, const typename Range::Value &new_end) {
-        assert(my_range.contains(Range(new_end)));
+    RangeMapVoid split(const Range&, const typename Range::Value&) {
         return RangeMapVoid();
     }
 
-    void print(std::ostream &o) const {}
+    void print(std::ostream&) const {}
     friend std::ostream& operator<<(std::ostream &o, const RangeMapVoid &x) {
         x.print(o);
         return o;
@@ -705,17 +701,17 @@ public:
 
     /** Called when this value is being removed from a RangeMap. */
     virtual void removing(const Range &my_range) {
-        assert(!my_range.empty());
+        ASSERT_always_require(!my_range.empty());
     }
 
     /** Called when removing part of a value from a RangeMap. */
     virtual void truncate(const Range &my_range, const typename Range::Value &new_end) {
-        assert(new_end>my_range.first() && new_end<=my_range.last());
+        ASSERT_always_require(new_end>my_range.first() && new_end<=my_range.last());
     }
 
     /** Called to merge two RangeMap values.  The values can be merged only if they compare equal. */
     bool merge(const Range &my_range, const Range &other_range, const RangeMapValue &other_value) {
-        assert(!my_range.empty() && !other_range.empty());
+        ASSERT_always_require(!my_range.empty() && !other_range.empty());
         return get()==other_value.get();
     }
 

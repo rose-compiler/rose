@@ -249,7 +249,7 @@ FunctionSimilarity::lists(const P2::Function::Ptr &function, CategoryId id) cons
 }
 
 double
-FunctionSimilarity::compare(const P2::Function::Ptr &f1, const P2::Function::Ptr &f2, double dflt) const {
+FunctionSimilarity::compare(const P2::Function::Ptr &f1, const P2::Function::Ptr &f2, double /*dflt*/) const {
     ASSERT_require(f1 != NULL || f2 != NULL);
     std::vector<double> categoryDistances;
 
@@ -323,7 +323,7 @@ struct ComparisonFunctor {
           matrixSize(std::max(rowFunctions.size(), colFunctions.size())),
           progress(progress), progressBar(progressBar), dfltCompare(dfltCompare) {}
 
-    void operator()(size_t taskId, const ComparisonTask &task) {
+    void operator()(size_t /*taskId*/, const ComparisonTask &task) {
         ASSERT_require(task.nComparisons > 0);
         ASSERT_not_null(task.results);
         ASSERT_require(task.startRow < matrixSize);

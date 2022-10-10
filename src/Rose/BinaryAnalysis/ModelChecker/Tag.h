@@ -21,6 +21,7 @@ namespace ModelChecker {
  *  special things. */
 class Tag: public std::enable_shared_from_this<Tag> {
 public:
+    /** Shared ownership pointer. */
     using Ptr = TagPtr;
 
 private:

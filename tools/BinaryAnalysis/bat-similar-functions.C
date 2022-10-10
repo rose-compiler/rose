@@ -67,7 +67,7 @@ struct Settings {
 
 // Parse command-line and apply to settings. Return the two RBA file names.
 static std::pair<boost::filesystem::path, boost::filesystem::path>
-parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings) {
+parseCommandLine(int argc, char *argv[], P2::Engine&, Settings &settings) {
     using namespace Sawyer::CommandLine;
 
     SwitchGroup gen = Rose::CommandLine::genericSwitches();

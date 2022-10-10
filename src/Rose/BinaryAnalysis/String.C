@@ -746,7 +746,7 @@ StringFinder::insertCommonEncoders(ByteOrder::Endianness sex) {
 }
 
 StringFinder&
-StringFinder::insertUncommonEncoders(ByteOrder::Endianness sex) {
+StringFinder::insertUncommonEncoders(ByteOrder::Endianness) {
     // This encoder finds printable ASCII that's not necessarily NUL-terminated
     TerminatedString::Ptr te = nulTerminatedPrintableAscii();
     te->terminators().clear();

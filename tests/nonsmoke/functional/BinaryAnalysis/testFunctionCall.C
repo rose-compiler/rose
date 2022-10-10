@@ -27,7 +27,7 @@ struct GraphvizVertexWriter {
 /* Filter that rejects basic block that are uncategorized.  I.e., those blocks that were disassemble but not ultimately
  * linked into the list of known functions.  We excluded these because their control flow information is often nonsensical. */
 struct ExcludeLeftovers: public Rose::BinaryAnalysis::FunctionCall::VertexFilter {
-    bool operator()(Rose::BinaryAnalysis::FunctionCall *analyzer, SgAsmFunction *func) {
+    bool operator()(Rose::BinaryAnalysis::FunctionCall */*analyzer*/, SgAsmFunction *func) {
         return func && 0==(func->get_reason() & SgAsmFunction::FUNC_LEFTOVERS);
     }
 };

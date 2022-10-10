@@ -172,7 +172,7 @@ public:
 
     /** Addresses and completeness.
      *
-     *  This is the return value for @ref codeAddresses. */
+     *  This is the return value for @ref nextCodeAddresses. */
     struct CodeAddresses {
         InstructionSemantics::BaseSemantics::SValuePtr ip; /**< Instruction pointer value. */
         std::set<rose_addr_t> addresses;                    /**< The concrete addresses. */

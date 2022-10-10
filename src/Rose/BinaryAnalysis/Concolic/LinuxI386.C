@@ -711,7 +711,7 @@ LinuxI386SyscallConstant::instance() {
 }
 
 void
-LinuxI386SyscallConstant::playback(SyscallContext &ctx) {}
+LinuxI386SyscallConstant::playback(SyscallContext&) {}
 
 std::pair<SymbolicExpression::Ptr, Sawyer::Optional<uint64_t>>
 LinuxI386SyscallConstant::makeReturnConstraint(SyscallContext &ctx) {
@@ -746,7 +746,7 @@ LinuxI386SyscallNondecreasing::instance() {
 }
 
 void
-LinuxI386SyscallNondecreasing::playback(SyscallContext &ctx) {}
+LinuxI386SyscallNondecreasing::playback(SyscallContext&) {}
 
 std::pair<SymbolicExpression::Ptr, Sawyer::Optional<uint64_t>>
 LinuxI386SyscallNondecreasing::makeReturnConstraint(SyscallContext &ctx) {
@@ -1780,14 +1780,14 @@ LinuxI386::systemCallReturnRegister() {
 }
 
 BS::SValue::Ptr
-LinuxI386::systemCallReturnValue(const P2::Partitioner &partitioner, const BS::RiscOperators::Ptr &ops) {
+LinuxI386::systemCallReturnValue(const P2::Partitioner&, const BS::RiscOperators::Ptr &ops) {
     ASSERT_not_null(ops);
     const RegisterDescriptor reg = systemCallReturnRegister();
     return ops->readRegister(reg);
 }
 
 BS::SValue::Ptr
-LinuxI386::systemCallReturnValue(const P2::Partitioner &partitioner, const BS::RiscOperators::Ptr &ops,
+LinuxI386::systemCallReturnValue(const P2::Partitioner&, const BS::RiscOperators::Ptr &ops,
                                  const BS::SValue::Ptr &retval) {
     ASSERT_not_null(ops);
     const RegisterDescriptor reg = systemCallReturnRegister();

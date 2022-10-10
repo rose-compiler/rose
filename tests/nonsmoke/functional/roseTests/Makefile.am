@@ -15,12 +15,13 @@ SUBDIRS += roseTraits
 
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 
-   SUBDIRS += astMempoolTests astMergeTests astPerformanceTests \
+   SUBDIRS += astMempoolTests astMergeTests  \
+	      astPerformanceTests \
               astProcessingTests astQueryTests astRewriteTests \
               astSymbolTableTests astSnippetTests \
               programTransformationTests \
               graph_tests mergeTraversal_tests \
-              astLValueTests abstractMemoryObjectTests varDeclNorm \
+              astLValueTests abstractMemoryObjectTests varDeclNorm  astNodeIdTests \
 	      roseCodeGen
 
 # DQ (3/31/2021): Testing by removing astTokenStreamTests (above)

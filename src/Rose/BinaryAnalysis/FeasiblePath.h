@@ -198,13 +198,11 @@ public:
          *  pushed for each edge of the path.
          *
          *  The return value from this callback determines whether the analysis will search for additional paths. A return
-         *  value of @ref Action::CONTINUE means the model checker will try other paths, and a return value of @ref
+         *  value of @c Action::CONTINUE means the model checker will try other paths, and a return value of @c
          *  Action::BREAK means no more paths will be tested. */
         virtual Action found(const FeasiblePath &analyzer, const Partitioner2::CfgPath &path,
                              const InstructionSemantics::BaseSemantics::DispatcherPtr &cpu,
-                             const SmtSolverPtr &solver) {
-            return CONTINUE;
-        }
+                             const SmtSolverPtr &solver);
 
         /** Function invoked whenever a null pointer dereference is detected.
          *
@@ -236,14 +234,12 @@ public:
          *  The @p addr is the address that was accessed.  Depending on the model checker's settings, this is either a constant
          *  or a symbolic expression. In the latter case, the @p solver will have evidence that the expression can be zero.
          *
-         *  The return value indicates whether the model checker should continue along the same path (@ref Action::CONTINUE) or
-         *  backtrack (@ref Action::BREAK). If this callback requests backtracking then the model checker may continue evaluating
+         *  The return value indicates whether the model checker should continue along the same path (@c Action::CONTINUE) or
+         *  backtrack (@c Action::BREAK). If this callback requests backtracking then the model checker may continue evaluating
          *  the current path vertex but will not call any more more path processing functions until the backtrack occurs. */
         virtual Action nullDeref(const FeasiblePath &analyzer, const Partitioner2::CfgPath &path, SgAsmInstruction *insn,
                                  const InstructionSemantics::BaseSemantics::RiscOperatorsPtr &cpu, const SmtSolverPtr &solver,
-                                 IoMode ioMode, const InstructionSemantics::BaseSemantics::SValuePtr &addr) {
-            return CONTINUE;
-        }
+                                 IoMode ioMode, const InstructionSemantics::BaseSemantics::SValuePtr &addr);
 
         /** Function invoked every time a memory reference occurs.
          *
@@ -281,15 +277,13 @@ public:
          *  from the stack for a function that was called but whose implementation is not present (such as when the
          *  inter-procedural depth was too great, the function is a non-linked import, etc.).
          *
-         *  The return value indicates whether the model checker should continue along the same path (@ref Action::CONTINUE) or
-         *  backtrack (@ref Action::BREAK). If this callback requests backtracking then the model checker may continue evaluating
+         *  The return value indicates whether the model checker should continue along the same path (@c Action::CONTINUE) or
+         *  backtrack (@c Action::BREAK). If this callback requests backtracking then the model checker may continue evaluating
          *  the current path vertex but will not call any more more path processing functions until the backtrack occurs. */
         virtual Action memoryIo(const FeasiblePath &analyzer, const Partitioner2::CfgPath &path, SgAsmInstruction *insn,
                                 const InstructionSemantics::BaseSemantics::RiscOperatorsPtr &cpu, const SmtSolverPtr &solver,
                                 IoMode ioMode, const InstructionSemantics::BaseSemantics::SValuePtr &addr,
-                                const InstructionSemantics::BaseSemantics::SValuePtr &value) {
-            return CONTINUE;
-        }
+                                const InstructionSemantics::BaseSemantics::SValuePtr &value);
     };
 
     /** Information stored per V_USER_DEFINED path vertex.

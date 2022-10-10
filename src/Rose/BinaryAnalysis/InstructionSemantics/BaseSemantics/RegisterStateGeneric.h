@@ -18,7 +18,7 @@ namespace BinaryAnalysis {
 namespace InstructionSemantics {
 namespace BaseSemantics {
 
-/** Shared-ownership pointer to generic register states. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer to generic register states. */
 typedef boost::shared_ptr<class RegisterStateGeneric> RegisterStateGenericPtr;
 
 /** A RegisterState for any architecture.

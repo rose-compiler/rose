@@ -344,7 +344,7 @@ private:
                 }
             }
 
-            SymbolicExpression::VisitAction postVisit(const SymbolicExpression::Ptr &node) override {
+            SymbolicExpression::VisitAction postVisit(const SymbolicExpression::Ptr&) override {
                 return SymbolicExpression::CONTINUE;
             }
         } varFinder;
@@ -611,6 +611,8 @@ public:
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      helper functions
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static bool
 hasVirtualAddress(const P2::ControlFlowGraph::ConstVertexIterator &vertex) {
@@ -634,6 +636,10 @@ fpOperators(BaseSemantics::RiscOperators::Ptr ops) {
 Sawyer::Message::Facility FeasiblePath::mlog;
 Sawyer::Attribute::Id FeasiblePath::POST_STATE(-1);
 Sawyer::Attribute::Id FeasiblePath::EFFECTIVE_K(-1);
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      FeasiblePath nested classes
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void
 FeasiblePath::Expression::print(std::ostream &out) const {
@@ -672,6 +678,32 @@ FeasiblePath::Statistics::operator+=(const FeasiblePath::Statistics &other) {
         reachedBlockVas.insertMaybe(node.key(), 0) += node.value();
     return *this;
 }
+
+FeasiblePath::PathProcessor::Action
+FeasiblePath::PathProcessor::found(const FeasiblePath&, const Partitioner2::CfgPath&,
+                                   const InstructionSemantics::BaseSemantics::Dispatcher::Ptr&,
+                                   const SmtSolver::Ptr&) {
+    return CONTINUE;
+}
+
+FeasiblePath::PathProcessor::Action
+FeasiblePath::PathProcessor::nullDeref(const FeasiblePath&, const Partitioner2::CfgPath&, SgAsmInstruction*,
+                                       const InstructionSemantics::BaseSemantics::RiscOperators::Ptr&, const SmtSolver::Ptr&,
+                                       IoMode, const InstructionSemantics::BaseSemantics::SValue::Ptr&) {
+    return CONTINUE;
+}
+
+FeasiblePath::PathProcessor::Action
+FeasiblePath::PathProcessor::memoryIo(const FeasiblePath&, const Partitioner2::CfgPath&, SgAsmInstruction*,
+                                      const InstructionSemantics::BaseSemantics::RiscOperators::Ptr&, const SmtSolver::Ptr&,
+                                      IoMode, const InstructionSemantics::BaseSemantics::SValue::Ptr&,
+                                      const InstructionSemantics::BaseSemantics::SValue::Ptr&) {
+    return CONTINUE;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      FeasiblePath
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 FeasiblePath::FeasiblePath() {}
 
@@ -1076,6 +1108,13 @@ FeasiblePath::processBasicBlock(const P2::BasicBlock::Ptr &bblock, const BaseSem
                 BaseSemantics::SValue::Ptr sp = ops->readRegister(SP, ops->undefined_(SP.nBits()));
                 debug <<"          sp = " <<*sp <<"\n";
             }
+        } catch (const BaseSemantics::NotImplemented &e) {
+            if (settings_.ignoreSemanticFailure) {
+                SAWYER_MESG(mlog[WHERE]) <<"semantics failed (instruction ignored): " <<e <<"\n";
+            } else {
+                SAWYER_MESG(mlog[WHERE]) <<"semantics failed: " <<e <<"\n";
+                throw;
+            }
         } catch (const BaseSemantics::Exception &e) {
             if (settings_.ignoreSemanticFailure) {
                 SAWYER_MESG(mlog[WARN]) <<"semantics failed (instruction ignored): " <<e <<"\n";
@@ -1094,8 +1133,8 @@ FeasiblePath::processBasicBlock(const P2::BasicBlock::Ptr &bblock, const BaseSem
 
 /** Process an indeterminate block. This represents flow of control through an unknown address. */
 void
-FeasiblePath::processIndeterminateBlock(const P2::ControlFlowGraph::ConstVertexIterator &vertex,
-                                        const BaseSemantics::Dispatcher::Ptr &cpu, size_t pathInsnIndex) {
+FeasiblePath::processIndeterminateBlock(const P2::ControlFlowGraph::ConstVertexIterator&,
+                                        const BaseSemantics::Dispatcher::Ptr&, size_t pathInsnIndex) {
     SAWYER_MESG(mlog[DEBUG]) <<"      processing indeterminate vertex\n";
     mlog[WARN] <<"control flow passes through an indeterminate address at path position #" <<pathInsnIndex <<"\n";
 }
@@ -1455,7 +1494,7 @@ FeasiblePath::pathEndsWithFunctionCall(const P2::CfgPath &path) const {
 }
 
 bool
-FeasiblePath::shouldSummarizeCall(const P2::ControlFlowGraph::ConstVertexIterator &pathVertex,
+FeasiblePath::shouldSummarizeCall(const P2::ControlFlowGraph::ConstVertexIterator &/*pathVertex*/,
                                   const P2::ControlFlowGraph &cfg,
                                   const P2::ControlFlowGraph::ConstVertexIterator &cfgCallTarget) {
     if (cfgCallTarget->value().type() != P2::V_BASIC_BLOCK)
@@ -1535,7 +1574,7 @@ FeasiblePath::shouldInline(const P2::CfgPath &path, const P2::ControlFlowGraph::
 void
 FeasiblePath::insertCallSummary(const P2::ControlFlowGraph::ConstVertexIterator &pathsCallSite,
                                 const P2::ControlFlowGraph &cfg, const P2::ControlFlowGraph::ConstEdgeIterator &cfgCallEdge) {
-    ASSERT_require(cfg.isValidEdge(cfgCallEdge));
+    ASSERT_always_require(cfg.isValidEdge(cfgCallEdge));
     P2::ControlFlowGraph::ConstVertexIterator cfgCallTarget = cfgCallEdge->target();
     P2::Function::Ptr function = cfgCallTarget->value().isEntryBlock();
 

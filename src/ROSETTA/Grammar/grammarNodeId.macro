@@ -1,0 +1,34 @@
+
+$CLASSNAME*  $CLASSNAME::getNodeByNodeIdInternal(size_t poolIdx, size_t itemIdx)
+  {          
+     ROSE_ASSERT(poolIdx < pools.size());
+     $CLASSNAME* poolStart = reinterpret_cast<$CLASSNAME*>(pools[poolIdx]);
+      
+     ROSE_ASSERT(itemIdx < pool_size);
+     return poolStart+itemIdx; 
+  }
+
+
+std::string $CLASSNAME::getNodeIdStringInternal($CLASSNAME* node)
+  {       
+     // Do a linear search for a pool that contains this node (because pools are not sorted)
+     auto poolIt = pools.begin();
+     $CLASSNAME* poolStart = nullptr;
+     for(;poolIt != pools.end(); ++poolIt) {
+       //Check for containment by seeing if the node pointer is contined in the range of the pool
+       if(*poolIt <= (unsigned char*) node && (*poolIt + ($CLASSNAME::pool_size * sizeof($CLASSNAME))) > (unsigned char*) node) {
+	 poolStart = reinterpret_cast<$CLASSNAME*>(*poolIt);
+	 break;
+       } 
+     }	
+     ROSE_ASSERT(poolStart != nullptr);
+     size_t poolIdx = std::distance(pools.begin(), poolIt);  //Check this to make index from iterator
+  
+     ROSE_ASSERT(node >= poolStart && node <  poolStart + $CLASSNAME::pool_size);
+     size_t itemIdx = std::distance(poolStart, node);
+  
+     std::stringstream ss;
+     ss << poolIdx << "_" << itemIdx;
+     return ss.str();
+  }
+

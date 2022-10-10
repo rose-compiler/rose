@@ -5686,6 +5686,7 @@ SgMemberFunctionType::SgMemberFunctionType ( SgPartialFunctionType* ft )
    {
      p_class_type      = ft->p_class_type ;
      p_mfunc_specifier = ft->p_mfunc_specifier;
+     // p_ref_qualifiers  = ft->p_ref_qualifiers;
    }
 
 void
@@ -5699,6 +5700,9 @@ SgMemberFunctionType::post_construction_initialization()
 
   // DQ (3/8/2012): We can't assert that this is true (likely because of how SgPartialFunctionType is used to build non-memb4r function types.
   // ROSE_ASSERT(p_class_type != NULL);
+
+  // PP (10/4/2022): p_ref_qualifier needs to be default initialized
+      // p_ref_qualifier   = 0;
 
   // p_mfunc_specifier = 0;
 

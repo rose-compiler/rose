@@ -2334,6 +2334,7 @@ tests/nonsmoke/functional/roseTests/astInterfaceTests/unitTests/Makefile
 tests/nonsmoke/functional/roseTests/astLValueTests/Makefile
 tests/nonsmoke/functional/roseTests/astMempoolTests/Makefile
 tests/nonsmoke/functional/roseTests/astMergeTests/Makefile
+tests/nonsmoke/functional/roseTests/astNodeIdTests/Makefile
 tests/nonsmoke/functional/roseTests/astOutliningTests/Makefile
 tests/nonsmoke/functional/roseTests/astPerformanceTests/Makefile
 tests/nonsmoke/functional/roseTests/astProcessingTests/Makefile
@@ -2410,6 +2411,8 @@ tests/smoke/unit/Sawyer/Makefile
 tests/smoke/unit/Utility/Makefile
 tools/Makefile
 tools/BinaryAnalysis/Makefile
+tools/CodeThorn/Makefile
+tools/CodeThorn/src/Makefile
 tools/checkFortranInterfaces/Makefile
 tools/classMemberVariablesInLambdas/Makefile
 tools/featureVector/Makefile
