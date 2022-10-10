@@ -1,0 +1,938 @@
+\documentclass[natbib]{article}
+\usepackage{microtype}
+\usepackage{lmodern}
+\usepackage{url}
+\usepackage{xspace}
+\usepackage{calc}
+\usepackage{enumerate}
+\usepackage{listings}
+\usepackage{amsmath,amssymb}
+\usepackage{rotating}
+\usepackage{colortbl}
+\usepackage{color} % load color package
+\usepackage{pifont}
+\usepackage{tikz}
+%\usetikzlibrary{shapes,shadows,arrows,calc,positioning,fit,matrix,mindmap,trees}
+%\usepackage{pgfplots}
+%\usepackage{pgfplotstable}
+\usepackage{booktabs}
+\usepackage{natbib}
+\usepackage{colortbl}
+% pantone colors
+
+% More sensible defaults akin to \sloppy
+% \tolerance 1414
+% \hbadness 1414
+% \emergencystretch 1.5em
+% \hfuzz 0.3pt
+% \widowpenalty=10000
+% \clubpenalty=10000
+% \vfuzz
+% \hfuzz
+% \raggedbottom
+
+% eg:
+% HEX: 006666 -> range[0,1] -> 
+\definecolor{lavender}{rgb}{.0,.32,.32}
+\definecolor{algomarkcolor}{rgb}{.82,.82,.42}
+\definecolor{black}{rgb}{.0,.0,.0}
+\definecolor{red}{rgb}{1.0,.0,.0}
+\definecolor{green}{rgb}{.1,0.6,.1}
+\definecolor{blue}{rgb}{.0,.0,1.0}
+\definecolor{lightblue}{rgb}{.3,.3,0.8}
+
+\definecolor{colTitle}{rgb}{.3,.3,0.8}
+
+\newcommand{\ignore}[1]{}
+\newcommand{\st}{\textit{s.\,t.}\xspace}
+\newcommand{\eg}{\textit{e.\,g.}\xspace}
+\newcommand{\ie}{\textit{i.\,e.}\xspace}
+\newcommand{\cf}{\textit{cf.}\xspace}
+
+\newcommand{\blackarrow}{{\color{black} \Pisymbol{pzd}{217}}}
+\newcommand{\redarrow}{{\color{DarkRed} \Pisymbol{pzd}{217}}}
+\newcommand{\minibox}[2]{\begin{minipage}{#1}\raggedright #2\end{minipage}}
+
+\newcommand{\enquote}[1]{``#1''}
+
+\newcommand{\ptsize}[1]{} % ignored
+
+\input{formalisms2}
+\input{programanalysismacros}
+
+%\newcommand{\fixme}[1]{\begin{tikzpicture}
+%\node[bottom color=red!80!white, top color=red!70!black, rounded corners,
+%      font=\bf\color{white}\footnotesize] {
+%  \begin{minipage}{.75\columnwidth}
+%    FIXME\\
+%    #1
+%  \end{minipage}
+%};
+%\end{tikzpicture}
+%}
+
+\lstset{
+  language=C,
+  basicstyle=\small,%\scriptsize, %\footnotesize\ttfamily,
+  keywordstyle={\bf},
+  keywordstyle={[2]\it},%\color{Blue!40!black}},
+  breaklines=true,
+  identifierstyle=,
+  stringstyle=\bf,
+  commentstyle=\it\color{black!80},
+  captionpos=b,
+  numbers=left,
+  stepnumber=3,
+  columns=fullflexible
+}
+
+\begin{document}
+\title{CodeThorn}
+
+\author{\small Markus Schordan, Marc Jasper, Simon Schr\"{o}der, Maximilian Fecke, Joshua Asplund, Adrian Prantl}
+%\end{tabular}
+\date{September 20, 2017}
+
+\maketitle
+
+\begin{abstract}
+\noindent CodeThorn is a tool for analyzing C/C++ programs by combining approaches
+from data flow analysis, constraint-based analysis, and model
+checking. The main focus in the development of CodeThorn is to explore program analysis algorithms while combining above
+approaches and to investigate methods for combining static analysis with
+methods for software verification.
+
+The input language is currently restricted to a subset of C.
+
+\end{abstract}
+
+\tableofcontents
+
+%-------------------------------------------------------------------------
+
+\section{Introduction}
+\label{sec:intro}
+
+CodeThorn was initially developed as a tool for exploring approaches
+for reachbility analysis and verification of linear temporal logic (LTL)
+formulae based on finite state systems~\cite{schordan2014combining}. 
+This was later extended to
+also perform specialization of programs and program equivalence
+checking~\cite{schordan2014verification}. CodeThorn is based on the 
+ROSE compiler infrastructure\footnote{\url{http://www.rosecompiler.org/}} 
+and uses the ROSE abstract syntax tree as basis for its input. 
+A number of components have been moved
+from CodeThorn to ROSE over time. What remains are command line
+options that allow to access those features conveniently and also to
+reproduce some published results.
+
+\nocite{roseWWW}
+
+\subsection{Use in Competitions}
+
+Since 2012, CodeThorn has been successfully used to participate in the
+international RERS Challenge\footnote{\url{http://www.rers-challenge.org}} 
+on program analysis and verification~\cite{schordan2014combining}.
+Among other accomplishments, the use of CodeThorn helped to become overall winner and obtain the method
+combination award in RERS 2014 as well as to win the 1st place in the Sequential LTL track of the 
+recent 2017 iteration of RERS\footnote{See \url{http://www.rers-challenge.org} for detailed competition results}.
+Participating in the challenge led to many improvements in the tool such as an efficient
+parallelization of the analysis~\cite{jasper2016multi} and to the development of new model checking 
+approaches~\cite{jasper2014counterexample}.
+
+Starting in 2016, the LTL model checking infrastructure of CodeThorn has been successfully
+applied to generate parallel verification benchmarks. These benchmarks were used for 
+a new parallel track of the RERS Challenges 2016 and 2017~\cite{jasper2017rers}.
+
+
+\subsection{Benchmarks}
+
+We have found that benchmarks of the RERS Challenge
+serve as an excellent guidance in crafting this tool and investigating
+the impact and performance of each of the approaches on the overall
+results. For the RERS programs, LTL formulae are
+provided. This allows to verify behavioral properties of these
+programs. Reachability properties can be verified by checking the
+reachability of failing assertions.
+
+For program equivalence checking and data race detection the
+Polybench/C 3.2 suite has provided a good basis for evaluation. By
+generating various polyhedral variants of the 30+ benchmarks, CodeThorn
+can be used to check the equivalence of two given programs and verify
+whether the optimizations are semantics preserving. 
+Furthermore,
+parallel OpenMP for loops are recognized and can be checked not to
+introduce data races. Currently these approaches are extended to
+address other large scale applications.
+
+\section{Installation}
+
+No additional configuration is required because
+CodeThorn is configured as part of ROSE. In order to use all features of CodeThorn however,
+the SPOT LTL model checking library version 1.2.6\footnote{This version of SPOT can be downloaded here: 
+\url{https://www.lrde.epita.fr/dload/spot/spot-1.2.6.tar.gz}} is required. In addition, some
+experimental features require the Z3 SMT 
+solver\footnote{\url{https://github.com/Z3Prover/z3}}. Please provide the options
+\verb+--with-spot=<spot-install-dir>+ and \verb+--with-z3=<z3-install-dir>+ to ROSE's configure command.
+
+Run 'make', 'make install', and optionally 'make check' in the
+\verb+projects/+ \verb+CodeThorn+ directory to install CodeThorn. CodeThorn is
+installed as 'codethorn' (at the same location as other ROSE tools, in
+the 'bin' directory of the ROSE installation).
+
+\section{Command Line Options}
+The command line options of CodeThorn are parsed by Boost's program options 
+library\footnote{\url{http://www.boost.org/doc/libs/1_63_0/doc/html/program_options.html}}.
+The \texttt{(=0)} syntax found for example in the description \texttt{--status [=arg(=1)] (=0)} 
+denotes that the default value of option \enquote{status} is 0 (or false).
+In addition, the \texttt{[=arg(=1)]} indicates that option \enquote{status} is set to 1 (or true) 
+if it is provided without an argument.
+
+Command line options can alternatively be passed to CodeThorn by using a configuration file.
+In order to use this feature, the name of the configuration file needs to be set using the 
+command line option \texttt{--config} (or just \texttt{-c}). For example, we could create a file
+\enquote{myConfiguration.config} with the following content:
+\begin{verbatim}
+max-time=60
+max-memory=8000000000
+resource-limit-diff=10000
+status=yes
+log-level=trace
+\end{verbatim}
+
+This configuration file sets thresholds for the exploration of reachable program states: 
+The exploration will terminate either after 60 seconds have passed or when approximately 8GB of RAM have been used,
+depending on what happens first. Option \enquote{resource-limit-diff} is used to specify that these
+resource constraints should be checked after every 10,000 newly discovered program states. 
+In addition, status messages and a trace of the
+analysis will be displayed. Note that implicit values cannot be used in configuration files,
+an explicit argument has to be provided for example to the option \enquote{status}.
+A command line using our configuration file could look as follows:
+\begin{verbatim}
+codethorn programToBeAnalyzed.c --config=myConfiguration.config
+\end{verbatim}
+
+\subsection{Main options}
+The following command line options are listed when running \verb+codethorn --help+.
+These main options below comprise general analysis parameters such as the exploration mode or resource constraints.
+More detailed options belonging to individual aspects of CodeThorn are listed in the following sections and can be
+seen by running \verb+codethorn --help-<name-of-detailed-options>+. 
+\begin{verbatim}
+  -c [ --config ] arg                   Use the configuration specified in file
+                                        <arg>.
+  --colors [=arg(=1)] (=1)              Use colors in output.
+  --csv-stats arg                       Output statistics into a CSV file 
+                                        <arg>.
+  --display-diff arg                    Print statistics every <arg> computed 
+                                        estates.
+  --exploration-mode arg                Set mode in which state space is 
+                                        explored. ([breadth-first]|depth-first|
+                                        loop-aware|loop-aware-sync)
+  -h [ --help ]                         Produce this help message.
+  --help-cegpra                         Show options for CEGRPA.
+  --help-eq                             Show options for program equivalence 
+                                        checking.
+  --help-exp                            Show options for experimental features.
+  --help-pat                            Show options for pattern search mode.
+  --help-svcomp                         Show options for SV-Comp specific 
+                                        features.
+  --help-rers                           Show options for RERS specific features
+  --help-ltl                            Show options for LTL verification.
+  --help-par                            Show options for analyzing parallel 
+                                        programs.
+  --help-vis                            Show options for visualization output 
+                                        files.
+  --help-data-race                      Show options for data race detection.
+  --help-info                           Show options for program info.
+  --status [=arg(=1)] (=0)              Show status messages.
+  --reduce-cfg [=arg(=1)] (=1)          Reduce CFG nodes that are irrelevant 
+                                        for the analysis.
+  --internal-checks                     Run internal consistency checks 
+                                        (without input program).
+  --cl-options arg                      Specify command line options for the 
+                                        analyzed program (as one quoted 
+                                        string).
+  --input-values arg                    Specify a set of input values. (e.g. 
+                                        "{1,2,3}")
+  --input-values-as-constraints [=arg(=1)] (=0)
+                                        Represent input var values as 
+                                        constraints (otherwise as constants in 
+                                        PState).
+  --input-sequence arg                  Specify a sequence of input values. 
+                                        (e.g. "[1,2,3]")
+  --log-level arg (=none,>=warn)        Set the log level ("x,>=y" with x,y in:
+                                        (none|info|warn|trace|debug)).
+  --max-transitions arg                 Passes (possibly) incomplete STG to 
+                                        verifier after <arg> transitions have 
+                                        been computed.
+  --max-iterations arg                  Passes (possibly) incomplete STG to 
+                                        verifier after <arg> loop iterations 
+                                        have been explored. Currently requires 
+                                        --exploration-mode=loop-aware[-sync].
+  --max-memory arg                      Stop computing the STG after a total 
+                                        physical memory consumption of 
+                                        approximately <arg> Bytes has been 
+                                        reached.
+  --max-time arg                        Stop computing the STG after an 
+                                        analysis time of approximately <arg> 
+                                        seconds has been reached.
+  --max-transitions-forced-top arg      Performs approximation after <arg> 
+                                        transitions.
+  --max-iterations-forced-top arg       Performs approximation after <arg> loop
+                                        iterations. Currently requires 
+                                        --exploration-mode=loop-aware[-sync].
+  --max-memory-forced-top arg           Performs approximation after <arg> 
+                                        bytes of physical memory have been 
+                                        used.
+  --max-time-forced-top arg             Performs approximation after an 
+                                        analysis time of approximately <arg> 
+                                        seconds has been reached.
+  --resource-limit-diff arg             Check if the resource limit is reached 
+                                        every <arg> computed estates.
+  --rewrite                             Rewrite AST applying all rewrite system
+                                        rules.
+  --run-rose-tests                      Run ROSE AST tests.
+  --threads arg                         (experimental) Run analyzer in parallel
+                                        using <arg> threads.
+  -v [ --version ]                      Display the version of CodeThorn.
+\end{verbatim}
+
+
+\subsection{Counterexample-Guided Prefix Refinement Analysis}
+The Counterexample-guided prefix refinement analysis (CEGPRA)~\cite{jasper2014counterexample} is a special instance 
+of CEGAR for reactive, PLC-like systems.
+Based on an over-approximating initial model of the analyzed program's behavior, model checking is performed. In an iterative process, spurious counterexamples are removed by guided unrolling of the actual program's reachable state space. 
+\begin{verbatim}
+  --csv-stats-cegpra arg           Output statistics regarding the 
+                                   counterexample-guided prefix refinement 
+                                   analysis (CEGPRA) into a CSV file <arg>.
+  --cegpra-ltl arg                 Select the ID of an LTL property that should
+                                   be checked using cegpra (between 0 and 99).
+  --cegpra-ltl-all [=arg(=1)] (=0) Check all specified LTL properties using 
+                                   CEGPRA.
+  --cegpra-max-iterations arg      Select a maximum number of counterexamples 
+                                   anaylzed by CEGPRA.
+  --viz-cegpra-detailed arg        Generate visualization (.dot) output files 
+                                   with prefix <arg> for different stages 
+                                   within each loop of CEGPRA.
+\end{verbatim}
+
+
+\subsection{Program Equivalence Checking}
+The following list of options is relevant to the program equivalence checking capabilities of CodeThorn.
+\begin{verbatim}
+  --dump-sorted arg                      (experimental) Generates sorted array 
+                                        updates in file <file>.
+  --dump-non-sorted arg                  (experimental) Generates non-sorted 
+                                        array updates in file <file>.
+  --rewrite-ssa [=arg(=1)] (=0)         Rewrite SSA form: Replace use of SSA 
+                                        variable by rhs of its assignment (only
+                                        applied outside loops or unrolled 
+                                        loops).
+  --print-rewrite-trace [=arg(=1)] (=0) Print trace of rewrite rules.
+  --print-update-infos [=arg(=1)] (=0)  Print information about array updates 
+                                        on stdout.
+  --rule-const-subst [=arg(=1)] (=1)    Use const-expr substitution rule.
+  --rule-commutative-sort [=arg(=1)] (=0)
+                                        Apply rewrite rule for commutative sort
+                                        of expression trees.
+  --specialize-fun-name arg             Function of name <arg> to be 
+                                        specialized.
+  --specialize-fun-param arg            Function parameter number to be 
+                                        specialized (starting at 0).
+  --specialize-fun-const arg            Constant <arg>, the param is to be 
+                                        specialized to.
+  --specialize-fun-varinit arg          Variable name of which the 
+                                        initialization is to be specialized 
+                                        (overrides any initializer expression).
+  --specialize-fun-varinit-const arg    Constant <arg>, the variable 
+                                        initialization is to be specialized to.
+\end{verbatim}
+
+
+
+\subsection{Experimental}
+Experimental features that are not (yet) fully integrated.
+\begin{verbatim}
+  --annotate-terms [=arg(=1)] (=0)      Annotate term representation of 
+                                        expressions in unparsed program.
+  --eliminate-stg-back-edges [=arg(=1)] (=0)
+                                        Eliminate STG back-edges (STG becomes a
+                                        tree).
+  --generate-assertions [=arg(=1)] (=0) Generate assertions (pre-conditions) in
+                                        program and output program (using ROSE 
+                                        unparser).
+  --precision-exact-constraints [=arg(=1)] (=0)
+                                        Use precise constraint extraction.
+  --trace-file arg                      Generate STG computation trace and 
+                                        write to file <arg>.
+  --explicit-arrays [=arg(=1)] (=1)     Represent all arrays explicitly in 
+                                        every state.
+  --z3                                  RERS specific reachability analysis 
+                                        using z3.
+  --rers-upper-input-bound arg          RERS specific parameter for z3.
+  --rers-verifier-error-number arg      RERS specific parameter for z3.
+  --ssa [=arg(=1)] (=0)                 Generate SSA form (only works for 
+                                        programs without function calls, loops,
+                                        jumps, pointers and returns).
+\end{verbatim}
+
+
+\subsection{Pattern Search}
+These options correspond to the pattern search exploration mode. During state-space exploration, it systematically 
+unrolls repeating input/output patterns in order to reach deep areas of the state space of reactive systems. It was 
+used as a black-box analysis during participation in the RERS Challenge.
+\begin{verbatim}
+  --pattern-search-max-depth arg (=10)  Maximum input depth that is searched 
+                                        for cyclic I/O patterns.
+  --pattern-search-repetitions arg (=100)
+                                        Number of unrolled iterations of cyclic
+                                        I/O patterns.
+  --pattern-search-max-suffix arg (=5)  Maximum input depth of the suffix that 
+                                        is searched for failing assertions 
+                                        after following an I/O-pattern.
+  --pattern-search-exploration arg      Exploration mode for the pattern 
+                                        search. Note: all suffixes will always 
+                                        be checked using depth-first search. 
+                                        ([depth-first]|breadth-first)
+\end{verbatim}
+
+
+\subsection{SV-COMP}
+Options specific to analyzing programs of the SV-COMP competition (work in progress).
+\begin{verbatim}
+  --svcomp-mode [=arg(=1)] (=0) Sets default options for all following 
+                                SVCOMP-specific options.
+  --error-function arg          Detect a verifier error function with name 
+                                <arg> (terminates verification).
+  --witness-file arg            Write an SV-COMP witness (counterexample) to 
+                                file <arg>.
+\end{verbatim}
+
+
+\subsection{RERS Challenge}
+The following list contains options that are relevant when analyzing programs of the RERS Challenge.
+\begin{verbatim}
+  --csv-assert arg                      Output assert reachability results into
+                                        a CSV file <arg>.
+  --eliminate-arrays [=arg(=1)] (=0)    Transform all arrays into single 
+                                        variables.
+  --iseq-file arg                       Compute input sequence and generate 
+                                        file <arg>.
+  --iseq-length arg                     Set length <arg> of input sequence to 
+                                        be computed.
+  --iseq-random-num arg                 Select random search and number <arg> 
+                                        of paths.
+  --rers-binary [=arg(=1)] (=0)         Call RERS binary functions in analysis.
+  --rers-numeric [=arg(=1)] (=0)        Print RERS I/O values as raw numeric 
+                                        numbers.
+  --rersmode [=arg(=1)] (=0)            Sets several options such that RERS 
+                                        specifics are utilized and observed.
+  --stderr-like-failed-assert [=arg(=1)] (=0)
+                                        Treat output on stderr similar to a 
+                                        failed assert.
+\end{verbatim}
+
+
+\subsection{Linear Temporal Logic (LTL)}
+Options below allow to check whether an analyzed program satisfies Linear Temporal Logic (LTL) properties 
+(currently restrcited to input/ouput traces). Option \enquote{--check-ltl} is used to specify an input LTL file
+in the format of the RERS Challenge\footnote{The following link leads to an exemplary input file: 
+\url{http://www.rers-challenge.org/2014Isola/problems/constraints-RERS14-5.txt}}.
+\begin{verbatim}
+  --csv-spot-ltl arg                    Output SPOT's LTL verification results 
+                                        into a CSV file <arg>.
+  --csv-stats-size-and-ltl arg          Output statistics regarding the final 
+                                        model size and results for LTL 
+                                        properties into a CSV file <arg>.
+  --check-ltl arg                       Take a text file of LTL I/O formulae 
+                                        <arg> and check whether or not the 
+                                        analyzed program satisfies these 
+                                        formulae. Formulae should start with 
+                                        '('. Use "csv-spot-ltl" option to 
+                                        specify an output csv file for the 
+                                        results.
+  --single-property arg                 Number (ID) of the property that is 
+                                        supposed to be analyzed. All other LTL 
+                                        properties will be ignored. ( Use 
+                                        "check-ltl" option to specify an input 
+                                        property file).
+  --counterexamples-with-output [=arg(=1)] (=0)
+                                        Reported counterexamples for LTL or 
+                                        reachability properties also include 
+                                        output values.
+  --inf-paths-only [=arg(=1)] (=0)      Recursively prune the transition graph 
+                                        so that only infinite paths remain when
+                                        checking LTL properties.
+  --io-reduction arg                    (work in progress) Reduce the 
+                                        transition system to only 
+                                        input/output/worklist states after 
+                                        every <arg> computed EStates.
+  --keep-error-states [=arg(=1)] (=0)   Do not reduce error states for the LTL 
+                                        analysis.
+  --ltl-in-alphabet arg                 Specify an input alphabet used by the 
+                                        LTL formulae. (e.g. "{1,2,3}")
+  --ltl-out-alphabet arg                Specify an output alphabet used by the 
+                                        LTL formulae. (e.g. "{19,20,21,22,23,24
+                                        ,25,26}")
+  --ltl-driven [=arg(=1)] (=0)          Select mode to verify LTLs driven by 
+                                        SPOT's access to the state transitions.
+  --reset-analyzer [=arg(=1)] (=1)      Reset the analyzer and therefore the 
+                                        state transition graph before checking 
+                                        the next property. Only affects 
+                                        ltl-driven mode.
+  --no-input-input [=arg(=1)] (=0)      remove transitions where one input 
+                                        states follows another without any 
+                                        output in between. Removal occurs 
+                                        before the LTL check. [yes|=no]
+  --std-io-only [=arg(=1)] (=0)         Bypass and remove all states that are 
+                                        not standard I/O.
+  --with-counterexamples [=arg(=1)] (=0)
+                                        Add counterexample I/O traces to the 
+                                        analysis results. Applies to reachable 
+                                        assertions and falsified LTL properties
+                                        (uses RERS-specific alphabet).
+  --with-assert-counterexamples [=arg(=1)] (=0)
+                                        Report counterexamples leading to 
+                                        failing assertion states.
+  --with-ltl-counterexamples [=arg(=1)] (=0)
+                                        Report counterexamples that violate LTL
+                                        properties.
+\end{verbatim}
+
+
+\subsection{Parallel Process Graphs}
+These options allow to generate random parallel process graphs in the form of synchronized labeled transition systems.
+In addition, CodeThorn can be used to explore the state space of parallel interleavings of such process graphs. 
+When selecting \enquote{--ltl=mode=mine}, random LTL properties are mined based on subsets of the analyzed process graphs. 
+These features have been used to generate benchmarks for the Parallel LTL track of the RERS Challenge~\cite{jasper2017rers}.
+\begin{verbatim}
+  --seed arg                            Seed value for randomly selected 
+                                        integers (concurrency-related 
+                                        non-determinism might still affect 
+                                        results).
+  --generate-automata arg               Generate random control flow automata 
+                                        (file <arg>) that can be interpreted 
+                                        and analyzed as a parallel program.
+  --num-automata arg                    Select the number of parallel automata 
+                                        to generate.
+  --num-syncs-range arg                 Select a range for the number of random
+                                        synchronizations between the generated 
+                                        automata (csv pair of integers).
+  --num-circles-range arg               Select a range for the number of 
+                                        circles that a randomly generated 
+                                        automaton consists of (csv pair of 
+                                        integers).
+  --circle-length-range arg             Select a range for the length of 
+                                        circles that are used to construct an 
+                                        automaton (csv pair of integers).
+  --num-intersections-range arg         Select a range for the number of 
+                                        intersections of a newly added circle 
+                                        with existing circles in the automaton 
+                                        (csv pair of integers).
+  --automata-dot-input arg              Reads in parallel automata with 
+                                        synchronized transitions from a given 
+                                        .dot file.
+  --keep-systems [=arg(=1)] (=0)        Store computed parallel systems (over- 
+                                        and under-approximated STGs) during 
+                                        exploration  so that they do not need 
+                                        to be recomputed.
+  --use-components arg                  Selects which parallel components are 
+                                        chosen for analyzing the (approximated)
+                                        state space ([all] | subsets-fixed | 
+                                        subsets-random).
+  --fixed-subsets arg                   A list of sets of parallel component 
+                                        IDs used for analysis (e.g. 
+                                        "{1,2},{4,7}"). Use only with 
+                                        "--use-components=subsets-fixed".
+  --num-random-components arg           Number of different random components 
+                                        used for the analysis. Use only with 
+                                        "--use-components=subsets-random". 
+                                        Default: min(3, <num-parallel-component
+                                        s>)
+  --parallel-composition-only [=arg(=1)] (=0)
+                                        If set to "yes", then no approximation 
+                                        will take place. Instead, the parallel 
+                                        compositions of the respective 
+                                        sub-systems will be expanded 
+                                        (sequentialized). Skips any LTL 
+                                        analysis. ([yes|no])
+  --num-components-ltl arg              Number of different random components 
+                                        used to generate a random LTL property.
+                                        Default: value of option 
+                                        --num-random-components (a.k.a. all 
+                                        analyzed components)
+  --minimum-components arg              Number of different parallel components
+                                        that need to be explored together in 
+                                        order to be able to analyze the mined 
+                                        properties. (Default: 3).
+  --different-component-subsets arg     Number of random component subsets. The
+                                        solver will be run for each of the 
+                                        random subsets. Use only with 
+                                        "--use-components=subsets-random" 
+                                        (Default: no termination).
+  --ltl-mode arg                        "check" checks the properties passed to
+                                        option "--check-ltl=<filename>". "mine"
+                                        searches for automatically generated 
+                                        properties that adhere to certain 
+                                        criteria. "none" means no LTL analysis 
+                                        (default).
+  --mine-num-verifiable arg             Number of verifiable properties 
+                                        satisfying given requirements that 
+                                        should be collected (Default: 10).
+  --mine-num-falsifiable arg            Number of falsifiable properties 
+                                        satisfying given requirements that 
+                                        should be collected (Default: 10).
+  --minings-per-subsets arg             Number of randomly generated properties
+                                        that are evaluated based on one subset 
+                                        of parallel components (Default: 50).
+  --ltl-properties-output arg           Writes the analyzed LTL properties to 
+                                        file <arg>.
+  --promela-output arg                  Writes a promela program reflecting the
+                                        synchronized automata of option 
+                                        "--automata-dot-input" to file <arg>. 
+                                        Includes LTL properties if analyzed.
+  --promela-output-only [=arg(=1)] (=0) Only generate Promela code, skip 
+                                        analysis of the input .dot graphs.
+  --output-with-results [=arg(=1)] (=0) Include results for the LTL properties 
+                                        in generated promela code and LTL 
+                                        property files .
+  --output-with-annotations [=arg(=1)] (=0)
+                                        Include annotations for the LTL 
+                                        properties in generated promela code 
+                                        and LTL property files .
+  --verification-engine arg             Choose which backend verification 
+                                        engine is used (ltsmin|[spot]).
+\end{verbatim}
+
+
+\subsection{Visualization}
+Transition graphs and other data structures can be visualized using the follwing command line options.
+The main option that activates most of the visualization features is \verb+--viz=yes+.
+\begin{verbatim}
+  --rw-clusters [=arg(=1)] (=0)         Draw boxes around data elements from 
+                                        the same array (read/write-set graphs).
+  --rw-data [=arg(=1)] (=0)             Display names of data elements 
+                                        (read/write-set graphs).
+  --rw-highlight-races [=arg(=1)] (=0)  Highlight data races as large red dots 
+                                        (read/write-set graphs).
+  --dot-io-stg arg                      Output STG with explicit I/O node 
+                                        information in dot file <arg>.
+  --dot-io-stg-forced-top arg           Output STG with explicit I/O node 
+                                        information in dot file <arg>. Groups 
+                                        abstract states together.
+  --tg1-estate-address [=arg(=1)] (=0)  Transition graph 1: Visualize address.
+  --tg1-estate-id [=arg(=1)] (=1)       Transition graph 1: Visualize 
+                                        estate-id.
+  --tg1-estate-properties [=arg(=1)] (=1)
+                                        Transition graph 1: Visualize all 
+                                        estate-properties.
+  --tg1-estate-predicate [=arg(=1)] (=0)
+                                        Transition graph 1: Show estate as 
+                                        predicate.
+  --tg2-estate-address [=arg(=1)] (=0)  Transition graph 2: Visualize address.
+  --tg2-estate-id [=arg(=1)] (=0)       Transition graph 2: Visualize 
+                                        estate-id.
+  --tg2-estate-properties [=arg(=1)] (=0)
+                                        Transition graph 2: Visualize all 
+                                        estate-properties.
+  --tg2-estate-predicate [=arg(=1)] (=0)
+                                        Transition graph 2: Show estate as 
+                                        predicate.
+  --visualize-read-write-sets [=arg(=1)] (=0)
+                                        Generate a read/write-set graph that 
+                                        illustrates the read and write accesses
+                                        of the involved threads.
+  --viz [=arg(=1)] (=0)                 Generate visualizations (.dot) outputs.
+
+\end{verbatim}
+
+
+\subsection{Data Race Detection}
+Options for data race detection.
+\begin{verbatim}
+  --data-race [=arg(=1)] (=0)      Perform data race detection.
+  --data-race-csv arg              Write data race detection results in 
+                                   specified csv file <arg>. Implicitly enables
+                                   data race detection.
+  --data-race-fail [=arg(=1)] (=0) Perform data race detection and fail on 
+                                   error (codethorn exit status 1). For use in 
+                                   regression verification. Implicitly enables 
+                                   data race detection.
+\end{verbatim}
+
+
+\subsection{Information}
+The following option allows to display additional information about the analysis.
+\begin{verbatim}
+  --print-varid-mapping [=arg(=1)] (=0) Print all information stored in var-id 
+                                        mapping after analysis.
+
+\end{verbatim}
+
+
+\section{Analysis Overview}
+
+The analysis is performed in five phases:
+
+\begin{enumerate}
+\item Syntactic and semantic analysis of the input program (ROSE). The program is analyzed and represented in memory as an annotated abstract syntax tree (AST).
+\item Control flow analysis. We compute a control flow graph (CFG) for the AST. Transitions, as computed for the state transition system in the next phase, correspond to edges in the CFG.
+\item Computation of the state transition system.
+\item LTL checking. Input to the LTL checking phase are the state transition system and the LTL formulae.
+\item Reporting of analysis results. Reachability of failing assertions or verification errors is computed based 
+on the transition system. Results for LTL formulae are computed solely by the LTL checker.
+\end{enumerate}
+
+\noindent States of the analyzed program are represented as follows:
+
+\subsection{Program State}
+
+A program state consists of a label (lab), a property state (pstate),
+a constraint set (cset), and an IO property (io). $PState = Var
+\rightarrow Val$ where $Val$ is either a constant or $top$. $Val$ is a
+lifted integer set. An execution state is defined as $EState = Lab \times
+PState \times Constraints \times IO$ where $Constraints$ is a set of
+constraints, and $IO$ determines whether one of the variables in $PState$ is
+an input or output variable. More specifically, whether a variable is
+read from stdin, or printed to stdout or stderr. Furthermore it
+determines whether the state produces an output which is caused by a
+failed assert.
+
+\subsection{Syntactic categories}
+
+\begin{tabular}{llll}
+$a$ & $\in$ \textup{AExp} & artithmetic expressions \\
+$b$ & $\in$ \textup{BExp} & boolean expressions \\
+$S$ & $\in$ \textup{Stmt} & statements \\
+\end{tabular}
+
+\bigskip
+\begin{tabular}{llll}
+$x,y$ & $\in$ \textup{Var} & variables \\
+$n$ & $\in$ \textup{Num} & numerals \\
+$\ell$ & $\in$ \textup{Lab} & labels \\
+\end{tabular}
+
+\bigskip
+\begin{tabular}{llll}
+$op_a$ & $\in$ \textup{Op$_a$} & arithmetic operators \\
+$op_b$ & $\in$ \textup{Op$_b$} & boolean operators \\
+$op_r$ & $\in$ \textup{Op$_r$} & relational operators \\
+\end{tabular}
+
+
+
+\subsection{Abstract Syntax}
+\begin{displaymath}
+\begin{array}{llll}
+%p &::=& x~|~x.sel~|~  \textup{null} \\
+a & \textup{::=} & x ~|~ n ~|~ a_1~ op_a~ a_2 \\
+b & \textup{::=} & \textup{true}~ |~ \textup{false}~ |~ \textup{not}~ b~ |~ b_1~ op_b~ b_2~ |~ a_1~ op_r~ a_2\\
+S & \textup{::=} & [ \textup{x:=a} ]^\ell ~|~ [ \textup{skip}]^\ell\\
+  &     & |~\textup{if}~ [b]^\ell~ \textup{then} ~S_1~  \textup{else}~ S_2\\ 
+  &     & |~\textup{while} [b]^\ell~\textup{do} ~S~ \textup{od}\\
+  &     & |~S_1;S_2\\
+\end{array}
+\end{displaymath}
+
+\bigskip
+Assignments and tests are (uniquely) labelled to allow analyses to refer
+to these program fragments -- the labels correspond to pointers into the
+syntax tree. We use abstract syntax and insert paranthesis to disambiguate syntax.
+
+\bigskip
+We will often refer to labelled fragments as {\em elementary blocks}.
+
+
+
+\subsection{Auxiliary Functions for Flow Graphs}
+\bigskip
+\begin{tabular}{lp{9.5cm}}
+labels(S) & set of nodes of flow graphs of $S$\\
+init(S)   & initial node of flow graph of $S$; the unique node where execution of program starts\\
+final(S)  & final nodes of flow graph for $S$; set of nodes where program execution may terminate\\
+flow(S)   & edges of flow graphs for $S$ (used for forward analyses)\\
+flow$^R$(S) & reverse edges of flow graphs for $S$ (used for backward analyses)\\
+blocks(S) & set of elementary blocks in a flow graph
+\end{tabular}
+
+
+\subsection{Computing the Information (1)}
+\bigskip
+\begin{tabular}{l|p{2.5cm}|l|p{2.5cm}}
+$S$ & $\auxlabels{S}$ & $\auxinit{S}$ & $\auxfinal{S}$ \\\hline
+$\whlnodeassignxal$ & $\ellset$ & $\ell$ & $\ellset$ \\
+$\whlnodeskipl$ & $\ellset$ & $\ell$ & $\ellset$ \\
+$\whlnodesequence$ & $\auxlabels{S_1}\setunion\auxlabels{S_2}$ & $\auxinit{S_1}$ & $\auxfinal{S_2}$ \\
+$\whlnodeifl$ & $\ellset\setunion\auxlabels{S_1}\setunion\auxlabels{S_2}$ & $\ell$ & $\auxfinal{S_1}\setunion\auxfinal{S_2}$\\
+$\whlnodewhilel$ & $\ellset\setunion\auxlabels{S}$ & $\ell$ & $\ellset$\\
+\end{tabular}
+
+
+\subsection{Example}
+\exampleprogramfactorial
+
+\vspace{0.2cm}
+\begin{center}
+\begin{tabular}{l|l}
+\begin{minipage}[t]{25ex}
+\exampleflowgraphforward
+
+\vspace{-0.0cm}
+
+{
+\ptsize{8}
+$
+\auxflow{S_\star} = \{ 
+\pair{1}{2},
+\pair{2}{3},
+\pair{3}{4},\\
+~~~~~~~~~~~~~~~~~~~~~~\pair{4}{5},
+\pair{5}{3},
+\pair{3}{6}\}
+$
+}
+\end{minipage}
+&
+\begin{minipage}[t]{25ex}
+\exampleflowgraphbackward
+
+{
+\ptsize{8}
+$
+\auxflowr{S_\star} = \{
+\pair{6}{3},
+\pair{3}{5},
+\pair{5}{4},\\
+~~~~~~~~~~~~~~~~~~~~~~~~~\pair{4}{3},
+\pair{3}{2},
+\pair{2}{1}
+\}
+$
+}
+\end{minipage}
+\end{tabular}
+\end{center}
+
+\subsubsection{Parallel Program State}
+
+The Parallel Program State extends the Program State with an additional thread id (tid) and the corresponding read and write data sets for the respective thread.
+The read and write set holds the accesses to shared memory in order to detect data races in parallel regions.
+For the specific rules on how the parallel state is managed, i.e., the corresponding transfer functions, see Section~\ref{sec:par_transfer_functions}.
+
+
+\subsection{Control-Flow Graph}
+The construction of the call graph is based on the construction presented in the book Principles of Program Analysis by Nielson, Nielson, and Hankin~\cite{NielsonNielson}.
+For every construct in the AST that is relevant for the call graph, first, their respective labels are computed.
+The graph's construction algorithm is purely based on these labels, with minimal interaction with the AST in mind.
+
+We introduce some fundamental functions (\emph{cf.}~\cite{NielsonNielson}) that operate on programs and labels.
+\begin{enumerate}
+\item The function init$(S)$ returns the label corresponding to the beginning of the flow for a statement $S$.
+\item The function final$(S)$ returns the set of labels marking the end of the flow through a statement $S$.
+\end{enumerate}
+
+Further, we consider a function \emph{flow}$(S)$, which constructs the control flow for statements $S$.
+It does so by uniting the flows within statements $S_1$ and $S_2$ by connecting the elements of final$(S_1)$ to the elements of init$(S_2)$ for two consecutive statements $S_1$ and $S_2$.
+
+We want to have here the construction presented in the book.
+
+\subsubsection{Parallel Control-Flow Graph}
+The general scheme outlined in the last section is changed slightly when the OpenMP-parallel control-flow graph is built.
+OpenMP's execution model is based on the fork/join concept, i.e., when a parallel region is encountered the runtime forks a number of parallel threads to, potentially, distribute work across them.
+When the scope bound to the parallel region is left, the runtime joins the threads created for this region again.
+In the parallel CFG the concept is reflected with the \emph{fork} and \emph{join} nodes.
+
+In addition to the fork/join nodes, however, the OpenMP model also introduces the concept of worksharing (with implicit barriers) and additional possibilities for explicit barriers.
+Both constructs are present in the parallel CFG and adopt the respective OpenMP nomenclature.
+Implicit and explicit barriers use the same CFG node.
+
+In the presence of the parallelism-related nodes in the CFG, the construction needs to be extended with rules to account for the nested parallel constructs.
+In particular, we add a rule on how to connect a parallel statement $P$ with a parallel or sequential statement $S$.
+This is most relevant when statements are nested as they are in OpenMP regions, \emph{cf.} Listing~\ref{lst:omp_example}.
+In the example, the closing curly brace of the \texttt{pragma omp for} introduces an implicit barrier that ends the worksharing \texttt{omp for} construct.
+Also, the closing curly brace, ending the structured block in line eight, introduces a join, since it ends the \texttt{omp parallel} section.
+
+In summary, the construction of the Parallel CFG requires these additional nodes in the CFG:
+For the OpenMP parallel statement, a pair of fork/join nodes is introduced.
+For the OpenMP for and sections statements, a pair of workshare/barrier nodes is introduced.
+In the case of an attached \texttt{nowait} clause the acoording barrier statement may be removed.
+For an OpenMP barrier construct, a single barrier node is introduced in the CFG.
+\begin{figure}
+  \begin{lstlisting}[label=lst:omp_example, caption={This is the caption of the listing}]
+    void someFunction(int *a, int n) {
+      #pragma omp parallel
+        {
+          #pragma omp for
+          for (int i = 0; i < n; ++i) {
+            a += 3*a[i];
+          }
+        }
+    }
+  \end{lstlisting}
+\end{figure}
+In the presence of the OpenMP parallel regions, the flow function introduced earlier would connect edges to and from the parallel nodes incorrectly to the rest of the CFG.
+Hence, it is necessary to extend the set of construction rules with Rule~\ref{eq:par_flow}.
+\begin{equation}\label{eq:par_flow}
+\begin{split}
+flow(P_1*P_2) ={} & \{(p_1,p_2), p_1 \in init(P_1), p_2 \in init(P_2)\} \\
+              & \cup flow(P_2) \\ 
+              & \cup \{(p_2, p_1), p_2 \in final(P_2), p_1 \in final(P_2)\}
+\end{split}
+\end{equation}
+The original set of rules connects the final label of a sequence of statements preceding the parallel construct with the parallel constructs init label.
+Our additional rule connects the init label of the parallel construct with the init label of the subsequent, i.e., enclosed, statement.
+In addition, the final label of the enclosed statement is connected with the final label of the parallel construct.
+Thereafter, the original set of rules connect the final label of the most outer parallel construct with its successor statement in the sequential CFG.
+
+\subsubsection{ToDos}
+For the construction of the parallel CFG, some open todos and points for discussion exist.
+\begin{itemize}
+	\item Currently, \texttt{omp simd} is treated as a normal worksharing construct. One could argue that for simd-ization it only needs to have a (known) data-race free length that vectors can have. Or a tool can test whether the (OpenMP specific) simd length given by the user in the \texttt{safelen} clause is actually safe.
+  \item The semantics of the different synchronization directives, e.g., single or master, are not yet modeled or considered.
+	\item The map clause is not handled and we did only briefly discuss it. Where it should be placed in the graph (if at all) is also up for further discussion. The purpose of mapping memory regions from host to device might be more related to the actual semantics implementation in the respective transfer functions.
+  \item In my opinion, we should have additional consistency checks and properties for the CFG.
+\end{itemize}
+
+\subsection{Transfer-Functions for Parallel CFG}\label{sec:par_transfer_functions}
+The transfer functions that operate on the parallel nodes implement the respective OpenMP semantics.
+The OpenMP specification requires additional actions from OpenMP runtime libraries, e.g., thread creation or barrier events, which are not implemented in the transfer functions.
+
+\subsubsection{Fork Nodes}
+To handle a fork node correctly, the following steps must be done.
+\begin{enumerate}
+\item Create private environment for each thread $t_i$
+\item Allocate memory for all private variables in the OpenMP section.
+Note: The loop iteration counter is always privatized.
+\item Initialize variables that were marked as firstprivate with their initial value.
+\end{enumerate}
+
+\subsubsection{Workshare Nodes}
+To handle any worksharing construct correctly, the following steps must be done.
+\begin{enumerate}
+\item Create thread local storage for remaining variables declared as private.
+\item If the workshare is a \texttt{for} loop: Split up the iteration ranges and assign the chunks to the different threads.
+\item If the workshare is a \texttt{sections}: Assign each \texttt{section} block to one thread.
+\end{enumerate}
+
+\subsubsection{Barrier Nodes}
+To handle barrier nodes correctly, the following steps must be done.
+\begin{enumerate}
+\item Intersect the collected read/write sets linearly between all synchronizing threads to detect data races.
+When the intersection is done based on values only, benign data races are not found, whereas, when using addresses for all accesses also benign races are detected.
+\end{enumerate}
+
+\subsubsection{Join Node}
+To handle join nodes correctly, the following steps must be done.
+\begin{enumerate}
+\item Clean up private storage for every thread $t_i$
+\item Write-out the correct value to all variables marked as \texttt{lastprivate}
+\end{enumerate}
+
+
+
+\bibliographystyle{plain}
+\bibliography{codethorn}
+
+\end{document}

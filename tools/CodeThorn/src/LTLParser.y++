@@ -1,0 +1,235 @@
+// -*- mode: C++; coding: utf-8; -*-
+// Copyright (c) 2012 Lawrence Livermore National Security, LLC.
+// Produced at the Lawrence Livermore National Laboratory
+// Written by Adrian Prantl <adrian@llnl.gov>.
+//
+// UCRL-CODE-155962.
+// All rights reserved.
+//
+// This file is part of ROSE. For details, see http://www.rosecompiler.org/.
+// Please read the COPYRIGHT file for Our Notice and for the BSD License.
+%{
+#include <cstdio>
+#include <cstdlib>
+#include <sstream>
+#include <iostream>
+#include <string>
+#include <cassert>
+#include "LTL.h"
+
+using namespace CodeThorn;
+using namespace LTL;
+
+// Scanner function
+int ltl_lex(void);
+void ltl_error (char const *msg);
+
+// Parser return type
+#define YYSTYPE LTL::Expr*
+
+// Scanner variables
+bool ltl_eof = false;
+unsigned short ltl_label = 0;
+static int ltl_pos = 0;
+static int ltl_line = 1;
+static int ltl_next_char = EOF;
+static std::stringstream debug_line;
+LTL::Formula* ltl_val = NULL;
+FILE* ltl_input = NULL;
+
+%}
+
+%token IN_SYMBOL OUT_SYMBOL WU FALSE TRUE END
+/* operator precedences */
+%nonassoc G
+%nonassoc R
+%nonassoc WU
+%nonassoc U
+%left     OR
+%left     AND
+%nonassoc F
+%nonassoc X
+%nonassoc NOT
+
+%% /* Grammar rules and actions follow.  */
+
+/**
+ * In the LTL formulae, the atomic propositions correspond to input
+ * and output symbols, where the prefix i is used for input and o is
+ * used for output symbols, to allow a clear distinction.
+ *
+ * The LTL formulae are given in a standard syntax, making use of the
+ * following temporal operators:
+ *
+ * X φ (next): φ has to hold after the next step
+ * F φ (eventually): φ has to hold at some point in the future (or now)
+ * G φ (globally): φ has to hold always (including now)
+ * φ U ψ (until): φ has to hold until ψ holds (which eventually occurs)
+ * φ WU ψ (weak until): φ has to hold until ψ holds (which does not necessarily occur)
+ * φ R ψ (release): φ has to hold until ψ held in the previous step.
+ * Additionally, the boolean operators & (conjunction), | (disjunction) and ! (negation) are used.
+ * 
+ * Example:
+ *
+ * (G (! ((oY & ! iC) & (F iC)) | (! oW U iC)))
+ * output W does never occur between output Y and input C
+ */
+start: 
+END { ltl_val = NULL; return 0; }
+| bin_expr { 
+  if ($1 == NULL) 
+    ltl_val = NULL;
+  else 
+    ltl_val = new Formula(*$1); 
+  return 0; 
+}
+
+lit:
+'(' bin_expr ')' { $$ = $2; }
+| IN_SYMBOL	 { $$ = new InputSymbol(ltl_next_char); }
+| OUT_SYMBOL	 { $$ = new OutputSymbol(ltl_next_char); }
+| TRUE  	 { $$ = new True(); }
+| FALSE  	 { $$ = new False(); }
+
+
+un_expr:
+  lit        		{ $$ = $1; }
+| 'X' un_expr %prec X	{ $$ = new Next($2); }
+| 'F' un_expr %prec F	{ $$ = new Eventually($2); }
+| 'G' un_expr %prec G	{ $$ = new Globally($2); }
+| '!' un_expr %prec NOT { 
+  switch ($2->type) {
+  case e_InputSymbol:
+    --ltl_label;
+    $$ = new NegInputSymbol(static_cast<InputSymbol*>($2)->c); 
+    delete $2;
+    break;
+  case e_OutputSymbol:
+    --ltl_label;
+    $$ = new NegOutputSymbol(static_cast<OutputSymbol*>($2)->c); 
+    delete $2;
+    break;
+  default:
+    $$ = new Not($2);
+  }
+}
+
+bin_expr:
+| un_expr                        { $$ = $1; }
+| bin_expr '&' un_expr %prec AND { $$ = new And($1, $3); }
+| bin_expr '|' un_expr %prec OR	 { $$ = new Or($1, $3); }
+| bin_expr 'U' un_expr %prec U	 { $$ = new Until($1, $3); }
+| bin_expr 'R' un_expr %prec R	 { $$ = new Release($1, $3); }
+| bin_expr WU  un_expr %prec WU	 { 
+  /*$$ = new WeakUntil($1, $3); */
+  /* Create a copy with a unique label */
+  Expr* copy;
+  switch ($1->type) {
+#define CASE_LTL(TYPE) \
+    case e_##TYPE: copy = new TYPE(*static_cast<TYPE*>($1)); break;
+
+    CASE_LTL(InputSymbol);
+    CASE_LTL(OutputSymbol);
+    CASE_LTL(NegInputSymbol);
+    CASE_LTL(NegOutputSymbol);
+    CASE_LTL(Not);
+    CASE_LTL(Next);
+    CASE_LTL(Eventually);
+    CASE_LTL(Globally);
+    CASE_LTL(And);
+    CASE_LTL(Or);
+    CASE_LTL(Until);
+    CASE_LTL(Release);
+  default:
+    assert(false);
+  }
+  copy->label = ltl_label++;
+  $$ = new Or(new Globally($1), new Until(copy, $3));
+}
+
+%%
+
+using namespace std;
+int ltl_lex(void) {
+  if (!ltl_input) ltl_input = stdin;
+  ltl_next_char = getc(ltl_input);
+  debug_line << string(1, ltl_next_char);
+  ltl_pos++;
+
+  // skip comment lines
+  if (ltl_pos == 1 && ltl_next_char != '(') {
+    ltl_val = NULL;;
+    while ((ltl_next_char!='\n' && ltl_next_char != EOF)) {
+      ltl_next_char = getc(ltl_input);
+    } 
+  }
+
+  switch (ltl_next_char) {
+  case EOF:   ltl_eof = true; return END;
+  case 'i':   ltl_next_char = getc(ltl_input);
+              debug_line << string(1, ltl_next_char);
+              return IN_SYMBOL;
+  case 'o':   ltl_next_char = getc(ltl_input);
+              debug_line << string(1, ltl_next_char);
+              return OUT_SYMBOL;
+  case 'W':   ltl_next_char = getc(ltl_input);
+              if (ltl_next_char == 'U') {
+		debug_line << string(1, ltl_next_char);
+		return WU;
+              } else {
+                ltl_pos--;
+                ungetc(ltl_next_char, ltl_input);
+                return ltl_next_char;
+              }
+  case 'f':   if(getc(ltl_input) == 'a' && 
+		 getc(ltl_input) == 'l' &&
+		 getc(ltl_input) == 's' &&
+		 getc(ltl_input) == 'e') return FALSE;
+              return '#';
+  case 't':   if(getc(ltl_input) == 'r' && 
+		 getc(ltl_input) == 'u' &&
+		 getc(ltl_input) == 'e') return TRUE;
+              return '#';
+
+  case '\r':
+  case '\n':  ltl_line++; 
+              ltl_pos=0;
+              debug_line.clear();
+	      return ltl_lex();
+  case ' ':
+  case '\t':  return ltl_lex();
+  default:    return ltl_next_char;
+  }
+}
+
+void ltl_error (char const *msg) {
+  if (ltl_eof) {
+    // std::cerr << "unexpected end of file" << std::endl;
+    return;
+  }
+  std::string remainder;
+  int c;
+  while (1) {
+    c = fgetc(ltl_input);
+    if (c == '\r' || c == '\n' || c == EOF)
+      break;
+    debug_line << (char)c;
+  }
+  std::cerr << debug_line.str() << remainder << std::endl;
+  std::cerr << std::string(ltl_pos-1, '-') << "^"<< std::endl;
+  fprintf(stderr, "%d:%d: %s\n", ltl_line, ltl_pos, msg);
+  exit(1);
+}
+
+#ifdef LTL_PARSER_DEBUG
+int main (void)
+{
+  while (ltl_parse() == 0) {
+    if (ltl_eof) break;
+    if (ltl_val)
+      std::cout << std::string(*ltl_val) << std::endl;
+    ltl_val = NULL;
+  }
+}
+#endif
+

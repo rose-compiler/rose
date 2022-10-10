@@ -1,0 +1,61 @@
+<style>
+ code { white-space:pre; }
+</style>
+
+<h2>Address-Taken Analysis</h2>
+
+The Address-Taken-Analysis (ATA) described in this document is a flow-<b>in</b>sensitive analysis that determines all variables and functions which underlying data
+structure can be accessed by using another variable or function. For example given the code
+<code>
+  int x = 0;
+  int* xp = &x;
+  int& xr = x;
+</code>
+the variable <code>x</code> as well as <code>xr</code> can be accessed by not using their name (<code>x</code> can be accessed by using
+<code>x</code>, <code>xr</code> can be accessed by using <code>x</code> and both <code>x</code> and <code>xr</code> can be accessed by dereferencing <code>xp</code>).
+<br><br>
+The ATA works for C++11 programs and should also handle most C programs correctly.
+
+<h3>The ATA currently covers the following mechanisms:</h3>
+<ul>
+  <li>Address-taking of a variable by using the explicit address-of operator.</li>
+  <li>Address-taking of a function by using the explicit address-of operator.</li>
+  <li>Address-taking of a function or a variable of function reference type by using the implicit function-to-pointer conversion
+    <ul>
+      <li>if a function (reference) is assigned to a variable of function pointer type (e.g. <code>void (*fp)(); fp = func;</code> &lt;=&gt; <code>void (*fp)(); fp = &func;</code>).</li>
+      <li>if a function (reference) is provided as an argument for a parameter of function pointer type (e.g. <code>func2(func);</code> &lt;=&gt; <code>func2(&func);</code>).</li>
+      <li>if a function (reference) is provided as an argument to a cast of function pointer type (e.g. <code>static_cast<void(*)()>(func);</code> &lt;=&gt; <code>static_cast<void(*)()>(&func);</code>).</li>
+      <li>if a function (reference) is provided as an initializer for a variable of function pointer type in a declaration(e.g. <code>void (*fp)() = func;</code> &lt;=&gt; <code>void (*fp)() = &func;</code>).</li>
+      <li>if a function (reference) is provided as an initializer for a member of function pointer type in a constructor initializer list (e.g. (given <code>class C { void (*m)(); C(); };</code>) <code>C::C() : m(func) {}</code> &lt;=&gt; <code>C::C() : m(&func) {}</code>).</li>
+      <li>if a function (reference) is provided as an initializer for a default argument of function pointer type (e.g. <code>void f(void(*arg)() = func);</code> &lt;=&gt; <code>void f(void(*arg)() = &func);</code>).</li>
+      <li>if a function (reference) is returned from a (member) function with function pointer return type (e.g. <code>void (*func( void(&fp)() ))() { return fp; }</code> &lt;=&gt; <code>void (*func( void(&fp)() ))() { return &fp; }</code>).</li>
+      <li>if a function (reference) is thrown (e.g. <code>throw func;</code> &lt;=&gt; <code>throw &func;</code>).</li>
+    </ul>
+  </li>
+  <li>Alias/ reference creation of a variable or function by
+    <ul>
+      <li> using it as an initializer during the creation a reference variable.</li>
+      <li> passing it as an argument for a parameter of reference type.</li>
+      <li> defining it as a parameter of reference type.</li>
+      <li> providing it as initializer for a member of reference type in a constructor initializer list.</li>
+      <li> providing it as initializer for a default argument of reference type.</li>
+      <li> returning it from a (member) function with reference return type.</li>
+      <li> capturing it by-reference in a lambda capture list.</li>
+    </ul>
+  </li>
+  <li>Call of a non-static member function. (The address of the object on which the member function is called is accessible inside the member function via "this".)</li>
+  <li>Implicit address-taking of other members of union U and members of nested unions if the address of a member of U is taken.</li>
+</ul>
+
+<h3>Opportunities to improve precision:</h3>
+<ul>
+  <li>Address-taking of array variables</li>
+  <li>Lambda: No <code>this</code> that points to the lambda itself</li>
+  <li>Designated initialization</li>
+  <li>Compound literals</li>
+</ul>
+
+
+The ATA uses an id mapping for both variables and functions to create an abstraction layer between an id and the corresponding AST node. Due to this
+it is possible that even if the same variable is present in two ASTs (e.g. <code>int i;</code> in one source file and <code>extern int i;</code> in another source
+file) it can be identified by using an unique id.

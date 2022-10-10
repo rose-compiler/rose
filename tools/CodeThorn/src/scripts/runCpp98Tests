@@ -1,0 +1,185 @@
+#!/bin/bash
+
+# printStats numPass numWarn numWarnExpected numFail numFailExpected
+function printStats {
+    echo "PASS: $1, WARN: $2 (expected: $3), FAIL: $4 (expected: $5)"
+    if [ $2 -gt $3 ]; then
+      echo "${red}Error: more warnings than expected${end}"
+      exit 1
+    fi
+    if [ $4 -gt $5 ]; then
+      echo "${red}Error: more failing runs than expected${end}"
+      exit 1
+    fi
+}
+
+# runCxxTests compiler testdir testprefix numWarnExpected numFailExpected list-of-test-numbers
+function runCxxTests {
+    if [ $# -lt 6 ]; then
+      echo "error: insufficient arguments to runCxxTests $# < 6"
+      exit 1
+    fi
+
+    numPass=0
+    CXX=$1
+    shift
+    testDir=$1
+    shift
+    testPrefix=$1
+    shift
+    numWarn=0
+    numWarnExpected=$1
+    shift
+    numFail=0
+    numFailExpected=$1
+    shift
+
+    while (( "$#" )); do
+        benchmarkprefix="$testDir/src/$testPrefix$1*.cc"
+        shift
+
+        for benchmark in ${benchmarkprefix}; do
+            benchmarkname=$(basename $benchmark)
+            printf "Testing %-38s: " $benchmarkname
+            CT_OUTPUT_FILE=$benchmarkname.imout
+            OUTPUT_FILE_OBSERVED="${CT_OUTPUT_FILE}.observed"
+            OUTPUT_FILE_EXPECTED="${CT_OUTPUT_FILE}.expected"
+
+            # ./codethorn $CT_MODE_OPTIONS --interpreter-mode-file=$CT_OUTPUT_FILE -I $TESTDIR/include $benchmark > /dev/null
+
+            if [ $VERBOSE_MODE -gt 0 ]; then
+              echo "./codethorn $CT_MODE_OPTIONS --interpreter-mode-file="${OUTPUT_FILE_OBSERVED}" -I $TESTDIR/include $benchmark"
+            fi
+            ./codethorn $CT_MODE_OPTIONS --interpreter-mode-file="${OUTPUT_FILE_OBSERVED}" -I $TESTDIR/include $benchmark > /dev/null
+            CT_RESULT=$?
+
+            if [ $CT_RESULT == 0 ]; then
+              EXEFILE=${benchmarkname}.exe
+              $CXX -std=c++03 -Wall -Wextra -pedantic -I $TESTDIR/include $benchmark -o$EXEFILE
+              EXE_RESULT=$?
+
+              ./$EXEFILE -e > $OUTPUT_FILE_EXPECTED
+
+              DIFF=$(diff $OUTPUT_FILE_OBSERVED $OUTPUT_FILE_EXPECTED)
+              if [ "$DIFF" != "" ]
+              then
+                  echo $COLORED_FAIL
+                  ((numFail++))
+              else
+                  echo $COLORED_PASS
+                  ((numPass++))
+              fi
+            else
+              echo $COLORED_FAIL
+              ((numFail++))
+            fi
+
+            rm -f $EXEFILE $OUTPUT_FILE_OBSERVED $OUTPUT_FILE_EXPECTED
+        done
+    done
+    printStats $numPass $numWarn $numWarnExpected $numFail $numFailExpected
+}
+
+#~ function runDomainTestsLevel2 {
+    #~ echo "Scheduled tests: $testNumbers"
+    #~ numPass=0
+    #~ numWarn=0
+    #~ numFail=0
+    #~ for testNumber in $testNumbers; do
+        #~ benchmarkprefix=$TESTDIR/DOM${testNumber};
+        #~ for benchmark in ${benchmarkprefix}*.[Cc]; do
+            #~ benchmarkname=$(basename $benchmark)
+            #~ printf "Testing %-38s: " $benchmarkname
+            #~ CT_OUTPUT_FILE=$benchmarkname.imout
+            #~ ./codethorn $benchmark $CT_MODE_OPTIONS --interpreter-mode-file=$CT_OUTPUT_FILE -I $TESTDIR > /dev/null
+            #~ if [ ! $? -eq 0 ]
+            #~ then
+          #~ echo $COLORED_FAIL
+                #~ ((numFail++))
+            #~ else
+                #~ echo "$COLORED_PASS"
+    #~ ((numPass++))
+            #~ fi
+        #~ done
+    #~ done
+    #~ printStats
+#~ }
+
+#########
+## main
+#########
+
+# exit immediately with ctrl-c
+trap "exit" INT
+
+red=$'\e[1;31m'
+grn=$'\e[1;32m'
+yel=$'\e[1;33m'
+blu=$'\e[1;34m'
+mag=$'\e[1;35m'
+cyn=$'\e[1;36m'
+end=$'\e[0m'
+
+COLORED_FAIL=${red}FAIL${end}
+COLORED_WARN=${yel}WARN${end}
+COLORED_PASS=${grn}PASS${end}
+
+
+echo "------------------------------------------------"
+echo "running Cxx TESTS"
+echo "------------------------------------------------"
+
+
+# default values
+TESTPREFIX="Cxx"
+COMPILER="g++"
+VERBOSE_MODE=0
+
+# command line argument processing
+
+while [[ $# -gt 0 ]]; do
+  key="$1"
+
+  case $key in
+    -c|--compiler)
+      COMPILER="$2"
+      shift # consume argument
+      shift # consume value
+      ;;
+    -p|--prefix)
+      TESTPREFIX="$2"
+      shift # consume argument
+      shift # consume value
+      ;;
+    -V|--verbose)
+      VERBOSE_MODE=1
+      shift # consume value
+      ;;
+    *)    # unknown option
+      TESTDIR="$1" # overwrite test directory
+      shift # consume argument
+      ;;
+  esac
+done
+
+#CT_MODE_OPTIONS="--context-sensitive=yes --normalize-level=2 --interpreter-mode=1 --in-state-string-literals --exploration-mode=topologic-sort"
+CT_MODE_OPTIONS="--vis=1 --context-sensitive=yes --exploration-mode=topologic-sort --normalize-level=2 --normalize-extended --interpreter-mode=1"
+
+echo "Valid C++98 Tests: "
+passingTests=`echo {001..016} {018..034} {036..051} {053..060}`
+numWarnExpected=0
+numFailExpected=48
+runCxxTests $COMPILER $TESTDIR $TESTPREFIX $numWarnExpected $numFailExpected $passingTests
+
+echo "Undefined Behavior Tests: "
+undefinedBehavior=`echo 017`
+numWarnExpected=1
+numFailExpected=1
+runCxxTests $COMPILER $TESTDIR $TESTPREFIX $numWarnExpected $numFailExpected $undefinedBehavior
+
+echo "Language Extension Tests: "
+languageExtension=`echo 035 052`
+numWarnExpected=1
+numFailExpected=2
+runCxxTests $COMPILER $TESTDIR $TESTPREFIX $numWarnExpected $numFailExpected $languageExtension
+

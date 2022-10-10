@@ -92,13 +92,13 @@ public:
 
     // Overrides documented in base class
     virtual InstructionSemantics::BaseSemantics::RiscOperatorsPtr
-    create(const InstructionSemantics::BaseSemantics::SValuePtr &protoval,
-           const SmtSolverPtr &solver = SmtSolverPtr()) const override {
+    create(const InstructionSemantics::BaseSemantics::SValuePtr &/*protoval*/,
+           const SmtSolverPtr& = SmtSolverPtr()) const override {
         ASSERT_not_implemented("[Robb Matzke 2019-09-24]");
     }
     virtual InstructionSemantics::BaseSemantics::RiscOperatorsPtr
-    create(const InstructionSemantics::BaseSemantics::StatePtr &state,
-           const SmtSolverPtr &solver = SmtSolverPtr()) const override {
+    create(const InstructionSemantics::BaseSemantics::StatePtr &/*state*/,
+           const SmtSolverPtr& = SmtSolverPtr()) const override {
         ASSERT_not_implemented("[Robb Matzke 2019-09-24]");
     }
 

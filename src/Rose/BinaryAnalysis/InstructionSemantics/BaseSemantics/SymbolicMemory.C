@@ -28,7 +28,8 @@ SymbolicMemory::clear() {
 }
 
 SValue::Ptr
-SymbolicMemory::readMemory(const SValue::Ptr &address_, const SValue::Ptr &dflt, RiscOperators *addrOps, RiscOperators *valOps) {
+SymbolicMemory::readMemory(const SValue::Ptr &address_, const SValue::Ptr &dflt,
+                           RiscOperators */*addrOps*/, RiscOperators *valOps) {
     SymbolicSemantics::SValue::Ptr address = SymbolicSemantics::SValue::promote(address_);
     if (address->nBits() != mem_->domainWidth() || dflt->nBits() != mem_->nBits()) {
         ASSERT_require2(mem_->isMemoryVariable(),
@@ -51,7 +52,7 @@ SymbolicMemory::peekMemory(const SValue::Ptr &address, const SValue::Ptr &dflt, 
 }
 
 void
-SymbolicMemory::writeMemory(const SValue::Ptr &address_, const SValue::Ptr &value_, RiscOperators *addrOps, RiscOperators *valOps) {
+SymbolicMemory::writeMemory(const SValue::Ptr &address_, const SValue::Ptr &value_, RiscOperators */*addrOps*/, RiscOperators *valOps) {
     SymbolicSemantics::SValue::Ptr address = SymbolicSemantics::SValue::promote(address_);
     SymbolicSemantics::SValue::Ptr value = SymbolicSemantics::SValue::promote(value_);
     if (address->nBits() != mem_->domainWidth() || value->nBits() != mem_->nBits()) {
@@ -68,7 +69,7 @@ SymbolicMemory::writeMemory(const SValue::Ptr &address_, const SValue::Ptr &valu
 }
 
 bool
-SymbolicMemory::merge(const MemoryState::Ptr &other_, RiscOperators *addrOps, RiscOperators *valOps) {
+SymbolicMemory::merge(const MemoryState::Ptr &other_, RiscOperators */*addrOps*/, RiscOperators */*valOps*/) {
     SymbolicMemory::Ptr other = SymbolicMemory::promote(other_);
     TODO("[Robb P. Matzke 2015-08-10]");
 }

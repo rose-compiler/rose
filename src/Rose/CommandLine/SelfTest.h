@@ -63,7 +63,7 @@ public:
 
 protected:
     void operator()(const Sawyer::CommandLine::ParserResult &cmdline) {
-        ASSERT_require(cmdline.have("self-test"));
+        ASSERT_always_require(cmdline.have("self-test"));
         runSelfTestsAndExit();
     }
 };

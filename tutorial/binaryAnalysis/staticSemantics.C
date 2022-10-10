@@ -35,7 +35,7 @@ struct ExprPrinter: AstPrePostProcessing {
         std::cerr <<"\n";
     }
 
-    void postOrderVisit(SgNode *node) override {
+    void postOrderVisit(SgNode*) override {
         ASSERT_require(indentation > 0);
         --indentation;
     }

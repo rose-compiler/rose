@@ -1,0 +1,6 @@
+SPOT: C++ Library for LTL Verification
+http://spot.lip6.fr/wiki/SpotWiki
+
+after installation set:
+SPOT_PREFIX to installation directory
+

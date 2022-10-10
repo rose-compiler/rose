@@ -81,7 +81,7 @@ BinaryLoaderPe::getRemapSections(SgAsmGenericHeader *header) {
 /* This algorithm was implemented based on an e-mail from Cory Cohen at CERT and inspection of PE::ConvertRvaToFilePosition()
  * as defined in "PE.cpp 2738 2009-06-05 15:09:11Z murawski_dev". [RPM 2009-08-17] */
 BinaryLoader::MappingContribution
-BinaryLoaderPe::alignValues(SgAsmGenericSection *section, const MemoryMap::Ptr &map,
+BinaryLoaderPe::alignValues(SgAsmGenericSection *section, const MemoryMap::Ptr&,
                             rose_addr_t *malign_lo_p, rose_addr_t *malign_hi_p,
                             rose_addr_t *va_p, rose_addr_t *mem_size_p,
                             rose_addr_t *offset_p, rose_addr_t *file_size_p, bool *map_private_p,

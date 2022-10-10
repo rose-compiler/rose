@@ -37,17 +37,18 @@ namespace BaseSemantics {
  *  vectors. Operators @ref extract, @ref unsignedExtend, @ref signExtend, @ref readRegister, and @ref readMemory fall into
  *  this category.
  *
- *  Operators with side effects (@ref writeRegister, @ref writeMemory, and possibly others) usually modify a @ref State object
- *  pointed to by the @ref currentState property. Keeping side effects in states allows @ref RiscOperators to be used in
- *  data-flow analysis where meeting control flow edges cause states to be merged.  Side effects that don't need to be part of
- *  a data-flow can be stored elsewhere, such as data members of a subclass or the @ref initialState property.
+ *  Operators with side effects (@ref writeRegister, @ref writeMemory, and possibly others) usually modify a @ref
+ *  BaseSemantics::State object pointed to by the @ref currentState property. Keeping side effects in states allows
+ *  RiscOperators to be used in data-flow analysis where meeting control flow edges cause states to be merged.  Side effects
+ *  that don't need to be part of a data-flow can be stored elsewhere, such as data members of a subclass or the @ref
+ *  initialState property.
  *
  *  RiscOperator objects are allocated on the heap and reference counted.  The BaseSemantics::RiscOperator is an abstract class
  *  that defines the interface.  See the Rose::BinaryAnalysis::InstructionSemantics namespace for an overview of how the parts
  *  fit together. */
 class RiscOperators: public boost::enable_shared_from_this<RiscOperators> {
 public:
-    /** Shared-ownership pointer for a @ref RiscOperators object. See @ref heap_object_shared_ownership. */
+    /** Shared-ownership pointer. */
     using Ptr = RiscOperatorsPtr;
 
 private:
@@ -636,7 +637,7 @@ public:
      *  the minor number is the interrupt number (e.g., 0x80 for Linux system calls), while an x86 SYSENTER instruction uses
      *  major number one. The minr operand for INT3 is -3 to distinguish it from the one-argument "INT 3" instruction which has
      *  slightly different semantics. */
-    virtual void interrupt(int majr, int minr) {}
+    virtual void interrupt(int /*majr*/, int /*minr*/) {}
 
     /** Invoked for instructions that cause an interrupt.
      *
@@ -811,7 +812,7 @@ public:
     /** Reads a value from memory.
      *
      *  The implementation (in subclasses) will typically delegate much of the work to the current state's @ref
-     *  State::readMemory "readMemory" method.
+     *  BaseSemantics::State::readMemory "readMemory" method.
      *
      *  A MemoryState will implement storage for memory locations and might impose certain restrictions, such as "all memory
      *  values must be eight bits".  However, the @ref readMemory should not have these constraints so that it can be called
@@ -835,7 +836,7 @@ public:
     /** Writes a value to memory.
      *
      *  The implementation (in subclasses) will typically delegate much of the work to the current state's @ref
-     *  State::writeMemory "writeMemory" method.
+     *  BaseSemantics::State::writeMemory "writeMemory" method.
      *
      *  The @p segreg argument is an optional segment register. Most architectures have a flat virtual address space and will
      *  pass a default-constructed register descriptor whose is_valid() method returns false.

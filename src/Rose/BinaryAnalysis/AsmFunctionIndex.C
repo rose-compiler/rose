@@ -178,7 +178,7 @@ AsmFunctionIndex::OutputCallback::center(const std::string &s, size_t width)
 }
 
 bool
-AsmFunctionIndex::OutputCallback::operator()(bool enabled, const BeforeAfterArgs &args)
+AsmFunctionIndex::OutputCallback::operator()(bool enabled, const BeforeAfterArgs&)
 {
     return enabled;
 }

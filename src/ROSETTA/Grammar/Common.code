@@ -188,6 +188,17 @@ HEADER_START
           static void visitRepresentativeNode (ROSE_VisitTraversal & visit);
       /* */
 
+     public: 
+	/* NodeId support functions */
+      /*! \brief Find a node by its variant type, pool index, and item index */
+ 	static SgNode* getNodeByNodeId(VariantT variantT, size_t poolIdx, size_t itemIdx);
+      /*! \brief \b FOR \b INTERNAL \b USE Find an SgNode from its memory pool and location therin.
+       */
+ 	static $CLASSNAME* getNodeByNodeIdInternal(size_t poolIdx, size_t itemIdx);
+      /*! \brief compute the NodeId for a particular SgNode*.
+       */
+ 	static std::string getNodeIdString($CLASSNAME* sgnode);
+ 	static std::string getNodeIdStringInternal($CLASSNAME* sgnode);
 
      public:
       /* name Memory Allocation Functions

@@ -123,8 +123,8 @@ namespace BinaryAnalysis {
  *
  *  Let's say you have an analysis that needs to process x86 instructions symbolically. The first thing you need to do is
  *  instantiate a semantics framework -- the lattice of objects that are instantiated from the particular semantics component
- *  subclasses.  You'll need a @ref BaseSemantics::DispatcherX86 "DispatcherX86" object to handle the instructions, which
- *  invokes the RISC-like operations defined by an instance of @ref SymbolicSemantics::RiscOperators, which can use a
+ *  subclasses.  You'll need a @ref InstructionSemantics::DispatcherX86 "DispatcherX86" object to handle the instructions,
+ *  which invokes the RISC-like operations defined by an instance of @ref SymbolicSemantics::RiscOperators, which can use a
  *  chronological memory state and a generic register state, and whose values are symbolic (@ref
  *  SymbolicSemantics::SValue). You'll need to tie all these objects together into a lattice with the disptatcher at the top.
  *  The constructors for the various components generally take arguments which are the lower layers of the lattice, therefore

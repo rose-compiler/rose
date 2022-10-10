@@ -1,0 +1,86 @@
+#!/bin/bash
+
+OPTIONS="--normalize-level=1 --ignore-unknown-functions --generate-reports=yes --precision=2 --solver=18 --exploration-mode=topologic-sort --abstraction-mode=1 --array-abstraction-index=0"
+
+# test 1-9: normalization: YES
+# test 10:  normalization: NO
+
+TESTDIR=$1
+echo "------------------------------------------------"
+echo "running DEADCODE TESTS"
+echo "------------------------------------------------"
+
+REPORT_DIR="test_$$"
+mkdir -p $REPORT_DIR
+
+function runDeadCodeTests {    
+echo "Scheduled tests: $testNumbers"
+
+MIN_COUNT=$1
+MAX_COUNT=$2
+
+TESTS_FAILED=0
+TESTS_PASSED=0
+
+    for testNumber in $testNumbers; do
+        benchmarkprefix=$TESTDIR/${testprefix}${testNumber};
+        for benchmark in ${benchmarkprefix}_*.c; do
+            benchmarkname=$(basename $benchmark)
+            printf "Testing %-44s : " "$benchmarkname"
+            ./codethorn ${OPTIONS} --report-dir=$REPORT_DIR $benchmark > /dev/null
+            dclines=`grep -v gcc_HEADERS $REPORT_DIR/dead-code-locations.csv | grep -v include | wc -l | cut -f1 -d' '`
+            if [ ! $? -eq 0 ]
+            then
+	        echo "FAIL"
+                exit 1
+            else
+                if [ $dclines -lt $MIN_COUNT ] || [ $dclines -gt $MAX_COUNT ];
+                then
+	            printf "FAIL: %s unreachable locations\n" "$dclines"
+                    TESTS_FAILED=$((TESTS_FAILED+1))
+                else
+	            printf "PASS: %s unreachable locations\n" "$dclines"
+                    TESTS_PASSED=$((TESTS_PASSED+1))
+                fi
+            fi
+        done
+    done
+    TESTS_TOTAL=$((TESTS_PASSED+TESTS_FAILED))
+    if [ $TESTS_FAILED -gt 0 ];
+    then
+        echo "$TESTS_FAILED tests of $TESTS_TOTAL failed. Exiting."
+        exit 1
+    else
+        echo "All tests passed ($TESTS_TOTAL)"
+    fi
+}
+
+ARG=$1
+
+if [[ $# -eq 0 ]];
+then
+    echo "runDeadCodeTests: usage: TESTDIR [--dc] [--no-dc]"
+    exit
+fi
+
+for arg in "$@"
+do
+    case $arg in
+        --dc)
+            testNumbers=`echo {001..015}`
+            testprefix=DC
+            # not finding any dead code is ok
+            runDeadCodeTests 0 100
+            ;;
+        --no-dc)
+            testNumbers=`echo {001..002}`
+            testprefix=NODC
+            # there is no dead code, finding any dead code is an incorrect analysis
+            runDeadCodeTests 0 0
+            ;;
+        *)
+            ;;
+    esac
+done
+
+rm -rf $REPORT_DIR

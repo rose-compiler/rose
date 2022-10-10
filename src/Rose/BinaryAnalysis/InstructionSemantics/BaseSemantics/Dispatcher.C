@@ -127,14 +127,14 @@ Dispatcher::processInstruction(SgAsmInstruction *insn)
     InsnProcessor *iproc = iprocLookup(insn);
     try {
         if (!iproc)
-            throw Exception("no dispatch ability for \"" + insn->get_mnemonic() + "\" instruction", insn);
+            throw NotImplemented("no semantics for \"" + insn->get_mnemonic() + "\" instruction", insn);
         iproc->process(shared_from_this(), insn);
     } catch (Exception &e) {
         // If the exception was thrown by something that didn't have an instruction available, then add the instruction
         if (!e.insn)
             e.insn = insn;
         e.insn->incrementSemanticFailure();
-        throw e;
+        throw;
     }
     operators()->finishInstruction(insn);
 }

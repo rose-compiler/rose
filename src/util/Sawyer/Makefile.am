@@ -123,4 +123,4 @@ EXTRA_DIST += docs/examples/commandLineEx1.C docs/examples/graphIso.C
 
 bin_PROGRAMS += stringify-enums
 stringify_enums_SOURCES = stringifyEnums.C
-stringify_enums_LDADD = libroseSawyer.la
+stringify_enums_LDADD = libroseSawyer.la $(ROSE_BOOST_LIBS) $(RT_LIBS)

@@ -334,6 +334,12 @@ Architecture::readCString(rose_addr_t va, size_t maxBytes) {
     return retval;
 }
 
+void
+Architecture::mapMemory(const AddressInterval&, unsigned /*permissions*/) {}
+
+void
+Architecture::unmapMemory(const AddressInterval&) {}
+
 const ExecutionLocation&
 Architecture::nextInstructionLocation() {
     currentLocation_ = currentLocation_.nextPrimary();
@@ -355,7 +361,7 @@ Architecture::restoreInputVariables(const Partitioner2::Partitioner&, const Emul
 }
 
 std::pair<ExecutionEvent::Ptr, SymbolicExpression::Ptr>
-Architecture::sharedMemoryAccess(const SharedMemoryCallbacks &callbacks, const P2::Partitioner &partitioner,
+Architecture::sharedMemoryAccess(const SharedMemoryCallbacks &callbacks, const P2::Partitioner&,
                                  const Emulation::RiscOperators::Ptr &ops, rose_addr_t addr, size_t nBytes) {
     // A shared memory read has just been encountered, and we're in the middle of executing the instruction that caused it.
     ASSERT_not_null(ops);
@@ -569,7 +575,7 @@ Architecture::printSharedMemoryEvents(const ExecutionEvent::Ptr &sharedMemoryEve
 }
 
 void
-Architecture::sharedMemoryAccessPost(const P2::Partitioner &partitioner, const Emulation::RiscOperators::Ptr &ops) {
+Architecture::sharedMemoryAccessPost(const P2::Partitioner&, const Emulation::RiscOperators::Ptr &ops) {
     // Called after a shared memory accessing instruction has completed.
     ASSERT_not_null(ops);
     ASSERT_require2(ops->currentInstruction() == nullptr, "must be called after instruction execution");

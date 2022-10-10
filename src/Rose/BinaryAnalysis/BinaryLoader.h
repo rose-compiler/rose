@@ -112,7 +112,7 @@ protected:
 
     /** Copy constructor. */
     BinaryLoader(const BinaryLoader &other)
-        : performingDynamicLinking_(other.performingDynamicLinking_),
+        : Sawyer::SharedObject(other), performingDynamicLinking_(other.performingDynamicLinking_),
           performingRemap_(other.performingRemap_), performingRelocations_(other.performingRelocations_) {
         preloads_ = other.preloads_;
         directories_ = other.directories_;

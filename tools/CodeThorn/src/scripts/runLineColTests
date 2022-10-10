@@ -1,0 +1,90 @@
+#!/bin/bash
+
+# exit immediately with ctrl-c
+trap "exit" INT
+
+red=$'\e[1;31m'
+grn=$'\e[0;32m'
+yel=$'\e[0;33m'
+blu=$'\e[0;34m'
+mag=$'\e[0;35m'
+cyn=$'\e[0;36m'
+end=$'\e[0m'
+
+COLORED_FAIL=${red}FAIL${end}
+COLORED_WARN=${yel}WARN${end}
+COLORED_PASS=${grn}PASS${end}
+
+TESTDIR=$1
+echo "------------------------------------------------"
+echo "running NORMALIZATION + LINE (COLUMN) REPORTING TESTS"
+echo "------------------------------------------------"
+
+
+function printStats {
+    echo "PASS: $numPass, WARN: $numWarn (expected: $numWarnExpected), FAIL: $numFail (expected: $numFailExpected)"
+    if [ $numWarn -gt $numWarnExpected ]; then
+	echo "${red}Error: more warnings than expected${end}"
+	exit 1
+    fi
+    if [ $numFail -gt $numFailExpected ]; then
+	echo "${red}Error: more failing runs than expected${end}"
+	exit 1
+    fi
+}
+
+function runLineColTests {
+    echo "scheduled tests: $testFiles"
+    numPass=0
+    numWarn=0
+    numFail=0
+    for testNumber in $testNumbers; do
+        benchmarkprefix=$TESTDIR/DOM${testNumber};
+        for benchmark in ${benchmarkprefix}*.[Cc]; do
+    #for benchmark in $testFiles; do
+	benchmarkname=$(basename $benchmark)
+        printf "Testing %-38s: " $benchmarkname
+            CT_OUTPUT_FILE1=${benchmarkname}_1.lcout.csv
+	    CT_OUTPUT_FILE2=${benchmarkname}_2.lcout.csv
+            ./codethorn $benchmark --line-col-csv=$CT_OUTPUT_FILE1 -I $TESTDIR --normalize-level=0 --run-solver=no > /dev/null
+            if [ ! $? -eq 0 ]
+            then
+	        echo $COLORED_FAIL
+                ((numFail++))
+	    fi
+	    ./codethorn $benchmark --line-col-csv=$CT_OUTPUT_FILE2 -I $TESTDIR --normalize-level=1 --run-solver=no > /dev/null
+            if [ ! $? -eq 0 ]
+            then
+	        echo $COLORED_FAIL
+                ((numFail++))
+            else
+                echo -n "$COLORED_PASS "
+
+		# count those lines that are present in normalized output FILE2, but not in original output FILE1
+		LINES=$(grep -vf $CT_OUTPUT_FILE1 $CT_OUTPUT_FILE2) # make sure no line is lost (e.g. casts in 005 are lost)
+                #LINES=$(diff $CT_OUTPUT_FILE1 $CT_OUTPUT_FILE2) # sequence is not necessarily the same because of moved code
+		numDiffLines=`echo "$LINES" | wc -l`
+		# there is always one line counted, therefor check for >1
+                if [ $numDiffLines -gt 1 ] 
+                then
+                    echo $COLORED_WARN $numDiffLines
+		    ((numWarn++))
+                else
+                    echo $COLORED_PASS
+		    ((numPass++))
+                fi
+	    fi
+	done
+    done
+    printStats
+    #rm -f DOM*.lcout.csv
+}
+
+# select those tests with no control constructs (because they change the order of line-col info)
+#testFiles=`grep 'for\|while\|if' -L $TESTDIR/DOM*.C`
+#testFiles=`grep 'xxxx' -L $TESTDIR/DOM*.C`
+testNumbers=`echo {001..050}`
+numWarnExpected=5
+numFailExpected=0
+echo -n "Line-Column normalization tests: " 
+runLineColTests

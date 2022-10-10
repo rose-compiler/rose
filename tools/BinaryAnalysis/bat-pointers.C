@@ -30,7 +30,7 @@ struct Settings {
 
 // Parses the command-line and returns the name of the input file if any (the ROSE binary state).
 static boost::filesystem::path
-parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings) {
+parseCommandLine(int argc, char *argv[], P2::Engine&, Settings &settings) {
     using namespace Sawyer::CommandLine;
 
     SwitchGroup gen = Rose::CommandLine::genericSwitches();

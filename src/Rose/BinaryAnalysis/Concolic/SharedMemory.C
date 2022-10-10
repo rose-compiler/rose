@@ -129,7 +129,7 @@ SharedMemoryCallback::inputVariable(const SharedMemoryContext &ctx) const {
 }
 
 bool
-SharedMemoryCallback::operator()(bool handled, SharedMemoryContext &ctx) {
+SharedMemoryCallback::operator()(bool /*handled*/, SharedMemoryContext &ctx) {
     switch (ctx.phase) {
         case ConcolicPhase::REPLAY:
             playback(ctx);

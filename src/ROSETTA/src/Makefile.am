@@ -57,6 +57,7 @@ GRAMMAR_SOURCE_FILES = \
      ../Grammar/grammarMainClassSourceCodeMacros.macro \
      ../Grammar/grammarNewDeleteOperatorMacros.macro \
      ../Grammar/grammarTraverseMemoryPool.macro \
+     ../Grammar/grammarNodeId.macro \
      ../Grammar/grammarCheckingIfDataMembersAreInMemoryPool.macro \
      ../Grammar/grammarStorageClassDeclatationMacros.macro \
      ../Grammar/grammarStorageClassDefinitionMacros.macro \
@@ -119,6 +120,7 @@ CxxGrammarMetaProgram_SOURCES = \
    binaryInstruction.C \
    storageSize.C \
    visitorSupport.C \
+   nodeIdSupport.C \
    poolBasedTraversal.C \
    node.C \
    buildAstFileIO.C \

@@ -17,12 +17,12 @@ namespace BinaryAnalysis {
 namespace InstructionSemantics {
 namespace BaseSemantics {
 
-/** Shared-ownership pointer to a map-based memory state. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer to a map-based memory state. */
 typedef boost::shared_ptr<class MemoryCellMap> MemoryCellMapPtr;
 
 /** Simple map-based memory state.
  *
- *  Memory cells (address + value pairs with additional data, @refMemoryCell) are stored in a map-like container so that a cell
+ *  Memory cells (address + value pairs with additional data, @ref MemoryCell) are stored in a map-like container so that a cell
  *  can be accessed in logarithmic time given its address.  The keys for the map are generated from the cell virtual addresses,
  *  either by using the address directly or by hashing it. The function that generates these keys, @ref generateCellKey, is
  *  pure virtual. */

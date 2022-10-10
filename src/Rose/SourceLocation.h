@@ -75,7 +75,7 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, unsigned version) {
+    void serialize(S &s, const unsigned /*version*/) {
         s & BOOST_SERIALIZATION_NVP(fileName_);
         s & BOOST_SERIALIZATION_NVP(line_);
         s & BOOST_SERIALIZATION_NVP(column_);

@@ -68,6 +68,8 @@
 #include <Rose/BinaryAnalysis/Variables.h>
 #include <Rose/BinaryAnalysis/Z3Solver.h>
 
+namespace Rose {
+
 /** Binary analysis.
  *
  *  ROSE supports both source code analysis and binary analysis. This namespace contains most of the binary analysis
@@ -75,5 +77,6 @@
  *  documentation. Follow those links to the enclosing class and/or namespace to obtain an overview of how those classes and
  *  namespaces work. */
 namespace BinaryAnalysis {}
+} // namespace
 
 #endif

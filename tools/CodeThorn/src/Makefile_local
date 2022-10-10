@@ -1,0 +1,174 @@
+# MS: makefile for building hybrid analyzers
+
+# required environment variables:
+# ROSE_LIB_DIR (.e.g install/rose/lib)
+# ROSE_SRC_DIR
+# ROSE_BUILD_TREE
+
+TOOLNAME3 = codethorn
+
+MYDATE = `date +%Y_%m_%d`
+
+CC                    = gcc
+CXX                   = g++
+BISON                 = bison
+FLEX                  = flex
+
+# Location of library directory after "make install" (set as environment variable)
+ROSE_LIBS = -Wl,-rpath -Wl,$(ROSE_LIB_DIR) -L $(ROSE_LIB_DIR) -L $(ROSE_LIB_DIR)/rose -L $(SPOT_PREFIX)/lib -lbdd -lspot -lspray -lrose
+
+CPPFLAGS              = -O2 -w -march=native -ftree-vectorize $(EXTRA_INCLUDES) -fopenmp -I.
+#CXXCPPFLAGS           = @CXXCPPFLAGS@
+CXXFLAGS              = -Wno-deprecated -std=c++11
+LDFLAGS               = 
+YACC                  = bison
+
+#OBJECT_FILES=Analyzer.o CommandLineOptions.o ConstraintRepresentation.o ExprAnalyzer.o InternalChecks.o LanguageRestrictorCollection.o Miscellaneous.o StateRepresentations.o  Timer.cpp Visualizer.o PropertyValueTable.o RewriteSystem.o SpotConnection.o SpotTgba.o  SpotState.o SpotSuccIter.o CounterexampleAnalyzer.o ArrayElementAccessData.o Specialization.o  PragmaHandler.o
+
+REGRESSION_DATA_DIR=regressiondata
+
+#OBJECT_FILES_EXPERIMENTAL=BoostGraphIntegration.o
+
+# Default make rule to use
+all: RERS_BINARY
+
+.PHONY: check dist viz clean distclean bsps docs
+
+# Example suffix rule for more experienced makefile users
+# .C.o:
+#	g++ -c -I$(ROSE_INCLUDE_DIR) -o $@ $(@:.o=.C)
+
+###############################################################################################
+
+TODO: build_tree and Z3 directory provided by script
+
+#%.o: %.C %.h
+#	$(CXX) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) -I$(BOOST_HOME)/include $< $(BOOST_CPPFLAGS) -c 
+
+# build_tree necessary for rose_config.h
+%.o: %.C
+	$(CXX) -I$(ROSE_BUILD_TREE) $(CXXFLAGS)  $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) -I$(BOOST_HOME)/include -I$(SPOT_PREFIX)/include -I$(SPOT_PREFIX)/include/spot $< $(BOOST_CPPFLAGS) -c 
+
+# Create a specialized hybrid analyzer for the given RERS problem.
+# Called by "generate_rers_hybrid_analyzer" script.
+$(TOOLNAME3)_$(PROBLEM): $(OBJECT_FILES_REMOTE) $(HYBRID_DIR)/$(PROBLEM)_copy_functions.o 
+	$(CXX) -DRERS_SPECIALIZATION $(CXXFLAGS) $(CPPFLAGS) $(OBJECT_FILES_REMOTE) $(PROBLEM)_copy_functions.o $(ROSE_LIBS) $(Z3_LIBS) $(BOOST_CPPFLAGS) -lspray -lcodethorn -lz3 -lbdd -lspot -o$(HYBRID_DIR)/$(TOOLNAME3)_$(PROBLEM) -L $(Z3_LIBRARY_INSTALL_PATH)
+
+###############################################################################################
+
+ltlparser: LTLParser.y++ LTL.h
+	$(BISON) -p ltl_ $<
+	$(CXX) -DLTL_PARSER_DEBUG -o $@ $(CXXFLAGS) $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) LTLParser.tab.c++
+
+LTLParser.o: LTLParser.y++ LTL.h
+	$(BISON) -p ltl_ $<
+	$(CXX) -o $@ $(CXXFLAGS) $(CPPFLAGS) -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) LTLParser.tab.c++ -c
+
+check: $(TOOLNAME3)
+	./$(TOOLNAME3) --internal-checks
+	@echo ================================================================
+	@echo CHECK: all of the following formulae should evaluate to "YES"!
+	@echo ================================================================
+	./$(TOOLNAME3) --edg:no_warnings tests/rers_mini1.c    --verify tests/rers_mini1.ltl
+
+checkall: check regressiontest
+	@echo
+	@echo "=================="
+	@echo "All checks passed."
+	@echo "=================="
+	@echo
+
+test: $(TOOLNAME3)
+	./$(TOOLNAME3) --edg:no_warnings tests/rers/Problem1.c \
+	               --verify tests/rers/properties1.txt \
+	               --csv-assert Problem1-assert.csv \
+	               --csv-ltl Problem1-ltl.csv
+
+RERS=$(patsubst %,Problem%.log, $(shell seq 13))
+rers: $(RERS)
+
+# parallel tests with make -j<N> test
+%.log: tests/rers/%.c $(TOOLNAME3) Makefile
+	./$(TOOLNAME3) --edg:no_warnings --colors=no $< \
+	     --verify $(patsubst tests/rers/Problem%.c,tests/rers/properties%.txt,$<) \
+	     --csv-ltl $(patsubst tests/rers/Problem%.c,Problem%-ltl.csv,$<) \
+	     --csv-assert $(patsubst tests/rers/Problem%.c,Problem%-assert.csv,$<) >$@
+
+
+validate:
+	cd regressiondata && python validate.py --log Problem1.log --csv rers_Problem1_ltl_csv.txt
+
+docs:
+	doxygen Doxyfile
+
+clean:
+	rm -f testCode.o
+	rm -f rose_testCode.o
+	rm -f rose_testCode.C
+	rm -f *.o
+	rm -f $(TOOLNAME3)
+	rm -f $(TOOLNAME3)_rers*
+	rm -f RERS_Problem*_mod.C
+	rm -f *.dot
+	rm -f *.ps
+	rm -f viz/*
+	rm -f bsps/*
+	rm -f LTLParser.tab.c++
+	rm -f tmp*
+	rm -f matcherparser.C
+	rm -f matcherlexer.C
+	rm -f matcherparser.tab.cxx
+
+distclean: clean
+	rm -f *.tgz
+	rm -f *~
+	rm -rf ../docs/doxygen
+	rm -f $(TOOLNAME3)ref
+
+dist:
+	tar cvzf codethorn_$(MYDATE).tgz *.C *cpp *.h *.lxx *.yxx tests/*.C tests/*.c Makefile*
+
+
+asserttest: $(TOOLNAME3)
+	./$(TOOLNAME3) --edg:no_warnings tests/asserttest2.c --csv-assert assert_csv.txt
+
+regressiontest: $(TOOLNAME3)
+	@./$(TOOLNAME3) --csv-assert tmp_rers_mini1_assert_csv.txt --csv-ltl tmp_rers_mini1_ltl_csv.txt --verify tests/rers_mini1.ltl --viz=yes tests/rers_mini1.c
+	@echo "----------------------------------------"
+	@sort -u tmp_rers_mini1_assert_csv.txt > tmp2_rers_mini1_assert_csv.txt 
+	@diff tmp2_rers_mini1_assert_csv.txt $(REGRESSION_DATA_DIR)/rers_mini1_assert_csv.txt
+	@echo "Regression assert test PASSED."
+	@diff tmp_rers_mini1_ltl_csv.txt $(REGRESSION_DATA_DIR)/rers_mini1_ltl_csv.txt
+	@echo "Regression LTL test PASSED."
+	@sort -u transitiongraph1.dat > rg1.dat
+	@sort -u $(REGRESSION_DATA_DIR)/rers_mini1_transitiongraph1.dat > rg2.dat
+	@diff rg1.dat rg2.dat
+	@echo "Regression transition graph test PASSED."
+	@echo "----------------------------------------"
+	@echo "All regression tests PASSED."
+	@echo "----------------------------------------"
+
+# use with caution
+generateregressiondata:
+	./$(TOOLNAME3) --csv-assert $(REGRESSION_DATA_DIR)/rers_mini1_assert_csv.txt --csv-ltl $(REGRESSION_DATA_DIR)/rers_mini1_ltl_csv.txt --verify tests/rers_mini1.ltl --viz=yes tests/rers_mini1.c 
+	sort -u transitiongraph1.dat > tmp_transitiongraph1.dat
+	cp tmp_transitiongraph1.dat $(REGRESSION_DATA_DIR)/rers_mini1_transitiongraph1.dat
+
+projectsize:
+	@echo -n "Number of lines: "
+	@wc -l `ls *.h *.C -1 | grep -v parser |  grep -v scanner | grep -v RERS | tr '\n' ' '` *.l?? *.y?? RERS_Problem*_specialization*.C | grep total 
+
+
+RERS_BINARY: transform_rers_problems codethorn_rers1 codethorn_rers2 codethorn_rers3 codethorn_rers4 codethorn_rers5 codethorn_rers6 codethorn_rers7 codethorn_rers8 codethorn_rers9 codethorn_rers10
+
+transform_rers_problems:
+		./transform_rers_problem Problem1
+		./transform_rers_problem Problem2
+		./transform_rers_problem Problem3
+		./transform_rers_problem Problem4
+		./transform_rers_problem Problem5
+		./transform_rers_problem Problem6
+		./transform_rers_problem Problem7
+		./transform_rers_problem Problem8
+		./transform_rers_problem Problem9
+		./transform_rers_problem Problem10

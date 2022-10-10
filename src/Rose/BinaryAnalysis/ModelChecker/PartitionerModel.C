@@ -393,8 +393,7 @@ SValue::copy(size_t newWidth) const {
 }
 
 Sawyer::Optional<BS::SValue::Ptr>
-SValue::createOptionalMerge(const BS::SValue::Ptr &other, const BS::Merger::Ptr &merger,
-                    const SmtSolver::Ptr &solver) const {
+SValue::createOptionalMerge(const BS::SValue::Ptr &/*other*/, const BS::Merger::Ptr&, const SmtSolver::Ptr&) const {
     ASSERT_not_implemented("[Robb Matzke 2021-07-07]");
 }
 
@@ -1675,7 +1674,7 @@ SemanticCallbacks::nextCodeAddresses(const BS::RiscOperators::Ptr &ops) {
 }
 
 std::vector<SemanticCallbacks::NextUnit>
-SemanticCallbacks::nextUnits(const Path::Ptr &path, const BS::RiscOperators::Ptr &ops, const SmtSolver::Ptr &solver) {
+SemanticCallbacks::nextUnits(const Path::Ptr&, const BS::RiscOperators::Ptr &ops, const SmtSolver::Ptr &solver) {
     std::vector<SemanticCallbacks::NextUnit> units;
     ProgressTask task(solver->progress(), "nextUnits");
 
@@ -1694,7 +1693,7 @@ SemanticCallbacks::nextUnits(const Path::Ptr &path, const BS::RiscOperators::Ptr
         auto tag = ErrorTag::instance(0, "abstract jump", "symbolic address not handled yet", nullptr, ip);
         tag->importance(WARN);
         auto fail = FailureUnit::instance(Sawyer::Nothing(), SourceLocation(), "no concrete instruction pointer", tag);
-        units.push_back({fail, SymbolicExpression::makeBooleanConstant(true)});
+        units.push_back({fail, SymbolicExpression::makeBooleanConstant(true), SmtSolver::Evidence()});
         return units;
     }
 
@@ -1738,24 +1737,24 @@ SemanticCallbacks::nextUnits(const Path::Ptr &path, const BS::RiscOperators::Ptr
 }
 
 bool
-SemanticCallbacks::filterNullDeref(const BS::SValue::Ptr &addr, SgAsmInstruction *insn, TestMode testMode, IoMode ioMode) {
+SemanticCallbacks::filterNullDeref(const BS::SValue::Ptr &/*addr*/, SgAsmInstruction*, TestMode, IoMode) {
     return true;
 }
 
 bool
-SemanticCallbacks::filterOobAccess(const BS::SValue::Ptr &addr, const AddressInterval &referencedRegion,
-                                   const AddressInterval &accessedRegion, SgAsmInstruction *insn, TestMode testMode,
-                                   IoMode ioMode, const Variables::StackVariable &intendedVariable,
-                                   const AddressInterval &intendedVariableLocation,
-                                   const Variables::StackVariable &accessedVariable,
-                                   const AddressInterval &accessedVariableLocation) {
+SemanticCallbacks::filterOobAccess(const BS::SValue::Ptr &/*addr*/, const AddressInterval &/*referencedRegion*/,
+                                   const AddressInterval &/*accessedRegion*/, SgAsmInstruction*, TestMode,
+                                   IoMode, const Variables::StackVariable &/*intendedVariable*/,
+                                   const AddressInterval &/*intendedVariableLocation*/,
+                                   const Variables::StackVariable &/*accessedVariable*/,
+                                   const AddressInterval &/*accessedVariableLocation*/) {
     return true;
 }
 
 bool
-SemanticCallbacks::filterUninitVar(const BS::SValue::Ptr &addr, const AddressInterval &referencedRegion,
-                                   const AddressInterval &accessedRegion, SgAsmInstruction *insn, TestMode testMode,
-                                   const Variables::StackVariable &variable, const AddressInterval &variableLocation) {
+SemanticCallbacks::filterUninitVar(const BS::SValue::Ptr &/*addr*/, const AddressInterval &/*referencedRegion*/,
+                                   const AddressInterval &/*accessedRegion*/, SgAsmInstruction*, TestMode,
+                                   const Variables::StackVariable &/*variable*/, const AddressInterval &/*variableLocation*/) {
     return true;
 }
 

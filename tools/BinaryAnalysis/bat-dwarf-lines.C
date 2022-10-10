@@ -23,7 +23,7 @@ struct Settings {};
 static Sawyer::Message::Facility mlog;
 
 static std::vector<std::string>
-parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings) {
+parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings&) {
     using namespace Sawyer::CommandLine;
 
     Parser parser = Rose::CommandLine::createEmptyParser(purpose, description);

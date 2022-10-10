@@ -21,7 +21,7 @@ namespace ConcreteSemantics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Sawyer::Optional<BaseSemantics::SValue::Ptr>
-SValue::createOptionalMerge(const BaseSemantics::SValue::Ptr &other_, const BaseSemantics::Merger::Ptr&,
+SValue::createOptionalMerge(const BaseSemantics::SValue::Ptr &/*other*/, const BaseSemantics::Merger::Ptr&,
                             const SmtSolverPtr&) const {
     // There's no official way to represent BOTTOM
     throw BaseSemantics::NotImplemented("SValue merging for ConcreteSemantics is not supported", NULL);
@@ -136,7 +136,7 @@ MemoryState::memoryMap(const MemoryMap::Ptr &map, Sawyer::Optional<unsigned> pad
 
 BaseSemantics::SValue::Ptr
 MemoryState::readOrPeekMemory(const BaseSemantics::SValue::Ptr &addr_, const BaseSemantics::SValue::Ptr &dflt_,
-                              BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps,
+                              BaseSemantics::RiscOperators */*addrOps*/, BaseSemantics::RiscOperators */*valOps*/,
                               bool allowSideEffects) {
     ASSERT_require2(8==dflt_->nBits(), "ConcreteSemantics::MemoryState requires memory cells contain 8-bit data");
     rose_addr_t addr = addr_->toUnsigned().get();
@@ -166,7 +166,7 @@ MemoryState::peekMemory(const BaseSemantics::SValue::Ptr &addr, const BaseSemant
 
 void
 MemoryState::writeMemory(const BaseSemantics::SValue::Ptr &addr_, const BaseSemantics::SValue::Ptr &value_,
-                         BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps) {
+                         BaseSemantics::RiscOperators */*addrOps*/, BaseSemantics::RiscOperators */*valOps*/) {
     ASSERT_require2(8==value_->nBits(), "ConcreteSemantics::MemoryState requires memory cells contain 8-bit data");
     rose_addr_t addr = addr_->toUnsigned().get();
     uint8_t value = value_->toUnsigned().get();
@@ -176,8 +176,8 @@ MemoryState::writeMemory(const BaseSemantics::SValue::Ptr &addr_, const BaseSema
 }
 
 bool
-MemoryState::merge(const BaseSemantics::MemoryState::Ptr &other, BaseSemantics::RiscOperators *addrOps,
-                   BaseSemantics::RiscOperators *valOps) {
+MemoryState::merge(const BaseSemantics::MemoryState::Ptr &/*other*/, BaseSemantics::RiscOperators */*addrOps*/,
+                   BaseSemantics::RiscOperators */*valOps*/) {
     throw BaseSemantics::NotImplemented("MemoryState merging for ConcreteSemantics is not supported", NULL);
 }
 
@@ -274,7 +274,7 @@ RiscOperators::promote(const BaseSemantics::RiscOperators::Ptr &x) {
 }
 
 void
-RiscOperators::interrupt(int majr, int minr) {
+RiscOperators::interrupt(int /*major*/, int /*minor*/) {
     currentState()->clear();
 }
 
@@ -450,9 +450,9 @@ BaseSemantics::SValue::Ptr
 RiscOperators::signedDivide(const BaseSemantics::SValue::Ptr &a_, const BaseSemantics::SValue::Ptr &b_) {
     // FIXME[Robb P. Matzke 2015-03-31]: BitVector doesn't have a divide method
     if (a_->nBits() > 64 || b_->nBits() > 64) {
-        throw BaseSemantics::Exception("signedDivide x[" + StringUtility::addrToString(a_->nBits()) +
-                                       "] / y[" + StringUtility::addrToString(b_->nBits()) +
-                                       "] is not implemented", currentInstruction());
+        throw BaseSemantics::NotImplemented("signedDivide x[" + StringUtility::addrToString(a_->nBits()) +
+                                            "] / y[" + StringUtility::addrToString(b_->nBits()) +
+                                            "] is not implemented", currentInstruction());
     }
     int64_t a = IntegerOps::signExtend2(a_->toUnsigned().get(), a_->nBits(), 64);
     int64_t b = IntegerOps::signExtend2(b_->toUnsigned().get(), b_->nBits(), 64);
@@ -465,9 +465,9 @@ BaseSemantics::SValue::Ptr
 RiscOperators::signedModulo(const BaseSemantics::SValue::Ptr &a_, const BaseSemantics::SValue::Ptr &b_) {
     // FIXME[Robb P. Matzke 2015-03-31]: BitVector doesn't have a modulo method
     if (a_->nBits() > 64 || b_->nBits() > 64) {
-        throw BaseSemantics::Exception("signedModulo x[" + StringUtility::addrToString(a_->nBits()) +
-                                       "] % y[" + StringUtility::addrToString(b_->nBits()) +
-                                       "] is not implemented", currentInstruction());
+        throw BaseSemantics::NotImplemented("signedModulo x[" + StringUtility::addrToString(a_->nBits()) +
+                                            "] % y[" + StringUtility::addrToString(b_->nBits()) +
+                                            "] is not implemented", currentInstruction());
     }
     int64_t a = IntegerOps::signExtend2(a_->toUnsigned().get(), a_->nBits(), 64);
     int64_t b = IntegerOps::signExtend2(b_->toUnsigned().get(), b_->nBits(), 64);
@@ -501,9 +501,9 @@ RiscOperators::signedMultiply(const BaseSemantics::SValue::Ptr &a_, const BaseSe
         product.fromInteger(BitRange::baseSize(64, 64), c2);
         return svalueNumber(product);
     } else if (a_->nBits() + b_->nBits() > 64) {
-        throw BaseSemantics::Exception("signedMultiply x[" + StringUtility::addrToString(a_->nBits()) +
-                                       "] * y[" + StringUtility::addrToString(b_->nBits()) +
-                                       "] is not implemented", currentInstruction());
+        throw BaseSemantics::NotImplemented("signedMultiply x[" + StringUtility::addrToString(a_->nBits()) +
+                                            "] * y[" + StringUtility::addrToString(b_->nBits()) +
+                                            "] is not implemented", currentInstruction());
     } else {
         ASSERT_require2(a_->nBits() + b_->nBits() <= 64, "not implemented yet");
         int64_t a = IntegerOps::signExtend2(a_->toUnsigned().get(), a_->nBits(), 64);
@@ -540,9 +540,9 @@ RiscOperators::unsignedDivide(const BaseSemantics::SValue::Ptr &a_, const BaseSe
 
     // FIXME[Robb P. Matzke 2015-03-31]: BitVector doesn't have a divide method
     if (a->nBits() > 64 || b->nBits() > 64) {
-        throw BaseSemantics::Exception("unsignedDivide x[" + StringUtility::addrToString(a->nBits()) +
-                                       "] / y[" + StringUtility::addrToString(b->nBits()) +
-                                       "] is not implemented", currentInstruction());
+        throw BaseSemantics::NotImplemented("unsignedDivide x[" + StringUtility::addrToString(a->nBits()) +
+                                            "] / y[" + StringUtility::addrToString(b->nBits()) +
+                                            "] is not implemented", currentInstruction());
     }
 
     uint64_t an = a->toUnsigned().get();
@@ -575,9 +575,9 @@ RiscOperators::unsignedModulo(const BaseSemantics::SValue::Ptr &a_, const BaseSe
 
     // FIXME[Robb P. Matzke 2015-03-31]: BitVector doesn't have a modulo method
     if (a->nBits() > 64 || b->nBits() > 64) {
-        throw BaseSemantics::Exception("unsignedModulo x[" + StringUtility::addrToString(a->nBits()) +
-                                       "] % y[" + StringUtility::addrToString(b->nBits()) +
-                                       "] is not implemented", currentInstruction());
+        throw BaseSemantics::NotImplemented("unsignedModulo x[" + StringUtility::addrToString(a->nBits()) +
+                                            "] % y[" + StringUtility::addrToString(b->nBits()) +
+                                            "] is not implemented", currentInstruction());
     }
     uint64_t an = a->toUnsigned().get();
     uint64_t bn = b->toUnsigned().get();
@@ -611,9 +611,9 @@ RiscOperators::unsignedMultiply(const BaseSemantics::SValue::Ptr &a_, const Base
         product.fromInteger(BitRange::baseSize(64, 64), c2);
         return svalueNumber(product);
     } else if (a_->nBits() + b_->nBits() > 64) {
-        throw BaseSemantics::Exception("unsignedMultiply x[" + StringUtility::addrToString(a_->nBits()) +
-                                       "] * y[" + StringUtility::addrToString(b_->nBits()) +
-                                       "] is not implemented", currentInstruction());
+        throw BaseSemantics::NotImplemented("unsignedMultiply x[" + StringUtility::addrToString(a_->nBits()) +
+                                            "] * y[" + StringUtility::addrToString(b_->nBits()) +
+                                            "] is not implemented", currentInstruction());
     } else {
         ASSERT_require2(a_->nBits() + b_->nBits() <= 64, "not implemented yet");
         uint64_t a = a_->toUnsigned().get();

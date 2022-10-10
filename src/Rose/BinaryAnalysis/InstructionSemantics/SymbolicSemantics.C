@@ -225,7 +225,7 @@ MemoryListState::CellCompressorMcCarthy::instance() {
 
 SValue::Ptr
 MemoryListState::CellCompressorMcCarthy::operator()(const SValue::Ptr &address, const BaseSemantics::SValue::Ptr &dflt,
-                                                    BaseSemantics::RiscOperators *addrOps,
+                                                    BaseSemantics::RiscOperators */*addrOps*/,
                                                     BaseSemantics::RiscOperators *valOps, const CellList &cells)
 {
     if (1==cells.size())
@@ -260,9 +260,9 @@ MemoryListState::CellCompressorSimple::instance() {
 }
 
 SValue::Ptr
-MemoryListState::CellCompressorSimple::operator()(const SValue::Ptr &address, const BaseSemantics::SValue::Ptr &dflt,
-                                                  BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps,
-                                                  const CellList &cells)
+MemoryListState::CellCompressorSimple::operator()(const SValue::Ptr &/*address*/, const BaseSemantics::SValue::Ptr &dflt,
+                                                  BaseSemantics::RiscOperators */*addrOps*/,
+                                                  BaseSemantics::RiscOperators */*valOps*/, const CellList &cells)
 {
     if (1==cells.size())
         return SValue::promote(cells.front()->value()->copy());
@@ -300,9 +300,9 @@ SValue::Ptr
 MemoryListState::CellCompressorSet::operator()(const SValue::Ptr &address, const BaseSemantics::SValue::Ptr &dflt,
                                                BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps,
                                                const CellList &cells) {
-    ASSERT_not_null(address);
+    ASSERT_always_not_null(address);
     ASSERT_not_null(dflt);
-    ASSERT_not_null(addrOps);
+    ASSERT_always_not_null(addrOps);
     ASSERT_not_null(valOps);
 
     RiscOperators *valOpsSymbolic = dynamic_cast<RiscOperators*>(valOps);
@@ -515,7 +515,7 @@ RiscOperators::substitute(const SValue::Ptr &from, const SValue::Ptr &to)
         SmtSolverPtr solver;
         RegSubst(const SValue::Ptr &from, const SValue::Ptr &to, const SmtSolverPtr &solver)
             : from(from), to(to), solver(solver) {}
-        virtual BaseSemantics::SValue::Ptr operator()(RegisterDescriptor reg, const BaseSemantics::SValue::Ptr &val_) {
+        virtual BaseSemantics::SValue::Ptr operator()(RegisterDescriptor, const BaseSemantics::SValue::Ptr &val_) {
             SValue::Ptr val = SValue::promote(val_);
             return val->substitute(from, to, solver);
         }
@@ -555,8 +555,7 @@ RiscOperators::filterResult(const BaseSemantics::SValue::Ptr &a_) {
 }
 
 void
-RiscOperators::interrupt(int majr, int minr)
-{
+RiscOperators::interrupt(int /*major*/, int /*minor*/) {
     currentState()->clear();
 }
 
