@@ -1,5 +1,7 @@
 #include "sage3basic.h"
+#include "rose_config.h"
 #include "SpotConnection.h"
+
 using namespace std;
 using namespace CodeThorn;
 
