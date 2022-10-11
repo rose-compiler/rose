@@ -1,3 +1,4 @@
+
 #ifdef HAVE_SPOT
 
 #ifndef SPOT_STATE_H
