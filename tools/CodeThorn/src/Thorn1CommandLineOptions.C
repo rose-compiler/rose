@@ -1,4 +1,7 @@
 #include "sage3basic.h"
+// required for checking of: HAVE_SPOT, HAVE_Z3
+#include "rose_config.h"
+
 #include "CodeThornException.h"
 #include "CodeThornCommandLineOptions.h"
 #include "CppStdUtilities.h"
@@ -6,9 +9,6 @@
 #include <string>
 #include <sstream>
 #include <iostream>
-
-// required for checking of: HAVE_SPOT, HAVE_Z3
-#include "rose_config.h"
 
 #include "Rose/Diagnostics.h"
 using namespace Sawyer::Message;

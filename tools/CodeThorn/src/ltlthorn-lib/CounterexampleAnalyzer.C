@@ -1,4 +1,6 @@
 // Author: Marc Jasper, 2014, 2015.
+#include "sage3basic.h"
+#include "rose_config.h"
 
 #ifdef HAVE_SPOT
 
