@@ -1,4 +1,6 @@
 #include "sage3basic.h"
+#include "rose_config.h"
+
 #include "CodeThornCommandLineOptions.h"
 #include "ParProAutomata.h"
 #include "DotGraphCfgFrontend.h"
