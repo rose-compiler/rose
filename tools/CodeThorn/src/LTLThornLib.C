@@ -1,4 +1,5 @@
 #include "sage3basic.h"
+#include "rose_config.h"
 
 #include <string>     // std::string, std::stoi
 #include <regex>
