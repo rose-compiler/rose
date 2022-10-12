@@ -9,7 +9,12 @@
 #define Sawyer_Assert_H
 
 #include <Sawyer/Sawyer.h>
+
+#include <boost/config.hpp>
 #include <string>
+#ifdef __clang_analyzer__
+#include <cassert>
+#endif
 
 // If SAWYER_NDEBUG is defined then some of the macros defined in this header become no-ops.  For interoperability with the
 // more standard NDEBUG symbol, we define SAWYER_NDEBUG if NDEBUG is defined.
@@ -92,7 +97,7 @@ namespace Assert {
 /** Cause immediate failure.  This function is the low-level function called by most of the other Sawyer::Assert macros
  *  when an assertion fails. Calls to this function do not return. */
 SAWYER_EXPORT
-#if __cplusplus >= 201103L
+#ifndef BOOST_WINDOWS
 [[noreturn]]
 #endif
 void fail(const char *mesg, const char *expr, const std::string &note,
@@ -116,41 +121,46 @@ SAWYER_EXPORT extern AssertFailureHandler assertFailureHandler;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #define ASSERT_always_require(expr) ASSERT_always_require2(expr, "")
-#define ASSERT_always_require2(expr, note)                                                                                     \
-    ((expr) ?                                                                                                                  \
-        static_cast<void>(0) :                                                                                                 \
-        Sawyer::Assert::fail("assertion failed", "required: " #expr, (note),                                                   \
-                             __FILE__, __LINE__, SAWYER_PRETTY_FUNCTION))
-
 #define ASSERT_always_forbid(expr) ASSERT_always_forbid2(expr, "")
-#define ASSERT_always_forbid2(expr, note)                                                                                      \
-    (!(expr) ?                                                                                                                 \
-        static_cast<void>(0) :                                                                                                 \
-        Sawyer::Assert::fail("assertion failed",                                                                               \
-                             "forbidden: " #expr, (note), __FILE__, __LINE__, SAWYER_PRETTY_FUNCTION))
-
 #define ASSERT_always_not_null(expr) ASSERT_always_not_null2(expr, "")
-#define ASSERT_always_not_null2(expr, note)                                                                                    \
-    ((expr)!=NULL ?                                                                                                            \
-        static_cast<void>(0) :                                                                                                 \
-        Sawyer::Assert::fail("null pointer",                                                                                   \
-                             #expr, (note), __FILE__, __LINE__, SAWYER_PRETTY_FUNCTION))
-
 #define ASSERT_always_not_reachable(note)                                                                                      \
     Sawyer::Assert::fail("reached impossible state", NULL, (note),                                                             \
-                         __FILE__, __LINE__, SAWYER_PRETTY_FUNCTION);
-
+                         __FILE__, __LINE__, SAWYER_PRETTY_FUNCTION)
 #define ASSERT_always_not_implemented(note)                                                                                    \
     Sawyer::Assert::fail("not implemented yet", NULL, (note),                                                                  \
                          __FILE__, __LINE__, SAWYER_PRETTY_FUNCTION)
-
 #define ASSERT_always_this() /*void*/
+
+#ifdef __clang_analyzer__
+    // The Clang analyzer doesn't recognize Sawyer::Assert::fail, but it does recognize C's assert
+    #define ASSERT_always_require2(expr, note) assert(expr)
+    #define ASSERT_always_forbid2(expr, note) assert(!(expr))
+    #define ASSERT_always_not_null2(expr, note) assert((expr) != nullptr)
+#else
+    #define ASSERT_always_require2(expr, note)                                                                                 \
+        ((expr) ?                                                                                                              \
+            static_cast<void>(0) :                                                                                             \
+            Sawyer::Assert::fail("assertion failed", "required: " #expr, (note),                                               \
+                                 __FILE__, __LINE__, SAWYER_PRETTY_FUNCTION))
+
+    #define ASSERT_always_forbid2(expr, note)                                                                                  \
+        (!(expr) ?                                                                                                             \
+            static_cast<void>(0) :                                                                                             \
+            Sawyer::Assert::fail("assertion failed",                                                                           \
+                                 "forbidden: " #expr, (note), __FILE__, __LINE__, SAWYER_PRETTY_FUNCTION))
+
+    #define ASSERT_always_not_null2(expr, note)                                                                                \
+        ((expr)!=NULL ?                                                                                                        \
+            static_cast<void>(0) :                                                                                             \
+            Sawyer::Assert::fail("null pointer",                                                                               \
+                                 #expr, (note), __FILE__, __LINE__, SAWYER_PRETTY_FUNCTION))
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // The non-"always" macros might change behavior based on whether SAWYER_NDEBUG is defined.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifdef SAWYER_NDEBUG
+#if defined(SAWYER_NDEBUG) && !defined(__clang_analyzer__)
 
 #define ASSERT_require(expr)            /*void*/
 #define ASSERT_require2(expr, note)     /*void*/
