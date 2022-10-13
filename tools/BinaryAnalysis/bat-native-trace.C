@@ -5,7 +5,7 @@ static const char *description =
 #include <rose.h>
 #include <batSupport.h>
 
-#include <Rose/BinaryAnalysis/Debugger.h>
+#include <Rose/BinaryAnalysis/Debugger/Linux.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/InstructionProvider.h>
@@ -108,9 +108,9 @@ main(int argc, char *argv[]) {
         ::mlog[FATAL] <<"no specimen supplied on command-line; see --help\n";
         exit(1);
     }
-    Debugger::Specimen specimen(args);
+    Debugger::Linux::Specimen specimen(args);
     specimen.randomizedAddresses(false);
-    specimen.flags().set(Debugger::CLOSE_FILES);
+    specimen.flags().set(Debugger::Linux::Flag::CLOSE_FILES);
 
     // Trace output goes to either std::cout or some file.
     std::filebuf fb;
@@ -139,10 +139,10 @@ main(int argc, char *argv[]) {
 
     // Single-step the specimen natively in a debugger and show each instruction.
     size_t nSteps = 0;                                  // number of instructions executed
-    Debugger::Ptr debugger = Debugger::instance(specimen);
+    auto debugger = Debugger::Linux::instance(specimen);
     while (!debugger->isTerminated()) {
         ++nSteps;
-        uint64_t ip = debugger->readRegister(REG_IP).toInteger();
+        uint64_t ip = debugger->readRegister(Debugger::ThreadId::unspecified(), REG_IP).toInteger();
 
         if (WITH_INSTRUCTION_PROVIDER) {
             if (settings.listingEachInsn) {
@@ -170,7 +170,7 @@ main(int argc, char *argv[]) {
             }
         }
 
-        debugger->singleStep();
+        debugger->singleStep(Debugger::ThreadId::unspecified());
     }
 
     std::cerr <<debugger->howTerminated() <<"\n";

@@ -10,7 +10,7 @@
 #include <Rose/BinaryAnalysis/CodeInserter.h>
 #include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
 #include <Rose/BinaryAnalysis/DataFlow.h>
-#include <Rose/BinaryAnalysis/Debugger.h>
+#include <Rose/BinaryAnalysis/Debugger/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/FeasiblePath.h>
 #include <Rose/BinaryAnalysis/FunctionSimilarity.h>

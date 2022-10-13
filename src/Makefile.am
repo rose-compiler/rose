@@ -306,6 +306,10 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/ControlFlow.h						\
 	Rose/BinaryAnalysis/DataFlow.h							\
 	Rose/BinaryAnalysis/Debugger.h							\
+	Rose/BinaryAnalysis/Debugger/Base.h						\
+	Rose/BinaryAnalysis/Debugger/BasicTypes.h					\
+	Rose/BinaryAnalysis/Debugger/Linux.h						\
+	Rose/BinaryAnalysis/Debugger/ThreadId.h						\
 	Rose/BinaryAnalysis/Demangler.h							\
 	Rose/BinaryAnalysis/Disassembler.h						\
 	Rose/BinaryAnalysis/Disassembler/Aarch32.h					\

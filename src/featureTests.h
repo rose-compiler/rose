@@ -73,6 +73,12 @@
 #define ROSE_ENABLE_LIBRARY_IDENTIFICATION
 #endif
 
+// Whether to enable the ptrace dynamic debugger
+#if !defined(ROSE_ENABLE_DEBUGGER_LINUX) && \
+    defined(__linux__)
+#define ROSE_ENABLE_DEBUGGER_LINUX
+#endif
+
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

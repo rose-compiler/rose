@@ -69,7 +69,9 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/ConcreteLocation.C						\
 	BinaryAnalysis/ControlFlow.C							\
 	BinaryAnalysis/DataFlow.C							\
-	BinaryAnalysis/Debugger.C							\
+	BinaryAnalysis/Debugger/Base.C							\
+	BinaryAnalysis/Debugger/Linux.C							\
+	BinaryAnalysis/Debugger/ThreadId.C						\
 	BinaryAnalysis/Demangler.C							\
 	BinaryAnalysis/Disassembler/Aarch32.C						\
 	BinaryAnalysis/Disassembler/Aarch64.C						\

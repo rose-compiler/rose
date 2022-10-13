@@ -7,7 +7,7 @@
 #include <Rose/BinaryAnalysis/Concolic/ExecutionEvent.h>
 #include <Rose/BinaryAnalysis/Concolic/SharedMemory.h>
 #include <Rose/BinaryAnalysis/Concolic/SystemCall.h>
-#include <Rose/BinaryAnalysis/Debugger.h>
+#include <Rose/BinaryAnalysis/Debugger/Linux.h>
 
 #include <boost/filesystem.hpp>
 #include <Sawyer/Callbacks.h>
@@ -29,7 +29,7 @@ public:
     using Ptr = LinuxI386Ptr;
 
 private:
-    DebuggerPtr debugger_;
+    Debugger::Linux::Ptr debugger_;
     rose_addr_t scratchVa_ = 0;                         // subordinate address for scratch page
     bool markingArgvAsInput_ = true;
     bool markingEnvpAsInput_ = false;
@@ -52,7 +52,7 @@ public:
     /** Property: Debugger.
      *
      *  The debugger represents the concrete state of the specimen. */
-    DebuggerPtr debugger() const;
+    Debugger::Linux::Ptr debugger() const;
 
 public:
     /** The register where system call return values are stored. */

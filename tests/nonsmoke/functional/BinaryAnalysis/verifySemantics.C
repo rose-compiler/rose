@@ -8,7 +8,7 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 
 #include <rose.h>
 
-#include <Rose/BinaryAnalysis/Debugger.h>
+#include <Rose/BinaryAnalysis/Debugger/Linux.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/MemoryCellList.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherX86.h>
@@ -103,15 +103,15 @@ public:
     using Ptr = RiscOperatorsPtr;
 
 private:
-    Debugger::Ptr subordinate_;
+    Debugger::Linux::Ptr subordinate_;
 
 protected:
-    RiscOperators(const BaseSemantics::State::Ptr &state, const Debugger::Ptr &subordinate)
+    RiscOperators(const BaseSemantics::State::Ptr &state, const Debugger::Linux::Ptr &subordinate)
         : ConcreteSemantics::RiscOperators(state, SmtSolverPtr()), subordinate_(subordinate) {
         name("Verification");
     }
 public:
-    static RiscOperators::Ptr instance(const Debugger::Ptr &subordinate, const RegisterDictionary::Ptr &regdict) {
+    static RiscOperators::Ptr instance(const Debugger::Linux::Ptr &subordinate, const RegisterDictionary::Ptr &regdict) {
         BaseSemantics::SValue::Ptr protoval = ConcreteSemantics::SValue::instance();
         BaseSemantics::RegisterState::Ptr registers = BaseSemantics::RegisterStateGeneric::instance(protoval, regdict);
         BaseSemantics::MemoryState::Ptr memory = BaseSemantics::MemoryCellList::instance(protoval, protoval);
@@ -127,7 +127,7 @@ public:
         if (regs->is_partly_stored(reg))
             return ConcreteSemantics::RiscOperators::readRegister(reg);
         try {
-            return svalueNumber(subordinate_->readRegister(reg));
+            return svalueNumber(subordinate_->readRegister(Debugger::ThreadId::unspecified(), reg));
         } catch (const std::runtime_error &e) {
             RegisterNames rname(currentState()->registerState()->registerDictionary());
             throw BaseSemantics::Exception("cannot read register " + rname(reg) + " from subordinate process",
@@ -171,7 +171,7 @@ public:
         BOOST_FOREACH (const RegisterState::RegPair &cell, cells) {
             Sawyer::Container::BitVector nativeValue;
             try {
-                nativeValue = subordinate_->readRegister(cell.desc);
+                nativeValue = subordinate_->readRegister(Debugger::ThreadId::unspecified(), cell.desc);
             } catch (const std::runtime_error &e) {
                 ::mlog[ERROR] <<"cannot read register " <<rname(cell.desc) <<" from subordinate process: " <<e.what() <<"\n";
                 continue;
@@ -290,7 +290,7 @@ main(int argc, char *argv[]) {
     InstructionMap insns;
 
     // Build instruction semantics framework
-    Debugger::Ptr debugger = Debugger::instance(args);
+    auto debugger = Debugger::Linux::instance(args);
     RiscOperators::Ptr checkOps = RiscOperators::instance(debugger, registerDictionary);
     BaseSemantics::Dispatcher::Ptr cpu;
     std::ostringstream trace;
@@ -308,7 +308,7 @@ main(int argc, char *argv[]) {
     Sawyer::ProgressBar<size_t> progress(::mlog[MARCH], "executed");
     while (!debugger->isTerminated()) {
         ++progress;
-        rose_addr_t ip = debugger->executionAddress();
+        rose_addr_t ip = debugger->executionAddress(Debugger::ThreadId::unspecified());
 
         // Disassemble (and save) the instruction
         SgAsmInstruction *insn = NULL;
@@ -345,7 +345,7 @@ main(int argc, char *argv[]) {
 
         // Single-step the native execution and then compare written-to registers and memory for the simulated execution with
         // those same registers and memory in the native execution.
-        debugger->singleStep();
+        debugger->singleStep(Debugger::ThreadId::unspecified());
         if (insn && !checkOps->checkRegisters(insn))
             std::cerr <<trace.str();
     }

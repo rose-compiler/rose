@@ -42,25 +42,29 @@ LinuxTraceExecutor::execute(const TestCase::Ptr &testCase) {
     // Prepare to run the test case in a debugger
     Debugger::Ptr debugger;
     {
-        Debugger::Specimen specimen(exeName);
+        Debugger::Linux::Specimen specimen(exeName);
         specimen.arguments(testCase->args());
         specimen.eraseAllEnvironmentVariables();
-        specimen.flags() = Debugger::REDIRECT_INPUT | Debugger::REDIRECT_OUTPUT | Debugger::REDIRECT_ERROR | Debugger::CLOSE_FILES;
+        specimen.flags().clear();
+        specimen.flags().set(Debugger::Linux::Flag::REDIRECT_INPUT);
+        specimen.flags().set(Debugger::Linux::Flag::REDIRECT_OUTPUT);
+        specimen.flags().set(Debugger::Linux::Flag::REDIRECT_ERROR);
+        specimen.flags().set(Debugger::Linux::Flag::CLOSE_FILES);
         specimen.randomizedAddresses(false);
         for (const EnvValue &env: testCase->env())
             specimen.insertEnvironmentVariable(env.first, env.second);
-        debugger = Debugger::instance(specimen);
+        debugger = Debugger::Linux::instance(specimen);
     }
 
     // Run the specimen by single stepping to get the instruction addresses that were executed
     auto result = std::make_unique<Result>();
     std::set<rose_addr_t> executedVas;
     while (!debugger->isTerminated()) {
-        result->executedVas.insert(debugger->executionAddress());
-        debugger->singleStep();
+        result->executedVas.insert(debugger->executionAddress(Debugger::ThreadId::unspecified()));
+        debugger->singleStep(Debugger::ThreadId::unspecified());
     }
-    result->rank(-static_cast<double>(result->executedVas.size())); // neg because lowest ranks execute first
-    database()->saveConcreteResult(testCase, result.get());
+
+    result->rank(-static_cast<double>(result->executedVas.size())); // neg because lowest ranks execute firstdatabase()->saveConcreteResult(testCase, result.get());
 
     // If the concrete results are a duplicate of other concrete results then mark this test case as not interesting.
     for (TestCaseId otherId: database()->testCases()) {

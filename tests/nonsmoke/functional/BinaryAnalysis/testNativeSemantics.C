@@ -1,4 +1,7 @@
 #include <rose.h>
+#if defined(ROSE_ENABLE_BINARY_ANALYSIS) && defined(ROSE_ENABLE_DEBUGGER_LINUX)
+
+#include <Rose/BinaryAnalysis/Debugger/Linux.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/NativeSemantics.h>
 
 using namespace Rose::BinaryAnalysis;
@@ -9,7 +12,7 @@ namespace NativeSemantics = IS::NativeSemantics;
 int main(int argc, char *argv[]) {
     ASSERT_require(argc >= 2);
 
-    Debugger::Specimen exe(argv[1]);
+    Debugger::Linux::Specimen exe(argv[1]);
     exe.arguments(std::vector<std::string>(argv+2, argv+argc));
 
     NativeSemantics::Dispatcher::Ptr cpu = NativeSemantics::Dispatcher::instance(exe);
@@ -25,3 +28,12 @@ int main(int argc, char *argv[]) {
     }
 }
 
+#else
+
+#include <iostream>
+
+int main(int, char *argv[]) {
+    std::cout <<argv[0] <<": not tested for this configuration of ROSE\n";
+}
+
+#endif

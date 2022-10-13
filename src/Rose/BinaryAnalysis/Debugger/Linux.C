@@ -1,160 +1,80 @@
 #include <featureTests.h>
-#ifdef ROSE_ENABLE_BINARY_ANALYSIS
+#ifdef ROSE_ENABLE_DEBUGGER_LINUX
 #include <sage3basic.h>
-#include <Rose/BinaryAnalysis/Debugger.h>
+#include <Rose/BinaryAnalysis/Debugger/Linux.h>
 
 #include <Rose/BinaryAnalysis/Disassembler/X86.h>
-#include <integerOps.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
-#include <rose_pragma_message.h>
 
-#include <boost/algorithm/string/case_conv.hpp>
-#include <boost/filesystem.hpp>
 #include <dirent.h>
-#include <Sawyer/Message.h>
-#include <cstdlib>
-
-#ifdef ROSE_HAVE_SYS_PERSONALITY_H
+#include <fcntl.h>
 #include <sys/personality.h>
-#endif
-
-#include <boost/config.hpp>
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Supporting functions
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-#ifdef BOOST_WINDOWS                                    // FIXME[Robb P. Matzke 2014-10-11]: not implemented on Windows
-
-enum __ptrace_request {                                 // Windows dud
-    PTRACE_ATTACH,
-    PTRACE_CONT,
-    PTRACE_DETACH,
-    PTRACE_GETREGS,
-    PTRACE_GETFPREGS,
-    PTRACE_KILL,
-    PTRACE_SETREGS,
-    PTRACE_SINGLESTEP,
-    PTRACE_TRACEME,
-    PTRACE_PEEKUSER,
-};
-
-static int SIGTRAP;                                     // Windows dud
-static int SIGCONT;                                     // Windows dud
-static int SIGSTOP;                                     // Windows dud
-
-struct user_regs_struct {                               // Windows dud
-    long int eip;
-};
-
-static int ptrace(__ptrace_request, int, void*, void*) {// Windows dud
-    errno = ENOSYS;
-    return -1;
-}
-
-static int waitpid(int, int*, int) {                    // Windows dud
-    errno = ENOSYS;
-    return -1;
-}
-
-static int kill(int, int) {                             // Windows dud
-    errno = ENOSYS;
-    return -1;
-}
-
-static int fork() {                                     // Windows dud
-    errno = ENOSYS;
-    return -1;
-}
-
-static int execv(const char*, char *const argv[]) {     // Windows dud
-    errno = ENOSYS;
-    return -1;
-}
-
-static const char *strsignal(int) {                     // Windows dud
-    return "unknown";
-}
-
-static int WIFEXITED(int) { return 1; }                 // Windows dud
-static int WEXITSTATUS(int) { return 1; }               // Windows dud
-static int WIFSIGNALED(int) { return 0; }               // Windows dud
-static int WTERMSIG(int) { return 0; }                  // Windows dud
-static int WIFSTOPPED(int) { return 0; }                // Windows dud
-static int WSTOPSIG(int) { return 0; }                  // Windows dud
-
-#elif defined(__APPLE__) && defined(__MACH__)
-
-# warning("FIXME[Robb P. Matzke  2015-02-20]: Not supported on macOS yet")
-# warning("FIXME[Craig Rasmussen 2017-12-09]: Still not supported on macOS but will now compile")
-
-# include <signal.h>
-# include <sys/ptrace.h>
-
-// from /usr/include/sys/ptrace.h (perhaps for future use)
-//
-# define  PTRACE_TRACEME     PT_TRACE_ME    /* child declares it's being traced */
-# define  PTRACE_CONT        PT_CONTINUE    /* continue the child */
-# define  PTRACE_KILL        PT_KILL        /* kill the child process */
-# define  PTRACE_SINGLESTEP  PT_STEP        /* single step the child */
-# define  PTRACE_DETACH      PT_DETACH      /* stop tracing a process */
-# define  PTRACE_ATTACH      PT_ATTACHEXC   /* attach to running process with signal exception */
-
-// no direct equivalent
-//
-#define ROSE_PT_NO_EQUIVALENT  33
-#define PTRACE_GETREGS         ROSE_PT_NO_EQUIVALENT
-#define PTRACE_SETREGS         ROSE_PT_NO_EQUIVALENT
-#define PTRACE_GETFPREGS       ROSE_PT_NO_EQUIVALENT
-#define PTRACE_SETFPREGS       ROSE_PT_NO_EQUIVALENT
-#define PTRACE_SYSCALL         ROSE_PT_NO_EQUIVALENT
-
-struct user_regs_struct {                               // macOS dud
-    long int eip;
-};
-
-typedef int __ptrace_request;                           // macOS dud
-
-static int ptrace(__ptrace_request, int, void*, void*) {// macOS dud
-    errno = ENOSYS;
-    return -1;
-}
-
-static char **environ = NULL;                           // macOS dud
-
-#else
-
-# include <fcntl.h>
-# include <sys/ptrace.h>
-# include <sys/user.h>
-# include <sys/wait.h>
-# include <unistd.h>
-
-#endif
+#include <sys/ptrace.h>
+#include <sys/user.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
 using namespace Sawyer::Message::Common;
 namespace bfs = boost::filesystem;
 
 namespace Rose {
 namespace BinaryAnalysis {
+namespace Debugger {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Specimen
+// Linux::Specimen
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Linux::Specimen::Specimen()
+    : persona_(getPersonality()) {}
+
+Linux::Specimen::Specimen(int pid)
+    : flags_(Flag::DEFAULT_FLAGS), persona_(getPersonality()), pid_(pid) {}
+
+Linux::Specimen::Specimen(const boost::filesystem::path &name)
+    : flags_(Flag::DEFAULT_FLAGS), persona_(getPersonality()), program_(name) {}
+
+Linux::Specimen::Specimen(const boost::filesystem::path &name, const std::vector<std::string> &args)
+    : flags_(Flag::DEFAULT_FLAGS), persona_(getPersonality()), program_(name), arguments_(args) {}
+
+Linux::Specimen::Specimen(const std::vector<std::string> &nameAndArgs)
+    : flags_(Flag::DEFAULT_FLAGS), persona_(getPersonality()), program_(nameAndArgs.front()),
+      arguments_(nameAndArgs.begin()+1, nameAndArgs.end()) {}
+
+const boost::filesystem::path&
+Linux::Specimen::program() const {
+    return program_;
+}
 
 void
-Debugger::Specimen::eraseMatchingEnvironmentVariables(const boost::regex &re) {
+Linux::Specimen::program(const boost::filesystem::path &name) {
+    program_ = name;
+    pid_ = -1;
+}
+
+const std::vector<std::string>&
+Linux::Specimen::arguments() const {
+    return arguments_;
+}
+
+void
+Linux::Specimen::arguments(const std::vector<std::string> &args) {
+    arguments_ = args;
+}
+
+void
+Linux::Specimen::eraseMatchingEnvironmentVariables(const boost::regex &re) {
     clearEnvVars_.push_back(re);
 }
 
 void
-Debugger::Specimen::eraseAllEnvironmentVariables() {
+Linux::Specimen::eraseAllEnvironmentVariables() {
     clearEnvVars_.clear();
     clearEnvVars_.push_back(boost::regex(".*"));
 }
 
 void
-Debugger::Specimen::eraseEnvironmentVariable(const std::string &s) {
+Linux::Specimen::eraseEnvironmentVariable(const std::string &s) {
     std::string reStr = "^";
     for (char ch: s) {
         if (strchr(".|*?+(){}[]^$\\", ch))
@@ -166,12 +86,53 @@ Debugger::Specimen::eraseEnvironmentVariable(const std::string &s) {
 }
 
 void
-Debugger::Specimen::insertEnvironmentVariable(const std::string &name, const std::string &value) {
+Linux::Specimen::insertEnvironmentVariable(const std::string &name, const std::string &value) {
     setEnvVars_[name] = value;
 }
 
+boost::filesystem::path
+Linux::Specimen::workingDirectory() const {
+    return workingDirectory_;
+}
+
+void
+Linux::Specimen::workingDirectory(const boost::filesystem::path &name) {
+    workingDirectory_ = name;
+}
+
+const BitFlags<Linux::Flag>&
+Linux::Specimen::flags() const {
+    return flags_;
+}
+
+BitFlags<Linux::Flag>&
+Linux::Specimen::flags() {
+    return flags_;
+}
+
+unsigned long
+Linux::Specimen::persona() const {
+    return persona_;
+}
+
+void
+Linux::Specimen::persona(unsigned long bits) {
+    persona_ = bits;
+}
+
+int
+Linux::Specimen::process() const {
+    return pid_;
+}
+
+void
+Linux::Specimen::process(int pid) {
+    pid_ = pid;
+    program_.clear();
+}
+
 char**
-Debugger::Specimen::prepareEnvAdjustments() const {
+Linux::Specimen::prepareEnvAdjustments() const {
     // Variables to be erased
     std::vector<std::string> erasures;
     for (char **entryPtr = environ; entryPtr && *entryPtr; ++entryPtr) {
@@ -206,6 +167,42 @@ Debugger::Specimen::prepareEnvAdjustments() const {
     return retval;
 }
 
+
+bool
+Linux::Specimen::randomizedAddresses() const {
+#ifdef ROSE_HAVE_SYS_PERSONALITY_H
+    return (persona_ & ADDR_NO_RANDOMIZE) == 0;
+#else
+    return false;
+#endif
+}
+
+void
+Linux::Specimen::randomizedAddresses(bool b) {
+#ifdef ROSE_HAVE_SYS_PERSONALITY_H
+    if (b) {
+        persona_ &= ~ADDR_NO_RANDOMIZE;
+    } else {
+        persona_ |= ADDR_NO_RANDOMIZE;
+    }
+#else
+    // void
+#endif
+}
+
+void
+Linux::Specimen::print(std::ostream &out) const {
+    if (!program_.empty()) {
+        out <<program_;
+        for (const std::string &arg: arguments_)
+            out <<" \"" <<StringUtility::cEscape(arg);
+    } else if (-1 != pid_) {
+        out <<"pid " <<pid_;
+    } else {
+        out <<"empty";
+    }
+}
+
 // This function should be async signal safe. However, the call to putenv is AS-unsafe. I think the only time this might be an
 // issue is if fork() happened to be called when some other thread was also operating on the environment and assuming that
 // glibc fails to have an pthread::atfork handler that releases the lock.
@@ -227,7 +224,7 @@ freeStringList(char **list) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Debugger
+// Linux
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static long
@@ -236,7 +233,7 @@ sendCommand(__ptrace_request request, int child, void *addr = nullptr, void *dat
     errno = 0;
     long result = ptrace(request, child, addr, data);
     if (result == -1 && errno != 0)
-        throw std::runtime_error("Rose::BinaryAnalysis::Debugger::sendCommand failed: " +
+        throw std::runtime_error("Rose::BinaryAnalysis::Debugger::Linux::sendCommand failed: " +
                                  boost::to_lower_copy(std::string(strerror(errno))));
     return result;
 }
@@ -270,86 +267,13 @@ setInstructionPointer(user_regs_struct &regs, rose_addr_t va) {
 }
 #endif
 
-bool
-Debugger::Specimen::randomizedAddresses() const {
-#ifdef ROSE_HAVE_SYS_PERSONALITY_H
-    return (persona_ & ADDR_NO_RANDOMIZE) == 0;
-#else
-    return false;
-#endif
-}
-
-void
-Debugger::Specimen::randomizedAddresses(bool b) {
-#ifdef ROSE_HAVE_SYS_PERSONALITY_H
-    if (b) {
-        persona_ &= ~ADDR_NO_RANDOMIZE;
-    } else {
-        persona_ |= ADDR_NO_RANDOMIZE;
-    }
-#else
-    // void
-#endif
-}
-
-void
-Debugger::Specimen::print(std::ostream &out) const {
-    if (!program_.empty()) {
-        out <<program_;
-        for (const std::string &arg: arguments_)
-            out <<" \"" <<StringUtility::cEscape(arg);
-    } else if (-1 != pid_) {
-        out <<"pid " <<pid_;
-    } else {
-        out <<"empty";
-    }
-}
-
 std::ostream&
-operator<<(std::ostream &out, const Debugger::Specimen &specimen) {
+operator<<(std::ostream &out, const Debugger::Linux::Specimen &specimen) {
     specimen.print(out);
     return out;
 }
 
-Sawyer::Message::Facility Debugger::mlog;
-
-// class method
-void
-Debugger::initDiagnostics() {
-    static bool initialized = false;
-    if (!initialized) {
-        initialized = true;
-        Diagnostics::initAndRegister(&mlog, "Rose::BinaryAnalysis::Debugger");
-        mlog.comment("debugging other processes");
-    }
-}
-
-Debugger::Debugger() {
-    init();
-}
-
-Debugger::Debugger(const Specimen &specimen) {
-    init();
-    attach(specimen);
-}
-
-Debugger::~Debugger() {
-    detach(autoDetach_);
-}
-
-RegisterDictionary::Ptr
-Debugger::registerDictionary() const {
-    ASSERT_not_null(disassembler_);
-    return disassembler_->registerDictionary();
-}
-
-Disassembler::Base::Ptr
-Debugger::disassembler() const {
-    return disassembler_;
-}
-
-void
-Debugger::init() {
+Linux::Linux() {
     syscallVa_.reset();
     memset(regsPage_.data(), 0, regsPage_.size() * sizeof(RegisterPage::value_type));
 
@@ -483,28 +407,69 @@ Debugger::init() {
 #endif
 }
 
+Linux::~Linux() {
+    detach();
+}
+
+Linux::Ptr
+Linux::instance() {
+    return Ptr(new Linux);
+}
+
+Linux::Ptr
+Linux::instance(const Specimen &s, Sawyer::Optional<DetachMode> onDelete) {
+    auto debugger = instance();
+    debugger->attach(s, onDelete);
+    return debugger;
+}
+
 bool
-Debugger::isTerminated() {
+Linux::isAttached() {
+    return -1 != child_;
+}
+
+Sawyer::Optional<int>
+Linux::processId() const {
+    if (-1 == child_) {
+        return Sawyer::Nothing();
+    } else {
+        return child_;
+    }
+}
+
+RegisterDictionary::Ptr
+Linux::registerDictionary() const {
+    ASSERT_not_null(disassembler_);
+    return disassembler_->registerDictionary();
+}
+
+Disassembler::Base::Ptr
+Linux::disassembler() const {
+    return disassembler_;
+}
+
+bool
+Linux::isTerminated() {
     return WIFEXITED(wstat_) || WIFSIGNALED(wstat_);
 }
 
+int
+Linux::waitpidStatus() const {
+    return wstat_;
+}
+
 void
-Debugger::waitForChild() {
-#ifdef __linux__
+Linux::waitForChild() {
     ASSERT_require2(child_, "must be attached to a subordinate process");
     if (-1 == waitpid(child_, &wstat_, __WALL))
-        throw std::runtime_error("Rose::BinaryAnalysis::Debugger::waitForChild failed: "
+        throw std::runtime_error("Rose::BinaryAnalysis::Debugger::Linux::waitForChild failed: "
                                  + boost::to_lower_copy(std::string(strerror(errno))));
     sendSignal_ = WIFSTOPPED(wstat_) && WSTOPSIG(wstat_)!=SIGTRAP ? WSTOPSIG(wstat_) : 0;
-    regsPageStatus_ = REGPAGE_NONE;
-#else
-    ROSE_PRAGMA_MESSAGE("waitForChild is not supported on this platform");
-    throw std::runtime_error("waitForChild is not supported on this platform");
-#endif
+    regsPageStatus_ = RegPage::NONE;
 }
 
 std::string
-Debugger::howTerminated() {
+Linux::howTerminated() {
     if (WIFEXITED(wstat_)) {
         return "exited with status " + StringUtility::numberToString(WEXITSTATUS(wstat_));
     } else if (WIFSIGNALED(wstat_)) {
@@ -514,40 +479,56 @@ Debugger::howTerminated() {
     }
 }
 
+Linux::DetachMode
+Linux::detachMode() const {
+    return autoDetach_;
+}
+
 void
-Debugger::detach(Sawyer::Optional<DetachMode> how) {
+Linux::detachMode(DetachMode m) {
+    autoDetach_ = m;
+}
+
+void
+Linux::detach() {
     if (child_ && !isTerminated()) {
-        switch (how.orElse(autoDetach_)) {
-            case NOTHING:
+        switch (autoDetach_) {
+            case DetachMode::NOTHING:
                 break;
-            case CONTINUE:
+            case DetachMode::CONTINUE:
                 kill(child_, SIGCONT);
                 break;
-            case DETACH:
+            case DetachMode::DETACH:
                 sendCommand(PTRACE_DETACH, child_);
                 break;
-            case KILL:
+            case DetachMode::KILL:
                 sendCommand(PTRACE_KILL, child_);
                 waitForChild();
         }
     }
     child_ = 0;
-    regsPageStatus_ = REGPAGE_NONE;
+    regsPageStatus_ = RegPage::NONE;
     syscallVa_.reset();
 }
 
 void
-Debugger::terminate() {
-    detach(KILL);
+Linux::terminate() {
+    detachMode(DetachMode::KILL);
+    detach();
+}
+
+std::vector<ThreadId>
+Linux::threadIds() {
+    return std::vector<ThreadId>();
 }
 
 void
-Debugger::attach(const Specimen &specimen, Sawyer::Optional<DetachMode> onDelete) {
+Linux::attach(const Specimen &specimen, Sawyer::Optional<DetachMode> onDelete) {
     if (!specimen.program().empty()) {
         // Attach to an executable program by running it.
-        detach(autoDetach_);
+        detach();
         specimen_ = specimen;
-        autoDetach_ = onDelete.orElse(KILL);
+        autoDetach_ = onDelete.orElse(DetachMode::KILL);
 
         // Create the child exec arguments before the fork because heap allocation is not async-signal-safe.
         char **argv = new char*[1 /*name*/ + specimen.arguments().size() + 1 /*null*/]();
@@ -558,13 +539,12 @@ Debugger::attach(const Specimen &specimen, Sawyer::Optional<DetachMode> onDelete
             std::strcpy(argv[i+1], specimen.arguments()[i].c_str());
         }
 
-#ifndef BOOST_WINDOWS
         // Prepare to close files when forking.  This is a race because some other thread might open a file without the
         // O_CLOEXEC flag after we've checked but before we reach the fork. And we can't fix that entirely within ROSE since we
         // have no control over the user program or other libraries. Furthermore, we must do it here in the parent rather than
         // after the fork because opendir, readdir, and strtol are not async-signal-safe and Linux does't have a closefrom
         // syscall.
-        if (specimen.flags().isSet(CLOSE_FILES)) {
+        if (specimen.flags().isSet(Flag::CLOSE_FILES)) {
             static const int minFd = 3;
             if (DIR *dir = opendir("/proc/self/fd")) {
                 while (const struct dirent *entry = readdir(dir)) {
@@ -577,27 +557,26 @@ Debugger::attach(const Specimen &specimen, Sawyer::Optional<DetachMode> onDelete
                 closedir(dir);
             }
         }
-#endif
 
         char **envAdjustments = specimen.prepareEnvAdjustments();
         child_ = fork();
         if (0==child_) {
             // Since the parent process may have been multi-threaded, we are now in an async-signal-safe context.
             adjustEnvironment(envAdjustments);
-            if (specimen.flags().isSet(REDIRECT_INPUT))
+            if (specimen.flags().isSet(Flag::REDIRECT_INPUT))
                 devNullTo(0, O_RDONLY);                 // async-signal-safe
 
-            if (specimen.flags().isSet(REDIRECT_OUTPUT))
+            if (specimen.flags().isSet(Flag::REDIRECT_OUTPUT))
                 devNullTo(1, O_WRONLY);                 // async-signal-safe
 
-            if (specimen.flags().isSet(REDIRECT_ERROR))
+            if (specimen.flags().isSet(Flag::REDIRECT_ERROR))
                 devNullTo(2, O_WRONLY);                 // async-signal-safe
 
             // FIXME[Robb Matzke 2017-08-04]: We should be using a direct system call here instead of the C library wrapper because
             // the C library is adjusting errno, which is not async-signal-safe.
             if (-1 == ptrace(PTRACE_TRACEME, 0, 0, 0)) {
                 // errno is set, but no way to access it in an async-signal-safe way
-                const char *mesg= "Rose::BinaryAnalysis::Debugger::attach: ptrace_traceme failed\n";
+                const char *mesg= "Rose::BinaryAnalysis::Debugger::Linux::attach: ptrace_traceme failed\n";
                 if (write(2, mesg, strlen(mesg)) == -1)
                     abort();
                 _Exit(1);                                   // avoid calling C++ destructors from child
@@ -607,7 +586,7 @@ Debugger::attach(const Specimen &specimen, Sawyer::Optional<DetachMode> onDelete
             execv(argv[0], argv);
 
             // If failure, we must still call only async signal-safe functions.
-            const char *mesg = "Rose::BinaryAnalysis::Debugger::attach: exec failed: ";
+            const char *mesg = "Rose::BinaryAnalysis::Debugger::Linux::attach: exec failed: ";
             if (write(2, mesg, strlen(mesg)) == -1)
                 abort();
             mesg = strerror(errno);
@@ -623,24 +602,24 @@ Debugger::attach(const Specimen &specimen, Sawyer::Optional<DetachMode> onDelete
 
         waitForChild();
         if (isTerminated())
-            throw std::runtime_error("Rose::BinaryAnalysis::Debugger::attach: subordinate " +
+            throw std::runtime_error("Rose::BinaryAnalysis::Debugger::Linux::attach: subordinate " +
                                      howTerminated() + " before we gained control");
     } else {
         // Attach to an existing process.
         if (-1 == specimen.process()) {
-            detach(autoDetach_);
+            detach();
         } else if (specimen.process() == child_) {
             // do nothing
-        } else if (specimen.flags().isSet(ATTACH)) {
+        } else if (specimen.flags().isSet(Flag::ATTACH)) {
             child_ = specimen.process();
             sendCommand(PTRACE_ATTACH, child_);
-            autoDetach_ = onDelete.orElse(DETACH);
+            autoDetach_ = onDelete.orElse(DetachMode::DETACH);
             waitForChild();
             if (SIGSTOP==sendSignal_)
                 sendSignal_ = 0;
         } else {
             child_ = specimen.process();
-            autoDetach_ = onDelete.orElse(NOTHING);
+            autoDetach_ = onDelete.orElse(DetachMode::NOTHING);
         }
         specimen_ = specimen;
     }
@@ -648,7 +627,7 @@ Debugger::attach(const Specimen &specimen, Sawyer::Optional<DetachMode> onDelete
 
 // Must be async signal safe!
 void
-Debugger::devNullTo(int targetFd, int openFlags) {
+Linux::devNullTo(int targetFd, int openFlags) {
     int fd = open("/dev/null", openFlags, 0666);
     if (-1 == fd) {
         close(targetFd);
@@ -659,7 +638,7 @@ Debugger::devNullTo(int targetFd, int openFlags) {
 }
 
 void
-Debugger::executionAddress(rose_addr_t va) {
+Linux::executionAddress(ThreadId, rose_addr_t va) {
     user_regs_struct regs;
     sendCommand(PTRACE_GETREGS, child_, 0, &regs);
     setInstructionPointer(regs, va);
@@ -667,35 +646,40 @@ Debugger::executionAddress(rose_addr_t va) {
 }
 
 rose_addr_t
-Debugger::executionAddress() {
-    return readRegister(RegisterDescriptor(x86_regclass_ip, 0, 0, kernelWordSize())).toInteger();
+Linux::executionAddress(ThreadId tid) {
+    return readRegister(tid, RegisterDescriptor(x86_regclass_ip, 0, 0, kernelWordSize())).toInteger();
 }
 
 void
-Debugger::setBreakpoint(const AddressInterval &va) {
-    breakpoints_.insert(va);
+Linux::setBreakPoint(const AddressInterval &va) {
+    breakPoints_.insert(va);
 }
 
 void
-Debugger::clearBreakpoint(const AddressInterval &va) {
-    breakpoints_.erase(va);
+Linux::clearBreakPoint(const AddressInterval &va) {
+    breakPoints_.erase(va);
 }
 
 void
-Debugger::singleStep() {
+Linux::clearBreakPoints() {
+    breakPoints_.clear();
+}
+
+void
+Linux::singleStep(ThreadId) {
     sendCommandInt(PTRACE_SINGLESTEP, child_, 0, sendSignal_);
     waitForChild();
 }
 
 void
-Debugger::stepIntoSyscall() {
+Linux::stepIntoSystemCall(ThreadId) {
     sendCommandInt(PTRACE_SYSCALL, child_, 0, sendSignal_);
     waitForChild();
 }
 
 #if 0 // [Robb Matzke 2021-05-26]: doesn't seem to work on Linux 5.4: always says PTRACE_SYSCALL_INFO_NONE
-Sawyer::Optional<Debugger::SyscallEntry>
-Debugger::syscallEntryInfo() {
+Sawyer::Optional<Linux::SyscallEntry>
+Linux::syscallEntryInfo() {
     __ptrace_syscall_info info;
     sendCommand(PTRACE_GET_SYSCALL_INFO, child_, reinterpret_cast<void*>(sizeof info), &info);
     if (PTRACE_SYSCALL_INFO_ENTRY == info.op) {
@@ -705,8 +689,8 @@ Debugger::syscallEntryInfo() {
     }
 }
 
-Sawyer::Optional<Debugger::SyscallExit>
-Debugger::syscallExitInfo() {
+Sawyer::Optional<Linux::SyscallExit>
+Linux::syscallExitInfo() {
     __ptrace_syscall_info info;
     sendCommand(PTRACE_GET_SYSCALL_INFO, child_, reinterpret_cast<void*>(sizeof info), &info);
     if (PTRACE_SYSCALL_INFO_EXIT == info.op) {
@@ -718,7 +702,7 @@ Debugger::syscallExitInfo() {
 #endif
 
 size_t
-Debugger::kernelWordSize() {
+Linux::kernelWordSize() {
     if (kernelWordSize_ == 0) {
         static const uint8_t magic = 0xb7;              // arbitrary
         uint8_t userRegs[4096];                         // arbitrary size, but plenty large for any user_regs_struct
@@ -742,53 +726,53 @@ Debugger::kernelWordSize() {
     return kernelWordSize_;
 }
 
-Debugger::AllRegisters
-Debugger::readAllRegisters() {
+Linux::AllRegisters
+Linux::readAllRegisters(ThreadId) {
     AllRegisters retval;
-    if (REGPAGE_REGS == regsPageStatus_) {
+    if (RegPage::REGS == regsPageStatus_) {
         retval.regs = regsPage_;
         sendCommand(PTRACE_GETFPREGS, child_, 0, regsPage_.data());
         retval.fpregs = regsPage_;
-        regsPageStatus_ = REGPAGE_FPREGS;
-    } else if (REGPAGE_FPREGS == regsPageStatus_) {
+        regsPageStatus_ = RegPage::FPREGS;
+    } else if (RegPage::FPREGS == regsPageStatus_) {
         retval.fpregs = regsPage_;
         sendCommand(PTRACE_GETREGS, child_, 0, regsPage_.data());
         retval.regs = regsPage_;
-        regsPageStatus_ = REGPAGE_REGS;
+        regsPageStatus_ = RegPage::REGS;
     } else {
         sendCommand(PTRACE_GETFPREGS, child_, 0, regsPage_.data());
         retval.fpregs = regsPage_;
         sendCommand(PTRACE_GETREGS, child_, 0, regsPage_.data());
         retval.regs = regsPage_;
-        regsPageStatus_ = REGPAGE_REGS;
+        regsPageStatus_ = RegPage::REGS;
     }
     return retval;
 }
 
 void
-Debugger::writeAllRegisters(const AllRegisters &all) {
+Linux::writeAllRegisters(ThreadId, const AllRegisters &all) {
     sendCommand(PTRACE_SETFPREGS, child_, 0, (void*)all.fpregs.data());
     sendCommand(PTRACE_SETREGS, child_, 0, (void*)all.regs.data());
     regsPage_ = all.regs;
-    regsPageStatus_ = REGPAGE_REGS;
+    regsPageStatus_ = RegPage::REGS;
 }
 
 Sawyer::Container::BitVector
-Debugger::readRegister(RegisterDescriptor desc) {
+Linux::readRegister(ThreadId, RegisterDescriptor desc) {
     using namespace Sawyer::Container;
 
     // Lookup register according to kernel word size rather than the actual size of the register.
     RegisterDescriptor base(desc.majorNumber(), desc.minorNumber(), 0, kernelWordSize());
     size_t userOffset = 0;
     if (userRegDefs_.getOptional(base).assignTo(userOffset)) {
-        if (regsPageStatus_ != REGPAGE_REGS) {
+        if (regsPageStatus_ != RegPage::REGS) {
             sendCommand(PTRACE_GETREGS, child_, 0, regsPage_.data());
-            regsPageStatus_ = REGPAGE_REGS;
+            regsPageStatus_ = RegPage::REGS;
         }
     } else if (userFpRegDefs_.getOptional(base).assignTo(userOffset)) {
-        if (regsPageStatus_ != REGPAGE_FPREGS) {
+        if (regsPageStatus_ != RegPage::FPREGS) {
             sendCommand(PTRACE_GETFPREGS, child_, 0, regsPage_.data());
-            regsPageStatus_ = REGPAGE_FPREGS;
+            regsPageStatus_ = RegPage::FPREGS;
         }
     } else {
         throw std::runtime_error("register is not available");
@@ -808,11 +792,11 @@ Debugger::readRegister(RegisterDescriptor desc) {
 }
 
 void
-Debugger::writeRegister(RegisterDescriptor desc, const Sawyer::Container::BitVector &bits) {
+Linux::writeRegister(ThreadId tid, RegisterDescriptor desc, const Sawyer::Container::BitVector &bits) {
     using namespace Sawyer::Container;
 
     // Side effect is to update regsPage_ if necessary.
-    (void) readRegister(desc);
+    (void) readRegister(tid, desc);
 
     // Look up register according to kernel word size rather than the actual size of the register.
     RegisterDescriptor base(desc.majorNumber(), desc.minorNumber(), 0, kernelWordSize());
@@ -840,15 +824,15 @@ Debugger::writeRegister(RegisterDescriptor desc, const Sawyer::Container::BitVec
 }
 
 void
-Debugger::writeRegister(RegisterDescriptor desc, uint64_t value) {
+Linux::writeRegister(ThreadId tid, RegisterDescriptor desc, uint64_t value) {
     using namespace Sawyer::Container;
     BitVector bits(desc.nBits());
     bits.fromInteger(value);
-    writeRegister(desc, bits);
+    writeRegister(tid, desc, bits);
 }
 
 Sawyer::Container::BitVector
-Debugger::readMemory(rose_addr_t va, size_t nBytes, ByteOrder::Endianness sex) {
+Linux::readMemory(rose_addr_t va, size_t nBytes, ByteOrder::Endianness sex) {
     using namespace Sawyer::Container;
 
     struct Resources {
@@ -883,7 +867,7 @@ Debugger::readMemory(rose_addr_t va, size_t nBytes, ByteOrder::Endianness sex) {
 }
 
 std::vector<uint8_t>
-Debugger::readMemory(rose_addr_t va, size_t nBytes) {
+Linux::readMemory(rose_addr_t va, size_t nBytes) {
     std::vector<uint8_t> buf(nBytes);
     size_t nRead = readMemory(va, nBytes, buf.data());
     buf.resize(nRead);
@@ -891,7 +875,7 @@ Debugger::readMemory(rose_addr_t va, size_t nBytes) {
 }
 
 size_t
-Debugger::readMemory(rose_addr_t va, size_t nBytes, uint8_t *buffer) {
+Linux::readMemory(rose_addr_t va, size_t nBytes, uint8_t *buffer) {
 #ifdef __linux__
     if (0 == nBytes)
         return 0;
@@ -938,7 +922,7 @@ Debugger::readMemory(rose_addr_t va, size_t nBytes, uint8_t *buffer) {
 }
 
 size_t
-Debugger::writeMemory(rose_addr_t va, size_t nBytes, const uint8_t *buffer) {
+Linux::writeMemory(rose_addr_t va, size_t nBytes, const uint8_t *buffer) {
 #ifdef __linux__
     if (0 == nBytes)
         return 0;
@@ -984,7 +968,7 @@ Debugger::writeMemory(rose_addr_t va, size_t nBytes, const uint8_t *buffer) {
 }
 
 std::string
-Debugger::readCString(rose_addr_t va, size_t maxBytes) {
+Linux::readCString(rose_addr_t va, size_t maxBytes) {
     std::string retval;
     while (maxBytes > 0) {
         uint8_t buf[32];
@@ -1005,44 +989,32 @@ Debugger::readCString(rose_addr_t va, size_t maxBytes) {
 }
 
 void
-Debugger::runToBreakpoint() {
-    if (breakpoints_.isEmpty()) {
+Linux::runToBreakPoint(ThreadId tid) {
+    if (breakPoints_.isEmpty()) {
         sendCommandInt(PTRACE_CONT, child_, 0, sendSignal_);
         waitForChild();
     } else {
         while (1) {
-            singleStep();
+            singleStep(tid);
             if (isTerminated())
                 break;
             user_regs_struct regs;
             sendCommand(PTRACE_GETREGS, child_, 0, &regs);
-            if (breakpoints_.exists(getInstructionPointer(regs)))
+            if (breakPoints_.exists(getInstructionPointer(regs)))
                 break;
         }
     }
 }
 
 void
-Debugger::runToSyscall() {
+Linux::runToSystemCall(ThreadId) {
     sendCommandInt(PTRACE_SYSCALL, child_, 0, sendSignal_);
     waitForChild();
 }
 
-struct DefaultTraceFilter {
-    Debugger::FilterAction operator()(rose_addr_t) {
-        return Debugger::FilterAction();
-    }
-};
-
-Sawyer::Container::Trace<rose_addr_t>
-Debugger::trace() {
-    DefaultTraceFilter filter;
-    return trace(filter);
-}
-
 // class method
 unsigned long
-Debugger::getPersonality() {
+Linux::getPersonality() {
 #ifdef ROSE_HAVE_SYS_PERSONALITY_H
     return ::personality(0xffffffff);
 #else
@@ -1052,7 +1024,7 @@ Debugger::getPersonality() {
 
 // class method
 void
-Debugger::setPersonality(unsigned long bits) {
+Linux::setPersonality(unsigned long bits) {
 #ifdef ROSE_HAVE_SYS_PERSONALITY_H
     ::personality(bits);
 #else
@@ -1062,7 +1034,7 @@ Debugger::setPersonality(unsigned long bits) {
 }
 
 Sawyer::Optional<rose_addr_t>
-Debugger::findSystemCall() {
+Linux::findSystemCall() {
     std::vector<uint8_t> needle{0xcd, 0x80};            // x86: INT 0x80
 
     // Make sure the syscall is still there if we already found it. This is reasonally fast.
@@ -1092,43 +1064,44 @@ Debugger::findSystemCall() {
 }
 
 int64_t
-Debugger::remoteSystemCall(int syscallNumber) {
-    return remoteSystemCall(syscallNumber, std::vector<uint64_t>());
+Linux::remoteSystemCall(ThreadId tid, int syscallNumber) {
+    return remoteSystemCall(tid, syscallNumber, std::vector<uint64_t>());
 }
 
 int64_t
-Debugger::remoteSystemCall(int syscallNumber, uint64_t arg1) {
-    return remoteSystemCall(syscallNumber, std::vector<uint64_t>{arg1});
+Linux::remoteSystemCall(ThreadId tid, int syscallNumber, uint64_t arg1) {
+    return remoteSystemCall(tid, syscallNumber, std::vector<uint64_t>{arg1});
 }
 
 int64_t
-Debugger::remoteSystemCall(int syscallNumber, uint64_t arg1, uint64_t arg2) {
-    return remoteSystemCall(syscallNumber, std::vector<uint64_t>{arg1, arg2});
+Linux::remoteSystemCall(ThreadId tid, int syscallNumber, uint64_t arg1, uint64_t arg2) {
+    return remoteSystemCall(tid, syscallNumber, std::vector<uint64_t>{arg1, arg2});
 }
 
 int64_t
-Debugger::remoteSystemCall(int syscallNumber, uint64_t arg1, uint64_t arg2, uint64_t arg3) {
-    return remoteSystemCall(syscallNumber, std::vector<uint64_t>{arg1, arg2, arg3});
+Linux::remoteSystemCall(ThreadId tid, int syscallNumber, uint64_t arg1, uint64_t arg2, uint64_t arg3) {
+    return remoteSystemCall(tid, syscallNumber, std::vector<uint64_t>{arg1, arg2, arg3});
 }
 
 int64_t
-Debugger::remoteSystemCall(int syscallNumber, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4) {
-    return remoteSystemCall(syscallNumber, std::vector<uint64_t>{arg1, arg2, arg3, arg4});
+Linux::remoteSystemCall(ThreadId tid, int syscallNumber, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4) {
+    return remoteSystemCall(tid, syscallNumber, std::vector<uint64_t>{arg1, arg2, arg3, arg4});
 }
 
 int64_t
-Debugger::remoteSystemCall(int syscallNumber, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5) {
-    return remoteSystemCall(syscallNumber, std::vector<uint64_t>{arg1, arg2, arg3, arg4, arg5});
+Linux::remoteSystemCall(ThreadId tid, int syscallNumber, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4,
+                         uint64_t arg5) {
+    return remoteSystemCall(tid, syscallNumber, std::vector<uint64_t>{arg1, arg2, arg3, arg4, arg5});
 }
 
 int64_t
-Debugger::remoteSystemCall(int syscallNumber, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4, uint64_t arg5,
-                           uint64_t arg6) {
-    return remoteSystemCall(syscallNumber, std::vector<uint64_t>{arg1, arg2, arg3, arg4, arg5, arg6});
+Linux::remoteSystemCall(ThreadId tid, int syscallNumber, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4,
+                         uint64_t arg5, uint64_t arg6) {
+    return remoteSystemCall(tid, syscallNumber, std::vector<uint64_t>{arg1, arg2, arg3, arg4, arg5, arg6});
 }
 
 int64_t
-Debugger::remoteSystemCall(int syscallNumber, std::vector<uint64_t> args) {
+Linux::remoteSystemCall(ThreadId tid, int syscallNumber, std::vector<uint64_t> args) {
     // Find a system call that we can hijack to do our bidding.
     Sawyer::Optional<rose_addr_t> syscallVa = findSystemCall();
     if (!syscallVa)
@@ -1163,30 +1136,30 @@ Debugger::remoteSystemCall(int syscallNumber, std::vector<uint64_t> args) {
     // Save registers we're about to overwrite
     std::vector<Sawyer::Container::BitVector> savedRegs(args.size());
     for (size_t i = 0; i < args.size(); ++i)
-        savedRegs[i] = readRegister(regs[i]);
-    Sawyer::Container::BitVector savedSyscallReg = readRegister(syscallReg);
+        savedRegs[i] = readRegister(tid, regs[i]);
+    Sawyer::Container::BitVector savedSyscallReg = readRegister(tid, syscallReg);
 
     // Assign arguments to registers
     for (size_t i = 0; i < args.size(); ++i)
-        writeRegister(regs[i], args[i]);
-    writeRegister(syscallReg, syscallNumber);
+        writeRegister(tid, regs[i], args[i]);
+    writeRegister(tid, syscallReg, syscallNumber);
 
     // Single step through the syscall instruction
-    rose_addr_t ip = executionAddress();
-    executionAddress(*syscallVa);
-    singleStep();
-    executionAddress(ip);
-    int64_t retval = readRegister(syscallReg).toSignedInteger();
+    rose_addr_t ip = executionAddress(tid);
+    executionAddress(tid, *syscallVa);
+    singleStep(tid);
+    executionAddress(tid, ip);
+    int64_t retval = readRegister(tid, syscallReg).toSignedInteger();
 
     // Restore registers
     for (size_t i = 0; i < args.size(); ++i)
-        writeRegister(regs[i], savedRegs[i]);
-    writeRegister(syscallReg, savedSyscallReg);
+        writeRegister(tid, regs[i], savedRegs[i]);
+    writeRegister(tid, syscallReg, savedSyscallReg);
     return retval;
 }
 
 int
-Debugger::remoteOpenFile(const boost::filesystem::path &fileName, unsigned flags, mode_t mode) {
+Linux::remoteOpenFile(ThreadId tid, const boost::filesystem::path &fileName, unsigned flags, mode_t mode) {
     // Find some writable memory in which to write the file name
     Sawyer::Optional<rose_addr_t> nameVa;
     std::vector<MemoryMap::ProcessMapRecord> mapRecords = MemoryMap::readProcessMap(child_);
@@ -1204,7 +1177,7 @@ Debugger::remoteOpenFile(const boost::filesystem::path &fileName, unsigned flags
     std::vector<uint8_t> savedName(fileName.string().size() + 1);
     readMemory(*nameVa, fileName.string().size() + 1, savedName.data());
     writeMemory(*nameVa, fileName.string().size()+1, (const uint8_t*)fileName.c_str());
-    int retval = remoteSystemCall(5 /*open*/, std::vector<uint64_t>{*nameVa, flags, mode});
+    int retval = remoteSystemCall(tid, 5 /*open*/, std::vector<uint64_t>{*nameVa, flags, mode});
 
     // Restore saved memory
     writeMemory(*nameVa, savedName.size(), savedName.data());
@@ -1212,22 +1185,22 @@ Debugger::remoteOpenFile(const boost::filesystem::path &fileName, unsigned flags
 }
 
 int
-Debugger::remoteCloseFile(unsigned fd) {
-    return remoteSystemCall(6 /*close*/, std::vector<uint64_t>{fd});
+Linux::remoteCloseFile(ThreadId tid, unsigned fd) {
+    return remoteSystemCall(tid, 6 /*close*/, std::vector<uint64_t>{fd});
 }
 
 rose_addr_t
-Debugger::remoteMmap(rose_addr_t va, size_t nBytes, unsigned prot, unsigned flags, const boost::filesystem::path &fileName,
-                     off_t offset_) {
+Linux::remoteMmap(ThreadId tid, rose_addr_t va, size_t nBytes, unsigned prot, unsigned flags,
+                   const boost::filesystem::path &fileName, off_t offset_) {
     uint64_t offset = boost::numeric_cast<uint64_t>(offset_);
-    int fd = remoteOpenFile(fileName, O_RDONLY, 0);
+    int fd = remoteOpenFile(tid, fileName, O_RDONLY, 0);
     if (fd < 0)
         return fd;
-    int retval = remoteSystemCall(90 /*mmap*/, std::vector<uint64_t>{va, nBytes, prot, flags, (unsigned)fd, offset});
-    remoteCloseFile(fd);
+    int retval = remoteSystemCall(tid, 90 /*mmap*/, std::vector<uint64_t>{va, nBytes, prot, flags, (unsigned)fd, offset});
+    remoteCloseFile(tid, fd);
     return retval;
 }
-
+} // namespace
 } // namespace
 } // namespace
 
