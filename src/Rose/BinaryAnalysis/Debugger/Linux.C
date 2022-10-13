@@ -1,0 +1,1207 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_DEBUGGER_LINUX
+#include <sage3basic.h>
+#include <Rose/BinaryAnalysis/Debugger/Linux.h>
+
+#include <Rose/BinaryAnalysis/Disassembler/X86.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
+
+#include <dirent.h>
+#include <fcntl.h>
+#include <sys/personality.h>
+#include <sys/ptrace.h>
+#include <sys/user.h>
+#include <sys/wait.h>
+#include <unistd.h>
+
+using namespace Sawyer::Message::Common;
+namespace bfs = boost::filesystem;
+
+namespace Rose {
+namespace BinaryAnalysis {
+namespace Debugger {
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Linux::Specimen
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Linux::Specimen::Specimen()
+    : persona_(getPersonality()) {}
+
+Linux::Specimen::Specimen(int pid)
+    : flags_(Flag::DEFAULT_FLAGS), persona_(getPersonality()), pid_(pid) {}
+
+Linux::Specimen::Specimen(const boost::filesystem::path &name)
+    : flags_(Flag::DEFAULT_FLAGS), persona_(getPersonality()), program_(name) {}
+
+Linux::Specimen::Specimen(const boost::filesystem::path &name, const std::vector<std::string> &args)
+    : flags_(Flag::DEFAULT_FLAGS), persona_(getPersonality()), program_(name), arguments_(args) {}
+
+Linux::Specimen::Specimen(const std::vector<std::string> &nameAndArgs)
+    : flags_(Flag::DEFAULT_FLAGS), persona_(getPersonality()), program_(nameAndArgs.front()),
+      arguments_(nameAndArgs.begin()+1, nameAndArgs.end()) {}
+
+const boost::filesystem::path&
+Linux::Specimen::program() const {
+    return program_;
+}
+
+void
+Linux::Specimen::program(const boost::filesystem::path &name) {
+    program_ = name;
+    pid_ = -1;
+}
+
+const std::vector<std::string>&
+Linux::Specimen::arguments() const {
+    return arguments_;
+}
+
+void
+Linux::Specimen::arguments(const std::vector<std::string> &args) {
+    arguments_ = args;
+}
+
+void
+Linux::Specimen::eraseMatchingEnvironmentVariables(const boost::regex &re) {
+    clearEnvVars_.push_back(re);
+}
+
+void
+Linux::Specimen::eraseAllEnvironmentVariables() {
+    clearEnvVars_.clear();
+    clearEnvVars_.push_back(boost::regex(".*"));
+}
+
+void
+Linux::Specimen::eraseEnvironmentVariable(const std::string &s) {
+    std::string reStr = "^";
+    for (char ch: s) {
+        if (strchr(".|*?+(){}[]^$\\", ch))
+            reStr += "\\";
+        reStr += ch;
+    }
+    reStr += "$";
+    eraseMatchingEnvironmentVariables(boost::regex(reStr));
+}
+
+void
+Linux::Specimen::insertEnvironmentVariable(const std::string &name, const std::string &value) {
+    setEnvVars_[name] = value;
+}
+
+boost::filesystem::path
+Linux::Specimen::workingDirectory() const {
+    return workingDirectory_;
+}
+
+void
+Linux::Specimen::workingDirectory(const boost::filesystem::path &name) {
+    workingDirectory_ = name;
+}
+
+const BitFlags<Linux::Flag>&
+Linux::Specimen::flags() const {
+    return flags_;
+}
+
+BitFlags<Linux::Flag>&
+Linux::Specimen::flags() {
+    return flags_;
+}
+
+unsigned long
+Linux::Specimen::persona() const {
+    return persona_;
+}
+
+void
+Linux::Specimen::persona(unsigned long bits) {
+    persona_ = bits;
+}
+
+int
+Linux::Specimen::process() const {
+    return pid_;
+}
+
+void
+Linux::Specimen::process(int pid) {
+    pid_ = pid;
+    program_.clear();
+}
+
+char**
+Linux::Specimen::prepareEnvAdjustments() const {
+    // Variables to be erased
+    std::vector<std::string> erasures;
+    for (char **entryPtr = environ; entryPtr && *entryPtr; ++entryPtr) {
+        char *eq = std::strchr(*entryPtr, '=');
+        ASSERT_not_null(eq);
+        std::string name(*entryPtr, eq);
+        for (const boost::regex &re: clearEnvVars_) {
+            if (boost::regex_search(name, re)) {
+                erasures.push_back(name);
+                break;
+            }
+        }
+    }
+
+    // Return value should be a list of strings that are either variable names to be moved, or variables to be added. The
+    // variables to be added will have an '=' in the string.
+    char **retval = new char*[erasures.size() + setEnvVars_.size() + 1]();
+    char **entryPtr = retval;
+    for (const std::string &name: erasures) {
+        *entryPtr = new char[name.size()+1];
+        std::strcpy(*entryPtr, name.c_str());
+        ++entryPtr;
+    }
+    for (std::map<std::string, std::string>::const_iterator iter = setEnvVars_.begin(); iter != setEnvVars_.end(); ++iter) {
+        std::string var = iter->first + "=" + iter->second;
+        *entryPtr = new char[var.size()+1];
+        std::strcpy(*entryPtr, var.c_str());
+        ++entryPtr;
+    }
+    ASSERT_require((size_t)(entryPtr - retval) == erasures.size() + setEnvVars_.size());
+    ASSERT_require(NULL == *entryPtr);
+    return retval;
+}
+
+
+bool
+Linux::Specimen::randomizedAddresses() const {
+#ifdef ROSE_HAVE_SYS_PERSONALITY_H
+    return (persona_ & ADDR_NO_RANDOMIZE) == 0;
+#else
+    return false;
+#endif
+}
+
+void
+Linux::Specimen::randomizedAddresses(bool b) {
+#ifdef ROSE_HAVE_SYS_PERSONALITY_H
+    if (b) {
+        persona_ &= ~ADDR_NO_RANDOMIZE;
+    } else {
+        persona_ |= ADDR_NO_RANDOMIZE;
+    }
+#else
+    // void
+#endif
+}
+
+void
+Linux::Specimen::print(std::ostream &out) const {
+    if (!program_.empty()) {
+        out <<program_;
+        for (const std::string &arg: arguments_)
+            out <<" \"" <<StringUtility::cEscape(arg);
+    } else if (-1 != pid_) {
+        out <<"pid " <<pid_;
+    } else {
+        out <<"empty";
+    }
+}
+
+// This function should be async signal safe. However, the call to putenv is AS-unsafe. I think the only time this might be an
+// issue is if fork() happened to be called when some other thread was also operating on the environment and assuming that
+// glibc fails to have an pthread::atfork handler that releases the lock.
+static void
+adjustEnvironment(char **list) {
+    if (list) {
+        for (char **entryPtr = list; *entryPtr; ++entryPtr)
+            putenv(*entryPtr);                          // NOT ASYNC SIGNAL SAFE
+    }
+}
+
+// Free an allocated list of C strings.
+static char**
+freeStringList(char **list) {
+    for (char **entryPtr = list; entryPtr && *entryPtr; ++entryPtr)
+        delete[] *entryPtr;
+    delete[] list;
+    return nullptr;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Linux
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static long
+sendCommand(__ptrace_request request, int child, void *addr = nullptr, void *data = nullptr) {
+    ASSERT_require2(child, "must be attached to a subordinate process");
+    errno = 0;
+    long result = ptrace(request, child, addr, data);
+    if (result == -1 && errno != 0)
+        throw std::runtime_error("Rose::BinaryAnalysis::Debugger::Linux::sendCommand failed: " +
+                                 boost::to_lower_copy(std::string(strerror(errno))));
+    return result;
+}
+
+static long
+sendCommandInt(__ptrace_request request, int child, void *addr, int i) {
+    // Avoid doing a cast because that will cause a G++ warning.
+    void *ptr = 0;
+    ASSERT_require(sizeof i <= sizeof ptr);
+    memcpy(&ptr, &i, sizeof i);
+    return sendCommand(request, child, addr, ptr);
+}
+
+#if defined(BOOST_WINDOWS) || __WORDSIZE==32 || (defined(__APPLE__) && defined(__MACH__))
+static rose_addr_t
+getInstructionPointer(const user_regs_struct &regs) {
+    return regs.eip;
+}
+static void
+setInstructionPointer(user_regs_struct &regs, rose_addr_t va) {
+    regs.eip = va;
+}
+#else
+static rose_addr_t
+getInstructionPointer(const user_regs_struct &regs) {
+    return regs.rip;
+}
+static void
+setInstructionPointer(user_regs_struct &regs, rose_addr_t va) {
+    regs.rip = va;
+}
+#endif
+
+std::ostream&
+operator<<(std::ostream &out, const Debugger::Linux::Specimen &specimen) {
+    specimen.print(out);
+    return out;
+}
+
+Linux::Linux() {
+    syscallVa_.reset();
+    memset(regsPage_.data(), 0, regsPage_.size() * sizeof(RegisterPage::value_type));
+
+    // Initialize register information.  This is very architecture and OS-dependent. See <sys/user.h> for details, but be
+    // warned that even <sys/user.h> is only a guideline!  The header defines two versions of user_regs_struct, one for 32-bit
+    // and the other for 64-bit based on whether ROSE is compiled as 32- or 64-bit.  I'm not sure what happens if a 32-bit
+    // version of ROSE tries to analyze a 64-bit specimen; does the OS return only the 32-bit registers or does it return the
+    // 64-bit versions regardless of how user_regs_struct is defined in ROSE? [Robb P. Matzke 2015-03-24]
+    //
+    // The userRegDefs map assigns an offset in the returned (not necessarily the defined) user_regs_struct. The register
+    // descriptors in this table have sizes that correspond to the data member in the user_regs_struct, not necessarily the
+    // natural size of the register (e.g., The 16-bit segment registers are listed as 32 or 64 bits).
+#if defined(__linux) && defined(__x86_64) && __WORDSIZE==64
+    disassembler_ = Disassembler::X86::instance(8 /*bytes*/);
+
+    //------------------------------------                                                 struct  struct
+    // Entries for 64-bit user_regs_struct                                                 offset  size
+    //------------------------------------                                                 (byte)  (bytes)
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_r15,      0, 64), 0x0000); // 8
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_r14,      0, 64), 0x0008); // 8
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_r13,      0, 64), 0x0010); // 8
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_r12,      0, 64), 0x0018); // 8
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_bp,       0, 64), 0x0020); // 8
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_bx,       0, 64), 0x0028); // 8
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_r11,      0, 64), 0x0030); // 8
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_r10,      0, 64), 0x0038); // 8
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_r9,       0, 64), 0x0040); // 8
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_r8,       0, 64), 0x0048); // 8
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_ax,       0, 64), 0x0050); // 8
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_cx,       0, 64), 0x0058); // 8
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_dx,       0, 64), 0x0060); // 8
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_si,       0, 64), 0x0068); // 8
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_di,       0, 64), 0x0070); // 8
+    // orig_rax: unused                                                                    0x0078   // 8
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_ip,      0,                0, 64), 0x0080); // 8
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_segment, x86_segreg_cs,    0, 64), 0x0088); // 8
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_flags,   x86_flags_status, 0, 64), 0x0090); // 8
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_sp,       0, 64), 0x0098); // 8
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_segment, x86_segreg_ss,    0, 64), 0x00a0); // 8
+    // fs_base: unused                                                                     0x00a8   // 8
+    // gs_base: unused                                                                     0x00b0   // 8
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_segment, x86_segreg_ds,    0, 64), 0x00b8); // 8
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_segment, x86_segreg_es,    0, 64), 0x00c0); // 8
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_segment, x86_segreg_fs,    0, 64), 0x00c8); // 8
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_segment, x86_segreg_gs,    0, 64), 0x00d0); // 8
+
+    //--------------------------------------                                                 struct   struct
+    // Entries for 64-bit user_fpregs_struct                                                 offset   size
+    //--------------------------------------                                                 (byte)   (bytes)
+    // cwd: unused                                                                           0x0000   // 2
+    // swd: unused                                                                           0x0002   // 2
+    // ftw: unused                                                                           0x0004   // 2
+    // fop: unused                                                                           0x0006   // 2
+    // rip: unused                                                                           0x0008   // 8
+    // rdp: unused                                                                           0x0010   // 8
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_flags,   x86_flags_mxcsr,  0, 64), 0x0018); // 4
+    // mxcsr_mask: unused                                                                    0x001c   // 4
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_st,      x86_st_0,         0, 64), 0x0020); // 16
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_st,      x86_st_1,         0, 64), 0x0030); // 16
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_st,      x86_st_2,         0, 64), 0x0040); // 16
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_st,      x86_st_3,         0, 64), 0x0050); // 16
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_st,      x86_st_4,         0, 64), 0x0060); // 16
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_st,      x86_st_5,         0, 64), 0x0070); // 16
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_st,      x86_st_6,         0, 64), 0x0080); // 16
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_st,      x86_st_7,         0, 64), 0x0090); // 16
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_xmm,     0,                0, 64), 0x00a0); // 16
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_xmm,     1,                0, 64), 0x00b0); // 16
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_xmm,     2,                0, 64), 0x00c0); // 16
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_xmm,     3,                0, 64), 0x00d0); // 16
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_xmm,     4,                0, 64), 0x00e0); // 16
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_xmm,     5,                0, 64), 0x00f0); // 16
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_xmm,     6,                0, 64), 0x0100); // 16
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_xmm,     7,                0, 64), 0x0110); // 16
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_xmm,     8,                0, 64), 0x0120); // 16
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_xmm,     9,                0, 64), 0x0130); // 16
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_xmm,     10,               0, 64), 0x0140); // 16
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_xmm,     11,               0, 64), 0x0150); // 16
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_xmm,     12,               0, 64), 0x0160); // 16
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_xmm,     13,               0, 64), 0x0170); // 16
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_xmm,     14,               0, 64), 0x0180); // 16
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_xmm,     15,               0, 64), 0x0190); // 16
+    //                                                                                       0x01a0
+
+#elif defined(__linux) && defined(__x86) && __WORDSIZE==32
+    disassembler_ = new Disassembler::X86(4 /*bytes*/);
+
+    //------------------------------------                                                 struct  struct
+    // Entries for 32-bit user_regs_struct                                                 offset  size
+    //------------------------------------                                                 (byte)  (bytes)
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_bx,       0, 32), 0x0000); // 4
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_cx,       0, 32), 0x0004); // 4
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_dx,       0, 32), 0x0008); // 4
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_si,       0, 32), 0x000c); // 4
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_di,       0, 32), 0x0010); // 4
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_bp,       0, 32), 0x0014); // 4
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_ax,       0, 32), 0x0018); // 4
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_segment, x86_segreg_ds,    0, 32), 0x001c); // 4
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_segment, x86_segreg_es,    0, 32), 0x0020); // 4
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_segment, x86_segreg_fs,    0, 32), 0x0024); // 4
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_segment, x86_segreg_gs,    0, 32), 0x0028); // 4
+    // orig_eax: unused                                                                    0x002c   // 4
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_ip,      0,                0, 32), 0x0030); // 4
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_segment, x86_segreg_cs,    0, 32), 0x0034); // 4
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_flags,   x86_flags_status, 0, 32), 0x0038); // 4
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_sp,       0, 32), 0x003c); // 4
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_segment, x86_segreg_ss,    0, 32), 0x0040); // 4
+
+    //--------------------------------------                                               struct   struct
+    // Entries for 32-bit user_fpregs_struct                                               offset   size
+    //--------------------------------------                                               (byte)   (bytes)
+    // cwd: unused                                                                         0x0000   // 4
+    // swd: unused                                                                         0x0004   // 4
+    // twd: unused                                                                         0x0008   // 4
+    // fip: unused                                                                         0x000c   // 4
+    // fcs: unused                                                                         0x0010   // 4
+    // foo: unused                                                                         0x0014   // 4
+    // fos: unused                                                                         0x0018   // 4
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_st,      x86_st_0,         0, 32),   28); // 10
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_st,      x86_st_1,         0, 32),   38); // 10
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_st,      x86_st_2,         0, 32),   48); // 10
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_st,      x86_st_3,         0, 32),   58); // 10
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_st,      x86_st_4,         0, 32),   68); // 10
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_st,      x86_st_5,         0, 32),   78); // 10
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_st,      x86_st_6,         0, 32),   88); // 10
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_st,      x86_st_7,         0, 32),   98); // 10
+    //                                                                                          108
+
+#else
+    ROSE_PRAGMA_MESSAGE("subordinate process registers not supported on this platform");
+    throw std::runtime_error("subordinate process registers not supported on this platform");
+#endif
+}
+
+Linux::~Linux() {
+    detach();
+}
+
+Linux::Ptr
+Linux::instance() {
+    return Ptr(new Linux);
+}
+
+Linux::Ptr
+Linux::instance(const Specimen &s, Sawyer::Optional<DetachMode> onDelete) {
+    auto debugger = instance();
+    debugger->attach(s, onDelete);
+    return debugger;
+}
+
+bool
+Linux::isAttached() {
+    return -1 != child_;
+}
+
+Sawyer::Optional<int>
+Linux::processId() const {
+    if (-1 == child_) {
+        return Sawyer::Nothing();
+    } else {
+        return child_;
+    }
+}
+
+RegisterDictionary::Ptr
+Linux::registerDictionary() const {
+    ASSERT_not_null(disassembler_);
+    return disassembler_->registerDictionary();
+}
+
+Disassembler::Base::Ptr
+Linux::disassembler() const {
+    return disassembler_;
+}
+
+bool
+Linux::isTerminated() {
+    return WIFEXITED(wstat_) || WIFSIGNALED(wstat_);
+}
+
+int
+Linux::waitpidStatus() const {
+    return wstat_;
+}
+
+void
+Linux::waitForChild() {
+    ASSERT_require2(child_, "must be attached to a subordinate process");
+    if (-1 == waitpid(child_, &wstat_, __WALL))
+        throw std::runtime_error("Rose::BinaryAnalysis::Debugger::Linux::waitForChild failed: "
+                                 + boost::to_lower_copy(std::string(strerror(errno))));
+    sendSignal_ = WIFSTOPPED(wstat_) && WSTOPSIG(wstat_)!=SIGTRAP ? WSTOPSIG(wstat_) : 0;
+    regsPageStatus_ = RegPage::NONE;
+}
+
+std::string
+Linux::howTerminated() {
+    if (WIFEXITED(wstat_)) {
+        return "exited with status " + StringUtility::numberToString(WEXITSTATUS(wstat_));
+    } else if (WIFSIGNALED(wstat_)) {
+        return "terminated by signal (" + boost::to_lower_copy(std::string(strsignal(WTERMSIG(wstat_)))) + ")";
+    } else {
+        return "";                                      // not terminated yet
+    }
+}
+
+Linux::DetachMode
+Linux::detachMode() const {
+    return autoDetach_;
+}
+
+void
+Linux::detachMode(DetachMode m) {
+    autoDetach_ = m;
+}
+
+void
+Linux::detach() {
+    if (child_ && !isTerminated()) {
+        switch (autoDetach_) {
+            case DetachMode::NOTHING:
+                break;
+            case DetachMode::CONTINUE:
+                kill(child_, SIGCONT);
+                break;
+            case DetachMode::DETACH:
+                sendCommand(PTRACE_DETACH, child_);
+                break;
+            case DetachMode::KILL:
+                sendCommand(PTRACE_KILL, child_);
+                waitForChild();
+        }
+    }
+    child_ = 0;
+    regsPageStatus_ = RegPage::NONE;
+    syscallVa_.reset();
+}
+
+void
+Linux::terminate() {
+    detachMode(DetachMode::KILL);
+    detach();
+}
+
+std::vector<ThreadId>
+Linux::threadIds() {
+    return std::vector<ThreadId>();
+}
+
+void
+Linux::attach(const Specimen &specimen, Sawyer::Optional<DetachMode> onDelete) {
+    if (!specimen.program().empty()) {
+        // Attach to an executable program by running it.
+        detach();
+        specimen_ = specimen;
+        autoDetach_ = onDelete.orElse(DetachMode::KILL);
+
+        // Create the child exec arguments before the fork because heap allocation is not async-signal-safe.
+        char **argv = new char*[1 /*name*/ + specimen.arguments().size() + 1 /*null*/]();
+        argv[0] = new char[specimen.program().string().size()+1];
+        std::strcpy(argv[0], specimen.program().string().c_str());
+        for (size_t i = 0; i < specimen.arguments().size(); ++i) {
+            argv[i+1] = new char[specimen.arguments()[i].size()+1];
+            std::strcpy(argv[i+1], specimen.arguments()[i].c_str());
+        }
+
+        // Prepare to close files when forking.  This is a race because some other thread might open a file without the
+        // O_CLOEXEC flag after we've checked but before we reach the fork. And we can't fix that entirely within ROSE since we
+        // have no control over the user program or other libraries. Furthermore, we must do it here in the parent rather than
+        // after the fork because opendir, readdir, and strtol are not async-signal-safe and Linux does't have a closefrom
+        // syscall.
+        if (specimen.flags().isSet(Flag::CLOSE_FILES)) {
+            static const int minFd = 3;
+            if (DIR *dir = opendir("/proc/self/fd")) {
+                while (const struct dirent *entry = readdir(dir)) {
+                    char *rest = nullptr;
+                    errno = 0;
+                    int fd = strtol(entry->d_name, &rest, 10);
+                    if (0 == errno && '\0' == *rest && rest != entry->d_name && fd >= minFd)
+                        fcntl(fd, F_SETFD, FD_CLOEXEC);
+                }
+                closedir(dir);
+            }
+        }
+
+        char **envAdjustments = specimen.prepareEnvAdjustments();
+        child_ = fork();
+        if (0==child_) {
+            // Since the parent process may have been multi-threaded, we are now in an async-signal-safe context.
+            adjustEnvironment(envAdjustments);
+            if (specimen.flags().isSet(Flag::REDIRECT_INPUT))
+                devNullTo(0, O_RDONLY);                 // async-signal-safe
+
+            if (specimen.flags().isSet(Flag::REDIRECT_OUTPUT))
+                devNullTo(1, O_WRONLY);                 // async-signal-safe
+
+            if (specimen.flags().isSet(Flag::REDIRECT_ERROR))
+                devNullTo(2, O_WRONLY);                 // async-signal-safe
+
+            // FIXME[Robb Matzke 2017-08-04]: We should be using a direct system call here instead of the C library wrapper because
+            // the C library is adjusting errno, which is not async-signal-safe.
+            if (-1 == ptrace(PTRACE_TRACEME, 0, 0, 0)) {
+                // errno is set, but no way to access it in an async-signal-safe way
+                const char *mesg= "Rose::BinaryAnalysis::Debugger::Linux::attach: ptrace_traceme failed\n";
+                if (write(2, mesg, strlen(mesg)) == -1)
+                    abort();
+                _Exit(1);                                   // avoid calling C++ destructors from child
+            }
+
+            setPersonality(specimen.persona());
+            execv(argv[0], argv);
+
+            // If failure, we must still call only async signal-safe functions.
+            const char *mesg = "Rose::BinaryAnalysis::Debugger::Linux::attach: exec failed: ";
+            if (write(2, mesg, strlen(mesg)) == -1)
+                abort();
+            mesg = strerror(errno);
+            if (write(2, mesg, strlen(mesg)) == -1)
+                abort();
+            if (write(2, "\n", 1) == -1)
+                abort();
+            _Exit(1);
+        }
+
+        argv = freeStringList(argv);
+        envAdjustments = freeStringList(envAdjustments);
+
+        waitForChild();
+        if (isTerminated())
+            throw std::runtime_error("Rose::BinaryAnalysis::Debugger::Linux::attach: subordinate " +
+                                     howTerminated() + " before we gained control");
+    } else {
+        // Attach to an existing process.
+        if (-1 == specimen.process()) {
+            detach();
+        } else if (specimen.process() == child_) {
+            // do nothing
+        } else if (specimen.flags().isSet(Flag::ATTACH)) {
+            child_ = specimen.process();
+            sendCommand(PTRACE_ATTACH, child_);
+            autoDetach_ = onDelete.orElse(DetachMode::DETACH);
+            waitForChild();
+            if (SIGSTOP==sendSignal_)
+                sendSignal_ = 0;
+        } else {
+            child_ = specimen.process();
+            autoDetach_ = onDelete.orElse(DetachMode::NOTHING);
+        }
+        specimen_ = specimen;
+    }
+}
+
+// Must be async signal safe!
+void
+Linux::devNullTo(int targetFd, int openFlags) {
+    int fd = open("/dev/null", openFlags, 0666);
+    if (-1 == fd) {
+        close(targetFd);
+    } else {
+        dup2(fd, targetFd);
+        close(fd);
+    }
+}
+
+void
+Linux::executionAddress(ThreadId, rose_addr_t va) {
+    user_regs_struct regs;
+    sendCommand(PTRACE_GETREGS, child_, 0, &regs);
+    setInstructionPointer(regs, va);
+    sendCommand(PTRACE_SETREGS, child_, 0, &regs);
+}
+
+rose_addr_t
+Linux::executionAddress(ThreadId tid) {
+    return readRegister(tid, RegisterDescriptor(x86_regclass_ip, 0, 0, kernelWordSize())).toInteger();
+}
+
+void
+Linux::setBreakPoint(const AddressInterval &va) {
+    breakPoints_.insert(va);
+}
+
+void
+Linux::clearBreakPoint(const AddressInterval &va) {
+    breakPoints_.erase(va);
+}
+
+void
+Linux::clearBreakPoints() {
+    breakPoints_.clear();
+}
+
+void
+Linux::singleStep(ThreadId) {
+    sendCommandInt(PTRACE_SINGLESTEP, child_, 0, sendSignal_);
+    waitForChild();
+}
+
+void
+Linux::stepIntoSystemCall(ThreadId) {
+    sendCommandInt(PTRACE_SYSCALL, child_, 0, sendSignal_);
+    waitForChild();
+}
+
+#if 0 // [Robb Matzke 2021-05-26]: doesn't seem to work on Linux 5.4: always says PTRACE_SYSCALL_INFO_NONE
+Sawyer::Optional<Linux::SyscallEntry>
+Linux::syscallEntryInfo() {
+    __ptrace_syscall_info info;
+    sendCommand(PTRACE_GET_SYSCALL_INFO, child_, reinterpret_cast<void*>(sizeof info), &info);
+    if (PTRACE_SYSCALL_INFO_ENTRY == info.op) {
+        return SyscallEntry(info.entry.nr, info.entry.args);
+    } else {
+        return Sawyer::Nothing();
+    }
+}
+
+Sawyer::Optional<Linux::SyscallExit>
+Linux::syscallExitInfo() {
+    __ptrace_syscall_info info;
+    sendCommand(PTRACE_GET_SYSCALL_INFO, child_, reinterpret_cast<void*>(sizeof info), &info);
+    if (PTRACE_SYSCALL_INFO_EXIT == info.op) {
+        return SyscallExit(info.exit.rval, info.exit.is_error);
+    } else {
+        return Sawyer::Nothing();
+    }
+}
+#endif
+
+size_t
+Linux::kernelWordSize() {
+    if (kernelWordSize_ == 0) {
+        static const uint8_t magic = 0xb7;              // arbitrary
+        uint8_t userRegs[4096];                         // arbitrary size, but plenty large for any user_regs_struct
+        memset(userRegs, magic, sizeof userRegs);
+        sendCommand(PTRACE_GETREGS, child_, 0, &userRegs);
+
+        // How much was written, approximately?
+        size_t highWater = sizeof userRegs;
+        while (highWater>0 && userRegs[highWater-1]==magic)
+            --highWater;
+        if (highWater == 216) {
+            kernelWordSize_ = 64;
+        } else if (highWater == 68) {
+            kernelWordSize_ = 32;
+        } else if (highWater > 100) {
+            kernelWordSize_ = 64;                       // guess
+        } else {
+            kernelWordSize_ = 32;                       // guess;
+        }
+    }
+    return kernelWordSize_;
+}
+
+Linux::AllRegisters
+Linux::readAllRegisters(ThreadId) {
+    AllRegisters retval;
+    if (RegPage::REGS == regsPageStatus_) {
+        retval.regs = regsPage_;
+        sendCommand(PTRACE_GETFPREGS, child_, 0, regsPage_.data());
+        retval.fpregs = regsPage_;
+        regsPageStatus_ = RegPage::FPREGS;
+    } else if (RegPage::FPREGS == regsPageStatus_) {
+        retval.fpregs = regsPage_;
+        sendCommand(PTRACE_GETREGS, child_, 0, regsPage_.data());
+        retval.regs = regsPage_;
+        regsPageStatus_ = RegPage::REGS;
+    } else {
+        sendCommand(PTRACE_GETFPREGS, child_, 0, regsPage_.data());
+        retval.fpregs = regsPage_;
+        sendCommand(PTRACE_GETREGS, child_, 0, regsPage_.data());
+        retval.regs = regsPage_;
+        regsPageStatus_ = RegPage::REGS;
+    }
+    return retval;
+}
+
+void
+Linux::writeAllRegisters(ThreadId, const AllRegisters &all) {
+    sendCommand(PTRACE_SETFPREGS, child_, 0, (void*)all.fpregs.data());
+    sendCommand(PTRACE_SETREGS, child_, 0, (void*)all.regs.data());
+    regsPage_ = all.regs;
+    regsPageStatus_ = RegPage::REGS;
+}
+
+Sawyer::Container::BitVector
+Linux::readRegister(ThreadId, RegisterDescriptor desc) {
+    using namespace Sawyer::Container;
+
+    // Lookup register according to kernel word size rather than the actual size of the register.
+    RegisterDescriptor base(desc.majorNumber(), desc.minorNumber(), 0, kernelWordSize());
+    size_t userOffset = 0;
+    if (userRegDefs_.getOptional(base).assignTo(userOffset)) {
+        if (regsPageStatus_ != RegPage::REGS) {
+            sendCommand(PTRACE_GETREGS, child_, 0, regsPage_.data());
+            regsPageStatus_ = RegPage::REGS;
+        }
+    } else if (userFpRegDefs_.getOptional(base).assignTo(userOffset)) {
+        if (regsPageStatus_ != RegPage::FPREGS) {
+            sendCommand(PTRACE_GETFPREGS, child_, 0, regsPage_.data());
+            regsPageStatus_ = RegPage::FPREGS;
+        }
+    } else {
+        throw std::runtime_error("register is not available");
+    }
+
+    // Extract the necessary data members from the struct. Assume that memory is little endian.
+    size_t nUserBytes = (desc.offset() + desc.nBits() + 7) / 8;
+    ASSERT_require(userOffset + nUserBytes <= regsPage_.size());
+    BitVector bits(8 * nUserBytes);
+    for (size_t i=0; i<nUserBytes; ++i)
+        bits.fromInteger(BitVector::BitRange::baseSize(i*8, 8), regsPage_[userOffset+i]);
+
+    // Adjust the data to return only the bits we want.
+    bits.shiftRight(desc.offset());
+    bits.resize(desc.nBits());
+    return bits;
+}
+
+void
+Linux::writeRegister(ThreadId tid, RegisterDescriptor desc, const Sawyer::Container::BitVector &bits) {
+    using namespace Sawyer::Container;
+
+    // Side effect is to update regsPage_ if necessary.
+    (void) readRegister(tid, desc);
+
+    // Look up register according to kernel word size rather than the actual size of the register.
+    RegisterDescriptor base(desc.majorNumber(), desc.minorNumber(), 0, kernelWordSize());
+
+    // Update the register page with the new data and write it to the process. Assume that memory is little endian.
+    size_t nUserBytes = (desc.offset() + desc.nBits() + 7) / 8;
+    size_t userOffset = 0;
+    if (userRegDefs_.getOptional(base).assignTo(userOffset)) {
+        ASSERT_require(userOffset + nUserBytes <= regsPage_.size());
+        for (size_t i = 0; i < nUserBytes; ++i)
+            regsPage_[userOffset + i] = bits.toInteger(BitVector::BitRange::baseSize(i*8, 8));
+        sendCommand(PTRACE_SETREGS, child_, 0, regsPage_.data());
+    } else if (userFpRegDefs_.getOptional(base).assignTo(userOffset)) {
+#ifdef __linux
+        ASSERT_require(userOffset + nUserBytes <= regsPage_.size());
+        for (size_t i = 0; i < nUserBytes; ++i)
+            regsPage_[userOffset + i] = bits.toInteger(BitVector::BitRange::baseSize(i*8, 8));
+        sendCommand(PTRACE_SETFPREGS, child_, 0, regsPage_.data());
+#else
+        ROSE_PRAGMA_MESSAGE("unable to save FP registers on this platform")
+#endif
+    } else {
+        throw std::runtime_error("register is not available");
+    }
+}
+
+void
+Linux::writeRegister(ThreadId tid, RegisterDescriptor desc, uint64_t value) {
+    using namespace Sawyer::Container;
+    BitVector bits(desc.nBits());
+    bits.fromInteger(value);
+    writeRegister(tid, desc, bits);
+}
+
+Sawyer::Container::BitVector
+Linux::readMemory(rose_addr_t va, size_t nBytes, ByteOrder::Endianness sex) {
+    using namespace Sawyer::Container;
+
+    struct Resources {
+        uint8_t *buffer;
+        Resources(): buffer(nullptr) {}
+        ~Resources() {
+            delete[] buffer;
+        }
+    } r;
+
+    r.buffer = new uint8_t[nBytes];
+    size_t nRead = readMemory(va, nBytes, r.buffer);
+    if (nRead != nBytes)
+        throw std::runtime_error("short read at " + StringUtility::addrToString(va));
+
+    BitVector retval(8*nBytes);
+    for (size_t i=0; i<nBytes; ++i) {
+        BitVector::BitRange where;
+        switch (sex) {
+            case ByteOrder::ORDER_LSB:
+                where = BitVector::BitRange::baseSize(8*i, 8);
+                break;
+            case ByteOrder::ORDER_MSB:
+                where = BitVector::BitRange::baseSize(8*nBytes-(i+1), 8);
+                break;
+            default:
+                ASSERT_not_reachable("invalid byte order");
+        }
+        retval.fromInteger(where, r.buffer[i]);
+    }
+    return retval;
+}
+
+std::vector<uint8_t>
+Linux::readMemory(rose_addr_t va, size_t nBytes) {
+    std::vector<uint8_t> buf(nBytes);
+    size_t nRead = readMemory(va, nBytes, buf.data());
+    buf.resize(nRead);
+    return buf;
+}
+
+size_t
+Linux::readMemory(rose_addr_t va, size_t nBytes, uint8_t *buffer) {
+#ifdef __linux__
+    if (0 == nBytes)
+        return 0;
+
+    struct T {
+        int fd;
+        T(): fd(-1) {}
+        ~T() {
+            if (-1 != fd)
+                close(fd);
+        }
+    } mem;
+
+    // We could use PTRACE_PEEKDATA, but it can be very slow if we're reading lots of memory since it reads only one word at a
+    // time. We'd also need to worry about alignment so we don't inadvertently read past the end of a memory region when we're
+    // trying to read the last byte.  Reading /proc/N/mem is faster and easier.
+    std::string memName = "/proc/" + StringUtility::numberToString(child_) + "/mem";
+    if (-1 == (mem.fd = open(memName.c_str(), O_RDONLY)))
+        throw std::runtime_error("cannot open \"" + memName + "\": " + strerror(errno));
+    if (-1 == lseek(mem.fd, va, SEEK_SET))
+        return 0;                                       // bad address
+    size_t totalRead = 0;
+    while (nBytes > 0) {
+        ssize_t nread = read(mem.fd, buffer, nBytes);
+        if (-1 == nread) {
+            if (EINTR == errno)
+                continue;
+            return totalRead;                           // error
+        } else if (0 == nread) {
+            return totalRead;                           // short read
+        } else {
+            ASSERT_require(nread > 0);
+            ASSERT_require((size_t)nread <= nBytes);
+            nBytes -= nread;
+            buffer += nread;
+            totalRead += nread;
+        }
+    }
+    return totalRead;
+#else
+    ROSE_PRAGMA_MESSAGE("reading from subordinate memory is not supported on this platform");
+    throw std::runtime_error("reading from subordinate memory is not supported on this platform");
+#endif
+}
+
+size_t
+Linux::writeMemory(rose_addr_t va, size_t nBytes, const uint8_t *buffer) {
+#ifdef __linux__
+    if (0 == nBytes)
+        return 0;
+
+    struct T {
+        int fd;
+        T(): fd(-1) {}
+        ~T() {
+            if (-1 != fd)
+                close(fd);
+        }
+    } mem;
+
+    // We could use PTRACE_POKEDATA, but it can be very slow if we're writing lots of memory since it only reads one word at a
+    // time. We'd also need to worry about alignment so we don't inadvertently write past the end of a memory region when we're
+    // try to write the last byte. Writing to  /proc/N/mem is faster and easier.
+    std::string memName = "/proc/" + StringUtility::numberToString(child_) + "/mem";
+    if (-1 == (mem.fd = open(memName.c_str(), O_RDWR)))
+        throw std::runtime_error("cannot open \"" + memName + "\": " + strerror(errno));
+    if (-1 == lseek(mem.fd, va, SEEK_SET))
+        return 0;                                       // bad address
+    size_t totalWritten = 0;
+    while (nBytes > 0) {
+        ssize_t nWritten = write(mem.fd, buffer, nBytes);
+        if (-1 == nWritten) {
+            if (EINTR == errno)
+                continue;
+        } else if (0 == nWritten) {
+            return totalWritten;
+        } else {
+            ASSERT_require(nWritten > 0);
+            ASSERT_require((size_t)nWritten <= nBytes);
+            nBytes -= nWritten;
+            buffer += nWritten;
+            totalWritten += nWritten;
+        }
+    }
+    return totalWritten;
+#else
+    ROSE_PRAGMA_MESSAGE("writing to subordinate memory is not supported on this platform");
+    throw std::runtime_error("writing to subordinate memory is not supported on this platform");
+#endif
+}
+
+std::string
+Linux::readCString(rose_addr_t va, size_t maxBytes) {
+    std::string retval;
+    while (maxBytes > 0) {
+        uint8_t buf[32];
+        size_t nRead = readMemory(va, std::min(maxBytes, sizeof buf), buf);
+        if (0 == nRead)
+            break;
+        for (size_t i = 0; i < nRead; ++i) {
+            if (0 == buf[i]) {
+                return retval;                          // NUL terminated
+            } else {
+                retval += (char)buf[i];
+            }
+        }
+        maxBytes -= nRead;
+        va += nRead;
+    }
+    return retval;                                      // buffer overflow
+}
+
+void
+Linux::runToBreakPoint(ThreadId tid) {
+    if (breakPoints_.isEmpty()) {
+        sendCommandInt(PTRACE_CONT, child_, 0, sendSignal_);
+        waitForChild();
+    } else {
+        while (1) {
+            singleStep(tid);
+            if (isTerminated())
+                break;
+            user_regs_struct regs;
+            sendCommand(PTRACE_GETREGS, child_, 0, &regs);
+            if (breakPoints_.exists(getInstructionPointer(regs)))
+                break;
+        }
+    }
+}
+
+void
+Linux::runToSystemCall(ThreadId) {
+    sendCommandInt(PTRACE_SYSCALL, child_, 0, sendSignal_);
+    waitForChild();
+}
+
+// class method
+unsigned long
+Linux::getPersonality() {
+#ifdef ROSE_HAVE_SYS_PERSONALITY_H
+    return ::personality(0xffffffff);
+#else
+    return 0;
+#endif
+}
+
+// class method
+void
+Linux::setPersonality(unsigned long bits) {
+#ifdef ROSE_HAVE_SYS_PERSONALITY_H
+    ::personality(bits);
+#else
+    if (bits != 0)
+        mlog[WARN] <<"unable to set process execution domain for this architecture\n";
+#endif
+}
+
+Sawyer::Optional<rose_addr_t>
+Linux::findSystemCall() {
+    std::vector<uint8_t> needle{0xcd, 0x80};            // x86: INT 0x80
+
+    // Make sure the syscall is still there if we already found it. This is reasonally fast.
+    if (syscallVa_) {
+        std::vector<uint8_t> buf(needle.size());
+        size_t nRead = readMemory(*syscallVa_, buf.size(), buf.data());
+        if (nRead != buf.size() || !std::equal(buf.begin(), buf.end(), needle.begin()))
+            syscallVa_.reset();
+    }
+
+    // If we haven't found a syscall (even if we previously searched for one) then search now.
+    std::vector<MemoryMap::ProcessMapRecord> segments = MemoryMap::readProcessMap(child_);
+    for (const MemoryMap::ProcessMapRecord &segment: segments) {
+        if ("[vvar]" == segment.comment) {
+            // Linux vvar segment cannot be read from /proc/*/mem even though it's marked readable in the map
+        } else if ((segment.accessibility & MemoryMap::READ_EXECUTE) != MemoryMap::READ_EXECUTE) {
+            // Don't try to read memory which is not readable and executable
+        } else {
+            auto map = MemoryMap::instance();
+            map->insertProcessPid(child_, std::vector<MemoryMap::ProcessMapRecord>{segment});
+            if ((syscallVa_ = map->findAny(AddressInterval::whole(), std::vector<uint8_t>{0xcd, 0x80}, MemoryMap::EXECUTABLE)))
+                break;
+        }
+    }
+
+    return syscallVa_;
+}
+
+int64_t
+Linux::remoteSystemCall(ThreadId tid, int syscallNumber) {
+    return remoteSystemCall(tid, syscallNumber, std::vector<uint64_t>());
+}
+
+int64_t
+Linux::remoteSystemCall(ThreadId tid, int syscallNumber, uint64_t arg1) {
+    return remoteSystemCall(tid, syscallNumber, std::vector<uint64_t>{arg1});
+}
+
+int64_t
+Linux::remoteSystemCall(ThreadId tid, int syscallNumber, uint64_t arg1, uint64_t arg2) {
+    return remoteSystemCall(tid, syscallNumber, std::vector<uint64_t>{arg1, arg2});
+}
+
+int64_t
+Linux::remoteSystemCall(ThreadId tid, int syscallNumber, uint64_t arg1, uint64_t arg2, uint64_t arg3) {
+    return remoteSystemCall(tid, syscallNumber, std::vector<uint64_t>{arg1, arg2, arg3});
+}
+
+int64_t
+Linux::remoteSystemCall(ThreadId tid, int syscallNumber, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4) {
+    return remoteSystemCall(tid, syscallNumber, std::vector<uint64_t>{arg1, arg2, arg3, arg4});
+}
+
+int64_t
+Linux::remoteSystemCall(ThreadId tid, int syscallNumber, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4,
+                         uint64_t arg5) {
+    return remoteSystemCall(tid, syscallNumber, std::vector<uint64_t>{arg1, arg2, arg3, arg4, arg5});
+}
+
+int64_t
+Linux::remoteSystemCall(ThreadId tid, int syscallNumber, uint64_t arg1, uint64_t arg2, uint64_t arg3, uint64_t arg4,
+                         uint64_t arg5, uint64_t arg6) {
+    return remoteSystemCall(tid, syscallNumber, std::vector<uint64_t>{arg1, arg2, arg3, arg4, arg5, arg6});
+}
+
+int64_t
+Linux::remoteSystemCall(ThreadId tid, int syscallNumber, std::vector<uint64_t> args) {
+    // Find a system call that we can hijack to do our bidding.
+    Sawyer::Optional<rose_addr_t> syscallVa = findSystemCall();
+    if (!syscallVa)
+        return -1;
+
+    // Registers that we'll need later, one per syscall argument.
+    // FIXME[Robb Matzke 2020-08-26]: This is i386 specific, but I'm not sure what the best way is to figure out whether the
+    // subordinate is using the syscall numbers for i386, x86-64, or something else.
+    RegisterDescriptor syscallReg(x86_regclass_gpr, x86_gpr_ax, 0, 32);
+    std::vector<RegisterDescriptor> regs;
+#if 1 // i386
+    switch (args.size()) {
+        case 6: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_bp, 0, 32)); // falls through
+        case 5: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_di, 0, 32)); // falls through
+        case 4: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_si, 0, 32)); // falls through
+        case 3: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_dx, 0, 32)); // falls through
+        case 2: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_cx, 0, 32)); // falls through
+        case 1: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_bx, 0, 32));
+    }
+#else // x86-64
+    switch (args.size()) {
+        case 6: regs.push_back(RegisterDescriptor(x86_regclass_gpr, 9,          0, 32)); // falls through
+        case 5: regs.push_back(RegisterDescriptor(x86_regclass_gpr, 8,          0, 32)); // falls through
+        case 4: regs.push_back(RegisterDescriptor(x86_regclass_gpr, 10,         0, 32)); // falls through
+        case 3: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_dx, 0, 32)); // falls through
+        case 2: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_si, 0, 32)); // falls through
+        case 1: regs.push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_di, 0, 32));
+    }
+#endif
+    std::reverse(regs.begin(), regs.end());
+
+    // Save registers we're about to overwrite
+    std::vector<Sawyer::Container::BitVector> savedRegs(args.size());
+    for (size_t i = 0; i < args.size(); ++i)
+        savedRegs[i] = readRegister(tid, regs[i]);
+    Sawyer::Container::BitVector savedSyscallReg = readRegister(tid, syscallReg);
+
+    // Assign arguments to registers
+    for (size_t i = 0; i < args.size(); ++i)
+        writeRegister(tid, regs[i], args[i]);
+    writeRegister(tid, syscallReg, syscallNumber);
+
+    // Single step through the syscall instruction
+    rose_addr_t ip = executionAddress(tid);
+    executionAddress(tid, *syscallVa);
+    singleStep(tid);
+    executionAddress(tid, ip);
+    int64_t retval = readRegister(tid, syscallReg).toSignedInteger();
+
+    // Restore registers
+    for (size_t i = 0; i < args.size(); ++i)
+        writeRegister(tid, regs[i], savedRegs[i]);
+    writeRegister(tid, syscallReg, savedSyscallReg);
+    return retval;
+}
+
+int
+Linux::remoteOpenFile(ThreadId tid, const boost::filesystem::path &fileName, unsigned flags, mode_t mode) {
+    // Find some writable memory in which to write the file name
+    Sawyer::Optional<rose_addr_t> nameVa;
+    std::vector<MemoryMap::ProcessMapRecord> mapRecords = MemoryMap::readProcessMap(child_);
+    for (const MemoryMap::ProcessMapRecord &record: mapRecords) {
+        if ((record.accessibility & MemoryMap::READ_WRITE) == MemoryMap::READ_WRITE &&
+            record.interval.size() > fileName.string().size()) {
+            nameVa = record.interval.least();
+            break;
+        }
+    }
+    if (!nameVa)
+        return -1;
+
+    // Write the file name to the subordinate's memory, saving what was there previously.
+    std::vector<uint8_t> savedName(fileName.string().size() + 1);
+    readMemory(*nameVa, fileName.string().size() + 1, savedName.data());
+    writeMemory(*nameVa, fileName.string().size()+1, (const uint8_t*)fileName.c_str());
+    int retval = remoteSystemCall(tid, 5 /*open*/, std::vector<uint64_t>{*nameVa, flags, mode});
+
+    // Restore saved memory
+    writeMemory(*nameVa, savedName.size(), savedName.data());
+    return retval;
+}
+
+int
+Linux::remoteCloseFile(ThreadId tid, unsigned fd) {
+    return remoteSystemCall(tid, 6 /*close*/, std::vector<uint64_t>{fd});
+}
+
+rose_addr_t
+Linux::remoteMmap(ThreadId tid, rose_addr_t va, size_t nBytes, unsigned prot, unsigned flags,
+                   const boost::filesystem::path &fileName, off_t offset_) {
+    uint64_t offset = boost::numeric_cast<uint64_t>(offset_);
+    int fd = remoteOpenFile(tid, fileName, O_RDONLY, 0);
+    if (fd < 0)
+        return fd;
+    int retval = remoteSystemCall(tid, 90 /*mmap*/, std::vector<uint64_t>{va, nBytes, prot, flags, (unsigned)fd, offset});
+    remoteCloseFile(tid, fd);
+    return retval;
+}
+} // namespace
+} // namespace
+} // namespace
+
+#endif

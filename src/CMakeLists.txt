@@ -140,6 +140,7 @@ set(rose_LIB_OBJS
   roseBinaryAnalysis
   roseBinaryAnalysisByteCode
   roseBinaryAnalysisConcolic
+  roseBinaryAnalysisDebugger
   roseBinaryAnalysisDisassembler
   roseBinaryAnalysisInstructionSemantics
   roseBinaryAnalysisInstructionSemanticsBaseSemantics

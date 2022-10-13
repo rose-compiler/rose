@@ -7,7 +7,7 @@ static const char *description =
     "the execution with a previously saved trace and report differences.";
 
 #include <rose.h>
-#include <Rose/BinaryAnalysis/Debugger.h>
+#include <Rose/BinaryAnalysis/Debugger/Linux.h>
 #include <Rose/CommandLine.h>
 #include <rose_getline.h>                               // rose
 #include <rose_strtoull.h>                              // rose
@@ -134,11 +134,11 @@ struct TraceFilter {
             if (iter == answer.end()) {
                 mlog[ERROR] <<"current trace extends beyond previous answer trace at step " <<nSteps.value() <<"\n";
                 hadError = true;
-                return Debugger::STOP;
+                return makeBitFlags(Debugger::FilterActionFlag::STOP);
             } else if (va != *iter++) {
                 mlog[ERROR] <<"current trace diverges from previous answer trace at step " <<nSteps.value() <<"\n";
                 hadError = true;
-                return Debugger::STOP;
+                return makeBitFlags(Debugger::FilterActionFlag::STOP);
             }
         }
         ++nSteps;
@@ -254,13 +254,13 @@ main(int argc, char *argv[]) {
         output = &std::cout;
     }
 
-    Debugger::Specimen specimen(args);
+    Debugger::Linux::Specimen specimen(args);
     specimen.randomizedAddresses(false);
-    auto process = Debugger::instance(specimen);
+    auto process = Debugger::Linux::instance(specimen);
 
     P2::Partitioner partitioner;
     if (settings.showingInsns) {
-        std::string specimen = "proc:noattach:" + boost::lexical_cast<std::string>(process->isAttached());
+        std::string specimen = "proc:noattach:" + boost::lexical_cast<std::string>(*process->processId());
         P2::Engine engine;
         engine.settings().disassembler.isaName = "i386";// FIXME[Robb Matzke 2019-12-12]
         partitioner = engine.partition(specimen);
@@ -269,7 +269,7 @@ main(int argc, char *argv[]) {
     TraceFilter filter(settings.compareFile);
     Sawyer::Stopwatch timer;
     mlog[INFO] <<"tracing process...\n";
-    auto trace = process->trace(filter);
+    auto trace = process->trace(Debugger::ThreadId::unspecified(), filter);
     mlog[INFO] <<"tracing process; took " <<timer <<"\n";
     mlog[INFO] <<"process " <<process->howTerminated() <<"\n";
     filter.finalCheck();
