@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_DEBUGGER_LINUX
+
 static const char* purpose = "compares actual execution with known instructions";
 static const char* description =
     "Reads instruction addresses from a file, the so-called \"expected\" addresses and and then executes the specimen "
@@ -258,3 +261,26 @@ main(int argc, char *argv[]) {
         }
     }
 }
+
+#else
+
+#include <rose.h>
+#include <Rose/Diagnostics.h>
+
+#include <iostream>
+#include <cstring>
+
+int main(int, char *argv[]) {
+    ROSE_INITIALIZE;
+    Sawyer::Message::Facility mlog;
+    Rose::Diagnostics::initAndRegister(&mlog, "tool");
+    mlog[Rose::Diagnostics::FATAL] <<argv[0] <<": this tool is not available in this ROSE configuration\n";
+
+    for (char **arg = argv+1; *arg; ++arg) {
+        if (!strcmp(*arg, "--no-error-if-disabled"))
+            return 0;
+    }
+    return 1;
+}
+
+#endif
