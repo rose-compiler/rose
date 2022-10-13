@@ -1,3 +1,5 @@
+#include "sage3basic.h"
+
 #include "PropertyValueTable.h"
 #include "CodeThornException.h"
 #include "Miscellaneous2.h"

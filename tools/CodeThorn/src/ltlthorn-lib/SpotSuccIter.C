@@ -1,4 +1,7 @@
 #include "sage3basic.h"
+// required for checking of: HAVE_SPOT
+#include "rose_config.h"
+
 #ifdef HAVE_SPOT
 
 #include <list>

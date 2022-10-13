@@ -27,9 +27,9 @@ namespace CodeThorn {
   enum IoType {IO_TYPE_UNKNOWN,IO_TYPE_INPUT,IO_TYPE_OUTPUT,IO_TYPE_ERROR};
 
   typedef std::pair<int, IoType> CeIoVal;
-  typedef std::pair<list<CeIoVal> , std::list<CeIoVal> > PrefixAndCycle;
+  typedef std::pair<std::list<CeIoVal> , std::list<CeIoVal> > PrefixAndCycle;
   typedef std::list<std::unordered_set<EStatePtr> > StateSets;
-  typedef std::unordered_map<EStatePtr, list<int> > InputsAtEState;
+  typedef std::unordered_map<EStatePtr, std::list<int> > InputsAtEState;
 
   /*! 
    * \author Marc Jasper
@@ -63,7 +63,7 @@ namespace CodeThorn {
   public:
     // initializing the CounterexampleAnalyzer, using "analyzer" to trace paths of the original program
     CounterexampleAnalyzer(IOAnalyzer* analyzer);
-    CounterexampleAnalyzer(IOAnalyzer* analyzer, stringstream* csvOutput);
+    CounterexampleAnalyzer(IOAnalyzer* analyzer, std::stringstream* csvOutput);
     // Check whether or not the "counterexample" is spurious. 
     // If "returnSpuriousLabel" is set to true: In the case of a spurious counterexample, the result includes a label that should not 
     //                                        be reachable according to the original program but is reachable in the counterexample
@@ -108,15 +108,15 @@ namespace CodeThorn {
     // marks index in "v" as true iff the entry in "erroneousBranches" that corresponds to "eState" containts (index+1) in its mapping.
 
     //std::vector<bool> setErrorBranches(vector<bool> v, EStatePtr eState, InputsAtEState erroneousBranches);
-    std::vector<bool> setErrorBranches(vector<bool> v, EStatePtr eState);
-    std::list<pair<EStatePtr, int> > removeTraceLeadingToErrorState(EStatePtr errorState, TransitionGraph* stg);
+    std::vector<bool> setErrorBranches(std::vector<bool> v, EStatePtr eState);
+    std::list<std::pair<EStatePtr, int> > removeTraceLeadingToErrorState(EStatePtr errorState, TransitionGraph* stg);
 
     // Adds all output states in the prefix to "startAndOuputStatesPrefix" and returns the set.
     EStatePtrSet addAllPrefixOutputStates(EStatePtrSet& startAndOuputStatesPrefix, TransitionGraph* model);
     // identify states needed to disconnect the concrete prefix and the over-approximated part in the initial abstract model
-    pair<EStatePtrSet, EStatePtrSet> getConcreteOutputAndAbstractInput(TransitionGraph* model);
+    std::pair<EStatePtrSet, EStatePtrSet> getConcreteOutputAndAbstractInput(TransitionGraph* model);
     // sort the |<input_alphabet>| abstract input states according to their input value and insert them into the vector "v". 
-    vector<EStatePtr> sortAbstractInputStates(vector<EStatePtr> v, EStatePtrSet abstractInputStates);
+    std::vector<EStatePtr> sortAbstractInputStates(std::vector<EStatePtr> v, EStatePtrSet abstractInputStates);
     // deprecated: now implemented as function of EState ("isRersTopified(...)");
     bool isPrefixState(EStatePtr state);
     // prints #transitions, details about states and #counterexamples analyzed
@@ -124,13 +124,13 @@ namespace CodeThorn {
 
     //for debugging purposes
     std::string ceIoValToString(CeIoVal& ioVal);
-    std::string ioErrTraceToString(list<pair<int, IoType> > trace);
+    std::string ioErrTraceToString(std::list<std::pair<int, IoType> > trace);
     void writeDotGraphToDisk(std::string filename, Visualizer& visualizer);
 
     CodeThorn::VariableId globalVarIdByName(std::string);
     
     IOAnalyzer* _analyzer;
-    stringstream* _csvOutput;
+    std::stringstream* _csvOutput;
     int _maxCounterexamples;
     InputsAtEState _erroneousBranches;
   };
