@@ -1,4 +1,5 @@
 #include "sage3basic.h"
+#include "rose_config.h"
 #ifdef HAVE_SPOT
 
 #include "ParProSpotSuccIter.h"

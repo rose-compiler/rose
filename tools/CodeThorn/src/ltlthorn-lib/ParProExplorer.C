@@ -1,14 +1,19 @@
 // Author: Marc Jasper, 2016.
 
+#include "sage3basic.h"
+#include "rose_config.h"
+
 #include "ParProExplorer.h"
 #include "LtsminConnection.h"
 #include "ParProAutomataGenerator.h"
-
 
 using namespace CodeThorn;
 using namespace std;
 
 #ifdef HAVE_SPOT
+
+#include "SpotState.h" // requires HAVE_SPOT to be defined
+
 /*! 
  * \author Marc Jasper
  * \date 2016.
