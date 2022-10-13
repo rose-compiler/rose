@@ -609,7 +609,7 @@ foreach (keys %docdirs) {
 
 my $nerrors = printViolations(\%violations);
 if ($nerrors > 0) {
-    print STDERR "\n*** error: policy checks failed for the ::Rose namespace (src/Rose directory)",
+    print "\n*** error: policy checks failed for the ::Rose namespace (src/Rose directory)",
 	": $nerrors ", (1==$nerrors?"error":"errors"), "\n";
     exit(1);
 } else {
