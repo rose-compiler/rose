@@ -56,13 +56,20 @@
     #define ROSE_ENABLE_ASM_AARCH32
 #endif
 
+// Whether to enable the Linux ptrace-based dynamic debugger
+#if !defined(ROSE_ENABLE_DEBUGGER_LINUX) && \
+    defined(__linux__)
+#define ROSE_ENABLE_DEBUGGER_LINUX
+#endif
+
 // Whether to enable concolic testing.
 #if !defined(ROSE_ENABLE_CONCOLIC_TESTING) && \
     defined(__linux__) && \
     __cplusplus >= 201402L && \
     (defined(ROSE_HAVE_SQLITE3) || defined(ROSE_HAVE_LIBPQXX)) && \
     BOOST_VERSION >= 106400 && \
-    defined(ROSE_HAVE_BOOST_SERIALIZATION_LIB)
+    defined(ROSE_HAVE_BOOST_SERIALIZATION_LIB) && \
+    defined(ROSE_ENABLE_DEBUGGER_LINUX)
 #define ROSE_ENABLE_CONCOLIC_TESTING
 #endif
 
@@ -73,10 +80,11 @@
 #define ROSE_ENABLE_LIBRARY_IDENTIFICATION
 #endif
 
-// Whether to enable the ptrace dynamic debugger
-#if !defined(ROSE_ENABLE_DEBUGGER_LINUX) && \
-    defined(__linux__)
-#define ROSE_ENABLE_DEBUGGER_LINUX
+// Whether to enable Model checking. The model checker was designed to run in multiple threads. Some parts of the API don't
+// even make sense for a single thread.
+#if !defined(ROSE_ENABLE_MODEL_CHECKER) && \
+    defined(_REENTRANT)
+#define ROSE_ENABLE_MODEL_CHECKER
 #endif
 
 #endif

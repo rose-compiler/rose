@@ -1296,6 +1296,7 @@ Engine::loadNonContainers(const std::vector<std::string> &fileNames) {
             map_->insertProcess(resource);
         } else if (boost::starts_with(fileName, "run:")) {
             // Split resource as "run:OPTIONS:EXECUTABLE"
+#ifdef ROSE_ENABLE_DEBUGGER_LINUX
             static const size_t colon1 = 3;             // index of first colon in fileName
             const size_t colon2 = fileName.find(':', colon1+1); // index of second colon in FileName
             if (std::string::npos == colon2)
@@ -1368,6 +1369,9 @@ Engine::loadNonContainers(const std::vector<std::string> &fileNames) {
                 map_->clear();
             map_->insertProcess(*debugger->processId(), MemoryMap::Attach::NO);
             debugger->terminate();
+#else
+            throw std::runtime_error("\"run:\" loader schema is not available in this configuration of ROSE");
+#endif
         } else if (boost::starts_with(fileName, "srec:") || boost::ends_with(fileName, ".srec")) {
             std::string resource;                       // name of file to open
             unsigned perms = MemoryMap::READABLE | MemoryMap::WRITABLE | MemoryMap::EXECUTABLE;
