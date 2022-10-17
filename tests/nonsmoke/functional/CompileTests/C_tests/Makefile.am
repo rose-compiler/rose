@@ -745,8 +745,6 @@ TESTCODES_REQUIRED_TO_PASS += \
      test2015_44.c \
      test2015_45.c \
      test2015_47.c \
-     test2015_48.c \
-     test2015_49.c \
      test2015_50.c \
      test2015_51.c \
      test2015_54.c \
@@ -760,12 +758,9 @@ TESTCODES_REQUIRED_TO_PASS += \
      test2015_81.c \
      test2015_82.c \
      test2015_83.c \
-     test2015_104.c \
-     test2015_105.c \
      test2015_107.c \
      test2015_108.c \
      test2015_110.c \
-     test2015_113.c \
      test2015_115.c \
      test2015_139.c \
      test2015_140.c \
@@ -922,6 +917,11 @@ if !OS_MACOSX
       test2014_13.c \
       test2014_83.c \
       test2015_05.c \
+      test2015_48.c \
+      test2015_49.c \
+      test2015_104.c \
+      test2015_105.c \
+      test2015_113.c \
       test2012_09.c
 
 if !ROSE_USE_CLANG_FRONTEND
@@ -956,6 +956,11 @@ else
       test2014_83.c \
       test2014_93.c \
       test2015_34.c \
+      test2015_48.c \
+      test2015_49.c \
+      test2015_104.c \
+      test2015_105.c \
+      test2015_113.c \
       test2012_09.c
 endif
 
