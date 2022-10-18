@@ -231,6 +231,7 @@ my @extra_words = qw/
     AST 			# Abstract Syntax Tree
     CFG				# Control Flow Graph
     CIL				# Common Intermediate Language
+    GDB				# GNU Debugger
     JVM				# Java Virtual Machine
     callbacks			# missing from dictionary
     Concolic			# as in Concolic Testing
