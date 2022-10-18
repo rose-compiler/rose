@@ -398,7 +398,7 @@ public:
 
     /** Get size of node.
      *
-     *        Nodes of type None or Scalar will return 0. */
+     * Nodes of type None or Scalar will return 0. */
     size_t size() const { return Size(); }
 
     // Sequence operators
@@ -408,12 +408,12 @@ public:
      * Converts node to sequence type if needed. Adding new item to end of sequence if index is larger than sequence size. */
     Node& insert(const size_t index) { return Insert(index); }
 
-    /** Add new sequence index to back.
+    /** Add new sequence index to front.
      *
      *  Converts node to sequence type if needed. */
     Node& pushFront() { return PushFront(); }
 
-    /** Add new sequence index to front.
+    /** Add new sequence index to back.
      *
      *  Converts node to sequence type if needed. */
     Node& pushBack() { return PushBack(); }
@@ -555,7 +555,7 @@ struct SerializeConfig {
 *
 * @{ */
 void Serialize(const Node &root, const char *filename, const SerializeConfig &config = {2, 64, false, false});
-void Serialize(const Node &root, std::iostream &stream, const SerializeConfig &config = {2, 64, false, false});
+void Serialize(const Node &root, std::ostream &stream, const SerializeConfig &config = {2, 64, false, false});
 void Serialize(const Node &root, std::string &string, const SerializeConfig &config = {2, 64, false, false});
 /** @} */
 
