@@ -308,6 +308,9 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/Debugger.h							\
 	Rose/BinaryAnalysis/Debugger/Base.h						\
 	Rose/BinaryAnalysis/Debugger/BasicTypes.h					\
+	Rose/BinaryAnalysis/Debugger/Exception.h					\
+	Rose/BinaryAnalysis/Debugger/Gdb.h						\
+	Rose/BinaryAnalysis/Debugger/GdbResponse.h					\
 	Rose/BinaryAnalysis/Debugger/Linux.h						\
 	Rose/BinaryAnalysis/Debugger/ThreadId.h						\
 	Rose/BinaryAnalysis/Demangler.h							\
