@@ -70,6 +70,9 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/ControlFlow.C							\
 	BinaryAnalysis/DataFlow.C							\
 	BinaryAnalysis/Debugger/Base.C							\
+	BinaryAnalysis/Debugger/Exception.C						\
+	BinaryAnalysis/Debugger/Gdb.C							\
+	BinaryAnalysis/Debugger/GdbResponse.C						\
 	BinaryAnalysis/Debugger/Linux.C							\
 	BinaryAnalysis/Debugger/ThreadId.C						\
 	BinaryAnalysis/Demangler.C							\

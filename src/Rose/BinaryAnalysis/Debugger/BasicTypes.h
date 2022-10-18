@@ -13,8 +13,17 @@ namespace Debugger {
 class Base;
 using BasePtr = Sawyer::SharedPointer<Base>;
 using Ptr = BasePtr;
+
+class Exception;
+
+class Gdb;
+using GdbPtr = Sawyer::SharedPointer<Gdb>;
+
+class GdbResponse;
+
 class Linux;
 using LinuxPtr = Sawyer::SharedPointer<Linux>;
+
 class ThreadId;
 
 /** Diagnostic facility for debuggers. */

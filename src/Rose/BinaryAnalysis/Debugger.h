@@ -3,6 +3,9 @@
 
 #include <Rose/BinaryAnalysis/Debugger/Base.h>
 #include <Rose/BinaryAnalysis/Debugger/BasicTypes.h>
+#include <Rose/BinaryAnalysis/Debugger/Exception.h>
+#include <Rose/BinaryAnalysis/Debugger/Gdb.h>
+#include <Rose/BinaryAnalysis/Debugger/GdbResponse.h>
 #include <Rose/BinaryAnalysis/Debugger/Linux.h>
 #include <Rose/BinaryAnalysis/Debugger/ThreadId.h>
 

@@ -3,6 +3,7 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Debugger/Linux.h>
 
+#include <Rose/BinaryAnalysis/Debugger/Exception.h>
 #include <Rose/BinaryAnalysis/Disassembler/X86.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 
@@ -233,8 +234,8 @@ sendCommand(__ptrace_request request, int child, void *addr = nullptr, void *dat
     errno = 0;
     long result = ptrace(request, child, addr, data);
     if (result == -1 && errno != 0)
-        throw std::runtime_error("Rose::BinaryAnalysis::Debugger::Linux::sendCommand failed: " +
-                                 boost::to_lower_copy(std::string(strerror(errno))));
+        throw Exception("Rose::BinaryAnalysis::Debugger::Linux::sendCommand failed: " +
+                        boost::to_lower_copy(std::string(strerror(errno))));
     return result;
 }
 
@@ -403,7 +404,7 @@ Linux::Linux() {
 
 #else
     ROSE_PRAGMA_MESSAGE("subordinate process registers not supported on this platform");
-    throw std::runtime_error("subordinate process registers not supported on this platform");
+    throw Exception("subordinate process registers not supported on this platform");
 #endif
 }
 
@@ -462,8 +463,8 @@ void
 Linux::waitForChild() {
     ASSERT_require2(child_, "must be attached to a subordinate process");
     if (-1 == waitpid(child_, &wstat_, __WALL))
-        throw std::runtime_error("Rose::BinaryAnalysis::Debugger::Linux::waitForChild failed: "
-                                 + boost::to_lower_copy(std::string(strerror(errno))));
+        throw Exception("Rose::BinaryAnalysis::Debugger::Linux::waitForChild failed: "
+                        + boost::to_lower_copy(std::string(strerror(errno))));
     sendSignal_ = WIFSTOPPED(wstat_) && WSTOPSIG(wstat_)!=SIGTRAP ? WSTOPSIG(wstat_) : 0;
     regsPageStatus_ = RegPage::NONE;
 }
@@ -602,8 +603,8 @@ Linux::attach(const Specimen &specimen, Sawyer::Optional<DetachMode> onDelete) {
 
         waitForChild();
         if (isTerminated())
-            throw std::runtime_error("Rose::BinaryAnalysis::Debugger::Linux::attach: subordinate " +
-                                     howTerminated() + " before we gained control");
+            throw Exception("Rose::BinaryAnalysis::Debugger::Linux::attach: subordinate " +
+                            howTerminated() + " before we gained control");
     } else {
         // Attach to an existing process.
         if (-1 == specimen.process()) {
@@ -775,7 +776,7 @@ Linux::readRegister(ThreadId, RegisterDescriptor desc) {
             regsPageStatus_ = RegPage::FPREGS;
         }
     } else {
-        throw std::runtime_error("register is not available");
+        throw Exception("register is not available");
     }
 
     // Extract the necessary data members from the struct. Assume that memory is little endian.
@@ -819,7 +820,7 @@ Linux::writeRegister(ThreadId tid, RegisterDescriptor desc, const Sawyer::Contai
         ROSE_PRAGMA_MESSAGE("unable to save FP registers on this platform")
 #endif
     } else {
-        throw std::runtime_error("register is not available");
+        throw Exception("register is not available");
     }
 }
 
@@ -846,7 +847,7 @@ Linux::readMemory(rose_addr_t va, size_t nBytes, ByteOrder::Endianness sex) {
     r.buffer = new uint8_t[nBytes];
     size_t nRead = readMemory(va, nBytes, r.buffer);
     if (nRead != nBytes)
-        throw std::runtime_error("short read at " + StringUtility::addrToString(va));
+        throw Exception("short read at " + StringUtility::addrToString(va));
 
     BitVector retval(8*nBytes);
     for (size_t i=0; i<nBytes; ++i) {
@@ -894,7 +895,7 @@ Linux::readMemory(rose_addr_t va, size_t nBytes, uint8_t *buffer) {
     // trying to read the last byte.  Reading /proc/N/mem is faster and easier.
     std::string memName = "/proc/" + StringUtility::numberToString(child_) + "/mem";
     if (-1 == (mem.fd = open(memName.c_str(), O_RDONLY)))
-        throw std::runtime_error("cannot open \"" + memName + "\": " + strerror(errno));
+        throw Exception("cannot open \"" + memName + "\": " + strerror(errno));
     if (-1 == lseek(mem.fd, va, SEEK_SET))
         return 0;                                       // bad address
     size_t totalRead = 0;
@@ -917,7 +918,7 @@ Linux::readMemory(rose_addr_t va, size_t nBytes, uint8_t *buffer) {
     return totalRead;
 #else
     ROSE_PRAGMA_MESSAGE("reading from subordinate memory is not supported on this platform");
-    throw std::runtime_error("reading from subordinate memory is not supported on this platform");
+    throw Exception("reading from subordinate memory is not supported on this platform");
 #endif
 }
 
@@ -941,7 +942,7 @@ Linux::writeMemory(rose_addr_t va, size_t nBytes, const uint8_t *buffer) {
     // try to write the last byte. Writing to  /proc/N/mem is faster and easier.
     std::string memName = "/proc/" + StringUtility::numberToString(child_) + "/mem";
     if (-1 == (mem.fd = open(memName.c_str(), O_RDWR)))
-        throw std::runtime_error("cannot open \"" + memName + "\": " + strerror(errno));
+        throw Exception("cannot open \"" + memName + "\": " + strerror(errno));
     if (-1 == lseek(mem.fd, va, SEEK_SET))
         return 0;                                       // bad address
     size_t totalWritten = 0;
@@ -963,7 +964,7 @@ Linux::writeMemory(rose_addr_t va, size_t nBytes, const uint8_t *buffer) {
     return totalWritten;
 #else
     ROSE_PRAGMA_MESSAGE("writing to subordinate memory is not supported on this platform");
-    throw std::runtime_error("writing to subordinate memory is not supported on this platform");
+    throw Exception("writing to subordinate memory is not supported on this platform");
 #endif
 }
 
