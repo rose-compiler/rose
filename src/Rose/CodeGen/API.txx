@@ -15,6 +15,14 @@ void API<CRT>::load(Driver & driver) {
 }
 
 template <typename CRT>
+void API<CRT>::add_nodes_for_namequal(Driver & driver, SgSourceFile * srcfile) const {
+  auto & extra_nodes_for_namequal_init = srcfile->get_extra_nodes_for_namequal_init();
+  for (auto fid: file_ids) {
+    extra_nodes_for_namequal_init.push_back(driver.getGlobalScope(fid));
+  }
+}
+
+template <typename CRT>
 void API<CRT>::display(std::ostream & out) const {
   out << "API of " << name << " :" << std::endl;
   out << "  Namespaces:" << std::endl;
@@ -120,7 +128,7 @@ struct SymbolScanner : public ROSE_VisitTraversal {
   template <typename SymT>
   void visit(SymT * sym, std::map<std::string, SymT * API::* > const & objmap) {
     auto str = sym->get_declaration()->get_qualified_name().getString();
-    std::cout << "str: " << str << std::endl;
+//  std::cout << "str: " << str << std::endl;
     auto it = objmap.find(str);
     if (it != objmap.end()) {
       api.*(it->second) = sym;

@@ -8,7 +8,7 @@ template <typename CRT, typename API>
 struct __factory_helper_t<CRT, API, Object::a_typedef> {
   template <typename... Args>
   static declaration_t<Object::a_typedef> * instantiate(
-      Factory<CRT, API> & factory,
+      Factory<CRT, API> const & factory,
       symbol_t<Object::a_typedef> * sym,
       SgNamedType * parent,
       Args... args
@@ -16,7 +16,7 @@ struct __factory_helper_t<CRT, API, Object::a_typedef> {
 
   template <typename... Args>
   static reference_t<Object::a_typedef> * reference(
-      Factory<CRT, API> & factory,
+      Factory<CRT, API> const & factory,
       symbol_t<Object::a_typedef> * sym,
       SgNamedType * parent,
       Args... args
@@ -26,7 +26,7 @@ struct __factory_helper_t<CRT, API, Object::a_typedef> {
 template <typename CRT, typename API>
 template <typename... Args>
 declaration_t<Object::a_typedef> * __factory_helper_t<CRT, API, Object::a_typedef>::instantiate(
-  Factory<CRT, API> & factory,
+  Factory<CRT, API> const & factory,
   symbol_t<Object::a_typedef> * sym,
   SgNamedType * parent,
   Args... args
@@ -38,7 +38,7 @@ declaration_t<Object::a_typedef> * __factory_helper_t<CRT, API, Object::a_typede
 template <typename CRT, typename API>
 template <typename... Args>
 reference_t<Object::a_typedef> * __factory_helper_t<CRT, API, Object::a_typedef>::reference(
-  Factory<CRT, API> & factory,
+  Factory<CRT, API> const & factory,
   symbol_t<Object::a_typedef> * sym,
   SgNamedType * parent,
   Args... args

@@ -8,7 +8,7 @@ template <typename CRT, typename API>
 struct __factory_helper_t<CRT, API, Object::a_variable> {
   template <typename... Args>
   static declaration_t<Object::a_variable> * instantiate(
-      Factory<CRT, API> & factory,
+      Factory<CRT, API> const & factory,
       symbol_t<Object::a_variable> * sym,
       SgNamedType * parent,
       Args... args
@@ -16,7 +16,7 @@ struct __factory_helper_t<CRT, API, Object::a_variable> {
 
   template <typename... Args>
   static reference_t<Object::a_variable> * reference(
-      Factory<CRT, API> & factory,
+      Factory<CRT, API> const & factory,
       symbol_t<Object::a_variable> * sym,
       SgNamedType * parent,
       Args... args
@@ -26,7 +26,7 @@ struct __factory_helper_t<CRT, API, Object::a_variable> {
 template <typename CRT, typename API>
 template <typename... Args>
 declaration_t<Object::a_variable> * __factory_helper_t<CRT, API, Object::a_variable>::instantiate(
-  Factory<CRT, API> & factory,
+  Factory<CRT, API> const & factory,
   symbol_t<Object::a_variable> * sym,
   SgNamedType * parent,
   Args... args
@@ -38,7 +38,7 @@ declaration_t<Object::a_variable> * __factory_helper_t<CRT, API, Object::a_varia
 template <typename CRT, typename API>
 template <typename... Args>
 reference_t<Object::a_variable> * __factory_helper_t<CRT, API, Object::a_variable>::reference(
-  Factory<CRT, API> & factory,
+  Factory<CRT, API> const & factory,
   symbol_t<Object::a_variable> * sym,
   SgNamedType * parent,
   Args... args
