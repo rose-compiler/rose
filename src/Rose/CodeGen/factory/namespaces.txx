@@ -8,7 +8,7 @@ template <typename CRT, typename API>
 struct __factory_helper_t<CRT, API, Object::a_namespace> {
   template <typename... Args>
   static reference_t<Object::a_namespace> * reference(
-      Factory<CRT, API> & factory,
+      Factory<CRT, API> const & factory,
       symbol_t<Object::a_namespace> * sym,
       SgNamedType * parent,
       Args... args
@@ -18,7 +18,7 @@ struct __factory_helper_t<CRT, API, Object::a_namespace> {
 template <typename CRT, typename API>
 template <typename... Args>
 reference_t<Object::a_namespace> * __factory_helper_t<CRT, API, Object::a_namespace>::reference(
-  Factory<CRT, API> & factory,
+  Factory<CRT, API> const & factory,
   symbol_t<Object::a_namespace> * sym,
   SgNamedType * parent,
   Args... args
