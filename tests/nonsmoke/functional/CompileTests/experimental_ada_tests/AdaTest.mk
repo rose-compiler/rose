@@ -223,6 +223,9 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   requeue_statements.adb               \
   rep_database.ads                     \
   rep_database-mgr.ads                 \
+  rep_common_types-data.ads            \
+  rep_common_types-menu.ads            \
+  rep_common_types.ads                 \
   select_accept.adb                    \
   simple_select_accept.adb             \
   simple_select_accept_guarded.adb     \
