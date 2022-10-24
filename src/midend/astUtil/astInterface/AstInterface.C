@@ -2355,7 +2355,7 @@ IsFunctionCall( SgNode* s, SgNode** func, AstNodeList* args)
   
   switch (exp->variantT()) {
     //  case V_SgNonrealRefExp:
-    // This may be a call, but I don't know how to interpret it.  -Jim Leek
+    // SgNonrealRef is from an uninstantiated template, so ignore it.  -Jim Leek
     //return false;
   case V_SgExprStatement:
      exp = isSgExprStatement(exp)->get_expression();

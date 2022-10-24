@@ -21,7 +21,7 @@ PushScope( const AstNodePtr& scope, int skip, TraverseLocation state)
      TraverseState tmp(scope, skip, state);
      scopeStack.PushFirst(tmp);
    }
-bool ProcessAstTreeBase:: Traverse( AstInterface &fa, const AstNodePtr& s,
+bool ProcessAstTreeBase::Traverse( AstInterface &fa, const AstNodePtr& s,
                       AstInterface::TraversalVisitType t)
    {
      cur = s;
