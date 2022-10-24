@@ -1,3 +1,0 @@
-include_rules
-
-run $(librose_compile) parser.cpp
