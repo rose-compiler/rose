@@ -84,7 +84,7 @@ namespace // anonymous namespace for auxiliary functions
   std::string
   readUtf8String(std::vector<uint8_t>& buf, size_t& index, size_t maxLen = std::numeric_limits<size_t>::max())
   {
-    // FIXME: read real Utf8 string
+    // \todo FIXME: read real Utf8 string
     return readString(buf, index, maxLen);
   }
 
@@ -96,7 +96,8 @@ namespace // anonymous namespace for auxiliary functions
     uint32_t res = 0;
 
     if (TRACE_CONSTRUCTION)
-      printf ("skip string padding of %zu bytes\n", (reservedLen - strLen));
+      std::cerr << "skip string padding of " << (reservedLen - strLen) << " bytes"
+                << std::endl;
       
     while (strLen < reservedLen)
     {
@@ -136,13 +137,17 @@ namespace // anonymous namespace for auxiliary functions
     std::vector<elem_type> res;
 
     if (TRACE_CONSTRUCTION)
-      printf ("Output the number of rows for each table: \n");
+      std::cerr << "Output the number of rows for each table: "
+                << std::endl;
 
     for (uint64_t i = 0; i < num; ++i)
     {
       elem_type tmp_rows_value = rd(buf, index);
-      //~ printf ("--- table %2zu: tmp_rows_value = %u \n",i,tmp_rows_value);
       res.push_back(tmp_rows_value);
+      
+      if (TRACE_CONSTRUCTION)
+        std::cerr << "--- table " << i << ": tmp_rows_value = " << tmp_rows_value
+                  << std::endl;
     }
 
     return res;
@@ -189,11 +194,11 @@ namespace // anonymous namespace for auxiliary functions
       SgAsmCilDataStream* dataStream = nullptr;
 
       if (  (SgAsmCilDataStream::ID_STRING_HEAP == streamHeader.name())
-         || (SgAsmCilDataStream::ID_US_HEAP     == streamHeader.name())
          || (SgAsmCilDataStream::ID_BLOB_HEAP   == streamHeader.name())
+         || (SgAsmCilDataStream::ID_US_HEAP     == streamHeader.name()) // \todo should be a Utf16 Stream
          )
         dataStream = new SgAsmCilUint8Heap(streamHeader.offset(), streamHeader.size(), streamHeader.name(), streamHeader.namePadding());
-      else if (SgAsmCilDataStream::ID_GUID_HEAP == streamHeader.name())
+      else if (SgAsmCilDataStream::ID_GUID_HEAP == streamHeader.name()) // \todo should be a Uint128? stream
         dataStream = new SgAsmCilUint32Heap(streamHeader.offset(), streamHeader.size(), streamHeader.name(), streamHeader.namePadding());
       else if (SgAsmCilDataStream::ID_METADATA_HEAP == streamHeader.name())
         dataStream = new SgAsmCilMetadataHeap(streamHeader.offset(), streamHeader.size(), streamHeader.name(), streamHeader.namePadding());
@@ -212,9 +217,9 @@ namespace // anonymous namespace for auxiliary functions
     return res;
   }
 
-  template <class SageAsmCilNode>
+  template <class SageAsmCilNode, class SageAsmCilMetadataTable>
   SageAsmCilNode*
-  parseAsmCilNode(SgAsmCilMetadataHeap* parent, std::vector<uint8_t>& buf, size_t& index, uint64_t dataSizeflags)
+  parseAsmCilNode(SageAsmCilMetadataTable* parent, std::vector<uint8_t>& buf, size_t& index, uint64_t dataSizeflags)
   {
       SageAsmCilNode* res = new SageAsmCilNode;
       ASSERT_not_null(res);
@@ -247,10 +252,14 @@ namespace // anonymous namespace for auxiliary functions
   const SgAsmCilMetadataHeap&
   getMetadataHeap(const SgAsmCilMetadata* o)
   {
-    ROSE_ASSERT(o);
-    const SgAsmCilMetadataHeap* res = isSgAsmCilMetadataHeap(o->get_parent());
-
-    ROSE_ASSERT(res);
+    ASSERT_not_null(o);
+    
+    const SgNode* metadataTable = o->get_parent();
+    ASSERT_not_null(metadataTable);
+    
+    const SgAsmCilMetadataHeap* res = isSgAsmCilMetadataHeap(metadataTable->get_parent());
+    ASSERT_not_null(res);
+    
     return *res;
   }
   
@@ -258,10 +267,14 @@ namespace // anonymous namespace for auxiliary functions
   SgAsmCilMetadataHeap&
   getMetadataHeap(SgAsmCilMetadata* o)
   {
-    ROSE_ASSERT(o);
-    SgAsmCilMetadataHeap* res = isSgAsmCilMetadataHeap(o->get_parent());
-
-    ROSE_ASSERT(res);
+    ASSERT_not_null(o);
+    
+    SgNode* metadataTable = o->get_parent();
+    ASSERT_not_null(metadataTable);
+    
+    SgAsmCilMetadataHeap* res = isSgAsmCilMetadataHeap(metadataTable->get_parent());
+    ASSERT_not_null(res);
+    
     return *res;
   }
   
@@ -1638,8 +1651,8 @@ computeAccessPair( const std::vector<int8_t>& posInRowVector,
 }
 
 
-template <class SageAsmCilMetadata>
-std::vector<SageAsmCilMetadata*>
+template <class SageAsmCilMetadataTable>
+SageAsmCilMetadataTable*
 parseMetadataTable( SgAsmCilMetadataHeap* parent,
                     std::vector<uint8_t>& buf,
                     size_t& index,
@@ -1648,18 +1661,23 @@ parseMetadataTable( SgAsmCilMetadataHeap* parent,
                     const char* tblName
                   )
 {
-  std::vector<SageAsmCilMetadata*> res;
+  using CilMetadataType = typename SageAsmCilMetadataTable::CilMetadataType;
+
+  SageAsmCilMetadataTable*       sgnode = new SageAsmCilMetadataTable;
+  std::vector<CilMetadataType*>& res = sgnode->get_elements();
+  
+  sgnode->set_parent(parent);
 
   if (TRACE_CONSTRUCTION)
     std::cerr << "Build the e_" << tblName << " table; rows = " << rows << std::endl;
 
+  res.reserve(rows);
   for (size_t j=0; j < rows; ++j)
   {
     if (TRACE_CONSTRUCTION)
       std::cerr << " --- processing row j = " << j << std::endl;
 
-    SageAsmCilMetadata* obj = parseAsmCilNode<SageAsmCilMetadata>(parent,buf,index,sizeFlags);
-    res.push_back(obj);
+    res.push_back(parseAsmCilNode<CilMetadataType>(sgnode,buf,index,sizeFlags));
 
     if (TRACE_CONSTRUCTION)
       std::cerr << "DONE: processing row j = " << j << std::endl;
@@ -1668,7 +1686,7 @@ parseMetadataTable( SgAsmCilMetadataHeap* parent,
   if (TRACE_CONSTRUCTION)
     std::cerr << "DONE: Build the e_" << tblName << " table; rows = " << rows << std::endl;
 
-  return res;
+  return sgnode;
 }
 
 template <class T>
@@ -1740,121 +1758,120 @@ void SgAsmCilMetadataHeap::parse(std::vector<uint8_t>& buf, size_t startOfMetaDa
 
     // Build the associated table.
     switch (kind)
-    {
-      
+    { 
       case e_Assembly:
-        p_Assembly = parseMetadataTable<SgAsmCilAssembly>(this, buf, index, get_DataSizeFlags(), rows, "Assembly");
+        p_AssemblyTable = parseMetadataTable<SgAsmCilAssemblyTable>(this, buf, index, get_DataSizeFlags(), rows, "Assembly");
         break;
       case e_AssemblyOS:
-        p_AssemblyOS = parseMetadataTable<SgAsmCilAssemblyOS>(this, buf, index, get_DataSizeFlags(), rows, "AssemblyOS");
+        p_AssemblyOSTable = parseMetadataTable<SgAsmCilAssemblyOSTable>(this, buf, index, get_DataSizeFlags(), rows, "AssemblyOS");
         break;
       case e_AssemblyProcessor:
-        p_AssemblyProcessor = parseMetadataTable<SgAsmCilAssemblyProcessor>(this, buf, index, get_DataSizeFlags(), rows, "AssemblyProcessor");
+        p_AssemblyProcessorTable = parseMetadataTable<SgAsmCilAssemblyProcessorTable>(this, buf, index, get_DataSizeFlags(), rows, "AssemblyProcessor");
         break;
       case e_AssemblyRef:
-        p_AssemblyRef = parseMetadataTable<SgAsmCilAssemblyRef>(this, buf, index, get_DataSizeFlags(), rows, "AssemblyRef");
+        p_AssemblyRefTable = parseMetadataTable<SgAsmCilAssemblyRefTable>(this, buf, index, get_DataSizeFlags(), rows, "AssemblyRef");
         break;
       case e_AssemblyRefOS:
-        p_AssemblyRefOS = parseMetadataTable<SgAsmCilAssemblyRefOS>(this, buf, index, get_DataSizeFlags(), rows, "AssemblyRefOS");
+        p_AssemblyRefOSTable = parseMetadataTable<SgAsmCilAssemblyRefOSTable>(this, buf, index, get_DataSizeFlags(), rows, "AssemblyRefOS");
         break;
       case e_AssemblyRefProcessor:
-        p_AssemblyRefProcessor = parseMetadataTable<SgAsmCilAssemblyRefProcessor>(this, buf, index, get_DataSizeFlags(), rows, "AssemblyRefProcessor");
+        p_AssemblyRefProcessorTable = parseMetadataTable<SgAsmCilAssemblyRefProcessorTable>(this, buf, index, get_DataSizeFlags(), rows, "AssemblyRefProcessor");
         break;
       case e_ClassLayout:
-        p_ClassLayout = parseMetadataTable<SgAsmCilClassLayout>(this, buf, index, get_DataSizeFlags(), rows, "ClassLayout");
+        p_ClassLayoutTable = parseMetadataTable<SgAsmCilClassLayoutTable>(this, buf, index, get_DataSizeFlags(), rows, "ClassLayout");
         break;
       case e_Constant:
-        p_Constant = parseMetadataTable<SgAsmCilConstant>(this, buf, index, get_DataSizeFlags(), rows, "Constant");
+        p_ConstantTable = parseMetadataTable<SgAsmCilConstantTable>(this, buf, index, get_DataSizeFlags(), rows, "Constant");
         break;
       case e_CustomAttribute:
-        p_CustomAttribute = parseMetadataTable<SgAsmCilCustomAttribute>(this, buf, index, get_DataSizeFlags(), rows, "CustomAttribute");
+        p_CustomAttributeTable = parseMetadataTable<SgAsmCilCustomAttributeTable>(this, buf, index, get_DataSizeFlags(), rows, "CustomAttribute");
         break;
       case e_DeclSecurity:
-        p_DeclSecurity = parseMetadataTable<SgAsmCilDeclSecurity>(this, buf, index, get_DataSizeFlags(), rows, "DeclSecurity");
+        p_DeclSecurityTable = parseMetadataTable<SgAsmCilDeclSecurityTable>(this, buf, index, get_DataSizeFlags(), rows, "DeclSecurity");
         break;
       case e_Event:
-        p_Event = parseMetadataTable<SgAsmCilEvent>(this, buf, index, get_DataSizeFlags(), rows, "Event");
+        p_EventTable = parseMetadataTable<SgAsmCilEventTable>(this, buf, index, get_DataSizeFlags(), rows, "Event");
         break;
       case e_EventMap:
-        p_EventMap = parseMetadataTable<SgAsmCilEventMap>(this, buf, index, get_DataSizeFlags(), rows, "EventMap");
+        p_EventMapTable = parseMetadataTable<SgAsmCilEventMapTable>(this, buf, index, get_DataSizeFlags(), rows, "EventMap");
         break;
       case e_ExportedType:
-        p_ExportedType = parseMetadataTable<SgAsmCilExportedType>(this, buf, index, get_DataSizeFlags(), rows, "ExportedType");
+        p_ExportedTypeTable = parseMetadataTable<SgAsmCilExportedTypeTable>(this, buf, index, get_DataSizeFlags(), rows, "ExportedType");
         break;
       case e_Field:
-        p_Field = parseMetadataTable<SgAsmCilField>(this, buf, index, get_DataSizeFlags(), rows, "Field");
+        p_FieldTable = parseMetadataTable<SgAsmCilFieldTable>(this, buf, index, get_DataSizeFlags(), rows, "Field");
         break;
       case e_FieldLayout:
-        p_FieldLayout = parseMetadataTable<SgAsmCilFieldLayout>(this, buf, index, get_DataSizeFlags(), rows, "FieldLayout");
+        p_FieldLayoutTable = parseMetadataTable<SgAsmCilFieldLayoutTable>(this, buf, index, get_DataSizeFlags(), rows, "FieldLayout");
         break;
       case e_FieldMarshal:
-        p_FieldMarshal = parseMetadataTable<SgAsmCilFieldMarshal>(this, buf, index, get_DataSizeFlags(), rows, "FieldMarshal");
+        p_FieldMarshalTable = parseMetadataTable<SgAsmCilFieldMarshalTable>(this, buf, index, get_DataSizeFlags(), rows, "FieldMarshal");
         break;
       case e_FieldRVA:
-        p_FieldRVA = parseMetadataTable<SgAsmCilFieldRVA>(this, buf, index, get_DataSizeFlags(), rows, "FieldRVA");
+        p_FieldRVATable = parseMetadataTable<SgAsmCilFieldRVATable>(this, buf, index, get_DataSizeFlags(), rows, "FieldRVA");
         break;
       case e_File:
-        p_File = parseMetadataTable<SgAsmCilFile>(this, buf, index, get_DataSizeFlags(), rows, "File");
+        p_FileTable = parseMetadataTable<SgAsmCilFileTable>(this, buf, index, get_DataSizeFlags(), rows, "File");
         break;
       case e_GenericParam:
-        p_GenericParam = parseMetadataTable<SgAsmCilGenericParam>(this, buf, index, get_DataSizeFlags(), rows, "GenericParam");
+        p_GenericParamTable = parseMetadataTable<SgAsmCilGenericParamTable>(this, buf, index, get_DataSizeFlags(), rows, "GenericParam");
         break;
       case e_GenericParamConstraint:
-        p_GenericParamConstraint = parseMetadataTable<SgAsmCilGenericParamConstraint>(this, buf, index, get_DataSizeFlags(), rows, "GenericParamConstraint");
+        p_GenericParamConstraintTable = parseMetadataTable<SgAsmCilGenericParamConstraintTable>(this, buf, index, get_DataSizeFlags(), rows, "GenericParamConstraint");
         break;
       case e_ImplMap:
-        p_ImplMap = parseMetadataTable<SgAsmCilImplMap>(this, buf, index, get_DataSizeFlags(), rows, "ImplMap");
+        p_ImplMapTable = parseMetadataTable<SgAsmCilImplMapTable>(this, buf, index, get_DataSizeFlags(), rows, "ImplMap");
         break;
       case e_InterfaceImpl:
-        p_InterfaceImpl = parseMetadataTable<SgAsmCilInterfaceImpl>(this, buf, index, get_DataSizeFlags(), rows, "InterfaceImpl");
+        p_InterfaceImplTable = parseMetadataTable<SgAsmCilInterfaceImplTable>(this, buf, index, get_DataSizeFlags(), rows, "InterfaceImpl");
         break;
       case e_ManifestResource:
-        p_ManifestResource = parseMetadataTable<SgAsmCilManifestResource>(this, buf, index, get_DataSizeFlags(), rows, "ManifestResource");
+        p_ManifestResourceTable = parseMetadataTable<SgAsmCilManifestResourceTable>(this, buf, index, get_DataSizeFlags(), rows, "ManifestResource");
         break;
       case e_MemberRef:
-        p_MemberRef = parseMetadataTable<SgAsmCilMemberRef>(this, buf, index, get_DataSizeFlags(), rows, "MemberRef");
+        p_MemberRefTable = parseMetadataTable<SgAsmCilMemberRefTable>(this, buf, index, get_DataSizeFlags(), rows, "MemberRef");
         break;
       case e_MethodDef:
-        p_MethodDef = parseMetadataTable<SgAsmCilMethodDef>(this, buf, index, get_DataSizeFlags(), rows, "MethodDef");
+        p_MethodDefTable = parseMetadataTable<SgAsmCilMethodDefTable>(this, buf, index, get_DataSizeFlags(), rows, "MethodDef");
         break;
       case e_MethodImpl:
-        p_MethodImpl = parseMetadataTable<SgAsmCilMethodImpl>(this, buf, index, get_DataSizeFlags(), rows, "MethodImpl");
+        p_MethodImplTable = parseMetadataTable<SgAsmCilMethodImplTable>(this, buf, index, get_DataSizeFlags(), rows, "MethodImpl");
         break;
       case e_MethodSemantics:
-        p_MethodSemantics = parseMetadataTable<SgAsmCilMethodSemantics>(this, buf, index, get_DataSizeFlags(), rows, "MethodSemantics");
+        p_MethodSemanticsTable = parseMetadataTable<SgAsmCilMethodSemanticsTable>(this, buf, index, get_DataSizeFlags(), rows, "MethodSemantics");
         break;
       case e_MethodSpec:
-        p_MethodSpec = parseMetadataTable<SgAsmCilMethodSpec>(this, buf, index, get_DataSizeFlags(), rows, "MethodSpec");
+        p_MethodSpecTable = parseMetadataTable<SgAsmCilMethodSpecTable>(this, buf, index, get_DataSizeFlags(), rows, "MethodSpec");
         break;
       case e_Module:
-        p_Module = parseMetadataTable<SgAsmCilModule>(this, buf, index, get_DataSizeFlags(), rows, "Module");
+        p_ModuleTable = parseMetadataTable<SgAsmCilModuleTable>(this, buf, index, get_DataSizeFlags(), rows, "Module");
         break;
       case e_ModuleRef:
-        p_ModuleRef = parseMetadataTable<SgAsmCilModuleRef>(this, buf, index, get_DataSizeFlags(), rows, "ModuleRef");
+        p_ModuleRefTable = parseMetadataTable<SgAsmCilModuleRefTable>(this, buf, index, get_DataSizeFlags(), rows, "ModuleRef");
         break;
       case e_NestedClass:
-        p_NestedClass = parseMetadataTable<SgAsmCilNestedClass>(this, buf, index, get_DataSizeFlags(), rows, "NestedClass");
+        p_NestedClassTable = parseMetadataTable<SgAsmCilNestedClassTable>(this, buf, index, get_DataSizeFlags(), rows, "NestedClass");
         break;
       case e_Param:
-        p_Param = parseMetadataTable<SgAsmCilParam>(this, buf, index, get_DataSizeFlags(), rows, "Param");
+        p_ParamTable = parseMetadataTable<SgAsmCilParamTable>(this, buf, index, get_DataSizeFlags(), rows, "Param");
         break;
       case e_Property:
-        p_Property = parseMetadataTable<SgAsmCilProperty>(this, buf, index, get_DataSizeFlags(), rows, "Property");
+        p_PropertyTable = parseMetadataTable<SgAsmCilPropertyTable>(this, buf, index, get_DataSizeFlags(), rows, "Property");
         break;
       case e_PropertyMap:
-        p_PropertyMap = parseMetadataTable<SgAsmCilPropertyMap>(this, buf, index, get_DataSizeFlags(), rows, "PropertyMap");
+        p_PropertyMapTable = parseMetadataTable<SgAsmCilPropertyMapTable>(this, buf, index, get_DataSizeFlags(), rows, "PropertyMap");
         break;
       case e_StandAloneSig:
-        p_StandAloneSig = parseMetadataTable<SgAsmCilStandAloneSig>(this, buf, index, get_DataSizeFlags(), rows, "StandAloneSig");
+        p_StandAloneSigTable = parseMetadataTable<SgAsmCilStandAloneSigTable>(this, buf, index, get_DataSizeFlags(), rows, "StandAloneSig");
         break;
       case e_TypeDef:
-        p_TypeDef = parseMetadataTable<SgAsmCilTypeDef>(this, buf, index, get_DataSizeFlags(), rows, "TypeDef");
+        p_TypeDefTable = parseMetadataTable<SgAsmCilTypeDefTable>(this, buf, index, get_DataSizeFlags(), rows, "TypeDef");
         break;
       case e_TypeRef:
-        p_TypeRef = parseMetadataTable<SgAsmCilTypeRef>(this, buf, index, get_DataSizeFlags(), rows, "TypeRef");
+        p_TypeRefTable = parseMetadataTable<SgAsmCilTypeRefTable>(this, buf, index, get_DataSizeFlags(), rows, "TypeRef");
         break;
       case e_TypeSpec:
-        p_TypeSpec = parseMetadataTable<SgAsmCilTypeSpec>(this, buf, index, get_DataSizeFlags(), rows, "TypeSpec");
+        p_TypeSpecTable = parseMetadataTable<SgAsmCilTypeSpecTable>(this, buf, index, get_DataSizeFlags(), rows, "TypeSpec");
         break;
       default:
         std::cerr << "default reached:\n"
@@ -1870,124 +1887,161 @@ void SgAsmCilMetadataHeap::parse(std::vector<uint8_t>& buf, size_t startOfMetaDa
 SgAsmCilMetadata*
 SgAsmCilMetadataHeap::get_MetadataNode(std::uint32_t index, TableKind knd) const
 {
-  SgAsmCilMetadata*   res    = nullptr;
+  SgAsmCilMetadata* res = nullptr;
 
   switch (knd)
-  {
-    
+  { 
     case e_Assembly:
-      res = get_Assembly().at(index-1);
+      ASSERT_not_null(get_AssemblyTable());
+      res = get_AssemblyTable()->get_elements().at(index-1);
       break;
     case e_AssemblyOS:
-      res = get_AssemblyOS().at(index-1);
+      ASSERT_not_null(get_AssemblyOSTable());
+      res = get_AssemblyOSTable()->get_elements().at(index-1);
       break;
     case e_AssemblyProcessor:
-      res = get_AssemblyProcessor().at(index-1);
+      ASSERT_not_null(get_AssemblyProcessorTable());
+      res = get_AssemblyProcessorTable()->get_elements().at(index-1);
       break;
     case e_AssemblyRef:
-      res = get_AssemblyRef().at(index-1);
+      ASSERT_not_null(get_AssemblyRefTable());
+      res = get_AssemblyRefTable()->get_elements().at(index-1);
       break;
     case e_AssemblyRefOS:
-      res = get_AssemblyRefOS().at(index-1);
+      ASSERT_not_null(get_AssemblyRefOSTable());
+      res = get_AssemblyRefOSTable()->get_elements().at(index-1);
       break;
     case e_AssemblyRefProcessor:
-      res = get_AssemblyRefProcessor().at(index-1);
+      ASSERT_not_null(get_AssemblyRefProcessorTable());
+      res = get_AssemblyRefProcessorTable()->get_elements().at(index-1);
       break;
     case e_ClassLayout:
-      res = get_ClassLayout().at(index-1);
+      ASSERT_not_null(get_ClassLayoutTable());
+      res = get_ClassLayoutTable()->get_elements().at(index-1);
       break;
     case e_Constant:
-      res = get_Constant().at(index-1);
+      ASSERT_not_null(get_ConstantTable());
+      res = get_ConstantTable()->get_elements().at(index-1);
       break;
     case e_CustomAttribute:
-      res = get_CustomAttribute().at(index-1);
+      ASSERT_not_null(get_CustomAttributeTable());
+      res = get_CustomAttributeTable()->get_elements().at(index-1);
       break;
     case e_DeclSecurity:
-      res = get_DeclSecurity().at(index-1);
+      ASSERT_not_null(get_DeclSecurityTable());
+      res = get_DeclSecurityTable()->get_elements().at(index-1);
       break;
     case e_Event:
-      res = get_Event().at(index-1);
+      ASSERT_not_null(get_EventTable());
+      res = get_EventTable()->get_elements().at(index-1);
       break;
     case e_EventMap:
-      res = get_EventMap().at(index-1);
+      ASSERT_not_null(get_EventMapTable());
+      res = get_EventMapTable()->get_elements().at(index-1);
       break;
     case e_ExportedType:
-      res = get_ExportedType().at(index-1);
+      ASSERT_not_null(get_ExportedTypeTable());
+      res = get_ExportedTypeTable()->get_elements().at(index-1);
       break;
     case e_Field:
-      res = get_Field().at(index-1);
+      ASSERT_not_null(get_FieldTable());
+      res = get_FieldTable()->get_elements().at(index-1);
       break;
     case e_FieldLayout:
-      res = get_FieldLayout().at(index-1);
+      ASSERT_not_null(get_FieldLayoutTable());
+      res = get_FieldLayoutTable()->get_elements().at(index-1);
       break;
     case e_FieldMarshal:
-      res = get_FieldMarshal().at(index-1);
+      ASSERT_not_null(get_FieldMarshalTable());
+      res = get_FieldMarshalTable()->get_elements().at(index-1);
       break;
     case e_FieldRVA:
-      res = get_FieldRVA().at(index-1);
+      ASSERT_not_null(get_FieldRVATable());
+      res = get_FieldRVATable()->get_elements().at(index-1);
       break;
     case e_File:
-      res = get_File().at(index-1);
+      ASSERT_not_null(get_FileTable());
+      res = get_FileTable()->get_elements().at(index-1);
       break;
     case e_GenericParam:
-      res = get_GenericParam().at(index-1);
+      ASSERT_not_null(get_GenericParamTable());
+      res = get_GenericParamTable()->get_elements().at(index-1);
       break;
     case e_GenericParamConstraint:
-      res = get_GenericParamConstraint().at(index-1);
+      ASSERT_not_null(get_GenericParamConstraintTable());
+      res = get_GenericParamConstraintTable()->get_elements().at(index-1);
       break;
     case e_ImplMap:
-      res = get_ImplMap().at(index-1);
+      ASSERT_not_null(get_ImplMapTable());
+      res = get_ImplMapTable()->get_elements().at(index-1);
       break;
     case e_InterfaceImpl:
-      res = get_InterfaceImpl().at(index-1);
+      ASSERT_not_null(get_InterfaceImplTable());
+      res = get_InterfaceImplTable()->get_elements().at(index-1);
       break;
     case e_ManifestResource:
-      res = get_ManifestResource().at(index-1);
+      ASSERT_not_null(get_ManifestResourceTable());
+      res = get_ManifestResourceTable()->get_elements().at(index-1);
       break;
     case e_MemberRef:
-      res = get_MemberRef().at(index-1);
+      ASSERT_not_null(get_MemberRefTable());
+      res = get_MemberRefTable()->get_elements().at(index-1);
       break;
     case e_MethodDef:
-      res = get_MethodDef().at(index-1);
+      ASSERT_not_null(get_MethodDefTable());
+      res = get_MethodDefTable()->get_elements().at(index-1);
       break;
     case e_MethodImpl:
-      res = get_MethodImpl().at(index-1);
+      ASSERT_not_null(get_MethodImplTable());
+      res = get_MethodImplTable()->get_elements().at(index-1);
       break;
     case e_MethodSemantics:
-      res = get_MethodSemantics().at(index-1);
+      ASSERT_not_null(get_MethodSemanticsTable());
+      res = get_MethodSemanticsTable()->get_elements().at(index-1);
       break;
     case e_MethodSpec:
-      res = get_MethodSpec().at(index-1);
+      ASSERT_not_null(get_MethodSpecTable());
+      res = get_MethodSpecTable()->get_elements().at(index-1);
       break;
     case e_Module:
-      res = get_Module().at(index-1);
+      ASSERT_not_null(get_ModuleTable());
+      res = get_ModuleTable()->get_elements().at(index-1);
       break;
     case e_ModuleRef:
-      res = get_ModuleRef().at(index-1);
+      ASSERT_not_null(get_ModuleRefTable());
+      res = get_ModuleRefTable()->get_elements().at(index-1);
       break;
     case e_NestedClass:
-      res = get_NestedClass().at(index-1);
+      ASSERT_not_null(get_NestedClassTable());
+      res = get_NestedClassTable()->get_elements().at(index-1);
       break;
     case e_Param:
-      res = get_Param().at(index-1);
+      ASSERT_not_null(get_ParamTable());
+      res = get_ParamTable()->get_elements().at(index-1);
       break;
     case e_Property:
-      res = get_Property().at(index-1);
+      ASSERT_not_null(get_PropertyTable());
+      res = get_PropertyTable()->get_elements().at(index-1);
       break;
     case e_PropertyMap:
-      res = get_PropertyMap().at(index-1);
+      ASSERT_not_null(get_PropertyMapTable());
+      res = get_PropertyMapTable()->get_elements().at(index-1);
       break;
     case e_StandAloneSig:
-      res = get_StandAloneSig().at(index-1);
+      ASSERT_not_null(get_StandAloneSigTable());
+      res = get_StandAloneSigTable()->get_elements().at(index-1);
       break;
     case e_TypeDef:
-      res = get_TypeDef().at(index-1);
+      ASSERT_not_null(get_TypeDefTable());
+      res = get_TypeDefTable()->get_elements().at(index-1);
       break;
     case e_TypeRef:
-      res = get_TypeRef().at(index-1);
+      ASSERT_not_null(get_TypeRefTable());
+      res = get_TypeRefTable()->get_elements().at(index-1);
       break;
     case e_TypeSpec:
-      res = get_TypeSpec().at(index-1);
+      ASSERT_not_null(get_TypeSpecTable());
+      res = get_TypeSpecTable()->get_elements().at(index-1);
       break;
 
     default: ;
@@ -2098,9 +2152,12 @@ void decodeMetadata(rose_addr_t base_va, SgAsmCilMetadataHeap* mdh, SgAsmCilMeta
 
   SgAsmPEFileHeader* fhdr = SageInterface::getEnclosingNode<SgAsmPEFileHeader>(root);
   ASSERT_not_null(fhdr);
-
+  
+  SgAsmCilMethodDefTable* mtbl = mdh->get_MethodDefTable();
+  ASSERT_not_null(mtbl);
+  
   // decode methods
-  for (SgAsmCilMethodDef* m : mdh->get_MethodDef())
+  for (SgAsmCilMethodDef* m : mtbl->get_elements())
   {
     ASSERT_not_null(m);
 
@@ -2301,5 +2358,82 @@ SgAsmCilMetadataRoot::get_MetadataHeap() const
   return getHeapInternal<SgAsmCilMetadataHeap>(get_Streams(), idxMetadataHeap, SgAsmCilDataStream::ID_METADATA_HEAP);
 }
 
-#endif /* ROSE_ENABLE_BINARY_ANALYSIS */
 
+std::vector<SgAsmCilAssembly*>&       SgAsmCilAssemblyTable::get_elements()       { return p_elements; }
+std::vector<SgAsmCilAssembly*> const& SgAsmCilAssemblyTable::get_elements() const { return p_elements; }
+std::vector<SgAsmCilAssemblyOS*>&       SgAsmCilAssemblyOSTable::get_elements()       { return p_elements; }
+std::vector<SgAsmCilAssemblyOS*> const& SgAsmCilAssemblyOSTable::get_elements() const { return p_elements; }
+std::vector<SgAsmCilAssemblyProcessor*>&       SgAsmCilAssemblyProcessorTable::get_elements()       { return p_elements; }
+std::vector<SgAsmCilAssemblyProcessor*> const& SgAsmCilAssemblyProcessorTable::get_elements() const { return p_elements; }
+std::vector<SgAsmCilAssemblyRef*>&       SgAsmCilAssemblyRefTable::get_elements()       { return p_elements; }
+std::vector<SgAsmCilAssemblyRef*> const& SgAsmCilAssemblyRefTable::get_elements() const { return p_elements; }
+std::vector<SgAsmCilAssemblyRefOS*>&       SgAsmCilAssemblyRefOSTable::get_elements()       { return p_elements; }
+std::vector<SgAsmCilAssemblyRefOS*> const& SgAsmCilAssemblyRefOSTable::get_elements() const { return p_elements; }
+std::vector<SgAsmCilAssemblyRefProcessor*>&       SgAsmCilAssemblyRefProcessorTable::get_elements()       { return p_elements; }
+std::vector<SgAsmCilAssemblyRefProcessor*> const& SgAsmCilAssemblyRefProcessorTable::get_elements() const { return p_elements; }
+std::vector<SgAsmCilClassLayout*>&       SgAsmCilClassLayoutTable::get_elements()       { return p_elements; }
+std::vector<SgAsmCilClassLayout*> const& SgAsmCilClassLayoutTable::get_elements() const { return p_elements; }
+std::vector<SgAsmCilConstant*>&       SgAsmCilConstantTable::get_elements()       { return p_elements; }
+std::vector<SgAsmCilConstant*> const& SgAsmCilConstantTable::get_elements() const { return p_elements; }
+std::vector<SgAsmCilCustomAttribute*>&       SgAsmCilCustomAttributeTable::get_elements()       { return p_elements; }
+std::vector<SgAsmCilCustomAttribute*> const& SgAsmCilCustomAttributeTable::get_elements() const { return p_elements; }
+std::vector<SgAsmCilDeclSecurity*>&       SgAsmCilDeclSecurityTable::get_elements()       { return p_elements; }
+std::vector<SgAsmCilDeclSecurity*> const& SgAsmCilDeclSecurityTable::get_elements() const { return p_elements; }
+std::vector<SgAsmCilEvent*>&       SgAsmCilEventTable::get_elements()       { return p_elements; }
+std::vector<SgAsmCilEvent*> const& SgAsmCilEventTable::get_elements() const { return p_elements; }
+std::vector<SgAsmCilEventMap*>&       SgAsmCilEventMapTable::get_elements()       { return p_elements; }
+std::vector<SgAsmCilEventMap*> const& SgAsmCilEventMapTable::get_elements() const { return p_elements; }
+std::vector<SgAsmCilExportedType*>&       SgAsmCilExportedTypeTable::get_elements()       { return p_elements; }
+std::vector<SgAsmCilExportedType*> const& SgAsmCilExportedTypeTable::get_elements() const { return p_elements; }
+std::vector<SgAsmCilField*>&       SgAsmCilFieldTable::get_elements()       { return p_elements; }
+std::vector<SgAsmCilField*> const& SgAsmCilFieldTable::get_elements() const { return p_elements; }
+std::vector<SgAsmCilFieldLayout*>&       SgAsmCilFieldLayoutTable::get_elements()       { return p_elements; }
+std::vector<SgAsmCilFieldLayout*> const& SgAsmCilFieldLayoutTable::get_elements() const { return p_elements; }
+std::vector<SgAsmCilFieldMarshal*>&       SgAsmCilFieldMarshalTable::get_elements()       { return p_elements; }
+std::vector<SgAsmCilFieldMarshal*> const& SgAsmCilFieldMarshalTable::get_elements() const { return p_elements; }
+std::vector<SgAsmCilFieldRVA*>&       SgAsmCilFieldRVATable::get_elements()       { return p_elements; }
+std::vector<SgAsmCilFieldRVA*> const& SgAsmCilFieldRVATable::get_elements() const { return p_elements; }
+std::vector<SgAsmCilFile*>&       SgAsmCilFileTable::get_elements()       { return p_elements; }
+std::vector<SgAsmCilFile*> const& SgAsmCilFileTable::get_elements() const { return p_elements; }
+std::vector<SgAsmCilGenericParam*>&       SgAsmCilGenericParamTable::get_elements()       { return p_elements; }
+std::vector<SgAsmCilGenericParam*> const& SgAsmCilGenericParamTable::get_elements() const { return p_elements; }
+std::vector<SgAsmCilGenericParamConstraint*>&       SgAsmCilGenericParamConstraintTable::get_elements()       { return p_elements; }
+std::vector<SgAsmCilGenericParamConstraint*> const& SgAsmCilGenericParamConstraintTable::get_elements() const { return p_elements; }
+std::vector<SgAsmCilImplMap*>&       SgAsmCilImplMapTable::get_elements()       { return p_elements; }
+std::vector<SgAsmCilImplMap*> const& SgAsmCilImplMapTable::get_elements() const { return p_elements; }
+std::vector<SgAsmCilInterfaceImpl*>&       SgAsmCilInterfaceImplTable::get_elements()       { return p_elements; }
+std::vector<SgAsmCilInterfaceImpl*> const& SgAsmCilInterfaceImplTable::get_elements() const { return p_elements; }
+std::vector<SgAsmCilManifestResource*>&       SgAsmCilManifestResourceTable::get_elements()       { return p_elements; }
+std::vector<SgAsmCilManifestResource*> const& SgAsmCilManifestResourceTable::get_elements() const { return p_elements; }
+std::vector<SgAsmCilMemberRef*>&       SgAsmCilMemberRefTable::get_elements()       { return p_elements; }
+std::vector<SgAsmCilMemberRef*> const& SgAsmCilMemberRefTable::get_elements() const { return p_elements; }
+std::vector<SgAsmCilMethodDef*>&       SgAsmCilMethodDefTable::get_elements()       { return p_elements; }
+std::vector<SgAsmCilMethodDef*> const& SgAsmCilMethodDefTable::get_elements() const { return p_elements; }
+std::vector<SgAsmCilMethodImpl*>&       SgAsmCilMethodImplTable::get_elements()       { return p_elements; }
+std::vector<SgAsmCilMethodImpl*> const& SgAsmCilMethodImplTable::get_elements() const { return p_elements; }
+std::vector<SgAsmCilMethodSemantics*>&       SgAsmCilMethodSemanticsTable::get_elements()       { return p_elements; }
+std::vector<SgAsmCilMethodSemantics*> const& SgAsmCilMethodSemanticsTable::get_elements() const { return p_elements; }
+std::vector<SgAsmCilMethodSpec*>&       SgAsmCilMethodSpecTable::get_elements()       { return p_elements; }
+std::vector<SgAsmCilMethodSpec*> const& SgAsmCilMethodSpecTable::get_elements() const { return p_elements; }
+std::vector<SgAsmCilModule*>&       SgAsmCilModuleTable::get_elements()       { return p_elements; }
+std::vector<SgAsmCilModule*> const& SgAsmCilModuleTable::get_elements() const { return p_elements; }
+std::vector<SgAsmCilModuleRef*>&       SgAsmCilModuleRefTable::get_elements()       { return p_elements; }
+std::vector<SgAsmCilModuleRef*> const& SgAsmCilModuleRefTable::get_elements() const { return p_elements; }
+std::vector<SgAsmCilNestedClass*>&       SgAsmCilNestedClassTable::get_elements()       { return p_elements; }
+std::vector<SgAsmCilNestedClass*> const& SgAsmCilNestedClassTable::get_elements() const { return p_elements; }
+std::vector<SgAsmCilParam*>&       SgAsmCilParamTable::get_elements()       { return p_elements; }
+std::vector<SgAsmCilParam*> const& SgAsmCilParamTable::get_elements() const { return p_elements; }
+std::vector<SgAsmCilProperty*>&       SgAsmCilPropertyTable::get_elements()       { return p_elements; }
+std::vector<SgAsmCilProperty*> const& SgAsmCilPropertyTable::get_elements() const { return p_elements; }
+std::vector<SgAsmCilPropertyMap*>&       SgAsmCilPropertyMapTable::get_elements()       { return p_elements; }
+std::vector<SgAsmCilPropertyMap*> const& SgAsmCilPropertyMapTable::get_elements() const { return p_elements; }
+std::vector<SgAsmCilStandAloneSig*>&       SgAsmCilStandAloneSigTable::get_elements()       { return p_elements; }
+std::vector<SgAsmCilStandAloneSig*> const& SgAsmCilStandAloneSigTable::get_elements() const { return p_elements; }
+std::vector<SgAsmCilTypeDef*>&       SgAsmCilTypeDefTable::get_elements()       { return p_elements; }
+std::vector<SgAsmCilTypeDef*> const& SgAsmCilTypeDefTable::get_elements() const { return p_elements; }
+std::vector<SgAsmCilTypeRef*>&       SgAsmCilTypeRefTable::get_elements()       { return p_elements; }
+std::vector<SgAsmCilTypeRef*> const& SgAsmCilTypeRefTable::get_elements() const { return p_elements; }
+std::vector<SgAsmCilTypeSpec*>&       SgAsmCilTypeSpecTable::get_elements()       { return p_elements; }
+std::vector<SgAsmCilTypeSpec*> const& SgAsmCilTypeSpecTable::get_elements() const { return p_elements; }
+
+#endif /* ROSE_ENABLE_BINARY_ANALYSIS */
