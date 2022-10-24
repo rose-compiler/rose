@@ -207,8 +207,8 @@ computeAccessPair( const std::vector<int8_t>& posInRowVector,
 }
 
 
-template <class SageAsmCilMetadata>
-std::vector<SageAsmCilMetadata*>
+template <class SageAsmCilMetadataTable>
+SageAsmCilMetadataTable*
 parseMetadataTable( SgAsmCilMetadataHeap* parent,
                     std::vector<uint8_t>& buf,
                     size_t& index,
@@ -217,18 +217,23 @@ parseMetadataTable( SgAsmCilMetadataHeap* parent,
                     const char* tblName
                   )
 {
-  std::vector<SageAsmCilMetadata*> res;
+  using CilMetadataType = typename SageAsmCilMetadataTable::CilMetadataType;
+
+  SageAsmCilMetadataTable*       sgnode = new SageAsmCilMetadataTable;
+  std::vector<CilMetadataType*>& res = sgnode->get_elements();
+  
+  sgnode->set_parent(parent);
 
   if (TRACE_CONSTRUCTION)
     std::cerr << "Build the e_" << tblName << " table; rows = " << rows << std::endl;
 
+  res.reserve(rows);
   for (size_t j=0; j < rows; ++j)
   {
     if (TRACE_CONSTRUCTION)
       std::cerr << " --- processing row j = " << j << std::endl;
 
-    SageAsmCilMetadata* obj = parseAsmCilNode<SageAsmCilMetadata>(parent,buf,index,sizeFlags);
-    res.push_back(obj);
+    res.push_back(parseAsmCilNode<CilMetadataType>(sgnode,buf,index,sizeFlags));
 
     if (TRACE_CONSTRUCTION)
       std::cerr << "DONE: processing row j = " << j << std::endl;
@@ -237,7 +242,7 @@ parseMetadataTable( SgAsmCilMetadataHeap* parent,
   if (TRACE_CONSTRUCTION)
     std::cerr << "DONE: Build the e_" << tblName << " table; rows = " << rows << std::endl;
 
-  return res;
+  return sgnode;
 }
 
 template <class T>

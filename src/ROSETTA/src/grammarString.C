@@ -239,6 +239,28 @@ conditionalToBuildNewVariable ( string typeName, string variableNameSource, stri
 
      return returnString;
    }
+   
+namespace
+{
+  // PP (10/20/22) copied from Grammar.C
+  bool isAstNodePtrVector(const string& typeString)
+  {
+    // consider using regex similar to: "(std::)?vector<\*>"
+    return    boost::starts_with(typeString, "std::vector<Sg")
+           && boost::ends_with(typeString, "*>");
+  }
+  
+  std::string astNodeType(const std::string& typeName)
+  {
+    static const int prefixLen = std::string{"std::vector<"}.size(); // w/o Sg prefix
+    static const int suffixLen = std::string{"*>"}.size();
+    
+    ROSE_ASSERT(isAstNodePtrVector(typeName));
+    
+    return typeName.substr(prefixLen, typeName.size() - (prefixLen + suffixLen));
+  }
+}
+   
 
 string
 GrammarString::buildCopyMemberFunctionSetParentSource ( string copyString )
@@ -276,10 +298,16 @@ GrammarString::buildCopyMemberFunctionSetParentSource ( string copyString )
           bool typeIsPointerToList              = typeIsPointerToListOfPointers || typeIsPointerToListOfNonpointers;
 
        // By "simple list" we mean NOT a pointer to a list (just a list, e.g. STL list)
-          bool typeIsSimpleListOfPointers       = (typeIsPointerToListOfPointers == false) && typeName.find("PtrList") != string::npos;
+          // PP (10/20/22)
+          // was: bool typeIsSimpleListOfPointers       = (typeIsPointerToListOfPointers == false) && typeName.find("PtrList") != string::npos;
+          bool typeIsSimpleListOfPointers       = (  (typeIsPointerToListOfPointers == false) 
+                                                  && (  (typeName.find("PtrList") != string::npos)
+                                                     || isAstNodePtrVector(typeName) // PP added to support std::vector<SageNode*>
+                                                     ));
+                    
           bool typeIsList                       = typeIsPointerToList || typeIsSimpleListOfPointers;
 #ifndef NDEBUG
-          bool typeIsSgNode                     = typeName.find('*') != string::npos;
+          bool typeIsSgNode                     = typeName.find('*') != string::npos && !isAstNodePtrVector(typeName);
 #endif
 
 #if 0
@@ -360,9 +388,15 @@ GrammarString::buildCopyMemberFunctionSetParentSource ( string copyString )
                   }
 
             // Need to get the prefix substring to strings like "SgFilePtrList" (i.e. "SgFile")
-               int positionOfPtrListSubstring = iteratorBaseType.find("PtrList");
-               int positionOfListSubstring    = iteratorBaseType.find("Ptr",positionOfPtrListSubstring);
-               listElementType = typeName.substr(0,positionOfListSubstring) + needPointer;
+               if (!isAstNodePtrVector(typeName)) {
+                 int positionOfPtrListSubstring = iteratorBaseType.find("PtrList");
+                 int positionOfListSubstring    = iteratorBaseType.find("Ptr",positionOfPtrListSubstring);
+                 listElementType = typeName.substr(0,positionOfListSubstring) + needPointer;
+               }
+               else {
+                 listElementType = astNodeType(typeName) + needPointer;
+               }
+               
 
             // Declare the loop index iterator
                returnString  += commentString + listIteratorInitialization(iteratorBaseType,iteratorName,copyOfList,accessOperator);
@@ -398,6 +432,7 @@ GrammarString::buildCopyMemberFunctionSetParentSource ( string copyString )
 // the previous version was coplex and didn't generate the correct code to support
 // the copy of a SgFile within the pointer to the list of SgFile in SgProject.
 // I will see if I can fix this :-).
+
 
 // Note that the input parameter is never used!
 string
@@ -458,7 +493,7 @@ GrammarString::buildCopyMemberFunctionSource ( bool buildConstructorArgument )
 
    // The rule is that if it is not a char* or char** then if it ia a pointer type it is a pointer to a Sage IR node
 #ifndef NDEBUG
-      bool typeIsSgNode = typeName.find('*') != string::npos;
+      bool typeIsSgNode = typeName.find('*') != string::npos && !isAstNodePtrVector(typeName);
 #endif
 
   // check if the member is accessed in tree traversal
@@ -470,11 +505,15 @@ GrammarString::buildCopyMemberFunctionSource ( bool buildConstructorArgument )
           bool typeIsPointerToList              = typeIsPointerToListOfPointers || typeIsPointerToListOfNonpointers;
 
        // By "simple list" we mean NOT a pointer to a list (just a list, e.g. STL list)
-          bool typeIsSimpleListOfPointers       = (typeIsPointerToListOfPointers == false) && typeName.find("PtrList") != string::npos;
+          bool typeIsSimpleListOfPointers       = (  (typeIsPointerToListOfPointers == false) 
+                                                  && (  (typeName.find("PtrList") != string::npos)
+                                                     || isAstNodePtrVector(typeName) // PP added to support std::vector<SageNode*>
+                                                     ));
           bool typeIsList                       = typeIsPointerToList || typeIsSimpleListOfPointers;
 
 
 #if 0
+          std::cerr << "* " << typeName << std::endl;
           printf ("typeIsPointerToListOfPointers    = %s \n",typeIsPointerToListOfPointers ? "true" : "false");
           printf ("typeIsPointerToListOfNonpointers = %s \n",typeIsPointerToListOfNonpointers ? "true" : "false");
           printf ("typeIsPointerToList              = %s \n",typeIsPointerToList ? "true" : "false");
@@ -559,9 +598,14 @@ GrammarString::buildCopyMemberFunctionSource ( bool buildConstructorArgument )
                   }
 
             // Need to get the prefix substring to strings like "SgFilePtrList" (i.e. "SgFile")
-               int positionOfPtrListSubstring = iteratorBaseType.find("PtrList");
-               int positionOfListSubstring    = iteratorBaseType.find("Ptr",positionOfPtrListSubstring);
-               listElementType = typeName.substr(0,positionOfListSubstring) + needPointer;
+               if (!isAstNodePtrVector(typeName)) {
+                 int positionOfPtrListSubstring = iteratorBaseType.find("PtrList");
+                 int positionOfListSubstring    = iteratorBaseType.find("Ptr",positionOfPtrListSubstring);
+                 listElementType = typeName.substr(0,positionOfListSubstring) + needPointer;
+               }
+               else {
+                 listElementType = astNodeType(typeName) + needPointer;
+               }
 
             // Declare the loop index iterator
                returnString += commentString + listIteratorInitialization(iteratorBaseType,iteratorName,originalList,accessOperator);

@@ -135,10 +135,9 @@ void SgAsmCilMetadataHeap::parse(std::vector<uint8_t>& buf, size_t startOfMetaDa
 
     // Build the associated table.
     switch (kind)
-    {
-      `for_each tbl = .metadata`
+    { `for_each tbl = .metadata`
       case e_`tbl.Name`:
-        p_`tbl.Name` = parseMetadataTable<SgAsmCil`tbl.Name`>(this, buf, index, get_DataSizeFlags(), rows, "`tbl.Name`");
+        p_`tbl.Name`Table = parseMetadataTable<SgAsmCil`tbl.Name`Table>(this, buf, index, get_DataSizeFlags(), rows, "`tbl.Name`");
         break;
       `end_for`
       default:
@@ -155,13 +154,13 @@ void SgAsmCilMetadataHeap::parse(std::vector<uint8_t>& buf, size_t startOfMetaDa
 SgAsmCilMetadata*
 SgAsmCilMetadataHeap::get_MetadataNode(std::uint32_t index, TableKind knd) const
 {
-  SgAsmCilMetadata*   res    = nullptr;
+  SgAsmCilMetadata* res = nullptr;
 
   switch (knd)
-  {
-    `for_each tbl = .metadata`
+  { `for_each tbl = .metadata`
     case e_`tbl.Name`:
-      res = get_`tbl.Name`().at(index-1);
+      ASSERT_not_null(get_`tbl.Name`Table());
+      res = get_`tbl.Name`Table()->get_elements().at(index-1);
       break;
     `end_for`
 
@@ -287,5 +286,10 @@ SgAsmCilMetadataRoot::get_MetadataHeap() const
 {
   return getHeapInternal<SgAsmCilMetadataHeap>(get_Streams(), idxMetadataHeap, SgAsmCilDataStream::ID_METADATA_HEAP);
 }
+
+`for_each cl = .metadata`
+std::vector<SgAsmCil`cl.Name`*>&       SgAsmCil`cl.Name`Table::get_elements()       { return p_elements; }
+std::vector<SgAsmCil`cl.Name`*> const& SgAsmCil`cl.Name`Table::get_elements() const { return p_elements; }
+`end_for`
 
 #endif /* ROSE_ENABLE_BINARY_ANALYSIS */

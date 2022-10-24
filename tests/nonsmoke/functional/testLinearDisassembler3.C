@@ -395,8 +395,11 @@ printAssemblies(std::ostream& os, const SgAsmCilMetadataRoot* n)
 {
   SgAsmCilMetadataHeap* metadataHeap = n->get_MetadataHeap();
   ASSERT_not_null(metadataHeap);
-
-  for (SgAsmCilAssembly* assembly : metadataHeap->get_Assembly())
+  
+  SgAsmCilAssemblyTable* assemblies = metadataHeap->get_AssemblyTable();
+  ASSERT_not_null(assemblies);
+  
+  for (SgAsmCilAssembly* assembly : assemblies->get_elements())
   {
     ASSERT_not_null(assembly);
     os << ".assembly " << assembly->get_Name_string()
@@ -418,8 +421,11 @@ printModules(std::ostream& os, const SgAsmCilMetadataRoot* n)
 {
   SgAsmCilMetadataHeap* metadataHeap = n->get_MetadataHeap();
   ASSERT_not_null(metadataHeap);
-
-  for (SgAsmCilModule* mod : metadataHeap->get_Module())
+  
+  SgAsmCilModuleTable* modules = metadataHeap->get_ModuleTable();
+  ASSERT_not_null(modules);
+  
+  for (SgAsmCilModule* mod : modules->get_elements())
   {
     ASSERT_not_null(mod);
     os << ".module " << mod->get_Name_string()
@@ -443,7 +449,10 @@ printMethods(std::ostream& os, const SgAsmCilMetadataRoot* n, size_t beg = 0, si
   SgAsmCilMetadataHeap* metadataHeap = n->get_MetadataHeap();
   ASSERT_not_null(metadataHeap);
   
-  const std::vector<SgAsmCilMethodDef*>& methods = metadataHeap->get_MethodDef();
+  SgAsmCilMethodDefTable* methodDefs = metadataHeap->get_MethodDefTable();
+  ASSERT_not_null(methodDefs);
+  
+  const std::vector<SgAsmCilMethodDef*>& methods = methodDefs->get_elements();
   
   lim = std::min(lim, methods.size());
   
@@ -496,8 +505,11 @@ printTypeDefs(std::ostream& os, const SgAsmCilMetadataRoot* n)
   SgAsmCilMetadataHeap* metadataHeap = n->get_MetadataHeap();
   ASSERT_not_null(metadataHeap);
   
+  SgAsmCilTypeDefTable* typedefs = metadataHeap->get_TypeDefTable();
+  ASSERT_not_null(typedefs);
+  
   const std::uint8_t* lastNamespace = nullptr;
-  const std::vector<SgAsmCilTypeDef*>& tydefs = metadataHeap->get_TypeDef();
+  const std::vector<SgAsmCilTypeDef*>& tydefs = typedefs->get_elements();
 
   for (size_t i = 0; i < tydefs.size(); ++i)
   {
@@ -522,8 +534,9 @@ printTypeDefs(std::ostream& os, const SgAsmCilMetadataRoot* n)
          << std::endl;     
     }
     
+    size_t numMethods = metadataHeap->get_MethodDefTable()->get_elements().size();
     size_t beg = td->get_MethodList()-1;
-    size_t lim  = (i+1 < tydefs.size() ? tydefs.at(i+1)->get_MethodList()-1 : metadataHeap->get_MethodDef().size());
+    size_t lim  = (i+1 < tydefs.size() ? tydefs.at(i+1)->get_MethodList()-1 : numMethods);
     
     printMethods(os, n, beg, lim);    
 
@@ -578,6 +591,8 @@ void forAllMetadataRoots(const SgProject& prj, std::function<void(const SgAsmCil
 
 int main(int argc, char *argv[])
 {
+    constexpr bool GEN_DOT_FILES = false;
+    
     ROSE_INITIALIZE;
     Rose::Diagnostics::initAndRegister(&::mlog, "tool");
 
@@ -591,9 +606,13 @@ int main(int argc, char *argv[])
 
     SgProject* p = SageInterface::getProject();
     ASSERT_not_null(p);
+    
+    if (GEN_DOT_FILES)
+      generateDOT(p, specimenNames.front());
            
     forAllMetadataRoots( *p, 
-                         [os = std::ref(std::cout)](const SgAsmCilMetadataRoot* root) mutable
+                         [os = std::ref(std::cout)] 
+                         (const SgAsmCilMetadataRoot* root) mutable -> void 
                          {
                            printAssemblies(os, root);
                            printModules(os, root);
