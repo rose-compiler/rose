@@ -283,7 +283,7 @@ namespace
   ///      int a = InitExpr, int b = a
   ///    for parameter declarations (!initializeFromFirst) the C-style AST looks like:
   ///      int a = InitExpr, int b = clone(InitExpr)
-  ///      Here side-effects of executing InitExpr twice NEED TO BE CONSIDERED.
+  ///      NOTE: SIDE-EFFECTS of executing InitExpr twice NEED TO BE CONSIDERED.
   SgExpression*
   createInit(SgInitializedNamePtrList& lst, SgExpression* exp, bool initializeFromFirst, AstContext ctx)
   {
@@ -293,6 +293,10 @@ namespace
     // secondary variable declarations are either initialized from the first (variables)
     //   or from a clone (parameters).
     // \todo NOTE: cloning the expression may produce side-effects.
+    if (!initializeFromFirst)
+      logWarn() << "cloning parameter's default init expressions may produce side effects!."
+                << std::endl;
+
     exp = initializeFromFirst ? sb::buildVarRefExp(lst.front(), &ctx.scope())
                               : si::deepCopy(exp);
 

@@ -156,7 +156,10 @@ namespace
       const Iterator     pos = nameQualMap.find(const_cast<SgNode*>(&n));
 
       if (pos != nameQualMap.end())
+      {
         prn(pos->second);
+        //~ std::cerr << "::" << pos->second << std::endl;
+      }
     }
 
     void handle(SgNode& n)      { SG_UNEXPECTED_NODE(n); }
