@@ -43,7 +43,7 @@ struct InterproceduralPredicate: P2::DataFlow::InterproceduralPredicate {
     bool operator()(const ControlFlowGraph &cfg, const ControlFlowGraph::ConstEdgeIterator &callEdge, size_t depth) {
         if (depth > partitioner.stackDeltaInterproceduralLimit())
             return false;
-        ASSERT_require(callEdge != cfg.edges().end());
+        ASSERT_always_require(callEdge != cfg.edges().end());
         ASSERT_require(callEdge->target()->value().type() == V_BASIC_BLOCK);
         for (const Function::Ptr &function: callEdge->target()->value().owningFunctions().values()) {
             if (function->stackDelta())
@@ -152,7 +152,7 @@ struct StackDeltaWorker {
     StackDeltaWorker(const Partitioner &partitioner, Sawyer::ProgressBar<size_t> &progress)
         : partitioner(partitioner), progress(progress) {}
 
-    void operator()(size_t workId, const Function::Ptr &function) {
+    void operator()(size_t /*workId*/, const Function::Ptr &function) {
         Sawyer::Stopwatch t;
         partitioner.functionStackDelta(function);
 

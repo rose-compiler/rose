@@ -5,7 +5,7 @@
 
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Formatter.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RiscOperators.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/Util.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/Utility.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BinaryAnalysis/RegisterNames.h>
 #include <Rose/Diagnostics.h>

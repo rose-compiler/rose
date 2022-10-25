@@ -15,7 +15,7 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics {
 
-/** Shared-ownership pointer to an M68k instruction dispatcher. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer to an M68k instruction dispatcher. */
 typedef boost::shared_ptr<class DispatcherM68k> DispatcherM68kPtr;
 
 class DispatcherM68k: public BaseSemantics::Dispatcher {

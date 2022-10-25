@@ -19,7 +19,7 @@ namespace sb = SageBuilder;
 
 namespace SageInterface
 {
-namespace ada
+namespace Ada
 {
   // workaround to get the scope of package standard more easily
   //   set in AdaType.C:initializePkgStandard
@@ -278,7 +278,7 @@ namespace
       //       this would need to be fixed in the AST (if this is an issue).
       void handle(SgExpression& n)         { res = recurse(n.get_type()); }
 
-      void handle(SgAdaAttributeExp& n)    { res = ::si::ada::range(n); }
+      void handle(SgAdaAttributeExp& n)    { res = ::si::Ada::range(n); }
 
       void handle(SgAdaRangeConstraint& n) { res = recurse(n.get_range()); }
 
@@ -296,7 +296,7 @@ namespace
 
       void handle(SgArrayType& n)
       {
-        if (::si::ada::unconstrained(n))
+        if (::si::Ada::unconstrained(n))
           return notFound();
 
         SgExprListExp& exprlst = SG_DEREF(n.get_dim_info());
@@ -416,7 +416,7 @@ namespace
 
 namespace SageInterface
 {
-namespace ada
+namespace Ada
 {
   const std::string roseOperatorPrefix  = "operator";
   const std::string packageStandardName = "Standard";
@@ -536,7 +536,7 @@ namespace ada
     if (boost::to_upper_copy(n.get_attribute().getString()) != "RANGE")
       return nullptr;
 
-    const int dim = si::ada::firstLastDimension(SG_DEREF(n.get_args()));
+    const int dim = si::Ada::firstLastDimension(SG_DEREF(n.get_args()));
 
     return RangeExp::find(n.get_object(), dim);
   }
@@ -586,6 +586,50 @@ namespace ada
 
     return SG_DEREF(specDecl);
   }
+
+  /// returns the declaration node for the task specification
+  /// @{
+  SgDeclarationStatement& getSpecificationDeclaration(const SgAdaTaskBodyDecl& bodyDecl)
+  {
+    return SG_DEREF(bodyDecl.get_specificationDeclaration());
+  }
+
+  SgDeclarationStatement* getSpecificationDeclaration(const SgAdaTaskBodyDecl* bodyDecl)
+  {
+    return bodyDecl ? &getSpecificationDeclaration(*bodyDecl) : nullptr;
+  }
+  /// @}
+
+  /// returns the declaration node for the protected object specification
+  /// @{
+  SgDeclarationStatement& getSpecificationDeclaration(const SgAdaProtectedBodyDecl& bodyDecl)
+  {
+    const SgAdaProtectedBodyDecl* defDecl = &bodyDecl; // isSgAdaPackageBodyDecl(bodyDecl.get_definingDeclaration());
+    //~ if (!defDecl) defDecl = &bodyDecl;
+
+    SgAdaProtectedBody&     body = SG_DEREF(defDecl->get_definition());
+    SgAdaProtectedSpec&     spec = SG_DEREF(body.get_spec());
+    SgDeclarationStatement* specDecl = isSgDeclarationStatement(spec.get_parent());
+
+    return SG_DEREF(specDecl);
+  }
+
+  SgDeclarationStatement* getSpecificationDeclaration(const SgAdaProtectedBodyDecl* bodyDecl)
+  {
+    if (!bodyDecl) return nullptr;
+
+    const SgAdaProtectedBodyDecl* defDecl = bodyDecl; // isSgAdaPackageBodyDecl(bodyDecl->get_definingDeclaration());
+    if (!defDecl) defDecl = bodyDecl;
+
+    SgAdaProtectedBody*     body = defDecl->get_definition();
+    if (!body) return nullptr;
+
+    SgAdaProtectedSpec*     spec = body->get_spec();
+    if (!spec) return nullptr;
+
+    return isSgDeclarationStatement(spec->get_parent());
+  }
+
 
   SgAdaPackageBodyDecl*
   getBodyDeclaration(const SgAdaPackageSpecDecl* specDecl)
@@ -1149,11 +1193,6 @@ namespace ada
       SgType& find(SgType* ty);
     };
 
-    SgScopeStatement* pkgStandardScope()
-    {
-      return SG_DEREF(stdpkg).get_definition();
-    }
-
     SgType&
     RootTypeFinder::find(SgType* ty)
     {
@@ -1178,7 +1217,6 @@ namespace ada
 
       // are subroutines their own root type?
       void handle(SgAdaSubroutineType& n) { res = pkgStandardScope(); }
-
 
       // plus types used by AdaMaker but that do not have a direct correspondence
       //   in the Ada Standard.
@@ -1219,7 +1257,7 @@ namespace ada
       // Ada non-fundamental types
       void handle(SgArrayType& n)         { res = pkgStandardScope(); }
       void handle(SgPointerType& n)       { res = pkgStandardScope(); } // \todo should not be in Ada
-      void handle(SgAdaAccessType& n)     { res = pkgStandardScope(); }
+      void handle(SgAdaAccessType& n)     { res = pkgStandardScope(); } // \todo or scope of underlying type?
       void handle(SgTypeNullptr& n)       { res = pkgStandardScope(); }
 
       // \todo add string types as introduced by AdaType.C:initializePkgStandard
@@ -1227,19 +1265,85 @@ namespace ada
 
       // all type indirections that do not have a separate declaration associated
       // \todo may need to be reconsidered
-      void handle(SgModifierType& n)         { res = scopeOfTypedecl(n.get_base_type()); }
-      void handle(SgAdaSubtype& n)           { res = scopeOfTypedecl(n.get_base_type()); }
-      void handle(SgAdaDerivedType& n)       { res = scopeOfTypedecl(n.get_base_type()); }
+      void handle(SgModifierType& n)      { res = scopeOfTypedecl(n.get_base_type()); }
+      void handle(SgAdaSubtype& n)        { res = scopeOfTypedecl(n.get_base_type()); }
+      void handle(SgAdaDerivedType& n)    { res = scopeOfTypedecl(n.get_base_type()); }
       // void handle(SgDeclType& n)             { res = pkgStandardScope(); }
 
-      // records, enums,typedefs, discriminated types have real declarations,
-      //   so return the scope where they were defined.
-      //~ void handle(SgNamedType& n)            { res = si::getEnclosingScope(n.get_declaration()); }
-      void handle(SgNamedType& n)            { res = SG_DEREF(n.get_declaration()).get_scope(); }
+      // for records, enums, typedefs, discriminated types, and types with a real declarations
+      //   => return the scope where they were defined.
+      void handle(SgNamedType& n)         { res = SG_DEREF(n.get_declaration()).get_scope(); }
     };
 
 
+    /// \todo remove after adding Ada specific types to stripType
+    struct DeclFinder : sg::DispatchHandler<SgDeclarationStatement*>
+    {
+      void handle(SgNode& n)              { SG_UNEXPECTED_NODE(n); }
+
+      void handle(SgType& n)              { /* \todo do nothing for now; should disappear and raise error */ }
+
+      // \todo may need to be reconsidered
+      void handle(SgModifierType& n)      { res = associatedDeclaration(n.get_base_type()); }
+      void handle(SgAdaSubtype& n)        { res = associatedDeclaration(n.get_base_type()); }
+      void handle(SgAdaDerivedType& n)    { res = associatedDeclaration(n.get_base_type()); }
+      void handle(SgArrayType& n)         { res = associatedDeclaration(n.get_base_type()); }
+      void handle(SgPointerType& n)       { res = associatedDeclaration(n.get_base_type()); } // \todo should not be in Ada
+      void handle(SgAdaAccessType& n)     { res = associatedDeclaration(n.get_base_type()); } // \todo or scope of underlying type?
+      // void handle(SgDeclType& n)             { res = pkgStandardScope(); }
+
+      // for records, enums, typedefs, discriminated types, and types with a real declarations
+      //   => return the scope where they were defined.
+      void handle(SgNamedType& n)         { res = n.get_declaration(); }
+    };
+
+    struct ImportedUnit : sg::DispatchHandler<ImportedUnitResult>
+    {
+        using base = sg::DispatchHandler<ImportedUnitResult>;
+
+        explicit
+        ImportedUnit(const SgImportStatement& import)
+        : base(), impdcl(import)
+        {}
+
+        void handle(const SgNode& n) { SG_UNEXPECTED_NODE(n); }
+
+        void handle(const SgFunctionRefExp& n)
+        {
+          res = ReturnType{ nameOf(n), &declOf(n), nullptr };
+        }
+
+        void handle(const SgAdaUnitRefExp& n)
+        {
+          const SgDeclarationStatement* dcl = &declOf(n);
+
+          if (const SgAdaGenericDecl* gendcl = isSgAdaGenericDecl(dcl))
+            dcl = gendcl->get_declaration();
+
+          ASSERT_not_null(dcl);
+          res = ReturnType{ nameOf(n), dcl, nullptr };
+        }
+
+        void handle(const SgAdaRenamingRefExp& n)
+        {
+          res = ReturnType{ nameOf(n), n.get_decl(), n.get_decl() };
+        }
+
+        void handle(const SgVarRefExp& n)
+        {
+          res = ReturnType{ nameOf(n), &impdcl, nullptr };
+        }
+
+      private:
+        const SgImportStatement& impdcl; // fallback package when unit is not avail
+    };
   } // end anonymous namespace
+
+  SgScopeStatement* pkgStandardScope()
+  {
+    return SG_DEREF(stdpkg).get_definition();
+  }
+
 
   SgType* typeRoot(SgType& ty)
   {
@@ -1271,6 +1375,32 @@ namespace ada
     return ty ? scopeOfTypedecl(*ty) : nullptr;
   }
 
+  SgDeclarationStatement* associatedDeclaration(const SgType& ty)
+  {
+    return sg::dispatch(DeclFinder{}, &ty);
+  }
+
+  SgDeclarationStatement* associatedDeclaration(const SgType* ty)
+  {
+    return ty ? associatedDeclaration(*ty) : nullptr;
+  }
+
+  const SgExpression&
+  importedElement(const SgImportStatement& n)
+  {
+    const SgExpressionPtrList& lst = n.get_import_list();
+    ROSE_ASSERT(lst.size() == 1);
+
+    return SG_DEREF(lst.back());
+  }
+
+  ImportedUnitResult
+  importedUnit(const SgImportStatement& impdcl)
+  {
+    return sg::dispatch(ImportedUnit{ impdcl }, &importedElement(impdcl));
+  }
+
+
 
 /*
   std::set<std::string> adaOperatorNames()
@@ -1300,10 +1430,10 @@ namespace ada
 
   std::string convertRoseOperatorNameToAdaOperator(const std::string& name)
   {
-    if (name.rfind(si::ada::roseOperatorPrefix, 0) != 0)
+    if (name.rfind(si::Ada::roseOperatorPrefix, 0) != 0)
       return "";
 
-    const std::string op = name.substr(si::ada::roseOperatorPrefix.size());
+    const std::string op = name.substr(si::Ada::roseOperatorPrefix.size());
 
     if (!isOperatorName(op))
       return "";
@@ -1315,10 +1445,10 @@ namespace ada
   {
     static const std::string quotes    = "\"";
 
-    if (name.rfind(si::ada::roseOperatorPrefix, 0) != 0)
+    if (name.rfind(si::Ada::roseOperatorPrefix, 0) != 0)
       return name;
 
-    const std::string op = name.substr(si::ada::roseOperatorPrefix.size());
+    const std::string op = name.substr(si::Ada::roseOperatorPrefix.size());
 
     if (!isOperatorName(op))
       return name;
@@ -2168,6 +2298,130 @@ explicitNullRecord(const SgClassDefinition& recdef)
   return recdef.get_members().empty();
 }
 
+namespace
+{
+  // \todo consider integrating this into si::getEnclosingScope
+  struct LogicalParent : sg::DispatchHandler<const SgScopeStatement*>
+  {
+    void handle(const SgNode& n)                 { SG_UNEXPECTED_NODE(n); }
+
+    void handle(const SgAdaPackageSpecDecl& n)   { res = n.get_scope(); }
+    void handle(const SgAdaTaskSpecDecl& n)      { res = n.get_scope(); }
+    void handle(const SgAdaTaskTypeDecl& n)      { res = n.get_scope(); }
+    void handle(const SgAdaProtectedSpecDecl& n) { res = n.get_scope(); }
+    void handle(const SgAdaProtectedTypeDecl& n) { res = n.get_scope(); }
+
+    // do not look beyond global
+    // (during AST construction the parents of global may not yet be properly linked).
+    void handle(const SgGlobal&)                 { res = nullptr; }
+
+    // For Ada features that have a spec/body combination
+    //   we define the logical parent to be the spec.
+    // This way, both scopes are on the path for identifying overloaded symbols.
+    void handle(const SgAdaPackageBody& n)       { res = n.get_spec(); }
+    void handle(const SgAdaTaskBody& n)          { res = n.get_spec(); }
+    void handle(const SgAdaProtectedBody& n)     { res = n.get_spec(); }
+
+    void handle(const SgAdaPackageSpec& n)       { res = fromParent(n); }
+    void handle(const SgAdaTaskSpec& n)          { res = fromParent(n); }
+    void handle(const SgAdaProtectedSpec& n)     { res = fromParent(n); }
+
+    void handle(const SgScopeStatement& n)
+    {
+      const SgNode* node = &n;
+
+      res = si::getEnclosingScope(const_cast<SgNode*>(node));
+    }
+
+    static
+    const SgScopeStatement*
+    fromParent(const SgNode& n);
+  };
+
+  const SgScopeStatement*
+  LogicalParent::fromParent(const SgNode& n)
+  {
+    return sg::dispatch(LogicalParent{}, n.get_parent());
+  }
+
+
+  struct AssociatedDecl : sg::DispatchHandler<SgDeclarationStatement*>
+  {
+    // for any valid return
+    ReturnType filterReturnType(ReturnType v)   { return v; }
+
+    // for non-declaration statements (e.g., InitializedName) and other unhandled symbols
+    ReturnType filterReturnType(const SgNode*)  { return nullptr; }
+
+    // all non-symbols
+    auto handlesyms(const SgNode& n, const SgNode&) -> const SgNode* { SG_UNEXPECTED_NODE(n); }
+
+    // calls get_declaration on the most derived SgSymbol type
+    // \note the second parameter is a tag to guarantee the type requirement.
+    template <class SageSymbol>
+    auto handlesyms(const SageSymbol& n, const SgSymbol&) -> decltype(n.get_declaration())
+    {
+      return n.get_declaration();
+    }
+
+    //
+    // special cases
+    auto handlesyms(const SgSymbol& n, const SgSymbol&) -> const SgNode*
+    {
+      std::stringstream out;
+
+      out << "unhandled symbol kind: " << typeid(n).name() << std::endl;
+      throw std::runtime_error{out.str()};
+
+      // return will be filtered out
+      return &n;
+    }
+
+    template <class SageNode>
+    void handle(const SageNode& n)
+    {
+      res = filterReturnType(handlesyms(n, n));
+    }
+  };
+}
+
+const SgScopeStatement*
+logicalParentScope(const SgScopeStatement& curr)
+{
+  return sg::dispatch(LogicalParent{}, &curr);
+}
+
+const SgScopeStatement*
+logicalParentScope(const SgScopeStatement* curr)
+{
+  return curr ? logicalParentScope(*curr) : nullptr;
+}
+
+std::tuple<const SgScopeStatement*, const SgSymbol*>
+findSymbolInContext(std::string id, const SgScopeStatement& scope, const SgScopeStatement* limit)
+{
+  constexpr SgTemplateParameterPtrList* templParams = nullptr;
+  constexpr SgTemplateArgumentPtrList*  templArgs   = nullptr;
+
+  const SgScopeStatement* curr = &scope;
+  const SgSymbol*         sym  = nullptr;
+
+  while ((curr != nullptr) && (curr != limit))
+  {
+    sym = curr->lookup_symbol(id, templParams, templArgs);
+    if (sym) break;
+
+    curr = logicalParentScope(*curr);
+  }
+
+  return {curr, sym};
+}
+
+SgDeclarationStatement* associatedDecl(const SgSymbol& n)
+{
+  return sg::dispatch(AssociatedDecl{}, &n);
+}
+
 
 } // ada
 } // SageInterface
@@ -2196,11 +2450,11 @@ namespace sg
     {
       using namespace Rose::Diagnostics;
 
-      mlog[FATAL] << "[abort] " << desc << std::endl;
-      ROSE_ABORT();
+      //~ mlog[FATAL] << "[abort] " << desc << std::endl;
+      //~ ROSE_ABORT();
 
-      //~ mlog[FATAL] << "[throw] " << desc << std::endl;
-      //~ throw std::runtime_error(desc);
+      mlog[FATAL] << "[throw] " << desc << std::endl;
+      throw std::runtime_error(desc);
 
     //~ std::cerr << "[exit] [FATAL] " << desc << std::endl;
     //~ std::exit(1);

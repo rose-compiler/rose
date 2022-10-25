@@ -142,7 +142,7 @@ public:
         return g_EmptyString;
     }
 
-    virtual bool SetData(const std::string &data) {
+    virtual bool SetData(const std::string &/*data*/) {
         return false;
     }
 
@@ -227,7 +227,7 @@ public:
         m_Sequence.erase(index);
     }
 
-    virtual void Erase(const std::string &key) {}
+    virtual void Erase(const std::string &/*key*/) {}
 };
 
 class MapImp: public TypeImp {
@@ -244,7 +244,7 @@ public:
         return g_EmptyString;
     }
 
-    virtual bool SetData(const std::string &data) {
+    virtual bool SetData(const std::string &/*data*/) {
         return false;
     }
 
@@ -275,7 +275,7 @@ public:
         return it != m_Map.end() ? it->second : nullptr;
     }
 
-    virtual Node* Insert(const size_t index) {
+    virtual Node* Insert(const size_t /*index*/) {
         return nullptr;
     }
 
@@ -287,7 +287,7 @@ public:
         return nullptr;
     }
 
-    virtual void Erase(const size_t index) {}
+    virtual void Erase(const size_t /*index*/) {}
 
     virtual void Erase(const std::string &key) {
         auto it = m_Map.find(key);
@@ -334,7 +334,7 @@ public:
         return nullptr;
     }
 
-    virtual Node* Insert(const size_t index) {
+    virtual Node* Insert(const size_t /*index*/) {
         return nullptr;
     }
 
@@ -346,9 +346,9 @@ public:
         return nullptr;
     }
 
-    virtual void Erase(const size_t index) {}
+    virtual void Erase(const size_t /*index*/) {}
 
-    virtual void Erase(const std::string &key) {}
+    virtual void Erase(const std::string &/*key*/) {}
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -436,9 +436,9 @@ public:
         m_Iterator = pSequenceImp->m_Sequence.end();
     }
 
-    virtual void InitBegin(MapImp *pMapImp) {}
+    virtual void InitBegin(MapImp */*pMapImp*/) {}
 
-    virtual void InitEnd(MapImp *pMapImp) {}
+    virtual void InitEnd(MapImp */*pMapImp*/) {}
 
     void Copy(const SequenceIteratorImp &it) {
         m_Iterator = it.m_Iterator;
@@ -454,9 +454,9 @@ public:
         return Node::MapType;
     }
 
-    virtual void InitBegin(SequenceImp *pSequenceImp) {}
+    virtual void InitBegin(SequenceImp */*pSequenceImp*/) {}
 
-    virtual void InitEnd(SequenceImp *pSequenceImp) {}
+    virtual void InitEnd(SequenceImp */*pSequenceImp*/) {}
 
     virtual void InitBegin(MapImp *pMapImp) {
         m_Iterator = pMapImp->m_Map.begin();
@@ -488,9 +488,9 @@ public:
         m_Iterator = pSequenceImp->m_Sequence.end();
     }
 
-    virtual void InitBegin(MapImp *pMapImp) {}
+    virtual void InitBegin(MapImp */*pMapImp*/) {}
 
-    virtual void InitEnd(MapImp *pMapImp) {}
+    virtual void InitEnd(MapImp */*pMapImp*/) {}
 
     void Copy(const SequenceConstIteratorImp &it) {
         m_Iterator = it.m_Iterator;
@@ -506,9 +506,9 @@ public:
         return Node::MapType;
     }
 
-    virtual void InitBegin(SequenceImp *pSequenceImp) {}
+    virtual void InitBegin(SequenceImp */*pSequenceImp*/) {}
 
-    virtual void InitEnd(SequenceImp *pSequenceImp) {}
+    virtual void InitEnd(SequenceImp */*pSequenceImp*/) {}
 
     virtual void InitBegin(MapImp *pMapImp) {
         m_Iterator = pMapImp->m_Map.begin();
@@ -552,38 +552,40 @@ Iterator::Iterator(const Iterator &it)
 
 Iterator&
 Iterator::operator=(const Iterator &it) {
-    if (m_pImp) {
-        switch (m_Type) {
+    if (&it != this) {
+        if (m_pImp) {
+            switch (m_Type) {
+                case SequenceType:
+                    delete static_cast<SequenceIteratorImp*>(m_pImp);
+                    break;
+                case MapType:
+                    delete static_cast<MapIteratorImp*>(m_pImp);
+                    break;
+                default:
+                    break;
+            }
+            m_pImp = nullptr;
+            m_Type = None;
+        }
+
+        IteratorImp *pNewImp = nullptr;
+        switch (it.m_Type) {
             case SequenceType:
-                delete static_cast<SequenceIteratorImp*>(m_pImp);
+                m_Type = SequenceType;
+                pNewImp = new SequenceIteratorImp;
+                static_cast<SequenceIteratorImp*>(pNewImp)->m_Iterator = static_cast<SequenceIteratorImp*>(it.m_pImp)->m_Iterator;
                 break;
             case MapType:
-                delete static_cast<MapIteratorImp*>(m_pImp);
+                m_Type = MapType;
+                pNewImp = new MapIteratorImp;
+                static_cast<MapIteratorImp*>(pNewImp)->m_Iterator = static_cast<MapIteratorImp*>(it.m_pImp)->m_Iterator;
                 break;
             default:
                 break;
         }
-        m_pImp = nullptr;
-        m_Type = None;
-    }
 
-    IteratorImp *pNewImp = nullptr;
-    switch (it.m_Type) {
-        case SequenceType:
-            m_Type = SequenceType;
-            pNewImp = new SequenceIteratorImp;
-            static_cast<SequenceIteratorImp*>(pNewImp)->m_Iterator = static_cast<SequenceIteratorImp*>(it.m_pImp)->m_Iterator;
-            break;
-        case MapType:
-            m_Type = MapType;
-            pNewImp = new MapIteratorImp;
-            static_cast<MapIteratorImp*>(pNewImp)->m_Iterator = static_cast<MapIteratorImp*>(it.m_pImp)->m_Iterator;
-            break;
-        default:
-            break;
+        m_pImp = pNewImp;
     }
-
-    m_pImp = pNewImp;
     return *this;
 }
 
@@ -755,38 +757,40 @@ ConstIterator::ConstIterator(const ConstIterator &it)
 
 ConstIterator&
 ConstIterator::operator=(const ConstIterator &it) {
-    if (m_pImp) {
-        switch (m_Type) {
+    if (&it != this) {
+        if (m_pImp) {
+            switch (m_Type) {
+                case SequenceType:
+                    delete static_cast<SequenceConstIteratorImp*>(m_pImp);
+                    break;
+                case MapType:
+                    delete static_cast<MapConstIteratorImp*>(m_pImp);
+                    break;
+                default:
+                    break;
+            }
+            m_pImp = nullptr;
+            m_Type = None;
+        }
+
+        IteratorImp *pNewImp = nullptr;
+        switch (it.m_Type) {
             case SequenceType:
-                delete static_cast<SequenceConstIteratorImp*>(m_pImp);
+                m_Type = SequenceType;
+                pNewImp = new SequenceConstIteratorImp;
+                static_cast<SequenceConstIteratorImp*>(pNewImp)->m_Iterator = static_cast<SequenceConstIteratorImp*>(it.m_pImp)->m_Iterator;
                 break;
             case MapType:
-                delete static_cast<MapConstIteratorImp*>(m_pImp);
+                m_Type = MapType;
+                pNewImp = new MapConstIteratorImp;
+                static_cast<MapConstIteratorImp*>(pNewImp)->m_Iterator = static_cast<MapConstIteratorImp*>(it.m_pImp)->m_Iterator;
                 break;
             default:
                 break;
         }
-        m_pImp = nullptr;
-        m_Type = None;
-    }
 
-    IteratorImp *pNewImp = nullptr;
-    switch (it.m_Type) {
-        case SequenceType:
-            m_Type = SequenceType;
-            pNewImp = new SequenceConstIteratorImp;
-            static_cast<SequenceConstIteratorImp*>(pNewImp)->m_Iterator = static_cast<SequenceConstIteratorImp*>(it.m_pImp)->m_Iterator;
-            break;
-        case MapType:
-            m_Type = MapType;
-            pNewImp = new MapConstIteratorImp;
-            static_cast<MapConstIteratorImp*>(pNewImp)->m_Iterator = static_cast<MapConstIteratorImp*>(it.m_pImp)->m_Iterator;
-            break;
-        default:
-            break;
+        m_pImp = pNewImp;
     }
-
-    m_pImp = pNewImp;
     return *this;
 }
 
@@ -1065,8 +1069,10 @@ Node::Erase(const std::string &key) {
 
 Node&
 Node::operator=(const Node &node) {
-    NODE_IMP->Clear();
-    CopyNode(node, *this);
+    if (&node != this) {
+        NODE_IMP->Clear();
+        CopyNode(node, *this);
+    }
     return *this;
 }
 
@@ -1276,7 +1282,7 @@ public:
     }
 
 private:
-    ParseImp(const ParseImp &copy) {}
+    ParseImp(const ParseImp &/*copy*/) {}
 
     // Read all lines, ignoring: empty lines, comments, and document start/end.
     void ReadLines(std::iostream &stream) {
@@ -1969,7 +1975,7 @@ LineFolding(const std::string &input, std::vector<std::string> &folded, const si
 }
 
 static void
-SerializeLoop(const Node &node, std::iostream &stream, bool useLevel, const size_t level, const SerializeConfig &config) {
+SerializeLoop(const Node &node, std::ostream &stream, bool useLevel, const size_t level, const SerializeConfig &config) {
     const size_t indention = config.SpaceIndentation;
     switch (node.Type()) {
         case Node::SequenceType: {
@@ -2081,7 +2087,7 @@ SerializeLoop(const Node &node, std::iostream &stream, bool useLevel, const size
 }
 
 void
-Serialize(const Node &root, std::iostream &stream, const SerializeConfig &config) {
+Serialize(const Node &root, std::ostream &stream, const SerializeConfig &config) {
     if (config.SpaceIndentation < 2)
         throw OperationException(g_ErrorIndentation);
     SerializeLoop(root, stream, false, 0, config);

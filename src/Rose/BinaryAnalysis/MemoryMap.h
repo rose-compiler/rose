@@ -271,7 +271,7 @@ public:
     /** Property: byte order.
      *
      *  Every map has a default byte order property which can be used by functions that read and write multi-byte values when
-     *  the user does not provide a byte order to those functions.  The MemoryMap constructors initialize this property to @ref
+     *  the user does not provide a byte order to those functions.  The MemoryMap constructors initialize this property to @c
      *  ByteOrder::ORDER_UNSPECIFIED.
      *
      * @{ */

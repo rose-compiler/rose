@@ -55,7 +55,7 @@ SgAsmIntegerValueExpression::virtualAddress(SgNode *node)
 }
 
 std::string
-SgAsmIntegerValueExpression::get_label(bool quiet/*=false*/) const
+SgAsmIntegerValueExpression::get_label(bool /*quiet=false*/) const
 {
     SgNode *node = get_baseNode();
     if (node == NULL)

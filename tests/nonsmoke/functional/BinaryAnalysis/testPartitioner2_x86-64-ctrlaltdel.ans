@@ -448,7 +448,7 @@
 0x004008bf: Successor blocks: 0x004008c8
 
 0x004008c1: Basic block reasons: 
-0x004008c1: ff 54 dd 00             |.T..    |<sp-24>   call   qword ds:[rbp + rbx*0x08 + 0x00]
+0x004008c1: ff 54 dd 00             |.T..    |<sp-24>   call   qword ds:[rbp + 0x00 + rbx*0x08]
 0x004008c1: Outgoing stack delta: -32
 0x004008c1: Successor blocks: 0x004008c5, unknown
 

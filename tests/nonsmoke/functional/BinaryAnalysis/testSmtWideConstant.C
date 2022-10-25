@@ -1,5 +1,5 @@
 #include <rose.h>
-#include <Rose/BinaryAnalysis/SymbolicExpr.h>
+#include <Rose/BinaryAnalysis/SymbolicExpression.h>
 #include <Rose/BinaryAnalysis/Z3Solver.h>
 #include <Sawyer/Message.h>
 
@@ -8,19 +8,19 @@ using namespace Sawyer::Message::Common;
 
 static void test01(const std::string &solverName) {
     std::cout <<"test01: 96-bit constant\n";
-    SymbolicExpr::Ptr var = SymbolicExpr::makeIntegerVariable(64+32);
-    SymbolicExpr::Ptr wide = SymbolicExpr::makeIntegerConstant(64+32, 0x42);
+    SymbolicExpression::Ptr var = SymbolicExpression::makeIntegerVariable(64+32);
+    SymbolicExpression::Ptr wide = SymbolicExpression::makeIntegerConstant(64+32, 0x42);
     
     SmtSolver::Ptr solver = SmtSolver::instance(solverName);
     std::cout <<"SMT solver: " <<solver->name() <<"\n";
-    solver->insert(SymbolicExpr::makeEq(wide, var));
+    solver->insert(SymbolicExpression::makeEq(wide, var));
     SmtSolver::Satisfiable sat = solver->check();
     ASSERT_always_require(SmtSolver::SAT_YES == sat);
 
     std::vector<std::string> vars = solver->evidenceNames();
     ASSERT_always_require(vars.size() == 1);
     std::string varName = vars[0];
-    SymbolicExpr::Ptr val = solver->evidenceForName(varName);
+    SymbolicExpression::Ptr val = solver->evidenceForName(varName);
     ASSERT_always_not_null(val);
     std::ostringstream ss;
     ss <<*val;
@@ -30,21 +30,21 @@ static void test01(const std::string &solverName) {
 
 static void test02(const std::string &solverName) {
     std::cout <<"test02: 160-bit constant\n";
-    SymbolicExpr::Ptr var = SymbolicExpr::makeIntegerVariable(64+64+32);
+    SymbolicExpression::Ptr var = SymbolicExpression::makeIntegerVariable(64+64+32);
     Sawyer::Container::BitVector bits(64+64+32);
     bits.fromHex("55555555_44444444_33333333_22222222_11111111");
-    SymbolicExpr::Ptr wide = SymbolicExpr::makeIntegerConstant(bits);
+    SymbolicExpression::Ptr wide = SymbolicExpression::makeIntegerConstant(bits);
     
     SmtSolver::Ptr solver = SmtSolver::instance(solverName);
     std::cout <<"SMT solver: " <<solver->name() <<"\n";
-    solver->insert(SymbolicExpr::makeEq(wide, var));
+    solver->insert(SymbolicExpression::makeEq(wide, var));
     SmtSolver::Satisfiable sat = solver->check();
     ASSERT_always_require(SmtSolver::SAT_YES == sat);
 
     std::vector<std::string> vars = solver->evidenceNames();
     ASSERT_always_require(vars.size() == 1);
     std::string varName = vars[0];
-    SymbolicExpr::Ptr val = solver->evidenceForName(varName);
+    SymbolicExpression::Ptr val = solver->evidenceForName(varName);
     ASSERT_always_not_null(val);
     std::ostringstream ss;
     ss <<*val;

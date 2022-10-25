@@ -198,6 +198,11 @@ AC_DEFUN([GET_CXX_VERSION_INFO],[
                       AC_MSG_FAILURE([unknown or unsupported version of XCode: Major version is 13, XCODE_VERSION_MINOR = "$XCODE_VERSION_MINOR"])
                             ;;
                     esac
+                elif test $XCODE_VERSION_MAJOR -eq 14; then
+                  # Rasmussen (10/13/2022): Updated results for clang --version 14.0.0
+                    CXX_VERSION_MAJOR=14
+                    CXX_VERSION_MINOR=0
+                    CXX_VERSION_PATCH=0
                 else
                     AC_MSG_FAILURE([unknown or unsupported version of XCode (XCODE_VERSION_MAJOR = "$XCODE_VERSION_MAJOR")])
                 fi

@@ -3,7 +3,7 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherAarch32.h>
 
-#include <Rose/BinaryAnalysis/InstructionSemantics/Util.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/Utility.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 
 using namespace Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;
@@ -163,7 +163,7 @@ struct IP_and: P {
 
 // Branch
 struct IP_b: P {
-    void p(D d, Ops ops, I insn, A args, V enabled) {
+    void p(D d, Ops, I insn, A args, V enabled) {
         assert_args(insn, args, 1);
         SValue::Ptr targetVa = d->read(args[0], 32);
 
@@ -309,7 +309,7 @@ struct IP_blx: P {
 
 // Branch and exchange
 struct IP_bx: P {
-    void p(D d, Ops ops, I insn, A args, V enabled) {
+    void p(D d, Ops, I insn, A args, V enabled) {
         assert_args(insn, args, 1);
         SValue::Ptr result = d->read(args[0], 32);
         d->bxWritePc(enabled, result, DispatcherAarch32::BranchType::INDIR);
@@ -318,7 +318,7 @@ struct IP_bx: P {
 
 // Count leading zeros
 struct IP_clz: P {
-    void p(D d, Ops ops, I insn, A args, V enabled) {
+    void p(D d, Ops, I insn, A args, V enabled) {
         assert_args(insn, args, 2);
         SValue::Ptr a = d->read(args[1], 32);
         SValue::Ptr result = d->countLeadingZeroBits(a);
@@ -355,7 +355,7 @@ struct IP_cmp: P {
 
 // Change PE state
 struct IP_cps: P {
-    void p(D d, Ops ops, I insn, A args, V enabled) {
+    void p(D, Ops, I insn, A args, V) {
         assert_args(insn, args, 1);
         // CPS, CPSID, and CPSIE are treated as NOP if executed in USER mode.
     }
@@ -363,7 +363,7 @@ struct IP_cps: P {
 
 // Data synchronization barrier
 struct IP_dsb: P {
-    void p(D d, Ops ops, I insn, A args, V enabled) {
+    void p(D, Ops, I insn, A args, V) {
         assert_args(insn, args, 0);
     }
 };
@@ -397,7 +397,7 @@ struct IP_eor: P {
 
 // Hypervisor call
 struct IP_hvc: P {
-    void p(D d, Ops ops, I insn, A args, V enabled) {
+    void p(D d, Ops, I insn, A args, V enabled) {
         assert_args(insn, args, 1);
         SValue::Ptr value = d->read(args[0]);
         d->aarch32CallHypervisor(enabled, value);
@@ -406,7 +406,7 @@ struct IP_hvc: P {
 
 // Load data to system register
 struct IP_ldc: P {
-    void p(D d, Ops ops, I insn, A args, V enabled) {
+    void p(D d, Ops, I insn, A args, V enabled) {
         assert_args(insn, args, 3);
         SValue::Ptr value = d->read(args[2], 32);
         d->dbgdtrEl0(enabled, value);
@@ -540,7 +540,7 @@ struct IP_ldr: P {
 
 // Load register byte
 struct IP_ldrb: P {
-    void p(D d, Ops ops, I insn, A args, V enabled) {
+    void p(D d, Ops, I insn, A args, V enabled) {
         assert_args(insn, args, 2);
         SValue::Ptr readValue = d->read(args[1], 32);
         d->maybeWrite(enabled, args[0], readValue);
@@ -549,7 +549,7 @@ struct IP_ldrb: P {
 
 // Load register byte unprivileged
 struct IP_ldrbt: P {
-    void p(D d, Ops ops, I insn, A args, V enabled) {
+    void p(D d, Ops, I insn, A args, V enabled) {
         assert_args(insn, args, 2);
         SValue::Ptr readValue = d->read(args[1], 32);
         d->maybeWrite(enabled, args[0], readValue);
@@ -589,7 +589,7 @@ struct IP_ldrd: P {
 
 // Load register exclusive
 struct IP_ldrex: P {
-    void p(D d, Ops ops, I insn, A args, V enabled) {
+    void p(D d, Ops, I insn, A args, V enabled) {
         assert_args(insn, args, 2);
         SValue::Ptr readValue = d->read(args[1], 32);
         d->maybeWrite(enabled, args[0], readValue);
@@ -598,7 +598,7 @@ struct IP_ldrex: P {
 
 // Load register halfword
 struct IP_ldrh: P {
-    void p(D d, Ops ops, I insn, A args, V enabled) {
+    void p(D d, Ops, I insn, A args, V enabled) {
         assert_args(insn, args, 2);
         SValue::Ptr readValue = d->read(args[1], 32);
         d->maybeWrite(enabled, args[0], readValue);
@@ -607,7 +607,7 @@ struct IP_ldrh: P {
 
 // Load register halfword privileged
 struct IP_ldrht: P {
-    void p(D d, Ops ops, I insn, A args, V enabled) {
+    void p(D d, Ops, I insn, A args, V enabled) {
         assert_args(insn, args, 2);
         SValue::Ptr readValue = d->read(args[1], 32);
         d->maybeWrite(enabled, args[0], readValue);
@@ -656,7 +656,7 @@ struct IP_ldrsht: P {
 
 // Load register unprivileged
 struct IP_ldrt: P {
-    void p(D d, Ops ops, I insn, A args, V enabled) {
+    void p(D d, Ops, I insn, A args, V enabled) {
         assert_args(insn, args, 2);
         SValue::Ptr readValue = d->read(args[1], 32);
         d->maybeWrite(enabled, args[0], readValue);
@@ -665,7 +665,7 @@ struct IP_ldrt: P {
 
 // Move to system register from general purpose register or execute a system instruction.
 struct IP_mcr: P {
-    void p(D d, Ops ops, I insn, A args, V enabled) {
+    void p(D, Ops, I insn, A args, V) {
         assert_args(insn, args, 6);
         // System registers are modified by hardware over which we have no control, and we don't even know what this hardware
         // is. Therefore, all writes can be safely ignored since a read later could return anything anyway.
@@ -674,7 +674,7 @@ struct IP_mcr: P {
 
 // Move to system register from two general purpose registers
 struct IP_mcrr: P {
-    void p(D d, Ops ops, I insn, A args, V enabled) {
+    void p(D, Ops, I insn, A args, V) {
         assert_args(insn, args, 5);
         // System registers are modified by hardware over which we have no control, and we don't even know what this hardware
         // is. Therefore, all writes can be safely ignored since a read later could return anything anyway.
@@ -750,7 +750,7 @@ struct IP_movt: P {
 
 // Move immediate
 struct IP_movw: P {
-    void p(D d, Ops ops, I insn, A args, V enabled) {
+    void p(D d, Ops, I insn, A args, V enabled) {
         assert_args(insn, args, 2);
         SValue::Ptr result = d->read(args[1], 32);
         ASSERT_forbid(insn->get_updatesFlags());
@@ -924,7 +924,7 @@ struct IP_pkhtb: P {
 
 // Preload data
 struct IP_pld: P {
-    void p(D d, Ops ops, I insn, A args, V enabled) {
+    void p(D, Ops, I insn, A args, V) {
         assert_args(insn, args, 1);
         // The effect of a PLD instruction is implementation defined. ROSE does nothing.
     }
@@ -2177,7 +2177,7 @@ struct IP_ssub8: P {
 
 // Store data to system register
 struct IP_stc: P {
-    void p(D d, Ops ops, I insn, A args, V enabled) {
+    void p(D d, Ops, I insn, A args, V) {
         assert_args(insn, args, 3);
         d->write(args[2], d->dbgdtrEl0());
     }
@@ -2419,7 +2419,7 @@ struct IP_sub: P {
 
 // Supervisor call
 struct IP_svc: P {
-    void p(D d, Ops ops, I insn, A args, V enabled) {
+    void p(D, Ops ops, I insn, A args, V) {
         assert_args(insn, args, 1);
         ASSERT_require(isSgAsmIntegerValueExpression(args[0]));
         uint32_t val = isSgAsmIntegerValueExpression(args[0])->get_absoluteValue(32);
@@ -2605,7 +2605,7 @@ struct IP_ubfx: P {
 
 // Permanently undefined
 struct IP_udf: P {
-    void p(D d, Ops ops, I insn, A args, V enabled) {
+    void p(D, Ops ops, I insn, A args, V) {
         assert_args(insn, args, 1);
         ASSERT_require(isSgAsmIntegerValueExpression(args[0]));
         int imm = isSgAsmIntegerValueExpression(args[0])->get_absoluteValue();
@@ -3006,7 +3006,7 @@ DispatcherAarch32::instance(const BaseSemantics::RiscOperators::Ptr &ops, const 
 BaseSemantics::Dispatcher::Ptr
 DispatcherAarch32::create(const BaseSemantics::RiscOperators::Ptr &ops, size_t addrWidth,
                           const RegisterDictionary::Ptr &regs) const {
-    ASSERT_require(0 == addrWidth || 32 == addrWidth);
+    ASSERT_always_require(0 == addrWidth || 32 == addrWidth);
     return instance(ops, regs);
 }
 
@@ -3597,7 +3597,7 @@ DispatcherAarch32::join(const SValue::Ptr &hi, const SValue::Ptr &lo) {
 
 // See ARM32 A32ExpandImm_C
 DispatcherAarch32::TwoValues
-DispatcherAarch32::a32ExpandImmC(const SValue::Ptr &imm12) {
+DispatcherAarch32::a32ExpandImmC(const SValue::Ptr &/*imm12*/) {
 #if 0 // [Robb Matzke 2021-02-05]
     ASSERT_not_null(imm12);
     auto carryIn = operators()->readRegister(REG_PSTATE_C);
@@ -3753,7 +3753,7 @@ DispatcherAarch32::spsr() {
 
 // See ARM32 AArch32.ExceptionReturn
 void
-DispatcherAarch32::aarch32ExceptionReturn(const SValue::Ptr &enabled, const SValue::Ptr &address, const SValue::Ptr &spsr) {
+DispatcherAarch32::aarch32ExceptionReturn(const SValue::Ptr &enabled, const SValue::Ptr &/*address*/, const SValue::Ptr &/*spsr*/) {
 #if 0 // [Robb Matzke 2021-02-18]
     syncrhonizeContext(enabled);
     setPstateFromPsr(enabled, spsr);
@@ -3884,7 +3884,7 @@ DispatcherAarch32::addWithCarry(const SValue::Ptr &a, const SValue::Ptr &b, cons
 
 // See AARCH32 DBGDTR_EL0 (writing overload)
 void
-DispatcherAarch32::dbgdtrEl0(const SValue::Ptr &enabled, const SValue::Ptr &value) {
+DispatcherAarch32::dbgdtrEl0(const SValue::Ptr &/*enabled*/, const SValue::Ptr &/*value*/) {
     // The EDSCR.TXfull and DTRTX registers are manipulated by hardware outside our control. Therefore, we should get a new
     // variable every time we read from them, and our own writes to it are meaningless.
 }

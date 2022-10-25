@@ -1,7 +1,7 @@
 #ifndef ROSE_BinaryAnalysis_ModelChecker_SemanticCallbacks_H
 #define ROSE_BinaryAnalysis_ModelChecker_SemanticCallbacks_H
 #include <featureTests.h>
-#ifdef ROSE_ENABLE_BINARY_ANALYSIS
+#ifdef ROSE_ENABLE_MODEL_CHECKER
 
 #include <Rose/BinaryAnalysis/ModelChecker/Types.h>
 
@@ -172,7 +172,7 @@ public:
 
     /** Addresses and completeness.
      *
-     *  This is the return value for @ref codeAddresses. */
+     *  This is the return value for @ref nextCodeAddresses. */
     struct CodeAddresses {
         InstructionSemantics::BaseSemantics::SValuePtr ip; /**< Instruction pointer value. */
         std::set<rose_addr_t> addresses;                    /**< The concrete addresses. */
@@ -218,7 +218,7 @@ public:
     /** Return value for @ref nextUnits. */
     struct NextUnit {
         ExecutionUnitPtr unit;                          /**< Unit to be executed. */
-        SymbolicExpr::Ptr assertion;                    /**< Path assertion for this unit. */
+        SymbolicExpression::Ptr assertion;              /**< Path assertion for this unit. */
         SmtSolver::Evidence evidence;                   /**< SMT solver evidence that this is a feasible path. */
     };
 

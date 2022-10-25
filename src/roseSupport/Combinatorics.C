@@ -225,7 +225,7 @@ HasherSha256Builtin::messageByte(size_t index, const uint8_t *message, size_t me
     if (index < leftoverBytes_.size())
         return leftoverBytes_[index];
     index -= leftoverBytes_.size();
-    ASSERT_require(index < messageSize);
+    ASSERT_always_require(index < messageSize);
     return message[index];
 }
 

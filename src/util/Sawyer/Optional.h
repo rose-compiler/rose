@@ -243,6 +243,22 @@ public:
     }
     /** @} */
 
+    /** If a value is present, return something else.
+     *
+     *  If this optional has a value, then return the argument, otherwise return nothing.
+     *
+     * @{ */
+    Optional andThen(const Value &value) const {
+        return isEmpty_ ? *this : Optional(value);
+    }
+    Optional andTHen(Value &value) const {
+        return isEmpty_ ? *this : Optional(value);
+    }
+    const Optional& andThen(const Optional &other) const {
+        return isEmpty_ ? *this : other;
+    }
+    /** @} */
+
     /** Obtain a value or a default.
      *
      *  Returns a copy of the contained value if it exists, otherwise returns a default constructed value.

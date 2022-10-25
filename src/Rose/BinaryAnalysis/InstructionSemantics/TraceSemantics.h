@@ -4,7 +4,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/Util.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/Utility.h>
 #include <Rose/Diagnostics.h>
 
 namespace Rose {
@@ -59,7 +59,7 @@ namespace TraceSemantics {
 
 typedef void SValue;
 
-/** Shared-ownership pointer to trace-semantics values. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer to trace-semantics values. */
 typedef boost::shared_ptr<void> SValuePtr;
 
 
@@ -69,7 +69,7 @@ typedef boost::shared_ptr<void> SValuePtr;
 
 typedef void RegisterState;
 
-/** Shared-ownership pointer to trace-semantics register state. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer to trace-semantics register state. */
 typedef boost::shared_ptr<void> RegisterStatePtr;
 
 
@@ -79,7 +79,7 @@ typedef boost::shared_ptr<void> RegisterStatePtr;
 
 typedef void MemoryState;
 
-/** Shared-ownership pointer to trace-semantics memory state. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer to trace-semantics memory state. */
 typedef boost::shared_ptr<void> MemoryStatePtr;
 
 
@@ -87,7 +87,7 @@ typedef boost::shared_ptr<void> MemoryStatePtr;
 //                                      RISC operators
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Shared-ownership pointer to trace-semantics RISC operations. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer to trace-semantics RISC operations. */
 typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
 /** Wraps RISC operators so they can be traced. */

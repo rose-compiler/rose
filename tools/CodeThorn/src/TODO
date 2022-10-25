@@ -1,0 +1,81 @@
+10) move
+  #define NO_STATE -3
+  #define NO_ESTATE -4
+  from file Labeler.h to CodeThorn.h header file (to be created).
+
+11) DONE
+remove dead code
+IntervalAnalysis.C
+IntervalAnalysis.h
+IntervalAstAttribute.C
+IntervalAstAttribute.h
+IntervalAstAttributeInterface.C
+IntervalAstAttributeInterface.h
+IntervalPropertyState.C
+IntervalPropertyStateFactory.C
+IntervalPropertyStateFactory.h
+IntervalPropertyState.h
+IntervalTransferFunctions.C
+IntervalTransferFunctions.h
+
+CppExprEvaluator.h
+CppExprEvaluator.C
+analyterix-src/analyterix.C
+analyterix-src/DeadCodeAnalysis.C
+analyterix-src/DeadCodeAnalysis.h
+analyterix-src/DFAstAttributeConversion.C
+analyterix-src/DFAstAttributeConversion.h
+analyterix-src/FIPointerAnalysis.C
+analyterix-src/FIPointerAnalysis.h
+analyterix-src/rd-analysis-standalone-example.C
+analyterix-src/RoseRDAnalysis.C
+analyterix-src/RoseRDAnalysis.h
+analyterix-src/TransformationOperators.C
+analyterix-src/TransformationOperators.h
+
+12) DONE
+remove dead code
+RDAnalysis.C
+RDAnalysis.h
+RDAstAttribute.C
+RDAstAttribute.h
+RDLattice.C
+RDLattice.h
+RDTransferFunctions.C
+RDTransferFunctions.h
+UDAstAttribute.C
+UDAstAttribute.h
+
+13) DONE
+remove dead code
+LVAnalysis.C
+LVAnalysis.h
+LVAstAttribute.C
+LVAstAttribute.h
+LVAstAttributeInterface.C
+LVAstAttributeInterface.h
+LVLattice.C
+LVLattice.h
+
+14) DONE
+remove dead code
+AstTermRepresentation.C
+AstTermRepresentation.h
+
+15) DONE
+remove dead code
+DataRaceDetection.C
+DataRaceDetection.h
+
+16) DONE
+remove dead code
+ConstraintRepresentation.C
+ConstraintRepresentation.h
+EStateAnalysis.C
+EStateAnalysis.h
+EStateFactory.h
+EStateFactory.C
+
+rers_latex_bin_assert_only
+rers_latex_ltl
+

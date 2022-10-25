@@ -3,7 +3,7 @@
 #include <sage3basic.h>
 
 #include <AsmUnparser_compat.h>
-#include <Rose/BinaryAnalysis/Debugger.h>
+#include <Rose/BinaryAnalysis/Debugger/Linux.h>
 #include <Rose/BinaryAnalysis/BinaryLoader.h>
 #include <Rose/BinaryAnalysis/SerialIo.h>
 #include <BinaryVxcoreParser.h>
@@ -29,6 +29,7 @@
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesX86.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Semantics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Utility.h>
+#include <Rose/BinaryAnalysis/SymbolicExpression.h>
 #include <rose_getline.h>
 #include <rose_strtoull.h>
 #include <Sawyer/FileSystem.h>
@@ -1295,6 +1296,7 @@ Engine::loadNonContainers(const std::vector<std::string> &fileNames) {
             map_->insertProcess(resource);
         } else if (boost::starts_with(fileName, "run:")) {
             // Split resource as "run:OPTIONS:EXECUTABLE"
+#ifdef ROSE_ENABLE_DEBUGGER_LINUX
             static const size_t colon1 = 3;             // index of first colon in fileName
             const size_t colon2 = fileName.find(':', colon1+1); // index of second colon in FileName
             if (std::string::npos == colon2)
@@ -1321,12 +1323,12 @@ Engine::loadNonContainers(const std::vector<std::string> &fileNames) {
                 }
             }
 
-            Debugger::Specimen subordinate(exeName);
+            Debugger::Linux::Specimen subordinate(exeName);
             subordinate.flags()
-                .set(Debugger::CLOSE_FILES)
-                .set(Debugger::REDIRECT_INPUT)
-                .set(Debugger::REDIRECT_OUTPUT)
-                .set(Debugger::REDIRECT_ERROR);
+                .set(Debugger::Linux::Flag::CLOSE_FILES)
+                .set(Debugger::Linux::Flag::REDIRECT_INPUT)
+                .set(Debugger::Linux::Flag::REDIRECT_OUTPUT)
+                .set(Debugger::Linux::Flag::REDIRECT_ERROR);
             subordinate.randomizedAddresses(aslr);
 
             for (const std::string &name: settings_.loader.envEraseNames)
@@ -1341,7 +1343,7 @@ Engine::loadNonContainers(const std::vector<std::string> &fileNames) {
                     throw std::runtime_error("empty name in NAME=VALUE: \"" + StringUtility::cEscape(var) + "\"");
                 subordinate.insertEnvironmentVariable(var.substr(0, eq), var.substr(eq+1));
             }
-            Debugger::Ptr debugger = Debugger::instance(subordinate);
+            auto debugger = Debugger::Linux::instance(subordinate);
 
             // Set breakpoints for all executable addresses in the memory map created by the Linux kernel. Since we're doing
             // this before the first instruction executes, no shared libraries have been loaded yet. However, the dynamic
@@ -1350,23 +1352,26 @@ Engine::loadNonContainers(const std::vector<std::string> &fileNames) {
             // of the process after shared libraries are loaded. We assume that the kernel has loaded the executable at the
             // lowest address.
             MemoryMap::Ptr procMap = MemoryMap::instance();
-            procMap->insertProcess(debugger->isAttached(), MemoryMap::Attach::NO);
+            procMap->insertProcess(*debugger->processId(), MemoryMap::Attach::NO);
             procMap->require(MemoryMap::EXECUTABLE).keep();
             if (procMap->isEmpty())
                 throw std::runtime_error(exeName + " has no executable addresses");
             std::string name = procMap->segments().begin()->name(); // lowest segment is always part of the main executable
             for (const MemoryMap::Node &node: procMap->nodes()) {
                 if (node.value().name() == name)        // usually just one match; names are like "proc:123(/bin/ls)"
-                    debugger->setBreakpoint(node.key());
+                    debugger->setBreakPoint(node.key());
             }
 
-            debugger->runToBreakpoint();
+            debugger->runToBreakPoint(Debugger::ThreadId::unspecified());
             if (debugger->isTerminated())
                 throw std::runtime_error(exeName + " " + debugger->howTerminated() + " without reaching a breakpoint");
             if (doReplace)
                 map_->clear();
-            map_->insertProcess(debugger->isAttached(), MemoryMap::Attach::NO);
+            map_->insertProcess(*debugger->processId(), MemoryMap::Attach::NO);
             debugger->terminate();
+#else
+            throw std::runtime_error("\"run:\" loader schema is not available in this configuration of ROSE");
+#endif
         } else if (boost::starts_with(fileName, "srec:") || boost::ends_with(fileName, ".srec")) {
             std::string resource;                       // name of file to open
             unsigned perms = MemoryMap::READABLE | MemoryMap::WRITABLE | MemoryMap::EXECUTABLE;
@@ -1953,7 +1958,7 @@ void
 Engine::labelAddresses(Partitioner &partitioner, const Configuration &configuration) {
     Modules::labelSymbolAddresses(partitioner, interp_);
 
-    for (const AddressConfig &c: configuration.addresses().values()) {
+    for (const AddressConfiguration &c: configuration.addresses().values()) {
         if (!c.name().empty())
             partitioner.addressName(c.address(), c.name());
     }
@@ -1962,7 +1967,7 @@ Engine::labelAddresses(Partitioner &partitioner, const Configuration &configurat
 std::vector<DataBlock::Ptr>
 Engine::makeConfiguredDataBlocks(Partitioner &partitioner, const Configuration &configuration) {
     // FIXME[Robb P. Matzke 2015-05-12]: This just adds labels to addresses right now.
-    for (const DataBlockConfig &dconfig: configuration.dataBlocks().values()) {
+    for (const DataBlockConfiguration &dconfig: configuration.dataBlocks().values()) {
         if (!dconfig.name().empty())
             partitioner.addressName(dconfig.address(), dconfig.name());
     }
@@ -1972,7 +1977,7 @@ Engine::makeConfiguredDataBlocks(Partitioner &partitioner, const Configuration &
 std::vector<Function::Ptr>
 Engine::makeConfiguredFunctions(Partitioner &partitioner, const Configuration &configuration) {
     std::vector<Function::Ptr> retval;
-    for (const FunctionConfig &fconfig: configuration.functionConfigsByAddress().values()) {
+    for (const FunctionConfiguration &fconfig: configuration.functionConfigurationsByAddress().values()) {
         rose_addr_t entryVa = 0;
         if (fconfig.address().assignTo(entryVa)) {
             Function::Ptr function = Function::instance(entryVa, fconfig.name(), SgAsmFunction::FUNC_CONFIGURED);
@@ -2730,7 +2735,7 @@ Engine::BasicBlockFinalizer::fixFunctionReturnEdge(const Args &args) {
         BasicBlock::Successors successors = args.partitioner.basicBlockSuccessors(args.bblock);
         for (size_t i = 0; i < successors.size(); ++i) {
             if (!successors[i].expr()->isConcrete() ||
-                (successors[i].expr()->get_expression()->flags() & SymbolicExpr::Node::INDETERMINATE) != 0) {
+                (successors[i].expr()->get_expression()->flags() & SymbolicExpression::Node::INDETERMINATE) != 0) {
                 if (successors[i].type() == E_FUNCTION_RETURN) {
                     hadCorrectEdge = true;
                     break;
@@ -2774,8 +2779,8 @@ Engine::BasicBlockFinalizer::fixFunctionCallEdges(const Args &args) {
 // RiscOperators::peekMemory would have returned a free variable to indicate an indeterminate value, or ADDR is writable but
 // its MemoryMap::INITIALIZED bit is set to indicate it has a valid value already, in which case RiscOperators::peekMemory
 // would have returned the value stored there but also marked the value as being INDETERMINATE.  The
-// SymbolicExpr::TreeNode::INDETERMINATE bit in the expression should have been carried along so that things like "MOV EAX,
-// [ADDR]; JMP EAX" will behave the same as "JMP [ADDR]".
+// SymbolicExpression::TreeNode::INDETERMINATE bit in the expression should have been carried along so that things like "MOV
+// EAX, [ADDR]; JMP EAX" will behave the same as "JMP [ADDR]".
 void
 Engine::BasicBlockFinalizer::addPossibleIndeterminateEdge(const Args &args) {
     BasicBlockSemantics sem = args.bblock->semantics();
@@ -2790,7 +2795,7 @@ Engine::BasicBlockFinalizer::addPossibleIndeterminateEdge(const Args &args) {
             addIndeterminateEdge = false;
             break;
         } else if (!addIndeterminateEdge &&
-                   (successor.expr()->get_expression()->flags() & SymbolicExpr::Node::INDETERMINATE) != 0) {
+                   (successor.expr()->get_expression()->flags() & SymbolicExpression::Node::INDETERMINATE) != 0) {
             addIndeterminateEdge = true;
             addrWidth = successor.expr()->nBits();
         }

@@ -194,6 +194,8 @@ Utf16CharacterEncodingForm::decode(CodeValue cv) {
             } else if (cv >= 0xd800 && cv <= 0xdbff) {
                 cp_ = (cv - 0xd800) << 10;              // high/leasing surrogate
                 return state_ = State(1);
+            } else {
+                return state_ = ERROR_STATE;
             }
         case USER_DEFINED_1:                            // second of two 16-bit code values
             if (cv >= 0xdc00 && cv <= 0xdfff) {
@@ -744,7 +746,7 @@ StringFinder::insertCommonEncoders(ByteOrder::Endianness sex) {
 }
 
 StringFinder&
-StringFinder::insertUncommonEncoders(ByteOrder::Endianness sex) {
+StringFinder::insertUncommonEncoders(ByteOrder::Endianness) {
     // This encoder finds printable ASCII that's not necessarily NUL-terminated
     TerminatedString::Ptr te = nulTerminatedPrintableAscii();
     te->terminators().clear();

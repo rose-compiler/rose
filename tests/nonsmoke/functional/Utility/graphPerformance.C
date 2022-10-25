@@ -298,7 +298,7 @@ bgl_vertex_vector(GraphType &g)
 
 template<class GraphType>
 static typename boost::graph_traits<GraphType>::vertex_descriptor
-bgl_random_vertex(const GraphType &g, const std::vector<typename boost::graph_traits<GraphType>::vertex_descriptor> &vertices)
+bgl_random_vertex(const GraphType&, const std::vector<typename boost::graph_traits<GraphType>::vertex_descriptor> &vertices)
 {
     size_t n = vertices.size();
     assert(n>0);
@@ -315,7 +315,7 @@ sage_vertex_vector(GraphType *g)
 
 template<class GraphType>
 static SgGraphNode *
-sage_random_vertex(const GraphType &g, const std::vector<SgGraphNode*> &vertices)
+sage_random_vertex(const GraphType&, const std::vector<SgGraphNode*> &vertices)
 {
     size_t n = vertices.size();
     assert(n>0);

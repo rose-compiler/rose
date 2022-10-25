@@ -419,7 +419,7 @@ namespace Ada_ROSE_Translation
 
   /// creates an Ada generic declaration
   SgAdaGenericDecl&
-  mkAdaGenericDecl(SgScopeStatement& scope);
+  mkAdaGenericDecl(const std::string& name, SgScopeStatement& scope);
 
   /// creates an Ada renaming declaration
   /// \param name    the new name

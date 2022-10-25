@@ -37,13 +37,13 @@ LocalVar* HandleMap:: NewBodyHandle()
 }
 
 LocalVar* HandleMap::
-GetLoopHandle(AstInterface &fa, const AstNodePtr& loop)
+GetLoopHandle(AstInterface&, const AstNodePtr&)
 {
   std::cerr << "POET needs to be installed for this to work!\n";
   ROSE_ABORT();
 }
 
-LocalVar* HandleMap:: GetBodyHandle(LoopTreeNode* loop, LocalVar* loophandle)
+LocalVar* HandleMap:: GetBodyHandle(LoopTreeNode*, LocalVar*)
 {
   std::cerr << "POET needs to be installed for this to work!\n";
   ROSE_ABORT();
@@ -51,19 +51,19 @@ LocalVar* HandleMap:: GetBodyHandle(LoopTreeNode* loop, LocalVar* loophandle)
 
 void HandleMap::
 ObserveCopyAst(AstInterfaceImpl& fa,
-      const AstNodePtr& orig, const AstNodePtr& n)
+      const AstNodePtr&, const AstNodePtr&)
 {
   std::cerr << "POET needs to be installed for this to work!\n";
   ROSE_ABORT();
 }
 
-void HandleMap::UpdateCodeGen(const LoopTreeCodeGenInfo& info)
+void HandleMap::UpdateCodeGen(const LoopTreeCodeGenInfo&)
 {
   std::cerr << "POET needs to be installed for this to work!\n";
   ROSE_ABORT();
 }
 
-void HandleMap::UpdateDeleteNode(const LoopTreeNode* n)
+void HandleMap::UpdateDeleteNode(const LoopTreeNode*)
 {
   std::cerr << "POET needs to be installed for this to work!\n";
   ROSE_ABORT();
@@ -73,43 +73,43 @@ HandleMap:: ~HandleMap()
 {
 }
 
-LocalVar* HandleMap:: GetLoopHandle(LoopTreeNode* loop)
+LocalVar* HandleMap:: GetLoopHandle(LoopTreeNode*)
 {
   std::cerr << "POET needs to be installed for this to work!\n";
   ROSE_ABORT();
 }
 
-void HandleMap::GenTraceHandles(POETProgram& poet, AstInterface& fa)
+void HandleMap::GenTraceHandles(POETProgram&, AstInterface&)
 {
   std::cerr << "POET needs to be installed for this to work!\n";
   ROSE_ABORT();
 }
 
-void HandleMap::GenTraceHandles(POETProgram& poet, LoopTreeNode* r)
+void HandleMap::GenTraceHandles(POETProgram&, LoopTreeNode*)
 {
   std::cerr << "POET needs to be installed for this to work!\n";
   ROSE_ABORT();
 }
 
-LocalVar* HandleMap:: GetTraceTop(const std::string& handleName)
+LocalVar* HandleMap:: GetTraceTop(const std::string&)
 {
   std::cerr << "POET needs to be installed for this to work!\n";
   ROSE_ABORT();
 }
 
-LocalVar* HandleMap:: GetTraceDecl(LocalVar* top)
+LocalVar* HandleMap:: GetTraceDecl(LocalVar*)
 {
   std::cerr << "POET needs to be installed for this to work!\n";
   ROSE_ABORT();
 }
 
-LocalVar* HandleMap:: GetTracePrivate(LocalVar* top)
+LocalVar* HandleMap:: GetTracePrivate(LocalVar*)
 {
   std::cerr << "POET needs to be installed for this to work!\n";
   ROSE_ABORT();
 }
 
-LocalVar* HandleMap:: FindTracePrivate(LocalVar* top)
+LocalVar* HandleMap:: FindTracePrivate(LocalVar*)
 {
   std::cerr << "POET needs to be installed for this to work!\n";
   ROSE_ABORT();
@@ -133,19 +133,19 @@ LocalVar* HandleMap:: GetTraceTarget()
   ROSE_ABORT();
 }
 
-LocalVar* HandleMap::DeclareTraceInclude(POETProgram& poet, int& lineNo)
+LocalVar* HandleMap::DeclareTraceInclude(POETProgram&, int&)
 {
   std::cerr << "POET needs to be installed for this to work!\n";
   ROSE_ABORT();
 }
 
-LocalVar* HandleMap:: GetTraceCleanup(LocalVar* top)
+LocalVar* HandleMap:: GetTraceCleanup(LocalVar*)
 {
   std::cerr << "POET needs to be installed for this to work!\n";
   ROSE_ABORT();
 }
 
-LocalVar* HandleMap:: FindTraceCleanup(LocalVar* top)
+LocalVar* HandleMap:: FindTraceCleanup(LocalVar*)
 {
   std::cerr << "POET needs to be installed for this to work!\n";
   ROSE_ABORT();
@@ -158,8 +158,8 @@ std::string HandleMap:: to_string() const
 }
 
 LocalVar* HandleMap::
-GenTraceCommand(POETProgram& poet,const std::vector<LocalVar*>& handles,
-                LocalVar* target,int &lineNo)
+GenTraceCommand(POETProgram&,const std::vector<LocalVar*>&,
+                LocalVar*,int&)
 {
   std::cerr << "POET needs to be installed for this to work!\n";
   ROSE_ABORT();

@@ -27,7 +27,7 @@ namespace ConcreteSemantics {
 //                                      Value type
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Smart-ownership pointer to a concrete semantic value. See @ref heap_object_shared_ownership. */
+/** Smart-ownership pointer to a concrete semantic value. */
 typedef Sawyer::SharedPointer<class SValue> SValuePtr;
 
 /** Formatter for symbolic values. */
@@ -178,7 +178,7 @@ typedef BaseSemantics::RegisterStateGenericPtr RegisterStatePtr;
 //                                      Memory State
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Shared-ownership pointer to a concrete memory state. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer to a concrete memory state. */
 typedef boost::shared_ptr<class MemoryState> MemoryStatePtr;
 
 /** Byte-addressable memory.
@@ -342,7 +342,7 @@ typedef BaseSemantics::StatePtr StatePtr;
 //                                      RISC operators
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Shared-ownership pointer to concrete RISC operations. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer to concrete RISC operations. */
 typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
 /** Defines RISC operators for the ConcreteSemantics domain.
@@ -382,16 +382,21 @@ protected:
 public:
     ~RiscOperators();
 
-    /** Instantiates a new @ref RiscOperators object and configures it to use semantic values and states that are defaults for
-     *  @ref ConcreteSemantics. */
+    /** Allocating constructor.
+     *
+     *  Instantiates a new object and configures it to use semantic values and states that are defaults for @ref
+     *  ConcreteSemantics. */
     static RiscOperatorsPtr instanceFromRegisters(const RegisterDictionaryPtr&, const SmtSolverPtr &solver = SmtSolverPtr());
 
-    /** Instantiates a new @ref RiscOperators object with specified prototypical values.  An SMT solver may be specified as the
-     *  second argument because the base class expects one, but it is not used for @ref ConcreteSemantics. See @ref SmtSolver
-     *  for details. */
+    /** Allocating constructor.
+     *
+     *  Instantiates a new object with specified prototypical values. An SMT solver may be specified as the second argument
+     *  because the base class expects one, but it is not used for @ref ConcreteSemantics. See @ref SmtSolver for details. */
     static RiscOperatorsPtr instanceFromProtoval(const BaseSemantics::SValuePtr &protoval, const SmtSolverPtr &solver = SmtSolverPtr());
 
-    /** Instantiates a new RiscOperators object with specified state.  An SMT solver may be specified as the second argument
+    /** Allocating constructor.
+     *
+     *  Instantiates a new RiscOperators object with specified state.  An SMT solver may be specified as the second argument
      *  because the base class expects one, but it is not used for concrete semantics. See @ref solver for details. */
     static RiscOperatorsPtr instanceFromState(const BaseSemantics::StatePtr&, const SmtSolverPtr &solver = SmtSolverPtr());
 

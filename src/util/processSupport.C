@@ -158,14 +158,14 @@ int pcloseFromVector(FILE* f)
 namespace Rose {
 
 ROSE_UTIL_API void
-abortOnFailedAssertion(const char *mesg, const char *expr, const std::string &note, const char *fileName,
-                       unsigned lineNumber, const char *functionName) {
+abortOnFailedAssertion(const char */*mesg*/, const char */*expr*/, const std::string &/*note*/, const char */*fileName*/,
+                       unsigned /*lineNumber*/, const char */*functionName*/) {
     abort();
 }
 
 ROSE_UTIL_API void
-exitOnFailedAssertion(const char *mesg, const char *expr, const std::string &note, const char *fileName,
-                       unsigned lineNumber, const char *functionName) {
+exitOnFailedAssertion(const char */*mesg*/, const char */*expr*/, const std::string &/*note*/, const char */*fileName*/,
+                      unsigned /*lineNumber*/, const char */*functionName*/) {
     exit(1);
 }
 

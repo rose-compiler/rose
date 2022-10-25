@@ -65,9 +65,9 @@ digraph "complex.adt" {
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
           <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">Ada</TD></TR>
-          <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2647057</TD></TR>
-          <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2647057</TD></TR>
-          <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2660112</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2651057</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2651057</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2664112</TD></TR>
           </TABLE>> ];
   Element_2272237
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
@@ -79,9 +79,9 @@ digraph "complex.adt" {
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
           <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">Text_IO</TD></TR>
-          <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2695081</TD></TR>
-          <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2695081</TD></TR>
-          <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_6656112</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2699081</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2699081</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_6660112</TD></TR>
           </TABLE>> ];
   Element_2275425 -> Element_2277265
       [ label="Clause_Name ( 1)" ];
@@ -121,9 +121,9 @@ digraph "complex.adt" {
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
           <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">Ada</TD></TR>
-          <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2647057</TD></TR>
-          <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2647057</TD></TR>
-          <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2660112</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2651057</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2651057</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2664112</TD></TR>
           </TABLE>> ];
   Element_2276237
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
@@ -135,9 +135,9 @@ digraph "complex.adt" {
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
           <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">Text_IO</TD></TR>
-          <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2695081</TD></TR>
-          <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2695081</TD></TR>
-          <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_6656112</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2699081</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2699081</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_6660112</TD></TR>
           </TABLE>> ];
   Element_2287113 -> Element_2280057
       [ label="Names ( 1)" ];
@@ -168,7 +168,7 @@ digraph "complex.adt" {
           <TR><TD ALIGN="LEFT">Body_Declarative_Items ( 4)       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2395107</TD></TR>
           <TR><TD ALIGN="LEFT">Body_Declarative_Items ( 5)       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2417106</TD></TR>
           <TR><TD ALIGN="LEFT">Is_Name_Repeated     </TD><TD> = </TD><TD ALIGN="LEFT">TRUE</TD></TR>
-          <TR><TD ALIGN="LEFT">Corresponding_Declaration       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2641112</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Declaration       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2645112</TD></TR>
           </TABLE>> ];
   Element_2280057
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
@@ -299,7 +299,7 @@ digraph "complex.adt" {
           </TABLE>> ];
   Element_2319374 -> Element_2317237
       [ label=Converted_Or_Qualified_Subtype_Mark ];
-  Element_2319374 -> Element_17556362
+  Element_2319374 -> Element_17562362
       [ label=Converted_Or_Qualified_Expression ];
   Element_2319374
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
@@ -311,7 +311,7 @@ digraph "complex.adt" {
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_QUALIFIED_EXPRESSION</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2469087</TD></TR>
           <TR><TD ALIGN="LEFT">Converted_Or_Qualified_Subtype_Mark         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2317237</TD></TR>
-          <TR><TD ALIGN="LEFT">Converted_Or_Qualified_Expression         </TD><TD> = </TD><TD ALIGN="LEFT">Element_17556362</TD></TR>
+          <TR><TD ALIGN="LEFT">Converted_Or_Qualified_Expression         </TD><TD> = </TD><TD ALIGN="LEFT">Element_17562362</TD></TR>
           </TABLE>> ];
   Element_2317237
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
@@ -327,13 +327,13 @@ digraph "complex.adt" {
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2582057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2615082</TD></TR>
           </TABLE>> ];
-  Element_17556362 -> Element_2323383
+  Element_17562362 -> Element_2323383
       [ label="Record_Component_Associations ( 1)" ];
-  Element_17556362 -> Element_2331383
+  Element_17562362 -> Element_2331383
       [ label="Record_Component_Associations ( 2)" ];
-  Element_17556362
+  Element_17562362
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
-          <TR><TD COLSPAN="3">Element_17556362</TD></TR>
+          <TR><TD COLSPAN="3">Element_17562362</TD></TR>
           <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_EXPRESSION</TD></TR>
           <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT"> 1913140489</TD></TR>
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2319374</TD></TR>
@@ -350,7 +350,7 @@ digraph "complex.adt" {
           <TR><TD COLSPAN="3">Element_2323383</TD></TR>
           <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_ASSOCIATION</TD></TR>
           <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT"> 1913143209</TD></TR>
-          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_17556362</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_17562362</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Complex.adb - 8:19 .. 8:33</TD></TR>
           <TR><TD ALIGN="LEFT">Association_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_RECORD_COMPONENT_ASSOCIATION</TD></TR>
           <TR><TD ALIGN="LEFT">Component_Expression      </TD><TD> = </TD><TD ALIGN="LEFT">Element_2323262</TD></TR>
@@ -511,7 +511,7 @@ digraph "complex.adt" {
           <TR><TD COLSPAN="3">Element_2331383</TD></TR>
           <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_ASSOCIATION</TD></TR>
           <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT"> 1913143213</TD></TR>
-          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_17556362</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_17562362</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Complex.adb - 8:36 .. 8:50</TD></TR>
           <TR><TD ALIGN="LEFT">Association_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_RECORD_COMPONENT_ASSOCIATION</TD></TR>
           <TR><TD ALIGN="LEFT">Component_Expression      </TD><TD> = </TD><TD ALIGN="LEFT">Element_2331262</TD></TR>
@@ -1130,7 +1130,7 @@ digraph "complex.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Complex.adb - 28:3 .. 28:11</TD></TR>
           <TR><TD ALIGN="LEFT">Statement_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_PROCEDURE_CALL_STATEMENT</TD></TR>
           <TR><TD ALIGN="LEFT">Called_Name   </TD><TD> = </TD><TD ALIGN="LEFT">Element_2418237</TD></TR>
-          <TR><TD ALIGN="LEFT">Corresponding_Called_Entity       </TD><TD> = </TD><TD ALIGN="LEFT">Element_5687103</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Called_Entity       </TD><TD> = </TD><TD ALIGN="LEFT">Element_5691103</TD></TR>
           <TR><TD ALIGN="LEFT">Call_Statement_Parameters ( 1)        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2420385</TD></TR>
           </TABLE>> ];
   Element_2418237
@@ -1143,9 +1143,9 @@ digraph "complex.adt" {
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
           <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">Put</TD></TR>
-          <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_5669057</TD></TR>
-          <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_5669057</TD></TR>
-          <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_5687103</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_5673057</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_5673057</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_5691103</TD></TR>
           </TABLE>> ];
   Element_2420385 -> Element_2420236
       [ label=Actual_Parameter ];
@@ -1184,7 +1184,7 @@ digraph "complex.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Complex.adb - 29:3 .. 29:25</TD></TR>
           <TR><TD ALIGN="LEFT">Statement_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_PROCEDURE_CALL_STATEMENT</TD></TR>
           <TR><TD ALIGN="LEFT">Called_Name   </TD><TD> = </TD><TD ALIGN="LEFT">Element_2422237</TD></TR>
-          <TR><TD ALIGN="LEFT">Corresponding_Called_Entity       </TD><TD> = </TD><TD ALIGN="LEFT">Element_5687103</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Called_Entity       </TD><TD> = </TD><TD ALIGN="LEFT">Element_5691103</TD></TR>
           <TR><TD ALIGN="LEFT">Call_Statement_Parameters ( 1)        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2425385</TD></TR>
           </TABLE>> ];
   Element_2422237
@@ -1197,9 +1197,9 @@ digraph "complex.adt" {
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
           <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">Put</TD></TR>
-          <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_5669057</TD></TR>
-          <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_5669057</TD></TR>
-          <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_5687103</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_5673057</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_5673057</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_5691103</TD></TR>
           </TABLE>> ];
   Element_2425385 -> Element_2425262
       [ label=Actual_Parameter ];
@@ -1346,7 +1346,7 @@ digraph "complex.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Complex.adb - 30:3 .. 30:13</TD></TR>
           <TR><TD ALIGN="LEFT">Statement_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_PROCEDURE_CALL_STATEMENT</TD></TR>
           <TR><TD ALIGN="LEFT">Called_Name   </TD><TD> = </TD><TD ALIGN="LEFT">Element_2430237</TD></TR>
-          <TR><TD ALIGN="LEFT">Corresponding_Called_Entity       </TD><TD> = </TD><TD ALIGN="LEFT">Element_5687103</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Called_Entity       </TD><TD> = </TD><TD ALIGN="LEFT">Element_5691103</TD></TR>
           <TR><TD ALIGN="LEFT">Call_Statement_Parameters ( 1)        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2431385</TD></TR>
           </TABLE>> ];
   Element_2430237
@@ -1359,9 +1359,9 @@ digraph "complex.adt" {
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
           <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">Put</TD></TR>
-          <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_5669057</TD></TR>
-          <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_5669057</TD></TR>
-          <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_5687103</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_5673057</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_5673057</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_5691103</TD></TR>
           </TABLE>> ];
   Element_2431385 -> Element_2431236
       [ label=Actual_Parameter ];
@@ -1400,7 +1400,7 @@ digraph "complex.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Complex.adb - 31:3 .. 31:25</TD></TR>
           <TR><TD ALIGN="LEFT">Statement_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_PROCEDURE_CALL_STATEMENT</TD></TR>
           <TR><TD ALIGN="LEFT">Called_Name   </TD><TD> = </TD><TD ALIGN="LEFT">Element_2433237</TD></TR>
-          <TR><TD ALIGN="LEFT">Corresponding_Called_Entity       </TD><TD> = </TD><TD ALIGN="LEFT">Element_5687103</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Called_Entity       </TD><TD> = </TD><TD ALIGN="LEFT">Element_5691103</TD></TR>
           <TR><TD ALIGN="LEFT">Call_Statement_Parameters ( 1)        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2436385</TD></TR>
           </TABLE>> ];
   Element_2433237
@@ -1413,9 +1413,9 @@ digraph "complex.adt" {
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
           <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">Put</TD></TR>
-          <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_5669057</TD></TR>
-          <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_5669057</TD></TR>
-          <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_5687103</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_5673057</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_5673057</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_5691103</TD></TR>
           </TABLE>> ];
   Element_2436385 -> Element_2436262
       [ label=Actual_Parameter ];
@@ -1562,7 +1562,7 @@ digraph "complex.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Complex.adb - 32:3 .. 32:12</TD></TR>
           <TR><TD ALIGN="LEFT">Statement_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_PROCEDURE_CALL_STATEMENT</TD></TR>
           <TR><TD ALIGN="LEFT">Called_Name   </TD><TD> = </TD><TD ALIGN="LEFT">Element_2441237</TD></TR>
-          <TR><TD ALIGN="LEFT">Corresponding_Called_Entity       </TD><TD> = </TD><TD ALIGN="LEFT">Element_5687103</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Called_Entity       </TD><TD> = </TD><TD ALIGN="LEFT">Element_5691103</TD></TR>
           <TR><TD ALIGN="LEFT">Call_Statement_Parameters ( 1)        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2442385</TD></TR>
           </TABLE>> ];
   Element_2441237
@@ -1575,9 +1575,9 @@ digraph "complex.adt" {
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
           <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">Put</TD></TR>
-          <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_5669057</TD></TR>
-          <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_5669057</TD></TR>
-          <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_5687103</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_5673057</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_5673057</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_5691103</TD></TR>
           </TABLE>> ];
   Element_2442385 -> Element_2442236
       [ label=Actual_Parameter ];
@@ -1603,7 +1603,7 @@ digraph "complex.adt" {
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_931082</TD></TR>
           <TR><TD ALIGN="LEFT">Value_Image   </TD><TD> = </TD><TD ALIGN="LEFT">""i)""</TD></TR>
           </TABLE>> ];
-  Unit_3 -> Element_2641112
+  Unit_3 -> Element_2645112
       [ label=Unit_Declaration ];
   Unit_3
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
@@ -1621,35 +1621,35 @@ digraph "complex.adt" {
           <TR><TD ALIGN="LEFT">Object_Name   </TD><TD> = </TD><TD ALIGN="LEFT"></TD></TR>
           <TR><TD ALIGN="LEFT">Object_Form   </TD><TD> = </TD><TD ALIGN="LEFT"></TD></TR>
           <TR><TD ALIGN="LEFT">Compilation_Command_Line_Options         </TD><TD> = </TD><TD ALIGN="LEFT">-gnatc -gnatt -gnatws -gnatyN -mtune=generic -march=x86-64</TD></TR>
-          <TR><TD ALIGN="LEFT">Unit_Declaration     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2641112</TD></TR>
+          <TR><TD ALIGN="LEFT">Unit_Declaration     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2645112</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Parent_Declaration         </TD><TD> = </TD><TD ALIGN="LEFT">Unit_1</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Body     </TD><TD> = </TD><TD ALIGN="LEFT">Unit_2</TD></TR>
           </TABLE>> ];
-  Element_2641112 -> Element_2454057
+  Element_2645112 -> Element_2454057
       [ label="Names ( 1)" ];
-  Element_2641112 -> Element_2469087
+  Element_2645112 -> Element_2469087
       [ label="Visible_Part_Declarative_Items ( 1)" ];
-  Element_2641112 -> Element_2485092
+  Element_2645112 -> Element_2485092
       [ label="Visible_Part_Declarative_Items ( 2)" ];
-  Element_2641112 -> Element_2515104
+  Element_2645112 -> Element_2515104
       [ label="Visible_Part_Declarative_Items ( 3)" ];
-  Element_2641112 -> Element_2534104
+  Element_2645112 -> Element_2534104
       [ label="Visible_Part_Declarative_Items ( 4)" ];
-  Element_2641112 -> Element_2553104
+  Element_2645112 -> Element_2553104
       [ label="Visible_Part_Declarative_Items ( 5)" ];
-  Element_2641112 -> Element_2563104
+  Element_2645112 -> Element_2563104
       [ label="Visible_Part_Declarative_Items ( 6)" ];
-  Element_2641112 -> Element_2581103
+  Element_2645112 -> Element_2581103
       [ label="Visible_Part_Declarative_Items ( 7)" ];
-  Element_2641112 -> Element_2615082
+  Element_2645112 -> Element_2615082
       [ label="Private_Part_Declarative_Items ( 1)" ];
-  Element_2641112 -> Element_2624091
+  Element_2645112 -> Element_2624091
       [ label="Private_Part_Declarative_Items ( 2)" ];
-  Element_2641112 -> Element_2636091
+  Element_2645112 -> Element_2636091
       [ label="Private_Part_Declarative_Items ( 3)" ];
-  Element_2641112
+  Element_2645112
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
-          <TR><TD COLSPAN="3">Element_2641112</TD></TR>
+          <TR><TD COLSPAN="3">Element_2645112</TD></TR>
           <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_DECLARATION</TD></TR>
           <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT">-2137259327</TD></TR>
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
@@ -1657,9 +1657,9 @@ digraph "complex.adt" {
           <TR><TD ALIGN="LEFT">Declaration_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_PACKAGE_DECLARATION</TD></TR>
           <TR><TD ALIGN="LEFT">Declaration_Origin     </TD><TD> = </TD><TD ALIGN="LEFT">AN_EXPLICIT_DECLARATION</TD></TR>
           <TR><TD ALIGN="LEFT">Names ( 1)   </TD><TD> = </TD><TD ALIGN="LEFT">Element_2454057</TD></TR>
-          <TR><TD ALIGN="LEFT">Corresponding_End_Name      </TD><TD> = </TD><TD ALIGN="LEFT">Element_2642237</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_End_Name      </TD><TD> = </TD><TD ALIGN="LEFT">Element_2646237</TD></TR>
           <TR><TD ALIGN="LEFT">Is_Name_Repeated     </TD><TD> = </TD><TD ALIGN="LEFT">TRUE</TD></TR>
-          <TR><TD ALIGN="LEFT">Corresponding_Declaration       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2641112</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Declaration       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2645112</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Body     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2287113</TD></TR>
           <TR><TD ALIGN="LEFT">Visible_Part_Declarative_Items ( 1)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2469087</TD></TR>
           <TR><TD ALIGN="LEFT">Visible_Part_Declarative_Items ( 2)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2485092</TD></TR>
@@ -1678,7 +1678,7 @@ digraph "complex.adt" {
           <TR><TD COLSPAN="3">Element_2454057</TD></TR>
           <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_DEFINING_NAME</TD></TR>
           <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT">-2138156351</TD></TR>
-          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2641112</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2645112</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Complex.ads - 1:9 .. 1:15</TD></TR>
           <TR><TD ALIGN="LEFT">Defining_Name_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_DEFINING_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Defining_Name_Image     </TD><TD> = </TD><TD ALIGN="LEFT">"Complex"</TD></TR>
@@ -1692,7 +1692,7 @@ digraph "complex.adt" {
           <TR><TD COLSPAN="3">Element_2469087</TD></TR>
           <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_DECLARATION</TD></TR>
           <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT"> 1617260976</TD></TR>
-          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2641112</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2645112</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Complex.ads - 3:3 .. 3:26</TD></TR>
           <TR><TD ALIGN="LEFT">Declaration_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_PRIVATE_TYPE_DECLARATION</TD></TR>
           <TR><TD ALIGN="LEFT">Declaration_Origin     </TD><TD> = </TD><TD ALIGN="LEFT">AN_EXPLICIT_DECLARATION</TD></TR>
@@ -1739,7 +1739,7 @@ digraph "complex.adt" {
           <TR><TD COLSPAN="3">Element_2485092</TD></TR>
           <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_DECLARATION</TD></TR>
           <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT"> 405368940</TD></TR>
-          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2641112</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2645112</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Complex.ads - 5:3 .. 5:29</TD></TR>
           <TR><TD ALIGN="LEFT">Declaration_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_DEFERRED_CONSTANT_DECLARATION</TD></TR>
           <TR><TD ALIGN="LEFT">Declaration_Origin     </TD><TD> = </TD><TD ALIGN="LEFT">AN_EXPLICIT_DECLARATION</TD></TR>
@@ -1805,7 +1805,7 @@ digraph "complex.adt" {
           <TR><TD COLSPAN="3">Element_2515104</TD></TR>
           <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_DECLARATION</TD></TR>
           <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT">-2096614387</TD></TR>
-          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2641112</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2645112</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Complex.ads - 8:3 .. 10:32</TD></TR>
           <TR><TD ALIGN="LEFT">Declaration_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_FUNCTION_DECLARATION</TD></TR>
           <TR><TD ALIGN="LEFT">Declaration_Origin     </TD><TD> = </TD><TD ALIGN="LEFT">AN_EXPLICIT_DECLARATION</TD></TR>
@@ -1907,7 +1907,7 @@ digraph "complex.adt" {
           <TR><TD COLSPAN="3">Element_2534104</TD></TR>
           <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_DECLARATION</TD></TR>
           <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT"> 1813539232</TD></TR>
-          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2641112</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2645112</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Complex.ads - 13:3 .. 13:47</TD></TR>
           <TR><TD ALIGN="LEFT">Declaration_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_FUNCTION_DECLARATION</TD></TR>
           <TR><TD ALIGN="LEFT">Declaration_Origin     </TD><TD> = </TD><TD ALIGN="LEFT">AN_EXPLICIT_DECLARATION</TD></TR>
@@ -1995,7 +1995,7 @@ digraph "complex.adt" {
           <TR><TD COLSPAN="3">Element_2553104</TD></TR>
           <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_DECLARATION</TD></TR>
           <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT"> 226693172</TD></TR>
-          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2641112</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2645112</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Complex.ads - 16:3 .. 16:47</TD></TR>
           <TR><TD ALIGN="LEFT">Declaration_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_FUNCTION_DECLARATION</TD></TR>
           <TR><TD ALIGN="LEFT">Declaration_Origin     </TD><TD> = </TD><TD ALIGN="LEFT">AN_EXPLICIT_DECLARATION</TD></TR>
@@ -2081,7 +2081,7 @@ digraph "complex.adt" {
           <TR><TD COLSPAN="3">Element_2563104</TD></TR>
           <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_DECLARATION</TD></TR>
           <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT"> 56673421</TD></TR>
-          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2641112</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2645112</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Complex.ads - 18:3 .. 18:33</TD></TR>
           <TR><TD ALIGN="LEFT">Declaration_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_FUNCTION_DECLARATION</TD></TR>
           <TR><TD ALIGN="LEFT">Declaration_Origin     </TD><TD> = </TD><TD ALIGN="LEFT">AN_EXPLICIT_DECLARATION</TD></TR>
@@ -2124,7 +2124,7 @@ digraph "complex.adt" {
           <TR><TD COLSPAN="3">Element_2581103</TD></TR>
           <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_DECLARATION</TD></TR>
           <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT"> 953692483</TD></TR>
-          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2641112</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2645112</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Complex.ads - 20:3 .. 20:32</TD></TR>
           <TR><TD ALIGN="LEFT">Declaration_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_PROCEDURE_DECLARATION</TD></TR>
           <TR><TD ALIGN="LEFT">Declaration_Origin     </TD><TD> = </TD><TD ALIGN="LEFT">AN_EXPLICIT_DECLARATION</TD></TR>
@@ -2194,7 +2194,7 @@ digraph "complex.adt" {
           <TR><TD COLSPAN="3">Element_2615082</TD></TR>
           <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_DECLARATION</TD></TR>
           <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT"> 688751384</TD></TR>
-          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2641112</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2645112</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Complex.ads - 24:3 .. 27:18</TD></TR>
           <TR><TD ALIGN="LEFT">Declaration_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">AN_ORDINARY_TYPE_DECLARATION</TD></TR>
           <TR><TD ALIGN="LEFT">Declaration_Origin     </TD><TD> = </TD><TD ALIGN="LEFT">AN_EXPLICIT_DECLARATION</TD></TR>
@@ -2249,7 +2249,7 @@ digraph "complex.adt" {
       [ label="Names ( 1)" ];
   Element_2600099 -> Element_2601183
       [ label=Object_Declaration_View ];
-  Element_2600099 -> Element_17507235
+  Element_2600099 -> Element_17511235
       [ label=Initialization_Expression ];
   Element_2600099
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
@@ -2262,7 +2262,7 @@ digraph "complex.adt" {
           <TR><TD ALIGN="LEFT">Declaration_Origin     </TD><TD> = </TD><TD ALIGN="LEFT">AN_EXPLICIT_DECLARATION</TD></TR>
           <TR><TD ALIGN="LEFT">Names ( 1)   </TD><TD> = </TD><TD ALIGN="LEFT">Element_2592057</TD></TR>
           <TR><TD ALIGN="LEFT">Object_Declaration_View      </TD><TD> = </TD><TD ALIGN="LEFT">Element_2601183</TD></TR>
-          <TR><TD ALIGN="LEFT">Initialization_Expression       </TD><TD> = </TD><TD ALIGN="LEFT">Element_17507235</TD></TR>
+          <TR><TD ALIGN="LEFT">Initialization_Expression       </TD><TD> = </TD><TD ALIGN="LEFT">Element_17511235</TD></TR>
           </TABLE>> ];
   Element_2592057
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
@@ -2313,9 +2313,9 @@ digraph "complex.adt" {
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_79057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_925082</TD></TR>
           </TABLE>> ];
-  Element_17507235
+  Element_17511235
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
-          <TR><TD COLSPAN="3">Element_17507235</TD></TR>
+          <TR><TD COLSPAN="3">Element_17511235</TD></TR>
           <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_EXPRESSION</TD></TR>
           <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT">-1160724084</TD></TR>
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2600099</TD></TR>
@@ -2328,7 +2328,7 @@ digraph "complex.adt" {
       [ label="Names ( 1)" ];
   Element_2611099 -> Element_2612183
       [ label=Object_Declaration_View ];
-  Element_2611099 -> Element_17509235
+  Element_2611099 -> Element_17513235
       [ label=Initialization_Expression ];
   Element_2611099
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
@@ -2341,7 +2341,7 @@ digraph "complex.adt" {
           <TR><TD ALIGN="LEFT">Declaration_Origin     </TD><TD> = </TD><TD ALIGN="LEFT">AN_EXPLICIT_DECLARATION</TD></TR>
           <TR><TD ALIGN="LEFT">Names ( 1)   </TD><TD> = </TD><TD ALIGN="LEFT">Element_2603057</TD></TR>
           <TR><TD ALIGN="LEFT">Object_Declaration_View      </TD><TD> = </TD><TD ALIGN="LEFT">Element_2612183</TD></TR>
-          <TR><TD ALIGN="LEFT">Initialization_Expression       </TD><TD> = </TD><TD ALIGN="LEFT">Element_17509235</TD></TR>
+          <TR><TD ALIGN="LEFT">Initialization_Expression       </TD><TD> = </TD><TD ALIGN="LEFT">Element_17513235</TD></TR>
           </TABLE>> ];
   Element_2603057
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
@@ -2392,9 +2392,9 @@ digraph "complex.adt" {
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_79057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_925082</TD></TR>
           </TABLE>> ];
-  Element_17509235
+  Element_17513235
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
-          <TR><TD COLSPAN="3">Element_17509235</TD></TR>
+          <TR><TD COLSPAN="3">Element_17513235</TD></TR>
           <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_EXPRESSION</TD></TR>
           <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT">-1654103866</TD></TR>
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2611099</TD></TR>
@@ -2407,20 +2407,20 @@ digraph "complex.adt" {
       [ label="Names ( 1)" ];
   Element_2624091 -> Element_2623176
       [ label=Object_Declaration_View ];
-  Element_2624091 -> Element_17522362
+  Element_2624091 -> Element_17526362
       [ label=Initialization_Expression ];
   Element_2624091
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2624091</TD></TR>
           <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_DECLARATION</TD></TR>
           <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT">-378770408</TD></TR>
-          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2641112</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2645112</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Complex.ads - 29:3 .. 29:37</TD></TR>
           <TR><TD ALIGN="LEFT">Declaration_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_CONSTANT_DECLARATION</TD></TR>
           <TR><TD ALIGN="LEFT">Declaration_Origin     </TD><TD> = </TD><TD ALIGN="LEFT">AN_EXPLICIT_DECLARATION</TD></TR>
           <TR><TD ALIGN="LEFT">Names ( 1)   </TD><TD> = </TD><TD ALIGN="LEFT">Element_2616057</TD></TR>
           <TR><TD ALIGN="LEFT">Object_Declaration_View      </TD><TD> = </TD><TD ALIGN="LEFT">Element_2623176</TD></TR>
-          <TR><TD ALIGN="LEFT">Initialization_Expression       </TD><TD> = </TD><TD ALIGN="LEFT">Element_17522362</TD></TR>
+          <TR><TD ALIGN="LEFT">Initialization_Expression       </TD><TD> = </TD><TD ALIGN="LEFT">Element_17526362</TD></TR>
           </TABLE>> ];
   Element_2616057
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
@@ -2459,63 +2459,63 @@ digraph "complex.adt" {
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2582057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2615082</TD></TR>
           </TABLE>> ];
-  Element_17522362 -> Element_17512383
+  Element_17526362 -> Element_17516383
       [ label="Record_Component_Associations ( 1)" ];
-  Element_17522362 -> Element_17517383
+  Element_17526362 -> Element_17521383
       [ label="Record_Component_Associations ( 2)" ];
-  Element_17522362
+  Element_17526362
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
-          <TR><TD COLSPAN="3">Element_17522362</TD></TR>
+          <TR><TD COLSPAN="3">Element_17526362</TD></TR>
           <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_EXPRESSION</TD></TR>
           <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT">-374772712</TD></TR>
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2624091</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Complex.ads - 29:27 .. 29:36</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_RECORD_AGGREGATE</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2469087</TD></TR>
-          <TR><TD ALIGN="LEFT">Record_Component_Associations ( 1)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_17512383</TD></TR>
-          <TR><TD ALIGN="LEFT">Record_Component_Associations ( 2)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_17517383</TD></TR>
+          <TR><TD ALIGN="LEFT">Record_Component_Associations ( 1)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_17516383</TD></TR>
+          <TR><TD ALIGN="LEFT">Record_Component_Associations ( 2)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_17521383</TD></TR>
           </TABLE>> ];
-  Element_17512383 -> Element_17512235
+  Element_17516383 -> Element_17516235
       [ label=Component_Expression ];
-  Element_17512383
+  Element_17516383
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
-          <TR><TD COLSPAN="3">Element_17512383</TD></TR>
+          <TR><TD COLSPAN="3">Element_17516383</TD></TR>
           <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_ASSOCIATION</TD></TR>
           <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT">-369259496</TD></TR>
-          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_17522362</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_17526362</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Complex.ads - 29:28 .. 29:30</TD></TR>
           <TR><TD ALIGN="LEFT">Association_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_RECORD_COMPONENT_ASSOCIATION</TD></TR>
-          <TR><TD ALIGN="LEFT">Component_Expression      </TD><TD> = </TD><TD ALIGN="LEFT">Element_17512235</TD></TR>
+          <TR><TD ALIGN="LEFT">Component_Expression      </TD><TD> = </TD><TD ALIGN="LEFT">Element_17516235</TD></TR>
           </TABLE>> ];
-  Element_17512235
+  Element_17516235
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
-          <TR><TD COLSPAN="3">Element_17512235</TD></TR>
+          <TR><TD COLSPAN="3">Element_17516235</TD></TR>
           <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_EXPRESSION</TD></TR>
           <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT">-340947944</TD></TR>
-          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_17512383</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_17516383</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Complex.ads - 29:28 .. 29:30</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_REAL_LITERAL</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_82</TD></TR>
           <TR><TD ALIGN="LEFT">Value_Image   </TD><TD> = </TD><TD ALIGN="LEFT">0.0</TD></TR>
           </TABLE>> ];
-  Element_17517383 -> Element_17517235
+  Element_17521383 -> Element_17521235
       [ label=Component_Expression ];
-  Element_17517383
+  Element_17521383
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
-          <TR><TD COLSPAN="3">Element_17517383</TD></TR>
+          <TR><TD COLSPAN="3">Element_17521383</TD></TR>
           <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_ASSOCIATION</TD></TR>
           <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT">-369349608</TD></TR>
-          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_17522362</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_17526362</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Complex.ads - 29:33 .. 29:35</TD></TR>
           <TR><TD ALIGN="LEFT">Association_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_RECORD_COMPONENT_ASSOCIATION</TD></TR>
-          <TR><TD ALIGN="LEFT">Component_Expression      </TD><TD> = </TD><TD ALIGN="LEFT">Element_17517235</TD></TR>
+          <TR><TD ALIGN="LEFT">Component_Expression      </TD><TD> = </TD><TD ALIGN="LEFT">Element_17521235</TD></TR>
           </TABLE>> ];
-  Element_17517235
+  Element_17521235
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
-          <TR><TD COLSPAN="3">Element_17517235</TD></TR>
+          <TR><TD COLSPAN="3">Element_17521235</TD></TR>
           <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_EXPRESSION</TD></TR>
           <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT">-341038056</TD></TR>
-          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_17517383</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_17521383</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Complex.ads - 29:33 .. 29:35</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_REAL_LITERAL</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_82</TD></TR>
@@ -2525,20 +2525,20 @@ digraph "complex.adt" {
       [ label="Names ( 1)" ];
   Element_2636091 -> Element_2635176
       [ label=Object_Declaration_View ];
-  Element_2636091 -> Element_17534362
+  Element_2636091 -> Element_17540362
       [ label=Initialization_Expression ];
   Element_2636091
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2636091</TD></TR>
           <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_DECLARATION</TD></TR>
           <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT"> 2025207308</TD></TR>
-          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2641112</TD></TR>
-          <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Complex.ads - 30:3 .. 30:39</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2645112</TD></TR>
+          <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Complex.ads - 30:3 .. 30:51</TD></TR>
           <TR><TD ALIGN="LEFT">Declaration_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_CONSTANT_DECLARATION</TD></TR>
           <TR><TD ALIGN="LEFT">Declaration_Origin     </TD><TD> = </TD><TD ALIGN="LEFT">AN_EXPLICIT_DECLARATION</TD></TR>
           <TR><TD ALIGN="LEFT">Names ( 1)   </TD><TD> = </TD><TD ALIGN="LEFT">Element_2628057</TD></TR>
           <TR><TD ALIGN="LEFT">Object_Declaration_View      </TD><TD> = </TD><TD ALIGN="LEFT">Element_2635176</TD></TR>
-          <TR><TD ALIGN="LEFT">Initialization_Expression       </TD><TD> = </TD><TD ALIGN="LEFT">Element_17534362</TD></TR>
+          <TR><TD ALIGN="LEFT">Initialization_Expression       </TD><TD> = </TD><TD ALIGN="LEFT">Element_17540362</TD></TR>
           </TABLE>> ];
   Element_2628057
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
@@ -2577,64 +2577,98 @@ digraph "complex.adt" {
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2582057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2615082</TD></TR>
           </TABLE>> ];
-  Element_17534362 -> Element_17524383
+  Element_17540362 -> Element_2639383
       [ label="Record_Component_Associations ( 1)" ];
-  Element_17534362 -> Element_17529383
+  Element_17540362 -> Element_2642383
       [ label="Record_Component_Associations ( 2)" ];
-  Element_17534362
+  Element_17540362
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
-          <TR><TD COLSPAN="3">Element_17534362</TD></TR>
+          <TR><TD COLSPAN="3">Element_17540362</TD></TR>
           <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_EXPRESSION</TD></TR>
           <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT"> 2027214348</TD></TR>
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2636091</TD></TR>
-          <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Complex.ads - 30:29 .. 30:38</TD></TR>
+          <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Complex.ads - 30:29 .. 30:50</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_RECORD_AGGREGATE</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2469087</TD></TR>
-          <TR><TD ALIGN="LEFT">Record_Component_Associations ( 1)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_17524383</TD></TR>
-          <TR><TD ALIGN="LEFT">Record_Component_Associations ( 2)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_17529383</TD></TR>
+          <TR><TD ALIGN="LEFT">Record_Component_Associations ( 1)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2639383</TD></TR>
+          <TR><TD ALIGN="LEFT">Record_Component_Associations ( 2)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2642383</TD></TR>
           </TABLE>> ];
-  Element_17524383 -> Element_17524235
+  Element_2639383 -> Element_2637237
+      [ label="Record_Component_Choices ( 1)" ];
+  Element_2639383 -> Element_17528235
       [ label=Component_Expression ];
-  Element_17524383
+  Element_2639383
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
-          <TR><TD COLSPAN="3">Element_17524383</TD></TR>
+          <TR><TD COLSPAN="3">Element_2639383</TD></TR>
           <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_ASSOCIATION</TD></TR>
-          <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT"> 2029970956</TD></TR>
-          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_17534362</TD></TR>
-          <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Complex.ads - 30:30 .. 30:32</TD></TR>
+          <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT"> 2029917708</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_17540362</TD></TR>
+          <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Complex.ads - 30:30 .. 30:38</TD></TR>
           <TR><TD ALIGN="LEFT">Association_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_RECORD_COMPONENT_ASSOCIATION</TD></TR>
-          <TR><TD ALIGN="LEFT">Component_Expression      </TD><TD> = </TD><TD ALIGN="LEFT">Element_17524235</TD></TR>
+          <TR><TD ALIGN="LEFT">Record_Component_Choices ( 1)        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2637237</TD></TR>
+          <TR><TD ALIGN="LEFT">Component_Expression      </TD><TD> = </TD><TD ALIGN="LEFT">Element_17528235</TD></TR>
           </TABLE>> ];
-  Element_17524235
+  Element_2637237
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
-          <TR><TD COLSPAN="3">Element_17524235</TD></TR>
+          <TR><TD COLSPAN="3">Element_2637237</TD></TR>
           <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_EXPRESSION</TD></TR>
-          <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT"> 2044126732</TD></TR>
-          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_17524383</TD></TR>
-          <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Complex.ads - 30:30 .. 30:32</TD></TR>
+          <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT"> 2044388876</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2639383</TD></TR>
+          <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Complex.ads - 30:30 .. 30:31</TD></TR>
+          <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_IDENTIFIER</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
+          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">Re</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2592057</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2592057</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2600099</TD></TR>
+          </TABLE>> ];
+  Element_17528235
+      [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
+          <TR><TD COLSPAN="3">Element_17528235</TD></TR>
+          <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_EXPRESSION</TD></TR>
+          <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT"> 2044085772</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2639383</TD></TR>
+          <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Complex.ads - 30:36 .. 30:38</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_REAL_LITERAL</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_82</TD></TR>
           <TR><TD ALIGN="LEFT">Value_Image   </TD><TD> = </TD><TD ALIGN="LEFT">0.0</TD></TR>
           </TABLE>> ];
-  Element_17529383 -> Element_17529235
+  Element_2642383 -> Element_2641237
+      [ label="Record_Component_Choices ( 1)" ];
+  Element_2642383 -> Element_17534235
       [ label=Component_Expression ];
-  Element_17529383
+  Element_2642383
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
-          <TR><TD COLSPAN="3">Element_17529383</TD></TR>
+          <TR><TD COLSPAN="3">Element_2642383</TD></TR>
           <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_ASSOCIATION</TD></TR>
-          <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT"> 2029925900</TD></TR>
-          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_17534362</TD></TR>
-          <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Complex.ads - 30:35 .. 30:37</TD></TR>
+          <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT"> 2029962764</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_17540362</TD></TR>
+          <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Complex.ads - 30:41 .. 30:49</TD></TR>
           <TR><TD ALIGN="LEFT">Association_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_RECORD_COMPONENT_ASSOCIATION</TD></TR>
-          <TR><TD ALIGN="LEFT">Component_Expression      </TD><TD> = </TD><TD ALIGN="LEFT">Element_17529235</TD></TR>
+          <TR><TD ALIGN="LEFT">Record_Component_Choices ( 1)        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2641237</TD></TR>
+          <TR><TD ALIGN="LEFT">Component_Expression      </TD><TD> = </TD><TD ALIGN="LEFT">Element_17534235</TD></TR>
           </TABLE>> ];
-  Element_17529235
+  Element_2641237
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
-          <TR><TD COLSPAN="3">Element_17529235</TD></TR>
+          <TR><TD COLSPAN="3">Element_2641237</TD></TR>
           <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_EXPRESSION</TD></TR>
-          <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT"> 2044081676</TD></TR>
-          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_17529383</TD></TR>
-          <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Complex.ads - 30:35 .. 30:37</TD></TR>
+          <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT"> 2044368396</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2642383</TD></TR>
+          <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Complex.ads - 30:41 .. 30:42</TD></TR>
+          <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_IDENTIFIER</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
+          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">Im</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2603057</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2603057</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2611099</TD></TR>
+          </TABLE>> ];
+  Element_17534235
+      [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
+          <TR><TD COLSPAN="3">Element_17534235</TD></TR>
+          <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_EXPRESSION</TD></TR>
+          <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT"> 2044130828</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2642383</TD></TR>
+          <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Complex.ads - 30:47 .. 30:49</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_REAL_LITERAL</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_82</TD></TR>
           <TR><TD ALIGN="LEFT">Value_Image   </TD><TD> = </TD><TD ALIGN="LEFT">0.0</TD></TR>

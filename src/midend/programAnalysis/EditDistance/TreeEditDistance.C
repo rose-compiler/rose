@@ -50,7 +50,7 @@ struct SequenceGenerationTraversal: SgTopDownBottomUpProcessing<size_t, Sawyer::
         return depth+1;
     }
 
-    Sawyer::Nothing evaluateSynthesizedAttribute(SgNode*, size_t depth, SubTreeSynthesizedAttributes) override {
+    Sawyer::Nothing evaluateSynthesizedAttribute(SgNode*, size_t /*depth*/, SubTreeSynthesizedAttributes) override {
         return Sawyer::Nothing();
     }
 };
@@ -289,7 +289,7 @@ Edit::print(std::ostream &out) const {
     }
     out <<" cost=" <<cost;
 }
-    
+
 } // namespace
 } // namespace
 } // namespace

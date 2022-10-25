@@ -69,7 +69,7 @@ public:
 //                                      Semantic values
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Shared-ownership pointer to a multi-semantic value. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer to a multi-semantic value. */
 typedef Sawyer::SharedPointer<class SValue> SValuePtr;
 
 /** Type of values manipulated by the MultiSemantics domain.
@@ -146,7 +146,7 @@ public:
         return SValuePtr(new SValue(nbits));
     }
     
-    virtual BaseSemantics::SValuePtr copy(size_t new_width=0) const override {
+    virtual BaseSemantics::SValuePtr copy(size_t /*new_width*/=0) const override {
         return BaseSemantics::SValuePtr(new SValue(*this));
     }
     
@@ -224,7 +224,7 @@ public:
 
 typedef void RegisterState;
 
-/** Shared-ownership pointer to a multi-semantics register state. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer to a multi-semantics register state. */
 typedef boost::shared_ptr<void> RegisterStatePtr;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -233,7 +233,7 @@ typedef boost::shared_ptr<void> RegisterStatePtr;
 
 typedef void MemoryState;
 
-/** Shared-ownership pointer to a multi-semantics memory state. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer to a multi-semantics memory state. */
 typedef boost::shared_ptr<void> MemoryStatePtr;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -242,14 +242,14 @@ typedef boost::shared_ptr<void> MemoryStatePtr;
 
 typedef void State;
 
-/** Shared-ownership pointer to a multi-semantics state. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer to a multi-semantics state. */
 typedef boost::shared_ptr<void> StatePtr;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      RISC operators
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Shared-ownership pointer to multi-semantics RISC operators. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer to multi-semantics RISC operators. */
 typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
 /** Defines RISC operators for the MultiSemantics domain.
@@ -349,11 +349,11 @@ public:
 
     /** Called before each subdomain RISC operation.  The default implementation does nothing, but subclasses can override this
      *  to do interesting things. The @p idx is the index of the subdomain that's about to be called. */
-    virtual void before(size_t idx) {}
+    virtual void before(size_t /*idx*/) {}
 
     /** Called after each subdomain RISC operation.  The default implementation does nothing, but subclasses can override this
      *  to do interesting things. The @p idx is the index of the subdomain that was just called. */
-    virtual void after(size_t idx) {}
+    virtual void after(size_t /*idx*/) {}
 
     /** Convenience function for SValue::create_empty(). */
     virtual SValuePtr svalue_empty(size_t nbits) {

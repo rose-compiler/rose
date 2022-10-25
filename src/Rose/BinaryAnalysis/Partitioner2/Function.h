@@ -25,7 +25,7 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
-/** Shared-ownership pointer for function. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer for function. */
 typedef Sawyer::SharedPointer<class Function> FunctionPtr;
 
 /** Describes one function.
@@ -196,7 +196,7 @@ public:
      *  addresses rather than basic blocks.  This allows a function to indicate which blocks will be ultimately part of its
      *  definition without requiring that the blocks actually exist.  When a detached function is inserted into the CFG then
      *  basic block placeholders will be created for any basic blocks that don't exist in the CFG (see @ref
-     *  Partitioner::insertFunction). */
+     *  Partitioner::attachFunction). */
     const std::set<rose_addr_t>& basicBlockAddresses() const { return bblockVas_; }
 
     /** Predicate to test whether a function owns a basic block address. */
@@ -279,7 +279,7 @@ public:
      *  This function is a thunk if it is marked as such in its reason codes via @ref SgAsmFunction::FUNC_THUNK and it has
      *  exactly one basic block.
      *
-     *  See also, @ref Partitioner::functionThunkTarget that is a stronger predicate and also returns the address of the thunk
+     *  See also, @ref Partitioner::functionIsThunk that is a stronger predicate and also returns the address of the thunk
      *  target. */
     bool isThunk() const;
 

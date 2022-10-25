@@ -1,5 +1,5 @@
 #include <featureTests.h>
-#ifdef ROSE_ENABLE_BINARY_ANALYSIS
+#ifdef ROSE_ENABLE_MODEL_CHECKER
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/ModelChecker/BasicBlockUnit.h>
 
@@ -88,8 +88,8 @@ BasicBlockUnit::toYamlHeader(const Settings::Ptr&, std::ostream &out, const std:
 }
 
 void
-BasicBlockUnit::toYamlSteps(const Settings::Ptr &settings, std::ostream &out, const std::string &prefix1,
-                            size_t stepOrigin, size_t maxSteps) const {
+BasicBlockUnit::toYamlSteps(const Settings::Ptr&, std::ostream &out, const std::string &prefix1, size_t /*stepOrigin*/,
+                            size_t maxSteps) const {
     // No lock necessary since the basic block pointer cannot be changed after construction. However, the BasicBlock API itself
     // might not be thread safe.
     ASSERT_not_null(bblock_);

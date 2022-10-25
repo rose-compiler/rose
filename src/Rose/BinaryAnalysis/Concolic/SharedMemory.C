@@ -9,6 +9,7 @@
 #include <Rose/BinaryAnalysis/Concolic/InputVariables.h>
 #include <Rose/BinaryAnalysis/Concolic/TestCase.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/SValue.h>
+#include <Rose/BinaryAnalysis/SymbolicExpression.h>
 
 using namespace Sawyer::Message::Common;
 
@@ -79,7 +80,7 @@ SharedMemoryCallback::hello(const std::string &myName, const SharedMemoryContext
             <<" (" <<StringUtility::plural(ctx.accessedVas.size(), "bytes") <<")\n";
         if (mlog[DEBUG] && ConcolicPhase::REPLAY == ctx.phase) {
             ASSERT_not_null(ctx.sharedMemoryEvent);
-            if (SymbolicExpr::Ptr value = ctx.sharedMemoryEvent->value()) {
+            if (SymbolicExpression::Ptr value = ctx.sharedMemoryEvent->value()) {
                 SAWYER_MESG(mlog[DEBUG]) <<"  value = " <<*value <<"\n";
             } else {
                 SAWYER_MESG(mlog[DEBUG]) <<"  no concrete value (treated as non-shared memory)\n";
@@ -92,8 +93,8 @@ void
 SharedMemoryCallback::normalRead(SharedMemoryContext &ctx) const {
     SAWYER_MESG(mlog[DEBUG]) <<"    canceled: this read will be treated as non-shared memory\n";
     ctx.ops->inputVariables()->deactivate(ctx.sharedMemoryEvent);
-    ctx.sharedMemoryEvent->variable(SymbolicExpr::Ptr());
-    ctx.valueRead = SymbolicExpr::Ptr();
+    ctx.sharedMemoryEvent->variable(SymbolicExpression::Ptr());
+    ctx.valueRead = SymbolicExpression::Ptr();
 }
 
 void
@@ -103,12 +104,12 @@ SharedMemoryCallback::notAnInput(SharedMemoryContext &ctx) const {
 }
 
 void
-SharedMemoryCallback::returns(SharedMemoryContext &ctx, const SymbolicExpr::Ptr &value) const {
+SharedMemoryCallback::returns(SharedMemoryContext &ctx, const SymbolicExpression::Ptr &value) const {
     ASSERT_not_null(value);
     SAWYER_MESG(mlog[DEBUG]) <<"    returning " <<*value <<"\n";
     if (value->isConstant()) {
         ctx.ops->inputVariables()->deactivate(ctx.sharedMemoryEvent);
-        ctx.sharedMemoryEvent->variable(SymbolicExpr::Ptr());
+        ctx.sharedMemoryEvent->variable(SymbolicExpression::Ptr());
         ctx.valueRead = value;
         SAWYER_MESG(mlog[DEBUG]) <<"    this shared memory read will not be treated as a test case input\n";
     } else {
@@ -118,17 +119,17 @@ SharedMemoryCallback::returns(SharedMemoryContext &ctx, const SymbolicExpr::Ptr 
 
 void
 SharedMemoryCallback::returns(SharedMemoryContext &ctx, const BS::SValue::Ptr &value) const {
-    SymbolicExpr::Ptr expr = IS::SymbolicSemantics::SValue::promote(value)->get_expression();
+    SymbolicExpression::Ptr expr = IS::SymbolicSemantics::SValue::promote(value)->get_expression();
     returns(ctx, expr);
 }
 
-SymbolicExpr::Ptr
+SymbolicExpression::Ptr
 SharedMemoryCallback::inputVariable(const SharedMemoryContext &ctx) const {
     return ctx.sharedMemoryEvent->inputVariable();
 }
 
 bool
-SharedMemoryCallback::operator()(bool handled, SharedMemoryContext &ctx) {
+SharedMemoryCallback::operator()(bool /*handled*/, SharedMemoryContext &ctx) {
     switch (ctx.phase) {
         case ConcolicPhase::REPLAY:
             playback(ctx);

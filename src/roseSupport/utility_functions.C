@@ -219,7 +219,6 @@ std::map<std::string, SgIncludeFile*> Rose::includeFileMapForUnparsing;
 // the header file.
 bool Rose::is_Ada_language        = false;
 bool Rose::is_C_language          = false;
-bool Rose::is_Cobol_language      = false;
 bool Rose::is_OpenMP_language     = false;
 bool Rose::is_UPC_language        = false;
 bool Rose::is_UPC_dynamic_threads = false;
@@ -529,12 +528,6 @@ std::string version_message() {
     ss <<"  --- C# analysis:                enabled\n";
 #else
     ss <<"  --- C# analysis:                disabled\n";
-#endif
-
-#ifdef ROSE_EXPERIMENTAL_COBAL_ROSE_CONNECTION
-    ss <<"  --- COBOL analysis:             enabled\n";
-#else
-    ss <<"  --- COBOL analysis:             disabled\n";
 #endif
 
 #ifdef ROSE_BUILD_CUDA_LANGUAGE_SUPPORT
@@ -1808,7 +1801,7 @@ Rose::containsString ( const std::string& masterString, const std::string& targe
    }
 
 void
-Rose::filterInputFile ( const string inputFileName, const string outputFileName )
+Rose::filterInputFile ( const string inputFileName, const string outputFileName ) // blame quinlan1
    {
   // This function filters the input file to remove ^M characters and expand tabs etc.
   // Any possible processing of the input file, before being compiled, should be done

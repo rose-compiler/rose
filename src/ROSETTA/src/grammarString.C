@@ -197,8 +197,10 @@ variableDeclaration ( string typeName, string variableName )
      return returnString;
    }
 
+// DQ (9/28/2022): Fixing compiler warning for argument not used.
+// string stringCopyConditional ( string typeName, string variableName, string copyVariableName )
 string
-stringCopyConditional ( string typeName, string variableName, string copyVariableName )
+stringCopyConditional ( string variableName, string copyVariableName )
    {
   // string returnString = "     " + typeName + " " + copyVariableName + " = NULL; \n"
      string returnString = "     if (" + variableName + " != NULL) \n"
@@ -262,8 +264,10 @@ namespace
 }
    
 
+// DQ (9/28/2022): Fixing compiler warning for argument not used.
+// string GrammarString::buildCopyMemberFunctionSetParentSource ( string copyString )
 string
-GrammarString::buildCopyMemberFunctionSetParentSource ( string copyString )
+GrammarString::buildCopyMemberFunctionSetParentSource()
    {
   // DQ (9/25/2005): This function builds code to reset parent pointers in the copy function
 
@@ -467,7 +471,10 @@ GrammarString::buildCopyMemberFunctionSource ( bool buildConstructorArgument )
        // Declare the copy of the variable
        // returnString += "     " + typeName + " " + variableName + "_copy; \n";
           returnString += "     " + typeName + " " + copyOfVariableName + "; \n";
-          returnString += commentString + stringCopyConditional(typeName,sourceVariableName,copyOfVariableName);
+
+       // DQ (9/28/2022): Fixing compiler warning for argument not used.
+       // returnString += commentString + stringCopyConditional(typeName,sourceVariableName,copyOfVariableName);
+          returnString += commentString + stringCopyConditional(sourceVariableName,copyOfVariableName);
 
        // string copyOfVariableName = "result->p_" + variableName;
        // printf ("\n\n*****************************************************\n");

@@ -1,5 +1,5 @@
 #include <featureTests.h>
-#ifdef ROSE_ENABLE_BINARY_ANALYSIS
+#ifdef ROSE_ENABLE_MODEL_CHECKER
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/ModelChecker/PathNode.h>
 
@@ -9,6 +9,7 @@
 #include <Rose/BinaryAnalysis/ModelChecker/Settings.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Tag.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/State.h>
+#include <Rose/BinaryAnalysis/SymbolicExpression.h>
 #include <rose_isnan.h>
 
 using namespace Sawyer::Message::Common;
@@ -23,7 +24,7 @@ PathNode::PathNode(const ExecutionUnit::Ptr &unit)
     ASSERT_not_null(unit);
 }
 
-PathNode::PathNode(const Ptr &parent, const ExecutionUnit::Ptr &unit, const SymbolicExpr::Ptr &assertion,
+PathNode::PathNode(const Ptr &parent, const ExecutionUnit::Ptr &unit, const SymbolicExpression::Ptr &assertion,
                    const SmtSolver::Evidence &evidence, const BS::State::Ptr &parentOutgoingState)
     : parent_(parent), executionUnit_(unit),  incomingState_(parentOutgoingState), assertions_{assertion},
       evidence_(evidence), id_(Sawyer::fastRandomIndex(UINT32_MAX)) {
@@ -41,7 +42,7 @@ PathNode::instance(const ExecutionUnit::Ptr &unit) {
 }
 
 PathNode::Ptr
-PathNode::instance(const Ptr &parent, const ExecutionUnit::Ptr &unit, const SymbolicExpr::Ptr &assertion,
+PathNode::instance(const Ptr &parent, const ExecutionUnit::Ptr &unit, const SymbolicExpression::Ptr &assertion,
                    const SmtSolver::Evidence &evidence, const BS::State::Ptr &parentOutgoingState) {
     ASSERT_not_null(unit);
     ASSERT_not_null(parent);
@@ -88,13 +89,13 @@ PathNode::nSteps() const {
 }
 
 void
-PathNode::assertion(const SymbolicExpr::Ptr &expr) {
+PathNode::assertion(const SymbolicExpression::Ptr &expr) {
     ASSERT_not_null(expr);
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
     assertions_.push_back(expr);
 }
 
-std::vector<SymbolicExpr::Ptr>
+std::vector<SymbolicExpression::Ptr>
 PathNode::assertions() const {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
     return assertions_;                                 // must be a copy for thread safety

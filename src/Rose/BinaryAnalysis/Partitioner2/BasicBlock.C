@@ -92,6 +92,7 @@ BasicBlock::instructionExists(rose_addr_t startVa) const {
 
 Sawyer::Optional<size_t>
 BasicBlock::instructionExists(SgAsmInstruction *toFind) const {
+    ASSERT_not_null(toFind);
     if (insns_.size() >= bigBlock_) {
         ASSERT_require(insns_.size() == insnAddrMap_.size());
         size_t idx = 0;
@@ -104,6 +105,28 @@ BasicBlock::instructionExists(SgAsmInstruction *toFind) const {
         }
     }
     return Sawyer::Nothing();
+}
+
+Sawyer::Optional<size_t>
+BasicBlock::instructionIndex(rose_addr_t startVa) const {
+    if (insns_.size() >= bigBlock_) {
+        // O(log N) search for large blocks
+        ASSERT_require(insns_.size() == insnAddrMap_.size());
+        if (auto idx = insnAddrMap_.getOptional(startVa))
+            return *idx;
+    } else {
+        // O(N) search for small blocks
+        for (size_t idx = 0; idx < insns_.size(); ++idx)
+            if (insns_[idx]->get_address() == startVa)
+                return idx;
+    }
+    return Sawyer::Nothing();
+}
+
+Sawyer::Optional<size_t>
+BasicBlock::instructionIndex(SgAsmInstruction *toFind) const {
+    ASSERT_not_null(toFind);
+    return instructionIndex(toFind->get_address());
 }
 
 // Reset semantics back to a state similar to  after calling init() followed by append() with a failed dispatch, except also

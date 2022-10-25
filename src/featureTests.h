@@ -56,13 +56,31 @@
     #define ROSE_ENABLE_ASM_AARCH32
 #endif
 
+// Whether to enable the Linux ptrace-based dynamic debugger
+//   * Requires Linux since it uses Linux-specific ptrace features
+#if !defined(ROSE_ENABLE_DEBUGGER_LINUX) && defined(__linux__)
+#define ROSE_ENABLE_DEBUGGER_LINUX
+#endif
+
+// Whether to enable the GDB-based dynamic debugger.
+//   * Requires Boost 1.64.0 or later for portable process manipulation (boost::process)
+//   * On macOS with LLVM-11 and Boost 1.73 we get compile errors in boost::asio
+#if !defined(ROSE_ENABLE_DEBUGGER_GDB) && \
+    BOOST_VERSION >= 106400 && \
+    (!defined(__APPLE__) || !defined(__MACH__) || BOOST_VERSION >= 107300)
+#define ROSE_ENABLE_DEBUGGER_GDB
+#endif
+
 // Whether to enable concolic testing.
+//   * Requires a mechanism by which to store results (SQLite or PostgreSQL)
+//   * Requires a way to serialize data structures (boost::serialization)
+//   * Requires the Linux ptrace debugger (for now)
 #if !defined(ROSE_ENABLE_CONCOLIC_TESTING) && \
     defined(__linux__) && \
-    __cplusplus >= 201402L && \
     (defined(ROSE_HAVE_SQLITE3) || defined(ROSE_HAVE_LIBPQXX)) && \
     BOOST_VERSION >= 106400 && \
-    defined(ROSE_HAVE_BOOST_SERIALIZATION_LIB)
+    defined(ROSE_HAVE_BOOST_SERIALIZATION_LIB) && \
+    defined(ROSE_ENABLE_DEBUGGER_LINUX)
 #define ROSE_ENABLE_CONCOLIC_TESTING
 #endif
 
@@ -71,6 +89,13 @@
     (defined(ROSE_HAVE_SQLITE3) || defined(ROSE_HAVE_LIBPQXX)) &&                                                              \
     !(defined(__APPLE__) && defined(__MACH__))
 #define ROSE_ENABLE_LIBRARY_IDENTIFICATION
+#endif
+
+// Whether to enable Model checking. The model checker was designed to run in multiple threads. Some parts of the API don't
+// even make sense for a single thread.
+#if !defined(ROSE_ENABLE_MODEL_CHECKER) && \
+    defined(_REENTRANT)
+#define ROSE_ENABLE_MODEL_CHECKER
 #endif
 
 #endif
@@ -91,7 +116,6 @@
     defined(ROSE_BUILD_PHP_LANGUAGE_SUPPORT) || \
     defined(ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT) || \
     defined(ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION) || \
-    defined(ROSE_EXPERIMENTAL_COBOL_ROSE_CONNECTION) || \
     defined(ROSE_EXPERIMENTAL_CSHARP_ROSE_CONNECTION) || \
     defined(ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION) || \
     defined(ROSE_EXPERIMENTAL_MATLAB_ROSE_CONNECTION))

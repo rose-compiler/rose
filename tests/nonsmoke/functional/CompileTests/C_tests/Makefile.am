@@ -105,7 +105,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2012_53.c \
      test2012_55.c \
      test2012_57.c \
-     test2012_58.c \
      test2012_59.c \
      test2012_60.c \
      test2012_61.c \
@@ -124,7 +123,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2012_79.c \
      test2012_80.c \
      test2012_81.c \
-     test2012_82.c \
      test2012_83.c \
      test2012_84.c \
      test2012_85.c \
@@ -142,7 +140,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2012_97.c \
      test2012_98.c \
      test2012_99.c \
-     test2012_100.c \
      test2012_102.c \
      test2012_103.c \
      test2012_104.c \
@@ -164,14 +161,12 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2012_127.c \
      test2012_130.c \
      test2012_131.c \
-     test2012_133.c \
      test2012_134.c \
      test2012_135.c \
      test2012_136.c \
      test2012_137.c \
      test2012_139.c \
      test2012_140.c \
-     test2012_141.c \
      test2012_142.c \
      test2012_143.c \
      test2012_144.c \
@@ -204,7 +199,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2013_03.c \
      test2013_05.c \
      test2013_06.c \
-     test2013_07.c \
      test2013_08.c \
      test2013_09.c \
      test2013_10.c \
@@ -214,7 +208,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2013_14.c \
      test2013_15.c \
      test2013_16.c \
-     test2013_17.c \
      test2013_18.c \
      test2013_19.c \
      test2013_20.c \
@@ -271,7 +264,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2013_73.c \
      test2013_74.c \
      test2013_75.c \
-     test2013_76.c \
      test2013_77.c \
      test2013_78.c \
      test2013_79.c \
@@ -330,7 +322,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2014_26.c \
      test2014_27.c \
      test2014_28.c \
-     test2014_29.c \
      test2014_30.c \
      test2014_31.c \
      test2014_32.c \
@@ -342,7 +333,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2014_38.c \
      test2014_39.c \
      test2014_40.c \
-     test2014_41.c \
      test2014_42.c \
      test2014_43.c \
      test2014_44.c \
@@ -363,7 +353,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2014_63.c \
      test2014_64.c \
      test2014_65.c \
-     test2014_66.c \
      test2014_67.c \
      test2014_68.c \
      test2014_69.c \
@@ -382,7 +371,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2014_87.c \
      test2014_88.c \
      test2014_89.c \
-     test2014_91.c \
      test2014_92.c \
      test2014_94.c \
      test2014_95.c \
@@ -395,11 +383,9 @@ TESTCODES_REQUIRED_TO_PASS = \
      stdio.c \
      test2006_48.c  \
      test2006_132.c \
-     test2010_04.c \
      test2010_10.c \
      test2010_11.c \
      test2010_14.c \
-     constants.c \
      test2015_01.c \
      test2015_02.c \
      test2015_03.c \
@@ -407,7 +393,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2015_06.c \
      test2015_07.c \
      test2015_08.c \
-     test2015_09.c \
      test2015_10.c \
      test2015_11.c \
      test2015_12.c \
@@ -473,11 +458,7 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2015_131.c \
      test2015_132.c \
      test2015_136.c \
-     test2015_137.c \
-     test2015_138.c \
      test2015_145.c \
-     test2015_156.c \
-     test2015_157.c \
      test2015_158.c \
      test2015_160.c \
      test2015_161.c \
@@ -517,7 +498,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2017_13.c \
      test2017_14.c \
      test2017_15.c \
-     test2017_17.c \
      test2017_18.c \
      test2017_19.c \
      test2017_20.c \
@@ -533,8 +513,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2018_05.c \
      test2018_06.c \
      test2018_07.c \
-     test2018_09.c \
-     test2018_10.c \
      test2018_11.c \
      test2018_12.c \
      test2018_13.c \
@@ -548,14 +526,11 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2018_21.c \
      test2018_22.c \
      test2018_23.c \
-     test2018_24.c \
      test2018_25.c \
      test2018_28.c \
      test2018_29.c \
      test2018_30.c \
-     test2018_31.c \
      test2018_32.c \
-     test2018_33.c \
      test2018_35.c \
      test2018_36.c \
      test2018_37.c \
@@ -583,12 +558,8 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2019_12.c \
      test2019_13.c \
      test2019_14.c \
-     test2019_15.c \
      test2020_12.c \
      test2020_13.c \
-     test2020_14.c \
-     test2020_15.c \
-     test2020_16.c \
      test2020_17.c \
      test2020_18.c \
      test2020_19.c \
@@ -617,7 +588,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2020_47.c \
      test2020_48.c \
      test2020_49.c \
-     test2021_01.c \
      test2021_02.c \
      test2021_03.c \
      test2021_04.c \
@@ -663,8 +633,84 @@ TESTCODE_CURRENTLY_FAILING = \
      test2020_26.c \
      test2020_27.c 
 
+
+if !ROSE_USE_CLANG_FRONTEND
+TESTCODES_REQUIRED_TO_PASS = \
+     constants.c \
+     test2012_56.c \
+     test2012_58.c \
+     test2012_82.c \
+     test2012_100.c \
+     test2012_133.c \
+     test2012_141.c \
+     test2013_07.c \
+     test2013_17.c \
+     test2013_76.c \
+     test2014_29.c \
+     test2014_41.c \
+     test2014_66.c \
+     test2014_91.c \
+     test2015_09.c \
+     test2015_116.c \
+     test2015_137.c \
+     test2015_138.c \
+     test2015_141.c \
+     test2015_142.c \
+     test2015_156.c \
+     test2015_157.c \
+     test2017_17.c \
+     test2018_08.c \
+     test2018_09.c \
+     test2018_10.c \
+     test2018_24.c \
+     test2018_31.c \
+     test2018_33.c \
+     test2019_15.c \
+     test2020_14.c \
+     test2020_15.c \
+     test2020_16.c \
+     test2021_01.c 
+
+else
+
+TESTCODE_CURRENTLY_FAILING = \
+     constants.c \
+     test2012_56.c \
+     test2012_58.c \
+     test2012_82.c \
+     test2012_100.c \
+     test2012_133.c \
+     test2012_141.c \
+     test2013_07.c \
+     test2013_17.c \
+     test2013_76.c \
+     test2014_29.c \
+     test2014_41.c \
+     test2014_66.c \
+     test2014_91.c \
+     test2015_09.c \
+     test2015_116.c \
+     test2015_137.c \
+     test2015_138.c \
+     test2015_141.c \
+     test2015_142.c \
+     test2015_156.c \
+     test2015_157.c \
+     test2017_17.c \
+     test2018_08.c \
+     test2018_09.c \
+     test2018_10.c \
+     test2018_24.c \
+     test2018_31.c \
+     test2018_33.c \
+     test2019_15.c \
+     test2020_14.c \
+     test2020_15.c \
+     test2020_16.c \
+     test2021_01.c 
+endif
+
 # DQ (1/16/2017): Clang C support appears to be missign the typeof operator (C11 mode).
-if !USING_CLANG_COMPILER
 TESTCODES_REQUIRED_TO_PASS += \
      test2010_12.c \
      test2012_14.c \
@@ -673,7 +719,6 @@ TESTCODES_REQUIRED_TO_PASS += \
      test2012_51.c \
      test2012_52.c \
      test2012_54.c \
-     test2012_56.c \
      test2012_101.c \
      test2012_106.c \
      test2012_109.c \
@@ -700,8 +745,6 @@ TESTCODES_REQUIRED_TO_PASS += \
      test2015_44.c \
      test2015_45.c \
      test2015_47.c \
-     test2015_48.c \
-     test2015_49.c \
      test2015_50.c \
      test2015_51.c \
      test2015_54.c \
@@ -715,31 +758,23 @@ TESTCODES_REQUIRED_TO_PASS += \
      test2015_81.c \
      test2015_82.c \
      test2015_83.c \
-     test2015_104.c \
-     test2015_105.c \
      test2015_107.c \
      test2015_108.c \
      test2015_110.c \
-     test2015_113.c \
      test2015_115.c \
-     test2015_116.c \
      test2015_139.c \
      test2015_140.c \
-     test2015_141.c \
-     test2015_142.c \
      test2015_143.c \
      test2015_144.c \
      test2015_146.c \
      test2015_147.c \
      test2015_148.c \
      test2015_149.c \
-     test2018_08.c \
      test2004_21.c \
      test2006_65.c
 
    TESTCODE_CURRENTLY_FAILING += \
      test2006_132.c \
-     test2010_04.c \
      test2006_14.c  \
      test2006_100.c \
      test2006_136.c \
@@ -748,90 +783,15 @@ TESTCODES_REQUIRED_TO_PASS += \
      test2011_03.c \
      test2011_04.c \
      Yarden_client.c
+
+if !USING_CLANG_COMPILER
+TESTCODES_REQUIRED_TO_PASS += \
+     test2010_04.c 
 else
    TESTCODE_CURRENTLY_FAILING += \
-     test2010_12.c \
-     test2012_14.c \
-     test2012_25.c \
-     test2012_48.c \
-     test2012_51.c \
-     test2012_52.c \
-     test2012_54.c \
-     test2012_56.c \
-     test2012_101.c \
-     test2012_106.c \
-     test2012_109.c \
-     test2012_110.c \
-     test2012_111.c \
-     test2012_112.c \
-     test2012_113.c \
-     test2012_114.c \
-     test2012_129.c \
-     test2012_162.c \
-     test2015_14.c \
-     test2015_15.c \
-     test2015_16.c \
-     test2015_17.c \
-     test2015_18.c \
-     test2015_20.c \
-     test2015_21.c \
-     test2015_38.c \
-     test2015_39.c \
-     test2015_40.c \
-     test2015_41.c \
-     test2015_42.c \
-     test2015_43.c \
-     test2015_44.c \
-     test2015_45.c \
-     test2015_47.c \
-     test2015_48.c \
-     test2015_49.c \
-     test2015_50.c \
-     test2015_51.c \
-     test2015_54.c \
-     test2015_55.c \
-     test2015_57.c \
-     test2015_58.c \
-     test2015_77.c \
-     test2015_78.c \
-     test2015_79.c \
-     test2015_80.c \
-     test2015_81.c \
-     test2015_82.c \
-     test2015_83.c \
-     test2015_104.c \
-     test2015_105.c \
-     test2015_107.c \
-     test2015_108.c \
-     test2015_110.c \
-     test2015_113.c \
-     test2015_115.c \
-     test2015_116.c \
-     test2015_139.c \
-     test2015_140.c \
-     test2015_141.c \
-     test2015_142.c \
-     test2015_143.c \
-     test2015_144.c \
-     test2015_146.c \
-     test2015_147.c \
-     test2015_148.c \
-     test2015_149.c 
-
-   TESTCODES_REQUIRED_TO_PASS += \
-     test2006_132.c \
-     test2010_04.c \
-     test2006_14.c  \
-     test2006_100.c \
-     test2006_136.c \
-     test2010_02.c \
-     test2010_03.c \
-     test2011_03.c \
-     test2011_04.c \
-     Yarden_client.c \
-     test2004_21.c \
-     test2006_65.c
+     test2010_04.c 
 endif
+
 
 # DQ (4/11/2015): New failing tests:
 FAILING_TESTCODES_XEN = \
@@ -952,15 +912,30 @@ if !OS_MACOSX
       test2012_152.c \
       test2013_21.c \
       test2013_32.c \
-      test2013_104.c \
       test2013_113.c \
       test2014_12.c \
       test2014_13.c \
       test2014_83.c \
-      test2014_93.c \
       test2015_05.c \
-      test2015_34.c \
+      test2015_48.c \
+      test2015_49.c \
+      test2015_104.c \
+      test2015_105.c \
+      test2015_113.c \
       test2012_09.c
+
+if !ROSE_USE_CLANG_FRONTEND
+   TESTCODES_REQUIRED_TO_PASS += \
+      test2013_104.c \
+      test2014_93.c \
+      test2015_34.c 
+else
+   TESTCODE_CURRENTLY_FAILING += \
+      test2013_104.c \
+      test2014_93.c \
+      test2015_34.c 
+endif
+
 else
    TESTCODE_CURRENTLY_FAILING += \
       test2009_19.c \
@@ -981,6 +956,11 @@ else
       test2014_83.c \
       test2014_93.c \
       test2015_34.c \
+      test2015_48.c \
+      test2015_49.c \
+      test2015_104.c \
+      test2015_105.c \
+      test2015_113.c \
       test2012_09.c
 endif
 
@@ -1295,20 +1275,26 @@ check-local: check-pthread.passed
 	@$(MAKE) $(PASSING_TEST_Source_passed)
 if !OS_MACOSX
 	@$(MAKE) test_link_using_asm_symbol_injection
+if !ROSE_USE_CLANG_FRONTEND
 	@$(MAKE) test_link_using_alias_attribute
 endif
+endif
 	@$(MAKE) test_build_generated_file_in_same_directory_as_input_file.passed
+if !ROSE_USE_CLANG_FRONTEND
 	@$(MAKE) test_unparse_includes_option.passed
 	@$(MAKE) test_unparse_includes_option_with_link.passed
+endif
 	@$(MAKE) test_else_case_disambiguation.passed
 	@$(MAKE) test_common_configure_test_with_link.passed
 	@$(MAKE) test_using_explicit_output_file_option
 	@$(MAKE) test_using_implicit_output_file_option
 	@$(MAKE) test_rtd_use
+if !ROSE_USE_CLANG_FRONTEND
 	@$(MAKE) test_optimization_specifier_O
 	@$(MAKE) test_optimization_specifier_Os
 	@$(MAKE) test_optimization_specifier_O1
 	@$(MAKE) test_optimization_specifier_O2
+endif
 	@$(MAKE) test_mregparm_m32_use
 	@$(MAKE) test_compile_and_link_with_NDEBUG
 	@$(MAKE) test_compile_and_link_without_NDEBUG

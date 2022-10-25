@@ -1,12 +1,12 @@
 #ifndef ROSE_BinaryAnalysis_ModelChecker_PathNode_H
 #define ROSE_BinaryAnalysis_ModelChecker_PathNode_H
 #include <featureTests.h>
-#ifdef ROSE_ENABLE_BINARY_ANALYSIS
+#ifdef ROSE_ENABLE_MODEL_CHECKER
 
 #include <Rose/BinaryAnalysis/ModelChecker/Types.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Types.h>
 #include <Rose/BinaryAnalysis/SmtSolver.h>
-#include <Rose/BinaryAnalysis/SymbolicExpr.h>
+#include <Rose/BinaryAnalysis/SymbolicExpression.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -45,7 +45,7 @@ private:
     InstructionSemantics::BaseSemantics::StatePtr outgoingState_;  // state after execution, or null if error during execution
 
     bool executionFailed_ = false;                                 // true iff execution failed (and outgoingState_ therefore null)
-    std::vector<SymbolicExpr::Ptr> assertions_;                    // assertions for the model checker for this node of the path
+    std::vector<SymbolicExpression::Ptr> assertions_;              // assertions for the model checker for this node of the path
     SmtSolver::Evidence evidence_;                                 // SMT evidence that path to and including this node is feasible
     std::vector<TagPtr> tags_;                                     // tags associated with this node of the path
     uint32_t id_ = 0;                                              // a random path ID number
@@ -63,7 +63,7 @@ protected:
     /** Allocating constructor.
      *
      *  Create a non-initial path node. This node is a continuation of the path ending at parent. See @ref instance. */
-    PathNode(const Ptr &parent, const ExecutionUnitPtr&, const SymbolicExpr::Ptr &assertion,
+    PathNode(const Ptr &parent, const ExecutionUnitPtr&, const SymbolicExpression::Ptr &assertion,
              const SmtSolver::Evidence&, const InstructionSemantics::BaseSemantics::StatePtr &parentOutgoingState);
 
 public:
@@ -84,7 +84,7 @@ public:
      *  "executing" this node in a worker thread. The @p assertion must be true but is not checked here.
      *
      *  Thread safety: This constructor is thread safe. */
-    static Ptr instance(const Ptr &parent, const ExecutionUnitPtr&, const SymbolicExpr::Ptr &assertion,
+    static Ptr instance(const Ptr &parent, const ExecutionUnitPtr&, const SymbolicExpression::Ptr &assertion,
                         const SmtSolver::Evidence&, const InstructionSemantics::BaseSemantics::StatePtr &parentOutgoingState);
 
     /** Property: Identifier.
@@ -142,12 +142,12 @@ public:
      *  model checking is to indicate how the conditional branches in the path depend on other variables.
      *
      *  Thread safety: This method is thread safe. */
-    void assertion(const SymbolicExpr::Ptr&);
+    void assertion(const SymbolicExpression::Ptr&);
 
     /** Returns all the assersions for this node.
      *
      *  Thread safety: This method is thread safe. */
-    std::vector<SymbolicExpr::Ptr> assertions() const;
+    std::vector<SymbolicExpression::Ptr> assertions() const;
 
     /** Returns the SMT solver evidence for path feasibility.
      *

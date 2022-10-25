@@ -42,7 +42,7 @@ SgAsmInstruction::get_anyKind() const {
 }
 
 AddressSet
-SgAsmInstruction::getSuccessors(bool &complete) {
+SgAsmInstruction::getSuccessors(bool &/*complete*/) {
     abort();
     // tps (12/9/2009) : MSC requires a return value
     return AddressSet();
@@ -50,7 +50,7 @@ SgAsmInstruction::getSuccessors(bool &complete) {
 
 AddressSet
 SgAsmInstruction::getSuccessors(const std::vector<SgAsmInstruction*>& basic_block, bool &complete/*out*/,
-                                const MemoryMap::Ptr &initial_memory/*=NULL*/)
+                                const MemoryMap::Ptr &  /*initial_memory=NULL*/)
 {
     if (basic_block.size()==0) {
         complete = true;
@@ -69,13 +69,13 @@ SgAsmInstruction::terminatesBasicBlock()
 }
 
 bool
-SgAsmInstruction::isFunctionCallFast(const std::vector<SgAsmInstruction*>&, rose_addr_t *target, rose_addr_t *return_va)
+SgAsmInstruction::isFunctionCallFast(const std::vector<SgAsmInstruction*>&, rose_addr_t */*target*/, rose_addr_t */*return_va*/)
 {
     return false;
 }
 
 bool
-SgAsmInstruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>&, rose_addr_t *target, rose_addr_t *return_va)
+SgAsmInstruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>&, rose_addr_t */*target*/, rose_addr_t */*return_va*/)
 {
     return false;
 }
@@ -153,7 +153,7 @@ buildNopAnalyzer(SgAsmInterpretation *interp) {
 }
 
 bool
-SgAsmInstruction::hasEffect(const std::vector<SgAsmInstruction*> &insns, bool allow_branch/*false*/,
+SgAsmInstruction::hasEffect(const std::vector<SgAsmInstruction*> &insns, bool /*allow_branch=false*/,
                             bool relax_stack_semantics/*false*/)
 {
     SgAsmInterpretation *interp = SageInterface::getEnclosingNode<SgAsmInterpretation>(insns.front());
@@ -171,7 +171,7 @@ SgAsmInstruction::hasEffect(const std::vector<SgAsmInstruction*> &insns, bool al
 }
 
 std::vector<std::pair<size_t,size_t> >
-SgAsmInstruction::findNoopSubsequences(const std::vector<SgAsmInstruction*>& insns, bool allow_branch/*false*/, 
+SgAsmInstruction::findNoopSubsequences(const std::vector<SgAsmInstruction*>& insns, bool /*allow_branch=false*/,
                                        bool relax_stack_semantics/*false*/)
 {
     SgAsmInterpretation *interp = SageInterface::getEnclosingNode<SgAsmInterpretation>(insns.front());

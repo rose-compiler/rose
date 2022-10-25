@@ -1,7 +1,7 @@
 #ifndef ROSE_BinaryAnalysis_ModelChecker_ExternalFunctionUnit_H
 #define ROSE_BinaryAnalysis_ModelChecker_ExternalFunctionUnit_H
 #include <featureTests.h>
-#ifdef ROSE_ENABLE_BINARY_ANALYSIS
+#ifdef ROSE_ENABLE_MODEL_CHECKER
 
 #include <Rose/BinaryAnalysis/ModelChecker/ExecutionUnit.h>
 #include <Rose/BinaryAnalysis/CallingConvention.h>

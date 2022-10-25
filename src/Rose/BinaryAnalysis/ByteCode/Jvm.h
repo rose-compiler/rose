@@ -60,7 +60,7 @@ public:
   virtual const Code & code() const {
     return code_;
   }
-  virtual const void decode(const Disassembler::BasePtr &disassembler) const;
+  virtual const void decode(const Disassembler::BasePtr &disassembler) const; // blame rasmussen17
   virtual const SgAsmInstructionList* instructions() const {
     return sgMethod_->get_instruction_list();
   }

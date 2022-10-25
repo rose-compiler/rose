@@ -120,7 +120,7 @@ enum SemanticMemoryParadigm {
 /** Settings that control building the AST.
  *
  *  The runtime descriptions and command-line parser for these switches can be obtained from @ref
- *  astConstructionSwitches. */
+ *  Engine::astConstructionSwitches. */
 struct AstConstructionSettings {
     /** Whether to allow an empty global block.
      *
@@ -212,19 +212,19 @@ public:
 /** How the partitioner should globally treat memory. */
 enum MemoryDataAdjustment {
     DATA_IS_CONSTANT,                               /**< Treat all memory as if it were constant. This is accomplished by
-                                                     *   removing @ref MemoryMap::READABLE from all segments. */
+                                                     *   removing @c MemoryMap::READABLE from all segments. */
     DATA_IS_INITIALIZED,                            /**< Treat all memory as if it were initialized. This is a little
-                                                     *   weaker than @ref MEMORY_IS_CONSTANT in that it allows the
+                                                     *   weaker than @c MEMORY_IS_CONSTANT in that it allows the
                                                      *   partitioner to read the value from memory as if it were constant,
                                                      *   but also marks the value as being indeterminate. This is
-                                                     *   accomplished by adding @ref MemoryMap::INITIALIZED to all
+                                                     *   accomplished by adding @c MemoryMap::INITIALIZED to all
                                                      *   segments. */
     DATA_NO_CHANGE,                                 /**< Do not make any global changes to the memory map. */
 };
 
 /** Settings for loading specimens.
  *
- *  The runtime descriptions and command-line parser for these switches can be obtained from @ref loaderSwitches. */
+ *  The runtime descriptions and command-line parser for these switches can be obtained from @ref Engine::loaderSwitches. */
 struct LoaderSettings {
     size_t deExecuteZerosThreshold;                 /**< Size threshold for removing execute permission from zero data. If
                                                      *   this data member is non-zero, then the memory map will be adjusted
@@ -246,7 +246,8 @@ struct LoaderSettings {
                                                      *   instructions at that address.  The default, false, means that the
                                                      *   engine will not modify executable bits in memory, but rather use
                                                      *   the bits already set in the memory map. This happens before the
-                                                     *   @ref deExecuteZeros property is processed. */
+                                                     *   processing related to removing execution permission from areas of
+                                                     *   memory containing only zero values. */
     bool linkObjectFiles;                           /**< Link object files before parsing. */
     bool linkStaticArchives;                        /**< Link static libraries before parsing. */
     std::string linker;                             /**< Command to run to link object and archives.  ELF object files
@@ -302,7 +303,8 @@ private:
 
 /** Settings that control the disassembler.
  *
- *  The runtime descriptions and command-line parser for these switches can be obtained from @ref disassemblerSwitches. */
+ *  The runtime descriptions and command-line parser for these switches can be obtained from @ref
+ *  Engine::disassemblerSwitches. */
 struct DisassemblerSettings {
     bool doDisassemble;                             /**< Perform disassembly. If false, then it is not an error if no
                                                      *   disassembler can be found. */
@@ -372,7 +374,8 @@ public:
  *  instructions into basic blocks, and basic blocks and static data into functions.  Some of these settings are copied into a
  *  @ref Partitioner object while others affect the @ref Engine directly.
  *
- *  The runtime descriptions and command-line parser for these switches can be obtained from @ref partitionerSwitches. */
+ *  The runtime descriptions and command-line parser for these switches can be obtained from @ref
+ *  Engine::partitionerSwitches. */
 struct PartitionerSettings {
     BasePartitionerSettings base;
     std::vector<rose_addr_t> functionStartingVas;   /**< Addresses at which to start recursive disassembly. These
@@ -394,7 +397,7 @@ struct PartitionerSettings {
     bool findingFunctionPadding;                    /**< Look for padding before each function entry point? */
     bool findingDeadCode;                           /**< Look for unreachable basic blocks? */
     rose_addr_t peScramblerDispatcherVa;            /**< Run the PeDescrambler module if non-zero. */
-    size_t findingIntraFunctionCode;                /**< Suck up unused addresses as intra-function code (number of passes).. */
+    size_t findingIntraFunctionCode;                /**< Suck up unused addresses as intra-function code (number of passes). */
     bool findingIntraFunctionData;                  /**< Suck up unused addresses as intra-function data. */
     bool findingInterFunctionCalls;                 /**< Look for function calls between functions. */
     bool findingFunctionCallFunctions;              /**< Create functions from function calls. */
@@ -529,7 +532,7 @@ public:
 /** Settings for controling the engine behavior.
  *
  *  These settings control the behavior of the engine itself irrespective of how the partitioner is configured. The runtime
- *  descriptions and command-line parser for these switches can be obtained from @ref engineBehaviorSwitches. */
+ *  descriptions and command-line parser for these switches can be obtained from the @ref Engine::settings property. */
 struct EngineSettings {
     std::vector<std::string> configurationNames;    /**< List of configuration files and/or directories. */
     bool exitOnError;                               /**< If true, emit error message and exit non-zero, else throw. */

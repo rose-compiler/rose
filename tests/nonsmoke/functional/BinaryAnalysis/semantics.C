@@ -23,7 +23,7 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 // SMT_SOLVER values
 #define NO_SOLVER 0
 
-#include <Rose/BinaryAnalysis/SymbolicExpr.h>
+#include <Rose/BinaryAnalysis/SymbolicExpression.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherX86.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/TestSemantics.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
@@ -264,7 +264,7 @@ int main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
 
     // Use a single pool for allocating variable IDs. This makes the test deterministic.
-    Rose::BinaryAnalysis::SymbolicExpr::serializeVariableIds = true;
+    Rose::BinaryAnalysis::SymbolicExpression::serializeVariableIds = true;
 
     std::vector<std::string> args(argv, argv+argc);
     for (size_t argno=1; argno<args.size(); ++argno) {

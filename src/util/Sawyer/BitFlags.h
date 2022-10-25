@@ -261,7 +261,7 @@ public:
     }
 
     /** Split a vector into the individual bits values. */
-    std::vector<Enum> split(Vector &leftovers /*out*/) const {
+    std::vector<Enum> split() const {
         std::vector<Enum> retval;
         for (size_t i = 0; i < 8*sizeof(Enum); ++i) {
             Enum e = static_cast<Enum>(uint64_t(1) << i);
@@ -287,8 +287,7 @@ public:
      *  The functor is called with one argument each time. */
     template<class F>
     void each(const F &functor) const {
-        Vector leftovers;
-        for (Enum e: split(leftovers))
+        for (Enum e: split())
             functor(e);
     }
 #endif

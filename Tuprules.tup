@@ -819,6 +819,7 @@ CxxGrammarMetaProgram_GENSRC = \
  $(ROSE)/src/ROSETTA/src/Cxx_GrammarMemoryPoolSupport.C \
  $(ROSE)/src/ROSETTA/src/Cxx_GrammarNewAndDeleteOperators.C \
  $(ROSE)/src/ROSETTA/src/Cxx_GrammarNewConstructors.C \
+ $(ROSE)/src/ROSETTA/src/Cxx_GrammarNodeIdSupport.C \
  $(ROSE)/src/ROSETTA/src/Cxx_GrammarProcessDataMemberReferenceToPointers.C \
  $(ROSE)/src/ROSETTA/src/Cxx_GrammarRTI.C \
  $(ROSE)/src/ROSETTA/src/Cxx_GrammarReturnClassHierarchySubTree.C \

@@ -1,7 +1,7 @@
 #ifndef ROSE_BinaryAnalysis_ModelChecker_Periodic_H
 #define ROSE_BinaryAnalysis_ModelChecker_Periodic_H
 #include <featureTests.h>
-#ifdef ROSE_ENABLE_BINARY_ANALYSIS
+#ifdef ROSE_ENABLE_MODEL_CHECKER
 
 #include <Rose/BinaryAnalysis/ModelChecker/Types.h>
 #include <condition_variable>
@@ -29,9 +29,18 @@ private:
 
 public:
     virtual ~Periodic();
+
+    /** Creates a new thread to run periodically. */
     void start(const EnginePtr&, std::chrono::duration<double> period);
+
+    /** Stop running periodically. */
     void stop();
+
+    /** The work to be done.
+     *
+     *  This function is called periodically from the thread created by @ref start. */
     virtual void step(const EnginePtr&) = 0;
+
 private:
     void run(const EnginePtr&, std::chrono::duration<double> period);
 };

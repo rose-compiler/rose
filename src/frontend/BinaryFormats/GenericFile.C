@@ -774,6 +774,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, rose_addr_t sa, rose_addr
 #endif
             }
         }
+        ASSERT_require(align != 0);
         aligned_sa = (sa/align + (sa%align?1:0))*align;
         aligned_sasn = ((sa+sn)/align + ((sa+sn)%align?1:0))*align;
         if (debug) {

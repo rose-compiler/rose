@@ -15,8 +15,8 @@ SgAsmAarch32Instruction::get_anyKind() const {
 }
 
 bool
-SgAsmAarch32Instruction::isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns, rose_addr_t *target,
-                                 rose_addr_t *return_va) {
+SgAsmAarch32Instruction::isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns, rose_addr_t */*target*/,
+                                            rose_addr_t */*return_va*/) {
     if (insns.empty())
         return false;
 

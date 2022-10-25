@@ -19,17 +19,13 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 SUBDIRS = \
         POET_ROSE \
-	BinaryCloneDetection \
 	CertSecureCodeProject \
 	CloneDetection \
-	EditDistanceMetric \
 	fuse \
 	HeaderFilesInclusion \
 	MapleDSL \
 	arrayOptimization \
 	ManyCoreRuntime \
-	Fortran_to_C \
-	extractMPISkeleton \
 	RoseBlockLevelTracing \
 	$(OPTIONAL_PROJECTS)
 
@@ -54,8 +50,6 @@ endif
 #   BinaryDataStructureRecognition 
 
 # DQ (9/26/2011): Directory removed for failing new AST consistancy test for references to deleted IR nodes.
-
-SUBDIRS += simulator2
 
 # DQ (2/12/2010): compass appears to be a problem for the code generation support
 # in ROSE, so lets' move on and return to compass later for this level of support
@@ -112,7 +106,7 @@ endif
 ########################################################################################################################
 
 # The developer-specific project lists used for portability testing have been moved to
-# project/MatrixTesting/lib/matrix/docker-scripts/steps so they can be used by all
+# tools/PortabilityTesting/lib/matrix/docker-scripts/steps so they can be used by all
 # supported build systems. [Matzke, 2019-04-24]
 
 ########################################################################################################################

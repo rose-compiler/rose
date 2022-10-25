@@ -171,7 +171,7 @@ FunctionReturnDetector::operator()(bool chain, const Args &args) {
 };
 
 bool
-matchEnterAnyZero(const Partitioner &partitioner, SgAsmX86Instruction *enter) {
+matchEnterAnyZero(const Partitioner&, SgAsmX86Instruction *enter) {
 #if 1 // FIXME[Robb Matzke 2015-12-17]
     // This matcher looks at only two bytes of input (0xc8, 0x??, 0x??, 0x00) and thus gets too many false positives. A better
     // approach ight be to look at the entire block starting at the ENTER instruction and measure how reasonable it looks
@@ -196,7 +196,7 @@ matchEnterAnyZero(const Partitioner &partitioner, SgAsmX86Instruction *enter) {
 }
 
 Sawyer::Optional<rose_addr_t>
-matchJmpConst(const Partitioner &partitioner, SgAsmX86Instruction *jmp) {
+matchJmpConst(const Partitioner&, SgAsmX86Instruction *jmp) {
     if (!jmp || jmp->get_kind()!=x86_jmp)
         return Sawyer::Nothing();
 
@@ -212,7 +212,7 @@ matchJmpConst(const Partitioner &partitioner, SgAsmX86Instruction *jmp) {
 }
 
 bool
-matchJmpMem(const Partitioner &partitioner, SgAsmX86Instruction *jmp) {
+matchJmpMem(const Partitioner&, SgAsmX86Instruction *jmp) {
     if (!jmp || jmp->get_kind()!=x86_jmp || jmp->nOperands() != 1)
         return false;                                   // not a JMP instruction
     SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(jmp->operand(0));
@@ -619,7 +619,7 @@ SwitchSuccessors::matchPattern2(const BasicBlock::Ptr &bb, SgAsmInstruction *jmp
 bool
 SwitchSuccessors::matchPattern3(const Partitioner &partitioner, const BasicBlock::Ptr &bb, SgAsmInstruction *jmp) {
     ASSERT_not_null(bb);
-    ASSERT_not_null(jmp);
+    ASSERT_always_not_null(jmp);
     size_t nInsns = bb->nInstructions();
     if (nInsns < 4)
         return false;

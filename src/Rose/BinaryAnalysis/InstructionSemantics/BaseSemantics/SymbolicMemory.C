@@ -4,6 +4,7 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/SymbolicMemory.h>
 
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/SymbolicExpression.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -11,7 +12,7 @@ namespace InstructionSemantics {
 namespace BaseSemantics {
 
 void
-SymbolicMemory::expression(const SymbolicExpr::Ptr &expr) {
+SymbolicMemory::expression(const SymbolicExpression::Ptr &expr) {
     ASSERT_not_null(expr);
     ASSERT_require2(!expr->isScalar(), "expression must be a memory state");
     mem_ = expr;
@@ -20,14 +21,15 @@ SymbolicMemory::expression(const SymbolicExpr::Ptr &expr) {
 void
 SymbolicMemory::clear() {
     if (mem_) {
-        mem_ = SymbolicExpr::makeMemoryVariable(mem_->domainWidth(), mem_->nBits());
+        mem_ = SymbolicExpression::makeMemoryVariable(mem_->domainWidth(), mem_->nBits());
     } else {
-        mem_ = SymbolicExpr::makeMemoryVariable(32, 8); // can be adjusted later
+        mem_ = SymbolicExpression::makeMemoryVariable(32, 8); // can be adjusted later
     }
 }
 
 SValue::Ptr
-SymbolicMemory::readMemory(const SValue::Ptr &address_, const SValue::Ptr &dflt, RiscOperators *addrOps, RiscOperators *valOps) {
+SymbolicMemory::readMemory(const SValue::Ptr &address_, const SValue::Ptr &dflt,
+                           RiscOperators */*addrOps*/, RiscOperators *valOps) {
     SymbolicSemantics::SValue::Ptr address = SymbolicSemantics::SValue::promote(address_);
     if (address->nBits() != mem_->domainWidth() || dflt->nBits() != mem_->nBits()) {
         ASSERT_require2(mem_->isMemoryVariable(),
@@ -36,9 +38,9 @@ SymbolicMemory::readMemory(const SValue::Ptr &address_, const SValue::Ptr &dflt,
                         StringUtility::numberToString(mem_->nBits()) + "-bit values");
 
         // We can finalize the domain and range widths for the memory now that they've been given.
-        mem_ = SymbolicExpr::makeMemoryVariable(address->nBits(), dflt->nBits());
+        mem_ = SymbolicExpression::makeMemoryVariable(address->nBits(), dflt->nBits());
     }
-    SymbolicExpr::Ptr resultExpr = SymbolicExpr::makeRead(mem_, address->get_expression(), valOps->solver());
+    SymbolicExpression::Ptr resultExpr = SymbolicExpression::makeRead(mem_, address->get_expression(), valOps->solver());
     SymbolicSemantics::SValue::Ptr retval = SymbolicSemantics::SValue::promote(dflt->copy());
     retval->set_expression(resultExpr);
     return retval;
@@ -50,7 +52,7 @@ SymbolicMemory::peekMemory(const SValue::Ptr &address, const SValue::Ptr &dflt, 
 }
 
 void
-SymbolicMemory::writeMemory(const SValue::Ptr &address_, const SValue::Ptr &value_, RiscOperators *addrOps, RiscOperators *valOps) {
+SymbolicMemory::writeMemory(const SValue::Ptr &address_, const SValue::Ptr &value_, RiscOperators */*addrOps*/, RiscOperators *valOps) {
     SymbolicSemantics::SValue::Ptr address = SymbolicSemantics::SValue::promote(address_);
     SymbolicSemantics::SValue::Ptr value = SymbolicSemantics::SValue::promote(value_);
     if (address->nBits() != mem_->domainWidth() || value->nBits() != mem_->nBits()) {
@@ -60,14 +62,14 @@ SymbolicMemory::writeMemory(const SValue::Ptr &address_, const SValue::Ptr &valu
                         StringUtility::numberToString(mem_->nBits()) + "-bit values");
 
         // We can finalize the domain and range widths for the memory now that they've been given.
-        mem_ = SymbolicExpr::makeMemoryVariable(address->nBits(), value->nBits());
+        mem_ = SymbolicExpression::makeMemoryVariable(address->nBits(), value->nBits());
     }
 
-    mem_ = SymbolicExpr::makeWrite(mem_, address->get_expression(), value->get_expression(), valOps->solver());
+    mem_ = SymbolicExpression::makeWrite(mem_, address->get_expression(), value->get_expression(), valOps->solver());
 }
 
 bool
-SymbolicMemory::merge(const MemoryState::Ptr &other_, RiscOperators *addrOps, RiscOperators *valOps) {
+SymbolicMemory::merge(const MemoryState::Ptr &other_, RiscOperators */*addrOps*/, RiscOperators */*valOps*/) {
     SymbolicMemory::Ptr other = SymbolicMemory::promote(other_);
     TODO("[Robb P. Matzke 2015-08-10]");
 }
@@ -80,8 +82,8 @@ SymbolicMemory::hash(Combinatorics::Hasher &hasher, RiscOperators*, RiscOperator
 void
 SymbolicMemory::print(std::ostream &out, Formatter &formatter_) const {
     SymbolicSemantics::Formatter *formatter = dynamic_cast<SymbolicSemantics::Formatter*>(&formatter_);
-    SymbolicExpr::Formatter dflt_expr_formatter;
-    SymbolicExpr::Formatter &expr_formatter = formatter ? formatter->expr_formatter : dflt_expr_formatter;
+    SymbolicExpression::Formatter dflt_expr_formatter;
+    SymbolicExpression::Formatter &expr_formatter = formatter ? formatter->expr_formatter : dflt_expr_formatter;
     out <<formatter_.get_line_prefix() <<(*mem_ + expr_formatter) <<"\n";
 }
 
