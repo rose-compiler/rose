@@ -46,11 +46,11 @@ namespace Partitioner2 {
  *      conflicts when assigning basic blocks to functions, etc.
  *
  *  Use of an engine is entirely optional.  All of the engine's actions are implemented in terms of public APIs on other
- *  objects such as @ref Disassembler and @ref Partitioner.  In fact, this particular engine base class is disigned so that
+ *  objects such as @ref Disassembler and @ref Partitioner.  In fact, this particular engine base class is designed so that
  *  users can pick and choose to use only those steps they need, or perhaps to call the main actions one step at a time with
  *  the user making adjustments between steps.
  *
- *  @section extensibility Custimization
+ *  @section extensibility Customization
  *
  *  The actions taken by an engine can be customized in a number of ways:
  *
@@ -61,7 +61,7 @@ namespace Partitioner2 {
  *
  *  @li Instead of calling one function that does everything from parsing the command-line to generating the final abstract
  *      syntax tree, the engine breaks things into steps. The user can invoke one step at a time and make adjustments between
- *      steps.  This is actually the most common custimization within the tools distributed with ROSE.
+ *      steps.  This is actually the most common customization within the tools distributed with ROSE.
  *
  *  @li The behavior of the @ref Partitioner itself can be modified by attaching callbacks to it. In fact, if the engine is
  *      used to create a partitioner then certain engine-defined callbacks are added to the partitioner.
@@ -364,7 +364,7 @@ public:
      *  @li Clears any existing memory map in the engine.
      *
      *  @li If the binary containers have not been parsed (@ref areContainersParsed returns false, i.e., engine has a null
-     *      binary  interpretation) then @ref parseContainers is called with the same arguments.
+     *      binary interpretation) then @ref parseContainers is called with the same arguments.
      *
      *  @li If binary containers are present but the chosen binary interpretation's memory map is null or empty, then
      *      initialize the memory map by calling @ref loadContainers with the same arguments.
