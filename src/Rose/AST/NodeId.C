@@ -8,20 +8,22 @@
 namespace Rose {
 namespace AST 
 {
+  NodeId::NodeId(SgNode *inNode) : node(inNode) {
+    //ROSETTA code required to generate this for every AST
+    //subclass...
+    std::string stringId = SgNode::getNodeIdString(node);
+    
+    //Then we parse out the string to fill in the data on this NodeId
+    std::size_t pos = stringId.find("_");
+    std::string poolStr = stringId.substr(0, pos);
+    std::string nodeStr = stringId.substr(pos+1);
+    poolIndex = stoull(poolStr, NULL);
+    nodeIndex = stoull(nodeStr, NULL);
+  }
+
   //! \brief Get the Node ID for a particular SgNode*
     NodeId NodeId::getId(SgNode *node) {
-        //ROSETTA code required to generate this for every AST
-        //subclass...
-      std::string stringId = SgNode::getNodeIdString(node);
-
-      //Then we parse out the string to fill in the data on this NodeId
-      std::size_t pos = stringId.find("_");
-      std::string poolStr = stringId.substr(0, pos);
-      std::string nodeStr = stringId.substr(pos+1);
-      size_t poolId = stoull(poolStr, NULL);
-      size_t nodeId = stoull(nodeStr, NULL);
-      
-      return NodeId(poolId, nodeId, node);
+      return NodeId(node);
   };
 
 /**
