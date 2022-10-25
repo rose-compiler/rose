@@ -190,6 +190,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   exception_rename.ads                 \
   fixed_point_definition.ads           \
   generic_package_renaming_declaration.adb          \
+  genex.adb                            \
   gentask.ads                          \
   gentask.adb                          \
   gentask-share.adb                    \
@@ -268,6 +269,7 @@ ROSE_FAILING_ADA_TESTS :=                           \
   blockreference.adb                                \
   sq_pkg_fun_overload.adb                           \
   delay_until.adb                                   \
+  mangle_disctypes.adb                 \
   mpiuse.ads
 
 # defines tests that are supported by ASIS
