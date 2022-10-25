@@ -1,5 +1,6 @@
 add_subdirectory(ByteCode)
 add_subdirectory(Concolic)
+add_subdirectory(Debugger)
 add_subdirectory(Disassembler)
 add_subdirectory(InstructionSemantics)
 add_subdirectory(InstructionSemantics2)
@@ -21,7 +22,6 @@ add_library(roseBinaryAnalysis OBJECT
   ConcreteLocation.C
   ControlFlow.C
   DataFlow.C
-  Debugger.C
   Demangler.C
   DisassemblerCil.C
   FeasiblePath.C

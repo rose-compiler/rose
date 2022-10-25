@@ -80,7 +80,10 @@ namespace // anonymous namespace for auxiliary functions
 
     uint32_t res = 0;
 
-    printf ("skip string padding of %zu bytes\n", (reservedLen - strLen));
+    if (TRACE_CONSTRUCTION)
+      std::cerr << "skip string padding of " << (reservedLen - strLen) << " bytes"
+                << std::endl;
+      
     while (strLen < reservedLen)
     {
       res = (res<<8) + buf.at(index);
@@ -118,13 +121,18 @@ namespace // anonymous namespace for auxiliary functions
 
     std::vector<elem_type> res;
 
-    printf ("Output the number of rows for each table: \n");
+    if (TRACE_CONSTRUCTION)
+      std::cerr << "Output the number of rows for each table: "
+                << std::endl;
 
     for (uint64_t i = 0; i < num; ++i)
     {
       elem_type tmp_rows_value = rd(buf, index);
-      //~ printf ("--- table %2zu: tmp_rows_value = %u \n",i,tmp_rows_value);
       res.push_back(tmp_rows_value);
+      
+      if (TRACE_CONSTRUCTION)
+        std::cerr << "--- table " << i << ": tmp_rows_value = " << tmp_rows_value
+                  << std::endl;
     }
 
     return res;
@@ -172,13 +180,10 @@ namespace // anonymous namespace for auxiliary functions
 
       if (  (SgAsmCilDataStream::ID_STRING_HEAP == streamHeader.name())
          || (SgAsmCilDataStream::ID_BLOB_HEAP   == streamHeader.name())
+         || (SgAsmCilDataStream::ID_US_HEAP     == streamHeader.name()) // \todo should be a Utf16 Stream
          )
         dataStream = new SgAsmCilUint8Heap(streamHeader.offset(), streamHeader.size(), streamHeader.name(), streamHeader.namePadding());
-      else if (SgAsmCilDataStream::ID_US_HEAP == streamHeader.name())
-      {
-        dataStream = new SgAsmCilUint16Heap(streamHeader.offset(), streamHeader.size(), streamHeader.name(), streamHeader.namePadding());
-      } 
-      else if (SgAsmCilDataStream::ID_GUID_HEAP == streamHeader.name())
+      else if (SgAsmCilDataStream::ID_GUID_HEAP == streamHeader.name()) // \todo should be a Uint128? stream
         dataStream = new SgAsmCilUint32Heap(streamHeader.offset(), streamHeader.size(), streamHeader.name(), streamHeader.namePadding());
       else if (SgAsmCilDataStream::ID_METADATA_HEAP == streamHeader.name())
         dataStream = new SgAsmCilMetadataHeap(streamHeader.offset(), streamHeader.size(), streamHeader.name(), streamHeader.namePadding());
@@ -197,9 +202,9 @@ namespace // anonymous namespace for auxiliary functions
     return res;
   }
 
-  template <class SageAsmCilNode>
+  template <class SageAsmCilNode, class SageAsmCilMetadataTable>
   SageAsmCilNode*
-  parseAsmCilNode(SgAsmCilMetadataHeap* parent, std::vector<uint8_t>& buf, size_t& index, uint64_t dataSizeflags)
+  parseAsmCilNode(SageAsmCilMetadataTable* parent, std::vector<uint8_t>& buf, size_t& index, uint64_t dataSizeflags)
   {
       SageAsmCilNode* res = new SageAsmCilNode;
       ASSERT_not_null(res);
@@ -232,10 +237,14 @@ namespace // anonymous namespace for auxiliary functions
   const SgAsmCilMetadataHeap&
   getMetadataHeap(const SgAsmCilMetadata* o)
   {
-    ROSE_ASSERT(o);
-    const SgAsmCilMetadataHeap* res = isSgAsmCilMetadataHeap(o->get_parent());
-
-    ROSE_ASSERT(res);
+    ASSERT_not_null(o);
+    
+    const SgNode* metadataTable = o->get_parent();
+    ASSERT_not_null(metadataTable);
+    
+    const SgAsmCilMetadataHeap* res = isSgAsmCilMetadataHeap(metadataTable->get_parent());
+    ASSERT_not_null(res);
+    
     return *res;
   }
   
@@ -243,10 +252,14 @@ namespace // anonymous namespace for auxiliary functions
   SgAsmCilMetadataHeap&
   getMetadataHeap(SgAsmCilMetadata* o)
   {
-    ROSE_ASSERT(o);
-    SgAsmCilMetadataHeap* res = isSgAsmCilMetadataHeap(o->get_parent());
-
-    ROSE_ASSERT(res);
+    ASSERT_not_null(o);
+    
+    SgNode* metadataTable = o->get_parent();
+    ASSERT_not_null(metadataTable);
+    
+    SgAsmCilMetadataHeap* res = isSgAsmCilMetadataHeap(metadataTable->get_parent());
+    ASSERT_not_null(res);
+    
     return *res;
   }
   

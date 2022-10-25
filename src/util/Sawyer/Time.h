@@ -18,16 +18,16 @@ namespace Sawyer {
 
 /** Represents an ISO 8601 time point. */
 class Time {
-    Sawyer::Optional<unsigned> year_;                      // year, >= 1583
-    Sawyer::Optional<unsigned> month_;                     // month of year, 1 through 12, only if year_ is defined
-    Sawyer::Optional<unsigned> day_;                       // day of month, 1 through 31, only if month_ is defined
+    Optional<unsigned> year_;                           // year, >= 1583
+    Optional<unsigned> month_;                          // month of year, 1 through 12, only if year_ is defined
+    Optional<unsigned> day_;                            // day of month, 1 through 31, only if month_ is defined
 
-    Sawyer::Optional<unsigned> hour_;                      // 0 through 23
-    Sawyer::Optional<unsigned> minute_;                    // 0 through 59, only if hour_ is defined
-    Sawyer::Optional<unsigned> second_;                    // 0 through 60 (for a leap second), only if minute_ is defined
+    Optional<unsigned> hour_;                           // 0 through 23
+    Optional<unsigned> minute_;                         // 0 through 59, only if hour_ is defined
+    Optional<unsigned> second_;                         // 0 through 60 (for a leap second), only if minute_ is defined
 
-    Sawyer::Optional<int> tz_hour_;                        // -23 through +23
-    Sawyer::Optional<int> tz_minute_;                      // -59 through 59, only if tz_hour_ is defined and having the same sign
+    Optional<int> tz_hour_;                             // -23 through +23
+    Optional<int> tz_minute_;                           // -59 through 59, only if tz_hour_ is defined and having the same sign
 
 public:
     /** Construct an empty time point.
@@ -130,46 +130,59 @@ public:
     /** Returns the year, if any.
      *
      *  A year can be anything between 1583 and 9999, inclusive. */
-    const Sawyer::Optional<unsigned>& year() const;
+    const Optional<unsigned>& year() const;
 
     /** Returns the month, if any.
      *
      *  A month can be in the range 1 through 12, inclusive. If a month is present, then a year is also present. */
-    const Sawyer::Optional<unsigned>& month() const;
+    const Optional<unsigned>& month() const;
 
     /** Returns the day of the month, if any.
      *
      *  The day of the month can be in the range 1 through 28, 29, 30, or 31 depending on the year and month. If a day of month
      *  is present, then the year and month are also present. */
-    const Sawyer::Optional<unsigned>& day() const;
+    const Optional<unsigned>& day() const;
 
     /** Returns the hour, if any.
      *
      *  An hour is in the range 0 through 23, inclusive. */
-    const Sawyer::Optional<unsigned>& hour() const;
+    const Optional<unsigned>& hour() const;
 
     /** Returns the minute, if any.
      *
      *  A minute is in the range 0 through 59, inclusive. If a minute is present, then an hour is also present. */
-    const Sawyer::Optional<unsigned>& minute() const;
+    const Optional<unsigned>& minute() const;
 
     /** Returns the second, if any.
      *
      *  A second is in the range 0 through 60, inclusive. A value of 60 represents a leap second. If a second is present, then
      *  an hour and minute are also present. */
-    const Sawyer::Optional<unsigned>& second() const;
+    const Optional<unsigned>& second() const;
 
     /** Returns a timezone hour, if any.
      *
      *  The timezone hour is a signed integer between -23 and 23, inclusive and represents the distance east of the prime
      *  meridian.  Positive values are east; negative values are west. */
-    const Sawyer::Optional<int>& timeZoneHour() const;
+    const Optional<int>& timeZoneHour() const;
 
     /** Returns a timezone minute, if any.
      *
      *  The timezone minute is a value between -59 and 59, inclusive and has the same sign as the timezone hour. If a timezone
      *  minute is present then a timezone hour is also present. */
-    const Sawyer::Optional<int>& timeZoneMinute() const;
+    const Optional<int>& timeZoneMinute() const;
+
+    /** Convert to timezone +0000.
+     *
+     *  The hours and minutes of this time's timezone is subtracted from this time in order to create a new time whose time
+     *  zone is +0000. If the input time has no timezone or has no time, then the output is the same as the input.  The seconds
+     *  field is always unchanged. If the time zone minute field is unspecified, then it is assumed to be zero for the purpose
+     *  of subtraction. If the time minute field is unspecified, then it is assumed to be zero for the purpose of the
+     *  subtraction and will remain unspecified in the result. If the input has a time but no date, then the time will be
+     *  adjusted but the return value will also not have a date.
+     *
+     *  It's possible that the normalized time does not fall within the range of times representable by this type. If that
+     *  happens, then an error string is returned instead of a valid time. */
+    Result<Time, std::string> toZulu() const;
 
     /** Convert a time point to ISO 8601 format.
      *
@@ -184,6 +197,38 @@ public:
      *  Returns the number of seconds since "1970-01-01 00:00:00Z". Returns an error string if this time point does not have a
      *  specific time. If no timezone is present, then the return value is local time. */
     Result<time_t, std::string> toUnix() const;
+
+    /** Compare two times for equality or inequality.
+     *
+     *  Two times are equal if, after converting them both to the same timezone, they have the same year, month, day, hour,
+     *  minute, and second for all such fields where either or both times have a value. Fields are considered equal if neither
+     *  time has a value for that field.
+     *
+     *  If either or both times fail to convert to Zulu due to overflows, then they are neither equal nor unequal.
+     *
+     * @{ */
+    bool operator==(const Time&) const;
+    bool operator!=(const Time&) const;
+    /** @} */
+
+    /** Compare two times for less-than.
+     *
+     *  Time @p a is less than time @p b if @p a occurs earlier than @p b after normalizing both to Zulu.  If the conversion to
+     *  Zulu fails for both times, then the result is the comparison of the error strings. If only one of the times fails to
+     *  convert, then that one is less than the other. If a field is missing from both times, then that field is considered to
+     *  be equal (e.g., if both times are missing the month). If the field is missing from @p a but not @p b, then @p a is less
+     *  than @p b. The fields are compared in order from year to second, followed by the timezone hour and then timezone minute
+     *  (although the timezone comparisons are only based on their presence or absense since they've both been converted to
+     *  Zulu). */
+    bool operator<(const Time&) const;
+
+private:
+    // Normalization functions
+    void normalizeSecond();
+    void normalizeMinute();
+    void normalizeHour();
+    void normalizeMonth();
+    void normalize();
 };
 
 std::ostream& operator<<(std::ostream&, const Time&);

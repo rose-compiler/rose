@@ -72,6 +72,8 @@ public:
   //! \brief default constructor required for containers, but only makes invalid NodeIds 
   NodeId() : poolIndex(std::numeric_limits<size_t>::max()), nodeIndex(std::numeric_limits<size_t>::max()), node(nullptr) {}
 
+  NodeId(SgNode* sgnode); 
+
   //! \brief copy constructor
   NodeId(const NodeId &rhs) : poolIndex(rhs.poolIndex), nodeIndex(rhs.nodeIndex), node(rhs.node) {}
 
@@ -108,6 +110,27 @@ public:
     }
     return false;
   }
+
+  bool operator!=(const NodeId& rhs) const { return !(this->operator==(rhs)); }
+  bool operator< (const NodeId& rhs) const {     
+    if(poolIndex < rhs.poolIndex ||
+       nodeIndex < rhs.nodeIndex ||
+       node < rhs.node) { //Should never reach this comparison...  
+      return true;
+    }
+    return false;
+  }
+  bool operator<= (const NodeId& rhs) const {     
+    if(poolIndex <= rhs.poolIndex ||
+       nodeIndex <= rhs.nodeIndex ||
+       node <= rhs.node) { //Should never reach this comparison...  
+      return true;
+    }
+    return false;
+  }
+
+  bool operator> (const NodeId& rhs) const { return !(this->operator<=(rhs));}
+  bool operator>=(const NodeId& rhs) const { return !(this->operator< (rhs));}
   
 };
     

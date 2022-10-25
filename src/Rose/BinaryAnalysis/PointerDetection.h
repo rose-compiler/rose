@@ -125,7 +125,8 @@ extern Sawyer::Message::Facility mlog;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Settings to control the pointer analysis. */
-struct Settings {
+class Settings {
+public:
     /** Whether to ignore branches to concrete addresses.
      *
      *  If set, then conditional branches to concrete addresses are ignored, not treated as code pointers.  For instance, the
@@ -175,7 +176,8 @@ struct Settings {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Description of one pointer. */
-struct PointerDescriptor {
+class PointerDescriptor {
+public:
     /** Information about how a pointer is dereferenced. */
     enum Direction {
         READ,                                           /**< Pointer is used to read from memory. */

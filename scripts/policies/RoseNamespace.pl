@@ -231,6 +231,7 @@ my @extra_words = qw/
     AST 			# Abstract Syntax Tree
     CFG				# Control Flow Graph
     CIL				# Common Intermediate Language
+    GDB				# GNU Debugger
     JVM				# Java Virtual Machine
     callbacks			# missing from dictionary
     Concolic			# as in Concolic Testing
@@ -609,7 +610,7 @@ foreach (keys %docdirs) {
 
 my $nerrors = printViolations(\%violations);
 if ($nerrors > 0) {
-    print STDERR "\n*** error: policy checks failed for the ::Rose namespace (src/Rose directory)",
+    print "\n*** error: policy checks failed for the ::Rose namespace (src/Rose directory)",
 	": $nerrors ", (1==$nerrors?"error":"errors"), "\n";
     exit(1);
 } else {

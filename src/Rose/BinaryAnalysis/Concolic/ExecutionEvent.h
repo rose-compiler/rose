@@ -6,7 +6,7 @@
 #include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Concolic/Database.h>
 #include <Rose/BinaryAnalysis/Concolic/ExecutionLocation.h>
-#include <Rose/BinaryAnalysis/Debugger.h>
+#include <Rose/BinaryAnalysis/Debugger/Linux.h>
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
 #include <Combinatorics.h>                              // rose
 
@@ -207,7 +207,7 @@ public:
 
     /** Allocating constructor for @c BULK_REGISTER_WRITE events. */
     static Ptr bulkRegisterWrite(const TestCasePtr&, const ExecutionLocation&, rose_addr_t ip,
-                                 const Debugger::AllRegisters&);
+                                 const Debugger::Linux::AllRegisters&);
 
     /** Allocating constructor for @c REGISTER_WRITE events. */
     static Ptr registerWrite(const TestCasePtr&, const ExecutionLocation&, rose_addr_t ip,
@@ -356,8 +356,8 @@ public:
      *  Valid for type @c BULK_REGISTER_WRITE. Other types do not permit this property to be set or retrieved.
      *
      * @{ */
-    Debugger::AllRegisters registerValues() const;
-    void registerValues(const Debugger::AllRegisters&);
+    Debugger::Linux::AllRegisters registerValues() const;
+    void registerValues(const Debugger::Linux::AllRegisters&);
     /** @} */
 
     /** Property: Hash value for checksumming.

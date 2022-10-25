@@ -10,7 +10,7 @@
 #include <Rose/BinaryAnalysis/CodeInserter.h>
 #include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
 #include <Rose/BinaryAnalysis/DataFlow.h>
-#include <Rose/BinaryAnalysis/Debugger.h>
+#include <Rose/BinaryAnalysis/Debugger/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/FeasiblePath.h>
 #include <Rose/BinaryAnalysis/FunctionSimilarity.h>
@@ -145,7 +145,9 @@ void initialize() {
 #ifdef ROSE_ENABLE_LIBRARY_IDENTIFICATION
         BinaryAnalysis::LibraryIdentification::initDiagnostics();
 #endif
+#ifdef ROSE_ENABLE_MODEL_CHECKER
         BinaryAnalysis::ModelChecker::initDiagnostics();
+#endif
         BinaryAnalysis::NoOperation::initDiagnostics();
         BinaryAnalysis::Partitioner2::initDiagnostics();
 #if __cplusplus >= 201103L

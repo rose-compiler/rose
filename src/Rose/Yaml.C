@@ -1975,7 +1975,7 @@ LineFolding(const std::string &input, std::vector<std::string> &folded, const si
 }
 
 static void
-SerializeLoop(const Node &node, std::iostream &stream, bool useLevel, const size_t level, const SerializeConfig &config) {
+SerializeLoop(const Node &node, std::ostream &stream, bool useLevel, const size_t level, const SerializeConfig &config) {
     const size_t indention = config.SpaceIndentation;
     switch (node.Type()) {
         case Node::SequenceType: {
@@ -2087,7 +2087,7 @@ SerializeLoop(const Node &node, std::iostream &stream, bool useLevel, const size
 }
 
 void
-Serialize(const Node &root, std::iostream &stream, const SerializeConfig &config) {
+Serialize(const Node &root, std::ostream &stream, const SerializeConfig &config) {
     if (config.SpaceIndentation < 2)
         throw OperationException(g_ErrorIndentation);
     SerializeLoop(root, stream, false, 0, config);

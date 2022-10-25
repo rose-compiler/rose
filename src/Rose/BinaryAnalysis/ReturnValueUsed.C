@@ -371,7 +371,7 @@ Analysis::analyzeCallSite(const P2::Partitioner &partitioner, const P2::ControlF
         State::Ptr outputState;
         try {
             outputState = State::promote(xfer(dfCfg, t.vertex()->id(), inputState));
-        } catch (const S2::BaseSemantics::Exception &e) {
+        } catch (const S2::BaseSemantics::NotImplemented &e) {
             mlog[WHERE] <<e.what() <<" at call site vertex " <<partitioner.vertexName(callSite) <<"\n";
             retval.didConverge(false);
             return retval;

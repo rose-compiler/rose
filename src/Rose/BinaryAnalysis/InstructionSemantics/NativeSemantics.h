@@ -1,10 +1,10 @@
 #ifndef ROSE_BinaryAnalysis_InstructionSemantics_NativeSemantics_H
 #define ROSE_BinaryAnalysis_InstructionSemantics_NativeSemantics_H
 #include <featureTests.h>
-#ifdef ROSE_ENABLE_BINARY_ANALYSIS
+#if defined(ROSE_ENABLE_BINARY_ANALYSIS) && defined(ROSE_ENABLE_DEBUGGER_LINUX)
 
 #include <Rose/BinaryAnalysis/BasicTypes.h>
-#include <Rose/BinaryAnalysis/Debugger.h>
+#include <Rose/BinaryAnalysis/Debugger/Linux.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/ConcreteSemantics.h>
 
 #include <boost/noncopyable.hpp>
@@ -49,7 +49,7 @@ public:
     using Ptr = RegisterStatePtr;
 
 private:
-    Debugger::Ptr process_;
+    Debugger::Linux::Ptr process_;
 
     //----------------------------------------
     // Real constructors
@@ -57,7 +57,7 @@ private:
 protected:
     RegisterState();
 
-    RegisterState(const BaseSemantics::SValuePtr &protoval, const Debugger::Ptr &process);
+    RegisterState(const BaseSemantics::SValuePtr &protoval, const Debugger::Linux::Ptr &process);
 
     //----------------------------------------
     // Static allocating constructors
@@ -69,7 +69,7 @@ public:
     static RegisterStatePtr instance();
 
     /** Construct a state attached to the specified process. */
-    static RegisterStatePtr instance(const BaseSemantics::SValuePtr &protoval, const Debugger::Ptr &process);
+    static RegisterStatePtr instance(const BaseSemantics::SValuePtr &protoval, const Debugger::Linux::Ptr &process);
 
     //----------------------------------------
     // Virtual constructors
@@ -91,7 +91,7 @@ public:
     //----------------------------------------
 public:
     /** Property: Subordinate process storing the registers. */
-    Debugger::Ptr process() const;
+    Debugger::Linux::Ptr process() const;
 
     //----------------------------------------
     // Virtual function implementations
@@ -142,7 +142,7 @@ public:
     using Ptr = MemoryStatePtr;
 
 private:
-    Debugger::Ptr process_;
+    Debugger::Linux::Ptr process_;
 
     //----------------------------------------
     // Real constructors
@@ -151,7 +151,7 @@ protected:
     MemoryState();
 
     MemoryState(const BaseSemantics::SValuePtr &addrProtoval, const BaseSemantics::SValuePtr &valProtoval,
-                const Debugger::Ptr &process);
+                const Debugger::Linux::Ptr &process);
 
     //----------------------------------------
     // Static allocating constructors
@@ -164,7 +164,7 @@ public:
 
     /** Construct a state attached to the specified process. */
     static MemoryStatePtr instance(const BaseSemantics::SValuePtr &addrProtoval, const BaseSemantics::SValuePtr &valProtoval,
-                                   const Debugger::Ptr &process);
+                                   const Debugger::Linux::Ptr &process);
 
     //----------------------------------------
     // Virtual constructors
@@ -186,7 +186,7 @@ public:
     //----------------------------------------
 public:
     /** Property: Subordinate process storing the registers. */
-    Debugger::Ptr process() const;
+    Debugger::Linux::Ptr process() const;
 
     //----------------------------------------
     // Virtual function implementations
@@ -294,7 +294,7 @@ public:
      *  The register state, memory state, and combined state are instantiations of @ref NativeSemantics::RegisterState, @ref
      *  NativeSemantics::MemoryState, and @ref NativeSemantics::State, which point to the subordinate process and which are not
      *  copyable. */
-    static RiscOperatorsPtr instanceFromProtoval(const BaseSemantics::SValuePtr &protoval, const Debugger::Ptr &process);
+    static RiscOperatorsPtr instanceFromProtoval(const BaseSemantics::SValuePtr &protoval, const Debugger::Linux::Ptr &process);
 
     /** Allocating constructor.
      *
@@ -326,7 +326,7 @@ public:
     /** Property: Process storing the state.
      *
      *  This is just a convenience function that queries the state for the information. */
-    Debugger::Ptr process() const {
+    Debugger::Linux::Ptr process() const {
         return RegisterState::promote(currentState()->registerState())->process();
     }
 };
@@ -347,13 +347,13 @@ public:
     using Ptr = DispatcherPtr;
 
 private:
-    Debugger::Ptr process_;
+    Debugger::Linux::Ptr process_;
 
     //----------------------------------------
     // Real constructors
     //----------------------------------------
 protected:
-    Dispatcher(const Debugger::Ptr &process, const BaseSemantics::SValuePtr &protoval);
+    Dispatcher(const Debugger::Linux::Ptr &process, const BaseSemantics::SValuePtr &protoval);
 
     Dispatcher(const BaseSemantics::RiscOperatorsPtr&);
 
@@ -364,10 +364,10 @@ public:
     ~Dispatcher();
 
     /** Create a new dispatcher using the specified process. */
-    static DispatcherPtr instance(const Debugger::Ptr &process, const BaseSemantics::SValuePtr &protoval = SValue::instance());
+    static DispatcherPtr instance(const Debugger::Linux::Ptr &process, const BaseSemantics::SValuePtr &protoval = SValue::instance());
 
     /** Create a new dispatcher using the specified executable specimen. */
-    static DispatcherPtr instance(const Debugger::Specimen&, const BaseSemantics::SValuePtr &protoval = SValue::instance());
+    static DispatcherPtr instance(const Debugger::Linux::Specimen&, const BaseSemantics::SValuePtr &protoval = SValue::instance());
 
     /** Create a new dispatcher using the specified operators.
      *

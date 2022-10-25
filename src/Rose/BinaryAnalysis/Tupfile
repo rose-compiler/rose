@@ -14,7 +14,6 @@ run $(librose_compile)				\
     ConcreteLocation.C				\
     ControlFlow.C				\
     DataFlow.C					\
-    Debugger.C					\
     Demangler.C					\
     DisassemblerCil.C				\
     FeasiblePath.C				\

@@ -1,2 +1,10 @@
-%%forall Class%%SgAsmCil%%Class.Name%%
-%%end_for%%
+`for_each cl = .metadata`SgAsmCil`cl.Name`
+`end_for`
+`for_each cl = .metadata`SgAsmCil`cl.Name`Table
+`end_for`
+SgAsmCilUint8Heap
+SgAsmCilUint32Heap
+SgAsmCilMetadataHeap
+SgAsmCilMetadataRoot
+SgAsmCilNode
+  

@@ -167,7 +167,7 @@ ExecutionEvent::memoryWrite(const TestCase::Ptr &tc, const ExecutionLocation &lo
 
 ExecutionEvent::Ptr
 ExecutionEvent::bulkRegisterWrite(const TestCase::Ptr &tc, const ExecutionLocation &loc, rose_addr_t ip,
-                                  const Debugger::AllRegisters &values) {
+                                  const Debugger::Linux::AllRegisters &values) {
     Ptr e = Ptr(new ExecutionEvent);
     e->action_ = Action::BULK_REGISTER_WRITE;
     e->testCase_ = tc;
@@ -395,11 +395,11 @@ ExecutionEvent::bytes(const std::vector<uint8_t> &v) {
     }
 }
 
-Debugger::AllRegisters
+Debugger::Linux::AllRegisters
 ExecutionEvent::registerValues() const {
     switch (action_) {
         case Action::BULK_REGISTER_WRITE: {
-            Debugger::AllRegisters values;
+            Debugger::Linux::AllRegisters values;
             ASSERT_require(bytes_.size() == values.regs.size() + values.fpregs.size());
             std::copy(bytes_.begin(), bytes_.begin() + values.regs.size(), values.regs.begin());
             std::copy(bytes_.begin() + values.regs.size(), bytes_.end(), values.fpregs.begin());
@@ -411,7 +411,7 @@ ExecutionEvent::registerValues() const {
 }
 
 void
-ExecutionEvent::registerValues(const Debugger::AllRegisters &values) {
+ExecutionEvent::registerValues(const Debugger::Linux::AllRegisters &values) {
     switch (action_) {
         case Action::BULK_REGISTER_WRITE: {
             bytes_.clear();
