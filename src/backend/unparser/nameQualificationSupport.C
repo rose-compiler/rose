@@ -569,25 +569,6 @@ namespace
     /// add all scopes on the path to the global scope
     while (requiresNameQual(curr))
     {
-#if OLD_VERSION
-      const SgStatement& scopeOrDecl = scopeForNameQualification(*curr);
-
-/*
-      std::cerr << ">" << typeid(scopeOrDecl).name() << " @ " << SrcLoc(scopeOrDecl)
-                << " - " << typeid(*curr).name() << " @ " << SrcLoc(*curr)
-                << " / " << res.size()
-                << std::endl;
-      if (const SgAdaRenamingDecl* ren = isSgAdaRenamingDecl(&scopeOrDecl))
-        std::cerr << "  " << ren->get_name() << " renames " << SG_DEREF(ren->get_renamed()).get_name()
-                  << std::endl;
-*/
-
-      // assert progress
-      ROSE_ASSERT(std::find(res.rbegin(), res.rend(), &scopeOrDecl) == res.rend());
-      res.push_back(&scopeOrDecl);
-      curr = scopeOrDecl.get_scope();
-#endif /* OLD_VERSION */
-
       ROSE_ASSERT(std::find(res.rbegin(), res.rend(), curr) == res.rend());
 
       res.push_back(curr);
@@ -597,45 +578,6 @@ namespace
     return res;
   }
 
-#if WORK_IN_PROGRESS
-  struct RequiredScopes : sg::DispatchHandler<std::size_t>
-  {
-    using base = sg::DispatchHandler<std::size_t>;
-
-    explicit
-    RequiredScopes(const ScopePath& p)
-    : base(0), path(p)
-    {}
-
-    void handle(const SgNode&) { /* returns default value = 0 */ }
-
-    void handle(const SgFunctionRefExp& n)
-    {
-      const SgFunctionSymbol& sym    = SG_DEREF(n.get_symbol());
-      std::string             fnname = sym.get_name();
-
-      for (const SgStatement* stmt : path)
-      {
-        if (const SgScopeStatement* sc = isSgScopeStatement(stmt))
-        {
-          const SgSymbolTable& sytbl = SG_DEREF(sc->get_symbol_table());
-
-          std::cerr << fnname << ": " << sytbl.exists(fnname) << std::endl;
-        }
-      }
-    }
-
-    private:
-      const ScopePath& path;
-  };
-
-  std::size_t
-  numberOfRequiredScopes(const SgNode& node, const ScopePath& path)
-  {
-    return 0;
-    // return sg::dispatch(RequiredScopes{ path }, &node);
-  }
-#endif /* WORK_IN_PROGRESS */
 
   bool symbolMatchesDeclaration(const SgSymbol& sym, const SgNode& dcl)
   {
@@ -672,14 +614,45 @@ namespace
     return false;
   }
 
+  struct NodeName : sg::DispatchHandler<std::string>
+  {
+    void handle(const SgNode& n)                 { SG_UNEXPECTED_NODE(n); }
+    void handle(const SgDeclarationStatement& n) { res = si::get_name(&n); }
+    //~ void handle(const SgInitializedName& n)      { res = si::get_name(&n); }
+    void handle(const SgEnumVal& n)              { res = n.get_name(); }
+    void handle(const SgBaseClass& n)            { res = SG_DEREF(n.get_base_class()).get_name(); }
+
+    // ref expressions
+    void handle(const SgVarRefExp& n)            { res = SG_DEREF(n.get_symbol()).get_name(); }
+    void handle(const SgFunctionRefExp& n)       { res = SG_DEREF(n.get_symbol()).get_name(); }
+    void handle(const SgAdaUnitRefExp& n)        { res = si::get_name(n.get_decl()); }
+    void handle(const SgAdaProtectedRefExp& n)   { res = si::get_name(n.get_decl()); }
+    void handle(const SgAdaTaskRefExp& n)        { res = si::get_name(n.get_decl()); }
+    void handle(const SgAdaRenamingRefExp& n)    { res = si::get_name(n.get_decl()); }
+    void handle(const SgBasicBlock& n)           { res = n.get_string_label(); }
+  };
+
+
+  /// gets the name of the node
+  std::string nodeName(const SgNode& n)
+  {
+    std::string res = sg::dispatch(NodeName{}, &n);
+
+    // PP (10/24/22): To avoid false positives when unnamed variables
+    //                are declared along the scope path (i.e., in a catch statement),
+    //                a 'special' name is returned for unnamed scopes.
+    // \todo fix the underlying cause of false positive reporting..
+    if (res.empty()) res = "@@This#Is$An%Unreal^Name@@";
+    return res;
+  }
+
   bool isShadowedAlongPath( const SgNode& n,
                             ScopePath::const_reverse_iterator beg, ScopePath::const_reverse_iterator lim
                           )
   {
-    std::string                   dclname = si::get_name(&n);
+    std::string                   dclname = nodeName(n);
     const SgDeclarationStatement* dcl = isSgDeclarationStatement(&n);
     const SgScopeStatement*       dclscope = dcl ? dcl->get_scope() : nullptr;
-
 
     auto        pred    = [&dclname, &n, dclscope](const SgScopeStatement* scope)->bool
                           {
@@ -711,7 +684,11 @@ namespace
                             return shadowed;
                           };
 
-    return lim != std::find_if(beg, lim, pred);
+    bool const res = lim != std::find_if(beg, lim, pred);
+
+    //~ std::cerr << &n << " " << typeid(n).name() << " :" << dclname << ": " << res
+              //~ << std::endl;
+    return res;
   }
 
   std::string
@@ -747,6 +724,9 @@ namespace
                      if (!name.empty())
                      {
                        qual += name;
+                       //~ qual += "(";
+                       //~ qual += typeid(*ref).name();
+                       //~ qual += ")";
                        qual += '.';
                      }
 
@@ -756,8 +736,106 @@ namespace
     return std::accumulate(beg, lim, std::string{}, scopeFn);
   }
 
+  struct DeclarationOf : sg::DispatchHandler<const SgNode*>
+  {
+    void setDecl(const SgNode* node)
+    {
+      ASSERT_not_null(isSgDeclarationStatement(node));
+
+      res = node;
+    }
+
+    void handle(const SgNode& n)                   { SG_UNEXPECTED_NODE(n); }
+
+    void handle(const SgAdaProtectedSpec& n)       { setDecl(n.get_parent()); }
+    void handle(const SgAdaProtectedBody& n)       { setDecl(n.get_parent()); }
+    void handle(const SgAdaTaskSpec& n)            { setDecl(n.get_parent()); }
+    void handle(const SgAdaTaskBody& n)            { setDecl(n.get_parent()); }
+    void handle(const SgAdaPackageSpec& n)         { setDecl(n.get_parent()); }
+    void handle(const SgAdaPackageBody& n)         { setDecl(n.get_parent()); }
+    void handle(const SgAdaGenericDefn& n)         { setDecl(n.get_parent()); }
+    void handle(const SgFunctionDefinition& n)     { setDecl(n.get_parent()); }
+    void handle(const SgDeclarationScope& n)       { setDecl(n.get_parent()); }
+    void handle(const SgFunctionParameterScope& n) { setDecl(n.get_parent()); }
+    void handle(const SgClassDefinition& n)        { setDecl(n.get_parent()); }
+
+    void handle(const SgBasicBlock& n)             { res = &n; }
+  };
+
+  const SgNode*
+  declarationOf(const SgScopeStatement* scope)
+  {
+    return sg::dispatch(DeclarationOf{}, scope);
+  }
+
+  bool skipAuxiliaryScope(const SgScopeStatement& scope)
+  {
+    if (const SgBasicBlock* blk = isSgBasicBlock(&scope))
+      return (  isSgFunctionDefinition(blk->get_parent())
+             || isSgIfStmt(blk->get_parent())
+             //~ || isSgTryStmt(blk->get_parent())
+             );
+
+    return false;
+  }
+
+  ScopePath::reverse_iterator
+  ancestorScope(ScopePath::reverse_iterator beg, ScopePath::reverse_iterator pos)
+  {
+    if (beg == pos) return pos;
+
+    ScopePath::reverse_iterator res = std::prev(pos);
+
+    if (skipAuxiliaryScope(**res))
+      return ancestorScope(beg, res);
+
+    return res;
+  }
+
+  ScopePath::reverse_iterator
+  extendNameQualUntilUnambiguous( ScopePath::reverse_iterator remBeg,
+                                  ScopePath::reverse_iterator remMin,
+                                  ScopePath::reverse_iterator remLim,
+                                  ScopePath::reverse_iterator locMin,
+                                  ScopePath::reverse_iterator locLim,
+                                  const SgNode& declOrRef
+                                )
+  {
+    const SgNode* refNode = &declOrRef;
+
+    // set the reference Node to the leading scope (or if none use the quasiDecl node instead).
+    if (std::distance(remMin, remLim) > 0)
+      refNode = declarationOf(*remMin);
+
+    // while the refnode is aliases along (locMin, locLim] and the scope is extensible |remBeg,remMin| > 0
+    //   extend the scope by one.
+    while ((std::distance(remBeg, remMin) > 0) && isShadowedAlongPath(*refNode, locMin, locLim))
+    {
+      remMin  = ancestorScope(remBeg, remMin);
+      refNode = declarationOf(*remMin);
+    }
+
+    return remMin;
+  }
+
+  struct DebugSeqPrinter
+  {
+    const ScopePath& el;
+  };
+
+  std::ostream& operator<<(std::ostream& os, const DebugSeqPrinter& s)
+  {
+    for (const SgScopeStatement* scope : s.el)
+      os << ", " << typeid(*scope).name()
+         << " (" << scope << ")";
+
+    return os;
+  }
+
+
+
   std::string
-  NameQualificationTraversalAda::computeNameQual( const SgNode& decl,
+  NameQualificationTraversalAda::computeNameQual( const SgNode& quasiDecl,
                                                   const SgScopeStatement& local,
                                                   const SgScopeStatement& remote
                                                 ) const
@@ -793,16 +871,25 @@ namespace
                                                 );
     // 2a unless an overload for front(b.c) exists somewhere in d.e
     //    \todo instead of querying whether the prefix is empty, use the leading element as decl
+    PathIterator    remotePos    = extendNameQualUntilUnambiguous( remotePath.rbegin(),
+                                                                   mismPos.second,
+                                                                   remotePath.rend(),
+                                                                   mismPos.first,
+                                                                   localPath.rend(),
+                                                                   quasiDecl
+                                                                 );
+/*
     const bool      hasOverload  = (  (std::distance(mismPos.second, remotePath.rend()) == 0)
                                    && isShadowedAlongPath(decl, mismPos.first, localPath.rend())
                                    );
 
     // 2b if an overload exists, fall back to full qualification
     PathIterator    remotePos    = hasOverload ? remotePath.rbegin() : mismPos.second;
+*/
 
     // 3 Since a body has its spec as the logical ancestor scope, adjacent spec/body combination
-    //   are filtered.
-    auto            areSpecAndBody =
+    //   are filtered from the path.
+    auto areSpecAndBody =
           [](const SgScopeStatement* lhs, const SgScopeStatement* rhs) -> bool
           {
             if (const SgAdaProtectedSpec* spec = isSgAdaProtectedSpec(lhs))
@@ -821,12 +908,12 @@ namespace
     PathIterator    remoteEnd    = std::unique(remotePos, remotePath.rend(), areSpecAndBody);
 
     std::string res = nameQualString(remotePos, remoteEnd);
-    //~ std::cerr << "--- " << hasOverload << " <ovl  len> " << std::distance(mismPos.first,  localPath.rend())
-              //~ << "/" << localPath.size()
+    //~ std::cerr << "--- " /*<< hasOverload*/ << " <ovl  len> " << std::distance(mismPos.first, localPath.rend())
+              //~ << "/" << localPath.size() << DebugSeqPrinter{localPath}
               //~ << "/" << nameQualString(localPath.rbegin(), localPath.rend())
               //~ << " <> " << std::distance(mismPos.second, remotePath.rend())
-              //~ << "/" << remotePath.size()
-              //~ << "/" << nameQualString(remotePath.rbegin(), remotePath.rend())
+              //~ << "/" << std::distance(remotePos, remoteEnd)
+              //~ << " /" << nameQualString(remotePath.rbegin(), remotePath.rend())
               //~ << "  => " << res
               //~ << std::endl;
 
@@ -1072,10 +1159,12 @@ namespace
       {
         handle(sg::asBaseType(n));
 
+
         SgExpression& orig = SG_DEREF(n.get_renamed());
 
         //~ recordNameQualIfNeeded(n, orig.get_scope());
         computeNameQualForShared(n, n.get_type());
+        computeNameQualForShared(n, &orig);
         addRenamedScopeIfNeeded(&orig, n);
       }
 
