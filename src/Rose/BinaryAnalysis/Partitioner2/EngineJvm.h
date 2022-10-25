@@ -1,13 +1,9 @@
-#ifndef ROSE_BinaryAnalysis_Partitioner2_JvmEngine_H
-#define ROSE_BinaryAnalysis_Partitioner2_JvmEngine_H
-#include <featureTests.h>
-#ifdef ROSE_ENABLE_BINARY_ANALYSIS
+#ifndef ROSE_BinaryAnalysis_Partitioner2_EngineJvm_H
+#define ROSE_BinaryAnalysis_Partitioner2_EngineJvm_H
 
-#include <Rose/BinaryAnalysis/Disassembler/BasicTypes.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
-#include <Rose/Progress.h>
-#include <Rose/Exception.h>
-#include <stdexcept>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -31,11 +27,11 @@ namespace Partitioner2 {
  *      conflicts when assigning basic blocks to functions, etc.
  *
  *  Use of an engine is entirely optional.  All of the engine's actions are implemented in terms of public APIs on other
- *  objects such as @ref Disassembler and @ref Partitioner.  In fact, this particular engine base class is disigned so that
+ *  objects such as @ref Disassembler and @ref Partitioner.  In fact, this particular engine base class is designed so that
  *  users can pick and choose to use only those steps they need, or perhaps to call the main actions one step at a time with
  *  the user making adjustments between steps.
  *
- *  @section JvmEngine_extensibility Custimization
+ *  @section EngineJvm_extensibility Customization
  *
  *  The actions taken by an engine can be customized in a number of ways:
  *
@@ -51,14 +47,14 @@ namespace Partitioner2 {
  *  @li The behavior of the @ref Partitioner itself can be modified by attaching callbacks to it. In fact, if the engine is
  *      used to create a partitioner then certain engine-defined callbacks are added to the partitioner.
  *
- *  @section JvmEngine_basic Basic usage
+ *  @section EngineJvm_basic Basic usage
  *
  *  The most basic use case for the engine is to pass it the command-line arguments and have it do everything, eventually
  *  returning an abstract syntax tree.
  *
  *  @code
  *   #include <rose.h>
- *   #include <Rose/BinaryAnalysis/Partitioner2/JvmEngine.h>
+ *   #include <Rose/BinaryAnalysis/Partitioner2/EngineJvm.h>
  *   using namespace Rose;
  *   namespace P2 = Rose::BinaryAnalysis::Partitioner2;
  *
@@ -68,10 +64,10 @@ namespace Partitioner2 {
  *           "This tool disassembles the specified specimen and presents the "
  *           "results as a pseudo assembly listing, that is, a listing intended "
  *           "for human consumption rather than assembly.";
- *       SgAsmBlock *gblock = P2::JvmEngine().frontend(argc, argv, purpose, description);
+ *       SgAsmBlock *gblock = P2::EngineJvm().frontend(argc, argv, purpose, description);
  *  @endcode
  *
- *  @section JvmEngine_topsteps High level operations
+ *  @section EngineJvm_topsteps High level operations
  *
  *  While @ref frontend does everything, it's often useful to break it down to individual steps so that adjustments can be made
  *  along the way. This next level of steps are:
@@ -92,7 +88,7 @@ namespace Partitioner2 {
  *      although many binary analysis capabilities are built directly on the more efficient partitioner data structures.
  *      Because of this, the partitioner also has a mechanism by which its data structures can be initialized from an AST.
  */
-class ROSE_DLL_API JvmEngine: private boost::noncopyable {
+class ROSE_DLL_API EngineJvm: private boost::noncopyable {
 public:
     /** Settings for the engine.
      *
@@ -130,12 +126,12 @@ private:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     /** Default constructor. */
-    JvmEngine();
+    EngineJvm();
 
     /** Construct engine with settings. */
-    explicit JvmEngine(const Settings &settings);
+    explicit EngineJvm(const Settings &settings);
 
-    virtual ~JvmEngine();
+    virtual ~EngineJvm();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  The very top-level use case
@@ -673,7 +669,7 @@ public:
 
     /** Property: Whether to search for function calls between exiting functions.
      *
-     *  If set, then @ref JvmEngine::makeFunctionFromInterFunctionCalls is invoked, which looks for call-like code between
+     *  If set, then @ref EngineJvm::makeFunctionFromInterFunctionCalls is invoked, which looks for call-like code between
      *  existing functions in order to create new functions at the call target addresses.
      *
      * @{ */

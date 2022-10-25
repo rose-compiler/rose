@@ -3,7 +3,7 @@
 #include <sage3basic.h>
 
 #include <Rose/CommandLine.h>
-#include <Rose/BinaryAnalysis/Partitioner2/JvmEngine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/EngineJvm.h>
 #include <Rose/BinaryAnalysis/Disassembler/Jvm.h>
 #include <Rose/BinaryAnalysis/ByteCode/Jvm.h>
 
@@ -15,29 +15,29 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
-JvmEngine::JvmEngine()
+EngineJvm::EngineJvm()
     : progress_(Progress::instance()) {
     init();
 }
 
-JvmEngine::JvmEngine(const Settings &settings)
+EngineJvm::EngineJvm(const Settings &settings)
     : settings_(settings), progress_(Progress::instance()) {
     init();
 }
 
-JvmEngine::~JvmEngine() {}
+EngineJvm::~EngineJvm() {}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Utility functions
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void
-JvmEngine::init() {
+EngineJvm::init() {
     Rose::initialize(nullptr);
 }
 
 void
-JvmEngine::reset() {
+EngineJvm::reset() {
     disassembler_ = Disassembler::Base::Ptr();
 }
 
@@ -46,7 +46,7 @@ JvmEngine::reset() {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 SgAsmBlock*
-JvmEngine::frontend(int argc, char *argv[], const std::string &purpose, const std::string &description) {
+EngineJvm::frontend(int argc, char *argv[], const std::string &purpose, const std::string &description) {
     std::vector<std::string> args;
     for (int i=1; i<argc; ++i)
         args.push_back(argv[i]);
@@ -54,7 +54,7 @@ JvmEngine::frontend(int argc, char *argv[], const std::string &purpose, const st
 }
 
 SgAsmBlock*
-JvmEngine::frontend(const std::vector<std::string> &args, const std::string &purpose, const std::string &description) {
+EngineJvm::frontend(const std::vector<std::string> &args, const std::string &purpose, const std::string &description) {
     try {
         std::vector<std::string> specimenNames = parseCommandLine(args, purpose, description).unreachedArgs();
         if (specimenNames.empty())
@@ -75,13 +75,13 @@ JvmEngine::frontend(const std::vector<std::string> &args, const std::string &pur
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Sawyer::CommandLine::SwitchGroup
-JvmEngine::disassemblerSwitches() {
+EngineJvm::disassemblerSwitches() {
     return disassemblerSwitches(settings_.disassembler);
 }
 
 // class method
 Sawyer::CommandLine::SwitchGroup
-JvmEngine::disassemblerSwitches(DisassemblerSettings &settings) {
+EngineJvm::disassemblerSwitches(DisassemblerSettings &settings) {
     using namespace Sawyer::CommandLine;
     SwitchGroup sg("Disassembler switches");
     sg.name("disassemble");
@@ -97,13 +97,13 @@ JvmEngine::disassemblerSwitches(DisassemblerSettings &settings) {
 }
 
 Sawyer::CommandLine::SwitchGroup
-JvmEngine::partitionerSwitches() {
+EngineJvm::partitionerSwitches() {
     return partitionerSwitches(settings_.partitioner);
 }
 
 // class method
 Sawyer::CommandLine::SwitchGroup
-JvmEngine::partitionerSwitches(PartitionerSettings &settings) {
+EngineJvm::partitionerSwitches(PartitionerSettings &settings) {
     using namespace Sawyer::CommandLine;
     SwitchGroup sg("Partitioner switches");
     sg.name("partition");
@@ -368,13 +368,13 @@ JvmEngine::partitionerSwitches(PartitionerSettings &settings) {
 }
 
 Sawyer::CommandLine::SwitchGroup
-JvmEngine::engineSwitches() {
+EngineJvm::engineSwitches() {
     return engineSwitches(settings_.engine);
 }
 
 // class method
 Sawyer::CommandLine::SwitchGroup
-JvmEngine::engineSwitches(EngineSettings &settings) {
+EngineJvm::engineSwitches(EngineSettings &settings) {
     using namespace Sawyer::CommandLine;
     SwitchGroup sg = Rose::CommandLine::genericSwitches();
     sg.name("global");
@@ -391,13 +391,13 @@ JvmEngine::engineSwitches(EngineSettings &settings) {
 }
 
 Sawyer::CommandLine::SwitchGroup
-JvmEngine::astConstructionSwitches() {
+EngineJvm::astConstructionSwitches() {
     return astConstructionSwitches(settings_.astConstruction);
 }
 
 // class method
 Sawyer::CommandLine::SwitchGroup
-JvmEngine::astConstructionSwitches(AstConstructionSettings &settings) {
+EngineJvm::astConstructionSwitches(AstConstructionSettings &settings) {
     using namespace Sawyer::CommandLine;
     SwitchGroup sg("AST construction switches");
     sg.name("ast");
@@ -428,7 +428,7 @@ JvmEngine::astConstructionSwitches(AstConstructionSettings &settings) {
 }
 
 std::string
-JvmEngine::specimenNameDocumentation() {
+EngineJvm::specimenNameDocumentation() {
     return ("The following names are recognized for binary specimens:"
 
             "@bullet{If the name does not match any of the following patterns then it is assumed to be the name of a "
@@ -498,9 +498,9 @@ JvmEngine::specimenNameDocumentation() {
 }
 
 Sawyer::CommandLine::Parser
-JvmEngine::commandLineParser(const std::string &purpose, const std::string &description) {
+EngineJvm::commandLineParser(const std::string &purpose, const std::string &description) {
     using namespace Sawyer::CommandLine;
-    cout << "JvmEngine::parseCommandLine:2: creating parser\n";
+    cout << "EngineJvm::parseCommandLine:2: creating parser\n";
     Parser parser =
         CommandLine::createEmptyParser(purpose.empty() ? std::string("analyze binary specimen") : purpose, description);
     parser.groupNameSeparator("-");                     // ROSE defaults to ":", which is sort of ugly
@@ -515,7 +515,7 @@ JvmEngine::commandLineParser(const std::string &purpose, const std::string &desc
 }
 
 Sawyer::CommandLine::ParserResult
-JvmEngine::parseCommandLine(int argc, char *argv[], const std::string &purpose, const std::string &description) {
+EngineJvm::parseCommandLine(int argc, char *argv[], const std::string &purpose, const std::string &description) {
   try {
     std::vector<std::string> args;
     for (int i=1; i<argc; ++i) {
@@ -533,7 +533,7 @@ JvmEngine::parseCommandLine(int argc, char *argv[], const std::string &purpose, 
 }
 
 Sawyer::CommandLine::ParserResult
-JvmEngine::parseCommandLine(const std::vector<std::string> &args, const std::string &purpose, const std::string &description) {
+EngineJvm::parseCommandLine(const std::vector<std::string> &args, const std::string &purpose, const std::string &description) {
 #if 0 // until I figure out the command line options
   return commandLineParser(purpose, description).parse(args).apply();
 #endif
@@ -544,7 +544,7 @@ JvmEngine::parseCommandLine(const std::vector<std::string> &args, const std::str
   if (isJavaClassFile(fileName)) {
 #ifdef DEBUG_ON
     // assumes args[0] is the file name for now
-    cout << "JvmEngine::parseCommandLine for file " << fileName << endl;
+    cout << "EngineJvm::parseCommandLine for file " << fileName << endl;
     cout << "  Purpose: " << purpose << ": Description: " << description << "\n";
 #endif
   }
@@ -681,13 +681,13 @@ JvmEngine::parseCommandLine(const std::vector<std::string> &args, const std::str
 }
 
 void
-JvmEngine::checkSettings() {
+EngineJvm::checkSettings() {
     if (!disassembler_ && !settings_.disassembler.isaName.empty())
         disassembler_ = Disassembler::lookup(settings_.disassembler.isaName);
 }
 
 SgAsmInterpretation*
-JvmEngine::parseContainers(const std::string &fileName) {
+EngineJvm::parseContainers(const std::string &fileName) {
   Sawyer::Message::Stream where(mlog[WHERE]);
   SAWYER_MESG(where) << "implement parsing containers\n";
   return nullptr;
@@ -698,7 +698,7 @@ JvmEngine::parseContainers(const std::string &fileName) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Disassembler::Base::Ptr
-JvmEngine::obtainDisassembler(const Disassembler::Base::Ptr &hint) { // blame rasmussen17
+EngineJvm::obtainDisassembler(const Disassembler::Base::Ptr &hint) { // blame rasmussen17
   if (disassembler_ == nullptr) {
     disassembler_ = Disassembler::Jvm::instance();
   }
@@ -710,12 +710,12 @@ JvmEngine::obtainDisassembler(const Disassembler::Base::Ptr &hint) { // blame ra
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Partitioner
-JvmEngine::createPartitioner() {
+EngineJvm::createPartitioner() {
   return Partitioner{};
 }
 
 void
-JvmEngine::runPartitioner(Partitioner &partitioner) {
+EngineJvm::runPartitioner(Partitioner &partitioner) {
     Sawyer::Message::Stream info(mlog[INFO]);
     Sawyer::Stopwatch timer;
     info <<"disassembling and partitioning";
@@ -723,7 +723,7 @@ JvmEngine::runPartitioner(Partitioner &partitioner) {
 }
 
 Partitioner
-JvmEngine::partition(const std::vector<std::string> &fileNames) {
+EngineJvm::partition(const std::vector<std::string> &fileNames) {
     try {
         obtainDisassembler();
         Partitioner partitioner = createPartitioner();
@@ -740,7 +740,7 @@ JvmEngine::partition(const std::vector<std::string> &fileNames) {
 }
 
 Partitioner
-JvmEngine::partition(const std::string &fileName) {
+EngineJvm::partition(const std::string &fileName) {
     return partition(std::vector<std::string>(1, fileName));
 }
 
@@ -749,15 +749,15 @@ JvmEngine::partition(const std::string &fileName) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void
-JvmEngine::labelAddresses(Partitioner &p, const Configuration &c) {
+EngineJvm::labelAddresses(Partitioner &p, const Configuration &c) {
   Sawyer::Message::Stream where{mlog[WHERE]};
-  SAWYER_MESG(where) << "JvmEngine::labelAddresses: no implementation\n";
+  SAWYER_MESG(where) << "EngineJvm::labelAddresses: no implementation\n";
 }
 
 void
-JvmEngine::discoverBasicBlocks(Partitioner&) {
+EngineJvm::discoverBasicBlocks(Partitioner&) {
   Sawyer::Message::Stream where{mlog[WHERE]};
-  SAWYER_MESG(where) << "JvmEngine::discoverBasicBlocks: no implementation\n";
+  SAWYER_MESG(where) << "EngineJvm::discoverBasicBlocks: no implementation\n";
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -765,7 +765,7 @@ JvmEngine::discoverBasicBlocks(Partitioner&) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 SgAsmBlock*
-JvmEngine::buildAst(const std::vector<std::string> &fileNames) {
+EngineJvm::buildAst(const std::vector<std::string> &fileNames) {
     try {
         // TODO
         // Partitioner partitioner = partition(fileNames);
@@ -781,17 +781,17 @@ JvmEngine::buildAst(const std::vector<std::string> &fileNames) {
 }
 
 SgAsmBlock*
-JvmEngine::buildAst(const std::string &fileName) {
+EngineJvm::buildAst(const std::string &fileName) {
     return buildAst(std::vector<std::string>(1, fileName));
 }
 
 Disassembler::Base::Ptr
-JvmEngine::disassembler() const {
+EngineJvm::disassembler() const {
     return disassembler_;
 }
 
 void
-JvmEngine::disassembler(const Disassembler::Base::Ptr &d) {
+EngineJvm::disassembler(const Disassembler::Base::Ptr &d) {
     disassembler_ = d;
 }
 
