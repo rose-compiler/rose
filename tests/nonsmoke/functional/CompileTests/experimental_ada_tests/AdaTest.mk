@@ -192,7 +192,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   generic_package_renaming_declaration.adb          \
   gentask.ads                          \
   gentask.adb                          \
-  gentask-share.adb                    \ 
+  gentask-share.adb                    \
   generic_package_declaration.adb      \
   generic_procedure_renaming_declaration.ads  \
   generic_function_renaming_declaration.ads   \
@@ -222,6 +222,10 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   requeue_statement_2.adb              \
   requeue_statements.adb               \
   rep_database.ads                     \
+  rep_database-mgr.ads                 \
+  rep_common_types-data.ads            \
+  rep_common_types-menu.ads            \
+  rep_common_types.ads                 \
   select_accept.adb                    \
   simple_select_accept.adb             \
   simple_select_accept_guarded.adb     \

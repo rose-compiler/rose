@@ -11,7 +11,7 @@
 #include <Rose/BinaryAnalysis/Concolic/Specimen.h>
 #include <Rose/BinaryAnalysis/Concolic/SystemCall.h>
 #include <Rose/BinaryAnalysis/Concolic/TestCase.h>
-#include <Rose/BinaryAnalysis/Debugger.h>
+#include <Rose/BinaryAnalysis/Debugger/Linux.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
@@ -487,7 +487,9 @@ LinuxI386SyscallBase::operator()(bool /*handled*/, SyscallContext &ctx) {
         // test cases for this same specimen (subsequent callbacks can remove this variable if desired).
         if (!ctx.returnEvent) {
             handlePreSyscall(ctx);
-            i386->debugger()->stepIntoSyscall();        // after this, we're in the syscall-exit-stop state
+
+            // after this, we're in the syscall-exit-stop state
+            i386->debugger()->stepIntoSystemCall(Debugger::ThreadId::unspecified());
 
             // If the syscall terminated the program, we should still allow the subclass to handle things even though we're
             // not creating a return event or input variable for the return.
@@ -505,7 +507,7 @@ LinuxI386SyscallBase::operator()(bool /*handled*/, SyscallContext &ctx) {
                 SAWYER_MESG(debug) <<"  using existing variable " <<*ctx.symbolicReturn <<"\n";
                 ASSERT_require(ctx.symbolicReturn->nBits() == SYS_RET.nBits());
             }
-            uint64_t retConcrete = i386->debugger()->readRegister(SYS_RET).toInteger();
+            uint64_t retConcrete = i386->debugger()->readRegister(Debugger::ThreadId::unspecified(), SYS_RET).toInteger();
             SymbolicExpression::Ptr retValue = SymbolicExpression::makeIntegerConstant(SYS_RET.nBits(), retConcrete);
             SAWYER_MESG(debug) <<"  concrete return value: " <<*retValue <<"\n";
             ctx.returnEvent = ExecutionEvent::registerWrite(i386->testCase(), i386->nextEventLocation(When::POST),
@@ -691,7 +693,7 @@ LinuxI386SyscallReturn::handlePostSyscall(SyscallContext &ctx) {
     if (concreteReturn) {
         SAWYER_MESG(mlog[DEBUG]) <<"  modifying concrete state to have returned "
                                  <<StringUtility::toHex2(*concreteReturn, SYS_RET.nBits()) <<"\n";
-        i386->debugger()->writeRegister(SYS_RET, *concreteReturn);
+        i386->debugger()->writeRegister(Debugger::ThreadId::unspecified(), SYS_RET, *concreteReturn);
     } else {
         SAWYER_MESG(mlog[DEBUG]) <<"  not modifying concrete return value\n";
     }
@@ -1015,7 +1017,7 @@ LinuxI386::instance(const Database::Ptr &db, const TestCase::Ptr &tc, const P2::
     return retval;
 }
 
-Debugger::Ptr
+Debugger::Linux::Ptr
 LinuxI386::debugger() const {
     return debugger_;
 }
@@ -1046,19 +1048,19 @@ LinuxI386::load(const boost::filesystem::path &targetDir) {
     std::vector<std::string> args = testCase()->args();
     ASSERT_forbid(args.empty());
     args.erase(args.begin());
-    Debugger::Specimen ds = exeName;
+    Debugger::Linux::Specimen ds = exeName;
     ds.arguments(args);
     ds.workingDirectory(targetDir);
     ds.randomizedAddresses(false);
     ds.flags()
-        .set(Debugger::REDIRECT_INPUT)
-        .set(Debugger::REDIRECT_OUTPUT)
-        .set(Debugger::REDIRECT_ERROR)
-        .set(Debugger::CLOSE_FILES);
+        .set(Debugger::Linux::Flag::REDIRECT_INPUT)
+        .set(Debugger::Linux::Flag::REDIRECT_OUTPUT)
+        .set(Debugger::Linux::Flag::REDIRECT_ERROR)
+        .set(Debugger::Linux::Flag::CLOSE_FILES);
 
     // Create the process
-    debugger_ = Debugger::instance(ds);
-    SAWYER_MESG(mlog[DEBUG]) <<"loaded pid=" <<debugger_->isAttached() <<" " <<exeName <<"\n";
+    debugger_ = Debugger::Linux::instance(ds);
+    SAWYER_MESG(mlog[DEBUG]) <<"loaded pid=" <<*debugger_->processId() <<" " <<exeName <<"\n";
     mapScratchPage();
 }
 
@@ -1079,12 +1081,12 @@ LinuxI386::memoryByteOrder() {
 
 rose_addr_t
 LinuxI386::ip() {
-    return debugger_->executionAddress();
+    return debugger_->executionAddress(Debugger::ThreadId::unspecified());
 }
 
 void
 LinuxI386::ip(rose_addr_t va) {
-    debugger_->executionAddress(va);
+    debugger_->executionAddress(Debugger::ThreadId::unspecified(), va);
 }
 
 std::vector<ExecutionEvent::Ptr>
@@ -1093,7 +1095,7 @@ LinuxI386::createMemoryRestoreEvents() {
     std::vector<ExecutionEvent::Ptr> events;
     auto map = MemoryMap::instance();
     std::vector<MemoryMap::ProcessMapRecord> segments = disposableMemory();
-    map->insertProcessPid(debugger_->isAttached(), segments);
+    map->insertProcessPid(*debugger_->processId(), segments);
 
     for (const MemoryMap::Node &node: map->nodes()) {
         const AddressInterval &where = node.key();
@@ -1170,7 +1172,7 @@ LinuxI386::createMemoryAdjustEvents(const MemoryMap::Ptr &oldMap, rose_addr_t in
     std::vector<ExecutionEvent::Ptr> events;
     auto newMap = MemoryMap::instance();
     std::vector<MemoryMap::ProcessMapRecord> segments = disposableMemory();
-    newMap->insertProcessPid(debugger_->isAttached(), segments);
+    newMap->insertProcessPid(*debugger_->processId(), segments);
 
 #if 1 // DEBUGGING [Robb Matzke 2021-12-20]
     if (mlog[DEBUG]) {
@@ -1274,7 +1276,7 @@ LinuxI386::createMemoryHashEvents() {
     std::vector<ExecutionEvent::Ptr> events;
     auto map = MemoryMap::instance();
     std::vector<MemoryMap::ProcessMapRecord> segments = disposableMemory();
-    map->insertProcessPid(debugger_->isAttached(), segments);
+    map->insertProcessPid(*debugger_->processId(), segments);
     for (const MemoryMap::Node &node: map->nodes()) {
         SAWYER_MESG(mlog[DEBUG]) <<"  memory at " <<StringUtility::addrToString(node.key())
                                  <<StringUtility::plural(node.key().size(), "bytes") <<"\n";
@@ -1290,7 +1292,7 @@ LinuxI386::createMemoryHashEvents() {
 std::vector<ExecutionEvent::Ptr>
 LinuxI386::createRegisterRestoreEvents() {
     SAWYER_MESG(mlog[DEBUG]) <<"saving all registers\n";
-    Debugger::AllRegisters allRegisters = debugger_->readAllRegisters();
+    Debugger::Linux::AllRegisters allRegisters = debugger_->readAllRegisters(Debugger::ThreadId::unspecified());
     auto event = ExecutionEvent::bulkRegisterWrite(TestCase::Ptr(), ExecutionLocation(), ip(), allRegisters);
     return {event};
 }
@@ -1303,8 +1305,8 @@ LinuxI386::playEvent(const ExecutionEvent::Ptr &event) {
     switch (event->action()) {
         case ExecutionEvent::Action::BULK_REGISTER_WRITE: {
             SAWYER_MESG(mlog[DEBUG]) <<"  restore registers\n";
-            Debugger::AllRegisters allRegisters = event->registerValues();
-            debugger_->writeAllRegisters(allRegisters);
+            Debugger::Linux::AllRegisters allRegisters = event->registerValues();
+            debugger_->writeAllRegisters(Debugger::ThreadId::unspecified(), allRegisters);
             return true;
         }
 
@@ -1343,7 +1345,7 @@ LinuxI386::mapMemory(const AddressInterval &where, unsigned permissions) {
         prot |= PROT_EXEC;
     }
     SAWYER_MESG(mlog[DEBUG]) <<" at " <<StringUtility::addrToString(where) <<", flags=private|anonymous|fixed\n";
-    int32_t status = debugger_->remoteSystemCall(i386_NR_mmap, where.least(), where.size(), prot,
+    int32_t status = debugger_->remoteSystemCall(Debugger::ThreadId::unspecified(), i386_NR_mmap, where.least(), where.size(), prot,
                                                  MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, -1, 0);
     if (status < 0 && status > -4096) {
         mlog[ERROR] <<"MAP_MEMORY event failed to map memory (" <<strerror(-status) <<")\n";
@@ -1357,7 +1359,7 @@ LinuxI386::unmapMemory(const AddressInterval &where) {
     ASSERT_forbid(where.isEmpty());
     SAWYER_MESG(mlog[DEBUG]) <<"unmap " <<StringUtility::plural(where.size(), "bytes")
                              << " at " <<StringUtility::addrToString(where) <<"\n";
-    int64_t status = debugger_->remoteSystemCall(i386_NR_munmap, where.least(), where.size());
+    int64_t status = debugger_->remoteSystemCall(Debugger::ThreadId::unspecified(), i386_NR_munmap, where.least(), where.size());
     if (status < 0)
         mlog[ERROR] <<"UNMAP_MEMORY event failed to unmap memory\n";
 }
@@ -1374,29 +1376,29 @@ LinuxI386::readMemory(rose_addr_t va, size_t nBytes) {
 
 void
 LinuxI386::writeRegister(RegisterDescriptor reg, uint64_t value) {
-    debugger_->writeRegister(reg, value);
+    debugger_->writeRegister(Debugger::ThreadId::unspecified(), reg, value);
 }
 
 void
 LinuxI386::writeRegister(RegisterDescriptor reg, const Sawyer::Container::BitVector &bv) {
-    debugger_->writeRegister(reg, bv);
+    debugger_->writeRegister(Debugger::ThreadId::unspecified(), reg, bv);
 }
 
 Sawyer::Container::BitVector
 LinuxI386::readRegister(RegisterDescriptor reg) {
-    return debugger_->readRegister(reg);
+    return debugger_->readRegister(Debugger::ThreadId::unspecified(), reg);
 }
 
 void
 LinuxI386::executeInstruction(const P2::Partitioner &partitioner) {
     if (mlog[DEBUG]) {
-        rose_addr_t va = debugger_->executionAddress();
+        rose_addr_t va = debugger_->executionAddress(Debugger::ThreadId::unspecified());
         SgAsmInstruction *insn = partitioner.instructionProvider()[va];
         mlog[DEBUG] <<"concretely executing insn #" <<currentLocation().primary()
                     <<" " <<partitioner.unparse(insn) <<"\n";
     }
 
-    debugger_->singleStep();
+    debugger_->singleStep(Debugger::ThreadId::unspecified());
 }
 
 void
@@ -1424,11 +1426,11 @@ LinuxI386::executeInstruction(const BS::RiscOperators::Ptr &ops_, SgAsmInstructi
         throw Exception("symbolic instruction doesn't match concrete instructon at " + StringUtility::addrToString(va));
     }
 
-    debugger_->executionAddress(va);
+    debugger_->executionAddress(Debugger::ThreadId::unspecified(), va);
     if (ops->hadSystemCall()) {
-        debugger_->stepIntoSyscall();
+        debugger_->stepIntoSystemCall(Debugger::ThreadId::unspecified());
     } else {
-        debugger_->singleStep();
+        debugger_->singleStep(Debugger::ThreadId::unspecified());
     }
 }
 
@@ -1437,7 +1439,7 @@ LinuxI386::mapScratchPage() {
     ASSERT_require(debugger_->isAttached());
 
     // Create the scratch page
-    int64_t status = debugger_->remoteSystemCall(i386_NR_mmap, 0, 4096,
+    int64_t status = debugger_->remoteSystemCall(Debugger::ThreadId::unspecified(), i386_NR_mmap, 0, 4096,
                                                  PROT_EXEC | PROT_READ | PROT_WRITE,
                                                  MAP_ANONYMOUS | MAP_PRIVATE,
                                                  -1, 0);
@@ -1457,7 +1459,7 @@ LinuxI386::mapScratchPage() {
 
 std::vector<MemoryMap::ProcessMapRecord>
 LinuxI386::disposableMemory() {
-    std::vector<MemoryMap::ProcessMapRecord> segments = MemoryMap::readProcessMap(debugger_->isAttached());
+    std::vector<MemoryMap::ProcessMapRecord> segments = MemoryMap::readProcessMap(*debugger_->processId());
     for (auto segment = segments.begin(); segment != segments.end(); /*void*/) {
         ASSERT_forbid(segment->interval.isEmpty());
         if ("[vvar]" == segment->comment) {
@@ -1482,7 +1484,8 @@ LinuxI386::unmapAllMemory() {
     std::vector<MemoryMap::ProcessMapRecord> segments = disposableMemory();
     for (const MemoryMap::ProcessMapRecord &segment: segments) {
         SAWYER_MESG(mlog[DEBUG]) <<"  at " <<StringUtility::addrToString(segment.interval) <<": " <<segment.comment <<"\n";
-        int64_t status = debugger_->remoteSystemCall(i386_NR_munmap, segment.interval.least(), segment.interval.size());
+        int64_t status = debugger_->remoteSystemCall(Debugger::ThreadId::unspecified(), i386_NR_munmap, segment.interval.least(),
+                                                     segment.interval.size());
         if (status < 0) {
             mlog[ERROR] <<"unamp memory failed at " <<StringUtility::addrToString(segment.interval)
                         <<" for " <<segment.comment <<"\n";
@@ -1804,7 +1807,7 @@ LinuxI386::systemCall(const P2::Partitioner &partitioner, const BS::RiscOperator
     auto ops = Emulation::RiscOperators::promote(ops_);
     ASSERT_not_null(ops);
     Sawyer::Message::Stream debug(mlog[DEBUG]);
-    const rose_addr_t ip = debugger_->executionAddress();
+    const rose_addr_t ip = debugger_->executionAddress(Debugger::ThreadId::unspecified());
 
     //-------------------------------------
     // Create system call execution event.

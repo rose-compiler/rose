@@ -1,3 +1,5 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_CONCOLIC_TESTING
 
 static const char* purpose = "Monitors the execution of some program and computes some coverage number.";
 
@@ -12,7 +14,7 @@ static const char* description =
 #include <fstream>
 
 #include <sage3basic.h>
-#include <Rose/BinaryAnalysis/Debugger.h>
+#include <Rose/BinaryAnalysis/Debugger/Linux.h>
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
@@ -33,65 +35,54 @@ Sawyer::Message::Facility mlog;
 namespace Rose {
 namespace BinaryAnalysis {
 
-  struct ExecutionMonitor : Debugger
-  {
-      typedef rose_addr_t                  addr_t;
-      typedef std::set<addr_t>             AddressSet;
+struct ExecutionMonitor: Debugger::Linux {
+    typedef rose_addr_t                  addr_t;
+    typedef std::set<addr_t>             AddressSet;
 
-      ExecutionMonitor(const std::vector<std::string>& exeNameAndArgs)
-          : addresses()
-      {
-          Debugger::Specimen specimen(exeNameAndArgs);
-          specimen.flags().set(Debugger::CLOSE_FILES);
-          attach(specimen);
-      }
+    ExecutionMonitor(const std::vector<std::string>& exeNameAndArgs)
+        : addresses() {
+        Debugger::Linux::Specimen specimen(exeNameAndArgs);
+        specimen.flags().set(Debugger::Linux::Flags::CLOSE_FILES);
+        attach(specimen);
+    }
 
-      /** Returns the current program counter (PC). */
-      addr_t pc()
-      {
-        return executionAddress();
-      }
+    /** Returns the current program counter (PC). */
+    addr_t pc() {
+        return executionAddress(Debugger::ThreadId::unspecified());
+    }
 
-      
-      /** Executes a single instruction and manages the
-       *  instruction range interval. */
-      void step();
+    /** Executes a single instruction and manages the instruction range interval. */
+    void step(Debugger::ThreadId);
 
-      /** Runs the program to termination. */
-      void run();
+    /** Runs the program to termination. */
+    void run();
 
-      /** Returns an estimated number of unique instructions executed
-       *  during the program run. */
-      size_t estimateDistinctInstructionBytes() const
-      {
+    /** Returns an estimated number of unique instructions executed during the program run. */
+    size_t estimateDistinctInstructionBytes() const {
         return addresses.size();
-      }
+    }
 
-    private:
-      AddressSet addresses;    ///< all code intervals
+private:
+    AddressSet addresses;                               /**< all code intervals */
+};
 
-      //
-      // ExecutionMonitor() = delete;
-  };
-
-  void ExecutionMonitor::step()
-  {
+void
+ExecutionMonitor::step(Debugger::ThreadId tid) {
     addresses.insert(pc());
 
     // make a move
-    singleStep();
-  }
+    singleStep(tid);
+}
 
-  void ExecutionMonitor::run()
-  {
+void
+ExecutionMonitor::run() {
     while (!isTerminated())
-      step();
-  }
-}
+        step();
 }
 
+} // namespace
+} // namespace
 
-//
 // command line and option handling
 
 struct Settings
@@ -175,3 +166,12 @@ int main(int argc, char** argv)
 
   return 0;
 }
+
+#else
+
+#include <iostream>
+int main() {
+    std::cerr <<"concolic testing is not enabled\n";
+}
+
+#endif

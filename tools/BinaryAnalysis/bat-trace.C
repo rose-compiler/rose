@@ -1,4 +1,5 @@
-#if __cplusplus >= 201103L
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_DEBUGGER_LINUX
 
 static const char *purpose = "trace program execution";
 static const char *description =
@@ -7,7 +8,7 @@ static const char *description =
     "the execution with a previously saved trace and report differences.";
 
 #include <rose.h>
-#include <Rose/BinaryAnalysis/Debugger.h>
+#include <Rose/BinaryAnalysis/Debugger/Linux.h>
 #include <Rose/CommandLine.h>
 #include <rose_getline.h>                               // rose
 #include <rose_strtoull.h>                              // rose
@@ -134,11 +135,11 @@ struct TraceFilter {
             if (iter == answer.end()) {
                 mlog[ERROR] <<"current trace extends beyond previous answer trace at step " <<nSteps.value() <<"\n";
                 hadError = true;
-                return Debugger::STOP;
+                return makeBitFlags(Debugger::FilterActionFlag::STOP);
             } else if (va != *iter++) {
                 mlog[ERROR] <<"current trace diverges from previous answer trace at step " <<nSteps.value() <<"\n";
                 hadError = true;
-                return Debugger::STOP;
+                return makeBitFlags(Debugger::FilterActionFlag::STOP);
             }
         }
         ++nSteps;
@@ -254,13 +255,13 @@ main(int argc, char *argv[]) {
         output = &std::cout;
     }
 
-    Debugger::Specimen specimen(args);
+    Debugger::Linux::Specimen specimen(args);
     specimen.randomizedAddresses(false);
-    auto process = Debugger::instance(specimen);
+    auto process = Debugger::Linux::instance(specimen);
 
     P2::Partitioner partitioner;
     if (settings.showingInsns) {
-        std::string specimen = "proc:noattach:" + boost::lexical_cast<std::string>(process->isAttached());
+        std::string specimen = "proc:noattach:" + boost::lexical_cast<std::string>(*process->processId());
         P2::Engine engine;
         engine.settings().disassembler.isaName = "i386";// FIXME[Robb Matzke 2019-12-12]
         partitioner = engine.partition(specimen);
@@ -269,7 +270,7 @@ main(int argc, char *argv[]) {
     TraceFilter filter(settings.compareFile);
     Sawyer::Stopwatch timer;
     mlog[INFO] <<"tracing process...\n";
-    auto trace = process->trace(filter);
+    auto trace = process->trace(Debugger::ThreadId::unspecified(), filter);
     mlog[INFO] <<"tracing process; took " <<timer <<"\n";
     mlog[INFO] <<"process " <<process->howTerminated() <<"\n";
     filter.finalCheck();
@@ -296,12 +297,23 @@ main(int argc, char *argv[]) {
 
 #else
 
-#include <cstdlib>
-#include <iostream>
+#include <rose.h>
+#include <Rose/Diagnostics.h>
 
-int main(int argc, char *argv[]) {
-    std::cerr <<argv[0] <<": this tool is not configured (compiler is too old)\n";
-    exit(1);
+#include <iostream>
+#include <cstring>
+
+int main(int, char *argv[]) {
+    ROSE_INITIALIZE;
+    Sawyer::Message::Facility mlog;
+    Rose::Diagnostics::initAndRegister(&mlog, "tool");
+    mlog[Rose::Diagnostics::FATAL] <<argv[0] <<": this tool is not available in this ROSE configuration\n";
+
+    for (char **arg = argv+1; *arg; ++arg) {
+        if (!strcmp(*arg, "--no-error-if-disabled"))
+            return 0;
+    }
+    return 1;
 }
 
 #endif

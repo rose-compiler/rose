@@ -12,6 +12,7 @@
 #include <fstream>
 #include <map>
 #include <iostream>
+#include <boost/algorithm/string/predicate.hpp>
 
 using namespace std;
 using namespace Rose;
@@ -1181,6 +1182,7 @@ generate_override_keyword( AstNodeClass & node, GrammarString & data )
           (nodeName == "AdaProtectedTypeDecl"       && variableNameString == "name")  ||
           (nodeName == "AdaRenamingDecl"            && variableNameString == "name")  ||
           (nodeName == "AdaDiscriminatedTypeDecl"   && variableNameString == "name")  ||
+          (nodeName == "AdaGenericDecl"             && variableNameString == "name")  ||
           (nodeName == "AdaGenericInstanceDecl"     && variableNameString == "name")  ||
           (nodeName == "AsmFunction"                && variableNameString == "name")  ||
           (nodeName == "AsmSynthesizedFieldDeclaration" && variableNameString == "name")  ||
@@ -1297,6 +1299,7 @@ generate_override_keyword_for_set_functions( AstNodeClass & node, GrammarString 
           (nodeName == "AdaProtectedTypeDecl"       && variableNameString == "name")  ||
           (nodeName == "AdaRenamingDecl"            && variableNameString == "name")  ||
           (nodeName == "AdaDiscriminatedTypeDecl"   && variableNameString == "name")  ||
+          (nodeName == "AdaGenericDecl"             && variableNameString == "name")  ||
           (nodeName == "AdaGenericInstanceDecl"     && variableNameString == "name")  ||
           (nodeName == "AsmFunction"                && variableNameString == "name")  ||
           (nodeName == "AsmSynthesizedFieldDeclaration" && variableNameString == "name")  ||
@@ -3220,7 +3223,7 @@ Grammar::buildCode ()
      string memoryPoolTraversalSupport = buildMemoryPoolBasedTraversalSupport();
      ROSE_ArrayGrammarSourceFile.push_back(StringUtility::StringWithLineNumber(memoryPoolTraversalSupport, "", 1));
 
-  // Jim Leek (09/23/2022): Build the NodeId code     
+  // Jim Leek (09/23/2022): Build the NodeId code
      string nodeIdSupport = buildMemoryPoolBasedNodeId();
      ROSE_ArrayGrammarSourceFile.push_back(StringUtility::StringWithLineNumber(nodeIdSupport, "", 1));
 
@@ -4228,6 +4231,17 @@ Grammar::buildTreeTraversalFunctions(AstNodeClass& node, StringUtility::FileWith
 // traversalSuccessorContainer Code Generation //
 /////////////////////////////////////////////////
 
+namespace
+{
+  bool isAstNodePtrVector(const string& typeString)
+  {
+    // consider using regex similar to: "(std::)?vector<Sg.*\*>"
+    return    boost::starts_with(typeString, "std::vector<Sg")
+           && boost::ends_with(typeString, "*>");
+  }
+}
+
+
 // MS: 06/28/02: factored out the loop code generation
 string Grammar::generateTraverseSuccessorForLoopSource(string typeString,
                                                        string memberVariableName,
@@ -4247,7 +4261,10 @@ string Grammar::generateTraverseSuccessorForLoopSource(string typeString,
                     +  " iter != p_" + string(memberVariableName) + successorContainerAccessOperator+"end(); iter++)\n";
 
   // Check whether the STL container contains pointers or not
-     if (typeString.find("PtrList") != string::npos || typeString.find("PtrVector") != string::npos)
+     if (  typeString.find("PtrList") != string::npos 
+        || typeString.find("PtrVector") != string::npos
+        || isAstNodePtrVector(typeString) // PP added STL vector: \todo check for pointers?
+        )
           travSuccSource += "          " + successorContainerName + ".push_back(*iter);\n"; // It contains pointers to AST objects
        else
           travSuccSource += "          " + successorContainerName + ".push_back(&(*iter));\n";  // It contains AST objects
@@ -4571,6 +4588,10 @@ Grammar::isSTLContainer(const string& typeString)
   if (typeString.size() >= 4 && typeString.substr(typeString.size() - 4) == "List") return true;
   if (typeString.size() >= 9 && typeString.substr(typeString.size() - 9) == "BitVector") return false;
   if (typeString.size() >= 6 && typeString.substr(typeString.size() - 6) == "Vector") return true;
+  
+  // PP (10/20/22) added STL vector<XXX*> case;
+  if (isAstNodePtrVector(typeString)) return true;
+   
   return false;
 }
 

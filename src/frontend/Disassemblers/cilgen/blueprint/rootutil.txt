@@ -84,9 +84,12 @@ void decodeMetadata(rose_addr_t base_va, SgAsmCilMetadataHeap* mdh, SgAsmCilMeta
 
   SgAsmPEFileHeader* fhdr = SageInterface::getEnclosingNode<SgAsmPEFileHeader>(root);
   ASSERT_not_null(fhdr);
-
+  
+  SgAsmCilMethodDefTable* mtbl = mdh->get_MethodDefTable();
+  ASSERT_not_null(mtbl);
+  
   // decode methods
-  for (SgAsmCilMethodDef* m : mdh->get_MethodDef())
+  for (SgAsmCilMethodDef* m : mtbl->get_elements())
   {
     ASSERT_not_null(m);
 
@@ -142,8 +145,6 @@ void decodeMetadata(rose_addr_t base_va, SgAsmCilMetadataHeap* mdh, SgAsmCilMeta
 
     ASSERT_not_null(blk);
     m->set_body(blk);
-    
-    std::cerr << "}\n" << std::endl;
   }
 }
 

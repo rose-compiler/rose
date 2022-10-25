@@ -3,7 +3,7 @@
 #include <sage3basic.h>
 
 #include <AsmUnparser_compat.h>
-#include <Rose/BinaryAnalysis/Debugger.h>
+#include <Rose/BinaryAnalysis/Debugger/Linux.h>
 #include <Rose/BinaryAnalysis/BinaryLoader.h>
 #include <Rose/BinaryAnalysis/SerialIo.h>
 #include <BinaryVxcoreParser.h>
@@ -1296,6 +1296,7 @@ Engine::loadNonContainers(const std::vector<std::string> &fileNames) {
             map_->insertProcess(resource);
         } else if (boost::starts_with(fileName, "run:")) {
             // Split resource as "run:OPTIONS:EXECUTABLE"
+#ifdef ROSE_ENABLE_DEBUGGER_LINUX
             static const size_t colon1 = 3;             // index of first colon in fileName
             const size_t colon2 = fileName.find(':', colon1+1); // index of second colon in FileName
             if (std::string::npos == colon2)
@@ -1322,12 +1323,12 @@ Engine::loadNonContainers(const std::vector<std::string> &fileNames) {
                 }
             }
 
-            Debugger::Specimen subordinate(exeName);
+            Debugger::Linux::Specimen subordinate(exeName);
             subordinate.flags()
-                .set(Debugger::CLOSE_FILES)
-                .set(Debugger::REDIRECT_INPUT)
-                .set(Debugger::REDIRECT_OUTPUT)
-                .set(Debugger::REDIRECT_ERROR);
+                .set(Debugger::Linux::Flag::CLOSE_FILES)
+                .set(Debugger::Linux::Flag::REDIRECT_INPUT)
+                .set(Debugger::Linux::Flag::REDIRECT_OUTPUT)
+                .set(Debugger::Linux::Flag::REDIRECT_ERROR);
             subordinate.randomizedAddresses(aslr);
 
             for (const std::string &name: settings_.loader.envEraseNames)
@@ -1342,7 +1343,7 @@ Engine::loadNonContainers(const std::vector<std::string> &fileNames) {
                     throw std::runtime_error("empty name in NAME=VALUE: \"" + StringUtility::cEscape(var) + "\"");
                 subordinate.insertEnvironmentVariable(var.substr(0, eq), var.substr(eq+1));
             }
-            Debugger::Ptr debugger = Debugger::instance(subordinate);
+            auto debugger = Debugger::Linux::instance(subordinate);
 
             // Set breakpoints for all executable addresses in the memory map created by the Linux kernel. Since we're doing
             // this before the first instruction executes, no shared libraries have been loaded yet. However, the dynamic
@@ -1351,23 +1352,26 @@ Engine::loadNonContainers(const std::vector<std::string> &fileNames) {
             // of the process after shared libraries are loaded. We assume that the kernel has loaded the executable at the
             // lowest address.
             MemoryMap::Ptr procMap = MemoryMap::instance();
-            procMap->insertProcess(debugger->isAttached(), MemoryMap::Attach::NO);
+            procMap->insertProcess(*debugger->processId(), MemoryMap::Attach::NO);
             procMap->require(MemoryMap::EXECUTABLE).keep();
             if (procMap->isEmpty())
                 throw std::runtime_error(exeName + " has no executable addresses");
             std::string name = procMap->segments().begin()->name(); // lowest segment is always part of the main executable
             for (const MemoryMap::Node &node: procMap->nodes()) {
                 if (node.value().name() == name)        // usually just one match; names are like "proc:123(/bin/ls)"
-                    debugger->setBreakpoint(node.key());
+                    debugger->setBreakPoint(node.key());
             }
 
-            debugger->runToBreakpoint();
+            debugger->runToBreakPoint(Debugger::ThreadId::unspecified());
             if (debugger->isTerminated())
                 throw std::runtime_error(exeName + " " + debugger->howTerminated() + " without reaching a breakpoint");
             if (doReplace)
                 map_->clear();
-            map_->insertProcess(debugger->isAttached(), MemoryMap::Attach::NO);
+            map_->insertProcess(*debugger->processId(), MemoryMap::Attach::NO);
             debugger->terminate();
+#else
+            throw std::runtime_error("\"run:\" loader schema is not available in this configuration of ROSE");
+#endif
         } else if (boost::starts_with(fileName, "srec:") || boost::ends_with(fileName, ".srec")) {
             std::string resource;                       // name of file to open
             unsigned perms = MemoryMap::READABLE | MemoryMap::WRITABLE | MemoryMap::EXECUTABLE;

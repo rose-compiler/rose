@@ -108,11 +108,13 @@ bool traceKind(const char* /* kind */)
   return true;
 }
 
-void logKind(const char* kind, bool /* unused */)
+void logKind(const char* kind, int elemID)
 {
   if (!traceKind(kind)) return;
 
-  logTrace() << kind << std::endl;
+  logTrace() << kind;
+  if (elemID > 0) logTrace() << ' ' << elemID;
+  logTrace() << std::endl;
 }
 
 LabelAndLoopManager::~LabelAndLoopManager()

@@ -14,7 +14,7 @@
     IS_SERIALIZABLE(AsmCil`cl.Name`);
 
 #ifdef DOCUMENTATION
-    /** CIL `cl.Name` table.
+    /** CIL `cl.Name` node.
      *
      */
     class SgAsmCil`cl.Name`: public Sg`cl.Baseclass` {
@@ -101,6 +101,69 @@
 #endif
 `end_for`
 
+
+`for_each cl = .metadata`
+    /*************************************************************************************************************************
+     *                                          CIL `cl.Name`Table: Table of `cl.Name` nodes
+     *************************************************************************************************************************/
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmCil`cl.Name`Table);
+    IS_SERIALIZABLE(AsmCil`cl.Name`Table);
+
+#ifdef DOCUMENTATION
+    /** CIL `cl.Name` tables.
+     *
+     */
+    class SgAsmCil`cl.Name`Table: public Sg`cl.Baseclass` {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+#else
+        AsmCil`cl.Name`Table.setDataPrototype("std::vector<SgAsmCil`cl.Name`*>", "elements", "", 
+                                         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#endif
+
+
+        DECLARE_OTHERS(AsmCil`cl.Name`Table);
+#if defined(SgAsmCil`cl.Name`Table_OTHERS) || defined(DOCUMENTATION)
+
+    public:
+        using CilMetadataType = SgAsmCil`cl.Name`;
+    
+        std::vector<CilMetadataType*>&       get_elements(); 
+        std::vector<CilMetadataType*> const& get_elements() const; 
+
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmCilNode);
+            s & BOOST_SERIALIZATION_NVP(p_elements);
+        }
+#endif
+
+
+#endif // SgAsmCil`cl.Name`Table_OTHERS
+
+#ifdef DOCUMENTATION
+    protected:
+      std::vector<SgAsmCil`cl.Name`*> p_elements; 
+#endif
+
+#ifdef DOCUMENTATION
+    };
+#endif
+`end_for`
+
+
+
+
+
     /*************************************************************************************************************************
      *                                      Root of a branch of CIL IR classes
      *************************************************************************************************************************/
@@ -115,7 +178,17 @@
                           AsmCilMethodDef       | AsmCilMethodImpl           | AsmCilMethodSemantics   | AsmCilMethodSpec |
                           AsmCilModule          | AsmCilModuleRef            | AsmCilNestedClass       | AsmCilParam |
                           AsmCilProperty        | AsmCilPropertyMap          | AsmCilStandAloneSig     | AsmCilTypeDef |
-                          AsmCilTypeRef         | AsmCilTypeSpec,
+                          AsmCilTypeRef         | AsmCilTypeSpec             |
+                          AsmCilAssemblyTable        | AsmCilAssemblyOSTable           | AsmCilAssemblyProcessorTable | AsmCilAssemblyRefTable  |
+                          AsmCilAssemblyRefOSTable   | AsmCilAssemblyRefProcessorTable | AsmCilClassLayoutTable       | AsmCilConstantTable     |
+                          AsmCilCustomAttributeTable | AsmCilDeclSecurityTable         | AsmCilEventTable             | AsmCilEventMapTable     |
+                          AsmCilExportedTypeTable    | AsmCilFieldTable                | AsmCilFieldLayoutTable       | AsmCilFieldMarshalTable |
+                          AsmCilFieldRVATable        | AsmCilFileTable                 | AsmCilGenericParamTable      | AsmCilGenericParamConstraintTable |
+                          AsmCilImplMapTable         | AsmCilInterfaceImplTable        | AsmCilManifestResourceTable  | AsmCilMemberRefTable |
+                          AsmCilMethodDefTable       | AsmCilMethodImplTable           | AsmCilMethodSemanticsTable   | AsmCilMethodSpecTable |
+                          AsmCilModuleTable          | AsmCilModuleRefTable            | AsmCilNestedClassTable       | AsmCilParamTable |
+                          AsmCilPropertyTable        | AsmCilPropertyMapTable          | AsmCilStandAloneSigTable     | AsmCilTypeDefTable |
+                          AsmCilTypeRefTable         | AsmCilTypeSpecTable,
                           "AsmCilMetadata", "AsmCilMetadataTag", false);
     AsmCilMetadata.setCppCondition("!defined(DOCUMENTATION)");
     IS_SERIALIZABLE(AsmCilMetadata);
@@ -159,7 +232,6 @@
 #endif
 
 `for_each fl = .metadataheap.Fields`
-
 #ifdef DOCUMENTATION
         /** Property: `fl.Doc`
          * @{ */
@@ -170,19 +242,21 @@
         AsmCilMetadataHeap.setDataPrototype("`fl.Type`", "`fl.Name`", "", NO_CONSTRUCTOR_PARAMETER,
                                             BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
-
 `end_for`
+
 
 `for_each cl = .metadata`
-
 #ifdef DOCUMENTATION
+        /** Property: `cl.Name`Table
+         * @{ */
+        SgAsmCil`cl.Name`Table* get_`cl.Name`Table const;
+        void set_`cl.Name`Table(SgAsmCil`cl.Name`Table*);
+        /** @} */
 #else
-        AsmCilMetadataHeap.setDataPrototype("std::vector<SgAsmCil`cl.Name`*>", "`cl.Name`", "", NO_CONSTRUCTOR_PARAMETER,
-                                            NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+        AsmCilMetadataHeap.setDataPrototype("SgAsmCil`cl.Name`Table*", "`cl.Name`Table", "", NO_CONSTRUCTOR_PARAMETER,
+                                            BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 #endif
-
 `end_for`
-
 
         DECLARE_OTHERS(AsmCilMetadataHeap);
 #if defined(SgAsmCilMetadataHeap_OTHERS) || defined(DOCUMENTATION)
@@ -251,14 +325,6 @@
          */
         SgAsmCilMetadata* get_MetadataNode(std::uint32_t refcode, ReferenceKind knd) const;
 
-        /** metadata-tables accessor methods
-         *  @{ */
-        `for_each cl = .metadata`
-        std::vector<SgAsmCil`cl.Name`*>&       get_`cl.Name`()       { return p_`cl.Name`; }
-        std::vector<SgAsmCil`cl.Name`*> const& get_`cl.Name`() const { return p_`cl.Name`; }
-        `end_for`
-        /** @} */
-
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
@@ -271,7 +337,7 @@
             s & BOOST_SERIALIZATION_NVP(p_`fl.Name`);
             `end_for`
             `for_each cl = .metadata`
-            s & BOOST_SERIALIZATION_NVP(p_`cl.Name`);
+            s & BOOST_SERIALIZATION_NVP(p_`cl.Name`Table);
             `end_for`
         }
 #endif
@@ -285,7 +351,7 @@
       `fl.Type` p_`fl.Name`;
       `end_for`
       `for_each cl = .metadata`
-      std::vector<SgAsmCil`cl.Name`*> p_`cl.Name`;
+      SgAsmCil`cl.Name`Table* p_`cl.Name`Table;
       `end_for`
 #endif
 
@@ -553,8 +619,8 @@
 #ifdef DOCUMENTATION
 
 #else
-        AsmCilMetadataRoot.setDataPrototype("std::vector<`str.Type`*>", "`str.Name`", "", NO_CONSTRUCTOR_PARAMETER,
-                                            NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+        AsmCilMetadataRoot.setDataPrototype("std::vector<`str.Type`*>", "`str.Name`", "", 
+                                            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 #endif
 
 `end_for`

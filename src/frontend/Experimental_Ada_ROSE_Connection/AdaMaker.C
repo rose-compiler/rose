@@ -517,7 +517,10 @@ mkWithClause(SgExpressionPtrList imported)
 SgUsingDeclarationStatement&
 mkUseClause(SgDeclarationStatement& used)
 {
-  return mkLocatedNode<SgUsingDeclarationStatement>(&used, nullptr);
+  SgUsingDeclarationStatement& sgnode = mkLocatedNode<SgUsingDeclarationStatement>(&used, nullptr);
+
+  sgnode.set_firstNondefiningDeclaration(&sgnode);
+  return sgnode;
 }
 
 
@@ -791,18 +794,15 @@ mkAdaFormalPackageDecl(const std::string& name, SgDeclarationStatement& gendecl,
 
 
 SgAdaGenericDecl&
-mkAdaGenericDecl(SgScopeStatement& scope)
+mkAdaGenericDecl(const std::string& name, SgScopeStatement& scope)
 {
-   SgAdaGenericDefn&   defn   = mkLocatedNode<SgAdaGenericDefn>();
-   SgAdaGenericDecl&   sgnode = mkLocatedNode<SgAdaGenericDecl>(&defn);
-
-   defn.setCaseInsensitive(true);
-
-   sgnode.set_parent(&scope);
-   sgnode.set_firstNondefiningDeclaration(&sgnode);
+   SgAdaGenericDefn&   defn   = mkScopeStmt<SgAdaGenericDefn>();
+   SgAdaGenericDecl&   sgnode = mkLocatedNode<SgAdaGenericDecl>(name, &defn);
 
    sg::linkParentChild(sgnode, defn, &SgAdaGenericDecl::set_definition);
 
+   sgnode.set_firstNondefiningDeclaration(&sgnode);
+   scope.insert_symbol(name, &mkBareNode<SgAdaGenericSymbol>(&sgnode));
    return sgnode;
 }
 
@@ -1024,7 +1024,7 @@ mkAdaTaskBodyDecl( SgDeclarationStatement& tskdecl,
   tskspec.set_body(&tskbody);
 
   linkBodyDeclDef_opt(nondef_opt, sgnode);
-  insertBodySymbol_opt<SgAdaProtectedSymbol>(sgnode, scope);
+  insertBodySymbol_opt<SgAdaTaskSymbol>(sgnode, scope);
   return sgnode;
 }
 
@@ -1170,6 +1170,8 @@ namespace
                        std::function<SgScopeStatement&()> scopeMaker
                      )
   {
+    //~ std::cerr << nm << "() -> " << &retty << std::endl;
+
     SgFunctionParameterList& lst       = mkFunctionParameterList();
     SgScopeStatement&        parmScope = scopeMaker();
 
@@ -1186,6 +1188,7 @@ namespace
 
     markCompilerGenerated(lst); // this is overwritten in buildNondefiningFunctionDeclaration
     markCompilerGenerated(sgnode);
+    // std::cerr << nm << "'() -> " << sgnode.get_type()->get_return_type() << std::endl;
     return sgnode;
   }
 }
