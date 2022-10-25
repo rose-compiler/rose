@@ -8,6 +8,7 @@
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/Reachability.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
+#include <Rose/BinaryAnalysis/SymbolicExpression.h>
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
@@ -1557,7 +1558,7 @@ Base::emitBasicBlockSuccessors(std::ostream &out, const P2::BasicBlock::Ptr &bb,
             bool emitted = false;
             for (size_t i=0; i<successors.size(); ++i) {
                 ASSERT_not_null(successors[i].expr());
-                SymbolicExpr::Ptr expr = successors[i].expr()->get_expression();
+                SymbolicExpression::Ptr expr = successors[i].expr()->get_expression();
 
                 if (targetVa && expr->toUnsigned().isEqual(targetVa)) {
                     // Edge to concrete node
@@ -1599,7 +1600,7 @@ Base::emitBasicBlockSuccessors(std::ostream &out, const P2::BasicBlock::Ptr &bb,
         // Emit the basic block successors that don't correspond to any CFG edge. Can this happen? [Robb Matzke 2018-12-05]
         for (const P2::BasicBlock::Successor &successor: successors) {
             ASSERT_not_null(successor.expr());
-            SymbolicExpr::Ptr expr = successor.expr()->get_expression();
+            SymbolicExpression::Ptr expr = successor.expr()->get_expression();
             if (expr->isIntegerConstant() && expr->nBits() <= 64) {
                 // Edge to concrete node
                 state.frontUnparser().emitLinePrefix(out, state);

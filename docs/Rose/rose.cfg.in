@@ -690,6 +690,7 @@ INPUT                  = @top_srcdir@/docs/Rose/MainPage.dox \
 			 @top_srcdir@/src/Rose/BinaryAnalysis \
 			 @top_srcdir@/src/Rose/BinaryAnalysis/ByteCode \
 			 @top_srcdir@/src/Rose/BinaryAnalysis/Concolic \
+			 @top_srcdir@/src/Rose/BinaryAnalysis/Debugger \
 			 @top_srcdir@/src/Rose/BinaryAnalysis/Disassembler \
 			 @top_srcdir@/src/Rose/BinaryAnalysis/Dwarf \
                          @top_srcdir@/src/Rose/BinaryAnalysis/InstructionSemantics \
@@ -732,7 +733,6 @@ INPUT                  = @top_srcdir@/docs/Rose/MainPage.dox \
                          @top_srcdir@/src/midend/programAnalysis/genericDataflow/simpleAnalyses \
                          @top_srcdir@/src/midend/programAnalysis/genericDataflow/state \
                          @top_srcdir@/src/midend/programAnalysis/genericDataflow/variables \
-                         @top_srcdir@/src/midend/programAnalysis/EditDistance \
                          @top_srcdir@/src/midend/programTransformation/documentation.docs \
                          @top_srcdir@/src/midend/programTransformation/extractFunctionArgumentsNormalization \
                          @top_srcdir@/src/midend/programTransformation/ompLowering/omp_lowering.h \

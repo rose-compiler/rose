@@ -7,7 +7,7 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Formatter.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/State.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/SValue.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/Util.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/Utility.h>
 #include <Rose/StringUtility/Convert.h>
 
 using namespace Sawyer::Message::Common;
@@ -102,7 +102,7 @@ RiscOperators::startInstruction(SgAsmInstruction *insn) {
 
 void
 RiscOperators::finishInstruction(SgAsmInstruction *insn) {
-    ASSERT_not_null(insn);
+    ASSERT_always_not_null(insn);
     ASSERT_require(currentInsn_==insn);
     hotPatch_.apply(shared_from_this());
     currentInsn_ = nullptr;
@@ -268,14 +268,14 @@ RiscOperators::interrupt(const SValue::Ptr &majr, const SValue::Ptr &minr, const
 }
 
 SValue::Ptr
-RiscOperators::fpFromInteger(const SValue::Ptr &intValue, SgAsmFloatType *fpType) {
-    ASSERT_not_null(fpType);
+RiscOperators::fpFromInteger(const SValue::Ptr &/*intValue*/, SgAsmFloatType *fpType) {
+    ASSERT_always_not_null(fpType);
     throw NotImplemented("fpFromInteger is not implemented", currentInstruction());
 }
 
 SValue::Ptr
-RiscOperators::fpToInteger(const SValue::Ptr &fpValue, SgAsmFloatType *fpType, const SValue::Ptr &dflt) {
-    ASSERT_not_null(fpType);
+RiscOperators::fpToInteger(const SValue::Ptr &/*fpValue*/, SgAsmFloatType *fpType, const SValue::Ptr &/*dflt*/) {
+    ASSERT_always_not_null(fpType);
     throw NotImplemented("fpToInteger is not implemented", currentInstruction());
 }
 
@@ -363,32 +363,32 @@ RiscOperators::fpEffectiveExponent(const SValue::Ptr &a, SgAsmFloatType *aType) 
 }
 
 SValue::Ptr
-RiscOperators::fpAdd(const SValue::Ptr &a, const SValue::Ptr &b, SgAsmFloatType *fpType) {
+RiscOperators::fpAdd(const SValue::Ptr&, const SValue::Ptr&, SgAsmFloatType*) {
     throw NotImplemented("fpAdd is not implemented", currentInstruction());
 }
 
 SValue::Ptr
-RiscOperators::fpSubtract(const SValue::Ptr &a, const SValue::Ptr &b, SgAsmFloatType *fpType) {
+RiscOperators::fpSubtract(const SValue::Ptr&, const SValue::Ptr&, SgAsmFloatType*) {
     throw NotImplemented("fpSubtract is not implemented", currentInstruction());
 }
 
 SValue::Ptr
-RiscOperators::fpMultiply(const SValue::Ptr &a, const SValue::Ptr &b, SgAsmFloatType *fpType) {
+RiscOperators::fpMultiply(const SValue::Ptr&, const SValue::Ptr&, SgAsmFloatType*) {
     throw NotImplemented("fpMultiply is not implemented", currentInstruction());
 }
 
 SValue::Ptr
-RiscOperators::fpDivide(const SValue::Ptr &a, const SValue::Ptr &b, SgAsmFloatType *fpType) {
+RiscOperators::fpDivide(const SValue::Ptr&, const SValue::Ptr&, SgAsmFloatType*) {
     throw NotImplemented("fpDivide is not implemented", currentInstruction());
 }
 
 SValue::Ptr
-RiscOperators::fpSquareRoot(const SValue::Ptr &a, SgAsmFloatType *aType) {
+RiscOperators::fpSquareRoot(const SValue::Ptr&, SgAsmFloatType*) {
     throw NotImplemented("fpSquareRoot is not implemented", currentInstruction());
 }
 
 SValue::Ptr
-RiscOperators::fpRoundTowardZero(const SValue::Ptr &a, SgAsmFloatType *aType) {
+RiscOperators::fpRoundTowardZero(const SValue::Ptr&, SgAsmFloatType*) {
     throw NotImplemented("fpRoundTowardZero is not implemented", currentInstruction());
 }
 

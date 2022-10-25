@@ -7,7 +7,7 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Merger.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RiscOperators.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/SValue.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/Util.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/Utility.h>
 
 #include <boost/range/adaptor/reversed.hpp>
 
@@ -328,7 +328,7 @@ MemoryCellList::mergeNoAliasing(const MemoryState::Ptr &other_, RiscOperators *a
 }
 
 SValue::Ptr
-MemoryCellList::mergeCellValues(const CellList &cells, const SValue::Ptr &dflt, RiscOperators *addrOps, RiscOperators *valOps) {
+MemoryCellList::mergeCellValues(const CellList &cells, const SValue::Ptr &dflt, RiscOperators */*addrOps*/, RiscOperators *valOps) {
     SValue::Ptr retval;
     for (const MemoryCell::Ptr &cell: cells) {
         // Get the cell's value. If the cell value is not the same width as the desired return value then we've go more work to

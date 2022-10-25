@@ -555,7 +555,8 @@ SgInitializedName::asm_register_name_enum ClangToSageTranslator::get_sgAsmRegist
 std::string ClangToSageTranslator::generate_source_position_string(clang::SourceLocation srcLoc)
 {
   clang::SourceManager& SM = p_compiler_instance->getSourceManager();
-  clang::FileID fID = SM.getFileID(srcLoc);
+  clang::SourceLocation expansionLoc = SM.getExpansionLoc(srcLoc);
+  clang::FileID fID = SM.getFileID(expansionLoc);
   const clang::FileEntry* fEntry = SM.getFileEntryForID(fID);
   std::string return_string;
 

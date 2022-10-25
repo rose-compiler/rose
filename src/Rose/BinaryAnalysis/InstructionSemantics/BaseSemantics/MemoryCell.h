@@ -21,9 +21,10 @@ namespace BaseSemantics {
  *
  *  MemoryCell objects are used by the MemoryCellList to represent a memory state. Each memory cell has an address and a
  *  value. A cell also has an optional list of instruction addresses that wrote to that cell, and this list is manipulated by
- *  the @ref RiscOperators separately from updating cell addresses and values and according to settings in the
- *  RiscOperators. Cells written to by RiscOperators typically contain one writer address since each write operation creates a
- *  new cell; however, the result of a dataflow merge operation might produce cells that have multiple writers. */
+ *  the @ref BaseSemantics::RiscOperators "RiscOperators" separately from updating cell addresses and values and according to
+ *  settings in the @ref BaseSemantics::RiscOperators "RiscOperators". Cells written to by RiscOperators typically contain one
+ *  writer address since each write operation creates a new cell; however, the result of a dataflow merge operation might
+ *  produce cells that have multiple writers. */
 class MemoryCell: public boost::enable_shared_from_this<MemoryCell> {
 public:
     /** Shared-ownership pointer. */

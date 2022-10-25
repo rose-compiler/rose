@@ -632,7 +632,7 @@ struct DataFlowReferences {
     DataFlowReferences(const P2::Partitioner &partitioner, Reachability::FunctionToVertexMap &byFunction)
         : partitioner(partitioner), byFunction(byFunction) {}
 
-    void operator()(size_t taskId, P2::Function::Ptr &function) {
+    void operator()(size_t /*taskId*/, P2::Function::Ptr &function) {
         ASSERT_not_null(function);
         std::set<size_t> targetVertexIds = Reachability::findImplicitFunctionReferents(partitioner, function);
 
@@ -672,7 +672,7 @@ Reachability::cacheImplicitFunctionReferents(const P2::Partitioner &partitioner,
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 struct TransferFunction {
-    Reachability::ReasonFlags operator()(const P2::ControlFlowGraph&, size_t vertexId, Reachability::ReasonFlags state) {
+    Reachability::ReasonFlags operator()(const P2::ControlFlowGraph&, size_t /*vertexId*/, Reachability::ReasonFlags state) {
         return state;
     }
 

@@ -99,6 +99,12 @@ public:
     }
 };
 
+// Temporary construction helper useful before C++17
+template<class E>
+inline BitFlags<E>
+makeBitFlags(E enumMember) {
+    return BitFlags<E>(enumMember);
+}
 
 } // namespace
 

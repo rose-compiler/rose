@@ -1,5 +1,5 @@
 #include <featureTests.h>
-#ifdef ROSE_ENABLE_BINARY_ANALYSIS
+#ifdef ROSE_ENABLE_MODEL_CHECKER
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/ModelChecker/InstructionUnit.h>
 
@@ -41,8 +41,8 @@ InstructionUnit::printableName() const {
 }
 
 void
-InstructionUnit::printSteps(const Settings::Ptr &settings, std::ostream &out, const std::string &prefix,
-                            size_t stepOrigin, size_t maxSteps) const {
+InstructionUnit::printSteps(const Settings::Ptr&, std::ostream &out, const std::string &prefix, size_t stepOrigin,
+                            size_t maxSteps) const {
     if (maxSteps > 0) {
         if (sourceLocation())
             out <<prefix <<"from " <<sourceLocation() <<"\n";
@@ -55,7 +55,7 @@ InstructionUnit::printSteps(const Settings::Ptr &settings, std::ostream &out, co
 }
 
 void
-InstructionUnit::toYamlHeader(const Settings::Ptr &settings, std::ostream &out, const std::string &prefix1) const {
+InstructionUnit::toYamlHeader(const Settings::Ptr&, std::ostream &out, const std::string &prefix1) const {
     out <<prefix1 <<"vertex-type: instruction\n";
     if (auto va = address()) {
         std::string prefix(prefix1.size(), ' ');
@@ -64,8 +64,8 @@ InstructionUnit::toYamlHeader(const Settings::Ptr &settings, std::ostream &out, 
 }
 
 void
-InstructionUnit::toYamlSteps(const Settings::Ptr &settings, std::ostream &out, const std::string &prefix1,
-                             size_t stepOrigin, size_t maxSteps) const {
+InstructionUnit::toYamlSteps(const Settings::Ptr&, std::ostream &out, const std::string &prefix1, size_t /*stepOrigin*/,
+                             size_t maxSteps) const {
     if (maxSteps > 0) {
         out <<prefix1 <<"instruction: " <<StringUtility::yamlEscape(insn_->toString()) <<"\n";
 

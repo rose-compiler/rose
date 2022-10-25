@@ -130,7 +130,7 @@ public:
  *  See also, @ref SgAsmBlock which is how a basic block (and some other things) are represented in the AST. */
 class BasicBlock: public Sawyer::SharedObject, public Sawyer::Attribute::Storage<> {
 public:
-    /** Shared pointer to a basic block. See @ref heap_object_shared_ownership. */
+    /** Shared pointer to a basic block. */
     typedef Sawyer::SharedPointer<BasicBlock> Ptr;
 
     /** Basic block successor. */
@@ -408,6 +408,16 @@ public:
      *
      *  Thread safety: This method is not thread safe. */
     Sawyer::Optional<size_t> instructionExists(SgAsmInstruction*) const;
+
+    /** Position of an instruction.
+     *
+     *  Returns the position (index) of the specified instruction within this basic block. If the instruction doesn't exist
+     *  then returns nothing.
+     *
+     * @{ */
+    Sawyer::Optional<size_t> instructionIndex(rose_addr_t) const;
+    Sawyer::Optional<size_t> instructionIndex(SgAsmInstruction*) const;
+    /** @} */
 
     /** Get the instructions for this block.
      *

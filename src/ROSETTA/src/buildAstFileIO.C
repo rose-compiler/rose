@@ -477,7 +477,6 @@ Grammar::build_source_AST_FILE_IO_CLASS()
           if ( find (abstractClassesListStart,abstractClassesListEnd,nodeNameString) == abstractClassesListEnd )
              {
                writeASTToFile += "     sizeOfActualPool = getSizeOfMemoryPool(V_" + nodeNameString + " ); \n" ;
-               writeASTToFile += "     storageClassIndex = 0 ;\n" ;
                writeASTToFile += "     if ( 0 < sizeOfActualPool ) \n" ;
                writeASTToFile += "        {  \n" ;
             // Initializing the StorageClasses 
@@ -526,12 +525,15 @@ Grammar::build_source_AST_FILE_IO_CLASS()
                   {
                     readASTFromFile += "        " + nodeNameString + "StorageClass :: readEasyStorageDataFromFile(inFile) ;\n" ;
                   }
-               readASTFromFile += "          " + nodeNameString + "StorageClass* storageArray = storageArray" + nodeNameString + ";\n" ;
-               readASTFromFile += "          for ( unsigned int i = 0;  i < sizeOfActualPool; ++i )\n" ;
-               readASTFromFile += "             {\n" ;
-            // readASTFromFile += "               new " + nodeNameString + " ( *storageArray ) ; \n" ;
-               readASTFromFile += "               " + nodeNameString + "* tmp = new " + nodeNameString + " ( *storageArray ) ; \n" ;
-               readASTFromFile += "               ROSE_ASSERT(tmp->p_freepointer == AST_FileIO::IS_VALID_POINTER() ); \n" ;
+               readASTFromFile += "          " + nodeNameString + "StorageClass* storageArray = storageArray" + nodeNameString + ";\n"
+                                  "          for ( unsigned int i = 0;  i < sizeOfActualPool; ++i )\n"
+                                  "             {\n"
+                                  "#ifdef NDEBUG\n"
+                                  "               new " + nodeNameString + " ( *storageArray ) ; \n"
+                                  "#else\n"
+                                  "               " + nodeNameString + "* tmp = new " + nodeNameString + " ( *storageArray ) ; \n"
+                                  "               ROSE_ASSERT(tmp->p_freepointer == AST_FileIO::IS_VALID_POINTER() ); \n"
+                                  "#endif\n";
                readASTFromFile += "               storageArray++ ; \n" ;
                readASTFromFile += "             }\n" ;
                readASTFromFile += "        }  \n" ;

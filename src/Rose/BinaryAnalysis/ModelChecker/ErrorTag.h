@@ -1,11 +1,11 @@
 #ifndef ROSE_BinaryAnalysis_ModelChecker_ErrorTag_H
 #define ROSE_BinaryAnalysis_ModelChecker_ErrorTag_H
 #include <featureTests.h>
-#ifdef ROSE_ENABLE_BINARY_ANALYSIS
+#ifdef ROSE_ENABLE_MODEL_CHECKER
 #include <Rose/BinaryAnalysis/ModelChecker/Tag.h>
 
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Types.h>
-#include <Rose/BinaryAnalysis/SymbolicExpr.h>
+#include <Rose/BinaryAnalysis/SymbolicExpression.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -24,7 +24,7 @@ protected:
     const std::string mesg_;                                       // error message
     SgAsmInstruction* const insn_;                                 // instruction where the error occurs (optional)
     Sawyer::Optional<uint64_t> concrete_;                          // optional concrete value
-    const SymbolicExpr::Ptr symbolic_;                             // optional symbolic value
+    const SymbolicExpression::Ptr symbolic_;                       // optional symbolic value
     const InstructionSemantics::BaseSemantics::SValuePtr svalue_;  // optional semantic value
     Sawyer::Message::Importance importance_ = Sawyer::Message::ERROR;
 
@@ -33,7 +33,7 @@ protected:
     ErrorTag(size_t nodeStep, const std::string &name, const std::string &mesg, SgAsmInstruction*,
              const Sawyer::Optional<uint64_t>&);
     ErrorTag(size_t nodeStep, const std::string &name, const std::string &mesg, SgAsmInstruction*,
-             const SymbolicExpr::Ptr&);
+             const SymbolicExpression::Ptr&);
     ErrorTag(size_t nodeStep, const std::string &name, const std::string &mesg, SgAsmInstruction*,
              const InstructionSemantics::BaseSemantics::SValuePtr&);
 
@@ -49,7 +49,7 @@ public:
     static Ptr instance(size_t nodeStep, const std::string &name, const std::string &mesg, SgAsmInstruction*,
                         uint64_t);
     static Ptr instance(size_t nodeStep, const std::string &name, const std::string &mesg, SgAsmInstruction*,
-                        const SymbolicExpr::Ptr&);
+                        const SymbolicExpression::Ptr&);
     static Ptr instance(size_t nodeStep, const std::string &name, const std::string &mesg, SgAsmInstruction*,
                         const InstructionSemantics::BaseSemantics::SValuePtr&);
     /** @} */

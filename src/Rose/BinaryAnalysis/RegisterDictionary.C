@@ -22,7 +22,8 @@ RegisterDictionary::RegisterDictionary() {}
 RegisterDictionary::RegisterDictionary(const std::string &name)
     : name_(name) {}
 
-RegisterDictionary::RegisterDictionary(const RegisterDictionary &other) {
+RegisterDictionary::RegisterDictionary(const RegisterDictionary &other)
+    : SharedObject(other) {
     *this = other;
 }
 

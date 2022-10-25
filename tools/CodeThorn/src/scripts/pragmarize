@@ -1,0 +1,8 @@
+#converted comments with pragmas to pragmas
+#workaround until pragmas are fixed
+sed -e s/"\/\/#pragma"/"#pragma"/ rose_$1.C > $1_pragma.C
+mv $1_pragma.C $1_gen.C
+
+
+
+

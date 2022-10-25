@@ -1,5 +1,6 @@
 add_subdirectory(ByteCode)
 add_subdirectory(Concolic)
+add_subdirectory(Debugger)
 add_subdirectory(Disassembler)
 add_subdirectory(InstructionSemantics)
 add_subdirectory(InstructionSemantics2)
@@ -21,7 +22,6 @@ add_library(roseBinaryAnalysis OBJECT
   ConcreteLocation.C
   ControlFlow.C
   DataFlow.C
-  Debugger.C
   Demangler.C
   DisassemblerCil.C
   FeasiblePath.C
@@ -48,8 +48,8 @@ add_library(roseBinaryAnalysis OBJECT
   SRecord.C
   StackDelta.C
   String.C
-  SymbolicExpr.C
-  SymbolicExprParser.C
+  SymbolicExpression.C
+  SymbolicExpressionParser.C
   SystemCall.C
   TaintedFlow.C
   ToSource.C
@@ -68,6 +68,7 @@ install(FILES
   BinaryLoaderElf.h
   BinaryLoaderElfObj.h
   BinaryLoaderPe.h
+  ByteCode.h
   CallingConvention.h
   CodeInserter.h
   Concolic.h
@@ -116,12 +117,14 @@ install(FILES
   StackDelta.h
   String.h
   SymbolicExpr.h
+  SymbolicExpression.h
   SymbolicExprParser.h
+  SymbolicExpressionParser.h
   SystemCall.h
   TaintedFlow.h
   ToSource.h
   Unparser.h
-  Utils.h
+  Utility.h
   Variables.h
   Z3Solver.h
 

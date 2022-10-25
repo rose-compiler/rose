@@ -7,7 +7,9 @@
 #include <Rose/BinaryAnalysis/Concolic/TestCase.h>
 #include <Rose/BinaryAnalysis/Concolic/TestSuite.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/SymbolicExpression.h>
 #include <Rose/BitOps.h>
+
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/format.hpp>
@@ -147,8 +149,8 @@ ExecutionEvent::bulkMemoryHash(const TestCase::Ptr &tc, const ExecutionLocation 
 
 ExecutionEvent::Ptr
 ExecutionEvent::memoryWrite(const TestCase::Ptr &tc, const ExecutionLocation &loc, rose_addr_t ip,
-                           const AddressInterval &where, const SymbolicExprPtr &variable,
-                            const SymbolicExprPtr &value, const SymbolicExprPtr &expression) {
+                            const AddressInterval &where, const SymbolicExpression::Ptr &variable,
+                            const SymbolicExpression::Ptr &value, const SymbolicExpression::Ptr &expression) {
     Ptr e = Ptr(new ExecutionEvent);
     e->action_ = Action::MEMORY_WRITE;
     e->testCase_ = tc;
@@ -165,7 +167,7 @@ ExecutionEvent::memoryWrite(const TestCase::Ptr &tc, const ExecutionLocation &lo
 
 ExecutionEvent::Ptr
 ExecutionEvent::bulkRegisterWrite(const TestCase::Ptr &tc, const ExecutionLocation &loc, rose_addr_t ip,
-                                  const Debugger::AllRegisters &values) {
+                                  const Debugger::Linux::AllRegisters &values) {
     Ptr e = Ptr(new ExecutionEvent);
     e->action_ = Action::BULK_REGISTER_WRITE;
     e->testCase_ = tc;
@@ -177,8 +179,8 @@ ExecutionEvent::bulkRegisterWrite(const TestCase::Ptr &tc, const ExecutionLocati
 
 ExecutionEvent::Ptr
 ExecutionEvent::registerWrite(const TestCase::Ptr &tc, const ExecutionLocation &loc, rose_addr_t ip,
-                              RegisterDescriptor where, const SymbolicExprPtr &variable,
-                              const SymbolicExprPtr &value, const SymbolicExprPtr &expression) {
+                              RegisterDescriptor where, const SymbolicExpression::Ptr &variable,
+                              const SymbolicExpression::Ptr &value, const SymbolicExpression::Ptr &expression) {
     Ptr e = Ptr(new ExecutionEvent);
     e->action_ = Action::REGISTER_WRITE;
     e->testCase_ = tc;
@@ -208,8 +210,8 @@ ExecutionEvent::osSyscall(const TestCase::Ptr &tc, const ExecutionLocation &loc,
 
 ExecutionEvent::Ptr
 ExecutionEvent::osSharedMemory(const TestCase::Ptr &tc, const ExecutionLocation &loc, rose_addr_t ip,
-                               const AddressInterval &where, const SymbolicExprPtr &variable,
-                               const SymbolicExprPtr &value, const SymbolicExprPtr &expression) {
+                               const AddressInterval &where, const SymbolicExpression::Ptr &variable,
+                               const SymbolicExpression::Ptr &value, const SymbolicExpression::Ptr &expression) {
     Ptr e = Ptr(new ExecutionEvent);
     e->action_ = Action::OS_SHARED_MEMORY;
     e->testCase_ = tc;
@@ -393,11 +395,11 @@ ExecutionEvent::bytes(const std::vector<uint8_t> &v) {
     }
 }
 
-Debugger::AllRegisters
+Debugger::Linux::AllRegisters
 ExecutionEvent::registerValues() const {
     switch (action_) {
         case Action::BULK_REGISTER_WRITE: {
-            Debugger::AllRegisters values;
+            Debugger::Linux::AllRegisters values;
             ASSERT_require(bytes_.size() == values.regs.size() + values.fpregs.size());
             std::copy(bytes_.begin(), bytes_.begin() + values.regs.size(), values.regs.begin());
             std::copy(bytes_.begin() + values.regs.size(), bytes_.end(), values.fpregs.begin());
@@ -409,7 +411,7 @@ ExecutionEvent::registerValues() const {
 }
 
 void
-ExecutionEvent::registerValues(const Debugger::AllRegisters &values) {
+ExecutionEvent::registerValues(const Debugger::Linux::AllRegisters &values) {
     switch (action_) {
         case Action::BULK_REGISTER_WRITE: {
             bytes_.clear();
@@ -448,7 +450,7 @@ ExecutionEvent::hash(const Combinatorics::Hasher::Digest &digest) {
     }
 }
 
-SymbolicExpr::Ptr
+SymbolicExpression::Ptr
 ExecutionEvent::variable() const {
     switch (action_) {
         case Action::MEMORY_WRITE:
@@ -462,7 +464,7 @@ ExecutionEvent::variable() const {
 }
 
 void
-ExecutionEvent::variable(const SymbolicExpr::Ptr &v) {
+ExecutionEvent::variable(const SymbolicExpression::Ptr &v) {
     switch (action_) {
         case Action::MEMORY_WRITE:
         case Action::REGISTER_WRITE:
@@ -475,7 +477,7 @@ ExecutionEvent::variable(const SymbolicExpr::Ptr &v) {
     }
 }
 
-SymbolicExpr::Ptr
+SymbolicExpression::Ptr
 ExecutionEvent::value() const {
     switch (action_) {
         case Action::MEMORY_WRITE:
@@ -489,7 +491,7 @@ ExecutionEvent::value() const {
 }
 
 void
-ExecutionEvent::value(const SymbolicExpr::Ptr &v) {
+ExecutionEvent::value(const SymbolicExpression::Ptr &v) {
     switch (action_) {
         case Action::MEMORY_WRITE:
         case Action::REGISTER_WRITE:
@@ -502,7 +504,7 @@ ExecutionEvent::value(const SymbolicExpr::Ptr &v) {
     }
 }
 
-SymbolicExpr::Ptr
+SymbolicExpression::Ptr
 ExecutionEvent::expression() const {
     switch (action_) {
         case Action::MEMORY_WRITE:
@@ -515,7 +517,7 @@ ExecutionEvent::expression() const {
 }
 
 void
-ExecutionEvent::expression(const SymbolicExpr::Ptr &expr) {
+ExecutionEvent::expression(const SymbolicExpression::Ptr &expr) {
     switch (action_) {
         case Action::MEMORY_WRITE:
         case Action::REGISTER_WRITE:
@@ -608,14 +610,14 @@ ExecutionEvent::inputIndices() const {
     }
 }
 
-SymbolicExpr::Ptr
+SymbolicExpression::Ptr
 ExecutionEvent::inputVariable() const {
-    return InputType::NONE == inputType_ ? SymbolicExpr::Ptr() : variable();
+    return InputType::NONE == inputType_ ? SymbolicExpression::Ptr() : variable();
 }
 
-SymbolicExpr::Ptr
-ExecutionEvent::calculateResult(const SymbolicExpr::ExprExprHashMap &bindings) const {
-    SymbolicExpr::Ptr result = expression_ ? expression()->substituteMultiple(bindings) : value();
+SymbolicExpression::Ptr
+ExecutionEvent::calculateResult(const SymbolicExpression::ExprExprHashMap &bindings) const {
+    SymbolicExpression::Ptr result = expression_ ? expression()->substituteMultiple(bindings) : value();
     ASSERT_not_null(result);
     ASSERT_require(result->isScalarConstant());
     return result;
@@ -1088,33 +1090,33 @@ ExecutionEvent::fromDatabase(const Database::Ptr &db, ExecutionEventId eventId) 
     if (auto serialized = iter->get<std::string>(12)) {
         std::istringstream ss(*serialized);
         boost::archive::binary_iarchive archive(ss);
-        SymbolicExpr::Ptr var;
+        SymbolicExpression::Ptr var;
         archive >>variable_;
         ASSERT_not_null(variable_);
         ASSERT_require(variable_->isScalarVariable());
     } else {
-        variable_ = SymbolicExpr::Ptr();
+        variable_ = SymbolicExpression::Ptr();
     }
 
     if (auto serialized = iter->get<std::string>(13)) {
         std::istringstream ss(*serialized);
         boost::archive::binary_iarchive archive(ss);
-        SymbolicExpr::Ptr var;
+        SymbolicExpression::Ptr var;
         archive >>value_;
         ASSERT_not_null(value_);
         ASSERT_require(value_->isScalarConstant());
     } else {
-        value_ = SymbolicExpr::Ptr();
+        value_ = SymbolicExpression::Ptr();
     }
 
     if (auto serialized = iter->get<std::string>(14)) {
         std::istringstream ss(*serialized);
         boost::archive::binary_iarchive archive(ss);
-        SymbolicExpr::Ptr var;
+        SymbolicExpression::Ptr var;
         archive >>expression_;
         ASSERT_not_null(expression_);
     } else {
-        expression_ = SymbolicExpr::Ptr();
+        expression_ = SymbolicExpression::Ptr();
     }
 
     s = iter->get<std::string>(15).orElse("none");

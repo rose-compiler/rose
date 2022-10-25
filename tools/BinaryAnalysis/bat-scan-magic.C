@@ -27,7 +27,7 @@ struct Settings {
 };
 
 static boost::filesystem::path
-parseCommandLine(int argc, char *argv[], BinaryAnalysis::Partitioner2::Engine &engine, Settings &settings /*in,out*/) {
+parseCommandLine(int argc, char *argv[], BinaryAnalysis::Partitioner2::Engine&, Settings &settings /*in,out*/) {
     using namespace Sawyer::CommandLine;
 
     SwitchGroup gen = Rose::CommandLine::genericSwitches();

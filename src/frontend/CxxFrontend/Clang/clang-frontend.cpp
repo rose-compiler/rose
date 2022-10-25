@@ -541,6 +541,12 @@ void ClangToSageTranslator::applySourceRange(SgNode * node, clang::SourceRange s
      if (located_node != NULL)
         {
           located_node->set_startOfConstruct(start_fi);
+          // Pei-Hung (09/29/2022) SgExpression::get_file_info() checks and returns get_operatorPosition()
+          // therefore, call set_operatorPosition() to make sure the Sg_File_Info is properly set.
+          if(isSgExpression(located_node))
+          {
+             isSgExpression(located_node)->set_operatorPosition(start_fi);
+          }
           located_node->set_endOfConstruct(end_fi);
         }
        else

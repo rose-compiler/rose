@@ -514,6 +514,7 @@ struct VariableLinker {
       rlist.push_back(iname);
       while (true) {
         SgInitializedName * prev = rlist.back()->get_prev_decl_item();
+        ROSE_ASSERT(prev != rlist.back());
         if (prev == NULL) break;
         seens.insert(prev);
         rlist.push_back(prev);

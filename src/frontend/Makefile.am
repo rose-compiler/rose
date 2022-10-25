@@ -42,10 +42,6 @@ if ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION
    SUBDIRS += Experimental_Jovial_ROSE_Connection
 endif
 
-if ROSE_EXPERIMENTAL_COBOL_ROSE_CONNECTION
-   SUBDIRS += Experimental_Cobol_ROSE_Connection
-endif
-
 if ROSE_EXPERIMENTAL_MATLAB_ROSE_CONNECTION
    SUBDIRS += Experimental_Matlab_ROSE_Connection
 endif

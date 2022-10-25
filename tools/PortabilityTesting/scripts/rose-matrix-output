@@ -1,0 +1,40 @@
+#!/bin/bash
+# Purpose: to show the final output from a test.
+
+set -e
+arg0="${0##*/}"
+
+die() {
+    echo "$arg0: error:" "$@" >&2
+    exit 1
+}
+
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+	--help|-h)
+	    echo "usage: $arg0 TEST_ID"
+	    exit 0
+	    ;;
+	--)
+	    shift
+	    break
+	    ;;
+	-*)
+	    die "unrecognized switch \"$1\""
+	    ;;
+	*)
+	    break
+	    ;;
+    esac
+done
+
+[ "$#" -eq 1 ] || die "usage: $arg0 TEST_ID"
+
+test_id="$1"
+while IFS=, read attachment_id attachment_name; do
+    if [ "$attachment_name" = "Final output" ]; then
+	rose-matrix-attachments "$test_id" "$attachment_id"
+	exit 0
+    fi
+done <<< $(rose-matrix-attachments -Fcsv "$test_id")
+die "no output associated with test ID $test_id"

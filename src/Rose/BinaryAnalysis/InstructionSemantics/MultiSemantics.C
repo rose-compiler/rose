@@ -13,8 +13,7 @@ namespace MultiSemantics {
  *******************************************************************************************************************************/
 
 void
-SValue::init(const SValue &other)
-{
+SValue::init(const SValue &/*other*/) {
     for (size_t i=0; i<subvalues.size(); ++i) {
         if (subvalues[i]!=NULL)
             subvalues[i] = subvalues[i]->copy();
@@ -329,7 +328,7 @@ RiscOperators::RiscOperators(const BaseSemantics::State::Ptr &state, const SmtSo
 RiscOperators::~RiscOperators() {}
 
 RiscOperators::Ptr
-RiscOperators::instanceFromRegisters(const RegisterDictionary::Ptr &regdict) {
+RiscOperators::instanceFromRegisters(const RegisterDictionary::Ptr&) {
     BaseSemantics::SValue::Ptr protoval = SValue::instance();
     return Ptr(new RiscOperators(protoval, SmtSolver::Ptr()));
 }

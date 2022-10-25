@@ -84,6 +84,11 @@ public:
      *  body. Each time this inlining happens, a counter is incremented and all new vertices are created using this
      *  counter. The counter starts at zero. */
     size_t inliningId() const { return inliningId_; }
+
+    /** Virtual address of vertex.
+     *
+     *  Returns the virtual address if known, otherwise nothing. */
+    Sawyer::Optional<rose_addr_t> address() const;
 };
 
 /** Control flow graph used by data-flow analysis.
@@ -123,7 +128,7 @@ public:
 /** Predicate that always returns false, preventing interprocedural analysis. */
 class NotInterprocedural: public InterproceduralPredicate {
 public:
-    bool operator()(const ControlFlowGraph&, const ControlFlowGraph::ConstEdgeIterator&, size_t depth) override {
+    bool operator()(const ControlFlowGraph&, const ControlFlowGraph::ConstEdgeIterator&, size_t /*depth*/) override {
         return false;
     }
 };

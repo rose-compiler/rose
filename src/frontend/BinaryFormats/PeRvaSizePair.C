@@ -4,7 +4,9 @@
 
 // In order to efficiently (in terms of amount of code) parse a file format that's defined for a different architecture, we
 // need to occassionally take addresses of structs that don't follow alignment rules for this architecture.
+#if defined(__GNUC__) && __GNUC__ >= 9
 #pragma GCC diagnostic ignored "-Waddress-of-packed-member"
+#endif
 
 void
 SgAsmPERVASizePair::ctor(SgAsmPERVASizePairList *parent, const RVASizePair_disk *disk) {

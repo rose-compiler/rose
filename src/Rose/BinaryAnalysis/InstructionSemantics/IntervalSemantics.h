@@ -32,7 +32,7 @@ typedef Sawyer::Container::IntervalSet<Interval> Intervals;
 //                                      Semantic values
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Shared-ownership pointer to an interval semantic value. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer to an interval semantic value. */
 typedef Sawyer::SharedPointer<class SValue> SValuePtr;
 
 /** Type of values manipulated by the IntervalSemantics domain. */
@@ -246,7 +246,7 @@ typedef BaseSemantics::RegisterStateGenericPtr RegisterStateGenericPtr;
 //                                      Memory state
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Shared-ownership pointer to an interval memory state. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer to an interval memory state. */
 typedef boost::shared_ptr<class MemoryState> MemoryStatePtr;
 
 /** Byte-addressable memory.
@@ -346,7 +346,7 @@ typedef BaseSemantics::StatePtr StatePtr;
 //                                      RISC operators
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Shared-ownership pointer to interval RISC operations. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer to interval RISC operations. */
 typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
 /** RISC operators for interval domains. */

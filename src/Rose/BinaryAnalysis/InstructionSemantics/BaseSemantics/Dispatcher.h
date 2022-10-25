@@ -43,7 +43,7 @@ public:
  *  fit together. */
 class Dispatcher: public boost::enable_shared_from_this<Dispatcher> {
 public:
-    /** Shared-ownership pointer for a @ref Dispatcher object. See @ref heap_object_shared_ownership. */
+    /** Shared-ownership pointer. */
     using Ptr = DispatcherPtr;
 
 private:
@@ -180,7 +180,7 @@ public:
      *  The register dictionary should not be changed after a dispatcher is instantiated because the dispatcher's constructor
      *  may query the dictionary and cache the resultant register descriptors.
      *
-     *  This function should not be redefined in subclasses. Instead, override @ref get_register_dictionary or @ref
+     *  This function should not be redefined in subclasses. Instead, override @c get_register_dictionary or @c
      *  set_register_dictionary.
      *
      * @{ */

@@ -6,7 +6,7 @@
 #include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 #include <Rose/BinaryAnalysis/SmtSolver.h>
-#include <Rose/BinaryAnalysis/SymbolicExprParser.h>
+#include <Rose/BinaryAnalysis/SymbolicExpressionParser.h>
 #include <Rose/BinaryAnalysis/Partitioner2/CfgPath.h>
 #include <Rose/Exception.h>
 #include <Sawyer/CommandLine.h>
@@ -71,11 +71,11 @@ public:
     struct Expression {
         AddressIntervalSet location;                    /**< Location where constraint applies. Empty implies end-of-path. */
         std::string parsable;                           /**< String to be parsed as an expression. */
-        SymbolicExpr::Ptr expr;                         /**< Symbolic expression. */
+        SymbolicExpression::Ptr expr;                   /**< Symbolic expression. */
 
         Expression() {}
         /*implicit*/ Expression(const std::string &parsable): parsable(parsable) {}
-        /*implicit*/ Expression(const SymbolicExpr::Ptr &expr): expr(expr) {}
+        /*implicit*/ Expression(const SymbolicExpression::Ptr &expr): expr(expr) {}
 
         void print(std::ostream&) const;
     };
@@ -160,7 +160,7 @@ public:
         std::string firstAccessMode;                    /**< How was variable first accessed ("read" or "write"). */
         SgAsmInstruction *firstAccessInsn;              /**< Instruction address where this var was first read. */
         Sawyer::Optional<size_t> firstAccessIdx;        /**< Instruction position in path where this var was first read. */
-        SymbolicExpr::Ptr memAddress;                   /**< Address where variable is located. */
+        SymbolicExpression::Ptr memAddress;             /**< Address where variable is located. */
         size_t memSize;                                 /**< Size of total memory access in bytes. */
         size_t memByteNumber;                           /**< Byte number for memory access. */
         Sawyer::Optional<rose_addr_t> returnFrom;       /**< This variable is the return value from the specified function. */
@@ -198,13 +198,11 @@ public:
          *  pushed for each edge of the path.
          *
          *  The return value from this callback determines whether the analysis will search for additional paths. A return
-         *  value of @ref Action::CONTINUE means the model checker will try other paths, and a return value of @ref
+         *  value of @c Action::CONTINUE means the model checker will try other paths, and a return value of @c
          *  Action::BREAK means no more paths will be tested. */
         virtual Action found(const FeasiblePath &analyzer, const Partitioner2::CfgPath &path,
                              const InstructionSemantics::BaseSemantics::DispatcherPtr &cpu,
-                             const SmtSolverPtr &solver) {
-            return CONTINUE;
-        }
+                             const SmtSolverPtr &solver);
 
         /** Function invoked whenever a null pointer dereference is detected.
          *
@@ -236,14 +234,12 @@ public:
          *  The @p addr is the address that was accessed.  Depending on the model checker's settings, this is either a constant
          *  or a symbolic expression. In the latter case, the @p solver will have evidence that the expression can be zero.
          *
-         *  The return value indicates whether the model checker should continue along the same path (@ref Action::CONTINUE) or
-         *  backtrack (@ref Action::BREAK). If this callback requests backtracking then the model checker may continue evaluating
+         *  The return value indicates whether the model checker should continue along the same path (@c Action::CONTINUE) or
+         *  backtrack (@c Action::BREAK). If this callback requests backtracking then the model checker may continue evaluating
          *  the current path vertex but will not call any more more path processing functions until the backtrack occurs. */
         virtual Action nullDeref(const FeasiblePath &analyzer, const Partitioner2::CfgPath &path, SgAsmInstruction *insn,
                                  const InstructionSemantics::BaseSemantics::RiscOperatorsPtr &cpu, const SmtSolverPtr &solver,
-                                 IoMode ioMode, const InstructionSemantics::BaseSemantics::SValuePtr &addr) {
-            return CONTINUE;
-        }
+                                 IoMode ioMode, const InstructionSemantics::BaseSemantics::SValuePtr &addr);
 
         /** Function invoked every time a memory reference occurs.
          *
@@ -281,15 +277,13 @@ public:
          *  from the stack for a function that was called but whose implementation is not present (such as when the
          *  inter-procedural depth was too great, the function is a non-linked import, etc.).
          *
-         *  The return value indicates whether the model checker should continue along the same path (@ref Action::CONTINUE) or
-         *  backtrack (@ref Action::BREAK). If this callback requests backtracking then the model checker may continue evaluating
+         *  The return value indicates whether the model checker should continue along the same path (@c Action::CONTINUE) or
+         *  backtrack (@c Action::BREAK). If this callback requests backtracking then the model checker may continue evaluating
          *  the current path vertex but will not call any more more path processing functions until the backtrack occurs. */
         virtual Action memoryIo(const FeasiblePath &analyzer, const Partitioner2::CfgPath &path, SgAsmInstruction *insn,
                                 const InstructionSemantics::BaseSemantics::RiscOperatorsPtr &cpu, const SmtSolverPtr &solver,
                                 IoMode ioMode, const InstructionSemantics::BaseSemantics::SValuePtr &addr,
-                                const InstructionSemantics::BaseSemantics::SValuePtr &value) {
-            return CONTINUE;
-        }
+                                const InstructionSemantics::BaseSemantics::SValuePtr &value);
     };
 
     /** Information stored per V_USER_DEFINED path vertex.
@@ -671,33 +665,33 @@ private:
     // whose address doesn't match the contents of the instruction pointer register after executing the edge's source
     // block. Otherwise, returns a symbolic expression which must be tree if the edge is feasible. For trivially feasible
     // edges, the return value is the constant 1 (one bit wide; i.e., true).
-    SymbolicExpr::Ptr pathEdgeConstraint(const Partitioner2::ControlFlowGraph::ConstEdgeIterator &pathEdge,
-                                         const InstructionSemantics::BaseSemantics::DispatcherPtr &cpu);
+    SymbolicExpression::Ptr pathEdgeConstraint(const Partitioner2::ControlFlowGraph::ConstEdgeIterator &pathEdge,
+                                               const InstructionSemantics::BaseSemantics::DispatcherPtr &cpu);
 
     // Parse the expression if it's a parsable string, otherwise return the expression as is. */
-    Expression parseExpression(Expression, const std::string &where, SymbolicExprParser&) const;
+    Expression parseExpression(Expression, const std::string &where, SymbolicExpressionParser&) const;
 
-    SymbolicExpr::Ptr expandExpression(const Expression&, const SymbolicExprParser&);
+    SymbolicExpression::Ptr expandExpression(const Expression&, const SymbolicExpressionParser&);
 
     // Based on the last vertex of the path, insert user-specified assertions into the SMT solver.
     void insertAssertions(const SmtSolver::Ptr&, const Partitioner2::CfgPath&,
-                          const std::vector<Expression> &assertions, bool atEndOfPath, const SymbolicExprParser&);
+                          const std::vector<Expression> &assertions, bool atEndOfPath, const SymbolicExpressionParser&);
 
     // Size of vertex. How much of "k" does this vertex consume?
     static size_t vertexSize(const Partitioner2::ControlFlowGraph::ConstVertexIterator&);
 
     // Information needed for adding user-supplied assertions to the solver.
     struct Substitutions {
-        SymbolicExprParser exprParser;
+        SymbolicExpressionParser exprParser;
         std::vector<Expression> assertions;
-        SymbolicExprParser::RegisterSubstituter::Ptr regSubber;
-        SymbolicExprParser::MemorySubstituter::Ptr memSubber;
+        SymbolicExpressionParser::RegisterSubstituter::Ptr regSubber;
+        SymbolicExpressionParser::MemorySubstituter::Ptr memSubber;
     };
 
     // Insert the edge assertion and any applicable user assertions (after delayed expansion of the expressions' register
     // and memory references), and run the solver, returning its result.
     SmtSolver::Satisfiable
-    solvePathConstraints(const SmtSolver::Ptr&, const Partitioner2::CfgPath&, const SymbolicExpr::Ptr &edgeAssertion,
+    solvePathConstraints(const SmtSolver::Ptr&, const Partitioner2::CfgPath&, const SymbolicExpression::Ptr &edgeAssertion,
                          const Substitutions&, bool atEndOfPath);
 
     // Mark vertex as being reached

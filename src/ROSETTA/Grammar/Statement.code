@@ -3609,6 +3609,8 @@ HEADER_ADA_PROTECTED_TYPE_DECL_STATEMENT_END
 HEADER_ADA_TASK_BODY_DECL_STATEMENT_START
   SgSymbol* get_symbol_from_symbol_table() const override;
   SgName get_mangled_name() const override;
+  void set_scope(SgScopeStatement*) override;
+  SgScopeStatement* get_scope() const override;
 HEADER_ADA_TASK_BODY_DECL_STATEMENT_END
 
 HEADER_ADA_PROTECTED_BODY_DECL_STATEMENT_START
@@ -11983,23 +11985,27 @@ SgFunctionDeclaration::get_mangled_name() const
 #if 0
           printf ("Inside of SgFunctionDeclaration::get_mangled_name(): mangledName = %s \n",mangledName.str());
 #endif
-#if 1
+
+// DQ (6/22/2022): Leave this call to SageInterface::addMangledNameToCache(), but remove
+// the addition of the parameter list's mangled name as a suffix since it is redundant,
+// and the resetting of the updated mangled name in the globalMangledNameMap.
+// #if 1
        // printf ("TEMP: Inside of SgFunctionDeclaration::get_mangled_name(): mangledName = %s \n",mangledName.str());
           mangledName = SageInterface::addMangledNameToCache(const_cast<SgFunctionDeclaration*>(this),mangledName);
        // printf ("TEMP RETURN: Inside of SgFunctionDeclaration::get_mangled_name(): mangledName = %s \n",mangledName.str());
-
+#if 0
        // This results in infinite recursion in the evaluation.
           SgFunctionParameterList* parameterList = this->get_parameterList();
           ROSE_ASSERT(parameterList != NULL);
           SgName mangledParameterList = parameterList->get_mangled_name();
           mangledName += "__" + mangledParameterList;
        // printf ("Inside of SgFunctionDeclaration::get_mangled_name(): after adding parameter list mangledName = %s \n",mangledName.str());
-#endif
+// #endif
 
        // Reset the mangled name in the map.
        // p_globalMangledNameMap[function] = mangledName;
           SgNode::get_globalMangledNameMap()[const_cast<SgFunctionDeclaration*>(this)] = mangledName;
-
+#endif
        // DQ (7/24/2012): Added test for template brackets that are caught later in AstConsistencyTests.
        // Make sure that there is no template specific syntax included in the mangled name
           string mangled_name = mangledName;
@@ -17402,8 +17408,10 @@ SgName SgTypedefDeclaration::get_mangled_name (void) const {
      if (mangledNameString.empty() == false)
         {
 #if DEBUG_TYPEDEF_DECLARATION_GET_MANGLED_NAME
-          printf ("In SgTypedefDeclaration::get_mangled_name(): (from cache) %s \n", mangledNameString.c_str() );
-#endif
+          std::cerr << "In SgTypedefDeclaration::get_mangled_name(): (from cache) " << mangledNameString
+                    << "  " << this
+                    << std::endl;
+#endif /* DEBUG_TYPEDEF_DECLARATION_GET_MANGLED_NAME */
           return mangledNameString;
         }
        else
@@ -17411,7 +17419,7 @@ SgName SgTypedefDeclaration::get_mangled_name (void) const {
           SgName mangledName;
 #if DEBUG_TYPEDEF_DECLARATION_GET_MANGLED_NAME
           printf ("In SgTypedefDeclaration::get_mangled_name(): before calling get_base_type() \n");
-#endif
+#endif /* DEBUG_TYPEDEF_DECLARATION_GET_MANGLED_NAME */
           SgType* baseType = get_base_type();
 #if DEBUG_TYPEDEF_DECLARATION_GET_MANGLED_NAME
        // DQ (5/23/2018): Added assertion prior to the debug statement below.
@@ -17425,7 +17433,7 @@ SgName SgTypedefDeclaration::get_mangled_name (void) const {
              {
                printf ("   --- typedef source position: line = (unknown) \n");
              }
-#endif
+#endif /* DEBUG_TYPEDEF_DECLARATION_GET_MANGLED_NAME */
 
        // DQ (6/3/2006): I think this is a better implementation of name mangling for a typedef
        // (need to include the name and the type) but I'm not clear if we want the scope.
@@ -17450,8 +17458,7 @@ SgName SgTypedefDeclaration::get_mangled_name (void) const {
                printf ("  -- this = %p (%s) = %s\n", this, this->class_name().c_str(), this->get_name().getString().c_str());
                SgNode * parent = get_parent();
                printf ("  -- parent = %p (%s)\n", parent, parent ? parent->class_name().c_str() : "");
-               ROSE_ASSERT(false);
-#endif
+#endif /* DEBUG_TYPEDEF_DECLARATION_GET_MANGLED_NAME */
             // DQ (3/20/2012): Added for debugging.
             // ROSE_ASSERT(false);
              }
@@ -17459,20 +17466,20 @@ SgName SgTypedefDeclaration::get_mangled_name (void) const {
              {
 #if DEBUG_TYPEDEF_DECLARATION_GET_MANGLED_NAME
                printf ("In SgTypedefDeclaration::get_mangled_name(): scope = %p = %s (calling mangleQualifiers()) \n",scope,scope->class_name().c_str());
-#endif
+#endif /* DEBUG_TYPEDEF_DECLARATION_GET_MANGLED_NAME */
                mangleQualifiersString = mangleQualifiers(scope);
 #if DEBUG_TYPEDEF_DECLARATION_GET_MANGLED_NAME
                printf ("DONE: In SgTypedefDeclaration::get_mangled_name(): mangleQualifiersString = %s scope = %p = %s (calling mangleQualifiers()) \n",mangleQualifiersString.c_str(),scope,scope->class_name().c_str());
-#endif
+#endif /* DEBUG_TYPEDEF_DECLARATION_GET_MANGLED_NAME */
              }
 
        // DQ (9/6/2016): We require a prefix to the name to avoid name collisions (see test2005_199.C and simplified test (but non-failing) in test2016_60.C).
        // mangledName = joinMangledQualifiers (mangleQualifiersString,get_name()) + baseType->get_mangled();
           SgName prefixed_name = "typedef_" + get_name();
 
-#if 0
+#if 0 /* 0_1 */
           printf ("In SgTypedefDeclaration::get_mangled_name(): prefixed_name = %s \n",prefixed_name.str());
-#endif
+#endif /* 0_1 */
 #define ADD_MANGLED_NAME_OF_BASE_TYPE 0
 #if ADD_MANGLED_NAME_OF_BASE_TYPE
        // DQ (6/30/2018): I think the call to the baseType->get_mangled() is the cause of the infinite loop in test2018_118.C.
@@ -17505,9 +17512,9 @@ SgName SgTypedefDeclaration::get_mangled_name (void) const {
           printf ("In SgTypedefDeclaration::get_mangled_name(): baseTypeMangleName = %s \n",baseTypeMangleName.str());
 #endif
           mangledName = joinMangledQualifiers(mangleQualifiersString,prefixed_name) + baseTypeMangleName;
-#else
+#else /* ADD_MANGLED_NAME_OF_BASE_TYPE */
           mangledName = joinMangledQualifiers(mangleQualifiersString,prefixed_name);
-#endif
+#endif /* ADD_MANGLED_NAME_OF_BASE_TYPE */
        // DQ (1/29/2007): We need to make this more specific to this IR nodes so that a typedef of an unnamed struct does not be mangled to be the same name
           mangledName += "__typedef_declaration";
 #if DEBUG_TYPEDEF_DECLARATION_GET_MANGLED_NAME
@@ -20699,7 +20706,10 @@ void SgAdaPackageSpec::post_construction_initialization() {}
 SgName
 SgAdaPackageSpec::get_mangled_name() const
 {
-  return "ada$pkg$spec";
+  std::stringstream manglr;
+
+  manglr << "ada$pkg$spec$" << this;
+  return manglr.str();
 }
 
 SgName
@@ -20977,25 +20987,12 @@ SgSymbol*
 SgAdaTaskBodyDecl::get_symbol_from_symbol_table() const
 {
 /*
-  PP (11/16/21)
+  PP (9/16/22)
   Package bodies do not have their own symbol currently,
   as a body must have seen the spec.
-  ==> Return the spec's symbol.
-  see also SgAdaPackageBodyDecl::get_symbol_from_symbol_table
-
-  SgScopeStatement* scope = get_scope();
-
-  ROSE_ASSERT(scope);
-  return scope->find_symbol_from_declaration(this);
+  ==> Return the specificationDeclaration's
 */
-
-  SgAdaTaskBody* body = get_definition();
-  ROSE_ASSERT(body);
-
-  SgAdaTaskSpec* spec = body->get_spec();
-  ROSE_ASSERT(spec);
-
-  SgDeclarationStatement* specdecl = isSgDeclarationStatement(spec->get_parent());
+  SgDeclarationStatement* specdecl = get_specificationDeclaration();
   ROSE_ASSERT(specdecl);
 
   return specdecl->search_for_symbol_from_symbol_table();
@@ -21009,6 +21006,17 @@ SgAdaTaskBodyDecl::get_mangled_name() const
   name.append(get_name());
   return name;
 }
+
+void SgAdaTaskBodyDecl::set_scope(SgScopeStatement*) {}
+
+SgScopeStatement* SgAdaTaskBodyDecl::get_scope() const
+{
+  SgDeclarationStatement* specdecl = get_specificationDeclaration();
+  ROSE_ASSERT(specdecl);
+
+  return specdecl->get_scope();
+}
+
 
 SOURCE_ADA_TASK_BODY_DECL_STATEMENT_END
 

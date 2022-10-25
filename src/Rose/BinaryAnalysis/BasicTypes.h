@@ -4,6 +4,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
+#include <Rose/BinaryAnalysis/Debugger/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Disassembler/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Types.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Types.h>
@@ -33,8 +34,6 @@ class BinaryToSource;
 class CodeInserter;
 class ConcreteLocation;
 class DataFlow;
-class Debugger;
-using DebuggerPtr = Sawyer::SharedPointer<Debugger>;    /**< Reference counting pointer. */
 class Demangler;
 class FeasiblePath;
 class FunctionCall;
@@ -66,7 +65,7 @@ class SmtSolver;
 using SmtSolverPtr = std::shared_ptr<SmtSolver>;  /**< Reference counting pointer. */
 class SourceLocations;
 class SRecord;
-class SymbolicExprParser;
+class SymbolicExpresssionParser;
 class SystemCall;
 class TaintedFlow;
 class Z3Solver;
@@ -112,7 +111,7 @@ class Utf8CharacterEncodingForm;
 class Utf16CharacterEncodingForm;
 } // namespace
 
-namespace SymbolicExpr {
+namespace SymbolicExpression {
 class Exception;
 class ExprExprHashMap;
 class Formatter;

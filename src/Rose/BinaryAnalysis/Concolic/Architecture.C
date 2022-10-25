@@ -10,6 +10,7 @@
 #include <Rose/BinaryAnalysis/Concolic/SharedMemory.h>
 #include <Rose/BinaryAnalysis/Concolic/SystemCall.h>
 #include <Rose/BinaryAnalysis/Concolic/TestCase.h>
+#include <Rose/BinaryAnalysis/SymbolicExpression.h>
 
 using namespace Sawyer::Message::Common;
 namespace BS = Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;
@@ -213,7 +214,7 @@ Architecture::playEvent(const ExecutionEvent::Ptr &event) {
             SAWYER_MESG(debug) <<"  write memory " <<StringUtility::plural(where.size(), "bytes")
                                <<" at " <<StringUtility::addrToString(where) <<"\n";
             ASSERT_forbid(where.isEmpty());
-            SymbolicExpr::Ptr value = event->calculateResult(inputVariables()->bindings());
+            SymbolicExpression::Ptr value = event->calculateResult(inputVariables()->bindings());
             ASSERT_require(8*where.size() == value->nBits());
 
             // We do it this way because the value could, theoretically, be very wide.
@@ -333,6 +334,12 @@ Architecture::readCString(rose_addr_t va, size_t maxBytes) {
     return retval;
 }
 
+void
+Architecture::mapMemory(const AddressInterval&, unsigned /*permissions*/) {}
+
+void
+Architecture::unmapMemory(const AddressInterval&) {}
+
 const ExecutionLocation&
 Architecture::nextInstructionLocation() {
     currentLocation_ = currentLocation_.nextPrimary();
@@ -353,8 +360,8 @@ Architecture::restoreInputVariables(const Partitioner2::Partitioner&, const Emul
     }
 }
 
-std::pair<ExecutionEvent::Ptr, SymbolicExpr::Ptr>
-Architecture::sharedMemoryAccess(const SharedMemoryCallbacks &callbacks, const P2::Partitioner &partitioner,
+std::pair<ExecutionEvent::Ptr, SymbolicExpression::Ptr>
+Architecture::sharedMemoryAccess(const SharedMemoryCallbacks &callbacks, const P2::Partitioner&,
                                  const Emulation::RiscOperators::Ptr &ops, rose_addr_t addr, size_t nBytes) {
     // A shared memory read has just been encountered, and we're in the middle of executing the instruction that caused it.
     ASSERT_not_null(ops);
@@ -370,10 +377,10 @@ Architecture::sharedMemoryAccess(const SharedMemoryCallbacks &callbacks, const P
     // instruction is reading from shared memory.
     ExecutionLocation loc = nextEventLocation(When::PRE);
     std::string name = (boost::format("shm_read_%s_%d") % StringUtility::addrToString(addr).substr(2) % loc.primary()).str();
-    auto valueRead = SymbolicExpr::makeIntegerVariable(8 * nBytes, name);
+    auto valueRead = SymbolicExpression::makeIntegerVariable(8 * nBytes, name);
     auto sharedMemoryEvent = ExecutionEvent::osSharedMemory(testCase(), loc, ip,
                                                             AddressInterval::baseSize(addr, nBytes), valueRead,
-                                                            SymbolicExpr::Ptr(), /*concrete value not known yet*/
+                                                            SymbolicExpression::Ptr(), /*concrete value not known yet*/
                                                             valueRead);
     inputVariables()->activate(sharedMemoryEvent, InputType::SHMEM_READ);
     database()->save(sharedMemoryEvent);
@@ -387,7 +394,7 @@ Architecture::sharedMemoryAccess(const SharedMemoryCallbacks &callbacks, const P
 
     if (!handled) {
         mlog[ERROR] <<"    shared memory read not handled by any callbacks; treating it as normal memory\n";
-        return {ExecutionEvent::Ptr(), SymbolicExpr::Ptr()};
+        return {ExecutionEvent::Ptr(), SymbolicExpression::Ptr()};
     } else if (!ctx.valueRead) {
         SAWYER_MESG(debug) <<"    shared memory read did not return a special value; doing a normal read\n";
     } else {
@@ -426,7 +433,7 @@ Architecture::fixupSharedMemoryEvents(const ExecutionEvent::Ptr &sharedMemoryEve
     // variable. Therefore, we can set the expression equal to the concrete value stored in this register and solve to get the
     // value that was read from memory represented by the sharedMemoryEvent.
     SmtSolver::Transaction tx(ops->solver());
-    std::vector<SymbolicExpr::Ptr> newAssertions;
+    std::vector<SymbolicExpression::Ptr> newAssertions;
     std::vector<ExecutionEvent::Ptr> relatedEvents = getRelatedEvents(sharedMemoryEvent);
     for (const ExecutionEvent::Ptr &relatedEvent: relatedEvents) {
         if (relatedEvent->action() == ExecutionEvent::Action::REGISTER_WRITE) {
@@ -434,14 +441,14 @@ Architecture::fixupSharedMemoryEvents(const ExecutionEvent::Ptr &sharedMemoryEve
             ASSERT_require(relatedEvent->value() == nullptr);
 
             const RegisterDescriptor REG = relatedEvent->registerDescriptor();
-            relatedEvent->value(SymbolicExpr::makeIntegerConstant(readRegister(REG)));
+            relatedEvent->value(SymbolicExpression::makeIntegerConstant(readRegister(REG)));
 
             if (!sharedMemoryEvent->value()) {
-                SymbolicExpr::Ptr eq = SymbolicExpr::makeEq(relatedEvent->expression(), relatedEvent->value());
+                SymbolicExpression::Ptr eq = SymbolicExpression::makeEq(relatedEvent->expression(), relatedEvent->value());
                 SAWYER_MESG(debug) <<"    from " <<relatedEvent->printableName(database()) <<":\n";
                 SAWYER_MESG(debug) <<"      asserting:  (eq[u1] " <<*relatedEvent->expression()
                                                         <<" " <<*relatedEvent->value() <<")\n";
-                if (debug && eq->getOperator() != SymbolicExpr::OP_EQ)
+                if (debug && eq->getOperator() != SymbolicExpression::OP_EQ)
                     debug <<"      simplified: " <<*eq <<"\n";
                 newAssertions.push_back(eq);
             }
@@ -452,7 +459,7 @@ Architecture::fixupSharedMemoryEvents(const ExecutionEvent::Ptr &sharedMemoryEve
     // Figure out a concrete value for the shared memory read event based on the assertions we added above.
     if (!sharedMemoryEvent->value()) {
         std::string varName = "v" + boost::lexical_cast<std::string>(*sharedMemoryEvent->variable()->variableId());
-        SymbolicExpr::Ptr concreteRead;                 // value read concretely
+        SymbolicExpression::Ptr concreteRead;           // value read concretely
 
         // First, we try to figure out the value that was concretely read from memory, but we do this in the context of all the
         // previous assertions also, so it might fail. For instance, if we're reading shared memory that represents a timer,
@@ -461,7 +468,7 @@ Architecture::fixupSharedMemoryEvents(const ExecutionEvent::Ptr &sharedMemoryEve
         // assertions to be unsatisfiable.
         if (debug) {
             debug <<"    all assertions:\n";
-            for (const SymbolicExpr::Ptr &assertion: ops->solver()->assertions())
+            for (const SymbolicExpression::Ptr &assertion: ops->solver()->assertions())
                 debug <<"      asserting:  " <<*assertion <<"\n";
         }
         SmtSolver::Satisfiable isSatisfied = ops->solver()->check();
@@ -503,7 +510,7 @@ Architecture::fixupSharedMemoryEvents(const ExecutionEvent::Ptr &sharedMemoryEve
     SAWYER_MESG(debug) <<"  fixing up concrete state\n";
     for (const ExecutionEvent::Ptr &relatedEvent: relatedEvents) {
         if (relatedEvent->action() == ExecutionEvent::Action::REGISTER_WRITE) {
-            SymbolicExpr::Ptr registerValue = relatedEvent->calculateResult(inputVariables()->bindings());
+            SymbolicExpression::Ptr registerValue = relatedEvent->calculateResult(inputVariables()->bindings());
             ASSERT_require(registerValue->isScalarConstant());
             SAWYER_MESG(debug) <<"    for " <<relatedEvent->printableName(database()) <<"\n"
                                <<"      writing " <<*registerValue <<"to register " <<relatedEvent->registerDescriptor() <<"\n";
@@ -568,7 +575,7 @@ Architecture::printSharedMemoryEvents(const ExecutionEvent::Ptr &sharedMemoryEve
 }
 
 void
-Architecture::sharedMemoryAccessPost(const P2::Partitioner &partitioner, const Emulation::RiscOperators::Ptr &ops) {
+Architecture::sharedMemoryAccessPost(const P2::Partitioner&, const Emulation::RiscOperators::Ptr &ops) {
     // Called after a shared memory accessing instruction has completed.
     ASSERT_not_null(ops);
     ASSERT_require2(ops->currentInstruction() == nullptr, "must be called after instruction execution");

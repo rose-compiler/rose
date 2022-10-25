@@ -15,7 +15,7 @@ using namespace Rose::BinaryAnalysis;
 void
 SgAsmGenericSection::ctor(SgAsmGenericFile *ef, SgAsmGenericHeader *hdr)
 {
-    ROSE_ASSERT(ef != NULL);
+    ASSERT_always_not_null(ef);
 
     ROSE_ASSERT(p_name==NULL);
     p_name = new SgAsmBasicString("");
@@ -610,7 +610,7 @@ SgAsmGenericSection::unparse(std::ostream &f, const ExtentMap &map) const
 }
 
 void
-SgAsmGenericSection::unparse_holes(std::ostream &f) const
+SgAsmGenericSection::unparse_holes(std::ostream&) const
 {
 #if 0 /*DEBUGGING*/
     ExtentMap holes = get_unreferenced_extents();

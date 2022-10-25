@@ -20,7 +20,7 @@ namespace InstructionSemantics {
 //                                      Dispatcher
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/** Shared-ownership pointer to an x86 instruction dispatcher. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer to an x86 instruction dispatcher. */
 typedef boost::shared_ptr<class DispatcherX86> DispatcherX86Ptr;
 
 class DispatcherX86: public BaseSemantics::Dispatcher {
@@ -276,7 +276,7 @@ namespace X86 {
  *  This class provides single-letter names for some types that are used in all instructions: D, I, A, and Ops for the
  *  dispatcher raw pointer, instruction pointer, argument list pointer, and RISC operators raw pointer.  It also takes care
  *  of advancing the instruction pointer prior to handing the instruction to the subclass, which by the way is done via
- *  @ref p method (short for "process").  See examples in DispatcherX86.C -- there are <em>lots</em> of them. */
+ *  @c p method (short for "process").  See examples in DispatcherX86.C -- there are <em>lots</em> of them. */
 class InsnProcessor: public BaseSemantics::InsnProcessor {
 public:
     typedef DispatcherX86 *D;

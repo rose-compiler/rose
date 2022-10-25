@@ -15,7 +15,7 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics {
 
-/** Shared-ownership pointer to an A32/T32 instruction dispatcher. See @ref heap_object_shared_ownership. */
+/** Shared-ownership pointer to an A32/T32 instruction dispatcher. */
 using DispatcherAarch32Ptr = boost::shared_ptr<class DispatcherAarch32>;
 
 class DispatcherAarch32: public BaseSemantics::Dispatcher {
@@ -29,8 +29,8 @@ public:
 public:
     /** Cached register.
      *
-     *  This register is cached so that there are not so amny calls to @ref Dispatcher::findRegister. Changing the register
-     *  dictionary via @ref set_register_dictionary updates all entries of this cache.
+     *  This register is cached so that there are not so amny calls to @ref BaseSemantics::Dispatcher::findRegister. Changing
+     *  the @ref BaseSemantics::Dispatcher::registerDictionary property updates all entries of this cache.
      *
      * @{ */
     RegisterDescriptor REG_PC, REG_SP, REG_LR;

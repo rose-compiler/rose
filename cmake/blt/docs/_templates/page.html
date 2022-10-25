@@ -1,0 +1,27 @@
+{% extends "!page.html" %}
+
+{% set css_files = css_files + ["_static/style.css"] %}
+
+{% block footer %}
+<script type="text/javascript">
+  $(document).ready(function() {
+    // hide all direct children of class toggle
+    $(".toggle > *").hide();
+    // show children of class toggle with class label
+    $(".toggle .label").show();
+
+    // now just show all direct children of a parent of class 'expanded'
+    // this could be better... also toggle the class 'expanded' of all direct
+    // children of class expanded that all class label
+    $(".expanded > *").show();
+    $(".expanded > .label").toggleClass("expanded");
+
+    $(".toggle .label").click(function() {
+      // show or hide every class that isn't 'label'
+      $(this).parent().children().not(".label").toggle(400);
+      // add or remove the 'expanded' class
+      $(this).parent().children(".label").toggleClass("expanded");
+    });
+  });
+</script>
+{% endblock %}

@@ -1,7 +1,7 @@
 #ifndef ROSE_BinaryAnalysis_ModelChecker_ExecutionUnit_H
 #define ROSE_BinaryAnalysis_ModelChecker_ExecutionUnit_H
 #include <featureTests.h>
-#ifdef ROSE_ENABLE_BINARY_ANALYSIS
+#ifdef ROSE_ENABLE_MODEL_CHECKER
 
 #include <Rose/BinaryAnalysis/ModelChecker/Types.h>
 
@@ -111,14 +111,15 @@ public:
 
     /** Execute the unit to create a new state.
      *
-     *  The supplied @ref RiscOperators argument has an attached state that should be modified in place according to the
+     *  The supplied @p riscOperators argument has an attached state that should be modified in place according to the
      *  semantics of the execution unit. It returns zero or more tags to be added to the path node.
      *
      *  This method is not responsible for adding new paths to the work queue--it only updates the state.
      *
      *  Thread safety: The implementation need not be thread safe. */
     virtual std::vector<TagPtr>
-    execute(const SettingsPtr&, const SemanticCallbacksPtr&, const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&) = 0;
+    execute(const SettingsPtr&, const SemanticCallbacksPtr&,
+            const InstructionSemantics::BaseSemantics::RiscOperatorsPtr &riscOperators) = 0;
 
     /** Execute a single instruction semantically.
      *
@@ -137,7 +138,7 @@ public:
      *
      *  @li It can throw a @ref Tag wrapped in a @ref ThrownTag object, which this function catches and returns. The tag
      *  is printed in the diagnostic output and the current state of the RISC operators is set to null before returning. Do not
-     *  throw a @ref Tag::Ptr directly--these are @c std::shared_ptr that don't interact well with C++ try/catch.
+     *  throw a @ref ModelChecker::Tag::Ptr directly--these are @c std::shared_ptr that don't interact well with C++ try/catch.
      *
      *  Limitations of this design:
      *

@@ -1,5 +1,5 @@
 #include <featureTests.h>
-#ifdef ROSE_ENABLE_BINARY_ANALYSIS
+#if defined(ROSE_ENABLE_BINARY_ANALYSIS) && defined(ROSE_ENABLE_DEBUGGER_LINUX)
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/NativeSemantics.h>
 
@@ -22,7 +22,7 @@ namespace NativeSemantics {
 
 RegisterState::RegisterState() {}
 
-RegisterState::RegisterState(const BaseSemantics::SValue::Ptr &protoval, const Debugger::Ptr &process)
+RegisterState::RegisterState(const BaseSemantics::SValue::Ptr &protoval, const Debugger::Linux::Ptr &process)
     : BaseSemantics::RegisterState(protoval, process->registerDictionary()), process_(process) {
     ASSERT_not_null(process);
 }
@@ -35,14 +35,14 @@ RegisterState::instance() {
 }
 
 RegisterState::Ptr
-RegisterState::instance(const BaseSemantics::SValue::Ptr &protoval, const Debugger::Ptr &process) {
+RegisterState::instance(const BaseSemantics::SValue::Ptr &protoval, const Debugger::Linux::Ptr &process) {
     ASSERT_not_null(protoval);
     (void) SValue::promote(protoval);
     return Ptr(new RegisterState(protoval, process));
 }
 
 BaseSemantics::RegisterState::Ptr
-RegisterState::create(const BaseSemantics::SValue::Ptr &protoval, const RegisterDictionary::Ptr&) const {
+RegisterState::create(const BaseSemantics::SValue::Ptr &/*protoval*/, const RegisterDictionary::Ptr&) const {
     ASSERT_not_implemented("not applicable for this class");
 }
 
@@ -58,20 +58,20 @@ RegisterState::promote(const BaseSemantics::RegisterState::Ptr &x) {
     return retval;
 }
 
-Debugger::Ptr
+Debugger::Linux::Ptr
 RegisterState::process() const {
     return process_;
 }
 
 BaseSemantics::SValue::Ptr
-RegisterState::peekRegister(RegisterDescriptor reg, const BaseSemantics::SValue::Ptr &dflt, BaseSemantics::RiscOperators *ops) {
+RegisterState::peekRegister(RegisterDescriptor reg, const BaseSemantics::SValue::Ptr &/*dflt*/, BaseSemantics::RiscOperators*) {
     ASSERT_not_null(process_);
-    Sawyer::Container::BitVector value = process_->readRegister(reg);
+    Sawyer::Container::BitVector value = process_->readRegister(Debugger::ThreadId::unspecified(), reg);
     return protoval()->number_(value.size(), value.toInteger());
 }
 
 void
-RegisterState::writeRegister(RegisterDescriptor reg, const BaseSemantics::SValue::Ptr &value, BaseSemantics::RiscOperators *ops) {
+RegisterState::writeRegister(RegisterDescriptor, const BaseSemantics::SValue::Ptr&, BaseSemantics::RiscOperators*) {
     ASSERT_not_null(process_);
     ASSERT_not_implemented("[Robb Matzke 2019-09-05]: Debugger has no writeRegister method");
 }
@@ -95,7 +95,7 @@ MemoryState::MemoryState() {}
 MemoryState::~MemoryState() {}
 
 MemoryState::MemoryState(const BaseSemantics::SValue::Ptr &addrProtoval, const BaseSemantics::SValue::Ptr &valProtoval,
-                         const Debugger::Ptr &process)
+                         const Debugger::Linux::Ptr &process)
     : BaseSemantics::MemoryState(addrProtoval, valProtoval), process_(process) {
     ASSERT_not_null(process);
 }
@@ -107,12 +107,12 @@ MemoryState::instance() {
 
 MemoryState::Ptr
 MemoryState::instance(const BaseSemantics::SValue::Ptr &addrProtoval, const BaseSemantics::SValue::Ptr &valProtoval,
-                      const Debugger::Ptr &process) {
+                      const Debugger::Linux::Ptr &process) {
     return Ptr(new MemoryState(addrProtoval, valProtoval, process));
 }
 
 BaseSemantics::MemoryState::Ptr
-MemoryState::create(const BaseSemantics::SValue::Ptr &addrProtoval, const BaseSemantics::SValue::Ptr &valProtoval) const {
+MemoryState::create(const BaseSemantics::SValue::Ptr &/*addrProtoval*/, const BaseSemantics::SValue::Ptr &/*valProtoval*/) const {
     ASSERT_not_implemented("not applicable for this class");
 }
 
@@ -128,14 +128,14 @@ MemoryState::promote(const BaseSemantics::MemoryState::Ptr &x) {
     return retval;
 }
 
-Debugger::Ptr
+Debugger::Linux::Ptr
 MemoryState::process() const {
     return process_;
 }
 
 BaseSemantics::SValue::Ptr
 MemoryState::peekMemory(const BaseSemantics::SValue::Ptr &address, const BaseSemantics::SValue::Ptr &dflt,
-                        BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps) {
+                        BaseSemantics::RiscOperators */*addrOps*/, BaseSemantics::RiscOperators */*valOps*/) {
     ASSERT_not_null(process_);
     std::vector<uint8_t> buffer((dflt->nBits() + 7) / 8);
     ASSERT_require(buffer.size() <= 8);
@@ -177,7 +177,7 @@ RiscOperators::RiscOperators(const BaseSemantics::State::Ptr &state)
 RiscOperators::~RiscOperators() {}
 
 RiscOperators::Ptr
-RiscOperators::instanceFromProtoval(const BaseSemantics::SValue::Ptr &protoval, const Debugger::Ptr &process) {
+RiscOperators::instanceFromProtoval(const BaseSemantics::SValue::Ptr &protoval, const Debugger::Linux::Ptr &process) {
     RegisterState::Ptr registers = RegisterState::instance(protoval, process);
     MemoryState::Ptr memory = MemoryState::instance(protoval, protoval, process);
     State::Ptr state = State::instance(registers, memory);
@@ -191,7 +191,7 @@ RiscOperators::instanceFromState(const BaseSemantics::State::Ptr &state) {
 }
 
 BaseSemantics::RiscOperators::Ptr
-RiscOperators::create(const BaseSemantics::SValue::Ptr &protoval, const SmtSolver::Ptr &solver) const {
+RiscOperators::create(const BaseSemantics::SValue::Ptr &/*protoval*/, const SmtSolver::Ptr&) const {
     TODO("[Robb Matzke 2019-09-05]");
 }
 
@@ -206,7 +206,7 @@ RiscOperators::promote(const BaseSemantics::RiscOperators::Ptr &x) {
 // Dispatcher
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Dispatcher::Dispatcher(const Debugger::Ptr &process, const BaseSemantics::SValue::Ptr &protoval)
+Dispatcher::Dispatcher(const Debugger::Linux::Ptr &process, const BaseSemantics::SValue::Ptr &protoval)
     : process_(process) {
     registerDictionary(process_->registerDictionary());
     addressWidth(process_->kernelWordSize());
@@ -223,13 +223,13 @@ Dispatcher::Dispatcher(const BaseSemantics::RiscOperators::Ptr &ops)
 Dispatcher::~Dispatcher() {}
 
 Dispatcher::Ptr
-Dispatcher::instance(const Debugger::Ptr &process, const BaseSemantics::SValue::Ptr &protoval) {
+Dispatcher::instance(const Debugger::Linux::Ptr &process, const BaseSemantics::SValue::Ptr &protoval) {
     return Ptr(new Dispatcher(process, protoval));
 }
 
 Dispatcher::Ptr
-Dispatcher::instance(const Debugger::Specimen &specimen, const BaseSemantics::SValue::Ptr &protoval) {
-    Debugger::Ptr process = Debugger::instance(specimen);
+Dispatcher::instance(const Debugger::Linux::Specimen &specimen, const BaseSemantics::SValue::Ptr &protoval) {
+    Debugger::Linux::Ptr process = Debugger::Linux::instance(specimen);
     return Ptr(new Dispatcher(process, protoval));
 }
 
@@ -240,7 +240,7 @@ Dispatcher::instance(const BaseSemantics::RiscOperators::Ptr &ops) {
 }
 
 BaseSemantics::Dispatcher::Ptr
-Dispatcher::create(const BaseSemantics::RiscOperators::Ptr &ops, size_t addrWidth, const RegisterDictionary::Ptr &regs) const {
+Dispatcher::create(const BaseSemantics::RiscOperators::Ptr&, size_t /*addrWidth*/, const RegisterDictionary::Ptr&) const {
     notApplicable("create");
 }
 
@@ -253,14 +253,14 @@ Dispatcher::processInstruction(SgAsmInstruction *insn) {
 void
 Dispatcher::processInstruction(rose_addr_t va) {
     ASSERT_not_null(process_);
-    process_->executionAddress(va);
-    process_->singleStep();
+    process_->executionAddress(Debugger::ThreadId::unspecified(), va);
+    process_->singleStep(Debugger::ThreadId::unspecified());
 }
 
 SgAsmInstruction*
 Dispatcher::currentInstruction() const {
     ASSERT_not_null(process_);
-    rose_addr_t va = process_->executionAddress();
+    rose_addr_t va = process_->executionAddress(Debugger::ThreadId::unspecified());
     uint8_t buf[16];
     size_t nRead = process_->readMemory(va, sizeof buf, buf);
     if (0 == nRead)

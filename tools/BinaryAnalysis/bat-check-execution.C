@@ -1,3 +1,6 @@
+#include <featureTests.h>
+#ifdef ROSE_ENABLE_DEBUGGER_LINUX
+
 static const char* purpose = "compares actual execution with known instructions";
 static const char* description =
     "Reads instruction addresses from a file, the so-called \"expected\" addresses and and then executes the specimen "
@@ -14,7 +17,7 @@ static const char* description =
 
 #include <rose_getline.h>
 #include <rose_strtoull.h>
-#include <Rose/BinaryAnalysis/Debugger.h>
+#include <Rose/BinaryAnalysis/Debugger/Linux.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/Message.h>
@@ -147,15 +150,15 @@ isGoodAddr(const std::set<rose_addr_t> &goodVas, const MemoryMap::Ptr &map, rose
 
 // returns number of good and bad addresses executed
 static std::pair<size_t, size_t>
-execute(const Settings &settings, const std::set<rose_addr_t> &knownVas, const Debugger::Ptr &debugger,
+execute(const Settings &settings, const std::set<rose_addr_t> &knownVas, const Debugger::Linux::Ptr &debugger,
         const MemoryMap::Ptr &map, AddressCounts &executed /*in,out*/) {
     Sawyer::ProgressBar<size_t> progress(mlog[MARCH], "instructions");
     std::ofstream trace;
     if (settings.trace)
-        trace.open((numberToString(debugger->isAttached()) + ".trace").c_str());
+        trace.open((numberToString(*debugger->processId()) + ".trace").c_str());
     size_t totalGood=0, totalBad=0;
     while (!debugger->isTerminated()) {
-        rose_addr_t eip = debugger->executionAddress();
+        rose_addr_t eip = debugger->executionAddress(Debugger::ThreadId::unspecified());
         size_t addrSequence = ++executed.insertMaybe(eip, 0);
         bool goodAddr = isGoodAddr(knownVas, map, eip);
 
@@ -168,7 +171,7 @@ execute(const Settings &settings, const std::set<rose_addr_t> &knownVas, const D
         if (settings.trace)
             trace <<addrToString(eip) <<"\t" <<addrSequence <<"\t" <<(goodAddr?'1':'0') <<"\n";
 
-        debugger->singleStep();
+        debugger->singleStep(Debugger::ThreadId::unspecified());
         ++progress;
     }
     return std::make_pair(totalGood, totalBad);
@@ -192,13 +195,13 @@ main(int argc, char *argv[]) {
     mlog[INFO] <<"parsed " <<plural(knownVas.size(), "unique addresses") <<"\n";
 
     // Load specimen natively and attach debugger
-    Debugger::Specimen specimen(args);
-    specimen.flags().set(Debugger::CLOSE_FILES);
-    Debugger::Ptr debugger = Debugger::instance(specimen);
-    debugger->setBreakpoint(AddressInterval::whole());
+    Debugger::Linux::Specimen specimen(args);
+    specimen.flags().set(Debugger::Linux::Flag::CLOSE_FILES);
+    auto debugger = Debugger::Linux::instance(specimen);
+    debugger->setBreakPoint(AddressInterval::whole());
     ASSERT_always_require(debugger->isAttached());
     ASSERT_always_forbid(debugger->isTerminated());
-    pid_t pid = debugger->isAttached();
+    pid_t pid = *debugger->processId();
     mlog[INFO] <<"child PID " <<pid <<"\n";
 
     // Get memory map.
@@ -258,3 +261,26 @@ main(int argc, char *argv[]) {
         }
     }
 }
+
+#else
+
+#include <rose.h>
+#include <Rose/Diagnostics.h>
+
+#include <iostream>
+#include <cstring>
+
+int main(int, char *argv[]) {
+    ROSE_INITIALIZE;
+    Sawyer::Message::Facility mlog;
+    Rose::Diagnostics::initAndRegister(&mlog, "tool");
+    mlog[Rose::Diagnostics::FATAL] <<argv[0] <<": this tool is not available in this ROSE configuration\n";
+
+    for (char **arg = argv+1; *arg; ++arg) {
+        if (!strcmp(*arg, "--no-error-if-disabled"))
+            return 0;
+    }
+    return 1;
+}
+
+#endif

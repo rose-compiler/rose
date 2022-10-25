@@ -4,6 +4,7 @@
 #define _SAGEINTERFACE_ADA_H 1
 
 #include "sage3basic.hhh"
+#include "sageInterface.h"
 
 #include <tuple>
 
@@ -11,8 +12,157 @@ namespace SageInterface
 {
 
 /// Contains Ada-specific functionality
-namespace ada
+namespace Ada
 {
+
+namespace
+{
+  inline
+  SgVariableSymbol&
+  symOf(const SgVarRefExp& n)
+  {
+    ASSERT_not_null(n.get_symbol());
+
+    return *n.get_symbol();
+  }
+
+  inline
+  SgFunctionSymbol&
+  symOf(const SgFunctionRefExp& n)
+  {
+    ASSERT_not_null(n.get_symbol());
+
+    return *n.get_symbol();
+  }
+
+  inline
+  SgFunctionDeclaration&
+  declOf(const SgFunctionSymbol& n)
+  {
+    ASSERT_not_null(n.get_declaration());
+
+    return *n.get_declaration();
+  }
+
+  inline
+  SgFunctionDeclaration&
+  declOf(const SgFunctionRefExp& n)
+  {
+    return declOf(symOf(n));
+  }
+
+  inline
+  SgInitializedName&
+  declOf(const SgVarRefExp& n)
+  {
+    SgVariableSymbol& sy = symOf(n);
+
+    ASSERT_not_null(sy.get_declaration());
+    return *sy.get_declaration();
+  }
+
+  inline
+  SgDeclarationStatement&
+  declOf(const SgAdaUnitRefExp& n)
+  {
+    ASSERT_not_null(n.get_decl());
+
+    return *n.get_decl();
+  }
+
+
+
+/*
+  inline
+  SgVariableDeclaration& declOf(const SgVariableSymbol& n)
+  {
+    SgNode* varnode = SG_DEREF(n.get_declaration()).get_parent();
+
+    return SG_DEREF(isSgVariableDeclaration(varnode));
+  }
+
+  inline
+  SgVariableDeclaration& declOf(const SgVarRefExp& n)
+  {
+    return declOf(symOf(n));
+  }
+*/
+
+  inline
+  SgAdaRenamingDecl&
+  declOf(const SgAdaRenamingRefExp& n)
+  {
+    ASSERT_not_null(n.get_decl());
+
+    return *n.get_decl();
+  }
+
+
+
+  inline
+  SgName
+  nameOf(const SgSymbol& sy)
+  {
+    return sy.get_name();
+  }
+
+  inline
+  SgName
+  nameOf(const SgVarRefExp& n)
+  {
+    return nameOf(symOf(n));
+  }
+
+  inline
+  SgName
+  nameOf(const SgFunctionRefExp& n)
+  {
+    return nameOf(symOf(n));
+  }
+
+  inline
+  SgName
+  nameOf(const SgEnumVal& n)
+  {
+    return n.get_name();
+  }
+
+  inline
+  SgName
+  nameOf(const SgAdaRenamingDecl& n)
+  {
+    return n.get_name();
+  }
+
+  inline
+  SgName
+  nameOf(const SgAdaRenamingRefExp& n)
+  {
+    return nameOf(declOf(n));
+  }
+
+  inline
+  SgName
+  nameOf(const SgAdaUnitRefExp& n)
+  {
+    return SageInterface::get_name(n.get_decl());
+  }
+
+
+/*
+  inline
+  SgName nameOf(const SgImportStatement& import)
+  {
+    const SgExpressionPtrList& lst = import.get_import_list();
+    ROSE_ASSERT(lst.size() == 1);
+
+    return nameOf(SG_DEREF(isSgVarRefExp(lst.back())));
+  }
+*/
+
+} // anononymous namespace for convenience functions
+
+
   extern const std::string roseOperatorPrefix;
   extern const std::string packageStandardName;
   extern const std::string durationTypeName;
@@ -134,6 +284,20 @@ namespace ada
   SgAdaPackageBodyDecl& getBodyDeclaration(const SgAdaPackageSpecDecl& specDecl);
   SgAdaPackageBodyDecl* getBodyDeclaration(const SgAdaPackageSpecDecl* specDecl);
   /// @}
+
+  /// returns the declaration node (either SgAdaTaskSpecDecl or SgAdaTaskTypeDecl) for the task specification
+  /// @{
+  SgDeclarationStatement& getSpecificationDeclaration(const SgAdaTaskBodyDecl& bodyDecl);
+  SgDeclarationStatement* getSpecificationDeclaration(const SgAdaTaskBodyDecl* bodyDecl);
+  /// @}
+
+  /// returns the declaration node (either SgAdaProtectedSpecDecl or SgAdaProtectedTypeDecl)
+  ///   for the protected object specification
+  /// @{
+  SgDeclarationStatement& getSpecificationDeclaration(const SgAdaProtectedBodyDecl& bodyDecl);
+  SgDeclarationStatement* getSpecificationDeclaration(const SgAdaProtectedBodyDecl* bodyDecl);
+  /// @}
+
 
   /// returns the iterator to one past the last declaration (the limit)
   /// in the statement sequence.
@@ -263,6 +427,41 @@ namespace ada
   SgScopeStatement* scopeOfTypedecl(const SgType* ty);
   /// \}
 
+  /// returns the scope where \ref ty was defined
+  /// \todo remove after integrating functionality into SgType...
+  /// \{
+  SgDeclarationStatement* associatedDeclaration(const SgType& ty);
+  SgDeclarationStatement* associatedDeclaration(const SgType* ty);
+  /// \}
+
+  /// describes properties of imported units
+  struct ImportedUnitResult : std::tuple<std::string, const SgDeclarationStatement*, const SgAdaRenamingDecl*>
+  {
+    using base = std::tuple<std::string, const SgDeclarationStatement*, const SgAdaRenamingDecl*>;
+    using base::base;
+
+    const std::string&            name()         const { return std::get<0>(*this); }
+
+    const SgDeclarationStatement& decl()         const
+    {
+      ASSERT_not_null(std::get<1>(*this));
+      return *(std::get<1>(*this));
+    }
+
+    const SgAdaRenamingDecl*      renamingDecl() const { return std::get<2>(*this); }
+  };
+
+  /// queries properties of an imported unit
+  ImportedUnitResult
+  importedUnit(const SgImportStatement& impdcl);
+
+  /// returns the imported element (i.e., the first entry in n's import_list
+  const SgExpression&
+  importedElement(const SgImportStatement& n);
+
+
+  /// do not use, this is temporary
+  SgScopeStatement* pkgStandardScope();
 
   /// takes a function name as used in ROSE and converts it to a name in Ada
   ///   (i.e., '"' + operator_text + '"').
@@ -357,6 +556,24 @@ namespace ada
   /// @}
 
 
+  /// finds the symbol with @ref name in the context of @ref scope or its logical parents in the range
+  ///   [scope, limit).
+  /// @param  name   an identifier of the sought symbol
+  /// @param  scope  current scope
+  /// @param  limit  the scope in the chain that terminates the search (this scope will not be considered)
+  /// @return a tuple of scope and first symbol inthat scope with the name @ref name.
+  ///         or <nullptr, nullptr> if no such symbol exists in the context.
+  /// @details
+  ///         a scope can contain multiple symbols with the same name, so the caller
+  ///         may iterate over the remaining names using the scope's accessor functions
+  ///         (next_XXX_symbol).
+  /// @{
+  std::tuple<const SgScopeStatement*, const SgSymbol*>
+  findSymbolInContext(std::string id, const SgScopeStatement& scope, const SgScopeStatement* limit = nullptr);
+  /// @}
+
+
+
   /// returns the overriding scope of a primitive function based on the
   ///   associated arguments as defined by the argument list \ref args and
   ///   the primitive argument positions defined by \ref primitiveArgs.
@@ -385,6 +602,25 @@ namespace ada
   SgDeclarationStatement*
   baseDeclaration(SgType* ty);
   /// \}
+
+  /// returns the logical parent scope of a scope @ref s.
+  /// \details
+  ///    Compared to si::getEnclosingScope, this function
+  ///    returns the spec as the logical parent for Ada bodies
+  ///    (e.g., packages, tasks, protected objects). Otherwise,
+  ///    the parent scope is the same as returned by si::getEnclosingScope.
+  /// @{
+  const SgScopeStatement*
+  logicalParentScope(const SgScopeStatement& s);
+
+  const SgScopeStatement*
+  logicalParentScope(const SgScopeStatement* s);
+  /// @}
+
+
+  /// returns the associated declaration for symbol @ref n
+  ///   or nullptr if there is none.
+  SgDeclarationStatement* associatedDecl(const SgSymbol& n);
 
   /// finds the underlying enum declaration of a type \ref ty
   /// \returns an enum declaration associated with ty

@@ -5,6 +5,7 @@
 
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/SymbolicExpression.h>
 
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
@@ -359,10 +360,10 @@ MemoryState<Super>::readOrPeekMemory(const InstructionSemantics::BaseSemantics::
         if (!isModifiable || isInitialized) {
             uint8_t byte;
             if (1 == map_->at(va).limit(1).read(&byte).size()) {
-                SymbolicExpr::Ptr expr = SymbolicExpr::makeIntegerConstant(8, byte);
+                SymbolicExpression::Ptr expr = SymbolicExpression::makeIntegerConstant(8, byte);
                 if (isModifiable) {
-                    SymbolicExpr::Ptr indet = SymbolicExpr::makeIntegerVariable(8);
-                    expr = SymbolicExpr::makeSet(expr, indet, valOps->solver());
+                    SymbolicExpression::Ptr indet = SymbolicExpression::makeIntegerVariable(8);
+                    expr = SymbolicExpression::makeSet(expr, indet, valOps->solver());
                 }
                 SymbolicSemantics::SValuePtr val = SymbolicSemantics::SValue::promote(valOps->undefined_(8));
                 val->set_expression(expr);

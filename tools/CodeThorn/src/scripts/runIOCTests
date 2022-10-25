@@ -1,0 +1,48 @@
+#!/bin/bash
+
+# test 1-9: normalization: YES
+# test 10:  normalization: NO
+
+red=$'\e[1;31m'
+grn=$'\e[1;32m'
+yel=$'\e[1;33m'
+blu=$'\e[1;34m'
+mag=$'\e[1;35m'
+cyn=$'\e[1;36m'
+end=$'\e[0m'
+
+COLORED_FAIL=${red}FAIL${end}
+COLORED_WARN=${yel}WARN${end}
+COLORED_PASS=${grn}PASS${end}
+
+TESTDIR=$1
+echo "------------------------------------------------"
+echo "running IOC TESTS"
+echo "------------------------------------------------"
+
+BENCH_PASS=0
+BENCH_FAIL=0
+
+function IOCTests {
+    testNumbers=`echo {001..002}`
+    echo "Scheduled tests: $testNumbers"
+    for testNumber in $testNumbers; do
+        benchmarkprefix=$TESTDIR/IOC${testNumber};
+        for benchmark in ${benchmarkprefix}*.[c]; do
+            benchmarkname=$(basename $benchmark)
+            printf "Testing %-35s: " $benchmarkname
+#            CT_OUTPUT_FILE=$benchmarkname.imout
+            ./codethorn $benchmark --normalize-level=2 --interpreter-mode=0 --in-state-string-literals -I $TESTDIR > /dev/null
+            if [ ! $? -eq 0 ]
+            then
+	        echo $COLORED_FAIL
+                exit 1
+            else
+                echo "$COLORED_PASS"
+            fi
+        done
+    done
+}
+
+IOCTests
+echo

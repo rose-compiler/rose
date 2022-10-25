@@ -123,7 +123,7 @@ BinaryToSource::commandLineSwitches(Settings &settings) {
 }
 
 void
-BinaryToSource::emitFilePrologue(const P2::Partitioner &partitioner, std::ostream &out) {
+BinaryToSource::emitFilePrologue(const P2::Partitioner&, std::ostream &out) {
     out <<"#include <assert.h>\n"
         <<"#include <signal.h>\n"
         <<"#include <stdint.h>\n"

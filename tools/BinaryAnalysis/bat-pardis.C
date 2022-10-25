@@ -79,7 +79,7 @@ void
 initailizeParallelPartitioner(PP::Partitioner &pp, std::istream &in) {
     initializeParallelPartitioner(pp);
     std::string line;
-    while (std::getline(std::cin, line)) {
+    while (std::getline(in, line)) {
         rose_addr_t va = rose_strtoull(line.c_str(), nullptr, 0);
         pp.makeInstruction(va);
         pp.scheduleDecodeInstruction(va);
@@ -266,7 +266,7 @@ void
 asyncProgressReporting(Progress::Ptr &progress, Sawyer::ProgressBar<double> *bar) {
     ASSERT_not_null(bar);
     progress->reportRegularly(boost::chrono::seconds(1),
-                              [&bar](const Progress::Report &rpt, double age) -> bool {
+                              [&bar](const Progress::Report &rpt, double /*age*/) -> bool {
                                   bar->value(100.0 * rpt.completion);
                                   return true; // keep listening until task is finished
                               });
@@ -363,10 +363,22 @@ int main(int argc, char *argv[]) {
 
 #else
 
-#include <iostream>
+#include <rose.h>
+#include <Rose/Diagnostics.h>
 
-int main(int argc, char *argv[]) {
-    std::cerr <<argv[0] <<": not supported in this ROSE configuration\n";
+#include <iostream>
+#include <cstring>
+
+int main(int, char *argv[]) {
+    ROSE_INITIALIZE;
+    Sawyer::Message::Facility mlog;
+    Rose::Diagnostics::initAndRegister(&mlog, "tool");
+    mlog[Rose::Diagnostics::FATAL] <<argv[0] <<": this tool is not available in this ROSE configuration\n";
+
+    for (char **arg = argv+1; *arg; ++arg) {
+        if (!strcmp(*arg, "--no-error-if-disabled"))
+            return 0;
+    }
     return 1;
 }
 

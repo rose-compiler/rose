@@ -1,5 +1,5 @@
 #include <featureTests.h>
-#ifdef ROSE_ENABLE_BINARY_ANALYSIS
+#ifdef ROSE_ENABLE_MODEL_CHECKER
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/ModelChecker/FailureUnit.h>
 
@@ -55,7 +55,7 @@ FailureUnit::printableName() const {
 }
 
 void
-FailureUnit::printSteps(const Settings::Ptr &settings, std::ostream &out, const std::string &prefix,
+FailureUnit::printSteps(const Settings::Ptr&, std::ostream &out, const std::string &prefix,
                         size_t stepOrigin, size_t maxSteps) const {
     if (maxSteps > 0) {
         if (sourceLocation())
@@ -68,7 +68,7 @@ FailureUnit::printSteps(const Settings::Ptr &settings, std::ostream &out, const 
 }
 
 void
-FailureUnit::toYamlHeader(const Settings::Ptr &settings, std::ostream &out, const std::string &prefix1) const {
+FailureUnit::toYamlHeader(const Settings::Ptr&, std::ostream &out, const std::string &prefix1) const {
     out <<prefix1 <<"vertex-type: failure\n";
     if (auto va = address()) {
         std::string prefix(prefix1.size(), ' ');
@@ -77,8 +77,8 @@ FailureUnit::toYamlHeader(const Settings::Ptr &settings, std::ostream &out, cons
 }
 
 void
-FailureUnit::toYamlSteps(const Settings::Ptr &settings, std::ostream &out, const std::string &prefix1,
-                         size_t stepOrigin, size_t maxSteps) const {
+FailureUnit::toYamlSteps(const Settings::Ptr&, std::ostream &out, const std::string &prefix1, size_t /*stepOrigin*/,
+                         size_t maxSteps) const {
     if (maxSteps > 0) {
         out <<prefix1 <<"definition: automatic-failure\n";
 
@@ -106,7 +106,7 @@ FailureUnit::address() const {
 std::vector<Tag::Ptr>
 FailureUnit::execute(const Settings::Ptr &settings, const SemanticCallbacks::Ptr &semantics, const BS::RiscOperators::Ptr &ops) {
     ASSERT_not_null(settings);
-    ASSERT_not_null(semantics);
+    ASSERT_always_not_null(semantics);
     ASSERT_not_null(ops);
     BS::Formatter fmt;
     fmt.set_line_prefix("      ");

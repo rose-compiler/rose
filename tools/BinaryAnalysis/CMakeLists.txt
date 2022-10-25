@@ -2,7 +2,9 @@ if(enable-binary-analysis)
   include_directories(. ${ROSE_INCLUDES})
 
   add_library(bat SHARED batSupport.C)
+  set_target_properties(bat PROPERTIES OUTPUT_NAME "batSupport")
   target_link_libraries(bat ROSE_DLL)
+  install(TARGETS bat DESTINATION ${ROSE_LIB_DIR_NAME})
 
   add_executable(bat-ana bat-ana.C)
   target_link_libraries(bat-ana bat ROSE_DLL)
@@ -92,6 +94,10 @@ if(enable-binary-analysis)
   target_link_libraries(bat-pardis bat ROSE_DLL)
   install(TARGETS bat-pardis DESTINATION bin)
 
+  add_executable(bat-pointers bat-pointers.C)
+  target_link_libraries(bat-pointers bat ROSE_DLL)
+  install(TARGETS bat-pointers DESTINATION bin)
+
   add_executable(bat-prop bat-prop.C)
   target_link_libraries(bat-prop bat ROSE_DLL)
   install(TARGETS bat-prop DESTINATION bin)
@@ -103,6 +109,10 @@ if(enable-binary-analysis)
   add_executable(bat-similar-functions bat-similar-functions.C)
   target_link_libraries(bat-similar-functions bat ROSE_DLL)
   install(TARGETS bat-similar-functions DESTINATION bin)
+
+  add_executable(bat-simplify bat-simplify.C)
+  target_link_libraries(bat-simplify bat ROSE_DLL)
+  install(TARGETS bat-simplify DESTINATION bin)
 
   add_executable(bat-stack-deltas bat-stack-deltas.C)
   target_link_libraries(bat-stack-deltas bat ROSE_DLL)
@@ -119,5 +129,9 @@ if(enable-binary-analysis)
   add_executable(bat-var bat-var.C)
   target_link_libraries(bat-var bat ROSE_DLL)
   install(TARGETS bat-var DESTINATION bin)
+
+  add_executable(bat-xml-to-json bat-xml-to-json.C)
+  target_link_libraries(bat-xml-to-json bat ROSE_DLL)
+  install(TARGETS bat-xml-to-json DESTINATION bin)
 
 endif()

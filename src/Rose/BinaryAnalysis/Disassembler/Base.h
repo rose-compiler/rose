@@ -47,9 +47,9 @@ typedef Map<rose_addr_t, SgAsmInstruction*> InstructionMap;
  *
  *  New architectures can be added to ROSE without modifying any ROSE source code. One does this by subclassing an existing
  *  disassembler, overriding any necessary virtual methods, and registering an instance of the subclass with @ref
- *  register_subclass.  If the new subclass can handle multiple architectures then a disassembler should be registered for each
- *  of those architectures.When ROSE needs to disassemble something, it calls @ref lookup, which in turn calls the @ref
- *  can_disassemble method for all registered disassemblers.  The first disassembler whose @ref can_disassemble returns true is
+ *  registerFactory.  If the new subclass can handle multiple architectures then a disassembler should be registered for each
+ *  of those architectures. When ROSE needs to disassemble something, it calls @ref lookup, which in turn calls the @ref
+ *  canDisassemble method for all registered disassemblers.  The first disassembler whose @ref canDisassemble returns true is
  *  used for the disassembly. */
 class Base: public Sawyer::SharedObject {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

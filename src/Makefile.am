@@ -121,13 +121,6 @@ else
    libroseJoviallibraries =
 endif
 
-# DQ (28/8/2017): Adding more general language support.
-if ROSE_EXPERIMENTAL_COBOL_ROSE_CONNECTION
-   libroseCobollibraries = frontend/Experimental_Cobol_ROSE_Connection/libexperimentalRoseCobol.la
-else
-   libroseCobollibraries =
-endif
-
 # Rasmussen (11/19/2017): Adding language support for Matlab
 if ROSE_EXPERIMENTAL_MATLAB_ROSE_CONNECTION
    libroseMatlablibraries = frontend/Experimental_Matlab_ROSE_Connection/libexperimentalRoseMatlab.la
@@ -207,7 +200,6 @@ libroseLibraries = \
    $(libroseCsharplibraries) \
    $(libroseAdalibraries) \
    $(libroseJoviallibraries) \
-   $(libroseCobollibraries) \
    $(top_builddir)/src/midend/programAnalysis/libprogramAnalysis.la \
    $(top_builddir)/src/midend/programTransformation/loopProcessing/libLoopProcessing.la \
    $(top_builddir)/src/midend/programTransformation/extractFunctionArgumentsNormalization/libExtractFunctionArgumentsNormalization.la \
@@ -220,8 +212,6 @@ libroseLibraries = \
    $(top_builddir)/src/util/Sawyer/libroseSawyer.la \
    $(top_builddir)/src/roseExtensions/failSafe/libfailsafe.la \
    $(top_builddir)/src/Rose/librose_partial.la \
-   $(top_builddir)/src/Rose/AST/libRoseAST.la \
-   $(top_builddir)/src/Rose/CodeGen/libRoseCodeGen.la \
    $(libroseSqlite3xConnection) \
    $(libroseQtExtension)
 
@@ -272,6 +262,13 @@ pkginclude_HEADERS = \
 # Header files organized by namespace. If the directory part of the name doesn't match
 # a C++ namespace, then DO NOT put the header file in this list.
 nobase_pkginclude_HEADERS=								\
+	Rose/AST.h									\
+	Rose/AST/Checker.h								\
+	Rose/AST/cmdline.h								\
+	Rose/AST/Defect.h								\
+	Rose/AST/IO.h									\
+	Rose/AST/NodeId.h								\
+	Rose/AST/Utils.h								\
 	Rose/BasicTypes.h								\
 	Rose/BinaryAnalysis.h								\
 	Rose/BinaryAnalysis/AbstractLocation.h						\
@@ -283,6 +280,7 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/BinaryLoaderElf.h						\
 	Rose/BinaryAnalysis/BinaryLoaderElfObj.h					\
 	Rose/BinaryAnalysis/BinaryLoaderPe.h						\
+	Rose/BinaryAnalysis/ByteCode.h							\
 	Rose/BinaryAnalysis/ByteCode/Analysis.h						\
 	Rose/BinaryAnalysis/CallingConvention.h						\
 	Rose/BinaryAnalysis/CodeInserter.h						\
@@ -309,6 +307,13 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/ControlFlow.h						\
 	Rose/BinaryAnalysis/DataFlow.h							\
 	Rose/BinaryAnalysis/Debugger.h							\
+	Rose/BinaryAnalysis/Debugger/Base.h						\
+	Rose/BinaryAnalysis/Debugger/BasicTypes.h					\
+	Rose/BinaryAnalysis/Debugger/Exception.h					\
+	Rose/BinaryAnalysis/Debugger/Gdb.h						\
+	Rose/BinaryAnalysis/Debugger/GdbResponse.h					\
+	Rose/BinaryAnalysis/Debugger/Linux.h						\
+	Rose/BinaryAnalysis/Debugger/ThreadId.h						\
 	Rose/BinaryAnalysis/Demangler.h							\
 	Rose/BinaryAnalysis/Disassembler.h						\
 	Rose/BinaryAnalysis/Disassembler/Aarch32.h					\
@@ -376,7 +381,7 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/InstructionSemantics/TestSemantics.h			\
 	Rose/BinaryAnalysis/InstructionSemantics/TaintSemantics.h			\
 	Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h			\
-	Rose/BinaryAnalysis/InstructionSemantics/Util.h					\
+	Rose/BinaryAnalysis/InstructionSemantics/Utility.h				\
 	Rose/BinaryAnalysis/InstructionSemantics2.h					\
 	Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Dispatcher.h		\
 	Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Exception.h		\
@@ -427,9 +432,9 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/ModelChecker/ExternalFunctionUnit.h				\
 	Rose/BinaryAnalysis/ModelChecker/FailureUnit.h					\
 	Rose/BinaryAnalysis/ModelChecker/InstructionUnit.h				\
-	Rose/BinaryAnalysis/ModelChecker/NullDerefTag.h					\
-	Rose/BinaryAnalysis/ModelChecker/OobTag.h					\
-	Rose/BinaryAnalysis/ModelChecker/P2Model.h					\
+	Rose/BinaryAnalysis/ModelChecker/NullDereferenceTag.h				\
+	Rose/BinaryAnalysis/ModelChecker/OutOfBoundsTag.h				\
+	Rose/BinaryAnalysis/ModelChecker/PartitionerModel.h				\
 	Rose/BinaryAnalysis/ModelChecker/Path.h						\
 	Rose/BinaryAnalysis/ModelChecker/PathNode.h					\
 	Rose/BinaryAnalysis/ModelChecker/PathPredicate.h				\
@@ -441,7 +446,7 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/ModelChecker/SourceLister.h					\
 	Rose/BinaryAnalysis/ModelChecker/Tag.h						\
 	Rose/BinaryAnalysis/ModelChecker/Types.h					\
-	Rose/BinaryAnalysis/ModelChecker/UninitVarTag.h					\
+	Rose/BinaryAnalysis/ModelChecker/UninitializedVariableTag.h			\
 	Rose/BinaryAnalysis/ModelChecker/WorkerStatus.h					\
 	Rose/BinaryAnalysis/NoOperation.h						\
 	Rose/BinaryAnalysis/Partitioner2.h						\
@@ -449,7 +454,7 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/Partitioner2/BasicBlock.h					\
 	Rose/BinaryAnalysis/Partitioner2/BasicTypes.h					\
 	Rose/BinaryAnalysis/Partitioner2/CfgPath.h					\
-	Rose/BinaryAnalysis/Partitioner2/Config.h					\
+	Rose/BinaryAnalysis/Partitioner2/Configuration.h				\
 	Rose/BinaryAnalysis/Partitioner2/ControlFlowGraph.h				\
 	Rose/BinaryAnalysis/Partitioner2/DataBlock.h					\
 	Rose/BinaryAnalysis/Partitioner2/DataFlow.h					\
@@ -489,7 +494,9 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/StackDelta.h						\
 	Rose/BinaryAnalysis/String.h							\
 	Rose/BinaryAnalysis/SymbolicExpr.h						\
+	Rose/BinaryAnalysis/SymbolicExpression.h					\
 	Rose/BinaryAnalysis/SymbolicExprParser.h					\
+	Rose/BinaryAnalysis/SymbolicExpressionParser.h					\
 	Rose/BinaryAnalysis/SystemCall.h						\
 	Rose/BinaryAnalysis/TaintedFlow.h						\
 	Rose/BinaryAnalysis/ToSource.h							\
@@ -504,11 +511,22 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/Unparser/Powerpc.h						\
 	Rose/BinaryAnalysis/Unparser/Settings.h						\
 	Rose/BinaryAnalysis/Unparser/X86.h						\
-	Rose/BinaryAnalysis/Utils.h							\
+	Rose/BinaryAnalysis/Utility.h							\
 	Rose/BinaryAnalysis/Variables.h							\
 	Rose/BinaryAnalysis/Z3Solver.h							\
 	Rose/BitFlags.h									\
 	Rose/BitOps.h									\
+	Rose/CodeGen.h									\
+	Rose/CodeGen/API.h								\
+	Rose/CodeGen/API.txx								\
+	Rose/CodeGen/Driver.h								\
+	Rose/CodeGen/Factory.h								\
+	Rose/CodeGen/factory/classes.txx						\
+	Rose/CodeGen/factory/functions.txx						\
+	Rose/CodeGen/factory/namespaces.txx						\
+	Rose/CodeGen/factory/typedefs.txx						\
+	Rose/CodeGen/factory/variables.txx						\
+	Rose/CodeGen/Object.h								\
 	Rose/Color.h									\
 	Rose/CommandLine.h								\
 	Rose/CommandLine/DurationParser.h						\
@@ -527,6 +545,7 @@ nobase_pkginclude_HEADERS=								\
 	Rose/GraphUtility.h								\
 	Rose/Initialize.h								\
 	Rose/Location.h									\
+	Rose/metaprog.h									\
 	Rose/Progress.h									\
 	Rose/RecursionCounter.h								\
 	Rose/SourceLocation.h								\
@@ -538,6 +557,16 @@ nobase_pkginclude_HEADERS=								\
 	Rose/StringUtility/Predicate.h							\
 	Rose/StringUtility/SplitJoin.h							\
 	Rose/StringUtility/StringToNumber.h						\
+	Rose/Traits.h									\
+	Rose/Traits/Describe.h								\
+	Rose/Traits/describe/declarations.h						\
+	Rose/Traits/describe/fields.h							\
+	Rose/Traits/describe/nodes.h							\
+	Rose/Traits/describe/predicates.h						\
+	Rose/Traits/grammar/lists.h							\
+	Rose/Traits/grammar/predicates.h						\
+	Rose/Traits/grammar/traversal.h							\
+	Rose/Traits/Traversal.h								\
 	Rose/Yaml.h
 
 
@@ -581,8 +610,7 @@ librose_la_LIBADD = $(BOOST_LDFLAGS) $(libroseLibraries) $(JAVA_JVM_FLAGS) $(LIB
           $(BOOST_SYSTEM_LIB) $(BOOST_SERIALIZATION_LIB) \
           $(BOOST_WAVE_LIB) $(BOOST_IOSTREAMS_LIB) \
           $(OPT_SQLITE3_LDFLAGS) \
-          $(OPT_MYSQL_LDFLAGS) $(ROSE_ATERM_LIBS) $(ROSE_FLANG_LIBS) \
-          $(ROSE_COBOL_PT_LIBS_WITH_PATH)
+          $(OPT_MYSQL_LDFLAGS) $(ROSE_ATERM_LIBS) $(ROSE_FLANG_LIBS)
 
 # DQ (6/9/2017): Removed because it failes for "make install" rule on my machine.
 # This was located after the BOOST_WAVE_LIB line in the librose_la_LIBADD rule above.
@@ -727,7 +755,6 @@ rose_config_installed_ldflags =			\
 	$(ROSE_INTEL_COMPILER_MATH_LIBS)	\
 	$(ROSE_ATERM_LIBS)			\
 	$(ROSE_FLANG_LIBS)			\
-	$(ROSE_COBOL_PT_LIBS_WITH_PATH)         \
 	$(ROSE_YAMLCPP_LIBS_WITH_PATH)		\
 	$(ROSE_LIBMAGIC_LIBS_WITH_PATH)		\
 	$(ROSE_DLIB_LIBS_WITH_PATH)		\
@@ -778,7 +805,6 @@ endif
 #if ROSE_EXPERIMENTAL_CSHARP_ROSE_CONNECTION
 #if ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
 #if ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION
-#if ROSE_EXPERIMENTAL_COBOL_ROSE_CONNECTION
 #if ROSE_EXPERIMENTAL_MATLAB_ROSE_CONNECTION
 
 ROSEBIN_LDADD        = $(ROSE_LIBS)

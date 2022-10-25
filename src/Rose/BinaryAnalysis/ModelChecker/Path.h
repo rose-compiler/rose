@@ -1,13 +1,13 @@
 #ifndef ROSE_BinaryAnalysis_ModelChecker_Path_H
 #define ROSE_BinaryAnalysis_ModelChecker_Path_H
 #include <featureTests.h>
-#ifdef ROSE_ENABLE_BINARY_ANALYSIS
+#ifdef ROSE_ENABLE_MODEL_CHECKER
 
 #include <Rose/BinaryAnalysis/ModelChecker/Types.h>
 
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Types.h>
 #include <Rose/BinaryAnalysis/SmtSolver.h>
-#include <Rose/BinaryAnalysis/SymbolicExpr.h>
+#include <Rose/BinaryAnalysis/SymbolicExpression.h>
 #include <Combinatorics.h>
 
 namespace Rose {
@@ -46,7 +46,7 @@ public:
      *  method).
      *
      *  Thread safety: This constructor is thread safe. */
-    static Ptr instance(const PathPtr &prefix, const ExecutionUnitPtr&, const SymbolicExpr::Ptr &assertion,
+    static Ptr instance(const PathPtr &prefix, const ExecutionUnitPtr&, const SymbolicExpression::Ptr &assertion,
                         const SmtSolver::Evidence&, const InstructionSemantics::BaseSemantics::StatePtr &parentOutgoingState);
 
     /** Test for empty path.
@@ -103,7 +103,7 @@ public:
      *  Returns the list of all assertions that are required along the specified path.
      *
      *  Thread safety: This method is thread safe. */
-    std::vector<SymbolicExpr::Ptr> assertions() const;
+    std::vector<SymbolicExpression::Ptr> assertions() const;
 
     /** Last node of the path.
      *

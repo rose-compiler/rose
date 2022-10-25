@@ -268,7 +268,7 @@ RiscOperators::unsignedMultiply(const BaseSemantics::SValue::Ptr &a_, const Base
 }
 
 BaseSemantics::SValue::Ptr
-RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValue::Ptr &addr,
+RiscOperators::readMemory(RegisterDescriptor /*segreg*/, const BaseSemantics::SValue::Ptr &addr,
                           const BaseSemantics::SValue::Ptr &dflt, const BaseSemantics::SValue::Ptr &cond)
 {
     ASSERT_not_null(currentState());
@@ -278,7 +278,7 @@ RiscOperators::readMemory(RegisterDescriptor segreg, const BaseSemantics::SValue
 }
 
 BaseSemantics::SValue::Ptr
-RiscOperators::peekMemory(RegisterDescriptor segreg, const BaseSemantics::SValue::Ptr &addr,
+RiscOperators::peekMemory(RegisterDescriptor /*segreg*/, const BaseSemantics::SValue::Ptr &addr,
                           const BaseSemantics::SValue::Ptr &dflt)
 {
     ASSERT_not_null(currentState());
@@ -287,7 +287,7 @@ RiscOperators::peekMemory(RegisterDescriptor segreg, const BaseSemantics::SValue
 }
 
 void
-RiscOperators::writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValue::Ptr &addr,
+RiscOperators::writeMemory(RegisterDescriptor /*segreg*/, const BaseSemantics::SValue::Ptr &addr,
                          const BaseSemantics::SValue::Ptr &data, const BaseSemantics::SValue::Ptr &cond)
 {
     ASSERT_not_null(currentState());

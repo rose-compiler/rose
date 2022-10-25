@@ -642,7 +642,7 @@ public:
      *
      *  (Re)selects all vertices and edges and gives them default names and attributes according to certain properties defined
      *  in this object.  The user then has a chance to make adjustments to the organization before calling @ref
-     *  emitSelectedGraph.  The @ref emitWholeGraph does the selection and emitting in one step. */
+     *  BaseEmitter::emit "emit".  The @ref emitWholeGraph does the selection and emitting in one step. */
     CfgEmitter& selectWholeGraph();
 
     /** Selects the CFG for one function.

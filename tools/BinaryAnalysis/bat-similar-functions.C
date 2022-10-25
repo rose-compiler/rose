@@ -67,7 +67,7 @@ struct Settings {
 
 // Parse command-line and apply to settings. Return the two RBA file names.
 static std::pair<boost::filesystem::path, boost::filesystem::path>
-parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings) {
+parseCommandLine(int argc, char *argv[], P2::Engine&, Settings &settings) {
     using namespace Sawyer::CommandLine;
 
     SwitchGroup gen = Rose::CommandLine::genericSwitches();
@@ -542,10 +542,22 @@ main(int argc, char *argv[]) {
 
 #else
 
-#include <iostream>
+#include <rose.h>
+#include <Rose/Diagnostics.h>
 
-int main(int argc, char *argv[]) {
-    std::cerr <<argv[0] <<": not supported in this ROSE configuration\n";
+#include <iostream>
+#include <cstring>
+
+int main(int, char *argv[]) {
+    ROSE_INITIALIZE;
+    Sawyer::Message::Facility mlog;
+    Rose::Diagnostics::initAndRegister(&mlog, "tool");
+    mlog[Rose::Diagnostics::FATAL] <<argv[0] <<": this tool is not available in this ROSE configuration\n";
+
+    for (char **arg = argv+1; *arg; ++arg) {
+        if (!strcmp(*arg, "--no-error-if-disabled"))
+            return 0;
+    }
     return 1;
 }
 

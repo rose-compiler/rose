@@ -947,6 +947,14 @@ bool ClangToSageTranslator::VisitTypedefType(clang::TypedefType * typedef_type, 
     SgTypedefSymbol * tdef_sym = isSgTypedefSymbol(sym);
 
     if (tdef_sym == NULL) {
+        // Pei-Hung (09/23/2022) typedef declaration can appear after it is used. Example: test2012_58.c 
+        // build tthe typedef declaration here if it's still missing
+        SgNode * child = Traverse(typedef_type->getDecl());
+    }
+
+    sym = GetSymbolFromSymbolTable(typedef_type->getDecl());
+    tdef_sym = isSgTypedefSymbol(sym);
+    if (tdef_sym == NULL) {
         std::cerr << "Runtime Error: Cannot find a typedef symbol for the TypedefType." << std::endl;
         res = false;
     }
