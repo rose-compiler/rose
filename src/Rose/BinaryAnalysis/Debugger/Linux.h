@@ -205,7 +205,6 @@ private:
     size_t kernelWordSize_ = 0;                         // cached width in bits of kernel's words
     RegisterPage regsPage_;                             // latest register information read from subordinate
     RegPage regsPageStatus_ = RegPage::NONE;            // what are the contents of regsPage_?
-    Disassembler::BasePtr disassembler_;                // how to disassemble instructions
     Sawyer::Optional<rose_addr_t> syscallVa_;           // address of some executable system call instruction.
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -347,8 +346,6 @@ public:
     virtual std::string readCString(rose_addr_t va, size_t maxBytes = UNLIMITED) override;
     virtual bool isTerminated() override;
     virtual std::string howTerminated() override;
-    virtual RegisterDictionaryPtr registerDictionary() const override;
-    virtual Disassembler::BasePtr disassembler() const override;
 
 private:
     // Wait for subordinate or throw on error

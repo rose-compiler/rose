@@ -10,7 +10,12 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace Debugger {
 
+/** Reponse from the GNU debugger, GDB.
+ *
+ *  This class represents one parsed line of output from GDB's machine interface (MI) output. */
 class GdbResponse {
+
+    // Token types from the lexical analyzer
     enum TokenType {
         TOK_EOF,                                        // end of file
         TOK_LEFT,                                       // '{' or '['
@@ -22,6 +27,7 @@ class GdbResponse {
         TOK_OTHER                                       // anything else
     };
 
+    // One token from the GDB MI output langauge
     class Token {
         friend class TokenStream;
         TokenType type_ = TOK_EOF;
@@ -52,6 +58,7 @@ class GdbResponse {
         }
     };
 
+    // Lexical analysis and the resulting sequence of tokens.
     class TokenStream {
         std::string content_;
         size_t at_ = 0;
@@ -70,8 +77,11 @@ class GdbResponse {
         void makeNextToken();
     };
 
+public:
+    /** GDB result class for a result records. */
     enum class ResultClass { DONE, RUNNING, CONNECTED, ERROR, EXIT, UNSPECIFIED };
 
+    /** GDB async class for asynchronous records. */
     enum class AsyncClass {
         STOPPED,
         RUNNING,
@@ -82,34 +92,52 @@ class GdbResponse {
         UNSPECIFIED
     };
 
+    /** GDB result record. */
     struct ResultRecord {
-        ResultClass rclass = ResultClass::UNSPECIFIED;
-        Yaml::Node results;
+        ResultClass rclass = ResultClass::UNSPECIFIED;  /**< The result class. */
+        Yaml::Node results;                             /**< YAML node representing the results. */
+
+        /** True if this record is initialized. */
+        explicit operator bool() const {
+            return rclass != ResultClass::UNSPECIFIED;
+        }
     };
 
+    /** GDB asynchronous record. */
     struct AsyncRecord {
-        AsyncClass aclass = AsyncClass::UNSPECIFIED;
-        Yaml::Node results;
+        AsyncClass aclass = AsyncClass::UNSPECIFIED;    /**< The asynchronous class. */
+        Yaml::Node results;                             /**< YAML node representing the results. */
+
+        /** True if this record is initialized. */
+        explicit operator bool() const {
+            return aclass != AsyncClass::UNSPECIFIED;
+        }
     };
 
 public:
-    std::string raw;                                    // raw string from GDB, no line termination
-    bool atEnd = false;                                 // saw a "(gdb)" line
-    std::string token;                                  // optional GDB "token", a sequence of digits
-    ResultRecord result;
-    AsyncRecord exec;
-    AsyncRecord status;
-    AsyncRecord notify;
-    std::string console;
-    std::string target;
-    std::string log;
+    std::string raw;                                    /**< The raw string from GDB without line termination. */
+    bool atEnd = false;                                 /**< Whether the line matches "(gdb)". */
+    std::string token;                                  /**< The optional GDB "token", a sequence of digits. */
+    ResultRecord result;                                /**< GDB '^' records. */
+    AsyncRecord exec;                                   /**< GDB '*' records. */
+    AsyncRecord status;                                 /**< GDB '+' records. */
+    AsyncRecord notify;                                 /**< GDB '=' records. */
+    std::string console;                                /**< GDB '~' records. */
+    std::string target;                                 /**< GDB '@@' records. */
+    std::string log;                                    /**< GDB '@&' records. */
 
 public:
+    /** Parse a response from a GDB MI output line. */
     static GdbResponse parse(const std::string &line);
+
+    /** Print a response to a stream. */
     void print(std::ostream&) const;
 
 private:
+    // Construct an exception for a syntax error with information about the error and where it occurs.
     static Exception syntaxError(std::string mesg, TokenStream&, size_t);
+
+    // Parsers
     static void parseResultRecord(TokenStream&, GdbResponse&);
     static std::pair<AsyncClass, Yaml::Node> parseAsyncOutput(TokenStream&);
     static void parseExecAsyncOutput(TokenStream&, GdbResponse&);
@@ -120,9 +148,12 @@ private:
     static void parseLogStreamOutput(TokenStream&, GdbResponse&);
     static std::pair<std::string, Yaml::Node> parseResult(TokenStream&);
     static Yaml::Node parseValue(TokenStream&);
+
+    // Returns indented YAML unparsed from the specified node tree.
     static std::string nodeToString(const Yaml::Node&, const std::string&);
 };
 
+/** Print a GDB response record to a stream. */
 std::ostream& operator<<(std::ostream&, const GdbResponse&);
 
 } // namespace

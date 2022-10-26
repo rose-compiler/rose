@@ -438,17 +438,6 @@ Linux::processId() const {
     }
 }
 
-RegisterDictionary::Ptr
-Linux::registerDictionary() const {
-    ASSERT_not_null(disassembler_);
-    return disassembler_->registerDictionary();
-}
-
-Disassembler::Base::Ptr
-Linux::disassembler() const {
-    return disassembler_;
-}
-
 bool
 Linux::isTerminated() {
     return WIFEXITED(wstat_) || WIFSIGNALED(wstat_);
