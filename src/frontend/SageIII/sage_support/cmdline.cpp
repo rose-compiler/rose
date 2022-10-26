@@ -145,19 +145,13 @@ makeSysIncludeList(const Rose_STL_Container<string>& dirs, Rose_STL_Container<st
 bool
 CommandlineProcessing::isOptionWithParameter ( vector<string> & argv, string optionPrefix, string option, string & optionParameter, bool removeOption )
    {
-  // I could not make this work cleanly with valgrind withouth allocatting memory twice
+  // I could not make this work cleanly with valgrind without allocating memory twice
      string localString ="";
-
-     //   printf ("Calling sla for string! removeOption = %s \n",removeOption ? "true" : "false");
-     //printf ("   argv %d    optionPrefix %s  option %s   localString  %s \n",argv.size(), optionPrefix.c_str(), option.c_str() , localString.c_str() );
      int optionCount = sla(argv, optionPrefix, "($)^", option, &localString, removeOption ? 1 : -1);
-  // printf ("DONE: Calling sla for string! optionCount = %d localString = %s \n",optionCount,localString.c_str());
 
-  // optionCount = sla(argv, optionPrefix, "($)^", option, &localString, removeOption ? 1 : -1);
-  // printf ("DONE: Calling sla for string! optionCount = %d localString = %s \n",optionCount,localString.c_str());
-
-     if (optionCount > 0)
-          optionParameter = localString;
+     if (optionCount > 0) {
+         optionParameter = localString;
+     }
 
      return (optionCount > 0);
    }
@@ -173,8 +167,6 @@ CommandlineProcessing::initExecutableFileSuffixList ( )
         {
        // DQ (1/5/2008): For a binary (executable) file, no suffix is a valid suffix, so allow this case
           validExecutableFileSuffixes.push_back("");
-
-          // printf ("CASE_SENSITIVE_SYSTEM = %d \n",CASE_SENSITIVE_SYSTEM);
 
 #if(CASE_SENSITIVE_SYSTEM == 1)
           validExecutableFileSuffixes.push_back(".exe");
@@ -210,13 +202,9 @@ CommandlineProcessing::isExecutableFilename ( string name )
         {
           int jlength = (*j).size();
 
-          // printf ("jlength = %d *j = %s \n",jlength,(*j).c_str());
-
           if ( (length > jlength) && (name.compare(length - jlength, jlength, *j) == 0) )
              {
                bool returnValue = false;
-
-            // printf ("passed test (length > jlength) && (name.compare(length - jlength, jlength, *j) == 0): opening file to double check \n");
 
             // Open file for reading
                bool firstBase = isValidFileWithExecutableFileSuffixes(name);
@@ -231,17 +219,11 @@ CommandlineProcessing::isExecutableFilename ( string name )
 
                  // Note that there may be more executable formats that this simple test will not catch.
                  // The first character of an ELF binary is '\177' and for a PE binary it is 'M'
-                 // if (character0 == 127)
-                 // if ((character0 == 0x7F && character1 == 0x45) ||
-                 //     (character0 == 0x4D && character1 == 0x5A))
                     bool secondBase = ( (character0 == 0x7F && character1 == 0x45) || (character0 == 0x4D && character1 == 0x5A) );
                     if (secondBase == true)
                        {
-                      // printf ("Found a valid executable file! \n");
                          returnValue = true;
                        }
-
-                 // printf ("First character in file: character0 = %d  (77 == %c) \n",character0,'\77');
 
                     fclose(f);
                   }
@@ -264,8 +246,6 @@ CommandlineProcessing::isValidFileWithExecutableFileSuffixes ( string name )
   // counts as source for binary analysis in ROSE).
 
      initExecutableFileSuffixList();
-
-  // printf ("CommandlineProcessing::isValidFileWithExecutableFileSuffixes(): name = %s validExecutableFileSuffixes.size() = %" PRIuPTR " \n",name.c_str(),validExecutableFileSuffixes.size());
      ROSE_ASSERT(validExecutableFileSuffixes.empty() == false);
 
      int length = name.size();
@@ -273,22 +253,15 @@ CommandlineProcessing::isValidFileWithExecutableFileSuffixes ( string name )
         {
           int jlength = (*j).size();
 
-          // printf ("jlength = %d *j = %s \n",jlength,(*j).c_str());
-
           if ( (length > jlength) && (name.compare(length - jlength, jlength, *j) == 0) )
              {
                bool returnValue = false;
 
-            // printf ("passed test (length > jlength) && (name.compare(length - jlength, jlength, *j) == 0): opening file to double check \n");
-#if 0
-               printf ("In CommandlineProcessing::isValidFileWithExecutableFileSuffixes(): name = %s \n",name.c_str());
-#endif
             // Open file for reading
                if ( boost::filesystem::exists(name.c_str()) )
                   {
                     returnValue = true;
 
-                 // printf ("This is a valid file: %s \n",name.c_str());
                   }
                  else
                   {
@@ -297,8 +270,6 @@ CommandlineProcessing::isValidFileWithExecutableFileSuffixes ( string name )
                  // DQ (8/20/2008): We need to allow this to pass, since Qing's command line processing
                  // mistakenly treats all the arguments as filenames (and most do not exist as valid files).
                  // If we can't open the file then I think we should end in an error!
-                 // ROSE_ASSERT(false);
-
 
                  // DQ (1/21/2009): This fails for ./binaryReader /home/dquinlan/ROSE/svn-rose/developersScratchSpace/Dan/Disassembler_tests//home/dquinlan/ROSE/svn-rose/developersScratchSpace/Dan/Disassembler_tests/arm-ctrlaltdel
                     ROSE_ABORT();
@@ -317,7 +288,6 @@ bool
 CommandlineProcessing::isOptionTakingSecondParameter( string argument )
    {
      bool result = false;
-  // printf ("In CommandlineProcessing::isOptionTakingFileName(): argument = %s \n",argument.c_str());
 
   // List any rose options that take source filenames here, so that they can avoid
   // being confused with the source file name that is to be read by EDG and translated.
@@ -473,8 +443,6 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
           result = true;
         }
 
-  // printf ("In CommandlineProcessing::isOptionTakingFileName(): argument = %s result = %s \n",argument.c_str(),result ? "true" : "false");
-
      return result;
    }
 
@@ -482,7 +450,6 @@ bool
 CommandlineProcessing::isOptionTakingThirdParameter( string argument )
    {
      bool result = false;
-  // printf ("In CommandlineProcessing::isOptionTakingFileName(): argument = %s \n",argument.c_str());
 
   // List any rose options that take source filenames here, so that they can avoid
   // being confused with the source file name that is to be read by EDG and translated.
@@ -502,12 +469,11 @@ CommandlineProcessing::isOptionTakingThirdParameter( string argument )
           result = true;
         }
 
-  // printf ("In CommandlineProcessing::isOptionTakingFileName(): argument = %s result = %s \n",argument.c_str(),result ? "true" : "false");
-
      return result;
    }
 
-// DQ (1/16/2008): This function was moved from the commandling_processing.C file to support the debugging specific to binary analysis
+// DQ (1/16/2008): This function was moved from the commandline_processing.C file to support the debugging specific to binary analysis
+// Build the list of isolated file names from the command line
 Rose_STL_Container<string>
 CommandlineProcessing::generateSourceFilenames ( Rose_STL_Container<string> argList, bool binaryMode )
    {
@@ -572,52 +538,32 @@ CommandlineProcessing::generateSourceFilenames ( Rose_STL_Container<string> argL
        // have to process +w2 (warnings option) on some compilers so include +<option>
 
        // DQ (1/5/2008): Ignore things that would be obvious options using a "-" or "+" prefix.
-       // if ( ((*i)[0] != '-') || ((*i)[0] != '+') )
           if ( (*i).empty() || (((*i)[0] != '-') && ((*i)[0] != '+')) )
              {
-            // printf ("In CommandlineProcessing::generateSourceFilenames(): Look for file names:  argv[%d] = %s length = %" PRIuPTR " \n",counter,(*i).c_str(),(*i).size());
-
                  if (!isSourceFilename(*i) &&
                      (binaryMode || !isObjectFilename(*i)) &&
                      (binaryMode || isExecutableFilename(*i))) {
-                     // printf ("This is an executable file: *i = %s \n",(*i).c_str());
-                     // executableFileList.push_back(*i);
                      if(isSourceCodeCompiler == false || binaryMode == true)
                          sourceFileList.push_back(*i);
                      goto incrementPosition;
                   }
 
             // PC (4/27/2006): Support for custom source file suffixes
-            // if ( isSourceFilename(*i) )
                if ( isObjectFilename(*i) == false && isSourceFilename(*i) == true )
                   {
-                 // printf ("This is a source file: *i = %s \n",(*i).c_str());
-                 // foundSourceFile = true;
                     sourceFileList.push_back(*i);
                     goto incrementPosition;
                   }
-#if 1
-            // cout << "second call " << endl;
                if ( isObjectFilename(*i) == false && isSourceFilename(*i) == false && isValidFileWithExecutableFileSuffixes(*i) == true )
                   {
-                 // printf ("This is at least an existing file of some kind: *i = %s \n",(*i).c_str());
-                 // foundSourceFile = true;
                     if(isSourceCodeCompiler == false || binaryMode == true)
                       sourceFileList.push_back(*i);
                     goto incrementPosition;
 
                   }
-#endif
-#if 0
-               if ( isObjectFilename(*i) )
-                  {
-                    objectFileList.push_back(*i);
-                  }
-#endif
              }
 
        // DQ (12/8/2007): Looking for rose options that take filenames that would accidentally be considered as source files.
-       // if (isOptionTakingFileName(*i) == true)
           if (isOptionTakingSecondParameter(*i) == true)
              {
                if (isOptionTakingThirdParameter(*i) == true)
@@ -724,24 +670,6 @@ SgProject::processCommandLine(const vector<string>& input_argv)
   // pass in out copies of the argc and argv to make clear that we don't modify argc and argv
      set_originalCommandLineArgumentList( local_commandLineArgumentList );
 
-  // printf ("DONE with copy of command line in SgProject constructor! \n");
-
-#if 0
-     printf ("SgProject::processCommandLine(): local_commandLineArgumentList.size() = %" PRIuPTR " \n",local_commandLineArgumentList.size());
-     printf ("SgProject::processCommandLine(): local_commandLineArgumentList = %s \n",StringUtility::listToString(local_commandLineArgumentList).c_str());
-#endif
-
-#if 0
-  // DQ (4/13/2015): The value of get_verbose() has not yet been set, so this is always the default value (zero).
-     if (SgProject::get_verbose() > 1)
-        {
-          printf ("SgProject::processCommandLine(): local_commandLineArgumentList = %s \n",StringUtility::listToString(local_commandLineArgumentList).c_str());
-
-          printf ("Exiting as a test! \n");
-          ROSE_ABORT();
-        }
-#endif
-
   // Build the empty STL lists
 #if ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT
      p_fileList.clear();
@@ -752,29 +680,6 @@ SgProject::processCommandLine(const vector<string>& input_argv)
 
   // return value for calls to SLA
      int optionCount = 0;
-
-#if 0
-  // DQ (11/1/2009): To be consistant with other tools disable -h and -help options (use --h and --help instead).
-  // This is a deprecated option
-  //
-  // help option (allows alternative -h or -help instead of just -rose:help)
-  //
-  // Use 1 at end of argument list to SLA to force removal of option from argv and decrement of agrc
-  // optionCount = sla(&argc, argv, "-", "($)", "(h|help)",1);
-     optionCount = sla_none(local_commandLineArgumentList, "-", "($)", "(h|help)",1);
-     if( optionCount > 0 )
-        {
-       // printf ("option -help found \n");
-          printf ("This is a deprecated option in ROSE (use --h or --help instead).\n");
-  // Default
-          cout << version_message() << endl;
-       // Rose::usage(0);
-          SgFile::usage(0);
-          exit(0);
-        }
-
-  // printf ("After SgProject processing -help option argc = %d \n",argc);
-#endif
 
   //
   // help option (allows alternative --h or --help)
@@ -7925,26 +7830,19 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 
        // DQ (11/15/2017): Added case to support binary handling, but there is no tool that we run the output code through for a binary that is disassembled (I think).
           case SgFile::e_Binary_language:
+          case SgFile::e_Jvm_language:
              {
-            // DQ (11/15/2017): Perhaps we should run the output through the gnu assembler?
-#if 0
-               printf ("SgFile::e_Binary_language detected in SgFile::buildCompilerCommandLineOptions(): nothing to do here! \n");
-#endif
                break;
              }
 
           case SgFile::e_Fortran_language:
              {
-#if 0
-               printf ("Error: SgFile::e_Fortran_language detected in SgFile::buildCompilerCommandLineOptions() \n");
-#endif
                compilerNameString[0] = BACKEND_FORTRAN_COMPILER_NAME_WITH_PATH;
 
                if (get_backendCompileFormat() == e_fixed_form_output_format)
                   {
-                 // If backend compilation is specificed to be fixed form, then allow any line length (to simplify code generation for now)
-                 // compilerNameString += "-ffixed-form ";
-                 // compilerNameString += "-ffixed-line-length- "; // -ffixed-line-length-<n>
+                 // If backend compilation is specificed to be fixed form, then allow any line length
+                 // (to simplify code generation for now)
 #if BACKEND_FORTRAN_IS_GNU_COMPILER
                     compilerNameString.push_back("-ffixed-line-length-none");
 #elif BACKEND_FORTRAN_IS_INTEL_COMPILER
@@ -7957,9 +7855,6 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                        {
                       // If backend compilation is specificed to be free form, then
                       // allow any line length (to simplify code generation for now)
-                      // compilerNameString += "-ffree-form ";
-                      // compilerNameString += "-ffree-line-length-<n> "; // -ffree-line-length-<n>
-                      // compilerNameString.push_back("-ffree-line-length-none");
 
                       // DQ (9/16/2009): This option is not available in gfortran version 4.0.x (wonderful).
 #if BACKEND_FORTRAN_IS_GNU_COMPILER

@@ -783,8 +783,6 @@ SgSourceFile::initializeGlobalScope()
           filename = generate_C_preprocessor_intermediate_filename(filename);
         }
 
-  // printf ("get_requires_C_preprocessor() = %s filename = %s \n",get_requires_C_preprocessor() ? "true" : "false",filename.c_str());
-
      get_globalScope()->get_startOfConstruct()->set_filenameString(filename);
      ROSE_ASSERT(get_globalScope()->get_startOfConstruct()->get_filenameString().empty() == false);
 
@@ -821,13 +819,10 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
   // DQ (2/4/2009): The specification of "-rose:binary" causes filenames to be interpreted
   // differently if they are object files or libary archive files.
   // DQ (4/21/2006): New version of source file name handling (set the source file name early)
-  // printf ("In determineFileType(): Calling CommandlineProcessing::generateSourceFilenames(argv) \n");
-  // Rose_STL_Container<string> fileList = CommandlineProcessing::generateSourceFilenames(argv);
      ROSE_ASSERT(project != NULL);
      Rose_STL_Container<string> fileList = CommandlineProcessing::generateSourceFilenames(argv,project->get_binary_only());
 
 #if 0
-  // this->display("In SgFile::setupSourceFilename()");
      printf ("In determineFileType(): listToString(argv) = %s \n",StringUtility::listToString(argv).c_str());
      printf ("In determineFileType(): listToString(fileList) = %s \n",StringUtility::listToString(fileList).c_str());
 #endif
@@ -906,12 +901,8 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                SgSourceFile* sourceFile = new SgSourceFile ( argv,  project );
                file = sourceFile;
 
-            // printf ("----------- Great location to set the sourceFilename = %s \n",sourceFilename.c_str());
-
             // DQ (12/23/2008): Moved initialization of source position (call to initializeSourcePosition())
             // to earliest position in setup of SgFile.
-
-            // printf ("Calling file->set_sourceFileUsesFortranFileExtension(true) \n");
                file->set_sourceFileUsesFortranFileExtension(true);
 
             // Use the filename suffix as a default means to set this value
@@ -919,7 +910,6 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
 
             // DQ (29/8/2017): Set the input language as well.
                file->set_inputLanguage(SgFile::e_Fortran_language);
-
                file->set_Fortran_only(true);
 
             // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
@@ -979,7 +969,6 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
 
                if (CommandlineProcessing::isFortran95FileNameSuffix(filenameExtension) == true)
                   {
-                 // printf ("Calling file->set_sourceFileUsesFortran95FileExtension(true) \n");
                     file->set_sourceFileUsesFortran95FileExtension(true);
 
                  // Use the filename suffix as a default means to set this value
@@ -1017,11 +1006,6 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
 
                if (CommandlineProcessing::isFortran2008FileNameSuffix(filenameExtension) == true)
                   {
-                 // printf ("Sorry, Fortran 2008 specific support is not yet implemented in ROSE ... \n");
-                 // ROSE_ASSERT(false);
-
-                 // This is not yet supported.
-                 // file->set_sourceFileUsesFortran2008FileExtension(true);
                     file->set_sourceFileUsesFortran2008FileExtension(true);
 
                  // Use the filename suffix as a default means to set this value
@@ -1158,13 +1142,9 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                                 // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
                                    Rose::is_Cuda_language = true;
 
-                                // DQ (12/23/2008): This is the eariliest point where the global scope can be set.
-                                // Note that file->get_requires_C_preprocessor() should be false.
+                                // DQ (12/23/2008): This is the earliest point where the global scope can be set.
                                    ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
                                    sourceFile->initializeGlobalScope();
-#if 0
-                                   printf ("In determineFileType(): Processing as a CUDA file \n");
-#endif
                                  }
                                 else if ( CommandlineProcessing::isOpenCLFileNameSuffix(filenameExtension) == true )
                                  {
@@ -1183,7 +1163,6 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                                 else if ( CommandlineProcessing::isJavaFileNameSuffix(filenameExtension) == true )
                                  {
                                 // DQ (10/11/2010): Adding support for Java.
-                                // file = new SgSourceFile ( argv,  project );
                                    SgSourceFile* sourceFile = new SgSourceFile ( argv,  project );
                                    file = sourceFile;
 
@@ -1193,7 +1172,6 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                                 // Note that we can use the C++ unparser to provide output that will support inspection of
                                 // code from the AST, but this is a temporary solution.  The only correct setting is to use
                                 // the ongoing support within the Java specific unparser.
-                                // file->set_outputLanguage(SgFile::e_C_output_language);
                                    file->set_outputLanguage(SgFile::e_Java_language);
 
                                 // DQ (29/8/2017): Set the input language as well.
@@ -1211,8 +1189,6 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                                 // Note that file->get_requires_C_preprocessor() should be false.
                                    ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
                                    sourceFile->initializeGlobalScope();
-
-                                // file->display("Marked as java file based on file suffix");
                                  }
                                 else if (CommandlineProcessing::isX10FileNameSuffix(filenameExtension) == true)
                                 {
@@ -1230,7 +1206,6 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
 
                                 // DQ (29/8/2017): Set the input language as well.
                                    file->set_inputLanguage(SgFile::e_X10_language);
-
                                    file->set_X10_only(true);
 
                                 // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
@@ -1243,8 +1218,6 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                                 // Note that file->get_requires_C_preprocessor() should be false.
                                    ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
                                    sourceFile->initializeGlobalScope();
-
-                                // file->display("Marked as X10 file based on file suffix");
                                 }
                                else if (CommandlineProcessing::isPythonFileNameSuffix(filenameExtension) == true)
                                 {
@@ -1271,7 +1244,6 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                             // DQ (28/8/2017): Adding language support.
                                else if (CommandlineProcessing::isCsharpFileNameSuffix(filenameExtension) == true)
                                 {
-                                // file = new SgSourceFile ( argv,  project );
                                    SgSourceFile* sourceFile = new SgSourceFile ( argv,  project );
                                    file = sourceFile;
 
@@ -1291,7 +1263,6 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                             // DQ (28/8/2017): Adding language support.
                                else if (CommandlineProcessing::isAdaFileNameSuffix(filenameExtension) == true)
                                 {
-                                // file = new SgSourceFile ( argv,  project );
                                    SgSourceFile* sourceFile = new SgSourceFile ( argv,  project );
                                    file = sourceFile;
 
@@ -1331,12 +1302,16 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
 
                                    SageBuilder::symbol_table_case_insensitive_semantics = true;
 
-                                // DQ (12/23/2008): This is the eariliest point where the global scope can be set.
+                                // DQ (12/23/2008): This is the earliest point where the global scope can be set.
                                 // Note that file->get_requires_C_preprocessor() should be false.
                                    ROSE_ASSERT(file->get_requires_C_preprocessor() == false);
                                    sourceFile->initializeGlobalScope();
                                 }
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
+                               else if (CommandlineProcessing::isJvmFileNameSuffix(filenameExtension))
+                                {
+                                   file = new SgJvmComposite(argv, project);
+                                }
                                else if (true)
                                 {
                                    // This is not a source file recognized by ROSE, so it is either a binary executable or
@@ -1475,9 +1450,9 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
      printf ("***************************************************************************************************************************************************************************** \n");
 #endif
 
-  // Keep the filename stored in the Sg_File_Info consistant.  Later we will want to remove this redundency
+  // Keep the filename stored in the Sg_File_Info consistent.  Later we will want to remove this redundency
   // The reason we have the Sg_File_Info object is so that we can easily support filename matching based on
-  // the integer values instead of string comparisions.  Required for the handling co CPP directives and comments.
+  // the integer values instead of string comparisons.  Required for the handling of CPP directives and comments.
 
 #if 0
      if (file != nullptr)

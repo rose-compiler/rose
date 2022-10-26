@@ -40,10 +40,6 @@ int systemFromVector(const vector<string>& argv)
           vector<const char*> argvC(argv.size() + 1);
           size_t length = argv.size();
 
-       // DQ (6/22/2020): Truncate as a test!
-       // length = 5;
-
-       // for (size_t i = 0; i < argv.size(); ++i)
           for (size_t i = 0; i < length; ++i)
              {
                argvC[i] = strdup(argv[i].c_str());

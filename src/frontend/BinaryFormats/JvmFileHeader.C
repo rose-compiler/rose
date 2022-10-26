@@ -7,6 +7,9 @@
 
 using std::cout;
 using std::endl;
+using namespace Rose::Diagnostics; // for mlog, INFO, WARN, ERROR, FATAL, etc.
+
+constexpr bool TRACE_CONSTRUCTION = false;
 
 SgAsmJvmFileHeader::SgAsmJvmFileHeader(SgAsmGenericFile* f)
   : SgAsmGenericHeader{f}, p_minor_version{0}, p_major_version{0}, p_access_flags{0},
@@ -55,8 +58,6 @@ SgAsmJvmFileHeader::parse()
   /* parse base class */
   SgAsmGenericHeader::parse();
 
-  cout << "WARNING: SgAsmJvmFileHeader::parse() ...\n"; // TODO: move to constructor (probably can't because parse needed
-  // how does this offset fit in now that switched to file header from class file?
   rose_addr_t offset{get_offset()};
 
   /* Construct, but don't parse (yet), constant pool */
@@ -97,11 +98,12 @@ SgAsmJvmFileHeader::parse()
     uint16_t index;
     Jvm::read_value(pool, index);
     interfaces.push_back(index);
-#ifdef DEBUG_ON
-    cout << "SgAsmJvmFileHeader::parse(): &p_interfaces: " << &p_interfaces << ": size:" << p_interfaces.size() << endl;;
-    cout << "SgAsmJvmFileHeader::parse(): get_interfaces().size(): " << get_interfaces().size() << endl;;
-    cout << "SgAsmJvmFileHeader::parse(): interfaces.size(): " << interfaces.size() << endl;;
-#endif
+
+    if (TRACE_CONSTRUCTION) {
+      cout << "SgAsmJvmFileHeader::parse(): &p_interfaces: " << &p_interfaces << ": size:" << p_interfaces.size() << endl;;
+      cout << "SgAsmJvmFileHeader::parse(): get_interfaces().size(): " << get_interfaces().size() << endl;;
+      cout << "SgAsmJvmFileHeader::parse(): interfaces.size(): " << interfaces.size() << endl;;
+    }
   }
 
   /* Fields */
@@ -120,9 +122,9 @@ SgAsmJvmFileHeader::parse()
   ASSERT_not_null(attributes->get_parent());
   attributes->parse(pool);
 
-#ifdef DEBUG_ON
-  cout << "SgAsmJvmFileHeader::parse() offset, get_offset: " << offset << ", " << get_offset() << endl;
-#endif
+  if (TRACE_CONSTRUCTION) {
+    cout << "SgAsmJvmFileHeader::parse() offset, get_offset: " << offset << ", " << get_offset() << endl;
+  }
 
   if (1 != (get_end_offset() - get_offset())) {
     ROSE_ASSERT(false && "Error reading file, end of file not reached");

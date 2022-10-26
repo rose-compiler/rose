@@ -97,14 +97,16 @@ Grammar::setUpSupport ()
   // to an analysis phase to define and not defined in the structure of the AST.
      NEW_TERMINAL_MACRO (SourceFile, "SourceFile", "SourceFileTag" );
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-     NEW_TERMINAL_MACRO (BinaryComposite, "BinaryComposite", "BinaryCompositeTag" );
-     BinaryComposite.isBoostSerializable(true);
+     NEW_TERMINAL_MACRO (JvmComposite, "JvmComposite", "JvmCompositeTag" );
+     JvmComposite.isBoostSerializable(true);
 #endif
      NEW_TERMINAL_MACRO (UnknownFile, "UnknownFile", "UnknownFileTag" );
 
   // Mark this as being able to be an IR node for now and later make it false.
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
+     NEW_NONTERMINAL_MACRO (BinaryComposite, JvmComposite, "BinaryComposite", "BinaryCompositeTag", false);
      NEW_NONTERMINAL_MACRO (File, SourceFile | BinaryComposite | UnknownFile , "File", "FileTag", false);
+     BinaryComposite.isBoostSerializable(true);
 #else
      NEW_NONTERMINAL_MACRO (File, SourceFile |                   UnknownFile , "File", "FileTag", false);
 #endif
@@ -356,7 +358,8 @@ Grammar::setUpSupport ()
   // SourceFile.setAutomaticGenerationOfConstructor(false);
 
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-     BinaryComposite.setFunctionPrototype          ( "HEADER_APPLICATION_BINARY_FILE", "../Grammar/Support.code");
+     BinaryComposite.setFunctionPrototype     ( "HEADER_APPLICATION_BINARY_COMPOSITE", "../Grammar/Support.code");
+     JvmComposite.setFunctionPrototype        ( "HEADER_APPLICATION_JVM_COMPOSITE"   , "../Grammar/Support.code");
 #endif
 
      UnknownFile.setFunctionPrototype          ( "HEADER_APPLICATION_UNKNOWN_FILE", "../Grammar/Support.code");
@@ -1035,10 +1038,6 @@ Grammar::setUpSupport ()
 #endif
 
   // DQ (8/19/2007): Added more options specific to Fortran support
-  // File.setDataPrototype         ( "bool", "fixedFormat", "= false",
-  //             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // File.setDataPrototype         ( "bool", "freeFormat", "= false",
-  //             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      File.setDataPrototype         ( "SgFile::outputFormatOption_enum", "inputFormat", "= SgFile::e_unknown_output_format",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      File.setDataPrototype         ( "SgFile::outputFormatOption_enum", "outputFormat", "= SgFile::e_unknown_output_format",
@@ -1317,6 +1316,8 @@ Grammar::setUpSupport ()
      File.setDataPrototype         ( "bool", "sourceFileUsesPythonFileExtension", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      File.setDataPrototype         ( "bool", "sourceFileUsesJavaFileExtension", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     File.setDataPrototype         ( "bool", "sourceFileUsesJvmFileExtension", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      File.setDataPrototype         ( "bool", "sourceFileUsesBinaryFileExtension", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -2695,7 +2696,8 @@ Specifiers that can have only one value (implemented with a protected enum varia
      File.setFunctionSource            ( "SOURCE_APPLICATION_FILE", "../Grammar/Support.code");
      SourceFile.setFunctionSource      ( "SOURCE_APPLICATION_SOURCE_FILE", "../Grammar/Support.code");
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-     BinaryComposite.setFunctionSource ( "SOURCE_APPLICATION_BINARY_FILE", "../Grammar/Support.code");
+     BinaryComposite.setFunctionSource ( "SOURCE_APPLICATION_BINARY_COMPOSITE", "../Grammar/Support.code");
+     JvmComposite.setFunctionSource    ( "SOURCE_APPLICATION_JVM_COMPOSITE", "../Grammar/Support.code");
 #endif
      FileList.setFunctionSource        ( "SOURCE_APPLICATION_FILE_LIST", "../Grammar/Support.code");
      UnknownFile.setFunctionSource     ( "SOURCE_APPLICATION_UNKNOWN_FILE", "../Grammar/Support.code");

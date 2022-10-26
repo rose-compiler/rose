@@ -27,7 +27,7 @@ libroseBinaryFormats_la_SOURCES =											\
       PeImportSection.C PeRvaSizePair.C PeSection.C PeStringTable.C PeSymbolTable.C					\
       ElfDynamicLinking.C ElfErrorFrame.C ElfFileHeader.C ElfNote.C ElfRelocation.C ElfSection.C ElfSectionTable.C	\
       ElfSegmentTable.C ElfStringTable.C ElfSymbolTable.C ElfSymbolVersion.C						\
-      JvmNode.C JvmAttribute.C JvmConstantPool.C JvmField.C JvmFileHeader.C JvmMethod.C				\
+      JvmNode.C JvmAttribute.C JvmComposite.C JvmConstantPool.C JvmField.C JvmFileHeader.C JvmMethod.C			\
       ExecDOS.C ExecNE.C ExecLE.C ExecGeneric.C PeSectionTable.C BinaryVxcoreParser.C \
       CilImpl.C CliHeader.C
 

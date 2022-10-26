@@ -10,7 +10,7 @@ add_library(roseBinaryFormats OBJECT
 
   ### BinaryComposite classes ###
   BinaryComposite.C
-  #TODO: JvmComposite.C
+  JvmComposite.C
 
   ### Generic Base Classes ###
   GenericDynamicLinking.C

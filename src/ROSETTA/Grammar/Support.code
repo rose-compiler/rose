@@ -192,16 +192,12 @@ HEADER_GRAPH_START
 
   // DQ (4/29/2009): Added support for boost edges to be used in boost graph library algorithms.
   // We need this local type so that the member access functions for data members of this type can be resolved.
-  // typedef std::vector<SgGraph::BoostEdgeType> SgBoostEdgeList;
      typedef std::vector<BoostEdgeType> SgBoostEdgeList;
-  // typedef SgBoostEdgeList* SgBoostEdgeListPtr;
 
   // DQ (4/29/2009): Added support for boost edges to be used in boost graph library algorithms.
      typedef std::vector<int> SgBoostEdgeWeightList;
-  // typedef SgBoostEdgeWeightList* SgBoostEdgeWeightListPtr;
 
      int hashCode( const char* p, int len) const; // hash a character array
-  // void initialize_graph_id();
      void append_properties( int addr, const std::string & prop );
 
  //! Support for adding SgGraphNode to SgGraph.
@@ -219,30 +215,20 @@ HEADER_GRAPH_START
      void post_construction_initialization() override;
 
  //! Support for Boost Minimum Spanning Tree.
-  // std::vector <BoostEdgeDescriptor> generateSpanningTree();
      std::vector <SgGraphEdge*> generateSpanningTree();
 
-     // tps (4/30/2009): Added properties for nodes and edges
-     // todo: this will be replaced with AstAttributes once the graph conversion is done.
-      std::string getProperty(SgGraph::GraphProperties property, SgGraphNode* node);
-    std::string getProperty(SgGraph::GraphProperties property, SgGraphEdge* edge);
-    void setProperty(SgGraph::GraphProperties property, SgGraphNode* node, std::string value);
-    void setProperty(SgGraph::GraphProperties property, SgGraphEdge* edge, std::string value);
+     std::string getProperty(SgGraph::GraphProperties property, SgGraphNode* node);
+     std::string getProperty(SgGraph::GraphProperties property, SgGraphEdge* edge);
+     void setProperty(SgGraph::GraphProperties property, SgGraphNode* node, std::string value);
+     void setProperty(SgGraph::GraphProperties property, SgGraphEdge* edge, std::string value);
 
-  // tps (4/30/2009): The following are functions on the graph that were used before
-  // in the old graph implementation
-    //std::set<SgGraphEdge*> getEdge(SgGraphNode* src, SgGraphNode* trg);
-        void checkIfGraphNodeExists(const std::string& trg_mnemonic, std::vector<SgGraphNode*>& nodes);
-//SgGraphNode* checkIfGraphNodeExists(std::string& trg_mnemonic);
-
-
+     void checkIfGraphNodeExists(const std::string& trg_mnemonic, std::vector<SgGraphNode*>& nodes);
 
  //! Check if the node is present in the graph.
      bool exists( SgGraphNode* node );
 
  //! Check if the edge is present in the graph.
      bool exists( SgGraphEdge* edge );
-
 
  //! Builds a set of edges that are associated with a specific node.
      std::set<SgGraphEdge*> computeEdgeSet( SgGraphNode* node );
@@ -301,10 +287,6 @@ typedef SgBoostEdgeList* SgBoostEdgeListPtr;
 // DQ (4/29/2009): Added support for boost edges to be used in boost graph library algorithms.
 typedef SgGraph::SgBoostEdgeWeightList SgBoostEdgeWeightList;
 typedef SgBoostEdgeWeightList* SgBoostEdgeWeightListPtr;
-
-
-// Supporting graph type required by Boost Graph Library.
-// typedef boost::graph_traits < SgGraph::BoostGraphType >::edge_descriptor BoostEdgeDescriptor;
 
 
 HEADER_GRAPH_POSTDECLARATION_END
@@ -3854,16 +3836,8 @@ bool SgTypeModifier::isIdentity() const
   // When this is true, the SgTypeModifier acts as a simple wrapper to a base type that is equivalent.
      bool identity = false;
 
-#if 0
-     mprintf ("In SgTypeModifier::isIdentity(): this = %p get_constVolatileModifier().isConst() = %s \n",this,get_constVolatileModifier().isConst() ? "true" : "false");
-#endif
-
   // This needs to be an expanded set of fields later.
      identity = (get_constVolatileModifier().isConst() == false) && (get_constVolatileModifier().isVolatile() == false) && (isRestrict() == false);
-
-#if 0
-     mprintf ("In SgTypeModifier::isIdentity(): return identity = %s \n",identity ? "true" : "false");
-#endif
 
      return identity;
    }
@@ -6140,7 +6114,7 @@ HEADER_HEADER_FILE_REPORT_START
 HEADER_HEADER_FILE_REPORT_END
 
 
-HEADER_APPLICATION_BINARY_FILE_START
+HEADER_APPLICATION_BINARY_COMPOSITE_START
         private:
                 friend class boost::serialization::access;
 
@@ -6152,14 +6126,9 @@ HEADER_APPLICATION_BINARY_FILE_START
                 }
 
      public:
-       // SgBinaryComposite ( int & argc, char** & argv, int & errorCode, int fileNameIndex = 0, SgProject* project = NULL );
           SgBinaryComposite(std::vector<std::string>& argv,  SgProject* project = NULL);
-       // SgBinaryComposite ( const SgBinaryFile & X );
 
           virtual int callFrontEnd() override;
-      //  Default constructor (not meant to be used)
-      //  JJW (9/5/2008): the normal constructor has defaults for all of its arguments, so this is ambiguous
-      //  SgBinaryComposite() ROSE_DEPRECATED_FUNCTION;
 
           virtual void doSetupForConstructor(const std::vector<std::string>& argv, SgProject* project) override;
 
@@ -6172,7 +6141,26 @@ HEADER_APPLICATION_BINARY_FILE_START
 
        //! This is refactored code, called once for a binary executable, and called on each object file for a library archive.
           void buildAsmAST( std::string executableFileName );
-HEADER_APPLICATION_BINARY_FILE_END
+HEADER_APPLICATION_BINARY_COMPOSITE_END
+
+
+HEADER_APPLICATION_JVM_COMPOSITE_START
+        private:
+                friend class boost::serialization::access;
+
+                template<class S>
+                void serialize(S &s, const unsigned /*version*/) {
+                     s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgFile);
+                }
+
+     public:
+          SgJvmComposite(std::vector<std::string>& argv,  SgProject* project = nullptr);
+
+          virtual int callFrontEnd() override;
+          virtual int buildAST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine ) override;
+
+HEADER_APPLICATION_JVM_COMPOSITE_END
+
 
 HEADER_APPLICATION_UNKNOWN_FILE_START
      public:
@@ -7800,10 +7788,6 @@ SgSymbolTable::get_name( const SgNode* node) const
              }
         }
 
-#if 0
-     mprintf ("SgSymbolTable::get_name(SgNode*) node = %p = %s name = %s \n",node,node->class_name().c_str(),name.str());
-#endif
-
      return name;
    }
 
@@ -8129,7 +8113,6 @@ SgSymbolTable::find( const SgFunctionType* functionType)
         }
 
   // DQ (2/13/2007): Fixed bug that returns a valid pointer even when there was no match to the input statement!
-  // return returnSymbol;
      return NULL;
    }
 
@@ -12267,18 +12250,10 @@ Sg_File_Info* Sg_File_Info::generateDefaultFileInfo()
   // DQ (6/7/2007): This causes "NULL_FILE" filenames to be introduced into the AST.
   // Gergo pointed out this problems and removing such entries will simplify the tests
   // that are done in the traverseInputFile traversal.
-  // mprintf ("Sg_File_Info::generateDefaultFileInfo(): This function is depricated and is an error to call! \n");
-  // assert(false);
-
-#if 0
-     mprintf ("In Sg_File_Info::generateDefaultFileInfo() return = %p \n",returnValue);
-#endif
 
      return returnValue;
    }
 
-// Static function to return new Sg_File_Info object set to default values appropriate for transformations
-// static Sg_File_Info* generateTransformationDefaultFileInfo()
 Sg_File_Info* Sg_File_Info::generateDefaultFileInfoForTransformationNode()
    {
   // IR nodes using this function's return value will be marked as transformations
@@ -12291,10 +12266,6 @@ Sg_File_Info* Sg_File_Info::generateDefaultFileInfoForTransformationNode()
      returnValue->setOutputInCodeGeneration();
 
      returnValue->set_file_id( TRANSFORMATION_FILE_ID );
-
-#if 0
-     mprintf ("In Sg_File_Info::generateDefaultFileInfoForTransformationNode() return = %p \n",returnValue);
-#endif
 
      return returnValue;
    }
@@ -14174,6 +14145,7 @@ SgFile::get_outputLanguageOptionName ( SgFile::languageOption_enum lang )
           case SgFile::e_Binary_language:  s = "Binary";  break;
           case SgFile::e_Fortran_language: s = "Fortran"; break;
           case SgFile::e_Java_language:    s = "Java";    break;
+          case SgFile::e_Jvm_language:     s = "JVM";     break;
           case SgFile::e_X10_language:     s = "X10";     break;
           case SgFile::e_PHP_language:     s = "PHP";     break;
           case SgFile::e_Python_language:  s = "Python";  break;
@@ -14185,7 +14157,6 @@ SgFile::get_outputLanguageOptionName ( SgFile::languageOption_enum lang )
           default:
              {
                mprintf ("In SgFile::outputLanguageOption(): lang = %" PRIuPTR " \n",(size_t)lang);
-            // mprintf ("In SgFile::outputLanguageOption(): lang = %d \n",lang);
                ROSE_ASSERT(false);
              }
         }
@@ -14267,11 +14238,6 @@ SgFile::initialization()
      assert(this != NULL);
 
      p_verbose                 = 0;
-  // version                   = false;
-  // help                      = false;
-
-  // DQ (4/4/2020): Adding support for unparse headers feature specific diagnostics.
-  // p_unparseHeaderFilesDebug = 0;
 
   // DQ (12/8/2007): use "-Wall" to control output of warnings
      p_output_warnings         = false;
@@ -14289,12 +14255,13 @@ SgFile::initialization()
      p_CoArrayFortran_only     = false;
 
      p_PHP_only                = false;
-
      p_Python_only             = false;
 
   // DQ (8/25/2017): Added more language support.
      p_Csharp_only             = false;
      p_Ada_only                = false;
+     p_Java_only               = false;
+     p_Jvm_only                = false;
      p_Jovial_only             = false;
 
      p_requires_C_preprocessor = false;
@@ -14804,24 +14771,9 @@ SgFile::generateOutputFileName() const
   // output file name from the source file name.
 
      std::string sourceFileName = get_sourceFileNameWithPath();
-
-  // std::string baseFileName    = Rose::utility_stripPathFromFileName(sourceFileName.c_str());
      std::string baseFileName    = Rose::StringUtility::stripPathFromFileName(sourceFileName);
-
      std::string baseFileNameWithoutSuffix = Rose::StringUtility::stripFileSuffixFromFileName(baseFileName);
-
-  // mprintf ("sourceFileName = %s oldFileName = %s\n",sourceFileName.c_str(),baseFileName.c_str());
-
      std::string objectFileName;
-
-  // DQ (1/17/2006): test this
-  // assert(get_fileInfo() != NULL);
-
-#if 0
-     mprintf ("sourceFileName = %s \n",sourceFileName.c_str());
-     mprintf ("baseFileName = %s \n",baseFileName.c_str());
-     mprintf ("baseFileNameWithoutSuffix = %s \n",baseFileNameWithoutSuffix.c_str());
-#endif
 
 #ifndef USE_ORIGINAL_SOURCE_FILE_NAME_IN_PRELINKING
 
@@ -14839,10 +14791,6 @@ SgFile::generateOutputFileName() const
        // test for leading "rose_" prefix in name (it should NOT be present now)
           assert(baseFileName.find("rose_") == std::string::npos);
         }
-#else
-
-#error "DEAD CODE"
-
 #endif
 
   // DQ (4/2/2011): Added support for Java.
@@ -14872,12 +14820,6 @@ SgFile::unparse ( UnparseFormatHelp *unparseFormatHelp, UnparseDelegate* unparse
   // DQ (1/24/2010): This call to the timer has been moved to the unparseFile() function.
   // DQ (7/12/2005): Introduce tracking of performance of ROSE.
   // TimingPerformance timer ("AST Code Generation (unparsing):");
-
-  // mprintf ("Inside of SgFile::unparse () ROSE_DEBUG = %d  \n",ROSE_DEBUG);
-
-  // Not clear if we can or should eliminate this function.
-  // mprintf ("This SgFile::unparse() function should no longer be called (I think)! \n");
-  // assert(false);
 
   // Call the unparser mechanism
   // DQ (1/24/2010): Moved the extern declaration for unparseFile() to be local to this function (better code design).
@@ -14919,6 +14861,7 @@ SgFile::display ( const std::string & label ) const
   // DQ (3/28/2013): Added support to specify C89 support, so that default can be C99 support (same as EDG3x branch).
      printf ("     p_Cxx_only()                                = %s \n",(p_Cxx_only == true) ? "true" : "false");
      printf ("     p_Java_only()                               = %s \n",(p_Java_only == true) ? "true" : "false");
+     printf ("     p_Jvm_only()                                = %s \n",(p_Jvm_only == true) ? "true" : "false");
      printf ("     p_Fortran_only()                            = %s \n",(p_Fortran_only == true) ? "true" : "false");
      printf ("     p_CoArrayFortran_only()                     = %s \n",(p_CoArrayFortran_only == true) ? "true" : "false");
      printf ("     p_PHP_only()                                = %s \n",(p_PHP_only == true) ? "true" : "false");
@@ -15704,7 +15647,6 @@ SgHeaderFileReport::display( const string & label) const
           printf ("   --- --- isHeaderFileIncludedMoreThanOnce = %s \n",includedFile->get_isHeaderFileIncludedMoreThanOnce() ? "true" : "false");
 
        // DQ (11/15/2018): removed the include list from SgSourceFile so that we could support traversals on the inlcude tree.
-       // printf ("   --- --- include_file_list size = %zu \n",includedFile->get_include_file_list().size());
           printf ("   --- --- associated_include_file = %p \n",includedFile->get_associated_include_file());
           ROSE_ASSERT(includedFile->get_associated_include_file() != NULL);
           printf ("   --- --- associated_include_file include_file_list size = %zu \n",includedFile->get_associated_include_file()->get_include_file_list().size());
@@ -15716,7 +15658,7 @@ SgHeaderFileReport::display( const string & label) const
 SOURCE_HEADER_FILE_REPORT_END
 
 
-SOURCE_APPLICATION_BINARY_FILE_START
+SOURCE_APPLICATION_BINARY_COMPOSITE_START
 
 const SgAsmGenericFile*
 SgBinaryComposite::get_binaryFile() const
@@ -15739,7 +15681,12 @@ SgBinaryComposite::set_binaryFile( SgAsmGenericFile* file )
      p_genericFileList->get_files().push_back(file);
    }
 
-SOURCE_APPLICATION_BINARY_FILE_END
+SOURCE_APPLICATION_BINARY_COMPOSITE_END
+
+
+SOURCE_APPLICATION_JVM_COMPOSITE_START
+SOURCE_APPLICATION_JVM_COMPOSITE_END
+
 
 SOURCE_APPLICATION_UNKNOWN_FILE_START
 SgUnknownFile::SgUnknownFile ( vector<string> & argv ,  SgProject* project )
@@ -15982,6 +15929,7 @@ SgProject::initialization()
      p_Fortran_only          = false;
      p_addCppDirectivesToAST = false;
      p_Java_only             = false;
+     p_Jvm_only              = false;
      p_Jovial_only           = false;
   // PP (10/13/2020) plus Ada
      p_Ada_only              = false;

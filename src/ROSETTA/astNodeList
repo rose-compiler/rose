@@ -1035,3 +1035,4 @@ SgAsmCilStandAloneSigTable
 SgAsmCilTypeDefTable
 SgAsmCilTypeRefTable
 SgAsmCilTypeSpecTable
+SgJvmComposite
