@@ -997,8 +997,11 @@ M68k::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va, AddressSet
     SgAsmM68kInstruction *insn = NULL;
     if (Decoder *idis = find_idis(state.iwords, state.niwords))
         insn = (*idis)(state, this, instructionWord(state, 0));
-    if (!insn)
-        throw Exception("cannot disassemble m68k instruction: "+addrToString(instructionWord(state, 0), 16), start_va);
+    if (!insn) {
+        std::vector<uint8_t> rawData(buf, buf+std::min(size_t(2), nbytes));
+        throw Exception("cannot disassemble m68k instruction: "+addrToString(instructionWord(state, 0), 16),
+                        start_va, rawData, 0);
+    }
 
     ASSERT_require(state.niwords_used>0);
     SgUnsignedCharList raw_bytes(buf+0, buf+2*state.niwords_used);
