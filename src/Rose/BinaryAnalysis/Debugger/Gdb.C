@@ -4,10 +4,13 @@
 #include <Rose/BinaryAnalysis/Debugger/Gdb.h>
 
 #include <Rose/BinaryAnalysis/Debugger/Exception.h>
+#include <Rose/BinaryAnalysis/Disassembler/M68k.h>
+#include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/StringUtility/Escape.h>
 #include <rose_getline.h>
 
 #include <boost/algorithm/string/trim.hpp>
+#include <boost/lexical_cast.hpp>
 
 #include <list>
 #include <string>
@@ -67,41 +70,58 @@ public:
 
 };
 
-void
+const std::list<GdbResponse>&
 Gdb::sendCommand(const std::string &cmd) {
     ASSERT_require(isAttached());
+    resetResponses();
 
     // Read asynchronous responses that are already waiting
     while (true) {
-        auto responses = readOptionalResponses();
-        if (!responses.empty()) {
-            for (const GdbResponse &response: responses)
-                SAWYER_MESG(mlog[DEBUG]) <<response;
+        const auto list = readOptionalResponses();
+        if (!list.empty()) {
+            if (mlog[DEBUG]) {
+                for (const GdbResponse &response: list)
+                    mlog[DEBUG] <<response;
+            }
         } else {
             break;
         }
     }
 
     // Send the command to GDB
-    SAWYER_MESG(mlog[DEBUG]) <<"GDB command: -" <<cmd <<"\n";
+    SAWYER_MESG_OR(mlog[TRACE], mlog[DEBUG]) <<"(gdb) -" <<cmd <<"\n";
     gdbInput_ <<"-" <<cmd <<"\n";
     gdbInput_.flush();
 
-    // Read required response
-    auto responses = readRequiredResponses();
-    for (const GdbResponse &response: responses)
-        SAWYER_MESG(mlog[DEBUG]) <<response;
+    // Read required response until we get a result record followed later by a end record.
+    bool hasResult = false;
+    while (!hasResult) {
+        const auto list = readRequiredResponses();
+        for (const GdbResponse &response: list) {
+            if (response.result) {
+                hasResult = true;
+                break;
+            }
+        }
+        if (mlog[DEBUG]) {
+            for (const GdbResponse &response: list)
+                mlog[DEBUG] <<response;
+        }
+    }
 
     // Read asynchronous responses until there aren't any more ready
     while (true) {
-        auto responses = readOptionalResponses();
-        if (!responses.empty()) {
-            for (const GdbResponse &response: responses)
-                SAWYER_MESG(mlog[DEBUG]) <<response;
+        const auto list = readOptionalResponses();
+        if (!list.empty()) {
+            if (mlog[DEBUG]) {
+                for (const GdbResponse &response: list)
+                    mlog[DEBUG] <<response;
+            }
         } else {
             break;
         }
     }
+    return responses_;
 }
 
 std::list<GdbResponse>
@@ -122,6 +142,17 @@ Gdb::readResponseSet(bool required) {
         if (responses.back().atEnd)
             break;
     }
+
+    if (mlog[TRACE]) {
+        for (const GdbResponse &response: responses) {
+            if (!response.console.empty())
+                mlog[TRACE] <<response.console <<"\n";
+        }
+    }
+
+    // Accumulate responses
+    responses_.insert(responses_.end(), responses.begin(), responses.end());
+
     return responses;
 }
 
@@ -133,6 +164,16 @@ Gdb::readRequiredResponses() {
 std::list<GdbResponse>
 Gdb::readOptionalResponses() {
     return readResponseSet(false);
+}
+
+const std::list<GdbResponse>&
+Gdb::responses() const {
+    return responses_;
+}
+
+void
+Gdb::resetResponses() {
+    responses_.clear();
 }
 
 // Starts the GDB process and reads/writes
@@ -163,11 +204,47 @@ Gdb::attach(const Specimen &specimen) {
 
     OutputHandler outputHandler(ios_, gdbOutputPipe_, gdbOutputBuffer_, gdbOutput_);
     gdbThread_ = std::thread(gdbIoThread, argv, std::ref(outputHandler), std::ref(gdbInput_));
-    auto responses = readRequiredResponses();
-    for (const GdbResponse &response: responses)
-        SAWYER_MESG(mlog[DEBUG]) <<response;
+    readRequiredResponses();
 
+    // Attach to remote target
     sendCommand("target-select remote " + specimen.remote.host + ":" + boost::lexical_cast<std::string>(specimen.remote.port));
+
+    // Get an appropriate disassembler for this architecture
+    for (const GdbResponse &response: responses()) {
+        if (GdbResponse::AsyncClass::STOPPED == response.exec.aclass) {
+            if (const Yaml::Node &node = response.exec.results["frame"]["arch"]) {
+                const std::string arch = node.as<std::string>();
+                if ("m68k" == arch) {
+                    disassembler_ = Disassembler::M68k::instance(m68k_freescale_cpu32);
+                } else {
+                    ASSERT_not_implemented("unrecognized architecture: " + arch);
+                }
+            }
+        }
+    }
+    ASSERT_not_null(disassembler_);
+
+    // Get the list of register names for this architecture.
+    for (const GdbResponse &response: sendCommand("data-list-register-names")) {
+        if (GdbResponse::ResultClass::DONE == response.result.rclass) {
+            if (Yaml::Node names = response.result.results["register-names"]) {
+                ASSERT_require(names.isSequence());
+                for (const auto &pair: names) {
+                    const std::string name = pair.second.as<std::string>();
+                    const RegisterDescriptor reg = registerDictionary()->find(name);
+                    registers_.push_back(std::make_pair(name, reg));
+                    if (!reg && !name.empty()) {
+                        mlog[ERROR] <<"GDB register #" <<(registers_.size()-1) <<" \"" <<name <<"\""
+                                    <<" is not present in dictionary \"" <<registerDictionary()->name() <<"\"\n";
+                    }
+                }
+                break;
+            }
+        }
+    }
+    ASSERT_forbid(registers_.empty());
+
+    resetResponses();
 }
 
 bool
@@ -178,6 +255,8 @@ Gdb::isAttached() {
 void
 Gdb::detach() {
     sendCommand("gdb-exit");
+    registers_.clear();
+    responses_.clear();
     ASSERT_not_implemented("[Robb Matzke 2022-10-17]");
 }
 
@@ -226,9 +305,75 @@ Gdb::runToBreakPoint(ThreadId) {
     ASSERT_not_implemented("[Robb Matzke 2022-10-17]");
 }
 
+Sawyer::Optional<size_t>
+Gdb::findRegisterIndex(RegisterDescriptor reg) const {
+    ASSERT_forbid(registers_.empty());
+    for (size_t i = 0; i < registers_.size(); ++i) {
+        if (reg.majorNumber() == registers_[i].second.majorNumber() && reg.minorNumber() == registers_[i].second.minorNumber())
+            return i;
+    }
+    return Sawyer::Nothing();
+}
+
+RegisterDescriptor
+Gdb::findRegister(RegisterDescriptor reg) const {
+    if (auto i = findRegisterIndex(reg)) {
+        ASSERT_require(*i < registers_.size());
+        return registers_[*i].second;
+    } else {
+        return RegisterDescriptor();
+    }
+}
+
 Sawyer::Container::BitVector
-Gdb::readRegister(ThreadId, RegisterDescriptor) {
-    ASSERT_not_implemented("[Robb Matzke 2022-10-17]");
+Gdb::readRegister(ThreadId, RegisterDescriptor reg) {
+    ASSERT_require(reg);
+    resetResponses();
+
+    // Find the GDB register of which `reg` is a part.
+    Sawyer::Optional<size_t> idx = findRegisterIndex(reg);
+    if (!idx)
+        throw Exception("register " + boost::lexical_cast<std::string>(reg) + " not found in debugger");
+    const RegisterDescriptor gdbReg  = registers_[*idx].second;
+
+    // Send the data-list-register-values command and wait for its response. Then process the reponse to find
+    // 'register-values=[{number="I", value="0xVALUE"}]' and parse the value. Extract from the value that portion to which
+    // `reg` corresponds.
+    for (const GdbResponse &response: sendCommand("data-list-register-values x " + boost::lexical_cast<std::string>(*idx))) {
+        if (GdbResponse::ResultClass::DONE == response.result.rclass) {
+            if (const Yaml::Node sequence = response.result.results["register-values"]) {
+                ASSERT_require(sequence.isSequence());
+                for (const auto &elmt: sequence) {
+                    ASSERT_require(elmt.second.isMap());
+                    const size_t j = elmt.second["number"].as<size_t>();
+                    ASSERT_require(j == *idx);
+                    const std::string strval = elmt.second["value"].as<std::string>();
+                    Sawyer::Container::BitVector whole(gdbReg.nBits());
+                    ASSERT_require2(boost::starts_with(strval, "0x"), strval);
+                    whole.fromHex(strval.substr(2));
+
+                    if (reg == gdbReg) {
+                        return whole;
+                    } else {
+                        Sawyer::Container::BitVector retval(reg.nBits());
+                        const auto from = Sawyer::Container::BitVector::baseSize(reg.offset(), reg.nBits());
+                        retval.copy(retval.hull(), whole, from);
+                        return retval;
+                    }
+                }
+            }
+        }
+    }
+
+#if 1 // DEBUGGING [Robb Matzke 2022-10-19]
+    std::cerr <<"ROBB: previous responses:\n";
+    for (const GdbResponse &response: responses())
+        std::cerr <<response;
+    std::cerr <<"ROBB: next response:\n";
+    for (const GdbResponse &response: readRequiredResponses())
+        std::cerr <<response;
+#endif
+    throw Exception("no \"register-values\" response from debugger for \"data-list-register-values\"");
 }
 
 void
@@ -276,14 +421,9 @@ Gdb::howTerminated() {
     ASSERT_not_implemented("[Robb Matzke 2022-10-17]");
 }
 
-RegisterDictionaryPtr
-Gdb::registerDictionary() const {
-    ASSERT_not_implemented("[Robb Matzke 2022-10-17]");
-}
-
-Disassembler::BasePtr
-Gdb::disassembler() const {
-    ASSERT_not_implemented("[Robb Matzke 2022-10-17]");
+const std::vector<std::pair<std::string, RegisterDescriptor>>&
+Gdb::registerNames() const {
+    return registers_;
 }
 
 } // namespace

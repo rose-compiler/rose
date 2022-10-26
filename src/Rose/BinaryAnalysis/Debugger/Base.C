@@ -3,6 +3,8 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Debugger/Base.h>
 
+#include <Rose/BinaryAnalysis/Disassembler/Base.h>
+
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Debugger {
@@ -28,6 +30,17 @@ struct DefaultTraceFilter {
 Base::Base() {}
 
 Base::~Base() {}
+
+Disassembler::Base::Ptr
+Base::disassembler() {
+    return disassembler_;
+}
+
+RegisterDictionary::Ptr
+Base::registerDictionary() {
+    ASSERT_not_null(disassembler());
+    return disassembler()->registerDictionary();
+}
 
 Sawyer::Container::Trace<rose_addr_t>
 Base::trace() {

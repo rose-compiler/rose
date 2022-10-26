@@ -22,6 +22,9 @@ public:
     using Ptr = Debugger::Ptr;
 
 protected:
+    Disassembler::BasePtr disassembler_;                // how to disassemble instructions
+
+protected:
     Base();
 
     // Debuggers are not copyable
@@ -142,10 +145,10 @@ public:
     virtual std::string howTerminated() = 0;
 
     /** Available registers. */
-    virtual RegisterDictionaryPtr registerDictionary() const = 0;
+    virtual RegisterDictionaryPtr registerDictionary();
 
     /** Disassembler. */
-    virtual Disassembler::BasePtr disassembler() const = 0;
+    virtual Disassembler::BasePtr disassembler();
 
     /** Run the program and return an execution trace. */
     virtual Sawyer::Container::Trace<rose_addr_t> trace();

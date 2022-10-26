@@ -176,24 +176,24 @@ GdbResponse::print(std::ostream &out) const {
     if (!token.empty())
         out <<"  token: " <<token <<"\n";
 
-    if (result.rclass != ResultClass::UNSPECIFIED) {
+    if (result) {
         out <<"  result-class: " <<Stringify::ResultClass((int64_t)result.rclass, "") <<"\n"
             <<nodeToString(result.results, "  ");
     }
 
-    if (exec.aclass != AsyncClass::UNSPECIFIED) {
+    if (exec) {
         out <<"  exec-async:\n"
             <<"    async-class: " <<Stringify::AsyncClass((int64_t)exec.aclass, "") <<"\n"
             <<nodeToString(exec.results, "    ");
     }
 
-    if (status.aclass != AsyncClass::UNSPECIFIED) {
+    if (status) {
         out <<"  status-async:\n"
             <<"    async-class: " <<Stringify::AsyncClass((int64_t)status.aclass, "") <<"\n"
             <<nodeToString(status.results, "    ");
     }
 
-    if (notify.aclass != AsyncClass::UNSPECIFIED) {
+    if (notify) {
         out <<"  notify-async:\n"
             <<"    async-class: " <<Stringify::AsyncClass((int64_t)notify.aclass, "") <<"\n"
             <<nodeToString(notify.results, "    ");
