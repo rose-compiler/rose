@@ -1105,14 +1105,10 @@ CommandlineProcessing::isJavaFileNameSuffix ( const std::string & suffix )
 bool
 CommandlineProcessing::isJvmFileNameSuffix ( const std::string & suffix )
    {
-     bool returnValue = false;
-     if ( suffix == "class" ||
-          suffix == "jar" )
-        {
-          returnValue = true;
-        }
-
-     return returnValue;
+     if (suffix == "class" || suffix == "jar") {
+        return true;
+     }
+     return false;
    }
 
 bool

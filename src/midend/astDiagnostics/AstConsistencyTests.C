@@ -4943,6 +4943,7 @@ TestParentPointersInMemoryPool::visit(SgNode* node)
                case V_SgSourceFile:
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
                case V_SgBinaryComposite:
+               case V_SgJvmComposite:
 #endif
                case V_SgUnknownFile:
                case V_SgTypedefSeq:
