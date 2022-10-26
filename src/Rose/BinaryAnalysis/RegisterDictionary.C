@@ -1393,7 +1393,7 @@ RegisterDictionary::instanceM68000AlternateNames() {
     if (!regs) {
         regs = RegisterDictionary::instance("m68000");
         regs->insert(instanceM68000());
-        regs->insert("bp", m68k_regclass_addr, 6, 0, 32);                       // a6 is conventionally the stack frame pointer
+        regs->insert("fp", m68k_regclass_addr, 6, 0, 32);                       // a6 is conventionally the stack frame pointer
         regs->insert("sp", m68k_regclass_addr, 7, 0, 32);                       // a7 is conventionally the stack pointer
     }
     return regs;
