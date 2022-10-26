@@ -67,7 +67,7 @@ struct object_helper<Object::a_class> {
 
 template <>
 struct object_helper<Object::a_typedef> {
-  using decl_t   = SgClassDeclaration;
+  using decl_t   = SgTypedefDeclaration;
   using symbol_t = SgTypedefSymbol;
   using type_t   = SgTypedefType;
 

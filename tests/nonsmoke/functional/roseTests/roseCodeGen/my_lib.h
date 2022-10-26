@@ -25,5 +25,9 @@ namespace OtherNsp {
 
   template <typename T>
   using OtherTplClass2 = MyTplCls<T, true>;
+
+  
+  template <class RetT, class ValT>
+  RetT my_tpl_function(ValT my_param);
 };
 
