@@ -1409,7 +1409,7 @@ RegisterDictionary::instanceColdfire() {
     static RegisterDictionary::Ptr regs;
     if (!regs) {
         regs = RegisterDictionary::instance("freescale MAC");
-        regs->insert(instanceM68000());
+        regs->insert(instanceM68000AlternateNames());
 
         // Floating point data registers.
         // The ColdFire processors do not support extended precision real ("X") format values, and therefore don't need
