@@ -85,7 +85,8 @@ class Factory {
         declaration_t<otag> * decl = instantiate<otag>(obj, parent, args...);
         ROSE_ASSERT(decl != nullptr);
 
-        ROSE_ABORT(); // TODO get symbol from decl
+        sym = dynamic_cast<symbol_t<otag> *>(decl->search_for_symbol_from_symbol_table());
+        ROSE_ASSERT(sym != nullptr);
       } else {
         // FIXME sanity-check: `args` is empty
       }

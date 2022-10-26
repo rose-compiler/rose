@@ -1090,6 +1090,7 @@ ROSE_DLL_API void setTemplateArgumentsInDeclaration               ( SgDeclaratio
 ROSE_DLL_API void setTemplateSpecializationArgumentsInDeclaration ( SgDeclarationStatement* decl, SgTemplateArgumentPtrList* templateSpecializationArgumentsList_input );
 ROSE_DLL_API void setTemplateParametersInDeclaration              ( SgDeclarationStatement* decl, SgTemplateParameterPtrList* templateParametersList_input );
 
+
 //! Build a prototype for a function, handle function type, symbol etc transparently
 // DQ (7/26/2012): Changing the API to include template arguments so that we can generate names with and without template arguments (to support name mangiling).
 ROSE_DLL_API SgFunctionDeclaration * buildNondefiningFunctionDeclaration(
@@ -1849,6 +1850,65 @@ namespace Rose {
         }// ::Rose::frontend::java
     }// ::Rose::frontend
 }// ::Rose
+
+namespace Rose {
+  namespace Builder {
+    namespace Templates {
+
+      SgTemplateArgument * buildTemplateArgument(SgType * t);
+      SgTemplateArgument * buildTemplateArgument(SgExpression * e);
+      SgTemplateArgument * buildTemplateArgument(int v);
+      SgTemplateArgument * buildTemplateArgument(bool v);
+
+      std::string strTemplateArgument(int v);
+      std::string strTemplateArgument(bool v);
+      std::string strTemplateArgument(SgType * t);
+      std::string strTemplateArgument(SgNamedType * nt);
+      std::string strTemplateArgument(SgExpression * e);
+
+      template <typename... Args>
+      struct TemplateArgumentList {
+        static std::string str() { return ""; }
+        static void fill(std::vector<SgTemplateArgument *> & tpl_args) {}
+      };
+      
+      template <typename T>
+      struct TemplateArgumentList<T> {
+        static std::string str(T v) {
+          return strTemplateArgument(v);
+        }
+        static void fill(std::vector<SgTemplateArgument *> & tpl_args, T v) {
+          tpl_args.push_back(buildTemplateArgument(v));
+        }
+      };
+      
+      template <typename T, typename... Args>
+      struct TemplateArgumentList<T, Args...> {
+        static std::string str(T v, Args... args) {
+          return strTemplateArgument(v) + ", " + TemplateArgumentList<Args...>::str(args...);
+        }
+        static void fill(std::vector<SgTemplateArgument *> & tpl_args, T v, Args... args) {
+          tpl_args.push_back(buildTemplateArgument(v));
+          TemplateArgumentList<Args...>::fill(tpl_args, args...);
+        }
+      };
+
+      template <typename... Args>
+      std::string strTemplateArgumentList(Args... args) {
+        return TemplateArgumentList<Args...>::str(args...);
+      }
+
+      template <typename... Args>
+      void fillTemplateArgumentList(std::vector<SgTemplateArgument *> & tpl_args, Args... args) {
+        TemplateArgumentList<Args...>::fill(tpl_args, args...);
+      }
+
+} } }
+
+namespace SageBuilder {
+  using namespace Rose::Builder::Templates;
+}
+
 //-----------------------------------------------------------------------------
 //#endif // ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 //-----------------------------------------------------------------------------

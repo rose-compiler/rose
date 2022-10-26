@@ -18961,7 +18961,74 @@ SgJavaWildcardType *SageBuilder::getUniqueJavaWildcardSuper(SgType *type) {
 
     return isSgJavaWildcardType(attribute -> getNode());
 }
+
+
 //-----------------------------------------------------------------------------
 #endif // ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 //-----------------------------------------------------------------------------
+
+
+namespace Rose {
+  namespace Builder {
+    namespace Templates {
+
+SgTemplateArgument * buildTemplateArgument(SgType * t) {
+  ROSE_ASSERT(t != nullptr);
+  SgTemplateArgument * r = new SgTemplateArgument(SgTemplateArgument::type_argument, false, t, nullptr, nullptr);
+  return r;
+}
+
+SgTemplateArgument * buildTemplateArgument(SgExpression * e) {
+  ROSE_ASSERT(e != nullptr);
+  SgTemplateArgument * r = new SgTemplateArgument(SgTemplateArgument::nontype_argument, false, nullptr, e, nullptr);
+  e->set_parent(r);
+  return r;
+}
+
+SgTemplateArgument * buildTemplateArgument(int v) {
+  SgExpression * e = SageBuilder::buildIntVal_nfi(v);
+  SgTemplateArgument * r = new SgTemplateArgument(SgTemplateArgument::nontype_argument, false, nullptr, e, nullptr);
+  e->set_parent(r);
+  return r;
+}
+
+SgTemplateArgument * buildTemplateArgument(bool v) {
+  SgExpression * e = SageBuilder::buildBoolValExp(v);
+  SgTemplateArgument * r = new SgTemplateArgument(SgTemplateArgument::nontype_argument, false, nullptr, e, nullptr);
+  e->set_parent(r);
+  return r;
+}
+
+std::string strTemplateArgument(int v) {
+  std::ostringstream oss;
+  oss << v;
+  return oss.str();
+}
+
+std::string strTemplateArgument(bool v) {
+  std::ostringstream oss;
+  if (v) oss << "true";
+  else   oss << "false";
+  return oss.str();
+}
+
+std::string strTemplateArgument(SgNamedType * nt) {
+  std::ostringstream oss;
+  oss << nt->get_qualified_name().getString();
+  return oss.str();
+}
+
+std::string strTemplateArgument(SgType * t) {
+  std::ostringstream oss;
+  oss << t->unparseToString();
+  return oss.str();
+}
+
+std::string strTemplateArgument(SgExpression * e) {
+  std::ostringstream oss;
+  oss << e->unparseToString();
+  return oss.str();
+}
+
+} } }
 

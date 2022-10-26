@@ -31,8 +31,26 @@ declaration_t<Object::a_typedef> * __factory_helper_t<CRT, API, Object::a_typede
   SgNamedType * parent,
   Args... args
 ) {
-  ROSE_ABORT(); // TODO
-  return nullptr;
+  std::string tpl_args_str = Rose::Builder::Templates::strTemplateArgumentList(args...);
+  // TODO lookup (sym,tpl_args_str) in cache
+
+  std::vector<SgTemplateArgument *> tpl_args;
+  Rose::Builder::Templates::fillTemplateArgumentList(tpl_args, args...);
+
+  SgType * base_type = SageBuilder::buildIntType(); // TODO instantiate base of typedef?
+
+  SgTemplateTypedefDeclaration * tpl_decl = isSgTemplateTypedefDeclaration(sym->get_declaration());
+  ROSE_ASSERT(tpl_decl);
+
+  SgScopeStatement * defn_scope = tpl_decl->get_scope();
+  SgName type_name(sym->get_name().getString());
+  SgTemplateInstantiationTypedefDeclaration * tddecl = SageBuilder::buildTemplateInstantiationTypedefDeclaration_nfi(
+    type_name, base_type, defn_scope, false, tpl_decl, tpl_args
+  );
+  ROSE_ASSERT(tddecl != nullptr);
+  defn_scope->append_statement(tddecl);
+
+  return tddecl;
 }
 
 template <typename CRT, typename API>
