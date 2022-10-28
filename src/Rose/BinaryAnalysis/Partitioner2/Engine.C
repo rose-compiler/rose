@@ -52,14 +52,8 @@ namespace Partitioner2 {
 //                                      Utility functions
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Engine::Engine()
-    : interp_(NULL), basicBlockWorkList_(BasicBlockWorkList::instance(this, settings_.partitioner.functionReturnAnalysisMaxSorts)),
-      progress_(Progress::instance()) {
-    init();
-}
-
 Engine::Engine(const Settings &settings)
-    : settings_(settings), interp_(NULL),
+    : settings_(settings), interp_(nullptr),
       basicBlockWorkList_(BasicBlockWorkList::instance(this, settings_.partitioner.functionReturnAnalysisMaxSorts)),
       progress_(Progress::instance()) {
     init();
@@ -69,8 +63,8 @@ Engine::~Engine() {}
 
 void
 Engine::init() {
-    ASSERT_require(map_ == NULL);
-    Rose::initialize(NULL);
+    ASSERT_require(map_ == nullptr);
+    Rose::initialize(nullptr);
     functionMatcherThunks_ = ThunkPredicates::functionMatcherThunks();
     functionSplittingThunks_ = ThunkPredicates::allThunks();
 #if ROSE_PARTITIONER_EXPENSIVE_CHECKS == 1
@@ -84,7 +78,7 @@ Engine::init() {
 
 void
 Engine::reset() {
-    interp_ = NULL;
+    interp_ = nullptr;
     binaryLoader_ = BinaryLoader::Ptr();
     disassembler_ = Disassembler::Base::Ptr();
     map_ = MemoryMap::Ptr();
@@ -1038,7 +1032,7 @@ Engine::isNonContainer(const std::string &name) {
 
 bool
 Engine::areContainersParsed() const {
-    return interp_ != NULL;
+    return interp_ != nullptr;
 }
 
 SgAsmInterpretation*
@@ -1049,7 +1043,7 @@ Engine::parseContainers(const std::string &fileName) {
 SgAsmInterpretation*
 Engine::parseContainers(const std::vector<std::string> &fileNames) {
     try {
-        interp_ = NULL;
+        interp_ = nullptr;
         map_ = MemoryMap::Ptr();
         checkSettings();
 
@@ -1199,7 +1193,7 @@ Engine::roseFrontendReplacement(const std::vector<boost::filesystem::path> &file
             ASSERT_not_null(format);
 
             // Find or create the interpretation that holds this family of headers.
-            SgAsmInterpretation *interpretation = NULL;
+            SgAsmInterpretation *interpretation = nullptr;
             for (size_t i = 0; i < interpretations.size() && !interpretation; ++i) {
                 if (interpretations[i].first == format->get_family())
                     interpretation = interpretations[i].second;
@@ -1244,7 +1238,7 @@ Engine::roseFrontendReplacement(const std::vector<boost::filesystem::path> &file
 
 bool
 Engine::areSpecimensLoaded() const {
-    return map_!=NULL && !map_->isEmpty();
+    return map_!=nullptr && !map_->isEmpty();
 }
 
 BinaryLoader::Ptr
@@ -1517,7 +1511,7 @@ Engine::obtainDisassembler(const Disassembler::Base::Ptr &hint) {
 
 void
 Engine::checkCreatePartitionerPrerequisites() const {
-    if (NULL == disassembler_ && settings_.disassembler.doDisassemble)
+    if (nullptr == disassembler_ && settings_.disassembler.doDisassemble)
         throw std::runtime_error("Engine::createBarePartitioner needs a prior disassembler");
     if (!map_ || map_->isEmpty())
         mlog[WARN] <<"Engine::createBarePartitioner: using an empty memory map\n";
@@ -1615,7 +1609,7 @@ Engine::createGenericPartitioner() {
     p.functionPrologueMatchers().push_back(ModulesX86::MatchEnterPrologue::instance());
     p.functionPrologueMatchers().push_back(ModulesPowerpc::MatchStwuPrologue::instance());
     if (settings_.partitioner.findingThunks)
-        p.functionPrologueMatchers().push_back(Modules::MatchThunk::instance(functionMatcherThunks()));
+        p.functionPrologueMatchers().push_back(Modules::MatchThunk::instance(functionMatcherThunks_));
     p.functionPrologueMatchers().push_back(ModulesX86::MatchRetPadPush::instance());
     p.functionPrologueMatchers().push_back(ModulesM68k::MatchLink::instance());
     p.functionPrologueMatchers().push_back(ModulesMips::MatchRetAddiu::instance());
@@ -1934,10 +1928,10 @@ Engine::loadPartitioner(const boost::filesystem::path &name, SerialIo::Format fm
 
     Partitioner partitioner = archive->loadPartitioner();
 
-    interp_ = NULL;
+    interp_ = nullptr;
     while (archive->objectType() == SerialIo::AST) {
         SgNode *ast = archive->loadAst();
-        if (NULL == interp_) {
+        if (nullptr == interp_) {
             std::vector<SgAsmInterpretation*> interps = SageInterface::querySubTree<SgAsmInterpretation>(ast);
             if (!interps.empty())
                 interp_ = interps[0];
@@ -2338,7 +2332,7 @@ Engine::makeFunctionFromInterFunctionCalls(Partitioner &partitioner, rose_addr_t
             // block we just discovered because it might not be contiguous in memory.  Watch out for overflow since it's
             // possible that startVa is already the last address in the address space (in which case we leave startVa as is and
             // return).
-            if (bb == NULL || bb->nInstructions() == 0) {
+            if (bb == nullptr || bb->nInstructions() == 0) {
                 if (startVa == MAX_ADDR)
                     return NO_FUNCTIONS;
                 ++startVa;
@@ -2686,9 +2680,9 @@ Engine::updateAnalysisResults(Partitioner &partitioner) {
 void
 Engine::disassembleForRoseFrontend(SgAsmInterpretation *interp) {
     ASSERT_not_null(interp);
-    ASSERT_require(interp->get_global_block() == NULL);
+    ASSERT_require(interp->get_global_block() == nullptr);
 
-    if (interp->get_map() == NULL) {
+    if (interp->get_map() == nullptr) {
         mlog[WARN] <<"no virtual memory to disassemble for";
         for (SgAsmGenericFile *file: interp->get_files())
             mlog[WARN] <<" \"" <<StringUtility::cEscape(file->get_name()) <<"\"";
@@ -2696,15 +2690,17 @@ Engine::disassembleForRoseFrontend(SgAsmInterpretation *interp) {
         return;
     }
 
-    Engine engine;
-    engine.memoryMap(interp->get_map()->shallowCopy()); // copied so we can make local changes
-    engine.adjustMemoryMap();
-    engine.interpretation(interp);
+    Engine *engine = Engine::instance();
 
-    if (SgAsmBlock *gblock = engine.buildAst()) {
+    engine->memoryMap(interp->get_map()->shallowCopy()); // copied so we can make local changes
+    engine->adjustMemoryMap();
+    engine->interpretation(interp);
+
+    if (SgAsmBlock *gblock = engine->buildAst()) {
         interp->set_global_block(gblock);
-        interp->set_map(engine.memoryMap());
+        interp->set_map(engine->memoryMap());
     }
+    delete engine;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2784,7 +2780,7 @@ Engine::BasicBlockFinalizer::fixFunctionCallEdges(const Args &args) {
 void
 Engine::BasicBlockFinalizer::addPossibleIndeterminateEdge(const Args &args) {
     BasicBlockSemantics sem = args.bblock->semantics();
-    if (sem.finalState() == NULL)
+    if (sem.finalState() == nullptr)
         return;
     ASSERT_not_null(sem.operators);
 
@@ -2824,7 +2820,7 @@ Engine::BasicBlockWorkList::operator()(bool chain, const AttachedBasicBlock &arg
         // maintain our own list instead.  The reason for depth-first discovery is that some analyses are recursive in nature
         // and we want to try to have children discovered and analyzed before we try to analyze the parent.  For instance,
         // may-return analysis for one vertex probably depends on the may-return analysis of its successors.
-        if (args.bblock == NULL) {
+        if (args.bblock == nullptr) {
             undiscovered_.pushBack(args.startVa);
             return chain;
         }
@@ -2836,7 +2832,7 @@ Engine::BasicBlockWorkList::operator()(bool chain, const AttachedBasicBlock &arg
         if (p->basicBlockIsFunctionCall(args.bblock)) {
             ControlFlowGraph::ConstVertexIterator placeholder = p->findPlaceholder(args.startVa);
             boost::logic::tribool mayReturn;
-            switch (engine_->functionReturnAnalysis()) {
+            switch (engine_->settings_.partitioner.functionReturnAnalysis) {
                 case MAYRETURN_ALWAYS_YES:
                     mayReturn = true;
                     break;
@@ -3209,19 +3205,6 @@ Engine::pythonParseSingle(const std::string &specimen, const std::string &purpos
 }
 
 #endif
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Deprecated functions
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void
-Engine::namingConstants(bool b) {
-    if (b) {
-        settings_.partitioner.namingConstants = AddressInterval::whole();
-    } else {
-        settings_.partitioner.namingConstants = AddressInterval();
-    }
-}
 
 } // namespace
 } // namespace

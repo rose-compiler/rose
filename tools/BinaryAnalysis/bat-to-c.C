@@ -42,17 +42,19 @@ main(int argc, char *argv[]) {
     Bat::registerSelfTests();
 
     // Parse the command-line switches
-    P2::Engine engine;
     Settings settings;
-    std::vector<std::string> args = parseCommandLine(argc, argv, engine, settings);
+    P2::Engine *engine = P2::Engine::instance();
+    std::vector<std::string> args = parseCommandLine(argc, argv, *engine, settings);
     if (args.empty()) {
         mlog[FATAL] <<"no binary specimen specified; see --help\n";
         exit(1);
     }
 
     // Parse the binary specimen. We're not actually adding it to the AST.
-    P2::Partitioner binary = engine.partition(args);
+    P2::Partitioner binary = engine->partition(args);
 
     // Process the binary to add its instructions to the source template
     BinaryToSource(settings.generator).generateSource(binary, std::cout);
+
+    delete engine;
 }

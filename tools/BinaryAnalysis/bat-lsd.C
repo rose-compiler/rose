@@ -72,9 +72,9 @@ main(int argc, char *argv[]) {
     Bat::registerSelfTests();
 
     Settings settings;
-    P2::Engine engine;
+    P2::Engine *engine = P2::Engine::instance();
     boost::filesystem::path inputFileName = parseCommandLine(argc, argv, settings);
-    P2::Partitioner partitioner = engine.loadPartitioner(inputFileName, format);
+    P2::Partitioner partitioner = engine->loadPartitioner(inputFileName, format);
 
     P2::AddressUsers allUsers = partitioner.aum().overlapping(partitioner.aum().hull());
     for (const P2::AddressUser &user: allUsers.addressUsers()) {
@@ -113,4 +113,5 @@ main(int argc, char *argv[]) {
             }
         }
     }
+    delete engine;
 }

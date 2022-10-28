@@ -22,16 +22,17 @@ int
 main(int argc, char *argv[])
 {
     ROSE_INITIALIZE;
-    P2::Engine engine;
-    engine.doingPostAnalysis(false);                    // not needed for this tool, and faster without
-    engine.namingSystemCalls(false);                    // for consistent results w.r.t. the answer file since the system...
-    engine.systemCallHeader("/dev/null");               // ...call mapping comes from run-time files.
-    std::vector<std::string> specimen = engine.parseCommandLine(argc, argv, programPurpose, programDescription).unreachedArgs();
-    P2::Partitioner partitioner = engine.partition(specimen);
+    P2::Engine *engine = P2::Engine::instance();
+    P2::Engine::Settings &settings = engine->settings();
+    settings.partitioner.doingPostAnalysis = false;      // not needed for this tool, and faster without
+    settings.partitioner.namingSyscalls = false;         // for consistent results w.r.t. the answer file since the system...
+    settings.partitioner.syscallHeader = "/dev/null";    // ...call mapping comes from run-time files.
+    std::vector<std::string> specimen = engine->parseCommandLine(argc, argv, programPurpose, programDescription).unreachedArgs();
+    P2::Partitioner partitioner = engine->partition(specimen);
     //! [init]
 
     //! [iterate]
-    BOOST_FOREACH (P2::Function::Ptr function, partitioner.functions()) {
+    for (P2::Function::Ptr function : partitioner.functions()) {
         std::cout <<"CFG dominators for function " <<Rose::StringUtility::addrToString(function->address()) <<":\n"; // or function->printableName()
         //! [iterate]
 
@@ -71,4 +72,6 @@ main(int argc, char *argv[])
         }
         //! [results]
     }
+
+    delete engine;
 }

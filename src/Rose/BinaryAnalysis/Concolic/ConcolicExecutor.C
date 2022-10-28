@@ -83,11 +83,11 @@ ConcolicExecutor::partition(const Specimen::Ptr &specimen) {
     SpecimenId specimenId = database()->id(specimen, Update::NO);
     ASSERT_require2(specimenId, "specimen must be in the database");
 
-    P2::Engine engine;
-    engine.settings().engine = settings_.partitionerEngine;
-    engine.settings().loader = settings_.loader;
-    engine.settings().disassembler = settings_.disassembler;
-    engine.settings().partitioner = settings_.partitioner;
+    P2::Engine *engine = P2::Engine::instance();
+    engine->settings().engine = settings_.partitionerEngine;
+    engine->settings().loader = settings_.loader;
+    engine->settings().disassembler = settings_.disassembler;
+    engine->settings().partitioner = settings_.partitioner;
 
     // Build the P2::Partitioner object for the specimen
     P2::Partitioner partitioner;
@@ -102,17 +102,18 @@ ConcolicExecutor::partition(const Specimen::Ptr &specimen) {
         boost::filesystem::permissions(specimenFileName, boost::filesystem::owner_all);
 
         // Use the "run:" scheme to load the simulated virtual memory in order to get all the shared libraries.
-        partitioner = engine.partition("run:replace:" + specimenFileName.string());
+        partitioner = engine->partition("run:replace:" + specimenFileName.string());
 
         // Cache the results in the database.
         boost::filesystem::path rbaFileName = tempDir.name() / "specimen.rba";
-        engine.savePartitioner(partitioner, rbaFileName);
+        engine->savePartitioner(partitioner, rbaFileName);
         database()->saveRbaFile(rbaFileName, specimenId);
     } else {
         Sawyer::FileSystem::TemporaryFile rbaFile;
         database()->extractRbaFile(rbaFile.name(), specimenId);
-        partitioner = engine.loadPartitioner(rbaFile.name());
+        partitioner = engine->loadPartitioner(rbaFile.name());
     }
+    delete engine;
 
     return boost::move(partitioner);
 }

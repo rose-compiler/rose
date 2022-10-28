@@ -281,10 +281,10 @@ int main(int argc, char *argv[]) {
 
     // Get, parse, and load the specimen.
     mlog[INFO] <<"parsing container\n";
-    P2::Engine engine;
-    std::vector<std::string> specimenName = engine.parseCommandLine(argc, argv, purpose, description).unreachedArgs();
-    MemoryMap::Ptr memory = engine.loadSpecimens(specimenName);
-    Disassembler::Base::Ptr decoder = engine.obtainDisassembler();
+    P2::Engine *engine = P2::Engine::instance();
+    std::vector<std::string> specimenName = engine->parseCommandLine(argc, argv, purpose, description).unreachedArgs();
+    MemoryMap::Ptr memory = engine->loadSpecimens(specimenName);
+    Disassembler::Base::Ptr decoder = engine->obtainDisassembler();
 
     // Create the parallel partitioner
     PP::Settings ppSettings;
@@ -296,13 +296,13 @@ int main(int argc, char *argv[]) {
 
 #if 1 // [Robb Matzke 2020-07-30]
     mlog[INFO] <<"searching for starting points (serial)\n";
-    P2::Partitioner p = engine.createPartitioner();
-    engine.runPartitionerInit(p);
+    P2::Partitioner p = engine->createPartitioner();
+    engine->runPartitionerInit(p);
     initializeParallelPartitioner(pp, p);
 #elif 1
     mlog[INFO] <<"adding memory starting points\n";
     initializeParallelPartitioner(pp);
-    P2::Partitioner p = engine.createPartitioner();
+    P2::Partitioner p = engine->createPartitioner();
 #else
     mlog[INFO] <<"reading start points from standard input";
     initializeParallelPartitioner(pp, std::cin);
@@ -347,18 +347,20 @@ int main(int argc, char *argv[]) {
     mlog[INFO] <<"; took " <<timer <<"\n";
     mlog[INFO] <<"generating output\n";
     //printInsnsFromBoth(pp, p);
-    engine.savePartitioner(p, "x.rba");
+    engine->savePartitioner(p, "x.rba");
 
 #else
     mlog[INFO] <<"running serial partitioner";
     timer.restart();
-    engine.doingPostAnalysis(false);
-    P2::Partitioner p2 = engine.partition(specimenName);
+    engine->doingPostAnalysis(false);
+    P2::Partitioner p2 = engine->partition(specimenName);
     mlog[INFO] <<"; took " <<timer <<"\n";
 
     mlog[INFO] <<"generating output\n";
     printInsnsFromBoth(pp, p2);
 #endif
+
+    delete engine;
 }
 
 #else

@@ -255,15 +255,15 @@ main(int argc, char *argv[]) {
     properties.define(new InsnCountProperty);
     properties.define(new IsaNameProperty);
 
-    P2::Engine engine;
-    std::vector<std::string> args = parseCommandLine(argc, argv, engine, properties);
+    P2::Engine *engine = P2::Engine::instance();
+    std::vector<std::string> args = parseCommandLine(argc, argv, *engine, properties);
     boost::filesystem::path inputFileName = args[0];
     args.erase(args.begin());
     if (!properties.check(args, mlog[FATAL]))
         exit(1);
     size_t showAllProperties = std::count(args.begin(), args.end(), "all");
 
-    P2::Partitioner partitioner = engine.loadPartitioner(inputFileName, stateFormat);
+    P2::Partitioner partitioner = engine->loadPartitioner(inputFileName, stateFormat);
 
     if (showAllProperties) {
         properties.evalAll(partitioner);
@@ -271,6 +271,7 @@ main(int argc, char *argv[]) {
         for (const std::string &property: args)
             properties.eval(property, partitioner);
     }
+    delete engine;
 
     return properties.nErrors() > 0;
 }
