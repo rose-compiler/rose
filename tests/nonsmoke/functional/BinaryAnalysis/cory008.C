@@ -88,12 +88,14 @@ printIntegersByHeading(const IntegersByHeading &ibh) {
 
 int
 main(int argc, char *argv[]) {
-    SgAsmBlock *gblock = P2::Engine().frontend(argc, argv, purpose, description);
+    P2::Engine *engine = P2::Engine::instance();
+    SgAsmBlock *gblock = engine->frontend(argc, argv, purpose, description);
     GatherIntegers gatherer;
     gatherer.traverse(gblock, preorder);
     std::pair<size_t, size_t> counts = printIntegersByHeading(gatherer.integers);
     std::cout <<"Number of SgAsmIntegerValueExpression nodes: " <<counts.first <<"\n";
     std::cout <<"Number of such nodes having a base object:   " <<counts.second <<"\n";
+    delete engine;
 }
 
 #endif

@@ -105,9 +105,9 @@ main(int argc, char *argv[]) {
         std::cerr <<"test is being skipped\n";
         return 0; // lack of a disassembler is not a test failure
     }
-    P2::Engine engine;
-    engine.settings().disassembler.isaName = settings.isa;
-    P2::Partitioner partitioner = engine.createPartitioner();
+    P2::Engine *engine = P2::Engine::instance();
+    engine->settings().disassembler.isaName = settings.isa;
+    P2::Partitioner partitioner = engine->createPartitioner();
     Disassembler::Base::Ptr disassembler = partitioner.instructionProvider().disassembler();
     ASSERT_not_null(disassembler);
 
@@ -184,4 +184,6 @@ main(int argc, char *argv[]) {
     std::cout <<"unknown instructions:   " <<nUnknown <<"\n";
     std::cout <<"disassembly exceptions: " <<nDisExceptions <<"\n";
     std::cout <<"semantic exceptions:    " <<nSemExceptions <<"\n";
+
+    delete engine;
 }

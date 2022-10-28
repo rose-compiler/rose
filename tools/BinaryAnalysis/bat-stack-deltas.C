@@ -144,8 +144,8 @@ main(int argc, char *argv[]) {
 
     Settings settings;
     boost::filesystem::path inputFileName = parseCommandLine(argc, argv, settings);
-    P2::Engine engine;
-    P2::Partitioner partitioner = engine.loadPartitioner(inputFileName, settings.stateFormat);
+    P2::Engine *engine = P2::Engine::instance();
+    P2::Partitioner partitioner = engine->loadPartitioner(inputFileName, settings.stateFormat);
 
     // Accumulate deltas in a map
     Sawyer::Stopwatch timer;
@@ -192,4 +192,6 @@ main(int argc, char *argv[]) {
             std::cout <<"nan\n";
         }
     }
+
+    delete engine;
 }

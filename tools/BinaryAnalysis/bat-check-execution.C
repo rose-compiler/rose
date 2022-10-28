@@ -184,9 +184,9 @@ main(int argc, char *argv[]) {
     Sawyer::ProgressBarSettings::minimumUpdateInterval(0.2); // more fluid spinner
 
     // Parse command-line
-    P2::Engine engine;
     Settings settings;
-    std::vector<std::string> args = parseCommandLine(argc, argv, engine, settings);
+    P2::Engine *engine = P2::Engine::instance();
+    std::vector<std::string> args = parseCommandLine(argc, argv, *engine, settings);
     ASSERT_always_require2(args.size() >= 2, "incorrect usage; see --help");
 
     // Parse file containing instruction addresses
@@ -207,7 +207,7 @@ main(int argc, char *argv[]) {
     // Get memory map.
     MemoryMap::Ptr map;
     if (MAP_ROSE==settings.mapSource) {
-        map = engine.loadSpecimens(specimen.program().string());
+        map = engine->loadSpecimens(specimen.program().string());
     } else {
         map = MemoryMap::instance();
         map->insertProcess(pid, MemoryMap::Attach::NO);
@@ -260,6 +260,8 @@ main(int argc, char *argv[]) {
                 std::cout <<"    " <<addrToString(addrCount.key()) <<"\t" <<addrCount.value() <<"\n";
         }
     }
+
+    delete engine;
 }
 
 #else

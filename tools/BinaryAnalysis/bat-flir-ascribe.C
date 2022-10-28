@@ -124,12 +124,12 @@ main(int argc, char *argv[]) {
 
     // Command-line parsing
     Settings settings;
-    P2::Engine engine;
+    P2::Engine *engine = P2::Engine::instance();
     std::vector<std::string> args = parseCommandLine(argc, argv, settings);
     ASSERT_require(args.size() >= 2);
     std::string rbaFileName = args.front();
     args.erase(args.begin(), args.begin()+1);
-    P2::Partitioner partitioner = engine.loadPartitioner(rbaFileName, settings.stateFormat);
+    P2::Partitioner partitioner = engine->loadPartitioner(rbaFileName, settings.stateFormat);
 
     // Match each function against the databases. It's fastest to open each database just once.
     SAWYER_THREAD_TRAITS::Mutex resultMutex;            // guards 'functions' and 'libraries' as they're being initialized
@@ -182,6 +182,8 @@ main(int argc, char *argv[]) {
                       <<" arch \"" <<StringUtility::cEscape(pair.first->architecture()) <<"\"\n";
         }
     }
+
+    delete engine;
 }
 
 #else // LibraryIdentification is not enable...

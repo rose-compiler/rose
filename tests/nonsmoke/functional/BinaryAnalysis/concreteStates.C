@@ -32,13 +32,13 @@ int main() {
     ROSE_INITIALIZE;
 
     // Disassemble a small example specimen
-    P2::Engine engine;
-    engine.isaName("i386");
-    engine.functionStartingVas().push_back(0x10000000);
-    P2::Partitioner partitioner = engine.partition("data:0x10000000=rx::"      // i386 assembly:
-                                                   "0xb8 0 0 0x10 0 "          //   mov eax, 0x100000
-                                                   "0xbb 0xef 0xbe 0xad 0xde " //   mov ebx, 0xdeadbeef
-                                                   "0x89 0x18");               //   mov dword ptr [eax], ebx
+    P2::Engine *engine = P2::Engine::instance();
+    engine->settings().disassembler.isaName = "i386";
+    engine->settings().partitioner.functionStartingVas.push_back(0x10000000);
+    P2::Partitioner partitioner = engine->partition("data:0x10000000=rx::"      // i386 assembly:
+                                                    "0xb8 0 0 0x10 0 "          //   mov eax, 0x100000
+                                                    "0xbb 0xef 0xbe 0xad 0xde " //   mov ebx, 0xdeadbeef
+                                                    "0x89 0x18");               //   mov dword ptr [eax], ebx
 
     // Create the instruction semantics and give it an initial MemoryMap containing the instructions we parsed above
     auto ops = IS::ConcreteSemantics::RiscOperators::instanceFromRegisters(partitioner.instructionProvider().registerDictionary());
@@ -73,6 +73,7 @@ int main() {
                            "initial saved memory was modified by executing instructions");
     ASSERT_always_require2(memBeforeRunning.str() != memCurrent.str(),
                            "executing instructions should have changed the current memory state");
+    delete engine;
 }
 
 #else

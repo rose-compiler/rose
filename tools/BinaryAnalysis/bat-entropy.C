@@ -303,10 +303,10 @@ main(int argc, char *argv[]) {
     Bat::checkRoseVersionNumber(MINIMUM_ROSE_LIBRARY_VERSION, mlog[FATAL]);
     Bat::registerSelfTests();
 
-    P2::Engine engine;
     Settings settings;
-    boost::filesystem::path inputFileName = parseCommandLine(argc, argv, engine, settings);
-    P2::Partitioner partitioner = engine.loadPartitioner(inputFileName, settings.stateFormat);
+    P2::Engine *engine = P2::Engine::instance();
+    boost::filesystem::path inputFileName = parseCommandLine(argc, argv, *engine, settings);
+    P2::Partitioner partitioner = engine->loadPartitioner(inputFileName, settings.stateFormat);
     MemoryMap::Ptr map = partitioner.memoryMap();
     ASSERT_not_null(map);
 
@@ -398,4 +398,6 @@ main(int argc, char *argv[]) {
             break;                                      // overflow
         va = nextVa;
     }
+
+    delete engine;
 }

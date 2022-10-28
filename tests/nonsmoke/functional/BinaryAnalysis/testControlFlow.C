@@ -25,9 +25,10 @@ main(int argc, char *argv[]) {
     --argc;
 
     /* Parse the binary file */
-    P2::Engine engine;
-    std::vector<std::string> specimen = engine.parseCommandLine(argc, argv, purpose, description).unreachedArgs();
-    P2::Partitioner partitioner = engine.partition(specimen);
+    P2::Engine *engine = P2::Engine::instance();
+    std::vector<std::string> specimen = engine->parseCommandLine(argc, argv, purpose, description).unreachedArgs();
+    P2::Partitioner partitioner = engine->partition(specimen);
+    delete engine;
 
     /* Calculate plain old CFG. */
     if (algorithm=="A") {

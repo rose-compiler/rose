@@ -28,7 +28,7 @@ checkAum(const P2::Partitioner &p, const P2::DataBlock::Ptr &db, const std::set<
         P2::AddressUsers users = p.aum().spanning(db->address() + i);
         std::set<P2::BasicBlock::Ptr> bblocks = owners;
         size_t nDataBlocksFound = 0;
-        BOOST_FOREACH (const P2::AddressUser &user, users.addressUsers()) {
+        for (const P2::AddressUser &user : users.addressUsers()) {
             if (user.dataBlock() == db) {
                 ++nDataBlocksFound;
                 ASSERT_always_require(nDataBlocksFound == 1);
@@ -41,7 +41,7 @@ checkAum(const P2::Partitioner &p, const P2::DataBlock::Ptr &db, const std::set<
                     bblocks.erase(found);
                 }
             }
-            BOOST_FOREACH (P2::BasicBlock::Ptr bb, bblocks) {
+            for (P2::BasicBlock::Ptr bb : bblocks) {
                 ASSERT_not_reachable("at " + StringUtility::addrToString(db->address() + i) +
                                      " " + db->printableName() + " was expected be owned by " + bb->printableName());
             }
@@ -56,11 +56,11 @@ checkAum(const P2::Partitioner &p, const P2::DataBlock::Ptr &db, std::set<P2::Fu
         P2::AddressUsers users = p.aum().spanning(db->address() + i);
         std::set<P2::Function::Ptr> functions = owners;
         size_t nDataBlocksFound = 0;
-        BOOST_FOREACH (const P2::AddressUser &user, users.addressUsers()) {
+        for (const P2::AddressUser &user : users.addressUsers()) {
             if (user.dataBlock() == db) {
                 ++nDataBlocksFound;
                 ASSERT_always_require(nDataBlocksFound == 1);
-                BOOST_FOREACH (P2::Function::Ptr owningFunction, db->attachedFunctionOwners()) {
+                for (P2::Function::Ptr owningFunction : db->attachedFunctionOwners()) {
                     std::set<P2::Function::Ptr>::iterator found = functions.find(owningFunction);
                     ASSERT_always_require2(found != functions.end(),
                                            "at " + StringUtility::addrToString(db->address() + i) +
@@ -70,7 +70,7 @@ checkAum(const P2::Partitioner &p, const P2::DataBlock::Ptr &db, std::set<P2::Fu
                 }
             }
         }
-        BOOST_FOREACH (P2::Function::Ptr function, functions) {
+        for (P2::Function::Ptr function : functions) {
             ASSERT_not_reachable("at " + StringUtility::addrToString(db->address() + i) +
                                  " " + db->printableName() +
                                  " was expected be owned by " + function->printableName());
@@ -93,7 +93,7 @@ testNoOwner() {
     ASSERT_always_require(db->nAttachedOwners() == 0);
     ASSERT_always_require(!db->isFrozen());
     p.checkConsistency();
-    ASSERT_always_require(p.aum().dataBlockExists(db) == NULL);
+    ASSERT_always_require(p.aum().dataBlockExists(db) == nullptr);
 
     size_t n = p.nDataBlocks();
     p.attachDataBlock(db);
@@ -108,7 +108,7 @@ testNoOwner() {
     ASSERT_always_require(!db->isFrozen());
     ASSERT_always_require(p.nDataBlocks() == n);
     p.checkConsistency();
-    ASSERT_always_require(p.aum().dataBlockExists(db) == NULL);
+    ASSERT_always_require(p.aum().dataBlockExists(db) == nullptr);
 }
 
 // Attach two data blocks having the same address and size to the partitioner without any owning basic block or function. The
@@ -153,7 +153,7 @@ static void
 testDetachedBasicBlock(P2::Partitioner &p) {
     // Find any old basic block and detach it for this test
     P2::BasicBlock::Ptr bb;
-    BOOST_FOREACH (const P2::ControlFlowGraph::Vertex &vertex, p.cfg().vertices()) {
+    for (const P2::ControlFlowGraph::Vertex &vertex : p.cfg().vertices()) {
         if (vertex.value().type() == P2::V_BASIC_BLOCK) {
             bb = vertex.value().bblock();
             break;
@@ -176,7 +176,7 @@ testDetachedBasicBlock(P2::Partitioner &p) {
     ASSERT_always_require(bb->nDataBlocks() == n2 + 1);
     ASSERT_always_require(p.nDataBlocks() == n1);
     p.checkConsistency();
-    ASSERT_always_require(p.aum().dataBlockExists(db1) == NULL);
+    ASSERT_always_require(p.aum().dataBlockExists(db1) == nullptr);
 
     // Attach a second data block to the detached basic block.
     P2::DataBlock::Ptr db2 = createUniqueDataBlock(8);
@@ -187,8 +187,8 @@ testDetachedBasicBlock(P2::Partitioner &p) {
     ASSERT_always_require(bb->nDataBlocks() == n2 + 2);
     ASSERT_always_require(p.nDataBlocks() == n1);
     p.checkConsistency();
-    ASSERT_always_require(p.aum().dataBlockExists(db1) == NULL);
-    ASSERT_always_require(p.aum().dataBlockExists(db2) == NULL);
+    ASSERT_always_require(p.aum().dataBlockExists(db1) == nullptr);
+    ASSERT_always_require(p.aum().dataBlockExists(db2) == nullptr);
 
     // Attach a third data block having the same address and size as the first block. This should be a no-op.
     P2::DataBlock::Ptr db3 = P2::DataBlock::instanceBytes(db1->address(), db1->size());
@@ -199,31 +199,31 @@ testDetachedBasicBlock(P2::Partitioner &p) {
     ASSERT_always_require(bb->nDataBlocks() == n2 + 2);
     ASSERT_always_require(p.nDataBlocks() == n1);
     p.checkConsistency();
-    ASSERT_always_require(p.aum().dataBlockExists(db1) == NULL);
-    ASSERT_always_require(p.aum().dataBlockExists(db2) == NULL);
-    ASSERT_always_require(p.aum().dataBlockExists(db3) == NULL);
+    ASSERT_always_require(p.aum().dataBlockExists(db1) == nullptr);
+    ASSERT_always_require(p.aum().dataBlockExists(db2) == nullptr);
+    ASSERT_always_require(p.aum().dataBlockExists(db3) == nullptr);
 
     // Detach the data blocks from the basic block.
     db3b = bb->eraseDataBlock(db3);
     ASSERT_require(db3b == db1);                        // since db3 isn't owned by the basic block
     db1b = bb->eraseDataBlock(db1);
-    ASSERT_always_require(NULL == db1b);                // already erased
+    ASSERT_always_require(nullptr == db1b);                // already erased
     db2b = bb->eraseDataBlock(db2);
     ASSERT_always_require(db2b == db2);
     ASSERT_always_require(bb->nDataBlocks() == n2);
     p.checkConsistency();
-    ASSERT_always_require(p.aum().dataBlockExists(db1) == NULL);
-    ASSERT_always_require(p.aum().dataBlockExists(db2) == NULL);
-    ASSERT_always_require(p.aum().dataBlockExists(db3) == NULL);
+    ASSERT_always_require(p.aum().dataBlockExists(db1) == nullptr);
+    ASSERT_always_require(p.aum().dataBlockExists(db2) == nullptr);
+    ASSERT_always_require(p.aum().dataBlockExists(db3) == nullptr);
 
     // Re-attach the basic block
     p.attachBasicBlock(bb);
     ASSERT_always_require(bb->nDataBlocks() == n2);
     ASSERT_always_require(p.nDataBlocks() == n1);
     p.checkConsistency();
-    ASSERT_always_require(p.aum().dataBlockExists(db1) == NULL);
-    ASSERT_always_require(p.aum().dataBlockExists(db2) == NULL);
-    ASSERT_always_require(p.aum().dataBlockExists(db3) == NULL);
+    ASSERT_always_require(p.aum().dataBlockExists(db1) == nullptr);
+    ASSERT_always_require(p.aum().dataBlockExists(db2) == nullptr);
+    ASSERT_always_require(p.aum().dataBlockExists(db3) == nullptr);
 }
 
 // Attach and detach data blocks to a detached function, including attempting to attach a data block that has the same address
@@ -250,7 +250,7 @@ testDetachedFunction(P2::Partitioner &p) {
     ASSERT_always_require(f->nDataBlocks() == n2 + 1);
     ASSERT_always_require(p.nDataBlocks() == n1);
     p.checkConsistency();
-    ASSERT_always_require(p.aum().dataBlockExists(db1) == NULL);
+    ASSERT_always_require(p.aum().dataBlockExists(db1) == nullptr);
 
     // Attach a second data block to the detached function.
     P2::DataBlock::Ptr db2 = createUniqueDataBlock(8);
@@ -261,8 +261,8 @@ testDetachedFunction(P2::Partitioner &p) {
     ASSERT_always_require(f->nDataBlocks() == n2 + 2);
     ASSERT_always_require(p.nDataBlocks() == n1);
     p.checkConsistency();
-    ASSERT_always_require(p.aum().dataBlockExists(db1) == NULL);
-    ASSERT_always_require(p.aum().dataBlockExists(db2) == NULL);
+    ASSERT_always_require(p.aum().dataBlockExists(db1) == nullptr);
+    ASSERT_always_require(p.aum().dataBlockExists(db2) == nullptr);
 
     // Attach a third data block having the same address and size as the first block. This should be a no-op.
     P2::DataBlock::Ptr db3 = P2::DataBlock::instanceBytes(db1->address(), db1->size());
@@ -273,31 +273,31 @@ testDetachedFunction(P2::Partitioner &p) {
     ASSERT_always_require(f->nDataBlocks() == n2 + 2);
     ASSERT_always_require(p.nDataBlocks() == n1);
     p.checkConsistency();
-    ASSERT_always_require(p.aum().dataBlockExists(db1) == NULL);
-    ASSERT_always_require(p.aum().dataBlockExists(db2) == NULL);
-    ASSERT_always_require(p.aum().dataBlockExists(db3) == NULL);
+    ASSERT_always_require(p.aum().dataBlockExists(db1) == nullptr);
+    ASSERT_always_require(p.aum().dataBlockExists(db2) == nullptr);
+    ASSERT_always_require(p.aum().dataBlockExists(db3) == nullptr);
 
     // Detach the data blocks from the function
     db3b = f->eraseDataBlock(db3);
     ASSERT_require(db3b == db1);                        // since db3 isn't owned by the basic block
     db1b = f->eraseDataBlock(db1);
-    ASSERT_always_require(NULL == db1b);                // already erased
+    ASSERT_always_require(nullptr == db1b);                // already erased
     db2b = f->eraseDataBlock(db2);
     ASSERT_always_require(db2b == db2);
     ASSERT_always_require(f->nDataBlocks() == n2);
     p.checkConsistency();
-    ASSERT_always_require(p.aum().dataBlockExists(db1) == NULL);
-    ASSERT_always_require(p.aum().dataBlockExists(db2) == NULL);
-    ASSERT_always_require(p.aum().dataBlockExists(db3) == NULL);
+    ASSERT_always_require(p.aum().dataBlockExists(db1) == nullptr);
+    ASSERT_always_require(p.aum().dataBlockExists(db2) == nullptr);
+    ASSERT_always_require(p.aum().dataBlockExists(db3) == nullptr);
 
     // Re-attach the function
     p.attachFunction(f);
     ASSERT_always_require(f->nDataBlocks() == n2);
     ASSERT_always_require(p.nDataBlocks() == n1);
     p.checkConsistency();
-    ASSERT_always_require(p.aum().dataBlockExists(db1) == NULL);
-    ASSERT_always_require(p.aum().dataBlockExists(db2) == NULL);
-    ASSERT_always_require(p.aum().dataBlockExists(db3) == NULL);
+    ASSERT_always_require(p.aum().dataBlockExists(db1) == nullptr);
+    ASSERT_always_require(p.aum().dataBlockExists(db2) == nullptr);
+    ASSERT_always_require(p.aum().dataBlockExists(db3) == nullptr);
 }
 
 // Attach data blocks to a basic block that's attached to the CFG/AUM.
@@ -307,7 +307,7 @@ testAttachedBasicBlock(P2::Partitioner &p) {
 
     // Find any old basic block
     P2::BasicBlock::Ptr bb;
-    BOOST_FOREACH (const P2::ControlFlowGraph::Vertex &vertex, p.cfg().vertices()) {
+    for (const P2::ControlFlowGraph::Vertex &vertex : p.cfg().vertices()) {
         if (vertex.value().type() == P2::V_BASIC_BLOCK) {
             bb = vertex.value().bblock();
             break;
@@ -324,7 +324,7 @@ testAttachedBasicBlock(P2::Partitioner &p) {
     ASSERT_always_require(!db1->isFrozen());
     ASSERT_always_require(!bb->dataBlockExists(db1));
     p.checkConsistency();
-    ASSERT_always_require(p.aum().dataBlockExists(db1) == NULL);
+    ASSERT_always_require(p.aum().dataBlockExists(db1) == nullptr);
 
     // Attach data block to an attached basic block
     size_t n1 = p.nDataBlocks();
@@ -358,7 +358,7 @@ testAttachedBasicBlock(P2::Partitioner &p) {
     ASSERT_always_require(db1->nAttachedOwners() == 0);
     ASSERT_always_require(p.nDataBlocks() == n1);
     p.checkConsistency();
-    ASSERT_always_require(p.aum().dataBlockExists(db1) == NULL);
+    ASSERT_always_require(p.aum().dataBlockExists(db1) == nullptr);
 
     // Reattaching the basic block reattaches the data block
     p.attachBasicBlock(bb);
@@ -397,16 +397,16 @@ testAttachedBasicBlock(P2::Partitioner &p) {
     ASSERT_always_require(db2b == db1);                 // actually removed db1
     ASSERT_always_require(bb->nDataBlocks() == n2);
     p.checkConsistency();
-    ASSERT_always_require(p.aum().dataBlockExists(db1) == NULL);
-    ASSERT_always_require(p.aum().dataBlockExists(db2) == NULL);
+    ASSERT_always_require(p.aum().dataBlockExists(db1) == nullptr);
+    ASSERT_always_require(p.aum().dataBlockExists(db2) == nullptr);
 
     p.attachBasicBlock(bb);
     ASSERT_always_require(bb->nDataBlocks() == n2);
     ASSERT_always_require(p.nDataBlocks() == n1);
     ASSERT_always_require(!db1->isFrozen());
     ASSERT_always_require(db1->nAttachedOwners() == 0);
-    ASSERT_always_require(p.aum().dataBlockExists(db1) == NULL);
-    ASSERT_always_require(p.aum().dataBlockExists(db2) == NULL);
+    ASSERT_always_require(p.aum().dataBlockExists(db1) == nullptr);
+    ASSERT_always_require(p.aum().dataBlockExists(db2) == nullptr);
     p.checkConsistency();
 }
 
@@ -429,7 +429,7 @@ testAttachedFunction(P2::Partitioner &p) {
     ASSERT_always_require(!db1->isFrozen());
     ASSERT_always_require(!f->dataBlockExists(db1));
     p.checkConsistency();
-    ASSERT_always_require(p.aum().dataBlockExists(db1) == NULL);
+    ASSERT_always_require(p.aum().dataBlockExists(db1) == nullptr);
 
     // Attach data block to an attached function
     size_t n1 = p.nDataBlocks();
@@ -472,7 +472,7 @@ testAttachedFunction(P2::Partitioner &p) {
     ASSERT_always_require(db1->nAttachedOwners() == 0);
     ASSERT_always_require(p.nDataBlocks() == n1);
     p.checkConsistency();
-    ASSERT_always_require(p.aum().dataBlockExists(db1) == NULL);
+    ASSERT_always_require(p.aum().dataBlockExists(db1) == nullptr);
 
     // Reattaching the function reattaches the data block
     p.attachFunction(f);
@@ -512,8 +512,8 @@ testAttachedFunction(P2::Partitioner &p) {
     owners.erase(f);
     ASSERT_always_require(db2b == db1);                 // actually removed db1
     ASSERT_always_require(f->nDataBlocks() == n2);
-    ASSERT_always_require(p.aum().dataBlockExists(db1) == NULL);
-    ASSERT_always_require(p.aum().dataBlockExists(db2) == NULL);
+    ASSERT_always_require(p.aum().dataBlockExists(db1) == nullptr);
+    ASSERT_always_require(p.aum().dataBlockExists(db2) == nullptr);
     p.checkConsistency();
 
     p.attachFunction(f);
@@ -522,8 +522,8 @@ testAttachedFunction(P2::Partitioner &p) {
     ASSERT_always_require(!db1->isFrozen());
     ASSERT_always_require(db1->nAttachedOwners() == 0);
     p.checkConsistency();
-    ASSERT_always_require(p.aum().dataBlockExists(db1) == NULL);
-    ASSERT_always_require(p.aum().dataBlockExists(db2) == NULL);
+    ASSERT_always_require(p.aum().dataBlockExists(db1) == nullptr);
+    ASSERT_always_require(p.aum().dataBlockExists(db2) == nullptr);
     checkAum(p, db1, owners);
 }
 
@@ -534,7 +534,7 @@ testTwoBasicBlocks(P2::Partitioner &p) {
 
     // Find any two basic block
     P2::BasicBlock::Ptr bb1, bb2;
-    BOOST_FOREACH (const P2::ControlFlowGraph::Vertex &vertex, p.cfg().vertices()) {
+    for (const P2::ControlFlowGraph::Vertex &vertex : p.cfg().vertices()) {
         if (vertex.value().type() == P2::V_BASIC_BLOCK) {
             if (!bb1) {
                 bb1 = vertex.value().bblock();
@@ -558,7 +558,7 @@ testTwoBasicBlocks(P2::Partitioner &p) {
     ASSERT_always_require(!bb1->dataBlockExists(db));
     ASSERT_always_require(!bb2->dataBlockExists(db));
     p.checkConsistency();
-    ASSERT_always_require(p.aum().dataBlockExists(db) == NULL);
+    ASSERT_always_require(p.aum().dataBlockExists(db) == nullptr);
 
     // Make the data block owned by both basic blocks
     p.attachDataBlockToBasicBlock(db, bb1);
@@ -600,7 +600,7 @@ testTwoBasicBlocks(P2::Partitioner &p) {
     ASSERT_always_require(!db->isFrozen());
     ASSERT_always_require(db->nAttachedOwners() == 0);
     p.checkConsistency();
-    ASSERT_always_require(p.aum().dataBlockExists(db) == NULL);
+    ASSERT_always_require(p.aum().dataBlockExists(db) == nullptr);
 
     // Reattaching a basic block reattaches the data block
     p.attachBasicBlock(bb1);
@@ -634,7 +634,7 @@ testTwoBasicBlocks(P2::Partitioner &p) {
     ASSERT_always_require(!db->isFrozen());
     ASSERT_always_require(db->nAttachedOwners() == 0);
     p.checkConsistency();
-    ASSERT_always_require(p.aum().dataBlockExists(db) == NULL);
+    ASSERT_always_require(p.aum().dataBlockExists(db) == nullptr);
 }
 
 // Attach same data block to two functions.
@@ -658,7 +658,7 @@ testTwoFunctions(P2::Partitioner &p) {
     ASSERT_always_require(!f1->dataBlockExists(db));
     ASSERT_always_require(!f2->dataBlockExists(db));
     p.checkConsistency();
-    ASSERT_always_require(p.aum().dataBlockExists(db) == NULL);
+    ASSERT_always_require(p.aum().dataBlockExists(db) == nullptr);
     
     // Make the data block owned by both functions
     p.attachDataBlockToFunction(db, f1);
@@ -700,7 +700,7 @@ testTwoFunctions(P2::Partitioner &p) {
     ASSERT_always_require(!db->isFrozen());
     ASSERT_always_require(db->nAttachedOwners() == 0);
     p.checkConsistency();
-    ASSERT_always_require(p.aum().dataBlockExists(db) == NULL);
+    ASSERT_always_require(p.aum().dataBlockExists(db) == nullptr);
 
     // Reattaching a function reattaches the data block
     p.attachFunction(f1);
@@ -734,7 +734,7 @@ testTwoFunctions(P2::Partitioner &p) {
     ASSERT_always_require(!db->isFrozen());
     ASSERT_always_require(db->nAttachedOwners() == 0);
     p.checkConsistency();
-    ASSERT_always_require(p.aum().dataBlockExists(db) == NULL);
+    ASSERT_always_require(p.aum().dataBlockExists(db) == nullptr);
 }
 
 // Attach same data block to both a basic block and a function
@@ -745,7 +745,7 @@ testBasicBlockFunction(P2::Partitioner &p) {
 
     // Find any basic block and function
     P2::BasicBlock::Ptr bb;
-    BOOST_FOREACH (const P2::ControlFlowGraph::Vertex &vertex, p.cfg().vertices()) {
+    for (const P2::ControlFlowGraph::Vertex &vertex : p.cfg().vertices()) {
         if (vertex.value().type() == P2::V_BASIC_BLOCK) {
             bb = vertex.value().bblock();
             break;
@@ -766,7 +766,7 @@ testBasicBlockFunction(P2::Partitioner &p) {
     ASSERT_always_require(!bb->dataBlockExists(db));
     ASSERT_always_require(!f->dataBlockExists(db));
     p.checkConsistency();
-    ASSERT_always_require(p.aum().dataBlockExists(db) == NULL);
+    ASSERT_always_require(p.aum().dataBlockExists(db) == nullptr);
     
     // Make the data block owned by the basic block and function
     p.attachDataBlockToBasicBlock(db, bb);
@@ -811,7 +811,7 @@ testBasicBlockFunction(P2::Partitioner &p) {
     ASSERT_always_require(!db->isFrozen());
     ASSERT_always_require(db->nAttachedOwners() == 0);
     p.checkConsistency();
-    ASSERT_always_require(p.aum().dataBlockExists(db) == NULL);
+    ASSERT_always_require(p.aum().dataBlockExists(db) == nullptr);
 
     // Reattaching an owner reattaches the data block
     p.attachBasicBlock(bb);
@@ -847,7 +847,7 @@ testBasicBlockFunction(P2::Partitioner &p) {
     ASSERT_always_require(!db->isFrozen());
     ASSERT_always_require(db->nAttachedOwners() == 0);
     p.checkConsistency();
-    ASSERT_always_require(p.aum().dataBlockExists(db) == NULL);
+    ASSERT_always_require(p.aum().dataBlockExists(db) == nullptr);
 }
 
 // Test that two data blocks with the same address and size are treated as a single data block.
@@ -868,7 +868,7 @@ testAliases(P2::Partitioner &p) {
     ASSERT_always_require(!db1->isFrozen());
     ASSERT_always_require(!f->dataBlockExists(db1));
     p.checkConsistency();
-    ASSERT_always_require(p.aum().dataBlockExists(db1) == NULL);
+    ASSERT_always_require(p.aum().dataBlockExists(db1) == nullptr);
 
     P2::DataBlock::Ptr db2 = P2::DataBlock::instanceBytes(db1->address(), db1->size());
     ASSERT_always_not_null(db2);
@@ -878,8 +878,8 @@ testAliases(P2::Partitioner &p) {
     ASSERT_always_require(!f->dataBlockExists(db2));
     ASSERT_always_require(db1 != db2);
     p.checkConsistency();
-    ASSERT_always_require(p.aum().dataBlockExists(db1) == NULL);
-    ASSERT_always_require(p.aum().dataBlockExists(db2) == NULL);
+    ASSERT_always_require(p.aum().dataBlockExists(db1) == nullptr);
+    ASSERT_always_require(p.aum().dataBlockExists(db2) == nullptr);
 
     // Make the first data block owned by the function
     p.attachDataBlockToFunction(db1, f);
@@ -918,8 +918,8 @@ testAliases(P2::Partitioner &p) {
     ASSERT_always_require(!db1->isFrozen());
     ASSERT_always_require(db1->nAttachedOwners() == 0);
     p.checkConsistency();
-    ASSERT_always_require(p.aum().dataBlockExists(db1) == NULL);
-    ASSERT_always_require(p.aum().dataBlockExists(db2) == NULL);
+    ASSERT_always_require(p.aum().dataBlockExists(db1) == nullptr);
+    ASSERT_always_require(p.aum().dataBlockExists(db2) == nullptr);
 }
 
 // Test that two basic blocks having two different data blocks both with the same address and size can be attached to the
@@ -931,7 +931,7 @@ testDelayedBasicBlock(P2::Partitioner &p) {
 
     // Find any two basic blocks
     P2::BasicBlock::Ptr bb1, bb2;
-    BOOST_FOREACH (const P2::ControlFlowGraph::Vertex &vertex, p.cfg().vertices()) {
+    for (const P2::ControlFlowGraph::Vertex &vertex : p.cfg().vertices()) {
         if (vertex.value().type() == P2::V_BASIC_BLOCK) {
             if (!bb1) {
                 bb1 = vertex.value().bblock();
@@ -998,8 +998,8 @@ testDelayedBasicBlock(P2::Partitioner &p) {
     ASSERT_always_require(!db1->isFrozen());
     ASSERT_always_require(!db2->isFrozen());
     p.checkConsistency();
-    ASSERT_always_require(p.aum().dataBlockExists(db1) == NULL);
-    ASSERT_always_require(p.aum().dataBlockExists(db2) == NULL);
+    ASSERT_always_require(p.aum().dataBlockExists(db1) == nullptr);
+    ASSERT_always_require(p.aum().dataBlockExists(db2) == nullptr);
 }
 
 // Test that two functions having two different data blocks both with the same address and size can be attached to the
@@ -1068,8 +1068,8 @@ testDelayedFunction(P2::Partitioner &p) {
     ASSERT_always_require(!db1->isFrozen());
     ASSERT_always_require(!db2->isFrozen());
     p.checkConsistency();
-    ASSERT_always_require(p.aum().dataBlockExists(db1) == NULL);
-    ASSERT_always_require(p.aum().dataBlockExists(db2) == NULL);
+    ASSERT_always_require(p.aum().dataBlockExists(db1) == nullptr);
+    ASSERT_always_require(p.aum().dataBlockExists(db2) == nullptr);
 }
 
 // Test partial data block overlaps
@@ -1381,7 +1381,7 @@ testPartialOverlaps(P2::Partitioner &p) {
     ASSERT_always_require(f1->dataBlockExists(mid2) == mid2);
     ASSERT_always_require(mid2->isFrozen());
     ASSERT_always_require(mid2->nAttachedOwners() == 1);
-    ASSERT_always_require(f1->dataBlockExists(mid3) == NULL);
+    ASSERT_always_require(f1->dataBlockExists(mid3) == nullptr);
     ASSERT_always_require(!mid3->isFrozen());
     ASSERT_always_require(mid3->nAttachedOwners() == 0);
     p.checkConsistency();
@@ -1392,7 +1392,7 @@ testPartialOverlaps(P2::Partitioner &p) {
     ASSERT_always_require(p.aum().dataBlockExists(left4) == left4);
     ASSERT_always_require(p.aum().dataBlockExists(mid1) == mid1);
     ASSERT_always_require(p.aum().dataBlockExists(mid2) == mid2);
-    ASSERT_always_require(p.aum().dataBlockExists(mid3) == NULL);
+    ASSERT_always_require(p.aum().dataBlockExists(mid3) == nullptr);
     checkAum(p, base, owners);
     checkAum(p, left1, owners);
     checkAum(p, left2, owners);
@@ -1430,10 +1430,10 @@ testPartialOverlaps(P2::Partitioner &p) {
     ASSERT_always_require(f1->dataBlockExists(mid1) == mid1);
     ASSERT_always_require(mid1->isFrozen());
     ASSERT_always_require(mid1->nAttachedOwners() == 1);
-    ASSERT_always_require(f1->dataBlockExists(mid2) == NULL);
+    ASSERT_always_require(f1->dataBlockExists(mid2) == nullptr);
     ASSERT_always_require(!mid2->isFrozen());
     ASSERT_always_require(mid2->nAttachedOwners() == 0);
-    ASSERT_always_require(f1->dataBlockExists(mid3) == NULL);
+    ASSERT_always_require(f1->dataBlockExists(mid3) == nullptr);
     ASSERT_always_require(!mid3->isFrozen());
     ASSERT_always_require(mid3->nAttachedOwners() == 0);
     p.checkConsistency();
@@ -1443,8 +1443,8 @@ testPartialOverlaps(P2::Partitioner &p) {
     ASSERT_always_require(p.aum().dataBlockExists(left3) == left3);
     ASSERT_always_require(p.aum().dataBlockExists(left4) == left4);
     ASSERT_always_require(p.aum().dataBlockExists(mid1) == mid1);
-    ASSERT_always_require(p.aum().dataBlockExists(mid2) == NULL);
-    ASSERT_always_require(p.aum().dataBlockExists(mid3) == NULL);
+    ASSERT_always_require(p.aum().dataBlockExists(mid2) == nullptr);
+    ASSERT_always_require(p.aum().dataBlockExists(mid3) == nullptr);
     checkAum(p, base, owners);
     checkAum(p, left1, owners);
     checkAum(p, left2, owners);
@@ -1478,13 +1478,13 @@ testPartialOverlaps(P2::Partitioner &p) {
     ASSERT_always_require(f1->dataBlockExists(left4) == left4);
     ASSERT_always_require(left4->isFrozen());
     ASSERT_always_require(left4->nAttachedOwners() == 1);
-    ASSERT_always_require(f1->dataBlockExists(mid1) == NULL);
+    ASSERT_always_require(f1->dataBlockExists(mid1) == nullptr);
     ASSERT_always_require(!mid1->isFrozen());
     ASSERT_always_require(mid1->nAttachedOwners() == 0);
-    ASSERT_always_require(f1->dataBlockExists(mid2) == NULL);
+    ASSERT_always_require(f1->dataBlockExists(mid2) == nullptr);
     ASSERT_always_require(!mid2->isFrozen());
     ASSERT_always_require(mid2->nAttachedOwners() == 0);
-    ASSERT_always_require(f1->dataBlockExists(mid3) == NULL);
+    ASSERT_always_require(f1->dataBlockExists(mid3) == nullptr);
     ASSERT_always_require(!mid3->isFrozen());
     ASSERT_always_require(mid3->nAttachedOwners() == 0);
     p.checkConsistency();
@@ -1493,9 +1493,9 @@ testPartialOverlaps(P2::Partitioner &p) {
     ASSERT_always_require(p.aum().dataBlockExists(left2) == left2);
     ASSERT_always_require(p.aum().dataBlockExists(left3) == left3);
     ASSERT_always_require(p.aum().dataBlockExists(left4) == left4);
-    ASSERT_always_require(p.aum().dataBlockExists(mid1) == NULL);
-    ASSERT_always_require(p.aum().dataBlockExists(mid2) == NULL);
-    ASSERT_always_require(p.aum().dataBlockExists(mid3) == NULL);
+    ASSERT_always_require(p.aum().dataBlockExists(mid1) == nullptr);
+    ASSERT_always_require(p.aum().dataBlockExists(mid2) == nullptr);
+    ASSERT_always_require(p.aum().dataBlockExists(mid3) == nullptr);
     checkAum(p, base, owners);
     checkAum(p, left1, owners);
     checkAum(p, left2, owners);
@@ -1525,16 +1525,16 @@ testPartialOverlaps(P2::Partitioner &p) {
     ASSERT_always_require(f1->dataBlockExists(left3) == left3);
     ASSERT_always_require(left3->isFrozen());
     ASSERT_always_require(left3->nAttachedOwners() == 1);
-    ASSERT_always_require(f1->dataBlockExists(left4) == NULL);
+    ASSERT_always_require(f1->dataBlockExists(left4) == nullptr);
     ASSERT_always_require(!left4->isFrozen());
     ASSERT_always_require(left4->nAttachedOwners() == 0);
-    ASSERT_always_require(f1->dataBlockExists(mid1) == NULL);
+    ASSERT_always_require(f1->dataBlockExists(mid1) == nullptr);
     ASSERT_always_require(!mid1->isFrozen());
     ASSERT_always_require(mid1->nAttachedOwners() == 0);
-    ASSERT_always_require(f1->dataBlockExists(mid2) == NULL);
+    ASSERT_always_require(f1->dataBlockExists(mid2) == nullptr);
     ASSERT_always_require(!mid2->isFrozen());
     ASSERT_always_require(mid2->nAttachedOwners() == 0);
-    ASSERT_always_require(f1->dataBlockExists(mid3) == NULL);
+    ASSERT_always_require(f1->dataBlockExists(mid3) == nullptr);
     ASSERT_always_require(!mid3->isFrozen());
     ASSERT_always_require(mid3->nAttachedOwners() == 0);
     p.checkConsistency();
@@ -1542,10 +1542,10 @@ testPartialOverlaps(P2::Partitioner &p) {
     ASSERT_always_require(p.aum().dataBlockExists(left1) == left1);
     ASSERT_always_require(p.aum().dataBlockExists(left2) == left2);
     ASSERT_always_require(p.aum().dataBlockExists(left3) == left3);
-    ASSERT_always_require(p.aum().dataBlockExists(left4) == NULL);
-    ASSERT_always_require(p.aum().dataBlockExists(mid1) == NULL);
-    ASSERT_always_require(p.aum().dataBlockExists(mid2) == NULL);
-    ASSERT_always_require(p.aum().dataBlockExists(mid3) == NULL);
+    ASSERT_always_require(p.aum().dataBlockExists(left4) == nullptr);
+    ASSERT_always_require(p.aum().dataBlockExists(mid1) == nullptr);
+    ASSERT_always_require(p.aum().dataBlockExists(mid2) == nullptr);
+    ASSERT_always_require(p.aum().dataBlockExists(mid3) == nullptr);
     checkAum(p, base, owners);
     checkAum(p, left1, owners);
     checkAum(p, left2, owners);
@@ -1571,30 +1571,30 @@ testPartialOverlaps(P2::Partitioner &p) {
     ASSERT_always_require(f1->dataBlockExists(left2) == left2);
     ASSERT_always_require(left2->isFrozen());
     ASSERT_always_require(left2->nAttachedOwners() == 1);
-    ASSERT_always_require(f1->dataBlockExists(left3) == NULL);
+    ASSERT_always_require(f1->dataBlockExists(left3) == nullptr);
     ASSERT_always_require(!left3->isFrozen());
     ASSERT_always_require(left3->nAttachedOwners() == 0);
-    ASSERT_always_require(f1->dataBlockExists(left4) == NULL);
+    ASSERT_always_require(f1->dataBlockExists(left4) == nullptr);
     ASSERT_always_require(!left4->isFrozen());
     ASSERT_always_require(left4->nAttachedOwners() == 0);
-    ASSERT_always_require(f1->dataBlockExists(mid1) == NULL);
+    ASSERT_always_require(f1->dataBlockExists(mid1) == nullptr);
     ASSERT_always_require(!mid1->isFrozen());
     ASSERT_always_require(mid1->nAttachedOwners() == 0);
-    ASSERT_always_require(f1->dataBlockExists(mid2) == NULL);
+    ASSERT_always_require(f1->dataBlockExists(mid2) == nullptr);
     ASSERT_always_require(!mid2->isFrozen());
     ASSERT_always_require(mid2->nAttachedOwners() == 0);
-    ASSERT_always_require(f1->dataBlockExists(mid3) == NULL);
+    ASSERT_always_require(f1->dataBlockExists(mid3) == nullptr);
     ASSERT_always_require(!mid3->isFrozen());
     ASSERT_always_require(mid3->nAttachedOwners() == 0);
     p.checkConsistency();
     ASSERT_always_require(p.aum().dataBlockExists(base) == base);
     ASSERT_always_require(p.aum().dataBlockExists(left1) == left1);
     ASSERT_always_require(p.aum().dataBlockExists(left2) == left2);
-    ASSERT_always_require(p.aum().dataBlockExists(left3) == NULL);
-    ASSERT_always_require(p.aum().dataBlockExists(left4) == NULL);
-    ASSERT_always_require(p.aum().dataBlockExists(mid1) == NULL);
-    ASSERT_always_require(p.aum().dataBlockExists(mid2) == NULL);
-    ASSERT_always_require(p.aum().dataBlockExists(mid3) == NULL);
+    ASSERT_always_require(p.aum().dataBlockExists(left3) == nullptr);
+    ASSERT_always_require(p.aum().dataBlockExists(left4) == nullptr);
+    ASSERT_always_require(p.aum().dataBlockExists(mid1) == nullptr);
+    ASSERT_always_require(p.aum().dataBlockExists(mid2) == nullptr);
+    ASSERT_always_require(p.aum().dataBlockExists(mid3) == nullptr);
     checkAum(p, base, owners);
     checkAum(p, left1, owners);
     checkAum(p, left2, owners);
@@ -1616,33 +1616,33 @@ testPartialOverlaps(P2::Partitioner &p) {
     ASSERT_always_require(f1->dataBlockExists(left1) == left1);
     ASSERT_always_require(left1->isFrozen());
     ASSERT_always_require(left1->nAttachedOwners() == 1);
-    ASSERT_always_require(f1->dataBlockExists(left2) == NULL);
+    ASSERT_always_require(f1->dataBlockExists(left2) == nullptr);
     ASSERT_always_require(!left2->isFrozen());
     ASSERT_always_require(left2->nAttachedOwners() == 0);
-    ASSERT_always_require(f1->dataBlockExists(left3) == NULL);
+    ASSERT_always_require(f1->dataBlockExists(left3) == nullptr);
     ASSERT_always_require(!left3->isFrozen());
     ASSERT_always_require(left3->nAttachedOwners() == 0);
-    ASSERT_always_require(f1->dataBlockExists(left4) == NULL);
+    ASSERT_always_require(f1->dataBlockExists(left4) == nullptr);
     ASSERT_always_require(!left4->isFrozen());
     ASSERT_always_require(left4->nAttachedOwners() == 0);
-    ASSERT_always_require(f1->dataBlockExists(mid1) == NULL);
+    ASSERT_always_require(f1->dataBlockExists(mid1) == nullptr);
     ASSERT_always_require(!mid1->isFrozen());
     ASSERT_always_require(mid1->nAttachedOwners() == 0);
-    ASSERT_always_require(f1->dataBlockExists(mid2) == NULL);
+    ASSERT_always_require(f1->dataBlockExists(mid2) == nullptr);
     ASSERT_always_require(!mid2->isFrozen());
     ASSERT_always_require(mid2->nAttachedOwners() == 0);
-    ASSERT_always_require(f1->dataBlockExists(mid3) == NULL);
+    ASSERT_always_require(f1->dataBlockExists(mid3) == nullptr);
     ASSERT_always_require(!mid3->isFrozen());
     ASSERT_always_require(mid3->nAttachedOwners() == 0);
     p.checkConsistency();
     ASSERT_always_require(p.aum().dataBlockExists(base) == base);
     ASSERT_always_require(p.aum().dataBlockExists(left1) == left1);
-    ASSERT_always_require(p.aum().dataBlockExists(left2) == NULL);
-    ASSERT_always_require(p.aum().dataBlockExists(left3) == NULL);
-    ASSERT_always_require(p.aum().dataBlockExists(left4) == NULL);
-    ASSERT_always_require(p.aum().dataBlockExists(mid1) == NULL);
-    ASSERT_always_require(p.aum().dataBlockExists(mid2) == NULL);
-    ASSERT_always_require(p.aum().dataBlockExists(mid3) == NULL);
+    ASSERT_always_require(p.aum().dataBlockExists(left2) == nullptr);
+    ASSERT_always_require(p.aum().dataBlockExists(left3) == nullptr);
+    ASSERT_always_require(p.aum().dataBlockExists(left4) == nullptr);
+    ASSERT_always_require(p.aum().dataBlockExists(mid1) == nullptr);
+    ASSERT_always_require(p.aum().dataBlockExists(mid2) == nullptr);
+    ASSERT_always_require(p.aum().dataBlockExists(mid3) == nullptr);
     checkAum(p, base, owners);
     checkAum(p, left1, owners);
     
@@ -1660,36 +1660,36 @@ testPartialOverlaps(P2::Partitioner &p) {
     ASSERT_always_require(f1->dataBlockExists(base) == base);
     ASSERT_always_require(base->isFrozen());
     ASSERT_always_require(base->nAttachedOwners() == 1);
-    ASSERT_always_require(f1->dataBlockExists(left1) == NULL);
+    ASSERT_always_require(f1->dataBlockExists(left1) == nullptr);
     ASSERT_always_require(!left1->isFrozen());
     ASSERT_always_require(left1->nAttachedOwners() == 0);
-    ASSERT_always_require(f1->dataBlockExists(left2) == NULL);
+    ASSERT_always_require(f1->dataBlockExists(left2) == nullptr);
     ASSERT_always_require(!left2->isFrozen());
     ASSERT_always_require(left2->nAttachedOwners() == 0);
-    ASSERT_always_require(f1->dataBlockExists(left3) == NULL);
+    ASSERT_always_require(f1->dataBlockExists(left3) == nullptr);
     ASSERT_always_require(!left3->isFrozen());
     ASSERT_always_require(left3->nAttachedOwners() == 0);
-    ASSERT_always_require(f1->dataBlockExists(left4) == NULL);
+    ASSERT_always_require(f1->dataBlockExists(left4) == nullptr);
     ASSERT_always_require(!left4->isFrozen());
     ASSERT_always_require(left4->nAttachedOwners() == 0);
-    ASSERT_always_require(f1->dataBlockExists(mid1) == NULL);
+    ASSERT_always_require(f1->dataBlockExists(mid1) == nullptr);
     ASSERT_always_require(!mid1->isFrozen());
     ASSERT_always_require(mid1->nAttachedOwners() == 0);
-    ASSERT_always_require(f1->dataBlockExists(mid2) == NULL);
+    ASSERT_always_require(f1->dataBlockExists(mid2) == nullptr);
     ASSERT_always_require(!mid2->isFrozen());
     ASSERT_always_require(mid2->nAttachedOwners() == 0);
-    ASSERT_always_require(f1->dataBlockExists(mid3) == NULL);
+    ASSERT_always_require(f1->dataBlockExists(mid3) == nullptr);
     ASSERT_always_require(!mid3->isFrozen());
     ASSERT_always_require(mid3->nAttachedOwners() == 0);
     p.checkConsistency();
     ASSERT_always_require(p.aum().dataBlockExists(base) == base);
-    ASSERT_always_require(p.aum().dataBlockExists(left1) == NULL);
-    ASSERT_always_require(p.aum().dataBlockExists(left2) == NULL);
-    ASSERT_always_require(p.aum().dataBlockExists(left3) == NULL);
-    ASSERT_always_require(p.aum().dataBlockExists(left4) == NULL);
-    ASSERT_always_require(p.aum().dataBlockExists(mid1) == NULL);
-    ASSERT_always_require(p.aum().dataBlockExists(mid2) == NULL);
-    ASSERT_always_require(p.aum().dataBlockExists(mid3) == NULL);
+    ASSERT_always_require(p.aum().dataBlockExists(left1) == nullptr);
+    ASSERT_always_require(p.aum().dataBlockExists(left2) == nullptr);
+    ASSERT_always_require(p.aum().dataBlockExists(left3) == nullptr);
+    ASSERT_always_require(p.aum().dataBlockExists(left4) == nullptr);
+    ASSERT_always_require(p.aum().dataBlockExists(mid1) == nullptr);
+    ASSERT_always_require(p.aum().dataBlockExists(mid2) == nullptr);
+    ASSERT_always_require(p.aum().dataBlockExists(mid3) == nullptr);
     checkAum(p, base, owners);
     
     //   base  = ...XXXXXXXX...    <------ remove
@@ -1703,39 +1703,39 @@ testPartialOverlaps(P2::Partitioner &p) {
     p.detachFunction(f1);
     f1->eraseDataBlock(base);
     p.attachFunction(f1);
-    ASSERT_always_require(f1->dataBlockExists(base) == NULL);
+    ASSERT_always_require(f1->dataBlockExists(base) == nullptr);
     ASSERT_always_require(!base->isFrozen());
     ASSERT_always_require(base->nAttachedOwners() == 0);
-    ASSERT_always_require(f1->dataBlockExists(left1) == NULL);
+    ASSERT_always_require(f1->dataBlockExists(left1) == nullptr);
     ASSERT_always_require(!left1->isFrozen());
     ASSERT_always_require(left1->nAttachedOwners() == 0);
-    ASSERT_always_require(f1->dataBlockExists(left2) == NULL);
+    ASSERT_always_require(f1->dataBlockExists(left2) == nullptr);
     ASSERT_always_require(!left2->isFrozen());
     ASSERT_always_require(left2->nAttachedOwners() == 0);
-    ASSERT_always_require(f1->dataBlockExists(left3) == NULL);
+    ASSERT_always_require(f1->dataBlockExists(left3) == nullptr);
     ASSERT_always_require(!left3->isFrozen());
     ASSERT_always_require(left3->nAttachedOwners() == 0);
-    ASSERT_always_require(f1->dataBlockExists(left4) == NULL);
+    ASSERT_always_require(f1->dataBlockExists(left4) == nullptr);
     ASSERT_always_require(!left4->isFrozen());
     ASSERT_always_require(left4->nAttachedOwners() == 0);
-    ASSERT_always_require(f1->dataBlockExists(mid1) == NULL);
+    ASSERT_always_require(f1->dataBlockExists(mid1) == nullptr);
     ASSERT_always_require(!mid1->isFrozen());
     ASSERT_always_require(mid1->nAttachedOwners() == 0);
-    ASSERT_always_require(f1->dataBlockExists(mid2) == NULL);
+    ASSERT_always_require(f1->dataBlockExists(mid2) == nullptr);
     ASSERT_always_require(!mid2->isFrozen());
     ASSERT_always_require(mid2->nAttachedOwners() == 0);
-    ASSERT_always_require(f1->dataBlockExists(mid3) == NULL);
+    ASSERT_always_require(f1->dataBlockExists(mid3) == nullptr);
     ASSERT_always_require(!mid3->isFrozen());
     ASSERT_always_require(mid3->nAttachedOwners() == 0);
     p.checkConsistency();
-    ASSERT_always_require(p.aum().dataBlockExists(base) == NULL);
-    ASSERT_always_require(p.aum().dataBlockExists(left1) == NULL);
-    ASSERT_always_require(p.aum().dataBlockExists(left2) == NULL);
-    ASSERT_always_require(p.aum().dataBlockExists(left3) == NULL);
-    ASSERT_always_require(p.aum().dataBlockExists(left4) == NULL);
-    ASSERT_always_require(p.aum().dataBlockExists(mid1) == NULL);
-    ASSERT_always_require(p.aum().dataBlockExists(mid2) == NULL);
-    ASSERT_always_require(p.aum().dataBlockExists(mid3) == NULL);
+    ASSERT_always_require(p.aum().dataBlockExists(base) == nullptr);
+    ASSERT_always_require(p.aum().dataBlockExists(left1) == nullptr);
+    ASSERT_always_require(p.aum().dataBlockExists(left2) == nullptr);
+    ASSERT_always_require(p.aum().dataBlockExists(left3) == nullptr);
+    ASSERT_always_require(p.aum().dataBlockExists(left4) == nullptr);
+    ASSERT_always_require(p.aum().dataBlockExists(mid1) == nullptr);
+    ASSERT_always_require(p.aum().dataBlockExists(mid2) == nullptr);
+    ASSERT_always_require(p.aum().dataBlockExists(mid3) == nullptr);
 }
 
 // Bug reported. AUM doesn't have correct ownrship count.
@@ -1819,8 +1819,8 @@ main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
     ASSERT_always_require(argc > 1);
     std::vector<std::string> names(argv+1, argv+argc);
-    P2::Engine engine;
-    P2::Partitioner partitioner = engine.partition(names);
+    P2::Engine *engine = P2::Engine::instance();
+    P2::Partitioner partitioner = engine->partition(names);
 
     testNoOwner();
     testNoOwnerDuplicate();
@@ -1836,4 +1836,6 @@ main(int argc, char *argv[]) {
     testDelayedFunction(partitioner);
     testPartialOverlaps(partitioner);
     testJiraRose2084(partitioner);
+
+    delete engine;
 }

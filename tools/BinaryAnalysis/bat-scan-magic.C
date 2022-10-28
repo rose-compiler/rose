@@ -95,10 +95,10 @@ main(int argc, char *argv[]) {
     Bat::checkRoseVersionNumber(MINIMUM_ROSE_LIBRARY_VERSION, mlog[FATAL]);
     Bat::registerSelfTests();
 
-    P2::Engine engine;
     Settings settings;
-    boost::filesystem::path rbaFile = parseCommandLine(argc, argv, engine, settings /*in,out*/);
-    P2::Partitioner partitioner = engine.loadPartitioner(rbaFile, settings.stateFormat);
+    P2::Engine *engine = P2::Engine::instance();
+    boost::filesystem::path rbaFile = parseCommandLine(argc, argv, *engine, settings /*in,out*/);
+    P2::Partitioner partitioner = engine->loadPartitioner(rbaFile, settings.stateFormat);
 
 
     BinaryAnalysis::MagicNumber analyzer;
@@ -128,4 +128,6 @@ main(int argc, char *argv[]) {
                 break;                                  // prevent overflow at top of address space
         }
     }
+
+    delete engine;
 }

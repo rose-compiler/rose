@@ -597,12 +597,12 @@ int main(int argc, char *argv[])
     Rose::Diagnostics::initAndRegister(&::mlog, "tool");
 
     // Parse the command-line
-    P2::Engine engine;
+    P2::Engine *engine = P2::Engine::instance();
     Settings settings;
-    std::vector<std::string> specimenNames = parseCommandLine(argc, argv, engine, settings);
+    std::vector<std::string> specimenNames = parseCommandLine(argc, argv, *engine, settings);
 
     // Load the specimen as raw data or an ELF or PE container
-    /* MemoryMap::Ptr map = */ engine.loadSpecimens(specimenNames);
+    /* MemoryMap::Ptr map = */ engine->loadSpecimens(specimenNames);
 
     SgProject* p = SageInterface::getProject();
     ASSERT_not_null(p);
@@ -620,5 +620,6 @@ int main(int argc, char *argv[])
                          }
                        );
 
+    delete engine;
     exit(0);
 }

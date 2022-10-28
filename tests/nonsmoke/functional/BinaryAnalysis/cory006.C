@@ -48,9 +48,9 @@ main(int argc, char *argv[]) {
     std::string purpose = "demonstrate inter-function disassembly";
     std::string description =
         "Disassembles and partitions the specimen(s), then tries to disassemble things between the functions.";
-    P2::Engine engine;
-    std::vector<std::string> specimens = engine.parseCommandLine(argc, argv, purpose, description).unreachedArgs();
-    P2::Partitioner partitioner = engine.partition(specimens);
+    P2::Engine *engine = P2::Engine::instance();
+    std::vector<std::string> specimens = engine->parseCommandLine(argc, argv, purpose, description).unreachedArgs();
+    P2::Partitioner partitioner = engine->partition(specimens);
 
     // The partitioner's address usage map (AUM) describes what part of memory has been disassembled as instructions or
     // data. We're interested in the unused parts between the lowest and highest disassembled addresses, so we loop over those
@@ -70,13 +70,13 @@ main(int argc, char *argv[]) {
         // executable). A naive implementation would just increment to the next address and try again, but that could take a
         // very long time.  This "if" statement will give us the next executable address that falls within the unused interval
         // if possible. The address is assigned to "va" if possible.
-        if (!engine.memoryMap()->within(unused).require(MemoryMap::EXECUTABLE).next().assignTo(va)) {
+        if (!engine->memoryMap()->within(unused).require(MemoryMap::EXECUTABLE).next().assignTo(va)) {
             va = unused.greatest() + 1;                 // won't overflow because of check above
             continue;
         }
 
         // "va" now points to an executable address that the partitioner doesn't know about yet.
-        ASSERT_require(engine.memoryMap()->at(va).require(MemoryMap::EXECUTABLE).exists());
+        ASSERT_require(engine->memoryMap()->at(va).require(MemoryMap::EXECUTABLE).exists());
         ASSERT_forbid(partitioner.aum().instructionExists(va));
         std::cout <<"unused address " <<StringUtility::addrToString(va) <<"\n";
 
@@ -105,26 +105,28 @@ main(int argc, char *argv[]) {
         // This basic block might be the first block of a whole bunch that are connected by as yet undiscovered CFG edges. We
         // can recursively discover and attach all those blocks with one Engine method.  There are also Partitioner methods to
         // do similar things, but they're lower level.
-        engine.runPartitionerRecursive(partitioner);
+        engine->runPartitionerRecursive(partitioner);
     }
 
     // We've probably added a bunch more functions and basic blocks to the partitioner, but we haven't yet assigned the basic
     // blocks discovered by Engine::runPartitionerRecursive to any functions.  We might also need to assign function labels
     // from ELF/PE information, re-run some analysis, etc., so do that now.
-    engine.runPartitionerFinal(partitioner);
+    engine->runPartitionerFinal(partitioner);
 
     // Most ROSE analysis is performed on an abstract syntax tree, so generate one.  If the specime is an ELF or PE container
     // then the returned global block will also be attached somewhere below a SgProject node, otherwise the returned global
     // block is the root of the AST and there is no project (e.g., like when the specimen is a raw memory dump).
-    SgAsmBlock *gblock = P2::Modules::buildAst(partitioner, engine.interpretation());
+    SgAsmBlock *gblock = P2::Modules::buildAst(partitioner, engine->interpretation());
 
     // Generate an assembly listing. These unparser properties are all optional, but they result in more informative assembly
     // listings.
     AsmUnparser unparser;
     unparser.set_registers(partitioner.instructionProvider().registerDictionary());
     unparser.add_control_flow_graph(ControlFlow().build_block_cfg_from_ast<ControlFlow::BlockGraph>(gblock));
-    unparser.staticDataDisassembler.init(engine.disassembler());
+    unparser.staticDataDisassembler.init(engine->disassembler());
     unparser.unparse(std::cout, gblock);
+
+    delete engine;
 }
 
 #endif

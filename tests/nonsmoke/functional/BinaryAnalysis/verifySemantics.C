@@ -283,15 +283,15 @@ main(int argc, char *argv[]) {
     Diagnostics::initAndRegister(&::mlog, "tool");
 
     // Parse command-line
-    P2::Engine engine;
+    P2::Engine *engine = P2::Engine::instance();
     Settings settings;
-    std::vector<std::string> args = parseCommandLine(argc, argv, engine, settings);
+    std::vector<std::string> args = parseCommandLine(argc, argv, *engine, settings);
     if (args.empty())
         throw std::runtime_error("no specimen name specified; see --help");
 
     // Obtain info about the specimen, including a disassembler.
-    engine.parseContainers(args.front());
-    Disassembler::Base::Ptr disassembler = engine.obtainDisassembler();
+    engine->parseContainers(args.front());
+    Disassembler::Base::Ptr disassembler = engine->obtainDisassembler();
     if (!disassembler)
         throw std::runtime_error("architecture is not supported by this tool");
     size_t addrWidth = disassembler->stackPointerRegister().nBits();
@@ -359,6 +359,7 @@ main(int argc, char *argv[]) {
         if (insn && !checkOps->checkRegisters(insn))
             std::cerr <<trace.str();
     }
+    delete engine;
 }
 
 #endif

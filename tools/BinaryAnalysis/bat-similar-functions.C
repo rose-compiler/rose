@@ -417,15 +417,15 @@ main(int argc, char *argv[]) {
     Stream info(mlog[INFO]);
 
     // Parse command-line
-    P2::Engine engine;
+    P2::Engine *engine = P2::Engine::instance();
     Settings settings;
-    std::pair<boost::filesystem::path, boost::filesystem::path> rbaFiles = parseCommandLine(argc, argv, engine, settings);
+    std::pair<boost::filesystem::path, boost::filesystem::path> rbaFiles = parseCommandLine(argc, argv, *engine, settings);
     size_t nThreads = Rose::CommandLine::genericSwitchArgs.threads;
     if (0 == nThreads)
         nThreads = boost::thread::hardware_concurrency();
 
-    std::vector<SgAsmFunction*> functions1 = loadFunctions(rbaFiles.first, engine);
-    std::vector<SgAsmFunction*> functions2 = loadFunctions(rbaFiles.second, engine);
+    std::vector<SgAsmFunction*> functions1 = loadFunctions(rbaFiles.first, *engine);
+    std::vector<SgAsmFunction*> functions2 = loadFunctions(rbaFiles.second, *engine);
     info <<"specimen1 has " <<plural(functions1.size(), "functions") <<" containing " <<treeSize(functions1) <<" AST nodes.\n";
     info <<"specimen2 has " <<plural(functions2.size(), "functions")<<" containing " <<treeSize(functions2) <<" AST nodes.\n";
     if (functions1.empty() || functions2.empty())
@@ -538,6 +538,8 @@ main(int argc, char *argv[]) {
                    <<" (" <<(100.0*nClashes/assignments.size()) <<" percent)"
                    <<(1==nClashes?" was":" were") <<" between functions with different names\n";
     }
+
+    delete engine;
 }
 
 #else

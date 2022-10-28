@@ -56,7 +56,7 @@ shouldAnalyze(const Settings &settings, const P2::Function::Ptr &function) {
     BOOST_FOREACH (const std::string &name_or_address, settings.functionNames) {
         if (function->name() == name_or_address)
             return true;
-        char *rest = NULL;
+        char *rest = nullptr;
         errno = 0;
         rose_addr_t va = rose_strtoull(name_or_address.c_str(), &rest, 0);
         if (0 == errno && !*rest && va == function->address())
@@ -70,23 +70,23 @@ main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
     SymbolicExpression::serializeVariableIds = true;
     Settings settings;
-    P2::Engine engine;
-    std::vector<std::string> specimen = parseCommandLine(argc, argv, engine, settings);
+    P2::Engine *engine = P2::Engine::instance();
+    std::vector<std::string> specimen = parseCommandLine(argc, argv, *engine, settings);
     if (specimen.empty()) {
         mlog[FATAL] <<"no binary specimen specified; see --help\n";
         exit(1);
     }
-    P2::Partitioner partitioner = engine.partition(specimen);
+    P2::Partitioner partitioner = engine->partition(specimen);
 
-    BOOST_FOREACH (const P2::Function::Ptr &function, partitioner.functions()) {
+    for (const P2::Function::Ptr &function : partitioner.functions()) {
         if (shouldAnalyze(settings, function)) {
             std::cout <<"\nPointer detection analysis for " <<function->printableName() <<"\n";
 
             // Display the function's instructions for easy reference
             std::cout <<"  Instructions:\n";
-            BOOST_FOREACH (rose_addr_t bbVa, function->basicBlockAddresses()) {
+            for (rose_addr_t bbVa : function->basicBlockAddresses()) {
                 if (P2::BasicBlock::Ptr bb = partitioner.basicBlockExists(bbVa)) {
-                    BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions()) {
+                    for (SgAsmInstruction *insn : bb->instructions()) {
                         std::cout <<"    " <<partitioner.unparse(insn) <<"\n";
                     }
                 }
@@ -94,7 +94,7 @@ main(int argc, char *argv[]) {
 
             //! [documentation guts]
             // Run the analysis
-            PointerDetection::Analysis pda(engine.disassembler());
+            PointerDetection::Analysis pda(engine->disassembler());
             pda.analyzeFunction(partitioner, function);
 
             // Show the results
@@ -104,15 +104,17 @@ main(int argc, char *argv[]) {
                 if (!pda.didConverge())
                     std::cout <<"  WARNING: Analysis did not converge; following info may be incomplete\n";
                 std::cout <<"  Code pointers:\n";
-                BOOST_FOREACH (const PointerDetection::PointerDescriptor &desc, pda.codePointers())
+                for (const PointerDetection::PointerDescriptor &desc : pda.codePointers())
                     std::cout <<"    " <<desc.nBits <<"-bit pointer at " <<*desc.pointerVa <<"\n";
                 std::cout <<"  Data pointers:\n";
-                BOOST_FOREACH (const PointerDetection::PointerDescriptor &desc, pda.dataPointers())
+                for (const PointerDetection::PointerDescriptor &desc : pda.dataPointers())
                     std::cout <<"    " <<desc.nBits <<"-bit pointer at " <<*desc.pointerVa <<"\n";
             }
             //! [documentation guts]
         }
     }
+
+    delete engine;
 }
 
 #endif
