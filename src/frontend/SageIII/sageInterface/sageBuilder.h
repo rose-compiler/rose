@@ -1049,16 +1049,12 @@ buildTypedefDeclaration_nfi(const std::string& name, SgType* base_type, SgScopeS
 ROSE_DLL_API SgTemplateTypedefDeclaration*
 buildTemplateTypedefDeclaration_nfi(const SgName & name, SgType* base_type, SgScopeStatement* scope = NULL, bool has_defining_base=false);
 
-#if 1
-// ROSE_DLL_API SgTemplateInstantiationTypedefDeclaration*
-// buildTemplateInstantiationTypedefDeclaration_nfi(SgName name, SgType* base_type, SgScopeStatement* scope, bool has_defining_base, SgTemplateTypedefDeclaration* templateTypedefDeclaration, SgTemplateArgumentPtrList templateArgumentList);
-// ROSE_DLL_API SgTemplateInstantiationTypedefDeclaration*
-// buildTemplateInstantiationTypedefDeclaration_nfi(SgName name, SgType* base_type, SgScopeStatement* scope, bool has_defining_base, SgTemplateTypedefDeclaration* templateTypedefDeclaration);
-// ROSE_DLL_API SgTemplateInstantiationTypedefDeclaration*
-// buildTemplateInstantiationTypedefDeclaration_nfi();
-ROSE_DLL_API SgTemplateInstantiationTypedefDeclaration*
-buildTemplateInstantiationTypedefDeclaration_nfi(SgName & name, SgType* base_type, SgScopeStatement* scope, bool has_defining_base, SgTemplateTypedefDeclaration* templateTypedefDeclaration, SgTemplateArgumentPtrList & templateArgumentsList);
-#endif
+
+ROSE_DLL_API SgTemplateInstantiationTypedefDeclaration * buildTemplateInstantiationTypedefDeclaration_nfi(
+  SgName & name, SgType* base_type, SgScopeStatement* scope, bool has_defining_base,
+  SgTemplateTypedefDeclaration * templateTypedefDeclaration,
+  SgTemplateArgumentPtrList & templateArgumentsList
+);
 
 //! Build an empty SgFunctionParameterList, possibly with some initialized names filled in
 ROSE_DLL_API SgFunctionParameterList * buildFunctionParameterList(SgInitializedName* in1 = NULL, SgInitializedName* in2 = NULL, SgInitializedName* in3 = NULL, SgInitializedName* in4 = NULL, SgInitializedName* in5 = NULL, SgInitializedName* in6 = NULL, SgInitializedName* in7 = NULL, SgInitializedName* in8 = NULL, SgInitializedName* in9 = NULL, SgInitializedName* in10 = NULL);
@@ -1902,6 +1898,16 @@ namespace Rose {
       void fillTemplateArgumentList(std::vector<SgTemplateArgument *> & tpl_args, Args... args) {
         TemplateArgumentList<Args...>::fill(tpl_args, args...);
       }
+
+      template <typename... Args>
+      std::vector<SgTemplateArgument *> buildTemplateArgumentList(Args... args) {
+        std::vector<SgTemplateArgument *> tpl_args;
+        TemplateArgumentList<Args...>::fill(tpl_args, args...);
+        return tpl_args;
+      }
+
+      SgExpression * instantiateNonrealRefExps(SgExpression * expr, std::vector<SgTemplateParameter *> & tpl_params, std::vector<SgTemplateArgument *> & tpl_args);
+      SgType * instantiateNonrealTypes(SgType * type, std::vector<SgTemplateParameter *> & tpl_params, std::vector<SgTemplateArgument *> & tpl_args);
 
 } } }
 

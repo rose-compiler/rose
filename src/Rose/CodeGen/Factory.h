@@ -28,6 +28,8 @@ class Factory;
 template <typename CRT, typename apiT, Object otag>
 struct __factory_helper_t;
 
+using tplargs_t = std::vector<SgTemplateArgument *>;
+
 template <typename CRT, typename API>
 class Factory {
   public:
@@ -84,9 +86,9 @@ class Factory {
       if (is_template_symbol_variant<otag>(sym->variantT())) {
         declaration_t<otag> * decl = instantiate<otag>(obj, parent, args...);
         ROSE_ASSERT(decl != nullptr);
-
         sym = dynamic_cast<symbol_t<otag> *>(decl->search_for_symbol_from_symbol_table());
         ROSE_ASSERT(sym != nullptr);
+//      ROSE_ASSERT(sym->get_declaration() == decl->get_firstNondefiningDeclaration());
       } else {
         // FIXME sanity-check: `args` is empty
       }
