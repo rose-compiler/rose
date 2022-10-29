@@ -13,11 +13,13 @@ struct my_api_t : Rose::CodeGen::API<my_api_t> {
   a_class     my_class_t          { nullptr };
   a_function  my_function         { nullptr };
   a_variable  my_variable         { nullptr };
+
   a_namespace OtherNsp            { nullptr };
   a_class     MyTplCls            { nullptr };
   a_typedef   OtherTplClass1      { nullptr };
   a_typedef   OtherTplClass2      { nullptr };
   a_typedef   MyTplCls__type_t    { nullptr };
+  a_function  my_tpl_function     { nullptr };
 };
 
 namespace Rose { namespace CodeGen {
@@ -64,7 +66,8 @@ std::map<std::string, API<my_api_t>::a_variable my_api_t::* > const API<my_api_t
 
 template <>
 std::map<std::string, API<my_api_t>::a_function my_api_t::* > const API<my_api_t>::functions{
-  { "::MyNsp::my_function", &my_api_t::my_function }
+  { "::MyNsp::my_function", &my_api_t::my_function },
+  { "::OtherNsp::my_tpl_function", &my_api_t::my_tpl_function }
 };
 
 } }
@@ -128,17 +131,31 @@ int main( int argc, char * argv[] ) {
   std::cout << "type_2 = " << std::hex << type_2 << " : " << (type_2 ? type_2->class_name() : "") << std::endl;
   main_defn->append_statement(SageBuilder::buildVariableDeclaration("var_2", type_2, nullptr, main_defn));
 
-  // Test 3: "::OtherNsp::OtherTplClass2<int> var3;"
+  // Test 3: variable declaration with alias-type from API
 
-//auto type_3 = my_factory.reference<Rose::CodeGen::Object::a_typedef>(&my_api_t::OtherTplClass2, nullptr, SageBuilder::buildIntType());
-//std::cout << "type_3 = " << std::hex << type_3 << " : " << (type_3 ? type_3->class_name() : "") << std::endl;
-//main_defn->append_statement(SageBuilder::buildVariableDeclaration("var_3", type_3, nullptr, main_defn));
+  auto fref_3 = my_factory.reference<Rose::CodeGen::Object::a_function>(&my_api_t::my_function, (SgNamedType*)nullptr);
+  std::cout << "fref_3 = " << std::hex << fref_3 << " : " << (fref_3 ? fref_3->class_name() : "") << std::endl;
+  auto fcall_3 = SageBuilder::buildFunctionCallExp(fref_3, SageBuilder::buildExprListExp());
+  std::cout << "fcall_3 = " << std::hex << fcall_3 << " : " << (fcall_3 ? fcall_3->class_name() : "") << std::endl;
+  main_defn->append_statement(SageBuilder::buildExprStatement(fcall_3));
 
-  // Test 4: "::OtherNsp::OtherTplClass2<int>::type_t var4;"
+  // Test 4: "::OtherNsp::OtherTplClass2<MyNsp::my_typedef_t> var4;"
 
-//auto type_4 = my_factory.reference<Rose::CodeGen::Object::a_typedef>(&my_api_t::MyTplCls__type_t, type_3);
-//std::cout << "type_4 = " << std::hex << type_4 << " : " << (type_4 ? type_4->class_name() : "") << std::endl;
-//main_defn->append_statement(SageBuilder::buildVariableDeclaration("var_4", type_4, nullptr, main_defn));
+  auto type_4 = my_factory.reference<Rose::CodeGen::Object::a_typedef>(&my_api_t::OtherTplClass2, nullptr, type_2);
+  std::cout << "type_4 = " << std::hex << type_4 << " : " << (type_4 ? type_4->class_name() : "") << std::endl;
+  main_defn->append_statement(SageBuilder::buildVariableDeclaration("var_4", type_4, nullptr, main_defn));
+
+  // Test 5: "::OtherNsp::OtherTplClass2<OtherNsp::OtherTplClass2<MyNsp::my_typedef_t>> var5;"
+
+  auto type_5 = my_factory.reference<Rose::CodeGen::Object::a_typedef>(&my_api_t::OtherTplClass2, nullptr, type_4);
+  std::cout << "type_5 = " << std::hex << type_5 << " : " << (type_5 ? type_5->class_name() : "") << std::endl;
+  main_defn->append_statement(SageBuilder::buildVariableDeclaration("var_5", type_5, nullptr, main_defn));
+
+  // Test 5: "::OtherNsp::OtherTplClass2<MyNsp::my_typedef_t>::type_t var5;"
+
+//auto type_5 = my_factory.reference<Rose::CodeGen::Object::a_typedef>(&my_api_t::MyTplCls__type_t, type_4);
+//std::cout << "type_5 = " << std::hex << type_5 << " : " << (type_5 ? type_5->class_name() : "") << std::endl;
+//main_defn->append_statement(SageBuilder::buildVariableDeclaration("var_5", type_5, nullptr, main_defn));
 
   // TODO
 
