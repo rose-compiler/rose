@@ -5,6 +5,8 @@
 #include <Rose/StringUtility/Convert.h>
 #include <stringify.h>
 
+#include <boost/algorithm/string/case_conv.hpp>
+#include <boost/algorithm/string/replace.hpp>
 #include <cstring>
 
 namespace Rose {
@@ -253,23 +255,26 @@ GdbResponse::parseResultRecord(TokenStream &tokens, GdbResponse &response) {
 std::pair<GdbResponse::AsyncClass, Yaml::Node>
 GdbResponse::parseAsyncOutput(TokenStream &tokens) {
     // async-class := 'stopped' | to-be-decided
-    AsyncClass aclass = AsyncClass::STOPPED;
+    AsyncClass aclass = AsyncClass::UNSPECIFIED;
     if (tokens[0].type() != TOK_SYMBOL)
         throw syntaxError("expected async-class", tokens, 0);
     const std::string asyncClass = tokens.lexeme(0);
-    if ("stopped" == asyncClass) {
-        aclass = AsyncClass::STOPPED;
-    } else if ("running" == asyncClass) {
-        aclass = AsyncClass::RUNNING;
-    } else if ("thread-group-added" == asyncClass) {
-        aclass = AsyncClass::THREAD_GROUP_ADDED;
-    } else if ("thread-group-started" == asyncClass) {
-        aclass = AsyncClass::THREAD_GROUP_STARTED;
-    } else if ("thread-created" == asyncClass) {
-        aclass = AsyncClass::THREAD_CREATED;
-    } else {
-        throw syntaxError("expected async-class", tokens, 0);
+
+    // The AsyncClass enum constants are named identically to the string we get from GDB except GDB uses hypens instead of
+    // underscores. You may need to run scripts/restringify if you've recently changed the
+    // Rose::BinaryAnalysis::Debugger::GdbResponse::AsyncClass enum type.
+    for (int64_t enumVal: stringify::Rose::BinaryAnalysis::Debugger::GdbResponse::AsyncClass()) {
+        using namespace boost;
+        const std::string enumString =
+            to_lower_copy(replace_all_copy(stringify::Rose::BinaryAnalysis::Debugger::GdbResponse::AsyncClass(enumVal, ""),
+                                           "_", "-"));
+        if (asyncClass == enumString) {
+            aclass = (AsyncClass)enumVal;
+            break;
+        }
     }
+    if (AsyncClass::UNSPECIFIED == aclass)
+        throw syntaxError("expected async-class", tokens, 0);
     tokens.consume();
 
     // zero or more 'result' phrases each introduced by a comma.

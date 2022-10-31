@@ -4134,7 +4134,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/Rose/BinaryAnalysis/Unparser/Base.h line 53
+// /src/Rose/BinaryAnalysis/Unparser/Base.h line 54
 namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Unparser { namespace ArrowMargin {
     const char* Flags(int64_t i) {
         switch (i) {
@@ -8798,7 +8798,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/Rose/BinaryAnalysis/Debugger/Gdb.h line 119
+// /src/Rose/BinaryAnalysis/Debugger/Gdb.h line 126
 namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Debugger { namespace Gdb { namespace Response { namespace ResultRecord {
     const char* ResultClass(int64_t i) {
         switch (i) {
@@ -9020,7 +9020,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/Rose/BinaryAnalysis/Debugger/GdbResponse.h line 14
+// /src/Rose/BinaryAnalysis/Debugger/GdbResponse.h line 19
 namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Debugger { namespace GdbResponse {
     const char* TokenType(int64_t i) {
         switch (i) {
@@ -9082,7 +9082,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/Rose/BinaryAnalysis/Debugger/GdbResponse.h line 73
+// /src/Rose/BinaryAnalysis/Debugger/GdbResponse.h line 82
 namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Debugger { namespace GdbResponse {
     const char* ResultClass(int64_t i) {
         switch (i) {
@@ -9140,7 +9140,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/Rose/BinaryAnalysis/Debugger/GdbResponse.h line 75
+// /src/Rose/BinaryAnalysis/Debugger/GdbResponse.h line 85
 namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Debugger { namespace GdbResponse {
     const char* AsyncClass(int64_t i) {
         switch (i) {
@@ -9148,9 +9148,12 @@ namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Debu
             case 1L: return "RUNNING";
             case 2L: return "THREAD_GROUP_ADDED";
             case 3L: return "THREAD_GROUP_STARTED";
-            case 4L: return "THREAD_CREATED";
-            case 5L: return "OTHER";
-            case 6L: return "UNSPECIFIED";
+            case 4L: return "THREAD_GROUP_EXITED";
+            case 5L: return "THREAD_CREATED";
+            case 6L: return "THREAD_EXITED";
+            case 7L: return "BREAKPOINT_MODIFIED";
+            case 8L: return "OTHER";
+            case 9L: return "UNSPECIFIED";
             default: return "";
         }
     }
@@ -9172,9 +9175,12 @@ namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Debu
             3L,
             4L,
             5L,
-            6L
+            6L,
+            7L,
+            8L,
+            9L
         };
-        static const std::vector<int64_t> retval(values, values + 7);
+        static const std::vector<int64_t> retval(values, values + 10);
         return retval;
     }
 
@@ -9200,7 +9206,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/Rose/BinaryAnalysis/Debugger/BasicTypes.h line 36
+// /src/Rose/BinaryAnalysis/Debugger/BasicTypes.h line 38
 namespace stringify { namespace Rose { namespace BinaryAnalysis { namespace Debugger {
     const char* FilterActionFlag(int64_t i) {
         switch (i) {
@@ -16822,7 +16828,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/ROSETTA/src/binaryInstruction.C line 24161
+// /src/ROSETTA/src/binaryInstruction.C line 26364
 namespace stringify { namespace SgAsmCilMetadataHeap {
     const char* ReferenceKind(int64_t i) {
         switch (i) {
@@ -18436,116 +18442,6 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/midend/MDCG/include/MDCG/Model/base.hpp line 24
-namespace stringify { namespace MDCG { namespace Model {
-    const char* model_elements_e(int64_t i) {
-        switch (i) {
-            case 0L: return "e_model_blank";
-            case 1L: return "e_model_variable";
-            case 2L: return "e_model_function";
-            case 3L: return "e_model_field";
-            case 4L: return "e_model_method";
-            case 5L: return "e_model_type";
-            case 6L: return "e_model_class";
-            case 7L: return "e_model_namespace";
-            default: return "";
-        }
-    }
-
-    std::string model_elements_e(int64_t i, const std::string &strip) {
-        std::string s = model_elements_e(i);
-        if (s.empty())
-            s = "(MDCG::Model::model_elements_e)" + boost::lexical_cast<std::string>(i);
-        if (boost::starts_with(s, strip))
-            s = s.substr(strip.size());
-        return s;
-    }
-
-    const std::vector<int64_t>& model_elements_e() {
-        static const int64_t values[] = {
-            0L,
-            1L,
-            2L,
-            3L,
-            4L,
-            5L,
-            6L,
-            7L
-        };
-        static const std::vector<int64_t> retval(values, values + 8);
-        return retval;
-    }
-
-}}}
-
-namespace Rose {
-    std::string stringifyMDCG_Model_model_elements_e(int64_t i, const char *strip, bool canonic) {
-        std::string retval = stringify::MDCG::Model::model_elements_e(i);
-        if (retval.empty()) {
-            retval = "(MDCG::Model::model_elements_e)" + boost::lexical_cast<std::string>(i);
-        } else {
-            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
-                retval = retval.substr(strlen(strip));
-            if (canonic)
-                retval = "MDCG::Model::model_elements_e::" + retval;
-        }
-        return retval;
-    }
-
-    const std::vector<int64_t>& stringifyMDCG_Model_model_elements_e() {
-        return stringify::MDCG::Model::model_elements_e();
-    }
-}
-
-// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/midend/MDCG/include/MDCG/Model/base.hpp line 46
-namespace stringify { namespace MDCG { namespace Model { namespace element_t {
-    const char* kind_e(int64_t i) {
-        switch (i) {
-            case 0L: return "kind";
-            default: return "";
-        }
-    }
-
-    std::string kind_e(int64_t i, const std::string &strip) {
-        std::string s = kind_e(i);
-        if (s.empty())
-            s = "(MDCG::Model::element_t::kind_e)" + boost::lexical_cast<std::string>(i);
-        if (boost::starts_with(s, strip))
-            s = s.substr(strip.size());
-        return s;
-    }
-
-    const std::vector<int64_t>& kind_e() {
-        static const int64_t values[] = {
-            0L
-        };
-        static const std::vector<int64_t> retval(values, values + 1);
-        return retval;
-    }
-
-}}}}
-
-namespace Rose {
-    std::string stringifyMDCG_Model_element_t_kind_e(int64_t i, const char *strip, bool canonic) {
-        std::string retval = stringify::MDCG::Model::element_t::kind_e(i);
-        if (retval.empty()) {
-            retval = "(MDCG::Model::element_t::kind_e)" + boost::lexical_cast<std::string>(i);
-        } else {
-            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
-                retval = retval.substr(strlen(strip));
-            if (canonic)
-                retval = "MDCG::Model::element_t::kind_e::" + retval;
-        }
-        return retval;
-    }
-
-    const std::vector<int64_t>& stringifyMDCG_Model_element_t_kind_e() {
-        return stringify::MDCG::Model::element_t::kind_e();
-    }
-}
-
-// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
 // /src/midend/astProcessing/AstAttributeMechanism.C line 21
 namespace stringify {
     const char* WarningType(int64_t i) {
@@ -19734,232 +19630,6 @@ namespace Rose {
 
     const std::vector<int64_t>& stringifySgNodeHelperPatternOutputTargetOType() {
         return stringify::SgNodeHelper::Pattern::OutputTarget::OType();
-    }
-}
-
-// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/midend/KLT/include/KLT/Core/descriptor.hpp line 18
-namespace stringify { namespace KLT { namespace Descriptor {
-    const char* tile_kind_e(int64_t i) {
-        switch (i) {
-            case -1L: return "e_not_tile";
-            case 0L: return "e_static_tile";
-            case 1L: return "e_last_klt_tile";
-            default: return "";
-        }
-    }
-
-    std::string tile_kind_e(int64_t i, const std::string &strip) {
-        std::string s = tile_kind_e(i);
-        if (s.empty())
-            s = "(KLT::Descriptor::tile_kind_e)" + boost::lexical_cast<std::string>(i);
-        if (boost::starts_with(s, strip))
-            s = s.substr(strip.size());
-        return s;
-    }
-
-    const std::vector<int64_t>& tile_kind_e() {
-        static const int64_t values[] = {
-            -1L,
-            0L,
-            1L
-        };
-        static const std::vector<int64_t> retval(values, values + 3);
-        return retval;
-    }
-
-}}}
-
-namespace Rose {
-    std::string stringifyKLT_Descriptor_tile_kind_e(int64_t i, const char *strip, bool canonic) {
-        std::string retval = stringify::KLT::Descriptor::tile_kind_e(i);
-        if (retval.empty()) {
-            retval = "(KLT::Descriptor::tile_kind_e)" + boost::lexical_cast<std::string>(i);
-        } else {
-            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
-                retval = retval.substr(strlen(strip));
-            if (canonic)
-                retval = "KLT::Descriptor::tile_kind_e::" + retval;
-        }
-        return retval;
-    }
-
-    const std::vector<int64_t>& stringifyKLT_Descriptor_tile_kind_e() {
-        return stringify::KLT::Descriptor::tile_kind_e();
-    }
-}
-
-// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/midend/KLT/include/KLT/Core/looptree.hpp line 30
-namespace stringify { namespace KLT { namespace LoopTree {
-    const char* kind_e(int64_t i) {
-        switch (i) {
-            case 0L: return "e_block";
-            case 1L: return "e_cond";
-            case 2L: return "e_loop";
-            case 3L: return "e_tile";
-            case 4L: return "e_stmt";
-            case 5L: return "e_ignored";
-            case 6L: return "e_unknown";
-            default: return "";
-        }
-    }
-
-    std::string kind_e(int64_t i, const std::string &strip) {
-        std::string s = kind_e(i);
-        if (s.empty())
-            s = "(KLT::LoopTree::kind_e)" + boost::lexical_cast<std::string>(i);
-        if (boost::starts_with(s, strip))
-            s = s.substr(strip.size());
-        return s;
-    }
-
-    const std::vector<int64_t>& kind_e() {
-        static const int64_t values[] = {
-            0L,
-            1L,
-            2L,
-            3L,
-            4L,
-            5L,
-            6L
-        };
-        static const std::vector<int64_t> retval(values, values + 7);
-        return retval;
-    }
-
-}}}
-
-namespace Rose {
-    std::string stringifyKLT_LoopTree_kind_e(int64_t i, const char *strip, bool canonic) {
-        std::string retval = stringify::KLT::LoopTree::kind_e(i);
-        if (retval.empty()) {
-            retval = "(KLT::LoopTree::kind_e)" + boost::lexical_cast<std::string>(i);
-        } else {
-            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
-                retval = retval.substr(strlen(strip));
-            if (canonic)
-                retval = "KLT::LoopTree::kind_e::" + retval;
-        }
-        return retval;
-    }
-
-    const std::vector<int64_t>& stringifyKLT_LoopTree_kind_e() {
-        return stringify::KLT::LoopTree::kind_e();
-    }
-}
-
-// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/midend/KLT/include/KLT/RTL/tile.h line 7
-namespace stringify { namespace klt_tile_desc_t {
-    const char* tile_kind_e(int64_t i) {
-        switch (i) {
-            case 0L: return "e_tile_static";
-            case 1L: return "e_tile_dynamic";
-            default: return "";
-        }
-    }
-
-    std::string tile_kind_e(int64_t i, const std::string &strip) {
-        std::string s = tile_kind_e(i);
-        if (s.empty())
-            s = "(klt_tile_desc_t::tile_kind_e)" + boost::lexical_cast<std::string>(i);
-        if (boost::starts_with(s, strip))
-            s = s.substr(strip.size());
-        return s;
-    }
-
-    const std::vector<int64_t>& tile_kind_e() {
-        static const int64_t values[] = {
-            0L,
-            1L
-        };
-        static const std::vector<int64_t> retval(values, values + 2);
-        return retval;
-    }
-
-}}
-
-namespace Rose {
-    std::string stringify_klt_tile_desc_t_tile_kind_e(int64_t i, const char *strip, bool canonic) {
-        std::string retval = stringify::klt_tile_desc_t::tile_kind_e(i);
-        if (retval.empty()) {
-            retval = "(klt_tile_desc_t::tile_kind_e)" + boost::lexical_cast<std::string>(i);
-        } else {
-            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
-                retval = retval.substr(strlen(strip));
-            if (canonic)
-                retval = "klt_tile_desc_t::tile_kind_e::" + retval;
-        }
-        return retval;
-    }
-
-    const std::vector<int64_t>& stringify_klt_tile_desc_t_tile_kind_e() {
-        return stringify::klt_tile_desc_t::tile_kind_e();
-    }
-}
-
-// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /src/midend/MFB/include/MFB/Sage/graph.hpp line 35
-namespace stringify { namespace MFB { namespace Graph { namespace API {
-    const char* link_kind_e(int64_t i) {
-        switch (i) {
-            case 0L: return "e_link_kind_unknown";
-            case 1L: return "e_link_kind_defines";
-            case 2L: return "e_link_kind_extends";
-            case 3L: return "e_link_kind_specializes";
-            case 4L: return "e_link_kind_represents";
-            case 5L: return "e_link_kind_param";
-            case 6L: return "e_link_kind_arg";
-            case 7L: return "e_link_kind_type_base";
-            case 8L: return "e_link_kind_last";
-            default: return "";
-        }
-    }
-
-    std::string link_kind_e(int64_t i, const std::string &strip) {
-        std::string s = link_kind_e(i);
-        if (s.empty())
-            s = "(MFB::Graph::API::link_kind_e)" + boost::lexical_cast<std::string>(i);
-        if (boost::starts_with(s, strip))
-            s = s.substr(strip.size());
-        return s;
-    }
-
-    const std::vector<int64_t>& link_kind_e() {
-        static const int64_t values[] = {
-            0L,
-            1L,
-            2L,
-            3L,
-            4L,
-            5L,
-            6L,
-            7L,
-            8L
-        };
-        static const std::vector<int64_t> retval(values, values + 9);
-        return retval;
-    }
-
-}}}}
-
-namespace Rose {
-    std::string stringifyMFB_GraphAPIlink_kind_e(int64_t i, const char *strip, bool canonic) {
-        std::string retval = stringify::MFB::Graph::API::link_kind_e(i);
-        if (retval.empty()) {
-            retval = "(MFB::Graph::API::link_kind_e)" + boost::lexical_cast<std::string>(i);
-        } else {
-            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
-                retval = retval.substr(strlen(strip));
-            if (canonic)
-                retval = "MFB::Graph::API::link_kind_e::" + retval;
-        }
-        return retval;
-    }
-
-    const std::vector<int64_t>& stringifyMFB_GraphAPIlink_kind_e() {
-        return stringify::MFB::Graph::API::link_kind_e();
     }
 }
 
@@ -85278,6 +84948,54 @@ namespace Rose {
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
 // /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1668
 namespace stringify {
+    const char* E_SgAsmCliHeader(int64_t i) {
+        switch (i) {
+            case 0L: return "SgAsmCliHeader_metadataRoot";
+            default: return "";
+        }
+    }
+
+    std::string E_SgAsmCliHeader(int64_t i, const std::string &strip) {
+        std::string s = E_SgAsmCliHeader(i);
+        if (s.empty())
+            s = "(E_SgAsmCliHeader)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<int64_t>& E_SgAsmCliHeader() {
+        static const int64_t values[] = {
+            0L
+        };
+        static const std::vector<int64_t> retval(values, values + 1);
+        return retval;
+    }
+
+}
+
+namespace Rose {
+    std::string stringifyE_SgAsmCliHeader(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::E_SgAsmCliHeader(i);
+        if (retval.empty()) {
+            retval = "(E_SgAsmCliHeader)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "E_SgAsmCliHeader::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<int64_t>& stringifyE_SgAsmCliHeader() {
+        return stringify::E_SgAsmCliHeader();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1671
+namespace stringify {
     const char* E_SgAsmCoffSymbol(int64_t i) {
         switch (i) {
             case 0L: return "SgAsmCoffSymbol_name";
@@ -85324,7 +85042,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1671
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1674
 namespace stringify {
     const char* E_SgAsmElfSymbol(int64_t i) {
         switch (i) {
@@ -85372,7 +85090,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1674
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1677
 namespace stringify {
     const char* E_SgAsmGenericSymbol(int64_t i) {
         switch (i) {
@@ -85420,7 +85138,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1677
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1680
 namespace stringify {
     const char* E_SgAsmGenericSectionList(int64_t i) {
         switch (i) {
@@ -85468,7 +85186,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1680
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1683
 namespace stringify {
     const char* E_SgAsmGenericHeaderList(int64_t i) {
         switch (i) {
@@ -85516,7 +85234,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1683
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1686
 namespace stringify {
     const char* E_SgAsmElfSymbolList(int64_t i) {
         switch (i) {
@@ -85564,7 +85282,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1686
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1689
 namespace stringify {
     const char* E_SgAsmElfRelocEntryList(int64_t i) {
         switch (i) {
@@ -85612,7 +85330,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1689
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1692
 namespace stringify {
     const char* E_SgAsmPEExportEntry(int64_t i) {
         switch (i) {
@@ -85662,7 +85380,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1692
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1695
 namespace stringify {
     const char* E_SgAsmPEExportEntryList(int64_t i) {
         switch (i) {
@@ -85710,7 +85428,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1695
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1698
 namespace stringify {
     const char* E_SgAsmElfDynamicEntry(int64_t i) {
         switch (i) {
@@ -85758,7 +85476,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1698
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1701
 namespace stringify {
     const char* E_SgAsmElfSegmentTableEntryList(int64_t i) {
         switch (i) {
@@ -85806,7 +85524,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1701
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1704
 namespace stringify {
     const char* E_SgAsmElfNoteEntry(int64_t i) {
         switch (i) {
@@ -85854,7 +85572,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1704
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1707
 namespace stringify {
     const char* E_SgAsmElfSymverEntryList(int64_t i) {
         switch (i) {
@@ -85902,7 +85620,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1707
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1710
 namespace stringify {
     const char* E_SgAsmElfSymverDefinedEntry(int64_t i) {
         switch (i) {
@@ -85950,7 +85668,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1710
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1713
 namespace stringify {
     const char* E_SgAsmElfSymverDefinedEntryList(int64_t i) {
         switch (i) {
@@ -85998,7 +85716,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1713
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1716
 namespace stringify {
     const char* E_SgAsmElfSymverDefinedAux(int64_t i) {
         switch (i) {
@@ -86046,7 +85764,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1716
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1719
 namespace stringify {
     const char* E_SgAsmElfSymverDefinedAuxList(int64_t i) {
         switch (i) {
@@ -86094,7 +85812,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1719
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1722
 namespace stringify {
     const char* E_SgAsmElfSymverNeededEntry(int64_t i) {
         switch (i) {
@@ -86144,7 +85862,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1722
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1725
 namespace stringify {
     const char* E_SgAsmElfSymverNeededEntryList(int64_t i) {
         switch (i) {
@@ -86192,7 +85910,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1725
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1728
 namespace stringify {
     const char* E_SgAsmElfSymverNeededAux(int64_t i) {
         switch (i) {
@@ -86240,7 +85958,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1728
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1731
 namespace stringify {
     const char* E_SgAsmElfSymverNeededAuxList(int64_t i) {
         switch (i) {
@@ -86288,7 +86006,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1731
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1734
 namespace stringify {
     const char* E_SgAsmPEImportDirectory(int64_t i) {
         switch (i) {
@@ -86338,7 +86056,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1734
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1737
 namespace stringify {
     const char* E_SgAsmPEExportDirectory(int64_t i) {
         switch (i) {
@@ -86386,7 +86104,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1737
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1740
 namespace stringify {
     const char* E_SgAsmCoffSymbolList(int64_t i) {
         switch (i) {
@@ -86434,7 +86152,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1740
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1743
 namespace stringify {
     const char* E_SgAsmPERVASizePairList(int64_t i) {
         switch (i) {
@@ -86482,7 +86200,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1743
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1746
 namespace stringify {
     const char* E_SgAsmElfEHFrameEntryCI(int64_t i) {
         switch (i) {
@@ -86530,7 +86248,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1746
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1749
 namespace stringify {
     const char* E_SgAsmPEImportDirectoryList(int64_t i) {
         switch (i) {
@@ -86578,7 +86296,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1749
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1752
 namespace stringify {
     const char* E_SgAsmLEEntryPoint(int64_t i) {
         switch (i) {
@@ -86626,7 +86344,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1752
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1755
 namespace stringify {
     const char* E_SgAsmDwarfMacroList(int64_t i) {
         switch (i) {
@@ -86674,7 +86392,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1755
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1758
 namespace stringify {
     const char* E_SgAsmDwarfLineList(int64_t i) {
         switch (i) {
@@ -86722,7 +86440,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1758
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1761
 namespace stringify {
     const char* E_SgAsmDwarfCompilationUnitList(int64_t i) {
         switch (i) {
@@ -86770,7 +86488,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1761
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1764
 namespace stringify {
     const char* E_SgAsmDwarfArrayType(int64_t i) {
         switch (i) {
@@ -86818,7 +86536,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1764
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1767
 namespace stringify {
     const char* E_SgAsmDwarfClassType(int64_t i) {
         switch (i) {
@@ -86866,7 +86584,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1767
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1770
 namespace stringify {
     const char* E_SgAsmDwarfEnumerationType(int64_t i) {
         switch (i) {
@@ -86914,7 +86632,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1770
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1773
 namespace stringify {
     const char* E_SgAsmDwarfLexicalBlock(int64_t i) {
         switch (i) {
@@ -86962,7 +86680,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1773
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1776
 namespace stringify {
     const char* E_SgAsmDwarfCompilationUnit(int64_t i) {
         switch (i) {
@@ -87014,7 +86732,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1776
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1779
 namespace stringify {
     const char* E_SgAsmDwarfStructureType(int64_t i) {
         switch (i) {
@@ -87062,7 +86780,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1779
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1782
 namespace stringify {
     const char* E_SgAsmDwarfSubroutineType(int64_t i) {
         switch (i) {
@@ -87110,7 +86828,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1782
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1785
 namespace stringify {
     const char* E_SgAsmDwarfUnionType(int64_t i) {
         switch (i) {
@@ -87158,7 +86876,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1785
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1788
 namespace stringify {
     const char* E_SgAsmDwarfCommonBlock(int64_t i) {
         switch (i) {
@@ -87206,7 +86924,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1788
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1791
 namespace stringify {
     const char* E_SgAsmDwarfInlinedSubroutine(int64_t i) {
         switch (i) {
@@ -87254,7 +86972,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1791
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1794
 namespace stringify {
     const char* E_SgAsmDwarfSubprogram(int64_t i) {
         switch (i) {
@@ -87302,7 +87020,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1794
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1797
 namespace stringify {
     const char* E_SgAsmDwarfNamespace(int64_t i) {
         switch (i) {
@@ -87350,7 +87068,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1797
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1800
 namespace stringify {
     const char* E_SgAsmDwarfConstructList(int64_t i) {
         switch (i) {
@@ -87398,7 +87116,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1800
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1803
 namespace stringify {
     const char* E_SgAsmPEImportItem(int64_t i) {
         switch (i) {
@@ -87446,7 +87164,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1803
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1806
 namespace stringify {
     const char* E_SgAsmPEImportItemList(int64_t i) {
         switch (i) {
@@ -87494,7 +87212,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1806
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1809
 namespace stringify {
     const char* E_SgAsmInterpretationList(int64_t i) {
         switch (i) {
@@ -87542,7 +87260,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1809
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1812
 namespace stringify {
     const char* E_SgAsmGenericFileList(int64_t i) {
         switch (i) {
@@ -87590,7 +87308,2001 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1812
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1815
+namespace stringify {
+    const char* E_SgAsmCilAssemblyTable(int64_t i) {
+        switch (i) {
+            case 0L: return "SgAsmCilAssemblyTable_elements";
+            default: return "";
+        }
+    }
+
+    std::string E_SgAsmCilAssemblyTable(int64_t i, const std::string &strip) {
+        std::string s = E_SgAsmCilAssemblyTable(i);
+        if (s.empty())
+            s = "(E_SgAsmCilAssemblyTable)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<int64_t>& E_SgAsmCilAssemblyTable() {
+        static const int64_t values[] = {
+            0L
+        };
+        static const std::vector<int64_t> retval(values, values + 1);
+        return retval;
+    }
+
+}
+
+namespace Rose {
+    std::string stringifyE_SgAsmCilAssemblyTable(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::E_SgAsmCilAssemblyTable(i);
+        if (retval.empty()) {
+            retval = "(E_SgAsmCilAssemblyTable)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "E_SgAsmCilAssemblyTable::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<int64_t>& stringifyE_SgAsmCilAssemblyTable() {
+        return stringify::E_SgAsmCilAssemblyTable();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1818
+namespace stringify {
+    const char* E_SgAsmCilAssemblyOSTable(int64_t i) {
+        switch (i) {
+            case 0L: return "SgAsmCilAssemblyOSTable_elements";
+            default: return "";
+        }
+    }
+
+    std::string E_SgAsmCilAssemblyOSTable(int64_t i, const std::string &strip) {
+        std::string s = E_SgAsmCilAssemblyOSTable(i);
+        if (s.empty())
+            s = "(E_SgAsmCilAssemblyOSTable)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<int64_t>& E_SgAsmCilAssemblyOSTable() {
+        static const int64_t values[] = {
+            0L
+        };
+        static const std::vector<int64_t> retval(values, values + 1);
+        return retval;
+    }
+
+}
+
+namespace Rose {
+    std::string stringifyE_SgAsmCilAssemblyOSTable(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::E_SgAsmCilAssemblyOSTable(i);
+        if (retval.empty()) {
+            retval = "(E_SgAsmCilAssemblyOSTable)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "E_SgAsmCilAssemblyOSTable::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<int64_t>& stringifyE_SgAsmCilAssemblyOSTable() {
+        return stringify::E_SgAsmCilAssemblyOSTable();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1821
+namespace stringify {
+    const char* E_SgAsmCilAssemblyProcessorTable(int64_t i) {
+        switch (i) {
+            case 0L: return "SgAsmCilAssemblyProcessorTable_elements";
+            default: return "";
+        }
+    }
+
+    std::string E_SgAsmCilAssemblyProcessorTable(int64_t i, const std::string &strip) {
+        std::string s = E_SgAsmCilAssemblyProcessorTable(i);
+        if (s.empty())
+            s = "(E_SgAsmCilAssemblyProcessorTable)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<int64_t>& E_SgAsmCilAssemblyProcessorTable() {
+        static const int64_t values[] = {
+            0L
+        };
+        static const std::vector<int64_t> retval(values, values + 1);
+        return retval;
+    }
+
+}
+
+namespace Rose {
+    std::string stringifyE_SgAsmCilAssemblyProcessorTable(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::E_SgAsmCilAssemblyProcessorTable(i);
+        if (retval.empty()) {
+            retval = "(E_SgAsmCilAssemblyProcessorTable)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "E_SgAsmCilAssemblyProcessorTable::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<int64_t>& stringifyE_SgAsmCilAssemblyProcessorTable() {
+        return stringify::E_SgAsmCilAssemblyProcessorTable();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1824
+namespace stringify {
+    const char* E_SgAsmCilAssemblyRefTable(int64_t i) {
+        switch (i) {
+            case 0L: return "SgAsmCilAssemblyRefTable_elements";
+            default: return "";
+        }
+    }
+
+    std::string E_SgAsmCilAssemblyRefTable(int64_t i, const std::string &strip) {
+        std::string s = E_SgAsmCilAssemblyRefTable(i);
+        if (s.empty())
+            s = "(E_SgAsmCilAssemblyRefTable)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<int64_t>& E_SgAsmCilAssemblyRefTable() {
+        static const int64_t values[] = {
+            0L
+        };
+        static const std::vector<int64_t> retval(values, values + 1);
+        return retval;
+    }
+
+}
+
+namespace Rose {
+    std::string stringifyE_SgAsmCilAssemblyRefTable(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::E_SgAsmCilAssemblyRefTable(i);
+        if (retval.empty()) {
+            retval = "(E_SgAsmCilAssemblyRefTable)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "E_SgAsmCilAssemblyRefTable::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<int64_t>& stringifyE_SgAsmCilAssemblyRefTable() {
+        return stringify::E_SgAsmCilAssemblyRefTable();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1827
+namespace stringify {
+    const char* E_SgAsmCilAssemblyRefOSTable(int64_t i) {
+        switch (i) {
+            case 0L: return "SgAsmCilAssemblyRefOSTable_elements";
+            default: return "";
+        }
+    }
+
+    std::string E_SgAsmCilAssemblyRefOSTable(int64_t i, const std::string &strip) {
+        std::string s = E_SgAsmCilAssemblyRefOSTable(i);
+        if (s.empty())
+            s = "(E_SgAsmCilAssemblyRefOSTable)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<int64_t>& E_SgAsmCilAssemblyRefOSTable() {
+        static const int64_t values[] = {
+            0L
+        };
+        static const std::vector<int64_t> retval(values, values + 1);
+        return retval;
+    }
+
+}
+
+namespace Rose {
+    std::string stringifyE_SgAsmCilAssemblyRefOSTable(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::E_SgAsmCilAssemblyRefOSTable(i);
+        if (retval.empty()) {
+            retval = "(E_SgAsmCilAssemblyRefOSTable)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "E_SgAsmCilAssemblyRefOSTable::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<int64_t>& stringifyE_SgAsmCilAssemblyRefOSTable() {
+        return stringify::E_SgAsmCilAssemblyRefOSTable();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1830
+namespace stringify {
+    const char* E_SgAsmCilAssemblyRefProcessorTable(int64_t i) {
+        switch (i) {
+            case 0L: return "SgAsmCilAssemblyRefProcessorTable_elements";
+            default: return "";
+        }
+    }
+
+    std::string E_SgAsmCilAssemblyRefProcessorTable(int64_t i, const std::string &strip) {
+        std::string s = E_SgAsmCilAssemblyRefProcessorTable(i);
+        if (s.empty())
+            s = "(E_SgAsmCilAssemblyRefProcessorTable)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<int64_t>& E_SgAsmCilAssemblyRefProcessorTable() {
+        static const int64_t values[] = {
+            0L
+        };
+        static const std::vector<int64_t> retval(values, values + 1);
+        return retval;
+    }
+
+}
+
+namespace Rose {
+    std::string stringifyE_SgAsmCilAssemblyRefProcessorTable(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::E_SgAsmCilAssemblyRefProcessorTable(i);
+        if (retval.empty()) {
+            retval = "(E_SgAsmCilAssemblyRefProcessorTable)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "E_SgAsmCilAssemblyRefProcessorTable::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<int64_t>& stringifyE_SgAsmCilAssemblyRefProcessorTable() {
+        return stringify::E_SgAsmCilAssemblyRefProcessorTable();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1833
+namespace stringify {
+    const char* E_SgAsmCilClassLayoutTable(int64_t i) {
+        switch (i) {
+            case 0L: return "SgAsmCilClassLayoutTable_elements";
+            default: return "";
+        }
+    }
+
+    std::string E_SgAsmCilClassLayoutTable(int64_t i, const std::string &strip) {
+        std::string s = E_SgAsmCilClassLayoutTable(i);
+        if (s.empty())
+            s = "(E_SgAsmCilClassLayoutTable)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<int64_t>& E_SgAsmCilClassLayoutTable() {
+        static const int64_t values[] = {
+            0L
+        };
+        static const std::vector<int64_t> retval(values, values + 1);
+        return retval;
+    }
+
+}
+
+namespace Rose {
+    std::string stringifyE_SgAsmCilClassLayoutTable(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::E_SgAsmCilClassLayoutTable(i);
+        if (retval.empty()) {
+            retval = "(E_SgAsmCilClassLayoutTable)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "E_SgAsmCilClassLayoutTable::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<int64_t>& stringifyE_SgAsmCilClassLayoutTable() {
+        return stringify::E_SgAsmCilClassLayoutTable();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1836
+namespace stringify {
+    const char* E_SgAsmCilConstantTable(int64_t i) {
+        switch (i) {
+            case 0L: return "SgAsmCilConstantTable_elements";
+            default: return "";
+        }
+    }
+
+    std::string E_SgAsmCilConstantTable(int64_t i, const std::string &strip) {
+        std::string s = E_SgAsmCilConstantTable(i);
+        if (s.empty())
+            s = "(E_SgAsmCilConstantTable)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<int64_t>& E_SgAsmCilConstantTable() {
+        static const int64_t values[] = {
+            0L
+        };
+        static const std::vector<int64_t> retval(values, values + 1);
+        return retval;
+    }
+
+}
+
+namespace Rose {
+    std::string stringifyE_SgAsmCilConstantTable(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::E_SgAsmCilConstantTable(i);
+        if (retval.empty()) {
+            retval = "(E_SgAsmCilConstantTable)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "E_SgAsmCilConstantTable::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<int64_t>& stringifyE_SgAsmCilConstantTable() {
+        return stringify::E_SgAsmCilConstantTable();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1839
+namespace stringify {
+    const char* E_SgAsmCilCustomAttributeTable(int64_t i) {
+        switch (i) {
+            case 0L: return "SgAsmCilCustomAttributeTable_elements";
+            default: return "";
+        }
+    }
+
+    std::string E_SgAsmCilCustomAttributeTable(int64_t i, const std::string &strip) {
+        std::string s = E_SgAsmCilCustomAttributeTable(i);
+        if (s.empty())
+            s = "(E_SgAsmCilCustomAttributeTable)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<int64_t>& E_SgAsmCilCustomAttributeTable() {
+        static const int64_t values[] = {
+            0L
+        };
+        static const std::vector<int64_t> retval(values, values + 1);
+        return retval;
+    }
+
+}
+
+namespace Rose {
+    std::string stringifyE_SgAsmCilCustomAttributeTable(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::E_SgAsmCilCustomAttributeTable(i);
+        if (retval.empty()) {
+            retval = "(E_SgAsmCilCustomAttributeTable)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "E_SgAsmCilCustomAttributeTable::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<int64_t>& stringifyE_SgAsmCilCustomAttributeTable() {
+        return stringify::E_SgAsmCilCustomAttributeTable();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1842
+namespace stringify {
+    const char* E_SgAsmCilDeclSecurityTable(int64_t i) {
+        switch (i) {
+            case 0L: return "SgAsmCilDeclSecurityTable_elements";
+            default: return "";
+        }
+    }
+
+    std::string E_SgAsmCilDeclSecurityTable(int64_t i, const std::string &strip) {
+        std::string s = E_SgAsmCilDeclSecurityTable(i);
+        if (s.empty())
+            s = "(E_SgAsmCilDeclSecurityTable)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<int64_t>& E_SgAsmCilDeclSecurityTable() {
+        static const int64_t values[] = {
+            0L
+        };
+        static const std::vector<int64_t> retval(values, values + 1);
+        return retval;
+    }
+
+}
+
+namespace Rose {
+    std::string stringifyE_SgAsmCilDeclSecurityTable(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::E_SgAsmCilDeclSecurityTable(i);
+        if (retval.empty()) {
+            retval = "(E_SgAsmCilDeclSecurityTable)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "E_SgAsmCilDeclSecurityTable::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<int64_t>& stringifyE_SgAsmCilDeclSecurityTable() {
+        return stringify::E_SgAsmCilDeclSecurityTable();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1845
+namespace stringify {
+    const char* E_SgAsmCilEventTable(int64_t i) {
+        switch (i) {
+            case 0L: return "SgAsmCilEventTable_elements";
+            default: return "";
+        }
+    }
+
+    std::string E_SgAsmCilEventTable(int64_t i, const std::string &strip) {
+        std::string s = E_SgAsmCilEventTable(i);
+        if (s.empty())
+            s = "(E_SgAsmCilEventTable)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<int64_t>& E_SgAsmCilEventTable() {
+        static const int64_t values[] = {
+            0L
+        };
+        static const std::vector<int64_t> retval(values, values + 1);
+        return retval;
+    }
+
+}
+
+namespace Rose {
+    std::string stringifyE_SgAsmCilEventTable(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::E_SgAsmCilEventTable(i);
+        if (retval.empty()) {
+            retval = "(E_SgAsmCilEventTable)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "E_SgAsmCilEventTable::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<int64_t>& stringifyE_SgAsmCilEventTable() {
+        return stringify::E_SgAsmCilEventTable();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1848
+namespace stringify {
+    const char* E_SgAsmCilEventMapTable(int64_t i) {
+        switch (i) {
+            case 0L: return "SgAsmCilEventMapTable_elements";
+            default: return "";
+        }
+    }
+
+    std::string E_SgAsmCilEventMapTable(int64_t i, const std::string &strip) {
+        std::string s = E_SgAsmCilEventMapTable(i);
+        if (s.empty())
+            s = "(E_SgAsmCilEventMapTable)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<int64_t>& E_SgAsmCilEventMapTable() {
+        static const int64_t values[] = {
+            0L
+        };
+        static const std::vector<int64_t> retval(values, values + 1);
+        return retval;
+    }
+
+}
+
+namespace Rose {
+    std::string stringifyE_SgAsmCilEventMapTable(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::E_SgAsmCilEventMapTable(i);
+        if (retval.empty()) {
+            retval = "(E_SgAsmCilEventMapTable)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "E_SgAsmCilEventMapTable::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<int64_t>& stringifyE_SgAsmCilEventMapTable() {
+        return stringify::E_SgAsmCilEventMapTable();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1851
+namespace stringify {
+    const char* E_SgAsmCilExportedTypeTable(int64_t i) {
+        switch (i) {
+            case 0L: return "SgAsmCilExportedTypeTable_elements";
+            default: return "";
+        }
+    }
+
+    std::string E_SgAsmCilExportedTypeTable(int64_t i, const std::string &strip) {
+        std::string s = E_SgAsmCilExportedTypeTable(i);
+        if (s.empty())
+            s = "(E_SgAsmCilExportedTypeTable)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<int64_t>& E_SgAsmCilExportedTypeTable() {
+        static const int64_t values[] = {
+            0L
+        };
+        static const std::vector<int64_t> retval(values, values + 1);
+        return retval;
+    }
+
+}
+
+namespace Rose {
+    std::string stringifyE_SgAsmCilExportedTypeTable(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::E_SgAsmCilExportedTypeTable(i);
+        if (retval.empty()) {
+            retval = "(E_SgAsmCilExportedTypeTable)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "E_SgAsmCilExportedTypeTable::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<int64_t>& stringifyE_SgAsmCilExportedTypeTable() {
+        return stringify::E_SgAsmCilExportedTypeTable();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1854
+namespace stringify {
+    const char* E_SgAsmCilFieldTable(int64_t i) {
+        switch (i) {
+            case 0L: return "SgAsmCilFieldTable_elements";
+            default: return "";
+        }
+    }
+
+    std::string E_SgAsmCilFieldTable(int64_t i, const std::string &strip) {
+        std::string s = E_SgAsmCilFieldTable(i);
+        if (s.empty())
+            s = "(E_SgAsmCilFieldTable)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<int64_t>& E_SgAsmCilFieldTable() {
+        static const int64_t values[] = {
+            0L
+        };
+        static const std::vector<int64_t> retval(values, values + 1);
+        return retval;
+    }
+
+}
+
+namespace Rose {
+    std::string stringifyE_SgAsmCilFieldTable(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::E_SgAsmCilFieldTable(i);
+        if (retval.empty()) {
+            retval = "(E_SgAsmCilFieldTable)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "E_SgAsmCilFieldTable::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<int64_t>& stringifyE_SgAsmCilFieldTable() {
+        return stringify::E_SgAsmCilFieldTable();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1857
+namespace stringify {
+    const char* E_SgAsmCilFieldLayoutTable(int64_t i) {
+        switch (i) {
+            case 0L: return "SgAsmCilFieldLayoutTable_elements";
+            default: return "";
+        }
+    }
+
+    std::string E_SgAsmCilFieldLayoutTable(int64_t i, const std::string &strip) {
+        std::string s = E_SgAsmCilFieldLayoutTable(i);
+        if (s.empty())
+            s = "(E_SgAsmCilFieldLayoutTable)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<int64_t>& E_SgAsmCilFieldLayoutTable() {
+        static const int64_t values[] = {
+            0L
+        };
+        static const std::vector<int64_t> retval(values, values + 1);
+        return retval;
+    }
+
+}
+
+namespace Rose {
+    std::string stringifyE_SgAsmCilFieldLayoutTable(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::E_SgAsmCilFieldLayoutTable(i);
+        if (retval.empty()) {
+            retval = "(E_SgAsmCilFieldLayoutTable)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "E_SgAsmCilFieldLayoutTable::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<int64_t>& stringifyE_SgAsmCilFieldLayoutTable() {
+        return stringify::E_SgAsmCilFieldLayoutTable();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1860
+namespace stringify {
+    const char* E_SgAsmCilFieldMarshalTable(int64_t i) {
+        switch (i) {
+            case 0L: return "SgAsmCilFieldMarshalTable_elements";
+            default: return "";
+        }
+    }
+
+    std::string E_SgAsmCilFieldMarshalTable(int64_t i, const std::string &strip) {
+        std::string s = E_SgAsmCilFieldMarshalTable(i);
+        if (s.empty())
+            s = "(E_SgAsmCilFieldMarshalTable)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<int64_t>& E_SgAsmCilFieldMarshalTable() {
+        static const int64_t values[] = {
+            0L
+        };
+        static const std::vector<int64_t> retval(values, values + 1);
+        return retval;
+    }
+
+}
+
+namespace Rose {
+    std::string stringifyE_SgAsmCilFieldMarshalTable(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::E_SgAsmCilFieldMarshalTable(i);
+        if (retval.empty()) {
+            retval = "(E_SgAsmCilFieldMarshalTable)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "E_SgAsmCilFieldMarshalTable::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<int64_t>& stringifyE_SgAsmCilFieldMarshalTable() {
+        return stringify::E_SgAsmCilFieldMarshalTable();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1863
+namespace stringify {
+    const char* E_SgAsmCilFieldRVATable(int64_t i) {
+        switch (i) {
+            case 0L: return "SgAsmCilFieldRVATable_elements";
+            default: return "";
+        }
+    }
+
+    std::string E_SgAsmCilFieldRVATable(int64_t i, const std::string &strip) {
+        std::string s = E_SgAsmCilFieldRVATable(i);
+        if (s.empty())
+            s = "(E_SgAsmCilFieldRVATable)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<int64_t>& E_SgAsmCilFieldRVATable() {
+        static const int64_t values[] = {
+            0L
+        };
+        static const std::vector<int64_t> retval(values, values + 1);
+        return retval;
+    }
+
+}
+
+namespace Rose {
+    std::string stringifyE_SgAsmCilFieldRVATable(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::E_SgAsmCilFieldRVATable(i);
+        if (retval.empty()) {
+            retval = "(E_SgAsmCilFieldRVATable)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "E_SgAsmCilFieldRVATable::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<int64_t>& stringifyE_SgAsmCilFieldRVATable() {
+        return stringify::E_SgAsmCilFieldRVATable();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1866
+namespace stringify {
+    const char* E_SgAsmCilFileTable(int64_t i) {
+        switch (i) {
+            case 0L: return "SgAsmCilFileTable_elements";
+            default: return "";
+        }
+    }
+
+    std::string E_SgAsmCilFileTable(int64_t i, const std::string &strip) {
+        std::string s = E_SgAsmCilFileTable(i);
+        if (s.empty())
+            s = "(E_SgAsmCilFileTable)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<int64_t>& E_SgAsmCilFileTable() {
+        static const int64_t values[] = {
+            0L
+        };
+        static const std::vector<int64_t> retval(values, values + 1);
+        return retval;
+    }
+
+}
+
+namespace Rose {
+    std::string stringifyE_SgAsmCilFileTable(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::E_SgAsmCilFileTable(i);
+        if (retval.empty()) {
+            retval = "(E_SgAsmCilFileTable)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "E_SgAsmCilFileTable::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<int64_t>& stringifyE_SgAsmCilFileTable() {
+        return stringify::E_SgAsmCilFileTable();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1869
+namespace stringify {
+    const char* E_SgAsmCilGenericParamTable(int64_t i) {
+        switch (i) {
+            case 0L: return "SgAsmCilGenericParamTable_elements";
+            default: return "";
+        }
+    }
+
+    std::string E_SgAsmCilGenericParamTable(int64_t i, const std::string &strip) {
+        std::string s = E_SgAsmCilGenericParamTable(i);
+        if (s.empty())
+            s = "(E_SgAsmCilGenericParamTable)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<int64_t>& E_SgAsmCilGenericParamTable() {
+        static const int64_t values[] = {
+            0L
+        };
+        static const std::vector<int64_t> retval(values, values + 1);
+        return retval;
+    }
+
+}
+
+namespace Rose {
+    std::string stringifyE_SgAsmCilGenericParamTable(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::E_SgAsmCilGenericParamTable(i);
+        if (retval.empty()) {
+            retval = "(E_SgAsmCilGenericParamTable)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "E_SgAsmCilGenericParamTable::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<int64_t>& stringifyE_SgAsmCilGenericParamTable() {
+        return stringify::E_SgAsmCilGenericParamTable();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1872
+namespace stringify {
+    const char* E_SgAsmCilGenericParamConstraintTable(int64_t i) {
+        switch (i) {
+            case 0L: return "SgAsmCilGenericParamConstraintTable_elements";
+            default: return "";
+        }
+    }
+
+    std::string E_SgAsmCilGenericParamConstraintTable(int64_t i, const std::string &strip) {
+        std::string s = E_SgAsmCilGenericParamConstraintTable(i);
+        if (s.empty())
+            s = "(E_SgAsmCilGenericParamConstraintTable)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<int64_t>& E_SgAsmCilGenericParamConstraintTable() {
+        static const int64_t values[] = {
+            0L
+        };
+        static const std::vector<int64_t> retval(values, values + 1);
+        return retval;
+    }
+
+}
+
+namespace Rose {
+    std::string stringifyE_SgAsmCilGenericParamConstraintTable(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::E_SgAsmCilGenericParamConstraintTable(i);
+        if (retval.empty()) {
+            retval = "(E_SgAsmCilGenericParamConstraintTable)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "E_SgAsmCilGenericParamConstraintTable::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<int64_t>& stringifyE_SgAsmCilGenericParamConstraintTable() {
+        return stringify::E_SgAsmCilGenericParamConstraintTable();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1875
+namespace stringify {
+    const char* E_SgAsmCilImplMapTable(int64_t i) {
+        switch (i) {
+            case 0L: return "SgAsmCilImplMapTable_elements";
+            default: return "";
+        }
+    }
+
+    std::string E_SgAsmCilImplMapTable(int64_t i, const std::string &strip) {
+        std::string s = E_SgAsmCilImplMapTable(i);
+        if (s.empty())
+            s = "(E_SgAsmCilImplMapTable)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<int64_t>& E_SgAsmCilImplMapTable() {
+        static const int64_t values[] = {
+            0L
+        };
+        static const std::vector<int64_t> retval(values, values + 1);
+        return retval;
+    }
+
+}
+
+namespace Rose {
+    std::string stringifyE_SgAsmCilImplMapTable(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::E_SgAsmCilImplMapTable(i);
+        if (retval.empty()) {
+            retval = "(E_SgAsmCilImplMapTable)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "E_SgAsmCilImplMapTable::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<int64_t>& stringifyE_SgAsmCilImplMapTable() {
+        return stringify::E_SgAsmCilImplMapTable();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1878
+namespace stringify {
+    const char* E_SgAsmCilInterfaceImplTable(int64_t i) {
+        switch (i) {
+            case 0L: return "SgAsmCilInterfaceImplTable_elements";
+            default: return "";
+        }
+    }
+
+    std::string E_SgAsmCilInterfaceImplTable(int64_t i, const std::string &strip) {
+        std::string s = E_SgAsmCilInterfaceImplTable(i);
+        if (s.empty())
+            s = "(E_SgAsmCilInterfaceImplTable)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<int64_t>& E_SgAsmCilInterfaceImplTable() {
+        static const int64_t values[] = {
+            0L
+        };
+        static const std::vector<int64_t> retval(values, values + 1);
+        return retval;
+    }
+
+}
+
+namespace Rose {
+    std::string stringifyE_SgAsmCilInterfaceImplTable(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::E_SgAsmCilInterfaceImplTable(i);
+        if (retval.empty()) {
+            retval = "(E_SgAsmCilInterfaceImplTable)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "E_SgAsmCilInterfaceImplTable::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<int64_t>& stringifyE_SgAsmCilInterfaceImplTable() {
+        return stringify::E_SgAsmCilInterfaceImplTable();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1881
+namespace stringify {
+    const char* E_SgAsmCilManifestResourceTable(int64_t i) {
+        switch (i) {
+            case 0L: return "SgAsmCilManifestResourceTable_elements";
+            default: return "";
+        }
+    }
+
+    std::string E_SgAsmCilManifestResourceTable(int64_t i, const std::string &strip) {
+        std::string s = E_SgAsmCilManifestResourceTable(i);
+        if (s.empty())
+            s = "(E_SgAsmCilManifestResourceTable)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<int64_t>& E_SgAsmCilManifestResourceTable() {
+        static const int64_t values[] = {
+            0L
+        };
+        static const std::vector<int64_t> retval(values, values + 1);
+        return retval;
+    }
+
+}
+
+namespace Rose {
+    std::string stringifyE_SgAsmCilManifestResourceTable(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::E_SgAsmCilManifestResourceTable(i);
+        if (retval.empty()) {
+            retval = "(E_SgAsmCilManifestResourceTable)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "E_SgAsmCilManifestResourceTable::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<int64_t>& stringifyE_SgAsmCilManifestResourceTable() {
+        return stringify::E_SgAsmCilManifestResourceTable();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1884
+namespace stringify {
+    const char* E_SgAsmCilMemberRefTable(int64_t i) {
+        switch (i) {
+            case 0L: return "SgAsmCilMemberRefTable_elements";
+            default: return "";
+        }
+    }
+
+    std::string E_SgAsmCilMemberRefTable(int64_t i, const std::string &strip) {
+        std::string s = E_SgAsmCilMemberRefTable(i);
+        if (s.empty())
+            s = "(E_SgAsmCilMemberRefTable)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<int64_t>& E_SgAsmCilMemberRefTable() {
+        static const int64_t values[] = {
+            0L
+        };
+        static const std::vector<int64_t> retval(values, values + 1);
+        return retval;
+    }
+
+}
+
+namespace Rose {
+    std::string stringifyE_SgAsmCilMemberRefTable(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::E_SgAsmCilMemberRefTable(i);
+        if (retval.empty()) {
+            retval = "(E_SgAsmCilMemberRefTable)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "E_SgAsmCilMemberRefTable::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<int64_t>& stringifyE_SgAsmCilMemberRefTable() {
+        return stringify::E_SgAsmCilMemberRefTable();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1887
+namespace stringify {
+    const char* E_SgAsmCilMethodDefTable(int64_t i) {
+        switch (i) {
+            case 0L: return "SgAsmCilMethodDefTable_elements";
+            default: return "";
+        }
+    }
+
+    std::string E_SgAsmCilMethodDefTable(int64_t i, const std::string &strip) {
+        std::string s = E_SgAsmCilMethodDefTable(i);
+        if (s.empty())
+            s = "(E_SgAsmCilMethodDefTable)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<int64_t>& E_SgAsmCilMethodDefTable() {
+        static const int64_t values[] = {
+            0L
+        };
+        static const std::vector<int64_t> retval(values, values + 1);
+        return retval;
+    }
+
+}
+
+namespace Rose {
+    std::string stringifyE_SgAsmCilMethodDefTable(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::E_SgAsmCilMethodDefTable(i);
+        if (retval.empty()) {
+            retval = "(E_SgAsmCilMethodDefTable)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "E_SgAsmCilMethodDefTable::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<int64_t>& stringifyE_SgAsmCilMethodDefTable() {
+        return stringify::E_SgAsmCilMethodDefTable();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1890
+namespace stringify {
+    const char* E_SgAsmCilMethodImplTable(int64_t i) {
+        switch (i) {
+            case 0L: return "SgAsmCilMethodImplTable_elements";
+            default: return "";
+        }
+    }
+
+    std::string E_SgAsmCilMethodImplTable(int64_t i, const std::string &strip) {
+        std::string s = E_SgAsmCilMethodImplTable(i);
+        if (s.empty())
+            s = "(E_SgAsmCilMethodImplTable)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<int64_t>& E_SgAsmCilMethodImplTable() {
+        static const int64_t values[] = {
+            0L
+        };
+        static const std::vector<int64_t> retval(values, values + 1);
+        return retval;
+    }
+
+}
+
+namespace Rose {
+    std::string stringifyE_SgAsmCilMethodImplTable(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::E_SgAsmCilMethodImplTable(i);
+        if (retval.empty()) {
+            retval = "(E_SgAsmCilMethodImplTable)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "E_SgAsmCilMethodImplTable::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<int64_t>& stringifyE_SgAsmCilMethodImplTable() {
+        return stringify::E_SgAsmCilMethodImplTable();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1893
+namespace stringify {
+    const char* E_SgAsmCilMethodSemanticsTable(int64_t i) {
+        switch (i) {
+            case 0L: return "SgAsmCilMethodSemanticsTable_elements";
+            default: return "";
+        }
+    }
+
+    std::string E_SgAsmCilMethodSemanticsTable(int64_t i, const std::string &strip) {
+        std::string s = E_SgAsmCilMethodSemanticsTable(i);
+        if (s.empty())
+            s = "(E_SgAsmCilMethodSemanticsTable)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<int64_t>& E_SgAsmCilMethodSemanticsTable() {
+        static const int64_t values[] = {
+            0L
+        };
+        static const std::vector<int64_t> retval(values, values + 1);
+        return retval;
+    }
+
+}
+
+namespace Rose {
+    std::string stringifyE_SgAsmCilMethodSemanticsTable(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::E_SgAsmCilMethodSemanticsTable(i);
+        if (retval.empty()) {
+            retval = "(E_SgAsmCilMethodSemanticsTable)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "E_SgAsmCilMethodSemanticsTable::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<int64_t>& stringifyE_SgAsmCilMethodSemanticsTable() {
+        return stringify::E_SgAsmCilMethodSemanticsTable();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1896
+namespace stringify {
+    const char* E_SgAsmCilMethodSpecTable(int64_t i) {
+        switch (i) {
+            case 0L: return "SgAsmCilMethodSpecTable_elements";
+            default: return "";
+        }
+    }
+
+    std::string E_SgAsmCilMethodSpecTable(int64_t i, const std::string &strip) {
+        std::string s = E_SgAsmCilMethodSpecTable(i);
+        if (s.empty())
+            s = "(E_SgAsmCilMethodSpecTable)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<int64_t>& E_SgAsmCilMethodSpecTable() {
+        static const int64_t values[] = {
+            0L
+        };
+        static const std::vector<int64_t> retval(values, values + 1);
+        return retval;
+    }
+
+}
+
+namespace Rose {
+    std::string stringifyE_SgAsmCilMethodSpecTable(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::E_SgAsmCilMethodSpecTable(i);
+        if (retval.empty()) {
+            retval = "(E_SgAsmCilMethodSpecTable)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "E_SgAsmCilMethodSpecTable::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<int64_t>& stringifyE_SgAsmCilMethodSpecTable() {
+        return stringify::E_SgAsmCilMethodSpecTable();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1899
+namespace stringify {
+    const char* E_SgAsmCilModuleTable(int64_t i) {
+        switch (i) {
+            case 0L: return "SgAsmCilModuleTable_elements";
+            default: return "";
+        }
+    }
+
+    std::string E_SgAsmCilModuleTable(int64_t i, const std::string &strip) {
+        std::string s = E_SgAsmCilModuleTable(i);
+        if (s.empty())
+            s = "(E_SgAsmCilModuleTable)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<int64_t>& E_SgAsmCilModuleTable() {
+        static const int64_t values[] = {
+            0L
+        };
+        static const std::vector<int64_t> retval(values, values + 1);
+        return retval;
+    }
+
+}
+
+namespace Rose {
+    std::string stringifyE_SgAsmCilModuleTable(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::E_SgAsmCilModuleTable(i);
+        if (retval.empty()) {
+            retval = "(E_SgAsmCilModuleTable)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "E_SgAsmCilModuleTable::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<int64_t>& stringifyE_SgAsmCilModuleTable() {
+        return stringify::E_SgAsmCilModuleTable();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1902
+namespace stringify {
+    const char* E_SgAsmCilModuleRefTable(int64_t i) {
+        switch (i) {
+            case 0L: return "SgAsmCilModuleRefTable_elements";
+            default: return "";
+        }
+    }
+
+    std::string E_SgAsmCilModuleRefTable(int64_t i, const std::string &strip) {
+        std::string s = E_SgAsmCilModuleRefTable(i);
+        if (s.empty())
+            s = "(E_SgAsmCilModuleRefTable)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<int64_t>& E_SgAsmCilModuleRefTable() {
+        static const int64_t values[] = {
+            0L
+        };
+        static const std::vector<int64_t> retval(values, values + 1);
+        return retval;
+    }
+
+}
+
+namespace Rose {
+    std::string stringifyE_SgAsmCilModuleRefTable(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::E_SgAsmCilModuleRefTable(i);
+        if (retval.empty()) {
+            retval = "(E_SgAsmCilModuleRefTable)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "E_SgAsmCilModuleRefTable::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<int64_t>& stringifyE_SgAsmCilModuleRefTable() {
+        return stringify::E_SgAsmCilModuleRefTable();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1905
+namespace stringify {
+    const char* E_SgAsmCilNestedClassTable(int64_t i) {
+        switch (i) {
+            case 0L: return "SgAsmCilNestedClassTable_elements";
+            default: return "";
+        }
+    }
+
+    std::string E_SgAsmCilNestedClassTable(int64_t i, const std::string &strip) {
+        std::string s = E_SgAsmCilNestedClassTable(i);
+        if (s.empty())
+            s = "(E_SgAsmCilNestedClassTable)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<int64_t>& E_SgAsmCilNestedClassTable() {
+        static const int64_t values[] = {
+            0L
+        };
+        static const std::vector<int64_t> retval(values, values + 1);
+        return retval;
+    }
+
+}
+
+namespace Rose {
+    std::string stringifyE_SgAsmCilNestedClassTable(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::E_SgAsmCilNestedClassTable(i);
+        if (retval.empty()) {
+            retval = "(E_SgAsmCilNestedClassTable)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "E_SgAsmCilNestedClassTable::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<int64_t>& stringifyE_SgAsmCilNestedClassTable() {
+        return stringify::E_SgAsmCilNestedClassTable();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1908
+namespace stringify {
+    const char* E_SgAsmCilParamTable(int64_t i) {
+        switch (i) {
+            case 0L: return "SgAsmCilParamTable_elements";
+            default: return "";
+        }
+    }
+
+    std::string E_SgAsmCilParamTable(int64_t i, const std::string &strip) {
+        std::string s = E_SgAsmCilParamTable(i);
+        if (s.empty())
+            s = "(E_SgAsmCilParamTable)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<int64_t>& E_SgAsmCilParamTable() {
+        static const int64_t values[] = {
+            0L
+        };
+        static const std::vector<int64_t> retval(values, values + 1);
+        return retval;
+    }
+
+}
+
+namespace Rose {
+    std::string stringifyE_SgAsmCilParamTable(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::E_SgAsmCilParamTable(i);
+        if (retval.empty()) {
+            retval = "(E_SgAsmCilParamTable)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "E_SgAsmCilParamTable::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<int64_t>& stringifyE_SgAsmCilParamTable() {
+        return stringify::E_SgAsmCilParamTable();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1911
+namespace stringify {
+    const char* E_SgAsmCilPropertyTable(int64_t i) {
+        switch (i) {
+            case 0L: return "SgAsmCilPropertyTable_elements";
+            default: return "";
+        }
+    }
+
+    std::string E_SgAsmCilPropertyTable(int64_t i, const std::string &strip) {
+        std::string s = E_SgAsmCilPropertyTable(i);
+        if (s.empty())
+            s = "(E_SgAsmCilPropertyTable)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<int64_t>& E_SgAsmCilPropertyTable() {
+        static const int64_t values[] = {
+            0L
+        };
+        static const std::vector<int64_t> retval(values, values + 1);
+        return retval;
+    }
+
+}
+
+namespace Rose {
+    std::string stringifyE_SgAsmCilPropertyTable(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::E_SgAsmCilPropertyTable(i);
+        if (retval.empty()) {
+            retval = "(E_SgAsmCilPropertyTable)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "E_SgAsmCilPropertyTable::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<int64_t>& stringifyE_SgAsmCilPropertyTable() {
+        return stringify::E_SgAsmCilPropertyTable();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1914
+namespace stringify {
+    const char* E_SgAsmCilPropertyMapTable(int64_t i) {
+        switch (i) {
+            case 0L: return "SgAsmCilPropertyMapTable_elements";
+            default: return "";
+        }
+    }
+
+    std::string E_SgAsmCilPropertyMapTable(int64_t i, const std::string &strip) {
+        std::string s = E_SgAsmCilPropertyMapTable(i);
+        if (s.empty())
+            s = "(E_SgAsmCilPropertyMapTable)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<int64_t>& E_SgAsmCilPropertyMapTable() {
+        static const int64_t values[] = {
+            0L
+        };
+        static const std::vector<int64_t> retval(values, values + 1);
+        return retval;
+    }
+
+}
+
+namespace Rose {
+    std::string stringifyE_SgAsmCilPropertyMapTable(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::E_SgAsmCilPropertyMapTable(i);
+        if (retval.empty()) {
+            retval = "(E_SgAsmCilPropertyMapTable)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "E_SgAsmCilPropertyMapTable::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<int64_t>& stringifyE_SgAsmCilPropertyMapTable() {
+        return stringify::E_SgAsmCilPropertyMapTable();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1917
+namespace stringify {
+    const char* E_SgAsmCilStandAloneSigTable(int64_t i) {
+        switch (i) {
+            case 0L: return "SgAsmCilStandAloneSigTable_elements";
+            default: return "";
+        }
+    }
+
+    std::string E_SgAsmCilStandAloneSigTable(int64_t i, const std::string &strip) {
+        std::string s = E_SgAsmCilStandAloneSigTable(i);
+        if (s.empty())
+            s = "(E_SgAsmCilStandAloneSigTable)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<int64_t>& E_SgAsmCilStandAloneSigTable() {
+        static const int64_t values[] = {
+            0L
+        };
+        static const std::vector<int64_t> retval(values, values + 1);
+        return retval;
+    }
+
+}
+
+namespace Rose {
+    std::string stringifyE_SgAsmCilStandAloneSigTable(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::E_SgAsmCilStandAloneSigTable(i);
+        if (retval.empty()) {
+            retval = "(E_SgAsmCilStandAloneSigTable)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "E_SgAsmCilStandAloneSigTable::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<int64_t>& stringifyE_SgAsmCilStandAloneSigTable() {
+        return stringify::E_SgAsmCilStandAloneSigTable();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1920
+namespace stringify {
+    const char* E_SgAsmCilTypeDefTable(int64_t i) {
+        switch (i) {
+            case 0L: return "SgAsmCilTypeDefTable_elements";
+            default: return "";
+        }
+    }
+
+    std::string E_SgAsmCilTypeDefTable(int64_t i, const std::string &strip) {
+        std::string s = E_SgAsmCilTypeDefTable(i);
+        if (s.empty())
+            s = "(E_SgAsmCilTypeDefTable)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<int64_t>& E_SgAsmCilTypeDefTable() {
+        static const int64_t values[] = {
+            0L
+        };
+        static const std::vector<int64_t> retval(values, values + 1);
+        return retval;
+    }
+
+}
+
+namespace Rose {
+    std::string stringifyE_SgAsmCilTypeDefTable(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::E_SgAsmCilTypeDefTable(i);
+        if (retval.empty()) {
+            retval = "(E_SgAsmCilTypeDefTable)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "E_SgAsmCilTypeDefTable::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<int64_t>& stringifyE_SgAsmCilTypeDefTable() {
+        return stringify::E_SgAsmCilTypeDefTable();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1923
+namespace stringify {
+    const char* E_SgAsmCilTypeRefTable(int64_t i) {
+        switch (i) {
+            case 0L: return "SgAsmCilTypeRefTable_elements";
+            default: return "";
+        }
+    }
+
+    std::string E_SgAsmCilTypeRefTable(int64_t i, const std::string &strip) {
+        std::string s = E_SgAsmCilTypeRefTable(i);
+        if (s.empty())
+            s = "(E_SgAsmCilTypeRefTable)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<int64_t>& E_SgAsmCilTypeRefTable() {
+        static const int64_t values[] = {
+            0L
+        };
+        static const std::vector<int64_t> retval(values, values + 1);
+        return retval;
+    }
+
+}
+
+namespace Rose {
+    std::string stringifyE_SgAsmCilTypeRefTable(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::E_SgAsmCilTypeRefTable(i);
+        if (retval.empty()) {
+            retval = "(E_SgAsmCilTypeRefTable)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "E_SgAsmCilTypeRefTable::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<int64_t>& stringifyE_SgAsmCilTypeRefTable() {
+        return stringify::E_SgAsmCilTypeRefTable();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1926
+namespace stringify {
+    const char* E_SgAsmCilTypeSpecTable(int64_t i) {
+        switch (i) {
+            case 0L: return "SgAsmCilTypeSpecTable_elements";
+            default: return "";
+        }
+    }
+
+    std::string E_SgAsmCilTypeSpecTable(int64_t i, const std::string &strip) {
+        std::string s = E_SgAsmCilTypeSpecTable(i);
+        if (s.empty())
+            s = "(E_SgAsmCilTypeSpecTable)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<int64_t>& E_SgAsmCilTypeSpecTable() {
+        static const int64_t values[] = {
+            0L
+        };
+        static const std::vector<int64_t> retval(values, values + 1);
+        return retval;
+    }
+
+}
+
+namespace Rose {
+    std::string stringifyE_SgAsmCilTypeSpecTable(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::E_SgAsmCilTypeSpecTable(i);
+        if (retval.empty()) {
+            retval = "(E_SgAsmCilTypeSpecTable)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "E_SgAsmCilTypeSpecTable::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<int64_t>& stringifyE_SgAsmCilTypeSpecTable() {
+        return stringify::E_SgAsmCilTypeSpecTable();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1929
+namespace stringify {
+    const char* E_SgAsmCilMetadataHeap(int64_t i) {
+        switch (i) {
+            case 0L: return "SgAsmCilMetadataHeap_AssemblyTable";
+            case 1L: return "SgAsmCilMetadataHeap_AssemblyOSTable";
+            case 2L: return "SgAsmCilMetadataHeap_AssemblyProcessorTable";
+            case 3L: return "SgAsmCilMetadataHeap_AssemblyRefTable";
+            case 4L: return "SgAsmCilMetadataHeap_AssemblyRefOSTable";
+            case 5L: return "SgAsmCilMetadataHeap_AssemblyRefProcessorTable";
+            case 6L: return "SgAsmCilMetadataHeap_ClassLayoutTable";
+            case 7L: return "SgAsmCilMetadataHeap_ConstantTable";
+            case 8L: return "SgAsmCilMetadataHeap_CustomAttributeTable";
+            case 9L: return "SgAsmCilMetadataHeap_DeclSecurityTable";
+            case 10L: return "SgAsmCilMetadataHeap_EventTable";
+            case 11L: return "SgAsmCilMetadataHeap_EventMapTable";
+            case 12L: return "SgAsmCilMetadataHeap_ExportedTypeTable";
+            case 13L: return "SgAsmCilMetadataHeap_FieldTable";
+            case 14L: return "SgAsmCilMetadataHeap_FieldLayoutTable";
+            case 15L: return "SgAsmCilMetadataHeap_FieldMarshalTable";
+            case 16L: return "SgAsmCilMetadataHeap_FieldRVATable";
+            case 17L: return "SgAsmCilMetadataHeap_FileTable";
+            case 18L: return "SgAsmCilMetadataHeap_GenericParamTable";
+            case 19L: return "SgAsmCilMetadataHeap_GenericParamConstraintTable";
+            case 20L: return "SgAsmCilMetadataHeap_ImplMapTable";
+            case 21L: return "SgAsmCilMetadataHeap_InterfaceImplTable";
+            case 22L: return "SgAsmCilMetadataHeap_ManifestResourceTable";
+            case 23L: return "SgAsmCilMetadataHeap_MemberRefTable";
+            case 24L: return "SgAsmCilMetadataHeap_MethodDefTable";
+            case 25L: return "SgAsmCilMetadataHeap_MethodImplTable";
+            case 26L: return "SgAsmCilMetadataHeap_MethodSemanticsTable";
+            case 27L: return "SgAsmCilMetadataHeap_MethodSpecTable";
+            case 28L: return "SgAsmCilMetadataHeap_ModuleTable";
+            case 29L: return "SgAsmCilMetadataHeap_ModuleRefTable";
+            case 30L: return "SgAsmCilMetadataHeap_NestedClassTable";
+            case 31L: return "SgAsmCilMetadataHeap_ParamTable";
+            case 32L: return "SgAsmCilMetadataHeap_PropertyTable";
+            case 33L: return "SgAsmCilMetadataHeap_PropertyMapTable";
+            case 34L: return "SgAsmCilMetadataHeap_StandAloneSigTable";
+            case 35L: return "SgAsmCilMetadataHeap_TypeDefTable";
+            case 36L: return "SgAsmCilMetadataHeap_TypeRefTable";
+            case 37L: return "SgAsmCilMetadataHeap_TypeSpecTable";
+            default: return "";
+        }
+    }
+
+    std::string E_SgAsmCilMetadataHeap(int64_t i, const std::string &strip) {
+        std::string s = E_SgAsmCilMetadataHeap(i);
+        if (s.empty())
+            s = "(E_SgAsmCilMetadataHeap)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<int64_t>& E_SgAsmCilMetadataHeap() {
+        static const int64_t values[] = {
+            0L,
+            1L,
+            2L,
+            3L,
+            4L,
+            5L,
+            6L,
+            7L,
+            8L,
+            9L,
+            10L,
+            11L,
+            12L,
+            13L,
+            14L,
+            15L,
+            16L,
+            17L,
+            18L,
+            19L,
+            20L,
+            21L,
+            22L,
+            23L,
+            24L,
+            25L,
+            26L,
+            27L,
+            28L,
+            29L,
+            30L,
+            31L,
+            32L,
+            33L,
+            34L,
+            35L,
+            36L,
+            37L
+        };
+        static const std::vector<int64_t> retval(values, values + 38);
+        return retval;
+    }
+
+}
+
+namespace Rose {
+    std::string stringifyE_SgAsmCilMetadataHeap(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::E_SgAsmCilMetadataHeap(i);
+        if (retval.empty()) {
+            retval = "(E_SgAsmCilMetadataHeap)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "E_SgAsmCilMetadataHeap::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<int64_t>& stringifyE_SgAsmCilMetadataHeap() {
+        return stringify::E_SgAsmCilMetadataHeap();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1932
+namespace stringify {
+    const char* E_SgAsmCilMetadataRoot(int64_t i) {
+        switch (i) {
+            case 0L: return "SgAsmCilMetadataRoot_Streams";
+            default: return "";
+        }
+    }
+
+    std::string E_SgAsmCilMetadataRoot(int64_t i, const std::string &strip) {
+        std::string s = E_SgAsmCilMetadataRoot(i);
+        if (s.empty())
+            s = "(E_SgAsmCilMetadataRoot)" + boost::lexical_cast<std::string>(i);
+        if (boost::starts_with(s, strip))
+            s = s.substr(strip.size());
+        return s;
+    }
+
+    const std::vector<int64_t>& E_SgAsmCilMetadataRoot() {
+        static const int64_t values[] = {
+            0L
+        };
+        static const std::vector<int64_t> retval(values, values + 1);
+        return retval;
+    }
+
+}
+
+namespace Rose {
+    std::string stringifyE_SgAsmCilMetadataRoot(int64_t i, const char *strip, bool canonic) {
+        std::string retval = stringify::E_SgAsmCilMetadataRoot(i);
+        if (retval.empty()) {
+            retval = "(E_SgAsmCilMetadataRoot)" + boost::lexical_cast<std::string>(i);
+        } else {
+            if (strip && !strncmp(strip, retval.c_str(), strlen(strip)))
+                retval = retval.substr(strlen(strip));
+            if (canonic)
+                retval = "E_SgAsmCilMetadataRoot::" + retval;
+        }
+        return retval;
+    }
+
+    const std::vector<int64_t>& stringifyE_SgAsmCilMetadataRoot() {
+        return stringify::E_SgAsmCilMetadataRoot();
+    }
+}
+
+// DO NOT EDIT -- This implementation was automatically generated for the enum defined at
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1935
 namespace stringify {
     const char* E_SgAsmJvmMethod(int64_t i) {
         switch (i) {
@@ -87638,7 +89350,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1815
+// /_build/src/ROSETTA/src/Cxx_GrammarTreeTraversalAccessEnums.h line 1938
 namespace stringify {
     const char* E_SgAsmJvmField(int64_t i) {
         switch (i) {
@@ -88680,8 +90392,46 @@ namespace stringify {
             case 997L: return "AsmCliHeaderTag";
             case 998L: return "ADA_VARIANT_DECL_STATEMENT";
             case 999L: return "ADA_VARIANT_WHEN_STMT";
-            case 1001L: return "Cxx_Grammar_UNKNOWN_GRAMMAR";
-            case 1002L: return "Cxx_Grammar_LAST_TAG";
+            case 1000L: return "AsmCilAssemblyTableTag";
+            case 1001L: return "AsmCilAssemblyOSTableTag";
+            case 1002L: return "AsmCilAssemblyProcessorTableTag";
+            case 1003L: return "AsmCilAssemblyRefTableTag";
+            case 1004L: return "AsmCilAssemblyRefOSTableTag";
+            case 1005L: return "AsmCilAssemblyRefProcessorTableTag";
+            case 1006L: return "AsmCilClassLayoutTableTag";
+            case 1007L: return "AsmCilConstantTableTag";
+            case 1008L: return "AsmCilCustomAttributeTableTag";
+            case 1009L: return "AsmCilDeclSecurityTableTag";
+            case 1010L: return "AsmCilEventTableTag";
+            case 1011L: return "AsmCilEventMapTableTag";
+            case 1012L: return "AsmCilExportedTypeTableTag";
+            case 1013L: return "AsmCilFieldTableTag";
+            case 1014L: return "AsmCilFieldLayoutTableTag";
+            case 1015L: return "AsmCilFieldMarshalTableTag";
+            case 1016L: return "AsmCilFieldRVATableTag";
+            case 1017L: return "AsmCilFileTableTag";
+            case 1018L: return "AsmCilGenericParamTableTag";
+            case 1019L: return "AsmCilGenericParamConstraintTableTag";
+            case 1020L: return "AsmCilImplMapTableTag";
+            case 1021L: return "AsmCilInterfaceImplTableTag";
+            case 1022L: return "AsmCilManifestResourceTableTag";
+            case 1023L: return "AsmCilMemberRefTableTag";
+            case 1024L: return "AsmCilMethodDefTableTag";
+            case 1025L: return "AsmCilMethodImplTableTag";
+            case 1026L: return "AsmCilMethodSemanticsTableTag";
+            case 1027L: return "AsmCilMethodSpecTableTag";
+            case 1028L: return "AsmCilModuleTableTag";
+            case 1029L: return "AsmCilModuleRefTableTag";
+            case 1030L: return "AsmCilNestedClassTableTag";
+            case 1031L: return "AsmCilParamTableTag";
+            case 1032L: return "AsmCilPropertyTableTag";
+            case 1033L: return "AsmCilPropertyMapTableTag";
+            case 1034L: return "AsmCilStandAloneSigTableTag";
+            case 1035L: return "AsmCilTypeDefTableTag";
+            case 1036L: return "AsmCilTypeRefTableTag";
+            case 1037L: return "AsmCilTypeSpecTableTag";
+            case 1039L: return "Cxx_Grammar_UNKNOWN_GRAMMAR";
+            case 1040L: return "Cxx_Grammar_LAST_TAG";
             default: return "";
         }
     }
@@ -89687,10 +91437,48 @@ namespace stringify {
             997L,
             998L,
             999L,
+            1000L,
             1001L,
-            1002L
+            1002L,
+            1003L,
+            1004L,
+            1005L,
+            1006L,
+            1007L,
+            1008L,
+            1009L,
+            1010L,
+            1011L,
+            1012L,
+            1013L,
+            1014L,
+            1015L,
+            1016L,
+            1017L,
+            1018L,
+            1019L,
+            1020L,
+            1021L,
+            1022L,
+            1023L,
+            1024L,
+            1025L,
+            1026L,
+            1027L,
+            1028L,
+            1029L,
+            1030L,
+            1031L,
+            1032L,
+            1033L,
+            1034L,
+            1035L,
+            1036L,
+            1037L,
+            1039L,
+            1040L
         };
-        static const std::vector<int64_t> retval(values, values + 992);
+        static const std::vector<int64_t> retval(values, values + 1030);
         return retval;
     }
 
@@ -89716,7 +91504,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 1013
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 1051
 namespace stringify {
     const char* VariantT(int64_t i) {
         switch (i) {
@@ -90710,7 +92498,45 @@ namespace stringify {
             case 997L: return "V_SgAsmCliHeader";
             case 998L: return "V_SgAdaVariantDecl";
             case 999L: return "V_SgAdaVariantWhenStmt";
-            case 1001L: return "V_SgNumVariants";
+            case 1000L: return "V_SgAsmCilAssemblyTable";
+            case 1001L: return "V_SgAsmCilAssemblyOSTable";
+            case 1002L: return "V_SgAsmCilAssemblyProcessorTable";
+            case 1003L: return "V_SgAsmCilAssemblyRefTable";
+            case 1004L: return "V_SgAsmCilAssemblyRefOSTable";
+            case 1005L: return "V_SgAsmCilAssemblyRefProcessorTable";
+            case 1006L: return "V_SgAsmCilClassLayoutTable";
+            case 1007L: return "V_SgAsmCilConstantTable";
+            case 1008L: return "V_SgAsmCilCustomAttributeTable";
+            case 1009L: return "V_SgAsmCilDeclSecurityTable";
+            case 1010L: return "V_SgAsmCilEventTable";
+            case 1011L: return "V_SgAsmCilEventMapTable";
+            case 1012L: return "V_SgAsmCilExportedTypeTable";
+            case 1013L: return "V_SgAsmCilFieldTable";
+            case 1014L: return "V_SgAsmCilFieldLayoutTable";
+            case 1015L: return "V_SgAsmCilFieldMarshalTable";
+            case 1016L: return "V_SgAsmCilFieldRVATable";
+            case 1017L: return "V_SgAsmCilFileTable";
+            case 1018L: return "V_SgAsmCilGenericParamTable";
+            case 1019L: return "V_SgAsmCilGenericParamConstraintTable";
+            case 1020L: return "V_SgAsmCilImplMapTable";
+            case 1021L: return "V_SgAsmCilInterfaceImplTable";
+            case 1022L: return "V_SgAsmCilManifestResourceTable";
+            case 1023L: return "V_SgAsmCilMemberRefTable";
+            case 1024L: return "V_SgAsmCilMethodDefTable";
+            case 1025L: return "V_SgAsmCilMethodImplTable";
+            case 1026L: return "V_SgAsmCilMethodSemanticsTable";
+            case 1027L: return "V_SgAsmCilMethodSpecTable";
+            case 1028L: return "V_SgAsmCilModuleTable";
+            case 1029L: return "V_SgAsmCilModuleRefTable";
+            case 1030L: return "V_SgAsmCilNestedClassTable";
+            case 1031L: return "V_SgAsmCilParamTable";
+            case 1032L: return "V_SgAsmCilPropertyTable";
+            case 1033L: return "V_SgAsmCilPropertyMapTable";
+            case 1034L: return "V_SgAsmCilStandAloneSigTable";
+            case 1035L: return "V_SgAsmCilTypeDefTable";
+            case 1036L: return "V_SgAsmCilTypeRefTable";
+            case 1037L: return "V_SgAsmCilTypeSpecTable";
+            case 1039L: return "V_SgNumVariants";
             default: return "";
         }
     }
@@ -91716,9 +93542,47 @@ namespace stringify {
             997L,
             998L,
             999L,
-            1001L
+            1000L,
+            1001L,
+            1002L,
+            1003L,
+            1004L,
+            1005L,
+            1006L,
+            1007L,
+            1008L,
+            1009L,
+            1010L,
+            1011L,
+            1012L,
+            1013L,
+            1014L,
+            1015L,
+            1016L,
+            1017L,
+            1018L,
+            1019L,
+            1020L,
+            1021L,
+            1022L,
+            1023L,
+            1024L,
+            1025L,
+            1026L,
+            1027L,
+            1028L,
+            1029L,
+            1030L,
+            1031L,
+            1032L,
+            1033L,
+            1034L,
+            1035L,
+            1036L,
+            1037L,
+            1039L
         };
-        static const std::vector<int64_t> retval(values, values + 991);
+        static const std::vector<int64_t> retval(values, values + 1029);
         return retval;
     }
 
@@ -91744,7 +93608,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 11918
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 12222
 namespace stringify { namespace SgConstVolatileModifier {
     const char* cv_modifier_enum(int64_t i) {
         switch (i) {
@@ -91804,7 +93668,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 12471
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 12775
 namespace stringify { namespace SgStorageModifier {
     const char* storage_modifier_enum(int64_t i) {
         switch (i) {
@@ -91906,7 +93770,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 13107
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 13411
 namespace stringify { namespace SgAccessModifier {
     const char* access_modifier_enum(int64_t i) {
         switch (i) {
@@ -91964,7 +93828,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 13644
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 13948
 namespace stringify { namespace SgFunctionModifier {
     const char* function_modifier_enum(int64_t i) {
         switch (i) {
@@ -92092,7 +93956,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 14443
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 14747
 namespace stringify { namespace SgUPC_AccessModifier {
     const char* upc_access_modifier_enum(int64_t i) {
         switch (i) {
@@ -92148,7 +94012,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 14996
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 15300
 namespace stringify { namespace SgSpecialFunctionModifier {
     const char* special_function_modifier_enum(int64_t i) {
         switch (i) {
@@ -92212,7 +94076,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 15554
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 15858
 namespace stringify { namespace SgElaboratedTypeModifier {
     const char* elaborated_type_modifier_enum(int64_t i) {
         switch (i) {
@@ -92274,7 +94138,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 16097
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 16401
 namespace stringify { namespace SgLinkageModifier {
     const char* linkage_modifier_enum(int64_t i) {
         switch (i) {
@@ -92334,7 +94198,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 16631
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 16935
 namespace stringify { namespace SgBaseClassModifier {
     const char* baseclass_modifier_enum(int64_t i) {
         switch (i) {
@@ -92388,7 +94252,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 17166
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 17470
 namespace stringify { namespace SgStructureModifier {
     const char* jovial_structure_modifier_enum(int64_t i) {
         switch (i) {
@@ -92444,7 +94308,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 17708
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 18012
 namespace stringify { namespace SgTypeModifier {
     const char* type_modifier_enum(int64_t i) {
         switch (i) {
@@ -92570,7 +94434,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 17800
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 18104
 namespace stringify { namespace SgTypeModifier {
     const char* gnu_extension_machine_mode_enum(int64_t i) {
         switch (i) {
@@ -92726,7 +94590,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 18627
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 18931
 namespace stringify { namespace SgDeclarationModifier {
     const char* declaration_modifier_enum(int64_t i) {
         switch (i) {
@@ -92850,7 +94714,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 18685
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 18989
 namespace stringify { namespace SgDeclarationModifier {
     const char* gnu_declaration_visability_enum(int64_t i) {
         switch (i) {
@@ -92912,7 +94776,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 19450
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 19754
 namespace stringify { namespace SgOpenclAccessModeModifier {
     const char* access_mode_modifier_enum(int64_t i) {
         switch (i) {
@@ -92970,7 +94834,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 24017
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 24321
 namespace stringify { namespace Sg_File_Info {
     const char* classifier(int64_t i) {
         switch (i) {
@@ -93036,7 +94900,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 24282
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 24586
 namespace stringify { namespace Sg_File_Info {
     const char* p_fileflags(int64_t i) {
         switch (i) {
@@ -93094,7 +94958,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 24869
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 25173
 namespace stringify { namespace SgFile {
     const char* outputFormatOption_enum(int64_t i) {
         switch (i) {
@@ -93146,7 +95010,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 24884
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 25188
 namespace stringify { namespace SgFile {
     const char* languageOption_enum(int64_t i) {
         switch (i) {
@@ -93224,7 +95088,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 24905
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 25209
 namespace stringify { namespace SgFile {
     const char* standard_enum(int64_t i) {
         switch (i) {
@@ -93312,7 +95176,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 28687
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 28991
 namespace stringify { namespace SgProject {
     const char* template_instantiation_enum(int64_t i) {
         switch (i) {
@@ -93372,7 +95236,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 30787
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 31091
 namespace stringify { namespace SgUnparse_Info {
     const char* unparse_type_num(int64_t i) {
         switch (i) {
@@ -93532,7 +95396,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 30964
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 31268
 namespace stringify { namespace SgUnparse_Info {
     const char* access_attr_enum(int64_t i) {
         switch (i) {
@@ -93588,7 +95452,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 34081
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 34385
 namespace stringify { namespace SgTemplateParameter {
     const char* template_parameter_enum(int64_t i) {
         switch (i) {
@@ -93642,7 +95506,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 34657
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 34961
 namespace stringify { namespace SgTemplateArgument {
     const char* template_argument_enum(int64_t i) {
         switch (i) {
@@ -93698,7 +95562,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 38949
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 39253
 namespace stringify { namespace SgGraph {
     const char* GraphEdgeType(int64_t i) {
         switch (i) {
@@ -93754,7 +95618,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 38963
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 39267
 namespace stringify { namespace SgGraph {
     const char* GraphProperties(int64_t i) {
         switch (i) {
@@ -93840,7 +95704,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 49384
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 49688
 namespace stringify { namespace SgDataStatementValue {
     const char* data_statement_value_enum(int64_t i) {
         switch (i) {
@@ -93898,7 +95762,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 51521
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 51825
 namespace stringify { namespace SgType {
     const char* useWithinDeclarationEnum(int64_t i) {
         switch (i) {
@@ -93948,7 +95812,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 51539
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 51843
 namespace stringify { namespace SgType {
     const char* fortran_attribute_specifiers_enum(int64_t i) {
         switch (i) {
@@ -94030,7 +95894,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 69255
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 69559
 namespace stringify { namespace SgJovialTableType {
     const char* StructureSpecifier(int64_t i) {
         switch (i) {
@@ -94082,7 +95946,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 75295
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 75599
 namespace stringify { namespace SgModifierType {
     const char* modifiers(int64_t i) {
         switch (i) {
@@ -94144,7 +96008,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 75349
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 75653
 namespace stringify { namespace SgModifierType {
     const char* type_modifier_enum(int64_t i) {
         switch (i) {
@@ -94212,7 +96076,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 75366
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 75670
 namespace stringify { namespace SgModifierType {
     const char* storage_modifier_enum(int64_t i) {
         switch (i) {
@@ -94286,7 +96150,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 75388
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 75692
 namespace stringify { namespace SgModifierType {
     const char* access_modifier_enum(int64_t i) {
         switch (i) {
@@ -94344,7 +96208,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 76646
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 76950
 namespace stringify { namespace SgMemberFunctionType {
     const char* mfunc_specifier_enum(int64_t i) {
         switch (i) {
@@ -94400,7 +96264,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 94254
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 94558
 namespace stringify { namespace SgToken {
     const char* ROSE_Fortran_Keywords(int64_t i) {
         switch (i) {
@@ -94752,7 +96616,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 94421
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 94725
 namespace stringify { namespace SgToken {
     const char* ROSE_C_CXX_keywords(int64_t i) {
         switch (i) {
@@ -94926,7 +96790,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 94490
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 94794
 namespace stringify { namespace SgToken {
     const char* ROSE_Fortran_Operators(int64_t i) {
         switch (i) {
@@ -95018,7 +96882,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 94517
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 94821
 namespace stringify { namespace SgToken {
     const char* ROSE_C_CXX_Operators(int64_t i) {
         switch (i) {
@@ -95214,7 +97078,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 94597
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 94901
 namespace stringify { namespace SgToken {
     const char* ROSE_Fortran_Additional_Info(int64_t i) {
         switch (i) {
@@ -95270,7 +97134,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 96083
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 96387
 namespace stringify { namespace SgInitializedName {
     const char* preinitialization_enum(int64_t i) {
         switch (i) {
@@ -95328,7 +97192,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 96098
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 96402
 namespace stringify { namespace SgInitializedName {
     const char* asm_register_name_enum(int64_t i) {
         switch (i) {
@@ -95494,7 +97358,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 96165
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 96469
 namespace stringify { namespace SgInitializedName {
     const char* gnu_variable_attribute_enum(int64_t i) {
         switch (i) {
@@ -95584,7 +97448,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 96200
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 96504
 namespace stringify { namespace SgInitializedName {
     const char* excess_specifier_enum(int64_t i) {
         switch (i) {
@@ -95638,7 +97502,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 99315
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 99619
 namespace stringify { namespace SgOmpClause {
     const char* omp_default_option_enum(int64_t i) {
         switch (i) {
@@ -95696,7 +97560,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 99327
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 99631
 namespace stringify { namespace SgOmpClause {
     const char* omp_schedule_kind_enum(int64_t i) {
         switch (i) {
@@ -95756,7 +97620,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 99337
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 99641
 namespace stringify { namespace SgOmpClause {
     const char* omp_reduction_operator_enum(int64_t i) {
         switch (i) {
@@ -95840,7 +97704,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 99365
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 99669
 namespace stringify { namespace SgOmpClause {
     const char* omp_dependence_type_enum(int64_t i) {
         switch (i) {
@@ -95896,7 +97760,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 99375
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 99679
 namespace stringify { namespace SgOmpClause {
     const char* omp_map_operator_enum(int64_t i) {
         switch (i) {
@@ -95954,7 +97818,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 99386
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 99690
 namespace stringify { namespace SgOmpClause {
     const char* omp_map_dist_data_enum(int64_t i) {
         switch (i) {
@@ -96010,7 +97874,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 99396
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 99700
 namespace stringify { namespace SgOmpClause {
     const char* omp_proc_bind_policy_enum(int64_t i) {
         switch (i) {
@@ -96066,7 +97930,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 99405
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 99709
 namespace stringify { namespace SgOmpClause {
     const char* omp_atomic_clause_enum(int64_t i) {
         switch (i) {
@@ -96122,7 +97986,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 131979
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 132283
 namespace stringify { namespace SgForAllStatement {
     const char* forall_statement_kind_enum(int64_t i) {
         switch (i) {
@@ -96176,7 +98040,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 136774
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 137078
 namespace stringify { namespace SgJovialForThenStatement {
     const char* loop_statement_type_enum(int64_t i) {
         switch (i) {
@@ -96236,7 +98100,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 141938
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 142242
 namespace stringify { namespace SgDeclarationStatement {
     const char* template_specialization_enum(int64_t i) {
         switch (i) {
@@ -96292,7 +98156,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 141953
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 142257
 namespace stringify { namespace SgDeclarationStatement {
     const char* gnu_extension_visability_attribute_enum(int64_t i) {
         switch (i) {
@@ -96350,7 +98214,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 143446
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 143750
 namespace stringify { namespace SgVariableDeclaration {
     const char* gnu_extension_declaration_attributes_enum(int64_t i) {
         switch (i) {
@@ -96412,7 +98276,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 148001
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 148305
 namespace stringify { namespace SgAttributeSpecificationStatement {
     const char* attribute_spec_enum(int64_t i) {
         switch (i) {
@@ -96498,7 +98362,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 149083
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 149387
 namespace stringify { namespace SgTemplateDeclaration {
     const char* template_type_enum(int64_t i) {
         switch (i) {
@@ -96556,7 +98420,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 152237
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 152541
 namespace stringify { namespace SgInterfaceStatement {
     const char* generic_spec_enum(int64_t i) {
         switch (i) {
@@ -96616,7 +98480,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 157641
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 157945
 namespace stringify { namespace SgClassDeclaration {
     const char* class_types(int64_t i) {
         switch (i) {
@@ -96682,7 +98546,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 158374
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 158678
 namespace stringify { namespace SgTemplateClassDeclaration {
     const char* class_types(int64_t i) {
         switch (i) {
@@ -96736,7 +98600,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 160963
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 161267
 namespace stringify { namespace SgJovialTableStatement {
     const char* WordsPerEntry(int64_t i) {
         switch (i) {
@@ -96788,7 +98652,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 161480
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 161784
 namespace stringify { namespace SgImplicitStatement {
     const char* implicit_spec_enum(int64_t i) {
         switch (i) {
@@ -96846,7 +98710,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 167759
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 168063
 namespace stringify { namespace SgProcedureHeaderStatement {
     const char* subprogram_kind_enum(int64_t i) {
         switch (i) {
@@ -96902,7 +98766,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 183408
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 183712
 namespace stringify { namespace SgJovialDirectiveStatement {
     const char* directive_types(int64_t i) {
         switch (i) {
@@ -96992,7 +98856,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 203571
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 203884
 namespace stringify { namespace SgProcessControlStatement {
     const char* control_enum(int64_t i) {
         switch (i) {
@@ -97054,7 +98918,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 204103
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 204416
 namespace stringify { namespace SgIOStatement {
     const char* io_statement_enum(int64_t i) {
         switch (i) {
@@ -97122,7 +98986,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 234272
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 234585
 namespace stringify { namespace SgImageControlStatement {
     const char* image_control_statement_enum(int64_t i) {
         switch (i) {
@@ -97194,7 +99058,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 239350
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 239663
 namespace stringify { namespace SgAdaSelectStmt {
     const char* select_type_enum(int64_t i) {
         switch (i) {
@@ -97250,7 +99114,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 242546
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 242859
 namespace stringify { namespace SgUnaryOp {
     const char* Sgop_mode(int64_t i) {
         switch (i) {
@@ -97300,7 +99164,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 247515
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 247828
 namespace stringify { namespace SgCastExp {
     const char* cast_type_enum(int64_t i) {
         switch (i) {
@@ -97366,7 +99230,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 248135
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 248448
 namespace stringify { namespace SgThrowOp {
     const char* e_throw_kind(int64_t i) {
         switch (i) {
@@ -97418,7 +99282,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 322398
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 322711
 namespace stringify { namespace SgAsmOp {
     const char* asm_operand_modifier_enum(int64_t i) {
         switch (i) {
@@ -97484,7 +99348,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 322417
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 322730
 namespace stringify { namespace SgAsmOp {
     const char* asm_operand_constraint_enum(int64_t i) {
         switch (i) {
@@ -97646,7 +99510,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 357539
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 357852
 namespace stringify { namespace SgLabelSymbol {
     const char* label_type_enum(int64_t i) {
         switch (i) {
@@ -97706,7 +99570,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 408565
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 408878
 namespace stringify { namespace SgAsmLEFileHeader {
     const char* LEFileHeaderFlags(int64_t i) {
         switch (i) {
@@ -97782,7 +99646,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 409608
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 409921
 namespace stringify { namespace SgAsmNEFileHeader {
     const char* HeaderFlags1(int64_t i) {
         switch (i) {
@@ -97842,7 +99706,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 409619
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 409932
 namespace stringify { namespace SgAsmNEFileHeader {
     const char* HeaderFlags2(int64_t i) {
         switch (i) {
@@ -97896,7 +99760,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 455435
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 455748
 namespace stringify { namespace SgAsmNEEntryPoint {
     const char* NEEntryFlags(int64_t i) {
         switch (i) {
@@ -97950,7 +99814,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 455967
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 456280
 namespace stringify { namespace SgAsmNERelocEntry {
     const char* NERelocSrcType(int64_t i) {
         switch (i) {
@@ -98014,7 +99878,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 455979
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 456292
 namespace stringify { namespace SgAsmNERelocEntry {
     const char* NERelocTgtType(int64_t i) {
         switch (i) {
@@ -98068,7 +99932,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 455986
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 456299
 namespace stringify { namespace SgAsmNERelocEntry {
     const char* NERelocModifiers(int64_t i) {
         switch (i) {
@@ -98118,7 +99982,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 455991
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 456304
 namespace stringify { namespace SgAsmNERelocEntry {
     const char* NERelocFlags(int64_t i) {
         switch (i) {
@@ -98176,7 +100040,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 456640
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 456953
 namespace stringify { namespace SgAsmNESectionTableEntry {
     const char* NESectionFlags(int64_t i) {
         switch (i) {
@@ -98248,7 +100112,7 @@ namespace Rose {
 }
 
 // DO NOT EDIT -- This implementation was automatically generated for the enum defined at
-// /_build/src/ROSETTA/src/Cxx_Grammar.h line 458801
+// /_build/src/ROSETTA/src/Cxx_Grammar.h line 459114
 namespace stringify { namespace SgAsmLESectionTableEntry {
     const char* LESectionFlags(int64_t i) {
         switch (i) {

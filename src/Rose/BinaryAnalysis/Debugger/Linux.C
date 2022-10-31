@@ -846,7 +846,7 @@ Linux::readMemory(rose_addr_t va, size_t nBytes, ByteOrder::Endianness sex) {
                 where = BitVector::BitRange::baseSize(8*i, 8);
                 break;
             case ByteOrder::ORDER_MSB:
-                where = BitVector::BitRange::baseSize(8*nBytes-(i+1), 8);
+                where = BitVector::BitRange::baseSize(8*(nBytes-(i+1)), 8);
                 break;
             default:
                 ASSERT_not_reachable("invalid byte order");
@@ -955,27 +955,6 @@ Linux::writeMemory(rose_addr_t va, size_t nBytes, const uint8_t *buffer) {
     ROSE_PRAGMA_MESSAGE("writing to subordinate memory is not supported on this platform");
     throw Exception("writing to subordinate memory is not supported on this platform");
 #endif
-}
-
-std::string
-Linux::readCString(rose_addr_t va, size_t maxBytes) {
-    std::string retval;
-    while (maxBytes > 0) {
-        uint8_t buf[32];
-        size_t nRead = readMemory(va, std::min(maxBytes, sizeof buf), buf);
-        if (0 == nRead)
-            break;
-        for (size_t i = 0; i < nRead; ++i) {
-            if (0 == buf[i]) {
-                return retval;                          // NUL terminated
-            } else {
-                retval += (char)buf[i];
-            }
-        }
-        maxBytes -= nRead;
-        va += nRead;
-    }
-    return retval;                                      // buffer overflow
 }
 
 void
