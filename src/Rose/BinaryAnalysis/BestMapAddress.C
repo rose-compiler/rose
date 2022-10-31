@@ -121,10 +121,10 @@ BestMapAddress::analyze(const AddressInterval &restrictEntryAddresses, const Add
     std::set<rose_addr_t> deltaSet;
     maxMatches_ = 0;
     for (rose_addr_t entryVa: entryVas_.values()) {
-        if (restrictEntryAddresses.isContaining(entryVa)) {
+        if (restrictEntryAddresses.contains(entryVa)) {
             ++maxMatches_;
             for (rose_addr_t targetVa: targetVas_.values()) {
-                if (restrictTargetAddresses.isContaining(targetVa))
+                if (restrictTargetAddresses.contains(targetVa))
                     deltaSet.insert((targetVa - entryVa) & mask);
             }
         }

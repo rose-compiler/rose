@@ -178,7 +178,7 @@ public:
         ASSERT_require2(symbols_.isEmpty() || symbols_.least().size() == symbolSize, "inconsistent symbols size");
         if (nSymbols > 0) {
             AddressInterval erasingInterval = AddressInterval::baseSize(va, nSymbols*symbolSize);
-            ASSERT_require2(location_.isContaining(erasingInterval), "cannot erase what isn't present");
+            ASSERT_require2(location_.contains(erasingInterval), "cannot erase what isn't present");
             if (erasingInterval == location_) {
                 clear();
             } else if (location_.least() == erasingInterval.least()) {

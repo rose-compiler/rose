@@ -1243,11 +1243,11 @@ RiscOperators::sgIsIeee754(SgAsmType *sgType) {
     // Motorola 68000 family has an "extended real" type that's 96 bits but 17 bits are unused (the format is 63-bit
     // significand, a bit that's always set (i.e., the explicit leading one bit for the significand), 16 bits that are always
     // clear, a 15-bit exponent, and a sign bit).
-    if (fpType->significandBits().isOverlapping(fpType->exponentBits()))
+    if (fpType->significandBits().overlaps(fpType->exponentBits()))
         return NULL;
-    if (fpType->significandBits().isOverlapping(fpType->signBit()))
+    if (fpType->significandBits().overlaps(fpType->signBit()))
         return NULL;
-    if (fpType->exponentBits().isOverlapping(fpType->signBit()))
+    if (fpType->exponentBits().overlaps(fpType->signBit()))
         return NULL;
 
     return fpType;

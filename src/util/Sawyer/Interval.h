@@ -226,19 +226,31 @@ public:
 
     /** True if two intervals overlap.
      *
-     *  An empty interval never overlaps with any other interval, empty or not. */
-    bool isOverlapping(const Interval &other) const {
+     *  An empty interval never overlaps with any other interval, empty or not.
+     *
+     * @{ */
+    bool overlaps(const Interval &other) const {
         return !intersection(other).isEmpty();
     }
+    bool isOverlapping(const Interval &other) const {
+        return overlaps(other);
+    }
+    /** @} */
 
     /** Containment predicate.
      *
      *  Returns true if this interval contains all of the @p other interval.  An empty interval is always contained in any
-     *  other interval, even another empty interval. */
-    bool isContaining(const Interval &other) const {
+     *  other interval, even another empty interval.
+     *
+     * @{ */
+    bool contains(const Interval &other) const {
         return (other.isEmpty() ||
                 (!isEmpty() && least()<=other.least() && greatest()>=other.greatest()));
     }
+    bool isContaining(const Interval &other) const {
+        return contains(other);
+    }
+    /** @} */
 
     /** Adjacency predicate.
      *

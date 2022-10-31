@@ -5,18 +5,19 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <Rose/BinaryAnalysis/BasicTypes.h>
-#include <Rose/BinaryAnalysis/Unparser/EdgeArrows.h>
-#include <Rose/BinaryAnalysis/Reachability.h>
-#include <Rose/BinaryAnalysis/Unparser/Settings.h>
-#include <Rose/BitFlags.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ControlFlowGraph.h>
 #include <Rose/BinaryAnalysis/Partitioner2/FunctionCallGraph.h>
+#include <Rose/BinaryAnalysis/Reachability.h>
 #include <Rose/BinaryAnalysis/RegisterNames.h>
+#include <Rose/BinaryAnalysis/Unparser/EdgeArrows.h>
+#include <Rose/BinaryAnalysis/Unparser/Settings.h>
+#include <Rose/BitFlags.h>
+#include <Rose/Progress.h>
+
 #include <Sawyer/Map.h>
 #include <Sawyer/Message.h>
 #include <Sawyer/SharedObject.h>
-#include <Rose/Progress.h>
 
 namespace Rose {
 namespace BinaryAnalysis {

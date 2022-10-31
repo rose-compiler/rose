@@ -286,7 +286,7 @@ public:
      *  Returns true if the specified value can be stored in this set, and false otherwise.  A storable value is a value that
      *  falls within this set's domain. */
     bool isStorable(Value v) const {
-        return domain().isContaining(v);
+        return domain().contains(v);
     }
 
     /** Determines whether a value is stored.

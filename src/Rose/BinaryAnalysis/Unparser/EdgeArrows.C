@@ -79,7 +79,7 @@ EdgeArrows::computeLayout(const Graph &graph, const std::vector<VertexId> &order
     for (const Arrow &arrow: arrows) {
         bool inserted = false;
         for (size_t i = 0; i < columns_.size() && !inserted; ++i) {
-            if (!columns_[i].isOverlapping(arrow.location)) {
+            if (!columns_[i].overlaps(arrow.location)) {
                 columns_[i].insert(arrow.location, arrow);
                 inserted = true;
             }

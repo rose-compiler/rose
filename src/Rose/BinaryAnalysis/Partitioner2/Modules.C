@@ -182,7 +182,7 @@ InstructionLister::instance(const std::vector<std::string> &args) {
 bool
 InstructionLister::operator()(bool chain, const AttachedBasicBlock &args) {
     using namespace StringUtility;
-    if (chain && settings_.where.isContaining(args.startVa) && trigger_.shouldTrigger() && !settings_.what.isEmpty()) {
+    if (chain && settings_.where.contains(args.startVa) && trigger_.shouldTrigger() && !settings_.what.isEmpty()) {
         Stream debug(mlog[DEBUG]);
         debug.enable();
         debug <<"InstructionLister triggered: #" <<(trigger_.nCalls()-1) <<" for "
@@ -278,7 +278,7 @@ CfgGraphVizDumper::instance(const std::vector<std::string> &args) {
 bool
 CfgGraphVizDumper::operator()(bool chain, const AttachedBasicBlock &args) {
     using namespace StringUtility;
-    if (chain && settings_.where.isContaining(args.startVa) && trigger_.shouldTrigger() && !settings_.what.isEmpty()) {
+    if (chain && settings_.where.contains(args.startVa) && trigger_.shouldTrigger() && !settings_.what.isEmpty()) {
         Stream debug(mlog[DEBUG]);
         debug.enable();
         debug <<"CfgGraphVizDumper triggered: #" <<(trigger_.nCalls()-1) <<" for "
@@ -362,7 +362,7 @@ HexDumper::instance(const std::vector<std::string> &args) {
 bool
 HexDumper::operator()(bool chain, const AttachedBasicBlock &args) {
     using namespace StringUtility;
-    if (chain && settings_.where.isContaining(args.startVa) && trigger_.shouldTrigger() && !settings_.what.isEmpty()) {
+    if (chain && settings_.where.contains(args.startVa) && trigger_.shouldTrigger() && !settings_.what.isEmpty()) {
         Stream debug(mlog[DEBUG]);
         debug.enable();
         debug <<"HexDumper triggered: #" <<(trigger_.nCalls()-1) <<" for "
@@ -447,7 +447,7 @@ Debugger::instance(const std::vector<std::string> &args) {
 
 bool
 Debugger::operator()(bool chain, const AttachedBasicBlock &args) {
-    if (chain && settings_.where.isContaining(args.startVa) && trigger_.shouldTrigger())
+    if (chain && settings_.where.contains(args.startVa) && trigger_.shouldTrigger())
         debug(args.startVa, args.bblock);
     return chain;
 }
@@ -629,7 +629,7 @@ nameStrings(const Partitioner &partitioner, const AddressInterval &where) {
 
                 } else {
                     // Try to find a label and cache it.
-                    if (!where.isContaining(va)) {
+                    if (!where.contains(va)) {
                         // Constant is outside the area that might be the start of a string.
 
                     } else if (!partitioner.instructionsOverlapping(va).empty()) {
@@ -765,7 +765,7 @@ nameConstants(const Partitioner &partitioner, const AddressInterval &where) {
         void visit(SgNode *node) {
             if (SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(node)) {
                 const auto va = ival->get_absoluteValue();
-                if (ival->get_comment().empty() && where.isContaining(va))
+                if (ival->get_comment().empty() && where.contains(va))
                     ival->set_comment(partitioner.addressName(va));
             }
         }
