@@ -343,7 +343,6 @@ public:
     virtual std::vector<uint8_t> readMemory(rose_addr_t va, size_t nBytes) override;
     virtual Sawyer::Container::BitVector readMemory(rose_addr_t va, size_t nBytes, ByteOrder::Endianness order) override;
     virtual size_t writeMemory(rose_addr_t va, size_t nBytes, const uint8_t *bytes) override;
-    virtual std::string readCString(rose_addr_t va, size_t maxBytes = UNLIMITED) override;
     virtual bool isTerminated() override;
     virtual std::string howTerminated() override;
 

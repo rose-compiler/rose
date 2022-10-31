@@ -64,8 +64,8 @@ public:
      *  in the EIP register.
      *
      * @{ */
-    virtual void executionAddress(ThreadId, rose_addr_t) = 0;
-    virtual rose_addr_t executionAddress(ThreadId) = 0;
+    virtual void executionAddress(ThreadId, rose_addr_t);
+    virtual rose_addr_t executionAddress(ThreadId);
     /** @} */
 
     /** Set breakpoints. */
@@ -136,7 +136,7 @@ public:
      *  Reads up to @p maxBytes bytes from the subordinate or until an ASCII NUL character is read, concatenates all the
      *  characters (except the NUL) into a C++ string and returns it. The @p maxBytes includes the NUL terminator although the
      *  NUL terminator is not returned as part of the string. */
-    virtual std::string readCString(rose_addr_t va, size_t maxBytes = UNLIMITED) = 0;
+    virtual std::string readCString(rose_addr_t va, size_t maxBytes = UNLIMITED);
 
     /** Returns true if the subordinate terminated. */
     virtual bool isTerminated() = 0;

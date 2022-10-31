@@ -87,7 +87,10 @@ public:
         RUNNING,
         THREAD_GROUP_ADDED,
         THREAD_GROUP_STARTED,
+        THREAD_GROUP_EXITED,
         THREAD_CREATED,
+        THREAD_EXITED,
+        BREAKPOINT_MODIFIED,
         OTHER,
         UNSPECIFIED
     };
