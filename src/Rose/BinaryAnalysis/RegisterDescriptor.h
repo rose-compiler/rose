@@ -149,6 +149,18 @@ public:
     void nBits(size_t);
     /** @} */
 
+    /** Bit range.
+     *
+     *  This is the range of bits to which this register descriptor refers. It is formed from the @ref offset and
+     *  @ref nBits properties. */
+    Sawyer::Container::Interval<size_t> bits() const {
+        if (const size_t n = nBits()) {
+            return Sawyer::Container::Interval<size_t>::baseSize(offset(), n);
+        } else {
+            return {};
+        }
+    }
+
     /** Set offset and size at the same time.
      *
      *  Adjusting the offset and width individually with the @ref offset and @ref nBits properties can be tricky because you
