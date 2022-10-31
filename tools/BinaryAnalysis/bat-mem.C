@@ -125,7 +125,7 @@ public:
         MemoryMap::ConstNodeIterator inode = map->at(dataInterval.least()).nodes().begin();
         ASSERT_forbid(inode == map->nodes().end());
         const AddressInterval &segmentInterval = inode->key();
-        ASSERT_require(segmentInterval.isContaining(dataInterval));
+        ASSERT_require(segmentInterval.contains(dataInterval));
         const MemoryMap::Segment &segment = inode->value();
         if (const uint8_t *data = segment.buffer()->data()) {
             rose_addr_t bufferOffset = segment.offset() + dataInterval.least() - segmentInterval.least();

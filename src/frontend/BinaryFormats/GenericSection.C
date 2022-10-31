@@ -521,11 +521,11 @@ SgAsmGenericSection::get_referenced_extents() const
     AddressInterval segment = AddressInterval::baseSize(get_offset(), get_size());
     const AddressIntervalSet &fileExtents = get_file()->get_referenced_extents();
     BOOST_FOREACH (const AddressInterval &interval, fileExtents.intervals()) {
-        if (segment.isContaining(interval)) {
+        if (segment.contains(interval)) {
             retval.insert(AddressInterval::baseSize(interval.least()-get_offset(), interval.size()));
         } else if (interval.isLeftOf(segment) || interval.isRightOf(segment)) {
             // no overlap
-        } else if (interval.isContaining(segment)) {
+        } else if (interval.contains(segment)) {
             retval.insert(AddressInterval::baseSize(0, get_size()));
             break;                                      // no point in continuing since we've referenced whole segment now
         } else if (interval.least() < segment.least()) {

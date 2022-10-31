@@ -185,7 +185,7 @@ main(int argc, char *argv[]) {
     Sawyer::Optional<rose_addr_t> lastSeenVa;
     while (map->atOrAfter(va).require(MemoryMap::EXECUTABLE).next().assignTo(va)) {
         va = alignUp(va, settings.alignment);
-        if (!settings.where.isContaining(va))
+        if (!settings.where.contains(va))
             break;
         if (lastSeenVa && lastSeenVa.get()+1 != va)
             std::cout <<"\n";

@@ -1439,7 +1439,7 @@ public:
      *  Asserts that the specified range is valid for this vector. This is intended mostly for internal use and does nothing
      *  when assertions are disabled. */
     void checkRange(const BitRange &range) const {
-        ASSERT_always_require(hull().isContaining(range)); // so range is always used
+        ASSERT_always_require(hull().contains(range)); // so range is always used
     }
 
     /** Raw data for vector.

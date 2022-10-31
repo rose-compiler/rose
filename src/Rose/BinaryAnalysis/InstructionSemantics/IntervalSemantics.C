@@ -126,7 +126,7 @@ SValue::possible_bits() const
             uint64_t bit = IntegerOps::shl1<uint64_t>(bitno);
             if (0 == (bits & bit)) {
                 uint64_t base = lo & ~IntegerOps::genMask<uint64_t>(bitno);
-                if (interval.isContaining(base+bit))
+                if (interval.contains(base+bit))
                     bits |= bit; 
             }
         }

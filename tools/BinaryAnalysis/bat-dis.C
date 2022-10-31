@@ -120,7 +120,7 @@ public:
             for (size_t i=0; i<bb->nInstructions(); ++i) {
                 bool isGoodInstruction = true;
                 for (const NoOperation::IndexInterval &interval: nopIndexes) {
-                    if (interval.isContaining(i)) {
+                    if (interval.contains(i)) {
                         isGoodInstruction = false;
                         break;
                     }

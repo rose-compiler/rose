@@ -376,7 +376,7 @@ scanCodeAddressTable(const Partitioner &partitioner, AddressInterval &tableLimit
         // Read table entry to get target address
         uint8_t bytes[sizeof(rose_addr_t)];
         rose_addr_t tableEntryVa = actualStartVa + tableEntries.size() * tableEntrySizeBytes;
-        if (!tableLimits.isContaining(AddressInterval::baseSize(tableEntryVa, tableEntrySizeBytes))) {
+        if (!tableLimits.contains(AddressInterval::baseSize(tableEntryVa, tableEntrySizeBytes))) {
             SAWYER_MESG(debug) <<"  entry at " <<StringUtility::addrToString(tableEntryVa) <<" falls outside table boundary\n";
             break;
         }
@@ -401,7 +401,7 @@ scanCodeAddressTable(const Partitioner &partitioner, AddressInterval &tableLimit
         }
 
         // Save or skip the table entry
-        if (targetLimits.isContaining(target) && map->at(target).require(MemoryMap::EXECUTABLE).exists()) {
+        if (targetLimits.contains(target) && map->at(target).require(MemoryMap::EXECUTABLE).exists()) {
             tableEntries.push_back(target);
         } else if (tableEntries.empty() && nSkippedEntries < nSkippable) {
             ++nSkippedEntries;
@@ -420,7 +420,7 @@ scanCodeAddressTable(const Partitioner &partitioner, AddressInterval &tableLimit
     size_t nBackwardEntries = 0;
     if (0 == nSkippedEntries) {
         while (actualStartVa >= tableEntrySizeBytes &&
-               tableLimits.isContaining(AddressInterval::baseSize(actualStartVa-tableEntrySizeBytes, tableEntrySizeBytes))) {
+               tableLimits.contains(AddressInterval::baseSize(actualStartVa-tableEntrySizeBytes, tableEntrySizeBytes))) {
             uint8_t bytes[sizeof(rose_addr_t)];
             rose_addr_t tableEntryVa = actualStartVa - tableEntrySizeBytes;
             if (tableEntrySizeBytes != (map->at(tableEntryVa).limit(tableEntrySizeBytes)
@@ -431,7 +431,7 @@ scanCodeAddressTable(const Partitioner &partitioner, AddressInterval &tableLimit
                 target |= bytes[i] << (8*i);            // x86 is little endian
 
             // Save entry if valid, otherwise we've reached the beginning of the table
-            if (targetLimits.isContaining(target) && map->at(target).require(MemoryMap::EXECUTABLE).exists()) {
+            if (targetLimits.contains(target) && map->at(target).require(MemoryMap::EXECUTABLE).exists()) {
                 tableEntries.insert(tableEntries.begin(), target);
                 actualStartVa -= tableEntrySizeBytes;
                 ++nBackwardEntries;
@@ -504,7 +504,7 @@ scanCodeAddressTable(const Partitioner &partitioner, AddressInterval &tableLimit
     // Return values
     AddressInterval actualTableLocation =
         AddressInterval::baseSize(actualStartVa, tableEntries.size() * tableEntrySizeBytes + nIndexes);
-    ASSERT_require(tableLimits.isContaining(actualTableLocation));
+    ASSERT_require(tableLimits.contains(actualTableLocation));
     tableLimits = actualTableLocation;
     SAWYER_MESG(debug) <<"  actual table location = " <<StringUtility::addrToString(actualTableLocation) <<"\n";
     return tableEntries;

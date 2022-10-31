@@ -426,7 +426,7 @@ public:
         if (interval.isEmpty())
             return imap.nodes().end();
         Iter lb = imap.lowerBound(interval.least());
-        return lb!=imap.nodes().end() && interval.isOverlapping(lb->key()) ? lb : imap.nodes().end();
+        return lb!=imap.nodes().end() && interval.overlaps(lb->key()) ? lb : imap.nodes().end();
     }
     /** @} */
 
@@ -460,7 +460,7 @@ public:
                          const IntervalMap<Interval, T2, Policy2> &other,
                          typename IntervalMap<Interval, T2, Policy2>::ConstNodeIterator otherIter) {
         while (thisIter!=imap.nodes().end() && otherIter!=other.nodes().end()) {
-            if (thisIter->key().isOverlapping(otherIter->key()))
+            if (thisIter->key().overlaps(otherIter->key()))
                 return std::make_pair(thisIter, otherIter);
             if (thisIter->key().greatest() < otherIter->key().greatest()) {
                 ++thisIter;
@@ -779,7 +779,7 @@ public:
         for (iter=lowerBound(erasure.least()); iter!=nodes().end() && !erasure.isLeftOf(iter->key()); ++iter) {
             Interval foundInterval = iter->key();
             Value &v = iter->value();
-            if (erasure.isContaining(foundInterval)) {
+            if (erasure.contains(foundInterval)) {
                 // erase entire found interval
                 if (eraseBegin==nodes().end())
                     eraseBegin = iter;
@@ -842,7 +842,7 @@ public:
             erase(key);
         } else {
             NodeIterator found = lowerBound(key.least());
-            if (found!=nodes().end() && key.isOverlapping(found->key()))
+            if (found!=nodes().end() && key.overlaps(found->key()))
                 return;
         }
 
@@ -897,22 +897,29 @@ public:
     //                                  Predicates
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+    bool overlaps(const Interval &interval) const {
+        return findFirstOverlap(interval) != nodes().end();
+    }
     bool isOverlapping(const Interval &interval) const {
-        return findFirstOverlap(interval)!=nodes().end();
+        return overlaps(interval);
     }
 
     template<typename T2, class Policy2>
-    bool isOverlapping(const IntervalMap<Interval, T2, Policy2> &other) const {
+    bool overlaps(const IntervalMap<Interval, T2, Policy2> &other) const {
         return findFirstOverlap(nodes().begin(), other, other.nodes().begin()).first != nodes().end();
+    }
+    template<typename T2, class Policy2>
+    bool isOverlapping(const IntervalMap<Interval, T2, Policy2> &other) const {
+        return overlaps(other);
     }
 
     bool isDistinct(const Interval &interval) const {
-        return !isOverlapping(interval);
+        return !overlaps(interval);
     }
 
     template<typename T2, class Policy2>
     bool isDistinct(const IntervalMap<Interval, T2, Policy2> &other) const {
-        return !isOverlapping(other);
+        return !overlaps(other);
     }
 
     bool contains(Interval key) const {
@@ -924,7 +931,7 @@ public:
                 return false;
             if (key.least() < found->key().least())
                 return false;
-            ASSERT_require(key.isOverlapping(found->key()));
+            ASSERT_require(key.overlaps(found->key()));
             if (key.greatest() <= found->key().greatest())
                 return true;
             key = splitInterval(key, found->key().greatest()+1).second;

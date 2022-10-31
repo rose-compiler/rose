@@ -2776,7 +2776,7 @@ Parser::regroupArgs(const std::vector<std::string> &args, const Container::Inter
             retval.push_back(std::vector<std::string>(1, arg));
     }
 
-    if (!limit.isContaining(retval.size())) {
+    if (!limit.contains(retval.size())) {
         std::ostringstream mesg;
         mesg <<"wrong number of positional argument groups; got " <<retval.size() <<", expected ";
         if (limit.isSingleton()) {

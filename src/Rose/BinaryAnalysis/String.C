@@ -916,7 +916,7 @@ StringFinder::find(const MemoryMap::ConstConstraints &constraints, Sawyer::Conta
         AddressIntervalSet stringAddresses;
         std::sort(strings_.begin(), strings_.end(), byDecreasingLength);
         for (EncodedString &string: strings_) {
-            if (stringAddresses.isOverlapping(string.where())) {
+            if (stringAddresses.overlaps(string.where())) {
                 string = EncodedString();               // mark for erasing
             } else {
                 stringAddresses.insert(string.where());
