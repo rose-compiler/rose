@@ -589,5 +589,13 @@ run $(tool_compile_linkexe) testInterpRegs.C
 run $(test) testInterpRegs \
     ./testInterpRegs $(ROSE)/tests/nonsmoke/specimens/binary/i386-pop
 
+########################################################################################################################
+# Test the debugger attaching to a Motorola M68k specimen
+########################################################################################################################
+
+run $(tool_compile_linkexe) testGdb.C
+run $(test) testGdb \
+    ./testGdb $(ROSE)/tests/nonsmoke/specimens/binary/m68k-gdb
+
 endif
 endif
