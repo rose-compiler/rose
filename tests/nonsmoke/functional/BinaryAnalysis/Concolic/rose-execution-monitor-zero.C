@@ -42,7 +42,7 @@ struct ExecutionMonitor: Debugger::Linux {
     ExecutionMonitor(const std::vector<std::string>& exeNameAndArgs)
         : addresses() {
         Debugger::Linux::Specimen specimen(exeNameAndArgs);
-        specimen.flags().set(Debugger::Linux::Flags::CLOSE_FILES);
+        specimen.flags().set(Debugger::Linux::Flag::CLOSE_FILES);
         attach(specimen);
     }
 
@@ -77,7 +77,7 @@ ExecutionMonitor::step(Debugger::ThreadId tid) {
 void
 ExecutionMonitor::run() {
     while (!isTerminated())
-        step();
+        step(Debugger::ThreadId::unspecified());
 }
 
 } // namespace
@@ -135,9 +135,9 @@ int main(int argc, char** argv)
   Rose::Diagnostics::initAndRegister(&::mlog, "tool");
 
   // Parse command-line
-  P2::Engine               engine;
+  auto engine = P2::Engine::instance();
   Settings                 settings;
-  std::vector<std::string> specimenAndArgs = parseCommandLine(argc, argv, engine, settings);
+  std::vector<std::string> specimenAndArgs = parseCommandLine(argc, argv, *engine, settings);
   
   if (specimenAndArgs.size() == 0)
   {

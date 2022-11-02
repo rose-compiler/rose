@@ -399,7 +399,7 @@ munkresCost(const dlib::matrix<double> &src, T scale, dlib::matrix<T> &dst /*out
 static std::vector<SgAsmFunction*>
 loadFunctions(const boost::filesystem::path rbaName, P2::Engine &engine) {
     engine.reset();                                            // clear all but config properties
-    engine.doingPostAnalysis(false);                           // not needed for this tool
+    engine.settings().partitioner.doingPostAnalysis = false;   // not needed for this tool
     SgAsmBlock *gblock = engine.buildAst(rbaName.string());    // parse, load, link, disassemble, partition, build AST
     return SageInterface::querySubTree<SgAsmFunction>(gblock); // return just the functions
 }
