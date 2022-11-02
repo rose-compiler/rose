@@ -1,5 +1,6 @@
 # -*- conf -*-
 
+responsibility = Tristan Vanderbruggen <vanderbrugge1@llnl.gov>
 declarations.h: disable namespace_capitalization namespace_header_exists doxygen_input
 fields.h:       disable namespace_capitalization namespace_header_exists doxygen_input
 nodes.h:        disable namespace_capitalization namespace_header_exists doxygen_input

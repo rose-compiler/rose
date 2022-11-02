@@ -279,11 +279,19 @@ my %bad_words = (
 
 
 ###############################################################################################################################
-# Returns a severity prefix string appropriate for whether the specified policy is enabled or disabled for the file.
+# Returns a severity prefix string appropriate for whether the specified policy is enabled or disabled for the file. Additional
+# information string is the second return value (such as responsible party for warnings).
 # See also, the regular expression in `countViolations` below.
 sub severity {
     my($file_name, $policy_name) = @_;
-    return is_disabled_in_dir($file_name, $policy_name) ? "warning: " : "error: ";
+    my($disabled,$info) = is_disabled_in_dir($file_name, $policy_name);
+    my($w) = $disabled ? "warning: " : "error: ";
+    
+    my($extra) = "";
+    for my $key (keys %$info) {
+	$extra .= "\n" . $key . ": " . $info->{$key} unless $key eq 'disabled';
+    }
+    return ($w, $extra);
 }
 
 ###############################################################################################################################
@@ -478,6 +486,7 @@ sub printViolations {
 	print $desc, "\nThe following $total violations were found:\n";
     }
 
+    my $me = $ENV{USER} || "i am nobody";
     my $i = 0;
     my $policy_number = 0;
     foreach (@policies) {
@@ -486,7 +495,17 @@ sub printViolations {
 	print "    Policy #", ++$policy_number, " \"", $policy->{name}, "\"\n\n";
 	print indent("    ", "Requirement: " . $policy->{policy}), "\n";
 	print indent("    ", "Reason: " . $policy->{reason}), "\n";
-	printf "        (%d) %s\n", ++$i, $_ for @{$violations->{$policy->{name}}};
+	for my $text (@{$violations->{$policy->{name}}}) {
+	    ++$i;
+	    my($highlight) = $text =~ /\Q<$me@\E/ && -t STDOUT;
+	    my($hl_begin) = $highlight ? "\033[30;43m" : "";
+	    my($hl_end) = $highlight ? "\033[0m" : "";
+	    my($prefix) = "        ($i) ";
+	    for my $line (split "\n", $text) {
+		print $prefix, $hl_begin, $line, $hl_end, "\n";
+		$prefix = ' ' x length($prefix);
+	    }
+	}
 	print  "        No violations found for this policy\n" if 0 == @{$violations->{$policy->{name}}};
     }
     return $nerrors;
@@ -516,22 +535,22 @@ while (my $filename = $files->next_file) {
 
         # All header files should use ".h" for their file extension
         if ($extension ne "h") {
-	    my $w = severity($filename, 'h_extension');
-	    push @{$violations{h_extension}}, "${w}file \"$filename\" must use \".h\" as its extension";
+	    my($w,$u) = severity($filename, 'h_extension');
+	    push @{$violations{h_extension}}, "${w}file \"$filename\" must use \".h\" as its extension${u}";
         }
 
         # The directory must be an input for Doxygen if it contains a header file
         if (!exists $docdirs{$dir}) {
-	    my $w = severity($filename, 'doxygen_input');
-	    push @{$violations{doxygen_input}}, "${w}directory \"$root/$dir\" must be included in the list of Doxygen inputs";
+	    my($w,$u) = severity($filename, 'doxygen_input');
+	    push @{$violations{doxygen_input}}, "${w}directory \"$root/$dir\" must be included in the list of Doxygen inputs${u}";
         }
         $docdirs{$dir} = 2;
 
 	# Namespace symbol must be composed of valid words.
 	if (keys %words) {
 	    if (my @badWords = checkWords($nsParts[-1], \%words)) {
-		my $w = severity($filename, 'english_words');
-		push @{$violations{english_words}}, map("${w}in \"$ns\", $_", @badWords);
+		my($w,$u) = severity($filename, 'english_words');
+		push @{$violations{english_words}}, map("${w}in \"$ns\", $_${u}", @badWords);
 	    }
 	}
 	    
@@ -539,21 +558,23 @@ while (my $filename = $files->next_file) {
 	my $nsLastCase = $nsParts[-1];
 	$nsLastCase =~ s/[A-Z]/X/g;
 	if (($nsLastCase =~ /XXX|_|-/ || $nsLastCase eq "XX" || $nsLastCase =~ /^[^X]/) && $nsLastCase =~ /[^X]/) {
-	    my $w = severity($filename, 'namespace_capitalization');
-	    push @{$violations{namespace_capitalization}}, "${w}in \"$ns\", \"$nsParts[-1]\" must be PascalCase";
+	    my($w,$u) = severity($filename, 'namespace_capitalization');
+	    push @{$violations{namespace_capitalization}}, "${w}in \"$ns\", \"$nsParts[-1]\" must be PascalCase${u}";
 	} else {
 	    # Check the the multi-inclusion-protection symbol is correct
 	    my($expectedMipSymbol) = join("_", "ROSE", @nsParts[1 .. $#nsParts], "H");
 	    my($ifndef,$def) = multiInclusionProtectionSymbols($filename);
 	    if ($ifndef eq "") {
-		my $w = severity($filename, 'include_once');
-		push @{$violations{include_once}}, "${w}file \"$filename\" must have multi-inclusion protection using #ifndef/#define";
+		my($w,$u) = severity($filename, 'include_once');
+		push @{$violations{include_once}},
+		    "${w}file \"$filename\" must have multi-inclusion protection using #ifndef/#define${u}";
 	    } elsif ($ifndef ne $expectedMipSymbol) {
-		my $w = severity($filename, 'once_symbol');
-		push @{$violations{once_symbol}}, "${w}file \"$filename\" multi-inclusion symbol must be \"$expectedMipSymbol\" (not \"$ifndef\")";
+		my($w,$u) = severity($filename, 'once_symbol');
+		push @{$violations{once_symbol}},
+		    "${w}file \"$filename\" multi-inclusion symbol must be \"$expectedMipSymbol\" (not \"$ifndef\")${u}";
 	    } elsif ($def eq "") {
-		my $w = severity($filename, 'once_symbol');
-		push @{$violations{once_symbol}}, "${note}file \"$filename\" multi-inclusion lacks #define";
+		my($w,$u) = severity($filename, 'once_symbol');
+		push @{$violations{once_symbol}}, "${note}file \"$filename\" multi-inclusion lacks #define${u}";
 	    }
 	}
 	
@@ -566,8 +587,8 @@ while (my $filename = $files->next_file) {
 		# to have both <rose.h> and <Rose.h>, especially on file systems that don't follow
 		# POSIX specifications (like macOS).
 	    } else {
-		my $w = severity($filename, 'namespace_header_exists');
-		push @{$violations{namespace_header_exists}}, "${w}file \"$parentHeader\" must exist for $ns";
+		my($w,$u) = severity($filename, 'namespace_header_exists');
+		push @{$violations{namespace_header_exists}}, "${w}file \"$parentHeader\" must exist for ${ns}${u}";
 	    }
 	} else {
 	    $parentHeaderExists = 1;
@@ -581,9 +602,9 @@ while (my $filename = $files->next_file) {
 		if (my($sep, $name) = /^\s*#\s*include\s*([<"])(.*)[">]/) {
 		    if ($name eq "$nsFile.h") {
 			if ($sep ne "<") {
-			    my $w = severity($filename, 'include_by_angle_brackets');
+			    my($w,$u) = severity($filename, 'include_by_angle_brackets');
 			    push @{$violations{include_by_angle_brackets}},
-				"${w}in \"$parentHeader\", \"$nsFile\" must be included with <> not \"\"";
+				"${w}in \"$parentHeader\", \"$nsFile\" must be included with <> not \"\"${u}";
 			}
 			$foundInclude++;
 		    }
@@ -591,11 +612,13 @@ while (my $filename = $files->next_file) {
 	    }
 	    close PARENT;
 	    if ($foundInclude == 0) {
-		my $w = severity($filename, 'namespace_header_includes_all');
-		push @{$violations{namespace_header_includes_all}}, "${w}file \"$parentHeader\" does not include <$nsFile.h>";
+		my($w,$u) = severity($filename, 'namespace_header_includes_all');
+		push @{$violations{namespace_header_includes_all}},
+		    "${w}file \"$parentHeader\" does not include <$nsFile.h>${u}";
 	    } elsif ($foundInclude > 1) {
-		my $w = severity($filename, 'namespace_header_includes_all');
-		push @{$violations{namespace_header_includes_all}}, "${w}file \"$parentHeader\" includes <$nsFile> more than once";
+		my($w,$u) = severity($filename, 'namespace_header_includes_all');
+		push @{$violations{namespace_header_includes_all}},
+		    "${w}file \"$parentHeader\" includes <$nsFile> more than once${u}";
 	    }
 	}
     }
