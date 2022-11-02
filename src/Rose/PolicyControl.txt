@@ -1,3 +1,4 @@
 # -*- conf -*-
 
+responsibility = Tristan Vanderbruggen <vanderbrugge1@llnl.gov>
 metaprog.h: disable namespace_capitalization english_words
