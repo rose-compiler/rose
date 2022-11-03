@@ -19521,7 +19521,6 @@ SgExpression * instantiateNonrealRefExps(
     std::cout << "  iname->get_name()    = " << iname->get_name() << std::endl;
     std::cout << "  iname->get_initializer()    = " << std::hex << iname->get_initializer() << " : " << ( iname->get_initializer() ? iname->get_initializer()->class_name() : "" ) << std::endl;
     std::cout << "  iname->get_parent()    = " << std::hex << iname->get_parent() << " : " << ( iname->get_parent() ? iname->get_parent()->class_name() : "" ) << std::endl;
-    std::cout << "  iname->get_parent()->get_parent()    = " << std::hex << iname->get_parent()->get_parent() << " : " << ( iname->get_parent()->get_parent() ? iname->get_parent()->get_parent()->class_name() : "" ) << std::endl;
 #endif
 
     unsigned pos = 0;
@@ -19559,8 +19558,16 @@ SgExpression * instantiateNonrealRefExps(
     return cond;
   } else if (isSgSizeOfOp(expr)) {
     SgSizeOfOp * szo = (SgSizeOfOp*)expr;
+#if DEBUG_Rose_Builder_Templates_instantiateNonrealRefExps
+    std::cout << "  szo->get_operand_expr() = " << std::hex << szo->get_operand_expr() << " : " << ( szo->get_operand_expr() ? szo->get_operand_expr()->class_name() : "" ) << std::endl;
+    std::cout << "  szo->get_operand_type() = " << std::hex << szo->get_operand_type() << " : " << ( szo->get_operand_type() ? szo->get_operand_type()->class_name() : "" ) << std::endl;
+#endif
     szo->set_operand_expr(instantiateNonrealRefExps(szo->get_operand_expr(), tpl_params, tpl_args));
     szo->set_operand_type(instantiateNonrealTypes(szo->get_operand_type(), tpl_params, tpl_args));
+#if DEBUG_Rose_Builder_Templates_instantiateNonrealRefExps
+    std::cout << "  szo->get_operand_expr() = " << std::hex << szo->get_operand_expr() << " : " << ( szo->get_operand_expr() ? szo->get_operand_expr()->class_name() : "" ) << std::endl;
+    std::cout << "  szo->get_operand_type() = " << std::hex << szo->get_operand_type() << " : " << ( szo->get_operand_type() ? szo->get_operand_type()->class_name() : "" ) << std::endl;
+#endif
     return szo;
   } else if (isSgCastExp(expr)) {
     SgCastExp * cast = (SgCastExp*)expr;
@@ -19622,36 +19629,47 @@ SgType * instantiateNonrealTypes(
 #endif
         std::vector<SgTemplateArgument *> inst_tpl_args;
         for (SgTemplateArgument * tplarg: nrdecl->get_tpl_args()) {
-          if (tplarg->get_type()) {
 #if DEBUG_Rose_Builder_Templates_instantiateNonrealTypes
-            std::cout << "      tplarg->get_type() = " << std::hex << tplarg->get_type() << " : " << ( tplarg->get_type() ? tplarg->get_type()->class_name() : "" ) << std::endl;
+          std::cout << "      tplarg = " << std::hex << tplarg << " : " << ( tplarg ? tplarg->class_name() : "" ) << std::endl;
+          std::cout << "        ->get_argumentType() = " << tplarg->get_argumentType() << std::endl;
 #endif
-            auto inst_tplarg = instantiateNonrealTypes(tplarg->get_type(), tpl_params, tpl_args);
-            if (inst_tplarg)
-              inst_tpl_args.push_back(buildTemplateArgument(inst_tplarg));
-            else
-              break; // nullptr is interpreted as "use default argument from this one"
-          } else if (tplarg->get_expression()) {
+          switch (tplarg->get_argumentType()) {
+            case  SgTemplateArgument::type_argument: {
 #if DEBUG_Rose_Builder_Templates_instantiateNonrealTypes
-            std::cout << "      tplarg->get_expression() = " << std::hex << tplarg->get_expression() << " : " << ( tplarg->get_expression() ? tplarg->get_expression()->class_name() : "" ) << std::endl;
-            std::cout << "        ->unparseToString() = " << tplarg->get_expression()->unparseToString() << std::endl;
+              std::cout << "      tplarg->get_type() = " << std::hex << tplarg->get_type() << " : " << ( tplarg->get_type() ? tplarg->get_type()->class_name() : "" ) << std::endl;
 #endif
-            auto inst_tplarg = instantiateNonrealRefExps(SageInterface::copyExpression(tplarg->get_expression()), tpl_params, tpl_args);
+              auto inst_tplarg = instantiateNonrealTypes(tplarg->get_type(), tpl_params, tpl_args);
+              if (inst_tplarg)
+                inst_tpl_args.push_back(buildTemplateArgument(inst_tplarg));
+              break;
+            }
+            case  SgTemplateArgument::nontype_argument: {
 #if DEBUG_Rose_Builder_Templates_instantiateNonrealTypes
-            std::cout << "      inst_tplarg = " << std::hex << inst_tplarg << " : " << ( inst_tplarg ? inst_tplarg->class_name() : "" ) << std::endl;
-            std::cout << "      inst_tplarg->unparseToString() = " << ( inst_tplarg ? inst_tplarg->unparseToString() : "" ) << std::endl;
+              std::cout << "      tplarg->get_expression() = " << std::hex << tplarg->get_expression() << " : " << ( tplarg->get_expression() ? tplarg->get_expression()->class_name() : "" ) << std::endl;
+              std::cout << "        ->unparseToString() = " << tplarg->get_expression()->unparseToString() << std::endl;
 #endif
-            if (inst_tplarg)
-              inst_tpl_args.push_back(buildTemplateArgument(inst_tplarg));
-            else
-              break; // nullptr is interpreted as "use default argument from this one"
-          } else if (tplarg->get_templateDeclaration()) {
+              auto inst_tplarg = instantiateNonrealRefExps(SageInterface::copyExpression(tplarg->get_expression()), tpl_params, tpl_args);
 #if DEBUG_Rose_Builder_Templates_instantiateNonrealTypes
-            std::cout << "      tplarg->get_templateDeclaration() = " << std::hex << tplarg->get_templateDeclaration() << " : " << ( tplarg->get_templateDeclaration() ? tplarg->get_templateDeclaration()->class_name() : "" ) << std::endl;
+              std::cout << "      inst_tplarg = " << std::hex << inst_tplarg << " : " << ( inst_tplarg ? inst_tplarg->class_name() : "" ) << std::endl;
+              std::cout << "      inst_tplarg->unparseToString() = " << ( inst_tplarg ? inst_tplarg->unparseToString() : "" ) << std::endl;
 #endif
-            ROSE_ABORT(); // TODO
-          } else {
-            ROSE_ABORT();
+              if (inst_tplarg)
+                inst_tpl_args.push_back(buildTemplateArgument(inst_tplarg));
+              break;
+            }
+            case  SgTemplateArgument::template_template_argument: {
+#if DEBUG_Rose_Builder_Templates_instantiateNonrealTypes
+              std::cout << "      tplarg->get_templateDeclaration() = " << std::hex << tplarg->get_templateDeclaration() << " : " << ( tplarg->get_templateDeclaration() ? tplarg->get_templateDeclaration()->class_name() : "" ) << std::endl;
+#endif
+              ROSE_ABORT(); // TODO
+            } 
+            case  SgTemplateArgument::start_of_pack_expansion_argument: {
+#if DEBUG_Rose_Builder_Templates_instantiateNonrealTypes
+              std::cout << "      start_of_pack_expansion_argument" << std::endl;
+#endif
+              break; // NOP
+            }
+            default: ROSE_ABORT();
           }
         }
         SgTemplateInstantiationDecl * inst_decl = isSgTemplateInstantiationDecl(SageBuilder::buildClassDeclaration_nfi(
@@ -19680,10 +19698,21 @@ SgType * instantiateNonrealTypes(
 #endif
       ROSE_ASSERT(nrdecl->get_template_parameter_position() > 0);
       if (nrdecl->get_template_parameter_position() <= tpl_args.size()) {
-        return tpl_args[nrdecl->get_template_parameter_position()-1]->get_type();
-//      } else if (nrdecl->get_template_parameter_position() <= tpl_params.size()) {
-//        SgType * dft_tpl_arg = tpl_params[nrdecl->get_template_parameter_position()-1]->get_defaultTypeParameter();
-//        return instantiateNonrealTypes(dft_tpl_arg, tpl_params, tpl_args);
+        SgType * res = tpl_args[nrdecl->get_template_parameter_position()-1]->get_type();
+#if DEBUG_Rose_Builder_Templates_instantiateNonrealTypes
+        std::cout << "  tpl_args[nrdecl->get_template_parameter_position()-1]->get_type() = " << std::dec << res << std::endl;
+#endif
+        return res;
+      } else if (nrdecl->get_template_parameter_position() <= tpl_params.size()) {
+        SgType * dft_tpl_arg = tpl_params[nrdecl->get_template_parameter_position()-1]->get_defaultTypeParameter();
+#if DEBUG_Rose_Builder_Templates_instantiateNonrealTypes
+        std::cout << "  dft_tpl_arg = " << std::dec << dft_tpl_arg << std::endl;
+#endif
+        dft_tpl_arg = instantiateNonrealTypes(dft_tpl_arg, tpl_params, tpl_args);
+#if DEBUG_Rose_Builder_Templates_instantiateNonrealTypes
+        std::cout << "  dft_tpl_arg = " << std::dec << dft_tpl_arg << std::endl;
+#endif
+        return dft_tpl_arg;
       } else {
         return nullptr;
       }

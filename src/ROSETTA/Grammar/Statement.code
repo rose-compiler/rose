@@ -11481,12 +11481,19 @@ SgDeclarationScope::get_mangled_name(void) const
 SgName
 SgDeclarationScope::get_qualified_name() const
    {
-     std::string globalScopeDelimiter;
-
-  // globalScopeDelimiter = "/* declaration scope */";
-     globalScopeDelimiter = "";
-
-     return SgName (globalScopeDelimiter);
+     SgNode * p = get_parent();
+     if (isSgTemplateFunctionDeclaration(p)) {
+       return ((SgTemplateFunctionDeclaration *)p)->get_qualified_name();
+     } else if (isSgTemplateClassDeclaration(p)) {
+       return ((SgTemplateClassDeclaration *)p)->get_qualified_name();
+     } else if (isSgTemplateTypedefDeclaration(p)) {
+       return ((SgTemplateTypedefDeclaration *)p)->get_qualified_name();
+//     } else if (is(p)) {
+//       return (( *)p)->get_qualified_name();
+     } else {
+       std::string globalScopeDelimiter = "";
+       return SgName (globalScopeDelimiter);
+     }
    }
 
 SOURCE_DECLARATION_SCOPE_END
