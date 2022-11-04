@@ -7900,82 +7900,61 @@ SgSymbolTable::remove_function_type( const SgName & name )
 
    }
 
-
-SgSymbol*
-SgSymbolTable::find( const SgInitializedName* initializedName)
-   {
-     ROSE_ASSERT(p_table != NULL);
-     ROSE_ASSERT(initializedName != NULL);
-
 #define DEBUG_FIND_INITIALIZED_NAME_SYMBOL 0
 
+SgSymbol*
+SgSymbolTable::find( const SgInitializedName* initializedName) {
 #if DEBUG_FIND_INITIALIZED_NAME_SYMBOL
-     mprintf ("Inside of SgSymbolTable::find( const SgInitializedName* ): initializedName = %p = %s \n",initializedName,SageInterface::get_name(initializedName).c_str());
+  printf ("In SgSymbolTable::find( const SgInitializedName* ):\n");
+  printf ("  this = %p\n", this);
+  printf ("  initializedName = %p : %s \n", initializedName, SageInterface::get_name(initializedName).c_str());
+#endif
+  ROSE_ASSERT(p_table != NULL);
+  ROSE_ASSERT(initializedName != NULL);
+
+  SgName name = initializedName->get_name();
+#if DEBUG_FIND_INITIALIZED_NAME_SYMBOL
+  printf ("  name = %s \n",name.str());
+#endif
+  if (isSgTemplateVariableInstantiation(initializedName->get_parent())) {
+    SgTemplateVariableInstantiation * tplinst = (SgTemplateVariableInstantiation *)initializedName->get_parent();
+    name = SageBuilder::appendTemplateArgumentsToName(name, tplinst->get_templateArguments());
+  }
+#if DEBUG_FIND_INITIALIZED_NAME_SYMBOL
+  printf ("  name = %s \n",name.str());
 #endif
 
-     SgSymbol* returnSymbol = NULL;
-
-     SgName name = initializedName->get_name();
+  p_iterator = p_table->find(name);
 
 #if DEBUG_FIND_INITIALIZED_NAME_SYMBOL
-     mprintf ("Inside of SgSymbolTable::find( const SgInitializedName* ): name = %s \n",name.str());
-#endif
-
-  // Find the first symbol in the multimap
-     p_iterator = p_table->find(name);
-
-#if DEBUG_FIND_INITIALIZED_NAME_SYMBOL
-     mprintf ("Inside of SgSymbolTable::find( const SgInitializedName* ): name = %s this->count(name) = %d \n",name.str(),this->count(name));
+  printf ("  this->count(name) = %d\n", this->count(name));
 #endif
 
   // Iterate through the matching symbols in the multimap
-     while (p_iterator != p_table->end() && get_table()->key_eq()((*p_iterator).first,name))
-        {
-          ROSE_ASSERT(p_iterator->second != NULL);
-          SgNode* symbolBasis = p_iterator->second->get_symbol_basis();
+  SgSymbol * sym = nullptr;
+  while (p_iterator != p_table->end() && get_table()->key_eq()((*p_iterator).first,name)) {
+    sym = p_iterator->second;
+    ROSE_ASSERT(sym != NULL);
+#if DEBUG_FIND_INITIALIZED_NAME_SYMBOL
+    printf ("  sym = %p : %s\n", sym, sym->class_name().c_str());
+#endif
+    SgNode * symbolBasis = sym->get_symbol_basis();
+    ROSE_ASSERT(symbolBasis != NULL);
+#if DEBUG_FIND_INITIALIZED_NAME_SYMBOL
+    printf ("  symbolBasis = %p : %s\n", symbolBasis, symbolBasis->class_name().c_str());
+#endif
+    if (symbolBasis == initializedName) break;
 
+    sym = nullptr;
+    p_iterator++;
+  }
 #if DEBUG_FIND_INITIALIZED_NAME_SYMBOL
-          mprintf ("In loop: p_iterator->second = %p symbolBasis = %p initializedName = %p \n",p_iterator->second,symbolBasis,initializedName);
-          mprintf ("In loop: symbolBasis->variantT() = %d statement->variantT() = %d \n",symbolBasis->variantT(),initializedName->variantT());
+  printf ("  sym = %p : %s\n", sym, sym ? sym->class_name().c_str() : "");
 #endif
-          ROSE_ASSERT(symbolBasis != NULL);
-          if (isSgInitializedName(symbolBasis) != NULL)
-             {
-#if DEBUG_FIND_INITIALIZED_NAME_SYMBOL
-               mprintf ("found a SgInitializedName \n");
-#endif
-               returnSymbol = p_iterator->second;
-               if (returnSymbol->get_symbol_basis() == initializedName)
-                  {
-#if DEBUG_FIND_INITIALIZED_NAME_SYMBOL
-                    mprintf ("returnSymbol->get_symbol_basis() == initializedName returnSymbol = %p = %s \n",returnSymbol,returnSymbol->class_name().c_str());
-#endif
-                    return returnSymbol;
-                  }
-                 else
-                  {
-#if DEBUG_FIND_INITIALIZED_NAME_SYMBOL
-                    mprintf ("returnSymbol->get_symbol_basis() != initializedName \n");
-#endif
-                  }
-             }
-            else
-             {
-#if DEBUG_FIND_INITIALIZED_NAME_SYMBOL
-               mprintf ("Some other symbol was found (no matching variants) \n");
-#endif
-             }
+  ROSE_ASSERT(sym == nullptr || sym->get_symbol_basis() == initializedName);
 
-          p_iterator++;
-        }
-
-#if DEBUG_FIND_INITIALIZED_NAME_SYMBOL
-     mprintf ("Leaving SgSymbolTable::find( const SgInitializedName* ): return NULL \n");
-#endif
-
-  // DQ (2/13/2007): Fixed bug that returns a valid pointer even when there was no match to the input statement!
-     return NULL;
-   }
+  return sym;
+}
 
 SgSymbol*
 SgSymbolTable::find( const SgFunctionType* functionType)
@@ -10774,30 +10753,33 @@ SgInitializedName::get_symbol_from_symbol_table() const
      return get_scope()->find_symbol_from_declaration(this);
    }
 
+#define DEBUG__SgInitializedName__search_for_symbol_from_symbol_table 0
+
 // PC (10/1/2009): Added support to get the symbol from the correct associated declaration
 SgSymbol*
 SgInitializedName::search_for_symbol_from_symbol_table() const
    {
+#if DEBUG__SgInitializedName__search_for_symbol_from_symbol_table
+     printf("In SgInitializedName::search_for_symbol_from_symbol_table():\n");
+     printf("  this = %p : %s\n", this, this->class_name().c_str());
+#endif
      SgInitializedName* aPrevDeclItem = p_prev_decl_item;
-     while(aPrevDeclItem != NULL && aPrevDeclItem->p_prev_decl_item != NULL)
-        {
-       // DQ (11/19/2011): This loop will not terminate if (aPrevDeclItem->p_prev_decl_item == aPrevDeclItem).
-       // This should not happen but this mistake has happened and this assertion helps it be caught instead
-       // of be an infinite loop.
-          ROSE_ASSERT(aPrevDeclItem->p_prev_decl_item != aPrevDeclItem);
+     while(aPrevDeclItem != NULL && aPrevDeclItem->p_prev_decl_item != NULL) {
+       // looks for self loop, should we have a more complex check (using a set of seen nodes)?
+       ROSE_ASSERT(aPrevDeclItem->p_prev_decl_item != aPrevDeclItem);
+       aPrevDeclItem = aPrevDeclItem->p_prev_decl_item;
+     }
 
-          aPrevDeclItem = aPrevDeclItem->p_prev_decl_item;
-        }
+     SgSymbol* symbol = nullptr;
+     if (aPrevDeclItem != nullptr) {
+       symbol = aPrevDeclItem->get_symbol_from_symbol_table();
+     } else {
+       symbol = get_symbol_from_symbol_table();
+     }
 
-     SgSymbol* symbol=0;
-     if (aPrevDeclItem != NULL)
-          symbol = aPrevDeclItem->get_symbol_from_symbol_table();
-     else
-          symbol = get_symbol_from_symbol_table();
-
-   // MS: for SgInitializedName in a forward declaration this always fails because no symbol exists. Therefore
-   // this assert can be put back, once symbols for such variables are available.
-     // assert(symbol != NULL);
+#if DEBUG__SgInitializedName__search_for_symbol_from_symbol_table
+     printf("  symbol = %p : %s\n", symbol, symbol->class_name().c_str());
+#endif
      return symbol;
    }
 

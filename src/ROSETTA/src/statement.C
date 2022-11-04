@@ -161,12 +161,15 @@ Grammar::setUpStatements ()
   // DQ (12/6/2011): Adding support for template variables (static data members).
      NEW_TERMINAL_MACRO (TemplateVariableDeclaration, "TemplateVariableDeclaration",    "TEMPLATE_VARIABLE_DECL_STMT" );
 
+  // DQ (12/6/2011): Adding support for template variables (static data members).
+     NEW_TERMINAL_MACRO (TemplateVariableInstantiation, "TemplateVariableInstantiation",    "TEMPLATE_VARIABLE_INST_STMT" );
+
   // DQ (12/21/2011): This is the newer design, we want template declaration to act just like functions and classes since they are used as such in the AST
   // representation of the template declaration.  In this case a template function declaration is more like a function declaration than a template declaration.
      NEW_TERMINAL_MACRO (TemplateDeclaration, "TemplateDeclaration", "TEMPLATE_DECL_STMT");
 
   // DQ (12/21/2011): Newer version of code.
-     NEW_NONTERMINAL_MACRO (VariableDeclaration, TemplateVariableDeclaration,
+     NEW_NONTERMINAL_MACRO (VariableDeclaration, TemplateVariableDeclaration | TemplateVariableInstantiation,
            "VariableDeclaration",       "VAR_DECL_STMT", true );
 
      NEW_TERMINAL_MACRO (TemplateInstantiationDecl, "TemplateInstantiationDecl", "TEMPLATE_INST_DECL_STMT" );
@@ -1808,6 +1811,21 @@ Grammar::setUpStatements ()
   // TV (04/11/2018): Introducing representation for non-real "stuff" (template parameters)
      TemplateVariableDeclaration.setDataPrototype("SgDeclarationScope*", "nonreal_decl_scope", "= NULL",
                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
+
+  // *******************************************************************************
+  // TV: Adding support for instantiation of template variables into the AST.
+  // *******************************************************************************
+
+     TemplateVariableInstantiation.setFunctionPrototype ( "HEADER_TEMPLATE_VARIABLE_INSTANTIATION_STATEMENT", "../Grammar/Statement.code" );
+
+     TemplateVariableInstantiation.setDataPrototype ( "SgName", "templateName", "= \"\"",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     TemplateVariableInstantiation.setDataPrototype ( "SgName", "templateHeader", "= \"\"",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     TemplateVariableInstantiation.setDataPrototype ( "SgTemplateVariableDeclaration*", "templateDeclaration", "= NULL",
+                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     TemplateVariableInstantiation.setDataPrototype ( "SgTemplateArgumentPtrList", "templateArguments",  "= SgTemplateArgumentPtrList()",
+                CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // *******************************************************************************
 
@@ -4124,6 +4142,7 @@ Grammar::setUpStatements ()
 
   // DQ (12/6/2011): Adding support for template variables (e.g. static template data members).
      TemplateVariableDeclaration.setFunctionSource       ( "SOURCE_TEMPLATE_VARIABLE_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
+     TemplateVariableInstantiation.setFunctionSource     ( "SOURCE_TEMPLATE_VARIABLE_INSTANTIATION_STATEMENT", "../Grammar/Statement.code" );
 
   // DQ (10/14/2014): Adding template typedef for C++11 support.
      TemplateTypedefDeclaration.setFunctionSource       ( "SOURCE_TEMPLATE_TYPEDEF_DECLARATION_STATEMENT", "../Grammar/Statement.code" );

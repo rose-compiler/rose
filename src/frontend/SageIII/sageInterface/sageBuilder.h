@@ -1043,6 +1043,19 @@ ROSE_DLL_API SgTemplateVariableDeclaration* buildTemplateVariableDeclaration_nfi
 //! Build template variable declarations
 ROSE_DLL_API SgTemplateVariableDeclaration* buildTemplateVariableDeclaration(const SgName & name, SgType *type, SgInitializer *varInit, SgScopeStatement* scope);
 
+ROSE_DLL_API SgTemplateVariableInstantiation* buildTemplateVariableInstantiation_nfi(
+  const SgName & name, SgType *type, SgInitializer *varInit, SgScopeStatement* scope,
+  SgTemplateVariableDeclaration* tpl_decl,
+  SgTemplateArgumentPtrList & tpl_args
+);
+
+//! Build template variable declarations
+ROSE_DLL_API SgTemplateVariableInstantiation* buildTemplateVariableInstantiation(
+  const SgName & name, SgType *type, SgInitializer *varInit, SgScopeStatement* scope,
+  SgTemplateVariableDeclaration* tpl_decl,
+  SgTemplateArgumentPtrList &tpl_args
+);
+
 //!Build a typedef declaration, such as: typedef int myint;  typedef struct A {..} s_A;
 ROSE_DLL_API SgTypedefDeclaration*
 buildTypedefDeclaration(const std::string& name, SgType* base_type, SgScopeStatement* scope = NULL, bool has_defining_base=false);
@@ -1898,6 +1911,9 @@ namespace Rose {
 
       SgExpression * instantiateNonrealRefExps(SgExpression * expr, std::vector<SgTemplateParameter *> & tpl_params, std::vector<SgTemplateArgument *> & tpl_args);
       SgType * instantiateNonrealTypes(SgType * type, std::vector<SgTemplateParameter *> & tpl_params, std::vector<SgTemplateArgument *> & tpl_args);
+
+      SgExpression * instantiateNonrealRefExps(SgExpression * expr, std::vector<std::vector<SgTemplateParameter *>> & tpl_params, std::vector<std::vector<SgTemplateArgument *>> & tpl_args);
+      SgType * instantiateNonrealTypes(SgType * type, std::vector<std::vector<SgTemplateParameter *>> & tpl_params, std::vector<std::vector<SgTemplateArgument *>> & tpl_args);
 
 } } }
 

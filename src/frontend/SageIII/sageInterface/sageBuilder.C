@@ -795,23 +795,11 @@ SageBuilder::getTemplateArgumentList( SgDeclarationStatement* decl )
 
      switch(decl->variantT())
         {
-       // DQ (4/9/2018): Added support for namespace alias.
           case V_SgNamespaceAliasDeclarationStatement:
-       // DQ (8/17/2013): These cases do not use templates.
-       // This function has to handle these cases because it is called in a general context
-       // on many types of declarations as part of the name qualification support.
           case V_SgNamespaceDeclarationStatement:
           case V_SgEnumDeclaration:
           case V_SgVariableDeclaration:
           case V_SgTypedefDeclaration:
-             {
-               templateArgumentsList = NULL;
-               break;
-             }
-
-       // PC (10/11/13):  Added case of SgJavaPackageDeclaration
-       // DQ (8/11/2013): Added cases for SgFunctionDeclaration and SgMemberFunctionDeclaration
-       // I forget why we needed this case...
           case V_SgProcedureHeaderStatement:
           case V_SgJovialTableStatement:
           case V_SgJavaPackageDeclaration:
@@ -865,14 +853,18 @@ SageBuilder::getTemplateArgumentList( SgDeclarationStatement* decl )
                break;
              }
 
-       // DQ (11/10/2014): Added support for template typedef declarations.
+          case V_SgTemplateVariableInstantiation:
+             {
+               templateArgumentsList = &(isSgTemplateVariableInstantiation(decl)->get_templateArguments());
+               break;
+             }
+
           case V_SgTemplateTypedefDeclaration:
              {
                templateArgumentsList = &(isSgTemplateTypedefDeclaration(decl)->get_templateSpecializationArguments());
                break;
              }
 
-       // DQ (11/10/2014): Added support for template typedef declarations.
           case V_SgTemplateInstantiationTypedefDeclaration:
              {
                templateArgumentsList = &(isSgTemplateInstantiationTypedefDeclaration(decl)->get_templateArguments());
@@ -915,42 +907,22 @@ SageBuilder::getTemplateParameterList( SgDeclarationStatement* decl )
 
      switch(decl->variantT())
         {
-       // DQ (4/9/2018): Added support for namespace alias.
           case V_SgNamespaceAliasDeclarationStatement:
-       // DQ (8/17/2013): These cases do not use templates.
-       // This function has to handle these cases because it is called in a general context
-       // on many types of declarations as part of the name qualification support.
           case V_SgNamespaceDeclarationStatement:
           case V_SgEnumDeclaration:
           case V_SgVariableDeclaration:
           case V_SgTypedefDeclaration:
-             {
-               templateParameterList = NULL;
-               break;
-             }
-
-       // PC (10/11/13):  Added case of SgJavaPackageDeclaration
-       // DQ (8/12/2013): This function has to be supported when called using any kind of declaration (at least SgFunctionDeclaration and SgClassDeclaration).
-       // DQ (9/16/2012): I think it should be an error to call this function for a SgClassDeclaration.
           case V_SgProcedureHeaderStatement:
           case V_SgJovialTableStatement:
           case V_SgJavaPackageDeclaration:
           case V_SgFunctionDeclaration:
           case V_SgMemberFunctionDeclaration:
           case V_SgClassDeclaration:
-             {
-               templateParameterList = NULL;
-               break;
-             }
-
-       // DQ (11/10/2014): Added support for template typedef declarations.
           case V_SgTemplateInstantiationTypedefDeclaration:
-
-       // DQ (8/12/2013): This function has to be supported when called using any kind of declaration (at least SgFunctionDeclaration and SgClassDeclaration).
-       // DQ (9/16/2012): I think it should be an error to call this function for these types of declarations.
-          case V_SgTemplateInstantiationDecl:
           case V_SgTemplateInstantiationFunctionDecl:
           case V_SgTemplateInstantiationMemberFunctionDecl:
+          case V_SgTemplateVariableInstantiation:
+          case V_SgTemplateInstantiationDecl:
              {
                templateParameterList = NULL;
                break;
@@ -980,7 +952,6 @@ SageBuilder::getTemplateParameterList( SgDeclarationStatement* decl )
                break;
              }
 
-       // DQ (11/10/2014): Added support for template typedef declarations.
           case V_SgTemplateTypedefDeclaration:
              {
                templateParameterList = &(isSgTemplateTypedefDeclaration(decl)->get_templateParameters());
@@ -1256,51 +1227,49 @@ SageBuilder::setTemplateParametersInDeclaration( SgDeclarationStatement* decl, S
      testTemplateParameterParents(decl);
    }
 
+#define DEBUG__buildInitializedName 0
 // Only used to build parameter arguments for function ??
 // should be transparently generated for most variable declaration builder
 // deferred symbol insertion, scope setting , etc
 // do them when it is actually used with the  parameterList!!
-SgInitializedName *
-SageBuilder::buildInitializedName (const SgName & name, SgType* type, SgInitializer* init /*= NULL*/)
-{
-     ASSERT_not_null(type);
+SgInitializedName * SageBuilder::buildInitializedName ( const SgName & name, SgType* type, SgInitializer* init /* = NULL */) {
+#if DEBUG__buildInitializedName
+  std::cout << "SageBuilder::buildInitializedName" << std::endl;
+  std::cout << "  name = " << name << std::endl;
+#endif
+  ASSERT_not_null(type);
 
-     SgInitializedName* initializedName = new SgInitializedName(name,type,init);
-     ASSERT_not_null(initializedName);
+  SgInitializedName* initializedName = new SgInitializedName(name,type,init);
+  ROSE_ASSERT(initializedName);
 
-    setSourcePositionAtRootAndAllChildren(initializedName);
-    return initializedName;
+  setSourcePositionAtRootAndAllChildren(initializedName);
+  return initializedName;
 }
 
-SgInitializedName *
-SageBuilder::buildInitializedName ( const std::string & name, SgType* type)
-   {
-     SgName var_name(name);
-     return buildInitializedName(var_name,type);
-   }
+SgInitializedName * SageBuilder::buildInitializedName ( const std::string & name, SgType* type)  {
+  SgName var_name(name);
+  return buildInitializedName(var_name,type);
+}
 
-SgInitializedName *
-SageBuilder::buildInitializedName ( const char* name, SgType* type)
-   {
-  // DQ (3/20/2017): Call the version of the function that takes a string as part of migration away from this function that takes a const char*.
-  // This also provides a test of the string based version of this function (for code coverage).
-     string var_name(name);
-     return buildInitializedName(var_name,type);
-   }
+SgInitializedName * SageBuilder::buildInitializedName ( const char* name, SgType* type) {
+  string var_name(name);
+  return buildInitializedName(var_name,type);
+}
 
-SgInitializedName *
-SageBuilder::buildInitializedName_nfi ( const SgName & name, SgType* type, SgInitializer* init)
-   {
-     ASSERT_not_null(type);
+SgInitializedName * SageBuilder::buildInitializedName_nfi ( const SgName & name, SgType* type, SgInitializer* init) {
+#if DEBUG__buildInitializedName
+  std::cout << "SageBuilder::buildInitializedName_nfi" << std::endl;
+  std::cout << "  name = " << name << std::endl;
+#endif
+  ROSE_ASSERT(type != NULL);
 
-     SgInitializedName* initializedName = new SgInitializedName(name,type,init);
-     ASSERT_not_null(initializedName);
-     ASSERT_require(init == nullptr || init->get_parent() == initializedName);
+  SgInitializedName* initializedName = new SgInitializedName(name,type,init);
+  ROSE_ASSERT(initializedName != NULL);
 
-     setOneSourcePositionNull(initializedName);
+  setOneSourcePositionNull(initializedName);
 
-     return initializedName;
-   }
+  return initializedName;
+}
 
 //-----------------------------------------------
 // could have two declarations for a same variable
@@ -1766,10 +1735,6 @@ SageBuilder::buildTemplateVariableDeclaration (const SgName & name, SgType* type
   return res;
 }
 
-// DQ (12/6/2011): Adding support for template declarations into the AST.
-// SgTemplateDeclaration*
-// SgVariableDeclaration*
-// SgTemplateVariableDeclaration* buildTemplateVariableDeclaration_nfi(const SgName & name, SgType *type, SgInitializer *varInit, SgScopeStatement* scope);
 SgTemplateVariableDeclaration*
 SageBuilder::buildTemplateVariableDeclaration_nfi (const SgName & name, SgType* type, SgInitializer * varInit, SgScopeStatement* scope)
    {
@@ -1799,6 +1764,76 @@ SageBuilder::buildTemplateVariableDeclaration_nfi (const SgName & name, SgType* 
   // bug 119, SgVariableDefintion's File_info is needed for deep copy to work
   // AstQuery based setSourcePositionForTransformation() cannot access all child nodes
   // have to set SgVariableDefintion explicitly
+     SgVariableDefinition* variableDefinition_original = isSgVariableDefinition(initName->get_declptr());
+     ROSE_ASSERT(variableDefinition_original != NULL);
+     setOneSourcePositionNull(variableDefinition_original);
+
+     setOneSourcePositionNull(varDecl);
+
+     return varDecl;
+   }
+
+SgTemplateVariableInstantiation*
+SageBuilder::buildTemplateVariableInstantiation (
+  const SgName & name, SgType *type, SgInitializer *varInit, SgScopeStatement* scope,
+  SgTemplateVariableDeclaration* tpl_decl,
+  SgTemplateArgumentPtrList & tpl_args
+) {
+  SgTemplateVariableInstantiation* res = buildTemplateVariableInstantiation_nfi(name, type, varInit, scope, tpl_decl, tpl_args);
+  setOneSourcePositionForTransformation(res);
+  return res;
+}
+
+#define DEBUG__SageBuilder__buildTemplateVariableInstantiation_nfi 0
+
+SgTemplateVariableInstantiation*
+SageBuilder::buildTemplateVariableInstantiation_nfi (
+  const SgName & name, SgType *type, SgInitializer *varInit, SgScopeStatement* scope,
+  SgTemplateVariableDeclaration* tpl_decl,
+  SgTemplateArgumentPtrList & tpl_args
+) {
+#if DEBUG__SageBuilder__buildTemplateVariableInstantiation_nfi
+     std::cout << "SageBuilder::buildTemplateVariableInstantiation_nfi" << std::endl;
+     std::cout << "  name = " << name.getString() << std::endl;
+     std::cout << "  type = " << std::hex << type << " : " << ( type ? type->class_name() : "" ) << std::endl;
+     std::cout << "  scope = " << std::hex << scope << " : " << ( scope ? scope->class_name() : "" ) << std::endl;
+#endif
+     ROSE_ASSERT (type != NULL);
+
+     SgName nameWithoutTemplateArguments = name;
+     SgName nameWithTemplateArguments    = appendTemplateArgumentsToName(name,tpl_args);
+#if DEBUG__SageBuilder__buildTemplateVariableInstantiation_nfi
+     std::cout << "  nameWithoutTemplateArguments = " << nameWithoutTemplateArguments.getString() << std::endl;
+     std::cout << "  nameWithTemplateArguments    = " << nameWithTemplateArguments.getString() << std::endl;
+#endif
+
+     ROSE_ASSERT (scope != NULL);
+     ROSE_ASSERT(type != NULL);
+
+     SgTemplateVariableInstantiation * varDecl = new SgTemplateVariableInstantiation(name, type, varInit);
+     ROSE_ASSERT(varDecl);
+#if DEBUG__SageBuilder__buildTemplateVariableInstantiation_nfi
+     std::cout << "  varDecl = " << std::hex << varDecl << " : " << ( varDecl ? varDecl->class_name() : "" ) << std::endl;
+#endif
+
+     varDecl->set_firstNondefiningDeclaration(varDecl);
+     varDecl->get_templateArguments() = tpl_args;
+
+     SgInitializedName* variable = getFirstInitializedName(varDecl);
+     ROSE_ASSERT(variable != NULL);
+     setSourcePosition(variable);
+
+     if (name != "") {
+       fixVariableDeclaration(varDecl, scope);
+     }
+
+     SgInitializedName *initName = varDecl->get_decl_item (name);
+     ROSE_ASSERT(initName);
+     ROSE_ASSERT((initName->get_declptr()) != nullptr);
+#if DEBUG__SageBuilder__buildTemplateVariableInstantiation_nfi
+     std::cout << "  initName = " << std::hex << initName << " : " << ( initName ? initName->class_name() : "" ) << std::endl;
+#endif
+
      SgVariableDefinition* variableDefinition_original = isSgVariableDefinition(initName->get_declptr());
      ROSE_ASSERT(variableDefinition_original != NULL);
      setOneSourcePositionNull(variableDefinition_original);
@@ -19501,8 +19536,8 @@ std::string strTemplateArgument(SgExpression * e) {
 
 SgExpression * instantiateNonrealRefExps(
   SgExpression * expr,
-  std::vector<SgTemplateParameter *> & tpl_params,
-  std::vector<SgTemplateArgument *> & tpl_args
+  std::vector<std::vector<SgTemplateParameter *>> & tpl_params,
+  std::vector<std::vector<SgTemplateArgument *>> & tpl_args
 ) {
 #if DEBUG_Rose_Builder_Templates_instantiateNonrealRefExps
   std::cout << "Rose::Builder::Templates::instantiateNonrealRefExps" << std::endl;
@@ -19523,30 +19558,40 @@ SgExpression * instantiateNonrealRefExps(
     std::cout << "  iname->get_parent()    = " << std::hex << iname->get_parent() << " : " << ( iname->get_parent() ? iname->get_parent()->class_name() : "" ) << std::endl;
 #endif
 
+    unsigned depth = 0;
     unsigned pos = 0;
-    for (auto tpl_param: tpl_params) {
-      if (tpl_param->get_initializedName()) {
+    for (auto tpl_params_: tpl_params) {
+      pos = 0;
+      for (auto tpl_param: tpl_params_) {
+        if (tpl_param->get_initializedName()) {
 #if DEBUG_Rose_Builder_Templates_instantiateNonrealRefExps
-        std::cout << "  tpl_param->get_initializedName() = " << std::hex << tpl_param->get_initializedName() << std::endl;
-        std::cout << "  tpl_param->get_initializedName()->get_name() = " << tpl_param->get_initializedName()->get_name() << std::endl;
+          std::cout << "  tpl_param->get_initializedName() = " << std::hex << tpl_param->get_initializedName() << std::endl;
+          std::cout << "  tpl_param->get_initializedName()->get_name() = " << tpl_param->get_initializedName()->get_name() << std::endl;
 #endif
-        if (tpl_param->get_initializedName()->get_name() == iname->get_name()) {
-          iname = tpl_param->get_initializedName();
-          break;
+          if (tpl_param->get_initializedName()->get_name() == iname->get_name()) {
+            iname = tpl_param->get_initializedName();
+            break;
+          }
         }
+        pos++;
       }
-      pos++;
+      depth++;
     }
 
-    if (pos < tpl_params.size() && pos < tpl_args.size()) {
-      ROSE_ASSERT(tpl_args[pos]->get_expression());
-      return tpl_args[pos]->get_expression();
-    } else if (pos < tpl_params.size()) {
-      SgExpression * dft = tpl_params[pos]->get_defaultExpressionParameter();
+    if (depth < tpl_args.size() && pos < tpl_args[depth].size()) {
+      SgExpression * res = tpl_args[depth][pos]->get_expression();
+      ROSE_ASSERT(res);
+      return res;
+    } else if (depth < tpl_params.size() && pos < tpl_params[depth].size()) {
+      SgExpression * dft = tpl_params[depth][pos]->get_defaultExpressionParameter();
       ROSE_ASSERT(dft);
-      return instantiateNonrealRefExps(dft, tpl_params, tpl_args);
+      dft = instantiateNonrealRefExps(dft, tpl_params, tpl_args);
+      ROSE_ASSERT(dft);
+      return dft;
     }
-
+#if DEBUG_Rose_Builder_Templates_instantiateNonrealRefExps
+    std::cerr << "Error: In instantiateNonrealRefExps: this should not be reached!!!" << std::endl;
+#endif
     return vref;
   } else if (isSgValueExp(expr)) {
     return expr;
@@ -19562,8 +19607,14 @@ SgExpression * instantiateNonrealRefExps(
     std::cout << "  szo->get_operand_expr() = " << std::hex << szo->get_operand_expr() << " : " << ( szo->get_operand_expr() ? szo->get_operand_expr()->class_name() : "" ) << std::endl;
     std::cout << "  szo->get_operand_type() = " << std::hex << szo->get_operand_type() << " : " << ( szo->get_operand_type() ? szo->get_operand_type()->class_name() : "" ) << std::endl;
 #endif
-    szo->set_operand_expr(instantiateNonrealRefExps(szo->get_operand_expr(), tpl_params, tpl_args));
-    szo->set_operand_type(instantiateNonrealTypes(szo->get_operand_type(), tpl_params, tpl_args));
+    SgExpression * eres = instantiateNonrealRefExps(szo->get_operand_expr(), tpl_params, tpl_args);
+    ROSE_ASSERT(szo->get_operand_expr() == nullptr || eres != nullptr);
+    szo->set_operand_expr(eres);
+
+    SgType * tres = instantiateNonrealTypes(szo->get_operand_type(), tpl_params, tpl_args);
+    ROSE_ASSERT(szo->get_operand_type() == nullptr || tres != nullptr);
+    szo->set_operand_type(tres);
+
 #if DEBUG_Rose_Builder_Templates_instantiateNonrealRefExps
     std::cout << "  szo->get_operand_expr() = " << std::hex << szo->get_operand_expr() << " : " << ( szo->get_operand_expr() ? szo->get_operand_expr()->class_name() : "" ) << std::endl;
     std::cout << "  szo->get_operand_type() = " << std::hex << szo->get_operand_type() << " : " << ( szo->get_operand_type() ? szo->get_operand_type()->class_name() : "" ) << std::endl;
@@ -19589,12 +19640,22 @@ SgExpression * instantiateNonrealRefExps(
   }
 }
 
+SgExpression * instantiateNonrealRefExps(
+  SgExpression * expr,
+  std::vector<SgTemplateParameter *> & tpl_params,
+  std::vector<SgTemplateArgument *> & tpl_args
+) {
+  std::vector<std::vector<SgTemplateParameter *>> tpl_params_{tpl_params};
+  std::vector<std::vector<SgTemplateArgument *>> tpl_args_{tpl_args};
+  return instantiateNonrealRefExps(expr, tpl_params_, tpl_args_);
+}
+
 #define DEBUG_Rose_Builder_Templates_instantiateNonrealTypes 0
 
 SgType * instantiateNonrealTypes(
   SgType * type,
-  std::vector<SgTemplateParameter *> & tpl_params,
-  std::vector<SgTemplateArgument *> & tpl_args
+  std::vector<std::vector<SgTemplateParameter *>> & tpl_params,
+  std::vector<std::vector<SgTemplateArgument *>> & tpl_args
 ) {
 #if DEBUG_Rose_Builder_Templates_instantiateNonrealTypes
   std::cout << "Rose::Builder::Templates::instantiateNonrealTypes" << std::endl;
@@ -19608,6 +19669,8 @@ SgType * instantiateNonrealTypes(
     ROSE_ASSERT(nrdecl != nullptr);
 #if DEBUG_Rose_Builder_Templates_instantiateNonrealTypes
     std::cout << "  nrdecl  = " << std::hex << nrdecl << " : " << nrdecl->class_name() << std::endl;
+    std::cout << "    ->get_qualified_name() = " << nrdecl->get_qualified_name().getString() << std::endl;
+//  std::cout << "    ->unparseToString()    = " << nrdecl->unparseToString() << std::endl;
     std::cout << "    ->get_tpl_args()                    = " << std::dec << nrdecl->get_tpl_args().size() << std::endl;
     std::cout << "    ->get_tpl_params()                  = " << std::dec << nrdecl->get_tpl_params().size() << std::endl;
     std::cout << "    ->get_is_class_member()             = " << ( nrdecl->get_is_class_member() ? "true" : "false" ) << std::endl;
@@ -19686,27 +19749,34 @@ SgType * instantiateNonrealTypes(
         inst_decl->set_templateDeclaration(xtpldecl);
         ((SgTemplateInstantiationDecl *)(inst_decl->get_firstNondefiningDeclaration()))->set_templateDeclaration(xtpldecl);
 
+        for (auto inst_tpl_arg: inst_tpl_args) {
+          inst_tpl_arg->set_parent(inst_decl);
+        }
+
         xtpldecl->get_scope()->append_statement(inst_decl);
         return inst_decl->get_type();
       } else {
         ROSE_ABORT(); // TODO probably typedef
       }
     } else if (nrdecl->get_is_template_param()) {
+      auto depth = nrdecl->get_template_parameter_depth();
+      auto position = nrdecl->get_template_parameter_position();
 #if DEBUG_Rose_Builder_Templates_instantiateNonrealTypes
-      std::cout << "    ->get_template_parameter_position() = " << std::dec << nrdecl->get_template_parameter_position() << std::endl;
-      std::cout << "    ->get_template_parameter_depth() = " << std::dec << nrdecl->get_template_parameter_depth() << std::endl;
+      std::cout << "    ->get_template_parameter_position() = " << std::dec << position << std::endl;
+      std::cout << "    ->get_template_parameter_depth() = " << std::dec << depth << std::endl;
 #endif
-      ROSE_ASSERT(nrdecl->get_template_parameter_position() > 0);
-      if (nrdecl->get_template_parameter_position() <= tpl_args.size()) {
-        SgType * res = tpl_args[nrdecl->get_template_parameter_position()-1]->get_type();
+      ROSE_ASSERT(depth > 0);
+      ROSE_ASSERT(position > 0);
+      if (depth <= tpl_args.size() && position <= tpl_args[depth-1].size()) {
+        SgType * res = tpl_args[depth-1][position-1]->get_type();
 #if DEBUG_Rose_Builder_Templates_instantiateNonrealTypes
-        std::cout << "  tpl_args[nrdecl->get_template_parameter_position()-1]->get_type() = " << std::dec << res << std::endl;
+        std::cout << "  tpl_args[" << std::dec << depth-1 << "][" << std::dec << position-1 << "]->get_type() = " << std::dec << res << std::endl;
 #endif
         return res;
-      } else if (nrdecl->get_template_parameter_position() <= tpl_params.size()) {
-        SgType * dft_tpl_arg = tpl_params[nrdecl->get_template_parameter_position()-1]->get_defaultTypeParameter();
+      } else if (depth <= tpl_params.size() && position <= tpl_params[depth-1].size()) {
+        SgType * dft_tpl_arg = tpl_params[depth-1][position-1]->get_defaultTypeParameter();
 #if DEBUG_Rose_Builder_Templates_instantiateNonrealTypes
-        std::cout << "  dft_tpl_arg = " << std::dec << dft_tpl_arg << std::endl;
+        std::cout << "  tpl_params[" << std::dec << depth-1 << "][" << std::dec << position-1 << "]->get_type() = " << std::dec << dft_tpl_arg << std::endl;
 #endif
         dft_tpl_arg = instantiateNonrealTypes(dft_tpl_arg, tpl_params, tpl_args);
 #if DEBUG_Rose_Builder_Templates_instantiateNonrealTypes
@@ -19716,14 +19786,38 @@ SgType * instantiateNonrealTypes(
       } else {
         return nullptr;
       }
+    } else if (nrdecl->get_is_class_member()) {
+      return nullptr; // TODO case such as "template <unsigned depth=0> static constexpr typename range_at_depth_t<depth>::Base ub;"
+    } else {
+      ROSE_ABORT();
     }
-  } else if (isSgTypedefType(type) || isSgTypeUnsignedLong(type) || isSgTypeUnsignedInt(type)) {
+  } else if (isSgTypeUnsignedLong(type) || isSgTypeUnsignedInt(type)) {
     return type;
+  } else if (isSgTypedefType(type)) {
+    return type;
+  } else if (isSgModifierType(type)) {
+    SgModifierType * mtype = (SgModifierType *)type;
+    SgType * btype = mtype->get_base_type();
+    ROSE_ASSERT(btype != nullptr);
+    SgModifierType * rtype = SageBuilder::buildModifierType(btype);
+    ROSE_ASSERT(rtype != nullptr);
+    rtype->get_typeModifier() = mtype->get_typeModifier();
+    return rtype;
   } else {
     std::cerr << "!!! type = " << std::hex << type << " : " << ( type ? type->class_name() : "" ) << std::endl;
-    ROSE_ABORT(); // TODO maybe pointer/reference/const type
+    ROSE_ABORT(); // TODO maybe pointer/reference
   }
   return nullptr;
+}
+
+SgType * instantiateNonrealTypes(
+  SgType * type,
+  std::vector<SgTemplateParameter *> & tpl_params,
+  std::vector<SgTemplateArgument *> & tpl_args
+) {
+  std::vector<std::vector<SgTemplateParameter *>> tpl_params_{tpl_params};
+  std::vector<std::vector<SgTemplateArgument *>> tpl_args_{tpl_args};
+  return instantiateNonrealTypes(type, tpl_params_, tpl_args_);
 }
 
 } } }

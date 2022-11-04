@@ -882,92 +882,17 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
                     break;
                   }
 
-            // case T_POINTER:            unparsePointerType(type, info);          break;
-               case T_POINTER:
-                  {
-#if 0
-                    printf ("Calling unparsePointerType(%p) \n",type);
-#endif
-                    unparsePointerType(type, info);
-#if 0
-                    printf ("DONE: Calling unparsePointerType(%p) \n",type);
-#endif
-                    break;
-                  }
-
+               case T_POINTER:            unparsePointerType(type, info);          break;
                case T_MEMBER_POINTER:     unparseMemberPointerType(type, info);    break;
                case T_REFERENCE:          unparseReferenceType(type, info);        break;
 
                case T_RVALUE_REFERENCE:   unparseRvalueReferenceType(type, info);  break;
 
-            // case T_NAME:               unparseNameType(type, info);             break;
-
-            // DQ (6/18/2013): Test to see if this is the correct handling of test2013_214.C.
-#if 1
-            // DQ (6/18/2013): Original version of code.
                case T_CLASS:              unparseClassType(type, info);            break;
-#else
-               case T_CLASS:
-                  {
-                    if ( ( info.isWithType() && info.SkipBaseType() ) || info.isTypeSecondPart() )
-                       {
-                      /* do nothing */
-#if 0
-                         printf ("In unparseType(): Skipping output of SgClassType \n");
-#endif
-#if 0
-                         curprint ("/* In unparseType(): Skipping output of SgClassType */ \n");
-#endif
-                       }
-
-#error "DEAD CODE!"
-
-                      else
-                       {
-                         unparseClassType(type, info);
-                       }
-                    break;
-                  }
-#endif
                case T_ENUM:               unparseEnumType(type, info);             break;
 
-            // DQ (6/18/2013): Test to see if this is the correct handling of test2013_214.C.
-#if 1
-            // DQ (6/18/2013): Original version of code.
                case T_TYPEDEF:            unparseTypedefType(type, info);          break;
-#else
-               case T_TYPEDEF:
-                  {
-                 // if ( ( info.isWithType() && info.SkipBaseType() ) || info.isTypeSecondPart() )
-                    if ( info.SkipBaseType() == true )
-#error "DEAD CODE!"
-
-                       {
-                      /* do nothing */
-#if 0
-                         printf ("In unparseType(): Skipping output of SgTypedefType \n");
-#endif
-#if 0
-                         curprint ("/* In unparseType(): Skipping output of SgTypedefType */ \n");
-#endif
-                       }
-                      else
-                       {
-#if 0
-                         printf ("In unparseType(): Calling unparseTypedefType \n");
-                         curprint ("/* In unparseType(): Calling unparseTypedefType */ \n");
-#endif
-                         unparseTypedefType(type, info);
-                       }
-#error "DEAD CODE!"
-
-                    break;
-                  }
-#endif
                case T_MODIFIER:           unparseModifierType(type, info);         break;
-
-            // DQ (5/3/2013): This approach is no longer supported, as I recall.
-            // case T_QUALIFIED_NAME:     unparseQualifiedNameType(type, info);    break;
 
                case T_PARTIAL_FUNCTION:
                case T_FUNCTION:           unparseFunctionType(type, info);         break;
@@ -975,25 +900,8 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
                case T_MEMBERFUNCTION:     unparseMemberFunctionType(type, info);   break;
                case T_ARRAY:              unparseArrayType(type, info);            break;
 
-            // DQ (11/20/2011): Adding support for template declarations within the AST.
-               case T_TEMPLATE:
-                  {
-#if 0
-                    printf ("Calling unparseTemplateType(%p) \n",type);
-#endif
-                    unparseTemplateType(type, info);
-#if 0
-                    printf ("DONE: Calling unparseTemplateType(%p) \n",type);
-#endif
-                    break;
-                  }
-
-            // TV (09/06/2018): Adding support for auto typed variable declaration.
-               case T_AUTO:
-                  {
-                    unparseAutoType(type, info);
-                    break;
-                  }
+               case T_TEMPLATE:           unparseTemplateType(type, info);         break;
+               case T_AUTO:               unparseAutoType(type, info);             break;
 
              // DQ (3/10/2014): Added so that we could get past this call in the dot file generator (fix later).
              // SgJavaWildcardType

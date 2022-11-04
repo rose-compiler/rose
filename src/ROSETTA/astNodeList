@@ -1059,3 +1059,4 @@ SgAsmAarch64PState
 SgRangeType
 SgAsmCilExceptionData
 SgAsmCilMethodData
+SgTemplateVariableInstantiation

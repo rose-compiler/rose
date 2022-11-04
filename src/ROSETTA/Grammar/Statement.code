@@ -3134,21 +3134,18 @@ HEADER_TEMPLATE_MEMBER_FUNCTION_INSTANTIATION_DECLARATION_STATEMENT_END
 
 
 HEADER_TEMPLATE_VARIABLE_DECLARATION_STATEMENT_START
-
-          typedef SgDeclarationStatement instantiation_kind_t;
-
-       // DQ (12/28/2011): We need a constructor similar to the base class.
+          typedef SgTemplateVariableInstantiation instantiation_kind_t;
           $CLASSNAME ( const SgName& var_name, SgType *type, SgInitializer *initializer );
-
-// DQ (10/5/2014): This is now wrong because we now include rose_config.h before processing the
-// files generated from this file.  This change was required to support the ATerm libraries.
-// BH (11/13/2015) on windows this caused incosistent defines of this
-// so that it was not defined in the .h but used in the cxx file
      private:
-       // DQ (12/29/2011): This is added to support backward compatability.
           SgDeclarationStatement *compute_baseTypeDefiningDeclaration() const;
-
 HEADER_TEMPLATE_VARIABLE_DECLARATION_STATEMENT_END
+
+HEADER_TEMPLATE_VARIABLE_INSTANTIATION_STATEMENT_START
+          typedef SgTemplateVariableDeclaration template_kind_t;
+          $CLASSNAME ( const SgName& var_name, SgType *type, SgInitializer *initializer );
+     private:
+          SgDeclarationStatement *compute_baseTypeDefiningDeclaration() const;
+HEADER_TEMPLATE_VARIABLE_INSTANTIATION_STATEMENT_END
 
 
 HEADER_TEMPLATE_TYPEDEF_DECLARATION_STATEMENT_START
@@ -6137,11 +6134,21 @@ SgScopeStatement::lookup_alias_symbol(const SgName& n, SgSymbol* sp) const
      return symbol;
    }
 
+#define DEBUG__SgScopeStatement__find_symbol_from_declaration 0
+
 template<class T>
 SgSymbol * SgScopeStatement::find_symbol_from_declaration(const T* node) const {
+#if DEBUG__SgScopeStatement__find_symbol_from_declaration
+  printf("In SgScopeStatement::find_symbol_from_declaration():\n");
+  printf("  this = %p : %s\n", this, this->class_name().c_str());
+  printf("  node = %p : %s\n", node, node->class_name().c_str());
+#endif
   assert (p_symbol_table != NULL);
 
   SgSymbol * symbol = p_symbol_table->find(node);
+#if DEBUG__SgScopeStatement__find_symbol_from_declaration
+  printf("  symbol = %p : %s\n", symbol, symbol ? symbol->class_name().c_str() : "");
+#endif
 
   const SgNamespaceDefinitionStatement * namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(this);
   if (symbol == NULL && namespaceDefinitionStatement != NULL) {
@@ -6149,6 +6156,9 @@ SgSymbol * SgScopeStatement::find_symbol_from_declaration(const T* node) const {
     ROSE_ASSERT(globalNamespaceDefinitionStatement != nullptr);
     symbol = globalNamespaceDefinitionStatement->get_symbol_table()->find(node);
   }
+#if DEBUG__SgScopeStatement__find_symbol_from_declaration
+  printf("  symbol = %p : %s\n", symbol, symbol ? symbol->class_name().c_str() : "");
+#endif
 
   const SgGlobal * global_scope = isSgGlobal(this);
   if (symbol == NULL && global_scope != NULL) {
@@ -6159,12 +6169,18 @@ SgSymbol * SgScopeStatement::find_symbol_from_declaration(const T* node) const {
       symbol = globalScopeAcrossFiles->get_symbol_table()->find(node);
     }
   }
+#if DEBUG__SgScopeStatement__find_symbol_from_declaration
+  printf("  symbol = %p : %s\n", symbol, symbol ? symbol->class_name().c_str() : "");
+#endif
 
   SgAliasSymbol * alias = isSgAliasSymbol(symbol);
   if (alias != NULL) {
     symbol = alias->get_alias();
     ROSE_ASSERT(!isSgAliasSymbol(symbol));
   }
+#if DEBUG__SgScopeStatement__find_symbol_from_declaration
+  printf("  symbol = %p : %s\n", symbol, symbol ? symbol->class_name().c_str() : "");
+#endif
 
   return symbol;
 }
@@ -9982,9 +9998,16 @@ SgDeclarationStatement::get_symbol_from_symbol_table() const
      return NULL;
    }
 
+#define DEBUG__SgDeclarationStatement__search_for_symbol_from_symbol_table 0
+
 SgSymbol*
 SgDeclarationStatement::search_for_symbol_from_symbol_table() const
    {
+
+#if DEBUG__SgDeclarationStatement__search_for_symbol_from_symbol_table
+     printf("In search_for_symbol_from_symbol_table():\n");
+     printf("  this = %p : $s:\n", this, this->class_name().c_str());
+#endif
      SgDeclarationStatement* declaration = get_declaration_associated_with_symbol();
      if (declaration == NULL)
         {
@@ -9997,12 +10020,16 @@ SgDeclarationStatement::search_for_symbol_from_symbol_table() const
      return symbol;
    }
 
-#define DEBUG_SgDeclarationStatement_get_declaration_associated_with_symbol 1
+#define DEBUG_SgDeclarationStatement_get_declaration_associated_with_symbol 0
 
 // DQ (7/4/2007): Search for the declaration that would identify the associated symbol
 SgDeclarationStatement*
 SgDeclarationStatement::get_declaration_associated_with_symbol() const
    {
+#if DEBUG__SgDeclarationStatement__search_for_symbol_from_symbol_table
+     printf("In get_declaration_associated_with_symbol():\n");
+     printf("  this = %p : $s:\n", this, this->class_name().c_str());
+#endif
      ROSE_ASSERT(this != NULL);
 
      // First try: the 1st non-defining declaration
@@ -13253,12 +13280,9 @@ SgVariableDeclaration::initializeData(Sg_File_Info *info, const SgName& var_name
    {
      ROSE_ASSERT (this != NULL);
 
-  // DQ (7/20/2006): Suggested by Peter to so that the initializer will be used.
-  // DQ (6/1/2004): Changed list to contain pointers to SgInitializedName elements
-  // SgInitializedName c_item(var_name, type, 0, this);
-  // SgInitializedName* c_item = new SgInitializedName(var_name, type, NULL, this);
-     SgInitializedName* c_item = new SgInitializedName(var_name, type, initializer, this);
+     SgInitializedName* c_item = SageBuilder::buildInitializedName_nfi(var_name, type, initializer);
      ROSE_ASSERT (c_item != NULL);
+     c_item->set_parent(this);
 
      initializeData (info, c_item);
    }
@@ -17965,6 +17989,30 @@ SgTemplateVariableDeclaration::compute_baseTypeDefiningDeclaration() const
 SOURCE_TEMPLATE_VARIABLE_DECLARATION_STATEMENT_END
 
 
+SOURCE_TEMPLATE_VARIABLE_INSTANTIATION_STATEMENT_START
+
+void SgTemplateVariableInstantiation::post_construction_initialization() {}
+
+
+SgTemplateVariableInstantiation::SgTemplateVariableInstantiation(
+  const SgName& var_name, SgType *type, SgInitializer *initializer
+) :
+  SgVariableDeclaration(var_name,type,initializer),
+  p_templateName(""),
+  p_templateHeader(""),
+  p_templateDeclaration(nullptr),
+  p_templateArguments()
+{}
+
+SgDeclarationStatement *
+SgTemplateVariableInstantiation::compute_baseTypeDefiningDeclaration() const
+   {
+     return SgVariableDeclaration::compute_baseTypeDefiningDeclaration();
+   }
+
+SOURCE_TEMPLATE_VARIABLE_INSTANTIATION_STATEMENT_END
+
+
 SOURCE_TEMPLATE_TYPEDEF_DECLARATION_STATEMENT_START
 
 #if 0
@@ -18129,21 +18177,7 @@ SgTemplateInstantiationTypedefDeclaration::post_construction_initialization()
 void
 SgTemplateInstantiationTypedefDeclaration::resetTemplateName()
    {
-  // DQ (2/26/2018): Added support for resetting the template name.
-
-  // local version of function to support generation of template names
-
-#if 0
-     printf ("In SgTemplateInstantiationTypedefDeclaration::resetTemplateName(): p_name = %s \n",p_name.str());
-#endif
-
      resetTemplateNameSupport (p_nameResetFromMangledForm,p_name);
-
-#if 0
-     printf ("Leaving SgTemplateInstantiationTypedefDeclaration::resetTemplateName(): p_name = %s p_templateName = %s \n",p_name.str(),p_templateName.str());
-#endif
-
-  // ROSE_ASSERT(p_templateName != "");
    }
 
 // DQ (2/28/2018): Added support for getting the symbol from the declaration.

@@ -1692,6 +1692,7 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
 
        // DQ (2/10/2012): Added support for template variable declarations (using base class support).
           case V_SgTemplateVariableDeclaration:
+          case V_SgTemplateVariableInstantiation:
 
        // DQ (3/8/2006): Implemented case for variable declaration (forgot this case)
           case V_SgVariableDeclaration:
@@ -15177,17 +15178,22 @@ void SageInterface::fixNamespaceDeclaration(SgNamespaceDeclarationStatement* str
         }
    }
 
+#define DEBUG__SageInterface__fixVariableDeclaration 0
+
 void SageInterface::fixVariableDeclaration(SgVariableDeclaration* varDecl, SgScopeStatement* scope)
    {
      ROSE_ASSERT(varDecl != NULL);
      ROSE_ASSERT(scope   != NULL);
 
      SgInitializedNamePtrList namelist = varDecl->get_variables();
+     SgTemplateVariableInstantiation * tplinst = isSgTemplateVariableInstantiation(varDecl);
 
   // printf ("In SageInterface::fixVariableDeclaration(): Is this a recursive call! \n");
 
-#if 0
-     printf ("In SageInterface::fixVariableDeclaration(): varDecl = %p scope = %p = %s \n",varDecl,scope,scope->class_name().c_str());
+#if DEBUG__SageInterface__fixVariableDeclaration
+     printf ("In SageInterface::fixVariableDeclaration():\n");
+     printf ("  varDecl = %p scope = %p = %s \n", varDecl);
+     printf ("  scope = %p : %s \n", scope, scope->class_name().c_str());
 #endif
 
      ROSE_ASSERT(namelist.size() > 0);
@@ -15197,86 +15203,62 @@ void SageInterface::fixVariableDeclaration(SgVariableDeclaration* varDecl, SgSco
         {
           SgInitializedName *initName = *i;
           ROSE_ASSERT(initName != NULL);
+#if DEBUG__SageInterface__fixVariableDeclaration
+          printf ("  initName = %p\n", initName);
+          printf ("  initName->get_scope() = %p : %s\n", initName->get_scope(), initName->get_scope() ? initName->get_scope()->class_name().c_str() : "");
+#endif
 
           SgName name = initName->get_name();
-#if 0
-          printf ("  -- initName = %p : %s\n", initName, name.str());
-          printf ("  -- initName->get_scope() = %p (%s)\n", initName->get_scope(), initName->get_scope() ? initName->get_scope()->class_name().c_str() : "");
+#if DEBUG__SageInterface__fixVariableDeclaration
+          printf ("  name = %s\n", name.str());
+#endif
+          if (tplinst) {
+            name = appendTemplateArgumentsToName(name, tplinst->get_templateArguments());
+          }
+#if DEBUG__SageInterface__fixVariableDeclaration
+          printf ("  name = %s\n", name.str());
 #endif
 
        // DQ (11/19/2011): When used with C++, the variable may already have an associated scope
        // and be using name qualification, so might not be associated with the current scope.
           SgScopeStatement* requiredScope = scope;
           SgScopeStatement* preAssociatedScope = initName->get_scope();
-       // printf ("In SageInterface::fixVariableDeclaration() preAssociatedScope = %p \n",preAssociatedScope);
-
-          if (preAssociatedScope != NULL)
-             {
-#if 0
-               printf ("In SageInterface::fixVariableDeclaration(): Note that this variable already has an associated scope! preAssociatedScope = %p = %s (but will be reset below) \n",preAssociatedScope,preAssociatedScope->class_name().c_str());
-#endif
-            // ROSE_ASSERT(preAssociatedScope == scope);
-               requiredScope = preAssociatedScope;
-             }
+          if (preAssociatedScope != NULL) {
+            requiredScope = preAssociatedScope;
+          }
 
        // DQ (11/19/2011): C++ can have a different scope than that of the current scope.
-       // initName->set_scope(scope);
           initName->set_scope(requiredScope);
-
-       // optional?
-       // DQ (7/9/2012): Don't set this since it will be set later (see test2012_107.C) (LATER) Putting this back (mark declarations to not be output as compiler generated -- and not to be output).
-       // DQ (7/12/2012): This is not correct for C++, so don't set it here (unless we use the current scope instead of scope).
-       // Yes, let's set it to the current top of the scope stack.  This might be a problem if the scope stack is not being used...
-       // varDecl->set_parent(scope);
-        if (topScopeStack() != NULL)
-        {
-          varDecl->set_parent(topScopeStack());
-          ROSE_ASSERT(varDecl->get_parent() != NULL);
-        }
-
-       // DQ (11/19/2011): C++ can have a different scope than that of the current scope.
-       // symbol table
-       // ROSE_ASSERT(scope != NULL);
-       // SgVariableSymbol* varSymbol = scope->lookup_variable_symbol(name);
+          if (topScopeStack() != NULL) {
+            varDecl->set_parent(topScopeStack());
+            ROSE_ASSERT(varDecl->get_parent() != NULL);
+          }
           ROSE_ASSERT(requiredScope != NULL);
           SgVariableSymbol* varSymbol = requiredScope->lookup_variable_symbol(name);
-#if 0
-          printf ("  -- varSymbol = %p (%s)\n", varSymbol, varSymbol ? varSymbol->class_name().c_str() : "");
+#if DEBUG__SageInterface__fixVariableDeclaration
+          printf ("  varSymbol = %p (%s)\n", varSymbol, varSymbol ? varSymbol->class_name().c_str() : "");
 #endif
-
-          if (varSymbol == NULL)
-             {
-            // DQ (12/4/2011): This code is modified to try to only insert the symbol into the correct scope.  It used to
-            // just insert the symbol into whatever scope structureally held the declaration (not good enough for C++).
-               if (scope == initName->get_scope())
-                  {
-                    if (isSgTemplateVariableDeclaration(varDecl)) {
-                      varSymbol = new SgTemplateVariableSymbol(initName);
-                    } else {
-                      varSymbol = new SgVariableSymbol(initName);
-                    }
-                    ROSE_ASSERT(varSymbol);
-
-                 // DQ (5/16/2013): We now want to use the SgScopeStatement::insert_symbol() functions since we put
-                 // the complexity of handling namespaces into the implementation of that function.
-                    scope->insert_symbol(name, varSymbol);
-                  }
-             }
-            else
-             {
-            // TODO consider prepend() and insert(), prev_decl_time is position dependent.
-            // cout<<"sageInterface.C:5130 debug: found a previous var declaration!!...."<<endl;
-               SgInitializedName* prev_decl = varSymbol->get_declaration();
-               ROSE_ASSERT(prev_decl);
-
-            // DQ (11/19/2011): Don't let prev_decl_item point be a self reference.
-            // initName->set_prev_decl_item(prev_decl);
-               if (initName != prev_decl)
-                    initName->set_prev_decl_item(prev_decl);
-
-               ROSE_ASSERT(initName->get_prev_decl_item() != initName);
-
-             } //end if
+          if (varSymbol == NULL) {
+            if (scope == initName->get_scope()) {
+              if (isSgTemplateVariableDeclaration(varDecl)) {
+                varSymbol = new SgTemplateVariableSymbol(initName);
+              } else {
+                varSymbol = new SgVariableSymbol(initName);
+              }
+              ROSE_ASSERT(varSymbol);
+              scope->insert_symbol(name, varSymbol);
+            }
+          } else {
+            SgInitializedName* prev_decl = varSymbol->get_declaration();
+            ROSE_ASSERT(prev_decl);
+            if (initName != prev_decl) {
+              initName->set_prev_decl_item(prev_decl);
+            }
+            ROSE_ASSERT(initName->get_prev_decl_item() != initName);
+          }
+#if DEBUG__SageInterface__fixVariableDeclaration
+          printf ("  varSymbol = %p (%s)\n", varSymbol, varSymbol ? varSymbol->class_name().c_str() : "");
+#endif
         } //end for
 
   // Liao 12/8/2010

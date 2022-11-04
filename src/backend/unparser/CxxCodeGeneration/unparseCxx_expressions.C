@@ -1988,124 +1988,53 @@ Unparse_ExprStmt::unparseBinaryOperator(SgExpression* expr, const char* op, SgUn
 void
 Unparse_ExprStmt::unparseAssnExpr(SgExpression*, SgUnparse_Info&) {}
 
+#define DEBUG__Unparse_ExprStmt__unparseVarRef 0
 
 void
 Unparse_ExprStmt::unparseVarRef(SgExpression* expr, SgUnparse_Info&)
    {
+#if DEBUG__Unparse_ExprStmt__unparseVarRef
+     printf ("In Unparse_ExprStmt::unparseVarRef():\n");
+#endif
      SgVarRefExp* var_ref = isSgVarRefExp(expr);
      ASSERT_not_null(var_ref);
-
-#if 0
-     printf ("In Unparse_ExprStmt::unparseVarRef() \n");
-     curprint(" /* In Unparse_ExprStmt::unparseVarRef() */ \n ");
-#endif
-
-#if 0
-     var_ref->get_startOfConstruct()->display("In Unparse_ExprStmt::unparseVarRef()");
-#endif
-
-  // todo: when get_parent() works for this class we can
-  // get back to the lhs of the SgArrowExp or SgDotExp that
-  // may be a parent of this expression.  This will let
-  // us avoid outputting the class qualifier when its not needed.
-
-  // For now we always output the class qualifier.
-
-     if (var_ref->get_symbol() == NULL)
-        {
-          printf ("Error in unparseVarRef() at line %d column %d \n",var_ref->get_file_info()->get_line(),var_ref->get_file_info()->get_col());
-        }
      ASSERT_not_null(var_ref->get_symbol());
 
-     SgInitializedName* theName = var_ref->get_symbol()->get_declaration();
-     ASSERT_not_null(theName);
+     SgInitializedName* iname = var_ref->get_symbol()->get_declaration();
+     ASSERT_not_null(iname);
 
-#if 0
-     printf ("In Unparse_ExprStmt::unparseVarRef(): SgInitializedName* theName = %p = %s \n",theName,theName->get_name().str());
-     printf ("In Unparse_ExprStmt::unparseVarRef(): SgInitializedName scope = %p = %s \n",theName->get_scope(),theName->get_scope()->class_name().c_str());
-     printf ("In Unparse_ExprStmt::unparseVarRef(): SgInitializedName scope = %p qualified name = %s \n",theName->get_scope(),theName->get_scope()->get_qualified_name().str());
+     std:string name = iname->get_name().getString();
+     bool isAnonymousName = (name.substr(0,14) == "__anonymous_0x");
+
+#if DEBUG__Unparse_ExprStmt__unparseVarRef
+     printf ("  iname = %p : %s\n", iname,iname->get_name().str());
+     printf ("    ->get_parent() = %p : %s\n", iname->get_parent(), iname->get_parent()->class_name().c_str());
+     printf ("    ->get_scope() = %p : %s\n", iname->get_scope(), iname->get_scope()->class_name().c_str());
+     printf ("      ->get_qualified_name() = %s\n", iname->get_scope()->get_qualified_name().str());
 #endif
 
-#if 0
-  // DQ (2/8/2010): Debugging code.
-     var_ref->get_startOfConstruct()->display("Inside of unparseVarRef");
+     if (name == "__assert_fail") {
+       curprint ("__PRETTY_FUNCTION__");
+     } else if (!isAnonymousName) {
+       SgName nameQualifier = var_ref->get_qualified_name_prefix();
+#if DEBUG__Unparse_ExprStmt__unparseVarRef
+       printf ("  nameQualifier = %s\n", nameQualifier.str());
 #endif
+       curprint(nameQualifier.str());
+       curprint(name.c_str());
+     }
 
-  // DQ (1/7/2007): Much simpler version of code!
-  // SgScopeStatement* declarationScope = theName->get_scope();
-  // ASSERT_not_null(declarationScope);
-  // SgUnparse_Info ninfo(info);
-
-  // DQ (2/10/2010): Don't search for the name "__assert_fail", this is part of macro expansion of the assert macro and will not be found.
-  // SgName nameQualifier = unp->u_name->generateNameQualifier(theName,info);
-     SgName nameQualifier;
-     if (theName->get_name() != "__assert_fail")
-        {
-       // nameQualifier = unp->u_name->generateNameQualifier(theName,info);
-
-       // DQ (5/30/2011): Newest refactored support for name qualification.
-          nameQualifier = var_ref->get_qualified_name_prefix();
-
-#if 0
-          printf ("In Unparse_ExprStmt::unparseVarRef(): nameQualifier = %s \n",nameQualifier.str());
-          curprint(" /* In Unparse_ExprStmt::unparseVarRef() */ \n ");
+     SgTemplateVariableInstantiation * tplvar_inst = isSgTemplateVariableInstantiation(iname->get_parent());
+#if DEBUG__Unparse_ExprStmt__unparseVarRef
+     printf ("  tplvar_inst = %p = %s \n", tplvar_inst, tplvar_inst ? tplvar_inst->class_name().c_str() : "");
 #endif
-        }
-
-  // DQ (1/22/2014): Adding support for generated names used in un-named variables.
-     bool isAnonymousName = (string(var_ref->get_symbol()->get_name()).substr(0,14) == "__anonymous_0x");
-#if 0
-     printf ("In unparseVarRef(): isAnonymousName = %s \n",isAnonymousName ? "true" : "false");
+     if (tplvar_inst) {
+       SgTemplateArgumentPtrList & tpl_args = tplvar_inst->get_templateArguments();
+#if DEBUG__Unparse_ExprStmt__unparseVarRef
+       printf ("  tpl_args.size() = %d\n", tpl_args.size());
 #endif
-
-#if 0
-     printf ("In Unparse_ExprStmt::unparseVarRef(): output nameQualifier = %s \n",nameQualifier.str());
-     curprint(" /* In Unparse_ExprStmt::unparseVarRef(): output nameQualifier */ \n ");
-#endif
-
-#if 0
-  // DQ (7/31/2012): I don't think we use the name "__unnamed_class" any more (so this maybe be always true).
-  // DQ (11/9/2007): Need to ignore these sorts of generated names
-     if (nameQualifier.getString().find("__unnamed_class") == string::npos)
-        {
-#if 0
-          printf ("In Unparse_ExprStmt::unparseVarRef(): nameQualifier = %s \n",nameQualifier.str());
-#endif
-          curprint(nameQualifier.str());
-        }
-#else
-  // DQ (8/19/2014): This causes output such as: "XXX::isValidDomainSize(domain_extents . Extents_s::imin);"
-  // with the function parameter's SgVarRefExp qualified un-nessesarily (see test2014_116.C).
-     curprint(nameQualifier.str());
-#endif
-
-#if 0
-     printf ("In Unparse_ExprStmt::unparseVarRef(): DONE output nameQualifier = %s \n",nameQualifier.str());
-     curprint(" /* In Unparse_ExprStmt::unparseVarRef(): DONE output nameQualifier */ \n ");
-#endif
-
-  // DQ (2/10/2010): This is a strange problem demonstrated only by test2010_07.C.
-  // curprint (  var_ref->get_symbol()->get_name().str());
-     if (theName->get_name() == "__assert_fail")
-        {
-       // DQ (2/10/2010): For some reason, "__PRETTY_FUNCTION__" is replaced with "__assert_fail" by EDG?
-       // But only when the assert comes from a struct (see test2010_07.C).
-       // printf ("Warning: work around substitution of __PRETTY_FUNCTION__ for __assert_fail \n");
-          curprint ("__PRETTY_FUNCTION__");
-        }
-       else
-        {
-       // curprint (var_ref->get_symbol()->get_name().str());
-          if (isAnonymousName == false)
-             {
-               curprint (var_ref->get_symbol()->get_name().str());
-             }
-        }
-
-#if 0
-     printf ("Leaving Unparse_ExprStmt::unparseVarRef() \n");
-     curprint(" /* Leaving Unparse_ExprStmt::unparseVarRef() */ \n ");
-#endif
+       unparseTemplateArgumentList(tpl_args, info);
+     }
    }
 
 #define DEBUG_unparseCompoundLiteral 0

@@ -5356,6 +5356,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
 
                  // DQ (3/13/2012): Added support for SgTemplateVariableDeclaration (I think it can just leverage the SgVariableDeclaration case).
                     case V_SgTemplateVariableDeclaration:
+                    case V_SgTemplateVariableInstantiation:
 
                  // DQ (7/22/2017): We will be added this support shortly.
                  // case V_SgTemplateInstantiationVariableDeclaration:
@@ -14816,191 +14817,6 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                       // because we are not considering the case of a variable of type class that is being used with the SgArrowExp or SgDotExp
                       // which would not require the name qualification.  The only case where we would still need the name qualification is the
                       // relatively rare case of multiple inheritance (which must be detected seperately).
-#if 0
-
-#error "DEAD CODE!"
-
-#define DEBUG_MEMBER_DATA_QUALIFICATION 1
-
-                         SgScopeStatement* variableDeclarationScope = variableDeclaration->get_scope();
-                         ASSERT_not_null(variableDeclarationScope);
-
-                      // If this is the same scoep then it is not interesting to debug this case.
-                         if (variableDeclarationScope != currentScope)
-                            {
-                              SgExpression* parentExpression = isSgExpression(varRefExp->get_parent());
-
-                              SgBinaryOp* binaryOperator = isSgBinaryOp(parentExpression);
-                              if (binaryOperator != NULL)
-                                 {
-                                   ASSERT_not_null(parentExpression);
-#if DEBUG_MEMBER_DATA_QUALIFICATION
-                                   mfprintf(mlog [ WARN ] ) ("   --- parentExpression of varRefExp = %p varRefExp = %p = %s \n",varRefExp,parentExpression,parentExpression->class_name().c_str());
-#endif
-                                   SgArrowExp* arrowExp = isSgArrowExp(binaryOperator);
-                                   SgDotExp* dotExp     = isSgDotExp(binaryOperator);
-
-                                   SgExpression* lhs  = binaryOperator->get_lhs_operand();
-                                   ASSERT_not_null(lhs);
-                                   SgCastExp* castExp = isSgCastExp(lhs);
-#if DEBUG_MEMBER_DATA_QUALIFICATION
-                                   mfprintf(mlog [ WARN ] ) ("   --- lhs = %p = %s \n",lhs,lhs->class_name().c_str());
-#endif
-                                // DQ (12/22/2015): Iterate though any possible chain of SgCastExp IR nodes (see test2005_89.C).
-                                // if (castExp != NULL && castExp->get_file_info()->isCompilerGenerated() == true)
-                                   while (castExp != NULL && castExp->get_file_info()->isCompilerGenerated() == true)
-                                      {
-#if DEBUG_MEMBER_DATA_QUALIFICATION
-                                        mfprintf(mlog [ WARN ] ) ("   --- detected implicit (compiler generated) cast: castExp = %p \n",castExp);
-#endif
-                                        lhs = isSgExpression(castExp->get_operand());
-                                        ASSERT_not_null(lhs);
-
-#error "DEAD CODE!"
-
-                                     // We have to handle chains of implicit casts.
-                                     // ROSE_ASSERT(isSgCastExp(lhs) == NULL);
-
-                                        castExp = isSgCastExp(lhs);
-#if 0
-                                        if (isSgCastExp(lhs) != NULL)
-                                           {
-                                             mfprintf(mlog [ WARN ] ) ("lhs = %p = %s \n",lhs,lhs->class_name().c_str());
-                                             lhs->get_file_info()->display("implicit cast");
-                                             varRefExp->get_file_info()->display("varRefExp associated with implicit cast");
-                                           }
-#endif
-                                      }
-
-#if DEBUG_MEMBER_DATA_QUALIFICATION
-                                   mfprintf(mlog [ WARN ] ) ("   --- (after filtering implicit casts) lhs = %p = %s \n",lhs,lhs->class_name().c_str());
-#endif
-                                   SgClassType* classType = NULL;
-
-                                // DQ (12/22/2015): If the varRefExp is the lhs then we don't want to change the name qualification.
-                                // See test2015_138.C for example for the case of SgDotExp.
-                                // if (arrowExp != NULL)
-                                   if (arrowExp != NULL && lhs != varRefExp)
-                                      {
-#if DEBUG_MEMBER_DATA_QUALIFICATION
-                                        mfprintf(mlog [ WARN ] ) ("   --- Found SgArrowExp: lhs = %p = %s \n",lhs,lhs->class_name().c_str());
-#endif
-                                        SgType* lhs_type = lhs->get_type();
-                                        ASSERT_not_null(lhs_type);
-#if DEBUG_MEMBER_DATA_QUALIFICATION
-                                        mfprintf(mlog [ WARN ] ) ("   --- lhs_type = %p = %s \n",lhs_type,lhs_type->class_name().c_str());
-#endif
-                                     // Handle the case of reference to pointer type.
-                                        lhs_type = lhs_type->stripType(SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_RVALUE_REFERENCE_TYPE | SgType::STRIP_TYPEDEF_TYPE);
-
-#error "DEAD CODE!"
-
-                                        SgPointerType* pointerType = isSgPointerType(lhs_type);
-                                     // ASSERT_not_null(pointerType);
-                                        if (pointerType != NULL)
-                                           {
-                                             SgType* baseType = pointerType->get_base_type();
-                                             ASSERT_not_null(baseType);
-
-                                          // Handle the case of pointer to reference type.
-                                          // Not clear if we have to handle array types
-                                             baseType = baseType->stripType(SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_RVALUE_REFERENCE_TYPE | SgType::STRIP_TYPEDEF_TYPE);
-                                             ASSERT_not_null(baseType);
-#if DEBUG_MEMBER_DATA_QUALIFICATION
-                                             mfprintf(mlog [ WARN ] ) ("   --- baseType = %p = %s \n",baseType,baseType->class_name().c_str());
-#endif
-                                          // It might be better to resolve this to a SgNamedType instead of SgClassType.
-                                             classType = isSgClassType(baseType);
-                                             if (classType == NULL)
-                                                {
-                                               // DQ (12/18/2016): In the case of Cxx11_tests/test2016_97.C the baseType is a SgTemplateType (though the variable is declared with "auto").
-                                                  mfprintf(mlog [ WARN ] ) ("Note: Name qualification: case of SgVarRefExp: type is not a SgClassType --- baseType = %p = %s \n",baseType,baseType->class_name().c_str());
-#if 0
-                                                  lhs->get_file_info()->display("classType == NULL: debug");
-#endif
-                                                }
-                                          // ASSERT_not_null(classType);
-                                           }
-                                          else
-                                           {
-#if 0
-                                          // Debug this case!
-                                          // I think this is happening for template classes (might be interesting to look into further).
-                                             mfprintf(mlog [ WARN ] ) ("   --- SgArrowExp without associated SgPointer \n");
-                                             varRefExp->get_file_info()->display("SgArrowExp without associated SgPointer: debug");
-#endif
-                                           }
-                                      }
-
-#error "DEAD CODE!"
-
-                                // DQ (12/22/2015): If the varRefExp is the lhs then we don't want to change the name qualification. See test2015_138.C for example.
-                                // if (dotExp != NULL)
-                                   if (dotExp != NULL && lhs != varRefExp)
-                                      {
-#if DEBUG_MEMBER_DATA_QUALIFICATION
-                                        mfprintf(mlog [ WARN ] ) ("   --- Found SgDotExp: lhs = %p = %s \n",lhs,lhs->class_name().c_str());
-#endif
-                                        SgType* lhs_type = lhs->get_type();
-                                        ASSERT_not_null(lhs_type);
-#if DEBUG_MEMBER_DATA_QUALIFICATION
-                                        mfprintf(mlog [ WARN ] ) ("   --- lhs_type = %p = %s = %s \n",lhs_type,lhs_type->class_name().c_str(),lhs_type->unparseToString().c_str());
-#endif
-                                     // Not clear if we have to handle array types
-                                        SgType* baseType = lhs_type->stripType(SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_RVALUE_REFERENCE_TYPE | SgType::STRIP_TYPEDEF_TYPE);
-                                        ASSERT_not_null(baseType);
-#if DEBUG_MEMBER_DATA_QUALIFICATION
-                                        mfprintf(mlog [ WARN ] ) ("   --- baseType = %p = %s \n",baseType,baseType->class_name().c_str());
-#endif
-                                        classType = isSgClassType(baseType);
-                                     // ASSERT_not_null(classType);
-                                      }
-
-                                   if (classType != NULL)
-                                      {
-                                        SgDeclarationStatement* declarationStatement = classType->get_declaration();
-                                        ASSERT_not_null(declarationStatement);
-#if DEBUG_MEMBER_DATA_QUALIFICATION
-                                        mfprintf(mlog [ WARN ] ) ("   --- declarationStatement = %p = %s = %s \n",declarationStatement,declarationStatement->class_name().c_str(),SageInterface::get_name(declarationStatement).c_str());
-#endif
-                                        SgDeclarationStatement* definingDeclarationStatement = declarationStatement->get_definingDeclaration();
-                                     // ASSERT_not_null(definingDeclarationStatement);
-                                        if (definingDeclarationStatement != NULL)
-                                           {
-#error "DEAD CODE!"
-
-                                             SgClassDeclaration* definingClassDeclaration = isSgClassDeclaration(definingDeclarationStatement);
-                                             ASSERT_not_null(definingClassDeclaration);
-                                             SgClassDefinition* classDefinition = definingClassDeclaration->get_definition();
-                                             ASSERT_not_null(classDefinition);
-
-                                             currentScope = classDefinition;
-#if DEBUG_MEMBER_DATA_QUALIFICATION
-                                             mfprintf(mlog [ WARN ] ) ("   --- Case of SgVarRefExp: recomputed currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
-#endif
-                                           }
-                                          else
-                                           {
-#if 0
-                                          // Debug this case!
-                                          // I think this happends in template member functions.
-                                          // I think this is happening for template classes (might be interesting to look into further).
-                                             mfprintf(mlog [ WARN ] ) ("   --- SgClassType without associated defining declaration \n");
-                                             varRefExp->get_file_info()->display("SgClassType without associated defining declaration: debug");
-#endif
-                                           }
-                                      }
-#if 0
-                                   mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                                   ROSE_ABORT();
-#endif
-                                 }
-                            }
-
-#error "DEAD CODE!"
-
-#endif
-
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                          mfprintf(mlog [ WARN ] ) ("variableDeclaration = %p \n",variableDeclaration);
@@ -15010,42 +14826,6 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #endif
                          int amountOfNameQualificationRequired = nameQualificationDepth(variableDeclaration,currentScope,currentStatement);
 
-#if 0
-                      // DQ (2/8/2019): And then I woke up in the morning and had a better idea.
-
-#error "DEAD CODE!"
-
-                      // DQ (2/7/2019): Adding support for SgPointerMemberType lvalue types that force rvalue name qualification (see Cxx11_tests/test2019_80.C).
-                         SgPointerMemberType* pointerMemberType = inheritedAttribute.get_usingPointerToMemberType();
-                         if (pointerMemberType != NULL)
-                            {
-#error "DEAD CODE!"
-
-#if 0
-                              mfprintf(mlog [ WARN ] ) ("Found case of name qualification required because the lhs type is SgPointerMemberType: pointerMemberType = %p \n",pointerMemberType);
-#endif
-                              amountOfNameQualificationRequired++;
-#if 0
-                              mfprintf(mlog [ WARN ] ) ("Exiting as a test! \n");
-                              ROSE_ABORT();
-#endif
-                            }
-                           else
-                            {
-#error "DEAD CODE!"
-
-                           // DQ (2/7/2019): Add an extra level of name qualification if this is pointer-to-member type induced.
-                              if (nameQualificationInducedFromPointerMemberType == true)
-                                 {
-#if 0
-                                   mfprintf(mlog [ WARN ] ) ("Found case of name qualification required because the function parameter type is SgPointerMemberType \n");
-#endif
-                                   amountOfNameQualificationRequired++;
-                                 }
-#error "DEAD CODE!"
-
-                           }
-#else
                       // DQ (2/7/2019): Add an extra level of name qualification if this is pointer-to-member type induced.
                          if (nameQualificationInducedFromPointerMemberType == true)
                             {
@@ -15060,7 +14840,6 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                               mfprintf(mlog [ WARN ] ) ("Found case of name qualification required because the variable is associated with SgPointerMemberType: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
 #endif
                             }
-#endif
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                          mfprintf(mlog [ WARN ] ) ("SgVarRefExp's SgDeclarationStatement: amountOfNameQualificationRequired = %d \n",amountOfNameQualificationRequired);
