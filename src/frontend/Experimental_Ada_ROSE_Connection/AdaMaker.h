@@ -268,6 +268,14 @@ namespace Ada_ROSE_Translation
   SgAdaLoopStmt&
   mkLoopStmt(SgBasicBlock& body);
 
+  /// creates a select statement of type \ref select_type
+  SgAdaSelectStmt&
+  mkAdaSelectStmt(SgAdaSelectStmt::select_type_enum select_type);
+
+  /// creates an Ada select alternative statement
+  SgAdaSelectAlternativeStmt&
+  mkAdaSelectAlternativeStmt(SgExpression& guard, SgBasicBlock& body);
+
   /// creates a for loop statement with body \ref body and an *empty*
   ///   loop header (i.e., init-stmt, test, and increment are nullptr).
   /// to complete an Ada for loop, the init-stmt needs to be set, and
@@ -782,7 +790,7 @@ namespace Ada_ROSE_Translation
 
   /// makes an empty if expression (aka SgConditionalExp)
   SgConditionalExp&
-  mkIfExpr();
+  mkIfExpr(bool isElsif = false);
 
   /// Creates a new expression
   /// \param ty the type of the allocation
@@ -860,6 +868,9 @@ namespace Ada_ROSE_Translation
   SgUnaryOp&
   mkForLoopIncrement(bool forward, SgVariableDeclaration& var);
 
+  /// creates a loop test
+  SgExprStatement&
+  mkForLoopTest(bool forward, SgVariableDeclaration& var);
 
   /// creates an  expression list from \ref exprs
   SgExprListExp&
@@ -886,7 +897,7 @@ namespace Ada_ROSE_Translation
 
   /// creates and if statement
   SgIfStmt&
-  mkIfStmt();
+  mkIfStmt(bool elseIfPath = false);
 
   //
   // special Ada symbols

@@ -1489,7 +1489,7 @@ namespace Ada
   StatementRange
   declsInPackage(SgGlobal& globalScope, const std::string& mainFile)
   {
-    auto declaredInMainFile = [&mainFile](const SgDeclarationStatement* dcl)
+    auto declaredInMainFile = [&mainFile](const SgDeclarationStatement* dcl)->bool
                               {
                                 ROSE_ASSERT(dcl);
 
@@ -1497,7 +1497,7 @@ namespace Ada
 
                                 return fileInfo.get_filenameString() == mainFile;
                               };
-    auto notDeclaredInMainFile = [&declaredInMainFile](const SgDeclarationStatement* dcl)
+    auto notDeclaredInMainFile = [&declaredInMainFile](const SgDeclarationStatement* dcl)->bool
                                  {
                                    return !declaredInMainFile(dcl);
                                  };

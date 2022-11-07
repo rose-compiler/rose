@@ -1481,7 +1481,8 @@ std::string SgAdaRangeConstraint::displayString() const
 
   std::stringstream out;
 
-  out << "$ada$range$" << rng->unparseToString();
+  // out << "$ada$range$" << rng->unparseToString();
+  out << "$ada$rngc$" << this;
   return out.str();
 }
 
@@ -1506,13 +1507,16 @@ std::string SgAdaIndexConstraint::displayString() const
 {
   std::stringstream out;
 
-  out << "$ada$idxc(";
-  for (const SgExpression* exp : get_indexRanges())
-  {
-    out << exp->unparseToString() << ',';
-  }
-  out << ')';
+  //out << "$ada$idxc(";
+  //for (const SgExpression* exp : get_indexRanges())
+  //{
+  //  out << exp->unparseToString() << ',';
+  //}
+  //out << ')';
 
+  // PP(10/27/22) use address in defense against SageBuilder's
+  //              mangled name based type sharing.
+  out << "$ada$idxc" << this;
   return out.str();
 }
 

@@ -1053,7 +1053,7 @@ namespace
               logKind("An_Elsif_Path", elem.ID);
               ADA_ASSERT (ifStmt);
 
-              SgIfStmt& cascadingIf = mkIfStmt();
+              SgIfStmt& cascadingIf = mkIfStmt(true /* elsif */);
 
               sg::linkParentChild( SG_DEREF(ifStmt),
                                    static_cast<SgStatement&>(cascadingIf),
@@ -1084,37 +1084,6 @@ namespace
       IfStmtCreator() = delete;
   };
 
-  // MS 11/17/2020 : builders not in sageBuilder (yet)
-  SgAdaSelectAlternativeStmt* buildAdaSelectAlternativeStmt(SgExpression *guard,
-                                                            SgBasicBlock *body)
-  {
-    ADA_ASSERT (body);
-
-    SgAdaSelectAlternativeStmt *stmt =
-      new SgAdaSelectAlternativeStmt();
-    ADA_ASSERT (stmt);
-
-    stmt->set_guard(guard);
-    stmt->set_body(body);
-
-    body->set_parent(stmt);
-    guard->set_parent(stmt);
-
-    markCompilerGenerated(*stmt);
-    return stmt;
-  }
-
-  SgAdaSelectStmt& mkAdaSelectStmt(SgAdaSelectStmt::select_type_enum select_type)
-  {
-    SgAdaSelectStmt *stmt = new SgAdaSelectStmt;
-    ADA_ASSERT (stmt);
-
-    stmt->set_select_type(select_type);
-
-    markCompilerGenerated(*stmt);
-    return *stmt;
-  }
-
   // MS 11/17/2020 : SelectStmtCreator modeled on IfStmtCreator
   // PP 10/12/2021 : modified code to eliminate the need for using scope_npc.
   //                 A block will only be populated after the new node has been connected
@@ -1136,10 +1105,10 @@ namespace
       SgBasicBlock* block = &mkBasicBlock();
 
       // create guard
-      SgExpression* guard = &getExprID_opt(path.Guard, ctx);
+      SgExpression& guard = getExprID_opt(path.Guard, ctx);
 
       // instantiate SgAdaSelectAlternativeStmt node and return it
-      SgAdaSelectAlternativeStmt* stmt = buildAdaSelectAlternativeStmt(guard, block);
+      SgAdaSelectAlternativeStmt& stmt = mkAdaSelectAlternativeStmt(guard, *block);
       Path_Struct* pathptr = &path;
       AstContext   astctx{ctx};
 
@@ -1150,7 +1119,7 @@ namespace
                           traverseIDs(altStmts, elemMap(), StmtCreator{astctx.scope(*block)});
                         };
 
-      return std::make_pair(stmt, completion);
+      return std::make_pair(&stmt, completion);
     }
 
     std::pair<SgBasicBlock*, DeferredBodyCompletion>
@@ -1793,8 +1762,11 @@ namespace
 
           SgVariableDeclaration* inductionVar = isSgVariableDeclaration(forini.get_init_stmt().front());
           SgExpression&          direction    = mkForLoopIncrement(isForwardLoop(forvar), SG_DEREF(inductionVar));
-
           sg::linkParentChild(sgnode, direction, &SgForStatement::set_increment);
+
+          // test is not strictly necessary; added for convenience
+          SgStatement&           test    = mkForLoopTest(isForwardLoop(forvar), SG_DEREF(inductionVar));
+          sg::linkParentChild(sgnode, test, &SgForStatement::set_test);
 
           // loop body
           {
