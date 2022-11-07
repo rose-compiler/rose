@@ -493,13 +493,14 @@ mkForStatement(SgBasicBlock& body)
 
 
 SgIfStmt&
-mkIfStmt()
+mkIfStmt(bool elseIfPath)
 // SgExpression& cond, SgStatement& thenBranch, SgStatement* elseBranch_opt)
 {
   SgIfStmt& sgnode = SG_DEREF( sb::buildIfStmt_nfi(nullptr, nullptr, nullptr) );
 
   markCompilerGenerated(sgnode);
   setSymbolTableCaseSensitivity(sgnode);
+  sgnode.set_is_else_if_statement(elseIfPath);
   return sgnode;
 }
 
@@ -560,6 +561,26 @@ mkWhenOthersPath(SgBasicBlock& blk)
   sgnode.set_has_fall_through(false);
   return sgnode;
 }
+
+SgAdaSelectStmt&
+mkAdaSelectStmt(SgAdaSelectStmt::select_type_enum select_type)
+{
+  SgAdaSelectStmt& sgnode = mkLocatedNode<SgAdaSelectStmt>();
+
+  sgnode.set_select_type(select_type);
+  return sgnode;
+}
+
+SgAdaSelectAlternativeStmt&
+mkAdaSelectAlternativeStmt(SgExpression& guard, SgBasicBlock& body)
+{
+  SgAdaSelectAlternativeStmt& sgnode = mkLocatedNode<SgAdaSelectAlternativeStmt>();
+
+  sg::linkParentChild(sgnode, guard, &SgAdaSelectAlternativeStmt::set_guard);
+  sg::linkParentChild(sgnode, body, &SgAdaSelectAlternativeStmt::set_body);
+  return sgnode;
+}
+
 
 
 SgAdaDelayStmt&
@@ -1908,6 +1929,25 @@ mkForLoopIncrement(bool forward, SgVariableDeclaration& var)
   markCompilerGenerated(*sgnode);
   return *sgnode;
 }
+
+SgExprStatement&
+mkForLoopTest(bool forward, SgVariableDeclaration& var)
+{
+  SgVarRefExp&         varref = SG_DEREF( sb::buildVarRefExp(&var) );
+  SgInitializedName&   inivar = SG_DEREF( var.get_variables().front() );
+  SgAssignInitializer& iniini = SG_DEREF( isSgAssignInitializer(inivar.get_initializer()) );
+  SgExpression&        range  = SG_DEREF( iniini.get_operand() );
+  SgExpression&        rngcp  = SG_DEREF( si::deepCopy(&range) );
+  SgExpression&        test   = SG_DEREF( sb::buildMembershipOp(&varref, &rngcp) );
+  SgExprStatement&     sgnode = mkExprStatement(test);
+
+  markCompilerGenerated(varref);
+  markCompilerGenerated(rngcp);
+  markCompilerGenerated(test);
+  markCompilerGenerated(sgnode);
+  return sgnode;
+}
+
 
 
 SgExprListExp&

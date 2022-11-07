@@ -1146,6 +1146,17 @@ namespace
       prn(" ");
     }
 
+    // added to support independent unparsing of SgForInitStatement
+    void handle(SgForInitStatement& n)
+    {
+      bool isReverse = false;
+
+      if (SgForStatement* forStmt = isSgForStatement(n.get_parent()))
+        isReverse = isSgMinusMinusOp(forStmt->get_increment());
+
+      forInitStmt(n, isReverse);
+    }
+
     void handle(SgForStatement& n)
     {
       ROSE_ASSERT(n.get_increment());

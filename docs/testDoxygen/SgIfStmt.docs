@@ -217,14 +217,14 @@ SgLabelRefExp* else_numeric_label()
 
 /*!
 \fn SgIfStmt::get_is_else_if_statement()
-\brief Fortran specific function to indicate "else if" form of "if" construct (C/C++ useage always returns false).
+\brief Fortran and Ada specific function to indicate "else if" form of "if" construct (C/C++ useage always returns false).
 
 \return Returns bool.
 */
 
 /*!
 \fn SgIfStmt::set_is_else_if_statement(bool value)
-\brief Fortran specific function to indicate "else if" form of "if" construct (C/C++ useage always returns false).
+\brief Fortran and Ada specific function to indicate "else if" form of "if" construct (C/C++ useage always returns false).
 
 \param value to use in setting associated (Fortran specific) data member.
 \return Returns void.

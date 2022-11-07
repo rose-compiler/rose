@@ -772,6 +772,9 @@ namespace
     void handle(const SgClassDefinition& n)        { setDecl(n.get_parent()); }
 
     void handle(const SgBasicBlock& n)             { res = &n; }
+
+    // what to do with others?
+    void handle(const SgScopeStatement& n)         { /* res = nullptr; */ }
   };
 
   const SgNode*
@@ -784,7 +787,7 @@ namespace
   usableScope(const SgScopeStatement& scope)
   {
     const SgNode* namedNode = namedAstNode(&scope);
-    std::string   scopeName = nodeName(SG_DEREF(namedNode));
+    std::string   scopeName = namedNode ? nodeName(SG_DEREF(namedNode)) : std::string{};
 
     if ((scopeName == "") || (scopeName == NodeName::AN_UNREAL_NAME))
       return std::make_tuple(false, nullptr);
@@ -819,7 +822,8 @@ namespace
 
     // set the reference Node to the leading scope (or if none use the quasiDecl node instead).
     if (std::distance(remMin, remLim) > 0)
-      refNode = namedAstNode(*remMin);
+      if (const SgNode* namedNode = namedAstNode(*remMin))
+        refNode = namedNode;
 
     // while the refnode is aliases along (locMin, locLim] and the scope is extensible |remBeg,remMin| > 0
     //   extend the scope by one.
