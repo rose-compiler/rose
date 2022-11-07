@@ -22,7 +22,7 @@
 class FileHelper {
 public:
 
-    // This is initialized in src/frontend/SageIII/sage_support/sage_support.cpp, not FileHelper.C
+    // This is initialized in src/frontend/SageIII/sage_support/sage_support.C, not FileHelper.C
     static const std::string pathDelimiter;
 
     static void ensureParentFolderExists(const std::string& path) {
