@@ -1,5 +1,5 @@
 /**
- * \file    sage_support.cpp
+ * \file    sage_support.C
  * \author  Justin Too <too1@llnl.gov>
  * \date    April 4, 2012
  */
@@ -3120,7 +3120,7 @@ SgFile::secondaryPassOverSourceFile()
 
   // DQ (10/27/2018): Added documentation.
   // Note that this function is called from two locations:
-  // 1) From the sage_support.cpp (for the main source file)
+  // 1) From the sage_support.C (for the main source file)
   // 2) From the attachPreprocessingInfoTraversal.C (for any header files when using the unparse headers option)
 
   // GB (9/4/2009): Factored out the secondary pass. It is now done after

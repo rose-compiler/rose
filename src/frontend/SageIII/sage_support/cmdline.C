@@ -1,5 +1,5 @@
 /**
- * \file    cmdline.cpp
+ * \file    cmdline.C
  * \author  Justin Too <too1@llnl.gov>
  * \date    April 4, 2012
  */
@@ -5192,7 +5192,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
 
 #if 0
   // DQ (29/8/2017): Add a note to fix this.
-     printf ("In cmdline.cpp: Need to add support for other languages here! \n");
+     printf ("In cmdline.C: Need to add support for other languages here! \n");
 #endif
 
   //

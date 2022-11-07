@@ -271,7 +271,7 @@ ROSE_UTIL_API int directoryDistance(const std::string& left, const std::string& 
  *  standard output (not error) and the program exits with status 1. */
 ROSE_UTIL_API std::vector<std::string> readWordsInFile(std::string filename);
 
-// popen_wrapper is defined in sage_support.cpp
+// popen_wrapper is defined in sage_support.C
 
 /** Simple wrapper for Unix popen command.
  *

@@ -1,5 +1,5 @@
 /**
- * \file    signal_handling.cpp
+ * \file    keep_going.C
  * \author  Justin Too <too1@llnl.gov>
  * \date    November 16, 2013
  */
