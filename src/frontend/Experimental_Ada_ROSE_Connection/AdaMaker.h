@@ -790,7 +790,7 @@ namespace Ada_ROSE_Translation
 
   /// makes an empty if expression (aka SgConditionalExp)
   SgConditionalExp&
-  mkIfExpr(bool isElsif = false);
+  mkIfExpr();
 
   /// Creates a new expression
   /// \param ty the type of the allocation
