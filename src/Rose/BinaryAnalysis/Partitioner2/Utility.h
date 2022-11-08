@@ -240,7 +240,7 @@ public:
     bool isArmed() const { return !settings_.when.isEmpty() && nCalls_<=settings_.when.greatest(); }
 
     /** Increment calls and return true if triggering. */
-    bool shouldTrigger() { return settings_.when.isContaining(nCalls_++); }
+    bool shouldTrigger() { return settings_.when.contains(nCalls_++); }
 
     /** Number of times called. */
     size_t nCalls() const { return nCalls_; }

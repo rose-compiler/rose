@@ -28,6 +28,8 @@ class Factory;
 template <typename CRT, typename apiT, Object otag>
 struct __factory_helper_t;
 
+using tplargs_t = std::vector<SgTemplateArgument *>;
+
 template <typename CRT, typename API>
 class Factory {
   public:
@@ -56,7 +58,7 @@ class Factory {
      *
      */
     template <Object otag, typename... Args>
-    declaration_t<otag> * instantiate(symbol_t<otag> * API::* obj, SgNamedType * parent, Args... args) {
+    declaration_t<otag> * instantiate(symbol_t<otag> * API::* obj, SgNamedType * parent, Args... args) const {
       symbol_t<otag> * sym = api.*obj;
       ROSE_ASSERT(sym);
       ROSE_ASSERT(is_template_symbol_variant<otag>(sym->variantT()));
@@ -77,15 +79,16 @@ class Factory {
      *
      */
     template <Object otag, typename... Args>
-    reference_t<otag> * reference(symbol_t<otag> * API::* obj, SgNamedType * parent, Args... args) {
+    reference_t<otag> * reference(symbol_t<otag> * API::* obj, SgNamedType * parent, Args... args) const {
       symbol_t<otag> * sym = api.*obj;
       ROSE_ASSERT(sym);
       
       if (is_template_symbol_variant<otag>(sym->variantT())) {
         declaration_t<otag> * decl = instantiate<otag>(obj, parent, args...);
         ROSE_ASSERT(decl != nullptr);
-
-        ROSE_ABORT(); // TODO get symbol from decl
+        sym = dynamic_cast<symbol_t<otag> *>(decl->search_for_symbol_from_symbol_table());
+        ROSE_ASSERT(sym != nullptr);
+//      ROSE_ASSERT(sym->get_declaration() == decl->get_firstNondefiningDeclaration());
       } else {
         // FIXME sanity-check: `args` is empty
       }
@@ -107,7 +110,7 @@ class Factory {
      *
      */
     template <Object otag, typename... Args>
-    SgExpression * access(symbol_t<otag> * API::* obj, SgExpression * parent, Args... args) {
+    SgExpression * access(symbol_t<otag> * API::* obj, SgExpression * parent, Args... args) const {
 
       SgType * ptype = parent->get_type(); // TODO strip type modifiers and references
 
@@ -154,7 +157,7 @@ class Factory {
      *
      */
     template <Object otag, typename... Args>
-    access_return_t<otag> * access(symbol_t<otag> * API::* obj, SgNamedType * parent, Args... args) {
+    access_return_t<otag> * access(symbol_t<otag> * API::* obj, SgNamedType * parent, Args... args) const {
       reference_t<otag> * rhs = reference(obj, parent, args...);
       // TODO build either SgScopedRefType SgScopedRefExp
       return rhs;

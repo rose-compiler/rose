@@ -15,7 +15,7 @@ run $(librose_compile)				\
     FunctionNoop.C				\
     GraphViz.C					\
     InstructionProvider.C			\
-    JvmEngine.C					\
+    EngineJvm.C					\
     MayReturnAnalysis.C				\
     Modules.C					\
     ModulesElf.C				\
@@ -48,7 +48,7 @@ run $(public_header) -o include/rose/Rose/BinaryAnalysis/Partitioner2	\
     FunctionCallGraph.h							\
     GraphViz.h								\
     InstructionProvider.h						\
-    JvmEngine.h								\
+    EngineJvm.h								\
     Modules.h								\
     ModulesElf.h							\
     ModulesLinux.h							\

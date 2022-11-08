@@ -22,6 +22,9 @@ public:
     using Ptr = Debugger::Ptr;
 
 protected:
+    Disassembler::BasePtr disassembler_;                // how to disassemble instructions
+
+protected:
     Base();
 
     // Debuggers are not copyable
@@ -61,8 +64,8 @@ public:
      *  in the EIP register.
      *
      * @{ */
-    virtual void executionAddress(ThreadId, rose_addr_t) = 0;
-    virtual rose_addr_t executionAddress(ThreadId) = 0;
+    virtual void executionAddress(ThreadId, rose_addr_t);
+    virtual rose_addr_t executionAddress(ThreadId);
     /** @} */
 
     /** Set breakpoints. */
@@ -133,7 +136,7 @@ public:
      *  Reads up to @p maxBytes bytes from the subordinate or until an ASCII NUL character is read, concatenates all the
      *  characters (except the NUL) into a C++ string and returns it. The @p maxBytes includes the NUL terminator although the
      *  NUL terminator is not returned as part of the string. */
-    virtual std::string readCString(rose_addr_t va, size_t maxBytes = UNLIMITED) = 0;
+    virtual std::string readCString(rose_addr_t va, size_t maxBytes = UNLIMITED);
 
     /** Returns true if the subordinate terminated. */
     virtual bool isTerminated() = 0;
@@ -142,10 +145,10 @@ public:
     virtual std::string howTerminated() = 0;
 
     /** Available registers. */
-    virtual RegisterDictionaryPtr registerDictionary() const = 0;
+    virtual RegisterDictionaryPtr registerDictionary();
 
     /** Disassembler. */
-    virtual Disassembler::BasePtr disassembler() const = 0;
+    virtual Disassembler::BasePtr disassembler();
 
     /** Run the program and return an execution trace. */
     virtual Sawyer::Container::Trace<rose_addr_t> trace();

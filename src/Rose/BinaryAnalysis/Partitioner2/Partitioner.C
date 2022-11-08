@@ -1491,7 +1491,7 @@ Partitioner::dataBlocksContainedIn(const AddressInterval &interval) const {
     std::vector<DataBlock::Ptr> retval;
     std::vector<DataBlock::Ptr> overlapping = dataBlocksOverlapping(interval);
     for (const DataBlock::Ptr &db: overlapping) {
-        if (interval.isContaining(db->extent()))
+        if (interval.contains(db->extent()))
             retval.push_back(db);
     }
     return retval;

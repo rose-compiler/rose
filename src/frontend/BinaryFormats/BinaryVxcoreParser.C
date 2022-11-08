@@ -224,7 +224,7 @@ VxcoreParser::unparse(std::ostream &out, const MemoryMap::Ptr &memory, const Add
         while (const AddressInterval selected = memory->atOrAfter(va).singleSegment().available() & memoryLimit) {
             MemoryMap::ConstNodeIterator inode = memory->at(selected.least()).nodes().begin();
             ASSERT_forbid(inode == memory->nodes().end()); // because of the while loop's condition
-            ASSERT_require(inode->key().isContaining(selected));
+            ASSERT_require(inode->key().contains(selected));
             const MemoryMap::Segment &segment = inode->value();
 
             // Header

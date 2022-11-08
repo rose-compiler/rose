@@ -236,7 +236,7 @@ SgAsmGenericStrtab::free(rose_addr_t offset, rose_addr_t size)
     
     /* Make sure area is not already in free list.  The freelist.insert() handles this gracefully, but if we're freeing
      * something that's already in the list then we have a logic error somewhere. */
-    ROSE_ASSERT(!get_freelist().isOverlapping(AddressInterval::baseSize(offset, size)));
+    ROSE_ASSERT(!get_freelist().overlaps(AddressInterval::baseSize(offset, size)));
 
     /* Preserve anything that's still referenced. The caller should have assigned SgAsmStoredString::unalloced to the "offset"
      * member of the string storage to indicate that it's memory in the string table is no longer in use. */

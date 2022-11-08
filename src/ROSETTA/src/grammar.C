@@ -306,7 +306,7 @@ Grammar::writeFile ( const StringUtility::FileWithLineNumbers & outputString,
           printf ("outputFilename = %s could not be opened, likely the directory is missing...\n",outputFilename.c_str());
           string command = "mkdir -p " + target_directory + sourceCodeDirectoryName();
 
-       // DQ (12/28/2009): As I recall there is a more secure way to do this...see sage_support.cpp for an example.
+       // DQ (12/28/2009): As I recall there is a more secure way to do this...see sage_support.C for an example.
           if (verbose)
               printf ("Calling system(%s): making a new directory in the build tree...\n",command.c_str());
           if (system(command.c_str())) {
@@ -340,7 +340,6 @@ Grammar::appendFile ( const StringUtility::FileWithLineNumbers & outputString,
    {
      string outputFilename = (directoryName == "." ? "" : directoryName + "/") + className + fileExtension;
 
-  // printf ("outputFilename = %s \n",outputFilename.c_str());
      ofstream ROSE_ShowFile(outputFilename.c_str(),std::ios::out | std::ios::app);
      ROSE_ASSERT (ROSE_ShowFile.good() == true);
 
@@ -596,8 +595,6 @@ Grammar::buildStringFromLists ( AstNodeClass & node,
   vector<GrammarString *> sourceList= buildListFromLists(node, listFunction);
   vector<GrammarString *>::iterator sourceListIterator;
 
-  // ROSE_ASSERT (node.token != NULL);
-
   string editStringMiddle;
 
   for( sourceListIterator = sourceList.begin();
@@ -646,7 +643,6 @@ Grammar::buildStringForPrototypes ( AstNodeClass & node )
   // This function adds in the source code specific to a node in the
   // tree that represents the hierachy of the grammer's implementation.
 
-     // ROSE_ASSERT (node.token != NULL);
      // BP : 10/09/2001 modified to provide addresses
      return buildStringFromLists ( node,
                                    &AstNodeClass::getMemberFunctionPrototypeList,
@@ -767,7 +763,6 @@ Grammar::buildStringForTraverseMemoryPoolSource ( AstNodeClass & node )
 
      string className = node.getName();
 
-  // printf ("node.getName() = %s classSpecificString = %s \n",node.getName(),classSpecificString.c_str());
      returnString = GrammarString::copyEdit(returnString,"$CLASS_SPECIFIC_STATIC_MEMBERS_USING_ROSE_VISIT",classSpecificString);
      returnString = GrammarString::copyEdit(returnString,"$CLASS_SPECIFIC_STATIC_MEMBERS_USING_VISITOR_PATTERN",classSpecificVisitorPatternString);
      returnString = GrammarString::copyEdit(returnString,"$CLASS_SPECIFIC_STATIC_MEMBERS_MEMORY_USED",classSpecificMemoryUsageString);
@@ -828,7 +823,6 @@ Grammar::buildNodeIdSupport( AstNodeClass & node, StringUtility::FileWithLineNum
   // Now write out the file (each class in its own file)!
      string fileExtension = ".C";
      string directoryName = target_directory + sourceCodeDirectoryName();
-  // printf ("In buildTraverseMemoryPoolSupport(): directoryName = %s \n",directoryName.c_str());
 
   // This should append the string to the target file.
      appendFile ( editString, directoryName, node.getName(), fileExtension );
@@ -836,7 +830,6 @@ Grammar::buildNodeIdSupport( AstNodeClass & node, StringUtility::FileWithLineNum
      outputFile += editString;
 #endif
 
-#if 1
   // Call this function recursively on the children of this node in the tree
      vector<AstNodeClass *>::iterator treeNodeIterator;
      for( treeNodeIterator = node.subclasses.begin();
@@ -848,7 +841,6 @@ Grammar::buildNodeIdSupport( AstNodeClass & node, StringUtility::FileWithLineNum
 
           buildNodeIdSupport(**treeNodeIterator,outputFile);
         }
-#endif
    }
 
 
@@ -866,7 +858,6 @@ Grammar::buildStringToTestPointerForContainmentInMemoryPoolSource ( AstNodeClass
 
      string className = node.getName();
 
-  // printf ("node.getName() = %s classSpecificString = %s \n",node.getName(),classSpecificString.c_str());
      returnString = GrammarString::copyEdit(returnString,"$CLASS_SPECIFIC_STATIC_MEMBERS_MEMORY_USED",classSpecificMemoryUsageString);
 
      return returnString;
@@ -896,14 +887,10 @@ Grammar::buildStringForCheckingIfDataMembersAreInMemoryPoolSupport( AstNodeClass
    {
      StringUtility::FileWithLineNumbers editString = buildStringForCheckingIfDataMembersAreInMemoryPoolSource(node);
 
-  // printf ("editString = %s \n",editString.c_str());
-
-
 #if WRITE_SEPARATE_FILES_FOR_EACH_CLASS
   // Now write out the file (each class in its own file)!
      string fileExtension = ".C";
      string directoryName = target_directory + sourceCodeDirectoryName();
-  // printf ("In buildStringForCheckingIfDataMembersAreInMemoryPoolSupport(): directoryName = %s \n",directoryName.c_str());
 
   // This should append the string to the target file.
      appendFile ( editString, directoryName, node.getName(), fileExtension );
@@ -1079,7 +1066,6 @@ Grammar::buildStringForDataDeclaration ( AstNodeClass & node )
 
 
 // DQ (3/22/2017): Added to support output of "override" keyword to reduce Clang warnings.
-// bool Grammar::generate_override_keyword( string variableNameString )
 bool
 generate_override_keyword( AstNodeClass & node, GrammarString & data )
    {
@@ -1087,10 +1073,6 @@ generate_override_keyword( AstNodeClass & node, GrammarString & data )
 
      string variableNameString = string(data.variableNameString);
      string nodeName = node.baseName;
-
-#if 0
-     printf ("In generate_override_keyword(): nodeName = %s variableNameString = %s \n",nodeName.c_str(),variableNameString.c_str());
-#endif
 
   // Rasmussen (08/25/2022): Removed all untyped Sage nodes. Ultimately it proved easier to
   // construct regular IR nodes from the Jovial parser. Using the untyped system just led to an
@@ -1201,7 +1183,6 @@ generate_override_keyword( AstNodeClass & node, GrammarString & data )
    }
 
 // DQ (3/22/2017): Added to support output of "override" keyword to reduce Clang warnings.
-// bool Grammar::generate_override_keyword( string variableNameString )
 bool
 generate_override_keyword_for_set_functions( AstNodeClass & node, GrammarString & data )
    {
@@ -1209,10 +1190,6 @@ generate_override_keyword_for_set_functions( AstNodeClass & node, GrammarString 
 
      string variableNameString = string(data.variableNameString);
      string nodeName = node.baseName;
-
-#if 0
-     printf ("In generate_override_keyword(): nodeName = %s variableNameString = %s \n",nodeName.c_str(),variableNameString.c_str());
-#endif
 
   // Rasmussen (08/25/2022): Removed all untyped Sage nodes. Ultimately it proved easier to
   // construct regular IR nodes from the Jovial parser. Using the untyped system just led to an
@@ -1812,7 +1789,6 @@ Grammar::buildCopyMemberFunctions ( AstNodeClass & node, StringUtility::FileWith
   // Now write out the file (each class in its own file)!
      string fileExtension = ".C";
      string directoryName = target_directory + sourceCodeDirectoryName();
-  // printf ("In buildCopyMemberFunctions(): directoryName = %s \n",directoryName.c_str());
 
   // This should append the string to the target file.
      appendFile ( editString, directoryName, node.getName(), fileExtension );
@@ -2107,7 +2083,6 @@ Grammar::editSubstitution ( AstNodeClass & node, const StringUtility::FileWithLi
         }
 
      // Finally, Edit into place the name of the grammar
-     // printf ("In editSubstitution node name = %s \n",node.getName());
      editString = GrammarString::copyEdit (editString,"$GRAMMAR_PREFIX_",node.getGrammar()->getGrammarPrefixName());
      editString = GrammarString::copyEdit (editString,"$GRAMMAR_TAG_PREFIX_",node.getGrammar()->getGrammarTagName());
 
@@ -3288,10 +3263,7 @@ Grammar::buildCode ()
      if (verbose)
          cout << "DONE: buildNodeIdSupport()" << endl;
 
-  // printf ("Exiting after building traverse memory pool functions \n");
-  // ROSE_ASSERT(false);
      Grammar::writeFile(ROSE_NodeIdSourceFile, target_directory, getGrammarName() + "NodeIdSupport", ".C");
-
 
   // --------------------------------------------
   // generate code for the memory pool traversal
@@ -3311,8 +3283,6 @@ Grammar::buildCode ()
      if (verbose)
          cout << "DONE: buildStringForCheckingIfDataMembersAreInMemoryPoolSupport()" << endl;
 
-  // printf ("Exiting after building code to check data members which are pointers to IR nodes \n");
-  // ROSE_ASSERT(false);
      Grammar::writeFile(ROSE_CheckingIfDataMembersAreInMemoryPoolSourceFile, target_directory, getGrammarName() + "CheckingIfDataMembersAreInMemoryPool", ".C");
 
   // --------------------------------------------
@@ -3659,12 +3629,10 @@ Grammar::GrammarNodeInfo Grammar::getGrammarNodeInfo(AstNodeClass* grammarnode) 
  /* MS (10/8/2015): turned off the warning. This doesn't break
   anything except the enums for synthesized attributes access. But those
   will be removed. */
- //   printf ("Warning: Detected node violating ROSETTA rules (some exceptions are allowed): nodeName = %s, num-trav-datam:%d, num-trav-container:%d\n",nodeName.c_str(),info.numSingleDataMembers,info.numContainerMembers);
 
  // DQ (2/7/2011): Added SgExprListExp to the list so that we can support originalExpressionTree data member in SgExpression.
  // Liao I made more exceptions for some OpenMP specific nodes for now
  // The traversal generator has already been changed accordingly.
- //    std::cout << "both single and container members in node " << nodeName << std::endl;
     ROSE_ASSERT(
           nodeName == "SgVariableDeclaration"
      // DQ (12/21/2011): Added exception for SgTemplateVariableDeclaration derived from SgVariableDeclaration.

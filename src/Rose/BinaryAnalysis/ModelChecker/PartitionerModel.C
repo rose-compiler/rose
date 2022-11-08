@@ -268,7 +268,7 @@ findStackVariable(const FunctionCallStack &callStack, const AddressInterval &loc
         for (const Variables::StackVariable &var: fcall.stackVariables().values()) {
             if (AddressInterval varAddrs = shiftAddresses(fcall.initialStackPointer() + fcall.framePointerDelta(),
                                                           var.interval(), stackLimits)) {
-                if (varAddrs.isContaining(location)) {
+                if (varAddrs.contains(location)) {
                     if (!foundInterval || varAddrs.size() < foundInterval.size()) {
                         foundInterval = varAddrs;
                         foundVariable = var;
@@ -636,7 +636,7 @@ RiscOperators::checkOobAccess(const BS::SValue::Ptr &addrSVal_, TestMode testMod
             if (AddressInterval referencedRegion = addrSVal->region()) {
                 ProgressTask task(modelCheckerSolver_->progress(), "oob");
                 AddressInterval accessedRegion = AddressInterval::baseSizeSat(*va, nBytes);
-                if (!referencedRegion.isContaining(accessedRegion)) {
+                if (!referencedRegion.contains(accessedRegion)) {
 
                     // Get information about the variable that was intended to be accessed, and the variable (if any) that was
                     // actually accessed.
@@ -683,7 +683,7 @@ RiscOperators::checkUninitVar(const BS::SValue::Ptr &addrSVal_, TestMode testMod
         if (auto va = addrSVal->toUnsigned()) {
             if (AddressInterval referencedRegion = addrSVal->region()) {
                 AddressInterval accessedRegion = AddressInterval::baseSize(*va, nBytes);
-                if (referencedRegion.isContaining(accessedRegion)) {
+                if (referencedRegion.contains(accessedRegion)) {
                     // If there are no writers for this address, then this is an uninitialized variable read
                     auto mem = BS::MemoryCellState::promote(currentState()->memoryState());
                     if (mem->getWritersUnion(addrSVal, 8*nBytes, this, this).isEmpty()) {

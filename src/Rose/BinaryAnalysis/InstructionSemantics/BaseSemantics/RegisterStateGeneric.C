@@ -110,7 +110,7 @@ RegisterStateGeneric::assertStorageConditions(const std::string &when, RegisterD
                 error <<"value is null for register " <<regpair.desc;
             } else if (regpair.value->nBits() != regpair.desc.nBits()) {
                 error <<"value width (" <<regpair.value->nBits() <<") is incorrect for register " <<regpair.desc;
-            } else if (foundLocations.isOverlapping(regpair.location())) {
+            } else if (foundLocations.overlaps(regpair.location())) {
                 error <<"register " <<regpair.desc <<" is stored multiple times in the list";
             }
             foundLocations.insert(regpair.location());
@@ -635,7 +635,7 @@ RegisterStateGeneric::hasWritersAny(RegisterDescriptor desc) const {
         return false;
     const BitAddressSet &parts = writers_[desc];
     BitRange where = BitRange::baseSize(desc.offset(), desc.nBits());
-    return parts.isOverlapping(where);
+    return parts.overlaps(where);
 }
 
 bool

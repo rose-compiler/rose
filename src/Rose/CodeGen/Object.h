@@ -43,6 +43,13 @@ template <Object otag> using declaration_t = typename object_helper<otag>::decl_
  */
 template <Object otag> constexpr auto is_template_symbol_variant = object_helper<otag>::is_template_symbol_variant;
 
+/**
+ * Pointer to an API member
+ * /tparam otag an Object kind
+ * /tparam API
+ */
+template <Object otag, typename API> using symref_t = symbol_t<otag> * API::*;
+
 template <>
 struct object_helper<Object::a_namespace> {
   using decl_t   = SgNamespaceDeclarationStatement;
@@ -67,7 +74,7 @@ struct object_helper<Object::a_class> {
 
 template <>
 struct object_helper<Object::a_typedef> {
-  using decl_t   = SgClassDeclaration;
+  using decl_t   = SgTypedefDeclaration;
   using symbol_t = SgTypedefSymbol;
   using type_t   = SgTypedefType;
 

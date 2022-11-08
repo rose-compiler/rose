@@ -83,10 +83,10 @@ main(int argc, char *argv[]) {
     Bat::checkRoseVersionNumber(MINIMUM_ROSE_LIBRARY_VERSION, mlog[FATAL]);
     Bat::registerSelfTests();
 
-    P2::Engine engine;
     Settings settings;
-    boost::filesystem::path inputFileName = parseCommandLine(argc, argv, engine, settings);
-    P2::Partitioner partitioner = engine.loadPartitioner(inputFileName, settings.stateFormat);
+    P2::Engine *engine = P2::Engine::instance();
+    boost::filesystem::path inputFileName = parseCommandLine(argc, argv, *engine, settings);
+    P2::Partitioner partitioner = engine->loadPartitioner(inputFileName, settings.stateFormat);
 
     // Select the functions to analyze
     std::vector<P2::Function::Ptr> selectedFunctions;
@@ -107,4 +107,6 @@ main(int argc, char *argv[]) {
         Variables::StackVariables lvars = variableFinder->findStackVariables(partitioner, function);
         Variables::print(lvars, partitioner, std::cout, "  ");
     }
+
+    delete engine;
 }

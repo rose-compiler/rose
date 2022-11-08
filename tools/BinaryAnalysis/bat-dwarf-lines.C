@@ -49,14 +49,16 @@ main(int argc, char *argv[]) {
     Bat::checkRoseVersionNumber(MINIMUM_ROSE_LIBRARY_VERSION, mlog[FATAL]);
     Bat::registerSelfTests();
 
-    P2::Engine engine;
     Settings settings;
-    std::vector<std::string> specimen = parseCommandLine(argc, argv, engine, settings);
-    engine.parseContainers(specimen);
+    P2::Engine *engine = P2::Engine::instance();
+    std::vector<std::string> specimen = parseCommandLine(argc, argv, *engine, settings);
+    engine->parseContainers(specimen);
 
     SgProject *project = SageInterface::getProject();
     SourceLocations lineMapper;
     lineMapper.insertFromDebug(project);
     lineMapper.printSrcToAddr(std::cout);
     lineMapper.printAddrToSrc(std::cout);
+
+    delete engine;
 }

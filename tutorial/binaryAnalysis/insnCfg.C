@@ -16,9 +16,9 @@ namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 int main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
 
-    P2::Engine engine;
-    std::vector<std::string> specimen = engine.parseCommandLine(argc, argv, purpose, description).unreachedArgs();
-    P2::Partitioner partitioner = engine.partition(specimen);
+    P2::Engine *engine = P2::Engine::instance();
+    std::vector<std::string> specimen = engine->parseCommandLine(argc, argv, purpose, description).unreachedArgs();
+    P2::Partitioner partitioner = engine->partition(specimen);
 
     // Get the standard basic block CFG and empty instruction CFG. The instruction CFG is as simple as possible: each vertex is
     // just a pointer to an instruction AST (with ill-defined ownership and all) and we're not storing any data on the
@@ -73,6 +73,8 @@ int main(int argc, char *argv[]) {
                       <<" to vertex " <<edge.target()->id() <<"\n";
         }
     }
+
+    delete engine;
 }
 
 #else

@@ -51,7 +51,7 @@ using namespace Rose;
 // DQ (6/25/2011): Forward declaration for new name qualification support.
 void generateNameQualificationSupport( SgNode* node, std::set<SgNode*> & referencedNameSet );
 
-// DQ (12/6/2014): The call to this function has been moved to the sage_support.cpp file
+// DQ (12/6/2014): The call to this function has been moved to the sage_support.C file
 // so that it can be called on the AST before transformations.  However it is now
 // split into two parts so that the token stream can be mapped to the AST before
 // transformations, and then the token stream frontier can be computed after

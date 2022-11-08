@@ -293,7 +293,7 @@ CfgEmitter::selectIntervalGraph(const AddressInterval &interval) {
 void
 CfgEmitter::selectInterval(const AddressInterval &interval) {
     for (const ControlFlowGraph::Vertex &vertex: graph_.vertices()) {
-        if (vertex.value().type() == V_BASIC_BLOCK && interval.isContaining(vertex.value().address())) {
+        if (vertex.value().type() == V_BASIC_BLOCK && interval.contains(vertex.value().address())) {
             Organization &org = vertexOrganization(vertex);
             org.select();
             org.label(vertexLabelDetailed(vertex));
