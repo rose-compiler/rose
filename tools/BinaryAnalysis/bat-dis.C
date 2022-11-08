@@ -120,7 +120,7 @@ public:
             for (size_t i=0; i<bb->nInstructions(); ++i) {
                 bool isGoodInstruction = true;
                 for (const NoOperation::IndexInterval &interval: nopIndexes) {
-                    if (interval.isContaining(i)) {
+                    if (interval.contains(i)) {
                         isGoodInstruction = false;
                         break;
                     }
@@ -170,12 +170,12 @@ main(int argc, char *argv[]) {
     Bat::checkRoseVersionNumber(MINIMUM_ROSE_LIBRARY_VERSION, mlog[FATAL]);
     Bat::registerSelfTests();
 
-    P2::Engine engine;
     Settings settings;
+    P2::Engine *engine = P2::Engine::instance();
     if (boost::ends_with(argv[0], "-simple"))
         settings.unparser = BinaryAnalysis::Unparser::Settings::minimal();
-    boost::filesystem::path inputFileName = parseCommandLine(argc, argv, engine, settings);
-    P2::Partitioner partitioner = engine.loadPartitioner(inputFileName, settings.stateFormat);
+    boost::filesystem::path inputFileName = parseCommandLine(argc, argv, *engine, settings);
+    P2::Partitioner partitioner = engine->loadPartitioner(inputFileName, settings.stateFormat);
 
     // Make sure output directories exit
     boost::filesystem::path dir = boost::filesystem::path(settings.fileNamePrefix).parent_path();
@@ -223,4 +223,6 @@ main(int argc, char *argv[]) {
         // Output all functions to standard output
         unparser->unparse(std::cout, partitioner, Progress::instance());
     }
+
+    delete engine;
 }

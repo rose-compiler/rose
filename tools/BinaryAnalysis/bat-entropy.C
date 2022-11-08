@@ -178,7 +178,7 @@ public:
         ASSERT_require2(symbols_.isEmpty() || symbols_.least().size() == symbolSize, "inconsistent symbols size");
         if (nSymbols > 0) {
             AddressInterval erasingInterval = AddressInterval::baseSize(va, nSymbols*symbolSize);
-            ASSERT_require2(location_.isContaining(erasingInterval), "cannot erase what isn't present");
+            ASSERT_require2(location_.contains(erasingInterval), "cannot erase what isn't present");
             if (erasingInterval == location_) {
                 clear();
             } else if (location_.least() == erasingInterval.least()) {
@@ -303,10 +303,10 @@ main(int argc, char *argv[]) {
     Bat::checkRoseVersionNumber(MINIMUM_ROSE_LIBRARY_VERSION, mlog[FATAL]);
     Bat::registerSelfTests();
 
-    P2::Engine engine;
     Settings settings;
-    boost::filesystem::path inputFileName = parseCommandLine(argc, argv, engine, settings);
-    P2::Partitioner partitioner = engine.loadPartitioner(inputFileName, settings.stateFormat);
+    P2::Engine *engine = P2::Engine::instance();
+    boost::filesystem::path inputFileName = parseCommandLine(argc, argv, *engine, settings);
+    P2::Partitioner partitioner = engine->loadPartitioner(inputFileName, settings.stateFormat);
     MemoryMap::Ptr map = partitioner.memoryMap();
     ASSERT_not_null(map);
 
@@ -398,4 +398,6 @@ main(int argc, char *argv[]) {
             break;                                      // overflow
         va = nextVa;
     }
+
+    delete engine;
 }

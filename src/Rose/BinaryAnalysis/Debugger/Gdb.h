@@ -12,6 +12,7 @@
 #include <boost/process.hpp>
 
 #include <condition_variable>
+#include <future>
 #include <string>
 #include <thread>
 
@@ -66,6 +67,13 @@ public:
             const std::lock_guard<std::mutex> lock(mutex_);
             items_.push_back(item);
             cond_.notify_one();
+        }
+
+        // Remove all items from this FIFO
+        void clear() {
+            const std::lock_guard<std::mutex> lock(mutex_);
+            items_.clear();
+            cond_.notify_all();
         }
 
         // Mark the list as closed. No more items can be appended.
@@ -136,6 +144,12 @@ private:
     boost::process::async_pipe gdbOutputPipe_;
     boost::process::opstream gdbInput_;
     boost::asio::streambuf gdbOutputBuffer_;
+    std::vector<std::pair<std::string, RegisterDescriptor>> registers_;
+    std::list<GdbResponse> responses_;                          // accumulated responses
+    AddressIntervalSet breakPoints_;                            // all break points
+    std::map<rose_addr_t, unsigned /*bp_id*/> gdbBreakPoints_;  // subset of breakpoints known to GDB
+    std::future<int> exitCodeFuture_;                           // exit code returned from GDB thread
+    Sawyer::Optional<int> exitCode_;                            // exit code from the GDB process
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Constructors and destructors
@@ -166,6 +180,43 @@ public:
     virtual void attach(const Specimen&);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Low-level stuff not often used publically but available nonetheless.
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    /** Send command to debugger.
+     *
+     *  Clears accumulated responses, then sends the specified command to GDB and returns the subsequent responses. The
+     *  responses are all those that have arrived asynchronously since any prior command was executed, the required response
+     *  for this command, and all asynchronous reponses that arrive before this function returns. The responses are also
+     *  available with the @ref responses property. */
+    const std::list<GdbResponse>& sendCommand(const std::string&);
+
+    /** Read up to one pending asynchronous reponse.
+     *
+     *  If an asynchronous reponse is available, then this function consumes it from the queue and returns it. A response
+     *  normally consists of multiple lines of output returned as a list of individual @ref GdbResponse objects. */
+    std::list<GdbResponse> readRequiredResponses();
+
+    /** Read one reponse.
+     *
+     *  Blocks until a response is available, then this function consumes it from the queue and returns it. A response
+     *  normally consists of multiple lines of output returned as a list of individual @ref GdbResponse objects. */
+    std::list<GdbResponse> readOptionalResponses();
+
+    /** Return all accumulated responses.
+     *
+     *  This is the ordered sequence of GDB responses since the last time it was cleared. */
+    const std::list<GdbResponse>& responses() const;
+
+    /** Clear the accumulated responses. */
+    void resetResponses();
+
+    /** Get the list of register names and descriptors for this architecture.
+     *
+     *  These registers are reported in the same order as used by GDB. */
+    const std::vector<std::pair<std::string, RegisterDescriptor>>& registerNames() const;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Overrides for methods declared and documented in the super class.
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
@@ -173,8 +224,6 @@ public:
     virtual void detach() override;
     virtual void terminate() override;
     virtual std::vector<ThreadId> threadIds() override;
-    virtual void executionAddress(ThreadId, rose_addr_t) override;
-    virtual rose_addr_t executionAddress(ThreadId) override;
     virtual void setBreakPoint(const AddressInterval&) override;
     virtual void clearBreakPoint(const AddressInterval&) override;
     virtual void clearBreakPoints() override;
@@ -187,24 +236,25 @@ public:
     virtual std::vector<uint8_t> readMemory(rose_addr_t va, size_t nBytes) override;
     virtual Sawyer::Container::BitVector readMemory(rose_addr_t va, size_t nBytes, ByteOrder::Endianness order) override;
     virtual size_t writeMemory(rose_addr_t va, size_t nBytes, const uint8_t *bytes) override;
-    virtual std::string readCString(rose_addr_t va, size_t maxBytes = UNLIMITED) override;
     virtual bool isTerminated() override;
     virtual std::string howTerminated() override;
-    virtual RegisterDictionaryPtr registerDictionary() const override;
-    virtual Disassembler::BasePtr disassembler() const override;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Supporting functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private:
-    // Send a command to GDB and read its response
-    void sendCommand(const std::string&);
-
     // Read GDB's multi-line response to a command
-    std::list<GdbResponse> readRequiredResponses();
-    std::list<GdbResponse> readOptionalResponses();
     std::list<GdbResponse> readResponseSet(bool required);
 
+    // Find the index for the GDB register whose major and minor numbers match the specified register.
+    Sawyer::Optional<size_t> findRegisterIndex(RegisterDescriptor) const;
+
+    // Find the register descriptor for the GDB register whose major and minor numbers match the specified register. Returns
+    // an empty descriptor if not found.
+    RegisterDescriptor findRegister(RegisterDescriptor) const;
+
+    // True if GDB should handle the break points; false if ROSE should handle the break points.
+    bool gdbHandlesBreakPoints() const;
 };
 
 } // namespace

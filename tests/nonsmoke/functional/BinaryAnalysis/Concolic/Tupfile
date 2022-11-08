@@ -20,7 +20,7 @@ run $(support_compile_linkexe) sampleExecutable.C
 run $(support_compile_linkexe) test-execution-monitor.C
 
 # a.3) execution monitor to produce quality score
-# run $(tool_compile_linkexe) rose-execution-monitor-zero.C
+run $(tool_compile_linkexe) rose-execution-monitor-zero.C
 
 # a.4) test compiled programs
 run $(tool_compile_linkexe) testConcolicDB.C

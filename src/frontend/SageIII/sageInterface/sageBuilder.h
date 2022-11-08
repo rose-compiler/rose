@@ -1049,16 +1049,12 @@ buildTypedefDeclaration_nfi(const std::string& name, SgType* base_type, SgScopeS
 ROSE_DLL_API SgTemplateTypedefDeclaration*
 buildTemplateTypedefDeclaration_nfi(const SgName & name, SgType* base_type, SgScopeStatement* scope = NULL, bool has_defining_base=false);
 
-#if 1
-// ROSE_DLL_API SgTemplateInstantiationTypedefDeclaration*
-// buildTemplateInstantiationTypedefDeclaration_nfi(SgName name, SgType* base_type, SgScopeStatement* scope, bool has_defining_base, SgTemplateTypedefDeclaration* templateTypedefDeclaration, SgTemplateArgumentPtrList templateArgumentList);
-// ROSE_DLL_API SgTemplateInstantiationTypedefDeclaration*
-// buildTemplateInstantiationTypedefDeclaration_nfi(SgName name, SgType* base_type, SgScopeStatement* scope, bool has_defining_base, SgTemplateTypedefDeclaration* templateTypedefDeclaration);
-// ROSE_DLL_API SgTemplateInstantiationTypedefDeclaration*
-// buildTemplateInstantiationTypedefDeclaration_nfi();
-ROSE_DLL_API SgTemplateInstantiationTypedefDeclaration*
-buildTemplateInstantiationTypedefDeclaration_nfi(SgName & name, SgType* base_type, SgScopeStatement* scope, bool has_defining_base, SgTemplateTypedefDeclaration* templateTypedefDeclaration, SgTemplateArgumentPtrList & templateArgumentsList);
-#endif
+
+ROSE_DLL_API SgTemplateInstantiationTypedefDeclaration * buildTemplateInstantiationTypedefDeclaration_nfi(
+  SgName & name, SgType* base_type, SgScopeStatement* scope, bool has_defining_base,
+  SgTemplateTypedefDeclaration * templateTypedefDeclaration,
+  SgTemplateArgumentPtrList & templateArgumentsList
+);
 
 //! Build an empty SgFunctionParameterList, possibly with some initialized names filled in
 ROSE_DLL_API SgFunctionParameterList * buildFunctionParameterList(SgInitializedName* in1 = NULL, SgInitializedName* in2 = NULL, SgInitializedName* in3 = NULL, SgInitializedName* in4 = NULL, SgInitializedName* in5 = NULL, SgInitializedName* in6 = NULL, SgInitializedName* in7 = NULL, SgInitializedName* in8 = NULL, SgInitializedName* in9 = NULL, SgInitializedName* in10 = NULL);
@@ -1089,6 +1085,7 @@ ROSE_DLL_API SgTemplateParameterPtrList* getTemplateParameterList( SgDeclaration
 ROSE_DLL_API void setTemplateArgumentsInDeclaration               ( SgDeclarationStatement* decl, SgTemplateArgumentPtrList* templateArgumentsList_input );
 ROSE_DLL_API void setTemplateSpecializationArgumentsInDeclaration ( SgDeclarationStatement* decl, SgTemplateArgumentPtrList* templateSpecializationArgumentsList_input );
 ROSE_DLL_API void setTemplateParametersInDeclaration              ( SgDeclarationStatement* decl, SgTemplateParameterPtrList* templateParametersList_input );
+
 
 //! Build a prototype for a function, handle function type, symbol etc transparently
 // DQ (7/26/2012): Changing the API to include template arguments so that we can generate names with and without template arguments (to support name mangiling).
@@ -1849,6 +1846,75 @@ namespace Rose {
         }// ::Rose::frontend::java
     }// ::Rose::frontend
 }// ::Rose
+
+namespace Rose {
+  namespace Builder {
+    namespace Templates {
+
+      SgTemplateArgument * buildTemplateArgument(SgType * t);
+      SgTemplateArgument * buildTemplateArgument(SgExpression * e);
+      SgTemplateArgument * buildTemplateArgument(int v);
+      SgTemplateArgument * buildTemplateArgument(bool v);
+
+      std::string strTemplateArgument(int v);
+      std::string strTemplateArgument(bool v);
+      std::string strTemplateArgument(SgType * t);
+      std::string strTemplateArgument(SgNamedType * nt);
+      std::string strTemplateArgument(SgExpression * e);
+
+      template <typename... Args>
+      struct TemplateArgumentList {
+        static std::string str() { return ""; }
+        static void fill(std::vector<SgTemplateArgument *> & tpl_args) {}
+      };
+      
+      template <typename T>
+      struct TemplateArgumentList<T> {
+        static std::string str(T v) {
+          return strTemplateArgument(v);
+        }
+        static void fill(std::vector<SgTemplateArgument *> & tpl_args, T v) {
+          tpl_args.push_back(buildTemplateArgument(v));
+        }
+      };
+      
+      template <typename T, typename... Args>
+      struct TemplateArgumentList<T, Args...> {
+        static std::string str(T v, Args... args) {
+          return strTemplateArgument(v) + ", " + TemplateArgumentList<Args...>::str(args...);
+        }
+        static void fill(std::vector<SgTemplateArgument *> & tpl_args, T v, Args... args) {
+          tpl_args.push_back(buildTemplateArgument(v));
+          TemplateArgumentList<Args...>::fill(tpl_args, args...);
+        }
+      };
+
+      template <typename... Args>
+      std::string strTemplateArgumentList(Args... args) {
+        return TemplateArgumentList<Args...>::str(args...);
+      }
+
+      template <typename... Args>
+      void fillTemplateArgumentList(std::vector<SgTemplateArgument *> & tpl_args, Args... args) {
+        TemplateArgumentList<Args...>::fill(tpl_args, args...);
+      }
+
+      template <typename... Args>
+      std::vector<SgTemplateArgument *> buildTemplateArgumentList(Args... args) {
+        std::vector<SgTemplateArgument *> tpl_args;
+        TemplateArgumentList<Args...>::fill(tpl_args, args...);
+        return tpl_args;
+      }
+
+      SgExpression * instantiateNonrealRefExps(SgExpression * expr, std::vector<SgTemplateParameter *> & tpl_params, std::vector<SgTemplateArgument *> & tpl_args);
+      SgType * instantiateNonrealTypes(SgType * type, std::vector<SgTemplateParameter *> & tpl_params, std::vector<SgTemplateArgument *> & tpl_args);
+
+} } }
+
+namespace SageBuilder {
+  using namespace Rose::Builder::Templates;
+}
+
 //-----------------------------------------------------------------------------
 //#endif // ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 //-----------------------------------------------------------------------------

@@ -55,13 +55,13 @@ int
 main(int argc, char** argv) {
     ROSE_INITIALIZE;
     TimingPerformance timer ("AST Library Identification checker (main): time (sec) = ",true);
-    P2::Engine engine;
-    engine.doingPostFunctionStackDelta(false); // We don't need StackDelta analysis
+    P2::Engine *engine = P2::Engine::instance();
+    engine->settings().partitioner.doingPostFunctionStackDelta = false; // We don't need StackDelta analysis
 
     //----------------------------------------------------------
     // Parse Command line args
     Settings settings;
-    std::vector<std::string> specimenNames = parseCommandLine(argc, argv, engine, settings);
+    std::vector<std::string> specimenNames = parseCommandLine(argc, argv, *engine, settings);
      
     if (specimenNames.empty())
         throw std::runtime_error("no specimen specified; see --help");
@@ -83,18 +83,18 @@ main(int argc, char** argv) {
     }
     std::string libHash = fnv.toString();
 
-    engine.loadSpecimens(specimenNames);
+    engine->loadSpecimens(specimenNames);
 
     // Some analyses need to know what part of the address space is being disassembled.
-    ASSERT_not_null(engine.memoryMap());
+    ASSERT_not_null(engine->memoryMap());
     AddressIntervalSet executableSpace;
-    for (const MemoryMap::Node &node: engine.memoryMap()->nodes()) {
+    for (const MemoryMap::Node &node: engine->memoryMap()->nodes()) {
         if ((node.value().accessibility() & MemoryMap::EXECUTABLE) != 0)
             executableSpace.insert(node.key());
     }
      
     // Create a partitioner that's tuned for a certain architecture, and then tune it even more depending on our command-line.
-    P2::Partitioner partitioner = engine.createPartitioner();
+    P2::Partitioner partitioner = engine->createPartitioner();
 
     // Build a Library Identification database (in the current directory).
     Flir flir;
@@ -108,4 +108,6 @@ main(int argc, char** argv) {
 #else
     printf ("SKIPPING TEST OF BINARY AGAINST GENERATED DATABASE! \n");
 #endif
+
+    delete engine;
 }

@@ -160,19 +160,19 @@ main(int argc, char *argv[]) {
     Bat::checkRoseVersionNumber(MINIMUM_ROSE_LIBRARY_VERSION, mlog[FATAL]);
     Bat::registerSelfTests();
 
-    P2::Engine engine;
     Settings settings;
-    std::vector<std::string> specimen = parseCommandLine(argc, argv, engine, settings);
+    P2::Engine *engine = P2::Engine::instance();
+    std::vector<std::string> specimen = parseCommandLine(argc, argv, *engine, settings);
     Bat::checkRbaOutput(settings.outputFileName, mlog);
 
-    MemoryMap::Ptr map = engine.loadSpecimens(specimen);
+    MemoryMap::Ptr map = engine->loadSpecimens(specimen);
     map->dump(mlog[INFO]);
 
     if (settings.doRemap) {
-        P2::Engine::Settings settings = engine.settings();
+        P2::Engine::Settings settings = engine->settings();
         settings.partitioner.doingPostAnalysis = false;
         if (settings.disassembler.isaName.empty()) {
-            Disassembler::Base::Ptr disassembler = engine.obtainDisassembler();
+            Disassembler::Base::Ptr disassembler = engine->obtainDisassembler();
             if (!disassembler) {
                 mlog[FATAL] <<"no disassembler found and none specified\n";
                 exit(1);
@@ -182,17 +182,17 @@ main(int argc, char *argv[]) {
         MemoryMap::Ptr newMap = BestMapAddress::align(map, settings);
         mlog[INFO] <<"Remapped addresses:\n";
         newMap->dump(mlog[INFO]);
-        engine.memoryMap(newMap);
+        engine->memoryMap(newMap);
     }
 
     P2::Partitioner partitioner;
-    if (engine.doDisassemble()) {
-        mlog[INFO] <<"using the " <<engine.obtainDisassembler()->name() <<" disassembler\n";
-        partitioner = engine.partition(specimen);
+    if (engine->settings().disassembler.doDisassemble) {
+        mlog[INFO] <<"using the " <<engine->obtainDisassembler()->name() <<" disassembler\n";
+        partitioner = engine->partition(specimen);
     } else {
-        partitioner = engine.createPartitioner();
-        engine.runPartitionerInit(partitioner);
-        engine.runPartitionerFinal(partitioner);
+        partitioner = engine->createPartitioner();
+        engine->runPartitionerInit(partitioner);
+        engine->runPartitionerFinal(partitioner);
     }
 
 #if 0 // DEBUGGING [Robb Matzke 2018-10-24]
@@ -201,6 +201,8 @@ main(int argc, char *argv[]) {
 
     if (!settings.skipOutput) {
         partitioner.basicBlockDropSemantics();
-        engine.savePartitioner(partitioner, settings.outputFileName, settings.stateFormat);
+        engine->savePartitioner(partitioner, settings.outputFileName, settings.stateFormat);
     }
+
+    delete engine;
 }

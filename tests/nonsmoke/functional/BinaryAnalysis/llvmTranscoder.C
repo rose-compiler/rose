@@ -31,10 +31,10 @@ struct Settings {
 SgProject*
 buildAst(int argc, char *argv[], Settings &settings) {
     using namespace Sawyer::CommandLine;
-    P2::Engine engine;
+    P2::Engine *engine = P2::Engine::instance();
 
     // Parse the commane-line
-    Parser p = engine.commandLineParser("transcode to LLVM", "Convert an ELF/PE specimen to LLVM assembly for testing.");
+    Parser p = engine->commandLineParser("transcode to LLVM", "Convert an ELF/PE specimen to LLVM assembly for testing.");
     SwitchGroup tool("Tool-specific switches");
     tool.insert(Switch("llvm")
                 .argument("version", anyParser(settings.llvmVersionString))
@@ -64,12 +64,13 @@ buildAst(int argc, char *argv[], Settings &settings) {
     }
 
     // Parse, load, disassemble, and partition the specimen.
-    (void) engine.buildAst(specimen);
+    (void) engine->buildAst(specimen);
     SgProject *project = SageInterface::getProject();
     if (!project) {
         ::mlog[FATAL] <<"This tool only supports ELF/PE specimens.\n";
         exit(1);
     }
+    delete engine;
     
     return project;
 }

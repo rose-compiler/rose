@@ -145,7 +145,7 @@ namespace CommandlineProcessing
           ROSE_DLL_API bool isOptionTakingThirdParameter ( std::string argument );
    };
 
-// DQ (4/5/2010): This are defined in sage_support.cpp
+// DQ (4/5/2010): This are defined in sage_support.C
 //! Find the path of a ROSE support file.  If ROSE is not installed (see
 //! roseInstallPrefix()), the top of the source tree plus sourceTreeLocation is
 //! used as the location.  If the variable is not set, the path in
@@ -154,7 +154,7 @@ ROSE_DLL_API std::string
 findRoseSupportPathFromSource(const std::string& sourceTreeLocation,
                               const std::string& installTreeLocation);
 
-// DQ (4/5/2010): This are defined in sage_support.cpp
+// DQ (4/5/2010): This are defined in sage_support.C
 //! Find the path of a ROSE support file.  If ROSE is not installed (see
 //! roseInstallPrefix()), the top of the build tree plus buildTreeLocation is
 //! used as the location.  If the variable is not set, the path in
@@ -163,7 +163,7 @@ ROSE_DLL_API std::string
 findRoseSupportPathFromBuild(const std::string& buildTreeLocation,
                              const std::string& installTreeLocation);
 
-// DQ (4/5/2010): This are defined in sage_support.cpp
+// DQ (4/5/2010): This are defined in sage_support.C
 //! Find the path of the ROSE install prefix.  There is an assumption that
 //! <directory containing librose>/.. is the prefix, and that other things can
 //! be found from that.  This may not be true if the various install

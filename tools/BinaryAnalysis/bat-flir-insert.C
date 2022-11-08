@@ -121,8 +121,8 @@ hashLibrary(const MemoryMap::Ptr &map) {
 
 static void
 copyFromRba(const Settings &settings, Flir &dst, const std::string &rbaName) {
-    P2::Engine engine;
-    P2::Partitioner partitioner = engine.loadPartitioner(rbaName, settings.stateFormat);
+    P2::Engine *engine = P2::Engine::instance();
+    P2::Partitioner partitioner = engine->loadPartitioner(rbaName, settings.stateFormat);
 
     std::string libraryHash = settings.libraryHash;
     if (libraryHash.empty()) {
@@ -141,6 +141,8 @@ copyFromRba(const Settings &settings, Flir &dst, const std::string &rbaName) {
                                        libraryArchitecture);
     size_t nInserted = dst.insertLibrary(lib, partitioner);
     mlog[INFO] <<"inserted/updated " <<StringUtility::plural(nInserted, "functions") <<"\n";
+
+    delete engine;
 }
 
 static void

@@ -121,10 +121,10 @@ BestMapAddress::analyze(const AddressInterval &restrictEntryAddresses, const Add
     std::set<rose_addr_t> deltaSet;
     maxMatches_ = 0;
     for (rose_addr_t entryVa: entryVas_.values()) {
-        if (restrictEntryAddresses.isContaining(entryVa)) {
+        if (restrictEntryAddresses.contains(entryVa)) {
             ++maxMatches_;
             for (rose_addr_t targetVa: targetVas_.values()) {
-                if (restrictTargetAddresses.isContaining(targetVa))
+                if (restrictTargetAddresses.contains(targetVa))
                     deltaSet.insert((targetVa - entryVa) & mask);
             }
         }
@@ -201,18 +201,18 @@ BestMapAddress::align(const MemoryMap::Ptr &map, const P2::Engine::Settings &set
         }
 
         // Partitioning engine used by the BestMapAddress analysis.
-        P2::Engine engine(settings);
-        engine.memoryMap(tmpMap);
-        engine.doingPostAnalysis(false);
+        P2::Engine *engine = P2::Engine::instance(settings);
+        engine->memoryMap(tmpMap);
+        engine->settings().partitioner.doingPostAnalysis = false;
         if (progress)
-            engine.progress(progress);
+            engine->progress(progress);
 
         // Analyze the tmpMap using the specified partitioning engine.
         BestMapAddress mapAnalyzer;
         mapAnalyzer.progress(progress);
         {
             ProgressTask t(progress, "disassemble", (double)(nWork-1) / totalWork);
-            mapAnalyzer.gatherAddresses(engine);
+            mapAnalyzer.gatherAddresses(*engine);
         }
         mlog[INFO] <<"found " <<StringUtility::plural(mapAnalyzer.entryAddresses().size(), "entry addresses") <<" and "
                    <<StringUtility::plural(mapAnalyzer.targetAddresses().size(), "target addresses") <<"\n";
@@ -271,7 +271,10 @@ BestMapAddress::align(const MemoryMap::Ptr &map, const P2::Engine::Settings &set
             rose_addr_t adjustedEntryVa = (origEntryVa + bestDelta) & mask;
             entryAddresses.insert(adjustedEntryVa);
         }
+
+        delete engine;
     }
+
     return retval;
 }
 

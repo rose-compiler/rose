@@ -327,15 +327,17 @@ main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
     Diagnostics::initAndRegister(&::mlog, "tool");
 
-    P2::Engine engine;
-    std::vector<std::string> specimen = engine.parseCommandLine(argc, argv, "tests semantics initial states", description)
+    P2::Engine *engine = P2::Engine::instance();
+    std::vector<std::string> specimen = engine->parseCommandLine(argc, argv, "tests semantics initial states", description)
                                         .unreachedArgs();
-    P2::Partitioner partitioner = engine.partition(specimen);
+    P2::Partitioner partitioner = engine->partition(specimen);
 
     basicReadTest(partitioner);
     advancedReadTest(partitioner);
-    BOOST_FOREACH (const P2::Function::Ptr &function, partitioner.functions())
-        analyzeFunction(partitioner, function);
+    for (const P2::Function::Ptr &function : partitioner.functions())
+         analyzeFunction(partitioner, function);
+
+    delete engine;
 }
 
 #endif

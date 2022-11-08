@@ -56,8 +56,7 @@ mProgramTransformationPath=programTransformation#
 SUBDIRS = \
 	BinaryAnalysis \
 	programTransformation/extractFunctionArgumentsNormalization \
-	programTransformation/singleStatementToBlockNormalization \
-        MFB MDCG KLT
+	programTransformation/singleStatementToBlockNormalization
 
 # DQ (12/2/2016): These directories have poorly formated Makefile.am files have
 # and are a source of portability problem on Ubuntu systems (because they overload 

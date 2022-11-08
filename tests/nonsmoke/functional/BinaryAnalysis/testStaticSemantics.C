@@ -24,13 +24,15 @@ main(int argc, char *argv[]) {
         "from other platforms might be more accustomed to having semantics represented statically as part of an "
         "abstract syntax tree. ROSE can build these static semantics ASTs from its StaticSemantics domain in the "
         "Semantics2 API, and that is what this program tests.";
-    P2::Engine engine;
-    SgAsmBlock *gblock = engine.frontend(argc, argv, purpose, description);
-    InstructionSemantics::StaticSemantics::attachInstructionSemantics(gblock, engine.disassembler());
+    P2::Engine *engine = P2::Engine::instance();
+    SgAsmBlock *gblock = engine->frontend(argc, argv, purpose, description);
+    InstructionSemantics::StaticSemantics::attachInstructionSemantics(gblock, engine->disassembler());
 
 #if 1 // DEBUGGING [Robb P. Matzke 2015-06-08]
     generateDOT(*SageInterface::getProject());
 #endif
+
+    delete engine;
 }
 
 #endif

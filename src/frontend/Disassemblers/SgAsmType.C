@@ -138,9 +138,9 @@ SgAsmFloatType::SgAsmFloatType(ByteOrder::Endianness sex, size_t nBits,
 void
 SgAsmFloatType::check() const {
     SgAsmScalarType::check();
-    ASSERT_always_forbid(exponentBits().isOverlapping(significandBits()));
-    ASSERT_always_forbid(exponentBits().isOverlapping(signBit()));
-    ASSERT_always_forbid(significandBits().isOverlapping(signBit()));
+    ASSERT_always_forbid(exponentBits().overlaps(significandBits()));
+    ASSERT_always_forbid(exponentBits().overlaps(signBit()));
+    ASSERT_always_forbid(significandBits().overlaps(signBit()));
     ASSERT_always_require(exponentBits().greatest() < get_nBits());
     ASSERT_always_require(significandBits().greatest() < get_nBits());
     ASSERT_always_require(signBit() < get_nBits());

@@ -332,18 +332,30 @@ public:
      *
      * @{ */
     template<class Interval2>
-    bool isOverlapping(const Interval2 &interval) const {
+    bool overlaps(const Interval2 &interval) const {
         return map_.isOverlapping(interval);
+    }
+    template<class Interval2>
+    bool isOverlapping(const Interval2 &interval) const {
+        return overlaps(interval);
     }
 
     template<class Interval2>
+    bool overlaps(const IntervalSet<Interval2> &other) const {
+        return map_.overlaps(other.map_);
+    }
+    template<class Interval2>
     bool isOverlapping(const IntervalSet<Interval2> &other) const {
-        return map_.isOverlapping(other.map_);
+        return overlaps(other);
     }
 
     template<class Interval2, class T2, class Policy2>
+    bool overlaps(const IntervalMap<Interval2, T2, Policy2> &other) const {
+        return map_.overlaps(other);
+    }
+    template<class Interval2, class T2, class Policy2>
     bool isOverlapping(const IntervalMap<Interval2, T2, Policy2> &other) const {
-        return map_.isOverlapping(other);
+        return overlaps(other);
     }
     /** @} */
 
@@ -354,17 +366,17 @@ public:
      * @{ */
     template<class Interval2>
     bool isDistinct(const Interval2 &interval) const {
-        return !isOverlapping();
+        return !overlaps();
     }
 
     template<class Interval2>
     bool isDistinct(const IntervalSet<Interval2> &other) const {
-        return !isOverlapping(other);
+        return !overlaps(other);
     }
 
     template<class Interval2, class T2, class Policy2>
     bool isDistinct(const IntervalMap<Interval2, T2, Policy2> &other) const {
-        return !isOverlapping(other);
+        return !overlaps(other);
     }
     /** @} */
 

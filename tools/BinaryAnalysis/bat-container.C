@@ -49,9 +49,9 @@ main(int argc, char *argv[]) {
     Bat::checkRoseVersionNumber(MINIMUM_ROSE_LIBRARY_VERSION, mlog[FATAL]);
     Bat::registerSelfTests();
 
-    P2::Engine engine;
-    boost::filesystem::path inputFileName = parseCommandLine(argc, argv, engine);
-    P2::Partitioner partitioner = engine.loadPartitioner(inputFileName, stateFormat);
+    P2::Engine *engine = P2::Engine::instance();
+    boost::filesystem::path inputFileName = parseCommandLine(argc, argv, *engine);
+    P2::Partitioner partitioner = engine->loadPartitioner(inputFileName, stateFormat);
 
     for (SgFile *file: SageInterface::generateFileList()) {
         if (SgBinaryComposite *binComp = isSgBinaryComposite(file)) {
@@ -72,4 +72,5 @@ main(int argc, char *argv[]) {
             }
         }
     }
+    delete engine;
 }

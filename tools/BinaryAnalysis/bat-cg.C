@@ -216,8 +216,8 @@ main(int argc, char *argv[]) {
 
     Settings settings;
     boost::filesystem::path inputFileName = parseCommandLine(argc, argv, settings);
-    P2::Engine engine;
-    P2::Partitioner partitioner = engine.loadPartitioner(inputFileName, settings.stateFormat);
+    P2::Engine *engine = P2::Engine::instance();
+    P2::Partitioner partitioner = engine->loadPartitioner(inputFileName, settings.stateFormat);
 
     switch (settings.outputFormat) {
         case FORMAT_GRAPHVIZ:
@@ -243,4 +243,6 @@ main(int argc, char *argv[]) {
         default:
             ASSERT_not_implemented("output format");
     }
+
+    delete engine;
 }
