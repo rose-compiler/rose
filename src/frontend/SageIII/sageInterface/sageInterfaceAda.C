@@ -894,7 +894,7 @@ namespace Ada
     bool isExceptionType(const SgType& n)
     {
       const SgTypedefType* ty = isSgTypedefType(&n);
-      if (ty == nullptr || (ty->get_name() == exceptionName))
+      if (ty == nullptr || (ty->get_name() == exceptionName)) // \todo should be !=
         return false;
 
       SgTypedefDeclaration* dcl = isSgTypedefDeclaration(ty->get_declaration());
