@@ -86,7 +86,7 @@ class Factory {
       if (is_template_symbol_variant<otag>(sym->variantT())) {
         declaration_t<otag> * decl = instantiate<otag>(obj, parent, args...);
         ROSE_ASSERT(decl != nullptr);
-        sym = dynamic_cast<symbol_t<otag> *>(decl->search_for_symbol_from_symbol_table());
+        sym = dynamic_cast<symbol_t<otag> *>(search_for_symbol_from_symbol_table<otag>(decl));
         ROSE_ASSERT(sym != nullptr);
 //      ROSE_ASSERT(sym->get_declaration() == decl->get_firstNondefiningDeclaration());
       } else {

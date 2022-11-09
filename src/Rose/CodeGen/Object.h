@@ -45,6 +45,12 @@ template <Object otag> using declaration_t = typename object_helper<otag>::decl_
 template <Object otag> constexpr auto is_template_symbol_variant = object_helper<otag>::is_template_symbol_variant;
 
 /**
+ * This function returns the symbol associated with a declaration
+ * /tparam otag an Object kind
+ */
+template <Object otag> constexpr auto search_for_symbol_from_symbol_table = object_helper<otag>::search_for_symbol_from_symbol_table;
+
+/**
  * Pointer to an API member
  * /tparam otag an Object kind
  * /tparam API
@@ -60,6 +66,7 @@ struct object_helper<Object::a_namespace> {
   using ref_t    = void;
 
   static constexpr bool is_template_symbol_variant(VariantT v) { return v == false; }
+  static symbol_t * search_for_symbol_from_symbol_table(decl_t * d) { return (symbol_t *)d->search_for_symbol_from_symbol_table(); }
 };
 
 template <>
@@ -71,6 +78,7 @@ struct object_helper<Object::a_class> {
   using ref_t    = type_t;
 
   static constexpr bool is_template_symbol_variant(VariantT v) { return v == V_SgTemplateClassSymbol; }
+  static symbol_t * search_for_symbol_from_symbol_table(decl_t * d) { return (symbol_t *)d->search_for_symbol_from_symbol_table(); }
 };
 
 template <>
@@ -82,6 +90,7 @@ struct object_helper<Object::a_typedef> {
   using ref_t    = type_t;
 
   static constexpr bool is_template_symbol_variant(VariantT v) { return v == V_SgTemplateTypedefSymbol; }
+  static symbol_t * search_for_symbol_from_symbol_table(decl_t * d) { return (symbol_t *)d->search_for_symbol_from_symbol_table(); }
 };
 
 template <>
@@ -93,6 +102,10 @@ struct object_helper<Object::a_variable> {
   using ref_t      = SgVarRefExp;
 
   static constexpr bool is_template_symbol_variant(VariantT v) { return v == V_SgTemplateVariableSymbol; }
+  static symbol_t * search_for_symbol_from_symbol_table(decl_t * d) {
+    SgInitializedName * iname = d->get_variables()[0];
+    return (symbol_t *)iname->search_for_symbol_from_symbol_table();
+  }
 };
 
 template <>
@@ -104,6 +117,7 @@ struct object_helper<Object::a_function> {
   using ref_t      = SgFunctionRefExp;
 
   static constexpr bool is_template_symbol_variant(VariantT v) { return v == V_SgTemplateFunctionSymbol || v == V_SgTemplateMemberFunctionSymbol; }
+  static symbol_t * search_for_symbol_from_symbol_table(decl_t * d) { return (symbol_t *)d->search_for_symbol_from_symbol_table(); }
 };
 
 } }

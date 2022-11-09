@@ -88,12 +88,21 @@ void API<CRT>::set_command_line(Driver & driver) const {
   driver.project->set_originalCommandLineArgumentList(cmdline);
 }
 
+#define DEBUG_API__load_headers 0
+
 template <typename CRT>
 void API<CRT>::load_headers(Driver & driver) {
+#if DEBUG_API__load_headers
+  std::cout << "API<CRT>::load_headers" << std::endl;
+#endif
   set_command_line(driver);
   driver.addCxxExtension("hxx");
 
   for (auto file: files) {
+#if DEBUG_API__load_headers
+    std::cout << "  file = " << file << std::endl;
+#endif
+
     bool found = false;
     if (!cache.empty()) {
       // TODO Try to get AST file from cache directory else build AST file
@@ -119,6 +128,8 @@ void API<CRT>::load_headers(Driver & driver) {
   ROSE_ASSERT(SageBuilder::topScopeStack() == NULL); // Sanity check
 }
 
+#define DEBUG_Rose_CodeGen_SymbolScanner 0
+
 template <typename API>
 struct SymbolScanner : public ROSE_VisitTraversal {
   API & api;
@@ -127,8 +138,18 @@ struct SymbolScanner : public ROSE_VisitTraversal {
 
   template <typename SymT>
   void visit(SymT * sym, std::map<std::string, SymT * API::* > const & objmap) {
+#if DEBUG_Rose_CodeGen_SymbolScanner
+    std::cout << "SymbolScanner::visit( sym = " << sym << " : " << sym->class_name() << " )" << std::endl;
+    std::cout << "  sym->get_declaration() = " << sym->get_declaration() << " : " << sym->get_declaration()->class_name() << ")" << std::endl;
+    std::cout << "  sym->get_scope() = " << sym->get_scope() << " : " << sym->get_scope()->class_name() << ")" << std::endl;
+    if (sym->get_scope()) {
+      std::cout << "  sym->get_scope()->get_parent() = " << sym->get_scope()->get_parent() << " : " << sym->get_scope()->get_parent()->class_name() << ")" << std::endl;
+    }
+#endif
     auto str = sym->get_declaration()->get_qualified_name().getString();
-//  std::cout << "str: " << str << std::endl;
+#if DEBUG_Rose_CodeGen_SymbolScanner
+    std::cout << "  str = " << str << std::endl;
+#endif
     auto it = objmap.find(str);
     if (it != objmap.end()) {
       api.*(it->second) = sym;

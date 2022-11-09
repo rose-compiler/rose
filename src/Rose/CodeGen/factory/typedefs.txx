@@ -70,6 +70,10 @@ declaration_t<Object::a_typedef> * __factory_helper_t<CRT, API, Object::a_typede
   }
   defn_scope->append_statement(tddecl);
 
+  for (auto tpl_arg: tpl_args) {
+    tpl_arg->set_parent(tddecl);
+  }
+
   return tddecl;
 }
 
