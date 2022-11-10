@@ -25328,6 +25328,7 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
     out<<" "<< v->get_qualified_name();
     out<<" type@"<< v->get_type();
     out<<" initializer@"<< v->get_initializer();
+    out<<" scope@"<< v->get_scope();
 //    type_set.insert (v->get_type());
   }
 
