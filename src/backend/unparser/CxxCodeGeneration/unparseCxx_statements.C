@@ -7476,62 +7476,6 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      #endif
 
 #if 0
-  // DQ (5/24/2015): Moved to output specifier after the "extern" and "static" keywords.
-     if (usingGxx)
-        {
-          SgFile* file = TransformationSupport::getFile(vardecl_stmt);
-#if 0
-          printf ("In unparseVarDeclStmt(): resolving file to be %p \n",file);
-#endif
-          bool is_Cxx_Compiler = false;
-          bool is_C_Compiler   = false;
-          if (file != NULL)
-             {
-               is_Cxx_Compiler = file->get_Cxx_only();
-               is_C_Compiler   = file->get_C_only();
-             }
-            else
-             {
-            // DQ (3/6/2017): Added support for message logging to control output from ROSE tools.
-               mprintf ("Warning: TransformationSupport::getFile(vardecl_stmt) == NULL \n");
-             }
-
-       // For C we need to use the GNU 4.9 compiler.
-       // Now check the version of the identified GNU g++ compiler.
-          if ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4 && BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER >= 9) || (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER > 4))
-              {
-            // DQ (7/25/2014): Adding C11 thread local support.
-            // if (vardecl_stmt->get_is_thread_local() == true)
-               if (is_C_Compiler == true && vardecl_stmt->get_is_thread_local() == true)
-                  {
-                    curprint("_Thread_local ");
-                  }
-             }
-            else
-             {
-            // For C++ we can use the GNU 4.8 compiler.
-               if ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4 && BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER >= 8) || (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER > 4))
-                  {
-                 // DQ (8/13/2014): Adding C++11 thread local support.
-                    if (is_Cxx_Compiler == true && vardecl_stmt->get_is_thread_local() == true)
-                       {
-                         curprint("thread_local ");
-                       }
-                  }
-                 else
-                  {
-                 // DQ (5/24/2015): Adding support for GNU __thread keyword (thread local support for older versions of C).
-                 // For older compilers we use the __thread modifier.  This may also we what is required for non-C11 support.
-                    if (is_C_Compiler == true && vardecl_stmt->get_is_thread_local() == true)
-                       {
-                         curprint("__thread ");
-                       }
-                  }
-             }
-        }
-#endif
-
-#if 0
      vardecl_stmt->get_declarationModifier().display("Called from unparseVarDeclStmt()");
 #endif
 
@@ -7778,33 +7722,6 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
             // If this is the first variable then output the base type
 #if DEBUG_VARIABLE_DECLARATION
                curprint ("/* In unparseVarDeclStmt(): (first variable): cname = decl_item->get_name() = " + decl_item->get_name() + " */ \n");
-#endif
-#if 0
-            // DQ (5/6/2013): Experiment with calling the new refactored function. This code is perhaps specific to the problem demonstrated in test2013_153.C.
-            // void outputType(T* referenceNode, SgType* referenceNodeType, SgUnparse_Info & info);
-            // unp->u_type->outputType<SgInitializedName>(decl_item,tmp_type,ninfo);
-               SgPointerType* pointerType = isSgPointerType(tmp_type);
-               bool outputAsFunctionPointer = false;
-               if (pointerType != NULL && isSgFunctionType(pointerType->get_base_type()) != NULL)
-                  {
-                    outputAsFunctionPointer = true;
-                  }
-
-#error "DEAD CODE!"
-
-               printf ("outputAsFunctionPointer = %s \n",outputAsFunctionPointer ? "true" : "false");
-
-               outputAsFunctionPointer = true;
-               if (outputAsFunctionPointer == false)
-                  {
-                 // This is a new branch that handles the typical case...(outputAsFunctionPointer == false)
-                    unp->u_type->unparseType(tmp_type, ninfo);
-                    SgName nm = decl_item->get_name();
-                    curprint(nm + " ");
-                  }
-                 else
-                  {
-                 // This is the original branch that was always taken.
 #endif
                decl_item = *p;
                ASSERT_not_null(decl_item);
@@ -8225,7 +8142,6 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #endif
                if (vardecl_stmt->get_isAssociatedWithDeclarationList() == true)
                   {
-#if 1
 #if 0
                     printf ("Using ninfo_for_type.set_PrintName(); to support unparsing of type \n");
 #endif
@@ -8233,11 +8149,6 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                  // But it would have to be uniform that all the pieces of the first part of the type would have to 
                  // be output.  E.g. "*" in "*X".
                     ninfo_for_type.set_PrintName();
-#if 0
-
-#error "DEAD CODE!"
-                    unp->u_type->unparseType(tmp_type, ninfo_for_type);
-#else
                     if (ninfo_for_type.SkipBaseType() == false)
                        {
 #if 0
@@ -8269,43 +8180,6 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                                  }
                             }
                        }
-#endif
-#else
-                 // Get the base type and if it is a class or enum, is it associated with a un-named 
-                 // declaration (if so then we need to output the name in this associated declaration).
-                 // if (isSgNamedType(tmp_type) != NULL)
-#error "DEAD CODE!"
-                    SgType* baseType = tmp_type->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_RVALUE_REFERENCE_TYPE|SgType::STRIP_POINTER_TYPE|SgType::STRIP_ARRAY_TYPE);
-                    SgClassType* classType = isSgClassType(baseType);
-                    SgEnumType*  enumType  = isSgEnumType(baseType);
-                    if (classType != NULL || enumType != NULL)
-                       {
-                         if (classType != NULL)
-                            {
-                              SgClassDeclaration *decl = isSgClassDeclaration(classType->get_declaration());
-                              if (decl->get_isUnNamed() == false)
-                                 {
-                                   SgName nm = decl->get_name();
-                                   curprint (nm + " ");
-                                 }
-                            }
-#error "DEAD CODE!"
-                         if (enumType != NULL)
-                            {
-                              SgEnumDeclaration *decl = isSgEnumDeclaration(enumType->get_declaration());
-                              if (decl->get_isUnNamed() == true)
-                                 {
-                                   SgName nm = decl->get_name();
-                                   curprint (nm + " ");
-                                 }
-                            }
-                       }
-                      else
-                       {
-                      // If this is not a class or enum type then output the type as we would otherwise.
-                         unp->u_type->unparseType(tmp_type, ninfo_for_type);
-                       }
-#endif
                   }
                  else
                   {
@@ -8352,11 +8226,6 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                          printf ("In unparseVarDeclStmt(): Note that (ninfo_for_type.SkipBaseType() == true) so type was not unparsed \n");
                        }
                   }
-#else
-
-#error "DEAD CODE!"
-
-               unp->u_type->unparseType(tmp_type, ninfo_for_type);
 #endif
 
 #if 0
@@ -8381,7 +8250,6 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
             // DQ (12/30/2013): Adding support to seperate how packing is handled when attached to the type of a variable vs. the variable directly.
                if (!ninfo.inEnumDecl() && !ninfo.inArgList() && !ninfo.SkipSemiColon())
                   {
-                 // unp->u_sage->printAttributes(vardecl_stmt,info);
                     unp->u_sage->printAttributesForType(vardecl_stmt,info);
                   }
 #if DEBUG_VARIABLE_DECLARATION
@@ -8632,37 +8500,17 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                          curprint ( string("\")"));
                        }
                   }
-               
-#if 0
-               printf ("Calling printAttributes() \n");
-               curprint("\n/* Calling printAttributes() */ \n ");
-#endif
-            // DQ (2/6/2014): Move this to be after the name is output.
-            // DQ (8/31/2013): Added support for missing attributes.
+
+            // TV: Variable attributes held by both variable declaration and initialized name must be unparsed before the initializer.
+            //     I guarded the declaration level call using the same guard as used above for the call printAttributesForType
                unp->u_sage->printAttributes(decl_item,info);
+               if (!ninfo.inEnumDecl() && !ninfo.inArgList() && !ninfo.SkipSemiColon()) {
+                 unp->u_sage->printAttributes(vardecl_stmt,info);
+               }
 
-            // DQ (7/26/2014): comment out to avoid compiler warning.
-            // Mark that we are no longer processing the first entry 
-            // (first variable in a declaration containing multiple "," separated names)
-            // first = false;
-
-            // DQ (5/6/2013): Associated end of block for alternative handling of type in variable declaration.
-            //    }
 #if DEBUG_VARIABLE_DECLARATION
                printf ("In unparseVarDeclStmt(): Handle initializers (if any) \n");
                curprint("\n/* Handle initializers (if any) */ \n");
-#endif
-            // Unparse the initializers if any exist
-
-#if 0
-               if (tmp_init != NULL)
-                  {
-                    printf ("In unparseVarDeclStmt(): Initializer tmp_init = %p = %s \n",tmp_init,tmp_init->class_name().c_str());
-                    printf (" --- decl_item->get_using_assignment_copy_constructor_syntax() = %s \n",decl_item->get_using_assignment_copy_constructor_syntax() ? "true" : "false");
-#if 0
-                    tmp_init->get_file_info()->display("Initializer tmp_init: debug");
-#endif
-                  }
 #endif
 
 #define DEBUG_COPY_INITIALIZER_SYNTAX 0
@@ -8891,10 +8739,6 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                curprint(tmp_name.str());
              }
 
-       // DQ (8/31/2013): I think this is the wrong location for the attribute (see test2013_40.c).
-       // DQ (2/27/2013): Added support for missing attributes.
-       // unp->u_sage->printAttributes(decl_item,info);
-
 #if 0
           curprint("\n /* Inside of unparseVarDeclStmt(): increment the variable iterator */ \n");
 #endif
@@ -8957,9 +8801,6 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 //   if (!ninfo.inEnumDecl() && !ninfo.inArgList() && !ninfo.SkipSemiColon())
      if (!ninfo.SkipSemiColon())
         {
-       // DQ (2/27/2013): Added support for missing attributes.
-          unp->u_sage->printAttributes(vardecl_stmt,info);
-
           curprint(";");
         }
 #if 0
