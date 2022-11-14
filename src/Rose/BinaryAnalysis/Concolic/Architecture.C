@@ -12,6 +12,8 @@
 #include <Rose/BinaryAnalysis/Concolic/TestCase.h>
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
 
+#include <boost/format.hpp>
+
 using namespace Sawyer::Message::Common;
 namespace BS = Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
@@ -185,7 +187,23 @@ Architecture::playEvent(const ExecutionEvent::Ptr &event) {
         case ExecutionEvent::Action::BULK_MEMORY_MAP: {
             AddressInterval where = event->memoryLocation();
             ASSERT_forbid(where.isEmpty());
-            SAWYER_MESG(debug) <<"  map " <<where.size() <<" bytes at " <<StringUtility::addrToString(where) <<", prot=";
+            if (debug) {
+                debug <<"  map " <<where.size() <<" bytes at " <<StringUtility::addrToString(where) <<", prot=";
+                if ((event->permissions() & MemoryMap::READABLE) != 0)
+                    debug <<"r";
+                if ((event->permissions() & MemoryMap::WRITABLE) != 0)
+                    debug <<"w";
+                if ((event->permissions() & MemoryMap::EXECUTABLE) != 0)
+                    debug <<"x";
+                if ((event->permissions() & MemoryMap::IMMUTABLE) != 0)
+                    debug <<"i";
+                if ((event->permissions() & MemoryMap::PRIVATE) != 0)
+                    debug <<"p";
+                const unsigned otherMask = ~(MemoryMap::READ_WRITE_EXECUTE | MemoryMap::IMMUTABLE | MemoryMap::PRIVATE);
+                if (const unsigned other = event->permissions() & otherMask)
+                    debug <<(boost::format("+0x%08x") % (event->permissions() & otherMask));
+                debug <<"\n";
+            }
             mapMemory(where, event->permissions());
             return true;
         }

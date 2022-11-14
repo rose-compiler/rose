@@ -60,6 +60,12 @@ Base::registerDictionary() {
     return disassembler()->registerDictionary();
 }
 
+std::string
+Base::registerName(RegisterDescriptor desc) {
+    const std::string s = registerDictionary()->lookup(desc);
+    return s.empty() ? desc.toString() : s;
+}
+
 Sawyer::Container::Trace<rose_addr_t>
 Base::trace() {
     DefaultTraceFilter filter;

@@ -1338,11 +1338,11 @@ struct ToBytes {
     }
 
     bool operator()(const Word &word, size_t nbits) {
-        Word tmp = word & 0xff;
+        Word tmp = word;
         ASSERT_require(nremaining < size_t(8));
-        while (nremaining+nbits >= size_t(8)) {
-            const size_t nrem = std::min(nremaining, size_t(8)); // number left-over bits to use
-            const size_t nnew = size_t(8) - nrem;                // number of new bits to use
+        while (nremaining + nbits >= size_t(8)) {
+            const size_t nrem = nremaining;             // number left-over bits to use
+            const size_t nnew = size_t(8) - nrem;       // number of new bits to use
             const Word byte = (remaining & bitMask<Word>(0, nrem)) | ((tmp & bitMask<Word>(0, nnew)) << nrem);
             bytes.push_back(byte);
             nremaining = 0;
@@ -1378,10 +1378,9 @@ void fromBytes(Word *vec, const BitRange &range, const std::vector<uint8_t> &inp
     size_t offset = 0;                                  // bit offset from range.least()
     for (size_t idx = 0; idx < input.size() && offset < range.size(); ++idx) {
         const Word byte = input[idx];
-        const size_t nbits = std::min(size_t(8), range.size() - offset); // number of bits of the input byte to copy
-        copy(&byte, BitRange::baseSize(0, std::min(size_t(8), nbits)),
-             vec, BitRange::baseSize(range.least() + offset, nbits));
-        offset += 8;
+        const size_t nbits = std::min(size_t(8), range.size() - offset); // number of bits to copy
+        copy(&byte, BitRange::baseSize(0, nbits), vec, BitRange::baseSize(range.least() + offset, nbits));
+        offset += nbits;
     }
 
     // Zero fill high order stuff that we didn't already initialize

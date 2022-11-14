@@ -230,6 +230,7 @@ public:
     virtual void singleStep(ThreadId) override;
     virtual void runToBreakPoint(ThreadId) override;
     virtual Sawyer::Container::BitVector readRegister(ThreadId, RegisterDescriptor) override;
+    virtual std::vector<RegisterDescriptor> availableRegisters() override;
     virtual void writeRegister(ThreadId, RegisterDescriptor, const Sawyer::Container::BitVector&) override;
     virtual void writeRegister(ThreadId, RegisterDescriptor, uint64_t value) override;
     virtual size_t readMemory(rose_addr_t va, size_t nBytes, uint8_t *buffer) override;
@@ -238,6 +239,8 @@ public:
     virtual size_t writeMemory(rose_addr_t va, size_t nBytes, const uint8_t *bytes) override;
     virtual bool isTerminated() override;
     virtual std::string howTerminated() override;
+    virtual Sawyer::Container::BitVector readAllRegisters(ThreadId) override;
+    virtual void writeAllRegisters(ThreadId, const Sawyer::Container::BitVector&) override;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Supporting functions

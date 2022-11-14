@@ -821,18 +821,6 @@ void
 LinuxI386SyscallBrk::handlePostSyscall(SyscallContext &ctx) {
     hello("LinuxI386SyscallBrk::handlePostSyscall", ctx);
 
-#if 0 // [Robb Matzke 2021-12-17]
-    ASSERT_not_null(ctx.returnEvent);
-    if (SymbolicExpression::Ptr v = ctx.returnEvent->value())
-        std::cerr <<"ROBB: value      = " <<*v <<"\n";
-    if (SymbolicExpression::Ptr v = ctx.returnEvent->expression())
-        std::cerr <<"ROBB: expression = " <<*v <<"\n";
-    if (SymbolicExpression::Ptr v = ctx.returnEvent->inputVariable())
-        std::cerr <<"ROBB: input var  = " <<*v <<"\n";
-    if (SymbolicExpression::Ptr v = ctx.returnEvent->calculateResult(ctx.ops->inputVariables()->bindings()))
-        std::cerr <<"ROBB: calc ret   = " <<*v <<"\n";
-#endif
-
     rose_addr_t endVa = 0;
     if (!ctx.returnEvent->calculateResult(ctx.ops->inputVariables()->bindings())->toUnsigned().assignTo(endVa)) {
         SAWYER_MESG(mlog[ERROR]) <<"no concrete return value from brk system call\n";
@@ -1292,7 +1280,7 @@ LinuxI386::createMemoryHashEvents() {
 std::vector<ExecutionEvent::Ptr>
 LinuxI386::createRegisterRestoreEvents() {
     SAWYER_MESG(mlog[DEBUG]) <<"saving all registers\n";
-    Debugger::Linux::AllRegisters allRegisters = debugger_->readAllRegisters(Debugger::ThreadId::unspecified());
+    Sawyer::Container::BitVector allRegisters = debugger_->readAllRegisters(Debugger::ThreadId::unspecified());
     auto event = ExecutionEvent::bulkRegisterWrite(TestCase::Ptr(), ExecutionLocation(), ip(), allRegisters);
     return {event};
 }
@@ -1305,7 +1293,7 @@ LinuxI386::playEvent(const ExecutionEvent::Ptr &event) {
     switch (event->action()) {
         case ExecutionEvent::Action::BULK_REGISTER_WRITE: {
             SAWYER_MESG(mlog[DEBUG]) <<"  restore registers\n";
-            Debugger::Linux::AllRegisters allRegisters = event->registerValues();
+            Sawyer::Container::BitVector allRegisters = event->registerValues();
             debugger_->writeAllRegisters(Debugger::ThreadId::unspecified(), allRegisters);
             return true;
         }
@@ -1393,9 +1381,13 @@ void
 LinuxI386::executeInstruction(const P2::Partitioner &partitioner) {
     if (mlog[DEBUG]) {
         rose_addr_t va = debugger_->executionAddress(Debugger::ThreadId::unspecified());
-        SgAsmInstruction *insn = partitioner.instructionProvider()[va];
-        mlog[DEBUG] <<"concretely executing insn #" <<currentLocation().primary()
-                    <<" " <<partitioner.unparse(insn) <<"\n";
+        if (SgAsmInstruction *insn = partitioner.instructionProvider()[va]) {
+            mlog[DEBUG] <<"concretely executing insn #" <<currentLocation().primary()
+                        <<" " <<partitioner.unparse(insn) <<"\n";
+        } else {
+            mlog[DEBUG] <<"concretely executing insn #" <<currentLocation().primary()
+                        <<" " <<StringUtility::addrToString(va) <<": null instruction\n";
+        }
     }
 
     debugger_->singleStep(Debugger::ThreadId::unspecified());
