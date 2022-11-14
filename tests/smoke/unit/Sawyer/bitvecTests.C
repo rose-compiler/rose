@@ -737,9 +737,23 @@ static void numeric_tests() {
     check(v1.compareSigned(v2) > 0);
     check(v2.compareSigned(v1) < 0);
     check(v1.compareSigned(v1) == 0);
-    
-    
-    
+}
+
+static void byte_vector_tests() {
+    std::cout <<"byte vector tests\n";
+    const std::vector<uint8_t> bytes = {0x01, 0x7f, 0x80, 0xff};
+
+    BitVector v1(8);
+    v1.fromBytes(bytes);
+    check(v1.toHex() == "01");
+
+    BitVector v2(10);
+    v2.fromBytes(bytes);
+    check(v2.toHex() == "301");
+
+    BitVector v3(27);
+    v3.fromBytes(bytes);
+    check(v3.toHex() == "7807f01");
 }
 
 int main() {
@@ -767,4 +781,5 @@ int main() {
     sign_extend_tests();
     boolean_tests();
     numeric_tests();
+    byte_vector_tests();
 }
