@@ -3299,6 +3299,30 @@ void handleDefinition(Element_Struct& elem, AstContext ctx)
 
 namespace
 {
+  Declaration_Struct* firstDeclaration(Declaration_Struct& dcl)
+  {
+    if (dcl.Corresponding_Declaration > 0)
+    {
+      if (Element_Struct* res = retrieveAsOpt(elemMap(), dcl.Corresponding_Declaration))
+      {
+        ADA_ASSERT (res->Element_Kind == A_Declaration);
+        return &res->The_Union.Declaration;
+      }
+    }
+
+    if (dcl.Corresponding_Body_Stub > 0)
+    {
+      if (Element_Struct* stub = retrieveAsOpt(elemMap(), dcl.Corresponding_Body_Stub))
+      {
+        ADA_ASSERT(stub && (stub->Element_Kind == A_Declaration));
+        return firstDeclaration(stub->The_Union.Declaration);
+      }
+    }
+
+    return nullptr;
+  }
+
+
   Parameter_Specification_List
   usableParameterProfile(Declaration_Struct& decl)
   {
@@ -3321,22 +3345,18 @@ namespace
        )
       return decl.Parameter_Profile;
 
-    Element_Struct* firstDeclElem = retrieveAsOpt(elemMap(), decl.Corresponding_Declaration);
+    Declaration_Struct* firstDecl = firstDeclaration(decl);
 
-    if (firstDeclElem == nullptr) return decl.Parameter_Profile;
+    if (firstDecl == nullptr) return decl.Parameter_Profile;
 
-    ADA_ASSERT (firstDeclElem->Element_Kind == A_Declaration);
-
-    Declaration_Struct& firstDecl = firstDeclElem->The_Union.Declaration;
-
-    ADA_ASSERT(  (firstDecl.Declaration_Kind == A_Procedure_Declaration)
-              || (firstDecl.Declaration_Kind == A_Function_Declaration)
-              || (firstDecl.Declaration_Kind == A_Generic_Procedure_Declaration)
-              || (firstDecl.Declaration_Kind == A_Generic_Function_Declaration)
-              || (firstDecl.Declaration_Kind == An_Entry_Declaration)
+    ADA_ASSERT(  (firstDecl->Declaration_Kind == A_Procedure_Declaration)
+              || (firstDecl->Declaration_Kind == A_Function_Declaration)
+              || (firstDecl->Declaration_Kind == A_Generic_Procedure_Declaration)
+              || (firstDecl->Declaration_Kind == A_Generic_Function_Declaration)
+              || (firstDecl->Declaration_Kind == An_Entry_Declaration)
               );
 
-    return firstDecl.Parameter_Profile;
+    return firstDecl->Parameter_Profile;
   }
 }
 
@@ -4324,6 +4344,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
         NameData                adaname = singleName(decl, ctx);
         ElemIdRange             params  = idRange(decl.Parameter_Profile);
+        //~ ElemIdRange             params  = idRange(usableParameterProfile(decl));
         SgType&                 rettype = isFunc ? getDeclTypeID(decl.Result_Profile, ctx)
                                                  : mkTypeVoid();
 
