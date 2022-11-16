@@ -39,7 +39,9 @@ NameQuery::queryNameArgumentNames (SgNode * astNode)
 
       typedef SgInitializedNamePtrList::iterator argumentIterator;
       SgInitializedNamePtrList sageNameList = sageFunctionDeclaration->get_args ();
+#if DEBUG_NAMEQUERY
       int countArguments = 0;
+#endif
       for (argumentIterator i = sageNameList.begin();
            i != sageNameList.end(); ++i)
         {
@@ -50,7 +52,9 @@ NameQuery::queryNameArgumentNames (SgNode * astNode)
 
           returnNameList.push_back(sageArgument.c_str());
 
+#if DEBUG_NAMEQUERY
           countArguments += 1;
+#endif
         }
 #if DEBUG_NAMEQUERY
       printf ("\nHere is a function declaration :Line = %d Columns = %d \n",
