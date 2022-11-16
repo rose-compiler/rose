@@ -43,8 +43,6 @@ SgAsmCliHeader* SgAsmCliHeader::parse()
 
   /* RVA and size of implementation-specific resources */
   p_metaData = ByteOrder::le_to_host(*reinterpret_cast<uint64_t*>(data));
-  rose_addr_t rva = ByteOrder::le_to_host(*reinterpret_cast<uint32_t*>(data));
-  size_t size = ByteOrder::le_to_host(*reinterpret_cast<uint32_t*>(data+4));
   data += 8;
 
   /* Flags describing this runtime image */
