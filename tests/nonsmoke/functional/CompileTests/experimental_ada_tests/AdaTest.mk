@@ -177,6 +177,9 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   choice_parameter_specification.adb   \
   complex.ads                          \
   complex.adb                          \
+  dbase.ads                            \
+  dbase.adb                            \
+  dbase_test.adb                       \
   deref_test.adb                                    \
   discriminant.adb                     \
   discriminant_constraint.ads          \

@@ -26,6 +26,7 @@ begin
   d  := d*d;
   d  := Standard."*"(d, d);
   ok := P."/="(d, d);
+  ok := P."="(d, d);
   
   s0 := s0*s0;
   s0 := Standard."+"(s0, s0);
