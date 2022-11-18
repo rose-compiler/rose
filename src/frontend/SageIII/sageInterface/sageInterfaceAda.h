@@ -98,7 +98,6 @@ namespace
   }
 
 
-
   inline
   SgName
   nameOf(const SgSymbol& sy)
@@ -423,11 +422,11 @@ namespace
 
   /// returns the scope where \ref ty was defined
   /// \{
-  SgScopeStatement* scopeOfTypedecl(const SgType& ty);
-  SgScopeStatement* scopeOfTypedecl(const SgType* ty);
+  SgScopeStatement* operatorScope(const SgType& ty, bool isRelational);
+  SgScopeStatement* operatorScope(const SgType* ty, bool isRelational);
   /// \}
 
-  /// returns the scope where \ref ty was defined
+  /// returns the decl where \ref ty was defined
   /// \todo remove after integrating functionality into SgType...
   /// \{
   SgDeclarationStatement* associatedDeclaration(const SgType& ty);

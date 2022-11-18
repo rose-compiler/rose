@@ -386,9 +386,9 @@ namespace
   }
 
 
-  void handleElementID(Element_ID id, AstContext ctx)
+  void handleElementID(Element_ID id, AstContext ctx, bool isPrivate = false)
   {
-    handleElement(retrieveAs(elemMap(), id), ctx);
+    handleElement(retrieveAs(elemMap(), id), ctx, isPrivate);
   }
 
   //
@@ -581,9 +581,12 @@ namespace
       logTrace()   << std::endl;
 
       ElemIdRange range = idRange(adaUnit.Context_Clause_Elements);
+      bool        privateDecl = (  (adaUnit.Unit_Class == A_Private_Declaration)
+                                || (adaUnit.Unit_Class == A_Private_Body)
+                                );
 
       traverseIDs(range, elemMap(), ElemCreator{ctx});
-      handleElementID(adaUnit.Unit_Declaration, ctx);
+      handleElementID(adaUnit.Unit_Declaration, ctx, privateDecl);
     }
   }
 
