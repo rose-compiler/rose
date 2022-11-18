@@ -3301,6 +3301,11 @@ namespace
 {
   Declaration_Struct* firstDeclaration(Declaration_Struct& dcl)
   {
+    // PP (11/14/22): RC-1418 (Asis only?)
+    // Since Corresponding_Declaration is not set on routines with body stubs,
+    // the converter reads through Corresponding_Body_Stub to find the
+    // relevant declaration.
+
     if (dcl.Corresponding_Declaration > 0)
     {
       if (Element_Struct* res = retrieveAsOpt(elemMap(), dcl.Corresponding_Declaration))
@@ -3326,7 +3331,7 @@ namespace
   Parameter_Specification_List
   usableParameterProfile(Declaration_Struct& decl)
   {
-    // PP (7/29/22): RC-1372
+    // PP (7/29/22): RC-1372 (Asis only?)
     // In the Asis rep. parameter references inside of routine bodies
     //   refer back to the parameter list of the first declaration.
     //   Not sure if this is by design or a bug (\todo ask CR or PL).
@@ -3512,7 +3517,9 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         recordNode(asisDecls(), elem.ID, sgnode);
         recordNode(asisDecls(), adaname.id(), sgnode);
 
-        privatize(pkgnode, isPrivate);
+        // should private be set on the generic or on the package?
+        //~ privatize(pkgnode, isPrivate);
+        privatize(sgnode, isPrivate);
         attachSourceLocation(pkgspec, elem, ctx);
         attachSourceLocation(pkgnode, elem, ctx);
         attachSourceLocation(gen_defn, elem, ctx);

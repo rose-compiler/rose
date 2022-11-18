@@ -1201,11 +1201,20 @@ namespace Ada
       return SG_DEREF(res);
     }
 
+    bool fromRootType(SgAdaSubtype* ty)
+    {
+      return ty && ty->get_fromRootType();
+    }
+
     struct DeclScopeFinder : sg::DispatchHandler<SgScopeStatement*>
     {
+      static
+      SgScopeStatement* find(SgNode*);
+
       void handle(SgNode& n)              { SG_UNEXPECTED_NODE(n); }
 
       void handle(SgType& n)              { /* \todo do nothing for now; should disappear and raise error */ }
+      void handle(SgExpression& n)        { /* base case for expression based types */ }
 
       // all root types (according to the three builder function in AdaMaker.C)
       void handle(SgTypeLongLong& n)      { res = pkgStandardScope(); }
@@ -1265,16 +1274,47 @@ namespace Ada
 
       // all type indirections that do not have a separate declaration associated
       // \todo may need to be reconsidered
-      void handle(SgModifierType& n)      { res = scopeOfTypedecl(n.get_base_type()); }
-      void handle(SgAdaSubtype& n)        { res = scopeOfTypedecl(n.get_base_type()); }
-      void handle(SgAdaDerivedType& n)    { res = scopeOfTypedecl(n.get_base_type()); }
+      void handle(SgModifierType& n)      { res = find(n.get_base_type()); }
+      void handle(SgAdaSubtype& n)        { res = find(n.get_base_type()); }
+      void handle(SgAdaDerivedType& n)    { res = find(n.get_base_type()); }
       // void handle(SgDeclType& n)             { res = pkgStandardScope(); }
 
       // for records, enums, typedefs, discriminated types, and types with a real declarations
       //   => return the scope where they were defined.
       void handle(SgNamedType& n)         { res = SG_DEREF(n.get_declaration()).get_scope(); }
+
+      void handle(SgTypedefType& n)
+      {
+        SgTypedefDeclaration* dcl    = isSgTypedefDeclaration(n.get_declaration());
+        ASSERT_not_null(dcl);
+        SgTypedefDeclaration* defdcl = isSgTypedefDeclaration(dcl->get_definingDeclaration());
+
+        if (defdcl != nullptr) dcl = defdcl;
+
+        SgType*    basety      = dcl->get_base_type();
+        const bool useThisDecl = (  isSgAdaDerivedType(basety)
+                                 || isSgAdaAccessType(basety)
+                                 || fromRootType(isSgAdaSubtype(basety))
+                                 );
+
+        if (useThisDecl)
+          handle(sg::asBaseType(n));
+        else
+          res = find(basety);
+      }
+
+      //
+      void handle(SgDeclType& n)          { res = find(n.get_base_expression()); }
+
+      // some expressions
+      void handle(SgVarRefExp& n)         { res = declOf(n).get_scope(); }
+      void handle(SgAdaAttributeExp& n)   { res = pkgStandardScope(); } // \todo
     };
 
+    SgScopeStatement* DeclScopeFinder::find(SgNode* n)
+    {
+      return sg::dispatch(DeclScopeFinder{}, n);
+    }
 
     /// \todo remove after adding Ada specific types to stripType
     struct DeclFinder : sg::DispatchHandler<SgDeclarationStatement*>
@@ -1365,14 +1405,15 @@ namespace Ada
     return exp ? typeOfExpr(*exp) : nullptr;
   }
 
-  SgScopeStatement* scopeOfTypedecl(const SgType& ty)
+  SgScopeStatement* operatorScope(const SgType& ty, bool isRelational)
   {
-    return sg::dispatch(DeclScopeFinder{}, &ty);
+    return isRelational ? DeclScopeFinder::find(const_cast<SgType*>(&ty))
+                        : pkgStandardScope();
   }
 
-  SgScopeStatement* scopeOfTypedecl(const SgType* ty)
+  SgScopeStatement* operatorScope(const SgType* ty, bool isRelational)
   {
-    return ty ? scopeOfTypedecl(*ty) : nullptr;
+    return ty ? operatorScope(*ty, isRelational) : nullptr;
   }
 
   SgDeclarationStatement* associatedDeclaration(const SgType& ty)

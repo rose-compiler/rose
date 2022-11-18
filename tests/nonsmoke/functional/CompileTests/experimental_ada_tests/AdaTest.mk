@@ -247,6 +247,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   test_unit.ads                        \
   test.adb                             \
   test_unit.adb                        \
+  types_operators.adb                  \
   usegenericinstance.adb               \
   unit_2.adb                           \
   unit_2.ads                           \
