@@ -879,7 +879,13 @@ namespace
 
     ADA_ASSERT(expr.Expression_Kind == An_Operator_Symbol);
 
-    if (SgDeclarationStatement* dcl = findFirst(asisDecls(), expr.Corresponding_Name_Definition, expr.Corresponding_Name_Declaration))
+    // PP 11/18/22
+    // under some unclear circumstances a provided = operator and a generated /= may have the
+    //   same Corresponding_Name_Declaration, but different Corresponding_Name_Definition.
+    //   => just use the Corresponding_Name_Definition
+    // ROSE regression tests: dbase.ads, dbase.adb, dbase_test.adb
+    // was: if (SgDeclarationStatement* dcl = findFirst(asisDecls(), expr.Corresponding_Name_Definition, expr.Corresponding_Name_Declaration))
+    if (SgDeclarationStatement* dcl = findFirst(asisDecls(), expr.Corresponding_Name_Definition))
     {
       SgExpression* res = sg::dispatch(ExprRefMaker{ctx}, dcl);
 
