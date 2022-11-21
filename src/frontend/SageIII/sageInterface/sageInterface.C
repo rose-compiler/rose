@@ -25276,6 +25276,39 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
   if (SgLocatedNode* lnode= isSgLocatedNode(node))
   {
     out<< Rose::StringUtility::stripPathFromFileName ( lnode->get_file_info()->get_filename() )<<" "<<lnode->get_file_info()->get_line()<<":"<<lnode->get_file_info()->get_col();
+    // also preprocessing info. attached.
+    AttachedPreprocessingInfoType *comments =
+      lnode->getAttachedPreprocessingInfo ();
+
+    if (comments != NULL)
+    { 
+//      printf ("Found an IR node with preprocessing Info attached:\n");
+      out<<" AttachedPreprocessingInfoType@"<<comments;  
+      int counter = 0;
+      AttachedPreprocessingInfoType::iterator i;
+      out <<"{";
+      for (i = comments->begin (); i != comments->end (); i++)
+      { 
+        out<<"<id=";
+        out<<counter++<<" ";
+  //        printf("-------------PreprocessingInfo #%d ----------- : \n",counter++);
+  //        printf("classification = %s:\n String format = %s\n",
+  //              PreprocessingInfo::directiveTypeName((*i)->getTypeOfDirective ()). c_str (),
+  //              (*i)->getString ().c_str ());
+        out<<" classification="<<PreprocessingInfo::directiveTypeName((*i)->getTypeOfDirective ()). c_str ();
+        out<<" string="<<(*i)->getString ().c_str ();
+        out<<" relative pos=";
+        if ((*i)->getRelativePosition () == PreprocessingInfo::inside)
+          out<<"inside";
+        else if ((*i)->getRelativePosition () == PreprocessingInfo::before)
+          out<<"inside";
+        else 
+          out<<"after";
+
+        out<<">";
+      }
+      out <<"}"; 
+    }
   }
 
   if (SgDeclarationStatement* v= isSgDeclarationStatement(node))
