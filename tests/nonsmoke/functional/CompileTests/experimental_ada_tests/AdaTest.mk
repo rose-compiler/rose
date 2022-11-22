@@ -190,6 +190,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   entry_declaration.ads                \
   entry_body_declaration.adb           \
   entry_index_specification.adb        \
+  enum_routine.adb                     \
   exception_rename.ads                 \
   fixed_point_definition.ads           \
   generic_package_renaming_declaration.adb          \

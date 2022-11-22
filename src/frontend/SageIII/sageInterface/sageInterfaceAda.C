@@ -2345,6 +2345,13 @@ baseType(const SgType* ty)
     return res;
   }
 
+  if (const SgEnumType* enmty = isSgEnumType(ty))
+  {
+    SgEnumDeclaration* enmdcl = baseEnumDeclaration(const_cast<SgEnumType*>(enmty));
+
+    return enmdcl ? enmdcl->get_adaParentType() : nullptr;
+  }
+
   return nullptr;
 }
 
