@@ -1,0 +1,31 @@
+#!/bin/bash
+set -e
+arg0="${0##*/}"
+
+if [ "$RMC_BUILD" = "" ] || [ "$RG_SRC" = "" ] || [ "$RG_BLD" = "" ]; then
+    echo "$arg0: this command needs to run in an RMC environment" >&2
+    exit 1
+fi
+
+
+case "$RMC_BUILD" in
+    tup)
+	$RG_SRC/scripts/mkinstaller \
+	    --create=binary-release \
+	    --project-name=ROSE \
+	    --project-version="$(head -n1 $RG_SRC/ROSE_VERSION)" \
+	    --postinstall-bin="$RG_SRC/scripts/tup/post-install-script" \
+	    --CC=cc --CXX=c++ \
+	    $HOME/rose-installed/latest/* ${ALL_LIBDIRS//:/ }
+	;;
+
+    autoconf)
+	make -C $RG_BLD rose-installer-rmc2
+	mv $RG_BLD/rose-installer-rmc2 binary-release
+	;;
+
+    *)
+	echo "$arg0: unknown build system: \"$RMC_BUILD\"" >&2
+	exit 1
+	;;
+esac
