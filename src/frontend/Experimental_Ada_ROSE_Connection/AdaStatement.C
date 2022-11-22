@@ -2219,7 +2219,7 @@ namespace
           std::tie(std::ignore, sym) = si::Ada::findSymbolInContext(ident, ctx.scope());
 
           // do we need to check the symbol type?
-          if (sym) used = si::Ada::associatedDecl(*sym);
+          if (sym) used = si::Ada::associatedDeclaration(*sym);
         }
 
         // if a package is not available otherwise, maybe it is part of the Ada standard?
@@ -2374,7 +2374,9 @@ namespace
       DefinitionDetails detail = queryDefinitionDetails(*baseElem, ctx);
 
       if (detail.typeKind() == An_Enumeration_Type_Definition)
-      tyKind = An_Enumeration_Type_Definition;
+      {
+        tyKind = An_Enumeration_Type_Definition;
+      }
     }
 
     return tyKind;
@@ -2524,8 +2526,8 @@ namespace
 
   struct InheritedSymbolCreator
   {
-      InheritedSymbolCreator(SgTypedefType& declDervType, AstContext astctx)
-      : declaredDervivedType(declDervType), ctx(astctx)
+      InheritedSymbolCreator(SgType& dervType, AstContext astctx)
+      : dervivedType(dervType), ctx(astctx)
       {}
 
       void operator()(Element_Struct& elem)
@@ -2539,15 +2541,19 @@ namespace
           return;
         }
 
-        SgAdaInheritedFunctionSymbol& sgnode = mkAdaInheritedFunctionSymbol(*fn, declaredDervivedType, ctx.scope());
-        const bool inserted = inheritedSymbols().insert(std::make_pair(std::make_pair(fn, &declaredDervivedType), &sgnode)).second;
+        SgAdaInheritedFunctionSymbol& sgnode = mkAdaInheritedFunctionSymbol(*fn, dervivedType, ctx.scope());
+        const auto inserted = inheritedSymbols().insert(std::make_pair(InheritedSymbolKey{fn, &dervivedType}, &sgnode));
 
-        ROSE_ASSERT(inserted);
+        //~ logError() << "create inh subroutine " << elem.ID
+                   //~ << " " << fn << "/" << &dervivedType
+                   //~ << std::endl;
+
+        ROSE_ASSERT(inserted.second);
     }
 
     private:
-      SgTypedefType& declaredDervivedType;
-      AstContext     ctx;
+      SgType&    dervivedType;
+      AstContext ctx;
   };
 
   struct InheritedEnumeratorCreator
@@ -2607,29 +2613,43 @@ namespace
       AstContext                                     ctx;
   };
 
-
   void
-  processInheritedSubroutines( Type_Definition_Struct& tydef,
-                               SgTypedefDeclaration& derivedTypeDcl,
+  processInheritedSubroutines( SgType* ty,
+                               std::string name,
+                               ElemIdRange subprograms,
+                               ElemIdRange declarations,
                                AstContext ctx
                              )
   {
-    {
-      SgTypedefType& ty    = SG_DEREF(derivedTypeDcl.get_type());
-      ElemIdRange    range = idRange(tydef.Implicit_Inherited_Subprograms);
+    traverseIDs(subprograms, elemMap(), InheritedSymbolCreator{SG_DEREF(ty), ctx});
 
-      traverseIDs(range, elemMap(), InheritedSymbolCreator{ty, ctx});
-    }
-
-    {
-      ElemIdRange range = idRange(tydef.Implicit_Inherited_Declarations);
-
-      if (!range.empty())
-        logError() << "A derived types implicit declaration is not empty: "
-                   << derivedTypeDcl.get_name()
-                   << std::endl;
-    }
+    if (!declarations.empty())
+      logWarn() << "A derived/extension record type's implicit declaration is not empty: "
+                 << name
+                 << std::endl;
   }
+
+  void
+  processInheritedSubroutines(SgType* ty, std::string name, Type_Definition_Struct& tydef, AstContext ctx)
+  {
+    processInheritedSubroutines( ty,
+                                 name,
+                                 idRange(tydef.Implicit_Inherited_Subprograms),
+                                 idRange(tydef.Implicit_Inherited_Declarations),
+                                 ctx
+                               );
+  }
+
+  template <class SageTypeDeclStmt>
+  void
+  processInheritedSubroutines( Type_Definition_Struct& tydef,
+                               SageTypeDeclStmt& tyDecl,
+                               AstContext ctx
+                             )
+  {
+    processInheritedSubroutines(tyDecl.get_type(), tyDecl.get_name(), tydef, ctx);
+  }
+
 
   std::tuple<SgEnumDeclaration*, SgAdaRangeConstraint*>
   getBaseEnum(SgType* baseTy)
@@ -2697,17 +2717,22 @@ namespace
   {
     Type_Definition_Struct& tydef = ty.definitionStruct();
 
-    if (tydef.Type_Kind != A_Derived_Type_Definition)
+    if (  (tydef.Type_Kind != A_Derived_Type_Definition)
+       && (tydef.Type_Kind != A_Derived_Record_Extension_Definition)
+       )
+    {
       return;
+    }
 
     if (SgTypedefDeclaration* derivedTypeDcl = isSgTypedefDeclaration(&dcl))
       processInheritedSubroutines(tydef, *derivedTypeDcl, ctx);
+    else if (SgClassDeclaration* classTypeDcl = isSgClassDeclaration(&dcl))
+      processInheritedSubroutines(tydef, *classTypeDcl, ctx);
     else if (SgEnumDeclaration* derivedEnumDcl = isSgEnumDeclaration(&dcl))
       processInheritedEnumValues(tydef, *derivedEnumDcl, ctx);
     else
       ADA_ASSERT(false);
   }
-
 
 
   SgDeclarationStatement&
@@ -2897,6 +2922,11 @@ namespace
     Element_ID              id     = adaname.id();
     SgDeclarationStatement& sgdecl = createOpaqueDecl(adaname, decl, defdata, ctx.scope(scope));
 
+    /*
+    TypeData                ty   = getTypeFoundation(adaname.ident, decl, ctx.scope(scope));
+    processInheritedElementsOfDerivedTypes(ty, sgdecl, ctx);
+    */
+
     attachSourceLocation(sgdecl, elem, ctx);
     privatize(sgdecl, isPrivate);
     recordNode(asisTypes(), id, sgdecl);
@@ -2911,6 +2941,25 @@ namespace
     {
       sg::linkParentChild(*discr, sgdecl, &SgAdaDiscriminatedTypeDecl::set_discriminatedDecl);
       completeDiscriminatedDecl(*discr, nullptr /* no nondef dcl */, id, sgdecl, elem, isPrivate, ctx);
+    }
+
+    if (decl.Declaration_Kind == A_Private_Extension_Declaration)
+    {
+      if (Element_Struct* tyview = retrieveAsOpt(elemMap(), decl.Type_Declaration_View))
+      {
+        ADA_ASSERT(tyview->Element_Kind == A_Definition);
+        Definition_Struct& tydef = tyview->The_Union.Definition;
+
+        if (tydef.Definition_Kind == A_Private_Extension_Definition)
+        {
+          processInheritedSubroutines( si::getDeclaredType(&sgdecl),
+                                       adaname.ident,
+                                       idRange(tydef.The_Union.The_Private_Extension_Definition.Implicit_Inherited_Subprograms),
+                                       idRange(tydef.The_Union.The_Private_Extension_Definition.Implicit_Inherited_Declarations),
+                                       ctx
+                                     );
+        }
+      }
     }
   }
 
@@ -3781,9 +3830,9 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
     case A_Private_Extension_Declaration:
     case A_Private_Type_Declaration:               // 3.2.1(2):7.3(2) -> Trait_Kinds
       {
-        logKind( decl.Declaration_Kind == A_Private_Type_Declaration
-                        ? "A_Private_Type_Declaration"
-                        : "A_Private_Extension_Declaration"
+        const bool recordExtension = decl.Declaration_Kind != A_Private_Type_Declaration;
+
+        logKind( recordExtension ? "A_Private_Extension_Declaration": "A_Private_Type_Declaration"
                , elem.ID
                );
 

@@ -102,13 +102,19 @@ namespace
       SgAdaInheritedFunctionSymbol*
       inheritedFunctionSymbol(SgType* ty, SgFunctionSymbol& origSymbol)
       {
-        const SgDeclarationStatement* tydcl = si::Ada::baseDeclaration(ty);
-        const SgTypedefDeclaration*   tydefDcl = isSgTypedefDeclaration(tydcl);
+        const SgDeclarationStatement* tydcl = si::Ada::associatedDeclaration(ty);
+        const bool                    supported = (  isSgTypedefDeclaration(tydcl)
+                                                  || isSgClassDeclaration(tydcl)
+                                                  //~ || isSgEnumDeclaration(tydcl) \todo support enums
+                                                  );
 
-        if (tydefDcl == nullptr)
+        if (!supported)
+        {
+          //~ logError() << "not a supported type derivation (i.e., extension record or derived type)" << std::endl;
           return nullptr;
+        }
 
-        InheritedSymbolKey            key{origSymbol.get_declaration(), tydefDcl->get_type()};
+        InheritedSymbolKey            key{origSymbol.get_declaration(), si::getDeclaredType(tydcl)};
 
         return findFirst(inheritedSymbols(), key);
       }
@@ -136,7 +142,10 @@ namespace
           const SgExpression* arg = arglst.at(aa->pos());
 
           if (SgAdaInheritedFunctionSymbol* inhSym = inheritedFunctionSymbol(arg->get_type(), implSymbol))
+          {
+            //~ logError() << "inh fnsym" << std::endl;
             return *inhSym;
+          }
 
           ++aa;
         }
@@ -166,7 +175,10 @@ namespace
             continue;
 
           if (SgAdaInheritedFunctionSymbol* inhSym = inheritedFunctionSymbol((*argpos)->get_type(), implSymbol))
+          {
+            //~ logError() << "inh2 fnsym" << std::endl;
             return *inhSym;
+          }
         }
 
         return implSymbol;
@@ -196,6 +208,10 @@ namespace
 
           if (&origSym != &funSym)
             n.set_symbol(&funSym);
+        }
+        else
+        {
+          //~ logError() << "w/o fndcl" << std::endl;
         }
 
         res = &mkFunctionCallExp(n, arglst, !callSyntax);
