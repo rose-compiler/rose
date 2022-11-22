@@ -161,7 +161,7 @@ ADA_TRANSLATOR_PASSING_INCOMPLETE_TESTS :=       \
   default_function_argument.adb        \
   qualified_expression.adb             \
   type_in_local_pkg.adb                \
-  very_large_value.adb                 
+  very_large_value.adb
 
 ADA_TRANSLATOR_FAILING_TESTS :=        \
   ada_packages.adb                     \
@@ -200,6 +200,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   generic_package_declaration.adb      \
   generic_procedure_renaming_declaration.ads  \
   generic_function_renaming_declaration.ads   \
+  gen_overloaded_funcs.adb             \
   inherited_primitive_operation.adb    \
   iterate_range.adb                    \
   digital.ads                          \
@@ -259,7 +260,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   variant_record.ads                   \
   variable_variant_record.adb
 
-ADA_TRANSLATOR_PENDING_TESTS :=       
+ADA_TRANSLATOR_PENDING_TESTS :=
 
 # defines tests that are fully supported by ROSE
 ROSE_PASSING_ADA_TESTS :=                           \
@@ -269,7 +270,7 @@ ROSE_PASSING_ADA_TESTS :=                           \
   $(ADA_TRANSLATOR_FAILING_TESTS)
 
 
-# ROSE_PASSING_IMCOMPLETE_ADA_TESTS :=                
+# ROSE_PASSING_IMCOMPLETE_ADA_TESTS :=
 
 ROSE_FAILING_ADA_TESTS :=                           \
   aspect_spec.ads                                   \

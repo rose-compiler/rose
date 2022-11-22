@@ -1191,8 +1191,6 @@ namespace
                        std::function<SgScopeStatement&()> scopeMaker
                      )
   {
-    //~ std::cerr << nm << "() -> " << &retty << std::endl;
-
     SgFunctionParameterList& lst       = mkFunctionParameterList();
     SgScopeStatement&        parmScope = scopeMaker();
 
@@ -1209,7 +1207,7 @@ namespace
 
     markCompilerGenerated(lst); // this is overwritten in buildNondefiningFunctionDeclaration
     markCompilerGenerated(sgnode);
-    // std::cerr << nm << "'() -> " << sgnode.get_type()->get_return_type() << std::endl;
+    //~ logError() << "1: " << nm << " " << sgnode.get_type()->get_mangled() << std::endl;
     return sgnode;
   }
 }
@@ -1285,7 +1283,6 @@ mkProcedureDecl( SgFunctionDeclaration& ndef,
   linkDeclDef(funcSy, sgnode);
   sgnode.set_definingDeclaration(&sgnode);
   sgnode.unsetForward();
-
   return sgnode;
 }
 
