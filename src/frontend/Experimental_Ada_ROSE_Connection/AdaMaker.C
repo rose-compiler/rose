@@ -2266,7 +2266,7 @@ namespace
   }
 
 
-  /// replaces the original type of \ref declaredDerivedType with \ref declaredDerivedType in \ref funcTy.
+  /// replaces the original type of with \ref declaredDerivedType in \ref funcTy.
   /// returns \ref funcTy to indicate an error.
   SgFunctionType&
   convertToDerivedType(SgFunctionType& funcTy, SgType& derivedType)

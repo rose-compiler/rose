@@ -2692,12 +2692,9 @@ namespace
   {
     {
       ElemIdRange range = idRange(tydef.Implicit_Inherited_Subprograms);
+      SgEnumType& enty  = SG_DEREF(derivedTypeDcl.get_type());
 
-      //~ traverseIDs(range, elemMap(), InheritedSymbolCreator{declDerivedType, ctx});
-      if (!range.empty())
-        logError() << "A derived enum has implicitly inherited subprograms: "
-                   << derivedTypeDcl.get_name()
-                   << std::endl;
+      traverseIDs(range, elemMap(), InheritedSymbolCreator{enty, ctx});
     }
 
     {

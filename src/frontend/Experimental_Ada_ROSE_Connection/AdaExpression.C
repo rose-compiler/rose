@@ -105,12 +105,13 @@ namespace
         const SgDeclarationStatement* tydcl = si::Ada::associatedDeclaration(ty);
         const bool                    supported = (  isSgTypedefDeclaration(tydcl)
                                                   || isSgClassDeclaration(tydcl)
-                                                  //~ || isSgEnumDeclaration(tydcl) \todo support enums
+                                                  || isSgEnumDeclaration(tydcl)
                                                   );
 
         if (!supported)
         {
-          //~ logError() << "not a supported type derivation (i.e., extension record or derived type)" << std::endl;
+          //~ logError() << "not a supported type derivation (i.e., extension record, derived type, derived enum)"
+                     //~ << std::endl;
           return nullptr;
         }
 
