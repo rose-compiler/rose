@@ -331,16 +331,15 @@ namespace
       ReturnType
       recurse(SgType* n);
 
-      void handle(SgNode& n) { SG_UNEXPECTED_NODE(n); }
-      void handle(SgType& n) { /* not found */ }
+      void handle(const SgNode& n) { SG_UNEXPECTED_NODE(n); }
+      void handle(const SgType& n) { /* not found */ }
 
-      void handle(SgNamedType& n)           { res = n.get_declaration(); }
+      void handle(const SgNamedType& n)           { res = n.get_declaration(); }
 
-      void handle(SgAdaSubtype& n)          { res = recurse(n.get_base_type()); }
-      void handle(SgModifierType& n)        { res = recurse(n.get_base_type()); }
-      void handle(SgAdaDerivedType& n)      { res = recurse(n.get_base_type()); }
+      void handle(const SgAdaSubtype& n)          { res = recurse(n.get_base_type()); }
+      void handle(const SgModifierType& n)        { res = recurse(n.get_base_type()); }
+      void handle(const SgAdaDerivedType& n)      { res = recurse(n.get_base_type()); }
   };
-
 
   BaseTypeDecl::ReturnType
   BaseTypeDecl::find(SgType* n)
@@ -2187,8 +2186,9 @@ primitiveParameterPositions(const SgFunctionDeclaration& dcl)
 
   for (const SgInitializedName* parm : SG_DEREF(dcl.get_parameterList()).get_args())
   {
-    ROSE_ASSERT(parm);
-    const SgDeclarationStatement* tydcl = BaseTypeDecl::find(parm->get_type());
+    ASSERT_not_null(parm);
+    // PP: note for self: BaseTypeDecl::find does NOT skip the initial typedef decl
+    const SgDeclarationStatement* tydcl = associatedDeclaration(parm->get_type());
 
     if (tydcl && isSameScope(tydcl->get_scope(), scope))
       res.emplace_back(parmpos, parm);
@@ -2202,7 +2202,7 @@ primitiveParameterPositions(const SgFunctionDeclaration& dcl)
 std::vector<PrimitiveParameterDesc>
 primitiveParameterPositions(const SgFunctionDeclaration* dcl)
 {
-  ROSE_ASSERT(dcl);
+  ASSERT_not_null(dcl);
 
   return primitiveParameterPositions(*dcl);
 }
@@ -2250,7 +2250,7 @@ overridingScope(const SgExprListExp& args, const std::vector<PrimitiveParameterD
   {
     const SgExpression* arg = arglst.at(aa->pos());
 
-    if (const SgDeclarationStatement* tydcl = BaseTypeDecl::find(arg->get_type()))
+    if (const SgDeclarationStatement* tydcl = associatedDeclaration(arg->get_type()))
       return tydcl->get_scope();
 
     ++aa;
@@ -2278,7 +2278,7 @@ overridingScope(const SgExprListExp& args, const std::vector<PrimitiveParameterD
     if (argpos == argLimit)
       continue;
 
-    if (const SgDeclarationStatement* tydcl = BaseTypeDecl::find((*argpos)->get_type()))
+    if (const SgDeclarationStatement* tydcl = associatedDeclaration((*argpos)->get_type()))
       return tydcl->get_scope();
   }
 
@@ -2295,16 +2295,70 @@ overridingScope(const SgExprListExp* args, const std::vector<PrimitiveParameterD
   return overridingScope(*args, primitiveArgs);
 }
 
+SgType*
+baseType(const SgType& ty)
+{
+  return baseType(&ty);
+}
+
+SgType*
+baseType(const SgType* ty)
+{
+  if (const SgTypedefType* tydefty = isSgTypedefType(ty))
+  {
+    const SgTypedefDeclaration* tydefdcl = isSgTypedefDeclaration(tydefty->get_declaration());
+    ASSERT_not_null(tydefdcl);
+
+    return tydefdcl->get_base_type();
+  }
+
+  if (const SgClassType* clsty = isSgClassType(ty))
+  {
+    SgType*             res    = nullptr;
+    SgClassDeclaration& cldcl  = SG_DEREF(isSgClassDeclaration(clsty->get_declaration()));
+    SgBaseClass*        basecl = cldcl.get_adaParentType();
+
+    // if the base type is hidden, look at the definition
+    if (basecl == nullptr)
+    {
+      if (SgClassDeclaration* defdcl = isSgClassDeclaration(cldcl.get_definingDeclaration()))
+      {
+        SgClassDefinition&  cldef = SG_DEREF(defdcl->get_definition());
+        SgBaseClassPtrList& bases = cldef.get_inheritances();
+
+        if (bases.size()) basecl = bases.front();
+      }
+    }
+
+    if (/*const SgExpBaseClass* basexp =*/ isSgExpBaseClass(basecl))
+    {
+      // \todo what is the type decl here?
+      // if (const SgTypeExpression* tyexp = isSgTypeExpression(basexp->get_base_class_exp()))
+      //  res = tyexp->get_type();
+      // else ...
+    }
+    else if (basecl)
+    {
+      res = SG_DEREF(basecl->get_base_class()).get_type();
+    }
+
+    return res;
+  }
+
+  return nullptr;
+}
+
+
 SgDeclarationStatement*
-baseDeclaration(SgType& ty)
+baseDeclaration(const SgType& ty)
 {
   return baseDeclaration(&ty);
 }
 
 SgDeclarationStatement*
-baseDeclaration(SgType* ty)
+baseDeclaration(const SgType* ty)
 {
-  return BaseTypeDecl::find(ty);
+  return associatedDeclaration(baseType(ty));
 }
 
 SgEnumDeclaration*
@@ -2316,7 +2370,7 @@ baseEnumDeclaration(SgType& ty)
 SgEnumDeclaration*
 baseEnumDeclaration(SgType* ty)
 {
-  SgDeclarationStatement* basedcl = baseDeclaration(ty);
+  SgDeclarationStatement* basedcl = associatedDeclaration(ty);
 
   if (SgTypedefDeclaration* tydcl = isSgTypedefDeclaration(basedcl))
     return baseEnumDeclaration(tydcl->get_base_type());
@@ -2458,7 +2512,7 @@ findSymbolInContext(std::string id, const SgScopeStatement& scope, const SgScope
   return {curr, sym};
 }
 
-SgDeclarationStatement* associatedDecl(const SgSymbol& n)
+SgDeclarationStatement* associatedDeclaration(const SgSymbol& n)
 {
   return sg::dispatch(AssociatedDecl{}, &n);
 }

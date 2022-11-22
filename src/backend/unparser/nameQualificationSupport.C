@@ -581,7 +581,7 @@ namespace
 
   bool symbolMatchesDeclaration(const SgSymbol& sym, const SgNode& dcl)
   {
-    const SgDeclarationStatement* symdcl = si::Ada::associatedDecl(sym);
+    const SgDeclarationStatement* symdcl = si::Ada::associatedDeclaration(sym);
 
     if (!symdcl) return false;
     if (symdcl == &dcl) return true;
