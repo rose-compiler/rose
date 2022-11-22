@@ -6902,14 +6902,19 @@ SgAdaFormalType::get_name() const {
 }
 
 
-/*
+
 SgName
 SgAdaFormalType::get_mangled(void) const {
+  //~ SgAdaFormalTypeDecl* dcl = get_declaration();
+  SgDeclarationStatement* dcl = get_declaration();
+  ASSERT_not_null(dcl);
+
   string name("ft'");
-  name.append(get_type_name());
+  // name.append(get_type_name());
+  name.append(dcl->get_mangled_name());
   return SgName(name);
 }
-*/
+
 
 SOURCE_ADA_FORMAL_TYPE_END
 
