@@ -3345,7 +3345,7 @@ void handleDefinition(Element_Struct& elem, AstContext ctx)
 
 namespace
 {
-  Declaration_Struct* firstDeclaration(Declaration_Struct& dcl)
+  Declaration_Struct& firstDeclaration(Declaration_Struct& dcl)
   {
     // PP (11/14/22): RC-1418 (Asis only?)
     // Since Corresponding_Declaration is not set on routines with body stubs,
@@ -3357,7 +3357,7 @@ namespace
       if (Element_Struct* res = retrieveAsOpt(elemMap(), dcl.Corresponding_Declaration))
       {
         ADA_ASSERT (res->Element_Kind == A_Declaration);
-        return &res->The_Union.Declaration;
+        return res->The_Union.Declaration;
       }
     }
 
@@ -3370,7 +3370,7 @@ namespace
       }
     }
 
-    return nullptr;
+    return dcl;
   }
 
 
@@ -3396,7 +3396,8 @@ namespace
        )
       return decl.Parameter_Profile;
 
-    Declaration_Struct* firstDecl = firstDeclaration(decl);
+/*
+    Declaration_Struct& firstDecl = firstDeclaration(decl);
 
     if (firstDecl == nullptr) return decl.Parameter_Profile;
 
@@ -3406,8 +3407,8 @@ namespace
               || (firstDecl->Declaration_Kind == A_Generic_Function_Declaration)
               || (firstDecl->Declaration_Kind == An_Entry_Declaration)
               );
-
-    return firstDecl->Parameter_Profile;
+*/
+    return firstDeclaration(decl).Parameter_Profile;
   }
 }
 
