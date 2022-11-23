@@ -2402,7 +2402,10 @@ explicitNullRecord(const SgClassDefinition& recdef)
 
 namespace
 {
-  // \todo consider integrating this into si::getEnclosingScope
+  // In contrast to si::getEnclosingScope, which seems to return the actual parent scope
+  //   in the AST, this returns the logical parent.
+  // e.g., a separate function has the package as logical parent, but
+  //       the global scope as the actual parent scope.
   struct LogicalParent : sg::DispatchHandler<const SgScopeStatement*>
   {
     void handle(const SgNode& n)                 { SG_UNEXPECTED_NODE(n); }
@@ -2412,6 +2415,7 @@ namespace
     void handle(const SgAdaTaskTypeDecl& n)      { res = n.get_scope(); }
     void handle(const SgAdaProtectedSpecDecl& n) { res = n.get_scope(); }
     void handle(const SgAdaProtectedTypeDecl& n) { res = n.get_scope(); }
+    void handle(const SgFunctionDeclaration& n)  { res = n.get_scope(); }
 
     // do not look beyond global
     // (during AST construction the parents of global may not yet be properly linked).
@@ -2427,6 +2431,7 @@ namespace
     void handle(const SgAdaPackageSpec& n)       { res = fromParent(n); }
     void handle(const SgAdaTaskSpec& n)          { res = fromParent(n); }
     void handle(const SgAdaProtectedSpec& n)     { res = fromParent(n); }
+    void handle(const SgFunctionDefinition& n)   { res = fromParent(n); }
 
     void handle(const SgScopeStatement& n)
     {
