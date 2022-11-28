@@ -11,6 +11,7 @@
 #include <rose_getline.h>
 
 #include <boost/algorithm/string/trim.hpp>
+#include <boost/filesystem.hpp>
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
 
@@ -23,6 +24,60 @@ using namespace Sawyer::Message::Common;
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Debugger {
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Gdb::Specimen
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Gdb::Specimen::Specimen() {}
+
+Gdb::Specimen::Specimen(const boost::filesystem::path &exeName)
+    : executable_(exeName) {}
+
+Gdb::Specimen::Specimen(const boost::filesystem::path &exeName, const std::string &host, uint16_t port)
+    : executable_(exeName) {
+    remote_.host = host;
+    remote_.port = port;
+}
+
+const boost::filesystem::path&
+Gdb::Specimen::gdbName() const {
+    return gdbName_;
+}
+
+void
+Gdb::Specimen::gdbName(const boost::filesystem::path &p) {
+    gdbName_ = p;
+}
+
+const boost::filesystem::path&
+Gdb::Specimen::executable() const {
+    return executable_;
+}
+
+void
+Gdb::Specimen::executable(const boost::filesystem::path &p) {
+    executable_ = p;
+}
+
+const Gdb::Specimen::Remote&
+Gdb::Specimen::remote() const {
+    return remote_;
+}
+
+void
+Gdb::Specimen::remote(const Gdb::Specimen::Remote &r) {
+    remote_ = r;
+}
+
+void
+Gdb::Specimen::remote(const std::string &host, uint16_t port) {
+    remote(Gdb::Specimen::Remote{host, port});
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Gdb
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Gdb::Gdb()
     : gdbOutputPipe_(ios_) {}
@@ -198,12 +253,12 @@ Gdb::attach(const Specimen &specimen) {
         throw Exception("already attached");
 
     std::vector<std::string> argv;
-    argv.push_back(boost::process::search_path(specimen.gdbName).string());
+    argv.push_back(boost::process::search_path(specimen.gdbName()).string());
     argv.push_back("-n");                               // skip initialization files
     argv.push_back("-q");                               // do not print introductory and copyright messages
     argv.push_back("--interpreter=mi");
-    if (!specimen.executable.empty())
-        argv.push_back(specimen.executable.string());
+    if (!specimen.executable().empty())
+        argv.push_back(specimen.executable().string());
 
     std::promise<int> exitCodePromise;
     exitCodeFuture_ = exitCodePromise.get_future();
@@ -213,7 +268,7 @@ Gdb::attach(const Specimen &specimen) {
     readRequiredResponses();
 
     // Attach to remote target
-    sendCommand("-target-select remote " + specimen.remote.host + ":" + boost::lexical_cast<std::string>(specimen.remote.port));
+    sendCommand("-target-select remote " + specimen.remote().host + ":" + boost::lexical_cast<std::string>(specimen.remote().port));
 
     // Get an appropriate disassembler for this architecture
     for (const GdbResponse &response: responses()) {
