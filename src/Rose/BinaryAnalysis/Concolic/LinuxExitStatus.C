@@ -24,16 +24,16 @@ LinuxExitStatus::~LinuxExitStatus() {}
 
 // class method
 LinuxExitStatus::Ptr
-LinuxExitStatus::create(const std::string /*databaseUrl*/, const boost::filesystem::path &executableName,
+LinuxExitStatus::create(const std::string& /*databaseUrl*/, const boost::filesystem::path &executableName,
                         const std::vector<std::string> &/*arguments*/) {
     // Create the initial test case
     std::string name = executableName.filename().string();
-    Specimen::Ptr specimen = Specimen::instance(executableName);
-    TestCase::Ptr testCase0 = TestCase::instance(specimen);
+    auto specimen = Specimen::instance(executableName);
+    auto testCase0 = TestCase::instance(specimen);
     testCase0->name(name + " #0");
 
     // Create the database
-    Database::Ptr db = Database::create("sqlite:" + name + ".db", name);
+    auto db = Database::create("sqlite:" + name + ".db", name);
     db->id(testCase0);                                  // save the first test case, side effect of obtaining an ID
 
     return Ptr(new LinuxExitStatus(db));

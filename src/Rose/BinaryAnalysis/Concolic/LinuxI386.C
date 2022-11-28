@@ -995,14 +995,7 @@ LinuxI386::instance(const Database::Ptr &db, TestCaseId tcid, const P2::Partitio
 
 LinuxI386::Ptr
 LinuxI386::instance(const Database::Ptr &db, const TestCase::Ptr &tc, const P2::Partitioner &partitioner) {
-    ASSERT_not_null(db);
-    ASSERT_not_null(tc);
-    TestCaseId tcid = db->id(tc);
-    ASSERT_require(tcid);
-    auto retval = Ptr(new LinuxI386(db, tcid, partitioner));
-    retval->configureSystemCalls();
-    retval->configureSharedMemory();
-    return retval;
+    return instance(db, db->id(tc), partitioner);
 }
 
 Debugger::Linux::Ptr
@@ -1012,7 +1005,7 @@ LinuxI386::debugger() const {
 
 void
 LinuxI386::load(const boost::filesystem::path &targetDir) {
-    // Extract the executable into the working directory.
+    // Extract the executable into the target temporary directory.
     auto exeName = boost::filesystem::path(testCase()->specimen()->name()).filename();
     if (exeName.empty())
         exeName = "a.out";
