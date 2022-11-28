@@ -206,7 +206,7 @@ ConcolicExecutor::configureExecution(const Database::Ptr &db, const TestCase::Pt
         //
         // FIXME[Robb Matzke 2021-05-25]: This will need to eventually change so that the architecture type (Linux i386 in this
         // case) is not hard coded.
-        process_ = LinuxI386::instance(db, testCase, partitioner_);
+        process_ = I386Linux::Architecture::instance(db, testCase, partitioner_);
 
         cpu_ = makeDispatcher(process_);
     }
