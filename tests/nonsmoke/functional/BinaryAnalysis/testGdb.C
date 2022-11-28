@@ -76,11 +76,8 @@ main(int argc, char *argv[]) {
     ASSERT_require(qemu.running());
 
     // Start the debugger
-    Debugger::Gdb::Specimen specimen;
-    specimen.gdbName = gdbName;
-    specimen.executable = exeName;
-    specimen.remote.host = "localhost";
-    specimen.remote.port = 1234;
+    Debugger::Gdb::Specimen specimen(exeName, "localhost", 1234);
+    specimen.gdbName(gdbName);
     auto gdb = Debugger::Gdb::instance(specimen);
 
     // Set a breakpoint at the end of the loop (BRA back to beginning). Since this is a singleton break point, it will be
