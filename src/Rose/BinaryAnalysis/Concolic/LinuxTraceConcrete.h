@@ -1,5 +1,5 @@
-#ifndef ROSE_BinaryAnalysis_Concolic_LinuxTraceExecutor_H
-#define ROSE_BinaryAnalysis_Concolic_LinuxTraceExecutor_H
+#ifndef ROSE_BinaryAnalysis_Concolic_LinuxTraceConcrete_H
+#define ROSE_BinaryAnalysis_Concolic_LinuxTraceConcrete_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 #include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
@@ -15,10 +15,10 @@ namespace Concolic {
 /** Concrete executor to trace a native ELF executable.
  *
  *  Ranks executables by the size of the set of addresses that were executed. */
-class LinuxTraceExecutor: public ConcreteExecutor {
+class LinuxTraceConcrete: public ConcreteExecutor {
 public:
-    /** Reference counting pointer to a @ref LinuxTraceExecutor. */
-    using Ptr = Sawyer::SharedPointer<LinuxTraceExecutor>;
+    /** Reference counting pointer to a @ref LinuxTraceConcrete. */
+    using Ptr = Sawyer::SharedPointer<LinuxTraceConcrete>;
 
     /** Results of the execution. */
     class Result: public ConcreteExecutorResult {
@@ -37,10 +37,10 @@ public:
     };
 
 protected:
-    explicit LinuxTraceExecutor(const DatabasePtr&);
+    explicit LinuxTraceConcrete(const DatabasePtr&);
 
 public:
-    ~LinuxTraceExecutor();
+    ~LinuxTraceConcrete();
 
     /** Allocating constructor. */
     static Ptr instance(const DatabasePtr&);

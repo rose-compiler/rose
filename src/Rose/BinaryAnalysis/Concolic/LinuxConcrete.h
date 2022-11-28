@@ -1,5 +1,5 @@
-#ifndef ROSE_BinaryAnalysis_Concolic_LinuxExecutor_H
-#define ROSE_BinaryAnalysis_Concolic_LinuxExecutor_H
+#ifndef ROSE_BinaryAnalysis_Concolic_LinuxConcrete_H
+#define ROSE_BinaryAnalysis_Concolic_LinuxConcrete_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 #include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
@@ -18,10 +18,10 @@ namespace BinaryAnalysis {
 namespace Concolic {
 
 /** Concrete executor for Linux ELF executables. */
-class LinuxExecutor: public ConcreteExecutor {
+class LinuxConcrete: public ConcreteExecutor {
 public:
-    /** Reference counting pointer to a @ref LinuxExecutor. */
-    typedef Sawyer::SharedPointer<LinuxExecutor> Ptr;
+    /** Reference counting pointer to a @ref LinuxConcrete. */
+    typedef Sawyer::SharedPointer<LinuxConcrete> Ptr;
 
     /** Holds an optional personality-value (i.g., indicating if address randomization should be turned off). */
     typedef Sawyer::Optional<unsigned long> Persona;
@@ -83,10 +83,10 @@ protected:
     bool useAddressRandomization_;                      // enable/disable address space randomization in the OS
 
 protected:
-    explicit LinuxExecutor(const DatabasePtr&);
+    explicit LinuxConcrete(const DatabasePtr&);
 
 public:
-    ~LinuxExecutor();
+    ~LinuxConcrete();
 
     /** Allocating constructor. */
     static Ptr instance(const DatabasePtr&);

@@ -56,10 +56,10 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/Concolic/ExecutionLocation.C					\
 	BinaryAnalysis/Concolic/ExecutionManager.C					\
 	BinaryAnalysis/Concolic/InputVariables.C					\
-	BinaryAnalysis/Concolic/LinuxExecutor.C						\
+	BinaryAnalysis/Concolic/LinuxConcrete.C						\
 	BinaryAnalysis/Concolic/LinuxExitStatus.C					\
 	BinaryAnalysis/Concolic/LinuxI386.C						\
-	BinaryAnalysis/Concolic/LinuxTraceExecutor.C					\
+	BinaryAnalysis/Concolic/LinuxTraceConcrete.C					\
 	BinaryAnalysis/Concolic/SharedMemory.C						\
 	BinaryAnalysis/Concolic/Specimen.C						\
 	BinaryAnalysis/Concolic/SystemCall.C						\

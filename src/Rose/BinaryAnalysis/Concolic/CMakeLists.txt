@@ -7,10 +7,10 @@ add_library(roseBinaryAnalysisConcolic OBJECT
   ExecutionLocation.C
   ExecutionManager.C
   InputVariables.C
-  LinuxExecutor.C
+  LinuxConcrete.C
   LinuxExitStatus.C
   LinuxI386.C
-  LinuxTraceExecutor.C
+  LinuxTraceConcrete.C
   SharedMemory.C
   Specimen.C
   SystemCall.C
@@ -30,10 +30,10 @@ install(FILES
   ExecutionLocation.h
   ExecutionManager.h
   InputVariables.h
-  LinuxExecutor.h
+  LinuxConcrete.h
   LinuxExitStatus.h
   LinuxI386.h
-  LinuxTraceExecutor.h
+  LinuxTraceConcrete.h
   SharedMemory.h
   Specimen.h
   SystemCall.h

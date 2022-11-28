@@ -1,7 +1,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 #include <sage3basic.h>
-#include <Rose/BinaryAnalysis/Concolic/LinuxExecutor.h>
+#include <Rose/BinaryAnalysis/Concolic/LinuxConcrete.h>
 
 #include <Rose/BinaryAnalysis/Concolic/Database.h>
 #include <Rose/BinaryAnalysis/Concolic/Specimen.h>
@@ -21,11 +21,6 @@
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Concolic {
-
-/*****
- **  LinuxExecutors work best on Linux
- *****/
-
 
 namespace
 {
@@ -57,7 +52,7 @@ std::string nameCompletionStatus(int processDisposition)
   return res;
 }
 
-LinuxExecutor::Result::Result(double rank, int exitStatus)
+LinuxConcrete::Result::Result(double rank, int exitStatus)
 : ConcreteExecutorResult(rank), exitStatus_(exitStatus)
 {
   exitKind_ = nameCompletionStatus(exitStatus_);
@@ -103,7 +98,7 @@ void redirectStream(const std::string& ofile, int num)
   if (outstream) dup2(outstream, num);
 }
 
-void setPersonality(LinuxExecutor::Persona persona)
+void setPersonality(LinuxConcrete::Persona persona)
 {
   if (persona) personality(persona.get());
 }
@@ -114,7 +109,7 @@ int executeBinary( const std::string& execmon,
                    const std::string& binary,
                    const std::string& logout,
                    const std::string& logerr,
-                   LinuxExecutor::Persona persona,
+                   LinuxConcrete::Persona persona,
                    std::vector<std::string> arguments,
                    std::vector<std::string> environment
                  )
@@ -172,7 +167,7 @@ int executeBinary( const boost::filesystem::path&  execmon,
                    const boost::filesystem::path&  binary,
                    const boost::filesystem::path&  logout,
                    const boost::filesystem::path&  logerr,
-                   LinuxExecutor::Persona          persona,
+                   LinuxConcrete::Persona          persona,
                    TestCase::Ptr                   tc
                  )
 {
@@ -224,34 +219,34 @@ typedef atomic_counter<int> atomic_counter_t;
 static atomic_counter_t versioning(0);
 
 
-void LinuxExecutor::Result::exitStatus(int x)
+void LinuxConcrete::Result::exitStatus(int x)
 {
   exitStatus_ = x;
   exitKind_   = nameCompletionStatus(x);
 }
 
-LinuxExecutor::Result*
+LinuxConcrete::Result*
 createLinuxResult(int errcode, std::string outstr, std::string errstr, double rank)
 {
-  LinuxExecutor::Result* res = new LinuxExecutor::Result(rank, errcode);
+  LinuxConcrete::Result* res = new LinuxConcrete::Result(rank, errcode);
 
   res->out(outstr);
   res->err(errstr);
   return res;
 }
 
-LinuxExecutor::LinuxExecutor(const Database::Ptr &db)
+LinuxConcrete::LinuxConcrete(const Database::Ptr &db)
     : ConcreteExecutor(db), useAddressRandomization_(false) {}
 
-LinuxExecutor::~LinuxExecutor() {}
+LinuxConcrete::~LinuxConcrete() {}
 
-LinuxExecutor::Ptr
-LinuxExecutor::instance(const Database::Ptr &db) {
-    return Ptr(new LinuxExecutor(db));
+LinuxConcrete::Ptr
+LinuxConcrete::instance(const Database::Ptr &db) {
+    return Ptr(new LinuxConcrete(db));
 }
 
 ConcreteExecutorResult*
-LinuxExecutor::execute(const TestCase::Ptr& tc)
+LinuxConcrete::execute(const TestCase::Ptr& tc)
 {
   namespace bstfs = boost::filesystem;
 
@@ -322,6 +317,6 @@ LinuxExecutor::execute(const TestCase::Ptr& tc)
 } // namespace
 } // namespace
 
-BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::Concolic::LinuxExecutor::Result);
+BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::Concolic::LinuxConcrete::Result);
 
 #endif

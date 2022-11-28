@@ -5,7 +5,7 @@
 
 #include <Rose/BinaryAnalysis/Concolic/ConcolicExecutor.h>
 #include <Rose/BinaryAnalysis/Concolic/Database.h>
-#include <Rose/BinaryAnalysis/Concolic/LinuxExecutor.h>
+#include <Rose/BinaryAnalysis/Concolic/LinuxConcrete.h>
 #include <Rose/BinaryAnalysis/Concolic/Specimen.h>
 #include <Rose/BinaryAnalysis/Concolic/TestCase.h>
 
@@ -46,8 +46,8 @@ LinuxExitStatus::instance(const std::string& databaseUri, const std::string &tes
 
 void
 LinuxExitStatus::run() {
-    LinuxExecutor::Ptr concreteExecutor = LinuxExecutor::instance(database());
-    ConcolicExecutor::Ptr concolicExecutor = ConcolicExecutor::instance();
+    auto concreteExecutor = LinuxConcrete::instance(database());
+    auto concolicExecutor = ConcolicExecutor::instance();
 
     while (!isFinished()) {
         // Run as many test cases concretely as possible.
