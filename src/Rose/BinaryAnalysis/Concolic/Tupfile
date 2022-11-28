@@ -9,11 +9,11 @@ run $(public_header) -o include/rose/Rose/BinaryAnalysis/Concolic	\
     ExecutionEvent.h							\
     ExecutionLocation.h							\
     ExecutionManager.h							\
+    I386Linux.h								\
     InputVariables.h							\
-    LinuxConcrete.h							\
     LinuxExitStatus.h							\
-    LinuxI386.h								\
     LinuxTraceConcrete.h						\
+    M68kSystem.h							\
     SharedMemory.h							\
     Specimen.h								\
     SystemCall.h							\
@@ -29,9 +29,7 @@ run $(librose_compile)				\
     ExecutionLocation.C				\
     ExecutionManager.C				\
     InputVariables.C				\
-    LinuxConcrete.C				\
     LinuxExitStatus.C				\
-    LinuxI386.C					\
     LinuxTraceConcrete.C			\
     SharedMemory.C				\
     Specimen.C					\

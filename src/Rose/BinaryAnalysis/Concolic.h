@@ -11,11 +11,11 @@
 #include <Rose/BinaryAnalysis/Concolic/ExecutionEvent.h>
 #include <Rose/BinaryAnalysis/Concolic/ExecutionLocation.h>
 #include <Rose/BinaryAnalysis/Concolic/ExecutionManager.h>
+#include <Rose/BinaryAnalysis/Concolic/I386Linux.h>
 #include <Rose/BinaryAnalysis/Concolic/InputVariables.h>
-#include <Rose/BinaryAnalysis/Concolic/LinuxConcrete.h>
 #include <Rose/BinaryAnalysis/Concolic/LinuxExitStatus.h>
-#include <Rose/BinaryAnalysis/Concolic/LinuxI386.h>
 #include <Rose/BinaryAnalysis/Concolic/LinuxTraceConcrete.h>
+#include <Rose/BinaryAnalysis/Concolic/M68kSystem.h>
 #include <Rose/BinaryAnalysis/Concolic/SharedMemory.h>
 #include <Rose/BinaryAnalysis/Concolic/Specimen.h>
 #include <Rose/BinaryAnalysis/Concolic/SystemCall.h>

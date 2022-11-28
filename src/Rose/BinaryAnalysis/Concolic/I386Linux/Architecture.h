@@ -1,5 +1,5 @@
-#ifndef ROSE_BinaryAnalysis_Concolic_LinuxI386_H
-#define ROSE_BinaryAnalysis_Concolic_LinuxI386_H
+#ifndef ROSE_BinaryAnalysis_Concolic_I386Linux_Architecture_H
+#define ROSE_BinaryAnalysis_Concolic_I386Linux_Architecture_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 
@@ -15,18 +15,19 @@
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Concolic {
+namespace I386Linux {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Linux Intel 80386 and compatible hardware architecture.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Features specific to native Linux ELF i386 specimens. */
-class LinuxI386: public Architecture {
-    using Super = Architecture;
+class Architecture: public Concolic::Architecture {
+    using Super = Concolic::Architecture;
 
 public:
     /** Reference counting pointer. */
-    using Ptr = LinuxI386Ptr;
+    using Ptr = ArchitecturePtr;
 
 private:
     Debugger::Linux::Ptr debugger_;
@@ -35,9 +36,9 @@ private:
     bool markingEnvpAsInput_ = false;
 
 protected:
-    LinuxI386(const DatabasePtr&, TestCaseId, const Partitioner2::Partitioner&);
+    Architecture(const DatabasePtr&, TestCaseId, const Partitioner2::Partitioner&);
 public:
-    ~LinuxI386();
+    ~Architecture();
 
 public:
     /** Allocating constructor for test case.
@@ -132,13 +133,13 @@ private:
 /** Base class for Linux i386 syscall callbacks.
  *
  *  This is the base class for all Linux i386 system call callbacks. */
-class LinuxI386SyscallBase: public SyscallCallback {
+class SyscallBase: public SyscallCallback {
     ExecutionEventPtr   latestReturnEvent_;             // event for most recent system call return
     ExecutionEventPtr   penultimateReturnEvent_;        // event for next most recent system call return
 
 public:
-    LinuxI386SyscallBase();
-    virtual ~LinuxI386SyscallBase();
+    SyscallBase();
+    virtual ~SyscallBase();
 
     /** Welcome message in diagnostic output.
      *
@@ -216,11 +217,11 @@ public:
  *  This callback does nothing except create return value events, create return value input variables, and print an error
  *  message that the system call has not been implemented. It is not necessary for the user to create these objects and bind
  *  them to system calls -- that happens automatically if a system call has no other callbacks. */
-class LinuxI386SyscallUnimplemented: public LinuxI386SyscallBase {
+class SyscallUnimplemented: public SyscallBase {
 protected:
-    LinuxI386SyscallUnimplemented();
+    SyscallUnimplemented();
 public:
-    ~LinuxI386SyscallUnimplemented();
+    ~SyscallUnimplemented();
 
 public:
     /** Allocating constructor. */
@@ -234,11 +235,11 @@ public:
  *
  *  This is for system calls that return a value that is treated as an input variable, but don't have any other constraints
  *  on their behavior. */
-class LinuxI386SyscallReturnsInput: public LinuxI386SyscallBase {
+class SyscallReturnsInput: public SyscallBase {
 protected:
-    LinuxI386SyscallReturnsInput();
+    SyscallReturnsInput();
 public:
-    ~LinuxI386SyscallReturnsInput();
+    ~SyscallReturnsInput();
 
 public:
     /** Allocating constructor. */
@@ -249,11 +250,11 @@ public:
 };
 
 /** Callback for system calls that terminate the process. */
-class LinuxI386SyscallTerminates: public LinuxI386SyscallBase {
+class SyscallTerminates: public SyscallBase {
 protected:
-    LinuxI386SyscallTerminates();
+    SyscallTerminates();
 public:
-    ~LinuxI386SyscallTerminates();
+    ~SyscallTerminates();
 
 public:
     /** Allocating constructor. */
@@ -266,11 +267,11 @@ public:
 /** Base class for constraints on return values.
  *
  *  Subclasses must implement the @ref playback and @ref makeReturnConstaint methods. */
-class LinuxI386SyscallReturn: public LinuxI386SyscallBase {
+class SyscallReturn: public SyscallBase {
 protected:
-    LinuxI386SyscallReturn();
+    SyscallReturn();
 public:
-    ~LinuxI386SyscallReturn();
+    ~SyscallReturn();
 
 protected:
     /** Creates the symbolic constraint and concrete return value.
@@ -290,11 +291,11 @@ public:
  *  This callback can be used for system calls like @c getpid that always return the same value no matter how many times
  *  they're called. Note that although the return value is constant within a particular test case, it is not necessarily
  *  constant across all test cases (unless solver constraints require it to be so). */
-class LinuxI386SyscallConstant: public LinuxI386SyscallReturn {
+class SyscallConstant: public SyscallReturn {
 protected:
-    LinuxI386SyscallConstant();
+    SyscallConstant();
 public:
-    ~LinuxI386SyscallConstant();
+    ~SyscallConstant();
 
 public:
     /** Allocating constructor. */
@@ -307,11 +308,11 @@ public:
 /** Callback for system calls that return non-decreasing values.
  *
  *  This callback can be used for system calls like @c time that return non-decreasing values. */
-class LinuxI386SyscallNondecreasing: public LinuxI386SyscallReturn {
+class SyscallNondecreasing: public SyscallReturn {
 protected:
-    LinuxI386SyscallNondecreasing();
+    SyscallNondecreasing();
 public:
-    ~LinuxI386SyscallNondecreasing();
+    ~SyscallNondecreasing();
 
 public:
     /** Allocating constructor. */
@@ -322,11 +323,11 @@ public:
 };
 
 /** Callback for access system call. */
-class LinuxI386SyscallAccess: public LinuxI386SyscallBase {
+class SyscallAccess: public SyscallBase {
 protected:
-    LinuxI386SyscallAccess();
+    SyscallAccess();
 public:
-    ~LinuxI386SyscallAccess();
+    ~SyscallAccess();
 
 public:
     /** Allocating constructor. */
@@ -337,11 +338,11 @@ public:
 };
 
 /** Callback for brk system call. */
-class LinuxI386SyscallBrk: public LinuxI386SyscallBase {
+class SyscallBrk: public SyscallBase {
 protected:
-    LinuxI386SyscallBrk();
+    SyscallBrk();
 public:
-    ~LinuxI386SyscallBrk();
+    ~SyscallBrk();
 
 public:
     /** Allocating constructor. */
@@ -352,11 +353,11 @@ public:
 };
 
 /** Callback for mmap2 system call. */
-class LinuxI386SyscallMmap2: public LinuxI386SyscallBase {
+class SyscallMmap2: public SyscallBase {
 protected:
-    LinuxI386SyscallMmap2();
+    SyscallMmap2();
 public:
-    ~LinuxI386SyscallMmap2();
+    ~SyscallMmap2();
 
 public:
     /** Allocating constructor. */
@@ -367,11 +368,11 @@ public:
 };
 
 /** Callback for openat system call. */
-class LinuxI386SyscallOpenat: public LinuxI386SyscallBase {
+class SyscallOpenat: public SyscallBase {
 protected:
-    LinuxI386SyscallOpenat();
+    SyscallOpenat();
 public:
-    ~LinuxI386SyscallOpenat();
+    ~SyscallOpenat();
 
 public:
     /** Allocating constructor. */
@@ -381,6 +382,7 @@ public:
     void handlePostSyscall(SyscallContext&) override;
 };
 
+} // namespace
 } // namespace
 } // namespace
 } // namespace

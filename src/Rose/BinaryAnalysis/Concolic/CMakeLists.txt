@@ -1,3 +1,6 @@
+add_subdirectory(M68kSystem)
+add_subdirectory(I386Linux)
+
 add_library(roseBinaryAnalysisConcolic OBJECT
   Architecture.C
   ConcolicExecutor.C
@@ -7,9 +10,7 @@ add_library(roseBinaryAnalysisConcolic OBJECT
   ExecutionLocation.C
   ExecutionManager.C
   InputVariables.C
-  LinuxConcrete.C
   LinuxExitStatus.C
-  LinuxI386.C
   LinuxTraceConcrete.C
   SharedMemory.C
   Specimen.C
@@ -29,11 +30,11 @@ install(FILES
   ExecutionEvent.h
   ExecutionLocation.h
   ExecutionManager.h
+  I386Linux.h
   InputVariables.h
-  LinuxConcrete.h
   LinuxExitStatus.h
-  LinuxI386.h
   LinuxTraceConcrete.h
+  M68kSystem.h
   SharedMemory.h
   Specimen.h
   SystemCall.h

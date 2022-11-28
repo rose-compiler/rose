@@ -1,7 +1,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 #include <sage3basic.h>
-#include <Rose/BinaryAnalysis/Concolic/LinuxI386.h>
+#include <Rose/BinaryAnalysis/Concolic/I386Linux/Architecture.h>
 
 #include <Rose/BinaryAnalysis/Concolic/ConcolicExecutor.h>
 #include <Rose/BinaryAnalysis/Concolic/Database.h>
@@ -31,6 +31,7 @@ namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Concolic {
+namespace I386Linux {
 
 static const unsigned i386_NR_mmap   = 192;             //  | 0x40000000; // __X32_SYSCALL_BIT
 static const unsigned i386_NR_munmap = 91;              //  | 0x40000000; // __X32_SYSCALL_BIT
@@ -445,18 +446,18 @@ syscallName(int n) {
 // Syscall callback base class
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-LinuxI386SyscallBase::LinuxI386SyscallBase() {}
+SyscallBase::SyscallBase() {}
 
-LinuxI386SyscallBase::~LinuxI386SyscallBase() {}
+SyscallBase::~SyscallBase() {}
 
 bool
-LinuxI386SyscallBase::operator()(bool /*handled*/, SyscallContext &ctx) {
+SyscallBase::operator()(bool /*handled*/, SyscallContext &ctx) {
     // Since a system call might have multiple callbacks, and since all of them inherit from this class, they will all end up
     // calling this code. Some things (such as creating new events and single stepping the concrete process) should only be
     // done once, so be careful!
     hello("linux i386 base class", ctx);
     Sawyer::Message::Stream debug(mlog[DEBUG]);
-    auto i386 = ctx.architecture.dynamicCast<LinuxI386>();
+    auto i386 = ctx.architecture.dynamicCast<Architecture>();
     ASSERT_not_null(i386);
     const RegisterDescriptor SYS_RET = i386->systemCallReturnRegister();
     penultimateReturnEvent_ = latestReturnEvent_;
@@ -529,7 +530,7 @@ LinuxI386SyscallBase::operator()(bool /*handled*/, SyscallContext &ctx) {
 }
 
 void
-LinuxI386SyscallBase::hello(const std::string &name, const SyscallContext &ctx) const {
+SyscallBase::hello(const std::string &name, const SyscallContext &ctx) const {
     if (name.empty()) {
         SyscallCallback::hello("", ctx);
     } else {
@@ -538,18 +539,18 @@ LinuxI386SyscallBase::hello(const std::string &name, const SyscallContext &ctx) 
 }
 
 ExecutionEvent::Ptr
-LinuxI386SyscallBase::latestReturnEvent() const {
+SyscallBase::latestReturnEvent() const {
     return latestReturnEvent_;
 }
 
 ExecutionEvent::Ptr
-LinuxI386SyscallBase::penultimateReturnEvent() const {
+SyscallBase::penultimateReturnEvent() const {
     return penultimateReturnEvent_;
 }
 
 
 SymbolicExpression::Ptr
-LinuxI386SyscallBase::penultimateSymbolicReturn() const {
+SyscallBase::penultimateSymbolicReturn() const {
     if (!penultimateReturnEvent_) {
         return SymbolicExpression::Ptr();
     } else if (SymbolicExpression::Ptr variable = penultimateReturnEvent_->inputVariable()) {
@@ -561,7 +562,7 @@ LinuxI386SyscallBase::penultimateSymbolicReturn() const {
 }
 
 void
-LinuxI386SyscallBase::showRecentReturnValues(std::ostream &out, const SyscallContext &ctx) const {
+SyscallBase::showRecentReturnValues(std::ostream &out, const SyscallContext &ctx) const {
     Database::Ptr db = ctx.architecture->database();
 
     if (!latestReturnEvent_) {
@@ -587,23 +588,23 @@ LinuxI386SyscallBase::showRecentReturnValues(std::ostream &out, const SyscallCon
 // System calls that are unimplemented
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-LinuxI386SyscallUnimplemented::LinuxI386SyscallUnimplemented() {}
+SyscallUnimplemented::SyscallUnimplemented() {}
 
-LinuxI386SyscallUnimplemented::~LinuxI386SyscallUnimplemented() {}
+SyscallUnimplemented::~SyscallUnimplemented() {}
 
 SyscallCallback::Ptr
-LinuxI386SyscallUnimplemented::instance() {
-    return Ptr(new LinuxI386SyscallUnimplemented);
+SyscallUnimplemented::instance() {
+    return Ptr(new SyscallUnimplemented);
 }
 
 void
-LinuxI386SyscallUnimplemented::playback(SyscallContext &ctx) {
+SyscallUnimplemented::playback(SyscallContext &ctx) {
     hello("not-implemented", ctx);
     mlog[ERROR] <<"  " <<syscallName(ctx.syscallEvent->syscallFunction()) <<" system call is not implemented\n";
 }
 
 void
-LinuxI386SyscallUnimplemented::handlePostSyscall(SyscallContext &ctx) {
+SyscallUnimplemented::handlePostSyscall(SyscallContext &ctx) {
     hello("not-implemented", ctx);
     mlog[ERROR] <<"  " <<syscallName(ctx.syscallEvent->syscallFunction()) <<" system call is not implemented\n";
 }
@@ -612,22 +613,22 @@ LinuxI386SyscallUnimplemented::handlePostSyscall(SyscallContext &ctx) {
 // System calls whose only behavior is to return value that's a program input.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-LinuxI386SyscallReturnsInput::LinuxI386SyscallReturnsInput() {}
+SyscallReturnsInput::SyscallReturnsInput() {}
 
-LinuxI386SyscallReturnsInput::~LinuxI386SyscallReturnsInput() {}
+SyscallReturnsInput::~SyscallReturnsInput() {}
 
 SyscallCallback::Ptr
-LinuxI386SyscallReturnsInput::instance() {
-    return Ptr(new LinuxI386SyscallReturnsInput);
+SyscallReturnsInput::instance() {
+    return Ptr(new SyscallReturnsInput);
 }
 
 void
-LinuxI386SyscallReturnsInput::playback(SyscallContext &ctx) {
+SyscallReturnsInput::playback(SyscallContext &ctx) {
     hello("returns-input", ctx);
 }
 
 void
-LinuxI386SyscallReturnsInput::handlePostSyscall(SyscallContext &ctx) {
+SyscallReturnsInput::handlePostSyscall(SyscallContext &ctx) {
     hello("returns-input", ctx);
 }
 
@@ -635,23 +636,23 @@ LinuxI386SyscallReturnsInput::handlePostSyscall(SyscallContext &ctx) {
 // System calls that terminate
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-LinuxI386SyscallTerminates::LinuxI386SyscallTerminates() {}
+SyscallTerminates::SyscallTerminates() {}
 
-LinuxI386SyscallTerminates::~LinuxI386SyscallTerminates() {}
+SyscallTerminates::~SyscallTerminates() {}
 
 SyscallCallback::Ptr
-LinuxI386SyscallTerminates::instance() {
-    return Ptr(new LinuxI386SyscallTerminates);
+SyscallTerminates::instance() {
+    return Ptr(new SyscallTerminates);
 }
 
 void
-LinuxI386SyscallTerminates::playback(SyscallContext &ctx) {
+SyscallTerminates::playback(SyscallContext &ctx) {
     hello("syscall-exits-process", ctx);
     ASSERT_not_reachable("cannot occur during startup phase");
 }
 
 void
-LinuxI386SyscallTerminates::handlePostSyscall(SyscallContext &ctx) {
+SyscallTerminates::handlePostSyscall(SyscallContext &ctx) {
     hello("syscall-exits-process", ctx);
     auto ops = Emulation::RiscOperators::promote(ctx.ops);
     ops->doExit(ctx.argsConcrete[0]);
@@ -661,15 +662,15 @@ LinuxI386SyscallTerminates::handlePostSyscall(SyscallContext &ctx) {
 // System call return constraints.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-LinuxI386SyscallReturn::LinuxI386SyscallReturn() {}
+SyscallReturn::SyscallReturn() {}
 
-LinuxI386SyscallReturn::~LinuxI386SyscallReturn() {}
+SyscallReturn::~SyscallReturn() {}
 
 void
-LinuxI386SyscallReturn::handlePostSyscall(SyscallContext &ctx) {
+SyscallReturn::handlePostSyscall(SyscallContext &ctx) {
     hello("syscall-return-constraint", ctx);
     Sawyer::Message::Stream debug(mlog[DEBUG]);
-    auto i386 = ctx.architecture.dynamicCast<LinuxI386>();
+    auto i386 = ctx.architecture.dynamicCast<Architecture>();
     ASSERT_not_null(i386);
     const RegisterDescriptor SYS_RET = i386->systemCallReturnRegister();
     showRecentReturnValues(debug, ctx);
@@ -703,20 +704,20 @@ LinuxI386SyscallReturn::handlePostSyscall(SyscallContext &ctx) {
 // System calls that are constant, always returning the same value.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-LinuxI386SyscallConstant::LinuxI386SyscallConstant() {}
+SyscallConstant::SyscallConstant() {}
 
-LinuxI386SyscallConstant::~LinuxI386SyscallConstant() {}
+SyscallConstant::~SyscallConstant() {}
 
 SyscallCallback::Ptr
-LinuxI386SyscallConstant::instance() {
-    return Ptr(new LinuxI386SyscallConstant);
+SyscallConstant::instance() {
+    return Ptr(new SyscallConstant);
 }
 
 void
-LinuxI386SyscallConstant::playback(SyscallContext&) {}
+SyscallConstant::playback(SyscallContext&) {}
 
 std::pair<SymbolicExpression::Ptr, Sawyer::Optional<uint64_t>>
-LinuxI386SyscallConstant::makeReturnConstraint(SyscallContext &ctx) {
+SyscallConstant::makeReturnConstraint(SyscallContext &ctx) {
     SymbolicExpression::Ptr constraint;
     Sawyer::Optional<uint64_t> concreteReturn;
 
@@ -738,20 +739,20 @@ LinuxI386SyscallConstant::makeReturnConstraint(SyscallContext &ctx) {
 // System calls that return non-decreasing values, such as time
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-LinuxI386SyscallNondecreasing::LinuxI386SyscallNondecreasing() {}
+SyscallNondecreasing::SyscallNondecreasing() {}
 
-LinuxI386SyscallNondecreasing::~LinuxI386SyscallNondecreasing() {}
+SyscallNondecreasing::~SyscallNondecreasing() {}
 
 SyscallCallback::Ptr
-LinuxI386SyscallNondecreasing::instance() {
-    return Ptr(new LinuxI386SyscallNondecreasing);
+SyscallNondecreasing::instance() {
+    return Ptr(new SyscallNondecreasing);
 }
 
 void
-LinuxI386SyscallNondecreasing::playback(SyscallContext&) {}
+SyscallNondecreasing::playback(SyscallContext&) {}
 
 std::pair<SymbolicExpression::Ptr, Sawyer::Optional<uint64_t>>
-LinuxI386SyscallNondecreasing::makeReturnConstraint(SyscallContext &ctx) {
+SyscallNondecreasing::makeReturnConstraint(SyscallContext &ctx) {
     SymbolicExpression::Ptr constraint;
     Sawyer::Optional<uint64_t> concreteReturn;
 
@@ -773,23 +774,23 @@ LinuxI386SyscallNondecreasing::makeReturnConstraint(SyscallContext &ctx) {
 // Access system call
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-LinuxI386SyscallAccess::LinuxI386SyscallAccess() {}
+SyscallAccess::SyscallAccess() {}
 
-LinuxI386SyscallAccess::~LinuxI386SyscallAccess() {}
+SyscallAccess::~SyscallAccess() {}
 
 SyscallCallback::Ptr
-LinuxI386SyscallAccess::instance() {
-    return Ptr(new LinuxI386SyscallAccess);
+SyscallAccess::instance() {
+    return Ptr(new SyscallAccess);
 }
 
 void
-LinuxI386SyscallAccess::playback(SyscallContext &ctx) {
-    hello("LinuxI386SyscallAccess::playback", ctx);
+SyscallAccess::playback(SyscallContext &ctx) {
+    hello("I386Linux::SyscallAccess::playback", ctx);
 }
 
 void
-LinuxI386SyscallAccess::handlePostSyscall(SyscallContext &ctx) {
-    hello("LinuxI386SyscallAccess::handlePostSyscall", ctx);
+SyscallAccess::handlePostSyscall(SyscallContext &ctx) {
+    hello("I386Linux::SyscallAccess::handlePostSyscall", ctx);
     if (mlog[DEBUG]) {
         rose_addr_t fileNameVa = ctx.argsConcrete[0];
         std::string fileName = ctx.architecture->partitioner().memoryMap()->readString(fileNameVa, 16384);
@@ -802,24 +803,24 @@ LinuxI386SyscallAccess::handlePostSyscall(SyscallContext &ctx) {
 // Brk system call
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-LinuxI386SyscallBrk::LinuxI386SyscallBrk() {}
+SyscallBrk::SyscallBrk() {}
 
-LinuxI386SyscallBrk::~LinuxI386SyscallBrk() {}
+SyscallBrk::~SyscallBrk() {}
 
 SyscallCallback::Ptr
-LinuxI386SyscallBrk::instance() {
-    return Ptr(new LinuxI386SyscallBrk);
+SyscallBrk::instance() {
+    return Ptr(new SyscallBrk);
 }
 
 void
-LinuxI386SyscallBrk::playback(SyscallContext &ctx) {
-    hello("LinuxI386SyscallBrk::playback", ctx);
+SyscallBrk::playback(SyscallContext &ctx) {
+    hello("I386Linux::SyscallBrk::playback", ctx);
     ASSERT_not_implemented("[Robb Matzke 2021-12-16]");
 }
 
 void
-LinuxI386SyscallBrk::handlePostSyscall(SyscallContext &ctx) {
-    hello("LinuxI386SyscallBrk::handlePostSyscall", ctx);
+SyscallBrk::handlePostSyscall(SyscallContext &ctx) {
+    hello("I386Linux::SyscallBrk::handlePostSyscall", ctx);
 
     rose_addr_t endVa = 0;
     if (!ctx.returnEvent->calculateResult(ctx.ops->inputVariables()->bindings())->toUnsigned().assignTo(endVa)) {
@@ -840,23 +841,23 @@ LinuxI386SyscallBrk::handlePostSyscall(SyscallContext &ctx) {
 // Mmap2 system call
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-LinuxI386SyscallMmap2::LinuxI386SyscallMmap2() {}
-LinuxI386SyscallMmap2::~LinuxI386SyscallMmap2() {}
+SyscallMmap2::SyscallMmap2() {}
+SyscallMmap2::~SyscallMmap2() {}
 
 SyscallCallback::Ptr
-LinuxI386SyscallMmap2::instance() {
-    return Ptr(new LinuxI386SyscallMmap2);
+SyscallMmap2::instance() {
+    return Ptr(new SyscallMmap2);
 }
 
 void
-LinuxI386SyscallMmap2::playback(SyscallContext &ctx) {
-    hello("LinuxI386SyscallMmap2::playback", ctx);
+SyscallMmap2::playback(SyscallContext &ctx) {
+    hello("I386Linux::SyscallMmap2::playback", ctx);
     ASSERT_not_implemented("[Robb Matzke 2021-12-20]");
 }
 
 void
-LinuxI386SyscallMmap2::handlePostSyscall(SyscallContext &ctx) {
-    hello("LinuxI386SyscallMmap2::handlePostSyscall", ctx);
+SyscallMmap2::handlePostSyscall(SyscallContext &ctx) {
+    hello("I386Linux::SyscallMmap2::handlePostSyscall", ctx);
 
     if (ctx.returnEvent)
         notAnInput(ctx, ctx.returnEvent);
@@ -870,22 +871,22 @@ LinuxI386SyscallMmap2::handlePostSyscall(SyscallContext &ctx) {
 // Openat system call
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-LinuxI386SyscallOpenat::LinuxI386SyscallOpenat() {}
-LinuxI386SyscallOpenat::~LinuxI386SyscallOpenat() {}
+SyscallOpenat::SyscallOpenat() {}
+SyscallOpenat::~SyscallOpenat() {}
 
 SyscallCallback::Ptr
-LinuxI386SyscallOpenat::instance() {
-    return Ptr(new LinuxI386SyscallOpenat);
+SyscallOpenat::instance() {
+    return Ptr(new SyscallOpenat);
 }
 
 void
-LinuxI386SyscallOpenat::playback(SyscallContext &ctx) {
-    hello("LinuxI386SyscallOpenat::playback", ctx);
+SyscallOpenat::playback(SyscallContext &ctx) {
+    hello("I386Linux::SyscallOpenat::playback", ctx);
 }
 
 void
-LinuxI386SyscallOpenat::handlePostSyscall(SyscallContext &ctx) {
-    hello("LinuxI386SyscallOpenat::handlPostSyscall", ctx);
+SyscallOpenat::handlePostSyscall(SyscallContext &ctx) {
+    hello("I386Linux::SyscallOpenat::handlPostSyscall", ctx);
     if (mlog[DEBUG]) {
         rose_addr_t fileNameVa = ctx.argsConcrete[1];
         std::string fileName = ctx.architecture->partitioner().memoryMap()->readString(fileNameVa, 16384);
@@ -898,51 +899,51 @@ LinuxI386SyscallOpenat::handlePostSyscall(SyscallContext &ctx) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void
-LinuxI386::configureSystemCalls() {
+Architecture::configureSystemCalls() {
     // These are the generally useful configurations. Feel free to override these to accomplish whatever kind of testing you
     // need.
 
     // SYS_exit
-    systemCalls(1, LinuxI386SyscallTerminates::instance());
+    systemCalls(1, SyscallTerminates::instance());
 
     // SYS_time
-    systemCalls(13, LinuxI386SyscallNondecreasing::instance());
+    systemCalls(13, SyscallNondecreasing::instance());
 
     // SYS_getpid
-    systemCalls(20, LinuxI386SyscallConstant::instance());
+    systemCalls(20, SyscallConstant::instance());
 
     // SYS_getuid: assumes SYS_setuid is never successfully called
-    systemCalls(24, LinuxI386SyscallConstant::instance());
+    systemCalls(24, SyscallConstant::instance());
 
     // SYS_access
-    systemCalls(33, LinuxI386SyscallAccess::instance());
+    systemCalls(33, SyscallAccess::instance());
 
     // SYS_brk
-    systemCalls(45, LinuxI386SyscallBrk::instance());
+    systemCalls(45, SyscallBrk::instance());
 
     // SYS_getgid: assumes SYS_setgid is never successfully called
-    systemCalls(47, LinuxI386SyscallConstant::instance());
+    systemCalls(47, SyscallConstant::instance());
 
     // SYS_geteuid: assumes SYS_setuid is never successfully called
-    systemCalls(50, LinuxI386SyscallConstant::instance());
+    systemCalls(50, SyscallConstant::instance());
 
     // SYS_getppid
-    systemCalls(64, LinuxI386SyscallConstant::instance());
+    systemCalls(64, SyscallConstant::instance());
 
     // SYS_getpgrp
-    systemCalls(65, LinuxI386SyscallConstant::instance());
+    systemCalls(65, SyscallConstant::instance());
 
     // SYS_mmap2
-    systemCalls(192, LinuxI386SyscallMmap2::instance());
+    systemCalls(192, SyscallMmap2::instance());
 
     // SYS_exit_group
-    systemCalls(252, LinuxI386SyscallTerminates::instance());
+    systemCalls(252, SyscallTerminates::instance());
 
     // SYS_openat
-    systemCalls(295, LinuxI386SyscallOpenat::instance());
+    systemCalls(295, SyscallOpenat::instance());
 
     // SYS_arch_prctl
-    systemCalls(384, LinuxI386SyscallReturnsInput::instance());
+    systemCalls(384, SyscallReturnsInput::instance());
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -966,7 +967,7 @@ public:
 };
 
 void
-LinuxI386::configureSharedMemory() {
+Architecture::configureSharedMemory() {
     // These are the generally useful configurations. Feel free to override these to accomplish whatever kind of testing you
     // need.
 
@@ -975,36 +976,36 @@ LinuxI386::configureSharedMemory() {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// LinuxI386
+// Architecture
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-LinuxI386::LinuxI386(const Database::Ptr &db, TestCaseId tcid, const P2::Partitioner &partitioner)
-    : Architecture(db, tcid, partitioner) {}
+Architecture::Architecture(const Database::Ptr &db, TestCaseId tcid, const P2::Partitioner &partitioner)
+    : Concolic::Architecture(db, tcid, partitioner) {}
 
-LinuxI386::~LinuxI386() {}
+Architecture::~Architecture() {}
 
-LinuxI386::Ptr
-LinuxI386::instance(const Database::Ptr &db, TestCaseId tcid, const P2::Partitioner &partitioner) {
+Architecture::Ptr
+Architecture::instance(const Database::Ptr &db, TestCaseId tcid, const P2::Partitioner &partitioner) {
     ASSERT_not_null(db);
     ASSERT_require(tcid);
-    auto retval = Ptr(new LinuxI386(db, tcid, partitioner));
+    auto retval = Ptr(new Architecture(db, tcid, partitioner));
     retval->configureSystemCalls();
     retval->configureSharedMemory();
     return retval;
 }
 
-LinuxI386::Ptr
-LinuxI386::instance(const Database::Ptr &db, const TestCase::Ptr &tc, const P2::Partitioner &partitioner) {
+Architecture::Ptr
+Architecture::instance(const Database::Ptr &db, const TestCase::Ptr &tc, const P2::Partitioner &partitioner) {
     return instance(db, db->id(tc), partitioner);
 }
 
 Debugger::Linux::Ptr
-LinuxI386::debugger() const {
+Architecture::debugger() const {
     return debugger_;
 }
 
 void
-LinuxI386::load(const boost::filesystem::path &targetDir) {
+Architecture::load(const boost::filesystem::path &targetDir) {
     // Extract the executable into the target temporary directory.
     auto exeName = boost::filesystem::path(testCase()->specimen()->name()).filename();
     if (exeName.empty())
@@ -1046,32 +1047,32 @@ LinuxI386::load(const boost::filesystem::path &targetDir) {
 }
 
 bool
-LinuxI386::isTerminated() {
+Architecture::isTerminated() {
     return !debugger_ || debugger_->isTerminated();
 }
 
 std::string
-LinuxI386::readCString(rose_addr_t va, size_t maxBytes) {
+Architecture::readCString(rose_addr_t va, size_t maxBytes) {
     return debugger_->readCString(va, maxBytes);
 }
 
 ByteOrder::Endianness
-LinuxI386::memoryByteOrder() {
+Architecture::memoryByteOrder() {
     return ByteOrder::ORDER_LSB;
 }
 
 rose_addr_t
-LinuxI386::ip() {
+Architecture::ip() {
     return debugger_->executionAddress(Debugger::ThreadId::unspecified());
 }
 
 void
-LinuxI386::ip(rose_addr_t va) {
+Architecture::ip(rose_addr_t va) {
     debugger_->executionAddress(Debugger::ThreadId::unspecified(), va);
 }
 
 std::vector<ExecutionEvent::Ptr>
-LinuxI386::createMemoryRestoreEvents() {
+Architecture::createMemoryRestoreEvents() {
     SAWYER_MESG(mlog[DEBUG]) <<"saving subordinate memory\n";
     std::vector<ExecutionEvent::Ptr> events;
     auto map = MemoryMap::instance();
@@ -1113,8 +1114,8 @@ LinuxI386::createMemoryRestoreEvents() {
 }
 
 std::vector<ExecutionEvent::Ptr>
-LinuxI386::copyMemory(const MemoryMap::Ptr &srcMap, const MemoryMap::Ptr &dstMap, const AddressInterval &where,
-                      rose_addr_t insnVa) {
+Architecture::copyMemory(const MemoryMap::Ptr &srcMap, const MemoryMap::Ptr &dstMap, const AddressInterval &where,
+                         rose_addr_t insnVa) {
     ASSERT_not_null(srcMap);
     ASSERT_not_null(dstMap);
     std::vector<ExecutionEvent::Ptr> retval;
@@ -1147,7 +1148,7 @@ LinuxI386::copyMemory(const MemoryMap::Ptr &srcMap, const MemoryMap::Ptr &dstMap
 }
 
 std::vector<ExecutionEvent::Ptr>
-LinuxI386::createMemoryAdjustEvents(const MemoryMap::Ptr &oldMap, rose_addr_t insnVa) {
+Architecture::createMemoryAdjustEvents(const MemoryMap::Ptr &oldMap, rose_addr_t insnVa) {
     std::vector<ExecutionEvent::Ptr> retval;
     SAWYER_MESG(mlog[DEBUG]) <<"saving memory map adjustments\n";
     std::vector<ExecutionEvent::Ptr> events;
@@ -1252,7 +1253,7 @@ LinuxI386::createMemoryAdjustEvents(const MemoryMap::Ptr &oldMap, rose_addr_t in
 }
 
 std::vector<ExecutionEvent::Ptr>
-LinuxI386::createMemoryHashEvents() {
+Architecture::createMemoryHashEvents() {
     SAWYER_MESG(mlog[DEBUG]) <<"hashing subordinate memory\n";
     std::vector<ExecutionEvent::Ptr> events;
     auto map = MemoryMap::instance();
@@ -1271,7 +1272,7 @@ LinuxI386::createMemoryHashEvents() {
 }
 
 std::vector<ExecutionEvent::Ptr>
-LinuxI386::createRegisterRestoreEvents() {
+Architecture::createRegisterRestoreEvents() {
     SAWYER_MESG(mlog[DEBUG]) <<"saving all registers\n";
     Sawyer::Container::BitVector allRegisters = debugger_->readAllRegisters(Debugger::ThreadId::unspecified());
     auto event = ExecutionEvent::bulkRegisterWrite(TestCase::Ptr(), ExecutionLocation(), ip(), allRegisters);
@@ -1279,7 +1280,7 @@ LinuxI386::createRegisterRestoreEvents() {
 }
 
 bool
-LinuxI386::playEvent(const ExecutionEvent::Ptr &event) {
+Architecture::playEvent(const ExecutionEvent::Ptr &event) {
     ASSERT_not_null(event);
     bool handled = Super::playEvent(event);
 
@@ -1297,7 +1298,7 @@ LinuxI386::playEvent(const ExecutionEvent::Ptr &event) {
                 const uint64_t functionNumber = event->syscallFunction();
                 SyscallCallbacks callbacks = systemCalls().getOrDefault(functionNumber);
                 ASSERT_require(callbacks.isEmpty());
-                callbacks.append(LinuxI386SyscallUnimplemented::instance());
+                callbacks.append(SyscallUnimplemented::instance());
                 SyscallContext ctx(sharedFromThis(), event, getRelatedEvents(event));
                 return callbacks.apply(false, ctx);
             }
@@ -1309,7 +1310,7 @@ LinuxI386::playEvent(const ExecutionEvent::Ptr &event) {
 }
 
 void
-LinuxI386::mapMemory(const AddressInterval &where, unsigned permissions) {
+Architecture::mapMemory(const AddressInterval &where, unsigned permissions) {
     ASSERT_forbid(where.isEmpty());
     SAWYER_MESG(mlog[DEBUG]) <<"map " <<StringUtility::plural(where.size(), "bytes") <<" ";
     unsigned prot = 0;
@@ -1336,7 +1337,7 @@ LinuxI386::mapMemory(const AddressInterval &where, unsigned permissions) {
 }
 
 void
-LinuxI386::unmapMemory(const AddressInterval &where) {
+Architecture::unmapMemory(const AddressInterval &where) {
     ASSERT_forbid(where.isEmpty());
     SAWYER_MESG(mlog[DEBUG]) <<"unmap " <<StringUtility::plural(where.size(), "bytes")
                              << " at " <<StringUtility::addrToString(where) <<"\n";
@@ -1346,32 +1347,32 @@ LinuxI386::unmapMemory(const AddressInterval &where) {
 }
 
 size_t
-LinuxI386::writeMemory(rose_addr_t va, const std::vector<uint8_t> &bytes) {
+Architecture::writeMemory(rose_addr_t va, const std::vector<uint8_t> &bytes) {
     return debugger_->writeMemory(va, bytes.size(), bytes.data());
 }
 
 std::vector<uint8_t>
-LinuxI386::readMemory(rose_addr_t va, size_t nBytes) {
+Architecture::readMemory(rose_addr_t va, size_t nBytes) {
     return debugger_->readMemory(va, nBytes);
 }
 
 void
-LinuxI386::writeRegister(RegisterDescriptor reg, uint64_t value) {
+Architecture::writeRegister(RegisterDescriptor reg, uint64_t value) {
     debugger_->writeRegister(Debugger::ThreadId::unspecified(), reg, value);
 }
 
 void
-LinuxI386::writeRegister(RegisterDescriptor reg, const Sawyer::Container::BitVector &bv) {
+Architecture::writeRegister(RegisterDescriptor reg, const Sawyer::Container::BitVector &bv) {
     debugger_->writeRegister(Debugger::ThreadId::unspecified(), reg, bv);
 }
 
 Sawyer::Container::BitVector
-LinuxI386::readRegister(RegisterDescriptor reg) {
+Architecture::readRegister(RegisterDescriptor reg) {
     return debugger_->readRegister(Debugger::ThreadId::unspecified(), reg);
 }
 
 void
-LinuxI386::executeInstruction(const P2::Partitioner &partitioner) {
+Architecture::executeInstruction(const P2::Partitioner &partitioner) {
     if (mlog[DEBUG]) {
         rose_addr_t va = debugger_->executionAddress(Debugger::ThreadId::unspecified());
         if (SgAsmInstruction *insn = partitioner.instructionProvider()[va]) {
@@ -1387,7 +1388,7 @@ LinuxI386::executeInstruction(const P2::Partitioner &partitioner) {
 }
 
 void
-LinuxI386::executeInstruction(const BS::RiscOperators::Ptr &ops_, SgAsmInstruction *insn) {
+Architecture::executeInstruction(const BS::RiscOperators::Ptr &ops_, SgAsmInstruction *insn) {
     auto ops = Emulation::RiscOperators::promote(ops_);
     ASSERT_not_null(ops);
     ASSERT_not_null(insn);
@@ -1420,7 +1421,7 @@ LinuxI386::executeInstruction(const BS::RiscOperators::Ptr &ops_, SgAsmInstructi
 }
 
 void
-LinuxI386::mapScratchPage() {
+Architecture::mapScratchPage() {
     ASSERT_require(debugger_->isAttached());
 
     // Create the scratch page
@@ -1443,7 +1444,7 @@ LinuxI386::mapScratchPage() {
 }
 
 std::vector<MemoryMap::ProcessMapRecord>
-LinuxI386::disposableMemory() {
+Architecture::disposableMemory() {
     std::vector<MemoryMap::ProcessMapRecord> segments = MemoryMap::readProcessMap(*debugger_->processId());
     for (auto segment = segments.begin(); segment != segments.end(); /*void*/) {
         ASSERT_forbid(segment->interval.isEmpty());
@@ -1464,7 +1465,7 @@ LinuxI386::disposableMemory() {
 }
 
 void
-LinuxI386::unmapAllMemory() {
+Architecture::unmapAllMemory() {
     SAWYER_MESG(mlog[DEBUG]) <<"unmapping memory\n";
     std::vector<MemoryMap::ProcessMapRecord> segments = disposableMemory();
     for (const MemoryMap::ProcessMapRecord &segment: segments) {
@@ -1479,7 +1480,7 @@ LinuxI386::unmapAllMemory() {
 }
 
 void
-LinuxI386::createInputVariables(const P2::Partitioner &partitioner, const Emulation::RiscOperators::Ptr &ops,
+Architecture::createInputVariables(const P2::Partitioner &partitioner, const Emulation::RiscOperators::Ptr &ops,
                                 const SmtSolver::Ptr &solver) {
     ASSERT_not_null(ops);
     ASSERT_not_null(solver);
@@ -1720,7 +1721,7 @@ LinuxI386::createInputVariables(const P2::Partitioner &partitioner, const Emulat
 }
 
 uint64_t
-LinuxI386::systemCallFunctionNumber(const P2::Partitioner &partitioner, const BS::RiscOperators::Ptr &ops) {
+Architecture::systemCallFunctionNumber(const P2::Partitioner &partitioner, const BS::RiscOperators::Ptr &ops) {
     ASSERT_not_null(ops);
 
     const RegisterDescriptor AX = partitioner.instructionProvider().registerDictionary()->findOrThrow("eax");
@@ -1730,7 +1731,7 @@ LinuxI386::systemCallFunctionNumber(const P2::Partitioner &partitioner, const BS
 }
 
 BS::SValue::Ptr
-LinuxI386::systemCallArgument(const P2::Partitioner &partitioner, const BS::RiscOperators::Ptr &ops, size_t idx) {
+Architecture::systemCallArgument(const P2::Partitioner &partitioner, const BS::RiscOperators::Ptr &ops, size_t idx) {
     switch (idx) {
         case 0: {
             const RegisterDescriptor r = partitioner.instructionProvider().registerDictionary()->findOrThrow("ebx");
@@ -1763,19 +1764,19 @@ LinuxI386::systemCallArgument(const P2::Partitioner &partitioner, const BS::Risc
 }
 
 RegisterDescriptor
-LinuxI386::systemCallReturnRegister() {
+Architecture::systemCallReturnRegister() {
     return RegisterDescriptor(x86_regclass_gpr, x86_gpr_ax, 0, 32);
 }
 
 BS::SValue::Ptr
-LinuxI386::systemCallReturnValue(const P2::Partitioner&, const BS::RiscOperators::Ptr &ops) {
+Architecture::systemCallReturnValue(const P2::Partitioner&, const BS::RiscOperators::Ptr &ops) {
     ASSERT_not_null(ops);
     const RegisterDescriptor reg = systemCallReturnRegister();
     return ops->readRegister(reg);
 }
 
 BS::SValue::Ptr
-LinuxI386::systemCallReturnValue(const P2::Partitioner&, const BS::RiscOperators::Ptr &ops,
+Architecture::systemCallReturnValue(const P2::Partitioner&, const BS::RiscOperators::Ptr &ops,
                                  const BS::SValue::Ptr &retval) {
     ASSERT_not_null(ops);
     const RegisterDescriptor reg = systemCallReturnRegister();
@@ -1784,7 +1785,7 @@ LinuxI386::systemCallReturnValue(const P2::Partitioner&, const BS::RiscOperators
 }
 
 void
-LinuxI386::systemCall(const P2::Partitioner &partitioner, const BS::RiscOperators::Ptr &ops_) {
+Architecture::systemCall(const P2::Partitioner &partitioner, const BS::RiscOperators::Ptr &ops_) {
     // A system call has been encountered. The INT instruction has been processed symbolically (basically a no-op other than
     // to adjust the instruction pointer), and the concrete execution has stepped into the system call but has not yet executed
     // it (i.e., the subordinate process is in the syscall-enter-stop state).
@@ -1835,7 +1836,7 @@ LinuxI386::systemCall(const P2::Partitioner &partitioner, const BS::RiscOperator
     SyscallCallbacks callbacks = systemCalls().getOrDefault(functionNumber);
     bool handled = callbacks.apply(false, ctx);
     if (!handled) {
-        callbacks.append(LinuxI386SyscallUnimplemented::instance());
+        callbacks.append(SyscallUnimplemented::instance());
         callbacks.apply(false, ctx);
     }
     ASSERT_not_null(ctx.returnEvent);                   // if the syscall didn't exit, then it must have returned
@@ -1864,6 +1865,7 @@ LinuxI386::systemCall(const P2::Partitioner &partitioner, const BS::RiscOperator
     }
 }
 
+} // namespace
 } // namespace
 } // namespace
 } // namespace

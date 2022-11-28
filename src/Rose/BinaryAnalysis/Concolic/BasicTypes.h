@@ -3,6 +3,9 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 
+#include <Rose/BinaryAnalysis/Concolic/I386Linux/BasicTypes.h>
+#include <Rose/BinaryAnalysis/Concolic/M68kSystem/BasicTypes.h>
+
 #include <rose_strtoull.h>
 
 #include <Rose/Exception.h>
@@ -108,12 +111,6 @@ using ExecutionManagerPtr = Sawyer::SharedPointer<ExecutionManager>;
 
 class InputVariables;
 using InputVariablesPtr = Sawyer::SharedPointer<InputVariables>;
-
-class LinuxConcrete;
-using LinuxConcretePtr = Sawyer::SharedPointer<LinuxConcrete>;
-
-class LinuxI386;
-using LinuxI386Ptr = Sawyer::SharedPointer<LinuxI386>;
 
 class SharedMemoryCallback;
 using SharedMemoryCallbackPtr = Sawyer::SharedPointer<SharedMemoryCallback>;

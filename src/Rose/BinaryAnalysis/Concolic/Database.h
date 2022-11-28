@@ -417,8 +417,8 @@ private:
 #include <boost/archive/xml_iarchive.hpp>
 #include <boost/archive/xml_oarchive.hpp>
 
-#include <Rose/BinaryAnalysis/Concolic/LinuxConcrete.h>
-BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::Concolic::LinuxConcrete::Result);
+#include <Rose/BinaryAnalysis/Concolic/I386Linux/ConcreteExecutor.h>
+BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::Concolic::I386Linux::ConcreteExecutor::Result);
 
 #include <Rose/BinaryAnalysis/Concolic/LinuxTraceConcrete.h>
 BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::Concolic::LinuxTraceConcrete::Result);

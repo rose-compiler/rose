@@ -1,0 +1,10 @@
+include_rules
+
+run $(public_header) -o include/rose/Rose/BinaryAnalysis/Concolic/I386Linux	\
+    Architecture.h								\
+    BasicTypes.h								\
+    ConcreteExecutor.h
+
+run $(librose_compile)				\
+    Architecture.C				\
+    ConcreteExecutor.C
