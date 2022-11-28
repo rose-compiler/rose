@@ -295,10 +295,10 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/Concolic/ExecutionLocation.h				\
 	Rose/BinaryAnalysis/Concolic/ExecutionManager.h					\
 	Rose/BinaryAnalysis/Concolic/InputVariables.h					\
-	Rose/BinaryAnalysis/Concolic/LinuxExecutor.h					\
+	Rose/BinaryAnalysis/Concolic/LinuxConcrete.h					\
 	Rose/BinaryAnalysis/Concolic/LinuxExitStatus.h					\
 	Rose/BinaryAnalysis/Concolic/LinuxI386.h					\
-	Rose/BinaryAnalysis/Concolic/LinuxTraceExecutor.h				\
+	Rose/BinaryAnalysis/Concolic/LinuxTraceConcrete.h				\
 	Rose/BinaryAnalysis/Concolic/SharedMemory.h					\
 	Rose/BinaryAnalysis/Concolic/Specimen.h						\
 	Rose/BinaryAnalysis/Concolic/SystemCall.h					\

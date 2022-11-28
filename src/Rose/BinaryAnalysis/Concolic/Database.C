@@ -10,7 +10,7 @@
 
 #include <Rose/BinaryAnalysis/Concolic/ConcreteExecutor.h>
 #include <Rose/BinaryAnalysis/Concolic/ExecutionEvent.h>
-#include <Rose/BinaryAnalysis/Concolic/LinuxTraceExecutor.h>
+#include <Rose/BinaryAnalysis/Concolic/LinuxTraceConcrete.h>
 #include <Rose/BinaryAnalysis/Concolic/Specimen.h>
 #include <Rose/BinaryAnalysis/Concolic/TestCase.h>
 #include <Rose/BinaryAnalysis/Concolic/TestSuite.h>
@@ -977,7 +977,7 @@ Database::saveConcreteResult(const TestCase::Ptr &testCase, const ConcreteExecut
         std::stringstream ss;
         {
             boost::archive::xml_oarchive archive(ss);
-            archive.register_type<LinuxTraceExecutor::Result>();
+            archive.register_type<LinuxTraceConcrete::Result>();
             archive <<BOOST_SERIALIZATION_NVP(details);
         }
         connection().stmt("update test_cases"
@@ -1015,7 +1015,7 @@ Database::readConcreteResult(TestCaseId id) {
     if (bytes) {
         std::istringstream ss(*bytes);
         boost::archive::xml_iarchive archive(ss);
-        archive.register_type<LinuxTraceExecutor::Result>();
+        archive.register_type<LinuxTraceConcrete::Result>();
         archive >> BOOST_SERIALIZATION_NVP(details);
     }
     return std::unique_ptr<ConcreteExecutorResult>(details);

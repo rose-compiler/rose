@@ -109,8 +109,8 @@ using ExecutionManagerPtr = Sawyer::SharedPointer<ExecutionManager>;
 class InputVariables;
 using InputVariablesPtr = Sawyer::SharedPointer<InputVariables>;
 
-class LinuxExecutor;
-using LinuxExecutorPtr = Sawyer::SharedPointer<LinuxExecutor>;
+class LinuxConcrete;
+using LinuxConcretePtr = Sawyer::SharedPointer<LinuxConcrete>;
 
 class LinuxI386;
 using LinuxI386Ptr = Sawyer::SharedPointer<LinuxI386>;
