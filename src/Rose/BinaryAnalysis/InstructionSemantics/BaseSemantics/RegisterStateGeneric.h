@@ -594,17 +594,9 @@ public:
     findProperties(const InputOutputPropertySet &required,
                    const InputOutputPropertySet &prohibited = InputOutputPropertySet()) const;
 
-    /** Update write properties.
-     *
-     *  Adds the specified property to all bits of the register.  The property can be anything, but is normally either IO_WRITE
-     *  or IO_INIT depending on whether the writeRegister operation was on behalf of an instruction or not. */
-    virtual void updateWriteProperties(RegisterDescriptor, InputOutputProperty);
-
-    /** Update read properties.
-     *
-     *  Adds the READ property to all bits of the register. Also adds READ_BEFORE_WRITE and/or READ_UNINITIALIZED as
-     *  appropriate depending on writer properties. */
-    virtual void updateReadProperties(RegisterDescriptor);
+    // Documented in super class
+    virtual void updateWriteProperties(RegisterDescriptor, InputOutputProperty) override;
+    virtual void updateReadProperties(RegisterDescriptor) override;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Non-public APIs

@@ -53,7 +53,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x080482cb<134513355>[u32]
+ eip = 0x080482cb<134513355>[u32]
  fpstatus_top = 0x0[u3]
 memory:
  addr=(add[u32] esp_0[u32] 0xffffffff<4294967295,-1>[u32]) write-only value=(extract[u8] 0x00000018[u32] 0x00000020[u32] ebp_0[u32])
@@ -118,7 +118,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x080482ce<134513358>[u32]
+ eip = 0x080482ce<134513358>[u32]
  cf write-only = (invert[u1] (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])) 0x0fffffff8<4294967288>[u33]) (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])) 0x0fffffff7<4294967287>[u33])))
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32]))))
  af write-only = (invert[u1] (extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])) 0x0fffffff8<4294967288>[u33]) (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])) 0x0fffffff7<4294967287>[u33])))
@@ -325,7 +325,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = V5[u32]
+ eip = V5[u32]
  fpstatus_top = 0x0[u3]
 memory:
  addr=(add[u32] ebp_0[u32] 0x00000007[u32]) read-before-write value=(extract[u8] 0x00000018[u32] 0x00000020[u32] V5[u32])
@@ -401,7 +401,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
- eip write-only = V3[u32]
+ eip = V3[u32]
  fpstatus_top = 0x0[u3]
 memory:
  addr=0x080496d3<134518483>[u32] read-before-write value=(extract[u8] 0x00000018[u32] 0x00000020[u32] V3[u32])
@@ -667,7 +667,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x08048343<134513475>[u32]
+ eip = 0x08048343<134513475>[u32]
  cf write-only = false[u1]
  pf write-only = true[u1]
  af write-only = V1[u1]<unspec>
@@ -702,7 +702,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x08048345<134513477>[u32]
+ eip = 0x08048345<134513477>[u32]
  cf write-only = false[u1]
  pf write-only = true[u1]
  af write-only = V1[u1]<unspec>
@@ -768,7 +768,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x08048348<134513480>[u32]
+ eip = 0x08048348<134513480>[u32]
  cf write-only = false[u1]
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32]))))
  af write-only = V6[u1]<unspec>
@@ -809,7 +809,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x08048349<134513481>[u32]
+ eip = 0x08048349<134513481>[u32]
  cf write-only = false[u1]
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32]))))
  af write-only = V6[u1]<unspec>
@@ -854,7 +854,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x0804834a<134513482>[u32]
+ eip = 0x0804834a<134513482>[u32]
  cf write-only = false[u1]
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32]))))
  af write-only = V6[u1]<unspec>
@@ -903,7 +903,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x0804834b<134513483>[u32]
+ eip = 0x0804834b<134513483>[u32]
  cf write-only = false[u1]
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32]))))
  af write-only = V6[u1]<unspec>
@@ -955,7 +955,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x08048350<134513488>[u32]
+ eip = 0x08048350<134513488>[u32]
  cf write-only = false[u1]
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32]))))
  af write-only = V6[u1]<unspec>
@@ -1011,7 +1011,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x08048355<134513493>[u32]
+ eip = 0x08048355<134513493>[u32]
  cf write-only = false[u1]
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32]))))
  af write-only = V6[u1]<unspec>
@@ -1072,7 +1072,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x08048356<134513494>[u32]
+ eip = 0x08048356<134513494>[u32]
  cf write-only = false[u1]
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32]))))
  af write-only = V6[u1]<unspec>
@@ -1137,7 +1137,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x08048357<134513495>[u32]
+ eip = 0x08048357<134513495>[u32]
  cf write-only = false[u1]
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32]))))
  af write-only = V6[u1]<unspec>
@@ -1205,7 +1205,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x0804835c<134513500>[u32]
+ eip = 0x0804835c<134513500>[u32]
  cf write-only = false[u1]
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (and[u32] (add[u32] esp_0[u32] 0x00000004[u32]) 0xfffffff0<4294967280>[u32]))))
  af write-only = V6[u1]<unspec>
@@ -1412,7 +1412,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x08048367<134513511>[u32]
+ eip = 0x08048367<134513511>[u32]
  fpstatus_top = 0x0[u3]
 memory:
  addr=(add[u32] esp_0[u32] 0xffffffff<4294967295,-1>[u32]) write-only value=(extract[u8] 0x00000018[u32] 0x00000020[u32] ebp_0[u32])
@@ -1445,7 +1445,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x08048368<134513512>[u32]
+ eip = 0x08048368<134513512>[u32]
  fpstatus_top = 0x0[u3]
 memory:
  addr=(add[u32] esp_0[u32] 0xfffffffb<4294967291,-5>[u32]) write-only value=(extract[u8] 0x00000018[u32] 0x00000020[u32] ebx_0[u32])
@@ -1482,7 +1482,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x08048369<134513513>[u32]
+ eip = 0x08048369<134513513>[u32]
  fpstatus_top = 0x0[u3]
 memory:
  addr=(add[u32] esp_0[u32] 0xfffffff7<4294967287,-9>[u32]) write-only value=(extract[u8] 0x00000018[u32] 0x00000020[u32] ecx_0[u32])
@@ -1636,7 +1636,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x08048375<134513525>[u32]
+ eip = 0x08048375<134513525>[u32]
  cf write-only = (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] V2[u32]) 0x00000135a<4954>[u33]) (uextend[u33] 0x00000021[u32] V2[u32]) 0x00000135a<4954>[u33]))
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (add[u32] V2[u32] 0x0000135a<4954>[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] V2[u32] 0x0000135a<4954>[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (add[u32] V2[u32] 0x0000135a<4954>[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (add[u32] V2[u32] 0x0000135a<4954>[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u32] V2[u32] 0x0000135a<4954>[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (add[u32] V2[u32] 0x0000135a<4954>[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (add[u32] V2[u32] 0x0000135a<4954>[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (add[u32] V2[u32] 0x0000135a<4954>[u32]))))
  af write-only = (extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] V2[u32]) 0x00000135a<4954>[u33]) (uextend[u33] 0x00000021[u32] V2[u32]) 0x00000135a<4954>[u33]))
@@ -1675,7 +1675,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
- eip write-only = 0x0804837b<134513531>[u32]
+ eip = 0x0804837b<134513531>[u32]
  cf write-only = (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] V2[u32]) 0x00000135a<4954>[u33]) (uextend[u33] 0x00000021[u32] V2[u32]) 0x00000135a<4954>[u33]))
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (add[u32] V2[u32] 0x0000135a<4954>[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] V2[u32] 0x0000135a<4954>[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (add[u32] V2[u32] 0x0000135a<4954>[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (add[u32] V2[u32] 0x0000135a<4954>[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u32] V2[u32] 0x0000135a<4954>[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (add[u32] V2[u32] 0x0000135a<4954>[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (add[u32] V2[u32] 0x0000135a<4954>[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (add[u32] V2[u32] 0x0000135a<4954>[u32]))))
  af write-only = (extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] V2[u32]) 0x00000135a<4954>[u33]) (uextend[u33] 0x00000021[u32] V2[u32]) 0x00000135a<4954>[u33]))
@@ -1743,7 +1743,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
- eip write-only = 0x0804837d<134513533>[u32]
+ eip = 0x0804837d<134513533>[u32]
  cf write-only = false[u1]
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] V5[u32]) (extract[u1] 0x00000001[u32] 0x00000002[u32] V5[u32]) (extract[u1] 0x00000002[u32] 0x00000003[u32] V5[u32]) (extract[u1] 0x00000003[u32] 0x00000004[u32] V5[u32]) (extract[u1] 0x00000004[u32] 0x00000005[u32] V5[u32]) (extract[u1] 0x00000005[u32] 0x00000006[u32] V5[u32]) (extract[u1] 0x00000006[u32] 0x00000007[u32] V5[u32]) (extract[u1] 0x00000007[u32] 0x00000008[u32] V5[u32])))
  af write-only = V8[u1]<unspec>
@@ -1908,7 +1908,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x08048386<134513542>[u32]
+ eip = 0x08048386<134513542>[u32]
  fpstatus_top = 0x0[u3]
 memory:
  addr=(add[u32] esp_0[u32] 0x00000007[u32]) read-before-write value=(extract[u8] 0x00000018[u32] 0x00000020[u32] V4[u32])
@@ -1950,7 +1950,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x08048387<134513543>[u32]
+ eip = 0x08048387<134513543>[u32]
  fpstatus_top = 0x0[u3]
 memory:
  addr=(add[u32] ebp_0[u32] 0x00000003[u32]) read-before-write value=(extract[u8] 0x00000018[u32] 0x00000020[u32] V7[u32])
@@ -1994,7 +1994,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = V9[u32]
+ eip = V9[u32]
  fpstatus_top = 0x0[u3]
 memory:
  addr=(add[u32] ebp_0[u32] 0x00000007[u32]) read-before-write value=(extract[u8] 0x00000018[u32] 0x00000020[u32] V9[u32])
@@ -2069,7 +2069,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x08048393<134513555>[u32]
+ eip = 0x08048393<134513555>[u32]
  fpstatus_top = 0x0[u3]
 memory:
  addr=(add[u32] esp_0[u32] 0xffffffff<4294967295,-1>[u32]) write-only value=(extract[u8] 0x00000018[u32] 0x00000020[u32] ebp_0[u32])
@@ -2134,7 +2134,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x08048396<134513558>[u32]
+ eip = 0x08048396<134513558>[u32]
  cf write-only = (invert[u1] (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])) 0x0fffffff8<4294967288>[u33]) (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])) 0x0fffffff7<4294967287>[u33])))
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32]))))
  af write-only = (invert[u1] (extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])) 0x0fffffff8<4294967288>[u33]) (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])) 0x0fffffff7<4294967287>[u33])))
@@ -2205,7 +2205,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
- eip write-only = 0x0804839d<134513565>[u32]
+ eip = 0x0804839d<134513565>[u32]
  cf write-only = (invert[u1] (extract[u1] 0x00000008[u32] 0x00000009[u32] (xor[u9] (add[u9] (uextend[u9] 0x00000009[u32] V5[u8]) 0x100<256,-256>[u9]) (uextend[u9] 0x00000009[u32] V5[u8]) 0x0ff[u9])))
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] V5[u8]) (extract[u1] 0x00000001[u32] 0x00000002[u32] V5[u8]) (extract[u1] 0x00000002[u32] 0x00000003[u32] V5[u8]) (extract[u1] 0x00000003[u32] 0x00000004[u32] V5[u8]) (extract[u1] 0x00000004[u32] 0x00000005[u32] V5[u8]) (extract[u1] 0x00000005[u32] 0x00000006[u32] V5[u8]) (extract[u1] 0x00000006[u32] 0x00000007[u32] V5[u8]) (extract[u1] 0x00000007[u32] 0x00000008[u32] V5[u8])))
  af write-only = (invert[u1] (extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u9] (add[u9] (uextend[u9] 0x00000009[u32] V5[u8]) 0x100<256,-256>[u9]) (uextend[u9] 0x00000009[u32] V5[u8]) 0x0ff[u9])))
@@ -2315,7 +2315,7 @@ registers:
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
- eip write-only = 0x080483a6<134513574>[u32]
+ eip = 0x080483a6<134513574>[u32]
  fpstatus_top = 0x0[u3]
 memory:
  addr=(add[u32] V1[u32] 0x00000003[u32]) read-before-write value=(extract[u8] 0x00000018[u32] 0x00000020[u32] V3[u32])
@@ -2376,7 +2376,7 @@ registers:
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
- eip write-only = 0x080483a8<134513576>[u32]
+ eip = 0x080483a8<134513576>[u32]
  cf write-only = false[u1]
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] V3[u32]) (extract[u1] 0x00000001[u32] 0x00000002[u32] V3[u32]) (extract[u1] 0x00000002[u32] 0x00000003[u32] V3[u32]) (extract[u1] 0x00000003[u32] 0x00000004[u32] V3[u32]) (extract[u1] 0x00000004[u32] 0x00000005[u32] V3[u32]) (extract[u1] 0x00000005[u32] 0x00000006[u32] V3[u32]) (extract[u1] 0x00000006[u32] 0x00000007[u32] V3[u32]) (extract[u1] 0x00000007[u32] 0x00000008[u32] V3[u32])))
  af write-only = V6[u1]<unspec>
@@ -2517,7 +2517,7 @@ registers:
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x080483b3<134513587>[u32]
+ eip = 0x080483b3<134513587>[u32]
  cf write-only = (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] eax_0[u32]) 0x000000004[u33]) (uextend[u33] 0x00000021[u32] eax_0[u32]) 0x000000004[u33]))
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (add[u32] eax_0[u32] 0x00000004[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] eax_0[u32] 0x00000004[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (add[u32] eax_0[u32] 0x00000004[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (add[u32] eax_0[u32] 0x00000004[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u32] eax_0[u32] 0x00000004[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (add[u32] eax_0[u32] 0x00000004[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (add[u32] eax_0[u32] 0x00000004[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (add[u32] eax_0[u32] 0x00000004[u32]))))
  af write-only = (extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] eax_0[u32]) 0x000000004[u33]) (uextend[u33] 0x00000021[u32] eax_0[u32]) 0x000000004[u33]))
@@ -2547,7 +2547,7 @@ registers:
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
- eip write-only = 0x080483b8<134513592>[u32]
+ eip = 0x080483b8<134513592>[u32]
  cf write-only = (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] eax_0[u32]) 0x000000004[u33]) (uextend[u33] 0x00000021[u32] eax_0[u32]) 0x000000004[u33]))
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (add[u32] eax_0[u32] 0x00000004[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] eax_0[u32] 0x00000004[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (add[u32] eax_0[u32] 0x00000004[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (add[u32] eax_0[u32] 0x00000004[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u32] eax_0[u32] 0x00000004[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (add[u32] eax_0[u32] 0x00000004[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (add[u32] eax_0[u32] 0x00000004[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (add[u32] eax_0[u32] 0x00000004[u32]))))
  af write-only = (extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] eax_0[u32]) 0x000000004[u33]) (uextend[u33] 0x00000021[u32] eax_0[u32]) 0x000000004[u33]))
@@ -2663,7 +2663,7 @@ registers:
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
- eip write-only = 0x080483c1<134513601>[u32]
+ eip = 0x080483c1<134513601>[u32]
  fpstatus_top = 0x0[u3]
 memory:
  addr=(add[u32] V1[u32] 0x00000003[u32]) read-before-write value=(extract[u8] 0x00000018[u32] 0x00000020[u32] V3[u32])
@@ -2724,7 +2724,7 @@ registers:
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
- eip write-only = 0x080483c3<134513603>[u32]
+ eip = 0x080483c3<134513603>[u32]
  cf write-only = false[u1]
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] V3[u32]) (extract[u1] 0x00000001[u32] 0x00000002[u32] V3[u32]) (extract[u1] 0x00000002[u32] 0x00000003[u32] V3[u32]) (extract[u1] 0x00000003[u32] 0x00000004[u32] V3[u32]) (extract[u1] 0x00000004[u32] 0x00000005[u32] V3[u32]) (extract[u1] 0x00000005[u32] 0x00000006[u32] V3[u32]) (extract[u1] 0x00000006[u32] 0x00000007[u32] V3[u32]) (extract[u1] 0x00000007[u32] 0x00000008[u32] V3[u32])))
  af write-only = V6[u1]<unspec>
@@ -2841,7 +2841,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
- eip write-only = 0x080483cd<134513613>[u32]
+ eip = 0x080483cd<134513613>[u32]
  fpstatus_top = 0x0[u3]
 memory:
  addr=(add[u32] ebp_0[u32] 0x00000003[u32]) read-before-write value=(extract[u8] 0x00000018[u32] 0x00000020[u32] V3[u32])
@@ -2876,7 +2876,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
- eip write-only = V5[u32]
+ eip = V5[u32]
  fpstatus_top = 0x0[u3]
 memory:
  addr=(add[u32] ebp_0[u32] 0x00000007[u32]) read-before-write value=(extract[u8] 0x00000018[u32] 0x00000020[u32] V5[u32])
@@ -2944,7 +2944,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x080483d3<134513619>[u32]
+ eip = 0x080483d3<134513619>[u32]
  fpstatus_top = 0x0[u3]
 memory:
  addr=(add[u32] esp_0[u32] 0xffffffff<4294967295,-1>[u32]) write-only value=(extract[u8] 0x00000018[u32] 0x00000020[u32] ebp_0[u32])
@@ -3009,7 +3009,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x080483d6<134513622>[u32]
+ eip = 0x080483d6<134513622>[u32]
  cf write-only = (invert[u1] (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])) 0x0fffffff8<4294967288>[u33]) (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])) 0x0fffffff7<4294967287>[u33])))
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32]))))
  af write-only = (invert[u1] (extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])) 0x0fffffff8<4294967288>[u33]) (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])) 0x0fffffff7<4294967287>[u33])))
@@ -3045,7 +3045,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
- eip write-only = 0x080483db<134513627>[u32]
+ eip = 0x080483db<134513627>[u32]
  cf write-only = (invert[u1] (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])) 0x0fffffff8<4294967288>[u33]) (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])) 0x0fffffff7<4294967287>[u33])))
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32]))))
  af write-only = (invert[u1] (extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])) 0x0fffffff8<4294967288>[u33]) (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])) 0x0fffffff7<4294967287>[u33])))
@@ -3113,7 +3113,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
- eip write-only = 0x080483dd<134513629>[u32]
+ eip = 0x080483dd<134513629>[u32]
  cf write-only = false[u1]
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] V5[u32]) (extract[u1] 0x00000001[u32] 0x00000002[u32] V5[u32]) (extract[u1] 0x00000002[u32] 0x00000003[u32] V5[u32]) (extract[u1] 0x00000003[u32] 0x00000004[u32] V5[u32]) (extract[u1] 0x00000004[u32] 0x00000005[u32] V5[u32]) (extract[u1] 0x00000005[u32] 0x00000006[u32] V5[u32]) (extract[u1] 0x00000006[u32] 0x00000007[u32] V5[u32]) (extract[u1] 0x00000007[u32] 0x00000008[u32] V5[u32])))
  af write-only = V8[u1]<unspec>
@@ -3248,7 +3248,7 @@ registers:
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x080483e6<134513638>[u32]
+ eip = 0x080483e6<134513638>[u32]
  cf write-only = false[u1]
  pf write-only = true[u1]
  af write-only = V3[u1]<unspec>
@@ -3525,7 +3525,7 @@ registers:
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x08048400<134513664>[u32]
+ eip = 0x08048400<134513664>[u32]
  fpstatus_top = 0x0[u3]
 memory:
 Symbolic: operators destroyed
@@ -3583,7 +3583,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x08048416<134513686>[u32]
+ eip = 0x08048416<134513686>[u32]
  fpstatus_top = 0x0[u3]
 memory:
  addr=(add[u32] esp_0[u32] 0xffffffff<4294967295,-1>[u32]) write-only value=(extract[u8] 0x00000018[u32] 0x00000020[u32] ebp_0[u32])
@@ -3611,7 +3611,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x08048418<134513688>[u32]
+ eip = 0x08048418<134513688>[u32]
  fpstatus_top = 0x0[u3]
 memory:
  addr=(add[u32] esp_0[u32] 0xffffffff<4294967295,-1>[u32]) write-only value=(extract[u8] 0x00000018[u32] 0x00000020[u32] ebp_0[u32])
@@ -3677,7 +3677,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x0804841b<134513691>[u32]
+ eip = 0x0804841b<134513691>[u32]
  cf write-only = (invert[u1] (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])) 0x0fffffff8<4294967288>[u33]) (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])) 0x0fffffff7<4294967287>[u33])))
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32]))))
  af write-only = (invert[u1] (extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])) 0x0fffffff8<4294967288>[u33]) (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])) 0x0fffffff7<4294967287>[u33])))
@@ -3742,7 +3742,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x0804841e<134513694>[u32]
+ eip = 0x0804841e<134513694>[u32]
  cf write-only = false[u1]
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (and[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (and[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (and[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (and[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (and[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (and[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (and[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (and[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32]) 0xfffffff0<4294967280>[u32]))))
  af write-only = V6[u1]<unspec>
@@ -3782,7 +3782,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x08048422<134513698>[u32]
+ eip = 0x08048422<134513698>[u32]
  cf write-only = false[u1]
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (and[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (and[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (and[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (and[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (and[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (and[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (and[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (and[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32]) 0xfffffff0<4294967280>[u32]))))
  af write-only = V6[u1]<unspec>
@@ -3822,7 +3822,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x08048429<134513705>[u32]
+ eip = 0x08048429<134513705>[u32]
  cf write-only = false[u1]
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (and[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (and[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (and[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (and[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (and[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (and[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (and[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32]) 0xfffffff0<4294967280>[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (and[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32]) 0xfffffff0<4294967280>[u32]))))
  af write-only = V6[u1]<unspec>
@@ -3972,7 +3972,7 @@ registers:
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x08048432<134513714>[u32]
+ eip = 0x08048432<134513714>[u32]
  cf write-only = false[u1]
  pf write-only = true[u1]
  af write-only = V2[u1]<unspec>
@@ -4008,7 +4008,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x08048433<134513715>[u32]
+ eip = 0x08048433<134513715>[u32]
  cf write-only = false[u1]
  pf write-only = true[u1]
  af write-only = V2[u1]<unspec>
@@ -4049,7 +4049,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = V6[u32]
+ eip = V6[u32]
  cf write-only = false[u1]
  pf write-only = true[u1]
  af write-only = V2[u1]<unspec>
@@ -4122,7 +4122,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x08048443<134513731>[u32]
+ eip = 0x08048443<134513731>[u32]
  fpstatus_top = 0x0[u3]
 memory:
  addr=(add[u32] esp_0[u32] 0xffffffff<4294967295,-1>[u32]) write-only value=(extract[u8] 0x00000018[u32] 0x00000020[u32] ebp_0[u32])
@@ -4187,7 +4187,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x08048446<134513734>[u32]
+ eip = 0x08048446<134513734>[u32]
  cf write-only = (invert[u1] (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])) 0x0fffffff8<4294967288>[u33]) (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])) 0x0fffffff7<4294967287>[u33])))
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32]))))
  af write-only = (invert[u1] (extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])) 0x0fffffff8<4294967288>[u33]) (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])) 0x0fffffff7<4294967287>[u33])))
@@ -4222,7 +4222,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x0804844d<134513741>[u32]
+ eip = 0x0804844d<134513741>[u32]
  cf write-only = (invert[u1] (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])) 0x0fffffff8<4294967288>[u33]) (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])) 0x0fffffff7<4294967287>[u33])))
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32]))))
  af write-only = (invert[u1] (extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])) 0x0fffffff8<4294967288>[u33]) (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])) 0x0fffffff7<4294967287>[u33])))
@@ -4342,7 +4342,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x08048455<134513749>[u32]
+ eip = 0x08048455<134513749>[u32]
  fpstatus_top = 0x0[u3]
 memory:
  addr=(add[u32] ebp_0[u32] 0x00000003[u32]) read-before-write value=(extract[u8] 0x00000018[u32] 0x00000020[u32] V3[u32])
@@ -4376,7 +4376,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = V5[u32]
+ eip = V5[u32]
  fpstatus_top = 0x0[u3]
 memory:
  addr=(add[u32] ebp_0[u32] 0x00000007[u32]) read-before-write value=(extract[u8] 0x00000018[u32] 0x00000020[u32] V5[u32])
@@ -4443,7 +4443,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x08048463<134513763>[u32]
+ eip = 0x08048463<134513763>[u32]
  fpstatus_top = 0x0[u3]
 memory:
  addr=(add[u32] esp_0[u32] 0xffffffff<4294967295,-1>[u32]) write-only value=(extract[u8] 0x00000018[u32] 0x00000020[u32] ebp_0[u32])
@@ -4508,7 +4508,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x08048466<134513766>[u32]
+ eip = 0x08048466<134513766>[u32]
  cf write-only = (invert[u1] (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])) 0x0fffffff8<4294967288>[u33]) (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])) 0x0fffffff7<4294967287>[u33])))
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32]))))
  af write-only = (invert[u1] (extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])) 0x0fffffff8<4294967288>[u33]) (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])) 0x0fffffff7<4294967287>[u33])))
@@ -4543,7 +4543,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x0804846d<134513773>[u32]
+ eip = 0x0804846d<134513773>[u32]
  cf write-only = (invert[u1] (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])) 0x0fffffff8<4294967288>[u33]) (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])) 0x0fffffff7<4294967287>[u33])))
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32]))))
  af write-only = (invert[u1] (extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])) 0x0fffffff8<4294967288>[u33]) (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])) 0x0fffffff7<4294967287>[u33])))
@@ -4738,7 +4738,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x08048483<134513795>[u32]
+ eip = 0x08048483<134513795>[u32]
  fpstatus_top = 0x0[u3]
 memory:
  addr=(add[u32] esp_0[u32] 0xffffffff<4294967295,-1>[u32]) write-only value=(extract[u8] 0x00000018[u32] 0x00000020[u32] ebp_0[u32])
@@ -4803,7 +4803,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x08048486<134513798>[u32]
+ eip = 0x08048486<134513798>[u32]
  cf write-only = (invert[u1] (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])) 0x0fffffff8<4294967288>[u33]) (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])) 0x0fffffff7<4294967287>[u33])))
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32]))))
  af write-only = (invert[u1] (extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])) 0x0fffffff8<4294967288>[u33]) (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])) 0x0fffffff7<4294967287>[u33])))
@@ -4872,7 +4872,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
- eip write-only = 0x0804848c<134513804>[u32]
+ eip = 0x0804848c<134513804>[u32]
  cf write-only = (invert[u1] (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])) 0x0fffffff8<4294967288>[u33]) (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])) 0x0fffffff7<4294967287>[u33])))
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (add[u32] V5[u32] 0x00000001[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] V5[u32] 0x00000001[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (add[u32] V5[u32] 0x00000001[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (add[u32] V5[u32] 0x00000001[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u32] V5[u32] 0x00000001[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (add[u32] V5[u32] 0x00000001[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (add[u32] V5[u32] 0x00000001[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (add[u32] V5[u32] 0x00000001[u32]))))
  af write-only = (extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] V5[u32]) 0x000000001[u33]) (uextend[u33] 0x00000021[u32] V5[u32]) 0x000000001[u33]))
@@ -4915,7 +4915,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
- eip write-only = 0x08048493<134513811>[u32]
+ eip = 0x08048493<134513811>[u32]
  cf write-only = (invert[u1] (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])) 0x0fffffff8<4294967288>[u33]) (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffffc<4294967292,-4>[u32])) 0x0fffffff7<4294967287>[u33])))
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (add[u32] V5[u32] 0x00000001[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] V5[u32] 0x00000001[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (add[u32] V5[u32] 0x00000001[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (add[u32] V5[u32] 0x00000001[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u32] V5[u32] 0x00000001[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (add[u32] V5[u32] 0x00000001[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (add[u32] V5[u32] 0x00000001[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (add[u32] V5[u32] 0x00000001[u32]))))
  af write-only = (extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] V5[u32]) 0x000000001[u33]) (uextend[u33] 0x00000021[u32] V5[u32]) 0x000000001[u33]))
@@ -5126,7 +5126,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x080484b3<134513843>[u32]
+ eip = 0x080484b3<134513843>[u32]
  fpstatus_top = 0x0[u3]
 memory:
  addr=(add[u32] esp_0[u32] 0xffffffff<4294967295,-1>[u32]) write-only value=(extract[u8] 0x00000018[u32] 0x00000020[u32] ebp_0[u32])
@@ -5159,7 +5159,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x080484b4<134513844>[u32]
+ eip = 0x080484b4<134513844>[u32]
  fpstatus_top = 0x0[u3]
 memory:
  addr=(add[u32] esp_0[u32] 0xfffffffb<4294967291,-5>[u32]) write-only value=(extract[u8] 0x00000018[u32] 0x00000020[u32] edi_0[u32])
@@ -5196,7 +5196,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x080484b5<134513845>[u32]
+ eip = 0x080484b5<134513845>[u32]
  fpstatus_top = 0x0[u3]
 memory:
  addr=(add[u32] esp_0[u32] 0xfffffff7<4294967287,-9>[u32]) write-only value=(extract[u8] 0x00000018[u32] 0x00000020[u32] esi_0[u32])
@@ -5237,7 +5237,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x080484b6<134513846>[u32]
+ eip = 0x080484b6<134513846>[u32]
  fpstatus_top = 0x0[u3]
 memory:
  addr=(add[u32] esp_0[u32] 0xfffffff3<4294967283,-13>[u32]) write-only value=(extract[u8] 0x00000018[u32] 0x00000020[u32] ebx_0[u32])
@@ -5314,7 +5314,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x080484b9<134513849>[u32]
+ eip = 0x080484b9<134513849>[u32]
  cf write-only = (invert[u1] (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffff0<4294967280,-16>[u32])) 0x0fffffff4<4294967284>[u33]) (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffff0<4294967280,-16>[u32])) 0x0fffffff3<4294967283>[u33])))
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (add[u32] esp_0[u32] 0xffffffe4<4294967268,-28>[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] esp_0[u32] 0xffffffe4<4294967268,-28>[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (add[u32] esp_0[u32] 0xffffffe4<4294967268,-28>[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (add[u32] esp_0[u32] 0xffffffe4<4294967268,-28>[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u32] esp_0[u32] 0xffffffe4<4294967268,-28>[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (add[u32] esp_0[u32] 0xffffffe4<4294967268,-28>[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (add[u32] esp_0[u32] 0xffffffe4<4294967268,-28>[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (add[u32] esp_0[u32] 0xffffffe4<4294967268,-28>[u32]))))
  af write-only = (invert[u1] (extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffff0<4294967280,-16>[u32])) 0x0fffffff4<4294967284>[u33]) (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffff0<4294967280,-16>[u32])) 0x0fffffff3<4294967283>[u33])))
@@ -5488,7 +5488,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x080484c5<134513861>[u32]
+ eip = 0x080484c5<134513861>[u32]
  cf write-only = (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] V2[u32]) 0x00000120a<4618>[u33]) (uextend[u33] 0x00000021[u32] V2[u32]) 0x00000120a<4618>[u33]))
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (add[u32] V2[u32] 0x0000120a<4618>[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] V2[u32] 0x0000120a<4618>[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (add[u32] V2[u32] 0x0000120a<4618>[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (add[u32] V2[u32] 0x0000120a<4618>[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u32] V2[u32] 0x0000120a<4618>[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (add[u32] V2[u32] 0x0000120a<4618>[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (add[u32] V2[u32] 0x0000120a<4618>[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (add[u32] V2[u32] 0x0000120a<4618>[u32]))))
  af write-only = (extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] V2[u32]) 0x00000120a<4618>[u33]) (uextend[u33] 0x00000021[u32] V2[u32]) 0x00000120a<4618>[u33]))
@@ -5599,7 +5599,7 @@ registers:
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x080484d6<134513878>[u32]
+ eip = 0x080484d6<134513878>[u32]
  fpstatus_top = 0x0[u3]
 memory:
 
@@ -5660,7 +5660,7 @@ registers:
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x080484d8<134513880>[u32]
+ eip = 0x080484d8<134513880>[u32]
  cf write-only = (invert[u1] (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] (add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32])) (uextend[u33] 0x00000021[u32] (invert[u32] (add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32]))) 0x000000001[u33]) (uextend[u33] 0x00000021[u32] (add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32])) (uextend[u33] 0x00000021[u32] (invert[u32] (add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32]))))))
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (add[u32] (invert[u32] (add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32])) ebx_0[u32] 0xffffff21<4294967073,-223>[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] (invert[u32] (add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32])) ebx_0[u32] 0xffffff21<4294967073,-223>[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (add[u32] (invert[u32] (add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32])) ebx_0[u32] 0xffffff21<4294967073,-223>[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (add[u32] (invert[u32] (add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32])) ebx_0[u32] 0xffffff21<4294967073,-223>[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u32] (invert[u32] (add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32])) ebx_0[u32] 0xffffff21<4294967073,-223>[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (add[u32] (invert[u32] (add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32])) ebx_0[u32] 0xffffff21<4294967073,-223>[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (add[u32] (invert[u32] (add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32])) ebx_0[u32] 0xffffff21<4294967073,-223>[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (add[u32] (invert[u32] (add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32])) ebx_0[u32] 0xffffff21<4294967073,-223>[u32]))))
  af write-only = (invert[u1] (extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] (add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32])) (uextend[u33] 0x00000021[u32] (invert[u32] (add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32]))) 0x000000001[u33]) (uextend[u33] 0x00000021[u32] (add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32])) (uextend[u33] 0x00000021[u32] (invert[u32] (add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32]))))))
@@ -5762,7 +5762,7 @@ registers:
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x080484db<134513883>[u32]
+ eip = 0x080484db<134513883>[u32]
  cf write-only = (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] (invert[u32] (add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32])) ebx_0[u32] 0xffffff21<4294967073,-223>[u32]))
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32])) ebx_0[u32] 0xffffff21<4294967073,-223>[u32]))) (extract[u1] 0x00000001[u32] 0x00000002[u32] (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32])) ebx_0[u32] 0xffffff21<4294967073,-223>[u32]))) (extract[u1] 0x00000002[u32] 0x00000003[u32] (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32])) ebx_0[u32] 0xffffff21<4294967073,-223>[u32]))) (extract[u1] 0x00000003[u32] 0x00000004[u32] (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32])) ebx_0[u32] 0xffffff21<4294967073,-223>[u32]))) (extract[u1] 0x00000004[u32] 0x00000005[u32] (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32])) ebx_0[u32] 0xffffff21<4294967073,-223>[u32]))) (extract[u1] 0x00000005[u32] 0x00000006[u32] (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32])) ebx_0[u32] 0xffffff21<4294967073,-223>[u32]))) (extract[u1] 0x00000006[u32] 0x00000007[u32] (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32])) ebx_0[u32] 0xffffff21<4294967073,-223>[u32]))) (extract[u1] 0x00000007[u32] 0x00000008[u32] (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32])) ebx_0[u32] 0xffffff21<4294967073,-223>[u32])))))
  af write-only = V7[u1]<unspec>
@@ -5797,7 +5797,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x080484de<134513886>[u32]
+ eip = 0x080484de<134513886>[u32]
  cf write-only = (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] (invert[u32] (add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32])) ebx_0[u32] 0xffffff21<4294967073,-223>[u32]))
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32])) ebx_0[u32] 0xffffff21<4294967073,-223>[u32]))) (extract[u1] 0x00000001[u32] 0x00000002[u32] (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32])) ebx_0[u32] 0xffffff21<4294967073,-223>[u32]))) (extract[u1] 0x00000002[u32] 0x00000003[u32] (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32])) ebx_0[u32] 0xffffff21<4294967073,-223>[u32]))) (extract[u1] 0x00000003[u32] 0x00000004[u32] (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32])) ebx_0[u32] 0xffffff21<4294967073,-223>[u32]))) (extract[u1] 0x00000004[u32] 0x00000005[u32] (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32])) ebx_0[u32] 0xffffff21<4294967073,-223>[u32]))) (extract[u1] 0x00000005[u32] 0x00000006[u32] (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32])) ebx_0[u32] 0xffffff21<4294967073,-223>[u32]))) (extract[u1] 0x00000006[u32] 0x00000007[u32] (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32])) ebx_0[u32] 0xffffff21<4294967073,-223>[u32]))) (extract[u1] 0x00000007[u32] 0x00000008[u32] (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] ebx_0[u32] 0xffffff20<4294967072,-224>[u32])) ebx_0[u32] 0xffffff21<4294967073,-223>[u32])))))
  af write-only = V7[u1]<unspec>
@@ -5942,7 +5942,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x080484e4<134513892>[u32]
+ eip = 0x080484e4<134513892>[u32]
  cf write-only = (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x00000000c[u33]) (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x00000000c[u33]))
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (add[u32] esp_0[u32] 0x0000000c[u32]))))
  af write-only = (extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x00000000c[u33]) (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x00000000c[u33]))
@@ -5982,7 +5982,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x080484e5<134513893>[u32]
+ eip = 0x080484e5<134513893>[u32]
  cf write-only = (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x00000000c[u33]) (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x00000000c[u33]))
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (add[u32] esp_0[u32] 0x0000000c[u32]))))
  af write-only = (extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x00000000c[u33]) (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x00000000c[u33]))
@@ -6027,7 +6027,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x080484e6<134513894>[u32]
+ eip = 0x080484e6<134513894>[u32]
  cf write-only = (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x00000000c[u33]) (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x00000000c[u33]))
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (add[u32] esp_0[u32] 0x0000000c[u32]))))
  af write-only = (extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x00000000c[u33]) (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x00000000c[u33]))
@@ -6077,7 +6077,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x080484e7<134513895>[u32]
+ eip = 0x080484e7<134513895>[u32]
  cf write-only = (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x00000000c[u33]) (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x00000000c[u33]))
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (add[u32] esp_0[u32] 0x0000000c[u32]))))
  af write-only = (extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x00000000c[u33]) (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x00000000c[u33]))
@@ -6132,7 +6132,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = V11[u32]
+ eip = V11[u32]
  cf write-only = (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x00000000c[u33]) (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x00000000c[u33]))
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (add[u32] esp_0[u32] 0x0000000c[u32]))))
  af write-only = (extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x00000000c[u33]) (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x00000000c[u33]))
@@ -6204,7 +6204,7 @@ registers:
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x080484f0<134513904>[u32]
+ eip = 0x080484f0<134513904>[u32]
  fpstatus_top = 0x0[u3]
 memory:
 
@@ -6253,7 +6253,7 @@ registers:
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x080484f2<134513906>[u32]
+ eip = 0x080484f2<134513906>[u32]
  cf write-only = false[u1]
  pf write-only = true[u1]
  af write-only = V2[u1]<unspec>
@@ -6282,7 +6282,7 @@ registers:
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x080484f4<134513908>[u32]
+ eip = 0x080484f4<134513908>[u32]
  cf write-only = false[u1]
  pf write-only = true[u1]
  af write-only = V2[u1]<unspec>
@@ -6314,7 +6314,7 @@ registers:
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x080484fa<134513914>[u32]
+ eip = 0x080484fa<134513914>[u32]
  cf write-only = false[u1]
  pf write-only = true[u1]
  af write-only = V2[u1]<unspec>
@@ -6346,7 +6346,7 @@ registers:
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x08048500<134513920>[u32]
+ eip = 0x08048500<134513920>[u32]
  cf write-only = false[u1]
  pf write-only = true[u1]
  af write-only = V2[u1]<unspec>
@@ -6524,7 +6524,7 @@ registers:
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x08048506<134513926>[u32]
+ eip = 0x08048506<134513926>[u32]
  cf write-only = (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] esi_0[u32]) 0x000000004[u33]) (uextend[u33] 0x00000021[u32] esi_0[u32]) 0x000000004[u33]))
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (add[u32] esi_0[u32] 0x00000004[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] esi_0[u32] 0x00000004[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (add[u32] esi_0[u32] 0x00000004[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (add[u32] esi_0[u32] 0x00000004[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u32] esi_0[u32] 0x00000004[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (add[u32] esi_0[u32] 0x00000004[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (add[u32] esi_0[u32] 0x00000004[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (add[u32] esi_0[u32] 0x00000004[u32]))))
  af write-only = (extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] esi_0[u32]) 0x000000004[u33]) (uextend[u33] 0x00000021[u32] esi_0[u32]) 0x000000004[u33]))
@@ -6596,7 +6596,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x08048509<134513929>[u32]
+ eip = 0x08048509<134513929>[u32]
  cf write-only = (invert[u1] (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] (add[u32] edi_0[u32] 0x00000001[u32])) (uextend[u33] 0x00000021[u32] (invert[u32] V5[u32])) 0x000000001[u33]) (uextend[u33] 0x00000021[u32] (add[u32] edi_0[u32] 0x00000001[u32])) (uextend[u33] 0x00000021[u32] (invert[u32] V5[u32])))))
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (add[u32] (invert[u32] V5[u32]) edi_0[u32] 0x00000002[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] (invert[u32] V5[u32]) edi_0[u32] 0x00000002[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (add[u32] (invert[u32] V5[u32]) edi_0[u32] 0x00000002[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (add[u32] (invert[u32] V5[u32]) edi_0[u32] 0x00000002[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u32] (invert[u32] V5[u32]) edi_0[u32] 0x00000002[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (add[u32] (invert[u32] V5[u32]) edi_0[u32] 0x00000002[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (add[u32] (invert[u32] V5[u32]) edi_0[u32] 0x00000002[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (add[u32] (invert[u32] V5[u32]) edi_0[u32] 0x00000002[u32]))))
  af write-only = (invert[u1] (extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] (add[u32] edi_0[u32] 0x00000001[u32])) (uextend[u33] 0x00000021[u32] (invert[u32] V5[u32])) 0x000000001[u33]) (uextend[u33] 0x00000021[u32] (add[u32] edi_0[u32] 0x00000001[u32])) (uextend[u33] 0x00000021[u32] (invert[u32] V5[u32])))))
@@ -6740,7 +6740,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x0804850f<134513935>[u32]
+ eip = 0x0804850f<134513935>[u32]
  cf write-only = (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x00000000c[u33]) (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x00000000c[u33]))
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (add[u32] esp_0[u32] 0x0000000c[u32]))))
  af write-only = (extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x00000000c[u33]) (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x00000000c[u33]))
@@ -6780,7 +6780,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x08048510<134513936>[u32]
+ eip = 0x08048510<134513936>[u32]
  cf write-only = (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x00000000c[u33]) (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x00000000c[u33]))
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (add[u32] esp_0[u32] 0x0000000c[u32]))))
  af write-only = (extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x00000000c[u33]) (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x00000000c[u33]))
@@ -6825,7 +6825,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x08048511<134513937>[u32]
+ eip = 0x08048511<134513937>[u32]
  cf write-only = (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x00000000c[u33]) (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x00000000c[u33]))
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (add[u32] esp_0[u32] 0x0000000c[u32]))))
  af write-only = (extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x00000000c[u33]) (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x00000000c[u33]))
@@ -6875,7 +6875,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x08048512<134513938>[u32]
+ eip = 0x08048512<134513938>[u32]
  cf write-only = (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x00000000c[u33]) (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x00000000c[u33]))
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (add[u32] esp_0[u32] 0x0000000c[u32]))))
  af write-only = (extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x00000000c[u33]) (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x00000000c[u33]))
@@ -6930,7 +6930,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = V11[u32]
+ eip = V11[u32]
  cf write-only = (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x00000000c[u33]) (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x00000000c[u33]))
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (add[u32] esp_0[u32] 0x0000000c[u32]))))
  af write-only = (extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x00000000c[u33]) (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x00000000c[u33]))
@@ -7015,7 +7015,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x08048523<134513955>[u32]
+ eip = 0x08048523<134513955>[u32]
  fpstatus_top = 0x0[u3]
 memory:
  addr=(add[u32] esp_0[u32] 0xffffffff<4294967295,-1>[u32]) write-only value=(extract[u8] 0x00000018[u32] 0x00000020[u32] ebp_0[u32])
@@ -7048,7 +7048,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x08048524<134513956>[u32]
+ eip = 0x08048524<134513956>[u32]
  fpstatus_top = 0x0[u3]
 memory:
  addr=(add[u32] esp_0[u32] 0xfffffffb<4294967291,-5>[u32]) write-only value=(extract[u8] 0x00000018[u32] 0x00000020[u32] edi_0[u32])
@@ -7085,7 +7085,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x08048525<134513957>[u32]
+ eip = 0x08048525<134513957>[u32]
  fpstatus_top = 0x0[u3]
 memory:
  addr=(add[u32] esp_0[u32] 0xfffffff7<4294967287,-9>[u32]) write-only value=(extract[u8] 0x00000018[u32] 0x00000020[u32] esi_0[u32])
@@ -7126,7 +7126,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x08048526<134513958>[u32]
+ eip = 0x08048526<134513958>[u32]
  fpstatus_top = 0x0[u3]
 memory:
  addr=(add[u32] esp_0[u32] 0xfffffff3<4294967283,-13>[u32]) write-only value=(extract[u8] 0x00000018[u32] 0x00000020[u32] ebx_0[u32])
@@ -7203,7 +7203,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x08048529<134513961>[u32]
+ eip = 0x08048529<134513961>[u32]
  cf write-only = (invert[u1] (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffff0<4294967280,-16>[u32])) 0x0fffffff4<4294967284>[u33]) (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffff0<4294967280,-16>[u32])) 0x0fffffff3<4294967283>[u33])))
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (add[u32] esp_0[u32] 0xffffffe4<4294967268,-28>[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] esp_0[u32] 0xffffffe4<4294967268,-28>[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (add[u32] esp_0[u32] 0xffffffe4<4294967268,-28>[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (add[u32] esp_0[u32] 0xffffffe4<4294967268,-28>[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u32] esp_0[u32] 0xffffffe4<4294967268,-28>[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (add[u32] esp_0[u32] 0xffffffe4<4294967268,-28>[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (add[u32] esp_0[u32] 0xffffffe4<4294967268,-28>[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (add[u32] esp_0[u32] 0xffffffe4<4294967268,-28>[u32]))))
  af write-only = (invert[u1] (extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffff0<4294967280,-16>[u32])) 0x0fffffff4<4294967284>[u33]) (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffff0<4294967280,-16>[u32])) 0x0fffffff3<4294967283>[u33])))
@@ -7377,7 +7377,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x08048535<134513973>[u32]
+ eip = 0x08048535<134513973>[u32]
  cf write-only = (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] V2[u32]) 0x00000119a<4506>[u33]) (uextend[u33] 0x00000021[u32] V2[u32]) 0x00000119a<4506>[u33]))
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (add[u32] V2[u32] 0x0000119a<4506>[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] V2[u32] 0x0000119a<4506>[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (add[u32] V2[u32] 0x0000119a<4506>[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (add[u32] V2[u32] 0x0000119a<4506>[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u32] V2[u32] 0x0000119a<4506>[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (add[u32] V2[u32] 0x0000119a<4506>[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (add[u32] V2[u32] 0x0000119a<4506>[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (add[u32] V2[u32] 0x0000119a<4506>[u32]))))
  af write-only = (extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] V2[u32]) 0x00000119a<4506>[u33]) (uextend[u33] 0x00000021[u32] V2[u32]) 0x00000119a<4506>[u33]))
@@ -7414,7 +7414,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x0804853b<134513979>[u32]
+ eip = 0x0804853b<134513979>[u32]
  cf write-only = (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] V2[u32]) 0x00000119a<4506>[u33]) (uextend[u33] 0x00000021[u32] V2[u32]) 0x00000119a<4506>[u33]))
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (add[u32] V2[u32] 0x0000119a<4506>[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] V2[u32] 0x0000119a<4506>[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (add[u32] V2[u32] 0x0000119a<4506>[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (add[u32] V2[u32] 0x0000119a<4506>[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u32] V2[u32] 0x0000119a<4506>[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (add[u32] V2[u32] 0x0000119a<4506>[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (add[u32] V2[u32] 0x0000119a<4506>[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (add[u32] V2[u32] 0x0000119a<4506>[u32]))))
  af write-only = (extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] V2[u32]) 0x00000119a<4506>[u33]) (uextend[u33] 0x00000021[u32] V2[u32]) 0x00000119a<4506>[u33]))
@@ -7452,7 +7452,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x08048541<134513985>[u32]
+ eip = 0x08048541<134513985>[u32]
  cf write-only = (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] V2[u32]) 0x00000119a<4506>[u33]) (uextend[u33] 0x00000021[u32] V2[u32]) 0x00000119a<4506>[u33]))
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (add[u32] V2[u32] 0x0000119a<4506>[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] V2[u32] 0x0000119a<4506>[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (add[u32] V2[u32] 0x0000119a<4506>[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (add[u32] V2[u32] 0x0000119a<4506>[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u32] V2[u32] 0x0000119a<4506>[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (add[u32] V2[u32] 0x0000119a<4506>[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (add[u32] V2[u32] 0x0000119a<4506>[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (add[u32] V2[u32] 0x0000119a<4506>[u32]))))
  af write-only = (extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] V2[u32]) 0x00000119a<4506>[u33]) (uextend[u33] 0x00000021[u32] V2[u32]) 0x00000119a<4506>[u33]))
@@ -7525,7 +7525,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x08048543<134513987>[u32]
+ eip = 0x08048543<134513987>[u32]
  cf write-only = (invert[u1] (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32])) (uextend[u33] 0x00000021[u32] (invert[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32]))) 0x000000001[u33]) (uextend[u33] 0x00000021[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32])) (uextend[u33] 0x00000021[u32] (invert[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32]))))))
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (add[u32] (invert[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32])) V2[u32] 0x000010bb<4283>[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] (invert[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32])) V2[u32] 0x000010bb<4283>[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (add[u32] (invert[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32])) V2[u32] 0x000010bb<4283>[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (add[u32] (invert[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32])) V2[u32] 0x000010bb<4283>[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u32] (invert[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32])) V2[u32] 0x000010bb<4283>[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (add[u32] (invert[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32])) V2[u32] 0x000010bb<4283>[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (add[u32] (invert[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32])) V2[u32] 0x000010bb<4283>[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (add[u32] (invert[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32])) V2[u32] 0x000010bb<4283>[u32]))))
  af write-only = (invert[u1] (extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32])) (uextend[u33] 0x00000021[u32] (invert[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32]))) 0x000000001[u33]) (uextend[u33] 0x00000021[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32])) (uextend[u33] 0x00000021[u32] (invert[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32]))))))
@@ -7633,7 +7633,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x08048546<134513990>[u32]
+ eip = 0x08048546<134513990>[u32]
  cf write-only = (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] (invert[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32])) V2[u32] 0x000010bb<4283>[u32]))
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32])) V2[u32] 0x000010bb<4283>[u32]))) (extract[u1] 0x00000001[u32] 0x00000002[u32] (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32])) V2[u32] 0x000010bb<4283>[u32]))) (extract[u1] 0x00000002[u32] 0x00000003[u32] (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32])) V2[u32] 0x000010bb<4283>[u32]))) (extract[u1] 0x00000003[u32] 0x00000004[u32] (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32])) V2[u32] 0x000010bb<4283>[u32]))) (extract[u1] 0x00000004[u32] 0x00000005[u32] (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32])) V2[u32] 0x000010bb<4283>[u32]))) (extract[u1] 0x00000005[u32] 0x00000006[u32] (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32])) V2[u32] 0x000010bb<4283>[u32]))) (extract[u1] 0x00000006[u32] 0x00000007[u32] (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32])) V2[u32] 0x000010bb<4283>[u32]))) (extract[u1] 0x00000007[u32] 0x00000008[u32] (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32])) V2[u32] 0x000010bb<4283>[u32])))))
  af write-only = V10[u1]<unspec>
@@ -7674,7 +7674,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x08048549<134513993>[u32]
+ eip = 0x08048549<134513993>[u32]
  cf write-only = (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] (invert[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32])) V2[u32] 0x000010bb<4283>[u32]))
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32])) V2[u32] 0x000010bb<4283>[u32]))) (extract[u1] 0x00000001[u32] 0x00000002[u32] (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32])) V2[u32] 0x000010bb<4283>[u32]))) (extract[u1] 0x00000002[u32] 0x00000003[u32] (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32])) V2[u32] 0x000010bb<4283>[u32]))) (extract[u1] 0x00000003[u32] 0x00000004[u32] (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32])) V2[u32] 0x000010bb<4283>[u32]))) (extract[u1] 0x00000004[u32] 0x00000005[u32] (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32])) V2[u32] 0x000010bb<4283>[u32]))) (extract[u1] 0x00000005[u32] 0x00000006[u32] (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32])) V2[u32] 0x000010bb<4283>[u32]))) (extract[u1] 0x00000006[u32] 0x00000007[u32] (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32])) V2[u32] 0x000010bb<4283>[u32]))) (extract[u1] 0x00000007[u32] 0x00000008[u32] (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32])) V2[u32] 0x000010bb<4283>[u32])))))
  af write-only = V10[u1]<unspec>
@@ -7746,7 +7746,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x0804854a<134513994>[u32]
+ eip = 0x0804854a<134513994>[u32]
  cf write-only = (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] (invert[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32])) V2[u32] 0x000010bb<4283>[u32]))
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (add[u32] (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32])) V2[u32] 0x000010bb<4283>[u32])) 0xffffffff<4294967295,-1>[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32])) V2[u32] 0x000010bb<4283>[u32])) 0xffffffff<4294967295,-1>[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (add[u32] (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32])) V2[u32] 0x000010bb<4283>[u32])) 0xffffffff<4294967295,-1>[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (add[u32] (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32])) V2[u32] 0x000010bb<4283>[u32])) 0xffffffff<4294967295,-1>[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u32] (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32])) V2[u32] 0x000010bb<4283>[u32])) 0xffffffff<4294967295,-1>[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (add[u32] (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32])) V2[u32] 0x000010bb<4283>[u32])) 0xffffffff<4294967295,-1>[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (add[u32] (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32])) V2[u32] 0x000010bb<4283>[u32])) 0xffffffff<4294967295,-1>[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (add[u32] (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32])) V2[u32] 0x000010bb<4283>[u32])) 0xffffffff<4294967295,-1>[u32]))))
  af write-only = (invert[u1] (extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32])) V2[u32] 0x000010bb<4283>[u32]))) 0x0ffffffff<4294967295>[u33]) (uextend[u33] 0x00000021[u32] (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32])) V2[u32] 0x000010bb<4283>[u32]))) 0x0ffffffff<4294967295>[u33])))
@@ -7822,7 +7822,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x0804854d<134513997>[u32]
+ eip = 0x0804854d<134513997>[u32]
  cf write-only = (invert[u1] (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] (add[u32] (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32])) V2[u32] 0x000010bb<4283>[u32])) 0xffffffff<4294967295,-1>[u32])) 0x000000001[u33]) (uextend[u33] 0x00000021[u32] (add[u32] (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32])) V2[u32] 0x000010bb<4283>[u32])) 0xffffffff<4294967295,-1>[u32])))))
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32])) V2[u32] 0x000010bb<4283>[u32]))) (extract[u1] 0x00000001[u32] 0x00000002[u32] (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32])) V2[u32] 0x000010bb<4283>[u32]))) (extract[u1] 0x00000002[u32] 0x00000003[u32] (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32])) V2[u32] 0x000010bb<4283>[u32]))) (extract[u1] 0x00000003[u32] 0x00000004[u32] (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32])) V2[u32] 0x000010bb<4283>[u32]))) (extract[u1] 0x00000004[u32] 0x00000005[u32] (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32])) V2[u32] 0x000010bb<4283>[u32]))) (extract[u1] 0x00000005[u32] 0x00000006[u32] (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32])) V2[u32] 0x000010bb<4283>[u32]))) (extract[u1] 0x00000006[u32] 0x00000007[u32] (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32])) V2[u32] 0x000010bb<4283>[u32]))) (extract[u1] 0x00000007[u32] 0x00000008[u32] (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32])) V2[u32] 0x000010bb<4283>[u32])))))
  af write-only = (invert[u1] (extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] (add[u32] (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32])) V2[u32] 0x000010bb<4283>[u32])) 0xffffffff<4294967295,-1>[u32])) 0x000000001[u33]) (uextend[u33] 0x00000021[u32] (add[u32] (asr[u32] 0x02[u5] (add[u32] (invert[u32] (add[u32] V2[u32] 0x000010ba<4282>[u32])) V2[u32] 0x000010bb<4283>[u32])) 0xffffffff<4294967295,-1>[u32])))))
@@ -7965,7 +7965,7 @@ registers:
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x08048554<134514004>[u32]
+ eip = 0x08048554<134514004>[u32]
  cf write-only = false[u1]
  pf write-only = true[u1]
  af write-only = V3[u1]<unspec>
@@ -7997,7 +7997,7 @@ registers:
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x0804855a<134514010>[u32]
+ eip = 0x0804855a<134514010>[u32]
  cf write-only = false[u1]
  pf write-only = true[u1]
  af write-only = V3[u1]<unspec>
@@ -8029,7 +8029,7 @@ registers:
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x08048560<134514016>[u32]
+ eip = 0x08048560<134514016>[u32]
  cf write-only = false[u1]
  pf write-only = true[u1]
  af write-only = V3[u1]<unspec>
@@ -8211,7 +8211,7 @@ registers:
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x08048566<134514022>[u32]
+ eip = 0x08048566<134514022>[u32]
  cf write-only = (invert[u1] (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] esi_0[u32]) 0x0fffffffc<4294967292>[u33]) (uextend[u33] 0x00000021[u32] esi_0[u32]) 0x0fffffffb<4294967291>[u33])))
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (add[u32] esi_0[u32] 0xfffffffc<4294967292,-4>[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] esi_0[u32] 0xfffffffc<4294967292,-4>[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (add[u32] esi_0[u32] 0xfffffffc<4294967292,-4>[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (add[u32] esi_0[u32] 0xfffffffc<4294967292,-4>[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u32] esi_0[u32] 0xfffffffc<4294967292,-4>[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (add[u32] esi_0[u32] 0xfffffffc<4294967292,-4>[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (add[u32] esi_0[u32] 0xfffffffc<4294967292,-4>[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (add[u32] esi_0[u32] 0xfffffffc<4294967292,-4>[u32]))))
  af write-only = (invert[u1] (extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] esi_0[u32]) 0x0fffffffc<4294967292>[u33]) (uextend[u33] 0x00000021[u32] esi_0[u32]) 0x0fffffffb<4294967291>[u33])))
@@ -8283,7 +8283,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x08048569<134514025>[u32]
+ eip = 0x08048569<134514025>[u32]
  cf write-only = (invert[u1] (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] (invert[u32] (add[u32] edi_0[u32] 0x00000001[u32]))) (uextend[u33] 0x00000021[u32] V4[u32]) 0x000000001[u33]) (uextend[u33] 0x00000021[u32] (invert[u32] (add[u32] edi_0[u32] 0x00000001[u32]))) (uextend[u33] 0x00000021[u32] V4[u32]))))
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (add[u32] (invert[u32] (add[u32] edi_0[u32] 0x00000001[u32])) V4[u32] 0x00000001[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] (invert[u32] (add[u32] edi_0[u32] 0x00000001[u32])) V4[u32] 0x00000001[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (add[u32] (invert[u32] (add[u32] edi_0[u32] 0x00000001[u32])) V4[u32] 0x00000001[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (add[u32] (invert[u32] (add[u32] edi_0[u32] 0x00000001[u32])) V4[u32] 0x00000001[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u32] (invert[u32] (add[u32] edi_0[u32] 0x00000001[u32])) V4[u32] 0x00000001[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (add[u32] (invert[u32] (add[u32] edi_0[u32] 0x00000001[u32])) V4[u32] 0x00000001[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (add[u32] (invert[u32] (add[u32] edi_0[u32] 0x00000001[u32])) V4[u32] 0x00000001[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (add[u32] (invert[u32] (add[u32] edi_0[u32] 0x00000001[u32])) V4[u32] 0x00000001[u32]))))
  af write-only = (invert[u1] (extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] (invert[u32] (add[u32] edi_0[u32] 0x00000001[u32]))) (uextend[u33] 0x00000021[u32] V4[u32]) 0x000000001[u33]) (uextend[u33] 0x00000021[u32] (invert[u32] (add[u32] edi_0[u32] 0x00000001[u32]))) (uextend[u33] 0x00000021[u32] V4[u32]))))
@@ -8468,7 +8468,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x08048574<134514036>[u32]
+ eip = 0x08048574<134514036>[u32]
  cf write-only = (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x00000000c[u33]) (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x00000000c[u33]))
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (add[u32] esp_0[u32] 0x0000000c[u32]))))
  af write-only = (extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x00000000c[u33]) (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x00000000c[u33]))
@@ -8508,7 +8508,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x08048575<134514037>[u32]
+ eip = 0x08048575<134514037>[u32]
  cf write-only = (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x00000000c[u33]) (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x00000000c[u33]))
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (add[u32] esp_0[u32] 0x0000000c[u32]))))
  af write-only = (extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x00000000c[u33]) (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x00000000c[u33]))
@@ -8553,7 +8553,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x08048576<134514038>[u32]
+ eip = 0x08048576<134514038>[u32]
  cf write-only = (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x00000000c[u33]) (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x00000000c[u33]))
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (add[u32] esp_0[u32] 0x0000000c[u32]))))
  af write-only = (extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x00000000c[u33]) (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x00000000c[u33]))
@@ -8603,7 +8603,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x08048577<134514039>[u32]
+ eip = 0x08048577<134514039>[u32]
  cf write-only = (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x00000000c[u33]) (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x00000000c[u33]))
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (add[u32] esp_0[u32] 0x0000000c[u32]))))
  af write-only = (extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x00000000c[u33]) (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x00000000c[u33]))
@@ -8658,7 +8658,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = V11[u32]
+ eip = V11[u32]
  cf write-only = (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x00000000c[u33]) (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x00000000c[u33]))
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (add[u32] esp_0[u32] 0x0000000c[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (add[u32] esp_0[u32] 0x0000000c[u32]))))
  af write-only = (extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x00000000c[u33]) (uextend[u33] 0x00000021[u32] esp_0[u32]) 0x00000000c[u33]))
@@ -8743,7 +8743,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x08048583<134514051>[u32]
+ eip = 0x08048583<134514051>[u32]
  fpstatus_top = 0x0[u3]
 memory:
  addr=(add[u32] esp_0[u32] 0xffffffff<4294967295,-1>[u32]) write-only value=(extract[u8] 0x00000018[u32] 0x00000020[u32] ebp_0[u32])
@@ -8776,7 +8776,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x08048584<134514052>[u32]
+ eip = 0x08048584<134514052>[u32]
  fpstatus_top = 0x0[u3]
 memory:
  addr=(add[u32] esp_0[u32] 0xfffffffb<4294967291,-5>[u32]) write-only value=(extract[u8] 0x00000018[u32] 0x00000020[u32] ebx_0[u32])
@@ -8845,7 +8845,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x08048587<134514055>[u32]
+ eip = 0x08048587<134514055>[u32]
  cf write-only = (invert[u1] (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])) 0x0fffffffc<4294967292>[u33]) (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])) 0x0fffffffb<4294967291>[u33])))
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32]))))
  af write-only = (invert[u1] (extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])) 0x0fffffffc<4294967292>[u33]) (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])) 0x0fffffffb<4294967291>[u33])))
@@ -8882,7 +8882,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x0804858c<134514060>[u32]
+ eip = 0x0804858c<134514060>[u32]
  cf write-only = (invert[u1] (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])) 0x0fffffffc<4294967292>[u33]) (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])) 0x0fffffffb<4294967291>[u33])))
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32]))))
  af write-only = (invert[u1] (extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])) 0x0fffffffc<4294967292>[u33]) (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])) 0x0fffffffb<4294967291>[u33])))
@@ -8923,7 +8923,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
- eip write-only = 0x08048591<134514065>[u32]
+ eip = 0x08048591<134514065>[u32]
  cf write-only = (invert[u1] (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])) 0x0fffffffc<4294967292>[u33]) (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])) 0x0fffffffb<4294967291>[u33])))
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (add[u32] esp_0[u32] 0xfffffff4<4294967284,-12>[u32]))))
  af write-only = (invert[u1] (extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])) 0x0fffffffc<4294967292>[u33]) (uextend[u33] 0x00000021[u32] (add[u32] esp_0[u32] 0xfffffff8<4294967288,-8>[u32])) 0x0fffffffb<4294967291>[u33])))
@@ -9003,7 +9003,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
- eip write-only = 0x08048594<134514068>[u32]
+ eip = 0x08048594<134514068>[u32]
  cf write-only = (invert[u1] (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] V7[u32]) 0x000000001[u33]) (uextend[u33] 0x00000021[u32] V7[u32]))))
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (add[u32] V7[u32] 0x00000001[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] V7[u32] 0x00000001[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (add[u32] V7[u32] 0x00000001[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (add[u32] V7[u32] 0x00000001[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u32] V7[u32] 0x00000001[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (add[u32] V7[u32] 0x00000001[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (add[u32] V7[u32] 0x00000001[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (add[u32] V7[u32] 0x00000001[u32]))))
  af write-only = (invert[u1] (extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] V7[u32]) 0x000000001[u33]) (uextend[u33] 0x00000021[u32] V7[u32]))))
@@ -9123,7 +9123,7 @@ registers:
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x080485a0<134514080>[u32]
+ eip = 0x080485a0<134514080>[u32]
  fpstatus_top = 0x0[u3]
 memory:
 
@@ -9183,7 +9183,7 @@ registers:
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x080485a3<134514083>[u32]
+ eip = 0x080485a3<134514083>[u32]
  cf write-only = (invert[u1] (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] ebx_0[u32]) 0x0fffffffc<4294967292>[u33]) (uextend[u33] 0x00000021[u32] ebx_0[u32]) 0x0fffffffb<4294967291>[u33])))
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (add[u32] ebx_0[u32] 0xfffffffc<4294967292,-4>[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] ebx_0[u32] 0xfffffffc<4294967292,-4>[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (add[u32] ebx_0[u32] 0xfffffffc<4294967292,-4>[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (add[u32] ebx_0[u32] 0xfffffffc<4294967292,-4>[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u32] ebx_0[u32] 0xfffffffc<4294967292,-4>[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (add[u32] ebx_0[u32] 0xfffffffc<4294967292,-4>[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (add[u32] ebx_0[u32] 0xfffffffc<4294967292,-4>[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (add[u32] ebx_0[u32] 0xfffffffc<4294967292,-4>[u32]))))
  af write-only = (invert[u1] (extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] ebx_0[u32]) 0x0fffffffc<4294967292>[u33]) (uextend[u33] 0x00000021[u32] ebx_0[u32]) 0x0fffffffb<4294967291>[u33])))
@@ -9325,7 +9325,7 @@ registers:
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds read-before-write = 0x0000[u16]
- eip write-only = 0x080485aa<134514090>[u32]
+ eip = 0x080485aa<134514090>[u32]
  cf write-only = (invert[u1] (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] V2[u32]) 0x000000001[u33]) (uextend[u33] 0x00000021[u32] V2[u32]))))
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (add[u32] V2[u32] 0x00000001[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] V2[u32] 0x00000001[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (add[u32] V2[u32] 0x00000001[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (add[u32] V2[u32] 0x00000001[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u32] V2[u32] 0x00000001[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (add[u32] V2[u32] 0x00000001[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (add[u32] V2[u32] 0x00000001[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (add[u32] V2[u32] 0x00000001[u32]))))
  af write-only = (invert[u1] (extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] V2[u32]) 0x000000001[u33]) (uextend[u33] 0x00000021[u32] V2[u32]))))
@@ -9441,7 +9441,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x080485ae<134514094>[u32]
+ eip = 0x080485ae<134514094>[u32]
  fpstatus_top = 0x0[u3]
 memory:
  addr=(add[u32] esp_0[u32] 0x00000007[u32]) read-before-write value=(extract[u8] 0x00000018[u32] 0x00000020[u32] V4[u32])
@@ -9480,7 +9480,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x080485af<134514095>[u32]
+ eip = 0x080485af<134514095>[u32]
  fpstatus_top = 0x0[u3]
 memory:
  addr=(add[u32] esp_0[u32] 0x0000000b[u32]) read-before-write value=(extract[u8] 0x00000018[u32] 0x00000020[u32] V6[u32])
@@ -9524,7 +9524,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = V8[u32]
+ eip = V8[u32]
  fpstatus_top = 0x0[u3]
 memory:
  addr=(add[u32] esp_0[u32] 0x0000000f[u32]) read-before-write value=(extract[u8] 0x00000018[u32] 0x00000020[u32] V8[u32])
@@ -9599,7 +9599,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x080485b3<134514099>[u32]
+ eip = 0x080485b3<134514099>[u32]
  fpstatus_top = 0x0[u3]
 memory:
  addr=(add[u32] esp_0[u32] 0xffffffff<4294967295,-1>[u32]) write-only value=(extract[u8] 0x00000018[u32] 0x00000020[u32] ebp_0[u32])
@@ -9632,7 +9632,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x080485b4<134514100>[u32]
+ eip = 0x080485b4<134514100>[u32]
  fpstatus_top = 0x0[u3]
 memory:
  addr=(add[u32] esp_0[u32] 0xfffffffb<4294967291,-5>[u32]) write-only value=(extract[u8] 0x00000018[u32] 0x00000020[u32] ebx_0[u32])
@@ -9669,7 +9669,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x080485b5<134514101>[u32]
+ eip = 0x080485b5<134514101>[u32]
  fpstatus_top = 0x0[u3]
 memory:
  addr=(add[u32] esp_0[u32] 0xfffffff7<4294967287,-9>[u32]) write-only value=(extract[u8] 0x00000018[u32] 0x00000020[u32] eax_0[u32])
@@ -9823,7 +9823,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x080485c1<134514113>[u32]
+ eip = 0x080485c1<134514113>[u32]
  cf write-only = (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] V2[u32]) 0x00000110e<4366>[u33]) (uextend[u33] 0x00000021[u32] V2[u32]) 0x00000110e<4366>[u33]))
  pf write-only = (invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (add[u32] V2[u32] 0x0000110e<4366>[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] V2[u32] 0x0000110e<4366>[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (add[u32] V2[u32] 0x0000110e<4366>[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (add[u32] V2[u32] 0x0000110e<4366>[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u32] V2[u32] 0x0000110e<4366>[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (add[u32] V2[u32] 0x0000110e<4366>[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (add[u32] V2[u32] 0x0000110e<4366>[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (add[u32] V2[u32] 0x0000110e<4366>[u32]))))
  af write-only = (extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] V2[u32]) 0x00000110e<4366>[u33]) (uextend[u33] 0x00000021[u32] V2[u32]) 0x00000110e<4366>[u33]))
@@ -9946,7 +9946,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x080485c8<134514120>[u32]
+ eip = 0x080485c8<134514120>[u32]
  fpstatus_top = 0x0[u3]
 memory:
  addr=(add[u32] esp_0[u32] 0x00000007[u32]) read-before-write value=(extract[u8] 0x00000018[u32] 0x00000020[u32] V4[u32])
@@ -9988,7 +9988,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = 0x080485c9<134514121>[u32]
+ eip = 0x080485c9<134514121>[u32]
  fpstatus_top = 0x0[u3]
 memory:
  addr=(add[u32] ebp_0[u32] 0x00000003[u32]) read-before-write value=(extract[u8] 0x00000018[u32] 0x00000020[u32] V7[u32])
@@ -10032,7 +10032,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip write-only = V9[u32]
+ eip = V9[u32]
  fpstatus_top = 0x0[u3]
 memory:
  addr=(add[u32] ebp_0[u32] 0x00000007[u32]) read-before-write value=(extract[u8] 0x00000018[u32] 0x00000020[u32] V9[u32])
