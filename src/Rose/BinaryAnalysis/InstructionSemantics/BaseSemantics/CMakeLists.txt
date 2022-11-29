@@ -20,6 +20,7 @@ add_library(roseBinaryAnalysisInstructionSemanticsBaseSemantics OBJECT
 add_dependencies(roseBinaryAnalysisInstructionSemanticsBaseSemantics rosetta_generated)
 
 install(FILES
+  BasicTypes.h
   Dispatcher.h
   Exception.h
   Formatter.h
@@ -35,6 +36,5 @@ install(FILES
   State.h
   SValue.h
   SymbolicMemory.h
-  Types.h
     
   DESTINATION ${INCLUDE_INSTALL_DIR}/Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics)

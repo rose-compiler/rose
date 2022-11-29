@@ -5,7 +5,7 @@
 
 #include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Concolic/ExecutionLocation.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Types.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 #include <Rose/BinaryAnalysis/RegisterDescriptor.h>
 #include <Rose/BinaryAnalysis/SmtSolver.h>

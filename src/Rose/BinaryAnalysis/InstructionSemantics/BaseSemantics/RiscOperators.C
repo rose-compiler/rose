@@ -5,6 +5,7 @@
 
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Exception.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Formatter.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RegisterState.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/State.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/SValue.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/Utility.h>
