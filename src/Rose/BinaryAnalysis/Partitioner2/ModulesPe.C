@@ -35,9 +35,12 @@ getImportIndex(const Partitioner&, SgAsmPEFileHeader *peHeader, ImportIndex &ind
             if (SgAsmPEImportSection *importSection = isSgAsmPEImportSection(section)) {
                 for (SgAsmPEImportDirectory *importDir: importSection->get_import_directories()->get_vector()) {
                     for (SgAsmPEImportItem *import: importDir->get_imports()->get_vector()) {
-                        rose_addr_t va = import->get_hintname_rva().get_va();
-                        if (index.insertMaybe(va, import))
-                            ++nInserted;
+                        if (import->get_hintname_rva() != 0 || import->get_hint() != 0 ||
+                            !import->get_name()->get_string().empty()) {
+                            rose_addr_t va = import->get_hintname_rva().get_va();
+                            if (index.insertMaybe(va, import))
+                                ++nInserted;
+                        }
                     }
                 }
             }
