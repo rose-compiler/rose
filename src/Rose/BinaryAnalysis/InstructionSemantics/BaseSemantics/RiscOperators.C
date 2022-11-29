@@ -501,13 +501,16 @@ RiscOperators::readRegister(RegisterDescriptor reg, const SValue::Ptr &dflt_) {
     if (initialState_)
         dflt = initialState()->readRegister(reg, dflt, this);
 
-    return currentState()->readRegister(reg, dflt, this);
+    SValue::Ptr retval = currentState()->readRegister(reg, dflt, this);
+    currentState()->registerState()->updateReadProperties(reg);
+    return retval;
 }
 
 void
 RiscOperators::writeRegister(RegisterDescriptor reg, const SValue::Ptr &a) {
     ASSERT_not_null(currentState());
     currentState()->writeRegister(reg, a, this);
+    currentState()->registerState()->updateWriteProperties(reg, currentInstruction() ? IO_WRITE : IO_INIT);
 }
 
 SValue::Ptr
