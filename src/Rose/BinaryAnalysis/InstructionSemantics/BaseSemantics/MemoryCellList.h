@@ -44,7 +44,6 @@ public:
     /** Shared-ownership pointer. */
     using Ptr = MemoryCellListPtr;
 
-    typedef std::list<MemoryCellPtr> CellList;          /**< List of memory cells. */
 protected:
     CellList cells;                                     // list of cells in reverse chronological order
     bool occlusionsErased_;                             // prune away old cells that are occluded by newer ones.
@@ -253,10 +252,6 @@ protected:
 
     // Returns the union of all properties from the specified cells.
     virtual InputOutputPropertySet mergeCellProperties(const CellList &cells);
-
-    // Adjust I/O properties in the specified cells to make it look like they were just read.  This adds the READ property and
-    // may also add READ_AFTER_WRITE, READ_BEFORE_WRITE, and/or READ_UNINITIALIZED.
-    virtual void updateReadProperties(CellList &cells);
 
     // Insert a new cell at the head of the list. It's writers set is empty and its I/O properties will be READ,
     // READ_BEFORE_WRITE, and READ_UNINITIALIZED.
