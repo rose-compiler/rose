@@ -346,6 +346,28 @@ matchPushSi(const Partitioner &partitioner, SgAsmX86Instruction *push) {
     return true;
 }
 
+// Is this table entry a valid target? If valid, returns nullptr, otherwise a reason for being invalid.
+static const char*
+isInvalidTarget(rose_addr_t target, const AddressInterval &targetLimits, const Partitioner &partitioner) {
+    if (!targetLimits.contains(target)) {
+        return "target is not within target limits";
+    } else if (!partitioner.memoryMap()->at(target).require(MemoryMap::EXECUTABLE).exists()) {
+        return "target is not in executable memory";
+    } else {
+        SgAsmInstruction *targetInsn = partitioner.instructionProvider()[target];
+        if (!targetInsn || targetInsn->isUnknown()) {
+            return "target does not point to a valid instruction";
+        } else {
+            std::vector<SgAsmInstruction*> overlappingInsns = partitioner.instructionsOverlapping(target);
+            for (SgAsmInstruction *insn: overlappingInsns) {
+                if (insn->get_address() != target)
+                    return "target overlaps existing instruction";
+            }
+        }
+    }
+    return nullptr;
+}
+
 std::vector<rose_addr_t>
 scanCodeAddressTable(const Partitioner &partitioner, AddressInterval &tableLimits /*in,out*/,
                      const AddressInterval &targetLimits, SwitchSuccessors::EntryType tableEntryType,
@@ -401,16 +423,19 @@ scanCodeAddressTable(const Partitioner &partitioner, AddressInterval &tableLimit
         }
 
         // Save or skip the table entry
-        if (targetLimits.contains(target) && map->at(target).require(MemoryMap::EXECUTABLE).exists()) {
+        const char *invalidReason = isInvalidTarget(target, targetLimits, partitioner);
+        if (!invalidReason) {
             tableEntries.push_back(target);
         } else if (tableEntries.empty() && nSkippedEntries < nSkippable) {
             ++nSkippedEntries;
             actualStartVa += tableEntrySizeBytes;
             SAWYER_MESG(debug) <<"  entry at " <<StringUtility::addrToString(tableEntryVa) <<" is skipped"
-                               <<": value is " <<StringUtility::addrToString(target) <<"\n";
+                               <<": target is " <<StringUtility::addrToString(target)
+                               <<" (" <<invalidReason <<")\n";
         } else {
             SAWYER_MESG(debug) <<"  entry at " <<StringUtility::addrToString(tableEntryVa) <<" is invalid"
-                               <<": value is " <<StringUtility::addrToString(target) <<"\n";
+                               <<": target is " <<StringUtility::addrToString(target)
+                               <<" (" <<invalidReason <<")\n";
             break;
         }
     }
@@ -431,13 +456,17 @@ scanCodeAddressTable(const Partitioner &partitioner, AddressInterval &tableLimit
                 target |= bytes[i] << (8*i);            // x86 is little endian
 
             // Save entry if valid, otherwise we've reached the beginning of the table
-            if (targetLimits.contains(target) && map->at(target).require(MemoryMap::EXECUTABLE).exists()) {
+            const char *invalidReason = isInvalidTarget(target, targetLimits, partitioner);
+            if (invalidReason) {
+                SAWYER_MESG(debug) <<"  entry at " <<StringUtility::addrToString(tableEntryVa) <<" is invalid"
+                                   <<": target is " <<StringUtility::addrToString(target)
+                                   <<" (" <<invalidReason <<")\n";
+                break;
+            } else {
                 tableEntries.insert(tableEntries.begin(), target);
                 actualStartVa -= tableEntrySizeBytes;
                 ++nBackwardEntries;
                 SAWYER_MESG(debug) <<"  entry at " <<StringUtility::addrToString(tableEntryVa) <<" found by backward search\n";
-            } else {
-                break;
             }
         }
     }
@@ -759,6 +788,7 @@ SwitchSuccessors::operator()(bool chain, const Args &args) {
     if (!matchPatterns(args.partitioner, args.bblock))
         return chain;
     ASSERT_require(tableVa_);
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
 
     // Set some limits on the location of the target address table, besides those restrictions that will be imposed during the
     // table-reading loop (like table is mapped read-only).
@@ -807,7 +837,7 @@ SwitchSuccessors::operator()(bool chain, const Args &args) {
             targetLimits = targetLimits & AddressInterval::hull(0, nextFunction->address()-1);
         }
     }
-    SAWYER_MESG(mlog[DEBUG]) <<"switch table target limits: " <<StringUtility::addrToString(targetLimits) <<"\n";
+    SAWYER_MESG(debug) <<"switch table target limits: " <<StringUtility::addrToString(targetLimits) <<"\n";
     if (targetLimits.isEmpty())
         return chain;                                   // not even room for one case label
 
@@ -834,19 +864,19 @@ SwitchSuccessors::operator()(bool chain, const Args &args) {
     args.bblock->insertDataBlock(addressTable);
 
     // Debugging
-    if (mlog[DEBUG]) {
+    if (debug) {
         using namespace StringUtility;
-        mlog[DEBUG] <<"ModulesX86::SwitchSuccessors: found \"switch\" statement\n";
-        mlog[DEBUG] <<"  basic block: " <<addrToString(args.bblock->address()) <<"\n";
-        mlog[DEBUG] <<"  instruction: " <<args.bblock->instructions()[nInsns-1]->toString() <<"\n";
-        mlog[DEBUG] <<"  table va:    " <<addrToString(tableLimits.least()) <<"\n";
-        mlog[DEBUG] <<"  table size:  " <<plural(tableEntries.size(), "entries")
-                    <<", " <<plural(tableLimits.size(), "bytes") <<"\n";
-        mlog[DEBUG] <<"  successors:  " <<plural(successors.size(), "distinct addresses") <<"\n";
-        mlog[DEBUG] <<"   ";
+        debug <<"ModulesX86::SwitchSuccessors: found \"switch\" statement\n";
+        debug <<"  basic block: " <<addrToString(args.bblock->address()) <<"\n";
+        debug <<"  instruction: " <<args.bblock->instructions()[nInsns-1]->toString() <<"\n";
+        debug <<"  table va:    " <<addrToString(tableLimits.least()) <<"\n";
+        debug <<"  table size:  " <<plural(tableEntries.size(), "entries")
+              <<", " <<plural(tableLimits.size(), "bytes") <<"\n";
+        debug <<"  successors:  " <<plural(successors.size(), "distinct addresses") <<"\n";
+        debug <<"   ";
         for (rose_addr_t va: successors)
-            mlog[DEBUG] <<" " <<addrToString(va);
-        mlog[DEBUG] <<"\n";
+            debug <<" " <<addrToString(va);
+        debug <<"\n";
     }
 
     return chain;
