@@ -1,5 +1,5 @@
-#ifndef ROSE_BinaryAnalysis_InstructionSemantics_BaseSemantics_Types_H
-#define ROSE_BinaryAnalysis_InstructionSemantics_BaseSemantics_Types_H
+#ifndef ROSE_BinaryAnalysis_InstructionSemantics_BaseSemantics_BasicTypes_H
+#define ROSE_BinaryAnalysis_InstructionSemantics_BaseSemantics_BasicTypes_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 

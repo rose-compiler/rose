@@ -19,6 +19,7 @@ run $(librose_compile)				\
     SymbolicMemory.C
 
 run $(public_header) -o include/rose/Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics	\
+    BasicTypes.h										\
     Dispatcher.h										\
     Exception.h											\
     Formatter.h											\
@@ -33,5 +34,4 @@ run $(public_header) -o include/rose/Rose/BinaryAnalysis/InstructionSemantics/Ba
     RiscOperators.h										\
     State.h											\
     SValue.h											\
-    SymbolicMemory.h										\
-    Types.h
+    SymbolicMemory.h
