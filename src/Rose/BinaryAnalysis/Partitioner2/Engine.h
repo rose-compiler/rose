@@ -1053,6 +1053,40 @@ public:
     virtual void progress(const Progress::Ptr &progress) { progress_ = progress; }
     /** @} */
 
+    /** Property: binary loader.
+     *
+     *  The binary loader that maps a binary container's sections into simulated memory and optionally performs dynamic linking
+     *  and relocation fixups.  If none is specified then the engine will choose one based on the container.
+     *
+     * @{ */
+    BinaryLoader::Ptr binaryLoader() const /*final*/ { return binaryLoader_; }
+    virtual void binaryLoader(const BinaryLoader::Ptr &loader) { binaryLoader_ = loader; }
+    /** @} */
+
+    /** Property: Predicate for finding functions that are thunks.
+     *
+     *  This collective predicate is used when searching for function prologues in order to create new functions. Its purpose
+     *  is to try to match sequences of instructions that look like thunks and then create a function at that address. A suitable
+     *  default list of predicates is created when the engine is initialized, and can either be replaced by a new list, an empty
+     *  list, or the list itself can be adjusted.  The list is consulted only when @ref findingThunks is set.
+     *
+     * @{ */
+    ThunkPredicates::Ptr functionMatcherThunks() const /*final*/ { return functionMatcherThunks_; }
+    virtual void functionMatcherThunks(const ThunkPredicates::Ptr &p) { functionMatcherThunks_ = p; }
+    /** @} */
+
+    /** Property: Predicate for finding thunks at the start of functions.
+     *
+     *  This collective predicate is used when searching for thunks at the beginnings of existing functions in order to split
+     *  those thunk instructions into their own separate function.  A suitable default list of predicates is created when the
+     *  engine is initialized, and can either be replaced by a new list, an empty list, or the list itself can be adjusted.
+     *  The list is consulted only when @ref splittingThunks is set.
+     *
+     * @{ */
+    ThunkPredicates::Ptr functionSplittingThunks() const /*final*/ { return functionSplittingThunks_; }
+    virtual void functionSplittingThunks(const ThunkPredicates::Ptr &p) { functionSplittingThunks_ = p; }
+    /** @} */
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Python API support functions
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
