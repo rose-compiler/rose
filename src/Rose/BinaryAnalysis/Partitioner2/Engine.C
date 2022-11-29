@@ -1609,7 +1609,7 @@ Engine::createGenericPartitioner() {
     p.functionPrologueMatchers().push_back(ModulesX86::MatchEnterPrologue::instance());
     p.functionPrologueMatchers().push_back(ModulesPowerpc::MatchStwuPrologue::instance());
     if (settings_.partitioner.findingThunks)
-        p.functionPrologueMatchers().push_back(Modules::MatchThunk::instance(functionMatcherThunks_));
+        p.functionPrologueMatchers().push_back(Modules::MatchThunk::instance(functionMatcherThunks()));
     p.functionPrologueMatchers().push_back(ModulesX86::MatchRetPadPush::instance());
     p.functionPrologueMatchers().push_back(ModulesM68k::MatchLink::instance());
     p.functionPrologueMatchers().push_back(ModulesMips::MatchRetAddiu::instance());
