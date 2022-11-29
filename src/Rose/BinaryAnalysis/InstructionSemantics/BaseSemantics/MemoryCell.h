@@ -11,6 +11,7 @@
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/export.hpp>
 #include <boost/serialization/list.hpp>
+#include <list>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -269,6 +270,8 @@ public:
     /** @} */
 };
 
+/** List of memory cells. */
+using CellList = std::list<MemoryCellPtr>;
 
 std::ostream& operator<<(std::ostream&, const MemoryCell&);
 std::ostream& operator<<(std::ostream&, const MemoryCell::WithFormatter&);
