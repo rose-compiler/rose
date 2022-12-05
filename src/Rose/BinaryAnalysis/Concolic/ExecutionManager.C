@@ -4,6 +4,7 @@
 #include <Rose/BinaryAnalysis/Concolic/ExecutionManager.h>
 
 #include <Rose/BinaryAnalysis/Concolic/ConcreteExecutor.h>
+#include <Rose/BinaryAnalysis/Concolic/ConcreteExecutorResult.h>
 #include <Rose/BinaryAnalysis/Concolic/Database.h>
 #include <Rose/BinaryAnalysis/Concolic/TestCase.h>
 
@@ -38,12 +39,9 @@ ExecutionManager::pendingConcreteResult() {
 }
 
 void
-ExecutionManager::insertConcreteResults( const TestCase::Ptr &testCase, 
-                                         const ConcreteExecutorResult& details
-                                       ) 
-{
-  testCase->concreteRank(details.rank());
-  database_->saveConcreteResult(testCase, &details);
+ExecutionManager::insertConcreteResults(const TestCase::Ptr &testCase, const ConcreteExecutorResultPtr &details) {
+    testCase->concreteRank(details->rank());
+    database_->saveConcreteResult(testCase, details);
 }
 
 std::vector<TestCaseId>

@@ -5,6 +5,7 @@ add_library(roseBinaryAnalysisConcolic OBJECT
   Architecture.C
   ConcolicExecutor.C
   ConcreteExecutor.C
+  ConcreteExecutorResult.C
   Database.C
   ExecutionEvent.C
   ExecutionLocation.C
@@ -12,6 +13,7 @@ add_library(roseBinaryAnalysisConcolic OBJECT
   InputVariables.C
   LinuxExitStatus.C
   LinuxTraceConcrete.C
+  LinuxTraceConcreteResult.C
   SharedMemory.C
   Specimen.C
   SystemCall.C
@@ -26,6 +28,7 @@ install(FILES
   BasicTypes.h
   ConcolicExecutor.h
   ConcreteExecutor.h
+  ConcreteExecutorResult.h
   Database.h
   ExecutionEvent.h
   ExecutionLocation.h
@@ -34,6 +37,7 @@ install(FILES
   InputVariables.h
   LinuxExitStatus.h
   LinuxTraceConcrete.h
+  LinuxTraceConcreteResult.h
   M68kSystem.h
   SharedMemory.h
   Specimen.h

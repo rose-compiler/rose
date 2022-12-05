@@ -4,5 +4,6 @@
 #include <Rose/BinaryAnalysis/Concolic/I386Linux/Architecture.h>
 #include <Rose/BinaryAnalysis/Concolic/I386Linux/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Concolic/I386Linux/ConcreteExecutor.h>
+#include <Rose/BinaryAnalysis/Concolic/I386Linux/ConcreteExecutorResult.h>
 
 #endif

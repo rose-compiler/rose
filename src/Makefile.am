@@ -290,6 +290,7 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/Concolic/BasicTypes.h					\
 	Rose/BinaryAnalysis/Concolic/ConcolicExecutor.h					\
 	Rose/BinaryAnalysis/Concolic/ConcreteExecutor.h					\
+	Rose/BinaryAnalysis/Concolic/ConcreteExecutorResult.h				\
 	Rose/BinaryAnalysis/Concolic/Database.h						\
 	Rose/BinaryAnalysis/Concolic/ExecutionEvent.h					\
 	Rose/BinaryAnalysis/Concolic/ExecutionLocation.h				\
@@ -298,13 +299,16 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/Concolic/I386Linux/Architecture.h				\
 	Rose/BinaryAnalysis/Concolic/I386Linux/BasicTypes.h				\
 	Rose/BinaryAnalysis/Concolic/I386Linux/ConcreteExecutor.h			\
+	Rose/BinaryAnalysis/Concolic/I386Linux/ConcreteExecutorResult.h			\
 	Rose/BinaryAnalysis/Concolic/InputVariables.h					\
 	Rose/BinaryAnalysis/Concolic/LinuxExitStatus.h					\
 	Rose/BinaryAnalysis/Concolic/LinuxTraceConcrete.h				\
+	Rose/BinaryAnalysis/Concolic/LinuxTraceConcreteResult.h				\
 	Rose/BinaryAnalysis/Concolic/M68kSystem.h					\
 	Rose/BinaryAnalysis/Concolic/M68kSystem/Architecture.h				\
 	Rose/BinaryAnalysis/Concolic/M68kSystem/BasicTypes.h				\
 	Rose/BinaryAnalysis/Concolic/M68kSystem/ConcreteExecutor.h			\
+	Rose/BinaryAnalysis/Concolic/M68kSystem/ConcreteExecutorResult.h		\
 	Rose/BinaryAnalysis/Concolic/SharedMemory.h					\
 	Rose/BinaryAnalysis/Concolic/Specimen.h						\
 	Rose/BinaryAnalysis/Concolic/SystemCall.h					\

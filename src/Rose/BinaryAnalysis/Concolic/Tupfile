@@ -5,6 +5,7 @@ run $(public_header) -o include/rose/Rose/BinaryAnalysis/Concolic	\
     BasicTypes.h							\
     ConcolicExecutor.h							\
     ConcreteExecutor.h							\
+    ConcreteExecutorResult.h						\
     Database.h								\
     ExecutionEvent.h							\
     ExecutionLocation.h							\
@@ -13,6 +14,7 @@ run $(public_header) -o include/rose/Rose/BinaryAnalysis/Concolic	\
     InputVariables.h							\
     LinuxExitStatus.h							\
     LinuxTraceConcrete.h						\
+    LinuxTraceConcreteResult.h						\
     M68kSystem.h							\
     SharedMemory.h							\
     Specimen.h								\
@@ -24,6 +26,7 @@ run $(librose_compile)				\
     Architecture.C				\
     ConcolicExecutor.C				\
     ConcreteExecutor.C				\
+    ConcreteExecutorResult.C			\
     Database.C					\
     ExecutionEvent.C				\
     ExecutionLocation.C				\
@@ -31,6 +34,7 @@ run $(librose_compile)				\
     InputVariables.C				\
     LinuxExitStatus.C				\
     LinuxTraceConcrete.C			\
+    LinuxTraceConcreteResult.C			\
     SharedMemory.C				\
     Specimen.C					\
     SystemCall.C				\
