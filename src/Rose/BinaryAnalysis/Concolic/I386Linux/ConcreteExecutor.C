@@ -4,6 +4,7 @@
 #include <Rose/BinaryAnalysis/Concolic/I386Linux/ConcreteExecutor.h>
 
 #include <Rose/BinaryAnalysis/Concolic/Database.h>
+#include <Rose/BinaryAnalysis/Concolic/I386Linux/ConcreteExecutorResult.h>
 #include <Rose/BinaryAnalysis/Concolic/Specimen.h>
 #include <Rose/BinaryAnalysis/Concolic/TestCase.h>
 #include <Rose/FileSystem.h>
@@ -37,28 +38,6 @@ namespace
   }
 }
 
-std::string nameCompletionStatus(int processDisposition)
-{
-  std::string res = "unknown";
-
-  if (WIFEXITED(processDisposition)) {
-      res = "exit";
-  } else if (WIFSIGNALED(processDisposition)) {
-      res = "signal";
-  } else if (WIFSTOPPED(processDisposition)) {
-      res = "stopped";
-  } else if (WIFCONTINUED(processDisposition)) {
-      res = "resumed";
-  }
-
-  return res;
-}
-
-ConcreteExecutor::Result::Result(double rank, int exitStatus)
-    : Concolic::ConcreteExecutorResult(rank), exitStatus_(exitStatus)
-{
-  exitKind_ = nameCompletionStatus(exitStatus_);
-}
 
 std::vector<std::string>
 convToStringVector(std::vector<EnvValue> env)
@@ -221,20 +200,12 @@ typedef atomic_counter<int> atomic_counter_t;
 static atomic_counter_t versioning(0);
 
 
-void ConcreteExecutor::Result::exitStatus(int x)
-{
-  exitStatus_ = x;
-  exitKind_   = nameCompletionStatus(x);
-}
-
-ConcreteExecutor::Result*
-createLinuxResult(int errcode, std::string outstr, std::string errstr, double rank)
-{
-  ConcreteExecutor::Result* res = new ConcreteExecutor::Result(rank, errcode);
-
-  res->out(outstr);
-  res->err(errstr);
-  return res;
+ConcreteExecutorResult::Ptr
+createLinuxResult(int errcode, std::string outstr, std::string errstr, double rank) {
+    auto res = I386Linux::ConcreteExecutorResult::instance(rank, errcode);
+    res->out(outstr);
+    res->err(errstr);
+    return res;
 }
 
 ConcreteExecutor::ConcreteExecutor(const Database::Ptr &db)
@@ -247,9 +218,8 @@ ConcreteExecutor::instance(const Database::Ptr &db) {
     return Ptr(new ConcreteExecutor(db));
 }
 
-ConcreteExecutorResult*
-ConcreteExecutor::execute(const TestCase::Ptr& tc)
-{
+Concolic::ConcreteExecutorResult::Ptr
+ConcreteExecutor::execute(const TestCase::Ptr& tc) {
   namespace bstfs = boost::filesystem;
 
   const bool               withExecMonitor = executionMonitor().string().size();
@@ -319,7 +289,5 @@ ConcreteExecutor::execute(const TestCase::Ptr& tc)
 } // namespace
 } // namespace
 } // namespace
-
-BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::Concolic::I386Linux::ConcreteExecutor::Result);
 
 #endif

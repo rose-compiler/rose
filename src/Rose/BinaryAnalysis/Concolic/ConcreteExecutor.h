@@ -5,54 +5,12 @@
 #include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
 
 #include <boost/filesystem.hpp>
-#include <rose_isnan.h>
 #include <Sawyer/SharedObject.h>
 #include <Sawyer/SharedPointer.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Concolic {
-
-/** Base class for user-defined concrete execution results.
- *
- *  Regardless of what data a subclass might add, all concrete execution results have a floating-point "rank" used to sort them
- *  when creating the list of test cases that should next run in the concolic (combined concrete and symbolic) executor. The
- *  convention is that those with lower ranks will run before those with higher ranks, although subclasses of @ref
- *  ExecutionManager can override this. The rank should be a real number (not NaN).
- *
- *  The subclasses must provide @c boost::serialization support which is used to store the user-defined results in the database
- *  and to reconstitute results objects from the database. Since this is a relatively expensive operation, the rank is also
- *  stored separately within the database. */
-class ConcreteExecutorResult {
-private:
-    double rank_;
-    bool isInteresting_;
-
-public:
-    ConcreteExecutorResult()
-        : rank_(0.0), isInteresting_(true) {}
-
-    explicit ConcreteExecutorResult(double rank)
-        : rank_(rank), isInteresting_(true) {
-        ASSERT_forbid(rose_isnan(rank));
-    }
-
-    virtual ~ConcreteExecutorResult() {}
-
-    double rank() const { return rank_; }
-    void rank(double r) { rank_ = r; }
-
-    bool isInteresting() const { return isInteresting_; }
-    void isInteresting(bool b) { isInteresting_ = b; }
-
-private:
-    friend class boost::serialization::access;
-
-    template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
-        s & BOOST_SERIALIZATION_NVP(rank_);
-    }
-};
 
 /** Base class for executing test cases concretely.
  *
@@ -86,7 +44,7 @@ public:
      *
      *  Returns the results from running the test concretely. Results are user-defined. The return value is never a null
      *  pointer. */
-    virtual ConcreteExecutorResult* execute(const TestCasePtr&) = 0;
+    virtual ConcreteExecutorResultPtr execute(const TestCasePtr&) = 0;
 
     // FIXME[Robb Matzke 2020-07-14]: This should be in a subclass
     /** \brief

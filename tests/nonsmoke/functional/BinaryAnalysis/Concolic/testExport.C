@@ -64,7 +64,7 @@ int main() {
     for (auto testCaseId: db->needConcreteTesting(10)) {
         auto testCase = db->object(testCaseId);
         auto executor = I386Linux::ConcreteExecutor::instance(db);
-        auto result = dynamic_cast<I386Linux::ConcreteExecutor::Result*>(executor->execute(testCase)); // leaked?
+        auto result = executor->execute(testCase).dynamicCast<I386Linux::ConcreteExecutorResult>();
         int status = result->exitStatus();
         ASSERT_always_require(WIFEXITED(status) && WEXITSTATUS(status) != 0);
         db->saveConcreteResult(testCase, result);
@@ -75,7 +75,7 @@ int main() {
     for (auto testCaseId: db->needConcreteTesting(10)) {
         auto testCase = db->object(testCaseId);
         auto executor = I386Linux::ConcreteExecutor::instance(db);
-        auto result = dynamic_cast<I386Linux::ConcreteExecutor::Result*>(executor->execute(testCase)); // leaked?
+        auto result = executor->execute(testCase).dynamicCast<I386Linux::ConcreteExecutorResult>();
         int status = result->exitStatus();
         ASSERT_always_require(WIFEXITED(status) && WEXITSTATUS(status) == 0);
         db->saveConcreteResult(testCase, result);

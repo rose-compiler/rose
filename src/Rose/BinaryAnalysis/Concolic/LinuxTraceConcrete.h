@@ -20,23 +20,9 @@ public:
     /** Reference counting pointer to a @ref LinuxTraceConcrete. */
     using Ptr = Sawyer::SharedPointer<LinuxTraceConcrete>;
 
-    /** Results of the execution. */
-    class Result: public ConcreteExecutorResult {
-    public:
-        int exitStatus;                                 // as returned by wait
-        AddressSet executedVas;
-
-    private:
-        friend class boost::serialization::access;
-
-        template<class S>
-        void serialize(S &s, const unsigned /*version*/) {
-            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(ConcreteExecutorResult);
-            s & BOOST_SERIALIZATION_NVP(executedVas);
-        }
-    };
-
 protected:
+    LinuxTraceConcrete();
+
     explicit LinuxTraceConcrete(const DatabasePtr&);
 
 public:
@@ -46,12 +32,18 @@ public:
     static Ptr instance(const DatabasePtr&);
 
     /** Specimen exit status, as returned by wait. */
-    static int exitStatus(const ConcreteExecutorResult*);
+    static int exitStatus(const ConcreteExecutorResultPtr&);
 
     /** Executed virtual addresses. */
-    const AddressSet& executedVas(const ConcreteExecutorResult*);
+    const AddressSet& executedVas(const ConcreteExecutorResultPtr&);
 
-    ConcreteExecutorResult* execute(const TestCasePtr&) override;
+    ConcreteExecutorResultPtr execute(const TestCasePtr&) override;
+
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {}
 };
 
 } // namespace

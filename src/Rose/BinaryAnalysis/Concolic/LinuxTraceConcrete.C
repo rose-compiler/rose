@@ -23,7 +23,7 @@ LinuxTraceConcrete::instance(const Database::Ptr &db) {
     return Ptr(new LinuxTraceConcrete(db));
 }
 
-ConcreteExecutorResult*
+ConcreteExecutorResult::Ptr
 LinuxTraceConcrete::execute(const TestCase::Ptr &testCase) {
 
     // FIXME[Robb Matzke 2020-07-15]: This temp dir should be automatically removed.
@@ -57,22 +57,21 @@ LinuxTraceConcrete::execute(const TestCase::Ptr &testCase) {
     }
 
     // Run the specimen by single stepping to get the instruction addresses that were executed
-    auto result = std::make_unique<Result>();
-    std::set<rose_addr_t> executedVas;
+    AddressSet executedVas;
     while (!debugger->isTerminated()) {
-        result->executedVas.insert(debugger->executionAddress(Debugger::ThreadId::unspecified()));
+        executedVas.insert(debugger->executionAddress(Debugger::ThreadId::unspecified()));
         debugger->singleStep(Debugger::ThreadId::unspecified());
     }
 
-    result->rank(-static_cast<double>(result->executedVas.size())); // neg because lowest ranks execute firstdatabase()->saveConcreteResult(testCase, result.get());
+    const double rank = -static_cast<double>(executedVas.size()); // more instructions are better (lower rank)
+    auto result = LinuxTraceConcreteResult::instance(rank, executedVas);
 
     // If the concrete results are a duplicate of other concrete results then mark this test case as not interesting.
     for (TestCaseId otherId: database()->testCases()) {
         TestCase::Ptr other = database()->object(otherId);
         if (other != testCase) {
-            std::unique_ptr<ConcreteExecutorResult> otherResult_ = database()->readConcreteResult(otherId);
-            if (auto otherResult = dynamic_cast<const LinuxTraceConcrete::Result*>(otherResult_.get())) {
-                if (result->executedVas == otherResult->executedVas) {
+            if (auto otherResult = database()->readConcreteResult(otherId).dynamicCast<LinuxTraceConcreteResult>()) {
+                if (result->executedVas() == otherResult->executedVas()) {
                     result->isInteresting(false);
                     break;
                 }
@@ -80,28 +79,26 @@ LinuxTraceConcrete::execute(const TestCase::Ptr &testCase) {
         }
     }
 
-    database()->saveConcreteResult(testCase, result.get());
-    return result.release();
+    database()->saveConcreteResult(testCase, result);
+    return result;
 }
 
 int
-LinuxTraceConcrete::exitStatus(const ConcreteExecutorResult *result_) {
-    auto result = dynamic_cast<const Result*>(result_);
+LinuxTraceConcrete::exitStatus(const ConcreteExecutorResultPtr &result_) {
+    auto result = result_.dynamicCast<LinuxTraceConcreteResult>();
     ASSERT_not_null(result);
-    return result->exitStatus;
+    return result->exitStatus();
 }
 
 const AddressSet&
-LinuxTraceConcrete::executedVas(const ConcreteExecutorResult *result_) {
-    auto result = dynamic_cast<const Result*>(result_);
+LinuxTraceConcrete::executedVas(const ConcreteExecutorResultPtr &result_) {
+    auto result = result_.dynamicCast<LinuxTraceConcreteResult>();
     ASSERT_not_null(result);
-    return result->executedVas;
+    return result->executedVas();
 }
 
 } // namespace
 } // namespace
 } // namespace
-
-BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::Concolic::LinuxTraceConcrete::Result);
 
 #endif

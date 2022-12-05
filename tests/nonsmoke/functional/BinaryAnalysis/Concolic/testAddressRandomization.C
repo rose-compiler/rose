@@ -20,7 +20,7 @@ int main() {
 
         auto executor = I386Linux::ConcreteExecutor::instance(db);
         executor->useAddressRandomization(true);
-        auto result = dynamic_cast<I386Linux::ConcreteExecutor::Result*>(executor->execute(e01));
+        auto result = executor->execute(e01).dynamicCast<I386Linux::ConcreteExecutorResult>();
         int status = result->exitStatus();
         ASSERT_always_require(WIFEXITED(status) && WEXITSTATUS(status) == 0);
     }
@@ -32,7 +32,7 @@ int main() {
 
         auto executor = I386Linux::ConcreteExecutor::instance(db);
         executor->useAddressRandomization(false);
-        auto result = dynamic_cast<I386Linux::ConcreteExecutor::Result*>(executor->execute(e02));
+        auto result = executor->execute(e02).dynamicCast<I386Linux::ConcreteExecutorResult>();
         int status = result->exitStatus();
         ASSERT_always_require(WIFEXITED(status) && WEXITSTATUS(status) == 0);
     }

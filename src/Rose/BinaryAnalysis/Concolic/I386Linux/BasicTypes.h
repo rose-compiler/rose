@@ -16,6 +16,9 @@ using ArchitecturePtr = Sawyer::SharedPointer<Architecture>;
 class ConcreteExecutor;
 using ConcreteExecutorPtr = Sawyer::SharedPointer<ConcreteExecutor>;
 
+class ConcreteExecutorResult;
+using ConcreteExecutorResultPtr = Sawyer::SharedPointer<ConcreteExecutorResult>;
+
 } // namespace
 } // namespace
 } // namespace

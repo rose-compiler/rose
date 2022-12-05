@@ -4,6 +4,9 @@
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 #include <Rose/BinaryAnalysis/Concolic/ConcreteExecutor.h>
 
+#include <boost/filesystem.hpp>
+#include <boost/process/child.hpp>
+
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Concolic {
@@ -25,7 +28,11 @@ public:
     static Ptr instance(const DatabasePtr&);
 
 public:
-    virtual ConcreteExecutorResult* execute(const TestCasePtr&) override;
+    virtual Concolic::ConcreteExecutorResultPtr execute(const TestCasePtr&) override;
+
+private:
+    // Start running QEMU asynchronously
+    boost::process::child startQemu(const boost::filesystem::path &firmwareName);
 };
 
 } // namespace
