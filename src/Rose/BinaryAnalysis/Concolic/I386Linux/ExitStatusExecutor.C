@@ -1,10 +1,10 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 #include <sage3basic.h>
-#include <Rose/BinaryAnalysis/Concolic/I386Linux/ConcreteExecutor.h>
+#include <Rose/BinaryAnalysis/Concolic/I386Linux/ExitStatusExecutor.h>
 
 #include <Rose/BinaryAnalysis/Concolic/Database.h>
-#include <Rose/BinaryAnalysis/Concolic/I386Linux/ConcreteExecutorResult.h>
+#include <Rose/BinaryAnalysis/Concolic/I386Linux/ExitStatusResult.h>
 #include <Rose/BinaryAnalysis/Concolic/Specimen.h>
 #include <Rose/BinaryAnalysis/Concolic/TestCase.h>
 #include <Rose/FileSystem.h>
@@ -79,7 +79,7 @@ void redirectStream(const std::string& ofile, int num)
   if (outstream) dup2(outstream, num);
 }
 
-void setPersonality(ConcreteExecutor::Persona persona)
+void setPersonality(ExitStatusExecutor::Persona persona)
 {
   if (persona) personality(persona.get());
 }
@@ -90,7 +90,7 @@ int executeBinary( const std::string& execmon,
                    const std::string& binary,
                    const std::string& logout,
                    const std::string& logerr,
-                   ConcreteExecutor::Persona persona,
+                   ExitStatusExecutor::Persona persona,
                    std::vector<std::string> arguments,
                    std::vector<std::string> environment
                  )
@@ -148,7 +148,7 @@ int executeBinary( const boost::filesystem::path&  execmon,
                    const boost::filesystem::path&  binary,
                    const boost::filesystem::path&  logout,
                    const boost::filesystem::path&  logerr,
-                   ConcreteExecutor::Persona          persona,
+                   ExitStatusExecutor::Persona persona,
                    TestCase::Ptr                   tc
                  )
 {
@@ -199,27 +199,26 @@ typedef atomic_counter<int> atomic_counter_t;
 //~ static atomic_counter<int> versioning(0);
 static atomic_counter_t versioning(0);
 
-
-ConcreteExecutorResult::Ptr
+ExitStatusResult::Ptr
 createLinuxResult(int errcode, std::string outstr, std::string errstr, double rank) {
-    auto res = I386Linux::ConcreteExecutorResult::instance(rank, errcode);
+    auto res = ExitStatusResult::instance(rank, errcode);
     res->out(outstr);
     res->err(errstr);
     return res;
 }
 
-ConcreteExecutor::ConcreteExecutor(const Database::Ptr &db)
-    : Concolic::ConcreteExecutor(db), useAddressRandomization_(false) {}
+ExitStatusExecutor::ExitStatusExecutor(const Database::Ptr &db)
+    : Super(db), useAddressRandomization_(false) {}
 
-ConcreteExecutor::~ConcreteExecutor() {}
+ExitStatusExecutor::~ExitStatusExecutor() {}
 
-ConcreteExecutor::Ptr
-ConcreteExecutor::instance(const Database::Ptr &db) {
-    return Ptr(new ConcreteExecutor(db));
+ExitStatusExecutor::Ptr
+ExitStatusExecutor::instance(const Database::Ptr &db) {
+    return Ptr(new ExitStatusExecutor(db));
 }
 
-Concolic::ConcreteExecutorResult::Ptr
-ConcreteExecutor::execute(const TestCase::Ptr& tc) {
+Concolic::ConcreteResult::Ptr
+ExitStatusExecutor::execute(const TestCase::Ptr& tc) {
   namespace bstfs = boost::filesystem;
 
   const bool               withExecMonitor = executionMonitor().string().size();

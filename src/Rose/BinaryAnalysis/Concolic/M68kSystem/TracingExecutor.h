@@ -1,5 +1,5 @@
-#ifndef ROSE_BinaryAnalysis_Concolic_M68kSystem_ConcreteExecutor_H
-#define ROSE_BinaryAnalysis_Concolic_M68kSystem_ConcreteExecutor_H
+#ifndef ROSE_BinaryAnalysis_Concolic_M68kSystem_TracingExecutor_H
+#define ROSE_BinaryAnalysis_Concolic_M68kSystem_TracingExecutor_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 #include <Rose/BinaryAnalysis/Concolic/ConcreteExecutor.h>
@@ -13,22 +13,22 @@ namespace Concolic {
 namespace M68kSystem {
 
 /** Concrete executor for M68k system emulation. */
-class ConcreteExecutor: public Concolic::ConcreteExecutor {
+class TracingExecutor: public Concolic::ConcreteExecutor {
 public:
     /** Reference counting pointer. */
-    using Ptr = ConcreteExecutorPtr;
+    using Ptr = TracingExecutorPtr;
 
 protected:
-    explicit ConcreteExecutor(const DatabasePtr&);
+    explicit TracingExecutor(const DatabasePtr&);
 public:
-    ~ConcreteExecutor();
+    ~TracingExecutor();
 
 public:
     /** Allocating constructor. */
     static Ptr instance(const DatabasePtr&);
 
 public:
-    virtual Concolic::ConcreteExecutorResultPtr execute(const TestCasePtr&) override;
+    virtual Concolic::ConcreteResultPtr execute(const TestCasePtr&) override;
 
 private:
     // Start running QEMU asynchronously

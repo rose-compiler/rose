@@ -1,5 +1,5 @@
-#ifndef ROSE_BinaryAnalysis_Concolic_LinuxTraceConcrete_H
-#define ROSE_BinaryAnalysis_Concolic_LinuxTraceConcrete_H
+#ifndef ROSE_BinaryAnalysis_Concolic_I386Linux_TracingExecutor_H
+#define ROSE_BinaryAnalysis_Concolic_I386Linux_TracingExecutor_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 #include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
@@ -11,33 +11,36 @@
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Concolic {
+namespace I386Linux {
 
 /** Concrete executor to trace a native ELF executable.
  *
  *  Ranks executables by the size of the set of addresses that were executed. */
-class LinuxTraceConcrete: public ConcreteExecutor {
+class TracingExecutor: public Concolic::ConcreteExecutor {
+    using Super = Concolic::ConcreteExecutor;
+
 public:
     /** Reference counting pointer to a @ref LinuxTraceConcrete. */
-    using Ptr = Sawyer::SharedPointer<LinuxTraceConcrete>;
+    using Ptr = TracingExecutorPtr;
 
 protected:
-    LinuxTraceConcrete();
+    TracingExecutor();
 
-    explicit LinuxTraceConcrete(const DatabasePtr&);
+    explicit TracingExecutor(const DatabasePtr&);
 
 public:
-    ~LinuxTraceConcrete();
+    ~TracingExecutor();
 
     /** Allocating constructor. */
     static Ptr instance(const DatabasePtr&);
 
     /** Specimen exit status, as returned by wait. */
-    static int exitStatus(const ConcreteExecutorResultPtr&);
+    static int exitStatus(const ConcreteResultPtr&);
 
     /** Executed virtual addresses. */
-    const AddressSet& executedVas(const ConcreteExecutorResultPtr&);
+    const AddressSet& executedVas(const ConcreteResultPtr&);
 
-    ConcreteExecutorResultPtr execute(const TestCasePtr&) override;
+    ConcreteResultPtr execute(const TestCasePtr&) override;
 
 private:
     friend class boost::serialization::access;
@@ -46,6 +49,7 @@ private:
     void serialize(S &s, const unsigned /*version*/) {}
 };
 
+} // namespace
 } // namespace
 } // namespace
 } // namespace

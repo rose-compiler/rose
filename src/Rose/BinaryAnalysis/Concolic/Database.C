@@ -12,10 +12,9 @@
 
 #include <Rose/BinaryAnalysis/Concolic/ConcreteExecutor.h>
 #include <Rose/BinaryAnalysis/Concolic/ExecutionEvent.h>
-#include <Rose/BinaryAnalysis/Concolic/I386Linux/ConcreteExecutorResult.h>
-#include <Rose/BinaryAnalysis/Concolic/LinuxTraceConcrete.h>
-#include <Rose/BinaryAnalysis/Concolic/LinuxTraceConcreteResult.h>
-#include <Rose/BinaryAnalysis/Concolic/M68kSystem/ConcreteExecutorResult.h>
+#include <Rose/BinaryAnalysis/Concolic/I386Linux/ExitStatusResult.h>
+#include <Rose/BinaryAnalysis/Concolic/I386Linux/TracingResult.h>
+#include <Rose/BinaryAnalysis/Concolic/M68kSystem/TracingResult.h>
 #include <Rose/BinaryAnalysis/Concolic/Specimen.h>
 #include <Rose/BinaryAnalysis/Concolic/TestCase.h>
 #include <Rose/BinaryAnalysis/Concolic/TestSuite.h>
@@ -77,9 +76,9 @@ static void
 registerTypes(Archive &archive) {
     archive.template register_type<IS::SymbolicSemantics::MemoryListState>();
     archive.template register_type<IS::SymbolicSemantics::MemoryMapState>();
-    archive.template register_type<LinuxTraceConcreteResult>();
-    archive.template register_type<I386Linux::ConcreteExecutorResult>();
-    archive.template register_type<M68kSystem::ConcreteExecutorResult>();
+    archive.template register_type<I386Linux::ExitStatusResult>();
+    archive.template register_type<I386Linux::TracingResult>();
+    archive.template register_type<M68kSystem::TracingResult>();
 }
 
 // Return the file name part of an SQLite connection URL
@@ -974,7 +973,7 @@ Database::concreteResultExists(TestCaseId id) {
 }
 
 void
-Database::saveConcreteResult(const TestCase::Ptr &testCase, const ConcreteExecutorResult::Ptr &details) {
+Database::saveConcreteResult(const TestCase::Ptr &testCase, const ConcreteResult::Ptr &details) {
     ASSERT_not_null(testCase);
     TestCaseId id = save(testCase);
 
@@ -1016,7 +1015,7 @@ Database::saveConcreteResult(const TestCase::Ptr &testCase, const ConcreteExecut
     save(testCase);
 }
 
-ConcreteExecutorResult::Ptr
+ConcreteResult::Ptr
 Database::readConcreteResult(TestCaseId id) {
     Sawyer::Optional<std::string> bytes = connection().stmt("select concrete_result from test_cases where id = ?id")
                                           .bind("id", *id)
@@ -1025,7 +1024,7 @@ Database::readConcreteResult(TestCaseId id) {
         std::istringstream ss(*bytes);
         boost::archive::xml_iarchive archive(ss);
         registerTypes(archive);
-        ConcreteExecutorResult::Ptr details;
+        ConcreteResult::Ptr details;
         archive >> BOOST_SERIALIZATION_NVP(details);
         return details;
     } else {

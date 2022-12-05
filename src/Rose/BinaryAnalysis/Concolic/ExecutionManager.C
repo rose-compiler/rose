@@ -4,7 +4,7 @@
 #include <Rose/BinaryAnalysis/Concolic/ExecutionManager.h>
 
 #include <Rose/BinaryAnalysis/Concolic/ConcreteExecutor.h>
-#include <Rose/BinaryAnalysis/Concolic/ConcreteExecutorResult.h>
+#include <Rose/BinaryAnalysis/Concolic/ConcreteResult.h>
 #include <Rose/BinaryAnalysis/Concolic/Database.h>
 #include <Rose/BinaryAnalysis/Concolic/TestCase.h>
 
@@ -12,7 +12,7 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace Concolic {
 
-ExecutionManager::ExecutionManager(const DatabasePtr &db)
+ExecutionManager::ExecutionManager(const Database::Ptr &db)
     : database_(db) {
     ASSERT_not_null(db);
 }
@@ -39,7 +39,7 @@ ExecutionManager::pendingConcreteResult() {
 }
 
 void
-ExecutionManager::insertConcreteResults(const TestCase::Ptr &testCase, const ConcreteExecutorResultPtr &details) {
+ExecutionManager::insertConcreteResults(const TestCase::Ptr &testCase, const ConcreteResult::Ptr &details) {
     testCase->concreteRank(details->rank());
     database_->saveConcreteResult(testCase, details);
 }

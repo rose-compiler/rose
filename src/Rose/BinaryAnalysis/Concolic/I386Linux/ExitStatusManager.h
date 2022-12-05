@@ -1,5 +1,5 @@
-#ifndef ROSE_BinaryAnalysis_Concolic_LinuxExitStatus_H
-#define ROSE_BinaryAnalysis_Concolic_LinuxExitStatus_H
+#ifndef ROSE_BinaryAnalysis_Concolic_I386Linux_ExitStatusManager_H
+#define ROSE_BinaryAnalysis_Concolic_I386Linux_ExitStatusManager_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 #include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
@@ -11,21 +11,24 @@
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Concolic {
+namespace I386Linux {
 
 /** Concolic testing of Linux executables.
  *
  *  Tests a single Linux executable. The concrete ranking metric is only whether the executable exited with zero status or
  *  not. */
-class LinuxExitStatus: public ExecutionManager {
+class ExitStatusManager: public Concolic::ExecutionManager {
+    using Super = Concolic::ExecutionManager;
+
 public:
-    /** Reference counting pointer to @ref LinuxExitStatus. */
-    typedef Sawyer::SharedPointer<LinuxExitStatus> Ptr;
+    /** Reference counting pointer. */
+    using Ptr = ExitStatusManagerPtr;
 
 protected:
-    explicit LinuxExitStatus(const DatabasePtr &db);
+    explicit ExitStatusManager(const DatabasePtr &db);
 
 public:
-    ~LinuxExitStatus();
+    ~ExitStatusManager();
 
     /** Start a new round of concolic testing.
      *
@@ -44,6 +47,7 @@ public:
     virtual void run() override;
 };
 
+} // namespace
 } // namespace
 } // namespace
 } // namespace

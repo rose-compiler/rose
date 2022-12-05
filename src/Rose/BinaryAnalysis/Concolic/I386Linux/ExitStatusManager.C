@@ -1,32 +1,33 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 #include <sage3basic.h>
-#include <Rose/BinaryAnalysis/Concolic/LinuxExitStatus.h>
+#include <Rose/BinaryAnalysis/Concolic/I386Linux/ExitStatusManager.h>
 
 #include <Rose/BinaryAnalysis/Concolic/ConcolicExecutor.h>
 #include <Rose/BinaryAnalysis/Concolic/Database.h>
-#include <Rose/BinaryAnalysis/Concolic/I386Linux/ConcreteExecutor.h>
-#include <Rose/BinaryAnalysis/Concolic/I386Linux/ConcreteExecutorResult.h>
+#include <Rose/BinaryAnalysis/Concolic/I386Linux/ExitStatusExecutor.h>
+#include <Rose/BinaryAnalysis/Concolic/I386Linux/ExitStatusResult.h>
 #include <Rose/BinaryAnalysis/Concolic/Specimen.h>
 #include <Rose/BinaryAnalysis/Concolic/TestCase.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Concolic {
+namespace I386Linux {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// LinuxExitStatus
+// ExitStatusManager
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-LinuxExitStatus::LinuxExitStatus(const Database::Ptr &db)
-    : ExecutionManager(db) {}
+ExitStatusManager::ExitStatusManager(const Database::Ptr &db)
+    : Super(db) {}
 
-LinuxExitStatus::~LinuxExitStatus() {}
+ExitStatusManager::~ExitStatusManager() {}
 
 // class method
-LinuxExitStatus::Ptr
-LinuxExitStatus::create(const std::string& /*databaseUrl*/, const boost::filesystem::path &executableName,
-                        const std::vector<std::string> &/*arguments*/) {
+ExitStatusManager::Ptr
+ExitStatusManager::create(const std::string& /*databaseUrl*/, const boost::filesystem::path &executableName,
+                          const std::vector<std::string> &/*arguments*/) {
     // Create the initial test case
     std::string name = executableName.filename().string();
     auto specimen = Specimen::instance(executableName);
@@ -37,17 +38,17 @@ LinuxExitStatus::create(const std::string& /*databaseUrl*/, const boost::filesys
     auto db = Database::create("sqlite:" + name + ".db", name);
     db->id(testCase0);                                  // save the first test case, side effect of obtaining an ID
 
-    return Ptr(new LinuxExitStatus(db));
+    return Ptr(new ExitStatusManager(db));
 }
 
-LinuxExitStatus::Ptr
-LinuxExitStatus::instance(const std::string& databaseUri, const std::string &testSuiteName) {
+ExitStatusManager::Ptr
+ExitStatusManager::instance(const std::string& databaseUri, const std::string &testSuiteName) {
     ASSERT_not_implemented("[Robb Matzke 2019-04-15]");
 }
 
 void
-LinuxExitStatus::run() {
-    auto concreteExecutor = I386Linux::ConcreteExecutor::instance(database());
+ExitStatusManager::run() {
+    auto concreteExecutor = ExitStatusExecutor::instance(database());
     auto concolicExecutor = ConcolicExecutor::instance();
 
     while (!isFinished()) {
@@ -70,6 +71,7 @@ LinuxExitStatus::run() {
     }
 }
 
+} // namespace
 } // namespace
 } // namespace
 } // namespace

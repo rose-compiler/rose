@@ -1,5 +1,5 @@
-#ifndef ROSE_BinaryAnalysis_Concolic_I386Linux_ConcreteExecutor_H
-#define ROSE_BinaryAnalysis_Concolic_I386Linux_ConcreteExecutor_H
+#ifndef ROSE_BinaryAnalysis_Concolic_I386Linux_ExitStatusExecutor_H
+#define ROSE_BinaryAnalysis_Concolic_I386Linux_ExitStatusExecutor_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 #include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
@@ -19,10 +19,12 @@ namespace Concolic {
 namespace I386Linux {
 
 /** Concrete executor for Linux i386 ELF executables. */
-class ConcreteExecutor: public Concolic::ConcreteExecutor {
+class ExitStatusExecutor: public Concolic::ConcreteExecutor {
+    using Super = Concolic::ConcreteExecutor;
+
 public:
     /** Reference counting pointer to a @ref ConcreteExecutor. */
-    using Ptr = ConcreteExecutorPtr;
+    using Ptr = ExitStatusExecutorPtr;
 
     /** Holds an optional personality-value.
      *
@@ -33,10 +35,10 @@ protected:
     bool useAddressRandomization_;                      // enable/disable address space randomization in the OS
 
 protected:
-    explicit ConcreteExecutor(const DatabasePtr&);
+    explicit ExitStatusExecutor(const DatabasePtr&);
 
 public:
-    ~ConcreteExecutor();
+    ~ExitStatusExecutor();
 
     /** Allocating constructor. */
     static Ptr instance(const DatabasePtr&);
@@ -51,7 +53,7 @@ public:
     void useAddressRandomization(bool b) { useAddressRandomization_ = b; }
     /** @} */
 
-    virtual Concolic::ConcreteExecutorResultPtr execute(const TestCasePtr&) override;
+    virtual Concolic::ConcreteResultPtr execute(const TestCasePtr&) override;
 };
 
 } // namespace

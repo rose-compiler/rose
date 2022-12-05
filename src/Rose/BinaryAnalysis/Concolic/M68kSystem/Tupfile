@@ -3,10 +3,12 @@ include_rules
 run $(public_header) -o include/rose/Rose/BinaryAnalysis/Concolic/M68kSystem	\
     Architecture.h								\
     BasicTypes.h								\
-    ConcreteExecutor.h								\
-    ConcreteExecutorResult.h
+    TracingExecutor.h								\
+    TracingManager.h								\
+    TracingResult.h
 
 run $(librose_compile)				\
     Architecture.C				\
-    ConcreteExecutor.C				\
-    ConcreteExecutorResult.C
+    TracingExecutor.C				\
+    TracingManager.C				\
+    TracingResult.C

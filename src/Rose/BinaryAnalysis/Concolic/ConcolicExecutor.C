@@ -837,9 +837,9 @@ ConcolicExecutor::areSimilar(const TestCase::Ptr &a, const TestCase::Ptr &b) con
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 namespace Emulation {
 
-RiscOperators::RiscOperators(const Settings &settings, const DatabasePtr &db, const TestCasePtr &testCase,
-                             const Partitioner2::Partitioner &partitioner, const ArchitecturePtr &process,
-                             const InstructionSemantics::BaseSemantics::State::Ptr &state, const SmtSolverPtr &solver)
+RiscOperators::RiscOperators(const Settings &settings, const Database::Ptr &db, const TestCase::Ptr &testCase,
+                             const Partitioner2::Partitioner &partitioner, const Architecture::Ptr &process,
+                             const InstructionSemantics::BaseSemantics::State::Ptr &state, const SmtSolver::Ptr &solver)
     : Super(state, solver), REG_PATH(state->registerState()->registerDictionary()->findOrThrow("path")),
       settings_(settings), db_(db), testCase_(testCase), partitioner_(partitioner), process_(process),
       hadSystemCall_(false) {

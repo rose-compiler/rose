@@ -1,10 +1,10 @@
-#ifndef ROSE_BinaryAnalysis_Concolic_I386Linux_ConcreteExecutorResult_H
-#define ROSE_BinaryAnalysis_Concolic_I386Linux_ConcreteExecutorResult_H
+#ifndef ROSE_BinaryAnalysis_Concolic_I386Linux_ExitStatusResult_H
+#define ROSE_BinaryAnalysis_Concolic_I386Linux_ExitStatusResult_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 #include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
 
-#include <Rose/BinaryAnalysis/Concolic/ConcreteExecutorResult.h>
+#include <Rose/BinaryAnalysis/Concolic/ConcreteResult.h>
 #include <string>
 
 namespace Rose {
@@ -13,12 +13,12 @@ namespace Concolic {
 namespace I386Linux {
 
 /** Base class for user-defined Linux concrete execution results. */
-class ConcreteExecutorResult: public Concolic::ConcreteExecutorResult {
-    using Super = Concolic::ConcreteExecutorResult;
+class ExitStatusResult: public Concolic::ConcreteResult {
+    using Super = Concolic::ConcreteResult;
 
 public:
     /** Shared ownership pointer. */
-    using Ptr = ConcreteExecutorResultPtr;
+    using Ptr = ExitStatusResultPtr;
 
 protected:
     int         exitStatus_;   /**< Exit status as returned by waitpid[2]. */
@@ -39,13 +39,13 @@ private:
     }
 
 protected:
-    ConcreteExecutorResult(double rank, int exitStatus);
+    ExitStatusResult(double rank, int exitStatus);
 
     // required for boost serialization
-    ConcreteExecutorResult();
+    ExitStatusResult();
 
 public:
-    ~ConcreteExecutorResult();
+    ~ExitStatusResult();
 
 public:
     /** Allocating constructor. */

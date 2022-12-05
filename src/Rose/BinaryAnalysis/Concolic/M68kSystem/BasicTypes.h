@@ -13,11 +13,14 @@ namespace M68kSystem {
 class Architecture;
 using ArchitecturePtr = Sawyer::SharedPointer<Architecture>;
 
-class ConcreteExecutor;
-using ConcreteExecutorPtr = Sawyer::SharedPointer<ConcreteExecutor>;
+class TracingExecutor;
+using TracingExecutorPtr = Sawyer::SharedPointer<TracingExecutor>;
 
-class ConcreteExecutorResult;
-using ConcreteExecutorResultPtr = Sawyer::SharedPointer<ConcreteExecutorResult>;
+class TracingManager;
+using TracingManagerPtr = Sawyer::SharedPointer<TracingManager>;
+
+class TracingResult;
+using TracingResultPtr = Sawyer::SharedPointer<TracingResult>;
 
 } // namespace
 } // namespace

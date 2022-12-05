@@ -345,13 +345,13 @@ public:
      *  results for this test case are removed.
      *
      *  The concrete results are copied by this function. The caller continues to own the pointer. */
-    void saveConcreteResult(const TestCasePtr&, const ConcreteExecutorResultPtr&);
+    void saveConcreteResult(const TestCasePtr&, const ConcreteResultPtr&);
 
     /** Read concrete results from the database.
      *
      *  Reads concrete results from the database and returns a pointer to them. If the test case has no concrete results then a
      *  null pointer is returned. */
-    ConcreteExecutorResultPtr readConcreteResult(TestCaseId);
+    ConcreteResultPtr readConcreteResult(TestCaseId);
 
    /** Returns @p n test cases without concrete results.
     *
@@ -388,7 +388,7 @@ public:
     *
     * Thread safety: thread safe
     */
-   void insertConcreteResults(const TestCasePtr &testCase, const ConcreteExecutorResult& details);
+   void insertConcreteResults(const TestCasePtr &testCase, const ConcreteResult& details);
 #endif
 
    /** Tests if there are more test cases that require concrete testing.

@@ -27,8 +27,8 @@ int main() {
     // Run all tests
     for (auto testCaseId: db->needConcreteTesting(1)) {
         auto testCase = db->object(testCaseId);
-        auto executor = I386Linux::ConcreteExecutor::instance(db);
-        auto result = executor->execute(testCase).dynamicCast<I386Linux::ConcreteExecutorResult>();
+        auto executor = I386Linux::ExitStatusExecutor::instance(db);
+        auto result = executor->execute(testCase).dynamicCast<I386Linux::ExitStatusResult>();
         int status = result->exitStatus();
         ASSERT_always_require(WIFEXITED(status));
         db->saveConcreteResult(testCase, result);

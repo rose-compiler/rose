@@ -44,7 +44,7 @@ public:
      *
      *  Returns the results from running the test concretely. Results are user-defined. The return value is never a null
      *  pointer. */
-    virtual ConcreteExecutorResultPtr execute(const TestCasePtr&) = 0;
+    virtual ConcreteResultPtr execute(const TestCasePtr&) = 0;
 
     // FIXME[Robb Matzke 2020-07-14]: This should be in a subclass
     /** \brief

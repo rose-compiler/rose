@@ -18,9 +18,9 @@ int main() {
         e01->args(std::vector<std::string>{"--address-randomization=true"});
         db->save(e01);
 
-        auto executor = I386Linux::ConcreteExecutor::instance(db);
+        auto executor = I386Linux::ExitStatusExecutor::instance(db);
         executor->useAddressRandomization(true);
-        auto result = executor->execute(e01).dynamicCast<I386Linux::ConcreteExecutorResult>();
+        auto result = executor->execute(e01).dynamicCast<I386Linux::ExitStatusResult>();
         int status = result->exitStatus();
         ASSERT_always_require(WIFEXITED(status) && WEXITSTATUS(status) == 0);
     }
@@ -30,9 +30,9 @@ int main() {
         e02->args(std::vector<std::string>{"--address-randomization=false"});
         db->save(e02);
 
-        auto executor = I386Linux::ConcreteExecutor::instance(db);
+        auto executor = I386Linux::ExitStatusExecutor::instance(db);
         executor->useAddressRandomization(false);
-        auto result = executor->execute(e02).dynamicCast<I386Linux::ConcreteExecutorResult>();
+        auto result = executor->execute(e02).dynamicCast<I386Linux::ExitStatusResult>();
         int status = result->exitStatus();
         ASSERT_always_require(WIFEXITED(status) && WEXITSTATUS(status) == 0);
     }

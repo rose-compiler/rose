@@ -1,5 +1,5 @@
-#ifndef ROSE_BinaryAnalysis_Concolic_ConreteExecutorResult_H
-#define ROSE_BinaryAnalysis_Concolic_ConreteExecutorResult_H
+#ifndef ROSE_BinaryAnalysis_Concolic_ConcreteResult_H
+#define ROSE_BinaryAnalysis_Concolic_ConcreteResult_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 #include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
@@ -21,10 +21,10 @@ namespace Concolic {
  *  The subclasses must provide @c boost::serialization support which is used to store the user-defined results in the database
  *  and to reconstitute results objects from the database. Since this is a relatively expensive operation, the rank is also
  *  stored separately within the database. */
-class ConcreteExecutorResult: public Sawyer::SharedObject {
+class ConcreteResult: public Sawyer::SharedObject {
 public:
     /** Shared ownership pointer. */
-    using Ptr = ConcreteExecutorResultPtr;
+    using Ptr = ConcreteResultPtr;
 
 private:
     double rank_;
@@ -32,12 +32,12 @@ private:
 
 protected:
     // Allocating constructors are named "instance" in the subclasses
-    ConcreteExecutorResult();
+    ConcreteResult();
 
-    explicit ConcreteExecutorResult(double rank);
+    explicit ConcreteResult(double rank);
 
 public:
-    virtual ~ConcreteExecutorResult();
+    virtual ~ConcreteResult();
 
 public:
     /** Property: Relative rank of test case concrete execution result.

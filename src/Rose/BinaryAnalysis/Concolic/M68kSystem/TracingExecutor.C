@@ -1,10 +1,10 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 #include <sage3basic.h>
-#include <Rose/BinaryAnalysis/Concolic/M68kSystem/ConcreteExecutor.h>
+#include <Rose/BinaryAnalysis/Concolic/M68kSystem/TracingExecutor.h>
 
 #include <Rose/BinaryAnalysis/Concolic/Database.h>
-#include <Rose/BinaryAnalysis/Concolic/M68kSystem/ConcreteExecutorResult.h>
+#include <Rose/BinaryAnalysis/Concolic/M68kSystem/TracingResult.h>
 #include <Rose/BinaryAnalysis/Concolic/Specimen.h>
 #include <Rose/BinaryAnalysis/Concolic/TestCase.h>
 #include <Rose/BinaryAnalysis/Debugger/Gdb.h>
@@ -17,18 +17,18 @@ namespace BinaryAnalysis {
 namespace Concolic {
 namespace M68kSystem {
 
-ConcreteExecutor::ConcreteExecutor(const Database::Ptr &db)
+TracingExecutor::TracingExecutor(const Database::Ptr &db)
     : Concolic::ConcreteExecutor(db) {}
 
-ConcreteExecutor::~ConcreteExecutor() {}
+TracingExecutor::~TracingExecutor() {}
 
-ConcreteExecutor::Ptr
-ConcreteExecutor::instance(const Database::Ptr &db) {
-    return Ptr(new ConcreteExecutor(db));
+TracingExecutor::Ptr
+TracingExecutor::instance(const Database::Ptr &db) {
+    return Ptr(new TracingExecutor(db));
 }
 
 boost::process::child
-ConcreteExecutor::startQemu(const boost::filesystem::path &firmwareName) {
+TracingExecutor::startQemu(const boost::filesystem::path &firmwareName) {
     const boost::filesystem::path qemuBaseName = "qemu-m68k-system";
     const boost::filesystem::path qemuName = boost::process::search_path(qemuBaseName);
     if (qemuName.empty())
@@ -44,8 +44,8 @@ ConcreteExecutor::startQemu(const boost::filesystem::path &firmwareName) {
     return qemu;
 }
 
-Concolic::ConcreteExecutorResult::Ptr
-ConcreteExecutor::execute(const TestCase::Ptr &tc) {
+Concolic::ConcreteResult::Ptr
+TracingExecutor::execute(const TestCase::Ptr &tc) {
     ASSERT_not_null(tc);
 
     // Start QEMU asynchronously. QEMU will load the test case into memory and stop for debugging using the GDB server at the

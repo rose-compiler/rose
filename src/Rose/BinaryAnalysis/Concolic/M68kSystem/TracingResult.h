@@ -1,10 +1,10 @@
-#ifndef ROSE_BinaryAnalysis_Concolic_M68kSystem_ConcreteExecutorResult_H
-#define ROSE_BinaryAnalysis_Concolic_M68kSystem_ConcreteExecutorResult_H
+#ifndef ROSE_BinaryAnalysis_Concolic_M68kSystem_TracingResult_H
+#define ROSE_BinaryAnalysis_Concolic_M68kSystem_TracingResult_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 #include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
 
-#include <Rose/BinaryAnalysis/Concolic/ConcreteExecutorResult.h>
+#include <Rose/BinaryAnalysis/Concolic/ConcreteResult.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -12,18 +12,18 @@ namespace Concolic {
 namespace M68kSystem {
 
 /** M68k concrete execution results. */
-class ConcreteExecutorResult: public Concolic::ConcreteExecutorResult {
-    using Super = Concolic::ConcreteExecutorResult;
+class TracingResult: public Concolic::ConcreteResult {
+    using Super = Concolic::ConcreteResult;
 
 public:
     /** Reference counting pointer. */
-    using Ptr = ConcreteExecutorResultPtr;
+    using Ptr = TracingResultPtr;
 
 protected:
-    ConcreteExecutorResult();                           // for boost::serialization
-    explicit ConcreteExecutorResult(double rank);
+    TracingResult();                                    // for boost::serialization
+    explicit TracingResult(double rank);
 public:
-    ~ConcreteExecutorResult();
+    ~TracingResult();
 
 public:
     Ptr instance(double rank);

@@ -1,7 +1,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 #include <sage3basic.h>
-#include <Rose/BinaryAnalysis/Concolic/ConcreteExecutorResult.h>
+#include <Rose/BinaryAnalysis/Concolic/ConcreteResult.h>
 
 #include <rose_isnan.h>
 
@@ -9,33 +9,33 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace Concolic {
 
-ConcreteExecutorResult::ConcreteExecutorResult()
+ConcreteResult::ConcreteResult()
     : rank_(0.0), isInteresting_(true) {}
 
-ConcreteExecutorResult::ConcreteExecutorResult(double rank)
+ConcreteResult::ConcreteResult(double rank)
     : rank_(rank), isInteresting_(true) {
     ASSERT_forbid(rose_isnan(rank));
 }
 
-ConcreteExecutorResult::~ConcreteExecutorResult() {}
+ConcreteResult::~ConcreteResult() {}
 
 double
-ConcreteExecutorResult::rank() const {
+ConcreteResult::rank() const {
     return rank_;
 }
 
 void
-ConcreteExecutorResult::rank(double r) {
+ConcreteResult::rank(double r) {
     rank_ = r;
 }
 
 bool
-ConcreteExecutorResult::isInteresting() const {
+ConcreteResult::isInteresting() const {
     return isInteresting_;
 }
 
 void
-ConcreteExecutorResult::isInteresting(bool b) {
+ConcreteResult::isInteresting(bool b) {
     isInteresting_ = b;
 }
 

@@ -242,7 +242,7 @@ void addTestToSuite( concolic::Database::Ptr db,
  */
 void runTestcase(concolic::Database::Ptr db, concolic::TestCaseId testcaseId)
 {
-    auto exec = concolic::I386Linux::ConcreteExecutor::instance(db);
+    auto exec = concolic::I386Linux::ExitStatusExecutor::instance(db);
     concolic::TestCasePtr testcase = db->object(testcaseId, concolic::Update::YES);
 
     assert(testcase.getRawPointer());

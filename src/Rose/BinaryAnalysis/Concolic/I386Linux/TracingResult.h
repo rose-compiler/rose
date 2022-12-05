@@ -1,32 +1,33 @@
-#ifndef ROSE_BinaryAnalysis_Concolic_LinuxTraceConcreteResult_H
-#define ROSE_BinaryAnalysis_Concolic_LinuxTraceConcreteResult_H
+#ifndef ROSE_BinaryAnalysis_Concolic_I386Linux_TracingResult_H
+#define ROSE_BinaryAnalysis_Concolic_I386Linux_TracingResult_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 #include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
 
-#include <Rose/BinaryAnalysis/Concolic/ConcreteExecutorResult.h>
+#include <Rose/BinaryAnalysis/Concolic/ConcreteResult.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Concolic {
+namespace I386Linux {
 
 /** Results of the execution. */
-class LinuxTraceConcreteResult: public ConcreteExecutorResult {
-    using Super = ConcreteExecutorResult;
+class TracingResult: public Concolic::ConcreteResult {
+    using Super = Concolic::ConcreteResult;
 
 public:
     /** Shared ownership pointer. */
-    using Ptr = LinuxTraceConcreteResultPtr;
+    using Ptr = TracingResultPtr;
 
 private:
     int exitStatus_;                                    // as returned by wait
     AddressSet executedVas_;
 
 protected:
-    LinuxTraceConcreteResult();
-    LinuxTraceConcreteResult(double rank, const AddressSet &executedVas);
+    TracingResult();
+    TracingResult(double rank, const AddressSet &executedVas);
 public:
-    ~LinuxTraceConcreteResult();
+    ~TracingResult();
 
 public:
     /** Allocating constructor. */
@@ -53,12 +54,13 @@ private:
 
     template<class S>
     void serialize(S &s, const unsigned /*version*/) {
-        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(ConcreteExecutorResult);
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Super);
         s & BOOST_SERIALIZATION_NVP(exitStatus_);
         s & BOOST_SERIALIZATION_NVP(executedVas_);
     }
 };
 
+} // namespace
 } // namespace
 } // namespace
 } // namespace

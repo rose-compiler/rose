@@ -1,7 +1,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 #include <sage3basic.h>
-#include <Rose/BinaryAnalysis/Concolic/LinuxTraceConcrete.h>
+#include <Rose/BinaryAnalysis/Concolic/I386Linux/TracingExecutor.h>
 
 #include <Rose/BinaryAnalysis/Concolic.h>
 #include <boost/filesystem.hpp>
@@ -11,20 +11,21 @@
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Concolic {
+namespace I386Linux {
 
-LinuxTraceConcrete::LinuxTraceConcrete(const Database::Ptr &db)
-    : ConcreteExecutor(db) {}
+TracingExecutor::TracingExecutor(const Database::Ptr &db)
+    : Super(db) {}
 
-LinuxTraceConcrete::~LinuxTraceConcrete() {}
+TracingExecutor::~TracingExecutor() {}
 
 // class method
-LinuxTraceConcrete::Ptr
-LinuxTraceConcrete::instance(const Database::Ptr &db) {
-    return Ptr(new LinuxTraceConcrete(db));
+TracingExecutor::Ptr
+TracingExecutor::instance(const Database::Ptr &db) {
+    return Ptr(new TracingExecutor(db));
 }
 
-ConcreteExecutorResult::Ptr
-LinuxTraceConcrete::execute(const TestCase::Ptr &testCase) {
+Concolic::ConcreteResult::Ptr
+TracingExecutor::execute(const TestCase::Ptr &testCase) {
 
     // FIXME[Robb Matzke 2020-07-15]: This temp dir should be automatically removed.
 
@@ -64,13 +65,13 @@ LinuxTraceConcrete::execute(const TestCase::Ptr &testCase) {
     }
 
     const double rank = -static_cast<double>(executedVas.size()); // more instructions are better (lower rank)
-    auto result = LinuxTraceConcreteResult::instance(rank, executedVas);
+    auto result = TracingResult::instance(rank, executedVas);
 
     // If the concrete results are a duplicate of other concrete results then mark this test case as not interesting.
     for (TestCaseId otherId: database()->testCases()) {
         TestCase::Ptr other = database()->object(otherId);
         if (other != testCase) {
-            if (auto otherResult = database()->readConcreteResult(otherId).dynamicCast<LinuxTraceConcreteResult>()) {
+            if (auto otherResult = database()->readConcreteResult(otherId).dynamicCast<TracingResult>()) {
                 if (result->executedVas() == otherResult->executedVas()) {
                     result->isInteresting(false);
                     break;
@@ -84,19 +85,20 @@ LinuxTraceConcrete::execute(const TestCase::Ptr &testCase) {
 }
 
 int
-LinuxTraceConcrete::exitStatus(const ConcreteExecutorResultPtr &result_) {
-    auto result = result_.dynamicCast<LinuxTraceConcreteResult>();
+TracingExecutor::exitStatus(const ConcreteResult::Ptr &result_) {
+    auto result = result_.dynamicCast<TracingResult>();
     ASSERT_not_null(result);
     return result->exitStatus();
 }
 
 const AddressSet&
-LinuxTraceConcrete::executedVas(const ConcreteExecutorResultPtr &result_) {
-    auto result = result_.dynamicCast<LinuxTraceConcreteResult>();
+TracingExecutor::executedVas(const ConcreteResult::Ptr &result_) {
+    auto result = result_.dynamicCast<TracingResult>();
     ASSERT_not_null(result);
     return result->executedVas();
 }
 
+} // namespace
 } // namespace
 } // namespace
 } // namespace
