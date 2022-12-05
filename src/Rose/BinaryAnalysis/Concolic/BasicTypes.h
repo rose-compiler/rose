@@ -92,8 +92,8 @@ using ConcolicExecutorPtr = Sawyer::SharedPointer<ConcolicExecutor>;
 class ConcreteExecutor;
 using ConcreteExecutorPtr = Sawyer::SharedPointer<ConcreteExecutor>;
 
-class ConcreteExecutorResult;
-using ConcreteExecutorResultPtr = Sawyer::SharedPointer<ConcreteExecutorResult>;
+class ConcreteResult;
+using ConcreteResultPtr = Sawyer::SharedPointer<ConcreteResult>;
 
 class Database;
 using DatabasePtr = Sawyer::SharedPointer<Database>;
@@ -136,12 +136,6 @@ using TestCasePtr = Sawyer::SharedPointer<TestCase>;
 
 class TestSuite;
 using TestSuitePtr = Sawyer::SharedPointer<TestSuite>;
-
-class LinuxExitStatus;
-using LinuxExitStatusPtr = Sawyer::SharedPointer<LinuxExitStatus>;
-
-class LinuxTraceConcreteResult;
-using LinuxTraceConcreteResultPtr = Sawyer::SharedPointer<LinuxTraceConcreteResult>;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Database

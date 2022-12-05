@@ -51,7 +51,7 @@ public:
      *  Inserts into the database the results of a concrete run of a test case. Concrete test results always have two parts: a
      *  floating point number for ranking relative to other concrete results, and the result details.  The detailed results are
      *  user defined and stored in the database in XML format, while the rank is duplicated in a floating point field. */
-    virtual void insertConcreteResults(const TestCasePtr&, const ConcreteExecutorResultPtr&);
+    virtual void insertConcreteResults(const TestCasePtr&, const ConcreteResultPtr&);
 
     /** Next test case for concolic execution.
      *

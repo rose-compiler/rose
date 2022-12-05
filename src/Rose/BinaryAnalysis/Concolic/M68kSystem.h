@@ -3,7 +3,8 @@
 
 #include <Rose/BinaryAnalysis/Concolic/M68kSystem/Architecture.h>
 #include <Rose/BinaryAnalysis/Concolic/M68kSystem/BasicTypes.h>
-#include <Rose/BinaryAnalysis/Concolic/M68kSystem/ConcreteExecutor.h>
-#include <Rose/BinaryAnalysis/Concolic/M68kSystem/ConcreteExecutorResult.h>
+#include <Rose/BinaryAnalysis/Concolic/M68kSystem/TracingExecutor.h>
+#include <Rose/BinaryAnalysis/Concolic/M68kSystem/TracingManager.h>
+#include <Rose/BinaryAnalysis/Concolic/M68kSystem/TracingResult.h>
 
 #endif

@@ -71,7 +71,7 @@ Architecture::inputVariables() const {
 }
 
 void
-Architecture::inputVariables(const InputVariablesPtr &iv) {
+Architecture::inputVariables(const InputVariables::Ptr &iv) {
     inputVariables_ = iv;
 }
 

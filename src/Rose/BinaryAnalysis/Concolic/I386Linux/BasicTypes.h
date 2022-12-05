@@ -13,11 +13,20 @@ namespace I386Linux {
 class Architecture;
 using ArchitecturePtr = Sawyer::SharedPointer<Architecture>;
 
-class ConcreteExecutor;
-using ConcreteExecutorPtr = Sawyer::SharedPointer<ConcreteExecutor>;
+class ExitStatusExecutor;
+using ExitStatusExecutorPtr = Sawyer::SharedPointer<ExitStatusExecutor>;
 
-class ConcreteExecutorResult;
-using ConcreteExecutorResultPtr = Sawyer::SharedPointer<ConcreteExecutorResult>;
+class ExitStatusManager;
+using ExitStatusManagerPtr = Sawyer::SharedPointer<ExitStatusManager>;
+
+class ExitStatusResult;
+using ExitStatusResultPtr = Sawyer::SharedPointer<ExitStatusResult>;
+
+class TracingExecutor;
+using TracingExecutorPtr = Sawyer::SharedPointer<TracingExecutor>;
+
+class TracingResult;
+using TracingResultPtr = Sawyer::SharedPointer<TracingResult>;
 
 } // namespace
 } // namespace

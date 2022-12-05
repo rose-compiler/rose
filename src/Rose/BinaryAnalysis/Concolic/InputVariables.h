@@ -23,6 +23,7 @@ namespace Concolic {
  *  This class also coordinates the lists by adjusting lists and execution events in tandem. */
 class InputVariables: public Sawyer::SharedObject {
 public:
+    /** Shared ownership pointer. */
     using Ptr = InputVariablesPtr;
 
 private:
