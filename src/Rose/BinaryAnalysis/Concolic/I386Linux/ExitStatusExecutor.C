@@ -207,8 +207,11 @@ createLinuxResult(int errcode, std::string outstr, std::string errstr, double ra
     return res;
 }
 
+ExitStatusExecutor::ExitStatusExecutor(const std::string &name)
+    : Super(name) {}
+
 ExitStatusExecutor::ExitStatusExecutor(const Database::Ptr &db)
-    : Super(db), useAddressRandomization_(false) {}
+    : Super(db) {}
 
 ExitStatusExecutor::~ExitStatusExecutor() {}
 
@@ -217,8 +220,27 @@ ExitStatusExecutor::instance(const Database::Ptr &db) {
     return Ptr(new ExitStatusExecutor(db));
 }
 
+ExitStatusExecutor::Ptr
+ExitStatusExecutor::factory() {
+    return Ptr(new ExitStatusExecutor("I386Linux::ExitStatus"));
+}
+
+Concolic::ConcreteExecutor::Ptr
+ExitStatusExecutor::instanceFromFactory(const Database::Ptr &db) {
+    ASSERT_require(isFactory());
+    auto retval = instance(db);
+    retval->name(name());
+    return retval;
+}
+
+bool
+ExitStatusExecutor::matchFactory(const std::string &name) const {
+    return name == this->name();
+}
+
 Concolic::ConcreteResult::Ptr
 ExitStatusExecutor::execute(const TestCase::Ptr& tc) {
+  ASSERT_forbid(isFactory());
   namespace bstfs = boost::filesystem;
 
   const bool               withExecMonitor = executionMonitor().string().size();

@@ -13,19 +13,40 @@ namespace BinaryAnalysis {
 namespace Concolic {
 namespace I386Linux {
 
+TracingExecutor::TracingExecutor(const std::string &name)
+    : Super(name) {}
+
 TracingExecutor::TracingExecutor(const Database::Ptr &db)
     : Super(db) {}
 
 TracingExecutor::~TracingExecutor() {}
 
-// class method
 TracingExecutor::Ptr
 TracingExecutor::instance(const Database::Ptr &db) {
     return Ptr(new TracingExecutor(db));
 }
 
+TracingExecutor::Ptr
+TracingExecutor::factory() {
+    return Ptr(new TracingExecutor("I386Linux::Tracing"));
+}
+
+Concolic::ConcreteExecutor::Ptr
+TracingExecutor::instanceFromFactory(const Database::Ptr &db) {
+    ASSERT_require(isFactory());
+    auto retval = instance(db);
+    retval->name(name());
+    return retval;
+}
+
+bool
+TracingExecutor::matchFactory(const std::string &name) const {
+    return name == this->name();
+}
+
 Concolic::ConcreteResult::Ptr
 TracingExecutor::execute(const TestCase::Ptr &testCase) {
+    ASSERT_forbid(isFactory());
 
     // FIXME[Robb Matzke 2020-07-15]: This temp dir should be automatically removed.
 

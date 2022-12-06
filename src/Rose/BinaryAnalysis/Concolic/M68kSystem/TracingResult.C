@@ -20,6 +20,16 @@ TracingResult::instance(double rank) {
     return Ptr(new TracingResult(rank));
 }
 
+const TracingResult::Trace&
+TracingResult::trace() const {
+    return trace_;
+}
+
+TracingResult::Trace&
+TracingResult::trace() {
+    return trace_;
+}
+
 } // namespace
 } // namespace
 } // namespace

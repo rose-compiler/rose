@@ -29,12 +29,13 @@ public:
     /** Holds an optional personality-value.
      *
      *  This indicates whether address randomization should be turned on or off. */
-    typedef Sawyer::Optional<unsigned long> Persona;
+    using Persona = Sawyer::Optional<unsigned long>;
 
 protected:
-    bool useAddressRandomization_;                      // enable/disable address space randomization in the OS
+    bool useAddressRandomization_ = false;              // enable/disable address space randomization in the OS
 
 protected:
+    explicit ExitStatusExecutor(const std::string &name); // for creating a factory
     explicit ExitStatusExecutor(const DatabasePtr&);
 
 public:
@@ -42,6 +43,9 @@ public:
 
     /** Allocating constructor. */
     static Ptr instance(const DatabasePtr&);
+
+    /** Allocate a factory. */
+    static Ptr factory();
 
     /** Property: Address space randomization.
      *
@@ -53,6 +57,9 @@ public:
     void useAddressRandomization(bool b) { useAddressRandomization_ = b; }
     /** @} */
 
+public:
+    virtual bool matchFactory(const std::string&) const override;
+    virtual Concolic::ConcreteExecutorPtr instanceFromFactory(const DatabasePtr&) override;
     virtual Concolic::ConcreteResultPtr execute(const TestCasePtr&) override;
 };
 
