@@ -21,10 +21,18 @@ namespace BinaryAnalysis {
 namespace Concolic {
 namespace M68kSystem {
 
+Architecture::Architecture(const std::string &name)
+    : Concolic::Architecture(name) {}
+
 Architecture::Architecture(const Database::Ptr &db, TestCaseId tcid, const P2::Partitioner &partitioner)
     : Concolic::Architecture(db, tcid, partitioner) {}
 
 Architecture::~Architecture() {}
+
+Architecture::Ptr
+Architecture::factory() {
+    return Ptr(new Architecture("M68kSystem"));
+}
 
 Architecture::Ptr
 Architecture::instance(const Database::Ptr &db, TestCaseId tcid, const P2::Partitioner &partitioner) {
@@ -41,6 +49,19 @@ Architecture::instance(const Database::Ptr &db, const TestCase::Ptr &tc, const P
     return instance(db, db->id(tc), partitioner);
 }
 
+Concolic::Architecture::Ptr
+Architecture::instanceFromFactory(const Database::Ptr &db, TestCaseId tcid, const P2::Partitioner &partitioner) const {
+    ASSERT_require(isFactory());
+    auto retval = instance(db, tcid, partitioner);
+    retval->name(name());
+    return retval;
+}
+
+bool
+Architecture::matchFactory(const std::string &s) const {
+    return s == name();
+}
+
 void
 Architecture::configureSystemCalls() {
     // No system calls on bare metal
@@ -53,6 +74,7 @@ Architecture::configureSharedMemory() {
 
 void
 Architecture::load(const boost::filesystem::path &tempDirectory) {
+    ASSERT_forbid(isFactory());
     // Extract the executable into the target temporary directory
     const auto exeName = tempDirectory / [this]() {
         auto base = boost::filesystem::path(testCase()->specimen()->name()).filename();
@@ -87,107 +109,128 @@ Architecture::load(const boost::filesystem::path &tempDirectory) {
 
 bool
 Architecture::isTerminated() {
+    ASSERT_forbid(isFactory());
     ASSERT_not_implemented("[Robb Matzke 2022-11-21]");
 }
 
 ByteOrder::Endianness
 Architecture::memoryByteOrder() {
+    ASSERT_forbid(isFactory());
     return ByteOrder::Endianness::ORDER_MSB;
 }
 
 std::string
 Architecture::readCString(rose_addr_t va, size_t maxBytes) {
+    ASSERT_forbid(isFactory());
     ASSERT_not_implemented("[Robb Matzke 2022-11-21]");
 }
 
 rose_addr_t
 Architecture::ip() {
+    ASSERT_forbid(isFactory());
     ASSERT_not_implemented("[Robb Matzke 2022-11-21]");
 }
 
 void
 Architecture::ip(rose_addr_t va) {
+    ASSERT_forbid(isFactory());
     ASSERT_not_implemented("[Robb Matzke 2022-11-21]");
 }
 
 std::vector<ExecutionEvent::Ptr>
 Architecture::createMemoryRestoreEvents() {
+    ASSERT_forbid(isFactory());
     ASSERT_not_implemented("[Robb Matzke 2022-11-21]");
 }
 
 std::vector<ExecutionEvent::Ptr>
 Architecture::createMemoryHashEvents() {
+    ASSERT_forbid(isFactory());
     ASSERT_not_implemented("[Robb Matzke 2022-11-21]");
 }
 
 std::vector<ExecutionEvent::Ptr>
 Architecture::createMemoryAdjustEvents(const MemoryMap::Ptr &map, rose_addr_t insnVa) {
+    ASSERT_forbid(isFactory());
     ASSERT_not_implemented("[Robb Matzke 2022-11-21]");
 }
 
 std::vector<ExecutionEvent::Ptr>
 Architecture::createRegisterRestoreEvents() {
+    ASSERT_forbid(isFactory());
     ASSERT_not_implemented("[Robb Matzke 2022-11-21]");
 }
 
 bool
 Architecture::playEvent(const ExecutionEvent::Ptr &event) {
+    ASSERT_forbid(isFactory());
     ASSERT_not_implemented("[Robb Matzke 2022-11-21]");
 }
 
 void
 Architecture::mapMemory(const AddressInterval &where, unsigned permissions) {
+    ASSERT_forbid(isFactory());
     ASSERT_not_implemented("[Robb Matzke 2022-11-21]");
 }
 
 void
 Architecture::unmapMemory(const AddressInterval &where) {
+    ASSERT_forbid(isFactory());
     ASSERT_not_implemented("[Robb Matzke 2022-11-21]");
 }
 
 size_t
 Architecture::writeMemory(rose_addr_t va, const std::vector<uint8_t> &data) {
+    ASSERT_forbid(isFactory());
     ASSERT_not_implemented("[Robb Matzke 2022-11-21]");
 }
 
 std::vector<uint8_t>
 Architecture::readMemory(rose_addr_t va, size_t nBytes) {
+    ASSERT_forbid(isFactory());
     ASSERT_not_implemented("[Robb Matzke 2022-11-21]");
 }
 
 void
 Architecture::writeRegister(RegisterDescriptor reg, uint64_t value) {
+    ASSERT_forbid(isFactory());
     ASSERT_not_implemented("[Robb Matzke 2022-11-21]");
 }
 
 void
 Architecture::writeRegister(RegisterDescriptor reg, const Sawyer::Container::BitVector &value) {
+    ASSERT_forbid(isFactory());
     ASSERT_not_implemented("[Robb Matzke 2022-11-21]");
 }
 
 Sawyer::Container::BitVector
 Architecture::readRegister(RegisterDescriptor reg) {
+    ASSERT_forbid(isFactory());
     ASSERT_not_implemented("[Robb Matzke 2022-11-21]");
 }
 
 void
 Architecture::executeInstruction(const P2::Partitioner &partitoner) {
+    ASSERT_forbid(isFactory());
     ASSERT_not_implemented("[Robb Matzke 2022-11-21]");
 }
 
 void
 Architecture::executeInstruction(const InstructionSemantics::BaseSemantics::RiscOperators::Ptr &ops, SgAsmInstruction *insn) {
+    ASSERT_forbid(isFactory());
     ASSERT_not_implemented("[Robb Matzke 2022-11-21]");
 }
 
 void
 Architecture::createInputVariables(const P2::Partitioner &partitioner, const Emulation::RiscOperators::Ptr &ops,
                                const SmtSolver::Ptr &solver) {
+    ASSERT_forbid(isFactory());
     ASSERT_not_implemented("[Robb Matzke 2022-11-21]");
 }
 
 void
 Architecture::systemCall(const P2::Partitioner &partitioner, const InstructionSemantics::BaseSemantics::RiscOperators::Ptr &ops) {
+    ASSERT_forbid(isFactory());
     ASSERT_not_implemented("[Robb Matzke 2022-11-21]");
 }
 

@@ -30,6 +30,7 @@ private:
     Debugger::GdbPtr debugger_;
 
 protected:
+    Architecture(const std::string&);
     Architecture(const DatabasePtr&, TestCaseId, const Partitioner2::Partitioner&);
 public:
     ~Architecture();
@@ -44,8 +45,13 @@ public:
     static Ptr instance(const DatabasePtr&, const TestCasePtr&, const Partitioner2::Partitioner&);
     /** @} */
 
+    /** Allocating constructor to create a factory. */
+    static Ptr factory();
+
 public:
     // These are documented in the base class.
+    virtual bool matchFactory(const std::string&) const override;
+    virtual Super::Ptr instanceFromFactory(const DatabasePtr&, TestCaseId, const Partitioner2::Partitioner&) const override;
     virtual void configureSystemCalls() override;
     virtual void configureSharedMemory() override;
     virtual void load(const boost::filesystem::path&) override;

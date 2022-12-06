@@ -12,6 +12,10 @@
 #include <Rose/BinaryAnalysis/Concolic/TestCase.h>
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
 
+// Architectures pre-registered as factories
+#include <Rose/BinaryAnalysis/Concolic/I386Linux/Architecture.h>
+#include <Rose/BinaryAnalysis/Concolic/M68kSystem/Architecture.h>
+
 #include <boost/format.hpp>
 
 using namespace Sawyer::Message::Common;
@@ -21,6 +25,26 @@ namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Concolic {
+
+static SAWYER_THREAD_TRAITS::Mutex registryMutex;
+static std::vector<Architecture::Ptr> registry;
+static boost::once_flag registryInitFlag = BOOST_ONCE_INIT;
+static P2::Partitioner staticPartitioner;               // used only by factories
+
+static void
+initRegistryHelper() {
+    SAWYER_THREAD_TRAITS::LockGuard lock(registryMutex);
+    registry.push_back(I386Linux::Architecture::factory());
+    registry.push_back(M68kSystem::Architecture::factory());
+}
+
+static void
+initRegistry() {
+    boost::call_once(&initRegistryHelper, registryInitFlag);
+}
+
+Architecture::Architecture(const std::string &name)
+    : name_(name), partitioner_(staticPartitioner) {}
 
 Architecture::Architecture(const Database::Ptr &db, TestCaseId testCaseId, const P2::Partitioner &partitioner)
     : db_(db), testCaseId_(testCaseId), partitioner_(partitioner) {
@@ -32,36 +56,112 @@ Architecture::Architecture(const Database::Ptr &db, TestCaseId testCaseId, const
 
 Architecture::~Architecture() {}
 
+void
+Architecture::registerFactory(const Ptr &factory) {
+    ASSERT_not_null(factory);
+    initRegistry();
+    SAWYER_THREAD_TRAITS::LockGuard lock(registryMutex);
+    registry.push_back(factory);
+}
+
+bool
+Architecture::deregisterFactory(const Ptr &factory) {
+    ASSERT_not_null(factory);
+    initRegistry();
+    SAWYER_THREAD_TRAITS::LockGuard lock(registryMutex);
+    for (auto iter = registry.rbegin(); iter != registry.rend(); ++iter) {
+        if (*iter == factory) {
+            registry.erase(std::next(iter).base());
+            return true;
+        }
+    }
+    return false;
+}
+
+std::vector<Architecture::Ptr>
+Architecture::registeredFactories() {
+    initRegistry();
+    std::vector<Ptr> retval;
+    SAWYER_THREAD_TRAITS::LockGuard lock(registryMutex);
+    retval.reserve(registry.size());
+    for (const Ptr &factory: registry)
+        retval.push_back(factory);
+    return retval;
+}
+
+Architecture::Ptr
+Architecture::forge(const Database::Ptr &db, TestCaseId tcid, const P2::Partitioner &partitioner,
+                    const std::string &name) {
+    ASSERT_not_null(db);
+    ASSERT_require(tcid);
+    initRegistry();
+    SAWYER_THREAD_TRAITS::LockGuard lock(registryMutex);
+    for (auto factory = registry.rbegin(); factory != registry.rend(); ++factory) {
+        if ((*factory)->matchFactory(name))
+            return (*factory)->instanceFromFactory(db, tcid, partitioner);
+    }
+    return {};
+}
+
+Architecture::Ptr
+Architecture::forge(const Database::Ptr &db, const TestCase::Ptr &tc, const P2::Partitioner &partitioner,
+                    const std::string &name) {
+    ASSERT_not_null(db);
+    ASSERT_not_null(tc);
+    return forge(db, db->id(tc), partitioner, name);
+}
+
+bool
+Architecture::isFactory() const {
+    return !db_;
+}
+
+const std::string&
+Architecture::name() const {
+    return name_;
+}
+
+void
+Architecture::name(const std::string &s) {
+    name_ = s;
+}
+
 Database::Ptr
 Architecture::database() const {
+    ASSERT_forbid(isFactory());
     ASSERT_not_null(db_);
     return db_;
 }
 
 TestCaseId
 Architecture::testCaseId() const {
+    ASSERT_forbid(isFactory());
     ASSERT_require(testCaseId_);
     return testCaseId_;
 }
 
 TestCase::Ptr
 Architecture::testCase() const {
+    ASSERT_forbid(isFactory());
     ASSERT_not_null(testCase_);
     return testCase_;
 }
 
 const P2::Partitioner&
 Architecture::partitioner() const {
+    ASSERT_forbid(isFactory());
     return partitioner_;
 }
 
 ExecutionLocation
 Architecture::currentLocation() const {
+    ASSERT_forbid(isFactory());
     return currentLocation_;
 }
 
 void
 Architecture::currentLocation(const ExecutionLocation &loc) {
+    ASSERT_forbid(isFactory());
     currentLocation_ = loc;
 }
 
@@ -124,6 +224,7 @@ Architecture::sharedMemory(const AddressInterval &where, const SharedMemoryCallb
 
 void
 Architecture::saveEvents(const std::vector<ExecutionEvent::Ptr> &events, When when) {
+    ASSERT_forbid(isFactory());
     for (const ExecutionEvent::Ptr &event: events) {
         ASSERT_not_null(event);
         event->testCase(testCase_);
@@ -134,6 +235,7 @@ Architecture::saveEvents(const std::vector<ExecutionEvent::Ptr> &events, When wh
 
 size_t
 Architecture::playAllEvents(const P2::Partitioner &partitioner) {
+    ASSERT_forbid(isFactory());
     size_t retval = 0;
     std::vector<ExecutionEventId> eventIds = db_->executionEvents(testCaseId_);
     for (ExecutionEventId eventId: eventIds) {
@@ -149,6 +251,7 @@ Architecture::playAllEvents(const P2::Partitioner &partitioner) {
 
 std::vector<ExecutionEvent::Ptr>
 Architecture::getRelatedEvents(const ExecutionEvent::Ptr &parent) const {
+    ASSERT_forbid(isFactory());
     ASSERT_not_null(parent);
     TestCaseId testCaseId = database()->id(parent->testCase());
     std::vector<ExecutionEventId> eventIds = database()->executionEvents(testCaseId, parent->location().primary());
@@ -172,6 +275,7 @@ Architecture::getRelatedEvents(const ExecutionEvent::Ptr &parent) const {
 
 bool
 Architecture::playEvent(const ExecutionEvent::Ptr &event) {
+    ASSERT_forbid(isFactory());
     ASSERT_not_null(event);
     Sawyer::Message::Stream debug(mlog[DEBUG]);
 
@@ -303,6 +407,7 @@ Architecture::playEvent(const ExecutionEvent::Ptr &event) {
 
 void
 Architecture::runToEvent(const ExecutionEvent::Ptr &event, const P2::Partitioner &partitioner) {
+    ASSERT_forbid(isFactory());
     ASSERT_not_null(event);
 
     if (event->location().when() == When::PRE) {
@@ -321,6 +426,7 @@ Architecture::runToEvent(const ExecutionEvent::Ptr &event, const P2::Partitioner
 
 uint64_t
 Architecture::readMemoryUnsigned(rose_addr_t va, size_t nBytes) {
+    ASSERT_forbid(isFactory());
     ASSERT_require(nBytes >= 1 && nBytes <= 8);
     std::vector<uint8_t> bytes = readMemory(va, nBytes);
     ASSERT_require(bytes.size() == nBytes);
@@ -342,6 +448,7 @@ Architecture::readMemoryUnsigned(rose_addr_t va, size_t nBytes) {
 
 std::string
 Architecture::readCString(rose_addr_t va, size_t maxBytes) {
+    ASSERT_forbid(isFactory());
     std::string retval;
     while (retval.size() < maxBytes) {
         auto byte = readMemory(va++, 1);
@@ -360,18 +467,21 @@ Architecture::unmapMemory(const AddressInterval&) {}
 
 const ExecutionLocation&
 Architecture::nextInstructionLocation() {
+    ASSERT_forbid(isFactory());
     currentLocation_ = currentLocation_.nextPrimary();
     return currentLocation_;
 }
 
 const ExecutionLocation&
 Architecture::nextEventLocation(When when) {
+    ASSERT_forbid(isFactory());
     currentLocation_ = currentLocation_.nextSecondary(when);
     return currentLocation_;
 }
 
 void
 Architecture::restoreInputVariables(const Partitioner2::Partitioner&, const Emulation::RiscOperators::Ptr&, const SmtSolver::Ptr&) {
+    ASSERT_forbid(isFactory());
     for (ExecutionEventId eventId: database()->executionEvents(testCaseId())) {
         ExecutionEvent::Ptr event = database()->object(eventId, Update::NO);
         inputVariables_->playback(event);
@@ -382,6 +492,7 @@ std::pair<ExecutionEvent::Ptr, SymbolicExpression::Ptr>
 Architecture::sharedMemoryAccess(const SharedMemoryCallbacks &callbacks, const P2::Partitioner&,
                                  const Emulation::RiscOperators::Ptr &ops, rose_addr_t addr, size_t nBytes) {
     // A shared memory read has just been encountered, and we're in the middle of executing the instruction that caused it.
+    ASSERT_forbid(isFactory());
     ASSERT_not_null(ops);
     ASSERT_not_null2(ops->currentInstruction(), "must be called during instruction execution");
     Sawyer::Message::Stream debug(mlog[DEBUG]);
@@ -429,6 +540,7 @@ Architecture::sharedMemoryAccess(const SharedMemoryCallbacks &callbacks, const P
 
 void
 Architecture::runSharedMemoryPostCallbacks(const ExecutionEvent::Ptr &sharedMemoryEvent, const Emulation::RiscOperators::Ptr &ops) {
+    ASSERT_forbid(isFactory());
     ASSERT_not_null(sharedMemoryEvent);
     ASSERT_not_null(ops);
 
@@ -441,6 +553,7 @@ Architecture::runSharedMemoryPostCallbacks(const ExecutionEvent::Ptr &sharedMemo
 
 void
 Architecture::fixupSharedMemoryEvents(const ExecutionEvent::Ptr &sharedMemoryEvent, const Emulation::RiscOperators::Ptr &ops) {
+    ASSERT_forbid(isFactory());
     ASSERT_not_null(sharedMemoryEvent);
     ASSERT_not_null(ops);
     Sawyer::Message::Stream debug(mlog[DEBUG]);
@@ -555,6 +668,7 @@ Architecture::fixupSharedMemoryEvents(const ExecutionEvent::Ptr &sharedMemoryEve
 
 void
 Architecture::printSharedMemoryEvents(const ExecutionEvent::Ptr &sharedMemoryEvent, const Emulation::RiscOperators::Ptr &ops) {
+    ASSERT_forbid(isFactory());
     ASSERT_not_null(sharedMemoryEvent);
     ASSERT_not_null(ops);
     Sawyer::Message::Stream debug(mlog[DEBUG]);
@@ -595,6 +709,7 @@ Architecture::printSharedMemoryEvents(const ExecutionEvent::Ptr &sharedMemoryEve
 void
 Architecture::sharedMemoryAccessPost(const P2::Partitioner&, const Emulation::RiscOperators::Ptr &ops) {
     // Called after a shared memory accessing instruction has completed.
+    ASSERT_forbid(isFactory());
     ASSERT_not_null(ops);
     ASSERT_require2(ops->currentInstruction() == nullptr, "must be called after instruction execution");
 
