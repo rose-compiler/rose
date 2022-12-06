@@ -23,9 +23,16 @@ public:
     /** Reference counting pointer to a @ref LinuxTraceConcrete. */
     using Ptr = TracingExecutorPtr;
 
-protected:
-    TracingExecutor();
 
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {}
+
+protected:
+    TracingExecutor();                                  // for serialization
+    explicit TracingExecutor(const std::string &name);  // for factories
     explicit TracingExecutor(const DatabasePtr&);
 
 public:
@@ -33,6 +40,9 @@ public:
 
     /** Allocating constructor. */
     static Ptr instance(const DatabasePtr&);
+
+    /** Factory constructor. */
+    static Ptr factory();
 
     /** Specimen exit status, as returned by wait. */
     static int exitStatus(const ConcreteResultPtr&);
@@ -42,11 +52,9 @@ public:
 
     ConcreteResultPtr execute(const TestCasePtr&) override;
 
-private:
-    friend class boost::serialization::access;
-
-    template<class S>
-    void serialize(S &s, const unsigned /*version*/) {}
+    // Documented in super class
+    virtual bool matchFactory(const std::string&) const override;
+    virtual Concolic::ConcreteExecutorPtr instanceFromFactory(const DatabasePtr&) override;
 };
 
 } // namespace
