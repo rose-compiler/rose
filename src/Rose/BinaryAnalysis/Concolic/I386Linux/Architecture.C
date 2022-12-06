@@ -979,10 +979,18 @@ Architecture::configureSharedMemory() {
 // Architecture
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+Architecture::Architecture(const std::string &name)
+    : Concolic::Architecture(name) {}
+
 Architecture::Architecture(const Database::Ptr &db, TestCaseId tcid, const P2::Partitioner &partitioner)
     : Concolic::Architecture(db, tcid, partitioner) {}
 
 Architecture::~Architecture() {}
+
+Architecture::Ptr
+Architecture::factory() {
+    return Ptr(new Architecture("I386Linux"));
+}
 
 Architecture::Ptr
 Architecture::instance(const Database::Ptr &db, TestCaseId tcid, const P2::Partitioner &partitioner) {
@@ -999,6 +1007,19 @@ Architecture::instance(const Database::Ptr &db, const TestCase::Ptr &tc, const P
     return instance(db, db->id(tc), partitioner);
 }
 
+Concolic::Architecture::Ptr
+Architecture::instanceFromFactory(const Database::Ptr &db, TestCaseId tcid, const P2::Partitioner &partitioner) const {
+    ASSERT_require(isFactory());
+    auto retval = instance(db, tcid, partitioner);
+    retval->name(name());
+    return retval;
+}
+
+bool
+Architecture::matchFactory(const std::string &s) const {
+    return s == name();
+}
+
 Debugger::Linux::Ptr
 Architecture::debugger() const {
     return debugger_;
@@ -1006,6 +1027,8 @@ Architecture::debugger() const {
 
 void
 Architecture::load(const boost::filesystem::path &targetDir) {
+    ASSERT_forbid(isFactory());
+
     // Extract the executable into the target temporary directory.
     auto exeName = boost::filesystem::path(testCase()->specimen()->name()).filename();
     if (exeName.empty())
@@ -1048,11 +1071,13 @@ Architecture::load(const boost::filesystem::path &targetDir) {
 
 bool
 Architecture::isTerminated() {
+    ASSERT_forbid(isFactory());
     return !debugger_ || debugger_->isTerminated();
 }
 
 std::string
 Architecture::readCString(rose_addr_t va, size_t maxBytes) {
+    ASSERT_forbid(isFactory());
     return debugger_->readCString(va, maxBytes);
 }
 
@@ -1063,16 +1088,19 @@ Architecture::memoryByteOrder() {
 
 rose_addr_t
 Architecture::ip() {
+    ASSERT_forbid(isFactory());
     return debugger_->executionAddress(Debugger::ThreadId::unspecified());
 }
 
 void
 Architecture::ip(rose_addr_t va) {
+    ASSERT_forbid(isFactory());
     debugger_->executionAddress(Debugger::ThreadId::unspecified(), va);
 }
 
 std::vector<ExecutionEvent::Ptr>
 Architecture::createMemoryRestoreEvents() {
+    ASSERT_forbid(isFactory());
     SAWYER_MESG(mlog[DEBUG]) <<"saving subordinate memory\n";
     std::vector<ExecutionEvent::Ptr> events;
     auto map = MemoryMap::instance();
@@ -1116,6 +1144,7 @@ Architecture::createMemoryRestoreEvents() {
 std::vector<ExecutionEvent::Ptr>
 Architecture::copyMemory(const MemoryMap::Ptr &srcMap, const MemoryMap::Ptr &dstMap, const AddressInterval &where,
                          rose_addr_t insnVa) {
+    ASSERT_forbid(isFactory());
     ASSERT_not_null(srcMap);
     ASSERT_not_null(dstMap);
     std::vector<ExecutionEvent::Ptr> retval;
@@ -1149,6 +1178,7 @@ Architecture::copyMemory(const MemoryMap::Ptr &srcMap, const MemoryMap::Ptr &dst
 
 std::vector<ExecutionEvent::Ptr>
 Architecture::createMemoryAdjustEvents(const MemoryMap::Ptr &oldMap, rose_addr_t insnVa) {
+    ASSERT_forbid(isFactory());
     std::vector<ExecutionEvent::Ptr> retval;
     SAWYER_MESG(mlog[DEBUG]) <<"saving memory map adjustments\n";
     std::vector<ExecutionEvent::Ptr> events;
@@ -1254,6 +1284,7 @@ Architecture::createMemoryAdjustEvents(const MemoryMap::Ptr &oldMap, rose_addr_t
 
 std::vector<ExecutionEvent::Ptr>
 Architecture::createMemoryHashEvents() {
+    ASSERT_forbid(isFactory());
     SAWYER_MESG(mlog[DEBUG]) <<"hashing subordinate memory\n";
     std::vector<ExecutionEvent::Ptr> events;
     auto map = MemoryMap::instance();
@@ -1273,6 +1304,7 @@ Architecture::createMemoryHashEvents() {
 
 std::vector<ExecutionEvent::Ptr>
 Architecture::createRegisterRestoreEvents() {
+    ASSERT_forbid(isFactory());
     SAWYER_MESG(mlog[DEBUG]) <<"saving all registers\n";
     Sawyer::Container::BitVector allRegisters = debugger_->readAllRegisters(Debugger::ThreadId::unspecified());
     auto event = ExecutionEvent::bulkRegisterWrite(TestCase::Ptr(), ExecutionLocation(), ip(), allRegisters);
@@ -1281,6 +1313,7 @@ Architecture::createRegisterRestoreEvents() {
 
 bool
 Architecture::playEvent(const ExecutionEvent::Ptr &event) {
+    ASSERT_forbid(isFactory());
     ASSERT_not_null(event);
     bool handled = Super::playEvent(event);
 
@@ -1311,6 +1344,7 @@ Architecture::playEvent(const ExecutionEvent::Ptr &event) {
 
 void
 Architecture::mapMemory(const AddressInterval &where, unsigned permissions) {
+    ASSERT_forbid(isFactory());
     ASSERT_forbid(where.isEmpty());
     SAWYER_MESG(mlog[DEBUG]) <<"map " <<StringUtility::plural(where.size(), "bytes") <<" ";
     unsigned prot = 0;
@@ -1338,6 +1372,7 @@ Architecture::mapMemory(const AddressInterval &where, unsigned permissions) {
 
 void
 Architecture::unmapMemory(const AddressInterval &where) {
+    ASSERT_forbid(isFactory());
     ASSERT_forbid(where.isEmpty());
     SAWYER_MESG(mlog[DEBUG]) <<"unmap " <<StringUtility::plural(where.size(), "bytes")
                              << " at " <<StringUtility::addrToString(where) <<"\n";
@@ -1348,31 +1383,37 @@ Architecture::unmapMemory(const AddressInterval &where) {
 
 size_t
 Architecture::writeMemory(rose_addr_t va, const std::vector<uint8_t> &bytes) {
+    ASSERT_forbid(isFactory());
     return debugger_->writeMemory(va, bytes.size(), bytes.data());
 }
 
 std::vector<uint8_t>
 Architecture::readMemory(rose_addr_t va, size_t nBytes) {
+    ASSERT_forbid(isFactory());
     return debugger_->readMemory(va, nBytes);
 }
 
 void
 Architecture::writeRegister(RegisterDescriptor reg, uint64_t value) {
+    ASSERT_forbid(isFactory());
     debugger_->writeRegister(Debugger::ThreadId::unspecified(), reg, value);
 }
 
 void
 Architecture::writeRegister(RegisterDescriptor reg, const Sawyer::Container::BitVector &bv) {
+    ASSERT_forbid(isFactory());
     debugger_->writeRegister(Debugger::ThreadId::unspecified(), reg, bv);
 }
 
 Sawyer::Container::BitVector
 Architecture::readRegister(RegisterDescriptor reg) {
+    ASSERT_forbid(isFactory());
     return debugger_->readRegister(Debugger::ThreadId::unspecified(), reg);
 }
 
 void
 Architecture::executeInstruction(const P2::Partitioner &partitioner) {
+    ASSERT_forbid(isFactory());
     if (mlog[DEBUG]) {
         rose_addr_t va = debugger_->executionAddress(Debugger::ThreadId::unspecified());
         if (SgAsmInstruction *insn = partitioner.instructionProvider()[va]) {
@@ -1389,6 +1430,7 @@ Architecture::executeInstruction(const P2::Partitioner &partitioner) {
 
 void
 Architecture::executeInstruction(const BS::RiscOperators::Ptr &ops_, SgAsmInstruction *insn) {
+    ASSERT_forbid(isFactory());
     auto ops = Emulation::RiscOperators::promote(ops_);
     ASSERT_not_null(ops);
     ASSERT_not_null(insn);
@@ -1422,6 +1464,7 @@ Architecture::executeInstruction(const BS::RiscOperators::Ptr &ops_, SgAsmInstru
 
 void
 Architecture::mapScratchPage() {
+    ASSERT_forbid(isFactory());
     ASSERT_require(debugger_->isAttached());
 
     // Create the scratch page
@@ -1445,6 +1488,7 @@ Architecture::mapScratchPage() {
 
 std::vector<MemoryMap::ProcessMapRecord>
 Architecture::disposableMemory() {
+    ASSERT_forbid(isFactory());
     std::vector<MemoryMap::ProcessMapRecord> segments = MemoryMap::readProcessMap(*debugger_->processId());
     for (auto segment = segments.begin(); segment != segments.end(); /*void*/) {
         ASSERT_forbid(segment->interval.isEmpty());
@@ -1466,6 +1510,7 @@ Architecture::disposableMemory() {
 
 void
 Architecture::unmapAllMemory() {
+    ASSERT_forbid(isFactory());
     SAWYER_MESG(mlog[DEBUG]) <<"unmapping memory\n";
     std::vector<MemoryMap::ProcessMapRecord> segments = disposableMemory();
     for (const MemoryMap::ProcessMapRecord &segment: segments) {
@@ -1482,6 +1527,7 @@ Architecture::unmapAllMemory() {
 void
 Architecture::createInputVariables(const P2::Partitioner &partitioner, const Emulation::RiscOperators::Ptr &ops,
                                 const SmtSolver::Ptr &solver) {
+    ASSERT_forbid(isFactory());
     ASSERT_not_null(ops);
     ASSERT_not_null(solver);
 
@@ -1722,6 +1768,7 @@ Architecture::createInputVariables(const P2::Partitioner &partitioner, const Emu
 
 uint64_t
 Architecture::systemCallFunctionNumber(const P2::Partitioner &partitioner, const BS::RiscOperators::Ptr &ops) {
+    ASSERT_forbid(isFactory());
     ASSERT_not_null(ops);
 
     const RegisterDescriptor AX = partitioner.instructionProvider().registerDictionary()->findOrThrow("eax");
@@ -1732,6 +1779,7 @@ Architecture::systemCallFunctionNumber(const P2::Partitioner &partitioner, const
 
 BS::SValue::Ptr
 Architecture::systemCallArgument(const P2::Partitioner &partitioner, const BS::RiscOperators::Ptr &ops, size_t idx) {
+    ASSERT_forbid(isFactory());
     switch (idx) {
         case 0: {
             const RegisterDescriptor r = partitioner.instructionProvider().registerDictionary()->findOrThrow("ebx");
@@ -1765,11 +1813,13 @@ Architecture::systemCallArgument(const P2::Partitioner &partitioner, const BS::R
 
 RegisterDescriptor
 Architecture::systemCallReturnRegister() {
+    ASSERT_forbid(isFactory());
     return RegisterDescriptor(x86_regclass_gpr, x86_gpr_ax, 0, 32);
 }
 
 BS::SValue::Ptr
 Architecture::systemCallReturnValue(const P2::Partitioner&, const BS::RiscOperators::Ptr &ops) {
+    ASSERT_forbid(isFactory());
     ASSERT_not_null(ops);
     const RegisterDescriptor reg = systemCallReturnRegister();
     return ops->readRegister(reg);
@@ -1778,6 +1828,7 @@ Architecture::systemCallReturnValue(const P2::Partitioner&, const BS::RiscOperat
 BS::SValue::Ptr
 Architecture::systemCallReturnValue(const P2::Partitioner&, const BS::RiscOperators::Ptr &ops,
                                  const BS::SValue::Ptr &retval) {
+    ASSERT_forbid(isFactory());
     ASSERT_not_null(ops);
     const RegisterDescriptor reg = systemCallReturnRegister();
     ops->writeRegister(reg, retval);
@@ -1789,6 +1840,7 @@ Architecture::systemCall(const P2::Partitioner &partitioner, const BS::RiscOpera
     // A system call has been encountered. The INT instruction has been processed symbolically (basically a no-op other than
     // to adjust the instruction pointer), and the concrete execution has stepped into the system call but has not yet executed
     // it (i.e., the subordinate process is in the syscall-enter-stop state).
+    ASSERT_forbid(isFactory());
 
     auto ops = Emulation::RiscOperators::promote(ops_);
     ASSERT_not_null(ops);

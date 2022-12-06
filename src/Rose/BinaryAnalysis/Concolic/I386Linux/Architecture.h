@@ -36,11 +36,15 @@ private:
     bool markingEnvpAsInput_ = false;
 
 protected:
+    Architecture(const std::string&);                   // for instantiating a factory
     Architecture(const DatabasePtr&, TestCaseId, const Partitioner2::Partitioner&);
 public:
     ~Architecture();
 
 public:
+    /** Allocating constructor for a factory. */
+    static Ptr factory();
+
     /** Allocating constructor for test case.
      *
      *  Constructs a new executor for the specified test case.
@@ -61,6 +65,8 @@ public:
 
 public:
     // These are documented in the base class.
+    virtual bool matchFactory(const std::string&) const override;
+    virtual Super::Ptr instanceFromFactory(const DatabasePtr&, TestCaseId, const Partitioner2::Partitioner&) const override;
     virtual void configureSystemCalls() override;
     virtual void configureSharedMemory() override;
     virtual void load(const boost::filesystem::path&) override;

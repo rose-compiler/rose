@@ -39,7 +39,7 @@ TracingExecutor::startQemu(const boost::filesystem::path &firmwareName) {
                                "-display", "none",
                                "-kernel", firmwareName.string(),
                                "-S",                    // freeze CPU at startup
-                               "-gdb", "tcp:1234",
+                               "-gdb", "tcp::1234",
                                "-no-reboot", "-no-shutdown");
     return qemu;
 }

@@ -32,6 +32,7 @@ public:
     using SharedMemoryMap = Sawyer::Container::IntervalMap<AddressInterval, SharedMemoryCallbacks>;
 
 private:
+    std::string name_;                                  // architecture name for factory matching
     DatabasePtr db_;
     TestCaseId testCaseId_;
     TestCasePtr testCase_;
@@ -43,30 +44,103 @@ private:
 
 protected:
     // See "instance" methods in subclasses
+    explicit Architecture(const std::string&);
     Architecture(const DatabasePtr&, TestCaseId, const Partitioner2::Partitioner&);
 public:
     virtual ~Architecture();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Factory
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    /** Register an architecture as a factory.
+     *
+     *  The specified architecture is added to the end of a list of architecture prototypical objects. When a new architecture
+     *  is needed, this list is scanned in reverse order until one of the @c matchFactory predicates for the prototypical
+     *  object returns true, at which time a new copy of that prototypical object is created by passing the lookup arguments to
+     *  its virtual @c instanceFromFactory constructor.
+     *
+     *  Thread safety: This method is thread safe. */
+    static void registerFactory(const Ptr &factory);
+
+    /** Remove an architecture factory from the registry.
+     *
+     *  The last occurrence of the specified factory is removed from the list of registered factories. This function returns
+     *  true if a factory was removed, and false if no registered factories match.
+     *
+     *  Thread safety: This method is thread safe. */
+    static bool deregisterFactory(const Ptr &factory);
+
+    /** List of all registered factories.
+     *
+     *  The returned list contains the registered factories in the order they were registered, which is the reverse order
+     *  of how they're searched.
+     *
+     *  Thread safety: This method is thread safe. */
+    static std::vector<Ptr> registeredFactories();
+
+    /** Creates a suitable architecture by name.
+     *
+     *  Scans the @ref registeredFactories list in the reverse order looking for a factory whose @ref matchFactory predicate
+     *  (which accepts all but the first three arguments of this function) returns true. The first factory whose predicate
+     *  returns true is used to create and return a new architecture object by invoking the factory's virtual @c
+     *  instanceFromFactory constructor with the first three arguments of this function.
+     *
+     *  Thread safety: This method is thread safe.
+     *
+     * @{ */
+    static Ptr forge(const DatabasePtr&, TestCaseId, const Partitioner2::Partitioner&,
+                     const std::string&);
+    static Ptr forge(const DatabasePtr&, const TestCasePtr&, const Partitioner2::Partitioner&,
+                     const std::string&);
+    /** @} */
+
+    /** Predicate for matching an architecture factory by name. */
+    virtual bool matchFactory(const std::string &name) const = 0;
+
+    /** Virtual constructor for factories.
+     *
+     *  This creates a new object by calling the class method @c instance for the class of which @c this is a type. All
+     *  arguments are passed to @c instance. */
+    virtual Ptr instanceFromFactory(const DatabasePtr&, TestCaseId, const Partitioner2::Partitioner&) const = 0;
+
+    /** Returns true if this object is a factory.
+     *
+     *  Factories are created by the @c factory class methods rather than the usual @c instance class methods. A factory
+     *  object should only be used to create other (non-factory) objects by registering it as a factory and eventually
+     *  calling (directly or indirectly) its @ref instanceFromFactory object method. */
+    bool isFactory() const;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+    /** Property: Name.
+     *
+     *  The name of the architecture originally comes from the architecture factory, but can be changed on a per object
+     *  basis.
+     *
+     * @{ */
+    const std::string& name() const;
+    void name(const std::string&);
+    /** @} */
+
     /** Property: Database.
      *
      *  Returns the database used as backing store for parts of this object. This property is read-only, set by the
-     *  constructor. It is always non-null. */
+     *  constructor. It is always non-null except in factories. */
     DatabasePtr database() const;
 
     /** Property: Test case ID.
      *
      *  Returns the test case ID within the database. This property is read-only, set by the constructor. The return value is
-     *  always a valid ID. */
+     *  always a valid ID except in factories. */
     TestCaseId testCaseId() const;
 
     /** Property: Test case.
      *
      *  Returns the test case being executed. This property is read-only, set by the constructor. The return value is always
-     *  non-null. */
+     *  non-null except in factories. */
     TestCasePtr testCase() const;
 
     /** Property: Partitioner.
