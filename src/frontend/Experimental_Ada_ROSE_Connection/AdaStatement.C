@@ -1724,7 +1724,7 @@ namespace
 
           SgBasicBlock&  block    = mkBasicBlock();
           ElemIdRange    adaStmts = idRange(stmt.Loop_Statements);
-          SgAdaLoopStmt& sgnode   = mkLoopStmt(block);
+          SgAdaLoopStmt& sgnode   = mkAdaLoopStmt(block);
 
           completeStmt(sgnode, elem, ctx, stmt.Statement_Identifier);
 

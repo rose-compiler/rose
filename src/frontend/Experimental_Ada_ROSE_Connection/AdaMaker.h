@@ -266,7 +266,7 @@ namespace Ada_ROSE_Translation
 
   /// creates a loop statement with body \ref body.
   SgAdaLoopStmt&
-  mkLoopStmt(SgBasicBlock& body);
+  mkAdaLoopStmt(SgBasicBlock& body);
 
   /// creates a select statement of type \ref select_type
   SgAdaSelectStmt&
