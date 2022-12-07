@@ -471,7 +471,7 @@ mkWhileStmt(SgExpression& cond, SgBasicBlock& body)
 }
 
 SgAdaLoopStmt&
-mkLoopStmt(SgBasicBlock& body)
+mkAdaLoopStmt(SgBasicBlock& body)
 {
   SgAdaLoopStmt& sgnode = mkLocatedNode<SgAdaLoopStmt>();
 

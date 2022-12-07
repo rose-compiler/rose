@@ -1262,11 +1262,12 @@ namespace Ada
       void handle(SgTypeChar32& n)        { res = pkgStandardScope(); }
 
 
-      // Ada non-fundamental types
+      // Ada kind of fundamental types
       void handle(SgArrayType& n)         { res = pkgStandardScope(); }
-      void handle(SgPointerType& n)       { res = pkgStandardScope(); } // \todo should not be in Ada
-      void handle(SgAdaAccessType& n)     { res = pkgStandardScope(); } // \todo or scope of underlying type?
       void handle(SgTypeNullptr& n)       { res = pkgStandardScope(); }
+
+      void handle(SgPointerType& n)       { res = find(n.get_base_type()); } // \todo should not be in Ada
+      void handle(SgAdaAccessType& n)     { res = find(n.get_base_type()); } // \todo or scope of underlying type?
 
       // \todo add string types as introduced by AdaType.C:initializePkgStandard
       // \todo add other fundamental types as introduced by AdaType.C:initializePkgStandard
@@ -1291,6 +1292,7 @@ namespace Ada
         if (defdcl != nullptr) dcl = defdcl;
 
         SgType*    basety      = dcl->get_base_type();
+
         const bool useThisDecl = (  isSgAdaDerivedType(basety)
                                  || isSgAdaAccessType(basety)
                                  || fromRootType(isSgAdaSubtype(basety))

@@ -1604,10 +1604,20 @@ namespace
       list(n.get_members());
     }
 
+    bool isOnlyStatementInBlock(SgTryStmt& n)
+    {
+      SgBasicBlock* blk = isSgBasicBlock(n.get_parent());
+
+      return blk && blk->get_statements().size() == 1;
+    }
+
     void handle(SgTryStmt& n)
     {
       // skip the block, just print the statements
-      const bool    requiresBeginEnd = !(si::Ada::isFunctionTryBlock(n) || si::Ada::isPackageTryBlock(n));
+      const bool    requiresBeginEnd = (  !si::Ada::isFunctionTryBlock(n)
+                                       && !si::Ada::isPackageTryBlock(n)
+                                       && !isOnlyStatementInBlock(n) // \todo does this include the two previous conditions?
+                                       );
       SgBasicBlock& blk = SG_DEREF(isSgBasicBlock(n.get_body()));
 
       if (requiresBeginEnd) prn("begin\n");
@@ -1795,7 +1805,7 @@ namespace
     //   statement sequences in Ada, but are not true Ada scopes.
     struct AdaStmtSequence : sg::DispatchHandler<bool>
     {
-      void handle(SgNode&)                          { /* default: false */ }
+      void handle(SgNode& n)                        { /* default: false */ }
       void handle(SgTryStmt&)                       { res = true; }
       void handle(SgIfStmt&)                        { res = true; }
       void handle(SgWhileStmt&)                     { res = true; }
@@ -1820,14 +1830,13 @@ namespace
 
   void AdaStatementUnparser::handleBasicBlock(SgBasicBlock& n, bool functionbody)
   {
-    //~ ScopeUpdateGuard             scopeGuard{unparser, info, n};
-
     SgStatementPtrList&          stmts    = n.get_statements();
     SgStatementPtrList::iterator aa       = stmts.begin();
     SgStatementPtrList::iterator zz       = stmts.end();
     SgStatementPtrList::iterator dcllimit = si::Ada::declarationLimit(stmts);
     const std::string            label    = n.get_string_label();
     const bool                   requiresBeginEnd = !adaStmtSequence(n);
+
     //~ ROSE_ASSERT(aa == dcllimit || requiresBeginEnd);
 
     // was: ( functionbody || (aa != dcllimit) || label.size() );
