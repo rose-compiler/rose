@@ -4,9 +4,12 @@
 #include <Rose/BinaryAnalysis/Concolic/ConcolicExecutor.h>
 
 #include <Rose/CommandLine.h>
+#include <Rose/BinaryAnalysis/Concolic/Architecture.h>
 #include <Rose/BinaryAnalysis/Concolic/Database.h>
+#include <Rose/BinaryAnalysis/Concolic/ExecutionEvent.h>
 #include <Rose/BinaryAnalysis/Concolic/InputVariables.h>
 #include <Rose/BinaryAnalysis/Concolic/Specimen.h>
+#include <Rose/BinaryAnalysis/Concolic/SharedMemory.h>
 #include <Rose/BinaryAnalysis/Concolic/TestCase.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
@@ -15,6 +18,7 @@
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
 #include <Rose/BitOps.h>
 
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/format.hpp>
 #include <boost/scope_exit.hpp>
 
@@ -42,6 +46,16 @@ ConcolicExecutor::ConcolicExecutor() {}
 ConcolicExecutor::~ConcolicExecutor() {
     // Delete things that depend on partitioner_ before we delete the partitioner.
     process_ = Architecture::Ptr();
+}
+
+const ConcolicExecutor::Settings&
+ConcolicExecutor::settings() const {
+    return settings_;
+}
+
+ConcolicExecutor::Settings&
+ConcolicExecutor::settings() {
+    return settings_;
 }
 
 // class method
@@ -78,8 +92,10 @@ ConcolicExecutor::commandLineSwitches(Settings &settings /*in,out*/) {
 }
 
 P2::Partitioner
-ConcolicExecutor::partition(const Specimen::Ptr &specimen) {
+ConcolicExecutor::partition(const Specimen::Ptr &specimen, const std::string &architectureName) {
     ASSERT_not_null(specimen);
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+
     SpecimenId specimenId = database()->id(specimen, Update::NO);
     ASSERT_require2(specimenId, "specimen must be in the database");
 
@@ -101,8 +117,18 @@ ConcolicExecutor::partition(const Specimen::Ptr &specimen) {
         specimenFile.close();
         boost::filesystem::permissions(specimenFileName, boost::filesystem::owner_all);
 
-        // Use the "run:" scheme to load the simulated virtual memory in order to get all the shared libraries.
-        partitioner = engine->partition("run:replace:" + specimenFileName.string());
+        // Partitioning needs some slight variations depending on the architecture. However, we can only use the architecture
+        // name to make these choices because we don't yet have an Architecture object (since they are constructed from a
+        // partitioner). Perhaps we should move this entire `partition` function into the Architecture subclasses instead in
+        // order to avoid this specialized code here.
+        std::string specimenArg;
+        if (boost::icontains(architectureName, "i386") && boost::icontains(architectureName, "linux")) {
+            specimenArg = "run:replace:" + specimenFileName.string();
+        } else {
+            specimenArg = specimenFileName.string();
+        }
+        SAWYER_MESG(debug) <<"partitioning " <<specimenArg <<"\n";
+        partitioner = engine->partition(specimenArg);
 
         // Cache the results in the database.
         boost::filesystem::path rbaFileName = tempDir.name() / "specimen.rba";
@@ -179,12 +205,14 @@ ConcolicExecutor::startDispatcher() {
 }
 
 void
-ConcolicExecutor::configureExecution(const Database::Ptr &db, const TestCase::Ptr &testCase) {
+ConcolicExecutor::configureExecution(const Database::Ptr &db, const TestCase::Ptr &testCase, const std::string &architectureName) {
     ASSERT_not_null(db);
     ASSERT_not_null(testCase);
 
     if (testCase == testCase_) {
         ASSERT_require(db == db_);
+        ASSERT_require(process_);
+        ASSERT_require(process_->name() == architectureName);
         return;                                         // already configured
     } else {
         ASSERT_forbid2(testCase_, "concolic executor is already set up for another test case");
@@ -200,13 +228,12 @@ ConcolicExecutor::configureExecution(const Database::Ptr &db, const TestCase::Pt
         if (!solver_)
             solver_ = SmtSolver::instance("best");
 
-        partitioner_ = partition(testCase->specimen()); // must live for duration of cpu
+        partitioner_ = partition(testCase->specimen(), architectureName); // must live for duration of cpu
 
         // Create the a new process from the executable.
-        //
-        // FIXME[Robb Matzke 2021-05-25]: This will need to eventually change so that the architecture type (Linux i386 in this
-        // case) is not hard coded.
-        process_ = I386Linux::Architecture::instance(db, testCase, partitioner_);
+        process_ = Architecture::forge(db, testCase, partitioner_, architectureName);
+        if (!process_)
+            throw Exception("unknown architecture \"" + StringUtility::cEscape(architectureName) + "\"");
 
         cpu_ = makeDispatcher(process_);
     }
@@ -280,11 +307,11 @@ ConcolicExecutor::execute() {
 }
 
 std::vector<TestCase::Ptr>
-ConcolicExecutor::execute(const Database::Ptr &db, const TestCase::Ptr &testCase) {
+ConcolicExecutor::execute(const Database::Ptr &db, const TestCase::Ptr &testCase, const std::string &architectureName) {
     ASSERT_not_null(db);
     ASSERT_not_null(testCase);
 
-    configureExecution(db, testCase);
+    configureExecution(db, testCase, architectureName);
     return execute();
 }
 
@@ -852,6 +879,8 @@ RiscOperators::RiscOperators(const Settings &settings, const Database::Ptr &db, 
     (void) SValue::promote(state->protoval());
 }
 
+RiscOperators::~RiscOperators() {}
+
 RiscOperators::Ptr
 RiscOperators::instance(const Settings &settings, const Database::Ptr &db, const TestCase::Ptr &testCase,
                         const P2::Partitioner &partitioner, const Architecture::Ptr &process,
@@ -881,6 +910,26 @@ RiscOperators::promote(const BS::RiscOperators::Ptr &x) {
     return retval;
 }
 
+BS::RiscOperators::Ptr
+RiscOperators::create(const BS::SValue::Ptr&, const SmtSolver::Ptr&) const {
+    ASSERT_not_implemented("[Robb Matzke 2019-09-24]");
+}
+
+BS::RiscOperatorsPtr
+RiscOperators::create(const BS::State::Ptr&, const SmtSolver::Ptr&) const {
+    ASSERT_not_implemented("[Robb Matzke 2019-09-24]");
+}
+
+const RiscOperators::Settings&
+RiscOperators::settings() const {
+    return settings_;
+}
+
+const P2::Partitioner&
+RiscOperators::partitioner() const {
+    return partitioner_;
+}
+
 size_t
 RiscOperators::wordSizeBits() const {
     return partitioner_.instructionProvider().instructionPointerRegister().nBits();
@@ -896,10 +945,45 @@ RiscOperators::database() const {
     return db_;
 }
 
+Architecture::Ptr
+RiscOperators::process() const {
+    return process_;
+}
+
 InputVariables::Ptr
 RiscOperators::inputVariables() const {
     ASSERT_not_null(process_);
     return process_->inputVariables();
+}
+
+bool
+RiscOperators::hadSystemCall() const {
+    return hadSystemCall_;
+}
+
+void
+RiscOperators::hadSystemCall(bool b) {
+    hadSystemCall_ = b;
+}
+
+ExecutionEvent::Ptr
+RiscOperators::hadSharedMemoryAccess() const {
+    return hadSharedMemoryAccess_;
+}
+
+void
+RiscOperators::hadSharedMemoryAccess(const ExecutionEventPtr &e) {
+    hadSharedMemoryAccess_ = e;
+}
+
+bool
+RiscOperators::isRecursive() const {
+    return isRecursive_;
+}
+
+void
+RiscOperators::isRecursive(bool b) {
+    isRecursive_ = b;
 }
 
 RegisterDictionary::Ptr
@@ -938,6 +1022,11 @@ RiscOperators::readRegister(RegisterDescriptor reg, const BS::SValue::Ptr &dfltU
     SymbolicExpression::Ptr concrete = SymbolicExpression::makeIntegerConstant(process_->readRegister(reg));
     dflt->set_expression(concrete);
     return Super::readRegister(reg, dflt);
+}
+
+BS::SValue::Ptr
+RiscOperators::readRegister(RegisterDescriptor reg) {
+    return readRegister(reg, undefined_(reg.nBits()));
 }
 
 BS::SValue::Ptr
@@ -1061,6 +1150,16 @@ RiscOperators::printAssertions(std::ostream &out) const {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Dispatcher
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Dispatcher::Dispatcher(const InstructionSemantics::BaseSemantics::RiscOperators::Ptr &ops)
+    : Super(ops, unwrapEmulationOperators(ops)->wordSizeBits(), unwrapEmulationOperators(ops)->registerDictionary()) {}
+
+Dispatcher::~Dispatcher() {}
+
+Dispatcher::Ptr
+Dispatcher::instance(const InstructionSemantics::BaseSemantics::RiscOperators::Ptr &ops) {
+    return Ptr(new Dispatcher(ops));
+}
 
 
 // class method

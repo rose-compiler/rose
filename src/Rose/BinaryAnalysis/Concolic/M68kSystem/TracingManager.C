@@ -59,7 +59,7 @@ TracingManager::run() {
         // haven't done).
         for (TestCaseId testCaseId: pendingConcolicResults(10 /*arbitrary*/)) {
             TestCase::Ptr testCase = database()->object(testCaseId);
-            std::vector<TestCase::Ptr> newTestCases = concolicExecutor->execute(database(), testCase);
+            std::vector<TestCase::Ptr> newTestCases = concolicExecutor->execute(database(), testCase, "M68kSystem");
             insertConcolicResults(testCase, newTestCases);
         }
     }

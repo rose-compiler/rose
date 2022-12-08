@@ -73,7 +73,7 @@ main(int argc, char *argv[]) {
 
     // Run the concolic executor on the test case
     Concolic::ConcolicExecutor::Ptr executor = Concolic::ConcolicExecutor::instance();
-    executor->execute(db, testCase);
+    executor->execute(db, testCase, "I386Linux");
 }
 
 #else

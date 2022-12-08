@@ -69,7 +69,7 @@ Architecture::configureSystemCalls() {
 
 void
 Architecture::configureSharedMemory() {
-    ASSERT_not_implemented("[Robb Matzke 2022-11-21]");
+    mlog[WARN] <<"M68kSystem::Architecture::configureSharedMemory is not implemented yet\n";
 }
 
 void
