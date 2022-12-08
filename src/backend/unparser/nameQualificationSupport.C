@@ -1904,6 +1904,7 @@ namespace
     std::map<SgNode*,std::string>& res = qualifiedNameMapForMapsOfTypes[key];
 
     // do we see this reference node for the first time?
+    /*
     if (!res.empty())
     {
       const SgTypedefDeclaration* tydcl = isSgTypedefDeclaration(&n);
@@ -1912,6 +1913,7 @@ namespace
                     << ( tydcl ? std::string{tydcl->get_name()} : std::string{} )
                     << std::endl;
     }
+    */
 
     //~ ROSE_ASSERT(res.empty());
     return res;

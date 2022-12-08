@@ -906,7 +906,7 @@ namespace
     {
       SgExpression* res = sg::dispatch(ExprRefMaker{ctx}, dcl);
 
-      logWarn() << "ok1" << std::endl;
+      //logWarn() << "ok1" << std::endl;
       return SG_DEREF(res);
     }
 
@@ -922,7 +922,7 @@ namespace
     {
       if (SgFunctionDeclaration* fundcl = disambiguateOperators(overloadSet, suppl))
       {
-        logWarn() << "ok2" << std::endl;
+        //~ logWarn() << "ok2" << std::endl;
         return SG_DEREF(sb::buildFunctionRefExp(fundcl));
       }
     }
@@ -935,7 +935,7 @@ namespace
     // try to generate the operator
     if (SgExpression* res = generateOperator(fnname, expr, suppl, ctx))
     {
-      logWarn() << "ok3" << std::endl;
+      //~ logWarn() << "ok3" << std::endl;
       return *res;
     }
 
