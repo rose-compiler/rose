@@ -5,7 +5,6 @@
 #include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
 
 #include <Rose/BinaryAnalysis/BasicTypes.h>
-#include <Rose/BinaryAnalysis/Concolic/I386Linux/Architecture.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherX86.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
@@ -78,6 +77,8 @@ protected:
     /** Allocating constructor. */
     RiscOperators(const Settings&, const DatabasePtr&, const TestCasePtr&, const Partitioner2::Partitioner&,
                   const ArchitecturePtr&, const InstructionSemantics::BaseSemantics::StatePtr&, const SmtSolverPtr&);
+public:
+    ~RiscOperators();
 
 public:
     /** Allocating constructor. */
@@ -92,27 +93,19 @@ public:
     // Overrides documented in base class
     virtual InstructionSemantics::BaseSemantics::RiscOperatorsPtr
     create(const InstructionSemantics::BaseSemantics::SValuePtr &/*protoval*/,
-           const SmtSolverPtr& = SmtSolverPtr()) const override {
-        ASSERT_not_implemented("[Robb Matzke 2019-09-24]");
-    }
+           const SmtSolverPtr& = SmtSolverPtr()) const override;
     virtual InstructionSemantics::BaseSemantics::RiscOperatorsPtr
     create(const InstructionSemantics::BaseSemantics::StatePtr &/*state*/,
-           const SmtSolverPtr& = SmtSolverPtr()) const override {
-        ASSERT_not_implemented("[Robb Matzke 2019-09-24]");
-    }
+           const SmtSolverPtr& = SmtSolverPtr()) const override;
 
 public:
     /** Property: Settings.
      *
      *  The settings are read-only, set when this object was created. */
-    const Settings& settings() const {
-        return settings_;
-    }
+    const Settings& settings() const;
 
     /** Property: Partitioner. */
-    const Partitioner2::Partitioner& partitioner() const {
-        return partitioner_;
-    }
+    const Partitioner2::Partitioner& partitioner() const;
 
     /** Property: Test case. */
     TestCasePtr testCase() const;
@@ -121,9 +114,7 @@ public:
     DatabasePtr database() const;
 
     /** Property: Concrete half of the concolic executor semantics. */
-    ArchitecturePtr process() const {
-        return process_;
-    }
+    ArchitecturePtr process() const;
 
     /** Property: Input variables.
      *
@@ -140,12 +131,8 @@ public:
      *  namely stepping into the system call but not yet performing it.
      *
      * @{ */
-    bool hadSystemCall() const {
-        return hadSystemCall_;
-    }
-    void hadSystemCall(bool b) {
-        hadSystemCall_ = b;
-    }
+    bool hadSystemCall() const;
+    void hadSystemCall(bool);
     /** @} */
 
     /** Property: Had a shared memory access.
@@ -154,12 +141,8 @@ public:
      *  shared memory.
      *
      * @{ */
-    ExecutionEventPtr hadSharedMemoryAccess() const {
-        return hadSharedMemoryAccess_;
-    }
-    void hadSharedMemoryAccess(const ExecutionEventPtr &e) {
-        hadSharedMemoryAccess_ = e;
-    }
+    ExecutionEventPtr hadSharedMemoryAccess() const;
+    void hadSharedMemoryAccess(const ExecutionEventPtr&);
     /** @} */
 
     /** Property: Recursive calls through user code.
@@ -168,12 +151,8 @@ public:
      *  when the user code returns. If the test is true, then the user code is skipped.
      *
      * @{ */
-    bool isRecursive() const {
-        return isRecursive_;
-    }
-    void isRecursive(bool b) {
-        isRecursive_ = b;
-    }
+    bool isRecursive() const;
+    void isRecursive(bool);
     /** @} */
 
     /** Number of bits in a word.
@@ -216,9 +195,7 @@ public:
     readRegister(RegisterDescriptor reg, const InstructionSemantics::BaseSemantics::SValuePtr &dflt) override;
 
     virtual InstructionSemantics::BaseSemantics::SValuePtr
-    readRegister(RegisterDescriptor reg) override {
-        return readRegister(reg, undefined_(reg.nBits()));
-    }
+    readRegister(RegisterDescriptor reg) override;
 
     virtual InstructionSemantics::BaseSemantics::SValuePtr
     peekRegister(RegisterDescriptor reg, const InstructionSemantics::BaseSemantics::SValuePtr &dflt) override;
@@ -244,20 +221,21 @@ typedef boost::shared_ptr<class Dispatcher> DispatcherPtr;
 
 /** CPU for concolic emulation. */
 class Dispatcher: public InstructionSemantics::DispatcherX86 {
-    typedef InstructionSemantics::DispatcherX86 Super;
+    using Super = InstructionSemantics::DispatcherX86;
+
 public:
+    /** Shared ownership pointer. */
     using Ptr = boost::shared_ptr<Dispatcher>;
 
 protected:
     /** Constructor. */
-    explicit Dispatcher(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr &ops)
-        : Super(ops, unwrapEmulationOperators(ops)->wordSizeBits(), unwrapEmulationOperators(ops)->registerDictionary()) {}
+    explicit Dispatcher(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&);
+public:
+    ~Dispatcher();
 
 public:
     /** Allocating constructor. */
-    static DispatcherPtr instance(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr &ops) {
-        return DispatcherPtr(new Dispatcher(ops));
-    }
+    static DispatcherPtr instance(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&);
 
 public:
     /** Concrete instruction pointer. */
@@ -363,8 +341,8 @@ public:
      *  Thread safety: Not thread safe.
      *
      * @{ */
-    const Settings& settings() const { return settings_; }
-    Settings& settings() { return settings_; }
+    const Settings& settings() const;
+    Settings& settings();
     /** @} */
 
     /** Property: SMT solver to use during execution.
@@ -434,23 +412,24 @@ public:
     /** Called before execution starts.
      *
      *  This can be called by the user, or is called automatically by @ref execute. Calling it separately allows the user
-     *  to make some adjustments before execution starts, such as registering various callbacks. */
-    void configureExecution(const DatabasePtr&, const TestCasePtr&);
+     *  to make some adjustments before execution starts, such as registering various callbacks. The @p architectureName
+     *  must be a valid name for an architecture factory. */
+    void configureExecution(const DatabasePtr&, const TestCasePtr&, const std::string &architectureName);
 
     /** Execute the test case.
      *
      *  Executes the test case to produce new test cases. If you've alreay called @ref configureExecution, then you don't
-     *  need to pass the database and test case again (if you do, they better be the same as before).
+     *  need to pass the database, test case, or architecture name again (if you do, they better be the same as before).
      *
      * @{ */
     std::vector<TestCasePtr> execute();
-    std::vector<TestCasePtr> execute(const DatabasePtr&, const TestCasePtr&);
+    std::vector<TestCasePtr> execute(const DatabasePtr&, const TestCasePtr&, const std::string &architectureName);
     /** @} */
 
 private:
     // Disassemble the specimen and cache the result in the database. If the specimen has previously been disassembled
     // then reconstitute the analysis results from the database.
-    Partitioner2::Partitioner partition(const SpecimenPtr&);
+    Partitioner2::Partitioner partition(const SpecimenPtr&, const std::string &architectureName);
 
     // Create the dispatcher, operators, and memory and register state for the symbolic execution.
     Emulation::DispatcherPtr makeDispatcher(const ArchitecturePtr&);
