@@ -2316,8 +2316,8 @@ mkAdaInheritedFunctionSymbol(SgFunctionDeclaration& fn, SgType& derivedType, SgS
   {
     // \todo in a first step, just report the errors in the log.
     //       => fix this issues for all ROSE and ACATS tests.
-    logError() << "Inherited subroutine w/o type modification: " << fn.get_name()
-               << std::endl;
+    logWarn() << "Inherited subroutine w/o type modification: " << fn.get_name()
+              << std::endl;
   }
 
   SgAdaInheritedFunctionSymbol& sgnode = mkBareNode<SgAdaInheritedFunctionSymbol>(&fn, &dervty);

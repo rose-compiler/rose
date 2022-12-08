@@ -48,7 +48,7 @@ ada_to_ROSE_translation(Nodes_Struct& head_nodes, SgSourceFile* file)
            if (!emplaced.second)
            {
              // element was already inserted
-             logError() << "ERROR: element_id = " << element_id << " already processed (skipping additional instance) \n";
+             logWarn() << "ERROR: element_id = " << element_id << " already processed (skipping additional instance) \n";
            }
 
            current_element = current_element->Next;

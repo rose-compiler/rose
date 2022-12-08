@@ -3664,7 +3664,10 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         recordNode(asisDecls(), elem.ID, sgnode);
         recordNode(asisDecls(), adaname.id(), sgnode);
 
-        privatize(fundec, isPrivate);
+        // should private be set on the generic or on the proc?
+        //~ privatize(fundec, isPrivate);
+        privatize(sgnode, isPrivate);
+
         attachSourceLocation(fundec, elem, ctx);
         attachSourceLocation(sgnode, elem, ctx);
         attachSourceLocation(gen_defn, elem, ctx);

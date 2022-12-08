@@ -1085,6 +1085,11 @@ namespace Ada
       }
     };
 
+    bool fromRootType(SgAdaSubtype* ty)
+    {
+      return ty && ty->get_fromRootType();
+    }
+
     struct RootTypeFinder : sg::DispatchHandler<SgType*>
     {
       void handle(SgNode& n)              { SG_UNEXPECTED_NODE(n); }
@@ -1163,18 +1168,40 @@ namespace Ada
 
 
       // pointer types
+      void handle(SgTypeNullptr& n)       { res = pointerType(); }
       void handle(SgPointerType& n)       { res = pointerType(); } // \todo should not be in Ada
       void handle(SgAdaAccessType& n)     { res = pointerType(); }
-      void handle(SgTypeNullptr& n)       { res = pointerType(); }
+
 
       // \todo add string types as introduced by initializeStandardPackage in AdaType.C
       // \todo add other fundamental types as introduced by initializeStandardPackage in AdaType.C
 
       // all type indirections that do not define fundamental types
-      void handle(SgTypedefType& n)       { res = &find(n.get_base_type()); }
       void handle(SgModifierType& n)      { res = &find(n.get_base_type()); }
       void handle(SgAdaSubtype& n)        { res = &find(n.get_base_type()); }
       void handle(SgAdaDerivedType& n)    { res = &find(n.get_base_type()); }
+
+
+      void handle(SgTypedefType& n)
+      {
+        // section coped from DeclScopeFinder
+        // \todo factor out common code into a function
+        SgTypedefDeclaration* dcl    = isSgTypedefDeclaration(n.get_declaration());
+        ASSERT_not_null(dcl);
+        SgTypedefDeclaration* defdcl = isSgTypedefDeclaration(dcl->get_definingDeclaration());
+
+        if (defdcl != nullptr) dcl = defdcl;
+
+        SgType*    basety      = dcl->get_base_type();
+
+        const bool useThisDecl = (  isSgAdaDerivedType(basety)
+                                 || isSgAdaAccessType(basety)
+                                 || fromRootType(isSgAdaSubtype(basety))
+                                 );
+
+        // end copied code
+        res = useThisDecl ? &n : &find(basety);
+      }
 
       void handle(SgAdaDiscriminatedType& n)
       {
@@ -1198,11 +1225,6 @@ namespace Ada
       SgType* res = sg::dispatch(RootTypeFinder{}, ty);
 
       return SG_DEREF(res);
-    }
-
-    bool fromRootType(SgAdaSubtype* ty)
-    {
-      return ty && ty->get_fromRootType();
     }
 
     struct DeclScopeFinder : sg::DispatchHandler<SgScopeStatement*>
