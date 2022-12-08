@@ -217,25 +217,26 @@ public:
 };
 
 /**< Pointer to virtual CPU. */
-typedef boost::shared_ptr<class Dispatcher> DispatcherPtr;
+using DispatcherPtr = Sawyer::SharedPointer<class Dispatcher>;
 
-/** CPU for concolic emulation. */
-class Dispatcher: public InstructionSemantics::DispatcherX86 {
-    using Super = InstructionSemantics::DispatcherX86;
-
+class Dispatcher: public Sawyer::SharedObject {
 public:
-    /** Shared ownership pointer. */
-    using Ptr = boost::shared_ptr<Dispatcher>;
+    using Ptr = DispatcherPtr;
+
+private:
+    InstructionSemantics::BaseSemantics::DispatcherPtr inner_;
 
 protected:
-    /** Constructor. */
     explicit Dispatcher(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&);
 public:
     ~Dispatcher();
 
 public:
-    /** Allocating constructor. */
-    static DispatcherPtr instance(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&);
+    static Ptr instance(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&);
+
+public:
+    // These functions are similar to InstructionSemantics::BaseSemantics::Dispatcher
+    InstructionSemantics::BaseSemantics::RiscOperators::Ptr operators() const;
 
 public:
     /** Concrete instruction pointer. */
@@ -256,12 +257,11 @@ public:
     /** Unrwap the RISC operators if tracing is enabled. */
     static RiscOperatorsPtr unwrapEmulationOperators(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&);
 
+    /** Process one instruction concretely and symbolically. */
+    virtual void processInstruction(SgAsmInstruction*);
+
     /** The concrete half of processInstruction. */
     void processConcreteInstruction(SgAsmInstruction*);
-
-public:
-    // overrides
-    virtual void processInstruction(SgAsmInstruction*) override;
 };
 
 } // namespace

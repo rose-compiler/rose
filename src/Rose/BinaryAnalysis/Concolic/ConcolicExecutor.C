@@ -1151,8 +1151,12 @@ RiscOperators::printAssertions(std::ostream &out) const {
 // Dispatcher
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Dispatcher::Dispatcher(const InstructionSemantics::BaseSemantics::RiscOperators::Ptr &ops)
-    : Super(ops, unwrapEmulationOperators(ops)->wordSizeBits(), unwrapEmulationOperators(ops)->registerDictionary()) {}
+Dispatcher::Dispatcher(const InstructionSemantics::BaseSemantics::RiscOperators::Ptr &ops) {
+    ASSERT_not_null(ops);
+    inner_ = IS::DispatcherX86::instance(ops,
+                                         unwrapEmulationOperators(ops)->wordSizeBits(),
+                                         unwrapEmulationOperators(ops)->registerDictionary());
+}
 
 Dispatcher::~Dispatcher() {}
 
@@ -1161,6 +1165,11 @@ Dispatcher::instance(const InstructionSemantics::BaseSemantics::RiscOperators::P
     return Ptr(new Dispatcher(ops));
 }
 
+BS::RiscOperators::Ptr
+Dispatcher::operators() const {
+    ASSERT_not_null(inner_);
+    return inner_->operators();
+}
 
 // class method
 RiscOperators::Ptr
@@ -1189,6 +1198,7 @@ Dispatcher::processConcreteInstruction(SgAsmInstruction *insn) {
 void
 Dispatcher::processInstruction(SgAsmInstruction *insn) {
     ASSERT_not_null(insn);
+    ASSERT_not_null(inner_);
 
     // We do things this way so as to not interfere with debugging exceptions. We don't want to catch and re-throw.
     BOOST_SCOPE_EXIT(this_, insn) {
@@ -1199,7 +1209,7 @@ Dispatcher::processInstruction(SgAsmInstruction *insn) {
     Emulation::RiscOperators::Ptr ops = emulationOperators();
     SAWYER_MESG_OR(mlog[TRACE], mlog[DEBUG]) <<"executing insn #" <<ops->process()->currentLocation().primary()
                                              <<" " <<ops->partitioner().unparse(insn) <<"\n";
-    Super::processInstruction(insn);
+    inner_->processInstruction(insn);
 }
 
 bool
