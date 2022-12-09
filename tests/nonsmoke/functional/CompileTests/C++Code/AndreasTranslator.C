@@ -162,8 +162,8 @@ int main ( int argc, char** argv)
 
 	bool debug = false;
         if (debug == true){
-		AstPDFGeneration pdfOut;
-		pdfOut.generateInputFiles( project );
+//		AstPDFGeneration pdfOut;
+//		pdfOut.generateInputFiles( project );
 		AstDOTGeneration dotOut;
 		dotOut.generateInputFiles( project, AstDOTGeneration::PREORDER );
         }

@@ -62,9 +62,9 @@ main ( int argc, char* argv[] )
   AST_FILE_IO::clearAllMemoryPools();
   SgProject * proj2 = (SgProject*) (AST_FILE_IO::readASTFromFile("input.perf.bin"));
   // verify result
-  cerr << "[Dumping to PDF...]" << endl;
-  AstPDFGeneration pdf;
-  pdf.generateInputFiles (proj2);
+//  cerr << "[Dumping to PDF...]" << endl;
+//  AstPDFGeneration pdf;
+//  pdf.generateInputFiles (proj2);
 
   return 0;
 }

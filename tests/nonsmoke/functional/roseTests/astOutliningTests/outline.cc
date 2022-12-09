@@ -106,8 +106,8 @@ makePDF_SgFile (const SgFile* f, string fn_prefix)
   ROSE_ASSERT (f);
 
   string filename = fn_prefix + f->get_sourceFileNameWithoutPath ();
-  AstPDFGeneration pdf_gen;
-  pdf_gen.generateWithinFile (filename, const_cast<SgFile *> (f));
+//  AstPDFGeneration pdf_gen;
+//  pdf_gen.generateWithinFile (filename, const_cast<SgFile *> (f));
 }
 
 static

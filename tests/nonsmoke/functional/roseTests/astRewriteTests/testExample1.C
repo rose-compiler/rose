@@ -156,8 +156,8 @@ main( int argc, char * argv[] )
      cout << "EDG/SAGE Processing DONE! (manipulate with ROSE ...) " << endl;
 
   // Output the source code file (as represented by the SAGE AST) as a PDF file (with bookmarks)
-     AstPDFGeneration pdftest;
-     pdftest.generateInputFiles(sageProject);
+//     AstPDFGeneration pdftest;
+//     pdftest.generateInputFiles(sageProject);
 
   // Build the inherited attribute
   // MyInheritedAttribute inheritedAttribute (sageProject);

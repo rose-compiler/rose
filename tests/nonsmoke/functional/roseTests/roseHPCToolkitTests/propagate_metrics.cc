@@ -65,9 +65,9 @@ main ( int argc, char* argv[] )
   RoseHPCT::Vis_PreOrder preVis(&vis);
   proj->accept(preVis);
 
-  cerr << "[Dumping to PDF...]" << endl;
-  AstPDFGeneration pdf;
-  pdf.generateInputFiles (proj);
+//  cerr << "[Dumping to PDF...]" << endl;
+//  AstPDFGeneration pdf;
+//  pdf.generateInputFiles (proj);
 
   return 0;
 }

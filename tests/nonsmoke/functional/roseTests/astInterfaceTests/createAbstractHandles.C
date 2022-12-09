@@ -7,7 +7,6 @@ by Liao, 3/6/2014
 #include "rose.h"
 #include <string>
 #include <iostream>
-#include "AstPDFGeneration.h"
 
 using namespace std;
 using namespace AbstractHandle;
@@ -60,11 +59,6 @@ void visitorTraversal::visit(SgNode* n)
 int main(int argc, char * argv[])
 {
   SgProject *project = frontend (argc, argv);
-
-  cout << "[Dumping input file's AST to a PDF for debugging ...]" << endl;
-  AstPDFGeneration pdf;
-//  pdf.generate(project); // takes forever
-  pdf.generateInputFiles(project);
 
   //Generate a file handle
 #if 0
