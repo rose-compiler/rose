@@ -8,6 +8,8 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherAarch32.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 
+#include <SageBuilderAsm.h>
+
 using namespace Rose::Diagnostics;
 
 namespace Rose {

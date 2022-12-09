@@ -1,15 +1,17 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
-
-#include "AsmUnparser_compat.h"
-#include <Rose/Diagnostics.h>
-
-#include <Rose/BitOps.h>
-#include <boost/format.hpp>
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesX86.h>
+
+#include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Utility.h>
+#include <Rose/BitOps.h>
+#include <Rose/Diagnostics.h>
+
+#include "AsmUnparser_compat.h"
+
+#include <boost/format.hpp>
 #include <stringify.h>
 
 using namespace Rose::Diagnostics;
@@ -18,6 +20,20 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 namespace ModulesX86 {
+
+MatchStandardPrologue::MatchStandardPrologue() {}
+
+MatchStandardPrologue::~MatchStandardPrologue() {}
+
+MatchStandardPrologue::Ptr
+MatchStandardPrologue::instance() {
+    return Ptr(new MatchStandardPrologue);
+}
+
+std::vector<Function::Ptr>
+MatchStandardPrologue::functions() const {
+    return std::vector<Function::Ptr>(1, function_);
+}
 
 bool
 MatchStandardPrologue::match(const Partitioner::ConstPtr &partitioner, rose_addr_t anchor) {
@@ -64,6 +80,20 @@ MatchHotPatchPrologue::match(const Partitioner::ConstPtr &partitioner, rose_addr
     function_ = Function::instance(anchor, SgAsmFunction::FUNC_PATTERN);
     function_->reasonComment("matched MOV <di>, <di>; PUSH <bp>; MOV <bp>, <sp>");
     return true;
+}
+
+MatchAbbreviatedPrologue::MatchAbbreviatedPrologue() {}
+
+MatchAbbreviatedPrologue::~MatchAbbreviatedPrologue() {}
+
+MatchAbbreviatedPrologue::Ptr
+MatchAbbreviatedPrologue::instance() {
+    return Ptr(new MatchAbbreviatedPrologue);
+}
+
+std::vector<Function::Ptr>
+MatchAbbreviatedPrologue::functions() const {
+    return std::vector<Function::Ptr>(1, function_);
 }
 
 // Example function pattern matcher: matches x86 "MOV EDI, EDI; PUSH ESI" as a function prologue.

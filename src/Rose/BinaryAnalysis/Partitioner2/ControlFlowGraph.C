@@ -2,7 +2,9 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
+#include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ControlFlowGraph.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Sawyer/GraphTraversal.h>
 
@@ -34,6 +36,44 @@ CfgAdjustmentCallback::DetachedBasicBlock::~DetachedBasicBlock() {}
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // CfgVertex
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+CfgVertex::CfgVertex()
+    : type_(V_USER_DEFINED), startVa_(0) {}
+
+CfgVertex::~CfgVertex() {}
+
+CfgVertex::CfgVertex(rose_addr_t startVa)
+    : type_(V_BASIC_BLOCK), startVa_(startVa) {}
+
+CfgVertex::CfgVertex(const BasicBlock::Ptr &bb)
+    : type_(V_BASIC_BLOCK), bblock_(bb) {
+    ASSERT_not_null(bb);
+    startVa_ = bb->address();
+}
+
+CfgVertex::CfgVertex(VertexType type)
+    : type_(type), startVa_(0) {
+    ASSERT_forbid2(type==V_BASIC_BLOCK, "this constructor does not create basic block or placeholder vertices");
+}
+
+VertexType
+CfgVertex::type() const {
+    return type_;
+}
+
+rose_addr_t
+CfgVertex::address() const {
+    ASSERT_require(V_BASIC_BLOCK==type_ || V_USER_DEFINED==type_ || V_NONEXISTING==type_);
+    return startVa_;
+}
+
+void
+CfgVertex::address(rose_addr_t va) {
+    ASSERT_require(V_BASIC_BLOCK==type_ || V_USER_DEFINED==type_ || V_NONEXISTING==type_);
+    startVa_ = va;
+}
+
+
 
 AddressIntervalSet
 CfgVertex::addresses() const {
@@ -84,6 +124,51 @@ CfgVertex::optionalLastAddress() const {
     }
 }
 
+const BasicBlock::Ptr&
+CfgVertex::bblock() const {
+    return bblock_;
+}
+
+void
+CfgVertex::bblock(const BasicBlock::Ptr &bb) {
+    ASSERT_require(V_BASIC_BLOCK == type_ || V_USER_DEFINED == type_);
+    bblock_ = bb;
+}
+
+bool
+CfgVertex::insertOwningFunction(const Function::Ptr &function) {
+    ASSERT_require(V_BASIC_BLOCK == type_ || V_USER_DEFINED == type_ || V_NONEXISTING == type_);
+    ASSERT_not_null(function);
+    return owningFunctions_.insert(function);
+}
+
+void
+CfgVertex::eraseOwningFunction(const Function::Ptr &function) {
+    ASSERT_require(V_BASIC_BLOCK == type_ || V_USER_DEFINED == type_ || V_NONEXISTING == type_);
+    if (function != NULL)
+        owningFunctions_.erase(function);
+}
+
+bool
+CfgVertex::isOwningFunction(const Function::Ptr &function) const {
+    return owningFunctions_.exists(function);
+}
+
+size_t
+CfgVertex::nOwningFunctions() const {
+    return owningFunctions_.size();
+}
+
+const FunctionSet&
+CfgVertex::owningFunctions() const {
+    return owningFunctions_;
+}
+
+FunctionSet&
+CfgVertex::owningFunctions() {
+    return owningFunctions_;
+}
+
 Function::Ptr
 CfgVertex::isEntryBlock() const {
     Function::Ptr retval;
@@ -104,6 +189,40 @@ CfgVertex::isEntryBlock() const {
     }
     return retval;
 }
+
+void
+CfgVertex::nullify() {
+    ASSERT_require(V_BASIC_BLOCK == type_);
+    bblock_ = BasicBlockPtr();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// CfgEdge
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+CfgEdge::~CfgEdge() {}
+
+CfgEdge::CfgEdge()
+    : type_(E_NORMAL), confidence_(ASSUMED) {}
+
+CfgEdge::CfgEdge(EdgeType type, Confidence confidence)
+    : type_(type), confidence_(confidence) {}
+
+EdgeType
+CfgEdge::type() const {
+    return type_;
+}
+
+Confidence
+CfgEdge::confidence() const {
+    return confidence_;
+}
+
+void
+CfgEdge::confidence(Confidence c) {
+    confidence_ = c;
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Free functions

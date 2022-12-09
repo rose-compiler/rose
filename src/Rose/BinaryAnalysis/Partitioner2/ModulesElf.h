@@ -22,17 +22,17 @@ namespace ModulesElf {
  *  functions at unique starting addresses.  The functions are not attached to the CFG/AUM.
  *
  * @{ */
-std::vector<Function::Ptr> findErrorHandlingFunctions(SgAsmElfFileHeader*);
-std::vector<Function::Ptr> findErrorHandlingFunctions(SgAsmInterpretation*);
-size_t findErrorHandlingFunctions(SgAsmElfFileHeader*, std::vector<Function::Ptr>&);
+std::vector<FunctionPtr> findErrorHandlingFunctions(SgAsmElfFileHeader*);
+std::vector<FunctionPtr> findErrorHandlingFunctions(SgAsmInterpretation*);
+size_t findErrorHandlingFunctions(SgAsmElfFileHeader*, std::vector<FunctionPtr>&);
 /** @} */
 
 /** Reads ELF PLT sections and returns a list of functions.
  *
  * @{ */
-std::vector<Function::Ptr> findPltFunctions(const PartitionerPtr&, SgAsmElfFileHeader*);
-std::vector<Function::Ptr> findPltFunctions(const PartitionerPtr&, SgAsmInterpretation*);
-size_t findPltFunctions(const PartitionerPtr&, SgAsmElfFileHeader*, std::vector<Function::Ptr>&);
+std::vector<FunctionPtr> findPltFunctions(const PartitionerPtr&, SgAsmElfFileHeader*);
+std::vector<FunctionPtr> findPltFunctions(const PartitionerPtr&, SgAsmInterpretation*);
+size_t findPltFunctions(const PartitionerPtr&, SgAsmElfFileHeader*, std::vector<FunctionPtr>&);
 /** @} */
 
 /** Information about the procedure lookup table. */
@@ -57,18 +57,18 @@ std::vector<SgAsmElfSection*> findSectionsByName(SgAsmInterpretation*, const std
  *
  *  True if the specified function is an import, whether it's actually been linked in or not. This is a weaker version of @ref
  *  isLinkedImport. */
-bool isImport(const PartitionerConstPtr&, const Function::Ptr&);
+bool isImport(const PartitionerConstPtr&, const FunctionPtr&);
 
 /** True if function is a linked import.
  *
  *  Returns true if the specified function is an import which has been linked to an actual function. This is a stronger version
  *  of @ref isImport. */
-bool isLinkedImport(const PartitionerConstPtr&, const Function::Ptr&);
+bool isLinkedImport(const PartitionerConstPtr&, const FunctionPtr&);
 
 /** True if function is a non-linked import.
  *
  *  Returns true if the specified function is an import function but has not been linked in yet. */
-bool isUnlinkedImport(const PartitionerConstPtr&, const Function::Ptr&);
+bool isUnlinkedImport(const PartitionerConstPtr&, const FunctionPtr&);
 
 /** True if named file is an ELF object file.
  *

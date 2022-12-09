@@ -2,19 +2,15 @@
 #define ROSE_BinaryAnalysis_Partitioner2_Engine_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
+#include <Rose/BasicTypes.h>
 
-#include <Rose/BinaryAnalysis/BinaryLoader.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Exception.h>
+#include <Rose/BinaryAnalysis/Partitioner2/ModulesLinux.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Utility.h>
 #include <Rose/BinaryAnalysis/SerialIo.h>
+
 #include <boost/noncopyable.hpp>
 #include <boost/regex.hpp>
-#include <Rose/BinaryAnalysis/Disassembler/BasicTypes.h>
-#include <Rose/FileSystem.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Function.h>
-#include <Rose/BinaryAnalysis/Partitioner2/ModulesLinux.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Thunk.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Utility.h>
-#include <Rose/Progress.h>
-#include <Rose/Exception.h>
 #include <Sawyer/DistinctList.h>
 #include <stdexcept>
 
@@ -132,10 +128,10 @@ public:
     };
 
     /** Errors from the engine. */
-    class Exception: public Rose::Exception {
+    class Exception: public Partitioner2::Exception {
     public:
         Exception(const std::string &mesg)
-            : Rose::Exception(mesg) {}
+            : Partitioner2::Exception(mesg) {}
         ~Exception() throw () {}
     };
 
@@ -234,15 +230,15 @@ private:
 private:
     Settings settings_;                                 // Settings for the partitioner.
     SgAsmInterpretation *interp_;                       // interpretation set by loadSpecimen
-    BinaryLoader::Ptr binaryLoader_;                    // how to remap, link, and fixup
+    BinaryLoaderPtr binaryLoader_;                      // how to remap, link, and fixup
     Disassembler::BasePtr disassembler_;                // not ref-counted yet, but don't destroy it since user owns it
-    MemoryMap::Ptr map_;                                // memory map initialized by load()
+    MemoryMapPtr map_;                                  // memory map initialized by load()
     BasicBlockWorkList::Ptr basicBlockWorkList_;        // what blocks to work on next
     CodeConstants::Ptr codeFunctionPointers_;           // generates constants that are found in instruction ASTs
-    Progress::Ptr progress_;                            // optional progress reporting
+    ProgressPtr progress_;                              // optional progress reporting
     ModulesLinux::LibcStartMain::Ptr libcStartMain_;    // looking for "main" by analyzing libc_start_main?
-    ThunkPredicates::Ptr functionMatcherThunks_;        // predicates to find thunks when looking for functions
-    ThunkPredicates::Ptr functionSplittingThunks_;      // predicates for splitting thunks from front of functions
+    ThunkPredicatesPtr functionMatcherThunks_;          // predicates to find thunks when looking for functions
+    ThunkPredicatesPtr functionSplittingThunks_;        // predicates for splitting thunks from front of functions
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Constructors
@@ -258,10 +254,10 @@ public:
     virtual ~Engine();
 
     /** Factory method returning an Engine instance of type EngineBinary. */
-    static Engine *instance() { return new Engine(Settings{}); };
+    static Engine* instance();
 
     /** Factory method returning an Engine instance of type based on settings. */
-    static Engine *instance(const Settings &settings) { return new Engine(settings); };
+    static Engine* instance(const Settings&);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  The very top-level use case
@@ -383,8 +379,8 @@ public:
      *  its text is emitted to the partitioner's fatal error stream, and <code>exit(1)</code> is invoked.
      *
      * @{ */
-    virtual MemoryMap::Ptr loadSpecimens(const std::vector<std::string> &fileNames = std::vector<std::string>());
-    MemoryMap::Ptr loadSpecimens(const std::string &fileName) /*final*/;
+    virtual MemoryMapPtr loadSpecimens(const std::vector<std::string> &fileNames = std::vector<std::string>());
+    MemoryMapPtr loadSpecimens(const std::string &fileName) /*final*/;
     /** @} */
 
     /** Partition instructions into basic blocks and functions.
@@ -563,7 +559,7 @@ public:
      *  @li Fail by throwing an <code>std::runtime_error</code>.
      *
      *  In any case, the @ref binaryLoader property is set to this method's return value. */
-    virtual BinaryLoader::Ptr obtainLoader(const BinaryLoader::Ptr &hint = BinaryLoader::Ptr());
+    virtual BinaryLoaderPtr obtainLoader(const BinaryLoaderPtr &hint = BinaryLoaderPtr());
 
     /** Loads memory from binary containers.
      *
@@ -591,8 +587,8 @@ public:
      *  itself.  See @ref loadSpecimens.
      *
      * @{ */
-    MemoryMap::Ptr memoryMap() const /*final*/ { return map_; }
-    virtual void memoryMap(const MemoryMap::Ptr &m) { map_ = m; }
+    MemoryMapPtr memoryMap() const /*final*/;
+    virtual void memoryMap(const MemoryMapPtr&);
     /** @} */
 
 
@@ -707,12 +703,12 @@ public:
     /** Make data blocks based on configuration.
      *
      *  NOTE: for now, all this does is label the datablock addresses. FIXME[Robb P. Matzke 2015-05-12] */
-    virtual std::vector<DataBlock::Ptr> makeConfiguredDataBlocks(const PartitionerPtr&, const Configuration&);
+    virtual std::vector<DataBlockPtr> makeConfiguredDataBlocks(const PartitionerPtr&, const Configuration&);
 
     /** Make functions based on configuration information.
      *
      *  Uses the supplied function configuration information to make functions. */
-    virtual std::vector<Function::Ptr> makeConfiguredFunctions(const PartitionerPtr&, const Configuration&);
+    virtual std::vector<FunctionPtr> makeConfiguredFunctions(const PartitionerPtr&, const Configuration&);
 
     /** Make functions at specimen entry addresses.
      *
@@ -720,7 +716,7 @@ public:
      *  the specified partitioner's CFG/AUM.
      *
      *  Returns a list of such functions, some of which may have existed prior to this call. */
-    virtual std::vector<Function::Ptr> makeEntryFunctions(const PartitionerPtr&, SgAsmInterpretation*);
+    virtual std::vector<FunctionPtr> makeEntryFunctions(const PartitionerPtr&, SgAsmInterpretation*);
 
     /** Make functions at error handling addresses.
      *
@@ -728,7 +724,7 @@ public:
      *  specified partitioner's CFG/AUM.
      *
      *  Returns the list of such functions, some of which may have existed prior to this call. */
-    virtual std::vector<Function::Ptr> makeErrorHandlingFunctions(const PartitionerPtr&, SgAsmInterpretation*);
+    virtual std::vector<FunctionPtr> makeErrorHandlingFunctions(const PartitionerPtr&, SgAsmInterpretation*);
 
     /** Make functions at import trampolines.
      *
@@ -739,7 +735,7 @@ public:
      *  been performed.
      *
      *  Returns a list of such functions, some of which may have existed prior to this call. */
-    virtual std::vector<Function::Ptr> makeImportFunctions(const PartitionerPtr&, SgAsmInterpretation*);
+    virtual std::vector<FunctionPtr> makeImportFunctions(const PartitionerPtr&, SgAsmInterpretation*);
 
     /** Make functions at export addresses.
      *
@@ -747,7 +743,7 @@ public:
      *  partitioner's CFG/AUM.
      *
      *  Returns a list of such functions, some of which may have existed prior to this call. */
-    virtual std::vector<Function::Ptr> makeExportFunctions(const PartitionerPtr&, SgAsmInterpretation*);
+    virtual std::vector<FunctionPtr> makeExportFunctions(const PartitionerPtr&, SgAsmInterpretation*);
 
     /** Make functions for symbols.
      *
@@ -755,7 +751,7 @@ public:
      *  them into the specified partitioner's CFG/AUM.
      *
      *  Returns a list of such functions, some of which may have existed prior to this call. */
-    virtual std::vector<Function::Ptr> makeSymbolFunctions(const PartitionerPtr&, SgAsmInterpretation*);
+    virtual std::vector<FunctionPtr> makeSymbolFunctions(const PartitionerPtr&, SgAsmInterpretation*);
 
     /** Make functions based on specimen container.
      *
@@ -764,7 +760,7 @@ public:
      *  calls many of the other "make*Functions" methods and accumulates their results.
      *
      *  Returns a list of such functions, some of which may have existed prior to this call. */
-    virtual std::vector<Function::Ptr> makeContainerFunctions(const PartitionerPtr&, SgAsmInterpretation*);
+    virtual std::vector<FunctionPtr> makeContainerFunctions(const PartitionerPtr&, SgAsmInterpretation*);
 
     /** Make functions from an interrupt vector.
      *
@@ -772,13 +768,13 @@ public:
      *  CFG/AUM.
      *
      *  Returns the list of such functions, some of which may have existed prior to this call. */
-    virtual std::vector<Function::Ptr> makeInterruptVectorFunctions(const PartitionerPtr&, const AddressInterval &vector);
+    virtual std::vector<FunctionPtr> makeInterruptVectorFunctions(const PartitionerPtr&, const AddressInterval &vector);
 
     /** Make a function at each specified address.
      *
      *  A function is created at each address and is attached to the partitioner's CFG/AUM. Returns a list of such functions,
      *  some of which may have existed prior to this call. */
-    virtual std::vector<Function::Ptr> makeUserFunctions(const PartitionerPtr&, const std::vector<rose_addr_t>&);
+    virtual std::vector<FunctionPtr> makeUserFunctions(const PartitionerPtr&, const std::vector<rose_addr_t>&);
 
     /** Discover as many basic blocks as possible.
      *
@@ -799,7 +795,7 @@ public:
      *  function was found.  In any case, the startVa is updated so it points to the next read-only address to check.
      *
      *  Functions created in this manner have the @c SgAsmFunction::FUNC_SCAN_RO_DATA reason. */
-    virtual Function::Ptr makeNextDataReferencedFunction(const PartitionerConstPtr&, rose_addr_t &startVa /*in,out*/);
+    virtual FunctionPtr makeNextDataReferencedFunction(const PartitionerConstPtr&, rose_addr_t &startVa /*in,out*/);
 
     /** Scan instruction ASTs to function pointers.
      *
@@ -814,7 +810,7 @@ public:
      *  function was found.
      *
      *  Functions created in this manner have the @c SgAsmFunction::FUNC_INSN_RO_DATA reason. */
-    virtual Function::Ptr makeNextCodeReferencedFunction(const PartitionerConstPtr&);
+    virtual FunctionPtr makeNextCodeReferencedFunction(const PartitionerConstPtr&);
 
     /** Make functions for function call edges.
      *
@@ -822,7 +818,7 @@ public:
      *  that is concrete.  The function is added to the specified partitioner's CFG/AUM.
      *
      *  Returns a list of such functions, some of which may have existed prior to this call. */
-    virtual std::vector<Function::Ptr> makeCalledFunctions(const PartitionerPtr&);
+    virtual std::vector<FunctionPtr> makeCalledFunctions(const PartitionerPtr&);
 
     /** Make function at prologue pattern.
      *
@@ -839,9 +835,9 @@ public:
      *  searched.
      *
      * @{ */
-    virtual std::vector<Function::Ptr> makeNextPrologueFunction(const PartitionerPtr&, rose_addr_t startVa);
-    virtual std::vector<Function::Ptr> makeNextPrologueFunction(const PartitionerPtr&, rose_addr_t startVa,
-                                                                rose_addr_t &lastSearchedVa);
+    virtual std::vector<FunctionPtr> makeNextPrologueFunction(const PartitionerPtr&, rose_addr_t startVa);
+    virtual std::vector<FunctionPtr> makeNextPrologueFunction(const PartitionerPtr&, rose_addr_t startVa,
+                                                              rose_addr_t &lastSearchedVa);
     /** @} */
 
     /** Make functions from inter-function calls.
@@ -862,7 +858,7 @@ public:
      *
      *  Returns the new function(s) for the first basic block that satisfied the requirements outlined above, and updates @p
      *  startVa to be a greater address which is not part of the basic block that was scanned. */
-    virtual std::vector<Function::Ptr>
+    virtual std::vector<FunctionPtr>
     makeFunctionFromInterFunctionCalls(const PartitionerPtr&, rose_addr_t &startVa /*in,out*/);
 
     /** Discover as many functions as possible.
@@ -887,7 +883,7 @@ public:
      *  Returns the set of newly discovered addresses for unreachable code.  These are the ghost edge target addresses
      *  discovered at each iteration of the loop and do not include addresses of basic blocks that are reachable from the ghost
      *  target blocks. */
-    virtual std::set<rose_addr_t> attachDeadCodeToFunction(const PartitionerPtr&, const Function::Ptr&,
+    virtual std::set<rose_addr_t> attachDeadCodeToFunction(const PartitionerPtr&, const FunctionPtr&,
                                                            size_t maxIterations=size_t(-1));
 
     /** Attach function padding to function.
@@ -897,13 +893,13 @@ public:
      *
      *  Returns the padding data block, which might have existed prior to this call.  Returns null if the function apparently
      *  has no padding. */
-    virtual DataBlock::Ptr attachPaddingToFunction(const PartitionerPtr&, const Function::Ptr&);
+    virtual DataBlockPtr attachPaddingToFunction(const PartitionerPtr&, const FunctionPtr&);
 
     /** Attach padding to all functions.
      *
      *  Invokes @ref attachPaddingToFunction for each known function and returns the set of data blocks that were returned by
      *  the individual calls. */
-    virtual std::vector<DataBlock::Ptr> attachPaddingToFunctions(const PartitionerPtr&);
+    virtual std::vector<DataBlockPtr> attachPaddingToFunctions(const PartitionerPtr&);
 
     /** Attach  all possible intra-function basic blocks to functions.
      *
@@ -949,7 +945,7 @@ public:
      *  @todo In @ref attachSurroundedDataToFunctions: We can add a single-function version of this if necessary. It was done
      *  this way because it is more efficient to iterate over all unused addresses and find the surrounding functions than it
      *  is to iterate over one function's unused addresses at a time. [Robb P. Matzke 2014-09-08] */
-    virtual std::vector<DataBlock::Ptr> attachSurroundedDataToFunctions(const PartitionerPtr&);
+    virtual std::vector<DataBlockPtr> attachSurroundedDataToFunctions(const PartitionerPtr&);
 
     /** Runs various analysis passes.
      *
@@ -983,7 +979,7 @@ public:
      *  Discovers a basic block at some arbitrary placeholder.  Returns a pointer to the new basic block if a block was
      *  discovered, or null if no block is discovered.  A postcondition for a null return is that the CFG has no edges coming
      *  into the "undiscovered" vertex. */
-    virtual BasicBlock::Ptr makeNextBasicBlockFromPlaceholder(const PartitionerPtr&);
+    virtual BasicBlockPtr makeNextBasicBlockFromPlaceholder(const PartitionerPtr&);
 
     /** Discover a basic block.
      *
@@ -999,7 +995,7 @@ public:
      *      ROSE can't prove that a callee never returns then assume it may return).
      *
      *  Returns the basic block that was discovered, or the null pointer if there are no pending undiscovered blocks. */
-    virtual BasicBlock::Ptr makeNextBasicBlock(const PartitionerPtr&);
+    virtual BasicBlockPtr makeNextBasicBlock(const PartitionerPtr&);
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1050,8 +1046,8 @@ public:
      *  The optional object to receive progress reports.
      *
      * @{ */
-    Progress::Ptr progress() const /*final*/ { return progress_; }
-    virtual void progress(const Progress::Ptr &progress) { progress_ = progress; }
+    ProgressPtr progress() const /*final*/;
+    virtual void progress(const ProgressPtr&);
     /** @} */
 
     /** Property: binary loader.
@@ -1060,8 +1056,8 @@ public:
      *  and relocation fixups.  If none is specified then the engine will choose one based on the container.
      *
      * @{ */
-    BinaryLoader::Ptr binaryLoader() const /*final*/ { return binaryLoader_; }
-    virtual void binaryLoader(const BinaryLoader::Ptr &loader) { binaryLoader_ = loader; }
+    BinaryLoaderPtr binaryLoader() const /*final*/;
+    virtual void binaryLoader(const BinaryLoaderPtr&);
     /** @} */
 
     /** Property: Predicate for finding functions that are thunks.
@@ -1072,8 +1068,8 @@ public:
      *  list, or the list itself can be adjusted.  The list is consulted only when @ref findingThunks is set.
      *
      * @{ */
-    ThunkPredicates::Ptr functionMatcherThunks() const /*final*/ { return functionMatcherThunks_; }
-    virtual void functionMatcherThunks(const ThunkPredicates::Ptr &p) { functionMatcherThunks_ = p; }
+    ThunkPredicatesPtr functionMatcherThunks() const /*final*/;
+    virtual void functionMatcherThunks(const ThunkPredicatesPtr&);
     /** @} */
 
     /** Property: Predicate for finding thunks at the start of functions.
@@ -1084,8 +1080,8 @@ public:
      *  The list is consulted only when @ref splittingThunks is set.
      *
      * @{ */
-    ThunkPredicates::Ptr functionSplittingThunks() const /*final*/ { return functionSplittingThunks_; }
-    virtual void functionSplittingThunks(const ThunkPredicates::Ptr &p) { functionSplittingThunks_ = p; }
+    ThunkPredicatesPtr functionSplittingThunks() const /*final*/;
+    virtual void functionSplittingThunks(const ThunkPredicatesPtr&);
     /** @} */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

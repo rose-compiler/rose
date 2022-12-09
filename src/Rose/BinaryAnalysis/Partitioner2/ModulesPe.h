@@ -2,8 +2,8 @@
 #define ROSE_BinaryAnalysis_Partitioner2_ModulesPe_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
+#include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 
-#include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Modules.h>
 #include <Sawyer/Map.h>
 
@@ -36,9 +36,9 @@ typedef Sawyer::Container::Map<rose_addr_t, SgAsmPEImportItem*> ImportIndex;
  *  list of new, unique functions sorted by entry address.
  *
  * @{ */
-std::vector<Function::Ptr> findExportFunctions(const PartitionerConstPtr&, SgAsmPEFileHeader*);
-std::vector<Function::Ptr> findExportFunctions(const PartitionerConstPtr&, SgAsmInterpretation*);
-size_t findExportFunctions(const PartitionerConstPtr&, SgAsmInterpretation*, std::vector<Function::Ptr>&);
+std::vector<FunctionPtr> findExportFunctions(const PartitionerConstPtr&, SgAsmPEFileHeader*);
+std::vector<FunctionPtr> findExportFunctions(const PartitionerConstPtr&, SgAsmInterpretation*);
+size_t findExportFunctions(const PartitionerConstPtr&, SgAsmInterpretation*, std::vector<FunctionPtr>&);
 /** @} */
 
 /** Reads PE import sections to find functions.
@@ -48,9 +48,9 @@ size_t findExportFunctions(const PartitionerConstPtr&, SgAsmInterpretation*, std
  *  sorted by entry address.
  *
  * @{ */
-std::vector<Function::Ptr> findImportFunctions(const PartitionerConstPtr&, SgAsmPEFileHeader*);
-std::vector<Function::Ptr> findImportFunctions(const PartitionerConstPtr&, SgAsmInterpretation*);
-size_t findImportFunctions(const PartitionerConstPtr&, SgAsmPEFileHeader*, const ImportIndex&, std::vector<Function::Ptr>&);
+std::vector<FunctionPtr> findImportFunctions(const PartitionerConstPtr&, SgAsmPEFileHeader*);
+std::vector<FunctionPtr> findImportFunctions(const PartitionerConstPtr&, SgAsmInterpretation*);
+size_t findImportFunctions(const PartitionerConstPtr&, SgAsmPEFileHeader*, const ImportIndex&, std::vector<FunctionPtr>&);
 /** @} */
 
 /** Scans PE import sections to build an index.
@@ -162,7 +162,7 @@ public:
 private:
     // True if the only CFG successor for the specified block is the PEScrambler dispatcher and the block ends with a CALL
     // instruction.
-    bool basicBlockCallsDispatcher(const PartitionerConstPtr&, const BasicBlock::Ptr&);
+    bool basicBlockCallsDispatcher(const PartitionerConstPtr&, const BasicBlockPtr&);
 
     // Look up the return address in the PEScrambler dispatch table as if we were the dispatcher and return it if found.
     Sawyer::Optional<rose_addr_t> findCalleeAddress(const PartitionerConstPtr&, rose_addr_t returnVa);

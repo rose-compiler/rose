@@ -2,13 +2,10 @@
 #define ROSE_BinaryAnalysis_Partitioner2_Modules_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-
-#include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
+
 #include <Rose/BinaryAnalysis/Partitioner2/ControlFlowGraph.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Thunk.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Utility.h>
 
 #include <boost/logic/tribool.hpp>
 #include <Sawyer/SharedPointer.h>
@@ -387,23 +384,22 @@ protected:
 
 protected:
     // use 'instance' instead
-    MatchThunk(const ThunkPredicatesPtr &predicates)
-        : predicates_(predicates) {}
-    
+    MatchThunk(const ThunkPredicatesPtr&);
+public:
+    ~MatchThunk();
+
 public:
     /** Allocating constructor. */
-    static Ptr instance(const ThunkPredicatesPtr &predicates) {
-        return Ptr(new MatchThunk(predicates));
-    }
+    static Ptr instance(const ThunkPredicatesPtr&);
 
     /** Property: Predicates used for matching thunks.
      *
      * @{ */
-    ThunkPredicatesPtr predicates() const { return predicates_; }
-    void predicates(const ThunkPredicatesPtr &p) { predicates_ = p; }
+    ThunkPredicatesPtr predicates() const;
+    void predicates(const ThunkPredicatesPtr&);
     /** @} */
 
-    virtual std::vector<FunctionPtr> functions() const override { return functions_; }
+    virtual std::vector<FunctionPtr> functions() const override;
     virtual bool match(const PartitionerConstPtr&, rose_addr_t anchor) override;
 };
 

@@ -3,6 +3,7 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesMips.h>
 
+#include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 
 namespace Rose {
@@ -11,6 +12,20 @@ namespace Partitioner2 {
 namespace ModulesMips {
 
 using namespace Rose::Diagnostics;
+
+MatchRetAddiu::MatchRetAddiu() {}
+
+MatchRetAddiu::~MatchRetAddiu() {}
+
+MatchRetAddiu::Ptr
+MatchRetAddiu::instance() {
+    return Ptr(new MatchRetAddiu);
+}
+
+std::vector<Function::Ptr>
+MatchRetAddiu::functions() const {
+    return std::vector<Function::Ptr>(1, function_);
+}
 
 bool
 MatchRetAddiu::match(const Partitioner::ConstPtr &partitioner, rose_addr_t anchor) {

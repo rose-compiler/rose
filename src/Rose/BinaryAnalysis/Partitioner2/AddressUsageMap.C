@@ -1,8 +1,11 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
-
 #include <Rose/BinaryAnalysis/Partitioner2/AddressUsageMap.h>
+
+#include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
+#include <Rose/BinaryAnalysis/Partitioner2/DataBlock.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Utility.h>
 #include "AsmUnparser_compat.h"
 #include <integerOps.h>
@@ -17,12 +20,59 @@ namespace Partitioner2 {
 //                                      AddressUser
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+AddressUser::AddressUser()
+    : insn_(nullptr) {}
+
+AddressUser::AddressUser(SgAsmInstruction *insn, const BasicBlock::Ptr &bblock)
+    : insn_(insn) {
+    ASSERT_not_null(insn_);
+    if (bblock)
+        bblocks_.push_back(bblock);
+}
+
+AddressUser::AddressUser(const DataBlock::Ptr &dblock)
+    : insn_(nullptr), dblock_(dblock) {
+    ASSERT_not_null(dblock);
+}
+
+AddressUser::~AddressUser() {}
+
 rose_addr_t
 AddressUser::address() const {
     if (insn_)
         return insn_->get_address();
     ASSERT_require(dblock_ != NULL);
     return dblock_->address();
+}
+
+bool
+AddressUser::isBasicBlock() const {
+    return insn_ != nullptr;
+}
+
+bool
+AddressUser::isDataBlock() const {
+    return dblock_ != nullptr;
+}
+
+bool
+AddressUser::isEmpty() const {
+    return nullptr == insn_ && nullptr == dblock_;
+}
+
+SgAsmInstruction*
+AddressUser::insn() const {
+    return insn_;
+}
+
+BasicBlock::Ptr
+AddressUser::firstBasicBlock() const {
+    return bblocks_.empty() ? BasicBlock::Ptr() : bblocks_[0];
+}
+
+const std::vector<BasicBlock::Ptr>&
+AddressUser::basicBlocks() const {
+    return bblocks_;
 }
 
 void
@@ -36,6 +86,11 @@ void
 AddressUser::eraseBasicBlock(const BasicBlock::Ptr &bblock) {
     ASSERT_not_null(bblock);
     eraseUnique(bblocks_, bblock, sortBasicBlocksByAddress);
+}
+
+DataBlock::Ptr
+AddressUser::dataBlock() const {
+    return dblock_;
 }
 
 BasicBlock::Ptr
@@ -126,11 +181,21 @@ AddressUser::isConsistent() const {
     return !error;
 }
 
-
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      AddressUsers
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+AddressUsers::AddressUsers() {}
+
+AddressUsers::AddressUsers(SgAsmInstruction *insn, const BasicBlock::Ptr &bb) {
+    insertInstruction(insn, bb);
+}
+
+AddressUsers::AddressUsers(const DataBlock::Ptr &db) {
+    insertDataBlock(db);
+}
+
+AddressUsers::~AddressUsers() {}
 
 SgAsmInstruction*
 AddressUsers::instructionExists(SgAsmInstruction *insn) const {
@@ -311,6 +376,36 @@ AddressUsers::eraseDataBlock(const DataBlock::Ptr &dblock) {
     return retval;
 }
 
+bool
+AddressUsers::selectAllUsers(const AddressUser&) {
+    return true;
+}
+
+bool
+AddressUsers::selectBasicBlocks(const AddressUser &user) {
+    return user.isBasicBlock();
+}
+
+bool
+AddressUsers::selectDataBlocks(const AddressUser &user) {
+    return user.isDataBlock();
+}
+
+const std::vector<AddressUser>&
+AddressUsers::addressUsers() const {
+    return users_;
+}
+
+AddressUsers
+AddressUsers::instructionUsers() const {
+    return select(selectBasicBlocks);
+}
+
+AddressUsers
+AddressUsers::dataBlockUsers() const {
+    return select(selectDataBlocks);
+}
+
 std::vector<SgAsmInstruction*>
 AddressUsers::instructions() const {
     std::vector<SgAsmInstruction*> insns;
@@ -344,6 +439,16 @@ AddressUsers::dataBlocks() const {
             insertUnique(dblocks, dblock, sortDataBlocks);
     }
     return dblocks;
+}
+
+size_t
+AddressUsers::size() const {
+    return users_.size();
+}
+
+bool
+AddressUsers::isEmpty() const {
+    return users_.empty();
 }
 
 AddressUsers
@@ -439,12 +544,41 @@ AddressUsers::print(std::ostream &out) const {
 //                                      AddressUsageMap
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+AddressUsageMap::AddressUsageMap() {}
+
+AddressUsageMap::~AddressUsageMap() {}
+
+bool
+AddressUsageMap::isEmpty() const {
+    return map_.isEmpty();
+}
+
+void
+AddressUsageMap::clear() {
+    map_.clear();
+}
+
+size_t
+AddressUsageMap::size() const {
+    return map_.size();
+}
+
+AddressInterval
+AddressUsageMap::hull() const {
+    return map_.hull();
+}
+
 AddressIntervalSet
 AddressUsageMap::extent() const {
     AddressIntervalSet retval;
     for (const Map::Interval &interval: map_.intervals())
         retval.insert(interval);
     return retval;
+}
+
+bool
+AddressUsageMap::exists(rose_addr_t va) const {
+    return map_.exists(va);
 }
 
 bool
@@ -640,6 +774,27 @@ AddressUsageMap::eraseDataBlock(const DataBlock::Ptr &db) {
         map_.insertMultiple(adjustment);
     }
     return retval;
+}
+
+AddressUsers
+AddressUsageMap::spanning(const AddressInterval &interval) const {
+    return spanning(interval, AddressUsers::selectAllUsers);
+}
+
+AddressUsers
+AddressUsageMap::overlapping(const AddressInterval &interval) const {
+    return overlapping(interval, AddressUsers::selectAllUsers);
+}
+
+AddressUsers
+AddressUsageMap::containedIn(const AddressInterval &interval) const {
+    ASSERT_not_implemented("[Robb Matzke 2014-08-26]");
+    //return containedIn(interval, AddressUsers::selectAllUsers);
+}
+
+Sawyer::Optional<rose_addr_t>
+AddressUsageMap::leastUnmapped(rose_addr_t startVa) const {
+    return map_.leastUnmapped(startVa);
 }
 
 void

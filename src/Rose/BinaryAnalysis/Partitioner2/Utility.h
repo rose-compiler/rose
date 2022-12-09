@@ -2,10 +2,8 @@
 #define ROSE_BinaryAnalysis_Partitioner2_Utility_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
+#include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 
-#include <Rose/BinaryAnalysis/Partitioner2/AddressUsageMap.h>
-#include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
-#include <Rose/BinaryAnalysis/Partitioner2/DataBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 #include <Rose/CommandLine/IntervalParser.h>
 
@@ -21,11 +19,11 @@ namespace Partitioner2 {
 extern Sawyer::Message::Facility mlog;
 void initDiagnostics();
 
-bool sortBasicBlocksByAddress(const BasicBlock::Ptr&, const BasicBlock::Ptr&);
-bool sortDataBlocks(const DataBlock::Ptr&, const DataBlock::Ptr&);
-bool sortFunctionsByAddress(const Function::Ptr&, const Function::Ptr&);
+bool sortBasicBlocksByAddress(const BasicBlockPtr&, const BasicBlockPtr&);
+bool sortDataBlocks(const DataBlockPtr&, const DataBlockPtr&);
+bool sortFunctionsByAddress(const FunctionPtr&, const FunctionPtr&);
 bool sortFunctionNodesByAddress(const SgAsmFunction*, const SgAsmFunction*);
-bool sortByExpression(const BasicBlock::Successor&, const BasicBlock::Successor&);
+bool sortByExpression(const BasicBlockSuccessor&, const BasicBlockSuccessor&);
 bool sortBlocksForAst(SgAsmBlock*, SgAsmBlock*);
 bool sortInstructionsByAddress(SgAsmInstruction*, SgAsmInstruction*);
 

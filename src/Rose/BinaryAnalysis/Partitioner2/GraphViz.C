@@ -1,11 +1,12 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
+#include <Rose/BinaryAnalysis/Partitioner2/GraphViz.h>
 
 #include <AsmUnparser_compat.h>
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
-#include <Rose/BinaryAnalysis/Partitioner2/GraphViz.h>
+#include <Rose/BinaryAnalysis/Partitioner2/FunctionCallGraph.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Sawyer/GraphTraversal.h>
@@ -285,6 +286,21 @@ CfgEmitter::selectIntervalGraph(const AddressInterval &interval) {
     return *this;
 }
 
+void
+CfgEmitter::emitWholeGraph(std::ostream &out) {
+    selectWholeGraph().emit(out);
+}
+
+void
+CfgEmitter::emitFunctionGraph(std::ostream &out, const Function::Ptr &function) {
+    selectFunctionGraph(function).emit(out);
+}
+
+void
+CfgEmitter::emitIntervalGraph(std::ostream &out, const AddressInterval &interval) {
+    selectIntervalGraph(interval).emit(out);
+}
+
 
 //----------------------------------------------------------------------------------------------------------------------------
 //                                      Low-level selectors
@@ -539,6 +555,11 @@ CfgEmitter::owningFunctions(const ControlFlowGraph::Vertex &v) {
     return v.value().owningFunctions();
 }
 
+FunctionSet
+CfgEmitter::owningFunctions(const ControlFlowGraph::ConstVertexIterator &v) {
+    return owningFunctions(*v);
+}
+
 // class method
 bool
 CfgEmitter::isInterFunctionEdge(const ControlFlowGraph::Edge &edge) {
@@ -551,6 +572,11 @@ CfgEmitter::isInterFunctionEdge(const ControlFlowGraph::Edge &edge) {
     // inter- or intra- function.  For the purposes of the GraphViz output, each vertex is assigned to at most one function
     // and the edge classification is based on this assignment.
     return firstOwningFunction(edge.source()) != firstOwningFunction(edge.target());
+}
+
+bool
+CfgEmitter::isInterFunctionEdge(const ControlFlowGraph::ConstEdgeIterator &e) {
+    return isInterFunctionEdge(*e);
 }
 
 void

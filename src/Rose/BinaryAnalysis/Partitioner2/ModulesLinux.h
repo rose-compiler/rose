@@ -5,7 +5,7 @@
 #include <Rose/BinaryAnalysis/Partitioner2/Modules.h>
 
 #include <Rose/BinaryAnalysis/SystemCall.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Dispatcher.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/BasicTypes.h>
 
 namespace Rose {
 namespace BinaryAnalysis {

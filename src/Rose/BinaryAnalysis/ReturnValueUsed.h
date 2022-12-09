@@ -3,8 +3,10 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
+#include <Rose/BinaryAnalysis/CallingConvention.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ControlFlowGraph.h>
+#include <Rose/BinaryAnalysis/RegisterParts.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -48,8 +50,8 @@ private:
 #endif
 
 public:
-    CallSiteResults()
-        : didConverge_(false) {}
+    CallSiteResults();
+    ~CallSiteResults();
 
     /** Property: Did the analysis converge to a solution.
      *
@@ -58,21 +60,21 @@ public:
      *  might be only an approximation.
      *
      * @{ */
-    bool didConverge() const { return didConverge_; }
-    void didConverge(bool b) { didConverge_ = b; }
+    bool didConverge() const;
+    void didConverge(bool);
     /** @} */
 
     /** Property: Functions called at this site. */
-    const std::vector<Partitioner2::FunctionPtr> callees() const { return callees_; }
+    const std::vector<Partitioner2::FunctionPtr> callees() const;
 
     /** Property: Return registers that are used in the caller.
      *
      *  These represent the values returned by the callee in registers which are subsequently used in the caller.
      *
      * @{ */
-    const RegisterParts& returnRegistersUsed() const { return returnRegistersUsed_; }
-    RegisterParts& returnRegistersUsed() { return returnRegistersUsed_; }
-    void returnRegistersUsed(const RegisterParts &regs) { returnRegistersUsed_ = regs; }
+    const RegisterParts& returnRegistersUsed() const;
+    RegisterParts& returnRegistersUsed();
+    void returnRegistersUsed(const RegisterParts&);
     /** @} */
 
     /** Property: Return registers that are unused in the caller.
@@ -80,14 +82,14 @@ public:
      *  These represent the values returned by the callee in registers which are not subsequently used in the caller.
      *
      * @{ */
-    const RegisterParts& returnRegistersUnused() const { return returnRegistersUnused_; }
-    RegisterParts& returnRegistersUnused() { return returnRegistersUnused_; }
-    void returnRegistersUnused(const RegisterParts &regs) { returnRegistersUnused_ = regs; }
+    const RegisterParts& returnRegistersUnused() const;
+    RegisterParts& returnRegistersUnused();
+    void returnRegistersUnused(const RegisterParts&);
     /** @} */
 
 private:
     friend class Analysis;
-    void callees(const std::vector<Partitioner2::FunctionPtr> &functions) { callees_ = functions; }
+    void callees(const std::vector<Partitioner2::FunctionPtr>&);
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -121,8 +123,9 @@ public:
      *  This creates an analyzer that is not suitable for analysis since it doesn't know anything about the architecture it
      *  would be analyzing. This is mostly for use in situations where an analyzer must be constructed as a member of another
      *  class's default constructor, in containers that initialize their contents with default constructors, etc. */
-    Analysis()
-        : assumeCallerReturnsValue_(true) {}
+    Analysis();
+
+    ~Analysis();
 
     /** Property: Default calling convention.
      *
@@ -134,8 +137,8 @@ public:
      *  states which locations are <em>permitted</em> to be outputs.
      *
      * @{ */
-    CallingConvention::Definition::Ptr defaultCallingConvention() const { return defaultCallingConvention_; }
-    void defaultCallingConvention(const CallingConvention::Definition::Ptr &defn) { defaultCallingConvention_ = defn; }
+    CallingConvention::Definition::Ptr defaultCallingConvention() const;
+    void defaultCallingConvention(const CallingConvention::Definition::Ptr&);
     /** @} */
 
     /** Property: Assume caller returns value(s).
@@ -169,8 +172,8 @@ public:
      *  is clear, then the analysis indicates that the call to function "one" returns a value in EAX which is unused.
      *
      * @{ */
-    bool assumeCallerReturnsValue() const { return assumeCallerReturnsValue_; }
-    void assumeCallerReturnsValue(bool b) { assumeCallerReturnsValue_ = b; }
+    bool assumeCallerReturnsValue() const;
+    void assumeCallerReturnsValue(bool);
     /** @} */
 
     /** Clear analysis results.

@@ -2,9 +2,9 @@
 #define ROSE_BinaryAnalysis_Partitioner2_ModulesX86_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
+#include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 
 #include <Rose/BinaryAnalysis/Partitioner2/Modules.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Thunk.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -27,9 +27,14 @@ namespace ModulesX86 {
 class MatchStandardPrologue: public FunctionPrologueMatcher {
 protected:
     FunctionPtr function_;
+protected:
+    MatchStandardPrologue();
 public:
-    static Ptr instance() { return Ptr(new MatchStandardPrologue); } /**< Allocating constructor. */
-    virtual std::vector<FunctionPtr> functions() const override { return std::vector<FunctionPtr>(1, function_); }
+    ~MatchStandardPrologue();
+
+public:
+    static Ptr instance();                              /**< Allocating constructor. */
+    virtual std::vector<FunctionPtr> functions() const override;
     virtual bool match(const PartitionerConstPtr&, rose_addr_t anchor) override;
 };
 
@@ -52,9 +57,14 @@ public:
 class MatchAbbreviatedPrologue: public FunctionPrologueMatcher {
 protected:
     FunctionPtr function_;
+protected:
+    MatchAbbreviatedPrologue();
 public:
-    static Ptr instance() { return Ptr(new MatchAbbreviatedPrologue); }
-    virtual std::vector<FunctionPtr> functions() const override { return std::vector<FunctionPtr>(1, function_); }
+    ~MatchAbbreviatedPrologue();
+
+public:
+    static Ptr instance();                              /**< Allocating constructor. */
+    virtual std::vector<FunctionPtr> functions() const override;
     virtual bool match(const PartitionerConstPtr&, rose_addr_t anchor) override;
 };
 

@@ -1,4 +1,5 @@
 // Tests multi-threaded progress reporting.
+#include <sage3basic.h>
 #include <Rose/Progress.h>
 
 #include <boost/lexical_cast.hpp>

@@ -8,6 +8,9 @@
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/nvp.hpp>
 #include <boost/serialization/version.hpp>
+#include <Sawyer/Graph.h>
+#include <Sawyer/Map.h>
+#include <Sawyer/Set.h>
 #include <string>
 #include <vector>
 
@@ -798,20 +801,52 @@ private:
 };
 
 // Additional declarations incomplete definitions.
+class AddressUser;
+class AddressUsers;
+class AddressUsageMap;
+
 class BasicBlock;
 using BasicBlockPtr = Sawyer::SharedPointer<BasicBlock>; /**< Shared-ownersip pointer for @ref BasicBlock. */
+
+class BasicBlockError;
+
+class BasicBlockSuccessor;
+using BasicBlockSuccessors = std::vector<BasicBlockSuccessor>; /**< All successors in no particular order. */
+
+
+class CfgAdjustmentCallback;
+
+class CfgEdge;
+
+class CfgVertex;
+
+using ControlFlowGraph = Sawyer::Container::Graph<CfgVertex, CfgEdge>; /**< Control flow graph. */
 
 class Configuration;
 
 class DataBlock;
 using DataBlockPtr = Sawyer::SharedPointer<DataBlock>;  /**< Shared-ownership pointer for @ref DataBlock. */
 
+class DataBlockError;
+
+class Exception;
+
 class Function;
 using FunctionPtr = Sawyer::SharedPointer<Function>;    /**< Shared-ownership pointer for @ref Function. */
+
+using Functions = Sawyer::Container::Map<rose_addr_t, FunctionPtr>; /**< Mapping from address to function. */
+
+class FunctionCallGraph;
+
+using FunctionSet = Sawyer::Container::Set<FunctionPtr>; /**< Set of functions. */
+
+class FunctionError;
 
 class Partitioner;
 using PartitionerPtr = Sawyer::SharedPointer<Partitioner>; /**< Shared-ownership pointer for @ref Partitioner. */
 using PartitionerConstPtr = Sawyer::SharedPointer<const Partitioner>; /**< Shared-ownership pointer for @ref Partitioner. */
+
+class PlaceholderError;
 
 class ThunkPredicates;
 using ThunkPredicatesPtr = Sawyer::SharedPointer<ThunkPredicates>; /**< Shared-ownership pointer for @ref ThunkPredicates. */

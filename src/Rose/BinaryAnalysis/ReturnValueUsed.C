@@ -1,10 +1,11 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
+#include <Rose/BinaryAnalysis/ReturnValueUsed.h>
 
 #include <Rose/CommandLine.h>
-#include <Rose/BinaryAnalysis/ReturnValueUsed.h>
 #include <Rose/BinaryAnalysis/Partitioner2/DataFlow.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Semantics.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
@@ -207,8 +208,92 @@ public:
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// CallSiteResults
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+CallSiteResults::CallSiteResults()
+    : didConverge_(false) {}
+
+CallSiteResults::~CallSiteResults() {}
+
+bool
+CallSiteResults::didConverge() const {
+    return didConverge_;
+}
+
+void
+CallSiteResults::didConverge(bool b) {
+    didConverge_ = b;
+}
+
+const std::vector<Partitioner2::Function::Ptr>
+CallSiteResults::callees() const {
+    return callees_;
+}
+
+const RegisterParts&
+CallSiteResults::returnRegistersUsed() const {
+    return returnRegistersUsed_;
+}
+
+RegisterParts&
+CallSiteResults::returnRegistersUsed() {
+    return returnRegistersUsed_;
+}
+
+void
+CallSiteResults::returnRegistersUsed(const RegisterParts &regs) {
+    returnRegistersUsed_ = regs;
+}
+
+const RegisterParts&
+CallSiteResults::returnRegistersUnused() const {
+    return returnRegistersUnused_;
+}
+
+RegisterParts&
+CallSiteResults::returnRegistersUnused() {
+    return returnRegistersUnused_;
+}
+
+void
+CallSiteResults::returnRegistersUnused(const RegisterParts &regs) {
+    returnRegistersUnused_ = regs;
+}
+
+void
+CallSiteResults::callees(const std::vector<Partitioner2::Function::Ptr> &functions) {
+    callees_ = functions;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Analysis methods
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Analysis::Analysis()
+    : assumeCallerReturnsValue_(true) {}
+
+Analysis::~Analysis() {}
+
+CallingConvention::Definition::Ptr
+Analysis::defaultCallingConvention() const {
+    return defaultCallingConvention_;
+}
+
+void
+Analysis::defaultCallingConvention(const CallingConvention::Definition::Ptr &defn) {
+    defaultCallingConvention_ = defn;
+}
+
+bool
+Analysis::assumeCallerReturnsValue() const {
+    return assumeCallerReturnsValue_;
+}
+
+void
+Analysis::assumeCallerReturnsValue(bool b) {
+    assumeCallerReturnsValue_ = b;
+}
 
 void
 Analysis::clearResults() {

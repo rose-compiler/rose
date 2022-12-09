@@ -8,7 +8,9 @@
 #include <Rose/BinaryAnalysis/Disassembler/Mips.h>
 #include <Rose/BinaryAnalysis/Disassembler/Powerpc.h>
 #include <Rose/BinaryAnalysis/Disassembler/X86.h>
+#include <Rose/BinaryAnalysis/MemoryMap.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Modules.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesElf.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesLinux.h>
@@ -19,12 +21,14 @@
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesX86.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Semantics.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Thunk.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Utility.h>
 #include <Rose/BinaryAnalysis/SerialIo.h>
 #include <Rose/BinaryAnalysis/SRecord.h>
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
+#include <Rose/Progress.h>
 
 #include <AsmUnparser_compat.h>
 #include <BinaryVxcoreParser.h>
@@ -62,6 +66,16 @@ Engine::Engine(const Settings &settings)
 }
 
 Engine::~Engine() {}
+
+Engine*
+Engine::instance() {
+    return new Engine(Settings{});
+};
+
+Engine*
+Engine::instance(const Settings &settings) {
+    return new Engine(settings);
+};
 
 void
 Engine::init() {
@@ -1453,6 +1467,16 @@ Engine::adjustMemoryMap() {
         case DATA_NO_CHANGE:
             break;
     }
+}
+
+MemoryMap::Ptr
+Engine::memoryMap() const {
+    return map_;
+}
+
+void
+Engine::memoryMap(const MemoryMap::Ptr &m) {
+    map_ = m;
 }
 
 MemoryMap::Ptr
@@ -3207,6 +3231,46 @@ Engine::disassembler() const {
 void
 Engine::disassembler(const Disassembler::Base::Ptr &d) {
     disassembler_ = d;
+}
+
+Progress::Ptr
+Engine::progress() const {
+    return progress_;
+}
+
+void
+Engine::progress(const Progress::Ptr &progress) {
+    progress_ = progress;
+}
+
+BinaryLoader::Ptr
+Engine::binaryLoader() const {
+    return binaryLoader_;
+}
+
+void
+Engine::binaryLoader(const BinaryLoader::Ptr &loader) {
+    binaryLoader_ = loader;
+}
+
+ThunkPredicates::Ptr
+Engine::functionMatcherThunks() const {
+    return functionMatcherThunks_;
+}
+
+void
+Engine::functionMatcherThunks(const ThunkPredicates::Ptr &p) {
+    functionMatcherThunks_ = p;
+}
+
+ThunkPredicates::Ptr
+Engine::functionSplittingThunks() const {
+    return functionSplittingThunks_;
+}
+
+void
+Engine::functionSplittingThunks(const ThunkPredicates::Ptr &p) {
+    functionSplittingThunks_ = p;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

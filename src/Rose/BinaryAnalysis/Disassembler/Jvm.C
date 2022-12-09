@@ -5,6 +5,8 @@
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BinaryAnalysis/Unparser/Jvm.h>
 
+#include <SageBuilderAsm.h>
+
 #define DEBUG_ON 0
 
 using std::cout;
