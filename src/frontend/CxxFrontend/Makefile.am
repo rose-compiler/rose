@@ -139,8 +139,8 @@ check-network:
 	    echo "$(EDG_HELP_URL)" >&2;	\
 	    exit 1;											\
 	fi
-	@if ! wget -q --spider -t 3 --wait=1 $(ROSE_WEB_SERVER); then					\
-	    echo "ROSE web server $(ROSE_WEB_SERVER) is not currently reachable" >&2;			\
+	@if ! wget -q --spider -t 3 --wait=1 $(EDGBIN_REMOTE_TARBALLS); then					\
+	    echo "ROSE web server $(EDGBIN_REMOTE_TARBALLS) is not currently reachable" >&2;			\
 	    echo "$(CONTACT_INFO)" >&2;									\
 	    echo "For more information on EDG binaries visit" >&2;			\
 	    echo "$(EDG_HELP_URL)" >&2;	\

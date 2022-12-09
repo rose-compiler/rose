@@ -871,33 +871,11 @@ AM_PATH_XML2(2.0.0, [with_xml="yes"])
 # Make the use of libxml2 explicitly controlled.
 AM_CONDITIONAL(ROSE_USE_XML,test "$with_xml" != no)
 
-# DQ (10/17/2009): This is a bug introduced (again) into ROSE which disables the Java support.
-# See elsewhere in this file where this macro is commented out and the reason explained in
-# more details.
-# AS Check for ssl for the binary clone detection work
-# CHECK_SSL
-
 # Check for objdump for BinaryContextLookup since it doesn't normally exist on
 # Mac
 AC_CHECK_TOOL(ROSE_OBJDUMP_PATH, [objdump], [no])
 AM_CONDITIONAL(ROSE_USE_OBJDUMP, [test "$ROSE_OBJDUMP_PATH" != "no"])
 AM_CONDITIONAL(ROSE_USE_BINARYCONTEXTLOOKUP, [test "$with_xml" != "no" -a "$ROSE_OBJDUMP_PATH" != "no"])
-
-# Check for availability of wget (used for downloading the EDG binaries used in ROSE).
-AC_CHECK_TOOL(ROSE_WGET_PATH, [wget], [no])
-AM_CONDITIONAL(ROSE_USE_WGET, [test "$ROSE_WGET_PATH" != "no"])
-if test "$ROSE_WGET_PATH" = "no"; then
-   AC_MSG_FAILURE([wget was not found; ROSE requires wget to download EDG binaries automatically])
-else
-   # Not clear if we really should have ROSE configure automatically do something like this.
-   AC_MSG_NOTICE([ROSE might use wget to automatically download EDG binaries as required during the build])
-fi
-# Check for availability of ps2pdf, part of ghostscript (used for generating pdf files).
-AC_CHECK_TOOL(ROSE_PS2PDF_PATH, [ps2pdf], [no])
-AM_CONDITIONAL(ROSE_USE_PS2PDF, [test "$ROSE_PS2PDF_PATH" != "no"])
-if test "$ROSE_PS2PDF_PATH" = "no"; then
-   AC_MSG_FAILURE([ps2pdf was not found; ROSE requires ps2pdf (part of ghostscript) to generate pdf files])
-fi
 
 AC_C_BIGENDIAN
 AC_CHECK_HEADERS([byteswap.h machine/endian.h])
