@@ -6,6 +6,8 @@
 
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/LibraryIdentification.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Function.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 
 using namespace Rose::BinaryAnalysis;
 namespace P2 = Partitioner2;
@@ -17,7 +19,8 @@ namespace LibraryIdentification {
 void
 generateLibraryIdentificationDataBase(const std::string &databaseName, const std::string &libraryName,
                                       const std::string &libraryVersion, const std::string &libraryHash,
-                                      const P2::Partitioner &partitioner, enum DUPLICATE_OPTION dupOption) {
+                                      const P2::Partitioner::ConstPtr &partitioner, enum DUPLICATE_OPTION dupOption) {
+    ASSERT_not_null(partitioner);
     ASSERT_always_require(COMBINE == dupOption);
 
     Flir flir;
@@ -27,17 +30,18 @@ generateLibraryIdentificationDataBase(const std::string &databaseName, const std
         flir.createDatabase("sqlite://" + databaseName);
     }
 
-    const std::string arch = partitioner.instructionProvider().disassembler()->name();
+    const std::string arch = partitioner->instructionProvider().disassembler()->name();
     auto lib = Flir::Library::instance(libraryHash, libraryName, libraryVersion, arch);
     flir.insertLibrary(lib, partitioner);
 }
 
 LibToFuncsMap
-matchLibraryIdentificationDataBase(const std::string &databaseName, const P2::Partitioner &partitioner) {
+matchLibraryIdentificationDataBase(const std::string &databaseName, const P2::Partitioner::ConstPtr &partitioner) {
+    ASSERT_not_null(partitioner);
     LibToFuncsMap retval;
     Flir flir;
     flir.connect("sqlite://" + databaseName);
-    for (const P2::Function::Ptr &function: partitioner.functions()) {
+    for (const P2::Function::Ptr &function: partitioner->functions()) {
         std::vector<Flir::Function::Ptr> matches = flir.search(partitioner, function);
         FunctionInfo functionInfo(partitioner, function);
         if (matches.empty()) {

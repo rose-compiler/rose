@@ -37,7 +37,7 @@ void Class::partition()
 {
   const size_t nBits = 64;
 
-  Partitioner2::Partitioner partitioner{};
+  auto partitioner = Partitioner2::Partitioner::instance();
 
   for (auto constMethod : methods()) {
     bool needNewBlock{true};

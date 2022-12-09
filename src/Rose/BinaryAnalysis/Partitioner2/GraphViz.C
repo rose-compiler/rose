@@ -139,8 +139,8 @@ concatenate(const std::string &oldStuff, const std::string &newStuff, const std:
 
 unsigned long CfgEmitter::versionDate_ = 0;
 
-CfgEmitter::CfgEmitter(const Partitioner &partitioner)
-    : BaseEmitter<ControlFlowGraph>(partitioner.cfg()), partitioner_(partitioner), useFunctionSubgraphs_(true),
+CfgEmitter::CfgEmitter(const Partitioner::ConstPtr &partitioner)
+    : BaseEmitter<ControlFlowGraph>(partitioner->cfg()), partitioner_(partitioner), useFunctionSubgraphs_(true),
       showReturnEdges_(true), showInstructions_(false), showInstructionAddresses_(true), showInstructionStackDeltas_(true),
       showInNeighbors_(true), showOutNeighbors_(true), strikeNoopSequences_(false),
       funcEnterColor_(0.33, 1.0, 0.9),              // light green
@@ -150,7 +150,7 @@ CfgEmitter::CfgEmitter(const Partitioner &partitioner)
         init();
     }
 
-CfgEmitter::CfgEmitter(const Partitioner &partitioner, const ControlFlowGraph &g)
+CfgEmitter::CfgEmitter(const Partitioner::ConstPtr &partitioner, const ControlFlowGraph &g)
     : BaseEmitter<ControlFlowGraph>(g), partitioner_(partitioner), useFunctionSubgraphs_(true),
       showReturnEdges_(true), showInstructions_(false), showInstructionAddresses_(true), showInstructionStackDeltas_(true),
       showInNeighbors_(true), showOutNeighbors_(true), strikeNoopSequences_(false),
@@ -183,10 +183,10 @@ CfgEmitter::init() {
     }
 
     // Instance initialization
-    if (BaseSemantics::Dispatcher::Ptr cpu = partitioner_.instructionProvider().dispatcher()) {
+    if (BaseSemantics::Dispatcher::Ptr cpu = partitioner_->instructionProvider().dispatcher()) {
         SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
-        RegisterDictionary::Ptr regdict = partitioner_.instructionProvider().registerDictionary();
-        size_t addrWidth = partitioner_.instructionProvider().instructionPointerRegister().nBits();
+        RegisterDictionary::Ptr regdict = partitioner_->instructionProvider().registerDictionary();
+        size_t addrWidth = partitioner_->instructionProvider().instructionPointerRegister().nBits();
         BaseSemantics::RiscOperators::Ptr ops = SymbolicSemantics::RiscOperators::instanceFromRegisters(regdict, solver);
         noOpAnalysis_ = NoOperation(cpu->create(ops, addrWidth, regdict));
         noOpAnalysis_.initialStackPointer(0xdddd0001); // optional; odd prevents false positives for stack aligning instructions
@@ -325,7 +325,7 @@ CfgEmitter::selectIntraFunction(const Function::Ptr &function) {
                 vertexOrganization(vertex).attributes(vertexAttributes(vertex));
             }
             for (const ControlFlowGraph::Edge &edge: vertex.outEdges()) {
-                if (!edgeOrganization(edge).isSelected() && partitioner_.isEdgeIntraProcedural(edge, function)) {
+                if (!edgeOrganization(edge).isSelected() && partitioner_->isEdgeIntraProcedural(edge, function)) {
                     edgeOrganization(edge).select();
                     edgeOrganization(edge).label(edgeLabel(edge));
                     edgeOrganization(edge).attributes(edgeAttributes(edge));
@@ -342,7 +342,7 @@ CfgEmitter::selectFunctionCallees(const Function::Ptr &function) {
     for (const ControlFlowGraph::Vertex &vertex: graph_.vertices()) {
         if (vertexOrganization(vertex).isSelected() && vertex.value().isOwningFunction(function)) {
             for (const ControlFlowGraph::Edge &edge: vertex.outEdges()) {
-                if (partitioner_.isEdgeInterProcedural(edge, function)) {
+                if (partitioner_->isEdgeInterProcedural(edge, function)) {
                     if (!edgeOrganization(edge).isSelected()) {
                         edgeOrganization(edge).select();
                         edgeOrganization(edge).label(edgeLabel(edge));
@@ -385,7 +385,7 @@ CfgEmitter::selectFunctionCallers(const Function::Ptr &callee) {
             typedef Sawyer::Container::Map<rose_addr_t /*caller*/, CallInfo> Callers;
             Callers callers;
             for (const ControlFlowGraph::Edge &interEdge: vertex.inEdges()) {
-                if (partitioner_.isEdgeInterProcedural(interEdge, Function::Ptr(), callee) &&
+                if (partitioner_->isEdgeInterProcedural(interEdge, Function::Ptr(), callee) &&
                     !edgeOrganization(interEdge).isSelected()) {
 
                     // Is the call coming from a block that belongs to a function, or from some random non-owned block?
@@ -415,9 +415,9 @@ CfgEmitter::selectFunctionCallers(const Function::Ptr &callee) {
             
             // Organize the calls to this vertex from a function-as-a-whole
             for (const Callers::Node &callNode: callers.nodes()) {
-                Function::Ptr callerFunc = partitioner_.functionExists(callNode.key());
+                Function::Ptr callerFunc = partitioner_->functionExists(callNode.key());
                 ASSERT_not_null(callerFunc);
-                ControlFlowGraph::ConstVertexIterator caller = partitioner_.findPlaceholder(callerFunc->address());
+                ControlFlowGraph::ConstVertexIterator caller = partitioner_->findPlaceholder(callerFunc->address());
                 ASSERT_require(caller != graph_.vertices().end());
 
                 Organization &org = vertexOrganization(caller);
@@ -722,7 +722,7 @@ CfgEmitter::vertexAttributes(const ControlFlowGraph::ConstVertexIterator &vertex
         attr.insert("fontname", "Courier");
 
         bool isEntryBlock = vertex->value().isEntryBlock();
-        bool isFunctionReturn = partitioner_.basicBlockIsFunctionReturn(bblock);
+        bool isFunctionReturn = partitioner_->basicBlockIsFunctionReturn(bblock);
         bool isShared = vertex->value().nOwningFunctions() > 1;
 
         std::vector<std::string> styles;
@@ -798,7 +798,7 @@ CfgEmitter::edgeAttributes(const ControlFlowGraph::ConstEdgeIterator &edge) cons
 
     if (edge->value().type() == E_FUNCTION_RETURN) {
         attr.insert("color", makeEdgeColor(funcReturnColor_).toHtml());
-    } else if (edge->target() == partitioner_.indeterminateVertex()) {
+    } else if (edge->target() == partitioner_->indeterminateVertex()) {
         attr.insert("color", makeEdgeColor(warningColor_).toHtml());
     } else if (edge->value().type() == E_FUNCTION_CALL) {
         attr.insert("color", makeEdgeColor(funcEnterColor_).toHtml());
@@ -835,12 +835,13 @@ CfgEmitter::functionAttributes(const Function::Ptr &function) const {
 //                                      Function call graph
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-CgEmitter::CgEmitter(const Partitioner &partitioner)
+CgEmitter::CgEmitter(const Partitioner::ConstPtr &partitioner)
     : functionHighlightColor_(0.15, 1.0, 0.75), highlightNameMatcher_("^\\001$") {
-    callGraph(partitioner.functionCallGraph(AllowParallelEdges::NO));
+    ASSERT_not_null(partitioner);
+    callGraph(partitioner->functionCallGraph(AllowParallelEdges::NO));
 }
 
-CgEmitter::CgEmitter(const Partitioner& /*for consistency and future expansion*/, const FunctionCallGraph &cg)
+CgEmitter::CgEmitter(const Partitioner::ConstPtr& /*for consistency and future expansion*/, const FunctionCallGraph &cg)
     : functionHighlightColor_(0.15, 1.0, 0.75), highlightNameMatcher_("^\\001$") {
     callGraph(cg);
 }
@@ -932,12 +933,14 @@ CgEmitter::emitCallGraph(std::ostream &out) const {
 //                                      Function callgraph with inlined functions
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-CgInlinedEmitter::CgInlinedEmitter(const Partitioner &partitioner, const boost::regex &nameMatcher)
+CgInlinedEmitter::CgInlinedEmitter(const Partitioner::ConstPtr &partitioner, const boost::regex &nameMatcher)
     : CgEmitter(partitioner), nameMatcher_(nameMatcher) {
-    callGraph(partitioner.functionCallGraph(AllowParallelEdges::NO));
+    ASSERT_not_null(partitioner);
+    callGraph(partitioner->functionCallGraph(AllowParallelEdges::NO));
 }
 
-CgInlinedEmitter::CgInlinedEmitter(const Partitioner &partitioner, const FunctionCallGraph &cg, const boost::regex &nameMatcher)
+CgInlinedEmitter::CgInlinedEmitter(const Partitioner::ConstPtr &partitioner, const FunctionCallGraph &cg,
+                                   const boost::regex &nameMatcher)
     : CgEmitter(partitioner), nameMatcher_(nameMatcher) {
     callGraph(cg);
 }

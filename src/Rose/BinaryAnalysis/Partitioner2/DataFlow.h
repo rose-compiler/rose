@@ -143,7 +143,7 @@ std::vector<SgAsmInstruction*> vertexUnpacker(const DfCfgVertex&);
  *  reached vertex belongs to the same function as @p startVertex.
  *
  *  @sa DfCfg */
-DfCfg buildDfCfg(const Partitioner&, const ControlFlowGraph&, const ControlFlowGraph::ConstVertexIterator &startVertex,
+DfCfg buildDfCfg(const PartitionerConstPtr&, const ControlFlowGraph&, const ControlFlowGraph::ConstVertexIterator &startVertex,
                  InterproceduralPredicate &predicate = NOT_INTERPROCEDURAL);
 
 /** Emit a data-flow CFG as a GraphViz file. */

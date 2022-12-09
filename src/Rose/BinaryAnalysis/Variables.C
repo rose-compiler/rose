@@ -100,22 +100,24 @@ sizeStr(uint64_t n) {
 }
 
 void
-print(const StackVariables &lvars, const P2::Partitioner &partitioner,
+print(const StackVariables &lvars, const P2::Partitioner::ConstPtr &partitioner,
       std::ostream &out, const std::string &prefix) {
+    ASSERT_not_null(partitioner);
     for (const StackVariable &lvar: lvars.values()) {
         out <<prefix <<lvar <<"\n";
         for (rose_addr_t va: lvar.definingInstructionVas().values())
-            out <<prefix <<"  detected at " <<partitioner.instructionProvider()[va]->toString() <<"\n";
+            out <<prefix <<"  detected at " <<partitioner->instructionProvider()[va]->toString() <<"\n";
     }
 }
 
 void
-print(const GlobalVariables &gvars, const P2::Partitioner &partitioner,
+print(const GlobalVariables &gvars, const P2::Partitioner::ConstPtr &partitioner,
       std::ostream &out, const std::string &prefix) {
+    ASSERT_not_null(partitioner);
     for (const GlobalVariable &gvar: gvars.values()) {
         out <<prefix <<gvar <<"\n";
         for (rose_addr_t va: gvar.definingInstructionVas().values())
-            out <<prefix <<"  detected at " <<partitioner.instructionProvider()[va]->toString() <<"\n";
+            out <<prefix <<"  detected at " <<partitioner->instructionProvider()[va]->toString() <<"\n";
     }
 }
 
@@ -438,9 +440,10 @@ protected:
     }
 
 public:
-    static RiscOperators::Ptr instance(const StackFrame &frame, const P2::Partitioner &partitioner,
+    static RiscOperators::Ptr instance(const StackFrame &frame, const P2::Partitioner::ConstPtr &partitioner,
                                      StackVariable::Boundaries &boundaries /*in,out*/) {
-        RegisterDictionary::Ptr regdict = partitioner.instructionProvider().registerDictionary();
+        ASSERT_not_null(partitioner);
+        RegisterDictionary::Ptr regdict = partitioner->instructionProvider().registerDictionary();
         S2::BaseSemantics::SValue::Ptr protoval = SValue::instance();
         S2::BaseSemantics::RegisterState::Ptr registers = RegisterState::instance(protoval, regdict);
         S2::BaseSemantics::MemoryState::Ptr memory = P2::Semantics::MemoryMapState::instance(protoval, protoval);
@@ -561,16 +564,17 @@ VariableFinder::instance(const Settings &settings) {
 }
 
 StackFrame
-VariableFinder::detectFrameAttributes(const P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
+VariableFinder::detectFrameAttributes(const P2::Partitioner::ConstPtr &partitioner, const P2::Function::Ptr &function) {
+    ASSERT_not_null(partitioner);
     ASSERT_not_null(function);
-    SgAsmInstruction *firstInsn = partitioner.instructionProvider()[function->address()];
+    SgAsmInstruction *firstInsn = partitioner->instructionProvider()[function->address()];
     StackFrame frame;
-    frame.framePointerRegister = partitioner.instructionProvider().stackFrameRegister();
+    frame.framePointerRegister = partitioner->instructionProvider().stackFrameRegister();
 
     if (isSgAsmX86Instruction(firstInsn)) {
         // See initializeFrameBoundaries for the visual representation of the stack frame
         frame.growthDirection = StackFrame::GROWS_DOWN;
-        frame.maxOffset = 2 * partitioner.instructionProvider().wordSize() - 1;
+        frame.maxOffset = 2 * partitioner->instructionProvider().wordSize() - 1;
         frame.rule = "x86: general";
 
     } else if (isSgAsmPowerpcInstruction(firstInsn)) {
@@ -580,7 +584,7 @@ VariableFinder::detectFrameAttributes(const P2::Partitioner &partitioner, const 
             // If this PowerPC function starts with "stwu r1, u32 [r1 - N]" then the frame size is N.
             static RegisterDescriptor REG_R1;
             if (REG_R1.isEmpty())
-                REG_R1 = partitioner.instructionProvider().registerDictionary()->findOrThrow("r1");
+                REG_R1 = partitioner->instructionProvider().registerDictionary()->findOrThrow("r1");
             SgAsmDirectRegisterExpression *firstRegister = isSgAsmDirectRegisterExpression(firstInsn->operand(0));
             SgAsmMemoryReferenceExpression *secondArg = isSgAsmMemoryReferenceExpression(firstInsn->operand(1));
             SgAsmBinaryAdd *memAddr = secondArg ? isSgAsmBinaryAdd(secondArg->get_address()) : NULL;
@@ -607,7 +611,7 @@ VariableFinder::detectFrameAttributes(const P2::Partitioner &partitioner, const 
     } else if (auto m68k = isSgAsmM68kInstruction(firstInsn)) {
         frame.growthDirection = StackFrame::GROWS_DOWN;
 
-        const RegisterDescriptor REG_FP = partitioner.instructionProvider().stackFrameRegister();
+        const RegisterDescriptor REG_FP = partitioner->instructionProvider().stackFrameRegister();
 
         // If this m68k function starts with "link.w fp, -N" then the frame size is 4 + 4 + N since the caller has pushed the
         // return address and this function pushes the old frame pointer register r6 and then reserves N additional bytes in
@@ -635,9 +639,9 @@ VariableFinder::detectFrameAttributes(const P2::Partitioner &partitioner, const 
     } else if (isSgAsmAarch32Instruction(firstInsn)) {
         frame.growthDirection = StackFrame::GROWS_DOWN;
 
-        const RegisterDescriptor REG_FP = partitioner.instructionProvider().registerDictionary()->findOrThrow("fp");
-        const RegisterDescriptor REG_SP = partitioner.instructionProvider().registerDictionary()->findOrThrow("sp");
-        const RegisterDescriptor REG_LR = partitioner.instructionProvider().registerDictionary()->findOrThrow("lr");
+        const RegisterDescriptor REG_FP = partitioner->instructionProvider().registerDictionary()->findOrThrow("fp");
+        const RegisterDescriptor REG_SP = partitioner->instructionProvider().registerDictionary()->findOrThrow("sp");
+        const RegisterDescriptor REG_LR = partitioner->instructionProvider().registerDictionary()->findOrThrow("lr");
 
         // If the first three instructions are:
         //   push fp, lr
@@ -646,8 +650,8 @@ VariableFinder::detectFrameAttributes(const P2::Partitioner &partitioner, const 
         // then the frame size is N + 8 bytes
         SgAsmAarch32Instruction* insns[3] = {nullptr, nullptr, nullptr};
         insns[0] = isSgAsmAarch32Instruction(firstInsn);
-        insns[1] = isSgAsmAarch32Instruction(partitioner.instructionProvider()[function->address() + 4]);
-        insns[2] = isSgAsmAarch32Instruction(partitioner.instructionProvider()[function->address() + 8]);
+        insns[1] = isSgAsmAarch32Instruction(partitioner->instructionProvider()[function->address() + 4]);
+        insns[2] = isSgAsmAarch32Instruction(partitioner->instructionProvider()[function->address() + 8]);
         if (// push fp, lr
             insns[0] && insns[0]->get_kind() == Aarch32InstructionKind::ARM_INS_PUSH &&
             insns[0]->nOperands() == 2 &&
@@ -728,11 +732,12 @@ VariableFinder::detectFrameAttributes(const P2::Partitioner &partitioner, const 
 }
 
 void
-VariableFinder::initializeFrameBoundaries(const StackFrame &frame, const P2::Partitioner &partitioner,
+VariableFinder::initializeFrameBoundaries(const StackFrame &frame, const P2::Partitioner::ConstPtr &partitioner,
                                           const P2::Function::Ptr &function, StackVariable::Boundaries &boundaries /*in,out*/) {
+    ASSERT_not_null(partitioner);
     ASSERT_not_null(function);
-    SgAsmInstruction *firstInsn = partitioner.instructionProvider()[function->address()];
-    const size_t wordNBytes = partitioner.instructionProvider().wordSize() / 8;
+    SgAsmInstruction *firstInsn = partitioner->instructionProvider()[function->address()];
+    const size_t wordNBytes = partitioner->instructionProvider().wordSize() / 8;
 
     if (isSgAsmX86Instruction(firstInsn)) {
         //
@@ -866,8 +871,9 @@ VariableFinder::referencedFrameArea(const Partitioner2::Partitioner &partitioner
 #endif
 
 std::set<int64_t>
-VariableFinder::findFrameOffsets(const StackFrame &frame, const P2::Partitioner &partitioner, SgAsmInstruction *insn) {
-    const RegisterDescriptor REG_SP = partitioner.instructionProvider().stackPointerRegister();
+VariableFinder::findFrameOffsets(const StackFrame &frame, const P2::Partitioner::ConstPtr &partitioner, SgAsmInstruction *insn) {
+    ASSERT_not_null(partitioner);
+    const RegisterDescriptor REG_SP = partitioner->instructionProvider().stackPointerRegister();
 
 #ifdef ROSE_ENABLE_ASM_AARCH32
     // Look for ARM AArch32 "sub DEST_REG, fp, N" where DEST_REG is not the stack pointer register
@@ -931,7 +937,7 @@ isSortedByOffset(const StackVariable::Boundary &a, const StackVariable::Boundary
 }
 
 void
-VariableFinder::removeOutliers(const StackFrame &frame, const P2::Partitioner&, const P2::Function::Ptr&,
+VariableFinder::removeOutliers(const StackFrame &frame, const P2::Partitioner::ConstPtr&, const P2::Function::Ptr&,
                                StackVariable::Boundaries &boundaries /*in,out,sorted*/) {
 
 #ifndef NDEBUG
@@ -966,7 +972,7 @@ VariableFinder::removeOutliers(const StackFrame &frame, const P2::Partitioner&, 
 }
 
 StackVariables
-VariableFinder::findStackVariables(const P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
+VariableFinder::findStackVariables(const P2::Partitioner::ConstPtr &partitioner, const P2::Function::Ptr &function) {
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     StackVariable::Boundaries boundaries;
 
@@ -1005,7 +1011,7 @@ VariableFinder::findStackVariables(const P2::Partitioner &partitioner, const P2:
     // Look for stack offsets syntactically by looking for instructions that access memory w.r.t. the frame pointer.
     SAWYER_MESG(debug) <<"  searching for local variables syntactically...\n";
     for (rose_addr_t bblockVa: function->basicBlockAddresses()) {
-        P2::BasicBlock::Ptr bb = partitioner.basicBlockExists(bblockVa);
+        P2::BasicBlock::Ptr bb = partitioner->basicBlockExists(bblockVa);
         ASSERT_not_null(bb);
         for (SgAsmInstruction *insn: bb->instructions()) {
             std::set<int64_t> offsets = findFrameOffsets(frame, partitioner, insn);
@@ -1020,11 +1026,11 @@ VariableFinder::findStackVariables(const P2::Partitioner &partitioner, const P2:
     // basic block independently is usually just as good, and much faster.
     SAWYER_MESG(debug) <<"  searching for local variables semantically...\n";
     for (rose_addr_t bblockVa: function->basicBlockAddresses()) {
-        P2::BasicBlock::Ptr bb = partitioner.basicBlockExists(bblockVa);
+        P2::BasicBlock::Ptr bb = partitioner->basicBlockExists(bblockVa);
         ASSERT_not_null(bb);
         VarSearchSemantics::RiscOperators::Ptr ops =
             VarSearchSemantics::RiscOperators::instance(frame, partitioner, boundaries /*in,out*/);
-        S2::BaseSemantics::Dispatcher::Ptr cpu = partitioner.newDispatcher(ops);
+        S2::BaseSemantics::Dispatcher::Ptr cpu = partitioner->newDispatcher(ops);
         for (SgAsmInstruction *insn: bb->instructions()) {
             try {
                 cpu->processInstruction(insn);
@@ -1060,7 +1066,7 @@ VariableFinder::findStackVariables(const P2::Partitioner &partitioner, const P2:
         } else if (frame.maxOffset) {
             maxOffset = *frame.maxOffset;
         } else {
-            maxOffset = (int64_t)BitOps::lowMask<uint64_t>(8*partitioner.instructionProvider().wordSize() - 1);
+            maxOffset = (int64_t)BitOps::lowMask<uint64_t>(8*partitioner->instructionProvider().wordSize() - 1);
         }
 
         // Create the variable
@@ -1096,19 +1102,20 @@ VariableFinder::symbolicAddress(const P2::Partitioner &partitioner, const StackV
 #endif
 
 P2::Function::Ptr
-VariableFinder::functionForInstruction(const P2::Partitioner &partitioner, SgAsmInstruction *insn) {
+VariableFinder::functionForInstruction(const P2::Partitioner::ConstPtr &partitioner, SgAsmInstruction *insn) {
+    ASSERT_not_null(partitioner);
     ASSERT_not_null(insn);
-    P2::BasicBlock::Ptr bb = partitioner.basicBlockContainingInstruction(insn->get_address());
+    P2::BasicBlock::Ptr bb = partitioner->basicBlockContainingInstruction(insn->get_address());
     if (!bb)
         return P2::Function::Ptr();
-    std::vector<P2::Function::Ptr> functions = partitioner.functionsOwningBasicBlock(bb);
+    std::vector<P2::Function::Ptr> functions = partitioner->functionsOwningBasicBlock(bb);
     if (functions.empty())
         return P2::Function::Ptr();
     return functions[0];                                // arbitrarily choose the first one
 }
 
 StackVariables
-VariableFinder::findStackVariables(const P2::Partitioner &partitioner, SgAsmInstruction *insn) {
+VariableFinder::findStackVariables(const P2::Partitioner::ConstPtr &partitioner, SgAsmInstruction *insn) {
     ASSERT_not_null(insn);
     if (P2::Function::Ptr function = functionForInstruction(partitioner, insn)) {
         return findStackVariables(partitioner, function);
@@ -1125,8 +1132,9 @@ VariableFinder::evict(const P2::Function::Ptr &function) {
 }
 
 void
-VariableFinder::evict(const P2::Partitioner &partitioner) {
-    for (const P2::Function::Ptr &function: partitioner.functions())
+VariableFinder::evict(const P2::Partitioner::ConstPtr &partitioner) {
+    ASSERT_not_null(partitioner);
+    for (const P2::Function::Ptr &function: partitioner->functions())
         evict(function);
 }
 
@@ -1218,20 +1226,21 @@ VariableFinder::findAddressConstants(const S2::BaseSemantics::MemoryCellState::P
 }
 
 AddressToAddresses
-VariableFinder::findGlobalVariableVas(const P2::Partitioner &partitioner) {
+VariableFinder::findGlobalVariableVas(const P2::Partitioner::ConstPtr &partitioner) {
+    ASSERT_not_null(partitioner);
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     Sawyer::Message::Stream info(mlog[INFO]);
     info <<"Finding global variable addresses";
     Sawyer::Stopwatch timer;
 
     S2::SymbolicSemantics::RiscOperators::Ptr ops =
-        S2::SymbolicSemantics::RiscOperators::instanceFromRegisters(partitioner.instructionProvider().registerDictionary());
-    S2::BaseSemantics::Dispatcher::Ptr cpu = partitioner.newDispatcher(ops);
+        S2::SymbolicSemantics::RiscOperators::instanceFromRegisters(partitioner->instructionProvider().registerDictionary());
+    S2::BaseSemantics::Dispatcher::Ptr cpu = partitioner->newDispatcher(ops);
     ASSERT_not_null(cpu);
     AddressToAddresses retval;
 
     // FIXME[Robb Matzke 2019-12-06]: This could be parallel
-    for (const P2::ControlFlowGraph::Vertex &vertex: partitioner.cfg().vertices()) {
+    for (const P2::ControlFlowGraph::Vertex &vertex: partitioner->cfg().vertices()) {
         if (vertex.value().type() == P2::V_BASIC_BLOCK) {
             for (SgAsmInstruction *insn: vertex.value().bblock()->instructions()) {
                 SAWYER_MESG(debug) <<"  " <<insn->toString() <<"\n";
@@ -1255,9 +1264,9 @@ VariableFinder::findGlobalVariableVas(const P2::Partitioner &partitioner) {
                 // memory might have four consecutive constants.
                 AddressIntervalSet regions;
                 for (rose_addr_t c: constants) {
-                    if (partitioner.instructionExists(c))
+                    if (partitioner->instructionExists(c))
                         continue;                       // not a variable pointer if it points to an instruction
-                    if (!partitioner.memoryMap()->at(c).exists())
+                    if (!partitioner->memoryMap()->at(c).exists())
                         continue;                       // global variables always have storage
 
                     regions.insert(c);
@@ -1276,16 +1285,18 @@ VariableFinder::findGlobalVariableVas(const P2::Partitioner &partitioner) {
 }
 
 GlobalVariables
-VariableFinder::findGlobalVariables(const P2::Partitioner &partitioner) {
+VariableFinder::findGlobalVariables(const P2::Partitioner::ConstPtr &partitioner) {
+    ASSERT_not_null(partitioner);
+
     // Return cached global variable information
-    if (partitioner.attributeExists(ATTR_GLOBAL_VARS))
-        return partitioner.getAttribute<GlobalVariables>(ATTR_GLOBAL_VARS);
+    if (partitioner->attributeExists(ATTR_GLOBAL_VARS))
+        return partitioner->getAttribute<GlobalVariables>(ATTR_GLOBAL_VARS);
 
     // First, find all the global variables assume they're as large as possible but no global variables overlap.
     typedef Sawyer::Container::IntervalMap<AddressInterval /*occupiedVas*/, rose_addr_t /*startingVa*/> GVars;
     GVars gvars;
     AddressToAddresses globalVariableVas = findGlobalVariableVas(partitioner);
-    static size_t wordSize = partitioner.instructionProvider().stackPointerRegister().nBits();
+    static size_t wordSize = partitioner->instructionProvider().stackPointerRegister().nBits();
     for (AddressToAddresses::const_iterator iter = globalVariableVas.begin(); iter != globalVariableVas.end(); ++iter) {
 
         // This variable cannot overlap with the next variable
@@ -1293,15 +1304,15 @@ VariableFinder::findGlobalVariables(const P2::Partitioner &partitioner) {
         rose_addr_t lastVa = next == globalVariableVas.end() ? IntegerOps::genMask<rose_addr_t>(wordSize) : next->first - 1;
 
         // The variable will not extend beyond one segment of the memory map
-        MemoryMap::ConstNodeIterator node = partitioner.memoryMap()->at(iter->first).findNode();
-        ASSERT_require(node != partitioner.memoryMap()->nodes().end());
+        MemoryMap::ConstNodeIterator node = partitioner->memoryMap()->at(iter->first).findNode();
+        ASSERT_require(node != partitioner->memoryMap()->nodes().end());
         lastVa = std::min(lastVa, node->key().greatest());
 
         gvars.insert(AddressInterval::hull(iter->first, lastVa), iter->first);
     }
 
     // Then remove code areas from the global variable location map
-    for (const P2::ControlFlowGraph::Vertex &vertex: partitioner.cfg().vertices()) {
+    for (const P2::ControlFlowGraph::Vertex &vertex: partitioner->cfg().vertices()) {
         if (vertex.value().type() == P2::V_BASIC_BLOCK) {
             for (SgAsmInstruction *insn: vertex.value().bblock()->instructions())
                 gvars.erase(AddressInterval::baseSize(insn->get_address(), insn->get_size()));
@@ -1315,7 +1326,7 @@ VariableFinder::findGlobalVariables(const P2::Partitioner &partitioner) {
             retval.insert(node.key(), GlobalVariable(node.key().least(), node.key().size(), globalVariableVas[node.value()]));
     }
 
-    const_cast<P2::Partitioner&>(partitioner).setAttribute(ATTR_GLOBAL_VARS, retval);
+    const_cast<P2::Partitioner*>(partitioner.getRawPointer())->setAttribute(ATTR_GLOBAL_VARS, retval);
     return retval;
 }
 

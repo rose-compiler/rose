@@ -18,12 +18,12 @@ public:
     using Ptr = BasicBlockUnitPtr;
 
 private:
-    const Partitioner2::Partitioner &partitioner_;
+    Partitioner2::PartitionerConstPtr partitioner_;     // not null
     Partitioner2::BasicBlockPtr bblock_;
 
 protected:
     BasicBlockUnit() = delete;
-    BasicBlockUnit(const Partitioner2::Partitioner &partitioner, const Partitioner2::BasicBlockPtr&);
+    BasicBlockUnit(const Partitioner2::PartitionerConstPtr &partitioner, const Partitioner2::BasicBlockPtr&);
 public:
     ~BasicBlockUnit();
 
@@ -33,7 +33,7 @@ public:
      *  Constructs a new execution unit that holds the specified basic block, which must not be null.
      *
      *  Thread safety: This constructor is thread safe. */
-    static Ptr instance(const Partitioner2::Partitioner&, const Partitioner2::BasicBlockPtr&);
+    static Ptr instance(const Partitioner2::PartitionerConstPtr&, const Partitioner2::BasicBlockPtr&);
 
 public:
     /** Property: Basic block.

@@ -71,11 +71,11 @@ public:
     struct Expression {
         AddressIntervalSet location;                    /**< Location where constraint applies. Empty implies end-of-path. */
         std::string parsable;                           /**< String to be parsed as an expression. */
-        SymbolicExpression::Ptr expr;                   /**< Symbolic expression. */
+        SymbolicExpressionPtr expr;                     /**< Symbolic expression. */
 
         Expression() {}
         /*implicit*/ Expression(const std::string &parsable): parsable(parsable) {}
-        /*implicit*/ Expression(const SymbolicExpression::Ptr &expr): expr(expr) {}
+        /*implicit*/ Expression(const SymbolicExpressionPtr &expr): expr(expr) {}
 
         void print(std::ostream&) const;
     };
@@ -160,7 +160,7 @@ public:
         std::string firstAccessMode;                    /**< How was variable first accessed ("read" or "write"). */
         SgAsmInstruction *firstAccessInsn;              /**< Instruction address where this var was first read. */
         Sawyer::Optional<size_t> firstAccessIdx;        /**< Instruction position in path where this var was first read. */
-        SymbolicExpression::Ptr memAddress;             /**< Address where variable is located. */
+        SymbolicExpressionPtr memAddress;               /**< Address where variable is located. */
         size_t memSize;                                 /**< Size of total memory access in bytes. */
         size_t memByteNumber;                           /**< Byte number for memory access. */
         Sawyer::Optional<rose_addr_t> returnFrom;       /**< This variable is the return value from the specified function. */
@@ -316,7 +316,7 @@ public:
     public:
         /** Invoked when a new summary is created. */
         virtual void init(const FeasiblePath &analysis, FunctionSummary &summary /*in,out*/,
-                          const Partitioner2::Function::Ptr &function,
+                          const Partitioner2::FunctionPtr &function,
                           Partitioner2::ControlFlowGraph::ConstVertexIterator cfgCallTarget) = 0;
 
         /** Invoked when the analysis traverses the summary.
@@ -339,8 +339,8 @@ public:
     //                                  Private data members
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private:
-    const Partitioner2::Partitioner *partitioner_ = nullptr; // binary analysis context
-    RegisterDictionaryPtr registers_;                        // registers augmented with "path" pseudo-register
+    Partitioner2::PartitionerConstPtr partitioner_;     // binary analysis context, might be null
+    RegisterDictionaryPtr registers_;                   // registers augmented with "path" pseudo-register
     RegisterDescriptor REG_RETURN_;                     // FIXME[Robb P Matzke 2016-10-11]: see source
     Settings settings_;
     FunctionSummaries functionSummaries_;
@@ -415,7 +415,7 @@ public:
      *  specified partitioner and augments it with a "path" pseudo-register that holds a symbolic expressions on which the
      *  current CFG path depends. */
     virtual InstructionSemantics::BaseSemantics::DispatcherPtr
-    buildVirtualCpu(const Partitioner2::Partitioner&, const Partitioner2::CfgPath*, PathProcessor*, const SmtSolver::Ptr&);
+    buildVirtualCpu(const Partitioner2::PartitionerConstPtr&, const Partitioner2::CfgPath*, PathProcessor*, const SmtSolverPtr&);
 
     /** Initialize state for first vertex of path.
      *
@@ -432,7 +432,7 @@ public:
      *  This is a state transfer function, updating the virtual machine state by processing the instructions of the specified
      *  basic block. */
     virtual void
-    processBasicBlock(const Partitioner2::BasicBlock::Ptr &bblock,
+    processBasicBlock(const Partitioner2::BasicBlockPtr &bblock,
                       const InstructionSemantics::BaseSemantics::DispatcherPtr &cpu, size_t pathInsnIndex);
 
     /** Process an indeterminate block.
@@ -536,24 +536,24 @@ public:
      *
      * @{ */
     void
-    setSearchBoundary(const Partitioner2::Partitioner &partitioner,
+    setSearchBoundary(const Partitioner2::PartitionerConstPtr &partitioner,
                       const Partitioner2::CfgConstVertexSet &cfgBeginVertices,
                       const Partitioner2::CfgConstVertexSet &cfgEndVertices,
                       const Partitioner2::CfgConstVertexSet &cfgAvoidVertices = Partitioner2::CfgConstVertexSet(),
                       const Partitioner2::CfgConstEdgeSet &cfgAvoidEdges = Partitioner2::CfgConstEdgeSet());
     void
-    setSearchBoundary(const Partitioner2::Partitioner &partitioner,
+    setSearchBoundary(const Partitioner2::PartitionerConstPtr &partitioner,
                       const Partitioner2::ControlFlowGraph::ConstVertexIterator &cfgBeginVertex,
                       const Partitioner2::ControlFlowGraph::ConstVertexIterator &cfgEndVertex,
                       const Partitioner2::CfgConstVertexSet &cfgAvoidVertices = Partitioner2::CfgConstVertexSet(),
                       const Partitioner2::CfgConstEdgeSet &cfgAvoidEdges = Partitioner2::CfgConstEdgeSet());
     void
-    setSearchBoundary(const Partitioner2::Partitioner &partitioner,
+    setSearchBoundary(const Partitioner2::PartitionerConstPtr &partitioner,
                       const Partitioner2::CfgConstVertexSet &cfgBeginVertices,
                       const Partitioner2::CfgConstVertexSet &cfgAvoidVertices = Partitioner2::CfgConstVertexSet(),
                       const Partitioner2::CfgConstEdgeSet &cfgAvoidEdges = Partitioner2::CfgConstEdgeSet());
     void
-    setSearchBoundary(const Partitioner2::Partitioner &partitioner,
+    setSearchBoundary(const Partitioner2::PartitionerConstPtr &partitioner,
                       const Partitioner2::ControlFlowGraph::ConstVertexIterator &cfgBeginVertex,
                       const Partitioner2::CfgConstVertexSet &cfgAvoidVertices = Partitioner2::CfgConstVertexSet(),
                       const Partitioner2::CfgConstEdgeSet &cfgAvoidEdges = Partitioner2::CfgConstEdgeSet());
@@ -587,7 +587,7 @@ public:
      *
      *  Returns a reference to the partitioner that is currently in use, set by @ref setSearchBoundary.  It is a fatal error to
      *  call this function if there is no partitioner. */
-    const Partitioner2::Partitioner& partitioner() const;
+    Partitioner2::PartitionerConstPtr partitioner() const;
 
     /** Function summary information.
      *
@@ -656,7 +656,7 @@ private:
 
     // Pop an edge (or more) from the path and follow some other edge.  Also, adjust the SMT solver's stack in a similar
     // way. The SMT solver will have an initial state, plus one pushed state per edge of the path.
-    void backtrack(Partitioner2::CfgPath &path /*in,out*/, const SmtSolver::Ptr&);
+    void backtrack(Partitioner2::CfgPath &path /*in,out*/, const SmtSolverPtr&);
 
     // Process one edge of a path to find any path constraints. When called, the cpu's current state should be the virtual
     // machine state at it exists just prior to executing the target vertex of the specified edge.
@@ -665,16 +665,16 @@ private:
     // whose address doesn't match the contents of the instruction pointer register after executing the edge's source
     // block. Otherwise, returns a symbolic expression which must be tree if the edge is feasible. For trivially feasible
     // edges, the return value is the constant 1 (one bit wide; i.e., true).
-    SymbolicExpression::Ptr pathEdgeConstraint(const Partitioner2::ControlFlowGraph::ConstEdgeIterator &pathEdge,
-                                               const InstructionSemantics::BaseSemantics::DispatcherPtr &cpu);
+    SymbolicExpressionPtr pathEdgeConstraint(const Partitioner2::ControlFlowGraph::ConstEdgeIterator &pathEdge,
+                                             const InstructionSemantics::BaseSemantics::DispatcherPtr &cpu);
 
     // Parse the expression if it's a parsable string, otherwise return the expression as is. */
     Expression parseExpression(Expression, const std::string &where, SymbolicExpressionParser&) const;
 
-    SymbolicExpression::Ptr expandExpression(const Expression&, const SymbolicExpressionParser&);
+    SymbolicExpressionPtr expandExpression(const Expression&, const SymbolicExpressionParser&);
 
     // Based on the last vertex of the path, insert user-specified assertions into the SMT solver.
-    void insertAssertions(const SmtSolver::Ptr&, const Partitioner2::CfgPath&,
+    void insertAssertions(const SmtSolverPtr&, const Partitioner2::CfgPath&,
                           const std::vector<Expression> &assertions, bool atEndOfPath, const SymbolicExpressionParser&);
 
     // Size of vertex. How much of "k" does this vertex consume?
@@ -691,7 +691,7 @@ private:
     // Insert the edge assertion and any applicable user assertions (after delayed expansion of the expressions' register
     // and memory references), and run the solver, returning its result.
     SmtSolver::Satisfiable
-    solvePathConstraints(const SmtSolver::Ptr&, const Partitioner2::CfgPath&, const SymbolicExpression::Ptr &edgeAssertion,
+    solvePathConstraints(const SmtSolverPtr&, const Partitioner2::CfgPath&, const SymbolicExpressionPtr &edgeAssertion,
                          const Substitutions&, bool atEndOfPath);
 
     // Mark vertex as being reached

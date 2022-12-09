@@ -22,7 +22,7 @@ public:
     virtual std::vector<Function::Ptr> functions() const override {
         return std::vector<Function::Ptr>(1, function_);
     }
-    virtual bool match(const Partitioner&, rose_addr_t anchor) override;
+    virtual bool match(const PartitionerConstPtr&, rose_addr_t anchor) override;
 };
 
 } // namespace

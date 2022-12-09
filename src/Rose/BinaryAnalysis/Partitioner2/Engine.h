@@ -11,7 +11,6 @@
 #include <Rose/FileSystem.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesLinux.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Thunk.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Utility.h>
 #include <Rose/Progress.h>
@@ -196,7 +195,7 @@ private:
         Sawyer::Container::DistinctList<rose_addr_t>& processedCallReturn() { return processedCallReturn_; }
         Sawyer::Container::DistinctList<rose_addr_t>& finalCallReturn() { return finalCallReturn_; }
         Sawyer::Container::DistinctList<rose_addr_t>& undiscovered() { return undiscovered_; }
-        void moveAndSortCallReturn(const Partitioner&);
+        void moveAndSortCallReturn(const PartitionerConstPtr&);
     };
 
     // A work list providing constants from instructions that are part of the CFG.
@@ -223,7 +222,7 @@ private:
         virtual bool operator()(bool chain, const DetachedBasicBlock &detached) override;
 
         // Return the next available constant if any.
-        Sawyer::Optional<rose_addr_t> nextConstant(const Partitioner &partitioner);
+        Sawyer::Optional<rose_addr_t> nextConstant(const PartitionerConstPtr &partitioner);
 
         // Address of instruction being examined.
         rose_addr_t inProgress() const { return inProgress_; }
@@ -407,8 +406,8 @@ public:
      *  its text is emitted to the partitioner's fatal error stream, and <code>exit(1)</code> is invoked.
      *
      * @{ */
-    virtual Partitioner partition(const std::vector<std::string> &fileNames = std::vector<std::string>());
-    Partitioner partition(const std::string &fileName) /*final*/;
+    virtual PartitionerPtr partition(const std::vector<std::string> &fileNames = std::vector<std::string>());
+    PartitionerPtr partition(const std::string &fileName) /*final*/;
     /** @} */
 
     /** Obtain an abstract syntax tree.
@@ -434,13 +433,13 @@ public:
      *  The specified partitioner and the binary analysis components of the AST are saved into the specified file, which is
      *  created if it doesn't exist and truncated if it does exist. The name should end with a ".rba" extension. The file can
      *  be loaded by passing its name to the @ref partition function or by calling @ref loadPartitioner. */
-    virtual void savePartitioner(const Partitioner&, const boost::filesystem::path&, SerialIo::Format fmt = SerialIo::BINARY);
+    virtual void savePartitioner(const PartitionerConstPtr&, const boost::filesystem::path&, SerialIo::Format = SerialIo::BINARY);
 
     /** Load a partitioner and an AST from a file.
      *
      *  The specified RBA file is opened and read to create a new @ref Partitioner object and associated AST. The @ref
      *  partition function also understands how to open RBA files. */
-    virtual Partitioner loadPartitioner(const boost::filesystem::path&, SerialIo::Format fmt = SerialIo::BINARY);
+    virtual PartitionerPtr loadPartitioner(const boost::filesystem::path&, SerialIo::Format = SerialIo::BINARY);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Command-line parsing
@@ -640,56 +639,56 @@ public:
      *  not quite the same--that would produce an even more bare partitioner!  The engine must have @ref disassembler (if @ref
      *  doDisassemble is set) and @ref memoryMap properties already either assigned explicitly or as the result of earlier
      *  steps. */
-    virtual Partitioner createBarePartitioner();
+    virtual PartitionerPtr createBarePartitioner();
 
     /** Create a generic partitioner.
      *
      *  A generic partitioner should work for any architecture but is not fine-tuned for any particular architecture. The
      *  engine must have @ref disassembler (if @ref doDisassemble property is set) and @ref memoryMap properties assigned
      *  already, either explicitly or as the result of earlier steps. */
-    virtual Partitioner createGenericPartitioner();
+    virtual PartitionerPtr createGenericPartitioner();
 
     /** Create a tuned partitioner.
      *
      *  Returns a partitioner that is tuned to operate on a specific instruction set architecture. The engine must have @ref
      *  disassembler (if @ref doDisassemble property is set) and @ref memoryMap properties assigned already, either explicitly
      *  or as the result of earlier steps. */
-    virtual Partitioner createTunedPartitioner();
+    virtual PartitionerPtr createTunedPartitioner();
 
     /** Create a partitioner from an AST.
      *
      *  Partitioner data structures are often more useful and more efficient for analysis than an AST. This method initializes
      *  the engine and a new partitioner with information from the AST. */
-    virtual Partitioner createPartitionerFromAst(SgAsmInterpretation*);
+    virtual PartitionerPtr createPartitionerFromAst(SgAsmInterpretation*);
 
     /** Create partitioner.
      *
      *  This is the method usually called to create a new partitioner.  The base class just calls @ref
      *  createTunedPartitioner. */
-    virtual Partitioner createPartitioner();
+    virtual PartitionerPtr createPartitioner();
 
     /** Finds interesting things to work on initially.
      *
      *  Seeds the partitioner with addresses and functions where recursive disassembly should begin. */
-    virtual void runPartitionerInit(Partitioner&);
+    virtual void runPartitionerInit(const PartitionerPtr&);
 
     /** Runs the recursive part of partioning.
      *
      *  This is the long-running guts of the partitioner. */
-    virtual void runPartitionerRecursive(Partitioner&);
+    virtual void runPartitionerRecursive(const PartitionerPtr&);
 
     /** Runs the final parts of partitioning.
      *
      *  This does anything necessary after the main part of partitioning is finished. For instance, it might give names to some
      *  functions that don't have names yet. */
-    virtual void runPartitionerFinal(Partitioner&);
+    virtual void runPartitionerFinal(const PartitionerPtr&);
 
     /** Partitions instructions into basic blocks and functions.
      *
      *  This method is a wrapper around a number of lower-level partitioning steps that uses the specified interpretation to
      *  instantiate functions and then uses the specified partitioner to discover basic blocks and use the CFG to assign basic
      *  blocks to functions.  It is often overridden by subclasses. */
-    virtual void runPartitioner(Partitioner&);
+    virtual void runPartitioner(const PartitionerPtr&);
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -703,17 +702,17 @@ public:
      *
      *  Labels addresses according to symbols, etc.  Address labels are used for things like giving an unnamed function a name
      *  when it's attached to the partitioner's CFG/AUM. */
-    virtual void labelAddresses(Partitioner&, const Configuration&);
+    virtual void labelAddresses(const PartitionerPtr&, const Configuration&);
 
     /** Make data blocks based on configuration.
      *
      *  NOTE: for now, all this does is label the datablock addresses. FIXME[Robb P. Matzke 2015-05-12] */
-    virtual std::vector<DataBlock::Ptr> makeConfiguredDataBlocks(Partitioner&, const Configuration&);
+    virtual std::vector<DataBlock::Ptr> makeConfiguredDataBlocks(const PartitionerPtr&, const Configuration&);
 
     /** Make functions based on configuration information.
      *
      *  Uses the supplied function configuration information to make functions. */
-    virtual std::vector<Function::Ptr> makeConfiguredFunctions(Partitioner&, const Configuration&);
+    virtual std::vector<Function::Ptr> makeConfiguredFunctions(const PartitionerPtr&, const Configuration&);
 
     /** Make functions at specimen entry addresses.
      *
@@ -721,7 +720,7 @@ public:
      *  the specified partitioner's CFG/AUM.
      *
      *  Returns a list of such functions, some of which may have existed prior to this call. */
-    virtual std::vector<Function::Ptr> makeEntryFunctions(Partitioner&, SgAsmInterpretation*);
+    virtual std::vector<Function::Ptr> makeEntryFunctions(const PartitionerPtr&, SgAsmInterpretation*);
 
     /** Make functions at error handling addresses.
      *
@@ -729,7 +728,7 @@ public:
      *  specified partitioner's CFG/AUM.
      *
      *  Returns the list of such functions, some of which may have existed prior to this call. */
-    virtual std::vector<Function::Ptr> makeErrorHandlingFunctions(Partitioner&, SgAsmInterpretation*);
+    virtual std::vector<Function::Ptr> makeErrorHandlingFunctions(const PartitionerPtr&, SgAsmInterpretation*);
 
     /** Make functions at import trampolines.
      *
@@ -740,7 +739,7 @@ public:
      *  been performed.
      *
      *  Returns a list of such functions, some of which may have existed prior to this call. */
-    virtual std::vector<Function::Ptr> makeImportFunctions(Partitioner&, SgAsmInterpretation*);
+    virtual std::vector<Function::Ptr> makeImportFunctions(const PartitionerPtr&, SgAsmInterpretation*);
 
     /** Make functions at export addresses.
      *
@@ -748,7 +747,7 @@ public:
      *  partitioner's CFG/AUM.
      *
      *  Returns a list of such functions, some of which may have existed prior to this call. */
-    virtual std::vector<Function::Ptr> makeExportFunctions(Partitioner&, SgAsmInterpretation*);
+    virtual std::vector<Function::Ptr> makeExportFunctions(const PartitionerPtr&, SgAsmInterpretation*);
 
     /** Make functions for symbols.
      *
@@ -756,7 +755,7 @@ public:
      *  them into the specified partitioner's CFG/AUM.
      *
      *  Returns a list of such functions, some of which may have existed prior to this call. */
-    virtual std::vector<Function::Ptr> makeSymbolFunctions(Partitioner&, SgAsmInterpretation*);
+    virtual std::vector<Function::Ptr> makeSymbolFunctions(const PartitionerPtr&, SgAsmInterpretation*);
 
     /** Make functions based on specimen container.
      *
@@ -765,7 +764,7 @@ public:
      *  calls many of the other "make*Functions" methods and accumulates their results.
      *
      *  Returns a list of such functions, some of which may have existed prior to this call. */
-    virtual std::vector<Function::Ptr> makeContainerFunctions(Partitioner&, SgAsmInterpretation*);
+    virtual std::vector<Function::Ptr> makeContainerFunctions(const PartitionerPtr&, SgAsmInterpretation*);
 
     /** Make functions from an interrupt vector.
      *
@@ -773,13 +772,13 @@ public:
      *  CFG/AUM.
      *
      *  Returns the list of such functions, some of which may have existed prior to this call. */
-    virtual std::vector<Function::Ptr> makeInterruptVectorFunctions(Partitioner&, const AddressInterval &vector);
+    virtual std::vector<Function::Ptr> makeInterruptVectorFunctions(const PartitionerPtr&, const AddressInterval &vector);
 
     /** Make a function at each specified address.
      *
      *  A function is created at each address and is attached to the partitioner's CFG/AUM. Returns a list of such functions,
      *  some of which may have existed prior to this call. */
-    virtual std::vector<Function::Ptr> makeUserFunctions(Partitioner&, const std::vector<rose_addr_t>&);
+    virtual std::vector<Function::Ptr> makeUserFunctions(const PartitionerPtr&, const std::vector<rose_addr_t>&);
 
     /** Discover as many basic blocks as possible.
      *
@@ -787,7 +786,7 @@ public:
      *  for which no attempt has been made to discover instructions.  This method implements a recursive descent disassembler,
      *  although it does not process the control flow edges in any particular order. Subclasses are expected to override this
      *  to implement a more directed approach to discovering basic blocks. */
-    virtual void discoverBasicBlocks(Partitioner&);
+    virtual void discoverBasicBlocks(const PartitionerPtr&);
 
     /** Scan read-only data to find function pointers.
      *
@@ -800,7 +799,7 @@ public:
      *  function was found.  In any case, the startVa is updated so it points to the next read-only address to check.
      *
      *  Functions created in this manner have the @c SgAsmFunction::FUNC_SCAN_RO_DATA reason. */
-    virtual Function::Ptr makeNextDataReferencedFunction(const Partitioner&, rose_addr_t &startVa /*in,out*/);
+    virtual Function::Ptr makeNextDataReferencedFunction(const PartitionerConstPtr&, rose_addr_t &startVa /*in,out*/);
 
     /** Scan instruction ASTs to function pointers.
      *
@@ -815,7 +814,7 @@ public:
      *  function was found.
      *
      *  Functions created in this manner have the @c SgAsmFunction::FUNC_INSN_RO_DATA reason. */
-    virtual Function::Ptr makeNextCodeReferencedFunction(const Partitioner&);
+    virtual Function::Ptr makeNextCodeReferencedFunction(const PartitionerConstPtr&);
 
     /** Make functions for function call edges.
      *
@@ -823,7 +822,7 @@ public:
      *  that is concrete.  The function is added to the specified partitioner's CFG/AUM.
      *
      *  Returns a list of such functions, some of which may have existed prior to this call. */
-    virtual std::vector<Function::Ptr> makeCalledFunctions(Partitioner&);
+    virtual std::vector<Function::Ptr> makeCalledFunctions(const PartitionerPtr&);
 
     /** Make function at prologue pattern.
      *
@@ -840,8 +839,9 @@ public:
      *  searched.
      *
      * @{ */
-    virtual std::vector<Function::Ptr> makeNextPrologueFunction(Partitioner&, rose_addr_t startVa);
-    virtual std::vector<Function::Ptr> makeNextPrologueFunction(Partitioner&, rose_addr_t startVa, rose_addr_t &lastSearchedVa);
+    virtual std::vector<Function::Ptr> makeNextPrologueFunction(const PartitionerPtr&, rose_addr_t startVa);
+    virtual std::vector<Function::Ptr> makeNextPrologueFunction(const PartitionerPtr&, rose_addr_t startVa,
+                                                                rose_addr_t &lastSearchedVa);
     /** @} */
 
     /** Make functions from inter-function calls.
@@ -863,7 +863,7 @@ public:
      *  Returns the new function(s) for the first basic block that satisfied the requirements outlined above, and updates @p
      *  startVa to be a greater address which is not part of the basic block that was scanned. */
     virtual std::vector<Function::Ptr>
-    makeFunctionFromInterFunctionCalls(Partitioner &partitioner, rose_addr_t &startVa /*in,out*/);
+    makeFunctionFromInterFunctionCalls(const PartitionerPtr&, rose_addr_t &startVa /*in,out*/);
 
     /** Discover as many functions as possible.
      *
@@ -871,7 +871,7 @@ public:
      *  time we run out of basic blocks to try, we look for another function prologue pattern at the lowest possible address
      *  and then recursively discover more basic blocks.  When this procedure is exhausted a call to @ref
      *  attachBlocksToFunctions tries to attach each basic block to a function. */
-    virtual void discoverFunctions(Partitioner&);
+    virtual void discoverFunctions(const PartitionerPtr&);
 
     /** Attach dead code to function.
      *
@@ -887,7 +887,8 @@ public:
      *  Returns the set of newly discovered addresses for unreachable code.  These are the ghost edge target addresses
      *  discovered at each iteration of the loop and do not include addresses of basic blocks that are reachable from the ghost
      *  target blocks. */
-    virtual std::set<rose_addr_t> attachDeadCodeToFunction(Partitioner&, const Function::Ptr&, size_t maxIterations=size_t(-1));
+    virtual std::set<rose_addr_t> attachDeadCodeToFunction(const PartitionerPtr&, const Function::Ptr&,
+                                                           size_t maxIterations=size_t(-1));
 
     /** Attach function padding to function.
      *
@@ -896,13 +897,13 @@ public:
      *
      *  Returns the padding data block, which might have existed prior to this call.  Returns null if the function apparently
      *  has no padding. */
-    virtual DataBlock::Ptr attachPaddingToFunction(Partitioner&, const Function::Ptr&);
+    virtual DataBlock::Ptr attachPaddingToFunction(const PartitionerPtr&, const Function::Ptr&);
 
     /** Attach padding to all functions.
      *
      *  Invokes @ref attachPaddingToFunction for each known function and returns the set of data blocks that were returned by
      *  the individual calls. */
-    virtual std::vector<DataBlock::Ptr> attachPaddingToFunctions(Partitioner&);
+    virtual std::vector<DataBlock::Ptr> attachPaddingToFunctions(const PartitionerPtr&);
 
     /** Attach  all possible intra-function basic blocks to functions.
      *
@@ -914,7 +915,7 @@ public:
      *  This method is called automatically by @ref Engine::runPartitioner if the @ref findingIntraFunctionCode property is set.
      *
      *  Returns the sum from all the calls to @ref attachSurroundedCodeToFunctions. */
-    virtual size_t attachAllSurroundedCodeToFunctions(Partitioner&);
+    virtual size_t attachAllSurroundedCodeToFunctions(const PartitionerPtr&);
 
     /** Attach intra-function basic blocks to functions.
      *
@@ -923,13 +924,13 @@ public:
      *  created at the beginning of the interval and added to the function.
      *
      *  Returns the number of new placeholders created. */
-    virtual size_t attachSurroundedCodeToFunctions(Partitioner&);
+    virtual size_t attachSurroundedCodeToFunctions(const PartitionerPtr&);
 
     /** Attach basic blocks to functions.
      *
      *  Calls @ref Partitioner::discoverFunctionBasicBlocks once for each known function the partitioner's CFG/AUM in a
      *  sophomoric attempt to assign existing basic blocks to functions. */
-    virtual void attachBlocksToFunctions(Partitioner&);
+    virtual void attachBlocksToFunctions(const PartitionerPtr&);
 
     /** Attach dead code to functions.
      *
@@ -937,7 +938,7 @@ public:
      *  along @p maxIterations each time.
      *
      *  Returns the union of the dead code addresses discovered for each function. */
-    virtual std::set<rose_addr_t> attachDeadCodeToFunctions(Partitioner&, size_t maxIterations=size_t(-1));
+    virtual std::set<rose_addr_t> attachDeadCodeToFunctions(const PartitionerPtr&, size_t maxIterations=size_t(-1));
 
     /** Attach intra-function data to functions.
      *
@@ -948,14 +949,14 @@ public:
      *  @todo In @ref attachSurroundedDataToFunctions: We can add a single-function version of this if necessary. It was done
      *  this way because it is more efficient to iterate over all unused addresses and find the surrounding functions than it
      *  is to iterate over one function's unused addresses at a time. [Robb P. Matzke 2014-09-08] */
-    virtual std::vector<DataBlock::Ptr> attachSurroundedDataToFunctions(Partitioner&);
+    virtual std::vector<DataBlock::Ptr> attachSurroundedDataToFunctions(const PartitionerPtr&);
 
     /** Runs various analysis passes.
      *
      *  Runs each analysis over all functions to ensure that results are cached.  This should typically be done after functions
      *  are discovered and before the final AST is generated, otherwise the AST will not contain cached results for functions
      *  and blocks for which an analysis was not performed. */
-    virtual void updateAnalysisResults(Partitioner&);
+    virtual void updateAnalysisResults(const PartitionerPtr&);
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -975,14 +976,14 @@ public:
      *
      *  Returns true if a new call-return edge was added to some call, or false if no such edge could be added. A post
      *  condition for a false return is that the pendingCallReturn list is empty. */
-    virtual bool makeNextCallReturnEdge(Partitioner&, boost::logic::tribool assumeCallReturns);
+    virtual bool makeNextCallReturnEdge(const PartitionerPtr&, boost::logic::tribool assumeCallReturns);
 
     /** Discover basic block at next placeholder.
      *
      *  Discovers a basic block at some arbitrary placeholder.  Returns a pointer to the new basic block if a block was
      *  discovered, or null if no block is discovered.  A postcondition for a null return is that the CFG has no edges coming
      *  into the "undiscovered" vertex. */
-    virtual BasicBlock::Ptr makeNextBasicBlockFromPlaceholder(Partitioner&);
+    virtual BasicBlock::Ptr makeNextBasicBlockFromPlaceholder(const PartitionerPtr&);
 
     /** Discover a basic block.
      *
@@ -998,7 +999,7 @@ public:
      *      ROSE can't prove that a callee never returns then assume it may return).
      *
      *  Returns the basic block that was discovered, or the null pointer if there are no pending undiscovered blocks. */
-    virtual BasicBlock::Ptr makeNextBasicBlock(Partitioner&);
+    virtual BasicBlock::Ptr makeNextBasicBlock(const PartitionerPtr&);
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1093,8 +1094,8 @@ public:
 #ifdef ROSE_ENABLE_PYTHON_API
 
     // Similar to frontend, but returns a partitioner rather than an AST since the Python API doesn't yet support ASTs.
-    Partitioner pythonParseVector(boost::python::list &pyArgs, const std::string &purpose, const std::string &description);
-    Partitioner pythonParseSingle(const std::string &specimen, const std::string &purpose, const std::string &description);
+    PartitionerPtr pythonParseVector(boost::python::list &pyArgs, const std::string &purpose, const std::string &description);
+    PartitionerPtr pythonParseSingle(const std::string &specimen, const std::string &purpose, const std::string &description);
 
 #endif
 

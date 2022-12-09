@@ -4,6 +4,7 @@
 #include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/GraphViz.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Sawyer/CommandLine.h>
 //! [headers]
 
@@ -60,11 +61,11 @@ main(int argc, char *argv[]) {
     //! [setup]
     
     //! [partition]
-    Partitioner2::Partitioner partitioner = engine->partition(specimen);
+    Partitioner2::Partitioner::Ptr partitioner = engine->partition(specimen);
     //! [partition]
 
     //! [callgraph]
-    Partitioner2::FunctionCallGraph callgraph = partitioner.functionCallGraph(Partitioner2::AllowParallelEdges::NO);
+    Partitioner2::FunctionCallGraph callgraph = partitioner->functionCallGraph(Partitioner2::AllowParallelEdges::NO);
     //! [callgraph]
 
     //! [emit]

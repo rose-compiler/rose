@@ -88,10 +88,10 @@ public:
     static const CategoryId NO_CATEGORY = -1;           /**< Invalid category ID. */
 
     /** Function and distance to some other function. */
-    typedef std::pair<Partitioner2::Function::Ptr, double /*distance*/> FunctionDistancePair;
+    typedef std::pair<Partitioner2::FunctionPtr, double /*distance*/> FunctionDistancePair;
 
     /** Pair of functions. */
-    typedef std::pair<Partitioner2::Function::Ptr, Partitioner2::Function::Ptr> FunctionPair;
+    typedef std::pair<Partitioner2::FunctionPtr, Partitioner2::FunctionPtr> FunctionPair;
 
     /** Diagnostic streams */
     static Sawyer::Message::Facility mlog;
@@ -131,7 +131,7 @@ private:
     };
 
     // Info about all functions
-    typedef Sawyer::Container::Map<Partitioner2::Function::Ptr, FunctionInfo> Functions;
+    typedef Sawyer::Container::Map<Partitioner2::FunctionPtr, FunctionInfo> Functions;
     Functions functions_;
 
     // How to combine category distances to obtain a function distance
@@ -243,7 +243,7 @@ public:
      *
      * @{ */
     CategoryId declareCfgConnectivity(const std::string &categoryName);
-    void measureCfgConnectivity(CategoryId, const Partitioner2::Partitioner&, const Partitioner2::Function::Ptr&,
+    void measureCfgConnectivity(CategoryId, const Partitioner2::PartitionerConstPtr&, const Partitioner2::FunctionPtr&,
                                 size_t maxPoints = UNLIMITED);
     /** @} */
 
@@ -253,7 +253,7 @@ public:
      *
      * @{ */
     CategoryId declareCallGraphConnectivity(const std::string &categoryName);
-    void measureCallGraphConnectivity(CategoryId, const Partitioner2::Partitioner&, const Partitioner2::Function::Ptr&);
+    void measureCallGraphConnectivity(CategoryId, const Partitioner2::PartitionerConstPtr&, const Partitioner2::FunctionPtr&);
     /** @} */
 
     /** Instruction mnemonic stream.
@@ -263,7 +263,7 @@ public:
      *
      * @{ */
     CategoryId declareMnemonicStream(const std::string &categoryName);
-    void measureMnemonicStream(CategoryId, const Partitioner2::Partitioner&, const Partitioner2::Function::Ptr&);
+    void measureMnemonicStream(CategoryId, const Partitioner2::PartitionerConstPtr&, const Partitioner2::FunctionPtr&);
     /** @} */
 
 
@@ -279,7 +279,7 @@ public:
      *  does not match the dimensionality of the category or if the category is not one that stores points.
      *
      *  When comparing two functions, the order of points in the point clouds is irrelevant. */
-    void insertPoint(const Partitioner2::Function::Ptr&, CategoryId, const CartesianPoint&);
+    void insertPoint(const Partitioner2::FunctionPtr&, CategoryId, const CartesianPoint&);
 
     /** Insert an ordered list characteristic value.
      *
@@ -289,16 +289,16 @@ public:
      *  When comparing two functions, the order that ordered lists were inserted into the category matters since the distance
      *  between two categories is some function of the edit distances between corresponding ordered lists.  If you want to
      *  insert list-type characteristic values in any order then each list needs to be in its own category. */
-    void insertList(const Partitioner2::Function::Ptr&, CategoryId, const OrderedList&);
+    void insertList(const Partitioner2::FunctionPtr&, CategoryId, const OrderedList&);
 
     /** Number of characteristic points in a category. */
-    size_t size(const Partitioner2::Function::Ptr&, CategoryId) const;
+    size_t size(const Partitioner2::FunctionPtr&, CategoryId) const;
 
     /** Catesian points contained in a category. */
-    const PointCloud& points(const Partitioner2::Function::Ptr&, CategoryId) const;
+    const PointCloud& points(const Partitioner2::FunctionPtr&, CategoryId) const;
 
     /** Ordered lists contained in a category. */
-    const OrderedLists& lists(const Partitioner2::Function::Ptr&, CategoryId) const;
+    const OrderedLists& lists(const Partitioner2::FunctionPtr&, CategoryId) const;
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -328,13 +328,13 @@ public:
      *      categories.
      *
      *  If either function has not been analyzed, or has been analyzed but resulted in no data, then return the @p dflt value. */
-    double compare(const Partitioner2::Function::Ptr&, const Partitioner2::Function::Ptr&, double dflt = NAN) const;
+    double compare(const Partitioner2::FunctionPtr&, const Partitioner2::FunctionPtr&, double dflt = NAN) const;
 
     /** Compare one function with all others.
      *
      *  Compare the given function with all other functions and return a list of function+cost pairs. The returned list is
      *  unsorted. */
-    std::vector<FunctionDistancePair> compareOneToAll(const Partitioner2::Function::Ptr&) const;
+    std::vector<FunctionDistancePair> compareOneToAll(const Partitioner2::FunctionPtr&) const;
 
     /** Compare one function with many others.
      *
@@ -346,24 +346,24 @@ public:
      * @{ */
     template<class FunctionIterator>
     std::vector<FunctionDistancePair>
-    compareOneToMany(const Partitioner2::Function::Ptr &needle,
+    compareOneToMany(const Partitioner2::FunctionPtr &needle,
                      const boost::iterator_range<FunctionIterator> &haystack) const {
-        std::vector<Partitioner2::Function::Ptr> others;
-        for (const Partitioner2::Function::Ptr &other: haystack)
+        std::vector<Partitioner2::FunctionPtr> others;
+        for (const Partitioner2::FunctionPtr &other: haystack)
             others.push_back(other);
         return compareOneToMany(needle, others);
     }
 
     template<class FunctionIterator>
     std::vector<FunctionDistancePair>
-    compareOneToMany(const Partitioner2::Function::Ptr &needle,
+    compareOneToMany(const Partitioner2::FunctionPtr &needle,
                      const FunctionIterator &begin, const FunctionIterator &end) const {
         return compareOneToMany(needle, boost::iterator_range<FunctionIterator>(begin, end));
     }
 
     std::vector<FunctionDistancePair>
-    compareOneToMany(const Partitioner2::Function::Ptr &needle,
-                     const std::vector<Partitioner2::Function::Ptr> &haystack) const;
+    compareOneToMany(const Partitioner2::FunctionPtr &needle,
+                     const std::vector<Partitioner2::FunctionPtr> &haystack) const;
     /** @} */
 
     /** Compare many functions to many others.
@@ -375,8 +375,8 @@ public:
      *
      *  This analysis operates in parallel using multi-threading. It honors the global thread count usually specified with the
      *  <code>--threads=N</code> switch. */
-    std::vector<std::vector<double> > compareManyToMany(const std::vector<Partitioner2::Function::Ptr>&,
-                                                        const std::vector<Partitioner2::Function::Ptr>&) const;
+    std::vector<std::vector<double> > compareManyToMany(const std::vector<Partitioner2::FunctionPtr>&,
+                                                        const std::vector<Partitioner2::FunctionPtr>&) const;
 
     /** Compare many functions to many others.
      *
@@ -387,8 +387,8 @@ public:
      *
      *  This analysis operates in parallel using multi-threading. It honors the global thread count usually specified with the
      *  <code>--threads=N</code> switch. */
-    DistanceMatrix compareManyToManyMatrix(std::vector<Partitioner2::Function::Ptr>,
-                                           std::vector<Partitioner2::Function::Ptr>) const;
+    DistanceMatrix compareManyToManyMatrix(std::vector<Partitioner2::FunctionPtr>,
+                                           std::vector<Partitioner2::FunctionPtr>) const;
 
     /** Minimum cost 1:1 mapping.
      *
@@ -399,16 +399,16 @@ public:
      *
      *  Since @ref findMinimumAssignment only works if ROSE is configured with dlib support, this function throws an @ref
      *  Exception if that support is missing. */
-    std::vector<FunctionPair> findMinimumCostMapping(const std::vector<Partitioner2::Function::Ptr> &list1,
-                                                     const std::vector<Partitioner2::Function::Ptr> &list2) const;
+    std::vector<FunctionPair> findMinimumCostMapping(const std::vector<Partitioner2::FunctionPtr> &list1,
+                                                     const std::vector<Partitioner2::FunctionPtr> &list2) const;
 
     /** Compute distances between sets of functions.
      *
      *  This is a low-level function to compute the distance between all pairs of functions from list1 and list2 in
      *  parallel. The return value contains the distances so that the distance between the function @c list1[i] and @c list2[j]
      *  is at index <code>i * list2.size() + j</code> in the return value. */
-    std::vector<double> computeDistances(const std::vector<Partitioner2::Function::Ptr> &list1,
-                                         const std::vector<Partitioner2::Function::Ptr> &list2,
+    std::vector<double> computeDistances(const std::vector<Partitioner2::FunctionPtr> &list1,
+                                         const std::vector<Partitioner2::FunctionPtr> &list2,
                                          size_t nThreads) const;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

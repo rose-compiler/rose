@@ -38,10 +38,13 @@ Partitioner::forgetStackDeltas(const Function::Ptr &function) const {
 // Determines when to perform interprocedural dataflow.  We want stack delta analysis to be interprocedural only if the called
 // function has no stack delta.
 struct InterproceduralPredicate: P2::DataFlow::InterproceduralPredicate {
-    const Partitioner &partitioner;
-    InterproceduralPredicate(const Partitioner &partitioner): partitioner(partitioner) {}
+    Partitioner::ConstPtr partitioner;
+    InterproceduralPredicate(const Partitioner::ConstPtr &partitioner)
+        : partitioner(partitioner) {
+        ASSERT_not_null(partitioner);
+    }
     bool operator()(const ControlFlowGraph &cfg, const ControlFlowGraph::ConstEdgeIterator &callEdge, size_t depth) {
-        if (depth > partitioner.stackDeltaInterproceduralLimit())
+        if (depth > partitioner->stackDeltaInterproceduralLimit())
             return false;
         ASSERT_always_require(callEdge != cfg.edges().end());
         ASSERT_require(callEdge->target()->value().type() == V_BASIC_BLOCK);
@@ -94,8 +97,8 @@ Partitioner::functionStackDelta(const Function::Ptr &function) const {
     }
     StackDelta::Analysis &sdAnalysis = function->stackDeltaAnalysis() = StackDelta::Analysis(cpu);
     sdAnalysis.initialConcreteStackPointer(0x7fff0000); // optional: helps reach more solutions
-    InterproceduralPredicate ip(*this);
-    sdAnalysis.analyzeFunction(*this, function, ip);
+    InterproceduralPredicate ip(sharedFromThis());
+    sdAnalysis.analyzeFunction(sharedFromThis(), function, ip);
     retval = sdAnalysis.functionStackDelta();
 
 #if 0 // [Robb Matzke 2015-11-17]
@@ -146,15 +149,17 @@ Partitioner::functionStackDelta(const Function::Ptr &function) const {
 }
 
 struct StackDeltaWorker {
-    const Partitioner &partitioner;
+    Partitioner::ConstPtr partitioner;
     Sawyer::ProgressBar<size_t> &progress;
 
-    StackDeltaWorker(const Partitioner &partitioner, Sawyer::ProgressBar<size_t> &progress)
-        : partitioner(partitioner), progress(progress) {}
+    StackDeltaWorker(const Partitioner::ConstPtr &partitioner, Sawyer::ProgressBar<size_t> &progress)
+        : partitioner(partitioner), progress(progress) {
+        ASSERT_not_null(partitioner);
+    }
 
     void operator()(size_t /*workId*/, const Function::Ptr &function) {
         Sawyer::Stopwatch t;
-        partitioner.functionStackDelta(function);
+        partitioner->functionStackDelta(function);
 
         // Show some results. We're using Rose::BinaryAnalysis::StackDelta::mlog[TRACE] for the messages, so the mutex here
         // doesn't really protect it. However, since that analysis doesn't produce much output on that stream, this mutex helps
@@ -168,7 +173,7 @@ struct StackDeltaWorker {
 
         // Progress reports
         ++progress;
-        partitioner.updateProgress("stack-delta", progress.ratio());
+        partitioner->updateProgress("stack-delta", progress.ratio());
     }
 };
 
@@ -184,7 +189,7 @@ Partitioner::allFunctionStackDelta() const {
     Sawyer::Message::FacilitiesGuard guard;
     if (nThreads != 1)                                  // lots of threads doing progress reports won't look too good!
         Rose::BinaryAnalysis::StackDelta::mlog[MARCH].disable();
-    Sawyer::workInParallel(cg, nThreads, StackDeltaWorker(*this, progress));
+    Sawyer::workInParallel(cg, nThreads, StackDeltaWorker(sharedFromThis(), progress));
 }
 
 } // namespace

@@ -43,27 +43,27 @@ public:
 /** Test whether x86 instructions begin with "jmp ADDRESS".
  *
  *  Tries to match "jmp ADDRESS" where ADDRESS is a constant. */
-ThunkDetection isX86JmpImmThunk(const Partitioner&, const std::vector<SgAsmInstruction*>&);
+ThunkDetection isX86JmpImmThunk(const PartitionerConstPtr&, const std::vector<SgAsmInstruction*>&);
 
 /** Test whether x86 instruction begin with "jmp [ADDRESS]".
  *
  *  Tries to match "jmp [ADDRESS]" where ADDRESS is a constant. */
-ThunkDetection isX86JmpMemThunk(const Partitioner&, const std::vector<SgAsmInstruction*>&);
+ThunkDetection isX86JmpMemThunk(const PartitionerConstPtr&, const std::vector<SgAsmInstruction*>&);
 
 /** Test whether x86 instructions begin with an LEA JMP pair.
  *
  *  Tries to match "lea ecx, [ebp + C]; jmp ADDR" where C and ADDR are constants. */
-ThunkDetection isX86LeaJmpThunk(const Partitioner&, const std::vector<SgAsmInstruction*>&);
+ThunkDetection isX86LeaJmpThunk(const PartitionerConstPtr&, const std::vector<SgAsmInstruction*>&);
 
 /** Test whether x86 instructions begin with "mov R, [ADDR]; jmp R".
  *
  *  Tries to match "mov R, [ADDR]; jmp R" where R is a register and ADDR is a constant. */
-ThunkDetection isX86MovJmpThunk(const Partitioner&, const std::vector<SgAsmInstruction*>&);
+ThunkDetection isX86MovJmpThunk(const PartitionerConstPtr&, const std::vector<SgAsmInstruction*>&);
 
 /** Test whether x86 instructions begin with "add R, C; jmp ADDR".
  *
  *  Tries to match "add R, C; jmp ADDR" where R is one of the cx registers and C and ADDR are constants. */
-ThunkDetection isX86AddJmpThunk(const Partitioner&, const std::vector<SgAsmInstruction*>&);
+ThunkDetection isX86AddJmpThunk(const PartitionerConstPtr&, const std::vector<SgAsmInstruction*>&);
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -76,7 +76,7 @@ ThunkDetection isX86AddJmpThunk(const Partitioner&, const std::vector<SgAsmInstr
  *  sequence begins with instructions that look like a thunk of some sort. If they do, then the function returns the number of
  *  initial instructions that compose the thunk and the name of the pattern that matched, otherwise it returns zero and an empty
  *  string. */
-typedef ThunkDetection(*ThunkPredicate)(const Partitioner&, const std::vector<SgAsmInstruction*>&);
+typedef ThunkDetection(*ThunkPredicate)(const PartitionerConstPtr&, const std::vector<SgAsmInstruction*>&);
 
 /** List of thunk predicates. */
 class ThunkPredicates: public Sawyer::SharedObject {
@@ -121,7 +121,7 @@ public:
      *  number of leading instructions that are part of the thunk and the name of the thunk detector that matched. The
      *  determination is made by invoking each predicate from the @ref predicates list in the order of that list and returning
      *  the value returned by the first predicate that returns non-zero. */
-    ThunkDetection isThunk(const Partitioner&, const std::vector<SgAsmInstruction*>&) const;
+    ThunkDetection isThunk(const PartitionerConstPtr&, const std::vector<SgAsmInstruction*>&) const;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -131,7 +131,7 @@ public:
 /** Split thunks off from start of functions.
  *
  *  Splits as many thunks as possible off the front of all functions currently attached to the partitioner's CFG. */
-void splitThunkFunctions(Partitioner&, const ThunkPredicates::Ptr&);
+void splitThunkFunctions(const PartitionerPtr&, const ThunkPredicates::Ptr&);
 
 } // namespace
 } // namespace

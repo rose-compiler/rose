@@ -28,7 +28,7 @@ systemFunctionName(const std::string &name) {
 
 // Scan PE import sections to build an index
 size_t
-getImportIndex(const Partitioner&, SgAsmPEFileHeader *peHeader, ImportIndex &index /*in,out*/) {
+getImportIndex(const Partitioner::ConstPtr&, SgAsmPEFileHeader *peHeader, ImportIndex &index /*in,out*/) {
     size_t nInserted = 0;
     if (peHeader!=NULL) {
         for (SgAsmGenericSection *section: peHeader->get_sections()->get_sections()) {
@@ -50,14 +50,14 @@ getImportIndex(const Partitioner&, SgAsmPEFileHeader *peHeader, ImportIndex &ind
 }
 
 ImportIndex
-getImportIndex(const Partitioner &partitioner, SgAsmPEFileHeader *peHeader) {
+getImportIndex(const Partitioner::ConstPtr &partitioner, SgAsmPEFileHeader *peHeader) {
     ImportIndex index;
     getImportIndex(partitioner, peHeader, index);
     return index;
 }
 
 ImportIndex
-getImportIndex(const Partitioner &partitioner, SgAsmInterpretation *interp) {
+getImportIndex(const Partitioner::ConstPtr &partitioner, SgAsmInterpretation *interp) {
     ImportIndex index;
     if (interp!=NULL) {
         for (SgAsmGenericHeader *fileHeader: interp->get_headers()->get_headers())
@@ -67,14 +67,15 @@ getImportIndex(const Partitioner &partitioner, SgAsmInterpretation *interp) {
 }
 
 size_t
-findExportFunctions(const Partitioner &partitioner, SgAsmPEFileHeader *peHeader, std::vector<Function::Ptr> &functions) {
+findExportFunctions(const Partitioner::ConstPtr &partitioner, SgAsmPEFileHeader *peHeader, std::vector<Function::Ptr> &functions) {
+    ASSERT_not_null(partitioner);
     size_t nInserted = 0;
     if (peHeader!=NULL) {
         for (SgAsmGenericSection *section: peHeader->get_sections()->get_sections()) {
             if (SgAsmPEExportSection *exportSection = isSgAsmPEExportSection(section)) {
                 for (SgAsmPEExportEntry *exportEntry: exportSection->get_exports()->get_exports()) {
                     rose_addr_t va = exportEntry->get_export_rva().get_va();
-                    if (partitioner.discoverInstruction(va)) {
+                    if (partitioner->discoverInstruction(va)) {
                         Function::Ptr function = Function::instance(va, exportEntry->get_name()->get_string(),
                                                                     SgAsmFunction::FUNC_EXPORT);
                         if (insertUnique(functions, function, sortFunctionsByAddress))
@@ -88,14 +89,14 @@ findExportFunctions(const Partitioner &partitioner, SgAsmPEFileHeader *peHeader,
 }
 
 std::vector<Function::Ptr>
-findExportFunctions(const Partitioner &partitioner, SgAsmPEFileHeader *peHeader) {
+findExportFunctions(const Partitioner::ConstPtr &partitioner, SgAsmPEFileHeader *peHeader) {
     std::vector<Function::Ptr> functions;
     findExportFunctions(partitioner, peHeader, functions);
     return functions;
 }
 
 std::vector<Function::Ptr>
-findExportFunctions(const Partitioner &partitioner, SgAsmInterpretation *interp) {
+findExportFunctions(const Partitioner::ConstPtr &partitioner, SgAsmInterpretation *interp) {
     std::vector<Function::Ptr> functions;
     if (interp!=NULL) {
         for (SgAsmGenericHeader *fileHeader: interp->get_headers()->get_headers())
@@ -105,7 +106,7 @@ findExportFunctions(const Partitioner &partitioner, SgAsmInterpretation *interp)
 }
 
 size_t
-findImportFunctions(const Partitioner&, SgAsmPEFileHeader *peHeader, const ImportIndex &imports,
+findImportFunctions(const Partitioner::ConstPtr&, SgAsmPEFileHeader *peHeader, const ImportIndex &imports,
                     std::vector<Function::Ptr> &functions) {
     size_t nInserted = 0;
     if (peHeader) {
@@ -123,7 +124,7 @@ findImportFunctions(const Partitioner&, SgAsmPEFileHeader *peHeader, const Impor
 }
 
 std::vector<Function::Ptr>
-findImportFunctions(const Partitioner &partitioner, SgAsmPEFileHeader *peHeader) {
+findImportFunctions(const Partitioner::ConstPtr &partitioner, SgAsmPEFileHeader *peHeader) {
     ImportIndex imports = getImportIndex(partitioner, peHeader);
     std::vector<Function::Ptr> functions;
     findImportFunctions(partitioner, peHeader, imports, functions);
@@ -131,7 +132,7 @@ findImportFunctions(const Partitioner &partitioner, SgAsmPEFileHeader *peHeader)
 }
 
 std::vector<Function::Ptr>
-findImportFunctions(const Partitioner &partitioner, SgAsmInterpretation *interp) {
+findImportFunctions(const Partitioner::ConstPtr &partitioner, SgAsmInterpretation *interp) {
     std::vector<Function::Ptr> functions;
     if (interp!=NULL) {
         ImportIndex imports = getImportIndex(partitioner, interp);
@@ -142,8 +143,9 @@ findImportFunctions(const Partitioner &partitioner, SgAsmInterpretation *interp)
 }
 
 void
-rebaseImportAddressTables(Partitioner &partitioner, const ImportIndex &index) {
-    const size_t wordSize = partitioner.instructionProvider().instructionPointerRegister().nBits() / 8;
+rebaseImportAddressTables(const Partitioner::Ptr &partitioner, const ImportIndex &index) {
+    ASSERT_not_null(partitioner);
+    const size_t wordSize = partitioner->instructionProvider().instructionPointerRegister().nBits() / 8;
     if (wordSize > 8) {
         mlog[WARN] <<"ModulesPe::rebaseImportAddressTable does not support a word size of "
                    <<StringUtility::plural(wordSize, "bytes") <<"\n";
@@ -162,7 +164,7 @@ rebaseImportAddressTables(Partitioner &partitioner, const ImportIndex &index) {
             packed[i] = (node.key() >> (8*i)) & 0xff;
 
         // Then reorder bytes for other sexes
-        switch (partitioner.instructionProvider().defaultByteOrder()) {
+        switch (partitioner->instructionProvider().defaultByteOrder()) {
             case ByteOrder::ORDER_LSB:
                 break;
 
@@ -175,7 +177,7 @@ rebaseImportAddressTables(Partitioner &partitioner, const ImportIndex &index) {
         }
         
         rose_addr_t iatVa = node.value()->get_iat_entry_va();
-        if (wordSize != partitioner.memoryMap()->at(iatVa).limit(wordSize).write(packed).size()){
+        if (wordSize != partitioner->memoryMap()->at(iatVa).limit(wordSize).write(packed).size()){
             ASSERT_not_reachable("write failed to map we just created");
         }else{
             node.value()->set_iat_written(true);
@@ -184,10 +186,11 @@ rebaseImportAddressTables(Partitioner &partitioner, const ImportIndex &index) {
 }
 
 void
-nameImportThunks(const Partitioner &partitioner, SgAsmInterpretation *interp) {
+nameImportThunks(const Partitioner::ConstPtr &partitioner, SgAsmInterpretation *interp) {
+    ASSERT_not_null(partitioner);
     if (interp==NULL)
         return;
-    std::vector<Function::Ptr> functions = partitioner.functions();
+    std::vector<Function::Ptr> functions = partitioner->functions();
 
     // Get the addresses for the PE Import Address Tables
     AddressIntervalSet iatExtent;
@@ -211,7 +214,7 @@ nameImportThunks(const Partitioner &partitioner, SgAsmInterpretation *interp) {
             continue;                                   // no need to name functions that already have a name
         if (function->basicBlockAddresses().size()!=1)
             continue;                                   // thunks have only one basic block...
-        BasicBlock::Ptr bblock = partitioner.basicBlockExists(function->address());
+        BasicBlock::Ptr bblock = partitioner->basicBlockExists(function->address());
         ASSERT_not_null(bblock);
         if (bblock->nInstructions()!=1)
             continue;                                   // ...that contains only one instruction...
@@ -234,7 +237,7 @@ nameImportThunks(const Partitioner &partitioner, SgAsmInterpretation *interp) {
         if (!iatExtent.contains(indirectionAddress))
             continue;                                   // ...and where C is inside an Import Address Table...
         bool isComplete = true;
-        std::vector<rose_addr_t> successors = partitioner.basicBlockConcreteSuccessors(bblock, &isComplete);
+        std::vector<rose_addr_t> successors = partitioner->basicBlockConcreteSuccessors(bblock, &isComplete);
         if (!isComplete || successors.size()!=1)
             continue;                                   // ...and the JMP has a single successor that is concrete...
         SgAsmPEImportItem *importItem = NULL;
@@ -252,11 +255,13 @@ nameImportThunks(const Partitioner &partitioner, SgAsmInterpretation *interp) {
 }
 
 void
-buildMayReturnLists(Partitioner &partitioner) {
+buildMayReturnLists(const Partitioner::Ptr &partitioner) {
+    ASSERT_not_null(partitioner);
+
     // The following functions never return to their caller
     // FIXME[Robb P. Matzke 2014-11-20]: This list needs to be expanded; I'm only listing those I've actually seen in the wild
     //      because I haven't been able to find a good list anywhere.
-    Configuration &c = partitioner.configuration();
+    Configuration &c = partitioner->configuration();
     c.insertMaybeFunction("TerminateThread@KERNEL32.dll").mayReturn(false);
     c.insertMaybeFunction("ExitProcess@KERNEL32.dll").mayReturn(false);
 
@@ -266,17 +271,18 @@ buildMayReturnLists(Partitioner &partitioner) {
 }
 
 void
-PeDescrambler::nameKeyAddresses(Partitioner &partitioner) {
-    if (partitioner.addressName(dispatcherVa_).empty())
-        partitioner.addressName(dispatcherVa_, "PEScrambler_dispatcher");
-    if (partitioner.addressName(dispatchTableVa_).empty())
-        partitioner.addressName(dispatchTableVa_, "PEScrambler_dispatch_table");
+PeDescrambler::nameKeyAddresses(const Partitioner::Ptr &partitioner) {
+    ASSERT_not_null(partitioner);
+    if (partitioner->addressName(dispatcherVa_).empty())
+        partitioner->addressName(dispatcherVa_, "PEScrambler_dispatcher");
+    if (partitioner->addressName(dispatchTableVa_).empty())
+        partitioner->addressName(dispatchTableVa_, "PEScrambler_dispatch_table");
 }
 
 bool
 PeDescrambler::operator()(bool chain, const Args &args) {
     if (!checkedPreconditions_) {
-        if (args.partitioner.instructionProvider().instructionPointerRegister().nBits() != 32)
+        if (args.partitioner->instructionProvider().instructionPointerRegister().nBits() != 32)
             throw std::runtime_error("PeDescrambler module only works on 32-bit specimens");
         checkedPreconditions_ = true;
     }
@@ -296,17 +302,19 @@ PeDescrambler::operator()(bool chain, const Args &args) {
 }
 
 bool
-PeDescrambler::basicBlockCallsDispatcher(const Partitioner &partitioner, const BasicBlock::Ptr &bblock) {
+PeDescrambler::basicBlockCallsDispatcher(const Partitioner::ConstPtr &partitioner, const BasicBlock::Ptr &bblock) {
+    ASSERT_not_null(partitioner);
     ASSERT_not_null(bblock);
     SgAsmX86Instruction *x86insn = isSgAsmX86Instruction(bblock->instructions().back());
     if (!x86insn || (x86insn->get_kind() != x86_call && x86insn->get_kind() != x86_farcall))
         return false;
-    std::vector<rose_addr_t> successors = partitioner.basicBlockConcreteSuccessors(bblock);
-    return 1==successors.size() && 1==partitioner.basicBlockSuccessors(bblock).size() && successors.front() == dispatcherVa_;
+    std::vector<rose_addr_t> successors = partitioner->basicBlockConcreteSuccessors(bblock);
+    return 1==successors.size() && 1==partitioner->basicBlockSuccessors(bblock).size() && successors.front() == dispatcherVa_;
 }
 
 Sawyer::Optional<rose_addr_t>
-PeDescrambler::findCalleeAddress(const Partitioner &partitioner, rose_addr_t returnVa) {
+PeDescrambler::findCalleeAddress(const Partitioner::ConstPtr &partitioner, rose_addr_t returnVa) {
+    ASSERT_not_null(partitioner);
     size_t tableIdx = 0;
     bool hitNullEntry = false;
     while (1) {
@@ -318,7 +326,7 @@ PeDescrambler::findCalleeAddress(const Partitioner &partitioner, rose_addr_t ret
             static const size_t nWordsToRead = nEntriesToRead * wordsPerEntry;
             static uint32_t buf[nWordsToRead];
             rose_addr_t batchVa = dispatchTableVa_ + dispatchTable_.size() * sizeof(DispatchEntry);
-            size_t nReadBytes = partitioner.memoryMap()->at(batchVa).limit(sizeof buf).read((uint8_t*)buf).size();
+            size_t nReadBytes = partitioner->memoryMap()->at(batchVa).limit(sizeof buf).read((uint8_t*)buf).size();
             reachedEndOfTable_ = nReadBytes < bytesPerEntry;
             for (size_t i=0; 4*(i+1)<nReadBytes; i+=2)
                 dispatchTable_.push_back(DispatchEntry(ByteOrder::le_to_host(buf[i+0]), ByteOrder::le_to_host(buf[i+1])));
@@ -331,7 +339,7 @@ PeDescrambler::findCalleeAddress(const Partitioner &partitioner, rose_addr_t ret
             rose_addr_t va = dispatchTable_[tableIdx].calleeVa;
             if (hitNullEntry) {
                 uint32_t va2;
-                if (4 != partitioner.memoryMap()->at(va).limit(4).read((uint8_t*)&va2).size())
+                if (4 != partitioner->memoryMap()->at(va).limit(4).read((uint8_t*)&va2).size())
                     return Sawyer::Nothing();       // couldn't dereference table entry
                 va = ByteOrder::le_to_host(va2);
             }

@@ -23,6 +23,15 @@ using namespace Rose::Diagnostics;
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
+
+BasicBlockCallback::Args::Args(const Partitioner::ConstPtr &partitioner, const BasicBlock::Ptr &bblock, Results &results)
+    : partitioner(partitioner), bblock(bblock), results(results) {
+    ASSERT_not_null(partitioner);
+}
+
+BasicBlockCallback::Args::~Args() {}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 namespace Modules {
 
 // Convert "KERNEL32.dll:EncodePointer" to "EncodePointer@KERNEL32.dll" and similar
@@ -40,10 +49,10 @@ canonicalFunctionName(const std::string &name) {
 }
 
 void
-demangleFunctionNames(const Partitioner &p) {
+demangleFunctionNames(const Partitioner::ConstPtr &partitioner) {
     // The demangler is most efficient if we give it all the names at once.
     std::vector<std::string> mangledNames;
-    for (const Function::Ptr &f: p.functions()) {
+    for (const Function::Ptr &f: partitioner->functions()) {
         if (!f->name().empty() && f->name() == f->demangledName())
             mangledNames.push_back(f->name());
     }
@@ -58,7 +67,7 @@ demangleFunctionNames(const Partitioner &p) {
         return;
     }
 
-    for (const Function::Ptr &f: p.functions()) {
+    for (const Function::Ptr &f: partitioner->functions()) {
         if (!f->name().empty() && f->name() == f->demangledName()) { // same condition as above
             std::string demangled = demangler.demangle(f->name());
             if (demangled != f->name())
@@ -70,8 +79,8 @@ demangleFunctionNames(const Partitioner &p) {
 bool
 AddGhostSuccessors::operator()(bool chain, const Args &args) {
     if (chain) {
-        size_t nBits = args.partitioner.instructionProvider().instructionPointerRegister().nBits();
-        for (rose_addr_t successorVa: args.partitioner.basicBlockGhostSuccessors(args.bblock))
+        size_t nBits = args.partitioner->instructionProvider().instructionPointerRegister().nBits();
+        for (rose_addr_t successorVa: args.partitioner->basicBlockGhostSuccessors(args.bblock))
             args.bblock->insertSuccessor(successorVa, nBits);
     }
     return chain;
@@ -81,7 +90,7 @@ bool
 PreventDiscontiguousBlocks::operator()(bool chain, const Args &args) {
     if (chain) {
         bool complete;
-        std::vector<rose_addr_t> successors = args.partitioner.basicBlockConcreteSuccessors(args.bblock, &complete);
+        std::vector<rose_addr_t> successors = args.partitioner->basicBlockConcreteSuccessors(args.bblock, &complete);
         if (complete && 1==successors.size() && successors[0]!=args.bblock->fallthroughVa())
             args.results.terminate = TERMINATE_NOW;
     }
@@ -95,7 +104,7 @@ BasicBlockSizeLimiter::operator()(bool chain, const Args &args) {
         if (mlog[DEBUG]) {
             mlog[DEBUG] <<"BasicBlockSizeLimiter triggered (max " <<StringUtility::plural(maxInsns_, "instructions") <<"):\n";
             for (SgAsmInstruction *insn: args.bblock->instructions())
-                mlog[DEBUG] <<"        " <<args.partitioner.unparse(insn) <<"\n";
+                mlog[DEBUG] <<"        " <<args.partitioner->unparse(insn) <<"\n";
         }
     }
     return chain;
@@ -105,12 +114,12 @@ bool
 IpRewriter::operator()(bool chain, const Args &args) {
     using namespace InstructionSemantics;
     if (chain && !rewrites_.empty()) {
-        size_t wordSize = args.partitioner.instructionProvider().instructionPointerRegister().nBits();
+        size_t wordSize = args.partitioner->instructionProvider().instructionPointerRegister().nBits();
         std::vector<BasicBlock::Successor> succs;
         if (args.bblock->successors().isCached())
             succs = args.bblock->successors().get();
         bool isModified = false;
-        BaseSemantics::RiscOperators::Ptr ops = args.partitioner.newOperators();
+        BaseSemantics::RiscOperators::Ptr ops = args.partitioner->newOperators();
         for (size_t i = 0; i < succs.size(); ++i) {
             for (const AddressPair &rewrite: rewrites_) {
                 BaseSemantics::SValue::Ptr oldValue = ops->number_(wordSize, rewrite.first);
@@ -463,15 +472,17 @@ Debugger::debug(rose_addr_t va, const BasicBlock::Ptr &bblock) {
 }
 
 bool
-MatchThunk::match(const Partitioner &partitioner, rose_addr_t anchor) {
+MatchThunk::match(const Partitioner::ConstPtr &partitioner, rose_addr_t anchor) {
+    ASSERT_not_null(partitioner);
+
     // Disassemble the next few undiscovered instructions
     static const size_t maxInsns = 2;                   // max length of a thunk
     std::vector<SgAsmInstruction*> insns;
     rose_addr_t va = anchor;
     for (size_t i=0; i<maxInsns; ++i) {
-        if (partitioner.instructionExists(va))
+        if (partitioner->instructionExists(va))
             break;                                      // look only for undiscovered instructions
-        SgAsmInstruction *insn = partitioner.discoverInstruction(va);
+        SgAsmInstruction *insn = partitioner->discoverInstruction(va);
         if (!insn)
             break;
         insns.push_back(insn);
@@ -495,9 +506,9 @@ MatchThunk::match(const Partitioner &partitioner, rose_addr_t anchor) {
     BasicBlock::Ptr bb = BasicBlock::instance(anchor, partitioner);
     for (size_t i=0; i<found.nInsns; ++i)
         bb->append(partitioner, insns[i]);
-    for (const BasicBlock::Successor &successor: partitioner.basicBlockSuccessors(bb)) {
+    for (const BasicBlock::Successor &successor: partitioner->basicBlockSuccessors(bb)) {
         if (auto targetVa = successor.expr()->toUnsigned()) {
-            if (Function::Ptr thunkTarget = partitioner.functionExists(*targetVa)) {
+            if (Function::Ptr thunkTarget = partitioner->functionExists(*targetVa)) {
                 thunkTarget->insertReasons(SgAsmFunction::FUNC_THUNK_TARGET);
                 if (thunkTarget->reasonComment().empty())
                     thunkTarget->reasonComment("target of thunk " + thunk->printableName());
@@ -560,11 +571,14 @@ deExecuteZeros(const MemoryMap::Ptr &map /*in,out*/, size_t threshold, size_t le
 }
 
 void
-labelSymbolAddresses(Partitioner &partitioner, SgAsmGenericHeader *fileHeader) {
+labelSymbolAddresses(const Partitioner::Ptr &partitioner, SgAsmGenericHeader *fileHeader) {
+    ASSERT_not_null(partitioner);
+    ASSERT_not_null(fileHeader);
+
     struct T1: AstSimpleProcessing {
-        Partitioner &partitioner;
+        Partitioner::Ptr partitioner;
         SgAsmGenericHeader *fileHeader;
-        T1(Partitioner &partitioner, SgAsmGenericHeader *fileHeader)
+        T1(const Partitioner::Ptr &partitioner, SgAsmGenericHeader *fileHeader)
             : partitioner(partitioner), fileHeader(fileHeader) {}
         void visit(SgNode *node) {
             if (SgAsmGenericSymbol *symbol = isSgAsmGenericSymbol(node)) {
@@ -584,14 +598,14 @@ labelSymbolAddresses(Partitioner &partitioner, SgAsmGenericHeader *fileHeader) {
                         section->get_mapped_preferred_va() != section->get_mapped_actual_va()) {
                         va += section->get_mapped_actual_va() - section->get_mapped_preferred_va();
                     }
-                    if (partitioner.memoryMap()->at(va).exists())
-                        partitioner.addressName(va, name);
+                    if (partitioner->memoryMap()->at(va).exists())
+                        partitioner->addressName(va, name);
 
                     // Sometimes weak symbol values are offsets w.r.t. their linked section.
                     if (section && symbol->get_binding() == SgAsmGenericSymbol::SYM_WEAK) {
                         va = value + section->get_mapped_actual_va();
-                        if (partitioner.memoryMap()->at(va).exists())
-                            partitioner.addressName(va, name);
+                        if (partitioner->memoryMap()->at(va).exists())
+                            partitioner->addressName(va, name);
                     }
                 }
             }
@@ -601,19 +615,22 @@ labelSymbolAddresses(Partitioner &partitioner, SgAsmGenericHeader *fileHeader) {
 }
 
 void
-nameStrings(const Partitioner &partitioner, const AddressInterval &where) {
+nameStrings(const Partitioner::ConstPtr &partitioner, const AddressInterval &where) {
+    ASSERT_not_null(partitioner);
+
     struct T1: AstSimpleProcessing {
         Sawyer::Container::Map<rose_addr_t, std::string> seen;
-        const Partitioner &partitioner;
+        Partitioner::ConstPtr partitioner;
         Strings::StringFinder stringFinder;
         const AddressInterval &where;
 
-        T1(const Partitioner &partitioner, const AddressInterval &where)
+        T1(const Partitioner::ConstPtr &partitioner, const AddressInterval &where)
             : partitioner(partitioner), where(where) {
+            ASSERT_not_null(partitioner);
             stringFinder.settings().minLength = 1;
             stringFinder.settings().maxLength = 65536;
             stringFinder.settings().keepingOnlyLongest = true;
-            ByteOrder::Endianness sex = partitioner.instructionProvider().defaultByteOrder();
+            ByteOrder::Endianness sex = partitioner->instructionProvider().defaultByteOrder();
             if (sex == ByteOrder::ORDER_UNSPECIFIED)
                 sex = ByteOrder::ORDER_LSB;
             stringFinder.insertCommonEncoders(sex);
@@ -632,13 +649,13 @@ nameStrings(const Partitioner &partitioner, const AddressInterval &where) {
                     if (!where.contains(va)) {
                         // Constant is outside the area that might be the start of a string.
 
-                    } else if (!partitioner.instructionsOverlapping(va).empty()) {
+                    } else if (!partitioner->instructionsOverlapping(va).empty()) {
                         // Constant is inside a known instruction, so it's not the start of a string.
 
                     } else {
                         // Constant is possibly the start of a string, so look for a string.
                         stringFinder.reset();
-                        stringFinder.find(partitioner.memoryMap()->at(va));
+                        stringFinder.find(partitioner->memoryMap()->at(va));
                         if (!stringFinder.strings().empty()) {
                             ASSERT_require(stringFinder.strings().front().address() == va);
                             std::string str = stringFinder.strings().front().narrow(); // front is the longest string
@@ -662,12 +679,12 @@ nameStrings(const Partitioner &partitioner, const AddressInterval &where) {
             }
         }
     } t1(partitioner, where);
-    for (SgAsmInstruction *insn: partitioner.instructionsOverlapping(AddressInterval::whole()))
+    for (SgAsmInstruction *insn: partitioner->instructionsOverlapping(AddressInterval::whole()))
         t1.traverse(insn, preorder);
 }
 
 void
-labelSymbolAddresses(Partitioner &partitioner, SgAsmInterpretation *interp) {
+labelSymbolAddresses(const Partitioner::Ptr &partitioner, SgAsmInterpretation *interp) {
     if (interp!=NULL) {
         for (SgAsmGenericHeader *fileHeader: interp->get_headers()->get_headers())
             labelSymbolAddresses(partitioner, fileHeader);
@@ -675,19 +692,25 @@ labelSymbolAddresses(Partitioner &partitioner, SgAsmInterpretation *interp) {
 }
 
 size_t
-findSymbolFunctions(const Partitioner &partitioner, SgAsmGenericHeader *fileHeader, std::vector<Function::Ptr> &functions) {
+findSymbolFunctions(const Partitioner::ConstPtr &partitioner, SgAsmGenericHeader *fileHeader,
+                    std::vector<Function::Ptr> &functions) {
+    ASSERT_not_null(partitioner);
+    ASSERT_not_null(fileHeader);
+
     typedef Sawyer::Container::Map<rose_addr_t, std::string> AddrNames;
 
     // This traversal only finds the addresses for the new functions, it does not modify the AST since that's a dangerous thing
     // to do while we're traversing it.  It shouldn't make any difference though because we're traversing a different part of
     // the AST (the ELF/PE container) than we're modifying (instructions).
     struct T1: AstSimpleProcessing {
-        const Partitioner &partitioner;
+        Partitioner::ConstPtr partitioner;
         SgAsmGenericHeader *fileHeader;
         AddrNames addrNames;
 
-        T1(const Partitioner &p, SgAsmGenericHeader *h)
-            : partitioner(p), fileHeader(h) {}
+        T1(const Partitioner::ConstPtr &partitioner, SgAsmGenericHeader *h)
+            : partitioner(partitioner), fileHeader(h) {
+            ASSERT_not_null(partitioner);
+        }
 
         void visit(SgNode *node) {
             if (SgAsmGenericSymbol *symbol = isSgAsmGenericSymbol(node)) {
@@ -705,7 +728,7 @@ findSymbolFunctions(const Partitioner &partitioner, SgAsmGenericHeader *fileHead
                         section->get_mapped_preferred_va() != section->get_mapped_actual_va()) {
                         va += section->get_mapped_actual_va() - section->get_mapped_preferred_va();
                     }
-                    if (partitioner.discoverInstruction(va)) {
+                    if (partitioner->discoverInstruction(va)) {
                         std::string &s = addrNames.insertMaybeDefault(va);
                         if (s.empty())
                             s = symbol->get_name()->get_string();
@@ -715,7 +738,7 @@ findSymbolFunctions(const Partitioner &partitioner, SgAsmGenericHeader *fileHead
                     // they're the value is used directly (the above code handled that case). */
                     if (section && symbol->get_binding() == SgAsmGenericSymbol::SYM_WEAK)
                         value += section->get_mapped_actual_va();
-                    if (partitioner.discoverInstruction(value)) {
+                    if (partitioner->discoverInstruction(value)) {
                         std::string &s = addrNames.insertMaybeDefault(value);
                         if (s.empty())
                             s = symbol->get_name()->get_string();
@@ -737,14 +760,14 @@ findSymbolFunctions(const Partitioner &partitioner, SgAsmGenericHeader *fileHead
 }
 
 std::vector<Function::Ptr>
-findSymbolFunctions(const Partitioner &partitioner, SgAsmGenericHeader *fileHeader) {
+findSymbolFunctions(const Partitioner::ConstPtr &partitioner, SgAsmGenericHeader *fileHeader) {
     std::vector<Function::Ptr> functions;
     findSymbolFunctions(partitioner, fileHeader, functions);
     return functions;
 }
 
 std::vector<Function::Ptr>
-findSymbolFunctions(const Partitioner &partitioner, SgAsmInterpretation *interp) {
+findSymbolFunctions(const Partitioner::ConstPtr &partitioner, SgAsmInterpretation *interp) {
     std::vector<Function::Ptr> functions;
     if (interp!=NULL) {
         for (SgAsmGenericHeader *fileHeader: interp->get_headers()->get_headers())
@@ -754,29 +777,34 @@ findSymbolFunctions(const Partitioner &partitioner, SgAsmInterpretation *interp)
 }
 
 void
-nameConstants(const Partitioner &partitioner, const AddressInterval &where) {
+nameConstants(const Partitioner::ConstPtr &partitioner, const AddressInterval &where) {
+    ASSERT_not_null(partitioner);
+
     struct ConstantNamer: AstSimpleProcessing {
-        const Partitioner &partitioner;
+        Partitioner::ConstPtr partitioner;
         const AddressInterval &where;
 
-        ConstantNamer(const Partitioner &partitioner, const AddressInterval &where)
-            : partitioner(partitioner), where(where) {}
+        ConstantNamer(const Partitioner::ConstPtr &partitioner, const AddressInterval &where)
+            : partitioner(partitioner), where(where) {
+            ASSERT_not_null(partitioner);
+        }
 
         void visit(SgNode *node) {
             if (SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(node)) {
                 const auto va = ival->get_absoluteValue();
                 if (ival->get_comment().empty() && where.contains(va))
-                    ival->set_comment(partitioner.addressName(va));
+                    ival->set_comment(partitioner->addressName(va));
             }
         }
     } constantRenamer(partitioner, where);
 
-    for (SgAsmInstruction *insn: partitioner.instructionsOverlapping(AddressInterval::whole()))
+    for (SgAsmInstruction *insn: partitioner->instructionsOverlapping(AddressInterval::whole()))
         constantRenamer.traverse(insn, preorder);
 }
 
 boost::logic::tribool
-isStackBasedReturn(const Partitioner &partitioner, const BasicBlock::Ptr &bb) {
+isStackBasedReturn(const Partitioner::ConstPtr &partitioner, const BasicBlock::Ptr &bb) {
+    ASSERT_not_null(partitioner);
     ASSERT_not_null(bb);
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     BasicBlockSemantics sem = bb->semantics();
@@ -787,9 +815,9 @@ isStackBasedReturn(const Partitioner &partitioner, const BasicBlock::Ptr &bb) {
     ASSERT_not_null(sem.dispatcher);
     ASSERT_not_null(sem.operators);
     SAWYER_MESG(debug) <<"  block has semantic information\n";
-    const RegisterDescriptor REG_IP = partitioner.instructionProvider().instructionPointerRegister();
-    const RegisterDescriptor REG_SP = partitioner.instructionProvider().stackPointerRegister();
-    const RegisterDescriptor REG_SS = partitioner.instructionProvider().stackSegmentRegister();
+    const RegisterDescriptor REG_IP = partitioner->instructionProvider().instructionPointerRegister();
+    const RegisterDescriptor REG_SP = partitioner->instructionProvider().stackPointerRegister();
+    const RegisterDescriptor REG_SS = partitioner->instructionProvider().stackSegmentRegister();
 
     // Find the pointer to the return address. Since the return instruction (e.g., x86 RET) has been processed semantically
     // already, the return address is beyond the end of the stack.  Here we handle architecture-specific instructions that
@@ -842,8 +870,9 @@ isStackBasedReturn(const Partitioner &partitioner, const BasicBlock::Ptr &bb) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 SgAsmBlock*
-buildBasicBlockAst(const Partitioner &partitioner, const BasicBlock::Ptr &bb, const Function::Ptr &parentFunction,
+buildBasicBlockAst(const Partitioner::ConstPtr &partitioner, const BasicBlock::Ptr &bb, const Function::Ptr &parentFunction,
                    const AstConstructionSettings &settings) {
+    ASSERT_not_null(partitioner);
     ASSERT_not_null(bb);
     ASSERT_not_null(parentFunction);
     if (bb->isEmpty()) {
@@ -854,7 +883,7 @@ buildBasicBlockAst(const Partitioner &partitioner, const BasicBlock::Ptr &bb, co
         }
     }
 
-    ControlFlowGraph::ConstVertexIterator bblockVertex = partitioner.findPlaceholder(bb->address());
+    ControlFlowGraph::ConstVertexIterator bblockVertex = partitioner->findPlaceholder(bb->address());
 
     std::vector<SgAsmInstruction*> insns = bb->instructions();
     for (size_t i=0; i<insns.size(); ++i) {
@@ -877,7 +906,7 @@ buildBasicBlockAst(const Partitioner &partitioner, const BasicBlock::Ptr &bb, co
         reasons |= SgAsmBlock::BLK_ENTRY_POINT;
 
     // Does this block have any predecessors?
-    if (bblockVertex != partitioner.cfg().vertices().end() && bblockVertex->nInEdges()==0)
+    if (bblockVertex != partitioner->cfg().vertices().end() && bblockVertex->nInEdges()==0)
         reasons |= SgAsmBlock::BLK_CFGHEAD;
 
     ast->set_reason(reasons);
@@ -906,7 +935,7 @@ buildBasicBlockAst(const Partitioner &partitioner, const BasicBlock::Ptr &bb, co
     // from bb. In any case, we fill in the successor SgAsmIntegerValueExpression objects with only the address and not
     // pointers to SgAsmBlock IR nodes since we don't have all the blocks yet; the SgAsmBlock pointers will be initialized
     // higher up on the AST-building stack.
-    if (bblockVertex != partitioner.cfg().vertices().end()) {
+    if (bblockVertex != partitioner->cfg().vertices().end()) {
         bool isComplete = true;
         for (const ControlFlowGraph::Edge &edge: bblockVertex->outEdges()) {
             const ControlFlowGraph::Vertex &target = *edge.target();
@@ -922,7 +951,7 @@ buildBasicBlockAst(const Partitioner &partitioner, const BasicBlock::Ptr &bb, co
         ast->set_successors_complete(isComplete);
     } else {
         bool isComplete = true;
-        for (rose_addr_t successorVa: partitioner.basicBlockConcreteSuccessors(bb, &isComplete)) {
+        for (rose_addr_t successorVa: partitioner->basicBlockConcreteSuccessors(bb, &isComplete)) {
             SgAsmIntegerValueExpression *succ = SageBuilderAsm::buildValueU64(successorVa);
             succ->set_parent(ast);
             ast->get_successors().push_back(succ);
@@ -933,10 +962,12 @@ buildBasicBlockAst(const Partitioner &partitioner, const BasicBlock::Ptr &bb, co
 }
 
 SgAsmBlock*
-buildDataBlockAst(const Partitioner &partitioner, const DataBlock::Ptr &dblock, const AstConstructionSettings&) {
+buildDataBlockAst(const Partitioner::ConstPtr &partitioner, const DataBlock::Ptr &dblock, const AstConstructionSettings&) {
+    ASSERT_not_null(partitioner);
+
     // Build the static data item
     SgUnsignedCharList rawBytes(dblock->size(), 0);
-    size_t nRead = partitioner.memoryMap()->at(dblock->address()).read(rawBytes).size();
+    size_t nRead = partitioner->memoryMap()->at(dblock->address()).read(rawBytes).size();
     ASSERT_always_require(nRead==dblock->size());
     SgAsmStaticData *datum = SageBuilderAsm::buildStaticData(dblock->address(), rawBytes);
 
@@ -945,15 +976,16 @@ buildDataBlockAst(const Partitioner &partitioner, const DataBlock::Ptr &dblock, 
 }
 
 SgAsmFunction*
-buildFunctionAst(const Partitioner &partitioner, const Function::Ptr &function, const AstConstructionSettings &settings) {
+buildFunctionAst(const Partitioner::ConstPtr &partitioner, const Function::Ptr &function, const AstConstructionSettings &settings) {
+    ASSERT_not_null(partitioner);
     ASSERT_not_null(function);
 
     // Build the child basic block IR nodes and remember all the data blocks
     std::vector<DataBlock::Ptr> dblocks = function->dataBlocks();
     std::vector<SgAsmBlock*> children;
     for (rose_addr_t blockVa: function->basicBlockAddresses()) {
-        ControlFlowGraph::ConstVertexIterator vertex = partitioner.findPlaceholder(blockVa);
-        if (vertex == partitioner.cfg().vertices().end()) {
+        ControlFlowGraph::ConstVertexIterator vertex = partitioner->findPlaceholder(blockVa);
+        if (vertex == partitioner->cfg().vertices().end()) {
             mlog[WARN] <<function->printableName() <<" bblock "
                        <<StringUtility::addrToString(blockVa) <<" does not exist in the CFG; no AST node created\n";
         } else if (BasicBlock::Ptr bb = vertex->value().bblock()) {
@@ -987,16 +1019,16 @@ buildFunctionAst(const Partitioner &partitioner, const Function::Ptr &function, 
     unsigned reasons = function->reasons();
 
     // Is the function part of the CFG?
-    ControlFlowGraph::ConstVertexIterator entryVertex = partitioner.findPlaceholder(function->address());
-    if (entryVertex != partitioner.cfg().vertices().end())
+    ControlFlowGraph::ConstVertexIterator entryVertex = partitioner->findPlaceholder(function->address());
+    if (entryVertex != partitioner->cfg().vertices().end())
         reasons |= SgAsmFunction::FUNC_GRAPH;
     
     // Is the function discontiguous?
-    if (partitioner.aum(function).extent().nIntervals() > 1)
+    if (partitioner->aum(function).extent().nIntervals() > 1)
         reasons |= SgAsmFunction::FUNC_DISCONT;
 
     // Is the function the target of a function call?
-    if (entryVertex != partitioner.cfg().vertices().end()) {
+    if (entryVertex != partitioner->cfg().vertices().end()) {
         for (const ControlFlowGraph::Edge &edge: entryVertex->inEdges()) {
             if (edge.value().type() == E_FUNCTION_CALL || edge.value().type() == E_FUNCTION_XFER) {
                 reasons |= SgAsmFunction::FUNC_CALL_TARGET;
@@ -1007,7 +1039,7 @@ buildFunctionAst(const Partitioner &partitioner, const Function::Ptr &function, 
 
     // Can this function return to its caller?
     SgAsmFunction::MayReturn mayReturn = SgAsmFunction::RET_UNKNOWN;
-    if (entryVertex != partitioner.cfg().vertices().end()) {
+    if (entryVertex != partitioner->cfg().vertices().end()) {
         if (BasicBlock::Ptr bb = entryVertex->value().bblock()) {
             bool b = false;
             if (bb->mayReturn().getOptional().assignTo(b))
@@ -1033,10 +1065,12 @@ buildFunctionAst(const Partitioner &partitioner, const Function::Ptr &function, 
 }
 
 SgAsmBlock*
-buildGlobalBlockAst(const Partitioner &partitioner, const AstConstructionSettings &settings) {
+buildGlobalBlockAst(const Partitioner::ConstPtr &partitioner, const AstConstructionSettings &settings) {
+    ASSERT_not_null(partitioner);
+
     // Create the children first
     std::vector<SgAsmFunction*> children;
-    for (const Function::Ptr &function: partitioner.functions()) {
+    for (const Function::Ptr &function: partitioner->functions()) {
         if (SgAsmFunction *func = buildFunctionAst(partitioner, function, settings)) {
             children.push_back(func);
         }
@@ -1059,7 +1093,7 @@ buildGlobalBlockAst(const Partitioner &partitioner, const AstConstructionSetting
 }
 
 SgAsmBlock*
-buildAst(const Partitioner &partitioner, SgAsmInterpretation *interp/*=NULL*/, const AstConstructionSettings &settings) {
+buildAst(const Partitioner::ConstPtr &partitioner, SgAsmInterpretation *interp/*=NULL*/, const AstConstructionSettings &settings) {
     if (SgAsmBlock *global = buildGlobalBlockAst(partitioner, settings)) {
         fixupAstPointers(global, interp);
         fixupAstCallingConventions(partitioner, global);
@@ -1143,14 +1177,16 @@ fixupAstPointers(SgNode *ast, SgAsmInterpretation *interp/*=NULL*/) {
 }
 
 void
-fixupAstCallingConventions(const Partitioner &partitioner, SgNode *ast) {
+fixupAstCallingConventions(const Partitioner::ConstPtr &partitioner, SgNode *ast) {
+    ASSERT_not_null(partitioner);
+
     // Pass 1: Sort all calling conventions by number of occurrences within the partitioner.
     Sawyer::Container::Map<std::string, size_t> totals; // how many times does each calling convention name match?
-    for (const Function::Ptr &function: partitioner.functions()) {
+    for (const Function::Ptr &function: partitioner->functions()) {
         const CallingConvention::Analysis &ccAnalysis = function->callingConventionAnalysis();
         if (!ccAnalysis.hasResults())
             continue;                                   // don't run analysis if not run already
-        CallingConvention::Dictionary ccDefs = partitioner.functionCallingConventionDefinitions(function);
+        CallingConvention::Dictionary ccDefs = partitioner->functionCallingConventionDefinitions(function);
         for (const CallingConvention::Definition::Ptr &ccDef: ccDefs)
             ++totals.insertMaybe(ccDef->name(), 0);
     }
@@ -1159,11 +1195,11 @@ fixupAstCallingConventions(const Partitioner &partitioner, SgNode *ast) {
     // the first one from the function's definition list since this list is presumably sorted by how frequently the convention
     // is used by the whole world.
     for (SgAsmFunction *astFunction: SageInterface::querySubTree<SgAsmFunction>(ast)) {
-        if (Function::Ptr function = partitioner.functionExists(astFunction->get_address())) {
+        if (Function::Ptr function = partitioner->functionExists(astFunction->get_address())) {
             const CallingConvention::Analysis &ccAnalysis = function->callingConventionAnalysis();
             if (!ccAnalysis.hasResults())
                 continue;                               // don't run analysis if not run already
-            CallingConvention::Dictionary ccDefs = partitioner.functionCallingConventionDefinitions(function);
+            CallingConvention::Dictionary ccDefs = partitioner->functionCallingConventionDefinitions(function);
             CallingConvention::Definition::Ptr ccBest;
             for (const CallingConvention::Definition::Ptr &ccDef: ccDefs) {
                 if (NULL==ccBest) {
@@ -1182,10 +1218,11 @@ fixupAstCallingConventions(const Partitioner &partitioner, SgNode *ast) {
 }
 
 std::vector<Function::Ptr>
-findNoopFunctions(const Partitioner &partitioner) {
-    partitioner.allFunctionIsNoop();
+findNoopFunctions(const Partitioner::ConstPtr &partitioner) {
+    ASSERT_not_null(partitioner);
+    partitioner->allFunctionIsNoop();
     std::vector<Function::Ptr> retval;
-    for (const Function::Ptr &function: partitioner.functions()) {
+    for (const Function::Ptr &function: partitioner->functions()) {
         if (function->isNoop().getOptional().orElse(false))
             insertUnique(retval, function, sortFunctionsByAddress);
     }
@@ -1193,7 +1230,7 @@ findNoopFunctions(const Partitioner &partitioner) {
 }
 
 void
-nameNoopFunctions(const Partitioner &partitioner) {
+nameNoopFunctions(const Partitioner::ConstPtr &partitioner) {
     for (const Function::Ptr &function: findNoopFunctions(partitioner)) {
         if (function->name().empty()) {
             std::string newName = "noop_" + StringUtility::addrToString(function->address()).substr(2) + "() -> void";

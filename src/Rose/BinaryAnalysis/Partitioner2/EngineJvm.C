@@ -709,26 +709,26 @@ EngineJvm::obtainDisassembler(const Disassembler::Base::Ptr &hint) { // blame ra
 //                                      Partitioner high-level functions
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Partitioner
+Partitioner::Ptr
 EngineJvm::createPartitioner() {
-  return Partitioner{};
+    return Partitioner::instance();
 }
 
 void
-EngineJvm::runPartitioner(Partitioner &partitioner) {
+EngineJvm::runPartitioner(const Partitioner::Ptr &partitioner) {
     Sawyer::Message::Stream info(mlog[INFO]);
     Sawyer::Stopwatch timer;
     info <<"disassembling and partitioning";
     info <<"; took " <<timer <<"\n";
 }
 
-Partitioner
+Partitioner::Ptr
 EngineJvm::partition(const std::vector<std::string> &fileNames) {
     try {
         obtainDisassembler();
-        Partitioner partitioner = createPartitioner();
+        Partitioner::Ptr partitioner = createPartitioner();
         runPartitioner(partitioner);
-        return boost::move(partitioner);
+        return partitioner;
     } catch (const std::runtime_error &e) {
         if (settings().engine.exitOnError) {
             mlog[FATAL] <<e.what() <<"\n";
@@ -739,7 +739,7 @@ EngineJvm::partition(const std::vector<std::string> &fileNames) {
     }
 }
 
-Partitioner
+Partitioner::Ptr
 EngineJvm::partition(const std::string &fileName) {
     return partition(std::vector<std::string>(1, fileName));
 }
@@ -749,13 +749,13 @@ EngineJvm::partition(const std::string &fileName) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void
-EngineJvm::labelAddresses(Partitioner &p, const Configuration &c) {
+EngineJvm::labelAddresses(const Partitioner::Ptr &partitioner, const Configuration &c) {
   Sawyer::Message::Stream where{mlog[WHERE]};
   SAWYER_MESG(where) << "EngineJvm::labelAddresses: no implementation\n";
 }
 
 void
-EngineJvm::discoverBasicBlocks(Partitioner&) {
+EngineJvm::discoverBasicBlocks(const Partitioner::Ptr&) {
   Sawyer::Message::Stream where{mlog[WHERE]};
   SAWYER_MESG(where) << "EngineJvm::discoverBasicBlocks: no implementation\n";
 }
@@ -785,6 +785,26 @@ EngineJvm::buildAst(const std::string &fileName) {
     return buildAst(std::vector<std::string>(1, fileName));
 }
 
+const EngineJvm::Settings&
+EngineJvm::settings() const {
+    return settings_;
+}
+
+EngineJvm::Settings&
+EngineJvm::settings() {
+    return settings_;
+}
+
+Progress::Ptr
+EngineJvm::progress() const {
+    return progress_;
+}
+
+void
+EngineJvm::progress(const Progress::Ptr &progress) {
+    progress_ = progress;
+}
+
 Disassembler::Base::Ptr
 EngineJvm::disassembler() const {
     return disassembler_;
@@ -793,6 +813,16 @@ EngineJvm::disassembler() const {
 void
 EngineJvm::disassembler(const Disassembler::Base::Ptr &d) {
     disassembler_ = d;
+}
+
+const std::string&
+EngineJvm::isaName() const {
+    return settings_.disassembler.isaName;
+}
+
+void
+EngineJvm::isaName(const std::string &s) {
+    settings_.disassembler.isaName = s;
 }
 
 

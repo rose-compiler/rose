@@ -217,12 +217,12 @@ main(int argc, char *argv[]) {
     Settings settings;
     P2::Engine *engine = P2::Engine::instance();
     boost::filesystem::path inputFileName = parseCommandLine(argc, argv, *engine, settings);
-    P2::Partitioner partitioner = engine->loadPartitioner(inputFileName, settings.stateFormat);
-    MemoryMap::Ptr map = partitioner.memoryMap();
+    P2::Partitioner::Ptr partitioner = engine->loadPartitioner(inputFileName, settings.stateFormat);
+    MemoryMap::Ptr map = partitioner->memoryMap();
     ASSERT_not_null(map);
 
     if (OutputFormat::NONE == settings.outputFormat) {
-        switch (partitioner.memoryMap()->byteOrder()) {
+        switch (partitioner->memoryMap()->byteOrder()) {
             case ByteOrder::ORDER_LSB:
                 std::cout <<"default byte order is little-endian\n";
                 break;
@@ -233,7 +233,7 @@ main(int argc, char *argv[]) {
                 std::cout <<"default byte order is unspecified\n";
                 break;
         }
-        partitioner.memoryMap()->dump(std::cout);
+        partitioner->memoryMap()->dump(std::cout);
 
     } else if (OutputFormat::VXCORE == settings.outputFormat) {
         if (settings.outputPrefix.empty()) {

@@ -17,10 +17,11 @@ namespace Partitioner2 {
 
 // called only during construction
 void
-BasicBlock::init(const Partitioner &partitioner) {
-    semantics_.operators = partitioner.newOperators();
-    if (semantics_.usingDispatcher && partitioner.usingSymbolicSemantics()) {
-        semantics_.dispatcher = partitioner.newDispatcher(semantics_.operators);
+BasicBlock::init(const Partitioner::ConstPtr &partitioner) {
+    ASSERT_not_null(partitioner);
+    semantics_.operators = partitioner->newOperators();
+    if (semantics_.usingDispatcher && partitioner->usingSymbolicSemantics()) {
+        semantics_.dispatcher = partitioner->newDispatcher(semantics_.operators);
         undropSemantics(partitioner);
     } else {
         // Rely on other methods to get basic block characteristics
@@ -132,10 +133,11 @@ BasicBlock::instructionIndex(SgAsmInstruction *toFind) const {
 // Reset semantics back to a state similar to  after calling init() followed by append() with a failed dispatch, except also
 // discard the initial and penultimate state.
 void
-BasicBlock::dropSemantics(const Partitioner &partitioner) {
+BasicBlock::dropSemantics(const Partitioner::ConstPtr &partitioner) {
+    ASSERT_not_null(partitioner);
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-    semantics_.operators = partitioner.newOperators();
-    semantics_.dispatcher = partitioner.newDispatcher(semantics_.operators);
+    semantics_.operators = partitioner->newOperators();
+    semantics_.dispatcher = partitioner->newDispatcher(semantics_.operators);
     semantics_.initialState = BaseSemantics::State::Ptr();
     semantics_.usingDispatcher = false;
     semantics_.optionalPenultimateState = Sawyer::Nothing();
@@ -143,21 +145,23 @@ BasicBlock::dropSemantics(const Partitioner &partitioner) {
 }
 
 BasicBlockSemantics
-BasicBlock::undropSemantics(const Partitioner &partitioner) {
+BasicBlock::undropSemantics(const Partitioner::ConstPtr &partitioner) {
+    ASSERT_not_null(partitioner);
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
     return undropSemanticsNS(partitioner);
 }
 
 BasicBlockSemantics
-BasicBlock::undropSemanticsNS(const Partitioner &partitioner) {
+BasicBlock::undropSemanticsNS(const Partitioner::ConstPtr &partitioner) {
+    ASSERT_not_null(partitioner);
     bool reconstructed = false;                            // did we reconstruct the semantics?
     if (!semantics_.initialState) {
         if (semantics_.dispatcher) {
             reconstructed = true;
             BasicBlockSemantics sem;
-            sem.operators = partitioner.newOperators();
+            sem.operators = partitioner->newOperators();
             ASSERT_not_null(sem.operators);
-            sem.dispatcher = partitioner.newDispatcher(sem.operators);
+            sem.dispatcher = partitioner->newDispatcher(sem.operators);
             ASSERT_not_null(sem.dispatcher);
             BaseSemantics::State::Ptr curState = sem.operators->currentState();
             BaseSemantics::RegisterStateGeneric::promote(curState->registerState())->initialize_large();
@@ -196,7 +200,8 @@ BasicBlock::semantics() const {
 }
 
 void
-BasicBlock::append(const Partitioner &partitioner, SgAsmInstruction *insn) {
+BasicBlock::append(const Partitioner::ConstPtr &partitioner, SgAsmInstruction *insn) {
+    ASSERT_not_null(partitioner);
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
     ASSERT_forbid2(isFrozen_, "basic block must be modifiable to append instruction");
     ASSERT_not_null(insn);

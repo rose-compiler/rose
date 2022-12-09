@@ -106,7 +106,7 @@ public:
      *
      *  Throws an exception if semantic analysis fails. */
     virtual Sawyer::Optional<Declaration>
-    analyze(const Partitioner2::Partitioner&, const Partitioner2::BasicBlockPtr&, SgAsmInstruction*,
+    analyze(const Partitioner2::PartitionerConstPtr&, const Partitioner2::BasicBlockPtr&, SgAsmInstruction*,
             const SmtSolver::Ptr &solver = SmtSolver::Ptr()) const;
 
     /** Predicate to determine whether an instruction is a system call. */

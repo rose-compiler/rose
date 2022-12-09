@@ -28,7 +28,7 @@ namespace Partitioner2 {
 class CfgVertex {
     VertexType type_;                                   // type of vertex, special or not
     rose_addr_t startVa_;                               // address of start of basic block
-    BasicBlock::Ptr bblock_;                            // basic block, or null if only a place holder
+    BasicBlockPtr bblock_;                              // basic block, or null if only a place holder
     FunctionSet owningFunctions_;                       // functions to which vertex belongs
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -54,7 +54,7 @@ public:
     explicit CfgVertex(rose_addr_t startVa): type_(V_BASIC_BLOCK), startVa_(startVa) {}
 
     /** Construct a basic block vertex. */
-    explicit CfgVertex(const BasicBlock::Ptr &bb): type_(V_BASIC_BLOCK), bblock_(bb) {
+    explicit CfgVertex(const BasicBlockPtr &bb): type_(V_BASIC_BLOCK), bblock_(bb) {
         ASSERT_not_null(bb);
         startVa_ = bb->address();
     }
@@ -112,10 +112,10 @@ public:
      *  allowed to set a basic block, and will always return a null pointer.
      *
      * @{ */
-    const BasicBlock::Ptr& bblock() const {
+    const BasicBlockPtr& bblock() const {
         return bblock_;
     }
-    void bblock(const BasicBlock::Ptr &bb) {
+    void bblock(const BasicBlockPtr &bb) {
         ASSERT_require(V_BASIC_BLOCK==type_ || V_USER_DEFINED==type_);
         bblock_ = bb;
     }
@@ -124,7 +124,7 @@ public:
     /** Add a function to the list of functions that own this vertex.
      *
      *  Returns true if the function was added, false if it was already an owner of the vertex. */
-    bool insertOwningFunction(const Function::Ptr &function) {
+    bool insertOwningFunction(const FunctionPtr &function) {
         ASSERT_require(V_BASIC_BLOCK==type_ || V_USER_DEFINED==type_ || V_NONEXISTING==type_);
         ASSERT_not_null(function);
         return owningFunctions_.insert(function);
@@ -134,7 +134,7 @@ public:
      *
      *  Causes the specified function to no longer be listed as an owner of this vertex. Does nothing if the function is not an
      *  owner to begin with. */
-    void eraseOwningFunction(const Function::Ptr &function) {
+    void eraseOwningFunction(const FunctionPtr &function) {
         ASSERT_require(V_BASIC_BLOCK==type_ || V_USER_DEFINED==type_ || V_NONEXISTING==type_);
         if (function != NULL)
             owningFunctions_.erase(function);
@@ -143,7 +143,7 @@ public:
     /** Determines if a function owns this vertex.
      *
      *  Returns true if the specified function is listed as an owning function of this vertex, false otherwise. */
-    bool isOwningFunction(const Function::Ptr &function) const {
+    bool isOwningFunction(const FunctionPtr &function) const {
         return owningFunctions_.exists(function);
     }
 
@@ -170,14 +170,14 @@ public:
     /** Is block a function entry block?
      *
      *  Returns true (a non-null function pointer) if this block serves as the entry block for some function. */
-    Function::Ptr isEntryBlock() const;
+    FunctionPtr isEntryBlock() const;
 
     /** Turns a basic block vertex into a placeholder.
      *
      *  The basic block pointer is reset to null. */
     void nullify() {
         ASSERT_require(V_BASIC_BLOCK==type_);
-        bblock_ = BasicBlock::Ptr();
+        bblock_ = BasicBlockPtr();
     }
 };
 
@@ -296,11 +296,11 @@ public:
      *  to the CFG/AUM. The partitioner is passed as a const pointer because the callback should not modify the CFG/AUM;
      *  this callback may represent only one step in a larger sequence, and modifying the CFG/AUM could confuse things. */
     struct AttachedBasicBlock {
-        const Partitioner *partitioner;             /**< Partitioner in which change occurred. */
-        rose_addr_t startVa;                        /**< Starting address for basic block or placeholder. */
-        BasicBlock::Ptr bblock;                     /**< Optional basic block; otherwise a placeholder operation. */
-        AttachedBasicBlock(Partitioner *partitioner, rose_addr_t startVa, const BasicBlock::Ptr &bblock)
-            : partitioner(partitioner), startVa(startVa), bblock(bblock) {}
+        const PartitionerPtr partitioner;               /**< Partitioner in which change occurred. */
+        rose_addr_t startVa;                            /**< Starting address for basic block or placeholder. */
+        BasicBlockPtr bblock;                           /**< Optional basic block; otherwise a placeholder operation. */
+        AttachedBasicBlock(const PartitionerPtr&, rose_addr_t startVa, const BasicBlockPtr&);
+        ~AttachedBasicBlock();
     };
 
     /** Arguments for detaching a basic block.
@@ -312,11 +312,11 @@ public:
      *  the CFG/AUM; this callback may represent only one step in a larger sequence, and modifying the CFG/AUM could
      *  confuse things. */
     struct DetachedBasicBlock {
-        const Partitioner *partitioner;             /**< Partitioner in which change occurred. */
-        rose_addr_t startVa;                        /**< Starting address for basic block or placeholder. */
-        BasicBlock::Ptr bblock;                     /**< Optional basic block; otherwise a placeholder operation. */
-        DetachedBasicBlock(Partitioner *partitioner, rose_addr_t startVa, const BasicBlock::Ptr &bblock)
-            : partitioner(partitioner), startVa(startVa), bblock(bblock) {}
+        PartitionerConstPtr partitioner;                /**< Partitioner in which change occurred. */
+        rose_addr_t startVa;                            /**< Starting address for basic block or placeholder. */
+        BasicBlockPtr bblock;                           /**< Optional basic block; otherwise a placeholder operation. */
+        DetachedBasicBlock(const PartitionerPtr&, rose_addr_t startVa, const BasicBlockPtr&);
+        ~DetachedBasicBlock();
     };
 
     /** Called when basic block is attached or placeholder inserted. */
@@ -361,7 +361,7 @@ CfgConstVertexSet findCalledFunctions(const ControlFlowGraph &cfg, const Control
  *  is specified, then it returns only those call-return edges that emanate from said vertex.
  *
  * @{ */
-CfgConstEdgeSet findCallReturnEdges(const Partitioner&, const ControlFlowGraph&);
+CfgConstEdgeSet findCallReturnEdges(const PartitionerConstPtr&, const ControlFlowGraph&);
 CfgConstEdgeSet findCallReturnEdges(const ControlFlowGraph::ConstVertexIterator &callSite);
 /** @} */
 
@@ -380,8 +380,8 @@ CfgConstVertexSet findFunctionReturns(const ControlFlowGraph &cfg, const Control
  *  is specified then the partitioner's own CFG is used.
  *
  * @{ */
-Sawyer::Container::Map<Function::Ptr, CfgConstEdgeSet> findFunctionReturnEdges(const Partitioner&);
-Sawyer::Container::Map<Function::Ptr, CfgConstEdgeSet> findFunctionReturnEdges(const Partitioner&, const ControlFlowGraph&);
+Sawyer::Container::Map<FunctionPtr, CfgConstEdgeSet> findFunctionReturnEdges(const PartitionerConstPtr&);
+Sawyer::Container::Map<FunctionPtr, CfgConstEdgeSet> findFunctionReturnEdges(const PartitionerConstPtr&, const ControlFlowGraph&);
 /** @} */
 
 /** Erase multiple edges.
@@ -420,7 +420,7 @@ CfgConstVertexSet reverseMapped(const CfgConstVertexSet&, const CfgVertexMap&);
  *  with function return edges that point to the return sites. The return sites are the vertices pointed to by the call-return
  *  (@ref E_CALL_RETURN) edges emanating from the call sites for said function.  The graph is modified in place. The resulting
  *  graph will usually have more edges than the original graph. */
-void expandFunctionReturnEdges(const Partitioner&, ControlFlowGraph &cfg/*in,out*/);
+void expandFunctionReturnEdges(const PartitionerConstPtr&, ControlFlowGraph &cfg/*in,out*/);
 
 /** Generate a function control flow graph.
  *
@@ -436,7 +436,7 @@ void expandFunctionReturnEdges(const Partitioner&, ControlFlowGraph &cfg/*in,out
  *  graph. It has one benefit over @ref functionCfgByReachability though: it will find all vertices that belong to the
  *  function even if they're not reachable from the function's entry point, or even if they're only reachable by traversing
  *  through a non-owned vertex. */
-ControlFlowGraph functionCfgByErasure(const ControlFlowGraph &gcfg, const Function::Ptr &function,
+ControlFlowGraph functionCfgByErasure(const ControlFlowGraph &gcfg, const FunctionPtr &function,
                                       ControlFlowGraph::VertexIterator &entry/*out*/);
 
 /** Generate a function control flow graph.
@@ -453,7 +453,7 @@ ControlFlowGraph functionCfgByErasure(const ControlFlowGraph &gcfg, const Functi
  *  Note that this method of creating a function control graph can be much faster than @ref functionCfgByErasure since
  *  it only traverses part of the global CFG, but the drawback is that the return value won't include vertices that are
  *  not reachable from the return value's entry vertex. */
-ControlFlowGraph functionCfgByReachability(const ControlFlowGraph &gcfg, const Function::Ptr &function,
+ControlFlowGraph functionCfgByReachability(const ControlFlowGraph &gcfg, const FunctionPtr &function,
                                            const ControlFlowGraph::ConstVertexIterator &gcfgEntry);
 
 } // namespace

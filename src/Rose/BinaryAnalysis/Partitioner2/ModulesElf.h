@@ -30,9 +30,9 @@ size_t findErrorHandlingFunctions(SgAsmElfFileHeader*, std::vector<Function::Ptr
 /** Reads ELF PLT sections and returns a list of functions.
  *
  * @{ */
-std::vector<Function::Ptr> findPltFunctions(Partitioner&, SgAsmElfFileHeader*);
-std::vector<Function::Ptr> findPltFunctions(Partitioner&, SgAsmInterpretation*);
-size_t findPltFunctions(Partitioner&, SgAsmElfFileHeader*, std::vector<Function::Ptr>&);
+std::vector<Function::Ptr> findPltFunctions(const PartitionerPtr&, SgAsmElfFileHeader*);
+std::vector<Function::Ptr> findPltFunctions(const PartitionerPtr&, SgAsmInterpretation*);
+size_t findPltFunctions(const PartitionerPtr&, SgAsmElfFileHeader*, std::vector<Function::Ptr>&);
 /** @} */
 
 /** Information about the procedure lookup table. */
@@ -46,7 +46,7 @@ struct PltInfo {
 };
 
 /** Find information about the PLT. */
-PltInfo findPlt(const Partitioner&, SgAsmGenericSection*, SgAsmElfFileHeader*);
+PltInfo findPlt(const PartitionerConstPtr&, SgAsmGenericSection*, SgAsmElfFileHeader*);
 
 /** Get a list of all ELF sections by name.
  *
@@ -57,18 +57,18 @@ std::vector<SgAsmElfSection*> findSectionsByName(SgAsmInterpretation*, const std
  *
  *  True if the specified function is an import, whether it's actually been linked in or not. This is a weaker version of @ref
  *  isLinkedImport. */
-bool isImport(const Partitioner&, const Function::Ptr&);
+bool isImport(const PartitionerConstPtr&, const Function::Ptr&);
 
 /** True if function is a linked import.
  *
  *  Returns true if the specified function is an import which has been linked to an actual function. This is a stronger version
  *  of @ref isImport. */
-bool isLinkedImport(const Partitioner&, const Function::Ptr&);
+bool isLinkedImport(const PartitionerConstPtr&, const Function::Ptr&);
 
 /** True if function is a non-linked import.
  *
  *  Returns true if the specified function is an import function but has not been linked in yet. */
-bool isUnlinkedImport(const Partitioner&, const Function::Ptr&);
+bool isUnlinkedImport(const PartitionerConstPtr&, const Function::Ptr&);
 
 /** True if named file is an ELF object file.
  *
@@ -125,7 +125,7 @@ public:
     static Ptr instance(rose_addr_t gotVa) {
         return Ptr(new PltEntryMatcher(gotVa));
     }
-    virtual bool match(const Partitioner&, rose_addr_t anchor);
+    virtual bool match(const PartitionerConstPtr&, rose_addr_t anchor);
 
     /** Address of global offset table. */
     rose_addr_t gotVa() const { return gotVa_; }
@@ -146,25 +146,25 @@ public:
     rose_addr_t gotEntry() const { return gotEntry_; }
 
 private:
-    SgAsmInstruction* matchNop(const Partitioner&, rose_addr_t va);
-    SgAsmInstruction* matchPush(const Partitioner&, rose_addr_t var, rose_addr_t &n /*out*/);
-    SgAsmInstruction* matchDirectJump(const Partitioner&, rose_addr_t va);
-    SgAsmInstruction* matchIndirectJump(const Partitioner&, rose_addr_t va,
+    SgAsmInstruction* matchNop(const PartitionerConstPtr&, rose_addr_t va);
+    SgAsmInstruction* matchPush(const PartitionerConstPtr&, rose_addr_t var, rose_addr_t &n /*out*/);
+    SgAsmInstruction* matchDirectJump(const PartitionerConstPtr&, rose_addr_t va);
+    SgAsmInstruction* matchIndirectJump(const PartitionerConstPtr&, rose_addr_t va,
                                         rose_addr_t &indirectVa /*out*/, size_t &indirectNBytes /*out*/);
-    SgAsmInstruction* matchIndirectJumpEbx(const Partitioner&, rose_addr_t va,
+    SgAsmInstruction* matchIndirectJumpEbx(const PartitionerConstPtr&, rose_addr_t va,
                                            rose_addr_t &offsetFromEbx /*out*/, size_t &indirectNBytes /*out*/);
-    SgAsmInstruction* matchAarch64Adrp(const Partitioner&, rose_addr_t va, rose_addr_t &value /*out*/);
-    SgAsmInstruction* matchAarch64Ldr(const Partitioner&, rose_addr_t va, rose_addr_t &indirectVa /*in,out*/,
+    SgAsmInstruction* matchAarch64Adrp(const PartitionerConstPtr&, rose_addr_t va, rose_addr_t &value /*out*/);
+    SgAsmInstruction* matchAarch64Ldr(const PartitionerConstPtr&, rose_addr_t va, rose_addr_t &indirectVa /*in,out*/,
                                       rose_addr_t &indirectNBytes /*out*/);
-    SgAsmInstruction* matchAarch64Add(const Partitioner&, rose_addr_t va);
-    SgAsmInstruction* matchAarch64Br(const Partitioner&, rose_addr_t va);
-    SgAsmInstruction* matchAarch32CopyPcToIp(const Partitioner&, rose_addr_t va, uint32_t &result);
-    SgAsmInstruction* matchAarch32AddConstToIp(const Partitioner&, rose_addr_t va, uint32_t &addend);
-    SgAsmInstruction* matchAarch32IndirectBranch(const Partitioner&, rose_addr_t va, uint32_t &addend);
+    SgAsmInstruction* matchAarch64Add(const PartitionerConstPtr&, rose_addr_t va);
+    SgAsmInstruction* matchAarch64Br(const PartitionerConstPtr&, rose_addr_t va);
+    SgAsmInstruction* matchAarch32CopyPcToIp(const PartitionerConstPtr&, rose_addr_t va, uint32_t &result);
+    SgAsmInstruction* matchAarch32AddConstToIp(const PartitionerConstPtr&, rose_addr_t va, uint32_t &addend);
+    SgAsmInstruction* matchAarch32IndirectBranch(const PartitionerConstPtr&, rose_addr_t va, uint32_t &addend);
 };
 
 /** Build may-return white and black lists. */
-void buildMayReturnLists(Partitioner&);
+void buildMayReturnLists(const PartitionerPtr&);
 
 } // namespace
 } // namespace

@@ -51,7 +51,7 @@ main(int argc, char *argv[]) {
 
     P2::Engine *engine = P2::Engine::instance();
     boost::filesystem::path inputFileName = parseCommandLine(argc, argv, *engine);
-    P2::Partitioner partitioner = engine->loadPartitioner(inputFileName, stateFormat);
+    P2::Partitioner::Ptr partitioner = engine->loadPartitioner(inputFileName, stateFormat);
 
     for (SgFile *file: SageInterface::generateFileList()) {
         if (SgBinaryComposite *binComp = isSgBinaryComposite(file)) {

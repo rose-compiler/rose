@@ -797,16 +797,24 @@ private:
     }
 };
 
-// Additional declarations w/out definitions yet.
-class Partitioner;
-class Function;
-typedef Sawyer::SharedPointer<Function> FunctionPtr;
+// Additional declarations incomplete definitions.
 class BasicBlock;
-typedef Sawyer::SharedPointer<BasicBlock> BasicBlockPtr;
+using BasicBlockPtr = Sawyer::SharedPointer<BasicBlock>; /**< Shared-ownersip pointer for @ref BasicBlock. */
+
+class Configuration;
+
 class DataBlock;
-typedef Sawyer::SharedPointer<DataBlock> DataBlockPtr;
+using DataBlockPtr = Sawyer::SharedPointer<DataBlock>;  /**< Shared-ownership pointer for @ref DataBlock. */
+
+class Function;
+using FunctionPtr = Sawyer::SharedPointer<Function>;    /**< Shared-ownership pointer for @ref Function. */
+
+class Partitioner;
+using PartitionerPtr = Sawyer::SharedPointer<Partitioner>; /**< Shared-ownership pointer for @ref Partitioner. */
+using PartitionerConstPtr = Sawyer::SharedPointer<const Partitioner>; /**< Shared-ownership pointer for @ref Partitioner. */
+
 class ThunkPredicates;
-typedef Sawyer::SharedPointer<ThunkPredicates> ThunkPredicatesPtr;
+using ThunkPredicatesPtr = Sawyer::SharedPointer<ThunkPredicates>; /**< Shared-ownership pointer for @ref ThunkPredicates. */
 
 } // namespace
 } // namespace

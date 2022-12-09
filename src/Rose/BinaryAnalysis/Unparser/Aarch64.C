@@ -29,7 +29,7 @@ unparseAarch64Expression(SgAsmExpression *expr, const LabelMap *labels, Register
         registers = RegisterDictionary::instanceAarch64();
     auto unparser = Aarch64::instance(Aarch64Settings());
     std::ostringstream ss;
-    Partitioner2::Partitioner p;
+    auto p = Partitioner2::Partitioner::instance();
     State state(p, registers, unparser->settings(), *unparser);
     unparser->emitOperand(ss, expr, state);
     return ss.str();

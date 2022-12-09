@@ -13,12 +13,13 @@ namespace ModulesMips {
 using namespace Rose::Diagnostics;
 
 bool
-MatchRetAddiu::match(const Partitioner &partitioner, rose_addr_t anchor) {
+MatchRetAddiu::match(const Partitioner::ConstPtr &partitioner, rose_addr_t anchor) {
+    ASSERT_not_null(partitioner);
     if (anchor & 3)
         return false;                                   // MIPS instructions must be 4-byte aligned
 
     // First look for "JR RA"
-    if (SgAsmMipsInstruction *insn = isSgAsmMipsInstruction(partitioner.discoverInstruction(anchor))) {
+    if (SgAsmMipsInstruction *insn = isSgAsmMipsInstruction(partitioner->discoverInstruction(anchor))) {
         static const RegisterDescriptor REG_RA(mips_regclass_gpr, 31, 0, 32);
         if (insn->get_kind() != mips_jr)
             return false;
@@ -33,7 +34,7 @@ MatchRetAddiu::match(const Partitioner &partitioner, rose_addr_t anchor) {
     }
     
     // Then look for "ADDIU SP, SP, C" where C is a positive integer
-    if (SgAsmMipsInstruction *insn = isSgAsmMipsInstruction(partitioner.discoverInstruction(anchor + 4))) {
+    if (SgAsmMipsInstruction *insn = isSgAsmMipsInstruction(partitioner->discoverInstruction(anchor + 4))) {
         static const RegisterDescriptor REG_SP(mips_regclass_gpr, 29, 0, 32);
         if (insn->get_kind() != mips_addiu)
             return false;

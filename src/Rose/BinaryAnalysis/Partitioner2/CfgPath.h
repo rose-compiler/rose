@@ -483,7 +483,7 @@ public:
         /** @} */
 
         /** Whether to inline a function. */
-        virtual HowInline operator()(const Partitioner&, const ControlFlowGraph::ConstEdgeIterator cfgCallEdge,
+        virtual HowInline operator()(const PartitionerConstPtr&, const ControlFlowGraph::ConstEdgeIterator cfgCallEdge,
                                      const ControlFlowGraph &paths, const ControlFlowGraph::ConstVertexIterator &pathsCallSite,
                                      size_t callDepth);
     };
@@ -528,7 +528,7 @@ public:
      *  callback determines whether a function is inlined or summarized.
      *
      *  Returns the resulting control flow graph, a.k.a., the paths graph. */
-    void inlinePaths(const Partitioner &partitioner, const CfgConstVertexSet &cfgBeginVertices,
+    void inlinePaths(const PartitionerConstPtr &partitioner, const CfgConstVertexSet &cfgBeginVertices,
                      const CfgConstVertexSet &cfgEndVertices, const CfgConstVertexSet &cfgAvoidVertices,
                      const CfgConstEdgeSet &cfgAvoidEdges);
 
@@ -550,16 +550,16 @@ public:
     const CfgConstVertexSet& pathsEndVertices() const { return pathsEndVertices_; }
 
 private:
-    void reset(const Partitioner &partitioner, const CfgConstVertexSet &cfgBeginVertices,
+    void reset(const PartitionerConstPtr &partitioner, const CfgConstVertexSet &cfgBeginVertices,
                const CfgConstVertexSet &cfgEndVertices, const CfgConstVertexSet &cfgAvoidVertices,
                const CfgConstEdgeSet &cfgAvoidEdges);
 
     // Returns true if pathVertex is a function call. Does so by consulting the corresponding vertex in the partitioner's
     // global CFG.
-    static bool isFunctionCall(const Partitioner&, const ControlFlowGraph::ConstVertexIterator &pathVertex);
+    static bool isFunctionCall(const PartitionerConstPtr&, const ControlFlowGraph::ConstVertexIterator &pathVertex);
 
     // Convert a path vertex to the corresponding vertex in the partitioner's global CFG.
-    static ControlFlowGraph::ConstVertexIterator pathToCfg(const Partitioner &partitioner,
+    static ControlFlowGraph::ConstVertexIterator pathToCfg(const PartitionerConstPtr &partitioner,
                                                            const ControlFlowGraph::ConstVertexIterator &pathVertex);
 
     // Convert global CFG vertices to paths graph vertices. */

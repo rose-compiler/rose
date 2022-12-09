@@ -924,14 +924,16 @@ Analysis::registerDictionary(const RegisterDictionary::Ptr &d) {
 
 class TransferFunction: public P2::DataFlow::TransferFunction {
     using Super = P2::DataFlow::TransferFunction;
-    const P2::Partitioner &partitioner_;
+    P2::Partitioner::ConstPtr partitioner_;
 
 public:
     std::string dfEngineName;
 
 public:
-    TransferFunction(const P2::Partitioner &partitioner, const Dispatcher::Ptr &cpu)
-        : Super(cpu), partitioner_(partitioner) {}
+    TransferFunction(const P2::Partitioner::ConstPtr &partitioner, const Dispatcher::Ptr &cpu)
+        : Super(cpu), partitioner_(partitioner) {
+        ASSERT_not_null(partitioner);
+    }
 
     // Just add some debugging to the P2::DataFlow::TransferFunction.
     State::Ptr operator()(const P2::DataFlow::DfCfg &dfCfg, size_t vertexId, const State::Ptr &incomingState) const {
@@ -947,7 +949,7 @@ public:
                         out <<prefix <<"  in " <<parentFunction->printableName() <<"\n";
                     for (const auto &edge: vertex->inEdges())
                         out <<prefix <<"  cfg from vertex #" <<edge.source()->id() <<"\n";
-                    auto unparser = partitioner_.unparser()->copy();
+                    auto unparser = partitioner_->unparser()->copy();
                     unparser->settings().linePrefix = prefix + "    ";
                     unparser->settings().bblock.cfg.showingPredecessors = false;
                     unparser->settings().bblock.cfg.showingSuccessors = false;
@@ -997,7 +999,8 @@ public:
 };
 
 void
-Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
+Analysis::analyzeFunction(const P2::Partitioner::ConstPtr &partitioner, const P2::Function::Ptr &function) {
+    ASSERT_not_null(partitioner);
     mlog[DEBUG] <<"analyzing " <<function->printableName() <<"\n";
     clearResults();
 
@@ -1005,7 +1008,7 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     // point for the function we're analyzing and which belong to that function.  All return points in the function will flow
     // into a special CALLRET vertex (which is absent if there are no returns).
     typedef P2::DataFlow::DfCfg DfCfg;
-    DfCfg dfCfg = P2::DataFlow::buildDfCfg(partitioner, partitioner.cfg(), partitioner.findPlaceholder(function->address()));
+    DfCfg dfCfg = P2::DataFlow::buildDfCfg(partitioner, partitioner->cfg(), partitioner->findPlaceholder(function->address()));
 #if 0 // DEBUGGING [Robb P Matzke 2017-02-24]
     {
         boost::filesystem::path debugDir = "./rose-debug/BinaryAnalysis/CallingConvention";
@@ -1032,7 +1035,7 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     // Build the dataflow engine.  If an instruction dispatcher is already provided then use it, otherwise create one and store
     // it in this analysis object.
     typedef DataFlow::Engine<DfCfg, State::Ptr, TransferFunction, DataFlow::SemanticsMerge> DfEngine;
-    if (!cpu_ && NULL==(cpu_ = partitioner.newDispatcher(partitioner.newOperators()))) {
+    if (!cpu_ && NULL==(cpu_ = partitioner->newDispatcher(partitioner->newOperators()))) {
         mlog[DEBUG] <<"  no instruction semantics\n";
         return;
     }
@@ -1056,7 +1059,7 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     // constant here, then all such offsets from the stack pointer would be simplified to just constants and the local variable
     // detection wouldn't be able to find anything. However, it might also be possible to change the local variable detector
     // so it looks for constants that are near the stack pointer's concrete value. [Robb Matzke 2022-07-12]
-    const RegisterDescriptor SP = partitioner.instructionProvider().stackPointerRegister();
+    const RegisterDescriptor SP = partitioner->instructionProvider().stackPointerRegister();
     rose_addr_t initialStackPointer = 0xcf000000;       // arbitrary
     initialRegState->writeRegister(SP, cpu_->operators()->number_(SP.nBits(), initialStackPointer),
                                    cpu_->operators().get());

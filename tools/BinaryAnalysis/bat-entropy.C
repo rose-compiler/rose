@@ -306,8 +306,8 @@ main(int argc, char *argv[]) {
     Settings settings;
     P2::Engine *engine = P2::Engine::instance();
     boost::filesystem::path inputFileName = parseCommandLine(argc, argv, *engine, settings);
-    P2::Partitioner partitioner = engine->loadPartitioner(inputFileName, settings.stateFormat);
-    MemoryMap::Ptr map = partitioner.memoryMap();
+    P2::Partitioner::Ptr partitioner = engine->loadPartitioner(inputFileName, settings.stateFormat);
+    MemoryMap::Ptr map = partitioner->memoryMap();
     ASSERT_not_null(map);
 
     // Look at only part of the map
