@@ -123,7 +123,12 @@ void AstJSONGeneration_private::handle_node(SgNode *node, JSONInheritedAttribute
     // NOTE: may not be necessary if p_name field has same info
     // NOTE: exclude using directive statements to prevent issue with test cases
     //       failing due to get_symbol_from_symbol_table()
-    if (dclStmt->hasAssociatedSymbol() && !isSgUsingDirectiveStatement(node)) {
+    bool has_search_implementation = !(
+                                        isSgUsingDirectiveStatement(node)   ||
+                                        isSgUsingDeclarationStatement(node) ||
+                                        isSgStaticAssertionDeclaration(node)
+                                     );
+    if (dclStmt->hasAssociatedSymbol() && has_search_implementation) {
       if (SgSymbol *symbol = dclStmt->search_for_symbol_from_symbol_table()) {
         jdata["symbolName"] = symbol->get_name().getString();
       }
