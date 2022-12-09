@@ -101,6 +101,7 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/FunctionSimilarity.C						\
 	BinaryAnalysis/HotPatch.C							\
 	BinaryAnalysis/InstructionCache.C						\
+	BinaryAnalysis/InstructionProvider.C						\
 	BinaryAnalysis/InstructionSemantics/BaseSemantics/BaseSemantics.C		\
 	BinaryAnalysis/InstructionSemantics/BaseSemantics/BinaryAnalysis		\
 	BinaryAnalysis/InstructionSemantics/BaseSemantics/Dispatcher.C			\
@@ -178,7 +179,6 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/Partitioner2/FunctionCallGraph.C					\
 	BinaryAnalysis/Partitioner2/FunctionNoop.C					\
 	BinaryAnalysis/Partitioner2/GraphViz.C						\
-	BinaryAnalysis/Partitioner2/InstructionProvider.C				\
 	BinaryAnalysis/Partitioner2/MayReturnAnalysis.C					\
 	BinaryAnalysis/Partitioner2/Modules.C						\
 	BinaryAnalysis/Partitioner2/ModulesElf.C					\

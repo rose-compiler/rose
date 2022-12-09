@@ -10,8 +10,8 @@ static const char *description =
 
 #include <Rose/BinaryAnalysis/Debugger/Linux.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
+#include <Rose/BinaryAnalysis/InstructionProvider.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
-#include <Rose/BinaryAnalysis/Partitioner2/InstructionProvider.h>
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
 

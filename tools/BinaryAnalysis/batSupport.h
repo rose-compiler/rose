@@ -4,7 +4,7 @@
 #include <Rose/BinaryAnalysis/BasicTypes.h>
 
 #include <Rose/BinaryAnalysis/FeasiblePath.h>
-#include <Rose/BinaryAnalysis/Partitioner2/InstructionProvider.h>
+#include <Rose/BinaryAnalysis/InstructionProvider.h>
 #include <Rose/BinaryAnalysis/SerialIo.h>
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
 
