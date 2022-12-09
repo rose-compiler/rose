@@ -11,9 +11,13 @@
 #include <Rose/BinaryAnalysis/Partitioner2/DataBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 #include <Rose/BinaryAnalysis/Partitioner2/FunctionCallGraph.h>
-#include <Rose/BinaryAnalysis/Partitioner2/InstructionProvider.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Modules.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Reference.h>
+
+#include <Rose/BinaryAnalysis/InstructionProvider.h>
+#include <Rose/BinaryAnalysis/SourceLocations.h>
+#include <Rose/BinaryAnalysis/Unparser/Settings.h>
+#include <Rose/Progress.h>
 
 #include <Sawyer/Attribute.h>
 #include <Sawyer/Callbacks.h>
@@ -24,10 +28,6 @@
 #include <Sawyer/ProgressBar.h>
 #include <Sawyer/SharedObject.h>
 #include <Sawyer/SharedPointer.h>
-
-#include <Rose/BinaryAnalysis/SourceLocations.h>
-#include <Rose/BinaryAnalysis/Unparser/Settings.h>
-#include <Rose/Progress.h>
 
 #include <boost/filesystem.hpp>
 #include <boost/move/utility_core.hpp>

@@ -356,6 +356,7 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/InstructionEnumsMips.h					\
 	Rose/BinaryAnalysis/InstructionEnumsPowerpc.h					\
 	Rose/BinaryAnalysis/InstructionEnumsX86.h					\
+	Rose/BinaryAnalysis/InstructionProvider.h					\
 	Rose/BinaryAnalysis/InstructionSemantics.h					\
 	Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/BasicTypes.h		\
 	Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Dispatcher.h		\
@@ -475,7 +476,6 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/Partitioner2/Function.h					\
 	Rose/BinaryAnalysis/Partitioner2/FunctionCallGraph.h				\
 	Rose/BinaryAnalysis/Partitioner2/GraphViz.h					\
-	Rose/BinaryAnalysis/Partitioner2/InstructionProvider.h				\
 	Rose/BinaryAnalysis/Partitioner2/Modules.h					\
 	Rose/BinaryAnalysis/Partitioner2/ModulesElf.h					\
 	Rose/BinaryAnalysis/Partitioner2/ModulesLinux.h					\
