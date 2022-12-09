@@ -673,9 +673,7 @@ namespace
   {
     while (first != limit)
     {
-      ElemT* el = retrieveAsOpt(map, *first);
-
-      if (el)
+      if (ElemT* el = retrieveAsOpt(map, *first))
       {
         func(*el);
       }
