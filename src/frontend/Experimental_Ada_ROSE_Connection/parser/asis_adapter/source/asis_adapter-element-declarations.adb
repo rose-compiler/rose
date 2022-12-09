@@ -871,7 +871,9 @@ package body Asis_Adapter.Element.Declarations is
          State.Add_Not_Implemented (Ada_2005);
 
       when A_Null_Procedure_Declaration => -- A2005
-         State.Add_Not_Implemented (Ada_2005);
+         Add_Is_Not_Overriding_Declaration;
+         Add_Is_Overriding_Declaration;
+         Add_Parameter_Profile;
 
       when An_Expression_Function_Declaration =>  -- A2012
          State.Add_Not_Implemented (Ada_2012);
