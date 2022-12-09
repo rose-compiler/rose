@@ -532,15 +532,15 @@ VariableId VariableIdMapping::idForArrayRef(SgPntrArrRefExp* ref)
   // Calculate the index as below.
   // int a[M][N][K];
   // a[x][y][z] => index = x*N*K + y*K + z.
-  int index = 0;
+  //int index = 0;
   for(unsigned i = 0; i < subscripts.size(); i++) {
     int curIndex = exprToInt(subscripts[i]);
     if(curIndex == -1)
       return result;
-    int dimension_size = (i == arrayDimensions.size() - 1 ? 1 : arrayDimensions[i + 1]);
-    for(unsigned d = i + 2; d < arrayDimensions.size(); d++)
-      dimension_size*= arrayDimensions[d];
-    index += curIndex*dimension_size;
+    //int dimension_size = (i == arrayDimensions.size() - 1 ? 1 : arrayDimensions[i + 1]);
+    //for(unsigned d = i + 2; d < arrayDimensions.size(); d++)
+    //  dimension_size*= arrayDimensions[d];
+    //index += curIndex*dimension_size;
   }
 
   VariableId varId = variableId(arrVar);

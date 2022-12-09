@@ -1191,8 +1191,6 @@ namespace
                        std::function<SgScopeStatement&()> scopeMaker
                      )
   {
-    //~ std::cerr << nm << "() -> " << &retty << std::endl;
-
     SgFunctionParameterList& lst       = mkFunctionParameterList();
     SgScopeStatement&        parmScope = scopeMaker();
 
@@ -1209,7 +1207,7 @@ namespace
 
     markCompilerGenerated(lst); // this is overwritten in buildNondefiningFunctionDeclaration
     markCompilerGenerated(sgnode);
-    // std::cerr << nm << "'() -> " << sgnode.get_type()->get_return_type() << std::endl;
+    //~ logError() << "1: " << nm << " " << sgnode.get_type()->get_mangled() << std::endl;
     return sgnode;
   }
 }
@@ -1285,7 +1283,6 @@ mkProcedureDecl( SgFunctionDeclaration& ndef,
   linkDeclDef(funcSy, sgnode);
   sgnode.set_definingDeclaration(&sgnode);
   sgnode.unsetForward();
-
   return sgnode;
 }
 
@@ -2263,18 +2260,18 @@ namespace
   }
 
   SgType&
-  convertType(SgType& actual, SgType& orig, SgTypedefType& derv)
+  convertType(SgType& actual, SgType& orig, SgType& derv)
   {
     return &orig == &actual ? derv : actual;
   }
 
 
-  /// replaces the original type of \ref declaredDerivedType with \ref declaredDerivedType in \ref funcTy.
+  /// replaces the original type of with \ref declaredDerivedType in \ref funcTy.
   /// returns \ref funcTy to indicate an error.
   SgFunctionType&
-  convertToDerivedType(SgFunctionType& funcTy, SgTypedefType& declaredDerivedType)
+  convertToDerivedType(SgFunctionType& funcTy, SgType& derivedType)
   {
-    SgDeclarationStatement* baseTypeDecl = si::Ada::baseDeclaration(declaredDerivedType.get_base_type());
+    SgDeclarationStatement* baseTypeDecl = si::Ada::baseDeclaration(derivedType);
 
     if (baseTypeDecl == nullptr)
       return funcTy;
@@ -2282,13 +2279,13 @@ namespace
     SgType*              origTypePtr  = si::getDeclaredType(baseTypeDecl);
     SgType&              originalType = SG_DEREF(origTypePtr);
     SgType&              origRetTy    = SG_DEREF(funcTy.get_return_type());
-    SgType&              dervRetTy    = convertType(origRetTy, originalType, declaredDerivedType);
+    SgType&              dervRetTy    = convertType(origRetTy, originalType, derivedType);
     int                  numUpdTypes  = (&dervRetTy != &origRetTy);
     std::vector<SgType*> newTypeList;
 
     for (SgType* origArgTy : funcTy.get_arguments())
     {
-      SgType* newArgTy = &convertType(SG_DEREF(origArgTy), originalType, declaredDerivedType);
+      SgType* newArgTy = &convertType(SG_DEREF(origArgTy), originalType, derivedType);
 
       newTypeList.push_back(newArgTy);
       if (newArgTy != origArgTy) ++numUpdTypes;
@@ -2310,10 +2307,10 @@ namespace
 
 
 SgAdaInheritedFunctionSymbol&
-mkAdaInheritedFunctionSymbol(SgFunctionDeclaration& fn, SgTypedefType& declaredDerivedType, SgScopeStatement& scope)
+mkAdaInheritedFunctionSymbol(SgFunctionDeclaration& fn, SgType& derivedType, SgScopeStatement& scope)
 {
   SgFunctionType& functy = SG_DEREF(fn.get_type());
-  SgFunctionType& dervty = convertToDerivedType(functy, declaredDerivedType);
+  SgFunctionType& dervty = convertToDerivedType(functy, derivedType);
 
   if (&functy == &dervty)
   {

@@ -66,17 +66,19 @@ MemoryCellList::peekMemory(const SValue::Ptr &addr, const SValue::Ptr &dflt, Ris
 }
 
 void
-MemoryCellList::writeMemory(const SValue::Ptr &addr, const SValue::Ptr &value, RiscOperators *addrOps, RiscOperators *valOps)
-{
+MemoryCellList::writeMemory(const SValue::Ptr &addr, const SValue::Ptr &value, RiscOperators *addrOps, RiscOperators *valOps) {
     ASSERT_not_null(addr);
     ASSERT_require(!byteRestricted() || value->nBits() == 8);
     MemoryCell::Ptr newCell = protocell->create(addr, value);
 
+    // Update I/O properties
+    InputOutputPropertySet wprops;
     if (addrOps->currentInstruction() || valOps->currentInstruction()) {
-        newCell->ioProperties().insert(IO_WRITE);
+        wprops.insert(IO_WRITE);
     } else {
-        newCell->ioProperties().insert(IO_INIT);
+        wprops.insert(IO_INIT);
     }
+    updateWriteProperties(CellList{newCell}, wprops);
 
     // Prune away all cells that must-alias this new one since they will be occluded by this new one.
     if (occlusionsErased_) {
@@ -359,20 +361,6 @@ MemoryCellList::mergeCellProperties(const CellList &cells) {
     for (const MemoryCell::Ptr &cell: cells)
         props |= cell->ioProperties();
     return props;
-}
-
-void
-MemoryCellList::updateReadProperties(CellList &cells) {
-    for (MemoryCell::Ptr &cell: cells) {
-        cell->ioProperties().insert(IO_READ);
-        if (cell->ioProperties().exists(IO_WRITE)) {
-            cell->ioProperties().insert(IO_READ_AFTER_WRITE);
-        } else {
-            cell->ioProperties().insert(IO_READ_BEFORE_WRITE);
-        }
-        if (!cell->ioProperties().exists(IO_INIT))
-            cell->ioProperties().insert(IO_READ_UNINITIALIZED);
-    }
 }
 
 MemoryCell::Ptr

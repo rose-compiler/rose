@@ -482,7 +482,7 @@ Grammar::setUpTypes ()
      AdaDiscriminatedType.setFunctionSource        ( "SOURCE_ADA_DISCRIMINATED_TYPE", "../Grammar/Type.code");
 
   // MS (5/1/21): Ada formal types
-     //~ AdaFormalType.excludeFunctionSource    ( "SOURCE_GET_MANGLED", "../Grammar/Type.code" );
+     AdaFormalType.excludeFunctionSource    ( "SOURCE_GET_MANGLED", "../Grammar/Type.code" );
      AdaFormalType.setFunctionSource        ( "SOURCE_ADA_FORMAL_TYPE", "../Grammar/Type.code");
 #endif /* 1 */
 

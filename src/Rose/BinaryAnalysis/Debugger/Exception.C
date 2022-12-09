@@ -10,7 +10,7 @@ namespace Debugger {
 Exception::Exception(const std::string &mesg)
     : Rose::Exception(mesg) {}
 
-Exception::~Exception() {}
+Exception::~Exception() throw () {}
 
 } // namespace
 } // namespace

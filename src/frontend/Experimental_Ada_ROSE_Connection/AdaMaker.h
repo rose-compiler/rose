@@ -902,10 +902,14 @@ namespace Ada_ROSE_Translation
   //
   // special Ada symbols
 
-  /// creates a symbol for the inherited function \ref fn for inherited type \ref declaredDerivedType.
+  /// creates a symbol for the inherited function \ref fn for inherited type \ref derivedType.
   ///   adds the symbol to the scope \ref scope of the derived type.
+  /// \details
+  ///    currently derived type can either be an Ada derived type or an extension record ("class").
+  /// \todo
+  ///    support derived enum types
   SgAdaInheritedFunctionSymbol&
-  mkAdaInheritedFunctionSymbol(SgFunctionDeclaration& fn, SgTypedefType& declaredDerivedType, SgScopeStatement& scope);
+  mkAdaInheritedFunctionSymbol(SgFunctionDeclaration& fn, SgType& derivedType, SgScopeStatement& scope);
 
   //
   // conversions

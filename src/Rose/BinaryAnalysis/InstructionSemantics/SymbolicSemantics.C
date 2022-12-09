@@ -226,7 +226,7 @@ MemoryListState::CellCompressorMcCarthy::instance() {
 SValue::Ptr
 MemoryListState::CellCompressorMcCarthy::operator()(const SValue::Ptr &address, const BaseSemantics::SValue::Ptr &dflt,
                                                     BaseSemantics::RiscOperators */*addrOps*/,
-                                                    BaseSemantics::RiscOperators *valOps, const CellList &cells)
+                                                    BaseSemantics::RiscOperators *valOps, const BaseSemantics::CellList &cells)
 {
     if (1==cells.size())
         return SValue::promote(cells.front()->value()->copy());
@@ -238,7 +238,7 @@ MemoryListState::CellCompressorMcCarthy::operator()(const SValue::Ptr &address, 
     // FIXME: This makes no attempt to remove duplicate values [Robb Matzke 2013-03-01]
     ExprPtr expr = SymbolicExpression::makeMemoryVariable(address->nBits(), dflt->nBits());
     InsnSet addrDefiners, valDefiners;
-    for (CellList::const_reverse_iterator ci=cells.rbegin(); ci!=cells.rend(); ++ci) {
+    for (BaseSemantics::CellList::const_reverse_iterator ci = cells.rbegin(); ci != cells.rend(); ++ci) {
         SValue::Ptr cell_addr = SValue::promote((*ci)->address());
         SValue::Ptr cell_value  = SValue::promote((*ci)->value());
         expr = SymbolicExpression::makeWrite(expr, cell_addr->get_expression(), cell_value->get_expression(), valOps->solver());
@@ -262,7 +262,7 @@ MemoryListState::CellCompressorSimple::instance() {
 SValue::Ptr
 MemoryListState::CellCompressorSimple::operator()(const SValue::Ptr &/*address*/, const BaseSemantics::SValue::Ptr &dflt,
                                                   BaseSemantics::RiscOperators */*addrOps*/,
-                                                  BaseSemantics::RiscOperators */*valOps*/, const CellList &cells)
+                                                  BaseSemantics::RiscOperators */*valOps*/, const BaseSemantics::CellList &cells)
 {
     if (1==cells.size())
         return SValue::promote(cells.front()->value()->copy());
@@ -280,7 +280,7 @@ MemoryListState::CellCompressorChoice::instance() {
 SValue::Ptr
 MemoryListState::CellCompressorChoice::operator()(const SValue::Ptr &address, const BaseSemantics::SValue::Ptr &dflt,
                                                   BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps,
-                                                  const CellList &cells)
+                                                  const BaseSemantics::CellList &cells)
 {
     if (addrOps->solver() || valOps->solver()) {
         ASSERT_not_null(mccarthy_);
@@ -299,7 +299,7 @@ MemoryListState::CellCompressorSet::instance() {
 SValue::Ptr
 MemoryListState::CellCompressorSet::operator()(const SValue::Ptr &address, const BaseSemantics::SValue::Ptr &dflt,
                                                BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps,
-                                               const CellList &cells) {
+                                               const BaseSemantics::CellList &cells) {
     ASSERT_always_not_null(address);
     ASSERT_not_null(dflt);
     ASSERT_always_not_null(addrOps);
@@ -374,8 +374,8 @@ MemoryListState::readOrPeekMemory(const BaseSemantics::SValue::Ptr &address_, co
     SValue::Ptr address = SValue::promote(address_);
     ASSERT_require(8==nBits); // SymbolicSemantics::MemoryListState assumes that memory cells contain only 8-bit data
 
-    CellList::iterator cursor = get_cells().begin();
-    CellList cells = scan(cursor /*in,out*/, address, nBits, addrOps, valOps);
+    BaseSemantics::CellList::iterator cursor = get_cells().begin();
+    BaseSemantics::CellList cells = scan(cursor /*in,out*/, address, nBits, addrOps, valOps);
 
     // If we fell off the end of the list then the read could be reading from a memory location for which no cell exists. If
     // side effects are allowed, we should add a new cell to the return value.

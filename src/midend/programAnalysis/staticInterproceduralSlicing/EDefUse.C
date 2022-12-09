@@ -26,7 +26,7 @@ std::vector < SgNode* > EDefUse::getDefFor(SgNode* node, SgInitializedName* init
     {
       SgFunctionCallExp *call=isSgFunctionCallExp(defNode);
       Rose_STL_Container< SgNode * > varRefList=NodeQuery::querySubTree(call,V_SgVarRefExp);
-      bool foundDefinition=false;
+      //bool foundDefinition=false;
       for (Rose_STL_Container< SgNode * >::iterator varRefIt=varRefList.begin();
            varRefIt!=varRefList.end();
            varRefIt++)
@@ -47,7 +47,7 @@ std::vector < SgNode* > EDefUse::getDefFor(SgNode* node, SgInitializedName* init
           continue;
         }
         // this is the correct var ref
-        foundDefinition|=true;
+        //foundDefinition|=true;
         retVec.push_back(hiker);
       }
     }

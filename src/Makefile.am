@@ -345,6 +345,7 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/InstructionEnumsPowerpc.h					\
 	Rose/BinaryAnalysis/InstructionEnumsX86.h					\
 	Rose/BinaryAnalysis/InstructionSemantics.h					\
+	Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/BasicTypes.h		\
 	Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Dispatcher.h		\
 	Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Exception.h		\
 	Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Formatter.h		\
@@ -360,7 +361,6 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/State.h			\
 	Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/SValue.h			\
 	Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/SymbolicMemory.h		\
-	Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Types.h			\
 	Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h			\
 	Rose/BinaryAnalysis/InstructionSemantics/ConcreteSemantics.h			\
 	Rose/BinaryAnalysis/InstructionSemantics/DataFlowSemantics.h			\

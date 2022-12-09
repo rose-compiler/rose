@@ -581,7 +581,7 @@ namespace
 
   bool symbolMatchesDeclaration(const SgSymbol& sym, const SgNode& dcl)
   {
-    const SgDeclarationStatement* symdcl = si::Ada::associatedDecl(sym);
+    const SgDeclarationStatement* symdcl = si::Ada::associatedDeclaration(sym);
 
     if (!symdcl) return false;
     if (symdcl == &dcl) return true;
@@ -835,21 +835,20 @@ namespace
     return remMin;
   }
 
-/*
-  struct DebugSeqPrinter
-  {
-    const ScopePath& el;
-  };
 
-  std::ostream& operator<<(std::ostream& os, const DebugSeqPrinter& s)
-  {
-    for (const SgScopeStatement* scope : s.el)
-      os << ", " << typeid(*scope).name()
-         << " (" << scope << ")";
+  //~ struct DebugSeqPrinter
+  //~ {
+    //~ const ScopePath& el;
+  //~ };
 
-    return os;
-  }
-*/
+  //~ std::ostream& operator<<(std::ostream& os, const DebugSeqPrinter& s)
+  //~ {
+    //~ for (const SgScopeStatement* scope : s.el)
+      //~ os << ", " << typeid(*scope).name()
+         //~ << " (" << scope << ")";
+
+    //~ return os;
+  //~ }
 
 
   std::string
@@ -926,7 +925,7 @@ namespace
     PathIterator    remoteEnd    = std::unique(remotePos, remotePath.rend(), areSpecAndBody);
 
     std::string res = nameQualString(remotePos, remoteEnd);
-    //~ std::cerr << "--- " /*<< hasOverload*/ << " <ovl  len> " << std::distance(mismPos.first, localPath.rend())
+    //~ std::cerr << "--- len> " << std::distance(mismPos.first, localPath.rend())
               //~ << "/" << localPath.size() << DebugSeqPrinter{localPath}
               //~ << "/" << nameQualString(localPath.rbegin(), localPath.rend())
               //~ << " <> " << std::distance(mismPos.second, remotePath.rend())
@@ -1287,10 +1286,14 @@ namespace
 
         recordNameQualIfNeeded(n, n.get_scope());
 
-        const SgFunctionType* ty = n.get_type();
+        // set the scope to the logical parent before type qualification of
+        //   parameter and return types are computed.
+        res.set_currentScope(n.get_scope());
 
         // parameters are handled by the traversal, so just qualify
         //   the return type, if this is a function.
+        const SgFunctionType* ty = n.get_type();
+
         if (SageInterface::Ada::isFunction(ty))
         {
           computeNameQualForShared(n, ty->get_return_type());
@@ -1404,7 +1407,8 @@ namespace
 
       void handle(const SgInitializedName& n)
       {
-        //~ std::cerr << "ini: " << n.get_name() << "@" << &n
+        //~ std::cerr << "ini: " << n.get_name()
+                  //~ << "@" << &n
                   //~ << " t: " << typeid(*n.get_type()).name()
                   //~ << std::endl;
         computeNameQualForShared(n, n.get_type());

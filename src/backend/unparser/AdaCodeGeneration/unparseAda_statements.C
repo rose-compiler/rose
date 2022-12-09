@@ -884,7 +884,9 @@ namespace
 
     void handle(SgTypedefDeclaration& n)
     {
-      prn(typedeclSyntax(n.get_base_type()));
+      SgType* basety = n.get_base_type();
+
+      prn(typedeclSyntax(basety));
       prn(" ");
       prn(n.get_name());
 
@@ -895,7 +897,7 @@ namespace
       const bool requiresIs      = (  requiresPrivate
                                    || hasModifiers(n)
                                    //~ || declwords.second.size() != 0
-                                   || !isSgTypeDefault(n.get_base_type())
+                                   || !isSgTypeDefault(basety)
                                    );
 
       if (requiresIs)
@@ -903,7 +905,7 @@ namespace
 
       modifiers(n);
       prn(" ");
-      type(n, n.get_base_type());
+      type(n, basety);
 
       if (requiresPrivate)
         prn(" private");

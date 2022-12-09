@@ -491,7 +491,7 @@ public:
         /** Compress the cells into a single value. */
         virtual SValuePtr operator()(const SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
                                      BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps,
-                                     const MemoryCellList::CellList &cells) = 0;
+                                     const BaseSemantics::CellList &cells) = 0;
     };
 
     /** Functor for handling a memory read whose address matches more than one memory cell.  This functor returns a symbolic
@@ -512,7 +512,7 @@ public:
         static Ptr instance();                          /**< Allocating constructor. */
         virtual SValuePtr operator()(const SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
                                      BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps,
-                                     const CellList &cells) override;
+                                     const BaseSemantics::CellList &cells) override;
     };
 
     /** Functor for handling a memory read whose address matches more than one memory cell.  Simply returns the @p dflt value. */
@@ -521,7 +521,7 @@ public:
         static Ptr instance();                          /**< Allocating constructor. */
         virtual SValuePtr operator()(const SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
                                      BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps,
-                                     const CellList &cells) override;
+                                     const BaseSemantics::CellList &cells) override;
     };
 
     /** Functor for handling a memory read whose address matches more than one memory cell.  This is the default cell
@@ -536,7 +536,7 @@ public:
         static Ptr instance();                          /**< Allocating constructor. */
         virtual SValuePtr operator()(const SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
                                      BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps,
-                                     const CellList &cells) override;
+                                     const BaseSemantics::CellList &cells) override;
     };
 
     /** Functor for handling a memory read whose address matches more than one memory cell.
@@ -547,7 +547,7 @@ public:
         static Ptr instance();                          /**< Allocating constructor. */
         virtual SValuePtr operator()(const SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
                                      BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps,
-                                     const CellList &cells) override;
+                                     const BaseSemantics::CellList &cells) override;
     };
 
 private:

@@ -1151,7 +1151,12 @@ void Grammar::setUpBinaryInstructions() {
          *
          *  If instruction semantics are available and attached to the instruction, then this subtree will contain a list of
          *  semantic side effects of the instruction. The semantics are attached by using the @ref
-         *  Rose::BinaryAnalysis::InstructionSemantics::StaticSemantics semantic domain. */
+         *  Rose::BinaryAnalysis::InstructionSemantics::StaticSemantics semantic domain.
+         *
+         * @{ */
+        SgAsmExprListExp* get_semantics() const;
+        void set_semantics(SgAsmExprListExp*);
+        /** @} */
 #else
         AsmInstruction.setDataPrototype("SgAsmExprListExp*", "semantics", "= NULL",
                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, COPY_DATA);

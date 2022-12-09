@@ -1324,6 +1324,71 @@ int compareSigned(const Word *vec1, const BitRange &range1, const Word *vec2, co
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Byte representation
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+template<class Word>
+struct ToBytes {
+    Word remaining = 0;                                 // left over bits from a previous iteration
+    size_t nremaining = 0;                              // number valid low-order bits in "remaining" data member
+    std::vector<uint8_t> bytes;                         // resulting bytes in little endian order.
+
+    ToBytes(size_t nBitsTotal) {
+        const size_t nBytes = (nBitsTotal + 7) / 8;
+        bytes.reserve(nBytes);
+    }
+
+    bool operator()(const Word &word, size_t nbits) {
+        Word tmp = word;
+        ASSERT_require(nremaining < size_t(8));
+        while (nremaining + nbits >= size_t(8)) {
+            const size_t nrem = nremaining;             // number left-over bits to use
+            const size_t nnew = size_t(8) - nrem;       // number of new bits to use
+            const Word byte = (remaining & bitMask<Word>(0, nrem)) | ((tmp & bitMask<Word>(0, nnew)) << nrem);
+            bytes.push_back(byte);
+            nremaining = 0;
+            nbits -= nnew;
+            tmp >>= nnew;
+        }
+        nremaining = nbits;
+        remaining = tmp;
+        return false;
+    }
+
+    std::vector<uint8_t> result() {
+        if (nremaining > 0) {
+            ASSERT_require(nremaining <= 7);
+            const uint8_t byte = remaining & bitMask<Word>(0, nremaining);
+            bytes.push_back(byte);
+        }
+        return std::move(bytes);
+    }
+};
+
+template<class Word>
+std::vector<uint8_t>
+toBytes(const Word *vec, const BitRange &range) {
+    ToBytes<Word> visitor(range.size());
+    traverse(visitor, vec, range, LowToHigh());
+    return visitor.result();
+}
+
+template<class Word>
+void fromBytes(Word *vec, const BitRange &range, const std::vector<uint8_t> &input) {
+    // Copy bytes into the vector
+    size_t offset = 0;                                  // bit offset from range.least()
+    for (size_t idx = 0; idx < input.size() && offset < range.size(); ++idx) {
+        const Word byte = input[idx];
+        const size_t nbits = std::min(size_t(8), range.size() - offset); // number of bits to copy
+        copy(&byte, BitRange::baseSize(0, nbits), vec, BitRange::baseSize(range.least() + offset, nbits));
+        offset += nbits;
+    }
+
+    // Zero fill high order stuff that we didn't already initialize
+    if (offset < range.size())
+        clear(vec, BitRange::hull(range.least() + offset, range.greatest()));
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      String representation
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
