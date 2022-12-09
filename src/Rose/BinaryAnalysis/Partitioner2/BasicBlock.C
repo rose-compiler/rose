@@ -4,6 +4,7 @@
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherX86.h>
+#include <Rose/BinaryAnalysis/Partitioner2/DataBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Utility.h>
 
@@ -14,6 +15,17 @@ namespace Partitioner2 {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // BasicBlock
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+BasicBlock::BasicBlock()
+    : isFrozen_(false), startVa_(0) {}
+
+BasicBlock::BasicBlock(rose_addr_t startVa, const Partitioner::ConstPtr &partitioner)
+    : isFrozen_(false), startVa_(startVa) {
+    semantics_.usingDispatcher = true;
+    init(partitioner);
+}
+
+BasicBlock::~BasicBlock() {}
 
 // called only during construction
 void
@@ -27,6 +39,28 @@ BasicBlock::init(const Partitioner::ConstPtr &partitioner) {
         // Rely on other methods to get basic block characteristics
         semantics_.usingDispatcher = false;
     }
+}
+
+void
+BasicBlock::clearCacheNS() const {
+    successors_.clear();
+    ghostSuccessors_.clear();
+    isFunctionCall_.clear();
+    isFunctionReturn_.clear();
+    mayReturn_.clear();
+    popsStack_.clear();
+}
+
+void
+BasicBlock::copyCache(const BasicBlock::Ptr &other) {
+    ASSERT_not_null(other);
+    SAWYER_THREAD_TRAITS::LockGuard2 lock(mutex_, other->mutex_);
+    successors_ = other->successors_;
+    ghostSuccessors_ = other->ghostSuccessors_;
+    isFunctionCall_ = other->isFunctionCall_;
+    isFunctionReturn_ = other->isFunctionReturn_;
+    mayReturn_ = other->mayReturn_;
+    popsStack_ = other->popsStack_;
 }
 
 void
@@ -337,6 +371,12 @@ BasicBlock::explicitConstants() const {
         retval.insert(insnConstants.begin(), insnConstants.end());
     }
     return retval;
+}
+
+size_t
+BasicBlock::nDataBlocks() const {
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    return dblocks_.size();
 }
 
 } // namespace

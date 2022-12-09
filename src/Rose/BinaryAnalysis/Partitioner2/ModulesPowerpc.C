@@ -15,6 +15,15 @@ namespace BinaryAnalysis {
 namespace Partitioner2 {
 namespace ModulesPowerpc {
 
+MatchStwuPrologue::MatchStwuPrologue() {}
+
+MatchStwuPrologue::~MatchStwuPrologue() {}
+
+MatchStwuPrologue::Ptr
+MatchStwuPrologue::instance() {
+    return Ptr(new MatchStwuPrologue);
+}
+
 std::vector<Function::Ptr>
 MatchStwuPrologue::functions() const {
     std::vector<Function::Ptr> retval;

@@ -16,10 +16,15 @@ namespace ModulesPowerpc {
 /** Matches a PowerPC function prolog using STWU. */
 class MatchStwuPrologue: public FunctionPrologueMatcher {
 protected:
-    Function::Ptr function_;
+    FunctionPtr function_;
+protected:
+    MatchStwuPrologue();
 public:
-    static Ptr instance() { return Ptr(new MatchStwuPrologue); } /**< Allocating constructor. */
-    virtual std::vector<Function::Ptr> functions() const override;
+    ~MatchStwuPrologue();
+
+public:
+    static Ptr instance();                              /**< Allocating constructor. */
+    virtual std::vector<FunctionPtr> functions() const override;
     virtual bool match(const PartitionerConstPtr&, rose_addr_t anchor) override;
 };
 
@@ -28,7 +33,7 @@ public:
  *  If the function's instructions make it look like an ELF dynamic linking stub and it references an entry in the Procedure
  *  Loookup Table (defined by the PLT location in memory), then return the PLT entry address, otherwise return nothing. */
 Sawyer::Optional<rose_addr_t>
-matchElfDynamicStub(const PartitionerConstPtr&, const Function::Ptr&, const AddressIntervalSet &pltAddresses);
+matchElfDynamicStub(const PartitionerConstPtr&, const FunctionPtr&, const AddressIntervalSet &pltAddresses);
 
 /** Give names to thunks for dynamically linked functions. */
 void nameImportThunks(const PartitionerConstPtr&, SgAsmInterpretation*);
@@ -36,7 +41,7 @@ void nameImportThunks(const PartitionerConstPtr&, SgAsmInterpretation*);
 /** Determines whether basic block is a function return.
  *
  *  Returns true if the basic block appears to be a function return, semantically. Indeterminate if semantics are disabled. */
-boost::logic::tribool isFunctionReturn(const PartitionerConstPtr&, const BasicBlock::Ptr&);
+boost::logic::tribool isFunctionReturn(const PartitionerConstPtr&, const BasicBlockPtr&);
     
 } // namespace
 } // namespace

@@ -1,12 +1,13 @@
 #ifndef ROSE_Progress_H
 #define ROSE_Progress_H
 
-#include <rosePublicConfig.h>                           // for ROSE_USE_CMAKE
+#include <Rose/BasicTypes.h>
+
+#include <Rose/Constants.h>
+
 #include <boost/chrono.hpp>
 #include <boost/thread.hpp>
-#include <Rose/Constants.h>
 #include <rose_isnan.h>
-#include <Sawyer/SharedPointer.h>
 #include <Sawyer/Stopwatch.h>
 #include <Sawyer/Synchronization.h>
 #include <string>
@@ -165,7 +166,7 @@ namespace Rose {
 class Progress: public Sawyer::SharedObject {
 public:
     /** Progress objects are reference counted. */
-    typedef Sawyer::SharedPointer<Progress> Ptr;
+    using Ptr = ProgressPtr;
 
     /** A single progress report.
      *

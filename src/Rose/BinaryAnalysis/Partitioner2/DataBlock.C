@@ -6,6 +6,7 @@
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Utility.h>
+#include <Rose/SourceLocation.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -54,6 +55,16 @@ DataBlock::comment() const {
 void
 DataBlock::comment(const std::string &s) {
     comment_ = s;
+}
+
+const SourceLocation&
+DataBlock::sourceLocation() const {
+    return sourceLocation_;
+}
+
+void
+DataBlock::sourceLocation(const SourceLocation &loc) {
+    sourceLocation_ = loc;
 }
 
 AddressInterval

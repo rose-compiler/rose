@@ -2,10 +2,7 @@
 #define ROSE_BinaryAnalysis_Partitioner2_AddressUsageMap_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-
-#include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
-#include <Rose/BinaryAnalysis/Partitioner2/DataBlock.h>
 
 #include <Sawyer/IntervalMap.h>
 #include <Sawyer/IntervalSet.h>
@@ -33,8 +30,8 @@ namespace Partitioner2 {
  *  both. */
 class AddressUser {
     SgAsmInstruction *insn_;
-    std::vector<BasicBlock::Ptr> bblocks_;              // sorted and unique
-    DataBlock::Ptr dblock_;
+    std::vector<BasicBlockPtr> bblocks_;                // sorted and unique
+    DataBlockPtr dblock_;
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
@@ -54,24 +51,19 @@ private:
 
 public:
     /** Default constructed user is empty. */
-    AddressUser(): insn_(NULL) {}
+    AddressUser();
 
     /** Constructs new user which is an instruction and its basic block.
      *
      *  The instruction must not be the null pointer, but the basic block may as long as a null block user is not inserted into
      *  the AUM. A null basic block is generally only useful when searching for a particular instruction in an AddressUsers
      *  object. */
-    AddressUser(SgAsmInstruction *insn, const BasicBlock::Ptr &bblock): insn_(insn) {
-        ASSERT_not_null(insn_);
-        if (bblock)
-            bblocks_.push_back(bblock);
-    }
+    AddressUser(SgAsmInstruction*, const BasicBlockPtr&);
 
     /** Constructs a new user which is a data block. The data block must not be the null pointer. */
-    explicit AddressUser(const DataBlockPtr &dblock)
-        : insn_(NULL), dblock_(dblock) {
-        ASSERT_not_null(dblock);
-    }
+    explicit AddressUser(const DataBlockPtr&);
+
+    ~AddressUser();
 
     /** Address of user.
      *
@@ -80,61 +72,51 @@ public:
     rose_addr_t address() const;
 
     /** Predicate returning true if user is a basic block or instruction. */
-    bool isBasicBlock() const { return insn_ != NULL; }
+    bool isBasicBlock() const;
 
     /** Predicate returning true if user is a data block. */
-    bool isDataBlock() const { return dblock_ != NULL; }
+    bool isDataBlock() const;
 
     /** True if this object was default constructed.
      *
      *  Returns true if this @ref AddressUser doesn't point to anything. */
-    bool isEmpty() const {
-        return NULL == insn_ && NULL == dblock_;
-    }
-    
+    bool isEmpty() const;
+
     /** Return the instruction.
      *
      *  Returns the non-null instruction if this is an instruction address owner, otherwise returns the null pointer. */
-    SgAsmInstruction* insn() const {
-        return insn_;
-    }
+    SgAsmInstruction* insn() const;
 
     /** Returns an arbitrary basic block.
      *
      *  Returns a non-null basic block if this object points to an instruction, otherwise returns the null pointer.  All
      *  instructions in the AUM belong to at least one basic block and therefore have a non-null basic block pointer. */
-    BasicBlock::Ptr firstBasicBlock() const {
-        return bblocks_.empty() ? BasicBlock::Ptr() : bblocks_[0];
-    }
+    BasicBlockPtr firstBasicBlock() const;
 
     /** Returns all basic blocks to which this instruction belongs.
      *
      *  Returns a non-empty vector if this is an instruction owner, otherwise returns an empty vector. All instructions in the
      *  AUM belong to at least one basic block and therefore return a non-empty vector; non-instruction owners don't have basic
      *  blocks. */
-    const std::vector<BasicBlock::Ptr>& basicBlocks() const {
-        return bblocks_;
-    }
+    const std::vector<BasicBlockPtr>& basicBlocks() const;
 
     /** Add another basic block to the set of basic blocks. */
-    void insertBasicBlock(const BasicBlock::Ptr &bblock);
+    void insertBasicBlock(const BasicBlockPtr &bblock);
 
     /** Remove a basic block from the set of basic blocks. */
-    void eraseBasicBlock(const BasicBlock::Ptr &bblock);
+    void eraseBasicBlock(const BasicBlockPtr &bblock);
     
     /** Returns the data block.
      *
      *  Returns a non-null data block if this is a data block address owner, otherwise returns the null pointer. */
-    DataBlock::Ptr dataBlock() const {
-        return dblock_;
-    }
+    DataBlockPtr dataBlock() const;
 
     /** Determines if this user is a first instruction of a basic block.
      *
      *  If this user is the first instruction of some basic block then a pointer to that block is returned. An instruction can
      *  only be the first instruction of a single basic block, although that instruction may appear internally in other basic
      *  blocks as well. */
-    BasicBlock::Ptr isBlockEntry() const;
+    BasicBlockPtr isBlockEntry() const;
 
     /** Compare two users for equality.
      *
@@ -192,17 +174,14 @@ private:
 
 public:
     /** Constructs an empty list. */
-    AddressUsers() {}
+    AddressUsers();
+    ~AddressUsers();
 
     /** Constructs a list having one instruction user. */
-    explicit AddressUsers(SgAsmInstruction *insn, const BasicBlock::Ptr &bb) {
-        insertInstruction(insn, bb);
-    }
+    explicit AddressUsers(SgAsmInstruction *insn, const BasicBlockPtr&);
 
     /** Constructs a list having one data block user. */
-    explicit AddressUsers(const DataBlock::Ptr &db) {
-        insertDataBlock(db);
-    }
+    explicit AddressUsers(const DataBlockPtr&);
 
     /** Determines whether the specified instruction or an equivalent exists.
      *
@@ -222,8 +201,8 @@ public:
      *  The basic block is found only if its first instruction is present.
      *
      * @{ */
-    BasicBlock::Ptr basicBlockExists(const BasicBlock::Ptr&) const;
-    BasicBlock::Ptr basicBlockExists(rose_addr_t va) const;
+    BasicBlockPtr basicBlockExists(const BasicBlockPtr&) const;
+    BasicBlockPtr basicBlockExists(rose_addr_t va) const;
     /** @} */
 
     /** Determines whether the specified data block or an equivalent exists.
@@ -233,8 +212,8 @@ public:
      *  size.
      *
      * @{ */
-    DataBlock::Ptr dataBlockExists(const DataBlock::Ptr&) const;
-    DataBlock::Ptr dataBlockExists(rose_addr_t va, rose_addr_t size) const;
+    DataBlockPtr dataBlockExists(const DataBlockPtr&) const;
+    DataBlockPtr dataBlockExists(rose_addr_t va, rose_addr_t size) const;
     /** @} */
 
     /** Find an AddressUser record for the specified instruction, or equivalent.
@@ -256,7 +235,7 @@ public:
      *  either a @ref BasicBlock object or a starting address.
      *
      * @{ */
-    AddressUser findBasicBlock(const BasicBlock::Ptr&) const;
+    AddressUser findBasicBlock(const BasicBlockPtr&) const;
     AddressUser findBasicBlock(rose_addr_t va) const;
     /** @} */
 
@@ -267,7 +246,7 @@ public:
      *  and size.
      *
      * @{ */
-    AddressUser findDataBlock(const DataBlock::Ptr&) const;
+    AddressUser findDataBlock(const DataBlockPtr&) const;
     AddressUser findDataBlock(rose_addr_t va, rose_addr_t size) const;
     /** @} */
 
@@ -275,13 +254,13 @@ public:
      *
      *  Neither the instruction nor the basic block may be null.  If this list already contains the specified instruction, then
      *  the specified basic block is merged into its owner list and a reference to that user is returned. */
-    AddressUser insertInstruction(SgAsmInstruction*, const BasicBlock::Ptr&);
+    AddressUser insertInstruction(SgAsmInstruction*, const BasicBlockPtr&);
 
     /** Insert a data block.
      *
      *  The specified data block is inserted into this list of users unless it or an equivalent data block is already present. Returns
      *  the record describing the data block. */
-    AddressUser insertDataBlock(const DataBlock::Ptr&);
+    AddressUser insertDataBlock(const DataBlockPtr&);
 
     /** Insert one set of address users into another. */
     void insert(const AddressUsers&);
@@ -290,36 +269,30 @@ public:
      *
      *  Finds the specified instruction or equivalent in the list and removes the specified basic block owner. If this results
      *  in the instruction not being owned by any blocks then the instruction is removed. Returns the affected instruction. */
-    SgAsmInstruction* eraseInstruction(SgAsmInstruction*, const BasicBlock::Ptr&);
+    SgAsmInstruction* eraseInstruction(SgAsmInstruction*, const BasicBlockPtr&);
 
     /** Erase a data block from this list.
      *
      *  Erases the specified data block or equivalent from this list.  If the data block is null or the list does not contain
      *  the data block then this is a no-op. Returns the erased data block.*/
-    DataBlock::Ptr eraseDataBlock(const DataBlock::Ptr&);
+    DataBlockPtr eraseDataBlock(const DataBlockPtr&);
 
     /** Selector to select all users.
      *
      *  This selector is the default for methods like @ref AddressUsageMap::overlapping, and causes all users to be selected. */
-    static bool selectAllUsers(const AddressUser&) {
-        return true;
-    }
+    static bool selectAllUsers(const AddressUser&);
 
     /** Selector to select instructions and basic blocks.
      *
      *  This selector can be passed as the argument to the @ref select method, or to methods like @ref
      *  AddressUsageMap::overlapping to select only those users that are instructions and basic blocks. */
-    static bool selectBasicBlocks(const AddressUser &user) {
-        return user.isBasicBlock();
-    }
+    static bool selectBasicBlocks(const AddressUser&);
 
     /** Selector to select data blocks.
      *
      *  This selector can be passed as the argument to the @ref select method, or to methods like @ref
      *  AddressUsageMap::overlapping to select only those users that are data blocks. */
-    static bool selectDataBlocks(const AddressUser &user) {
-        return user.isDataBlock();
-    }
+    static bool selectDataBlocks(const AddressUser&);
 
     /** Selects certain users from a list.
      *
@@ -337,23 +310,17 @@ public:
     /** Return all address users.
      *
      *  Returns all address users as a vector sorted by starting address. */
-    const std::vector<AddressUser>& addressUsers() const {
-        return users_;
-    }
+    const std::vector<AddressUser>& addressUsers() const;
 
     /** Returns all instruction users.
      *
      *  Returns a new list of address users that contains only the instruction users from this list. */
-    AddressUsers instructionUsers() const {
-        return select(selectBasicBlocks);
-    }
+    AddressUsers instructionUsers() const;
 
     /** Returns all data block users.
      *
      *  Returns a new list of address users that contains only the data block users from this list. */
-    AddressUsers dataBlockUsers() const {
-        return select(selectDataBlocks);
-    }
+    AddressUsers dataBlockUsers() const;
 
     /** Returns all instructions.
      *
@@ -367,24 +334,20 @@ public:
      *  Returns a list of pointers to distinct basic blocks sorted by starting address.  The return value is not an
      *  AddressUsers because it is more useful to have a list of distinct basic blocks, and because the @ref instructionUsers
      *  method returns the other information already. */
-    std::vector<BasicBlock::Ptr> instructionOwners() const;
+    std::vector<BasicBlockPtr> instructionOwners() const;
 
     /** Returns all data blocks.
      *
      *  Returns a list of pointers to distinct data blocks sorted by starting address. */
-    std::vector<DataBlock::Ptr> dataBlocks() const;
+    std::vector<DataBlockPtr> dataBlocks() const;
 
     /** Number of address users. */
-    size_t size() const {
-        return users_.size();
-    }
+    size_t size() const;
 
     /** Determines whether this address user list is empty.
      *
      *  Returns true if empty, false otherwise. */
-    bool isEmpty() const {
-        return users_.empty();
-    }
+    bool isEmpty() const;
 
     /** Computes the intersection of this list with another. */
     AddressUsers intersection(const AddressUsers&) const;
@@ -415,7 +378,7 @@ public:
  *  directly by the user, and represents the instructions and basic blocks that are in the control flow graph as well as any data
  *  blocks they own. */
 class AddressUsageMap {
-    typedef Sawyer::Container::IntervalMap<AddressInterval, AddressUsers> Map;
+    using Map = Sawyer::Container::IntervalMap<AddressInterval, AddressUsers>;
     Map map_;
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -429,33 +392,29 @@ private:
 #endif
 
 public:
+    AddressUsageMap();
+    ~AddressUsageMap();
+
+public:
     /** Determines whether a map is empty.
      *
      *  Returns true if the map contains no instructions or data, false if it contains at least one instruction or at least one
      *  data block. */
-    bool isEmpty() const {
-        return map_.isEmpty();
-    }
+    bool isEmpty() const;
 
     /** Reset map to initial empty state. */
-    void clear() {
-        map_.clear();
-    }
+    void clear();
 
     /** Number of addresses represented by the map.
      *
      *  Returns the number of addresses that have at least one user.  This is a constant-time operation. */
-    size_t size() const {
-        return map_.size();
-    }
+    size_t size() const;
 
     /** Minimum and maximum used addresses.
      *
      *  Returns minimum and maximum addresses that exist in this address usage map.  If the map is empty then the returned
      *  interval is empty, containing neither a minimum nor maximum address. */
-    AddressInterval hull() const {
-        return map_.hull();
-    }
+    AddressInterval hull() const;
 
     /** Addresses represented.
      *
@@ -467,9 +426,7 @@ public:
      *  Returns true if the specified address belongs to any instruction, basic block, or data block. This is a O(log N)
      *  operation where N is the number of contiguous intervals in this address usage map.  It may be slightly faster than some
      *  of the other methods since it doesn't need to construct a non-POD return value. */
-    bool exists(rose_addr_t va) const {
-        return map_.exists(va);
-    }
+    bool exists(rose_addr_t) const;
 
     /** Predicate to determine whether any of the specified addresses are used.
      *
@@ -518,8 +475,8 @@ public:
      *  represented by a placeholder with no instructions.
      *
      * @{ */
-    BasicBlock::Ptr basicBlockExists(const BasicBlock::Ptr&) const;
-    BasicBlock::Ptr basicBlockExists(rose_addr_t startOfBlock) const;
+    BasicBlockPtr basicBlockExists(const BasicBlockPtr&) const;
+    BasicBlockPtr basicBlockExists(rose_addr_t startOfBlock) const;
     /** @} */
 
     /** Determines if a data block exists.
@@ -528,8 +485,8 @@ public:
      *  otherwise a null pointer is returned.
      *
      * @{ */
-    DataBlock::Ptr dataBlockExists(const DataBlock::Ptr&) const;
-    DataBlock::Ptr dataBlockExists(rose_addr_t va, rose_addr_t size) const;
+    DataBlockPtr dataBlockExists(const DataBlockPtr&) const;
+    DataBlockPtr dataBlockExists(rose_addr_t va, rose_addr_t size) const;
     /** @} */
 
     /** Find an AddressUser record for the specified instruction, or equivalent.
@@ -551,7 +508,7 @@ public:
      *  either a @ref BasicBlock object or a starting address.
      *
      * @{ */
-    AddressUser findBasicBlock(const BasicBlock::Ptr&) const;
+    AddressUser findBasicBlock(const BasicBlockPtr&) const;
     AddressUser findBasicBlock(rose_addr_t va) const;
     /** @} */
 
@@ -562,7 +519,7 @@ public:
      *  and size.
      *
      * @{ */
-    AddressUser findDataBlock(const DataBlock::Ptr&) const;
+    AddressUser findDataBlock(const DataBlockPtr&) const;
     AddressUser findDataBlock(rose_addr_t va, rose_addr_t size) const;
     /** @} */
 
@@ -571,25 +528,25 @@ public:
      *  Inserts the specified instruction and its owning basic block if the information is not already present in this AUM.
      *  Returns the relavent address user information since this method might substitute existing equivalent instruction and
      *  owner. */
-    AddressUser insertInstruction(SgAsmInstruction*, const BasicBlock::Ptr&);
+    AddressUser insertInstruction(SgAsmInstruction*, const BasicBlockPtr&);
 
     /** Insert the data block.
      *
      *  Inserts the specified data block if an equivalent data block is not already present. Returns the relevant address user
      *  information since this method might substitute an existing equivalent data block. */
-    AddressUser insertDataBlock(const DataBlock::Ptr&);
+    AddressUser insertDataBlock(const DataBlockPtr&);
 
     /** Remove the specified instruction/basic block pair.
      *
      *  If the specified instruction or equivalent is found in this AUM then the specified basic block is removed as one of its
      *  owners. If this leaves the instruction with no owning basic blocks, then the instruction itself is also
      *  removed. Returns the affected instruction. */
-    SgAsmInstruction* eraseInstruction(SgAsmInstruction*, const BasicBlock::Ptr&);
+    SgAsmInstruction* eraseInstruction(SgAsmInstruction*, const BasicBlockPtr&);
 
     /** Remove the specified data block.
      *
      *  Removes the specified data block or an equivalent from this AUM. Returns the data block that was erased. */
-    DataBlock::Ptr eraseDataBlock(const DataBlock::Ptr&);
+    DataBlockPtr eraseDataBlock(const DataBlockPtr&);
 
     /** Find address users that span the entire interval.
      *
@@ -599,10 +556,8 @@ public:
      *  as an argument and returns true to select that user for inclusion in the result.
      *
      * @{ */
-    AddressUsers spanning(const AddressInterval &interval) const {
-        return spanning(interval, AddressUsers::selectAllUsers);
-    }
-    
+    AddressUsers spanning(const AddressInterval&) const;
+
     template<class UserPredicate>
     AddressUsers spanning(const AddressInterval &interval, UserPredicate userPredicate) const {
         AddressUsers retval;
@@ -626,10 +581,8 @@ public:
      *  result.
      *
      * @{ */
-    AddressUsers overlapping(const AddressInterval &interval) const {
-        return overlapping(interval, AddressUsers::selectAllUsers);
-    }
-        
+    AddressUsers overlapping(const AddressInterval&) const;
+
     template<class UserPredicate>
     AddressUsers overlapping(const AddressInterval &interval, UserPredicate userPredicate) const {
         AddressUsers retval;
@@ -648,13 +601,11 @@ public:
      *  that user for inclusion in the result.
      *
      * @{ */
-    AddressUsers containedIn(const AddressInterval &interval) const {
-        return containedIn(interval, AddressUsers::selectAllUsers);
-    }
-
-    template<class UserPredicate>
-    AddressUsers containedIn(const AddressInterval &interval, UserPredicate userPredicate) const;
     // FIXME[Robb P. Matzke 2014-08-26]: not implemented yet
+    AddressUsers containedIn(const AddressInterval&) const;
+
+    //template<class UserPredicate>
+    //AddressUsers containedIn(const AddressInterval &interval, UserPredicate userPredicate) const {...}
     /** @} */
         
 
@@ -662,9 +613,7 @@ public:
      *
      *  Returns the smallest unmapped address that is greater than or equal to @p startVa.  If no such address exists then
      *  nothing is returned. */
-    Sawyer::Optional<rose_addr_t> leastUnmapped(rose_addr_t startVa) const {
-        return map_.leastUnmapped(startVa);
-    }
+    Sawyer::Optional<rose_addr_t> leastUnmapped(rose_addr_t startVa) const;
 
     /** Dump the contents of this AUM to a stream.
      *

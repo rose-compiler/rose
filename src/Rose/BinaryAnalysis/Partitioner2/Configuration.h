@@ -2,9 +2,9 @@
 #define ROSE_BinaryAnalysis_Partitioner2_Configuration_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
+#include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 
 #include <Rose/FileSystem.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 #include <Sawyer/Map.h>
 #include <Sawyer/Optional.h>
 #include <Rose/SourceLocation.h>
@@ -466,7 +466,7 @@ public:
      * @{ */
     std::string functionComment(rose_addr_t functionVa) const;
     std::string functionComment(const std::string &functionName) const;
-    std::string functionComment(const Function::Ptr&) const;
+    std::string functionComment(const FunctionPtr&) const;
     /** @} */
 
     /** Function stack delta.
@@ -478,7 +478,7 @@ public:
      * @{ */
     Sawyer::Optional<int64_t> functionStackDelta(rose_addr_t functionVa) const;
     Sawyer::Optional<int64_t> functionStackDelta(const std::string &functionName) const;
-    Sawyer::Optional<int64_t> functionStackDelta(const Function::Ptr&) const;
+    Sawyer::Optional<int64_t> functionStackDelta(const FunctionPtr&) const;
     /** @} */
 
     /** Function may-return status.
@@ -494,7 +494,7 @@ public:
      * @{ */
     Sawyer::Optional<bool> functionMayReturn(rose_addr_t functionVa) const;
     Sawyer::Optional<bool> functionMayReturn(const std::string &functionName) const;
-    Sawyer::Optional<bool> functionMayReturn(const Function::Ptr&) const;
+    Sawyer::Optional<bool> functionMayReturn(const FunctionPtr&) const;
     /** @} */
 
     /** Address comment.

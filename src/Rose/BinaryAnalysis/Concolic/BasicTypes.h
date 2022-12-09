@@ -6,9 +6,10 @@
 #include <Rose/BinaryAnalysis/Concolic/I386Linux/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Concolic/M68kSystem/BasicTypes.h>
 
-#include <rose_strtoull.h>
+#include <Rose/StringUtility/Escape.h>
 
 #include <Rose/Exception.h>
+#include <rose_strtoull.h>
 
 #include <Sawyer/Callbacks.h>
 #include <Sawyer/Message.h>

@@ -3,6 +3,7 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesM68k.h>
 
+#include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Utility.h>
 
@@ -17,6 +18,20 @@ namespace Partitioner2 {
 namespace ModulesM68k {
 
 using namespace Rose::Diagnostics;
+
+MatchLink::MatchLink() {}
+
+MatchLink::~MatchLink() {}
+
+MatchLink::Ptr
+MatchLink::instance() {
+    return Ptr(new MatchLink);
+}
+
+std::vector<Function::Ptr>
+MatchLink::functions() const {
+    return std::vector<Function::Ptr>(1, function_);
+}
 
 bool
 MatchLink::match(const Partitioner::ConstPtr &partitioner, rose_addr_t anchor) {

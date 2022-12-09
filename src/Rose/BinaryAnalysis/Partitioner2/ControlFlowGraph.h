@@ -2,10 +2,8 @@
 #define ROSE_BinaryAnalysis_Partitioner2_ControlFlowGraph_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-
-#include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Function.h>
+
 #include <Rose/BinaryAnalysis/Partitioner2/Utility.h>
 
 #include <Sawyer/BiMap.h>
@@ -46,26 +44,20 @@ private:
 
 public:
     // intentionally undocumented. Necessary for serialization of Sawyer::Container::Graph
-    CfgVertex()
-        : type_(V_USER_DEFINED), startVa_(0) {}
+    CfgVertex();
+    ~CfgVertex();
 
-public:
     /** Construct a basic block placeholder vertex. */
-    explicit CfgVertex(rose_addr_t startVa): type_(V_BASIC_BLOCK), startVa_(startVa) {}
+    explicit CfgVertex(rose_addr_t startVa);
 
     /** Construct a basic block vertex. */
-    explicit CfgVertex(const BasicBlockPtr &bb): type_(V_BASIC_BLOCK), bblock_(bb) {
-        ASSERT_not_null(bb);
-        startVa_ = bb->address();
-    }
+    explicit CfgVertex(const BasicBlockPtr &bb);
 
     /** Construct a special vertex. */
-    /*implicit*/ CfgVertex(VertexType type): type_(type), startVa_(0) {
-        ASSERT_forbid2(type==V_BASIC_BLOCK, "this constructor does not create basic block or placeholder vertices");
-    }
+    /*implicit*/ CfgVertex(VertexType type);
 
     /** Returns the vertex type. */
-    VertexType type() const { return type_; }
+    VertexType type() const;
 
     /** Property: starting address.
      *
@@ -75,14 +67,8 @@ public:
      *  See also, @ref optionalAddress.
      *
      * @{ */
-    rose_addr_t address() const {
-        ASSERT_require(V_BASIC_BLOCK==type_ || V_USER_DEFINED==type_ || V_NONEXISTING==type_);
-        return startVa_;
-    }
-    void address(rose_addr_t va) {
-        ASSERT_require(V_BASIC_BLOCK==type_ || V_USER_DEFINED==type_ || V_NONEXISTING==type_);
-        startVa_ = va;
-    }
+    rose_addr_t address() const;
+    void address(rose_addr_t);
     /** @} */
 
     /** Safe version of starting address.
@@ -112,45 +98,28 @@ public:
      *  allowed to set a basic block, and will always return a null pointer.
      *
      * @{ */
-    const BasicBlockPtr& bblock() const {
-        return bblock_;
-    }
-    void bblock(const BasicBlockPtr &bb) {
-        ASSERT_require(V_BASIC_BLOCK==type_ || V_USER_DEFINED==type_);
-        bblock_ = bb;
-    }
+    const BasicBlockPtr& bblock() const;
+    void bblock(const BasicBlockPtr&);
     /** @} */
 
     /** Add a function to the list of functions that own this vertex.
      *
      *  Returns true if the function was added, false if it was already an owner of the vertex. */
-    bool insertOwningFunction(const FunctionPtr &function) {
-        ASSERT_require(V_BASIC_BLOCK==type_ || V_USER_DEFINED==type_ || V_NONEXISTING==type_);
-        ASSERT_not_null(function);
-        return owningFunctions_.insert(function);
-    }
+    bool insertOwningFunction(const FunctionPtr&);
 
     /** Remove a function from the list of functions that own this vertex.
      *
      *  Causes the specified function to no longer be listed as an owner of this vertex. Does nothing if the function is not an
      *  owner to begin with. */
-    void eraseOwningFunction(const FunctionPtr &function) {
-        ASSERT_require(V_BASIC_BLOCK==type_ || V_USER_DEFINED==type_ || V_NONEXISTING==type_);
-        if (function != NULL)
-            owningFunctions_.erase(function);
-    }
+    void eraseOwningFunction(const FunctionPtr&);
 
     /** Determines if a function owns this vertex.
      *
      *  Returns true if the specified function is listed as an owning function of this vertex, false otherwise. */
-    bool isOwningFunction(const FunctionPtr &function) const {
-        return owningFunctions_.exists(function);
-    }
+    bool isOwningFunction(const FunctionPtr&) const;
 
     /** Number of functions that own this vertex. */
-    size_t nOwningFunctions() const {
-        return owningFunctions_.size();
-    }
+    size_t nOwningFunctions() const;
 
     /** Property: Owning functions.
      *
@@ -159,12 +128,8 @@ public:
      *  available for @ref V_BASIC_BLOCK and @ref V_USER_DEFINED vertices.
      *
      *  @{ */
-    const FunctionSet& owningFunctions() const {
-        return owningFunctions_;
-    }
-    FunctionSet& owningFunctions() {
-        return owningFunctions_;
-    }
+    const FunctionSet& owningFunctions() const;
+    FunctionSet& owningFunctions();
     /** @} */
 
     /** Is block a function entry block?
@@ -175,10 +140,7 @@ public:
     /** Turns a basic block vertex into a placeholder.
      *
      *  The basic block pointer is reset to null. */
-    void nullify() {
-        ASSERT_require(V_BASIC_BLOCK==type_);
-        bblock_ = BasicBlockPtr();
-    }
+    void nullify();
 };
 
 /** Control flow graph edge. */
@@ -199,27 +161,26 @@ private:
 #endif
 
 public:
+    ~CfgEdge();
+
     /** Construct a new normal edge. */
-    CfgEdge(): type_(E_NORMAL), confidence_(ASSUMED) {}
+    CfgEdge();
 
     /** Construct an edge with a specified type and confidence. */
-    /*implicit*/ CfgEdge(EdgeType type, Confidence confidence=ASSUMED): type_(type), confidence_(confidence) {}
+    /*implicit*/ CfgEdge(EdgeType type, Confidence confidence = ASSUMED);
 
     /** Return edge type. */
-    EdgeType type() const { return type_; }
+    EdgeType type() const;
 
     /** Property: Confidence.
      *
      *  The confidence that this edge is correct.
      *
      * @{ */
-    Confidence confidence() const { return confidence_; }
-    void confidence(Confidence c) { confidence_ = c; }
+    Confidence confidence() const;
+    void confidence(Confidence);
     /** @} */
 };
-
-/** Control flow graph. */
-typedef Sawyer::Container::Graph<CfgVertex, CfgEdge> ControlFlowGraph;
 
 /** Sort edges by source vertex address. */
 bool sortEdgesBySrc(const ControlFlowGraph::ConstEdgeIterator&, const ControlFlowGraph::ConstEdgeIterator&);

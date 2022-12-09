@@ -8,8 +8,12 @@
 namespace Rose {
 
 class Exception;
+
 class Location;
+
 class Progress;
+using ProgressPtr = Sawyer::SharedPointer<Progress>;
+
 class SourceLocation;
 
 } // namespace

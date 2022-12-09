@@ -471,6 +471,31 @@ Debugger::debug(rose_addr_t va, const BasicBlock::Ptr &bblock) {
     debug <<"Debugger triggered: #" <<callNumber <<" for " <<(isBblock?"bblock=":"placeholder=") <<addrToString(va) <<"\n";
 }
 
+MatchThunk::MatchThunk(const ThunkPredicates::Ptr &predicates)
+    : predicates_(predicates) {}
+
+MatchThunk::~MatchThunk() {}
+
+MatchThunk::Ptr
+MatchThunk::instance(const ThunkPredicates::Ptr &predicates) {
+    return Ptr(new MatchThunk(predicates));
+}
+
+ThunkPredicates::Ptr
+MatchThunk::predicates() const {
+    return predicates_;
+}
+
+void
+MatchThunk::predicates(const ThunkPredicates::Ptr &p) {
+    predicates_ = p;
+}
+
+std::vector<Function::Ptr>
+MatchThunk::functions() const {
+    return functions_;
+}
+
 bool
 MatchThunk::match(const Partitioner::ConstPtr &partitioner, rose_addr_t anchor) {
     ASSERT_not_null(partitioner);

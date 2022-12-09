@@ -196,13 +196,13 @@ public:
      *
      *  Counts the number of E_FUNCTION_CALL edges in a path.  If a non-null function is supplied then only count those edges
      *  that enter the specified function. */
-    size_t nCalls(const Function::Ptr &function = Function::Ptr()) const;
+    size_t nCalls(const FunctionPtr &function = FunctionPtr()) const;
 
     /** Number of function returns.
      *
      *  Counts the number of E_FUNCTION_RETURN edges in a path. If a non-null function is supplied then only count those edges
      *  that return from the specified function. */
-    size_t nReturns(const Function::Ptr &function = Function::Ptr()) const;
+    size_t nReturns(const FunctionPtr &function = FunctionPtr()) const;
 
     /** Call depth.
      *
@@ -210,14 +210,14 @@ public:
      *  and decremented for each E_FUNCTION_RETURN edge, and the value at the end of the path is returned. If a non-null
      *  function is specified, then count only calls to that function and returns from that function. The return value may be
      *  negative if more return edges than call edges are encountered. */
-    ssize_t callDepth(const Function::Ptr &function = Function::Ptr()) const;
+    ssize_t callDepth(const FunctionPtr &function = FunctionPtr()) const;
 
     /** Maximum call depth.
      *
      *  Returns the maximum function call depth in the path.  The call depth is incremented for each E_FUNCTION_CALL edge and
      *  decremented for each E_FUNCTION_RETURN edge, and its maximum value is returned. If a non-null function is specified,
      *  then count only calls to that function and returns from that function. */
-    size_t maxCallDepth(const Function::Ptr &function = Function::Ptr()) const;
+    size_t maxCallDepth(const FunctionPtr &function = FunctionPtr()) const;
 
     /** Truncate the path.
      *
