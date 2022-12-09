@@ -2150,24 +2150,6 @@ namespace
         SgScopeStatement&          scope    = ctx.scope();
 
         ADA_ASSERT(isSgVarRefExp(res) == nullptr);
-#if OBSOLETE_CODE
-        if (SgVarRefExp* varref = isSgVarRefExp(res))
-        {
-          // PP: we should not get here in the first place (after the frontend is complete).
-          logError() << "Unresolved Unit Name: " << SG_DEREF(varref->get_symbol()).get_name()
-                     << std::endl;
-
-          // \todo band-aid until frontend is complete
-          // HACK: the unit was not found, and its name is not properly scope qualified
-          //       ==> create a properly qualified name
-          // LEAK: symbol, and initialized name will leak
-          //~ scope.remove_symbol(varref->get_symbol());
-          delete res;
-
-          res = &mkUnresolvedName(imported.fullName, scope);
-        }
-#endif /* OBSOLETE_CODE */
-
 
         std::vector<SgExpression*> elems{res};
         SgImportStatement&         sgnode = mkWithClause(std::move(elems));

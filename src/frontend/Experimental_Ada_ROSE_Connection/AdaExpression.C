@@ -747,13 +747,7 @@ namespace
     if (suppl.result())
       return;
 
-    if (  name == "="
-       || name == "/="
-       || name == "<"
-       || name == "<="
-       || name == ">"
-       || name == ">="
-       )
+    if (isRelationalOperator(name))
     {
       suppl.result(sb::buildBoolType());
       return;
@@ -935,7 +929,6 @@ namespace
     // try to generate the operator
     if (SgExpression* res = generateOperator(fnname, expr, suppl, ctx))
     {
-      //~ logWarn() << "ok3" << std::endl;
       return *res;
     }
 
@@ -1377,6 +1370,39 @@ namespace
     return elem.The_Union.Expression.Expression_Kind;
   }
 
+  SgInitializedName*
+  queryByNameInDeclarationID(const AdaIdentifier& name, Declaration_ID id)
+  {
+    if (id <= 0)
+      return nullptr;
+
+    Element_Struct* elem = retrieveAsOpt(elemMap(), id); // \todo try the non_Opt version
+    if (elem == nullptr || (elem->Element_Kind != A_Declaration))
+      return nullptr;
+
+    Declaration_Struct& decl = elem->The_Union.Declaration;
+    if (decl.Declaration_Kind != A_Component_Declaration)
+      return nullptr;
+
+    ElemIdRange range = idRange(decl.Names);
+
+    for (Element_ID_Ptr pos = range.first; pos != range.second; ++pos)
+    {
+      if (Element_Struct* el = retrieveAsOpt(elemMap(), *pos))
+      {
+        if (el->Element_Kind == A_Defining_Name)
+        {
+          Defining_Name_Struct& def = el->The_Union.Defining_Name;
+
+          if (name == AdaIdentifier(def.Defining_Name_Image))
+            return findFirst(asisVars(), el->ID);
+        }
+      }
+    }
+
+    return nullptr;
+  }
+
 
   SgExpression&
   getExprID_undecorated(Element_ID el, AstContext ctx, OperatorCallSupplement suppl = {});
@@ -1423,6 +1449,10 @@ namespace
             if (SgType* ty = findFirst(adaTypes(), adaIdent))
             {
               res = &mkTypeExpression(*ty);
+            }
+            else if (SgInitializedName* fld = queryByNameInDeclarationID(adaIdent, expr.Corresponding_Name_Declaration))
+            {
+              res = sb::buildVarRefExp(fld, &ctx.scope());
             }
             else if (SgInitializedName* var = findFirst(adaVars(), adaIdent))
             {
