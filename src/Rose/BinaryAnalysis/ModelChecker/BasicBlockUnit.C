@@ -20,14 +20,16 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace ModelChecker {
 
-BasicBlockUnit::BasicBlockUnit(const P2::Partitioner &partitioner, const P2::BasicBlock::Ptr &bblock)
-    : ExecutionUnit(partitioner.sourceLocations().get(bblock->address())), partitioner_(partitioner),
-                    bblock_(bblock) {}
+BasicBlockUnit::BasicBlockUnit(const P2::Partitioner::ConstPtr &partitioner, const P2::BasicBlock::Ptr &bblock)
+    : ExecutionUnit(partitioner->sourceLocations().get(bblock->address())), partitioner_(partitioner),
+      bblock_(bblock) {
+    ASSERT_not_null(partitioner);
+}
 
 BasicBlockUnit::~BasicBlockUnit() {}
 
 BasicBlockUnit::Ptr
-BasicBlockUnit::instance(const P2::Partitioner &partitioner, const P2::BasicBlockPtr &bblock) {
+BasicBlockUnit::instance(const P2::Partitioner::ConstPtr &partitioner, const P2::BasicBlockPtr &bblock) {
     ASSERT_not_null(bblock);
     return Ptr(new BasicBlockUnit(partitioner, bblock));
 }
@@ -43,7 +45,7 @@ std::string
 BasicBlockUnit::printableName() const {
     // No lock necessary since the basic block pointer cannot be changed after construction.
     std::string retval = bblock_->printableName();
-    for (const P2::Function::Ptr &func: partitioner_.functionsOwningBasicBlock(bblock_)) {
+    for (const P2::Function::Ptr &func: partitioner_->functionsOwningBasicBlock(bblock_)) {
         retval += " in " + func->printableName();
         break;
     }
@@ -62,7 +64,7 @@ BasicBlockUnit::printSteps(const Settings::Ptr &settings, std::ostream &out, con
         SgAsmInstruction *insn = insns[i];
         ASSERT_not_null(insn);
 
-        if (SourceLocation sloc = partitioner_.sourceLocations().get(insn->get_address())) {
+        if (SourceLocation sloc = partitioner_->sourceLocations().get(insn->get_address())) {
             if (sloc != prevLoc) {
                 out <<prefix <<"| " <<sloc <<"\n";
                 if (settings->sourceLister)
@@ -104,7 +106,7 @@ BasicBlockUnit::toYamlSteps(const Settings::Ptr&, std::ostream &out, const std::
 
         out <<prefix <<"  - instruction: " <<StringUtility::yamlEscape(insns[i]->toString()) <<"\n";
 
-        if (SourceLocation sloc = partitioner_.sourceLocations().get(insn->get_address())) {
+        if (SourceLocation sloc = partitioner_->sourceLocations().get(insn->get_address())) {
             if (sloc != prevLoc) {
                 out <<prefix <<"    source-file: " <<StringUtility::yamlEscape(sloc.fileName().string()) <<"\n"
                     <<prefix <<"    source-line: " <<sloc.line() <<"\n";

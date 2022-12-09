@@ -619,13 +619,14 @@ FunctionSimilarity::declareCfgConnectivity(const std::string &categoryName) {
 }
 
 void
-FunctionSimilarity::measureCfgConnectivity(CategoryId id, const P2::Partitioner &partitioner,
+FunctionSimilarity::measureCfgConnectivity(CategoryId id, const P2::Partitioner::ConstPtr &partitioner,
                                            const P2::Function::Ptr &function, size_t maxPoints) {
+    ASSERT_not_null(partitioner);
     size_t nPoints = 0;
     for (rose_addr_t bbva: function->basicBlockAddresses()) {
         CartesianPoint point;
-        P2::ControlFlowGraph::ConstVertexIterator vertex = partitioner.findPlaceholder(bbva);
-        if (partitioner.cfg().isValidVertex(vertex)) {
+        P2::ControlFlowGraph::ConstVertexIterator vertex = partitioner->findPlaceholder(bbva);
+        if (partitioner->cfg().isValidVertex(vertex)) {
             if (++nPoints > maxPoints) {
                 mlog[WARN] <<"cfg connectivity truncated at " <<StringUtility::plural(maxPoints, "vertices")
                            <<" for " <<function->printableName() <<"\n";
@@ -656,20 +657,21 @@ FunctionSimilarity::declareCallGraphConnectivity(const std::string &categoryName
 }
 
 void
-FunctionSimilarity::measureCallGraphConnectivity(CategoryId id, const P2::Partitioner &partitioner,
+FunctionSimilarity::measureCallGraphConnectivity(CategoryId id, const P2::Partitioner::ConstPtr &partitioner,
                                                  const P2::Function::Ptr &function) {
-    ASSERT_require(partitioner.nFunctions() > 0);
+    ASSERT_not_null(partitioner);
+    ASSERT_require(partitioner->nFunctions() > 0);
     for (rose_addr_t bbva: function->basicBlockAddresses()) {
-        P2::ControlFlowGraph::ConstVertexIterator vertex = partitioner.findPlaceholder(bbva);
-        if (partitioner.cfg().isValidVertex(vertex) && vertex->value().type() == P2::V_BASIC_BLOCK &&
-            partitioner.basicBlockIsFunctionCall(vertex->value().bblock())) {
+        P2::ControlFlowGraph::ConstVertexIterator vertex = partitioner->findPlaceholder(bbva);
+        if (partitioner->cfg().isValidVertex(vertex) && vertex->value().type() == P2::V_BASIC_BLOCK &&
+            partitioner->basicBlockIsFunctionCall(vertex->value().bblock())) {
             for (const P2::ControlFlowGraph::Edge &edge: vertex->outEdges()) {
                 P2::ControlFlowGraph::ConstVertexIterator callee = edge.target();
                 CartesianPoint point;
                 if (callee->value().type() == P2::V_INDETERMINATE) {
                     point.push_back(1.0);
-                } else if (callee->nInEdges() <= partitioner.nFunctions()) {
-                    double x = log(callee->nInEdges()) / log(partitioner.nFunctions());
+                } else if (callee->nInEdges() <= partitioner->nFunctions()) {
+                    double x = log(callee->nInEdges()) / log(partitioner->nFunctions());
                     point.push_back(x);
                 } else {
                     point.push_back(1.0);
@@ -686,10 +688,11 @@ FunctionSimilarity::declareMnemonicStream(const std::string &categoryName) {
 }
 
 void
-FunctionSimilarity::measureMnemonicStream(CategoryId id, const P2::Partitioner &partitioner,
+FunctionSimilarity::measureMnemonicStream(CategoryId id, const P2::Partitioner::ConstPtr &partitioner,
                                           const P2::Function::Ptr &function) {
+    ASSERT_not_null(partitioner);
     for (rose_addr_t bbva: function->basicBlockAddresses()) {
-        if (P2::BasicBlock::Ptr bb = partitioner.basicBlockExists(bbva)) {
+        if (P2::BasicBlock::Ptr bb = partitioner->basicBlockExists(bbva)) {
             OrderedList list;
             for (SgAsmInstruction *insn: bb->instructions())
                 list.push_back(insn->get_anyKind());

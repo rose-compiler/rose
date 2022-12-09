@@ -141,10 +141,10 @@ namespace BinaryAnalysis {
  *      namespace Symbolic = Rose::BinaryAnalysis::InstructionSemantics::SymbolicSemantics;
  *      namespace P2 = Rose::BinaryAnalysis::Partitioner2;
  *
- *      P2::Partitioner partitioner = ....; // disassembly results
+ *      P2::Partitioner::Ptr partitioner = ....; // disassembly results
  *      SmtSolverPtr solver = ....; // optional SMT solver
  *
- *      RegisterDictionary::Ptr regdict = partitioner.instructionProvider().registerDictionary();
+ *      RegisterDictionary::Ptr regdict = partitioner->instructionProvider().registerDictionary();
  *      Base::SValuePtr prototval = Symbolic::SValue::instance();
  *      Base::RegisterStatePtr regs = Symbolic::RegisterState::instance(protoval, regdict);
  *      Base::MemoryStatePtr mem = Symbolic::MemoryListState::instance(protoval, protoval);

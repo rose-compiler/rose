@@ -1052,7 +1052,7 @@ public:
      *  graph.
      *
      *  Thread safety: This function is not thread safe. */
-    void transferResults(Rose::BinaryAnalysis::Partitioner2::Partitioner &out);
+    void transferResults(const Rose::BinaryAnalysis::Partitioner2::PartitionerPtr &out);
 
     /** Figure out how to remap memory.
      *

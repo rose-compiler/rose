@@ -86,7 +86,7 @@ public:
     };
 
     /* Mapping from functions to sets of CFG vertex IDs. */
-    typedef Sawyer::Container::Map<Partitioner2::Function::Ptr, std::set<size_t/*vertexId*/> > FunctionToVertexMap;
+    typedef Sawyer::Container::Map<Partitioner2::FunctionPtr, std::set<size_t/*vertexId*/> > FunctionToVertexMap;
 
 public:
     /** Facility for emitting diagnostics. */
@@ -207,7 +207,7 @@ public:
      *  Returns number of affected vertices.
      *
      *  See also, @ref markEntryFunctions, @ref markExportFunctions, @ref markMemoryConstants. */
-    size_t markStartingPoints(const Partitioner2::Partitioner&, MemoryMap::Ptr map = MemoryMap::Ptr());
+    size_t markStartingPoints(const Partitioner2::PartitionerConstPtr&, MemoryMapPtr map = MemoryMap::Ptr());
 
     /** Mark entry points as intrinsically reachable.
      *
@@ -215,20 +215,20 @@ public:
      *  functions marked this way (although the marking is based on the ELF header, not the name of the function).
      *
      *  Returns number of affected vertices. */
-    size_t markEntryFunctions(const Partitioner2::Partitioner&, ReasonFlags how = PROGRAM_ENTRY_POINT);
+    size_t markEntryFunctions(const Partitioner2::PartitionerConstPtr&, ReasonFlags how = PROGRAM_ENTRY_POINT);
 
     /** Mark exported functions as intrinsically reachable.
      *
      *  Marks all entry vertices of exported functions as intrinsically reachable.
      *
      *  Returns number of affected vertices. */
-    size_t markExportFunctions(const Partitioner2::Partitioner&, ReasonFlags how = EXPORTED_FUNCTION);
+    size_t markExportFunctions(const Partitioner2::PartitionerConstPtr&, ReasonFlags how = EXPORTED_FUNCTION);
 
     /** Mark vertices whose addresses appear in instructions.
      *
      *  Traverses the specified basic block to find all explicit constants. For each constant which is the address
      *  of a basic block, mark that block as intrinsically reachable. */
-    size_t markExplicitInstructionReferents(const Partitioner2::Partitioner&, const Partitioner2::BasicBlock::Ptr&,
+    size_t markExplicitInstructionReferents(const Partitioner2::PartitionerConstPtr&, const Partitioner2::BasicBlockPtr&,
                                             ReasonFlags how = EXPLICIT_INSN_CONSTANT);
 
     /** Mark vertices whose addresses appear in memory.
@@ -241,7 +241,7 @@ public:
      *  those are defaults, the values are obtained from the specimen architecture definition.
      *
      *  Returns number of affected vertices. */
-    size_t markExplicitMemoryReferents(const Partitioner2::Partitioner&, const MemoryMap::Ptr&, size_t bytesPerWord = 0,
+    size_t markExplicitMemoryReferents(const Partitioner2::PartitionerConstPtr&, const MemoryMapPtr&, size_t bytesPerWord = 0,
                                        size_t alignment = 0, ByteOrder::Endianness sex = ByteOrder::ORDER_UNSPECIFIED,
                                        ReasonFlags how = EXPLICIT_MEM_CONSTANT);
 
@@ -250,7 +250,7 @@ public:
      *  This looks for implicit values in the function by performing a symbolic data-flow analysis and then examining the
      *  state after each basic block in order to find concrete values. Any concrete value that's the start of some basic
      *  block causes that basic block to become intrinsically reachable. */
-    size_t markImplicitFunctionReferents(const Partitioner2::Partitioner&, const Partitioner2::Function::Ptr&,
+    size_t markImplicitFunctionReferents(const Partitioner2::PartitionerConstPtr&, const Partitioner2::FunctionPtr&,
                                          ReasonFlags how = IMPLICIT_FUNC_CONSTANT);
 
     /** Mark all basic blocks with in the specified ranges.
@@ -258,7 +258,7 @@ public:
      *  Any basic block that has an instruction beginning in any of the address intervals is marked with the given reason.
      *
      *  Returns number of affected vertices. */
-    size_t markSpecifiedVas(const Partitioner2::Partitioner&, const std::vector<AddressInterval>&, ReasonFlags);
+    size_t markSpecifiedVas(const Partitioner2::PartitionerConstPtr&, const std::vector<AddressInterval>&, ReasonFlags);
 
     /** Change intrinsic reachability for one vertex.
      *
@@ -347,8 +347,8 @@ public:
      *  reachability has changed will be appended to that vector.
      *
      * @{ */
-    size_t propagate(const Partitioner2::Partitioner&);
-    size_t propagate(const Partitioner2::Partitioner&, std::vector<size_t> &changedVertexIds /*in,out*/);
+    size_t propagate(const Partitioner2::PartitionerConstPtr&);
+    size_t propagate(const Partitioner2::PartitionerConstPtr&, std::vector<size_t> &changedVertexIds /*in,out*/);
     /** @} */
 
     /** Iteratively propagate and mark.
@@ -356,14 +356,14 @@ public:
      *  This function calls runs a @ref propagate step and a marking step in a loop until a steady state is reached. The
      *  marking step looks for new basic blocks that can be marked as intrinsically reachable based on the newly reachable
      *  blocks from the previous propagate step. */
-    void iterate(const Partitioner2::Partitioner &partitioner);
+    void iterate(const Partitioner2::PartitionerConstPtr &partitioner);
 
     /** Find all CFG vertices mentioned explicitly in a basic block.
      *
      * Scans the instructions of the specified basic block to look for explicit constants (i.e., "immediates") that are
      * addresses of other basic blocks, and return the CFG vertex ID numbers for those other blocks. */
     static std::set<size_t>
-    findExplicitInstructionReferents(const Partitioner2::Partitioner&, const Partitioner2::BasicBlock::Ptr&);
+    findExplicitInstructionReferents(const Partitioner2::PartitionerConstPtr&, const Partitioner2::BasicBlockPtr&);
 
     /** Find all CFG vertices mentioned in memory.
      *
@@ -372,7 +372,7 @@ public:
      *  default values, then the analysis @ref settings are used, or else if those are defaults, the values are obtained
      *  from the specimen architecture definition. */
     std::set<size_t>
-    findExplicitMemoryReferents(const Partitioner2::Partitioner&, const MemoryMap::Ptr&, size_t bytesPerWord = 0,
+    findExplicitMemoryReferents(const Partitioner2::PartitionerConstPtr&, const MemoryMapPtr&, size_t bytesPerWord = 0,
                                 size_t alignment = 0, ByteOrder::Endianness sex = ByteOrder::ORDER_UNSPECIFIED);
 
     /** Find all CFG vertices referenced from a function.
@@ -380,21 +380,21 @@ public:
      *  Performs a symbolic data-flow analysis on the specified function in order to find all CFG vertices that are mentioned
      *  in the semantic state. */
     static std::set<size_t>
-    findImplicitFunctionReferents(const Partitioner2::Partitioner&, const Partitioner2::Function::Ptr&);
+    findImplicitFunctionReferents(const Partitioner2::PartitionerConstPtr&, const Partitioner2::FunctionPtr&);
 
 private:
     // Implementation of the "propagate" functions
-    size_t propagateImpl(const Partitioner2::Partitioner&, std::vector<size_t>*);
+    size_t propagateImpl(const Partitioner2::PartitionerConstPtr&, std::vector<size_t>*);
 
     // Resize vectors based on partitioner CFG size
-    void resize(const Partitioner2::Partitioner&);
+    void resize(const Partitioner2::PartitionerConstPtr&);
 
     // Run findImplicitFunctionReferents on all (or specified) functions in parallel and cache the results
-    void cacheAllImplicitFunctionReferents(const Partitioner2::Partitioner&);
-    void cacheImplicitFunctionReferents(const Partitioner2::Partitioner&, const std::set<Partitioner2::Function::Ptr>&);
+    void cacheAllImplicitFunctionReferents(const Partitioner2::PartitionerConstPtr&);
+    void cacheImplicitFunctionReferents(const Partitioner2::PartitionerConstPtr&, const std::set<Partitioner2::FunctionPtr>&);
 
     // Do the marking part of the "iterate" function.
-    size_t iterationMarking(const Partitioner2::Partitioner&, const std::vector<size_t> &vertexIds);
+    size_t iterationMarking(const Partitioner2::PartitionerConstPtr&, const std::vector<size_t> &vertexIds);
 };
 
 } // namespace

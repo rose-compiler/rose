@@ -111,10 +111,10 @@ private:
     std::vector<SValueSValue> rewrites_;
 
 protected:
-    IpRewrite(const P2::Partitioner &partitioner, const std::vector<rose_addr_t> &vaPairs) {
+    IpRewrite(const P2::Partitioner::ConstPtr &partitioner, const std::vector<rose_addr_t> &vaPairs) {
         ASSERT_require(vaPairs.size() % 2 == 0);
-        const RegisterDescriptor REG_IP = partitioner.instructionProvider().instructionPointerRegister();
-        InstructionSemantics::BaseSemantics::RiscOperators::Ptr ops = partitioner.newOperators();
+        const RegisterDescriptor REG_IP = partitioner->instructionProvider().instructionPointerRegister();
+        InstructionSemantics::BaseSemantics::RiscOperators::Ptr ops = partitioner->newOperators();
         for (size_t i=0; i < vaPairs.size(); i += 2) {
             P2::Semantics::SValue::Ptr oldVal = P2::Semantics::SValue::promote(ops->number_(REG_IP.nBits(), vaPairs[i+0]));
             P2::Semantics::SValue::Ptr newVal = P2::Semantics::SValue::promote(ops->number_(REG_IP.nBits(), vaPairs[i+1]));
@@ -123,8 +123,8 @@ protected:
     }
 
 public:
-    static Ptr instance(const P2::Partitioner &p, const std::vector<rose_addr_t> &vaPairs) {
-        return Ptr(new IpRewrite(p, vaPairs));
+    static Ptr instance(const P2::Partitioner::ConstPtr &partitioner, const std::vector<rose_addr_t> &vaPairs) {
+        return Ptr(new IpRewrite(partitioner, vaPairs));
     }
 
     virtual bool operator()(bool chain, const Args &args) {
@@ -185,7 +185,7 @@ main(int argc, char *argv[]) {
         engine->memoryMap(newMap);
     }
 
-    P2::Partitioner partitioner;
+    P2::Partitioner::Ptr partitioner;
     if (engine->settings().disassembler.doDisassemble) {
         mlog[INFO] <<"using the " <<engine->obtainDisassembler()->name() <<" disassembler\n";
         partitioner = engine->partition(specimen);
@@ -196,11 +196,11 @@ main(int argc, char *argv[]) {
     }
 
 #if 0 // DEBUGGING [Robb Matzke 2018-10-24]
-    partitioner.showStatistics();                       // debugging
+    partitioner->showStatistics();                      // debugging
 #endif
 
     if (!settings.skipOutput) {
-        partitioner.basicBlockDropSemantics();
+        partitioner->basicBlockDropSemantics();
         engine->savePartitioner(partitioner, settings.outputFileName, settings.stateFormat);
     }
 

@@ -159,20 +159,23 @@ struct TraceFilter {
 };
 
 void
-showAllInstructions(std::ostream &out, const Sawyer::Container::Trace<rose_addr_t> &trace, const P2::Partitioner &partitioner) {
+showAllInstructions(std::ostream &out, const Sawyer::Container::Trace<rose_addr_t> &trace,
+                    const P2::Partitioner::ConstPtr &partitioner) {
     struct Visitor {
         std::ostream &out;
         Sawyer::Container::Map<rose_addr_t, std::string> seen;
-        const P2::Partitioner &partitioner;
+        P2::Partitioner::ConstPtr partitioner;          // not null
 
-        Visitor(std::ostream &out, const P2::Partitioner &partitioner)
-            : out(out), partitioner(partitioner) {}
+        Visitor(std::ostream &out, const P2::Partitioner::ConstPtr &partitioner)
+            : out(out), partitioner(partitioner) {
+            ASSERT_not_null(partitioner);
+        }
         
         bool operator()(rose_addr_t va) {
             std::string s;
             if (!seen.getOptional(va).assignTo(s)) {
-                if (SgAsmInstruction *insn = partitioner.instructionProvider()[va]) {
-                    s = partitioner.unparse(insn);
+                if (SgAsmInstruction *insn = partitioner->instructionProvider()[va]) {
+                    s = partitioner->unparse(insn);
                 } else {
                     s = StringUtility::addrToString(va) + ": no instruction";
                 }
@@ -187,11 +190,12 @@ showAllInstructions(std::ostream &out, const Sawyer::Container::Trace<rose_addr_
 
 void
 showDistinctInstructions(std::ostream &out, const Sawyer::Container::Trace<rose_addr_t> &trace,
-                         const P2::Partitioner &partitioner) {
+                         const P2::Partitioner::ConstPtr &partitioner) {
+    ASSERT_not_null(partitioner);
     Sawyer::Container::Set<rose_addr_t> vas = trace.labels();
     for (rose_addr_t va: vas.values()) {
-        if (SgAsmInstruction *insn = partitioner.instructionProvider()[va]) {
-            out <<partitioner.unparse(insn) <<"\n";
+        if (SgAsmInstruction *insn = partitioner->instructionProvider()[va]) {
+            out <<partitioner->unparse(insn) <<"\n";
         } else {
             out <<StringUtility::addrToString(va) + ": no instruction\n";
         }
@@ -259,15 +263,17 @@ main(int argc, char *argv[]) {
     specimen.randomizedAddresses(false);
     auto process = Debugger::Linux::instance(specimen);
 
-    P2::Partitioner partitioner;
+    P2::Partitioner::Ptr partitioner;
     if (settings.showingInsns) {
         std::string specimen = "proc:noattach:" + boost::lexical_cast<std::string>(*process->processId());
         P2::Engine *engine = P2::Engine::instance();
         engine->settings().disassembler.isaName = "i386";// FIXME[Robb Matzke 2019-12-12]
         partitioner = engine->partition(specimen);
         delete engine;
+    } else {
+        partitioner = P2::Partitioner::instance();
     }
-    
+
     TraceFilter filter(settings.compareFile);
     Sawyer::Stopwatch timer;
     mlog[INFO] <<"tracing process...\n";

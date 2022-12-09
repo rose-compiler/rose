@@ -30,7 +30,7 @@ NotInterprocedural NOT_INTERPROCEDURAL;
 // private class
 class DfCfgBuilder {
 public:
-    const Partitioner &partitioner;
+    Partitioner::ConstPtr partitioner;
     const ControlFlowGraph &cfg;                             // global control flow graph
     DfCfg dfCfg;                                             // dataflow control flow graph we are building
     InterproceduralPredicate &interproceduralPredicate;      // returns true when a call should be inlined
@@ -56,7 +56,7 @@ public:
     size_t maxCallStackSize;                            // safety to prevent infinite recursion
     size_t nextInliningId;                              // next ID when crating a CallFrame
     
-    DfCfgBuilder(const Partitioner &partitioner, const ControlFlowGraph &cfg, InterproceduralPredicate &predicate)
+    DfCfgBuilder(const Partitioner::ConstPtr &partitioner, const ControlFlowGraph &cfg, InterproceduralPredicate &predicate)
         : partitioner(partitioner), cfg(cfg), interproceduralPredicate(predicate),
           maxCallStackSize(10), nextInliningId(0) {}
 
@@ -117,7 +117,8 @@ public:
             retval = insertVertex(DfCfgVertex(bblock, parentFunction, inliningId), cfgVertex);
 
             // All function return basic blocks will point only to the special FUNCRET vertex.
-            if (partitioner.basicBlockIsFunctionReturn(bblock)) {
+            ASSERT_not_null(partitioner);
+            if (partitioner->basicBlockIsFunctionReturn(bblock)) {
                 if (!dfCfg.isValidVertex(callFrame.functionReturnVertex))
                     callFrame.functionReturnVertex = insertVertex(DfCfgVertex::FUNCRET, parentFunction, inliningId);
                 dfCfg.insertEdge(retval, callFrame.functionReturnVertex);
@@ -146,7 +147,8 @@ public:
 
     // top-level build function.
     DfCfgBuilder& build(const ControlFlowGraph::ConstVertexIterator &startVertex) {
-        Function::Ptr parentFunction = partitioner.functionExists(startVertex->value().address());
+        ASSERT_not_null(partitioner);
+        Function::Ptr parentFunction = partitioner->functionExists(startVertex->value().address());
         ASSERT_not_null(parentFunction);
         callStack.push_back(CallFrame(dfCfg, parentFunction, nextInliningId++));
         buildRecursively(startVertex);
@@ -168,7 +170,7 @@ public:
                 // function.
                 if (t.vertex()->value().type() == V_BASIC_BLOCK) {
                     findOrInsertBasicBlockVertex(t.vertex(), callStack.back().function, callStack.back().inliningId);
-                    if (partitioner.basicBlockIsFunctionReturn(t.vertex()->value().bblock()))
+                    if (partitioner->basicBlockIsFunctionReturn(t.vertex()->value().bblock()))
                         t.skipChildren();               // we're handling return successors explicitly
                 } else {
                     insertVertex(DfCfgVertex::INDET, t.vertex(), callStack.back().function, callStack.back().inliningId);
@@ -262,7 +264,7 @@ bestSummaryFunction(const FunctionSet &functions) {
 }
 
 DfCfg
-buildDfCfg(const Partitioner &partitioner,
+buildDfCfg(const Partitioner::ConstPtr &partitioner,
            const ControlFlowGraph &cfg, const ControlFlowGraph::ConstVertexIterator &startVertex,
            InterproceduralPredicate &predicate) {
     return DfCfgBuilder(partitioner, cfg, predicate).build(startVertex).dfCfg;

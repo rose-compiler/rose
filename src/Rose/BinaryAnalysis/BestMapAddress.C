@@ -4,6 +4,7 @@
 #include <Rose/BinaryAnalysis/BestMapAddress.h>
 
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/CommandLine.h>
 
 #include <integerOps.h>
@@ -58,11 +59,11 @@ BestMapAddress::gatherAddresses(P2::Engine &engine) {
     }
 
     // Disassemble and partition within the restricted region
-    P2::Partitioner partitioner = engine.createPartitioner();
+    P2::Partitioner::Ptr partitioner = engine.createPartitioner();
     engine.runPartitioner(partitioner);
 
     // Scan for and insert two lists of addresses
-    for (const P2::ControlFlowGraph::Vertex &vertex: partitioner.cfg().vertices()) {
+    for (const P2::ControlFlowGraph::Vertex &vertex: partitioner->cfg().vertices()) {
         if (vertex.value().type() == P2::V_BASIC_BLOCK) {
             if (P2::BasicBlock::Ptr bb = vertex.value().bblock()) {
 
@@ -71,8 +72,8 @@ BestMapAddress::gatherAddresses(P2::Engine &engine) {
                     entryVas_.insert(bb->address());
 
                 // Target address list
-                if (partitioner.basicBlockIsFunctionCall(bb)) {
-                    for (rose_addr_t target: partitioner.basicBlockConcreteSuccessors(bb)) {
+                if (partitioner->basicBlockIsFunctionCall(bb)) {
+                    for (rose_addr_t target: partitioner->basicBlockConcreteSuccessors(bb)) {
                         if (target != bb->fallthroughVa())
                             targetVas_.insert(target);
                     }

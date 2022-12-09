@@ -11,6 +11,27 @@ namespace BinaryAnalysis {
 namespace Partitioner2 {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// CfgAdjustmentCallback
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+CfgAdjustmentCallback::AttachedBasicBlock::AttachedBasicBlock(const Partitioner::Ptr &partitioner, rose_addr_t startVa,
+                                                              const BasicBlock::Ptr &bblock)
+    : partitioner(partitioner), startVa(startVa), bblock(bblock) {
+    ASSERT_not_null(partitioner);
+}
+
+CfgAdjustmentCallback::AttachedBasicBlock::~AttachedBasicBlock() {}
+
+CfgAdjustmentCallback::DetachedBasicBlock::DetachedBasicBlock(const Partitioner::Ptr &partitioner, rose_addr_t startVa,
+                                                              const BasicBlock::Ptr &bblock)
+    : partitioner(partitioner), startVa(startVa), bblock(bblock) {
+    ASSERT_not_null(partitioner);
+}
+
+CfgAdjustmentCallback::DetachedBasicBlock::~DetachedBasicBlock() {}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // CfgVertex
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -138,7 +159,7 @@ findCalledFunctions(const ControlFlowGraph &cfg, const ControlFlowGraph::ConstVe
 }
 
 CfgConstEdgeSet
-findCallReturnEdges(const Partitioner &partitioner, const ControlFlowGraph &cfg) {
+findCallReturnEdges(const Partitioner::ConstPtr &partitioner, const ControlFlowGraph &cfg) {
     CfgConstEdgeSet retval;
     for (ControlFlowGraph::ConstEdgeIterator edge = cfg.edges().begin(); edge != cfg.edges().end(); ++edge) {
         if (edge->value().type() == E_CALL_RETURN)
@@ -232,17 +253,18 @@ reverseMapped(const CfgConstVertexSet &vertices, const CfgVertexMap &vmap) {
 }
 
 Sawyer::Container::Map<Function::Ptr, CfgConstEdgeSet>
-findFunctionReturnEdges(const Partitioner &partitioner) {
-    return findFunctionReturnEdges(partitioner, partitioner.cfg());
+findFunctionReturnEdges(const Partitioner::ConstPtr &partitioner) {
+    return findFunctionReturnEdges(partitioner, partitioner->cfg());
 }
 
 Sawyer::Container::Map<Function::Ptr, CfgConstEdgeSet>
-findFunctionReturnEdges(const Partitioner &partitioner, const ControlFlowGraph &cfg) {
+findFunctionReturnEdges(const Partitioner::ConstPtr &partitioner, const ControlFlowGraph &cfg) {
+    ASSERT_not_null(partitioner);
     Sawyer::Container::Map<Function::Ptr, CfgConstEdgeSet> retval;
     for (ControlFlowGraph::ConstEdgeIterator edge = cfg.edges().begin(); edge != cfg.edges().end(); ++edge) {
         if (edge->value().type() == E_FUNCTION_RETURN) {
             if (BasicBlock::Ptr bblock = edge->source()->value().bblock()) {
-                std::vector<Function::Ptr> functions = partitioner.functionsOwningBasicBlock(bblock);
+                std::vector<Function::Ptr> functions = partitioner->functionsOwningBasicBlock(bblock);
                 for (const Function::Ptr &function: functions)
                     retval.insertMaybeDefault(function).insert(edge);
             }
@@ -252,7 +274,8 @@ findFunctionReturnEdges(const Partitioner &partitioner, const ControlFlowGraph &
 }
 
 void
-expandFunctionReturnEdges(const Partitioner &partitioner, ControlFlowGraph &cfg/*in,out*/) {
+expandFunctionReturnEdges(const Partitioner::ConstPtr &partitioner, ControlFlowGraph &cfg/*in,out*/) {
+    ASSERT_not_null(partitioner);
     Sawyer::Container::Map<Function::Ptr, CfgConstEdgeSet> fre = findFunctionReturnEdges(partitioner, cfg);
     CfgConstEdgeSet edgesToErase;                       // erased after iterating
 
@@ -266,7 +289,7 @@ expandFunctionReturnEdges(const Partitioner &partitioner, ControlFlowGraph &cfg/
                 continue; // functionCallEdge is not a call to a known function, so ignore it
 
             BasicBlock::Ptr functionBlock = callEdge->target()->value().bblock();
-            std::vector<Function::Ptr> functions = partitioner.functionsOwningBasicBlock(functionBlock);
+            std::vector<Function::Ptr> functions = partitioner->functionsOwningBasicBlock(functionBlock);
             for (const Function::Ptr &function: functions) {
                 for (const ControlFlowGraph::ConstEdgeIterator &oldReturnEdge: fre.getOrDefault(function).values()) {
                     edgesToErase.insert(oldReturnEdge);

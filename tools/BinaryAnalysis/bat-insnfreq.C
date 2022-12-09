@@ -81,10 +81,10 @@ main(int argc, char *argv[]) {
     // Compute the histogram
     for (const boost::filesystem::path &rbaFile: rbaFiles) {
         P2::Engine *engine = P2::Engine::instance();
-        P2::Partitioner partitioner = engine->loadPartitioner(rbaFile, stateFormat);
-        MemoryMap::Ptr map = partitioner.memoryMap();
+        P2::Partitioner::Ptr partitioner = engine->loadPartitioner(rbaFile, stateFormat);
+        MemoryMap::Ptr map = partitioner->memoryMap();
         ASSERT_not_null(map);
-        mergeInsnHistogram(histogram, computeInsnHistogram(partitioner.instructionProvider(), map));
+        mergeInsnHistogram(histogram, computeInsnHistogram(partitioner->instructionProvider(), map));
         delete engine;
     }
     

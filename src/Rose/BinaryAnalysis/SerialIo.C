@@ -183,7 +183,7 @@ SerialOutput::open(const boost::filesystem::path &fileName) {
 }
 
 void
-SerialOutput::savePartitioner(const Partitioner2::Partitioner &partitioner) {
+SerialOutput::savePartitioner(const Partitioner2::Partitioner::ConstPtr &partitioner) {
     saveObject(PARTITIONER, partitioner);
 }
 
@@ -332,11 +332,11 @@ SerialInput::advanceObjectType() {
     objectType(typeId);
 }
 
-Partitioner2::Partitioner
+Partitioner2::Partitioner::Ptr
 SerialInput::loadPartitioner() {
-    Partitioner2::Partitioner partitioner;
+    Partitioner2::Partitioner::Ptr partitioner;
     loadObject(PARTITIONER, partitioner);
-    return boost::move(partitioner);
+    return partitioner;
 }
 
 SgNode*

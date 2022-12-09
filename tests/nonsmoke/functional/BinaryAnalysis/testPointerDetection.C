@@ -76,18 +76,18 @@ main(int argc, char *argv[]) {
         mlog[FATAL] <<"no binary specimen specified; see --help\n";
         exit(1);
     }
-    P2::Partitioner partitioner = engine->partition(specimen);
+    P2::Partitioner::Ptr partitioner = engine->partition(specimen);
 
-    for (const P2::Function::Ptr &function : partitioner.functions()) {
+    for (const P2::Function::Ptr &function : partitioner->functions()) {
         if (shouldAnalyze(settings, function)) {
             std::cout <<"\nPointer detection analysis for " <<function->printableName() <<"\n";
 
             // Display the function's instructions for easy reference
             std::cout <<"  Instructions:\n";
             for (rose_addr_t bbVa : function->basicBlockAddresses()) {
-                if (P2::BasicBlock::Ptr bb = partitioner.basicBlockExists(bbVa)) {
+                if (P2::BasicBlock::Ptr bb = partitioner->basicBlockExists(bbVa)) {
                     for (SgAsmInstruction *insn : bb->instructions()) {
-                        std::cout <<"    " <<partitioner.unparse(insn) <<"\n";
+                        std::cout <<"    " <<partitioner->unparse(insn) <<"\n";
                     }
                 }
             }

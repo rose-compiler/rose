@@ -35,14 +35,14 @@ int main() {
     P2::Engine *engine = P2::Engine::instance();
     engine->settings().disassembler.isaName = "i386";
     engine->settings().partitioner.functionStartingVas.push_back(0x10000000);
-    P2::Partitioner partitioner = engine->partition("data:0x10000000=rx::"      // i386 assembly:
-                                                    "0xb8 0 0 0x10 0 "          //   mov eax, 0x100000
-                                                    "0xbb 0xef 0xbe 0xad 0xde " //   mov ebx, 0xdeadbeef
-                                                    "0x89 0x18");               //   mov dword ptr [eax], ebx
+    P2::Partitioner::Ptr partitioner = engine->partition("data:0x10000000=rx::"      // i386 assembly:
+                                                         "0xb8 0 0 0x10 0 "          //   mov eax, 0x100000
+                                                         "0xbb 0xef 0xbe 0xad 0xde " //   mov ebx, 0xdeadbeef
+                                                         "0x89 0x18");               //   mov dword ptr [eax], ebx
 
     // Create the instruction semantics and give it an initial MemoryMap containing the instructions we parsed above
-    auto ops = IS::ConcreteSemantics::RiscOperators::instanceFromRegisters(partitioner.instructionProvider().registerDictionary());
-    IS::ConcreteSemantics::MemoryState::promote(ops->currentState()->memoryState())->memoryMap(partitioner.memoryMap());
+    auto ops = IS::ConcreteSemantics::RiscOperators::instanceFromRegisters(partitioner->instructionProvider().registerDictionary());
+    IS::ConcreteSemantics::MemoryState::promote(ops->currentState()->memoryState())->memoryMap(partitioner->memoryMap());
 
     // Show the initial state's memory map.
     auto origMemState = IS::ConcreteSemantics::MemoryState::promote(ops->currentState()->clone()->memoryState());
@@ -51,9 +51,9 @@ int main() {
     std::cout <<"Original state before instructions\n" <<memBeforeRunning.str();
 
     // Process the instructions
-    BS::Dispatcher::Ptr dispatcher = partitioner.newDispatcher(ops);
-    for (SgAsmInstruction *insn: partitioner.instructionsOverlapping(AddressInterval::whole())) {
-        std::cout <<"Processing instruction " <<partitioner.unparse(insn) <<"\n";
+    BS::Dispatcher::Ptr dispatcher = partitioner->newDispatcher(ops);
+    for (SgAsmInstruction *insn: partitioner->instructionsOverlapping(AddressInterval::whole())) {
+        std::cout <<"Processing instruction " <<partitioner->unparse(insn) <<"\n";
         dispatcher->processInstruction(insn);
     }
 

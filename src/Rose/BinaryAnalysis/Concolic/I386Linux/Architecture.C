@@ -793,7 +793,7 @@ SyscallAccess::handlePostSyscall(SyscallContext &ctx) {
     hello("I386Linux::SyscallAccess::handlePostSyscall", ctx);
     if (mlog[DEBUG]) {
         rose_addr_t fileNameVa = ctx.argsConcrete[0];
-        std::string fileName = ctx.architecture->partitioner().memoryMap()->readString(fileNameVa, 16384);
+        std::string fileName = ctx.architecture->partitioner()->memoryMap()->readString(fileNameVa, 16384);
         mlog[DEBUG] <<"  pathname = \"" <<StringUtility::cEscape(fileName) <<"\"\n";
         mlog[DEBUG] <<"  mode     = " <<StringUtility::toHex(ctx.argsConcrete[1]) <<"\n";
     }
@@ -832,7 +832,7 @@ SyscallBrk::handlePostSyscall(SyscallContext &ctx) {
         notAnInput(ctx, ctx.returnEvent);
 
     // The easy way to add more memory
-    MemoryMap::Ptr map = ctx.ops->process()->partitioner().memoryMap();
+    MemoryMap::Ptr map = ctx.ops->process()->partitioner()->memoryMap();
     auto events = ctx.ops->process()->createMemoryAdjustEvents(map, ctx.ip);
     ctx.relatedEvents.insert(ctx.relatedEvents.end(), events.begin(), events.end());
 }
@@ -862,7 +862,7 @@ SyscallMmap2::handlePostSyscall(SyscallContext &ctx) {
     if (ctx.returnEvent)
         notAnInput(ctx, ctx.returnEvent);
 
-    MemoryMap::Ptr map = ctx.ops->process()->partitioner().memoryMap();
+    MemoryMap::Ptr map = ctx.ops->process()->partitioner()->memoryMap();
     auto events = ctx.ops->process()->createMemoryAdjustEvents(map, ctx.ip);
     ctx.relatedEvents.insert(ctx.relatedEvents.end(), events.begin(), events.end());
 }
@@ -889,7 +889,7 @@ SyscallOpenat::handlePostSyscall(SyscallContext &ctx) {
     hello("I386Linux::SyscallOpenat::handlPostSyscall", ctx);
     if (mlog[DEBUG]) {
         rose_addr_t fileNameVa = ctx.argsConcrete[1];
-        std::string fileName = ctx.architecture->partitioner().memoryMap()->readString(fileNameVa, 16384);
+        std::string fileName = ctx.architecture->partitioner()->memoryMap()->readString(fileNameVa, 16384);
         mlog[DEBUG] <<"  pathname = \"" <<StringUtility::cEscape(fileName) <<"\"\n";
     }
 }
@@ -982,7 +982,7 @@ Architecture::configureSharedMemory() {
 Architecture::Architecture(const std::string &name)
     : Concolic::Architecture(name) {}
 
-Architecture::Architecture(const Database::Ptr &db, TestCaseId tcid, const P2::Partitioner &partitioner)
+Architecture::Architecture(const Database::Ptr &db, TestCaseId tcid, const P2::PartitionerConstPtr &partitioner)
     : Concolic::Architecture(db, tcid, partitioner) {}
 
 Architecture::~Architecture() {}
@@ -993,7 +993,7 @@ Architecture::factory() {
 }
 
 Architecture::Ptr
-Architecture::instance(const Database::Ptr &db, TestCaseId tcid, const P2::Partitioner &partitioner) {
+Architecture::instance(const Database::Ptr &db, TestCaseId tcid, const P2::PartitionerConstPtr &partitioner) {
     ASSERT_not_null(db);
     ASSERT_require(tcid);
     auto retval = Ptr(new Architecture(db, tcid, partitioner));
@@ -1003,12 +1003,12 @@ Architecture::instance(const Database::Ptr &db, TestCaseId tcid, const P2::Parti
 }
 
 Architecture::Ptr
-Architecture::instance(const Database::Ptr &db, const TestCase::Ptr &tc, const P2::Partitioner &partitioner) {
+Architecture::instance(const Database::Ptr &db, const TestCase::Ptr &tc, const P2::PartitionerConstPtr &partitioner) {
     return instance(db, db->id(tc), partitioner);
 }
 
 Concolic::Architecture::Ptr
-Architecture::instanceFromFactory(const Database::Ptr &db, TestCaseId tcid, const P2::Partitioner &partitioner) const {
+Architecture::instanceFromFactory(const Database::Ptr &db, TestCaseId tcid, const P2::PartitionerConstPtr &partitioner) const {
     ASSERT_require(isFactory());
     auto retval = instance(db, tcid, partitioner);
     retval->name(name());
@@ -1412,13 +1412,13 @@ Architecture::readRegister(RegisterDescriptor reg) {
 }
 
 void
-Architecture::executeInstruction(const P2::Partitioner &partitioner) {
+Architecture::executeInstruction(const P2::PartitionerConstPtr &partitioner) {
     ASSERT_forbid(isFactory());
     if (mlog[DEBUG]) {
         rose_addr_t va = debugger_->executionAddress(Debugger::ThreadId::unspecified());
-        if (SgAsmInstruction *insn = partitioner.instructionProvider()[va]) {
+        if (SgAsmInstruction *insn = partitioner->instructionProvider()[va]) {
             mlog[DEBUG] <<"concretely executing insn #" <<currentLocation().primary()
-                        <<" " <<partitioner.unparse(insn) <<"\n";
+                        <<" " <<partitioner->unparse(insn) <<"\n";
         } else {
             mlog[DEBUG] <<"concretely executing insn #" <<currentLocation().primary()
                         <<" " <<StringUtility::addrToString(va) <<": null instruction\n";
@@ -1525,7 +1525,7 @@ Architecture::unmapAllMemory() {
 }
 
 void
-Architecture::createInputVariables(const P2::Partitioner &partitioner, const Emulation::RiscOperators::Ptr &ops,
+Architecture::createInputVariables(const P2::PartitionerConstPtr &partitioner, const Emulation::RiscOperators::Ptr &ops,
                                 const SmtSolver::Ptr &solver) {
     ASSERT_forbid(isFactory());
     ASSERT_not_null(ops);
@@ -1549,7 +1549,7 @@ Architecture::createInputVariables(const P2::Partitioner &partitioner, const Emu
     //   +-------------------------------------------------+
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     SAWYER_MESG(debug) <<"creating program arguments\n";
-    const RegisterDescriptor SP = partitioner.instructionProvider().stackPointerRegister();
+    const RegisterDescriptor SP = partitioner->instructionProvider().stackPointerRegister();
     size_t wordSizeBytes = SP.nBits() / 8;
     SymbolicExpression::Formatter fmt;
     fmt.show_comments = SymbolicExpression::Formatter::CMT_AFTER;
@@ -1767,42 +1767,42 @@ Architecture::createInputVariables(const P2::Partitioner &partitioner, const Emu
 }
 
 uint64_t
-Architecture::systemCallFunctionNumber(const P2::Partitioner &partitioner, const BS::RiscOperators::Ptr &ops) {
+Architecture::systemCallFunctionNumber(const P2::PartitionerConstPtr &partitioner, const BS::RiscOperators::Ptr &ops) {
     ASSERT_forbid(isFactory());
     ASSERT_not_null(ops);
 
-    const RegisterDescriptor AX = partitioner.instructionProvider().registerDictionary()->findOrThrow("eax");
+    const RegisterDescriptor AX = partitioner->instructionProvider().registerDictionary()->findOrThrow("eax");
     BS::SValue::Ptr retvalSValue = ops->readRegister(AX);
     ASSERT_require2(retvalSValue->isConcrete(), "non-concrete system call numbers not handled yet");
     return retvalSValue->toUnsigned().get();
 }
 
 BS::SValue::Ptr
-Architecture::systemCallArgument(const P2::Partitioner &partitioner, const BS::RiscOperators::Ptr &ops, size_t idx) {
+Architecture::systemCallArgument(const P2::PartitionerConstPtr &partitioner, const BS::RiscOperators::Ptr &ops, size_t idx) {
     ASSERT_forbid(isFactory());
     switch (idx) {
         case 0: {
-            const RegisterDescriptor r = partitioner.instructionProvider().registerDictionary()->findOrThrow("ebx");
+            const RegisterDescriptor r = partitioner->instructionProvider().registerDictionary()->findOrThrow("ebx");
             return ops->readRegister(r);
         }
         case 1: {
-            const RegisterDescriptor r = partitioner.instructionProvider().registerDictionary()->findOrThrow("ecx");
+            const RegisterDescriptor r = partitioner->instructionProvider().registerDictionary()->findOrThrow("ecx");
             return ops->readRegister(r);
         }
         case 2: {
-            const RegisterDescriptor r = partitioner.instructionProvider().registerDictionary()->findOrThrow("edx");
+            const RegisterDescriptor r = partitioner->instructionProvider().registerDictionary()->findOrThrow("edx");
             return ops->readRegister(r);
         }
         case 3: {
-            const RegisterDescriptor r = partitioner.instructionProvider().registerDictionary()->findOrThrow("esi");
+            const RegisterDescriptor r = partitioner->instructionProvider().registerDictionary()->findOrThrow("esi");
             return ops->readRegister(r);
         }
         case 4: {
-            const RegisterDescriptor r = partitioner.instructionProvider().registerDictionary()->findOrThrow("edi");
+            const RegisterDescriptor r = partitioner->instructionProvider().registerDictionary()->findOrThrow("edi");
             return ops->readRegister(r);
         }
         case 5: {
-            const RegisterDescriptor r = partitioner.instructionProvider().registerDictionary()->findOrThrow("ebp");
+            const RegisterDescriptor r = partitioner->instructionProvider().registerDictionary()->findOrThrow("ebp");
             return ops->readRegister(r);
         }
     }
@@ -1818,7 +1818,7 @@ Architecture::systemCallReturnRegister() {
 }
 
 BS::SValue::Ptr
-Architecture::systemCallReturnValue(const P2::Partitioner&, const BS::RiscOperators::Ptr &ops) {
+Architecture::systemCallReturnValue(const P2::PartitionerConstPtr&, const BS::RiscOperators::Ptr &ops) {
     ASSERT_forbid(isFactory());
     ASSERT_not_null(ops);
     const RegisterDescriptor reg = systemCallReturnRegister();
@@ -1826,7 +1826,7 @@ Architecture::systemCallReturnValue(const P2::Partitioner&, const BS::RiscOperat
 }
 
 BS::SValue::Ptr
-Architecture::systemCallReturnValue(const P2::Partitioner&, const BS::RiscOperators::Ptr &ops,
+Architecture::systemCallReturnValue(const P2::PartitionerConstPtr&, const BS::RiscOperators::Ptr &ops,
                                  const BS::SValue::Ptr &retval) {
     ASSERT_forbid(isFactory());
     ASSERT_not_null(ops);
@@ -1836,7 +1836,7 @@ Architecture::systemCallReturnValue(const P2::Partitioner&, const BS::RiscOperat
 }
 
 void
-Architecture::systemCall(const P2::Partitioner &partitioner, const BS::RiscOperators::Ptr &ops_) {
+Architecture::systemCall(const P2::PartitionerConstPtr &partitioner, const BS::RiscOperators::Ptr &ops_) {
     // A system call has been encountered. The INT instruction has been processed symbolically (basically a no-op other than
     // to adjust the instruction pointer), and the concrete execution has stepped into the system call but has not yet executed
     // it (i.e., the subordinate process is in the syscall-enter-stop state).

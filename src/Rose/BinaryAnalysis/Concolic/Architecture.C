@@ -10,6 +10,7 @@
 #include <Rose/BinaryAnalysis/Concolic/SharedMemory.h>
 #include <Rose/BinaryAnalysis/Concolic/SystemCall.h>
 #include <Rose/BinaryAnalysis/Concolic/TestCase.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
 
 // Architectures pre-registered as factories
@@ -29,7 +30,6 @@ namespace Concolic {
 static SAWYER_THREAD_TRAITS::Mutex registryMutex;
 static std::vector<Architecture::Ptr> registry;
 static boost::once_flag registryInitFlag = BOOST_ONCE_INIT;
-static P2::Partitioner staticPartitioner;               // used only by factories
 
 static void
 initRegistryHelper() {
@@ -44,9 +44,9 @@ initRegistry() {
 }
 
 Architecture::Architecture(const std::string &name)
-    : name_(name), partitioner_(staticPartitioner) {}
+    : name_(name) {}
 
-Architecture::Architecture(const Database::Ptr &db, TestCaseId testCaseId, const P2::Partitioner &partitioner)
+Architecture::Architecture(const Database::Ptr &db, TestCaseId testCaseId, const P2::PartitionerConstPtr &partitioner)
     : db_(db), testCaseId_(testCaseId), partitioner_(partitioner) {
     ASSERT_not_null(db);
     testCase_ = db->object(testCaseId, Update::NO);
@@ -90,7 +90,7 @@ Architecture::registeredFactories() {
 }
 
 Architecture::Ptr
-Architecture::forge(const Database::Ptr &db, TestCaseId tcid, const P2::Partitioner &partitioner,
+Architecture::forge(const Database::Ptr &db, TestCaseId tcid, const P2::PartitionerConstPtr &partitioner,
                     const std::string &name) {
     ASSERT_not_null(db);
     ASSERT_require(tcid);
@@ -104,7 +104,7 @@ Architecture::forge(const Database::Ptr &db, TestCaseId tcid, const P2::Partitio
 }
 
 Architecture::Ptr
-Architecture::forge(const Database::Ptr &db, const TestCase::Ptr &tc, const P2::Partitioner &partitioner,
+Architecture::forge(const Database::Ptr &db, const TestCase::Ptr &tc, const P2::PartitionerConstPtr &partitioner,
                     const std::string &name) {
     ASSERT_not_null(db);
     ASSERT_not_null(tc);
@@ -147,7 +147,7 @@ Architecture::testCase() const {
     return testCase_;
 }
 
-const P2::Partitioner&
+P2::PartitionerConstPtr
 Architecture::partitioner() const {
     ASSERT_forbid(isFactory());
     return partitioner_;
@@ -234,7 +234,7 @@ Architecture::saveEvents(const std::vector<ExecutionEvent::Ptr> &events, When wh
 }
 
 size_t
-Architecture::playAllEvents(const P2::Partitioner &partitioner) {
+Architecture::playAllEvents(const P2::PartitionerConstPtr &partitioner) {
     ASSERT_forbid(isFactory());
     size_t retval = 0;
     std::vector<ExecutionEventId> eventIds = db_->executionEvents(testCaseId_);
@@ -406,7 +406,7 @@ Architecture::playEvent(const ExecutionEvent::Ptr &event) {
 }
 
 void
-Architecture::runToEvent(const ExecutionEvent::Ptr &event, const P2::Partitioner &partitioner) {
+Architecture::runToEvent(const ExecutionEvent::Ptr &event, const P2::PartitionerConstPtr &partitioner) {
     ASSERT_forbid(isFactory());
     ASSERT_not_null(event);
 
@@ -480,7 +480,8 @@ Architecture::nextEventLocation(When when) {
 }
 
 void
-Architecture::restoreInputVariables(const Partitioner2::Partitioner&, const Emulation::RiscOperators::Ptr&, const SmtSolver::Ptr&) {
+Architecture::restoreInputVariables(const Partitioner2::PartitionerConstPtr&, const Emulation::RiscOperators::Ptr&,
+                                    const SmtSolver::Ptr&) {
     ASSERT_forbid(isFactory());
     for (ExecutionEventId eventId: database()->executionEvents(testCaseId())) {
         ExecutionEvent::Ptr event = database()->object(eventId, Update::NO);
@@ -489,7 +490,7 @@ Architecture::restoreInputVariables(const Partitioner2::Partitioner&, const Emul
 }
 
 std::pair<ExecutionEvent::Ptr, SymbolicExpression::Ptr>
-Architecture::sharedMemoryAccess(const SharedMemoryCallbacks &callbacks, const P2::Partitioner&,
+Architecture::sharedMemoryAccess(const SharedMemoryCallbacks &callbacks, const P2::PartitionerConstPtr&,
                                  const Emulation::RiscOperators::Ptr &ops, rose_addr_t addr, size_t nBytes) {
     // A shared memory read has just been encountered, and we're in the middle of executing the instruction that caused it.
     ASSERT_forbid(isFactory());
@@ -707,7 +708,7 @@ Architecture::printSharedMemoryEvents(const ExecutionEvent::Ptr &sharedMemoryEve
 }
 
 void
-Architecture::sharedMemoryAccessPost(const P2::Partitioner&, const Emulation::RiscOperators::Ptr &ops) {
+Architecture::sharedMemoryAccessPost(const P2::PartitionerConstPtr&, const Emulation::RiscOperators::Ptr &ops) {
     // Called after a shared memory accessing instruction has completed.
     ASSERT_forbid(isFactory());
     ASSERT_not_null(ops);

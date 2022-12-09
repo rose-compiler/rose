@@ -424,7 +424,7 @@ protected:
  *  emitters that combine a "select" method of the same name with @ref emit.
  *
  * @code
- *  Partitioner partitioner = ...;
+ *  Partitioner::Ptr partitioner = ...;
  *  Function::Ptr f1=..., f2=...;
  *  GraphViz::CfgEmitter gv(partitioner);
  *  gv.showInstructions(true);
@@ -433,7 +433,7 @@ protected:
  *  gv.emit(std::cout);
  * @endcode */
 class ROSE_DLL_API CfgEmitter: public BaseEmitter<ControlFlowGraph> {
-    const Partitioner &partitioner_;
+    PartitionerConstPtr partitioner_;                   // not null
     bool useFunctionSubgraphs_;                         // should called functions be shown as subgraphs?
     bool showReturnEdges_;                              // show E_FUNCTION_RETURN edges?
     bool showInstructions_;                             // show instructions or only block address?
@@ -457,8 +457,8 @@ public:
      *  hold a reference to the partitioner, therefore the partitioner should not be deleted before the GraphViz object.
      *
      * @{ */
-    explicit CfgEmitter(const Partitioner&);
-    CfgEmitter(const Partitioner&, const ControlFlowGraph&);
+    explicit CfgEmitter(const PartitionerConstPtr&);
+    CfgEmitter(const PartitionerConstPtr&, const ControlFlowGraph&);
     /** @} */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -467,7 +467,7 @@ public:
     /** Property: partitioner.
      *
      *  The partitioner that's being used, set when this emitter was constructed. */
-    const Partitioner& partitioner() { return partitioner_; }
+    PartitionerConstPtr partitioner() { return partitioner_; }
 
     /** Property: use function subgraphs.
      *
@@ -807,8 +807,8 @@ class ROSE_DLL_API CgEmitter: public BaseEmitter<FunctionCallGraph::Graph> {
     Color::HSV functionHighlightColor_;                 // highlight certain functions
     boost::regex highlightNameMatcher_;                 // which functions to highlight
 public:
-    explicit CgEmitter(const Partitioner &partitioner);
-    CgEmitter(const Partitioner &partitioner, const FunctionCallGraph &cg);
+    explicit CgEmitter(const PartitionerConstPtr &partitioner);
+    CgEmitter(const PartitionerConstPtr &partitioner, const FunctionCallGraph &cg);
     virtual std::string functionLabel(const Function::Ptr&) const;
     virtual Attributes functionAttributes(const Function::Ptr&) const;
     virtual void emitCallGraph(std::ostream &out) const;
@@ -838,8 +838,8 @@ class ROSE_DLL_API CgInlinedEmitter: public CgEmitter {
     typedef Sawyer::Container::Map<Function::Ptr, InlinedFunctions> Inlines;
     Inlines inlines_;
 public:
-    CgInlinedEmitter(const Partitioner &partitioner, const boost::regex &nameMatcher);
-    CgInlinedEmitter(const Partitioner &partitioner, const FunctionCallGraph &cg, const boost::regex &nameMatcher);
+    CgInlinedEmitter(const PartitionerConstPtr &partitioner, const boost::regex &nameMatcher);
+    CgInlinedEmitter(const PartitionerConstPtr &partitioner, const FunctionCallGraph &cg, const boost::regex &nameMatcher);
     virtual const FunctionCallGraph& callGraph() const override { return CgEmitter::callGraph(); }
     virtual void callGraph(const FunctionCallGraph&) override;
     virtual std::string functionLabel(const Function::Ptr&) const override;

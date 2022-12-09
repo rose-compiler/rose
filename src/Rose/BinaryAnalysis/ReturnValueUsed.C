@@ -216,11 +216,12 @@ Analysis::clearResults() {
 }
 
 std::vector<P2::Function::Ptr>
-Analysis::findCallees(const P2::Partitioner &partitioner, const P2::ControlFlowGraph::ConstVertexIterator &callSite) {
+Analysis::findCallees(const P2::Partitioner::ConstPtr &partitioner, const P2::ControlFlowGraph::ConstVertexIterator &callSite) {
+    ASSERT_not_null(partitioner);
     std::vector<P2::Function::Ptr> callees;
     for (const P2::ControlFlowGraph::Edge &edge: callSite->outEdges()) {
         if (edge.value().type() == P2::E_FUNCTION_CALL) {
-            for (const P2::Function::Ptr &f: partitioner.functionsOwningBasicBlock(edge.target()))
+            for (const P2::Function::Ptr &f: partitioner->functionsOwningBasicBlock(edge.target()))
                 P2::insertUnique(callees, f, P2::sortFunctionsByAddress);
         }
     }
@@ -228,7 +229,7 @@ Analysis::findCallees(const P2::Partitioner &partitioner, const P2::ControlFlowG
 }
 
 std::vector<P2::ControlFlowGraph::ConstVertexIterator>
-Analysis::findReturnTargets(const P2::Partitioner&, const P2::ControlFlowGraph::ConstVertexIterator &callSite) {
+Analysis::findReturnTargets(const P2::Partitioner::ConstPtr&, const P2::ControlFlowGraph::ConstVertexIterator &callSite) {
     std::vector<P2::ControlFlowGraph::ConstVertexIterator> returnVertices;
     for (const P2::ControlFlowGraph::Edge &edge: callSite->outEdges()) {
         if (edge.value().type() == P2::E_CALL_RETURN)
@@ -238,43 +239,44 @@ Analysis::findReturnTargets(const P2::Partitioner&, const P2::ControlFlowGraph::
 }
     
 CallSiteResults
-Analysis::analyzeCallSite(const P2::Partitioner &partitioner, const P2::ControlFlowGraph::ConstVertexIterator &callSite) {
-    ASSERT_require(partitioner.cfg().isValidVertex(callSite));
+Analysis::analyzeCallSite(const P2::Partitioner::ConstPtr &partitioner, const P2::ControlFlowGraph::ConstVertexIterator &callSite) {
+    ASSERT_not_null(partitioner);
+    ASSERT_require(partitioner->cfg().isValidVertex(callSite));
     CallSiteResults retval;
 
-    SAWYER_MESG(mlog[DEBUG]) <<"analyzing " <<partitioner.vertexName(callSite) <<"\n";
+    SAWYER_MESG(mlog[DEBUG]) <<"analyzing " <<partitioner->vertexName(callSite) <<"\n";
 
     // Find callers, callees, and return points in the CFG
-    std::vector<P2::Function::Ptr> callers = partitioner.functionsOwningBasicBlock(callSite);
+    std::vector<P2::Function::Ptr> callers = partitioner->functionsOwningBasicBlock(callSite);
     retval.callees(findCallees(partitioner, callSite));
     std::vector<P2::ControlFlowGraph::ConstVertexIterator> returnTargets = findReturnTargets(partitioner, callSite);
 
     // FIXME[Robb P Matzke 2017-03-03]: To simplify things for now, handle only the case where the call site is owned by a
     // single function, a single callee is called, and it returns to a single point in the caller.
     if (callers.size() > 1) {
-        mlog[ERROR] <<"multiple callers not implemented yet at vertex " <<partitioner.vertexName(callSite) <<"\n";
+        mlog[ERROR] <<"multiple callers not implemented yet at vertex " <<partitioner->vertexName(callSite) <<"\n";
         return retval;
     }
     if (retval.callees().size() > 1) {
-        mlog[ERROR] <<retval.callees().size() <<"-call not implemented yet at vertex " <<partitioner.vertexName(callSite) <<"\n";
+        mlog[ERROR] <<retval.callees().size() <<"-call not implemented yet at vertex " <<partitioner->vertexName(callSite) <<"\n";
         return retval;
     }
     if (returnTargets.size() > 1) {
-        mlog[ERROR] <<returnTargets.size() <<"-return not implemented yet at vertex " <<partitioner.vertexName(callSite) <<"\n";
+        mlog[ERROR] <<returnTargets.size() <<"-return not implemented yet at vertex " <<partitioner->vertexName(callSite) <<"\n";
         return retval;
     }
 
     // Handle the no-op cases.
     if (callers.empty()) {
-        mlog[WARN] <<"no caller at vertex " <<partitioner.vertexName(callSite) <<"\n";
+        mlog[WARN] <<"no caller at vertex " <<partitioner->vertexName(callSite) <<"\n";
         return retval;
     }
     if (retval.callees().empty()) {
-        mlog[WARN] <<"no callee at vertex " <<partitioner.vertexName(callSite) <<"\n";
+        mlog[WARN] <<"no callee at vertex " <<partitioner->vertexName(callSite) <<"\n";
         return retval;
     }
     if (returnTargets.empty()) {
-        mlog[WARN] <<"no return target at vertex " <<partitioner.vertexName(callSite) <<"\n";
+        mlog[WARN] <<"no return target at vertex " <<partitioner->vertexName(callSite) <<"\n";
         return retval;
     }
 
@@ -288,12 +290,12 @@ Analysis::analyzeCallSite(const P2::Partitioner &partitioner, const P2::ControlF
     const CallingConvention::Analysis &calleeBehavior = callee->callingConventionAnalysis();
     if (!calleeBehavior.hasResults() || !calleeBehavior.didConverge()) {
         mlog[WARN] <<"no calling convention behavior for " <<callee->printableName()
-                   <<" called at vertex " <<partitioner.vertexName(callSite) <<"\n";
+                   <<" called at vertex " <<partitioner->vertexName(callSite) <<"\n";
     }
     const CallingConvention::Definition::Ptr calleeDefinition = callee->callingConventionDefinition();
     if (!calleeDefinition) {
         mlog[ERROR] <<"no calling convention definition for " <<callee->printableName()
-                    <<" called at vertex " <<partitioner.vertexName(callSite) <<"\n";
+                    <<" called at vertex " <<partitioner->vertexName(callSite) <<"\n";
         return retval;
     }
     
@@ -304,7 +306,7 @@ Analysis::analyzeCallSite(const P2::Partitioner &partitioner, const P2::ControlF
     RegisterParts calleeReturnRegs = calleeDefinition->outputRegisterParts();
     if (calleeBehavior.hasResults() && calleeBehavior.didConverge())
         calleeReturnRegs &= calleeBehavior.outputRegisters();
-    calleeReturnRegs -= RegisterParts(partitioner.instructionProvider().stackPointerRegister());
+    calleeReturnRegs -= RegisterParts(partitioner->instructionProvider().stackPointerRegister());
     Variables::StackVariables calleeReturnMem;
 #if 0 // [Robb Matzke 2019-08-14]: turning off warning
     for (const ConcreteLocation &location: calleeDefinition->outputParameters()) {
@@ -316,7 +318,7 @@ Analysis::analyzeCallSite(const P2::Partitioner &partitioner, const P2::ControlF
     // means (1) the caller reads the callee output location without first writing to it, or (2) the caller calls a second
     // function whose input is one of the original callee outputs with no intervening write, or (3) one of the caller's own
     // return values is one of the calle's return values with no intervening write.
-    RegisterDictionary::Ptr regdict = partitioner.instructionProvider().registerDictionary();
+    RegisterDictionary::Ptr regdict = partitioner->instructionProvider().registerDictionary();
     ASSERT_not_null(regdict);
     SmtSolverPtr solver = SmtSolver::instance(Rose::CommandLine::genericSwitchArgs.smtSolver);
     RiscOperators::Ptr ops = RiscOperators::instance(regdict, solver);
@@ -324,14 +326,14 @@ Analysis::analyzeCallSite(const P2::Partitioner &partitioner, const P2::ControlF
     ops->insertOutputs(calleeReturnRegs, calleeReturnMem);
     if (!ops->hasOutputs())
         return retval;
-    S2::BaseSemantics::Dispatcher::Ptr cpu = partitioner.newDispatcher(ops);
+    S2::BaseSemantics::Dispatcher::Ptr cpu = partitioner->newDispatcher(ops);
     if (!cpu) {
         mlog[ERROR] <<"no instruction semantics for this architecture\n";
         return retval;
     }
 
     // Build a CFG to analyze. We use a data-flow CFG even though we're not doing a true data flow, because it's convenient.
-    P2::DataFlow::DfCfg dfCfg = P2::DataFlow::buildDfCfg(partitioner, partitioner.cfg(), returnTarget);
+    P2::DataFlow::DfCfg dfCfg = P2::DataFlow::buildDfCfg(partitioner, partitioner->cfg(), returnTarget);
     if (mlog[DEBUG]) {
         boost::filesystem::path debugDir = "./rose-debug/BinaryAnalysis/ReturnValueUsed";
         boost::filesystem::create_directories(debugDir);
@@ -372,11 +374,11 @@ Analysis::analyzeCallSite(const P2::Partitioner &partitioner, const P2::ControlF
         try {
             outputState = State::promote(xfer(dfCfg, t.vertex()->id(), inputState));
         } catch (const S2::BaseSemantics::NotImplemented &e) {
-            mlog[WHERE] <<e.what() <<" at call site vertex " <<partitioner.vertexName(callSite) <<"\n";
+            mlog[WHERE] <<e.what() <<" at call site vertex " <<partitioner->vertexName(callSite) <<"\n";
             retval.didConverge(false);
             return retval;
         } catch (const S2::BaseSemantics::Exception &e) {
-            mlog[WARN] <<e.what() <<" at call site vertex " <<partitioner.vertexName(callSite) <<"\n";
+            mlog[WARN] <<e.what() <<" at call site vertex " <<partitioner->vertexName(callSite) <<"\n";
             retval.didConverge(false);
             return retval;
         }

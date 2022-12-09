@@ -59,11 +59,11 @@ public:
 
     /** Arguments passed to the callback. */
     struct Args {
-        const Partitioner &partitioner;                 /**< Partitioner requesting basic block successors. */
-        BasicBlock::Ptr bblock;                         /**< Basic block whose successors are to be computed. */
+        PartitionerConstPtr partitioner;                /**< Partitioner requesting basic block successors. */
+        BasicBlockPtr bblock;                           /**< Basic block whose successors are to be computed. */
         Results &results;                               /**< Results to control basic block discovery. */
-        Args(const Partitioner &partitioner, const BasicBlock::Ptr &bblock, Results &results)
-            : partitioner(partitioner), bblock(bblock), results(results) {}
+        Args(const PartitionerConstPtr&, const BasicBlockPtr&, Results&);
+        ~Args();
     };
 
     /** Callback method.
@@ -93,7 +93,7 @@ public:
      *  address easier to write, but matchers that match at additional locations must explicitly check those other
      *  locations with the same conditions (FIXME[Robb P. Matzke 2014-08-04]: perhaps we should pass those conditions as an
      *  argument). */
-    virtual bool match(const Partitioner&, rose_addr_t anchor) = 0;
+    virtual bool match(const PartitionerConstPtr&, rose_addr_t anchor) = 0;
 };
 
 
@@ -125,7 +125,7 @@ public:
      *  created: the thunk itself, and the function to which it points.
      *
      *  The partitioner will never call @ref function without first having called @ref match. */
-    virtual std::vector<Function::Ptr> functions() const = 0;
+    virtual std::vector<FunctionPtr> functions() const = 0;
 };
 
 
@@ -145,7 +145,7 @@ public:
      *  then the return value is the starting address for the padding and must be less than @p anchor. When no match is found
      *  then @p anchor is returned. The size of the matched padding is always <code>anchor-retval</code> where @c retval is
      *  the returned value. */
-    virtual rose_addr_t match(const Partitioner&, rose_addr_t anchor) = 0;
+    virtual rose_addr_t match(const PartitionerConstPtr&, rose_addr_t anchor) = 0;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -169,7 +169,7 @@ std::string canonicalFunctionName(const std::string&);
  *
  *  Run the name demangler on all functions that have a non-empty name and no demangled name. Assign the result as each
  *  function's demangled name if it's different than the true name. */
-void demangleFunctionNames(const Partitioner&);
+void demangleFunctionNames(const PartitionerConstPtr&);
 
 /** Follow basic block ghost edges.
  *
@@ -372,7 +372,7 @@ public:
     static std::string docString();
     virtual bool operator()(bool chain, const AttachedBasicBlock &args) override;
     virtual bool operator()(bool chain, const DetachedBasicBlock&) override { return chain; }
-    void debug(rose_addr_t, const BasicBlock::Ptr&);
+    void debug(rose_addr_t, const BasicBlockPtr&);
 };
 
 /** Match thunk.
@@ -381,30 +381,30 @@ public:
  *  partitioner's CFG and will only match instructions not in the CFG. */
 class MatchThunk: public FunctionPrologueMatcher {
 private:
-    ThunkPredicates::Ptr predicates_;
+    ThunkPredicatesPtr predicates_;
 protected:
-    std::vector<Function::Ptr> functions_;
+    std::vector<FunctionPtr> functions_;
 
 protected:
     // use 'instance' instead
-    MatchThunk(const ThunkPredicates::Ptr &predicates)
+    MatchThunk(const ThunkPredicatesPtr &predicates)
         : predicates_(predicates) {}
     
 public:
     /** Allocating constructor. */
-    static Ptr instance(const ThunkPredicates::Ptr &predicates) {
+    static Ptr instance(const ThunkPredicatesPtr &predicates) {
         return Ptr(new MatchThunk(predicates));
     }
 
     /** Property: Predicates used for matching thunks.
      *
      * @{ */
-    ThunkPredicates::Ptr predicates() const { return predicates_; }
-    void predicates(const ThunkPredicates::Ptr &p) { predicates_ = p; }
+    ThunkPredicatesPtr predicates() const { return predicates_; }
+    void predicates(const ThunkPredicatesPtr &p) { predicates_ = p; }
     /** @} */
 
-    virtual std::vector<Function::Ptr> functions() const override { return functions_; }
-    virtual bool match(const Partitioner&, rose_addr_t anchor) override;
+    virtual std::vector<FunctionPtr> functions() const override { return functions_; }
+    virtual bool match(const PartitionerConstPtr&, rose_addr_t anchor) override;
 };
 
 /** Remove execute permissions for zeros.
@@ -421,7 +421,7 @@ public:
  *  each interval.
  *
  *  If @p threshold is zero or the @p leaveAtFront and @p leaveAtBack sum to at least @p threshold then nothing happens. */
-AddressIntervalSet deExecuteZeros(const MemoryMap::Ptr &map /*in,out*/, size_t threshold,
+AddressIntervalSet deExecuteZeros(const MemoryMapPtr &map /*in,out*/, size_t threshold,
                                   size_t leaveAtFront=16, size_t leaveAtBack=1);
 
 /** Give labels to addresses that are symbols.
@@ -431,8 +431,8 @@ AddressIntervalSet deExecuteZeros(const MemoryMap::Ptr &map /*in,out*/, size_t t
  *  than once by symbols with different names then one name is chosen arbitrarily.
  *
  * @{ */
-void labelSymbolAddresses(Partitioner&, SgAsmGenericHeader*);
-void labelSymbolAddresses(Partitioner&, SgAsmInterpretation*);
+void labelSymbolAddresses(const PartitionerPtr&, SgAsmGenericHeader*);
+void labelSymbolAddresses(const PartitionerPtr&, SgAsmInterpretation*);
 /** @} */
 
 /** Give labels to string constants.
@@ -441,7 +441,7 @@ void labelSymbolAddresses(Partitioner&, SgAsmInterpretation*);
  *  string and adds a comment to the constant (if it had none previously) to describe the string. All instructions that are
  *  attached to the CFG/AUM are processed. The instructions are modified by attaching the comment, but the comments are not
  *  added to the partitioners address name map. */
-void nameStrings(const Partitioner&, const AddressInterval&);
+void nameStrings(const PartitionerConstPtr&, const AddressInterval&);
 
 /** Finds functions for which symbols exist.
  *
@@ -449,21 +449,21 @@ void nameStrings(const Partitioner&, const AddressInterval&);
  *  made only if an instruction can be disassembled at the address. The return value is a sorted list of unique functions.
  *
  * @{ */
-std::vector<Function::Ptr> findSymbolFunctions(const Partitioner&, SgAsmGenericHeader*);
-std::vector<Function::Ptr> findSymbolFunctions(const Partitioner&, SgAsmInterpretation*);
-size_t findSymbolFunctions(const Partitioner&, SgAsmGenericHeader*, std::vector<Function::Ptr>&);
+std::vector<FunctionPtr> findSymbolFunctions(const PartitionerConstPtr&, SgAsmGenericHeader*);
+std::vector<FunctionPtr> findSymbolFunctions(const PartitionerConstPtr&, SgAsmInterpretation*);
+size_t findSymbolFunctions(const PartitionerConstPtr&, SgAsmGenericHeader*, std::vector<FunctionPtr>&);
 /** @} */
 
 /** Gives names to constants in instructions.
  *
  *  Scans the entire list of attached instructions and give each constant integer expression a name if the value of the
  *  expression happens to be an address that has a name and lies within the interval. */
-void nameConstants(const Partitioner&, const AddressInterval&);
+void nameConstants(const PartitionerConstPtr&, const AddressInterval&);
 
 /** Find functions that are no-ops.
  *
  *  Finds functions that are no-ops and returns them in ascending order of entry addresses. */
-std::vector<Function::Ptr> findNoopFunctions(const Partitioner&);
+std::vector<FunctionPtr> findNoopFunctions(const PartitionerConstPtr&);
 
 /** Give names to functions that are no-ops.
  *
@@ -471,7 +471,7 @@ std::vector<Function::Ptr> findNoopFunctions(const Partitioner&);
  *  findNoopFunctions) and gives names to those that don't have names.  The names are of the form "noop_ADDR() -> void" where
  *  ADDR is the hexadecimal entry address. The C++ trailing return type syntax is used so that functions can be easily sorted
  *  according to their names. */
-void nameNoopFunctions(const Partitioner&);
+void nameNoopFunctions(const PartitionerConstPtr&);
 
 /** Determine if basic block is a stack-based function return.
  *
@@ -479,7 +479,7 @@ void nameNoopFunctions(const Partitioner&);
  *  the end of the basic block, the instruction pointer has the same value as the value stored on-past-the-end of the stack
  *  it means that the basic block popped the next execution address from the top of the stack.  Returns indeterminate if
  *  this property could not be determined, such as is the case when semantics are not enabled. */
-boost::logic::tribool isStackBasedReturn(const Partitioner&, const BasicBlock::Ptr&);
+boost::logic::tribool isStackBasedReturn(const PartitionerConstPtr&, const BasicBlockPtr&);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                  Partitioner conversion to AST
@@ -489,26 +489,27 @@ boost::logic::tribool isStackBasedReturn(const Partitioner&, const BasicBlock::P
  *
  *  Builds and returns an AST for the specified basic block. The basic block must not be a null pointer, but it need not be in
  *  the CFG. */
-SgAsmBlock* buildBasicBlockAst(const Partitioner&, const BasicBlock::Ptr&, const Function::Ptr&, const AstConstructionSettings&);
+SgAsmBlock* buildBasicBlockAst(const PartitionerConstPtr&, const BasicBlockPtr&, const FunctionPtr&,
+                               const AstConstructionSettings&);
 
 /** Build AST for data block.
  *
  *  Builds and returns an AST for the specified data block.  The data block must not be a null pointer, but it need not be in
  *  the CFG. */
-SgAsmBlock* buildDataBlockAst(const Partitioner&, const DataBlock::Ptr&, const AstConstructionSettings&);
+SgAsmBlock* buildDataBlockAst(const PartitionerConstPtr&, const DataBlockPtr&, const AstConstructionSettings&);
 
 /** Build AST for function.
  *
  *  Builds and returns an AST for the specified function.  The function must not be a null pointer, but it need not be in the
  *  CFG.  The function will have children created only for its basic blocks that exist in the CFG (otherwise the partitioner
  *  doesn't know about them). */
-SgAsmFunction* buildFunctionAst(const Partitioner&, const Function::Ptr&, const AstConstructionSettings&);
+SgAsmFunction* buildFunctionAst(const PartitionerConstPtr&, const FunctionPtr&, const AstConstructionSettings&);
 
 /** Builds the global block AST.
  *
  *  A global block's children are all the functions contained in the AST, which in turn contain SgAsmBlock IR nodes for the
  *  basic blocks, which in turn contain instructions. */
-SgAsmBlock* buildGlobalBlockAst(const Partitioner&, const AstConstructionSettings&);
+SgAsmBlock* buildGlobalBlockAst(const PartitionerConstPtr&, const AstConstructionSettings&);
 
 /** Builds an AST from the CFG.
  *
@@ -518,7 +519,7 @@ SgAsmBlock* buildGlobalBlockAst(const Partitioner&, const AstConstructionSetting
  *  This function is the same as @ref buildGlobalBlockAst except it also calls various AST fixup functions. Providing an
  *  interpretation allows more fixups to occur.  Also, if @p interp is non-null then the returned global block is attached to
  *  the interpretation in the AST (any previous global block is detached but not destroyed). */
-SgAsmBlock* buildAst(const Partitioner&, SgAsmInterpretation *interp=NULL,
+SgAsmBlock* buildAst(const PartitionerConstPtr&, SgAsmInterpretation *interp=NULL,
                      const AstConstructionSettings &settings = AstConstructionSettings::strict());
 
 /** Fixes pointers in the AST.
@@ -539,7 +540,7 @@ void fixupAstPointers(SgNode *ast, SgAsmInterpretation *interp=NULL);
  *  across all the functions known to the partitioner. Then, for each function in the specified @ref ast, the we also get a
  *  list matching definitions (if a calling convention analysis has been run on that function). We copy into the AST that
  *  function's definition which has the highest global ranking. */
-void fixupAstCallingConventions(const Partitioner&, SgNode *ast);
+void fixupAstCallingConventions(const PartitionerConstPtr&, SgNode *ast);
 
 } // namespace
 

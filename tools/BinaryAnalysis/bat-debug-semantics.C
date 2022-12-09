@@ -236,7 +236,7 @@ makeRegisterState(const Settings &settings, const BaseSemantics::SValue::Ptr &pr
 }
 
 static BaseSemantics::MemoryState::Ptr
-makeMemoryState(const Settings &settings, const P2::Partitioner &partitioner, const BaseSemantics::SValue::Ptr &protoval,
+makeMemoryState(const Settings &settings, const P2::Partitioner::ConstPtr &partitioner, const BaseSemantics::SValue::Ptr &protoval,
                 const BaseSemantics::SValue::Ptr &protoaddr, const RegisterDictionary::Ptr &regdict) {
     const std::string className = settings.mstateClassName.orElse(settings.opsClassName);
     if (className == "list") {
@@ -261,11 +261,11 @@ makeMemoryState(const Settings &settings, const P2::Partitioner &partitioner, co
         return ops->currentState()->memoryState();
     } else if (className == "p2-list" || className == "partitioner2") {
         P2::Semantics::MemoryListState::Ptr m = P2::Semantics::MemoryListState::instance(protoval, protoaddr);
-        m->memoryMap(partitioner.memoryMap()->shallowCopy());
+        m->memoryMap(partitioner->memoryMap()->shallowCopy());
         return m;
     } else if (className == "p2-map") {
         P2::Semantics::MemoryMapState::Ptr m = P2::Semantics::MemoryMapState::instance(protoval, protoaddr);
-        m->memoryMap(partitioner.memoryMap()->shallowCopy());
+        m->memoryMap(partitioner->memoryMap()->shallowCopy());
         return m;
     } else if (className == "symbolic-list" || className == "symbolic") {
         return SymbolicSemantics::MemoryListState::instance(protoval, protoaddr);
@@ -277,7 +277,7 @@ makeMemoryState(const Settings &settings, const P2::Partitioner &partitioner, co
 }
 
 static BaseSemantics::RiscOperators::Ptr
-makeRiscOperators(const Settings &settings, const P2::Partitioner &partitioner) {
+makeRiscOperators(const Settings &settings, const P2::Partitioner::ConstPtr &partitioner) {
     const std::string &className = settings.opsClassName;
     if ("list" == className) {
         std::cout <<"semantic class names:\n"
@@ -291,7 +291,7 @@ makeRiscOperators(const Settings &settings, const P2::Partitioner &partitioner) 
     }
 
     SmtSolver::Ptr solver = makeSolver(settings);
-    RegisterDictionary::Ptr regdict = partitioner.instructionProvider().registerDictionary();
+    RegisterDictionary::Ptr regdict = partitioner->instructionProvider().registerDictionary();
     BaseSemantics::SValue::Ptr protoval = makeProtoVal(settings);
     BaseSemantics::RegisterState::Ptr rstate = makeRegisterState(settings, protoval, regdict);
     BaseSemantics::MemoryState::Ptr mstate = makeMemoryState(settings, partitioner, protoval, protoval, regdict);
@@ -306,7 +306,7 @@ makeRiscOperators(const Settings &settings, const P2::Partitioner &partitioner) 
     } else if (className == "partial") {
         PartialSymbolicSemantics::RiscOperators::Ptr ops = PartialSymbolicSemantics::RiscOperators::instanceFromState(state, solver);
         if (settings.useMemoryMap)
-            ops->set_memory_map(partitioner.memoryMap()->shallowCopy());
+            ops->set_memory_map(partitioner->memoryMap()->shallowCopy());
         return ops;
     } else if (className == "partitioner2") {
         return P2::Semantics::RiscOperators::instance(state, solver);
@@ -340,15 +340,15 @@ main(int argc, char *argv[]) {
     P2::Engine *engine = P2::Engine::instance();
     engine->settings().disassembler.isaName = isa;
     engine->memoryMap(memory);
-    P2::Partitioner partitioner = engine->createTunedPartitioner();
+    P2::Partitioner::Ptr partitioner = engine->createTunedPartitioner();
     auto innerOps = makeRiscOperators(settings, partitioner);
     auto ops = S2::TraceSemantics::RiscOperators::instance(innerOps);
-    S2::BaseSemantics::Dispatcher::Ptr cpu = partitioner.newDispatcher(ops);
+    S2::BaseSemantics::Dispatcher::Ptr cpu = partitioner->newDispatcher(ops);
 
     // Decode and process the instruction
     size_t va = memory->hull().least();
-    while (SgAsmInstruction *insn = partitioner.instructionProvider()[va]) {
-        std::cerr <<partitioner.unparse(insn) <<"\n";
+    while (SgAsmInstruction *insn = partitioner->instructionProvider()[va]) {
+        std::cerr <<partitioner->unparse(insn) <<"\n";
         if (cpu) {
             cpu->processInstruction(insn);
             std::cerr <<*ops->currentState();

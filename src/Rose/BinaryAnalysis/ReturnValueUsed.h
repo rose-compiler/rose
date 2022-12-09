@@ -30,7 +30,7 @@ extern Sawyer::Message::Facility mlog;
 
 class CallSiteResults {
     bool didConverge_;                                  // Are the following data members valid (else only approximations)?
-    std::vector<Partitioner2::Function::Ptr> callees_;
+    std::vector<Partitioner2::FunctionPtr> callees_;
     RegisterParts returnRegistersUsed_;
     RegisterParts returnRegistersUnused_;
 
@@ -63,7 +63,7 @@ public:
     /** @} */
 
     /** Property: Functions called at this site. */
-    const std::vector<Partitioner2::Function::Ptr> callees() const { return callees_; }
+    const std::vector<Partitioner2::FunctionPtr> callees() const { return callees_; }
 
     /** Property: Return registers that are used in the caller.
      *
@@ -87,7 +87,7 @@ public:
 
 private:
     friend class Analysis;
-    void callees(const std::vector<Partitioner2::Function::Ptr> &functions) { callees_ = functions; }
+    void callees(const std::vector<Partitioner2::FunctionPtr> &functions) { callees_ = functions; }
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -180,18 +180,20 @@ public:
     void clearResults();
 
     /** Analyze a call site to see if a function's return value is used. */
-    CallSiteResults analyzeCallSite(const Partitioner2::Partitioner&, const Partitioner2::ControlFlowGraph::ConstVertexIterator&);
+    CallSiteResults analyzeCallSite(const Partitioner2::PartitionerConstPtr&,
+                                    const Partitioner2::ControlFlowGraph::ConstVertexIterator&);
 
 private:
     // Given a control flow graph vertex, if that vertex is a function call basic block then return a list of the known, called
     // functions.
-    std::vector<Partitioner2::Function::Ptr>
-    findCallees(const Partitioner2::Partitioner&, const Partitioner2::ControlFlowGraph::ConstVertexIterator &callSite);
+    std::vector<Partitioner2::FunctionPtr>
+    findCallees(const Partitioner2::PartitionerConstPtr&, const Partitioner2::ControlFlowGraph::ConstVertexIterator &callSite);
 
     // Given a control flow graph vertex, if that vertex is a function call basic block then return a list of all vertices that
     // are known call-return points for that call.
     std::vector<Partitioner2::ControlFlowGraph::ConstVertexIterator>
-    findReturnTargets(const Partitioner2::Partitioner&, const Partitioner2::ControlFlowGraph::ConstVertexIterator &callSite);
+    findReturnTargets(const Partitioner2::PartitionerConstPtr&,
+                      const Partitioner2::ControlFlowGraph::ConstVertexIterator &callSite);
 };
 
 } // namespace

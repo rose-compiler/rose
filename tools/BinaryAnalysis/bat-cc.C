@@ -132,7 +132,8 @@ ccDefnBestName(const CallingConvention::Definition::Ptr &defn) {
 
 // Matching definition names for all functions, or the name "unknown"
 FuncDefNames
-functionCcDefinitionNames(const P2::Partitioner &p, const Settings &settings, const std::vector<P2::Function::Ptr> &functions) {
+functionCcDefinitionNames(const P2::Partitioner::ConstPtr &partitioner, const Settings &settings,
+                          const std::vector<P2::Function::Ptr> &functions) {
     FuncDefNames retval;
     for (P2::Function::Ptr f: functions) {
         SAWYER_MESG(mlog[DEBUG]) <<"finding matching definitions for " <<f->printableName() <<"\n";
@@ -145,7 +146,7 @@ functionCcDefinitionNames(const P2::Partitioner &p, const Settings &settings, co
             if (!settings.ignoreFailure)
                 retval.insertMaybeDefault(f).push_back("non-convergent");
         } else {
-            CallingConvention::Dictionary matches = p.functionCallingConventionDefinitions(f);
+            CallingConvention::Dictionary matches = partitioner->functionCallingConventionDefinitions(f);
             if (matches.empty()) {
                 SAWYER_MESG(mlog[DEBUG]) <<"  no matching definitions\n";
                 if (!settings.ignoreFailure)
@@ -214,7 +215,7 @@ main(int argc, char *argv[]) {
     
     // Read the state file
     P2::Engine *engine = P2::Engine::instance();
-    P2::Partitioner partitioner = engine->loadPartitioner(inputFileName, settings.stateFormat);
+    P2::Partitioner::Ptr partitioner = engine->loadPartitioner(inputFileName, settings.stateFormat);
 
     // Create the output state file early so that the user will get an error early if the file can't be created. The alternative
     // is to wait until after all calling convention analysis is completed, which could be a while!
@@ -223,12 +224,12 @@ main(int argc, char *argv[]) {
 
     // Output the dictionary if requested. This is fast, so do it before the cc analysis starts.
     if (settings.showingDictionary) {
-        for (const CallingConvention::Definition::Ptr &ccdef: partitioner.instructionProvider().callingConventions())
+        for (const CallingConvention::Definition::Ptr &ccdef: partitioner->instructionProvider().callingConventions())
             std::cout <<"cc definition: " <<*ccdef <<"\n";
     }
 
     // Select functions on which to operate
-    std::vector<P2::Function::Ptr> selectedFunctions = partitioner.functions();
+    std::vector<P2::Function::Ptr> selectedFunctions = partitioner->functions();
     if (!settings.functionNames.empty())
         selectedFunctions = Bat::selectFunctionsByNameOrAddress(selectedFunctions, settings.functionNames, mlog[WARN]);
     
@@ -239,15 +240,15 @@ main(int argc, char *argv[]) {
     } else {
         // If the input state file already has calling convention analysis then nothing really happens here.
         // The defaultCc obtained here is the same one that P2::Engine uses when calling the CC analysis.
-        const CallingConvention::Dictionary &ccDict = partitioner.instructionProvider().callingConventions();
+        const CallingConvention::Dictionary &ccDict = partitioner->instructionProvider().callingConventions();
         CallingConvention::Definition::Ptr defaultCc;
         if (!ccDict.empty())
             defaultCc = ccDict[0];
         if (settings.functionNames.empty()) {
-            partitioner.allFunctionCallingConventionDefinition(defaultCc); // faster than a loop since this runs in parallel
+            partitioner->allFunctionCallingConventionDefinition(defaultCc); // faster than a loop since this runs in parallel
         } else {
             for (const P2::Function::Ptr &function: selectedFunctions)
-                partitioner.functionCallingConvention(function, defaultCc);
+                partitioner->functionCallingConvention(function, defaultCc);
         }
     }
 

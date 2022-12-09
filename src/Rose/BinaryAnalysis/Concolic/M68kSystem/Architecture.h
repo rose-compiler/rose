@@ -31,7 +31,7 @@ private:
 
 protected:
     Architecture(const std::string&);
-    Architecture(const DatabasePtr&, TestCaseId, const Partitioner2::Partitioner&);
+    Architecture(const DatabasePtr&, TestCaseId, const Partitioner2::PartitionerConstPtr&);
 public:
     ~Architecture();
 
@@ -41,8 +41,8 @@ public:
      *  Constructs a new executor for the specified test case.
      *
      * @{ */
-    static Ptr instance(const DatabasePtr&, TestCaseId, const Partitioner2::Partitioner&);
-    static Ptr instance(const DatabasePtr&, const TestCasePtr&, const Partitioner2::Partitioner&);
+    static Ptr instance(const DatabasePtr&, TestCaseId, const Partitioner2::PartitionerConstPtr&);
+    static Ptr instance(const DatabasePtr&, const TestCasePtr&, const Partitioner2::PartitionerConstPtr&);
     /** @} */
 
     /** Allocating constructor to create a factory. */
@@ -51,7 +51,7 @@ public:
 public:
     // These are documented in the base class.
     virtual bool matchFactory(const std::string&) const override;
-    virtual Super::Ptr instanceFromFactory(const DatabasePtr&, TestCaseId, const Partitioner2::Partitioner&) const override;
+    virtual Super::Ptr instanceFromFactory(const DatabasePtr&, TestCaseId, const Partitioner2::PartitionerConstPtr&) const override;
     virtual void configureSystemCalls() override;
     virtual void configureSharedMemory() override;
     virtual void load(const boost::filesystem::path&) override;
@@ -72,11 +72,11 @@ public:
     virtual void writeRegister(RegisterDescriptor, uint64_t) override;
     virtual void writeRegister(RegisterDescriptor, const Sawyer::Container::BitVector&) override;
     virtual Sawyer::Container::BitVector readRegister(RegisterDescriptor) override;
-    virtual void executeInstruction(const Partitioner2::Partitioner&) override;
+    virtual void executeInstruction(const Partitioner2::PartitionerConstPtr&) override;
     virtual void executeInstruction(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&, SgAsmInstruction*) override;
-    virtual void createInputVariables(const Partitioner2::Partitioner&, const Emulation::RiscOperatorsPtr&,
+    virtual void createInputVariables(const Partitioner2::PartitionerConstPtr&, const Emulation::RiscOperatorsPtr&,
                                       const SmtSolver::Ptr&) override;
-    virtual void systemCall(const Partitioner2::Partitioner&,
+    virtual void systemCall(const Partitioner2::PartitionerConstPtr&,
                             const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&) override;
 };
 

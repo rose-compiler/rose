@@ -24,7 +24,7 @@ namespace M68kSystem {
 Architecture::Architecture(const std::string &name)
     : Concolic::Architecture(name) {}
 
-Architecture::Architecture(const Database::Ptr &db, TestCaseId tcid, const P2::Partitioner &partitioner)
+Architecture::Architecture(const Database::Ptr &db, TestCaseId tcid, const P2::PartitionerConstPtr &partitioner)
     : Concolic::Architecture(db, tcid, partitioner) {}
 
 Architecture::~Architecture() {}
@@ -35,7 +35,7 @@ Architecture::factory() {
 }
 
 Architecture::Ptr
-Architecture::instance(const Database::Ptr &db, TestCaseId tcid, const P2::Partitioner &partitioner) {
+Architecture::instance(const Database::Ptr &db, TestCaseId tcid, const P2::PartitionerConstPtr &partitioner) {
     ASSERT_not_null(db);
     ASSERT_require(tcid);
     auto retval = Ptr(new Architecture(db, tcid, partitioner));
@@ -45,12 +45,12 @@ Architecture::instance(const Database::Ptr &db, TestCaseId tcid, const P2::Parti
 }
 
 Architecture::Ptr
-Architecture::instance(const Database::Ptr &db, const TestCase::Ptr &tc, const P2::Partitioner &partitioner) {
+Architecture::instance(const Database::Ptr &db, const TestCase::Ptr &tc, const P2::PartitionerConstPtr &partitioner) {
     return instance(db, db->id(tc), partitioner);
 }
 
 Concolic::Architecture::Ptr
-Architecture::instanceFromFactory(const Database::Ptr &db, TestCaseId tcid, const P2::Partitioner &partitioner) const {
+Architecture::instanceFromFactory(const Database::Ptr &db, TestCaseId tcid, const P2::PartitionerConstPtr &partitioner) const {
     ASSERT_require(isFactory());
     auto retval = instance(db, tcid, partitioner);
     retval->name(name());
@@ -210,7 +210,7 @@ Architecture::readRegister(RegisterDescriptor reg) {
 }
 
 void
-Architecture::executeInstruction(const P2::Partitioner &partitoner) {
+Architecture::executeInstruction(const P2::PartitionerConstPtr &partitoner) {
     ASSERT_forbid(isFactory());
     ASSERT_not_implemented("[Robb Matzke 2022-11-21]");
 }
@@ -222,14 +222,15 @@ Architecture::executeInstruction(const InstructionSemantics::BaseSemantics::Risc
 }
 
 void
-Architecture::createInputVariables(const P2::Partitioner &partitioner, const Emulation::RiscOperators::Ptr &ops,
+Architecture::createInputVariables(const P2::PartitionerConstPtr &partitioner, const Emulation::RiscOperators::Ptr &ops,
                                const SmtSolver::Ptr &solver) {
     ASSERT_forbid(isFactory());
     ASSERT_not_implemented("[Robb Matzke 2022-11-21]");
 }
 
 void
-Architecture::systemCall(const P2::Partitioner &partitioner, const InstructionSemantics::BaseSemantics::RiscOperators::Ptr &ops) {
+Architecture::systemCall(const P2::PartitionerConstPtr &partitioner,
+                         const InstructionSemantics::BaseSemantics::RiscOperators::Ptr &ops) {
     ASSERT_forbid(isFactory());
     ASSERT_not_implemented("[Robb Matzke 2022-11-21]");
 }

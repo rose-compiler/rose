@@ -10,6 +10,7 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 
 #include <Sawyer/CommandLine.h>
 
@@ -52,11 +53,11 @@ main(int argc, char *argv[]) {
     engine->settings().partitioner.base.usingSemantics = true; // test specimens contain opaque predicates
     engine->settings().partitioner.followingGhostEdges = false;
     engine->settings().partitioner.findingIntraFunctionCode = false;
-    P2::Partitioner partitioner = engine->partition(parseCommandLine(argc, argv, *engine, settings));
+    P2::Partitioner::Ptr partitioner = engine->partition(parseCommandLine(argc, argv, *engine, settings));
 
     // Get a list of basic blocks to analyze, sorted by starting address.
     std::vector<P2::BasicBlock::Ptr> bblocks;
-    for (const P2::ControlFlowGraph::Vertex &vertex : partitioner.cfg().vertices()) {
+    for (const P2::ControlFlowGraph::Vertex &vertex : partitioner->cfg().vertices()) {
         if (vertex.value().type() == P2::V_BASIC_BLOCK)
             bblocks.push_back(vertex.value().bblock());
     }
@@ -76,7 +77,7 @@ main(int argc, char *argv[]) {
         for (size_t i=0; i<insns.size(); ++i) {
             std::cout <<"    [" <<std::setw(2) <<i <<"] "
                       <<(isNoop[i] ? " X " : "   ")
-                      <<partitioner.unparse(insns[i]) <<"\n";
+                      <<partitioner->unparse(insns[i]) <<"\n";
         }
 
         if (allSequences.size() > 1) {

@@ -122,7 +122,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
 }
 
 void
-emitGraphViz(const P2::Partitioner &partitioner, const Settings &settings) {
+emitGraphViz(const P2::Partitioner::ConstPtr &partitioner, const Settings &settings) {
     if (settings.inliningImports) {
         P2::GraphViz::CgInlinedEmitter gv(partitioner, boost::regex("(\\.dll|@plt)$"));
         gv.highlight(boost::regex("."));            // highlight anything with a name
@@ -136,8 +136,8 @@ emitGraphViz(const P2::Partitioner &partitioner, const Settings &settings) {
 }
 
 void
-emitText(const P2::Partitioner &partitioner, std::vector<P2::Function::Ptr> &functions, const Settings&) {
-    P2::FunctionCallGraph cg = partitioner.functionCallGraph(P2::AllowParallelEdges::YES);
+emitText(const P2::Partitioner::ConstPtr &partitioner, std::vector<P2::Function::Ptr> &functions, const Settings&) {
+    P2::FunctionCallGraph cg = partitioner->functionCallGraph(P2::AllowParallelEdges::YES);
     for (P2::Function::Ptr function: functions) {
         std::cout <<function->printableName() <<"\n";
         if (cg.callers(function).empty()) {
@@ -156,8 +156,9 @@ emitText(const P2::Partitioner &partitioner, std::vector<P2::Function::Ptr> &fun
 }
 
 void
-emitGexf(const P2::Partitioner &partitioner, const Settings&) {
-    P2::FunctionCallGraph functionCalls = partitioner.functionCallGraph(P2::AllowParallelEdges::NO);
+emitGexf(const P2::Partitioner::ConstPtr &partitioner, const Settings&) {
+    ASSERT_not_null(partitioner);
+    P2::FunctionCallGraph functionCalls = partitioner->functionCallGraph(P2::AllowParallelEdges::NO);
     const P2::FunctionCallGraph::Graph &cg = functionCalls.graph();
     Sawyer::ProgressBar<size_t> progress(cg.nVertices() + cg.nEdges(), mlog[MARCH], "GEXF output");
 
@@ -217,14 +218,14 @@ main(int argc, char *argv[]) {
     Settings settings;
     boost::filesystem::path inputFileName = parseCommandLine(argc, argv, settings);
     P2::Engine *engine = P2::Engine::instance();
-    P2::Partitioner partitioner = engine->loadPartitioner(inputFileName, settings.stateFormat);
+    P2::Partitioner::Ptr partitioner = engine->loadPartitioner(inputFileName, settings.stateFormat);
 
     switch (settings.outputFormat) {
         case FORMAT_GRAPHVIZ:
             emitGraphViz(partitioner, settings);
             break;
         case FORMAT_TEXT: {
-            std::vector<P2::Function::Ptr> selectedFunctions = partitioner.functions();
+            std::vector<P2::Function::Ptr> selectedFunctions = partitioner->functions();
             if (!settings.functionNames.empty() || !settings.addresses.empty()) {
                 selectedFunctions = Bat::selectFunctionsByNameOrAddress(selectedFunctions, settings.functionNames, mlog[WARN]);
                 std::vector<P2::Function::Ptr> more = Bat::selectFunctionsContainingInstruction(partitioner, settings.addresses);

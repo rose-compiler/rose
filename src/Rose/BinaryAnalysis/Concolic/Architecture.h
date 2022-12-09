@@ -36,7 +36,7 @@ private:
     DatabasePtr db_;
     TestCaseId testCaseId_;
     TestCasePtr testCase_;
-    const Partitioner2::Partitioner &partitioner_;
+    Partitioner2::PartitionerConstPtr partitioner_;
     ExecutionLocation currentLocation_;                 // incremented when the instruction begins execution
     SystemCallMap systemCalls_;                         // callbacks for syscalls
     SharedMemoryMap sharedMemory_;                      // callbacks for shared memory
@@ -45,7 +45,7 @@ private:
 protected:
     // See "instance" methods in subclasses
     explicit Architecture(const std::string&);
-    Architecture(const DatabasePtr&, TestCaseId, const Partitioner2::Partitioner&);
+    Architecture(const DatabasePtr&, TestCaseId, const Partitioner2::PartitionerConstPtr&);
 public:
     virtual ~Architecture();
 
@@ -89,9 +89,9 @@ public:
      *  Thread safety: This method is thread safe.
      *
      * @{ */
-    static Ptr forge(const DatabasePtr&, TestCaseId, const Partitioner2::Partitioner&,
+    static Ptr forge(const DatabasePtr&, TestCaseId, const Partitioner2::PartitionerConstPtr&,
                      const std::string&);
-    static Ptr forge(const DatabasePtr&, const TestCasePtr&, const Partitioner2::Partitioner&,
+    static Ptr forge(const DatabasePtr&, const TestCasePtr&, const Partitioner2::PartitionerConstPtr&,
                      const std::string&);
     /** @} */
 
@@ -102,7 +102,7 @@ public:
      *
      *  This creates a new object by calling the class method @c instance for the class of which @c this is a type. All
      *  arguments are passed to @c instance. */
-    virtual Ptr instanceFromFactory(const DatabasePtr&, TestCaseId, const Partitioner2::Partitioner&) const = 0;
+    virtual Ptr instanceFromFactory(const DatabasePtr&, TestCaseId, const Partitioner2::PartitionerConstPtr&) const = 0;
 
     /** Returns true if this object is a factory.
      *
@@ -146,7 +146,7 @@ public:
     /** Property: Partitioner.
      *
      *  This holds information about the disassembly of the specimen, such as functions, basic blocks, and instructions. */
-    const Partitioner2::Partitioner& partitioner() const;
+    Partitioner2::PartitionerConstPtr partitioner() const;
 
     /** Property: Current execution location.
      *
@@ -281,7 +281,7 @@ public:
      *  This is normally called immediately after @ref load. It processes all the events recorded in the database for this
      *  test case, causing the concrete execution to return to the state it was in after the last event.  Returns the number
      *  of events processed. */
-    size_t playAllEvents(const Partitioner2::Partitioner&);
+    size_t playAllEvents(const Partitioner2::PartitionerConstPtr&);
 
     /** Replay an execution event.
      *
@@ -294,7 +294,7 @@ public:
     /** Run to the specified event.
      *
      *  While the current instruction is less than the specified event location, execute the instruction. */
-    virtual void runToEvent(const ExecutionEventPtr&, const Partitioner2::Partitioner&);
+    virtual void runToEvent(const ExecutionEventPtr&, const Partitioner2::PartitionerConstPtr&);
 
     /** Read memory bytes as an unsigned integer.
      *
@@ -364,7 +364,7 @@ public:
      *  Executes the instruction and increments the length of the execution path.
      *
      * @{ */
-    virtual void executeInstruction(const Partitioner2::Partitioner&) = 0;
+    virtual void executeInstruction(const Partitioner2::PartitionerConstPtr&) = 0;
     virtual void executeInstruction(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&, SgAsmInstruction*) = 0;
     /** @} */
 
@@ -400,7 +400,7 @@ public:
      *  to the @ref inputVariables property.
      *
      *  Any interedependencies or other constraints on input variables should be added to the supplied SMT solver. */
-    virtual void createInputVariables(const Partitioner2::Partitioner&, const Emulation::RiscOperatorsPtr&,
+    virtual void createInputVariables(const Partitioner2::PartitionerConstPtr&, const Emulation::RiscOperatorsPtr&,
                                       const SmtSolver::Ptr&) = 0;
 
     /** Restore initial input variables.
@@ -420,7 +420,7 @@ public:
      *  @li The SMT solver's assertions have been initialized to be the same as when the parent test case created this test
      *  case. In particular, the solver contains the assertions for the current execution path in terms of input variables, as
      *  well as all the assertions for input variables from the parent test case. */
-    virtual void restoreInputVariables(const Partitioner2::Partitioner&, const Emulation::RiscOperatorsPtr&,
+    virtual void restoreInputVariables(const Partitioner2::PartitionerConstPtr&, const Emulation::RiscOperatorsPtr&,
                                        const SmtSolver::Ptr&);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -431,7 +431,8 @@ public:
      *
      *  This function is called after a system call instruction has been executed symbolically and the system call has been
      *  entered concretely. */
-    virtual void systemCall(const Partitioner2::Partitioner&, const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&) {}
+    virtual void systemCall(const Partitioner2::PartitionerConstPtr&,
+                            const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&) {}
 
     /** Called immediately when shared memory is accessed.
      *
@@ -439,7 +440,7 @@ public:
      *  RiscOperators::readMemory operation. For memory reads, it should either perform the operation and return the result, or
      *  return null in which case the caller will do the usual operation. */
     virtual std::pair<ExecutionEventPtr, SymbolicExpressionPtr>
-    sharedMemoryAccess(const SharedMemoryCallbacks&, const Partitioner2::Partitioner&, const Emulation::RiscOperatorsPtr&,
+    sharedMemoryAccess(const SharedMemoryCallbacks&, const Partitioner2::PartitionerConstPtr&, const Emulation::RiscOperatorsPtr&,
                        rose_addr_t memVa, size_t nBytes);
 
     /** Run after-instruction shared memory callbacks.
@@ -481,7 +482,7 @@ public:
     void printSharedMemoryEvents(const ExecutionEventPtr &sharedMemoryEvent, const Emulation::RiscOperatorsPtr&);
 
     /** Called after an instruction accesses shared memory. */
-    virtual void sharedMemoryAccessPost(const Partitioner2::Partitioner&, const Emulation::RiscOperatorsPtr&);
+    virtual void sharedMemoryAccessPost(const Partitioner2::PartitionerConstPtr&, const Emulation::RiscOperatorsPtr&);
 };
 
 } // namespace

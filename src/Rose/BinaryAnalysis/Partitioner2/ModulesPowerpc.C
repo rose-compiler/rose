@@ -24,10 +24,11 @@ MatchStwuPrologue::functions() const {
 }
 
 bool
-MatchStwuPrologue::match(const Partitioner &partitioner, rose_addr_t anchor) {
-    if (partitioner.instructionExists(anchor))
+MatchStwuPrologue::match(const Partitioner::ConstPtr &partitioner, rose_addr_t anchor) {
+    ASSERT_not_null(partitioner);
+    if (partitioner->instructionExists(anchor))
         return false;                                   // already in the CFG/AUM
-    SgAsmPowerpcInstruction *insn = isSgAsmPowerpcInstruction(partitioner.discoverInstruction(anchor));
+    SgAsmPowerpcInstruction *insn = isSgAsmPowerpcInstruction(partitioner->discoverInstruction(anchor));
     if (!insn)
         return false;                                   // cannot decode an instruction at this address
 
@@ -62,12 +63,14 @@ MatchStwuPrologue::match(const Partitioner &partitioner, rose_addr_t anchor) {
 }
 
 Sawyer::Optional<rose_addr_t>
-matchElfDynamicStub(const Partitioner &partitioner, const Function::Ptr &function, const AddressIntervalSet &pltAddresses) {
+matchElfDynamicStub(const Partitioner::ConstPtr &partitioner, const Function::Ptr &function,
+                    const AddressIntervalSet &pltAddresses) {
+    ASSERT_not_null(partitioner);
     ASSERT_not_null(function);
 
     if (function->basicBlockAddresses().size() != 1)
         return Sawyer::Nothing();
-    BasicBlock::Ptr bb = partitioner.basicBlockExists(function->address());
+    BasicBlock::Ptr bb = partitioner->basicBlockExists(function->address());
     ASSERT_not_null(bb);
     if (bb->nInstructions() != 4)
         return Sawyer::Nothing();
@@ -77,7 +80,7 @@ matchElfDynamicStub(const Partitioner &partitioner, const Function::Ptr &functio
     if (!addis || addis->get_kind() != powerpc_addis || addis->get_operandList()->get_operands().size() != 3)
         return Sawyer::Nothing();
     SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(addis->get_operandList()->get_operands()[0]);
-    const RegisterDescriptor REG_R11 = partitioner.instructionProvider().registerDictionary()->findOrThrow("r11");
+    const RegisterDescriptor REG_R11 = partitioner->instructionProvider().registerDictionary()->findOrThrow("r11");
     if (!rre || rre->get_descriptor() != REG_R11)
         return Sawyer::Nothing();
     SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(addis->get_operandList()->get_operands()[1]);
@@ -115,7 +118,7 @@ matchElfDynamicStub(const Partitioner &partitioner, const Function::Ptr &functio
     if (!mtspr || mtspr->get_kind() != powerpc_mtspr || mtspr->get_operandList()->get_operands().size() != 2)
         return Sawyer::Nothing();
     rre = isSgAsmDirectRegisterExpression(mtspr->get_operandList()->get_operands()[0]);
-    const RegisterDescriptor REG_CTR = partitioner.instructionProvider().registerDictionary()->findOrThrow("ctr");
+    const RegisterDescriptor REG_CTR = partitioner->instructionProvider().registerDictionary()->findOrThrow("ctr");
     if (!rre || rre->get_descriptor() != REG_CTR)
         return Sawyer::Nothing();
     rre = isSgAsmDirectRegisterExpression(mtspr->get_operandList()->get_operands()[1]);
@@ -137,8 +140,9 @@ matchElfDynamicStub(const Partitioner &partitioner, const Function::Ptr &functio
 }
 
 void
-nameImportThunks(const Partitioner &partitioner, SgAsmInterpretation *interp) {
-    if (!partitioner.instructionProvider().disassembler().dynamicCast<Disassembler::Powerpc>())
+nameImportThunks(const Partitioner::ConstPtr &partitioner, SgAsmInterpretation *interp) {
+    ASSERT_not_null(partitioner);
+    if (!partitioner->instructionProvider().disassembler().dynamicCast<Disassembler::Powerpc>())
         return;
 
     // Find the locations of all the PLTs
@@ -152,7 +156,7 @@ nameImportThunks(const Partitioner &partitioner, SgAsmInterpretation *interp) {
     // Look at all the functions that don't have names yet. If the function looks like a PowerPC ELF dynamic function
     // stub that goes through a particular PLT slot, then add "@plt" to the base name. If the PLT slot has a corresponding
     // entry in the .rela.plt section, then use that section's symbol table to get the base name of the function.
-    for (const Function::Ptr &function: partitioner.functions()) {
+    for (const Function::Ptr &function: partitioner->functions()) {
         if (!function->name().empty())
             continue;
 
@@ -190,7 +194,8 @@ nameImportThunks(const Partitioner &partitioner, SgAsmInterpretation *interp) {
 }
 
 boost::logic::tribool
-isFunctionReturn(const Partitioner &partitioner, const BasicBlock::Ptr &bb) {
+isFunctionReturn(const Partitioner::ConstPtr &partitioner, const BasicBlock::Ptr &bb) {
+    ASSERT_not_null(partitioner);
     ASSERT_not_null(bb);
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     BasicBlockSemantics sem = bb->semantics();
@@ -201,8 +206,8 @@ isFunctionReturn(const Partitioner &partitioner, const BasicBlock::Ptr &bb) {
     ASSERT_not_null(sem.dispatcher);
     ASSERT_not_null(sem.operators);
     SAWYER_MESG(debug) <<"  block has semantic information\n";
-    const RegisterDescriptor REG_IP = partitioner.instructionProvider().instructionPointerRegister();
-    const RegisterDescriptor REG_LR = partitioner.instructionProvider().callReturnRegister();
+    const RegisterDescriptor REG_IP = partitioner->instructionProvider().instructionPointerRegister();
+    const RegisterDescriptor REG_LR = partitioner->instructionProvider().callReturnRegister();
     ASSERT_forbid(REG_IP.isEmpty());
     ASSERT_forbid(REG_LR.isEmpty());
 

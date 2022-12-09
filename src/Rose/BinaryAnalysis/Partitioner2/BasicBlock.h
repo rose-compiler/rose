@@ -271,7 +271,7 @@ protected:
         : isFrozen_(false), startVa_(0) {}
 
     // use instance() instead
-    BasicBlock(rose_addr_t startVa, const Partitioner &partitioner)
+    BasicBlock(rose_addr_t startVa, const PartitionerConstPtr &partitioner)
         : isFrozen_(false), startVa_(startVa) {
         semantics_.usingDispatcher = true;
         init(partitioner);
@@ -283,7 +283,7 @@ public:
      *  The @p startVa is the starting address for this basic block.  The @p partitioner is the partitioner on whose behalf
      *  this basic block is created.  The partitioner is not stored in the basic block, but is only used to initialize
      *  certain data members of the block (such as its instruction dispatcher). */
-    static Ptr instance(rose_addr_t startVa, const Partitioner &partitioner) {
+    static Ptr instance(rose_addr_t startVa, const PartitionerConstPtr &partitioner) {
         return Ptr(new BasicBlock(startVa, partitioner));
     }
 
@@ -292,7 +292,7 @@ public:
      *  The @p startVa is the starting address for this basic block.  The @p partitioner is the partitioner on whose behalf
      *  this basic block is created.  The partitioner is not stored in the basic block, but is only used to initialize
      *  certain data members of the block (such as its instruction dispatcher). */
-    virtual Ptr create(rose_addr_t startVa, const Partitioner &partitioner) const {
+    virtual Ptr create(rose_addr_t startVa, const PartitionerConstPtr &partitioner) const {
         return instance(startVa, partitioner);
     }
 
@@ -445,7 +445,7 @@ public:
      * @endcode
      *
      *  Thread safety: This method is not thread safe. */
-    void append(const Partitioner&, SgAsmInstruction*);
+    void append(const PartitionerConstPtr&, SgAsmInstruction*);
 
     /** Undo the latest append.
      *
@@ -537,7 +537,7 @@ public:
      *  adjusting the instruction semantics framework for the block.
      *
      *  Thread safety: This method is thread safe. */
-    void dropSemantics(const Partitioner&);
+    void dropSemantics(const PartitionerConstPtr&);
 
     /** Undrop semantics.
      *
@@ -546,7 +546,7 @@ public:
      *  semantics framework for the block.
      *
      *  Thread safety: This method is thread safe. */
-    BasicBlockSemantics undropSemantics(const Partitioner&);
+    BasicBlockSemantics undropSemantics(const PartitionerConstPtr&);
 
 
 
@@ -658,10 +658,10 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private:
     friend class Partitioner;
-    void init(const Partitioner&);
+    void init(const PartitionerConstPtr&);
     void freeze() { isFrozen_ = true; semantics_.optionalPenultimateState = Sawyer::Nothing(); }
     void thaw() { isFrozen_ = false; }
-    BasicBlockSemantics undropSemanticsNS(const Partitioner&);
+    BasicBlockSemantics undropSemanticsNS(const PartitionerConstPtr&);
 
     // Find an equivalent data block and replace it with the specified data block, or insert the specified data block.
     void replaceOrInsertDataBlock(const DataBlock::Ptr&);

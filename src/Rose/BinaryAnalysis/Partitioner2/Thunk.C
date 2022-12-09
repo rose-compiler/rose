@@ -17,7 +17,7 @@ namespace Partitioner2 {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ThunkDetection
-isX86JmpMemThunk(const Partitioner &partitioner, const std::vector<SgAsmInstruction*> &insns) {
+isX86JmpMemThunk(const Partitioner::ConstPtr &partitioner, const std::vector<SgAsmInstruction*> &insns) {
     if (insns.empty())
         return ThunkDetection();
     SgAsmX86Instruction *jmp = isSgAsmX86Instruction(insns[0]);
@@ -27,7 +27,7 @@ isX86JmpMemThunk(const Partitioner &partitioner, const std::vector<SgAsmInstruct
 }
 
 ThunkDetection
-isX86LeaJmpThunk(const Partitioner &partitioner, const std::vector<SgAsmInstruction*> &insns) {
+isX86LeaJmpThunk(const Partitioner::ConstPtr &partitioner, const std::vector<SgAsmInstruction*> &insns) {
     if (insns.size() < 2)
         return ThunkDetection();
 
@@ -45,7 +45,7 @@ isX86LeaJmpThunk(const Partitioner &partitioner, const std::vector<SgAsmInstruct
 }
 
 ThunkDetection
-isX86MovJmpThunk(const Partitioner&, const std::vector<SgAsmInstruction*> &insns) {
+isX86MovJmpThunk(const Partitioner::ConstPtr&, const std::vector<SgAsmInstruction*> &insns) {
     if (insns.size() < 2)
         return ThunkDetection();
 
@@ -78,7 +78,8 @@ isX86MovJmpThunk(const Partitioner&, const std::vector<SgAsmInstruction*> &insns
 }
 
 ThunkDetection
-isX86JmpImmThunk(const Partitioner &partitioner, const std::vector<SgAsmInstruction*> &insns) {
+isX86JmpImmThunk(const Partitioner::ConstPtr &partitioner, const std::vector<SgAsmInstruction*> &insns) {
+    ASSERT_not_null(partitioner);
     if (insns.empty())
         return ThunkDetection();
     SgAsmX86Instruction *jmp = isSgAsmX86Instruction(insns[0]);
@@ -91,15 +92,15 @@ isX86JmpImmThunk(const Partitioner &partitioner, const std::vector<SgAsmInstruct
     if (!jmpArg0)
         return ThunkDetection();
     rose_addr_t targetVa = jmpArg0->get_absoluteValue();
-    if (!partitioner.memoryMap()->require(MemoryMap::EXECUTABLE).at(targetVa).exists())
+    if (!partitioner->memoryMap()->require(MemoryMap::EXECUTABLE).at(targetVa).exists())
         return ThunkDetection();                        // target must be an executable address
-    if (!partitioner.instructionExists(targetVa) && !partitioner.instructionsOverlapping(targetVa).empty())
+    if (!partitioner->instructionExists(targetVa) && !partitioner->instructionsOverlapping(targetVa).empty())
         return ThunkDetection();                        // points to middle of some instruction
     return ThunkDetection(1, "JMP address");
 }
 
 ThunkDetection
-isX86AddJmpThunk(const Partitioner&, const std::vector<SgAsmInstruction*> &insns) {
+isX86AddJmpThunk(const Partitioner::ConstPtr&, const std::vector<SgAsmInstruction*> &insns) {
     if (insns.size() < 2)
         return ThunkDetection();
     SgAsmX86Instruction *add = isSgAsmX86Instruction(insns[0]);
@@ -163,7 +164,7 @@ ThunkPredicates::allThunks() {
 }
 
 ThunkDetection
-ThunkPredicates::isThunk(const Partitioner &partitioner, const std::vector<SgAsmInstruction*> &insns) const {
+ThunkPredicates::isThunk(const Partitioner::ConstPtr &partitioner, const std::vector<SgAsmInstruction*> &insns) const {
     for (ThunkPredicate predicate: predicates_) {
         if (predicate) {
             if (ThunkDetection retval = (predicate)(partitioner, insns))
@@ -178,7 +179,8 @@ ThunkPredicates::isThunk(const Partitioner &partitioner, const std::vector<SgAsm
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void
-splitThunkFunctions(Partitioner &partitioner, const ThunkPredicates::Ptr &thunkPredicates) {
+splitThunkFunctions(const Partitioner::Ptr &partitioner, const ThunkPredicates::Ptr &thunkPredicates) {
+    ASSERT_not_null(partitioner);
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     debug <<"splitThunkFunctions\n";
     if (!thunkPredicates || thunkPredicates->predicates().empty()) {
@@ -186,15 +188,15 @@ splitThunkFunctions(Partitioner &partitioner, const ThunkPredicates::Ptr &thunkP
         return;
     }
 
-    std::vector<Function::Ptr> workList = partitioner.functions();
+    std::vector<Function::Ptr> workList = partitioner->functions();
     while (!workList.empty()) {
         Function::Ptr candidate = workList.back();
         workList.pop_back();
         SAWYER_MESG(debug) <<"  considering " <<candidate->printableName() <<"\n";
 
         // Get the entry vertex in the CFG and the entry basic block.
-        ControlFlowGraph::ConstVertexIterator entryVertex = partitioner.findPlaceholder(candidate->address());
-        ASSERT_require(partitioner.cfg().isValidVertex(entryVertex));
+        ControlFlowGraph::ConstVertexIterator entryVertex = partitioner->findPlaceholder(candidate->address());
+        ASSERT_require(partitioner->cfg().isValidVertex(entryVertex));
         if (entryVertex->value().type() != V_BASIC_BLOCK)
             continue;
         BasicBlock::Ptr entryBlock = entryVertex->value().bblock();
@@ -206,7 +208,7 @@ splitThunkFunctions(Partitioner &partitioner, const ThunkPredicates::Ptr &thunkP
         // of a loop).  Recursive calls (other than optimized tail recursion) should be fine.
         bool hasIntraFunctionEdge = false;
         for (const ControlFlowGraph::Edge &edge: entryVertex->inEdges()) {
-            if (partitioner.isEdgeIntraProcedural(edge, candidate)) {
+            if (partitioner->isEdgeIntraProcedural(edge, candidate)) {
                 hasIntraFunctionEdge = true;
                 break;
             }
@@ -238,24 +240,24 @@ splitThunkFunctions(Partitioner &partitioner, const ThunkPredicates::Ptr &thunkP
         // can't just remove the thunk's basic block from the candidate function because the thunk is the candidate function's
         // entry block. Therefore detach the big function from the CFG to make room for new thunk and target functions.
         SAWYER_MESG(debug) <<"    " <<candidate->printableName() <<" starts with a thunk\n";
-        partitioner.detachFunction(candidate);
+        partitioner->detachFunction(candidate);
 
         // If the thunk is a proper prefix of the candidate function's entry block then split the entry block in two.
         BasicBlock::Ptr origEntryBlock = entryBlock;
-        ControlFlowGraph::ConstVertexIterator targetVertex = partitioner.cfg().vertices().end();
+        ControlFlowGraph::ConstVertexIterator targetVertex = partitioner->cfg().vertices().end();
         if (thunkIsPrefix) {
             SAWYER_MESG(debug) <<"    splitting entry " <<origEntryBlock->printableName() <<"\n";
-            targetVertex = partitioner.truncateBasicBlock(entryVertex, entryBlock->instructions()[found.nInsns]);
-            ASSERT_require(targetVertex != partitioner.cfg().vertices().end());
+            targetVertex = partitioner->truncateBasicBlock(entryVertex, entryBlock->instructions()[found.nInsns]);
+            ASSERT_require(targetVertex != partitioner->cfg().vertices().end());
             entryBlock = entryVertex->value().bblock();
             SAWYER_MESG(debug) <<"    new entry is " <<entryBlock->printableName() <<"\n";
             ASSERT_require(entryBlock != origEntryBlock); // we need the original block for its analysis results below
             ASSERT_require(entryBlock->nInstructions() < origEntryBlock->nInstructions());
         } else {
             targetVertex = entryVertex->outEdges().begin()->target();
-            SAWYER_MESG(debug) <<"    eliding entry block; new entry is " <<partitioner.vertexName(targetVertex) <<"\n";
+            SAWYER_MESG(debug) <<"    eliding entry block; new entry is " <<partitioner->vertexName(targetVertex) <<"\n";
         }
-        ASSERT_require(partitioner.cfg().isValidVertex(targetVertex));
+        ASSERT_require(partitioner->cfg().isValidVertex(targetVertex));
 
         // Create the new thunk function.
         Function::Ptr thunkFunction = Function::instance(candidate->address(), SgAsmFunction::FUNC_THUNK);
@@ -263,7 +265,7 @@ splitThunkFunctions(Partitioner &partitioner, const ThunkPredicates::Ptr &thunkP
         reasonComment = (reasonComment.empty() ? "" : " ") + std::string("split from ") + candidate->printableName();
         thunkFunction->reasonComment(reasonComment);
         SAWYER_MESG(debug) <<"    created thunk " <<thunkFunction->printableName() <<"\n";
-        partitioner.attachFunction(thunkFunction);
+        partitioner->attachFunction(thunkFunction);
 
         // Create the new target function, which has basically the same features as the original candidate function except a
         // different entry address.  The target might be indeterminate (e.g., "jmp [address]" where address is not mapped or
@@ -271,7 +273,7 @@ splitThunkFunctions(Partitioner &partitioner, const ThunkPredicates::Ptr &thunkP
         // concrete address and functions need entry addresses). Since the partitioner supports shared basic blocks (basic
         // block owned by multiple functions), the target vertex might already be a function, in which case we shouldn't try to
         // create it.
-        if (targetVertex->value().type() == V_BASIC_BLOCK && !partitioner.functionExists(targetVertex->value().address())) {
+        if (targetVertex->value().type() == V_BASIC_BLOCK && !partitioner->functionExists(targetVertex->value().address())) {
             unsigned newReasons = (candidate->reasons() & ~SgAsmFunction::FUNC_THUNK) | SgAsmFunction::FUNC_THUNK_TARGET;
             Function::Ptr newFunc = Function::instance(targetVertex->value().address(), candidate->name(), newReasons);
             newFunc->comment(candidate->comment());
@@ -286,7 +288,7 @@ splitThunkFunctions(Partitioner &partitioner, const ThunkPredicates::Ptr &thunkP
             }
             for (const DataBlock::Ptr &db: candidate->dataBlocks())
                 newFunc->insertDataBlock(db);
-            partitioner.attachFunction(newFunc);
+            partitioner->attachFunction(newFunc);
             workList.push_back(newFunc);                // new function might have more thunks to split off yet.
 
             if (origEntryBlock != entryBlock) {         // original entry block was split
@@ -299,20 +301,20 @@ splitThunkFunctions(Partitioner &partitioner, const ThunkPredicates::Ptr &thunkP
                 //     cmp eax, global
                 //     jne foo              ; opaque predicate when thunk was attached to this block
                 //     nop                  ; originally part of this block, but now will start a new block
-                BasicBlock::Ptr targetBlock = partitioner.discoverBasicBlock(newFunc->address());
+                BasicBlock::Ptr targetBlock = partitioner->discoverBasicBlock(newFunc->address());
                 if (targetBlock->nInstructions() + entryBlock->nInstructions() == origEntryBlock->nInstructions()) {
                     for (const DataBlock::Ptr &db: origEntryBlock->dataBlocks())
                         targetBlock->insertDataBlock(db);
                     targetBlock->copyCache(origEntryBlock);
                 }
 
-                partitioner.attachBasicBlock(targetBlock);
+                partitioner->attachBasicBlock(targetBlock);
             }
         }
 
         // Fix edge types between the thunk and the target function
         for (ControlFlowGraph::ConstEdgeIterator ei=entryVertex->outEdges().begin(); ei!=entryVertex->outEdges().end(); ++ei)
-            partitioner.fixInterFunctionEdge(ei);
+            partitioner->fixInterFunctionEdge(ei);
     }
 }
 

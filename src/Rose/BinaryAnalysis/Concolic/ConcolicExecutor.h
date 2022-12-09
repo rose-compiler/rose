@@ -7,7 +7,6 @@
 #include <Rose/BinaryAnalysis/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherX86.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Sawyer/FileSystem.h>
 
 namespace Rose {
@@ -67,7 +66,7 @@ private:
     Settings settings_;                                 // emulation settings
     DatabasePtr db_;                                    // concolic database connection
     TestCasePtr testCase_;                              // test case whose instructions are being processed
-    const Partitioner2::Partitioner &partitioner_;      // ROSE disassembly info about the specimen
+    Partitioner2::PartitionerConstPtr partitioner_;     // ROSE disassembly info about the specimen
     ArchitecturePtr process_;                           // subordinate process, concrete state
     bool hadSystemCall_ = false;                        // true if we need to call process_->systemCall, cleared each insn
     ExecutionEventPtr hadSharedMemoryAccess_;           // set when shared memory is read, cleared each instruction
@@ -75,7 +74,7 @@ private:
 
 protected:
     /** Allocating constructor. */
-    RiscOperators(const Settings&, const DatabasePtr&, const TestCasePtr&, const Partitioner2::Partitioner&,
+    RiscOperators(const Settings&, const DatabasePtr&, const TestCasePtr&, const Partitioner2::PartitionerConstPtr&,
                   const ArchitecturePtr&, const InstructionSemantics::BaseSemantics::StatePtr&, const SmtSolverPtr&);
 public:
     ~RiscOperators();
@@ -83,7 +82,7 @@ public:
 public:
     /** Allocating constructor. */
     static RiscOperatorsPtr instance(const Settings &settings, const DatabasePtr&, const TestCasePtr&,
-                                     const Partitioner2::Partitioner&, const ArchitecturePtr &process,
+                                     const Partitioner2::PartitionerConstPtr&, const ArchitecturePtr &process,
                                      const InstructionSemantics::BaseSemantics::SValuePtr &protoval,
                                      const SmtSolverPtr &solver = SmtSolverPtr());
 
@@ -105,7 +104,7 @@ public:
     const Settings& settings() const;
 
     /** Property: Partitioner. */
-    const Partitioner2::Partitioner& partitioner() const;
+    Partitioner2::PartitionerConstPtr partitioner() const;
 
     /** Property: Test case. */
     TestCasePtr testCase() const;
@@ -319,7 +318,7 @@ private:
     TestCasePtr testCase_;                              // currently executing test case
     TestCaseId testCaseId_;                             // database ID for currently executing test case
     DatabasePtr db_;                                    // database for all this stuff
-    Partitioner2::Partitioner partitioner_;             // used during execution
+    Partitioner2::PartitionerPtr partitioner_;          // used during execution
     ArchitecturePtr process_;                           // the concrete half of the execution
     Emulation::DispatcherPtr cpu_;                      // the symbolic half of the execution
 
@@ -384,7 +383,7 @@ public:
      *  This property is initialized by @ref configureExecution.
      *
      *  Thread safety: Not thread safe. */
-    const Partitioner2::Partitioner& partitioner() const;
+    Partitioner2::PartitionerConstPtr partitioner() const;
 
     /** Property: The concrete half of execution.
      *
@@ -429,7 +428,7 @@ public:
 private:
     // Disassemble the specimen and cache the result in the database. If the specimen has previously been disassembled
     // then reconstitute the analysis results from the database.
-    Partitioner2::Partitioner partition(const SpecimenPtr&, const std::string &architectureName);
+    Partitioner2::PartitionerPtr partition(const SpecimenPtr&, const std::string &architectureName);
 
     // Create the dispatcher, operators, and memory and register state for the symbolic execution.
     Emulation::DispatcherPtr makeDispatcher(const ArchitecturePtr&);

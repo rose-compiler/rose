@@ -147,11 +147,11 @@ main(int argc, char *argv[]) {
     Settings settings;
     P2::Engine *engine = P2::Engine::instance();
     boost::filesystem::path inputFileName = parseCommandLine(argc, argv, *engine, settings);
-    P2::Partitioner partitioner = engine->loadPartitioner(inputFileName, settings.stateFormat);
-    MemoryMap::Ptr map = partitioner.memoryMap();
+    P2::Partitioner::Ptr partitioner = engine->loadPartitioner(inputFileName, settings.stateFormat);
+    MemoryMap::Ptr map = partitioner->memoryMap();
     ASSERT_not_null(map);
 
-    BinaryAnalysis::Unparser::Base::Ptr unparser = partitioner.unparser();
+    BinaryAnalysis::Unparser::Base::Ptr unparser = partitioner->unparser();
     ASSERT_not_null(unparser);
     unparser->settings().function.cg.showing = false;
     unparser->settings().insn.stackDelta.showing = false;
@@ -160,7 +160,7 @@ main(int argc, char *argv[]) {
                         Sawyer::Message::StreamSink::instance(std::cout, Sawyer::Message::Prefix::silentInstance()));
     IS::BaseSemantics::Dispatcher::Ptr cpu;
     if (settings.showSideEffects) {
-        if (IS::BaseSemantics::RiscOperators::Ptr ops = partitioner.newOperators()) {
+        if (IS::BaseSemantics::RiscOperators::Ptr ops = partitioner->newOperators()) {
             if (settings.showSemanticTrace) {
                 IS::TraceSemantics::RiscOperators::Ptr tops = IS::TraceSemantics::RiscOperators::instance(ops);
                 ASSERT_not_null(tops);
@@ -171,7 +171,7 @@ main(int argc, char *argv[]) {
                 ops = tops;
             }
 
-            cpu = partitioner.newDispatcher(ops);
+            cpu = partitioner->newDispatcher(ops);
             if (!cpu)
                 mlog[WARN] <<"no semantics available for this architecture\n";
         }
@@ -190,7 +190,7 @@ main(int argc, char *argv[]) {
         if (lastSeenVa && lastSeenVa.get()+1 != va)
             std::cout <<"\n";
 
-        if (SgAsmInstruction *insn = partitioner.instructionProvider()[va]) {
+        if (SgAsmInstruction *insn = partitioner->instructionProvider()[va]) {
             unparser->unparse(std::cout, partitioner, insn);
             std::cout <<"\n";
 

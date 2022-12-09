@@ -69,6 +69,16 @@ Partitioner::Partitioner(const Disassembler::Base::Ptr &disassembler, const Memo
     init(disassembler, map);
 }
 
+Partitioner::Ptr
+Partitioner::instance() {
+    return Ptr(new Partitioner);
+}
+
+Partitioner::Ptr
+Partitioner::instance(const Disassembler::Base::Ptr &disassembler, const MemoryMap::Ptr &memoryMap) {
+    return Ptr(new Partitioner(disassembler, memoryMap));
+}
+
 #ifdef ROSE_PARTITIONER_MOVE
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Copy construction, assignment, destructor when move semantics are present
@@ -122,12 +132,12 @@ Partitioner::operator=(BOOST_RV_REF(Partitioner) other) {
     semanticMemoryParadigm_ = other.semanticMemoryParadigm_;
 
     unparser_ = other.unparser_;
-    other.unparser_ = Unparser::BasePtr();
+    other.unparser_ = Unparser::Base::Ptr();
 
     insnUnparser_ = other.insnUnparser_;
-    other.insnUnparser_ = Unparser::BasePtr();
+    other.insnUnparser_ = Unparser::Base::Ptr();
     insnPlainUnparser_ = other.insnPlainUnparser_;
-    other.insnPlainUnparser_ = Unparser::BasePtr();
+    other.insnPlainUnparser_ = Unparser::Base::Ptr();
 
     {
         SAWYER_THREAD_TRAITS::LockGuard2(mutex_, other.mutex_);
@@ -256,12 +266,47 @@ Partitioner::init(const Partitioner &other) {
     nonexistingVertex_ = convertFrom(other, other.nonexistingVertex_);
 }
 
+bool
+Partitioner::isDefaultConstructed() const {
+    return !instructionProvider_;
+}
+
 void
 Partitioner::clear() {
     cfg_.clear();
     vertexIndex_.clear();
     aum_.clear();
     functions_.clear();
+}
+
+Configuration&
+Partitioner::configuration() {
+    return config_;
+}
+
+const Configuration&
+Partitioner::configuration() const {
+    return config_;
+}
+
+InstructionProvider&
+Partitioner::instructionProvider() {
+    return *instructionProvider_;
+}
+
+const InstructionProvider&
+Partitioner::instructionProvider() const {
+    return *instructionProvider_;
+}
+
+MemoryMap::Ptr
+Partitioner::memoryMap() const {
+    return memoryMap_;
+}
+
+bool
+Partitioner::addressIsExecutable(rose_addr_t va) const {
+    return memoryMap_ && memoryMap_->at(va).require(MemoryMap::EXECUTABLE).exists();
 }
 
 ControlFlowGraph::VertexIterator
@@ -310,23 +355,23 @@ Partitioner::configureInsnPlainUnparser(const Unparser::Base::Ptr &unparser) con
     unparser->settings().insn.semantics.showing = false;
 }
 
-Unparser::BasePtr
+Unparser::Base::Ptr
 Partitioner::unparser() const {
     return unparser_;
 }
 
 void
-Partitioner::unparser(const Unparser::BasePtr &u) {
+Partitioner::unparser(const Unparser::Base::Ptr &u) {
     unparser_ = u;
 }
 
-Unparser::BasePtr
+Unparser::Base::Ptr
 Partitioner::insnUnparser() const {
     return insnUnparser_;
 }
 
 void
-Partitioner::insnUnparser(const Unparser::BasePtr &u) {
+Partitioner::insnUnparser(const Unparser::Base::Ptr &u) {
     insnUnparser_ = u;
 }
 
@@ -343,7 +388,7 @@ Partitioner::unparse(std::ostream &out, SgAsmInstruction *insn) const {
         out <<"null instruction";
     } else {
         ASSERT_not_null(insnUnparser());
-        (*insnUnparser())(out, *this, insn);
+        (*insnUnparser())(out, sharedFromThis(), insn);
     }
 }
 
@@ -358,7 +403,7 @@ Partitioner::unparsePlain(SgAsmInstruction *insn) const {
         ASSERT_not_null(insnUnparser_);
         ASSERT_not_null(insnPlainUnparser_);
         insnPlainUnparser_->settings().colorization = insnUnparser_->settings().colorization;
-        return (*insnPlainUnparser_)(*this, insn);
+        return (*insnPlainUnparser_)(sharedFromThis(), insn);
     }
 }
 
@@ -368,7 +413,7 @@ Partitioner::unparse(std::ostream &out, const BasicBlock::Ptr &bb) const {
         out <<"null basic block";
     } else {
         ASSERT_not_null(unparser());
-        (*unparser())(out, *this, bb);
+        (*unparser())(out, sharedFromThis(), bb);
     }
 }
 
@@ -378,7 +423,7 @@ Partitioner::unparse(std::ostream &out, const DataBlock::Ptr &db) const {
         out <<"null data block";
     } else {
         ASSERT_not_null(unparser());
-        (*unparser())(out, *this, db);
+        (*unparser())(out, sharedFromThis(), db);
     }
 }
 
@@ -388,14 +433,63 @@ Partitioner::unparse(std::ostream &out, const Function::Ptr &f) const {
         out <<"null function";
     } else {
         ASSERT_not_null(unparser());
-        (*unparser())(out, *this, f);
+        (*unparser())(out, sharedFromThis(), f);
     }
 }
 
 void
 Partitioner::unparse(std::ostream &out) const {
     ASSERT_not_null(unparser());
-    (*unparser())(out, *this);
+    (*unparser())(out, sharedFromThis());
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Partitioner CFG queries
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+size_t
+Partitioner::nBytes() const {
+    return aum_.size();
+}
+
+ControlFlowGraph::VertexIterator
+Partitioner::undiscoveredVertex() {
+    return undiscoveredVertex_;
+}
+
+ControlFlowGraph::ConstVertexIterator
+Partitioner::undiscoveredVertex() const {
+    return undiscoveredVertex_;
+}
+
+ControlFlowGraph::VertexIterator
+Partitioner::indeterminateVertex() {
+    return indeterminateVertex_;
+}
+
+ControlFlowGraph::ConstVertexIterator
+Partitioner::indeterminateVertex() const {
+    return indeterminateVertex_;
+}
+
+ControlFlowGraph::VertexIterator
+Partitioner::nonexistingVertex() {
+    return nonexistingVertex_;
+}
+
+ControlFlowGraph::ConstVertexIterator
+Partitioner::nonexistingVertex() const {
+    return nonexistingVertex_;
+}
+
+const ControlFlowGraph&
+Partitioner::cfg() const {
+    return cfg_;
+}
+
+const AddressUsageMap&
+Partitioner::aum() const {
+    return aum_;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -501,6 +595,16 @@ Partitioner::nInstructions() const {
     return nInsns;
 }
 
+AddressUser
+Partitioner::instructionExists(rose_addr_t startVa) const {
+    return aum_.findInstruction(startVa);
+}
+
+AddressUser
+Partitioner::instructionExists(SgAsmInstruction *insn) const {
+    return aum_.findInstruction(insn);
+}
+
 CrossReferences
 Partitioner::instructionCrossReferences(const AddressIntervalSet &restriction) const {
     CrossReferences xrefs;
@@ -557,6 +661,20 @@ Partitioner::placeholderExists(rose_addr_t startVa) const {
     return vertexIndex_.exists(startVa);
 }
 
+ControlFlowGraph::VertexIterator
+Partitioner::findPlaceholder(rose_addr_t startVa) {
+    if (Sawyer::Optional<ControlFlowGraph::VertexIterator> found = vertexIndex_.getOptional(startVa))
+        return *found;
+    return cfg_.vertices().end();
+}
+
+ControlFlowGraph::ConstVertexIterator
+Partitioner::findPlaceholder(rose_addr_t startVa) const {
+    if (Sawyer::Optional<ControlFlowGraph::VertexIterator> found = vertexIndex_.getOptional(startVa))
+        return *found;
+    return cfg_.vertices().end();
+}
+
 BasicBlock::Ptr
 Partitioner::erasePlaceholder(const ControlFlowGraph::ConstVertexIterator &placeholder) {
     BasicBlock::Ptr bblock;
@@ -579,12 +697,22 @@ Partitioner::erasePlaceholder(const ControlFlowGraph::ConstVertexIterator &place
 // Basic blocks
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+bool
+Partitioner::basicBlockSemanticsAutoDrop() const {
+    return settings_.basicBlockSemanticsAutoDrop;
+}
+
+void
+Partitioner::basicBlockSemanticsAutoDrop(bool b) {
+    settings_.basicBlockSemanticsAutoDrop = b;
+}
+
 void
 Partitioner::basicBlockDropSemantics() const {
     for (const ControlFlowGraph::VertexValue &vertex: cfg_.vertexValues()) {
         if (vertex.type() == V_BASIC_BLOCK) {
             if (BasicBlock::Ptr bblock = vertex.bblock())
-                bblock->dropSemantics(*this);
+                bblock->dropSemantics(sharedFromThis());
         }
     }
 }
@@ -610,6 +738,21 @@ Partitioner::basicBlockExists(rose_addr_t startVa) const {
 BasicBlock::Ptr
 Partitioner::basicBlockExists(const BasicBlock::Ptr &bblock) const {
     return bblock==NULL ? BasicBlock::Ptr() : basicBlockExists(bblock->address());
+}
+
+SemanticMemoryParadigm
+Partitioner::semanticMemoryParadigm() const {
+    return semanticMemoryParadigm_;
+}
+
+void
+Partitioner::semanticMemoryParadigm(SemanticMemoryParadigm p) {
+    semanticMemoryParadigm_ = p;
+}
+
+SmtSolver::Ptr
+Partitioner::smtSolver() const {
+    return solver_;
 }
 
 BaseSemantics::RiscOperators::Ptr
@@ -727,19 +870,19 @@ Partitioner::discoverBasicBlockInternal(rose_addr_t startVa) const {
 
     // Keep adding instructions until we reach a termination condition.  The termination conditions are enumerated in detail in
     // the doxygen documentation for this function. READ IT AND KEEP IT UP TO DATE!!!
-    BasicBlock::Ptr retval = BasicBlock::instance(startVa, *this);
+    BasicBlock::Ptr retval = BasicBlock::instance(startVa, sharedFromThis());
     rose_addr_t va = startVa;
     while (1) {
         SgAsmInstruction *insn = discoverInstruction(va);
         if (insn==NULL)                                                 // case: no instruction available
             goto done;
-        retval->append(*this, insn);
+        retval->append(sharedFromThis(), insn);
         if (insn->isUnknown() && !settings_.ignoringUnknownInsns)       // case: "unknown" instruction
             goto done;
 
         // Give user chance to adjust basic block successors and/or pre-compute cached analysis results
         BasicBlockCallback::Results userResult;
-        basicBlockCallbacks_.apply(true, BasicBlockCallback::Args(*this, retval, userResult));
+        basicBlockCallbacks_.apply(true, BasicBlockCallback::Args(sharedFromThis(), retval, userResult));
 
         for (rose_addr_t successorVa: basicBlockConcreteSuccessors(retval)) {
             if (successorVa!=startVa && retval->instructionExists(successorVa)) { // case: successor is inside our own block
@@ -977,7 +1120,7 @@ Partitioner::attachBasicBlock(const ControlFlowGraph::ConstVertexIterator &const
     }
 
     if (basicBlockSemanticsAutoDrop())
-        bblock->dropSemantics(*this);
+        bblock->dropSemantics(sharedFromThis());
 
     bblockAttached(placeholder);
 }
@@ -1138,7 +1281,7 @@ Partitioner::basicBlockPopsStack(const BasicBlock::Ptr &bb) const {
             break;
 
         // We need instruction semantics, or return false
-        BasicBlockSemantics sem = bb->undropSemantics(*this);
+        BasicBlockSemantics sem = bb->undropSemantics(sharedFromThis());
         if (!sem.dispatcher) {
             bb->popsStack() = false;
             break;
@@ -1344,9 +1487,9 @@ Partitioner::basicBlockIsFunctionReturn(const BasicBlock::Ptr &bb) const {
     // Use our own semantics if we have them.
     boost::logic::tribool isReturn;
     if (isSgAsmPowerpcInstruction(lastInsn)) {
-        isReturn = ModulesPowerpc::isFunctionReturn(*this, bb);
+        isReturn = ModulesPowerpc::isFunctionReturn(sharedFromThis(), bb);
     } else {
-        isReturn = Modules::isStackBasedReturn(*this, bb);
+        isReturn = Modules::isStackBasedReturn(sharedFromThis(), bb);
     }
     if (isReturn || !isReturn) {
         bool retval = isReturn ? true : false;
@@ -1378,6 +1521,16 @@ Partitioner::basicBlockStackDeltaOut(const BasicBlock::Ptr &bb, const Function::
 
     (void) functionStackDelta(function);
     return function->stackDeltaAnalysis().basicBlockOutputStackDeltaWrtFunction(bb->address());
+}
+
+size_t
+Partitioner::stackDeltaInterproceduralLimit() const {
+    return stackDeltaInterproceduralLimit_;
+}
+
+void
+Partitioner::stackDeltaInterproceduralLimit(size_t n) {
+    stackDeltaInterproceduralLimit_ = std::max(size_t(1), n);
 }
 
 ControlFlowGraph::ConstVertexIterator
@@ -1599,6 +1752,11 @@ Partitioner::attachDataBlockToBasicBlock(const DataBlock::Ptr &dblock, const Bas
 // Functions
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+size_t
+Partitioner::nFunctions() const {
+    return functions_.size();
+}
+
 Function::Ptr
 Partitioner::functionExists(rose_addr_t entryVa) const {
     return functions_.getOptional(entryVa).orDefault();
@@ -1769,7 +1927,7 @@ Partitioner::matchFunctionPadding(const Function::Ptr &function) {
     ASSERT_not_null(function);
     rose_addr_t anchor = function->address();
     for (const FunctionPaddingMatcher::Ptr &matcher: functionPaddingMatchers_) {
-        rose_addr_t paddingVa = matcher->match(*this, anchor);
+        rose_addr_t paddingVa = matcher->match(sharedFromThis(), anchor);
         if (paddingVa < anchor) {
             DataBlock::Ptr paddingBlock = DataBlock::instanceBytes(paddingVa, anchor - paddingVa);
             paddingBlock->comment("function padding");
@@ -2011,7 +2169,7 @@ Partitioner::functionCallingConvention(const Function::Ptr &function,
         BaseSemantics::RiscOperators::Ptr ops = newOperators(MAP_BASED_MEMORY); // map works better for calling convention
         function->callingConventionAnalysis() = CallingConvention::Analysis(newDispatcher(ops));
         function->callingConventionAnalysis().defaultCallingConvention(dfltCc);
-        function->callingConventionAnalysis().analyzeFunction(*this, function);
+        function->callingConventionAnalysis().analyzeFunction(sharedFromThis(), function);
     }
     return function->callingConventionAnalysis();
 }
@@ -2301,7 +2459,7 @@ Partitioner::functionDataFlowConstants(const Function::Ptr &function) const {
 
     ControlFlowGraph::ConstVertexIterator startVertex = findPlaceholder(function->address());
     ASSERT_require2(cfg_.isValidVertex(startVertex), "function does not exist in partitioner");
-    DfCfg dfCfg = DataFlow::buildDfCfg(*this, cfg_, startVertex); // not interprocedural
+    DfCfg dfCfg = DataFlow::buildDfCfg(sharedFromThis(), cfg_, startVertex); // not interprocedural
     size_t dfCfgStartVertexId = 0; // dfCfg vertex corresponding to function's entry ponit.
     TransferFunction xfer(cpu);
     MergeFunction mergeFunction(cpu);
@@ -2350,6 +2508,50 @@ Partitioner::functionDataFlowConstants(const Function::Ptr &function) const {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Callbacks
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Partitioner::CfgAdjustmentCallbacks&
+Partitioner::cfgAdjustmentCallbacks() {
+    return cfgAdjustmentCallbacks_;
+}
+
+const Partitioner::CfgAdjustmentCallbacks&
+Partitioner::cfgAdjustmentCallbacks() const {
+    return cfgAdjustmentCallbacks_;
+}
+
+Partitioner::BasicBlockCallbacks&
+Partitioner::basicBlockCallbacks() {
+    return basicBlockCallbacks_;
+}
+
+const Partitioner::BasicBlockCallbacks&
+Partitioner::basicBlockCallbacks() const {
+    return basicBlockCallbacks_;
+}
+
+Partitioner::FunctionPrologueMatchers&
+Partitioner::functionPrologueMatchers() {
+    return functionPrologueMatchers_;
+}
+
+const Partitioner::FunctionPrologueMatchers&
+Partitioner::functionPrologueMatchers() const {
+    return functionPrologueMatchers_;
+}
+
+Partitioner::FunctionPaddingMatchers&
+Partitioner::functionPaddingMatchers() {
+    return functionPaddingMatchers_;
+}
+
+const Partitioner::FunctionPaddingMatchers&
+Partitioner::functionPaddingMatchers() const {
+    return functionPaddingMatchers_;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Internal utilities
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -2379,7 +2581,7 @@ Partitioner::bblockAttached(const ControlFlowGraph::VertexIterator &newVertex) {
 #if !defined(NDEBUG) && ROSE_PARTITIONER_EXPENSIVE_CHECKS == 1
     checkConsistency();
 #endif
-    cfgAdjustmentCallbacks_.apply(true, CfgAdjustmentCallback::AttachedBasicBlock(this, startVa, bblock));
+    cfgAdjustmentCallbacks_.apply(true, CfgAdjustmentCallback::AttachedBasicBlock(sharedFromThis(), startVa, bblock));
 #if !defined(NDEBUG) && ROSE_PARTITIONER_EXPENSIVE_CHECKS == 1
     checkConsistency();
 #endif
@@ -2405,7 +2607,7 @@ Partitioner::bblockDetached(rose_addr_t startVa, const BasicBlock::Ptr &bblock) 
 #if !defined(NDEBUG) && ROSE_PARTITIONER_EXPENSIVE_CHECKS == 1
     checkConsistency();
 #endif
-    cfgAdjustmentCallbacks_.apply(true, CfgAdjustmentCallback::DetachedBasicBlock(this, startVa, bblock));
+    cfgAdjustmentCallbacks_.apply(true, CfgAdjustmentCallback::DetachedBasicBlock(sharedFromThis(), startVa, bblock));
 #if !defined(NDEBUG) && ROSE_PARTITIONER_EXPENSIVE_CHECKS == 1
     checkConsistency();
 #endif
@@ -2541,6 +2743,80 @@ Partitioner::elfGot(SgAsmElfFileHeader *elfHeader) {
 Sawyer::Optional<rose_addr_t>
 Partitioner::elfGotVa() const {
     return elfGotVa_;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Settings
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+const BasePartitionerSettings&
+Partitioner::settings() const {
+    return settings_;
+}
+
+void
+Partitioner::settings(const BasePartitionerSettings &s) {
+    settings_ = s;
+}
+
+void
+Partitioner::enableSymbolicSemantics(bool b) {
+    settings_.usingSemantics = b;
+}
+
+void
+Partitioner::disableSymbolicSemantics() {
+    settings_.usingSemantics = false;
+}
+
+bool
+Partitioner::usingSymbolicSemantics() const {
+    return settings_.usingSemantics;
+}
+
+void
+Partitioner::autoAddCallReturnEdges(bool b) {
+    autoAddCallReturnEdges_ = b;
+}
+
+bool
+Partitioner::autoAddCallReturnEdges() const {
+    return autoAddCallReturnEdges_;
+}
+
+void
+Partitioner::assumeFunctionsReturn(bool b) {
+    assumeFunctionsReturn_ = b;
+}
+
+bool
+Partitioner::assumeFunctionsReturn() const {
+    return assumeFunctionsReturn_;
+}
+
+const SourceLocations&
+Partitioner::sourceLocations() const {
+    return sourceLocations_;
+}
+
+SourceLocations&
+Partitioner::sourceLocations() {
+    return sourceLocations_;
+}
+
+void
+Partitioner::sourceLocations(const SourceLocations &locs) {
+    sourceLocations_ = locs;
+}
+
+bool
+Partitioner::checkingCallBranch() const {
+    return settings_.checkingCallBranch;
+}
+
+void
+Partitioner::checkingCallBranch(bool b) {
+    settings_.checkingCallBranch = b;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2908,7 +3184,7 @@ Partitioner::dumpCfg(std::ostream &out, const std::string &prefix, bool showBloc
 void
 Partitioner::cfgGraphViz(std::ostream &out, const AddressInterval &restrict,
                          bool showNeighbors) const {
-    GraphViz::CfgEmitter gv(*this);
+    GraphViz::CfgEmitter gv(sharedFromThis());
     gv.useFunctionSubgraphs(true);
     gv.showReturnEdges(false);
     gv.showInstructions(true);
@@ -2932,7 +3208,7 @@ Partitioner::nextFunctionPrologue(rose_addr_t startVa, rose_addr_t &lastSearched
             return std::vector<Function::Ptr>();        // empty; no higher unused address
         if (startVa == *unmappedVa) {
             for (const FunctionPrologueMatcher::Ptr &matcher: functionPrologueMatchers_) {
-                if (matcher->match(*this, startVa)) {
+                if (matcher->match(sharedFromThis(), startVa)) {
                     std::vector<Function::Ptr> newFunctions = matcher->functions();
                     ASSERT_forbid(newFunctions.empty());
                     return newFunctions;
@@ -3049,6 +3325,16 @@ Partitioner::addressName(rose_addr_t va, const std::string &name) {
     } else {
         addressNames_.insert(va, name);
     }
+}
+
+const std::string&
+Partitioner::addressName(rose_addr_t va) const {
+    return addressNames_.getOrDefault(va);
+}
+
+const Partitioner::AddressNameMap&
+Partitioner::addressNames() const {
+    return addressNames_;
 }
 
 void

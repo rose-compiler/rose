@@ -86,16 +86,16 @@ main(int argc, char *argv[]) {
     Settings settings;
     P2::Engine *engine = P2::Engine::instance();
     boost::filesystem::path inputFileName = parseCommandLine(argc, argv, *engine, settings);
-    P2::Partitioner partitioner = engine->loadPartitioner(inputFileName, settings.stateFormat);
+    P2::Partitioner::Ptr partitioner = engine->loadPartitioner(inputFileName, settings.stateFormat);
 
     // Select the functions to analyze
     std::vector<P2::Function::Ptr> selectedFunctions;
     if (!settings.functionNames.empty() || !settings.addresses.empty()) {
-        selectedFunctions = Bat::selectFunctionsByNameOrAddress(partitioner.functions(), settings.functionNames, mlog[WARN]);
+        selectedFunctions = Bat::selectFunctionsByNameOrAddress(partitioner->functions(), settings.functionNames, mlog[WARN]);
         for (const P2::Function::Ptr &f: Bat::selectFunctionsContainingInstruction(partitioner, settings.addresses))
             P2::insertUnique(selectedFunctions, f, P2::sortFunctionsByAddress);
     } else {
-        selectedFunctions = partitioner.functions();
+        selectedFunctions = partitioner->functions();
     }
     if (selectedFunctions.empty())
         mlog[WARN] <<"no matching functions found\n";

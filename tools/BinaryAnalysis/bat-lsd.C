@@ -74,9 +74,9 @@ main(int argc, char *argv[]) {
     Settings settings;
     P2::Engine *engine = P2::Engine::instance();
     boost::filesystem::path inputFileName = parseCommandLine(argc, argv, settings);
-    P2::Partitioner partitioner = engine->loadPartitioner(inputFileName, format);
+    P2::Partitioner::Ptr partitioner = engine->loadPartitioner(inputFileName, format);
 
-    P2::AddressUsers allUsers = partitioner.aum().overlapping(partitioner.aum().hull());
+    P2::AddressUsers allUsers = partitioner->aum().overlapping(partitioner->aum().hull());
     for (const P2::AddressUser &user: allUsers.addressUsers()) {
         if (P2::DataBlock::Ptr db = user.dataBlock()) {
             // Header
@@ -105,7 +105,7 @@ main(int argc, char *argv[]) {
             std::cout <<"  data: " <<StringUtility::plural(db->size(), "bytes") <<"\n";
             if (settings.printingData) {
                 std::cout <<"    ";
-                std::vector<uint8_t> data = db->read(partitioner.memoryMap());
+                std::vector<uint8_t> data = db->read(partitioner->memoryMap());
                 HexdumpFormat fmt;
                 fmt.prefix = "    ";
                 SgAsmExecutableFileFormat::hexdump(std::cout, db->address(), &data[0], db->size(), fmt);

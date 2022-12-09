@@ -13,6 +13,7 @@ static const char *description =
 #include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/DataFlow.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BinaryAnalysis/RegisterNames.h>
@@ -34,18 +35,18 @@ static Diagnostics::Facility mlog;
 
 //! [basicReadTest]
 static void
-basicReadTest(const P2::Partitioner &partitioner) {
+basicReadTest(const P2::Partitioner::ConstPtr &partitioner) {
     std::cout <<"\n" <<std::string(40, '=') <<"\nbasicReadTest\n" <<std::string(40, '=') <<"\n";
     SymbolicSemantics::Formatter fmt;
     fmt.set_line_prefix("  ");
 
     // Create the RiscOperators and the initial state.
-    RegisterDictionary::Ptr regdict = partitioner.instructionProvider().registerDictionary();
-    const RegisterDescriptor REG = partitioner.instructionProvider().stackPointerRegister();
+    RegisterDictionary::Ptr regdict = partitioner->instructionProvider().registerDictionary();
+    const RegisterDescriptor REG = partitioner->instructionProvider().stackPointerRegister();
     const std::string REG_NAME = RegisterNames(regdict)(REG);
     BaseSemantics::RiscOperators::Ptr ops = SymbolicSemantics::RiscOperators::instanceFromRegisters(regdict);
     ASSERT_always_not_null(ops);
-    ops->currentState()->memoryState()->set_byteOrder(partitioner.instructionProvider().defaultByteOrder());
+    ops->currentState()->memoryState()->set_byteOrder(partitioner->instructionProvider().defaultByteOrder());
     BaseSemantics::State::Ptr initialState = ops->currentState()->clone();
     ops->initialState(initialState);                    // lazily evaluated initial state
     std::cout <<"Initial state before reading:\n" <<(*initialState+fmt);
@@ -187,14 +188,14 @@ public:                                                 // overrides
 
     
 static void
-advancedReadTest(const P2::Partitioner &partitioner) {
+advancedReadTest(const P2::Partitioner::ConstPtr &partitioner) {
     std::cout <<"\n" <<std::string(40, '=') <<"\nadvancedReadTest\n" <<std::string(40, '=') <<"\n";
     SymbolicSemantics::Formatter fmt;
     fmt.set_line_prefix("  ");
 
     // Build the semantics framework. We use SymbolicSemantics, but with our own memory state.
-    RegisterDictionary::Ptr regdict = partitioner.instructionProvider().registerDictionary();
-    const RegisterDescriptor REG = partitioner.instructionProvider().stackPointerRegister();
+    RegisterDictionary::Ptr regdict = partitioner->instructionProvider().registerDictionary();
+    const RegisterDescriptor REG = partitioner->instructionProvider().stackPointerRegister();
     const std::string REG_NAME = RegisterNames(regdict)(REG);
     const RegisterDescriptor REG2(15, 1023, 0, REG.nBits());
     BaseSemantics::RiscOperators::Ptr ops;
@@ -202,7 +203,7 @@ advancedReadTest(const P2::Partitioner &partitioner) {
         BaseSemantics::SValue::Ptr protoval = SymbolicSemantics::SValue::instance();
         BaseSemantics::RegisterState::Ptr registers = SymbolicSemantics::RegisterState::instance(protoval, regdict);
         BaseSemantics::MemoryState::Ptr memory = SymbolicSemantics::MemoryListState::instance(protoval, protoval);
-        memory->set_byteOrder(partitioner.instructionProvider().defaultByteOrder());
+        memory->set_byteOrder(partitioner->instructionProvider().defaultByteOrder());
         BaseSemantics::State::Ptr state = MyState::instance(registers, memory);
         ops = SymbolicSemantics::RiscOperators::instanceFromState(state);
     }
@@ -266,13 +267,13 @@ advancedReadTest(const P2::Partitioner &partitioner) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void
-analyzeFunction(const P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
+analyzeFunction(const P2::Partitioner::ConstPtr &partitioner, const P2::Function::Ptr &function) {
     std::cout <<"\n" <<std::string(40, '=') <<"\n" <<function->printableName() <<"\n" <<std::string(40, '=') <<"\n";
     typedef P2::DataFlow::DfCfg DfCfg;
 
     // Obtain the control flow graph that we'll use for the data-flow of this function. By convention, the function entry
     // address is vertex #0 of this graph.
-    DfCfg dfCfg = P2::DataFlow::buildDfCfg(partitioner, partitioner.cfg(), partitioner.findPlaceholder(function->address()));
+    DfCfg dfCfg = P2::DataFlow::buildDfCfg(partitioner, partitioner->cfg(), partitioner->findPlaceholder(function->address()));
     size_t startVertexId = 0;
 
     // Find the unique return vertex if there is one. All function return blocks flow into this vertex, but this vertex will
@@ -286,7 +287,7 @@ analyzeFunction(const P2::Partitioner &partitioner, const P2::Function::Ptr &fun
     }
 
     // Build the data-flow engine. We'll use parts from Partitioner2 for convenience, which uses symbolic semantics.
-    BaseSemantics::Dispatcher::Ptr cpu = partitioner.newDispatcher(partitioner.newOperators());
+    BaseSemantics::Dispatcher::Ptr cpu = partitioner->newDispatcher(partitioner->newOperators());
     P2::DataFlow::TransferFunction xfer(cpu);
     P2::DataFlow::MergeFunction merge(cpu);
     typedef DataFlow::Engine<DfCfg, SymbolicSemantics::State::Ptr, P2::DataFlow::TransferFunction,
@@ -330,11 +331,11 @@ main(int argc, char *argv[]) {
     P2::Engine *engine = P2::Engine::instance();
     std::vector<std::string> specimen = engine->parseCommandLine(argc, argv, "tests semantics initial states", description)
                                         .unreachedArgs();
-    P2::Partitioner partitioner = engine->partition(specimen);
+    P2::Partitioner::Ptr partitioner = engine->partition(specimen);
 
     basicReadTest(partitioner);
     advancedReadTest(partitioner);
-    for (const P2::Function::Ptr &function : partitioner.functions())
+    for (const P2::Function::Ptr &function : partitioner->functions())
          analyzeFunction(partitioner, function);
 
     delete engine;

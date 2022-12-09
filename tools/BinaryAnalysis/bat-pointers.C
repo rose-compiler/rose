@@ -69,9 +69,9 @@ parseCommandLine(int argc, char *argv[], P2::Engine&, Settings &settings) {
 }
 
 static void
-processFunction(const P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
+processFunction(const P2::Partitioner::ConstPtr &partitioner, const P2::Function::Ptr &function) {
     ASSERT_not_null(function);
-    BinaryAnalysis::PointerDetection::Analysis analyzer(partitioner.instructionProvider().disassembler());
+    BinaryAnalysis::PointerDetection::Analysis analyzer(partitioner->instructionProvider().disassembler());
     analyzer.analyzeFunction(partitioner, function);
     if (analyzer.hasResults()) {
         std::cout <<"data pointers in " <<function->printableName() <<"\n";
@@ -119,18 +119,18 @@ main(int argc, char *argv[]) {
     Settings settings;
     P2::Engine *engine = P2::Engine::instance();
     boost::filesystem::path inputFileName = parseCommandLine(argc, argv, *engine, settings);
-    P2::Partitioner partitioner = engine->loadPartitioner(inputFileName, settings.stateFormat);
+    P2::Partitioner::Ptr partitioner = engine->loadPartitioner(inputFileName, settings.stateFormat);
 
     // Select functions to analyze
     std::vector<P2::Function::Ptr> selectedFunctions;
     if (!settings.functionNames.empty() || !settings.addresses.empty()) {
-        selectedFunctions = Bat::selectFunctionsByNameOrAddress(partitioner.functions(), settings.functionNames, mlog[WARN]);
+        selectedFunctions = Bat::selectFunctionsByNameOrAddress(partitioner->functions(), settings.functionNames, mlog[WARN]);
         for (const P2::Function::Ptr &function: Bat::selectFunctionsContainingInstruction(partitioner, settings.addresses))
             P2::insertUnique(selectedFunctions, function, P2::sortFunctionsByAddress);
         if (selectedFunctions.empty())
             mlog[WARN] <<"no matching functions found\n";
     } else {
-        selectedFunctions = partitioner.functions();
+        selectedFunctions = partitioner->functions();
         if (selectedFunctions.empty())
             mlog[WARN] <<"specimen contains no functions\n";
     }

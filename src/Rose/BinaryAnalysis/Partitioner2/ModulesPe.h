@@ -36,9 +36,9 @@ typedef Sawyer::Container::Map<rose_addr_t, SgAsmPEImportItem*> ImportIndex;
  *  list of new, unique functions sorted by entry address.
  *
  * @{ */
-std::vector<Function::Ptr> findExportFunctions(const Partitioner&, SgAsmPEFileHeader*);
-std::vector<Function::Ptr> findExportFunctions(const Partitioner&, SgAsmInterpretation*);
-size_t findExportFunctions(const Partitioner&, SgAsmInterpretation*, std::vector<Function::Ptr>&);
+std::vector<Function::Ptr> findExportFunctions(const PartitionerConstPtr&, SgAsmPEFileHeader*);
+std::vector<Function::Ptr> findExportFunctions(const PartitionerConstPtr&, SgAsmInterpretation*);
+size_t findExportFunctions(const PartitionerConstPtr&, SgAsmInterpretation*, std::vector<Function::Ptr>&);
 /** @} */
 
 /** Reads PE import sections to find functions.
@@ -48,31 +48,31 @@ size_t findExportFunctions(const Partitioner&, SgAsmInterpretation*, std::vector
  *  sorted by entry address.
  *
  * @{ */
-std::vector<Function::Ptr> findImportFunctions(const Partitioner&, SgAsmPEFileHeader*);
-std::vector<Function::Ptr> findImportFunctions(const Partitioner&, SgAsmInterpretation*);
-size_t findImportFunctions(const Partitioner&, SgAsmPEFileHeader*, const ImportIndex&, std::vector<Function::Ptr>&);
+std::vector<Function::Ptr> findImportFunctions(const PartitionerConstPtr&, SgAsmPEFileHeader*);
+std::vector<Function::Ptr> findImportFunctions(const PartitionerConstPtr&, SgAsmInterpretation*);
+size_t findImportFunctions(const PartitionerConstPtr&, SgAsmPEFileHeader*, const ImportIndex&, std::vector<Function::Ptr>&);
 /** @} */
 
 /** Scans PE import sections to build an index.
  *
  * @{ */
-ImportIndex getImportIndex(const Partitioner&, SgAsmPEFileHeader*);
-ImportIndex getImportIndex(const Partitioner&, SgAsmInterpretation*);
-size_t getImportIndex(const Partitioner&, SgAsmPEFileHeader*, ImportIndex&);
+ImportIndex getImportIndex(const PartitionerConstPtr&, SgAsmPEFileHeader*);
+ImportIndex getImportIndex(const PartitionerConstPtr&, SgAsmInterpretation*);
+size_t getImportIndex(const PartitionerConstPtr&, SgAsmPEFileHeader*, ImportIndex&);
 /** @} */
 
 /** Update import address tables to reflect addresses of imported functions. */
-void rebaseImportAddressTables(Partitioner &partitioner, const ImportIndex &index);
+void rebaseImportAddressTables(const PartitionerPtr &partitioner, const ImportIndex &index);
 
 /** Names functions that look like they're thunks for imports.
  *
  *  An import thunk is an indirect unconditional jump through a read-only import address table to a virtual address where an
  *  external function will be dynamically linked.  The dynamic linking will have already taken place if a linker was used prior
  *  to disassembly. */
-void nameImportThunks(const Partitioner&, SgAsmInterpretation*);
+void nameImportThunks(const PartitionerConstPtr&, SgAsmInterpretation*);
 
 /** Build may-return white and black lists. */
-void buildMayReturnLists(Partitioner&);
+void buildMayReturnLists(const PartitionerPtr&);
 
 /** Callback to restore PEScrambler function call edges.
  *
@@ -136,7 +136,7 @@ public:
     /** Name certain addresses in the specimen.
      *
      *  Names the PEScrambler dispatch address and dispatch table address if they don't have names yet. */
-    void nameKeyAddresses(Partitioner&);
+    void nameKeyAddresses(const PartitionerPtr&);
 
     /** Virtual address of PEScrambler dispatch function. */
     rose_addr_t dispatcherVa() const { return dispatcherVa_; }
@@ -162,10 +162,10 @@ public:
 private:
     // True if the only CFG successor for the specified block is the PEScrambler dispatcher and the block ends with a CALL
     // instruction.
-    bool basicBlockCallsDispatcher(const Partitioner&, const BasicBlock::Ptr&);
+    bool basicBlockCallsDispatcher(const PartitionerConstPtr&, const BasicBlock::Ptr&);
 
     // Look up the return address in the PEScrambler dispatch table as if we were the dispatcher and return it if found.
-    Sawyer::Optional<rose_addr_t> findCalleeAddress(const Partitioner&, rose_addr_t returnVa);
+    Sawyer::Optional<rose_addr_t> findCalleeAddress(const PartitionerConstPtr&, rose_addr_t returnVa);
 };
 
 } // namespace

@@ -94,12 +94,12 @@ main(int argc, char** argv) {
     }
      
     // Create a partitioner that's tuned for a certain architecture, and then tune it even more depending on our command-line.
-    P2::Partitioner partitioner = engine->createPartitioner();
+    P2::Partitioner::Ptr partitioner = engine->createPartitioner();
 
     // Build a Library Identification database (in the current directory).
     Flir flir;
     flir.createDatabase(settings.databaseName);
-    auto lib = Flir::Library::instance(libHash, "foo", "0.0", partitioner.instructionProvider().disassembler()->name());
+    auto lib = Flir::Library::instance(libHash, "foo", "0.0", partitioner->instructionProvider().disassembler()->name());
     flir.insertLibrary(lib, partitioner);
 
 #if 0

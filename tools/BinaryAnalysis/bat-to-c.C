@@ -51,7 +51,7 @@ main(int argc, char *argv[]) {
     }
 
     // Parse the binary specimen. We're not actually adding it to the AST.
-    P2::Partitioner binary = engine->partition(args);
+    P2::Partitioner::Ptr binary = engine->partition(args);
 
     // Process the binary to add its instructions to the source template
     BinaryToSource(settings.generator).generateSource(binary, std::cout);
