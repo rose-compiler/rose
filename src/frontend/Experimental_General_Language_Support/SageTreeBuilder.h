@@ -175,7 +175,8 @@ public:
    void Enter(SgExprStatement* &, SgExpression* &, const std::vector<SgExpression*> &, const std::string &);
    void Leave(SgExprStatement*);
 
-   void Enter(SgIfStmt* &, SgExpression*, SgBasicBlock*, SgBasicBlock*, bool is_ifthen = false, bool has_end_stmt = false, bool is_else_if = false);
+   void Enter(SgIfStmt* &, SgExpression*, SgBasicBlock*, SgBasicBlock*, std::vector<Rose::builder::Token> &,
+              bool is_ifthen = false, bool has_end_stmt = false, bool is_else_if = false);
    void Leave(SgIfStmt*);
 
    void Enter(SgProcessControlStatement* &, const std::string &, const boost::optional<SgExpression*> &);
@@ -281,6 +282,7 @@ public:
 
    void attachComments(SgLocatedNode* node, bool at_end=false);
    void attachComments(SgLocatedNode* node, const PosInfo &pos, bool at_end=false);
+   void attachComments(SgLocatedNode* node, const std::vector<Token> &tokens);
    void attachComments(SgLocatedNode* node, std::vector<Token> &tokens, const PosInfo &pos);
    void attachRemainingComments(SgLocatedNode* node);
    void consumePrecedingComments(std::vector<Token> &tokens, const PosInfo &pos);
