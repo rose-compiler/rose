@@ -1,11 +1,13 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
-
-#include <Rose/CommandLine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/EngineJvm.h>
-#include <Rose/BinaryAnalysis/Disassembler/Jvm.h>
+
 #include <Rose/BinaryAnalysis/ByteCode/Jvm.h>
+#include <Rose/BinaryAnalysis/Disassembler/Jvm.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Configuration.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+#include <Rose/CommandLine.h>
 
 using namespace Rose::Diagnostics;
 using std::cout;

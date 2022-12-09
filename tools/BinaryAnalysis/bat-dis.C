@@ -9,9 +9,10 @@ static const char *description =
 
 #include <rose.h>
 #include <Rose/BinaryAnalysis/NoOperation.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
 #include <Rose/CommandLine.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Sawyer/Stopwatch.h>
 
 #include <batSupport.h>

@@ -6,6 +6,7 @@ static const char *description =
 #include <rose.h>
 #include <Rose/CommandLine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 
 #include <batSupport.h>
 #include <boost/format.hpp>

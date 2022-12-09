@@ -3,11 +3,12 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_MODEL_CHECKER
 
+#include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #include <Rose/BinaryAnalysis/ModelChecker/SemanticCallbacks.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
+#include <Rose/BinaryAnalysis/Variables.h>
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/Stack.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 
 namespace Rose {
 namespace BinaryAnalysis {

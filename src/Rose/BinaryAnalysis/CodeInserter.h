@@ -3,7 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+#include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 #include <Sawyer/Map.h>
 
 namespace Rose {
@@ -156,20 +156,8 @@ public:
     static Diagnostics::Facility mlog;
 
 public:
-    explicit CodeInserter(const Partitioner2::PartitionerConstPtr &partitioner)
-        : partitioner_(partitioner), minChunkAllocationSize_(8192), chunkAllocationAlignment_(4096),
-          chunkAllocationName_("new code"), aggregationDirection_(AGGREGATE_PREDECESSORS | AGGREGATE_SUCCESSORS),
-          nopPadding_(PAD_NOP_BACK) {
-        ASSERT_not_null(partitioner);
-        ASSERT_not_null(partitioner->memoryMap());
-        if (!partitioner->memoryMap()->isEmpty() &&
-            partitioner->memoryMap()->hull().greatest() < AddressInterval::whole().greatest()) {
-            chunkAllocationRegion_ = AddressInterval::hull(partitioner->memoryMap()->hull().greatest() + 1,
-                                                           AddressInterval::whole().greatest());
-        } else {
-            chunkAllocationRegion_ = AddressInterval::whole();
-        }
-    }
+    explicit CodeInserter(const Partitioner2::PartitionerConstPtr&);
+    ~CodeInserter();
 
     /** Initialize diagnostic streams.
      *
@@ -272,23 +260,16 @@ public:
      *  This is just a convenience for @ref replaceBlockInsns that replaces @p nInsns instructions at the beginning of the
      *  specified basic block. If @p nInsns is zero, then the @p replacement is inserted at the front of the basic block
      *  without removing any instructions. */
-    bool replaceInsnsAtFront(const Partitioner2::BasicBlockPtr &bb, size_t nInsns,
-                             const std::vector<uint8_t> &replacement,
-                             const std::vector<Relocation> &relocations = std::vector<Relocation>()) {
-        return replaceBlockInsns(bb, 0, nInsns, replacement, relocations);
-    }
+    bool replaceInsnsAtFront(const Partitioner2::BasicBlockPtr&, size_t nInsns, const std::vector<uint8_t> &replacement,
+                             const std::vector<Relocation> &relocations = std::vector<Relocation>());
 
     /** Replace instructions at back of basic block.
      *
      *  This is just a convenience for @ref replaceBlockInsns that replaces @p nInsns instructions at the end of the specified
      *  basic block. If @p nInsns is zero, then the @p replacement is appended to the end of the basic block without removing
      *  any instructions. */
-    virtual bool replaceInsnsAtBack(const Partitioner2::BasicBlockPtr &bb, size_t nInsns,
-                                    const std::vector<uint8_t> &replacement,
-                                    const std::vector<Relocation> &relocations = std::vector<Relocation>()) {
-        ASSERT_require(nInsns <= bb->nInstructions());
-        return replaceBlockInsns(bb, bb->nInstructions()-nInsns, nInsns, replacement, relocations);
-    }
+    virtual bool replaceInsnsAtBack(const Partitioner2::BasicBlockPtr&, size_t nInsns, const std::vector<uint8_t> &replacement,
+                                    const std::vector<Relocation> &relocations = std::vector<Relocation>());
 
     /** Prepend code to a basic block.
      *
@@ -296,11 +277,8 @@ public:
      *  writing the @p replacement followed by the first instruction(s) of the block to some other area of memory, overwriting
      *  the first part of the basic block with an unconditional branch to the replacement, and following the replacement with
      *  an unconditional branch back to the rest of the basic block. */
-    virtual bool prependInsns(const Partitioner2::BasicBlockPtr &bb,
-                              const std::vector<uint8_t> &replacement,
-                              const std::vector<Relocation> &relocations = std::vector<Relocation>()) {
-        return replaceInsnsAtFront(bb, 0, replacement, relocations);
-    }
+    virtual bool prependInsns(const Partitioner2::BasicBlockPtr&, const std::vector<uint8_t> &replacement,
+                              const std::vector<Relocation> &relocations = std::vector<Relocation>());
 
     /** Append code to a basic block.
      *
@@ -308,11 +286,8 @@ public:
      *  moving the last instruction(s) of the block to some other memory followed by the replacement. The original final
      *  instructions are overwritten with an unconditional branch to that other memory, which is followed by a branch back to
      *  the rest of the basic block. */
-    virtual bool appendInsns(const Partitioner2::BasicBlockPtr &bb,
-                             const std::vector<uint8_t> &replacement,
-                             const std::vector<Relocation> &relocations = std::vector<Relocation>()) {
-        return replaceInsnsAtBack(bb, 0, replacement, relocations);
-    }
+    virtual bool appendInsns(const Partitioner2::BasicBlockPtr&, const std::vector<uint8_t> &replacement,
+                             const std::vector<Relocation> &relocations = std::vector<Relocation>());
 
     /** Replace exactly the specified instructions with some other encoding.
      *

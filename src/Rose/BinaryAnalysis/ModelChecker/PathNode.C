@@ -3,14 +3,17 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/ModelChecker/PathNode.h>
 
-#include <boost/scope_exit.hpp>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RiscOperators.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/State.h>
 #include <Rose/BinaryAnalysis/ModelChecker/ExecutionUnit.h>
 #include <Rose/BinaryAnalysis/ModelChecker/SemanticCallbacks.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Settings.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Tag.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/State.h>
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
+
 #include <rose_isnan.h>
+
+#include <boost/scope_exit.hpp>
 
 using namespace Sawyer::Message::Common;
 namespace BS = Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;

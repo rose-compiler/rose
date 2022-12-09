@@ -9,6 +9,8 @@
 #include <Rose/BinaryAnalysis/ModelChecker/Tag.h>
 #include <Rose/BinaryAnalysis/ModelChecker/SourceLister.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
 
