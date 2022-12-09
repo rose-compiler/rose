@@ -1298,6 +1298,21 @@ public:
         return BitVectorSupport::toBinary(data(), hull());
     }
 
+    /** Convert to a vector of bytes.
+     *
+     *  The returned vector is in little endian order. The size of the returned vector is rounded up to the next whole byte
+     *  and any extra bits in the return value are cleared. For instance, if this bit vector contains 13 bits, then the return
+     *  value will be two bytes with the highest order three bits of the second byte cleared.
+     *
+     * @{ */
+    std::vector<uint8_t> toBytes() const {
+        return BitVectorSupport::toBytes(data(), hull());
+    }
+    std::vector<uint8_t> toBytes(const BitRange &range) const {
+        return BitVectorSupport::toBytes(data(), range);
+    }
+    /** @} */
+
     /** Obtain bits from an integer.
      *
      *  Assigns the specified value to the bits indicated by @p range of this vector.  If the range contains fewer than 64 bits
@@ -1429,6 +1444,23 @@ public:
         BitVectorSupport::fromBinary(data(), hull(), input);
         return *this;
     }
+
+    /** Obtain bits from a byte vector.
+     *
+     *  Reads bits from the little-endian byte vector and copies them into the specified range of this bit vector. If no range
+     *  is specified, then this entire bit vector is initialized. The byte vector must be long enough to initialize the
+     *  specified range or the whole bit vector.
+     *
+     * @{ */
+    BitVector& fromBytes(const std::vector<uint8_t> &input) {
+        BitVectorSupport::fromBytes(data(), hull(), input);
+        return *this;
+    }
+    BitVector& fromBytes(const BitRange &range, const std::vector<uint8_t> &input) {
+        BitVectorSupport::fromBytes(data(), range, input);
+        return *this;
+    }
+    /** @} */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Utility

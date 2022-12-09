@@ -69,9 +69,9 @@ struct AdaIdentifier : std::string
 };
 
 /// returns a map that collects inherited function symbols for
-struct InheritedSymbolKey : std::tuple<const SgFunctionDeclaration*, const SgTypedefType*>
+struct InheritedSymbolKey : std::tuple<const SgFunctionDeclaration*, const SgType*>
 {
-  using base = std::tuple<const SgFunctionDeclaration*, const SgTypedefType*>;
+  using base = std::tuple<const SgFunctionDeclaration*, const SgType*>;
   using base::base;
 
   std::tuple_element<0, base>::type function()        const { return std::get<0>(*this); }

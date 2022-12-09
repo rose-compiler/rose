@@ -23,6 +23,11 @@ begin
   return zero;
 end Origin;
 
+function "=" (lhs, rhs : in Complex) return boolean is
+begin
+  return lhs.Re = rhs.Re and then lhs.Im = rhs.Im;
+end "=";
+
 procedure Put(v : in Complex) is
 begin
   Put("(");

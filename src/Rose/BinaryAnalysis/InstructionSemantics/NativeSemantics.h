@@ -118,6 +118,9 @@ public:
     virtual void writeRegister(RegisterDescriptor, const BaseSemantics::SValuePtr &value,
                                BaseSemantics::RiscOperators*) override;
 
+    virtual void updateReadProperties(RegisterDescriptor) override {}
+    virtual void updateWriteProperties(RegisterDescriptor, BaseSemantics::InputOutputProperty) override {}
+
     virtual void hash(Combinatorics::Hasher&, BaseSemantics::RiscOperators*) const override;
 
     virtual void print(std::ostream&, Formatter&) const override;

@@ -31,22 +31,66 @@ public:
     using Ptr = GdbPtr;
 
     /** Describe a specimen. */
-    struct Specimen {
-        /** Name of GDB executable. */
-        boost::filesystem::path gdbName = "gdb-multiarch";
-
-        /** Path to executable file.
-         *
-         *  This is optional. */
-        boost::filesystem::path executable;
-
+    class Specimen {
+    public:
         /** Remote target.
          *
          *  This is a host name and port. */
         struct Remote {
-            std::string host;                           /**< Host name for remote connection. */
-            uint16_t port = 0;                          /**< TCP/IP port number for remote connection. */
-        } remote;
+            std::string host = "localhost";             /**< Host name for remote connection. */
+            uint16_t port = 1234;                       /**< TCP/IP port number for remote connection. */
+        };
+
+    private:
+        boost::filesystem::path gdbName_ = "gdb-multiarch"; // name of the GDB executable
+        boost::filesystem::path executable_;                // optional name of executable containing symbols
+        Remote remote_;                                     // how to connect to the GDB server
+
+    public:
+        /** Default constructor. */
+        Specimen();
+
+        /** Construct a specimen for a specific executable.
+         *
+         *  The executable name is only used to specify where the debugging symbols are stored. The actual executable being
+         *  executed is run under the control of the GDB server which is configured seperately from the ROSE library which
+         *  talks to the GDB client. */
+        Specimen(const boost::filesystem::path &exeName);
+
+        /** Construct a specimen for a specific executable and GDB server.
+         *
+         *  The executable name is only used to specify where the debugging symbols are stored. The actual executable being
+         *  executed is run under the control of the GDB server which is configured seperately from the ROSE library which
+         *  talks to the GDB client.
+         *
+         *  The @p host and @port describe how to connect to the GDB server. */
+        Specimen(const boost::filesystem::path &exeName, const std::string &host, uint16_t port);
+
+    public:
+        /** Property: Name of GDB executable.
+         *
+         * @{ */
+        const boost::filesystem::path &gdbName() const;
+        void gdbName(const boost::filesystem::path&);
+        /** @} */
+
+        /** Property: Optional path to executable file.
+         *
+         *  This is the name of the executable containing the debugging symbols. It is not necessarily the executable being
+         *  run since that's the reponsibility of the separate GDB server.
+         *
+         * @{ */
+        const boost::filesystem::path& executable() const;
+        void executable(const boost::filesystem::path&);
+        /** @} */
+
+        /** Property: How to connect to the GDB server.
+         *
+         * @{ */
+        const Remote& remote() const;
+        void remote(const Remote&);
+        void remote(const std::string &host, uint16_t port);
+        /** @} */
     };
 
     // Thread-safe FIFO
@@ -230,6 +274,7 @@ public:
     virtual void singleStep(ThreadId) override;
     virtual void runToBreakPoint(ThreadId) override;
     virtual Sawyer::Container::BitVector readRegister(ThreadId, RegisterDescriptor) override;
+    virtual std::vector<RegisterDescriptor> availableRegisters() override;
     virtual void writeRegister(ThreadId, RegisterDescriptor, const Sawyer::Container::BitVector&) override;
     virtual void writeRegister(ThreadId, RegisterDescriptor, uint64_t value) override;
     virtual size_t readMemory(rose_addr_t va, size_t nBytes, uint8_t *buffer) override;
@@ -238,6 +283,8 @@ public:
     virtual size_t writeMemory(rose_addr_t va, size_t nBytes, const uint8_t *bytes) override;
     virtual bool isTerminated() override;
     virtual std::string howTerminated() override;
+    virtual Sawyer::Container::BitVector readAllRegisters(ThreadId) override;
+    virtual void writeAllRegisters(ThreadId, const Sawyer::Container::BitVector&) override;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Supporting functions

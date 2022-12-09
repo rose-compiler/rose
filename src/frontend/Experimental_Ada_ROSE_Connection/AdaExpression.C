@@ -102,13 +102,20 @@ namespace
       SgAdaInheritedFunctionSymbol*
       inheritedFunctionSymbol(SgType* ty, SgFunctionSymbol& origSymbol)
       {
-        const SgDeclarationStatement* tydcl = si::Ada::baseDeclaration(ty);
-        const SgTypedefDeclaration*   tydefDcl = isSgTypedefDeclaration(tydcl);
+        const SgDeclarationStatement* tydcl = si::Ada::associatedDeclaration(ty);
+        const bool                    supported = (  isSgTypedefDeclaration(tydcl)
+                                                  || isSgClassDeclaration(tydcl)
+                                                  || isSgEnumDeclaration(tydcl)
+                                                  );
 
-        if (tydefDcl == nullptr)
+        if (!supported)
+        {
+          //~ logError() << "not a supported type derivation (i.e., extension record, derived type, derived enum)"
+                     //~ << std::endl;
           return nullptr;
+        }
 
-        InheritedSymbolKey            key{origSymbol.get_declaration(), tydefDcl->get_type()};
+        InheritedSymbolKey            key{origSymbol.get_declaration(), si::getDeclaredType(tydcl)};
 
         return findFirst(inheritedSymbols(), key);
       }
@@ -136,7 +143,10 @@ namespace
           const SgExpression* arg = arglst.at(aa->pos());
 
           if (SgAdaInheritedFunctionSymbol* inhSym = inheritedFunctionSymbol(arg->get_type(), implSymbol))
+          {
+            //~ logError() << "inh fnsym" << std::endl;
             return *inhSym;
+          }
 
           ++aa;
         }
@@ -166,7 +176,10 @@ namespace
             continue;
 
           if (SgAdaInheritedFunctionSymbol* inhSym = inheritedFunctionSymbol((*argpos)->get_type(), implSymbol))
+          {
+            //~ logError() << "inh2 fnsym" << std::endl;
             return *inhSym;
+          }
         }
 
         return implSymbol;
@@ -196,6 +209,10 @@ namespace
 
           if (&origSym != &funSym)
             n.set_symbol(&funSym);
+        }
+        else
+        {
+          //~ logError() << "w/o fndcl" << std::endl;
         }
 
         res = &mkFunctionCallExp(n, arglst, !callSyntax);
@@ -554,39 +571,98 @@ namespace
     return res.size() != 1 ? nullptr : res.front();
   }
 
-  bool anonAccessType(OperatorCallSupplement, AstContext)
+  bool anonAccessType(OperatorCallSupplement suppl, const AstContext&)
+  {
+    SgTypePtrList*   argtypes = suppl.args();
+    ADA_ASSERT(argtypes);
+
+    SgAdaAccessType* argty = isSgAdaAccessType(argtypes->front());
+
+    return argty && argty->get_is_anonymous();
+  }
+
+  bool equalArgumentTypes(OperatorCallSupplement suppl, const AstContext&)
+  {
+    SgTypePtrList* argtypes = suppl.args();
+    ADA_ASSERT(argtypes && argtypes->size() == 2);
+
+    // \todo do we need to find root types?
+    SgType*        lhsty = argtypes->front();
+    SgType*        rhsty = argtypes->back();
+
+    return lhsty == rhsty;
+  }
+
+  bool resultTypeIsBool(OperatorCallSupplement suppl, const AstContext&)
+  {
+    SgType const* rootty = si::Ada::typeRoot(suppl.result());
+
+    //~ res = res->stripTypedefsAndModifiers();
+    return isSgTypeBool(rootty) != nullptr;
+  }
+
+  bool nonLimitedArgumentType(OperatorCallSupplement suppl, const AstContext&)
+  {
+    SgTypePtrList* argtypes = suppl.args();
+    ADA_ASSERT(argtypes);
+
+    SgType*        argty = argtypes->front();
+    ADA_ASSERT(argty);
+
+    SgDeclarationStatement* dcl = si::Ada::associatedDeclaration(argty);
+
+    return !(dcl && dcl->get_declarationModifier().isAdaLimited());
+  }
+
+  bool hasEqualityOperator(OperatorCallSupplement, const AstContext&)
   {
     return false;
   }
 
-  bool equalArgumentTypes(OperatorCallSupplement, AstContext)
+  bool isScalarType(OperatorCallSupplement suppl, const AstContext&)
   {
-    return false;
+    SgTypePtrList* argtypes = suppl.args();
+    ADA_ASSERT(argtypes);
+
+    SgType const*  argty = si::Ada::typeRoot(argtypes->front());
+
+    if (!argty) return false;
+
+    return (  si::Ada::isModularType(*argty)
+           || si::Ada::isIntegerType(*argty)
+           || si::Ada::isFloatingPointType(*argty)
+           || si::Ada::isDiscreteType(*argty)
+           || si::Ada::isFixedType(*argty)
+           || si::Ada::isDecimalFixedType(*argty)
+           || isSgEnumType(argty)
+           );
   }
 
-  bool resultTypeIsBool(OperatorCallSupplement, AstContext)
+  bool isDiscreteArrayType(OperatorCallSupplement suppl, const AstContext&)
   {
-    return false;
-  }
+    SgTypePtrList const* argtypes = suppl.args();
+    ADA_ASSERT(argtypes);
 
-  bool nonLimitedArgumentTypes(OperatorCallSupplement, AstContext)
-  {
-    return false;
-  }
+    SgType const*        argty = si::Ada::typeRoot(argtypes->front());
+    SgArrayType const*   arrty = isSgArrayType(argty);
 
-  bool hasEqualityOperator(OperatorCallSupplement, AstContext)
-  {
-    return false;
-  }
+    if (!arrty) return false;
 
-  bool isScalarType(OperatorCallSupplement, AstContext)
-  {
-    return false;
-  }
+    SgExprListExp const* idx = arrty->get_dim_info();
+    if (!idx || (idx->get_expressions().size() != 1)) return false;
 
-  bool isDiscreteArrayType(OperatorCallSupplement, AstContext)
-  {
-    return false;
+    SgType const* elmty = si::Ada::typeRoot(arrty->get_base_type());
+
+    if (elmty) return false;
+
+    return (  si::Ada::isModularType(*elmty)
+           || si::Ada::isIntegerType(*elmty)
+           //~ || si::Ada::isFloatingPointType(*elmty)
+           || si::Ada::isDiscreteType(*elmty)
+           //~ || si::Ada::isFixedType(*elmty)
+           //~ || si::Ada::isDecimalFixedType(*elmty)
+           || isSgEnumType(elmty)
+           );
   }
 
   bool isGeneratableOperator(AdaIdentifier name, OperatorCallSupplement suppl, AstContext ctx)
@@ -599,7 +675,7 @@ namespace
     // see https://www.adaic.com/resources/add_content/standards/05rm/html/RM-4-4.html
     if (name == "=" && !anonAccessType(suppl, ctx))
     {
-      return (  nonLimitedArgumentTypes(suppl, ctx)
+      return (  nonLimitedArgumentType(suppl, ctx)
              && equalArgumentTypes(suppl, ctx)
              && resultTypeIsBool(suppl, ctx)
              );
@@ -607,7 +683,7 @@ namespace
 
     if (name == "/=" && !anonAccessType(suppl, ctx))
     {
-      return (  ( nonLimitedArgumentTypes(suppl, ctx) || hasEqualityOperator(suppl, ctx) )
+      return (  ( nonLimitedArgumentType(suppl, ctx) || hasEqualityOperator(suppl, ctx) )
              && equalArgumentTypes(suppl, ctx)
              && resultTypeIsBool(suppl, ctx)
              );
@@ -615,19 +691,105 @@ namespace
 
     if ((name == "=" || name == "/=") && anonAccessType(suppl, ctx))
     {
+      // catch these cases in testing...
+      ADA_ASSERT(false);
       return true;
     }
 
-    if (  ((name == "<") || (name == "<=") || (name == ">") || (name == ">="))
-       && (isScalarType(suppl, ctx) || isDiscreteArrayType(suppl, ctx))
-       )
+    if ((name == "<") || (name == "<=") || (name == ">") || (name == ">="))
     {
-      return (  equalArgumentTypes(suppl, ctx)
+      return (  (isScalarType(suppl, ctx) || isDiscreteArrayType(suppl, ctx))
+             && equalArgumentTypes(suppl, ctx)
              && resultTypeIsBool(suppl, ctx)
              );
     }
 
+    if (name == "and" || name == "or" || name == "xor")
+    {
+      return equalArgumentTypes(suppl, ctx);
+      //~ (  (argIsBoolean() || argIsModularType() || (argIsBoolArray()))
+             //~ && equalArgumentTypes(suppl, ctx)
+             //~ );
+    }
+
+    if (  ((name == "+") || (name == "-"))
+       // && (unaryCall(suppl, ctx))
+       )
+    {
+      return true; // \todo
+    }
+
+    if ( (  name == "+"   || name == "-"   || name == "*"
+         || name == "/"   || name == "mod" || name == "rem"
+         || name == "abs" || name == "not"
+         )
+       )
+    {
+      return true;
+    }
+
     return false;
+  }
+
+  bool isRelationalOperator(AdaIdentifier name)
+  {
+    return (  name == "="
+           || name == "/="
+           || name == "<"
+           || name == "<="
+           || name == ">"
+           || name == ">="
+           );
+  }
+
+  void setDefaultResultType(AdaIdentifier name, OperatorCallSupplement& suppl)
+  {
+    if (suppl.result())
+      return;
+
+    if (  name == "="
+       || name == "/="
+       || name == "<"
+       || name == "<="
+       || name == ">"
+       || name == ">="
+       )
+    {
+      suppl.result(sb::buildBoolType());
+      return;
+    }
+
+    if (suppl.args() == nullptr)
+      return;
+
+    if (  name == "+"
+       || name == "-"
+       || name == "*"
+       || name == "/"
+       || name == "mod"
+       || name == "rem"
+       || name == "abs"
+       || name == "not"
+       || name == "and"
+       || name == "or"
+       || name == "xor"
+       )
+    {
+      suppl.result(suppl.args()->front());
+      return;
+    }
+
+    if (name == "&")
+    {
+      // \todo
+      return;
+    }
+
+    if (name == "**")
+    {
+      // \todo
+      return;
+    }
   }
 
   // cmp to declareOp in SgType.C
@@ -636,23 +798,32 @@ namespace
   {
     ADA_ASSERT(expr.Expression_Kind == An_Operator_Symbol);
 
+    setDefaultResultType(name, suppl);
+
     if ((suppl.args() == nullptr) || (suppl.result() == nullptr))
+    {
+      logWarn() << "suppl is null" << std::endl;
       return nullptr;
+    }
 
     const SgType*          ty     = suppl.args()->front();
-    SgScopeStatement*      scope  = si::Ada::scopeOfTypedecl(ty);
+    SgScopeStatement*      scope  = si::Ada::operatorScope(ty, isRelationalOperator(name));
 
     if (scope == nullptr)
     {
-      logWarn() << "unable to get scope of type declaration: " << std::flush
-                << ty->unparseToString()
+      logWarn() << "unable to get scope of type declaration: "
+                << (ty ? typeid(*ty).name() : std::string{"<null>"}) << std::flush
+                << ": " << ty->unparseToString()
                 << std::endl;
       return nullptr;
     }
 
     // \todo add support for other operators
     if (!isGeneratableOperator(name, suppl, ctx))
+    {
+      logWarn() << "oper " << name << " not generatable" << std::endl;
       return nullptr;
+    }
 
     std::string            opname = si::Ada::roseOperatorPrefix + name;
 
@@ -725,7 +896,13 @@ namespace
 
     ADA_ASSERT(expr.Expression_Kind == An_Operator_Symbol);
 
-    if (SgDeclarationStatement* dcl = findFirst(asisDecls(), expr.Corresponding_Name_Definition, expr.Corresponding_Name_Declaration))
+    // PP 11/18/22
+    // under some unclear circumstances a provided = operator and a generated /= may have the
+    //   same Corresponding_Name_Declaration, but different Corresponding_Name_Definition.
+    //   => just use the Corresponding_Name_Definition
+    // ROSE regression tests: dbase.ads, dbase.adb, dbase_test.adb
+    // was: if (SgDeclarationStatement* dcl = findFirst(asisDecls(), expr.Corresponding_Name_Definition, expr.Corresponding_Name_Declaration))
+    if (SgDeclarationStatement* dcl = findFirst(asisDecls(), expr.Corresponding_Name_Definition))
     {
       SgExpression* res = sg::dispatch(ExprRefMaker{ctx}, dcl);
 
@@ -737,6 +914,7 @@ namespace
 
     // do not use leading and trailing '"'
     AdaIdentifier fnname{expr.Name_Image+1, len-2};
+
     std::vector<SgFunctionDeclaration*> overloadSet = genOverloadSet(fnname, suppl, ctx);
 
     if (!overloadSet.empty())
@@ -874,6 +1052,12 @@ namespace
     {
 
       logTrace() << "A_Function_Call/An_Explicit_Dereference?" << std::endl;
+      return true;
+    }
+
+    if (expr.Expression_Kind == A_Type_Conversion)
+    {
+      logTrace() << "A_Type_Conversion" << std::endl;
       return true;
     }
 

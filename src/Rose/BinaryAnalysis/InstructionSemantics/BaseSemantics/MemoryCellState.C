@@ -27,6 +27,26 @@ MemoryCellState::clear() {
     latestWrittenCell_ = MemoryCell::Ptr();
 }
 
+void
+MemoryCellState::updateReadProperties(const CellList &cells) {
+    for (const MemoryCell::Ptr &cell: cells) {
+        cell->ioProperties().insert(IO_READ);
+        if (cell->ioProperties().exists(IO_WRITE)) {
+            cell->ioProperties().insert(IO_READ_AFTER_WRITE);
+        } else {
+            cell->ioProperties().insert(IO_READ_BEFORE_WRITE);
+        }
+        if (!cell->ioProperties().exists(IO_INIT))
+            cell->ioProperties().insert(IO_READ_UNINITIALIZED);
+    }
+}
+
+void
+MemoryCellState::updateWriteProperties(const CellList &cells, InputOutputPropertySet properties) {
+    for (const MemoryCell::Ptr &cell: cells)
+        cell->ioProperties().insert(properties);
+}
+
 } // namespace
 } // namespace
 } // namespace

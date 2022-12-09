@@ -47,7 +47,8 @@ MemoryCellMap::readMemory(const SValue::Ptr &address, const SValue::Ptr &dflt,
                           RiscOperators */*addrOps*/, RiscOperators */*valOps*/) {
     SValue::Ptr retval;
     CellKey key = generateCellKey(address);
-    if (MemoryCell::Ptr cell = cells.getOrDefault(key)) {
+    MemoryCell::Ptr cell = cells.getOrDefault(key);
+    if (cell) {
         cell->position(nextPosition());
         retval = cell->value();
     } else {
@@ -59,6 +60,11 @@ MemoryCellMap::readMemory(const SValue::Ptr &address, const SValue::Ptr &dflt,
         cell->position(nextPosition());
         cells.insert(key, cell);
     }
+
+    ASSERT_not_null(cell);
+    CellList cellList;
+    cellList.push_back(cell);
+    updateReadProperties(cellList);
     return retval;
 }
 
@@ -81,12 +87,16 @@ MemoryCellMap::writeMemory(const SValue::Ptr &address, const SValue::Ptr &value,
     ASSERT_not_null(address);
     ASSERT_require(!byteRestricted() || value->nBits() == 8);
     MemoryCell::Ptr newCell = protocell->create(address, value);
-    if (addrOps->currentInstruction() || valOps->currentInstruction()) {
-        newCell->ioProperties().insert(IO_WRITE);
-    } else {
-        newCell->ioProperties().insert(IO_INIT);
-    }
     newCell->position(nextPosition());
+
+    // Update I/O properties
+    InputOutputPropertySet wprops;
+    if (addrOps->currentInstruction() || valOps->currentInstruction()) {
+        wprops.insert(IO_WRITE);
+    } else {
+        wprops.insert(IO_INIT);
+    }
+    updateWriteProperties(CellList{newCell}, wprops);
 
     CellKey key = generateCellKey(address);
     cells.insert(key, newCell);

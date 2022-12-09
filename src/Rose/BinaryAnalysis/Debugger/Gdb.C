@@ -11,6 +11,7 @@
 #include <rose_getline.h>
 
 #include <boost/algorithm/string/trim.hpp>
+#include <boost/filesystem.hpp>
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
 
@@ -23,6 +24,60 @@ using namespace Sawyer::Message::Common;
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Debugger {
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Gdb::Specimen
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Gdb::Specimen::Specimen() {}
+
+Gdb::Specimen::Specimen(const boost::filesystem::path &exeName)
+    : executable_(exeName) {}
+
+Gdb::Specimen::Specimen(const boost::filesystem::path &exeName, const std::string &host, uint16_t port)
+    : executable_(exeName) {
+    remote_.host = host;
+    remote_.port = port;
+}
+
+const boost::filesystem::path&
+Gdb::Specimen::gdbName() const {
+    return gdbName_;
+}
+
+void
+Gdb::Specimen::gdbName(const boost::filesystem::path &p) {
+    gdbName_ = p;
+}
+
+const boost::filesystem::path&
+Gdb::Specimen::executable() const {
+    return executable_;
+}
+
+void
+Gdb::Specimen::executable(const boost::filesystem::path &p) {
+    executable_ = p;
+}
+
+const Gdb::Specimen::Remote&
+Gdb::Specimen::remote() const {
+    return remote_;
+}
+
+void
+Gdb::Specimen::remote(const Gdb::Specimen::Remote &r) {
+    remote_ = r;
+}
+
+void
+Gdb::Specimen::remote(const std::string &host, uint16_t port) {
+    remote(Gdb::Specimen::Remote{host, port});
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Gdb
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Gdb::Gdb()
     : gdbOutputPipe_(ios_) {}
@@ -198,12 +253,12 @@ Gdb::attach(const Specimen &specimen) {
         throw Exception("already attached");
 
     std::vector<std::string> argv;
-    argv.push_back(boost::process::search_path(specimen.gdbName).string());
+    argv.push_back(boost::process::search_path(specimen.gdbName()).string());
     argv.push_back("-n");                               // skip initialization files
     argv.push_back("-q");                               // do not print introductory and copyright messages
     argv.push_back("--interpreter=mi");
-    if (!specimen.executable.empty())
-        argv.push_back(specimen.executable.string());
+    if (!specimen.executable().empty())
+        argv.push_back(specimen.executable().string());
 
     std::promise<int> exitCodePromise;
     exitCodeFuture_ = exitCodePromise.get_future();
@@ -213,7 +268,7 @@ Gdb::attach(const Specimen &specimen) {
     readRequiredResponses();
 
     // Attach to remote target
-    sendCommand("-target-select remote " + specimen.remote.host + ":" + boost::lexical_cast<std::string>(specimen.remote.port));
+    sendCommand("-target-select remote " + specimen.remote().host + ":" + boost::lexical_cast<std::string>(specimen.remote().port));
 
     // Get an appropriate disassembler for this architecture
     for (const GdbResponse &response: responses()) {
@@ -408,6 +463,47 @@ Gdb::findRegister(RegisterDescriptor reg) const {
     }
 }
 
+std::vector<RegisterDescriptor>
+Gdb::availableRegisters() {
+    std::vector<RegisterDescriptor> retval;
+    retval.reserve(registers_.size());
+    for (const auto &r: registers_)
+        retval.push_back(r.second);
+    return retval;
+}
+
+Sawyer::Container::BitVector
+Gdb::readAllRegisters(ThreadId) {
+    Sawyer::Container::BitVector retval;
+    resetResponses();
+
+    // offsets[i] is the bit offset in retval for the start of register i
+    std::vector<size_t> offsets;
+    offsets.reserve(registers_.size());
+    for (size_t i = 0; i < registers_.size(); ++i)
+        offsets.push_back(i > 0 ? offsets.back() + registers_[i-1].second.nBits() : 0);
+
+    // Ask GDB for all the register values
+    for (const GdbResponse &response: sendCommand("-data-list-register-values x")) {
+        if (GdbResponse::ResultClass::DONE == response.result.rclass) {
+            if (const Yaml::Node sequence = response.result.results["register-values"]) {
+                ASSERT_require(sequence.isSequence());
+                for (const auto &elmt: sequence) {
+                    ASSERT_require(elmt.second.isMap());
+                    const size_t idx = elmt.second["number"].as<size_t>();
+                    ASSERT_require(idx < registers_.size());
+                    const RegisterDescriptor reg = registers_[idx].second;
+                    const std::string strval = elmt.second["value"].as<std::string>();
+                    ASSERT_require2(boost::starts_with(strval, "0x"), strval);
+                    const auto range = Sawyer::Container::BitVector::BitRange::baseSize(offsets[idx], reg.nBits());
+                    retval.fromHex(range, strval.substr(2));
+                }
+            }
+        }
+    }
+    return retval;
+}
+
 Sawyer::Container::BitVector
 Gdb::readRegister(ThreadId, RegisterDescriptor reg) {
     ASSERT_require(reg);
@@ -430,7 +526,7 @@ Gdb::readRegister(ThreadId, RegisterDescriptor reg) {
                 ASSERT_require(sequence.isSequence());
                 for (const auto &elmt: sequence) {
                     ASSERT_require(elmt.second.isMap());
-                    ASSERT_require(elmt.second["number"].as<size_t>()== *idx);
+                    ASSERT_require(elmt.second["number"].as<size_t>() == *idx);
                     const std::string strval = elmt.second["value"].as<std::string>();
                     Sawyer::Container::BitVector whole(gdbReg.nBits());
                     ASSERT_require2(boost::starts_with(strval, "0x"), strval);
@@ -449,6 +545,27 @@ Gdb::readRegister(ThreadId, RegisterDescriptor reg) {
     }
 
     throw Exception("no \"register-values\" response from debugger for \"data-list-register-values\"");
+}
+
+void
+Gdb::writeAllRegisters(ThreadId tid, const Sawyer::Container::BitVector &allValues) {
+    // offsets[i] is the bit offset in retval for the start of register i
+    std::vector<size_t> offsets;
+    offsets.reserve(registers_.size());
+    for (size_t i = 0; i < registers_.size(); ++i)
+        offsets.push_back(i > 0 ? offsets.back() + registers_[i-1].second.nBits() : 0);
+
+    // GDB MI doesn't have a command to set multiple registers at the same time, so we have to do them one at a time.
+    size_t offset = 0;
+    for (size_t i = 0; i < registers_.size(); ++i) {
+        if (i > 0)
+            offset += registers_[i-1].second.nBits();
+        const auto range = Sawyer::Container::BitVector::BitRange::baseSize(offset, registers_[i].second.nBits());
+        const auto valueString = "0x" + allValues.toHex(range);
+        sendCommand("-var-create temp_reg * $" + registers_[i].first);
+        sendCommand("-var-assign temp_reg " + valueString);
+        sendCommand("-var-delete temp_reg");
+    }
 }
 
 void

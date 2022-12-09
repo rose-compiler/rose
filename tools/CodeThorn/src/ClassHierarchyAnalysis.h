@@ -101,10 +101,10 @@ struct OverrideDesc : std::tuple<FunctionKeyType, bool>
 
   FunctionKeyType function()        const { return std::get<0>(*this); }
   bool            covariantReturn() const { return std::get<1>(*this); }
-  
+
   /// returns true of an object adjustment is needed upon return.
   /// this should be a subset of covariantReturn() [only if the original
-  /// and the new return types have different primary base classes], 
+  /// and the new return types have different primary base classes],
   /// but currently we use the same value.
   bool            adjustReturnObj() const { return std::get<1>(*this); }
 };
@@ -241,12 +241,12 @@ class ClassAnalysis : std::unordered_map<ClassKeyType, ClassData>
 {
   public:
     using base = std::unordered_map<ClassKeyType, ClassData>;
-    
+
     explicit
     ClassAnalysis(bool fullTranslUnit)
     : base(), completeTranslationUnit(fullTranslUnit)
     {}
-  
+
     using base::value_type;
     using base::mapped_type;
     using base::key_type;
@@ -282,15 +282,19 @@ class ClassAnalysis : std::unordered_map<ClassKeyType, ClassData>
     isBaseOf(ClassKeyType ancestorKey, ClassKeyType descendantKey) const;
 
     /// returns true, iff \ref ancestorKey is a (direct or indirect) virtual base class
-    /// of \ref descendantKey.    
+    /// of \ref descendantKey.
     bool
     isVirtualBaseOf(ClassKeyType ancestorKey, ClassKeyType descendantKey) const;
-    
+
     /// convenience function to access the map using a SgClassDefinition&.
     const ClassData& at(const SgClassDefinition& clsdef) const { return this->at(&clsdef); }
-    
+
+    /// returns a list of concrete descendant classes of \ref classkey
+    std::vector<InheritanceDesc>
+    concreteDescendants(ClassKeyType classKey) const;
+
     bool containsAllClasses() const { return completeTranslationUnit; }
-    
+
   private:
     bool completeTranslationUnit;
 };

@@ -7,7 +7,7 @@
 #include <boost/numeric/conversion/cast.hpp>
 #include <ctype.h>
 #include <rose_strtoull.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/Types.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/BasicTypes.h>
 #include <Sawyer/BiMap.h>
 #include <Sawyer/Database.h>
 #include <Sawyer/Optional.h>

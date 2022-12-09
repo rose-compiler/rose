@@ -17,6 +17,7 @@ bool ignore(SgScopeStatement * scope) {
   return isSgBasicBlock(scope);
 }
 
+#if 0 // [Robb Matzke 2022-11-16]: unused
 static boost::filesystem::path resolve(
     const boost::filesystem::path & p,
     const boost::filesystem::path & base = boost::filesystem::current_path()
@@ -45,6 +46,7 @@ static boost::filesystem::path resolve(
     }
     return result;
 }
+#endif
 
 size_t Driver::getFileID(const boost::filesystem::path & path) const {
   auto it_file_id = path_to_id_map.find(path);

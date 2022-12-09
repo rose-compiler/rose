@@ -162,6 +162,40 @@ ClassAnalysis::isVirtualBaseOf(ClassKeyType ancestorKey, ClassKeyType descendant
                            );
 }
 
+std::vector<InheritanceDesc>
+ClassAnalysis::concreteDescendants(ClassKeyType classKey) const
+{
+  using container = ClassData::AncestorContainer;
+
+  RoseCompatibilityBridge      rcb;
+  std::vector<InheritanceDesc> res;
+  const container&             descendants = this->at(classKey).descendants();
+
+  std::copy_if( descendants.begin(), descendants.end(),
+                std::back_inserter(res),
+                [&rcb](const InheritanceDesc& desc) -> bool
+                {
+                  return !rcb.isAbstract(desc.getClass());
+                }
+              );
+
+  std::sort( res.begin(), res.end(),
+             [](const InheritanceDesc& lhs, const InheritanceDesc& rhs)
+             {
+               if (lhs.isDirect() != rhs.isDirect())
+                 return lhs.isDirect();
+
+               if (lhs.isVirtual() != rhs.isVirtual())
+                 return !lhs.isVirtual();
+
+               return lhs < rhs;
+             }
+           );
+
+  return res;
+}
+
+
 
 
 namespace
@@ -633,5 +667,7 @@ ClassAnalysis analyzeClass(ClassKeyType n)
 
   return classes;
 }
+
+
 
 }

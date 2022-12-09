@@ -167,7 +167,7 @@ ExecutionEvent::memoryWrite(const TestCase::Ptr &tc, const ExecutionLocation &lo
 
 ExecutionEvent::Ptr
 ExecutionEvent::bulkRegisterWrite(const TestCase::Ptr &tc, const ExecutionLocation &loc, rose_addr_t ip,
-                                  const Debugger::Linux::AllRegisters &values) {
+                                  const Sawyer::Container::BitVector &values) {
     Ptr e = Ptr(new ExecutionEvent);
     e->action_ = Action::BULK_REGISTER_WRITE;
     e->testCase_ = tc;
@@ -395,14 +395,12 @@ ExecutionEvent::bytes(const std::vector<uint8_t> &v) {
     }
 }
 
-Debugger::Linux::AllRegisters
+Sawyer::Container::BitVector
 ExecutionEvent::registerValues() const {
     switch (action_) {
         case Action::BULK_REGISTER_WRITE: {
-            Debugger::Linux::AllRegisters values;
-            ASSERT_require(bytes_.size() == values.regs.size() + values.fpregs.size());
-            std::copy(bytes_.begin(), bytes_.begin() + values.regs.size(), values.regs.begin());
-            std::copy(bytes_.begin() + values.regs.size(), bytes_.end(), values.fpregs.begin());
+            Sawyer::Container::BitVector values(8*bytes_.size());
+            values.fromBytes(bytes_);
             return values;
         }
         default:
@@ -411,13 +409,10 @@ ExecutionEvent::registerValues() const {
 }
 
 void
-ExecutionEvent::registerValues(const Debugger::Linux::AllRegisters &values) {
+ExecutionEvent::registerValues(const Sawyer::Container::BitVector &values) {
     switch (action_) {
         case Action::BULK_REGISTER_WRITE: {
-            bytes_.clear();
-            bytes_.reserve(values.regs.size() + values.fpregs.size());
-            bytes_.insert(bytes_.end(), values.regs.begin(), values.regs.end());
-            bytes_.insert(bytes_.end(), values.fpregs.begin(), values.fpregs.end());
+            bytes_ = values.toBytes();
             break;
         }
         default:

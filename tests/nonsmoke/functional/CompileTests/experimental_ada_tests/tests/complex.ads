@@ -19,6 +19,8 @@ package Complex is
 
   procedure Put(v : in Complex);
 
+  function "="(lhs, rhs: in Complex) return boolean;
+
 private
 
   type Complex is record

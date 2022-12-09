@@ -98,7 +98,6 @@ namespace
   }
 
 
-
   inline
   SgName
   nameOf(const SgSymbol& sy)
@@ -423,15 +422,8 @@ namespace
 
   /// returns the scope where \ref ty was defined
   /// \{
-  SgScopeStatement* scopeOfTypedecl(const SgType& ty);
-  SgScopeStatement* scopeOfTypedecl(const SgType* ty);
-  /// \}
-
-  /// returns the scope where \ref ty was defined
-  /// \todo remove after integrating functionality into SgType...
-  /// \{
-  SgDeclarationStatement* associatedDeclaration(const SgType& ty);
-  SgDeclarationStatement* associatedDeclaration(const SgType* ty);
+  SgScopeStatement* operatorScope(const SgType& ty, bool isRelational);
+  SgScopeStatement* operatorScope(const SgType* ty, bool isRelational);
   /// \}
 
   /// describes properties of imported units
@@ -589,19 +581,6 @@ namespace
   overridingScope(const SgExprListExp* args, const std::vector<PrimitiveParameterDesc>& primitiveArgs);
   /// @}
 
-  /// finds the type declaration of a type \ref ty
-  /// \returns returns the first named base declaration of ty
-  ///          nullptr if no declaration can be found
-  /// \details
-  ///    Skips over intermediate derived types, subtypes, etc. until a SgNamedType is found.
-  ///    Returns the declaration of said type.
-  /// \{
-  SgDeclarationStatement*
-  baseDeclaration(SgType& ty);
-
-  SgDeclarationStatement*
-  baseDeclaration(SgType* ty);
-  /// \}
 
   /// returns the logical parent scope of a scope @ref s.
   /// \details
@@ -620,7 +599,46 @@ namespace
 
   /// returns the associated declaration for symbol @ref n
   ///   or nullptr if there is none.
-  SgDeclarationStatement* associatedDecl(const SgSymbol& n);
+  SgDeclarationStatement* associatedDeclaration(const SgSymbol& n);
+
+  /// returns the decl where \ref ty was defined
+  ///   nullptr if no such declaration can be found.
+  /// \todo remove after integrating functionality into SgType...
+  /// \details
+  ///    Skips over intermediate derived types, subtypes, etc. until a SgNamedType is found.
+  ///    Returns the declaration of said type.
+  /// \{
+  SgDeclarationStatement* associatedDeclaration(const SgType& ty);
+  SgDeclarationStatement* associatedDeclaration(const SgType* ty);
+  /// \}
+
+  /// returns the base type of a type
+  /// \details
+  ///    A base type is either the base of a derived type or an extension record.
+  /// \todo
+  ///    extend for discriminated types, and enumerated types.
+  /// \{
+  SgType*
+  baseType(const SgType& ty);
+
+  SgType*
+  baseType(const SgType* ty);
+  /// \}
+
+  /// finds the declaration associated with ty's base type.
+  /// \returns returns the first named base declaration of ty
+  ///          nullptr if no declaration can be found.
+  /// \details
+  ///    finds the declaration assocated with \ref ty, and returns
+  ///    the declaration of ty's base type.
+  ///    i.e., associatedDecl(baseType(associatedDecl(ty)))
+  /// \{
+  SgDeclarationStatement*
+  baseDeclaration(const SgType& ty);
+
+  SgDeclarationStatement*
+  baseDeclaration(const SgType* ty);
+  /// \}
 
   /// finds the underlying enum declaration of a type \ref ty
   /// \returns an enum declaration associated with ty

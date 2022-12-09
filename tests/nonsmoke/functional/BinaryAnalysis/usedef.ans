@@ -98,7 +98,7 @@ registers:
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
- eip [writer=0x080480a5] write-only = {defs={0x080480a5}, expr=0x080480a7<134512807>[u32]}
+ eip [writer=0x080480a5] = {defs={0x080480a5}, expr=0x080480a7<134512807>[u32]}
  fpstatus_top = 0x0[u3]
 memory:
 
@@ -249,7 +249,7 @@ registers:
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
- eip [writer=0x080480ab] write-only = {defs={0x080480ab}, expr=0x080480ad<134512813>[u32]}
+ eip [writer=0x080480ab] = {defs={0x080480ab}, expr=0x080480ad<134512813>[u32]}
  cf [writer=0x080480ab] write-only = {defs={0x080480ab}, expr=(extract[u1] 0x00000020[u32] 0x00000021[u32] (add[u33] (uextend[u33] 0x00000021[u32] ebx_0[u32]) (uextend[u33] 0x00000021[u32] ebx_0[u32])))}
  pf [writer=0x080480ab] write-only = {defs={0x080480ab}, expr=(invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (add[u32] ebx_0[u32] ebx_0[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] ebx_0[u32] ebx_0[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (add[u32] ebx_0[u32] ebx_0[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (add[u32] ebx_0[u32] ebx_0[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u32] ebx_0[u32] ebx_0[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (add[u32] ebx_0[u32] ebx_0[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (add[u32] ebx_0[u32] ebx_0[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (add[u32] ebx_0[u32] ebx_0[u32]))))}
  af [writer=0x080480ab] write-only = {defs={0x080480ab}, expr=(extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u33] (uextend[u33] 0x00000021[u32] ebx_0[u32]) (uextend[u33] 0x00000021[u32] ebx_0[u32])))}
@@ -312,7 +312,7 @@ registers:
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
- eip [writer=0x080480ad] write-only = {defs={0x080480ad}, expr=0x080480af<134512815>[u32]}
+ eip [writer=0x080480ad] = {defs={0x080480ad}, expr=0x080480af<134512815>[u32]}
  cf [writer=0x080480ad] write-only = {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] (add[u32] eax_0[u32] eax_0[u32])) (uextend[u33] 0x00000021[u32] (add[u32] ebx_0[u32] ebx_0[u32]))) (uextend[u33] 0x00000021[u32] (add[u32] eax_0[u32] eax_0[u32])) (uextend[u33] 0x00000021[u32] (add[u32] ebx_0[u32] ebx_0[u32]))))}
  pf [writer=0x080480ad] write-only = {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (add[u32] eax_0[u32] eax_0[u32] ebx_0[u32] ebx_0[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] eax_0[u32] eax_0[u32] ebx_0[u32] ebx_0[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (add[u32] eax_0[u32] eax_0[u32] ebx_0[u32] ebx_0[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (add[u32] eax_0[u32] eax_0[u32] ebx_0[u32] ebx_0[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u32] eax_0[u32] eax_0[u32] ebx_0[u32] ebx_0[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (add[u32] eax_0[u32] eax_0[u32] ebx_0[u32] ebx_0[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (add[u32] eax_0[u32] eax_0[u32] ebx_0[u32] ebx_0[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (add[u32] eax_0[u32] eax_0[u32] ebx_0[u32] ebx_0[u32]))))}
  af [writer=0x080480ad] write-only = {defs={0x080480a9,0x080480ab,0x080480ad}, expr=(extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] (add[u32] eax_0[u32] eax_0[u32])) (uextend[u33] 0x00000021[u32] (add[u32] ebx_0[u32] ebx_0[u32]))) (uextend[u33] 0x00000021[u32] (add[u32] eax_0[u32] eax_0[u32])) (uextend[u33] 0x00000021[u32] (add[u32] ebx_0[u32] ebx_0[u32]))))}
@@ -453,7 +453,7 @@ registers:
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
- eip [writer=0x080480bd] write-only = {defs={0x080480bd}, expr=0x080480c2<134512834>[u32]}
+ eip [writer=0x080480bd] = {defs={0x080480bd}, expr=0x080480c2<134512834>[u32]}
  fpstatus_top = 0x0[u3]
 memory:
 
@@ -510,7 +510,7 @@ registers:
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
- eip [writer=0x080480c2] write-only = {defs={0x080480c2}, expr=0x080480c4<134512836>[u32]}
+ eip [writer=0x080480c2] = {defs={0x080480c2}, expr=0x080480c4<134512836>[u32]}
  cf [writer=0x080480c2] write-only = {defs={0x080480b8,0x080480bd,0x080480c2}, expr=false[u1]}
  pf [writer=0x080480c2] write-only = {defs={0x080480b8,0x080480bd,0x080480c2}, expr=false[u1]}
  af [writer=0x080480c2] write-only = {defs={0x080480b8,0x080480bd,0x080480c2}, expr=false[u1]}
@@ -577,7 +577,7 @@ registers:
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
- eip [writer=0x080480c4] write-only = {defs={0x080480c4}, expr=0x080480c6<134512838>[u32]}
+ eip [writer=0x080480c4] = {defs={0x080480c4}, expr=0x080480c6<134512838>[u32]}
  cf [writer=0x080480c4] write-only = {defs={0x080480c4}, expr=(invert[u1] (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] (invert[u32] ecx_0[u32])) 0x000000001[u33]) (uextend[u33] 0x00000021[u32] (invert[u32] ecx_0[u32])))))}
  pf [writer=0x080480c4] write-only = {defs={0x080480c4}, expr=(invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (add[u32] (invert[u32] ecx_0[u32]) 0x00000001[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] (invert[u32] ecx_0[u32]) 0x00000001[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (add[u32] (invert[u32] ecx_0[u32]) 0x00000001[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (add[u32] (invert[u32] ecx_0[u32]) 0x00000001[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u32] (invert[u32] ecx_0[u32]) 0x00000001[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (add[u32] (invert[u32] ecx_0[u32]) 0x00000001[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (add[u32] (invert[u32] ecx_0[u32]) 0x00000001[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (add[u32] (invert[u32] ecx_0[u32]) 0x00000001[u32]))))}
  af [writer=0x080480c4] write-only = {defs={0x080480c4}, expr=(invert[u1] (extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] (invert[u32] ecx_0[u32])) 0x000000001[u33]) (uextend[u33] 0x00000021[u32] (invert[u32] ecx_0[u32])))))}
@@ -672,7 +672,7 @@ registers:
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
- eip [writer=0x080480ca] write-only = {defs={0x080480ca}, expr=0x080480cc<134512844>[u32]}
+ eip [writer=0x080480ca] = {defs={0x080480ca}, expr=0x080480cc<134512844>[u32]}
  fpstatus_top = 0x0[u3]
 memory:
 
@@ -699,7 +699,7 @@ registers:
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
- eip [writer=0x080480cc] write-only = {defs={0x080480cc}, expr=0x080480ce<134512846>[u32]}
+ eip [writer=0x080480cc] = {defs={0x080480cc}, expr=0x080480ce<134512846>[u32]}
  fpstatus_top = 0x0[u3]
 memory:
 
@@ -725,7 +725,7 @@ registers:
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
- eip [writer=0x080480ce] write-only = {defs={0x080480ce}, expr=0x080480d1<134512849>[u32]}
+ eip [writer=0x080480ce] = {defs={0x080480ce}, expr=0x080480d1<134512849>[u32]}
  fpstatus_top = 0x0[u3]
 memory:
 
@@ -747,7 +747,7 @@ registers:
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
- eip [writer=0x080480d1] write-only = {defs={0x080480d1}, expr=0x080480d3<134512851>[u32]}
+ eip [writer=0x080480d1] = {defs={0x080480d1}, expr=0x080480d3<134512851>[u32]}
  fpstatus_top = 0x0[u3]
 memory:
 
@@ -1103,7 +1103,7 @@ registers:
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
- eip [writer=0x080480e0] write-only = {defs={0x080480e0}, expr=0x080480e3<134512867>[u32]}
+ eip [writer=0x080480e0] = {defs={0x080480e0}, expr=0x080480e3<134512867>[u32]}
  cf [writer=0x080480e0] write-only = {defs={0x080480dd,0x080480e0}, expr=(extract[u1] 0x00000013[u32] 0x00000014[u32] eax_0[u32])}
  pf [writer=0x080480e0] write-only = {defs={0x080480dd,0x080480e0}, expr=(invert[u1] (xor[u1] (extract[u1] 0x00000014[u32] 0x00000015[u32] eax_0[u32]) (extract[u1] 0x00000015[u32] 0x00000016[u32] eax_0[u32]) (extract[u1] 0x00000016[u32] 0x00000017[u32] eax_0[u32]) (extract[u1] 0x00000017[u32] 0x00000018[u32] eax_0[u32]) (extract[u1] 0x00000018[u32] 0x00000019[u32] eax_0[u32]) (extract[u1] 0x00000019[u32] 0x0000001a[u32] eax_0[u32]) (extract[u1] 0x0000001a[u32] 0x0000001b[u32] eax_0[u32]) (extract[u1] 0x0000001b[u32] 0x0000001c[u32] eax_0[u32])))}
  af [writer=0x080480e0] write-only = {defs={0x080480e0}, expr=V14[u1]<unspec>}
@@ -1204,7 +1204,7 @@ registers:
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
- eip [writer=0x080480e3] write-only = {defs={0x080480e3}, expr=0x080480e6<134512870>[u32]}
+ eip [writer=0x080480e3] = {defs={0x080480e3}, expr=0x080480e6<134512870>[u32]}
  cf [writer=0x080480e3] write-only = {defs={0x080480dd,0x080480e0,0x080480e3}, expr=(extract[u1] 0x0000001d[u32] 0x0000001e[u32] eax_0[u32])}
  pf [writer=0x080480e3] write-only = {defs={0x080480dd,0x080480e0,0x080480e3}, expr=(invert[u1] (xor[u1] (extract[u1] 0x0000001e[u32] 0x0000001f[u32] eax_0[u32]) (extract[u1] 0x0000001f[u32] 0x00000020[u32] eax_0[u32])))}
  af [writer=0x080480e3] write-only = {defs={0x080480e3}, expr=V25[u1]<unspec>}
@@ -1305,7 +1305,7 @@ registers:
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
- eip [writer=0x080480e6] write-only = {defs={0x080480e6}, expr=0x080480e9<134512873>[u32]}
+ eip [writer=0x080480e6] = {defs={0x080480e6}, expr=0x080480e9<134512873>[u32]}
  cf [writer=0x080480e6] write-only = {defs={0x080480dd,0x080480e0,0x080480e3,0x080480e6}, expr=(extract[u1] 0x0000001f[u32] 0x00000020[u32] eax_0[u32])}
  pf [writer=0x080480e6] write-only = {defs={0x080480dd,0x080480e0,0x080480e3,0x080480e6}, expr=true[u1]}
  af [writer=0x080480e6] write-only = {defs={0x080480e6}, expr=V36[u1]<unspec>}
@@ -1333,7 +1333,7 @@ registers:
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
- eip [writer=0x080480e9] write-only = {defs={0x080480e9}, expr=0x080480eb<134512875>[u32]}
+ eip [writer=0x080480e9] = {defs={0x080480e9}, expr=0x080480eb<134512875>[u32]}
  cf [writer=0x080480e6] write-only = {defs={0x080480dd,0x080480e0,0x080480e3,0x080480e6}, expr=(extract[u1] 0x0000001f[u32] 0x00000020[u32] eax_0[u32])}
  pf [writer=0x080480e6] write-only = {defs={0x080480dd,0x080480e0,0x080480e3,0x080480e6}, expr=true[u1]}
  af [writer=0x080480e6] write-only = {defs={0x080480e6}, expr=V36[u1]<unspec>}
@@ -1447,7 +1447,7 @@ registers:
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
- eip [writer=0x080480f2] write-only = {defs={0x080480f2}, expr=0x080480f4<134512884>[u32]}
+ eip [writer=0x080480f2] = {defs={0x080480f2}, expr=0x080480f4<134512884>[u32]}
  cf [writer=0x080480f2] write-only = {defs={0x080480f2}, expr=false[u1]}
  pf [writer=0x080480f2] write-only = {defs={0x080480f2}, expr=true[u1]}
  af [writer=0x080480f2] write-only = V1[u1]<unspec>
@@ -1513,7 +1513,7 @@ registers:
  cs = 0x0000[u16]
  ss = 0x0000[u16]
  ds = 0x0000[u16]
- eip [writer=0x080480f4] write-only = {defs={0x080480f4}, expr=0x080480f6<134512886>[u32]}
+ eip [writer=0x080480f4] = {defs={0x080480f4}, expr=0x080480f6<134512886>[u32]}
  cf [writer=0x080480f4] write-only = {defs={0x080480f4}, expr=(invert[u1] (extract[u1] 0x00000020[u32] 0x00000021[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] (invert[u32] ecx_0[u32])) 0x000000001[u33]) (uextend[u33] 0x00000021[u32] (invert[u32] ecx_0[u32])))))}
  pf [writer=0x080480f4] write-only = {defs={0x080480f4}, expr=(invert[u1] (xor[u1] (extract[u1] 0x00000000[u32] 0x00000001[u32] (add[u32] (invert[u32] ecx_0[u32]) 0x00000001[u32])) (extract[u1] 0x00000001[u32] 0x00000002[u32] (add[u32] (invert[u32] ecx_0[u32]) 0x00000001[u32])) (extract[u1] 0x00000002[u32] 0x00000003[u32] (add[u32] (invert[u32] ecx_0[u32]) 0x00000001[u32])) (extract[u1] 0x00000003[u32] 0x00000004[u32] (add[u32] (invert[u32] ecx_0[u32]) 0x00000001[u32])) (extract[u1] 0x00000004[u32] 0x00000005[u32] (add[u32] (invert[u32] ecx_0[u32]) 0x00000001[u32])) (extract[u1] 0x00000005[u32] 0x00000006[u32] (add[u32] (invert[u32] ecx_0[u32]) 0x00000001[u32])) (extract[u1] 0x00000006[u32] 0x00000007[u32] (add[u32] (invert[u32] ecx_0[u32]) 0x00000001[u32])) (extract[u1] 0x00000007[u32] 0x00000008[u32] (add[u32] (invert[u32] ecx_0[u32]) 0x00000001[u32]))))}
  af [writer=0x080480f4] write-only = {defs={0x080480f4}, expr=(invert[u1] (extract[u1] 0x00000004[u32] 0x00000005[u32] (xor[u33] (add[u33] (uextend[u33] 0x00000021[u32] (invert[u32] ecx_0[u32])) 0x000000001[u33]) (uextend[u33] 0x00000021[u32] (invert[u32] ecx_0[u32])))))}
@@ -1611,7 +1611,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip [writer=0x080480fd] write-only = {defs={0x080480fd}, expr=0x08048102<134512898>[u32]}
+ eip [writer=0x080480fd] = {defs={0x080480fd}, expr=0x08048102<134512898>[u32]}
  fpstatus_top = 0x0[u3]
 memory:
  addr={defs={0x080480f8}, expr=(add[u32] esp_0[u32] 0xffffffff<4294967295,-1>[u32])} writer=0x080480f8 write-only value={defs={0x080480f8}, expr=0x00[u8]}
@@ -1644,7 +1644,7 @@ registers:
  cs = 0x0000[u16]
  ss read-before-write = 0x0000[u16]
  ds = 0x0000[u16]
- eip [writer=0x08048102] write-only = {defs={0x08048102}, expr=0x08048103<134512899>[u32]}
+ eip [writer=0x08048102] = {defs={0x08048102}, expr=0x08048103<134512899>[u32]}
  fpstatus_top = 0x0[u3]
 memory:
  addr={defs={0x080480f8,0x08048102}, expr=(add[u32] esp_0[u32] 0xfffffffb<4294967291,-5>[u32])} writer=0x08048102 write-only value={defs={0x080480fd}, expr=0x00[u8]}

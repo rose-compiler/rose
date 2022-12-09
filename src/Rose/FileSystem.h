@@ -190,7 +190,9 @@ ROSE_UTIL_API std::vector<Path> findRoseFilesRecursively(const Path &root);
  *  Try not to use this.  Paths contain more information than std::string and the conversion may loose that info. */
 ROSE_UTIL_API std::string toString(const Path&);
 
-/** Load an entire file into an STL container. */
+/** Load an entire file into an STL container.
+ *
+ *  Throws an exception if the file cannot be opened or the entire contents of the file cannot be read. */
 template<class Container>
 Container readFile(const boost::filesystem::path &fileName,
                    std::ios_base::openmode openMode = std::ios_base::in | std::ios_base::binary) {
@@ -205,10 +207,14 @@ Container readFile(const boost::filesystem::path &fileName,
     return container;
 }
 
+/** Write a container to a file.
+ *
+ *  Writes the contents of the container to a file. Throws an exception if the file cannot be opened or
+ *  not all the data can be written. */
 template<class Container>
 void writeFile(const boost::filesystem::path &fileName, const Container &data,
                std::ios_base::openmode openMode = std::ios_base::out | std::ios_base::binary) {
-    std::ofstream stream(fileName.c_str(),openMode);
+    std::ofstream stream(fileName.c_str(), openMode);
     if (!stream.good())
         throw Exception("unable to open file " + boost::lexical_cast<std::string>(fileName));
     std::ostream_iterator<char> streamIterator(stream);

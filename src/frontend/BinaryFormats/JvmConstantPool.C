@@ -143,8 +143,6 @@ void PoolEntry::dump(FILE* f, const char* prefix, ssize_t idx) const
 
 PoolEntry* PoolEntry::parse(SgAsmJvmConstantPool* pool)
 {
-  auto header{pool->get_header()};
-
   set_parent(pool);
 
   switch (get_tag()) {
