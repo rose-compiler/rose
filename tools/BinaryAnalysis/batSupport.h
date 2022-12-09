@@ -1,13 +1,12 @@
 #ifndef ROSE_BatSupport_H
 #define ROSE_BatSupport_H
-
 #include <rose.h>
 #include <Rose/BinaryAnalysis/BasicTypes.h>
+
 #include <Rose/BinaryAnalysis/FeasiblePath.h>
+#include <Rose/BinaryAnalysis/Partitioner2/InstructionProvider.h>
 #include <Rose/BinaryAnalysis/SerialIo.h>
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Function.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 
 #include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>
@@ -296,11 +295,11 @@ void checkRbaOutput(const boost::filesystem::path &name, Sawyer::Message::Facili
  *  error stream is provided instead will be reported to that stream.
  *
  * @{ */
-std::vector<Rose::BinaryAnalysis::Partitioner2::Function::Ptr>
-selectFunctionsByNameOrAddress(const std::vector<Rose::BinaryAnalysis::Partitioner2::Function::Ptr> &functions,
+std::vector<Rose::BinaryAnalysis::Partitioner2::FunctionPtr>
+selectFunctionsByNameOrAddress(const std::vector<Rose::BinaryAnalysis::Partitioner2::FunctionPtr> &functions,
                                const std::set<std::string> &namesOrAddresses, std::set<std::string> &unmatched /*in,out*/);
-std::vector<Rose::BinaryAnalysis::Partitioner2::Function::Ptr>
-selectFunctionsByNameOrAddress(const std::vector<Rose::BinaryAnalysis::Partitioner2::Function::Ptr> &functions,
+std::vector<Rose::BinaryAnalysis::Partitioner2::FunctionPtr>
+selectFunctionsByNameOrAddress(const std::vector<Rose::BinaryAnalysis::Partitioner2::FunctionPtr> &functions,
                                const std::set<std::string> &namesOrAddresses, Sawyer::Message::Stream&);
 /** @} */
 
@@ -309,7 +308,7 @@ selectFunctionsByNameOrAddress(const std::vector<Rose::BinaryAnalysis::Partition
  *  Returns a list of functions sorted by primary entry address such that each function spans the specified address. In other
  *  words, the address can be the function entry address, a basic block address, an instruction address, or any address within
  *  an instruction. */
-std::vector<Rose::BinaryAnalysis::Partitioner2::Function::Ptr>
+std::vector<Rose::BinaryAnalysis::Partitioner2::FunctionPtr>
 selectFunctionsContainingInstruction(const Rose::BinaryAnalysis::Partitioner2::PartitionerConstPtr&,
                                      const std::set<rose_addr_t> &insnVas);
 
@@ -575,7 +574,7 @@ using InsnHistogram = std::map<std::string, size_t>;
  *  Scans the executable parts of the memory map like a linear sweeep disassembler would do in order to obtain a histogram
  *  describing how frequently each instruction mnemonic appears. */
 InsnHistogram
-computeInsnHistogram(const Rose::BinaryAnalysis::InstructionProvider&, const Rose::BinaryAnalysis::MemoryMap::Ptr&);
+computeInsnHistogram(const Rose::BinaryAnalysis::InstructionProvider&, const Rose::BinaryAnalysis::MemoryMapPtr&);
 
 /** Save an instruction histogram in a file. */
 void

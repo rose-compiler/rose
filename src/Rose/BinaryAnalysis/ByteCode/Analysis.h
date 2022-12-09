@@ -3,14 +3,14 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <Rose/BinaryAnalysis/Disassembler/Jvm.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+#include <Rose/BinaryAnalysis/Disassembler/BasicTypes.h>
+#include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
 namespace ByteCode {
 
-using BasicBlockPtr = Partitioner2::BasicBlock::Ptr;
+using BasicBlockPtr = Partitioner2::BasicBlockPtr;
 
 class Code {
 public:
@@ -39,15 +39,12 @@ public:
 
   // Methods associated with basic blocks (Rose::BinaryAnalysis::Partitioner2)
   //
-  const std::vector<BasicBlockPtr>& blocks() const {
-    return blocks_;
-  }
-  void append(BasicBlockPtr bb) {
-    blocks_.push_back(bb);
-  }
+  const std::vector<BasicBlockPtr>& blocks() const;
+  void append(BasicBlockPtr bb);
 
 protected:
-  Method() {}
+  Method();
+  ~Method();
   Partitioner2::FunctionPtr function_;
   std::vector<BasicBlockPtr> blocks_;
 };

@@ -4,6 +4,8 @@
 
 #include <Rose/BinaryAnalysis/CodeInserter.h>
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
+#include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
 #include <Rose/StringUtility.h>
@@ -30,6 +32,23 @@ CodeInserter::initDiagnostics() {
         Diagnostics::mfacilities.insertAndAdjust(mlog);
     }
 }
+
+CodeInserter::CodeInserter(const P2::PartitionerConstPtr &partitioner)
+    : partitioner_(partitioner), minChunkAllocationSize_(8192), chunkAllocationAlignment_(4096),
+      chunkAllocationName_("new code"), aggregationDirection_(AGGREGATE_PREDECESSORS | AGGREGATE_SUCCESSORS),
+      nopPadding_(PAD_NOP_BACK) {
+    ASSERT_not_null(partitioner);
+    ASSERT_not_null(partitioner->memoryMap());
+    if (!partitioner->memoryMap()->isEmpty() &&
+        partitioner->memoryMap()->hull().greatest() < AddressInterval::whole().greatest()) {
+        chunkAllocationRegion_ = AddressInterval::hull(partitioner->memoryMap()->hull().greatest() + 1,
+                                                       AddressInterval::whole().greatest());
+    } else {
+        chunkAllocationRegion_ = AddressInterval::whole();
+    }
+}
+
+CodeInserter::~CodeInserter() {}
 
 void
 CodeInserter::chunkAllocationAlignment(size_t n) {
@@ -155,6 +174,31 @@ CodeInserter::replaceBlockInsns(const P2::BasicBlock::Ptr &bb, size_t index, siz
     }
     SAWYER_MESG(debug) <<"  replaceBlockInsns was unable to insert new code\n";
     return false;
+}
+
+bool
+CodeInserter::replaceInsnsAtFront(const P2::BasicBlock::Ptr &bb, size_t nInsns, const std::vector<uint8_t> &replacement,
+                                  const std::vector<Relocation> &relocations) {
+    return replaceBlockInsns(bb, 0, nInsns, replacement, relocations);
+}
+
+bool
+CodeInserter::replaceInsnsAtBack(const P2::BasicBlock::Ptr &bb, size_t nInsns, const std::vector<uint8_t> &replacement,
+                                 const std::vector<Relocation> &relocations) {
+    ASSERT_require(nInsns <= bb->nInstructions());
+    return replaceBlockInsns(bb, bb->nInstructions()-nInsns, nInsns, replacement, relocations);
+}
+
+bool
+CodeInserter::prependInsns(const P2::BasicBlock::Ptr &bb, const std::vector<uint8_t> &replacement,
+                           const std::vector<Relocation> &relocations) {
+    return replaceInsnsAtFront(bb, 0, replacement, relocations);
+}
+
+bool
+CodeInserter::appendInsns(const P2::BasicBlock::Ptr &bb, const std::vector<uint8_t> &replacement,
+                             const std::vector<Relocation> &relocations) {
+    return replaceInsnsAtBack(bb, 0, replacement, relocations);
 }
 
 bool

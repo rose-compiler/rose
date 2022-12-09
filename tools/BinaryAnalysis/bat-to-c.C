@@ -10,6 +10,7 @@ static const char *description =
 #include <Rose/BinaryAnalysis/ToSource.h>
 #include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Sawyer/CommandLine.h>
 
 using namespace Sawyer::Message::Common;

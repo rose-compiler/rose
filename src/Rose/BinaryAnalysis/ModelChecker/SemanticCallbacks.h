@@ -6,7 +6,7 @@
 #include <Rose/BinaryAnalysis/ModelChecker/Types.h>
 
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/BasicTypes.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+#include <Rose/BinaryAnalysis/SmtSolver.h>
 #include <Rose/Yaml.h>
 
 #ifdef ROSE_HAVE_YAMLCPP
@@ -121,7 +121,7 @@ public:
      *
      *  Thread safety: The implementation must be thread safe, but the object it returns will be used only by the calling
      *  thread. */
-    virtual SmtSolver::Ptr createSolver() = 0;
+    virtual SmtSolverPtr createSolver() = 0;
 
     /** Associate solver with semantics.
      *
@@ -136,7 +136,7 @@ public:
      *  Thread safety: The implementation must be thread safe, but the provided RISC operators and solver will be thread
      *  local. */
     virtual void attachModelCheckerSolver(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&,
-                                          const SmtSolver::Ptr&) {}
+                                          const SmtSolverPtr&) {}
 
     /** Initialize the initial state.
      *
@@ -238,7 +238,7 @@ public:
      *  Thread safety: The implementation must be thread safe, but the provided RISC operators will be thread local. The
      *  current state to which the RISC operators points will have been copied by this thread. */
     virtual std::vector<NextUnit>
-    nextUnits(const PathPtr&, const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&, const SmtSolver::Ptr&) = 0;
+    nextUnits(const PathPtr&, const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&, const SmtSolverPtr&) = 0;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Path creation functions.
