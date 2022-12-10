@@ -563,6 +563,10 @@ package body Asis_Adapter.Element is
          Definitions.Do_Post_Child_Processing (Element, State);
       end if;
       
+      If Element_Kind = A_Declaration then
+         Declarations.Do_Post_Child_Processing (Element, State);
+      end if;
+      
       end if;
 
 
