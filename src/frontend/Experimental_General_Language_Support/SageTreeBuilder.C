@@ -67,6 +67,29 @@ SageTreeBuilder::attachComments(SgLocatedNode* node, const PosInfo &pos, bool at
   if (at_end && isSgStatement(node)) {
     boost::optional<const Token&> token{};
     while ((token = tokens_->getNextToken()) && token->getEndLine() <= pos.getEndLine()) {
+      std::cout << "---> attach comment at: " << at_end << " for: " << node->class_name() << ": " << token << "\n";
+      SI::attachComment(node, token->getLexeme(), PreprocessingInfo::after, PreprocessingInfo::JovialStyleComment);
+      tokens_->consumeNextToken();
+    }
+    return;
+  }
+
+  if (SgBasicBlock* block = isSgBasicBlock(node)) {
+    boost::optional<const Token&> token{};
+    // Comments before block
+    std::cout << "---> attach comments for a basic block\n";
+    while ((token = tokens_->getNextToken()) && token->getStartLine() <= pos.getStartLine()) {
+      std::cout << "---> attach comment before basic block: " << token << std::endl;
+      SI::attachComment(node, token->getLexeme(), PreprocessingInfo::before, PreprocessingInfo::JovialStyleComment);
+      tokens_->consumeNextToken();
+    }
+
+    std::cout << "---> attach comments for a basic block\n";
+    // Comments at end (and same line) of block
+    // NOT TRUE
+    // while ((token = tokens_->getNextToken()) && token->getEndLine() <= pos.getEndLine()) {
+    while ((token = tokens_->getNextToken()) && token->getEndLine() < pos.getEndLine()) {
+      std::cout << "---> attach comment at end of basic block: " << token << std::endl;
       SI::attachComment(node, token->getLexeme(), PreprocessingInfo::after, PreprocessingInfo::JovialStyleComment);
       tokens_->consumeNextToken();
     }
@@ -95,6 +118,7 @@ SageTreeBuilder::attachComments(SgLocatedNode* node, const PosInfo &pos, bool at
             }
           }
         }
+        std::cout << "---> attach comment for: " << commentNode->class_name() << ": " << token << "\n";
         SI::attachComment(commentNode, token->getLexeme(), commentPosition, PreprocessingInfo::JovialStyleComment);
       }
       tokens_->consumeNextToken();
@@ -108,6 +132,7 @@ SageTreeBuilder::attachComments(SgLocatedNode* node, const PosInfo &pos, bool at
         if (token->getEndCol() == pos.getStartCol()) {
           commentPosition = PreprocessingInfo::after;
         }
+        std::cout << "---> attach comment for: " << expr->class_name() << ": " << token << "\n";
         SI::attachComment(expr, token->getLexeme(), commentPosition, PreprocessingInfo::JovialStyleComment);
       }
       tokens_->consumeNextToken();
@@ -121,12 +146,22 @@ SageTreeBuilder::attachComments(SgLocatedNode* node, const PosInfo &pos, bool at
   }
 }
 
-/** Attach comments from a vector */
+/** Attach comments from a vector before the node */
+void
+SageTreeBuilder::attachComments(SgLocatedNode* node, const std::vector<Token> &tokens) {
+  for (auto token : tokens) {
+    std::cout << "---> attach comment for: " << node->class_name() << ": " << token << "\n";
+    SI::attachComment(node, token.getLexeme(), PreprocessingInfo::before, PreprocessingInfo::JovialStyleComment);
+  }
+}
+
+/** Conditionally attach comments from a vector */
 void
 SageTreeBuilder::attachComments(SgLocatedNode* node, std::vector<Token> &tokens, const PosInfo &pos) {
   int count{0};
   for (auto token : tokens) {
     if (token.getStartLine() <= pos.getStartLine()) {
+      std::cout << "---> attach comment for: " << node->class_name() << ": " << token << "\n";
       SI::attachComment(node, token.getLexeme(), PreprocessingInfo::before, PreprocessingInfo::JovialStyleComment);
       count += 1;
     }
@@ -139,6 +174,7 @@ void
 SageTreeBuilder::attachRemainingComments(SgLocatedNode* node) {
   boost::optional<const Token&> token{};
   while ((token = tokens_->getNextToken())) {
+    std::cout << "---> attach comment for: " << node->class_name() << ": " << token << "\n";
     SI::attachComment(node, token->getLexeme(), PreprocessingInfo::after, PreprocessingInfo::JovialStyleComment);
     tokens_->consumeNextToken();
   }
@@ -945,7 +981,8 @@ Enter(SgVarRefExp* &var_ref, const std::string &name, bool compiler_generate)
 }
 
 void SageTreeBuilder::
-Enter(SgIfStmt* &if_stmt, SgExpression* conditional, SgBasicBlock* true_body, SgBasicBlock* false_body, bool is_ifthen, bool has_end_stmt, bool is_else_if)
+Enter(SgIfStmt* &if_stmt, SgExpression* conditional, SgBasicBlock* true_body, SgBasicBlock* false_body,
+      std::vector<Rose::builder::Token> &comments, bool is_ifthen, bool has_end_stmt, bool is_else_if)
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgIfStmt* &, ...) \n";
 
@@ -958,14 +995,14 @@ Enter(SgIfStmt* &if_stmt, SgExpression* conditional, SgBasicBlock* true_body, Sg
    if (is_ifthen) {
       if_stmt->set_use_then_keyword(true);
    }
-
    if (has_end_stmt) {
       if_stmt->set_has_end_statement(true);
    }
-
    if (is_else_if) {
       if_stmt->set_is_else_if_statement(true);
    }
+
+   attachComments(if_stmt, comments);
 }
 
 void SageTreeBuilder::

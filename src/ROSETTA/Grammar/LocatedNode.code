@@ -1141,7 +1141,6 @@ SgLocatedNode::get_physical_file_id()
 void
 SgLocatedNode::addToAttachedPreprocessingInfo(
      PreprocessingInfo *prepInfoPtr,
-  // PositionOfPreprocessingInfoInListType locationInList )
      PreprocessingInfo::RelativePositionType locationInList )
    {
   // DQ (11/23/2008): Is this comment still true?  Is there something to fix here?

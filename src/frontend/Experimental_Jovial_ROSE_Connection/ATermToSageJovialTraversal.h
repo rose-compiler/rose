@@ -23,7 +23,7 @@ class ATermToSageJovialTraversal : public ATermTraversal
  protected:
    void setSourcePositions(ATerm term, Rose::builder::SourcePosition &start, Rose::builder::SourcePosition &end);
    void setDeclarationModifier(SgVariableDeclaration* var_decl, int def_or_ref);
-   void setSourcePosition(SgLocatedNode* node, ATerm term);
+   void setSourcePosition(SgLocatedNode* node, ATerm term, bool attach_comments=true);
 
  public:
    ATermToSageJovialTraversal() = delete;
