@@ -130,7 +130,8 @@ public:
    void Leave(SgBasicBlock*);
 
    void Enter(SgProgramHeaderStatement* &,
-              const boost::optional<std::string> &, const std::vector<std::string> &, const SourcePositions &);
+              const boost::optional<std::string> &, const std::vector<std::string> &,
+              const SourcePositions &, std::vector<Rose::builder::Token> &);
    void Leave(SgProgramHeaderStatement*);
 
    void setFortranEndProgramStmt(SgProgramHeaderStatement*,
@@ -287,6 +288,8 @@ public:
    void attachRemainingComments(SgLocatedNode* node);
    void consumePrecedingComments(std::vector<Token> &tokens, const PosInfo &pos);
    void setSourcePosition(SgLocatedNode* node, const SourcePosition &start, const SourcePosition &end);
+
+   SgScopeStatement* popScopeStack(bool attach_comments=false);
 
 // Helper function
    bool list_contains(const std::list<LanguageTranslation::FunctionModifier>& lst, const LanguageTranslation::FunctionModifier& item)

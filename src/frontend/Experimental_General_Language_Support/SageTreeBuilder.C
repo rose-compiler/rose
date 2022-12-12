@@ -9,6 +9,7 @@
 #include <iostream>
 
 #define PRINT_WARNINGS 0
+#define PRINT_ATTACH_COMMENT 0
 #define APPEND_BEFORE_LEAVE 1
 
 namespace Rose {
@@ -67,31 +68,45 @@ SageTreeBuilder::attachComments(SgLocatedNode* node, const PosInfo &pos, bool at
   if (at_end && isSgStatement(node)) {
     boost::optional<const Token&> token{};
     while ((token = tokens_->getNextToken()) && token->getEndLine() <= pos.getEndLine()) {
-      std::cout << "---> attach comment at: " << at_end << " for: " << node->class_name() << ": " << token << "\n";
+#if PRINT_ATTACH_COMMENT
+      std::cout << "---> attach stmt end comment at node pos: " << pos << " for: " << node->class_name() << ": " << token << "\n";
+#endif
       SI::attachComment(node, token->getLexeme(), PreprocessingInfo::after, PreprocessingInfo::JovialStyleComment);
       tokens_->consumeNextToken();
     }
     return;
   }
 
-  if (SgBasicBlock* block = isSgBasicBlock(node)) {
+  if (isSgScopeStatement(node)) {
     boost::optional<const Token&> token{};
-    // Comments before block
-    std::cout << "---> attach comments for a basic block\n";
-    while ((token = tokens_->getNextToken()) && token->getStartLine() <= pos.getStartLine()) {
-      std::cout << "---> attach comment before basic block: " << token << std::endl;
+    // Comments before scoping unit
+    while ((token = tokens_->getNextToken()) && token->getStartLine() < pos.getStartLine()) {
+#if PRINT_ATTACH_COMMENT
+      std::cout << "---> attach comment before scoping unit: " << token << std::endl;
+#endif
       SI::attachComment(node, token->getLexeme(), PreprocessingInfo::before, PreprocessingInfo::JovialStyleComment);
       tokens_->consumeNextToken();
     }
 
-    std::cout << "---> attach comments for a basic block\n";
-    // Comments at end (and same line) of block
-    // NOT TRUE
-    // while ((token = tokens_->getNextToken()) && token->getEndLine() <= pos.getEndLine()) {
-    while ((token = tokens_->getNextToken()) && token->getEndLine() < pos.getEndLine()) {
-      std::cout << "---> attach comment at end of basic block: " << token << std::endl;
-      SI::attachComment(node, token->getLexeme(), PreprocessingInfo::after, PreprocessingInfo::JovialStyleComment);
-      tokens_->consumeNextToken();
+    if (at_end) {
+#if PRINT_ATTACH_COMMENT
+      std::cout << "---> attach comments for end of a basic block\n";
+#endif
+      // Comments at end (and same line) of block
+      ROSE_ASSERT(false && "attaching comments at end of a basic block");
+
+      while ((token = tokens_->getNextToken()) && token->getEndLine() <= pos.getEndLine()) {
+        if (token->getEndLine() < pos.getEndLine()) {
+#if PRINT_ATTACH_COMMENT
+          std::cout << "---> attach (NOT) comment before end of basic block: " << token << std::endl;
+#endif
+        }
+#if PRINT_ATTACH_COMMENT
+        std::cout << "---> attach comment at end of basic block: " << token << std::endl;
+#endif
+        SI::attachComment(node, token->getLexeme(), PreprocessingInfo::after, PreprocessingInfo::JovialStyleComment);
+        tokens_->consumeNextToken();
+      }
     }
     return;
   }
@@ -118,7 +133,10 @@ SageTreeBuilder::attachComments(SgLocatedNode* node, const PosInfo &pos, bool at
             }
           }
         }
-        std::cout << "---> attach comment for: " << commentNode->class_name() << ": " << token << "\n";
+#if PRINT_ATTACH_COMMENT
+        std::cout << "---> attach comment for: " << commentNode->class_name() << ": "
+                  << token << ": " << commentPosition << "\n";
+#endif
         SI::attachComment(commentNode, token->getLexeme(), commentPosition, PreprocessingInfo::JovialStyleComment);
       }
       tokens_->consumeNextToken();
@@ -132,7 +150,9 @@ SageTreeBuilder::attachComments(SgLocatedNode* node, const PosInfo &pos, bool at
         if (token->getEndCol() == pos.getStartCol()) {
           commentPosition = PreprocessingInfo::after;
         }
+#if PRINT_ATTACH_COMMENT
         std::cout << "---> attach comment for: " << expr->class_name() << ": " << token << "\n";
+#endif
         SI::attachComment(expr, token->getLexeme(), commentPosition, PreprocessingInfo::JovialStyleComment);
       }
       tokens_->consumeNextToken();
@@ -150,7 +170,9 @@ SageTreeBuilder::attachComments(SgLocatedNode* node, const PosInfo &pos, bool at
 void
 SageTreeBuilder::attachComments(SgLocatedNode* node, const std::vector<Token> &tokens) {
   for (auto token : tokens) {
+#if PRINT_ATTACH_COMMENT
     std::cout << "---> attach comment for: " << node->class_name() << ": " << token << "\n";
+#endif
     SI::attachComment(node, token.getLexeme(), PreprocessingInfo::before, PreprocessingInfo::JovialStyleComment);
   }
 }
@@ -161,7 +183,9 @@ SageTreeBuilder::attachComments(SgLocatedNode* node, std::vector<Token> &tokens,
   int count{0};
   for (auto token : tokens) {
     if (token.getStartLine() <= pos.getStartLine()) {
+#if PRINT_ATTACH_COMMENT
       std::cout << "---> attach comment for: " << node->class_name() << ": " << token << "\n";
+#endif
       SI::attachComment(node, token.getLexeme(), PreprocessingInfo::before, PreprocessingInfo::JovialStyleComment);
       count += 1;
     }
@@ -174,7 +198,9 @@ void
 SageTreeBuilder::attachRemainingComments(SgLocatedNode* node) {
   boost::optional<const Token&> token{};
   while ((token = tokens_->getNextToken())) {
+#if PRINT_ATTACH_COMMENT
     std::cout << "---> attach comment for: " << node->class_name() << ": " << token << "\n";
+#endif
     SI::attachComment(node, token->getLexeme(), PreprocessingInfo::after, PreprocessingInfo::JovialStyleComment);
     tokens_->consumeNextToken();
   }
@@ -188,6 +214,17 @@ SageTreeBuilder::consumePrecedingComments(std::vector<Token> &tokens, const PosI
     tokens.push_back(*token);
     tokens_->consumeNextToken();
   }
+}
+
+/** Pop the scope stack and conditionally @attach_comments associated with end of scope */
+SgScopeStatement*
+SageTreeBuilder::popScopeStack(bool attach_comments) {
+  auto scope = SageBuilder::topScopeStack();
+  if (attach_comments) {
+    attachComments(scope, PosInfo{scope}, /*at_end*/true);
+  }
+  SageBuilder::popScopeStack();
+  return scope;
 }
 
 void
@@ -307,6 +344,9 @@ void SageTreeBuilder::Leave(SgScopeStatement* scope)
                << forward_type_refs_.size() << std::endl;
      forward_type_refs_.clear();
    }
+
+   // Attaching any remaining comments
+   attachRemainingComments(scope);
 }
 
 void SageTreeBuilder::Enter(SgBasicBlock* &block)
@@ -335,7 +375,8 @@ void SageTreeBuilder::Leave(SgBasicBlock* block)
 
 void SageTreeBuilder::
 Enter(SgProgramHeaderStatement* &program_decl,
-      const boost::optional<std::string> &name, const std::vector<std::string> &labels, const SourcePositions &sources)
+      const boost::optional<std::string> &name, const std::vector<std::string> &labels,
+      const SourcePositions &sources, std::vector<Rose::builder::Token> &comments)
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgProgramHeaderStatement* &, ...) "
                << sources.get<0>() << ":" << sources.get<1>() << ":" << sources.get<2>() << "\n";
@@ -376,7 +417,13 @@ Enter(SgProgramHeaderStatement* &program_decl,
    program_body->set_parent(program_def);
    program_def ->set_parent(program_decl);
 
-// set source position (order important as comments may be added as side effect)
+// set source position and attach comments (order important as comments may be added as side effect)
+   const SourcePosition &ps = sources.get<0>();
+   const SourcePosition &bs = sources.get<1>();
+   const SourcePosition &pe = sources.get<2>();
+   attachComments(program_decl, comments, PosInfo{ps.line,ps.column,pe.line,pe.column});
+   attachComments(program_body, comments, PosInfo{bs.line,bs.column,pe.line,pe.column});
+
    setSourcePosition(program_decl, sources.get<0>(), sources.get<2>());
    setSourcePosition(program_def,  sources.get<1>(), sources.get<2>());
    setSourcePosition(program_body, sources.get<1>(), sources.get<2>());
@@ -405,8 +452,8 @@ void SageTreeBuilder::Leave(SgProgramHeaderStatement* program_decl)
 
    mlog[TRACE] << "SageTreeBuilder::Leave(SgProgramHeaderStatement*) \n";
 
-   SageBuilder::popScopeStack();  // program body
-   SageBuilder::popScopeStack();  // program definition
+   popScopeStack(/*attach_comments*/true);  // program body
+   popScopeStack(/*attach_comments*/true);  // program definition
 
    auto scope = SageBuilder::topScopeStack();
 
