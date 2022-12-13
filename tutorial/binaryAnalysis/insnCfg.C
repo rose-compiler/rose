@@ -7,6 +7,7 @@ static const char *description =
     "necessarily need to occupy contiguous memory).  Flow of control neither enters nor exits from the interior of a basic block.";
 
 #include <rose.h>
+#include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Sawyer/GraphAlgorithm.h>

@@ -4,7 +4,7 @@
 
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/TraceSemantics.h>
-#include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
+#include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/Reachability.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>

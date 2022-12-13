@@ -4,6 +4,7 @@
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 
 #include <Rose/BinaryAnalysis/Partitioner2/AddressUsageMap.h>
+#include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/DataFlow.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Exception.h>
 #include <Rose/BinaryAnalysis/Partitioner2/GraphViz.h>
@@ -50,6 +51,16 @@ using namespace Rose::Diagnostics;
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Partitioner::Thunk
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Partitioner::Thunk::Thunk(const BasicBlock::Ptr &bblock, rose_addr_t target)
+    : bblock(bblock), target(target) {}
+
+Partitioner::Thunk::~Thunk() {}
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Constructors

@@ -5,11 +5,14 @@ static const char *description =
     "specified then the state is read from standard input.";
 
 #include <rose.h>
-#include <Rose/CommandLine.h>
-#include <Rose/Diagnostics.h>
+
+#include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/GraphViz.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+#include <Rose/CommandLine.h>
+#include <Rose/Diagnostics.h>
+
 #include <rose_strtoull.h>                              // rose
 
 #include <batSupport.h>

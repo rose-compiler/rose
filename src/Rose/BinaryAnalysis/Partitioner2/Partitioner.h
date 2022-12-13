@@ -2,10 +2,9 @@
 #define ROSE_BinaryAnalysis_Partitioner2_Partitioner_H
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
+#include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 
 #include <Rose/BinaryAnalysis/Partitioner2/AddressUsageMap.h>
-#include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
-#include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Configuration.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ControlFlowGraph.h>
 #include <Rose/BinaryAnalysis/Partitioner2/DataBlock.h>
@@ -13,8 +12,10 @@
 #include <Rose/BinaryAnalysis/Partitioner2/FunctionCallGraph.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Modules.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Reference.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Semantics.h>
 
 #include <Rose/BinaryAnalysis/InstructionProvider.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
 #include <Rose/BinaryAnalysis/SourceLocations.h>
 #include <Rose/BinaryAnalysis/Unparser/Settings.h>
 #include <Rose/Progress.h>
@@ -321,9 +322,10 @@ public:
 
     /** Represents information about a thunk. */
     struct Thunk {
-        BasicBlock::Ptr bblock;                         /**< The one and only basic block for the thunk. */
+        BasicBlockPtr bblock;                           /**< The one and only basic block for the thunk. */
         rose_addr_t target;                             /**< The one and only successor for the basic block. */
-        Thunk(const BasicBlock::Ptr &bblock, rose_addr_t target): bblock(bblock), target(target) {}
+        Thunk(const BasicBlockPtr&, rose_addr_t target);
+        ~Thunk();
     };
 
     /** Map address to name. */
@@ -593,7 +595,7 @@ public:
      *  @{ */
     std::string unparse(SgAsmInstruction*) const;
     void unparse(std::ostream&, SgAsmInstruction*) const;
-    void unparse(std::ostream&, const BasicBlock::Ptr&) const;
+    void unparse(std::ostream&, const BasicBlockPtr&) const;
     void unparse(std::ostream&, const DataBlock::Ptr&) const;
     void unparse(std::ostream&, const Function::Ptr&) const;
     void unparse(std::ostream&) const;
@@ -944,8 +946,8 @@ public:
      *  Thread safety: Not thread safe.
      *
      *  @{ */
-    BasicBlock::Ptr erasePlaceholder(const ControlFlowGraph::ConstVertexIterator &placeholder) /*final*/;
-    BasicBlock::Ptr erasePlaceholder(rose_addr_t startVa) /*final*/;
+    BasicBlockPtr erasePlaceholder(const ControlFlowGraph::ConstVertexIterator &placeholder) /*final*/;
+    BasicBlockPtr erasePlaceholder(rose_addr_t startVa) /*final*/;
     /** @} */
 
 
@@ -1002,7 +1004,7 @@ public:
      *  Thread safety: Not thread safe.
      *
      * @sa basicBlocksOverlapping, @ref basicBlocksSpanning, @ref basicBlocksContainedIn */
-    std::vector<BasicBlock::Ptr> basicBlocks() const;
+    std::vector<BasicBlockPtr> basicBlocks() const;
 
     /** Determines whether a discovered basic block exists in the CFG/AUM.
      *
@@ -1025,8 +1027,8 @@ public:
      *  @sa placeholderExists
      *
      *  @{ */
-    BasicBlock::Ptr basicBlockExists(rose_addr_t startVa) const;
-    BasicBlock::Ptr basicBlockExists(const BasicBlock::Ptr&) const;
+    BasicBlockPtr basicBlockExists(rose_addr_t startVa) const;
+    BasicBlockPtr basicBlockExists(const BasicBlockPtr&) const;
     /** @} */
 
     /** Returns basic blocks that overlap with specified address interval.
@@ -1038,7 +1040,7 @@ public:
      *  The returned list of basic blocks are sorted by their starting address.
      *
      *  Thread safety: Not thread safe. */
-    std::vector<BasicBlock::Ptr> basicBlocksOverlapping(const AddressInterval&) const;
+    std::vector<BasicBlockPtr> basicBlocksOverlapping(const AddressInterval&) const;
 
     /** Returns basic blocks that span an entire address interval.
      *
@@ -1050,7 +1052,7 @@ public:
      *  The returned list of basic blocks are sorted by their starting address.
      *
      *  Thread safety: Not thread safe. */
-    std::vector<BasicBlock::Ptr> basicBlocksSpanning(const AddressInterval&) const;
+    std::vector<BasicBlockPtr> basicBlocksSpanning(const AddressInterval&) const;
 
     /** Returns basic blocks that are fully contained in an address interval.
      *
@@ -1061,7 +1063,7 @@ public:
      *  The returned list of basic blocks are sorted by their starting address.
      *
      *  Thread safety: Not thread safe. */
-    std::vector<BasicBlock::Ptr> basicBlocksContainedIn(const AddressInterval&) const;
+    std::vector<BasicBlockPtr> basicBlocksContainedIn(const AddressInterval&) const;
 
     /** Returns the basic block that contains a specific instruction address.
      *
@@ -1069,7 +1071,7 @@ public:
      *  instruction or basic block exists in the CFG/AUM.
      *
      *  Thread safety: Not thread safe. */
-    BasicBlock::Ptr basicBlockContainingInstruction(rose_addr_t insnVa) const;
+    BasicBlockPtr basicBlockContainingInstruction(rose_addr_t insnVa) const;
 
     /** Returns the addresses used by basic block instructions.
      *
@@ -1080,14 +1082,14 @@ public:
      *  non-overlapping.
      *
      *  Thread safety: Not thread safe. */
-    AddressIntervalSet basicBlockInstructionExtent(const BasicBlock::Ptr&) const;
+    AddressIntervalSet basicBlockInstructionExtent(const BasicBlockPtr&) const;
 
     /** Returns the addresses used by basic block data.
      *
      *  Returns an interval set which is the union of the extents for each data block referenced by this basic block.
      *
      *  Thread safety: Not thread safe. */
-    AddressIntervalSet basicBlockDataExtent(const BasicBlock::Ptr&) const;
+    AddressIntervalSet basicBlockDataExtent(const BasicBlockPtr&) const;
 
     /** Detach a basic block from the CFG/AUM.
      *
@@ -1113,9 +1115,9 @@ public:
      *  Thread safety: Not thread safe.
      *
      *  @{ */
-    BasicBlock::Ptr detachBasicBlock(rose_addr_t startVa);
-    BasicBlock::Ptr detachBasicBlock(const BasicBlock::Ptr &basicBlock);
-    BasicBlock::Ptr detachBasicBlock(const ControlFlowGraph::ConstVertexIterator &placeholder);
+    BasicBlockPtr detachBasicBlock(rose_addr_t startVa);
+    BasicBlockPtr detachBasicBlock(const BasicBlockPtr &basicBlock);
+    BasicBlockPtr detachBasicBlock(const ControlFlowGraph::ConstVertexIterator &placeholder);
     /** @} */
 
     /** Truncate an attached basic-block.
@@ -1164,8 +1166,8 @@ public:
      *  Thread safety: Not thread safe.
      *
      *  @{ */
-    void attachBasicBlock(const BasicBlock::Ptr&);
-    void attachBasicBlock(const ControlFlowGraph::ConstVertexIterator &placeholder, const BasicBlock::Ptr&);
+    void attachBasicBlock(const BasicBlockPtr&);
+    void attachBasicBlock(const ControlFlowGraph::ConstVertexIterator &placeholder, const BasicBlockPtr&);
     /** @} */
 
     /** Discover instructions for a detached basic block.
@@ -1253,8 +1255,8 @@ public:
      *  Thread safety: Not thread safe.
      *
      *  @{ */
-    BasicBlock::Ptr discoverBasicBlock(rose_addr_t startVa) const;
-    BasicBlock::Ptr discoverBasicBlock(const ControlFlowGraph::ConstVertexIterator &placeholder) const;
+    BasicBlockPtr discoverBasicBlock(rose_addr_t startVa) const;
+    BasicBlockPtr discoverBasicBlock(const ControlFlowGraph::ConstVertexIterator &placeholder) const;
     /** @} */
 
     /** Determine successors for a basic block.
@@ -1271,7 +1273,7 @@ public:
      *  successors.
      *
      *  Thread safety: Not thread safe. */
-    BasicBlock::Successors basicBlockSuccessors(const BasicBlock::Ptr&, Precision::Level precision = Precision::HIGH) const;
+    BasicBlockSuccessors basicBlockSuccessors(const BasicBlockPtr&, Precision::Level precision = Precision::HIGH) const;
 
     /** Determines concrete successors for a basic block.
      *
@@ -1281,7 +1283,7 @@ public:
      *  the complete set is not concrete (false).
      *
      *  Thread safety: Not thread safe. */
-    std::vector<rose_addr_t> basicBlockConcreteSuccessors(const BasicBlock::Ptr&, bool *isComplete=NULL) const;
+    std::vector<rose_addr_t> basicBlockConcreteSuccessors(const BasicBlockPtr&, bool *isComplete=NULL) const;
 
     /** Determine ghost successors for a basic block.
      *
@@ -1301,7 +1303,7 @@ public:
      *
      *
      *  Thread safety: Not thread safe. */
-    std::set<rose_addr_t> basicBlockGhostSuccessors(const BasicBlock::Ptr&) const;
+    std::set<rose_addr_t> basicBlockGhostSuccessors(const BasicBlockPtr&) const;
 
     /** Determine if a basic block looks like a function call.
      *
@@ -1312,7 +1314,7 @@ public:
      *  If the analysis cannot prove that the block is a function call, then returns false.
      *
      *  Thread safety: Not thread safe. */
-    bool basicBlockIsFunctionCall(const BasicBlock::Ptr&, Precision::Level precision = Precision::HIGH) const;
+    bool basicBlockIsFunctionCall(const BasicBlockPtr&, Precision::Level precision = Precision::HIGH) const;
 
     /** Determine if a basic block looks like a function return.
      *
@@ -1324,13 +1326,13 @@ public:
      *  address is not the last thing popped from the stack. FIXME[Robb P. Matzke 2014-09-15]
      *
      *  Thread safety: Not thread safe. */
-    bool basicBlockIsFunctionReturn(const BasicBlock::Ptr&) const;
+    bool basicBlockIsFunctionReturn(const BasicBlockPtr&) const;
 
     /** Determine if the basic block pops at least one byte from the stack.
      *
      * Returns true if the basic block has a net effect of popping at least one byte from the stack compared to the original
      * stack pointer. Returns false if the block does not pop or its behavior cannot be determined. */
-     bool basicBlockPopsStack(const BasicBlock::Ptr&) const;
+     bool basicBlockPopsStack(const BasicBlockPtr&) const;
 
     /** Return the stack delta expression.
      *
@@ -1372,8 +1374,11 @@ public:
      *  @sa functionStackDelta and @ref allFunctionStackDelta
      *
      * @{ */
-    BaseSemantics::SValuePtr basicBlockStackDeltaIn(const BasicBlock::Ptr&, const Function::Ptr &function) const;
-    BaseSemantics::SValuePtr basicBlockStackDeltaOut(const BasicBlock::Ptr&, const Function::Ptr &function) const;
+    InstructionSemantics::BaseSemantics::SValuePtr
+    basicBlockStackDeltaIn(const BasicBlockPtr&, const Function::Ptr &function) const;
+
+    InstructionSemantics::BaseSemantics::SValuePtr
+    basicBlockStackDeltaOut(const BasicBlockPtr&, const Function::Ptr &function) const;
     /** @} */
 
     /** Clears all cached stack deltas.
@@ -1451,7 +1456,7 @@ public:
      *  Thread safety: Not thread safe.
      *
      * @{ */
-    Sawyer::Optional<bool> basicBlockOptionalMayReturn(const BasicBlock::Ptr&) const;
+    Sawyer::Optional<bool> basicBlockOptionalMayReturn(const BasicBlockPtr&) const;
     Sawyer::Optional<bool> basicBlockOptionalMayReturn(const ControlFlowGraph::ConstVertexIterator&) const;
     /** @} */
 
@@ -1569,7 +1574,7 @@ public:
      *  Returns either the specified data block or an equivalent data block that's already owned by the basic block.
      *
      *  Thread safety: Not thread safe. */
-    DataBlock::Ptr attachDataBlockToBasicBlock(const DataBlock::Ptr&, const BasicBlock::Ptr&);
+    DataBlock::Ptr attachDataBlockToBasicBlock(const DataBlock::Ptr&, const BasicBlockPtr&);
 
     /** Returns data blocks that overlap with specified address interval.
      *
@@ -1655,7 +1660,7 @@ public:
      *
      *  @{ */
     Function::Ptr functionExists(rose_addr_t entryVa) const;
-    Function::Ptr functionExists(const BasicBlock::Ptr &entryBlock) const;
+    Function::Ptr functionExists(const BasicBlockPtr &entryBlock) const;
     Function::Ptr functionExists(const Function::Ptr &function) const;
     /** @} */
 
@@ -1841,7 +1846,7 @@ public:
     functionsOwningBasicBlock(rose_addr_t bblockVa, bool doSort = true) const;
 
     std::vector<Function::Ptr>
-    functionsOwningBasicBlock(const BasicBlock::Ptr&, bool doSort = true) const;
+    functionsOwningBasicBlock(const BasicBlockPtr&, bool doSort = true) const;
 
     template<class Container> // container can hold any type accepted by functionsOwningBasicBlock
     std::vector<Function::Ptr>
@@ -1938,7 +1943,7 @@ public:
      *  performing any analysis.
      *
      *  Thread safety: Not thread safe. */
-    BaseSemantics::SValuePtr functionStackDelta(const Function::Ptr &function) const;
+    InstructionSemantics::BaseSemantics::SValuePtr functionStackDelta(const Function::Ptr &function) const;
 
     /** Compute stack delta analysis for all functions.
      *
@@ -2299,7 +2304,7 @@ public:
     /** Name of a basic block.
      *
      *  Thread safety: Not thread safe. */
-    static std::string basicBlockName(const BasicBlock::Ptr&);
+    static std::string basicBlockName(const BasicBlockPtr&);
 
     /** Name of a data block.
      *
@@ -2516,8 +2521,8 @@ public:
      *  Thread safety: Not thread safe.
      *
      * @{ */
-    BaseSemantics::RiscOperatorsPtr newOperators() const;
-    BaseSemantics::RiscOperatorsPtr newOperators(SemanticMemoryParadigm) const;
+    InstructionSemantics::BaseSemantics::RiscOperatorsPtr newOperators() const;
+    InstructionSemantics::BaseSemantics::RiscOperatorsPtr newOperators(SemanticMemoryParadigm) const;
     /** @} */
 
     /** Obtain a new instruction semantics dispatcher.
@@ -2527,7 +2532,8 @@ public:
      *  semantics are not supported for the specimen's architecture.
      *
      *  Thread safety: Not thread safe. */
-    BaseSemantics::DispatcherPtr newDispatcher(const BaseSemantics::RiscOperatorsPtr&) const;
+    InstructionSemantics::BaseSemantics::DispatcherPtr
+    newDispatcher(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&) const;
 
 
 
@@ -2571,7 +2577,7 @@ private:
     ControlFlowGraph::EdgeIterator adjustNonexistingEdges(const ControlFlowGraph::VertexIterator &vertex);
 
     // Implementation for the discoverBasicBlock methods.  The startVa must not be the address of an existing placeholder.
-    BasicBlock::Ptr discoverBasicBlockInternal(rose_addr_t startVa) const;
+    BasicBlockPtr discoverBasicBlockInternal(rose_addr_t startVa) const;
 
     // This method is called whenever a new placeholder is inserted into the CFG or a new basic block is attached to the
     // CFG/AUM. The call happens immediately after the CFG/AUM are updated.
@@ -2579,7 +2585,7 @@ private:
 
     // This method is called whenever a basic block is detached from the CFG/AUM or when a placeholder is erased from the CFG.
     // The call happens immediately after the CFG/AUM are updated.
-    void bblockDetached(rose_addr_t startVa, const BasicBlock::Ptr &removedBlock);
+    void bblockDetached(rose_addr_t startVa, const BasicBlockPtr &removedBlock);
 
     // Rebuild the vertexIndex_ and other cache-like data members from the control flow graph
     void rebuildVertexIndices();

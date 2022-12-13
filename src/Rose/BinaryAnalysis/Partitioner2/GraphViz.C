@@ -3,14 +3,18 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Partitioner2/GraphViz.h>
 
-#include <AsmUnparser_compat.h>
-#include <Rose/CommandLine.h>
-#include <Rose/Diagnostics.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/FunctionCallGraph.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
+#include <Rose/CommandLine.h>
+#include <Rose/Diagnostics.h>
+
+#include <AsmUnparser_compat.h>
+
 #include <Sawyer/GraphTraversal.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics/SymbolicSemantics.h>
+
 #ifdef _MSC_VER
 #define popen _popen
 #define pclose _pclose

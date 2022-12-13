@@ -9,6 +9,7 @@ static const char *description =
 #include <rose.h>                                       // must be first ROSE header
 
 #include <Rose/BinaryAnalysis/Disassembler/Base.h>
+#include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ParallelPartitioner.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>

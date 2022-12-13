@@ -4,8 +4,10 @@
 #include <Rose/BinaryAnalysis/Reachability.h>
 
 #include <Rose/BinaryAnalysis/DataFlow.h>
-#include <Rose/CommandLine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+#include <Rose/CommandLine.h>
+
 #include <Sawyer/Stopwatch.h>
 #include <Sawyer/ThreadWorkers.h>
 #include <Sawyer/Tracker.h>

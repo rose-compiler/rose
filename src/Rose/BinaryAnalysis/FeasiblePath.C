@@ -13,6 +13,7 @@
 #include <Rose/BinaryAnalysis/Disassembler/M68k.h>
 #include <Rose/BinaryAnalysis/Disassembler/Powerpc.h>
 #include <Rose/BinaryAnalysis/Disassembler/X86.h>
+#include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/GraphViz.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesElf.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
