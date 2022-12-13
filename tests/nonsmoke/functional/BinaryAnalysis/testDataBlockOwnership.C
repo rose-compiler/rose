@@ -1,5 +1,6 @@
 // Tests that DataBlock ownership rules work correctly
 #include <rose.h>
+#include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Exception.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>

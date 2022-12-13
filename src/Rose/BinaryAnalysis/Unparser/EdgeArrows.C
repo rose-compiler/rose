@@ -4,6 +4,7 @@
 #include <Rose/BinaryAnalysis/Unparser/EdgeArrows.h>
 
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
+#include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ControlFlowGraph.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>

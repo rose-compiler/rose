@@ -3,9 +3,12 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Partitioner2/CfgPath.h>
 
-#include <Combinatorics.h>
-#include <Rose/Diagnostics.h>
+#include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+#include <Rose/Diagnostics.h>
+
+#include <Combinatorics.h>
+
 #include <Sawyer/GraphTraversal.h>
 
 using namespace Rose::Diagnostics;

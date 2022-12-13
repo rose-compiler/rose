@@ -3,6 +3,7 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Disassembler/Powerpc.h>
 
+#include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesElf.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesPowerpc.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>

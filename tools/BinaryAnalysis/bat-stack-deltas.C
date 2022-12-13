@@ -5,10 +5,12 @@ static const char *description =
     "or unspecified.";
 
 #include <rose.h>
-#include <Rose/CommandLine.h>
-#include <Rose/Diagnostics.h>
+
+#include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+#include <Rose/CommandLine.h>
+#include <Rose/Diagnostics.h>
 
 #include <batSupport.h>
 #include <boost/filesystem.hpp>

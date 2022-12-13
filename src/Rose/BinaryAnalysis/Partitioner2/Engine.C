@@ -9,6 +9,7 @@
 #include <Rose/BinaryAnalysis/Disassembler/Powerpc.h>
 #include <Rose/BinaryAnalysis/Disassembler/X86.h>
 #include <Rose/BinaryAnalysis/MemoryMap.h>
+#include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Modules.h>

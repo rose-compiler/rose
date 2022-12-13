@@ -1,16 +1,19 @@
 // Library for all bat toolstState
 
 #include <rose.h>
+
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/State.h>
-#include <Rose/BinaryAnalysis/Unparser/Base.h>
-#include <Rose/CommandLine.h>
+#include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/RegisterDictionary.h>
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
+#include <Rose/BinaryAnalysis/Unparser/Base.h>
+#include <Rose/CommandLine.h>
+#include <Rose/StringUtility.h>
+
 #include <rose_strtoull.h>                              // rose
 #include <stringify.h>                                  // rose
-#include <Rose/StringUtility.h>
 
 #include <batSupport.h>
 #include <boost/format.hpp>

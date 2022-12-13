@@ -8,16 +8,18 @@ static const char *description =
     "systems whose standard input is opened in binary mode, such as Unix-like systems.";
 
 #include <rose.h>
+
 #include <Rose/BinaryAnalysis/NoOperation.h>
+#include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
 #include <Rose/CommandLine.h>
-#include <Sawyer/Stopwatch.h>
 
 #include <batSupport.h>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/filesystem.hpp>
+#include <Sawyer/Stopwatch.h>
 
 using namespace Rose;
 using namespace Rose::BinaryAnalysis;
