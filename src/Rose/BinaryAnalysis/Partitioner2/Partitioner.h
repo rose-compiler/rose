@@ -7,7 +7,6 @@
 #include <Rose/BinaryAnalysis/Partitioner2/AddressUsageMap.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Configuration.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ControlFlowGraph.h>
-#include <Rose/BinaryAnalysis/Partitioner2/DataBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 #include <Rose/BinaryAnalysis/Partitioner2/FunctionCallGraph.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Modules.h>
@@ -596,7 +595,7 @@ public:
     std::string unparse(SgAsmInstruction*) const;
     void unparse(std::ostream&, SgAsmInstruction*) const;
     void unparse(std::ostream&, const BasicBlockPtr&) const;
-    void unparse(std::ostream&, const DataBlock::Ptr&) const;
+    void unparse(std::ostream&, const DataBlockPtr&) const;
     void unparse(std::ostream&, const Function::Ptr&) const;
     void unparse(std::ostream&) const;
     /** @} */
@@ -1518,7 +1517,7 @@ public:
      *  block that's already present in the AUM. Otherwise return a null pointer.
      *
      *  Thread safety: Not thread safe. */
-    DataBlock::Ptr dataBlockExists(const DataBlock::Ptr&) const;
+    DataBlockPtr dataBlockExists(const DataBlockPtr&) const;
 
     /** Find an existing data block.
      *
@@ -1528,7 +1527,7 @@ public:
      *  starting address wins.  If no suitable data block can be found then the null pointer is returned.
      *
      *  Thread safety: Not thread safe. */
-    DataBlock::Ptr findBestDataBlock(const AddressInterval&) const;
+    DataBlockPtr findBestDataBlock(const AddressInterval&) const;
 
     /** Attach a data block to the CFG/AUM.
      *
@@ -1541,7 +1540,7 @@ public:
      *  now attached.
      *
      *  Thread safety: Not thread safe. */
-    DataBlock::Ptr attachDataBlock(const DataBlock::Ptr&);
+    DataBlockPtr attachDataBlock(const DataBlockPtr&);
 
     /** Detaches a data block from the CFG/AUM.
      *
@@ -1549,7 +1548,7 @@ public:
      *  to attempt to detach a data block which is owned by attached basic blocks or attached functions.
      *
      *  Thread safety: Not thread safe. */
-    void detachDataBlock(const DataBlock::Ptr&);
+    void detachDataBlock(const DataBlockPtr&);
 
     /** Attach a data block to an attached or detached function.
      *
@@ -1560,7 +1559,7 @@ public:
      *  Returns either the specified data block or an equivalent data block that's already owned by the function.
      *
      *  Thread safety: Not thread safe. */
-    DataBlock::Ptr attachDataBlockToFunction(const DataBlock::Ptr&, const Function::Ptr&);
+    DataBlockPtr attachDataBlockToFunction(const DataBlockPtr&, const Function::Ptr&);
 
     /** Attach a data block to a basic block.
      *
@@ -1574,7 +1573,7 @@ public:
      *  Returns either the specified data block or an equivalent data block that's already owned by the basic block.
      *
      *  Thread safety: Not thread safe. */
-    DataBlock::Ptr attachDataBlockToBasicBlock(const DataBlock::Ptr&, const BasicBlockPtr&);
+    DataBlockPtr attachDataBlockToBasicBlock(const DataBlockPtr&, const BasicBlockPtr&);
 
     /** Returns data blocks that overlap with specified address interval.
      *
@@ -1585,7 +1584,7 @@ public:
      *  The returned list of data blocks are sorted by their starting address.
      *
      *  Thread safety: Not thread safe. */
-    std::vector<DataBlock::Ptr> dataBlocksOverlapping(const AddressInterval&) const;
+    std::vector<DataBlockPtr> dataBlocksOverlapping(const AddressInterval&) const;
 
     /** Returns data blocks that span an entire address interval.
      *
@@ -1596,7 +1595,7 @@ public:
      *  The returned list of data blocks are sorted by their starting address.
      *
      *  Thread safety: Not thread safe. */
-    std::vector<DataBlock::Ptr> dataBlocksSpanning(const AddressInterval&) const;
+    std::vector<DataBlockPtr> dataBlocksSpanning(const AddressInterval&) const;
 
     /** Returns data blocks that are fully contained in an address interval.
      *
@@ -1607,7 +1606,7 @@ public:
      *  The returned list of data blocks are sorted by their starting address.
      *
      *  Thread safety: Not thread safe. */
-    std::vector<DataBlock::Ptr> dataBlocksContainedIn(const AddressInterval&) const;
+    std::vector<DataBlockPtr> dataBlocksContainedIn(const AddressInterval&) const;
 
     /** Returns the addresses used by a data block.
      *
@@ -1615,14 +1614,14 @@ public:
      *  in the data block type.  Since all addresses are returned, the extent of a data block is always contiguous.
      *
      *  Thread safety: Not thread safe. */
-    AddressInterval dataBlockExtent(const DataBlock::Ptr&) const;
+    AddressInterval dataBlockExtent(const DataBlockPtr&) const;
 
     /** Returns the list of all attached data blocks.
      *
      *  Returns a sorted list of distinct data blocks that are attached to the CFG/AUM.
      *
      *  Thread safety: Not thread safe. */
-    std::vector<DataBlock::Ptr> dataBlocks() const;
+    std::vector<DataBlockPtr> dataBlocks() const;
 
 
 
@@ -2220,7 +2219,7 @@ public:
      *  returned.  If no padding is found then the null pointer is returned.
      *
      *  Thread safety: Not thread safe. */
-    DataBlock::Ptr matchFunctionPadding(const Function::Ptr&);
+    DataBlockPtr matchFunctionPadding(const Function::Ptr&);
 
 
 
@@ -2309,7 +2308,7 @@ public:
     /** Name of a data block.
      *
      *  Thread safety: Not thread safe. */
-    static std::string dataBlockName(const DataBlock::Ptr&);
+    static std::string dataBlockName(const DataBlockPtr&);
 
     /** Name of a function.
      *
