@@ -810,9 +810,11 @@ using BasicBlockPtr = Sawyer::SharedPointer<BasicBlock>; /**< Shared-ownersip po
 
 class BasicBlockError;
 
+class BasicBlockCallback;
+using BasicBlockCallbackPtr = Sawyer::SharedPointer<BasicBlockCallback>; /**< Shared ownership pointer. */
+
 class BasicBlockSuccessor;
 using BasicBlockSuccessors = std::vector<BasicBlockSuccessor>; /**< All successors in no particular order. */
-
 
 class CfgAdjustmentCallback;
 
@@ -837,6 +839,12 @@ using FunctionPtr = Sawyer::SharedPointer<Function>;    /**< Shared-ownership po
 using Functions = Sawyer::Container::Map<rose_addr_t, FunctionPtr>; /**< Mapping from address to function. */
 
 class FunctionCallGraph;
+
+class FunctionPaddingMatcher;
+using FunctionPaddingMatcherPtr = Sawyer::SharedPointer<FunctionPaddingMatcher>; /**< Shared ownership pointer. */
+
+class FunctionPrologueMatcher;
+using FunctionPrologueMatcherPtr = Sawyer::SharedPointer<FunctionPrologueMatcher>; /**< Shared ownership pointer. */
 
 using FunctionSet = Sawyer::Container::Set<FunctionPtr>; /**< Set of functions. */
 
