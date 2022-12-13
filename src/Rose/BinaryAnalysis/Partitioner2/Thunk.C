@@ -4,6 +4,7 @@
 #include <Rose/BinaryAnalysis/Partitioner2/Thunk.h>
 
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
+#include <Rose/BinaryAnalysis/Partitioner2/DataBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesX86.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 

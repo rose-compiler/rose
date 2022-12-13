@@ -7,6 +7,7 @@
 #include <Rose/BinaryAnalysis/Demangler.h>
 #include <Rose/BinaryAnalysis/String.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
+#include <Rose/BinaryAnalysis/Partitioner2/DataBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/FunctionCallGraph.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Modules.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>

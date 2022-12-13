@@ -5,6 +5,7 @@
 
 #include <Rose/BinaryAnalysis/Partitioner2/AddressUsageMap.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
+#include <Rose/BinaryAnalysis/Partitioner2/DataBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/DataFlow.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Exception.h>
 #include <Rose/BinaryAnalysis/Partitioner2/GraphViz.h>
