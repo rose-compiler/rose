@@ -7,7 +7,6 @@
 #include <Rose/BinaryAnalysis/Partitioner2/AddressUsageMap.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Configuration.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ControlFlowGraph.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 #include <Rose/BinaryAnalysis/Partitioner2/FunctionCallGraph.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Modules.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Reference.h>
@@ -596,7 +595,7 @@ public:
     void unparse(std::ostream&, SgAsmInstruction*) const;
     void unparse(std::ostream&, const BasicBlockPtr&) const;
     void unparse(std::ostream&, const DataBlockPtr&) const;
-    void unparse(std::ostream&, const Function::Ptr&) const;
+    void unparse(std::ostream&, const FunctionPtr&) const;
     void unparse(std::ostream&) const;
     /** @} */
 
@@ -675,7 +674,7 @@ public:
     const AddressUsageMap& aum() const;
 
     /** Returns the address usage map for a single function. */
-    AddressUsageMap aum(const Function::Ptr&) const;
+    AddressUsageMap aum(const FunctionPtr&) const;
 
     /** Entities that exist at a particular address.
      *
@@ -720,8 +719,8 @@ public:
      *  @sa isEdgeInterProcedural.
      *
      * @{ */
-    bool isEdgeIntraProcedural(ControlFlowGraph::ConstEdgeIterator edge, const Function::Ptr&) const;
-    bool isEdgeIntraProcedural(const ControlFlowGraph::Edge &edge, const Function::Ptr&) const;
+    bool isEdgeIntraProcedural(ControlFlowGraph::ConstEdgeIterator edge, const FunctionPtr&) const;
+    bool isEdgeIntraProcedural(const ControlFlowGraph::Edge &edge, const FunctionPtr&) const;
     bool isEdgeIntraProcedural(ControlFlowGraph::ConstEdgeIterator edge) const;
     bool isEdgeIntraProcedural(const ControlFlowGraph::Edge &edge) const;
     /** @} */
@@ -761,14 +760,14 @@ public:
      *
      * @{ */
     bool isEdgeInterProcedural(ControlFlowGraph::ConstEdgeIterator edge) const;
-    bool isEdgeInterProcedural(ControlFlowGraph::ConstEdgeIterator edge, const Function::Ptr &sourceFunction) const;
-    bool isEdgeInterProcedural(ControlFlowGraph::ConstEdgeIterator edge, const Function::Ptr &sourceFunction,
-                               const Function::Ptr &targetFunction) const;
+    bool isEdgeInterProcedural(ControlFlowGraph::ConstEdgeIterator edge, const FunctionPtr &sourceFunction) const;
+    bool isEdgeInterProcedural(ControlFlowGraph::ConstEdgeIterator edge, const FunctionPtr &sourceFunction,
+                               const FunctionPtr &targetFunction) const;
 
     bool isEdgeInterProcedural(const ControlFlowGraph::Edge &edge) const;
-    bool isEdgeInterProcedural(const ControlFlowGraph::Edge &edge, const Function::Ptr &sourceFunction) const;
-    bool isEdgeInterProcedural(const ControlFlowGraph::Edge &edge, const Function::Ptr &sourceFunction,
-                               const Function::Ptr &targetFunction) const;
+    bool isEdgeInterProcedural(const ControlFlowGraph::Edge &edge, const FunctionPtr &sourceFunction) const;
+    bool isEdgeInterProcedural(const ControlFlowGraph::Edge &edge, const FunctionPtr &sourceFunction,
+                               const FunctionPtr &targetFunction) const;
     /** @} */
 
 
@@ -1374,10 +1373,10 @@ public:
      *
      * @{ */
     InstructionSemantics::BaseSemantics::SValuePtr
-    basicBlockStackDeltaIn(const BasicBlockPtr&, const Function::Ptr &function) const;
+    basicBlockStackDeltaIn(const BasicBlockPtr&, const FunctionPtr &function) const;
 
     InstructionSemantics::BaseSemantics::SValuePtr
-    basicBlockStackDeltaOut(const BasicBlockPtr&, const Function::Ptr &function) const;
+    basicBlockStackDeltaOut(const BasicBlockPtr&, const FunctionPtr &function) const;
     /** @} */
 
     /** Clears all cached stack deltas.
@@ -1389,7 +1388,7 @@ public:
      *
      * @{ */
     void forgetStackDeltas() const;
-    void forgetStackDeltas(const Function::Ptr&) const;
+    void forgetStackDeltas(const FunctionPtr&) const;
     /** @} */
 
     /** Property: max depth for inter-procedural stack delta analysis.
@@ -1559,7 +1558,7 @@ public:
      *  Returns either the specified data block or an equivalent data block that's already owned by the function.
      *
      *  Thread safety: Not thread safe. */
-    DataBlockPtr attachDataBlockToFunction(const DataBlockPtr&, const Function::Ptr&);
+    DataBlockPtr attachDataBlockToFunction(const DataBlockPtr&, const FunctionPtr&);
 
     /** Attach a data block to a basic block.
      *
@@ -1658,9 +1657,9 @@ public:
      *  Thread safety: Not thread safe.
      *
      *  @{ */
-    Function::Ptr functionExists(rose_addr_t entryVa) const;
-    Function::Ptr functionExists(const BasicBlockPtr &entryBlock) const;
-    Function::Ptr functionExists(const Function::Ptr &function) const;
+    FunctionPtr functionExists(rose_addr_t entryVa) const;
+    FunctionPtr functionExists(const BasicBlockPtr &entryBlock) const;
+    FunctionPtr functionExists(const FunctionPtr &function) const;
     /** @} */
 
     /** All functions attached to the CFG/AUM.
@@ -1668,7 +1667,7 @@ public:
      *  Returns a vector of distinct functions sorted by their entry address.
      *
      *  Thread safety: Not thread safe. */
-    std::vector<Function::Ptr> functions() const;
+    std::vector<FunctionPtr> functions() const;
 
     /** Returns functions that overlap with specified address interval.
      *
@@ -1679,7 +1678,7 @@ public:
      *  The returned list of funtions are sorted by their entry address.
      *
      *  Thread safety: Not thread safe. */
-    std::vector<Function::Ptr> functionsOverlapping(const AddressInterval&) const;
+    std::vector<FunctionPtr> functionsOverlapping(const AddressInterval&) const;
 
     /** Returns functions that span an entire address interval.
      *
@@ -1691,7 +1690,7 @@ public:
      *  The returned list of functions are sorted by their starting address.
      *
      *  Thread safety: Not thread safe. */
-    std::vector<Function::Ptr> functionsSpanning(const AddressInterval&) const;
+    std::vector<FunctionPtr> functionsSpanning(const AddressInterval&) const;
 
     /** Returns functions that are fully contained in an address interval.
      *
@@ -1702,7 +1701,7 @@ public:
      *  The returned list of functions are sorted by their starting address.
      *
      *  Thread safety: Not thread safe. */
-    std::vector<Function::Ptr> functionsContainedIn(const AddressInterval&) const;
+    std::vector<FunctionPtr> functionsContainedIn(const AddressInterval&) const;
 
     /** Returns the addresses used by a function.
      *
@@ -1720,12 +1719,12 @@ public:
      *  Thread safety: Not thread safe.
      *
      * @{ */
-    AddressIntervalSet functionExtent(const Function::Ptr&) const;
-    void functionExtent(const Function::Ptr &function, AddressIntervalSet &retval /*in,out*/) const;
-    AddressIntervalSet functionBasicBlockExtent(const Function::Ptr &function) const;
-    void functionBasicBlockExtent(const Function::Ptr &function, AddressIntervalSet &retval /*in,out*/) const;
-    AddressIntervalSet functionDataBlockExtent(const Function::Ptr &function) const;
-    void functionDataBlockExtent(const Function::Ptr &function, AddressIntervalSet &retval /*in,out*/) const;
+    AddressIntervalSet functionExtent(const FunctionPtr&) const;
+    void functionExtent(const FunctionPtr &function, AddressIntervalSet &retval /*in,out*/) const;
+    AddressIntervalSet functionBasicBlockExtent(const FunctionPtr &function) const;
+    void functionBasicBlockExtent(const FunctionPtr &function, AddressIntervalSet &retval /*in,out*/) const;
+    AddressIntervalSet functionDataBlockExtent(const FunctionPtr &function) const;
+    void functionDataBlockExtent(const FunctionPtr &function, AddressIntervalSet &retval /*in,out*/) const;
     /** @} */
 
     /** Attaches a function to the CFG/AUM.
@@ -1747,7 +1746,7 @@ public:
      *  Thread safety: Not thread safe.
      *
      *  @{ */
-    size_t attachFunction(const Function::Ptr&);
+    size_t attachFunction(const FunctionPtr&);
     size_t attachFunctions(const Functions&);
     /** @} */
 
@@ -1764,7 +1763,7 @@ public:
      *  owned also by those other functions. Data blocks are handled in a similar fashion.
      *
      *  Thread safety: Not thread safe. */
-    Function::Ptr attachOrMergeFunction(const Function::Ptr&);
+    FunctionPtr attachOrMergeFunction(const FunctionPtr&);
 
     /** Create placeholders for function basic blocks.
      *
@@ -1783,7 +1782,7 @@ public:
      *
      *  @{ */
     size_t attachFunctionBasicBlocks(const Functions&);
-    size_t attachFunctionBasicBlocks(const Function::Ptr&);
+    size_t attachFunctionBasicBlocks(const FunctionPtr&);
     /** @} */
 
     /** Detaches a function from the CFG/AUM.
@@ -1799,7 +1798,7 @@ public:
      *  user directly through its API. Attempting to detach a function that is already detached has no effect.
      *
      *  Thread safety: Not thread safe. */
-    void detachFunction(const Function::Ptr&);
+    void detachFunction(const FunctionPtr&);
 
     /** Finds functions that own the specified basic block.
      *
@@ -1835,24 +1834,24 @@ public:
      *  Thread safety: Not thread safe.
      *
      *  @{ */
-    std::vector<Function::Ptr>
+    std::vector<FunctionPtr>
     functionsOwningBasicBlock(const ControlFlowGraph::Vertex&, bool doSort = true) const;
 
-    std::vector<Function::Ptr>
+    std::vector<FunctionPtr>
     functionsOwningBasicBlock(const ControlFlowGraph::ConstVertexIterator&, bool doSort = true) const;
 
-    std::vector<Function::Ptr>
+    std::vector<FunctionPtr>
     functionsOwningBasicBlock(rose_addr_t bblockVa, bool doSort = true) const;
 
-    std::vector<Function::Ptr>
+    std::vector<FunctionPtr>
     functionsOwningBasicBlock(const BasicBlockPtr&, bool doSort = true) const;
 
     template<class Container> // container can hold any type accepted by functionsOwningBasicBlock
-    std::vector<Function::Ptr>
+    std::vector<FunctionPtr>
     functionsOwningBasicBlocks(const Container &bblocks) const {
-        std::vector<Function::Ptr> retval;
+        std::vector<FunctionPtr> retval;
         for (const typename Container::value_type& bblock: bblocks) {
-            for (const Function::Ptr &function: functionsOwningBasicBlock(bblock, false))
+            for (const FunctionPtr &function: functionsOwningBasicBlock(bblock, false))
                 insertUnique(retval, function, sortFunctionsByAddress);
         }
         return retval;
@@ -1868,7 +1867,7 @@ public:
      *  See also @ref discoverFunctionEntryVertices which returns a superset of the functions returned by this method.
      *
      *  Thread safety: Not thread safe. */
-    std::vector<Function::Ptr> discoverCalledFunctions() const;
+    std::vector<FunctionPtr> discoverCalledFunctions() const;
 
     /** Scans the CFG to find function entry basic blocks.
      *
@@ -1881,7 +1880,7 @@ public:
      *  See also @ref discoverFunctionCalls which returns a subset of the functions returned by this method.
      *
      *  Thread safety: Not thread safe. */
-    std::vector<Function::Ptr> discoverFunctionEntryVertices() const;
+    std::vector<FunctionPtr> discoverFunctionEntryVertices() const;
 
     /** True if function is a thunk.
      *
@@ -1892,7 +1891,7 @@ public:
      *  As a side effect, the basic block's outgoing edge type is changed to E_FUNCTION_XFER.
      *
      *  Thread safety: Not thread safe. */
-    Sawyer::Optional<Thunk> functionIsThunk(const Function::Ptr&) const;
+    Sawyer::Optional<Thunk> functionIsThunk(const FunctionPtr&) const;
 
     /** Adds basic blocks to a function.
      *
@@ -1904,7 +1903,7 @@ public:
      *  a thawed state.
      *
      *  Thread safety: Not thread safe. */
-    void discoverFunctionBasicBlocks(const Function::Ptr &function) const;
+    void discoverFunctionBasicBlocks(const FunctionPtr &function) const;
 
     /** Returns ghost successors for a single function.
      *
@@ -1912,7 +1911,7 @@ public:
      *  which are not actual control flow successors due to the presence of opaque predicates.
      *
      *  Thread safety: Not thread safe. */
-    std::set<rose_addr_t> functionGhostSuccessors(const Function::Ptr&) const;
+    std::set<rose_addr_t> functionGhostSuccessors(const FunctionPtr&) const;
 
     /** Returns a function call graph.
      *
@@ -1942,7 +1941,7 @@ public:
      *  performing any analysis.
      *
      *  Thread safety: Not thread safe. */
-    InstructionSemantics::BaseSemantics::SValuePtr functionStackDelta(const Function::Ptr &function) const;
+    InstructionSemantics::BaseSemantics::SValuePtr functionStackDelta(const FunctionPtr &function) const;
 
     /** Compute stack delta analysis for all functions.
      *
@@ -1955,7 +1954,7 @@ public:
      *  basicBlockOptionalMayReturn invoked on the function's entry block. See that method for details.
      *
      *  Thread safety: Not thread safe. */
-    Sawyer::Optional<bool> functionOptionalMayReturn(const Function::Ptr &function) const;
+    Sawyer::Optional<bool> functionOptionalMayReturn(const FunctionPtr &function) const;
 
     /** Compute may-return analysis for all functions.
      *
@@ -1990,8 +1989,8 @@ public:
      *  Thread safety: Not thread safe.
      *
      * @{ */
-    const CallingConvention::Analysis& functionCallingConvention(const Function::Ptr&) const;
-    const CallingConvention::Analysis& functionCallingConvention(const Function::Ptr&,
+    const CallingConvention::Analysis& functionCallingConvention(const FunctionPtr&) const;
+    const CallingConvention::Analysis& functionCallingConvention(const FunctionPtr&,
                                                                  const CallingConvention::Definition::Ptr &dflt) const;
     /** @} */
 
@@ -2041,8 +2040,8 @@ public:
      *  than definitions), and @ref allFunctionCallingConvention, which runs that analysis over all functions.
      *
      * @{ */
-    CallingConvention::Dictionary functionCallingConventionDefinitions(const Function::Ptr&) const;
-    CallingConvention::Dictionary functionCallingConventionDefinitions(const Function::Ptr&,
+    CallingConvention::Dictionary functionCallingConventionDefinitions(const FunctionPtr&) const;
+    CallingConvention::Dictionary functionCallingConventionDefinitions(const FunctionPtr&,
                                                                        const CallingConvention::Definition::Ptr&) const;
     /** @} */
 
@@ -2093,7 +2092,7 @@ public:
      *
      *  See also, @ref allFunctionIsNoop, which analyzes all functions at once and which therefore may be faster than invoking
      *  the analysis one function at a time. */
-    bool functionIsNoop(const Function::Ptr&) const;
+    bool functionIsNoop(const FunctionPtr&) const;
 
     /** Analyze all functions for whether they are effectivly no-ops.
      *
@@ -2110,14 +2109,14 @@ public:
      *
      * @{ */
     void forgetFunctionIsNoop() const;
-    void forgetFunctionIsNoop(const Function::Ptr&) const;
+    void forgetFunctionIsNoop(const FunctionPtr&) const;
     /** @} */
 
     /** Find constants in function using data-flow.
      *
      *  This function runs a simple data-flow operation on the specified function and examines all states to obtain a set
      *  of constants. */
-    std::set<rose_addr_t> functionDataFlowConstants(const Function::Ptr&) const;
+    std::set<rose_addr_t> functionDataFlowConstants(const FunctionPtr&) const;
 
 
 
@@ -2198,8 +2197,8 @@ public:
      *  Thread safety: Not thread safe.
      *
      *  @{ */
-    std::vector<Function::Ptr> nextFunctionPrologue(rose_addr_t startVa);
-    std::vector<Function::Ptr> nextFunctionPrologue(rose_addr_t startVa, rose_addr_t &lastSearchedVa /*out*/);
+    std::vector<FunctionPtr> nextFunctionPrologue(rose_addr_t startVa);
+    std::vector<FunctionPtr> nextFunctionPrologue(rose_addr_t startVa, rose_addr_t &lastSearchedVa /*out*/);
     /** @} */
 
 public:
@@ -2219,7 +2218,7 @@ public:
      *  returned.  If no padding is found then the null pointer is returned.
      *
      *  Thread safety: Not thread safe. */
-    DataBlockPtr matchFunctionPadding(const Function::Ptr&);
+    DataBlockPtr matchFunctionPadding(const FunctionPtr&);
 
 
 
@@ -2313,7 +2312,7 @@ public:
     /** Name of a function.
      *
      *  Thread safety: Not thread safe. */
-    static std::string functionName(const Function::Ptr&);
+    static std::string functionName(const FunctionPtr&);
 
     /** Expands indeterminate function calls.
      *
