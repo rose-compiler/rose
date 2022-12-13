@@ -1196,6 +1196,7 @@ namespace Ada
 
         const bool useThisDecl = (  isSgAdaDerivedType(basety)
                                  || isSgAdaAccessType(basety)
+                                 || isSgAdaModularType(basety)
                                  || fromRootType(isSgAdaSubtype(basety))
                                  );
 
@@ -1234,8 +1235,28 @@ namespace Ada
 
       void handle(SgNode& n)              { SG_UNEXPECTED_NODE(n); }
 
-      void handle(SgType& n)              { /* \todo do nothing for now; should disappear and raise error */ }
-      void handle(SgExpression& n)        { /* base case for expression based types */ }
+
+      //
+      // expression based types
+
+      // base case, do nothing
+      void handle(SgExpression&)          {}
+
+      void handle(SgAdaAttributeExp& n)
+      {
+        res = pkgStandardScope();
+
+        if (boost::to_upper_copy(n.get_attribute().getString()) == "CLASS")
+          if (SgTypeExpression* tyex = isSgTypeExpression(n.get_object()))
+            res = find(tyex->get_type());
+      }
+
+      void handle(SgVarRefExp& n)         { res = declOf(n).get_scope(); }
+
+      //
+      // types
+
+      void handle(SgType&)                { /* \todo do nothing for now; should disappear and raise error */ }
 
       // all root types (according to the three builder function in AdaMaker.C)
       void handle(SgTypeLongLong& n)      { res = pkgStandardScope(); }
@@ -1317,6 +1338,7 @@ namespace Ada
 
         const bool useThisDecl = (  isSgAdaDerivedType(basety)
                                  || isSgAdaAccessType(basety)
+                                 || isSgAdaModularType(basety)
                                  || fromRootType(isSgAdaSubtype(basety))
                                  );
 
@@ -1328,10 +1350,6 @@ namespace Ada
 
       //
       void handle(SgDeclType& n)          { res = find(n.get_base_expression()); }
-
-      // some expressions
-      void handle(SgVarRefExp& n)         { res = declOf(n).get_scope(); }
-      void handle(SgAdaAttributeExp& n)   { res = pkgStandardScope(); } // \todo
     };
 
     SgScopeStatement* DeclScopeFinder::find(SgNode* n)
@@ -1430,6 +1448,9 @@ namespace Ada
 
   SgScopeStatement* operatorScope(const SgType& ty, bool isRelational)
   {
+    //~ std::cerr << "osc: " << isRelational << " " << typeid(ty).name()
+              //~ << std::endl;
+
     return isRelational ? DeclScopeFinder::find(const_cast<SgType*>(&ty))
                         : pkgStandardScope();
   }
