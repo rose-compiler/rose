@@ -7,7 +7,6 @@
 #include <Rose/BinaryAnalysis/Partitioner2/AddressUsageMap.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Configuration.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ControlFlowGraph.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Modules.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Reference.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Semantics.h>
 
@@ -313,9 +312,9 @@ public:
 
     // Callback list types
     typedef Sawyer::Callbacks<CfgAdjustmentCallback::Ptr> CfgAdjustmentCallbacks; /**< See @ref cfgAdjustmentCallbacks. */
-    typedef Sawyer::Callbacks<BasicBlockCallback::Ptr> BasicBlockCallbacks; /**< See @ref basicBlockCallbacks. */
-    typedef std::vector<FunctionPrologueMatcher::Ptr> FunctionPrologueMatchers; /**< See @ref functionPrologueMatchers. */
-    typedef std::vector<FunctionPaddingMatcher::Ptr> FunctionPaddingMatchers; /**< See @ref functionPaddingMatchers. */
+    typedef Sawyer::Callbacks<BasicBlockCallbackPtr> BasicBlockCallbacks; /**< See @ref basicBlockCallbacks. */
+    typedef std::vector<FunctionPrologueMatcherPtr> FunctionPrologueMatchers; /**< See @ref functionPrologueMatchers. */
+    typedef std::vector<FunctionPaddingMatcherPtr> FunctionPaddingMatchers; /**< See @ref functionPaddingMatchers. */
 
     /** Represents information about a thunk. */
     struct Thunk {

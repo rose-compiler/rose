@@ -39,7 +39,7 @@ namespace Partitioner2 {
 class BasicBlockCallback: public Sawyer::SharedObject {
 public:
     /** Shared-ownership pointer to a @ref BasicBlockCallback. See @ref heap_object_shared_ownership. */
-    typedef Sawyer::SharedPointer<BasicBlockCallback> Ptr;
+    using Ptr = BasicBlockCallbackPtr;
 
     /** Whether to terminate a basic block. */
     enum Termination {
@@ -108,7 +108,7 @@ public:
 class FunctionPrologueMatcher: public InstructionMatcher {
 public:
     /** Shared-ownership pointer to a @ref FunctionPrologueMatcher. See @ref heap_object_shared_ownership. */
-    typedef Sawyer::SharedPointer<FunctionPrologueMatcher> Ptr;
+    using Ptr = FunctionPrologueMatcherPtr;
 
     /** Returns the function(s) for the previous successful match.
      *
@@ -134,7 +134,7 @@ public:
 class FunctionPaddingMatcher: public Sawyer::SharedObject {
 public:
     /** Shared-ownership pointer to a @ref FunctionPaddingMatcher. See @ref heap_object_shared_ownership. */
-    typedef Sawyer::SharedPointer<FunctionPaddingMatcher> Ptr;
+    using Ptr = FunctionPaddingMatcherPtr;
 
     /** Attempt to match padding.
      *
