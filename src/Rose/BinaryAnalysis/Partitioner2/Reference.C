@@ -12,6 +12,9 @@ namespace Partitioner2 {
 
 Reference::~Reference() {}
 
+Reference::Reference(const Function::Ptr &function)
+    : function_(function), insn_(nullptr) {}
+
 Reference::Reference(const Function::Ptr &function, const BasicBlock::Ptr &bblock, SgAsmInstruction *insn,
                      const Sawyer::Optional<rose_addr_t> &address)
     : function_(function), bblock_(bblock), insn_(insn), address_(address) {}

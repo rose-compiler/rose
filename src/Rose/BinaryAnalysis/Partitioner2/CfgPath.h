@@ -195,29 +195,45 @@ public:
     /** Number of function calls.
      *
      *  Counts the number of E_FUNCTION_CALL edges in a path.  If a non-null function is supplied then only count those edges
-     *  that enter the specified function. */
-    size_t nCalls(const FunctionPtr &function = FunctionPtr()) const;
+     *  that enter the specified function.
+     *
+     * @{ */
+    size_t nCalls(const FunctionPtr&) const;
+    size_t nCalls() const;
+    /** @} */
 
     /** Number of function returns.
      *
      *  Counts the number of E_FUNCTION_RETURN edges in a path. If a non-null function is supplied then only count those edges
-     *  that return from the specified function. */
-    size_t nReturns(const FunctionPtr &function = FunctionPtr()) const;
+     *  that return from the specified function.
+     *
+     * @{ */
+    size_t nReturns(const FunctionPtr&) const;
+    size_t nReturns() const;
+    /** @} */
 
     /** Call depth.
      *
      *  Returns the function call depth at the end of the path.  The call depth is incremented for each E_FUNCTION_CALL edge
      *  and decremented for each E_FUNCTION_RETURN edge, and the value at the end of the path is returned. If a non-null
      *  function is specified, then count only calls to that function and returns from that function. The return value may be
-     *  negative if more return edges than call edges are encountered. */
-    ssize_t callDepth(const FunctionPtr &function = FunctionPtr()) const;
+     *  negative if more return edges than call edges are encountered.
+     *
+     * @{ */
+    ssize_t callDepth(const FunctionPtr&) const;
+    ssize_t callDepth() const;
+    /** @} */
 
     /** Maximum call depth.
      *
      *  Returns the maximum function call depth in the path.  The call depth is incremented for each E_FUNCTION_CALL edge and
      *  decremented for each E_FUNCTION_RETURN edge, and its maximum value is returned. If a non-null function is specified,
-     *  then count only calls to that function and returns from that function. */
-    size_t maxCallDepth(const FunctionPtr &function = FunctionPtr()) const;
+     *  then count only calls to that function and returns from that function.
+     *
+     * @{ */
+    size_t maxCallDepth(const FunctionPtr&) const;
+    size_t maxCallDepth() const;
+    /** @} */
 
     /** Truncate the path.
      *
@@ -426,12 +442,12 @@ inlineMultipleCallees(ControlFlowGraph &paths /*in,out*/, const ControlFlowGraph
                       const ControlFlowGraph &cfg, const ControlFlowGraph::ConstVertexIterator &cfgCallSite,
                       const CfgConstVertexSet &cfgAvoidVertices = CfgConstVertexSet(),
                       const CfgConstEdgeSet &cfgAvoidEdges = CfgConstEdgeSet(),
-                      std::vector<ControlFlowGraph::ConstVertexIterator> *newEdges = NULL);
+                      std::vector<ControlFlowGraph::ConstVertexIterator> *newEdges = nullptr);
 bool
 inlineOneCallee(ControlFlowGraph &paths /*in,out*/, const ControlFlowGraph::ConstVertexIterator &pathsCallSite,
                 const ControlFlowGraph &cfg, const ControlFlowGraph::ConstVertexIterator &cfgCallTarget,
                 const CfgConstVertexSet &cfgAvoidVertices, const CfgConstEdgeSet &cfgAvoidEdges,
-                std::vector<ControlFlowGraph::ConstVertexIterator> *newVertices = NULL);
+                std::vector<ControlFlowGraph::ConstVertexIterator> *newVertices = nullptr);
 /** @} */
 
 /** Binary inliner.

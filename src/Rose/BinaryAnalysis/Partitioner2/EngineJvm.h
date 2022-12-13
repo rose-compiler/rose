@@ -352,7 +352,8 @@ public:
      *  @li Fail by throwing an <code>std::runtime_error</code>.
      *
      *  In any case, the @ref disassembler property is set to this method's return value. */
-    virtual Disassembler::BasePtr obtainDisassembler(const Disassembler::BasePtr &hint = Disassembler::BasePtr());
+    virtual Disassembler::BasePtr obtainDisassembler(const Disassembler::BasePtr &hint);
+    virtual Disassembler::BasePtr obtainDisassembler();
     /** @} */
 
 

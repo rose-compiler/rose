@@ -1275,6 +1275,11 @@ Engine::obtainLoader(const BinaryLoader::Ptr &hint) {
     return binaryLoader_;
 }
 
+BinaryLoader::Ptr
+Engine::obtainLoader() {
+    return obtainLoader(BinaryLoader::Ptr());
+}
+
 void
 Engine::loadContainers(const std::vector<std::string> &fileNames) {
     // Load the interpretation if it hasn't been already
