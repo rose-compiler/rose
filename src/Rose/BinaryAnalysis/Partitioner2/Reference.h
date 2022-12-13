@@ -119,12 +119,6 @@ public:
     bool operator<(const Reference &other) const;
 };
 
-/** Set of references. */
-typedef std::set<Reference> ReferenceSet;
-
-/** Cross references. */
-typedef Sawyer::Container::Map<Reference, ReferenceSet> CrossReferences;
-
 } // namespace
 } // namespace
 } // namespace

@@ -11,6 +11,7 @@
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 #include <Rose/BinaryAnalysis/Partitioner2/GraphViz.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesPowerpc.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Reference.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Utility.h>
 
 #include <AsmUnparser_compat.h>

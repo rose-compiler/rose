@@ -11,6 +11,7 @@
 #include <Sawyer/Graph.h>
 #include <Sawyer/Map.h>
 #include <Sawyer/Set.h>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -851,10 +852,14 @@ using FunctionSet = Sawyer::Container::Set<FunctionPtr>; /**< Set of functions. 
 class FunctionError;
 
 class Partitioner;
-using PartitionerPtr = Sawyer::SharedPointer<Partitioner>; /**< Shared-ownership pointer for @ref Partitioner. */
+using PartitionerPtr = Sawyer::SharedPointer<Partitioner>;            /**< Shared-ownership pointer for @ref Partitioner. */
 using PartitionerConstPtr = Sawyer::SharedPointer<const Partitioner>; /**< Shared-ownership pointer for @ref Partitioner. */
 
 class PlaceholderError;
+
+class Reference;
+using ReferenceSet = std::set<Reference>;                                /**< Set of references. */
+using CrossReferences = Sawyer::Container::Map<Reference, ReferenceSet>; /**< Cross references. */
 
 class ThunkPredicates;
 using ThunkPredicatesPtr = Sawyer::SharedPointer<ThunkPredicates>; /**< Shared-ownership pointer for @ref ThunkPredicates. */
