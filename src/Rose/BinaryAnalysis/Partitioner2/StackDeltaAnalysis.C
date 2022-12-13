@@ -7,6 +7,7 @@
 #include <Rose/BinaryAnalysis/StackDelta.h>
 #include <Rose/CommandLine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/DataFlow.h>
+#include <Rose/BinaryAnalysis/Partitioner2/FunctionCallGraph.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Sawyer/GraphAlgorithm.h>
 #include <Sawyer/ProgressBar.h>
