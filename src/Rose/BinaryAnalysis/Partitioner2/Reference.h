@@ -44,7 +44,9 @@ public:
      *  A reference can be constructed from any combination of a function, basic block, instruction, and address.
      *
      * @{ */
-    explicit Reference(const FunctionPtr&, const BasicBlockPtr& = BasicBlockPtr(),
+    explicit Reference(const FunctionPtr&);
+
+    explicit Reference(const FunctionPtr&, const BasicBlockPtr&,
                        SgAsmInstruction* = nullptr, const Sawyer::Optional<rose_addr_t>& = Sawyer::Nothing());
 
     explicit Reference(const BasicBlockPtr&, SgAsmInstruction* = nullptr, const Sawyer::Optional<rose_addr_t>& =Sawyer::Nothing());

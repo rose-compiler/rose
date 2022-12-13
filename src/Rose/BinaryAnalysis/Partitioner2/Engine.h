@@ -558,8 +558,12 @@ public:
      *
      *  @li Fail by throwing an <code>std::runtime_error</code>.
      *
-     *  In any case, the @ref binaryLoader property is set to this method's return value. */
-    virtual BinaryLoaderPtr obtainLoader(const BinaryLoaderPtr &hint = BinaryLoaderPtr());
+     *  In any case, the @ref binaryLoader property is set to this method's return value.
+     *
+     * @{ */
+    virtual BinaryLoaderPtr obtainLoader(const BinaryLoaderPtr &hint);
+    virtual BinaryLoaderPtr obtainLoader();
+    /** @} */
 
     /** Loads memory from binary containers.
      *

@@ -233,6 +233,11 @@ CfgPath::nCalls(const Function::Ptr &function) const {
 }
 
 size_t
+CfgPath::nCalls() const {
+    return nCalls(Function::Ptr());
+}
+
+size_t
 CfgPath::nReturns(const Function::Ptr &function) const {
     size_t retval = 0;
     for (const ControlFlowGraph::ConstEdgeIterator &edge: edges_) {
@@ -246,6 +251,11 @@ CfgPath::nReturns(const Function::Ptr &function) const {
         }
     }
     return retval;
+}
+
+size_t
+CfgPath::nReturns() const {
+    return nReturns(Function::Ptr());
 }
 
 ssize_t
@@ -271,6 +281,11 @@ CfgPath::callDepth(const Function::Ptr &function) const {
     return depth;
 }
 
+ssize_t
+CfgPath::callDepth() const {
+    return callDepth(Function::Ptr());
+}
+
 size_t
 CfgPath::maxCallDepth(const Function::Ptr &function) const {
     ssize_t depth = 0;
@@ -294,6 +309,11 @@ CfgPath::maxCallDepth(const Function::Ptr &function) const {
         retval = std::max(retval, depth);
     }
     return retval;
+}
+
+size_t
+CfgPath::maxCallDepth() const {
+    return maxCallDepth(Function::Ptr());
 }
 
 std::vector<ControlFlowGraph::ConstEdgeIterator>

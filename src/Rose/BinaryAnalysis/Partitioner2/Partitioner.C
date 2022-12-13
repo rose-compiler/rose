@@ -2161,6 +2161,11 @@ Partitioner::detachFunction(const Function::Ptr &function) {
 }
 
 const CallingConvention::Analysis&
+Partitioner::functionCallingConvention(const Function::Ptr &function) const {
+    return functionCallingConvention(function, CallingConvention::Definition::Ptr());
+}
+
+const CallingConvention::Analysis&
 Partitioner::functionCallingConvention(const Function::Ptr &function,
                                        const CallingConvention::Definition::Ptr &dfltCc/*=NULL*/) const {
     ASSERT_not_null(function);
@@ -2172,6 +2177,11 @@ Partitioner::functionCallingConvention(const Function::Ptr &function,
         function->callingConventionAnalysis().analyzeFunction(sharedFromThis(), function);
     }
     return function->callingConventionAnalysis();
+}
+
+CallingConvention::Dictionary
+Partitioner::functionCallingConventionDefinitions(const Function::Ptr &function) const {
+    return functionCallingConventionDefinitions(function, CallingConvention::Definition::Ptr());
 }
 
 CallingConvention::Dictionary
@@ -2215,6 +2225,11 @@ struct CallingConventionWorker {
 };
 
 void
+Partitioner::allFunctionCallingConvention() const {
+    allFunctionCallingConvention(CallingConvention::Definition::Ptr());
+}
+
+void
 Partitioner::allFunctionCallingConvention(const CallingConvention::Definition::Ptr &dfltCc/*=NULL*/) const {
     size_t nThreads = Rose::CommandLine::genericSwitchArgs.threads;
     FunctionCallGraph::Graph cg = functionCallGraph(AllowParallelEdges::NO).graph();
@@ -2225,6 +2240,11 @@ Partitioner::allFunctionCallingConvention(const CallingConvention::Definition::P
     if (nThreads != 1)                                  // lots of threads doing progress reports won't look too good!
         Rose::BinaryAnalysis::CallingConvention::mlog[MARCH].disable();
     Sawyer::workInParallel(cg, nThreads, CallingConventionWorker(*this, progress, dfltCc));
+}
+
+void
+Partitioner::allFunctionCallingConventionDefinition() const {
+    allFunctionCallingConventionDefinition(CallingConvention::Definition::Ptr());
 }
 
 void
@@ -3267,6 +3287,11 @@ Partitioner::isEdgeIntraProcedural(ControlFlowGraph::ConstEdgeIterator edge, con
 }
 
 bool
+Partitioner::isEdgeIntraProcedural(ControlFlowGraph::ConstEdgeIterator edge) const {
+    return isEdgeIntraProcedural(edge, Function::Ptr());
+}
+
+bool
 Partitioner::isEdgeIntraProcedural(const ControlFlowGraph::Edge &edge, const Function::Ptr &function) const {
     if (edge.value().type() == E_FUNCTION_CALL ||
         edge.value().type() == E_FUNCTION_XFER ||
@@ -3283,10 +3308,35 @@ Partitioner::isEdgeIntraProcedural(const ControlFlowGraph::Edge &edge, const Fun
 }
 
 bool
+Partitioner::isEdgeIntraProcedural(const ControlFlowGraph::Edge &edge) const {
+    return isEdgeIntraProcedural(edge, Function::Ptr());
+}
+
+bool
+Partitioner::isEdgeInterProcedural(ControlFlowGraph::ConstEdgeIterator edge) const {
+    return isEdgeInterProcedural(edge, Function::Ptr());
+}
+
+bool
+Partitioner::isEdgeInterProcedural(ControlFlowGraph::ConstEdgeIterator edge, const Function::Ptr &sourceFunction) const {
+    return isEdgeInterProcedural(edge, sourceFunction, Function::Ptr());
+}
+
+bool
 Partitioner::isEdgeInterProcedural(ControlFlowGraph::ConstEdgeIterator edge,
                                    const Function::Ptr &sourceFunction, const Function::Ptr &targetFunction) const {
     ASSERT_require(cfg_.isValidEdge(edge));
     return isEdgeInterProcedural(*edge, sourceFunction, targetFunction);
+}
+
+bool
+Partitioner::isEdgeInterProcedural(const ControlFlowGraph::Edge &edge) const {
+    return isEdgeInterProcedural(edge, Function::Ptr());
+}
+
+bool
+Partitioner::isEdgeInterProcedural(const ControlFlowGraph::Edge &edge, const Function::Ptr &sourceFunction) const {
+    return isEdgeInterProcedural(edge, sourceFunction, Function::Ptr());
 }
 
 bool

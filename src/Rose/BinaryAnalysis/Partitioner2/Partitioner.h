@@ -719,10 +719,10 @@ public:
      *  @sa isEdgeInterProcedural.
      *
      * @{ */
-    bool isEdgeIntraProcedural(ControlFlowGraph::ConstEdgeIterator edge,
-                               const Function::Ptr &function = Function::Ptr()) const;
-    bool isEdgeIntraProcedural(const ControlFlowGraph::Edge &edge,
-                               const Function::Ptr &function = Function::Ptr()) const;
+    bool isEdgeIntraProcedural(ControlFlowGraph::ConstEdgeIterator edge, const Function::Ptr&) const;
+    bool isEdgeIntraProcedural(const ControlFlowGraph::Edge &edge, const Function::Ptr&) const;
+    bool isEdgeIntraProcedural(ControlFlowGraph::ConstEdgeIterator edge) const;
+    bool isEdgeIntraProcedural(const ControlFlowGraph::Edge &edge) const;
     /** @} */
 
     /** Determine if an edge is inter-procedural.
@@ -759,12 +759,15 @@ public:
      *  @sa isEdgeIntraProcedural.
      *
      * @{ */
-    bool isEdgeInterProcedural(ControlFlowGraph::ConstEdgeIterator edge,
-                               const Function::Ptr &sourceFunction = Function::Ptr(),
-                               const Function::Ptr &targetFunction = Function::Ptr()) const;
-    bool isEdgeInterProcedural(const ControlFlowGraph::Edge &edge,
-                               const Function::Ptr &sourceFunction = Function::Ptr(),
-                               const Function::Ptr &targetFunction = Function::Ptr()) const;
+    bool isEdgeInterProcedural(ControlFlowGraph::ConstEdgeIterator edge) const;
+    bool isEdgeInterProcedural(ControlFlowGraph::ConstEdgeIterator edge, const Function::Ptr &sourceFunction) const;
+    bool isEdgeInterProcedural(ControlFlowGraph::ConstEdgeIterator edge, const Function::Ptr &sourceFunction,
+                               const Function::Ptr &targetFunction) const;
+
+    bool isEdgeInterProcedural(const ControlFlowGraph::Edge &edge) const;
+    bool isEdgeInterProcedural(const ControlFlowGraph::Edge &edge, const Function::Ptr &sourceFunction) const;
+    bool isEdgeInterProcedural(const ControlFlowGraph::Edge &edge, const Function::Ptr &sourceFunction,
+                               const Function::Ptr &targetFunction) const;
     /** @} */
 
 
@@ -1980,10 +1983,13 @@ public:
      *  See also, @ref allFunctionCallingConvention, which computes calling convention characteristics for all functions at
      *  once, and @ref functionCallingConventionDefinitions, which returns matching definitions.
      *
-     *  Thread safety: Not thread safe. */
-    const CallingConvention::Analysis&
-    functionCallingConvention(const Function::Ptr&,
-                              const CallingConvention::Definition::Ptr &dflt = CallingConvention::Definition::Ptr()) const;
+     *  Thread safety: Not thread safe.
+     *
+     * @{ */
+    const CallingConvention::Analysis& functionCallingConvention(const Function::Ptr&) const;
+    const CallingConvention::Analysis& functionCallingConvention(const Function::Ptr&,
+                                                                 const CallingConvention::Definition::Ptr &dflt) const;
+    /** @} */
 
     /** Compute calling conventions for all functions.
      *
@@ -1996,9 +2002,13 @@ public:
      *  After this method runs, results can be queried per function with either @ref Function::callingConventionAnalysis or
      *  @ref functionCallingConvention.
      *
-     *  Thread safety: Not thread safe. */
-    void
-    allFunctionCallingConvention(const CallingConvention::Definition::Ptr &dflt = CallingConvention::Definition::Ptr()) const;
+     *  Thread safety: Not thread safe.
+     *
+     * @{ */
+    void allFunctionCallingConvention() const;
+    void allFunctionCallingConvention(const CallingConvention::Definition::Ptr &dflt) const;
+
+    /** @} */
 
     /** Return list of matching calling conventions.
      *
@@ -2024,11 +2034,13 @@ public:
      *  Thread safety: Not thread safe.
      *
      *  See also, @ref functionCallingConvention, which returns the calling convention characteristics of a function (rather
-     *  than definitions), and @ref allFunctionCallingConvention, which runs that analysis over all functions. */
-    CallingConvention::Dictionary
-    functionCallingConventionDefinitions(const Function::Ptr&,
-                                         const CallingConvention::Definition::Ptr &dflt = CallingConvention::Definition::Ptr())
-        const;
+     *  than definitions), and @ref allFunctionCallingConvention, which runs that analysis over all functions.
+     *
+     * @{ */
+    CallingConvention::Dictionary functionCallingConventionDefinitions(const Function::Ptr&) const;
+    CallingConvention::Dictionary functionCallingConventionDefinitions(const Function::Ptr&,
+                                                                       const CallingConvention::Definition::Ptr&) const;
+    /** @} */
 
     /** Analyzes calling conventions and saves results.
      *
@@ -2041,10 +2053,12 @@ public:
      *  analysis. The default is also assigned as the @ref Function::callingConventionDefinition property of any function for
      *  which calling convention analysis fails.
      *
-     *  Thread safety: Not thread safe. */
-    void
-    allFunctionCallingConventionDefinition(const CallingConvention::Definition::Ptr &dflt = CallingConvention::Definition::Ptr())
-        const;
+     *  Thread safety: Not thread safe.
+     *
+     * @{ */
+    void allFunctionCallingConventionDefinition() const;
+    void allFunctionCallingConventionDefinition(const CallingConvention::Definition::Ptr&) const;
+    /** @} */
 
     /** Adjust inter-function edge types.
      *
