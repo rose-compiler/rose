@@ -7,6 +7,7 @@
 #include <Rose/BinaryAnalysis/Concolic/ExecutionLocation.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/RegisterDescriptor.h>
 #include <Rose/BinaryAnalysis/SmtSolver.h>
 #include <ByteOrder.h>
@@ -44,8 +45,8 @@ private:
 
 protected:
     // See "instance" methods in subclasses
-    explicit Architecture(const std::string&);
-    Architecture(const DatabasePtr&, TestCaseId, const Partitioner2::PartitionerConstPtr&);
+    explicit Architecture(const std::string&);          // for factories
+    Architecture(const DatabasePtr&, TestCaseId);       // for non-factories
 public:
     virtual ~Architecture();
 
@@ -82,17 +83,15 @@ public:
     /** Creates a suitable architecture by name.
      *
      *  Scans the @ref registeredFactories list in the reverse order looking for a factory whose @ref matchFactory predicate
-     *  (which accepts all but the first three arguments of this function) returns true. The first factory whose predicate
+     *  (which accepts all but the first two arguments of this function) returns true. The first factory whose predicate
      *  returns true is used to create and return a new architecture object by invoking the factory's virtual @c
-     *  instanceFromFactory constructor with the first three arguments of this function.
+     *  instanceFromFactory constructor with the first two arguments of this function.
      *
      *  Thread safety: This method is thread safe.
      *
      * @{ */
-    static Ptr forge(const DatabasePtr&, TestCaseId, const Partitioner2::PartitionerConstPtr&,
-                     const std::string&);
-    static Ptr forge(const DatabasePtr&, const TestCasePtr&, const Partitioner2::PartitionerConstPtr&,
-                     const std::string&);
+    static Ptr forge(const DatabasePtr&, TestCaseId, const std::string&);
+    static Ptr forge(const DatabasePtr&, const TestCasePtr&, const std::string&);
     /** @} */
 
     /** Predicate for matching an architecture factory by name. */
@@ -102,7 +101,7 @@ public:
      *
      *  This creates a new object by calling the class method @c instance for the class of which @c this is a type. All
      *  arguments are passed to @c instance. */
-    virtual Ptr instanceFromFactory(const DatabasePtr&, TestCaseId, const Partitioner2::PartitionerConstPtr&) const = 0;
+    virtual Ptr instanceFromFactory(const DatabasePtr&, TestCaseId) const = 0;
 
     /** Returns true if this object is a factory.
      *
@@ -147,6 +146,7 @@ public:
      *
      *  This holds information about the disassembly of the specimen, such as functions, basic blocks, and instructions. */
     Partitioner2::PartitionerConstPtr partitioner() const;
+    void partitioner(const Partitioner2::PartitionerConstPtr&);
 
     /** Property: Current execution location.
      *
@@ -203,6 +203,9 @@ public:
     // Functions that can be called before execution starts.
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+    /** Partition the specimen. */
+    virtual Partitioner2::PartitionerPtr partition(Partitioner2::Engine*, const std::string &specimenName) = 0;
+
     /** Configures system call behavior.
      *
      *  This function declares how system calls are handled and is called from the @c instance methods (construction). */

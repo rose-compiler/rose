@@ -46,8 +46,8 @@ initRegistry() {
 Architecture::Architecture(const std::string &name)
     : name_(name) {}
 
-Architecture::Architecture(const Database::Ptr &db, TestCaseId testCaseId, const P2::PartitionerConstPtr &partitioner)
-    : db_(db), testCaseId_(testCaseId), partitioner_(partitioner) {
+Architecture::Architecture(const Database::Ptr &db, TestCaseId testCaseId)
+    : db_(db), testCaseId_(testCaseId) {
     ASSERT_not_null(db);
     testCase_ = db->object(testCaseId, Update::NO);
     ASSERT_not_null(testCase_);
@@ -90,25 +90,23 @@ Architecture::registeredFactories() {
 }
 
 Architecture::Ptr
-Architecture::forge(const Database::Ptr &db, TestCaseId tcid, const P2::PartitionerConstPtr &partitioner,
-                    const std::string &name) {
+Architecture::forge(const Database::Ptr &db, TestCaseId tcid, const std::string &name) {
     ASSERT_not_null(db);
     ASSERT_require(tcid);
     initRegistry();
     SAWYER_THREAD_TRAITS::LockGuard lock(registryMutex);
     for (auto factory = registry.rbegin(); factory != registry.rend(); ++factory) {
         if ((*factory)->matchFactory(name))
-            return (*factory)->instanceFromFactory(db, tcid, partitioner);
+            return (*factory)->instanceFromFactory(db, tcid);
     }
     return {};
 }
 
 Architecture::Ptr
-Architecture::forge(const Database::Ptr &db, const TestCase::Ptr &tc, const P2::PartitionerConstPtr &partitioner,
-                    const std::string &name) {
+Architecture::forge(const Database::Ptr &db, const TestCase::Ptr &tc, const std::string &name) {
     ASSERT_not_null(db);
     ASSERT_not_null(tc);
-    return forge(db, db->id(tc), partitioner, name);
+    return forge(db, db->id(tc), name);
 }
 
 bool
@@ -151,6 +149,13 @@ P2::PartitionerConstPtr
 Architecture::partitioner() const {
     ASSERT_forbid(isFactory());
     return partitioner_;
+}
+
+void
+Architecture::partitioner(const P2::Partitioner::ConstPtr &p) {
+    ASSERT_forbid(isFactory());
+    ASSERT_not_null(p);
+    partitioner_ = p;
 }
 
 ExecutionLocation

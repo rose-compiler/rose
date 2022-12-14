@@ -428,7 +428,7 @@ public:
 private:
     // Disassemble the specimen and cache the result in the database. If the specimen has previously been disassembled
     // then reconstitute the analysis results from the database.
-    Partitioner2::PartitionerPtr partition(const SpecimenPtr&, const std::string &architectureName);
+    Partitioner2::PartitionerPtr partition(const SpecimenPtr&, const ArchitecturePtr&);
 
     // Create the dispatcher, operators, and memory and register state for the symbolic execution.
     Emulation::DispatcherPtr makeDispatcher(const ArchitecturePtr&);
