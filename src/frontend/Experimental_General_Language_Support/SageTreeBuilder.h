@@ -283,7 +283,7 @@ public:
 
    void attachComments(SgLocatedNode* node, bool at_end=false);
    void attachComments(SgLocatedNode* node, const PosInfo &pos, bool at_end=false);
-   void attachComments(SgLocatedNode* node, const std::vector<Token> &tokens);
+   void attachComments(SgLocatedNode* node, const std::vector<Token> &tokens, bool at_end=false);
    void attachComments(SgLocatedNode* node, std::vector<Token> &tokens, const PosInfo &pos);
    void attachRemainingComments(SgLocatedNode* node);
    void consumePrecedingComments(std::vector<Token> &tokens, const PosInfo &pos);

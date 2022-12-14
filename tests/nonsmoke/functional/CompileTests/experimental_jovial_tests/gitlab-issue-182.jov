@@ -1,11 +1,9 @@
 START
- 
 PROGRAM main;
 BEGIN
 "TEST//"
-ITEM test U;
-test = 5;
+  ITEM test U;
+  test = 5;
 % */ /* %
- 
 END
 TERM

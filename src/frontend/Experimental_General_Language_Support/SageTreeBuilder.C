@@ -67,11 +67,25 @@ SageTreeBuilder::attachComments(SgLocatedNode* node, const PosInfo &pos, bool at
   // Attach comments at end of statement
   if (at_end && isSgStatement(node)) {
     boost::optional<const Token&> token{};
+
+    // If a scope, some comments should be attached to last statement in scope
+    SgStatement* last{nullptr};
+    if (auto scope = isSgScopeStatement(node)) {
+      last = scope->lastStatement();
+    }
+
     while ((token = tokens_->getNextToken()) && token->getEndLine() <= pos.getEndLine()) {
+      if (last && token->getEndLine() < pos.getEndLine()) {
 #if PRINT_ATTACH_COMMENT
-      std::cout << "---> attach stmt end comment at node pos: " << pos << " for: " << node->class_name() << ": " << token << "\n";
+std::cout << "---> attach end comment to last stmt: " << last->class_name() << ": " << token << "\n";
 #endif
-      SI::attachComment(node, token->getLexeme(), PreprocessingInfo::after, PreprocessingInfo::JovialStyleComment);
+        SI::attachComment(last, token->getLexeme(), PreprocessingInfo::after, PreprocessingInfo::JovialStyleComment);
+      } else {
+#if PRINT_ATTACH_COMMENT
+std::cout << "---> attach end comment to: " << node->class_name() << ": " << token << "\n";
+#endif
+        SI::attachComment(node, token->getLexeme(), PreprocessingInfo::after, PreprocessingInfo::JovialStyleComment);
+      }
       tokens_->consumeNextToken();
     }
     return;
@@ -86,27 +100,6 @@ SageTreeBuilder::attachComments(SgLocatedNode* node, const PosInfo &pos, bool at
 #endif
       SI::attachComment(node, token->getLexeme(), PreprocessingInfo::before, PreprocessingInfo::JovialStyleComment);
       tokens_->consumeNextToken();
-    }
-
-    if (at_end) {
-#if PRINT_ATTACH_COMMENT
-      std::cout << "---> attach comments for end of a basic block\n";
-#endif
-      // Comments at end (and same line) of block
-      ROSE_ASSERT(false && "attaching comments at end of a basic block");
-
-      while ((token = tokens_->getNextToken()) && token->getEndLine() <= pos.getEndLine()) {
-        if (token->getEndLine() < pos.getEndLine()) {
-#if PRINT_ATTACH_COMMENT
-          std::cout << "---> attach (NOT) comment before end of basic block: " << token << std::endl;
-#endif
-        }
-#if PRINT_ATTACH_COMMENT
-        std::cout << "---> attach comment at end of basic block: " << token << std::endl;
-#endif
-        SI::attachComment(node, token->getLexeme(), PreprocessingInfo::after, PreprocessingInfo::JovialStyleComment);
-        tokens_->consumeNextToken();
-      }
     }
     return;
   }
@@ -166,14 +159,19 @@ SageTreeBuilder::attachComments(SgLocatedNode* node, const PosInfo &pos, bool at
   }
 }
 
-/** Attach comments from a vector before the node */
+/** Attach comments from a vector */
 void
-SageTreeBuilder::attachComments(SgLocatedNode* node, const std::vector<Token> &tokens) {
+SageTreeBuilder::attachComments(SgLocatedNode* node, const std::vector<Token> &tokens, bool at_end) {
+  PreprocessingInfo::RelativePositionType commentPosition{PreprocessingInfo::before};
+  if (at_end) {
+    commentPosition = PreprocessingInfo::after;
+  }
+
   for (auto token : tokens) {
 #if PRINT_ATTACH_COMMENT
-    std::cout << "---> attach comment for: " << node->class_name() << ": " << token << "\n";
+    std::cout << "---> attach comment to: " << node->class_name() << ": " << token << ": pos: " << commentPosition << "\n";
 #endif
-    SI::attachComment(node, token.getLexeme(), PreprocessingInfo::before, PreprocessingInfo::JovialStyleComment);
+    SI::attachComment(node, token.getLexeme(), commentPosition, PreprocessingInfo::JovialStyleComment);
   }
 }
 
