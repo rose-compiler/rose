@@ -37,7 +37,7 @@ private:
 
 protected:
     Architecture(const std::string&);                   // for instantiating a factory
-    Architecture(const DatabasePtr&, TestCaseId, const Partitioner2::PartitionerConstPtr&);
+    Architecture(const DatabasePtr&, TestCaseId);
 public:
     ~Architecture();
 
@@ -50,8 +50,8 @@ public:
      *  Constructs a new executor for the specified test case.
      *
      * @{ */
-    static Ptr instance(const DatabasePtr&, TestCaseId, const Partitioner2::PartitionerConstPtr&);
-    static Ptr instance(const DatabasePtr&, const TestCasePtr&, const Partitioner2::PartitionerConstPtr&);
+    static Ptr instance(const DatabasePtr&, TestCaseId);
+    static Ptr instance(const DatabasePtr&, const TestCasePtr&);
     /** @} */
 
     /** Property: Debugger.
@@ -66,7 +66,8 @@ public:
 public:
     // These are documented in the base class.
     virtual bool matchFactory(const std::string&) const override;
-    virtual Super::Ptr instanceFromFactory(const DatabasePtr&, TestCaseId, const Partitioner2::PartitionerConstPtr&) const override;
+    virtual Super::Ptr instanceFromFactory(const DatabasePtr&, TestCaseId) const override;
+    virtual Partitioner2::PartitionerPtr partition(Partitioner2::Engine*, const std::string &specimen) override;
     virtual void configureSystemCalls() override;
     virtual void configureSharedMemory() override;
     virtual void load(const boost::filesystem::path&) override;

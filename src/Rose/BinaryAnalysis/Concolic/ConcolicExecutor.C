@@ -93,7 +93,7 @@ ConcolicExecutor::commandLineSwitches(Settings &settings /*in,out*/) {
 }
 
 P2::Partitioner::Ptr
-ConcolicExecutor::partition(const Specimen::Ptr &specimen, const std::string &architectureName) {
+ConcolicExecutor::partition(const Specimen::Ptr &specimen, const Architecture::Ptr &architecture) {
     ASSERT_not_null(specimen);
     Sawyer::Message::Stream debug(mlog[DEBUG]);
 
@@ -118,18 +118,8 @@ ConcolicExecutor::partition(const Specimen::Ptr &specimen, const std::string &ar
         specimenFile.close();
         boost::filesystem::permissions(specimenFileName, boost::filesystem::owner_all);
 
-        // Partitioning needs some slight variations depending on the architecture. However, we can only use the architecture
-        // name to make these choices because we don't yet have an Architecture object (since they are constructed from a
-        // partitioner). Perhaps we should move this entire `partition` function into the Architecture subclasses instead in
-        // order to avoid this specialized code here.
-        std::string specimenArg;
-        if (boost::icontains(architectureName, "i386") && boost::icontains(architectureName, "linux")) {
-            specimenArg = "run:replace:" + specimenFileName.string();
-        } else {
-            specimenArg = specimenFileName.string();
-        }
-        SAWYER_MESG(debug) <<"partitioning " <<specimenArg <<"\n";
-        partitioner = engine->partition(specimenArg);
+        // Parse the specimen
+        partitioner = architecture->partition(engine, specimenFileName.string());
 
         // Cache the results in the database.
         boost::filesystem::path rbaFileName = tempDir.name() / "specimen.rba";
@@ -230,12 +220,12 @@ ConcolicExecutor::configureExecution(const Database::Ptr &db, const TestCase::Pt
         if (!solver_)
             solver_ = SmtSolver::instance("best");
 
-        partitioner_ = partition(testCase->specimen(), architectureName); // must live for duration of cpu
-
         // Create the a new process from the executable.
-        process_ = Architecture::forge(db, testCase, partitioner_, architectureName);
+        process_ = Architecture::forge(db, testCase, architectureName);
         if (!process_)
             throw Exception("unknown architecture \"" + StringUtility::cEscape(architectureName) + "\"");
+        partitioner_ = partition(testCase->specimen(), process_);
+        process_->partitioner(partitioner_);
 
         cpu_ = makeDispatcher(process_);
     }

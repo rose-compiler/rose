@@ -10,6 +10,7 @@
 #include <Rose/BinaryAnalysis/Concolic/TestCase.h>
 #include <Rose/BinaryAnalysis/Debugger/Gdb.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RiscOperators.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 
 #include <boost/process/search_path.hpp>
 
@@ -24,8 +25,8 @@ namespace M68kSystem {
 Architecture::Architecture(const std::string &name)
     : Concolic::Architecture(name) {}
 
-Architecture::Architecture(const Database::Ptr &db, TestCaseId tcid, const P2::PartitionerConstPtr &partitioner)
-    : Concolic::Architecture(db, tcid, partitioner) {}
+Architecture::Architecture(const Database::Ptr &db, TestCaseId tcid)
+    : Concolic::Architecture(db, tcid) {}
 
 Architecture::~Architecture() {}
 
@@ -35,24 +36,24 @@ Architecture::factory() {
 }
 
 Architecture::Ptr
-Architecture::instance(const Database::Ptr &db, TestCaseId tcid, const P2::PartitionerConstPtr &partitioner) {
+Architecture::instance(const Database::Ptr &db, TestCaseId tcid) {
     ASSERT_not_null(db);
     ASSERT_require(tcid);
-    auto retval = Ptr(new Architecture(db, tcid, partitioner));
+    auto retval = Ptr(new Architecture(db, tcid));
     retval->configureSystemCalls();
     retval->configureSharedMemory();
     return retval;
 }
 
 Architecture::Ptr
-Architecture::instance(const Database::Ptr &db, const TestCase::Ptr &tc, const P2::PartitionerConstPtr &partitioner) {
-    return instance(db, db->id(tc), partitioner);
+Architecture::instance(const Database::Ptr &db, const TestCase::Ptr &tc) {
+    return instance(db, db->id(tc));
 }
 
 Concolic::Architecture::Ptr
-Architecture::instanceFromFactory(const Database::Ptr &db, TestCaseId tcid, const P2::PartitionerConstPtr &partitioner) const {
+Architecture::instanceFromFactory(const Database::Ptr &db, TestCaseId tcid) const {
     ASSERT_require(isFactory());
-    auto retval = instance(db, tcid, partitioner);
+    auto retval = instance(db, tcid);
     retval->name(name());
     return retval;
 }
@@ -60,6 +61,12 @@ Architecture::instanceFromFactory(const Database::Ptr &db, TestCaseId tcid, cons
 bool
 Architecture::matchFactory(const std::string &s) const {
     return s == name();
+}
+
+P2::Partitioner::Ptr
+Architecture::partition(P2::Engine *engine, const std::string &specimenName) {
+    SAWYER_MESG(mlog[DEBUG]) <<"partitioning " <<specimenName;
+    return engine->partition(specimenName);
 }
 
 void
