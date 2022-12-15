@@ -1199,6 +1199,7 @@ SgLocatedNode::addToAttachedPreprocessingInfo(
                break;
              }
 
+          case PreprocessingInfo::end_of:
           case PreprocessingInfo::after:
              {
             // (9/10/2003) DQ: Force new comments to be attached closest to the target statement

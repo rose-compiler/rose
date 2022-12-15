@@ -137,15 +137,7 @@ UnparseJovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_Inf
         }
 
      // unparse comments at end of the statement
-     preprocInfo = stmt->get_attachedPreprocessingInfoPtr();
-     if (preprocInfo && !isSgBasicBlock(stmt)) {
-       for (PreprocessingInfo* info : *preprocInfo) {
-         if (info->getRelativePosition() == PreprocessingInfo::after) {
-           curprint(info->getString());
-           curprint("\n");
-         }
-       }
-     }
+     unparseCommentsAfter(stmt, info, /*newline*/true);
    }
 
 //----------------------------------------------------------------------------
@@ -449,18 +441,8 @@ UnparseJovial::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
      }
      info.dec_nestingLevel();
 
-     // unparse comments at end of the block (this allows comments before "END")
-     auto preprocInfo = stmt->get_attachedPreprocessingInfoPtr();
-     if (preprocInfo) {
-       for (PreprocessingInfo* info : *preprocInfo) {
-         if (info->getRelativePosition() == PreprocessingInfo::after) {
-           curprint(info->getString());
-           curprint("\n");
-         }
-       }
-     }
      if (block_size > 1 || switch_stmt) {
-       curprint_indented("END\n", info);
+       curprint_indented("END", info);
      }
    }
 
@@ -1124,10 +1106,6 @@ UnparseJovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initializedN
      SgModifierType* modifier_type = isSgModifierType(type);
 
      info.set_inVarDecl();
-//erasmus
-#if 0
-     unparseCommentsBefore(stmt, info);
-#endif
 
   // pretty printing
      curprint( ws_prefix(info.get_nestingLevel()) );
@@ -1301,8 +1279,6 @@ UnparseJovial::unparseExprStmt(SgStatement* stmt, SgUnparse_Info& info)
      if (isSgFunctionCallExp(expr)) {
         curprint(";");
      }
-
-     unp->u_sage->curprint_newline();
    }
 
 void
@@ -1321,15 +1297,27 @@ UnparseJovial::unparseCommentsBefore(SgStatement* stmt, SgUnparse_Info& info)
 }
 
 void
-UnparseJovial::unparseCommentsAfter(SgStatement* stmt, SgUnparse_Info& info)
+UnparseJovial::unparseCommentsAfter(SgStatement* stmt, SgUnparse_Info& info, bool newline)
 {
   // unparse comments after the statement
   const AttachedPreprocessingInfoType* preprocInfo = stmt->get_attachedPreprocessingInfoPtr();
   if (preprocInfo) {
     for (PreprocessingInfo* info : *preprocInfo) {
-      if (info->getRelativePosition() == PreprocessingInfo::after) {
+      auto pos = info->getRelativePosition();
+      if (pos == PreprocessingInfo::end_of || pos == PreprocessingInfo::after) {
+        if (newline) {
+          newline = false;
+          if (pos == PreprocessingInfo::end_of) {
+            curprint(" "); // pad end_of_stmt from comment
+          }
+          else {
+            curprint("\n");
+          }
+        }
         curprint(info->getString());
+        curprint("\n");
       }
     }
+    if (newline) curprint("\n");
   }
 }

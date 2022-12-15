@@ -10,6 +10,7 @@
 
 #define PRINT_WARNINGS 0
 #define PRINT_ATTACH_COMMENT 0
+#define ATTACH_EOL_COMMENT 1
 #define APPEND_BEFORE_LEAVE 1
 
 namespace Rose {
@@ -84,7 +85,14 @@ std::cout << "---> attach end comment to last stmt: " << last->class_name() << "
 #if PRINT_ATTACH_COMMENT
 std::cout << "---> attach end comment to: " << node->class_name() << ": " << token << "\n";
 #endif
+#if ATTACH_EOL_COMMENT
+#if PRINT_ATTACH_COMMENT
+std::cout << "---> attach end_of comment to: " << node->class_name() << ": " << token << "\n";
+#endif
+        SI::attachComment(node, token->getLexeme(), PreprocessingInfo::end_of, PreprocessingInfo::JovialStyleComment);
+#else
         SI::attachComment(node, token->getLexeme(), PreprocessingInfo::after, PreprocessingInfo::JovialStyleComment);
+#endif
       }
       tokens_->consumeNextToken();
     }
@@ -111,7 +119,7 @@ std::cout << "---> attach end comment to: " << node->class_name() << ": " << tok
       if (token->getTokenType() == JovialEnum::comment) {
         commentPosition = PreprocessingInfo::before;
         if (token->getStartLine() == pos.getStartLine()) {
-          commentPosition = PreprocessingInfo::after;
+          commentPosition = PreprocessingInfo::end_of;
           // check for comment following a variable initializer
           if (SgVariableDeclaration* varDecl = isSgVariableDeclaration(stmt)) {
             for (SgInitializedName* name : varDecl->get_variables()) {
