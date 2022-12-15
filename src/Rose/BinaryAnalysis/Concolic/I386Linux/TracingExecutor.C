@@ -4,6 +4,8 @@
 #include <Rose/BinaryAnalysis/Concolic/I386Linux/TracingExecutor.h>
 
 #include <Rose/BinaryAnalysis/Concolic.h>
+#include <Rose/BinaryAnalysis/Debugger/Linux.h>
+
 #include <boost/filesystem.hpp>
 #include <boost/serialization/export.hpp>
 #include <memory.h>

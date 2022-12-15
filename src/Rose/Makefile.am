@@ -53,6 +53,7 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/Concolic/ConcreteExecutor.C					\
 	BinaryAnalysis/Concolic/ConcreteResult.C					\
 	BinaryAnalysis/Concolic/Database.C						\
+	BinaryAnalysis/Concolic/Emulation.C						\
 	BinaryAnalysis/Concolic/ExecutionEvent.C					\
 	BinaryAnalysis/Concolic/ExecutionLocation.C					\
 	BinaryAnalysis/Concolic/ExecutionManager.C					\

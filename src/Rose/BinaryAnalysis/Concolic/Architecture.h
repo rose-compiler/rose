@@ -5,6 +5,7 @@
 
 #include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Concolic/ExecutionLocation.h>
+#include <Rose/BinaryAnalysis/Debugger/BasicTypes.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
@@ -38,10 +39,12 @@ private:
     TestCaseId testCaseId_;
     TestCasePtr testCase_;
     Partitioner2::PartitionerConstPtr partitioner_;
+    Debugger::BasePtr debugger_;
     ExecutionLocation currentLocation_;                 // incremented when the instruction begins execution
     SystemCallMap systemCalls_;                         // callbacks for syscalls
     SharedMemoryMap sharedMemory_;                      // callbacks for shared memory
     InputVariablesPtr inputVariables_;                  // info about variables for events and inputs
+    Sawyer::Optional<rose_addr_t> scratchVa_;           // scratch page for internal use in subordinate address space
 
 protected:
     // See "instance" methods in subclasses
@@ -148,6 +151,25 @@ public:
     Partitioner2::PartitionerConstPtr partitioner() const;
     void partitioner(const Partitioner2::PartitionerConstPtr&);
 
+    /** Property: Debugger.
+     *
+     *  The debugger represents the concrete state of the specimen.
+     *
+     * @{ */
+    Debugger::BasePtr debugger() const;
+    void debugger(const Debugger::BasePtr&);
+    /** @} */
+
+    /** Property: Scratch page address.
+     *
+     *  Address of an optional scratch page in the concrete memory map. A scratch page is sometimes needed by the concrete
+     *  executor in order to execute special code needed by the executor that isn't part of the normal process's image.
+     *
+     * @{ */
+    Sawyer::Optional<rose_addr_t> scratchVa() const;
+    void scratchVa(const Sawyer::Optional<rose_addr_t>&);
+    /** @} */
+
     /** Property: Current execution location.
      *
      *  The execution location has three parts: a primary and a secondary, and whether it occurs before or after the
@@ -238,7 +260,11 @@ public:
      *
      *  If a process is in the terminated state, then most of the functions that query or modify the execution state are no
      *  longer well defined and should not be called. */
-    virtual bool isTerminated() = 0;
+    virtual bool isTerminated();
+
+    /** Build the symbolic instruction executor. */
+    virtual InstructionSemantics::BaseSemantics::DispatcherPtr
+    makeDispatcher(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&) = 0;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions that create execution events. These query the concrete state but do not modify it.
@@ -249,6 +275,7 @@ public:
      *  Reads all memory from the active test case (see constructor) and creates events that would map these memory segments
      *  and initialize them. The new events have no location or test case and are not yet written to a database. */
     virtual std::vector<ExecutionEventPtr> createMemoryRestoreEvents() = 0;
+    std::vector<ExecutionEventPtr> createMemoryRestoreEvents(const MemoryMapPtr&);
 
     /** Create events that check memory hashes.
      *
@@ -267,7 +294,7 @@ public:
      *
      *  This function reads all registers and creates events that when replayed would restore the registers to their saved
      *  values. */
-    virtual std::vector<ExecutionEventPtr> createRegisterRestoreEvents() = 0;
+    virtual std::vector<ExecutionEventPtr> createRegisterRestoreEvents();
 
     /** Saves a list of events.
      *
@@ -323,8 +350,8 @@ public:
     /** Current execution address.
      *
      *  @{ */
-    virtual rose_addr_t ip() = 0;
-    virtual void ip(rose_addr_t) = 0;
+    virtual rose_addr_t ip();
+    virtual void ip(rose_addr_t);
     /** @} */
 
     /** Map a memory region.
@@ -341,13 +368,13 @@ public:
     /** Write bytes to memory.
      *
      *  Returns the number of bytes written, which might be fewer than the number requested if there is some kind of error. */
-    virtual size_t writeMemory(rose_addr_t startVa, const std::vector<uint8_t> &bytes) = 0;
+    virtual size_t writeMemory(rose_addr_t startVa, const std::vector<uint8_t> &bytes);
 
     /** Read memory.
      *
      *  Reads the specified number of bytes from memory beginning at the specified address. Returns the number of bytes
      *  actually read, which might be fewer than the number requested if there is some kind of error. */
-    virtual std::vector<uint8_t> readMemory(rose_addr_t startVa, size_t nBytes) = 0;
+    virtual std::vector<uint8_t> readMemory(rose_addr_t startVa, size_t nBytes);
 
     /** Write a value to a register.
      *
@@ -355,20 +382,32 @@ public:
      *  the value can be specified as a @c uint64_t. Other values will need to be specified as a bit vector.
      *
      * @{ */
-    virtual void writeRegister(RegisterDescriptor, uint64_t value) = 0;
-    virtual void writeRegister(RegisterDescriptor, const Sawyer::Container::BitVector&) = 0;
+    virtual void writeRegister(RegisterDescriptor, uint64_t value);
+    virtual void writeRegister(RegisterDescriptor, const Sawyer::Container::BitVector&);
     /** @} */
 
     /** Read a value from a register. */
-    virtual Sawyer::Container::BitVector readRegister(RegisterDescriptor) = 0;
+    virtual Sawyer::Container::BitVector readRegister(RegisterDescriptor);
+
+    /** Make sure the executable has the same instruction in those bytes.
+     *
+     *  Looks at the concrete executable to see if it has the specified instruction at the instruction's address, and
+     *  shows an error (optional) and throws an exception if not. */
+    virtual void checkInstruction(SgAsmInstruction*);
+
+    /** Execute an instruction concretely.
+     *
+     *  Executes the instruction concretely. For system calls, this only enters the system call. For other instructions
+     *  it executes the current instruction concretely. */
+    virtual void advanceExecution(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&);
 
     /** Execute current or specified instruction.
      *
      *  Executes the instruction and increments the length of the execution path.
      *
      * @{ */
-    virtual void executeInstruction(const Partitioner2::PartitionerConstPtr&) = 0;
-    virtual void executeInstruction(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&, SgAsmInstruction*) = 0;
+    virtual void executeInstruction(const Partitioner2::PartitionerConstPtr&);
+    virtual void executeInstruction(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&, SgAsmInstruction*);
     /** @} */
 
     /** Increment the primary part of the current location.

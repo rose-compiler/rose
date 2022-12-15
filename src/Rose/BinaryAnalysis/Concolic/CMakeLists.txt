@@ -7,6 +7,7 @@ add_library(roseBinaryAnalysisConcolic OBJECT
   ConcreteExecutor.C
   ConcreteResult.C
   Database.C
+  Emulation.C
   ExecutionEvent.C
   ExecutionLocation.C
   ExecutionManager.C
@@ -27,6 +28,7 @@ install(FILES
   ConcreteExecutor.h
   ConcreteResult.h
   Database.h
+  Emulation.h
   ExecutionEvent.h
   ExecutionLocation.h
   ExecutionManager.h

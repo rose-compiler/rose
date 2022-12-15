@@ -7,7 +7,6 @@
 #include <Rose/BinaryAnalysis/Concolic/ExecutionEvent.h>
 #include <Rose/BinaryAnalysis/Concolic/SharedMemory.h>
 #include <Rose/BinaryAnalysis/Concolic/SystemCall.h>
-#include <Rose/BinaryAnalysis/Debugger/Linux.h>
 
 #include <boost/filesystem.hpp>
 #include <Sawyer/Callbacks.h>
@@ -30,8 +29,6 @@ public:
     using Ptr = ArchitecturePtr;
 
 private:
-    Debugger::Linux::Ptr debugger_;
-    rose_addr_t scratchVa_ = 0;                         // subordinate address for scratch page
     bool markingArgvAsInput_ = true;
     bool markingEnvpAsInput_ = false;
 
@@ -54,12 +51,10 @@ public:
     static Ptr instance(const DatabasePtr&, const TestCasePtr&);
     /** @} */
 
-    /** Property: Debugger.
-     *
-     *  The debugger represents the concrete state of the specimen. */
-    Debugger::Linux::Ptr debugger() const;
-
 public:
+    // Same as super class, but casts result to a Linux debugger.
+    Debugger::LinuxPtr debugger() const;
+
     /** The register where system call return values are stored. */
     RegisterDescriptor systemCallReturnRegister();
 
@@ -71,29 +66,20 @@ public:
     virtual void configureSystemCalls() override;
     virtual void configureSharedMemory() override;
     virtual void load(const boost::filesystem::path&) override;
-    virtual bool isTerminated() override;
     virtual ByteOrder::Endianness memoryByteOrder() override;
-    virtual std::string readCString(rose_addr_t va, size_t maxBytes = UNLIMITED) override;
-    virtual rose_addr_t ip() override;
-    virtual void ip(rose_addr_t) override;
     virtual std::vector<ExecutionEventPtr> createMemoryRestoreEvents() override;
     virtual std::vector<ExecutionEventPtr> createMemoryHashEvents() override;
     virtual std::vector<ExecutionEventPtr> createMemoryAdjustEvents(const MemoryMap::Ptr&, rose_addr_t insnVa) override;
-    virtual std::vector<ExecutionEventPtr> createRegisterRestoreEvents() override;
     virtual bool playEvent(const ExecutionEventPtr&) override;
     virtual void mapMemory(const AddressInterval&, unsigned permissions) override;
     virtual void unmapMemory(const AddressInterval&) override;
-    virtual size_t writeMemory(rose_addr_t, const std::vector<uint8_t>&) override;
-    virtual std::vector<uint8_t> readMemory(rose_addr_t, size_t) override;
-    virtual void writeRegister(RegisterDescriptor, uint64_t) override;
-    virtual void writeRegister(RegisterDescriptor, const Sawyer::Container::BitVector&) override;
-    virtual Sawyer::Container::BitVector readRegister(RegisterDescriptor) override;
-    virtual void executeInstruction(const Partitioner2::PartitionerConstPtr&) override;
-    virtual void executeInstruction(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&, SgAsmInstruction*) override;
     virtual void createInputVariables(const Partitioner2::PartitionerConstPtr&, const Emulation::RiscOperatorsPtr&,
                                       const SmtSolver::Ptr &solver) override;
     virtual void systemCall(const Partitioner2::PartitionerConstPtr&,
                             const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&) override;
+    virtual void advanceExecution(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&) override;
+    virtual InstructionSemantics::BaseSemantics::DispatcherPtr
+        makeDispatcher(const InstructionSemantics::BaseSemantics::RiscOperatorsPtr&) override;
 
 private:
     // Maps a scratch page for internal use and updates scratchVa_ with the address of the page.
