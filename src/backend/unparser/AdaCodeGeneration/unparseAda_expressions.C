@@ -128,8 +128,8 @@ namespace
   {
     static constexpr bool SUPPRESS_SCOPE_QUAL = false; // no scope qual on selectors
 
-    AdaExprUnparser(Unparse_Ada& unp, SgUnparse_Info& inf, std::ostream& outp, bool requiresScopeQual)
-    : unparser(unp), info(inf), os(outp), ctxRequiresScopeQualification(requiresScopeQual)
+    AdaExprUnparser(Unparse_Ada& unp, SgUnparse_Info& inf, std::ostream& outp, bool = false)
+    : unparser(unp), info(inf), os(outp) // , ctxRequiresScopeQualification(requiresScopeQual)
     {}
 /*
     std::string
@@ -204,7 +204,7 @@ namespace
 
       expr(lhs);
       prn(".");
-      expr(rhs, SUPPRESS_SCOPE_QUAL /* no need to scope qual right hand side */);
+      expr(rhs);
     }
 
     void handle(SgCommaOpExp& n)
@@ -399,7 +399,7 @@ namespace
     void handle(SgDesignatedInitializer& n)
     {
       // suppress scope qual on selectors
-      exprlst(SG_DEREF(n.get_designatorList()), "| ", SUPPRESS_SCOPE_QUAL);
+      exprlst(SG_DEREF(n.get_designatorList()), "| ");
       prn(" => ");
       expr(n.get_memberInit());
     }
@@ -431,7 +431,7 @@ namespace
       prn("<null>");
     }
 
-
+#if OBSOLETE_CODE
     // Ada's derived types "inherit" the primitive functions of their base type.
     // Asis does not create new declaration for these functions, but instead links
     // to the original operation functions. However, the scope qualification needs to
@@ -454,6 +454,7 @@ namespace
 
       return overridingScope ? overridingScope : fundcl.get_scope();
     }
+#endif /* OBSOLETE_CODE */
 
     void handle(SgFunctionRefExp& n)
     {
@@ -504,13 +505,12 @@ namespace
 
     void exprlst( SgExpressionPtrList::const_iterator aa,
                   SgExpressionPtrList::const_iterator zz,
-                  std::string sep = ", ",
-                  bool reqScopeQual = true
+                  std::string sep = ", "
                 );
 
-    void expr(SgExpression* exp, bool requiresScopeQual = true);
+    void expr(SgExpression* exp);
     void expr_opt(SgExpression* exp);
-    void exprlst(SgExprListExp& exp, std::string sep = ", ", bool requiresScopeQual = true);
+    void exprlst(SgExprListExp& exp, std::string sep = ", ");
     void aggregate(SgExprListExp& exp);
     void arglst_opt(SgExprListExp& args);
 
@@ -527,7 +527,7 @@ namespace
     Unparse_Ada&    unparser;
     SgUnparse_Info& info;
     std::ostream&   os;
-    bool            ctxRequiresScopeQualification;
+    // bool            ctxRequiresScopeQualification;
   };
 
   bool argRequiresCallSyntax(SgExpression* n)
@@ -541,7 +541,7 @@ namespace
     unparser.UnparseLanguageIndependentConstructs::unparseExpression(&n, info);
   }
 
-  void AdaExprUnparser::expr(SgExpression* exp, bool requiresScopeQual)
+  void AdaExprUnparser::expr(SgExpression* exp)
   {
     // let the generic unparser handle its things..
     //~ unparser.unparseExpression(exp, info);
@@ -550,7 +550,7 @@ namespace
     const bool withParens = exp->get_need_paren();
 
     if (withParens) prn("(");
-    sg::dispatch(AdaExprUnparser{unparser, info, os, requiresScopeQual}, exp);
+    sg::dispatch(AdaExprUnparser{unparser, info, os}, exp);
     if (withParens) prn(")");
   }
 
@@ -609,27 +609,26 @@ namespace
     if (callsyntax) prn(")");
   }
 
-  void AdaExprUnparser::exprlst(SgExprListExp& exp, std::string sep, bool reqScopeQual)
+  void AdaExprUnparser::exprlst(SgExprListExp& exp, std::string sep)
   {
     SgExpressionPtrList& lst = exp.get_expressions();
 
-    exprlst(lst.begin(), lst.end(), sep, reqScopeQual);
+    exprlst(lst.begin(), lst.end(), sep);
   }
 
   void AdaExprUnparser::exprlst( SgExpressionPtrList::const_iterator aa,
                                  SgExpressionPtrList::const_iterator zz,
-                                 std::string sep,
-                                 bool reqScopeQual
+                                 std::string sep
                                )
   {
     if (aa == zz) return;
 
-    expr(*aa, reqScopeQual);
+    expr(*aa);
 
     while (++aa != zz)
     {
       prn(sep);
-      expr(*aa, reqScopeQual);
+      expr(*aa);
     }
   }
 
@@ -696,16 +695,15 @@ void Unparse_Ada::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
 
 void Unparse_Ada::unparseExpression(SgExpression* n, SgUnparse_Info& info)
 {
-  const bool    withScopeQual = info.get_current_scope() != nullptr;
   SgNode* const currentReferenceNode = info.get_reference_node_for_qualification();
 
   // set the reference node, unless the unparser is already in type mode
   if (&nameQualificationMap() == &SgNode::get_globalQualifiedNameMapForNames())
     info.set_reference_node_for_qualification(n);
 
-  AdaExprUnparser exprUnparser{*this, info, std::cerr, false /* scope qual, will be passed to expr(...) */};
+  AdaExprUnparser exprUnparser{*this, info, std::cerr};
 
-  exprUnparser.expr(n, withScopeQual);
+  exprUnparser.expr(n);
 
   // restore reference node
   info.set_reference_node_for_qualification(currentReferenceNode);
@@ -713,17 +711,15 @@ void Unparse_Ada::unparseExpression(SgExpression* n, SgUnparse_Info& info)
 
 void Unparse_Ada::unparseExprListExp(SgExprListExp* n, SgUnparse_Info& info, std::string sep)
 {
-  const bool withScopeQual = info.get_current_scope() != nullptr;
+  AdaExprUnparser exprUnparser{*this, info, std::cerr};
 
-  AdaExprUnparser exprUnparser{*this, info, std::cerr, false /* scope qual, will be passed to expr(...) */};
-
-  exprUnparser.exprlst(SG_DEREF(n), sep, withScopeQual);
+  exprUnparser.exprlst(SG_DEREF(n), sep);
 }
 
 
 void Unparse_Ada::unparseStringVal(SgExpression* expr, SgUnparse_Info& info)
 {
-  sg::dispatch(AdaExprUnparser{*this, info, std::cerr, false /* scope qual */}, expr);
+  sg::dispatch(AdaExprUnparser{*this, info, std::cerr}, expr);
 }
 
 void Unparse_Ada::setInitialScope(SgUnparse_Info& info, SgExpression* n)
