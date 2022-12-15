@@ -2215,8 +2215,12 @@ namespace
 
           AdaIdentifier ident{usedEl.fullName};
 
-          used = findFirst(adaPkgs(), ident);
-          // if (!used) used = findFirst(adaTypes(), ident);
+          used = findFirst(adaPkgs(), ident); 
+          if (!used)
+          {
+            if (SgNamedType* ty = isSgNamedType(findFirst(adaTypes(), ident)))
+              used = ty->get_declaration();
+          }
         }
 
         SgUsingDeclarationStatement& sgnode = mkUseClause(SG_DEREF(used));

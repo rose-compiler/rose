@@ -1,6 +1,7 @@
 #include "sage3basic.h"
 
 #include <limits>
+#include <cmath>
 
 #include "AdaType.h"
 
@@ -1349,16 +1350,47 @@ namespace
   declareIntSubtype(const std::string& name, int64_t lo, int64_t hi, SgAdaPackageSpec& scope)
   {
     SgType&               ty = mkIntegralType();
-    SgIntVal&             lb = SG_DEREF(sb::buildIntVal(lo));
-    SgIntVal&             ub = SG_DEREF(sb::buildIntVal(hi));
-    SgRangeExp&           range = mkRangeExp(lb, ub);
-    SgAdaRangeConstraint& constraint = mkAdaRangeConstraint(range);
-    SgAdaSubtype&         subtype = mkAdaSubtype(ty, constraint);
+    SgLongLongIntVal&     lb = SG_DEREF(sb::buildLongLongIntVal(lo));
+    ADA_ASSERT(lb.get_value() == lo);
+
+    SgLongLongIntVal&     ub = SG_DEREF(sb::buildLongLongIntVal(hi));
+    ADA_ASSERT(ub.get_value() == hi);
+
+    SgRangeExp&           rng = mkRangeExp(lb, ub);
+    SgAdaRangeConstraint& range = mkAdaRangeConstraint(rng);
+    SgAdaSubtype&         subtype = mkAdaSubtype(ty, range);
     SgTypedefDeclaration& sgnode = mkTypeDecl(name, subtype, scope);
 
     scope.append_statement(&sgnode);
     return sgnode;
   }
+
+  template <class CxxType>
+  SgTypedefDeclaration&
+  declareIntSubtype(const std::string& name, SgAdaPackageSpec& scope)
+  {
+    using TypeLimits = std::numeric_limits<CxxType>;
+
+    return declareIntSubtype(name, TypeLimits::min(), TypeLimits::max(), scope);
+  }
+
+  SgTypedefDeclaration&
+  declareRealSubtype(const std::string& name, int ndigits, long double base, int exp, SgAdaPackageSpec& scope)
+  {
+    SgType&               ty = mkRealType();
+    SgExpression&         lb = SG_DEREF(sb::buildFloat128Val(-std::pow(base, exp)));
+    SgExpression&         ub = SG_DEREF(sb::buildFloat128Val(+std::pow(base, exp)));
+    SgRangeExp&           rng = mkRangeExp(lb, ub);
+    SgAdaRangeConstraint& range = mkAdaRangeConstraint(rng);
+    SgExpression&         dig = SG_DEREF(sb::buildIntVal(ndigits));
+    SgAdaTypeConstraint&  digits = mkAdaDigitsConstraint(dig, &range);
+    SgAdaSubtype&         subtype = mkAdaSubtype(ty, digits);
+    SgTypedefDeclaration& sgnode = mkTypeDecl(name, subtype, scope);
+
+    scope.append_statement(&sgnode);
+    return sgnode;
+  }
+
 
   SgTypedefDeclaration&
   declareStringType(const std::string& name, SgType& positive, SgType& comp, SgAdaPackageSpec& scope)
@@ -1462,7 +1494,7 @@ void initializePkgStandard(SgGlobal& global)
   // make available declarations from the package standard
   // https://www.adaic.org/resources/add_content/standards/05rm/html/RM-A-1.html
 
-  constexpr auto ADAMAXINT = std::numeric_limits<int>::max();
+  constexpr auto ADAMAXINT = std::numeric_limits<std::int64_t>::max();
 
   SgAdaPackageSpecDecl& stdpkg  = mkAdaPackageSpecDecl(si::Ada::packageStandardName, global);
   SgAdaPackageSpec&     stdspec = SG_DEREF(stdpkg.get_definition());
@@ -1485,6 +1517,7 @@ void initializePkgStandard(SgGlobal& global)
   adaTypes()["DURATION"]            = &adaDuration;
 
   // integral types
+#if PREMAPPED_NUMERIC_TYPES
   SgType& adaIntType                = mkIntegralType();
   SgType& intType                   = SG_DEREF(sb::buildIntType());
   SgType& adaCharType               = SG_DEREF(sb::buildCharType());
@@ -1499,21 +1532,63 @@ void initializePkgStandard(SgGlobal& global)
   adaTypes()["LONG_LONG_INTEGER"]   = sb::buildLongLongType(); // Long long int
   adaTypes()["SHORT_INTEGER"]       = sb::buildShortType(); // Long long int
   adaTypes()["SHORT_SHORT_INTEGER"] = declareIntSubtype("Short_Short_Integer", -(1 << 7), (1 << 7)-1, stdspec).get_type();
+#endif /* PREMAPPED_NUMERIC_TYPES */
 
-  // \todo floating point types
-  SgType& adaRealType               = mkRealType();
-  SgType& realType                  = SG_DEREF(sb::buildFloatType());
-  adaTypes()["FLOAT"]               = &realType;  // Float is a subtype of Real
-  adaTypes()["SHORT_FLOAT"]         = &realType;  // Float is a subtype of Real
-  adaTypes()["LONG_FLOAT"]          = sb::buildDoubleType(); // Float is a subtype of Real
-  adaTypes()["LONG_LONG_FLOAT"]     = sb::buildLongDoubleType(); // Long long Double?
+  SgType& adaIntType                = mkIntegralType(); // the root integer type in ROSE
 
-  // int subtypes
+  adaTypes()["SHORT_SHORT_INTEGER"] = declareIntSubtype<std::int8_t> ("Short_Short_Integer", stdspec).get_type();
+  adaTypes()["SHORT_INTEGER"]       = declareIntSubtype<std::int16_t>("Short_Integer",       stdspec).get_type();
+  adaTypes()["INTEGER"]             = declareIntSubtype<std::int32_t>("Integer",             stdspec).get_type();
+  adaTypes()["LONG_INTEGER"]        = declareIntSubtype<std::int64_t>("Long_Integer",        stdspec).get_type();
+  adaTypes()["LONG_LONG_INTEGER"]   = declareIntSubtype<std::int64_t>("Long_Long_Integer",   stdspec).get_type();
+
   SgType& adaPositiveType           = SG_DEREF(declareIntSubtype("Positive", 1, ADAMAXINT, stdspec).get_type());
   SgType& adaNaturalType            = SG_DEREF(declareIntSubtype("Natural",  0, ADAMAXINT, stdspec).get_type());
 
   adaTypes()["POSITIVE"]            = &adaPositiveType;
   adaTypes()["NATURAL"]             = &adaNaturalType;
+
+  // characters
+  // \todo in Ada char, wide_char, and wide_wide_char are enums.
+  //       Consider revising the ROSE representation.
+  SgType& adaCharType               = SG_DEREF(sb::buildCharType());
+  SgType& adaWideCharType           = SG_DEREF(sb::buildChar16Type());
+  SgType& adaWideWideCharType       = SG_DEREF(sb::buildChar32Type());
+
+  adaTypes()["CHARACTER"]           = &adaCharType;
+  adaTypes()["WIDE_CHARACTER"]      = &adaWideCharType;
+  adaTypes()["WIDE_WIDE_CHARACTER"] = &adaWideWideCharType;
+
+#if PREMAPPED_NUMERIC_TYPES
+  // FP types
+  SgType& adaRealType               = mkRealType();
+  SgType& realType                  = SG_DEREF(sb::buildFloatType());
+  adaTypes()["FLOAT"]               = &realType;
+  adaTypes()["SHORT_FLOAT"]         = &realType;
+  adaTypes()["LONG_FLOAT"]          = sb::buildDoubleType();
+  adaTypes()["LONG_LONG_FLOAT"]     = sb::buildLongDoubleType();
+#endif /* PREMAPPED_NUMERIC_TYPES */
+
+  // from https://en.wikibooks.org/wiki/Ada_Programming/Libraries/Standard/GNAT
+  // \todo consider using C++ min/max limits
+  static constexpr long double VAL_S_FLOAT  = 3.40282;
+  static constexpr int         EXP_S_FLOAT  = 38;
+  static constexpr int         DIG_S_FLOAT  = 6;
+  static constexpr long double VAL_FLOAT    = 3.40282;
+  static constexpr int         EXP_FLOAT    = 38;
+  static constexpr int         DIG_FLOAT    = 6;
+  static constexpr long double VAL_L_FLOAT  = 1.79769313486232;
+  static constexpr int         EXP_L_FLOAT  = 308;
+  static constexpr int         DIG_L_FLOAT  = 15;
+  static constexpr long double VAL_LL_FLOAT = 1.18973149535723177;
+  static constexpr int         EXP_LL_FLOAT = 4932;
+  static constexpr int         DIG_LL_FLOAT = 18;
+
+  SgType& adaRealType               = mkRealType();
+  adaTypes()["SHORT_FLOAT"]         = declareRealSubtype("Short_Float",     DIG_S_FLOAT,  VAL_S_FLOAT,  EXP_S_FLOAT,  stdspec).get_type();
+  adaTypes()["FLOAT"]               = declareRealSubtype("Float",           DIG_FLOAT,    VAL_FLOAT,    EXP_FLOAT,    stdspec).get_type();
+  adaTypes()["LONG_FLOAT"]          = declareRealSubtype("Long_Float",      DIG_L_FLOAT,  VAL_L_FLOAT,  EXP_L_FLOAT,  stdspec).get_type();
+  adaTypes()["LONG_LONG_FLOAT"]     = declareRealSubtype("Long_Long_Float", DIG_LL_FLOAT, VAL_LL_FLOAT, EXP_LL_FLOAT, stdspec).get_type();
 
   // String types
   SgType& adaStringType             = SG_DEREF(declareStringType("String",           adaPositiveType, adaCharType,         stdspec).get_type());
