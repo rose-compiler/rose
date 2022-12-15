@@ -6,7 +6,7 @@ BEGIN
 %In Procedure%
   ITEM ITEM1 U;
 %Before IF%
-  IF ITEM1 = 9;
+  IF (ITEM1 = 9) ;
     BEGIN
 %In IF at begining%
       ITEM1 = 12;
@@ -15,7 +15,7 @@ BEGIN
     END %END of IF%
 %Before else if%
   ELSE
-    IF ITEM1 = 17;
+    IF (ITEM1 = 17) ;
       BEGIN
 %In else if at begining%
         ITEM1 = 20;

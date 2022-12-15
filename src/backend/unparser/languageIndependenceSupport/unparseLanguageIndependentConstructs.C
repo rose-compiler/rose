@@ -5495,6 +5495,7 @@ UnparseLanguageIndependentConstructs::unparseLineReplacement( SgLocatedNode* stm
           ASSERT_not_null( (*i));
           ROSE_ASSERT ( (*i)->getTypeOfDirective()  != PreprocessingInfo::CpreprocessorUnknownDeclaration );
           ROSE_ASSERT ( (*i)->getRelativePosition() == PreprocessingInfo::before ||
+                        (*i)->getRelativePosition() == PreprocessingInfo::end_of ||
                         (*i)->getRelativePosition() == PreprocessingInfo::after  ||
                         (*i)->getRelativePosition() == PreprocessingInfo::inside );
 
@@ -5506,10 +5507,9 @@ UnparseLanguageIndependentConstructs::unparseLineReplacement( SgLocatedNode* stm
        // Check and see if the info object would indicate that the statement would
        // be printed, if not then don't print the comments associated with it.
        // These might have to be handled on a case by case basis.
-       // bool infoSaysGoAhead = !info.SkipDefinition();
           bool infoSaysGoAhead = !info.SkipEnumDefinition() && !info.SkipClassDefinition() && !info.SkipFunctionDefinition();
 
-       // DQ (7/19/2008): Allow expressions to have there associated comments unparsed.
+       // DQ (7/19/2008): Allow expressions to have their associated comments unparsed.
           infoSaysGoAhead = (infoSaysGoAhead == true) || (isSgExpression(stmt) != NULL);
 
 #if 0
@@ -5616,6 +5616,7 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
           ASSERT_not_null((*i));
           ROSE_ASSERT ((*i)->getTypeOfDirective()  != PreprocessingInfo::CpreprocessorUnknownDeclaration);
           ROSE_ASSERT ((*i)->getRelativePosition() == PreprocessingInfo::before ||
+                       (*i)->getRelativePosition() == PreprocessingInfo::end_of ||
                        (*i)->getRelativePosition() == PreprocessingInfo::after  ||
                        (*i)->getRelativePosition() == PreprocessingInfo::inside);
 
@@ -6110,13 +6111,7 @@ UnparseLanguageIndependentConstructs::unparseUnaryExpr(SgExpression* expr, SgUnp
   // DQ (2/22/2005): Ignoring if this is a SgFunctionType (test ...)
   // Bugfix (2/26/2001) If this is for a function pointer then skip printing out
   // the operator name (for dereferencing operator)
-#if 1
-  // if (unary_op->get_mode() != SgUnaryOp::postfix && !arrow_op)
      if (unary_op->get_mode() != SgUnaryOp::postfix)
-#else
-#error "DEAD CODE!"
-     if (unary_op->get_mode() != SgUnaryOp::postfix && !arrow_op && !isFunctionType)
-#endif
         {
 #if 0
           curprint ( "\n /* Unparsing a prefix unary operator */ \n");

@@ -139,9 +139,10 @@ class PreprocessingInfo
                before       = 2, // Directive goes before the correponding code segment
                after        = 3, // Directive goes after the correponding code segment
                inside       = 4, // Directive goes inside the correponding code segment (as in between "{" and "}" of an empty basic block)
+            // Rasmussen (12/14/2022): Added end_of to support unparsing at end of a statement (for example)
+               end_of       = 5, // Directive goes at the end of the correponding code segment
 
             // DQ (7/19/2008): Added additional fields so that we could use this enum type in the AstUnparseAttribute
-            // replace       = 5, // Support for replacing the IR node in the unparsing of any associated subtree
                before_syntax = 6, // We still have to specify the syntax
                after_syntax  = 7  // We still have to specify the syntax
              };
