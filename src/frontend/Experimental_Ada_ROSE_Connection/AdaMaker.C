@@ -2183,7 +2183,7 @@ namespace
                                      , { "pred",                 &exprTypeAttr }   // Type'Pred may have no arguments when it is passed as function
                                      , { "remainder",            &argTypeAttr }
                                      , { "rounding",             &argTypeAttr }
-                                     //~ , { "range",                &unknownTypeAttr }
+                                     //~ , { "range",                &unknownTypeAttr }   // \todo consider creating a range type
                                      //~ , { "output",               &unknownTypeAttr }   // ???
                                      //~ , { "read",                 &unknownTypeAttr }   // ???
                                      , { "safe_first",           &realTypeAttr }

@@ -1358,7 +1358,7 @@ namespace
 
     SgRangeExp&           rng = mkRangeExp(lb, ub);
     SgAdaRangeConstraint& range = mkAdaRangeConstraint(rng);
-    SgAdaSubtype&         subtype = mkAdaSubtype(ty, range);
+    SgAdaSubtype&         subtype = mkAdaSubtype(ty, range, true /* from root*/ );
     SgTypedefDeclaration& sgnode = mkTypeDecl(name, subtype, scope);
 
     scope.append_statement(&sgnode);
