@@ -10,6 +10,7 @@
 #include <Rose/BinaryAnalysis/Concolic/SharedMemory.h>
 #include <Rose/BinaryAnalysis/Concolic/SystemCall.h>
 #include <Rose/BinaryAnalysis/Concolic/TestCase.h>
+#include <Rose/BinaryAnalysis/Debugger/Base.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/SymbolicExpression.h>
 
@@ -21,6 +22,7 @@
 
 using namespace Sawyer::Message::Common;
 namespace BS = Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;
+namespace IS = Rose::BinaryAnalysis::InstructionSemantics;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 namespace Rose {
@@ -158,6 +160,26 @@ Architecture::partitioner(const P2::Partitioner::ConstPtr &p) {
     partitioner_ = p;
 }
 
+Debugger::Base::Ptr
+Architecture::debugger() const {
+    return debugger_;
+}
+
+void
+Architecture::debugger(const Debugger::Base::Ptr &d) {
+    debugger_ = d;
+}
+
+Sawyer::Optional<rose_addr_t>
+Architecture::scratchVa() const {
+    return scratchVa_;
+}
+
+void
+Architecture::scratchVa(const Sawyer::Optional<rose_addr_t> &va) {
+    scratchVa_ = va;
+}
+
 ExecutionLocation
 Architecture::currentLocation() const {
     ASSERT_forbid(isFactory());
@@ -178,6 +200,127 @@ Architecture::inputVariables() const {
 void
 Architecture::inputVariables(const InputVariables::Ptr &iv) {
     inputVariables_ = iv;
+}
+
+bool
+Architecture::isTerminated() {
+    ASSERT_forbid(isFactory());
+    return !debugger() || debugger()->isTerminated();
+}
+
+rose_addr_t
+Architecture::ip() {
+    ASSERT_forbid(isFactory());
+    return debugger()->executionAddress(Debugger::ThreadId::unspecified());
+}
+
+void
+Architecture::ip(rose_addr_t va) {
+    ASSERT_forbid(isFactory());
+    debugger()->executionAddress(Debugger::ThreadId::unspecified(), va);
+}
+
+std::vector<ExecutionEvent::Ptr>
+Architecture::createRegisterRestoreEvents() {
+    ASSERT_forbid(isFactory());
+    SAWYER_MESG(mlog[DEBUG]) <<"saving all registers\n";
+    Sawyer::Container::BitVector allRegisters = debugger()->readAllRegisters(Debugger::ThreadId::unspecified());
+    auto event = ExecutionEvent::bulkRegisterWrite(TestCase::Ptr(), ExecutionLocation(), ip(), allRegisters);
+    return {event};
+}
+
+size_t
+Architecture::writeMemory(rose_addr_t va, const std::vector<uint8_t> &bytes) {
+    ASSERT_forbid(isFactory());
+    return debugger()->writeMemory(va, bytes.size(), bytes.data());
+}
+
+std::vector<uint8_t>
+Architecture::readMemory(rose_addr_t va, size_t nBytes) {
+    ASSERT_forbid(isFactory());
+    return debugger()->readMemory(va, nBytes);
+}
+
+void
+Architecture::writeRegister(RegisterDescriptor reg, uint64_t value) {
+    ASSERT_forbid(isFactory());
+    debugger()->writeRegister(Debugger::ThreadId::unspecified(), reg, value);
+}
+
+void
+Architecture::writeRegister(RegisterDescriptor reg, const Sawyer::Container::BitVector &bv) {
+    ASSERT_forbid(isFactory());
+    debugger()->writeRegister(Debugger::ThreadId::unspecified(), reg, bv);
+}
+
+Sawyer::Container::BitVector
+Architecture::readRegister(RegisterDescriptor reg) {
+    ASSERT_forbid(isFactory());
+    return debugger()->readRegister(Debugger::ThreadId::unspecified(), reg);
+}
+
+void
+Architecture::executeInstruction(const P2::PartitionerConstPtr &partitioner) {
+    ASSERT_forbid(isFactory());
+    if (mlog[DEBUG]) {
+        rose_addr_t va = debugger()->executionAddress(Debugger::ThreadId::unspecified());
+        if (SgAsmInstruction *insn = partitioner->instructionProvider()[va]) {
+            mlog[DEBUG] <<"concretely executing insn #" <<currentLocation().primary()
+                        <<" " <<partitioner->unparse(insn) <<"\n";
+        } else {
+            mlog[DEBUG] <<"concretely executing insn #" <<currentLocation().primary()
+                        <<" " <<StringUtility::addrToString(va) <<": null instruction\n";
+        }
+    }
+
+    debugger()->singleStep(Debugger::ThreadId::unspecified());
+}
+
+void
+Architecture::checkInstruction(SgAsmInstruction *insn) {
+    ASSERT_not_null(insn);
+    std::vector<uint8_t> buf = debugger()->readMemory(insn->get_address(), insn->get_size());
+    if (buf.size() != insn->get_size() || !std::equal(buf.begin(), buf.end(), insn->get_raw_bytes().begin())) {
+        if (mlog[ERROR]) {
+            mlog[ERROR] <<"symbolic instruction doesn't match concrete instruction at "
+                        <<StringUtility::addrToString(insn->get_address()) <<"\n"
+                        <<"  symbolic insn:  " <<insn->toString() <<"\n"
+                        <<"  symbolic bytes:";
+            for (uint8_t byte: insn->get_raw_bytes())
+                mlog[ERROR] <<(boost::format(" %02x") % (unsigned)byte);
+            mlog[ERROR] <<"\n"
+                        <<"  concrete bytes:";
+            for (uint8_t byte: buf)
+                mlog[ERROR] <<(boost::format(" %02x") % (unsigned)byte);
+            mlog[ERROR] <<"\n";
+        }
+        throw Exception("symbolic instruction doesn't match concrete instructon at " +
+                        StringUtility::addrToString(insn->get_address()));
+    }
+}
+
+void
+Architecture::advanceExecution(const BS::RiscOperators::Ptr&) {
+    debugger()->singleStep(Debugger::ThreadId::unspecified());
+}
+
+void
+Architecture::executeInstruction(const BS::RiscOperators::Ptr &ops_, SgAsmInstruction *insn) {
+    ASSERT_forbid(isFactory());
+    auto ops = Emulation::RiscOperators::promote(ops_);
+    ASSERT_not_null(ops);
+    ASSERT_not_null(insn);
+    rose_addr_t va = insn->get_address();
+
+    checkInstruction(insn);
+    debugger()->executionAddress(Debugger::ThreadId::unspecified(), va);
+    advanceExecution(ops_);
+}
+
+std::string
+Architecture::readCString(rose_addr_t va, size_t maxBytes) {
+    ASSERT_forbid(isFactory());
+    return debugger()->readCString(va, maxBytes);
 }
 
 const Architecture::SystemCallMap&
@@ -451,19 +594,6 @@ Architecture::readMemoryUnsigned(rose_addr_t va, size_t nBytes) {
     return retval;
 }
 
-std::string
-Architecture::readCString(rose_addr_t va, size_t maxBytes) {
-    ASSERT_forbid(isFactory());
-    std::string retval;
-    while (retval.size() < maxBytes) {
-        auto byte = readMemory(va++, 1);
-        if (byte.empty() || byte[0] == 0)
-            break;
-        retval += (char)byte[0];
-    }
-    return retval;
-}
-
 void
 Architecture::mapMemory(const AddressInterval&, unsigned /*permissions*/) {}
 
@@ -482,6 +612,46 @@ Architecture::nextEventLocation(When when) {
     ASSERT_forbid(isFactory());
     currentLocation_ = currentLocation_.nextSecondary(when);
     return currentLocation_;
+}
+
+std::vector<ExecutionEvent::Ptr>
+Architecture::createMemoryRestoreEvents(const MemoryMap::Ptr &map) {
+    ASSERT_not_null(map);
+    std::vector<ExecutionEvent::Ptr> events;
+    for (const MemoryMap::Node &node: map->nodes()) {
+        const AddressInterval &where = node.key();
+        const MemoryMap::Segment &segment = node.value();
+
+        // Don't save our own scratch space
+        if (scratchVa() && where.least() == *scratchVa())
+            continue;
+
+        SAWYER_MESG(mlog[DEBUG]) <<"  memory at " <<StringUtility::addrToString(where)
+                                 <<", " <<StringUtility::plural(where.size(), "bytes");
+        if (mlog[DEBUG]) {
+            std::string protStr;
+            if ((segment.accessibility() & MemoryMap::READABLE) != 0)
+                protStr += "r";
+            if ((segment.accessibility() & MemoryMap::WRITABLE) != 0)
+                protStr += "w";
+            if ((segment.accessibility() & MemoryMap::EXECUTABLE) != 0)
+                protStr += "x";
+            SAWYER_MESG(mlog[DEBUG]) <<", perm=" <<(protStr.empty() ? "none" : protStr) <<"\n";
+        }
+
+        auto eeMap = ExecutionEvent::bulkMemoryMap(TestCase::Ptr(), ExecutionLocation(), ip(), where,
+                                                   segment.accessibility());
+        eeMap->name("map " + segment.name());
+        events.push_back(eeMap);
+
+        std::vector<uint8_t> buf(where.size());
+        size_t nRead = map->at(where).read(buf).size();
+        ASSERT_always_require(nRead == where.size());
+        auto eeWrite = ExecutionEvent::bulkMemoryWrite(TestCase::Ptr(), ExecutionLocation(), ip(), where, buf);
+        eeWrite->name("init " + segment.name());
+        events.push_back(eeWrite);
+    }
+    return events;
 }
 
 void

@@ -283,6 +283,7 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/Concolic/ConcreteExecutor.h					\
 	Rose/BinaryAnalysis/Concolic/ConcreteResult.h					\
 	Rose/BinaryAnalysis/Concolic/Database.h						\
+	Rose/BinaryAnalysis/Concolic/Emulation.h					\
 	Rose/BinaryAnalysis/Concolic/ExecutionEvent.h					\
 	Rose/BinaryAnalysis/Concolic/ExecutionLocation.h				\
 	Rose/BinaryAnalysis/Concolic/ExecutionManager.h					\

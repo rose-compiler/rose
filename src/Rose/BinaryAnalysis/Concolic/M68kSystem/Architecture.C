@@ -10,11 +10,14 @@
 #include <Rose/BinaryAnalysis/Concolic/TestCase.h>
 #include <Rose/BinaryAnalysis/Debugger/Gdb.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RiscOperators.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherM68k.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 
 #include <boost/process/search_path.hpp>
 
 using namespace Sawyer::Message::Common;
+namespace BS = Rose::BinaryAnalysis::InstructionSemantics::BaseSemantics;
+namespace IS = Rose::BinaryAnalysis::InstructionSemantics;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 namespace Rose {
@@ -79,6 +82,14 @@ Architecture::configureSharedMemory() {
     mlog[WARN] <<"M68kSystem::Architecture::configureSharedMemory is not implemented yet\n";
 }
 
+BS::Dispatcher::Ptr
+Architecture::makeDispatcher(const BS::RiscOperators::Ptr &ops) {
+    ASSERT_not_null(ops);
+    return IS::DispatcherM68k::instance(ops,
+                                        Emulation::Dispatcher::unwrapEmulationOperators(ops)->wordSizeBits(),
+                                        Emulation::Dispatcher::unwrapEmulationOperators(ops)->registerDictionary());
+}
+
 void
 Architecture::load(const boost::filesystem::path &tempDirectory) {
     ASSERT_forbid(isFactory());
@@ -111,13 +122,7 @@ Architecture::load(const boost::filesystem::path &tempDirectory) {
                                   "-no-reboot",
                                   "-kernel", exeName.string());
 
-    debugger_ = Debugger::Gdb::instance(Debugger::Gdb::Specimen(exeName, "localhost", 1234));
-}
-
-bool
-Architecture::isTerminated() {
-    ASSERT_forbid(isFactory());
-    ASSERT_not_implemented("[Robb Matzke 2022-11-21]");
+    debugger(Debugger::Gdb::instance(Debugger::Gdb::Specimen(exeName, "localhost", 1234)));
 }
 
 ByteOrder::Endianness
@@ -126,28 +131,11 @@ Architecture::memoryByteOrder() {
     return ByteOrder::Endianness::ORDER_MSB;
 }
 
-std::string
-Architecture::readCString(rose_addr_t va, size_t maxBytes) {
-    ASSERT_forbid(isFactory());
-    ASSERT_not_implemented("[Robb Matzke 2022-11-21]");
-}
-
-rose_addr_t
-Architecture::ip() {
-    ASSERT_forbid(isFactory());
-    ASSERT_not_implemented("[Robb Matzke 2022-11-21]");
-}
-
-void
-Architecture::ip(rose_addr_t va) {
-    ASSERT_forbid(isFactory());
-    ASSERT_not_implemented("[Robb Matzke 2022-11-21]");
-}
-
 std::vector<ExecutionEvent::Ptr>
 Architecture::createMemoryRestoreEvents() {
     ASSERT_forbid(isFactory());
-    ASSERT_not_implemented("[Robb Matzke 2022-11-21]");
+    SAWYER_MESG(mlog[WARN]) <<"M68kSystem::Architecture::createMemoryRestoreEvents not implemented\n";
+    return {};
 }
 
 std::vector<ExecutionEvent::Ptr>
@@ -158,12 +146,6 @@ Architecture::createMemoryHashEvents() {
 
 std::vector<ExecutionEvent::Ptr>
 Architecture::createMemoryAdjustEvents(const MemoryMap::Ptr &map, rose_addr_t insnVa) {
-    ASSERT_forbid(isFactory());
-    ASSERT_not_implemented("[Robb Matzke 2022-11-21]");
-}
-
-std::vector<ExecutionEvent::Ptr>
-Architecture::createRegisterRestoreEvents() {
     ASSERT_forbid(isFactory());
     ASSERT_not_implemented("[Robb Matzke 2022-11-21]");
 }
@@ -186,53 +168,11 @@ Architecture::unmapMemory(const AddressInterval &where) {
     ASSERT_not_implemented("[Robb Matzke 2022-11-21]");
 }
 
-size_t
-Architecture::writeMemory(rose_addr_t va, const std::vector<uint8_t> &data) {
-    ASSERT_forbid(isFactory());
-    ASSERT_not_implemented("[Robb Matzke 2022-11-21]");
-}
-
-std::vector<uint8_t>
-Architecture::readMemory(rose_addr_t va, size_t nBytes) {
-    ASSERT_forbid(isFactory());
-    ASSERT_not_implemented("[Robb Matzke 2022-11-21]");
-}
-
-void
-Architecture::writeRegister(RegisterDescriptor reg, uint64_t value) {
-    ASSERT_forbid(isFactory());
-    ASSERT_not_implemented("[Robb Matzke 2022-11-21]");
-}
-
-void
-Architecture::writeRegister(RegisterDescriptor reg, const Sawyer::Container::BitVector &value) {
-    ASSERT_forbid(isFactory());
-    ASSERT_not_implemented("[Robb Matzke 2022-11-21]");
-}
-
-Sawyer::Container::BitVector
-Architecture::readRegister(RegisterDescriptor reg) {
-    ASSERT_forbid(isFactory());
-    ASSERT_not_implemented("[Robb Matzke 2022-11-21]");
-}
-
-void
-Architecture::executeInstruction(const P2::PartitionerConstPtr &partitoner) {
-    ASSERT_forbid(isFactory());
-    ASSERT_not_implemented("[Robb Matzke 2022-11-21]");
-}
-
-void
-Architecture::executeInstruction(const InstructionSemantics::BaseSemantics::RiscOperators::Ptr &ops, SgAsmInstruction *insn) {
-    ASSERT_forbid(isFactory());
-    ASSERT_not_implemented("[Robb Matzke 2022-11-21]");
-}
-
 void
 Architecture::createInputVariables(const P2::PartitionerConstPtr &partitioner, const Emulation::RiscOperators::Ptr &ops,
                                const SmtSolver::Ptr &solver) {
     ASSERT_forbid(isFactory());
-    ASSERT_not_implemented("[Robb Matzke 2022-11-21]");
+    SAWYER_MESG(mlog[WARN]) <<"M68kSystem::Architecture::createInputVariables not implemented\n";
 }
 
 void
