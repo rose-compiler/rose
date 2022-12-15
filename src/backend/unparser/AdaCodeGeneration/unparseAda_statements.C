@@ -2007,8 +2007,12 @@ namespace
 
     if (!def)
     {
-      if (n.get_declarationModifier().isAdaSeparate())
+      SgDeclarationModifier& mod = n.get_declarationModifier();
+
+      if (mod.isAdaSeparate())
         prn(" is separate");
+      else if (mod.isAdaAbstract())
+        prn(" is abstract");
 
       prn(STMT_SEP);
       return;

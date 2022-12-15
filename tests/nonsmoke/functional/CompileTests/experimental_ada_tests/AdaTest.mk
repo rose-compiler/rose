@@ -165,6 +165,7 @@ ADA_TRANSLATOR_PASSING_INCOMPLETE_TESTS :=       \
 
 ADA_TRANSLATOR_FAILING_TESTS :=        \
   ada_packages.adb                     \
+  abstract_fun.adb                     \
   accept_statement.adb                 \
   accept_statement_task_decl.adb       \
   access_to_subprogram.ads             \
