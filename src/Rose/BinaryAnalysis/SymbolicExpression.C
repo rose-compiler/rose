@@ -3236,7 +3236,7 @@ Leaf::print(std::ostream &o, Formatter &formatter) const {
 
 void
 Leaf::printAsSigned(std::ostream &o, Formatter &formatter, bool as_signed) const {
-    bool showed_comment = false;
+    std::string comment;                                // comment to show, without outer angle brackets
     if (isIntegerConstant()) {
         if (bits_.size() == 1) {
             // Boolean values
@@ -3280,44 +3280,61 @@ Leaf::printAsSigned(std::ostream &o, Formatter &formatter, bool as_signed) const
     } else if (isFloatingPointConstant()) {
         o <<"0x" <<bits_.toHex();
 
-    } else if (formatter.show_comments == Formatter::CMT_INSTEAD && !comment_.empty()) {
-        // Use the comment as the variable name.
-        ASSERT_require(isVariable2());
-        o <<nameEscape(comment_);
-        showed_comment = true;
-
     } else {
-        // Show the variable name.
         ASSERT_require(isVariable2());
-        uint64_t renamed = name_;
+
+        // Renumber the variable if appropriate. In any case, `renumbered` will be either the renumbered value or the original
+        // value, as appropriate.
+        int64_t renumbered = name_;
         if (formatter.do_rename) {
             RenameMap::iterator found = formatter.renames.find(name_);
-            if (found==formatter.renames.end() && formatter.add_renames) {
-                renamed = formatter.renames.size();
-                formatter.renames.insert(std::make_pair(name_, renamed));
+            if (found == formatter.renames.end() && formatter.add_renames) {
+                renumbered = formatter.renames.size();
+                formatter.renames.insert(std::make_pair(name_, renumbered));
             } else {
-                renamed = found->second;
+                renumbered = found->second;
             }
         }
-        if (isMemoryVariable()) {
-            o <<"m" <<renamed;
-        } else {
-            o <<"v" <<renamed;
+
+        // Compute the name and comment to output
+        std::string name = (isMemoryVariable() ? "m" : "v") + boost::lexical_cast<std::string>(renumbered);
+        switch (formatter.show_comments) {
+            case Formatter::CMT_SILENT:
+                break;
+
+            case Formatter::CMT_AFTER:
+                comment = comment_;
+                break;
+
+            case Formatter::CMT_BEFORE:
+                if (!comment_.empty()) {
+                    comment = name;
+                    name = comment_;
+                }
+                break;
+
+            case Formatter::CMT_INSTEAD:
+                if (!comment_.empty()) {
+                    name = comment_;
+                }
+                break;
         }
+
+        // Output name (or comment)
+        o <<nameEscape(name);
     }
 
     // Type of variable.  All variables have this otherwise there's no way for the parser to tell how wide a variable is
     // when reading it back in.
-    if (formatter.show_type) {
+    if (formatter.show_type)
         o <<'[' <<type().toString(TypeStyle::ABBREVIATED) <<']';
-    }
 
-    // Comment stuff
+    // Output comment (or name)
     char bracket='<';
     if (formatter.show_flags)
         printFlags(o, flags(), bracket /*in,out*/);
-    if (!showed_comment && formatter.show_comments!=Formatter::CMT_SILENT && !comment_.empty()) {
-        o <<bracket <<commentEscape(comment_);
+    if (!comment.empty()) {
+        o <<bracket <<commentEscape(comment);
         bracket = ',';
     }
     if (bracket != '<')
