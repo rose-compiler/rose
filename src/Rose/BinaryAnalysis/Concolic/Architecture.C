@@ -305,16 +305,15 @@ Architecture::advanceExecution(const BS::RiscOperators::Ptr&) {
 }
 
 void
-Architecture::executeInstruction(const BS::RiscOperators::Ptr &ops_, SgAsmInstruction *insn) {
+Architecture::executeInstruction(const BS::RiscOperators::Ptr &ops, SgAsmInstruction *insn) {
     ASSERT_forbid(isFactory());
-    auto ops = Emulation::RiscOperators::promote(ops_);
     ASSERT_not_null(ops);
     ASSERT_not_null(insn);
     rose_addr_t va = insn->get_address();
 
     checkInstruction(insn);
     debugger()->executionAddress(Debugger::ThreadId::unspecified(), va);
-    advanceExecution(ops_);
+    advanceExecution(ops);
 }
 
 std::string
@@ -530,6 +529,13 @@ Architecture::playEvent(const ExecutionEvent::Ptr &event) {
             return true;
         }
 
+        case ExecutionEvent::Action::BULK_REGISTER_WRITE: {
+            SAWYER_MESG(mlog[DEBUG]) <<"  restore registers\n";
+            Sawyer::Container::BitVector allRegisters = event->registerValues();
+            debugger()->writeAllRegisters(Debugger::ThreadId::unspecified(), allRegisters);
+            return true;
+        }
+
         case ExecutionEvent::Action::OS_SYSCALL: {
             // This is only the start of a system call. Additional following events for the same instruction will describe the
             // effects of the system call.
@@ -665,8 +671,8 @@ Architecture::restoreInputVariables(const Partitioner2::PartitionerConstPtr&, co
 }
 
 std::pair<ExecutionEvent::Ptr, SymbolicExpression::Ptr>
-Architecture::sharedMemoryAccess(const SharedMemoryCallbacks &callbacks, const P2::PartitionerConstPtr&,
-                                 const Emulation::RiscOperators::Ptr &ops, rose_addr_t addr, size_t nBytes) {
+Architecture::sharedMemoryRead(const SharedMemoryCallbacks &callbacks, const P2::Partitioner::ConstPtr&,
+                               const Emulation::RiscOperators::Ptr &ops, rose_addr_t addr, size_t nBytes) {
     // A shared memory read has just been encountered, and we're in the middle of executing the instruction that caused it.
     ASSERT_forbid(isFactory());
     ASSERT_not_null(ops);
@@ -713,6 +719,28 @@ Architecture::sharedMemoryAccess(const SharedMemoryCallbacks &callbacks, const P
     database()->save(sharedMemoryEvent);            // just in case the user modified it.
     return {ctx.sharedMemoryEvent, ctx.valueRead};
 }
+
+bool
+Architecture::sharedMemoryWrite(const SharedMemoryCallbacks &callbacks, const P2::Partitioner::ConstPtr&,
+                                const Emulation::RiscOperators::Ptr &ops, rose_addr_t addr, const BS::SValue::Ptr &value) {
+    // A shared memory write has just been encountered, and we're in the middle of executing the instruction that caused it.
+    ASSERT_forbid(isFactory());
+    ASSERT_not_null(ops);
+    ASSERT_not_null2(ops->currentInstruction(), "must be called during instruction execution");
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+
+    const rose_addr_t ip = ops->currentInstruction()->get_address();
+    SAWYER_MESG(debug) <<"  shared memory write at instruction " <<StringUtility::addrToString(ip)
+                       <<" to memory address " <<StringUtility::addrToString(addr)
+                       <<" writing " <<*value <<"\n";
+
+    // Invoke the callback
+    SharedMemoryContext ctx(sharedFromThis(), ops, ops->currentInstruction()->get_address(), addr,
+                            IS::SymbolicSemantics::SValue::promote(value)->get_expression());
+    const bool handled = callbacks.apply(false, ctx);
+    return handled;
+}
+
 
 void
 Architecture::runSharedMemoryPostCallbacks(const ExecutionEvent::Ptr &sharedMemoryEvent, const Emulation::RiscOperators::Ptr &ops) {
@@ -820,7 +848,7 @@ Architecture::fixupSharedMemoryEvents(const ExecutionEvent::Ptr &sharedMemoryEve
             SymbolicExpression::Ptr registerValue = relatedEvent->calculateResult(inputVariables()->bindings());
             ASSERT_require(registerValue->isScalarConstant());
             SAWYER_MESG(debug) <<"    for " <<relatedEvent->printableName(database()) <<"\n"
-                               <<"      writing " <<*registerValue <<"to register " <<relatedEvent->registerDescriptor() <<"\n";
+                               <<"      writing " <<*registerValue <<" to register " <<relatedEvent->registerDescriptor() <<"\n";
             writeRegister(relatedEvent->registerDescriptor(), registerValue->isLeafNode()->bits());
         }
     }

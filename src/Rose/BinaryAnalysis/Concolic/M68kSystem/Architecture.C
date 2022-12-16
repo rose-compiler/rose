@@ -6,12 +6,17 @@
 #include <Rose/BinaryAnalysis/Concolic/ConcolicExecutor.h>
 #include <Rose/BinaryAnalysis/Concolic/Database.h>
 #include <Rose/BinaryAnalysis/Concolic/ExecutionEvent.h>
+#include <Rose/BinaryAnalysis/Concolic/SharedMemory.h>
 #include <Rose/BinaryAnalysis/Concolic/Specimen.h>
 #include <Rose/BinaryAnalysis/Concolic/TestCase.h>
 #include <Rose/BinaryAnalysis/Debugger/Gdb.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/BaseSemantics/RiscOperators.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics/DispatcherM68k.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+
+// Temporary during testing
+#include <Rose/BinaryAnalysis/Concolic/Callback/MemoryExit.h>
+#include <Rose/BinaryAnalysis/Concolic/Callback/MemoryInput.h>
 
 #include <boost/process/search_path.hpp>
 
@@ -79,7 +84,8 @@ Architecture::configureSystemCalls() {
 
 void
 Architecture::configureSharedMemory() {
-    mlog[WARN] <<"M68kSystem::Architecture::configureSharedMemory is not implemented yet\n";
+    sharedMemory(AddressInterval::baseSize(0x8000213c, 4), Callback::MemoryExit::instance(100));
+    sharedMemory(AddressInterval::baseSize(0x80002140, 1), Callback::MemoryInput::instance(ByteOrder::ORDER_MSB));
 }
 
 BS::Dispatcher::Ptr
@@ -93,6 +99,8 @@ Architecture::makeDispatcher(const BS::RiscOperators::Ptr &ops) {
 void
 Architecture::load(const boost::filesystem::path &tempDirectory) {
     ASSERT_forbid(isFactory());
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+
     // Extract the executable into the target temporary directory
     const auto exeName = tempDirectory / [this]() {
         auto base = boost::filesystem::path(testCase()->specimen()->name()).filename();
@@ -116,13 +124,34 @@ Architecture::load(const boost::filesystem::path &tempDirectory) {
     if (qemuExe.empty())
         mlog[ERROR] <<"cannot find qemu-system-m68k in your executable search path ($PATH)\n";
 
+#if 1
+    std::vector<std::string> args;
+    args.push_back(qemuExe.string());
+    args.push_back("-display");
+    args.push_back("none");
+    args.push_back("-s");
+    args.push_back("-S");
+    args.push_back("-no-reboot");
+    args.push_back("-kernel");
+    args.push_back(exeName.string());
+    if (debug) {
+        debug <<"executing QEMU emulator for m68k firmware\n"
+              <<"  command:";
+        for (const std::string &arg: args)
+            debug <<" " <<StringUtility::bourneEscape(arg);
+        debug <<"\n";
+    }
+    qemu_ = boost::process::child(args);
+#else
     qemu_ = boost::process::child(qemuExe,
                                   "-display", "none",
                                   "-s", "-S",
                                   "-no-reboot",
                                   "-kernel", exeName.string());
+#endif
 
     debugger(Debugger::Gdb::instance(Debugger::Gdb::Specimen(exeName, "localhost", 1234)));
+    ASSERT_forbid(debugger()->isTerminated());
 }
 
 ByteOrder::Endianness
@@ -146,12 +175,6 @@ Architecture::createMemoryHashEvents() {
 
 std::vector<ExecutionEvent::Ptr>
 Architecture::createMemoryAdjustEvents(const MemoryMap::Ptr &map, rose_addr_t insnVa) {
-    ASSERT_forbid(isFactory());
-    ASSERT_not_implemented("[Robb Matzke 2022-11-21]");
-}
-
-bool
-Architecture::playEvent(const ExecutionEvent::Ptr &event) {
     ASSERT_forbid(isFactory());
     ASSERT_not_implemented("[Robb Matzke 2022-11-21]");
 }

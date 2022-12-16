@@ -279,6 +279,10 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/ConcreteLocation.h						\
 	Rose/BinaryAnalysis/Concolic/Architecture.h					\
 	Rose/BinaryAnalysis/Concolic/BasicTypes.h					\
+	Rose/BinaryAnalysis/Concolic/Callback/BasicTypes.h				\
+	Rose/BinaryAnalysis/Concolic/Callback/MemoryExit.h				\
+	Rose/BinaryAnalysis/Concolic/Callback/MemoryInput.h				\
+	Rose/BinaryAnalysis/Concolic/Callback/MemoryTime.h				\
 	Rose/BinaryAnalysis/Concolic/ConcolicExecutor.h					\
 	Rose/BinaryAnalysis/Concolic/ConcreteExecutor.h					\
 	Rose/BinaryAnalysis/Concolic/ConcreteResult.h					\

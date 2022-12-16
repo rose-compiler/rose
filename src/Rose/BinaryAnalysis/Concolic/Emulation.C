@@ -217,7 +217,9 @@ RiscOperators::writeRegister(RegisterDescriptor reg, const BS::SValue::Ptr &valu
         // address since it might be read-only or it might not follow normal memory semantics), we do the next best thing: we
         // adjust all the side effects of the instruction that read the byte from memory.
         SymbolicExpression::Ptr valueExpr = Emulation::SValue::promote(value)->get_expression();
-        SAWYER_MESG(debug) <<"  register update for shared memory read: value = " <<*valueExpr <<"\n";
+        SAWYER_MESG(debug) <<"  register update for shared memory read\n"
+                           <<"    register = " <<reg.toString() <<"\n"
+                           <<"    value    = " <<*valueExpr <<"\n";
         auto event = ExecutionEvent::registerWrite(process()->testCase(), process()->nextEventLocation(When::POST),
                                                    currentInstruction()->get_address(), reg, SymbolicExpression::Ptr(),
                                                    SymbolicExpression::Ptr(), valueExpr);
@@ -251,8 +253,8 @@ RiscOperators::readMemory(RegisterDescriptor segreg, const BS::SValue::Ptr &addr
             } BOOST_SCOPE_EXIT_END;
 
             // FIXME[Robb Matzke 2021-09-09]: use structured bindings when ROSE requires C++17 or later
-            auto x = process()->sharedMemoryAccess(callbacks, partitioner(), RiscOperators::promote(shared_from_this()),
-                                                   *va, nBytes);
+            auto x = process()->sharedMemoryRead(callbacks, partitioner(), RiscOperators::promote(shared_from_this()),
+                                                 *va, nBytes);
             ExecutionEvent::Ptr sharedMemoryEvent = x.first;
             SymbolicExpression::Ptr result = x.second;
 
@@ -273,8 +275,7 @@ RiscOperators::readMemory(RegisterDescriptor segreg, const BS::SValue::Ptr &addr
 }
 
 BS::SValue::Ptr
-RiscOperators::peekMemory(RegisterDescriptor segreg, const BS::SValue::Ptr &addr,
-                          const BS::SValue::Ptr &dfltUnused) {
+RiscOperators::peekMemory(RegisterDescriptor segreg, const BS::SValue::Ptr &addr, const BS::SValue::Ptr &dfltUnused) {
     // Read the memory's symbolic value if it exists, else read the concrete value. We can't read concretely if the address is
     // symbolic.
     if (auto va = addr->toUnsigned()) {
@@ -286,6 +287,43 @@ RiscOperators::peekMemory(RegisterDescriptor segreg, const BS::SValue::Ptr &addr
         return Super::peekMemory(segreg, addr, dflt);
     } else {
         return Super::peekMemory(segreg, addr, dfltUnused);
+    }
+}
+
+void
+RiscOperators::writeMemory(RegisterDescriptor segreg, const BS::SValue::Ptr &addr, const BS::SValue::Ptr &value,
+                           const BS::SValue::Ptr &cond) {
+    if (isRecursive()) {
+        // Don't do anything special because we're being called from inside a user callback.
+        Super::writeMemory(segreg, addr, value, cond);
+
+    } else if (auto va = addr->toUnsigned()) {
+        SharedMemoryCallbacks callbacks = process()->sharedMemory().getOrDefault(*va);
+        if (!callbacks.isEmpty()) {
+            isRecursive(true);
+            BOOST_SCOPE_EXIT(this_) {
+                this_->isRecursive(false);
+            } BOOST_SCOPE_EXIT_END;
+
+            // FIXME[Robb Matzke 2022-12-16]: use structured bindings when ROSE requires C++17 or later
+            const bool processed =
+                process()->sharedMemoryWrite(callbacks, partitioner(), RiscOperators::promote(shared_from_this()),
+                                             *va, value);
+            if (processed) {
+#if 0 // [Robb Matzke 2022-12-16]
+                hadSharedMemoryAccess(sharedMemoryEvent);
+                return svalueExpr(result);
+#else
+                return;
+#endif
+            }
+        }
+
+        Super::writeMemory(segreg, addr, value, cond);
+
+    } else {
+        // Not a concrete address, so do things symbolically
+        Super::writeMemory(segreg, addr, value, cond);
     }
 }
 

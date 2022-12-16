@@ -1,3 +1,4 @@
+add_subdirectory(Callback)
 add_subdirectory(M68kSystem)
 add_subdirectory(I386Linux)
 
@@ -24,6 +25,7 @@ add_dependencies(roseBinaryAnalysisConcolic rosetta_generated)
 install(FILES
   Architecture.h
   BasicTypes.h
+  Callback.h
   ConcolicExecutor.h
   ConcreteExecutor.h
   ConcreteResult.h
