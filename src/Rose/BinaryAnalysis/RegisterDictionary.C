@@ -1323,6 +1323,7 @@ RegisterDictionary::instanceM68000() {
         regs->insert("ccr_z", m68k_regclass_spr, m68k_spr_sr, 2,  1);           // condition code zero bit
         regs->insert("ccr_n", m68k_regclass_spr, m68k_spr_sr, 3,  1);           // condition code negative
         regs->insert("ccr_x", m68k_regclass_spr, m68k_spr_sr, 4,  1);           // condition code extend
+        regs->insert("ps",    m68k_regclass_spr, m68k_spr_sr, 0,  16);          // GDB's name for the SR register
         regs->insert("sr",    m68k_regclass_spr, m68k_spr_sr, 0,  16);          // status register
         regs->insert("sr_i",  m68k_regclass_spr, m68k_spr_sr, 8,  3);           // interrupt priority mask
         regs->insert("sr_s",  m68k_regclass_spr, m68k_spr_sr, 13, 1);           // status register user mode bit
