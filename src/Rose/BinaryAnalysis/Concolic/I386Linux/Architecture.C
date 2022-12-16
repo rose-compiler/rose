@@ -1272,13 +1272,6 @@ Architecture::playEvent(const ExecutionEvent::Ptr &event) {
     bool handled = Super::playEvent(event);
 
     switch (event->action()) {
-        case ExecutionEvent::Action::BULK_REGISTER_WRITE: {
-            SAWYER_MESG(mlog[DEBUG]) <<"  restore registers\n";
-            Sawyer::Container::BitVector allRegisters = event->registerValues();
-            debugger()->writeAllRegisters(Debugger::ThreadId::unspecified(), allRegisters);
-            return true;
-        }
-
         case ExecutionEvent::Action::OS_SYSCALL:
             if (!handled) {
                 // If it wasn't handled by Super, then it must be because there are no callbacks.

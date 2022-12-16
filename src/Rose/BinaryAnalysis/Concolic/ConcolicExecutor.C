@@ -182,7 +182,7 @@ void
 ConcolicExecutor::startDispatcher() {
     ASSERT_require(cpu());
     ASSERT_require(testCase());
-    auto ops = Emulation::RiscOperators::promote(cpu()->operators());
+    Emulation::RiscOperators::Ptr ops = Emulation::Dispatcher::unwrapEmulationOperators(cpu()->operators());
 
     if (testCase()->parent()) {
         ASSERT_require(database()->symbolicStateExists(testCaseId()));

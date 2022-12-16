@@ -690,6 +690,7 @@ INPUT                  = @top_srcdir@/docs/Rose/MainPage.dox \
 			 @top_srcdir@/src/Rose/BinaryAnalysis \
 			 @top_srcdir@/src/Rose/BinaryAnalysis/ByteCode \
 			 @top_srcdir@/src/Rose/BinaryAnalysis/Concolic \
+			 @top_srcdir@/src/Rose/BinaryAnalysis/Concolic/Callback \
 			 @top_srcdir@/src/Rose/BinaryAnalysis/Concolic/I386Linux \
 			 @top_srcdir@/src/Rose/BinaryAnalysis/Concolic/M68kSystem \
 			 @top_srcdir@/src/Rose/BinaryAnalysis/Debugger \

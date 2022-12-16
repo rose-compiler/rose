@@ -207,6 +207,11 @@ public:
     peekMemory(RegisterDescriptor segreg, const InstructionSemantics::BaseSemantics::SValuePtr &addr,
                const InstructionSemantics::BaseSemantics::SValuePtr &dflt) override;
 
+    virtual void
+    writeMemory(RegisterDescriptor segreg, const InstructionSemantics::BaseSemantics::SValuePtr &addr,
+                const InstructionSemantics::BaseSemantics::SValuePtr &value,
+                const InstructionSemantics::BaseSemantics::SValuePtr &cond) override;
+
     // Call this when the concrete simulation exits.
     void doExit(uint64_t);
 };

@@ -28,9 +28,13 @@ public:
     /** Constructor for shared memory event replay. */
     SharedMemoryContext(const ArchitecturePtr&, const ExecutionEventPtr &sharedMemoryEvent);
 
-    /** Constructor when a new shared memory event is encountered. */
+    /** Constructor when a new shared memory read event is encountered. */
     SharedMemoryContext(const ArchitecturePtr&, const Emulation::RiscOperatorsPtr&,
                         const ExecutionEventPtr &sharedMemoryEvent);
+
+    /** Constructor for a shared memory write. */
+    SharedMemoryContext(const ArchitecturePtr&, const Emulation::RiscOperatorsPtr&, rose_addr_t accessingInstructionVa,
+                        rose_addr_t accessedVa, const SymbolicExpression::Ptr &value);
 
     virtual ~SharedMemoryContext();
 
@@ -76,6 +80,11 @@ public:
      *  shared memory read. However, if the read was originally treated as non-shared (implying also that there is no input
      *  variable) then this data member is a null pointer. */
     SymbolicExpression::Ptr valueRead;
+
+    /** Value being written.
+     *
+     *  During a write operation, this is the value being written to memory. */
+    SymbolicExpression::Ptr valueWritten;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

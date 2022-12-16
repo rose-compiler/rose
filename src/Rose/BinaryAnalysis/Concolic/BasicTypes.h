@@ -3,6 +3,7 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 
+#include <Rose/BinaryAnalysis/Concolic/Callback/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Concolic/I386Linux/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Concolic/M68kSystem/BasicTypes.h>
 

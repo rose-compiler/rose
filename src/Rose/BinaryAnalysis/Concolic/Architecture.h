@@ -479,11 +479,22 @@ public:
     /** Called immediately when shared memory is accessed.
      *
      *  This function is called as soon as shared memory is accessed, right during the middle of an instruction from within the
-     *  RiscOperators::readMemory operation. For memory reads, it should either perform the operation and return the result, or
-     *  return null in which case the caller will do the usual operation. */
+     *  RiscOperators::readMemory operation.
+     *
+     *  For memory reads, it should either perform the operation and return the result, or return null in which case the caller
+     *  will do the usual operation.
+     *
+     *  For memory writes, it should either perform the operation and return true, or return false in which case the caller
+     *  will do the usual operation.
+     *
+     * @{ */
     virtual std::pair<ExecutionEventPtr, SymbolicExpressionPtr>
-    sharedMemoryAccess(const SharedMemoryCallbacks&, const Partitioner2::PartitionerConstPtr&, const Emulation::RiscOperatorsPtr&,
+    sharedMemoryRead(const SharedMemoryCallbacks&, const Partitioner2::PartitionerConstPtr&, const Emulation::RiscOperatorsPtr&,
                        rose_addr_t memVa, size_t nBytes);
+    virtual bool
+    sharedMemoryWrite(const SharedMemoryCallbacks&, const Partitioner2::PartitionerConstPtr&, const Emulation::RiscOperatorsPtr&,
+                      rose_addr_t memVa, const InstructionSemantics::BaseSemantics::SValuePtr&);
+    /** @} */
 
     /** Run after-instruction shared memory callbacks.
      *

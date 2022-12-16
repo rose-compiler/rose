@@ -58,7 +58,6 @@ public:
     virtual std::vector<ExecutionEventPtr> createMemoryHashEvents() override;
     virtual std::vector<ExecutionEventPtr> createMemoryAdjustEvents(const MemoryMap::Ptr&, rose_addr_t insnVa) override;
     virtual std::vector<ExecutionEventPtr> createMemoryRestoreEvents() override;
-    virtual bool playEvent(const ExecutionEventPtr&) override;
     virtual void mapMemory(const AddressInterval&, unsigned permissions) override;
     virtual void unmapMemory(const AddressInterval&) override;
     virtual void createInputVariables(const Partitioner2::PartitionerConstPtr&, const Emulation::RiscOperatorsPtr&,

@@ -43,6 +43,17 @@ SharedMemoryContext::SharedMemoryContext(const Architecture::Ptr &architecture, 
     ASSERT_not_null(sharedMemoryEvent);
 }
 
+SharedMemoryContext::SharedMemoryContext(const Architecture::Ptr &architecture, const Emulation::RiscOperators::Ptr &ops,
+                                         rose_addr_t accessingInstructionVa, rose_addr_t accessedVa,
+                                         const SymbolicExpression::Ptr &value)
+    : phase(ConcolicPhase::EMULATION), architecture(architecture), ops(ops), ip(accessingInstructionVa),
+      accessedVas(AddressInterval::baseSize(accessedVa, (value->nBits()+7)/8)), direction(IoDirection::WRITE),
+      valueWritten(value) {
+    ASSERT_not_null(architecture);
+    ASSERT_not_null(ops);
+    ASSERT_not_null(value);
+}
+
 SharedMemoryContext::~SharedMemoryContext() {}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

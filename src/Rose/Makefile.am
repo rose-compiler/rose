@@ -49,6 +49,9 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/CallingConvention.C						\
 	BinaryAnalysis/CodeInserter.C							\
 	BinaryAnalysis/Concolic/Architecture.C						\
+	BinaryAnalysis/Concolic/Callback/MemoryExit.C					\
+	BinaryAnalysis/Concolic/Callback/MemoryInput.C					\
+	BinaryAnalysis/Concolic/Callback/MemoryTime.C					\
 	BinaryAnalysis/Concolic/ConcolicExecutor.C					\
 	BinaryAnalysis/Concolic/ConcreteExecutor.C					\
 	BinaryAnalysis/Concolic/ConcreteResult.C					\
