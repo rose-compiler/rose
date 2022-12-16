@@ -414,7 +414,7 @@ void
 Gdb::singleStep(ThreadId) {
     if (!isAttached())
         throw Exception("not attached to subordinate process");
-    sendCommand("-exec-next-instruction");
+    sendCommand("-exec-step-instruction");
 }
 
 void
